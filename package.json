@@ -1,0 +1,12 @@
+{
+  "name": "my-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "client:dev": "cd Client && npm run dev",
+    "client:build": "cd Client && npm run build",
+    "server:dev": "cd Server && go run main.go",
+    "serve": "npm run client:dev && npm run server:dev"
+  }
+}
