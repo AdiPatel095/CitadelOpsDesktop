@@ -1,6 +1,7 @@
 package main
 
 import (
+	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/Router"
 	"CitadelDesktop/Server/Websocket"
 	"context"
@@ -11,6 +12,8 @@ import (
 	"github.com/chromedp/chromedp"
 	"github.com/joho/godotenv"
 )
+
+var GlobalPlayerResources Models.PlayerGlobalResources
 
 func main() {
 	// Load environment variables

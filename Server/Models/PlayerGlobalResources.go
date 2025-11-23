@@ -1,6 +1,8 @@
 package Models
 
-type playerGlobalResources struct {
+import "sync"
+
+type PlayerGlobalResources struct {
 	Rubies     float64 `json:"rubies"`
 	Coins      float64 `json:"coins"`
 	RelicShard float64 `json:"relic_shard"`
@@ -22,4 +24,17 @@ type playerGlobalResources struct {
 	MightPt    float64 `json:"might_pt"`
 	GloryPt    float64 `json:"glory_pt"`
 	GallanPt   float64 `json:"gallan_pt"`
+}
+
+var (
+	instance *PlayerGlobalResources
+	once     sync.Once
+)
+
+// GetPlayerGlobalResources returns the singleton instance of PlayerGlobalResources.
+func GetPlayerGlobalResources() *PlayerGlobalResources {
+	once.Do(func() {
+		instance = &PlayerGlobalResources{}
+	})
+	return instance
 }

@@ -1,6 +1,7 @@
 package Websocket
 
 import (
+	"CitadelDesktop/Server/GameParser"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -68,10 +69,14 @@ func handleParsedMessage(hub *Hub, msgBytes []byte, direction string) {
 					return
 				}
 				hub.Broadcast <- responseMsgBytes
+			} else {
+				if cd > 0 {
+					log.Printf("Cooldown for login: %d seconds", cd)
+				}
 			}
 		}
 	}
-	log.Printf("Received message: %s", messageParts)
+	GameParser.MessageRouter(messageParts)
 
 }
 
