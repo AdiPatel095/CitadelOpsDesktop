@@ -1,12 +1,14 @@
 .dashboard {
   width: 100%;
   box-sizing: border-box;
-  padding: 20px; /* Add padding directly to the dashboard container */
+  padding: 0;
+  min-height: calc(100vh - 180px);
 }
 
 .dashboard-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
-  gap: 20px;
+  gap: 24px;
+  align-items: flex-start;
 }

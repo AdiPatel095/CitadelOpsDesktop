@@ -1,56 +1,86 @@
 .event-counters-panel {
   position: fixed;
   bottom: 0;
-  left: 175px; /* Positioned next to the logs tab */
-  width: 150px;
-  height: 40px;
+  left: 205px;
+  /* Positioned next to the logs tab */
+  width: 200px;
+  height: 45px;
   z-index: 1100;
-  transition: all 0.3s ease-in-out;
+  transition: all var(--transition-base);
 }
 
 .event-counters-panel.closed .panel-header {
-  background-color: #34495e;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-secondary) 100%);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  border-bottom: none;
+  box-shadow: var(--shadow-md);
 }
 
 .event-counters-panel.open {
   width: 100%;
-  height: calc(100vh - 50px);
+  height: calc(100vh - 80px);
   left: 0;
-  background-color: #2c3e50;
-  border-top: 1px solid #4a627a;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 2px solid var(--color-primary);
+  box-shadow: var(--shadow-xl);
 }
 
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
+  height: 45px;
   cursor: pointer;
   position: relative;
+  transition: all var(--transition-base);
+}
+
+.panel-header:hover {
+  background: rgba(52, 211, 153, 0.1);
 }
 
 .panel-header h3 {
   margin: 0;
-  font-size: 1.1em;
-  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: 0.025em;
 }
 
 .panel-content {
-  padding: 15px;
+  padding: 20px;
   overflow-y: auto;
-  height: calc(100% - 40px);
+  height: calc(100% - 45px);
   box-sizing: border-box;
+  color: var(--color-text-secondary);
 }
 
 .minimize-button {
   position: absolute;
-  top: 5px;
+  top: 8px;
   right: 15px;
-  background: none;
+  background: var(--color-primary);
   border: none;
-  color: white;
-  font-size: 1.5em;
+  color: var(--color-bg-primary);
+  font-size: 1.3rem;
+  font-weight: 700;
   cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-md);
+}
+
+.minimize-button:hover {
+  background: var(--color-primary-light);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-glow);
 }

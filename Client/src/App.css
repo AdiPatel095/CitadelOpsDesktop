@@ -1,18 +1,29 @@
 .app-layout {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--color-bg-primary) 0%, #0a0f1e 100%);
+  position: relative;
 }
 
 .main-content {
   margin-left: 200px;
-  padding-top: 80px; /* ONLY reserve space for the header */
+  padding-top: 80px;
+  padding: 100px 30px 30px 230px;
   flex-grow: 1;
   overflow-y: auto;
-  transition: margin-left 0.3s ease;
+  overflow-x: hidden;
+  transition: all var(--transition-base);
   position: relative;
   z-index: 1;
+  min-height: 100vh;
 }
 
 .app-layout.sidebar-collapsed .main-content {
-  margin-left: 10px;
+  margin-left: 80px;
+  padding-left: 110px;
+}
+
+/* Smooth animations for content */
+.main-content>* {
+  animation: slideInUp var(--transition-slow);
 }
