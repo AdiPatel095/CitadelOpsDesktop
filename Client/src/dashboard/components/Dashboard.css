@@ -1,0 +1,12 @@
+.dashboard {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px; /* Add padding directly to the dashboard container */
+}
+
+.dashboard-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 20px;
+}

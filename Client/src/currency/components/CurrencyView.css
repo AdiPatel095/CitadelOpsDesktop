@@ -1,0 +1,54 @@
+.currency-view {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+}
+
+.category-section {
+  margin-bottom: 40px;
+}
+
+.category-title {
+  color: #ecf0f1;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #4a627a;
+}
+
+.currency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.currency-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #3a4b5c;
+  padding: 20px;
+  border-radius: 8px;
+  gap: 10px;
+  height: 150px;
+}
+
+.currency-name {
+  font-size: 1em;
+  color: #bdc3c7;
+  text-align: center;
+  height: 2.5em;
+}
+
+.currency-icon, .currency-item svg {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.currency-value {
+  color: white;
+  font-size: 1.2em;
+  font-weight: bold;
+}

@@ -1,7 +1,9 @@
 package GameParser
 
 import (
+	"CitadelDesktop/Server/Core"
 	"CitadelDesktop/Server/Models"
+	"encoding/json"
 	"fmt"
 	"log"
 )
@@ -44,16 +46,30 @@ const (
 )
 
 func CastleDetailParser(gcl map[string]interface{}, dcl map[string]interface{}) {
-	if gcl != nil {
-		if err := parseGCL(gcl); err != nil {
-			log.Printf("Error parsing GCL data: %v", err)
-		}
+	log.Printf("CastleDetailParser")
+	if err := parseGCL(gcl); err != nil {
+		log.Printf("Error parsing GCL data: %v", err)
 	}
 	if dcl != nil {
 		if err := parseDCL(dcl); err != nil {
 			log.Printf("Error parsing DCL data: %v", err)
 		}
 	}
+	log.Printf("CastleDetailParser finished")
+}
+
+func SendCastleResourceUpdate() {
+	playerResources := Models.GetPlayerCastleInfo()
+	castleResourceUpdate := map[string]interface{}{
+		"type":    "castleResourceUpdate",
+		"payload": playerResources,
+	}
+	jsonData, err := json.Marshal(castleResourceUpdate)
+	if err != nil {
+		log.Printf("Error marshalling resource update: %v", err)
+		return
+	}
+	Core.FrontendSocket.Broadcast <- jsonData
 }
 
 // parseGCL processes the Game Castle List data.

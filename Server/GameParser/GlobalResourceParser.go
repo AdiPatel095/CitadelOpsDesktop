@@ -1,11 +1,14 @@
 package GameParser
 
 import (
+	"CitadelDesktop/Server/Core"
 	"CitadelDesktop/Server/Models"
+	"encoding/json"
 	"log"
 )
 
 func UpdateCoins(gcuMap map[string]interface{}) {
+	log.Printf("UpdateCoins")
 	coins, ok := gcuMap["C1"].(float64)
 	if ok {
 		Models.GetPlayerGlobalResources().Coins = coins
@@ -14,9 +17,38 @@ func UpdateCoins(gcuMap map[string]interface{}) {
 	if ok {
 		Models.GetPlayerGlobalResources().Rubies = rubies
 	}
+	log.Printf("UpdateCoinComplete")
+}
+
+func UpdateMight(gmuMap map[string]interface{}) {
+	log.Printf("UpdateMight")
+	might, ok := gmuMap["MP"].(float64)
+	if ok {
+		Models.GetPlayerGlobalResources().MightPt = might
+	}
+	log.Printf("UpdateMightComplete")
+}
+
+func UpdateGlory(ufaMap map[string]interface{}) {
+	log.Printf("UpdateGlory")
+	glory, ok := ufaMap["CF"].(float64)
+	if ok {
+		Models.GetPlayerGlobalResources().GloryPt = glory
+	}
+	log.Printf("UpdateGloryComplete")
+}
+
+func UpdateGallantry(ufpMap map[string]interface{}) {
+	log.Printf("UpdateGallantry")
+	gallantry, ok := ufpMap["CFP"].(float64)
+	if ok {
+		Models.GetPlayerGlobalResources().GallanPt = gallantry
+	}
+	log.Printf("UpdateGallantryComplete")
 }
 
 func UpdateSCE(sceArray []interface{}) {
+	log.Printf("UpdateSCE")
 	for _, item := range sceArray {
 		valueArray, ok := item.([]interface{})
 		if !ok || len(valueArray) != 2 {
@@ -33,6 +65,7 @@ func UpdateSCE(sceArray []interface{}) {
 		}
 		updateResourceByLabel(label, value)
 	}
+	log.Printf("UpdateSCEComplete")
 }
 
 func updateResourceByLabel(label string, value float64) {
@@ -71,4 +104,20 @@ func updateResourceByLabel(label string, value float64) {
 	case "MS7":
 		playerResources.Hr24 = value
 	}
+}
+
+func SendGlobalResourceUpdate() {
+	log.Printf("SendGlobalResourceUpdate")
+	playerResources := Models.GetPlayerGlobalResources()
+	globalResourceUpdate := map[string]interface{}{
+		"type":    "globalResourceUpdate",
+		"payload": playerResources,
+	}
+	jsonData, err := json.Marshal(globalResourceUpdate)
+	if err != nil {
+		log.Printf("Error marshalling resource update: %v", err)
+		return
+	}
+	Core.FrontendSocket.Broadcast <- jsonData
+	log.Printf("SendGlobalResourceUpdateComplete")
 }
