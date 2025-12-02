@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './EquipmentView.css';
-import EquipmentStats from './EquipmentStats';
 import { useEquipment } from '../context/EquipmentContext';
-
-type EquipmentMode = 'Commander' | 'Castellan';
-type CombatMode = 'PvP' | 'PvE';
+import EquipmentSelection, { type EquipmentMode, type CombatMode } from './EquipmentSelection';
+import StatPriority from './StatPriority';
 
 const EquipmentView: React.FC = () => {
   const { equipmentData } = useEquipment();
@@ -14,7 +12,7 @@ const EquipmentView: React.FC = () => {
 
   const getSelectionItems = () => {
     if (equipmentMode === 'Commander') {
-      return []; // To be implemented later, as commActuals is not available
+      return equipmentData.commStats.map(c => c.name).filter(Boolean);
     }
     if (equipmentData.castStats) {
       return Object.values(equipmentData.castStats).map(c => c.name).filter(Boolean);
@@ -34,69 +32,16 @@ const EquipmentView: React.FC = () => {
 
   return (
     <div className="equipment-view">
-      {/* Left Half */}
-      <div className="equipment-panel left-panel">
-        <div className="controls-header">
-          <div className="switch-container">
-            <button 
-              className={`switch-btn ${equipmentMode === 'Commander' ? 'active' : ''}`}
-              onClick={() => setEquipmentMode('Commander')}
-            >
-              Commander
-            </button>
-            <button 
-              className={`switch-btn ${equipmentMode === 'Castellan' ? 'active' : ''}`}
-              onClick={() => setEquipmentMode('Castellan')}
-            >
-              Castellan
-            </button>
-          </div>
-          <div className="switch-container">
-            <button 
-              className={`switch-btn ${combatMode === 'PvP' ? 'active' : ''}`}
-              onClick={() => setCombatMode('PvP')}
-            >
-              PvP
-            </button>
-            <button 
-              className={`switch-btn ${combatMode === 'PvE' ? 'active' : ''}`}
-              onClick={() => setCombatMode('PvE')}
-            >
-              PvE
-            </button>
-          </div>
-        </div>
-
-        <div className="selection-container">
-          <div className="selection-sidebar">
-            {selectionItems.map(name => (
-              <div 
-                key={name} 
-                className={`selection-item ${selectedName === name ? 'active' : ''}`}
-                onClick={() => setSelectedName(name)}
-              >
-                {name}
-              </div>
-            ))}
-          </div>
-          <div className="stats-display">
-            <EquipmentStats 
-              equipmentMode={equipmentMode}
-              combatMode={combatMode}
-              selectedName={selectedName}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Right Half */}
-      <div className="equipment-panel right-panel">
-        <h3>Stat Priority</h3>
-        <div className="stat-priority-list">
-          <p>Stat priority settings will go here...</p>
-        </div>
-        <button className="reconfigure-btn">Reconfigure Loadout</button>
-      </div>
+      <EquipmentSelection
+        equipmentMode={equipmentMode}
+        setEquipmentMode={setEquipmentMode}
+        combatMode={combatMode}
+        setCombatMode={setCombatMode}
+        selectedName={selectedName}
+        setSelectedName={setSelectedName}
+        selectionItems={selectionItems}
+      />
+      <StatPriority />
     </div>
   );
 };

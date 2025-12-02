@@ -18,10 +18,7 @@
   min-height: 100vh;
 }
 
-.app-layout.sidebar-collapsed .main-content {
-  margin-left: 80px;
-  padding-left: 110px;
-}
+
 
 /* Smooth animations for content */
 .main-content>* {

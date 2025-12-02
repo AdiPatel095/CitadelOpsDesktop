@@ -1,10 +1,11 @@
-import React, {type JSX} from 'react';
+import React, { type JSX } from 'react';
 import './Sidebar.css';
 import { type View } from '../App';
 import { useResources } from '../currency/context/ResourceContext.tsx';
 
-import CoinsIcon from '../../assets/Coins.png';
-import RubyIcon from '../../assets/Ruby.png';
+import CoinsIcon from '../assets/Coins.png';
+import RubyIcon from '../assets/Ruby.png';
+import RelicIcon from '../assets/Relic_Shards.png';
 
 // Placeholder Icon
 const PlaceholderIcon = () => (
@@ -15,21 +16,15 @@ const PlaceholderIcon = () => (
   </svg>
 );
 
-const DashboardIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-    <line x1="3" y1="9" x2="21" y2="9"></line>
-    <line x1="9" y1="21" x2="9" y2="9"></line>
-  </svg>
-);
+// const DashboardIcon = () => (
+//   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+//     <line x1="3" y1="9" x2="21" y2="9"></line>
+//     <line x1="9" y1="21" x2="9" y2="9"></line>
+//   </svg>
+// );
 
-const CurrencyIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="8"></circle>
-    <line x1="12" y1="16" x2="12" y2="12"></line>
-    <line x1="12" y1="8" x2="12" y2="8"></line>
-  </svg>
-);
+
 
 // const TroopsIcon = () => (
 //   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -56,10 +51,8 @@ const EquipmentIcon = () => (
 );
 
 interface SidebarProps {
-  isCollapsed: boolean;
   activeView: View;
   setActiveView: (view: View) => void;
-  toggleSidebar: () => void;
 }
 
 const formatValue = (value: number | string) => {
@@ -69,12 +62,12 @@ const formatValue = (value: number | string) => {
   return value;
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, activeView, setActiveView, toggleSidebar }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
   const { resources } = useResources();
 
   const views: { name: View; icon: JSX.Element }[] = [
-    { name: 'Dashboard', icon: <DashboardIcon /> },
-    { name: 'Currency', icon: <CurrencyIcon /> },
+
+
     { name: 'Equipment', icon: <EquipmentIcon /> },
     // { name: 'Troops', icon: <TroopsIcon /> },
     // { name: 'Schedule', icon: <ScheduleIcon /> },
@@ -83,17 +76,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, activeView, setActiveVie
   const resourceItems = [
     { name: 'Coins', value: resources?.coins ?? 'N/A', icon: CoinsIcon },
     { name: 'Rubies', value: resources?.rubies ?? 'N/A', icon: RubyIcon },
-    { name: 'Feathers', value: 'N/A', icon: null },
-    { name: 'Total Attack Count', value: 'N/A', icon: null },
+    { name: 'Relic Shards', value: resources?.relic_shard ?? 'N/A', icon: RelicIcon },
   ];
 
   return (
-    <nav className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+    <nav className="sidebar">
       <div>
         <ul className="sidebar-nav">
           {views.map(({ name, icon }) => (
-            <li 
-              key={name} 
+            <li
+              key={name}
               className={`sidebar-item ${activeView === name ? 'active' : ''}`}
               onClick={() => setActiveView(name)}
             >
@@ -119,9 +111,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, activeView, setActiveVie
           ))}
         </div>
       </div>
-      <button onClick={toggleSidebar} className="sidebar-toggle">
-        {isCollapsed ? '>' : '<'}
-      </button>
     </nav>
   );
 };

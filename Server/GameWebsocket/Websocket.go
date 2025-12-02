@@ -126,7 +126,6 @@ func StartWebsocketChannels(ctx context.Context, cancel context.CancelFunc) {
 				log.Println("Write goroutine stopping.")
 				return
 			case message := <-OutgoingMessages:
-				log.Printf("Sending message: %s", message)
 				err := GlobalSocket.WriteMessage(websocket.TextMessage, message)
 				time.Sleep(50 * time.Millisecond)
 				if err != nil {
@@ -226,7 +225,6 @@ func LoginToGame(loginBytes [][]byte) bool {
 func incomingMessageParserStartup() {
 	for message := range IncomingMessages {
 		if len(message) > 3 {
-			log.Println(message)
 			if message[2] == "lli" {
 				checkLoginStatus(message)
 			}

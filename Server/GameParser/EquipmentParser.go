@@ -55,9 +55,6 @@ func ProcessCastArray(castArray []interface{}) {
 			ProcessCast(castMap, &Models.CastActualArray.DungeonCastleCast, &Models.CastStatArray.DungeonCastleCast)
 		case playerCastle.StormCastleAID:
 			ProcessCast(castMap, &Models.CastActualArray.StormCastleCast, &Models.CastStatArray.StormCastleCast)
-		default:
-			log.Println(playerCastle.MainCastleAID, playerCastle.Outpost1AID, playerCastle.Outpost2AID, playerCastle.Outpost3AID, playerCastle.IceCastleAID, playerCastle.DesertCastleAID, playerCastle.DungeonCastleAID, playerCastle.StormCastleAID)
-			log.Println(castleID)
 		}
 	}
 }
@@ -123,7 +120,7 @@ func ProcessEquipStatCast(equipment Models.EquipmentModel, dstCast *Models.CastS
 	for _, stat := range equipment.EquipStats {
 		updater, ok := Models.CastStatUpdaterMap[stat.ID]
 		if ok {
-			if stat.ID >= 20012 && stat.ID <= 20017 {
+			if (stat.ID >= 20012 && stat.ID <= 20017) || (stat.ID == 10118) {
 				updater(dstCast, stat.Value[1])
 			}
 			updater(dstCast, stat.Value[0])
@@ -266,6 +263,10 @@ func ProcessEquipStatComm(equipment Models.EquipmentModel, dstComm *Models.CommS
 		updater, ok := Models.CommStatUpdaterMap[stat.ID]
 		if ok {
 			if stat.ID >= 20012 && stat.ID <= 20017 {
+				updater(dstComm, stat.Value[1])
+			}
+			if stat.ID == 215 {
+				log.Printf("Found stat 215 with value : %v", stat.Value[1])
 				updater(dstComm, stat.Value[1])
 			}
 			updater(dstComm, stat.Value[0])

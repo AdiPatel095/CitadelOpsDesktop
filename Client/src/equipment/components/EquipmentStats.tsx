@@ -22,12 +22,12 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
         name = stats.name;
       }
     } else { // Castellan
-        if (equipmentData.castStats && selectedName in equipmentData.castStats) {
-            stats = equipmentData.castStats[selectedName as keyof typeof equipmentData.castStats];
-            if (stats) {
-                name = stats.name;
-            }
+      if (equipmentData.castStats) {
+        stats = Object.values(equipmentData.castStats).find(c => c.name === selectedName);
+        if (stats) {
+          name = stats.name;
         }
+      }
     }
     return { stats, name };
   }, [equipmentData, equipmentMode, selectedName]);
@@ -45,23 +45,46 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
       if (isSpecialStat) {
         baseKey = combatMode === 'PvP' ? `CL${key.charAt(0).toUpperCase() + key.slice(1)}` : `NPC${key.charAt(0).toUpperCase() + key.slice(1)}`;
       }
-      
+
       let finalValue = (stats as any)[baseKey] || 0;
 
       if (!isSpecialStat) {
-        if (combatMode === 'PvP') {
-          const clKey = `CL${key.charAt(0).toUpperCase() + key.slice(1).replace('CbtStr', '')}`;
-          if((stats as any)[clKey]){
-            finalValue += (stats as any)[clKey];
-          }
-        } else { // PvE
-          const npcKey = `NPC${key.charAt(0).toUpperCase() + key.slice(1).replace('CbtStr', '')}`;
-          if((stats as any)[npcKey]){
-            finalValue += (stats as any)[npcKey];
+        let suffix = key;
+        let isLimitStat = false;
+
+        // Special handling for Front/Flank limits
+        if (key === 'frontLimit') {
+          suffix = 'Front';
+          isLimitStat = true;
+        } else if (key === 'flankLimit') {
+          suffix = 'Flank';
+          isLimitStat = true;
+        } else if (key.endsWith('CbtStr')) {
+          suffix = key.replace('CbtStr', '');
+        } else if (key.endsWith('Str')) {
+          suffix = key.replace('Str', '');
+        }
+
+        const capitalizedSuffix = suffix.charAt(0).toUpperCase() + suffix.slice(1);
+
+        // Skip adding CL/NPC stats to frontCbtStr/flankCbtStr since they go to limits now
+        if (key === 'frontCbtStr' || key === 'flankCbtStr') {
+          // Do nothing, these don't get CL/NPC additions anymore
+        } else {
+          if (combatMode === 'PvP') {
+            const clKey = `CL${capitalizedSuffix}`;
+            if ((stats as any)[clKey]) {
+              finalValue += (stats as any)[clKey];
+            }
+          } else { // PvE
+            const npcKey = `NPC${capitalizedSuffix}`;
+            if ((stats as any)[npcKey]) {
+              finalValue += (stats as any)[npcKey];
+            }
           }
         }
       }
-      
+
       newStats[key] = finalValue;
     }
 

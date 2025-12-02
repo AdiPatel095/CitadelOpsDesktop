@@ -1,10 +1,13 @@
 .equipment-view {
   display: flex;
   width: 100%;
-  min-height: calc(100vh - 180px);
+  height: calc(100vh - 120px);
+  /* Fixed height to enable inner scrolling */
   gap: 24px;
   padding: 0;
   box-sizing: border-box;
+  overflow: hidden;
+  /* Prevent outer scroll */
 }
 
 .equipment-panel {
@@ -20,6 +23,10 @@
   box-shadow: var(--shadow-lg);
   transition: all var(--transition-base);
   animation: slideInUp var(--transition-slow);
+  height: 100%;
+  /* Take full height of parent */
+  overflow: hidden;
+  /* Ensure children scroll, not this panel */
 }
 
 .equipment-panel:hover {
