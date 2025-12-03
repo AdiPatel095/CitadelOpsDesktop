@@ -8,7 +8,7 @@
 .main-content {
   margin-left: 200px;
   padding-top: 80px;
-  padding: 100px 30px 30px 230px;
+  padding: 100px 30px 30px 30px;
   flex-grow: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -23,4 +23,11 @@
 /* Smooth animations for content */
 .main-content>* {
   animation: slideInUp var(--transition-slow);
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 60px;
+    padding: 80px 15px 15px 15px;
+  }
 }

@@ -3,32 +3,35 @@ import './EquipmentView.css';
 import { useEquipment } from '../context/EquipmentContext';
 import EquipmentSelection, { type EquipmentMode, type CombatMode } from './EquipmentSelection';
 import StatPriority from './StatPriority';
+import { type CommStat, type CastStat } from '../models/equipment';
 
 const EquipmentView: React.FC = () => {
   const { equipmentData } = useEquipment();
   const [equipmentMode, setEquipmentMode] = useState<EquipmentMode>('Commander');
   const [combatMode, setCombatMode] = useState<CombatMode>('PvP');
-  const [selectedName, setSelectedName] = useState<string>('');
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  const getSelectionItems = () => {
+  const getSelectionItems = (): (CommStat | CastStat)[] => {
     if (equipmentMode === 'Commander') {
-      return equipmentData.commStats.map(c => c.name).filter(Boolean);
+      return equipmentData.commStats;
     }
-    if (equipmentData.castStats) {
-      return Object.values(equipmentData.castStats).map(c => c.name).filter(Boolean);
+    if (equipmentMode === 'Castellan' && equipmentData.castStats) {
+      return Object.values(equipmentData.castStats)
+        .filter(c => c.name && c.name.toLowerCase() === 'castellan');
     }
     return [];
   };
 
   const selectionItems = getSelectionItems();
+  const selectedItem = selectedIndex !== null ? selectionItems[selectedIndex] : null;
 
   useEffect(() => {
-    if (selectionItems.length > 0 && !selectionItems.includes(selectedName)) {
-      setSelectedName(selectionItems[0]);
+    if (selectionItems.length > 0 && selectedIndex === null) {
+      setSelectedIndex(0);
     } else if (selectionItems.length === 0) {
-      setSelectedName('');
+      setSelectedIndex(null);
     }
-  }, [selectionItems, selectedName]);
+  }, [selectionItems, selectedIndex]);
 
   return (
     <div className="equipment-view">
@@ -37,9 +40,10 @@ const EquipmentView: React.FC = () => {
         setEquipmentMode={setEquipmentMode}
         combatMode={combatMode}
         setCombatMode={setCombatMode}
-        selectedName={selectedName}
-        setSelectedName={setSelectedName}
+        selectedIndex={selectedIndex}
+        setSelectedIndex={setSelectedIndex}
         selectionItems={selectionItems}
+        selectedItem={selectedItem}
       />
       <StatPriority />
     </div>

@@ -1,36 +1,16 @@
 import React, { useMemo } from 'react';
-import { useEquipment } from '../context/EquipmentContext';
 import './EquipmentStats.css';
 import { statDisplayName, commanderStatGroups, castellanStatGroups, type CommStat, type CastStat } from '../models/equipment';
 
 interface EquipmentStatsProps {
   equipmentMode: 'Commander' | 'Castellan';
   combatMode: 'PvP' | 'PvE';
-  selectedName: string;
+  selectedItem: CommStat | CastStat | null;
 }
 
-const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMode, selectedName }) => {
-  const { equipmentData } = useEquipment();
-
-  const { stats, name } = useMemo(() => {
-    let stats: CommStat | CastStat | undefined;
-    let name: string | undefined;
-
-    if (equipmentMode === 'Commander') {
-      stats = equipmentData.commStats.find(c => c.name === selectedName);
-      if (stats) {
-        name = stats.name;
-      }
-    } else { // Castellan
-      if (equipmentData.castStats) {
-        stats = Object.values(equipmentData.castStats).find(c => c.name === selectedName);
-        if (stats) {
-          name = stats.name;
-        }
-      }
-    }
-    return { stats, name };
-  }, [equipmentData, equipmentMode, selectedName]);
+const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMode, selectedItem }) => {
+  const stats = selectedItem;
+  const name = selectedItem?.name;
 
   const processedStats = useMemo(() => {
     if (!stats) return {};
@@ -50,16 +30,13 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
 
       if (!isSpecialStat) {
         let suffix = key;
-        let isLimitStat = false;
 
-        // Special handling for Front/Flank limits
-        if (key === 'frontLimit') {
-          suffix = 'Front';
-          isLimitStat = true;
-        } else if (key === 'flankLimit') {
-          suffix = 'Flank';
-          isLimitStat = true;
-        } else if (key.endsWith('CbtStr')) {
+          // Special handling for Front/Flank limits
+          if (key === 'frontLimit') {
+              suffix = 'Front';
+          } else if (key === 'flankLimit') {
+              suffix = 'Flank';
+          } else if (key.endsWith('CbtStr')) {
           suffix = key.replace('CbtStr', '');
         } else if (key.endsWith('Str')) {
           suffix = key.replace('Str', '');
@@ -113,7 +90,9 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
             <h5>{groupName}</h5>
             {statKeys.map(key => {
               const value = processedStats[key];
-              if (value === undefined || value === 0) return null;
+              if (equipmentMode === 'Commander' && (value === undefined || value === 0)) {
+                return null;
+              }
               return renderStat(key, value);
             }).filter(Boolean)}
           </div>

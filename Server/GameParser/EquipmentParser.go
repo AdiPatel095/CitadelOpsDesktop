@@ -40,20 +40,28 @@ func ProcessCastArray(castArray []interface{}) {
 		}
 		switch castleID {
 		case playerCastle.MainCastleAID:
+			Models.CastStatArray.MainCastleCast.Name = playerCastle.MainCastleName
 			ProcessCast(castMap, &Models.CastActualArray.MainCastleCast, &Models.CastStatArray.MainCastleCast)
 		case playerCastle.Outpost1AID:
+			Models.CastStatArray.Outpost1Cast.Name = playerCastle.Outpost1Name
 			ProcessCast(castMap, &Models.CastActualArray.Outpost1Cast, &Models.CastStatArray.Outpost1Cast)
 		case playerCastle.Outpost2AID:
+			Models.CastStatArray.Outpost2Cast.Name = playerCastle.Outpost2Name
 			ProcessCast(castMap, &Models.CastActualArray.Outpost2Cast, &Models.CastStatArray.Outpost2Cast)
 		case playerCastle.Outpost3AID:
+			Models.CastStatArray.Outpost3Cast.Name = playerCastle.Outpost3Name
 			ProcessCast(castMap, &Models.CastActualArray.Outpost3Cast, &Models.CastStatArray.Outpost3Cast)
 		case playerCastle.IceCastleAID:
+			Models.CastStatArray.IceCastleCast.Name = playerCastle.IceCastleName
 			ProcessCast(castMap, &Models.CastActualArray.IceCastleCast, &Models.CastStatArray.IceCastleCast)
 		case playerCastle.DesertCastleAID:
+			Models.CastStatArray.DesertCastleCast.Name = playerCastle.DesertCastleName
 			ProcessCast(castMap, &Models.CastActualArray.DesertCastleCast, &Models.CastStatArray.DesertCastleCast)
 		case playerCastle.DungeonCastleAID:
+			Models.CastStatArray.DungeonCastleCast.Name = playerCastle.DungeonCastleName
 			ProcessCast(castMap, &Models.CastActualArray.DungeonCastleCast, &Models.CastStatArray.DungeonCastleCast)
 		case playerCastle.StormCastleAID:
+			Models.CastStatArray.StormCastleCast.Name = playerCastle.StormCastleName
 			ProcessCast(castMap, &Models.CastActualArray.StormCastleCast, &Models.CastStatArray.StormCastleCast)
 		}
 	}
@@ -76,7 +84,6 @@ func ProcessCast(castMap map[string]interface{}, castActual *Models.CastActualMo
 
 	castStat.ID = castActual.ID
 	castStat.CastleID = castActual.CastleID
-	castStat.Name = castActual.Name
 	var tempEquipStat Models.CastStatModel
 	var tempHeroStat Models.CastStatModel
 	var tempGemStat Models.CastStatModel
@@ -122,8 +129,10 @@ func ProcessEquipStatCast(equipment Models.EquipmentModel, dstCast *Models.CastS
 		if ok {
 			if (stat.ID >= 20012 && stat.ID <= 20017) || (stat.ID == 10118) {
 				updater(dstCast, stat.Value[1])
+			} else {
+				updater(dstCast, stat.Value[0])
 			}
-			updater(dstCast, stat.Value[0])
+
 		}
 		Models.ApplyCastCeiling(dstCast, ceilingCast)
 	}
@@ -262,14 +271,12 @@ func ProcessEquipStatComm(equipment Models.EquipmentModel, dstComm *Models.CommS
 	for _, stat := range equipment.EquipStats {
 		updater, ok := Models.CommStatUpdaterMap[stat.ID]
 		if ok {
-			if stat.ID >= 20012 && stat.ID <= 20017 {
+			if (stat.ID >= 20012 && stat.ID <= 20017) || stat.ID == 121 {
 				updater(dstComm, stat.Value[1])
+			} else {
+				updater(dstComm, stat.Value[0])
 			}
-			if stat.ID == 215 {
-				log.Printf("Found stat 215 with value : %v", stat.Value[1])
-				updater(dstComm, stat.Value[1])
-			}
-			updater(dstComm, stat.Value[0])
+
 		}
 		Models.ApplyCommCeiling(dstComm, ceilingComm)
 

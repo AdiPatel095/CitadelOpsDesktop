@@ -160,7 +160,29 @@
 
 .resource-value {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   color: var(--color-primary);
   text-shadow: 0 0 10px var(--color-primary-glow);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 60px;
+  }
+
+  .link-text,
+  .resource-details,
+  .divider {
+    display: none;
+  }
+
+  .sidebar-link {
+    justify-content: center;
+    padding: 14px 0;
+  }
+
+  .resource-item {
+    justify-content: center;
+    padding: 12px 0;
+  }
 }

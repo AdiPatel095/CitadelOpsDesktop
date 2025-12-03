@@ -24,18 +24,17 @@ const Header: React.FC = () => {
         <h1 className="site-title">Citadel Ops Desktop</h1>
       </div>
       <div className="header-center">
-        <button className="control-button" onClick={handleStart}>Start</button>
+        {/* <button className="control-button" onClick={handleStart}>Start</button>
         <button className="control-button" onClick={handleStop}>Stop</button>
         <div className={`status-indicator ${controlStatus.replace(' ', '-').toLowerCase()}`}></div>
-        <span className="status-text">{controlStatus}</span>
+        <span className="status-text">{controlStatus}</span> */}
       </div>
       <div className="header-right">
-        <button className="settings-button">Settings</button>
+        {/* <button className="settings-button">Settings</button>
         <a href="https://example.com" target="_blank" rel="noopener noreferrer" className="profile-link">
-          {/* Placeholder for profile picture */}
           <div className="profile-picture-placeholder"></div>
           <span>Online Profile</span>
-        </a>
+        </a> */}
       </div>
     </header>
   );
