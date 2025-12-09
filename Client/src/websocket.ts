@@ -49,39 +49,43 @@ class FrontendWebsocketService {
   }
 
   private sendMockData() {
-    // Mock login success
-    const loginSuccess = {
-        type: 'LOGIN_STATUS',
-        payload: { status: 'success' },
+    // Mock registration status (registered for dev)
+    const mockRegistration = {
+      type: 'registrationStatus',
+      payload: {
+        registered: true,
+        hardwareID: 'mock-dev-hardware-id',
+        credits: 50000
+      },
     };
-    this.listeners.forEach((listener) => listener(loginSuccess));
+    this.listeners.forEach((listener) => listener(mockRegistration));
 
     // Mock resource update
     const mockResources = {
-        type: 'globalResourceUpdate',
-        payload: {
-            rubies: 1234,
-            coins: 567890,
-            relic_shard: 100,
-            sceat: 2500,
-            ducat: 50,
-            const_token: 5,
-            upgr_token: 2,
-            affl_tix: 10,
-            plaster: 500,
-            drg_scale: 20,
-            drg_spl: 15,
-            min1: 30,
-            min5: 10,
-            min10: 5,
-            min30: 2,
-            hr1: 1,
-            hr5: 0,
-            hr24: 0,
-            might_pt: 15000,
-            glory_pt: 7500,
-            gallan_pt: 1000,
-        },
+      type: 'globalResourceUpdate',
+      payload: {
+        rubies: 1234,
+        coins: 567890,
+        relic_shard: 100,
+        sceat: 2500,
+        ducat: 50,
+        const_token: 5,
+        upgr_token: 2,
+        affl_tix: 10,
+        plaster: 500,
+        drg_scale: 20,
+        drg_spl: 15,
+        min1: 30,
+        min5: 10,
+        min10: 5,
+        min30: 2,
+        hr1: 1,
+        hr5: 0,
+        hr24: 0,
+        might_pt: 15000,
+        glory_pt: 7500,
+        gallan_pt: 1000,
+      },
     };
     this.listeners.forEach((listener) => listener(mockResources));
   }
@@ -94,9 +98,23 @@ class FrontendWebsocketService {
     this.listeners = this.listeners.filter((l) => l !== listener);
   }
 
+  public sendMessage(message: object) {
+    if (this.mock) {
+      console.log('Mock WebSocket sending message:', message);
+      // In a more advanced mock, you could simulate a response from the backend here.
+      return;
+    }
+
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(message));
+    } else {
+      console.error('WebSocket is not connected. Cannot send message:', message);
+    }
+  }
+
   public getStatus(): string {
     if (this.mock) {
-        return this.status;
+      return this.status;
     }
     if (!this.socket) {
       return 'Disconnected';

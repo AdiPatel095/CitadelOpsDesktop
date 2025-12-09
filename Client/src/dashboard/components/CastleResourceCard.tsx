@@ -1,5 +1,5 @@
 import React from 'react';
-import './CastleResourceCard.css';
+
 
 import WoodIcon from '../../../assets/Wood.png';
 import StoneIcon from '../../../assets/Stone.png';
@@ -22,8 +22,7 @@ interface CastleResourceCardProps {
     castleName: string,
     resources: CastleResourcesAmount,
     storage: CastleStorageMax,
-    production: CastleProductionTotal,
-    key?: never
+    production: CastleProductionTotal
 }
 
 const resourceIconMap: { [key: string]: string } = {
@@ -44,7 +43,7 @@ const resourceKeys: (keyof CastleResourcesAmount)[] = [
     'glass_amount', 'iron_amount', 'honey_amount', 'mead_amount', 'beef_amount'
 ];
 
-const CastleResourceCard: React.FC<CastleResourceCardProps> = ({castleName, resources, storage, production}) => {
+const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ castleName, resources, storage, production }) => {
     return (
         <div className="castle-card">
             <h3 className="castle-name">{castleName}</h3>
@@ -60,14 +59,14 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({castleName, reso
                     return (
                         <div key={key} className="resource-list-item">
                             <img src={resourceIconMap[resourceBaseName]} alt={resourceBaseName}
-                                 className="resource-icon"/>
+                                className="resource-icon" />
                             <div className="resource-info">
                                 <div className="resource-text">
                                     <span>{amount.toLocaleString()} / {max.toLocaleString()}</span>
                                     <span className="production-rate">(+{prod.toLocaleString()}/hr)</span>
                                 </div>
                                 <div className="progress-bar-container">
-                                    <div className="progress-bar" style={{width: `${percentage}%`}}></div>
+                                    <div className="progress-bar" style={{ width: `${percentage}%` }}></div>
                                 </div>
                             </div>
                         </div>
@@ -79,13 +78,13 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({castleName, reso
                 <div className="queue">
                     <h4>Recruitment Queue</h4>
                     <div className="queue-items">
-                        {[...Array(5)].map((_, i) => <div key={i} className="queue-item-placeholder"/>)}
+                        {[...Array(5)].map((_, i) => <div key={i} className="queue-item-placeholder" />)}
                     </div>
                 </div>
                 <div className="queue">
                     <h4>Tool Queue</h4>
                     <div className="queue-items">
-                        {[...Array(5)].map((_, i) => <div key={i} className="queue-item-placeholder"/>)}
+                        {[...Array(5)].map((_, i) => <div key={i} className="queue-item-placeholder" />)}
                     </div>
                 </div>
             </div>

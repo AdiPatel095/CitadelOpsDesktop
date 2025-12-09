@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './EventCountersPanel.css';
+
 
 const EventCountersPanel: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);

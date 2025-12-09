@@ -1,48 +1,43 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
 import { FrontendWebsocket } from '../websocket';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: () => void;
-  logout: () => void;
+  isLoading: boolean;
+  hardwareID: string | null;
+  credits: number;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hardwareID, setHardwareID] = useState<string | null>(null);
+  const [credits, setCredits] = useState(0);
 
   useEffect(() => {
-    const handleLoginStatus = (message: any) => {
-      if (message.type === 'LOGIN_STATUS') {
-        if (message.payload.status === 'success') {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-        }
+    const handleMessage = (message: any) => {
+      if (message.type === 'registrationStatus') {
+        setIsAuthenticated(message.payload.registered);
+        setHardwareID(message.payload.hardwareID);
+        setCredits(message.payload.credits);
+        setIsLoading(false);
+      } else if (message.type === 'creditsUpdate') {
+        setCredits(message.payload.credits);
       }
     };
 
-    FrontendWebsocket.addMessageListener(handleLoginStatus);
+    FrontendWebsocket.addMessageListener(handleMessage);
     FrontendWebsocket.connect('ws://localhost:8080/ws');
 
     return () => {
-      FrontendWebsocket.removeMessageListener(handleLoginStatus);
+      FrontendWebsocket.removeMessageListener(handleMessage);
     };
   }, []);
 
-  const login = () => {
-    // For now, we'll just set isAuthenticated to true
-    // In the future, this would involve a login request to the backend
-    setIsAuthenticated(true);
-  };
-
-  const logout = () => {
-    setIsAuthenticated(false);
-  };
-
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, hardwareID, credits }}>
       {children}
     </AuthContext.Provider>
   );
@@ -55,3 +50,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

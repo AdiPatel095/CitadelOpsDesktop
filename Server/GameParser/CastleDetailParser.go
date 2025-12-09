@@ -1,9 +1,7 @@
 package GameParser
 
 import (
-	"CitadelDesktop/Server/Core"
 	"CitadelDesktop/Server/Models"
-	"encoding/json"
 	"fmt"
 	"log"
 )
@@ -58,20 +56,6 @@ func CastleDetailParser(gcl map[string]interface{}, dcl map[string]interface{}) 
 	log.Printf("CastleDetailParser finished")
 }
 
-func SendCastleResourceUpdate() {
-	playerResources := Models.GetPlayerCastleInfo()
-	castleResourceUpdate := map[string]interface{}{
-		"type":    "castleResourceUpdate",
-		"payload": playerResources,
-	}
-	jsonData, err := json.Marshal(castleResourceUpdate)
-	if err != nil {
-		log.Printf("Error marshalling resource update: %v", err)
-		return
-	}
-	Core.FrontendSocket.Broadcast <- jsonData
-}
-
 // parseGCL processes the Game Castle List data.
 // It now returns an error instead of calling log.Fatal, preventing server crashes.
 func parseGCL(gcl map[string]interface{}) error {
@@ -79,8 +63,6 @@ func parseGCL(gcl map[string]interface{}) error {
 	if !ok {
 		return fmt.Errorf("kingdomArray type assertion failed")
 	}
-
-	playerInfo := Models.GetPlayerCastleInfo()
 
 	for _, item := range kingdomArray {
 		kingdomMap, ok := item.(map[string]interface{})
@@ -104,29 +86,39 @@ func parseGCL(gcl map[string]interface{}) error {
 		switch kingdomID {
 		case kingdomIDMain:
 			updaters := []func(id float64, name string){
-				func(id float64, name string) { playerInfo.MainCastleAID, playerInfo.MainCastleName = id, name },
-				func(id float64, name string) { playerInfo.Outpost1AID, playerInfo.Outpost1Name = id, name },
-				func(id float64, name string) { playerInfo.Outpost2AID, playerInfo.Outpost2Name = id, name },
-				func(id float64, name string) { playerInfo.Outpost3AID, playerInfo.Outpost3Name = id, name },
+				func(id float64, name string) {
+					Models.MainCastleResources.Aid, Models.MainCastleResources.Name = id, name
+				},
+				func(id float64, name string) { Models.Outpost1Resources.Aid, Models.Outpost1Resources.Name = id, name },
+				func(id float64, name string) { Models.Outpost2Resources.Aid, Models.Outpost2Resources.Name = id, name },
+				func(id float64, name string) { Models.Outpost3Resources.Aid, Models.Outpost3Resources.Name = id, name },
 			}
 			parseCastles(castleArray, updaters)
 		case kingdomIDIce:
 			updaters := []func(id float64, name string){
-				func(id float64, name string) { playerInfo.IceCastleAID, playerInfo.IceCastleName = id, name },
+				func(id float64, name string) {
+					Models.IceCastleResources.Aid, Models.IceCastleResources.Name = id, name
+				},
 			}
 			parseCastles(castleArray, updaters)
 		case kingdomIDDesert:
 			updaters := []func(id float64, name string){
-				func(id float64, name string) { playerInfo.DesertCastleAID, playerInfo.DesertCastleName = id, name },
+				func(id float64, name string) {
+					Models.DesertCastleResources.Aid, Models.DesertCastleResources.Name = id, name
+				},
 			}
 			parseCastles(castleArray, updaters)
 		case kingdomIDDungeon:
 			updaters := []func(id float64, name string){
-				func(id float64, name string) { playerInfo.DungeonCastleAID, playerInfo.DungeonCastleName = id, name },
+				func(id float64, name string) {
+					Models.DungeonCastleResources.Aid, Models.DungeonCastleResources.Name = id, name
+				},
 			}
 			parseCastles(castleArray, updaters)
 		case kingdomIDStorm:
-			parseSingleCastle(castleArray, func(id float64, name string) { playerInfo.StormCastleAID, playerInfo.StormCastleName = id, name })
+			parseSingleCastle(castleArray, func(id float64, name string) {
+				Models.StormCastleResources.Aid, Models.StormCastleResources.Name = id, name
+			})
 		}
 	}
 	return nil
@@ -183,7 +175,6 @@ func extractCastleDetails(castleData interface{}, index int) (id float64, name s
 func parseDCL(dcl map[string]interface{}) error {
 	// DCL data seems to be a map of castles, not a kingdom array.
 	// The top-level keys are string representations of castle IDs.
-	playerInfo := Models.GetPlayerCastleInfo()
 
 	kingdomArray := dcl[keyKingdoms].([]interface{})
 	for _, item := range kingdomArray {
@@ -213,14 +204,14 @@ func parseDCL(dcl map[string]interface{}) error {
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
 					switch castleID {
-					case playerInfo.MainCastleAID:
-						parseCastleResources(castleMap, &playerInfo.MainCastleAmount, &playerInfo.MainCastleProduction, &playerInfo.MainCastleStorage)
-					case playerInfo.Outpost1AID:
-						parseCastleResources(castleMap, &playerInfo.Outpost1Amount, &playerInfo.Outpost1Production, &playerInfo.Outpost1Storage)
-					case playerInfo.Outpost2AID:
-						parseCastleResources(castleMap, &playerInfo.Outpost2Amount, &playerInfo.Outpost2Production, &playerInfo.Outpost2Storage)
-					case playerInfo.Outpost3AID:
-						parseCastleResources(castleMap, &playerInfo.Outpost3Amount, &playerInfo.Outpost3Production, &playerInfo.Outpost3Storage)
+					case Models.MainCastleResources.Aid:
+						parseCastleResources(castleMap, &Models.MainCastleResources.Amount, &Models.MainCastleResources.Production, &Models.MainCastleResources.Storage)
+					case Models.Outpost1Resources.Aid:
+						parseCastleResources(castleMap, &Models.Outpost1Resources.Amount, &Models.Outpost1Resources.Production, &Models.Outpost1Resources.Storage)
+					case Models.Outpost2Resources.Aid:
+						parseCastleResources(castleMap, &Models.Outpost2Resources.Amount, &Models.Outpost2Resources.Production, &Models.Outpost2Resources.Storage)
+					case Models.Outpost3Resources.Aid:
+						parseCastleResources(castleMap, &Models.Outpost3Resources.Amount, &Models.Outpost3Resources.Production, &Models.Outpost3Resources.Storage)
 					}
 				}
 
@@ -239,8 +230,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == playerInfo.IceCastleAID {
-						parseCastleResources(castleMap, &playerInfo.IceCastleAmount, &playerInfo.IceCastleProduction, &playerInfo.IceCastleStorage)
+					if castleID == Models.IceCastleResources.Aid {
+						parseCastleResources(castleMap, &Models.IceCastleResources.Amount, &Models.IceCastleResources.Production, &Models.IceCastleResources.Storage)
 					}
 				}
 
@@ -259,8 +250,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == playerInfo.DesertCastleAID {
-						parseCastleResources(castleMap, &playerInfo.DesertCastleAmount, &playerInfo.DesertCastleProduction, &playerInfo.DesertCastleStorage)
+					if castleID == Models.DesertCastleResources.Aid {
+						parseCastleResources(castleMap, &Models.DesertCastleResources.Amount, &Models.DesertCastleResources.Production, &Models.DesertCastleResources.Storage)
 					}
 				}
 
@@ -279,8 +270,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == playerInfo.DungeonCastleAID {
-						parseCastleResources(castleMap, &playerInfo.DungeonCastleAmount, &playerInfo.DungeonCastleProduction, &playerInfo.DungeonCastleStorage)
+					if castleID == Models.DungeonCastleResources.Aid {
+						parseCastleResources(castleMap, &Models.DungeonCastleResources.Amount, &Models.DungeonCastleResources.Production, &Models.DungeonCastleResources.Storage)
 					}
 				}
 
@@ -299,8 +290,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == playerInfo.StormCastleAID {
-						parseCastleResources(castleMap, &playerInfo.StormCastleAmount, &playerInfo.StormCastleProduction, &playerInfo.StormCastleStorage)
+					if castleID == Models.StormCastleResources.Aid {
+						parseCastleResources(castleMap, &Models.StormCastleResources.Amount, &Models.StormCastleResources.Production, &Models.StormCastleResources.Storage)
 					}
 				}
 

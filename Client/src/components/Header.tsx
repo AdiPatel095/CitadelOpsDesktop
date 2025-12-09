@@ -1,40 +1,40 @@
-import React, { useState } from 'react';
-import './Header.css';
-import logo from '../assets/citadel-ops-logo.svg';
-
-type ControlStatus = 'In control' | 'Idle';
+import React from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const Header: React.FC = () => {
-  const [controlStatus, setControlStatus] = useState<ControlStatus>('Idle');
-
-  const handleStart = () => {
-    setControlStatus('In control');
-    // TODO: Add logic to start the process
-  };
-
-  const handleStop = () => {
-    setControlStatus('Idle');
-    // TODO: Add logic to stop the process
-  };
+  const { credits, isLoading } = useAuth();
 
   return (
-    <header className="game-header">
-      <div className="header-left">
-        <img src={logo} alt="Citadel Ops Logo" className="logo" />
-        <h1 className="site-title">Citadel Ops Desktop</h1>
-      </div>
-      <div className="header-center">
-        {/* <button className="control-button" onClick={handleStart}>Start</button>
-        <button className="control-button" onClick={handleStop}>Stop</button>
-        <div className={`status-indicator ${controlStatus.replace(' ', '-').toLowerCase()}`}></div>
-        <span className="status-text">{controlStatus}</span> */}
-      </div>
-      <div className="header-right">
-        {/* <button className="settings-button">Settings</button>
-        <a href="https://example.com" target="_blank" rel="noopener noreferrer" className="profile-link">
-          <div className="profile-picture-placeholder"></div>
-          <span>Online Profile</span>
-        </a> */}
+    <header className="h-16 bg-dark-card/80 backdrop-blur-md border-b border-dark-border flex items-center px-6 fixed top-0 left-0 right-0 z-50">
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-3">
+          <img src="/logo.svg" alt="Citadel Ops Logo" className="w-8 h-8 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+          <span className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Citadel Ops</span>
+          <span className="text-xs font-medium text-gray-500 ml-2">Desktop</span>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* Credits Display */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-dark-bg/50 border border-dark-border rounded-full">
+            <div className="flex flex-col items-end mr-2">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-none">Credits</span>
+              <div className="flex items-center gap-1.5 leading-none mt-0.5">
+                {isLoading ? (
+                  <span className="text-sm font-mono font-medium text-gray-500">...</span>
+                ) : (
+                  <span className="text-sm font-mono font-medium text-primary">{credits.toLocaleString()}</span>
+                )}
+                <img src="/ops-coin.svg" alt="OPS" className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Device indicator */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full">
+            <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span className="text-xs font-medium text-primary">Connected</span>
+          </div>
+        </div>
       </div>
     </header>
   );

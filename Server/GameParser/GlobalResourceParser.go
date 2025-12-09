@@ -1,9 +1,7 @@
 package GameParser
 
 import (
-	"CitadelDesktop/Server/Core"
 	"CitadelDesktop/Server/Models"
-	"encoding/json"
 	"log"
 )
 
@@ -104,20 +102,4 @@ func updateResourceByLabel(label string, value float64) {
 	case "MS7":
 		playerResources.Hr24 = value
 	}
-}
-
-func SendGlobalResourceUpdate() {
-	log.Printf("SendGlobalResourceUpdate")
-	playerResources := Models.GetPlayerGlobalResources()
-	globalResourceUpdate := map[string]interface{}{
-		"type":    "globalResourceUpdate",
-		"payload": playerResources,
-	}
-	jsonData, err := json.Marshal(globalResourceUpdate)
-	if err != nil {
-		log.Printf("Error marshalling resource update: %v", err)
-		return
-	}
-	Core.FrontendSocket.Broadcast <- jsonData
-	log.Printf("SendGlobalResourceUpdateComplete")
 }

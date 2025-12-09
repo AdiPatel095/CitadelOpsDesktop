@@ -51,8 +51,8 @@ export interface CommStat {
     relicStr: number;
     beserkerStr: number;
     maidenSupp: number;
-    travelStr: number;
-    lootStr: number;
+    travel: number;
+    loot: number;
     NPCMelee: number;
     NPCRange: number;
     NPCFront: number;
@@ -136,7 +136,7 @@ export interface CastStat {
     CLEarly: number;
 }
 
-export interface CastStatArray {
+export interface CastStatObject {
     mainCastleCast: CastStat;
     outpost1Cast: CastStat;
     outpost2Cast: CastStat;
@@ -154,7 +154,7 @@ export interface CastStatArray {
 
 export interface EquipmentData {
     commStats: CommStat[];
-    castStats: CastStatArray | null;
+    castStats: CastStatObject | null;
 }
 
 export const statDisplayName: { [key: string]: string } = {
@@ -197,14 +197,14 @@ export const statDisplayName: { [key: string]: string } = {
     relicStr: 'Relic Strength',
     beserkerStr: 'Beserker Strength',
     maidenSupp: 'Maiden Support',
-    travelStr: 'Travel Speed',
+    travel: 'Travel Speed',
     NPCGlory: 'NPC Glory',
     CLFront: 'CL Frontline',
     CLFlank: 'CL Flank',
     CLLater: 'CL Later',
 
     // CastStat only
-    opCbtStr: 'OP Combat Strength',
+    opCbtStr: 'Outpost Combat Strength',
     mainCbtStr: 'Main Combat Strength',
     wallLimit: 'Wall Limit',
     protectorSupp: 'Protector Support',
@@ -219,7 +219,7 @@ export const statDisplayName: { [key: string]: string } = {
     resTransport: 'Resource Transport',
     honeyProd: 'Honey Production',
     meadStorage: 'Mead Storage',
-    honeyStorage: 'Honey Storage',
+    honeyStorage: 'Honey Storage', // Note: lootStr is in both, but has different display names. This might need review.
     NPCWallLimit: 'NPC Wall Limit',
     CLWallLimit: 'CL Wall Limit',
     CLEarly: 'CL Early',
@@ -236,7 +236,7 @@ export const commanderStatGroups = {
   relic2: ['frontCbtStr', 'flankCbtStr', 'allCbtStr', 'maidenSupp'],
   hero: ['meadStr', 'horrorStr', 'eliteStr', 'relicStr', 'beserkerStr', 'wave', 'cooldown'],
   specialStats: ['glory', 'later', 'fire'],
-  miscellaneous: ['travelStr', 'lootStr'],
+  miscellaneous: ['travel', 'loot'],
 };
 
 export const castellanStatGroups = {

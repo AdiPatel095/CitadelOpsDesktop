@@ -1,64 +1,11 @@
 package Models
 
-import "sync"
-
 type PlayerCastleInfo struct {
-	MainCastleName    string  `json:"main_castle_name"`
-	Outpost1Name      string  `json:"outpost_1_name"`
-	Outpost2Name      string  `json:"outpost_2_name"`
-	Outpost3Name      string  `json:"outpost_3_name"`
-	IceCastleName     string  `json:"ice_castle_name"`
-	DesertCastleName  string  `json:"desert_castle_name"`
-	DungeonCastleName string  `json:"dungeon_castle_name"`
-	StormCastleName   string  `json:"storm_castle_name"`
-	MainCastleAID     float64 `json:"main_castle_aid"`
-	Outpost1AID       float64 `json:"outpost_1_aid"`
-	Outpost2AID       float64 `json:"outpost_2_aid"`
-	Outpost3AID       float64 `json:"outpost_3_aid"`
-	IceCastleAID      float64 `json:"ice_castle_aid"`
-	DesertCastleAID   float64 `json:"desert_castle_aid"`
-	DungeonCastleAID  float64 `json:"dungeon_castle_aid"`
-	StormCastleAID    float64 `json:"storm_castle_aid"`
-
-	//MainCastle
-	MainCastleAmount     CastleResourcesAmount `json:"main_castle_amount"`
-	MainCastleProduction CastleProductionTotal `json:"main_castle_production"`
-	MainCastleStorage    CastleStorageMax      `json:"main_castle_storage"`
-
-	//Outpost1
-	Outpost1Amount     CastleResourcesAmount `json:"outpost_1_amount"`
-	Outpost1Production CastleProductionTotal `json:"outpost_1_production"`
-	Outpost1Storage    CastleStorageMax      `json:"outpost_1_storage"`
-
-	//Outpost2
-	Outpost2Amount     CastleResourcesAmount `json:"outpost_2_amount"`
-	Outpost2Production CastleProductionTotal `json:"outpost_2_production"`
-	Outpost2Storage    CastleStorageMax      `json:"outpost_2_storage"`
-
-	//Outpost3
-	Outpost3Amount     CastleResourcesAmount `json:"outpost_3_amount"`
-	Outpost3Production CastleProductionTotal `json:"outpost_3_production"`
-	Outpost3Storage    CastleStorageMax      `json:"outpost_3_storage"`
-
-	//IceCastle
-	IceCastleAmount     CastleResourcesAmount `json:"ice_castle_amount"`
-	IceCastleProduction CastleProductionTotal `json:"ice_castle_production"`
-	IceCastleStorage    CastleStorageMax      `json:"ice_castle_storage"`
-
-	//DesertCastle
-	DesertCastleAmount     CastleResourcesAmount `json:"desert_castle_amount"`
-	DesertCastleProduction CastleProductionTotal `json:"desert_castle_production"`
-	DesertCastleStorage    CastleStorageMax      `json:"desert_castle_storage"`
-
-	//DungeonCastle
-	DungeonCastleAmount     CastleResourcesAmount `json:"dungeon_castle_amount"`
-	DungeonCastleProduction CastleProductionTotal `json:"dungeon_castle_production"`
-	DungeonCastleStorage    CastleStorageMax      `json:"dungeon_castle_storage"`
-
-	//StormCastle
-	StormCastleAmount     CastleResourcesAmount `json:"storm_castle_amount"`
-	StormCastleProduction CastleProductionTotal `json:"storm_castle_production"`
-	StormCastleStorage    CastleStorageMax      `json:"storm_castle_storage"`
+	Name       string                `json:"castleName"`
+	Aid        float64               `json:"aid"`
+	Amount     CastleResourcesAmount `json:"amount"`
+	Production CastleProductionTotal `json:"production"`
+	Storage    CastleStorageMax      `json:"storage"`
 }
 
 type CastleResourcesAmount struct {
@@ -100,15 +47,11 @@ type CastleStorageMax struct {
 	BeefMax  float64 `json:"beef_max"`
 }
 
-var (
-	instanceCastleInfo *PlayerCastleInfo
-	onceCastleInfo     sync.Once
-)
-
-// GetPlayerGlobalResources returns the singleton instance of PlayerGlobalResources.
-func GetPlayerCastleInfo() *PlayerCastleInfo {
-	onceCastleInfo.Do(func() {
-		instanceCastleInfo = &PlayerCastleInfo{}
-	})
-	return instanceCastleInfo
-}
+var MainCastleResources PlayerCastleInfo
+var Outpost1Resources PlayerCastleInfo
+var Outpost2Resources PlayerCastleInfo
+var Outpost3Resources PlayerCastleInfo
+var IceCastleResources PlayerCastleInfo
+var DesertCastleResources PlayerCastleInfo
+var DungeonCastleResources PlayerCastleInfo
+var StormCastleResources PlayerCastleInfo

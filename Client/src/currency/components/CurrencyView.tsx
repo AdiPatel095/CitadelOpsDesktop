@@ -1,5 +1,5 @@
 import React from 'react';
-import './CurrencyView.css';
+
 import { useResources } from '../context/ResourceContext.tsx';
 
 // Import all available icons
@@ -36,7 +36,7 @@ const iconMap: { [key: string]: string | React.FC } = {
   might_pt: MightPtIcon,
   glory_pt: GloryPtIcon,
   gallan_pt: MightPtIcon, // Using Might as placeholder
-  min1: SpeedupIcon, min5: SpeedupIcon, min10: SpeedupIcon, min30: SpeedupIcon, 
+  min1: SpeedupIcon, min5: SpeedupIcon, min10: SpeedupIcon, min30: SpeedupIcon,
   hr1: SpeedupIcon, hr5: SpeedupIcon, hr24: SpeedupIcon,
 };
 

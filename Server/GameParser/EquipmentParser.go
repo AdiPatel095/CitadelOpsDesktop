@@ -1,9 +1,7 @@
 package GameParser
 
 import (
-	"CitadelDesktop/Server/Core"
 	"CitadelDesktop/Server/Models"
-	"encoding/json"
 	"log"
 	"math"
 )
@@ -28,7 +26,6 @@ func UpdateEquipmentList(gliMap map[string]interface{}) {
 }
 
 func ProcessCastArray(castArray []interface{}) {
-	playerCastle := Models.GetPlayerCastleInfo()
 	for _, castData := range castArray {
 		castMap, ok := castData.(map[string]interface{})
 		if !ok {
@@ -39,29 +36,29 @@ func ProcessCastArray(castArray []interface{}) {
 			log.Fatal("castleID is not a float64")
 		}
 		switch castleID {
-		case playerCastle.MainCastleAID:
-			Models.CastStatArray.MainCastleCast.Name = playerCastle.MainCastleName
+		case Models.MainCastleResources.Aid:
+			Models.CastStatArray.MainCastleCast.Name = Models.MainCastleResources.Name
 			ProcessCast(castMap, &Models.CastActualArray.MainCastleCast, &Models.CastStatArray.MainCastleCast)
-		case playerCastle.Outpost1AID:
-			Models.CastStatArray.Outpost1Cast.Name = playerCastle.Outpost1Name
+		case Models.Outpost1Resources.Aid:
+			Models.CastStatArray.Outpost1Cast.Name = Models.Outpost1Resources.Name
 			ProcessCast(castMap, &Models.CastActualArray.Outpost1Cast, &Models.CastStatArray.Outpost1Cast)
-		case playerCastle.Outpost2AID:
-			Models.CastStatArray.Outpost2Cast.Name = playerCastle.Outpost2Name
+		case Models.Outpost2Resources.Aid:
+			Models.CastStatArray.Outpost2Cast.Name = Models.Outpost2Resources.Name
 			ProcessCast(castMap, &Models.CastActualArray.Outpost2Cast, &Models.CastStatArray.Outpost2Cast)
-		case playerCastle.Outpost3AID:
-			Models.CastStatArray.Outpost3Cast.Name = playerCastle.Outpost3Name
+		case Models.Outpost3Resources.Aid:
+			Models.CastStatArray.Outpost3Cast.Name = Models.Outpost3Resources.Name
 			ProcessCast(castMap, &Models.CastActualArray.Outpost3Cast, &Models.CastStatArray.Outpost3Cast)
-		case playerCastle.IceCastleAID:
-			Models.CastStatArray.IceCastleCast.Name = playerCastle.IceCastleName
+		case Models.IceCastleResources.Aid:
+			Models.CastStatArray.IceCastleCast.Name = Models.IceCastleResources.Name
 			ProcessCast(castMap, &Models.CastActualArray.IceCastleCast, &Models.CastStatArray.IceCastleCast)
-		case playerCastle.DesertCastleAID:
-			Models.CastStatArray.DesertCastleCast.Name = playerCastle.DesertCastleName
+		case Models.DesertCastleResources.Aid:
+			Models.CastStatArray.DesertCastleCast.Name = Models.DesertCastleResources.Name
 			ProcessCast(castMap, &Models.CastActualArray.DesertCastleCast, &Models.CastStatArray.DesertCastleCast)
-		case playerCastle.DungeonCastleAID:
-			Models.CastStatArray.DungeonCastleCast.Name = playerCastle.DungeonCastleName
+		case Models.DungeonCastleResources.Aid:
+			Models.CastStatArray.DungeonCastleCast.Name = Models.DungeonCastleResources.Name
 			ProcessCast(castMap, &Models.CastActualArray.DungeonCastleCast, &Models.CastStatArray.DungeonCastleCast)
-		case playerCastle.StormCastleAID:
-			Models.CastStatArray.StormCastleCast.Name = playerCastle.StormCastleName
+		case Models.StormCastleResources.Aid:
+			Models.CastStatArray.StormCastleCast.Name = Models.StormCastleResources.Name
 			ProcessCast(castMap, &Models.CastActualArray.StormCastleCast, &Models.CastStatArray.StormCastleCast)
 		}
 	}
@@ -416,33 +413,4 @@ func ProcessGem(gemRawArray []interface{}, gemFinal *Models.Gem, equipRarity flo
 	}
 	gemFinal.GemStats = gemStatsArray
 	gemFinal.GemLevel, _ = gemRawArray[5].(float64)
-}
-
-func SendCastArray() {
-	log.Printf("SendCastArray")
-	playerCastStatUpdate := map[string]interface{}{
-		"type":    "castStatUpdate",
-		"payload": Models.CastStatArray,
-	}
-	jsonData, err := json.Marshal(playerCastStatUpdate)
-	if err != nil {
-		log.Fatal(err)
-	}
-	Core.FrontendSocket.Broadcast <- jsonData
-	log.Printf("SendCastArrayComplete")
-}
-
-func SendCommArray() {
-	log.Printf("SendCommArray")
-	playerCommStatUpdater := map[string]interface{}{
-		"type":    "commStatUpdate",
-		"payload": Models.CommStatArray,
-	}
-	jsonData, err := json.Marshal(playerCommStatUpdater)
-	if err != nil {
-		log.Fatal(err)
-	}
-	Core.FrontendSocket.Broadcast <- jsonData
-	log.Printf("SendCommArrayComplete")
-
 }

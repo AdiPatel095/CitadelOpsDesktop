@@ -1,6 +1,7 @@
-package Core
+package FrontendWebsocket
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"sync"
@@ -85,6 +86,29 @@ func (c *Client) WritePump() {
 	}
 }
 
+func (c *Client) ReadPump() {
+	defer func() {
+		FrontendSocket.Unregister <- c
+		c.Conn.Close()
+	}()
+	// You can configure read limits for security
+	// c.Conn.SetReadLimit(maxMessageSize)
+	// c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	// c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
+	for {
+		_, message, err := c.Conn.ReadMessage()
+		if err != nil {
+			log.Printf("error reading message: %v", err)
+			break
+		}
+		log.Printf("Received message from client: %s", message)
+		ParseFrontendMessage(message)
+		// Here you can process the message, e.g., parse JSON and act on it.
+		// For now, we'll just log it.
+	}
+}
+
 func ServeWs(w http.ResponseWriter, r *http.Request) {
 	log.Println("New frontend connection")
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -96,4 +120,35 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 	FrontendSocket.Register <- client
 
 	go client.WritePump()
+	go client.ReadPump()
+
+	SendInitialData(client)
+}
+
+func (c *Client) SendToClient(messageType string, payload interface{}, optionalData string) {
+	message := map[string]interface{}{
+		"type":         messageType,
+		"payload":      payload,
+		"optionalData": optionalData,
+	}
+	jsonData, err := json.Marshal(message)
+	if err != nil {
+		log.Println("Error marshaling message:", err)
+		return
+	}
+	c.Send <- jsonData
+}
+
+func SendFrontendMessage(messageType string, payload interface{}, optionalData string) {
+	message := map[string]interface{}{
+		"type":         messageType,
+		"payload":      payload,
+		"optionalData": optionalData,
+	}
+	jsonData, err := json.Marshal(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	FrontendSocket.Broadcast <- jsonData
+
 }

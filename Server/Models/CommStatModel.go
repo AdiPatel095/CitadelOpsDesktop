@@ -38,8 +38,8 @@ type CommStatModel struct {
 	RelicStr    float64 `json:"relicStr"`
 	BeserkerStr float64 `json:"beserkerStr"`
 	MaidenSupp  float64 `json:"maidenSupp"`
-	Travel      float64 `json:"travelStr"`
-	Loot        float64 `json:"lootStr"`
+	Travel      float64 `json:"travel"`
+	Loot        float64 `json:"loot"`
 
 	//NPCStats
 	NPCMelee float64 `json:"NPCMelee"`

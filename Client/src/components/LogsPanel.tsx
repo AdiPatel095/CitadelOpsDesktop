@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './LogsPanel.css';
+
 
 const LogsPanel: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);

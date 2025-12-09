@@ -95,11 +95,6 @@ func InitiateDetails(data string) {
 
 	wgInitialDetail.Wait()
 
-	SendGlobalResourceUpdate()
-	SendCastleResourceUpdate()
-	SendCastArray()
-	SendCommArray()
-
 }
 
 // contains checks if a string is present in a slice of strings.

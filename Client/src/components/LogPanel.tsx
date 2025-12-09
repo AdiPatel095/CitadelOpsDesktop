@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './LogPanel.css';
+
 
 type ActiveTab = 'logs' | 'eventCounters';
 
@@ -21,14 +21,14 @@ const LogPanel: React.FC = () => {
   return (
     <div className={`log-panel ${isOpen ? 'open' : 'closed'}`}>
       <div className="log-panel-header">
-        <div 
-          className={`tab ${activeTab === 'logs' ? 'active' : ''}`} 
+        <div
+          className={`tab ${activeTab === 'logs' ? 'active' : ''}`}
           onClick={() => setTab('logs')}
         >
           <h3>Logs</h3>
         </div>
-        <div 
-          className={`tab ${activeTab === 'eventCounters' ? 'active' : ''}`} 
+        <div
+          className={`tab ${activeTab === 'eventCounters' ? 'active' : ''}`}
           onClick={() => setTab('eventCounters')}
         >
           <h3>Event Counters</h3>

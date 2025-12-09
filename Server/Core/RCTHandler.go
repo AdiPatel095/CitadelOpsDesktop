@@ -49,7 +49,7 @@ func GetLoginBytes() [][]byte {
 				return nil
 			}
 
-			if err := os.WriteFile(loginFilename, data, 0644); err != nil {
+			if err := os.WriteFile(loginFilename, data, 0600); err != nil {
 				log.Printf("Error writing to '%s': %v", loginFilename, err)
 				return nil
 			}

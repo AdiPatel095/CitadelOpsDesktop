@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import './EquipmentStats.css';
+
 import { statDisplayName, commanderStatGroups, castellanStatGroups, type CommStat, type CastStat } from '../models/equipment';
 
 interface EquipmentStatsProps {
@@ -31,12 +31,12 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
       if (!isSpecialStat) {
         let suffix = key;
 
-          // Special handling for Front/Flank limits
-          if (key === 'frontLimit') {
-              suffix = 'Front';
-          } else if (key === 'flankLimit') {
-              suffix = 'Flank';
-          } else if (key.endsWith('CbtStr')) {
+        // Special handling for Front/Flank limits
+        if (key === 'frontLimit') {
+          suffix = 'Front';
+        } else if (key === 'flankLimit') {
+          suffix = 'Flank';
+        } else if (key.endsWith('CbtStr')) {
           suffix = key.replace('CbtStr', '');
         } else if (key.endsWith('Str')) {
           suffix = key.replace('Str', '');
@@ -71,9 +71,9 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
   const renderStat = (statKey: string, value: number) => {
     const label = statDisplayName[statKey] || statKey;
     return (
-      <div className="stat-row" key={statKey}>
-        <span className="stat-label">{label}</span>
-        <span className="stat-value">{value.toFixed(2)}</span>
+      <div className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-white/5 transition-colors" key={statKey}>
+        <span className="text-sm text-gray-400">{label}</span>
+        <span className="text-sm font-mono font-medium text-primary">{value.toFixed(2)}</span>
       </div>
     );
   };
@@ -81,22 +81,50 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
   const statGroups = equipmentMode === 'Commander' ? commanderStatGroups : castellanStatGroups;
 
   return (
-    <div className="stats-display-container">
-      <h4>{name ? `${name} - ${combatMode} Stats` : `Select a ${equipmentMode}`}</h4>
-      <div className="stats-list">
-        {!stats && <p>No stats available for this selection.</p>}
-        {stats && Object.entries(statGroups).map(([groupName, statKeys]) => (
-          <div key={groupName} className="stat-group">
-            <h5>{groupName}</h5>
-            {statKeys.map(key => {
-              const value = processedStats[key];
-              if (equipmentMode === 'Commander' && (value === undefined || value === 0)) {
-                return null;
-              }
-              return renderStat(key, value);
-            }).filter(Boolean)}
+    <div className="p-4">
+      {/* Header */}
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-white">
+          {name ? name : `Select a ${equipmentMode}`}
+        </h3>
+        {name && (
+          <span className={`
+            inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1
+            ${combatMode === 'PvP'
+              ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+              : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+            }
+          `}>
+            {combatMode} Stats
+          </span>
+        )}
+      </div>
+
+      {/* Stats List */}
+      <div className="space-y-4">
+        {!stats && (
+          <div className="text-center py-8 text-gray-500">
+            <p>No stats available for this selection.</p>
           </div>
-        ))}
+        )}
+
+        {stats && Object.entries(statGroups).map(([groupName, statKeys]) => {
+          const visibleStats = statKeys.filter(key => {
+            const value = processedStats[key];
+            return !(equipmentMode === 'Commander' && (value === undefined || value === 0));
+          });
+
+          if (visibleStats.length === 0) return null;
+
+          return (
+            <div key={groupName} className="bg-dark-bg/50 rounded-lg p-3 border border-dark-border/50">
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{groupName}</h4>
+              <div className="space-y-0.5">
+                {visibleStats.map(key => renderStat(key, processedStats[key]))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
