@@ -21,15 +21,19 @@ steps:
         docker cp temp-container:/app/server ./server-binary
         docker rm temp-container
 
+  # 3. Compress the binary to preserve permissions
+  - name: 'gcr.io/cloud-builders/tar'
+    args: ['-czvf', 'server-binary.tar.gz', 'server-binary']
+
   # 3. Upload the binary to Google Cloud Storage
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       [
         'storage',
         'cp',
-        '--content-type=application/octet-stream',
-        './server-binary',
-        'gs://${_ARTIFACT_BUCKET}/${_IMAGE_NAME}-$COMMIT_SHA',
+        '--content-type=application/gzip',
+        './server-binary.tar.gz',
+        'gs://${_ARTIFACT_BUCKET}/${_IMAGE_NAME}-$COMMIT_SHA.tar.gz',
       ]
 
 # Store the image name (optional, if you still want to push the image to registry)
