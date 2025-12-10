@@ -27,6 +27,7 @@ steps:
       [
         'storage',
         'cp',
+        '--content-type=application/octet-stream',
         './server-binary',
         'gs://${_ARTIFACT_BUCKET}/${_IMAGE_NAME}-$COMMIT_SHA',
       ]
