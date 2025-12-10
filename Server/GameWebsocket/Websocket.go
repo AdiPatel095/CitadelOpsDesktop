@@ -2,6 +2,7 @@ package GameWebsocket
 
 import (
 	"CitadelDesktop/Server/GameParser"
+	"CitadelDesktop/Server/License"
 	"fmt"
 	"log"
 	"net/http"
@@ -28,7 +29,23 @@ var (
 	GlobalSocket     *websocket.Conn
 	IncomingMessages = make(chan []string)
 	OutgoingMessages = make(chan []byte)
+
+	// SendInsufficientCreditsFunc is a callback to notify frontend of insufficient credits
+	SendInsufficientCreditsFunc func()
+
+	// SendGameLoginStatusFunc is a callback to notify frontend of login status changes
+	SendGameLoginStatusFunc func(bool, int)
 )
+
+// SetInsufficientCreditsCallback sets the callback for insufficient credits notification
+func SetInsufficientCreditsCallback(fn func()) {
+	SendInsufficientCreditsFunc = fn
+}
+
+// SetGameLoginStatusCallback sets the callback for game login status notification
+func SetGameLoginStatusCallback(fn func(bool, int)) {
+	SendGameLoginStatusFunc = fn
+}
 
 func NewGameWebsocket() error {
 	// Get config from environment
@@ -126,12 +143,21 @@ func StartWebsocketChannels(ctx context.Context, cancel context.CancelFunc) {
 				log.Println("Write goroutine stopping.")
 				return
 			case message := <-OutgoingMessages:
-				err := GlobalSocket.WriteMessage(websocket.TextMessage, message)
-				time.Sleep(50 * time.Millisecond)
-				if err != nil {
-					log.Println("write:", err)
-					// The read goroutine will handle cancellation, so we just exit.
-					return
+				// Deduct 1 credit for every message
+				// Note: License.UseCredits will handle the logic and return false if not enough credits
+				if License.UseCredits(1, "Game Message") {
+					err := GlobalSocket.WriteMessage(websocket.TextMessage, message)
+					time.Sleep(50 * time.Millisecond)
+					if err != nil {
+						log.Println("write:", err)
+						// The read goroutine will handle cancellation, so we just exit.
+						return
+					}
+				} else {
+					log.Println("Failed to send message: Insufficient credits")
+					if SendInsufficientCreditsFunc != nil {
+						go SendInsufficientCreditsFunc()
+					}
 				}
 			}
 		}
@@ -199,6 +225,11 @@ func LoginToGame(loginBytes [][]byte) bool {
 		log.Printf("Login attempt %d/%d...", i+1, maxRetries)
 		LoginStatus = false // Reset status before each attempt
 		LoginCooldown = 0   // Reset cooldown
+
+		if SendGameLoginStatusFunc != nil {
+			go SendGameLoginStatusFunc(LoginStatus, LoginCooldown)
+		}
+
 		OutgoingMessages <- loginBytes[0]
 		OutgoingMessages <- loginBytes[1]
 		OutgoingMessages <- loginBytes[2]
@@ -238,15 +269,24 @@ func checkLoginStatus(message []string) {
 	if message[4] == "0" {
 		LoginStatus = true
 		LoginCooldown = 0
+		if SendGameLoginStatusFunc != nil {
+			go SendGameLoginStatusFunc(LoginStatus, LoginCooldown)
+		}
 	}
 	if message[4] == "453" {
 		cooldownString := message[5]
 		cooldownStr := strings.TrimPrefix(cooldownString, "{\"CD\":")
 		cooldownStr = strings.TrimSuffix(cooldownStr, "}")
 		LoginCooldown, _ = strconv.Atoi(cooldownStr)
+		if SendGameLoginStatusFunc != nil {
+			go SendGameLoginStatusFunc(LoginStatus, LoginCooldown)
+		}
 	}
 	if message[4] == "20" {
 		LoginStatus = false
 		LoginCooldown = 9999
+		if SendGameLoginStatusFunc != nil {
+			go SendGameLoginStatusFunc(LoginStatus, LoginCooldown)
+		}
 	}
 }

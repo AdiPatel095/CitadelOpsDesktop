@@ -7,6 +7,7 @@ import EquipmentView from './equipment/components/EquipmentView';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import RegistrationPending from './components/RegistrationPending';
+import InsufficientCreditsModal from './components/InsufficientCreditsModal';
 
 import { ResourceProvider } from "./currency/context/ResourceContext.tsx";
 import { type ViewId } from './config/navigation';
@@ -62,6 +63,8 @@ const AppContent: React.FC = () => {
           {renderView()}
         </div>
       </main>
+
+      <InsufficientCreditsModal />
     </div>
   );
 };

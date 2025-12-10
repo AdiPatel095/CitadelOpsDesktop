@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
             <div
               key={item.id}
               className={`
-                                flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 group
+                                rounded-global flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all duration-200 group
                                 ${currentView === item.id
                   ? 'bg-primary/10 text-primary shadow-[0_0_15px_rgba(52,211,153,0.1)]'
                   : 'text-gray-400 hover:text-gray-100 hover:bg-white/5'}
@@ -45,7 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
             <div
               key={item.id}
               className={`
-                                flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 group
+                                rounded-global flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all duration-200 group
                                 ${currentView === item.id
                   ? 'bg-primary/10 text-primary shadow-[0_0_15px_rgba(52,211,153,0.1)]'
                   : 'text-gray-400 hover:text-gray-100 hover:bg-white/5'}

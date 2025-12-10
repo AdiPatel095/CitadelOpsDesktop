@@ -4,7 +4,7 @@ const getEnv = (key: string, defaultValue: string = ''): string => {
 };
 
 export const API_CONFIG = {
-    BASE_URL: getEnv('VITE_API_BASE_URL', 'https://citadelops.app/api'),
+    BASE_URL: getEnv('VITE_API_BASE_URL', 'http://localhost:8080'),
     ENDPOINTS: {
         LICENSE: {
             GET_BY_HARDWARE_ID: '/license/unverified', // GET /license/unverified/:hardwareID

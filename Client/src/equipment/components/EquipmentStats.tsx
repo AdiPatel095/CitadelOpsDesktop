@@ -89,7 +89,7 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
         </h3>
         {name && (
           <span className={`
-            inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1
+            inline-flex items-center px-2 py-0.5 rounded-global text-xs font-medium mt-1
             ${combatMode === 'PvP'
               ? 'bg-red-500/10 text-red-400 border border-red-500/20'
               : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
@@ -117,7 +117,7 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
           if (visibleStats.length === 0) return null;
 
           return (
-            <div key={groupName} className="bg-dark-bg/50 rounded-lg p-3 border border-dark-border/50">
+            <div key={groupName} className="rounded-global bg-dark-bg/50 p-3 border border-dark-border/50">
               <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{groupName}</h4>
               <div className="space-y-0.5">
                 {visibleStats.map(key => renderStat(key, processedStats[key]))}

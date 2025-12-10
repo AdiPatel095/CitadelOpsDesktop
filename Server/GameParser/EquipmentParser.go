@@ -2,19 +2,17 @@ package GameParser
 
 import (
 	"CitadelDesktop/Server/Models"
-	"log"
 	"math"
 )
 
 func UpdateEquipmentList(gliMap map[string]interface{}) {
-	log.Printf("UpdateEquipmentList")
 	castArray, ok := gliMap["B"].([]interface{})
 	if !ok {
-		log.Fatal("castArray is not a slice")
+		return // castArray is not a slice, skip processing
 	}
 	commArray, ok := gliMap["C"].([]interface{})
 	if !ok {
-		log.Fatal("commArray is not a slice")
+		return // commArray is not a slice, skip processing
 	}
 
 	Models.CommActualArray = make([]Models.CommActualModel, len(commArray))
@@ -22,18 +20,17 @@ func UpdateEquipmentList(gliMap map[string]interface{}) {
 
 	ProcessCastArray(castArray)
 	ProcessCommArray(commArray)
-	log.Printf("UpdateEquipmentListComplete")
 }
 
 func ProcessCastArray(castArray []interface{}) {
 	for _, castData := range castArray {
 		castMap, ok := castData.(map[string]interface{})
 		if !ok {
-			log.Fatal("castMap is not a map")
+			continue // castMap is not a map, skip
 		}
 		castleID, ok := castMap["LICID"].(float64)
 		if !ok {
-			log.Fatal("castleID is not a float64")
+			continue // castleID is not a float64, skip
 		}
 		switch castleID {
 		case Models.MainCastleResources.Aid:
@@ -200,7 +197,7 @@ func ProcessCommArray(commArray []interface{}) {
 	for index, commData := range commArray {
 		commMap, ok := commData.(map[string]interface{})
 		if !ok {
-			log.Fatal("commMap is not a map")
+			continue // commMap is not a map, skip
 		}
 		ProcessComm(commMap, index)
 	}
@@ -356,7 +353,7 @@ func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.E
 	if equipmentFinal.EquipRarity == 5 || equipmentFinal.EquipRarity == 15 {
 		gemSlotRaw, ok := equipmentDataArray[12].([]interface{})
 		if !ok {
-			log.Fatal("gemSlotRaw is not a slice")
+			return // gemSlotRaw is not a slice, skip gem processing
 		}
 		var gemSlot Models.GemSlot
 		ProcessGemSlot(gemSlotRaw, &gemSlot, equipmentFinal.EquipRarity)

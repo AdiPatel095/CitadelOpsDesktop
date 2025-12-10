@@ -43,10 +43,6 @@ export const ResourceProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [resources, setResources] = useState<PlayerGlobalResources | null>(null);
 
   useEffect(() => {
-    console.log('ResourceContext: resources changed to', resources);
-  }, [resources]);
-
-  useEffect(() => {
     const handleResourceUpdate = (data: any) => {
       if (data.type === 'globalResourceUpdate') {
         setResources(data.payload as PlayerGlobalResources);

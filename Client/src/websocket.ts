@@ -8,11 +8,9 @@ class FrontendWebsocketService {
 
   public connect(url: string) {
     if (this.mock) {
-      console.log('Running in mock websocket mode. No real connection will be established.');
       this.status = 'Connecting';
       setTimeout(() => {
         this.status = 'Connected';
-        console.log('Mock WebSocket connected');
         this.sendMockData();
       }, 1000);
       return;
@@ -25,11 +23,10 @@ class FrontendWebsocketService {
     this.socket = new WebSocket(url);
 
     this.socket.onopen = () => {
-      console.log('WebSocket connected');
+      // Connection established
     };
 
     this.socket.onclose = () => {
-      console.log('WebSocket disconnected');
       this.socket = null;
       this.status = 'Disconnected';
     };
@@ -100,8 +97,7 @@ class FrontendWebsocketService {
 
   public sendMessage(message: object) {
     if (this.mock) {
-      console.log('Mock WebSocket sending message:', message);
-      // In a more advanced mock, you could simulate a response from the backend here.
+      // Mock mode - no actual message sent
       return;
     }
 

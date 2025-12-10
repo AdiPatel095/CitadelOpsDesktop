@@ -59,8 +59,15 @@ export const LicenseService = {
      */
     reconfigureLoadout: async (
         hardwareID: string,
-        equipmentMode: 'Commander' | 'Castellan',
-        priorityStats: string[]
+        payload: {
+            equipmentMode: 'Commander' | 'Castellan';
+            combatMode: 'PvP' | 'PvE';
+            tradeoffMultiplier: number;
+            tiers: Array<{
+                tier: number;
+                stats: Array<{ stat: string; position: number }>;
+            }>;
+        }
     ): Promise<ReconfigureResponse> => {
         try {
             const response = await fetch(
@@ -70,8 +77,7 @@ export const LicenseService = {
                     method: 'POST',
                     body: JSON.stringify({
                         hardwareID,
-                        equipmentMode,
-                        priorityStats,
+                        ...payload,
                     }),
                 }
             );

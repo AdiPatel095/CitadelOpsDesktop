@@ -3,7 +3,6 @@ package GameParser
 import (
 	"CitadelDesktop/Server/Models"
 	"fmt"
-	"log"
 )
 
 // Constants for magic strings and indices to improve readability and maintainability.
@@ -44,16 +43,10 @@ const (
 )
 
 func CastleDetailParser(gcl map[string]interface{}, dcl map[string]interface{}) {
-	log.Printf("CastleDetailParser")
-	if err := parseGCL(gcl); err != nil {
-		log.Printf("Error parsing GCL data: %v", err)
-	}
+	parseGCL(gcl)
 	if dcl != nil {
-		if err := parseDCL(dcl); err != nil {
-			log.Printf("Error parsing DCL data: %v", err)
-		}
+		parseDCL(dcl)
 	}
-	log.Printf("CastleDetailParser finished")
 }
 
 // parseGCL processes the Game Castle List data.
@@ -67,19 +60,16 @@ func parseGCL(gcl map[string]interface{}) error {
 	for _, item := range kingdomArray {
 		kingdomMap, ok := item.(map[string]interface{})
 		if !ok {
-			log.Printf("warning: skipping item in kingdomArray, not a map")
 			continue
 		}
 
 		kingdomID, ok := kingdomMap[keyKingdomID].(float64)
 		if !ok {
-			log.Printf("warning: skipping kingdom, KID is not a float64")
 			continue
 		}
 
 		castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
 		if !ok {
-			log.Printf("warning: skipping kingdom ID %f, 'AI' is not a slice", kingdomID)
 			continue
 		}
 
@@ -151,13 +141,11 @@ func parseSingleCastle(castleArray []interface{}, updater func(id float64, name 
 func extractCastleDetails(castleData interface{}, index int) (id float64, name string, ok bool) {
 	castleMap, ok := castleData.(map[string]interface{})
 	if !ok {
-		log.Printf("warning: castle at index %d is not a map", index)
 		return 0, "", false
 	}
 
 	details, ok := castleMap[keyCastleInfoArray].([]interface{})
 	if !ok || len(details) <= castleNameIndex {
-		log.Printf("warning: castle at index %d has invalid 'AI' array", index)
 		return 0, "", false
 	}
 
@@ -165,7 +153,6 @@ func extractCastleDetails(castleData interface{}, index int) (id float64, name s
 	name, nameOk := details[castleNameIndex].(string)
 
 	if !idOk || !nameOk {
-		log.Printf("warning: castle at index %d has incorrect type for ID or Name", index)
 		return 0, "", false
 	}
 
@@ -180,12 +167,10 @@ func parseDCL(dcl map[string]interface{}) error {
 	for _, item := range kingdomArray {
 		kingdomMap, ok := item.(map[string]interface{})
 		if !ok {
-			log.Printf("warning: skipping item in kingdomArray, not a map")
 			continue
 		}
 		kingdomID, ok := kingdomMap[keyKingdomID].(float64)
 		if !ok {
-			log.Printf("warning: skipping kingdom, KID is not a float64")
 			continue
 		}
 		switch kingdomID {
@@ -193,13 +178,11 @@ func parseDCL(dcl map[string]interface{}) error {
 			{
 				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
 				if !ok {
-					log.Printf("warning: skipping kingdom ID %f, 'AI' is not a slice", kingdomID)
 					continue
 				}
 				for _, castleData := range castleArray {
 					castleMap, ok := castleData.(map[string]interface{})
 					if !ok {
-						log.Printf("warning: skipping item in castleArray, not a map")
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
@@ -220,13 +203,11 @@ func parseDCL(dcl map[string]interface{}) error {
 			{
 				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
 				if !ok {
-					log.Printf("warning: skipping kingdom ID %f, 'AI' is not a slice", kingdomID)
 					continue
 				}
 				for _, castleData := range castleArray {
 					castleMap, ok := castleData.(map[string]interface{})
 					if !ok {
-						log.Printf("warning: skipping item in castleArray, not a map")
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
@@ -240,13 +221,11 @@ func parseDCL(dcl map[string]interface{}) error {
 			{
 				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
 				if !ok {
-					log.Printf("warning: skipping kingdom ID %f, 'AI' is not a slice", kingdomID)
 					continue
 				}
 				for _, castleData := range castleArray {
 					castleMap, ok := castleData.(map[string]interface{})
 					if !ok {
-						log.Printf("warning: skipping item in castleArray, not a map")
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
@@ -260,13 +239,11 @@ func parseDCL(dcl map[string]interface{}) error {
 			{
 				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
 				if !ok {
-					log.Printf("warning: skipping kingdom ID %f, 'AI' is not a slice", kingdomID)
 					continue
 				}
 				for _, castleData := range castleArray {
 					castleMap, ok := castleData.(map[string]interface{})
 					if !ok {
-						log.Printf("warning: skipping item in castleArray, not a map")
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
@@ -280,13 +257,11 @@ func parseDCL(dcl map[string]interface{}) error {
 			{
 				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
 				if !ok {
-					log.Printf("warning: skipping kingdom ID %f, 'AI' is not a slice", kingdomID)
 					continue
 				}
 				for _, castleData := range castleArray {
 					castleMap, ok := castleData.(map[string]interface{})
 					if !ok {
-						log.Printf("warning: skipping item in castleArray, not a map")
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)

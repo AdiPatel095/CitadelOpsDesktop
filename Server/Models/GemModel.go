@@ -23,3 +23,10 @@ type GemSlot struct {
 }
 
 var GemsStorage []Gem
+
+type NonRelicGemIDStruct struct {
+	Count float64 `json:"count"`
+	ID    float64 `json:"id"`
+}
+
+var NonRelicGemIDs map[float64]float64

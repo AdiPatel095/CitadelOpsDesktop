@@ -20,7 +20,7 @@ const RegistrationPending = ({ hardwareID }: RegistrationPendingProps) => {
         <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
             <div className="glass-panel p-8 max-w-lg w-full text-center">
                 {/* Icon */}
-                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <div className="rounded-global w-16 h-16 mx-auto mb-6 bg-yellow-500/20 flex items-center justify-center">
                     <Icons.AlertTriangle className="w-8 h-8 text-yellow-500" />
                 </div>
 
@@ -36,7 +36,7 @@ const RegistrationPending = ({ hardwareID }: RegistrationPendingProps) => {
                 </p>
 
                 {/* Hardware ID Box */}
-                <div className="bg-dark-surface rounded-lg p-4 mb-6">
+                <div className="rounded-global bg-dark-surface p-4 mb-6">
                     <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Hardware ID</p>
                     <div className="flex items-center justify-center gap-3">
                         <code className="text-primary font-mono text-sm break-all">
@@ -45,7 +45,7 @@ const RegistrationPending = ({ hardwareID }: RegistrationPendingProps) => {
                         {hardwareID && (
                             <button
                                 onClick={handleCopy}
-                                className="p-2 rounded-lg hover:bg-dark-bg transition-colors"
+                                className="rounded-global p-2 hover:bg-dark-bg transition-colors"
                                 title="Copy to clipboard"
                             >
                                 {copied ? (
@@ -59,7 +59,7 @@ const RegistrationPending = ({ hardwareID }: RegistrationPendingProps) => {
                 </div>
 
                 {/* Instructions */}
-                <div className="text-left bg-dark-surface/50 rounded-lg p-4 mb-6">
+                <div className="rounded-global text-left bg-dark-surface/50 p-4 mb-6">
                     <h3 className="text-sm font-semibold text-gray-200 mb-2">How to register:</h3>
                     <ol className="text-sm text-gray-400 space-y-2">
                         <li className="flex items-start gap-2">

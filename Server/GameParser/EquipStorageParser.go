@@ -6,7 +6,23 @@ import (
 	"log"
 )
 
-func UpdateGemStorage(gemStorageMap map[string]interface{}) {
+func UpdateGemStorage(gemStorageString string) {
+	var gemStorageMap map[string]interface{}
+	_ = json.Unmarshal([]byte(gemStorageString), &gemStorageMap)
+	Models.NonRelicGemIDs = make(map[float64]float64)
+	nonRelicGemArray, ok := gemStorageMap["GEM"].([]interface{})
+	if !ok {
+		log.Fatal("nonRelicGemArray is not a slice")
+	}
+	for _, gem := range nonRelicGemArray {
+		gemRawArray, ok := gem.([]interface{})
+		if ok {
+			id := gemRawArray[0].(float64)
+			count := gemRawArray[1].(float64)
+			Models.NonRelicGemIDs[id] = count
+		}
+	}
+
 	relicGemArray, ok := gemStorageMap["RGEM"].([]interface{})
 	if !ok {
 		log.Fatal("relicGemArray is not a slice")

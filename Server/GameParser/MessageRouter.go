@@ -17,4 +17,12 @@ func MessageRouter(messageParts []string) {
 		log.Printf("Received gei message")
 		UpdateEquipmentStorage(messageParts[5])
 	}
+	if messageType == "ggm" {
+		log.Printf("Received ggm message")
+		UpdateGemStorage(messageParts[5])
+	}
+	if messageType == "sge" {
+		// Check for success code if present, user said %xt%sge%1%0%
+		// 1 is request ID? 0 might be success?
+	}
 }

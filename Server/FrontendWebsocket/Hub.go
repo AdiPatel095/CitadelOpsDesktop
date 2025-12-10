@@ -48,7 +48,6 @@ func (h *Hub) Run() {
 			h.Mutex.Lock()
 			h.Clients[client] = true
 			h.Mutex.Unlock()
-			log.Println("Client registered")
 		case client := <-h.Unregister:
 			h.Mutex.Lock()
 			if _, ok := h.Clients[client]; ok {
@@ -56,7 +55,6 @@ func (h *Hub) Run() {
 				close(client.Send)
 			}
 			h.Mutex.Unlock()
-			log.Println("Client unregistered")
 		case message := <-h.Broadcast:
 			h.Mutex.Lock()
 			for client := range h.Clients {
@@ -102,15 +100,12 @@ func (c *Client) ReadPump() {
 			log.Printf("error reading message: %v", err)
 			break
 		}
-		log.Printf("Received message from client: %s", message)
 		ParseFrontendMessage(message)
-		// Here you can process the message, e.g., parse JSON and act on it.
-		// For now, we'll just log it.
+		// Process the message
 	}
 }
 
 func ServeWs(w http.ResponseWriter, r *http.Request) {
-	log.Println("New frontend connection")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)

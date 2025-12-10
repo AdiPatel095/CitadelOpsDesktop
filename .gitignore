@@ -36,7 +36,6 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
-Server/Temp.json
 
 # Client build output
 Client/dist/

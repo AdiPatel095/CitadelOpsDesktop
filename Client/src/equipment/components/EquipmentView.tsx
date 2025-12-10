@@ -54,6 +54,7 @@ const EquipmentView: React.FC = () => {
       <div className="w-80 flex-shrink-0">
         <StatPriority
           equipmentMode={equipmentMode}
+          combatMode={combatMode}
           credits={credits}
           hardwareID={hardwareID}
         />

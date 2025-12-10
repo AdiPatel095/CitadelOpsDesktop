@@ -31,5 +31,13 @@ func ParseFrontendMessage(message []byte) {
 	case "getCastleResourceUpdate":
 		castleLocation := data["castleLocation"].(string)
 		SendCastleResource(castleLocation)
+	case "sellNonRelicEquipment":
+		log.Println("Received request to sell non-relic equipment")
+		soldCount := SellNonRelicEquipment()
+		log.Printf("SoldCount: %v", soldCount)
+	case "sellNonRelicGems":
+		log.Println("Received request to sell non-relic gems")
+		soldCount := SellNonRelicGems()
+		log.Printf("SoldCount: %v", soldCount)
 	}
 }

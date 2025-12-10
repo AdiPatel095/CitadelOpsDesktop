@@ -1,8 +1,12 @@
 package FrontendWebsocket
 
 import (
+	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/Models"
+	"fmt"
+	"log"
 	"strconv"
+	"time"
 )
 
 // Registration state - set by main.go via SetRegistrationState
@@ -31,9 +35,25 @@ func SendRegistrationStatusMessage(registered bool, hardwareID string, credits i
 
 // SendCreditsUpdateMessage sends credits update to all connected clients
 func SendCreditsUpdateMessage(credits int) {
+	log.Printf("SendCreditsUpdateMessage called with: %d", credits)
 	registrationState.Credits = credits
 	SendFrontendMessage("creditsUpdate", map[string]interface{}{
 		"credits": credits,
+	}, "")
+}
+
+// SendInsufficientCreditsMessage sends a notification that credits are exhausted
+func SendInsufficientCreditsMessage() {
+	SendFrontendMessage("insufficientCredits", map[string]interface{}{
+		"message": "Insufficient credits to perform action",
+	}, "")
+}
+
+// SendGameLoginStatusMessage sends the current game login status
+func SendGameLoginStatusMessage(loggedIn bool, cooldown int) {
+	SendFrontendMessage("gameLoginStatus", map[string]interface{}{
+		"loggedIn": loggedIn,
+		"cooldown": cooldown,
 	}, "")
 }
 
@@ -131,4 +151,37 @@ func SendCastleResource(castleLocation string) {
 		SendFrontendMessage("castleResourceUpdate", Models.StormCastleResources, "stormCastle")
 	}
 
+}
+
+func SellNonRelicEquipment() int {
+	counter := 0
+
+	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
+	time.Sleep(2 * time.Second)
+	log.Printf("Storage equipment amount : %v ", len(Models.EquipmentStorage))
+	for _, equipment := range Models.EquipmentStorage {
+		if equipment.EquipRarity != 5 && equipment.EquipRarity != 15 {
+			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
+			GameWebsocket.OutgoingMessages <- []byte(payload)
+			counter++
+		}
+	}
+	return counter
+}
+
+func SellNonRelicGems() int {
+	counter := 0
+
+	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
+	time.Sleep(2 * time.Second)
+	log.Printf("Storage gem amount : %v ", len(Models.NonRelicGemIDs))
+	for id, count := range Models.NonRelicGemIDs {
+		for i := 0; i < int(count); i++ {
+			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%03.0f,"RGEM":0,"LFID":-1}%%`, id)
+			GameWebsocket.OutgoingMessages <- []byte(payload)
+			counter++
+		}
+	}
+	log.Printf("Storage Gem amount : %v", len(Models.NonRelicGemIDs))
+	return counter
 }

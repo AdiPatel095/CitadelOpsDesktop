@@ -5,6 +5,7 @@ import (
 	"CitadelDesktop/Server/FrontendWebsocket"
 	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/License"
+	CitRouter "CitadelDesktop/Server/Router"
 	"embed"
 	"io/fs"
 	"log"
@@ -28,6 +29,9 @@ func main() {
 	// Set up callbacks for License package to send messages to frontend
 	License.SetSendStatusCallback(FrontendWebsocket.SendRegistrationStatusMessage)
 	License.SetSendCreditsCallback(FrontendWebsocket.SendCreditsUpdateMessage)
+	// Set up callback for GameWebsocket to notify frontend of insufficient credits
+	GameWebsocket.SetInsufficientCreditsCallback(FrontendWebsocket.SendInsufficientCreditsMessage)
+	GameWebsocket.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
 
 	// Startup frontend server (always, so users can see registration status)
 	go StartFrontendService()
@@ -80,11 +84,19 @@ func StartFrontendService() {
 		log.Fatal("Failed to create sub-filesystem for frontend assets:", err)
 	}
 
-	http.Handle("/", http.FileServer(http.FS(subFS)))
-	http.HandleFunc("/ws", FrontendWebsocket.ServeWs)
+	mux := CitRouter.NewRouter()
+
+	mux.Handle("/", http.FileServer(http.FS(subFS)))
+	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)
 
 	log.Println("Dashboard available at : http://localhost:8080")
-	err = http.ListenAndServe(":8080", nil)
+	// Allow CORS for development if needed, but since we are serving frontend from same origin, it's fine.
+	// Actually, for local dev (vite on 5173), we might need CORS or proxy.
+	// Assuming prod build for now or proxy in vite config.
+
+	// Wrap mux with CORS middleware if necessary, or simple serve
+	// For simplicity, just serve mux.
+	err = http.ListenAndServe(":8080", mux)
 	if err != nil {
 		log.Fatal(err)
 	}

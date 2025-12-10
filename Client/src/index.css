@@ -16,6 +16,9 @@
     --color-dark-border: #334155;
     /* Slate 700 */
 
+    /* Global border radius for consistent rounded corners */
+    --radius-global: 20px;
+
     --font-sans: "Inter", system-ui, sans-serif;
 
     --shadow-glow: 0 0 15px rgba(52, 211, 153, 0.3);
@@ -73,25 +76,84 @@
 
     /* Glassmorphism Panels */
     .glass-panel {
-        @apply bg-dark-card/80 backdrop-blur-md border border-dark-border shadow-lg rounded-xl;
+        @apply bg-dark-card/80 backdrop-blur-md border border-dark-border shadow-lg;
+        border-radius: var(--radius-global);
     }
 
     /* Buttons */
     .btn-primary {
-        @apply px-4 py-2 bg-primary text-dark-bg font-semibold rounded-lg shadow-glow hover:bg-primary-hover hover:shadow-glow-active active:scale-95 transition-all duration-200;
+        @apply px-4 py-2 bg-primary text-dark-bg font-semibold shadow-glow hover:bg-primary-hover hover:shadow-glow-active active:scale-95 transition-all duration-200;
+        border-radius: var(--radius-global);
     }
 
     .btn-ghost {
-        @apply px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors duration-200;
+        @apply px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 transition-colors duration-200;
+        border-radius: var(--radius-global);
     }
 
     .btn-icon {
-        @apply p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all duration-200;
+        @apply p-2 text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-200;
+        border-radius: var(--radius-global);
+    }
+
+    /* Toggle Switch Container */
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        background: var(--color-dark-bg);
+        padding: 2px;
+        gap: 0px;
+        border-radius: var(--radius-global);
+        transform: scale(0.875);
+        position: relative;
+    }
+
+    /* Toggle Switch Button */
+    .toggle-btn {
+        padding: 6px 16px;
+        border-radius: var(--radius-global);
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-origin: center;
+        cursor: pointer;
+        border: none;
+        outline: none;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Toggle Button - Inactive State (smaller, muted) */
+    .toggle-btn-inactive {
+        color: #9ca3af;
+        background: transparent;
+        transform: scale(0.9);
+    }
+
+    .toggle-btn-inactive:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.05);
+        transform: scale(0.95);
+    }
+
+    /* Toggle Button - Active State (larger, embossed) */
+    .toggle-btn-active {
+        color: var(--color-dark-bg);
+        background: var(--color-primary);
+        box-shadow: var(--shadow-glow), 0 2px 8px rgba(0, 0, 0, 0.3);
+        transform: scale(1.25);
+        z-index: 2;
+    }
+
+    /* Rounded corners using global radius */
+    .rounded-global {
+        border-radius: var(--radius-global);
     }
 
     /* Form Elements */
     .input-field {
-        @apply w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors duration-200;
+        @apply w-full bg-dark-bg border border-dark-border px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors duration-200;
+        border-radius: var(--radius-global);
     }
 
     /* Typography */

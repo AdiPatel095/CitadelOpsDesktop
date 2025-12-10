@@ -2,11 +2,9 @@ package GameParser
 
 import (
 	"CitadelDesktop/Server/Models"
-	"log"
 )
 
 func UpdateCoins(gcuMap map[string]interface{}) {
-	log.Printf("UpdateCoins")
 	coins, ok := gcuMap["C1"].(float64)
 	if ok {
 		Models.GetPlayerGlobalResources().Coins = coins
@@ -15,42 +13,33 @@ func UpdateCoins(gcuMap map[string]interface{}) {
 	if ok {
 		Models.GetPlayerGlobalResources().Rubies = rubies
 	}
-	log.Printf("UpdateCoinComplete")
 }
 
 func UpdateMight(gmuMap map[string]interface{}) {
-	log.Printf("UpdateMight")
 	might, ok := gmuMap["MP"].(float64)
 	if ok {
 		Models.GetPlayerGlobalResources().MightPt = might
 	}
-	log.Printf("UpdateMightComplete")
 }
 
 func UpdateGlory(ufaMap map[string]interface{}) {
-	log.Printf("UpdateGlory")
 	glory, ok := ufaMap["CF"].(float64)
 	if ok {
 		Models.GetPlayerGlobalResources().GloryPt = glory
 	}
-	log.Printf("UpdateGloryComplete")
 }
 
 func UpdateGallantry(ufpMap map[string]interface{}) {
-	log.Printf("UpdateGallantry")
 	gallantry, ok := ufpMap["CFP"].(float64)
 	if ok {
 		Models.GetPlayerGlobalResources().GallanPt = gallantry
 	}
-	log.Printf("UpdateGallantryComplete")
 }
 
 func UpdateSCE(sceArray []interface{}) {
-	log.Printf("UpdateSCE")
 	for _, item := range sceArray {
 		valueArray, ok := item.([]interface{})
 		if !ok || len(valueArray) != 2 {
-			log.Printf("Skipping invalid item in sceArray: %v", item)
 			continue
 		}
 
@@ -58,12 +47,10 @@ func UpdateSCE(sceArray []interface{}) {
 		value, valueOk := valueArray[1].(float64)
 
 		if !labelOk || !valueOk {
-			log.Printf("Skipping item with invalid types in sceArray: %v", valueArray)
 			continue
 		}
 		updateResourceByLabel(label, value)
 	}
-	log.Printf("UpdateSCEComplete")
 }
 
 func updateResourceByLabel(label string, value float64) {

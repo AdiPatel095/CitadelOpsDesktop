@@ -19,7 +19,7 @@ func InitiateDetails(data string) {
 	}
 
 	var wgInitialDetail sync.WaitGroup
-	wgInitialDetail.Add(7)
+	wgInitialDetail.Add(6)
 
 	go func() {
 		defer wgInitialDetail.Done()
@@ -82,15 +82,6 @@ func InitiateDetails(data string) {
 			log.Fatal("gliMap is not a map")
 		}
 		UpdateEquipmentList(gliMap)
-	}()
-
-	go func() {
-		defer wgInitialDetail.Done()
-		gemStorageMap, ok := jsonDataMap["ggm"].(map[string]interface{})
-		if !ok {
-			log.Fatal("gemStorageMap is not a map")
-		}
-		UpdateGemStorage(gemStorageMap)
 	}()
 
 	wgInitialDetail.Wait()

@@ -1,0 +1,47 @@
+steps:
+  # 1. Build the container image
+  # This builds both the frontend and backend due to the multi-stage Dockerfile
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t',
+        '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:$COMMIT_SHA',
+        '.',
+      ]
+
+  # 2. Extract the binary from the Docker image
+  # We create a temporary container, copy the file out, and then remove the container.
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        docker create --name temp-container ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:$COMMIT_SHA
+        docker cp temp-container:/app/server ./server-binary
+        docker rm temp-container
+
+  # 3. Upload the binary to Google Cloud Storage
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      [
+        'storage',
+        'cp',
+        './server-binary',
+        'gs://${_ARTIFACT_BUCKET}/${_IMAGE_NAME}-$COMMIT_SHA',
+      ]
+
+# Store the image name (optional, if you still want to push the image to registry)
+# We can keep this if you want to keep the docker image as well.
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:$COMMIT_SHA'
+
+# Define substitution variables
+substitutions:
+  _REGION: 'us-east1'
+  _REPO_NAME: 'us-service-live-auth'
+  _IMAGE_NAME: 'live-auth-service'
+  _ARTIFACT_BUCKET: 'desktop-binary-1-0-0' # <--- USER MUST SET THIS
+
+options:
+  logging: CLOUD_LOGGING_ONLY
