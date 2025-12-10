@@ -1,0 +1,15 @@
+.git
+.idea
+node_modules
+Client/node_modules
+dist
+Client/dist
+temp.go
+Temp.json
+clean.json
+hardwareID.txt
+loginBytes.json
+Dockerfile
+cloudbuild.yaml
+task.md
+implementation_plan.md

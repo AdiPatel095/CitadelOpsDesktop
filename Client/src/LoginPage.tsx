@@ -1,5 +1,5 @@
 import React from 'react';
-import './Curtain.css'; // We can reuse the curtain styles for the lock page
+
 
 const LoginPage: React.FC = () => {
   return (

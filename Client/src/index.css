@@ -1,68 +1,171 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@import "tailwindcss";
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@theme {
+    --color-primary: #34d399;
+    /* Emerald 400 */
+    --color-primary-hover: #059669;
+    /* Emerald 600 */
+    --color-primary-glow: rgba(52, 211, 153, 0.5);
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+    --color-dark-bg: #0f172a;
+    /* Slate 900 */
+    --color-dark-card: #1e293b;
+    /* Slate 800 */
+    --color-dark-border: #334155;
+    /* Slate 700 */
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+    /* Global border radius for consistent rounded corners */
+    --radius-global: 20px;
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+    --font-sans: "Inter", system-ui, sans-serif;
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+    --shadow-glow: 0 0 15px rgba(52, 211, 153, 0.3);
+    --shadow-glow-active: 0 0 25px rgba(52, 211, 153, 0.5);
+
+    --animate-fade-in: fadeIn 0.3s ease-out forwards;
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+@layer base {
+    body {
+        @apply bg-dark-bg text-gray-100 font-sans antialiased overflow-hidden;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        @apply bg-transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-dark-border rounded-full hover:bg-gray-500 transition-colors;
+    }
+}
+
+@layer components {
+
+    /* Layout Utilities */
+    .app-container {
+        @apply flex flex-col h-screen w-screen overflow-hidden;
+    }
+
+    .main-container {
+        @apply flex flex-1 overflow-hidden relative;
+    }
+
+    .content {
+        @apply flex-1 overflow-y-auto p-6 relative z-0;
+    }
+
+    /* Glassmorphism Panels */
+    .glass-panel {
+        @apply bg-dark-card/80 backdrop-blur-md border border-dark-border shadow-lg;
+        border-radius: var(--radius-global);
+    }
+
+    /* Buttons */
+    .btn-primary {
+        @apply px-4 py-2 bg-primary text-dark-bg font-semibold shadow-glow hover:bg-primary-hover hover:shadow-glow-active active:scale-95 transition-all duration-200;
+        border-radius: var(--radius-global);
+    }
+
+    .btn-ghost {
+        @apply px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 transition-colors duration-200;
+        border-radius: var(--radius-global);
+    }
+
+    .btn-icon {
+        @apply p-2 text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-200;
+        border-radius: var(--radius-global);
+    }
+
+    /* Toggle Switch Container */
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        background: var(--color-dark-bg);
+        padding: 2px;
+        gap: 0px;
+        border-radius: var(--radius-global);
+        transform: scale(0.875);
+        position: relative;
+    }
+
+    /* Toggle Switch Button */
+    .toggle-btn {
+        padding: 6px 16px;
+        border-radius: var(--radius-global);
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-origin: center;
+        cursor: pointer;
+        border: none;
+        outline: none;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Toggle Button - Inactive State (smaller, muted) */
+    .toggle-btn-inactive {
+        color: #9ca3af;
+        background: transparent;
+        transform: scale(0.9);
+    }
+
+    .toggle-btn-inactive:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.05);
+        transform: scale(0.95);
+    }
+
+    /* Toggle Button - Active State (larger, embossed) */
+    .toggle-btn-active {
+        color: var(--color-dark-bg);
+        background: var(--color-primary);
+        box-shadow: var(--shadow-glow), 0 2px 8px rgba(0, 0, 0, 0.3);
+        transform: scale(1.25);
+        z-index: 2;
+    }
+
+    /* Rounded corners using global radius */
+    .rounded-global {
+        border-radius: var(--radius-global);
+    }
+
+    /* Form Elements */
+    .input-field {
+        @apply w-full bg-dark-bg border border-dark-border px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors duration-200;
+        border-radius: var(--radius-global);
+    }
+
+    /* Typography */
+    .heading-1 {
+        @apply text-2xl font-bold text-white tracking-tight;
+    }
+
+    .heading-2 {
+        @apply text-xl font-semibold text-white tracking-tight;
+    }
+
+    .label-text {
+        @apply text-sm font-medium text-gray-400 uppercase tracking-wider;
+    }
 }

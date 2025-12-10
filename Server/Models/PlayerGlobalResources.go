@@ -27,14 +27,14 @@ type PlayerGlobalResources struct {
 }
 
 var (
-	instance *PlayerGlobalResources
-	once     sync.Once
+	instanceGlobalRes *PlayerGlobalResources
+	onceGlobalRes     sync.Once
 )
 
 // GetPlayerGlobalResources returns the singleton instance of PlayerGlobalResources.
 func GetPlayerGlobalResources() *PlayerGlobalResources {
-	once.Do(func() {
-		instance = &PlayerGlobalResources{}
+	onceGlobalRes.Do(func() {
+		instanceGlobalRes = &PlayerGlobalResources{}
 	})
-	return instance
+	return instanceGlobalRes
 }

@@ -1,96 +1,102 @@
 package main
 
 import (
-	"CitadelDesktop/Server/Models"
-	"CitadelDesktop/Server/Router"
-	"CitadelDesktop/Server/Websocket"
-	"context"
+	"CitadelDesktop/Server/Core"
+	"CitadelDesktop/Server/FrontendWebsocket"
+	"CitadelDesktop/Server/GameWebsocket"
+	"CitadelDesktop/Server/License"
+	CitRouter "CitadelDesktop/Server/Router"
+	"embed"
+	"io/fs"
 	"log"
 	"net/http"
+	"sync"
 	"time"
-
-	"github.com/chromedp/chromedp"
-	"github.com/joho/godotenv"
 )
 
-var GlobalPlayerResources Models.PlayerGlobalResources
+//go:embed all:Client/dist
+var frontendAssets embed.FS
 
 func main() {
-	// Load environment variables
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Error loading .env file, please ensure it's in the project root.")
-		return
+	// Initialize the hardware ID (creates file if needed)
+	if err := License.InitRegistration(); err != nil {
+		log.Printf("Warning: Failed to initialize registration: %v", err)
 	}
 
 	// Create WebSocket hub
-	hub := Websocket.NewHub()
-	go hub.Run()
+	FrontendWebsocket.InitHub()
 
-	// Startup frontend server
+	// Set up callbacks for License package to send messages to frontend
+	License.SetSendStatusCallback(FrontendWebsocket.SendRegistrationStatusMessage)
+	License.SetSendCreditsCallback(FrontendWebsocket.SendCreditsUpdateMessage)
+	// Set up callback for GameWebsocket to notify frontend of insufficient credits
+	GameWebsocket.SetInsufficientCreditsCallback(FrontendWebsocket.SendInsufficientCreditsMessage)
+	GameWebsocket.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
+
+	// Startup frontend server (always, so users can see registration status)
 	go StartFrontendService()
-
-	// Startup HTTP BackendServer
-	go StartHTTPService(hub)
 
 	// Give servers a moment to start up
 	time.Sleep(2 * time.Second)
 
-	// Create a new browser context
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false),
-		chromedp.Flag("start-maximized", false),
-		chromedp.NoSandbox,
-	)
-	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
-	defer cancelAlloc()
+	// Wait for registration (polls every 15 seconds)
+	// This blocks until the hardware is registered
+	go func() {
+		if License.WaitForRegistration() {
+			// Start credits sync goroutine
+			go License.StartCreditsSync()
 
-	// Create context for the first tab
-	ctx, cancelFirstTab := chromedp.NewContext(allocCtx)
-	defer cancelFirstTab()
-	var title1 string
-	var title2 string
-
-	err1 := chromedp.Run(ctx,
-		chromedp.Navigate("http://localhost:8080"),
-		chromedp.Title(&title1))
-	if err1 != nil {
-		log.Fatal(err1)
-	}
-
-	// Create context for the second tab
-	ctx2, cancelSecondTab := chromedp.NewContext(ctx)
-	defer cancelSecondTab()
-
-	err2 := chromedp.Run(ctx2,
-		chromedp.Navigate("https://empire.goodgamestudios.com/"),
-		chromedp.Title(&title2))
-	if err2 != nil {
-		log.Fatal(err2)
-	}
-
-	Websocket.SetupWebSocketListener(ctx2, "wss://ep-live-us1-game.goodgamestudios.com/")
-	Websocket.StartMessageProcessor(ctx2, hub)
+			// Now proceed with game connection
+			startGameConnection()
+		}
+	}()
 
 	// Block forever
 	select {}
 }
 
-func StartFrontendService() {
-	fs := http.FileServer(http.Dir("./Client/dist"))
-	http.Handle("/", fs)
+func startGameConnection() {
+	var loginBytes [][]byte
+	var wg sync.WaitGroup
+	wg.Add(1)
 
-	log.Println("Frontend service started on :8080")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Fatal(err)
+	go func() {
+		defer wg.Done()
+		loginBytes = Core.GetLoginBytes()
+	}()
+
+	wg.Wait()
+
+	errInternalSocket := GameWebsocket.NewGameWebsocket()
+	if errInternalSocket != nil {
+		log.Fatal(errInternalSocket)
 	}
+	if loginBytes == nil {
+		log.Fatal("No login bytes")
+	}
+	GameWebsocket.LoginToGame(loginBytes)
 }
 
-func StartHTTPService(hub *Websocket.Hub) {
-	mux := Router.NewRouter(hub)
-	log.Println("Backend service started on :8081")
-	err := http.ListenAndServe(":8081", mux)
+func StartFrontendService() {
+	// Create a sub-filesystem that starts from the 'Client/dist' directory
+	subFS, err := fs.Sub(frontendAssets, "Client/dist")
+	if err != nil {
+		log.Fatal("Failed to create sub-filesystem for frontend assets:", err)
+	}
+
+	mux := CitRouter.NewRouter()
+
+	mux.Handle("/", http.FileServer(http.FS(subFS)))
+	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)
+
+	log.Println("Dashboard available at : http://localhost:8080")
+	// Allow CORS for development if needed, but since we are serving frontend from same origin, it's fine.
+	// Actually, for local dev (vite on 5173), we might need CORS or proxy.
+	// Assuming prod build for now or proxy in vite config.
+
+	// Wrap mux with CORS middleware if necessary, or simple serve
+	// For simplicity, just serve mux.
+	err = http.ListenAndServe(":8080", mux)
 	if err != nil {
 		log.Fatal(err)
 	}
