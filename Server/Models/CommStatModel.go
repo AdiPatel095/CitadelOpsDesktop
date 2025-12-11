@@ -101,8 +101,8 @@ var CommStatUpdaterMap = map[float64]CommDBUpdater{
 	116: func(c *CommStatModel, v float64) { c.CyCbtStr += v },
 	117: func(c *CommStatModel, v float64) { c.FrontLimit += v },
 	118: func(c *CommStatModel, v float64) { c.AllCbtStr += v },
-	119: func(c *CommStatModel, v float64) { c.FlankCbtStr += v },
-	120: func(c *CommStatModel, v float64) { c.FrontCbtStr += v },
+	119: func(c *CommStatModel, v float64) { c.FrontCbtStr += v },
+	120: func(c *CommStatModel, v float64) { c.FlankCbtStr += v },
 	121: func(c *CommStatModel, v float64) { c.MaidenSupp += v },
 
 	//gem stats castle lord

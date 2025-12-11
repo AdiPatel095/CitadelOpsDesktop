@@ -35,7 +35,6 @@ func SendRegistrationStatusMessage(registered bool, hardwareID string, credits i
 
 // SendCreditsUpdateMessage sends credits update to all connected clients
 func SendCreditsUpdateMessage(credits int) {
-	log.Printf("SendCreditsUpdateMessage called with: %d", credits)
 	registrationState.Credits = credits
 	SendFrontendMessage("creditsUpdate", map[string]interface{}{
 		"credits": credits,
@@ -184,4 +183,12 @@ func SellNonRelicGems() int {
 	}
 	log.Printf("Storage Gem amount : %v", len(Models.NonRelicGemIDs))
 	return counter
+}
+
+// SendAlertMessage sends an alert message to the frontend
+func SendAlertMessage(category string, message string) {
+	SendFrontendMessage("alert", map[string]interface{}{
+		"category": category,
+		"message":  message,
+	}, "")
 }

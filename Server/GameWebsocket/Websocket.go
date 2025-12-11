@@ -1,9 +1,9 @@
 package GameWebsocket
 
 import (
+	"CitadelDesktop/Server/Core"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/License"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -54,7 +54,7 @@ func NewGameWebsocket() error {
 	bearer := os.Getenv("AUTH_BEARER")
 	authCookie := os.Getenv("AUTH_COOKIE")
 
-	wssURL := fmt.Sprintf("wss://ep-live-us1-game.goodgamestudios.com/")
+	wssURL := "wss://ep-live-us1-game.goodgamestudios.com/"
 
 	wsHeaders := http.Header{}
 	if origin != "" {
@@ -216,7 +216,7 @@ func SendPreparatoryPackets(ctx context.Context) {
 func LoginToGame(loginBytes [][]byte) bool {
 	maxRetries := 3
 
-	if loginBytes == nil || len(loginBytes) == 0 {
+	if len(loginBytes) == 0 {
 		log.Println("Login failed: login payload is empty.")
 		return false
 	}
@@ -285,11 +285,52 @@ func checkLoginStatus(message []string) {
 			go SendGameLoginStatusFunc(LoginStatus, LoginCooldown)
 		}
 	}
-	if message[4] == "20" {
-		LoginStatus = false
-		LoginCooldown = 9999
-		if SendGameLoginStatusFunc != nil {
-			go SendGameLoginStatusFunc(LoginStatus, LoginCooldown)
+}
+
+func StartGame() {
+	go func() {
+		// Use Core to get login bytes
+		loginBytes := Core.GetLoginBytes()
+		if loginBytes == nil {
+			log.Println("Failed to get login bytes")
+			return
 		}
+
+		if GlobalSocket != nil {
+			log.Println("Game websocket already connected.")
+			return
+		}
+
+		err := NewGameWebsocket()
+		if err != nil {
+			log.Printf("Failed to create game websocket: %v", err)
+			return
+		}
+
+		success := LoginToGame(loginBytes)
+		if success {
+			if SendGameLoginStatusFunc != nil {
+				SendGameLoginStatusFunc(true, 0)
+			}
+			// Trigger initial data load here if needed, or wait for frontend to request it
+			// Based on current architecture, SendInitialData in FrontendWebsocket might need to be triggered or
+			// the frontend will request data via `refreshEquipment` or other calls.
+			// Since `isGameDataReady` in frontend relies on `gameLoginStatus`, setting it to true here is key.
+		}
+	}()
+}
+
+func StopGame() {
+	if GlobalSocket != nil {
+		GlobalSocket.Close()
+		GlobalSocket = nil
+	}
+	// Cancel context? We need to store the cancel function from NewGameWebsocket
+	// For now, closing the socket should trigger the read loop to exit, which calls cancel.
+
+	LoginStatus = false
+	LoginCooldown = 0
+	if SendGameLoginStatusFunc != nil {
+		SendGameLoginStatusFunc(false, 0)
 	}
 }

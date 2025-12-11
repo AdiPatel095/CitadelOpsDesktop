@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const Header: React.FC = () => {
-  const { credits, isLoading, gameLoggedIn, gameLoginCooldown } = useAuth();
+  const { credits, isLoading, gameLoggedIn, gameLoginCooldown, startGame, stopGame } = useAuth();
 
   return (
     <header className="h-16 bg-dark-card/80 backdrop-blur-md border-b border-dark-border flex items-center px-6 fixed top-0 left-0 right-0 z-50">
@@ -29,32 +29,52 @@ const Header: React.FC = () => {
             </div>
           </div>
 
-          {/* Device indicator */}
-          {/* Device indicator */}
-          <div className={`rounded-global flex items-center gap-2 px-3 py-1.5 border transition-colors duration-300 ${gameLoggedIn
-            ? 'bg-emerald-500/10 border-emerald-500/20'
-            : gameLoginCooldown > 0
-              ? 'bg-yellow-500/10 border-yellow-500/20'
-              : 'bg-red-500/10 border-red-500/20'
-            }`}>
-            <div className={`w-2 h-2 rounded-full shadow-[0_0_8px] transition-colors duration-300 ${gameLoggedIn
-              ? 'bg-emerald-500 shadow-emerald-500/80'
+          {/* Device indicator and Start/Stop controls */}
+          <div className="flex items-center gap-3">
+            {/* Start/Stop Button */}
+            {!gameLoggedIn ? (
+              <button
+                onClick={startGame}
+                className="px-5 py-2 rounded-global bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />
+                Start Game
+              </button>
+            ) : (
+              <button
+                onClick={stopGame}
+                className="px-5 py-2 rounded-global bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-red-500/20 active:scale-95"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />
+                Stop Game
+              </button>
+            )}
+
+            <div className={`rounded-global flex items-center gap-2 px-3 py-1.5 border transition-colors duration-300 ${gameLoggedIn
+              ? 'bg-emerald-500/10 border-emerald-500/20'
               : gameLoginCooldown > 0
-                ? 'bg-yellow-500 shadow-yellow-500/80'
-                : 'bg-red-500 shadow-red-500/80'
-              }`} />
-            <span className={`text-xs font-medium transition-colors duration-300 ${gameLoggedIn
-              ? 'text-emerald-500'
-              : gameLoginCooldown > 0
-                ? 'text-yellow-500'
-                : 'text-red-500'
+                ? 'bg-yellow-500/10 border-yellow-500/20'
+                : 'bg-red-500/10 border-red-500/20'
               }`}>
-              {gameLoggedIn
-                ? 'Connected'
+              <div className={`w-2 h-2 rounded-full shadow-[0_0_8px] transition-colors duration-300 ${gameLoggedIn
+                ? 'bg-emerald-500 shadow-emerald-500/80'
                 : gameLoginCooldown > 0
-                  ? `Cooldown (${gameLoginCooldown}s)`
-                  : 'Disconnected'}
-            </span>
+                  ? 'bg-yellow-500 shadow-yellow-500/80'
+                  : 'bg-red-500 shadow-red-500/80'
+                }`} />
+              <span className={`text-xs font-medium transition-colors duration-300 ${gameLoggedIn
+                ? 'text-emerald-500'
+                : gameLoginCooldown > 0
+                  ? 'text-yellow-500'
+                  : 'text-red-500'
+                }`}>
+                {gameLoggedIn
+                  ? 'Connected'
+                  : gameLoginCooldown > 0
+                    ? `Cooldown (${gameLoginCooldown}s)`
+                    : 'Disconnected'}
+              </span>
+            </div>
           </div>
         </div>
       </div>

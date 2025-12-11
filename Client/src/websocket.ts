@@ -85,6 +85,17 @@ class FrontendWebsocketService {
       },
     };
     this.listeners.forEach((listener) => listener(mockResources));
+
+    // Mock alert
+    setTimeout(() => {
+      this.listeners.forEach((listener) => listener({
+        type: 'alert',
+        payload: {
+          category: 'green',
+          message: 'Successfully connected and synced with CitadelOps Network.'
+        }
+      }));
+    }, 2000);
   }
 
   public addMessageListener(listener: MessageListener) {
@@ -127,6 +138,18 @@ class FrontendWebsocketService {
       default:
         return 'Unknown';
     }
+  }
+
+  public startGame() {
+    this.sendMessage({ type: 'startGame' });
+  }
+
+  public stopGame() {
+    this.sendMessage({ type: 'stopGame' });
+  }
+
+  public refreshEquipment() {
+    this.sendMessage({ type: 'refreshEquipment' });
   }
 }
 

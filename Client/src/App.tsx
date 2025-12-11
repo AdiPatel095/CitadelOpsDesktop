@@ -8,6 +8,7 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import RegistrationPending from './components/RegistrationPending';
 import InsufficientCreditsModal from './components/InsufficientCreditsModal';
+import { Alerts } from './components/Alerts';
 
 import { ResourceProvider } from "./currency/context/ResourceContext.tsx";
 import { type ViewId } from './config/navigation';
@@ -65,6 +66,7 @@ const AppContent: React.FC = () => {
       </main>
 
       <InsufficientCreditsModal />
+      <Alerts />
     </div>
   );
 };

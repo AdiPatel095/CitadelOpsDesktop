@@ -1,7 +1,6 @@
 package main
 
 import (
-	"CitadelDesktop/Server/Core"
 	"CitadelDesktop/Server/FrontendWebsocket"
 	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/License"
@@ -10,7 +9,6 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 )
 
@@ -41,40 +39,19 @@ func main() {
 
 	// Wait for registration (polls every 15 seconds)
 	// This blocks until the hardware is registered
+	// Wait for registration (polls every 15 seconds)
+	// This blocks until the hardware is registered
+	// Wait for registration (polls every 15 seconds)
+	// This blocks until the hardware is registered
 	go func() {
 		if License.WaitForRegistration() {
 			// Start credits sync goroutine
 			go License.StartCreditsSync()
-
-			// Now proceed with game connection
-			startGameConnection()
 		}
 	}()
 
 	// Block forever
 	select {}
-}
-
-func startGameConnection() {
-	var loginBytes [][]byte
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-		loginBytes = Core.GetLoginBytes()
-	}()
-
-	wg.Wait()
-
-	errInternalSocket := GameWebsocket.NewGameWebsocket()
-	if errInternalSocket != nil {
-		log.Fatal(errInternalSocket)
-	}
-	if loginBytes == nil {
-		log.Fatal("No login bytes")
-	}
-	GameWebsocket.LoginToGame(loginBytes)
 }
 
 func StartFrontendService() {

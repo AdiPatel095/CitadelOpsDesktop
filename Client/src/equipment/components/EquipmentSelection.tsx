@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import EquipmentStats from './EquipmentStats';
+import GameButton from '../../components/GameButton';
 import { FrontendWebsocket } from '../../websocket';
 
 import { type CommStat, type CastStat } from '../models/equipment';
@@ -185,18 +186,18 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
 
                 {/* Sell Buttons - pushed to right */}
                 <div className="ml-auto flex gap-2">
-                    <button
+                    <GameButton
                         onClick={() => openSellModal('Gems')}
                         className="px-4 py-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 font-medium text-sm rounded-global hover:bg-amber-500/30 hover:border-amber-500/50 active:scale-95 transition-all duration-200"
                     >
                         Sell Gems
-                    </button>
-                    <button
+                    </GameButton>
+                    <GameButton
                         onClick={() => openSellModal('Equipment')}
                         className="px-4 py-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 font-medium text-sm rounded-global hover:bg-amber-500/30 hover:border-amber-500/50 active:scale-95 transition-all duration-200"
                     >
                         Sell Equipment
-                    </button>
+                    </GameButton>
                 </div>
             </div>
 

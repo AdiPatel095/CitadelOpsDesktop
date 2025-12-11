@@ -8,6 +8,9 @@ interface AuthContextType {
   credits: number;
   gameLoggedIn: boolean;
   gameLoginCooldown: number;
+  isGameDataReady: boolean;
+  startGame: () => void;
+  stopGame: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,6 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [credits, setCredits] = useState(0);
   const [gameLoggedIn, setGameLoggedIn] = useState(false);
   const [gameLoginCooldown, setGameLoginCooldown] = useState(0);
+  const [isGameDataReady, setIsGameDataReady] = useState(false);
 
   useEffect(() => {
     const handleMessage = (message: any) => {
@@ -35,6 +39,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('Game login status received:', message.payload);
         setGameLoggedIn(message.payload.loggedIn);
         setGameLoginCooldown(message.payload.cooldown);
+        if (message.payload.loggedIn) {
+          setIsGameDataReady(true);
+        } else {
+          setIsGameDataReady(false);
+        }
       }
     };
 
@@ -46,8 +55,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+
+    if (gameLoginCooldown > 0) {
+      interval = setInterval(() => {
+        setGameLoginCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [gameLoginCooldown]);
+
+  const startGame = () => {
+    FrontendWebsocket.startGame();
+  };
+
+  const stopGame = () => {
+    FrontendWebsocket.stopGame();
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, hardwareID, credits, gameLoggedIn, gameLoginCooldown }}>
+    <AuthContext.Provider value={{
+      isAuthenticated,
+      isLoading,
+      hardwareID,
+      credits,
+      gameLoggedIn,
+      gameLoginCooldown,
+      isGameDataReady,
+      startGame,
+      stopGame
+    }}>
       {children}
     </AuthContext.Provider>
   );

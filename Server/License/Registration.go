@@ -23,17 +23,6 @@ const registrationPollInterval = 1 * time.Second
 const creditsSyncInterval = 1 * time.Second
 const httpTimeout = 10 * time.Second
 
-// getHardwareFilePath returns the absolute path to the hardwareID file
-// relative to the executable directory
-func getHardwareFilePath() string {
-	ex, err := os.Executable()
-	if err != nil {
-		// Fallback to current working directory if executable path fails
-		return hardwareFile
-	}
-	return filepath.Join(filepath.Dir(ex), hardwareFile)
-}
-
 // httpClient is a shared HTTP client with timeout for all cloud API requests
 var httpClient = &http.Client{
 	Timeout: httpTimeout,
@@ -144,6 +133,15 @@ func parseHardwareID(id string) (fingerprint, instanceID string, valid bool) {
 	return "", "", false
 }
 
+func getHWFilePath() string {
+	ex, err := os.Executable()
+	if err != nil {
+		// Fallback to current working directory if executable path fails
+		return hardwareFile
+	}
+	return filepath.Join(filepath.Dir(ex), hardwareFile)
+}
+
 // InitRegistration initializes the hardware ID (creates file if needed)
 // Logic:
 // 1. Read hardwareID.txt
@@ -158,7 +156,8 @@ func InitRegistration() error {
 		log.Printf("Warning: Could not get machine fingerprint: %v", err)
 	}
 
-	hwFile := getHardwareFilePath()
+	hwFile := getHWFilePath()
+
 	log.Printf("Hardware License File Path: %s", hwFile)
 
 	data, err := os.ReadFile(hwFile)
@@ -340,17 +339,51 @@ func SendCreditsUpdate() {
 // and listens for credit usage from the CreditUsageChannel
 func StartCreditsSync() {
 	// Poll every 10 seconds for credit updates
-	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
+	syncTicker := time.NewTicker(10 * time.Second)
+	defer syncTicker.Stop()
+
+	// Flush buffer every 1.5 seconds
+	flushTicker := time.NewTicker(1500 * time.Millisecond)
+	defer flushTicker.Stop()
+
+	// Local buffer for credit usage: Type -> Amount
+	usageBuffer := make(map[string]int)
 
 	for {
 		select {
-		case <-ticker.C:
+		case <-syncTicker.C:
 			// Periodic sync with cloud
 			go syncCreditsFromCloud()
+
+		case <-flushTicker.C:
+			// Flush buffered usage
+			if len(usageBuffer) > 0 {
+				for usageType, amount := range usageBuffer {
+					if amount > 0 {
+						// We launch a goroutine for each type to not block the loop, similar to before
+						// but now it's one request per type per 1.5s instead of per item.
+						// Capture variables for the goroutine
+						t := usageType
+						a := amount
+						// We need the hardware ID. We can get it safely.
+						// Note: handling credit usage previously did RLock.
+						// We can do it inside the helper or here.
+						// Let's do it here to pass it to the function.
+						CurrentRegistration.mu.RLock()
+						hwID := CurrentRegistration.HardwareID
+						CurrentRegistration.mu.RUnlock()
+
+						go updateCloudCredits(hwID, CreditUsage{Amount: a, Type: t})
+					}
+				}
+				// Clear buffer
+				usageBuffer = make(map[string]int)
+			}
+
 		case usage := <-CreditUsageChannel:
-			// Handle credit usage
-			handleCreditUsage(usage)
+			// Buffer the usage
+			usageBuffer[usage.Type] += usage.Amount
+
 		case <-stopCreditsSync:
 			log.Println("Credits sync stopped")
 			return
@@ -398,19 +431,6 @@ func syncCreditsFromCloud() {
 	}
 
 	CurrentRegistration.mu.Unlock()
-}
-
-// handleCreditUsage processes a credit usage and updates the cloud
-func handleCreditUsage(usage CreditUsage) {
-	CurrentRegistration.mu.RLock()
-	hardwareID := CurrentRegistration.HardwareID
-	CurrentRegistration.mu.RUnlock()
-
-	// Local deduction is now handled in UseCredits to prevent race conditions
-	// We just need to sync with cloud here
-
-	// Update cloud backend
-	go updateCloudCredits(hardwareID, usage)
 }
 
 // updateCloudCredits notifies the cloud of credit usage

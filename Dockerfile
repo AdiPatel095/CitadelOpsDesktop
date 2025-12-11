@@ -25,7 +25,7 @@ COPY . .
 COPY --from=frontend-builder /app/Client/dist ./Client/dist
 
 # Build the Go application into a static executable.
-RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-s -w' -o /app/server .
+RUN CGO_ENABLED=0 GOOS=windows go build -a -ldflags '-s -w' -o /app/CitadelDesktop.exe .
 
 # --- Stage 3: The Final Stage ---
 FROM alpine:latest
@@ -37,10 +37,10 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
 # Copy the compiled binary from the 'builder' stage
-COPY --from=builder /app/server /app/server
+COPY --from=builder /app/CitadelDesktop.exe /app/CitadelDesktop.exe
 
 # Expose port (optional, mostly for documentation)
 EXPOSE 8080
 
 # The command to run your application
-ENTRYPOINT [ "/app/server" ]
+ENTRYPOINT [ "/app/CitadelDesktop.exe" ]

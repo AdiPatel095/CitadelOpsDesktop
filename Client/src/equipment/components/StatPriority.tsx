@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Icons } from '../../components/Icons';
-import { statDisplayName, commanderStatGroups, castellanStatGroups } from '../models/equipment';
+import GameButton from '../../components/GameButton';
+import { statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/equipment';
 import { LicenseService } from '../../services/LicenseService';
 
 const RECONFIGURE_COST = 10000;
@@ -343,7 +344,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                                 {Object.entries(groupedAvailableStats).map(([groupName, stats]) => (
                                     <div key={groupName}>
                                         <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider bg-dark-bg/80 sticky top-0">
-                                            {groupName}
+                                            {statGroupDisplayName[groupName] || groupName}
                                         </div>
                                         {stats.map(stat => (
                                             <button
@@ -426,7 +427,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                         <p className="text-xs text-red-400">{reconfigureError}</p>
                     </div>
                 )}
-                <button
+                <GameButton
                     onClick={handleReconfigure}
                     disabled={!hasEnoughCredits || isReconfiguring || totalStats === 0}
                     className={`
@@ -453,7 +454,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                             <span>Reconfigure {equipmentMode}</span>
                         </>
                     )}
-                </button>
+                </GameButton>
                 <div className="mt-2 text-center">
                     <span className={`text-xs ${hasEnoughCredits ? 'text-gray-500' : 'text-red-400'}`}>
                         Cost: {RECONFIGURE_COST.toLocaleString()} credits
