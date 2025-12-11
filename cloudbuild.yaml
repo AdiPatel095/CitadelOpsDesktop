@@ -31,10 +31,6 @@ steps:
         'gs://${_ARTIFACT_BUCKET}/${_IMAGE_NAME}-${_VERSION}.exe',
       ]
 
-# Store the image name (optional, if you still want to push the image to registry)
-# We can keep this if you want to keep the docker image as well.
-images:
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_VERSION}'
 
 # Define substitution variables
 substitutions:
