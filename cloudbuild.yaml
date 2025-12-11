@@ -6,7 +6,7 @@ steps:
       [
         'build',
         '-t',
-        '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_VERSION}',
+        '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}',
         '.',
       ]
 
