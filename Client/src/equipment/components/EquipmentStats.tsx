@@ -111,7 +111,7 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
         {stats && Object.entries(statGroups).map(([groupName, statKeys]) => {
           const visibleStats = statKeys.filter(key => {
             const value = processedStats[key];
-            return !(equipmentMode === 'Commander' && (value === undefined || value === 0));
+            return !(value === undefined || value === 0);
           });
 
           if (visibleStats.length === 0) return null;

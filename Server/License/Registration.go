@@ -327,7 +327,6 @@ func SendCreditsUpdate() {
 	CurrentRegistration.mu.RLock()
 	defer CurrentRegistration.mu.RUnlock()
 
-	log.Printf("Sending credits update: %d", CurrentRegistration.Credits)
 	SendCreditsFunc(CurrentRegistration.Credits)
 }
 

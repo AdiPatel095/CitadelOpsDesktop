@@ -15,7 +15,7 @@ const EquipmentView: React.FC = () => {
 
   const getSelectionItems = (): (CommStat | CastStat)[] => {
     if (equipmentMode === 'Commander') {
-      return equipmentData.commStats.filter(c => c !== null && c.id !== 0);
+      return equipmentData.commStats.filter(c => c !== null);
     }
     if (equipmentMode === 'Castellan') {
       return equipmentData.castellanStats;
