@@ -23,6 +23,17 @@ const registrationPollInterval = 1 * time.Second
 const creditsSyncInterval = 1 * time.Second
 const httpTimeout = 10 * time.Second
 
+// getHardwareFilePath returns the absolute path to the hardwareID file
+// relative to the executable directory
+func getHardwareFilePath() string {
+	ex, err := os.Executable()
+	if err != nil {
+		// Fallback to current working directory if executable path fails
+		return hardwareFile
+	}
+	return filepath.Join(filepath.Dir(ex), hardwareFile)
+}
+
 // httpClient is a shared HTTP client with timeout for all cloud API requests
 var httpClient = &http.Client{
 	Timeout: httpTimeout,
@@ -141,21 +152,16 @@ func parseHardwareID(id string) (fingerprint, instanceID string, valid bool) {
 // 4. If cloud check passes, keep it
 // 5. If any check fails, regenerate and register new
 func InitRegistration() error {
-	// Debug: perform absolute path check
-	absPath, absErr := filepath.Abs(hardwareFile)
-	if absErr == nil {
-		log.Printf("Hardware License File Path: %s", absPath)
-	} else {
-		log.Printf("Hardware License File Path (relative): %s", hardwareFile)
-	}
-
 	// 1. Get current fingerprint
 	currentFingerprint, err := getMachineFingerprint()
 	if err != nil {
 		log.Printf("Warning: Could not get machine fingerprint: %v", err)
 	}
 
-	data, err := os.ReadFile(hardwareFile)
+	hwFile := getHardwareFilePath()
+	log.Printf("Hardware License File Path: %s", hwFile)
+
+	data, err := os.ReadFile(hwFile)
 	storedID := ""
 	if err == nil {
 		storedID = strings.TrimSpace(string(data))
@@ -206,8 +212,8 @@ func InitRegistration() error {
 	}
 
 	// Write to file
-	if err := os.WriteFile(hardwareFile, []byte(newHardwareID), 0600); err != nil {
-		log.Printf("Error writing to '%s': %v", hardwareFile, err)
+	if err := os.WriteFile(hwFile, []byte(newHardwareID), 0600); err != nil {
+		log.Printf("Error writing to '%s': %v", hwFile, err)
 		return err
 	}
 

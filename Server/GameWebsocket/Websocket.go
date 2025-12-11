@@ -243,6 +243,9 @@ func LoginToGame(loginBytes [][]byte) bool {
 		}
 
 		if LoginCooldown > 0 {
+			if LoginCooldown == 9999 {
+				log.Println("Wrong password, please delete login file and try again !!!")
+			}
 			waitDuration := time.Duration(LoginCooldown+2) * time.Second
 			log.Printf("Login failed with cooldown. Waiting for %v to retry...", waitDuration)
 			time.Sleep(waitDuration)

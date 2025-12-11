@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -23,13 +24,25 @@ type LoginData struct {
 	Vck   []byte `json:"vck"`
 }
 
+// getLoginFilePath returns the absolute path to the loginBytes file
+// relative to the executable directory
+func getLoginFilePath() string {
+	ex, err := os.Executable()
+	if err != nil {
+		// Fallback to current working directory if executable path fails
+		return loginFilename
+	}
+	return filepath.Join(filepath.Dir(ex), loginFilename)
+}
+
 // GetLoginBytes reads login information from loginFilename.
 // If the file does not exist, it calls getLoginBytes to create it by prompting the user to log in.
 func GetLoginBytes() [][]byte {
-	data, err := os.ReadFile(loginFilename)
+	loginPath := getLoginFilePath()
+	data, err := os.ReadFile(loginPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Printf("'%s' not found. Starting login process to create it.", loginFilename)
+			log.Printf("'%s' not found. Starting login process to create it.", loginPath)
 			loginBytesSlices := getLoginBytes()
 			if len(loginBytesSlices) < 3 {
 				log.Println("Failed to retrieve login bytes. Aborting.")
@@ -49,20 +62,20 @@ func GetLoginBytes() [][]byte {
 				return nil
 			}
 
-			if err := os.WriteFile(loginFilename, data, 0600); err != nil {
-				log.Printf("Error writing to '%s': %v", loginFilename, err)
+			if err := os.WriteFile(loginPath, data, 0600); err != nil {
+				log.Printf("Error writing to '%s': %v", loginPath, err)
 				return nil
 			}
-			log.Printf("Successfully created and wrote login data to '%s'", loginFilename)
+			log.Printf("Successfully created and wrote login data to '%s'", loginPath)
 		} else {
-			log.Printf("Error reading '%s': %v", loginFilename, err)
+			log.Printf("Error reading '%s': %v", loginPath, err)
 			return nil
 		}
 	}
 
 	var storedLoginData LoginData
 	if err := json.Unmarshal(data, &storedLoginData); err != nil {
-		log.Printf("Error unmarshalling login data from '%s': %v", loginFilename, err)
+		log.Printf("Error unmarshalling login data from '%s': %v", loginPath, err)
 		return nil
 	}
 
