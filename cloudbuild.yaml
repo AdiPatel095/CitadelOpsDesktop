@@ -6,7 +6,7 @@ steps:
       [
         'build',
         '-t',
-        '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:$COMMIT_SHA',
+        '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_VERSION}',
         '.',
       ]
 
@@ -34,12 +34,12 @@ steps:
 # Store the image name (optional, if you still want to push the image to registry)
 # We can keep this if you want to keep the docker image as well.
 images:
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:$COMMIT_SHA'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_VERSION}'
 
 # Define substitution variables
 substitutions:
   _REGION: 'us-east1'
-  _REPO_NAME: 'us-service-live-auth'
+  _REPO_NAME: 'us-service-desktop'
   _IMAGE_NAME: 'CitadelOpsDesktop'
   _VERSION: '1.0.0'
   _ARTIFACT_BUCKET: 'desktop-binary-1-0-0'
