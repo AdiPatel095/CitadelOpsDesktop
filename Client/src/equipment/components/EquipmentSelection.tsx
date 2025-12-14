@@ -15,7 +15,7 @@ interface EquipmentSelectionProps {
     setCombatMode: (mode: CombatMode) => void;
     selectedIndex: number | null;
     setSelectedIndex: (index: number) => void;
-    selectionItems: (CommStat | CastStat)[];
+    fullArray: (CommStat | CastStat | null)[];  // Full array with nulls
     selectedItem: CommStat | CastStat | null;
 }
 
@@ -120,7 +120,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
     setCombatMode,
     selectedIndex,
     setSelectedIndex,
-    selectionItems,
+    fullArray,
     selectedItem,
 }) => {
     const [showSellModal, setShowSellModal] = useState(false);
@@ -206,39 +206,43 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                 {/* Selection Sidebar */}
                 <div className="w-56 border-r border-dark-border overflow-y-auto">
                     <div className="p-2 space-y-1">
-                        {selectionItems.length === 0 ? (
+                        {fullArray.every(item => item === null) ? (
                             <div className="px-3 py-4 text-center text-gray-500 text-sm">
                                 No {equipmentMode.toLowerCase()}s available
                             </div>
                         ) : (
-                            selectionItems.map((item, index) => (
-                                <div
-                                    key={index}
-                                    className={`
-                                        rounded-global px-3 py-2.5 cursor-pointer transition-all duration-200
-                                        ${selectedIndex === index
-                                            ? 'bg-primary/10 text-primary border border-primary/30 shadow-[0_0_10px_rgba(52,211,153,0.1)]'
-                                            : 'text-gray-300 hover:bg-white/5 hover:text-white border border-transparent'
-                                        }
-                                    `}
-                                    onClick={() => setSelectedIndex(index)}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <span className={`
-                                            rounded-global w-6 h-6 flex items-center justify-center text-xs font-bold
+                            fullArray.map((item, index) => {
+                                // Skip null items during rendering
+                                if (item === null) return null;
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`
+                                            rounded-global px-3 py-2.5 cursor-pointer transition-all duration-200
                                             ${selectedIndex === index
-                                                ? 'bg-primary text-dark-bg'
-                                                : 'bg-dark-border text-gray-400'
+                                                ? 'bg-primary/10 text-primary border border-primary/30 shadow-[0_0_10px_rgba(52,211,153,0.1)]'
+                                                : 'text-gray-300 hover:bg-white/5 hover:text-white border border-transparent'
                                             }
-                                        `}>
-                                            {index + 1}
-                                        </span>
-                                        <span className="text-sm font-medium truncate">
-                                            {item ? item.name : 'Loading...'}
-                                        </span>
+                                        `}
+                                        onClick={() => setSelectedIndex(index)}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className={`
+                                                rounded-global w-6 h-6 flex items-center justify-center text-xs font-bold
+                                                ${selectedIndex === index
+                                                    ? 'bg-primary text-dark-bg'
+                                                    : 'bg-dark-border text-gray-400'
+                                                }
+                                            `}>
+                                                {index + 1}
+                                            </span>
+                                            <span className="text-sm font-medium truncate">
+                                                {item.name}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </div>
@@ -249,6 +253,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                         equipmentMode={equipmentMode}
                         combatMode={combatMode}
                         selectedItem={selectedItem}
+                        selectedIndex={selectedIndex}
                     />
                 </div>
             </div>

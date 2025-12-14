@@ -64,6 +64,12 @@ func SendInitialData(client *Client) {
 		"credits":    registrationState.Credits,
 	}, "")
 
+	// Send current game login status so frontend knows if game is connected after page refresh
+	client.SendToClient("gameLoginStatus", map[string]interface{}{
+		"loggedIn": GameWebsocket.LoginStatus,
+		"cooldown": GameWebsocket.LoginCooldown,
+	}, "")
+
 	// Only send game data if registered
 	if !registrationState.Registered {
 		return
@@ -157,7 +163,6 @@ func SellNonRelicEquipment() int {
 
 	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
-	log.Printf("Storage equipment amount : %v ", len(Models.EquipmentStorage))
 	for _, equipment := range Models.EquipmentStorage {
 		if equipment.EquipRarity != 5 && equipment.EquipRarity != 15 {
 			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
@@ -173,7 +178,6 @@ func SellNonRelicGems() int {
 
 	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
 	time.Sleep(2 * time.Second)
-	log.Printf("Storage gem amount : %v ", len(Models.NonRelicGemIDs))
 	for id, count := range Models.NonRelicGemIDs {
 		for i := 0; i < int(count); i++ {
 			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%03.0f,"RGEM":0,"LFID":-1}%%`, id)

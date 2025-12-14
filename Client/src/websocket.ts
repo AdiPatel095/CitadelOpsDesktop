@@ -151,6 +151,43 @@ class FrontendWebsocketService {
   public refreshEquipment() {
     this.sendMessage({ type: 'refreshEquipment' });
   }
+
+  public refreshSingleCommander(equipmentMode: 'Commander' | 'Castellan', targetIndex: number) {
+    this.sendMessage({
+      type: 'refreshSingleCommander',
+      payload: { equipmentMode, targetIndex }
+    });
+  }
+
+  public sendReconfigureLoadout(payload: {
+    hardwareID: string;
+    equipmentMode: 'Commander' | 'Castellan';
+    combatMode: 'PvP' | 'PvE';
+    interTierMultiplier: number;
+    intraTierMultiplier: number;
+    targetIndex: number;
+    stats: Array<{
+      stat: string;
+      tier: number;
+      position: number;
+    }>;
+  }) {
+    this.sendMessage({
+      type: 'reconfigureLoadout',
+      payload: payload
+    });
+  }
+
+  public sendConfirmReconfigure(targetIndex: number, currentLoadout: any, newLoadout: any) {
+    this.sendMessage({
+      type: 'confirmReconfigure',
+      payload: {
+        targetIndex,
+        currentLoadout,
+        newLoadout
+      }
+    });
+  }
 }
 
 export const FrontendWebsocket = new FrontendWebsocketService();

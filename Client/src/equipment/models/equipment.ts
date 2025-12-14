@@ -224,9 +224,9 @@ export const statGroupDisplayName: { [key: string]: string } = {
 };
 
 export const commanderStatGroups = {
-    core: ['meleeCbtStr', 'rangeCbtStr', 'cyCbtStr', 'wallStr', 'gateStr', 'moatStr', 'flankLimit', 'frontLimit'],
-    relic2: ['frontCbtStr', 'flankCbtStr', 'allCbtStr', 'maidenSupp'],
-    hero: ['meadStr', 'horrorStr', 'eliteStr', 'relicStr', 'beserkerStr', 'wave', 'cooldown'],
+    core: ['meleeCbtStr', 'rangeCbtStr', 'cyCbtStr', 'wallStr', 'gateStr', 'moatStr', 'flankLimit', 'frontLimit', 'wave', 'maidenSupp'],
+    relic2: ['frontCbtStr', 'flankCbtStr', 'allCbtStr'],
+    hero: ['meadStr', 'horrorStr', 'eliteStr', 'relicStr', 'beserkerStr', 'cooldown'],
     specialStats: ['glory', 'later', 'fire'],
     miscellaneous: ['travel', 'loot'],
 };

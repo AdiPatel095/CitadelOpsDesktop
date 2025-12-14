@@ -13,9 +13,10 @@ const EquipmentView: React.FC = () => {
   const [combatMode, setCombatMode] = useState<CombatMode>('PvP');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  const getSelectionItems = (): (CommStat | CastStat)[] => {
+  // Keep full arrays - filtering happens only during rendering
+  const getFullArray = (): (CommStat | CastStat | null)[] => {
     if (equipmentMode === 'Commander') {
-      return equipmentData.commStats.filter(c => c !== null);
+      return equipmentData.commStats;
     }
     if (equipmentMode === 'Castellan') {
       return equipmentData.castellanStats;
@@ -23,16 +24,21 @@ const EquipmentView: React.FC = () => {
     return [];
   };
 
-  const selectionItems = getSelectionItems();
-  const selectedItem = selectedIndex !== null ? selectionItems[selectedIndex] : null;
+  const fullArray = getFullArray();
+  // selectedIndex is the actual 0-based array index
+  const selectedItem = selectedIndex !== null ? fullArray[selectedIndex] : null;
 
+  // Find first non-null item for default selection
   useEffect(() => {
-    if (selectionItems.length > 0 && selectedIndex === null) {
-      setSelectedIndex(0);
-    } else if (selectionItems.length === 0) {
-      setSelectedIndex(null);
+    if (selectedIndex === null || fullArray[selectedIndex] === null) {
+      const firstValidIndex = fullArray.findIndex(item => item !== null);
+      if (firstValidIndex !== -1) {
+        setSelectedIndex(firstValidIndex);
+      } else {
+        setSelectedIndex(null);
+      }
     }
-  }, [selectionItems, selectedIndex]);
+  }, [fullArray, selectedIndex]);
 
   return (
     <div className="flex gap-6 h-[calc(100vh-8rem)]">
@@ -45,7 +51,7 @@ const EquipmentView: React.FC = () => {
           setCombatMode={setCombatMode}
           selectedIndex={selectedIndex}
           setSelectedIndex={setSelectedIndex}
-          selectionItems={selectionItems}
+          fullArray={fullArray}
           selectedItem={selectedItem}
         />
       </div>
@@ -57,6 +63,7 @@ const EquipmentView: React.FC = () => {
           combatMode={combatMode}
           credits={credits}
           hardwareID={hardwareID}
+          selectedIndex={selectedIndex}
         />
       </div>
     </div>

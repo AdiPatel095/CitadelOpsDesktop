@@ -422,7 +422,6 @@ func syncCreditsFromCloud() {
 
 	if CurrentRegistration.Credits != response.Credits {
 		CurrentRegistration.Credits = response.Credits
-		log.Printf("Credits synced: %d", CurrentRegistration.Credits)
 
 		// Unlock before sending to avoid deadlock and allow other readers
 		CurrentRegistration.mu.Unlock()

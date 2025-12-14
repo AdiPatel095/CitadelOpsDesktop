@@ -4,7 +4,6 @@ import (
 	"CitadelDesktop/Server/FrontendWebsocket"
 	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/License"
-	CitRouter "CitadelDesktop/Server/Router"
 	"embed"
 	"io/fs"
 	"log"
@@ -61,7 +60,7 @@ func StartFrontendService() {
 		log.Fatal("Failed to create sub-filesystem for frontend assets:", err)
 	}
 
-	mux := CitRouter.NewRouter()
+	mux := http.NewServeMux()
 
 	mux.Handle("/", http.FileServer(http.FS(subFS)))
 	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)

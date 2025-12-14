@@ -109,6 +109,12 @@ export const EquipmentProvider: React.FC<EquipmentProviderProps> = ({ children }
                     }
                     break;
 
+                case 'refreshEquipment':
+                    // Backend notifies us to refresh all equipment data
+                    console.log('Received refreshEquipment notification from backend');
+                    FrontendWebsocket.refreshEquipment();
+                    break;
+
                 default:
                     // console.log('Unknown websocket message type:', message.type);
                     break;

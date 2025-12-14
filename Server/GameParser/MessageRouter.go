@@ -1,5 +1,10 @@
 package GameParser
 
+import (
+	"encoding/json"
+	"log"
+)
+
 func MessageRouter(messageParts []string) {
 	indexedList := []string{"gie", "gbl", "dcl", "gcu", "gmu", "gpa", "grc", "sce", "gbd", "sei"}
 	messageType := messageParts[2]
@@ -16,5 +21,19 @@ func MessageRouter(messageParts []string) {
 	}
 	if messageType == "ggm" {
 		UpdateGemStorage(messageParts[5])
+	}
+	// Log equipment equip/unequip responses
+	if messageType == "eeq" {
+		log.Printf("GAME RESPONSE (EQUIPMENT EQUIP/UNEQUIP): %v", messageParts)
+	}
+	// Log gem equip/unequip responses
+	if messageType == "ege" {
+		log.Printf("GAME RESPONSE (GEM EQUIP/UNEQUIP): %v", messageParts)
+	}
+
+	if messageType == "gli" {
+		var gliMap map[string]interface{}
+		_ = json.Unmarshal([]byte(messageParts[5]), &gliMap)
+		UpdateEquipmentList(gliMap)
 	}
 }

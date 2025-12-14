@@ -102,13 +102,13 @@ func ProcessCast(castMap map[string]interface{}, castActual *Models.CastActualMo
 		if equipment.EquipRarity == 5 || equipment.EquipRarity == 15 && equipment.GemSlot.Gem != nil {
 			switch equipment.GemSlot.SlotNumber {
 			case 1:
-				castStat.Gem1 = equipment.ID
+				castStat.Gem1 = equipment.GemSlot.Gem.ID
 			case 2:
-				castStat.Gem2 = equipment.ID
+				castStat.Gem2 = equipment.GemSlot.Gem.ID
 			case 3:
-				castStat.Gem3 = equipment.ID
+				castStat.Gem3 = equipment.GemSlot.Gem.ID
 			case 4:
-				castStat.Gem4 = equipment.ID
+				castStat.Gem4 = equipment.GemSlot.Gem.ID
 			}
 			ProcessGemStatCast(equipment, &tempGemStat, &Models.CastGemCeiling)
 		}
@@ -242,16 +242,16 @@ func ProcessComm(commMap map[string]interface{}, index int) {
 			ProcessEquipStatComm(equipment, &tempHeroStat, &Models.CommHeroCeiling)
 		}
 		// Check if the equipment is gem-capable AND a gem is actually present (Gem.ID will be non-zero).
-		if (equipment.EquipRarity == 5 || equipment.EquipRarity == 15) && equipment.GemSlot.Gem != nil {
+		if (equipment.EquipRarity == 5 || equipment.EquipRarity == 15) && equipment.GemSlot.Gem != nil && equipment.GemSlot.Gem.ID != 0 {
 			switch equipment.GemSlot.SlotNumber {
 			case 1:
-				statComm.Gem1 = equipment.ID
+				statComm.Gem1 = equipment.GemSlot.Gem.ID
 			case 2:
-				statComm.Gem2 = equipment.ID
+				statComm.Gem2 = equipment.GemSlot.Gem.ID
 			case 3:
-				statComm.Gem3 = equipment.ID
+				statComm.Gem3 = equipment.GemSlot.Gem.ID
 			case 4:
-				statComm.Gem4 = equipment.ID
+				statComm.Gem4 = equipment.GemSlot.Gem.ID
 			}
 			ProcessGemStatComm(equipment, &tempGemStat, &Models.CommGemCeiling)
 		}

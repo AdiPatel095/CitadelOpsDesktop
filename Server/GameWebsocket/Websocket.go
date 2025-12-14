@@ -122,7 +122,17 @@ func StartWebsocketChannels(ctx context.Context, cancel context.CancelFunc) {
 	go func() {
 		// When this goroutine exits, it means the connection is dead.
 		// We cancel the context to signal all other goroutines to stop.
-		defer cancel()
+		defer func() {
+			cancel()
+			// Update login status to disconnected when connection is force closed
+			LoginStatus = false
+			LoginCooldown = 0
+			// Reset global socket to allow reconnection
+			GlobalSocket = nil
+			if SendGameLoginStatusFunc != nil {
+				SendGameLoginStatusFunc(false, 0)
+			}
+		}()
 		for {
 			_, message, err := GlobalSocket.ReadMessage()
 			if err != nil {

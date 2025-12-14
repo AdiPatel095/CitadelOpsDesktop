@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Icons } from '../../components/Icons';
 import GameButton from '../../components/GameButton';
-import { statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/equipment';
-import { LicenseService } from '../../services/LicenseService';
+import { type CommStat, statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/equipment';
+import { FrontendWebsocket } from '../../websocket';
+import ReconfigureComparisonModal from './ReconfigureComparisonModal';
 
 const RECONFIGURE_COST = 10000;
 
@@ -11,6 +12,13 @@ interface StatPriorityProps {
     combatMode: 'PvP' | 'PvE';
     credits: number;
     hardwareID: string | null;
+    selectedIndex: number | null;
+}
+
+interface ComparisonData {
+    currentLoadout: CommStat;
+    newLoadout: CommStat;
+    targetIndex: number;
 }
 
 type TierType = 0 | 1 | 2;
@@ -139,7 +147,8 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     equipmentMode,
     combatMode,
     credits,
-    hardwareID
+    hardwareID,
+    selectedIndex
 }) => {
     const [tier0Stats, setTier0Stats] = useState<string[]>([]);
     const [tier1Stats, setTier1Stats] = useState<string[]>([]);
@@ -149,8 +158,12 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     const [dropTarget, setDropTarget] = useState<{ tier: TierType; index: number } | null>(null);
     const [isReconfiguring, setIsReconfiguring] = useState(false);
     const [reconfigureError, setReconfigureError] = useState<string | null>(null);
-    const [tradeoffMultiplier, setTradeoffMultiplier] = useState<number>(5);
+    const [showSettings, setShowSettings] = useState(false);
+    const [interTierMultiplier, setInterTierMultiplier] = useState<number>(2);
+    const [intraTierMultiplier, setIntraTierMultiplier] = useState<number>(5);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [showComparisonModal, setShowComparisonModal] = useState(false);
+    const [comparisonData, setComparisonData] = useState<ComparisonData | null>(null);
 
     const hasEnoughCredits = credits >= RECONFIGURE_COST;
     const totalStats = tier0Stats.length + tier1Stats.length + tier2Stats.length;
@@ -244,7 +257,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     // Add/Remove handlers - always adds to Tier 1, user can drag to other tiers
     const addStat = (stat: string) => {
         setTier1Stats([...tier1Stats, stat]);
-        setShowAddDropdown(false);
+        // setShowAddDropdown(false); // Keep menu open
     };
 
     const removeStat = (stat: string) => {
@@ -255,7 +268,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
 
     // Reconfigure handler - builds JSON payload
     const handleReconfigure = async () => {
-        if (!hasEnoughCredits || !hardwareID || totalStats === 0) return;
+        if (!hasEnoughCredits || !hardwareID || totalStats === 0 || selectedIndex === null) return;
 
         setIsReconfiguring(true);
         setReconfigureError(null);
@@ -265,36 +278,27 @@ const StatPriority: React.FC<StatPriorityProps> = ({
             const reconfigurePayload = {
                 equipmentMode: equipmentMode,
                 combatMode: combatMode,
-                tradeoffMultiplier: tradeoffMultiplier,
-                tiers: [
-                    {
-                        tier: 0,
-                        stats: tier0Stats.map((stat, index) => ({ stat, position: index }))
-                    },
-                    {
-                        tier: 1,
-                        stats: tier1Stats.map((stat, index) => ({ stat, position: index }))
-                    },
-                    {
-                        tier: 2,
-                        stats: tier2Stats.map((stat, index) => ({ stat, position: index }))
-                    }
-                ].filter(t => t.stats.length > 0) // Only include tiers with stats
+                interTierMultiplier: interTierMultiplier,
+                intraTierMultiplier: intraTierMultiplier,
+                targetIndex: selectedIndex,
+                stats: [
+                    ...tier0Stats.map((stat, index) => ({ stat, tier: 0, position: index })),
+                    ...tier1Stats.map((stat, index) => ({ stat, tier: 1, position: index })),
+                    ...tier2Stats.map((stat, index) => ({ stat, tier: 2, position: index }))
+                ]
             };
 
             console.log('Reconfigure Payload:', JSON.stringify(reconfigurePayload, null, 2));
 
-            const response = await LicenseService.reconfigureLoadout(
+            FrontendWebsocket.sendReconfigureLoadout({
                 hardwareID,
-                reconfigurePayload
-            );
+                ...reconfigurePayload
+            });
 
-            if (!response.success) {
-                setReconfigureError(response.message || 'Failed to reconfigure');
-            }
+            // The WebSocket listener will handle the comparison response
+            // and show the modal when reconfigureComparison is received
         } catch (error) {
             setReconfigureError('An unexpected error occurred');
-        } finally {
             setIsReconfiguring(false);
         }
     };
@@ -313,10 +317,33 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     // Reset priority stats when equipment mode changes
     React.useEffect(() => {
         setTier0Stats([]);
-        setTier1Stats([]);
+        // Default to Core Stats in Tier 1
+        const defaultStats = equipmentMode === 'Commander'
+            ? commanderStatGroups.core
+            : castellanStatGroups.core;
+        setTier1Stats(defaultStats);
         setTier2Stats([]);
         setReconfigureError(null);
     }, [equipmentMode]);
+
+    // Listen for reconfigureComparison message from backend
+    useEffect(() => {
+        const handleMessage = (message: any) => {
+            if (message.type === 'reconfigureComparison' && message.payload) {
+                console.log('Received reconfigureComparison:', message.payload);
+                setComparisonData({
+                    currentLoadout: message.payload.currentLoadout,
+                    newLoadout: message.payload.newLoadout,
+                    targetIndex: message.payload.targetIndex
+                });
+                setShowComparisonModal(true);
+                setIsReconfiguring(false);
+            }
+        };
+
+        FrontendWebsocket.addMessageListener(handleMessage);
+        return () => FrontendWebsocket.removeMessageListener(handleMessage);
+    }, []);
 
     return (
         <div className="glass-panel h-full flex flex-col">
@@ -327,41 +354,92 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                         <Icons.Activity className="w-5 h-5 text-primary" />
                         Stat Priority
                     </h3>
-                    {/* Add Stat Button */}
-                    <div className="relative" ref={dropdownRef}>
+
+                    <div className="flex items-center gap-2">
+                        {/* Settings Button */}
                         <button
-                            onClick={() => setShowAddDropdown(!showAddDropdown)}
-                            disabled={availableStats.length === 0}
-                            className="rounded-global p-2 bg-primary/10 hover:bg-primary/20 text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Add Stat"
+                            onClick={() => setShowSettings(!showSettings)}
+                            className={`p-2 rounded-global transition-colors ${showSettings ? 'bg-primary/20 text-primary' : 'bg-dark-bg/50 text-gray-400 hover:text-white hover:bg-dark-bg'}`}
+                            title="Configure Multipliers"
                         >
-                            <Icons.Plus className="w-4 h-4" />
+                            <Icons.Settings className="w-4 h-4" />
                         </button>
 
-                        {/* Dropdown */}
-                        {showAddDropdown && availableStats.length > 0 && (
-                            <div className="rounded-global absolute top-full right-0 mt-2 w-56 bg-dark-bg border border-dark-border shadow-xl max-h-64 overflow-y-auto z-50">
-                                {Object.entries(groupedAvailableStats).map(([groupName, stats]) => (
-                                    <div key={groupName}>
-                                        <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider bg-dark-bg/80 sticky top-0">
-                                            {statGroupDisplayName[groupName] || groupName}
+                        {/* Add Stat Button */}
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setShowAddDropdown(!showAddDropdown)}
+                                disabled={availableStats.length === 0}
+                                className="rounded-global p-2 bg-primary/10 hover:bg-primary/20 text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Add Stat"
+                            >
+                                <Icons.Plus className="w-4 h-4" />
+                            </button>
+
+                            {/* Dropdown */}
+                            {showAddDropdown && availableStats.length > 0 && (
+                                <div className="rounded-global absolute top-full right-0 mt-2 w-56 bg-dark-bg border border-dark-border shadow-xl max-h-64 overflow-y-auto z-50">
+                                    {Object.entries(groupedAvailableStats).map(([groupName, stats]) => (
+                                        <div key={groupName}>
+                                            <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider bg-dark-bg/80 sticky top-0">
+                                                {statGroupDisplayName[groupName] || groupName}
+                                            </div>
+                                            {stats.map(stat => (
+                                                <button
+                                                    key={stat}
+                                                    onClick={() => addStat(stat)}
+                                                    className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors"
+                                                >
+                                                    {statDisplayName[stat] || stat}
+                                                </button>
+                                            ))}
                                         </div>
-                                        {stats.map(stat => (
-                                            <button
-                                                key={stat}
-                                                onClick={() => addStat(stat)}
-                                                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors"
-                                            >
-                                                {statDisplayName[stat] || stat}
-                                            </button>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Drag between tiers to reorganize</p>
+
+                {/* Settings Modal/Panel */}
+                {showSettings && (
+                    <div className="mt-3 p-3 bg-dark-bg/50 rounded-global border border-dark-border/50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div>
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm text-gray-300">Inter-Tier Multiplier</span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    step="0.1"
+                                    value={interTierMultiplier}
+                                    onChange={(e) => setInterTierMultiplier(Math.max(1, parseFloat(e.target.value) || 1))}
+                                    className="rounded-global w-16 px-2 py-1 bg-dark-bg border border-dark-border text-white text-sm text-center focus:outline-none focus:border-primary/50 transition-colors"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Multiplier within the same tier (priority weight difference).
+                            </p>
+                        </div>
+
+                        <div className="border-t border-dark-border/30 pt-3">
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm text-gray-300">Intra-Tier Multiplier</span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    step="0.1"
+                                    value={intraTierMultiplier}
+                                    onChange={(e) => setIntraTierMultiplier(Math.max(1, parseFloat(e.target.value) || 1))}
+                                    className="rounded-global w-16 px-2 py-1 bg-dark-bg border border-dark-border text-white text-sm text-center focus:outline-none focus:border-primary/50 transition-colors"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Multiplier between different tiers (how much stronger a higher tier is).
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Three-Tier Priority Lists - Stacked */}
@@ -401,24 +479,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                 />
             </div>
 
-            {/* Trade off Multiplier */}
-            <div className="px-4 py-3 border-t border-dark-border">
-                <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-300">Tier Tradeoff</span>
-                    <div className="flex items-center gap-1">
-                        <input
-                            type="number"
-                            min="1"
-                            step="0.1"
-                            value={tradeoffMultiplier}
-                            onChange={(e) => setTradeoffMultiplier(Math.max(1, parseFloat(e.target.value) || 1))}
-                            className="rounded-global w-16 px-2 py-1.5 bg-dark-bg border border-dark-border text-white text-sm text-center focus:outline-none focus:border-primary/50 transition-colors"
-                        />
-                        <span className="text-xs text-gray-500">×</span>
-                    </div>
-                </div>
-                <p className="text-xs text-gray-500">&gt;{tradeoffMultiplier}% lower tier stat to beat 1% higher tier</p>
-            </div>
+
 
             {/* Reconfigure Button */}
             <div className="p-4 border-t border-dark-border">
@@ -462,6 +523,16 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                     </span>
                 </div>
             </div>
+
+            {/* Comparison Modal */}
+            <ReconfigureComparisonModal
+                isOpen={showComparisonModal}
+                onClose={() => setShowComparisonModal(false)}
+                currentLoadout={comparisonData?.currentLoadout ?? null}
+                newLoadout={comparisonData?.newLoadout ?? null}
+                targetIndex={comparisonData?.targetIndex ?? 0}
+                combatMode={combatMode}
+            />
         </div>
     );
 };

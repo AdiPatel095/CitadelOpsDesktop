@@ -10,18 +10,21 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 )
 
 const loginFilename = "loginBytes.json"
+const loginExpirationHours = 24 // Login credentials expire after 24 hours
 
 // LoginData holds the byte slices for login information.
 type LoginData struct {
-	Login []byte `json:"login"`
-	Name  []byte `json:"name"`
-	Vck   []byte `json:"vck"`
+	Login     []byte    `json:"login"`
+	Name      []byte    `json:"name"`
+	Vck       []byte    `json:"vck"`
+	CreatedAt time.Time `json:"createdAt"` // Timestamp for expiration tracking
 }
 
 // getLoginFilePath returns the absolute path to the loginBytes file
@@ -36,50 +39,81 @@ func getLoginFilePath() string {
 }
 
 // GetLoginBytes reads login information from loginFilename.
-// If the file does not exist, it calls getLoginBytes to create it by prompting the user to log in.
+// If the file does not exist or is expired, it calls getLoginBytes to create it by prompting the user to log in.
 func GetLoginBytes() [][]byte {
 	loginPath := getLoginFilePath()
+	needsRefresh := false
+
 	data, err := os.ReadFile(loginPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Printf("'%s' not found. Starting login process to create it.", loginPath)
-			loginBytesSlices := getLoginBytes()
-			if len(loginBytesSlices) < 3 {
-				log.Println("Failed to retrieve login bytes. Aborting.")
-				return nil
-			}
-
-			loginData := LoginData{
-				Login: loginBytesSlices[0],
-				Name:  loginBytesSlices[1],
-				Vck:   loginBytesSlices[2],
-				// Vck is not populated by getLoginBytes currently
-			}
-
-			data, err = json.Marshal(loginData)
-			if err != nil {
-				log.Printf("Error marshalling login data to JSON: %v", err)
-				return nil
-			}
-
-			if err := os.WriteFile(loginPath, data, 0600); err != nil {
-				log.Printf("Error writing to '%s': %v", loginPath, err)
-				return nil
-			}
-			log.Printf("Successfully created and wrote login data to '%s'", loginPath)
+			needsRefresh = true
 		} else {
 			log.Printf("Error reading '%s': %v", loginPath, err)
 			return nil
 		}
+	} else {
+		// File exists, check if it's expired
+		var storedLoginData LoginData
+		if err := json.Unmarshal(data, &storedLoginData); err != nil {
+			log.Printf("Error unmarshalling login data from '%s': %v. Refreshing credentials.", loginPath, err)
+			needsRefresh = true
+		} else if isLoginExpired(storedLoginData.CreatedAt) {
+			log.Printf("Login credentials have expired (older than %d hours). Refreshing...", loginExpirationHours)
+			// Delete the expired file
+			if err := os.Remove(loginPath); err != nil {
+				log.Printf("Warning: Could not delete expired login file: %v", err)
+			}
+			needsRefresh = true
+		} else {
+			// Valid and not expired
+			hoursRemaining := loginExpirationHours - int(time.Since(storedLoginData.CreatedAt).Hours())
+			log.Printf("Login credentials valid. Expires in approximately %d hours.", hoursRemaining)
+			return [][]byte{storedLoginData.Login, storedLoginData.Name, storedLoginData.Vck}
+		}
 	}
 
-	var storedLoginData LoginData
-	if err := json.Unmarshal(data, &storedLoginData); err != nil {
-		log.Printf("Error unmarshalling login data from '%s': %v", loginPath, err)
-		return nil
+	if needsRefresh {
+		loginBytesSlices := getLoginBytes()
+		if len(loginBytesSlices) < 3 {
+			log.Println("Failed to retrieve login bytes. Aborting.")
+			return nil
+		}
+
+		loginData := LoginData{
+			Login:     loginBytesSlices[0],
+			Name:      loginBytesSlices[1],
+			Vck:       loginBytesSlices[2],
+			CreatedAt: time.Now(), // Set the creation timestamp
+		}
+
+		data, err = json.Marshal(loginData)
+		if err != nil {
+			log.Printf("Error marshalling login data to JSON: %v", err)
+			return nil
+		}
+
+		if err := os.WriteFile(loginPath, data, 0600); err != nil {
+			log.Printf("Error writing to '%s': %v", loginPath, err)
+			return nil
+		}
+		log.Printf("Successfully created and wrote login data to '%s' (expires in %d hours)", loginPath, loginExpirationHours)
+
+		return [][]byte{loginData.Login, loginData.Name, loginData.Vck}
 	}
 
-	return [][]byte{storedLoginData.Login, storedLoginData.Name, storedLoginData.Vck}
+	return nil
+}
+
+// isLoginExpired checks if the login credentials have expired based on the creation time.
+func isLoginExpired(createdAt time.Time) bool {
+	if createdAt.IsZero() {
+		// If no timestamp exists (legacy file), consider it expired
+		return true
+	}
+	expirationTime := createdAt.Add(time.Duration(loginExpirationHours) * time.Hour)
+	return time.Now().After(expirationTime)
 }
 
 // getLoginBytes launches a visible browser for the user to log in and retrieve an RCT.
