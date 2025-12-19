@@ -27,7 +27,7 @@ func MessageRouter(messageParts []string) {
 		log.Printf("GAME RESPONSE (EQUIPMENT EQUIP/UNEQUIP): %v", messageParts)
 	}
 	// Log gem equip/unequip responses
-	if messageType == "ege" {
+	if messageType == "ege" || messageType == "bge" {
 		log.Printf("GAME RESPONSE (GEM EQUIP/UNEQUIP): %v", messageParts)
 	}
 

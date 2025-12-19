@@ -23,12 +23,17 @@ type AutoSendPackage struct {
 	Payload  string `json:"payload"`
 }
 
+type OutgoingMessageWithCost struct {
+	Payload []byte
+	Cost    int
+}
+
 var (
 	LoginStatus      bool
 	LoginCooldown    int
 	GlobalSocket     *websocket.Conn
 	IncomingMessages = make(chan []string)
-	OutgoingMessages = make(chan []byte)
+	OutgoingMessages = make(chan interface{})
 
 	// SendInsufficientCreditsFunc is a callback to notify frontend of insufficient credits
 	SendInsufficientCreditsFunc func()
@@ -153,10 +158,35 @@ func StartWebsocketChannels(ctx context.Context, cancel context.CancelFunc) {
 				log.Println("Write goroutine stopping.")
 				return
 			case message := <-OutgoingMessages:
-				// Deduct 1 credit for every message
-				// Note: License.UseCredits will handle the logic and return false if not enough credits
-				if License.UseCredits(1, "Game Message") {
-					err := GlobalSocket.WriteMessage(websocket.TextMessage, message)
+				var payload []byte
+				cost := 0
+
+				// Parse message type and determine cost
+				switch v := message.(type) {
+				case OutgoingMessageWithCost:
+					payload = v.Payload
+					cost = v.Cost
+				case []byte:
+					payload = v
+					cost = 0
+				case string:
+					payload = []byte(v)
+					cost = 0
+				default:
+					log.Printf("Unknown message type in OutgoingMessages: %T", v)
+					continue
+				}
+
+				// Deduct credits based on message cost
+				allowed := true
+				if cost > 0 {
+					if !License.UseCredits(cost, "Game Message") {
+						allowed = false
+					}
+				}
+
+				if allowed {
+					err := GlobalSocket.WriteMessage(websocket.TextMessage, payload)
 					time.Sleep(50 * time.Millisecond)
 					if err != nil {
 						log.Println("write:", err)

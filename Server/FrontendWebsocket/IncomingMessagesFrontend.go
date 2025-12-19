@@ -2,12 +2,12 @@ package FrontendWebsocket
 
 import (
 	"CitadelDesktop/Server/GameWebsocket"
-	"CitadelDesktop/Server/License"
-	"CitadelDesktop/Server/LoadoutReconfigure"
 	"CitadelDesktop/Server/Models"
+	"CitadelDesktop/Server/ReconfigureLoadout"
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"time"
 )
@@ -22,8 +22,10 @@ func ParseFrontendMessage(message []byte) {
 	switch messageType {
 	case "getCastUpdate":
 		{
-			castleLocation := data["castleLocation"].(string)
-			SendCastStat(castleLocation)
+			if castleIndexFloat, ok := data["castleIndex"].(float64); ok {
+				castleIndex := int(castleIndexFloat)
+				SendCastStat(castleIndex)
+			}
 		}
 	case "getCommUpdate":
 		{
@@ -40,7 +42,21 @@ func ParseFrontendMessage(message []byte) {
 		SendCastleResource(castleLocation)
 	case "sellNonRelicEquipment":
 		log.Println("Received request to sell non-relic equipment")
-		soldCount := SellNonRelicEquipment()
+
+		// Parse payload
+		var sellLookItems, saveRift bool
+		if payload, ok := data["payload"].(map[string]interface{}); ok {
+			if val, ok := payload["sellLookItems"].(bool); ok {
+				sellLookItems = val
+			}
+			if val, ok := payload["saveRift"].(bool); ok {
+				saveRift = val
+			}
+		}
+
+		log.Printf("Flags - Sell Look Items: %v, Save Rift: %v", sellLookItems, saveRift)
+
+		soldCount := SellNonRelicEquipment(saveRift, sellLookItems)
 		log.Printf("SoldCount: %v", soldCount)
 		SendAlertMessage("green", fmt.Sprintf("Sold %d non-relic equipment items", soldCount))
 	case "sellNonRelicGems":
@@ -69,14 +85,9 @@ func ParseFrontendMessage(message []byte) {
 			for i, comm := range Models.CommStatArray {
 				SendFrontendMessage("commStatUpdate", comm, strconv.Itoa(i))
 			}
-			SendCastStat("mainCastle")
-			SendCastStat("outpost1")
-			SendCastStat("outpost2")
-			SendCastStat("outpost3")
-			SendCastStat("iceCastle")
-			SendCastStat("desertCastle")
-			SendCastStat("dungeonCastle")
-			SendCastStat("stormCastle")
+			for i := 0; i < 8; i++ {
+				SendCastStat(i)
+			}
 
 			SendGlobalResourceUpdate()
 
@@ -116,33 +127,15 @@ func ParseFrontendMessage(message []byte) {
 		{
 			GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 			time.Sleep(2 * time.Second)
-			// Need custom struct for this payload
 
-			// var payload ReconfigurePayload
-			// Extract payload from map to struct or just use map
-			// Since data["payload"] is interface{}, we need to marshal/unmarshal or mapstructure
-			// Simplest is to re-marshal the payload part or just use the data map if it was flat
-			// But data is map[string]interface{}.
-
-			// Faster way: re-marshal just the payload part if possible, or manual cast.
-			// Let's rely on JSON unmarshal of the original message into a struct that has struct payload
-
-			// Re-parsing the whole message with a specific struct for this type is safer
+			// Parse the payload into ReconfigurePayload struct
 			var msg struct {
 				Type    string                                `json:"type"`
-				Payload LoadoutReconfigure.ReconfigurePayload `json:"payload"`
+				Payload ReconfigureLoadout.ReconfigurePayload `json:"payload"`
 			}
 			if err := json.Unmarshal(message, &msg); err != nil {
 				log.Printf("Error parsing reconfigure msg: %v", err)
 				SendAlertMessage("red", "Invalid reconfiguration request")
-				return
-			}
-
-			// Validate credits
-			const cost = 10000
-			if !License.UseCredits(cost, "reconfigure") {
-				SendInsufficientCreditsMessage()
-				SendAlertMessage("red", "Insufficient credits for reconfiguration")
 				return
 			}
 
@@ -155,7 +148,7 @@ func ParseFrontendMessage(message []byte) {
 				}
 
 				// Calculate the optimized loadout
-				newLoadout := LoadoutReconfigure.ReconfigureCommander(msg.Payload)
+				newLoadout := ReconfigureLoadout.ReconfigureCommander(msg.Payload)
 
 				// Marshal to JSON for readable logging
 				statCommJSON, err := json.MarshalIndent(newLoadout, "", "  ")
@@ -172,10 +165,30 @@ func ParseFrontendMessage(message []byte) {
 					"targetIndex":    targetIndex,
 				}
 				SendFrontendMessage("reconfigureComparison", comparisonData, "")
-			} else if msg.Payload.CombatMode == "Castellan" {
-				//statCast := ReconfigureCastellan(msg.Payload)
-				log.Printf("Received reconfigureCastellan: ")
-				//return statCast
+
+			} else if msg.Payload.EquipmentMode == "Castellan" {
+				// Get current loadout from the target index
+				targetIndex := msg.Payload.TargetIndex
+				currentLoadout := GameWebsocket.GetCastellanStat(targetIndex)
+
+				// Calculate the optimized loadout
+				newLoadout := ReconfigureLoadout.ReconfigureCastellan(msg.Payload)
+
+				// Marshal to JSON for readable logging
+				statCastJSON, err := json.MarshalIndent(newLoadout, "", "  ")
+				if err != nil {
+					log.Printf("Error marshaling statCast: %v", err)
+				} else {
+					log.Printf("Received reconfigure castellan:\n%s", string(statCastJSON))
+				}
+
+				// Send comparison data to frontend
+				comparisonData := map[string]interface{}{
+					"currentLoadout": currentLoadout,
+					"newLoadout":     newLoadout,
+					"targetIndex":    targetIndex,
+				}
+				SendFrontendMessage("reconfigureComparison", comparisonData, "")
 			}
 		}
 	case "confirmReconfigure":
@@ -189,6 +202,7 @@ func ParseFrontendMessage(message []byte) {
 					TargetIndex    float64              `json:"targetIndex"`
 					CurrentLoadout Models.CommStatModel `json:"currentLoadout"`
 					NewLoadout     Models.CommStatModel `json:"newLoadout"`
+					EquipmentMode  string               `json:"equipmentMode"`
 				} `json:"payload"`
 			}
 			if err := json.Unmarshal(message, &msg); err != nil {
@@ -200,14 +214,17 @@ func ParseFrontendMessage(message []byte) {
 			targetIndex := int(msg.Payload.TargetIndex)
 			current := msg.Payload.CurrentLoadout
 			newLoadout := msg.Payload.NewLoadout
-			equipmentMode := "Commander"
+			equipmentMode := msg.Payload.EquipmentMode
+			if equipmentMode == "" {
+				equipmentMode = "Commander" // Default
+			}
 
 			SendAlertMessage("green", "Starting reconfiguration...")
 
-			// --- Step 1: Unequip Current Loadout ---
-			log.Println("Step 1: Unequipping old loadout...")
-			oldSlots := []int{1, 2, 3, 4, 6}
-			for _, slot := range oldSlots {
+			// --- Step 1: Unequip Target Commander (all 5 slots) ---
+			log.Println("Step 1: Unequipping target commander")
+			slotsToClear := []int{1, 2, 3, 4, 6}
+			for _, slot := range slotsToClear {
 				var equipID float64
 				switch slot {
 				case 1:
@@ -222,12 +239,14 @@ func ParseFrontendMessage(message []byte) {
 					equipID = current.Hero
 				}
 				if equipID != 0 {
-					GameWebsocket.UnequipEquipmentWithListener(equipmentMode, targetIndex, slot, equipID)
+					GameWebsocket.UnequipEquipmentRaw(equipmentMode, targetIndex, equipID)
+					time.Sleep(500 * time.Millisecond)
 				}
 			}
 
-			// --- Step 2: Clean Target Gems (Ensure connection gems are free) ---
-			log.Println("Step 2: Checking storage for target gems...")
+			// --- Step 2: Clean Gems ---
+			// Check if any target gems are socketted in storage equipment
+			log.Println("Step 2: Cleaning target gems")
 			targetGems := []float64{newLoadout.Gem1, newLoadout.Gem2, newLoadout.Gem3, newLoadout.Gem4}
 			targetGemMap := make(map[float64]bool)
 			for _, g := range targetGems {
@@ -236,145 +255,73 @@ func ParseFrontendMessage(message []byte) {
 				}
 			}
 
-			// We need to track which gems we successfully freed from storage
-			// simply to avoid double processing or incorrect assumptions
 			if len(targetGemMap) > 0 {
 				for _, eq := range Models.EquipmentStorage {
 					if eq.GemSlot.Gem != nil {
 						gemID := eq.GemSlot.Gem.ID
 						if targetGemMap[gemID] {
-							log.Printf("Found target gem %.0f on stored item %.0f - Extracting...", gemID, eq.ID)
-							// Equip -> UnequipGem -> UnequipItem
+							// Double Jump: Equip -> UnequipGem -> UnequipItem
 							slot := int(eq.EquipSlotNumber)
-							GameWebsocket.EquipEquipmentWithListener(equipmentMode, targetIndex, slot, eq.ID)
-							GameWebsocket.UnequipGemRawWithListener(equipmentMode, targetIndex, eq.ID)
-							GameWebsocket.UnequipEquipmentRawWithListener(equipmentMode, targetIndex, eq.ID)
+							GameWebsocket.EquipEquipment(equipmentMode, targetIndex, slot, eq.ID)
+							time.Sleep(1 * time.Second)
+							GameWebsocket.UnequipGemRaw(equipmentMode, targetIndex, eq.ID)
+							time.Sleep(500 * time.Millisecond)
+							GameWebsocket.UnequipEquipmentRaw(equipmentMode, targetIndex, eq.ID)
+							time.Sleep(500 * time.Millisecond)
 						}
 					}
 				}
 			}
 
-			// --- Step 3 & 4: New Base Equipment Analysis ---
-			log.Println("Step 3 & 4: Analyzing new base equipment...")
-
-			// Map Slot Index (1-4) to Equipment ID
-			newEquipMap := map[int]float64{
+			// --- Step 3: Equip New Base Pieces & Hero ---
+			log.Println("Step 3: Equipping new base pieces and hero")
+			newEquips := map[int]float64{
 				1: newLoadout.Equip1,
 				2: newLoadout.Equip2,
 				3: newLoadout.Equip3,
 				4: newLoadout.Equip4,
+				6: newLoadout.Hero,
 			}
 
-			dirtyList := make(map[int]float64) // Slot -> ID
-			cleanList := make(map[int]float64) // Slot -> ID
-
-			for slot := 1; slot <= 4; slot++ {
-				eid := newEquipMap[slot]
-				if eid == 0 {
-					continue
-				}
-
-				hasGem := false
-
-				// Check if it was in Old Loadout (which we just unequipped in Step 1)
-				// The gem would still be on it.
-				if current.Equip1 == eid && current.Gem1 != 0 {
-					hasGem = true
-				} else if current.Equip2 == eid && current.Gem2 != 0 {
-					hasGem = true
-				} else if current.Equip3 == eid && current.Gem3 != 0 {
-					hasGem = true
-				} else if current.Equip4 == eid && current.Gem4 != 0 {
-					hasGem = true
-				} else {
-					// Check Storage
-					// If it wasn't equipped, it must be in storage
-					for _, eq := range Models.EquipmentStorage {
-						if eq.ID == eid {
-							if eq.GemSlot.Gem != nil {
-								// Special check: IF the gem on this item matches a Target Gem (Step 2),
-								// we technically already removed it in Step 2.
-								// However, Models.EquipmentStorage is STALE.
-								// So we must trust that if Step 2 ran, that gem is gone.
-								// But what if it has a Different Gem? Then it's still dirty.
-
-								// If the gem ID on this storage item is one of our target gems,
-								// we know we just cleaned it. So it's effectively clean.
-								if targetGemMap[eq.GemSlot.Gem.ID] {
-									hasGem = false
-								} else {
-									hasGem = true
-								}
-							}
-							break
-						}
-					}
-				}
-
-				if hasGem {
-					dirtyList[slot] = eid
-				} else {
-					cleanList[slot] = eid
+			for slot, eid := range newEquips {
+				if eid != 0 {
+					GameWebsocket.EquipEquipment(equipmentMode, targetIndex, slot, eid)
+					time.Sleep(800 * time.Millisecond)
 				}
 			}
 
-			// --- Step 5: Process Dirty Items ---
-			if len(dirtyList) > 0 {
-				log.Println("Step 5: Cleaning dirty base items...")
-				for slot, eid := range dirtyList {
-					log.Printf("Equipping & Cleaning dirty item %.0f in slot %d", eid, slot)
-					GameWebsocket.EquipEquipmentWithListener(equipmentMode, targetIndex, slot, eid)
-					GameWebsocket.UnequipGemRawWithListener(equipmentMode, targetIndex, eid)
-					// Now it's equipped and empty.
-				}
-			}
-
-			// --- Step 6: Process Clean Items ---
-			if len(cleanList) > 0 {
-				log.Println("Step 6: Equipping clean base items...")
-				for slot, eid := range cleanList {
-					GameWebsocket.EquipEquipmentWithListener(equipmentMode, targetIndex, slot, eid)
-				}
-			}
-			// At this point, all 4 base items are Equipped and Empty.
-
-			// --- Step 7: Equip New Gems ---
-			log.Println("Step 7: Equipping new gems...")
-
-			// Gem1 -> Slot 1 (Equip1)
-			// Gem2 -> Slot 2 (Equip2)
-			// ...
-			gemMap := map[int]float64{
+			// --- Step 4: Socket Gems ---
+			log.Println("Step 4: Socketing new gems")
+			gemMapping := map[int]float64{
 				1: newLoadout.Gem1,
 				2: newLoadout.Gem2,
 				3: newLoadout.Gem3,
 				4: newLoadout.Gem4,
 			}
 
-			for slot := 1; slot <= 4; slot++ {
-				gemID := gemMap[slot]
-				equipID := newEquipMap[slot]
-
-				if gemID != 0 && equipID != 0 {
-					GameWebsocket.EquipGemWithListener(equipmentMode, targetIndex, equipID, gemID)
+			for slot, gid := range gemMapping {
+				eid := newEquips[slot]
+				if gid != 0 && eid != 0 {
+					GameWebsocket.EquipGem(equipmentMode, targetIndex, eid, gid)
+					time.Sleep(800 * time.Millisecond)
 				}
 			}
 
-			// --- Step 8: Equip Hero ---
-			log.Println("Step 8: Equipping hero...")
-			if newLoadout.Hero != 0 {
-				GameWebsocket.EquipEquipmentWithListener(equipmentMode, targetIndex, 6, newLoadout.Hero)
-			}
-
-			// --- Step 9: Refresh ---
-			log.Println("Step 9: Refreshing...")
+			// Final Sync
 			SendAlertMessage("green", "Reconfiguration complete!")
-
-			GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+			GameWebsocket.OutgoingMessages <- GameWebsocket.OutgoingMessageWithCost{Payload: []byte(`%xt%EmpireEx_21%gli%1%{}%`), Cost: 10000}
 			time.Sleep(2 * time.Second)
-			refreshMsg := fmt.Sprintf(`{"type":"getCommUpdate","commanderIndex":%d}`, targetIndex)
+
+			// Trigger frontend refresh
+			var refreshMsg string
+			if equipmentMode == "Commander" {
+				refreshMsg = fmt.Sprintf(`{"type":"getCommUpdate","commanderIndex":%d}`, targetIndex)
+			} else {
+				refreshMsg = fmt.Sprintf(`{"type":"getCastUpdate","castleIndex":%d}`, targetIndex)
+			}
 			ParseFrontendMessage([]byte(refreshMsg))
 		}
+
 	case "unequipEquipment":
 		{
 			log.Println("Received request to unequip equipment")
@@ -409,7 +356,7 @@ func ParseFrontendMessage(message []byte) {
 				slotNumber, _ := sel["slotNumber"].(float64)
 				equipmentId, _ := sel["equipmentId"].(float64)
 
-				if GameWebsocket.UnequipEquipmentWithListener(equipmentMode, int(targetIndex), int(slotNumber), equipmentId) {
+				if GameWebsocket.UnequipEquipment(equipmentMode, int(targetIndex), int(slotNumber), equipmentId) {
 					successCount++
 				} else {
 					failCount++
@@ -470,7 +417,7 @@ func ParseFrontendMessage(message []byte) {
 				gemId, _ := sel["gemId"].(float64)
 				equipmentId, _ := sel["equipmentId"].(float64)
 
-				if GameWebsocket.UnequipGemWithListener(equipmentMode, int(targetIndex), int(slotNumber), gemId, equipmentId) {
+				if GameWebsocket.UnequipGem(equipmentMode, int(targetIndex), int(slotNumber), gemId, equipmentId) {
 					successCount++
 				} else {
 					failCount++
@@ -496,5 +443,15 @@ func ParseFrontendMessage(message []byte) {
 				ParseFrontendMessage([]byte(refreshMsg))
 			}()
 		}
+	case "changeLoginDetails":
+		log.Println("Received request to change login details")
+		// Delete loginBytes.json
+		err := os.Remove("loginBytes.json")
+		if err != nil {
+			log.Printf("Error deleting loginBytes.json: %v", err)
+			SendAlertMessage("red", "Failed to delete login details")
+			return
+		}
+		SendAlertMessage("green", "Login details deleted. Please restart the bot (Start Game).")
 	}
 }

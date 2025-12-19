@@ -80,15 +80,15 @@ func SendInitialData(client *Client) {
 		client.SendToClient("commStatUpdate", comm, strconv.Itoa(i))
 	}
 
-	// Send all castle stats
-	client.SendToClient("castStatUpdate", Models.CastStatArray.MainCastleCast, "mainCastle")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.Outpost1Cast, "outpost1")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.Outpost2Cast, "outpost2")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.Outpost3Cast, "outpost3")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.IceCastleCast, "iceCastle")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.DesertCastleCast, "desertCastle")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.DungeonCastleCast, "dungeonCastle")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.StormCastleCast, "stormCastle")
+	// Send all castle stats with index-based identification (0-7)
+	client.SendToClient("castStatUpdate", Models.CastStatArray.MainCastleCast, "0")
+	client.SendToClient("castStatUpdate", Models.CastStatArray.Outpost1Cast, "1")
+	client.SendToClient("castStatUpdate", Models.CastStatArray.Outpost2Cast, "2")
+	client.SendToClient("castStatUpdate", Models.CastStatArray.Outpost3Cast, "3")
+	client.SendToClient("castStatUpdate", Models.CastStatArray.IceCastleCast, "4")
+	client.SendToClient("castStatUpdate", Models.CastStatArray.DesertCastleCast, "5")
+	client.SendToClient("castStatUpdate", Models.CastStatArray.DungeonCastleCast, "6")
+	client.SendToClient("castStatUpdate", Models.CastStatArray.StormCastleCast, "7")
 
 	// Send global resources
 	client.SendToClient("globalResourceUpdate", Models.GetPlayerGlobalResources(), "")
@@ -104,24 +104,25 @@ func SendInitialData(client *Client) {
 	client.SendToClient("castleResourceUpdate", Models.StormCastleResources, "stormCastle")
 }
 
-func SendCastStat(castleLocation string) {
-	switch castleLocation {
-	case "mainCastle":
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.MainCastleCast, "mainCastle")
-	case "outpost1":
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.Outpost1Cast, "outpost1")
-	case "outpost2":
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.Outpost2Cast, "outpost2")
-	case "outpost3":
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.Outpost3Cast, "outpost3")
-	case "iceCastle":
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.IceCastleCast, "iceCastle")
-	case "desertCastle":
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.DesertCastleCast, "desertCastle")
-	case "dungeonCastle":
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.DungeonCastleCast, "dungeonCastle")
-	case "stormCastle":
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.StormCastleCast, "stormCastle")
+// SendCastStat sends a single castle's stats by index (0-7)
+func SendCastStat(castleIndex int) {
+	switch castleIndex {
+	case 0:
+		SendFrontendMessage("castStatUpdate", Models.CastStatArray.MainCastleCast, "0")
+	case 1:
+		SendFrontendMessage("castStatUpdate", Models.CastStatArray.Outpost1Cast, "1")
+	case 2:
+		SendFrontendMessage("castStatUpdate", Models.CastStatArray.Outpost2Cast, "2")
+	case 3:
+		SendFrontendMessage("castStatUpdate", Models.CastStatArray.Outpost3Cast, "3")
+	case 4:
+		SendFrontendMessage("castStatUpdate", Models.CastStatArray.IceCastleCast, "4")
+	case 5:
+		SendFrontendMessage("castStatUpdate", Models.CastStatArray.DesertCastleCast, "5")
+	case 6:
+		SendFrontendMessage("castStatUpdate", Models.CastStatArray.DungeonCastleCast, "6")
+	case 7:
+		SendFrontendMessage("castStatUpdate", Models.CastStatArray.StormCastleCast, "7")
 	}
 }
 
@@ -158,15 +159,25 @@ func SendCastleResource(castleLocation string) {
 
 }
 
-func SellNonRelicEquipment() int {
+func SellNonRelicEquipment(saveRift bool, sellLookItems bool) int {
 	counter := 0
 
 	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
+
+	if saveRift {
+		log.Println("Save Rift Equipment requested but not implemented yet")
+	}
+
 	for _, equipment := range Models.EquipmentStorage {
+		// Filter Look Items (Slot 5) if sellLookItems is false
+		if !sellLookItems && equipment.EquipSlotNumber == 5 {
+			continue
+		}
+
 		if equipment.EquipRarity != 5 && equipment.EquipRarity != 15 {
 			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
-			GameWebsocket.OutgoingMessages <- []byte(payload)
+			GameWebsocket.OutgoingMessages <- GameWebsocket.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
 			counter++
 		}
 	}
@@ -181,7 +192,7 @@ func SellNonRelicGems() int {
 	for id, count := range Models.NonRelicGemIDs {
 		for i := 0; i < int(count); i++ {
 			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%03.0f,"RGEM":0,"LFID":-1}%%`, id)
-			GameWebsocket.OutgoingMessages <- []byte(payload)
+			GameWebsocket.OutgoingMessages <- GameWebsocket.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
 			counter++
 		}
 	}

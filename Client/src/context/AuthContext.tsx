@@ -11,6 +11,7 @@ interface AuthContextType {
   isGameDataReady: boolean;
   startGame: () => void;
   stopGame: () => void;
+  changeLoginDetails: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,6 +78,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     FrontendWebsocket.stopGame();
   };
 
+  const changeLoginDetails = () => {
+    FrontendWebsocket.changeLoginDetails();
+  };
+
   return (
     <AuthContext.Provider value={{
       isAuthenticated,
@@ -87,7 +92,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       gameLoginCooldown,
       isGameDataReady,
       startGame,
-      stopGame
+      stopGame,
+      changeLoginDetails
     }}>
       {children}
     </AuthContext.Provider>

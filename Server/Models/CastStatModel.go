@@ -3,18 +3,19 @@ package Models
 import "math"
 
 type CastStatModel struct {
-	Equip1   float64 `json:"equip1"`
-	Equip2   float64 `json:"equip2"`
-	Equip3   float64 `json:"equip3"`
-	Equip4   float64 `json:"equip4"`
-	Hero     float64 `json:"hero"`
-	Gem1     float64 `json:"gem1"`
-	Gem2     float64 `json:"gem2"`
-	Gem3     float64 `json:"gem3"`
-	Gem4     float64 `json:"gem4"`
-	ID       float64 `json:"id"`
-	CastleID float64 `json:"castleID"`
-	Name     string  `json:"name"`
+	Equip1         float64 `json:"equip1"`
+	Equip2         float64 `json:"equip2"`
+	Equip3         float64 `json:"equip3"`
+	Equip4         float64 `json:"equip4"`
+	Hero           float64 `json:"hero"`
+	Gem1           float64 `json:"gem1"`
+	Gem2           float64 `json:"gem2"`
+	Gem3           float64 `json:"gem3"`
+	Gem4           float64 `json:"gem4"`
+	ID             float64 `json:"id"`
+	CastleID       float64 `json:"castleID"`
+	Name           string  `json:"name"`
+	CastlePosition int     `json:"castlePosition"`
 
 	MeleeCbtStr   float64 `json:"meleeCbtStr"`
 	RangeCbtStr   float64 `json:"rangeCbtStr"`
@@ -330,18 +331,18 @@ var CastGemCeiling = CastStatModel{
 	CastleID: 0,
 	Name:     "",
 
-	MeleeCbtStr:   0,
-	RangeCbtStr:   0,
+	MeleeCbtStr:   140,
+	RangeCbtStr:   140,
 	OpCbtStr:      0,
 	MainCbtStr:    0,
-	CyCbtStr:      0,
+	CyCbtStr:      100,
 	AllCbtStr:     0,
 	FrontCbtStr:   0,
 	FlankCbtStr:   0,
-	WallStr:       0,
-	GateStr:       0,
-	MoatStr:       0,
-	WallLimit:     0,
+	WallStr:       160,
+	GateStr:       160,
+	MoatStr:       120,
+	WallLimit:     50,
 	ProtectorSupp: 0,
 	Loot:          0,
 	Recruit:       0,

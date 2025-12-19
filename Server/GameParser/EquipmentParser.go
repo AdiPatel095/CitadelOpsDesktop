@@ -35,27 +35,35 @@ func ProcessCastArray(castArray []interface{}) {
 		switch castleID {
 		case Models.MainCastleResources.Aid:
 			Models.CastStatArray.MainCastleCast.Name = Models.MainCastleResources.Name
+			Models.CastStatArray.MainCastleCast.CastlePosition = 0
 			ProcessCast(castMap, &Models.CastActualArray.MainCastleCast, &Models.CastStatArray.MainCastleCast)
 		case Models.Outpost1Resources.Aid:
 			Models.CastStatArray.Outpost1Cast.Name = Models.Outpost1Resources.Name
+			Models.CastStatArray.Outpost1Cast.CastlePosition = 1
 			ProcessCast(castMap, &Models.CastActualArray.Outpost1Cast, &Models.CastStatArray.Outpost1Cast)
 		case Models.Outpost2Resources.Aid:
 			Models.CastStatArray.Outpost2Cast.Name = Models.Outpost2Resources.Name
+			Models.CastStatArray.Outpost2Cast.CastlePosition = 2
 			ProcessCast(castMap, &Models.CastActualArray.Outpost2Cast, &Models.CastStatArray.Outpost2Cast)
 		case Models.Outpost3Resources.Aid:
 			Models.CastStatArray.Outpost3Cast.Name = Models.Outpost3Resources.Name
+			Models.CastStatArray.Outpost3Cast.CastlePosition = 3
 			ProcessCast(castMap, &Models.CastActualArray.Outpost3Cast, &Models.CastStatArray.Outpost3Cast)
 		case Models.IceCastleResources.Aid:
 			Models.CastStatArray.IceCastleCast.Name = Models.IceCastleResources.Name
+			Models.CastStatArray.IceCastleCast.CastlePosition = 4
 			ProcessCast(castMap, &Models.CastActualArray.IceCastleCast, &Models.CastStatArray.IceCastleCast)
 		case Models.DesertCastleResources.Aid:
 			Models.CastStatArray.DesertCastleCast.Name = Models.DesertCastleResources.Name
+			Models.CastStatArray.DesertCastleCast.CastlePosition = 5
 			ProcessCast(castMap, &Models.CastActualArray.DesertCastleCast, &Models.CastStatArray.DesertCastleCast)
 		case Models.DungeonCastleResources.Aid:
 			Models.CastStatArray.DungeonCastleCast.Name = Models.DungeonCastleResources.Name
+			Models.CastStatArray.DungeonCastleCast.CastlePosition = 6
 			ProcessCast(castMap, &Models.CastActualArray.DungeonCastleCast, &Models.CastStatArray.DungeonCastleCast)
 		case Models.StormCastleResources.Aid:
 			Models.CastStatArray.StormCastleCast.Name = Models.StormCastleResources.Name
+			Models.CastStatArray.StormCastleCast.CastlePosition = 7
 			ProcessCast(castMap, &Models.CastActualArray.StormCastleCast, &Models.CastStatArray.StormCastleCast)
 		}
 	}
@@ -398,6 +406,9 @@ func ProcessGemSlot(gemSlotRaw []interface{}, gemSlot *Models.GemSlot, equipRari
 
 func ProcessGem(gemRawArray []interface{}, gemFinal *Models.Gem, equipRarity float64) {
 	gemFinal.ID, _ = gemRawArray[0].(float64)
+	gemFinal.GemType, _ = gemRawArray[1].(float64)
+	gemFinal.PlaceHolder24, _ = gemRawArray[2].(float64)
+	gemFinal.PlaceHolder25, _ = gemRawArray[3].(float64)
 	gemStatsRawArray, _ := gemRawArray[4].([]interface{})
 	// Initialize a slice with 0 length but pre-allocated capacity.
 	gemStatsArray := make([]Models.Stat, 0, len(gemStatsRawArray))

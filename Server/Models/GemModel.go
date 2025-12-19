@@ -6,7 +6,7 @@ package Models
 // It's designed to be parsed from a nested array of values.
 type Gem struct {
 	ID            float64 `json:"id"`
-	PlaceHolder23 float64 `json:"placeHolder23"`
+	GemType       float64 `json:"gemType"`
 	PlaceHolder24 float64 `json:"placeHolder24"`
 	PlaceHolder25 float64 `json:"placeHolder25"`
 	GemStats      []Stat  `json:"gemStats"`

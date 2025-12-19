@@ -6,23 +6,23 @@ import {
 } from '../models/equipment.ts';
 import { useAuth } from '../../context/AuthContext';
 
+// Castle index mapping (0-7)
+// 0 - MainCastle, 1 - Outpost1, 2 - Outpost2, 3 - Outpost3
+// 4 - IceCastle, 5 - DesertCastle, 6 - DungeonCastle, 7 - StormCastle
 export const CASTLE_LOCATIONS = [
-    'mainCastle', 'outpost1', 'outpost2', 'outpost3',
-    'iceCastle', 'desertCastle', 'dungeonCastle', 'stormCastle'
+    'MainCastle', 'Outpost1', 'Outpost2', 'Outpost3',
+    'IceCastle', 'DesertCastle', 'DungeonCastle', 'StormCastle'
 ];
-
-type CastStats = Record<string, CastStat>;
-type LoadingStatus = Record<string, boolean>;
 
 interface EquipmentData {
     commStats: CommStat[];
     castellanStats: CastStat[];
-    castStats: CastStats;
+    castStats: (CastStat | null)[];
 }
 
 interface EquipmentContextType {
     equipmentData: EquipmentData;
-    isCastStatsLoading: LoadingStatus;
+    isCastStatsLoading: boolean[];
     isCommStatsLoading: boolean;
 }
 
@@ -32,9 +32,9 @@ const defaultEquipmentContext: EquipmentContextType = {
     equipmentData: {
         commStats: [],
         castellanStats: [],
-        castStats: {},
+        castStats: Array(8).fill(null),
     },
-    isCastStatsLoading: {},
+    isCastStatsLoading: Array(8).fill(true),
     isCommStatsLoading: true,
 };
 
@@ -59,13 +59,9 @@ interface EquipmentProviderProps {
 
 export const EquipmentProvider: React.FC<EquipmentProviderProps> = ({ children }) => {
     const [commStats, setCommStats] = useState<CommStat[]>(Array(50).fill(null));
-    const [castStats, setCastStats] = useState<CastStats>({});
+    const [castStats, setCastStats] = useState<(CastStat | null)[]>(Array(8).fill(null));
     const [isCommStatsLoading, setIsCommStatsLoading] = useState(true);
-    const [isCastStatsLoading, setIsCastStatsLoading] = useState<LoadingStatus>(
-        CASTLE_LOCATIONS.reduce((acc, castleLocation) => {
-            acc[castleLocation] = true;
-            return acc;
-        }, {} as LoadingStatus));
+    const [isCastStatsLoading, setIsCastStatsLoading] = useState<boolean[]>(Array(8).fill(true));
     const [commStatsLoadedCount, setCommStatsLoadedCount] = useState(0);
 
     useEffect(() => {
@@ -96,16 +92,24 @@ export const EquipmentProvider: React.FC<EquipmentProviderProps> = ({ children }
                     break;
 
                 case 'castStatUpdate':
-                    if (message.optionalData && message.payload) {
-                        const castleLocation = message.optionalData;
-                        const newStat = message.payload as CastStat;
-                        setCastStats(prev => {
-                            return {
-                                ...prev,
-                                [castleLocation]: newStat,
-                            };
-                        });
-                        setIsCastStatsLoading(prev => ({ ...prev, [castleLocation]: false }));
+                    if (message.optionalData !== undefined && message.payload) {
+                        const index = parseInt(message.optionalData, 10);
+
+                        if (!isNaN(index) && index >= 0 && index < 8) {
+                            const newStat = message.payload as CastStat;
+                            setCastStats(prev => {
+                                const newStats = [...prev];
+                                newStats[index] = newStat;
+                                return newStats;
+                            });
+                            setIsCastStatsLoading(prev => {
+                                const newLoading = [...prev];
+                                newLoading[index] = false;
+                                return newLoading;
+                            });
+                        } else {
+                            console.error(`[castStatUpdate] Invalid index received. optionalData: "${message.optionalData}"`);
+                        }
                     }
                     break;
 
@@ -156,9 +160,9 @@ export const EquipmentProvider: React.FC<EquipmentProviderProps> = ({ children }
         setIsCommStatsLoading(commStatsLoadedCount < 50);
     }, [commStatsLoadedCount]);
 
-    // Memoize a flattened array of castellan stats
+    // Memoize a flattened array of castellan stats (filter out nulls)
     const castellanStats = useMemo(() => {
-        return Object.values(castStats).filter(Boolean); // filter(Boolean) removes any null/undefined entries
+        return castStats.filter((stat): stat is CastStat => stat !== null);
     }, [castStats]);
 
     const value = useMemo(() => ({

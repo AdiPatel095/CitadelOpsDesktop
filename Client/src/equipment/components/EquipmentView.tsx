@@ -19,7 +19,8 @@ const EquipmentView: React.FC = () => {
       return equipmentData.commStats;
     }
     if (equipmentMode === 'Castellan') {
-      return equipmentData.castellanStats;
+      // Use castStats (index-based array) to preserve proper order (0-7)
+      return equipmentData.castStats;
     }
     return [];
   };

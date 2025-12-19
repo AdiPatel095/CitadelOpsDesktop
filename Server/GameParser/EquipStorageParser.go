@@ -51,14 +51,17 @@ func UpdateEquipmentStorage(storageMap string) {
 	if !ok {
 		log.Fatal("equipmentRawArray is not a slice")
 	}
+
 	Models.EquipmentStorage = make([]Models.EquipmentModel, 0, len(equipmentRawArray))
 	for _, equipmentData := range equipmentRawArray {
-		var equipmentFinal Models.EquipmentModel
 		equipmentDataArray, ok := equipmentData.([]interface{})
 		if !ok {
 			log.Fatal("equipmentDataArray is not a slice")
 		}
+
+		var equipmentFinal Models.EquipmentModel
 		ProcessEquipment(equipmentDataArray, &equipmentFinal)
+
 		Models.EquipmentStorage = append(Models.EquipmentStorage, equipmentFinal)
 	}
 }

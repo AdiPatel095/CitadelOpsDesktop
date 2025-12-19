@@ -163,8 +163,6 @@ class FrontendWebsocketService {
     hardwareID: string;
     equipmentMode: 'Commander' | 'Castellan';
     combatMode: 'PvP' | 'PvE';
-    interTierMultiplier: number;
-    intraTierMultiplier: number;
     targetIndex: number;
     stats: Array<{
       stat: string;
@@ -178,14 +176,21 @@ class FrontendWebsocketService {
     });
   }
 
-  public sendConfirmReconfigure(targetIndex: number, currentLoadout: any, newLoadout: any) {
+  public sendConfirmReconfigure(targetIndex: number, currentLoadout: any, newLoadout: any, equipmentMode: 'Commander' | 'Castellan') {
     this.sendMessage({
       type: 'confirmReconfigure',
       payload: {
         targetIndex,
         currentLoadout,
-        newLoadout
+        newLoadout,
+        equipmentMode
       }
+    });
+  }
+
+  public changeLoginDetails() {
+    this.sendMessage({
+      type: 'changeLoginDetails'
     });
   }
 }

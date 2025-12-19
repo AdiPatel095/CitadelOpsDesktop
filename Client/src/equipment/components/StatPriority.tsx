@@ -19,9 +19,10 @@ interface ComparisonData {
     currentLoadout: CommStat;
     newLoadout: CommStat;
     targetIndex: number;
+    equipmentMode: 'Commander' | 'Castellan';
 }
 
-type TierType = 0 | 1 | 2;
+type TierType = 1 | 2;
 
 interface DragState {
     stat: string;
@@ -54,9 +55,8 @@ const TierList: React.FC<TierListProps> = ({
 }) => {
     const getTierStyle = () => {
         switch (tier) {
-            case 0: return { color: 'rose-500', bg: 'rose-500', label: 'Max Stat' };
-            case 1: return { color: 'primary', bg: 'primary', label: 'Ultimate Stat' };
-            case 2: return { color: 'amber-500', bg: 'amber-500', label: 'Optimize Stat' };
+            case 1: return { color: 'rose-500', bg: 'rose-500', label: 'Max Stat' };
+            case 2: return { color: 'primary', bg: 'primary', label: 'Have in Random Slots' };
         }
     };
     const style = getTierStyle();
@@ -150,7 +150,6 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     hardwareID,
     selectedIndex
 }) => {
-    const [tier0Stats, setTier0Stats] = useState<string[]>([]);
     const [tier1Stats, setTier1Stats] = useState<string[]>([]);
     const [tier2Stats, setTier2Stats] = useState<string[]>([]);
     const [showAddDropdown, setShowAddDropdown] = useState(false);
@@ -158,15 +157,12 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     const [dropTarget, setDropTarget] = useState<{ tier: TierType; index: number } | null>(null);
     const [isReconfiguring, setIsReconfiguring] = useState(false);
     const [reconfigureError, setReconfigureError] = useState<string | null>(null);
-    const [showSettings, setShowSettings] = useState(false);
-    const [interTierMultiplier, setInterTierMultiplier] = useState<number>(2);
-    const [intraTierMultiplier, setIntraTierMultiplier] = useState<number>(5);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [showComparisonModal, setShowComparisonModal] = useState(false);
     const [comparisonData, setComparisonData] = useState<ComparisonData | null>(null);
 
     const hasEnoughCredits = credits >= RECONFIGURE_COST;
-    const totalStats = tier0Stats.length + tier1Stats.length + tier2Stats.length;
+    const totalStats = tier1Stats.length + tier2Stats.length;
 
     // Get available stats based on equipment mode
     const allStats = useMemo(() => {
@@ -178,16 +174,16 @@ const StatPriority: React.FC<StatPriorityProps> = ({
 
     // Stats not yet in any tier
     const availableStats = useMemo(() => {
-        const usedStats = [...tier0Stats, ...tier1Stats, ...tier2Stats];
+        const usedStats = [...tier1Stats, ...tier2Stats];
         return allStats.filter(stat => !usedStats.includes(stat));
-    }, [allStats, tier0Stats, tier1Stats, tier2Stats]);
+    }, [allStats, tier1Stats, tier2Stats]);
 
     // Group available stats by category for the dropdown
     const groupedAvailableStats = useMemo(() => {
         const groups = equipmentMode === 'Commander'
             ? commanderStatGroups
             : castellanStatGroups;
-        const usedStats = [...tier0Stats, ...tier1Stats, ...tier2Stats];
+        const usedStats = [...tier1Stats, ...tier2Stats];
 
         const result: { [key: string]: string[] } = {};
         for (const [groupName, stats] of Object.entries(groups)) {
@@ -197,12 +193,11 @@ const StatPriority: React.FC<StatPriorityProps> = ({
             }
         }
         return result;
-    }, [equipmentMode, tier0Stats, tier1Stats, tier2Stats]);
+    }, [equipmentMode, tier1Stats, tier2Stats]);
 
     // Helper to get tier state setters
     const getTierState = (tier: TierType) => {
         switch (tier) {
-            case 0: return { stats: tier0Stats, setStats: setTier0Stats };
             case 1: return { stats: tier1Stats, setStats: setTier1Stats };
             case 2: return { stats: tier2Stats, setStats: setTier2Stats };
         }
@@ -261,7 +256,6 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     };
 
     const removeStat = (stat: string) => {
-        setTier0Stats(tier0Stats.filter(s => s !== stat));
         setTier1Stats(tier1Stats.filter(s => s !== stat));
         setTier2Stats(tier2Stats.filter(s => s !== stat));
     };
@@ -278,11 +272,8 @@ const StatPriority: React.FC<StatPriorityProps> = ({
             const reconfigurePayload = {
                 equipmentMode: equipmentMode,
                 combatMode: combatMode,
-                interTierMultiplier: interTierMultiplier,
-                intraTierMultiplier: intraTierMultiplier,
                 targetIndex: selectedIndex,
                 stats: [
-                    ...tier0Stats.map((stat, index) => ({ stat, tier: 0, position: index })),
                     ...tier1Stats.map((stat, index) => ({ stat, tier: 1, position: index })),
                     ...tier2Stats.map((stat, index) => ({ stat, tier: 2, position: index }))
                 ]
@@ -316,13 +307,12 @@ const StatPriority: React.FC<StatPriorityProps> = ({
 
     // Reset priority stats when equipment mode changes
     React.useEffect(() => {
-        setTier0Stats([]);
-        // Default to Core Stats in Tier 1
+        setTier1Stats([]);
+        // Default to Core Stats in Tier 2
         const defaultStats = equipmentMode === 'Commander'
             ? commanderStatGroups.core
             : castellanStatGroups.core;
-        setTier1Stats(defaultStats);
-        setTier2Stats([]);
+        setTier2Stats(defaultStats);
         setReconfigureError(null);
     }, [equipmentMode]);
 
@@ -334,7 +324,8 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                 setComparisonData({
                     currentLoadout: message.payload.currentLoadout,
                     newLoadout: message.payload.newLoadout,
-                    targetIndex: message.payload.targetIndex
+                    targetIndex: message.payload.targetIndex,
+                    equipmentMode: equipmentMode
                 });
                 setShowComparisonModal(true);
                 setIsReconfiguring(false);
@@ -356,15 +347,6 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                     </h3>
 
                     <div className="flex items-center gap-2">
-                        {/* Settings Button */}
-                        <button
-                            onClick={() => setShowSettings(!showSettings)}
-                            className={`p-2 rounded-global transition-colors ${showSettings ? 'bg-primary/20 text-primary' : 'bg-dark-bg/50 text-gray-400 hover:text-white hover:bg-dark-bg'}`}
-                            title="Configure Multipliers"
-                        >
-                            <Icons.Settings className="w-4 h-4" />
-                        </button>
-
                         {/* Add Stat Button */}
                         <div className="relative" ref={dropdownRef}>
                             <button
@@ -401,60 +383,12 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                     </div>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Drag between tiers to reorganize</p>
-
-                {/* Settings Modal/Panel */}
-                {showSettings && (
-                    <div className="mt-3 p-3 bg-dark-bg/50 rounded-global border border-dark-border/50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div>
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm text-gray-300">Inter-Tier Multiplier</span>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    step="0.1"
-                                    value={interTierMultiplier}
-                                    onChange={(e) => setInterTierMultiplier(Math.max(1, parseFloat(e.target.value) || 1))}
-                                    className="rounded-global w-16 px-2 py-1 bg-dark-bg border border-dark-border text-white text-sm text-center focus:outline-none focus:border-primary/50 transition-colors"
-                                />
-                            </div>
-                            <p className="text-xs text-gray-500 leading-relaxed">
-                                Multiplier within the same tier (priority weight difference).
-                            </p>
-                        </div>
-
-                        <div className="border-t border-dark-border/30 pt-3">
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm text-gray-300">Intra-Tier Multiplier</span>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    step="0.1"
-                                    value={intraTierMultiplier}
-                                    onChange={(e) => setIntraTierMultiplier(Math.max(1, parseFloat(e.target.value) || 1))}
-                                    className="rounded-global w-16 px-2 py-1 bg-dark-bg border border-dark-border text-white text-sm text-center focus:outline-none focus:border-primary/50 transition-colors"
-                                />
-                            </div>
-                            <p className="text-xs text-gray-500 leading-relaxed">
-                                Multiplier between different tiers (how much stronger a higher tier is).
-                            </p>
-                        </div>
-                    </div>
-                )}
             </div>
+
+
 
             {/* Three-Tier Priority Lists - Stacked */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                <TierList
-                    tier={0}
-                    stats={tier0Stats}
-                    dragState={dragState}
-                    dropTarget={dropTarget}
-                    onDragStart={handleDragStart}
-                    onDragOver={handleDragOver}
-                    onDragEnd={handleDragEnd}
-                    onDrop={handleDrop}
-                    onRemove={removeStat}
-                />
                 <TierList
                     tier={1}
                     stats={tier1Stats}
@@ -477,6 +411,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                     onDrop={handleDrop}
                     onRemove={removeStat}
                 />
+
             </div>
 
 
@@ -532,6 +467,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                 newLoadout={comparisonData?.newLoadout ?? null}
                 targetIndex={comparisonData?.targetIndex ?? 0}
                 combatMode={combatMode}
+                equipmentMode={equipmentMode}
             />
         </div>
     );

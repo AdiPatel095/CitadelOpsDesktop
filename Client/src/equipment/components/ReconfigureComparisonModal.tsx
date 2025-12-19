@@ -11,6 +11,7 @@ interface ReconfigureComparisonModalProps {
     newLoadout: CommStat | null;
     targetIndex: number;
     combatMode: 'PvP' | 'PvE';
+    equipmentMode: 'Commander' | 'Castellan';
 }
 
 // Process stats to combine base stats with CL/NPC stats based on combat mode
@@ -138,7 +139,8 @@ const ReconfigureComparisonModal: React.FC<ReconfigureComparisonModalProps> = ({
     currentLoadout,
     newLoadout,
     targetIndex,
-    combatMode
+    combatMode,
+    equipmentMode
 }) => {
     // Process stats with useMemo to combine base + CL/NPC based on combat mode
     const currentProcessed = useMemo(() => {
@@ -154,7 +156,7 @@ const ReconfigureComparisonModal: React.FC<ReconfigureComparisonModalProps> = ({
     if (!isOpen || !currentLoadout || !newLoadout) return null;
 
     const handleConfirm = () => {
-        FrontendWebsocket.sendConfirmReconfigure(targetIndex, currentLoadout, newLoadout);
+        FrontendWebsocket.sendConfirmReconfigure(targetIndex, currentLoadout, newLoadout, equipmentMode);
         onClose();
     };
 

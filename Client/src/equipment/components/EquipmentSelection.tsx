@@ -25,16 +25,33 @@ type SellItemType = 'Equipment' | 'Gems';
 interface CautionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: () => void;
+    onConfirm: (sellLookItems?: boolean, saveRift?: boolean) => void;
     itemType: SellItemType;
 }
 
 const CautionModal: React.FC<CautionModalProps> = ({ isOpen, onClose, onConfirm, itemType }) => {
+    // Local state for switches
+    const [sellLookItems, setSellLookItems] = useState(false);
+    const [saveRift, setSaveRift] = useState(false); // Placeholder for "Save Rift Equipment"
+
+    // Reset state when modal opens
+    React.useEffect(() => {
+        if (isOpen) {
+            setSellLookItems(false);
+            setSaveRift(false);
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const isGems = itemType === 'Gems';
     const singularItem = isGems ? 'gem' : 'item';
     const action = isGems ? 'socket it to an equipment piece' : 'equip it to a commander or castellan';
+
+    const handleConfirm = () => {
+        // Pass the switch states back to the parent
+        onConfirm(sellLookItems, saveRift);
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -75,6 +92,39 @@ const CautionModal: React.FC<CautionModalProps> = ({ isOpen, onClose, onConfirm,
                     This will sell all <span className="text-amber-400 font-semibold">Non-Relic {itemType.toLowerCase()}</span> and is <span className="text-red-400 font-semibold">not reversible</span>.
                 </p>
 
+                {/* Switches for Equipment Only */}
+                {!isGems && (
+                    <div className="space-y-3 mb-6">
+                        {/* Save Rift Equipment (Disabled/Locked) */}
+                        <div className="flex items-center justify-between p-3 rounded-global bg-dark-bg/30 border border-dark-border/50 opacity-60 cursor-not-allowed">
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-gray-400">Save Rift Equipment</span>
+                                <span className="text-xs text-primary flex items-center gap-1">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                    Coming Soon
+                                </span>
+                            </div>
+                            <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-700">
+                                <span className="translate-x-1 inline-block h-4 w-4 transform rounded-full bg-gray-500 transition" />
+                            </div>
+                        </div>
+
+                        {/* Sell Look Items */}
+                        <div
+                            className="flex items-center justify-between p-3 rounded-global bg-dark-bg/50 border border-dark-border cursor-pointer hover:bg-white/5 transition-colors"
+                            onClick={() => setSellLookItems(!sellLookItems)}
+                        >
+                            <span className="text-sm font-medium text-gray-300">Sell Look Items</span>
+                            <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${sellLookItems ? 'bg-primary' : 'bg-gray-600'}`}>
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ${sellLookItems ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+
                 {/* Cost Info */}
                 <div className="bg-dark-bg/50 border border-dark-border rounded-global px-4 py-3 mb-4">
                     <div className="flex items-center justify-center gap-2 text-sm">
@@ -102,7 +152,7 @@ const CautionModal: React.FC<CautionModalProps> = ({ isOpen, onClose, onConfirm,
                         Cancel
                     </button>
                     <button
-                        onClick={onConfirm}
+                        onClick={handleConfirm}
                         className="flex-1 px-4 py-2 bg-amber-500 text-dark-bg font-semibold rounded-global hover:bg-amber-600 active:scale-95 transition-all duration-200"
                     >
                         Confirm
@@ -131,9 +181,15 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
         setShowSellModal(true);
     };
 
-    const handleSellConfirm = () => {
+    const handleSellConfirm = (sellLookItems?: boolean, saveRift?: boolean) => {
         if (sellType === 'Equipment') {
-            FrontendWebsocket.sendMessage({ type: 'sellNonRelicEquipment' });
+            FrontendWebsocket.sendMessage({
+                type: 'sellNonRelicEquipment',
+                payload: {
+                    sellLookItems: !!sellLookItems,
+                    saveRift: !!saveRift
+                }
+            });
         } else {
             FrontendWebsocket.sendMessage({ type: 'sellNonRelicGems' });
         }
