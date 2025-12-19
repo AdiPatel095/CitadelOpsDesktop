@@ -15,6 +15,13 @@ const (
 	Tier2Decay     = 0.05 // 5% decay per position
 )
 
+// StatWeightMultipliers adjusts weights for stats with unusual raw value scales
+// These normalize scoring so all stats contribute fairly
+var StatWeightMultipliers = map[string]float64{
+	"maidenSupp": 0.1,   // Maiden Support has 10x normal raw values, reduce weight by 10x
+	"wave":       100.0, // Wave has a cap of 1, boost weight by 100x
+}
+
 // CommStatGetter maps stat names to functions that retrieve the value from CommStatModel
 var CommStatGetter = map[string]func(*Models.CommStatModel) float64{
 	// Base Stats
@@ -175,6 +182,11 @@ func ScoreCommander(stats *Models.CommStatModel, priorities PreparedPriority, co
 	for i, priorityStat := range priorities.Tier1Stats {
 		weight := calculateWeight(Tier1BaseScore, Tier1Decay, i)
 
+		// Apply stat-specific weight multipliers
+		if multiplier, exists := StatWeightMultipliers[priorityStat.StatName]; exists {
+			weight *= multiplier
+		}
+
 		// Score the base stat
 		if getter, exists := CommStatGetter[priorityStat.StatName]; exists {
 			score += getter(stats) * weight
@@ -192,6 +204,11 @@ func ScoreCommander(stats *Models.CommStatModel, priorities PreparedPriority, co
 	// Score Tier2 stats (optimize stats) with position-based decay
 	for i, priorityStat := range priorities.Tier2Stats {
 		weight := calculateWeight(Tier2BaseScore, Tier2Decay, i)
+
+		// Apply stat-specific weight multipliers
+		if multiplier, exists := StatWeightMultipliers[priorityStat.StatName]; exists {
+			weight *= multiplier
+		}
 
 		// Score the base stat
 		if getter, exists := CommStatGetter[priorityStat.StatName]; exists {
@@ -221,6 +238,11 @@ func ScoreCastellan(stats *Models.CastStatModel, priorities PreparedPriority, co
 	for i, priorityStat := range priorities.Tier1Stats {
 		weight := calculateWeight(Tier1BaseScore, Tier1Decay, i)
 
+		// Apply stat-specific weight multipliers
+		if multiplier, exists := StatWeightMultipliers[priorityStat.StatName]; exists {
+			weight *= multiplier
+		}
+
 		// Score the base stat
 		if getter, exists := CastStatGetter[priorityStat.StatName]; exists {
 			score += getter(stats) * weight
@@ -238,6 +260,11 @@ func ScoreCastellan(stats *Models.CastStatModel, priorities PreparedPriority, co
 	// Score Tier2 stats (optimize stats) with position-based decay
 	for i, priorityStat := range priorities.Tier2Stats {
 		weight := calculateWeight(Tier2BaseScore, Tier2Decay, i)
+
+		// Apply stat-specific weight multipliers
+		if multiplier, exists := StatWeightMultipliers[priorityStat.StatName]; exists {
+			weight *= multiplier
+		}
 
 		// Score the base stat
 		if getter, exists := CastStatGetter[priorityStat.StatName]; exists {

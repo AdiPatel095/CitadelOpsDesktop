@@ -167,10 +167,6 @@ func UnequipEquipmentRaw(equipmentMode string, targetIndex int, equipmentId floa
 		return false
 	}
 
-	if lidValue == 0 {
-		return false
-	}
-
 	// Payload: %xt%EmpireEx_21%eeq%1%{"EID":equipmentId,"LID":leaderId,"E":0}%
 	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%eeq%%1%%{"EID":%.0f,"LID":%.0f,"E":0}%%`, equipmentId, lidValue)
 	OutgoingMessages <- []byte(payload)
@@ -188,10 +184,6 @@ func UnequipGemRaw(equipmentMode string, targetIndex int, equipmentId float64) b
 	} else if equipmentMode == "Castellan" {
 		lidValue = GetCastellanID(targetIndex)
 	} else {
-		return false
-	}
-
-	if lidValue == 0 {
 		return false
 	}
 

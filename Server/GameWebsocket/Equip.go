@@ -20,10 +20,6 @@ func EquipEquipment(equipmentMode string, targetIndex int, slotNumber int, equip
 		return false
 	}
 
-	if lidValue == 0 {
-		return false
-	}
-
 	// Game message format: %xt%EmpireEx_21%eeq%1%{"EID":equipmentId,"LID":leaderId,"E":1}%
 	// E:1 means equip
 	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%eeq%%1%%{"EID":%.0f,"LID":%.0f,"E":1}%%`, equipmentId, lidValue)
@@ -44,10 +40,6 @@ func EquipGem(equipmentMode string, targetIndex int, equipmentId float64, gemId 
 	} else if equipmentMode == "Castellan" {
 		lidValue = GetCastellanID(targetIndex)
 	} else {
-		return false
-	}
-
-	if lidValue == 0 {
 		return false
 	}
 

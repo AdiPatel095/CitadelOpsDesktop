@@ -239,6 +239,7 @@ func ParseFrontendMessage(message []byte) {
 					equipID = current.Hero
 				}
 				if equipID != 0 {
+					log.Printf("Unequipping slot %d, equipID: %.0f", slot, equipID)
 					GameWebsocket.UnequipEquipmentRaw(equipmentMode, targetIndex, equipID)
 					time.Sleep(500 * time.Millisecond)
 				}
@@ -260,6 +261,7 @@ func ParseFrontendMessage(message []byte) {
 					if eq.GemSlot.Gem != nil {
 						gemID := eq.GemSlot.Gem.ID
 						if targetGemMap[gemID] {
+							log.Printf("Cleaning gem ID: %.0f from equipment ID: %.0f", gemID, eq.ID)
 							// Double Jump: Equip -> UnequipGem -> UnequipItem
 							slot := int(eq.EquipSlotNumber)
 							GameWebsocket.EquipEquipment(equipmentMode, targetIndex, slot, eq.ID)
@@ -285,6 +287,7 @@ func ParseFrontendMessage(message []byte) {
 
 			for slot, eid := range newEquips {
 				if eid != 0 {
+					log.Printf("Equipping slot %d, equipID: %.0f", slot, eid)
 					GameWebsocket.EquipEquipment(equipmentMode, targetIndex, slot, eid)
 					time.Sleep(800 * time.Millisecond)
 				}
@@ -302,6 +305,7 @@ func ParseFrontendMessage(message []byte) {
 			for slot, gid := range gemMapping {
 				eid := newEquips[slot]
 				if gid != 0 && eid != 0 {
+					log.Printf("Socketing gem ID: %.0f into equipment ID: %.0f (slot %d)", gid, eid, slot)
 					GameWebsocket.EquipGem(equipmentMode, targetIndex, eid, gid)
 					time.Sleep(800 * time.Millisecond)
 				}

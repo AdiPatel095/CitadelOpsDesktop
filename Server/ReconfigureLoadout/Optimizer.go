@@ -54,9 +54,6 @@ func PreparePriority(payload ReconfigurePayload) PreparedPriority {
 		return prepared.Tier2Stats[i].Position < prepared.Tier2Stats[j].Position
 	})
 
-	log.Printf("Prepared priorities: Tier1=%d stats, Tier2=%d stats (%d IDs)",
-		len(prepared.Tier1Stats), len(prepared.Tier2Stats), len(prepared.Tier2Bitmask))
-
 	return prepared
 }
 
@@ -105,18 +102,12 @@ func SeparateEquipmentBySlot(equipment []Models.EquipmentModel) (
 		slotOrder[i] = s.slot
 	}
 
-	log.Printf("Equipment by slot: Slot1=%d, Slot2=%d, Slot3=%d, Slot4=%d",
-		len(slot1), len(slot2), len(slot3), len(slot4))
-	log.Printf("Slot order (smallest first): %v", slotOrder)
-
 	return slot1, slot2, slot3, slot4, slotOrder
 }
 
 // Optimize is the shared optimizer method that works with pre-filtered equipment, heroes, and gems
 // It takes OptimizerInput and returns an OptimizationResult with the best loadout
 func Optimize(input OptimizerInput) OptimizationResult {
-	log.Printf("Starting optimization with %d equipment, %d heroes, %d gems",
-		len(input.Equipment), len(input.Heroes), len(input.Gems))
 
 	// Step 1: Prepare priority data structures
 	prepared := PreparePriority(input.Payload)
@@ -135,15 +126,10 @@ func Optimize(input OptimizerInput) OptimizationResult {
 				bestHeroID = hero.ID
 			}
 		}
-		log.Printf("Selected Best Hero ID: %.0f (Score: %.2f)", bestHeroID, bestHeroScore)
 	}
 
 	// Step 2: Separate equipment by slot
 	slot1, slot2, slot3, slot4, slotOrder := SeparateEquipmentBySlot(input.Equipment)
-
-	// Log the prepared priorities for debugging
-	log.Printf("Tier 1 (Priority) stats: %v", getStatNames(prepared.Tier1Stats))
-	log.Printf("Tier 2 (Optimize) bitmask size: %d IDs", len(prepared.Tier2Bitmask))
 
 	// Step 3: Score and select top 10 candidates from the first slot (smallest)
 	// Only process the first slot in slotOrder - it has the fewest items
@@ -161,8 +147,6 @@ func Optimize(input OptimizerInput) OptimizationResult {
 	}
 
 	topCandidates := SelectTopEquipment(firstSlotEquipment, prepared)
-	log.Printf("Step 3: Selected %d top candidates from slot %d (had %d items)",
-		len(topCandidates), firstSlotNum, len(firstSlotEquipment))
 
 	// Step 4: For each candidate, spawn a goroutine to continue optimization
 	// Each goroutine gets a copy of the bitmask updated with its candidate's stats
@@ -200,18 +184,12 @@ func Optimize(input OptimizerInput) OptimizationResult {
 				}
 			}
 
-			log.Printf("Step 4: Branch %d, equip ID %.0f, bitmask switches: %d",
-				branchIndex, selectedEquip.ID, len(branchBitmask))
-
 			// Step 5: Get slot 2 inventory (slotOrder[1]) and prune based on coverage
 			secondSlotNum := slotOrder[1]
 			secondSlotInventory := *slots[secondSlotNum]
 
 			// Prune: Strict exclusion - remove items with any redundant stats
 			prunedSlot2 := pruneInventory(secondSlotInventory, branchBitmask)
-
-			log.Printf("Step 5: Branch %d, slot %d pruned from %d to %d items",
-				branchIndex, secondSlotNum, len(secondSlotInventory), len(prunedSlot2))
 
 			// Branch tracking: best result found so far, running candidate, and capped stat IDs
 			// Branch tracking: running candidate, and capped stat IDs
@@ -431,18 +409,16 @@ func Optimize(input OptimizerInput) OptimizationResult {
 						CapAwareOptimization(&currentCandidate, slots, cappedBySlot, selectedEquip, prepared, input.Payload.EquipmentMode, input.Payload.CombatMode)
 
 						if currentCandidate.Score > branchResults[branchIndex].Score {
+							log.Printf("New best score: %.2f (was %.2f)", currentCandidate.Score, branchResults[branchIndex].Score)
 							branchResults[branchIndex] = currentCandidate
 						}
 					}
 				}
 			}
-
-			log.Printf("Branch %d: Best score = %.2f", branchIndex, branchResults[branchIndex].Score)
 		}(i, candidate)
 	}
 
 	wg.Wait()
-	log.Printf("Step 4: All %d candidate goroutines completed", len(topCandidates))
 
 	// Select best result from branchResults
 	var finalBest OptimizationResult
@@ -696,7 +672,6 @@ func OptimizeGems(result *OptimizationResult, input OptimizerInput, prepared Pre
 
 	// 1. Get Top Candidates using the multi-pass filter
 	candidateGems := filterTopStatGems(input.Gems, prepared)
-	log.Printf("Gem Optimization: Filtering reduced %d gems to %d candidates", len(input.Gems), len(candidateGems))
 
 	// 2. Reconstruct Base Loadout to track (for synergy context, though optimization focuses on Gem Bucket)
 	finalEquip1 := findEquipByID(result.Equip1, input.Equipment)
