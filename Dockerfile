@@ -24,8 +24,13 @@ COPY . .
 # The path must match what //go:embed expects (Client/dist)
 COPY --from=frontend-builder /app/Client/dist ./Client/dist
 
-# Build the Go application into a static executable.
-RUN CGO_ENABLED=0 GOOS=windows go build -a -ldflags '-s -w' -o /app/CitadelDesktop.exe .
+# Build the Go application into static executables for all platforms
+# Windows (x64)
+RUN CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -a -ldflags '-s -w' -o /app/CitadelDesktop.exe .
+# macOS Intel (x64)
+RUN CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -a -ldflags '-s -w' -o /app/CitadelDesktop-macos-amd64 .
+# macOS Apple Silicon (ARM64)
+RUN CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -a -ldflags '-s -w' -o /app/CitadelDesktop-macos-arm64 .
 
 # --- Stage 3: The Final Stage ---
 FROM alpine:latest
@@ -36,8 +41,10 @@ RUN apk --no-cache add ca-certificates
 # Set the working directory
 WORKDIR /app
 
-# Copy the compiled binary from the 'builder' stage
+# Copy the compiled binaries from the 'builder' stage
 COPY --from=builder /app/CitadelDesktop.exe /app/CitadelDesktop.exe
+COPY --from=builder /app/CitadelDesktop-macos-amd64 /app/CitadelDesktop-macos-amd64
+COPY --from=builder /app/CitadelDesktop-macos-arm64 /app/CitadelDesktop-macos-arm64
 
 # Expose port (optional, mostly for documentation)
 EXPOSE 8080
