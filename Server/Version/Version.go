@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -16,13 +17,44 @@ import (
 
 // CurrentVersion is the hardcoded current desktop app version.
 // Update this value when releasing a new version.
-const CurrentVersion = "1.0.0"
+const CurrentVersion = "1.1.3"
+
+// Download URL configuration
+const (
+	// Base URL for the GCS bucket where binaries are stored
+	DownloadBaseURL = "https://storage.googleapis.com/us-service-ggebot-desktop-bucket"
+	// Image name used in the build
+	ImageName = "citadel-ops-desktop"
+)
 
 // VersionInfo represents the response from the version check endpoint
 type VersionInfo struct {
-	Version     string `json:"version"`
-	DownloadURL string `json:"downloadUrl"`
-	ReleasedAt  string `json:"releasedAt"`
+	Version string `json:"version"`
+}
+
+// BuildDownloadURL constructs the appropriate download URL for the current platform
+// based on runtime.GOOS and runtime.GOARCH
+func BuildDownloadURL(version string) string {
+	switch runtime.GOOS {
+	case "darwin":
+		// macOS - check architecture
+		if runtime.GOARCH == "arm64" {
+			// Apple Silicon (M1/M2/M3/M4)
+			log.Printf("[Version] Platform detected: macOS ARM64 (Apple Silicon)")
+			return fmt.Sprintf("%s/macos-arm64-%s-%s", DownloadBaseURL, ImageName, version)
+		} else {
+			// Intel Mac (amd64)
+			log.Printf("[Version] Platform detected: macOS AMD64 (Intel)")
+			return fmt.Sprintf("%s/macos-amd64-%s-%s", DownloadBaseURL, ImageName, version)
+		}
+	case "windows":
+		log.Printf("[Version] Platform detected: Windows x64")
+		return fmt.Sprintf("%s/windows-%s-%s.exe", DownloadBaseURL, ImageName, version)
+	default:
+		// Fallback to Windows
+		log.Printf("[Version] Platform detected: unknown (%s/%s), defaulting to Windows", runtime.GOOS, runtime.GOARCH)
+		return fmt.Sprintf("%s/windows-%s-%s.exe", DownloadBaseURL, ImageName, version)
+	}
 }
 
 // Callback function types
@@ -123,7 +155,9 @@ func checkForUpdate() {
 	if compareVersions(versionInfo.Version, CurrentVersion) > 0 {
 		log.Printf("[Version] New version available: %s", versionInfo.Version)
 		if sendVersionUpdate != nil {
-			sendVersionUpdate(versionInfo.Version, versionInfo.DownloadURL)
+			// Build the download URL dynamically based on version and current platform
+			downloadURL := BuildDownloadURL(versionInfo.Version)
+			sendVersionUpdate(versionInfo.Version, downloadURL)
 		}
 	} else {
 		log.Printf("[Version] Already on latest version")
@@ -178,6 +212,7 @@ func CleanupOldBinary() {
 }
 
 // PerformSelfUpdate downloads the new binary and applies the update
+// After update, the user must manually restart the application
 func PerformSelfUpdate(downloadUrl string) error {
 	log.Printf("[Version] Starting self-update from: %s", downloadUrl)
 
@@ -192,12 +227,26 @@ func PerformSelfUpdate(downloadUrl string) error {
 	ext := filepath.Ext(exeName)
 	baseName := strings.TrimSuffix(exeName, ext)
 
-	newPath := filepath.Join(exeDir, baseName+"_new"+ext)
 	oldPath := filepath.Join(exeDir, baseName+"_old"+ext)
 
-	// Step 1: Download new binary
+	// Step 1: Rename current exe to _old (backup)
 	if sendUpdateProgress != nil {
-		sendUpdateProgress("Downloading update...", 0)
+		sendUpdateProgress("Backing up current version...", 0)
+	}
+
+	// Remove old backup if it exists
+	os.Remove(oldPath)
+
+	// Rename current -> old
+	if err := os.Rename(exePath, oldPath); err != nil {
+		return fmt.Errorf("failed to backup current binary: %w", err)
+	}
+
+	log.Printf("[Version] Backed up current binary to: %s", oldPath)
+
+	// Step 2: Download new binary directly to the original path
+	if sendUpdateProgress != nil {
+		sendUpdateProgress("Downloading update...", 5)
 	}
 
 	client := &http.Client{
@@ -206,17 +255,23 @@ func PerformSelfUpdate(downloadUrl string) error {
 
 	resp, err := client.Get(downloadUrl)
 	if err != nil {
+		// Restore the original on failure
+		os.Rename(oldPath, exePath)
 		return fmt.Errorf("failed to download update: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		// Restore the original on failure
+		os.Rename(oldPath, exePath)
 		return fmt.Errorf("download failed with status: %d", resp.StatusCode)
 	}
 
-	// Create the new file
-	newFile, err := os.Create(newPath)
+	// Create the new file at the original path
+	newFile, err := os.Create(exePath)
 	if err != nil {
+		// Restore the original on failure
+		os.Rename(oldPath, exePath)
 		return fmt.Errorf("failed to create new binary file: %w", err)
 	}
 
@@ -231,13 +286,15 @@ func PerformSelfUpdate(downloadUrl string) error {
 			_, writeErr := newFile.Write(buffer[:n])
 			if writeErr != nil {
 				newFile.Close()
-				os.Remove(newPath)
+				os.Remove(exePath)
+				os.Rename(oldPath, exePath) // Restore on failure
 				return fmt.Errorf("failed to write to new binary: %w", writeErr)
 			}
 			downloaded += int64(n)
 
 			if totalSize > 0 && sendUpdateProgress != nil {
-				percent := int(float64(downloaded) / float64(totalSize) * 100)
+				// Progress from 5% to 95%
+				percent := 5 + int(float64(downloaded)/float64(totalSize)*90)
 				sendUpdateProgress("Downloading update...", percent)
 			}
 		}
@@ -246,47 +303,31 @@ func PerformSelfUpdate(downloadUrl string) error {
 		}
 		if err != nil {
 			newFile.Close()
-			os.Remove(newPath)
+			os.Remove(exePath)
+			os.Rename(oldPath, exePath) // Restore on failure
 			return fmt.Errorf("error during download: %w", err)
 		}
 	}
 	newFile.Close()
 
+	// Make the new binary executable (for macOS/Linux)
+	if runtime.GOOS != "windows" {
+		if err := os.Chmod(exePath, 0755); err != nil {
+			log.Printf("[Version] Warning: failed to set executable permissions: %v", err)
+		}
+	}
+
 	log.Printf("[Version] Download complete: %d bytes", downloaded)
+	log.Printf("[Version] Update applied successfully - user must restart the application")
 
-	// Step 2: Rename current exe to _old
+	// Step 3: Notify frontend that update is complete and restart is required
 	if sendUpdateProgress != nil {
-		sendUpdateProgress("Applying update...", 100)
+		sendUpdateProgress("Update complete! Please restart.", 100)
 	}
 
-	// Remove old backup if it exists
-	os.Remove(oldPath)
-
-	// Rename current -> old
-	if err := os.Rename(exePath, oldPath); err != nil {
-		os.Remove(newPath)
-		return fmt.Errorf("failed to backup current binary: %w", err)
-	}
-
-	// Step 3: Rename new -> current
-	if err := os.Rename(newPath, exePath); err != nil {
-		// Try to restore the original
-		os.Rename(oldPath, exePath)
-		return fmt.Errorf("failed to install new binary: %w", err)
-	}
-
-	log.Printf("[Version] Update applied successfully")
-
-	// Step 4: Notify frontend and restart
 	if sendUpdateComplete != nil {
 		sendUpdateComplete()
 	}
-
-	// Give the frontend a moment to receive the message
-	time.Sleep(500 * time.Millisecond)
-
-	// Step 5: Restart the application
-	go RestartApp()
 
 	return nil
 }

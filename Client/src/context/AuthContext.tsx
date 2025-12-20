@@ -13,6 +13,7 @@ interface AuthContextType {
   isVersionBannerDismissed: boolean;
   updateProgress: { stage: string; percent: number } | null;
   isUpdating: boolean;
+  restartRequired: boolean;
   dismissVersionBanner: () => void;
   triggerUpdate: (downloadUrl: string) => void;
   startGame: () => void;
@@ -34,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isVersionBannerDismissed, setIsVersionBannerDismissed] = useState(false);
   const [updateProgress, setUpdateProgress] = useState<{ stage: string; percent: number } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [restartRequired, setRestartRequired] = useState(false);
 
   useEffect(() => {
     const handleMessage = (message: any) => {
@@ -70,10 +72,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           percent: message.payload.percent
         });
       } else if (message.type === 'updateComplete') {
-        console.log('Update complete:', message.payload);
-        setUpdateProgress(null);
+        console.log('Update complete - restart required');
         setIsUpdating(false);
-        // App will restart, so we just show a message
+        setRestartRequired(true);
       } else if (message.type === 'updateError') {
         console.log('Update error:', message.payload);
         setUpdateProgress(null);
@@ -140,6 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isVersionBannerDismissed,
       updateProgress,
       isUpdating,
+      restartRequired,
       dismissVersionBanner,
       triggerUpdate,
       startGame,

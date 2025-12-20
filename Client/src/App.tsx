@@ -8,7 +8,7 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import RegistrationPending from './components/RegistrationPending';
 import InsufficientCreditsModal from './components/InsufficientCreditsModal';
-import UpdateBanner from './components/UpdateBanner';
+import UpdateModal from './components/UpdateModal';
 import { Alerts } from './components/Alerts';
 
 import { ResourceProvider } from "./currency/context/ResourceContext.tsx";
@@ -57,25 +57,11 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-dark-bg text-gray-100 font-sans selection:bg-primary/30 flex flex-col">
-      {/* Version Update Banner - displayed above everything when new version available */}
-      {versionUpdate && !isVersionBannerDismissed && (
-        <div className="fixed top-0 left-0 right-0 z-[100]">
-          <UpdateBanner
-            newVersion={versionUpdate.newVersion}
-            downloadUrl={versionUpdate.downloadUrl}
-            onDismiss={dismissVersionBanner}
-          />
-        </div>
-      )}
-
-      {/* Header - adjust top position if banner is shown */}
-      <div className={versionUpdate && !isVersionBannerDismissed ? 'pt-12' : ''}>
-        <Header />
-      </div>
+      <Header />
 
       <Sidebar currentView={activeView} onViewChange={setActiveView} />
 
-      <main className={`ml-64 min-h-screen transition-all duration-300 ${versionUpdate && !isVersionBannerDismissed ? 'pt-16' : 'pt-16'}`}>
+      <main className="ml-64 min-h-screen transition-all duration-300 pt-16">
         <div className="p-6 max-w-[1600px] mx-auto animate-fade-in">
           {renderView()}
         </div>
@@ -83,6 +69,15 @@ const AppContent: React.FC = () => {
 
       <InsufficientCreditsModal />
       <Alerts />
+
+      {/* Version Update Modal - displayed when new version available */}
+      {versionUpdate && !isVersionBannerDismissed && (
+        <UpdateModal
+          newVersion={versionUpdate.newVersion}
+          downloadUrl={versionUpdate.downloadUrl}
+          onDismiss={dismissVersionBanner}
+        />
+      )}
     </div>
   );
 };
@@ -102,4 +97,3 @@ function App() {
 }
 
 export default App;
-
