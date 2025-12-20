@@ -4,7 +4,9 @@ import (
 	"CitadelDesktop/Server/FrontendWebsocket"
 	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/License"
+	"CitadelDesktop/Server/Version"
 	"embed"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
@@ -15,6 +17,9 @@ import (
 var frontendAssets embed.FS
 
 func main() {
+	// Clean up old binary from previous update (if exists)
+	Version.CleanupOldBinary()
+
 	// Initialize the hardware ID (creates file if needed)
 	if err := License.InitRegistration(); err != nil {
 		log.Printf("Warning: Failed to initialize registration: %v", err)
@@ -29,6 +34,12 @@ func main() {
 	// Set up callback for GameWebsocket to notify frontend of insufficient credits
 	GameWebsocket.SetInsufficientCreditsCallback(FrontendWebsocket.SendInsufficientCreditsMessage)
 	GameWebsocket.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
+
+	// Set up callbacks for Version package
+	Version.SetVersionUpdateCallback(FrontendWebsocket.SendVersionUpdateMessage)
+	Version.SetUpdateProgressCallback(FrontendWebsocket.SendUpdateProgressMessage)
+	Version.SetUpdateCompleteCallback(FrontendWebsocket.SendUpdateCompleteMessage)
+	Version.SetUpdateErrorCallback(FrontendWebsocket.SendUpdateErrorMessage)
 
 	// Startup frontend server (always, so users can see registration status)
 	go StartFrontendService()
@@ -49,6 +60,9 @@ func main() {
 		}
 	}()
 
+	// Start version check service (runs in background)
+	Version.StartVersionCheck()
+
 	// Block forever
 	select {}
 }
@@ -65,14 +79,17 @@ func StartFrontendService() {
 	mux.Handle("/", http.FileServer(http.FS(subFS)))
 	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)
 
-	log.Println("Dashboard available at : http://localhost:8080")
+	port := License.CurrentPort
+	log.Printf("Dashboard available at: http://localhost:%d", port)
+
 	// Allow CORS for development if needed, but since we are serving frontend from same origin, it's fine.
 	// Actually, for local dev (vite on 5173), we might need CORS or proxy.
 	// Assuming prod build for now or proxy in vite config.
 
 	// Wrap mux with CORS middleware if necessary, or simple serve
 	// For simplicity, just serve mux.
-	err = http.ListenAndServe(":8080", mux)
+	addr := fmt.Sprintf(":%d", port)
+	err = http.ListenAndServe(addr, mux)
 	if err != nil {
 		log.Fatal(err)
 	}

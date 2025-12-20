@@ -193,6 +193,13 @@ class FrontendWebsocketService {
       type: 'changeLoginDetails'
     });
   }
+
+  public triggerUpdate(downloadUrl: string) {
+    this.sendMessage({
+      type: 'triggerUpdate',
+      payload: { downloadUrl }
+    });
+  }
 }
 
 export const FrontendWebsocket = new FrontendWebsocketService();

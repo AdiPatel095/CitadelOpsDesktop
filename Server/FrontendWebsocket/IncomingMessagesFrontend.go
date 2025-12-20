@@ -4,6 +4,7 @@ import (
 	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ReconfigureLoadout"
+	"CitadelDesktop/Server/Version"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -11,6 +12,11 @@ import (
 	"strconv"
 	"time"
 )
+
+// triggerSelfUpdate is a wrapper that calls Version.PerformSelfUpdate
+func triggerSelfUpdate(downloadUrl string) error {
+	return Version.PerformSelfUpdate(downloadUrl)
+}
 
 func ParseFrontendMessage(message []byte) {
 	var data map[string]interface{}
@@ -457,5 +463,28 @@ func ParseFrontendMessage(message []byte) {
 			return
 		}
 		SendAlertMessage("green", "Login details deleted. Please restart the bot (Start Game).")
+	case "triggerUpdate":
+		log.Println("Received request to trigger self-update")
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			SendAlertMessage("red", "Invalid update request")
+			return
+		}
+
+		downloadUrl, _ := payloadRaw["downloadUrl"].(string)
+		if downloadUrl == "" {
+			SendAlertMessage("red", "No download URL provided")
+			return
+		}
+
+		// Import Version package dynamically called via callback
+		// The actual update is performed in a goroutine
+		go func() {
+			if err := triggerSelfUpdate(downloadUrl); err != nil {
+				log.Printf("Self-update failed: %v", err)
+				SendUpdateErrorMessage(err.Error())
+				SendAlertMessage("red", fmt.Sprintf("Update failed: %v", err))
+			}
+		}()
 	}
 }

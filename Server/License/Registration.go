@@ -8,9 +8,11 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -19,7 +21,7 @@ import (
 )
 
 const hardwareFile = "hardwareID.txt"
-const registrationPollInterval = 1 * time.Second
+const registrationPollInterval = 15 * time.Second
 const creditsSyncInterval = 1 * time.Second
 const httpTimeout = 10 * time.Second
 
@@ -30,8 +32,8 @@ var httpClient = &http.Client{
 
 // cloudBaseURL returns the base URL for cloud API, configurable via environment
 func cloudBaseURL() string {
-	if url := os.Getenv("CLOUD_BACKEND_URL"); url != "" {
-		return url
+	if envUrl := os.Getenv("CLOUD_BACKEND_URL"); envUrl != "" {
+		return envUrl
 	}
 	return "https://citadelops.app/api"
 }
@@ -108,29 +110,70 @@ func getMachineFingerprint() (string, error) {
 	return hex.EncodeToString(hash[:8]), nil
 }
 
-// generateHardwareID creates a new hardware ID combining machine fingerprint and instance UUID
+// CurrentPort holds the port that the frontend service will use
+var CurrentPort int
+
+// findAvailablePort finds an available TCP port by binding to :0 and getting the assigned port
+func findAvailablePort() (int, error) {
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+	defer listener.Close()
+	addr := listener.Addr().(*net.TCPAddr)
+	return addr.Port, nil
+}
+
+// generateHardwareID creates a new hardware ID combining machine fingerprint, instance UUID, and port
 func generateHardwareID() (string, error) {
 	fingerprint, err := getMachineFingerprint()
 	if err != nil {
 		return "", err
 	}
 	instanceID := uuid.New().String()
-	// Use pipe as separator because MAC addresses contain colons
-	return fmt.Sprintf("%s|%s", fingerprint, instanceID), nil
-}
 
-// parseHardwareID splits a hardware ID into machine fingerprint and instance UUID
-func parseHardwareID(id string) (fingerprint, instanceID string, valid bool) {
-	// Split on pipe first
-	parts := strings.SplitN(id, "|", 2)
-	if len(parts) == 2 {
-		return parts[0], parts[1], true
+	// Find an available port
+	port, err := findAvailablePort()
+	if err != nil {
+		return "", fmt.Errorf("failed to find available port: %w", err)
 	}
 
-	// Fallback/Legacy check: try splitting on last colon if pipe not found?
-	// But the user said previous ones were broken anyway.
-	// Actually, let's just valid = false if format is wrong.
-	return "", "", false
+	// Use pipe as separator because MAC addresses contain colons
+	// Format: MacAddress|LicenseUUID|Port
+	return fmt.Sprintf("%s|%s|%d", fingerprint, instanceID, port), nil
+}
+
+// generateHardwareIDWithPort creates a new hardware ID using a specified port
+func generateHardwareIDWithPort(port int) (string, error) {
+	fingerprint, err := getMachineFingerprint()
+	if err != nil {
+		return "", err
+	}
+	instanceID := uuid.New().String()
+
+	// Use pipe as separator because MAC addresses contain colons
+	// Format: MacAddress|LicenseUUID|Port
+	return fmt.Sprintf("%s|%s|%d", fingerprint, instanceID, port), nil
+}
+
+// parseHardwareID splits a hardware ID into machine fingerprint, instance UUID, and port
+func parseHardwareID(id string) (fingerprint, instanceID string, port int, valid bool) {
+	// Split on pipe - expect 3 parts: MacAddress|LicenseUUID|Port
+	parts := strings.Split(id, "|")
+	if len(parts) == 3 {
+		parsedPort, err := strconv.Atoi(parts[2])
+		if err != nil {
+			return "", "", 0, false
+		}
+		return parts[0], parts[1], parsedPort, true
+	}
+
+	// Legacy format with 2 parts (no port) - still valid but needs port regeneration
+	if len(parts) == 2 {
+		return parts[0], parts[1], 0, true
+	}
+
+	return "", "", 0, false
 }
 
 func getHWFilePath() string {
@@ -168,12 +211,18 @@ func InitRegistration() error {
 		log.Printf("Error reading existing hardware file: %v", err)
 	}
 
-	// shouldRegenerate is implied if we fall through
+	// Track existing port from file (to preserve it during regeneration)
+	var existingPort int
 
 	// Case 1: File exists and has content
 	if storedID != "" {
 		// Parse and check fingerprint
-		storedFingerprint, _, valid := parseHardwareID(storedID)
+		storedFingerprint, _, storedPort, valid := parseHardwareID(storedID)
+
+		// Save the port from the file - we may reuse it even if we regenerate
+		if storedPort > 0 {
+			existingPort = storedPort
+		}
 
 		// Check validity and fingerprint match
 		// We only check fingerprint mismatch if we successfully got a current fingerprint
@@ -183,17 +232,24 @@ func InitRegistration() error {
 			localValid = false
 		} else if !localValid {
 			log.Printf("REGENERATING: Hardware ID format invalid.")
+		} else if storedPort == 0 {
+			// Legacy format without port - needs regeneration
+			log.Printf("REGENERATING: Legacy hardware ID format (missing port).")
+			localValid = false
 		}
 
 		if localValid {
-			log.Printf("Local hardware ID valid: %s. Checking with cloud...", storedID)
+			log.Printf("Local hardware ID valid: %s (port: %d). Checking with cloud...", storedID, storedPort)
+
+			// Set the port from the stored ID
+			CurrentPort = storedPort
 
 			// Set it temporarily to check with cloud
 			CurrentRegistration.HardwareID = storedID
 
 			// Check with cloud
 			if CheckRegistration() {
-				log.Printf("Hardware ID verified with cloud. Keeping existing ID.")
+				log.Printf("Hardware ID verified with cloud. Keeping existing ID. Using port: %d", CurrentPort)
 				return nil
 			}
 			log.Printf("REGENERATING: Hardware ID not registered on cloud.")
@@ -203,12 +259,29 @@ func InitRegistration() error {
 	}
 
 	// Case 2: Regenerate (if we reached here, shouldRegenerate is effectively true)
-	// Generate new ID
-	newHardwareID, genErr := generateHardwareID()
+	// Determine port to use: prefer existing port from file, otherwise find a new one
+	var portToUse int
+	if existingPort > 0 {
+		portToUse = existingPort
+		log.Printf("Reusing existing port from file: %d", portToUse)
+	} else {
+		newPort, err := findAvailablePort()
+		if err != nil {
+			log.Printf("Error finding available port: %v", err)
+			return err
+		}
+		portToUse = newPort
+		log.Printf("Found new available port: %d", portToUse)
+	}
+
+	// Generate new ID with the preserved or new port
+	newHardwareID, genErr := generateHardwareIDWithPort(portToUse)
 	if genErr != nil {
 		log.Printf("Error generating hardware ID: %v", genErr)
 		return genErr
 	}
+
+	CurrentPort = portToUse
 
 	// Write to file
 	if err := os.WriteFile(hwFile, []byte(newHardwareID), 0600); err != nil {
@@ -216,7 +289,7 @@ func InitRegistration() error {
 		return err
 	}
 
-	log.Printf("Successfully created and saved new hardware ID: %s", newHardwareID)
+	log.Printf("Successfully created and saved new hardware ID: %s (port: %d)", newHardwareID, CurrentPort)
 	CurrentRegistration.HardwareID = newHardwareID
 
 	// Register with cloud backend (unverified)
@@ -230,7 +303,8 @@ func InitRegistration() error {
 
 // registerWithCloud registers a new hardware ID with the cloud (unverified)
 func registerWithCloud(hardwareID string) {
-	reqUrl := fmt.Sprintf("%s/license/create/%s", cloudBaseURL(), hardwareID)
+	encodedID := url.PathEscape(hardwareID)
+	reqUrl := fmt.Sprintf("%s/license/create/%s", cloudBaseURL(), encodedID)
 	resp, err := httpClient.Post(reqUrl, "application/json", nil)
 	if err != nil {
 		log.Printf("Failed to register with cloud: %v", err)
@@ -248,7 +322,8 @@ func CheckRegistration() bool {
 	CurrentRegistration.mu.Lock()
 	defer CurrentRegistration.mu.Unlock()
 
-	reqUrl := fmt.Sprintf("%s/license/check/%s", cloudBaseURL(), CurrentRegistration.HardwareID)
+	encodedID := url.PathEscape(CurrentRegistration.HardwareID)
+	reqUrl := fmt.Sprintf("%s/license/check/%s", cloudBaseURL(), encodedID)
 	resp, err := httpClient.Get(reqUrl)
 	if err != nil {
 		log.Printf("Failed to check registration: %v", err)
@@ -397,7 +472,8 @@ func syncCreditsFromCloud() {
 	hardwareID := CurrentRegistration.HardwareID
 	CurrentRegistration.mu.RUnlock()
 
-	reqUrl := fmt.Sprintf("%s/license/check/%s", cloudBaseURL(), hardwareID)
+	encodedID := url.PathEscape(hardwareID)
+	reqUrl := fmt.Sprintf("%s/license/check/%s", cloudBaseURL(), encodedID)
 	resp, err := httpClient.Get(reqUrl)
 	if err != nil {
 		log.Printf("Failed to sync credits: %v", err)
@@ -434,7 +510,8 @@ func syncCreditsFromCloud() {
 
 // updateCloudCredits notifies the cloud of credit usage
 func updateCloudCredits(hardwareID string, usage CreditUsage) {
-	reqUrl := fmt.Sprintf("%s/license/use-credits/%s", cloudBaseURL(), hardwareID)
+	encodedID := url.PathEscape(hardwareID)
+	reqUrl := fmt.Sprintf("%s/license/use-credits/%s", cloudBaseURL(), encodedID)
 
 	payload := map[string]interface{}{
 		"amount": usage.Amount,

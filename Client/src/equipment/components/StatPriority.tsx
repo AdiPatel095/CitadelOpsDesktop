@@ -160,6 +160,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [showComparisonModal, setShowComparisonModal] = useState(false);
     const [comparisonData, setComparisonData] = useState<ComparisonData | null>(null);
+    const [showInfoModal, setShowInfoModal] = useState(false);
 
     const hasEnoughCredits = credits >= RECONFIGURE_COST;
     const totalStats = tier1Stats.length + tier2Stats.length;
@@ -344,6 +345,13 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                     <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                         <Icons.Activity className="w-5 h-5 text-primary" />
                         Stat Priority
+                        <button
+                            onClick={() => setShowInfoModal(true)}
+                            className="p-1 rounded-full hover:bg-primary/20 text-gray-400 hover:text-primary transition-colors"
+                            title="Learn about stat priorities"
+                        >
+                            <Icons.Info className="w-4 h-4" />
+                        </button>
                     </h3>
 
                     <div className="flex items-center gap-2">
@@ -459,6 +467,97 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                 </div>
             </div>
 
+            {/* Info Modal */}
+            {showInfoModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-dark-bg border border-dark-border rounded-global max-w-md w-full mx-4 shadow-2xl">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-4 border-b border-dark-border">
+                            <h4 className="text-lg font-semibold text-white flex items-center gap-2">
+                                <Icons.Info className="w-5 h-5 text-primary" />
+                                Understanding Stat Priority
+                            </h4>
+                            <button
+                                onClick={() => setShowInfoModal(false)}
+                                className="p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
+                            >
+                                <Icons.X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-4 space-y-4">
+                            {/* Tier 1 Explanation */}
+                            <div className="rounded-global border border-rose-500/30 bg-rose-500/5 p-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="w-6 h-6 rounded flex items-center justify-center text-sm font-bold bg-rose-500/20 text-rose-500">
+                                        1
+                                    </span>
+                                    <span className="font-semibold text-rose-400">Max Stat</span>
+                                </div>
+                                <p className="text-sm text-gray-300 leading-relaxed">
+                                    Stats in this tier will be <span className="text-rose-400 font-medium">maximized to their ceiling values</span>.
+                                    The optimizer will prioritize finding gear that pushes these stats as high as possible.
+                                </p>
+                                <p className="text-xs text-gray-500 mt-2 italic">
+                                    Order matters — stats listed first receive higher priority.
+                                </p>
+                            </div>
+
+                            {/* Tier 2 Explanation */}
+                            <div className="rounded-global border border-primary/30 bg-primary/5 p-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="w-6 h-6 rounded flex items-center justify-center text-sm font-bold bg-primary/20 text-primary">
+                                        2
+                                    </span>
+                                    <span className="font-semibold text-primary">Have in Random Slots</span>
+                                </div>
+                                <p className="text-sm text-gray-300 leading-relaxed">
+                                    Stats in this tier will be <span className="text-primary font-medium">included when possible</span>,
+                                    but won't be pushed to their maximum. The optimizer ensures these stats appear
+                                    in your loadout without sacrificing Tier 1 priorities.
+                                </p>
+                                <p className="text-xs text-gray-500 mt-2 italic">
+                                    Order matters — stats listed first are preferred.
+                                </p>
+                            </div>
+
+                            {/* Best Practices */}
+                            <div className="rounded-global border border-dark-border bg-dark-bg/50 p-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-yellow-400">★</span>
+                                    <span className="font-semibold text-gray-200">Best Practices</span>
+                                </div>
+                                <ul className="text-sm text-gray-400 space-y-1.5">
+                                    <li className="flex items-start gap-2">
+                                        <span className="text-primary mt-0.5">•</span>
+                                        <span>Keep Tier 1 focused — <span className="text-gray-300">1-3 stats work best</span></span>
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="text-primary mt-0.5">•</span>
+                                        <span>Use Tier 2 for <span className="text-gray-300">secondary combat stats</span></span>
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="text-primary mt-0.5">•</span>
+                                        <span>Drag stats to <span className="text-gray-300">reorder priorities</span> within tiers</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-4 border-t border-dark-border">
+                            <button
+                                onClick={() => setShowInfoModal(false)}
+                                className="w-full py-2 px-4 rounded-global bg-primary/20 hover:bg-primary/30 text-primary font-medium transition-colors"
+                            >
+                                Got it
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Comparison Modal */}
             <ReconfigureComparisonModal
                 isOpen={showComparisonModal}
@@ -474,3 +573,4 @@ const StatPriority: React.FC<StatPriorityProps> = ({
 };
 
 export default StatPriority;
+

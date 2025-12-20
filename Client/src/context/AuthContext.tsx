@@ -9,6 +9,12 @@ interface AuthContextType {
   gameLoggedIn: boolean;
   gameLoginCooldown: number;
   isGameDataReady: boolean;
+  versionUpdate: { newVersion: string; downloadUrl: string } | null;
+  isVersionBannerDismissed: boolean;
+  updateProgress: { stage: string; percent: number } | null;
+  isUpdating: boolean;
+  dismissVersionBanner: () => void;
+  triggerUpdate: (downloadUrl: string) => void;
   startGame: () => void;
   stopGame: () => void;
   changeLoginDetails: () => void;
@@ -24,6 +30,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [gameLoggedIn, setGameLoggedIn] = useState(false);
   const [gameLoginCooldown, setGameLoginCooldown] = useState(0);
   const [isGameDataReady, setIsGameDataReady] = useState(false);
+  const [versionUpdate, setVersionUpdate] = useState<{ newVersion: string; downloadUrl: string } | null>(null);
+  const [isVersionBannerDismissed, setIsVersionBannerDismissed] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState<{ stage: string; percent: number } | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const handleMessage = (message: any) => {
@@ -45,11 +55,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsGameDataReady(false);
         }
+      } else if (message.type === 'versionUpdate') {
+        console.log('Version update received:', message.payload);
+        setVersionUpdate({
+          newVersion: message.payload.newVersion,
+          downloadUrl: message.payload.downloadUrl
+        });
+        // Reset dismissed state when a new version is detected
+        setIsVersionBannerDismissed(false);
+      } else if (message.type === 'updateProgress') {
+        console.log('Update progress:', message.payload);
+        setUpdateProgress({
+          stage: message.payload.stage,
+          percent: message.payload.percent
+        });
+      } else if (message.type === 'updateComplete') {
+        console.log('Update complete:', message.payload);
+        setUpdateProgress(null);
+        setIsUpdating(false);
+        // App will restart, so we just show a message
+      } else if (message.type === 'updateError') {
+        console.log('Update error:', message.payload);
+        setUpdateProgress(null);
+        setIsUpdating(false);
       }
     };
 
     FrontendWebsocket.addMessageListener(handleMessage);
-    FrontendWebsocket.connect('ws://localhost:8080/ws');
+    // Connect to WebSocket using the current page's host (supports dynamic port)
+    const wsUrl = `ws://${window.location.host}/ws`;
+    FrontendWebsocket.connect(wsUrl);
 
     return () => {
       FrontendWebsocket.removeMessageListener(handleMessage);
@@ -82,6 +117,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     FrontendWebsocket.changeLoginDetails();
   };
 
+  const dismissVersionBanner = () => {
+    setIsVersionBannerDismissed(true);
+  };
+
+  const triggerUpdate = (downloadUrl: string) => {
+    setIsUpdating(true);
+    setUpdateProgress({ stage: 'Starting update...', percent: 0 });
+    FrontendWebsocket.triggerUpdate(downloadUrl);
+  };
+
   return (
     <AuthContext.Provider value={{
       isAuthenticated,
@@ -91,6 +136,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       gameLoggedIn,
       gameLoginCooldown,
       isGameDataReady,
+      versionUpdate,
+      isVersionBannerDismissed,
+      updateProgress,
+      isUpdating,
+      dismissVersionBanner,
+      triggerUpdate,
       startGame,
       stopGame,
       changeLoginDetails

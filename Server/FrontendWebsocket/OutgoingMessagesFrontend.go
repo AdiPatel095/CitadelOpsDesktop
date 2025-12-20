@@ -207,3 +207,33 @@ func SendAlertMessage(category string, message string) {
 		"message":  message,
 	}, "")
 }
+
+// SendVersionUpdateMessage sends a new version notification to the frontend
+func SendVersionUpdateMessage(newVersion string, downloadUrl string) {
+	SendFrontendMessage("versionUpdate", map[string]interface{}{
+		"newVersion":  newVersion,
+		"downloadUrl": downloadUrl,
+	}, "")
+}
+
+// SendUpdateProgressMessage sends update download progress to the frontend
+func SendUpdateProgressMessage(stage string, percent int) {
+	SendFrontendMessage("updateProgress", map[string]interface{}{
+		"stage":   stage,
+		"percent": percent,
+	}, "")
+}
+
+// SendUpdateCompleteMessage notifies the frontend that the update is complete
+func SendUpdateCompleteMessage() {
+	SendFrontendMessage("updateComplete", map[string]interface{}{
+		"message": "Update installed successfully. Restarting...",
+	}, "")
+}
+
+// SendUpdateErrorMessage notifies the frontend of an update error
+func SendUpdateErrorMessage(errMsg string) {
+	SendFrontendMessage("updateError", map[string]interface{}{
+		"error": errMsg,
+	}, "")
+}
