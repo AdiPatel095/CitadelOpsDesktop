@@ -1,9 +1,11 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const Header: React.FC = () => {
   const { credits, isLoading, gameLoggedIn, gameLoginCooldown, startGame, stopGame, changeLoginDetails } = useAuth();
+  const { theme } = useTheme();
 
   const [showConfirm, setShowConfirm] = React.useState(false);
 
@@ -13,22 +15,27 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-16 bg-dark-card/80 backdrop-blur-md border-b border-dark-border flex items-center px-6 fixed top-0 left-0 right-0 z-50">
+    <header className="h-16 bg-bg-card/80 backdrop-blur-md border-b border-border-base flex items-center px-6 fixed top-0 left-0 right-0 z-50 transition-colors duration-300">
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-3">
-          <img src="/logo.svg" alt="Citadel Ops Logo" className="w-8 h-8 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-          <span className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Citadel Ops</span>
-          <span className="text-xs font-medium text-gray-500 ml-2">Desktop</span>
+          {/* Theme-aware Logo */}
+          <img
+            src={theme === 'light' ? '/logo-light.svg' : '/logo-dark.svg'}
+            alt="Citadel Ops Logo"
+            className="w-8 h-8 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)] transition-all duration-300"
+          />
+          <span className="text-xl font-bold text-text-main tracking-tight">Citadel Ops</span>
+          <span className="text-xs font-medium text-text-muted ml-2">Desktop</span>
         </div>
 
         <div className="flex items-center gap-4">
           {/* Credits Display */}
-          <div className="rounded-global flex items-center gap-2 px-3 py-1.5 bg-dark-bg/50 border border-dark-border">
+          <div className="rounded-global flex items-center gap-2 px-3 py-1.5 bg-bg-app/50 border border-border-base transition-colors duration-300">
             <div className="flex flex-col items-end mr-2">
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-none">Credits</span>
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider leading-none">Credits</span>
               <div className="flex items-center gap-1.5 leading-none mt-0.5">
                 {isLoading ? (
-                  <span className="text-sm font-mono font-medium text-gray-500">...</span>
+                  <span className="text-sm font-mono font-medium text-text-muted">...</span>
                 ) : (
                   <span className="text-sm font-mono font-medium text-primary">{credits.toLocaleString()}</span>
                 )}
@@ -87,7 +94,7 @@ const Header: React.FC = () => {
             {/* Change Login Details Button */}
             <button
               onClick={() => setShowConfirm(true)}
-              className="px-3 py-1.5 rounded-global bg-dark-bg border border-dark-border hover:border-yellow-500/50 hover:bg-yellow-500/10 text-gray-400 hover:text-yellow-500 text-[10px] font-medium transition-all uppercase tracking-wider flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-global bg-bg-app border border-border-base hover:border-yellow-500/50 hover:bg-yellow-500/10 text-text-muted hover:text-yellow-500 text-[10px] font-medium transition-all uppercase tracking-wider flex items-center gap-1.5"
             >
               Change Login
             </button>
@@ -102,7 +109,7 @@ const Header: React.FC = () => {
                 />
 
                 {/* Modal Content */}
-                <div className="relative glass-panel p-6 max-w-sm w-full mx-4 animate-fade-in border border-white/10 shadow-2xl bg-[#0f1115]/90">
+                <div className="relative glass-panel p-6 max-w-sm w-full mx-4 animate-fade-in shadow-2xl bg-bg-card/95">
                   {/* Icon */}
                   <div className="flex justify-center mb-4">
                     <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center shadow-[0_0_15px_rgba(234,179,8,0.2)]">
@@ -112,9 +119,9 @@ const Header: React.FC = () => {
                     </div>
                   </div>
 
-                  <h3 className="text-xl font-bold text-white text-center mb-3">Change Login Details?</h3>
+                  <h3 className="text-xl font-bold text-text-main text-center mb-3">Change Login Details?</h3>
 
-                  <p className="text-gray-300 text-center mb-6 leading-relaxed">
+                  <p className="text-text-muted text-center mb-6 leading-relaxed">
                     This will <span className="text-red-400 font-semibold">delete your current login session</span>.
                     You will need to click 'Start Bot' to log in again with new details.
                   </p>
@@ -122,13 +129,13 @@ const Header: React.FC = () => {
                   <div className="flex gap-3">
                     <button
                       onClick={() => setShowConfirm(false)}
-                      className="flex-1 px-4 py-2.5 rounded-global bg-dark-bg border border-dark-border hover:bg-white/5 text-gray-400 hover:text-white font-semibold transition-all duration-200"
+                      className="flex-1 px-4 py-2.5 rounded-global bg-bg-app border border-border-base hover:bg-bg-card-hover text-text-muted hover:text-text-main font-semibold transition-all duration-200"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleChangeLogin}
-                      className="flex-1 px-4 py-2.5 rounded-global bg-yellow-500 hover:bg-yellow-600 text-dark-bg font-bold transition-all shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/40 active:scale-95 duration-200"
+                      className="flex-1 px-4 py-2.5 rounded-global bg-yellow-500 hover:bg-yellow-600 text-bg-app font-bold transition-all shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/40 active:scale-95 duration-200"
                     >
                       Confirm
                     </button>

@@ -3,8 +3,15 @@ package GameWebsocket
 import (
 	"CitadelDesktop/Server/Models"
 	"fmt"
+	"log"
 )
 
+// UnequipEquipment removes equipment from a commander or castellan
+// equipmentMode: "Commander" or "Castellan"
+// targetIndex: The index of the commander (0-49) or castellan
+// slotNumber: The slot to unequip (1=Armor, 2=Weapon, 3=Helmet, 4=Artifact, 6=Hero)
+// expectedEquipmentId: The equipment ID the frontend expects to unequip (for validation)
+// Returns true if successful, false if validation fails
 // UnequipEquipment removes equipment from a commander or castellan
 // equipmentMode: "Commander" or "Castellan"
 // targetIndex: The index of the commander (0-49) or castellan
@@ -52,22 +59,31 @@ func UnequipEquipment(equipmentMode string, targetIndex int, slotNumber int, exp
 		return false
 	}
 
-	if actualEquipmentId == 0 {
-		return false
-	}
+	log.Printf("[Unequip Internal Debug] Mode=%s, Index=%d, Slot=%d -> LocalModelID=%.0f, ExpectedID=%.0f, LID=%.0f", equipmentMode, targetIndex, slotNumber, actualEquipmentId, expectedEquipmentId, lidValue)
 
-	// Validate the equipment ID matches what frontend expects
-	if actualEquipmentId != expectedEquipmentId {
-		return false
-	}
+	// Logic Update: Prioritize what the frontend sends (user intent), but log mismatch
+	// Use expectedEquipmentId as the ID for the payload
+	payloadEquipmentId := expectedEquipmentId
 
-	if lidValue == 0 {
-		return false
+	// Validation / Warning logic
+	if actualEquipmentId != 0 {
+		// Backend thinks something is equipped
+		if actualEquipmentId != expectedEquipmentId {
+			fmt.Printf("[Sort Warning] Unequip mismatch! Slot: %d. Backend has: %.0f, Frontend sent: %.0f. Proceeding with frontend ID.\n", slotNumber, actualEquipmentId, expectedEquipmentId)
+		}
+	} else {
+		// Backend thinks nothing is equipped
+		if expectedEquipmentId != 0 {
+			fmt.Printf("[Sort Warning] Backend thinks slot %d is empty, but frontend wants to unequip %.0f. Proceeding.\n", slotNumber, expectedEquipmentId)
+		} else {
+			// Both are 0, nothing to unequip
+			return false
+		}
 	}
 
 	// Game message format: %xt%EmpireEx_21%eeq%1%{"EID":equipmentId,"LID":leaderId,"E":0}%
 	// E:0 means unequip, E:1 means equip
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%eeq%%1%%{"EID":%.0f,"LID":%.0f,"E":0}%%`, actualEquipmentId, lidValue)
+	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%eeq%%1%%{"EID":%.0f,"LID":%.0f,"E":0}%%`, payloadEquipmentId, lidValue)
 	OutgoingMessages <- OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
 	return true
 }
@@ -126,29 +142,26 @@ func UnequipGem(equipmentMode string, targetIndex int, slotNumber int, expectedG
 		return false
 	}
 
-	if actualEquipmentId == 0 {
-		return false
-	}
+	// Logic Update: Prioritize what the frontend sends (user intent), but log mismatch
+	// Use expectedEquipmentId as the EID for the payload (Gem unequip uses EID of the parent item)
+	payloadEquipmentId := expectedEquipmentId
 
-	// Validate the equipment and gem IDs match what frontend expects
-	if actualEquipmentId != expectedEquipmentId {
-		return false
-	}
-
-	if actualGemId != expectedGemId {
-		return false
-	}
-
-	if actualGemId == 0 {
-		return false
-	}
-
-	if lidValue == 0 {
-		return false
+	// Validation / Warning logic
+	if actualEquipmentId != 0 {
+		if actualEquipmentId != expectedEquipmentId {
+			fmt.Printf("[Sort Warning] UnequipGem mismatch (Parent Item)! Slot: %d. Backend EID: %.0f, Frontend EID: %.0f. Proceeding with frontend ID.\n", slotNumber, actualEquipmentId, expectedEquipmentId)
+		}
+		if actualGemId != expectedGemId {
+			fmt.Printf("[Sort Warning] UnequipGem mismatch (Gem)! Slot: %d. Backend GID: %.0f, Frontend GID: %.0f. Proceeding.\n", slotNumber, actualGemId, expectedGemId)
+		}
+	} else {
+		// Backend thinks parent item is missing
+		fmt.Printf("[Sort Warning] Backend thinks slot %d is empty (no parent), but frontend wants to unequip gem %.0f from item %.0f. Proceeding.\n", slotNumber, expectedGemId, expectedEquipmentId)
 	}
 
 	// Game message format: %xt%EmpireEx_21%ege%1%{"EID":equipmentId,"LID":leaderId}%
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%ege%%1%%{"EID":%.0f,"LID":%.0f}%%`, actualEquipmentId, lidValue)
+	// Note: Unequip gem payload DOES NOT use gem ID, it uses the EQUIPMENT ID the gem is in.
+	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%ege%%1%%{"EID":%.0f,"LID":%.0f}%%`, payloadEquipmentId, lidValue)
 	OutgoingMessages <- OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
 	return true
 }

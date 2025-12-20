@@ -69,34 +69,38 @@ const AlertItem: React.FC<{ alert: AlertMessage; onDismiss: () => void }> = ({ a
         switch (alert.category) {
             case 'green':
                 return {
-                    bg: 'bg-emerald-500/10',
-                    border: 'border-emerald-500/50',
-                    text: 'text-emerald-200',
-                    icon: <Icons.Check className="w-5 h-5 text-emerald-400" />,
-                    shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                    bg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
+                    border: 'border-emerald-500/20 dark:border-emerald-500/50',
+                    // High Contrast Text: Almost black for light, Pure white for dark
+                    text: 'text-emerald-950 dark:text-white font-semibold',
+                    icon: <Icons.Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
+                    shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.1)] dark:shadow-[0_0_15px_rgba(16,185,129,0.2)]'
                 };
             case 'yellow':
                 return {
-                    bg: 'bg-amber-500/10',
-                    border: 'border-amber-500/50',
-                    text: 'text-amber-200',
-                    icon: <Icons.AlertTriangle className="w-5 h-5 text-amber-400" />,
-                    shadow: 'shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                    bg: 'bg-amber-500/10 dark:bg-amber-500/20',
+                    border: 'border-amber-500/20 dark:border-amber-500/50',
+                    // High Contrast Text
+                    text: 'text-amber-950 dark:text-white font-semibold',
+                    icon: <Icons.AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
+                    shadow: 'shadow-[0_0_15px_rgba(245,158,11,0.1)] dark:shadow-[0_0_15px_rgba(245,158,11,0.2)]'
                 };
             case 'red':
                 return {
-                    bg: 'bg-red-500/10',
-                    border: 'border-red-500/50',
-                    text: 'text-red-200',
-                    icon: <Icons.AlertCircle className="w-5 h-5 text-red-400" />,
-                    shadow: 'shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                    bg: 'bg-red-500/10 dark:bg-red-500/20',
+                    border: 'border-red-500/20 dark:border-red-500/50',
+                    // High Contrast Text
+                    text: 'text-red-950 dark:text-white font-semibold',
+                    icon: <Icons.AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />,
+                    shadow: 'shadow-[0_0_15px_rgba(239,68,68,0.1)] dark:shadow-[0_0_15px_rgba(239,68,68,0.2)]'
                 };
             default:
                 return {
-                    bg: 'bg-gray-800',
-                    border: 'border-gray-700',
-                    text: 'text-gray-200',
-                    icon: <Icons.Info className="w-5 h-5 text-gray-400" />,
+                    bg: 'bg-bg-card',
+                    border: 'border-border-base',
+                    // High Contrast Default
+                    text: 'text-text-main dark:text-white font-semibold',
+                    icon: <Icons.Info className="w-5 h-5 text-text-muted" />,
                     shadow: 'shadow-lg'
                 };
         }
@@ -118,7 +122,7 @@ const AlertItem: React.FC<{ alert: AlertMessage; onDismiss: () => void }> = ({ a
             role="alert"
         >
             <div className="shrink-0 mt-0.5">{style.icon}</div>
-            <div className={`flex-1 text-sm font-medium ${style.text}`}>
+            <div className={`flex-1 text-sm ${style.text}`}>
                 {alert.message}
             </div>
             <button

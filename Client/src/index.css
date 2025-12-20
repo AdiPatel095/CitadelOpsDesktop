@@ -2,29 +2,35 @@
 
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 @theme {
-    --color-primary: #34d399;
-    /* Emerald 400 */
-    --color-primary-hover: #059669;
-    /* Emerald 600 */
-    --color-primary-glow: rgba(52, 211, 153, 0.5);
+    /* Semantic Color Mapping */
+    --color-bg-app: var(--bg-app);
+    --color-bg-card: var(--bg-card);
+    --color-bg-card-hover: var(--bg-card-hover);
+    --color-border-base: var(--border-base);
 
-    --color-dark-bg: #0f172a;
-    /* Slate 900 */
-    --color-dark-card: #1e293b;
-    /* Slate 800 */
-    --color-dark-border: #334155;
-    /* Slate 700 */
+    --color-text-main: var(--text-main);
+    --color-text-muted: var(--text-muted);
+    --color-text-inverted: var(--text-inverted);
 
-    /* Global border radius for consistent rounded corners */
+    /* Dynamic Brand Colors */
+    --color-primary: var(--primary);
+    --color-primary-hover: var(--primary-hover);
+    --color-primary-glow: var(--primary-glow);
+
+    /* Global Settings */
     --radius-global: 20px;
-
     --font-sans: "Inter", system-ui, sans-serif;
 
-    --shadow-glow: 0 0 15px rgba(52, 211, 153, 0.3);
-    --shadow-glow-active: 0 0 25px rgba(52, 211, 153, 0.5);
+    /* Effects */
+    --shadow-glow: 0 0 15px var(--primary-glow);
+    --shadow-glow-active: 0 0 25px var(--primary-glow);
 
     --animate-fade-in: fadeIn 0.3s ease-out forwards;
+    --animate-fade-in-right: fadeInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    --animate-fade-out-right: fadeOutRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
     @keyframes fadeIn {
         from {
@@ -50,8 +56,6 @@
         }
     }
 
-    --animate-fade-in-right: fadeInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-
     @keyframes fadeOutRight {
         from {
             opacity: 1;
@@ -63,16 +67,76 @@
             transform: translateX(100%);
         }
     }
+}
 
-    --animate-fade-out-right: fadeOutRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* 
+  Theme Variables 
+  Default is Light Mode (Matching logo-light.svg)
+*/
+:root {
+    /* Light Mode Palette */
+    --bg-app: #f8fafc;
+    /* Slate 50 */
+    --bg-card: #ffffff;
+    /* White */
+    --bg-card-hover: #f1f5f9;
+    /* Slate 100 */
+
+    /* Neutral Borders (Replacing Orange) */
+    --border-base: #cbd5e1;
+    /* Slate 300 */
+
+    /* Text Colors (Matching Logo Outline) */
+    --text-main: #0f172a;
+    /* Slate 900 (Logo Hexagon) */
+    --text-muted: #64748b;
+    /* Slate 500 */
+    --text-inverted: #ffffff;
+    /* White */
+
+    /* Brand Colors (Matching Logo Bars) */
+    --primary: #059669;
+    /* Emerald 600 (Darker for Light Mode contrast) */
+    --primary-hover: #047857;
+    /* Emerald 700 */
+    --primary-glow: rgba(5, 150, 105, 0.3);
+}
+
+/* Dark Mode Palette (Matching logo-dark.svg) */
+[data-theme="dark"] {
+    --bg-app: #0f172a;
+    /* Slate 900 */
+    --bg-card: #1e293b;
+    /* Slate 800 */
+    --bg-card-hover: #334155;
+    /* Slate 700 */
+
+    /* Neutral Borders */
+    --border-base: #334155;
+    /* Slate 700 */
+
+    /* Text Colors */
+    --text-main: #f1f5f9;
+    /* Slate 100 */
+    --text-muted: #94a3b8;
+    /* Slate 400 */
+    --text-inverted: #0f172a;
+    /* Slate 900 */
+
+    /* Brand Colors (Matching Logo Bars) */
+    --primary: #34d399;
+    /* Emerald 400 (Original Logo Green) */
+    --primary-hover: #10b981;
+    /* Emerald 500 */
+    --primary-glow: rgba(52, 211, 153, 0.3);
 }
 
 @layer base {
     body {
-        @apply bg-dark-bg text-gray-100 font-sans antialiased overflow-hidden;
+        @apply bg-bg-app text-text-main font-sans antialiased overflow-hidden transition-colors duration-300;
     }
 
-    /* Custom Scrollbar */
+    /* Custom Scrollbar - Themed */
     ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -83,7 +147,7 @@
     }
 
     ::-webkit-scrollbar-thumb {
-        @apply bg-dark-border rounded-full hover:bg-gray-500 transition-colors;
+        @apply bg-border-base rounded-full hover:bg-primary transition-colors;
     }
 }
 
@@ -104,23 +168,29 @@
 
     /* Glassmorphism Panels */
     .glass-panel {
-        @apply bg-dark-card/80 backdrop-blur-md border border-dark-border shadow-lg;
+        @apply bg-bg-card/80 backdrop-blur-md border border-border-base shadow-lg transition-colors duration-300;
+        border-radius: var(--radius-global);
+    }
+
+    /* Interactive Card (Hover effects) */
+    .glass-panel-interactive {
+        @apply bg-bg-card/80 backdrop-blur-md border border-border-base shadow-lg transition-colors duration-300 hover:bg-bg-card-hover cursor-pointer;
         border-radius: var(--radius-global);
     }
 
     /* Buttons */
     .btn-primary {
-        @apply px-4 py-2 bg-primary text-dark-bg font-semibold shadow-glow hover:bg-primary-hover hover:shadow-glow-active active:scale-95 transition-all duration-200;
+        @apply px-4 py-2 bg-primary text-text-inverted font-semibold shadow-glow hover:bg-primary-hover hover:shadow-glow-active active:scale-95 transition-all duration-200;
         border-radius: var(--radius-global);
     }
 
     .btn-ghost {
-        @apply px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 transition-colors duration-200;
+        @apply px-4 py-2 text-text-muted hover:text-text-main hover:bg-bg-card-hover transition-colors duration-200;
         border-radius: var(--radius-global);
     }
 
     .btn-icon {
-        @apply p-2 text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-200;
+        @apply p-2 text-text-muted hover:text-primary hover:bg-primary/10 transition-all duration-200;
         border-radius: var(--radius-global);
     }
 
@@ -128,12 +198,13 @@
     .toggle-container {
         display: flex;
         align-items: center;
-        background: var(--color-dark-bg);
+        background: var(--bg-app);
         padding: 2px;
         gap: 0px;
         border-radius: var(--radius-global);
         transform: scale(0.875);
         position: relative;
+        border: 1px solid var(--border-base);
     }
 
     /* Toggle Switch Button */
@@ -151,24 +222,24 @@
         z-index: 1;
     }
 
-    /* Toggle Button - Inactive State (smaller, muted) */
+    /* Toggle Button - Inactive State */
     .toggle-btn-inactive {
-        color: #9ca3af;
+        color: var(--text-muted);
         background: transparent;
         transform: scale(0.9);
     }
 
     .toggle-btn-inactive:hover {
-        color: #fff;
-        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-main);
+        background: rgba(125, 125, 125, 0.1);
         transform: scale(0.95);
     }
 
-    /* Toggle Button - Active State (larger, embossed) */
+    /* Toggle Button - Active State */
     .toggle-btn-active {
-        color: var(--color-dark-bg);
+        color: var(--text-inverted);
         background: var(--color-primary);
-        box-shadow: var(--shadow-glow), 0 2px 8px rgba(0, 0, 0, 0.3);
+        box-shadow: var(--shadow-glow), 0 2px 8px rgba(0, 0, 0, 0.2);
         transform: scale(1.25);
         z-index: 2;
     }
@@ -180,20 +251,20 @@
 
     /* Form Elements */
     .input-field {
-        @apply w-full bg-dark-bg border border-dark-border px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors duration-200;
+        @apply w-full bg-bg-app border border-border-base px-4 py-2.5 text-text-main placeholder-text-muted focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors duration-200;
         border-radius: var(--radius-global);
     }
 
     /* Typography */
     .heading-1 {
-        @apply text-2xl font-bold text-white tracking-tight;
+        @apply text-2xl font-bold text-text-main tracking-tight;
     }
 
     .heading-2 {
-        @apply text-xl font-semibold text-white tracking-tight;
+        @apply text-xl font-semibold text-text-main tracking-tight;
     }
 
     .label-text {
-        @apply text-sm font-medium text-gray-400 uppercase tracking-wider;
+        @apply text-sm font-medium text-text-muted uppercase tracking-wider;
     }
 }

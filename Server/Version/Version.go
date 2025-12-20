@@ -124,6 +124,9 @@ func checkForUpdate() {
 	}
 
 	CloudBackendURL := os.Getenv("CLOUD_BACKEND_URL")
+	if CloudBackendURL == "" {
+		CloudBackendURL = "https://citadelops.app/api"
+	}
 
 	resp, err := client.Get(CloudBackendURL + "/version/latest")
 	if err != nil {

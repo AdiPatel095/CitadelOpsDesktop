@@ -83,7 +83,7 @@ const UnequipEquipmentModal: React.FC<UnequipEquipmentModalProps> = ({ isOpen, o
       />
 
       {/* Modal Content */}
-      <div className="relative glass-panel p-6 max-w-md mx-4 animate-fade-in">
+      <div className="relative glass-panel p-6 max-w-md mx-4 animate-fade-in bg-bg-card">
         {/* Icon */}
         <div className="flex justify-center mb-4">
           <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
@@ -94,19 +94,19 @@ const UnequipEquipmentModal: React.FC<UnequipEquipmentModalProps> = ({ isOpen, o
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-white text-center mb-3">
+        <h3 className="text-xl font-bold text-text-main text-center mb-3">
           Unequip Equipment
         </h3>
 
         {/* Description */}
-        <p className="text-gray-300 text-center mb-4">
+        <p className="text-text-muted text-center mb-4">
           Select equipment to unequip from <span className="text-primary font-semibold">{selectedItem?.name}</span>
         </p>
 
         {/* Slot Selection */}
         <div className="space-y-2 mb-6">
           {availableSlots.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No equipment to unequip</p>
+            <p className="text-text-muted text-center py-4">No equipment to unequip</p>
           ) : (
             availableSlots.map(({ slot, name }) => {
               const equipId = getEquipmentId(slot);
@@ -117,8 +117,8 @@ const UnequipEquipmentModal: React.FC<UnequipEquipmentModalProps> = ({ isOpen, o
                   className={`
                     flex items-center gap-3 p-3 rounded-global border cursor-pointer transition-all duration-200
                     ${isSelected
-                      ? 'bg-primary/10 border-primary/50 text-white'
-                      : 'bg-dark-bg/50 border-dark-border hover:bg-white/5 text-gray-300'
+                      ? 'bg-primary/10 border-primary/50 text-text-main'
+                      : 'bg-bg-app/50 border-border-base hover:bg-bg-card-hover text-text-muted'
                     }
                   `}
                   onClick={() => toggleSlot(slot)}
@@ -128,17 +128,17 @@ const UnequipEquipmentModal: React.FC<UnequipEquipmentModalProps> = ({ isOpen, o
                     w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
                     ${isSelected
                       ? 'bg-primary border-primary'
-                      : 'bg-dark-bg/50 border-gray-500 hover:border-gray-400'
+                      : 'bg-bg-app/50 border-gray-500 hover:border-text-muted'
                     }
                   `}>
                     {isSelected && (
-                      <svg className="w-3 h-3 text-dark-bg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 text-bg-app" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     )}
                   </div>
                   <span className="flex-1 font-medium">{name}</span>
-                  <span className="text-xs font-mono text-gray-400">
+                  <span className="text-xs font-mono text-text-muted opacity-75">
                     ID: {equipId}
                   </span>
                 </div>
@@ -151,7 +151,7 @@ const UnequipEquipmentModal: React.FC<UnequipEquipmentModalProps> = ({ isOpen, o
         <div className="flex gap-3">
           <button
             onClick={handleClose}
-            className="flex-1 btn-ghost border border-dark-border"
+            className="flex-1 btn-ghost border border-border-base"
           >
             Cancel
           </button>
@@ -161,8 +161,8 @@ const UnequipEquipmentModal: React.FC<UnequipEquipmentModalProps> = ({ isOpen, o
             className={`
               flex-1 px-4 py-2 font-semibold rounded-global transition-all duration-200
               ${selectedSlots.size > 0
-                ? 'bg-primary text-dark-bg hover:bg-primary/80 active:scale-95'
-                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                ? 'bg-primary text-bg-app hover:bg-primary/80 active:scale-95'
+                : 'bg-bg-card-hover text-text-muted cursor-not-allowed'
               }
             `}
           >
@@ -248,7 +248,7 @@ const UnequipGemModal: React.FC<UnequipGemModalProps> = ({ isOpen, onClose, onCo
       />
 
       {/* Modal Content */}
-      <div className="relative glass-panel p-6 max-w-md mx-4 animate-fade-in">
+      <div className="relative glass-panel p-6 max-w-md mx-4 animate-fade-in bg-bg-card">
         {/* Icon */}
         <div className="flex justify-center mb-4">
           <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center">
@@ -259,19 +259,19 @@ const UnequipGemModal: React.FC<UnequipGemModalProps> = ({ isOpen, onClose, onCo
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-white text-center mb-3">
+        <h3 className="text-xl font-bold text-text-main text-center mb-3">
           Unequip Gem
         </h3>
 
         {/* Description */}
-        <p className="text-gray-300 text-center mb-4">
+        <p className="text-text-muted text-center mb-4">
           Select gems to unequip from <span className="text-purple-400 font-semibold">{selectedItem?.name}</span>
         </p>
 
         {/* Slot Selection */}
         <div className="space-y-2 mb-6">
           {availableSlots.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No gems to unequip</p>
+            <p className="text-text-muted text-center py-4">No gems to unequip</p>
           ) : (
             availableSlots.map(({ slot, name }) => {
               const gemId = getGemId(slot);
@@ -282,8 +282,8 @@ const UnequipGemModal: React.FC<UnequipGemModalProps> = ({ isOpen, onClose, onCo
                   className={`
                     flex items-center gap-3 p-3 rounded-global border cursor-pointer transition-all duration-200
                     ${isSelected
-                      ? 'bg-purple-500/10 border-purple-500/50 text-white'
-                      : 'bg-dark-bg/50 border-dark-border hover:bg-white/5 text-gray-300'
+                      ? 'bg-purple-500/10 border-purple-500/50 text-text-main'
+                      : 'bg-bg-app/50 border-border-base hover:bg-bg-card-hover text-text-muted'
                     }
                   `}
                   onClick={() => toggleSlot(slot)}
@@ -293,7 +293,7 @@ const UnequipGemModal: React.FC<UnequipGemModalProps> = ({ isOpen, onClose, onCo
                     w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
                     ${isSelected
                       ? 'bg-purple-500 border-purple-500'
-                      : 'bg-dark-bg/50 border-gray-500 hover:border-gray-400'
+                      : 'bg-bg-app/50 border-gray-500 hover:border-gray-400'
                     }
                   `}>
                     {isSelected && (
@@ -303,7 +303,7 @@ const UnequipGemModal: React.FC<UnequipGemModalProps> = ({ isOpen, onClose, onCo
                     )}
                   </div>
                   <span className="flex-1 font-medium">{name}</span>
-                  <span className="text-xs font-mono text-gray-400">
+                  <span className="text-xs font-mono text-text-muted opacity-75">
                     Gem ID: {gemId}
                   </span>
                 </div>
@@ -316,7 +316,7 @@ const UnequipGemModal: React.FC<UnequipGemModalProps> = ({ isOpen, onClose, onCo
         <div className="flex gap-3">
           <button
             onClick={handleClose}
-            className="flex-1 btn-ghost border border-dark-border"
+            className="flex-1 btn-ghost border border-border-base"
           >
             Cancel
           </button>
@@ -327,7 +327,7 @@ const UnequipGemModal: React.FC<UnequipGemModalProps> = ({ isOpen, onClose, onCo
               flex-1 px-4 py-2 font-semibold rounded-global transition-all duration-200
               ${selectedSlots.size > 0
                 ? 'bg-purple-500 text-white hover:bg-purple-600 active:scale-95'
-                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                : 'bg-bg-card-hover text-text-muted cursor-not-allowed'
               }
             `}
           >
@@ -356,6 +356,12 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
   const handleUnequipEquipment = (selections: Array<{ slotNumber: number; equipmentId: number }>) => {
     if (!selectedItem || selectedIndex === null) return;
 
+    console.log('[Unequip Debug] Sending Request:', {
+      equipmentMode,
+      targetIndex: selectedIndex,
+      selections
+    });
+
     FrontendWebsocket.sendMessage({
       type: 'unequipEquipment',
       payload: {
@@ -370,6 +376,12 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
   // Handler for unequip gem - accepts multiple selections
   const handleUnequipGem = (selections: Array<{ slotNumber: number; gemId: number; equipmentId: number }>) => {
     if (!selectedItem || selectedIndex === null) return;
+
+    console.log('[Unequip Gem Debug] Sending Request:', {
+      equipmentMode,
+      targetIndex: selectedIndex,
+      selections
+    });
 
     FrontendWebsocket.sendMessage({
       type: 'unequipGem',
@@ -441,8 +453,8 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
   const renderStat = (statKey: string, value: number) => {
     const label = statDisplayName[statKey] || statKey;
     return (
-      <div className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-white/5 transition-colors" key={statKey}>
-        <span className="text-sm text-gray-400">{label}</span>
+      <div className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-bg-card-hover transition-colors" key={statKey}>
+        <span className="text-sm text-text-muted">{label}</span>
         <span className="text-sm font-mono font-medium text-primary">{value.toFixed(2)}</span>
       </div>
     );
@@ -508,7 +520,7 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
       {/* Stats List */}
       <div className="space-y-4">
         {!stats && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-text-muted">
             <p>No stats available for this selection.</p>
           </div>
         )}
@@ -522,8 +534,8 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
           if (visibleStats.length === 0) return null;
 
           return (
-            <div key={groupName} className="rounded-global bg-dark-bg/50 p-3 border border-dark-border/50">
-              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{statGroupDisplayName[groupName] || groupName}</h4>
+            <div key={groupName} className="rounded-global bg-bg-app/50 p-3 border border-border-base/50">
+              <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{statGroupDisplayName[groupName] || groupName}</h4>
               <div className="space-y-0.5">
                 {visibleStats.map(key => renderStat(key, processedStats[key]))}
               </div>

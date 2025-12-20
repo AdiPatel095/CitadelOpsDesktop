@@ -65,8 +65,8 @@ const TierList: React.FC<TierListProps> = ({
         <div
             className={`rounded-global border ${dropTarget?.tier === tier && stats.length === 0
                 ? `border-${style.color} bg-${style.bg}/5`
-                : 'border-dark-border/30'
-                } transition-colors`}
+                : 'border-border-base/30'
+                } transition-colors bg-bg-app/30`}
             onDragOver={(e) => {
                 e.preventDefault();
                 if (stats.length === 0) {
@@ -76,11 +76,11 @@ const TierList: React.FC<TierListProps> = ({
             onDrop={(e) => onDrop(e, tier)}
         >
             {/* Tier Header */}
-            <div className={`px-3 py-2 border-b border-dark-border/30 flex items-center gap-2`}>
+            <div className={`px-3 py-2 border-b border-border-base/30 flex items-center gap-2`}>
                 <span className={`w-5 h-5 rounded flex items-center justify-center text-xs font-bold bg-${style.bg}/20 text-${style.color}`}>
                     {tier}
                 </span>
-                <span className="text-xs font-medium text-gray-400">
+                <span className="text-xs font-medium text-text-muted">
                     {style.label}
                 </span>
             </div>
@@ -88,7 +88,7 @@ const TierList: React.FC<TierListProps> = ({
             {/* Stats List */}
             <div className="p-2 min-h-[50px]">
                 {stats.length === 0 ? (
-                    <div className="text-center py-2 text-gray-600 text-xs">
+                    <div className="text-center py-2 text-text-muted text-xs">
                         Drop stats here
                     </div>
                 ) : (
@@ -108,19 +108,19 @@ const TierList: React.FC<TierListProps> = ({
                                     }}
                                     onDragEnd={onDragEnd}
                                     className={`
-                                        rounded-global flex items-center gap-2 px-2.5 py-2 bg-dark-bg/50 border 
+                                        rounded-global flex items-center gap-2 px-2.5 py-2 bg-bg-card border 
                                         transition-all duration-150 cursor-grab active:cursor-grabbing
                                         ${isDragging ? 'opacity-40 scale-95' : ''}
                                         ${isDropTarget
                                             ? `border-${style.color} shadow-md shadow-${style.bg}/20`
-                                            : 'border-dark-border/50 hover:border-gray-600'
+                                            : 'border-border-base/50 hover:border-text-muted'
                                         }
                                     `}
                                 >
                                     <span className={`w-5 h-5 rounded flex items-center justify-center text-xs font-bold bg-${style.bg}/10 text-${style.color}`}>
                                         {index + 1}
                                     </span>
-                                    <span className="text-sm text-gray-300 flex-1 truncate">
+                                    <span className="text-sm text-text-muted flex-1 truncate">
                                         {statDisplayName[stat] || stat}
                                     </span>
                                     <button
@@ -128,11 +128,11 @@ const TierList: React.FC<TierListProps> = ({
                                             e.stopPropagation();
                                             onRemove(stat);
                                         }}
-                                        className="p-0.5 rounded hover:bg-red-500/20 text-gray-600 hover:text-red-400 transition-colors"
+                                        className="p-0.5 rounded hover:bg-red-500/20 text-text-muted hover:text-red-400 transition-colors"
                                     >
                                         <Icons.X className="w-3.5 h-3.5" />
                                     </button>
-                                    <Icons.GripVertical className="w-3.5 h-3.5 text-gray-600" />
+                                    <Icons.GripVertical className="w-3.5 h-3.5 text-text-muted" />
                                 </div>
                             );
                         })}
@@ -338,16 +338,16 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     }, []);
 
     return (
-        <div className="glass-panel h-full flex flex-col">
+        <div className="glass-panel h-full flex flex-col relative">
             {/* Header with Add Stat Button */}
-            <div className="p-4 border-b border-dark-border">
+            <div className="p-4 border-b border-border-base">
                 <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-text-main flex items-center gap-2">
                         <Icons.Activity className="w-5 h-5 text-primary" />
                         Stat Priority
                         <button
                             onClick={() => setShowInfoModal(true)}
-                            className="p-1 rounded-full hover:bg-primary/20 text-gray-400 hover:text-primary transition-colors"
+                            className="p-1 rounded-full hover:bg-primary/20 text-text-muted hover:text-primary transition-colors"
                             title="Learn about stat priorities"
                         >
                             <Icons.Info className="w-4 h-4" />
@@ -368,17 +368,17 @@ const StatPriority: React.FC<StatPriorityProps> = ({
 
                             {/* Dropdown */}
                             {showAddDropdown && availableStats.length > 0 && (
-                                <div className="rounded-global absolute top-full right-0 mt-2 w-56 bg-dark-bg border border-dark-border shadow-xl max-h-64 overflow-y-auto z-50">
+                                <div className="rounded-global absolute top-full right-0 mt-2 w-56 bg-bg-card border border-border-base shadow-xl max-h-64 overflow-y-auto z-50">
                                     {Object.entries(groupedAvailableStats).map(([groupName, stats]) => (
                                         <div key={groupName}>
-                                            <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider bg-dark-bg/80 sticky top-0">
+                                            <div className="px-3 py-2 text-xs font-bold text-text-muted uppercase tracking-wider bg-bg-card/95 sticky top-0 backdrop-blur-sm">
                                                 {statGroupDisplayName[groupName] || groupName}
                                             </div>
                                             {stats.map(stat => (
                                                 <button
                                                     key={stat}
                                                     onClick={() => addStat(stat)}
-                                                    className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors"
+                                                    className="w-full text-left px-3 py-2 text-sm text-text-muted hover:bg-primary/10 hover:text-primary transition-colors"
                                                 >
                                                     {statDisplayName[stat] || stat}
                                                 </button>
@@ -390,7 +390,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                         </div>
                     </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Drag between tiers to reorganize</p>
+                <p className="text-xs text-text-muted mt-1">Drag between tiers to reorganize</p>
             </div>
 
 
@@ -425,7 +425,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
 
 
             {/* Reconfigure Button */}
-            <div className="p-4 border-t border-dark-border">
+            <div className="p-4 border-t border-border-base">
                 {reconfigureError && (
                     <div className="rounded-global mb-3 p-2 bg-red-500/10 border border-red-500/30">
                         <p className="text-xs text-red-400">{reconfigureError}</p>
@@ -438,7 +438,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                         rounded-global w-full flex items-center justify-center gap-2 py-3 px-4 font-medium transition-all duration-200
                         ${hasEnoughCredits && totalStats > 0
                             ? 'bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 hover:border-primary/50'
-                            : 'bg-gray-800/50 text-gray-500 border border-gray-700/50 cursor-not-allowed'
+                            : 'bg-bg-card-hover/50 text-text-muted border border-border-base/50 cursor-not-allowed'
                         }
                     `}
                 >
@@ -460,99 +460,89 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                     )}
                 </GameButton>
                 <div className="mt-2 text-center">
-                    <span className={`text-xs ${hasEnoughCredits ? 'text-gray-500' : 'text-red-400'}`}>
+                    <span className={`text-xs ${hasEnoughCredits ? 'text-text-muted' : 'text-red-400'}`}>
                         Cost: {RECONFIGURE_COST.toLocaleString()} credits
                         {!hasEnoughCredits && ` (You have ${credits.toLocaleString()})`}
                     </span>
                 </div>
             </div>
 
-            {/* Info Modal */}
+            {/* Info Tooltip Popover */}
             {showInfoModal && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-dark-bg border border-dark-border rounded-global max-w-md w-full mx-4 shadow-2xl">
-                        {/* Modal Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-dark-border">
-                            <h4 className="text-lg font-semibold text-white flex items-center gap-2">
-                                <Icons.Info className="w-5 h-5 text-primary" />
-                                Understanding Stat Priority
-                            </h4>
-                            <button
-                                onClick={() => setShowInfoModal(false)}
-                                className="p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
-                            >
-                                <Icons.X className="w-5 h-5" />
-                            </button>
+                <div
+                    className="absolute top-12 right-4 z-50 w-[600px] bg-bg-card border border-border-base rounded-global shadow-2xl animate-fade-in"
+                    style={{
+                        animation: 'fadeIn 0.15s ease-out',
+                    }}
+                >
+                    {/* Popover Arrow */}
+                    <div className="absolute -top-2 right-[160px] w-4 h-4 bg-bg-card border-l border-t border-border-base rotate-45" />
+
+                    {/* Popover Header */}
+                    <div className="flex items-center justify-between p-5 border-b border-border-base relative">
+                        <h4 className="text-lg font-semibold text-text-main flex items-center gap-2">
+                            <Icons.Info className="w-5 h-5 text-primary" />
+                            Understanding Stat Priority
+                        </h4>
+                        <button
+                            onClick={() => setShowInfoModal(false)}
+                            className="p-1 rounded hover:bg-red-500/20 text-text-muted hover:text-red-400 transition-colors"
+                        >
+                            <Icons.X className="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    {/* Popover Content */}
+                    <div className="p-6 space-y-5 max-h-[700px] overflow-y-auto">
+                        {/* Tier 1 Explanation */}
+                        <div className="rounded-global border border-rose-500/30 bg-rose-500/5 p-5">
+                            <div className="flex items-center gap-3 mb-2">
+                                <span className="w-7 h-7 rounded flex items-center justify-center text-base font-bold bg-rose-500/20 text-rose-500">
+                                    1
+                                </span>
+                                <span className="text-lg font-semibold text-rose-400">Max Stat</span>
+                            </div>
+                            <p className="text-base text-text-muted leading-relaxed">
+                                These stats will be <span className="text-rose-400 font-medium">maximized to their limits</span> as much as possible.
+                            </p>
                         </div>
 
-                        {/* Modal Content */}
-                        <div className="p-4 space-y-4">
-                            {/* Tier 1 Explanation */}
-                            <div className="rounded-global border border-rose-500/30 bg-rose-500/5 p-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="w-6 h-6 rounded flex items-center justify-center text-sm font-bold bg-rose-500/20 text-rose-500">
-                                        1
-                                    </span>
-                                    <span className="font-semibold text-rose-400">Max Stat</span>
-                                </div>
-                                <p className="text-sm text-gray-300 leading-relaxed">
-                                    Stats in this tier will be <span className="text-rose-400 font-medium">maximized to their ceiling values</span>.
-                                    The optimizer will prioritize finding gear that pushes these stats as high as possible.
-                                </p>
-                                <p className="text-xs text-gray-500 mt-2 italic">
-                                    Order matters — stats listed first receive higher priority.
-                                </p>
+                        {/* Tier 2 Explanation */}
+                        <div className="rounded-global border border-primary/30 bg-primary/5 p-5">
+                            <div className="flex items-center gap-3 mb-2">
+                                <span className="w-7 h-7 rounded flex items-center justify-center text-base font-bold bg-primary/20 text-primary">
+                                    2
+                                </span>
+                                <span className="text-lg font-semibold text-primary">Have in Random Slots</span>
                             </div>
-
-                            {/* Tier 2 Explanation */}
-                            <div className="rounded-global border border-primary/30 bg-primary/5 p-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="w-6 h-6 rounded flex items-center justify-center text-sm font-bold bg-primary/20 text-primary">
-                                        2
-                                    </span>
-                                    <span className="font-semibold text-primary">Have in Random Slots</span>
-                                </div>
-                                <p className="text-sm text-gray-300 leading-relaxed">
-                                    Stats in this tier will be <span className="text-primary font-medium">included when possible</span>,
-                                    but won't be pushed to their maximum. The optimizer ensures these stats appear
-                                    in your loadout without sacrificing Tier 1 priorities.
-                                </p>
-                                <p className="text-xs text-gray-500 mt-2 italic">
-                                    Order matters — stats listed first are preferred.
-                                </p>
-                            </div>
-
-                            {/* Best Practices */}
-                            <div className="rounded-global border border-dark-border bg-dark-bg/50 p-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-yellow-400">★</span>
-                                    <span className="font-semibold text-gray-200">Best Practices</span>
-                                </div>
-                                <ul className="text-sm text-gray-400 space-y-1.5">
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-primary mt-0.5">•</span>
-                                        <span>Keep Tier 1 focused — <span className="text-gray-300">1-3 stats work best</span></span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-primary mt-0.5">•</span>
-                                        <span>Use Tier 2 for <span className="text-gray-300">secondary combat stats</span></span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-primary mt-0.5">•</span>
-                                        <span>Drag stats to <span className="text-gray-300">reorder priorities</span> within tiers</span>
-                                    </li>
-                                </ul>
-                            </div>
+                            <p className="text-base text-text-muted leading-relaxed mb-3">
+                                The bot will try to have exactly <span className="text-primary font-medium">1 copy of each stat in random slots</span> from this list.
+                            </p>
+                            <p className="text-base text-text-muted leading-relaxed">
+                                Relic 2.0 gear gets a total of <span className="text-text-main font-medium">9 random stats</span>. If you have less than 9 stats in this list, the bot will pick a combo to have 1 copy of all stats listed here in the random slots of the base equipment and then any leftover random stats will double up with (very likely) your highest priority stat.
+                            </p>
                         </div>
 
-                        {/* Modal Footer */}
-                        <div className="p-4 border-t border-dark-border">
-                            <button
-                                onClick={() => setShowInfoModal(false)}
-                                className="w-full py-2 px-4 rounded-global bg-primary/20 hover:bg-primary/30 text-primary font-medium transition-colors"
-                            >
-                                Got it
-                            </button>
+                        {/* Best Practices */}
+                        <div className="rounded-global border border-border-base bg-bg-app/50 p-5">
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="text-yellow-400 text-lg">★</span>
+                                <span className="text-lg font-semibold text-text-main">Best Practices</span>
+                            </div>
+                            <ul className="text-base text-text-muted space-y-3">
+                                <li className="flex items-start gap-3">
+                                    <span className="text-primary mt-1.5">•</span>
+                                    <span>Keep Tier 1 focused on <span className="text-text-main">1-2 stats at most</span>, and additionally stats that are exclusive to heroes such as Wave, Mead Strength, and so on.</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <span className="text-primary mt-1.5">•</span>
+                                    <span>If making a full Commander or Castellan, try to list <span className="text-text-main">every stat in Tier 2</span> that you want exactly at least 1 occurrence of in the random stats of the base equipment pieces.</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <span className="text-primary mt-1.5">•</span>
+                                    <span>You may <span className="text-text-main">drag to reorder</span> the priorities.</span>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -573,4 +563,3 @@ const StatPriority: React.FC<StatPriorityProps> = ({
 };
 
 export default StatPriority;
-

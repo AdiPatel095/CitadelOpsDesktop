@@ -1,5 +1,6 @@
 import React from 'react';
 import { NAVIGATION_ITEMS, type ViewId } from '../config/navigation';
+import { ThemeToggle } from './ThemeToggle';
 
 interface SidebarProps {
   currentView: ViewId;
@@ -11,9 +12,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
   const systemItems = NAVIGATION_ITEMS.filter(item => item.section === 'system');
 
   return (
-    <aside className="w-64 bg-dark-card border-r border-dark-border flex flex-col pt-20 pb-6 h-screen fixed left-0 top-0 z-40 transition-all duration-300">
+    <aside className="w-64 bg-bg-card border-r border-border-base flex flex-col pt-20 pb-6 h-screen fixed left-0 top-0 z-40 transition-colors duration-300">
       <div className="px-4 mb-2">
-        <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 px-3">Main Menu</div>
+        <div className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3 px-3">Main Menu</div>
         <div className="space-y-1">
           {mainItems.map((item) => (
             <div
@@ -22,11 +23,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
                                 rounded-global flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all duration-200 group
                                 ${currentView === item.id
                   ? 'bg-primary/10 text-primary shadow-[0_0_15px_rgba(52,211,153,0.1)]'
-                  : 'text-gray-400 hover:text-gray-100 hover:bg-white/5'}
+                  : 'text-text-muted hover:text-text-main hover:bg-bg-card-hover'}
                             `}
               onClick={() => onViewChange(item.id)}
             >
-              <span className={`transition-colors duration-200 ${currentView === item.id ? 'text-primary' : 'text-gray-500 group-hover:text-gray-300'}`}>
+              <span className={`transition-colors duration-200 ${currentView === item.id ? 'text-primary' : 'text-text-muted group-hover:text-text-main'}`}>
                 {item.icon}
               </span>
               <span className="text-sm font-medium">{item.label}</span>
@@ -39,8 +40,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
       </div>
 
       <div className="mt-auto px-4">
-        <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 px-3">System</div>
-        <div className="space-y-1">
+        <div className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3 px-3">System</div>
+        <div className="space-y-1 mb-4">
           {systemItems.map((item) => (
             <div
               key={item.id}
@@ -48,11 +49,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
                                 rounded-global flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all duration-200 group
                                 ${currentView === item.id
                   ? 'bg-primary/10 text-primary shadow-[0_0_15px_rgba(52,211,153,0.1)]'
-                  : 'text-gray-400 hover:text-gray-100 hover:bg-white/5'}
+                  : 'text-text-muted hover:text-text-main hover:bg-bg-card-hover'}
                             `}
               onClick={() => onViewChange(item.id)}
             >
-              <span className={`transition-colors duration-200 ${currentView === item.id ? 'text-primary' : 'text-gray-500 group-hover:text-gray-300'}`}>
+              <span className={`transition-colors duration-200 ${currentView === item.id ? 'text-primary' : 'text-text-muted group-hover:text-text-main'}`}>
                 {item.icon}
               </span>
               <span className="text-sm font-medium">{item.label}</span>
@@ -61,6 +62,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Theme Toggle Footer */}
+        <div className="pt-4 border-t border-border-base flex items-center justify-between px-2">
+          <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Appearance</span>
+          <ThemeToggle />
         </div>
       </div>
     </aside>

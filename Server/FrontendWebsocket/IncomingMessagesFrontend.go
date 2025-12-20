@@ -355,6 +355,8 @@ func ParseFrontendMessage(message []byte) {
 			GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 			time.Sleep(2 * time.Second)
 
+			log.Printf("[Unequip Debug] Received Request: Mode=%s, Index=%.0f, SelectionsCount=%d", equipmentMode, targetIndex, len(selectionsRaw))
+
 			// Process each selection
 			successCount := 0
 			failCount := 0
@@ -366,9 +368,12 @@ func ParseFrontendMessage(message []byte) {
 				slotNumber, _ := sel["slotNumber"].(float64)
 				equipmentId, _ := sel["equipmentId"].(float64)
 
+				log.Printf("[Unequip Debug] Processing Item: Slot=%.0f, ID=%.0f", slotNumber, equipmentId)
+
 				if GameWebsocket.UnequipEquipment(equipmentMode, int(targetIndex), int(slotNumber), equipmentId) {
 					successCount++
 				} else {
+					log.Printf("[Unequip Debug] Failed to unequip item: Slot=%.0f, ID=%.0f", slotNumber, equipmentId)
 					failCount++
 				}
 			}
