@@ -478,71 +478,88 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
         selectedItem={selectedItem}
       />
 
-      {/* Header */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-white">
-            {name ? name : `Select a ${equipmentMode}`}
-          </h3>
+      {/* Castellan Coming Soon Overlay */}
+      {equipmentMode === 'Castellan' ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-text-main mb-2">Coming Soon</h3>
+          <p className="text-text-muted max-w-sm">
+            Castellan equipment stats and management are currently being finalized. This feature will be available in a future update.
+          </p>
         </div>
-
-        {name && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={`
-              inline-flex items-center px-2 py-0.5 rounded-global text-xs font-medium
-              ${combatMode === 'PvP'
-                ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-              }
-            `}>
-              {combatMode} Stats
-            </span>
-
-            {/* Unequip Buttons */}
-            <div className="flex gap-2 ml-auto">
-              <GameButton
-                onClick={() => setShowEquipmentModal(true)}
-                className="px-3 py-1 bg-primary/20 text-primary border border-primary/30 font-medium text-xs rounded-global hover:bg-primary/30 hover:border-primary/50 active:scale-95 transition-all duration-200"
-              >
-                Unequip Equipment
-              </GameButton>
-              <GameButton
-                onClick={() => setShowGemModal(true)}
-                className="px-3 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/30 font-medium text-xs rounded-global hover:bg-purple-500/30 hover:border-purple-500/50 active:scale-95 transition-all duration-200"
-              >
-                Unequip Gem
-              </GameButton>
+      ) : (
+        <>
+          {/* Header */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold text-white">
+                {name ? name : `Select a ${equipmentMode}`}
+              </h3>
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* Stats List */}
-      <div className="space-y-4">
-        {!stats && (
-          <div className="text-center py-8 text-text-muted">
-            <p>No stats available for this selection.</p>
-          </div>
-        )}
+            {name && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`
+                  inline-flex items-center px-2 py-0.5 rounded-global text-xs font-medium
+                  ${combatMode === 'PvP'
+                    ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                    : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                  }
+                `}>
+                  {combatMode} Stats
+                </span>
 
-        {stats && Object.entries(statGroups).map(([groupName, statKeys]) => {
-          const visibleStats = statKeys.filter(key => {
-            const value = processedStats[key];
-            return !(value === undefined || value === 0);
-          });
-
-          if (visibleStats.length === 0) return null;
-
-          return (
-            <div key={groupName} className="rounded-global bg-bg-app/50 p-3 border border-border-base/50">
-              <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{statGroupDisplayName[groupName] || groupName}</h4>
-              <div className="space-y-0.5">
-                {visibleStats.map(key => renderStat(key, processedStats[key]))}
+                {/* Unequip Buttons */}
+                <div className="flex gap-2 ml-auto">
+                  <GameButton
+                    onClick={() => setShowEquipmentModal(true)}
+                    className="px-3 py-1 bg-primary/20 text-primary border border-primary/30 font-medium text-xs rounded-global hover:bg-primary/30 hover:border-primary/50 active:scale-95 transition-all duration-200"
+                  >
+                    Unequip Equipment
+                  </GameButton>
+                  <GameButton
+                    onClick={() => setShowGemModal(true)}
+                    className="px-3 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/30 font-medium text-xs rounded-global hover:bg-purple-500/30 hover:border-purple-500/50 active:scale-95 transition-all duration-200"
+                  >
+                    Unequip Gem
+                  </GameButton>
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            )}
+          </div>
+
+          {/* Stats List */}
+          <div className="space-y-4">
+            {!stats && (
+              <div className="text-center py-8 text-text-muted">
+                <p>No stats available for this selection.</p>
+              </div>
+            )}
+
+            {stats && Object.entries(statGroups).map(([groupName, statKeys]) => {
+              const visibleStats = statKeys.filter(key => {
+                const value = processedStats[key];
+                return !(value === undefined || value === 0);
+              });
+
+              if (visibleStats.length === 0) return null;
+
+              return (
+                <div key={groupName} className="rounded-global bg-bg-app/50 p-3 border border-border-base/50">
+                  <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{statGroupDisplayName[groupName] || groupName}</h4>
+                  <div className="space-y-0.5">
+                    {visibleStats.map(key => renderStat(key, processedStats[key]))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 };
