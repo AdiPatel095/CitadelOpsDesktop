@@ -330,6 +330,10 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                 });
                 setShowComparisonModal(true);
                 setIsReconfiguring(false);
+            } else if (message.type === 'reconfigureError') {
+                // Reset reconfiguring state when backend returns an error
+                console.log('Received reconfigureError:', message.payload);
+                setIsReconfiguring(false);
             }
         };
 
@@ -431,38 +435,53 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                         <p className="text-xs text-red-400">{reconfigureError}</p>
                     </div>
                 )}
-                <GameButton
-                    onClick={handleReconfigure}
-                    disabled={!hasEnoughCredits || isReconfiguring || totalStats === 0}
-                    className={`
-                        rounded-global w-full flex items-center justify-center gap-2 py-3 px-4 font-medium transition-all duration-200
-                        ${hasEnoughCredits && totalStats > 0
-                            ? 'bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 hover:border-primary/50'
-                            : 'bg-bg-card-hover/50 text-text-muted border border-border-base/50 cursor-not-allowed'
-                        }
-                    `}
-                >
-                    {!hasEnoughCredits ? (
-                        <>
-                            <Icons.Lock className="w-4 h-4" />
-                            <span>Reconfigure {equipmentMode}</span>
-                        </>
-                    ) : isReconfiguring ? (
-                        <>
-                            <Icons.RefreshCw className="w-4 h-4 animate-spin" />
-                            <span>Reconfiguring...</span>
-                        </>
-                    ) : (
-                        <>
-                            <Icons.RefreshCw className="w-4 h-4" />
-                            <span>Reconfigure {equipmentMode}</span>
-                        </>
-                    )}
-                </GameButton>
+                {equipmentMode === 'Castellan' ? (
+                    /* Castellan Reconfigure - Coming Soon */
+                    <div className="rounded-global w-full flex flex-col items-center justify-center gap-2 py-4 px-4 bg-bg-card-hover/30 border border-border-base/50">
+                        <div className="flex items-center gap-2">
+                            <Icons.Lock className="w-4 h-4 text-text-muted" />
+                            <span className="text-text-muted font-medium">Reconfigure Castellan</span>
+                        </div>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                            Coming Soon
+                        </span>
+                    </div>
+                ) : (
+                    <GameButton
+                        onClick={handleReconfigure}
+                        disabled={!hasEnoughCredits || isReconfiguring || totalStats === 0}
+                        className={`
+                            rounded-global w-full flex items-center justify-center gap-2 py-3 px-4 font-medium transition-all duration-200
+                            ${hasEnoughCredits && totalStats > 0
+                                ? 'bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 hover:border-primary/50'
+                                : 'bg-bg-card-hover/50 text-text-muted border border-border-base/50 cursor-not-allowed'
+                            }
+                        `}
+                    >
+                        {!hasEnoughCredits ? (
+                            <>
+                                <Icons.Lock className="w-4 h-4" />
+                                <span>Reconfigure {equipmentMode}</span>
+                            </>
+                        ) : isReconfiguring ? (
+                            <>
+                                <Icons.RefreshCw className="w-4 h-4 animate-spin" />
+                                <span>Reconfiguring...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Icons.RefreshCw className="w-4 h-4" />
+                                <span>Reconfigure {equipmentMode}</span>
+                            </>
+                        )}
+                    </GameButton>
+                )}
                 <div className="mt-2 text-center">
-                    <span className={`text-xs ${hasEnoughCredits ? 'text-text-muted' : 'text-red-400'}`}>
-                        Cost: {RECONFIGURE_COST.toLocaleString()} credits
-                        {!hasEnoughCredits && ` (You have ${credits.toLocaleString()})`}
+                    <span className={`text-xs ${hasEnoughCredits || equipmentMode === 'Castellan' ? 'text-text-muted' : 'text-red-400'}`}>
+                        {equipmentMode === 'Castellan'
+                            ? 'Castellan reconfiguration is under development'
+                            : `Cost: ${RECONFIGURE_COST.toLocaleString()} credits${!hasEnoughCredits ? ` (You have ${credits.toLocaleString()})` : ''}`
+                        }
                     </span>
                 </div>
             </div>

@@ -154,14 +154,11 @@ func ParseFrontendMessage(message []byte) {
 				}
 
 				// Calculate the optimized loadout
-				newLoadout := ReconfigureLoadout.ReconfigureCommander(msg.Payload)
-
-				// Marshal to JSON for readable logging
-				statCommJSON, err := json.MarshalIndent(newLoadout, "", "  ")
-				if err != nil {
-					log.Printf("Error marshaling statComm: %v", err)
-				} else {
-					log.Printf("Received reconfigure commander:\n%s", string(statCommJSON))
+				newLoadout, errMsg := ReconfigureLoadout.ReconfigureCommander(msg.Payload)
+				if errMsg != "" {
+					SendFrontendMessage("reconfigureError", map[string]interface{}{"error": errMsg}, "")
+					SendAlertMessage("red", errMsg)
+					return
 				}
 
 				// Send comparison data to frontend
@@ -178,14 +175,11 @@ func ParseFrontendMessage(message []byte) {
 				currentLoadout := GameWebsocket.GetCastellanStat(targetIndex)
 
 				// Calculate the optimized loadout
-				newLoadout := ReconfigureLoadout.ReconfigureCastellan(msg.Payload)
-
-				// Marshal to JSON for readable logging
-				statCastJSON, err := json.MarshalIndent(newLoadout, "", "  ")
-				if err != nil {
-					log.Printf("Error marshaling statCast: %v", err)
-				} else {
-					log.Printf("Received reconfigure castellan:\n%s", string(statCastJSON))
+				newLoadout, errMsg := ReconfigureLoadout.ReconfigureCastellan(msg.Payload)
+				if errMsg != "" {
+					SendFrontendMessage("reconfigureError", map[string]interface{}{"error": errMsg}, "")
+					SendAlertMessage("red", errMsg)
+					return
 				}
 
 				// Send comparison data to frontend
@@ -199,7 +193,6 @@ func ParseFrontendMessage(message []byte) {
 		}
 	case "confirmReconfigure":
 		{
-			log.Println("Received confirmReconfigure message from frontend")
 
 			// Re-parse message to get the structured payload
 			var msg struct {
@@ -228,7 +221,6 @@ func ParseFrontendMessage(message []byte) {
 			SendAlertMessage("green", "Starting reconfiguration...")
 
 			// --- Step 1: Unequip Target Commander (all 5 slots) ---
-			log.Println("Step 1: Unequipping target commander")
 			slotsToClear := []int{1, 2, 3, 4, 6}
 			for _, slot := range slotsToClear {
 				var equipID float64
@@ -245,7 +237,6 @@ func ParseFrontendMessage(message []byte) {
 					equipID = current.Hero
 				}
 				if equipID != 0 {
-					log.Printf("Unequipping slot %d, equipID: %.0f", slot, equipID)
 					GameWebsocket.UnequipEquipmentRaw(equipmentMode, targetIndex, equipID)
 					time.Sleep(500 * time.Millisecond)
 				}
@@ -253,7 +244,6 @@ func ParseFrontendMessage(message []byte) {
 
 			// --- Step 2: Clean Gems ---
 			// Check if any target gems are socketted in storage equipment
-			log.Println("Step 2: Cleaning target gems")
 			targetGems := []float64{newLoadout.Gem1, newLoadout.Gem2, newLoadout.Gem3, newLoadout.Gem4}
 			targetGemMap := make(map[float64]bool)
 			for _, g := range targetGems {
@@ -267,7 +257,6 @@ func ParseFrontendMessage(message []byte) {
 					if eq.GemSlot.Gem != nil {
 						gemID := eq.GemSlot.Gem.ID
 						if targetGemMap[gemID] {
-							log.Printf("Cleaning gem ID: %.0f from equipment ID: %.0f", gemID, eq.ID)
 							// Double Jump: Equip -> UnequipGem -> UnequipItem
 							slot := int(eq.EquipSlotNumber)
 							GameWebsocket.EquipEquipment(equipmentMode, targetIndex, slot, eq.ID)
@@ -282,7 +271,6 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			// --- Step 3: Equip New Base Pieces & Hero ---
-			log.Println("Step 3: Equipping new base pieces and hero")
 			newEquips := map[int]float64{
 				1: newLoadout.Equip1,
 				2: newLoadout.Equip2,
@@ -293,14 +281,12 @@ func ParseFrontendMessage(message []byte) {
 
 			for slot, eid := range newEquips {
 				if eid != 0 {
-					log.Printf("Equipping slot %d, equipID: %.0f", slot, eid)
 					GameWebsocket.EquipEquipment(equipmentMode, targetIndex, slot, eid)
 					time.Sleep(800 * time.Millisecond)
 				}
 			}
 
 			// --- Step 4: Socket Gems ---
-			log.Println("Step 4: Socketing new gems")
 			gemMapping := map[int]float64{
 				1: newLoadout.Gem1,
 				2: newLoadout.Gem2,
@@ -311,7 +297,6 @@ func ParseFrontendMessage(message []byte) {
 			for slot, gid := range gemMapping {
 				eid := newEquips[slot]
 				if gid != 0 && eid != 0 {
-					log.Printf("Socketing gem ID: %.0f into equipment ID: %.0f (slot %d)", gid, eid, slot)
 					GameWebsocket.EquipGem(equipmentMode, targetIndex, eid, gid)
 					time.Sleep(800 * time.Millisecond)
 				}

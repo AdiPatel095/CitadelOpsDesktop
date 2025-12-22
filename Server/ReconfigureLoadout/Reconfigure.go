@@ -9,7 +9,8 @@ import (
 
 // ReconfigureCommander is the entry point for Commander loadout optimization
 // It filters equipment, heroes, and gems for Commander type before calling the shared optimizer
-func ReconfigureCommander(payload ReconfigurePayload) Models.CommStatModel {
+// Returns the result and an error string (empty if successful)
+func ReconfigureCommander(payload ReconfigurePayload) (Models.CommStatModel, string) {
 	// 1. Refresh game state
 	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
@@ -47,7 +48,12 @@ func ReconfigureCommander(payload ReconfigurePayload) Models.CommStatModel {
 		}
 	}
 
-	// 5. Create optimizer input
+	// 5. Validate equipment slots - check for empty slot types
+	if emptySlot := ValidateEquipmentSlots(equipment); emptySlot != "" {
+		return Models.CommStatModel{}, "Cannot reconfigure: Found 0 " + emptySlot + " equipment"
+	}
+
+	// 6. Create optimizer input
 	input := OptimizerInput{
 		Equipment: equipment,
 		Heroes:    heroes,
@@ -55,16 +61,17 @@ func ReconfigureCommander(payload ReconfigurePayload) Models.CommStatModel {
 		Payload:   payload,
 	}
 
-	// 6. Run shared optimizer
+	// 7. Run shared optimizer
 	result := Optimize(input)
 
-	// 7. Convert result to CommStatModel
-	return BuildCommStatModel(result, equipment, heroes, gems)
+	// 8. Convert result to CommStatModel
+	return BuildCommStatModel(result, equipment, heroes, gems), ""
 }
 
 // ReconfigureCastellan is the entry point for Castellan loadout optimization
 // It filters equipment, heroes, and gems for Castellan type before calling the shared optimizer
-func ReconfigureCastellan(payload ReconfigurePayload) Models.CastStatModel {
+// Returns the result and an error string (empty if successful)
+func ReconfigureCastellan(payload ReconfigurePayload) (Models.CastStatModel, string) {
 	// 1. Refresh game state
 	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
@@ -102,7 +109,12 @@ func ReconfigureCastellan(payload ReconfigurePayload) Models.CastStatModel {
 		}
 	}
 
-	// 5. Create optimizer input
+	// 5. Validate equipment slots - check for empty slot types
+	if emptySlot := ValidateEquipmentSlots(equipment); emptySlot != "" {
+		return Models.CastStatModel{}, "Cannot reconfigure: Found 0 " + emptySlot + " equipment"
+	}
+
+	// 6. Create optimizer input
 	input := OptimizerInput{
 		Equipment: equipment,
 		Heroes:    heroes,
@@ -110,11 +122,11 @@ func ReconfigureCastellan(payload ReconfigurePayload) Models.CastStatModel {
 		Payload:   payload,
 	}
 
-	// 6. Run shared optimizer
+	// 7. Run shared optimizer
 	result := Optimize(input)
 
-	// 7. Convert result to CastStatModel
-	return BuildCastStatModel(result, equipment, heroes, gems)
+	// 8. Convert result to CastStatModel
+	return BuildCastStatModel(result, equipment, heroes, gems), ""
 }
 
 // BuildCommStatModel converts OptimizationResult to CommStatModel with calculated stats
@@ -348,4 +360,33 @@ func mergeCastStats(target *Models.CastStatModel, source Models.CastStatModel) {
 	target.CLFire += source.CLFire
 	target.CLGlory += source.CLGlory
 	target.CLEarly += source.CLEarly
+}
+
+// ValidateEquipmentSlots checks if any equipment slot type has 0 items
+// Returns the slot type name if empty, or empty string if all slots have items
+// Slot 1 = Armor, Slot 2 = Weapon, Slot 3 = Helmet, Slot 4 = Artifact
+func ValidateEquipmentSlots(equipment []Models.EquipmentModel) string {
+	slotCounts := make(map[int]int)
+
+	for _, item := range equipment {
+		slotNum := int(item.EquipSlotNumber)
+		if slotNum >= 1 && slotNum <= 4 {
+			slotCounts[slotNum]++
+		}
+	}
+
+	slotNames := map[int]string{
+		1: "Armor",
+		2: "Weapon",
+		3: "Helmet",
+		4: "Artifact",
+	}
+
+	for slot := 1; slot <= 4; slot++ {
+		if slotCounts[slot] == 0 {
+			return slotNames[slot]
+		}
+	}
+
+	return ""
 }

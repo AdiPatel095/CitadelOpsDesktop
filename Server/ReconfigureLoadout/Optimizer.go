@@ -2,7 +2,6 @@ package ReconfigureLoadout
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"sync"
 
@@ -250,6 +249,11 @@ func Optimize(input OptimizerInput) OptimizationResult {
 			// Deduplicate Slot 2
 			prunedSlot2 = deduplicateInventory(prunedSlot2, prepared)
 
+			// Fallback: If pruning removed all items, use unpruned inventory (dedup only)
+			if len(prunedSlot2) == 0 && len(secondSlotInventory) > 0 {
+				prunedSlot2 = deduplicateInventory(secondSlotInventory, prepared)
+			}
+
 			// === ITERATE SLOT 2 ===
 			for _, slot2Equip := range prunedSlot2 {
 				// Incremental Pruning (Loop 2)
@@ -287,6 +291,11 @@ func Optimize(input OptimizerInput) OptimizationResult {
 
 				// Prune slot 3 based on bitmask2 using Strict Exclusion
 				prunedSlot3 := deduplicateInventory(pruneInventory(*slots[thirdSlotNum], bitmask2), prepared)
+
+				// Fallback: If pruning removed all items, use unpruned inventory (dedup only)
+				if len(prunedSlot3) == 0 && len(*slots[thirdSlotNum]) > 0 {
+					prunedSlot3 = deduplicateInventory(*slots[thirdSlotNum], prepared)
+				}
 
 				// === ITERATE SLOT 3 ===
 				for _, slot3Equip := range prunedSlot3 {
@@ -331,6 +340,11 @@ func Optimize(input OptimizerInput) OptimizationResult {
 
 					// Prune slot 4 based on bitmask3 using Strict Exclusion
 					prunedSlot4 := deduplicateInventory(pruneInventory(*slots[fourthSlotNum], bitmask3), prepared)
+
+					// Fallback: If pruning removed all items, use unpruned inventory (dedup only)
+					if len(prunedSlot4) == 0 && len(*slots[fourthSlotNum]) > 0 {
+						prunedSlot4 = deduplicateInventory(*slots[fourthSlotNum], prepared)
+					}
 
 					// === ITERATE SLOT 4 ===
 					for _, slot4Equip := range prunedSlot4 {
@@ -409,7 +423,6 @@ func Optimize(input OptimizerInput) OptimizationResult {
 						CapAwareOptimization(&currentCandidate, slots, cappedBySlot, selectedEquip, prepared, input.Payload.EquipmentMode, input.Payload.CombatMode)
 
 						if currentCandidate.Score > branchResults[branchIndex].Score {
-							log.Printf("New best score: %.2f (was %.2f)", currentCandidate.Score, branchResults[branchIndex].Score)
 							branchResults[branchIndex] = currentCandidate
 						}
 					}
