@@ -1,23 +1,24 @@
 import React, { useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { Icons } from '../../components/Icons';
-import { type CommStat, statDisplayName, commanderStatGroups, statGroupDisplayName } from '../models/equipment';
+import { type CommStat, type CastStat, statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/equipment';
 import { FrontendWebsocket } from '../../websocket';
 
 interface ReconfigureComparisonModalProps {
     isOpen: boolean;
     onClose: () => void;
-    currentLoadout: CommStat | null;
-    newLoadout: CommStat | null;
+    currentLoadout: CommStat | CastStat | null;
+    newLoadout: CommStat | CastStat | null;
     targetIndex: number;
     combatMode: 'PvP' | 'PvE';
     equipmentMode: 'Commander' | 'Castellan';
 }
 
 // Process stats to combine base stats with CL/NPC stats based on combat mode
-const processStats = (stats: CommStat, combatMode: 'PvP' | 'PvE'): { [key: string]: number } => {
+const processStats = (stats: CommStat | CastStat, combatMode: 'PvP' | 'PvE', equipmentMode: 'Commander' | 'Castellan'): { [key: string]: number } => {
     const newStats: { [key: string]: number } = {};
-    const allKeys = Object.values(commanderStatGroups).flat();
+    const statGroups = equipmentMode === 'Commander' ? commanderStatGroups : castellanStatGroups;
+    const allKeys = Object.values(statGroups).flat();
 
     for (const key of allKeys) {
         const isSpecialStat = ['glory', 'later', 'fire', 'early'].includes(key);
@@ -142,16 +143,18 @@ const ReconfigureComparisonModal: React.FC<ReconfigureComparisonModalProps> = ({
     combatMode,
     equipmentMode
 }) => {
-    // Process stats with useMemo to combine base + CL/NPC based on combat mode
     const currentProcessed = useMemo(() => {
         if (!currentLoadout) return {};
-        return processStats(currentLoadout, combatMode);
-    }, [currentLoadout, combatMode]);
+        return processStats(currentLoadout, combatMode, equipmentMode);
+    }, [currentLoadout, combatMode, equipmentMode]);
 
     const newProcessed = useMemo(() => {
         if (!newLoadout) return {};
-        return processStats(newLoadout, combatMode);
-    }, [newLoadout, combatMode]);
+        return processStats(newLoadout, combatMode, equipmentMode);
+    }, [newLoadout, combatMode, equipmentMode]);
+
+    // Select appropriate stat groups based on mode
+    const statGroups = equipmentMode === 'Commander' ? commanderStatGroups : castellanStatGroups;
 
     if (!isOpen || !currentLoadout || !newLoadout) return null;
 
@@ -180,7 +183,7 @@ const ReconfigureComparisonModal: React.FC<ReconfigureComparisonModalProps> = ({
                         <div>
                             <h3 className="text-lg font-bold text-text-main">Loadout Comparison</h3>
                             <p className="text-sm text-text-muted">
-                                {currentLoadout.name || `Commander ${targetIndex + 1}`}
+                                {currentLoadout.name || `${equipmentMode} ${targetIndex + 1}`}
                                 <span className={`ml-2 px-1.5 py-0.5 text-xs rounded ${combatMode === 'PvP'
                                     ? 'bg-red-500/20 text-red-500'
                                     : 'bg-blue-500/20 text-blue-500'
@@ -208,8 +211,12 @@ const ReconfigureComparisonModal: React.FC<ReconfigureComparisonModalProps> = ({
                 </div>
 
                 {/* Scrollable Content - Uses commanderStatGroups with section titles */}
-                <div className="flex-1 overflow-y-auto p-4">
-                    {Object.entries(commanderStatGroups).map(([groupName, statKeys]) => (
+                <div className="flex-1 overflow-y-auto p-4"
+                    style={{
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'var(--color-border-base) transparent'
+                    }}>
+                    {Object.entries(statGroups).map(([groupName, statKeys]) => (
                         <StatSection
                             key={groupName}
                             title={statGroupDisplayName[groupName] || groupName}

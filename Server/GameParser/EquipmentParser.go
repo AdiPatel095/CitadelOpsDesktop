@@ -18,6 +18,9 @@ func UpdateEquipmentList(gliMap map[string]interface{}) {
 	Models.CommActualArray = make([]Models.CommActualModel, len(commArray))
 	Models.CommStatArray = make([]Models.CommStatModel, len(commArray))
 
+	Models.CastActualArray = make([]Models.CastActualModel, 0, len(castArray))
+	Models.CastStatArray = make([]Models.CastStatModel, 0, len(castArray))
+
 	ProcessCastArray(castArray)
 	ProcessCommArray(commArray)
 }
@@ -32,40 +35,46 @@ func ProcessCastArray(castArray []interface{}) {
 		if !ok {
 			continue // castleID is not a float64, skip
 		}
+
+		var tempCastStat Models.CastStatModel
+		var tempCastActual Models.CastActualModel
+
+		// Set default or known values
 		switch castleID {
 		case Models.MainCastleResources.Aid:
-			Models.CastStatArray.MainCastleCast.Name = Models.MainCastleResources.Name
-			Models.CastStatArray.MainCastleCast.CastlePosition = 0
-			ProcessCast(castMap, &Models.CastActualArray.MainCastleCast, &Models.CastStatArray.MainCastleCast)
+			tempCastStat.Name = Models.MainCastleResources.Name
+			tempCastStat.CastlePosition = 0
 		case Models.Outpost1Resources.Aid:
-			Models.CastStatArray.Outpost1Cast.Name = Models.Outpost1Resources.Name
-			Models.CastStatArray.Outpost1Cast.CastlePosition = 1
-			ProcessCast(castMap, &Models.CastActualArray.Outpost1Cast, &Models.CastStatArray.Outpost1Cast)
+			tempCastStat.Name = Models.Outpost1Resources.Name
+			tempCastStat.CastlePosition = 1
 		case Models.Outpost2Resources.Aid:
-			Models.CastStatArray.Outpost2Cast.Name = Models.Outpost2Resources.Name
-			Models.CastStatArray.Outpost2Cast.CastlePosition = 2
-			ProcessCast(castMap, &Models.CastActualArray.Outpost2Cast, &Models.CastStatArray.Outpost2Cast)
+			tempCastStat.Name = Models.Outpost2Resources.Name
+			tempCastStat.CastlePosition = 2
 		case Models.Outpost3Resources.Aid:
-			Models.CastStatArray.Outpost3Cast.Name = Models.Outpost3Resources.Name
-			Models.CastStatArray.Outpost3Cast.CastlePosition = 3
-			ProcessCast(castMap, &Models.CastActualArray.Outpost3Cast, &Models.CastStatArray.Outpost3Cast)
+			tempCastStat.Name = Models.Outpost3Resources.Name
+			tempCastStat.CastlePosition = 3
 		case Models.IceCastleResources.Aid:
-			Models.CastStatArray.IceCastleCast.Name = Models.IceCastleResources.Name
-			Models.CastStatArray.IceCastleCast.CastlePosition = 4
-			ProcessCast(castMap, &Models.CastActualArray.IceCastleCast, &Models.CastStatArray.IceCastleCast)
+			tempCastStat.Name = Models.IceCastleResources.Name
+			tempCastStat.CastlePosition = 4
 		case Models.DesertCastleResources.Aid:
-			Models.CastStatArray.DesertCastleCast.Name = Models.DesertCastleResources.Name
-			Models.CastStatArray.DesertCastleCast.CastlePosition = 5
-			ProcessCast(castMap, &Models.CastActualArray.DesertCastleCast, &Models.CastStatArray.DesertCastleCast)
+			tempCastStat.Name = Models.DesertCastleResources.Name
+			tempCastStat.CastlePosition = 5
 		case Models.DungeonCastleResources.Aid:
-			Models.CastStatArray.DungeonCastleCast.Name = Models.DungeonCastleResources.Name
-			Models.CastStatArray.DungeonCastleCast.CastlePosition = 6
-			ProcessCast(castMap, &Models.CastActualArray.DungeonCastleCast, &Models.CastStatArray.DungeonCastleCast)
+			tempCastStat.Name = Models.DungeonCastleResources.Name
+			tempCastStat.CastlePosition = 6
 		case Models.StormCastleResources.Aid:
-			Models.CastStatArray.StormCastleCast.Name = Models.StormCastleResources.Name
-			Models.CastStatArray.StormCastleCast.CastlePosition = 7
-			ProcessCast(castMap, &Models.CastActualArray.StormCastleCast, &Models.CastStatArray.StormCastleCast)
+			tempCastStat.Name = Models.StormCastleResources.Name
+			tempCastStat.CastlePosition = 7
+		default:
+			// Handle extra castles or unknown IDs
+			tempCastStat.Name = "Unknown Castle"
+			tempCastStat.CastlePosition = 99
 		}
+
+		ProcessCast(castMap, &tempCastActual, &tempCastStat)
+
+		Models.CastActualArray = append(Models.CastActualArray, tempCastActual)
+		Models.CastStatArray = append(Models.CastStatArray, tempCastStat)
 	}
 }
 
@@ -107,15 +116,19 @@ func ProcessCast(castMap map[string]interface{}, castActual *Models.CastActualMo
 			castStat.Hero = equipment.ID
 			ProcessEquipStatCast(equipment, &tempHeroStat, &Models.CastHeroCeiling)
 		}
-		if equipment.EquipRarity == 5 || equipment.EquipRarity == 15 && equipment.GemSlot.Gem != nil {
-			switch equipment.GemSlot.SlotNumber {
-			case 1:
+		// Process gems for Relic equipment (Rarity 5 or 15) with valid gems
+		if (equipment.EquipRarity == 5 || equipment.EquipRarity == 15) && equipment.GemSlot.Gem != nil {
+			// Castellan gem slots use 101-104 for equipment, 161 for hero
+			// We need to map these to Gem1-4
+			gemSlotNum := equipment.GemSlot.SlotNumber
+			switch {
+			case gemSlotNum == 101 || gemSlotNum == 1:
 				castStat.Gem1 = equipment.GemSlot.Gem.ID
-			case 2:
+			case gemSlotNum == 102 || gemSlotNum == 2:
 				castStat.Gem2 = equipment.GemSlot.Gem.ID
-			case 3:
+			case gemSlotNum == 103 || gemSlotNum == 3:
 				castStat.Gem3 = equipment.GemSlot.Gem.ID
-			case 4:
+			case gemSlotNum == 104 || gemSlotNum == 4:
 				castStat.Gem4 = equipment.GemSlot.Gem.ID
 			}
 			ProcessGemStatCast(equipment, &tempGemStat, &Models.CastGemCeiling)
@@ -348,6 +361,7 @@ func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.E
 	equipmentFinal.EquipType, _ = equipmentDataArray[2].(float64)
 	equipmentFinal.EquipRarity, _ = equipmentDataArray[3].(float64)
 	equipmentFinal.EquipLevel, _ = equipmentDataArray[8].(float64)
+
 	equipStatsRawArray, _ := equipmentDataArray[5].([]interface{})
 	// Initialize a slice with 0 length but pre-allocated capacity.
 	equipStatsArray := make([]Models.Stat, 0, len(equipStatsRawArray))
@@ -358,14 +372,41 @@ func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.E
 		// Assign the result of append back to the slice.
 		equipStatsArray = append(equipStatsArray, equipStatFinal)
 	}
-	if equipmentFinal.EquipRarity == 5 || equipmentFinal.EquipRarity == 15 {
-		gemSlotRaw, ok := equipmentDataArray[12].([]interface{})
-		if !ok {
-			return // gemSlotRaw is not a slice, skip gem processing
+
+	// Gem Processing
+	// Case 1: Castellan (Type 1) - Compressed Data Structure (Index 9 = GemID, Index 11 = Slot?)
+	if equipmentFinal.EquipType == 1 {
+		// Log indicates Castellan data is length 12 with GemID at index 9 (if > -1)
+		if len(equipmentDataArray) >= 10 {
+			gemIDRaw, ok := equipmentDataArray[9].(float64)
+			if ok && gemIDRaw > 0 {
+				var gemSlot Models.GemSlot
+				if len(equipmentDataArray) >= 12 {
+					gemSlot.SlotNumber, _ = equipmentDataArray[11].(float64)
+				}
+
+				// Construct Gem
+				gem := Models.Gem{
+					ID: gemIDRaw,
+					// Type/Stats are unknown in this compressed format, but ID allows unequip
+				}
+				gemSlot.Gem = &gem
+				equipmentFinal.GemSlot = gemSlot
+			}
 		}
-		var gemSlot Models.GemSlot
-		ProcessGemSlot(gemSlotRaw, &gemSlot, equipmentFinal.EquipRarity)
-		equipmentFinal.GemSlot = gemSlot
+	}
+
+	// Case 2: Standard Relic/Hero (Rarity 5/15) - Expanded Data Structure (Index 12 = GemSlotRaw)
+	// Applies to both Commander (Type 2) and Castellan (Type 1) if Rarity matches
+	if equipmentFinal.EquipRarity == 5 || equipmentFinal.EquipRarity == 15 {
+		if len(equipmentDataArray) > 12 {
+			gemSlotRaw, ok := equipmentDataArray[12].([]interface{})
+			if ok {
+				var gemSlot Models.GemSlot
+				ProcessGemSlot(gemSlotRaw, &gemSlot, equipmentFinal.EquipRarity)
+				equipmentFinal.GemSlot = gemSlot
+			}
+		}
 	}
 	equipmentFinal.EquipStats = equipStatsArray
 }
@@ -396,12 +437,16 @@ func ProcessStatToActual(equipStatDataArray []interface{}, equipStatFinal *Model
 
 func ProcessGemSlot(gemSlotRaw []interface{}, gemSlot *Models.GemSlot, equipRarity float64) {
 	gemSlot.SlotNumber, _ = gemSlotRaw[0].(float64)
-	gemRawArray, _ := gemSlotRaw[3].([]interface{})
-	var gemFinal Models.Gem
-	if len(gemRawArray) > 0 {
+	gemRawArray, ok := gemSlotRaw[3].([]interface{})
+	if ok && len(gemRawArray) > 0 {
+		var gemFinal Models.Gem
 		ProcessGem(gemRawArray, &gemFinal, equipRarity)
+		// Only set the pointer if we actually got a valid gem ID
+		if gemFinal.ID > 0 {
+			gemSlot.Gem = &gemFinal
+		}
 	}
-	gemSlot.Gem = &gemFinal
+	// If no valid gem, gemSlot.Gem remains nil
 }
 
 func ProcessGem(gemRawArray []interface{}, gemFinal *Models.Gem, equipRarity float64) {

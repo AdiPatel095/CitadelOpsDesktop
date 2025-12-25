@@ -138,6 +138,159 @@ var CastStatGetter = map[string]func(*Models.CastStatModel) float64{
 	"early": func(c *Models.CastStatModel) float64 { return c.CLEarly },
 }
 
+// ScoreCastellan calculates a heuristic score for a CastStatModel based on priorities.
+// Tier1: 10000 base, 10% cumulative decay per position
+// Tier2: 100 base, 5% cumulative decay per position
+// Combat mode determines whether CL or NPC stats are scored alongside base stats
+func ScoreCastellan(stats *Models.CastStatModel, priorities PreparedPriority, combatMode string) float64 {
+	var score float64
+
+	// Score Tier1 stats (priority stats)
+	for i, priorityStat := range priorities.Tier1Stats {
+		weight := calculateWeight(Tier1BaseScore, Tier1Decay, i)
+
+		// Apply stat-specific weight multipliers
+		if multiplier, exists := StatWeightMultipliers[priorityStat.StatName]; exists {
+			weight *= multiplier
+		}
+
+		// Score the base stat
+		if getter, exists := CastStatGetter[priorityStat.StatName]; exists {
+			score += getter(stats) * weight
+		}
+
+		// Also score the combat-mode specific stat at same priority
+		combatStatName := getCombatStatName(priorityStat.StatName, combatMode)
+		if combatStatName != "" {
+			if getter, exists := CastStatGetter[combatStatName]; exists {
+				score += getter(stats) * weight
+			}
+		}
+	}
+
+	// Score Tier2 stats (optimize stats) with position-based decay
+	for i, priorityStat := range priorities.Tier2Stats {
+		weight := calculateWeight(Tier2BaseScore, Tier2Decay, i)
+
+		// Apply stat-specific weight multipliers
+		if multiplier, exists := StatWeightMultipliers[priorityStat.StatName]; exists {
+			weight *= multiplier
+		}
+
+		// Score the base stat
+		if getter, exists := CastStatGetter[priorityStat.StatName]; exists {
+			score += getter(stats) * weight
+		}
+
+		// Also score the combat-mode specific stat at same priority
+		combatStatName := getCombatStatName(priorityStat.StatName, combatMode)
+		if combatStatName != "" {
+			if getter, exists := CastStatGetter[combatStatName]; exists {
+				score += getter(stats) * weight
+			}
+		}
+	}
+
+	return score
+}
+
+// CheckCastCeilings checks all Castellan stats against their ceilings and returns capped stat IDs
+func CheckCastCeilings(stats *Models.CastStatModel, ceiling *Models.CastStatModel) map[float64]bool {
+	capped := make(map[float64]bool)
+
+	markCapped := func(statName string) {
+		for _, id := range CastStatNameToIDs[statName] {
+			capped[id] = true
+		}
+	}
+
+	// Base stats
+	if ceiling.MeleeCbtStr > 0 && stats.MeleeCbtStr >= ceiling.MeleeCbtStr {
+		markCapped("meleeCbtStr")
+	}
+	if ceiling.RangeCbtStr > 0 && stats.RangeCbtStr >= ceiling.RangeCbtStr {
+		markCapped("rangeCbtStr")
+	}
+	if ceiling.WallStr > 0 && stats.WallStr >= ceiling.WallStr {
+		markCapped("wallStr")
+	}
+	if ceiling.GateStr > 0 && stats.GateStr >= ceiling.GateStr {
+		markCapped("gateStr")
+	}
+	if ceiling.MoatStr > 0 && stats.MoatStr >= ceiling.MoatStr {
+		markCapped("moatStr")
+	}
+	if ceiling.WallLimit > 0 && stats.WallLimit >= ceiling.WallLimit {
+		markCapped("wallLimit")
+	}
+	if ceiling.CyCbtStr > 0 && stats.CyCbtStr >= ceiling.CyCbtStr {
+		markCapped("cyCbtStr")
+	}
+	if ceiling.Loot > 0 && stats.Loot >= ceiling.Loot {
+		markCapped("lootStr")
+	}
+	if ceiling.ProtectorSupp > 0 && stats.ProtectorSupp >= ceiling.ProtectorSupp {
+		markCapped("protectorSupp")
+	}
+
+	// NPC stats
+	if ceiling.NPCMelee > 0 && stats.NPCMelee >= ceiling.NPCMelee {
+		markCapped("NPCMelee")
+	}
+	if ceiling.NPCRange > 0 && stats.NPCRange >= ceiling.NPCRange {
+		markCapped("NPCRange")
+	}
+	if ceiling.NPCWall > 0 && stats.NPCWall >= ceiling.NPCWall {
+		markCapped("NPCWall")
+	}
+	if ceiling.NPCGate > 0 && stats.NPCGate >= ceiling.NPCGate {
+		markCapped("NPCGate")
+	}
+	if ceiling.NPCMoat > 0 && stats.NPCMoat >= ceiling.NPCMoat {
+		markCapped("NPCMoat")
+	}
+	if ceiling.NPCCy > 0 && stats.NPCCy >= ceiling.NPCCy {
+		markCapped("NPCCy")
+	}
+	if ceiling.NPCWallLimit > 0 && stats.NPCWallLimit >= ceiling.NPCWallLimit {
+		markCapped("NPCWallLimit")
+	}
+
+	// CL stats
+	if ceiling.CLMelee > 0 && stats.CLMelee >= ceiling.CLMelee {
+		markCapped("CLMelee")
+	}
+	if ceiling.CLRange > 0 && stats.CLRange >= ceiling.CLRange {
+		markCapped("CLRange")
+	}
+	if ceiling.CLWall > 0 && stats.CLWall >= ceiling.CLWall {
+		markCapped("CLWall")
+	}
+	if ceiling.CLGate > 0 && stats.CLGate >= ceiling.CLGate {
+		markCapped("CLGate")
+	}
+	if ceiling.CLMoat > 0 && stats.CLMoat >= ceiling.CLMoat {
+		markCapped("CLMoat")
+	}
+	if ceiling.CLCy > 0 && stats.CLCy >= ceiling.CLCy {
+		markCapped("CLCy")
+	}
+	if ceiling.CLWallLimit > 0 && stats.CLWallLimit >= ceiling.CLWallLimit {
+		markCapped("CLWallLimit")
+	}
+	if ceiling.CLFire > 0 && stats.CLFire >= ceiling.CLFire {
+		markCapped("CLFire")
+	}
+	if ceiling.CLGlory > 0 && stats.CLGlory >= ceiling.CLGlory {
+		markCapped("CLGlory")
+	}
+	if ceiling.CLEarly > 0 && stats.CLEarly >= ceiling.CLEarly {
+		markCapped("CLEarly")
+	}
+
+	return capped
+}
+
 // CombatModeStatMap maps base stat names to their CL (PvP) and NPC (PvE) counterparts
 // Some stats don't have combat-specific versions (empty string means no counterpart)
 var CombatModeStatMap = map[string]struct{ CL, NPC string }{
@@ -159,7 +312,7 @@ func getCombatStatName(baseStat string, combatMode string) string {
 	if !exists {
 		return "" // No combat-specific version
 	}
-	if combatMode == "PVP" {
+	if combatMode == "PVP" || combatMode == "PvP" {
 		return mapping.CL
 	}
 	return mapping.NPC
@@ -219,62 +372,6 @@ func ScoreCommander(stats *Models.CommStatModel, priorities PreparedPriority, co
 		combatStatName := getCombatStatName(priorityStat.StatName, combatMode)
 		if combatStatName != "" {
 			if getter, exists := CommStatGetter[combatStatName]; exists {
-				score += getter(stats) * weight
-			}
-		}
-	}
-
-	return score
-}
-
-// ScoreCastellan calculates a heuristic score for a CastStatModel based on priorities.
-// Tier1: 10000 base, 10% cumulative decay per position
-// Tier2: 100 base, 5% cumulative decay per position
-// Combat mode determines whether CL or NPC stats are scored alongside base stats
-func ScoreCastellan(stats *Models.CastStatModel, priorities PreparedPriority, combatMode string) float64 {
-	var score float64
-
-	// Score Tier1 stats (priority stats)
-	for i, priorityStat := range priorities.Tier1Stats {
-		weight := calculateWeight(Tier1BaseScore, Tier1Decay, i)
-
-		// Apply stat-specific weight multipliers
-		if multiplier, exists := StatWeightMultipliers[priorityStat.StatName]; exists {
-			weight *= multiplier
-		}
-
-		// Score the base stat
-		if getter, exists := CastStatGetter[priorityStat.StatName]; exists {
-			score += getter(stats) * weight
-		}
-
-		// Also score the combat-mode specific stat at same priority
-		combatStatName := getCombatStatName(priorityStat.StatName, combatMode)
-		if combatStatName != "" {
-			if getter, exists := CastStatGetter[combatStatName]; exists {
-				score += getter(stats) * weight
-			}
-		}
-	}
-
-	// Score Tier2 stats (optimize stats) with position-based decay
-	for i, priorityStat := range priorities.Tier2Stats {
-		weight := calculateWeight(Tier2BaseScore, Tier2Decay, i)
-
-		// Apply stat-specific weight multipliers
-		if multiplier, exists := StatWeightMultipliers[priorityStat.StatName]; exists {
-			weight *= multiplier
-		}
-
-		// Score the base stat
-		if getter, exists := CastStatGetter[priorityStat.StatName]; exists {
-			score += getter(stats) * weight
-		}
-
-		// Also score the combat-mode specific stat at same priority
-		combatStatName := getCombatStatName(priorityStat.StatName, combatMode)
-		if combatStatName != "" {
-			if getter, exists := CastStatGetter[combatStatName]; exists {
 				score += getter(stats) * weight
 			}
 		}
@@ -559,103 +656,6 @@ func CheckCommCeilings(stats *Models.CommStatModel, ceiling *Models.CommStatMode
 	}
 	if ceiling.CLGlory > 0 && stats.CLGlory >= ceiling.CLGlory {
 		markCapped("CLGlory")
-	}
-
-	return capped
-}
-
-// CheckCastCeilings checks all Castellan stats against their ceilings and returns capped stat IDs
-func CheckCastCeilings(stats *Models.CastStatModel, ceiling *Models.CastStatModel) map[float64]bool {
-	capped := make(map[float64]bool)
-
-	markCapped := func(statName string) {
-		for _, id := range CastStatNameToIDs[statName] {
-			capped[id] = true
-		}
-	}
-
-	// Base stats
-	if ceiling.MeleeCbtStr > 0 && stats.MeleeCbtStr >= ceiling.MeleeCbtStr {
-		markCapped("meleeCbtStr")
-	}
-	if ceiling.RangeCbtStr > 0 && stats.RangeCbtStr >= ceiling.RangeCbtStr {
-		markCapped("rangeCbtStr")
-	}
-	if ceiling.WallStr > 0 && stats.WallStr >= ceiling.WallStr {
-		markCapped("wallStr")
-	}
-	if ceiling.GateStr > 0 && stats.GateStr >= ceiling.GateStr {
-		markCapped("gateStr")
-	}
-	if ceiling.MoatStr > 0 && stats.MoatStr >= ceiling.MoatStr {
-		markCapped("moatStr")
-	}
-	if ceiling.WallLimit > 0 && stats.WallLimit >= ceiling.WallLimit {
-		markCapped("wallLimit")
-	}
-	if ceiling.CyCbtStr > 0 && stats.CyCbtStr >= ceiling.CyCbtStr {
-		markCapped("cyCbtStr")
-	}
-	if ceiling.Loot > 0 && stats.Loot >= ceiling.Loot {
-		markCapped("lootStr")
-	}
-	if ceiling.ProtectorSupp > 0 && stats.ProtectorSupp >= ceiling.ProtectorSupp {
-		markCapped("protectorSupp")
-	}
-
-	// NPC stats
-	if ceiling.NPCMelee > 0 && stats.NPCMelee >= ceiling.NPCMelee {
-		markCapped("NPCMelee")
-	}
-	if ceiling.NPCRange > 0 && stats.NPCRange >= ceiling.NPCRange {
-		markCapped("NPCRange")
-	}
-	if ceiling.NPCWall > 0 && stats.NPCWall >= ceiling.NPCWall {
-		markCapped("NPCWall")
-	}
-	if ceiling.NPCGate > 0 && stats.NPCGate >= ceiling.NPCGate {
-		markCapped("NPCGate")
-	}
-	if ceiling.NPCMoat > 0 && stats.NPCMoat >= ceiling.NPCMoat {
-		markCapped("NPCMoat")
-	}
-	if ceiling.NPCCy > 0 && stats.NPCCy >= ceiling.NPCCy {
-		markCapped("NPCCy")
-	}
-	if ceiling.NPCWallLimit > 0 && stats.NPCWallLimit >= ceiling.NPCWallLimit {
-		markCapped("NPCWallLimit")
-	}
-
-	// CL stats
-	if ceiling.CLMelee > 0 && stats.CLMelee >= ceiling.CLMelee {
-		markCapped("CLMelee")
-	}
-	if ceiling.CLRange > 0 && stats.CLRange >= ceiling.CLRange {
-		markCapped("CLRange")
-	}
-	if ceiling.CLWall > 0 && stats.CLWall >= ceiling.CLWall {
-		markCapped("CLWall")
-	}
-	if ceiling.CLGate > 0 && stats.CLGate >= ceiling.CLGate {
-		markCapped("CLGate")
-	}
-	if ceiling.CLMoat > 0 && stats.CLMoat >= ceiling.CLMoat {
-		markCapped("CLMoat")
-	}
-	if ceiling.CLCy > 0 && stats.CLCy >= ceiling.CLCy {
-		markCapped("CLCy")
-	}
-	if ceiling.CLWallLimit > 0 && stats.CLWallLimit >= ceiling.CLWallLimit {
-		markCapped("CLWallLimit")
-	}
-	if ceiling.CLFire > 0 && stats.CLFire >= ceiling.CLFire {
-		markCapped("CLFire")
-	}
-	if ceiling.CLGlory > 0 && stats.CLGlory >= ceiling.CLGlory {
-		markCapped("CLGlory")
-	}
-	if ceiling.CLEarly > 0 && stats.CLEarly >= ceiling.CLEarly {
-		markCapped("CLEarly")
 	}
 
 	return capped

@@ -175,21 +175,7 @@ var CastStatUpdaterMap = map[float64]CastDBUpdater{
 	30020: func(castDB *CastStatModel, v float64) { castDB.HoneyStorage += v },
 }
 
-var CastStatArray struct {
-	MainCastleCast    CastStatModel `json:"mainCastleCast"`
-	Outpost1Cast      CastStatModel `json:"outpost1Cast"`
-	Outpost2Cast      CastStatModel `json:"outpost2Cast"`
-	Outpost3Cast      CastStatModel `json:"outpost3Cast"`
-	IceCastleCast     CastStatModel `json:"iceCastleCast"`
-	DesertCastleCast  CastStatModel `json:"desertCastleCast"`
-	DungeonCastleCast CastStatModel `json:"dungeonCastleCast"`
-	StormCastleCast   CastStatModel `json:"stormCastleCast"`
-	ExtraCast1        CastStatModel `json:"extraCast1"`
-	ExtraCast2        CastStatModel `json:"extraCast2"`
-	ExtraCast3        CastStatModel `json:"extraCast3"`
-	ExtraCast4        CastStatModel `json:"extraCast4"`
-	ExtraCast5        CastStatModel `json:"extraCast5"`
-}
+var CastStatArray []CastStatModel
 
 var CastEquipCeiling = CastStatModel{
 	Equip1:   0,

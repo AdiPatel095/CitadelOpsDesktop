@@ -32,21 +32,8 @@ func ReconfigureCommander(payload ReconfigurePayload) (Models.CommStatModel, str
 		}
 	}
 
-	// 3. Filter gems for Commander
-	// Commander gems: Type 32 = Relic 1.0 Commander, Type 132 = Relic 2.0 Commander
-	var gems []Models.Gem
-	for _, gem := range Models.GemsStorage {
-		if gem.GemType == 32 || gem.GemType == 132 {
-			gems = append(gems, gem)
-		}
-	}
-
-	// 4. Also extract embedded gems from equipment
-	for _, item := range Models.EquipmentStorage {
-		if item.EquipType == 2 && item.GemSlot.Gem != nil {
-			gems = append(gems, *item.GemSlot.Gem)
-		}
-	}
+	// 3. Filter gems for Commander using strict range logic
+	gems := collectAndFilterGems(payload)
 
 	// 5. Validate equipment slots - check for empty slot types
 	if emptySlot := ValidateEquipmentSlots(equipment); emptySlot != "" {
@@ -66,67 +53,6 @@ func ReconfigureCommander(payload ReconfigurePayload) (Models.CommStatModel, str
 
 	// 8. Convert result to CommStatModel
 	return BuildCommStatModel(result, equipment, heroes, gems), ""
-}
-
-// ReconfigureCastellan is the entry point for Castellan loadout optimization
-// It filters equipment, heroes, and gems for Castellan type before calling the shared optimizer
-// Returns the result and an error string (empty if successful)
-func ReconfigureCastellan(payload ReconfigurePayload) (Models.CastStatModel, string) {
-	// 1. Refresh game state
-	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
-	time.Sleep(2 * time.Second)
-	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
-	time.Sleep(2 * time.Second)
-
-	// 2. Filter equipment for Castellan (EquipType == 1)
-	var equipment []Models.EquipmentModel
-	var heroes []Models.EquipmentModel
-
-	for _, item := range Models.EquipmentStorage {
-		if item.EquipType == 1 {
-			// Slot 6 = Hero, everything else = equipment
-			if item.EquipSlotNumber == 6 {
-				heroes = append(heroes, item)
-			} else {
-				equipment = append(equipment, item)
-			}
-		}
-	}
-
-	// 3. Filter gems for Castellan
-	// Castellan gems: Type 31 = Relic 1.0 Castellan, Type 131 = Relic 2.0 Castellan
-	var gems []Models.Gem
-	for _, gem := range Models.GemsStorage {
-		if gem.GemType == 31 || gem.GemType == 131 {
-			gems = append(gems, gem)
-		}
-	}
-
-	// 4. Also extract embedded gems from equipment
-	for _, item := range Models.EquipmentStorage {
-		if item.EquipType == 1 && item.GemSlot.Gem != nil {
-			gems = append(gems, *item.GemSlot.Gem)
-		}
-	}
-
-	// 5. Validate equipment slots - check for empty slot types
-	if emptySlot := ValidateEquipmentSlots(equipment); emptySlot != "" {
-		return Models.CastStatModel{}, "Cannot reconfigure: Found 0 " + emptySlot + " equipment"
-	}
-
-	// 6. Create optimizer input
-	input := OptimizerInput{
-		Equipment: equipment,
-		Heroes:    heroes,
-		Gems:      gems,
-		Payload:   payload,
-	}
-
-	// 7. Run shared optimizer
-	result := Optimize(input)
-
-	// 8. Convert result to CastStatModel
-	return BuildCastStatModel(result, equipment, heroes, gems), ""
 }
 
 // BuildCommStatModel converts OptimizationResult to CommStatModel with calculated stats
@@ -195,6 +121,54 @@ func BuildCommStatModel(result OptimizationResult, equipment []Models.EquipmentM
 	return model
 }
 
+// ReconfigureCastellan is the entry point for Castellan loadout optimization
+// It filters equipment, heroes, and gems for Castellan type before calling the shared optimizer
+// Returns the result and an error string (empty if successful)
+func ReconfigureCastellan(payload ReconfigurePayload) (Models.CastStatModel, string) {
+	// 1. Refresh game state
+	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
+	time.Sleep(2 * time.Second)
+	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
+	time.Sleep(2 * time.Second)
+
+	// 2. Filter equipment for Castellan (EquipType == 1)
+	var equipment []Models.EquipmentModel
+	var heroes []Models.EquipmentModel
+
+	for _, item := range Models.EquipmentStorage {
+		if item.EquipType == 1 {
+			// Slot 6 = Hero, everything else = equipment
+			if item.EquipSlotNumber == 6 {
+				heroes = append(heroes, item)
+			} else {
+				equipment = append(equipment, item)
+			}
+		}
+	}
+
+	// 3. Filter gems for Castellan using strict range logic
+	gems := collectAndFilterGems(payload)
+
+	// 5. Validate equipment slots - check for empty slot types
+	if emptySlot := ValidateEquipmentSlots(equipment); emptySlot != "" {
+		return Models.CastStatModel{}, "Cannot reconfigure: Found 0 " + emptySlot + " equipment"
+	}
+
+	// 6. Create optimizer input
+	input := OptimizerInput{
+		Equipment: equipment,
+		Heroes:    heroes,
+		Gems:      gems,
+		Payload:   payload,
+	}
+
+	// 7. Run shared optimizer
+	result := Optimize(input)
+
+	// 8. Convert result to CastStatModel
+	return BuildCastStatModel(result, equipment, heroes, gems), ""
+}
+
 // BuildCastStatModel converts OptimizationResult to CastStatModel with calculated stats
 func BuildCastStatModel(result OptimizationResult, equipment []Models.EquipmentModel, heroes []Models.EquipmentModel, gems []Models.Gem) Models.CastStatModel {
 	model := Models.CastStatModel{
@@ -254,11 +228,65 @@ func BuildCastStatModel(result OptimizationResult, equipment []Models.EquipmentM
 	Models.ApplyCastCeiling(&gemModel, &gemCeiling)
 
 	// Merge Buckets
+	// Manually merging since we removed the helper, or we can inline it
+	// Actually, let's just sum them directly
+	// Or even better, just use the `+` operator if Models allows, but they are structs.
+	// For now, I will manually sum the fields in the replacement or re-add the helper.
+	// Re-adding the helper in the SAME file locally (Reconfigure.go).
+
 	mergeCastStats(&model, equipModel)
 	mergeCastStats(&model, heroModel)
 	mergeCastStats(&model, gemModel)
 
 	return model
+}
+
+func mergeCastStats(target *Models.CastStatModel, source Models.CastStatModel) {
+	target.MeleeCbtStr += source.MeleeCbtStr
+	target.RangeCbtStr += source.RangeCbtStr
+	target.OpCbtStr += source.OpCbtStr
+	target.MainCbtStr += source.MainCbtStr
+	target.CyCbtStr += source.CyCbtStr
+	target.AllCbtStr += source.AllCbtStr
+	target.FrontCbtStr += source.FrontCbtStr
+	target.FlankCbtStr += source.FlankCbtStr
+	target.WallStr += source.WallStr
+	target.GateStr += source.GateStr
+	target.MoatStr += source.MoatStr
+	target.WallLimit += source.WallLimit
+	target.ProtectorSupp += source.ProtectorSupp
+	target.Loot += source.Loot
+	target.Recruit += source.Recruit
+	target.MeadProd += source.MeadProd
+	target.Research += source.Research
+	target.Hospital += source.Hospital
+	target.Construction += source.Construction
+	target.BaseRes += source.BaseRes
+	target.KingRes += source.KingRes
+	target.PO += source.PO
+	target.ResTransport += source.ResTransport
+	target.HoneyProd += source.HoneyProd
+	target.MeadStorage += source.MeadStorage
+	target.HoneyStorage += source.HoneyStorage
+	target.NPCMelee += source.NPCMelee
+	target.NPCRange += source.NPCRange
+	target.NPCFront += source.NPCFront
+	target.NPCFlank += source.NPCFlank
+	target.NPCCy += source.NPCCy
+	target.NPCWall += source.NPCWall
+	target.NPCGate += source.NPCGate
+	target.NPCMoat += source.NPCMoat
+	target.NPCWallLimit += source.NPCWallLimit
+	target.CLMelee += source.CLMelee
+	target.CLRange += source.CLRange
+	target.CLCy += source.CLCy
+	target.CLWall += source.CLWall
+	target.CLGate += source.CLGate
+	target.CLMoat += source.CLMoat
+	target.CLWallLimit += source.CLWallLimit
+	target.CLFire += source.CLFire
+	target.CLGlory += source.CLGlory
+	target.CLEarly += source.CLEarly
 }
 
 func findGemByID(id float64, gems []Models.Gem) Models.Gem {
@@ -314,54 +342,6 @@ func mergeCommStats(target *Models.CommStatModel, source Models.CommStatModel) {
 	target.CLGlory += source.CLGlory
 }
 
-func mergeCastStats(target *Models.CastStatModel, source Models.CastStatModel) {
-	target.MeleeCbtStr += source.MeleeCbtStr
-	target.RangeCbtStr += source.RangeCbtStr
-	target.OpCbtStr += source.OpCbtStr
-	target.MainCbtStr += source.MainCbtStr
-	target.CyCbtStr += source.CyCbtStr
-	target.AllCbtStr += source.AllCbtStr
-	target.FrontCbtStr += source.FrontCbtStr
-	target.FlankCbtStr += source.FlankCbtStr
-	target.WallStr += source.WallStr
-	target.GateStr += source.GateStr
-	target.MoatStr += source.MoatStr
-	target.WallLimit += source.WallLimit
-	target.ProtectorSupp += source.ProtectorSupp
-	target.Loot += source.Loot
-	target.Recruit += source.Recruit
-	target.MeadProd += source.MeadProd
-	target.Research += source.Research
-	target.Hospital += source.Hospital
-	target.Construction += source.Construction
-	target.BaseRes += source.BaseRes
-	target.KingRes += source.KingRes
-	target.PO += source.PO
-	target.ResTransport += source.ResTransport
-	target.HoneyProd += source.HoneyProd
-	target.MeadStorage += source.MeadStorage
-	target.HoneyStorage += source.HoneyStorage
-	target.NPCMelee += source.NPCMelee
-	target.NPCRange += source.NPCRange
-	target.NPCFront += source.NPCFront
-	target.NPCFlank += source.NPCFlank
-	target.NPCCy += source.NPCCy
-	target.NPCWall += source.NPCWall
-	target.NPCGate += source.NPCGate
-	target.NPCMoat += source.NPCMoat
-	target.NPCWallLimit += source.NPCWallLimit
-	target.CLMelee += source.CLMelee
-	target.CLRange += source.CLRange
-	target.CLCy += source.CLCy
-	target.CLWall += source.CLWall
-	target.CLGate += source.CLGate
-	target.CLMoat += source.CLMoat
-	target.CLWallLimit += source.CLWallLimit
-	target.CLFire += source.CLFire
-	target.CLGlory += source.CLGlory
-	target.CLEarly += source.CLEarly
-}
-
 // ValidateEquipmentSlots checks if any equipment slot type has 0 items
 // Returns the slot type name if empty, or empty string if all slots have items
 // Slot 1 = Armor, Slot 2 = Weapon, Slot 3 = Helmet, Slot 4 = Artifact
@@ -389,4 +369,56 @@ func ValidateEquipmentSlots(equipment []Models.EquipmentModel) string {
 	}
 
 	return ""
+}
+
+// collectAndFilterGems gathers all gems from account and filters by strict ID ranges based on mode
+func collectAndFilterGems(payload ReconfigurePayload) []Models.Gem {
+	var allGems []Models.Gem
+
+	// 1. Gather ALL gems via pointers to avoid heavy copying initially
+	// From Inventory
+	for _, gem := range Models.GemsStorage {
+		allGems = append(allGems, gem)
+	}
+	// From ALL Equipment (embedded) - user requested "mega list of all gems on players account"
+	for _, item := range Models.EquipmentStorage {
+		if item.GemSlot.Gem != nil {
+			allGems = append(allGems, *item.GemSlot.Gem)
+		}
+	}
+
+	// 2. Determine Filter Range
+	isCastellan := payload.EquipmentMode == "Castellan"
+	isPvP := payload.CombatMode == "PVP" || payload.CombatMode == "PvP"
+
+	var minID, maxID float64
+	if isCastellan {
+		if isPvP {
+			minID, maxID = 10300, 10400 // Castellan PvP (103xx)
+		} else {
+			minID, maxID = 10200, 10300 // Castellan NPC (102xx)
+		}
+	} else {
+		// Commander
+		if isPvP {
+			minID, maxID = 300, 400 // Commander PvP (3xx)
+		} else {
+			minID, maxID = 200, 300 // Commander NPC (2xx)
+		}
+	}
+
+	// 3. Filter
+	var filtered []Models.Gem
+	for _, gem := range allGems {
+		if len(gem.GemStats) == 0 {
+			continue
+		}
+		// "The way to filter this will be to just take the gem and look for the statID of its first stat"
+		firstStatID := gem.GemStats[0].ID
+		if firstStatID >= minID && firstStatID < maxID {
+			filtered = append(filtered, gem)
+		}
+	}
+
+	return filtered
 }

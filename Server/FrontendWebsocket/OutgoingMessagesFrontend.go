@@ -81,14 +81,10 @@ func SendInitialData(client *Client) {
 	}
 
 	// Send all castle stats with index-based identification (0-7)
-	client.SendToClient("castStatUpdate", Models.CastStatArray.MainCastleCast, "0")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.Outpost1Cast, "1")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.Outpost2Cast, "2")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.Outpost3Cast, "3")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.IceCastleCast, "4")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.DesertCastleCast, "5")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.DungeonCastleCast, "6")
-	client.SendToClient("castStatUpdate", Models.CastStatArray.StormCastleCast, "7")
+	for i := 0; i < 8; i++ {
+		castStat := GameWebsocket.GetCastellanStat(i)
+		client.SendToClient("castStatUpdate", castStat, strconv.Itoa(i))
+	}
 
 	// Send global resources
 	client.SendToClient("globalResourceUpdate", Models.GetPlayerGlobalResources(), "")
@@ -106,23 +102,9 @@ func SendInitialData(client *Client) {
 
 // SendCastStat sends a single castle's stats by index (0-7)
 func SendCastStat(castleIndex int) {
-	switch castleIndex {
-	case 0:
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.MainCastleCast, "0")
-	case 1:
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.Outpost1Cast, "1")
-	case 2:
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.Outpost2Cast, "2")
-	case 3:
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.Outpost3Cast, "3")
-	case 4:
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.IceCastleCast, "4")
-	case 5:
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.DesertCastleCast, "5")
-	case 6:
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.DungeonCastleCast, "6")
-	case 7:
-		SendFrontendMessage("castStatUpdate", Models.CastStatArray.StormCastleCast, "7")
+	if castleIndex >= 0 && castleIndex < 8 {
+		castStat := GameWebsocket.GetCastellanStat(castleIndex)
+		SendFrontendMessage("castStatUpdate", castStat, strconv.Itoa(castleIndex))
 	}
 }
 
@@ -159,19 +141,29 @@ func SendCastleResource(castleLocation string) {
 
 }
 
-func SellNonRelicEquipment(saveRift bool, sellLookItems bool) int {
+func SellNonRelicEquipment(sellRift bool, sellLookItems bool) int {
 	counter := 0
 
 	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
 
-	if saveRift {
-		log.Println("Save Rift Equipment requested but not implemented yet")
-	}
-
 	for _, equipment := range Models.EquipmentStorage {
 		// Filter Look Items (Slot 5) if sellLookItems is false
 		if !sellLookItems && equipment.EquipSlotNumber == 5 {
+			continue
+		}
+
+		// Check for Rift Gear (StatID 158-165 on first stat)
+		isRift := false
+		if len(equipment.EquipStats) > 0 {
+			statID := equipment.EquipStats[0].ID
+			if statID >= 158 && statID <= 165 {
+				isRift = true
+			}
+		}
+
+		// If it is Rift Gear and we are NOT selling Rift Gear, skip it (save it)
+		if isRift && !sellRift {
 			continue
 		}
 
@@ -184,12 +176,20 @@ func SellNonRelicEquipment(saveRift bool, sellLookItems bool) int {
 	return counter
 }
 
-func SellNonRelicGems() int {
+func SellNonRelicGems(sellRiftGems bool) int {
 	counter := 0
 
 	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
 	time.Sleep(2 * time.Second)
 	for id, count := range Models.NonRelicGemIDs {
+		// Rift Gems (IDs 450-475)
+		isRift := id >= 450 && id <= 475
+
+		// If it is a Rift Gem and we are NOT selling Rift Gems, skip
+		if isRift && !sellRiftGems {
+			continue
+		}
+
 		for i := 0; i < int(count); i++ {
 			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%03.0f,"RGEM":0,"LFID":-1}%%`, id)
 			GameWebsocket.OutgoingMessages <- GameWebsocket.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
@@ -198,6 +198,118 @@ func SellNonRelicGems() int {
 	}
 	log.Printf("Storage Gem amount : %v", len(Models.NonRelicGemIDs))
 	return counter
+}
+
+func SellRelic1Equipment() int {
+	counter := 0
+	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
+	time.Sleep(2 * time.Second)
+
+	for _, equipment := range Models.EquipmentStorage {
+		// Relic 1.0 is Rarity 5 but NOT 4 stats (which is Relic 2.0)
+		if equipment.EquipRarity == 5 && len(equipment.EquipStats) < 4 {
+			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
+			GameWebsocket.OutgoingMessages <- GameWebsocket.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+			counter++
+		}
+	}
+	return counter
+}
+
+func SellRelic2Equipment(keepStars int) int {
+	counter := 0
+	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
+	time.Sleep(2 * time.Second)
+
+	for _, equipment := range Models.EquipmentStorage {
+		// Relic 2.0 Filters:
+		// 1. Standard Equipment: Rarity 5, 4 Stats, Slot != 6 (Hero)
+		// 2. Hero Equipment: Rarity 15, 6 Stats, Slot == 6
+		isStandardRelic := (equipment.EquipRarity == 5 && len(equipment.EquipStats) == 4 && equipment.EquipSlotNumber != 6)
+		isHeroRelic := (equipment.EquipRarity == 15 && len(equipment.EquipStats) == 6 && equipment.EquipSlotNumber == 6)
+
+		if isStandardRelic || isHeroRelic {
+			totalStars := 0
+			for _, stat := range equipment.EquipStats {
+				totalStars += GetStarFromPercent(stat.Percent)
+			}
+
+			// Sell if below the keep threshold
+			if totalStars < keepStars {
+				payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
+				GameWebsocket.OutgoingMessages <- GameWebsocket.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+				counter++
+			}
+		}
+	}
+	return counter
+}
+
+func SellRelic1Gems() int {
+	counter := 0
+	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
+	time.Sleep(2 * time.Second)
+
+	for _, gem := range Models.GemsStorage {
+		if len(gem.GemStats) == 3 {
+			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%.0f,"RGEM":1,"LFID":-1}%%`, gem.ID)
+			GameWebsocket.OutgoingMessages <- GameWebsocket.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+			counter++
+		}
+	}
+	return counter
+}
+
+func SellRelic2Gems(keepStars int) int {
+	counter := 0
+	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
+	time.Sleep(2 * time.Second)
+
+	for _, gem := range Models.GemsStorage {
+		// Filter for Relic 2.0 Gems (Type 131 and 132) AND 4 Stats
+		if (gem.GemType == 131 || gem.GemType == 132) && len(gem.GemStats) == 4 {
+			totalStars := 0
+			for _, stat := range gem.GemStats {
+				totalStars += GetStarFromPercent(stat.Percent)
+			}
+
+			// Sell if below the keep threshold
+			if totalStars < keepStars {
+				payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%.0f,"RGEM":1,"LFID":-1}%%`, gem.ID)
+				GameWebsocket.OutgoingMessages <- GameWebsocket.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+				counter++
+			}
+		}
+	}
+	return counter
+}
+
+// GetStarFromPercent converts a stat percentage to a star rating (1-7).
+// Thresholds per user:
+// 100: 7
+// 90-99: 6
+// 80-89: 5
+// 70-79: 4
+// 60-69: 3
+// 40-59: 2
+// 0-39: 1
+func GetStarFromPercent(percent float64) int {
+	switch {
+	case percent >= 100.0:
+		return 7
+	case percent >= 90.0:
+		return 6
+	case percent >= 80.0:
+		return 5
+	case percent >= 70.0:
+		return 4
+	case percent >= 60.0:
+		return 3
+	case percent >= 40.0:
+		return 2
+	default:
+		return 1
+	}
 }
 
 // SendAlertMessage sends an alert message to the frontend

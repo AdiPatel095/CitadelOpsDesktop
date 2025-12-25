@@ -217,10 +217,10 @@ export const statGroupDisplayName: { [key: string]: string } = {
     core: 'Core Stats',
     relic2: 'Relic Stats',
     hero: 'Hero Stats',
+    defense: 'Defensive Stats',
     specialStats: 'PvP Only Stats',
     miscellaneous: 'Miscellaneous',
     economy: 'Economy Stats',
-    special: 'Special Stats',
 };
 
 export const commanderStatGroups = {
@@ -232,7 +232,9 @@ export const commanderStatGroups = {
 };
 
 export const castellanStatGroups = {
-    core: ['meleeCbtStr', 'rangeCbtStr', 'opCbtStr', 'mainCbtStr', 'cyCbtStr', 'allCbtStr', 'frontCbtStr', 'flankCbtStr', 'wallStr', 'gateStr', 'moatStr', 'wallLimit', 'protectorSupp'],
+    core: ['meleeCbtStr', 'rangeCbtStr', 'cyCbtStr', 'wallStr', 'gateStr', 'moatStr', 'wallLimit'],
+    relic2: ['frontCbtStr', 'flankCbtStr', 'allCbtStr'],
+    defense: ['protectorSupp', 'opCbtStr', 'mainCbtStr'],
     economy: ['lootStr', 'recruit', 'meadProd', 'research', 'hospital', 'construction', 'baseRes', 'kingRes', 'po', 'resTransport', 'honeyProd', 'meadStorage', 'honeyStorage'],
-    special: ['glory', 'fire', 'early'],
+    specialStats: ['glory', 'fire', 'early'],
 };

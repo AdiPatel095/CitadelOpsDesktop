@@ -16,18 +16,4 @@ type CastActualModel struct {
 	Equipment     []EquipmentModel `json:"equipment"`
 }
 
-var CastActualArray struct {
-	MainCastleCast    CastActualModel `json:"mainCastleCast"`
-	Outpost1Cast      CastActualModel `json:"outpost1Cast"`
-	Outpost2Cast      CastActualModel `json:"outpost2Cast"`
-	Outpost3Cast      CastActualModel `json:"outpost3Cast"`
-	IceCastleCast     CastActualModel `json:"iceCastleCast"`
-	DesertCastleCast  CastActualModel `json:"desertCastleCast"`
-	DungeonCastleCast CastActualModel `json:"dungeonCastleCast"`
-	StormCastleCast   CastActualModel `json:"stormCastleCast"`
-	ExtraCast1        CastActualModel `json:"extraCast1"`
-	ExtraCast2        CastActualModel `json:"extraCast2"`
-	ExtraCast3        CastActualModel `json:"extraCast3"`
-	ExtraCast4        CastActualModel `json:"extraCast4"`
-	ExtraCast5        CastActualModel `json:"extraCast5"`
-}
+var CastActualArray []CastActualModel

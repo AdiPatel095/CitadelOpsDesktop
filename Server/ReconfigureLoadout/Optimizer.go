@@ -20,15 +20,52 @@ func PreparePriority(payload ReconfigurePayload) PreparedPriority {
 		Tier2Bitmask: make(map[float64]bool),
 	}
 
-	// Convert payload stats to PriorityStat with IDs and separate by tier
+	// 1. Build Blacklist based on CombatMode
+	// We want to exclude IDs that are irrelevant to the current mode (e.g. NPC stats in PvP)
+	blacklistIDs := make(map[float64]bool)
+	isPvP := payload.CombatMode == "PVP" || payload.CombatMode == "PvP"
+	var blacklistNames []string
+
+	if isPvP {
+		// In PvP, filter out NPC stats
+		blacklistNames = []string{
+			"NPCMelee", "NPCRange", "NPCFront", "NPCFlank", "NPCCy", "NPCWall", "NPCGate", "NPCMoat", "NPCGlory",
+		}
+		if payload.EquipmentMode == "Castellan" {
+			blacklistNames = append(blacklistNames, "NPCWallLimit")
+		}
+	} else {
+		// In NPC, filter out CL stats
+		blacklistNames = []string{
+			"CLMelee", "CLRange", "CLFront", "CLFlank", "CLCy", "CLWall", "CLGate", "CLMoat", "CLGlory", "CLFire", "CLLater",
+		}
+		if payload.EquipmentMode == "Castellan" {
+			blacklistNames = append(blacklistNames, "CLWallLimit", "CLEarly")
+		}
+	}
+
+	for _, blName := range blacklistNames {
+		ids := GetStatIDsForName(blName, payload.EquipmentMode)
+		for _, id := range ids {
+			blacklistIDs[id] = true
+		}
+	}
+
+	// 2. Convert payload stats to PriorityStat with IDs (Filtered)
 	for _, s := range payload.Stats {
-		statIDs := GetStatIDsForName(s.Stat, payload.EquipmentMode)
+		rawIDs := GetStatIDsForName(s.Stat, payload.EquipmentMode)
+		var validIDs []float64
+		for _, id := range rawIDs {
+			if !blacklistIDs[id] {
+				validIDs = append(validIDs, id)
+			}
+		}
 
 		priorityStat := PriorityStat{
 			StatName: s.Stat,
 			Tier:     s.Tier,
 			Position: s.Position,
-			StatIDs:  statIDs,
+			StatIDs:  validIDs,
 		}
 
 		switch s.Tier {
@@ -37,13 +74,13 @@ func PreparePriority(payload ReconfigurePayload) PreparedPriority {
 		case 2:
 			prepared.Tier2Stats = append(prepared.Tier2Stats, priorityStat)
 			// Also add to bitmask for pruning
-			for _, id := range statIDs {
+			for _, id := range validIDs {
 				prepared.Tier2Bitmask[id] = true
 			}
 		}
 	}
 
-	// Sort tier 1 stats by position (highest priority first, position 0 = highest)
+	// Sort tier 1 stats by position
 	sort.Slice(prepared.Tier1Stats, func(i, j int) bool {
 		return prepared.Tier1Stats[i].Position < prepared.Tier1Stats[j].Position
 	})
@@ -684,6 +721,7 @@ func OptimizeGems(result *OptimizationResult, input OptimizerInput, prepared Pre
 	}
 
 	// 1. Get Top Candidates using the multi-pass filter
+	// input.Gems is now pre-filtered by Reconfigure.go
 	candidateGems := filterTopStatGems(input.Gems, prepared)
 
 	// 2. Reconstruct Base Loadout to track (for synergy context, though optimization focuses on Gem Bucket)
@@ -731,6 +769,8 @@ func OptimizeGems(result *OptimizationResult, input OptimizerInput, prepared Pre
 			Models.ApplyCommCeiling(&currentCommStats, &commGemCeiling)
 		}
 	}
+
+	// Combat Mode
 
 	// 3. Iteratively select 4 gems -> Filling the Gem Bucket ONLY (using current(Gem)Stats and GemCeiling)
 	selectedGemIDs := make([]float64, 0, 4)
@@ -839,14 +879,26 @@ func CalculateEffectiveGemScoreComm(gem Models.Gem, currentStats Models.CommStat
 					totalScore += effective * weight
 				}
 			} else {
-				// If we can't map ID to a stat name for checking caps, assume uncapped or not relevant for cap
-				// But since it's in priority list (weight > 0), it SHOULD be mapped.
-				// Fallback: full value
 				totalScore += gemValue * weight
 			}
 		}
 	}
 	return totalScore
+}
+
+// getEffectiveValue returns how much of val contributes to the score without exceeding cap
+func getEffectiveValue(addVal, current, capVal float64) float64 {
+	if capVal <= 0 {
+		return addVal // No ceiling
+	}
+	if current >= capVal {
+		return 0 // Already capped
+	}
+	space := capVal - current
+	if addVal <= space {
+		return addVal // Fully effective
+	}
+	return space // Partially effective
 }
 
 // CalculateEffectiveGemScoreCast calculates the score a gem would ADD given current stats and ceilings
@@ -893,215 +945,6 @@ func CalculateEffectiveGemScoreCast(gem Models.Gem, currentStats Models.CastStat
 		}
 	}
 	return totalScore
-}
-
-// getEffectiveValue returns how much of val contributes to the score without exceeding cap
-func getEffectiveValue(addVal, current, capVal float64) float64 {
-	if capVal <= 0 {
-		return addVal // No ceiling
-	}
-	if current >= capVal {
-		return 0 // Already capped
-	}
-	space := capVal - current
-	if addVal <= space {
-		return addVal // Fully effective
-	}
-	return space // Partially effective
-}
-
-// getStatNameFromID tries to find a single stat name that maps to this ID
-// This is reverse lookup and simplistic (assumes 1-to-1 or just finds first match)
-// Used for finding which ceiling to check.
-func getStatNameFromID(id float64, isCastellan bool) string {
-	var mapping map[string][]float64
-	if isCastellan {
-		mapping = CastStatNameToIDs
-	} else {
-		mapping = CommStatNameToIDs
-	}
-
-	for name, ids := range mapping {
-		for _, mapID := range ids {
-			if mapID == id {
-				return name
-			}
-		}
-	}
-	return ""
-}
-
-// findEquipByID finds an equipment model by ID in a slice
-func findEquipByID(id float64, list []Models.EquipmentModel) Models.EquipmentModel {
-	for _, item := range list {
-		if item.ID == id {
-			return item
-		}
-	}
-	return Models.EquipmentModel{}
-}
-
-// filterTopStatGems selects the best gems by iteratively scoring with reducing priorities
-// Combines Tier1 and Tier2 stats for comprehensive gem selection
-func filterTopStatGems(gems []Models.Gem, prepared PreparedPriority) []Models.Gem {
-	uniqueGems := make(map[float64]Models.Gem)
-
-	// Combine Tier1 and Tier2 priorities into a single list for iteration
-	// Tier1 stats come first (higher priority), then Tier2 stats
-	combinedPriorities := make([]PriorityStat, 0, len(prepared.Tier1Stats)+len(prepared.Tier2Stats))
-	combinedPriorities = append(combinedPriorities, prepared.Tier1Stats...)
-	combinedPriorities = append(combinedPriorities, prepared.Tier2Stats...)
-
-	// Create a copy to manipulate
-	currentPriorities := make([]PriorityStat, len(combinedPriorities))
-	copy(currentPriorities, combinedPriorities)
-
-	// Iterate as long as we have priorities
-	// For each pass, we score gems based on CURRENT priorities, pick top 5
-	// Then remove the top priority stat and repeat
-	for len(currentPriorities) > 0 {
-
-		// Score all gems with current priority list
-		type scoredGem struct {
-			Gem   Models.Gem
-			Score float64
-		}
-		scoredGems := make([]scoredGem, len(gems))
-
-		for i, gem := range gems {
-			score := ScoreGem(gem, currentPriorities)
-			scoredGems[i] = scoredGem{Gem: gem, Score: score}
-		}
-
-		// Sort by score descending
-		sort.Slice(scoredGems, func(i, j int) bool {
-			return scoredGems[i].Score > scoredGems[j].Score
-		})
-
-		// Pick top 5 from this pass
-		count := 0
-		for _, sg := range scoredGems {
-			if count >= 5 {
-				break
-			}
-			uniqueGems[sg.Gem.ID] = sg.Gem
-			count++
-		}
-
-		// Remove the top priority stat (index 0) (Shift)
-		currentPriorities = currentPriorities[1:]
-	}
-
-	// Convert map to slice
-	result := make([]Models.Gem, 0, len(uniqueGems))
-	for _, g := range uniqueGems {
-		result = append(result, g)
-	}
-
-	// Optional: Sort final result by value or some metric?
-	// The requirement is just to return this list for the optimizer to use.
-	// We'll just return the gathered unique gems.
-	return result
-}
-
-// ScoreGem calculates a score for a single gem based on a list of priority stats
-func ScoreGem(gem Models.Gem, priorities []PriorityStat) float64 {
-	var score float64
-
-	// Build simple weight map for current priorities
-	// Since we are iterating and dropping, the "first" in the list is always most important for THAT pass.
-	// We can use the same decay logic or just simple weighting.
-	// Using standard decay based on current position in the sliced list.
-
-	statWeights := make(map[float64]float64)
-	for i, pStat := range priorities {
-		weight := calculateWeight(Tier1BaseScore, Tier1Decay, i)
-		for _, statID := range pStat.StatIDs {
-			statWeights[statID] = weight
-		}
-	}
-
-	for _, stat := range gem.GemStats {
-		if weight, exists := statWeights[stat.ID]; exists {
-			// Gems have values in nested array too? Yes per GemModel.
-			// However, GemStats use Stat struct which has Value []float64
-			if len(stat.Value) > 0 {
-				score += stat.Value[0] * weight
-			}
-		}
-	}
-
-	return score
-}
-
-// calculatePotentialBonusComm calculates the max possible score increase from future slots
-func calculatePotentialBonusComm(currentStats *Models.CommStatModel, maxStatsPool []map[float64]float64, prepared PreparedPriority, ceiling *Models.CommStatModel, combatMode string) float64 {
-	var totalPotential float64
-
-	for i, pStat := range prepared.Tier1Stats {
-		weight := calculateWeight(Tier1BaseScore, Tier1Decay, i)
-
-		statFunc, exists := CommStatGetter[pStat.StatName]
-		if !exists {
-			continue
-		}
-
-		currentVal := statFunc(currentStats)
-		ceilVal := statFunc(ceiling)
-
-		var gap float64
-		if ceilVal > 0 {
-			gap = ceilVal - currentVal
-			if gap < 0 {
-				gap = 0
-			}
-		} else {
-			gap = 999999
-		}
-
-		var maxAvailable float64
-		for _, statID := range pStat.StatIDs {
-			for _, maxMap := range maxStatsPool {
-				maxAvailable += maxMap[statID]
-			}
-		}
-
-		if maxAvailable > gap {
-			maxAvailable = gap
-		}
-
-		totalPotential += maxAvailable * weight
-
-		combatStatName := getCombatStatName(pStat.StatName, combatMode)
-		if combatStatName != "" {
-			if statFunc, exists := CommStatGetter[combatStatName]; exists {
-				currentVal := statFunc(currentStats)
-				ceilVal := statFunc(ceiling)
-
-				var gap float64
-				if ceilVal > 0 {
-					gap = ceilVal - currentVal
-					if gap < 0 {
-						gap = 0
-					}
-				} else {
-					gap = 999999
-				}
-
-				var maxAvailable float64
-				for _, statID := range pStat.StatIDs {
-					for _, maxMap := range maxStatsPool {
-						maxAvailable += maxMap[statID]
-					}
-				}
-				if maxAvailable > gap {
-					maxAvailable = gap
-				}
-				totalPotential += maxAvailable * weight
-			}
-		}
-	}
-	return totalPotential
 }
 
 // calculatePotentialBonusCast calculates the max possible score increase from future slots for Castellan
@@ -1208,4 +1051,209 @@ func getStatSignature(item Models.EquipmentModel) string {
 	sort.Float64s(ids)
 
 	return fmt.Sprint(ids)
+}
+
+// getStatNameFromID tries to find a single stat name that maps to this ID
+// This is reverse lookup and simplistic (assumes 1-to-1 or just finds first match)
+// Used for finding which ceiling to check.
+// getStatNameFromID tries to find a single stat name that maps to this ID
+// This is reverse lookup and simplistic (assumes 1-to-1 or just finds first match)
+// Used for finding which ceiling to check.
+func getStatNameFromID(id float64, isCastellan bool) string {
+	var mapping map[string][]float64
+	if isCastellan {
+		mapping = CastStatNameToIDs
+	} else {
+		mapping = CommStatNameToIDs
+	}
+
+	for name, ids := range mapping {
+		for _, mapID := range ids {
+			if mapID == id {
+				return name
+			}
+		}
+	}
+	return ""
+}
+
+// findEquipByID finds an equipment model by ID in a slice
+func findEquipByID(id float64, list []Models.EquipmentModel) Models.EquipmentModel {
+	for _, item := range list {
+		if item.ID == id {
+			return item
+		}
+	}
+	return Models.EquipmentModel{}
+}
+
+// filterTopStatGems selects the best gems by iteratively scoring with reducing priorities
+// Combines Tier1 and Tier2 stats for comprehensive gem selection
+func filterTopStatGems(gems []Models.Gem, prepared PreparedPriority) []Models.Gem {
+	uniqueGems := make(map[float64]Models.Gem)
+
+	// Combine Tier1 and Tier2 priorities into a single list for iteration
+	// Tier1 stats come first (higher priority), then Tier2 stats
+	combinedPriorities := make([]PriorityStat, 0, len(prepared.Tier1Stats)+len(prepared.Tier2Stats))
+	combinedPriorities = append(combinedPriorities, prepared.Tier1Stats...)
+	combinedPriorities = append(combinedPriorities, prepared.Tier2Stats...)
+
+	// Create a copy to manipulate
+	currentPriorities := make([]PriorityStat, len(combinedPriorities))
+	copy(currentPriorities, combinedPriorities)
+
+	// Iterate as long as we have priorities
+	// For each pass, we score gems based on CURRENT priorities, pick top 5
+	// Then remove the top priority stat and repeat
+	for len(currentPriorities) > 0 {
+
+		// Score all gems with current priority list
+		type scoredGem struct {
+			Gem   Models.Gem
+			Score float64
+		}
+		scoredGems := make([]scoredGem, len(gems))
+
+		for i, gem := range gems {
+			score := ScoreGem(gem, currentPriorities)
+			scoredGems[i] = scoredGem{Gem: gem, Score: score}
+		}
+
+		// Sort by score descending
+		sort.Slice(scoredGems, func(i, j int) bool {
+			return scoredGems[i].Score > scoredGems[j].Score
+		})
+
+		// Pick top 5 from this pass
+		count := 0
+		for _, sg := range scoredGems {
+			if count >= 5 {
+				break
+			}
+			uniqueGems[sg.Gem.ID] = sg.Gem
+			count++
+		}
+
+		// Remove the top priority stat (index 0) (Shift)
+		currentPriorities = currentPriorities[1:]
+	}
+
+	// Convert map to slice
+	result := make([]Models.Gem, 0, len(uniqueGems))
+	for _, g := range uniqueGems {
+		result = append(result, g)
+	}
+
+	// Optional: Sort final result by value or some metric?
+	// The requirement is just to return this list for the optimizer to use.
+	// We'll just return the gathered unique gems.
+	return result
+}
+
+func getGemStatIDs(gem Models.Gem) []float64 {
+	ids := make([]float64, 0, len(gem.GemStats))
+	for _, s := range gem.GemStats {
+		ids = append(ids, s.ID)
+	}
+	return ids
+}
+
+// ScoreGem calculates a score for a single gem based on a list of priority stats
+func ScoreGem(gem Models.Gem, priorities []PriorityStat) float64 {
+	var score float64
+
+	// Build simple weight map for current priorities
+	// Since we are iterating and dropping, the "first" in the list is always most important for THAT pass.
+	// We can use the same decay logic or just simple weighting.
+	// Using standard decay based on current position in the sliced list.
+
+	statWeights := make(map[float64]float64)
+	for i, pStat := range priorities {
+		weight := calculateWeight(Tier1BaseScore, Tier1Decay, i)
+		for _, statID := range pStat.StatIDs {
+			statWeights[statID] = weight
+		}
+	}
+
+	for _, stat := range gem.GemStats {
+		if weight, exists := statWeights[stat.ID]; exists {
+			// Gems have values in nested array too? Yes per GemModel.
+			// However, GemStats use Stat struct which has Value []float64
+			if len(stat.Value) > 0 {
+				score += stat.Value[0] * weight
+			}
+		}
+	}
+
+	return score
+}
+
+// calculatePotentialBonusComm calculates the max possible score increase from future slots
+func calculatePotentialBonusComm(currentStats *Models.CommStatModel, maxStatsPool []map[float64]float64, prepared PreparedPriority, ceiling *Models.CommStatModel, combatMode string) float64 {
+	var totalPotential float64
+
+	for i, pStat := range prepared.Tier1Stats {
+		weight := calculateWeight(Tier1BaseScore, Tier1Decay, i)
+
+		statFunc, exists := CommStatGetter[pStat.StatName]
+		if !exists {
+			continue
+		}
+
+		currentVal := statFunc(currentStats)
+		ceilVal := statFunc(ceiling)
+
+		var gap float64
+		if ceilVal > 0 {
+			gap = ceilVal - currentVal
+			if gap < 0 {
+				gap = 0
+			}
+		} else {
+			gap = 999999
+		}
+
+		var maxAvailable float64
+		for _, statID := range pStat.StatIDs {
+			for _, maxMap := range maxStatsPool {
+				maxAvailable += maxMap[statID]
+			}
+		}
+
+		if maxAvailable > gap {
+			maxAvailable = gap
+		}
+
+		totalPotential += maxAvailable * weight
+
+		combatStatName := getCombatStatName(pStat.StatName, combatMode)
+		if combatStatName != "" {
+			if statFunc, exists := CommStatGetter[combatStatName]; exists {
+				currentVal := statFunc(currentStats)
+				ceilVal := statFunc(ceiling)
+
+				var gap float64
+				if ceilVal > 0 {
+					gap = ceilVal - currentVal
+					if gap < 0 {
+						gap = 0
+					}
+				} else {
+					gap = 999999
+				}
+
+				var maxAvailable float64
+				for _, statID := range pStat.StatIDs {
+					for _, maxMap := range maxStatsPool {
+						maxAvailable += maxMap[statID]
+					}
+				}
+				if maxAvailable > gap {
+					maxAvailable = gap
+				}
+				totalPotential += maxAvailable * weight
+			}
+		}
+	}
+	return totalPotential
 }

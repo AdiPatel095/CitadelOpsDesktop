@@ -50,26 +50,66 @@ func ParseFrontendMessage(message []byte) {
 		log.Println("Received request to sell non-relic equipment")
 
 		// Parse payload
-		var sellLookItems, saveRift bool
+		var sellLookItems, sellRift bool
 		if payload, ok := data["payload"].(map[string]interface{}); ok {
 			if val, ok := payload["sellLookItems"].(bool); ok {
 				sellLookItems = val
 			}
-			if val, ok := payload["saveRift"].(bool); ok {
-				saveRift = val
+			if val, ok := payload["sellRift"].(bool); ok {
+				sellRift = val
 			}
 		}
 
-		log.Printf("Flags - Sell Look Items: %v, Save Rift: %v", sellLookItems, saveRift)
+		log.Printf("Flags - Sell Look Items: %v, Sell Rift: %v", sellLookItems, sellRift)
 
-		soldCount := SellNonRelicEquipment(saveRift, sellLookItems)
+		soldCount := SellNonRelicEquipment(sellRift, sellLookItems)
 		log.Printf("SoldCount: %v", soldCount)
 		SendAlertMessage("green", fmt.Sprintf("Sold %d non-relic equipment items", soldCount))
 	case "sellNonRelicGems":
 		log.Println("Received request to sell non-relic gems")
-		soldCount := SellNonRelicGems()
+		var sellRiftGems bool
+		if payload, ok := data["payload"].(map[string]interface{}); ok {
+			if val, ok := payload["sellRiftGems"].(bool); ok {
+				sellRiftGems = val
+			}
+		}
+		soldCount := SellNonRelicGems(sellRiftGems)
 		log.Printf("SoldCount: %v", soldCount)
 		SendAlertMessage("green", fmt.Sprintf("Sold %d non-relic gems", soldCount))
+	case "sellRelic1Equipment":
+		log.Println("Received request to sell Relic 1.0 equipment")
+		soldCount := SellRelic1Equipment()
+		log.Printf("SoldCount: %v", soldCount)
+		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 1.0 items", soldCount))
+	case "sellRelic2Equipment":
+		log.Println("Received request to sell Relic 2.0 equipment")
+		var keepStars int
+		if payload, ok := data["payload"].(map[string]interface{}); ok {
+			if val, ok := payload["keepStars"].(float64); ok {
+				keepStars = int(val)
+			}
+		}
+		soldCount := SellRelic2Equipment(keepStars)
+		log.Printf("SoldCount Relic 2.0 (Keep %d+ Stars): %v", keepStars, soldCount)
+		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 items", soldCount))
+
+	case "sellRelic1Gems":
+		log.Println("Received request to sell Relic 1.0 gems")
+		soldCount := SellRelic1Gems()
+		log.Printf("SoldCount Relic 1.0 Gems: %v", soldCount)
+		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 1.0 gems", soldCount))
+
+	case "sellRelic2Gems":
+		log.Println("Received request to sell Relic 2.0 gems")
+		var keepStars int
+		if payload, ok := data["payload"].(map[string]interface{}); ok {
+			if val, ok := payload["keepStars"].(float64); ok {
+				keepStars = int(val)
+			}
+		}
+		soldCount := SellRelic2Gems(keepStars)
+		log.Printf("SoldCount Relic 2.0 Gems (Keep %d+ Stars): %v", keepStars, soldCount)
+		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 gems", soldCount))
 	case "startGame":
 		log.Println("Received request to start game")
 		GameWebsocket.StartGame()
@@ -183,11 +223,13 @@ func ParseFrontendMessage(message []byte) {
 				}
 
 				// Send comparison data to frontend
+				// Send comparison data to frontend
 				comparisonData := map[string]interface{}{
 					"currentLoadout": currentLoadout,
 					"newLoadout":     newLoadout,
 					"targetIndex":    targetIndex,
 				}
+
 				SendFrontendMessage("reconfigureComparison", comparisonData, "")
 			}
 		}
@@ -340,8 +382,6 @@ func ParseFrontendMessage(message []byte) {
 			GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 			time.Sleep(2 * time.Second)
 
-			log.Printf("[Unequip Debug] Received Request: Mode=%s, Index=%.0f, SelectionsCount=%d", equipmentMode, targetIndex, len(selectionsRaw))
-
 			// Process each selection
 			successCount := 0
 			failCount := 0
@@ -353,12 +393,10 @@ func ParseFrontendMessage(message []byte) {
 				slotNumber, _ := sel["slotNumber"].(float64)
 				equipmentId, _ := sel["equipmentId"].(float64)
 
-				log.Printf("[Unequip Debug] Processing Item: Slot=%.0f, ID=%.0f", slotNumber, equipmentId)
-
 				if GameWebsocket.UnequipEquipment(equipmentMode, int(targetIndex), int(slotNumber), equipmentId) {
 					successCount++
 				} else {
-					log.Printf("[Unequip Debug] Failed to unequip item: Slot=%.0f, ID=%.0f", slotNumber, equipmentId)
+
 					failCount++
 				}
 			}
@@ -377,8 +415,13 @@ func ParseFrontendMessage(message []byte) {
 				log.Printf("Sending gli to refresh game data after unequip...")
 				GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 				time.Sleep(2 * time.Second)
-				// Call ParseFrontendMessage with getCommUpdate to trigger targeted refresh
-				refreshMsg := fmt.Sprintf(`{"type":"getCommUpdate","commanderIndex":%d}`, int(targetIndex))
+				// Call ParseFrontendMessage with getCommUpdate/getCastUpdate to trigger targeted refresh
+				var refreshMsg string
+				if equipmentMode == "Commander" {
+					refreshMsg = fmt.Sprintf(`{"type":"getCommUpdate","commanderIndex":%d}`, int(targetIndex))
+				} else {
+					refreshMsg = fmt.Sprintf(`{"type":"getCastUpdate","castleIndex":%d}`, int(targetIndex))
+				}
 				ParseFrontendMessage([]byte(refreshMsg))
 			}()
 		}
@@ -438,8 +481,13 @@ func ParseFrontendMessage(message []byte) {
 				log.Printf("Sending gli to refresh game data after gem unequip...")
 				GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 				time.Sleep(2 * time.Second)
-				// Call ParseFrontendMessage with getCommUpdate to trigger targeted refresh
-				refreshMsg := fmt.Sprintf(`{"type":"getCommUpdate","commanderIndex":%d}`, int(targetIndex))
+				// Call ParseFrontendMessage with getCommUpdate/getCastUpdate to trigger targeted refresh
+				var refreshMsg string
+				if equipmentMode == "Commander" {
+					refreshMsg = fmt.Sprintf(`{"type":"getCommUpdate","commanderIndex":%d}`, int(targetIndex))
+				} else {
+					refreshMsg = fmt.Sprintf(`{"type":"getCastUpdate","castleIndex":%d}`, int(targetIndex))
+				}
 				ParseFrontendMessage([]byte(refreshMsg))
 			}()
 		}

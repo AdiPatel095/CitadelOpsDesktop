@@ -3,7 +3,6 @@ package GameWebsocket
 import (
 	"CitadelDesktop/Server/Models"
 	"fmt"
-	"log"
 )
 
 // UnequipEquipment removes equipment from a commander or castellan
@@ -59,8 +58,6 @@ func UnequipEquipment(equipmentMode string, targetIndex int, slotNumber int, exp
 		return false
 	}
 
-	log.Printf("[Unequip Internal Debug] Mode=%s, Index=%d, Slot=%d -> LocalModelID=%.0f, ExpectedID=%.0f, LID=%.0f", equipmentMode, targetIndex, slotNumber, actualEquipmentId, expectedEquipmentId, lidValue)
-
 	// Logic Update: Prioritize what the frontend sends (user intent), but log mismatch
 	// Use expectedEquipmentId as the ID for the payload
 	payloadEquipmentId := expectedEquipmentId
@@ -69,12 +66,12 @@ func UnequipEquipment(equipmentMode string, targetIndex int, slotNumber int, exp
 	if actualEquipmentId != 0 {
 		// Backend thinks something is equipped
 		if actualEquipmentId != expectedEquipmentId {
-			fmt.Printf("[Sort Warning] Unequip mismatch! Slot: %d. Backend has: %.0f, Frontend sent: %.0f. Proceeding with frontend ID.\n", slotNumber, actualEquipmentId, expectedEquipmentId)
+
 		}
 	} else {
 		// Backend thinks nothing is equipped
 		if expectedEquipmentId != 0 {
-			fmt.Printf("[Sort Warning] Backend thinks slot %d is empty, but frontend wants to unequip %.0f. Proceeding.\n", slotNumber, expectedEquipmentId)
+
 		} else {
 			// Both are 0, nothing to unequip
 			return false
@@ -149,14 +146,14 @@ func UnequipGem(equipmentMode string, targetIndex int, slotNumber int, expectedG
 	// Validation / Warning logic
 	if actualEquipmentId != 0 {
 		if actualEquipmentId != expectedEquipmentId {
-			fmt.Printf("[Sort Warning] UnequipGem mismatch (Parent Item)! Slot: %d. Backend EID: %.0f, Frontend EID: %.0f. Proceeding with frontend ID.\n", slotNumber, actualEquipmentId, expectedEquipmentId)
+
 		}
 		if actualGemId != expectedGemId {
-			fmt.Printf("[Sort Warning] UnequipGem mismatch (Gem)! Slot: %d. Backend GID: %.0f, Frontend GID: %.0f. Proceeding.\n", slotNumber, actualGemId, expectedGemId)
+
 		}
 	} else {
 		// Backend thinks parent item is missing
-		fmt.Printf("[Sort Warning] Backend thinks slot %d is empty (no parent), but frontend wants to unequip gem %.0f from item %.0f. Proceeding.\n", slotNumber, expectedGemId, expectedEquipmentId)
+
 	}
 
 	// Game message format: %xt%EmpireEx_21%ege%1%{"EID":equipmentId,"LID":leaderId}%
