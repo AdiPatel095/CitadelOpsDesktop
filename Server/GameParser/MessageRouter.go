@@ -1,13 +1,17 @@
 package GameParser
 
 import (
+	"CitadelDesktop/Server/ResponseRegistry"
 	"encoding/json"
-	"log"
 )
 
 func MessageRouter(messageParts []string) {
-	indexedList := []string{"gie", "gbl", "dcl", "gcu", "gmu", "gpa", "grc", "sce", "gbd", "sei"}
 	messageType := messageParts[2]
+
+	// Check if any waiters are registered for this message type
+	ResponseRegistry.Global.CheckWaiters(messageType, messageParts)
+
+	indexedList := []string{"gie", "gbl", "dcl", "gcu", "gmu", "gpa", "grc", "sce", "gbd", "sei"}
 	if contains(indexedList, messageType) {
 		//log.Printf("Received message type: %s which has already been indexed", messageType)
 	} else if !contains(indexedList, messageType) {
@@ -21,14 +25,6 @@ func MessageRouter(messageParts []string) {
 	}
 	if messageType == "ggm" {
 		UpdateGemStorage(messageParts[5])
-	}
-	// Log equipment equip/unequip responses
-	if messageType == "eeq" {
-		log.Printf("GAME RESPONSE (EQUIPMENT EQUIP/UNEQUIP): %v", messageParts)
-	}
-	// Log gem equip/unequip responses
-	if messageType == "ege" || messageType == "bge" {
-		log.Printf("GAME RESPONSE (GEM EQUIP/UNEQUIP): %v", messageParts)
 	}
 
 	if messageType == "gli" {
