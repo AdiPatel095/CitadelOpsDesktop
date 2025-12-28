@@ -111,10 +111,8 @@ func ParseFrontendMessage(message []byte) {
 		log.Printf("SoldCount Relic 2.0 Gems (Keep %d+ Stars): %v", keepStars, soldCount)
 		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 gems", soldCount))
 	case "startGame":
-		log.Println("Received request to start game")
 		GameWebsocket.StartGame()
 	case "stopGame":
-		log.Println("Received request to stop game")
 		GameWebsocket.StopGame()
 	case "refreshEquipment":
 		// Send equipment data if registered
@@ -361,7 +359,6 @@ func ParseFrontendMessage(message []byte) {
 
 	case "unequipEquipment":
 		{
-			log.Println("Received request to unequip equipment")
 			payloadRaw, ok := data["payload"].(map[string]interface{})
 			if !ok {
 				SendAlertMessage("red", "Invalid unequip equipment request")
@@ -378,13 +375,13 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			// Fetch fresh data from game before attempting unequip
-			log.Println("Fetching fresh equipment data before unequip...")
 			GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 			time.Sleep(2 * time.Second)
 
 			// Process each selection
 			successCount := 0
 			failCount := 0
+			var lastErrorMsg string
 			for _, selRaw := range selectionsRaw {
 				sel, ok := selRaw.(map[string]interface{})
 				if !ok {
@@ -393,26 +390,26 @@ func ParseFrontendMessage(message []byte) {
 				slotNumber, _ := sel["slotNumber"].(float64)
 				equipmentId, _ := sel["equipmentId"].(float64)
 
-				if GameWebsocket.UnequipEquipment(equipmentMode, int(targetIndex), int(slotNumber), equipmentId) {
+				result := GameWebsocket.UnequipEquipment(equipmentMode, int(targetIndex), int(slotNumber), equipmentId)
+				if result.Success {
 					successCount++
 				} else {
-
+					lastErrorMsg = result.Message
 					failCount++
 				}
 			}
 
-			// Report results
+			// Report results with specific error messages
 			if failCount == 0 {
 				SendAlertMessage("green", fmt.Sprintf("Unequipped %d equipment successfully", successCount))
 			} else if successCount == 0 {
-				SendAlertMessage("yellow", "Equipment data out of sync - refreshing...")
+				SendAlertMessage("red", lastErrorMsg)
 			} else {
-				SendAlertMessage("yellow", fmt.Sprintf("Unequipped %d equipment, %d failed", successCount, failCount))
+				SendAlertMessage("yellow", fmt.Sprintf("Unequipped %d equipment, %d failed: %s", successCount, failCount, lastErrorMsg))
 			}
 
 			// Refresh equipment data from game and update frontend via ParseFrontendMessage
 			go func() {
-				log.Printf("Sending gli to refresh game data after unequip...")
 				GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 				time.Sleep(2 * time.Second)
 				// Call ParseFrontendMessage with getCommUpdate/getCastUpdate to trigger targeted refresh
@@ -427,7 +424,6 @@ func ParseFrontendMessage(message []byte) {
 		}
 	case "unequipGem":
 		{
-			log.Println("Received request to unequip gem")
 			payloadRaw, ok := data["payload"].(map[string]interface{})
 			if !ok {
 				SendAlertMessage("red", "Invalid unequip gem request")
@@ -444,13 +440,13 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			// Fetch fresh data from game before attempting unequip
-			log.Println("Fetching fresh equipment data before gem unequip...")
 			GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 			time.Sleep(2 * time.Second)
 
 			// Process each selection
 			successCount := 0
 			failCount := 0
+			var lastErrorMsg string
 			for _, selRaw := range selectionsRaw {
 				sel, ok := selRaw.(map[string]interface{})
 				if !ok {
@@ -460,25 +456,26 @@ func ParseFrontendMessage(message []byte) {
 				gemId, _ := sel["gemId"].(float64)
 				equipmentId, _ := sel["equipmentId"].(float64)
 
-				if GameWebsocket.UnequipGem(equipmentMode, int(targetIndex), int(slotNumber), gemId, equipmentId) {
+				result := GameWebsocket.UnequipGem(equipmentMode, int(targetIndex), int(slotNumber), gemId, equipmentId)
+				if result.Success {
 					successCount++
 				} else {
+					lastErrorMsg = result.Message
 					failCount++
 				}
 			}
 
-			// Report results
+			// Report results with specific error messages
 			if failCount == 0 {
 				SendAlertMessage("green", fmt.Sprintf("Unequipped %d gems successfully", successCount))
 			} else if successCount == 0 {
-				SendAlertMessage("yellow", "Equipment data out of sync - refreshing...")
+				SendAlertMessage("red", lastErrorMsg)
 			} else {
-				SendAlertMessage("yellow", fmt.Sprintf("Unequipped %d gems, %d failed", successCount, failCount))
+				SendAlertMessage("yellow", fmt.Sprintf("Unequipped %d gems, %d failed: %s", successCount, failCount, lastErrorMsg))
 			}
 
 			// Refresh equipment data from game and update frontend via ParseFrontendMessage
 			go func() {
-				log.Printf("Sending gli to refresh game data after gem unequip...")
 				GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 				time.Sleep(2 * time.Second)
 				// Call ParseFrontendMessage with getCommUpdate/getCastUpdate to trigger targeted refresh
@@ -500,7 +497,7 @@ func ParseFrontendMessage(message []byte) {
 			SendAlertMessage("red", "Failed to delete login details")
 			return
 		}
-		SendAlertMessage("green", "Login details deleted. Please restart the bot (Start Game).")
+		SendAlertMessage("green", "Login details deleted. Please restart the bot (Start Bot).")
 	case "triggerUpdate":
 		log.Println("Received request to trigger self-update")
 		payloadRaw, ok := data["payload"].(map[string]interface{})

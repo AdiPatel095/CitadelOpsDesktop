@@ -8,8 +8,8 @@ hardwareID.txt
 loginBytes.json
 
 # Build output - Go binary
-CitadelDesktop
-CitadelDesktop.exe
+/CitadelDesktop
+/Build
 
 # OS-generated files
 .DS_Store
@@ -45,3 +45,10 @@ Client/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+/Temp.json
+/clean.json
+
+# Architecture notes (private design docs)
+**/ARCHITECTURE_NOTES.md
+**/TASKS.md
+**/scheduler_diagram.html
