@@ -15,9 +15,24 @@ import (
 )
 
 var (
-	autoBirdCancel context.CancelFunc
-	autoBirdMu     sync.Mutex
+	autoBirdCancel     context.CancelFunc
+	autoBirdMu         sync.Mutex
+	autoBirdNextWakeUp int64 // Unix milliseconds, 0 if not sleeping
 )
+
+// IsAutoBirdRunning returns true if the AutoBird goroutine is currently active
+func IsAutoBirdRunning() bool {
+	autoBirdMu.Lock()
+	defer autoBirdMu.Unlock()
+	return autoBirdCancel != nil
+}
+
+// GetAutoBirdNextWakeUp returns the next wake up time in Unix milliseconds (0 if not sleeping)
+func GetAutoBirdNextWakeUp() int64 {
+	autoBirdMu.Lock()
+	defer autoBirdMu.Unlock()
+	return autoBirdNextWakeUp
+}
 
 // StartAutoBird starts the auto bird goroutine. If already running, it does nothing.
 func StartAutoBird() {
@@ -46,6 +61,7 @@ func StopAutoBird() {
 	if autoBirdCancel != nil {
 		autoBirdCancel()
 		autoBirdCancel = nil
+		autoBirdNextWakeUp = 0
 		// Clear bird ignore list from memory
 		Models.ClearBirdIgnoreList()
 		if SendAutoBirdStatusFunc != nil {
@@ -356,9 +372,12 @@ func runAutoBird(ctx context.Context) {
 			}
 		}
 
-		// Notify frontend of sleep
+		// Notify frontend of sleep and store for persistence
 		if SendAutoBirdStatusFunc != nil {
 			wakeUpTime := time.Now().Add(sleepDuration).UnixMilli()
+			autoBirdMu.Lock()
+			autoBirdNextWakeUp = wakeUpTime
+			autoBirdMu.Unlock()
 			go SendAutoBirdStatusFunc(true, wakeUpTime)
 		}
 
@@ -370,6 +389,9 @@ func runAutoBird(ctx context.Context) {
 			return
 		case <-time.After(sleepDuration):
 			// Waking up for next cycle
+			autoBirdMu.Lock()
+			autoBirdNextWakeUp = 0
+			autoBirdMu.Unlock()
 			if SendAutoBirdStatusFunc != nil {
 				go SendAutoBirdStatusFunc(true, 0)
 			}

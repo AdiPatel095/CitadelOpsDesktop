@@ -175,15 +175,15 @@ func StartVersionCheck() {
 		checkForUpdate()
 	}()
 
-	// Then check every 24 hours
-	ticker := time.NewTicker(24 * time.Hour)
+	// Then check every 1 hour
+	ticker := time.NewTicker(1 * time.Hour)
 	go func() {
 		for range ticker.C {
 			checkForUpdate()
 		}
 	}()
 
-	log.Printf("[Version] Version check service started (checking every 24 hours)")
+	log.Printf("[Version] Version check service started (checking every 1 hour)")
 }
 
 // CleanupOldBinary removes the old binary (_old.exe) if it exists

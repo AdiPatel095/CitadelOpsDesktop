@@ -13,10 +13,12 @@ interface AuthContextType {
   nextWakeUp: number | null;
   versionUpdate: { newVersion: string; downloadUrl: string } | null;
   isVersionBannerDismissed: boolean;
+  ignoredVersion: string | null;
   updateProgress: { stage: string; percent: number } | null;
   isUpdating: boolean;
   restartRequired: boolean;
   dismissVersionBanner: () => void;
+  ignoreVersion: (version: string) => void;
   triggerUpdate: (downloadUrl: string) => void;
   startGame: () => void;
   stopGame: () => void;
@@ -38,6 +40,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [nextWakeUp, setNextWakeUp] = useState<number | null>(null);
   const [versionUpdate, setVersionUpdate] = useState<{ newVersion: string; downloadUrl: string } | null>(null);
   const [isVersionBannerDismissed, setIsVersionBannerDismissed] = useState(false);
+  const [ignoredVersion, setIgnoredVersion] = useState<string | null>(() => {
+    return localStorage.getItem('ignoredVersion');
+  });
   const [updateProgress, setUpdateProgress] = useState<{ stage: string; percent: number } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [restartRequired, setRestartRequired] = useState(false);
@@ -67,12 +72,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setNextWakeUp(message.payload.nextWakeUp || null);
       } else if (message.type === 'versionUpdate') {
         console.log('Version update received:', message.payload);
+        const currentIgnoredVersion = localStorage.getItem('ignoredVersion');
         setVersionUpdate({
           newVersion: message.payload.newVersion,
           downloadUrl: message.payload.downloadUrl
         });
-        // Reset dismissed state when a new version is detected
-        setIsVersionBannerDismissed(false);
+        // Only show popup if this version is not ignored
+        if (message.payload.newVersion !== currentIgnoredVersion) {
+          setIsVersionBannerDismissed(false);
+        } else {
+          console.log('Version update ignored by user:', message.payload.newVersion);
+          setIsVersionBannerDismissed(true);
+        }
       } else if (message.type === 'updateProgress') {
         console.log('Update progress:', message.payload);
         setUpdateProgress({
@@ -165,6 +176,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsVersionBannerDismissed(true);
   };
 
+  const ignoreVersion = (version: string) => {
+    localStorage.setItem('ignoredVersion', version);
+    setIgnoredVersion(version);
+    setIsVersionBannerDismissed(true);
+    console.log('User ignored version:', version);
+  };
+
   const triggerUpdate = (downloadUrl: string) => {
     setIsUpdating(true);
     setUpdateProgress({ stage: 'Starting update...', percent: 0 });
@@ -184,10 +202,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       nextWakeUp,
       versionUpdate,
       isVersionBannerDismissed,
+      ignoredVersion,
       updateProgress,
       isUpdating,
       restartRequired,
       dismissVersionBanner,
+      ignoreVersion,
       triggerUpdate,
       startGame,
       stopGame,

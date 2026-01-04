@@ -39,7 +39,7 @@ steps:
       [
         'storage',
         'cp',
-        './CitadelDesktop-macos-arm64',
+        './CitadelDesktop',
         'gs://${_ARTIFACT_BUCKET}/macos-arm64-${_IMAGE_NAME}-${_VERSION}',
       ]
 
@@ -49,7 +49,7 @@ steps:
       [
         'storage',
         'cp',
-        './CitadelDesktop-macos-amd64',
+        './CitadelDesktop',
         'gs://${_ARTIFACT_BUCKET}/macos-amd64-${_IMAGE_NAME}-${_VERSION}',
       ]
 
