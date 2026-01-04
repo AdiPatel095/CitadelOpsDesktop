@@ -1,16 +1,16 @@
 import React from 'react';
 
-
-import WoodIcon from '../../../assets/Wood.png';
-import StoneIcon from '../../../assets/Stone.png';
-import FoodIcon from '../../../assets/Food.png';
-import CharcoalIcon from '../../../assets/Charcoal.png';
-import OliveOilIcon from '../../../assets/OliveOil.png';
-import GlassIcon from '../../../assets/Glass.png';
-import IronOreIcon from '../../../assets/Iron_Ore.png';
-import HoneyIcon from '../../../assets/Honey.png';
-import MeadIcon from '../../../assets/Mead.png';
-import BeefIcon from '../../../assets/Beef.png';
+// Asset paths from public directory
+const WoodIcon = '/assets/Resources/Wood.png';
+const StoneIcon = '/assets/Resources/Stone.png';
+const FoodIcon = '/assets/Resources/Food.png';
+const CharcoalIcon = '/assets/Resources/Charcoal.png';
+const OliveOilIcon = '/assets/Resources/OliveOil.png';
+const GlassIcon = '/assets/Resources/Glass.png';
+const IronOreIcon = '/assets/Resources/Iron_Ore.png';
+const HoneyIcon = '/assets/Resources/Honey.png';
+const MeadIcon = '/assets/Resources/Mead.png';
+const BeefIcon = '/assets/Resources/Beef.png';
 
 import {
     type CastleResourcesAmount,

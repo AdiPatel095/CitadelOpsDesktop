@@ -15,5 +15,3 @@ type CastActualModel struct {
 	PlaceHolder20 float64          `json:"placeHolder20"`
 	Equipment     []EquipmentModel `json:"equipment"`
 }
-
-var CastActualArray []CastActualModel

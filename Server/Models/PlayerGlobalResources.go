@@ -1,7 +1,5 @@
 package Models
 
-import "sync"
-
 type PlayerGlobalResources struct {
 	Rubies     float64 `json:"rubies"`
 	Coins      float64 `json:"coins"`
@@ -24,17 +22,5 @@ type PlayerGlobalResources struct {
 	MightPt    float64 `json:"might_pt"`
 	GloryPt    float64 `json:"glory_pt"`
 	GallanPt   float64 `json:"gallan_pt"`
-}
-
-var (
-	instanceGlobalRes *PlayerGlobalResources
-	onceGlobalRes     sync.Once
-)
-
-// GetPlayerGlobalResources returns the singleton instance of PlayerGlobalResources.
-func GetPlayerGlobalResources() *PlayerGlobalResources {
-	onceGlobalRes.Do(func() {
-		instanceGlobalRes = &PlayerGlobalResources{}
-	})
-	return instanceGlobalRes
+	PTT        float64 `json:"ptt"` // Post Travel Time?
 }

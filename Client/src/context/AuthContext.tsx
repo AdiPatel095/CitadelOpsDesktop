@@ -9,6 +9,8 @@ interface AuthContextType {
   gameLoggedIn: boolean;
   gameLoginCooldown: number;
   isGameDataReady: boolean;
+  autoBirdEnabled: boolean;
+  nextWakeUp: number | null;
   versionUpdate: { newVersion: string; downloadUrl: string } | null;
   isVersionBannerDismissed: boolean;
   updateProgress: { stage: string; percent: number } | null;
@@ -19,6 +21,7 @@ interface AuthContextType {
   startGame: () => void;
   stopGame: () => void;
   changeLoginDetails: () => void;
+  toggleAutoBird: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +34,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [gameLoggedIn, setGameLoggedIn] = useState(false);
   const [gameLoginCooldown, setGameLoginCooldown] = useState(0);
   const [isGameDataReady, setIsGameDataReady] = useState(false);
+  const [autoBirdEnabled, setAutoBirdEnabled] = useState(false);
+  const [nextWakeUp, setNextWakeUp] = useState<number | null>(null);
   const [versionUpdate, setVersionUpdate] = useState<{ newVersion: string; downloadUrl: string } | null>(null);
   const [isVersionBannerDismissed, setIsVersionBannerDismissed] = useState(false);
   const [updateProgress, setUpdateProgress] = useState<{ stage: string; percent: number } | null>(null);
@@ -57,6 +62,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsGameDataReady(false);
         }
+      } else if (message.type === 'autoBirdStatus') {
+        setAutoBirdEnabled(message.payload.enabled);
+        setNextWakeUp(message.payload.nextWakeUp || null);
       } else if (message.type === 'versionUpdate') {
         console.log('Version update received:', message.payload);
         setVersionUpdate({
@@ -118,6 +126,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     FrontendWebsocket.changeLoginDetails();
   };
 
+  const toggleAutoBird = () => {
+    // Send settings payload so backend can update runtime configuration before starting
+    const savedSettings = localStorage.getItem('autoBird_ignoreList');
+    let settings = {};
+    if (savedSettings) {
+      try {
+        settings = JSON.parse(savedSettings);
+      } catch (e) {
+        console.error("Failed to parse settings for auto bird toggle", e);
+      }
+    }
+
+    // Load Delay Settings
+    const savedDelays = localStorage.getItem('autoBird_delaySettings');
+    let minDelay = 6;
+    let maxDelay = 12;
+
+    if (savedDelays) {
+      try {
+        const delays = JSON.parse(savedDelays);
+        minDelay = delays.min || 6;
+        maxDelay = delays.max || 12;
+      } catch (e) {
+        console.error("Failed to parse delay settings", e);
+      }
+    }
+
+    console.log("[AutoBird] Toggling. Sending settings payload:", { settings, minDelay, maxDelay });
+
+    FrontendWebsocket.sendMessage({
+      type: 'toggleAutoBird',
+      payload: { settings, minDelay, maxDelay }
+    });
+  };
+
   const dismissVersionBanner = () => {
     setIsVersionBannerDismissed(true);
   };
@@ -137,6 +180,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       gameLoggedIn,
       gameLoginCooldown,
       isGameDataReady,
+      autoBirdEnabled,
+      nextWakeUp,
       versionUpdate,
       isVersionBannerDismissed,
       updateProgress,
@@ -146,7 +191,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       triggerUpdate,
       startGame,
       stopGame,
-      changeLoginDetails
+      changeLoginDetails,
+      toggleAutoBird
     }}>
       {children}
     </AuthContext.Provider>

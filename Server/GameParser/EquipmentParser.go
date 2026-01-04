@@ -6,6 +6,7 @@ import (
 )
 
 func UpdateEquipmentList(gliMap map[string]interface{}) {
+	gs := Models.GetGameState()
 	castArray, ok := gliMap["B"].([]interface{})
 	if !ok {
 		return // castArray is not a slice, skip processing
@@ -15,10 +16,10 @@ func UpdateEquipmentList(gliMap map[string]interface{}) {
 		return // commArray is not a slice, skip processing
 	}
 
-	Models.CommActualArray = make([]Models.CommActualModel, len(commArray))
+	gs.CommActualArray = make([]Models.CommActualModel, len(commArray))
 	Models.CommStatArray = make([]Models.CommStatModel, len(commArray))
 
-	Models.CastActualArray = make([]Models.CastActualModel, 0, len(castArray))
+	gs.CastActualArray = make([]Models.CastActualModel, 0, len(castArray))
 	Models.CastStatArray = make([]Models.CastStatModel, 0, len(castArray))
 
 	ProcessCastArray(castArray)
@@ -26,6 +27,7 @@ func UpdateEquipmentList(gliMap map[string]interface{}) {
 }
 
 func ProcessCastArray(castArray []interface{}) {
+	gs := Models.GetGameState()
 	for _, castData := range castArray {
 		castMap, ok := castData.(map[string]interface{})
 		if !ok {
@@ -41,29 +43,29 @@ func ProcessCastArray(castArray []interface{}) {
 
 		// Set default or known values
 		switch castleID {
-		case Models.MainCastleResources.Aid:
-			tempCastStat.Name = Models.MainCastleResources.Name
+		case gs.MainCastle.Aid:
+			tempCastStat.Name = gs.MainCastle.Name
 			tempCastStat.CastlePosition = 0
-		case Models.Outpost1Resources.Aid:
-			tempCastStat.Name = Models.Outpost1Resources.Name
+		case gs.Outpost1.Aid:
+			tempCastStat.Name = gs.Outpost1.Name
 			tempCastStat.CastlePosition = 1
-		case Models.Outpost2Resources.Aid:
-			tempCastStat.Name = Models.Outpost2Resources.Name
+		case gs.Outpost2.Aid:
+			tempCastStat.Name = gs.Outpost2.Name
 			tempCastStat.CastlePosition = 2
-		case Models.Outpost3Resources.Aid:
-			tempCastStat.Name = Models.Outpost3Resources.Name
+		case gs.Outpost3.Aid:
+			tempCastStat.Name = gs.Outpost3.Name
 			tempCastStat.CastlePosition = 3
-		case Models.IceCastleResources.Aid:
-			tempCastStat.Name = Models.IceCastleResources.Name
+		case gs.IceCastle.Aid:
+			tempCastStat.Name = gs.IceCastle.Name
 			tempCastStat.CastlePosition = 4
-		case Models.DesertCastleResources.Aid:
-			tempCastStat.Name = Models.DesertCastleResources.Name
+		case gs.DesertCastle.Aid:
+			tempCastStat.Name = gs.DesertCastle.Name
 			tempCastStat.CastlePosition = 5
-		case Models.DungeonCastleResources.Aid:
-			tempCastStat.Name = Models.DungeonCastleResources.Name
+		case gs.DungeonCastle.Aid:
+			tempCastStat.Name = gs.DungeonCastle.Name
 			tempCastStat.CastlePosition = 6
-		case Models.StormCastleResources.Aid:
-			tempCastStat.Name = Models.StormCastleResources.Name
+		case gs.StormCastle.Aid:
+			tempCastStat.Name = gs.StormCastle.Name
 			tempCastStat.CastlePosition = 7
 		default:
 			// Handle extra castles or unknown IDs
@@ -73,7 +75,7 @@ func ProcessCastArray(castArray []interface{}) {
 
 		ProcessCast(castMap, &tempCastActual, &tempCastStat)
 
-		Models.CastActualArray = append(Models.CastActualArray, tempCastActual)
+		gs.CastActualArray = append(gs.CastActualArray, tempCastActual)
 		Models.CastStatArray = append(Models.CastStatArray, tempCastStat)
 	}
 }
@@ -225,7 +227,7 @@ func ProcessCommArray(commArray []interface{}) {
 }
 
 func ProcessComm(commMap map[string]interface{}, index int) {
-	actualComm := &Models.CommActualArray[index]
+	actualComm := &Models.GetGameState().CommActualArray[index]
 	actualComm.ID = commMap["ID"].(float64)
 	actualComm.Name = commMap["N"].(string)
 	actualComm.VisiblePosition = commMap["VIS"].(float64) + 1

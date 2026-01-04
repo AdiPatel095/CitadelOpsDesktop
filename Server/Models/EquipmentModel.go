@@ -23,5 +23,3 @@ type EquipmentModel struct {
 	PlaceHolder11   float64 `json:"placeHolder11"`
 	GemSlot         GemSlot `json:"gem"`
 }
-
-var EquipmentStorage []EquipmentModel
