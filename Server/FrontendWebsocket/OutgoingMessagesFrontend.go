@@ -83,9 +83,10 @@ func SendInitialData(client *Client) {
 		return
 	}
 
-	// Send autoBird status
+	// Send autoBird status (including sleep timer for persistence across reloads)
 	client.SendToClient("autoBirdStatus", map[string]interface{}{
-		"enabled": Models.GetGameState().AutoBirdEnabled,
+		"enabled":    GameWebsocket.IsAutoBirdRunning(),
+		"nextWakeUp": GameWebsocket.GetAutoBirdNextWakeUp(),
 	}, "")
 
 	// Send all commanders

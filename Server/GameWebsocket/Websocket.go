@@ -369,6 +369,11 @@ func StartGame() {
 			// Based on current architecture, SendInitialData in FrontendWebsocket might need to be triggered or
 			// the frontend will request data via `refreshEquipment` or other calls.
 			// Since `isGameDataReady` in frontend relies on `gameLoginStatus`, setting it to true here is key.
+		} else {
+			// Login failed after all retries - notify frontend to clear connected state
+			if SendGameLoginStatusFunc != nil {
+				SendGameLoginStatusFunc(false, 0)
+			}
 		}
 	}()
 }
