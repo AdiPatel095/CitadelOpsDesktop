@@ -2,18 +2,18 @@ import React from 'react';
 
 import { useResources } from '../context/ResourceContext.tsx';
 
-// Import all available icons
-import SceatIcon from '../../../assets/Sceat.png';
-import DucatIcon from '../../../assets/ImperialDucat.png';
-import RelicShardIcon from '../../../assets/Relic_Shards.png';
-import ConstTokenIcon from '../../../assets/ConstructionToken.png';
-import UpgrTokenIcon from '../../../assets/UpgradeToken.png';
-import AfflTixIcon from '../../../assets/AffluenceTickets.png';
-import PlasterIcon from '../../../assets/Plaster.png';
-import DrgScaleIcon from '../../../assets/DragonScaleTiles.png';
-import DrgSplIcon from '../../../assets/DragonScaleSplinters.png';
-import MightPtIcon from '../../../assets/MightPoints.png';
-import GloryPtIcon from '../../../assets/Glory.png';
+// Asset paths from public directory
+const SceatIcon = '/assets/Resources/Sceat.png';
+const DucatIcon = '/assets/Resources/ImperialDucat.png';
+const RelicShardIcon = '/assets/Resources/Relic_Shards.png';
+const ConstTokenIcon = '/assets/Resources/ConstructionToken.png';
+const UpgrTokenIcon = '/assets/Resources/UpgradeToken.png';
+const AfflTixIcon = '/assets/Resources/AffluenceTickets.png';
+const PlasterIcon = '/assets/Resources/Plaster.png';
+const DrgScaleIcon = '/assets/Resources/DragonScaleTiles.png';
+const DrgSplIcon = '/assets/Resources/DragonScaleSplinters.png';
+const MightPtIcon = '/assets/Resources/MightPoints.png';
+const GloryPtIcon = '/assets/Resources/Glory.png';
 
 // Generic Speedup Icon
 const SpeedupIcon = () => (

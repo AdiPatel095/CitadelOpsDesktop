@@ -5,10 +5,11 @@ import { FrontendWebsocket } from '../../websocket';
 
 import { Icons } from '../../components/Icons';
 
-import img1Star from '../../assets/1Star.png';
-import img4Star from '../../assets/4Star.png';
-import img7Star from '../../assets/7Star.png';
-import img12Star from '../../assets/12Star.png';
+// Asset paths from public directory
+const img1Star = '/assets/Stars/1Star.png';
+const img4Star = '/assets/Stars/4Star.png';
+const img7Star = '/assets/Stars/7Star.png';
+const img12Star = '/assets/Stars/12Star.png';
 
 import { type CommStat, type CastStat } from '../models/equipment';
 

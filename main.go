@@ -34,6 +34,7 @@ func main() {
 	// Set up callback for GameWebsocket to notify frontend of insufficient credits
 	GameWebsocket.SetInsufficientCreditsCallback(FrontendWebsocket.SendInsufficientCreditsMessage)
 	GameWebsocket.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
+	GameWebsocket.SetAutoBirdStatusCallback(FrontendWebsocket.SendAutoBirdStatus)
 
 	// Set up callbacks for Version package
 	Version.SetVersionUpdateCallback(FrontendWebsocket.SendVersionUpdateMessage)

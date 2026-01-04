@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icons } from '../components/Icons';
 
-export type ViewId = 'equipment' | 'settings' | 'support';
+export type ViewId = 'equipment' | 'support';
 
 export interface NavigationItem {
     id: ViewId;
@@ -12,6 +12,5 @@ export interface NavigationItem {
 
 export const NAVIGATION_ITEMS: NavigationItem[] = [
     { id: 'equipment', label: 'Equipment', icon: <Icons.Shield />, section: 'main' },
-    { id: 'settings', label: 'Settings', icon: <Icons.Settings />, section: 'system' },
     { id: 'support', label: 'Support', icon: <Icons.Help />, section: 'system' },
 ];

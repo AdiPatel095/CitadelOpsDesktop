@@ -32,4 +32,7 @@ func MessageRouter(messageParts []string) {
 		_ = json.Unmarshal([]byte(messageParts[5]), &gliMap)
 		UpdateEquipmentList(gliMap)
 	}
+	if messageType == "ain" {
+		ParseAllianceInfo(messageParts[5])
+	}
 }

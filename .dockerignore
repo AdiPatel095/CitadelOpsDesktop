@@ -6,7 +6,7 @@ dist
 Client/dist
 temp.go
 Temp.json
-clean.json
+Temp2.json
 hardwareID.txt
 loginBytes.json
 Dockerfile

@@ -114,6 +114,60 @@ func ParseFrontendMessage(message []byte) {
 		GameWebsocket.StartGame()
 	case "stopGame":
 		GameWebsocket.StopGame()
+	case "fetchAllianceInfo":
+		GameWebsocket.FetchAllianceInfo()
+	case "toggleAutoBird":
+		gs := Models.GetGameState()
+		gs.AutoBirdEnabled = !gs.AutoBirdEnabled
+
+		// If enabling, parse and update settings
+		if gs.AutoBirdEnabled {
+			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
+
+				// Parse settings payload
+				newSettings := make(map[int]map[int]int)
+
+				if settingsRaw, ok := payloadRaw["settings"].(map[string]interface{}); ok {
+					for castleIDStr, itemsRaw := range settingsRaw {
+						castleID, _ := strconv.Atoi(castleIDStr)
+						if castleID == 0 {
+							continue
+						}
+
+						if items, ok := itemsRaw.([]interface{}); ok {
+							castleMap := make(map[int]int)
+							for _, itemRaw := range items {
+								if item, ok := itemRaw.(map[string]interface{}); ok {
+									unitID := int(item["id"].(float64))
+									amount := int(item["amount"].(float64))
+									if unitID > 0 && amount >= 0 {
+										castleMap[unitID] = amount
+									}
+								}
+							}
+							newSettings[castleID] = castleMap
+						}
+					}
+					Models.UpdateBirdIgnoreList(newSettings)
+				}
+
+				// Parse Delay Settings
+				if minDelay, ok := payloadRaw["minDelay"].(float64); ok {
+					Models.AutoBirdDelay.MinDelay = int(minDelay)
+				} else {
+					Models.AutoBirdDelay.MinDelay = 6
+				}
+				if maxDelay, ok := payloadRaw["maxDelay"].(float64); ok {
+					Models.AutoBirdDelay.MaxDelay = int(maxDelay)
+				} else {
+					Models.AutoBirdDelay.MaxDelay = 12
+				}
+			}
+			GameWebsocket.StartAutoBird()
+		} else {
+			GameWebsocket.StopAutoBird()
+		}
+		SendAutoBirdStatus(gs.AutoBirdEnabled, 0)
 	case "refreshEquipment":
 		// Send equipment data if registered
 		// We can reuse SendInitialData or parts of it
@@ -293,7 +347,7 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			if len(targetGemMap) > 0 {
-				for _, eq := range Models.EquipmentStorage {
+				for _, eq := range Models.GetGameState().EquipmentStorage {
 					if eq.GemSlot.Gem != nil {
 						gemID := eq.GemSlot.Gem.ID
 						if targetGemMap[gemID] {
@@ -521,5 +575,75 @@ func ParseFrontendMessage(message []byte) {
 				SendAlertMessage("red", fmt.Sprintf("Update failed: %v", err))
 			}
 		}()
+
+	case "getCastleList":
+		gs := Models.GetGameState()
+		type CastleItem struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+			Type string `json:"type"`
+		}
+		var castles []CastleItem
+
+		addCastle := func(aid float64, name, cType string) {
+			if aid > 0 {
+				castles = append(castles, CastleItem{ID: int(aid), Name: name, Type: cType})
+			}
+		}
+
+		addCastle(gs.MainCastle.Aid, gs.MainCastle.Name, "Main")
+		addCastle(gs.Outpost1.Aid, gs.Outpost1.Name, "Outpost")
+		addCastle(gs.Outpost2.Aid, gs.Outpost2.Name, "Outpost")
+		addCastle(gs.Outpost3.Aid, gs.Outpost3.Name, "Outpost")
+		addCastle(gs.IceCastle.Aid, gs.IceCastle.Name, "Ice")
+		addCastle(gs.DesertCastle.Aid, gs.DesertCastle.Name, "Desert")
+		addCastle(gs.DungeonCastle.Aid, gs.DungeonCastle.Name, "Dungeon")
+		addCastle(gs.StormCastle.Aid, gs.StormCastle.Name, "Storm")
+
+		SendFrontendMessage("castleList", castles, "")
+
+	case "getBirdSettings":
+		// Persistence moved to frontend.
+		// Return current in-memory settings if available (e.g. if bot ran), otherwise empty.
+		if Models.BirdIgnoreList.Troops == nil {
+			Models.BirdIgnoreList.Troops = make(map[int]map[int]int)
+		}
+		SendFrontendMessage("birdSettings", Models.BirdIgnoreList.Troops, "")
+
+	case "saveBirdSettings":
+		// Persistence moved to frontend. This is just for runtime update if needed.
+		// Or if user clicks save while bot is running.
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+
+		newSettings := make(map[int]map[int]int)
+
+		for castleIDStr, itemsRaw := range payloadRaw {
+			castleID, _ := strconv.Atoi(castleIDStr)
+			if castleID == 0 {
+				continue
+			}
+
+			if items, ok := itemsRaw.([]interface{}); ok {
+				castleMap := make(map[int]int)
+				for _, itemRaw := range items {
+					if item, ok := itemRaw.(map[string]interface{}); ok {
+						unitID := int(item["id"].(float64))
+						amount := int(item["amount"].(float64))
+						if unitID > 0 && amount >= 0 {
+							castleMap[unitID] = amount
+						}
+					}
+				}
+				newSettings[castleID] = castleMap
+			}
+		}
+
+		// Just update memory
+		Models.UpdateBirdIgnoreList(newSettings)
+		// Echo back for consistency (optional)
+		SendFrontendMessage("birdSettings", newSettings, "")
 	}
 }

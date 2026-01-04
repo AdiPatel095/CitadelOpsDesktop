@@ -4,6 +4,7 @@ import (
 	"CitadelDesktop/Server/Core"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/License"
+	"CitadelDesktop/Server/Models"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -40,6 +41,9 @@ var (
 
 	// SendGameLoginStatusFunc is a callback to notify frontend of login status changes
 	SendGameLoginStatusFunc func(bool, int)
+
+	// SendAutoBirdStatusFunc is a callback to notify frontend of auto bird status changes
+	SendAutoBirdStatusFunc func(bool, int64)
 )
 
 // SetInsufficientCreditsCallback sets the callback for insufficient credits notification
@@ -50,6 +54,11 @@ func SetInsufficientCreditsCallback(fn func()) {
 // SetGameLoginStatusCallback sets the callback for game login status notification
 func SetGameLoginStatusCallback(fn func(bool, int)) {
 	SendGameLoginStatusFunc = fn
+}
+
+// SetAutoBirdStatusCallback sets the callback for auto bird status notification
+func SetAutoBirdStatusCallback(fn func(bool, int64)) {
+	SendAutoBirdStatusFunc = fn
 }
 
 func NewGameWebsocket() error {
@@ -113,6 +122,10 @@ func NewGameWebsocket() error {
 	if err != nil {
 		return err
 	}
+
+	// Reset game state for fresh connection
+	Models.GetGameState().Reset()
+
 	// Create a context that can be canceled to signal goroutines to stop
 	ctx, cancel := context.WithCancel(context.Background())
 	StartWebsocketChannels(ctx, cancel)

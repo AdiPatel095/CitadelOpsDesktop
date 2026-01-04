@@ -5,34 +5,35 @@ import (
 )
 
 func UpdateCoins(gcuMap map[string]interface{}) {
+	gs := Models.GetGameState()
 	coins, ok := gcuMap["C1"].(float64)
 	if ok {
-		Models.GetPlayerGlobalResources().Coins = coins
+		gs.GlobalResources.Coins = coins
 	}
 	rubies, ok := gcuMap["C2"].(float64)
 	if ok {
-		Models.GetPlayerGlobalResources().Rubies = rubies
+		gs.GlobalResources.Rubies = rubies
 	}
 }
 
 func UpdateMight(gmuMap map[string]interface{}) {
 	might, ok := gmuMap["MP"].(float64)
 	if ok {
-		Models.GetPlayerGlobalResources().MightPt = might
+		Models.GetGameState().GlobalResources.MightPt = might
 	}
 }
 
 func UpdateGlory(ufaMap map[string]interface{}) {
 	glory, ok := ufaMap["CF"].(float64)
 	if ok {
-		Models.GetPlayerGlobalResources().GloryPt = glory
+		Models.GetGameState().GlobalResources.GloryPt = glory
 	}
 }
 
 func UpdateGallantry(ufpMap map[string]interface{}) {
 	gallantry, ok := ufpMap["CFP"].(float64)
 	if ok {
-		Models.GetPlayerGlobalResources().GallanPt = gallantry
+		Models.GetGameState().GlobalResources.GallanPt = gallantry
 	}
 }
 
@@ -54,7 +55,7 @@ func UpdateSCE(sceArray []interface{}) {
 }
 
 func updateResourceByLabel(label string, value float64) {
-	playerResources := Models.GetPlayerGlobalResources()
+	playerResources := &Models.GetGameState().GlobalResources
 	switch label {
 	case "STP":
 		playerResources.Sceat = value
@@ -88,5 +89,15 @@ func updateResourceByLabel(label string, value float64) {
 		playerResources.Hr5 = value
 	case "MS7":
 		playerResources.Hr24 = value
+	case "PTT":
+		playerResources.PTT = value
+	}
+}
+
+// UpdateAlliance parses the alliance data from gal and updates the global Alliance
+func UpdateAlliance(galMap map[string]interface{}) {
+	aid, ok := galMap["AID"].(float64)
+	if ok {
+		Models.GetGameState().Alliance.AID = int(aid)
 	}
 }

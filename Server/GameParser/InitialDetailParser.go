@@ -19,7 +19,7 @@ func InitiateDetails(data string) {
 	}
 
 	var wgInitialDetail sync.WaitGroup
-	wgInitialDetail.Add(6)
+	wgInitialDetail.Add(7)
 
 	go func() {
 		defer wgInitialDetail.Done()
@@ -82,6 +82,16 @@ func InitiateDetails(data string) {
 			log.Fatal("gliMap is not a map")
 		}
 		UpdateEquipmentList(gliMap)
+	}()
+
+	go func() {
+		defer wgInitialDetail.Done()
+		galMap, ok := jsonDataMap["gal"].(map[string]interface{})
+		if !ok {
+			log.Printf("galMap is not a map or doesn't exist")
+			return
+		}
+		UpdateAlliance(galMap)
 	}()
 
 	wgInitialDetail.Wait()

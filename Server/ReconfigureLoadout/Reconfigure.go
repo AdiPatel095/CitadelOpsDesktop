@@ -18,10 +18,11 @@ func ReconfigureCommander(payload ReconfigurePayload) (Models.CommStatModel, str
 	time.Sleep(2 * time.Second)
 
 	// 2. Filter equipment for Commander (EquipType == 2)
+	gs := Models.GetGameState()
 	var equipment []Models.EquipmentModel
 	var heroes []Models.EquipmentModel
 
-	for _, item := range Models.EquipmentStorage {
+	for _, item := range gs.EquipmentStorage {
 		if item.EquipType == 2 {
 			// Slot 6 = Hero, everything else = equipment
 			if item.EquipSlotNumber == 6 {
@@ -132,10 +133,11 @@ func ReconfigureCastellan(payload ReconfigurePayload) (Models.CastStatModel, str
 	time.Sleep(2 * time.Second)
 
 	// 2. Filter equipment for Castellan (EquipType == 1)
+	gs := Models.GetGameState()
 	var equipment []Models.EquipmentModel
 	var heroes []Models.EquipmentModel
 
-	for _, item := range Models.EquipmentStorage {
+	for _, item := range gs.EquipmentStorage {
 		if item.EquipType == 1 {
 			// Slot 6 = Hero, everything else = equipment
 			if item.EquipSlotNumber == 6 {
@@ -373,15 +375,16 @@ func ValidateEquipmentSlots(equipment []Models.EquipmentModel) string {
 
 // collectAndFilterGems gathers all gems from account and filters by strict ID ranges based on mode
 func collectAndFilterGems(payload ReconfigurePayload) []Models.Gem {
+	gs := Models.GetGameState()
 	var allGems []Models.Gem
 
 	// 1. Gather ALL gems via pointers to avoid heavy copying initially
 	// From Inventory
-	for _, gem := range Models.GemsStorage {
+	for _, gem := range gs.GemsStorage {
 		allGems = append(allGems, gem)
 	}
 	// From ALL Equipment (embedded) - user requested "mega list of all gems on players account"
-	for _, item := range Models.EquipmentStorage {
+	for _, item := range gs.EquipmentStorage {
 		if item.GemSlot.Gem != nil {
 			allGems = append(allGems, *item.GemSlot.Gem)
 		}

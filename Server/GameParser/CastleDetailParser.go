@@ -20,6 +20,8 @@ const (
 
 	castleAIDIndex  = 3
 	castleNameIndex = 10
+	castleXIndex    = 1
+	castleYIndex    = 2
 
 	// Constants for resource keys in DCL data
 	keyGPA = "gpa"
@@ -51,7 +53,13 @@ func CastleDetailParser(gcl map[string]interface{}, dcl map[string]interface{}) 
 
 // parseGCL processes the Game Castle List data.
 // It now returns an error instead of calling log.Fatal, preventing server crashes.
+// Also extracts player castle locations for AutoBird feature.
 func parseGCL(gcl map[string]interface{}) error {
+	gs := Models.GetGameState()
+
+	// Clear previous player castle locations
+	gs.Alliance.PlayerCastleLocations = nil
+
 	kingdomArray, ok := gcl[keyKingdoms].([]interface{})
 	if !ok {
 		return fmt.Errorf("kingdomArray type assertion failed")
@@ -77,89 +85,120 @@ func parseGCL(gcl map[string]interface{}) error {
 		case kingdomIDMain:
 			updaters := []func(id float64, name string){
 				func(id float64, name string) {
-					Models.MainCastleResources.Aid, Models.MainCastleResources.Name = id, name
+					gs.MainCastle.Aid, gs.MainCastle.Name = id, name
 				},
-				func(id float64, name string) { Models.Outpost1Resources.Aid, Models.Outpost1Resources.Name = id, name },
-				func(id float64, name string) { Models.Outpost2Resources.Aid, Models.Outpost2Resources.Name = id, name },
-				func(id float64, name string) { Models.Outpost3Resources.Aid, Models.Outpost3Resources.Name = id, name },
+				func(id float64, name string) { gs.Outpost1.Aid, gs.Outpost1.Name = id, name },
+				func(id float64, name string) { gs.Outpost2.Aid, gs.Outpost2.Name = id, name },
+				func(id float64, name string) { gs.Outpost3.Aid, gs.Outpost3.Name = id, name },
 			}
-			parseCastles(castleArray, updaters)
+			parseCastles(castleArray, updaters, 0)
 		case kingdomIDIce:
 			updaters := []func(id float64, name string){
 				func(id float64, name string) {
-					Models.IceCastleResources.Aid, Models.IceCastleResources.Name = id, name
+					gs.IceCastle.Aid, gs.IceCastle.Name = id, name
 				},
 			}
-			parseCastles(castleArray, updaters)
+			parseCastles(castleArray, updaters, 2)
 		case kingdomIDDesert:
 			updaters := []func(id float64, name string){
 				func(id float64, name string) {
-					Models.DesertCastleResources.Aid, Models.DesertCastleResources.Name = id, name
+					gs.DesertCastle.Aid, gs.DesertCastle.Name = id, name
 				},
 			}
-			parseCastles(castleArray, updaters)
+			parseCastles(castleArray, updaters, 1)
 		case kingdomIDDungeon:
 			updaters := []func(id float64, name string){
 				func(id float64, name string) {
-					Models.DungeonCastleResources.Aid, Models.DungeonCastleResources.Name = id, name
+					gs.DungeonCastle.Aid, gs.DungeonCastle.Name = id, name
 				},
 			}
-			parseCastles(castleArray, updaters)
+			parseCastles(castleArray, updaters, 3)
 		case kingdomIDStorm:
 			parseSingleCastle(castleArray, func(id float64, name string) {
-				Models.StormCastleResources.Aid, Models.StormCastleResources.Name = id, name
-			})
+				gs.StormCastle.Aid, gs.StormCastle.Name = id, name
+			}, 4)
 		}
 	}
+
 	return nil
 }
 
 // parseCastles iterates through a list of castles and applies an updater function for each.
-func parseCastles(castleArray []interface{}, updaters []func(id float64, name string)) {
+// Also stores player castle locations for AutoBird feature.
+func parseCastles(castleArray []interface{}, updaters []func(id float64, name string), kingdomID int) {
+	gs := Models.GetGameState()
 	for i, castle := range castleArray {
 		if i >= len(updaters) {
 			break // No more updaters defined for the remaining castles
 		}
-		id, name, ok := extractCastleDetails(castle, i)
+		id, name, x, y, ok := extractCastleDetails(castle, i)
 		if ok {
 			updaters[i](id, name)
+			// Store player castle location for AutoBird
+			if x > 0 && y > 0 {
+				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
+					KingdomID: kingdomID,
+					CastleID:  int(id),
+					X:         x,
+					Y:         y,
+				})
+			}
 		}
 	}
 }
 
 // parseSingleCastle handles kingdoms that are expected to have only one castle.
-func parseSingleCastle(castleArray []interface{}, updater func(id float64, name string)) {
+// Also stores player castle location for AutoBird feature.
+func parseSingleCastle(castleArray []interface{}, updater func(id float64, name string), kingdomID int) {
+	gs := Models.GetGameState()
 	if len(castleArray) > 0 {
-		id, name, ok := extractCastleDetails(castleArray[0], 0)
+		id, name, x, y, ok := extractCastleDetails(castleArray[0], 0)
 		if ok {
 			updater(id, name)
+			// Store player castle location for AutoBird
+			if x > 0 && y > 0 {
+				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
+					KingdomID: kingdomID,
+					CastleID:  int(id),
+					X:         x,
+					Y:         y,
+				})
+			}
 		}
 	}
 }
 
-// extractCastleDetails safely pulls the ID and Name from a castle data structure.
-func extractCastleDetails(castleData interface{}, index int) (id float64, name string, ok bool) {
+// extractCastleDetails safely pulls the ID, Name, X, and Y from a castle data structure.
+func extractCastleDetails(castleData interface{}, index int) (id float64, name string, x int, y int, ok bool) {
 	castleMap, ok := castleData.(map[string]interface{})
 	if !ok {
-		return 0, "", false
+		return 0, "", 0, 0, false
 	}
 
 	details, ok := castleMap[keyCastleInfoArray].([]interface{})
 	if !ok || len(details) <= castleNameIndex {
-		return 0, "", false
+		return 0, "", 0, 0, false
 	}
 
 	id, idOk := details[castleAIDIndex].(float64)
 	name, nameOk := details[castleNameIndex].(string)
+	xVal, xOk := details[castleXIndex].(float64)
+	yVal, yOk := details[castleYIndex].(float64)
 
 	if !idOk || !nameOk {
-		return 0, "", false
+		return 0, "", 0, 0, false
 	}
 
-	return id, name, true
+	if xOk && yOk {
+		x = int(xVal)
+		y = int(yVal)
+	}
+
+	return id, name, x, y, true
 }
 
 func parseDCL(dcl map[string]interface{}) error {
+	gs := Models.GetGameState()
 	// DCL data seems to be a map of castles, not a kingdom array.
 	// The top-level keys are string representations of castle IDs.
 
@@ -187,14 +226,14 @@ func parseDCL(dcl map[string]interface{}) error {
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
 					switch castleID {
-					case Models.MainCastleResources.Aid:
-						parseCastleResources(castleMap, &Models.MainCastleResources.Amount, &Models.MainCastleResources.Production, &Models.MainCastleResources.Storage)
-					case Models.Outpost1Resources.Aid:
-						parseCastleResources(castleMap, &Models.Outpost1Resources.Amount, &Models.Outpost1Resources.Production, &Models.Outpost1Resources.Storage)
-					case Models.Outpost2Resources.Aid:
-						parseCastleResources(castleMap, &Models.Outpost2Resources.Amount, &Models.Outpost2Resources.Production, &Models.Outpost2Resources.Storage)
-					case Models.Outpost3Resources.Aid:
-						parseCastleResources(castleMap, &Models.Outpost3Resources.Amount, &Models.Outpost3Resources.Production, &Models.Outpost3Resources.Storage)
+					case gs.MainCastle.Aid:
+						parseCastleResources(castleMap, &gs.MainCastle.Amount, &gs.MainCastle.Production, &gs.MainCastle.Storage)
+					case gs.Outpost1.Aid:
+						parseCastleResources(castleMap, &gs.Outpost1.Amount, &gs.Outpost1.Production, &gs.Outpost1.Storage)
+					case gs.Outpost2.Aid:
+						parseCastleResources(castleMap, &gs.Outpost2.Amount, &gs.Outpost2.Production, &gs.Outpost2.Storage)
+					case gs.Outpost3.Aid:
+						parseCastleResources(castleMap, &gs.Outpost3.Amount, &gs.Outpost3.Production, &gs.Outpost3.Storage)
 					}
 				}
 
@@ -211,8 +250,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == Models.IceCastleResources.Aid {
-						parseCastleResources(castleMap, &Models.IceCastleResources.Amount, &Models.IceCastleResources.Production, &Models.IceCastleResources.Storage)
+					if castleID == gs.IceCastle.Aid {
+						parseCastleResources(castleMap, &gs.IceCastle.Amount, &gs.IceCastle.Production, &gs.IceCastle.Storage)
 					}
 				}
 
@@ -229,8 +268,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == Models.DesertCastleResources.Aid {
-						parseCastleResources(castleMap, &Models.DesertCastleResources.Amount, &Models.DesertCastleResources.Production, &Models.DesertCastleResources.Storage)
+					if castleID == gs.DesertCastle.Aid {
+						parseCastleResources(castleMap, &gs.DesertCastle.Amount, &gs.DesertCastle.Production, &gs.DesertCastle.Storage)
 					}
 				}
 
@@ -247,8 +286,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == Models.DungeonCastleResources.Aid {
-						parseCastleResources(castleMap, &Models.DungeonCastleResources.Amount, &Models.DungeonCastleResources.Production, &Models.DungeonCastleResources.Storage)
+					if castleID == gs.DungeonCastle.Aid {
+						parseCastleResources(castleMap, &gs.DungeonCastle.Amount, &gs.DungeonCastle.Production, &gs.DungeonCastle.Storage)
 					}
 				}
 
@@ -265,8 +304,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == Models.StormCastleResources.Aid {
-						parseCastleResources(castleMap, &Models.StormCastleResources.Amount, &Models.StormCastleResources.Production, &Models.StormCastleResources.Storage)
+					if castleID == gs.StormCastle.Aid {
+						parseCastleResources(castleMap, &gs.StormCastle.Amount, &gs.StormCastle.Production, &gs.StormCastle.Storage)
 					}
 				}
 

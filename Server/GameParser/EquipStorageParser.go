@@ -7,9 +7,10 @@ import (
 )
 
 func UpdateGemStorage(gemStorageString string) {
+	gs := Models.GetGameState()
 	var gemStorageMap map[string]interface{}
 	_ = json.Unmarshal([]byte(gemStorageString), &gemStorageMap)
-	Models.NonRelicGemIDs = make(map[float64]float64)
+	gs.NonRelicGemIDs = make(map[float64]float64)
 	nonRelicGemArray, ok := gemStorageMap["GEM"].([]interface{})
 	if !ok {
 		log.Fatal("nonRelicGemArray is not a slice")
@@ -19,7 +20,7 @@ func UpdateGemStorage(gemStorageString string) {
 		if ok {
 			id := gemRawArray[0].(float64)
 			count := gemRawArray[1].(float64)
-			Models.NonRelicGemIDs[id] = count
+			gs.NonRelicGemIDs[id] = count
 		}
 	}
 
@@ -27,7 +28,7 @@ func UpdateGemStorage(gemStorageString string) {
 	if !ok {
 		log.Fatal("relicGemArray is not a slice")
 	}
-	Models.GemsStorage = make([]Models.Gem, 0, len(relicGemArray))
+	gs.GemsStorage = make([]Models.Gem, 0, len(relicGemArray))
 	for _, gem := range relicGemArray {
 		gemRawArray, ok := gem.([]interface{})
 		if !ok {
@@ -36,12 +37,13 @@ func UpdateGemStorage(gemStorageString string) {
 		var gemFinal Models.Gem
 		ProcessGem(gemRawArray, &gemFinal, 5)
 		if gemFinal.GemStats != nil {
-			Models.GemsStorage = append(Models.GemsStorage, gemFinal)
+			gs.GemsStorage = append(gs.GemsStorage, gemFinal)
 		}
 	}
 }
 
 func UpdateEquipmentStorage(storageMap string) {
+	gs := Models.GetGameState()
 	var storageMapUnmarshalled map[string]interface{}
 	err := json.Unmarshal([]byte(storageMap), &storageMapUnmarshalled)
 	if err != nil {
@@ -52,7 +54,7 @@ func UpdateEquipmentStorage(storageMap string) {
 		log.Fatal("equipmentRawArray is not a slice")
 	}
 
-	Models.EquipmentStorage = make([]Models.EquipmentModel, 0, len(equipmentRawArray))
+	gs.EquipmentStorage = make([]Models.EquipmentModel, 0, len(equipmentRawArray))
 	for _, equipmentData := range equipmentRawArray {
 		equipmentDataArray, ok := equipmentData.([]interface{})
 		if !ok {
@@ -62,6 +64,6 @@ func UpdateEquipmentStorage(storageMap string) {
 		var equipmentFinal Models.EquipmentModel
 		ProcessEquipment(equipmentDataArray, &equipmentFinal)
 
-		Models.EquipmentStorage = append(Models.EquipmentStorage, equipmentFinal)
+		gs.EquipmentStorage = append(gs.EquipmentStorage, equipmentFinal)
 	}
 }

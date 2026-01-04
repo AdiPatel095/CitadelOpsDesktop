@@ -46,12 +46,3 @@ type CastleStorageMax struct {
 	MeadMax  float64 `json:"mead_max"`
 	BeefMax  float64 `json:"beef_max"`
 }
-
-var MainCastleResources PlayerCastleInfo
-var Outpost1Resources PlayerCastleInfo
-var Outpost2Resources PlayerCastleInfo
-var Outpost3Resources PlayerCastleInfo
-var IceCastleResources PlayerCastleInfo
-var DesertCastleResources PlayerCastleInfo
-var DungeonCastleResources PlayerCastleInfo
-var StormCastleResources PlayerCastleInfo

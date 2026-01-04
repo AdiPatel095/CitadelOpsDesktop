@@ -564,6 +564,13 @@ func UseCredits(amount int, usageType string) bool {
 	return true
 }
 
+// HasCredits checks if the user has enough credits without deducting
+func HasCredits(amount int) bool {
+	CurrentRegistration.mu.Lock()
+	defer CurrentRegistration.mu.Unlock()
+	return CurrentRegistration.Credits >= amount
+}
+
 // GetCredits returns the current credit balance
 func GetCredits() int {
 	CurrentRegistration.mu.RLock()

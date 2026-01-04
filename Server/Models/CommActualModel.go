@@ -12,5 +12,3 @@ type CommActualModel struct {
 	PlaceHolder17   float64          `json:"placeHolder17"`
 	Equipment       []EquipmentModel `json:"equipment"`
 }
-
-var CommActualArray []CommActualModel
