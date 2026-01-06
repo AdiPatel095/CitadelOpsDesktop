@@ -79,4 +79,4 @@ substitutions:
   _BACKEND_SERVICE_NAME: 'live-backend-cloud'
 
 options:
-  logging: CLOUD_LOGGING_.LOGGING_ONLY
+  logging: CLOUD_LOGGING_ONLY
