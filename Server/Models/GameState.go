@@ -38,6 +38,7 @@ type GameState struct {
 	// Auto Bird Data
 	PlayerCastleTroops []CastleTroops         // Troop counts for each player castle
 	BirdMovements      map[int][]BirdMovement // CastleID -> List of active movements
+	ActiveMovements    []GAMMovement          // Parsed from GAM message
 }
 
 var (
@@ -77,4 +78,5 @@ func (gs *GameState) Reset() {
 	gs.AutoBirdEnabled = false
 	gs.PlayerCastleTroops = nil
 	gs.BirdMovements = make(map[int][]BirdMovement)
+	gs.ActiveMovements = nil
 }

@@ -72,6 +72,12 @@ func ParseAllianceInfo(data string) {
 		// Process each castle location for this player
 		for _, castleRaw := range apRaw {
 			castle, ok := castleRaw.([]interface{})
+
+			// Log array length for debugging
+			if ok && len(castle) > 0 {
+				// one-time log sample could be useful, but might spam
+			}
+
 			if !ok || len(castle) < 4 {
 				continue
 			}
@@ -80,15 +86,24 @@ func ParseAllianceInfo(data string) {
 			x, ok2 := castle[2].(float64)
 			y, ok3 := castle[3].(float64)
 
+			// Get Castle Type (index 4 - 5th element) if available
+			castleTypeInt := 0
+			if len(castle) > 4 {
+				if castleType, ok := castle[4].(float64); ok {
+					castleTypeInt = int(castleType)
+				}
+			}
+
 			if !ok1 || !ok2 || !ok3 {
 				continue
 			}
 
 			birdLocation := Models.BirdLocation{
-				X:         int(x),
-				Y:         int(y),
-				KingdomID: int(kingdomID),
-				BirdTime:  int(rpt),
+				X:          int(x),
+				Y:          int(y),
+				KingdomID:  int(kingdomID),
+				BirdTime:   int(rpt),
+				CastleType: castleTypeInt,
 			}
 			gs.Alliance.BirdLocations = append(gs.Alliance.BirdLocations, birdLocation)
 		}

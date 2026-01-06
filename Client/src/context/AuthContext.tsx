@@ -17,13 +17,19 @@ interface AuthContextType {
   updateProgress: { stage: string; percent: number } | null;
   isUpdating: boolean;
   restartRequired: boolean;
+  // Login credentials
+  hasStoredCredentials: boolean;
+  storedUsername: string | null;
+  storedServer: string | null;
   dismissVersionBanner: () => void;
   ignoreVersion: (version: string) => void;
   triggerUpdate: (downloadUrl: string) => void;
-  startGame: () => void;
+  startGame: (credentials?: { username: string; password: string; server: string }) => void;
   stopGame: () => void;
   changeLoginDetails: () => void;
   toggleAutoBird: () => void;
+  saveCredentials: (username: string, password: string, server: string) => void;
+  clearCredentials: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,6 +52,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [updateProgress, setUpdateProgress] = useState<{ stage: string; percent: number } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [restartRequired, setRestartRequired] = useState(false);
+
+  // Login credentials state
+  const [hasStoredCredentials, setHasStoredCredentials] = useState(() => {
+    return !!(localStorage.getItem('citadel_username') && localStorage.getItem('citadel_password'));
+  });
+  const [storedUsername, setStoredUsername] = useState<string | null>(() => {
+    return localStorage.getItem('citadel_username');
+  });
+  const [storedServer, setStoredServer] = useState<string | null>(() => {
+    return localStorage.getItem('citadel_server') || 'United States';
+  });
 
   useEffect(() => {
     const handleMessage = (message: any) => {
@@ -125,8 +142,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [gameLoginCooldown]);
 
-  const startGame = () => {
-    FrontendWebsocket.startGame();
+  const startGame = (credentials?: { username: string; password: string; server: string }) => {
+    // If credentials provided, save them and send to backend
+    if (credentials) {
+      saveCredentials(credentials.username, credentials.password, credentials.server);
+      FrontendWebsocket.startGame(credentials);
+    } else {
+      // Use stored credentials
+      const storedPassword = localStorage.getItem('citadel_password');
+      if (storedUsername && storedPassword && storedServer) {
+        FrontendWebsocket.startGame({
+          username: storedUsername,
+          password: storedPassword,
+          server: storedServer
+        });
+      } else {
+        // No credentials available, backend will use legacy flow
+        FrontendWebsocket.startGame();
+      }
+    }
   };
 
   const stopGame = () => {
@@ -134,7 +168,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const changeLoginDetails = () => {
+    // Just clear the stored credentials, modal will be shown by UI
+    clearCredentials();
     FrontendWebsocket.changeLoginDetails();
+  };
+
+  const saveCredentials = (username: string, password: string, server: string) => {
+    localStorage.setItem('citadel_username', username);
+    localStorage.setItem('citadel_password', password);
+    localStorage.setItem('citadel_server', server);
+    setStoredUsername(username);
+    setStoredServer(server);
+    setHasStoredCredentials(true);
+  };
+
+  const clearCredentials = () => {
+    localStorage.removeItem('citadel_username');
+    localStorage.removeItem('citadel_password');
+    localStorage.removeItem('citadel_server');
+    setStoredUsername(null);
+    setStoredServer(null);
+    setHasStoredCredentials(false);
   };
 
   const toggleAutoBird = () => {
@@ -153,22 +207,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const savedDelays = localStorage.getItem('autoBird_delaySettings');
     let minDelay = 6;
     let maxDelay = 12;
+    let minSend = 0;
 
     if (savedDelays) {
       try {
         const delays = JSON.parse(savedDelays);
         minDelay = delays.min || 6;
         maxDelay = delays.max || 12;
+        minSend = delays.minSend || 0;
       } catch (e) {
         console.error("Failed to parse delay settings", e);
       }
     }
 
-    console.log("[AutoBird] Toggling. Sending settings payload:", { settings, minDelay, maxDelay });
+    console.log("[AutoBird] Toggling. Sending settings payload:", { settings, minDelay, maxDelay, minSend });
 
     FrontendWebsocket.sendMessage({
       type: 'toggleAutoBird',
-      payload: { settings, minDelay, maxDelay }
+      payload: { settings, minDelay, maxDelay, minSend }
     });
   };
 
@@ -212,7 +268,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       startGame,
       stopGame,
       changeLoginDetails,
-      toggleAutoBird
+      toggleAutoBird,
+      hasStoredCredentials,
+      storedUsername,
+      storedServer,
+      saveCredentials,
+      clearCredentials
     }}>
       {children}
     </AuthContext.Provider>

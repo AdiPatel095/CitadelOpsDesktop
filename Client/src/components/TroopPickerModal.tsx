@@ -250,15 +250,19 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
             if (mode === 'single') {
                 const unitId = selectedArray[0];
                 if (unitId !== undefined) {
-                    onClose({ unitId, quantity: quantities[unitId] || 1 });
+                    const qty = quantities[unitId];
+                    onClose({ unitId, quantity: qty !== undefined ? qty : 1 });
                 } else {
                     onClose(null);
                 }
             } else {
-                const selected = selectedArray.map(unitId => ({
-                    unitId,
-                    quantity: quantities[unitId] || 1
-                }));
+                const selected = selectedArray.map(unitId => {
+                    const qty = quantities[unitId];
+                    return {
+                        unitId,
+                        quantity: qty !== undefined ? qty : 1
+                    };
+                });
                 onClose(selected.length > 0 ? selected : null);
             }
         } else {
