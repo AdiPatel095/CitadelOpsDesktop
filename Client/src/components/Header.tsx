@@ -3,7 +3,11 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onOpenLoginModal: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onOpenLoginModal }) => {
   const { credits, isLoading, gameLoggedIn, gameLoginCooldown, changeLoginDetails, autoBirdEnabled, nextWakeUp } = useAuth();
   const { theme } = useTheme();
 
@@ -40,6 +44,7 @@ const Header: React.FC = () => {
   const handleChangeLogin = () => {
     changeLoginDetails();
     setShowConfirm(false);
+    onOpenLoginModal();
   };
 
   return (
@@ -78,10 +83,15 @@ const Header: React.FC = () => {
         <div className="flex items-center gap-4">
           {/* AutoBird Status */}
           {autoBirdEnabled && (
-            <div className="rounded-global flex items-center gap-3 px-5 py-2 border-2 transition-all duration-300 bg-blue-500/15 border-blue-500/40 shadow-[0_0_20px_rgba(59,130,246,0.15)]">
-              <div className="w-3 h-3 rounded-full shadow-[0_0_12px] transition-colors duration-300 animate-pulse bg-blue-500 shadow-blue-500/80" />
-              <span className="text-sm font-semibold transition-colors duration-300 text-blue-400">
-                {sleepTimer ? `Sleeping (${sleepTimer})` : 'AutoBird Active'}
+            <div className={`rounded-global flex items-center gap-3 px-5 py-2 border-2 transition-all duration-300 ${sleepTimer
+              ? 'bg-emerald-500/15 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+              : 'bg-blue-500/15 border-blue-500/40 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
+              }`}>
+              <div className={`w-3 h-3 rounded-full shadow-[0_0_12px] transition-colors duration-300 animate-pulse ${sleepTimer ? 'bg-emerald-500 shadow-emerald-500/80' : 'bg-blue-500 shadow-blue-500/80'
+                }`} />
+              <span className={`text-sm font-semibold transition-colors duration-300 ${sleepTimer ? 'text-emerald-400' : 'text-blue-400'
+                }`}>
+                {sleepTimer ? `Next Bird in: ${sleepTimer}` : 'Sending Birds'}
               </span>
             </div>
           )}

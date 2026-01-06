@@ -28,10 +28,11 @@ type BirdIgnoreListFile struct {
 // Global instance of SaveInCastleTroops loaded from file
 var BirdIgnoreList SaveInCastleTroops
 
-// AutoBirdDelayConfig holds the min and max delay hours
+// AutoBirdDelayConfig holds the min and max delay hours and min send amount
 type AutoBirdDelayConfig struct {
 	MinDelay int
 	MaxDelay int
+	MinSend  int
 }
 
 var AutoBirdDelay = AutoBirdDelayConfig{MinDelay: 6, MaxDelay: 12}

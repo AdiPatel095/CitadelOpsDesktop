@@ -30,7 +30,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     const [castles, setCastles] = useState<Castle[]>([]);
     const [castleLinks, setCastleLinks] = useState<CastleLinks>({});
     const [loading, setLoading] = useState(true);
-    const [delaySettings, setDelaySettings] = useState({ min: 6, max: 12 });
+    const [delaySettings, setDelaySettings] = useState({ min: 6, max: 12, minSend: 0 });
 
 
     // Edit Modal State
@@ -241,7 +241,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         if (cachedDelays) {
             try {
                 const delays = JSON.parse(cachedDelays);
-                setDelaySettings({ min: delays.min || 6, max: delays.max || 12 });
+                setDelaySettings({ min: delays.min || 6, max: delays.max || 12, minSend: delays.minSend || 0 });
             } catch (e) {
                 console.error("Failed to parse cached delays", e);
             }
@@ -282,7 +282,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
             // Map result back to IgnoreItem
             const newItems: IgnoreItem[] = (result as UnitWithQuantity[]).map(u => ({
                 id: u.unitId,
-                amount: u.quantity
+                amount: u.quantity === 0 ? 100000000 : u.quantity
             }));
 
             // Compute new state
@@ -331,7 +331,11 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         // So I send object keyed by castleID.
 
         // Prepare payload
-        const payload: Record<string, any[]> = {};
+        const payload: Record<string, any> = {
+            minDelay: delaySettings.min,
+            maxDelay: delaySettings.max,
+            minSend: delaySettings.minSend
+        };
         Object.entries(ignoreList).forEach(([castleId, items]) => {
             payload[castleId] = items.map(item => ({ id: item.id, amount: item.amount }));
         });
@@ -340,7 +344,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         localStorage.setItem('autoBird_ignoreList', JSON.stringify(ignoreList));
         localStorage.setItem('autoBird_delaySettings', JSON.stringify(delaySettings));
 
-        // FrontendWebsocket.sendMessage({ type: 'saveBirdSettings', payload }); // Removed - Frontend managed
+        FrontendWebsocket.sendMessage({ type: 'saveBirdSettings', payload });
         onClose();
     };
 
@@ -651,6 +655,23 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                                             />
                                             <span className="absolute right-2 top-2.5 text-xs text-text-muted">Max</span>
                                         </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-text-muted font-bold uppercase mb-2 block">Minimum to Send</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={delaySettings.minSend}
+                                            onChange={e => {
+                                                const val = Math.max(0, parseInt(e.target.value) || 0);
+                                                setDelaySettings(prev => ({ ...prev, minSend: val }));
+                                            }}
+                                            className="w-32 bg-bg-input border border-border-base rounded-global px-3 py-2 text-center font-bold focus:border-primary focus:outline-none"
+                                            placeholder="0"
+                                        />
+                                        <span className="absolute right-2 top-2.5 text-xs text-text-muted">Troops</span>
                                     </div>
                                 </div>
                                 <div className="pb-2 text-sm text-text-muted italic max-w-md">

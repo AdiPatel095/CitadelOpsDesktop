@@ -154,7 +154,11 @@ func StartWebsocketChannels(ctx context.Context, cancel context.CancelFunc) {
 		for {
 			_, message, err := GlobalSocket.ReadMessage()
 			if err != nil {
-				log.Println("read:", err)
+				if strings.Contains(err.Error(), "use of closed network connection") {
+					log.Println("Logging out of the game")
+				} else {
+					log.Println("read:", err)
+				}
 				return
 			}
 			messageRawString := string(message)
@@ -168,7 +172,6 @@ func StartWebsocketChannels(ctx context.Context, cancel context.CancelFunc) {
 			select {
 			case <-ctx.Done():
 				// Context was canceled, stop trying to write.
-				log.Println("Write goroutine stopping.")
 				return
 			case message := <-OutgoingMessages:
 				var payload []byte
@@ -369,6 +372,11 @@ func StartGame() {
 			// Based on current architecture, SendInitialData in FrontendWebsocket might need to be triggered or
 			// the frontend will request data via `refreshEquipment` or other calls.
 			// Since `isGameDataReady` in frontend relies on `gameLoginStatus`, setting it to true here is key.
+		} else {
+			// Login failed after all retries - notify frontend to clear connected state
+			if SendGameLoginStatusFunc != nil {
+				SendGameLoginStatusFunc(false, 0)
+			}
 		}
 	}()
 }
@@ -386,4 +394,48 @@ func StopGame() {
 	if SendGameLoginStatusFunc != nil {
 		SendGameLoginStatusFunc(false, 0)
 	}
+}
+
+// StartGameWithCredentials starts the game with provided login credentials
+// Uses ChromeDP to automate the login process
+func StartGameWithCredentials(username, password, server string) {
+	go func() {
+		// Use Core to get login bytes with automated credentials
+		loginBytes := Core.GetLoginBytesWithCredentials(username, password, server)
+		if loginBytes == nil {
+			log.Println("Failed to get login bytes with credentials")
+			if SendGameLoginStatusFunc != nil {
+				SendGameLoginStatusFunc(false, 0)
+			}
+			return
+		}
+
+		if GlobalSocket != nil {
+			log.Println("Game websocket already connected.")
+			return
+		}
+
+		// TODO: Handle server selection in NewGameWebsocket
+		// For now, we use the default server URL
+		err := NewGameWebsocket()
+		if err != nil {
+			log.Printf("Failed to create game websocket: %v", err)
+			if SendGameLoginStatusFunc != nil {
+				SendGameLoginStatusFunc(false, 0)
+			}
+			return
+		}
+
+		success := LoginToGame(loginBytes)
+		if success {
+			if SendGameLoginStatusFunc != nil {
+				SendGameLoginStatusFunc(true, 0)
+			}
+		} else {
+			// Login failed after all retries - notify frontend to clear connected state
+			if SendGameLoginStatusFunc != nil {
+				SendGameLoginStatusFunc(false, 0)
+			}
+		}
+	}()
 }

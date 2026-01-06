@@ -8,12 +8,23 @@ interface SidebarProps {
   currentView: ViewId;
   onViewChange: (viewId: ViewId) => void;
   onOpenAutoBirdSettings: () => void;
+  onOpenLoginModal: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenAutoBirdSettings }) => {
-  const { gameLoggedIn, startGame, stopGame, autoBirdEnabled, toggleAutoBird } = useAuth();
+const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenAutoBirdSettings, onOpenLoginModal }) => {
+  const { gameLoggedIn, startGame, stopGame, autoBirdEnabled, toggleAutoBird, hasStoredCredentials } = useAuth();
   const mainItems = NAVIGATION_ITEMS.filter(item => item.section === 'main');
   const systemItems = NAVIGATION_ITEMS.filter(item => item.section === 'system');
+
+  const handleStartBot = () => {
+    if (hasStoredCredentials) {
+      // Credentials exist, start game directly
+      startGame();
+    } else {
+      // No credentials, open modal
+      onOpenLoginModal();
+    }
+  };
 
   return (
     <aside className="w-64 bg-bg-card border-r border-border-base flex flex-col pt-20 pb-6 h-screen fixed left-0 top-0 z-40 transition-colors duration-300">
@@ -24,7 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenAuto
           {/* Start/Stop Bot Button */}
           {!gameLoggedIn ? (
             <button
-              onClick={startGame}
+              onClick={handleStartBot}
               className="w-full px-3 py-2 rounded-global bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95"
             >
               <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />

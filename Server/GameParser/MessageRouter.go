@@ -35,4 +35,7 @@ func MessageRouter(messageParts []string) {
 	if messageType == "ain" {
 		ParseAllianceInfo(messageParts[5])
 	}
+	if messageType == "gam" {
+		ParseGAMMessage(messageParts[5])
+	}
 }

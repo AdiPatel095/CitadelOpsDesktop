@@ -111,17 +111,36 @@ func ParseFrontendMessage(message []byte) {
 		log.Printf("SoldCount Relic 2.0 Gems (Keep %d+ Stars): %v", keepStars, soldCount)
 		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 gems", soldCount))
 	case "startGame":
+		// Check if credentials are provided
+		if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
+			username, _ := payloadRaw["username"].(string)
+			password, _ := payloadRaw["password"].(string)
+			server, _ := payloadRaw["server"].(string)
+			if username != "" && password != "" {
+				log.Printf("Starting game with credentials for user: %s, server: %s", username, server)
+				GameWebsocket.StartGameWithCredentials(username, password, server)
+				return
+			}
+		}
+		// Fallback to legacy flow (no credentials)
 		GameWebsocket.StartGame()
 	case "stopGame":
 		GameWebsocket.StopGame()
 	case "fetchAllianceInfo":
 		GameWebsocket.FetchAllianceInfo()
 	case "toggleAutoBird":
-		gs := Models.GetGameState()
-		gs.AutoBirdEnabled = !gs.AutoBirdEnabled
+		// Check if AutoBird is currently running (actual goroutine state)
+		wasRunning := GameWebsocket.IsAutoBirdRunning()
+		log.Printf("[AutoBird] Toggle requested. Was running: %v", wasRunning)
 
-		// If enabling, parse and update settings
-		if gs.AutoBirdEnabled {
+		// Toggle based on actual running state
+		if wasRunning {
+			log.Println("[AutoBird] Calling StopAutoBird...")
+			GameWebsocket.StopAutoBird()
+			Models.GetGameState().AutoBirdEnabled = false
+			SendAutoBirdStatus(false, 0)
+		} else {
+			Models.GetGameState().AutoBirdEnabled = true
 			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
 
 				// Parse settings payload
@@ -154,20 +173,18 @@ func ParseFrontendMessage(message []byte) {
 				// Parse Delay Settings
 				if minDelay, ok := payloadRaw["minDelay"].(float64); ok {
 					Models.AutoBirdDelay.MinDelay = int(minDelay)
-				} else {
-					Models.AutoBirdDelay.MinDelay = 6
 				}
 				if maxDelay, ok := payloadRaw["maxDelay"].(float64); ok {
 					Models.AutoBirdDelay.MaxDelay = int(maxDelay)
-				} else {
-					Models.AutoBirdDelay.MaxDelay = 12
 				}
+				if minSend, ok := payloadRaw["minSend"].(float64); ok {
+					Models.AutoBirdDelay.MinSend = int(minSend)
+				}
+				log.Println("[AutoBird] Calling StartAutoBird...")
+				GameWebsocket.StartAutoBird()
+				SendAutoBirdStatus(true, 0)
 			}
-			GameWebsocket.StartAutoBird()
-		} else {
-			GameWebsocket.StopAutoBird()
 		}
-		SendAutoBirdStatus(gs.AutoBirdEnabled, 0)
 	case "refreshEquipment":
 		// Send equipment data if registered
 		// We can reuse SendInitialData or parts of it
@@ -643,6 +660,18 @@ func ParseFrontendMessage(message []byte) {
 
 		// Just update memory
 		Models.UpdateBirdIgnoreList(newSettings)
+
+		// Also update delay/minSend settings if present
+		if minDelay, ok := payloadRaw["minDelay"].(float64); ok {
+			Models.AutoBirdDelay.MinDelay = int(minDelay)
+		}
+		if maxDelay, ok := payloadRaw["maxDelay"].(float64); ok {
+			Models.AutoBirdDelay.MaxDelay = int(maxDelay)
+		}
+		if minSend, ok := payloadRaw["minSend"].(float64); ok {
+			Models.AutoBirdDelay.MinSend = int(minSend)
+		}
+
 		// Echo back for consistency (optional)
 		SendFrontendMessage("birdSettings", newSettings, "")
 	}

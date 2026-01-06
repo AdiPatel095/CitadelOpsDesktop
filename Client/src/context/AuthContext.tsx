@@ -13,15 +13,23 @@ interface AuthContextType {
   nextWakeUp: number | null;
   versionUpdate: { newVersion: string; downloadUrl: string } | null;
   isVersionBannerDismissed: boolean;
+  ignoredVersion: string | null;
   updateProgress: { stage: string; percent: number } | null;
   isUpdating: boolean;
   restartRequired: boolean;
+  // Login credentials
+  hasStoredCredentials: boolean;
+  storedUsername: string | null;
+  storedServer: string | null;
   dismissVersionBanner: () => void;
+  ignoreVersion: (version: string) => void;
   triggerUpdate: (downloadUrl: string) => void;
-  startGame: () => void;
+  startGame: (credentials?: { username: string; password: string; server: string }) => void;
   stopGame: () => void;
   changeLoginDetails: () => void;
   toggleAutoBird: () => void;
+  saveCredentials: (username: string, password: string, server: string) => void;
+  clearCredentials: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,9 +46,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [nextWakeUp, setNextWakeUp] = useState<number | null>(null);
   const [versionUpdate, setVersionUpdate] = useState<{ newVersion: string; downloadUrl: string } | null>(null);
   const [isVersionBannerDismissed, setIsVersionBannerDismissed] = useState(false);
+  const [ignoredVersion, setIgnoredVersion] = useState<string | null>(() => {
+    return localStorage.getItem('ignoredVersion');
+  });
   const [updateProgress, setUpdateProgress] = useState<{ stage: string; percent: number } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [restartRequired, setRestartRequired] = useState(false);
+
+  // Login credentials state
+  const [hasStoredCredentials, setHasStoredCredentials] = useState(() => {
+    return !!(localStorage.getItem('citadel_username') && localStorage.getItem('citadel_password'));
+  });
+  const [storedUsername, setStoredUsername] = useState<string | null>(() => {
+    return localStorage.getItem('citadel_username');
+  });
+  const [storedServer, setStoredServer] = useState<string | null>(() => {
+    return localStorage.getItem('citadel_server') || 'United States';
+  });
 
   useEffect(() => {
     const handleMessage = (message: any) => {
@@ -67,12 +89,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setNextWakeUp(message.payload.nextWakeUp || null);
       } else if (message.type === 'versionUpdate') {
         console.log('Version update received:', message.payload);
+        const currentIgnoredVersion = localStorage.getItem('ignoredVersion');
         setVersionUpdate({
           newVersion: message.payload.newVersion,
           downloadUrl: message.payload.downloadUrl
         });
-        // Reset dismissed state when a new version is detected
-        setIsVersionBannerDismissed(false);
+        // Only show popup if this version is not ignored
+        if (message.payload.newVersion !== currentIgnoredVersion) {
+          setIsVersionBannerDismissed(false);
+        } else {
+          console.log('Version update ignored by user:', message.payload.newVersion);
+          setIsVersionBannerDismissed(true);
+        }
       } else if (message.type === 'updateProgress') {
         console.log('Update progress:', message.payload);
         setUpdateProgress({
@@ -114,8 +142,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [gameLoginCooldown]);
 
-  const startGame = () => {
-    FrontendWebsocket.startGame();
+  const startGame = (credentials?: { username: string; password: string; server: string }) => {
+    // If credentials provided, save them and send to backend
+    if (credentials) {
+      saveCredentials(credentials.username, credentials.password, credentials.server);
+      FrontendWebsocket.startGame(credentials);
+    } else {
+      // Use stored credentials
+      const storedPassword = localStorage.getItem('citadel_password');
+      if (storedUsername && storedPassword && storedServer) {
+        FrontendWebsocket.startGame({
+          username: storedUsername,
+          password: storedPassword,
+          server: storedServer
+        });
+      } else {
+        // No credentials available, backend will use legacy flow
+        FrontendWebsocket.startGame();
+      }
+    }
   };
 
   const stopGame = () => {
@@ -123,7 +168,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const changeLoginDetails = () => {
+    // Just clear the stored credentials, modal will be shown by UI
+    clearCredentials();
     FrontendWebsocket.changeLoginDetails();
+  };
+
+  const saveCredentials = (username: string, password: string, server: string) => {
+    localStorage.setItem('citadel_username', username);
+    localStorage.setItem('citadel_password', password);
+    localStorage.setItem('citadel_server', server);
+    setStoredUsername(username);
+    setStoredServer(server);
+    setHasStoredCredentials(true);
+  };
+
+  const clearCredentials = () => {
+    localStorage.removeItem('citadel_username');
+    localStorage.removeItem('citadel_password');
+    localStorage.removeItem('citadel_server');
+    setStoredUsername(null);
+    setStoredServer(null);
+    setHasStoredCredentials(false);
   };
 
   const toggleAutoBird = () => {
@@ -142,27 +207,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const savedDelays = localStorage.getItem('autoBird_delaySettings');
     let minDelay = 6;
     let maxDelay = 12;
+    let minSend = 0;
 
     if (savedDelays) {
       try {
         const delays = JSON.parse(savedDelays);
         minDelay = delays.min || 6;
         maxDelay = delays.max || 12;
+        minSend = delays.minSend || 0;
       } catch (e) {
         console.error("Failed to parse delay settings", e);
       }
     }
 
-    console.log("[AutoBird] Toggling. Sending settings payload:", { settings, minDelay, maxDelay });
+    console.log("[AutoBird] Toggling. Sending settings payload:", { settings, minDelay, maxDelay, minSend });
 
     FrontendWebsocket.sendMessage({
       type: 'toggleAutoBird',
-      payload: { settings, minDelay, maxDelay }
+      payload: { settings, minDelay, maxDelay, minSend }
     });
   };
 
   const dismissVersionBanner = () => {
     setIsVersionBannerDismissed(true);
+  };
+
+  const ignoreVersion = (version: string) => {
+    localStorage.setItem('ignoredVersion', version);
+    setIgnoredVersion(version);
+    setIsVersionBannerDismissed(true);
+    console.log('User ignored version:', version);
   };
 
   const triggerUpdate = (downloadUrl: string) => {
@@ -184,15 +258,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       nextWakeUp,
       versionUpdate,
       isVersionBannerDismissed,
+      ignoredVersion,
       updateProgress,
       isUpdating,
       restartRequired,
       dismissVersionBanner,
+      ignoreVersion,
       triggerUpdate,
       startGame,
       stopGame,
       changeLoginDetails,
-      toggleAutoBird
+      toggleAutoBird,
+      hasStoredCredentials,
+      storedUsername,
+      storedServer,
+      saveCredentials,
+      clearCredentials
     }}>
       {children}
     </AuthContext.Provider>

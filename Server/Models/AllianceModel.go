@@ -8,10 +8,27 @@ type Alliance struct {
 }
 
 type BirdLocation struct {
-	X         int `json:"x"`
-	Y         int `json:"y"`
-	KingdomID int `json:"kingdomID"`
-	BirdTime  int `json:"birdTime"`
+	X          int `json:"x"`
+	Y          int `json:"y"`
+	KingdomID  int `json:"kingdomID"`
+	BirdTime   int `json:"birdTime"`
+	CastleType int `json:"castleType"` // 1=main, 4=outpost, 12=KW castle
+}
+
+// GAMMovement represents a parsed movement from GAM message
+type GAMMovement struct {
+	MID        int     `json:"mid"`
+	PT         int     `json:"pt"` // Past Time (seconds)
+	TT         int     `json:"tt"` // Total Time (one-way, seconds)
+	D          int     `json:"d"`  // Direction (0=out, 1=back)
+	KID        int     `json:"kid"`
+	SID        int     `json:"sid"`
+	OID        int     `json:"oid"`
+	TargetX    int     `json:"targetX"`    // From TA array
+	TargetY    int     `json:"targetY"`    // From TA array
+	SourceX    int     `json:"sourceX"`    // From SA array
+	SourceY    int     `json:"sourceY"`    // From SA array
+	TroopArray [][]int `json:"troopArray"` // From A field: [[troopID, count], ...]
 }
 
 // PlayerCastleLocation represents one of the player's castle locations

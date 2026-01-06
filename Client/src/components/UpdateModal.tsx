@@ -15,13 +15,18 @@ interface UpdateModalProps {
  * Shows update confirmation, progress during update, and restart required screen.
  */
 const UpdateModal: React.FC<UpdateModalProps> = ({ newVersion, downloadUrl, onDismiss }) => {
-    const { updateProgress, isUpdating, restartRequired, triggerUpdate } = useAuth();
+    const { updateProgress, isUpdating, restartRequired, triggerUpdate, ignoreVersion } = useAuth();
     const [showConfirm, setShowConfirm] = useState(true);
     const patchNotesUrl = "https://citadelops.app/";
 
     const handleConfirmUpdate = () => {
         setShowConfirm(false);
         triggerUpdate(downloadUrl);
+    };
+
+    const handleIgnore = () => {
+        ignoreVersion(newVersion);
+        onDismiss();
     };
 
     // Full-screen restart required overlay
@@ -184,6 +189,13 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ newVersion, downloadUrl, onDi
                             className="flex-1 px-4 py-3 rounded-global bg-bg-app border border-border-base hover:bg-bg-card-hover text-text-muted hover:text-text-main font-semibold transition-all duration-200"
                         >
                             Later
+                        </button>
+                        <button
+                            onClick={handleIgnore}
+                            className="px-4 py-3 rounded-global bg-bg-app border border-border-base hover:bg-bg-card-hover text-text-muted hover:text-text-main font-semibold transition-all duration-200"
+                            title="Don't show this update again"
+                        >
+                            Ignore
                         </button>
                         <button
                             onClick={handleConfirmUpdate}
