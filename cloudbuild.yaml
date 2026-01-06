@@ -74,7 +74,7 @@ substitutions:
   _REGION: 'us-east1'
   _REPO_NAME: 'us-service-desktop'
   _IMAGE_NAME: 'citadel-ops-desktop'
-  _VERSION: '1.2.0'
+  _VERSION: '1.2.1'
   _ARTIFACT_BUCKET: 'us-service-ggebot-desktop-bucket'
   _BACKEND_SERVICE_NAME: 'live-backend-cloud'
 
