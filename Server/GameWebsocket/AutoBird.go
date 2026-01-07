@@ -72,10 +72,9 @@ func StopAutoBird() {
 
 // runAutoBird is the main initialization routine when auto bird is enabled.
 // It runs in a loop, sending birds and then sleeping until they need to return.
-// runAutoBird is the main initialization routine when auto bird is enabled.
-// It runs in a loop, sending birds and then sleeping until they need to return.
 func runAutoBird(ctx context.Context) {
 	gs := Models.GetGameState()
+	// isFirstCycle removed - reconciliation runs every cycle
 
 	for {
 		select {
@@ -86,7 +85,52 @@ func runAutoBird(ctx context.Context) {
 
 		sleepDuration := 15 * time.Minute
 
-		// Check if connected, if not start game
+		// ---------------------------------------------------------
+		// STEP 0: Startup Reconciliation (First Cycle Only)
+		// ---------------------------------------------------------
+		// ---------------------------------------------------------
+		// STEP 0: Reconciliation (Every Cycle)
+		// ---------------------------------------------------------
+		// Run every cycle to clean up expired birds and check GAM
+		reconcileDuration, readyToSend := reconcileOnStartup(ctx)
+		if !readyToSend {
+			// We need to wait for existing birds
+			// Notify frontend of sleep
+			wakeUpTime := time.Now().Add(reconcileDuration).UnixMilli()
+
+			autoBirdMu.Lock()
+			autoBirdNextWakeUp = wakeUpTime
+			autoBirdMu.Unlock()
+
+			if SendAutoBirdStatusFunc != nil {
+				go SendAutoBirdStatusFunc(true, wakeUpTime)
+			}
+
+			// Ensure game is stopped while sleeping
+			StopGame()
+
+			log.Printf("[AutoBird] Reconciliation complete. Sleeping for %v until birds return/expire.", reconcileDuration)
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(reconcileDuration):
+				// Waking up
+				autoBirdMu.Lock()
+				autoBirdNextWakeUp = 0
+				autoBirdMu.Unlock()
+				if SendAutoBirdStatusFunc != nil {
+					go SendAutoBirdStatusFunc(true, 0)
+				}
+				// Continue to next loop iteration (which will re-run reconciliation/login)
+				continue
+			}
+		}
+		// Ready to send immediately
+
+		// ---------------------------------------------------------
+		// STEP 1: Login and Prepare
+		// ---------------------------------------------------------
 		if !LoginStatus {
 			StartGame()
 
@@ -130,6 +174,16 @@ func runAutoBird(ctx context.Context) {
 
 		log.Println("[AutoBird] Starting processing cycle...")
 
+		// Load existing saved birds to know which castles already have active birds
+		existingBirds := Models.LoadSentBirds()
+		activeCastleMap := make(map[int]bool)
+		if existingBirds != nil {
+			for _, bird := range existingBirds.Birds {
+				activeCastleMap[bird.CastleID] = true
+			}
+			log.Printf("[AutoBird] Loaded %d existing active birds. Castles with active birds: %v", len(existingBirds.Birds), activeCastleMap)
+		}
+
 		// Step 1: Fetch fresh alliance info (bird locations)
 		FetchAllianceInfo()
 
@@ -142,6 +196,19 @@ func runAutoBird(ctx context.Context) {
 
 		// Step 2: Get player's own castle locations from castle info
 		playerCastles := getPlayerCastleLocations()
+
+		// Helper to find player OID (use first castle's aid if available, though OID usually better from login)
+		// We'll rely on OID from login if we had it, but for now we can infer or pass 0 if unknown
+		// (though persistence asks for it). Let's try to find OID from game state if possible.
+		// For now we will use a placeholder or derived ID since the persistence mainly uses it for validation.
+		// Actually, let's use the first castle ID as a proxy for player ID if we don't have login OID stored globally.
+		playerOID := 0
+		if len(playerCastles) > 0 {
+			// Try to find OID from main castle if possible, or just use 0.
+			// The SentBirdTracker uses it to reset if ID changes.
+			// We can use MainCastle.Aid
+			playerOID = int(gs.MainCastle.Aid)
+		}
 
 		// Step 3: Process each castle sequentially
 		log.Printf("[AutoBird] Processing %d player castles...", len(playerCastles))
@@ -168,7 +235,7 @@ func runAutoBird(ctx context.Context) {
 			default:
 			}
 
-			// 3.1 Fetch Troops
+			// 3.1 Fetch Troops first (to check ratio)
 			troops := fetchCastleTroops(castleLoc.KingdomID, castleLoc.CastleID, castleLoc.X, castleLoc.Y)
 			if troops == nil {
 				log.Printf("[AutoBird] Failed to fetch troops for Castle %d (K%d). Skipping.", castleLoc.CastleID, castleLoc.KingdomID)
@@ -178,7 +245,79 @@ func runAutoBird(ctx context.Context) {
 			// Delay after JAA command
 			time.Sleep(1 * time.Second)
 
-			// 3.2 Calculate All Troops to Send first
+			// 3.2 Check Surplus Ratio
+			// User Logic: "ratio of troops need to be sent / ignore total >= 0.1"
+			// Meaning: We need at least 10% of the KEEP amount in SURPLUS to send.
+			totalToSend := 0
+			totalKeep := 0
+
+			for id, amount := range troops.Troops {
+				saveAmount := Models.BirdIgnoreList.GetSaveAmount(castleLoc.CastleID, id)
+				sendAmount := amount - saveAmount
+
+				// Calculate retention total
+				if saveAmount > 0 {
+					totalKeep += saveAmount
+				}
+
+				// Calculate surplus total (only valid troops)
+				if sendAmount > 0 {
+					totalToSend += sendAmount
+				}
+			}
+
+			// Check if we should send
+			shouldSend := false
+			ratio := 0.0
+
+			if totalKeep == 0 {
+				// No retention set, send everything if we have troops
+				if totalToSend > 0 { // totalToSend equals totalCurrent in this case
+					shouldSend = true
+				}
+			} else {
+				ratio = float64(totalToSend) / float64(totalKeep)
+				// Need 10% surplus relative to keep amount => Ratio >= 0.10
+				if ratio >= 0.10 {
+					shouldSend = true
+				}
+			}
+
+			if activeCastleMap[castleLoc.CastleID] {
+				if shouldSend {
+					// Proceed to MinSend check
+				} else {
+					continue
+				}
+			} else {
+				// No active bird
+				if !shouldSend {
+					// Apply same ratio logic to prevent micro-sends
+					if totalToSend > 0 && totalKeep > 0 && ratio < 0.10 {
+						continue
+					}
+				}
+			}
+
+			if totalToSend > 0 && totalToSend < Models.AutoBirdDelay.MinSend {
+				log.Printf("[AutoBird] Castle %d has troops to send (%d), but is below Global Minimum to Send (%d). Skipping.",
+					castleLoc.CastleID, totalToSend, Models.AutoBirdDelay.MinSend)
+				continue
+			}
+
+			// Move the confirmation log here, after passing all checks
+			if activeCastleMap[castleLoc.CastleID] {
+				log.Printf("[AutoBird] Castle %d has active bird, but found significant surplus and passed MinSend (%d > %d). Sending new bird.",
+					castleLoc.CastleID, totalToSend, Models.AutoBirdDelay.MinSend)
+			}
+
+			// 3.3 Process in batches (logic below uses same calc so we proceed)
+			// But check if we have anything to send first
+			if totalToSend == 0 {
+				continue
+			}
+
+			// 3.3 Calculate All Troops to Send
 			var allTroopsToSend [][]int
 			ignoredSummary := ""
 
@@ -345,6 +484,19 @@ func runAutoBird(ctx context.Context) {
 									castleName := getCastleName(castleLoc.CastleID)
 									log.Printf("[AutoBird] Successfully sent batch from %s. Data Left/Ignored: %s", castleName, ignoredSummary)
 
+									// Persist the sent bird with troop composition
+									Models.AppendSentBird(playerOID, Models.SentBird{
+										CastleID:          castleLoc.CastleID,
+										TargetX:           target.X,
+										TargetY:           target.Y,
+										KingdomID:         effectiveKID,
+										TroopComposition:  batch,
+										SentTime:          time.Now(),
+										ExpectedExpiry:    returnTime,
+										OneWayTimeSeconds: int(tt),
+										DelayHrs:          randomDelay,
+									})
+
 								}
 							}
 						}
@@ -356,20 +508,23 @@ func runAutoBird(ctx context.Context) {
 			time.Sleep(1 * time.Second)
 		}
 
-		// Calculate sleep time based on max return time
-		var maxReturnTime time.Time
-		for _, castleMovements := range gs.BirdMovements {
-			for _, m := range castleMovements {
-				if m.ReturnTime.After(maxReturnTime) {
-					maxReturnTime = m.ReturnTime
+		// Calculate sleep time based on EARLIEST return time from ALL saved birds
+		// This ensures we wake up when the first bird returns
+		allBirds := Models.LoadSentBirds()
+		var earliestReturnTime time.Time
+
+		if allBirds != nil && len(allBirds.Birds) > 0 {
+			for _, bird := range allBirds.Birds {
+				if earliestReturnTime.IsZero() || bird.ExpectedExpiry.Before(earliestReturnTime) {
+					earliestReturnTime = bird.ExpectedExpiry
 				}
 			}
+			log.Printf("[AutoBird] Found %d active birds. Earliest return: %v", len(allBirds.Birds), earliestReturnTime)
 		}
 
-		if !maxReturnTime.IsZero() {
-			// Sleep until last bird returns + 1 minute buffer
-			maxReturnTime = maxReturnTime.Add(1 * time.Minute)
-			sleepDuration = time.Until(maxReturnTime)
+		if !earliestReturnTime.IsZero() {
+			// Sleep until first bird returns + 1 minute buffer
+			sleepDuration = time.Until(earliestReturnTime) + 1*time.Minute
 			if sleepDuration < 0 {
 				sleepDuration = 1 * time.Minute // Already passed, just wait a bit
 			}
@@ -412,6 +567,24 @@ func findClosestBirdLocation(source Models.CastleTroops, targets []Models.BirdLo
 
 		// Must be in same kingdom
 		if target.KingdomID != source.KingdomID {
+			continue
+		}
+
+		// Filter by castle type based on kingdom
+		isValidType := false
+		if source.KingdomID == 0 {
+			// Green kingdom: main castle (1) or outpost (4)
+			if target.CastleType == 1 || target.CastleType == 4 {
+				isValidType = true
+			}
+		} else {
+			// Other kingdoms: only KW castle (12)
+			if target.CastleType == 12 {
+				isValidType = true
+			}
+		}
+
+		if !isValidType {
 			continue
 		}
 
@@ -597,4 +770,210 @@ func parseTroopsFromJAA(data string, kingdomID, castleID, x, y int) *Models.Cast
 		Y:         y,
 		Troops:    troops,
 	}
+}
+
+// reconcileOnStartup checks persisted birds and reconciles with live GAM data
+// Returns duration to sleep if birds are still out, or 0 if ready to send.
+// Returns bool readyToSend: true if we can start sending, false if we should sleep
+func reconcileOnStartup(ctx context.Context) (time.Duration, bool) {
+	// 1. Load sentBirds.json
+	savedBirds := Models.LoadSentBirds()
+	if savedBirds == nil || len(savedBirds.Birds) == 0 {
+		return 0, true // No saved birds, proceed to send
+	}
+
+	// 2. Check if all birds have definitely expired based on ExpectedExpiry
+	// Add a small buffer to be safe
+	allExpired := true
+	now := time.Now()
+	for _, bird := range savedBirds.Birds {
+		if now.Before(bird.ExpectedExpiry) {
+			allExpired = false
+			break
+		}
+	}
+
+	if allExpired {
+		log.Println("[AutoBird] All saved birds have expired locally. Ready to send new batch.")
+		Models.ClearSentBirds()
+		return 0, true
+	}
+
+	log.Println("[AutoBird] Found active saved birds. Reconciling with game server...")
+
+	// 3. Login to game and fetch GAM
+	if !LoginStatus {
+		StartGame()
+
+		// Wait for login
+		loginTimeout := time.After(45 * time.Second)
+		loginSuccess := false
+		for {
+			select {
+			case <-ctx.Done():
+				return 0, false
+			case <-loginTimeout:
+				break
+			case <-time.After(1 * time.Second):
+				if LoginStatus {
+					loginSuccess = true
+					break
+				}
+			}
+			if loginSuccess {
+				break
+			}
+		}
+
+		if !loginSuccess {
+			// Login failed, rely on local expiry as fallback?
+			// Or just retry later. Let's return short sleep to retry.
+			log.Println("[AutoBird] Login failed during reconciliation. Retrying in 1 minute.")
+			return 1 * time.Minute, false
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	// 4. Request GAM message
+	// First, clear existing movements because parser now appends to this list
+	// This allows us to accumulate multiple GAM messages if they come in sequence
+	gs := Models.GetGameState()
+	gs.ActiveMovements = nil
+
+	FetchMovements()
+
+	// 5. Wait for GAM response
+	// We wait a few seconds for the websocket to receive and parse the GAM message
+	select {
+	case <-ctx.Done():
+		return 0, false
+	case <-time.After(5 * time.Second):
+	}
+
+	gs = Models.GetGameState()
+
+	// 6. First, filter out already-expired birds from the saved list
+	log.Printf("[AutoBird] Checking %d saved birds for expiration...", len(savedBirds.Birds))
+	var stillPotentiallyActive []Models.SentBird
+	for _, bird := range savedBirds.Birds {
+		if now.Before(bird.ExpectedExpiry) {
+			stillPotentiallyActive = append(stillPotentiallyActive, bird)
+		} else {
+			log.Printf("[AutoBird] Bird from castle %d has expired (expected return: %v)", bird.CastleID, bird.ExpectedExpiry)
+		}
+	}
+
+	log.Printf("[AutoBird] %d birds still potentially active (not expired)", len(stillPotentiallyActive))
+
+	if len(stillPotentiallyActive) == 0 {
+		log.Println("[AutoBird] All saved birds have expired. Clearing file and ready to send.")
+		Models.ClearSentBirds()
+		return 0, true
+	}
+
+	// 7. Match remaining birds against GAM movements by troop composition
+	log.Printf("[AutoBird] Reconciling %d birds against %d active movements", len(stillPotentiallyActive), len(gs.ActiveMovements))
+
+	var matchedBirds []Models.SentBird
+	var maxReturnTime time.Time
+
+	for _, bird := range stillPotentiallyActive {
+		// Look for a movement that matches by troop composition
+		matched := false
+
+		for _, movement := range gs.ActiveMovements {
+			// Check if troop composition matches exactly
+			if troopsMatch(bird.TroopComposition, movement.TroopArray) {
+				// Found a match - keep this bird
+				matched = true
+				matchedBirds = append(matchedBirds, bird)
+
+				// Track max return time
+				if bird.ExpectedExpiry.After(maxReturnTime) {
+					maxReturnTime = bird.ExpectedExpiry
+				}
+				break
+			}
+		}
+
+		if !matched {
+			// Not matched in GAM.
+			// IMPORTANT: If high load, parser might miss it.
+			// We only discard if it's explicitly expired (which we filtered above).
+			// Since we already filtered expired birds into 'stillPotentiallyActive',
+			// all birds here are NOT expired. So we KEEP them to be safe.
+
+			// User Request: Keep log of birds not found with KID, Name, Troop Composition
+			castleName := getCastleName(bird.CastleID)
+			log.Printf("[AutoBird] ✗ No GAM match for bird from %s (KID: %d). Keeping safe. Troops: %v",
+				castleName, bird.KingdomID, bird.TroopComposition)
+
+			matchedBirds = append(matchedBirds, bird)
+
+			// Track max return time
+			if bird.ExpectedExpiry.After(maxReturnTime) {
+				maxReturnTime = bird.ExpectedExpiry
+			}
+		}
+	}
+
+	// 8. Update saved file with the kept birds (matched + unexpired unmatched)
+	if len(matchedBirds) > 0 {
+		log.Printf("[AutoBird] Updating saved birds file with %d active birds", len(matchedBirds))
+		Models.SaveSentBirds(savedBirds.PlayerID, matchedBirds)
+		// Removed per-castle log loop to reduce spam
+	} else {
+		// No birds matched - all have returned or were recalled
+		log.Println("[AutoBird] No saved birds found in active movements. Clearing file.")
+		Models.ClearSentBirds()
+	}
+
+	// Always proceed to send loop - it will skip castles with active birds
+	// and send to any castles without birds, then calculate proper sleep time
+	log.Println("[AutoBird] Reconciliation complete. Proceeding to check for castles needing birds...")
+	return 0, true
+}
+
+// troopsMatch checks if two troop compositions are the same or very similar
+// Returns true if compositions match (same troop IDs and counts, order doesn't matter)
+func troopsMatch(sent [][]int, gam [][]int) bool {
+	if len(sent) != len(gam) {
+		return false
+	}
+
+	// Create maps for easier comparison
+	sentMap := make(map[int]int)
+	for _, pair := range sent {
+		if len(pair) == 2 {
+			sentMap[pair[0]] = pair[1]
+		}
+	}
+
+	gamMap := make(map[int]int)
+	for _, pair := range gam {
+		if len(pair) == 2 {
+			gamMap[pair[0]] = pair[1]
+		}
+	}
+
+	// Check if maps are identical
+	if len(sentMap) != len(gamMap) {
+		return false
+	}
+
+	for troopID, count := range sentMap {
+		if gamMap[troopID] != count {
+			return false
+		}
+	}
+
+	return true
+}
+
+// FetchMovements sends the GAM command to get all active movements
+func FetchMovements() {
+	// Cmd: %xt%EmpireEx_21%gam%1%{}%
+	cmd := `%xt%EmpireEx_21%gam%1%{}%`
+	OutgoingMessages <- []byte(cmd)
+	log.Println("[AutoBird] Sent GAM request to fetch movements")
 }

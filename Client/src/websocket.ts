@@ -140,8 +140,19 @@ class FrontendWebsocketService {
     }
   }
 
-  public startGame() {
-    this.sendMessage({ type: 'startGame' });
+  public startGame(credentials?: { username: string; password: string; server: string }) {
+    if (credentials) {
+      this.sendMessage({
+        type: 'startGame',
+        payload: {
+          username: credentials.username,
+          password: credentials.password,
+          server: credentials.server
+        }
+      });
+    } else {
+      this.sendMessage({ type: 'startGame' });
+    }
   }
 
   public stopGame() {
