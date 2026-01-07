@@ -211,6 +211,8 @@ func runAutoBird(ctx context.Context) {
 		}
 
 		// Step 3: Process each castle sequentially
+		log.Printf("[AutoBird] Processing %d player castles...", len(playerCastles))
+
 		// Fetch troops -> Plan -> Send -> Wait -> Next
 
 		// Calculate random delay once per cycle (Configurable)
@@ -236,6 +238,7 @@ func runAutoBird(ctx context.Context) {
 			// 3.1 Fetch Troops first (to check ratio)
 			troops := fetchCastleTroops(castleLoc.KingdomID, castleLoc.CastleID, castleLoc.X, castleLoc.Y)
 			if troops == nil {
+				log.Printf("[AutoBird] Failed to fetch troops for Castle %d (K%d). Skipping.", castleLoc.CastleID, castleLoc.KingdomID)
 				continue
 			}
 
