@@ -523,8 +523,9 @@ func runAutoBird(ctx context.Context) {
 		}
 
 		if !earliestReturnTime.IsZero() {
-			// Sleep until first bird returns + 1 minute buffer
-			sleepDuration = time.Until(earliestReturnTime) + 1*time.Minute
+			// Sleep until first bird returns + 15 minute buffer
+			// User Request: "add a 15min delay to the next login to allow for a full batch return"
+			sleepDuration = time.Until(earliestReturnTime) + 15*time.Minute
 			if sleepDuration < 0 {
 				sleepDuration = 1 * time.Minute // Already passed, just wait a bit
 			}
