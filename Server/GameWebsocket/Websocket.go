@@ -44,7 +44,60 @@ var (
 
 	// SendAutoBirdStatusFunc is a callback to notify frontend of auto bird status changes
 	SendAutoBirdStatusFunc func(bool, int64)
+
+	// SendRequestCredentialsFunc is a callback to request credentials from frontend
+	SendRequestCredentialsFunc func()
+
+	// StoredCredentials holds the last used login info for auto-relogin
+	StoredCredentials struct {
+		Username string
+		Password string
+		Server   string
+	}
 )
+
+// ServerURLMap maps frontend server display names to actual server identifiers
+var ServerURLMap = map[string]string{
+	"United States":         "ep-live-us1-game",
+	"World: 2":              "ep-live-world2-game",
+	"World: 1":              "ep-live-world1-game",
+	"International: 1":      "ep-live-mz-int1-sk1-gb1-game",
+	"International: 2":      "ep-live-mz-int2-es1-it1-game",
+	"International: 3":      "ep-live-int3-game",
+	"Germany":               "ep-live-de1-game",
+	"France":                "ep-live-fr1-game",
+	"Czech Republic":        "ep-live-mz-cz1-es2-game",
+	"Poland":                "ep-live-pl1-game",
+	"Portuguese":            "ep-live-pt1-game",
+	"Spain: 1":              "ep-live-mz-int2-es1-it1-game",
+	"Italy":                 "ep-live-mz-int2-es1-it1-game",
+	"Turkey":                "ep-live-mz-tr1-nl1-bg1-game",
+	"Netherlands":           "ep-live-mz-tr1-nl1-bg1-game",
+	"Hungary: 1":            "ep-live-mz-hu1-skn1-gr1-lt1-game",
+	"Nordic":                "ep-live-mz-hu1-skn1-gr1-lt1-game",
+	"Russia":                "ep-live-ru1-game",
+	"Romania":               "ep-live-ro1-game",
+	"Bulgaria":              "ep-live-mz-tr1-nl1-bg1-game",
+	"Hungary: 2":            "ep-live-hu2-game",
+	"Slovakia":              "ep-live-mz-int1-sk1-gb1-game",
+	"United Kingdom":        "ep-live-mz-int1-sk1-gb1-game",
+	"Brazil":                "ep-live-br1-game",
+	"Australia":             "ep-live-au1-game",
+	"South Korea":           "ep-live-mz-kr1-jp1-in1-cn1-game",
+	"Japan":                 "ep-live-mz-kr1-jp1-in1-cn1-game",
+	"Hispanic America":      "ep-live-his1-game",
+	"India":                 "ep-live-mz-kr1-jp1-in1-cn1-game",
+	"China":                 "ep-live-mz-kr1-jp1-in1-cn1-game",
+	"Greece":                "ep-live-mz-hu1-skn1-gr1-lt1-game",
+	"Lithuania":             "ep-live-mz-hu1-skn1-gr1-lt1-game",
+	"Saudi Arabia":          "ep-live-mz-sa1-ae1-eg1-arab1-game",
+	"United Arab Emirates":  "ep-live-mz-sa1-ae1-eg1-arab1-game",
+	"Egypt":                 "ep-live-mz-sa1-ae1-eg1-arab1-game",
+	"Arab League":           "ep-live-mz-sa1-ae1-eg1-arab1-game",
+	"Asia":                  "ep-live-asia1-hant1-game",
+	"Chinese (traditional)": "ep-live-asia1-hant1-game",
+	"Spain: 2":              "ep-live-mz-cz1-es2-game",
+}
 
 // SetInsufficientCreditsCallback sets the callback for insufficient credits notification
 func SetInsufficientCreditsCallback(fn func()) {
@@ -61,14 +114,22 @@ func SetAutoBirdStatusCallback(fn func(bool, int64)) {
 	SendAutoBirdStatusFunc = fn
 }
 
-func NewGameWebsocket() error {
+// SetRequestCredentialsCallback sets the callback for requesting credentials
+func SetRequestCredentialsCallback(fn func()) {
+	SendRequestCredentialsFunc = fn
+}
+
+func NewGameWebsocket(serverID string) error {
 	// Get config from environment
 	startURL := "https://empire.goodgamestudios.com/"
 	origin := os.Getenv("ORIGIN")
 	bearer := os.Getenv("AUTH_BEARER")
 	authCookie := os.Getenv("AUTH_COOKIE")
 
-	wssURL := "wss://ep-live-us1-game.goodgamestudios.com/"
+	if serverID == "" {
+		serverID = "ep-live-us1-game" // Default fallback
+	}
+	wssURL := "wss://" + serverID + ".goodgamestudios.com/"
 
 	wsHeaders := http.Header{}
 	if origin != "" {
@@ -343,47 +404,12 @@ func checkLoginStatus(message []string) {
 	}
 }
 
-func StartGame() {
-	go func() {
-		// Use Core to get login bytes
-		loginBytes := Core.GetLoginBytes()
-		if loginBytes == nil {
-			log.Println("Failed to get login bytes")
-			return
-		}
-
-		if GlobalSocket != nil {
-			log.Println("Game websocket already connected.")
-			return
-		}
-
-		err := NewGameWebsocket()
-		if err != nil {
-			log.Printf("Failed to create game websocket: %v", err)
-			return
-		}
-
-		success := LoginToGame(loginBytes)
-		if success {
-			if SendGameLoginStatusFunc != nil {
-				SendGameLoginStatusFunc(true, 0)
-			}
-			// Trigger initial data load here if needed, or wait for frontend to request it
-			// Based on current architecture, SendInitialData in FrontendWebsocket might need to be triggered or
-			// the frontend will request data via `refreshEquipment` or other calls.
-			// Since `isGameDataReady` in frontend relies on `gameLoginStatus`, setting it to true here is key.
-		} else {
-			// Login failed after all retries - notify frontend to clear connected state
-			if SendGameLoginStatusFunc != nil {
-				SendGameLoginStatusFunc(false, 0)
-			}
-		}
-	}()
-}
-
 func StopGame() {
 	if GlobalSocket != nil {
-		GlobalSocket.Close()
+		err := GlobalSocket.Close()
+		if err != nil {
+			return
+		}
 		GlobalSocket = nil
 	}
 	// Cancel context? We need to store the cancel function from NewGameWebsocket
@@ -399,9 +425,21 @@ func StopGame() {
 // StartGameWithCredentials starts the game with provided login credentials
 // Uses ChromeDP to automate the login process
 func StartGameWithCredentials(username, password, server string) {
+	// Store credentials for auto-relogin (e.g. by AutoBird)
+	StoredCredentials.Username = username
+	StoredCredentials.Password = password
+	StoredCredentials.Server = server
+
 	go func() {
+		// Resolve Server Name to ID
+		serverID := ServerURLMap[server]
+		if serverID == "" {
+			serverID = "ep-live-us1-game" // Default to US1 if unknown
+			log.Printf("Warning: Unknown server '%s', defaulting to US1 (%s)", server, serverID)
+		}
+
 		// Use Core to get login bytes with automated credentials
-		loginBytes := Core.GetLoginBytesWithCredentials(username, password, server)
+		loginBytes := Core.GetLoginBytesWithCredentials(username, password, server, serverID)
 		if loginBytes == nil {
 			log.Println("Failed to get login bytes with credentials")
 			if SendGameLoginStatusFunc != nil {
@@ -415,9 +453,7 @@ func StartGameWithCredentials(username, password, server string) {
 			return
 		}
 
-		// TODO: Handle server selection in NewGameWebsocket
-		// For now, we use the default server URL
-		err := NewGameWebsocket()
+		err := NewGameWebsocket(serverID)
 		if err != nil {
 			log.Printf("Failed to create game websocket: %v", err)
 			if SendGameLoginStatusFunc != nil {

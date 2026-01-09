@@ -132,41 +132,62 @@ func runAutoBird(ctx context.Context) {
 		// STEP 1: Login and Prepare
 		// ---------------------------------------------------------
 		if !LoginStatus {
-			StartGame()
+			// Check if we have stored credentials to re-login
+			if StoredCredentials.Username != "" && StoredCredentials.Password != "" {
+				StartGameWithCredentials(StoredCredentials.Username, StoredCredentials.Password, StoredCredentials.Server)
 
-			// Wait for login
-			loginTimeout := time.After(45 * time.Second)
-			loginSuccess := false
+				// Wait for login to complete (indefinitely)
 
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-loginTimeout:
-					break
-				case <-time.After(1 * time.Second):
-					if LoginStatus {
-						loginSuccess = true
-						break
+			LoginWaitLoop:
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(1 * time.Second):
+						if LoginStatus {
+							break LoginWaitLoop
+						}
 					}
 				}
-				if loginSuccess {
-					break
-				}
-			}
 
-			if !loginSuccess {
-				// Failed to login, retry after a delay
-				select {
-				case <-ctx.Done():
+			} else {
+				if SendRequestCredentialsFunc != nil {
+					SendRequestCredentialsFunc()
+				}
+
+				// Wait for credentials (max 30s)
+				// We poll StoredCredentials every second
+				credentialsFound := false
+				timeout := time.After(30 * time.Second)
+
+			WaitLoop:
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case <-timeout:
+						break WaitLoop
+					case <-time.After(1 * time.Second):
+						if StoredCredentials.Username != "" {
+							credentialsFound = true
+							break WaitLoop
+						}
+					}
+				}
+
+				if !credentialsFound {
+					if SendAutoBirdStatusFunc != nil {
+						go SendAutoBirdStatusFunc(false, 0)
+					}
 					return
-				case <-time.After(30 * time.Second):
-					continue // Retry loop
 				}
+
+				// We continue the outer loop, which will re-hit the !LoginStatus check.
+				// Since StoredCredentials are now present, it will enter the 'if' block above
+				// and call StartGameWithCredentials (or the frontend message handler already did).
+				continue
 			}
 
-			// Give it a moment to stabilize
-			time.Sleep(2 * time.Second)
 		}
 
 		// Clear previous cycle data
@@ -804,35 +825,40 @@ func reconcileOnStartup(ctx context.Context) (time.Duration, bool) {
 
 	// 3. Login to game and fetch GAM
 	if !LoginStatus {
-		StartGame()
+		if StoredCredentials.Username != "" && StoredCredentials.Password != "" {
+			log.Println("[AutoBird] Disconnected during reconciliation. Attempting to re-login...")
+			StartGameWithCredentials(StoredCredentials.Username, StoredCredentials.Password, StoredCredentials.Server)
 
-		// Wait for login
-		loginTimeout := time.After(45 * time.Second)
-		loginSuccess := false
-		for {
-			select {
-			case <-ctx.Done():
-				return 0, false
-			case <-loginTimeout:
-				break
-			case <-time.After(1 * time.Second):
-				if LoginStatus {
-					loginSuccess = true
+			// Wait for login
+			loginTimeout := time.After(45 * time.Second)
+			loginSuccess := false
+			for {
+				select {
+				case <-ctx.Done():
+					return 0, false
+				case <-loginTimeout:
+					break
+				case <-time.After(1 * time.Second):
+					if LoginStatus {
+						loginSuccess = true
+						break
+					}
+				}
+				if loginSuccess {
 					break
 				}
 			}
-			if loginSuccess {
-				break
-			}
-		}
 
-		if !loginSuccess {
-			// Login failed, rely on local expiry as fallback?
-			// Or just retry later. Let's return short sleep to retry.
-			log.Println("[AutoBird] Login failed during reconciliation. Retrying in 1 minute.")
-			return 1 * time.Minute, false
+			if !loginSuccess {
+				log.Println("[AutoBird] Login failed during reconciliation. Retrying in 1 minute.")
+				return 1 * time.Minute, false
+			}
+			time.Sleep(2 * time.Second)
+		} else {
+			log.Println("[AutoBird] Disconnected during reconciliation. Cannot relogin without credentials. Stopping.")
+			StopAutoBird()
+			return 0, false
 		}
-		time.Sleep(2 * time.Second)
 	}
 
 	// 4. Request GAM message

@@ -122,8 +122,8 @@ func ParseFrontendMessage(message []byte) {
 				return
 			}
 		}
-		// Fallback to legacy flow (no credentials)
-		GameWebsocket.StartGame()
+		log.Println("Error: Start Game requested without credentials. Credentials are now required.")
+		SendAlertMessage("red", "Login credentials required to start bot.")
 	case "stopGame":
 		GameWebsocket.StopGame()
 	case "fetchAllianceInfo":
@@ -674,5 +674,30 @@ func ParseFrontendMessage(message []byte) {
 
 		// Echo back for consistency (optional)
 		SendFrontendMessage("birdSettings", newSettings, "")
+
+	case "getServerList":
+		var serverNames []string
+		for name := range GameWebsocket.ServerURLMap {
+			serverNames = append(serverNames, name)
+		}
+		// Sort for consistent display
+		// Simple bubble sort or import sort not needed if we trust frontend to sort?
+		// Better to just send raw list and let frontend sort or sort here if we import "sort"
+		// Let's import "sort"
+		// Wait, I can't easily add import with replace_file_content if imports block is far away without reading file content fully or multiple blocks.
+		// I'll just send the list, Frontend can sort it.
+		SendFrontendMessage("serverList", serverNames, "")
+	case "updateCredentials":
+		if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
+			username, _ := payloadRaw["username"].(string)
+			password, _ := payloadRaw["password"].(string)
+			server, _ := payloadRaw["server"].(string)
+			if username != "" && password != "" {
+				log.Printf("Updating credentials for user: %s (AutoBird fallback)", username)
+				GameWebsocket.StoredCredentials.Username = username
+				GameWebsocket.StoredCredentials.Password = password
+				GameWebsocket.StoredCredentials.Server = server
+			}
+		}
 	}
 }

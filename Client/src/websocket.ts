@@ -211,6 +211,22 @@ class FrontendWebsocketService {
       payload: { downloadUrl }
     });
   }
+
+
+
+  public sendGetServerList() {
+    this.sendMessage({
+      type: 'getServerList'
+    });
+  }
+
+  public sendUpdateCredentials(credentials: object) {
+    this.sendMessage({
+      type: 'updateCredentials',
+      payload: credentials
+    });
+  }
 }
+
 
 export const FrontendWebsocket = new FrontendWebsocketService();

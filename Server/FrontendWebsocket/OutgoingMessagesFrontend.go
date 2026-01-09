@@ -371,3 +371,8 @@ func SendUpdateErrorMessage(errMsg string) {
 		"error": errMsg,
 	}, "")
 }
+
+// SendRequestCredentialsMessage sends a request for credentials to the frontend
+func SendRequestCredentialsMessage() {
+	SendFrontendMessage("requestCredentials", nil, "")
+}

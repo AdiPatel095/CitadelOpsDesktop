@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { SERVER_OPTIONS, DEFAULT_SERVER } from '../config/servers';
+import { FrontendWebsocket } from '../websocket';
 
 interface LoginCredentialsModalProps {
     isOpen: boolean;
@@ -20,14 +21,35 @@ const LoginCredentialsModal: React.FC<LoginCredentialsModalProps> = ({
     const [username, setUsername] = useState(initialUsername);
     const [password, setPassword] = useState('');
     const [server, setServer] = useState(initialServer);
+    const [serverList, setServerList] = useState<string[]>(Object.keys(SERVER_OPTIONS));
 
     useEffect(() => {
         if (isOpen) {
             setUsername(initialUsername);
             setPassword('');
             setServer(initialServer);
+
+            // Fetch server list
+            FrontendWebsocket.sendGetServerList();
         }
     }, [isOpen, initialUsername, initialServer]);
+
+    useEffect(() => {
+        const handleMessage = (message: any) => {
+            if (message.type === 'serverList') {
+                // Assert payload is string[]
+                const list = message.payload as string[];
+                if (list && list.length > 0) {
+                    // Sort alphabetically
+                    list.sort();
+                    setServerList(list);
+                }
+            }
+        };
+
+        FrontendWebsocket.addMessageListener(handleMessage);
+        return () => FrontendWebsocket.removeMessageListener(handleMessage);
+    }, []);
 
     const handleSave = () => {
         if (!username.trim() || !password.trim()) {
@@ -104,12 +126,13 @@ const LoginCredentialsModal: React.FC<LoginCredentialsModalProps> = ({
                             onChange={(e) => setServer(e.target.value)}
                             className="w-full px-4 py-2.5 rounded-global bg-bg-input border border-border-base focus:border-primary focus:outline-none text-text-main transition-all cursor-pointer"
                         >
-                            {Object.keys(SERVER_OPTIONS).map((displayName) => (
+                            {serverList.map((displayName) => (
                                 <option key={displayName} value={displayName}>
                                     {displayName}
                                 </option>
                             ))}
                         </select>
+
                     </div>
                 </div>
 

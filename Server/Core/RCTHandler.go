@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -28,120 +27,97 @@ type LoginData struct {
 	CreatedAt time.Time `json:"createdAt"` // Timestamp for expiration tracking
 }
 
-// getLoginFilePath returns the absolute path to the loginBytes file
-// relative to the executable directory
-func getLoginFilePath() string {
-	ex, err := os.Executable()
-	if err != nil {
-		// Fallback to current working directory if executable path fails
-		return loginFilename
-	}
-	return filepath.Join(filepath.Dir(ex), loginFilename)
-}
-
-// GetLoginBytes reads login information from loginFilename.
-// If the file does not exist or is expired, it calls getLoginBytes to create it by prompting the user to log in.
-func GetLoginBytes() [][]byte {
-	loginPath := getLoginFilePath()
-	needsRefresh := false
-
-	data, err := os.ReadFile(loginPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.Printf("'%s' not found. Starting login process to create it.", loginPath)
-			needsRefresh = true
-		} else {
-			log.Printf("Error reading '%s': %v", loginPath, err)
-			return nil
-		}
-	} else {
-		// File exists, check if it's expired
-		var storedLoginData LoginData
-		if err := json.Unmarshal(data, &storedLoginData); err != nil {
-			log.Printf("Error unmarshalling login data from '%s': %v. Refreshing credentials.", loginPath, err)
-			needsRefresh = true
-		} else if isLoginExpired(storedLoginData.CreatedAt) {
-			log.Printf("Login credentials have expired (older than %d hours). Refreshing...", loginExpirationHours)
-			// Delete the expired file
-			if err := os.Remove(loginPath); err != nil {
-				log.Printf("Warning: Could not delete expired login file: %v", err)
-			}
-			needsRefresh = true
-		} else {
-			// Valid and not expired
-			hoursRemaining := loginExpirationHours - int(time.Since(storedLoginData.CreatedAt).Hours())
-			log.Printf("Login credentials valid. Expires in approximately %d hours.", hoursRemaining)
-			return [][]byte{storedLoginData.Login, storedLoginData.Name, storedLoginData.Vck}
-		}
-	}
-
-	if needsRefresh {
-		loginBytesSlices := getLoginBytes()
-		if len(loginBytesSlices) < 3 {
-			log.Println("Failed to retrieve login bytes. Aborting.")
-			return nil
-		}
-
-		loginData := LoginData{
-			Login:     loginBytesSlices[0],
-			Name:      loginBytesSlices[1],
-			Vck:       loginBytesSlices[2],
-			CreatedAt: time.Now(), // Set the creation timestamp
-		}
-
-		data, err = json.Marshal(loginData)
-		if err != nil {
-			log.Printf("Error marshalling login data to JSON: %v", err)
-			return nil
-		}
-
-		if err := os.WriteFile(loginPath, data, 0600); err != nil {
-			log.Printf("Error writing to '%s': %v", loginPath, err)
-			return nil
-		}
-		log.Printf("Successfully created and wrote login data to '%s' (expires in %d hours)", loginPath, loginExpirationHours)
-
-		return [][]byte{loginData.Login, loginData.Name, loginData.Vck}
-	}
-
-	return nil
-}
-
 // isLoginExpired checks if the login credentials have expired based on the creation time.
 func isLoginExpired(createdAt time.Time) bool {
 	if createdAt.IsZero() {
-		// If no timestamp exists (legacy file), consider it expired
 		return true
 	}
 	expirationTime := createdAt.Add(time.Duration(loginExpirationHours) * time.Hour)
 	return time.Now().After(expirationTime)
 }
 
-// ServerURLMap maps frontend server display names to actual server identifiers
-// Used to construct the WebSocket URL dynamically
-var ServerURLMap = map[string]string{
-	"United States": "ep-live-us1-game",
-	"World: 2":      "ep-live-world2-game",
-	"World: 3":      "ep-live-world3-game",
-	"World: 4":      "ep-live-world4-game",
-	// Add more servers as needed
+// getLoginFilePath returns the absolute path to the loginBytes file
+// using the current working directory for consistency.
+func getLoginFilePath() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Printf("[DEBUG] Failed to get working directory: %v. Using relative path.", err)
+		return loginFilename
+	}
+	path := filepath.Join(wd, loginFilename)
+	return path
 }
 
-// GetLoginBytesWithCredentials automates the login process using provided credentials.
-// It uses ChromeDP to:
-// 1. Navigate to the login page
-// 2. Click the login button to open the login form
-// 3. Fill in username and password
-// 4. Click submit
-// 5. Capture WebSocket login bytes
-func GetLoginBytesWithCredentials(username, password, server string) [][]byte {
+// LoadCachedLoginData retrieves and validates stored login data.
+// Returns nil if the file is missing, invalid, or expired.
+func LoadCachedLoginData() *LoginData {
+	loginPath := getLoginFilePath()
+
+	data, err := os.ReadFile(loginPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Printf("[DEBUG] Error reading '%s': %v", loginPath, err)
+		} else {
+		}
+		return nil
+	}
+
+	var storedLoginData LoginData
+	if err := json.Unmarshal(data, &storedLoginData); err != nil {
+		log.Printf("[DEBUG] Error unmarshalling login data from '%s': %v", loginPath, err)
+		return nil
+	}
+
+	if isLoginExpired(storedLoginData.CreatedAt) {
+		log.Printf("[DEBUG] Login credentials have expired (older than %d hours).", loginExpirationHours)
+		// Delete the expired file
+		if err := os.Remove(loginPath); err != nil {
+			log.Printf("[DEBUG] Warning: Could not delete expired login file: %v", err)
+		}
+		return nil
+	}
+
+	return &storedLoginData
+}
+
+// GetCachedLoginBytes returns the login bytes from the cache if available and valid.
+// Returns nil if no valid cache exists.
+func GetCachedLoginBytes() [][]byte {
+	cached := LoadCachedLoginData()
+	if cached != nil {
+		hoursRemaining := loginExpirationHours - int(time.Since(cached.CreatedAt).Hours())
+		log.Printf("[DEBUG] Login credentials valid. Expires in approximately %d hours.", hoursRemaining)
+		return [][]byte{cached.Login, cached.Name, cached.Vck}
+	}
+	return nil
+}
+
+// GetLoginBytesWithCredentials is the main entry point.
+// It tries to load from cache first. If that fails or mismatches, it triggers AutomatedLogin.
+func GetLoginBytesWithCredentials(username, password, serverName, serverID string) [][]byte {
+	// 1. Try to use cached credentials first
+	cached := LoadCachedLoginData()
+	if cached != nil {
+		// Verify if the cached credentials belong to the same user
+		_, cachedName := processLoginBytes(cached.Login)
+		if cachedName != "" && cachedName == username {
+			return [][]byte{cached.Login, cached.Name, cached.Vck}
+		} else {
+			log.Printf("[DEBUG] Cached credentials (user: '%s') do not match requested user '%s'. Proceeding with new login.", cachedName, username)
+		}
+	} else {
+	}
+
+	return AutomatedLogin(username, password, serverName, serverID)
+}
+
+// AutomatedLogin performs the browser automation to log in and retrieve the RCT/Login bytes.
+func AutomatedLogin(username, password, serverName, serverID string) [][]byte {
 	// Determine the game server URL based on the server parameter
-	serverID := ServerURLMap[server]
 	if serverID == "" {
 		serverID = "ep-live-us1-game" // Default to US1
 	}
 	expectedWSURL := serverID + ".goodgamestudios.com"
-	log.Printf("Using server: %s (%s)", server, expectedWSURL)
 
 	// URL to navigate to for login
 	const loginURL = "https://empire.goodgamestudios.com/"
@@ -164,13 +140,6 @@ func GetLoginBytesWithCredentials(username, password, server string) [][]byte {
 	// Set a timeout for the entire login process
 	taskCtx, cancel = context.WithTimeout(taskCtx, 2*time.Minute)
 	defer cancel()
-
-	// Prompt in console for visibility
-	fmt.Println("\n=================================================================")
-	fmt.Println("AUTOMATED LOGIN: Using saved credentials...")
-	fmt.Printf("Username: %s\n", username)
-	fmt.Printf("Server: %s\n", server)
-	fmt.Println("=================================================================")
 
 	// Channel to signal when the RCT is found
 	byteChan := make(chan [][]byte, 1)
@@ -203,30 +172,42 @@ func GetLoginBytesWithCredentials(username, password, server string) [][]byte {
 				}
 
 				if loginSuccess {
-					finalSendBytes := make([][]byte, 0, 3)
+					var loginByte, nameByte, vckByte []byte
 					var accountNameOnSuccessLogin string
+
+					// First pass: Find login bytes to extract account name
 					for _, data := range loginSendBytes {
-						if loginByte, accountString := processLoginBytes(data); loginByte != nil {
-							accountNameOnSuccessLogin = accountString
-							finalSendBytes = append(finalSendBytes, loginByte)
-						}
-						if nameByte := processNameBytes(data, accountNameOnSuccessLogin); nameByte != nil {
-							finalSendBytes = append(finalSendBytes, nameByte)
-						}
-						if vckByte := processVckBytes(data); vckByte != nil {
-							finalSendBytes = append(finalSendBytes, vckByte)
+						if lByte, accName := processLoginBytes(data); lByte != nil {
+							loginByte = lByte
+							accountNameOnSuccessLogin = accName
+							break
 						}
 					}
-					byteChan <- finalSendBytes
-					cancel()
-					close(byteChan)
+
+					// Second pass: Find name and vck bytes
+					for _, data := range loginSendBytes {
+						if nByte := processNameBytes(data, accountNameOnSuccessLogin); nByte != nil {
+							nameByte = nByte
+						}
+						if vByte := processVckBytes(data); vByte != nil {
+							vckByte = vByte
+						}
+					}
+
+					// Ensure all parts are found
+					if loginByte != nil && nameByte != nil && vckByte != nil {
+						// Return in strict order: Login, Name, Vck
+						finalSendBytes := [][]byte{loginByte, nameByte, vckByte}
+						byteChan <- finalSendBytes
+						cancel()
+						close(byteChan)
+					}
 				}
 			}
 		}
 	})
 
 	// Run the automation
-	log.Printf("Opening browser and navigating to %s...", loginURL)
 	err := chromedp.Run(taskCtx,
 		chromedp.EmulateViewport(1280, 633),
 		// Navigate to the login page
@@ -234,51 +215,65 @@ func GetLoginBytesWithCredentials(username, password, server string) [][]byte {
 		// Wait for page to load - waiting for a longer time to ensure assets are ready
 		chromedp.Sleep(5*time.Second),
 
+		// Pre-Selection: Select English(US) to ensure mapping works
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.MouseClickXY(800, 60).Do(ctx)
+		}),
+		chromedp.Sleep(500*time.Millisecond),
+
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.MouseClickXY(800, 105).Do(ctx)
+		}),
+		chromedp.Sleep(500*time.Millisecond),
+
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return input.InsertText("English (US)").Do(ctx)
+		}),
+		chromedp.Sleep(500*time.Millisecond),
+
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return chromedp.MouseClickXY(800, 130).Do(ctx)
+		}),
+		chromedp.Sleep(1*time.Second),
+
 		// 0a. Click World Selector dropdown
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			log.Println("Clicking World Selector dropdown...")
 			return chromedp.MouseClickXY(1100, 60).Do(ctx)
 		}),
 		chromedp.Sleep(1*time.Second),
 
 		// 0b. Click the search box
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			log.Println("Clicking World search box...")
 			return chromedp.MouseClickXY(1100, 105).Do(ctx)
 		}),
 		chromedp.Sleep(500*time.Millisecond),
 
 		// 0c. Type the world name (server parameter contains full name like "United States, World: 1")
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			log.Printf("Typing world name: %s...", server)
-			return input.InsertText(server).Do(ctx)
+			return input.InsertText(serverName).Do(ctx) // Keeping this simple for now, but flagging risk.
 		}),
 		chromedp.Sleep(1*time.Second),
 
 		// 0d. Click the first search result to select the world
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			log.Println("Selecting first search result...")
 			return chromedp.MouseClickXY(1100, 130).Do(ctx)
 		}),
 		chromedp.Sleep(1*time.Second),
 
 		// 1. Click "Log in!" button (to open form)
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			log.Println("Clicking 'Log in!' button...")
 			return chromedp.MouseClickXY(640, 570).Do(ctx)
 		}),
 		chromedp.Sleep(1*time.Second),
 
 		// 2. Click Username field
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			log.Println("Clicking Username field...")
 			return chromedp.MouseClickXY(640, 270).Do(ctx)
 		}),
 		chromedp.Sleep(500*time.Millisecond),
 
 		// 3. Type Username
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			log.Printf("Typing username: %s...", username)
 			// Clear fields might be needed? assuming empty start or overwrite
 			return input.InsertText(username).Do(ctx)
 		}),
@@ -286,21 +281,18 @@ func GetLoginBytesWithCredentials(username, password, server string) [][]byte {
 
 		// 4. Click Password field
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			log.Println("Clicking Password field...")
 			return chromedp.MouseClickXY(640, 350).Do(ctx)
 		}),
 		chromedp.Sleep(500*time.Millisecond),
 
 		// 5. Type Password
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			log.Println("Typing password...")
 			return input.InsertText(password).Do(ctx)
 		}),
 		chromedp.Sleep(500*time.Millisecond),
 
 		// 6. Click "Log in" submit button
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			log.Println("Clicking Submit button...")
 			return chromedp.MouseClickXY(640, 460).Do(ctx)
 		}),
 
@@ -321,7 +313,6 @@ func GetLoginBytesWithCredentials(username, password, server string) [][]byte {
 	select {
 	case returnBytes := <-byteChan:
 		if len(returnBytes) >= 3 {
-			log.Println("Automated login successful! Credential bytes captured.")
 			// Save to file for future use
 			saveLoginBytesToFile(returnBytes)
 			return returnBytes
@@ -347,128 +338,15 @@ func saveLoginBytesToFile(loginBytesSlices [][]byte) {
 
 	data, err := json.Marshal(loginData)
 	if err != nil {
-		log.Printf("Error marshalling login data to JSON: %v", err)
+		log.Printf("[DEBUG] Error marshalling login data to JSON: %v", err)
 		return
 	}
 
 	if err := os.WriteFile(loginPath, data, 0600); err != nil {
-		log.Printf("Error writing to '%s': %v", loginPath, err)
+		log.Printf("[DEBUG] Error writing to '%s': %v", loginPath, err)
 		return
 	}
-	log.Printf("Saved login credentials to '%s' (expires in %d hours)", loginPath, loginExpirationHours)
-}
-
-// getLoginBytes launches a visible browser for the user to log in and retrieve an RCT.
-// It prompts the user to paste the RCT into the console.
-func getLoginBytes() [][]byte {
-	// URL to navigate to for login.
-	// IMPORTANT: Change this to the actual login URL.
-	const loginURL = "https://empire.goodgamestudios.com/"
-
-	// Set up chromedp options for a visible browser with a debugging port.
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false),
-		chromedp.Flag("remote-debugging-port", "9222"),
-		chromedp.Flag("start-maximized", true),
-	)
-
-	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	defer cancel()
-
-	// Create a new browser context
-	taskCtx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
-	defer cancel()
-
-	// Prompt the user in the console to perform the login
-	fmt.Println("\n=================================================================")
-	fmt.Println("ACTION REQUIRED: A browser window has been opened.")
-	fmt.Println("1. Please log in to your account.")
-	fmt.Println("2. Wait for Citadel to process some data.")
-	fmt.Println("   The application will automatically detect the login.")
-	fmt.Println("=================================================================")
-
-	// Channel to signal when the RCT is found
-	byteChan := make(chan [][]byte, 1)
-	// Slices to hold message data, scoped to be accessible by the listener
-	var loginSendBytes [][]byte
-	var _ [][]string
-	var requestID network.RequestID
-
-	chromedp.ListenTarget(taskCtx, func(ev interface{}) {
-		switch e := ev.(type) {
-		case *network.EventWebSocketCreated:
-			if strings.Contains(e.URL, "ep-live-us1-game.goodgamestudios.com") {
-				log.Println("Game WebSocket connection detected.")
-				requestID = e.RequestID
-			}
-		case *network.EventWebSocketFrameSent:
-			if requestID != "" && e.RequestID == requestID {
-				loginSendBytes = append(loginSendBytes, processSentFrame(e.Response))
-			}
-		case *network.EventWebSocketFrameReceived:
-			if requestID != "" && e.RequestID == requestID {
-
-				lliRes := processReceivedFrame(e.Response)
-				loginSuccess, cooldown := checkForLogin(lliRes)
-
-				if cooldown == 9999 {
-					log.Printf("User password incorrect, please try again.")
-				} else if cooldown == 9998 {
-					log.Printf("Unknown login error.")
-				} else if cooldown > 0 {
-					log.Printf("Cooldown for login: %d seconds. Please wait and try again.", cooldown)
-				}
-
-				if loginSuccess {
-					finalSendBytes := make([][]byte, 0, 2)
-					var accountNameOnSuccessLogin string
-					for _, data := range loginSendBytes {
-						if loginByte, accountString := processLoginBytes(data); loginByte != nil {
-							accountNameOnSuccessLogin = accountString
-							finalSendBytes = append(finalSendBytes, loginByte)
-						}
-						if nameByte := processNameBytes(data, accountNameOnSuccessLogin); nameByte != nil {
-							finalSendBytes = append(finalSendBytes, nameByte)
-						}
-						if vckByte := processVckBytes(data); vckByte != nil {
-							finalSendBytes = append(finalSendBytes, vckByte)
-						}
-					}
-					byteChan <- finalSendBytes
-					cancel()
-					close(byteChan)
-				}
-			}
-		}
-	})
-
-	// Run the navigation task and block until a value is received on byteChan
-	// or the context is cancelled by our listener (or a timeout).
-	log.Printf("Opening browser and navigating to %s...", loginURL)
-	err := chromedp.Run(taskCtx,
-		chromedp.Navigate(loginURL),
-		// This action will block until the context is canceled.
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-		}),
-	)
-
-	if err != nil && err != context.Canceled {
-		log.Printf("Chromedp error: %v", err)
-	}
-
-	// Read the RCT from the channel. This will have a value if the login was successful.
-	select {
-	case returnBytes := <-byteChan:
-		log.Println("RCT has been successfully retrieved. Browser closed.")
-		return returnBytes
-	default:
-		log.Println("Browser was closed before RCT could be retrieved.")
-		return nil // Return empty if no RCT was found
-	}
+	log.Printf("[DEBUG] Saved login credentials to '%s' (expires in %d hours)", loginPath, loginExpirationHours)
 }
 
 func processSentFrame(resp *network.WebSocketFrame) []byte {

@@ -115,6 +115,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('Update error:', message.payload);
         setUpdateProgress(null);
         setIsUpdating(false);
+      } else if (message.type === 'requestCredentials') {
+        console.log('Backend requested credentials. Sending...');
+        // Use stored credentials directly
+        const storedPassword = localStorage.getItem('citadel_password');
+        const storedUsername = localStorage.getItem('citadel_username');
+        const storedServer = localStorage.getItem('citadel_server') || 'United States';
+
+        if (storedUsername && storedPassword) {
+          FrontendWebsocket.sendUpdateCredentials({
+            username: storedUsername,
+            password: storedPassword,
+            server: storedServer
+          });
+        }
       }
     };
 

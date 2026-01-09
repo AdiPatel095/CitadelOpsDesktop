@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { FrontendWebsocket } from '../websocket';
 
 interface HeaderProps {
   onOpenLoginModal: () => void;
@@ -126,6 +127,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenLoginModal }) => {
 
         {/* Right: Change Login Button */}
         <div className="flex items-center gap-3">
+
           <button
             onClick={() => setShowConfirm(true)}
             className="px-3 py-1.5 rounded-global bg-bg-app border border-border-base hover:border-yellow-500/50 hover:bg-yellow-500/10 text-text-muted hover:text-yellow-500 text-[10px] font-medium transition-all uppercase tracking-wider flex items-center gap-1.5"
