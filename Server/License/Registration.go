@@ -16,8 +16,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const hardwareFile = "hardwareID.txt"
@@ -124,13 +122,12 @@ func findAvailablePort() (int, error) {
 	return addr.Port, nil
 }
 
-// generateHardwareID creates a new hardware ID combining machine fingerprint, instance UUID, and port
+// generateHardwareID creates a new hardware ID combining machine fingerprint and port
 func generateHardwareID() (string, error) {
 	fingerprint, err := getMachineFingerprint()
 	if err != nil {
 		return "", err
 	}
-	instanceID := uuid.New().String()
 
 	// Find an available port
 	port, err := findAvailablePort()
@@ -139,8 +136,8 @@ func generateHardwareID() (string, error) {
 	}
 
 	// Use pipe as separator because MAC addresses contain colons
-	// Format: MacAddress|LicenseUUID|Port
-	return fmt.Sprintf("%s|%s|%d", fingerprint, instanceID, port), nil
+	// Format: MacAddress|Port
+	return fmt.Sprintf("%s|%d", fingerprint, port), nil
 }
 
 // generateHardwareIDWithPort creates a new hardware ID using a specified port
@@ -149,28 +146,34 @@ func generateHardwareIDWithPort(port int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	instanceID := uuid.New().String()
 
 	// Use pipe as separator because MAC addresses contain colons
-	// Format: MacAddress|LicenseUUID|Port
-	return fmt.Sprintf("%s|%s|%d", fingerprint, instanceID, port), nil
+	// Format: MacAddress|Port
+	return fmt.Sprintf("%s|%d", fingerprint, port), nil
 }
 
-// parseHardwareID splits a hardware ID into machine fingerprint, instance UUID, and port
+// parseHardwareID splits a hardware ID into machine fingerprint and port
+// Returns fingerprint, empty string (for legacy compatibility), port, and validity
 func parseHardwareID(id string) (fingerprint, instanceID string, port int, valid bool) {
-	// Split on pipe - expect 3 parts: MacAddress|LicenseUUID|Port
 	parts := strings.Split(id, "|")
+
+	// New format: 2 parts - MacAddress|Port
+	if len(parts) == 2 {
+		parsedPort, err := strconv.Atoi(parts[1])
+		if err != nil {
+			// Legacy 2-part format without port (MacAddress|UUID) - needs port regeneration
+			return parts[0], parts[1], 0, true
+		}
+		return parts[0], "", parsedPort, true
+	}
+
+	// Legacy format: 3 parts - MacAddress|LicenseUUID|Port
 	if len(parts) == 3 {
 		parsedPort, err := strconv.Atoi(parts[2])
 		if err != nil {
 			return "", "", 0, false
 		}
 		return parts[0], parts[1], parsedPort, true
-	}
-
-	// Legacy format with 2 parts (no port) - still valid but needs port regeneration
-	if len(parts) == 2 {
-		return parts[0], parts[1], 0, true
 	}
 
 	return "", "", 0, false
