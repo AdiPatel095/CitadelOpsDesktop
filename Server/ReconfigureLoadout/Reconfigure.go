@@ -4,6 +4,7 @@ import (
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/Models"
+	"log"
 	"time"
 )
 
@@ -11,6 +12,7 @@ import (
 // It filters equipment, heroes, and gems for Commander type before calling the shared optimizer
 // Returns the result and an error string (empty if successful)
 func ReconfigureCommander(payload ReconfigurePayload) (Models.CommStatModel, string) {
+	log.Println("[Reconfigure] Starting Commander reconfiguration")
 	// 1. Refresh game state
 	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
@@ -50,9 +52,11 @@ func ReconfigureCommander(payload ReconfigurePayload) (Models.CommStatModel, str
 	}
 
 	// 7. Run shared optimizer
+	log.Printf("[Reconfigure] Running optimizer for Commander with %d equipment, %d heroes, %d gems", len(equipment), len(heroes), len(gems))
 	result := Optimize(input)
 
 	// 8. Convert result to CommStatModel
+	log.Println("[Reconfigure] Commander reconfiguration optimization successful")
 	return BuildCommStatModel(result, equipment, heroes, gems), ""
 }
 
@@ -126,6 +130,7 @@ func BuildCommStatModel(result OptimizationResult, equipment []Models.EquipmentM
 // It filters equipment, heroes, and gems for Castellan type before calling the shared optimizer
 // Returns the result and an error string (empty if successful)
 func ReconfigureCastellan(payload ReconfigurePayload) (Models.CastStatModel, string) {
+	log.Println("[Reconfigure] Starting Castellan reconfiguration")
 	// 1. Refresh game state
 	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
@@ -165,9 +170,11 @@ func ReconfigureCastellan(payload ReconfigurePayload) (Models.CastStatModel, str
 	}
 
 	// 7. Run shared optimizer
+	log.Printf("[Reconfigure] Running optimizer for Castellan with %d equipment, %d heroes, %d gems", len(equipment), len(heroes), len(gems))
 	result := Optimize(input)
 
 	// 8. Convert result to CastStatModel
+	log.Println("[Reconfigure] Castellan reconfiguration optimization successful")
 	return BuildCastStatModel(result, equipment, heroes, gems), ""
 }
 

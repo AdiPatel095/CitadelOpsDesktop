@@ -1,7 +1,10 @@
 package GameWebsocket
 
 import (
+	"CitadelDesktop/Server/ResponseRegistry"
 	"fmt"
+	"log"
+	"time"
 )
 
 // EquipEquipment equips an item to a commander or castellan
@@ -23,7 +26,24 @@ func EquipEquipment(equipmentMode string, targetIndex int, slotNumber int, equip
 	// Game message format: %xt%EmpireEx_21%eeq%1%{"EID":equipmentId,"LID":leaderId,"E":1}%
 	// E:1 means equip
 	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%eeq%%1%%{"EID":%.0f,"LID":%.0f,"E":1}%%`, equipmentId, lidValue)
+	// Register waiter for response before sending
+	waiter := ResponseRegistry.Global.RegisterWaiter("eeq", 5*time.Second)
+	defer waiter.Cleanup()
+
 	OutgoingMessages <- []byte(payload)
+
+	// Wait for response and log
+	response, err := waiter.WaitWithTimeout()
+	if err != nil {
+		log.Printf("[Equip] Timeout waiting for response")
+		return false
+	}
+
+	log.Printf("[Equip] Game Message: %v", response)
+
+	if len(response) > 4 && response[4] != "0" {
+		return false
+	}
 	return true
 }
 
@@ -45,6 +65,23 @@ func EquipGem(equipmentMode string, targetIndex int, equipmentId float64, gemId 
 
 	// Game message format: %xt%EmpireEx_21%bge%1%{"GID":gemId,"EID":equipmentId,"LID":leaderId,"M":0,"RGEM":1}%
 	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%bge%%1%%{"GID":%.0f,"EID":%.0f,"LID":%.0f,"M":0,"RGEM":1}%%`, gemId, equipmentId, lidValue)
+	// Register waiter for response before sending
+	waiter := ResponseRegistry.Global.RegisterWaiter("bge", 5*time.Second)
+	defer waiter.Cleanup()
+
 	OutgoingMessages <- []byte(payload)
+
+	// Wait for response and log
+	response, err := waiter.WaitWithTimeout()
+	if err != nil {
+		log.Printf("[EquipGem] Timeout waiting for response")
+		return false
+	}
+
+	log.Printf("[EquipGem] Game Message: %v", response)
+
+	if len(response) > 4 && response[4] != "0" {
+		return false
+	}
 	return true
 }

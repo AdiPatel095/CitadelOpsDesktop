@@ -2,6 +2,7 @@ package ReconfigureLoadout
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"sync"
 
@@ -145,8 +146,10 @@ func SeparateEquipmentBySlot(equipment []Models.EquipmentModel) (
 // It takes OptimizerInput and returns an OptimizationResult with the best loadout
 func Optimize(input OptimizerInput) OptimizationResult {
 
+	log.Println("[Optimizer] Starting optimization process...")
 	// Step 1: Prepare priority data structures
 	prepared := PreparePriority(input.Payload)
+	log.Printf("[Optimizer] Prepared priorities. Target Mode: %s, Combat Mode: %s", input.Payload.EquipmentMode, input.Payload.CombatMode)
 
 	// Step 1.5: Select Best Hero Independently
 	// We pick the best hero purely based on score. Hero stats do not interact with
@@ -166,6 +169,7 @@ func Optimize(input OptimizerInput) OptimizationResult {
 
 	// Step 2: Separate equipment by slot
 	slot1, slot2, slot3, slot4, slotOrder := SeparateEquipmentBySlot(input.Equipment)
+	log.Printf("[Optimizer] Separated equipment. Slot distribution: 1:%d, 2:%d, 3:%d, 4:%d. Order: %v", len(slot1), len(slot2), len(slot3), len(slot4), slotOrder)
 
 	// Step 3: Score and select top 10 candidates from the first slot (smallest)
 	// Only process the first slot in slotOrder - it has the fewest items
@@ -183,6 +187,7 @@ func Optimize(input OptimizerInput) OptimizationResult {
 	}
 
 	topCandidates := SelectTopEquipment(firstSlotEquipment, prepared)
+	log.Printf("[Optimizer] Selected top %d candidates from first slot", len(topCandidates))
 
 	// Step 4: For each candidate, spawn a goroutine to continue optimization
 	// Each goroutine gets a copy of the bitmask updated with its candidate's stats
@@ -202,6 +207,7 @@ func Optimize(input OptimizerInput) OptimizationResult {
 
 	for i, candidate := range topCandidates {
 		go func(branchIndex int, selectedEquip Models.EquipmentModel) {
+			log.Printf("[Optimizer] Starting branch %d with root equipment ID %f", branchIndex, selectedEquip.ID)
 			defer wg.Done()
 
 			// Create bitmask with ONLY Tier2 stat IDs initialized to false
@@ -288,6 +294,7 @@ func Optimize(input OptimizerInput) OptimizationResult {
 
 			// Fallback: If pruning removed all items, use unpruned inventory (dedup only)
 			if len(prunedSlot2) == 0 && len(secondSlotInventory) > 0 {
+				log.Printf("[Optimizer] Branch %d: Pruning removed all slot 2 items. Falling back to deduplicated full inventory.", branchIndex)
 				prunedSlot2 = deduplicateInventory(secondSlotInventory, prepared)
 			}
 
@@ -331,6 +338,7 @@ func Optimize(input OptimizerInput) OptimizationResult {
 
 				// Fallback: If pruning removed all items, use unpruned inventory (dedup only)
 				if len(prunedSlot3) == 0 && len(*slots[thirdSlotNum]) > 0 {
+					log.Printf("[Optimizer] Branch %d: Pruning removed all slot 3 items. Falling back to deduplicated full inventory.", branchIndex)
 					prunedSlot3 = deduplicateInventory(*slots[thirdSlotNum], prepared)
 				}
 
@@ -469,6 +477,7 @@ func Optimize(input OptimizerInput) OptimizationResult {
 	}
 
 	wg.Wait()
+	log.Println("[Optimizer] All branches completed. Evaluating final best result.")
 
 	// Select best result from branchResults
 	var finalBest OptimizationResult
@@ -485,7 +494,9 @@ func Optimize(input OptimizerInput) OptimizationResult {
 	finalBest.Hero = bestHeroID
 
 	// Step 6: Optimize Gems
+	log.Println("[Optimizer] Optimizing gems...")
 	OptimizeGems(&finalBest, input, prepared)
+	log.Printf("[Optimizer] Optimization complete. Final Score: %f. Result Equip: %f, %f, %f, %f. Hero: %f", finalBest.Score, finalBest.Equip1, finalBest.Equip2, finalBest.Equip3, finalBest.Equip4, finalBest.Hero)
 
 	return finalBest
 }
@@ -545,6 +556,7 @@ func CapAwareOptimization(candidate *OptimizationResult, slots map[int]*[]Models
 	// If we don't have exactly 3 variable slots + 1 fixed, something is unusual but we proceed with what we have.
 	// Logic assumes 4 slots total.
 	if len(variableSlots) != 3 {
+		log.Printf("[Optimizer] Branch %d: Exiting candidate optimization prematurely. Expected 3 variable slots, got %d", branchPiece.ID, len(variableSlots))
 		return // Should not happen in standard 4-slot optimization
 	}
 

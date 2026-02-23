@@ -4,6 +4,7 @@ import (
 	"CitadelDesktop/Server/FrontendWebsocket"
 	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/License"
+	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Version"
 	"embed"
 	"fmt"
@@ -17,6 +18,12 @@ import (
 var frontendAssets embed.FS
 
 func main() {
+	// Initialize custom file logger (pipes to both stdout and file)
+	if err := Logging.InitLogger(); err != nil {
+		log.Printf("Warning: Failed to initialize file logger: %v", err)
+	}
+	defer Logging.CloseLogger()
+
 	// Clean up old binary from previous update (if exists)
 	Version.CleanupOldBinary()
 

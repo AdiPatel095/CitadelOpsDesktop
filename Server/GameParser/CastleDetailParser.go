@@ -2,7 +2,12 @@ package GameParser
 
 import (
 	"CitadelDesktop/Server/Models"
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"time"
 )
 
 // Constants for magic strings and indices to improve readability and maintainability.
@@ -59,6 +64,8 @@ func parseGCL(gcl map[string]interface{}) error {
 
 	// Clear previous player castle locations
 	gs.Alliance.PlayerCastleLocations = nil
+
+	log.Println("[CastleParser] Starting to parse GCL data...")
 
 	kingdomArray, ok := gcl[keyKingdoms].([]interface{})
 	if !ok {
@@ -120,6 +127,9 @@ func parseGCL(gcl map[string]interface{}) error {
 		}
 	}
 
+	// Save debug data to file
+	saveDebugData(gcl, gs.Alliance.PlayerCastleLocations)
+
 	return nil
 }
 
@@ -127,14 +137,18 @@ func parseGCL(gcl map[string]interface{}) error {
 // Also stores player castle locations for AutoBird feature.
 func parseCastles(castleArray []interface{}, updaters []func(id float64, name string), kingdomID int) {
 	gs := Models.GetGameState()
+	log.Printf("[CastleParser] Processing %d castles for KingdomID %d", len(castleArray), kingdomID)
 	for i, castle := range castleArray {
 		if i >= len(updaters) {
+			log.Printf("[CastleParser] No more updaters for castle index %d in KingdomID %d", i, kingdomID)
 			break // No more updaters defined for the remaining castles
 		}
 		id, name, x, y, ok := extractCastleDetails(castle, i)
+		log.Printf("[CastleParser] Castle %d: ID=%.0f, Name=%s, X=%d, Y=%d, OK=%v", i, id, name, x, y, ok)
 		if ok {
 			updaters[i](id, name)
 			// Store player castle location for AutoBird
+			log.Printf("[CastleParser] Checking coords: X=%d, Y=%d, condition (x > 0 && y > 0) = %v", x, y, x > 0 && y > 0)
 			if x > 0 && y > 0 {
 				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
 					KingdomID: kingdomID,
@@ -142,6 +156,9 @@ func parseCastles(castleArray []interface{}, updaters []func(id float64, name st
 					X:         x,
 					Y:         y,
 				})
+				log.Printf("[CastleParser] ✓ Added castle %s (ID: %.0f) to PlayerCastleLocations for KingdomID %d", name, id, kingdomID)
+			} else {
+				log.Printf("[CastleParser] ✗ SKIPPED castle %s (ID: %.0f) - coords X=%d, Y=%d failed check", name, id, x, y)
 			}
 		}
 	}
@@ -151,11 +168,14 @@ func parseCastles(castleArray []interface{}, updaters []func(id float64, name st
 // Also stores player castle location for AutoBird feature.
 func parseSingleCastle(castleArray []interface{}, updater func(id float64, name string), kingdomID int) {
 	gs := Models.GetGameState()
+	log.Printf("[CastleParser] Processing single castle for KingdomID %d", kingdomID)
 	if len(castleArray) > 0 {
 		id, name, x, y, ok := extractCastleDetails(castleArray[0], 0)
+		log.Printf("[CastleParser] Single Castle: ID=%.0f, Name=%s, X=%d, Y=%d, OK=%v", id, name, x, y, ok)
 		if ok {
 			updater(id, name)
 			// Store player castle location for AutoBird
+			log.Printf("[CastleParser] Checking coords: X=%d, Y=%d, condition (x > 0 && y > 0) = %v", x, y, x > 0 && y > 0)
 			if x > 0 && y > 0 {
 				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
 					KingdomID: kingdomID,
@@ -163,6 +183,9 @@ func parseSingleCastle(castleArray []interface{}, updater func(id float64, name 
 					X:         x,
 					Y:         y,
 				})
+				log.Printf("[CastleParser] ✓ Added castle %s (ID: %.0f) to PlayerCastleLocations for KingdomID %d", name, id, kingdomID)
+			} else {
+				log.Printf("[CastleParser] ✗ SKIPPED castle %s (ID: %.0f) - coords X=%d, Y=%d failed check", name, id, x, y)
 			}
 		}
 	}
@@ -375,4 +398,45 @@ func parseCastleResources(castleMap map[string]interface{}, amount *Models.Castl
 	storage.HoneyMax = getGpaFloat(prefixStorage + keyH)
 	storage.MeadMax = getGpaFloat(prefixStorage + keyM)
 	storage.BeefMax = getGpaFloat(prefixStorage + keyB)
+}
+
+// saveDebugData saves the raw GCL data and parsed castle locations to a debug file
+func saveDebugData(rawGCL map[string]interface{}, parsedLocations []Models.PlayerCastleLocation) {
+	// Get user home directory for saving debug file
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Printf("[CastleParser] Failed to get home directory: %v", err)
+		return
+	}
+
+	debugDir := filepath.Join(homeDir, ".citadel_debug")
+	if err := os.MkdirAll(debugDir, 0755); err != nil {
+		log.Printf("[CastleParser] Failed to create debug directory: %v", err)
+		return
+	}
+
+	debugData := map[string]interface{}{
+		"timestamp":               time.Now().Format(time.RFC3339),
+		"raw_gcl_data":            rawGCL,
+		"parsed_castle_locations": parsedLocations,
+		"total_castles_parsed":    len(parsedLocations),
+	}
+
+	jsonData, err := json.MarshalIndent(debugData, "", "  ")
+	if err != nil {
+		log.Printf("[CastleParser] Failed to marshal debug data: %v", err)
+		return
+	}
+
+	debugFile := filepath.Join(debugDir, "castle_parser_debug.json")
+	if err := os.WriteFile(debugFile, jsonData, 0644); err != nil {
+		log.Printf("[CastleParser] Failed to write debug file: %v", err)
+		return
+	}
+
+	log.Printf("[CastleParser] Debug data saved to %s", debugFile)
+	log.Printf("[CastleParser] Total castles added to PlayerCastleLocations: %d", len(parsedLocations))
+	for i, loc := range parsedLocations {
+		log.Printf("[CastleParser]   [%d] KingdomID=%d, CastleID=%d, X=%d, Y=%d", i, loc.KingdomID, loc.CastleID, loc.X, loc.Y)
+	}
 }

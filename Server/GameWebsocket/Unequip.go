@@ -31,6 +31,9 @@ func parseUnequipResponse(response []string, operationName string) UnequipResult
 	}
 
 	code := response[4]
+	if code != UnequipCodeSuccess {
+		log.Printf("[Unequip] %s failed with code %s. Full response: %v", operationName, code, response)
+	}
 	switch code {
 	case UnequipCodeSuccess:
 		return UnequipResult{Success: true, Code: code, Message: "Success"}

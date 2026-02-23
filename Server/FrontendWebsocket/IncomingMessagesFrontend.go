@@ -332,6 +332,7 @@ func ParseFrontendMessage(message []byte) {
 			SendAlertMessage("green", "Starting reconfiguration...")
 
 			// --- Step 1: Unequip Target Commander (all 5 slots) ---
+			log.Printf("[Reconfigure] Step 1: Unequipping target %s at index %d", equipmentMode, targetIndex)
 			slotsToClear := []int{1, 2, 3, 4, 6}
 			for _, slot := range slotsToClear {
 				var equipID float64
@@ -348,12 +349,14 @@ func ParseFrontendMessage(message []byte) {
 					equipID = current.Hero
 				}
 				if equipID != 0 {
+					log.Printf("[Reconfigure] Unequipping slot %d (equipID: %f)", slot, equipID)
 					GameWebsocket.UnequipEquipmentRaw(equipmentMode, targetIndex, equipID)
 					time.Sleep(500 * time.Millisecond)
 				}
 			}
 
 			// --- Step 2: Clean Gems ---
+			log.Printf("[Reconfigure] Step 2: Cleaning target gems from storage equipment")
 			// Check if any target gems are socketted in storage equipment
 			targetGems := []float64{newLoadout.Gem1, newLoadout.Gem2, newLoadout.Gem3, newLoadout.Gem4}
 			targetGemMap := make(map[float64]bool)
@@ -368,6 +371,7 @@ func ParseFrontendMessage(message []byte) {
 					if eq.GemSlot.Gem != nil {
 						gemID := eq.GemSlot.Gem.ID
 						if targetGemMap[gemID] {
+							log.Printf("[Reconfigure] Found target gem (ID: %f) in storage equipment (ID: %f, Slot: %d). Performing double jump.", gemID, eq.ID, eq.EquipSlotNumber)
 							// Double Jump: Equip -> UnequipGem -> UnequipItem
 							slot := int(eq.EquipSlotNumber)
 							GameWebsocket.EquipEquipment(equipmentMode, targetIndex, slot, eq.ID)
@@ -382,6 +386,7 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			// --- Step 3: Equip New Base Pieces & Hero ---
+			log.Printf("[Reconfigure] Step 3: Equipping new base pieces and hero")
 			newEquips := map[int]float64{
 				1: newLoadout.Equip1,
 				2: newLoadout.Equip2,
@@ -392,12 +397,14 @@ func ParseFrontendMessage(message []byte) {
 
 			for slot, eid := range newEquips {
 				if eid != 0 {
+					log.Printf("[Reconfigure] Equipping slot %d with item ID %f", slot, eid)
 					GameWebsocket.EquipEquipment(equipmentMode, targetIndex, slot, eid)
 					time.Sleep(800 * time.Millisecond)
 				}
 			}
 
 			// --- Step 4: Socket Gems ---
+			log.Printf("[Reconfigure] Step 4: Socketing gems into new equipment")
 			gemMapping := map[int]float64{
 				1: newLoadout.Gem1,
 				2: newLoadout.Gem2,
@@ -408,6 +415,7 @@ func ParseFrontendMessage(message []byte) {
 			for slot, gid := range gemMapping {
 				eid := newEquips[slot]
 				if gid != 0 && eid != 0 {
+					log.Printf("[Reconfigure] Socketing gem ID %f into equipment ID %f (Slot %d)", gid, eid, slot)
 					GameWebsocket.EquipGem(equipmentMode, targetIndex, eid, gid)
 					time.Sleep(800 * time.Millisecond)
 				}
