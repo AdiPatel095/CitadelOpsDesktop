@@ -264,9 +264,18 @@ func StartGameBrowser(dashboardURL string) {
 		return
 	}
 
+	// Resolve chrome-profile to an absolute path next to the executable
+	exePath, err := os.Executable()
+	if err != nil {
+		log.Printf("Failed to get executable path: %v", err)
+		return
+	}
+	profileDir := filepath.Join(filepath.Dir(exePath), "chrome-profile")
+
 	// Clean up any stale lock files from previous crashes
-	lockFile := filepath.Join("chrome-profile", "SingletonLock")
-	os.Remove(lockFile)
+	for _, lockName := range []string{"SingletonLock", "SingletonSocket", "SingletonCookie"} {
+		os.Remove(filepath.Join(profileDir, lockName))
+	}
 
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.Flag("headless", false),
@@ -274,7 +283,7 @@ func StartGameBrowser(dashboardURL string) {
 		chromedp.Flag("start-maximized", false),
 		chromedp.Flag("disable-site-isolation-trials", true),
 		chromedp.Flag("disable-features", "IsolateOrigins,site-per-process"),
-		chromedp.UserDataDir("chrome-profile"),
+		chromedp.UserDataDir(profileDir),
 	)
 
 	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), opts...)
@@ -379,7 +388,9 @@ func DisconnectGameWebSocket() {
 // ReloadGameTab reloads the game tab to trigger a fresh login without restarting the browser
 func ReloadGameTab() {
 	if BrowserCtx == nil {
-		log.Println("Cannot reload game tab: browser not running")
+		log.Println("Browser not running. Launching browser first...")
+		dashboardURL := fmt.Sprintf("http://localhost:%d", License.CurrentPort)
+		StartGameBrowser(dashboardURL)
 		return
 	}
 
