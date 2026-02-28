@@ -27,7 +27,7 @@ func IsAutoBirdRunning() bool {
 	return autoBirdCancel != nil
 }
 
-// GetAutoBirdNextWakeUp returns the next wake up time in Unix milliseconds (0 if not sleeping)
+// GetAutoBirdNextWakeUp returns the next wake-up time in Unix milliseconds (0 if not sleeping)
 func GetAutoBirdNextWakeUp() int64 {
 	autoBirdMu.Lock()
 	defer autoBirdMu.Unlock()
@@ -106,8 +106,7 @@ func runAutoBird(ctx context.Context) {
 				go SendAutoBirdStatusFunc(true, wakeUpTime)
 			}
 
-			// Ensure game is stopped while sleeping
-			StopGame()
+			// Game stays connected while sleeping for coplay
 
 			log.Printf("[AutoBird] Reconciliation complete. Sleeping for %v until birds return/expire.", reconcileDuration)
 
@@ -132,62 +131,20 @@ func runAutoBird(ctx context.Context) {
 		// STEP 1: Login and Prepare
 		// ---------------------------------------------------------
 		if !LoginStatus {
-			// Check if we have stored credentials to re-login
-			if StoredCredentials.Username != "" && StoredCredentials.Password != "" {
-				StartGameWithCredentials(StoredCredentials.Username, StoredCredentials.Password, StoredCredentials.Server)
-
-				// Wait for login to complete (indefinitely)
-
-			LoginWaitLoop:
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case <-time.After(1 * time.Second):
-						if LoginStatus {
-							break LoginWaitLoop
-						}
-					}
-				}
-
-			} else {
-				if SendRequestCredentialsFunc != nil {
-					SendRequestCredentialsFunc()
-				}
-
-				// Wait for credentials (max 30s)
-				// We poll StoredCredentials every second
-				credentialsFound := false
-				timeout := time.After(30 * time.Second)
-
-			WaitLoop:
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case <-timeout:
-						break WaitLoop
-					case <-time.After(1 * time.Second):
-						if StoredCredentials.Username != "" {
-							credentialsFound = true
-							break WaitLoop
-						}
-					}
-				}
-
-				if !credentialsFound {
-					if SendAutoBirdStatusFunc != nil {
-						go SendAutoBirdStatusFunc(false, 0)
-					}
+			log.Println("[AutoBird] Disconnected. Reloading game tab to reconnect...")
+			ReloadGameTab()
+			// Wait for login to complete after reload
+		LoginWaitLoop:
+			for {
+				select {
+				case <-ctx.Done():
 					return
+				case <-time.After(5 * time.Second):
+					if LoginStatus {
+						break LoginWaitLoop
+					}
 				}
-
-				// We continue the outer loop, which will re-hit the !LoginStatus check.
-				// Since StoredCredentials are now present, it will enter the 'if' block above
-				// and call StartGameWithCredentials (or the frontend message handler already did).
-				continue
 			}
-
 		}
 
 		// Clear previous cycle data
@@ -221,7 +178,7 @@ func runAutoBird(ctx context.Context) {
 		// Helper to find player OID (use first castle's aid if available, though OID usually better from login)
 		// We'll rely on OID from login if we had it, but for now we can infer or pass 0 if unknown
 		// (though persistence asks for it). Let's try to find OID from game state if possible.
-		// For now we will use a placeholder or derived ID since the persistence mainly uses it for validation.
+		// For now, we will use a placeholder or derived ID since the persistence mainly uses it for validation.
 		// Actually, let's use the first castle ID as a proxy for player ID if we don't have login OID stored globally.
 		playerOID := 0
 		if len(playerCastles) > 0 {
@@ -273,12 +230,31 @@ func runAutoBird(ctx context.Context) {
 			totalKeep := 0
 
 			for id, amount := range troops.Troops {
-				saveAmount := Models.BirdIgnoreList.GetSaveAmount(castleLoc.CastleID, id)
-				sendAmount := amount - saveAmount
+				saveAmountConfigured, configured := Models.BirdIgnoreList.GetSaveAmount(castleLoc.CastleID, id)
+				actualSaveAmount := 0
+				sendAmount := 0
+
+				if configured {
+					if saveAmountConfigured == 0 {
+						actualSaveAmount = amount
+						sendAmount = 0
+					} else {
+						if amount > saveAmountConfigured {
+							actualSaveAmount = saveAmountConfigured
+							sendAmount = amount - saveAmountConfigured
+						} else {
+							actualSaveAmount = amount
+							sendAmount = 0
+						}
+					}
+				} else {
+					actualSaveAmount = 0
+					sendAmount = amount
+				}
 
 				// Calculate retention total
-				if saveAmount > 0 {
-					totalKeep += saveAmount
+				if actualSaveAmount > 0 {
+					totalKeep += actualSaveAmount
 				}
 
 				// Calculate surplus total (only valid troops)
@@ -343,14 +319,33 @@ func runAutoBird(ctx context.Context) {
 			ignoredSummary := ""
 
 			for id, amount := range troops.Troops {
-				saveAmount := Models.BirdIgnoreList.GetSaveAmount(castleLoc.CastleID, id)
-				sendAmount := amount - saveAmount
+				saveAmountConfigured, configured := Models.BirdIgnoreList.GetSaveAmount(castleLoc.CastleID, id)
+				actualSaveAmount := 0
+				sendAmount := 0
+
+				if configured {
+					if saveAmountConfigured == 0 {
+						actualSaveAmount = amount
+						sendAmount = 0
+					} else {
+						if amount > saveAmountConfigured {
+							actualSaveAmount = saveAmountConfigured
+							sendAmount = amount - saveAmountConfigured
+						} else {
+							actualSaveAmount = amount
+							sendAmount = 0
+						}
+					}
+				} else {
+					actualSaveAmount = 0
+					sendAmount = amount
+				}
 
 				if sendAmount > 0 {
 					allTroopsToSend = append(allTroopsToSend, []int{id, sendAmount})
-					// Kept amount is saveAmount
-					if saveAmount > 0 {
-						ignoredSummary += fmt.Sprintf("ID:%d x%d, ", id, saveAmount)
+					// Kept amount is actualSaveAmount
+					if actualSaveAmount > 0 {
+						ignoredSummary += fmt.Sprintf("ID:%d x%d, ", id, actualSaveAmount)
 					}
 				} else {
 					// Kept amount is total amount (none sent)
@@ -385,7 +380,7 @@ func runAutoBird(ctx context.Context) {
 				effectiveKID := troops.KingdomID
 				target := findClosestBirdLocation(*troops, gs.Alliance.BirdLocations)
 
-				// If no target found and it's Ice/Desert, try with swapped KID for bird matching
+				// If no target found, and it's Ice/Desert, try with swapped KID for bird matching
 				if target == nil && (effectiveKID == 1 || effectiveKID == 2) {
 					swappedKID := 1
 					if effectiveKID == 1 {
@@ -444,7 +439,7 @@ func runAutoBird(ctx context.Context) {
 				// Try sending CDS with current target
 				response, err := sendCDS(target.X, target.Y)
 
-				// If CDS failed and it's Ice/Desert, try with swapped KID's bird target
+				// If CDS failed, and it's Ice/Desert, try with swapped KID's bird target
 				if err != nil && (effectiveKID == 1 || effectiveKID == 2) {
 					swappedKID := 1
 					if effectiveKID == 1 {
@@ -561,8 +556,7 @@ func runAutoBird(ctx context.Context) {
 			go SendAutoBirdStatusFunc(true, wakeUpTime)
 		}
 
-		// Disconnect from game to save resources/remain stealthy
-		StopGame()
+		// Game stays connected while sleeping for coplay
 
 		select {
 		case <-ctx.Done():
@@ -687,7 +681,7 @@ func fetchCastleTroops(kingdomID, castleID, x, y int) *Models.CastleTroops {
 	// Try with original kingdomID first
 	result := sendTroopRequest(kingdomID, castleID, x, y)
 
-	// If failed and it's Ice (2) or Desert (1), try with swapped KID
+	// If failed, and it's Ice (2) or Desert (1), try with swapped KID
 	if result == nil && (kingdomID == 1 || kingdomID == 2) {
 		swappedKID := 1
 		if kingdomID == 1 {
@@ -825,39 +819,19 @@ func reconcileOnStartup(ctx context.Context) (time.Duration, bool) {
 
 	// 3. Login to game and fetch GAM
 	if !LoginStatus {
-		if StoredCredentials.Username != "" && StoredCredentials.Password != "" {
-			log.Println("[AutoBird] Disconnected during reconciliation. Attempting to re-login...")
-			StartGameWithCredentials(StoredCredentials.Username, StoredCredentials.Password, StoredCredentials.Server)
+		log.Println("[AutoBird] Disconnected during reconciliation. Reloading game tab to reconnect...")
+		ReloadGameTab()
 
-			// Wait for login
-			loginTimeout := time.After(45 * time.Second)
-			loginSuccess := false
-			for {
-				select {
-				case <-ctx.Done():
-					return 0, false
-				case <-loginTimeout:
-					break
-				case <-time.After(1 * time.Second):
-					if LoginStatus {
-						loginSuccess = true
-						break
-					}
-				}
-				if loginSuccess {
-					break
+		// Wait for login after reload
+		for {
+			select {
+			case <-ctx.Done():
+				return 0, false
+			case <-time.After(5 * time.Second):
+				if LoginStatus {
+					return 0, false // Break out cleanly to re-run reconciliation when connected
 				}
 			}
-
-			if !loginSuccess {
-				log.Println("[AutoBird] Login failed during reconciliation. Retrying in 1 minute.")
-				return 1 * time.Minute, false
-			}
-			time.Sleep(2 * time.Second)
-		} else {
-			log.Println("[AutoBird] Disconnected during reconciliation. Cannot relogin without credentials. Stopping.")
-			StopAutoBird()
-			return 0, false
 		}
 	}
 

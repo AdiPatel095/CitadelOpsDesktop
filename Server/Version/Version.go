@@ -17,7 +17,7 @@ import (
 
 // CurrentVersion is the hardcoded current desktop app version.
 // Update this value when releasing a new version.
-const CurrentVersion = "1.2.2.1"
+const CurrentVersion = "1.3.0"
 
 // Download URL configuration
 const (

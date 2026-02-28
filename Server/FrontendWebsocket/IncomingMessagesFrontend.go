@@ -111,21 +111,10 @@ func ParseFrontendMessage(message []byte) {
 		log.Printf("SoldCount Relic 2.0 Gems (Keep %d+ Stars): %v", keepStars, soldCount)
 		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 gems", soldCount))
 	case "startGame":
-		// Check if credentials are provided
-		if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
-			username, _ := payloadRaw["username"].(string)
-			password, _ := payloadRaw["password"].(string)
-			server, _ := payloadRaw["server"].(string)
-			if username != "" && password != "" {
-				log.Printf("Starting game with credentials for user: %s, server: %s", username, server)
-				GameWebsocket.StartGameWithCredentials(username, password, server)
-				return
-			}
-		}
-		log.Println("Error: Start Game requested without credentials. Credentials are now required.")
-		SendAlertMessage("red", "Login credentials required to start bot.")
+		log.Println("Manual Start Bot pressed. Reloading game tab...")
+		GameWebsocket.ReloadGameTab()
 	case "stopGame":
-		GameWebsocket.StopGame()
+		GameWebsocket.DisconnectGameWebSocket()
 	case "fetchAllianceInfo":
 		GameWebsocket.FetchAllianceInfo()
 	case "toggleAutoBird":
@@ -697,15 +686,27 @@ func ParseFrontendMessage(message []byte) {
 		SendFrontendMessage("serverList", serverNames, "")
 	case "updateCredentials":
 		if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
-			username, _ := payloadRaw["username"].(string)
-			password, _ := payloadRaw["password"].(string)
 			server, _ := payloadRaw["server"].(string)
-			if username != "" && password != "" {
-				log.Printf("Updating credentials for user: %s (AutoBird fallback)", username)
-				GameWebsocket.StoredCredentials.Username = username
-				GameWebsocket.StoredCredentials.Password = password
+			if server != "" {
 				GameWebsocket.StoredCredentials.Server = server
 			}
 		}
+	case "sendCustomMessage":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			log.Println("Invalid sendCustomMessage request")
+			return
+		}
+		messageCode, ok := payloadRaw["messageCode"].(string)
+		if !ok || messageCode == "" {
+			SendAlertMessage("red", "No message code provided")
+			return
+		}
+
+		// Format and send the message to the game server
+		formattedMessage := fmt.Sprintf("%%xt%%EmpireEx_21%%%s%%1%%{}%%", messageCode)
+		log.Printf("[Custom Message] Sending: %s", formattedMessage)
+		GameWebsocket.OutgoingMessages <- []byte(formattedMessage)
+		SendAlertMessage("green", fmt.Sprintf("Sent custom message: %s", messageCode))
 	}
 }

@@ -30,6 +30,7 @@ interface AuthContextType {
   toggleAutoBird: () => void;
   saveCredentials: (username: string, password: string, server: string) => void;
   clearCredentials: () => void;
+  sendMessage: (type: string, payload?: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -259,6 +260,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     FrontendWebsocket.triggerUpdate(downloadUrl);
   };
 
+  const sendMessage = (type: string, payload?: any) => {
+    FrontendWebsocket.sendMessage({ type, payload });
+  };
+
   return (
     <AuthContext.Provider value={{
       isAuthenticated,
@@ -287,7 +292,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       storedUsername,
       storedServer,
       saveCredentials,
-      clearCredentials
+      clearCredentials,
+      sendMessage
     }}>
       {children}
     </AuthContext.Provider>
