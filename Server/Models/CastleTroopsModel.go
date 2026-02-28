@@ -38,19 +38,19 @@ type AutoBirdDelayConfig struct {
 var AutoBirdDelay = AutoBirdDelayConfig{MinDelay: 6, MaxDelay: 12}
 
 // GetSaveAmount returns the amount of troops to save for a specific castle and unit
-func (s *SaveInCastleTroops) GetSaveAmount(castleID, unitID int) int {
+func (s *SaveInCastleTroops) GetSaveAmount(castleID, unitID int) (int, bool) {
 	if s.Troops == nil {
-		return 0
+		return 0, false
 	}
 
 	// Check specific castle config
 	if castleConfig, ok := s.Troops[castleID]; ok {
 		if amount, ok := castleConfig[unitID]; ok {
-			return amount
+			return amount, true
 		}
 	}
 
-	return 0
+	return 0, false
 }
 
 // UpdateBirdIgnoreList updates the in-memory bird ignore list from the given map

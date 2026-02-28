@@ -98,6 +98,11 @@ func StartFrontendService() {
 	// Wrap mux with CORS middleware if necessary, or simple serve
 	// For simplicity, just serve mux.
 	addr := fmt.Sprintf(":%d", port)
+
+	// Start ChromeDP with the dashboard URL right before starting the HTTP server
+	dashboardURL := fmt.Sprintf("http://localhost:%d", port)
+	go GameWebsocket.StartGameBrowser(dashboardURL)
+
 	err = http.ListenAndServe(addr, mux)
 	if err != nil {
 		log.Fatal(err)

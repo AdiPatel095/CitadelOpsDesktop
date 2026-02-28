@@ -62,7 +62,6 @@ const AppContent: React.FC = () => {
         currentView={activeView}
         onViewChange={setActiveView}
         onOpenAutoBirdSettings={() => setIsAutoBirdSettingsOpen(true)}
-        onOpenLoginModal={() => setIsLoginModalOpen(true)}
       />
 
       <main className="ml-64 min-h-screen transition-all duration-300 pt-16 relative">

@@ -9,6 +9,7 @@
 
 import React from 'react';
 import { Icons } from '../components/Icons';
+import CustomMessageSender from '../components/CustomMessageSender';
 
 // Discord invite link
 const DISCORD_LINK = "https://discord.gg/zANyxDqfP3";
@@ -25,10 +26,12 @@ const SupportPage: React.FC = () => {
         <div className="max-w-4xl mx-auto py-8">
             <h1 className="heading-1 mb-2">Support & Community</h1>
             <p className="text-text-muted mb-8 text-lg">
-                Get help, report issues, or chat with other operators.
+                Get help, report issues, or send raw diagnostic commands.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <CustomMessageSender />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
                 {/* Discord Card */}
                 <div className="glass-panel p-8 flex flex-col items-center text-center hover:border-primary/30 transition-all duration-300 md:col-span-2">
                     <div className="w-20 h-20 bg-[#5865F2]/10 rounded-full flex items-center justify-center mb-6 ring-1 ring-[#5865F2]/20">

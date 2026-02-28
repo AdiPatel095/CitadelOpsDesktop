@@ -11,11 +11,11 @@ func MessageRouter(messageParts []string) {
 	// Check if any waiters are registered for this message type
 	ResponseRegistry.Global.CheckWaiters(messageType, messageParts)
 
-	indexedList := []string{"gie", "gbl", "dcl", "gcu", "gmu", "gpa", "grc", "sce", "gbd", "sei"}
+	indexedList := []string{"cra", "cds", "jaa", "cat", "gam", "gie", "gbl", "dcl", "gcu", "gmu", "gpa", "grc", "sce", "gbd", "sei", "mcm", "gaa", "sti"}
 	if contains(indexedList, messageType) {
 		//log.Printf("Received message type: %s which has already been indexed", messageType)
 	} else if !contains(indexedList, messageType) {
-		//log.Printf("Received unhandled message type: %s, full message: %v", messageType, messageParts)
+		//log.Printf("Received message type: %s, full message: %v", messageType, messageParts)
 	}
 	if messageType == "gbd" {
 		InitiateDetails(messageParts[5])
@@ -35,7 +35,7 @@ func MessageRouter(messageParts []string) {
 	if messageType == "ain" {
 		ParseAllianceInfo(messageParts[5])
 	}
-	if messageType == "gam" {
+	if messageType == "gam" || messageType == "cat" || messageType == "cds" || messageType == "cra" {
 		ParseGAMMessage(messageParts[5])
 	}
 }
