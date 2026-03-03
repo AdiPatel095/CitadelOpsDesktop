@@ -1,69 +1,42 @@
 import React from 'react';
+import { Settings } from 'lucide-react';
 import { NAVIGATION_ITEMS, type ViewId } from '../config/navigation';
 import { ThemeToggle } from './ThemeToggle';
-import { useAuth } from '../context/AuthContext';
-import { Settings } from 'lucide-react';
 
 interface SidebarProps {
   currentView: ViewId;
   onViewChange: (viewId: ViewId) => void;
-  onOpenAutoBirdSettings: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenAutoBirdSettings }) => {
-  const { gameLoggedIn, startGame, stopGame, autoBirdEnabled, toggleAutoBird } = useAuth();
+const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
   const mainItems = NAVIGATION_ITEMS.filter(item => item.section === 'main');
   const systemItems = NAVIGATION_ITEMS.filter(item => item.section === 'system');
 
   return (
     <aside className="w-64 bg-bg-card border-r border-border-base flex flex-col pt-20 pb-6 h-screen fixed left-0 top-0 z-40 transition-colors duration-300">
-      {/* Bot Controls Section - Smaller */}
+      {/* Event Controls Section */}
       <div className="px-4 mb-4">
-        <div className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-3">Bot Controls</div>
+        <div className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-3">Event Controls</div>
         <div className="px-2 space-y-2">
-          {/* Start/Stop Bot Button */}
-          {!gameLoggedIn ? (
-            <button
-              onClick={() => startGame()}
-              className="w-full px-3 py-2 rounded-global bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />
-              Start Bot
-            </button>
-          ) : (
-            <button
-              onClick={stopGame}
-              className="w-full px-3 py-2 rounded-global bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 active:scale-95"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />
-              Stop Bot
-            </button>
-          )}
-
-          {/* Auto Bird Controls */}
+          {/* Beri World Event Controls */}
           <div className="flex gap-2">
             <button
-              onClick={toggleAutoBird}
-              className={`flex-1 px-3 py-2 rounded-global text-xs font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 ${autoBirdEnabled
-                ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30'
-                : 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
-                }`}
+              onClick={() => console.log("Beri World Event Triggered")}
+              className="flex-1 px-3 py-2 rounded-global bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95"
             >
-              <div className={`w-1.5 h-1.5 rounded-full ${autoBirdEnabled ? 'bg-emerald-400' : 'bg-red-400'}`} />
-              Auto Bird: {autoBirdEnabled ? 'ON' : 'OFF'}
+              <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />
+              Beri World
             </button>
-
             <button
-              onClick={onOpenAutoBirdSettings}
-              className="px-3 py-2 rounded-global bg-bg-card-hover border border-border-light text-text-muted hover:text-text-main hover:bg-bg-input transition-all active:scale-95"
-              title="Auto Bird Settings"
+              onClick={() => console.log("Beri World Settings Triggered")}
+              className="px-3 py-2 rounded-global bg-bg-card-hover border border-border-light text-text-muted hover:text-text-main hover:bg-bg-input transition-all active:scale-95 shadow-sm"
+              title="Beri World Settings"
             >
               <Settings className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
-
       {/* Main Navigation - Vertically centered */}
       <div className="flex-1 flex flex-col justify-center px-4">
         <div className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3 px-3">Main Menu</div>

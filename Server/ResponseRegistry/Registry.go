@@ -1,8 +1,7 @@
-// Package ResponseRegistry provides a pattern for matching outgoing requests with incoming responses.
+// Package ResponseRegistry provides game communication infrastructure:
+// the outgoing message channel for sending commands, and a request/response
+// matching pattern for waiting on specific response types.
 //
-// # Architecture Overview
-//
-// The registry allows callers to register "waiters" for specific message types before sending
 // a command, then block until the expected response arrives (or timeout).
 //
 // # Data Flow
@@ -200,3 +199,13 @@ func (r *Registry) GetWaiterCount(messageType string) int {
 	defer r.mu.RUnlock()
 	return len(r.waiters[messageType])
 }
+
+// OutgoingMessageWithCost wraps a payload with a rate-limiting cost value.
+type OutgoingMessageWithCost struct {
+	Payload []byte
+	Cost    int
+}
+
+// OutgoingMessages is the shared channel for sending commands to the game server.
+// Any package can send messages by pushing []byte or OutgoingMessageWithCost onto this channel.
+var OutgoingMessages = make(chan interface{}, 100)

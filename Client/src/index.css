@@ -267,4 +267,85 @@
     .label-text {
         @apply text-sm font-medium text-text-muted uppercase tracking-wider;
     }
+
+    /* Currency View Styles */
+    .currency-view {
+        @apply flex flex-col gap-8;
+    }
+    .category-section {
+        @apply flex flex-col gap-4;
+    }
+    .category-title {
+        @apply text-lg font-bold text-text-main border-b border-border-base pb-2;
+    }
+    .currency-grid {
+        @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4;
+    }
+    .currency-item {
+        @apply bg-bg-card/80 backdrop-blur-md border border-border-base shadow-lg transition-colors duration-300 hover:bg-bg-card-hover cursor-pointer flex flex-col items-center justify-center p-4 gap-2;
+        border-radius: var(--radius-global);
+    }
+    .currency-name {
+        @apply text-sm font-medium text-text-muted text-center;
+    }
+    .currency-icon {
+        @apply w-12 h-12 object-contain drop-shadow-md;
+    }
+    .currency-value {
+        @apply text-lg font-bold text-text-main;
+    }
+
+    /* Dashboard & Castle Resource Card Styles */
+    .dashboard {
+        @apply flex flex-col gap-6;
+    }
+    .dashboard-grid {
+        @apply grid grid-cols-1 xl:grid-cols-2 gap-6;
+    }
+    .castle-card {
+        @apply bg-bg-card/80 backdrop-blur-md border border-border-base shadow-lg transition-colors duration-300 p-5 flex flex-col gap-4;
+        border-radius: var(--radius-global);
+    }
+    .castle-name {
+        @apply text-xl font-bold text-primary mb-1;
+    }
+    .resource-list-view {
+        @apply flex flex-col gap-2;
+    }
+    .resource-list-item {
+        @apply flex items-center gap-3 p-2 rounded-global bg-bg-card-hover border border-border-base;
+    }
+    .resource-icon {
+        @apply w-8 h-8 object-contain drop-shadow-sm;
+    }
+    .resource-info {
+        @apply flex-1 flex flex-col gap-1.5;
+    }
+    .resource-text {
+        @apply flex justify-between items-center text-xs font-medium text-text-main;
+    }
+    .production-rate {
+        @apply text-emerald-500 font-semibold;
+    }
+    .progress-bar-container {
+        @apply w-full h-2 bg-bg-app rounded-full overflow-hidden border border-border-base;
+    }
+    .progress-bar {
+        @apply h-full bg-primary transition-all duration-500 ease-out;
+    }
+    .queues-section {
+        @apply grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 border-t border-border-base pt-6;
+    }
+    .queue {
+        @apply flex flex-col gap-3;
+    }
+    .queue h4 {
+        @apply text-sm font-bold text-text-muted uppercase tracking-wider;
+    }
+    .queue-items {
+        @apply flex gap-2;
+    }
+    .queue-item-placeholder {
+        @apply w-12 h-12 rounded-global bg-bg-card-hover border border-border-base border-dashed;
+    }
 }

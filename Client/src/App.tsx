@@ -4,6 +4,10 @@ import { Providers } from './Providers';
 
 import EquipmentView from './equipment/components/EquipmentView';
 import SupportPage from './views/SupportPage';
+import Dashboard from './dashboard/components/Dashboard';
+import UnitsDashboard from './dashboard/components/UnitsDashboard';
+import CurrencyView from './currency/components/CurrencyView';
+import EventModulesView from './event-modules/components/EventModulesView';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import RegistrationPending from './components/RegistrationPending';
@@ -45,8 +49,16 @@ const AppContent: React.FC = () => {
 
   const renderView = () => {
     switch (activeView) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'units':
+        return <UnitsDashboard />;
       case 'equipment':
         return <EquipmentView />;
+      case 'event-modules':
+        return <EventModulesView />;
+      case 'currency':
+        return <CurrencyView />;
       case 'support':
         return <SupportPage />;
       default:
@@ -56,15 +68,14 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-bg-app text-text-main font-sans selection:bg-primary/30 flex flex-col transition-colors duration-300">
-      <Header onOpenLoginModal={() => setIsLoginModalOpen(true)} />
+      <Header onOpenAutoBirdSettings={() => setIsAutoBirdSettingsOpen(true)} />
 
       <Sidebar
         currentView={activeView}
         onViewChange={setActiveView}
-        onOpenAutoBirdSettings={() => setIsAutoBirdSettingsOpen(true)}
       />
 
-      <main className="ml-64 min-h-screen transition-all duration-300 pt-16 relative">
+      <main className="ml-64 h-screen overflow-y-auto transition-all duration-300 pt-16 relative">
         <div className="p-6 max-w-[1600px] mx-auto animate-fade-in relative z-10">
           {renderView()}
         </div>

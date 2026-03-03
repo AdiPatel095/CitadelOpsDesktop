@@ -2,12 +2,7 @@ package GameParser
 
 import (
 	"CitadelDesktop/Server/Models"
-	"encoding/json"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 // Constants for magic strings and indices to improve readability and maintainability.
@@ -18,8 +13,8 @@ const (
 	keyCastleInfoArray = "AI"
 
 	kingdomIDMain    = 0.0
-	kingdomIDIce     = 1.0
-	kingdomIDDesert  = 2.0
+	kingdomIDDesert  = 1.0
+	kingdomIDIce     = 2.0
 	kingdomIDDungeon = 3.0
 	kingdomIDStorm   = 4.0
 
@@ -54,6 +49,9 @@ func CastleDetailParser(gcl map[string]interface{}, dcl map[string]interface{}) 
 	if dcl != nil {
 		parseDCL(dcl)
 	}
+
+	// Fetch troops for all castles after GCL/DCL parsing completes
+	go FetchAllCastleTroopsAndConsumption()
 }
 
 // parseGCL processes the Game Castle List data.
@@ -64,8 +62,6 @@ func parseGCL(gcl map[string]interface{}) error {
 
 	// Clear previous player castle locations
 	gs.Alliance.PlayerCastleLocations = nil
-
-	log.Println("[CastleParser] Starting to parse GCL data...")
 
 	kingdomArray, ok := gcl[keyKingdoms].([]interface{})
 	if !ok {
@@ -90,15 +86,7 @@ func parseGCL(gcl map[string]interface{}) error {
 
 		switch kingdomID {
 		case kingdomIDMain:
-			updaters := []func(id float64, name string){
-				func(id float64, name string) {
-					gs.MainCastle.Aid, gs.MainCastle.Name = id, name
-				},
-				func(id float64, name string) { gs.Outpost1.Aid, gs.Outpost1.Name = id, name },
-				func(id float64, name string) { gs.Outpost2.Aid, gs.Outpost2.Name = id, name },
-				func(id float64, name string) { gs.Outpost3.Aid, gs.Outpost3.Name = id, name },
-			}
-			parseCastles(castleArray, updaters, 0)
+			parseMainKingdomCastles(castleArray)
 		case kingdomIDIce:
 			updaters := []func(id float64, name string){
 				func(id float64, name string) {
@@ -127,28 +115,121 @@ func parseGCL(gcl map[string]interface{}) error {
 		}
 	}
 
-	// Save debug data to file
-	saveDebugData(gcl, gs.Alliance.PlayerCastleLocations)
-
 	return nil
+}
+
+// GetCastleLocationName returns the string identifier for a castle given its ID
+func GetCastleLocationName(castleID int) string {
+	gs := Models.GetGameState()
+
+	if int(gs.MainCastle.Aid) == castleID {
+		return "mainCastle"
+	}
+	if int(gs.Outpost1.Aid) == castleID {
+		return "outpost1"
+	}
+	if int(gs.Outpost2.Aid) == castleID {
+		return "outpost2"
+	}
+	if int(gs.Outpost3.Aid) == castleID {
+		return "outpost3"
+	}
+	if int(gs.IceCastle.Aid) == castleID {
+		return "iceCastle"
+	}
+	if int(gs.DesertCastle.Aid) == castleID {
+		return "desertCastle"
+	}
+	if int(gs.DungeonCastle.Aid) == castleID {
+		return "dungeonCastle"
+	}
+	if int(gs.StormCastle.Aid) == castleID {
+		return "stormCastle"
+	}
+
+	return ""
+}
+
+// RecalculateCastleConsumption finds the specific castle by ID, recalculates its food/mead/beef consumption based on its troop data, and returns the castle location string so the frontend can be updated.
+func RecalculateCastleConsumption(castleID int) string {
+	gs := Models.GetGameState()
+
+	castle := gs.GetCastleByID(castleID)
+	if castle == nil {
+		return ""
+	}
+
+	// Calculate new consumptions from the castle's troop data
+	foodConsumption := 0.0
+	meadConsumption := 0.0
+	beefConsumption := 0.0
+
+	for unitID, count := range castle.Troops.TroopsI {
+		if troopInfo, exists := Models.TroopIDs[unitID]; exists {
+			consumption := float64(count * troopInfo.ConsumptionAmount)
+			switch troopInfo.ConsumptionType {
+			case "food":
+				foodConsumption += consumption
+			case "mead":
+				meadConsumption += consumption
+			case "beef":
+				beefConsumption += consumption
+			}
+		}
+	}
+
+	castle.Production.FoodConsumption = foodConsumption
+	castle.Production.MeadConsumption = meadConsumption
+	castle.Production.BeefConsumption = beefConsumption
+
+	return GetCastleLocationName(castleID)
+}
+
+// parseMainKingdomCastles handles Kingdom 0 where castles can be Main (type 1) or Outposts (type 4)
+func parseMainKingdomCastles(castleArray []interface{}) {
+	gs := Models.GetGameState()
+	outpostIndex := 1
+	for i, castle := range castleArray {
+		id, name, x, y, cType, ok := extractCastleDetails(castle, i)
+		if ok {
+			if cType == 1 {
+				gs.MainCastle.Aid, gs.MainCastle.Name = id, name
+			} else if cType == 4 {
+				if outpostIndex == 1 {
+					gs.Outpost1.Aid, gs.Outpost1.Name = id, name
+				} else if outpostIndex == 2 {
+					gs.Outpost2.Aid, gs.Outpost2.Name = id, name
+				} else if outpostIndex == 3 {
+					gs.Outpost3.Aid, gs.Outpost3.Name = id, name
+				}
+				outpostIndex++
+			}
+
+			// Store player castle location for AutoBird
+			if x > 0 && y > 0 {
+				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
+					KingdomID: 0,
+					CastleID:  int(id),
+					X:         x,
+					Y:         y,
+				})
+			}
+		}
+	}
 }
 
 // parseCastles iterates through a list of castles and applies an updater function for each.
 // Also stores player castle locations for AutoBird feature.
 func parseCastles(castleArray []interface{}, updaters []func(id float64, name string), kingdomID int) {
 	gs := Models.GetGameState()
-	log.Printf("[CastleParser] Processing %d castles for KingdomID %d", len(castleArray), kingdomID)
 	for i, castle := range castleArray {
 		if i >= len(updaters) {
-			log.Printf("[CastleParser] No more updaters for castle index %d in KingdomID %d", i, kingdomID)
 			break // No more updaters defined for the remaining castles
 		}
-		id, name, x, y, ok := extractCastleDetails(castle, i)
-		log.Printf("[CastleParser] Castle %d: ID=%.0f, Name=%s, X=%d, Y=%d, OK=%v", i, id, name, x, y, ok)
+		id, name, x, y, _, ok := extractCastleDetails(castle, i)
 		if ok {
 			updaters[i](id, name)
 			// Store player castle location for AutoBird
-			log.Printf("[CastleParser] Checking coords: X=%d, Y=%d, condition (x > 0 && y > 0) = %v", x, y, x > 0 && y > 0)
 			if x > 0 && y > 0 {
 				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
 					KingdomID: kingdomID,
@@ -156,9 +237,6 @@ func parseCastles(castleArray []interface{}, updaters []func(id float64, name st
 					X:         x,
 					Y:         y,
 				})
-				log.Printf("[CastleParser] ✓ Added castle %s (ID: %.0f) to PlayerCastleLocations for KingdomID %d", name, id, kingdomID)
-			} else {
-				log.Printf("[CastleParser] ✗ SKIPPED castle %s (ID: %.0f) - coords X=%d, Y=%d failed check", name, id, x, y)
 			}
 		}
 	}
@@ -168,14 +246,11 @@ func parseCastles(castleArray []interface{}, updaters []func(id float64, name st
 // Also stores player castle location for AutoBird feature.
 func parseSingleCastle(castleArray []interface{}, updater func(id float64, name string), kingdomID int) {
 	gs := Models.GetGameState()
-	log.Printf("[CastleParser] Processing single castle for KingdomID %d", kingdomID)
 	if len(castleArray) > 0 {
-		id, name, x, y, ok := extractCastleDetails(castleArray[0], 0)
-		log.Printf("[CastleParser] Single Castle: ID=%.0f, Name=%s, X=%d, Y=%d, OK=%v", id, name, x, y, ok)
+		id, name, x, y, _, ok := extractCastleDetails(castleArray[0], 0)
 		if ok {
 			updater(id, name)
 			// Store player castle location for AutoBird
-			log.Printf("[CastleParser] Checking coords: X=%d, Y=%d, condition (x > 0 && y > 0) = %v", x, y, x > 0 && y > 0)
 			if x > 0 && y > 0 {
 				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
 					KingdomID: kingdomID,
@@ -183,33 +258,36 @@ func parseSingleCastle(castleArray []interface{}, updater func(id float64, name 
 					X:         x,
 					Y:         y,
 				})
-				log.Printf("[CastleParser] ✓ Added castle %s (ID: %.0f) to PlayerCastleLocations for KingdomID %d", name, id, kingdomID)
-			} else {
-				log.Printf("[CastleParser] ✗ SKIPPED castle %s (ID: %.0f) - coords X=%d, Y=%d failed check", name, id, x, y)
 			}
 		}
 	}
 }
 
-// extractCastleDetails safely pulls the ID, Name, X, and Y from a castle data structure.
-func extractCastleDetails(castleData interface{}, index int) (id float64, name string, x int, y int, ok bool) {
+// extractCastleDetails safely pulls the ID, Name, X, Y, and CastleType from a castle data structure.
+func extractCastleDetails(castleData interface{}, index int) (id float64, name string, x int, y int, cType int, ok bool) {
 	castleMap, ok := castleData.(map[string]interface{})
 	if !ok {
-		return 0, "", 0, 0, false
+		return 0, "", 0, 0, 0, false
 	}
 
 	details, ok := castleMap[keyCastleInfoArray].([]interface{})
 	if !ok || len(details) <= castleNameIndex {
-		return 0, "", 0, 0, false
+		return 0, "", 0, 0, 0, false
 	}
 
 	id, idOk := details[castleAIDIndex].(float64)
 	name, nameOk := details[castleNameIndex].(string)
 	xVal, xOk := details[castleXIndex].(float64)
 	yVal, yOk := details[castleYIndex].(float64)
+	cTypeFloat, typeOk := details[0].(float64)
 
 	if !idOk || !nameOk {
-		return 0, "", 0, 0, false
+		return 0, "", 0, 0, 0, false
+	}
+
+	cTypeInt := 0
+	if typeOk {
+		cTypeInt = int(cTypeFloat)
 	}
 
 	if xOk && yOk {
@@ -217,7 +295,7 @@ func extractCastleDetails(castleData interface{}, index int) (id float64, name s
 		y = int(yVal)
 	}
 
-	return id, name, x, y, true
+	return id, name, x, y, cTypeInt, true
 }
 
 func parseDCL(dcl map[string]interface{}) error {
@@ -250,13 +328,13 @@ func parseDCL(dcl map[string]interface{}) error {
 					castleID, ok := castleMap[keyCastleID].(float64)
 					switch castleID {
 					case gs.MainCastle.Aid:
-						parseCastleResources(castleMap, &gs.MainCastle.Amount, &gs.MainCastle.Production, &gs.MainCastle.Storage)
+						parseCastleResources(castleMap, &gs.MainCastle.Amount, &gs.MainCastle.Production, &gs.MainCastle.Storage, castleID)
 					case gs.Outpost1.Aid:
-						parseCastleResources(castleMap, &gs.Outpost1.Amount, &gs.Outpost1.Production, &gs.Outpost1.Storage)
+						parseCastleResources(castleMap, &gs.Outpost1.Amount, &gs.Outpost1.Production, &gs.Outpost1.Storage, castleID)
 					case gs.Outpost2.Aid:
-						parseCastleResources(castleMap, &gs.Outpost2.Amount, &gs.Outpost2.Production, &gs.Outpost2.Storage)
+						parseCastleResources(castleMap, &gs.Outpost2.Amount, &gs.Outpost2.Production, &gs.Outpost2.Storage, castleID)
 					case gs.Outpost3.Aid:
-						parseCastleResources(castleMap, &gs.Outpost3.Amount, &gs.Outpost3.Production, &gs.Outpost3.Storage)
+						parseCastleResources(castleMap, &gs.Outpost3.Amount, &gs.Outpost3.Production, &gs.Outpost3.Storage, castleID)
 					}
 				}
 
@@ -274,7 +352,7 @@ func parseDCL(dcl map[string]interface{}) error {
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
 					if castleID == gs.IceCastle.Aid {
-						parseCastleResources(castleMap, &gs.IceCastle.Amount, &gs.IceCastle.Production, &gs.IceCastle.Storage)
+						parseCastleResources(castleMap, &gs.IceCastle.Amount, &gs.IceCastle.Production, &gs.IceCastle.Storage, castleID)
 					}
 				}
 
@@ -292,7 +370,7 @@ func parseDCL(dcl map[string]interface{}) error {
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
 					if castleID == gs.DesertCastle.Aid {
-						parseCastleResources(castleMap, &gs.DesertCastle.Amount, &gs.DesertCastle.Production, &gs.DesertCastle.Storage)
+						parseCastleResources(castleMap, &gs.DesertCastle.Amount, &gs.DesertCastle.Production, &gs.DesertCastle.Storage, castleID)
 					}
 				}
 
@@ -310,7 +388,7 @@ func parseDCL(dcl map[string]interface{}) error {
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
 					if castleID == gs.DungeonCastle.Aid {
-						parseCastleResources(castleMap, &gs.DungeonCastle.Amount, &gs.DungeonCastle.Production, &gs.DungeonCastle.Storage)
+						parseCastleResources(castleMap, &gs.DungeonCastle.Amount, &gs.DungeonCastle.Production, &gs.DungeonCastle.Storage, castleID)
 					}
 				}
 
@@ -328,7 +406,7 @@ func parseDCL(dcl map[string]interface{}) error {
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
 					if castleID == gs.StormCastle.Aid {
-						parseCastleResources(castleMap, &gs.StormCastle.Amount, &gs.StormCastle.Production, &gs.StormCastle.Storage)
+						parseCastleResources(castleMap, &gs.StormCastle.Amount, &gs.StormCastle.Production, &gs.StormCastle.Storage, castleID)
 					}
 				}
 
@@ -339,8 +417,8 @@ func parseDCL(dcl map[string]interface{}) error {
 }
 
 // parseCastleResources is a generic function to parse resources for any castle.
-// It safely extracts amounts, production, and storage data.
-func parseCastleResources(castleMap map[string]interface{}, amount *Models.CastleResourcesAmount, production *Models.CastleProductionTotal, storage *Models.CastleStorageMax) {
+// It safely extracts amounts, production, and storage data, and calculates food consumption from troops.
+func parseCastleResources(castleMap map[string]interface{}, amount *Models.CastleResourcesAmount, production *Models.CastleProductionTotal, storage *Models.CastleStorageMax, castleID float64) {
 	// Helper to safely get a float64 from the map
 	getFloat := func(key string) float64 {
 		if val, ok := castleMap[key].(float64); ok {
@@ -387,6 +465,34 @@ func parseCastleResources(castleMap map[string]interface{}, amount *Models.Castl
 	production.MeadProd = getGpaFloat(prefixProd+keyM) / 10
 	production.BeefProd = getGpaFloat(prefixProd+keyB) / 10
 
+	// Deduct consumption from production
+	gs := Models.GetGameState()
+	foodConsumption := 0.0
+	meadConsumption := 0.0
+	beefConsumption := 0.0
+
+	// Read troop data from the castle object itself
+	castle := gs.GetCastleByID(int(castleID))
+	if castle != nil {
+		for unitID, count := range castle.Troops.TroopsI {
+			if troopInfo, exists := Models.TroopIDs[unitID]; exists {
+				consumption := float64(count * troopInfo.ConsumptionAmount)
+				switch troopInfo.ConsumptionType {
+				case "food":
+					foodConsumption += consumption
+				case "mead":
+					meadConsumption += consumption
+				case "beef":
+					beefConsumption += consumption
+				}
+			}
+		}
+	}
+
+	production.FoodConsumption = foodConsumption
+	production.MeadConsumption = meadConsumption
+	production.BeefConsumption = beefConsumption
+
 	// Parse storage maximums
 	storage.WoodMax = getGpaFloat(prefixStorage + keyW)
 	storage.StoneMax = getGpaFloat(prefixStorage + keyS)
@@ -398,45 +504,4 @@ func parseCastleResources(castleMap map[string]interface{}, amount *Models.Castl
 	storage.HoneyMax = getGpaFloat(prefixStorage + keyH)
 	storage.MeadMax = getGpaFloat(prefixStorage + keyM)
 	storage.BeefMax = getGpaFloat(prefixStorage + keyB)
-}
-
-// saveDebugData saves the raw GCL data and parsed castle locations to a debug file
-func saveDebugData(rawGCL map[string]interface{}, parsedLocations []Models.PlayerCastleLocation) {
-	// Get user home directory for saving debug file
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Printf("[CastleParser] Failed to get home directory: %v", err)
-		return
-	}
-
-	debugDir := filepath.Join(homeDir, ".citadel_debug")
-	if err := os.MkdirAll(debugDir, 0755); err != nil {
-		log.Printf("[CastleParser] Failed to create debug directory: %v", err)
-		return
-	}
-
-	debugData := map[string]interface{}{
-		"timestamp":               time.Now().Format(time.RFC3339),
-		"raw_gcl_data":            rawGCL,
-		"parsed_castle_locations": parsedLocations,
-		"total_castles_parsed":    len(parsedLocations),
-	}
-
-	jsonData, err := json.MarshalIndent(debugData, "", "  ")
-	if err != nil {
-		log.Printf("[CastleParser] Failed to marshal debug data: %v", err)
-		return
-	}
-
-	debugFile := filepath.Join(debugDir, "castle_parser_debug.json")
-	if err := os.WriteFile(debugFile, jsonData, 0644); err != nil {
-		log.Printf("[CastleParser] Failed to write debug file: %v", err)
-		return
-	}
-
-	log.Printf("[CastleParser] Debug data saved to %s", debugFile)
-	log.Printf("[CastleParser] Total castles added to PlayerCastleLocations: %d", len(parsedLocations))
-	for i, loc := range parsedLocations {
-		log.Printf("[CastleParser]   [%d] KingdomID=%d, CastleID=%d, X=%d, Y=%d", i, loc.KingdomID, loc.CastleID, loc.X, loc.Y)
-	}
 }

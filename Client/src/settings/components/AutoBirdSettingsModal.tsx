@@ -3,7 +3,7 @@ import { X, Plus, Trash2, Search, Settings, AlertTriangle, Copy, Link as LinkIco
 import { TROOP_DEFINITIONS, TOOL_DEFINITIONS, getUnitBaseAndLevel, getUnitIdForLevel, UNIT_LEVEL_MAP } from '../../config/constants';
 import { FrontendWebsocket } from '../../websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
-import { UnitWithQuantity } from '../../components/TroopPickerModal';
+import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 
 interface AutoBirdSettingsModalProps {

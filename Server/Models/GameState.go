@@ -36,9 +36,9 @@ type GameState struct {
 	AutoBirdEnabled bool
 
 	// Auto Bird Data
-	PlayerCastleTroops []CastleTroops         // Troop counts for each player castle
-	BirdMovements      map[int][]BirdMovement // CastleID -> List of active movements
-	ActiveMovements    []GAMMovement          // Parsed from GAM message
+
+	BirdMovements   map[int][]BirdMovement // CastleID -> List of active movements
+	ActiveMovements []GAMMovement          // Parsed from GAM message
 }
 
 var (
@@ -76,7 +76,32 @@ func (gs *GameState) Reset() {
 	gs.CommActualArray = nil
 	gs.CastActualArray = nil
 	gs.AutoBirdEnabled = false
-	gs.PlayerCastleTroops = nil
+
 	gs.BirdMovements = make(map[int][]BirdMovement)
 	gs.ActiveMovements = nil
+}
+
+// GetCastleByID returns a pointer to the PlayerCastleInfo with the given castle ID, or nil if not found.
+func (gs *GameState) GetCastleByID(castleID int) *PlayerCastleInfo {
+	cID := float64(castleID)
+	switch {
+	case gs.MainCastle.Aid == cID:
+		return &gs.MainCastle
+	case gs.Outpost1.Aid == cID:
+		return &gs.Outpost1
+	case gs.Outpost2.Aid == cID:
+		return &gs.Outpost2
+	case gs.Outpost3.Aid == cID:
+		return &gs.Outpost3
+	case gs.IceCastle.Aid == cID:
+		return &gs.IceCastle
+	case gs.DesertCastle.Aid == cID:
+		return &gs.DesertCastle
+	case gs.DungeonCastle.Aid == cID:
+		return &gs.DungeonCastle
+	case gs.StormCastle.Aid == cID:
+		return &gs.StormCastle
+	default:
+		return nil
+	}
 }

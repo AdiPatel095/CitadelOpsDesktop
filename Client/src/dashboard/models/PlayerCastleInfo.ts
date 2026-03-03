@@ -22,6 +22,9 @@ export interface CastleProductionTotal {
   honey_prod: number;
   mead_prod: number;
   beef_prod: number;
+  food_consumption?: number;
+  mead_consumption?: number;
+  beef_consumption?: number;
 }
 
 export interface CastleStorageMax {
@@ -37,10 +40,22 @@ export interface CastleStorageMax {
   beef_max: number;
 }
 
+export interface CastleTroopData {
+  kingdomID: number;
+  x: number;
+  y: number;
+  troopsI: { [unitID: string]: number };
+  troopsTU: { [unitID: string]: number };
+  troopsHI: { [unitID: string]: number };
+  troopsSHI: { [unitID: string]: number };
+  troopsMixed: { [unitID: string]: number };
+}
+
 export interface PlayerCastleInfo {
   castleName: string;
   aid: number;
   amount: CastleResourcesAmount;
   production: CastleProductionTotal;
   storage: CastleStorageMax;
+  troops: CastleTroopData;
 }
