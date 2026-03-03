@@ -5,20 +5,18 @@ import CastleResourceCard from './CastleResourceCard.tsx';
 
 const Dashboard: React.FC = () => {
   const { castleResources } = useCastleResources();
-  const castlesList = Array.from(castleResources.values());
+  const castlesList = Array.from(castleResources.entries());
 
   if (castleResources.size === 0) {
     return <div>Loading castle data...</div>;
   }
 
-
-
   return (
     <div className="dashboard">
       <div className="dashboard-grid">
-        {castlesList.map((castle) => (
+        {castlesList.map(([castleId, castle]) => (
           <CastleResourceCard
-            key={castle.castleName}
+            key={castleId}
             castleName={castle.castleName}
             resources={castle.amount}
             storage={castle.storage}

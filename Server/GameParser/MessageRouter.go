@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 )
 
+func init() {
+	ResponseRegistry.MessageRouterFunc = MessageRouter
+}
+
 func MessageRouter(messageParts []string) {
 	messageType := messageParts[2]
 

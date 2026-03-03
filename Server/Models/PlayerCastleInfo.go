@@ -6,6 +6,27 @@ type PlayerCastleInfo struct {
 	Amount     CastleResourcesAmount `json:"amount"`
 	Production CastleProductionTotal `json:"production"`
 	Storage    CastleStorageMax      `json:"storage"`
+	Troops     CastleTroopData       `json:"troops"`
+	Buildings  []BuildingData        `json:"buildings"`
+}
+
+// BuildingData holds information about a specific building instance in a castle.
+type BuildingData struct {
+	BuildingID int    `json:"buildingID"`
+	Name       string `json:"name"`
+	Level      int    `json:"level"`
+}
+
+// CastleTroopData holds troop counts for a castle, embedded directly on the castle object.
+type CastleTroopData struct {
+	KingdomID   int         `json:"kingdomID"`
+	X           int         `json:"x"`
+	Y           int         `json:"y"`
+	TroopsI     map[int]int `json:"troopsI"`     // Units currently in castle
+	TroopsTU    map[int]int `json:"troopsTU"`    // Units travelling
+	TroopsHI    map[int]int `json:"troopsHI"`    // Units in hospital
+	TroopsSHI   map[int]int `json:"troopsSHI"`   // Units in special hospital
+	TroopsMixed map[int]int `json:"troopsMixed"` // Combined I + TU
 }
 
 type CastleResourcesAmount struct {
@@ -22,16 +43,19 @@ type CastleResourcesAmount struct {
 }
 
 type CastleProductionTotal struct {
-	WoodProd  float64 `json:"wood_prod"`
-	StoneProd float64 `json:"stone_prod"`
-	FoodProd  float64 `json:"food_prod"`
-	CoalProd  float64 `json:"coal_prod"`
-	OilProd   float64 `json:"oil_prod"`
-	GlassProd float64 `json:"glass_prod"`
-	IronProd  float64 `json:"iron_prod"`
-	HoneyProd float64 `json:"honey_prod"`
-	MeadProd  float64 `json:"mead_prod"`
-	BeefProd  float64 `json:"beef_prod"`
+	WoodProd        float64 `json:"wood_prod"`
+	StoneProd       float64 `json:"stone_prod"`
+	FoodProd        float64 `json:"food_prod"`
+	CoalProd        float64 `json:"coal_prod"`
+	OilProd         float64 `json:"oil_prod"`
+	GlassProd       float64 `json:"glass_prod"`
+	IronProd        float64 `json:"iron_prod"`
+	HoneyProd       float64 `json:"honey_prod"`
+	MeadProd        float64 `json:"mead_prod"`
+	BeefProd        float64 `json:"beef_prod"`
+	FoodConsumption float64 `json:"food_consumption"`
+	MeadConsumption float64 `json:"mead_consumption"`
+	BeefConsumption float64 `json:"beef_consumption"`
 }
 
 type CastleStorageMax struct {

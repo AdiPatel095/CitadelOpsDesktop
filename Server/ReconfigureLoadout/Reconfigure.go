@@ -2,8 +2,8 @@ package ReconfigureLoadout
 
 import (
 	"CitadelDesktop/Server/GameParser"
-	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/Models"
+	"CitadelDesktop/Server/ResponseRegistry"
 	"log"
 	"time"
 )
@@ -14,9 +14,9 @@ import (
 func ReconfigureCommander(payload ReconfigurePayload) (Models.CommStatModel, string) {
 	log.Println("[Reconfigure] Starting Commander reconfiguration")
 	// 1. Refresh game state
-	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
+	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
-	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
+	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
 	time.Sleep(2 * time.Second)
 
 	// 2. Filter equipment for Commander (EquipType == 2)
@@ -132,9 +132,9 @@ func BuildCommStatModel(result OptimizationResult, equipment []Models.EquipmentM
 func ReconfigureCastellan(payload ReconfigurePayload) (Models.CastStatModel, string) {
 	log.Println("[Reconfigure] Starting Castellan reconfiguration")
 	// 1. Refresh game state
-	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
+	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
-	GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
+	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
 	time.Sleep(2 * time.Second)
 
 	// 2. Filter equipment for Castellan (EquipType == 1)

@@ -56,26 +56,21 @@ func ParseGAMMessage(data string) {
 			return
 		}
 	} else {
-		log.Printf("[GAM Debug] Neither wrapper nor M found")
 		return
 	}
-
-	log.Printf("[GAM Debug] mArray length: %d", len(mArray))
 
 	gs := Models.GetGameState()
 	// gs.ActiveMovements is NOT cleared here anymore - handled by AutoBird/Scheduler before fetch
 	var parsedMovements []Models.GAMMovement
 
-	for i, item := range mArray {
+	for _, item := range mArray {
 		movObj, ok := item.(map[string]interface{})
 		if !ok {
-			log.Printf("[GAM Debug] Item %d is not a map[string]interface{}", i)
 			continue
 		}
 
 		mDetails, ok := movObj["M"].(map[string]interface{})
 		if !ok {
-			log.Printf("[GAM Debug] Item %d is missing the inner M object", i)
 			continue
 		}
 
@@ -140,18 +135,14 @@ func ParseGAMMessage(data string) {
 						commanderID = int(fID)
 					}
 				} else {
-					log.Printf("[GAM Debug] Item %d L object has no ID property", i)
 				}
 			} else {
-				log.Printf("[GAM Debug] Item %d UM has no L sibling", i)
 			}
 		} else {
-			log.Printf("[GAM Debug] Item %d has no UM sibling", i)
 		}
 
 		if commanderID >= 0 {
 		} else {
-			log.Printf("[GAM Debug] Commander ID not found for Movement MID: %d", mid)
 		}
 
 		// Store ALL movements - we'll match by troop composition which is unique

@@ -19,10 +19,10 @@ import {
 } from '../models/PlayerCastleInfo';
 
 interface CastleResourceCardProps {
-    castleName: string,
-    resources: CastleResourcesAmount,
-    storage: CastleStorageMax,
-    production: CastleProductionTotal
+    castleName: string;
+    resources: CastleResourcesAmount;
+    storage: CastleStorageMax;
+    production: CastleProductionTotal;
 }
 
 const resourceIconMap: { [key: string]: string } = {
@@ -44,6 +44,7 @@ const resourceKeys: (keyof CastleResourcesAmount)[] = [
 ];
 
 const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ castleName, resources, storage, production }) => {
+
     return (
         <div className="castle-card">
             <h3 className="castle-name">{castleName}</h3>
@@ -51,10 +52,22 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ castleName, res
             <div className="resource-list-view">
                 {resourceKeys.map(key => {
                     const resourceBaseName = key.replace('_amount', '');
-                    const amount = resources[key];
-                    const max = storage[`${resourceBaseName}_max` as keyof CastleStorageMax];
-                    const prod = production[`${resourceBaseName}_prod` as keyof CastleProductionTotal];
+                    const amount = resources[key] as number;
+                    const max = storage[`${resourceBaseName}_max` as keyof CastleStorageMax] as number;
+                    let prod = production[`${resourceBaseName}_prod` as keyof CastleProductionTotal] ?? 0;
+
+                    // Deduct consumption for food/mead/beef (calculated on backend)
+                    if (resourceBaseName === 'food') {
+                        prod -= (production.food_consumption ?? 0);
+                    } else if (resourceBaseName === 'mead') {
+                        prod -= (production.mead_consumption ?? 0);
+                    } else if (resourceBaseName === 'beef') {
+                        prod -= (production.beef_consumption ?? 0);
+                    }
+
                     const percentage = max > 0 ? (amount / max) * 100 : 0;
+                    const prodClass = prod < 0 ? "text-red-500 font-semibold" : "production-rate";
+                    const prodPrefix = prod > 0 ? "+" : "";
 
                     return (
                         <div key={key} className="resource-list-item">
@@ -63,7 +76,7 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ castleName, res
                             <div className="resource-info">
                                 <div className="resource-text">
                                     <span>{amount.toLocaleString()} / {max.toLocaleString()}</span>
-                                    <span className="production-rate">(+{prod.toLocaleString()}/hr)</span>
+                                    <span className={prodClass}>({prodPrefix}{prod.toLocaleString()}/hr)</span>
                                 </div>
                                 <div className="progress-bar-container">
                                     <div className="progress-bar" style={{ width: `${percentage}%` }}></div>

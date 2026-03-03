@@ -1,9 +1,11 @@
 package FrontendWebsocket
 
 import (
-	"CitadelDesktop/Server/GameWebsocket"
+	"CitadelDesktop/Server/GameFunctions"
+	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ReconfigureLoadout"
+	"CitadelDesktop/Server/ResponseRegistry"
 	"CitadelDesktop/Server/Version"
 	"encoding/json"
 	"fmt"
@@ -16,6 +18,13 @@ import (
 // triggerSelfUpdate is a wrapper that calls Version.PerformSelfUpdate
 func triggerSelfUpdate(downloadUrl string) error {
 	return Version.PerformSelfUpdate(downloadUrl)
+}
+
+func init() {
+	// Wire up callback so GameParser can notify frontend when castle data changes
+	GameParser.UpdateCastleResourceFunc = func(castleLocation string) {
+		SendCastleResource(castleLocation)
+	}
 }
 
 func ParseFrontendMessage(message []byte) {
@@ -112,20 +121,20 @@ func ParseFrontendMessage(message []byte) {
 		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 gems", soldCount))
 	case "startGame":
 		log.Println("Manual Start Bot pressed. Reloading game tab...")
-		GameWebsocket.ReloadGameTab()
+		ResponseRegistry.ReloadGameTab()
 	case "stopGame":
-		GameWebsocket.DisconnectGameWebSocket()
+		ResponseRegistry.DisconnectGameWebSocket()
 	case "fetchAllianceInfo":
-		GameWebsocket.FetchAllianceInfo()
+		GameFunctions.FetchAllianceInfo()
 	case "toggleAutoBird":
 		// Check if AutoBird is currently running (actual goroutine state)
-		wasRunning := GameWebsocket.IsAutoBirdRunning()
+		wasRunning := GameFunctions.IsAutoBirdRunning()
 		log.Printf("[AutoBird] Toggle requested. Was running: %v", wasRunning)
 
 		// Toggle based on actual running state
 		if wasRunning {
 			log.Println("[AutoBird] Calling StopAutoBird...")
-			GameWebsocket.StopAutoBird()
+			GameFunctions.StopAutoBird()
 			Models.GetGameState().AutoBirdEnabled = false
 			SendAutoBirdStatus(false, 0)
 		} else {
@@ -170,7 +179,7 @@ func ParseFrontendMessage(message []byte) {
 					Models.AutoBirdDelay.MinSend = int(minSend)
 				}
 				log.Println("[AutoBird] Calling StartAutoBird...")
-				GameWebsocket.StartAutoBird()
+				GameFunctions.StartAutoBird()
 				SendAutoBirdStatus(true, 0)
 			}
 		}
@@ -229,7 +238,7 @@ func ParseFrontendMessage(message []byte) {
 		}
 	case "reconfigureLoadout":
 		{
-			GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+			ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 			time.Sleep(2 * time.Second)
 
 			// Parse the payload into ReconfigurePayload struct
@@ -270,7 +279,7 @@ func ParseFrontendMessage(message []byte) {
 			} else if msg.Payload.EquipmentMode == "Castellan" {
 				// Get current loadout from the target index
 				targetIndex := msg.Payload.TargetIndex
-				currentLoadout := GameWebsocket.GetCastellanStat(targetIndex)
+				currentLoadout := GameFunctions.GetCastellanStat(targetIndex)
 
 				// Calculate the optimized loadout
 				newLoadout, errMsg := ReconfigureLoadout.ReconfigureCastellan(msg.Payload)
@@ -339,7 +348,7 @@ func ParseFrontendMessage(message []byte) {
 				}
 				if equipID != 0 {
 					log.Printf("[Reconfigure] Unequipping slot %d (equipID: %f)", slot, equipID)
-					GameWebsocket.UnequipEquipmentRaw(equipmentMode, targetIndex, equipID)
+					GameFunctions.UnequipEquipmentRaw(equipmentMode, targetIndex, equipID)
 					time.Sleep(500 * time.Millisecond)
 				}
 			}
@@ -363,11 +372,11 @@ func ParseFrontendMessage(message []byte) {
 							log.Printf("[Reconfigure] Found target gem (ID: %f) in storage equipment (ID: %f, Slot: %d). Performing double jump.", gemID, eq.ID, eq.EquipSlotNumber)
 							// Double Jump: Equip -> UnequipGem -> UnequipItem
 							slot := int(eq.EquipSlotNumber)
-							GameWebsocket.EquipEquipment(equipmentMode, targetIndex, slot, eq.ID)
+							GameFunctions.EquipEquipment(equipmentMode, targetIndex, slot, eq.ID)
 							time.Sleep(1 * time.Second)
-							GameWebsocket.UnequipGemRaw(equipmentMode, targetIndex, eq.ID)
+							GameFunctions.UnequipGemRaw(equipmentMode, targetIndex, eq.ID)
 							time.Sleep(500 * time.Millisecond)
-							GameWebsocket.UnequipEquipmentRaw(equipmentMode, targetIndex, eq.ID)
+							GameFunctions.UnequipEquipmentRaw(equipmentMode, targetIndex, eq.ID)
 							time.Sleep(500 * time.Millisecond)
 						}
 					}
@@ -387,7 +396,7 @@ func ParseFrontendMessage(message []byte) {
 			for slot, eid := range newEquips {
 				if eid != 0 {
 					log.Printf("[Reconfigure] Equipping slot %d with item ID %f", slot, eid)
-					GameWebsocket.EquipEquipment(equipmentMode, targetIndex, slot, eid)
+					GameFunctions.EquipEquipment(equipmentMode, targetIndex, slot, eid)
 					time.Sleep(800 * time.Millisecond)
 				}
 			}
@@ -405,14 +414,14 @@ func ParseFrontendMessage(message []byte) {
 				eid := newEquips[slot]
 				if gid != 0 && eid != 0 {
 					log.Printf("[Reconfigure] Socketing gem ID %f into equipment ID %f (Slot %d)", gid, eid, slot)
-					GameWebsocket.EquipGem(equipmentMode, targetIndex, eid, gid)
+					GameFunctions.EquipGem(equipmentMode, targetIndex, eid, gid)
 					time.Sleep(800 * time.Millisecond)
 				}
 			}
 
 			// Final Sync
 			SendAlertMessage("green", "Reconfiguration complete!")
-			GameWebsocket.OutgoingMessages <- GameWebsocket.OutgoingMessageWithCost{Payload: []byte(`%xt%EmpireEx_21%gli%1%{}%`), Cost: 10000}
+			ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(`%xt%EmpireEx_21%gli%1%{}%`), Cost: 10000}
 			time.Sleep(2 * time.Second)
 
 			// Trigger frontend refresh
@@ -443,7 +452,7 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			// Fetch fresh data from game before attempting unequip
-			GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+			ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 			time.Sleep(2 * time.Second)
 
 			// Process each selection
@@ -458,7 +467,7 @@ func ParseFrontendMessage(message []byte) {
 				slotNumber, _ := sel["slotNumber"].(float64)
 				equipmentId, _ := sel["equipmentId"].(float64)
 
-				result := GameWebsocket.UnequipEquipment(equipmentMode, int(targetIndex), int(slotNumber), equipmentId)
+				result := GameFunctions.UnequipEquipment(equipmentMode, int(targetIndex), int(slotNumber), equipmentId)
 				if result.Success {
 					successCount++
 				} else {
@@ -478,7 +487,7 @@ func ParseFrontendMessage(message []byte) {
 
 			// Refresh equipment data from game and update frontend via ParseFrontendMessage
 			go func() {
-				GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+				ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 				time.Sleep(2 * time.Second)
 				// Call ParseFrontendMessage with getCommUpdate/getCastUpdate to trigger targeted refresh
 				var refreshMsg string
@@ -508,7 +517,7 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			// Fetch fresh data from game before attempting unequip
-			GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+			ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 			time.Sleep(2 * time.Second)
 
 			// Process each selection
@@ -524,7 +533,7 @@ func ParseFrontendMessage(message []byte) {
 				gemId, _ := sel["gemId"].(float64)
 				equipmentId, _ := sel["equipmentId"].(float64)
 
-				result := GameWebsocket.UnequipGem(equipmentMode, int(targetIndex), int(slotNumber), gemId, equipmentId)
+				result := GameFunctions.UnequipGem(equipmentMode, int(targetIndex), int(slotNumber), gemId, equipmentId)
 				if result.Success {
 					successCount++
 				} else {
@@ -544,7 +553,7 @@ func ParseFrontendMessage(message []byte) {
 
 			// Refresh equipment data from game and update frontend via ParseFrontendMessage
 			go func() {
-				GameWebsocket.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+				ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 				time.Sleep(2 * time.Second)
 				// Call ParseFrontendMessage with getCommUpdate/getCastUpdate to trigger targeted refresh
 				var refreshMsg string
@@ -674,7 +683,7 @@ func ParseFrontendMessage(message []byte) {
 
 	case "getServerList":
 		var serverNames []string
-		for name := range GameWebsocket.ServerURLMap {
+		for name := range ResponseRegistry.ServerURLMap {
 			serverNames = append(serverNames, name)
 		}
 		// Sort for consistent display
@@ -688,7 +697,7 @@ func ParseFrontendMessage(message []byte) {
 		if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
 			server, _ := payloadRaw["server"].(string)
 			if server != "" {
-				GameWebsocket.StoredCredentials.Server = server
+				ResponseRegistry.StoredCredentials.Server = server
 			}
 		}
 	case "sendCustomMessage":
@@ -706,7 +715,7 @@ func ParseFrontendMessage(message []byte) {
 		// Format and send the message to the game server
 		formattedMessage := fmt.Sprintf("%%xt%%EmpireEx_21%%%s%%1%%{}%%", messageCode)
 		log.Printf("[Custom Message] Sending: %s", formattedMessage)
-		GameWebsocket.OutgoingMessages <- []byte(formattedMessage)
+		ResponseRegistry.OutgoingMessages <- []byte(formattedMessage)
 		SendAlertMessage("green", fmt.Sprintf("Sent custom message: %s", messageCode))
 	}
 }

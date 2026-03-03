@@ -6,11 +6,17 @@ import (
 
 // CastleTroops represents troop counts for a single castle location
 type CastleTroops struct {
-	KingdomID int         `json:"kingdomID"`
-	CastleID  int         `json:"castleID"` // Added CastleID
-	X         int         `json:"x"`
-	Y         int         `json:"y"`
-	Troops    map[int]int `json:"troops"` // unitID -> count (troops only, no tools)
+	KingdomID   int            `json:"kingdomID"`
+	CastleID    int            `json:"castleID"`
+	X           int            `json:"x"`
+	Y           int            `json:"y"`
+	Troops      map[int]int    `json:"troops"`      // unitID -> count (troops only, no tools) - Legacy/I
+	TroopsI     map[int]int    `json:"troopsI"`     // Units currently in castle
+	TroopsTU    map[int]int    `json:"troopsTU"`    // Units travelling
+	TroopsHI    map[int]int    `json:"troopsHI"`    // Units in hospital
+	TroopsSHI   map[int]int    `json:"troopsSHI"`   // Units in special hospital
+	TroopsMixed map[int]int    `json:"troopsMixed"` // Combined I + TU
+	Buildings   []BuildingData `json:"buildings"`   // New: building information
 }
 
 // SaveInCastleTroops represents the troops to keep in castle per castle ID
@@ -66,350 +72,2375 @@ func ClearBirdIgnoreList() {
 }
 
 // TroopIDs contains all valid troop unit IDs and their names
-var TroopIDs = map[int]string{
-	5:   "Veteran Saber Cleaver",
-	6:   "Veteran Slingshot",
-	7:   "Cave Smasher",
-	8:   "Cave Hunter",
-	9:   "Veteran Demon Horror",
-	10:  "Veteran Deathly Horror",
-	11:  "Veteran Flame Bearer",
-	12:  "Veteran Composite Bowman",
-	13:  "Muscle Man",
-	14:  "Marksman",
-	15:  "Fruit Pirate",
-	18:  "Imperial Guardsman",
-	19:  "Imperial Bowman",
-	20:  "Imperial Knight",
-	21:  "Imperial Marksman",
-	22:  "Berserker",
-	23:  "Spear Woman",
-	34:  "Renegade Sai Warrior",
-	35:  "Renegade Kunai Thrower",
-	36:  "Renegade Katana Warrior",
-	37:  "Renegade Bow Master",
-	38:  "Katana Warrior",
-	39:  "Bow Master",
-	40:  "Skeleton Warrior",
-	41:  "Skeleton Bowman",
-	42:  "Pumpkin Butcher",
-	43:  "Raven Chomper",
-	48:  "Bone Huntress",
-	50:  "Frost Bowman",
-	51:  "Master Bone Huntress",
-	52:  "Master Frost Bowman",
-	58:  "Star-Spangled Knight",
-	59:  "Star-Spangled Crossbowman",
-	68:  "Cave Smasher",
-	74:  "Cave Hunter",
-	75:  "Knight of the Elite Guard",
-	76:  "Crossbowman of the Elite Guard",
-	78:  "Renegade Cave Smasher",
-	79:  "Renegade Cave Hunter",
-	83:  "Forest Warrior",
-	84:  "Forest Hunter",
-	85:  "Forest Guardian",
-	86:  "Forest Bowman",
-	92:  "Demon Shadow",
-	93:  "Deathly Shadow",
-	100: "Shamrock Huntsman",
-	101: "Shamrock Assassin",
-	102: "Spring Huntress",
-	103: "Spring Footsoldier",
-	117: "Fire Witch",
-	118: "Bone Rattler",
-	119: "Skeletal Hunter",
-	120: "Skeletal Scytheman",
-	126: "Shapeshifter Legionnaire",
-	127: "Shapeshifter Sharpshooter",
-	132: "Gnomad Warrior",
-	133: "Gnomad Archer",
-	134: "Gingerbread Brawler",
-	135: "Gingerbread Sniper",
-	146: "Knight of the Throne-Watcher",
-	147: "Marksman of the Throne-Watcher",
-	148: "Relic Axeman",
-	149: "Relic Shortbowman",
-	150: "Relic Hammerman",
-	151: "Relic Longbowman",
-	183: "Cultist Brawler",
-	184: "Cultist Slingshot",
-	185: "Cultist Warrior",
-	186: "Cultist Hunter",
-	187: "Wilderness Brawler",
-	188: "Wilderness Slingshot",
-	189: "Wilderness Warrior",
-	190: "Wilderness Hunter",
-	191: "Corrupted Assassin",
-	192: "Corrupted Crossbowman",
-	193: "Corrupted Veteran Halberdier",
-	194: "Corrupted Veteran Longbowman",
-	195: "Shield-Maiden",
-	205: "Valkyrie Ranger",
-	217: "Protector of the North",
-	228: "Valkyrie Sniper",
-	277: "Direwolf",
-	288: "Easter Championess",
-	299: "Valkyrie Huntress",
-	308: "Veteran Halberdier",
-	309: "Veteran Two-Handed Swordsman",
-	311: "Veteran Longbowman",
-	312: "Veteran Heavy Crossbowman",
-	336: "Guardian of Spring",
-	347: "Celestial Marksman",
-	358: "Summer Huntress",
-	369: "Fruit Breaker",
-	409: "Star-Spangled Veteran Demon Horror",
-	410: "Star-Spangled Veteran Deathly Horror",
-	461: "Summer Marksman",
-	479: "Stein Smasher",
-	480: "Cask Marksmann",
-	481: "Pretzel Guardian",
-	482: "Bavarian Brewer",
-	485: "Glacial Amazon Warrior",
-	486: "Glacial Amazon Archer",
-	487: "Glacial Amazon Guardian",
-	488: "Glacial Amazon Huntress",
-	494: "Christmas Warrior",
-	495: "Christmas Archer",
-	496: "Christmas Guardian",
-	497: "Christmas Huntress",
-	498: "Festive Warrior",
-	499: "Festive Archer",
-	500: "Festive Guardian",
-	501: "Festive Huntress",
-	502: "Forsaken Maiden",
-	503: "Forlorn Ranger",
-	513: "Glasswing Archer",
-	524: "Flamebreath Berserker",
-	535: "Scalebound Guardian",
-	546: "Scaleshard Marksman",
-	601: "Swordsman",
-	602: "Spearman",
-	603: "Maceman",
-	604: "Halberdier",
-	605: "Two-Handed Swordsman",
-	606: "Archer",
-	607: "Crossbowman",
-	608: "Bowman",
-	609: "Heavy Crossbowman",
-	610: "Longbowman",
-	612: "Shadow Maceman",
-	613: "Shadow Crossbowman",
-	615: "Shadow Ram",
-	616: "Shadow Ladder",
-	618: "Shadow Bundles",
-	619: "Shadow Shields",
-	628: "Veteran Spearman",
-	630: "Veteran Maceman",
-	631: "Veteran Bowman",
-	636: "Veteran Crossbowman",
-	652: "Armed Citizen",
-	655: "Traveling Knight",
-	656: "Traveling Crossbowman",
-	657: "Shark Tooth Warrior",
-	658: "Stone Smasher",
-	659: "Prince",
-	662: "Skeleton Warrior",
-	663: "Skeleton Bowman",
-	664: "Crossbowman of the Kingsguard",
-	667: "Shadow Rogue",
-	668: "Shadow Felon",
-	670: "Norseman With Axe",
-	671: "Norseman With Bow",
-	672: "Knight of the Kingsguard",
-	673: "Dragon Claws",
-	674: "Dragon Fire",
-	675: "Saber Warrior",
-	676: "Desert Bowman",
-	677: "Norseman With Axe",
-	678: "Norseman With Bow",
-	679: "Cultist Fanatic",
-	680: "Cultist Bowman",
-	684: "Marauder",
-	685: "Pyromaniac",
-	686: "Sentinel of the Kingsguard",
-	687: "Scout of the Kingsguard",
-	688: "Renegade Saber Warrior",
-	689: "Renegade Desert Bowman",
-	690: "Renegade Norseman Warrior",
-	691: "Renegade Norseman Bowman",
-	692: "Renegade Cultist Warrior",
-	693: "Renegade Cultist Bowman",
-	698: "Cow Berdier",
-	699: "Longbow Ox",
-	710: "Bear Warrior",
-	711: "Bear Bowman",
-	712: "Lion Warrior",
-	713: "Lion Bowman",
-	714: "Demon Horror",
-	715: "Deathly Horror",
-	716: "Swashbuckler",
-	717: "Sail Ripper",
-	718: "Tentacle",
-	719: "Kraken Head",
-	720: "Wolfhound",
-	721: "Barbarian",
-	722: "Composite Bowman",
-	723: "Flame Bearer",
-	724: "Veteran Swordsman",
-	725: "Khan Guard",
-	726: "Saber Cleaver",
-	727: "Slingshot",
-	728: "Renegade Lancer",
-	729: "Renegade Spear Thrower",
-	743: "Lancer",
-	744: "Spear Thrower",
-	746: "Militia",
-	747: "Shadow Scoundrel",
-	748: "Shadow Wretch",
-	749: "Shadow Battering Ram",
-	750: "Shadow Siege Tower",
-	751: "Shadow Assault Bridge",
-	752: "Shadow Mantlet",
-	753: "Demon Slayer",
-	754: "Assassin",
-	759: "Renegade Swashbuckler",
-	760: "Renegade Sail Ripper",
-	765: "Veteran Marauder",
-	766: "Veteran Pyromaniac",
-	767: "Renegade Shark Tooth Warrior",
-	768: "Renegade Stone Smasher",
-	781: "Master Swordsman",
-	782: "Master Archer",
-	960: "Forest Warrior",
-	961: "Forest Hunter",
-	962: "Renegade Swashbuckler",
-	963: "Renegade Sail Ripper",
-	//Leveled units - Jolly Gingerbread Sniper
-	478: "Jolly Gingerbread Sniper",
-	//Leveled units - Candy Cane Protector
-	477: "Candy Cane Protector",
-	// Leveled units - Shield-Maiden
-	196: "Shield-Maiden", 197: "Shield-Maiden", 198: "Shield-Maiden", 199: "Shield-Maiden",
-	200: "Shield-Maiden", 201: "Shield-Maiden", 202: "Shield-Maiden", 203: "Shield-Maiden",
-	204: "Shield-Maiden", 215: "Shield-Maiden",
-	// Leveled units - Valkyrie Ranger
-	206: "Valkyrie Ranger", 207: "Valkyrie Ranger", 208: "Valkyrie Ranger", 209: "Valkyrie Ranger",
-	210: "Valkyrie Ranger", 211: "Valkyrie Ranger", 212: "Valkyrie Ranger", 213: "Valkyrie Ranger",
-	214: "Valkyrie Ranger", 216: "Valkyrie Ranger",
-	// Leveled units - Protector of the North
-	218: "Protector of the North", 219: "Protector of the North", 220: "Protector of the North",
-	221: "Protector of the North", 222: "Protector of the North", 223: "Protector of the North",
-	224: "Protector of the North", 225: "Protector of the North", 226: "Protector of the North",
-	227: "Protector of the North", 489: "Protector of the North",
-	// Leveled units - Valkyrie Sniper
-	229: "Valkyrie Sniper", 230: "Valkyrie Sniper", 231: "Valkyrie Sniper", 232: "Valkyrie Sniper",
-	233: "Valkyrie Sniper", 234: "Valkyrie Sniper", 235: "Valkyrie Sniper", 236: "Valkyrie Sniper",
-	237: "Valkyrie Sniper", 238: "Valkyrie Sniper", 493: "Valkyrie Sniper",
-	// Leveled units - Forsaken Maiden
-	472: "Forsaken Maiden", 483: "Forsaken Maiden",
-	// Leveled units - Forlorn Ranger
-	473: "Forlorn Ranger", 484: "Forlorn Ranger",
-	// Leveled units - Glasswing Archer
-	514: "Glasswing Archer", 515: "Glasswing Archer", 516: "Glasswing Archer", 517: "Glasswing Archer",
-	518: "Glasswing Archer", 519: "Glasswing Archer", 520: "Glasswing Archer", 521: "Glasswing Archer",
-	522: "Glasswing Archer", 523: "Glasswing Archer",
-	// Leveled units - Flamebreath Berserker
-	525: "Flamebreath Berserker", 526: "Flamebreath Berserker", 527: "Flamebreath Berserker",
-	528: "Flamebreath Berserker", 529: "Flamebreath Berserker", 530: "Flamebreath Berserker",
-	531: "Flamebreath Berserker", 532: "Flamebreath Berserker", 533: "Flamebreath Berserker",
-	534: "Flamebreath Berserker",
-	// Leveled units - Scalebound Guardian
-	536: "Scalebound Guardian", 537: "Scalebound Guardian", 538: "Scalebound Guardian",
-	539: "Scalebound Guardian", 540: "Scalebound Guardian", 541: "Scalebound Guardian",
-	542: "Scalebound Guardian", 543: "Scalebound Guardian", 544: "Scalebound Guardian",
-	545: "Scalebound Guardian",
-	// Leveled units - Scaleshard Marksman
-	547: "Scaleshard Marksman", 548: "Scaleshard Marksman", 549: "Scaleshard Marksman",
-	550: "Scaleshard Marksman", 551: "Scaleshard Marksman", 552: "Scaleshard Marksman",
-	553: "Scaleshard Marksman", 554: "Scaleshard Marksman", 555: "Scaleshard Marksman",
-	556: "Scaleshard Marksman",
-	// Leveled units - Swashbuckler
-	701: "Swashbuckler", 702: "Swashbuckler",
-	// Leveled units - Sail Ripper
-	703: "Sail Ripper", 704: "Sail Ripper",
-	// Leveled units - Renegade Swashbuckler (levels)
-	705: "Renegade Swashbuckler", 706: "Renegade Swashbuckler",
-	// Leveled units - Renegade Sail Ripper (levels)
-	707: "Renegade Sail Ripper", 708: "Renegade Sail Ripper",
-	// Leveled units - Katana Warrior
-	820: "Katana Warrior", 821: "Katana Warrior", 822: "Katana Warrior", 823: "Katana Warrior",
-	824: "Katana Warrior", 825: "Katana Warrior", 826: "Katana Warrior", 827: "Katana Warrior",
-	828: "Katana Warrior", 829: "Katana Warrior",
-	// Leveled units - Bow Master
-	830: "Bow Master", 831: "Bow Master", 832: "Bow Master", 833: "Bow Master",
-	834: "Bow Master", 835: "Bow Master", 836: "Bow Master", 837: "Bow Master",
-	838: "Bow Master", 839: "Bow Master",
-	// Leveled units - Sai Warrior
-	861: "Sai Warrior", 862: "Sai Warrior", 863: "Sai Warrior", 864: "Sai Warrior",
-	865: "Sai Warrior", 866: "Sai Warrior", 867: "Sai Warrior", 868: "Sai Warrior",
-	869: "Sai Warrior",
-	// Leveled units - Kunai Thrower
-	871: "Kunai Thrower", 872: "Kunai Thrower", 873: "Kunai Thrower", 874: "Kunai Thrower",
-	875: "Kunai Thrower", 876: "Kunai Thrower", 877: "Kunai Thrower", 878: "Kunai Thrower",
-	879: "Kunai Thrower",
-	// Leveled units - Lancer
-	900: "Lancer", 901: "Lancer", 902: "Lancer", 903: "Lancer", 904: "Lancer",
-	905: "Lancer", 906: "Lancer", 907: "Lancer", 908: "Lancer", 909: "Lancer",
-	// Leveled units - Spear Thrower
-	910: "Spear Thrower", 911: "Spear Thrower", 912: "Spear Thrower", 913: "Spear Thrower",
-	914: "Spear Thrower", 915: "Spear Thrower", 916: "Spear Thrower", 917: "Spear Thrower",
-	918: "Spear Thrower", 919: "Spear Thrower",
-	// Leveled units - Veteran Saber Cleaver
-	940: "Veteran Saber Cleaver", 941: "Veteran Saber Cleaver", 942: "Veteran Saber Cleaver",
-	943: "Veteran Saber Cleaver", 944: "Veteran Saber Cleaver", 945: "Veteran Saber Cleaver",
-	946: "Veteran Saber Cleaver", 947: "Veteran Saber Cleaver", 948: "Veteran Saber Cleaver",
-	949: "Veteran Saber Cleaver",
-	// Leveled units - Veteran Slingshot
-	950: "Veteran Slingshot", 951: "Veteran Slingshot", 952: "Veteran Slingshot",
-	953: "Veteran Slingshot", 954: "Veteran Slingshot", 955: "Veteran Slingshot",
-	956: "Veteran Slingshot", 957: "Veteran Slingshot", 958: "Veteran Slingshot",
-	959: "Veteran Slingshot",
-	// Leveled units - Veteran Halberdier
-	2000: "Veteran Halberdier", 2001: "Veteran Halberdier", 2002: "Veteran Halberdier",
-	2003: "Veteran Halberdier", 2004: "Veteran Halberdier", 2005: "Veteran Halberdier",
-	2006: "Veteran Halberdier", 2007: "Veteran Halberdier", 2008: "Veteran Halberdier",
-	2009: "Veteran Halberdier",
-	// Leveled units - Veteran Two-Handed Swordsman
-	2010: "Veteran Two-Handed Swordsman", 2011: "Veteran Two-Handed Swordsman",
-	2012: "Veteran Two-Handed Swordsman", 2013: "Veteran Two-Handed Swordsman",
-	2014: "Veteran Two-Handed Swordsman", 2015: "Veteran Two-Handed Swordsman",
-	2016: "Veteran Two-Handed Swordsman", 2017: "Veteran Two-Handed Swordsman",
-	2018: "Veteran Two-Handed Swordsman", 2019: "Veteran Two-Handed Swordsman",
-	// Leveled units - Relic Axeman
-	2020: "Relic Axeman", 2021: "Relic Axeman", 2022: "Relic Axeman", 2023: "Relic Axeman",
-	2024: "Relic Axeman", 2025: "Relic Axeman", 2026: "Relic Axeman", 2027: "Relic Axeman",
-	2028: "Relic Axeman", 2029: "Relic Axeman",
-	// Leveled units - Relic Hammerman
-	2030: "Relic Hammerman", 2031: "Relic Hammerman", 2032: "Relic Hammerman",
-	2033: "Relic Hammerman", 2034: "Relic Hammerman", 2035: "Relic Hammerman",
-	2036: "Relic Hammerman", 2037: "Relic Hammerman", 2038: "Relic Hammerman",
-	2039: "Relic Hammerman",
-	// Leveled units - Veteran Longbowman
-	2040: "Veteran Longbowman", 2041: "Veteran Longbowman", 2042: "Veteran Longbowman",
-	2043: "Veteran Longbowman", 2044: "Veteran Longbowman", 2045: "Veteran Longbowman",
-	2046: "Veteran Longbowman", 2047: "Veteran Longbowman", 2048: "Veteran Longbowman",
-	2049: "Veteran Longbowman",
-	// Leveled units - Veteran Heavy Crossbowman
-	2050: "Veteran Heavy Crossbowman", 2051: "Veteran Heavy Crossbowman",
-	2052: "Veteran Heavy Crossbowman", 2053: "Veteran Heavy Crossbowman",
-	2054: "Veteran Heavy Crossbowman", 2055: "Veteran Heavy Crossbowman",
-	2056: "Veteran Heavy Crossbowman", 2057: "Veteran Heavy Crossbowman",
-	2058: "Veteran Heavy Crossbowman", 2059: "Veteran Heavy Crossbowman",
-	// Leveled units - Relic Shortbowman
-	2060: "Relic Shortbowman", 2061: "Relic Shortbowman", 2062: "Relic Shortbowman",
-	2063: "Relic Shortbowman", 2064: "Relic Shortbowman", 2065: "Relic Shortbowman",
-	2066: "Relic Shortbowman", 2067: "Relic Shortbowman", 2068: "Relic Shortbowman",
-	2069: "Relic Shortbowman",
-	// Leveled units - Relic Longbowman
-	2070: "Relic Longbowman", 2071: "Relic Longbowman", 2072: "Relic Longbowman",
-	2073: "Relic Longbowman", 2074: "Relic Longbowman", 2075: "Relic Longbowman",
-	2076: "Relic Longbowman", 2077: "Relic Longbowman", 2078: "Relic Longbowman",
-	2079: "Relic Longbowman",
+type TroopInfo struct {
+	Name              string
+	ConsumptionType   string // "food", "mead", "beef"
+	ConsumptionAmount int
 }
 
-// ToolIDs contains all tool unit IDs and their names
+var TroopIDs = map[int]TroopInfo{
+	5: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	6: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	7: {
+		Name:              "Cave Smasher",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	8: {
+		Name:              "Cave Hunter",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	9: {
+		Name:              "Veteran Demon Horror",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	10: {
+		Name:              "Veteran Deathly Horror",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	11: {
+		Name:              "Veteran Flame Bearer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	12: {
+		Name:              "Veteran Composite Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	13: {
+		Name:              "Muscle Man",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	14: {
+		Name:              "Marksman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	15: {
+		Name:              "Fruit Pirate",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	18: {
+		Name:              "Imperial Guardsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	19: {
+		Name:              "Imperial Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	20: {
+		Name:              "Imperial Knight",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	21: {
+		Name:              "Imperial Marksman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	22: {
+		Name:              "Berserker",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	23: {
+		Name:              "Spear Woman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	34: {
+		Name:              "Renegade Sai Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	35: {
+		Name:              "Renegade Kunai Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	36: {
+		Name:              "Renegade Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	37: {
+		Name:              "Renegade Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	38: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	39: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	40: {
+		Name:              "Skeleton Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	41: {
+		Name:              "Skeleton Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	42: {
+		Name:              "Pumpkin Butcher",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	43: {
+		Name:              "Raven Chomper",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	48: {
+		Name:              "Bone Huntress",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	50: {
+		Name:              "Frost Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	51: {
+		Name:              "Master Bone Huntress",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	52: {
+		Name:              "Master Frost Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	58: {
+		Name:              "Star-Spangled Knight",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	59: {
+		Name:              "Star-Spangled Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	68: {
+		Name:              "Cave Smasher",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	74: {
+		Name:              "Cave Hunter",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	75: {
+		Name:              "Knight of the Elite Guard",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	76: {
+		Name:              "Crossbowman of the Elite Guard",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	78: {
+		Name:              "Renegade Cave Smasher",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	79: {
+		Name:              "Renegade Cave Hunter",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	83: {
+		Name:              "Forest Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	84: {
+		Name:              "Forest Hunter",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	85: {
+		Name:              "Forest Guardian",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	86: {
+		Name:              "Forest Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	92: {
+		Name:              "Demon Shadow",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	93: {
+		Name:              "Deathly Shadow",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	100: {
+		Name:              "Shamrock Huntsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	101: {
+		Name:              "Shamrock Assassin",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	102: {
+		Name:              "Spring Huntress",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	103: {
+		Name:              "Spring Footsoldier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	117: {
+		Name:              "Fire Witch",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	118: {
+		Name:              "Bone Rattler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	119: {
+		Name:              "Skeletal Hunter",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	120: {
+		Name:              "Skeletal Scytheman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	126: {
+		Name:              "Shapeshifter Legionnaire",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	127: {
+		Name:              "Shapeshifter Sharpshooter",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	132: {
+		Name:              "Gnomad Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	133: {
+		Name:              "Gnomad Archer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	134: {
+		Name:              "Gingerbread Brawler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	135: {
+		Name:              "Gingerbread Sniper",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	146: {
+		Name:              "Knight of the Throne-Watcher",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	147: {
+		Name:              "Marksman of the Throne-Watcher",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	148: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	149: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	150: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	151: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	183: {
+		Name:              "Cultist Brawler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	184: {
+		Name:              "Cultist Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	185: {
+		Name:              "Cultist Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	186: {
+		Name:              "Cultist Hunter",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	187: {
+		Name:              "Wilderness Brawler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	188: {
+		Name:              "Wilderness Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	189: {
+		Name:              "Wilderness Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	190: {
+		Name:              "Wilderness Hunter",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	191: {
+		Name:              "Corrupted Assassin",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	192: {
+		Name:              "Corrupted Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	193: {
+		Name:              "Corrupted Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	194: {
+		Name:              "Corrupted Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	195: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	205: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	217: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	228: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	277: {
+		Name:              "Direwolf",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	288: {
+		Name:              "Easter Championess",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	299: {
+		Name:              "Valkyrie Huntress",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	308: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	309: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	311: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	312: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	336: {
+		Name:              "Guardian of Spring",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	347: {
+		Name:              "Celestial Marksman",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	358: {
+		Name:              "Summer Huntress",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	369: {
+		Name:              "Fruit Breaker",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	409: {
+		Name:              "Star-Spangled Veteran Demon Horror",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	410: {
+		Name:              "Star-Spangled Veteran Deathly Horror",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	461: {
+		Name:              "Summer Marksman",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	479: {
+		Name:              "Stein Smasher",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	480: {
+		Name:              "Cask Marksmann",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	481: {
+		Name:              "Pretzel Guardian",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	482: {
+		Name:              "Bavarian Brewer",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	485: {
+		Name:              "Glacial Amazon Warrior",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	486: {
+		Name:              "Glacial Amazon Archer",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	487: {
+		Name:              "Glacial Amazon Guardian",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	488: {
+		Name:              "Glacial Amazon Huntress",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	494: {
+		Name:              "Christmas Warrior",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	495: {
+		Name:              "Christmas Archer",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	496: {
+		Name:              "Christmas Guardian",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	497: {
+		Name:              "Christmas Huntress",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	498: {
+		Name:              "Festive Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	499: {
+		Name:              "Festive Archer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	500: {
+		Name:              "Festive Guardian",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	501: {
+		Name:              "Festive Huntress",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	502: {
+		Name:              "Forsaken Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	503: {
+		Name:              "Forlorn Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	513: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	524: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	535: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	546: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	601: {
+		Name:              "Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	602: {
+		Name:              "Spearman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 2,
+	},
+	603: {
+		Name:              "Maceman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 2,
+	},
+	604: {
+		Name:              "Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	605: {
+		Name:              "Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	606: {
+		Name:              "Archer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 2,
+	},
+	607: {
+		Name:              "Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 2,
+	},
+	608: {
+		Name:              "Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 2,
+	},
+	609: {
+		Name:              "Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	610: {
+		Name:              "Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	612: {
+		Name:              "Shadow Maceman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	613: {
+		Name:              "Shadow Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	615: {
+		Name:              "Shadow Ram",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	616: {
+		Name:              "Shadow Ladder",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	618: {
+		Name:              "Shadow Bundles",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	619: {
+		Name:              "Shadow Shields",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	628: {
+		Name:              "Veteran Spearman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	630: {
+		Name:              "Veteran Maceman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	631: {
+		Name:              "Veteran Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	636: {
+		Name:              "Veteran Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	652: {
+		Name:              "Armed Citizen",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	655: {
+		Name:              "Traveling Knight",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	656: {
+		Name:              "Traveling Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	657: {
+		Name:              "Shark Tooth Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	658: {
+		Name:              "Stone Smasher",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	659: {
+		Name:              "Prince",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 2,
+	},
+	662: {
+		Name:              "Skeleton Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	663: {
+		Name:              "Skeleton Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	664: {
+		Name:              "Crossbowman of the Kingsguard",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	667: {
+		Name:              "Shadow Rogue",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	668: {
+		Name:              "Shadow Felon",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	670: {
+		Name:              "Norseman With Axe",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	671: {
+		Name:              "Norseman With Bow",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	672: {
+		Name:              "Knight of the Kingsguard",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	673: {
+		Name:              "Dragon Claws",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	674: {
+		Name:              "Dragon Fire",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	675: {
+		Name:              "Saber Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	676: {
+		Name:              "Desert Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	677: {
+		Name:              "Norseman With Axe",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	678: {
+		Name:              "Norseman With Bow",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	679: {
+		Name:              "Cultist Fanatic",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	680: {
+		Name:              "Cultist Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	684: {
+		Name:              "Marauder",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	685: {
+		Name:              "Pyromaniac",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	686: {
+		Name:              "Sentinel of the Kingsguard",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	687: {
+		Name:              "Scout of the Kingsguard",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	688: {
+		Name:              "Renegade Saber Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	689: {
+		Name:              "Renegade Desert Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	690: {
+		Name:              "Renegade Norseman Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	691: {
+		Name:              "Renegade Norseman Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	692: {
+		Name:              "Renegade Cultist Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	693: {
+		Name:              "Renegade Cultist Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	698: {
+		Name:              "Cow Berdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	699: {
+		Name:              "Longbow Ox",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	710: {
+		Name:              "Bear Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	711: {
+		Name:              "Bear Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	712: {
+		Name:              "Lion Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	713: {
+		Name:              "Lion Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	714: {
+		Name:              "Demon Horror",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	715: {
+		Name:              "Deathly Horror",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	716: {
+		Name:              "Swashbuckler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	717: {
+		Name:              "Sail Ripper",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	718: {
+		Name:              "Tentacle",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	719: {
+		Name:              "Kraken Head",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	720: {
+		Name:              "Wolfhound",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	721: {
+		Name:              "Barbarian",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	722: {
+		Name:              "Composite Bowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	723: {
+		Name:              "Flame Bearer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	724: {
+		Name:              "Veteran Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	725: {
+		Name:              "Khan Guard",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	726: {
+		Name:              "Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	727: {
+		Name:              "Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	728: {
+		Name:              "Renegade Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	729: {
+		Name:              "Renegade Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	743: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	744: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	746: {
+		Name:              "Militia",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	747: {
+		Name:              "Shadow Scoundrel",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	748: {
+		Name:              "Shadow Wretch",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	749: {
+		Name:              "Shadow Battering Ram",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	750: {
+		Name:              "Shadow Siege Tower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	751: {
+		Name:              "Shadow Assault Bridge",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	752: {
+		Name:              "Shadow Mantlet",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	753: {
+		Name:              "Demon Slayer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	754: {
+		Name:              "Assassin",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	759: {
+		Name:              "Renegade Swashbuckler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	760: {
+		Name:              "Renegade Sail Ripper",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	765: {
+		Name:              "Veteran Marauder",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	766: {
+		Name:              "Veteran Pyromaniac",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	767: {
+		Name:              "Renegade Shark Tooth Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	768: {
+		Name:              "Renegade Stone Smasher",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	781: {
+		Name:              "Master Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	782: {
+		Name:              "Master Archer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	960: {
+		Name:              "Forest Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	961: {
+		Name:              "Forest Hunter",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	962: {
+		Name:              "Renegade Swashbuckler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	963: {
+		Name:              "Renegade Sail Ripper",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	// Shield-Maiden (melee/attack) - MEAD
+	196: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	197: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	198: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	199: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	200: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	201: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	202: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	203: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	204: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	215: {
+		Name:              "Shield-Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	// Valkyrie Ranger (range/attack) - MEAD
+	206: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	207: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	208: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	209: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	210: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	211: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	212: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	213: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	214: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	216: {
+		Name:              "Valkyrie Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	// Protector of the North (melee/defense) - MEAD
+	218: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	219: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	220: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	221: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	222: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	223: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	224: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	225: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	226: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	227: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	489: {
+		Name:              "Protector of the North",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	// Valkyrie Sniper (range/defense) - MEAD
+	229: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	230: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	231: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	232: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	233: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	234: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	235: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	236: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	237: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	238: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	493: {
+		Name:              "Valkyrie Sniper",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	// Forsaken Maiden - MEAD
+	472: {
+		Name:              "Forsaken Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	483: {
+		Name:              "Forsaken Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	// Forlorn Ranger - MEAD
+	473: {
+		Name:              "Forlorn Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	484: {
+		Name:              "Forlorn Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	// Glasswing Archer (range/attack) - BEEF
+	514: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	515: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	516: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	517: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	518: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	519: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	520: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	521: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	522: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	523: {
+		Name:              "Glasswing Archer",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	// Flamebreath Berserker (melee/attack) - BEEF
+	525: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	526: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	527: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	528: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	529: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	530: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	531: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	532: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	533: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	534: {
+		Name:              "Flamebreath Berserker",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	// Scalebound Guardian (melee/attack) - BEEF
+	536: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	537: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	538: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	539: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	540: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	541: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	542: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	543: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	544: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	545: {
+		Name:              "Scalebound Guardian",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	// Scaleshard Marksman (range/attack) - BEEF
+	547: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	548: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	549: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	550: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	551: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	552: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	553: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	554: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	555: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	556: {
+		Name:              "Scaleshard Marksman",
+		ConsumptionType:   "beef",
+		ConsumptionAmount: 2,
+	},
+	// Swashbuckler (melee/attack) - FOOD
+	701: {
+		Name:              "Swashbuckler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	702: {
+		Name:              "Swashbuckler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	// Sail Ripper (range/attack) - FOOD
+	703: {
+		Name:              "Sail Ripper",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	704: {
+		Name:              "Sail Ripper",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	// Renegade Swashbuckler (melee/attack) - FOOD
+	705: {
+		Name:              "Renegade Swashbuckler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	706: {
+		Name:              "Renegade Swashbuckler",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	// Renegade Sail Ripper (range/attack) - FOOD
+	707: {
+		Name:              "Renegade Sail Ripper",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	708: {
+		Name:              "Renegade Sail Ripper",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 6,
+	},
+	// Katana Warrior (melee/defense) - FOOD
+	820: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	821: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	822: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	823: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	824: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	825: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	826: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	827: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	828: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	829: {
+		Name:              "Katana Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	// Bow Master (range/defense) - FOOD
+	830: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	831: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	832: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	833: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	834: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	835: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	836: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	837: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	838: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	839: {
+		Name:              "Bow Master",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	// Sai Warrior (melee/attack) - FOOD
+	861: {
+		Name:              "Sai Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	862: {
+		Name:              "Sai Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	863: {
+		Name:              "Sai Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	864: {
+		Name:              "Sai Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	865: {
+		Name:              "Sai Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	866: {
+		Name:              "Sai Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	867: {
+		Name:              "Sai Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	868: {
+		Name:              "Sai Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	869: {
+		Name:              "Sai Warrior",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	// Kunai Thrower (range/attack) - FOOD
+	871: {
+		Name:              "Kunai Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	872: {
+		Name:              "Kunai Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	873: {
+		Name:              "Kunai Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	874: {
+		Name:              "Kunai Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	875: {
+		Name:              "Kunai Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	876: {
+		Name:              "Kunai Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	877: {
+		Name:              "Kunai Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	878: {
+		Name:              "Kunai Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	879: {
+		Name:              "Kunai Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	// Lancer (melee/defense) - FOOD
+	900: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	901: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	902: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	903: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	904: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	905: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	906: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	907: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	908: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	909: {
+		Name:              "Lancer",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	// Spear Thrower (range/defense) - FOOD
+	910: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	911: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	912: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	913: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	914: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	915: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	916: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	917: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	918: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	919: {
+		Name:              "Spear Thrower",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 0,
+	},
+	// Veteran Saber Cleaver (melee/attack) - FOOD
+	940: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	941: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	942: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	943: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	944: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	945: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	946: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	947: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	948: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	949: {
+		Name:              "Veteran Saber Cleaver",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	// Veteran Slingshot (range/attack) - FOOD
+	950: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	951: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	952: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	953: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	954: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	955: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	956: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	957: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	958: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	959: {
+		Name:              "Veteran Slingshot",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	// Veteran Halberdier (melee/defense) - FOOD
+	2000: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2001: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2002: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2003: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2004: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2005: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2006: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2007: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2008: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2009: {
+		Name:              "Veteran Halberdier",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	// Veteran Two-Handed Swordsman (melee/attack) - FOOD
+	2010: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2011: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2012: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2013: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2014: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2015: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2016: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2017: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2018: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2019: {
+		Name:              "Veteran Two-Handed Swordsman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	// Relic Axeman (melee/attack) - FOOD
+	2020: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2021: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2022: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2023: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2024: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2025: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2026: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2027: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2028: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2029: {
+		Name:              "Relic Axeman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	// Relic Hammerman (melee/defense) - FOOD
+	2030: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2031: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2032: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2033: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2034: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2035: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2036: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2037: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2038: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2039: {
+		Name:              "Relic Hammerman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	// Veteran Longbowman (range/defense) - FOOD
+	2040: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2041: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2042: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2043: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2044: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2045: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2046: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2047: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2048: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	2049: {
+		Name:              "Veteran Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
+	// Veteran Heavy Crossbowman (range/attack) - FOOD
+	2050: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2051: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2052: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2053: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2054: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2055: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2056: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2057: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2058: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2059: {
+		Name:              "Veteran Heavy Crossbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	// Relic Shortbowman (range/attack) - FOOD
+	2060: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2061: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2062: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2063: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2064: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2065: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2066: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2067: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2068: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	2069: {
+		Name:              "Relic Shortbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 5,
+	},
+	// Relic Longbowman (range/defense) - FOOD
+	2070: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2071: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2072: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2073: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2074: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2075: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2076: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2077: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2078: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+	2079: {
+		Name:              "Relic Longbowman",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 4,
+	},
+}
+
 var ToolIDs = map[int]string{
 	// No tools were defined in the data file
 }

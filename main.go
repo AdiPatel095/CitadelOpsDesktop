@@ -2,9 +2,9 @@ package main
 
 import (
 	"CitadelDesktop/Server/FrontendWebsocket"
-	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/License"
 	"CitadelDesktop/Server/Logging"
+	"CitadelDesktop/Server/ResponseRegistry"
 	"CitadelDesktop/Server/Version"
 	"embed"
 	"fmt"
@@ -39,10 +39,10 @@ func main() {
 	License.SetSendStatusCallback(FrontendWebsocket.SendRegistrationStatusMessage)
 	License.SetSendCreditsCallback(FrontendWebsocket.SendCreditsUpdateMessage)
 	// Set up callback for GameWebsocket to notify frontend of insufficient credits
-	GameWebsocket.SetInsufficientCreditsCallback(FrontendWebsocket.SendInsufficientCreditsMessage)
-	GameWebsocket.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
-	GameWebsocket.SetAutoBirdStatusCallback(FrontendWebsocket.SendAutoBirdStatus)
-	GameWebsocket.SetRequestCredentialsCallback(FrontendWebsocket.SendRequestCredentialsMessage)
+	ResponseRegistry.SetInsufficientCreditsCallback(FrontendWebsocket.SendInsufficientCreditsMessage)
+	ResponseRegistry.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
+	ResponseRegistry.SetAutoBirdStatusCallback(FrontendWebsocket.SendAutoBirdStatus)
+	ResponseRegistry.SetRequestCredentialsCallback(FrontendWebsocket.SendRequestCredentialsMessage)
 
 	// Set up callbacks for Version package
 	Version.SetVersionUpdateCallback(FrontendWebsocket.SendVersionUpdateMessage)
@@ -101,7 +101,7 @@ func StartFrontendService() {
 
 	// Start ChromeDP with the dashboard URL right before starting the HTTP server
 	dashboardURL := fmt.Sprintf("http://localhost:%d", port)
-	go GameWebsocket.StartGameBrowser(dashboardURL)
+	go ResponseRegistry.StartGameBrowser(dashboardURL)
 
 	err = http.ListenAndServe(addr, mux)
 	if err != nil {
