@@ -42,4 +42,7 @@ func MessageRouter(messageParts []string) {
 	if messageType == "gam" || messageType == "cat" || messageType == "cds" || messageType == "cra" {
 		ParseGAMMessage(messageParts[5])
 	}
+	if messageType == "gaa" {
+		ParseGAAMessage(messageParts[5])
+	}
 }

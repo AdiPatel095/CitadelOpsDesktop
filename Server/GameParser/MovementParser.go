@@ -2,8 +2,11 @@ package GameParser
 
 import (
 	"CitadelDesktop/Server/Models"
+	"CitadelDesktop/Server/Scheduler"
 	"encoding/json"
+	"fmt"
 	"log"
+	"time"
 )
 
 // ParseGAMMessage parses the GAM (Global Army Movement) message
@@ -162,6 +165,14 @@ func ParseGAMMessage(data string) {
 			TroopArray:  troopArray,
 		}
 		parsedMovements = append(parsedMovements, movement)
+
+		// Set real travel time cooldown in Scheduler if target coordinates are present
+		if targetX != 0 && targetY != 0 && tt > 0 {
+			targetID := fmt.Sprintf("%d,%d", targetX, targetY)
+			// Apply a generic returning cooldown (time to target and back) + small safety buffer
+			totalCooldownMs := (tt * 2 * 1000) + 10000
+			Scheduler.GetScheduler().CooldownTracker.SetCooldown(targetID, time.Duration(totalCooldownMs)*time.Millisecond)
+		}
 	}
 
 	// Append new movements to the existing list (allows multiple GAM messages to be accumulated)

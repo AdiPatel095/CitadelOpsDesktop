@@ -87,11 +87,18 @@ func InitiateDetails(data string) {
 	go func() {
 		defer wgInitialDetail.Done()
 		galMap, ok := jsonDataMap["gal"].(map[string]interface{})
-		if !ok {
+		if ok {
+			UpdateAlliance(galMap)
+		} else {
 			log.Printf("galMap is not a map or doesn't exist")
-			return
 		}
-		UpdateAlliance(galMap)
+
+		gpiMap, ok := jsonDataMap["gpi"].(map[string]interface{})
+		if ok {
+			UpdatePlayerInfo(gpiMap)
+		} else {
+			log.Printf("gpiMap is not a map or doesn't exist")
+		}
 	}()
 
 	wgInitialDetail.Wait()

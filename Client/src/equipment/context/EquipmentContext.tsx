@@ -11,7 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 // 4 - IceCastle, 5 - DesertCastle, 6 - DungeonCastle, 7 - StormCastle
 export const CASTLE_LOCATIONS = [
     'MainCastle', 'Outpost1', 'Outpost2', 'Outpost3',
-    'IceCastle', 'DesertCastle', 'DungeonCastle', 'StormCastle'
+    'IceCastle', 'DesertCastle', 'DungeonCastle', 'StormCastle', 'BeriWorldCastle'
 ];
 
 interface EquipmentData {
@@ -32,9 +32,9 @@ const defaultEquipmentContext: EquipmentContextType = {
     equipmentData: {
         commStats: [],
         castellanStats: [],
-        castStats: Array(8).fill(null),
+        castStats: Array(9).fill(null),
     },
-    isCastStatsLoading: Array(8).fill(true),
+    isCastStatsLoading: Array(9).fill(true),
     isCommStatsLoading: true,
 };
 
@@ -59,9 +59,9 @@ interface EquipmentProviderProps {
 
 export const EquipmentProvider: React.FC<EquipmentProviderProps> = ({ children }) => {
     const [commStats, setCommStats] = useState<CommStat[]>(Array(50).fill(null));
-    const [castStats, setCastStats] = useState<(CastStat | null)[]>(Array(8).fill(null));
+    const [castStats, setCastStats] = useState<(CastStat | null)[]>(Array(9).fill(null));
     const [isCommStatsLoading, setIsCommStatsLoading] = useState(true);
-    const [isCastStatsLoading, setIsCastStatsLoading] = useState<boolean[]>(Array(8).fill(true));
+    const [isCastStatsLoading, setIsCastStatsLoading] = useState<boolean[]>(Array(9).fill(true));
     const [commStatsLoadedCount, setCommStatsLoadedCount] = useState(0);
 
     useEffect(() => {
@@ -95,7 +95,7 @@ export const EquipmentProvider: React.FC<EquipmentProviderProps> = ({ children }
                     if (message.optionalData !== undefined && message.payload) {
                         const index = parseInt(message.optionalData, 10);
 
-                        if (!isNaN(index) && index >= 0 && index < 8) {
+                        if (!isNaN(index) && index >= 0 && index < 9) {
                             const newStat = message.payload as CastStat;
                             setCastStats(prev => {
                                 const newStats = [...prev];

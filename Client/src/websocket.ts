@@ -226,6 +226,23 @@ class FrontendWebsocketService {
       payload: credentials
     });
   }
+
+  public sendGetSchedulerSettings() {
+    this.sendMessage({
+      type: 'getSchedulerSettings'
+    });
+  }
+
+  public sendSaveSchedulerSettings(payload: Partial<{
+    minAttackDelay: number;
+    maxAttackDelay: number;
+    tabPriorities: Record<string, string>;
+  }>) {
+    this.sendMessage({
+      type: 'saveSchedulerSettings',
+      payload: payload
+    });
+  }
 }
 
 

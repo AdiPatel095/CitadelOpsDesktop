@@ -14,14 +14,15 @@ type GameState struct {
 	GlobalResources PlayerGlobalResources
 
 	// Castle Resources
-	MainCastle    PlayerCastleInfo
-	Outpost1      PlayerCastleInfo
-	Outpost2      PlayerCastleInfo
-	Outpost3      PlayerCastleInfo
-	IceCastle     PlayerCastleInfo
-	DesertCastle  PlayerCastleInfo
-	DungeonCastle PlayerCastleInfo
-	StormCastle   PlayerCastleInfo
+	MainCastle      PlayerCastleInfo
+	Outpost1        PlayerCastleInfo
+	Outpost2        PlayerCastleInfo
+	Outpost3        PlayerCastleInfo
+	IceCastle       PlayerCastleInfo
+	DesertCastle    PlayerCastleInfo
+	DungeonCastle   PlayerCastleInfo
+	StormCastle     PlayerCastleInfo
+	BeriWorldCastle PlayerCastleInfo
 
 	// Equipment & Gems
 	EquipmentStorage []EquipmentModel
@@ -32,11 +33,8 @@ type GameState struct {
 	CommActualArray []CommActualModel
 	CastActualArray []CastActualModel
 
-	// Feature Toggles
-	AutoBirdEnabled bool
-
 	// Auto Bird Data
-
+	PlayerID        int
 	BirdMovements   map[int][]BirdMovement // CastleID -> List of active movements
 	ActiveMovements []GAMMovement          // Parsed from GAM message
 }
@@ -70,15 +68,17 @@ func (gs *GameState) Reset() {
 	gs.DesertCastle = PlayerCastleInfo{}
 	gs.DungeonCastle = PlayerCastleInfo{}
 	gs.StormCastle = PlayerCastleInfo{}
+	gs.BeriWorldCastle = PlayerCastleInfo{}
 	gs.EquipmentStorage = nil
 	gs.GemsStorage = nil
 	gs.NonRelicGemIDs = make(map[float64]float64)
 	gs.CommActualArray = nil
 	gs.CastActualArray = nil
-	gs.AutoBirdEnabled = false
 
 	gs.BirdMovements = make(map[int][]BirdMovement)
 	gs.ActiveMovements = nil
+
+	GetMapState().Reset()
 }
 
 // GetCastleByID returns a pointer to the PlayerCastleInfo with the given castle ID, or nil if not found.
@@ -101,6 +101,8 @@ func (gs *GameState) GetCastleByID(castleID int) *PlayerCastleInfo {
 		return &gs.DungeonCastle
 	case gs.StormCastle.Aid == cID:
 		return &gs.StormCastle
+	case gs.BeriWorldCastle.Aid == cID:
+		return &gs.BeriWorldCastle
 	default:
 		return nil
 	}

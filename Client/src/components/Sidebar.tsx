@@ -2,6 +2,7 @@ import React from 'react';
 import { Settings } from 'lucide-react';
 import { NAVIGATION_ITEMS, type ViewId } from '../config/navigation';
 import { ThemeToggle } from './ThemeToggle';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   currentView: ViewId;
@@ -9,6 +10,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
+  const { beriWorldEnabled, toggleBeriWorld } = useAuth();
   const mainItems = NAVIGATION_ITEMS.filter(item => item.section === 'main');
   const systemItems = NAVIGATION_ITEMS.filter(item => item.section === 'system');
 
@@ -21,11 +23,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
           {/* Beri World Event Controls */}
           <div className="flex gap-2">
             <button
-              onClick={() => console.log("Beri World Event Triggered")}
-              className="flex-1 px-3 py-2 rounded-global bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95"
+              onClick={toggleBeriWorld}
+              className={`flex-1 px-3 py-2 rounded-global text-xs font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg active:scale-95 ${beriWorldEnabled
+                  ? 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/20'
+                  : 'bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/50 text-indigo-400'
+                }`}
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />
-              Beri World
+              <div className={`w-1.5 h-1.5 rounded-full ${beriWorldEnabled ? 'bg-white shadow-[0_0_8px] shadow-white/80' : 'bg-indigo-400'}`} />
+              Beri World: {beriWorldEnabled ? 'ON' : 'OFF'}
             </button>
             <button
               onClick={() => console.log("Beri World Settings Triggered")}

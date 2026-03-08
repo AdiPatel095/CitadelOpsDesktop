@@ -57,6 +57,14 @@ func SendGameLoginStatusMessage(loggedIn bool, cooldown int) {
 	}, "")
 }
 
+// SendMemoryStatsMessage sends memory usage stats to the frontend
+func SendMemoryStatsMessage(goMemMB int, chromeMemMB int) {
+	SendFrontendMessage("memoryStats", map[string]interface{}{
+		"goMem":     goMemMB,
+		"chromeMem": chromeMemMB,
+	}, "")
+}
+
 // SendAutoBirdStatus sends the current auto bird enabled state and next wake up time to all clients
 func SendAutoBirdStatus(enabled bool, nextWakeUp int64) {
 	SendFrontendMessage("autoBirdStatus", map[string]interface{}{
@@ -95,8 +103,8 @@ func SendInitialData(client *Client) {
 		client.SendToClient("commStatUpdate", comm, strconv.Itoa(i))
 	}
 
-	// Send all castle stats with index-based identification (0-7)
-	for i := 0; i < 8; i++ {
+	// Send all castle stats with index-based identification (0-8)
+	for i := 0; i < 9; i++ {
 		castStat := GameFunctions.GetCastellanStat(i)
 		client.SendToClient("castStatUpdate", castStat, strconv.Itoa(i))
 	}
@@ -114,12 +122,13 @@ func SendInitialData(client *Client) {
 	client.SendToClient("castleResourceUpdate", gs.DesertCastle, "desertCastle")
 	client.SendToClient("castleResourceUpdate", gs.DungeonCastle, "dungeonCastle")
 	client.SendToClient("castleResourceUpdate", gs.StormCastle, "stormCastle")
+	client.SendToClient("castleResourceUpdate", gs.BeriWorldCastle, "beriWorldCastle")
 
 }
 
 // SendCastStat sends a single castle's stats by index (0-7)
 func SendCastStat(castleIndex int) {
-	if castleIndex >= 0 && castleIndex < 8 {
+	if castleIndex >= 0 && castleIndex < 9 {
 		castStat := GameFunctions.GetCastellanStat(castleIndex)
 		SendFrontendMessage("castStatUpdate", castStat, strconv.Itoa(castleIndex))
 	}
@@ -155,6 +164,8 @@ func SendCastleResource(castleLocation string) {
 		SendFrontendMessage("castleResourceUpdate", gs.DungeonCastle, "dungeonCastle")
 	case "stormCastle":
 		SendFrontendMessage("castleResourceUpdate", gs.StormCastle, "stormCastle")
+	case "beriWorldCastle":
+		SendFrontendMessage("castleResourceUpdate", gs.BeriWorldCastle, "beriWorldCastle")
 	}
 
 }

@@ -6,6 +6,7 @@ import (
 	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ReconfigureLoadout"
 	"CitadelDesktop/Server/ResponseRegistry"
+	"CitadelDesktop/Server/Scheduler"
 	"CitadelDesktop/Server/Version"
 	"encoding/json"
 	"fmt"
@@ -121,9 +122,17 @@ func ParseFrontendMessage(message []byte) {
 		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 gems", soldCount))
 	case "startGame":
 		log.Println("Manual Start Bot pressed. Reloading game tab...")
+		Models.GetSettingsState().BotEnabled = true
+		Scheduler.GetScheduler().Start()
 		ResponseRegistry.ReloadGameTab()
 	case "stopGame":
+		Models.GetSettingsState().BotEnabled = false
+		Scheduler.GetScheduler().Stop()
 		ResponseRegistry.DisconnectGameWebSocket()
+	case "startBeriWorld":
+		GameFunctions.StartBeriWorld()
+	case "stopBeriWorld":
+		GameFunctions.StopBeriWorld()
 	case "fetchAllianceInfo":
 		GameFunctions.FetchAllianceInfo()
 	case "toggleAutoBird":
@@ -135,10 +144,10 @@ func ParseFrontendMessage(message []byte) {
 		if wasRunning {
 			log.Println("[AutoBird] Calling StopAutoBird...")
 			GameFunctions.StopAutoBird()
-			Models.GetGameState().AutoBirdEnabled = false
+			Models.GetSettingsState().AutoBirdEnabled = false
 			SendAutoBirdStatus(false, 0)
 		} else {
-			Models.GetGameState().AutoBirdEnabled = true
+			Models.GetSettingsState().AutoBirdEnabled = true
 			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
 
 				// Parse settings payload
@@ -165,18 +174,18 @@ func ParseFrontendMessage(message []byte) {
 							newSettings[castleID] = castleMap
 						}
 					}
-					Models.UpdateBirdIgnoreList(newSettings)
+					Models.GetSettingsState().UpdateBirdIgnoreList(newSettings)
 				}
 
 				// Parse Delay Settings
 				if minDelay, ok := payloadRaw["minDelay"].(float64); ok {
-					Models.AutoBirdDelay.MinDelay = int(minDelay)
+					Models.GetSettingsState().AutoBirdDelay.MinDelay = int(minDelay)
 				}
 				if maxDelay, ok := payloadRaw["maxDelay"].(float64); ok {
-					Models.AutoBirdDelay.MaxDelay = int(maxDelay)
+					Models.GetSettingsState().AutoBirdDelay.MaxDelay = int(maxDelay)
 				}
 				if minSend, ok := payloadRaw["minSend"].(float64); ok {
-					Models.AutoBirdDelay.MinSend = int(minSend)
+					Models.GetSettingsState().AutoBirdDelay.MinSend = int(minSend)
 				}
 				log.Println("[AutoBird] Calling StartAutoBird...")
 				GameFunctions.StartAutoBird()
@@ -369,7 +378,7 @@ func ParseFrontendMessage(message []byte) {
 					if eq.GemSlot.Gem != nil {
 						gemID := eq.GemSlot.Gem.ID
 						if targetGemMap[gemID] {
-							log.Printf("[Reconfigure] Found target gem (ID: %f) in storage equipment (ID: %f, Slot: %d). Performing double jump.", gemID, eq.ID, eq.EquipSlotNumber)
+							log.Printf("[Reconfigure] Found target gem (ID: %f) in storage equipment (ID: %f, Slot: %.0f). Performing double jump.", gemID, eq.ID, eq.EquipSlotNumber)
 							// Double Jump: Equip -> UnequipGem -> UnequipItem
 							slot := int(eq.EquipSlotNumber)
 							GameFunctions.EquipEquipment(equipmentMode, targetIndex, slot, eq.ID)
@@ -628,10 +637,10 @@ func ParseFrontendMessage(message []byte) {
 	case "getBirdSettings":
 		// Persistence moved to frontend.
 		// Return current in-memory settings if available (e.g. if bot ran), otherwise empty.
-		if Models.BirdIgnoreList.Troops == nil {
-			Models.BirdIgnoreList.Troops = make(map[int]map[int]int)
+		if Models.GetSettingsState().BirdIgnoreList.Troops == nil {
+			Models.GetSettingsState().BirdIgnoreList.Troops = make(map[int]map[int]int)
 		}
-		SendFrontendMessage("birdSettings", Models.BirdIgnoreList.Troops, "")
+		SendFrontendMessage("birdSettings", Models.GetSettingsState().BirdIgnoreList.Troops, "")
 
 	case "saveBirdSettings":
 		// Persistence moved to frontend. This is just for runtime update if needed.
@@ -665,17 +674,17 @@ func ParseFrontendMessage(message []byte) {
 		}
 
 		// Just update memory
-		Models.UpdateBirdIgnoreList(newSettings)
+		Models.GetSettingsState().UpdateBirdIgnoreList(newSettings)
 
 		// Also update delay/minSend settings if present
 		if minDelay, ok := payloadRaw["minDelay"].(float64); ok {
-			Models.AutoBirdDelay.MinDelay = int(minDelay)
+			Models.GetSettingsState().AutoBirdDelay.MinDelay = int(minDelay)
 		}
 		if maxDelay, ok := payloadRaw["maxDelay"].(float64); ok {
-			Models.AutoBirdDelay.MaxDelay = int(maxDelay)
+			Models.GetSettingsState().AutoBirdDelay.MaxDelay = int(maxDelay)
 		}
 		if minSend, ok := payloadRaw["minSend"].(float64); ok {
-			Models.AutoBirdDelay.MinSend = int(minSend)
+			Models.GetSettingsState().AutoBirdDelay.MinSend = int(minSend)
 		}
 
 		// Echo back for consistency (optional)
@@ -717,5 +726,33 @@ func ParseFrontendMessage(message []byte) {
 		log.Printf("[Custom Message] Sending: %s", formattedMessage)
 		ResponseRegistry.OutgoingMessages <- []byte(formattedMessage)
 		SendAlertMessage("green", fmt.Sprintf("Sent custom message: %s", messageCode))
+	case "getSchedulerSettings":
+		SendFrontendMessage("schedulerSettings", Models.GetSettingsState(), "")
+	case "saveSchedulerSettings":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+
+		state := Models.GetSettingsState()
+
+		if minDelay, ok := payloadRaw["minAttackDelay"].(float64); ok {
+			state.MinAttackDelay = minDelay
+		}
+		if maxDelay, ok := payloadRaw["maxAttackDelay"].(float64); ok {
+			state.MaxAttackDelay = maxDelay
+		}
+
+		if priorities, ok := payloadRaw["tabPriorities"].(map[string]interface{}); ok {
+			for tabID, pRaw := range priorities {
+				if priorityStr, ok := pRaw.(string); ok {
+					state.TabPriorities[tabID] = Models.TabPriority(priorityStr)
+				}
+			}
+		}
+
+		// Echo back confirmed settings
+		SendFrontendMessage("schedulerSettings", state, "")
+		SendAlertMessage("green", "Scheduler Settings saved")
 	}
 }

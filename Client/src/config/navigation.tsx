@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icons } from '../components/Icons';
 
-export type ViewId = 'equipment' | 'support' | 'dashboard' | 'currency' | 'units' | 'event-modules';
+export type ViewId = 'equipment' | 'support' | 'dashboard' | 'currency' | 'units' | 'event-modules' | 'settings';
 
 export interface NavigationItem {
     id: ViewId;
@@ -16,5 +16,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     { id: 'equipment', label: 'Equipment', icon: <Icons.Shield />, section: 'main' },
     { id: 'event-modules', label: 'Event Modules', icon: <Icons.Trophy />, section: 'main' },
     { id: 'currency', label: 'Currency', icon: <Icons.Grid />, section: 'main' },
+    { id: 'settings', label: 'Settings', icon: <Icons.Settings />, section: 'system' },
     { id: 'support', label: 'Support', icon: <Icons.Help />, section: 'system' },
 ];

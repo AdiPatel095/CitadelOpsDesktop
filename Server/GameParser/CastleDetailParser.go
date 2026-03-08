@@ -12,11 +12,12 @@ const (
 	keyKingdomID       = "KID"
 	keyCastleInfoArray = "AI"
 
-	kingdomIDMain    = 0.0
-	kingdomIDDesert  = 1.0
-	kingdomIDIce     = 2.0
-	kingdomIDDungeon = 3.0
-	kingdomIDStorm   = 4.0
+	kingdomIDMain      = 0.0
+	kingdomIDDesert    = 1.0
+	kingdomIDIce       = 2.0
+	kingdomIDDungeon   = 3.0
+	kingdomIDStorm     = 4.0
+	kingdomIDBeriWorld = 10.0
 
 	castleAIDIndex  = 3
 	castleNameIndex = 10
@@ -112,6 +113,10 @@ func parseGCL(gcl map[string]interface{}) error {
 			parseSingleCastle(castleArray, func(id float64, name string) {
 				gs.StormCastle.Aid, gs.StormCastle.Name = id, name
 			}, 4)
+		case kingdomIDBeriWorld:
+			parseSingleCastle(castleArray, func(id float64, name string) {
+				gs.BeriWorldCastle.Aid, gs.BeriWorldCastle.Name = id, name
+			}, 10)
 		}
 	}
 
@@ -145,6 +150,9 @@ func GetCastleLocationName(castleID int) string {
 	}
 	if int(gs.StormCastle.Aid) == castleID {
 		return "stormCastle"
+	}
+	if int(gs.BeriWorldCastle.Aid) == castleID {
+		return "beriWorldCastle"
 	}
 
 	return ""
@@ -407,6 +415,24 @@ func parseDCL(dcl map[string]interface{}) error {
 					castleID, ok := castleMap[keyCastleID].(float64)
 					if castleID == gs.StormCastle.Aid {
 						parseCastleResources(castleMap, &gs.StormCastle.Amount, &gs.StormCastle.Production, &gs.StormCastle.Storage, castleID)
+					}
+				}
+
+			}
+		case 10:
+			{
+				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
+				if !ok {
+					continue
+				}
+				for _, castleData := range castleArray {
+					castleMap, ok := castleData.(map[string]interface{})
+					if !ok {
+						continue
+					}
+					castleID, ok := castleMap[keyCastleID].(float64)
+					if castleID == gs.BeriWorldCastle.Aid {
+						parseCastleResources(castleMap, &gs.BeriWorldCastle.Amount, &gs.BeriWorldCastle.Production, &gs.BeriWorldCastle.Storage, castleID)
 					}
 				}
 

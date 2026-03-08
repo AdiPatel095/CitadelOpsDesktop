@@ -6,7 +6,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
-  const { credits, isLoading, gameLoggedIn, gameLoginCooldown, startGame, stopGame, autoBirdEnabled, toggleAutoBird, nextWakeUp } = useAuth();
+  const { credits, isLoading, gameLoggedIn, gameLoginCooldown, startGame, stopGame, autoBirdEnabled, toggleAutoBird, nextWakeUp, goMem, chromeMem } = useAuth();
   const { theme } = useTheme();
 
   const [sleepTimer, setSleepTimer] = React.useState<string>('');
@@ -71,6 +71,16 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
 
         {/* Center: Status Indicators */}
         <div className="flex items-center gap-4">
+          {/* Memory Status */}
+          <div className="rounded-global flex items-center gap-2 px-3 py-1.5 border border-purple-500/30 bg-purple-500/10 transition-all duration-300">
+            <span className="text-[9px] font-bold text-purple-400/80 uppercase tracking-wider">APP RAM</span>
+            <span className="text-xs font-mono font-semibold text-purple-400">{goMem ? `${goMem} MB` : '--'}</span>
+          </div>
+          <div className="rounded-global flex items-center gap-2 px-3 py-1.5 border border-orange-500/30 bg-orange-500/10 transition-all duration-300">
+            <span className="text-[9px] font-bold text-orange-400/80 uppercase tracking-wider">CHROME RAM</span>
+            <span className="text-xs font-mono font-semibold text-orange-400">{chromeMem ? `${chromeMem} MB` : '--'}</span>
+          </div>
+
           {/* AutoBird Status */}
           {autoBirdEnabled && (
             <div className={`rounded-global flex items-center gap-3 px-5 py-2 border-2 transition-all duration-300 ${sleepTimer

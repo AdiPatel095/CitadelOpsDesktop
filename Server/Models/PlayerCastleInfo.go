@@ -12,9 +12,12 @@ type PlayerCastleInfo struct {
 
 // BuildingData holds information about a specific building instance in a castle.
 type BuildingData struct {
-	BuildingID int    `json:"buildingID"`
+	BuildingID int    `json:"buildingID"` // This is WID
+	OID        int    `json:"oid"`
 	Name       string `json:"name"`
 	Level      int    `json:"level"`
+	X          int    `json:"x"`
+	Y          int    `json:"y"`
 }
 
 // CastleTroopData holds troop counts for a castle, embedded directly on the castle object.

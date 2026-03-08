@@ -10,6 +10,7 @@ interface AuthContextType {
   gameLoginCooldown: number;
   isGameDataReady: boolean;
   autoBirdEnabled: boolean;
+  beriWorldEnabled: boolean;
   nextWakeUp: number | null;
   versionUpdate: { newVersion: string; downloadUrl: string } | null;
   isVersionBannerDismissed: boolean;
@@ -17,6 +18,9 @@ interface AuthContextType {
   updateProgress: { stage: string; percent: number } | null;
   isUpdating: boolean;
   restartRequired: boolean;
+  // Memory stats
+  goMem: number;
+  chromeMem: number;
   // Login credentials
   hasStoredCredentials: boolean;
   storedUsername: string | null;
@@ -28,6 +32,7 @@ interface AuthContextType {
   stopGame: () => void;
   changeLoginDetails: () => void;
   toggleAutoBird: () => void;
+  toggleBeriWorld: () => void;
   saveCredentials: (username: string, password: string, server: string) => void;
   clearCredentials: () => void;
   sendMessage: (type: string, payload?: any) => void;
@@ -44,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [gameLoginCooldown, setGameLoginCooldown] = useState(0);
   const [isGameDataReady, setIsGameDataReady] = useState(false);
   const [autoBirdEnabled, setAutoBirdEnabled] = useState(false);
+  const [beriWorldEnabled, setBeriWorldEnabled] = useState(false);
   const [nextWakeUp, setNextWakeUp] = useState<number | null>(null);
   const [versionUpdate, setVersionUpdate] = useState<{ newVersion: string; downloadUrl: string } | null>(null);
   const [isVersionBannerDismissed, setIsVersionBannerDismissed] = useState(false);
@@ -53,6 +59,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [updateProgress, setUpdateProgress] = useState<{ stage: string; percent: number } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [restartRequired, setRestartRequired] = useState(false);
+  const [goMem, setGoMem] = useState(0);
+  const [chromeMem, setChromeMem] = useState(0);
 
   // Login credentials state
   const [hasStoredCredentials, setHasStoredCredentials] = useState(() => {
@@ -85,9 +93,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsGameDataReady(false);
         }
+      } else if (message.type === 'memoryStats') {
+        setGoMem(message.payload.goMem);
+        setChromeMem(message.payload.chromeMem);
       } else if (message.type === 'autoBirdStatus') {
         setAutoBirdEnabled(message.payload.enabled);
         setNextWakeUp(message.payload.nextWakeUp || null);
+      } else if (message.type === 'beriWorldStatus') {
+        setBeriWorldEnabled(message.payload.enabled);
       } else if (message.type === 'versionUpdate') {
         console.log('Version update received:', message.payload);
         const currentIgnoredVersion = localStorage.getItem('ignoredVersion');
@@ -243,6 +256,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const toggleBeriWorld = () => {
+    const newState = !beriWorldEnabled;
+    setBeriWorldEnabled(newState); // Optimistic UI update
+    FrontendWebsocket.sendMessage({
+      type: newState ? 'startBeriWorld' : 'stopBeriWorld',
+    });
+  };
+
   const dismissVersionBanner = () => {
     setIsVersionBannerDismissed(true);
   };
@@ -274,6 +295,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       gameLoginCooldown,
       isGameDataReady,
       autoBirdEnabled,
+      beriWorldEnabled,
       nextWakeUp,
       versionUpdate,
       isVersionBannerDismissed,
@@ -281,6 +303,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       updateProgress,
       isUpdating,
       restartRequired,
+      goMem,
+      chromeMem,
       dismissVersionBanner,
       ignoreVersion,
       triggerUpdate,
@@ -288,6 +312,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       stopGame,
       changeLoginDetails,
       toggleAutoBird,
+      toggleBeriWorld,
       hasStoredCredentials,
       storedUsername,
       storedServer,

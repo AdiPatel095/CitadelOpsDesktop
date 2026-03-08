@@ -16,6 +16,7 @@ import UpdateModal from './components/UpdateModal';
 import LoginCredentialsModal from './components/LoginCredentialsModal';
 import { Alerts } from './components/Alerts';
 import { AutoBirdSettingsModal } from './settings/components/AutoBirdSettingsModal';
+import SettingsView from './views/SettingsView';
 
 
 import { type ViewId } from './config/navigation';
@@ -61,6 +62,8 @@ const AppContent: React.FC = () => {
         return <CurrencyView />;
       case 'support':
         return <SupportPage />;
+      case 'settings':
+        return <SettingsView />;
       default:
         return <EquipmentView />;
     }
