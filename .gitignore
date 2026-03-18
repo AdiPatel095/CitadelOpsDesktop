@@ -16,6 +16,7 @@ loginBytes.json
 .DS_Store?
 ._*
 Thumbs.db
+.gocache
 
 # IDE directories
 .idea/

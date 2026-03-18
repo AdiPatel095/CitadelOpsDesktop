@@ -17,6 +17,12 @@ type BirdIgnoreListFile struct {
 	Castles     map[string][][]int `json:"castles"` // CastleID (string) -> [[troopID, count], ...]
 }
 
+// RecruitTroopsConfig represents the target troops to recruit per castle
+// CastleID -> (unitID -> targetAmount)
+type RecruitTroopsConfig struct {
+	Targets map[int]map[int]int `json:"targets"`
+}
+
 // AutoBirdDelayConfig holds the min and max delay hours and min send amount
 type AutoBirdDelayConfig struct {
 	MinDelay int
@@ -32,6 +38,21 @@ func (s *SaveInCastleTroops) GetSaveAmount(castleID, unitID int) (int, bool) {
 
 	// Check specific castle config
 	if castleConfig, ok := s.Troops[castleID]; ok {
+		if amount, ok := castleConfig[unitID]; ok {
+			return amount, true
+		}
+	}
+
+	return 0, false
+}
+
+// GetTargetAmount returns the target amount of troops to recruit for a specific castle and unit
+func (c *RecruitTroopsConfig) GetTargetAmount(castleID, unitID int) (int, bool) {
+	if c.Targets == nil {
+		return 0, false
+	}
+
+	if castleConfig, ok := c.Targets[castleID]; ok {
 		if amount, ok := castleConfig[unitID]; ok {
 			return amount, true
 		}
@@ -58,13 +79,17 @@ type SettingsState struct {
 	TabPriorities  map[string]TabPriority `json:"tabPriorities"` // Map of TabID string to Priority Group
 
 	// Global Connection/Feature Flags
-	BotEnabled       bool `json:"botEnabled"`
-	AutoBirdEnabled  bool `json:"autoBirdEnabled"`
-	BeriWorldEnabled bool `json:"beriWorldEnabled"`
+	BotEnabled           bool `json:"botEnabled"`
+	AutoBirdEnabled      bool `json:"autoBirdEnabled"`
+	BeriWorldEnabled     bool `json:"beriWorldEnabled"`
+	RecruitTroopsEnabled bool `json:"recruitTroopsEnabled"`
 
 	// Auto Bird Configuration
 	BirdIgnoreList SaveInCastleTroops  `json:"birdIgnoreList"`
 	AutoBirdDelay  AutoBirdDelayConfig `json:"autoBirdDelay"`
+
+	// Recruit Troops Configuration
+	RecruitTroopsList RecruitTroopsConfig `json:"recruitTroopsList"`
 }
 
 var (
@@ -76,15 +101,20 @@ var (
 func GetSettingsState() *SettingsState {
 	onceSettingsState.Do(func() {
 		instanceSettingsState = &SettingsState{
-			MinAttackDelay:  4.0,
-			MaxAttackDelay:  6.0,
-			TabPriorities:   make(map[string]TabPriority),
-			BotEnabled:      false,
-			AutoBirdEnabled: false,
+			MinAttackDelay:       4.0,
+			MaxAttackDelay:       6.0,
+			TabPriorities:        make(map[string]TabPriority),
+			BotEnabled:           false,
+			AutoBirdEnabled:      false,
+			BeriWorldEnabled:     false,
+			RecruitTroopsEnabled: false,
 			BirdIgnoreList: SaveInCastleTroops{
 				Troops: make(map[int]map[int]int),
 			},
 			AutoBirdDelay: AutoBirdDelayConfig{MinDelay: 6, MaxDelay: 12, MinSend: 0},
+			RecruitTroopsList: RecruitTroopsConfig{
+				Targets: make(map[int]map[int]int),
+			},
 		}
 	})
 	return instanceSettingsState
@@ -97,8 +127,11 @@ func (s *SettingsState) Reset() {
 	s.TabPriorities = make(map[string]TabPriority)
 	s.BotEnabled = false
 	s.AutoBirdEnabled = false
+	s.BeriWorldEnabled = false
+	s.RecruitTroopsEnabled = false
 	s.BirdIgnoreList.Troops = make(map[int]map[int]int)
 	s.AutoBirdDelay = AutoBirdDelayConfig{MinDelay: 6, MaxDelay: 12, MinSend: 0}
+	s.RecruitTroopsList.Targets = make(map[int]map[int]int)
 }
 
 // UpdateBirdIgnoreList updates the in-memory bird ignore list from the given map
@@ -111,4 +144,16 @@ func (s *SettingsState) UpdateBirdIgnoreList(data map[int]map[int]int) {
 func (s *SettingsState) ClearBirdIgnoreList() {
 	s.BirdIgnoreList.Troops = nil
 	log.Println("[BirdIgnoreList] Cleared from memory")
+}
+
+// UpdateRecruitTroopsList updates the in-memory recruit troops list from the given map
+func (s *SettingsState) UpdateRecruitTroopsList(data map[int]map[int]int) {
+	s.RecruitTroopsList.Targets = data
+	log.Printf("[RecruitTroopsList] Updated in-memory config for %d castles", len(s.RecruitTroopsList.Targets))
+}
+
+// ClearRecruitTroopsList clears the RecruitTroopsList from memory
+func (s *SettingsState) ClearRecruitTroopsList() {
+	s.RecruitTroopsList.Targets = nil
+	log.Println("[RecruitTroopsList] Cleared from memory")
 }

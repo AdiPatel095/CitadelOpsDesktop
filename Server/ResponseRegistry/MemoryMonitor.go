@@ -57,10 +57,8 @@ func getMemoryStats() (int, int) {
 			continue
 		}
 
-		// Look for Chrome processes spawned by our app (they will have "chrome-profile" in cmdline)
-		// Or we can just look at "chrome" processes in general if we want to be less strict,
-		// but matching "chrome-profile" is a good way to identify our specific instance.
-		if strings.Contains(strings.ToLower(cmdline), "chrome") && strings.Contains(strings.ToLower(cmdline), "chrome-profile") {
+		// Look for Chrome processes spawned by our app
+		if strings.Contains(strings.ToLower(cmdline), "chrome") {
 			mem, err := p.MemoryInfo()
 			if err == nil && mem != nil {
 				totalChromeRSS += mem.RSS

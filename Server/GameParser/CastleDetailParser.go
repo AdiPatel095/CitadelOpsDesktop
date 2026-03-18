@@ -3,6 +3,7 @@ package GameParser
 import (
 	"CitadelDesktop/Server/Models"
 	"fmt"
+	"time"
 )
 
 // Constants for magic strings and indices to improve readability and maintainability.
@@ -51,8 +52,11 @@ func CastleDetailParser(gcl map[string]interface{}, dcl map[string]interface{}) 
 		parseDCL(dcl)
 	}
 
-	// Fetch troops for all castles after GCL/DCL parsing completes
-	go FetchAllCastleTroopsAndConsumption()
+	// Fetch troops for all castles after GCL/DCL parsing completes, with a 10s delay to allow the game to load.
+	go func() {
+		time.Sleep(10 * time.Second)
+		FetchAllCastleTroopsAndConsumption()
+	}()
 }
 
 // parseGCL processes the Game Castle List data.

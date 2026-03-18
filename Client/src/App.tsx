@@ -16,6 +16,7 @@ import UpdateModal from './components/UpdateModal';
 import LoginCredentialsModal from './components/LoginCredentialsModal';
 import { Alerts } from './components/Alerts';
 import { AutoBirdSettingsModal } from './settings/components/AutoBirdSettingsModal';
+import { RecruitTroopsSettingsModal } from './settings/components/RecruitTroopsSettingsModal';
 import SettingsView from './views/SettingsView';
 
 
@@ -27,6 +28,7 @@ const AppContent: React.FC = () => {
 
   // Modal states
   const [isAutoBirdSettingsOpen, setIsAutoBirdSettingsOpen] = useState(false);
+  const [isRecruitTroopsSettingsOpen, setIsRecruitTroopsSettingsOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const handleSaveCredentials = (username: string, password: string, server: string) => {
@@ -76,6 +78,7 @@ const AppContent: React.FC = () => {
       <Sidebar
         currentView={activeView}
         onViewChange={setActiveView}
+        onOpenRecruitTroopsSettings={() => setIsRecruitTroopsSettingsOpen(true)}
       />
 
       <main className="ml-64 h-screen overflow-y-auto transition-all duration-300 pt-16 relative">
@@ -91,6 +94,11 @@ const AppContent: React.FC = () => {
       <AutoBirdSettingsModal
         isOpen={isAutoBirdSettingsOpen}
         onClose={() => setIsAutoBirdSettingsOpen(false)}
+      />
+
+      <RecruitTroopsSettingsModal
+        isOpen={isRecruitTroopsSettingsOpen}
+        onClose={() => setIsRecruitTroopsSettingsOpen(false)}
       />
 
       {/* Version Update Modal - displayed when new version available */}

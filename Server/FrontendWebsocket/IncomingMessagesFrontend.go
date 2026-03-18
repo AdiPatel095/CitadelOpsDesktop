@@ -26,6 +26,7 @@ func init() {
 	GameParser.UpdateCastleResourceFunc = func(castleLocation string) {
 		SendCastleResource(castleLocation)
 	}
+	ResponseRegistry.SendRecruitTroopsStatusFunc = SendRecruitTroopsStatus
 }
 
 func ParseFrontendMessage(message []byte) {
@@ -190,6 +191,47 @@ func ParseFrontendMessage(message []byte) {
 				log.Println("[AutoBird] Calling StartAutoBird...")
 				GameFunctions.StartAutoBird()
 				SendAutoBirdStatus(true, 0)
+			}
+		}
+	case "toggleRecruitTroops":
+		wasRunning := GameFunctions.IsRecruitTroopsRunning()
+		log.Printf("[RecruitTroops] Toggle requested. Was running: %v", wasRunning)
+
+		if wasRunning {
+			log.Println("[RecruitTroops] Calling StopRecruitTroops...")
+			GameFunctions.StopRecruitTroops()
+			Models.GetSettingsState().RecruitTroopsEnabled = false
+			SendRecruitTroopsStatus(false)
+		} else {
+			Models.GetSettingsState().RecruitTroopsEnabled = true
+			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
+				newSettings := make(map[int]map[int]int)
+				if settingsRaw, ok := payloadRaw["settings"].(map[string]interface{}); ok {
+					for castleIDStr, itemsRaw := range settingsRaw {
+						castleID, _ := strconv.Atoi(castleIDStr)
+						if castleID == 0 {
+							continue
+						}
+
+						if items, ok := itemsRaw.([]interface{}); ok {
+							castleMap := make(map[int]int)
+							for _, itemRaw := range items {
+								if item, ok := itemRaw.(map[string]interface{}); ok {
+									unitID := int(item["id"].(float64))
+									amount := int(item["amount"].(float64))
+									if unitID > 0 && amount >= 0 {
+										castleMap[unitID] = amount
+									}
+								}
+							}
+							newSettings[castleID] = castleMap
+						}
+					}
+					Models.GetSettingsState().UpdateRecruitTroopsList(newSettings)
+				}
+				log.Println("[RecruitTroops] Calling StartRecruitTroops...")
+				GameFunctions.StartRecruitTroops()
+				SendRecruitTroopsStatus(true)
 			}
 		}
 	case "refreshEquipment":
@@ -642,6 +684,12 @@ func ParseFrontendMessage(message []byte) {
 		}
 		SendFrontendMessage("birdSettings", Models.GetSettingsState().BirdIgnoreList.Troops, "")
 
+	case "getRecruitTroopsSettings":
+		if Models.GetSettingsState().RecruitTroopsList.Targets == nil {
+			Models.GetSettingsState().RecruitTroopsList.Targets = make(map[int]map[int]int)
+		}
+		SendFrontendMessage("recruitTroopsSettings", Models.GetSettingsState().RecruitTroopsList.Targets, "")
+
 	case "saveBirdSettings":
 		// Persistence moved to frontend. This is just for runtime update if needed.
 		// Or if user clicks save while bot is running.
@@ -689,6 +737,38 @@ func ParseFrontendMessage(message []byte) {
 
 		// Echo back for consistency (optional)
 		SendFrontendMessage("birdSettings", newSettings, "")
+
+	case "saveRecruitTroopsSettings":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+
+		newSettings := make(map[int]map[int]int)
+
+		for castleIDStr, itemsRaw := range payloadRaw {
+			castleID, _ := strconv.Atoi(castleIDStr)
+			if castleID == 0 {
+				continue
+			}
+
+			if items, ok := itemsRaw.([]interface{}); ok {
+				castleMap := make(map[int]int)
+				for _, itemRaw := range items {
+					if item, ok := itemRaw.(map[string]interface{}); ok {
+						unitID := int(item["id"].(float64))
+						amount := int(item["amount"].(float64))
+						if unitID > 0 && amount >= 0 {
+							castleMap[unitID] = amount
+						}
+					}
+				}
+				newSettings[castleID] = castleMap
+			}
+		}
+
+		Models.GetSettingsState().UpdateRecruitTroopsList(newSettings)
+		SendFrontendMessage("recruitTroopsSettings", newSettings, "")
 
 	case "getServerList":
 		var serverNames []string

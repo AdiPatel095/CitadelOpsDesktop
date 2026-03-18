@@ -73,6 +73,13 @@ func SendAutoBirdStatus(enabled bool, nextWakeUp int64) {
 	}, "")
 }
 
+// SendRecruitTroopsStatus sends the current recruit troops enabled state to all clients
+func SendRecruitTroopsStatus(enabled bool) {
+	SendFrontendMessage("recruitTroopsStatus", map[string]interface{}{
+		"enabled": enabled,
+	}, "")
+}
+
 func SendInitialData(client *Client) {
 	// Send registration status first
 	client.SendToClient("registrationStatus", map[string]interface{}{
@@ -96,6 +103,11 @@ func SendInitialData(client *Client) {
 	client.SendToClient("autoBirdStatus", map[string]interface{}{
 		"enabled":    GameFunctions.IsAutoBirdRunning(),
 		"nextWakeUp": GameFunctions.GetAutoBirdNextWakeUp(),
+	}, "")
+
+	// Send recruitTroops status
+	client.SendToClient("recruitTroopsStatus", map[string]interface{}{
+		"enabled": GameFunctions.IsRecruitTroopsRunning(),
 	}, "")
 
 	// Send all commanders

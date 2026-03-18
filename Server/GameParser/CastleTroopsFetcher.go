@@ -6,12 +6,32 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"sync"
 	"time"
+)
+
+var (
+	troopFetchMutex  sync.Mutex
+	isFetchingTroops bool
 )
 
 // FetchAllCastleTroopsAndConsumption requests troops for all player castles, stores them on the castle objects,
 // and recalculates resource consumption. Called after GCL/DCL parsing completes.
 func FetchAllCastleTroopsAndConsumption() {
+	troopFetchMutex.Lock()
+	if isFetchingTroops {
+		troopFetchMutex.Unlock()
+		return
+	}
+	isFetchingTroops = true
+	troopFetchMutex.Unlock()
+
+	defer func() {
+		troopFetchMutex.Lock()
+		isFetchingTroops = false
+		troopFetchMutex.Unlock()
+	}()
+
 	gs := Models.GetGameState()
 
 	// Make a copy of the slice to sort it without affecting the original order in GameState
@@ -37,9 +57,19 @@ func FetchAllCastleTroopsAndConsumption() {
 	})
 
 	for i, loc := range castles {
+		// Abort if disconnected
+		if !ResponseRegistry.LoginStatus {
+			break
+		}
+
 		// Delay between requests to avoid overwhelming the server (skip delay for first)
 		if i > 0 {
-			time.Sleep(1500 * time.Millisecond)
+			time.Sleep(5 * time.Second)
+		}
+
+		// Check again after sleep just in case
+		if !ResponseRegistry.LoginStatus {
+			break
 		}
 
 		troops := sendTroopRequest(loc.KingdomID, loc.CastleID, loc.X, loc.Y)

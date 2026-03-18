@@ -38,6 +38,9 @@ var (
 	// SendAutoBirdStatusFunc is a callback to notify frontend of auto bird status changes
 	SendAutoBirdStatusFunc func(bool, int64)
 
+	// SendRecruitTroopsStatusFunc is a callback to notify frontend of recruit troops status changes
+	SendRecruitTroopsStatusFunc func(bool)
+
 	// SendRequestCredentialsFunc is a callback to request credentials from frontend
 	SendRequestCredentialsFunc func()
 
@@ -292,26 +295,12 @@ func StartGameBrowser(dashboardURL string) {
 		return
 	}
 
-	// Resolve chrome-profile to an absolute path next to the executable
-	exePath, err := os.Executable()
-	if err != nil {
-		log.Printf("Failed to get executable path: %v", err)
-		return
-	}
-	profileDir := filepath.Join(filepath.Dir(exePath), "chrome-profile")
-
-	// Clean up any stale lock files from previous crashes
-	for _, lockName := range []string{"SingletonLock", "SingletonSocket", "SingletonCookie"} {
-		os.Remove(filepath.Join(profileDir, lockName))
-	}
-
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.Flag("headless", false),
 		chromedp.Flag("remote-debugging-port", "9222"),
 		chromedp.Flag("start-maximized", false),
 		chromedp.Flag("disable-site-isolation-trials", true),
 		chromedp.Flag("disable-features", "IsolateOrigins,site-per-process"),
-		chromedp.UserDataDir(profileDir),
 	)
 
 	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), opts...)

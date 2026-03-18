@@ -11,6 +11,7 @@ interface AuthContextType {
   isGameDataReady: boolean;
   autoBirdEnabled: boolean;
   beriWorldEnabled: boolean;
+  recruitTroopsEnabled: boolean;
   nextWakeUp: number | null;
   versionUpdate: { newVersion: string; downloadUrl: string } | null;
   isVersionBannerDismissed: boolean;
@@ -33,6 +34,7 @@ interface AuthContextType {
   changeLoginDetails: () => void;
   toggleAutoBird: () => void;
   toggleBeriWorld: () => void;
+  toggleRecruitTroops: () => void;
   saveCredentials: (username: string, password: string, server: string) => void;
   clearCredentials: () => void;
   sendMessage: (type: string, payload?: any) => void;
@@ -50,6 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isGameDataReady, setIsGameDataReady] = useState(false);
   const [autoBirdEnabled, setAutoBirdEnabled] = useState(false);
   const [beriWorldEnabled, setBeriWorldEnabled] = useState(false);
+  const [recruitTroopsEnabled, setRecruitTroopsEnabled] = useState(false);
   const [nextWakeUp, setNextWakeUp] = useState<number | null>(null);
   const [versionUpdate, setVersionUpdate] = useState<{ newVersion: string; downloadUrl: string } | null>(null);
   const [isVersionBannerDismissed, setIsVersionBannerDismissed] = useState(false);
@@ -99,6 +102,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else if (message.type === 'autoBirdStatus') {
         setAutoBirdEnabled(message.payload.enabled);
         setNextWakeUp(message.payload.nextWakeUp || null);
+      } else if (message.type === 'recruitTroopsStatus') {
+        setRecruitTroopsEnabled(message.payload.enabled);
       } else if (message.type === 'beriWorldStatus') {
         setBeriWorldEnabled(message.payload.enabled);
       } else if (message.type === 'versionUpdate') {
@@ -264,6 +269,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const toggleRecruitTroops = () => {
+    const savedSettings = localStorage.getItem('recruitTroopsSettings');
+    let settings = {};
+    if (savedSettings) {
+      try {
+        settings = JSON.parse(savedSettings);
+      } catch (e) {
+        console.error("Failed to parse settings for recruit troops toggle", e);
+      }
+    }
+
+    console.log("[RecruitTroops] Toggling. Sending settings payload:", { settings });
+
+    FrontendWebsocket.sendMessage({
+      type: 'toggleRecruitTroops',
+      payload: { settings }
+    });
+  };
+
   const dismissVersionBanner = () => {
     setIsVersionBannerDismissed(true);
   };
@@ -296,6 +320,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isGameDataReady,
       autoBirdEnabled,
       beriWorldEnabled,
+      recruitTroopsEnabled,
       nextWakeUp,
       versionUpdate,
       isVersionBannerDismissed,
@@ -313,6 +338,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       changeLoginDetails,
       toggleAutoBird,
       toggleBeriWorld,
+      toggleRecruitTroops,
       hasStoredCredentials,
       storedUsername,
       storedServer,
