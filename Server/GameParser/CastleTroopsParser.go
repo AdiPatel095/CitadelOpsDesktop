@@ -128,6 +128,6 @@ func ParseCastleTroops(data string, kingdomID, x, y int) *Models.CastleTroops {
 		TroopsHI:    troopsHI,
 		TroopsSHI:   troopsSHI,
 		TroopsMixed: troopsMixed,
-		Buildings:   buildings,
+		BGRows:      buildings, // from gca.BG only; BD used for level lookup only
 	}
 }

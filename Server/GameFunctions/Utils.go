@@ -2,6 +2,7 @@ package GameFunctions
 
 import (
 	"CitadelDesktop/Server/Models"
+	equip "CitadelDesktop/Server/Models/Equipment"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"fmt"
 )
@@ -10,8 +11,8 @@ import (
 // Returns 0 if the index is out of bounds.
 func GetCommanderID(targetIndex int) float64 {
 	gs := Models.GetGameState()
-	if targetIndex >= 0 && targetIndex < len(gs.CommActualArray) {
-		return gs.CommActualArray[targetIndex].ID
+	if targetIndex >= 0 && targetIndex < len(gs.Equipment.CommActualArray) {
+		return gs.Equipment.CommActualArray[targetIndex].ID
 	}
 	return 0
 }
@@ -21,7 +22,7 @@ func GetCastellanID(targetIndex int) float64 {
 	// Find the CastActualModel in the slice with this CastlePosition using the mapped ID
 	gs := Models.GetGameState()
 	targetAid := getAidFromIndex(targetIndex)
-	for _, cast := range gs.CastActualArray {
+	for _, cast := range gs.Equipment.CastActualArray {
 		if cast.CastleID == targetAid {
 			return cast.ID
 		}
@@ -29,13 +30,10 @@ func GetCastellanID(targetIndex int) float64 {
 	return 0
 }
 
-// GetCastellanStat returns the CastStatModel for the given castle index (0-7).
+// GetCastellanStat returns the CastStatModel for the given castle index (0-10).
 // Returns an empty model if index is invalid.
 func GetCastellanStat(targetIndex int) Models.CastStatModel {
-	// targetIndex is 0..7
-	// We Iterate slice to find the one with CastlePosition == targetIndex
-
-	for _, cast := range Models.CastStatArray {
+	for _, cast := range equip.CastStatArray {
 		if cast.CastlePosition == targetIndex {
 			return cast
 		}
@@ -45,25 +43,30 @@ func GetCastellanStat(targetIndex int) Models.CastStatModel {
 
 func getAidFromIndex(index int) float64 {
 	gs := Models.GetGameState()
+	c := &gs.Castle
 	switch index {
 	case 0:
-		return gs.MainCastle.Aid
+		return c.MainCastle.Aid
 	case 1:
-		return gs.Outpost1.Aid
+		return c.Outpost1.Aid
 	case 2:
-		return gs.Outpost2.Aid
+		return c.Outpost2.Aid
 	case 3:
-		return gs.Outpost3.Aid
+		return c.Outpost3.Aid
 	case 4:
-		return gs.IceCastle.Aid
+		return c.IceCastle.Aid
 	case 5:
-		return gs.DesertCastle.Aid
+		return c.DesertCastle.Aid
 	case 6:
-		return gs.DungeonCastle.Aid
+		return c.DungeonCastle.Aid
 	case 7:
-		return gs.StormCastle.Aid
+		return c.StormCastle.Aid
 	case 8:
-		return gs.BeriWorldCastle.Aid
+		return c.BeriWorldCastle.Aid
+	case 9:
+		return c.Metropolis.Aid
+	case 10:
+		return c.Capital.Aid
 	default:
 		return -1
 	}

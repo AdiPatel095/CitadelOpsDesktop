@@ -39,6 +39,14 @@ export const Icons = {
             <path d="M3 5v14c0 1.66 4 3 9 3s 9-1.34 9-3V5"></path>
         </svg>
     ),
+    /** Castle / fortress — main nav for the castle-focused overview. */
+    Castle: (props: IconProps) => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <path d="M10 20V10H6V8l2-3 2 2 2-2 2 2 2-2 2 3v2h-4v10" />
+            <path d="M6 20h12" />
+            <path d="M9 6V4M12 5V3M15 6V4" />
+        </svg>
+    ),
     Users: (props: IconProps) => (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -158,6 +166,15 @@ export const Icons = {
             <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
             <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
             <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+        </svg>
+    ),
+    Sparkles: (props: IconProps) => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"></path>
+            <path d="M5 3v4"></path>
+            <path d="M19 17v4"></path>
+            <path d="M3 5h4"></path>
+            <path d="M17 19h4"></path>
         </svg>
     )
 };

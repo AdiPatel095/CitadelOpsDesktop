@@ -20,6 +20,12 @@ const (
 	kingdomIDStorm     = 4.0
 	kingdomIDBeriWorld = 10.0
 
+	// Kingdom 0 castle types from GCL details[0] (verify against live packets if Metropolis/Capital do not populate).
+	kingdomCastleTypeMain       = 1
+	kingdomCastleTypeOutpost    = 4
+	kingdomCastleTypeMetropolis = 5
+	kingdomCastleTypeCapital    = 6
+
 	castleAIDIndex  = 3
 	castleNameIndex = 10
 	castleXIndex    = 1
@@ -54,7 +60,7 @@ func CastleDetailParser(gcl map[string]interface{}, dcl map[string]interface{}) 
 
 	// Fetch troops for all castles after GCL/DCL parsing completes, with a 10s delay to allow the game to load.
 	go func() {
-		time.Sleep(10 * time.Second)
+		time.Sleep(25 * time.Millisecond)
 		FetchAllCastleTroopsAndConsumption()
 	}()
 }
@@ -95,31 +101,31 @@ func parseGCL(gcl map[string]interface{}) error {
 		case kingdomIDIce:
 			updaters := []func(id float64, name string){
 				func(id float64, name string) {
-					gs.IceCastle.Aid, gs.IceCastle.Name = id, name
+					gs.Castle.IceCastle.Aid, gs.Castle.IceCastle.Name = id, name
 				},
 			}
 			parseCastles(castleArray, updaters, 2)
 		case kingdomIDDesert:
 			updaters := []func(id float64, name string){
 				func(id float64, name string) {
-					gs.DesertCastle.Aid, gs.DesertCastle.Name = id, name
+					gs.Castle.DesertCastle.Aid, gs.Castle.DesertCastle.Name = id, name
 				},
 			}
 			parseCastles(castleArray, updaters, 1)
 		case kingdomIDDungeon:
 			updaters := []func(id float64, name string){
 				func(id float64, name string) {
-					gs.DungeonCastle.Aid, gs.DungeonCastle.Name = id, name
+					gs.Castle.DungeonCastle.Aid, gs.Castle.DungeonCastle.Name = id, name
 				},
 			}
 			parseCastles(castleArray, updaters, 3)
 		case kingdomIDStorm:
 			parseSingleCastle(castleArray, func(id float64, name string) {
-				gs.StormCastle.Aid, gs.StormCastle.Name = id, name
+				gs.Castle.StormCastle.Aid, gs.Castle.StormCastle.Name = id, name
 			}, 4)
 		case kingdomIDBeriWorld:
 			parseSingleCastle(castleArray, func(id float64, name string) {
-				gs.BeriWorldCastle.Aid, gs.BeriWorldCastle.Name = id, name
+				gs.Castle.BeriWorldCastle.Aid, gs.Castle.BeriWorldCastle.Name = id, name
 			}, 10)
 		}
 	}
@@ -131,32 +137,39 @@ func parseGCL(gcl map[string]interface{}) error {
 func GetCastleLocationName(castleID int) string {
 	gs := Models.GetGameState()
 
-	if int(gs.MainCastle.Aid) == castleID {
+	c := &gs.Castle
+	if int(c.MainCastle.Aid) == castleID {
 		return "mainCastle"
 	}
-	if int(gs.Outpost1.Aid) == castleID {
+	if int(c.Outpost1.Aid) == castleID {
 		return "outpost1"
 	}
-	if int(gs.Outpost2.Aid) == castleID {
+	if int(c.Outpost2.Aid) == castleID {
 		return "outpost2"
 	}
-	if int(gs.Outpost3.Aid) == castleID {
+	if int(c.Outpost3.Aid) == castleID {
 		return "outpost3"
 	}
-	if int(gs.IceCastle.Aid) == castleID {
+	if int(c.IceCastle.Aid) == castleID {
 		return "iceCastle"
 	}
-	if int(gs.DesertCastle.Aid) == castleID {
+	if int(c.DesertCastle.Aid) == castleID {
 		return "desertCastle"
 	}
-	if int(gs.DungeonCastle.Aid) == castleID {
+	if int(c.DungeonCastle.Aid) == castleID {
 		return "dungeonCastle"
 	}
-	if int(gs.StormCastle.Aid) == castleID {
+	if int(c.StormCastle.Aid) == castleID {
 		return "stormCastle"
 	}
-	if int(gs.BeriWorldCastle.Aid) == castleID {
+	if int(c.BeriWorldCastle.Aid) == castleID {
 		return "beriWorldCastle"
+	}
+	if int(c.Metropolis.Aid) == castleID {
+		return "metropolisCastle"
+	}
+	if int(c.Capital.Aid) == castleID {
+		return "capitalCastle"
 	}
 
 	return ""
@@ -204,17 +217,21 @@ func parseMainKingdomCastles(castleArray []interface{}) {
 	for i, castle := range castleArray {
 		id, name, x, y, cType, ok := extractCastleDetails(castle, i)
 		if ok {
-			if cType == 1 {
-				gs.MainCastle.Aid, gs.MainCastle.Name = id, name
-			} else if cType == 4 {
+			if cType == kingdomCastleTypeMain {
+				gs.Castle.MainCastle.Aid, gs.Castle.MainCastle.Name = id, name
+			} else if cType == kingdomCastleTypeOutpost {
 				if outpostIndex == 1 {
-					gs.Outpost1.Aid, gs.Outpost1.Name = id, name
+					gs.Castle.Outpost1.Aid, gs.Castle.Outpost1.Name = id, name
 				} else if outpostIndex == 2 {
-					gs.Outpost2.Aid, gs.Outpost2.Name = id, name
+					gs.Castle.Outpost2.Aid, gs.Castle.Outpost2.Name = id, name
 				} else if outpostIndex == 3 {
-					gs.Outpost3.Aid, gs.Outpost3.Name = id, name
+					gs.Castle.Outpost3.Aid, gs.Castle.Outpost3.Name = id, name
 				}
 				outpostIndex++
+			} else if cType == kingdomCastleTypeMetropolis {
+				gs.Castle.Metropolis.Aid, gs.Castle.Metropolis.Name = id, name
+			} else if cType == kingdomCastleTypeCapital {
+				gs.Castle.Capital.Aid, gs.Castle.Capital.Name = id, name
 			}
 
 			// Store player castle location for AutoBird
@@ -338,15 +355,20 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
+					c := &gs.Castle
 					switch castleID {
-					case gs.MainCastle.Aid:
-						parseCastleResources(castleMap, &gs.MainCastle.Amount, &gs.MainCastle.Production, &gs.MainCastle.Storage, castleID)
-					case gs.Outpost1.Aid:
-						parseCastleResources(castleMap, &gs.Outpost1.Amount, &gs.Outpost1.Production, &gs.Outpost1.Storage, castleID)
-					case gs.Outpost2.Aid:
-						parseCastleResources(castleMap, &gs.Outpost2.Amount, &gs.Outpost2.Production, &gs.Outpost2.Storage, castleID)
-					case gs.Outpost3.Aid:
-						parseCastleResources(castleMap, &gs.Outpost3.Amount, &gs.Outpost3.Production, &gs.Outpost3.Storage, castleID)
+					case c.MainCastle.Aid:
+						parseCastleResources(castleMap, &c.MainCastle.Amount, &c.MainCastle.Production, &c.MainCastle.Storage, castleID)
+					case c.Outpost1.Aid:
+						parseCastleResources(castleMap, &c.Outpost1.Amount, &c.Outpost1.Production, &c.Outpost1.Storage, castleID)
+					case c.Outpost2.Aid:
+						parseCastleResources(castleMap, &c.Outpost2.Amount, &c.Outpost2.Production, &c.Outpost2.Storage, castleID)
+					case c.Outpost3.Aid:
+						parseCastleResources(castleMap, &c.Outpost3.Amount, &c.Outpost3.Production, &c.Outpost3.Storage, castleID)
+					case c.Metropolis.Aid:
+						parseCastleResources(castleMap, &c.Metropolis.Amount, &c.Metropolis.Production, &c.Metropolis.Storage, castleID)
+					case c.Capital.Aid:
+						parseCastleResources(castleMap, &c.Capital.Amount, &c.Capital.Production, &c.Capital.Storage, castleID)
 					}
 				}
 
@@ -363,8 +385,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == gs.IceCastle.Aid {
-						parseCastleResources(castleMap, &gs.IceCastle.Amount, &gs.IceCastle.Production, &gs.IceCastle.Storage, castleID)
+					if castleID == gs.Castle.IceCastle.Aid {
+						parseCastleResources(castleMap, &gs.Castle.IceCastle.Amount, &gs.Castle.IceCastle.Production, &gs.Castle.IceCastle.Storage, castleID)
 					}
 				}
 
@@ -381,8 +403,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == gs.DesertCastle.Aid {
-						parseCastleResources(castleMap, &gs.DesertCastle.Amount, &gs.DesertCastle.Production, &gs.DesertCastle.Storage, castleID)
+					if castleID == gs.Castle.DesertCastle.Aid {
+						parseCastleResources(castleMap, &gs.Castle.DesertCastle.Amount, &gs.Castle.DesertCastle.Production, &gs.Castle.DesertCastle.Storage, castleID)
 					}
 				}
 
@@ -399,8 +421,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == gs.DungeonCastle.Aid {
-						parseCastleResources(castleMap, &gs.DungeonCastle.Amount, &gs.DungeonCastle.Production, &gs.DungeonCastle.Storage, castleID)
+					if castleID == gs.Castle.DungeonCastle.Aid {
+						parseCastleResources(castleMap, &gs.Castle.DungeonCastle.Amount, &gs.Castle.DungeonCastle.Production, &gs.Castle.DungeonCastle.Storage, castleID)
 					}
 				}
 
@@ -417,8 +439,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == gs.StormCastle.Aid {
-						parseCastleResources(castleMap, &gs.StormCastle.Amount, &gs.StormCastle.Production, &gs.StormCastle.Storage, castleID)
+					if castleID == gs.Castle.StormCastle.Aid {
+						parseCastleResources(castleMap, &gs.Castle.StormCastle.Amount, &gs.Castle.StormCastle.Production, &gs.Castle.StormCastle.Storage, castleID)
 					}
 				}
 
@@ -435,8 +457,8 @@ func parseDCL(dcl map[string]interface{}) error {
 						continue
 					}
 					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == gs.BeriWorldCastle.Aid {
-						parseCastleResources(castleMap, &gs.BeriWorldCastle.Amount, &gs.BeriWorldCastle.Production, &gs.BeriWorldCastle.Storage, castleID)
+					if castleID == gs.Castle.BeriWorldCastle.Aid {
+						parseCastleResources(castleMap, &gs.Castle.BeriWorldCastle.Amount, &gs.Castle.BeriWorldCastle.Production, &gs.Castle.BeriWorldCastle.Storage, castleID)
 					}
 				}
 

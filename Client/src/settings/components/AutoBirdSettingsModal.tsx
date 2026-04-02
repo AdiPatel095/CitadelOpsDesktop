@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Search, Settings, AlertTriangle, Copy, Link as LinkIcon, Unlink, CheckSquare, Square } from 'lucide-react';
+import { X, Plus, Trash2, Settings, AlertTriangle, Copy, Link as LinkIcon, Unlink, CheckSquare, Layers } from 'lucide-react';
 import { TROOP_DEFINITIONS, TOOL_DEFINITIONS, getUnitBaseAndLevel, getUnitIdForLevel, UNIT_LEVEL_MAP } from '../../config/constants';
 import { FrontendWebsocket } from '../../websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
@@ -19,6 +19,53 @@ interface IgnoreItem {
 type IgnoreList = Record<number, IgnoreItem[]>; // Key is CastleID (number)
 type CastleLinks = Record<number, number>; // Key is ChildID, Value is ParentID
 
+interface IgnorePreset {
+    id: string;
+    name: string;
+    items: IgnoreItem[];
+}
+
+const PRESETS_STORAGE_KEY = 'autoBird_ignorePresets';
+
+function loadPresetsFromStorage(): IgnorePreset[] {
+    try {
+        const raw = localStorage.getItem(PRESETS_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw) as unknown;
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+            .filter(
+                (p): p is IgnorePreset =>
+                    p &&
+                    typeof p === 'object' &&
+                    typeof (p as IgnorePreset).id === 'string' &&
+                    typeof (p as IgnorePreset).name === 'string' &&
+                    Array.isArray((p as IgnorePreset).items)
+            )
+            .map(p => ({
+                ...p,
+                items: p.items
+                    .filter(
+                        (it): it is IgnoreItem =>
+                            it &&
+                            typeof it === 'object' &&
+                            typeof (it as IgnoreItem).id === 'number' &&
+                            typeof (it as IgnoreItem).amount === 'number'
+                    )
+                    .map(it => ({ id: it.id, amount: it.amount }))
+            }));
+    } catch {
+        return [];
+    }
+}
+
+function newPresetId(): string {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return `p_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
 interface Castle {
     id: number;
     name: string;
@@ -32,6 +79,11 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     const [loading, setLoading] = useState(true);
     const [delaySettings, setDelaySettings] = useState({ min: 6, max: 12, minSend: 0 });
 
+    const [presets, setPresets] = useState<IgnorePreset[]>([]);
+    const [presetSelectByCastle, setPresetSelectByCastle] = useState<Record<number, string>>({});
+    const [globalPresetPick, setGlobalPresetPick] = useState('');
+    const [newPresetName, setNewPresetName] = useState('');
+    const [savePresetCastleId, setSavePresetCastleId] = useState<number | ''>('');
 
     // Edit Modal State
     // keys: castleId, originalId (to track replacement), item (current state in modal)
@@ -55,6 +107,68 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         // We do strictly local update here, assuming main Save persists to server/storage.
         // BUT logic requires offline persistence too.
         localStorage.setItem('autoBird_ignoreList', JSON.stringify(newList));
+    };
+
+    /** Apply the same ignore items to a castle and any castles linked to it as children. */
+    const applyItemsToCastle = (castleId: number, newItems: IgnoreItem[]) => {
+        const cloned = newItems.map(item => ({ ...item }));
+        setIgnoreList(prev => {
+            const children = Object.entries(castleLinks)
+                .filter(([_, parentId]) => parentId === castleId)
+                .map(([childId]) => parseInt(childId));
+            const updates: IgnoreList = {};
+            children.forEach(childId => {
+                updates[childId] = cloned.map(i => ({ ...i }));
+            });
+            const newList = { ...prev, [castleId]: cloned.map(i => ({ ...i })), ...updates };
+            localStorage.setItem('autoBird_ignoreList', JSON.stringify(newList));
+            return newList;
+        });
+    };
+
+    const applyPresetToAllRootCastles = (preset: IgnorePreset) => {
+        const roots = castles.filter(c => !castleLinks[c.id]);
+        const template = preset.items.map(i => ({ ...i }));
+        setIgnoreList(prev => {
+            let next = { ...prev };
+            for (const c of roots) {
+                const cloned = template.map(i => ({ ...i }));
+                next[c.id] = cloned;
+                Object.entries(castleLinks)
+                    .filter(([_, parentId]) => parentId === c.id)
+                    .forEach(([childIdStr]) => {
+                        next[parseInt(childIdStr, 10)] = cloned.map(x => ({ ...x }));
+                    });
+            }
+            localStorage.setItem('autoBird_ignoreList', JSON.stringify(next));
+            return next;
+        });
+    };
+
+    const handleSaveNewPreset = () => {
+        const name = newPresetName.trim();
+        if (!name || savePresetCastleId === '') return;
+        const items = ignoreList[savePresetCastleId as number] || [];
+        const entry: IgnorePreset = {
+            id: newPresetId(),
+            name,
+            items: items.map(i => ({ ...i }))
+        };
+        setPresets(prev => {
+            const next = [...prev, entry];
+            localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(next));
+            return next;
+        });
+        setNewPresetName('');
+    };
+
+    const handleDeletePreset = (presetId: string) => {
+        setPresets(prev => {
+            const next = prev.filter(p => p.id !== presetId);
+            localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(next));
+            return next;
+        });
+        setGlobalPresetPick(prev => (prev === presetId ? '' : prev));
     };
 
     // Management Handlers
@@ -247,6 +361,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
             }
         }
 
+        setPresets(loadPresetsFromStorage());
+
         // Always finish loading state after cache check so UI can render
         setLoading(false);
 
@@ -279,29 +395,11 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         });
 
         if (Array.isArray(result)) {
-            // Map result back to IgnoreItem
             const newItems: IgnoreItem[] = (result as UnitWithQuantity[]).map(u => ({
                 id: u.unitId,
                 amount: u.quantity === 0 ? 100000000 : u.quantity
             }));
-
-            // Compute new state
-            const updates: IgnoreList = {};
-            const children = Object.entries(castleLinks)
-                .filter(([_, parentId]) => parentId === castleId)
-                .map(([childId]) => parseInt(childId));
-
-            children.forEach(childId => {
-                updates[childId] = newItems.map(i => ({ ...i }));
-            });
-
-            const newList = {
-                ...ignoreList,
-                [castleId]: newItems,
-                ...updates
-            };
-
-            updateIgnoreList(newList);
+            applyItemsToCastle(castleId, newItems);
         }
     };
 
@@ -678,6 +776,97 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                                     Birds will be sent with a random return delay between these hours (Max 12h).
                                 </div>
                             </div>
+
+                            <div className="mt-6 pt-6 border-t border-border-base/60 space-y-4">
+                                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                    <Layers className="w-4 h-4 text-primary" />
+                                    Ignore list presets
+                                </h4>
+                                <p className="text-xs text-text-muted max-w-2xl leading-relaxed">
+                                    Save a castle&apos;s ignore list as a named template. Use the dropdown on each castle card to apply a preset, or apply one preset to every non-linked castle at once.
+                                </p>
+                                <div className="flex flex-wrap items-end gap-3">
+                                    <div>
+                                        <label className="text-xs text-text-muted font-bold uppercase mb-2 block">Apply everywhere</label>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <select
+                                                value={globalPresetPick}
+                                                onChange={e => setGlobalPresetPick(e.target.value)}
+                                                className="min-w-[200px] bg-bg-input border border-border-base rounded-global px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                                            >
+                                                <option value="">Select preset…</option>
+                                                {presets.map(p => (
+                                                    <option key={p.id} value={p.id}>
+                                                        {p.name} ({p.items.length} units)
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <button
+                                                type="button"
+                                                disabled={!globalPresetPick || castles.length === 0}
+                                                onClick={() => {
+                                                    const p = presets.find(x => x.id === globalPresetPick);
+                                                    if (p) applyPresetToAllRootCastles(p);
+                                                }}
+                                                className="px-4 py-2 rounded-global bg-primary/15 border border-primary/40 text-primary text-sm font-bold hover:bg-primary hover:text-bg-app transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
+                                                Apply to all castles
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={!globalPresetPick}
+                                                onClick={() => {
+                                                    if (!globalPresetPick) return;
+                                                    const p = presets.find(x => x.id === globalPresetPick);
+                                                    if (p && window.confirm(`Delete preset "${p.name}"?`)) {
+                                                        handleDeletePreset(globalPresetPick);
+                                                    }
+                                                }}
+                                                className="px-4 py-2 rounded-global bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-bold hover:bg-red-500 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
+                                                Delete preset
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap items-end gap-3">
+                                    <div>
+                                        <label className="text-xs text-text-muted font-bold uppercase mb-2 block">New preset name</label>
+                                        <input
+                                            type="text"
+                                            value={newPresetName}
+                                            onChange={e => setNewPresetName(e.target.value)}
+                                            placeholder="e.g. Main keep / Nomad cap"
+                                            className="w-56 bg-bg-input border border-border-base rounded-global px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-text-muted font-bold uppercase mb-2 block">Copy list from castle</label>
+                                        <select
+                                            value={savePresetCastleId === '' ? '' : String(savePresetCastleId)}
+                                            onChange={e =>
+                                                setSavePresetCastleId(e.target.value === '' ? '' : parseInt(e.target.value, 10))
+                                            }
+                                            className="min-w-[200px] bg-bg-input border border-border-base rounded-global px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                                        >
+                                            <option value="">Select castle…</option>
+                                            {castles.map(c => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveNewPreset}
+                                        disabled={!newPresetName.trim() || savePresetCastleId === ''}
+                                        className="px-5 py-2 rounded-global bg-bg-card border border-border-light text-text-main text-sm font-bold hover:border-primary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Save preset
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         {loading ? (
@@ -711,7 +900,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                                     return (
                                         <div
                                             key={castle.id}
-                                            className="glass-panel p-4 flex flex-col h-[320px] relative group hover:border-primary/50 transition-colors"
+                                            className="glass-panel p-4 flex flex-col h-[360px] relative group hover:border-primary/50 transition-colors"
                                         >
                                             {/* Castle Name Header */}
                                             <div className="flex items-center justify-between mb-3 px-1 h-8">
@@ -756,6 +945,34 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                                                     )}
                                                 </div>
                                             </div>
+
+                                            {!isLinked && presets.length > 0 && (
+                                                <div className="mb-2">
+                                                    <label className="text-[10px] text-text-muted font-bold uppercase mb-1 block px-0.5">
+                                                        Apply preset
+                                                    </label>
+                                                    <select
+                                                        value={presetSelectByCastle[castle.id] ?? ''}
+                                                        onChange={e => {
+                                                            const pid = e.target.value;
+                                                            if (!pid) return;
+                                                            const preset = presets.find(p => p.id === pid);
+                                                            if (preset) {
+                                                                applyItemsToCastle(castle.id, preset.items);
+                                                            }
+                                                            setPresetSelectByCastle(prev => ({ ...prev, [castle.id]: '' }));
+                                                        }}
+                                                        className="w-full bg-bg-input border border-border-base rounded-global px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
+                                                    >
+                                                        <option value="">Choose template…</option>
+                                                        {presets.map(p => (
+                                                            <option key={p.id} value={p.id}>
+                                                                {p.name} ({p.items.length})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
 
                                             {/* Units Grid Area */}
                                             <div className={`flex-1 overflow-y-auto bg-bg-app/30 rounded-lg p-3 border ${isLinked ? 'border-blue-500/30 bg-blue-500/5' : 'border-border-base/50'}`}>

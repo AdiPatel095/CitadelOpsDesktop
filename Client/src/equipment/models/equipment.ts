@@ -146,6 +146,8 @@ export interface CastStatObject {
     dungeonCastleCast: CastStat;
     stormCastleCast: CastStat;
     beriWorldCastleCast: CastStat;
+    metropolisCastleCast: CastStat;
+    capitalCastleCast: CastStat;
     extraCast1: CastStat;
     extraCast2: CastStat;
     extraCast3: CastStat;

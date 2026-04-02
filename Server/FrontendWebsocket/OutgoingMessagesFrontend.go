@@ -3,6 +3,7 @@ package FrontendWebsocket
 import (
 	"CitadelDesktop/Server/GameFunctions"
 	"CitadelDesktop/Server/Models"
+	equip "CitadelDesktop/Server/Models/Equipment"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"fmt"
 	"log"
@@ -111,12 +112,12 @@ func SendInitialData(client *Client) {
 	}, "")
 
 	// Send all commanders
-	for i, comm := range Models.CommStatArray {
+	for i, comm := range equip.CommStatArray {
 		client.SendToClient("commStatUpdate", comm, strconv.Itoa(i))
 	}
 
-	// Send all castle stats with index-based identification (0-8)
-	for i := 0; i < 9; i++ {
+	// Send all castle stats with index-based identification (0-10)
+	for i := 0; i < Models.NumPlayerCastleSlots; i++ {
 		castStat := GameFunctions.GetCastellanStat(i)
 		client.SendToClient("castStatUpdate", castStat, strconv.Itoa(i))
 	}
@@ -125,30 +126,33 @@ func SendInitialData(client *Client) {
 	gs := Models.GetGameState()
 	client.SendToClient("globalResourceUpdate", gs.GlobalResources, "")
 
-	// Send all castle resources
-	client.SendToClient("castleResourceUpdate", gs.MainCastle, "mainCastle")
-	client.SendToClient("castleResourceUpdate", gs.Outpost1, "outpost1")
-	client.SendToClient("castleResourceUpdate", gs.Outpost2, "outpost2")
-	client.SendToClient("castleResourceUpdate", gs.Outpost3, "outpost3")
-	client.SendToClient("castleResourceUpdate", gs.IceCastle, "iceCastle")
-	client.SendToClient("castleResourceUpdate", gs.DesertCastle, "desertCastle")
-	client.SendToClient("castleResourceUpdate", gs.DungeonCastle, "dungeonCastle")
-	client.SendToClient("castleResourceUpdate", gs.StormCastle, "stormCastle")
-	client.SendToClient("castleResourceUpdate", gs.BeriWorldCastle, "beriWorldCastle")
+	c := &gs.Castle
+	client.SendToClient("castleResourceUpdate", c.MainCastle, "mainCastle")
+	client.SendToClient("castleResourceUpdate", c.Outpost1, "outpost1")
+	client.SendToClient("castleResourceUpdate", c.Outpost2, "outpost2")
+	client.SendToClient("castleResourceUpdate", c.Outpost3, "outpost3")
+	client.SendToClient("castleResourceUpdate", c.IceCastle, "iceCastle")
+	client.SendToClient("castleResourceUpdate", c.DesertCastle, "desertCastle")
+	client.SendToClient("castleResourceUpdate", c.DungeonCastle, "dungeonCastle")
+	client.SendToClient("castleResourceUpdate", c.StormCastle, "stormCastle")
+	client.SendToClient("castleResourceUpdate", c.BeriWorldCastle, "beriWorldCastle")
+	client.SendToClient("castleResourceUpdate", c.Metropolis, "metropolisCastle")
+	client.SendToClient("castleResourceUpdate", c.Capital, "capitalCastle")
 
+	client.SendToClient("castleFocus", Models.CastleFocusMessagePayload(), "")
 }
 
-// SendCastStat sends a single castle's stats by index (0-7)
+// SendCastStat sends a single castle's stats by index (0-10)
 func SendCastStat(castleIndex int) {
-	if castleIndex >= 0 && castleIndex < 9 {
+	if castleIndex >= 0 && castleIndex < Models.NumPlayerCastleSlots {
 		castStat := GameFunctions.GetCastellanStat(castleIndex)
 		SendFrontendMessage("castStatUpdate", castStat, strconv.Itoa(castleIndex))
 	}
 }
 
 func SendCommStat(commanderIndex int) {
-	if commanderIndex >= 0 && commanderIndex < len(Models.CommStatArray) {
-		SendFrontendMessage("commStatUpdate", Models.CommStatArray[commanderIndex], strconv.Itoa(commanderIndex))
+	if commanderIndex >= 0 && commanderIndex < len(equip.CommStatArray) {
+		SendFrontendMessage("commStatUpdate", equip.CommStatArray[commanderIndex], strconv.Itoa(commanderIndex))
 	}
 
 }
@@ -159,25 +163,30 @@ func SendGlobalResourceUpdate() {
 
 func SendCastleResource(castleLocation string) {
 	gs := Models.GetGameState()
+	c := &gs.Castle
 	switch castleLocation {
 	case "mainCastle":
-		SendFrontendMessage("castleResourceUpdate", gs.MainCastle, "mainCastle")
+		SendFrontendMessage("castleResourceUpdate", c.MainCastle, "mainCastle")
 	case "outpost1":
-		SendFrontendMessage("castleResourceUpdate", gs.Outpost1, "outpost1")
+		SendFrontendMessage("castleResourceUpdate", c.Outpost1, "outpost1")
 	case "outpost2":
-		SendFrontendMessage("castleResourceUpdate", gs.Outpost2, "outpost2")
+		SendFrontendMessage("castleResourceUpdate", c.Outpost2, "outpost2")
 	case "outpost3":
-		SendFrontendMessage("castleResourceUpdate", gs.Outpost3, "outpost3")
+		SendFrontendMessage("castleResourceUpdate", c.Outpost3, "outpost3")
 	case "iceCastle":
-		SendFrontendMessage("castleResourceUpdate", gs.IceCastle, "iceCastle")
+		SendFrontendMessage("castleResourceUpdate", c.IceCastle, "iceCastle")
 	case "desertCastle":
-		SendFrontendMessage("castleResourceUpdate", gs.DesertCastle, "desertCastle")
+		SendFrontendMessage("castleResourceUpdate", c.DesertCastle, "desertCastle")
 	case "dungeonCastle":
-		SendFrontendMessage("castleResourceUpdate", gs.DungeonCastle, "dungeonCastle")
+		SendFrontendMessage("castleResourceUpdate", c.DungeonCastle, "dungeonCastle")
 	case "stormCastle":
-		SendFrontendMessage("castleResourceUpdate", gs.StormCastle, "stormCastle")
+		SendFrontendMessage("castleResourceUpdate", c.StormCastle, "stormCastle")
 	case "beriWorldCastle":
-		SendFrontendMessage("castleResourceUpdate", gs.BeriWorldCastle, "beriWorldCastle")
+		SendFrontendMessage("castleResourceUpdate", c.BeriWorldCastle, "beriWorldCastle")
+	case "metropolisCastle":
+		SendFrontendMessage("castleResourceUpdate", c.Metropolis, "metropolisCastle")
+	case "capitalCastle":
+		SendFrontendMessage("castleResourceUpdate", c.Capital, "capitalCastle")
 	}
 
 }
@@ -189,7 +198,7 @@ func SellNonRelicEquipment(sellRift bool, sellLookItems bool) int {
 	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
 
-	for _, equipment := range gs.EquipmentStorage {
+	for _, equipment := range gs.Equipment.EquipmentStorage {
 		// Filter Look Items (Slot 5) if sellLookItems is false
 		if !sellLookItems && equipment.EquipSlotNumber == 5 {
 			continue
@@ -224,7 +233,7 @@ func SellNonRelicGems(sellRiftGems bool) int {
 
 	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
 	time.Sleep(2 * time.Second)
-	for id, count := range gs.NonRelicGemIDs {
+	for id, count := range gs.Equipment.NonRelicGemIDs {
 		// Rift Gems (IDs 450-475)
 		isRift := id >= 450 && id <= 475
 
@@ -239,7 +248,7 @@ func SellNonRelicGems(sellRiftGems bool) int {
 			counter++
 		}
 	}
-	log.Printf("Storage Gem amount : %v", len(gs.NonRelicGemIDs))
+	log.Printf("Storage Gem amount : %v", len(gs.Equipment.NonRelicGemIDs))
 	return counter
 }
 
@@ -249,7 +258,7 @@ func SellRelic1Equipment() int {
 	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
 
-	for _, equipment := range gs.EquipmentStorage {
+	for _, equipment := range gs.Equipment.EquipmentStorage {
 		// Relic 1.0 is Rarity 5 but NOT 4 stats (which is Relic 2.0)
 		if equipment.EquipRarity == 5 && len(equipment.EquipStats) < 4 {
 			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
@@ -266,7 +275,7 @@ func SellRelic2Equipment(keepStars int) int {
 	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
 	time.Sleep(2 * time.Second)
 
-	for _, equipment := range gs.EquipmentStorage {
+	for _, equipment := range gs.Equipment.EquipmentStorage {
 		// Relic 2.0 Filters:
 		// 1. Standard Equipment: Rarity 5, 4 Stats, Slot != 6 (Hero)
 		// 2. Hero Equipment: Rarity 15, 6 Stats, Slot == 6
@@ -296,7 +305,7 @@ func SellRelic1Gems() int {
 	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
 	time.Sleep(2 * time.Second)
 
-	for _, gem := range gs.GemsStorage {
+	for _, gem := range gs.Equipment.GemsStorage {
 		if len(gem.GemStats) == 3 {
 			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%.0f,"RGEM":1,"LFID":-1}%%`, gem.ID)
 			ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
@@ -312,7 +321,7 @@ func SellRelic2Gems(keepStars int) int {
 	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
 	time.Sleep(2 * time.Second)
 
-	for _, gem := range gs.GemsStorage {
+	for _, gem := range gs.Equipment.GemsStorage {
 		// Filter for Relic 2.0 Gems (Type 131 and 132) AND 4 Stats
 		if (gem.GemType == 131 || gem.GemType == 132) && len(gem.GemStats) == 4 {
 			totalStars := 0

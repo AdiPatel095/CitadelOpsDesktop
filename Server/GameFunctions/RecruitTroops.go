@@ -1,11 +1,11 @@
 package GameFunctions
 
 import (
+	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"context"
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -134,7 +134,7 @@ func runRecruitTroops(ctx context.Context) {
 						TroopsSHI:   troops.TroopsSHI,
 						TroopsMixed: troops.TroopsMixed,
 					}
-					castleInfo.Buildings = troops.Buildings
+					Models.SetCastleBuildingRows(castleInfo, troops.BGRows, troops.BDRows)
 				}
 				time.Sleep(1 * time.Second)
 
@@ -159,10 +159,9 @@ func runRecruitTroops(ctx context.Context) {
 						}
 
 						log.Printf("[RecruitTroops] Castle: %d. Found %d/%d of Troop %d. Recruiting %d.", castleID, currentAmount, targetAmount, troopID, amountToRecruit)
-						// Command format: %xt%EmpireEx_21%bup%1%{"LID":0,"WID":<troopID>,"AMT":<amount>,"PO":-1,"PWR":0,"SK":73,"SID":0,"AID":<castleID>}%
-						payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%bup%%1%%{"LID":0,"WID":%d,"AMT":%d,"PO":-1,"PWR":0,"SK":73,"SID":0,"AID":%d}%%`, troopID, amountToRecruit, castleID)
-
-						ResponseRegistry.OutgoingMessages <- []byte(payload)
+						// SK must match live session (captured from browser bup); TODO: read from game state when available.
+						const recruitSessionKey = 73
+						GameCommands.SendBarracksUnitPurchase(0, troopID, amountToRecruit, -1, 0, recruitSessionKey, 0, castleID)
 						time.Sleep(1 * time.Second) // Small delay between recruit commands
 					}
 				}

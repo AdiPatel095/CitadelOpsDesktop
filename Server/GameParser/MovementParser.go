@@ -63,7 +63,7 @@ func ParseGAMMessage(data string) {
 	}
 
 	gs := Models.GetGameState()
-	// gs.ActiveMovements is NOT cleared here anymore - handled by AutoBird/Scheduler before fetch
+	// gs.Movement.ActiveMovements is NOT cleared here anymore - handled by AutoBird/Scheduler before fetch
 	var parsedMovements []Models.GAMMovement
 
 	for _, item := range mArray {
@@ -176,7 +176,7 @@ func ParseGAMMessage(data string) {
 	}
 
 	// Append new movements to the existing list (allows multiple GAM messages to be accumulated)
-	gs.ActiveMovements = append(gs.ActiveMovements, parsedMovements...)
+	gs.Movement.ActiveMovements = append(gs.Movement.ActiveMovements, parsedMovements...)
 }
 
 // Helper to safely get int from map

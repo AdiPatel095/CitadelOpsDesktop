@@ -3,13 +3,14 @@ import { TROOP_DEFINITIONS } from '../../config/constants';
 import UnitImage from '../../components/UnitImage';
 
 interface CastleUnitCardProps {
-    castleName: string;
+    /** Card heading (e.g. "Units"). */
+    title: string;
     troopsMixed: { [unitID: string]: number };
     troopsI: { [unitID: string]: number };
     troopsTU: { [unitID: string]: number };
 }
 
-const CastleUnitCard: React.FC<CastleUnitCardProps> = ({ castleName, troopsMixed, troopsI, troopsTU }) => {
+const CastleUnitCard: React.FC<CastleUnitCardProps> = ({ title, troopsMixed, troopsI, troopsTU }) => {
     // Go serializes map[int]int with string keys, so Object.keys gives strings
     const sortedUnitIds = Object.keys(troopsMixed)
         .map(Number)
@@ -18,7 +19,7 @@ const CastleUnitCard: React.FC<CastleUnitCardProps> = ({ castleName, troopsMixed
 
     return (
         <div className="castle-card">
-            <h3 className="castle-name">{castleName}</h3>
+            <h3 className="castle-name">{title}</h3>
 
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                 {sortedUnitIds.length === 0 ? (

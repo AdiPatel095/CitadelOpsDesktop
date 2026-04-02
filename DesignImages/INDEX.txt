@@ -1,0 +1,32 @@
+Citadel Ops — Stitch mockups (Google Stitch / user-stitch MCP)
+==============================================================
+
+Stitch project title: CitadelOps Desktop – Full UI Redesign
+Stitch project ID:   212196353979260999
+Design system:       Citadel Tactical (generated with first screen)
+
+Exported PNG files (desktop mocks, tactical dark theme):
+  01-dashboard.png      → App shell + Dashboard (castle resources)
+  02-units.png          → Units view
+  03-equipment.png      → Equipment view
+  04-decorations.png    → Decorations view
+  05-event-modules.png  → Event modules view
+  06-currency.png       → Currency view
+  07-settings.png       → Settings view
+  08-support.png        → Support view
+
+Screen IDs (for re-fetch in Stitch / MCP):
+  Dashboard:      7132af6977ed4bdbb521ccd50ad44dbb
+  Units:          e0e0f480f9d94a83bf4b1f4541045531
+  Equipment:      9d090a5aba2f4170b4a584907c2a4226
+  Decorations:    1ee06dfb1c0f4932870ec87e715bed0c
+  Event modules:  e52795d637024830902b15ae56b1dd08
+  Currency:       ca07674679f54fba9c1a352cf4b6bed1
+  Settings:       26b19e492482473cb98a91a8d62c05fd
+  Support:        5b903e4852e04ffea2db6fdfa50b3290
+
+Git: DesignImages/ is intended to be committed so mocks travel with the repo.
+     If PNGs grow too large, add /DesignImages/ to .gitignore and keep mocks local only.
+
+Note: fetch_screen_image may also write screen_<id>.png under your home directory;
+      canonical copies for this repo are the numbered files above.

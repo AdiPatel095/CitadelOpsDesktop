@@ -8,6 +8,7 @@ import (
 
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Models"
+	equip "CitadelDesktop/Server/Models/Equipment"
 )
 
 // PreparePriority converts the frontend payload stats into optimized data structures
@@ -284,9 +285,9 @@ func Optimize(input OptimizerInput) OptimizationResult {
 			isCastellan := input.Payload.EquipmentMode == "Castellan"
 
 			if isCastellan {
-				GameParser.ProcessEquipStatCast(selectedEquip, &castStats1, &Models.CastEquipCeiling)
+				GameParser.ProcessEquipStatCast(selectedEquip, &castStats1, &equip.CastEquipCeiling)
 			} else {
-				GameParser.ProcessEquipStatComm(selectedEquip, &commStats1, &Models.CommEquipCeiling)
+				GameParser.ProcessEquipStatComm(selectedEquip, &commStats1, &equip.CommEquipCeiling)
 			}
 
 			// Deduplicate Slot 2
@@ -303,20 +304,20 @@ func Optimize(input OptimizerInput) OptimizationResult {
 				// Incremental Pruning (Loop 2)
 				if isCastellan {
 					stats12 := castStats1
-					GameParser.ProcessEquipStatCast(slot2Equip, &stats12, &Models.CastEquipCeiling)
+					GameParser.ProcessEquipStatCast(slot2Equip, &stats12, &equip.CastEquipCeiling)
 
 					currentScore := ScoreCastellan(&stats12, prepared, input.Payload.CombatMode)
-					potential := calculatePotentialBonusCast(&stats12, []map[float64]float64{maxSlot3Values, maxSlot4Values}, prepared, &Models.CastEquipCeiling, input.Payload.CombatMode)
+					potential := calculatePotentialBonusCast(&stats12, []map[float64]float64{maxSlot3Values, maxSlot4Values}, prepared, &equip.CastEquipCeiling, input.Payload.CombatMode)
 
 					if currentScore+potential <= branchResults[branchIndex].Score {
 						continue
 					}
 				} else {
 					stats12 := commStats1
-					GameParser.ProcessEquipStatComm(slot2Equip, &stats12, &Models.CommEquipCeiling)
+					GameParser.ProcessEquipStatComm(slot2Equip, &stats12, &equip.CommEquipCeiling)
 
 					currentScore := ScoreCommander(&stats12, prepared, input.Payload.CombatMode)
-					potential := calculatePotentialBonusComm(&stats12, []map[float64]float64{maxSlot3Values, maxSlot4Values}, prepared, &Models.CommEquipCeiling, input.Payload.CombatMode)
+					potential := calculatePotentialBonusComm(&stats12, []map[float64]float64{maxSlot3Values, maxSlot4Values}, prepared, &equip.CommEquipCeiling, input.Payload.CombatMode)
 
 					if currentScore+potential <= branchResults[branchIndex].Score {
 						continue
@@ -347,26 +348,26 @@ func Optimize(input OptimizerInput) OptimizationResult {
 					// Incremental Pruning (Loop 3)
 					if isCastellan {
 						stats12 := castStats1
-						GameParser.ProcessEquipStatCast(slot2Equip, &stats12, &Models.CastEquipCeiling)
+						GameParser.ProcessEquipStatCast(slot2Equip, &stats12, &equip.CastEquipCeiling)
 
 						stats123 := stats12
-						GameParser.ProcessEquipStatCast(slot3Equip, &stats123, &Models.CastEquipCeiling)
+						GameParser.ProcessEquipStatCast(slot3Equip, &stats123, &equip.CastEquipCeiling)
 
 						currentScore := ScoreCastellan(&stats123, prepared, input.Payload.CombatMode)
-						potential := calculatePotentialBonusCast(&stats123, []map[float64]float64{maxSlot4Values}, prepared, &Models.CastEquipCeiling, input.Payload.CombatMode)
+						potential := calculatePotentialBonusCast(&stats123, []map[float64]float64{maxSlot4Values}, prepared, &equip.CastEquipCeiling, input.Payload.CombatMode)
 
 						if currentScore+potential <= branchResults[branchIndex].Score {
 							continue
 						}
 					} else {
 						stats12 := commStats1
-						GameParser.ProcessEquipStatComm(slot2Equip, &stats12, &Models.CommEquipCeiling)
+						GameParser.ProcessEquipStatComm(slot2Equip, &stats12, &equip.CommEquipCeiling)
 
 						stats123 := stats12
-						GameParser.ProcessEquipStatComm(slot3Equip, &stats123, &Models.CommEquipCeiling)
+						GameParser.ProcessEquipStatComm(slot3Equip, &stats123, &equip.CommEquipCeiling)
 
 						currentScore := ScoreCommander(&stats123, prepared, input.Payload.CombatMode)
-						potential := calculatePotentialBonusComm(&stats123, []map[float64]float64{maxSlot4Values}, prepared, &Models.CommEquipCeiling, input.Payload.CombatMode)
+						potential := calculatePotentialBonusComm(&stats123, []map[float64]float64{maxSlot4Values}, prepared, &equip.CommEquipCeiling, input.Payload.CombatMode)
 
 						if currentScore+potential <= branchResults[branchIndex].Score {
 							continue
@@ -400,13 +401,13 @@ func Optimize(input OptimizerInput) OptimizationResult {
 						var candidateScore float64
 						if input.Payload.EquipmentMode == "Castellan" {
 							aggregatedStats := Models.CastStatModel{}
-							GameParser.ProcessEquipStatCast(selectedEquip, &aggregatedStats, &Models.CastEquipCeiling)
-							GameParser.ProcessEquipStatCast(slot2Equip, &aggregatedStats, &Models.CastEquipCeiling)
-							GameParser.ProcessEquipStatCast(slot3Equip, &aggregatedStats, &Models.CastEquipCeiling)
-							GameParser.ProcessEquipStatCast(slot4Equip, &aggregatedStats, &Models.CastEquipCeiling)
+							GameParser.ProcessEquipStatCast(selectedEquip, &aggregatedStats, &equip.CastEquipCeiling)
+							GameParser.ProcessEquipStatCast(slot2Equip, &aggregatedStats, &equip.CastEquipCeiling)
+							GameParser.ProcessEquipStatCast(slot3Equip, &aggregatedStats, &equip.CastEquipCeiling)
+							GameParser.ProcessEquipStatCast(slot4Equip, &aggregatedStats, &equip.CastEquipCeiling)
 
 							// Check Caps
-							caps := CheckCastCeilings(&aggregatedStats, &Models.CastEquipCeiling)
+							caps := CheckCastCeilings(&aggregatedStats, &equip.CastEquipCeiling)
 							for id := range caps {
 								if !cappedStatIDs[id] {
 									cappedStatIDs[id] = true
@@ -430,13 +431,13 @@ func Optimize(input OptimizerInput) OptimizationResult {
 							candidateScore = ScoreCastellan(&aggregatedStats, prepared, input.Payload.CombatMode)
 						} else {
 							aggregatedStats := Models.CommStatModel{}
-							GameParser.ProcessEquipStatComm(selectedEquip, &aggregatedStats, &Models.CommEquipCeiling)
-							GameParser.ProcessEquipStatComm(slot2Equip, &aggregatedStats, &Models.CommEquipCeiling)
-							GameParser.ProcessEquipStatComm(slot3Equip, &aggregatedStats, &Models.CommEquipCeiling)
-							GameParser.ProcessEquipStatComm(slot4Equip, &aggregatedStats, &Models.CommEquipCeiling)
+							GameParser.ProcessEquipStatComm(selectedEquip, &aggregatedStats, &equip.CommEquipCeiling)
+							GameParser.ProcessEquipStatComm(slot2Equip, &aggregatedStats, &equip.CommEquipCeiling)
+							GameParser.ProcessEquipStatComm(slot3Equip, &aggregatedStats, &equip.CommEquipCeiling)
+							GameParser.ProcessEquipStatComm(slot4Equip, &aggregatedStats, &equip.CommEquipCeiling)
 
 							// Check Caps
-							caps := CheckCommCeilings(&aggregatedStats, &Models.CommEquipCeiling)
+							caps := CheckCommCeilings(&aggregatedStats, &equip.CommEquipCeiling)
 							for id := range caps {
 								if !cappedStatIDs[id] {
 									cappedStatIDs[id] = true
@@ -596,19 +597,19 @@ func CapAwareOptimization(candidate *OptimizationResult, slots map[int]*[]Models
 	if equipmentMode == "Castellan" {
 		scoreFunc = func(s1, s2, s3, s4 Models.EquipmentModel) float64 {
 			stats := Models.CastStatModel{}
-			GameParser.ProcessEquipStatCast(s1, &stats, &Models.CastEquipCeiling)
-			GameParser.ProcessEquipStatCast(s2, &stats, &Models.CastEquipCeiling)
-			GameParser.ProcessEquipStatCast(s3, &stats, &Models.CastEquipCeiling)
-			GameParser.ProcessEquipStatCast(s4, &stats, &Models.CastEquipCeiling)
+			GameParser.ProcessEquipStatCast(s1, &stats, &equip.CastEquipCeiling)
+			GameParser.ProcessEquipStatCast(s2, &stats, &equip.CastEquipCeiling)
+			GameParser.ProcessEquipStatCast(s3, &stats, &equip.CastEquipCeiling)
+			GameParser.ProcessEquipStatCast(s4, &stats, &equip.CastEquipCeiling)
 			return ScoreCastellan(&stats, prepared, combatMode)
 		}
 	} else {
 		scoreFunc = func(s1, s2, s3, s4 Models.EquipmentModel) float64 {
 			stats := Models.CommStatModel{}
-			GameParser.ProcessEquipStatComm(s1, &stats, &Models.CommEquipCeiling)
-			GameParser.ProcessEquipStatComm(s2, &stats, &Models.CommEquipCeiling)
-			GameParser.ProcessEquipStatComm(s3, &stats, &Models.CommEquipCeiling)
-			GameParser.ProcessEquipStatComm(s4, &stats, &Models.CommEquipCeiling)
+			GameParser.ProcessEquipStatComm(s1, &stats, &equip.CommEquipCeiling)
+			GameParser.ProcessEquipStatComm(s2, &stats, &equip.CommEquipCeiling)
+			GameParser.ProcessEquipStatComm(s3, &stats, &equip.CommEquipCeiling)
+			GameParser.ProcessEquipStatComm(s4, &stats, &equip.CommEquipCeiling)
 			return ScoreCommander(&stats, prepared, combatMode)
 		}
 	}
@@ -753,8 +754,8 @@ func OptimizeGems(result *OptimizationResult, input OptimizerInput, prepared Pre
 	var currentCastStats Models.CastStatModel
 
 	// Prepare Gem Ceiling Models
-	var castGemCeiling = Models.CastGemCeiling
-	var commGemCeiling = Models.CommGemCeiling
+	var castGemCeiling = equip.CastGemCeiling
+	var commGemCeiling = equip.CommGemCeiling
 
 	if isCastellan {
 		// Process Equipment & Hero into currentStats using GEM CEILING

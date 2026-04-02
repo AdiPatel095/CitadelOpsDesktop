@@ -8,7 +8,7 @@ temp.go
 Temp.json
 gbd.json
 hardwareID.txt
-loginBytes.json
+jsonExamples/loginBytes.json
 Dockerfile
 cloudbuild.yaml
 task.md

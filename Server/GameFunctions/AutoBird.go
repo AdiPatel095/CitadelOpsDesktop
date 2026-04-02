@@ -108,7 +108,7 @@ func runAutoBird(ctx context.Context) {
 		log.Println("[AutoBird] Starting processing cycle...")
 
 		// Clear previous cycle data
-		gs.BirdMovements = make(map[int][]Models.BirdMovement)
+		gs.Movement.BirdMovements = make(map[int][]Models.BirdMovement)
 
 		// Step 1: Fetch fresh alliance info (bird locations and player castles)
 		FetchAllianceInfo()
@@ -125,7 +125,7 @@ func runAutoBird(ctx context.Context) {
 		// Helper to find player OID
 		playerOID := gs.PlayerID
 		if playerOID == 0 && len(playerCastles) > 0 {
-			playerOID = int(gs.MainCastle.Aid) // Fallback if GameState isn't fully refreshed yet
+			playerOID = int(gs.Castle.MainCastle.Aid) // Fallback if GameState isn't fully refreshed yet
 		}
 
 		// ---------------------------------------------------------
@@ -199,7 +199,7 @@ func runAutoBird(ctx context.Context) {
 						TroopsSHI:   troops.TroopsSHI,
 						TroopsMixed: troops.TroopsMixed,
 					}
-					castle.Buildings = troops.Buildings
+					Models.SetCastleBuildingRows(castle, troops.BGRows, troops.BDRows)
 				}
 			}
 			time.Sleep(1 * time.Second)
@@ -423,10 +423,10 @@ func runAutoBird(ctx context.Context) {
 										DelayHrs:          randomDelay,
 									}
 
-									if gs.BirdMovements == nil {
-										gs.BirdMovements = make(map[int][]Models.BirdMovement)
+									if gs.Movement.BirdMovements == nil {
+										gs.Movement.BirdMovements = make(map[int][]Models.BirdMovement)
 									}
-									gs.BirdMovements[castleLoc.CastleID] = append(gs.BirdMovements[castleLoc.CastleID], movement)
+									gs.Movement.BirdMovements[castleLoc.CastleID] = append(gs.Movement.BirdMovements[castleLoc.CastleID], movement)
 
 									castleName := getCastleName(castleLoc.CastleID)
 									log.Printf("[AutoBird] Successfully sent batch from %s (MID: %.0f). Left/Ignored: %s", castleName, mid, ignoredSummary)
@@ -598,32 +598,39 @@ func getPlayerCastleLocations() []CastleLocation {
 // getCastleName returns the name of the castle with the given ID
 func getCastleName(castleID int) string {
 	gs := Models.GetGameState()
-	if int(gs.MainCastle.Aid) == castleID {
-		return gs.MainCastle.Name
+	c := &gs.Castle
+	if int(c.MainCastle.Aid) == castleID {
+		return c.MainCastle.Name
 	}
-	if int(gs.Outpost1.Aid) == castleID {
-		return gs.Outpost1.Name
+	if int(c.Outpost1.Aid) == castleID {
+		return c.Outpost1.Name
 	}
-	if int(gs.Outpost2.Aid) == castleID {
-		return gs.Outpost2.Name
+	if int(c.Outpost2.Aid) == castleID {
+		return c.Outpost2.Name
 	}
-	if int(gs.Outpost3.Aid) == castleID {
-		return gs.Outpost3.Name
+	if int(c.Outpost3.Aid) == castleID {
+		return c.Outpost3.Name
 	}
-	if int(gs.IceCastle.Aid) == castleID {
-		return gs.IceCastle.Name
+	if int(c.IceCastle.Aid) == castleID {
+		return c.IceCastle.Name
 	}
-	if int(gs.DesertCastle.Aid) == castleID {
-		return gs.DesertCastle.Name
+	if int(c.DesertCastle.Aid) == castleID {
+		return c.DesertCastle.Name
 	}
-	if int(gs.DungeonCastle.Aid) == castleID {
-		return gs.DungeonCastle.Name
+	if int(c.DungeonCastle.Aid) == castleID {
+		return c.DungeonCastle.Name
 	}
-	if int(gs.StormCastle.Aid) == castleID {
-		return gs.StormCastle.Name
+	if int(c.StormCastle.Aid) == castleID {
+		return c.StormCastle.Name
 	}
-	if int(gs.BeriWorldCastle.Aid) == castleID {
-		return gs.BeriWorldCastle.Name
+	if int(c.BeriWorldCastle.Aid) == castleID {
+		return c.BeriWorldCastle.Name
+	}
+	if int(c.Metropolis.Aid) == castleID {
+		return c.Metropolis.Name
+	}
+	if int(c.Capital.Aid) == castleID {
+		return c.Capital.Name
 	}
 	return fmt.Sprintf("Castle %d", castleID)
 }
@@ -642,7 +649,7 @@ func reconcileOnStartup(ctx context.Context) (time.Duration, bool) {
 	// 2. Fetch GAM
 	log.Println("[AutoBird] Found active saved birds. Reconciling with game server GAM data...")
 	gs := Models.GetGameState()
-	gs.ActiveMovements = nil
+	gs.Movement.ActiveMovements = nil
 
 	FetchMovements()
 
@@ -668,7 +675,7 @@ func reconcileOnStartup(ctx context.Context) (time.Duration, bool) {
 		}
 
 		matched := false
-		for _, movement := range gs.ActiveMovements {
+		for _, movement := range gs.Movement.ActiveMovements {
 			if troopsMatch(bird.TroopComposition, movement.TroopArray) {
 				matched = true
 				matchedBirds = append(matchedBirds, bird)

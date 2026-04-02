@@ -10,7 +10,6 @@ interface AuthContextType {
   gameLoginCooldown: number;
   isGameDataReady: boolean;
   autoBirdEnabled: boolean;
-  beriWorldEnabled: boolean;
   recruitTroopsEnabled: boolean;
   nextWakeUp: number | null;
   versionUpdate: { newVersion: string; downloadUrl: string } | null;
@@ -33,7 +32,6 @@ interface AuthContextType {
   stopGame: () => void;
   changeLoginDetails: () => void;
   toggleAutoBird: () => void;
-  toggleBeriWorld: () => void;
   toggleRecruitTroops: () => void;
   saveCredentials: (username: string, password: string, server: string) => void;
   clearCredentials: () => void;
@@ -51,7 +49,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [gameLoginCooldown, setGameLoginCooldown] = useState(0);
   const [isGameDataReady, setIsGameDataReady] = useState(false);
   const [autoBirdEnabled, setAutoBirdEnabled] = useState(false);
-  const [beriWorldEnabled, setBeriWorldEnabled] = useState(false);
   const [recruitTroopsEnabled, setRecruitTroopsEnabled] = useState(false);
   const [nextWakeUp, setNextWakeUp] = useState<number | null>(null);
   const [versionUpdate, setVersionUpdate] = useState<{ newVersion: string; downloadUrl: string } | null>(null);
@@ -104,8 +101,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setNextWakeUp(message.payload.nextWakeUp || null);
       } else if (message.type === 'recruitTroopsStatus') {
         setRecruitTroopsEnabled(message.payload.enabled);
-      } else if (message.type === 'beriWorldStatus') {
-        setBeriWorldEnabled(message.payload.enabled);
       } else if (message.type === 'versionUpdate') {
         console.log('Version update received:', message.payload);
         const currentIgnoredVersion = localStorage.getItem('ignoredVersion');
@@ -261,14 +256,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const toggleBeriWorld = () => {
-    const newState = !beriWorldEnabled;
-    setBeriWorldEnabled(newState); // Optimistic UI update
-    FrontendWebsocket.sendMessage({
-      type: newState ? 'startBeriWorld' : 'stopBeriWorld',
-    });
-  };
-
   const toggleRecruitTroops = () => {
     const savedSettings = localStorage.getItem('recruitTroopsSettings');
     let settings = {};
@@ -319,7 +306,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       gameLoginCooldown,
       isGameDataReady,
       autoBirdEnabled,
-      beriWorldEnabled,
       recruitTroopsEnabled,
       nextWakeUp,
       versionUpdate,
@@ -337,7 +323,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       stopGame,
       changeLoginDetails,
       toggleAutoBird,
-      toggleBeriWorld,
       toggleRecruitTroops,
       hasStoredCredentials,
       storedUsername,

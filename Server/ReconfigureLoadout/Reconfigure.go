@@ -3,6 +3,7 @@ package ReconfigureLoadout
 import (
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Models"
+	equip "CitadelDesktop/Server/Models/Equipment"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"log"
 	"time"
@@ -24,7 +25,7 @@ func ReconfigureCommander(payload ReconfigurePayload) (Models.CommStatModel, str
 	var equipment []Models.EquipmentModel
 	var heroes []Models.EquipmentModel
 
-	for _, item := range gs.EquipmentStorage {
+	for _, item := range gs.Equipment.EquipmentStorage {
 		if item.EquipType == 2 {
 			// Slot 6 = Hero, everything else = equipment
 			if item.EquipSlotNumber == 6 {
@@ -88,22 +89,22 @@ func BuildCommStatModel(result OptimizationResult, equipment []Models.EquipmentM
 
 	// Process Equipment Stats (Bucket 1)
 	equipModel := Models.CommStatModel{}
-	GameParser.ProcessEquipStatComm(equip1, &equipModel, &Models.CommEquipCeiling)
-	GameParser.ProcessEquipStatComm(equip2, &equipModel, &Models.CommEquipCeiling)
-	GameParser.ProcessEquipStatComm(equip3, &equipModel, &Models.CommEquipCeiling)
-	GameParser.ProcessEquipStatComm(equip4, &equipModel, &Models.CommEquipCeiling)
-	Models.ApplyCommCeiling(&equipModel, &Models.CommEquipCeiling)
+	GameParser.ProcessEquipStatComm(equip1, &equipModel, &equip.CommEquipCeiling)
+	GameParser.ProcessEquipStatComm(equip2, &equipModel, &equip.CommEquipCeiling)
+	GameParser.ProcessEquipStatComm(equip3, &equipModel, &equip.CommEquipCeiling)
+	GameParser.ProcessEquipStatComm(equip4, &equipModel, &equip.CommEquipCeiling)
+	Models.ApplyCommCeiling(&equipModel, &equip.CommEquipCeiling)
 
 	// Process Hero Stats (Bucket 2)
 	heroModel := Models.CommStatModel{}
 	if result.Hero > 0 {
-		GameParser.ProcessEquipStatComm(hero, &heroModel, &Models.CommHeroCeiling)
-		Models.ApplyCommCeiling(&heroModel, &Models.CommHeroCeiling)
+		GameParser.ProcessEquipStatComm(hero, &heroModel, &equip.CommHeroCeiling)
+		Models.ApplyCommCeiling(&heroModel, &equip.CommHeroCeiling)
 	}
 
 	// Process Gem Stats (Bucket 3)
 	gemModel := Models.CommStatModel{}
-	gemCeiling := Models.CommGemCeiling
+	gemCeiling := equip.CommGemCeiling
 	if result.Gem1 > 0 {
 		GameParser.ProcessEquipStatComm(Models.EquipmentModel{EquipStats: gem1.GemStats}, &gemModel, &gemCeiling)
 	}
@@ -142,7 +143,7 @@ func ReconfigureCastellan(payload ReconfigurePayload) (Models.CastStatModel, str
 	var equipment []Models.EquipmentModel
 	var heroes []Models.EquipmentModel
 
-	for _, item := range gs.EquipmentStorage {
+	for _, item := range gs.Equipment.EquipmentStorage {
 		if item.EquipType == 1 {
 			// Slot 6 = Hero, everything else = equipment
 			if item.EquipSlotNumber == 6 {
@@ -206,22 +207,22 @@ func BuildCastStatModel(result OptimizationResult, equipment []Models.EquipmentM
 
 	// Process Equipment Stats (Bucket 1)
 	equipModel := Models.CastStatModel{}
-	GameParser.ProcessEquipStatCast(equip1, &equipModel, &Models.CastEquipCeiling)
-	GameParser.ProcessEquipStatCast(equip2, &equipModel, &Models.CastEquipCeiling)
-	GameParser.ProcessEquipStatCast(equip3, &equipModel, &Models.CastEquipCeiling)
-	GameParser.ProcessEquipStatCast(equip4, &equipModel, &Models.CastEquipCeiling)
-	Models.ApplyCastCeiling(&equipModel, &Models.CastEquipCeiling)
+	GameParser.ProcessEquipStatCast(equip1, &equipModel, &equip.CastEquipCeiling)
+	GameParser.ProcessEquipStatCast(equip2, &equipModel, &equip.CastEquipCeiling)
+	GameParser.ProcessEquipStatCast(equip3, &equipModel, &equip.CastEquipCeiling)
+	GameParser.ProcessEquipStatCast(equip4, &equipModel, &equip.CastEquipCeiling)
+	Models.ApplyCastCeiling(&equipModel, &equip.CastEquipCeiling)
 
 	// Process Hero Stats (Bucket 2)
 	heroModel := Models.CastStatModel{}
 	if result.Hero > 0 {
-		GameParser.ProcessEquipStatCast(hero, &heroModel, &Models.CastHeroCeiling)
-		Models.ApplyCastCeiling(&heroModel, &Models.CastHeroCeiling)
+		GameParser.ProcessEquipStatCast(hero, &heroModel, &equip.CastHeroCeiling)
+		Models.ApplyCastCeiling(&heroModel, &equip.CastHeroCeiling)
 	}
 
 	// Process Gem Stats (Bucket 3)
 	gemModel := Models.CastStatModel{}
-	gemCeiling := Models.CastGemCeiling
+	gemCeiling := equip.CastGemCeiling
 	if result.Gem1 > 0 {
 		GameParser.ProcessEquipStatCast(Models.EquipmentModel{EquipStats: gem1.GemStats}, &gemModel, &gemCeiling)
 	}
@@ -387,11 +388,11 @@ func collectAndFilterGems(payload ReconfigurePayload) []Models.Gem {
 
 	// 1. Gather ALL gems via pointers to avoid heavy copying initially
 	// From Inventory
-	for _, gem := range gs.GemsStorage {
+	for _, gem := range gs.Equipment.GemsStorage {
 		allGems = append(allGems, gem)
 	}
 	// From ALL Equipment (embedded) - user requested "mega list of all gems on players account"
-	for _, item := range gs.EquipmentStorage {
+	for _, item := range gs.Equipment.EquipmentStorage {
 		if item.GemSlot.Gem != nil {
 			allGems = append(allGems, *item.GemSlot.Gem)
 		}

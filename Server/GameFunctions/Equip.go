@@ -9,7 +9,7 @@ import (
 
 // EquipEquipment equips an item to a commander or castellan
 // equipmentMode: "Commander" or "Castellan"
-// targetIndex: The index of the commander (0-49) or castellan (0-7)
+// targetIndex: The index of the commander (0-49) or castellan (0-10)
 // slotNumber: The slot to equip to (1=Armor, 2=Weapon, 3=Helmet, 4=Artifact, 6=Hero)
 // equipmentId: The equipment ID to equip
 func EquipEquipment(equipmentMode string, targetIndex int, slotNumber int, equipmentId float64) bool {

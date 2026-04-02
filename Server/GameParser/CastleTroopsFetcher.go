@@ -1,11 +1,10 @@
 package GameParser
 
 import (
+	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ResponseRegistry"
-	"fmt"
 	"log"
-	"sort"
 	"sync"
 	"time"
 )
@@ -15,8 +14,12 @@ var (
 	isFetchingTroops bool
 )
 
-// FetchAllCastleTroopsAndConsumption requests troops for all player castles, stores them on the castle objects,
-// and recalculates resource consumption. Called after GCL/DCL parsing completes.
+// jaaTroopFetchWait is how long we wait for the game's jaa response after SendTroopFocus (JCA/JAA).
+// Must be long enough for a real round trip; the previous 25ms value effectively never received data.
+const jaaTroopFetchWait = 8 * time.Second
+
+// FetchAllCastleTroopsAndConsumption runs once after GCL/DCL: a single JAA/JCA for the main castle only.
+// Other castles are refreshed when the player focuses them (in-game JAA or frontend focusPlayerCastle).
 func FetchAllCastleTroopsAndConsumption() {
 	troopFetchMutex.Lock()
 	if isFetchingTroops {
@@ -33,74 +36,82 @@ func FetchAllCastleTroopsAndConsumption() {
 	}()
 
 	gs := Models.GetGameState()
+	refocusMainCastleAfterTroopFetch(gs)
+}
 
-	// Make a copy of the slice to sort it without affecting the original order in GameState
-	castles := make([]Models.PlayerCastleLocation, len(gs.Alliance.PlayerCastleLocations))
-	copy(castles, gs.Alliance.PlayerCastleLocations)
+// FocusPlayerCastleTroops sends one JAA/JCA for the castle, merges troops and buildings into GameState,
+// and the jaa handler updates CastleFocus and notifies the frontend.
+func FocusPlayerCastleTroops(kingdomID, castleID, x, y int) bool {
+	troops := FetchCastleTroops(kingdomID, castleID, x, y)
+	if troops == nil {
+		return false
+	}
+	gs := Models.GetGameState()
+	applyTroopFetchToCastle(gs, castleID, troops)
+	return true
+}
 
-	// Sort order: Main Castle (KingdomID 0, CastleID == gs.MainCastle.Aid) -> Outposts (KingdomID 0) -> Others by KingdomID
-	sort.SliceStable(castles, func(i, j int) bool {
-		c1, c2 := castles[i], castles[j]
-		if c1.KingdomID != c2.KingdomID {
-			return c1.KingdomID < c2.KingdomID
+func applyTroopFetchToCastle(gs *Models.GameState, castleID int, troops *Models.CastleTroops) {
+	if troops == nil {
+		return
+	}
+	castle := gs.GetCastleByID(castleID)
+	if castle != nil {
+		castle.Troops = Models.CastleTroopData{
+			KingdomID:   troops.KingdomID,
+			X:           troops.X,
+			Y:           troops.Y,
+			TroopsI:     troops.TroopsI,
+			TroopsTU:    troops.TroopsTU,
+			TroopsHI:    troops.TroopsHI,
+			TroopsSHI:   troops.TroopsSHI,
+			TroopsMixed: troops.TroopsMixed,
 		}
-		// If both are Kingdom 0, Main Castle comes first
-		if c1.KingdomID == 0 {
-			if float64(c1.CastleID) == gs.MainCastle.Aid {
-				return true
-			}
-			if float64(c2.CastleID) == gs.MainCastle.Aid {
-				return false
-			}
-		}
-		return c1.CastleID < c2.CastleID
-	})
+		Models.SetCastleBuildingRows(castle, troops.BGRows, troops.BDRows)
+	} else {
+		log.Printf("[TroopFetch ERROR] gs.GetCastleByID returned nil for CastleID=%d", castleID)
+		return
+	}
+	castleLocationName := RecalculateCastleConsumption(castleID)
+	if castleLocationName != "" && UpdateCastleResourceFunc != nil {
+		UpdateCastleResourceFunc(castleLocationName)
+	}
+}
 
-	for i, loc := range castles {
-		// Abort if disconnected
-		if !ResponseRegistry.LoginStatus {
-			break
-		}
+func refocusMainCastleAfterTroopFetch(gs *Models.GameState) {
+	if !ResponseRegistry.LoginStatus {
+		return
+	}
+	mainAID := int(gs.Castle.MainCastle.Aid)
+	if mainAID <= 0 {
+		return
+	}
+	kingdomID, mapX, mapY, ok := mainCastleMapCoords(gs, mainAID)
+	if !ok {
+		return
+	}
+	time.Sleep(25 * time.Millisecond)
+	if !ResponseRegistry.LoginStatus {
+		return
+	}
+	// FetchCastleTroops includes desert/ice KID retry; refreshes state and drives JAA focus for main.
+	troops := FetchCastleTroops(kingdomID, mainAID, mapX, mapY)
+	if troops != nil {
+		applyTroopFetchToCastle(gs, mainAID, troops)
+	}
+}
 
-		// Delay between requests to avoid overwhelming the server (skip delay for first)
-		if i > 0 {
-			time.Sleep(5 * time.Second)
-		}
-
-		// Check again after sleep just in case
-		if !ResponseRegistry.LoginStatus {
-			break
-		}
-
-		troops := sendTroopRequest(loc.KingdomID, loc.CastleID, loc.X, loc.Y)
-		if troops != nil {
-
-			castle := gs.GetCastleByID(loc.CastleID)
-			if castle != nil {
-				castle.Troops = Models.CastleTroopData{
-					KingdomID:   troops.KingdomID,
-					X:           troops.X,
-					Y:           troops.Y,
-					TroopsI:     troops.TroopsI,
-					TroopsTU:    troops.TroopsTU,
-					TroopsHI:    troops.TroopsHI,
-					TroopsSHI:   troops.TroopsSHI,
-					TroopsMixed: troops.TroopsMixed,
-				}
-				castle.Buildings = troops.Buildings
-			} else {
-				log.Printf("[TroopFetch ERROR] gs.GetCastleByID returned nil for CastleID=%d", loc.CastleID)
-			}
-
-			// Recalculate consumption and get the string id of the castle
-			castleLocationName := RecalculateCastleConsumption(loc.CastleID)
-
-			// Notify the frontend of the updated castle (resources + troops + consumption)
-			if castleLocationName != "" && UpdateCastleResourceFunc != nil {
-				UpdateCastleResourceFunc(castleLocationName)
-			}
+func mainCastleMapCoords(gs *Models.GameState, mainAID int) (kingdomID, x, y int, ok bool) {
+	for _, loc := range gs.Alliance.PlayerCastleLocations {
+		if loc.CastleID == mainAID {
+			return loc.KingdomID, loc.X, loc.Y, true
 		}
 	}
+	td := gs.Castle.MainCastle.Troops
+	if td.X == 0 && td.Y == 0 {
+		return 0, 0, 0, false
+	}
+	return td.KingdomID, td.X, td.Y, true
 }
 
 // UpdateCastleResourceFunc is a callback to tell the frontend to refresh castle data.
@@ -126,20 +137,11 @@ func FetchCastleTroops(kingdomID, castleID, x, y int) *Models.CastleTroops {
 
 // sendTroopRequest sends a single JAA/JCA request and returns the parsed result.
 func sendTroopRequest(kingdomID, castleID, x, y int) *Models.CastleTroops {
-	var payload string
-
-	if kingdomID == 0 || kingdomID == 4 || kingdomID == 10 {
-		payload = fmt.Sprintf(`%%xt%%EmpireEx_21%%jaa%%1%%{"PX":%d,"PY":%d,"KID":%d}%%`, x, y, kingdomID)
-	} else {
-		payload = fmt.Sprintf(`%%xt%%EmpireEx_21%%jca%%1%%{"CID":%d,"KID":%d}%%`, castleID, kingdomID)
-	}
-
 	// Create a waiter for the response
-	waiter := ResponseRegistry.Global.RegisterWaiter("jaa", 5*time.Second)
+	waiter := ResponseRegistry.Global.RegisterWaiter("jaa", jaaTroopFetchWait)
 	defer waiter.Cleanup()
 
-	// Send the command
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
+	GameCommands.SendTroopFocus(kingdomID, castleID, x, y)
 
 	// Wait for response with timeout
 	response, err := waiter.WaitWithTimeout()

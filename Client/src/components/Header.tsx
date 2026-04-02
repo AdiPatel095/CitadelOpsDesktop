@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import CastleFocusBadge from './CastleFocusBadge';
 interface HeaderProps {
   onOpenAutoBirdSettings: () => void;
 }
@@ -38,10 +39,10 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
   }, [autoBirdEnabled, nextWakeUp]);
 
   return (
-    <header className="h-16 bg-bg-card/80 backdrop-blur-md border-b border-border-base flex items-center px-6 fixed top-0 left-0 right-0 z-50 transition-colors duration-300">
-      <div className="flex items-center justify-between w-full">
+    <header className="h-16 bg-bg-card/80 backdrop-blur-md border-b border-border-base flex min-w-0 items-center px-6 fixed top-0 left-0 right-0 z-50 transition-colors duration-300">
+      <div className="flex min-w-0 w-full items-center justify-between gap-3">
         {/* Left: Logo, Title, Credits */}
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 shrink-0 items-center gap-4">
           {/* Theme-aware Logo */}
           <img
             src={theme === 'light' ? '/logo-light.svg' : '/logo-dark.svg'}
@@ -70,7 +71,8 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
         </div>
 
         {/* Center: Status Indicators */}
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-1 justify-center gap-3 overflow-x-auto px-1 sm:gap-4">
+          <CastleFocusBadge />
           {/* Memory Status */}
           <div className="rounded-global flex items-center gap-2 px-3 py-1.5 border border-purple-500/30 bg-purple-500/10 transition-all duration-300">
             <span className="text-[9px] font-bold text-purple-400/80 uppercase tracking-wider">APP RAM</span>
@@ -124,8 +126,8 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
           </div>
         </div>
 
-        {/* Right: Bot Controls */}
-        <div className="flex items-center gap-3">
+        {/* Right: bot controls (castle focus switcher lives in App global strip below header) */}
+        <div className="flex shrink-0 items-center gap-3">
           {/* Start/Stop Bot Button */}
           {!gameLoggedIn ? (
             <button

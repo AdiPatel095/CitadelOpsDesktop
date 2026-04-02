@@ -1,7 +1,7 @@
 package GameFunctions
 
 import (
-	"CitadelDesktop/Server/Models"
+	equip "CitadelDesktop/Server/Models/Equipment"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"fmt"
 	"log"
@@ -61,8 +61,8 @@ func UnequipEquipment(equipmentMode string, targetIndex int, slotNumber int, exp
 
 	if equipmentMode == "Commander" {
 		lidValue = GetCommanderID(targetIndex)
-		if targetIndex >= 0 && targetIndex < len(Models.CommStatArray) {
-			comm := Models.CommStatArray[targetIndex]
+		if targetIndex >= 0 && targetIndex < len(equip.CommStatArray) {
+			comm := equip.CommStatArray[targetIndex]
 			switch slotNumber {
 			case 1:
 				actualEquipmentId = comm.Equip1
@@ -150,8 +150,8 @@ func UnequipGem(equipmentMode string, targetIndex int, slotNumber int, expectedG
 
 	if equipmentMode == "Commander" {
 		lidValue = GetCommanderID(targetIndex)
-		if targetIndex >= 0 && targetIndex < len(Models.CommStatArray) {
-			comm := Models.CommStatArray[targetIndex]
+		if targetIndex >= 0 && targetIndex < len(equip.CommStatArray) {
+			comm := equip.CommStatArray[targetIndex]
 			switch slotNumber {
 			case 1:
 				actualEquipmentId = comm.Equip1

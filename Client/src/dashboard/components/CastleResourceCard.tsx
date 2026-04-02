@@ -19,7 +19,8 @@ import {
 } from '../models/PlayerCastleInfo';
 
 interface CastleResourceCardProps {
-    castleName: string;
+    /** Card heading (e.g. "Resources"). */
+    title: string;
     resources: CastleResourcesAmount;
     storage: CastleStorageMax;
     production: CastleProductionTotal;
@@ -43,11 +44,11 @@ const resourceKeys: (keyof CastleResourcesAmount)[] = [
     'glass_amount', 'iron_amount', 'honey_amount', 'mead_amount', 'beef_amount'
 ];
 
-const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ castleName, resources, storage, production }) => {
+const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resources, storage, production }) => {
 
     return (
         <div className="castle-card">
-            <h3 className="castle-name">{castleName}</h3>
+            <h3 className="castle-name">{title}</h3>
 
             <div className="resource-list-view">
                 {resourceKeys.map(key => {
@@ -85,21 +86,6 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ castleName, res
                         </div>
                     );
                 })}
-            </div>
-
-            <div className="queues-section">
-                <div className="queue">
-                    <h4>Recruitment Queue</h4>
-                    <div className="queue-items">
-                        {[...Array(5)].map((_, i) => <div key={i} className="queue-item-placeholder" />)}
-                    </div>
-                </div>
-                <div className="queue">
-                    <h4>Tool Queue</h4>
-                    <div className="queue-items">
-                        {[...Array(5)].map((_, i) => <div key={i} className="queue-item-placeholder" />)}
-                    </div>
-                </div>
             </div>
         </div>
     );

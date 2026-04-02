@@ -11,11 +11,10 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenRecruitTroopsSettings }) => {
-  const { beriWorldEnabled, toggleBeriWorld, recruitTroopsEnabled, toggleRecruitTroops } = useAuth();
+  const { recruitTroopsEnabled, toggleRecruitTroops } = useAuth();
 
   // Collapse state
   const [expandedSections, setExpandedSections] = useState({
-    events: true,
     gameFunctions: true,
     mainMenu: true,
     system: true
@@ -34,41 +33,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenRecr
   return (
     <aside className="w-64 bg-bg-card border-r border-border-base flex flex-col pt-20 pb-6 h-screen fixed left-0 top-0 z-40 transition-colors duration-300">
       <div className="flex-1 overflow-y-auto hidden-scrollbar">
-        {/* Event Controls Section */}
-        <div className="px-4 mb-4">
-          <div
-            className="flex items-center justify-between text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-3 cursor-pointer hover:text-text-main transition-colors"
-            onClick={() => toggleSection('events')}
-          >
-            <span>Event Controls</span>
-            {expandedSections.events ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          </div>
-          {expandedSections.events && (
-            <div className="px-2 space-y-2">
-              {/* Beri World Event Controls */}
-              <div className="flex gap-2">
-                <button
-                  onClick={toggleBeriWorld}
-                  className={`flex-1 px-3 py-2 rounded-global text-xs font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg active:scale-95 ${beriWorldEnabled
-                    ? 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/20'
-                    : 'bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/50 text-indigo-400'
-                    }`}
-                >
-                  <div className={`w-1.5 h-1.5 rounded-full ${beriWorldEnabled ? 'bg-white shadow-[0_0_8px] shadow-white/80' : 'bg-indigo-400'}`} />
-                  Beri World: {beriWorldEnabled ? 'ON' : 'OFF'}
-                </button>
-                <button
-                  onClick={() => console.log("Beri World Settings Triggered")}
-                  className="px-3 py-2 rounded-global bg-bg-card-hover border border-border-light text-text-muted hover:text-text-main hover:bg-bg-input transition-all active:scale-95 shadow-sm"
-                  title="Beri World Settings"
-                >
-                  <Settings className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Game Functions Section */}
         <div className="px-4 mb-4">
           <div

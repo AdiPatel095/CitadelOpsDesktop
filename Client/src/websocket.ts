@@ -243,6 +243,72 @@ class FrontendWebsocketService {
       payload: payload
     });
   }
+
+  public sendGetCastleFocus() {
+    this.sendMessage({ type: 'getCastleFocus' });
+  }
+
+  /** Ask server to send **spl** for the focused castle (refreshes barracks / production slots in GameState). */
+  public sendRequestSlotProduction(lid = 0) {
+    this.sendMessage({ type: 'requestSlotProduction', payload: { lid } });
+  }
+
+  /**
+   * Ask server to send JCA/JAA for the castle (GameCommands.SendTroopFocus).
+   * Pass kingdom + map coords from castleResourceUpdate / initial details (troops.kingdomID, troops.x, troops.y).
+   */
+  public sendFocusPlayerCastle(payload: {
+    castleId: number;
+    kingdomId: number;
+    mapX: number;
+    mapY: number;
+  }) {
+    this.sendMessage({
+      type: 'focusPlayerCastle',
+      payload: {
+        castleId: payload.castleId,
+        kingdomId: payload.kingdomId,
+        mapX: payload.mapX,
+        mapY: payload.mapY,
+      },
+    });
+  }
+
+  public sendGetDecorationPresets(castleId?: number) {
+    this.sendMessage({
+      type: 'getDecorationPresets',
+      payload: castleId != null && castleId > 0 ? { castleId } : {}
+    });
+  }
+
+  public sendSaveDecorationPreset(name: string, castleId?: number) {
+    this.sendMessage({
+      type: 'saveDecorationPreset',
+      payload: { name, ...(castleId != null && castleId > 0 ? { castleId } : {}) }
+    });
+  }
+
+  public sendDeleteDecorationPreset(castleId: number, presetId: string) {
+    this.sendMessage({
+      type: 'deleteDecorationPreset',
+      payload: { castleId, presetId }
+    });
+  }
+
+  public sendApplyDecorationPreset(castleId: number, presetId: string, kingdomId?: number) {
+    this.sendMessage({
+      type: 'applyDecorationPreset',
+      payload: {
+        castleId,
+        presetId,
+        ...(kingdomId != null ? { kingdomId } : {})
+      }
+    });
+  }
+
+  public sendCancelDecorationApply() {
+    this.sendMessage({ type: 'cancelDecorationApply' });
+  }
 }
 
 

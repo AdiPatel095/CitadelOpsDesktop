@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from './context/AuthContext.tsx';
+import { useCastleFocus } from './context/CastleFocusContext';
 import { Providers } from './Providers';
 
 import EquipmentView from './equipment/components/EquipmentView';
 import SupportPage from './views/SupportPage';
-import Dashboard from './dashboard/components/Dashboard';
-import UnitsDashboard from './dashboard/components/UnitsDashboard';
+import CastleView from './dashboard/components/CastleView';
 import CurrencyView from './currency/components/CurrencyView';
 import EventModulesView from './event-modules/components/EventModulesView';
 import Header from './components/Header';
+import CastleFocusSwitcher from './components/CastleFocusSwitcher';
 import Sidebar from './components/Sidebar';
 import RegistrationPending from './components/RegistrationPending';
 import InsufficientCreditsModal from './components/InsufficientCreditsModal';
@@ -18,12 +19,25 @@ import { Alerts } from './components/Alerts';
 import { AutoBirdSettingsModal } from './settings/components/AutoBirdSettingsModal';
 import { RecruitTroopsSettingsModal } from './settings/components/RecruitTroopsSettingsModal';
 import SettingsView from './views/SettingsView';
-
-
 import { type ViewId } from './config/navigation';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading, hardwareID, versionUpdate, isVersionBannerDismissed, dismissVersionBanner, startGame, storedUsername, storedServer } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading,
+    hardwareID,
+    versionUpdate,
+    isVersionBannerDismissed,
+    dismissVersionBanner,
+    startGame,
+    storedUsername,
+    storedServer,
+    gameLoggedIn,
+  } = useAuth();
+  const { castleFocus } = useCastleFocus();
+
+  const showCastleFocusBar =
+    gameLoggedIn && Array.isArray(castleFocus?.playerCastles) && castleFocus.playerCastles.length > 0;
   const [activeView, setActiveView] = useState<ViewId>('equipment');
 
   // Modal states
@@ -52,10 +66,8 @@ const AppContent: React.FC = () => {
 
   const renderView = () => {
     switch (activeView) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'units':
-        return <UnitsDashboard />;
+      case 'castle':
+        return <CastleView />;
       case 'equipment':
         return <EquipmentView />;
       case 'event-modules':
@@ -75,13 +87,28 @@ const AppContent: React.FC = () => {
     <div className="min-h-screen bg-bg-app text-text-main font-sans selection:bg-primary/30 flex flex-col transition-colors duration-300">
       <Header onOpenAutoBirdSettings={() => setIsAutoBirdSettingsOpen(true)} />
 
+      {showCastleFocusBar && (
+        <div
+          className="fixed top-16 left-64 right-0 z-[45] flex items-center justify-end gap-3 border-b border-border-base bg-bg-app/95 px-6 py-2 backdrop-blur-md transition-colors duration-300"
+          role="region"
+          aria-label="Castle focus"
+        >
+          <span className="hidden text-[10px] font-bold uppercase tracking-wider text-text-muted sm:inline">
+            Focus castle
+          </span>
+          <CastleFocusSwitcher />
+        </div>
+      )}
+
       <Sidebar
         currentView={activeView}
         onViewChange={setActiveView}
         onOpenRecruitTroopsSettings={() => setIsRecruitTroopsSettingsOpen(true)}
       />
 
-      <main className="ml-64 h-screen overflow-y-auto transition-all duration-300 pt-16 relative">
+      <main
+        className={`relative ml-64 h-screen overflow-y-auto transition-all duration-300 ${showCastleFocusBar ? 'pt-[6.75rem]' : 'pt-16'}`}
+      >
         <div className="p-6 max-w-[1600px] mx-auto animate-fade-in relative z-10">
           {renderView()}
         </div>

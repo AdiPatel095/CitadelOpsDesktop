@@ -1,9 +1,12 @@
 package FrontendWebsocket
 
 import (
+	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/GameFunctions"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Models"
+	dec "CitadelDesktop/Server/Models/Decoration"
+	equip "CitadelDesktop/Server/Models/Equipment"
 	"CitadelDesktop/Server/ReconfigureLoadout"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"CitadelDesktop/Server/Scheduler"
@@ -27,6 +30,9 @@ func init() {
 		SendCastleResource(castleLocation)
 	}
 	ResponseRegistry.SendRecruitTroopsStatusFunc = SendRecruitTroopsStatus
+	GameParser.NotifyCastleFocusChanged = func() {
+		SendFrontendMessage("castleFocus", Models.CastleFocusMessagePayload(), "")
+	}
 }
 
 func ParseFrontendMessage(message []byte) {
@@ -55,7 +61,20 @@ func ParseFrontendMessage(message []byte) {
 	case "getGlobalResources":
 		SendGlobalResourceUpdate()
 	case "getCastleResourceUpdate":
-		castleLocation := data["castleLocation"].(string)
+		castleLocation := ""
+		if s, ok := data["castleLocation"].(string); ok && s != "" {
+			castleLocation = s
+		} else if v, ok := data["castleId"].(float64); ok && int(v) > 0 {
+			castleLocation = GameParser.GetCastleLocationName(int(v))
+		} else if payload, ok := data["payload"].(map[string]interface{}); ok {
+			if v, ok := payload["castleId"].(float64); ok && int(v) > 0 {
+				castleLocation = GameParser.GetCastleLocationName(int(v))
+			}
+		}
+		if castleLocation == "" {
+			log.Printf("[getCastleResourceUpdate] unknown castle (need castleLocation or castleId)")
+			return
+		}
 		SendCastleResource(castleLocation)
 	case "sellNonRelicEquipment":
 		log.Println("Received request to sell non-relic equipment")
@@ -130,10 +149,6 @@ func ParseFrontendMessage(message []byte) {
 		Models.GetSettingsState().BotEnabled = false
 		Scheduler.GetScheduler().Stop()
 		ResponseRegistry.DisconnectGameWebSocket()
-	case "startBeriWorld":
-		GameFunctions.StartBeriWorld()
-	case "stopBeriWorld":
-		GameFunctions.StopBeriWorld()
 	case "fetchAllianceInfo":
 		GameFunctions.FetchAllianceInfo()
 	case "toggleAutoBird":
@@ -246,10 +261,10 @@ func ParseFrontendMessage(message []byte) {
 			// We might need to change ParseFrontendMessage signature or use a broadcast for now.
 			// The request is likely from the single Connected desktop client, so broadcast is fine.
 
-			for i, comm := range Models.CommStatArray {
+			for i, comm := range equip.CommStatArray {
 				SendFrontendMessage("commStatUpdate", comm, strconv.Itoa(i))
 			}
-			for i := 0; i < 8; i++ {
+			for i := 0; i < Models.NumPlayerCastleSlots; i++ {
 				SendCastStat(i)
 			}
 
@@ -263,6 +278,9 @@ func ParseFrontendMessage(message []byte) {
 			SendCastleResource("desertCastle")
 			SendCastleResource("dungeonCastle")
 			SendCastleResource("stormCastle")
+			SendCastleResource("beriWorldCastle")
+			SendCastleResource("metropolisCastle")
+			SendCastleResource("capitalCastle")
 		}
 	case "refreshSingleCommander":
 		{
@@ -278,9 +296,9 @@ func ParseFrontendMessage(message []byte) {
 
 			if equipmentMode == "Commander" {
 				idx := int(targetIndex)
-				if idx >= 0 && idx < len(Models.CommStatArray) {
+				if idx >= 0 && idx < len(equip.CommStatArray) {
 					log.Printf("Refreshing single commander at index %d", idx)
-					SendFrontendMessage("commStatUpdate", Models.CommStatArray[idx], strconv.Itoa(idx))
+					SendFrontendMessage("commStatUpdate", equip.CommStatArray[idx], strconv.Itoa(idx))
 				}
 			} else if equipmentMode == "Castellan" {
 				// TODO: implement castellan single refresh
@@ -307,8 +325,8 @@ func ParseFrontendMessage(message []byte) {
 				// Get current loadout from the target index
 				targetIndex := msg.Payload.TargetIndex
 				var currentLoadout Models.CommStatModel
-				if targetIndex >= 0 && targetIndex < len(Models.CommStatArray) {
-					currentLoadout = Models.CommStatArray[targetIndex]
+				if targetIndex >= 0 && targetIndex < len(equip.CommStatArray) {
+					currentLoadout = equip.CommStatArray[targetIndex]
 				}
 
 				// Calculate the optimized loadout
@@ -416,7 +434,7 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			if len(targetGemMap) > 0 {
-				for _, eq := range Models.GetGameState().EquipmentStorage {
+				for _, eq := range Models.GetGameState().Equipment.EquipmentStorage {
 					if eq.GemSlot.Gem != nil {
 						gemID := eq.GemSlot.Gem.ID
 						if targetGemMap[gemID] {
@@ -665,14 +683,18 @@ func ParseFrontendMessage(message []byte) {
 			}
 		}
 
-		addCastle(gs.MainCastle.Aid, gs.MainCastle.Name, "Main")
-		addCastle(gs.Outpost1.Aid, gs.Outpost1.Name, "Outpost")
-		addCastle(gs.Outpost2.Aid, gs.Outpost2.Name, "Outpost")
-		addCastle(gs.Outpost3.Aid, gs.Outpost3.Name, "Outpost")
-		addCastle(gs.IceCastle.Aid, gs.IceCastle.Name, "Ice")
-		addCastle(gs.DesertCastle.Aid, gs.DesertCastle.Name, "Desert")
-		addCastle(gs.DungeonCastle.Aid, gs.DungeonCastle.Name, "Dungeon")
-		addCastle(gs.StormCastle.Aid, gs.StormCastle.Name, "Storm")
+		c := &gs.Castle
+		addCastle(c.MainCastle.Aid, c.MainCastle.Name, "Main")
+		addCastle(c.Outpost1.Aid, c.Outpost1.Name, "Outpost")
+		addCastle(c.Outpost2.Aid, c.Outpost2.Name, "Outpost")
+		addCastle(c.Outpost3.Aid, c.Outpost3.Name, "Outpost")
+		addCastle(c.IceCastle.Aid, c.IceCastle.Name, "Ice")
+		addCastle(c.DesertCastle.Aid, c.DesertCastle.Name, "Desert")
+		addCastle(c.DungeonCastle.Aid, c.DungeonCastle.Name, "Dungeon")
+		addCastle(c.StormCastle.Aid, c.StormCastle.Name, "Storm")
+		addCastle(c.BeriWorldCastle.Aid, c.BeriWorldCastle.Name, "BeriWorld")
+		addCastle(c.Metropolis.Aid, c.Metropolis.Name, "Metropolis")
+		addCastle(c.Capital.Aid, c.Capital.Name, "Capital")
 
 		SendFrontendMessage("castleList", castles, "")
 
@@ -834,5 +856,199 @@ func ParseFrontendMessage(message []byte) {
 		// Echo back confirmed settings
 		SendFrontendMessage("schedulerSettings", state, "")
 		SendAlertMessage("green", "Scheduler Settings saved")
+
+	case "getCastleFocus":
+		SendFrontendMessage("castleFocus", Models.CastleFocusMessagePayload(), "")
+		GameCommands.SendSPLRefreshDefaultProductionLIDs()
+
+	case "requestSlotProduction":
+		lid := 0
+		if payload, ok := data["payload"].(map[string]interface{}); ok {
+			if v, ok := payload["lid"].(float64); ok {
+				lid = int(v)
+			}
+		}
+		GameCommands.SendSPL(lid)
+
+	case "focusPlayerCastle":
+		payload, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		castleID := 0
+		if v, ok := payload["castleId"].(float64); ok {
+			castleID = int(v)
+		}
+		if castleID <= 0 {
+			SendAlertMessage("red", "focusPlayerCastle: castleId required.")
+			return
+		}
+		gs := Models.GetGameState()
+		if !gs.IsKnownPlayerCastleID(castleID) {
+			SendAlertMessage("red", "That castle is not in your account.")
+			return
+		}
+		kingdomID := 0
+		if v, ok := payload["kingdomId"].(float64); ok {
+			kingdomID = int(v)
+		}
+		mapX, mapY := 0, 0
+		if v, ok := payload["mapX"].(float64); ok {
+			mapX = int(v)
+		}
+		if v, ok := payload["mapY"].(float64); ok {
+			mapY = int(v)
+		}
+		// Same rule as GameCommands.SendTroopFocus: JAA uses map PX/PY for KID 0, 4, 10; other kingdoms use JCA.
+		needsMapCoords := kingdomID == 0 || kingdomID == 4 || kingdomID == 10
+		if needsMapCoords && mapX == 0 && mapY == 0 {
+			var okCoords bool
+			mapX, mapY, okCoords = gs.ResolveCastleMapCoords(castleID, kingdomID)
+			if !okCoords || (mapX == 0 && mapY == 0) {
+				for i := range gs.Alliance.PlayerCastleLocations {
+					L := &gs.Alliance.PlayerCastleLocations[i]
+					if L.CastleID != castleID {
+						continue
+					}
+					if kingdomID != 0 && L.KingdomID != kingdomID {
+						continue
+					}
+					if L.X != 0 || L.Y != 0 {
+						mapX, mapY, okCoords = L.X, L.Y, true
+						if kingdomID == 0 {
+							kingdomID = L.KingdomID
+						}
+						break
+					}
+				}
+			}
+			if !okCoords || (mapX == 0 && mapY == 0) {
+				for i := range gs.Alliance.PlayerCastleLocations {
+					L := &gs.Alliance.PlayerCastleLocations[i]
+					if L.CastleID == castleID && (L.X != 0 || L.Y != 0) {
+						mapX, mapY, okCoords = L.X, L.Y, true
+						if kingdomID == 0 {
+							kingdomID = L.KingdomID
+						}
+						break
+					}
+				}
+			}
+			if !okCoords || (mapX == 0 && mapY == 0) {
+				SendAlertMessage("red", "Could not resolve map coordinates for that castle.")
+				return
+			}
+		}
+		if !GameParser.FocusPlayerCastleTroops(kingdomID, castleID, mapX, mapY) {
+			SendAlertMessage("red", "Focus timed out — ensure the game client is connected.")
+			return
+		}
+		SendFrontendMessage("castleFocus", Models.CastleFocusMessagePayload(), "")
+		SendAlertMessage("green", "Switched castle focus.")
+		go func() {
+			time.Sleep(280 * time.Millisecond)
+			GameCommands.SendSPLRefreshDefaultProductionLIDs()
+		}()
+
+	case "getDecorationPresets":
+		payload, _ := data["payload"].(map[string]interface{})
+		cid := 0
+		if payload != nil {
+			if v, ok := payload["castleId"].(float64); ok {
+				cid = int(v)
+			}
+		}
+		if cid <= 0 {
+			cid = Models.GetGameState().CastleFocus.CastleAID
+		}
+		if cid <= 0 {
+			SendFrontendMessage("decorationPresets", []dec.NamedPreset{}, strconv.Itoa(cid))
+			return
+		}
+		SendFrontendMessage("decorationPresets", dec.ListPresetsForCastle(cid), strconv.Itoa(cid))
+
+	case "saveDecorationPreset":
+		payload, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		name, _ := payload["name"].(string)
+		castleID := int(0)
+		if v, ok := payload["castleId"].(float64); ok {
+			castleID = int(v)
+		}
+		if castleID <= 0 {
+			castleID = Models.GetGameState().CastleFocus.CastleAID
+		}
+		f := Models.GetGameState().CastleFocus
+		if castleID <= 0 || castleID != f.CastleAID {
+			SendAlertMessage("red", "Decoration preset: focus the target castle in-game first (castle id mismatch).")
+			return
+		}
+		c := Models.GetGameState().GetCastleByID(castleID)
+		if c == nil {
+			SendAlertMessage("red", "Decoration preset: castle not in GameState.")
+			return
+		}
+		items := GameFunctions.BuildPresetPlacementsFromCastle(c)
+		saved, err := dec.SavePresetForCastle(castleID, name, items)
+		if err != nil {
+			SendAlertMessage("red", fmt.Sprintf("Save preset failed: %v", err))
+			return
+		}
+		SendFrontendMessage("decorationPresets", dec.ListPresetsForCastle(castleID), strconv.Itoa(castleID))
+		SendAlertMessage("green", fmt.Sprintf("Saved decoration preset %q (%d items)", saved.Name, len(saved.Items)))
+
+	case "deleteDecorationPreset":
+		payload, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		castleID := int(0)
+		if v, ok := payload["castleId"].(float64); ok {
+			castleID = int(v)
+		}
+		presetID, _ := payload["presetId"].(string)
+		if castleID <= 0 || presetID == "" {
+			return
+		}
+		if err := dec.DeletePreset(castleID, presetID); err != nil {
+			SendAlertMessage("red", fmt.Sprintf("Delete preset failed: %v", err))
+			return
+		}
+		SendFrontendMessage("decorationPresets", dec.ListPresetsForCastle(castleID), strconv.Itoa(castleID))
+
+	case "applyDecorationPreset":
+		payload, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		castleID := int(0)
+		if v, ok := payload["castleId"].(float64); ok {
+			castleID = int(v)
+		}
+		kingdomID := Models.GetGameState().CastleFocus.KingdomID
+		if v, ok := payload["kingdomId"].(float64); ok {
+			kingdomID = int(v)
+		}
+		presetID, _ := payload["presetId"].(string)
+		if castleID <= 0 || presetID == "" {
+			SendAlertMessage("red", "applyDecorationPreset: castleId and presetId required.")
+			return
+		}
+		gs := Models.GetGameState()
+		mapX, mapY, okCoords := gs.ResolveCastleMapCoords(castleID, kingdomID)
+		if !okCoords {
+			SendAlertMessage("red", "Decoration apply: could not resolve map coordinates for castle.")
+			return
+		}
+		GameFunctions.StartDecorationPresetApply(castleID, kingdomID, mapX, mapY, presetID, func(msg string) {
+			SendFrontendMessage("decorationPlacerProgress", map[string]interface{}{"message": msg}, "")
+		})
+		SendAlertMessage("green", "Decoration preset apply started (watch progress in UI).")
+
+	case "cancelDecorationApply":
+		GameFunctions.CancelDecorationApply()
+		SendAlertMessage("yellow", "Decoration apply cancel requested.")
 	}
 }

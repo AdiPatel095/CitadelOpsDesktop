@@ -1,6 +1,7 @@
 package ResponseRegistry
 
 import (
+	"CitadelDesktop/Server/ChromeUserData"
 	"CitadelDesktop/Server/License"
 	"CitadelDesktop/Server/Models"
 	"context"
@@ -295,6 +296,11 @@ func StartGameBrowser(dashboardURL string) {
 		return
 	}
 
+	appChromeDir, err := ChromeUserData.AppUserDataDir()
+	if err != nil {
+		log.Printf("Chrome: could not create app profile directory: %v — falling back to chromedp temporary profile", err)
+	}
+
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.Flag("headless", false),
 		chromedp.Flag("remote-debugging-port", "9222"),
@@ -302,6 +308,19 @@ func StartGameBrowser(dashboardURL string) {
 		chromedp.Flag("disable-site-isolation-trials", true),
 		chromedp.Flag("disable-features", "IsolateOrigins,site-per-process"),
 	)
+
+	if err == nil && appChromeDir != "" {
+		for _, lockName := range []string{"SingletonLock", "SingletonSocket", "SingletonCookie"} {
+			_ = os.Remove(filepath.Join(appChromeDir, lockName))
+		}
+		opts = append(opts,
+			chromedp.UserDataDir(appChromeDir),
+			chromedp.Flag("disable-extensions", false),
+			chromedp.Flag("disable-sync", false),
+			chromedp.Flag("use-mock-keychain", false),
+		)
+		log.Printf("Chrome: dedicated app profile at %s", appChromeDir)
+	}
 
 	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), opts...)
 

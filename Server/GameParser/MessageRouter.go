@@ -1,6 +1,7 @@
 package GameParser
 
 import (
+	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"encoding/json"
 )
@@ -45,4 +46,41 @@ func MessageRouter(messageParts []string) {
 	if messageType == "gaa" {
 		ParseGAAMessage(messageParts[5])
 	}
+	// jaa: update CastleFocus + parse gca.BG / gca.BD via BuildingParser (ParseBGFromJAAResponseJSON, ParseBDFromJAAResponseJSON) in JaaCastleFocus.ApplyJAABuildingRowsFromPayload.
+	if messageType == "jaa" && len(messageParts) > 5 {
+		data := messageParts[5]
+		gs := Models.GetGameState()
+		focusChanged := ApplyCastleFocusFromJAAPayload(gs, data)
+		buildingsChanged := ApplyJAABuildingRowsFromPayload(gs, data)
+		if focusChanged || buildingsChanged {
+			if NotifyCastleFocusChanged != nil {
+				NotifyCastleFocusChanged()
+			}
+		}
+	}
+
+	// spl / bup: barracks-style production queue (PS active, QS[].P queued); bup nests the same under "spl".
+	if (messageType == "spl" || messageType == "bup") && len(messageParts) > 5 {
+		gs := Models.GetGameState()
+		if ApplySlotProductionFromSPLJSON(gs, messageParts[5]) {
+			if NotifyCastleFocusChanged != nil {
+				NotifyCastleFocusChanged()
+			}
+		}
+	}
+
+	// crin / crst: sovereign crafting — PS/QS use CRID (or RUT when CRID empty); CAI may be object {CBI} or array; optional **crai** wrapper (same as jaa).
+	if (messageType == "crin" || messageType == "crst") && len(messageParts) > 5 {
+		gs := Models.GetGameState()
+		changed := false
+		if messageType == "crin" {
+			changed = ApplyCraftingFromCRINJSON(gs, messageParts[5])
+		} else {
+			changed = ApplyCraftingFromCRSTJSON(gs, messageParts[5])
+		}
+		if changed && NotifyCastleFocusChanged != nil {
+			NotifyCastleFocusChanged()
+		}
+	}
+
 }
