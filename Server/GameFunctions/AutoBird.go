@@ -3,6 +3,7 @@ package GameFunctions
 import (
 	"CitadelDesktop/Server/Channels"
 	"CitadelDesktop/Server/GameParser"
+	"CitadelDesktop/Server/GameWebsocket"
 	"CitadelDesktop/Server/License"
 	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ResponseRegistry"
@@ -66,8 +67,8 @@ func StopAutoBird() {
 		autoBirdNextWakeUp = 0
 		// Clear bird ignore list from memory
 		Models.GetSettingsState().ClearBirdIgnoreList()
-		if ResponseRegistry.SendAutoBirdStatusFunc != nil {
-			go ResponseRegistry.SendAutoBirdStatusFunc(false, 0)
+		if GameWebsocket.SendAutoBirdStatusFunc != nil {
+			go GameWebsocket.SendAutoBirdStatusFunc(false, 0)
 		}
 	}
 }
@@ -89,9 +90,9 @@ func runAutoBird(ctx context.Context) {
 		// ---------------------------------------------------------
 		// STEP 1: Login and Prepare
 		// ---------------------------------------------------------
-		if !ResponseRegistry.LoginStatus {
+		if !GameWebsocket.LoginStatus {
 			log.Println("[AutoBird] Disconnected. Reloading game tab to reconnect...")
-			ResponseRegistry.ReloadGameTab()
+			GameWebsocket.ReloadGameTab()
 			// Wait for login to complete after reload
 		LoginWaitLoop:
 			for {
@@ -99,7 +100,7 @@ func runAutoBird(ctx context.Context) {
 				case <-ctx.Done():
 					return
 				case <-time.After(5 * time.Second):
-					if ResponseRegistry.LoginStatus {
+					if GameWebsocket.LoginStatus {
 						break LoginWaitLoop
 					}
 				}
@@ -142,8 +143,8 @@ func runAutoBird(ctx context.Context) {
 			autoBirdNextWakeUp = wakeUpTime
 			autoBirdMu.Unlock()
 
-			if ResponseRegistry.SendAutoBirdStatusFunc != nil {
-				go ResponseRegistry.SendAutoBirdStatusFunc(true, wakeUpTime)
+			if GameWebsocket.SendAutoBirdStatusFunc != nil {
+				go GameWebsocket.SendAutoBirdStatusFunc(true, wakeUpTime)
 			}
 
 			log.Printf("[AutoBird] Reconciliation sleep request. Sleeping for %v", reconcileDuration)
@@ -155,8 +156,8 @@ func runAutoBird(ctx context.Context) {
 				autoBirdMu.Lock()
 				autoBirdNextWakeUp = 0
 				autoBirdMu.Unlock()
-				if ResponseRegistry.SendAutoBirdStatusFunc != nil {
-					go ResponseRegistry.SendAutoBirdStatusFunc(true, 0)
+				if GameWebsocket.SendAutoBirdStatusFunc != nil {
+					go GameWebsocket.SendAutoBirdStatusFunc(true, 0)
 				}
 				continue
 			}
@@ -496,12 +497,12 @@ func runAutoBird(ctx context.Context) {
 		}
 
 		// Notify frontend of sleep and store for persistence
-		if ResponseRegistry.SendAutoBirdStatusFunc != nil {
+		if GameWebsocket.SendAutoBirdStatusFunc != nil {
 			wakeUpTime := time.Now().Add(sleepDuration).UnixMilli()
 			autoBirdMu.Lock()
 			autoBirdNextWakeUp = wakeUpTime
 			autoBirdMu.Unlock()
-			go ResponseRegistry.SendAutoBirdStatusFunc(true, wakeUpTime)
+			go GameWebsocket.SendAutoBirdStatusFunc(true, wakeUpTime)
 		}
 
 		select {
@@ -511,8 +512,8 @@ func runAutoBird(ctx context.Context) {
 			autoBirdMu.Lock()
 			autoBirdNextWakeUp = 0
 			autoBirdMu.Unlock()
-			if ResponseRegistry.SendAutoBirdStatusFunc != nil {
-				go ResponseRegistry.SendAutoBirdStatusFunc(true, 0)
+			if GameWebsocket.SendAutoBirdStatusFunc != nil {
+				go GameWebsocket.SendAutoBirdStatusFunc(true, 0)
 			}
 		}
 	}
