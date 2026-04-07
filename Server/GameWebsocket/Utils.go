@@ -72,12 +72,3 @@ func getAidFromIndex(index int) float64 {
 	}
 }
 
-// FetchAllianceInfo sends the AIN command to fetch full alliance info using the stored AID
-func FetchAllianceInfo() {
-	aid := Models.GetGameState().Alliance.AID
-	if aid == 0 {
-		return
-	}
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%ain%%1%%{"AID":%d}%%`, aid)
-	Channels.OutgoingMessages <- []byte(payload)
-}
