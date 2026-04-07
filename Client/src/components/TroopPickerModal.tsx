@@ -148,8 +148,8 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                 setColumns(1);
             } else {
                 setViewMode('grid');
-                // Match Tailwind breakpoints: 4 cols default, 6@500, 8@768+
-                if (width >= 1024) setColumns(8);
+                if (width >= 1280) setColumns(10);
+                else if (width >= 1024) setColumns(8);
                 else if (width >= 768) setColumns(8);
                 else if (width >= 500) setColumns(6);
                 else setColumns(4);
@@ -182,7 +182,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
     const rowVirtualizer = useVirtualizer({
         count: rows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => viewMode === 'list' ? 48 : 140,
+        estimateSize: () => viewMode === 'list' ? 48 : 150,
         overscan: 3,
         measureElement: (el) => el?.getBoundingClientRect().height ?? (viewMode === 'list' ? 48 : 140),
     });
@@ -296,7 +296,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                 })
                             ) : (
                                 // GRID MODE: existing card grid, unchanged
-                                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+                                <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
                                     {row.map(([idStr, name]) => {
                                         const unitId = parseInt(idStr);
                                         const isSelected = selectedIds.has(unitId);
@@ -339,13 +339,13 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                                 </div>
 
                                                 {/* Unit Image - edge to edge */}
-                                                <div className="w-full h-[88px] flex items-center justify-center">
+                                                <div className="w-full h-[90px] flex items-center justify-center pt-2">
                                                     <UnitImage unitId={unitId} size={80} showLevel={true} />
                                                 </div>
 
                                                 {/* Bottom area: Name or Quantity Input */}
                                                 {allowQuantity && isSelected ? (
-                                                    <div className="px-2 pb-2 pt-1 w-full">
+                                                    <div className="px-2 pt-1 pb-2 w-full">
                                                         <input
                                                             type="text"
                                                             value={quantities[unitId] ? quantities[unitId].toLocaleString() : ''}
@@ -359,7 +359,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                                         />
                                                     </div>
                                                 ) : (
-                                                    <span className="px-2 pb-2 pt-1 text-xs font-medium text-text-main text-center line-clamp-2 w-full">
+                                                    <span className="px-2 pt-1 pb-2 text-xs font-medium text-text-main text-center line-clamp-2 w-full">
                                                         {name}
                                                     </span>
                                                 )}
