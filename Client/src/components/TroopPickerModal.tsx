@@ -310,7 +310,8 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
 
     // Filter state
     const [searchQuery, setSearchQuery] = useState('');
-    const [quickAccessTab, setQuickAccessTab] = useState<QuickAccessTab>('frequent');
+    const initialTab = getTopFrequent(50).length > 0 ? 'frequent' : 'all';
+    const [quickAccessTab, setQuickAccessTab] = useState<QuickAccessTab>(initialTab);
     const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
     const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
     const [foodFilter, setFoodFilter] = useState<FoodFilter>('all');
@@ -324,10 +325,6 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
         setFavoritesState(getFavorites());
         setFrequentIds(getTopFrequent(50));
     }, [isOpen]);
-
-    useEffect(() => {
-        if (frequentIds.length === 0) setQuickAccessTab('all');
-    }, [frequentIds]);
 
     // Get definitions and metadata for troops
     const definitions = TROOP_DEFINITIONS;
