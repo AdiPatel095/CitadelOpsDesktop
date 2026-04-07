@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+// OnGAMParsed is a callback hook that fires after GAM messages are parsed
+// Set this from main.go or initialization code to wire in bird cleanup logic
+var OnGAMParsed func()
+
 // ParseGAMMessage parses the GAM (Global Army Movement) message
 // GAM message contains all active movements for the player and alliance
 // We store ALL movements since troop composition matching is unique
@@ -177,6 +181,11 @@ func ParseGAMMessage(data string) {
 
 	// Append new movements to the existing list (allows multiple GAM messages to be accumulated)
 	gs.Movement.ActiveMovements = append(gs.Movement.ActiveMovements, parsedMovements...)
+
+	// Trigger callback to auto-clean returned birds in real-time
+	if OnGAMParsed != nil {
+		go OnGAMParsed()
+	}
 }
 
 // Helper to safely get int from map

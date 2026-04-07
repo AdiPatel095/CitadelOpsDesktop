@@ -926,6 +926,47 @@ func troopsMatch(sent [][]int, gam [][]int) bool {
 	return true
 }
 
+// CleanupReturnedBirds removes expired birds that no longer appear in live GAM data
+// This is called asynchronously after GAM messages are parsed to auto-clean returned birds
+func CleanupReturnedBirds() {
+	savedBirds := Models.LoadSentBirds()
+	if savedBirds == nil || len(savedBirds.Birds) == 0 {
+		return
+	}
+	gs := Models.GetGameState()
+	movements := gs.Movement.ActiveMovements
+	now := time.Now()
+
+	var keepBirds []Models.SentBird
+	changed := false
+	for _, bird := range savedBirds.Birds {
+		if now.Before(bird.ExpectedExpiry) {
+			// Unexpired — never remove
+			keepBirds = append(keepBirds, bird)
+			continue
+		}
+		// Expired — check if still in movements
+		stillFlying := false
+		for _, movement := range movements {
+			if troopsMatch(bird.TroopComposition, movement.TroopArray) {
+				stillFlying = true
+				break
+			}
+		}
+		if stillFlying {
+			keepBirds = append(keepBirds, bird)
+		} else {
+			log.Printf("[AutoBird] CleanupReturnedBirds: removing expired+returned bird for castle %s", getCastleName(bird.CastleID))
+			changed = true
+		}
+	}
+
+	if changed {
+		savedBirds.Birds = keepBirds
+		Models.SaveSentBirds(savedBirds.PlayerID, keepBirds)
+	}
+}
+
 // FetchMovements sends the GAM command to get all active movements
 func FetchMovements() {
 	// Cmd: %xt%EmpireEx_21%gam%1%{}%
