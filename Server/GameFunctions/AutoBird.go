@@ -1,6 +1,7 @@
 package GameFunctions
 
 import (
+	"CitadelDesktop/Server/Channels"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/License"
 	"CitadelDesktop/Server/Models"
@@ -337,7 +338,7 @@ func runAutoBird(ctx context.Context) {
 				// Send SDI (Bird Intent) for this batch
 				sdiPayload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sdi%%1%%{"TX":%d,"TY":%d,"SX":%d,"SY":%d}%%`,
 					target.X, target.Y, castleLoc.X, castleLoc.Y)
-				ResponseRegistry.OutgoingMessages <- []byte(sdiPayload)
+				Channels.OutgoingMessages <- []byte(sdiPayload)
 
 				time.Sleep(1 * time.Second)
 
@@ -366,7 +367,7 @@ func runAutoBird(ctx context.Context) {
 						castleLoc.CastleID, targetX, targetY, randomDelay, hbwValue, pttValue, string(troopsJSON))
 
 					waiter := ResponseRegistry.Global.RegisterWaiter("cds", 15*time.Second)
-					ResponseRegistry.OutgoingMessages <- []byte(cdsPayload)
+					Channels.OutgoingMessages <- []byte(cdsPayload)
 
 					response, err := waiter.WaitWithTimeout()
 					waiter.Cleanup()
@@ -386,7 +387,7 @@ func runAutoBird(ctx context.Context) {
 					if newTarget != nil {
 						sdiPayload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sdi%%1%%{"TX":%d,"TY":%d,"SX":%d,"SY":%d}%%`,
 							newTarget.X, newTarget.Y, castleLoc.X, castleLoc.Y)
-						ResponseRegistry.OutgoingMessages <- []byte(sdiPayload)
+						Channels.OutgoingMessages <- []byte(sdiPayload)
 						time.Sleep(1 * time.Second)
 						target = newTarget // Update for persistence
 						response, err = sendCDS(newTarget.X, newTarget.Y)
@@ -741,6 +742,6 @@ func troopsMatch(sent [][]int, gam [][]int) bool {
 func FetchMovements() {
 	// Cmd: %xt%EmpireEx_21%gam%1%{}%
 	cmd := `%xt%EmpireEx_21%gam%1%{}%`
-	ResponseRegistry.OutgoingMessages <- []byte(cmd)
+	Channels.OutgoingMessages <- []byte(cmd)
 	log.Println("[AutoBird] Sent GAM request to fetch movements")
 }
