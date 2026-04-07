@@ -310,7 +310,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                                 tabIndex={0}
                                                 className={`
                                                     relative flex flex-col items-center rounded-xl transition-all duration-200
-                                                    border-2 hover:scale-105 overflow-hidden cursor-pointer w-full
+                                                    border-2 hover:scale-105 overflow-hidden cursor-pointer w-full py-2
                                                     ${isSelected
                                                         ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
                                                         : 'border-border-base bg-bg-card hover:border-primary/50 hover:bg-bg-card-hover'
@@ -339,7 +339,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                                 </div>
 
                                                 {/* Unit Image - edge to edge */}
-                                                <div className="w-full h-[90px] flex items-center justify-center pt-2">
+                                                <div className="w-full h-[90px] flex items-center justify-center">
                                                     <UnitImage unitId={unitId} size={80} showLevel={true} />
                                                 </div>
 
