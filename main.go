@@ -2,6 +2,8 @@ package main
 
 import (
 	"CitadelDesktop/Server/FrontendWebsocket"
+	"CitadelDesktop/Server/GameFunctions"
+	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/License"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/ResponseRegistry"
@@ -44,6 +46,9 @@ func main() {
 	ResponseRegistry.SetAutoBirdStatusCallback(FrontendWebsocket.SendAutoBirdStatus)
 	ResponseRegistry.SetRequestCredentialsCallback(FrontendWebsocket.SendRequestCredentialsMessage)
 	ResponseRegistry.SetMemoryStatsCallback(FrontendWebsocket.SendMemoryStatsMessage)
+
+	// Wire GAM parser to auto-clean returned birds in real-time
+	GameParser.OnGAMParsed = GameFunctions.CleanupReturnedBirds
 
 	// Set up callbacks for Version package
 	Version.SetVersionUpdateCallback(FrontendWebsocket.SendVersionUpdateMessage)
