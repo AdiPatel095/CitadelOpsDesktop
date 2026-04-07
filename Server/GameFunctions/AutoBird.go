@@ -805,31 +805,30 @@ func reconcileViaTroops(ctx context.Context, savedBirds *Models.SentBirdFile) (t
 			continue
 		}
 
-		// Check TroopsTU (travelling troops) against bird composition
-		allPresent := true
-		partialMatch := false
+		// Classify each troop component explicitly, then make a clean three-way decision.
+		allInTU := true
+		allInI := true
 		for _, troopPair := range bird.TroopComposition {
 			troopID := troopPair[0]
-			count := troopPair[1]
-			tuCount := troops.TroopsTU[troopID]
-			iCount := troops.TroopsI[troopID]
-			if tuCount >= count {
-				partialMatch = true
-			} else if iCount >= count {
-				// Troops are back home — bird returned
-				allPresent = false
+			required := troopPair[1]
+			if troops.TroopsTU[troopID] < required {
+				allInTU = false
+			}
+			if troops.TroopsI[troopID] < required {
+				allInI = false
 			}
 		}
 
-		if allPresent && partialMatch {
+		if allInTU {
+			// All troops still travelling — bird is in flight, keep
 			keepBirds = append(keepBirds, bird)
-		} else if !allPresent && partialMatch {
-			// Partial match — ambiguous, keep with warning
-			log.Printf("[AutoBird] Partial match for bird castle %s — keeping conservatively", getCastleName(bird.CastleID))
-			keepBirds = append(keepBirds, bird)
+		} else if allInI {
+			// All troops back home — bird has returned, drop
+			log.Printf("[AutoBird] Bird returned for castle %s — dropping", getCastleName(bird.CastleID))
 		} else {
-			log.Printf("[AutoBird] Bird returned (troops home) for castle %s — dropping", getCastleName(bird.CastleID))
-			// Drop: bird has returned
+			// Mixed or missing data — ambiguous, keep conservatively
+			log.Printf("[AutoBird] Partial troop match for castle %s — keeping conservatively", getCastleName(bird.CastleID))
+			keepBirds = append(keepBirds, bird)
 		}
 	}
 
