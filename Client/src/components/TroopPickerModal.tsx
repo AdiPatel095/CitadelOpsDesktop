@@ -151,7 +151,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                 // Match Tailwind breakpoints: 4 cols default, 5@sm(640), 6@md(768), 8@lg(1024)
                 if (width >= 1024) setColumns(8);
                 else if (width >= 768) setColumns(6);
-                else if (width >= 640) setColumns(5);
+                else if (width >= 500) setColumns(5);
                 else setColumns(4);
             }
         };
@@ -182,7 +182,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
     const rowVirtualizer = useVirtualizer({
         count: rows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => viewMode === 'list' ? 48 : 120,
+        estimateSize: () => viewMode === 'list' ? 48 : 160,
         overscan: 2,
     });
 
@@ -307,7 +307,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                                 tabIndex={0}
                                                 className={`
                                                     relative flex flex-col items-center rounded-xl transition-all duration-200
-                                                    border-2 hover:scale-105 overflow-hidden cursor-pointer max-w-[100px] w-full mx-auto
+                                                    border-2 hover:scale-105 overflow-hidden cursor-pointer w-full
                                                     ${isSelected
                                                         ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
                                                         : 'border-border-base bg-bg-card hover:border-primary/50 hover:bg-bg-card-hover'
@@ -337,7 +337,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
 
                                                 {/* Unit Image - edge to edge */}
                                                 <div className="w-full aspect-square flex items-center justify-center pt-1">
-                                                    <UnitImage unitId={unitId} size={56} showLevel={true} />
+                                                    <UnitImage unitId={unitId} size={80} showLevel={true} />
                                                 </div>
 
                                                 {/* Bottom area: Name or Quantity Input */}
