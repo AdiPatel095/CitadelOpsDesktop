@@ -762,7 +762,82 @@ func reconcileViaGAM(ctx context.Context, savedBirds *Models.SentBirdFile) (time
 // Returns duration to sleep if birds are still out, or 0 if ready to send.
 // Returns bool readyToSend: true if we can start sending immediately.
 func reconcileViaTroops(ctx context.Context, savedBirds *Models.SentBirdFile) (time.Duration, bool) {
-	// TODO: CITDESK-13 — troop-based reconciliation for disconnected state
+	// 1. Reconnect: reload game tab and wait for login
+	GameWebsocket.ReloadGameTab()
+	loginTimeout := time.After(2 * time.Minute)
+	for !isGameConnected() {
+		select {
+		case <-ctx.Done():
+			return 0, false
+		case <-loginTimeout:
+			log.Println("[AutoBird] Troop reconciliation: timed out waiting for login")
+			return 0, true // Fall through to send loop
+		case <-time.After(2 * time.Second):
+			// retry
+		}
+	}
+
+	// 2. Get castle locations for cross-referencing
+	castleLocations := getPlayerCastleLocations()
+	castleLocationMap := make(map[int]CastleLocation) // keyed by CastleID
+	for _, loc := range castleLocations {
+		castleLocationMap[loc.CastleID] = loc
+	}
+
+	// 3. Reconcile per castle
+	var keepBirds []Models.SentBird
+	now := time.Now()
+	for _, bird := range savedBirds.Birds {
+		if now.After(bird.ExpectedExpiry) {
+			continue // expired, drop
+		}
+		loc, ok := castleLocationMap[bird.CastleID]
+		if !ok {
+			// Can't verify, keep conservatively
+			keepBirds = append(keepBirds, bird)
+			continue
+		}
+		troops := GameParser.FetchCastleTroops(bird.KingdomID, bird.CastleID, loc.X, loc.Y)
+		if troops == nil {
+			keepBirds = append(keepBirds, bird)
+			continue
+		}
+
+		// Classify each troop component explicitly, then make a clean three-way decision.
+		allInTU := true
+		allInI := true
+		for _, troopPair := range bird.TroopComposition {
+			troopID := troopPair[0]
+			required := troopPair[1]
+			if troops.TroopsTU[troopID] < required {
+				allInTU = false
+			}
+			if troops.TroopsI[troopID] < required {
+				allInI = false
+			}
+		}
+
+		if allInTU {
+			// All troops still travelling — bird is in flight, keep
+			keepBirds = append(keepBirds, bird)
+		} else if allInI {
+			// All troops back home — bird has returned, drop
+			log.Printf("[AutoBird] Bird returned for castle %s — dropping", getCastleName(bird.CastleID))
+		} else {
+			// Mixed or missing data — ambiguous, keep conservatively
+			log.Printf("[AutoBird] Partial troop match for castle %s — keeping conservatively", getCastleName(bird.CastleID))
+			keepBirds = append(keepBirds, bird)
+		}
+	}
+
+	if len(keepBirds) > 0 {
+		log.Printf("[AutoBird] Troop reconciliation: keeping %d birds (from %d saved)", len(keepBirds), len(savedBirds.Birds))
+		Models.SaveSentBirds(savedBirds.PlayerID, keepBirds)
+	} else {
+		log.Println("[AutoBird] Troop reconciliation: all birds expired/returned, clearing file")
+		Models.ClearSentBirds()
+	}
+
 	return 0, true
 }
 
