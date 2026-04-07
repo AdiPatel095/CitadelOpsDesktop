@@ -166,6 +166,15 @@ func runAutoBird(ctx context.Context) {
 		// ---------------------------------------------------------
 		// STEP 3: Refresh GameState & Send Birds
 		// ---------------------------------------------------------
+		// Build activeCastleMap from existing saved birds
+		existingBirds := Models.LoadSentBirds()
+		activeCastleMap := make(map[int]bool)
+		if existingBirds != nil {
+			for _, bird := range existingBirds.Birds {
+				activeCastleMap[bird.CastleID] = true
+			}
+		}
+
 		// Calculate random delay once per cycle
 		minDelay := Models.GetSettingsState().AutoBirdDelay.MinDelay
 		maxDelay := Models.GetSettingsState().AutoBirdDelay.MaxDelay
@@ -279,24 +288,45 @@ func runAutoBird(ctx context.Context) {
 
 				// Check Surplus Ratio
 				shouldSend := false
+				ratio := 0.0
 				if totalKeep == 0 {
 					if totalToSend > 0 {
 						shouldSend = true
 					}
 				} else {
-					ratio := float64(totalToSend) / float64(totalKeep)
+					ratio = float64(totalToSend) / float64(totalKeep)
 					if ratio >= 0.10 {
 						shouldSend = true
 					}
 				}
 
-				if !shouldSend {
-					// Doesn't meet surplus ratio. Move to next castle.
+				// Active bird logic: only send if surplus passes ratio+MinSend
+				if activeCastleMap[castleLoc.CastleID] {
+					if shouldSend {
+						// Proceed to MinSend check
+					} else {
+						// Has active bird but doesn't meet surplus ratio. Skip.
+						break
+					}
+				} else {
+					// No active bird
+					if !shouldSend {
+						// Doesn't meet surplus ratio. Move to next castle.
+						break
+					}
+				}
+
+				delayCfg := Models.GetSettingsState().AutoBirdDelay
+				if totalToSend > 0 && totalToSend < delayCfg.MinSend {
+					log.Printf("[AutoBird] Castle %d has troops to send (%d), but is below Global Minimum to Send (%d). Skipping.",
+						castleLoc.CastleID, totalToSend, delayCfg.MinSend)
 					break
 				}
-				if totalToSend > 0 && totalToSend < Models.GetSettingsState().AutoBirdDelay.MinSend {
-					// Doesn't meet minimum send total. Move to next castle.
-					break
+
+				// Log if sending despite active bird
+				if activeCastleMap[castleLoc.CastleID] {
+					log.Printf("[AutoBird] Castle %d has active bird, but found significant surplus and passed MinSend (%d > %d). Sending new bird.",
+						castleLoc.CastleID, totalToSend, delayCfg.MinSend)
 				}
 
 				if len(allTroopsToSend) == 0 {
