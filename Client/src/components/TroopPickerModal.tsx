@@ -136,17 +136,24 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
 }) => {
     const parentRef = useRef<HTMLDivElement>(null);
     const [columns, setColumns] = useState(8);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-    // Determine column count based on container width
+    // Determine column count and view mode based on container width
     useEffect(() => {
         const updateColumns = () => {
             if (!parentRef.current) return;
             const width = parentRef.current.offsetWidth;
-            // Match Tailwind breakpoints: 4 cols default, 5@sm(640), 6@md(768), 8@lg(1024)
-            if (width >= 1024) setColumns(8);
-            else if (width >= 768) setColumns(6);
-            else if (width >= 640) setColumns(5);
-            else setColumns(4);
+            if (width < 500) {
+                setViewMode('list');
+                setColumns(1);
+            } else {
+                setViewMode('grid');
+                // Match Tailwind breakpoints: 4 cols default, 5@sm(640), 6@md(768), 8@lg(1024)
+                if (width >= 1024) setColumns(8);
+                else if (width >= 768) setColumns(6);
+                else if (width >= 640) setColumns(5);
+                else setColumns(4);
+            }
         };
 
         updateColumns();
@@ -160,16 +167,22 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
     // Group units into rows
     const rows = useMemo(() => {
         const result: [string, string][][] = [];
-        for (let i = 0; i < filteredUnits.length; i += columns) {
-            result.push(filteredUnits.slice(i, i + columns));
+        if (viewMode === 'list') {
+            for (const unit of filteredUnits) {
+                result.push([unit]);
+            }
+        } else {
+            for (let i = 0; i < filteredUnits.length; i += columns) {
+                result.push(filteredUnits.slice(i, i + columns));
+            }
         }
         return result;
-    }, [filteredUnits, columns]);
+    }, [filteredUnits, columns, viewMode]);
 
     const rowVirtualizer = useVirtualizer({
         count: rows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => 120, // Approximate row height
+        estimateSize: () => viewMode === 'list' ? 48 : 120,
         overscan: 2,
     });
 
@@ -212,8 +225,9 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                 transform: `translateY(${virtualRow.start}px)`,
                             }}
                         >
-                            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
-                                {row.map(([idStr, name]) => {
+                            {viewMode === 'list' ? (
+                                // LIST MODE: single full-width horizontal strip per unit
+                                row.map(([idStr, name]) => {
                                     const unitId = parseInt(idStr);
                                     const isSelected = selectedIds.has(unitId);
                                     const isFav = favorites.has(unitId);
@@ -225,64 +239,132 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                             role="button"
                                             tabIndex={0}
                                             className={`
-                                                relative flex flex-col items-center rounded-xl transition-all duration-200
-                                                border-2 hover:scale-105 overflow-hidden cursor-pointer max-w-[100px] w-full mx-auto
+                                                flex items-center gap-2 px-3 h-12 rounded-lg border transition-all duration-200 cursor-pointer mb-1
                                                 ${isSelected
-                                                    ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
-                                                    : 'border-border-base bg-bg-card hover:border-primary/50 hover:bg-bg-card-hover'
+                                                    ? 'border-primary bg-primary/10'
+                                                    : 'border-border-base bg-bg-card hover:bg-bg-card-hover'
                                                 }
                                             `}
                                         >
-                                            {/* Top-right icons container */}
-                                            <div className="absolute top-1 right-1 flex flex-col gap-1 z-10">
-                                                {/* Favorite button */}
-                                                <button
-                                                    onClick={(e) => onFavoriteClick(e, unitId)}
-                                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isFav
-                                                        ? 'bg-red-500 text-white'
-                                                        : 'bg-black/40 text-white/60 hover:bg-red-500/50 hover:text-white'
-                                                        }`}
-                                                >
-                                                    <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
-                                                </button>
-
-                                                {/* Selection indicator */}
-                                                {isSelected && (
-                                                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                                                        <Check className="w-3.5 h-3.5 text-bg-app" />
-                                                    </div>
-                                                )}
+                                            {/* Unit image */}
+                                            <div className="shrink-0">
+                                                <UnitImage unitId={unitId} size={32} showLevel={false} />
                                             </div>
 
-                                            {/* Unit Image - edge to edge */}
-                                            <div className="w-full aspect-square flex items-center justify-center pt-1">
-                                                <UnitImage unitId={unitId} size={56} showLevel={true} />
-                                            </div>
+                                            {/* Unit name */}
+                                            <span className="flex-1 text-sm font-medium text-text-main truncate">
+                                                {name}
+                                            </span>
 
-                                            {/* Bottom area: Name or Quantity Input */}
-                                            {allowQuantity && isSelected ? (
-                                                <div className="px-2 pb-2 pt-1 w-full">
-                                                    <input
-                                                        type="text"
-                                                        value={quantities[unitId] ? quantities[unitId].toLocaleString() : ''}
-                                                        onChange={(e) => {
-                                                            e.stopPropagation();
-                                                            onQuantityChange(unitId, e.target.value);
-                                                        }}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        placeholder="Qty"
-                                                        className="w-full px-2 py-1 text-xs text-center bg-bg-app border border-border-base rounded-global focus:border-primary focus:outline-none text-text-main"
-                                                    />
+                                            {/* Inline quantity input when selected */}
+                                            {allowQuantity && isSelected && (
+                                                <input
+                                                    type="text"
+                                                    value={quantities[unitId] ? quantities[unitId].toLocaleString() : ''}
+                                                    onChange={(e) => {
+                                                        e.stopPropagation();
+                                                        onQuantityChange(unitId, e.target.value);
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    placeholder="Qty"
+                                                    className="w-20 px-2 py-1 text-xs text-center bg-bg-app border border-border-base rounded-global focus:border-primary focus:outline-none text-text-main shrink-0"
+                                                />
+                                            )}
+
+                                            {/* Favorite button */}
+                                            <button
+                                                onClick={(e) => onFavoriteClick(e, unitId)}
+                                                className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all ${isFav
+                                                    ? 'bg-red-500 text-white'
+                                                    : 'bg-transparent text-text-muted hover:bg-red-500/20 hover:text-red-400'
+                                                    }`}
+                                            >
+                                                <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
+                                            </button>
+
+                                            {/* Selection indicator */}
+                                            {isSelected && (
+                                                <div className="shrink-0 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                                                    <Check className="w-3.5 h-3.5 text-bg-app" />
                                                 </div>
-                                            ) : (
-                                                <span className="px-2 pb-2 pt-1 text-xs font-medium text-text-main text-center line-clamp-2 w-full">
-                                                    {name}
-                                                </span>
                                             )}
                                         </div>
                                     );
-                                })}
-                            </div>
+                                })
+                            ) : (
+                                // GRID MODE: existing card grid, unchanged
+                                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+                                    {row.map(([idStr, name]) => {
+                                        const unitId = parseInt(idStr);
+                                        const isSelected = selectedIds.has(unitId);
+                                        const isFav = favorites.has(unitId);
+
+                                        return (
+                                            <div
+                                                key={unitId}
+                                                onClick={() => onUnitClick(unitId)}
+                                                role="button"
+                                                tabIndex={0}
+                                                className={`
+                                                    relative flex flex-col items-center rounded-xl transition-all duration-200
+                                                    border-2 hover:scale-105 overflow-hidden cursor-pointer max-w-[100px] w-full mx-auto
+                                                    ${isSelected
+                                                        ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
+                                                        : 'border-border-base bg-bg-card hover:border-primary/50 hover:bg-bg-card-hover'
+                                                    }
+                                                `}
+                                            >
+                                                {/* Top-right icons container */}
+                                                <div className="absolute top-1 right-1 flex flex-col gap-1 z-10">
+                                                    {/* Favorite button */}
+                                                    <button
+                                                        onClick={(e) => onFavoriteClick(e, unitId)}
+                                                        className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isFav
+                                                            ? 'bg-red-500 text-white'
+                                                            : 'bg-black/40 text-white/60 hover:bg-red-500/50 hover:text-white'
+                                                            }`}
+                                                    >
+                                                        <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
+                                                    </button>
+
+                                                    {/* Selection indicator */}
+                                                    {isSelected && (
+                                                        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                                                            <Check className="w-3.5 h-3.5 text-bg-app" />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Unit Image - edge to edge */}
+                                                <div className="w-full aspect-square flex items-center justify-center pt-1">
+                                                    <UnitImage unitId={unitId} size={56} showLevel={true} />
+                                                </div>
+
+                                                {/* Bottom area: Name or Quantity Input */}
+                                                {allowQuantity && isSelected ? (
+                                                    <div className="px-2 pb-2 pt-1 w-full">
+                                                        <input
+                                                            type="text"
+                                                            value={quantities[unitId] ? quantities[unitId].toLocaleString() : ''}
+                                                            onChange={(e) => {
+                                                                e.stopPropagation();
+                                                                onQuantityChange(unitId, e.target.value);
+                                                            }}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            placeholder="Qty"
+                                                            className="w-full px-2 py-1 text-xs text-center bg-bg-app border border-border-base rounded-global focus:border-primary focus:outline-none text-text-main"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <span className="px-2 pb-2 pt-1 text-xs font-medium text-text-main text-center line-clamp-2 w-full">
+                                                        {name}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     );
                 })}
