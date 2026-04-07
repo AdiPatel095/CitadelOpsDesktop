@@ -691,42 +691,76 @@ func reconcileOnStartup(ctx context.Context) (time.Duration, bool) {
 
 	gs = Models.GetGameState()
 
-	// 3. Match birds against GAM movements by troop composition
-	// If a bird does NOT exist in GAM, it is dropped aggressively.
+	// 3. Conservative reconciliation strategy: Keep unexpired birds even if not in GAM
+	// Only drop birds that are explicitly expired
 	now := time.Now()
-	var matchedBirds []Models.SentBird
+	var stillPotentiallyActive []Models.SentBird
+	var maxReturnTime time.Time
 
+	// First, filter out expired birds
 	for _, bird := range savedBirds.Birds {
-		// Automatically drop if locally expired
 		if !now.Before(bird.ExpectedExpiry) {
 			log.Printf("[AutoBird] Bird from castle %d expired normally (expected return: %v)", bird.CastleID, bird.ExpectedExpiry)
 			continue
 		}
+		stillPotentiallyActive = append(stillPotentiallyActive, bird)
+	}
 
+	// Now reconcile unexpired birds with GAM movements
+	var matchedBirds []Models.SentBird
+
+	for _, bird := range stillPotentiallyActive {
 		matched := false
+
 		for _, movement := range gs.Movement.ActiveMovements {
+			// Check if troop composition matches exactly
 			if troopsMatch(bird.TroopComposition, movement.TroopArray) {
+				// Found a match - keep this bird
 				matched = true
 				matchedBirds = append(matchedBirds, bird)
+
+				// Track max return time
+				if bird.ExpectedExpiry.After(maxReturnTime) {
+					maxReturnTime = bird.ExpectedExpiry
+				}
 				break
 			}
 		}
 
 		if !matched {
+			// Not matched in GAM.
+			// IMPORTANT: If high load, parser might miss it.
+			// We only discard if it's explicitly expired (which we filtered above).
+			// Since we already filtered expired birds into 'stillPotentiallyActive',
+			// all birds here are NOT expired. So we KEEP them to be safe.
+
+			// Keep log of birds not found with KID, Name, Troop Composition
 			castleName := getCastleName(bird.CastleID)
-			log.Printf("[AutoBird] ✗ No GAM match for unexpired bird from %s (KID: %d). Dropping from save list.", castleName, bird.KingdomID)
+			log.Printf("[AutoBird] ✗ No GAM match for bird from %s (KID: %d). Keeping safe. Troops: %v",
+				castleName, bird.KingdomID, bird.TroopComposition)
+
+			matchedBirds = append(matchedBirds, bird)
+
+			// Track max return time
+			if bird.ExpectedExpiry.After(maxReturnTime) {
+				maxReturnTime = bird.ExpectedExpiry
+			}
 		}
 	}
 
-	// 4. Update saved file with the kept birds
+	// 4. Update saved file with the kept birds (matched + unexpired unmatched)
 	if len(matchedBirds) > 0 {
-		log.Printf("[AutoBird] Found %d active birds still in flight. Updating saved file.", len(matchedBirds))
+		log.Printf("[AutoBird] Updating saved birds file with %d active birds", len(matchedBirds))
 		Models.SaveSentBirds(savedBirds.PlayerID, matchedBirds)
 	} else {
-		log.Println("[AutoBird] No saved birds matched GAM movements. Clearing file.")
+		// No birds kept - all have expired
+		log.Println("[AutoBird] No saved birds found in active movements. Clearing file.")
 		Models.ClearSentBirds()
 	}
 
+	// Always proceed to send loop - it will skip castles with active birds via activeCastleMap
+	// and send to any castles without birds, then calculate proper sleep time
+	log.Println("[AutoBird] Reconciliation complete. Proceeding to check for castles needing birds...")
 	return 0, true
 }
 
