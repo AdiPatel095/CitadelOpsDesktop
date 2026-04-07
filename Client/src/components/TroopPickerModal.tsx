@@ -169,7 +169,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
     const rowVirtualizer = useVirtualizer({
         count: rows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => 160, // Approximate row height
+        estimateSize: () => 120, // Approximate row height
         overscan: 2,
     });
 
@@ -226,7 +226,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                             tabIndex={0}
                                             className={`
                                                 relative flex flex-col items-center rounded-xl transition-all duration-200
-                                                border-2 hover:scale-105 overflow-hidden cursor-pointer
+                                                border-2 hover:scale-105 overflow-hidden cursor-pointer max-w-[100px] w-full mx-auto
                                                 ${isSelected
                                                     ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
                                                     : 'border-border-base bg-bg-card hover:border-primary/50 hover:bg-bg-card-hover'
@@ -255,8 +255,8 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                             </div>
 
                                             {/* Unit Image - edge to edge */}
-                                            <div className="w-full aspect-square flex items-center justify-center pt-2">
-                                                <UnitImage unitId={unitId} size={80} showLevel={true} />
+                                            <div className="w-full aspect-square flex items-center justify-center pt-1">
+                                                <UnitImage unitId={unitId} size={56} showLevel={true} />
                                             </div>
 
                                             {/* Bottom area: Name or Quantity Input */}
