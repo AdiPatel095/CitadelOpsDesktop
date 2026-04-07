@@ -182,8 +182,9 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
     const rowVirtualizer = useVirtualizer({
         count: rows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => viewMode === 'list' ? 48 : 160,
-        overscan: 2,
+        estimateSize: () => viewMode === 'list' ? 48 : 140,
+        overscan: 3,
+        measureElement: (el) => el?.getBoundingClientRect().height ?? (viewMode === 'list' ? 48 : 140),
     });
 
     if (filteredUnits.length === 0) {
@@ -217,6 +218,8 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                     return (
                         <div
                             key={virtualRow.index}
+                            ref={rowVirtualizer.measureElement}
+                            data-index={virtualRow.index}
                             style={{
                                 position: 'absolute',
                                 top: 0,
@@ -336,7 +339,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                                                 </div>
 
                                                 {/* Unit Image - edge to edge */}
-                                                <div className="w-full aspect-square flex items-center justify-center pt-1">
+                                                <div className="w-full h-[88px] flex items-center justify-center">
                                                     <UnitImage unitId={unitId} size={80} showLevel={true} />
                                                 </div>
 
