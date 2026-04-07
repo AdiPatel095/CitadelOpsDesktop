@@ -664,16 +664,48 @@ func getCastleName(castleID int) string {
 	return fmt.Sprintf("Castle %d", castleID)
 }
 
-// reconcileOnStartup checks persisted birds and reconciles with live GAM data.
-// It aggressively removes any saved birds that DO NOT MATCH returning GAM payloads.
+// reconcileOnStartup is the dispatcher that routes to GAM or troop-based reconciliation.
+// Loads saved birds, checks expiry, and routes based on connection state.
 // Returns duration to sleep if birds are still out, or 0 if ready to send.
 // Returns bool readyToSend: true if we can start sending immediately.
 func reconcileOnStartup(ctx context.Context) (time.Duration, bool) {
-	// 1. Load sentBirds.json
 	savedBirds := Models.LoadSentBirds()
 	if savedBirds == nil || len(savedBirds.Birds) == 0 {
-		return 0, true // No saved birds, ready
+		return 0, true // No saved birds, ready to send
 	}
+
+	// Check if all birds are expired
+	allExpired := true
+	now := time.Now()
+	for _, bird := range savedBirds.Birds {
+		if now.Before(bird.ExpectedExpiry) {
+			allExpired = false
+			break
+		}
+	}
+
+	if allExpired {
+		Models.ClearSentBirds()
+		return 0, true
+	}
+
+	// Route based on connection state
+	if isGameConnected() {
+		return reconcileViaGAM(ctx, savedBirds)
+	}
+	return reconcileViaTroops(ctx, savedBirds)
+}
+
+// isGameConnected checks if the game websocket is currently logged in
+func isGameConnected() bool {
+	return GameWebsocket.LoginStatus
+}
+
+// reconcileViaGAM checks persisted birds and reconciles with live GAM data.
+// It aggressively removes any saved birds that DO NOT MATCH returning GAM payloads.
+// Returns duration to sleep if birds are still out, or 0 if ready to send.
+// Returns bool readyToSend: true if we can start sending immediately.
+func reconcileViaGAM(ctx context.Context, savedBirds *Models.SentBirdFile) (time.Duration, bool) {
 
 	// 2. Fetch GAM
 	log.Println("[AutoBird] Found active saved birds. Reconciling with game server GAM data...")
@@ -761,6 +793,15 @@ func reconcileOnStartup(ctx context.Context) (time.Duration, bool) {
 	// Always proceed to send loop - it will skip castles with active birds via activeCastleMap
 	// and send to any castles without birds, then calculate proper sleep time
 	log.Println("[AutoBird] Reconciliation complete. Proceeding to check for castles needing birds...")
+	return 0, true
+}
+
+// reconcileViaTroops reconciles saved birds using troop-based verification when disconnected.
+// This path is used when the game websocket is not connected.
+// Returns duration to sleep if birds are still out, or 0 if ready to send.
+// Returns bool readyToSend: true if we can start sending immediately.
+func reconcileViaTroops(ctx context.Context, savedBirds *Models.SentBirdFile) (time.Duration, bool) {
+	// TODO: CITDESK-13 — troop-based reconciliation for disconnected state
 	return 0, true
 }
 
