@@ -188,34 +188,31 @@ func runAutoBird(ctx context.Context) {
 
 			// FOCUS + FETCH: Triggers JAA/JCA command to focus castle and update GameState BEFORE sending
 			troops := GameParser.FetchCastleTroops(castleLoc.KingdomID, castleLoc.CastleID, castleLoc.X, castleLoc.Y)
-			if troops != nil {
-				castle := gs.GetCastleByID(castleLoc.CastleID)
-				if castle != nil {
-					castle.Troops = Models.CastleTroopData{
-						KingdomID:   troops.KingdomID,
-						X:           troops.X,
-						Y:           troops.Y,
-						TroopsI:     troops.TroopsI,
-						TroopsTU:    troops.TroopsTU,
-						TroopsHI:    troops.TroopsHI,
-						TroopsSHI:   troops.TroopsSHI,
-						TroopsMixed: troops.TroopsMixed,
-					}
-					Models.SetCastleBuildingRows(castle, troops.BGRows, troops.BDRows)
-				}
-			}
-			time.Sleep(1 * time.Second)
-
-			// Look up castle in GameState
-			castleInfo := gs.GetCastleByID(castleLoc.CastleID)
-			if castleInfo == nil || castleInfo.Troops.TroopsI == nil {
-				log.Printf("[AutoBird] Missing GameState troops for Castle %d. Skipping.", castleLoc.CastleID)
+			if troops == nil || troops.TroopsI == nil {
+				log.Printf("[AutoBird] Missing troops data for Castle %d. Skipping.", castleLoc.CastleID)
 				continue
 			}
 
+			// Update GameState with fetched troops
+			castle := gs.GetCastleByID(castleLoc.CastleID)
+			if castle != nil {
+				castle.Troops = Models.CastleTroopData{
+					KingdomID:   troops.KingdomID,
+					X:           troops.X,
+					Y:           troops.Y,
+					TroopsI:     troops.TroopsI,
+					TroopsTU:    troops.TroopsTU,
+					TroopsHI:    troops.TroopsHI,
+					TroopsSHI:   troops.TroopsSHI,
+					TroopsMixed: troops.TroopsMixed,
+				}
+				Models.SetCastleBuildingRows(castle, troops.BGRows, troops.BDRows)
+			}
+			time.Sleep(1 * time.Second)
+
 			// Copy TroopsI to a local map so we can simulate deducting troops if we send multiple birds
 			localTroopsI := make(map[int]int)
-			for id, amount := range castleInfo.Troops.TroopsI {
+			for id, amount := range troops.TroopsI {
 				localTroopsI[id] = amount
 			}
 
