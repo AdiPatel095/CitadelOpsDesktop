@@ -702,25 +702,23 @@ func isGameConnected() bool {
 }
 
 // reconcileViaGAM checks persisted birds and reconciles with live GAM data.
-// Connected path: reads from live ActiveMovements first, falls back to GAM fetch if empty.
+// Always clears stale ActiveMovements and fetches a fresh GAM snapshot before reconciling,
+// ensuring reconciliation never operates on data accumulated from a previous session/loop cycle.
 // Conservative matching: unexpired unmatched birds are kept with a log.
 // Always returns readyToSend=true.
 func reconcileViaGAM(ctx context.Context, savedBirds *Models.SentBirdFile) (time.Duration, bool) {
 	gs := Models.GetGameState()
 
-	// 1. Check live ActiveMovements
-	movements := gs.Movement.ActiveMovements
-	if len(movements) == 0 {
-		// Fallback: send a GAM request and wait up to 5s for the parser to populate
-		log.Println("[AutoBird] ActiveMovements empty. Fetching GAM...")
-		FetchMovements()
-		select {
-		case <-time.After(5 * time.Second):
-		case <-ctx.Done():
-			return 0, false
-		}
-		movements = gs.Movement.ActiveMovements
+	// 1. Clear any stale accumulated movements from a prior cycle, then fetch fresh state.
+	gs.Movement.ActiveMovements = nil
+	log.Println("[AutoBird] Cleared stale ActiveMovements. Fetching fresh GAM...")
+	FetchMovements()
+	select {
+	case <-time.After(5 * time.Second):
+	case <-ctx.Done():
+		return 0, false
 	}
+	movements := gs.Movement.ActiveMovements
 
 	// 2. Reconcile each saved bird
 	var keepBirds []Models.SentBird
