@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Search, Check, Heart, List, Flame } from 'lucide-react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import UnitImage from './UnitImage';
 import {
     TROOP_DEFINITIONS,
@@ -103,6 +104,190 @@ export const TroopPickerProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 />
             )}
         </>
+    );
+};
+
+// ============================================
+// Virtualized Unit Grid Component
+// ============================================
+
+interface VirtualizedUnitGridProps {
+    filteredUnits: [string, string][];
+    selectedIds: Set<number>;
+    favorites: Set<number>;
+    quantities: Record<number, number>;
+    allowQuantity: boolean;
+    quickAccessTab: QuickAccessTab;
+    onUnitClick: (unitId: number) => void;
+    onFavoriteClick: (e: React.MouseEvent, unitId: number) => void;
+    onQuantityChange: (unitId: number, value: string) => void;
+}
+
+const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
+    filteredUnits,
+    selectedIds,
+    favorites,
+    quantities,
+    allowQuantity,
+    quickAccessTab,
+    onUnitClick,
+    onFavoriteClick,
+    onQuantityChange,
+}) => {
+    const parentRef = useRef<HTMLDivElement>(null);
+    const [columns, setColumns] = useState(8);
+
+    // Determine column count based on container width
+    useEffect(() => {
+        const updateColumns = () => {
+            if (!parentRef.current) return;
+            const width = parentRef.current.offsetWidth;
+            // Match Tailwind breakpoints: 4 cols default, 5@sm(640), 6@md(768), 8@lg(1024)
+            if (width >= 1024) setColumns(8);
+            else if (width >= 768) setColumns(6);
+            else if (width >= 640) setColumns(5);
+            else setColumns(4);
+        };
+
+        updateColumns();
+        const observer = new ResizeObserver(updateColumns);
+        if (parentRef.current) {
+            observer.observe(parentRef.current);
+        }
+        return () => observer.disconnect();
+    }, []);
+
+    // Group units into rows
+    const rows = useMemo(() => {
+        const result: [string, string][][] = [];
+        for (let i = 0; i < filteredUnits.length; i += columns) {
+            result.push(filteredUnits.slice(i, i + columns));
+        }
+        return result;
+    }, [filteredUnits, columns]);
+
+    const rowVirtualizer = useVirtualizer({
+        count: rows.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 160, // Approximate row height
+        overscan: 2,
+    });
+
+    if (filteredUnits.length === 0) {
+        return (
+            <div className="flex-1 overflow-y-auto p-6">
+                <div className="text-center py-12 text-text-muted">
+                    <p className="text-lg">No units found</p>
+                    <p className="text-sm mt-1">
+                        {quickAccessTab === 'favorites'
+                            ? 'Click the heart icon on units to add favorites'
+                            : quickAccessTab === 'frequent'
+                                ? 'Select units to build your frequently used list'
+                                : 'Try adjusting your filters'}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div ref={parentRef} className="flex-1 overflow-y-auto p-6">
+            <div
+                style={{
+                    height: `${rowVirtualizer.getTotalSize()}px`,
+                    width: '100%',
+                    position: 'relative',
+                }}
+            >
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                    const row = rows[virtualRow.index];
+                    return (
+                        <div
+                            key={virtualRow.index}
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                transform: `translateY(${virtualRow.start}px)`,
+                            }}
+                        >
+                            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+                                {row.map(([idStr, name]) => {
+                                    const unitId = parseInt(idStr);
+                                    const isSelected = selectedIds.has(unitId);
+                                    const isFav = favorites.has(unitId);
+
+                                    return (
+                                        <div
+                                            key={unitId}
+                                            onClick={() => onUnitClick(unitId)}
+                                            role="button"
+                                            tabIndex={0}
+                                            className={`
+                                                relative flex flex-col items-center rounded-xl transition-all duration-200
+                                                border-2 hover:scale-105 overflow-hidden cursor-pointer
+                                                ${isSelected
+                                                    ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
+                                                    : 'border-border-base bg-bg-card hover:border-primary/50 hover:bg-bg-card-hover'
+                                                }
+                                            `}
+                                        >
+                                            {/* Top-right icons container */}
+                                            <div className="absolute top-1 right-1 flex flex-col gap-1 z-10">
+                                                {/* Favorite button */}
+                                                <button
+                                                    onClick={(e) => onFavoriteClick(e, unitId)}
+                                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isFav
+                                                        ? 'bg-red-500 text-white'
+                                                        : 'bg-black/40 text-white/60 hover:bg-red-500/50 hover:text-white'
+                                                        }`}
+                                                >
+                                                    <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
+                                                </button>
+
+                                                {/* Selection indicator */}
+                                                {isSelected && (
+                                                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                                                        <Check className="w-3.5 h-3.5 text-bg-app" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Unit Image - edge to edge */}
+                                            <div className="w-full aspect-square flex items-center justify-center pt-2">
+                                                <UnitImage unitId={unitId} size={80} showLevel={true} />
+                                            </div>
+
+                                            {/* Bottom area: Name or Quantity Input */}
+                                            {allowQuantity && isSelected ? (
+                                                <div className="px-2 pb-2 pt-1 w-full">
+                                                    <input
+                                                        type="text"
+                                                        value={quantities[unitId] ? quantities[unitId].toLocaleString() : ''}
+                                                        onChange={(e) => {
+                                                            e.stopPropagation();
+                                                            onQuantityChange(unitId, e.target.value);
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        placeholder="Qty"
+                                                        className="w-full px-2 py-1 text-xs text-center bg-bg-app border border-border-base rounded-global focus:border-primary focus:outline-none text-text-main"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <span className="px-2 pb-2 pt-1 text-xs font-medium text-text-main text-center line-clamp-2 w-full">
+                                                    {name}
+                                                </span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
     );
 };
 
@@ -426,93 +611,18 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
                     </div>
                 </div>
 
-                {/* Unit Grid */}
-                <div className="flex-1 overflow-y-auto p-6">
-                    {filteredUnits.length === 0 ? (
-                        <div className="text-center py-12 text-text-muted">
-                            <p className="text-lg">No units found</p>
-                            <p className="text-sm mt-1">
-                                {quickAccessTab === 'favorites'
-                                    ? 'Click the heart icon on units to add favorites'
-                                    : quickAccessTab === 'frequent'
-                                        ? 'Select units to build your frequently used list'
-                                        : 'Try adjusting your filters'}
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                            {filteredUnits.map(([idStr, name]) => {
-                                const unitId = parseInt(idStr);
-                                const isSelected = selectedIds.has(unitId);
-                                const isFav = favorites.has(unitId);
-
-                                return (
-                                    <div
-                                        key={unitId}
-                                        onClick={() => handleUnitClick(unitId)}
-                                        role="button"
-                                        tabIndex={0}
-                                        className={`
-                                            relative flex flex-col items-center rounded-xl transition-all duration-200
-                                            border-2 hover:scale-105 overflow-hidden cursor-pointer
-                                            ${isSelected
-                                                ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
-                                                : 'border-border-base bg-bg-card hover:border-primary/50 hover:bg-bg-card-hover'
-                                            }
-                                        `}
-                                    >
-                                        {/* Top-right icons container */}
-                                        <div className="absolute top-1 right-1 flex flex-col gap-1 z-10">
-                                            {/* Favorite button */}
-                                            <button
-                                                onClick={(e) => handleFavoriteClick(e, unitId)}
-                                                className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isFav
-                                                    ? 'bg-red-500 text-white'
-                                                    : 'bg-black/40 text-white/60 hover:bg-red-500/50 hover:text-white'
-                                                    }`}
-                                            >
-                                                <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
-                                            </button>
-
-                                            {/* Selection indicator */}
-                                            {isSelected && (
-                                                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                                                    <Check className="w-3.5 h-3.5 text-bg-app" />
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Unit Image - edge to edge */}
-                                        <div className="w-full aspect-square flex items-center justify-center pt-2">
-                                            <UnitImage unitId={unitId} size={80} showLevel={true} />
-                                        </div>
-
-                                        {/* Bottom area: Name or Quantity Input */}
-                                        {allowQuantity && isSelected ? (
-                                            <div className="px-2 pb-2 pt-1 w-full">
-                                                <input
-                                                    type="text"
-                                                    value={quantities[unitId] ? quantities[unitId].toLocaleString() : ''}
-                                                    onChange={(e) => {
-                                                        e.stopPropagation();
-                                                        handleQuantityChange(unitId, e.target.value);
-                                                    }}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    placeholder="Qty"
-                                                    className="w-full px-2 py-1 text-xs text-center bg-bg-app border border-border-base rounded-global focus:border-primary focus:outline-none text-text-main"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <span className="px-2 pb-2 pt-1 text-xs font-medium text-text-main text-center line-clamp-2 w-full">
-                                                {name}
-                                            </span>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
+                {/* Unit Grid - Virtualized */}
+                <VirtualizedUnitGrid
+                    filteredUnits={filteredUnits}
+                    selectedIds={selectedIds}
+                    favorites={favorites}
+                    quantities={quantities}
+                    allowQuantity={allowQuantity}
+                    quickAccessTab={quickAccessTab}
+                    onUnitClick={handleUnitClick}
+                    onFavoriteClick={handleFavoriteClick}
+                    onQuantityChange={handleQuantityChange}
+                />
 
                 {/* Footer */}
                 <div className="h-20 border-t border-border-base flex items-center justify-end px-6 bg-bg-app/50 gap-4 shrink-0">
