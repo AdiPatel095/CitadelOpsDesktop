@@ -23,6 +23,8 @@ var (
 	autoBirdNextWakeUp int64 // Unix milliseconds, 0 if not sleeping
 )
 
+const reconcileSleepThreshold = 10 * time.Minute
+
 // IsAutoBirdRunning returns true if the AutoBird goroutine is currently active
 func IsAutoBirdRunning() bool {
 	autoBirdMu.Lock()
@@ -162,6 +164,50 @@ func runAutoBird(ctx context.Context) {
 				continue
 			}
 		}
+
+		// ---------------------------------------------------------
+		// Smart Sleep: If earliest bird return is within threshold, sleep until then
+		// ---------------------------------------------------------
+		reconciledBirds := Models.LoadSentBirds()
+		if reconciledBirds != nil && len(reconciledBirds.Birds) > 0 {
+			var earliest time.Time
+			for i, bird := range reconciledBirds.Birds {
+				if i == 0 || bird.ExpectedExpiry.Before(earliest) {
+					earliest = bird.ExpectedExpiry
+				}
+			}
+			timeUntilReturn := time.Until(earliest)
+			if timeUntilReturn > 0 && timeUntilReturn <= reconcileSleepThreshold {
+				sleepDur := timeUntilReturn + 2*time.Minute
+				log.Printf("[AutoBird] Earliest bird returns in %v — sleeping until then", timeUntilReturn)
+
+				wakeUpTime := time.Now().Add(sleepDur).UnixMilli()
+				autoBirdMu.Lock()
+				autoBirdNextWakeUp = wakeUpTime
+				autoBirdMu.Unlock()
+
+				if GameWebsocket.SendAutoBirdStatusFunc != nil {
+					go GameWebsocket.SendAutoBirdStatusFunc(true, wakeUpTime)
+				}
+
+				select {
+				case <-time.After(sleepDur):
+				case <-ctx.Done():
+					return
+				}
+
+				autoBirdMu.Lock()
+				autoBirdNextWakeUp = 0
+				autoBirdMu.Unlock()
+
+				if GameWebsocket.SendAutoBirdStatusFunc != nil {
+					go GameWebsocket.SendAutoBirdStatusFunc(true, 0)
+				}
+
+				continue // restart loop (re-runs reconciliation on wake)
+			}
+		}
+		// Otherwise fall through to send loop
 
 		// ---------------------------------------------------------
 		// STEP 3: Refresh GameState & Send Birds
