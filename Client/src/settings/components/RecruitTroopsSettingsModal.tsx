@@ -1,27 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Plus, Trash2 } from 'lucide-react';
+import { X, Save, Plus, Trash2, Settings } from 'lucide-react';
 import { FrontendWebsocket } from '../../websocket';
+import { showTroopPicker } from '../../components/TroopPickerModal';
+import type { UnitWithQuantity } from '../../components/TroopPickerModal';
+import UnitImage from '../../components/UnitImage';
+import { TROOP_DEFINITIONS } from '../../config/constants';
 
 interface RecruitTroopsSettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
-
-// Troop mapping derived from Models.go
-const TROOP_OPTIONS = [
-    { id: 5, name: 'Veteran Saber Cleaver' },
-    { id: 6, name: 'Veteran Slingshot' },
-    { id: 9, name: 'Veteran Demon Horror' },
-    { id: 10, name: 'Veteran Deathly Horror' },
-    { id: 11, name: 'Veteran Flame Bearer' },
-    { id: 12, name: 'Veteran Composite Bowman' },
-    { id: 409, name: 'Star-Spangled Veteran Demon Horror' },
-    { id: 410, name: 'Star-Spangled Veteran Deathly Horror' },
-    { id: 308, name: 'Veteran Halberdier' },
-    { id: 309, name: 'Veteran Two-Handed Swordsman' },
-    { id: 311, name: 'Veteran Longbowman' },
-    { id: 312, name: 'Veteran Heavy Crossbowman' },
-];
 
 interface Castle {
     id: number;
@@ -29,12 +17,21 @@ interface Castle {
     type: string;
 }
 
+interface RecruitItem {
+    id: number;
+    amount: number;
+}
+
 export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProps> = ({ isOpen, onClose }) => {
     const [castles, setCastles] = useState<Castle[]>([]);
 
     // State: CastleID -> Array of { id: troopId, amount: number }
-    const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
+    const [settings, setSettings] = useState<Record<string, RecruitItem[]>>({});
     const [isSaving, setIsSaving] = useState(false);
+
+    // Edit Modal State
+    const [editingUnit, setEditingUnit] = useState<{ castleId: string, item: RecruitItem } | null>(null);
+    const [editAmount, setEditAmount] = useState<string>('');
 
     useEffect(() => {
         if (isOpen) {
@@ -74,44 +71,91 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
         return () => FrontendWebsocket.removeMessageListener(handleMessage);
     }, []);
 
+    const handleAddItem = async (castleId: string) => {
+        // Get current items to pre-fill
+        const currentItems = settings[castleId] || [];
+        const preselectedQuantities: Record<number, number> = {};
+        currentItems.forEach(item => {
+            if (item.id) preselectedQuantities[item.id] = item.amount;
+        });
+
+        const result = await showTroopPicker({
+            mode: 'multi',
+            title: `Select Units to Recruit - ${castles.find(c => c.id === parseInt(castleId))?.name}`,
+            allowQuantity: true,
+            preselected: currentItems.map(i => i.id),
+            preselectedQuantities
+        });
+
+        if (Array.isArray(result)) {
+            const newItems: RecruitItem[] = (result as UnitWithQuantity[]).map(u => ({
+                id: u.unitId,
+                amount: u.quantity
+            }));
+            setSettings(prev => ({
+                ...prev,
+                [castleId]: newItems
+            }));
+        }
+    };
+
+    const openEditModal = (castleId: string, item: RecruitItem) => {
+        setEditingUnit({ castleId, item });
+        setEditAmount(item.amount.toLocaleString());
+    };
+
+    const closeEditModal = () => {
+        setEditingUnit(null);
+        setEditAmount('');
+    };
+
+    const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Allow digits and commas
+        const raw = e.target.value.replace(/,/g, '');
+        if (!/^\d*$/.test(raw)) return;
+
+        const num = parseInt(raw);
+        const formatted = num ? num.toLocaleString() : '';
+        setEditAmount(formatted);
+    };
+
+    const saveEditModal = () => {
+        if (!editingUnit) return;
+
+        const parsedAmount = parseInt(editAmount.replace(/,/g, '')) || 0;
+        const updatedItem = { ...editingUnit.item, amount: parsedAmount };
+
+        // Update the item in the list
+        const castleItems = settings[editingUnit.castleId] || [];
+        const updatedItems = castleItems.map(item =>
+            item.id === editingUnit.item.id ? updatedItem : item
+        );
+
+        setSettings(prev => ({
+            ...prev,
+            [editingUnit.castleId]: updatedItems
+        }));
+        closeEditModal();
+    };
+
+    const deleteFromEditModal = () => {
+        if (!editingUnit) return;
+
+        const castleItems = settings[editingUnit.castleId]?.filter(item => item.id !== editingUnit.item.id) || [];
+
+        setSettings(prev => ({
+            ...prev,
+            [editingUnit.castleId]: castleItems
+        }));
+        closeEditModal();
+    };
+
     const handleSave = () => {
         setIsSaving(true);
         localStorage.setItem('recruitTroopsSettings', JSON.stringify(settings));
         FrontendWebsocket.sendMessage({
             type: 'saveRecruitTroopsSettings',
             payload: settings
-        });
-    };
-
-    const addTroopRule = (castleId: string) => {
-        setSettings(prev => {
-            const castleRules = prev[castleId] || [];
-            return {
-                ...prev,
-                [castleId]: [...castleRules, { id: TROOP_OPTIONS[0].id, amount: 100 }]
-            };
-        });
-    };
-
-    const removeTroopRule = (castleId: string, index: number) => {
-        setSettings(prev => {
-            const castleRules = [...(prev[castleId] || [])];
-            castleRules.splice(index, 1);
-            return {
-                ...prev,
-                [castleId]: castleRules
-            };
-        });
-    };
-
-    const updateTroopRule = (castleId: string, index: number, field: 'id' | 'amount', value: number) => {
-        setSettings(prev => {
-            const castleRules = [...(prev[castleId] || [])];
-            castleRules[index] = { ...castleRules[index], [field]: value };
-            return {
-                ...prev,
-                [castleId]: castleRules
-            };
         });
     };
 
@@ -145,66 +189,67 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 hidden-scrollbar">
                     {castles.map((castle) => {
-                        const rules = settings[castle.id] || [];
+                        const castleId = castle.id.toString();
+                        const castleItems = settings[castleId] || [];
+                        const hasItems = castleItems.length > 0;
 
                         return (
                             <div key={castle.id} className="bg-bg-app rounded-xl border border-border-base overflow-hidden">
                                 <div className="px-4 py-3 bg-bg-card-hover border-b border-border-base flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <span className="font-semibold text-text-main">{castle.name}</span>
+                                        {hasItems && (
+                                            <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                                                {castleItems.length} unit{castleItems.length !== 1 ? 's' : ''}
+                                            </span>
+                                        )}
                                     </div>
-                                    <button
-                                        onClick={() => addTroopRule(castle.id)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-global bg-primary/10 text-primary hover:bg-primary/20 text-sm font-medium transition-colors"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        Add Troop
-                                    </button>
                                 </div>
-                                <div className="p-4 space-y-3">
-                                    {rules.length === 0 ? (
-                                        <div className="text-center py-4 text-text-muted/60 text-sm">
-                                            No recruitment rules for this castle
+
+                                {/* Units Grid Area */}
+                                <div className="flex-1 overflow-y-auto bg-bg-app/30 rounded-lg p-4 border-t border-border-base/50">
+                                    {hasItems ? (
+                                        <div className="flex flex-wrap gap-3 content-start">
+                                            {castleItems.map((item, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="relative group/unit transition-transform hover:scale-105 cursor-pointer"
+                                                    title={`${TROOP_DEFINITIONS[item.id] || 'Unknown Unit'} (x${item.amount})`}
+                                                    onClick={() => openEditModal(castleId, item)}
+                                                >
+                                                    <UnitImage unitId={item.id} size={60} showLevel={true} />
+                                                    <div className="absolute -bottom-2 -right-2 bg-text-main border-2 border-bg-card rounded-full px-2 py-0.5 text-[10px] font-black text-bg-app shadow-md z-10 min-w-[24px] text-center">
+                                                        {item.amount.toLocaleString()}
+                                                    </div>
+
+                                                    {/* Hover overlay hint */}
+                                                    <div className="absolute inset-0 bg-black/20 rounded-lg opacity-0 group-hover/unit:opacity-100 transition-opacity flex items-center justify-center text-white pointer-events-none">
+                                                        <Settings className="w-4 h-4 drop-shadow-md" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {/* Add Button Card */}
+                                            <button
+                                                onClick={() => handleAddItem(castleId)}
+                                                className="flex flex-col items-center justify-center w-[60px] h-[60px] rounded-global border-2 border-dashed border-border-base text-text-muted hover:text-primary hover:border-primary hover:bg-primary/5 transition-all group/add"
+                                                title="Add Unit"
+                                            >
+                                                <Plus className="w-6 h-6 group-hover/add:scale-110 transition-transform" />
+                                            </button>
                                         </div>
                                     ) : (
-                                        rules.map((rule, idx) => (
-                                            <div key={idx} className="flex flex-col sm:flex-row gap-3 items-center bg-bg-card p-3 rounded-lg border border-border-light">
-                                                <div className="flex-1 w-full">
-                                                    <label className="block text-xs text-text-muted mb-1 ml-1">Troop Type</label>
-                                                    <select
-                                                        value={rule.id}
-                                                        onChange={(e) => updateTroopRule(castle.id, idx, 'id', parseInt(e.target.value))}
-                                                        className="w-full bg-bg-input border border-border-base text-text-main text-sm rounded-global focus:ring-1 focus:ring-primary focus:border-primary block p-2 transition-colors"
-                                                    >
-                                                        {TROOP_OPTIONS.map(opt => (
-                                                            <option key={opt.id} value={opt.id}>{opt.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-
-                                                <div className="w-full sm:w-32">
-                                                    <label className="block text-xs text-text-muted mb-1 ml-1">Target Amount</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        step="100"
-                                                        value={rule.amount || 0}
-                                                        onChange={(e) => updateTroopRule(castle.id, idx, 'amount', parseInt(e.target.value) || 0)}
-                                                        className="w-full bg-bg-input border border-border-base text-text-main text-sm rounded-global focus:ring-1 focus:ring-primary focus:border-primary block p-2 transition-colors"
-                                                    />
-                                                </div>
-
-                                                <div className="sm:self-end mt-2 sm:mt-0">
-                                                    <button
-                                                        onClick={() => removeTroopRule(castle.id, idx)}
-                                                        className="p-2 text-text-muted hover:text-red-400 hover:bg-red-400/10 rounded-global transition-colors"
-                                                        title="Remove Rule"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
+                                        <div className="h-full flex flex-col items-center justify-center py-8">
+                                            <div className="text-text-muted/40 text-xs italic text-center mb-4">
+                                                No recruitment targets
                                             </div>
-                                        ))
+                                            <button
+                                                onClick={() => handleAddItem(castleId)}
+                                                className="flex items-center gap-2 px-4 py-2 rounded-global bg-bg-card border border-border-light hover:border-primary text-text-muted hover:text-primary transition-all group/empty-add"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                                <span className="font-bold text-sm">Add Unit</span>
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -229,6 +274,49 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
                     </button>
                 </div>
             </div>
+
+            {/* Edit Unit Modal */}
+            {editingUnit && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-bg-app border border-border-light rounded-global p-6 w-full max-w-sm shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-bold text-primary mb-4 text-center truncate">
+                            Edit {TROOP_DEFINITIONS[editingUnit.item.id] || 'Unit'}
+                        </h3>
+
+                        <div className="flex flex-col items-center gap-6 mb-6">
+                            <UnitImage unitId={editingUnit.item.id} size={80} showLevel={true} />
+
+                            <div className="w-full">
+                                <label className="text-xs text-text-muted font-bold uppercase mb-1 block text-center">Target Amount</label>
+                                <input
+                                    type="text"
+                                    value={editAmount}
+                                    onChange={handleQuantityChange}
+                                    className="w-full bg-bg-input border border-border-base rounded-global px-4 py-3 text-xl font-bold text-center focus:border-primary focus:outline-none placeholder-text-muted/20"
+                                    autoFocus
+                                    placeholder="0"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={deleteFromEditModal}
+                                className="flex-1 py-3 rounded-global bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white font-bold transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Remove
+                            </button>
+                            <button
+                                onClick={saveEditModal}
+                                className="flex-[2] py-3 rounded-global bg-primary text-bg-app font-bold hover:brightness-110 transition-colors"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };
