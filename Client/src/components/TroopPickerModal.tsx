@@ -148,10 +148,10 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                 setColumns(1);
             } else {
                 setViewMode('grid');
-                // Match Tailwind breakpoints: 4 cols default, 5@sm(640), 6@md(768), 8@lg(1024)
+                // Match Tailwind breakpoints: 4 cols default, 6@500, 8@768+
                 if (width >= 1024) setColumns(8);
-                else if (width >= 768) setColumns(6);
-                else if (width >= 500) setColumns(5);
+                else if (width >= 768) setColumns(8);
+                else if (width >= 500) setColumns(6);
                 else setColumns(4);
             }
         };
