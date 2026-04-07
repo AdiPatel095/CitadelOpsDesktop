@@ -71,6 +71,8 @@ const UnitImage: React.FC<UnitImageProps> = ({
                     alt={`Unit ${unitId}`}
                     className="w-full h-full object-contain rounded-lg"
                     style={{ width: size, height: size }}
+                    loading="lazy"
+                    decoding="async"
                     onError={() => setImageFailed(true)}
                 />
             )}
@@ -96,12 +98,6 @@ const UnitImage: React.FC<UnitImageProps> = ({
                             stroke="rgba(255,255,255,0.4)"
                             strokeWidth="4"
                         />
-                        <defs>
-                            <linearGradient id="levelGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stopColor="#3b82f6" />
-                                <stop offset="100%" stopColor="#1d4ed8" />
-                            </linearGradient>
-                        </defs>
                     </svg>
                     {/* Level number */}
                     <span
