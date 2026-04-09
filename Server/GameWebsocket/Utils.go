@@ -1,10 +1,8 @@
 package GameWebsocket
 
 import (
-	"CitadelDesktop/Server/Channels"
 	"CitadelDesktop/Server/Models"
 	equip "CitadelDesktop/Server/Models/Equipment"
-	"fmt"
 )
 
 // GetCommanderID returns the actual Commander ID (GUID) from the global model array.

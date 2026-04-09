@@ -1,16 +1,12 @@
-// Package craftingrecipes loads EmpireItems/craftingRecipes.json for CRID → recipeGroupID / queueTypeId labels.
+// Package craftingrecipes provides CRID labels for crafting queues.
+//
+// If EmpireItems recipe metadata is unavailable, it degrades gracefully to
+// generic labels like `CRID 123` instead of failing the build.
 package craftingrecipes
 
-import (
-	"encoding/json"
-	"fmt"
-	"strconv"
-	"sync"
+import "fmt"
 
-	"CitadelDesktop/Server/Data/EmpireItems"
-)
-
-// Meta is a subset of one crafting recipe row.
+// Meta is retained for compatibility if richer recipe metadata is restored later.
 type Meta struct {
 	CRID         int
 	RecipeGroup  int
@@ -19,59 +15,13 @@ type Meta struct {
 	CraftingSecs int
 }
 
-var (
-	loadOnce sync.Once
-	byCRID   map[int]Meta
-	loadErr  error
-)
-
-func ensureLoaded() {
-	loadOnce.Do(func() {
-		var rows []struct {
-			CraftingRecipeId string `json:"craftingRecipeId"`
-			RecipeGroupID    string `json:"recipeGroupID"`
-			QueueTypeId      string `json:"queueTypeId"`
-			RewardIDs        string `json:"rewardIDs"`
-			CraftingDuration string `json:"craftingDuration"`
-		}
-		if err := json.Unmarshal(empireitems.CraftingRecipesJSON, &rows); err != nil {
-			loadErr = err
-			byCRID = map[int]Meta{}
-			return
-		}
-		m := make(map[int]Meta, len(rows))
-		for _, r := range rows {
-			crid, e1 := strconv.Atoi(r.CraftingRecipeId)
-			if e1 != nil || crid <= 0 {
-				continue
-			}
-			g, _ := strconv.Atoi(r.RecipeGroupID)
-			q, _ := strconv.Atoi(r.QueueTypeId)
-			dur, _ := strconv.Atoi(r.CraftingDuration)
-			m[crid] = Meta{
-				CRID: crid, RecipeGroup: g, QueueType: q,
-				RewardIDs: r.RewardIDs, CraftingSecs: dur,
-			}
-		}
-		byCRID = m
-	})
-}
-
-// MetaForCRID returns recipe metadata from craftingRecipes.json, if present.
+// MetaForCRID currently falls back to unavailable metadata.
 func MetaForCRID(crid int) (Meta, bool) {
-	ensureLoaded()
-	if loadErr != nil {
-		return Meta{}, false
-	}
-	meta, ok := byCRID[crid]
-	return meta, ok
+	return Meta{}, false
 }
 
-// ShortLabel is a compact dashboard label (queueType groups map to the four manual buildings).
+// ShortLabel is a compact dashboard label.
+// Without EmpireItems recipe metadata, fall back to a generic CRID label.
 func ShortLabel(crid int) string {
-	meta, ok := MetaForCRID(crid)
-	if !ok {
-		return fmt.Sprintf("CRID %d", crid)
-	}
-	return fmt.Sprintf("CRID %d · Q%d · G%d", crid, meta.QueueType, meta.RecipeGroup)
+	return fmt.Sprintf("CRID %d", crid)
 }
