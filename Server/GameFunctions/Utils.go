@@ -62,10 +62,8 @@ func getAidFromIndex(index int) float64 {
 	case 7:
 		return c.StormCastle.Aid
 	case 8:
-		return c.BeriWorldCastle.Aid
-	case 9:
 		return c.Metropolis.Aid
-	case 10:
+	case 9:
 		return c.Capital.Aid
 	default:
 		return -1

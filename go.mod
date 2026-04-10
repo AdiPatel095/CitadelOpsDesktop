@@ -5,8 +5,8 @@ go 1.25
 require (
 	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d
 	github.com/chromedp/chromedp v0.14.2
-	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
+	github.com/shirou/gopsutil/v3 v3.24.5
 )
 
 require (
@@ -18,7 +18,6 @@ require (
 	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
-	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect

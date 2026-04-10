@@ -1,27 +1,12 @@
 package GameParser
 
-import (
-	"CitadelDesktop/Server/GameCommands"
-	"CitadelDesktop/Server/ResponseRegistry"
-	"time"
-)
+import "CitadelDesktop/Server/Models"
 
-const focusJAAWaitTimeout = 8 * time.Second
-
-// FocusPlayerCastle sends JAA or JCA for the castle and waits for a jaa response so MessageRouter
-// can refresh GameState (including BG/BD). Returns true if a jaa frame was received in time.
+// FocusPlayerCastle sends JAA or JCA for the castle and waits until MessageRouter has processed the game's **jaa**
+// (focus, BG/BD, troops). Returns true if the focused castle matches.
 func FocusPlayerCastle(kingdomID, castleID, mapX, mapY int) bool {
-	waiter := ResponseRegistry.Global.RegisterWaiter("jaa", focusJAAWaitTimeout)
-	defer waiter.Cleanup()
-
-	GameCommands.SendTroopFocus(kingdomID, castleID, mapX, mapY)
-
-	_, err := waiter.WaitWithTimeout()
-	if err != nil {
-		return false
-	}
-	// Desert/Ice ambiguity: if JCA failed to update, caller may retry swapped KID elsewhere.
-	return true
+	gs := Models.GetGameState()
+	return trySendAndAwaitJAA(gs, kingdomID, castleID, mapX, mapY)
 }
 
 // FocusPlayerCastleWithRetry matches FetchCastleTroops: retry JCA with swapped KID for desert (1) / ice (2).

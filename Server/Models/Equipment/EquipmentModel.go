@@ -15,11 +15,11 @@ type EquipmentModel struct {
 	EquipRarity     float64 `json:"equipRarity"`
 	PlaceHolder6    float64 `json:"placeHolder6"`
 	EquipStats      []Stat  `json:"equipStats"`
-	PlaceHolder7    float64 `json:"placeHolder7"`
+	TemplateID      float64 `json:"templateId"`
 	PlaceHolder8    float64 `json:"placeHolder8"`
 	EquipLevel      float64 `json:"equipLevel"`
 	PlaceHolder9    float64 `json:"placeHolder9"`
-	PlaceHolder10   float64 `json:"placeHolder10"`
+	GemID           float64 `json:"gemId"`
 	PlaceHolder11   float64 `json:"placeHolder11"`
 	GemSlot         GemSlot `json:"gem"`
 }

@@ -69,15 +69,12 @@ func ProcessCastArray(castArray []interface{}) {
 		case c.StormCastle.Aid:
 			tempCastStat.Name = c.StormCastle.Name
 			tempCastStat.CastlePosition = 7
-		case c.BeriWorldCastle.Aid:
-			tempCastStat.Name = c.BeriWorldCastle.Name
-			tempCastStat.CastlePosition = 8
 		case c.Metropolis.Aid:
 			tempCastStat.Name = c.Metropolis.Name
-			tempCastStat.CastlePosition = 9
+			tempCastStat.CastlePosition = 8
 		case c.Capital.Aid:
 			tempCastStat.Name = c.Capital.Name
-			tempCastStat.CastlePosition = 10
+			tempCastStat.CastlePosition = 9
 		default:
 			tempCastStat.Name = "Unknown Castle"
 			tempCastStat.CastlePosition = 99
@@ -372,9 +369,18 @@ func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.E
 	equipmentFinal.EquipSlotNumber, _ = equipmentDataArray[1].(float64)
 	equipmentFinal.EquipType, _ = equipmentDataArray[2].(float64)
 	equipmentFinal.EquipRarity, _ = equipmentDataArray[3].(float64)
+	equipmentFinal.PlaceHolder6, _ = equipmentDataArray[4].(float64)
 	equipmentFinal.EquipLevel, _ = equipmentDataArray[8].(float64)
 
 	equipStatsRawArray, _ := equipmentDataArray[5].([]interface{})
+
+	// Ensure array has enough elements to avoid panic
+	if len(equipmentDataArray) > 6 {
+		equipmentFinal.TemplateID, _ = equipmentDataArray[6].(float64)
+	}
+	if len(equipmentDataArray) > 10 {
+		equipmentFinal.GemID, _ = equipmentDataArray[10].(float64)
+	}
 	// Initialize a slice with 0 length but pre-allocated capacity.
 	equipStatsArray := make([]Models.Stat, 0, len(equipStatsRawArray))
 	for _, equipStatData := range equipStatsRawArray {
@@ -408,7 +414,21 @@ func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.E
 		}
 	}
 
-	// Case 2: Standard Relic/Hero (Rarity 5/15) - Expanded Data Structure (Index 12 = GemSlotRaw)
+	// Case 2: Special Post-2026 Sets - GemID stored at index 10 (without the expanded gem object at index 12)
+	if equipmentFinal.GemID > 0 {
+		var gemSlot Models.GemSlot
+		if len(equipmentDataArray) >= 12 {
+			gemSlot.SlotNumber, _ = equipmentDataArray[11].(float64)
+		}
+
+		gem := Models.Gem{
+			ID: equipmentFinal.GemID,
+		}
+		gemSlot.Gem = &gem
+		equipmentFinal.GemSlot = gemSlot
+	}
+
+	// Case 3: Standard Relic/Hero (Rarity 5/15) - Expanded Data Structure (Index 12 = GemSlotRaw)
 	// Applies to both Commander (Type 2) and Castellan (Type 1) if Rarity matches
 	if equipmentFinal.EquipRarity == 5 || equipmentFinal.EquipRarity == 15 {
 		if len(equipmentDataArray) > 12 {

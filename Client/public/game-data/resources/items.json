@@ -1,0 +1,106 @@
+[
+  {
+    "resourceID": "1",
+    "name": "currency1",
+    "JSONKey": "C1",
+    "_display_name": "currency1",
+    "image_url": "/assets/Resources/Sceat.png",
+    "image_local": "/assets/Resources/Sceat.png"
+  },
+  {
+    "resourceID": "2",
+    "name": "currency2",
+    "JSONKey": "C2",
+    "_display_name": "currency2",
+    "image_url": "/assets/Resources/ImperialDucat.png",
+    "image_local": "/assets/Resources/ImperialDucat.png"
+  },
+  {
+    "resourceID": "3",
+    "name": "wood",
+    "JSONKey": "W",
+    "_display_name": "wood",
+    "image_url": "/assets/Resources/Wood.png",
+    "image_local": "/assets/Resources/Wood.png"
+  },
+  {
+    "resourceID": "4",
+    "name": "stone",
+    "JSONKey": "S",
+    "_display_name": "stone",
+    "image_url": "/assets/Resources/Stone.png",
+    "image_local": "/assets/Resources/Stone.png"
+  },
+  {
+    "resourceID": "5",
+    "name": "food",
+    "JSONKey": "F",
+    "_display_name": "food",
+    "image_url": "/assets/Resources/Food.png",
+    "image_local": "/assets/Resources/Food.png"
+  },
+  {
+    "resourceID": "6",
+    "name": "coal",
+    "JSONKey": "C",
+    "_display_name": "coal",
+    "image_url": "/assets/Resources/Charcoal.png",
+    "image_local": "/assets/Resources/Charcoal.png"
+  },
+  {
+    "resourceID": "7",
+    "name": "oil",
+    "JSONKey": "O",
+    "_display_name": "oil",
+    "image_url": "/assets/Resources/OliveOil.png",
+    "image_local": "/assets/Resources/OliveOil.png"
+  },
+  {
+    "resourceID": "8",
+    "name": "glass",
+    "JSONKey": "G",
+    "_display_name": "glass",
+    "image_url": "/assets/Resources/Glass.png",
+    "image_local": "/assets/Resources/Glass.png"
+  },
+  {
+    "resourceID": "9",
+    "name": "aquamarine",
+    "JSONKey": "A",
+    "_display_name": "aquamarine",
+    "image_url": "/assets/Resources/Aquamarine.png",
+    "image_local": "/assets/Resources/Aquamarine.png"
+  },
+  {
+    "resourceID": "10",
+    "name": "iron",
+    "JSONKey": "I",
+    "_display_name": "iron",
+    "image_url": "/assets/Resources/Iron_Ore.png",
+    "image_local": "/assets/Resources/Iron_Ore.png"
+  },
+  {
+    "resourceID": "11",
+    "name": "honey",
+    "JSONKey": "HONEY",
+    "_display_name": "honey",
+    "image_url": "/assets/Resources/Honey.png",
+    "image_local": "/assets/Resources/Honey.png"
+  },
+  {
+    "resourceID": "12",
+    "name": "mead",
+    "JSONKey": "MEAD",
+    "_display_name": "mead",
+    "image_url": "/assets/Resources/Mead.png",
+    "image_local": "/assets/Resources/Mead.png"
+  },
+  {
+    "resourceID": "13",
+    "name": "beef",
+    "JSONKey": "BEEF",
+    "_display_name": "beef",
+    "image_url": "/assets/Resources/Beef.png",
+    "image_local": "/assets/Resources/Beef.png"
+  }
+]

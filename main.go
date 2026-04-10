@@ -2,9 +2,6 @@ package main
 
 import (
 	"CitadelDesktop/Server/FrontendWebsocket"
-	"CitadelDesktop/Server/GameFunctions"
-	"CitadelDesktop/Server/GameParser"
-	"CitadelDesktop/Server/License"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"CitadelDesktop/Server/Version"
@@ -12,43 +9,44 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"net"
 	"net/http"
-	"time"
 )
 
 //go:embed all:Client/dist
 var frontendAssets embed.FS
+
+var currentPort int
 
 func main() {
 	// Initialize custom file logger (pipes to both stdout and file)
 	if err := Logging.InitLogger(); err != nil {
 		log.Printf("Warning: Failed to initialize file logger: %v", err)
 	}
+	if err := Logging.InitChannelLogs(); err != nil {
+		log.Printf("Warning: Failed to initialize channel logs: %v", err)
+	}
 	defer Logging.CloseLogger()
+	defer Logging.CloseChannelLogs()
 
 	// Clean up old binary from previous update (if exists)
 	Version.CleanupOldBinary()
 
-	// Initialize the hardware ID (creates file if needed)
-	if err := License.InitRegistration(); err != nil {
-		log.Printf("Warning: Failed to initialize registration: %v", err)
+	// Initialize the port for the frontend service
+	port, err := findAvailablePort(8080)
+	if err != nil {
+		log.Printf("Warning: Failed to initialize port: %v", err)
 	}
+	currentPort = port
+	log.Printf("Frontend port initialized: %d", currentPort)
 
 	// Create WebSocket hub
 	FrontendWebsocket.InitHub()
 
-	// Set up callbacks for License package to send messages to frontend
-	License.SetSendStatusCallback(FrontendWebsocket.SendRegistrationStatusMessage)
-	License.SetSendCreditsCallback(FrontendWebsocket.SendCreditsUpdateMessage)
-	// Set up callback for GameWebsocket to notify frontend of insufficient credits
-	ResponseRegistry.SetInsufficientCreditsCallback(FrontendWebsocket.SendInsufficientCreditsMessage)
+	// Set up callbacks for ResponseRegistry to notify frontend
 	ResponseRegistry.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
 	ResponseRegistry.SetAutoBirdStatusCallback(FrontendWebsocket.SendAutoBirdStatus)
-	ResponseRegistry.SetRequestCredentialsCallback(FrontendWebsocket.SendRequestCredentialsMessage)
 	ResponseRegistry.SetMemoryStatsCallback(FrontendWebsocket.SendMemoryStatsMessage)
-
-	// Wire GAM parser to auto-clean returned birds in real-time
-	GameParser.OnGAMParsed = GameFunctions.CleanupReturnedBirds
 
 	// Set up callbacks for Version package
 	Version.SetVersionUpdateCallback(FrontendWebsocket.SendVersionUpdateMessage)
@@ -56,30 +54,33 @@ func main() {
 	Version.SetUpdateCompleteCallback(FrontendWebsocket.SendUpdateCompleteMessage)
 	Version.SetUpdateErrorCallback(FrontendWebsocket.SendUpdateErrorMessage)
 
-	// Startup frontend server (always, so users can see registration status)
+	// Startup frontend server
 	go StartFrontendService()
-
-	// Give servers a moment to start up
-	time.Sleep(2 * time.Second)
-
-	// Wait for registration (polls every 15 seconds)
-	// This blocks until the hardware is registered
-	// Wait for registration (polls every 15 seconds)
-	// This blocks until the hardware is registered
-	// Wait for registration (polls every 15 seconds)
-	// This blocks until the hardware is registered
-	go func() {
-		if License.WaitForRegistration() {
-			// Start credits sync goroutine
-			go License.StartCreditsSync()
-		}
-	}()
 
 	// Start version check service (runs in background)
 	Version.StartVersionCheck()
 
 	// Block forever
 	select {}
+}
+
+func findAvailablePort(preferredPort int) (int, error) {
+	// Try a preferred port first, if available
+	if preferredPort > 0 {
+		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", preferredPort))
+		if err == nil {
+			_ = ln.Close()
+			return preferredPort, nil
+		}
+	}
+
+	// Otherwise, let the OS choose
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+	defer listener.Close()
+	return listener.Addr().(*net.TCPAddr).Port, nil
 }
 
 func StartFrontendService() {
@@ -92,9 +93,11 @@ func StartFrontendService() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/", http.FileServer(http.FS(subFS)))
+	mux.Handle("/api/game-data/", http.StripPrefix("/api/game-data/", http.FileServer(http.Dir("Server/Data"))))
+	Logging.RegisterLogHandlers(mux)
 	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)
 
-	port := License.CurrentPort
+	port := currentPort
 	log.Printf("Dashboard available at: http://localhost:%d", port)
 
 	// Allow CORS for development if needed, but since we are serving frontend from same origin, it's fine.
@@ -107,6 +110,7 @@ func StartFrontendService() {
 
 	// Start ChromeDP with the dashboard URL right before starting the HTTP server
 	dashboardURL := fmt.Sprintf("http://localhost:%d", port)
+	ResponseRegistry.SetDashboardURL(dashboardURL)
 	go ResponseRegistry.StartGameBrowser(dashboardURL)
 
 	err = http.ListenAndServe(addr, mux)

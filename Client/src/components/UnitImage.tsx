@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getUnitBaseAndLevel } from '../config/constants';
+import { useMetadata } from '../context/MetadataContext';
 
 interface UnitImageProps {
     unitId: number;
@@ -8,22 +9,12 @@ interface UnitImageProps {
     className?: string;
 }
 
-function troopPngSrc(imageId: number): string {
-    const base = import.meta.env.BASE_URL;
-    const prefix = base.endsWith('/') ? base.slice(0, -1) : base;
-    return `${prefix}/assets/Troops/${imageId}.png`;
-}
-
 /**
  * UnitImage Component
  *
  * Renders a unit image with optional level badge overlay.
  * - Looks up unitId in UNIT_TO_BASE_MAP to find base image + level
- * - If found: renders base image with hexagonal level badge
- * - If not found: renders the unitId image directly (no level badge)
- *
- * Place PNGs at Client/public/assets/Troops/{id}.png (id = base unit for leveled troops)
- * so they are copied into dist and served by the embedded dashboard.
+ * - Fetches the image path from the metadata context
  */
 const UnitImage: React.FC<UnitImageProps> = ({
     unitId,
@@ -32,6 +23,7 @@ const UnitImage: React.FC<UnitImageProps> = ({
     className = ''
 }) => {
     const [imageFailed, setImageFailed] = useState(false);
+    const { getTroopImageUrl, getTroop } = useMetadata();
 
     // Check if this unit has a level mapping
     const levelInfo = getUnitBaseAndLevel(unitId);
@@ -40,7 +32,9 @@ const UnitImage: React.FC<UnitImageProps> = ({
     const imageId = levelInfo ? levelInfo.baseId : unitId;
     const level = levelInfo?.level;
 
-    const imageSrc = useMemo(() => troopPngSrc(imageId), [imageId]);
+    const imageSrc = useMemo(() => getTroopImageUrl(imageId), [imageId, getTroopImageUrl]);
+    const troopInfo = getTroop(unitId);
+    const altText = troopInfo?.name || `Unit ${unitId}`;
 
     useEffect(() => {
         setImageFailed(false);
@@ -52,23 +46,23 @@ const UnitImage: React.FC<UnitImageProps> = ({
             style={{ width: size, height: size }}
         >
             {/* Unit Image — avoid chaining to another missing PNG on error */}
-            {imageFailed ? (
+            {imageFailed || !imageSrc ? (
                 <div
                     className="w-full h-full object-contain rounded-lg flex items-center justify-center bg-bg-card border border-border-base"
                     style={{ width: size, height: size }}
-                    title={`Missing asset: assets/Troops/${imageId}.png`}
+                    title={`Missing asset for unit ${imageId}`}
                 >
                     <span
-                        className="font-semibold text-text-muted tabular-nums"
+                        className="font-semibold text-text-muted tabular-nums text-center px-1 break-words"
                         style={{ fontSize: Math.max(10, size * 0.22) }}
                     >
-                        {unitId}
+                        {troopInfo?.name || unitId}
                     </span>
                 </div>
             ) : (
                 <img
                     src={imageSrc}
-                    alt={`Unit ${unitId}`}
+                    alt={altText}
                     className="w-full h-full object-contain rounded-lg"
                     style={{ width: size, height: size }}
                     loading="lazy"

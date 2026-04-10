@@ -3,11 +3,11 @@ package decoration
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"sync"
 
-	"CitadelDesktop/Server/Data"
 	"CitadelDesktop/Server/Models/Castle"
 )
 
@@ -141,14 +141,14 @@ var (
 
 func loadBuildingsJSONNameMaps() {
 	buildingsJSONOnce.Do(func() {
-		raw, err := data.ReadEmpireItemsSection("buildings")
+		raw, err := os.ReadFile("Server/Data/decorations/items.json")
 		if err != nil {
 			buildingsJSONErr = err
 			return
 		}
 		var rows []struct {
 			WodID    int    `json:"wodID"`
-			Name     string `json:"name"`
+			Name     string `json:"_display_name"`
 			Type     string `json:"type"`
 			Comment1 string `json:"comment1"`
 		}
@@ -267,13 +267,10 @@ func DecorationSummaryLinesForCastle(c *castle.PlayerCastleInfo) []string {
 // resolvedDisplayNameForWodID prefers WodDisplayNames.json (General's Camp–style lang + items),
 // then the raw buildings.json name field.
 func resolvedDisplayNameForWodID(wid int) string {
-	if s, ok := data.WodDisplayName(wid); ok {
-		return s
-	}
 	if s, ok := EmpireBuildingDisplayName(wid); ok {
 		return s
 	}
-	return data.FormatUnknownWod(wid)
+	return fmt.Sprintf("Item #%d", wid)
 }
 
 // IsEssentialCastleStructureByName matches core / production / defense buildings that must not be

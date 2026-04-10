@@ -123,7 +123,7 @@ func UnequipEquipment(equipmentMode string, targetIndex int, slotNumber int, exp
 	waiter := ResponseRegistry.Global.RegisterWaiter("eeq", 5*time.Second)
 	defer waiter.Cleanup()
 
-	ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+	ResponseRegistry.OutgoingMessages <- []byte(payload)
 
 	// Wait for response and verify success
 	response, err := waiter.WaitWithTimeout()
@@ -213,7 +213,7 @@ func UnequipGem(equipmentMode string, targetIndex int, slotNumber int, expectedG
 	waiter := ResponseRegistry.Global.RegisterWaiter("ege", 5*time.Second)
 	defer waiter.Cleanup()
 
-	ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+	ResponseRegistry.OutgoingMessages <- []byte(payload)
 
 	// Wait for response and verify success
 	response, err := waiter.WaitWithTimeout()

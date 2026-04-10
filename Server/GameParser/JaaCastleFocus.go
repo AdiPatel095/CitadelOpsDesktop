@@ -3,6 +3,7 @@ package GameParser
 import (
 	"CitadelDesktop/Server/Models"
 	"encoding/json"
+	"reflect"
 )
 
 // NotifyCastleFocusChanged is wired by FrontendWebsocket to push castleFocus when jaa updates the in-view castle.
@@ -103,5 +104,38 @@ func ApplyJAABuildingRowsFromPayload(gs *Models.GameState, data string) bool {
 		return false
 	}
 	Models.SetCastleBuildingRows(c, bg, bd)
+	return true
+}
+
+// ApplyJAATroopsFromPayload parses gui troop arrays from the jaa JSON and updates the castle's CastleTroopData.
+// Returns true if troop snapshot changed (for notifying the frontend).
+func ApplyJAATroopsFromPayload(gs *Models.GameState, data string) bool {
+	kid, cid, px, py, ok := parseJAACastleIdentityFromPayload(data)
+	if !ok || !gs.IsKnownPlayerCastleID(cid) {
+		return false
+	}
+	troops := ParseCastleTroops(data, kid, px, py)
+	if troops == nil {
+		return false
+	}
+	troops.CastleID = cid
+	castle := gs.GetCastleByID(cid)
+	if castle == nil {
+		return false
+	}
+	next := Models.CastleTroopData{
+		KingdomID:   troops.KingdomID,
+		X:           troops.X,
+		Y:           troops.Y,
+		TroopsI:     troops.TroopsI,
+		TroopsTU:    troops.TroopsTU,
+		TroopsHI:    troops.TroopsHI,
+		TroopsSHI:   troops.TroopsSHI,
+		TroopsMixed: troops.TroopsMixed,
+	}
+	if reflect.DeepEqual(castle.Troops, next) {
+		return false
+	}
+	applyTroopFetchToCastle(gs, cid, troops)
 	return true
 }

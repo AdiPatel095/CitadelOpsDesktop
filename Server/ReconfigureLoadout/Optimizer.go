@@ -557,7 +557,7 @@ func CapAwareOptimization(candidate *OptimizationResult, slots map[int]*[]Models
 	// If we don't have exactly 3 variable slots + 1 fixed, something is unusual but we proceed with what we have.
 	// Logic assumes 4 slots total.
 	if len(variableSlots) != 3 {
-		log.Printf("[Optimizer] Branch %d: Exiting candidate optimization prematurely. Expected 3 variable slots, got %d", branchPiece.ID, len(variableSlots))
+		log.Printf("[Optimizer] Branch %.0f: Exiting candidate optimization prematurely. Expected 3 variable slots, got %d", branchPiece.ID, len(variableSlots))
 		return // Should not happen in standard 4-slot optimization
 	}
 

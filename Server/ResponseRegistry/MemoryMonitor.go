@@ -13,11 +13,6 @@ import (
 // SendMemoryStatsFunc is a callback to notify frontend of memory usage (Go App MB, Chrome MB)
 var SendMemoryStatsFunc func(int, int)
 
-// SetMemoryStatsCallback sets the callback for memory stats notification
-func SetMemoryStatsCallback(fn func(int, int)) {
-	SendMemoryStatsFunc = fn
-}
-
 // StartMemoryMonitor periodically calculates Go and Chrome memory and broadcasts stats using WebSockets
 func StartMemoryMonitor(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)

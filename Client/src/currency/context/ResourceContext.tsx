@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FrontendWebsocket } from '../../websocket.ts';
-import { PlayerGlobalResources } from '../../types/playerGlobalResources.ts';
+import type { PlayerGlobalResources } from '../../types/playerGlobalResources.ts';
 
 interface ResourceContextType {
   resources: PlayerGlobalResources | null;

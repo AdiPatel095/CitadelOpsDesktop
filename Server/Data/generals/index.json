@@ -1,0 +1,200 @@
+[
+  {
+    "id": "101",
+    "name": "Toril",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_101/GeneralPortrait_101--1675158121508.webp"
+  },
+  {
+    "id": "102",
+    "name": "Leo",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_102/GeneralPortrait_102--1675158121508.webp"
+  },
+  {
+    "id": "103",
+    "name": "Alyssa",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_103/GeneralPortrait_103--1675158121508.webp"
+  },
+  {
+    "id": "104",
+    "name": "Horatio",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_104/GeneralPortrait_104--1675158121508.webp"
+  },
+  {
+    "id": "105",
+    "name": "Sasaki",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_105/GeneralPortrait_105--1675158121508.webp"
+  },
+  {
+    "id": "106",
+    "name": "WolfKing",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_106/GeneralPortrait_106--1675158121508.webp"
+  },
+  {
+    "id": "107",
+    "name": "Tom",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_107/GeneralPortrait_107--1684758359395.webp"
+  },
+  {
+    "id": "108",
+    "name": "Alice",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_108/GeneralPortrait_108--1684758359395.webp"
+  },
+  {
+    "id": "109",
+    "name": "Uskhal",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_109/GeneralPortrait_109--1688742207782.webp"
+  },
+  {
+    "id": "110",
+    "name": "SamuraiGeneral",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_110/GeneralPortrait_110--1696424954893.webp"
+  },
+  {
+    "id": "111",
+    "name": "BabaVarjuka",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_111/GeneralPortrait_111--1696424954893.webp"
+  },
+  {
+    "id": "112",
+    "name": "AlienGeneral",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_112/GeneralPortrait_112--1697553710033.webp"
+  },
+  {
+    "id": "113",
+    "name": "RedGeneral",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_113/GeneralPortrait_113--1696424954893.webp"
+  },
+  {
+    "id": "114",
+    "name": "BlueGeneral",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_114/GeneralPortrait_114--1696424954893.webp"
+  },
+  {
+    "id": "115",
+    "name": "RobberBaron",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_115/GeneralPortrait_115--1697642269637.webp"
+  },
+  {
+    "id": "116",
+    "name": "SultanAlKillah",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_116/GeneralPortrait_116--1704888940261.webp"
+  },
+  {
+    "id": "117",
+    "name": "KingOlafson",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_117/GeneralPortrait_117--1704888940261.webp"
+  },
+  {
+    "id": "118",
+    "name": "Yigris",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_118/GeneralPortrait_118--1698066375635.webp"
+  },
+  {
+    "id": "119",
+    "name": "Tizi",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_119/GeneralPortrait_119--1737975812484.webp"
+  },
+  {
+    "id": "120",
+    "name": "Hasan",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_120/GeneralPortrait_120--1741777894735.webp"
+  },
+  {
+    "id": "121",
+    "name": "Diana",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_121/GeneralPortrait_121--1744639420823.webp"
+  },
+  {
+    "id": "122",
+    "name": "Valenta",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_122/GeneralPortrait_122--1744639420823.webp"
+  },
+  {
+    "id": "123",
+    "name": "Garrik",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_123/GeneralPortrait_123--1749647692663.webp"
+  },
+  {
+    "id": "125",
+    "name": "Kaelrith",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_125/GeneralPortrait_125--1753350117848.webp"
+  },
+  {
+    "id": "126",
+    "name": "Edric",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_126/GeneralPortrait_126--1755248871632.webp"
+  },
+  {
+    "id": "127",
+    "name": "Barin",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_127/GeneralPortrait_127--1754046596076.webp"
+  },
+  {
+    "id": "124",
+    "name": "Ashira",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_124/GeneralPortrait_124--1749647692663.webp"
+  },
+  {
+    "id": "128",
+    "name": "RaidBoss1Full",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_128/GeneralPortrait_128--1760969931499.webp"
+  },
+  {
+    "id": "129",
+    "name": "RaidBoss1Mid",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_129/GeneralPortrait_129--1760969931499.webp"
+  },
+  {
+    "id": "130",
+    "name": "RaidBoss1Low",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_130/GeneralPortrait_130--1760969931499.webp"
+  },
+  {
+    "id": "131",
+    "name": "RaidBoss2Full",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_131/GeneralPortrait_131--1770040338308.webp"
+  },
+  {
+    "id": "132",
+    "name": "RaidBoss2Mid",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_132/GeneralPortrait_132--1770040338308.webp"
+  },
+  {
+    "id": "133",
+    "name": "RaidBoss2Low",
+    "type": "",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/General/Portrait/GeneralPortrait_133/GeneralPortrait_133--1770040338308.webp"
+  }
+]

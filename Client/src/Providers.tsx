@@ -6,6 +6,7 @@ import { EquipmentProvider } from './equipment/context/EquipmentContext';
 import { ResourceProvider } from './currency/context/ResourceContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TroopPickerProvider } from './components/TroopPickerModal';
+import { MetadataProvider } from './context/MetadataContext';
 import SharedSvgDefs from './components/SharedSvgDefs';
 
 export const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -15,12 +16,14 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({ children })
                 <ThemeProvider>
                     <CastleResourceProvider>
                         <ResourceProvider>
-                            <EquipmentProvider>
-                                <TroopPickerProvider>
-                                    <SharedSvgDefs />
-                                    {children}
-                                </TroopPickerProvider>
-                            </EquipmentProvider>
+                            <MetadataProvider>
+                                <EquipmentProvider>
+                                    <TroopPickerProvider>
+                                        <SharedSvgDefs />
+                                        {children}
+                                    </TroopPickerProvider>
+                                </EquipmentProvider>
+                            </MetadataProvider>
                         </ResourceProvider>
                     </CastleResourceProvider>
                 </ThemeProvider>

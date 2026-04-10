@@ -1,0 +1,3716 @@
+[
+  {
+    "id": 665,
+    "name": "Unknown",
+    "type": "Soldiers",
+    "image": null
+  },
+  {
+    "id": 652,
+    "name": "Armed citizen",
+    "type": "Peasant",
+    "image": null
+  },
+  {
+    "id": 746,
+    "name": "Militia",
+    "type": "Militia",
+    "image": null
+  },
+  {
+    "id": 602,
+    "name": "Spearman",
+    "type": "Speerman",
+    "image": "/game-data/troops/images/602.png"
+  },
+  {
+    "id": 628,
+    "name": "Veteran spearman",
+    "type": "Elitespeerman",
+    "image": "/game-data/troops/images/628.png"
+  },
+  {
+    "id": 603,
+    "name": "Maceman",
+    "type": "Mace",
+    "image": "/game-data/troops/images/603.png"
+  },
+  {
+    "id": 630,
+    "name": "Veteran maceman",
+    "type": "Elitemace",
+    "image": "/game-data/troops/images/630.png"
+  },
+  {
+    "id": 601,
+    "name": "Swordsman",
+    "type": "Swordman",
+    "image": "/game-data/troops/images/601.png"
+  },
+  {
+    "id": 724,
+    "name": "Veteran swordsman",
+    "type": "Eliteswordman",
+    "image": "/game-data/troops/images/724.png"
+  },
+  {
+    "id": 604,
+    "name": "Halberdier",
+    "type": "Halberd",
+    "image": "/game-data/troops/images/604.png"
+  },
+  {
+    "id": 308,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/308.png"
+  },
+  {
+    "id": 2000,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/2000.png"
+  },
+  {
+    "id": 2001,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/2001.png"
+  },
+  {
+    "id": 2002,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/2002.png"
+  },
+  {
+    "id": 2003,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/2003.png"
+  },
+  {
+    "id": 2004,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/2004.png"
+  },
+  {
+    "id": 2005,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/2005.png"
+  },
+  {
+    "id": 2006,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/2006.png"
+  },
+  {
+    "id": 2007,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/2007.png"
+  },
+  {
+    "id": 2008,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/2008.png"
+  },
+  {
+    "id": 2009,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "/game-data/troops/images/2009.png"
+  },
+  {
+    "id": 605,
+    "name": "Two-handed swordsman",
+    "type": "Twohandedsword",
+    "image": "/game-data/troops/images/605.png"
+  },
+  {
+    "id": 309,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/309.png"
+  },
+  {
+    "id": 2010,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/2010.png"
+  },
+  {
+    "id": 2011,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/2011.png"
+  },
+  {
+    "id": 2012,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/2012.png"
+  },
+  {
+    "id": 2013,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/2013.png"
+  },
+  {
+    "id": 2014,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/2014.png"
+  },
+  {
+    "id": 2015,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/2015.png"
+  },
+  {
+    "id": 2016,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/2016.png"
+  },
+  {
+    "id": 2017,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/2017.png"
+  },
+  {
+    "id": 2018,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/2018.png"
+  },
+  {
+    "id": 2019,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "/game-data/troops/images/2019.png"
+  },
+  {
+    "id": 148,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/148.png"
+  },
+  {
+    "id": 2020,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/2020.png"
+  },
+  {
+    "id": 2021,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/2021.png"
+  },
+  {
+    "id": 2022,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/2022.png"
+  },
+  {
+    "id": 2023,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/2023.png"
+  },
+  {
+    "id": 2024,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/2024.png"
+  },
+  {
+    "id": 2025,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/2025.png"
+  },
+  {
+    "id": 2026,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/2026.png"
+  },
+  {
+    "id": 2027,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/2027.png"
+  },
+  {
+    "id": 2028,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/2028.png"
+  },
+  {
+    "id": 2029,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "/game-data/troops/images/2029.png"
+  },
+  {
+    "id": 150,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/150.png"
+  },
+  {
+    "id": 2030,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/2030.png"
+  },
+  {
+    "id": 2031,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/2031.png"
+  },
+  {
+    "id": 2032,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/2032.png"
+  },
+  {
+    "id": 2033,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/2033.png"
+  },
+  {
+    "id": 2034,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/2034.png"
+  },
+  {
+    "id": 2035,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/2035.png"
+  },
+  {
+    "id": 2036,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/2036.png"
+  },
+  {
+    "id": 2037,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/2037.png"
+  },
+  {
+    "id": 2038,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/2038.png"
+  },
+  {
+    "id": 2039,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "/game-data/troops/images/2039.png"
+  },
+  {
+    "id": 606,
+    "name": "Archer",
+    "type": "Archer",
+    "image": "/game-data/troops/images/606.png"
+  },
+  {
+    "id": 608,
+    "name": "Bowman",
+    "type": "Bowman",
+    "image": "/game-data/troops/images/608.png"
+  },
+  {
+    "id": 631,
+    "name": "Veteran bowman",
+    "type": "Elitebowman",
+    "image": "/game-data/troops/images/631.png"
+  },
+  {
+    "id": 610,
+    "name": "Longbowman",
+    "type": "Longbowman",
+    "image": "/game-data/troops/images/610.png"
+  },
+  {
+    "id": 311,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/311.png"
+  },
+  {
+    "id": 2040,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/2040.png"
+  },
+  {
+    "id": 2041,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/2041.png"
+  },
+  {
+    "id": 2042,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/2042.png"
+  },
+  {
+    "id": 2043,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/2043.png"
+  },
+  {
+    "id": 2044,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/2044.png"
+  },
+  {
+    "id": 2045,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/2045.png"
+  },
+  {
+    "id": 2046,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/2046.png"
+  },
+  {
+    "id": 2047,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/2047.png"
+  },
+  {
+    "id": 2048,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/2048.png"
+  },
+  {
+    "id": 2049,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "/game-data/troops/images/2049.png"
+  },
+  {
+    "id": 607,
+    "name": "Crossbowman",
+    "type": "Crossbowman",
+    "image": "/game-data/troops/images/607.png"
+  },
+  {
+    "id": 636,
+    "name": "Veteran crossbowman",
+    "type": "Elitecrossbowman",
+    "image": "/game-data/troops/images/636.png"
+  },
+  {
+    "id": 609,
+    "name": "Heavy crossbowman",
+    "type": "Heavycrossbowman",
+    "image": "/game-data/troops/images/609.png"
+  },
+  {
+    "id": 312,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/312.png"
+  },
+  {
+    "id": 2050,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/2050.png"
+  },
+  {
+    "id": 2051,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/2051.png"
+  },
+  {
+    "id": 2052,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/2052.png"
+  },
+  {
+    "id": 2053,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/2053.png"
+  },
+  {
+    "id": 2054,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/2054.png"
+  },
+  {
+    "id": 2055,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/2055.png"
+  },
+  {
+    "id": 2056,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/2056.png"
+  },
+  {
+    "id": 2057,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/2057.png"
+  },
+  {
+    "id": 2058,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/2058.png"
+  },
+  {
+    "id": 2059,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "/game-data/troops/images/2059.png"
+  },
+  {
+    "id": 149,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/149.png"
+  },
+  {
+    "id": 2060,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/2060.png"
+  },
+  {
+    "id": 2061,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/2061.png"
+  },
+  {
+    "id": 2062,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/2062.png"
+  },
+  {
+    "id": 2063,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/2063.png"
+  },
+  {
+    "id": 2064,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/2064.png"
+  },
+  {
+    "id": 2065,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/2065.png"
+  },
+  {
+    "id": 2066,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/2066.png"
+  },
+  {
+    "id": 2067,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/2067.png"
+  },
+  {
+    "id": 2068,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/2068.png"
+  },
+  {
+    "id": 2069,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "/game-data/troops/images/2069.png"
+  },
+  {
+    "id": 151,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/151.png"
+  },
+  {
+    "id": 2070,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/2070.png"
+  },
+  {
+    "id": 2071,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/2071.png"
+  },
+  {
+    "id": 2072,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/2072.png"
+  },
+  {
+    "id": 2073,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/2073.png"
+  },
+  {
+    "id": 2074,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/2074.png"
+  },
+  {
+    "id": 2075,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/2075.png"
+  },
+  {
+    "id": 2076,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/2076.png"
+  },
+  {
+    "id": 2077,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/2077.png"
+  },
+  {
+    "id": 2078,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/2078.png"
+  },
+  {
+    "id": 2079,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "/game-data/troops/images/2079.png"
+  },
+  {
+    "id": 9,
+    "name": "Veteran demon horror",
+    "type": "EliteRankrewardmelee",
+    "image": "/game-data/troops/images/9.png"
+  },
+  {
+    "id": 10,
+    "name": "Veteran deathly horror",
+    "type": "EliteRankrewardrange",
+    "image": "/game-data/troops/images/10.png"
+  },
+  {
+    "id": 714,
+    "name": "Demon horror",
+    "type": "Rankrewardmelee",
+    "image": "/game-data/troops/images/714.png"
+  },
+  {
+    "id": 715,
+    "name": "Deathly horror",
+    "type": "Rankrewardrange",
+    "image": "/game-data/troops/images/715.png"
+  },
+  {
+    "id": 58,
+    "name": "Star-spangled knight",
+    "type": "RankrewardmeleeUSA",
+    "image": "/game-data/troops/images/58.png"
+  },
+  {
+    "id": 59,
+    "name": "Star-spangled crossbowman",
+    "type": "RankrewardrangeUSA",
+    "image": "/game-data/troops/images/59.png"
+  },
+  {
+    "id": 40,
+    "name": "Skeleton warrior",
+    "type": "Renegadeskeletonspeerman",
+    "image": "/game-data/troops/images/40.png"
+  },
+  {
+    "id": 41,
+    "name": "Skeleton bowman",
+    "type": "Renegadeskeletonbowman",
+    "image": "/game-data/troops/images/41.png"
+  },
+  {
+    "id": 781,
+    "name": "Master swordsman",
+    "type": "Masterswordsman",
+    "image": "/game-data/troops/images/781.png"
+  },
+  {
+    "id": 782,
+    "name": "Master archer",
+    "type": "MasterArcher",
+    "image": "/game-data/troops/images/782.png"
+  },
+  {
+    "id": 655,
+    "name": "Traveling knight",
+    "type": "Eventknight",
+    "image": "/game-data/troops/images/655.png"
+  },
+  {
+    "id": 656,
+    "name": "Traveling crossbowman",
+    "type": "Eventcrossbowman",
+    "image": "/game-data/troops/images/656.png"
+  },
+  {
+    "id": 672,
+    "name": "Knight of the Kingsguard",
+    "type": "Kingsmace",
+    "image": "/game-data/troops/images/672.png"
+  },
+  {
+    "id": 664,
+    "name": "Crossbowman of the Kingsguard",
+    "type": "Kingscrossbowman",
+    "image": "/game-data/troops/images/664.png"
+  },
+  {
+    "id": 686,
+    "name": "Sentinel of the Kingsguard",
+    "type": "Kingsspeerman",
+    "image": "/game-data/troops/images/686.png"
+  },
+  {
+    "id": 687,
+    "name": "Scout of the Kingsguard",
+    "type": "Kingsbowman",
+    "image": "/game-data/troops/images/687.png"
+  },
+  {
+    "id": 75,
+    "name": "Knight of the Elite Guard",
+    "type": "Elitekingsmace",
+    "image": "/game-data/troops/images/75.png"
+  },
+  {
+    "id": 76,
+    "name": "Crossbowman of the Elite Guard",
+    "type": "Elitekingscrossbowman",
+    "image": "/game-data/troops/images/76.png"
+  },
+  {
+    "id": 22,
+    "name": "Berserker",
+    "type": "ValkyrieMelee",
+    "image": "/game-data/troops/images/22.png"
+  },
+  {
+    "id": 23,
+    "name": "Spear woman",
+    "type": "ValkyrieRange",
+    "image": "/game-data/troops/images/23.png"
+  },
+  {
+    "id": 126,
+    "name": "Shapeshifter legionnaire",
+    "type": "ShapeshifterMeleeJoker",
+    "image": "/game-data/troops/images/126.png"
+  },
+  {
+    "id": 127,
+    "name": "Shapeshifter sharpshooter",
+    "type": "ShapeshifterRangedJoker",
+    "image": "/game-data/troops/images/127.png"
+  },
+  {
+    "id": 684,
+    "name": "Marauder",
+    "type": "Marauder",
+    "image": "/game-data/troops/images/684.png"
+  },
+  {
+    "id": 685,
+    "name": "Pyromaniac",
+    "type": "Firedevil",
+    "image": "/game-data/troops/images/685.png"
+  },
+  {
+    "id": 765,
+    "name": "Veteran marauder",
+    "type": "Elitemarauder",
+    "image": "/game-data/troops/images/765.png"
+  },
+  {
+    "id": 766,
+    "name": "Veteran pyromaniac",
+    "type": "Elitefiredevil",
+    "image": "/game-data/troops/images/766.png"
+  },
+  {
+    "id": 677,
+    "name": "Norseman with axe",
+    "type": "Icemelee",
+    "image": null
+  },
+  {
+    "id": 678,
+    "name": "Norseman with bow",
+    "type": "Icerange",
+    "image": null
+  },
+  {
+    "id": 690,
+    "name": "Renegade Norseman warrior",
+    "type": "Iceeventmelee",
+    "image": "/game-data/troops/images/690.png"
+  },
+  {
+    "id": 691,
+    "name": "Renegade Norseman bowman",
+    "type": "Iceeventrange",
+    "image": "/game-data/troops/images/691.png"
+  },
+  {
+    "id": 675,
+    "name": "Saber warrior",
+    "type": "Desertmelee",
+    "image": null
+  },
+  {
+    "id": 676,
+    "name": "Desert bowman",
+    "type": "Desertrange",
+    "image": null
+  },
+  {
+    "id": 688,
+    "name": "Renegade saber warrior",
+    "type": "Deserteventmelee",
+    "image": "/game-data/troops/images/688.png"
+  },
+  {
+    "id": 689,
+    "name": "Renegade desert bowman",
+    "type": "Deserteventrange",
+    "image": "/game-data/troops/images/689.png"
+  },
+  {
+    "id": 679,
+    "name": "Cultist fanatic",
+    "type": "Firemelee",
+    "image": null
+  },
+  {
+    "id": 680,
+    "name": "Cultist bowman",
+    "type": "Firerange",
+    "image": null
+  },
+  {
+    "id": 692,
+    "name": "Renegade cultist warrior",
+    "type": "Fireeventmelee",
+    "image": "/game-data/troops/images/692.png"
+  },
+  {
+    "id": 693,
+    "name": "Renegade cultist bowman",
+    "type": "Fireeventrange",
+    "image": "/game-data/troops/images/693.png"
+  },
+  {
+    "id": 673,
+    "name": "Dragon claws",
+    "type": "Dragonclaws",
+    "image": "/game-data/troops/images/673.png"
+  },
+  {
+    "id": 674,
+    "name": "Dragon fire",
+    "type": "Dragonjaw",
+    "image": "/game-data/troops/images/674.png"
+  },
+  {
+    "id": 720,
+    "name": "Wolfhound",
+    "type": "Tinoswolves",
+    "image": "/game-data/troops/images/720.png"
+  },
+  {
+    "id": 49,
+    "name": "Direwolf",
+    "type": "Elitetinoswolves",
+    "image": "/game-data/troops/images/49.png"
+  },
+  {
+    "id": 277,
+    "name": "Direwolf",
+    "type": "Elitetinoswolves",
+    "image": "/game-data/troops/images/277.png"
+  },
+  {
+    "id": 721,
+    "name": "Barbarian",
+    "type": "Conan",
+    "image": "/game-data/troops/images/721.png"
+  },
+  {
+    "id": 723,
+    "name": "Flame bearer",
+    "type": "Flamethrower",
+    "image": "/game-data/troops/images/723.png"
+  },
+  {
+    "id": 722,
+    "name": "Composite bowman",
+    "type": "Arrowthrower",
+    "image": "/game-data/troops/images/722.png"
+  },
+  {
+    "id": 11,
+    "name": "Veteran flame bearer",
+    "type": "EliteFlamethrower",
+    "image": "/game-data/troops/images/11.png"
+  },
+  {
+    "id": 12,
+    "name": "Veteran composite bowman",
+    "type": "EliteArrowthrower",
+    "image": "/game-data/troops/images/12.png"
+  },
+  {
+    "id": 118,
+    "name": "Bone rattler",
+    "type": "Bonerattler",
+    "image": "/game-data/troops/images/118.png"
+  },
+  {
+    "id": 117,
+    "name": "Fire witch",
+    "type": "Firewitch",
+    "image": "/game-data/troops/images/117.png"
+  },
+  {
+    "id": 120,
+    "name": "Skeletal scytheman",
+    "type": "Skeletalscytheman",
+    "image": "/game-data/troops/images/120.png"
+  },
+  {
+    "id": 119,
+    "name": "Skeletal hunter",
+    "type": "Skeletalarcher",
+    "image": "/game-data/troops/images/119.png"
+  },
+  {
+    "id": 662,
+    "name": "Skeleton warrior",
+    "type": "Skeletonspeerman",
+    "image": "/game-data/troops/images/662.png"
+  },
+  {
+    "id": 663,
+    "name": "Skeleton bowman",
+    "type": "Skeletonbowman",
+    "image": "/game-data/troops/images/663.png"
+  },
+  {
+    "id": 698,
+    "name": "Cow berdier",
+    "type": "Cowhalberd",
+    "image": "/game-data/troops/images/698.png"
+  },
+  {
+    "id": 699,
+    "name": "Longbow ox",
+    "type": "Cowbowman",
+    "image": "/game-data/troops/images/699.png"
+  },
+  {
+    "id": 753,
+    "name": "Demon slayer",
+    "type": "Crusademelee",
+    "image": "/game-data/troops/images/753.png"
+  },
+  {
+    "id": 754,
+    "name": "Assassin",
+    "type": "Crusaderange",
+    "image": "/game-data/troops/images/754.png"
+  },
+  {
+    "id": 68,
+    "name": "Cave smasher",
+    "type": "Ogermace",
+    "image": "/game-data/troops/images/68.png"
+  },
+  {
+    "id": 74,
+    "name": "Cave hunter",
+    "type": "Ogercrossbow",
+    "image": "/game-data/troops/images/74.png"
+  },
+  {
+    "id": 78,
+    "name": "Renegade cave smasher",
+    "type": "Renegadeogermace",
+    "image": "/game-data/troops/images/78.png"
+  },
+  {
+    "id": 79,
+    "name": "Renegade cave hunter",
+    "type": "Renegadeogercrossbow",
+    "image": "/game-data/troops/images/79.png"
+  },
+  {
+    "id": 7,
+    "name": "Cave smasher",
+    "type": "Ogermace",
+    "image": "/game-data/troops/images/7.png"
+  },
+  {
+    "id": 8,
+    "name": "Cave hunter",
+    "type": "Ogercrossbow",
+    "image": "/game-data/troops/images/8.png"
+  },
+  {
+    "id": 716,
+    "name": "Swashbuckler",
+    "type": "Piratespeerman",
+    "image": "/game-data/troops/images/716.png"
+  },
+  {
+    "id": 701,
+    "name": "Swashbuckler",
+    "type": "Piratespeerman",
+    "image": "/game-data/troops/images/701.png"
+  },
+  {
+    "id": 702,
+    "name": "Swashbuckler",
+    "type": "Piratespeerman",
+    "image": "/game-data/troops/images/702.png"
+  },
+  {
+    "id": 717,
+    "name": "Sail ripper",
+    "type": "Piratebowman",
+    "image": "/game-data/troops/images/717.png"
+  },
+  {
+    "id": 703,
+    "name": "Sail ripper",
+    "type": "Piratebowman",
+    "image": "/game-data/troops/images/703.png"
+  },
+  {
+    "id": 704,
+    "name": "Sail ripper",
+    "type": "Piratebowman",
+    "image": "/game-data/troops/images/704.png"
+  },
+  {
+    "id": 718,
+    "name": "Tentacle",
+    "type": "Tentacle",
+    "image": "/game-data/troops/images/718.png"
+  },
+  {
+    "id": 719,
+    "name": "Kraken head",
+    "type": "Octopushead",
+    "image": "/game-data/troops/images/719.png"
+  },
+  {
+    "id": 759,
+    "name": "Renegade swashbuckler",
+    "type": "Renegadepiratemelee",
+    "image": "/game-data/troops/images/759.png"
+  },
+  {
+    "id": 705,
+    "name": "Renegade swashbuckler",
+    "type": "Renegadepiratemelee",
+    "image": "/game-data/troops/images/705.png"
+  },
+  {
+    "id": 706,
+    "name": "Renegade swashbuckler",
+    "type": "Renegadepiratemelee",
+    "image": "/game-data/troops/images/706.png"
+  },
+  {
+    "id": 760,
+    "name": "Renegade sail ripper",
+    "type": "Renegadepiraterange",
+    "image": "/game-data/troops/images/760.png"
+  },
+  {
+    "id": 707,
+    "name": "Renegade sail ripper",
+    "type": "Renegadepiraterange",
+    "image": "/game-data/troops/images/707.png"
+  },
+  {
+    "id": 708,
+    "name": "Renegade sail ripper",
+    "type": "Renegadepiraterange",
+    "image": "/game-data/troops/images/708.png"
+  },
+  {
+    "id": 13,
+    "name": "Muscle man",
+    "type": "AuxiliaryMelee",
+    "image": "/game-data/troops/images/13.png"
+  },
+  {
+    "id": 14,
+    "name": "Marksman",
+    "type": "AuxiliaryRange",
+    "image": "/game-data/troops/images/14.png"
+  },
+  {
+    "id": 710,
+    "name": "Bear warrior",
+    "type": "Bluemelee",
+    "image": "/game-data/troops/images/710.png"
+  },
+  {
+    "id": 711,
+    "name": "Bear bowman",
+    "type": "Bluerange",
+    "image": "/game-data/troops/images/711.png"
+  },
+  {
+    "id": 712,
+    "name": "Lion warrior",
+    "type": "Redmelee",
+    "image": "/game-data/troops/images/712.png"
+  },
+  {
+    "id": 713,
+    "name": "Lion bowman",
+    "type": "Redrange",
+    "image": "/game-data/troops/images/713.png"
+  },
+  {
+    "id": 18,
+    "name": "Imperial guardsman",
+    "type": "BerimondRewardMelee",
+    "image": "/game-data/troops/images/18.png"
+  },
+  {
+    "id": 19,
+    "name": "Imperial bowman",
+    "type": "BerimondRewardRange",
+    "image": "/game-data/troops/images/19.png"
+  },
+  {
+    "id": 20,
+    "name": "Imperial knight",
+    "type": "EliteBerimondRewardMelee",
+    "image": "/game-data/troops/images/20.png"
+  },
+  {
+    "id": 21,
+    "name": "Imperial marksman",
+    "type": "EliteBerimondRewardRange",
+    "image": "/game-data/troops/images/21.png"
+  },
+  {
+    "id": 743,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/743.png"
+  },
+  {
+    "id": 744,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/744.png"
+  },
+  {
+    "id": 725,
+    "name": "Khan guard",
+    "type": "Khanguard",
+    "image": "/game-data/troops/images/725.png"
+  },
+  {
+    "id": 726,
+    "name": "Saber cleaver",
+    "type": "Saberslasher",
+    "image": "/game-data/troops/images/726.png"
+  },
+  {
+    "id": 727,
+    "name": "Slingshot",
+    "type": "Slingshotmarksman",
+    "image": "/game-data/troops/images/727.png"
+  },
+  {
+    "id": 5,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/5.png"
+  },
+  {
+    "id": 6,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/6.png"
+  },
+  {
+    "id": 728,
+    "name": "Renegade lancer",
+    "type": "Renegadepikeman",
+    "image": "/game-data/troops/images/728.png"
+  },
+  {
+    "id": 729,
+    "name": "Renegade spear thrower",
+    "type": "Renegadespearthrower",
+    "image": "/game-data/troops/images/729.png"
+  },
+  {
+    "id": 34,
+    "name": "Renegade sai warrior",
+    "type": "SamuraiAttackerMelee",
+    "image": "/game-data/troops/images/34.png"
+  },
+  {
+    "id": 35,
+    "name": "Renegade kunai thrower",
+    "type": "SamuraiAttackerRange",
+    "image": "/game-data/troops/images/35.png"
+  },
+  {
+    "id": 36,
+    "name": "Renegade katana warrior",
+    "type": "SamuraiDefenderMelee",
+    "image": "/game-data/troops/images/36.png"
+  },
+  {
+    "id": 37,
+    "name": "Renegade bow master",
+    "type": "SamuraiDefenderRange",
+    "image": "/game-data/troops/images/37.png"
+  },
+  {
+    "id": 38,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/38.png"
+  },
+  {
+    "id": 39,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/39.png"
+  },
+  {
+    "id": 42,
+    "name": "Pumpkin butcher",
+    "type": "HalloweenMelee",
+    "image": "/game-data/troops/images/42.png"
+  },
+  {
+    "id": 43,
+    "name": "Raven chomper",
+    "type": "HalloweenRange",
+    "image": "/game-data/troops/images/43.png"
+  },
+  {
+    "id": 48,
+    "name": "Bone huntress",
+    "type": "WinterAttackerMelee",
+    "image": "/game-data/troops/images/48.png"
+  },
+  {
+    "id": 50,
+    "name": "Frost bowman",
+    "type": "WinterAttackerRange",
+    "image": "/game-data/troops/images/50.png"
+  },
+  {
+    "id": 51,
+    "name": "Master bone huntress",
+    "type": "EliteWinterAttackerMelee",
+    "image": "/game-data/troops/images/51.png"
+  },
+  {
+    "id": 52,
+    "name": "Master frost bowman",
+    "type": "EliteWinterAttackerRange",
+    "image": "/game-data/troops/images/52.png"
+  },
+  {
+    "id": 83,
+    "name": "Forest warrior",
+    "type": "EliteSpringAttackerMelee",
+    "image": "/game-data/troops/images/83.png"
+  },
+  {
+    "id": 84,
+    "name": "Forest hunter",
+    "type": "EliteSpringAttackerRange",
+    "image": "/game-data/troops/images/84.png"
+  },
+  {
+    "id": 85,
+    "name": "Forest guardian",
+    "type": "EliteSpringDefenderMelee",
+    "image": "/game-data/troops/images/85.png"
+  },
+  {
+    "id": 86,
+    "name": "Forest bowman",
+    "type": "EliteSpringDefenderRange",
+    "image": "/game-data/troops/images/86.png"
+  },
+  {
+    "id": 132,
+    "name": "Gnomad warrior",
+    "type": "EliteChristmasAttackerMelee",
+    "image": "/game-data/troops/images/132.png"
+  },
+  {
+    "id": 133,
+    "name": "Gnomad archer",
+    "type": "EliteChristmasAttackerRange",
+    "image": "/game-data/troops/images/133.png"
+  },
+  {
+    "id": 134,
+    "name": "Gingerbread brawler",
+    "type": "EliteChristmasDefenderMelee",
+    "image": "/game-data/troops/images/134.png"
+  },
+  {
+    "id": 135,
+    "name": "Gingerbread sniper",
+    "type": "EliteChristmasDefenderRange",
+    "image": "/game-data/troops/images/135.png"
+  },
+  {
+    "id": 657,
+    "name": "Shark tooth warrior",
+    "type": "Nativemelee",
+    "image": "/game-data/troops/images/657.png"
+  },
+  {
+    "id": 658,
+    "name": "Stone smasher",
+    "type": "Nativerange",
+    "image": "/game-data/troops/images/658.png"
+  },
+  {
+    "id": 767,
+    "name": "Renegade shark tooth warrior",
+    "type": "Renegadenativemelee",
+    "image": "/game-data/troops/images/767.png"
+  },
+  {
+    "id": 768,
+    "name": "Renegade stone smasher",
+    "type": "Renegadenativerange",
+    "image": "/game-data/troops/images/768.png"
+  },
+  {
+    "id": 183,
+    "name": "Cultist brawler",
+    "type": "MayaMelee",
+    "image": "/game-data/troops/images/183.png"
+  },
+  {
+    "id": 184,
+    "name": "Cultist slingshot",
+    "type": "MayaRange",
+    "image": "/game-data/troops/images/184.png"
+  },
+  {
+    "id": 185,
+    "name": "Cultist warrior",
+    "type": "MayaEliteMelee",
+    "image": "/game-data/troops/images/185.png"
+  },
+  {
+    "id": 186,
+    "name": "Cultist hunter",
+    "type": "MayaEliteRange",
+    "image": "/game-data/troops/images/186.png"
+  },
+  {
+    "id": 187,
+    "name": "Wilderness brawler",
+    "type": "RenegadeMayaMelee",
+    "image": "/game-data/troops/images/187.png"
+  },
+  {
+    "id": 188,
+    "name": "Wilderness slingshot",
+    "type": "RenegadeMayaRange",
+    "image": "/game-data/troops/images/188.png"
+  },
+  {
+    "id": 189,
+    "name": "Wilderness warrior",
+    "type": "RenegadeMayaEliteMelee",
+    "image": "/game-data/troops/images/189.png"
+  },
+  {
+    "id": 190,
+    "name": "Wilderness hunter",
+    "type": "RenegadeMayaEliteRange",
+    "image": "/game-data/troops/images/190.png"
+  },
+  {
+    "id": 100,
+    "name": "Shamrock huntsman",
+    "type": "StpatricksDefenderMelee",
+    "image": "/game-data/troops/images/100.png"
+  },
+  {
+    "id": 101,
+    "name": "Shamrock assassin",
+    "type": "StpatricksDefenderRange",
+    "image": "/game-data/troops/images/101.png"
+  },
+  {
+    "id": 102,
+    "name": "Spring huntress",
+    "type": "EasterDefenderMelee",
+    "image": "/game-data/troops/images/102.png"
+  },
+  {
+    "id": 103,
+    "name": "Spring footsoldier",
+    "type": "EasterDefenderRange",
+    "image": "/game-data/troops/images/103.png"
+  },
+  {
+    "id": 146,
+    "name": "Knight of the Throne-watcher",
+    "type": "AlienRerollDefenderMelee",
+    "image": "/game-data/troops/images/146.png"
+  },
+  {
+    "id": 147,
+    "name": "Marksman of the Throne-watcher",
+    "type": "AlienRerollDefenderRange",
+    "image": "/game-data/troops/images/147.png"
+  },
+  {
+    "id": 191,
+    "name": "Corrupted assassin",
+    "type": "CorruptedAssassin",
+    "image": "/game-data/troops/images/191.png"
+  },
+  {
+    "id": 192,
+    "name": "Corrupted crossbowman",
+    "type": "CorruptedCrossbowman",
+    "image": "/game-data/troops/images/192.png"
+  },
+  {
+    "id": 193,
+    "name": "Corrupted veteran halberdier",
+    "type": "CorruptedEliteHalberdier",
+    "image": "/game-data/troops/images/193.png"
+  },
+  {
+    "id": 194,
+    "name": "Corrupted veteran longbowman",
+    "type": "CorruptedEliteLongbowman",
+    "image": "/game-data/troops/images/194.png"
+  },
+  {
+    "id": 1337,
+    "name": "QuickAttack",
+    "type": "QuickAttack",
+    "image": null
+  },
+  {
+    "id": 205,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/205.png"
+  },
+  {
+    "id": 206,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/206.png"
+  },
+  {
+    "id": 207,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/207.png"
+  },
+  {
+    "id": 208,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/208.png"
+  },
+  {
+    "id": 209,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/209.png"
+  },
+  {
+    "id": 210,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/210.png"
+  },
+  {
+    "id": 211,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/211.png"
+  },
+  {
+    "id": 212,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/212.png"
+  },
+  {
+    "id": 213,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/213.png"
+  },
+  {
+    "id": 214,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/214.png"
+  },
+  {
+    "id": 216,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "/game-data/troops/images/216.png"
+  },
+  {
+    "id": 217,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/217.png"
+  },
+  {
+    "id": 218,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/218.png"
+  },
+  {
+    "id": 219,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/219.png"
+  },
+  {
+    "id": 220,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/220.png"
+  },
+  {
+    "id": 221,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/221.png"
+  },
+  {
+    "id": 222,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/222.png"
+  },
+  {
+    "id": 223,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/223.png"
+  },
+  {
+    "id": 224,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/224.png"
+  },
+  {
+    "id": 225,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/225.png"
+  },
+  {
+    "id": 226,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/226.png"
+  },
+  {
+    "id": 227,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/227.png"
+  },
+  {
+    "id": 489,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "/game-data/troops/images/489.png"
+  },
+  {
+    "id": 228,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/228.png"
+  },
+  {
+    "id": 229,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/229.png"
+  },
+  {
+    "id": 230,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/230.png"
+  },
+  {
+    "id": 231,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/231.png"
+  },
+  {
+    "id": 232,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/232.png"
+  },
+  {
+    "id": 233,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/233.png"
+  },
+  {
+    "id": 234,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/234.png"
+  },
+  {
+    "id": 235,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/235.png"
+  },
+  {
+    "id": 236,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/236.png"
+  },
+  {
+    "id": 237,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/237.png"
+  },
+  {
+    "id": 238,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/238.png"
+  },
+  {
+    "id": 493,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "/game-data/troops/images/493.png"
+  },
+  {
+    "id": 820,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/820.png"
+  },
+  {
+    "id": 821,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/821.png"
+  },
+  {
+    "id": 822,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/822.png"
+  },
+  {
+    "id": 823,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/823.png"
+  },
+  {
+    "id": 824,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/824.png"
+  },
+  {
+    "id": 825,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/825.png"
+  },
+  {
+    "id": 826,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/826.png"
+  },
+  {
+    "id": 827,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/827.png"
+  },
+  {
+    "id": 828,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/828.png"
+  },
+  {
+    "id": 829,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "/game-data/troops/images/829.png"
+  },
+  {
+    "id": 830,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/830.png"
+  },
+  {
+    "id": 831,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/831.png"
+  },
+  {
+    "id": 832,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/832.png"
+  },
+  {
+    "id": 833,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/833.png"
+  },
+  {
+    "id": 834,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/834.png"
+  },
+  {
+    "id": 835,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/835.png"
+  },
+  {
+    "id": 836,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/836.png"
+  },
+  {
+    "id": 837,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/837.png"
+  },
+  {
+    "id": 838,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/838.png"
+  },
+  {
+    "id": 839,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "/game-data/troops/images/839.png"
+  },
+  {
+    "id": 860,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "/game-data/troops/images/860.png"
+  },
+  {
+    "id": 861,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "/game-data/troops/images/861.png"
+  },
+  {
+    "id": 862,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "/game-data/troops/images/862.png"
+  },
+  {
+    "id": 863,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "/game-data/troops/images/863.png"
+  },
+  {
+    "id": 864,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "/game-data/troops/images/864.png"
+  },
+  {
+    "id": 865,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "/game-data/troops/images/865.png"
+  },
+  {
+    "id": 866,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "/game-data/troops/images/866.png"
+  },
+  {
+    "id": 867,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "/game-data/troops/images/867.png"
+  },
+  {
+    "id": 868,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "/game-data/troops/images/868.png"
+  },
+  {
+    "id": 869,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "/game-data/troops/images/869.png"
+  },
+  {
+    "id": 870,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "/game-data/troops/images/870.png"
+  },
+  {
+    "id": 871,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "/game-data/troops/images/871.png"
+  },
+  {
+    "id": 872,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "/game-data/troops/images/872.png"
+  },
+  {
+    "id": 873,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "/game-data/troops/images/873.png"
+  },
+  {
+    "id": 874,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "/game-data/troops/images/874.png"
+  },
+  {
+    "id": 875,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "/game-data/troops/images/875.png"
+  },
+  {
+    "id": 876,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "/game-data/troops/images/876.png"
+  },
+  {
+    "id": 877,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "/game-data/troops/images/877.png"
+  },
+  {
+    "id": 878,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "/game-data/troops/images/878.png"
+  },
+  {
+    "id": 879,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "/game-data/troops/images/879.png"
+  },
+  {
+    "id": 900,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/900.png"
+  },
+  {
+    "id": 901,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/901.png"
+  },
+  {
+    "id": 902,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/902.png"
+  },
+  {
+    "id": 903,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/903.png"
+  },
+  {
+    "id": 904,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/904.png"
+  },
+  {
+    "id": 905,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/905.png"
+  },
+  {
+    "id": 906,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/906.png"
+  },
+  {
+    "id": 907,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/907.png"
+  },
+  {
+    "id": 908,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/908.png"
+  },
+  {
+    "id": 909,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "/game-data/troops/images/909.png"
+  },
+  {
+    "id": 910,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/910.png"
+  },
+  {
+    "id": 911,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/911.png"
+  },
+  {
+    "id": 912,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/912.png"
+  },
+  {
+    "id": 913,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/913.png"
+  },
+  {
+    "id": 914,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/914.png"
+  },
+  {
+    "id": 915,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/915.png"
+  },
+  {
+    "id": 916,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/916.png"
+  },
+  {
+    "id": 917,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/917.png"
+  },
+  {
+    "id": 918,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/918.png"
+  },
+  {
+    "id": 919,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "/game-data/troops/images/919.png"
+  },
+  {
+    "id": 940,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/940.png"
+  },
+  {
+    "id": 941,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/941.png"
+  },
+  {
+    "id": 942,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/942.png"
+  },
+  {
+    "id": 943,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/943.png"
+  },
+  {
+    "id": 944,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/944.png"
+  },
+  {
+    "id": 945,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/945.png"
+  },
+  {
+    "id": 946,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/946.png"
+  },
+  {
+    "id": 947,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/947.png"
+  },
+  {
+    "id": 948,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/948.png"
+  },
+  {
+    "id": 949,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "/game-data/troops/images/949.png"
+  },
+  {
+    "id": 950,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/950.png"
+  },
+  {
+    "id": 951,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/951.png"
+  },
+  {
+    "id": 952,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/952.png"
+  },
+  {
+    "id": 953,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/953.png"
+  },
+  {
+    "id": 954,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/954.png"
+  },
+  {
+    "id": 955,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/955.png"
+  },
+  {
+    "id": 956,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/956.png"
+  },
+  {
+    "id": 957,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/957.png"
+  },
+  {
+    "id": 958,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/958.png"
+  },
+  {
+    "id": 959,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "/game-data/troops/images/959.png"
+  },
+  {
+    "id": 960,
+    "name": "Forest warrior",
+    "type": "EliteSpringAttackerMelee",
+    "image": "/game-data/troops/images/960.png"
+  },
+  {
+    "id": 961,
+    "name": "Forest hunter",
+    "type": "EliteSpringAttackerRange",
+    "image": "/game-data/troops/images/961.png"
+  },
+  {
+    "id": 962,
+    "name": "Renegade swashbuckler",
+    "type": "Renegadepiratemelee",
+    "image": "/game-data/troops/images/962.png"
+  },
+  {
+    "id": 963,
+    "name": "Renegade sail ripper",
+    "type": "Renegadepiraterange",
+    "image": "/game-data/troops/images/963.png"
+  },
+  {
+    "id": 409,
+    "name": "Star-Spangled Veteran demon horror",
+    "type": "EliteRankrewardmeleeUSA",
+    "image": "/game-data/troops/images/409.png"
+  },
+  {
+    "id": 410,
+    "name": "Star-Spangled Veteran deathly horror",
+    "type": "EliteRankrewardrangeUSA",
+    "image": "/game-data/troops/images/410.png"
+  },
+  {
+    "id": 472,
+    "name": "Forsaken maiden",
+    "type": "ForsakenMaiden",
+    "image": "/game-data/troops/images/472.png"
+  },
+  {
+    "id": 473,
+    "name": "Forlorn ranger",
+    "type": "ForlornRanger",
+    "image": "/game-data/troops/images/473.png"
+  },
+  {
+    "id": 477,
+    "name": "Candy Cane Protector",
+    "type": "GingerBreadMaiden",
+    "image": "/game-data/troops/images/477.png"
+  },
+  {
+    "id": 478,
+    "name": "Jolly Gingerbread Sniper",
+    "type": "GingerBreadRanger",
+    "image": "/game-data/troops/images/478.png"
+  },
+  {
+    "id": 670,
+    "name": "Norseman with axe",
+    "type": "Axeviking",
+    "image": "/game-data/troops/images/670.png"
+  },
+  {
+    "id": 671,
+    "name": "Norseman with bow",
+    "type": "Bowviking",
+    "image": "/game-data/troops/images/671.png"
+  },
+  {
+    "id": 659,
+    "name": "Prince",
+    "type": "PrinceNoob",
+    "image": "/game-data/troops/images/659.png"
+  },
+  {
+    "id": 299,
+    "name": "Valkyrie Huntress",
+    "type": "EasterMeadRanger",
+    "image": "/game-data/troops/images/299.png"
+  },
+  {
+    "id": 336,
+    "name": "Guardian of Spring",
+    "type": "EasterMeadMace",
+    "image": "/game-data/troops/images/336.png"
+  },
+  {
+    "id": 347,
+    "name": "Celestial Marksman",
+    "type": "EasterMeadBow",
+    "image": "/game-data/troops/images/347.png"
+  },
+  {
+    "id": 513,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/513.png"
+  },
+  {
+    "id": 514,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/514.png"
+  },
+  {
+    "id": 515,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/515.png"
+  },
+  {
+    "id": 516,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/516.png"
+  },
+  {
+    "id": 517,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/517.png"
+  },
+  {
+    "id": 518,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/518.png"
+  },
+  {
+    "id": 519,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/519.png"
+  },
+  {
+    "id": 520,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/520.png"
+  },
+  {
+    "id": 521,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/521.png"
+  },
+  {
+    "id": 522,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/522.png"
+  },
+  {
+    "id": 523,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "/game-data/troops/images/523.png"
+  },
+  {
+    "id": 524,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/524.png"
+  },
+  {
+    "id": 525,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/525.png"
+  },
+  {
+    "id": 526,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/526.png"
+  },
+  {
+    "id": 527,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/527.png"
+  },
+  {
+    "id": 528,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/528.png"
+  },
+  {
+    "id": 529,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/529.png"
+  },
+  {
+    "id": 530,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/530.png"
+  },
+  {
+    "id": 531,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/531.png"
+  },
+  {
+    "id": 532,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/532.png"
+  },
+  {
+    "id": 533,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/533.png"
+  },
+  {
+    "id": 534,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "/game-data/troops/images/534.png"
+  },
+  {
+    "id": 535,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/535.png"
+  },
+  {
+    "id": 536,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/536.png"
+  },
+  {
+    "id": 537,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/537.png"
+  },
+  {
+    "id": 538,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/538.png"
+  },
+  {
+    "id": 539,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/539.png"
+  },
+  {
+    "id": 540,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/540.png"
+  },
+  {
+    "id": 541,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/541.png"
+  },
+  {
+    "id": 542,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/542.png"
+  },
+  {
+    "id": 543,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/543.png"
+  },
+  {
+    "id": 544,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/544.png"
+  },
+  {
+    "id": 545,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "/game-data/troops/images/545.png"
+  },
+  {
+    "id": 546,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/546.png"
+  },
+  {
+    "id": 547,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/547.png"
+  },
+  {
+    "id": 548,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/548.png"
+  },
+  {
+    "id": 549,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/549.png"
+  },
+  {
+    "id": 550,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/550.png"
+  },
+  {
+    "id": 551,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/551.png"
+  },
+  {
+    "id": 552,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/552.png"
+  },
+  {
+    "id": 553,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/553.png"
+  },
+  {
+    "id": 554,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/554.png"
+  },
+  {
+    "id": 555,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/555.png"
+  },
+  {
+    "id": 556,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "/game-data/troops/images/556.png"
+  },
+  {
+    "id": 15,
+    "name": "Fruit Pirate",
+    "type": "FruitPirate",
+    "image": "/game-data/troops/images/15.png"
+  },
+  {
+    "id": 358,
+    "name": "Summer Huntress",
+    "type": "SummerHuntress",
+    "image": "/game-data/troops/images/358.png"
+  },
+  {
+    "id": 369,
+    "name": "Fruit Breaker",
+    "type": "FruitBreaker",
+    "image": "/game-data/troops/images/369.png"
+  },
+  {
+    "id": 461,
+    "name": "Summer Marksman",
+    "type": "SummerMarksman",
+    "image": "/game-data/troops/images/461.png"
+  },
+  {
+    "id": 479,
+    "name": "Stein Smasher",
+    "type": "SteinSmasher",
+    "image": "/game-data/troops/images/479.png"
+  },
+  {
+    "id": 480,
+    "name": "Cask Marksmann",
+    "type": "CaskMarksmann",
+    "image": "/game-data/troops/images/480.png"
+  },
+  {
+    "id": 481,
+    "name": "Pretzel Guardian",
+    "type": "PretzelGuardian",
+    "image": "/game-data/troops/images/481.png"
+  },
+  {
+    "id": 482,
+    "name": "Bavarian Brewer",
+    "type": "BavarianBrewer",
+    "image": "/game-data/troops/images/482.png"
+  },
+  {
+    "id": 483,
+    "name": "Forsaken maiden",
+    "type": "ForsakenMaiden",
+    "image": "/game-data/troops/images/483.png"
+  },
+  {
+    "id": 484,
+    "name": "Forlorn ranger",
+    "type": "ForlornRanger",
+    "image": "/game-data/troops/images/484.png"
+  },
+  {
+    "id": 485,
+    "name": "Glacial Amazon Warrior",
+    "type": "GlacialAmazonWarrior",
+    "image": "/game-data/troops/images/485.png"
+  },
+  {
+    "id": 486,
+    "name": "Glacial Amazon Archer",
+    "type": "GlacialAmazonArcher",
+    "image": "/game-data/troops/images/486.png"
+  },
+  {
+    "id": 487,
+    "name": "Glacial Amazon Guardian",
+    "type": "GlacialAmazonGuardian",
+    "image": "/game-data/troops/images/487.png"
+  },
+  {
+    "id": 488,
+    "name": "Glacial Amazon Huntress",
+    "type": "GlacialAmazonHuntress",
+    "image": "/game-data/troops/images/488.png"
+  },
+  {
+    "id": 494,
+    "name": "Christmas Warrior",
+    "type": "ChristmasWarrior",
+    "image": "/game-data/troops/images/494.png"
+  },
+  {
+    "id": 495,
+    "name": "Christmas Archer",
+    "type": "ChristmasArcher",
+    "image": "/game-data/troops/images/495.png"
+  },
+  {
+    "id": 496,
+    "name": "Christmas Guardian",
+    "type": "ChristmasGuardian",
+    "image": "/game-data/troops/images/496.png"
+  },
+  {
+    "id": 497,
+    "name": "Christmas Huntress",
+    "type": "ChristmasHuntress",
+    "image": "/game-data/troops/images/497.png"
+  },
+  {
+    "id": 498,
+    "name": "Festive Warrior",
+    "type": "AnniversaryTroopMeleeOff",
+    "image": "/game-data/troops/images/498.png"
+  },
+  {
+    "id": 499,
+    "name": "Festive Archer",
+    "type": "AnniversaryTroopRangedOff",
+    "image": "/game-data/troops/images/499.png"
+  },
+  {
+    "id": 500,
+    "name": "Festive Guardian",
+    "type": "AnniversaryTroopMeleeDef",
+    "image": "/game-data/troops/images/500.png"
+  },
+  {
+    "id": 501,
+    "name": "Festive Huntress",
+    "type": "AnniversaryTroopRangedDef",
+    "image": "/game-data/troops/images/501.png"
+  },
+  {
+    "id": 502,
+    "name": "Forsaken maiden",
+    "type": "Halloween2025TroopMeleeOff",
+    "image": "/game-data/troops/images/502.png"
+  },
+  {
+    "id": 503,
+    "name": "Forlorn ranger",
+    "type": "Halloween2025TroopRangedOff",
+    "image": "/game-data/troops/images/503.png"
+  },
+  {
+    "id": 504,
+    "name": "Corrupted Subject",
+    "type": "ZombieDefender",
+    "image": "/game-data/troops/images/504.png"
+  },
+  {
+    "id": 505,
+    "name": "Decayed Axe Bearer",
+    "type": "ZombieGuardian",
+    "image": "/game-data/troops/images/505.png"
+  },
+  {
+    "id": 506,
+    "name": "Decayed Bolt Slinger",
+    "type": "ZombieMarksman",
+    "image": "/game-data/troops/images/506.png"
+  },
+  {
+    "id": 593,
+    "name": "Fungus Guard",
+    "type": "FungalNormalMelee",
+    "image": "/game-data/troops/images/593.png"
+  },
+  {
+    "id": 594,
+    "name": "Dormant Spore Maw",
+    "type": "FungalSporeMelee",
+    "image": "/game-data/troops/images/594.png"
+  },
+  {
+    "id": 595,
+    "name": "Spore Gnasher",
+    "type": "FungalStrongMelee",
+    "image": "/game-data/troops/images/595.png"
+  },
+  {
+    "id": 596,
+    "name": "Spore Slinger",
+    "type": "FungalNormalRanged",
+    "image": "/game-data/troops/images/596.png"
+  },
+  {
+    "id": 597,
+    "name": "Dormant Spore Cyst",
+    "type": "FungalSporeRanged",
+    "image": "/game-data/troops/images/597.png"
+  },
+  {
+    "id": 598,
+    "name": "Cyst-born Sporecaster",
+    "type": "FungalStrongRanged",
+    "image": "/game-data/troops/images/598.png"
+  },
+  {
+    "id": 640,
+    "name": "Siege tower",
+    "type": "Siegetower",
+    "image": "/game-data/troops/images/640.png"
+  },
+  {
+    "id": 733,
+    "name": "Grappling hooks",
+    "type": "Grapplinghook",
+    "image": "/game-data/troops/images/733.png"
+  },
+  {
+    "id": 3,
+    "name": "The wolf's howl",
+    "type": "Fenriswolfhorn",
+    "image": "/game-data/troops/images/3.png"
+  },
+  {
+    "id": 165,
+    "name": "Case of the Shogun",
+    "type": "CaseOfTheShogun",
+    "image": "/game-data/troops/images/165.png"
+  },
+  {
+    "id": 111,
+    "name": "Reinforced portcullis",
+    "type": "NomadEliteDefenseGate",
+    "image": "/game-data/troops/images/111.png"
+  },
+  {
+    "id": 109,
+    "name": "Nomadic murder hole",
+    "type": "NomadEliteDefenseWall",
+    "image": "/game-data/troops/images/109.png"
+  },
+  {
+    "id": 110,
+    "name": "Balistraria",
+    "type": "NomadEliteDefenseRanged",
+    "image": "/game-data/troops/images/110.png"
+  },
+  {
+    "id": 182,
+    "name": "Flaming arrows",
+    "type": "MayaArrow",
+    "image": "/game-data/troops/images/182.png"
+  },
+  {
+    "id": 108,
+    "name": "Plunderer's trunk",
+    "type": "NomadDefenseKeep",
+    "image": "/game-data/troops/images/108.png"
+  },
+  {
+    "id": 245,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/245.png"
+  },
+  {
+    "id": 246,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/246.png"
+  },
+  {
+    "id": 247,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/247.png"
+  },
+  {
+    "id": 248,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/248.png"
+  },
+  {
+    "id": 249,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/249.png"
+  },
+  {
+    "id": 250,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/250.png"
+  },
+  {
+    "id": 251,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/251.png"
+  },
+  {
+    "id": 252,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/252.png"
+  },
+  {
+    "id": 253,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/253.png"
+  },
+  {
+    "id": 254,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/254.png"
+  },
+  {
+    "id": 255,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "/game-data/troops/images/255.png"
+  },
+  {
+    "id": 267,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "/game-data/troops/images/267.png"
+  },
+  {
+    "id": 268,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "/game-data/troops/images/268.png"
+  },
+  {
+    "id": 269,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "/game-data/troops/images/269.png"
+  },
+  {
+    "id": 270,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "/game-data/troops/images/270.png"
+  },
+  {
+    "id": 271,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "/game-data/troops/images/271.png"
+  },
+  {
+    "id": 272,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "/game-data/troops/images/272.png"
+  },
+  {
+    "id": 273,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "/game-data/troops/images/273.png"
+  },
+  {
+    "id": 274,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "/game-data/troops/images/274.png"
+  },
+  {
+    "id": 275,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "/game-data/troops/images/275.png"
+  },
+  {
+    "id": 276,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "/game-data/troops/images/276.png"
+  },
+  {
+    "id": 289,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "/game-data/troops/images/289.png"
+  },
+  {
+    "id": 290,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "/game-data/troops/images/290.png"
+  },
+  {
+    "id": 291,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "/game-data/troops/images/291.png"
+  },
+  {
+    "id": 292,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "/game-data/troops/images/292.png"
+  },
+  {
+    "id": 293,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "/game-data/troops/images/293.png"
+  },
+  {
+    "id": 294,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "/game-data/troops/images/294.png"
+  },
+  {
+    "id": 295,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "/game-data/troops/images/295.png"
+  },
+  {
+    "id": 296,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "/game-data/troops/images/296.png"
+  },
+  {
+    "id": 297,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "/game-data/troops/images/297.png"
+  },
+  {
+    "id": 298,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "/game-data/troops/images/298.png"
+  },
+  {
+    "id": 300,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/300.png"
+  },
+  {
+    "id": 301,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/301.png"
+  },
+  {
+    "id": 302,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/302.png"
+  },
+  {
+    "id": 303,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/303.png"
+  },
+  {
+    "id": 304,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/304.png"
+  },
+  {
+    "id": 305,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/305.png"
+  },
+  {
+    "id": 306,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/306.png"
+  },
+  {
+    "id": 307,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/307.png"
+  },
+  {
+    "id": 310,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/310.png"
+  },
+  {
+    "id": 313,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/313.png"
+  },
+  {
+    "id": 314,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "/game-data/troops/images/314.png"
+  },
+  {
+    "id": 326,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "/game-data/troops/images/326.png"
+  },
+  {
+    "id": 327,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "/game-data/troops/images/327.png"
+  },
+  {
+    "id": 328,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "/game-data/troops/images/328.png"
+  },
+  {
+    "id": 329,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "/game-data/troops/images/329.png"
+  },
+  {
+    "id": 330,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "/game-data/troops/images/330.png"
+  },
+  {
+    "id": 331,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "/game-data/troops/images/331.png"
+  },
+  {
+    "id": 332,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "/game-data/troops/images/332.png"
+  },
+  {
+    "id": 333,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "/game-data/troops/images/333.png"
+  },
+  {
+    "id": 334,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "/game-data/troops/images/334.png"
+  },
+  {
+    "id": 335,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "/game-data/troops/images/335.png"
+  },
+  {
+    "id": 348,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "/game-data/troops/images/348.png"
+  },
+  {
+    "id": 349,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "/game-data/troops/images/349.png"
+  },
+  {
+    "id": 350,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "/game-data/troops/images/350.png"
+  },
+  {
+    "id": 351,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "/game-data/troops/images/351.png"
+  },
+  {
+    "id": 352,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "/game-data/troops/images/352.png"
+  },
+  {
+    "id": 353,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "/game-data/troops/images/353.png"
+  },
+  {
+    "id": 354,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "/game-data/troops/images/354.png"
+  },
+  {
+    "id": 355,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "/game-data/troops/images/355.png"
+  },
+  {
+    "id": 356,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "/game-data/troops/images/356.png"
+  },
+  {
+    "id": 357,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "/game-data/troops/images/357.png"
+  },
+  {
+    "id": 359,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "/game-data/troops/images/359.png"
+  },
+  {
+    "id": 360,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "/game-data/troops/images/360.png"
+  },
+  {
+    "id": 361,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "/game-data/troops/images/361.png"
+  },
+  {
+    "id": 362,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "/game-data/troops/images/362.png"
+  },
+  {
+    "id": 363,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "/game-data/troops/images/363.png"
+  },
+  {
+    "id": 364,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "/game-data/troops/images/364.png"
+  },
+  {
+    "id": 365,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "/game-data/troops/images/365.png"
+  },
+  {
+    "id": 366,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "/game-data/troops/images/366.png"
+  },
+  {
+    "id": 367,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "/game-data/troops/images/367.png"
+  },
+  {
+    "id": 368,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "/game-data/troops/images/368.png"
+  },
+  {
+    "id": 370,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "/game-data/troops/images/370.png"
+  },
+  {
+    "id": 371,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "/game-data/troops/images/371.png"
+  },
+  {
+    "id": 372,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "/game-data/troops/images/372.png"
+  },
+  {
+    "id": 373,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "/game-data/troops/images/373.png"
+  },
+  {
+    "id": 374,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "/game-data/troops/images/374.png"
+  },
+  {
+    "id": 375,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "/game-data/troops/images/375.png"
+  },
+  {
+    "id": 376,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "/game-data/troops/images/376.png"
+  },
+  {
+    "id": 377,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "/game-data/troops/images/377.png"
+  },
+  {
+    "id": 378,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "/game-data/troops/images/378.png"
+  },
+  {
+    "id": 379,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "/game-data/troops/images/379.png"
+  },
+  {
+    "id": 381,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "/game-data/troops/images/381.png"
+  },
+  {
+    "id": 382,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "/game-data/troops/images/382.png"
+  },
+  {
+    "id": 383,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "/game-data/troops/images/383.png"
+  },
+  {
+    "id": 384,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "/game-data/troops/images/384.png"
+  },
+  {
+    "id": 385,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "/game-data/troops/images/385.png"
+  },
+  {
+    "id": 386,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "/game-data/troops/images/386.png"
+  },
+  {
+    "id": 387,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "/game-data/troops/images/387.png"
+  },
+  {
+    "id": 388,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "/game-data/troops/images/388.png"
+  },
+  {
+    "id": 389,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "/game-data/troops/images/389.png"
+  },
+  {
+    "id": 390,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "/game-data/troops/images/390.png"
+  },
+  {
+    "id": 391,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "/game-data/troops/images/391.png"
+  },
+  {
+    "id": 392,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "/game-data/troops/images/392.png"
+  },
+  {
+    "id": 393,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "/game-data/troops/images/393.png"
+  },
+  {
+    "id": 394,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "/game-data/troops/images/394.png"
+  },
+  {
+    "id": 395,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "/game-data/troops/images/395.png"
+  },
+  {
+    "id": 396,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "/game-data/troops/images/396.png"
+  },
+  {
+    "id": 397,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "/game-data/troops/images/397.png"
+  },
+  {
+    "id": 398,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "/game-data/troops/images/398.png"
+  },
+  {
+    "id": 399,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "/game-data/troops/images/399.png"
+  },
+  {
+    "id": 400,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "/game-data/troops/images/400.png"
+  },
+  {
+    "id": 401,
+    "name": "Warwagon",
+    "type": "SceatSuppAttWaves",
+    "image": "/game-data/troops/images/401.png"
+  },
+  {
+    "id": 402,
+    "name": "Warwagon",
+    "type": "SceatSuppAttWaves",
+    "image": "/game-data/troops/images/402.png"
+  },
+  {
+    "id": 403,
+    "name": "Warwagon",
+    "type": "SceatSuppAttWaves",
+    "image": "/game-data/troops/images/403.png"
+  },
+  {
+    "id": 567,
+    "name": "Warwagon",
+    "type": "SceatSuppAttWaves",
+    "image": "/game-data/troops/images/567.png"
+  },
+  {
+    "id": 421,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "/game-data/troops/images/421.png"
+  },
+  {
+    "id": 422,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "/game-data/troops/images/422.png"
+  },
+  {
+    "id": 423,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "/game-data/troops/images/423.png"
+  },
+  {
+    "id": 424,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "/game-data/troops/images/424.png"
+  },
+  {
+    "id": 425,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "/game-data/troops/images/425.png"
+  },
+  {
+    "id": 426,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "/game-data/troops/images/426.png"
+  },
+  {
+    "id": 427,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "/game-data/troops/images/427.png"
+  },
+  {
+    "id": 428,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "/game-data/troops/images/428.png"
+  },
+  {
+    "id": 429,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "/game-data/troops/images/429.png"
+  },
+  {
+    "id": 430,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "/game-data/troops/images/430.png"
+  },
+  {
+    "id": 431,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "/game-data/troops/images/431.png"
+  },
+  {
+    "id": 432,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "/game-data/troops/images/432.png"
+  },
+  {
+    "id": 433,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "/game-data/troops/images/433.png"
+  },
+  {
+    "id": 434,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "/game-data/troops/images/434.png"
+  },
+  {
+    "id": 435,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "/game-data/troops/images/435.png"
+  },
+  {
+    "id": 436,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "/game-data/troops/images/436.png"
+  },
+  {
+    "id": 437,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "/game-data/troops/images/437.png"
+  },
+  {
+    "id": 438,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "/game-data/troops/images/438.png"
+  },
+  {
+    "id": 439,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "/game-data/troops/images/439.png"
+  },
+  {
+    "id": 440,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "/game-data/troops/images/440.png"
+  },
+  {
+    "id": 441,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "/game-data/troops/images/441.png"
+  },
+  {
+    "id": 442,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "/game-data/troops/images/442.png"
+  },
+  {
+    "id": 443,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "/game-data/troops/images/443.png"
+  },
+  {
+    "id": 444,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "/game-data/troops/images/444.png"
+  },
+  {
+    "id": 445,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "/game-data/troops/images/445.png"
+  },
+  {
+    "id": 446,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "/game-data/troops/images/446.png"
+  },
+  {
+    "id": 447,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "/game-data/troops/images/447.png"
+  },
+  {
+    "id": 448,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "/game-data/troops/images/448.png"
+  },
+  {
+    "id": 449,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "/game-data/troops/images/449.png"
+  },
+  {
+    "id": 450,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "/game-data/troops/images/450.png"
+  },
+  {
+    "id": 451,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "/game-data/troops/images/451.png"
+  },
+  {
+    "id": 452,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "/game-data/troops/images/452.png"
+  },
+  {
+    "id": 453,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "/game-data/troops/images/453.png"
+  },
+  {
+    "id": 454,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "/game-data/troops/images/454.png"
+  },
+  {
+    "id": 455,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "/game-data/troops/images/455.png"
+  },
+  {
+    "id": 456,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "/game-data/troops/images/456.png"
+  },
+  {
+    "id": 457,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "/game-data/troops/images/457.png"
+  },
+  {
+    "id": 458,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "/game-data/troops/images/458.png"
+  },
+  {
+    "id": 459,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "/game-data/troops/images/459.png"
+  },
+  {
+    "id": 460,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "/game-data/troops/images/460.png"
+  },
+  {
+    "id": 462,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "/game-data/troops/images/462.png"
+  },
+  {
+    "id": 463,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "/game-data/troops/images/463.png"
+  },
+  {
+    "id": 464,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "/game-data/troops/images/464.png"
+  },
+  {
+    "id": 465,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "/game-data/troops/images/465.png"
+  },
+  {
+    "id": 466,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "/game-data/troops/images/466.png"
+  },
+  {
+    "id": 467,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "/game-data/troops/images/467.png"
+  },
+  {
+    "id": 468,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "/game-data/troops/images/468.png"
+  },
+  {
+    "id": 469,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "/game-data/troops/images/469.png"
+  },
+  {
+    "id": 470,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "/game-data/troops/images/470.png"
+  },
+  {
+    "id": 471,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "/game-data/troops/images/471.png"
+  }
+]

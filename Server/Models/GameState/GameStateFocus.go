@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strconv"
 
-	"CitadelDesktop/Server/Data/craftingrecipes"
 	alliance "CitadelDesktop/Server/Models/Alliance"
 	"CitadelDesktop/Server/Models/Decoration"
 )
@@ -119,7 +118,7 @@ func CastleFocusMessagePayload() map[string]interface{} {
 		}
 	}
 	if c := gs.GetCastleByID(f.CastleAID); c != nil && len(c.CraftingQueues) > 0 {
-		craftingQueues = craftingrecipes.EnrichCraftingQueues(c.CraftingQueues)
+		craftingQueues = c.CraftingQueues
 	}
 	return map[string]interface{}{
 		"aid":                 f.CastleAID,

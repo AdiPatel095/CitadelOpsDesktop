@@ -5,6 +5,7 @@ import { FrontendWebsocket } from '../websocket';
 import CastleFocusHoverPopover from './CastleFocusHoverPopover';
 import { castleFocusDisplayName } from '../types/castleFocusState.ts';
 import { Icons } from './Icons';
+import { Card, CardHeader, CardTitle, CardContent, Input, Button, Select } from './ui';
 
 interface NamedPreset {
   id: string;
@@ -17,6 +18,7 @@ const DecorationPresetsPanel: React.FC = () => {
   const [presets, setPresets] = useState<NamedPreset[]>([]);
   const [newName, setNewName] = useState('');
   const [progress, setProgress] = useState<string | null>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState('');
 
   const castleId = castleFocus?.aid && castleFocus.aid > 0 ? castleFocus.aid : 0;
   const focusLabel = castleFocusDisplayName(castleFocus);
@@ -28,6 +30,7 @@ const DecorationPresetsPanel: React.FC = () => {
   useEffect(() => {
     setPresets([]);
     setProgress(null);
+    setSelectedPresetId('');
     if (castleId > 0) {
       FrontendWebsocket.sendGetDecorationPresets(castleId);
     }
@@ -45,7 +48,11 @@ const DecorationPresetsPanel: React.FC = () => {
         if (responseCastleId !== current) {
           return;
         }
-        setPresets(msg.payload as NamedPreset[]);
+        const nextPresets = msg.payload as NamedPreset[];
+        setPresets(nextPresets);
+        setSelectedPresetId((prev) =>
+          prev && nextPresets.some((preset) => preset.id === prev) ? prev : nextPresets[0]?.id ?? ''
+        );
       }
       if (msg.type === 'decorationPlacerProgress' && msg.payload && typeof msg.payload === 'object') {
         const m = (msg.payload as { message?: string }).message;
@@ -74,141 +81,163 @@ const DecorationPresetsPanel: React.FC = () => {
     FrontendWebsocket.sendDeleteDecorationPreset(castleId, presetId);
   };
 
+  const selectedPreset = presets.find((preset) => preset.id === selectedPresetId) ?? null;
+
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
+    <div className="grid grid-cols-1 gap-6 h-full">
       {/* Save from current scan */}
-      <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-global border border-border-base bg-bg-card">
-        <div className="flex items-center gap-3 border-b border-border-base bg-bg-card-hover/50 px-6 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
-            <Icons.Sparkles className="h-4 w-4 text-violet-400" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-text-main">Save layout as preset</h2>
-            <p className="text-xs text-text-muted">
-              Stores pickup-eligible decoration rows from your current in-game castle focus (JAA).
-            </p>
-          </div>
-        </div>
-
-        <div className="flex min-h-0 flex-1 flex-col space-y-5 p-6">
-          <div className="rounded-global border border-border-light/80 bg-bg-app/40 px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Focused castle</div>
-            <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              <CastleFocusHoverPopover
-                castleFocus={castleFocus}
-                align="start"
-                expandToViewport
-                className="min-w-0 max-w-full"
-              >
-                <span className="cursor-help truncate border-b border-dotted border-text-muted/50 font-medium text-text-main">
-                  {focusLabel}
-                </span>
-              </CastleFocusHoverPopover>
-              {castleId <= 0 && (
-                <span className="text-xs text-amber-500/90">Focus a castle in the game to enable saving.</span>
-              )}
+      <Card variant="solid" className="flex flex-col min-h-0 border-border-base bg-bg-app/20">
+        <CardHeader className="bg-bg-card-hover/50 pb-4 border-b border-border-base rounded-t-[calc(var(--radius-global)-1px)]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
+              <Icons.Sparkles className="h-4 w-4 text-violet-400" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Save layout as preset</CardTitle>
+              <p className="text-xs text-text-muted mt-0.5">
+                Stores pickup-eligible decoration rows from your current in-game castle focus (JAA).
+              </p>
             </div>
           </div>
+        </CardHeader>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-            <div className="min-w-0 flex-1">
-              <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                Preset name
-              </label>
-              <input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSave();
-                }}
-                className="w-full rounded-global border border-border-light bg-bg-input px-3 py-2.5 text-sm text-text-main transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50"
-                placeholder="e.g. Event layout"
-              />
+        <CardContent className="flex flex-col flex-1 min-h-0 space-y-5 p-5">
+          <div className="px-2 py-1">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+              <div className="min-w-0 lg:w-48">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Focused castle</div>
+                <div className="mt-1.5 flex min-h-[42px] items-center">
+                  <CastleFocusHoverPopover
+                    castleFocus={castleFocus}
+                    align="start"
+                    expandToViewport
+                    className="min-w-0 max-w-full"
+                  >
+                    <span className="cursor-help truncate border-b border-dotted border-text-muted/50 font-medium text-text-main">
+                      {focusLabel}
+                    </span>
+                  </CastleFocusHoverPopover>
+                </div>
+              </div>
+              <div className="min-w-0 flex-1">
+                <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                  Preset name
+                </label>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSave();
+                  }}
+                  placeholder="e.g. Event layout"
+                    className="flex-1"
+                />
+                  <Button
+                    disabled={castleId <= 0 || !newName.trim()}
+                    onClick={handleSave}
+                    leftIcon={<Save className="h-4 w-4" strokeWidth={2.25} />}
+                    className="shrink-0 shadow-none hover:shadow-none"
+                  >
+                    Save preset
+                  </Button>
+                </div>
+              </div>
             </div>
-            <button
-              type="button"
-              disabled={castleId <= 0 || !newName.trim()}
-              onClick={handleSave}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-global bg-primary px-5 py-2.5 text-sm font-bold text-bg-app shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Save className="h-4 w-4" strokeWidth={2.25} />
-              Save preset
-            </button>
+            {castleId <= 0 && (
+              <div className="mt-3 text-xs text-warning">Focus a castle in the game to enable saving.</div>
+            )}
           </div>
 
           {progress && (
-            <div className="space-y-3 rounded-global border border-amber-500/35 bg-amber-500/10 px-4 py-3">
-              <p className="font-mono text-xs text-amber-200/95">{progress}</p>
-              <button
-                type="button"
+            <div className="space-y-3 rounded-global border border-warning/35 bg-warning/10 px-4 py-3">
+              <p className="font-mono text-xs text-warning/90">{progress}</p>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => FrontendWebsocket.sendCancelDecorationApply()}
-                className="inline-flex items-center gap-2 rounded-global border border-border-light bg-bg-card-hover px-4 py-2 text-xs font-bold text-text-main transition-colors hover:border-amber-500/40 hover:bg-bg-input"
+                className="border-warning/40 text-warning hover:bg-warning/10 w-full justify-center shadow-none hover:shadow-none"
+                leftIcon={<XCircle className="h-3.5 w-3.5" strokeWidth={2.25} />}
               >
-                <XCircle className="h-3.5 w-3.5 text-amber-400" strokeWidth={2.25} />
                 Cancel apply
-              </button>
+              </Button>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Saved presets */}
-      <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-global border border-border-base bg-bg-card">
-        <div className="flex items-center gap-3 border-b border-border-base bg-bg-card-hover/50 px-6 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
-            <Layers className="h-4 w-4 text-teal-400" strokeWidth={2.25} />
+      <Card variant="solid" className="flex flex-col min-h-0 border-border-base bg-bg-app/20">
+        <CardHeader className="bg-bg-card-hover/50 pb-4 border-b border-border-base rounded-t-[calc(var(--radius-global)-1px)]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
+              <Layers className="h-4 w-4 text-teal-400" strokeWidth={2.25} />
+            </div>
+            <div>
+              <CardTitle className="text-base">Saved presets</CardTitle>
+              <p className="text-xs text-text-muted mt-0.5">
+                Per castle. Apply runs the smart replacer (SOB / EBU) until the layout matches.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-text-main">Saved presets</h2>
-            <p className="text-xs text-text-muted">Per castle. Apply runs the smart replacer (SOB / EBU) until the layout matches.</p>
-          </div>
-        </div>
+        </CardHeader>
 
-        <div className="flex min-h-0 flex-1 flex-col p-6">
+        <CardContent className="flex flex-col flex-1 min-h-0 p-5">
           {castleId <= 0 ? (
             <p className="text-sm text-text-muted">Focus a castle in-game to load and manage presets for it.</p>
           ) : presets.length === 0 ? (
-            <div className="rounded-global border border-dashed border-border-light bg-bg-app/30 px-4 py-8 text-center">
-              <p className="text-sm text-text-muted">No presets yet for this castle.</p>
+            <div className="rounded-global border border-dashed border-border-base bg-bg-card px-4 py-8 text-center h-full flex flex-col justify-center">
+              <p className="text-sm text-text-muted font-medium">No presets yet for this castle.</p>
               <p className="mt-1 text-xs text-text-muted/80">Name a layout above and save from your current focus.</p>
             </div>
           ) : (
-            <ul className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
-              {presets.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex flex-col gap-3 rounded-global border border-border-base bg-bg-card-hover/35 p-4 transition-colors hover:bg-bg-card-hover/55 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <div className="font-semibold text-text-main">{p.name}</div>
-                    <div className="mt-0.5 text-xs text-text-muted">{p.items?.length ?? 0} decoration placements</div>
-                  </div>
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={castleId <= 0}
-                      onClick={() => handleApply(p.id)}
-                      title="Run smart replacer until layout matches this preset"
-                      className="inline-flex items-center justify-center gap-2 rounded-global bg-emerald-500 px-4 py-2 text-xs font-bold text-white shadow-md shadow-emerald-500/25 transition-colors hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <Play className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      Apply
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(p.id)}
-                      className="inline-flex items-center justify-center gap-2 rounded-global border border-border-light bg-bg-card-hover px-4 py-2 text-xs font-bold text-text-muted transition-colors hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="px-2 py-1">
+              <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                Saved preset
+              </label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Select
+                  value={selectedPresetId}
+                  options={presets.map((preset) => ({
+                    value: preset.id,
+                    label: preset.name,
+                  }))}
+                  onChange={setSelectedPresetId}
+                  placeholder="Select a preset"
+                  className="min-w-0 flex-1"
+                />
+                <div className="flex shrink-0 gap-2">
+                  <Button
+                    size="sm"
+                    disabled={castleId <= 0 || !selectedPreset}
+                    onClick={() => selectedPreset && handleApply(selectedPreset.id)}
+                    title="Run smart replacer until layout matches this preset"
+                    leftIcon={<Play className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                    className="shadow-none hover:shadow-none"
+                  >
+                    Apply
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    disabled={!selectedPreset}
+                    onClick={() => selectedPreset && handleDelete(selectedPreset.id)}
+                    leftIcon={<Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
+                    className="shadow-none hover:shadow-none"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+              {selectedPreset && (
+                <div className="mt-3 text-xs text-text-muted">
+                  {selectedPreset.items?.length ?? 0} decoration placements
+                </div>
+              )}
+            </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

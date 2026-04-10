@@ -2,7 +2,7 @@ package ResponseRegistry
 
 import (
 	"CitadelDesktop/Server/ChromeUserData"
-	"CitadelDesktop/Server/License"
+	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
 	"context"
 	"encoding/base64"
@@ -29,28 +29,16 @@ var (
 	BrowserCancel          context.CancelFunc
 	gameExecutionContextID runtime.ExecutionContextID
 	IncomingMessages       = make(chan []string, 100)
-
-	// SendInsufficientCreditsFunc is a callback to notify frontend of insufficient credits
-	SendInsufficientCreditsFunc func()
+	DashboardURL           string
 
 	// SendGameLoginStatusFunc is a callback to notify frontend of login status changes
 	SendGameLoginStatusFunc func(bool, int)
 
-	// SendAutoBirdStatusFunc is a callback to notify frontend of auto bird status changes
-	SendAutoBirdStatusFunc func(bool, int64)
+	// SendAutoBirdStatusFunc is a callback to notify frontend of auto bird enabled + next wake (unix ms).
+	SendAutoBirdStatusFunc func(enabled bool, nextWakeUp int64)
 
 	// SendRecruitTroopsStatusFunc is a callback to notify frontend of recruit troops status changes
 	SendRecruitTroopsStatusFunc func(bool)
-
-	// SendRequestCredentialsFunc is a callback to request credentials from frontend
-	SendRequestCredentialsFunc func()
-
-	// StoredCredentials holds the last used login info for auto-relogin
-	StoredCredentials struct {
-		Server string
-	}
-
-	gameWSLogger *log.Logger
 )
 
 // ServerURLMap maps frontend server display names to actual server identifiers
@@ -96,37 +84,24 @@ var ServerURLMap = map[string]string{
 	"Spain: 2":              "ep-live-mz-cz1-es2-game",
 }
 
-func init() {
-	exePath, err := os.Executable()
-	if err == nil {
-		logPath := filepath.Join(filepath.Dir(exePath), "game_websocket.log")
-		file, err := os.OpenFile(logPath, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
-		if err == nil {
-			gameWSLogger = log.New(file, "", log.Ldate|log.Ltime|log.Lmicroseconds)
-		} else {
-			log.Println("Failed to open game_websocket.log:", err)
-		}
-	}
-}
-
-// SetInsufficientCreditsCallback sets the callback for insufficient credits notification
-func SetInsufficientCreditsCallback(fn func()) {
-	SendInsufficientCreditsFunc = fn
-}
-
 // SetGameLoginStatusCallback sets the callback for game login status notification
 func SetGameLoginStatusCallback(fn func(bool, int)) {
 	SendGameLoginStatusFunc = fn
 }
 
-// SetAutoBirdStatusCallback sets the callback for auto bird status notification
+// SetAutoBirdStatusCallback sets the callback for auto bird status notification.
 func SetAutoBirdStatusCallback(fn func(bool, int64)) {
 	SendAutoBirdStatusFunc = fn
 }
 
-// SetRequestCredentialsCallback sets the callback for requesting credentials
-func SetRequestCredentialsCallback(fn func()) {
-	SendRequestCredentialsFunc = fn
+func SetMemoryStatsCallback(fn func(int, int)) {
+	SendMemoryStatsFunc = fn
+}
+
+// SetDashboardURL sets the dashboard URL used for bootstrapping Chrome tabs (and as a fallback when ReloadGameTab
+// is called before a browser is running).
+func SetDashboardURL(url string) {
+	DashboardURL = url
 }
 
 func handleCDPEvent(ev interface{}) {
@@ -155,10 +130,8 @@ func handleCDPEvent(ev interface{}) {
 			if decoded, err := base64.StdEncoding.DecodeString(payload); err == nil {
 				payload = string(decoded)
 			}
-			if gameWSLogger != nil {
-				msgType := extractMessageType(payload)
-				gameWSLogger.Printf("[RECV] [%s] %s", msgType, payload)
-			}
+			msgType := extractMessageType(payload)
+			Logging.AppendChannelLine(Logging.ChannelWebSocketGame, "RECV", msgType, payload)
 			messageParts := strings.Split(payload, "%")
 			go func() {
 				IncomingMessages <- messageParts
@@ -167,10 +140,11 @@ func handleCDPEvent(ev interface{}) {
 	case *network.EventWebSocketFrameSent:
 		if gameRequestIDs[string(ev.RequestID)] {
 			payload := ev.Response.PayloadData
-			if gameWSLogger != nil {
-				msgType := extractMessageType(payload)
-				gameWSLogger.Printf("[SEND] [%s] %s", msgType, payload)
+			if decoded, err := base64.StdEncoding.DecodeString(payload); err == nil {
+				payload = string(decoded)
 			}
+			msgType := extractMessageType(payload)
+			Logging.AppendChannelLine(Logging.ChannelWebSocketGame, "SEND", msgType, payload)
 		}
 	}
 }
@@ -426,8 +400,7 @@ func DisconnectGameWebSocket() {
 func ReloadGameTab() {
 	if BrowserCtx == nil {
 		log.Println("Browser not running. Launching browser first...")
-		dashboardURL := fmt.Sprintf("http://localhost:%d", License.CurrentPort)
-		StartGameBrowser(dashboardURL)
+		StartGameBrowser(DashboardURL)
 		return
 	}
 
@@ -460,54 +433,37 @@ func StartWebsocketChannels(ctx context.Context) {
 				return
 			case message := <-OutgoingMessages:
 				var payload []byte
-				cost := 0
 
 				switch v := message.(type) {
-				case OutgoingMessageWithCost:
-					payload = v.Payload
-					cost = v.Cost
 				case []byte:
 					payload = v
-					cost = 0
 				case string:
 					payload = []byte(v)
-					cost = 0
 				default:
 					log.Printf("Unknown message type in OutgoingMessages: %T", v)
 					continue
 				}
 
-				allowed := true
-				if cost > 0 {
-					if !License.UseCredits(cost, "Game Message") {
-						allowed = false
-					}
-				}
+				if BrowserCtx != nil && gameExecutionContextID != 0 {
+					// Escape single quotes in payload
+					safePayload := strings.ReplaceAll(string(payload), "'", "\\'")
+					safePayload = strings.ReplaceAll(safePayload, "\n", "")
+					safePayload = strings.ReplaceAll(safePayload, "\r", "")
 
-				if allowed {
-					if BrowserCtx != nil && gameExecutionContextID != 0 {
-						// Escape single quotes in payload
-						safePayload := strings.ReplaceAll(string(payload), "'", "\\'")
-						safePayload = strings.ReplaceAll(safePayload, "\n", "")
-						safePayload = strings.ReplaceAll(safePayload, "\r", "")
-
+					// Run CDP command asynchronously so we don't add CDP overhead to the strict 25ms rate limit
+					go func(sp string) {
 						err := chromedp.Run(BrowserCtx, chromedp.ActionFunc(func(ctx context.Context) error {
-							exp := fmt.Sprintf("window.sendToGameSocket('%s')", safePayload)
+							exp := fmt.Sprintf("window.sendToGameSocket('%s')", sp)
 							_, _, err := runtime.Evaluate(exp).WithContextID(gameExecutionContextID).Do(ctx)
 							return err
 						}))
-
-						// We still sleep to preserve rate limiting
-						time.Sleep(50 * time.Millisecond)
 						if err != nil {
 							log.Println("write via CDP:", err)
 						}
-					}
-				} else {
-					log.Println("Failed to send message: Insufficient credits")
-					if SendInsufficientCreditsFunc != nil {
-						go SendInsufficientCreditsFunc()
-					}
+					}(safePayload)
+
+					// We still sleep to preserve rate limiting
+					time.Sleep(25 * time.Millisecond)
 				}
 			}
 		}
@@ -520,18 +476,22 @@ var MessageRouterFunc func([]string)
 
 func incomingMessageParserStartup() {
 	for message := range IncomingMessages {
-		if len(message) > 3 {
-			if message[2] == "lli" {
-				checkLoginStatus(message)
-			}
-			if MessageRouterFunc != nil {
-				MessageRouterFunc(message)
-			}
+		if len(message) < 3 {
+			continue
+		}
+		if message[2] == "lli" {
+			checkLoginStatus(message)
+		}
+		if MessageRouterFunc != nil {
+			MessageRouterFunc(message)
 		}
 	}
 }
 
 func checkLoginStatus(message []string) {
+	if len(message) <= 4 {
+		return
+	}
 	if message[4] == "0" {
 		LoginStatus = true
 		LoginCooldown = 0
@@ -543,6 +503,9 @@ func checkLoginStatus(message []string) {
 		}
 	}
 	if message[4] == "453" {
+		if len(message) <= 5 {
+			return
+		}
 		cooldownString := message[5]
 		cooldownStr := strings.TrimPrefix(cooldownString, "{\"CD\":")
 		cooldownStr = strings.TrimSuffix(cooldownStr, "}")

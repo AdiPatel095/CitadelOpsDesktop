@@ -1,0 +1,80 @@
+[
+  {
+    "id": null,
+    "name": "currency1",
+    "type": "currency1",
+    "image": "/assets/Resources/Sceat.png"
+  },
+  {
+    "id": null,
+    "name": "currency2",
+    "type": "currency2",
+    "image": "/assets/Resources/ImperialDucat.png"
+  },
+  {
+    "id": null,
+    "name": "wood",
+    "type": "wood",
+    "image": "/assets/Resources/Wood.png"
+  },
+  {
+    "id": null,
+    "name": "stone",
+    "type": "stone",
+    "image": "/assets/Resources/Stone.png"
+  },
+  {
+    "id": null,
+    "name": "food",
+    "type": "food",
+    "image": "/assets/Resources/Food.png"
+  },
+  {
+    "id": null,
+    "name": "coal",
+    "type": "coal",
+    "image": "/assets/Resources/Charcoal.png"
+  },
+  {
+    "id": null,
+    "name": "oil",
+    "type": "oil",
+    "image": "/assets/Resources/OliveOil.png"
+  },
+  {
+    "id": null,
+    "name": "glass",
+    "type": "glass",
+    "image": "/assets/Resources/Glass.png"
+  },
+  {
+    "id": null,
+    "name": "aquamarine",
+    "type": "aquamarine",
+    "image": "/assets/Resources/Aquamarine.png"
+  },
+  {
+    "id": null,
+    "name": "iron",
+    "type": "iron",
+    "image": "/assets/Resources/Iron_Ore.png"
+  },
+  {
+    "id": null,
+    "name": "honey",
+    "type": "honey",
+    "image": "/assets/Resources/Honey.png"
+  },
+  {
+    "id": null,
+    "name": "mead",
+    "type": "mead",
+    "image": "/assets/Resources/Mead.png"
+  },
+  {
+    "id": null,
+    "name": "beef",
+    "type": "beef",
+    "image": "/assets/Resources/Beef.png"
+  }
+]

@@ -74,8 +74,7 @@ type (
 	RecruitTroopsConfig = settings.RecruitTroopsConfig
 	TabPriority         = settings.TabPriority
 
-	SentBird     = sentbird.SentBird
-	SentBirdFile = sentbird.SentBirdFile
+	LoggedBird = sentbird.LoggedBird
 
 	MapState  = mapstate.MapState
 	MapNode   = mapstate.MapNode
@@ -103,14 +102,13 @@ var (
 	CastStatUpdaterMap = equipment.CastStatUpdaterMap
 )
 
-var (
-	LoadSentBirds  = sentbird.LoadSentBirds
-	SaveSentBirds  = sentbird.SaveSentBirds
-	AppendSentBird = sentbird.AppendSentBird
-	ClearSentBirds = sentbird.ClearSentBirds
-)
-
 var SetCastleBuildingRows = castle.SetCastleBuildingRows
+
+var (
+	SentBirdLoad         = sentbird.Load
+	SentBirdAppend       = sentbird.Append
+	SentBirdReplaceBirds = sentbird.ReplaceBirds
+)
 
 var (
 	IsTroop                          = castle.IsTroop

@@ -14,7 +14,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"time"
 )
@@ -37,11 +36,15 @@ func init() {
 
 func ParseFrontendMessage(message []byte) {
 	var data map[string]interface{}
-	err := json.Unmarshal(message, &data)
-	if err != nil {
-		log.Fatalf("Not a json message:%v", string(message))
+	if err := json.Unmarshal(message, &data); err != nil {
+		log.Printf("[frontend-ws] invalid JSON: %v", err)
+		return
 	}
-	messageType := data["type"].(string)
+	messageType, ok := data["type"].(string)
+	if !ok || messageType == "" {
+		log.Printf("[frontend-ws] missing or invalid type")
+		return
+	}
 	switch messageType {
 	case "getCastUpdate":
 		{
@@ -80,37 +83,43 @@ func ParseFrontendMessage(message []byte) {
 		log.Println("Received request to sell non-relic equipment")
 
 		// Parse payload
-		var sellLookItems, sellRift bool
+		var sellLookItems, sellSpecialPost2026 bool
 		if payload, ok := data["payload"].(map[string]interface{}); ok {
 			if val, ok := payload["sellLookItems"].(bool); ok {
 				sellLookItems = val
 			}
-			if val, ok := payload["sellRift"].(bool); ok {
-				sellRift = val
+			if val, ok := payload["sellSpecialPost2026"].(bool); ok {
+				sellSpecialPost2026 = val
 			}
 		}
 
-		log.Printf("Flags - Sell Look Items: %v, Sell Rift: %v", sellLookItems, sellRift)
+		log.Printf("Flags - Sell Look Items: %v, Sell Special Post-2026: %v", sellLookItems, sellSpecialPost2026)
 
-		soldCount := SellNonRelicEquipment(sellRift, sellLookItems)
-		log.Printf("SoldCount: %v", soldCount)
-		SendAlertMessage("green", fmt.Sprintf("Sold %d non-relic equipment items", soldCount))
+		go func() {
+			soldCount := SellNonRelicEquipment(sellLookItems, sellSpecialPost2026)
+			log.Printf("SoldCount: %v", soldCount)
+			SendAlertMessage("green", fmt.Sprintf("Sold %d non-relic equipment items", soldCount))
+		}()
 	case "sellNonRelicGems":
 		log.Println("Received request to sell non-relic gems")
-		var sellRiftGems bool
+		var sellSpecialPost2026 bool
 		if payload, ok := data["payload"].(map[string]interface{}); ok {
-			if val, ok := payload["sellRiftGems"].(bool); ok {
-				sellRiftGems = val
+			if val, ok := payload["sellSpecialPost2026"].(bool); ok {
+				sellSpecialPost2026 = val
 			}
 		}
-		soldCount := SellNonRelicGems(sellRiftGems)
-		log.Printf("SoldCount: %v", soldCount)
-		SendAlertMessage("green", fmt.Sprintf("Sold %d non-relic gems", soldCount))
+		go func() {
+			soldCount := SellNonRelicGems(sellSpecialPost2026)
+			log.Printf("SoldCount: %v", soldCount)
+			SendAlertMessage("green", fmt.Sprintf("Sold %d non-relic gems", soldCount))
+		}()
 	case "sellRelic1Equipment":
 		log.Println("Received request to sell Relic 1.0 equipment")
-		soldCount := SellRelic1Equipment()
-		log.Printf("SoldCount: %v", soldCount)
-		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 1.0 items", soldCount))
+		go func() {
+			soldCount := SellRelic1Equipment()
+			log.Printf("SoldCount: %v", soldCount)
+			SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 1.0 items", soldCount))
+		}()
 	case "sellRelic2Equipment":
 		log.Println("Received request to sell Relic 2.0 equipment")
 		var keepStars int
@@ -119,15 +128,19 @@ func ParseFrontendMessage(message []byte) {
 				keepStars = int(val)
 			}
 		}
-		soldCount := SellRelic2Equipment(keepStars)
-		log.Printf("SoldCount Relic 2.0 (Keep %d+ Stars): %v", keepStars, soldCount)
-		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 items", soldCount))
+		go func() {
+			soldCount := SellRelic2Equipment(keepStars)
+			log.Printf("SoldCount Relic 2.0 (Keep %d+ Stars): %v", keepStars, soldCount)
+			SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 items", soldCount))
+		}()
 
 	case "sellRelic1Gems":
 		log.Println("Received request to sell Relic 1.0 gems")
-		soldCount := SellRelic1Gems()
-		log.Printf("SoldCount Relic 1.0 Gems: %v", soldCount)
-		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 1.0 gems", soldCount))
+		go func() {
+			soldCount := SellRelic1Gems()
+			log.Printf("SoldCount Relic 1.0 Gems: %v", soldCount)
+			SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 1.0 gems", soldCount))
+		}()
 
 	case "sellRelic2Gems":
 		log.Println("Received request to sell Relic 2.0 gems")
@@ -137,9 +150,11 @@ func ParseFrontendMessage(message []byte) {
 				keepStars = int(val)
 			}
 		}
-		soldCount := SellRelic2Gems(keepStars)
-		log.Printf("SoldCount Relic 2.0 Gems (Keep %d+ Stars): %v", keepStars, soldCount)
-		SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 gems", soldCount))
+		go func() {
+			soldCount := SellRelic2Gems(keepStars)
+			log.Printf("SoldCount Relic 2.0 Gems (Keep %d+ Stars): %v", keepStars, soldCount)
+			SendAlertMessage("green", fmt.Sprintf("Sold %d Relic 2.0 gems", soldCount))
+		}()
 	case "startGame":
 		log.Println("Manual Start Bot pressed. Reloading game tab...")
 		Models.GetSettingsState().BotEnabled = true
@@ -152,30 +167,21 @@ func ParseFrontendMessage(message []byte) {
 	case "fetchAllianceInfo":
 		GameFunctions.FetchAllianceInfo()
 	case "toggleAutoBird":
-		// Check if AutoBird is currently running (actual goroutine state)
 		wasRunning := GameFunctions.IsAutoBirdRunning()
-		log.Printf("[AutoBird] Toggle requested. Was running: %v", wasRunning)
-
-		// Toggle based on actual running state
 		if wasRunning {
-			log.Println("[AutoBird] Calling StopAutoBird...")
 			GameFunctions.StopAutoBird()
 			Models.GetSettingsState().AutoBirdEnabled = false
 			SendAutoBirdStatus(false, 0)
 		} else {
 			Models.GetSettingsState().AutoBirdEnabled = true
 			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
-
-				// Parse settings payload
 				newSettings := make(map[int]map[int]int)
-
 				if settingsRaw, ok := payloadRaw["settings"].(map[string]interface{}); ok {
 					for castleIDStr, itemsRaw := range settingsRaw {
 						castleID, _ := strconv.Atoi(castleIDStr)
 						if castleID == 0 {
 							continue
 						}
-
 						if items, ok := itemsRaw.([]interface{}); ok {
 							castleMap := make(map[int]int)
 							for _, itemRaw := range items {
@@ -192,8 +198,6 @@ func ParseFrontendMessage(message []byte) {
 					}
 					Models.GetSettingsState().UpdateBirdIgnoreList(newSettings)
 				}
-
-				// Parse Delay Settings
 				if minDelay, ok := payloadRaw["minDelay"].(float64); ok {
 					Models.GetSettingsState().AutoBirdDelay.MinDelay = int(minDelay)
 				}
@@ -203,10 +207,9 @@ func ParseFrontendMessage(message []byte) {
 				if minSend, ok := payloadRaw["minSend"].(float64); ok {
 					Models.GetSettingsState().AutoBirdDelay.MinSend = int(minSend)
 				}
-				log.Println("[AutoBird] Calling StartAutoBird...")
-				GameFunctions.StartAutoBird()
-				SendAutoBirdStatus(true, 0)
 			}
+			GameFunctions.StartAutoBird()
+			SendAutoBirdStatus(true, 0)
 		}
 	case "toggleRecruitTroops":
 		wasRunning := GameFunctions.IsRecruitTroopsRunning()
@@ -250,38 +253,27 @@ func ParseFrontendMessage(message []byte) {
 			}
 		}
 	case "refreshEquipment":
-		// Send equipment data if registered
-		// We can reuse SendInitialData or parts of it
-		if registrationState.Registered {
-			// Trigger updates for equipment
-			// We can call the individual send functions
-			// Or we can just call SendInitialData with a dummy client if we had access to the client
-			// But since we want to broadcast to the requesting client...
-			// ParseFrontendMessage doesn't have reference to the client currently!
-			// We might need to change ParseFrontendMessage signature or use a broadcast for now.
-			// The request is likely from the single Connected desktop client, so broadcast is fine.
-
-			for i, comm := range equip.CommStatArray {
-				SendFrontendMessage("commStatUpdate", comm, strconv.Itoa(i))
-			}
-			for i := 0; i < Models.NumPlayerCastleSlots; i++ {
-				SendCastStat(i)
-			}
-
-			SendGlobalResourceUpdate()
-
-			SendCastleResource("mainCastle")
-			SendCastleResource("outpost1")
-			SendCastleResource("outpost2")
-			SendCastleResource("outpost3")
-			SendCastleResource("iceCastle")
-			SendCastleResource("desertCastle")
-			SendCastleResource("dungeonCastle")
-			SendCastleResource("stormCastle")
-			SendCastleResource("beriWorldCastle")
-			SendCastleResource("metropolisCastle")
-			SendCastleResource("capitalCastle")
+		// Trigger updates for equipment
+		for i, comm := range equip.CommStatArray {
+			SendFrontendMessage("commStatUpdate", comm, strconv.Itoa(i))
 		}
+		for i := 0; i < Models.NumPlayerCastleSlots; i++ {
+			SendCastStat(i)
+		}
+
+		SendGlobalResourceUpdate()
+
+		SendCastleResource("mainCastle")
+		SendCastleResource("outpost1")
+		SendCastleResource("outpost2")
+		SendCastleResource("outpost3")
+		SendCastleResource("iceCastle")
+		SendCastleResource("desertCastle")
+		SendCastleResource("dungeonCastle")
+		SendCastleResource("stormCastle")
+		SendCastleResource("metropolisCastle")
+		SendCastleResource("capitalCastle")
+
 	case "refreshSingleCommander":
 		{
 			// Refresh a single commander or castellan
@@ -490,7 +482,7 @@ func ParseFrontendMessage(message []byte) {
 
 			// Final Sync
 			SendAlertMessage("green", "Reconfiguration complete!")
-			ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(`%xt%EmpireEx_21%gli%1%{}%`), Cost: 10000}
+			ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
 			time.Sleep(2 * time.Second)
 
 			// Trigger frontend refresh
@@ -634,16 +626,6 @@ func ParseFrontendMessage(message []byte) {
 				ParseFrontendMessage([]byte(refreshMsg))
 			}()
 		}
-	case "changeLoginDetails":
-		log.Println("Received request to change login details")
-		// Delete loginBytes.json
-		err := os.Remove("loginBytes.json")
-		if err != nil {
-			log.Printf("Error deleting loginBytes.json: %v", err)
-			SendAlertMessage("red", "Failed to delete login details")
-			return
-		}
-		SendAlertMessage("green", "Login details deleted. Please restart the bot (Start Bot).")
 	case "triggerUpdate":
 		log.Println("Received request to trigger self-update")
 		payloadRaw, ok := data["payload"].(map[string]interface{})
@@ -692,73 +674,16 @@ func ParseFrontendMessage(message []byte) {
 		addCastle(c.DesertCastle.Aid, c.DesertCastle.Name, "Desert")
 		addCastle(c.DungeonCastle.Aid, c.DungeonCastle.Name, "Dungeon")
 		addCastle(c.StormCastle.Aid, c.StormCastle.Name, "Storm")
-		addCastle(c.BeriWorldCastle.Aid, c.BeriWorldCastle.Name, "BeriWorld")
 		addCastle(c.Metropolis.Aid, c.Metropolis.Name, "Metropolis")
 		addCastle(c.Capital.Aid, c.Capital.Name, "Capital")
 
 		SendFrontendMessage("castleList", castles, "")
-
-	case "getBirdSettings":
-		// Persistence moved to frontend.
-		// Return current in-memory settings if available (e.g. if bot ran), otherwise empty.
-		if Models.GetSettingsState().BirdIgnoreList.Troops == nil {
-			Models.GetSettingsState().BirdIgnoreList.Troops = make(map[int]map[int]int)
-		}
-		SendFrontendMessage("birdSettings", Models.GetSettingsState().BirdIgnoreList.Troops, "")
 
 	case "getRecruitTroopsSettings":
 		if Models.GetSettingsState().RecruitTroopsList.Targets == nil {
 			Models.GetSettingsState().RecruitTroopsList.Targets = make(map[int]map[int]int)
 		}
 		SendFrontendMessage("recruitTroopsSettings", Models.GetSettingsState().RecruitTroopsList.Targets, "")
-
-	case "saveBirdSettings":
-		// Persistence moved to frontend. This is just for runtime update if needed.
-		// Or if user clicks save while bot is running.
-		payloadRaw, ok := data["payload"].(map[string]interface{})
-		if !ok {
-			return
-		}
-
-		newSettings := make(map[int]map[int]int)
-
-		for castleIDStr, itemsRaw := range payloadRaw {
-			castleID, _ := strconv.Atoi(castleIDStr)
-			if castleID == 0 {
-				continue
-			}
-
-			if items, ok := itemsRaw.([]interface{}); ok {
-				castleMap := make(map[int]int)
-				for _, itemRaw := range items {
-					if item, ok := itemRaw.(map[string]interface{}); ok {
-						unitID := int(item["id"].(float64))
-						amount := int(item["amount"].(float64))
-						if unitID > 0 && amount >= 0 {
-							castleMap[unitID] = amount
-						}
-					}
-				}
-				newSettings[castleID] = castleMap
-			}
-		}
-
-		// Just update memory
-		Models.GetSettingsState().UpdateBirdIgnoreList(newSettings)
-
-		// Also update delay/minSend settings if present
-		if minDelay, ok := payloadRaw["minDelay"].(float64); ok {
-			Models.GetSettingsState().AutoBirdDelay.MinDelay = int(minDelay)
-		}
-		if maxDelay, ok := payloadRaw["maxDelay"].(float64); ok {
-			Models.GetSettingsState().AutoBirdDelay.MaxDelay = int(maxDelay)
-		}
-		if minSend, ok := payloadRaw["minSend"].(float64); ok {
-			Models.GetSettingsState().AutoBirdDelay.MinSend = int(minSend)
-		}
-
-		// Echo back for consistency (optional)
-		SendFrontendMessage("birdSettings", newSettings, "")
 
 	case "saveRecruitTroopsSettings":
 		payloadRaw, ok := data["payload"].(map[string]interface{})
@@ -792,25 +717,6 @@ func ParseFrontendMessage(message []byte) {
 		Models.GetSettingsState().UpdateRecruitTroopsList(newSettings)
 		SendFrontendMessage("recruitTroopsSettings", newSettings, "")
 
-	case "getServerList":
-		var serverNames []string
-		for name := range ResponseRegistry.ServerURLMap {
-			serverNames = append(serverNames, name)
-		}
-		// Sort for consistent display
-		// Simple bubble sort or import sort not needed if we trust frontend to sort?
-		// Better to just send raw list and let frontend sort or sort here if we import "sort"
-		// Let's import "sort"
-		// Wait, I can't easily add import with replace_file_content if imports block is far away without reading file content fully or multiple blocks.
-		// I'll just send the list, Frontend can sort it.
-		SendFrontendMessage("serverList", serverNames, "")
-	case "updateCredentials":
-		if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
-			server, _ := payloadRaw["server"].(string)
-			if server != "" {
-				ResponseRegistry.StoredCredentials.Server = server
-			}
-		}
 	case "sendCustomMessage":
 		payloadRaw, ok := data["payload"].(map[string]interface{})
 		if !ok {

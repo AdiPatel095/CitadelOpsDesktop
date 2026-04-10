@@ -1,6 +1,7 @@
 import React from 'react';
 import UnitImage from '../../components/UnitImage';
-import { TROOP_DEFINITIONS } from '../../config/constants';
+import ToolImage from '../../components/ToolImage';
+import { useMetadata } from '../../context/MetadataContext';
 import type { BarracksQueueRow } from '../../types/castleFocusState.ts';
 
 function formatQueueCount(n: number): string {
@@ -14,13 +15,17 @@ export interface BarracksQueueSlotProps {
   row: BarracksQueueRow;
   /** Icon size in px (container is slightly larger for the count badge). */
   imageSize?: number;
+  isTool?: boolean;
 }
 
 /**
- * Single recruitment slot: troop PNG (via {@link UnitImage}) + alert-style count for TUA.
+ * Single recruitment slot: troop/tool PNG + alert-style count for TUA.
  */
-const BarracksQueueSlot: React.FC<BarracksQueueSlotProps> = ({ row, imageSize = 40 }) => {
-  const name = TROOP_DEFINITIONS[row.wid] ?? `Recipe ${row.wid}`;
+const BarracksQueueSlot: React.FC<BarracksQueueSlotProps> = ({ row, imageSize = 40, isTool = false }) => {
+  const { getTroop, getTool } = useMetadata();
+  const metadata = isTool ? getTool(row.wid) : getTroop(row.wid);
+  const name = metadata?.name ?? `Item ${row.wid}`;
+
   const batch =
     row.pid != null && row.pid > 0
       ? ` · batch ${row.pid}`
@@ -39,7 +44,11 @@ const BarracksQueueSlot: React.FC<BarracksQueueSlotProps> = ({ row, imageSize = 
       style={{ width: imageSize + 18, height: imageSize + 18 }}
       title={title}
     >
-      <UnitImage unitId={row.wid} size={imageSize} showLevel={true} className="!block" />
+      {isTool ? (
+        <ToolImage toolId={row.wid} size={imageSize} className="!block" />
+      ) : (
+        <UnitImage unitId={row.wid} size={imageSize} showLevel={true} className="!block" />
+      )}
       <span
         className="absolute -right-1 -top-1 z-20 flex min-h-[1.125rem] min-w-[1.125rem] max-w-[3.25rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-md ring-2 ring-bg-card"
         aria-label={`${formatQueueCount(row.tua)} in slot`}

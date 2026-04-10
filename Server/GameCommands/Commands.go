@@ -125,3 +125,88 @@ func SendSPLRefreshDefaultProductionLIDs() {
 		}
 	}()
 }
+
+// QueueOutgoingPayload enqueues a raw payload onto the single game websocket outbound queue.
+func QueueOutgoingPayload(payload string) {
+	ResponseRegistry.OutgoingMessages <- []byte(payload)
+}
+
+// SDIPayload returns EmpireEx_21 **sdi** — select/preview a bird dispatch route.
+//
+// Payload: {"TX":<targetX>,"TY":<targetY>,"SX":<sourceX>,"SY":<sourceY>}
+func SDIPayload(targetX, targetY, sourceX, sourceY int) string {
+	return fmt.Sprintf(
+		`%%xt%%EmpireEx_21%%sdi%%1%%{"TX":%d,"TY":%d,"SX":%d,"SY":%d}%%`,
+		targetX, targetY, sourceX, sourceY,
+	)
+}
+
+// CDSPayload returns EmpireEx_21 **cds** — send a bird movement with a troop batch.
+//
+// troopsJSON must be a valid JSON array string for "A", e.g. [[unitId,amount],...].
+// JSON shape:
+//
+//	{"SID":<castleAID>,"TX":<targetX>,"TY":<targetY>,"LID":<sdiLID>,"WT":<delayHours>,
+//	 "HBW":<hbw>,"BPC":1,"PTT":<ptt>,"SD":0,"A":<troopsJSON>}
+//	 Valid (HBW,PTT) pairs: see CDSVariants.go (HBW=0,PTT=0 → code 5 in logs; app uses 1001/0 and -1/1).
+func CDSPayload(castleAID, targetX, targetY, sdiLID, delayHours, hbw, ptt int, troopsJSON string) string {
+	return fmt.Sprintf(
+		`%%xt%%EmpireEx_21%%cds%%1%%{"SID":%d,"TX":%d,"TY":%d,"LID":%d,"WT":%d,"HBW":%d,"BPC":1,"PTT":%d,"SD":0,"A":%s}%%`,
+		castleAID, targetX, targetY, sdiLID, delayHours, hbw, ptt, troopsJSON,
+	)
+}
+
+// GAMPayload returns EmpireEx_21 **gam** — request active troop movements.
+func GAMPayload() string {
+	return `%xt%EmpireEx_21%gam%1%{}%`
+}
+
+// SendGAM requests active movements (**gam**). Parsed into GameState.Movement.ActiveMovements.
+func SendGAM() {
+	QueueOutgoingPayload(GAMPayload())
+}
+
+// SendSDI queues **sdi** — preview bird route source → target map tiles.
+func SendSDI(targetX, targetY, sourceX, sourceY int) {
+	QueueOutgoingPayload(SDIPayload(targetX, targetY, sourceX, sourceY))
+}
+
+// SendCDS queues **cds** — dispatch bird with troop batch **A** (JSON array string).
+func SendCDS(castleAID, targetX, targetY, sdiLID, delayHours, hbw, ptt int, troopsJSON string) {
+	QueueOutgoingPayload(CDSPayload(castleAID, targetX, targetY, sdiLID, delayHours, hbw, ptt, troopsJSON))
+}
+
+// SendAIN queues **ain** — alliance info refresh (bird targets, etc.). AID from alliance state.
+func SendAIN(allianceAID int) {
+	if allianceAID <= 0 {
+		return
+	}
+	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%ain%%1%%{"AID":%d}%%`, allianceAID)
+	QueueOutgoingPayload(payload)
+}
+
+// EEQPayload returns EmpireEx_21 **eeq** — equip/unequip an equipment item.
+//
+// equip=true -> E=1 (equip), equip=false -> E=0 (unequip).
+// Payload: {"EID":<equipmentId>,"LID":<leaderId>,"E":<0|1>}
+func EEQPayload(equipmentID, leaderID float64, equip bool) string {
+	eFlag := 0
+	if equip {
+		eFlag = 1
+	}
+	return fmt.Sprintf(`%%xt%%EmpireEx_21%%eeq%%1%%{"EID":%.0f,"LID":%.0f,"E":%d}%%`, equipmentID, leaderID, eFlag)
+}
+
+// BGEPayload returns EmpireEx_21 **bge** — attach/equip a gem to a specific equipment item.
+//
+// Payload: {"GID":<gemId>,"EID":<equipmentId>,"LID":<leaderId>,"M":0,"RGEM":1}
+func BGEPayload(gemID, equipmentID, leaderID float64) string {
+	return fmt.Sprintf(`%%xt%%EmpireEx_21%%bge%%1%%{"GID":%.0f,"EID":%.0f,"LID":%.0f,"M":0,"RGEM":1}%%`, gemID, equipmentID, leaderID)
+}
+
+// EGEPayload returns EmpireEx_21 **ege** — remove a gem from an equipped item.
+//
+// Payload: {"EID":<equipmentId>,"LID":<leaderId>}
+func EGEPayload(equipmentID, leaderID float64) string {
+	return fmt.Sprintf(`%%xt%%EmpireEx_21%%ege%%1%%{"EID":%.0f,"LID":%.0f}%%`, equipmentID, leaderID)
+}

@@ -9,8 +9,7 @@ import (
 	"time"
 )
 
-// OnGAMParsed is a callback hook that fires after GAM messages are parsed
-// Set this from main.go or initialization code to wire in bird cleanup logic
+// OnGAMParsed is a callback hook that fires after GAM messages are parsed.
 var OnGAMParsed func()
 
 // ParseGAMMessage parses the GAM (Global Army Movement) message
@@ -67,7 +66,7 @@ func ParseGAMMessage(data string) {
 	}
 
 	gs := Models.GetGameState()
-	// gs.Movement.ActiveMovements is NOT cleared here anymore - handled by AutoBird/Scheduler before fetch
+	// gs.Movement.ActiveMovements is not cleared here; fetchers manage lifecycle.
 	var parsedMovements []Models.GAMMovement
 
 	for _, item := range mArray {
@@ -179,8 +178,9 @@ func ParseGAMMessage(data string) {
 		}
 	}
 
-	// Append new movements to the existing list (allows multiple GAM messages to be accumulated)
-	gs.Movement.ActiveMovements = append(gs.Movement.ActiveMovements, parsedMovements...)
+	// Replace with the latest snapshot so reconciliation always sees current movements only.
+	gs.Movement.ActiveMovements = parsedMovements
+	markGAMParsed()
 
 	// Trigger callback to auto-clean returned birds in real-time
 	if OnGAMParsed != nil {

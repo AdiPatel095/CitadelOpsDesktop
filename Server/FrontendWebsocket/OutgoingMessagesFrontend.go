@@ -11,45 +11,6 @@ import (
 	"time"
 )
 
-// Registration state - set by main.go via SetRegistrationState
-var registrationState struct {
-	Registered bool
-	HardwareID string
-	Credits    int
-}
-
-// SetRegistrationState is called from main.go to update the registration state
-func SetRegistrationState(registered bool, hardwareID string, credits int) {
-	registrationState.Registered = registered
-	registrationState.HardwareID = hardwareID
-	registrationState.Credits = credits
-}
-
-// SendRegistrationStatusMessage sends registration status to all connected clients
-func SendRegistrationStatusMessage(registered bool, hardwareID string, credits int) {
-	SetRegistrationState(registered, hardwareID, credits)
-	SendFrontendMessage("registrationStatus", map[string]interface{}{
-		"registered": registered,
-		"hardwareID": hardwareID,
-		"credits":    credits,
-	}, "")
-}
-
-// SendCreditsUpdateMessage sends credits update to all connected clients
-func SendCreditsUpdateMessage(credits int) {
-	registrationState.Credits = credits
-	SendFrontendMessage("creditsUpdate", map[string]interface{}{
-		"credits": credits,
-	}, "")
-}
-
-// SendInsufficientCreditsMessage sends a notification that credits are exhausted
-func SendInsufficientCreditsMessage() {
-	SendFrontendMessage("insufficientCredits", map[string]interface{}{
-		"message": "Insufficient credits to perform action",
-	}, "")
-}
-
 // SendGameLoginStatusMessage sends the current game login status
 func SendGameLoginStatusMessage(loggedIn bool, cooldown int) {
 	SendFrontendMessage("gameLoginStatus", map[string]interface{}{
@@ -66,7 +27,7 @@ func SendMemoryStatsMessage(goMemMB int, chromeMemMB int) {
 	}, "")
 }
 
-// SendAutoBirdStatus sends the current auto bird enabled state and next wake up time to all clients
+// SendAutoBirdStatus pushes auto bird enabled state and next wake time (unix ms, 0 if none).
 func SendAutoBirdStatus(enabled bool, nextWakeUp int64) {
 	SendFrontendMessage("autoBirdStatus", map[string]interface{}{
 		"enabled":    enabled,
@@ -82,25 +43,12 @@ func SendRecruitTroopsStatus(enabled bool) {
 }
 
 func SendInitialData(client *Client) {
-	// Send registration status first
-	client.SendToClient("registrationStatus", map[string]interface{}{
-		"registered": registrationState.Registered,
-		"hardwareID": registrationState.HardwareID,
-		"credits":    registrationState.Credits,
-	}, "")
-
 	// Send current game login status so frontend knows if game is connected after page refresh
 	client.SendToClient("gameLoginStatus", map[string]interface{}{
 		"loggedIn": ResponseRegistry.LoginStatus,
 		"cooldown": ResponseRegistry.LoginCooldown,
 	}, "")
 
-	// Only send game data if registered
-	if !registrationState.Registered {
-		return
-	}
-
-	// Send autoBird status (including sleep timer for persistence across reloads)
 	client.SendToClient("autoBirdStatus", map[string]interface{}{
 		"enabled":    GameFunctions.IsAutoBirdRunning(),
 		"nextWakeUp": GameFunctions.GetAutoBirdNextWakeUp(),
@@ -135,7 +83,6 @@ func SendInitialData(client *Client) {
 	client.SendToClient("castleResourceUpdate", c.DesertCastle, "desertCastle")
 	client.SendToClient("castleResourceUpdate", c.DungeonCastle, "dungeonCastle")
 	client.SendToClient("castleResourceUpdate", c.StormCastle, "stormCastle")
-	client.SendToClient("castleResourceUpdate", c.BeriWorldCastle, "beriWorldCastle")
 	client.SendToClient("castleResourceUpdate", c.Metropolis, "metropolisCastle")
 	client.SendToClient("castleResourceUpdate", c.Capital, "capitalCastle")
 
@@ -181,8 +128,6 @@ func SendCastleResource(castleLocation string) {
 		SendFrontendMessage("castleResourceUpdate", c.DungeonCastle, "dungeonCastle")
 	case "stormCastle":
 		SendFrontendMessage("castleResourceUpdate", c.StormCastle, "stormCastle")
-	case "beriWorldCastle":
-		SendFrontendMessage("castleResourceUpdate", c.BeriWorldCastle, "beriWorldCastle")
 	case "metropolisCastle":
 		SendFrontendMessage("castleResourceUpdate", c.Metropolis, "metropolisCastle")
 	case "capitalCastle":
@@ -191,7 +136,7 @@ func SendCastleResource(castleLocation string) {
 
 }
 
-func SellNonRelicEquipment(sellRift bool, sellLookItems bool) int {
+func SellNonRelicEquipment(sellLookItems bool, sellSpecialPost2026 bool) int {
 	counter := 0
 	gs := Models.GetGameState()
 
@@ -204,48 +149,45 @@ func SellNonRelicEquipment(sellRift bool, sellLookItems bool) int {
 			continue
 		}
 
-		// Check for Rift Gear (StatID 158-165 on first stat)
-		isRift := false
-		if len(equipment.EquipStats) > 0 {
-			statID := equipment.EquipStats[0].ID
-			if statID >= 158 && statID <= 165 {
-				isRift = true
-			}
+		id := int(equipment.TemplateID)
+		if id == 0 {
+			id = int(equipment.PlaceHolder6)
 		}
 
-		// If it is Rift Gear and we are NOT selling Rift Gear, skip it (save it)
-		if isRift && !sellRift {
-			continue
-		}
+		// Selling Logic:
+		// 1. Sell if TemplateID < 1366 (Old Pre-2026 Gear)
+		// 2. Sell if TemplateID >= 1366 (New Post-2026 Gear) AND the user enabled that toggle
+		shouldSell := id < 1366 || sellSpecialPost2026
 
-		if equipment.EquipRarity != 5 && equipment.EquipRarity != 15 {
+		if shouldSell && equipment.EquipRarity != 5 && equipment.EquipRarity != 15 {
 			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
-			ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+			ResponseRegistry.OutgoingMessages <- []byte(payload)
 			counter++
 		}
 	}
 	return counter
 }
 
-func SellNonRelicGems(sellRiftGems bool) int {
+func SellNonRelicGems(sellSpecialPost2026 bool) int {
 	counter := 0
 	gs := Models.GetGameState()
 
 	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
 	time.Sleep(2 * time.Second)
 	for id, count := range gs.Equipment.NonRelicGemIDs {
-		// Rift Gems (IDs 450-475)
-		isRift := id >= 450 && id <= 475
+		gemID := int(id)
 
-		// If it is a Rift Gem and we are NOT selling Rift Gems, skip
-		if isRift && !sellRiftGems {
-			continue
-		}
+		// Selling Logic:
+		// 1. Sell if GemID < 450 (Old Pre-2026 Gems)
+		// 2. Sell if GemID >= 450 (New Post-2026 Gems) AND the user enabled that toggle
+		shouldSell := gemID < 450 || sellSpecialPost2026
 
-		for i := 0; i < int(count); i++ {
-			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%03.0f,"RGEM":0,"LFID":-1}%%`, id)
-			ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
-			counter++
+		if shouldSell {
+			for i := 0; i < int(count); i++ {
+				payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%03.0f,"RGEM":0,"LFID":-1}%%`, id)
+				ResponseRegistry.OutgoingMessages <- []byte(payload)
+				counter++
+			}
 		}
 	}
 	log.Printf("Storage Gem amount : %v", len(gs.Equipment.NonRelicGemIDs))
@@ -262,7 +204,7 @@ func SellRelic1Equipment() int {
 		// Relic 1.0 is Rarity 5 but NOT 4 stats (which is Relic 2.0)
 		if equipment.EquipRarity == 5 && len(equipment.EquipStats) < 4 {
 			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
-			ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+			ResponseRegistry.OutgoingMessages <- []byte(payload)
 			counter++
 		}
 	}
@@ -291,7 +233,7 @@ func SellRelic2Equipment(keepStars int) int {
 			// Sell if below the keep threshold
 			if totalStars < keepStars {
 				payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
-				ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+				ResponseRegistry.OutgoingMessages <- []byte(payload)
 				counter++
 			}
 		}
@@ -308,7 +250,7 @@ func SellRelic1Gems() int {
 	for _, gem := range gs.Equipment.GemsStorage {
 		if len(gem.GemStats) == 3 {
 			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%.0f,"RGEM":1,"LFID":-1}%%`, gem.ID)
-			ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+			ResponseRegistry.OutgoingMessages <- []byte(payload)
 			counter++
 		}
 	}
@@ -332,7 +274,7 @@ func SellRelic2Gems(keepStars int) int {
 			// Sell if below the keep threshold
 			if totalStars < keepStars {
 				payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%.0f,"RGEM":1,"LFID":-1}%%`, gem.ID)
-				ResponseRegistry.OutgoingMessages <- ResponseRegistry.OutgoingMessageWithCost{Payload: []byte(payload), Cost: 1}
+				ResponseRegistry.OutgoingMessages <- []byte(payload)
 				counter++
 			}
 		}
@@ -404,9 +346,4 @@ func SendUpdateErrorMessage(errMsg string) {
 	SendFrontendMessage("updateError", map[string]interface{}{
 		"error": errMsg,
 	}, "")
-}
-
-// SendRequestCredentialsMessage sends a request for credentials to the frontend
-func SendRequestCredentialsMessage() {
-	SendFrontendMessage("requestCredentials", nil, "")
 }

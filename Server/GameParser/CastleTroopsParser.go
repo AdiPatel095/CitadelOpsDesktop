@@ -3,7 +3,6 @@ package GameParser
 import (
 	"CitadelDesktop/Server/Models"
 	"encoding/json"
-	"fmt"
 )
 
 // ParseCastleTroops parses the JAA response to extract troop counts for a castle.
@@ -67,48 +66,6 @@ func ParseCastleTroops(data string, kingdomID, x, y int) *Models.CastleTroops {
 	troopsHI := parseUnitArray("HI")
 	troopsSHI := parseUnitArray("SHI")
 
-	// Parse buildings from gca.BD and gca.BG
-	var buildings []Models.BuildingData
-	if gcaObj, gcaOk := dataObj["gca"].(map[string]interface{}); gcaOk {
-		bdMap, _ := gcaObj["BD"].(map[string]interface{})
-		bgArr, _ := gcaObj["BG"].([]interface{})
-
-		for _, item := range bgArr {
-			bArr, ok := item.([]interface{})
-			if !ok || len(bArr) < 5 {
-				continue
-			}
-			wid, ok1 := bArr[0].(float64)
-			bx, ok2 := bArr[1].(float64)
-			by, ok3 := bArr[2].(float64)
-			oid, ok4 := bArr[4].(float64)
-			if !ok1 || !ok2 || !ok3 || !ok4 {
-				continue
-			}
-
-			// Try to get level from BD if available
-			level := 0
-			if bdMap != nil {
-				oidStr := fmt.Sprintf("%d", int(oid))
-				if bDetails, exists := bdMap[oidStr].(map[string]interface{}); exists {
-					if l, exists := bDetails["L"].(float64); exists {
-						level = int(l)
-					}
-				}
-			}
-
-			info := Models.GetBuildingInfo(int(wid))
-			buildings = append(buildings, Models.BuildingData{
-				BuildingID: int(wid),
-				OID:        int(oid),
-				Name:       info.Name,
-				Level:      level,
-				X:          int(bx),
-				Y:          int(by),
-			})
-		}
-	}
-
 	// Create mixed map (I + TU)
 	troopsMixed := make(map[int]int)
 	for id, count := range troopsI {
@@ -128,6 +85,5 @@ func ParseCastleTroops(data string, kingdomID, x, y int) *Models.CastleTroops {
 		TroopsHI:    troopsHI,
 		TroopsSHI:   troopsSHI,
 		TroopsMixed: troopsMixed,
-		BGRows:      buildings, // from gca.BG only; BD used for level lookup only
 	}
 }

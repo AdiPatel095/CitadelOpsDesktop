@@ -46,17 +46,6 @@ class FrontendWebsocketService {
   }
 
   private sendMockData() {
-    // Mock registration status (registered for dev)
-    const mockRegistration = {
-      type: 'registrationStatus',
-      payload: {
-        registered: true,
-        hardwareID: 'mock-dev-hardware-id',
-        credits: 50000
-      },
-    };
-    this.listeners.forEach((listener) => listener(mockRegistration));
-
     // Mock resource update
     const mockResources = {
       type: 'globalResourceUpdate',
@@ -140,19 +129,8 @@ class FrontendWebsocketService {
     }
   }
 
-  public startGame(credentials?: { username: string; password: string; server: string }) {
-    if (credentials) {
-      this.sendMessage({
-        type: 'startGame',
-        payload: {
-          username: credentials.username,
-          password: credentials.password,
-          server: credentials.server
-        }
-      });
-    } else {
-      this.sendMessage({ type: 'startGame' });
-    }
+  public startGame() {
+    this.sendMessage({ type: 'startGame' });
   }
 
   public stopGame() {
@@ -171,7 +149,6 @@ class FrontendWebsocketService {
   }
 
   public sendReconfigureLoadout(payload: {
-    hardwareID: string;
     equipmentMode: 'Commander' | 'Castellan';
     combatMode: 'PvP' | 'PvE';
     targetIndex: number;
@@ -199,34 +176,12 @@ class FrontendWebsocketService {
     });
   }
 
-  public changeLoginDetails() {
-    this.sendMessage({
-      type: 'changeLoginDetails'
-    });
-  }
-
   public triggerUpdate(downloadUrl: string) {
     this.sendMessage({
       type: 'triggerUpdate',
       payload: { downloadUrl }
     });
   }
-
-
-
-  public sendGetServerList() {
-    this.sendMessage({
-      type: 'getServerList'
-    });
-  }
-
-  public sendUpdateCredentials(credentials: object) {
-    this.sendMessage({
-      type: 'updateCredentials',
-      payload: credentials
-    });
-  }
-
   public sendGetSchedulerSettings() {
     this.sendMessage({
       type: 'getSchedulerSettings'

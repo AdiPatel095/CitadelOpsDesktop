@@ -1,0 +1,80 @@
+[
+  {
+    "id": null,
+    "name": "currency1",
+    "type": "currency1",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "currency2",
+    "type": "currency2",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wood",
+    "type": "wood",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stone",
+    "type": "stone",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "food",
+    "type": "food",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "coal",
+    "type": "coal",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "oil",
+    "type": "oil",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "glass",
+    "type": "glass",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "aquamarine",
+    "type": "aquamarine",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "iron",
+    "type": "iron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "honey",
+    "type": "honey",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "mead",
+    "type": "mead",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "beef",
+    "type": "beef",
+    "image": null
+  }
+]

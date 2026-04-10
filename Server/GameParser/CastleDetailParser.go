@@ -13,12 +13,11 @@ const (
 	keyKingdomID       = "KID"
 	keyCastleInfoArray = "AI"
 
-	kingdomIDMain      = 0.0
-	kingdomIDDesert    = 1.0
-	kingdomIDIce       = 2.0
-	kingdomIDDungeon   = 3.0
-	kingdomIDStorm     = 4.0
-	kingdomIDBeriWorld = 10.0
+	kingdomIDMain    = 0.0
+	kingdomIDDesert  = 1.0
+	kingdomIDIce     = 2.0
+	kingdomIDDungeon = 3.0
+	kingdomIDStorm   = 4.0
 
 	// Kingdom 0 castle types from GCL details[0] (verify against live packets if Metropolis/Capital do not populate).
 	kingdomCastleTypeMain       = 1
@@ -67,7 +66,7 @@ func CastleDetailParser(gcl map[string]interface{}, dcl map[string]interface{}) 
 
 // parseGCL processes the Game Castle List data.
 // It now returns an error instead of calling log.Fatal, preventing server crashes.
-// Also extracts player castle locations for AutoBird feature.
+// Also extracts player castle locations used for focusing/troop fetch.
 func parseGCL(gcl map[string]interface{}) error {
 	gs := Models.GetGameState()
 
@@ -123,10 +122,6 @@ func parseGCL(gcl map[string]interface{}) error {
 			parseSingleCastle(castleArray, func(id float64, name string) {
 				gs.Castle.StormCastle.Aid, gs.Castle.StormCastle.Name = id, name
 			}, 4)
-		case kingdomIDBeriWorld:
-			parseSingleCastle(castleArray, func(id float64, name string) {
-				gs.Castle.BeriWorldCastle.Aid, gs.Castle.BeriWorldCastle.Name = id, name
-			}, 10)
 		}
 	}
 
@@ -161,9 +156,6 @@ func GetCastleLocationName(castleID int) string {
 	}
 	if int(c.StormCastle.Aid) == castleID {
 		return "stormCastle"
-	}
-	if int(c.BeriWorldCastle.Aid) == castleID {
-		return "beriWorldCastle"
 	}
 	if int(c.Metropolis.Aid) == castleID {
 		return "metropolisCastle"
@@ -441,24 +433,6 @@ func parseDCL(dcl map[string]interface{}) error {
 					castleID, ok := castleMap[keyCastleID].(float64)
 					if castleID == gs.Castle.StormCastle.Aid {
 						parseCastleResources(castleMap, &gs.Castle.StormCastle.Amount, &gs.Castle.StormCastle.Production, &gs.Castle.StormCastle.Storage, castleID)
-					}
-				}
-
-			}
-		case 10:
-			{
-				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
-				if !ok {
-					continue
-				}
-				for _, castleData := range castleArray {
-					castleMap, ok := castleData.(map[string]interface{})
-					if !ok {
-						continue
-					}
-					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == gs.Castle.BeriWorldCastle.Aid {
-						parseCastleResources(castleMap, &gs.Castle.BeriWorldCastle.Amount, &gs.Castle.BeriWorldCastle.Production, &gs.Castle.BeriWorldCastle.Storage, castleID)
 					}
 				}
 

@@ -38,7 +38,6 @@ GameState                          // Unified dynamic session state (gamestate.G
 │   ├── MainCastle                 // PlayerCastleInfo
 │   ├── Outpost1, Outpost2, Outpost3
 │   ├── IceCastle, DesertCastle, DungeonCastle, StormCastle
-│   ├── BeriWorldCastle
 │   ├── Metropolis
 │   └── Capital
 │       └── (each PlayerCastleInfo)

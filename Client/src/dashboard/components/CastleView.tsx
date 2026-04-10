@@ -5,6 +5,7 @@ import { useCastleResources } from '../context/CastleResourceContext.tsx';
 import CastleResourceCard from './CastleResourceCard.tsx';
 import CastleUnitCard from './CastleUnitCard.tsx';
 import CastleQueuesCard from './CastleQueuesCard.tsx';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 
 /**
  * Single-castle hub driven by GameState.CastleFocus (mirrored as `castleFocus`): resources, units, queues, decorations.
@@ -34,7 +35,7 @@ const CastleView: React.FC = () => {
 
   if (focusedAid <= 0) {
     return (
-      <div className="dashboard">
+      <div className="flex flex-col gap-6">
         <div className="rounded-global border border-dashed border-border-light bg-bg-card/50 px-6 py-12 text-center">
           <p className="text-sm font-medium text-text-main">No castle in focus</p>
           <p className="mt-2 text-xs text-text-muted mx-auto max-w-md">
@@ -48,7 +49,7 @@ const CastleView: React.FC = () => {
 
   if (!castle && loadingFocused) {
     return (
-      <div className="dashboard">
+      <div className="flex flex-col gap-6">
         <div className="rounded-global border border-border-base bg-bg-card/80 px-6 py-10 text-center">
           <p className="text-sm text-text-muted">Loading {castleName}…</p>
         </div>
@@ -58,7 +59,7 @@ const CastleView: React.FC = () => {
 
   if (!castle) {
     return (
-      <div className="dashboard">
+      <div className="flex flex-col gap-6">
         <div className="rounded-global border border-border-base bg-bg-card/80 px-6 py-10 text-center">
           <p className="text-sm font-medium text-text-main">{castleName}</p>
           <p className="mt-2 text-xs text-text-muted mx-auto max-w-md">
@@ -71,7 +72,7 @@ const CastleView: React.FC = () => {
   }
 
   return (
-    <div className="dashboard">
+    <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1 border-b border-border-base pb-4">
         <h1 className="text-2xl font-bold tracking-tight text-text-main">{castleName}</h1>
         <p className="text-xs text-text-muted">
@@ -81,30 +82,31 @@ const CastleView: React.FC = () => {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch">
-        <CastleQueuesCard />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch h-[calc(100vh-14rem)]">
+        <Card className="flex flex-col min-h-0">
+          <CardHeader className="pb-2 border-b-0">
+            <CardTitle className="text-primary">Decorations</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-auto custom-scrollbar pt-0">
+            <DecorationPresetsPanel />
+          </CardContent>
+        </Card>
+        
         <CastleResourceCard
           title="Resources"
           resources={castle.amount}
           storage={castle.storage}
           production={castle.production}
         />
+        
         <CastleUnitCard
           title="Units"
           troopsMixed={castle.troops?.troopsMixed ?? {}}
           troopsI={castle.troops?.troopsI ?? {}}
           troopsTU={castle.troops?.troopsTU ?? {}}
         />
-        <div className="castle-card flex min-h-0 flex-col md:min-h-[22rem]">
-          <h3 className="castle-name">Decorations</h3>
-          <p className="-mt-2 mb-4 text-xs text-text-muted">
-            Save and apply decoration presets from your current in-game focus (JAA). Apply runs the smart replacer (SOB
-            / EBU) until the layout matches.
-          </p>
-          <div className="min-h-0 flex-1 overflow-auto">
-            <DecorationPresetsPanel />
-          </div>
-        </div>
+        
+        <CastleQueuesCard />
       </div>
     </div>
   );

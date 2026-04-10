@@ -6,12 +6,12 @@ import {
 } from '../models/equipment.ts';
 import { useAuth } from '../../context/AuthContext';
 
-// Castle index mapping (0-10) — matches server Models.NumPlayerCastleSlots / castStatUpdate optionalData
-// 0 Main … 7 Storm, 8 BeriWorld, 9 Metropolis, 10 Capital
-export const NUM_CASTLE_SLOTS = 11;
+// Castle index mapping (0-9) — matches server Models.NumPlayerCastleSlots / castStatUpdate optionalData
+// 0 Main … 7 Storm, 8 Metropolis, 9 Capital
+export const NUM_CASTLE_SLOTS = 10;
 export const CASTLE_LOCATIONS = [
     'MainCastle', 'Outpost1', 'Outpost2', 'Outpost3',
-    'IceCastle', 'DesertCastle', 'DungeonCastle', 'StormCastle', 'BeriWorldCastle',
+    'IceCastle', 'DesertCastle', 'DungeonCastle', 'StormCastle',
     'MetropolisCastle', 'CapitalCastle',
 ];
 

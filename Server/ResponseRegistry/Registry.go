@@ -31,10 +31,10 @@
 //	┌─────────────────────────────────────────────────────────────────────────────┐
 //	│                     MessageRouter (GameParser package)                      │
 //	│                                                                             │
-//	│  func MessageRouter(messageParts []string) {                                │
-//	│      messageType := messageParts[2]                                         │
-//	│      ResponseRegistry.Global.CheckWaiters(messageType, messageParts)        │
-//	│      // ... continue normal processing                                      │
+//	│  func MessageRouter(parts []string) {                                       │
+//	│      cmd, _ := GameParser.CommandType(parts)                                │
+//	│      ResponseRegistry.Global.CheckWaiters(cmd, parts)                       │
+//	│      // dispatch by cmd; JSON payload at index 5 when present               │
 //	│  }                                                                          │
 //	└─────────────────────────────────────────────────────────────────────────────┘
 //	                                   ▲
@@ -57,7 +57,7 @@
 //	waiter := ResponseRegistry.Global.RegisterWaiter("eeq", 5*time.Second)
 //	defer waiter.Cleanup()
 //
-//	GameWebsocket.OutgoingMessages <- payload
+//	ResponseRegistry.OutgoingMessages <- payload
 //
 //	response, err := waiter.WaitWithTimeout()
 //	if err == ResponseRegistry.ErrTimeout {
@@ -200,12 +200,6 @@ func (r *Registry) GetWaiterCount(messageType string) int {
 	return len(r.waiters[messageType])
 }
 
-// OutgoingMessageWithCost wraps a payload with a rate-limiting cost value.
-type OutgoingMessageWithCost struct {
-	Payload []byte
-	Cost    int
-}
-
 // OutgoingMessages is the shared channel for sending commands to the game server.
-// Any package can send messages by pushing []byte or OutgoingMessageWithCost onto this channel.
+// Any package can send messages by pushing []byte or string onto this channel.
 var OutgoingMessages = make(chan interface{}, 100)

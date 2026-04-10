@@ -37,6 +37,7 @@ func GetGameState() *GameState {
 			},
 			Movement: movement.PlayerMovement{
 				BirdMovements: make(map[int][]movement.BirdMovement),
+				LastSDI:       make(map[int]movement.SDIContext),
 			},
 		}
 	})
@@ -50,7 +51,10 @@ func (gs *GameState) Reset() {
 	gs.GlobalResources = resources.PlayerGlobalResources{}
 	gs.Castle = castle.PlayerCastles{}
 	gs.Equipment = equipment.PlayerEquipment{NonRelicGemIDs: make(map[float64]float64)}
-	gs.Movement = movement.PlayerMovement{BirdMovements: make(map[int][]movement.BirdMovement)}
+	gs.Movement = movement.PlayerMovement{
+		BirdMovements: make(map[int][]movement.BirdMovement),
+		LastSDI:       make(map[int]movement.SDIContext),
+	}
 	gs.CastleFocus = castle.CastleFocus{}
 	mapstate.GetMapState().Reset()
 }
@@ -76,8 +80,6 @@ func (gs *GameState) GetCastleByID(castleID int) *castle.PlayerCastleInfo {
 		return &c.DungeonCastle
 	case c.StormCastle.Aid == cID:
 		return &c.StormCastle
-	case c.BeriWorldCastle.Aid == cID:
-		return &c.BeriWorldCastle
 	case c.Metropolis.Aid == cID:
 		return &c.Metropolis
 	case c.Capital.Aid == cID:

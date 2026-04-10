@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import { statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName, type CommStat, type CastStat } from '../models/equipment';
 import { FrontendWebsocket } from '../../websocket';
-import GameButton from '../../components/GameButton';
+import { Button, Badge, Modal, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 
 // Equipment slot definitions
 const EQUIPMENT_SLOTS = [
@@ -75,36 +75,41 @@ const UnequipEquipmentModal: React.FC<UnequipEquipmentModalProps> = ({ isOpen, o
   const availableSlots = EQUIPMENT_SLOTS.filter(({ slot }) => getEquipmentId(slot) !== 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={handleClose}
-      />
-
-      {/* Modal Content */}
-      <div className="relative glass-panel p-6 max-w-md mx-4 animate-fade-in bg-bg-card">
-        {/* Icon */}
-        <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={
+        <div className="flex flex-col items-center pt-2">
+          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-4">
             <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </div>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-xl font-bold text-text-main text-center mb-3">
           Unequip Equipment
-        </h3>
-
-        {/* Description */}
-        <p className="text-text-muted text-center mb-4">
+        </div>
+      }
+      footer={
+        <>
+          <Button variant="ghost" onClick={handleClose} className="flex-1">
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleConfirm}
+            disabled={selectedSlots.size === 0}
+            className="flex-1"
+          >
+            Unequip {selectedSlots.size > 0 ? `(${selectedSlots.size})` : ''}
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col items-center">
+        <p className="text-text-muted text-center mb-6">
           Select equipment to unequip from <span className="text-primary font-semibold">{selectedItem?.name}</span>
         </p>
 
-        {/* Slot Selection */}
-        <div className="space-y-2 mb-6">
+        <div className="w-full space-y-2">
           {availableSlots.length === 0 ? (
             <p className="text-text-muted text-center py-4">No equipment to unequip</p>
           ) : (
@@ -123,16 +128,12 @@ const UnequipEquipmentModal: React.FC<UnequipEquipmentModalProps> = ({ isOpen, o
                   `}
                   onClick={() => toggleSlot(slot)}
                 >
-                  {/* Custom Checkbox */}
                   <div className={`
-                    w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
-                    ${isSelected
-                      ? 'bg-primary border-primary'
-                      : 'bg-bg-app/50 border-gray-500 hover:border-text-muted'
-                    }
+                    w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 shrink-0
+                    ${isSelected ? 'bg-primary border-primary' : 'bg-bg-app/50 border-border-base group-hover:border-text-muted'}
                   `}>
                     {isSelected && (
-                      <svg className="w-3 h-3 text-bg-app" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 text-text-inverted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     )}
@@ -146,31 +147,8 @@ const UnequipEquipmentModal: React.FC<UnequipEquipmentModalProps> = ({ isOpen, o
             })
           )}
         </div>
-
-        {/* Buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleClose}
-            className="flex-1 btn-ghost border border-border-base"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={selectedSlots.size === 0}
-            className={`
-              flex-1 px-4 py-2 font-semibold rounded-global transition-all duration-200
-              ${selectedSlots.size > 0
-                ? 'bg-primary text-bg-app hover:bg-primary/80 active:scale-95'
-                : 'bg-bg-card-hover text-text-muted cursor-not-allowed'
-              }
-            `}
-          >
-            Unequip {selectedSlots.size > 0 ? `(${selectedSlots.size})` : ''}
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 
@@ -236,40 +214,43 @@ const UnequipGemModal: React.FC<UnequipGemModalProps> = ({ isOpen, onClose, onCo
     onClose();
   };
 
-  // Filter to only show slots that have gems (gem ID != 0)
   const availableSlots = GEM_SLOTS.filter(({ slot }) => getGemId(slot) !== 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={handleClose}
-      />
-
-      {/* Modal Content */}
-      <div className="relative glass-panel p-6 max-w-md mx-4 animate-fade-in bg-bg-card">
-        {/* Icon */}
-        <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={
+        <div className="flex flex-col items-center pt-2">
+          <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mb-4">
             <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
           </div>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-xl font-bold text-text-main text-center mb-3">
           Unequip Gem
-        </h3>
-
-        {/* Description */}
-        <p className="text-text-muted text-center mb-4">
+        </div>
+      }
+      footer={
+        <>
+          <Button variant="ghost" onClick={handleClose} className="flex-1">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={selectedSlots.size === 0}
+            className={`flex-1 bg-purple-500 text-white hover:bg-purple-600 ${selectedSlots.size === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            Unequip {selectedSlots.size > 0 ? `(${selectedSlots.size})` : ''}
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col items-center">
+        <p className="text-text-muted text-center mb-6">
           Select gems to unequip from <span className="text-purple-400 font-semibold">{selectedItem?.name}</span>
         </p>
 
-        {/* Slot Selection */}
-        <div className="space-y-2 mb-6">
+        <div className="w-full space-y-2">
           {availableSlots.length === 0 ? (
             <p className="text-text-muted text-center py-4">No gems to unequip</p>
           ) : (
@@ -288,13 +269,9 @@ const UnequipGemModal: React.FC<UnequipGemModalProps> = ({ isOpen, onClose, onCo
                   `}
                   onClick={() => toggleSlot(slot)}
                 >
-                  {/* Custom Checkbox */}
                   <div className={`
-                    w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
-                    ${isSelected
-                      ? 'bg-purple-500 border-purple-500'
-                      : 'bg-bg-app/50 border-gray-500 hover:border-gray-400'
-                    }
+                    w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 shrink-0
+                    ${isSelected ? 'bg-purple-500 border-purple-500' : 'bg-bg-app/50 border-border-base group-hover:border-text-muted'}
                   `}>
                     {isSelected && (
                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -311,31 +288,8 @@ const UnequipGemModal: React.FC<UnequipGemModalProps> = ({ isOpen, onClose, onCo
             })
           )}
         </div>
-
-        {/* Buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleClose}
-            className="flex-1 btn-ghost border border-border-base"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={selectedSlots.size === 0}
-            className={`
-              flex-1 px-4 py-2 font-semibold rounded-global transition-all duration-200
-              ${selectedSlots.size > 0
-                ? 'bg-purple-500 text-white hover:bg-purple-600 active:scale-95'
-                : 'bg-bg-card-hover text-text-muted cursor-not-allowed'
-              }
-            `}
-          >
-            Unequip {selectedSlots.size > 0 ? `(${selectedSlots.size})` : ''}
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 
@@ -401,7 +355,6 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
       if (!isSpecialStat) {
         let suffix = key;
 
-        // Special handling for Front/Flank limits
         if (key === 'frontLimit') {
           suffix = 'Front';
         } else if (key === 'flankLimit') {
@@ -414,9 +367,8 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
 
         const capitalizedSuffix = suffix.charAt(0).toUpperCase() + suffix.slice(1);
 
-        // Skip adding CL/NPC stats to frontCbtStr/flankCbtStr since they go to limits now
         if (key === 'frontCbtStr' || key === 'flankCbtStr') {
-          // Do nothing, these don't get CL/NPC additions anymore
+          // Do nothing
         } else {
           if (combatMode === 'PvP') {
             const clKey = `CL${capitalizedSuffix}`;
@@ -452,7 +404,6 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
 
   return (
     <div className="p-4">
-      {/* Modals */}
       <UnequipEquipmentModal
         isOpen={showEquipmentModal}
         onClose={() => setShowEquipmentModal(false)}
@@ -466,46 +417,39 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
         selectedItem={selectedItem}
       />
 
-      {/* Header */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-white">
+          <h3 className="text-lg font-semibold text-text-main">
             {name ? name : `Select a ${equipmentMode}`}
           </h3>
         </div>
 
         {name && (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`
-              inline-flex items-center px-2 py-0.5 rounded-global text-xs font-medium
-              ${combatMode === 'PvP'
-                ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-              }
-            `}>
+            <Badge variant={combatMode === 'PvP' ? 'danger' : 'info'}>
               {combatMode} Stats
-            </span>
+            </Badge>
 
-            {/* Unequip Buttons */}
             <div className="flex gap-2 ml-auto">
-              <GameButton
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setShowEquipmentModal(true)}
-                className="px-3 py-1 bg-primary/20 text-primary border border-primary/30 font-medium text-xs rounded-global hover:bg-primary/30 hover:border-primary/50 active:scale-95 transition-all duration-200"
               >
                 Unequip Equipment
-              </GameButton>
-              <GameButton
+              </Button>
+              <Button
+                size="sm"
+                className="bg-purple-500/10 text-purple-400 border-purple-500/30 border hover:bg-purple-500/20 hover:border-purple-500/50"
                 onClick={() => setShowGemModal(true)}
-                className="px-3 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/30 font-medium text-xs rounded-global hover:bg-purple-500/30 hover:border-purple-500/50 active:scale-95 transition-all duration-200"
               >
                 Unequip Gem
-              </GameButton>
+              </Button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Stats List */}
       <div className="space-y-4">
         {!stats && (
           <div className="text-center py-8 text-text-muted">
@@ -522,7 +466,7 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
           if (visibleStats.length === 0) return null;
 
           return (
-            <div key={groupName} className="rounded-global bg-bg-app/50 p-3 border border-border-base/50">
+            <div key={groupName} className="rounded-global bg-bg-app border border-border-base p-3">
               <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{statGroupDisplayName[groupName] || groupName}</h4>
               <div className="space-y-0.5">
                 {visibleStats.map(key => renderStat(key, processedStats[key]))}

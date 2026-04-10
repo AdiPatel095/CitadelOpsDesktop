@@ -37,7 +37,6 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
-*.json
 !Server/Models/DecorationCatalogInformation.json
 !Server/Data/GGEHtml5Assets/manifest.json
 

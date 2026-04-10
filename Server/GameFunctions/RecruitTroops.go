@@ -121,30 +121,17 @@ func runRecruitTroops(ctx context.Context) {
 					continue
 				}
 
-				// Focus castle to get the latest troop counts
-				troops := GameParser.FetchCastleTroops(kingdomID, castleID, x, y)
-				if troops != nil {
-					castleInfo.Troops = Models.CastleTroopData{
-						KingdomID:   troops.KingdomID,
-						X:           troops.X,
-						Y:           troops.Y,
-						TroopsI:     troops.TroopsI,
-						TroopsTU:    troops.TroopsTU,
-						TroopsHI:    troops.TroopsHI,
-						TroopsSHI:   troops.TroopsSHI,
-						TroopsMixed: troops.TroopsMixed,
-					}
-					Models.SetCastleBuildingRows(castleInfo, troops.BGRows, troops.BDRows)
-				}
+				// Focus castle; inbound **jaa** updates troops/buildings/focus in MessageRouter.
+				_ = GameParser.FetchCastleTroops(kingdomID, castleID, x, y)
 				time.Sleep(1 * time.Second)
 
 				// For each target troop type, check if we need to recruit
+				tmix := castleInfo.Troops.TroopsMixed
 				for troopID, targetAmount := range targets {
 					currentAmount := 0
-					if troops != nil && troops.TroopsMixed != nil {
-						currentAmount = troops.TroopsMixed[troopID]
+					if tmix != nil {
+						currentAmount = tmix[troopID]
 					} else {
-						// Fallback to local GameState if fetch failed
 						currentAmount = castleInfo.Troops.TroopsI[troopID] + castleInfo.Troops.TroopsTU[troopID]
 					}
 

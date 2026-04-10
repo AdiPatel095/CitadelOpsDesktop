@@ -1,0 +1,718 @@
+[
+  {
+    "skinID": "1",
+    "name": "Sundial",
+    "_display_name": "Sundial"
+  },
+  {
+    "skinID": "2",
+    "name": "Saxophone",
+    "_display_name": "Saxophone"
+  },
+  {
+    "skinID": "3",
+    "name": "Cowbell",
+    "_display_name": "Cowbell"
+  },
+  {
+    "skinID": "4",
+    "name": "Hourglass",
+    "_display_name": "Hourglass"
+  },
+  {
+    "skinID": "5",
+    "name": "Demon",
+    "definesMoat": "1",
+    "_display_name": "Demon"
+  },
+  {
+    "skinID": "6",
+    "name": "Underworld",
+    "definesAllCastleLevels": "1",
+    "_display_name": "Underworld"
+  },
+  {
+    "skinID": "7",
+    "name": "Ethereal",
+    "definesResources": "1",
+    "_display_name": "Ethereal"
+  },
+  {
+    "skinID": "8",
+    "name": "Whale_Chest",
+    "_display_name": "Whale_Chest"
+  },
+  {
+    "skinID": "9",
+    "name": "Block",
+    "_display_name": "Block"
+  },
+  {
+    "skinID": "10",
+    "name": "Sand",
+    "definesResources": "1",
+    "_display_name": "Sand"
+  },
+  {
+    "skinID": "11",
+    "name": "Chtuhullu",
+    "_display_name": "Chtuhullu"
+  },
+  {
+    "skinID": "12",
+    "name": "WitchCastle",
+    "_display_name": "WitchCastle"
+  },
+  {
+    "skinID": "13",
+    "name": "Halloween",
+    "_display_name": "The Sleeper of R'lyeh"
+  },
+  {
+    "skinID": "14",
+    "name": "StPatricks",
+    "_display_name": "StPatricks"
+  },
+  {
+    "skinID": "15",
+    "name": "Easter",
+    "_display_name": "Easter"
+  },
+  {
+    "skinID": "16",
+    "name": "Emblem",
+    "_display_name": "Emblem"
+  },
+  {
+    "skinID": "17",
+    "name": "HalloweenTrap",
+    "_display_name": "HalloweenTrap"
+  },
+  {
+    "skinID": "18",
+    "name": "HalloweenPoster",
+    "_display_name": "HalloweenPoster"
+  },
+  {
+    "skinID": "19",
+    "name": "HalloweenRing",
+    "_display_name": "HalloweenRing"
+  },
+  {
+    "skinID": "20",
+    "name": "ChristmasAxe",
+    "_display_name": "ChristmasAxe"
+  },
+  {
+    "skinID": "21",
+    "name": "ChristmasTotem",
+    "_display_name": "ChristmasTotem"
+  },
+  {
+    "skinID": "22",
+    "name": "ChristmasKnife",
+    "_display_name": "ChristmasKnife"
+  },
+  {
+    "skinID": "23",
+    "name": "iceJug",
+    "_display_name": "iceJug"
+  },
+  {
+    "skinID": "24",
+    "name": "CarnivalCouldron",
+    "_display_name": "CarnivalCouldron"
+  },
+  {
+    "skinID": "25",
+    "name": "CarnivalBird",
+    "_display_name": "CarnivalBird"
+  },
+  {
+    "skinID": "26",
+    "name": "CarnivalMask",
+    "_display_name": "CarnivalMask"
+  },
+  {
+    "skinID": "27",
+    "name": "SpringFrozenBlossom",
+    "_display_name": "SpringFrozenBlossom"
+  },
+  {
+    "skinID": "28",
+    "name": "SpringBlossom",
+    "_display_name": "SpringBlossom"
+  },
+  {
+    "skinID": "29",
+    "name": "SpringHoneycomb",
+    "_display_name": "SpringHoneycomb"
+  },
+  {
+    "skinID": "30",
+    "name": "DragonEgg",
+    "_display_name": "DragonEgg"
+  },
+  {
+    "skinID": "31",
+    "name": "WoodAxe",
+    "_display_name": "WoodAxe"
+  },
+  {
+    "skinID": "32",
+    "name": "MetalMask",
+    "_display_name": "MetalMask"
+  },
+  {
+    "skinID": "33",
+    "name": "LostAnchor",
+    "_display_name": "LostAnchor"
+  },
+  {
+    "skinID": "34",
+    "name": "TreasureChest",
+    "_display_name": "Treasure chest"
+  },
+  {
+    "skinID": "35",
+    "name": "MudGolem",
+    "_display_name": "MudGolem"
+  },
+  {
+    "skinID": "36",
+    "name": "Whirlwind",
+    "_display_name": "Whirlwind"
+  },
+  {
+    "skinID": "37",
+    "name": "IcedLava",
+    "_display_name": "IcedLava"
+  },
+  {
+    "skinID": "38",
+    "name": "Anubis",
+    "_display_name": "Anubis"
+  },
+  {
+    "skinID": "39",
+    "name": "FlowerBracelet",
+    "_display_name": "FlowerBracelet"
+  },
+  {
+    "skinID": "40",
+    "name": "BeerBarrel",
+    "_display_name": "BeerBarrel"
+  },
+  {
+    "skinID": "41",
+    "name": "MayaInsignia",
+    "_display_name": "MayaInsignia"
+  },
+  {
+    "skinID": "42",
+    "name": "EmperorsChessSet",
+    "_display_name": "EmperorsChessSet"
+  },
+  {
+    "skinID": "43",
+    "name": "Nutcracker",
+    "_display_name": "Nutcracker"
+  },
+  {
+    "skinID": "44",
+    "name": "SpringBell",
+    "_display_name": "SpringBell"
+  },
+  {
+    "skinID": "45",
+    "name": "TeaLeaf",
+    "_display_name": "TeaLeaf"
+  },
+  {
+    "skinID": "46",
+    "name": "MosaicPlate",
+    "_display_name": "MosaicPlate"
+  },
+  {
+    "skinID": "47",
+    "name": "FreshTea",
+    "_display_name": "FreshTea"
+  },
+  {
+    "skinID": "48",
+    "name": "Birdhouse",
+    "_display_name": "Birdhouse"
+  },
+  {
+    "skinID": "49",
+    "name": "SeaShell",
+    "_display_name": "SeaShell"
+  },
+  {
+    "skinID": "50",
+    "name": "Elephant",
+    "_display_name": "Elephant"
+  },
+  {
+    "skinID": "51",
+    "name": "StarCompass",
+    "_display_name": "StarCompass"
+  },
+  {
+    "skinID": "52",
+    "name": "MistyShroud",
+    "_display_name": "MistyShroud"
+  },
+  {
+    "skinID": "53",
+    "name": "SoulCandle",
+    "_display_name": "SoulCandle"
+  },
+  {
+    "skinID": "54",
+    "name": "snowflakehouse",
+    "_display_name": "snowflakehouse"
+  },
+  {
+    "skinID": "55",
+    "name": "VikingGeneral",
+    "_display_name": "VikingGeneral"
+  },
+  {
+    "skinID": "56",
+    "name": "VikingBaron",
+    "_display_name": "VikingBaron"
+  },
+  {
+    "skinID": "57",
+    "name": "EvergreenClover",
+    "_display_name": "EvergreenClover"
+  },
+  {
+    "skinID": "58",
+    "name": "SpringtimeBlossom",
+    "_display_name": "SpringtimeBlossom"
+  },
+  {
+    "skinID": "59",
+    "name": "MistwoodFern",
+    "_display_name": "MistwoodFern"
+  },
+  {
+    "skinID": "60",
+    "name": "MistwoodBastion",
+    "_display_name": "MistwoodBastion"
+  },
+  {
+    "skinID": "61",
+    "name": "RingtailHat",
+    "_display_name": "RingtailHat"
+  },
+  {
+    "skinID": "62",
+    "name": "RosewoodBud",
+    "_display_name": "RosewoodBud"
+  },
+  {
+    "skinID": "63",
+    "name": "GeneralPinacolada",
+    "_display_name": "GeneralPinacolada"
+  },
+  {
+    "skinID": "64",
+    "name": "BaronDucky",
+    "_display_name": "BaronDucky"
+  },
+  {
+    "skinID": "65",
+    "name": "GeneralBanana",
+    "_display_name": "GeneralBanana"
+  },
+  {
+    "skinID": "66",
+    "name": "BaronWatermelon",
+    "_display_name": "BaronWatermelon"
+  },
+  {
+    "skinID": "67",
+    "name": "10YearsAnniversaryGeneral",
+    "_display_name": "10YearsAnniversaryGeneral"
+  },
+  {
+    "skinID": "68",
+    "name": "10YearsAnniversaryBaron",
+    "_display_name": "10YearsAnniversaryBaron"
+  },
+  {
+    "skinID": "69",
+    "name": "AnniversaryCake",
+    "_display_name": "Sweet surprise cake"
+  },
+  {
+    "skinID": "70",
+    "name": "AnniversaryPartyBadge",
+    "_display_name": "AnniversaryPartyBadge"
+  },
+  {
+    "skinID": "71",
+    "name": "AnniversaryPartyCannon",
+    "_display_name": "AnniversaryPartyCannon"
+  },
+  {
+    "skinID": "72",
+    "name": "GeneralSquirrel",
+    "_display_name": "GeneralSquirrel"
+  },
+  {
+    "skinID": "73",
+    "name": "BaronNuts",
+    "_display_name": "BaronNuts"
+  },
+  {
+    "skinID": "74",
+    "name": "Generalcthulhu",
+    "_display_name": "Generalcthulhu"
+  },
+  {
+    "skinID": "75",
+    "name": "BaronCthulhu",
+    "_display_name": "BaronCthulhu"
+  },
+  {
+    "skinID": "76",
+    "name": "GeneralSamurai",
+    "_display_name": "GeneralSamurai"
+  },
+  {
+    "skinID": "77",
+    "name": "BaronSamurai",
+    "_display_name": "BaronSamurai"
+  },
+  {
+    "skinID": "78",
+    "name": "GeneralCandyCane",
+    "_display_name": "GeneralCandyCane"
+  },
+  {
+    "skinID": "80",
+    "name": "WinterBaron",
+    "_display_name": "WinterBaron"
+  },
+  {
+    "skinID": "81",
+    "name": "GeneralofLove",
+    "_display_name": "GeneralofLove"
+  },
+  {
+    "skinID": "82",
+    "name": "BaronTortureofLove",
+    "_display_name": "BaronTortureofLove"
+  },
+  {
+    "skinID": "83",
+    "name": "GeneralCarnival",
+    "_display_name": "GeneralCarnival"
+  },
+  {
+    "skinID": "84",
+    "name": "BaronCarnival",
+    "_display_name": "BaronCarnival"
+  },
+  {
+    "skinID": "85",
+    "name": "GeneralViking",
+    "_display_name": "GeneralViking"
+  },
+  {
+    "skinID": "86",
+    "name": "BaronViking",
+    "_display_name": "BaronViking"
+  },
+  {
+    "skinID": "87",
+    "name": "GeneralFishKite",
+    "_display_name": "GeneralFishKite"
+  },
+  {
+    "skinID": "88",
+    "name": "BaronEasterTree",
+    "_display_name": "BaronEasterTree"
+  },
+  {
+    "skinID": "89",
+    "name": "GeneralSpring",
+    "_display_name": "GeneralSpring"
+  },
+  {
+    "skinID": "90",
+    "name": "BaronSpring",
+    "_display_name": "BaronSpring"
+  },
+  {
+    "skinID": "91",
+    "name": "Generalsummer",
+    "_display_name": "Generalsummer"
+  },
+  {
+    "skinID": "92",
+    "name": "BaronSummer",
+    "_display_name": "BaronSummer"
+  },
+  {
+    "skinID": "93",
+    "name": "GeneralCupcake",
+    "_display_name": "GeneralCupcake"
+  },
+  {
+    "skinID": "94",
+    "name": "GeneralOctoberfest",
+    "_display_name": "GeneralOctoberfest"
+  },
+  {
+    "skinID": "95",
+    "name": "GeneralGenericAnniversary",
+    "_display_name": "GeneralGenericAnniversary"
+  },
+  {
+    "skinID": "96",
+    "name": "CyberBaron",
+    "_display_name": "CyberBaron"
+  },
+  {
+    "skinID": "97",
+    "name": "HalloweenGeneral",
+    "_display_name": "HalloweenGeneral"
+  },
+  {
+    "skinID": "98",
+    "name": "SinglesDay22General",
+    "_display_name": "SinglesDay22General"
+  },
+  {
+    "skinID": "99",
+    "name": "BaronDeathMask",
+    "_display_name": "BaronDeathMask"
+  },
+  {
+    "skinID": "100",
+    "name": "PineconeBaron",
+    "_display_name": "PineconeBaron"
+  },
+  {
+    "skinID": "101",
+    "name": "StPatrickBaron",
+    "_display_name": "StPatrickBaron"
+  },
+  {
+    "skinID": "102",
+    "name": "ButterflyBaron",
+    "_display_name": "ButterflyBaron"
+  },
+  {
+    "skinID": "103",
+    "name": "SnakeGeneral",
+    "_display_name": "SnakeGeneral"
+  },
+  {
+    "skinID": "104",
+    "name": "HarpBaron",
+    "_display_name": "HarpBaron"
+  },
+  {
+    "skinID": "105",
+    "name": "FireworkBaron",
+    "_display_name": "FireworkBaron"
+  },
+  {
+    "skinID": "106",
+    "name": "FireworkGeneral",
+    "_display_name": "FireworkGeneral"
+  },
+  {
+    "skinID": "107",
+    "name": "PretzelCommander",
+    "_display_name": "PretzelCommander"
+  },
+  {
+    "skinID": "108",
+    "name": "PretzelCastellan",
+    "_display_name": "PretzelCastellan"
+  },
+  {
+    "skinID": "109",
+    "name": "turkeyCommander",
+    "_display_name": "turkeyCommander"
+  },
+  {
+    "skinID": "110",
+    "name": "turkeyCastellan",
+    "_display_name": "turkeyCastellan"
+  },
+  {
+    "skinID": "111",
+    "name": "xmasCastellan",
+    "_display_name": "xmasCastellan"
+  },
+  {
+    "skinID": "112",
+    "name": "EasterAppearence",
+    "_display_name": "EasterAppearence"
+  },
+  {
+    "skinID": "113",
+    "name": "SummerAppearence",
+    "_display_name": "SummerAppearence"
+  },
+  {
+    "skinID": "79",
+    "name": "FestiveCandyCane",
+    "_display_name": "FestiveCandyCane"
+  },
+  {
+    "skinID": "114",
+    "name": "GingerbreadManSoul",
+    "_display_name": "GingerbreadManSoul"
+  },
+  {
+    "skinID": "115",
+    "name": "GrandNewKingCrown",
+    "increasedSize": "1",
+    "_display_name": "GrandNewKingCrown"
+  },
+  {
+    "skinID": "116",
+    "name": "GrandCloverEmblem",
+    "increasedSize": "1",
+    "_display_name": "GrandCloverEmblem"
+  },
+  {
+    "skinID": "117",
+    "name": "GrandIceDagger",
+    "increasedSize": "1",
+    "_display_name": "GrandIceDagger"
+  },
+  {
+    "skinID": "118",
+    "name": "GrandSapphireBrooch",
+    "increasedSize": "1",
+    "_display_name": "GrandSapphireBrooch"
+  },
+  {
+    "skinID": "119",
+    "name": "GrandFeatherCrest",
+    "increasedSize": "1",
+    "_display_name": "GrandFeatherCrest"
+  },
+  {
+    "skinID": "120",
+    "name": "GrandAmethystLotus",
+    "increasedSize": "1",
+    "_display_name": "GrandAmethystLotus"
+  },
+  {
+    "skinID": "121",
+    "name": "EasterBirdhouse",
+    "_display_name": "EasterBirdhouse"
+  },
+  {
+    "skinID": "122",
+    "name": "EasterFern",
+    "_display_name": "EasterFern"
+  },
+  {
+    "skinID": "123",
+    "name": "WarbandOfTheCitrusMonster",
+    "_display_name": "WarbandOfTheCitrusMonster"
+  },
+  {
+    "skinID": "124",
+    "name": "CitrusFortress",
+    "_display_name": "CitrusFortress"
+  },
+  {
+    "skinID": "125",
+    "name": "PirateCove",
+    "increasedSize": "1",
+    "_display_name": "PirateCove"
+  },
+  {
+    "skinID": "126",
+    "name": "BaronBaloon",
+    "increasedSize": "1",
+    "_display_name": "BaronBaloon"
+  },
+  {
+    "skinID": "127",
+    "name": "KegCastle",
+    "increasedSize": "1",
+    "_display_name": "KegCastle"
+  },
+  {
+    "skinID": "128",
+    "name": "AnniversaryChestComm",
+    "_display_name": "AnniversaryChestComm"
+  },
+  {
+    "skinID": "129",
+    "name": "AnniversaryCakeSliceCast",
+    "_display_name": "AnniversaryCakeSliceCast"
+  },
+  {
+    "skinID": "130",
+    "name": "HalloweenRing2025",
+    "increasedSize": "1",
+    "_display_name": "HalloweenRing2025"
+  },
+  {
+    "skinID": "131",
+    "name": "VikingBaron2025",
+    "increasedSize": "1",
+    "_display_name": "VikingBaron2025"
+  },
+  {
+    "skinID": "132",
+    "name": "Snowflakehouse2025",
+    "increasedSize": "1",
+    "_display_name": "Snowflakehouse2025"
+  },
+  {
+    "skinID": "133",
+    "name": "BlackFriday2025Cast",
+    "_display_name": "BlackFriday2025Cast"
+  },
+  {
+    "skinID": "134",
+    "name": "BlackFriday2025Com",
+    "_display_name": "BlackFriday2025Com"
+  },
+  {
+    "skinID": "135",
+    "name": "Xmas2025Cast",
+    "_display_name": "Xmas2025Cast"
+  },
+  {
+    "skinID": "136",
+    "name": "Xmas2025Com",
+    "_display_name": "Xmas2025Com"
+  },
+  {
+    "skinID": "137",
+    "name": "CarnivalMaskComm",
+    "_display_name": "CarnivalMaskComm"
+  },
+  {
+    "skinID": "138",
+    "name": "CarnivalMaskCast",
+    "_display_name": "CarnivalMaskCast"
+  },
+  {
+    "skinID": "139",
+    "name": "ChocolateBunny",
+    "_display_name": "ChocolateBunny"
+  },
+  {
+    "skinID": "140",
+    "name": "ChocolateEggSprout",
+    "_display_name": "ChocolateEggSprout"
+  }
+]
