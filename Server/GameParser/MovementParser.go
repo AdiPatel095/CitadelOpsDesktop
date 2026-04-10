@@ -5,12 +5,79 @@ import (
 	"CitadelDesktop/Server/Scheduler"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 )
 
 // OnGAMParsed is a callback hook that fires after GAM messages are parsed.
 var OnGAMParsed func()
+
+// movementItemsFromGAMLikeRoot splits a **gam** / **cds** / **cat** / **cra** JSON root into per-movement objects (each holds M, UM, A).
+func movementItemsFromGAMLikeRoot(gamData map[string]interface{}) []map[string]interface{} {
+	var mArray []interface{}
+
+	var wrapper map[string]interface{}
+	if aWrapper, ok := gamData["A"].(map[string]interface{}); ok {
+		wrapper = aWrapper
+	} else if aamWrapper, ok := gamData["AAM"].(map[string]interface{}); ok {
+		wrapper = aamWrapper
+	}
+
+	if wrapper != nil {
+		movObj := make(map[string]interface{})
+		if mObj, ok := wrapper["M"].(map[string]interface{}); ok {
+			movObj["M"] = mObj
+		}
+		if umObj, ok := wrapper["UM"].(map[string]interface{}); ok {
+			movObj["UM"] = umObj
+		}
+		if aArr, ok := wrapper["A"].([]interface{}); ok {
+			movObj["A"] = aArr
+		}
+		mArray = []interface{}{movObj}
+	} else if mVal, ok := gamData["M"]; ok {
+		switch v := mVal.(type) {
+		case []interface{}:
+			mArray = v
+		case map[string]interface{}:
+			mArray = []interface{}{gamData}
+		default:
+			return nil
+		}
+	} else {
+		return nil
+	}
+
+	out := make([]map[string]interface{}, 0, len(mArray))
+	for _, item := range mArray {
+		movObj, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		out = append(out, movObj)
+	}
+	return out
+}
+
+// ExtractMaxTTSecondsFromGAMLikeJSON returns the largest one-way travel time **TT** (seconds) from M blocks in a **gam**-like JSON payload (including **cds** responses).
+func ExtractMaxTTSecondsFromGAMLikeJSON(data string) int {
+	var gamData map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &gamData); err != nil {
+		return 0
+	}
+	items := movementItemsFromGAMLikeRoot(gamData)
+	maxTT := 0
+	for _, movObj := range items {
+		mDetails, ok := movObj["M"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		tt := getInt(mDetails, "TT")
+		if tt > maxTT {
+			maxTT = tt
+		}
+	}
+	return maxTT
+}
 
 // ParseGAMMessage parses the GAM (Global Army Movement) message
 // GAM message contains all active movements for the player and alliance
@@ -23,45 +90,8 @@ func ParseGAMMessage(data string) {
 	}
 	//log.Printf("Raw GAM Data: %s", data)
 
-	// Handle 'cat', 'cds', 'cra' wrapper structure:
-	// cat/cds uses {"A": {"M": {...}, "UM": {...}, "A": [...]}}
-	// cra uses {"AAM": {"M": {...}, "UM": {...}, "A": [...]}}
-	var mArray []interface{}
-
-	// Determine which wrapper is used
-	var wrapper map[string]interface{}
-	if aWrapper, ok := gamData["A"].(map[string]interface{}); ok {
-		wrapper = aWrapper
-	} else if aamWrapper, ok := gamData["AAM"].(map[string]interface{}); ok {
-		wrapper = aamWrapper
-	}
-
-	if wrapper != nil {
-		// Extract M, UM, A from inside the wrapper
-		movObj := make(map[string]interface{})
-		if mObj, ok := wrapper["M"].(map[string]interface{}); ok {
-			movObj["M"] = mObj
-		}
-		if umObj, ok := wrapper["UM"].(map[string]interface{}); ok {
-			movObj["UM"] = umObj
-		}
-		if aArr, ok := wrapper["A"].([]interface{}); ok {
-			movObj["A"] = aArr
-		}
-
-		mArray = []interface{}{movObj}
-	} else if mVal, ok := gamData["M"]; ok {
-		// Handle 'gam' wrapper structure: { "M": [{...}, {...}] }
-		switch v := mVal.(type) {
-		case []interface{}:
-			mArray = v
-		case map[string]interface{}:
-			mArray = []interface{}{gamData}
-		default:
-			log.Printf("Unexpected type for M: %T", v)
-			return
-		}
-	} else {
+	items := movementItemsFromGAMLikeRoot(gamData)
+	if len(items) == 0 {
 		return
 	}
 
@@ -69,11 +99,7 @@ func ParseGAMMessage(data string) {
 	// gs.Movement.ActiveMovements is not cleared here; fetchers manage lifecycle.
 	var parsedMovements []Models.GAMMovement
 
-	for _, item := range mArray {
-		movObj, ok := item.(map[string]interface{})
-		if !ok {
-			continue
-		}
+	for _, movObj := range items {
 
 		mDetails, ok := movObj["M"].(map[string]interface{})
 		if !ok {

@@ -15,12 +15,17 @@ function aidFromOptionKey(key: string | null): number {
 }
 
 /**
- * Global control: castle list comes from every `castleFocus` payload (GCL / GameState).
+ * Global control: castle list comes from every `castleFocus` payload (GCL / GameState), or from snapshot when disconnected.
  * Rendered in the Header next to the castle focus badge.
  */
 const CastleFocusSwitcher: React.FC = () => {
   const { gameLoggedIn } = useAuth();
-  const { castleFocus, requestPlayerCastleFocus } = useCastleFocus();
+  const {
+    castleFocus,
+    requestPlayerCastleFocus,
+    setOfflineCastleFocusKey,
+    offlineCastleFocusKey,
+  } = useCastleFocus();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
 
   const rawOptions = useMemo(() => castleFocus?.playerCastles ?? [], [castleFocus?.playerCastles]);
@@ -42,11 +47,25 @@ const CastleFocusSwitcher: React.FC = () => {
   /** JAA KID can differ from GCL kingdom on the same castle (e.g. desert/ice); still one row per aid in practice. */
   const matched = exactMatched || (currentAid > 0 && sameAidOptions.length === 1);
 
-  const selectValue = exactMatched
-    ? currentKey
-    : sameAidOptions.length === 1
-      ? optionKey(sameAidOptions[0])
-      : '';
+  const selectValue = useMemo(() => {
+    if (
+      !gameLoggedIn &&
+      offlineCastleFocusKey &&
+      rawOptions.some((c) => optionKey(c) === offlineCastleFocusKey)
+    ) {
+      return offlineCastleFocusKey;
+    }
+    if (exactMatched) return currentKey;
+    if (sameAidOptions.length === 1) return optionKey(sameAidOptions[0]);
+    return '';
+  }, [
+    gameLoggedIn,
+    offlineCastleFocusKey,
+    rawOptions,
+    exactMatched,
+    currentKey,
+    sameAidOptions,
+  ]);
 
   useEffect(() => {
     if (pendingKey == null) return;
@@ -66,11 +85,11 @@ const CastleFocusSwitcher: React.FC = () => {
     return () => window.clearTimeout(t);
   }, [pendingKey]);
 
-  if (!gameLoggedIn || rawOptions.length === 0) {
+  if (rawOptions.length === 0) {
     return null;
   }
 
-  const busy = pendingKey != null;
+  const busy = pendingKey != null && gameLoggedIn;
 
   const dropdownOptions: SelectOption[] = rawOptions.map((c) => ({
     value: optionKey(c),
@@ -78,7 +97,7 @@ const CastleFocusSwitcher: React.FC = () => {
   }));
 
   const placeholderText = currentAid > 0
-    ? `${castleFocus?.castleName?.trim() || 'Castle'} (in-game)`
+    ? `${castleFocus?.castleName?.trim() || 'Castle'}${gameLoggedIn ? ' (in-game)' : ' (last known)'}`
     : 'Select castle';
 
   return (
@@ -89,6 +108,10 @@ const CastleFocusSwitcher: React.FC = () => {
         onChange={(v) => {
           const c = rawOptions.find((o) => optionKey(o) === v);
           if (!c) return;
+          if (!gameLoggedIn) {
+            setOfflineCastleFocusKey(v);
+            return;
+          }
           setPendingKey(v);
           requestPlayerCastleFocus({
             castleId: c.aid,

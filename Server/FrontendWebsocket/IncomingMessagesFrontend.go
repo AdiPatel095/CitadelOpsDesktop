@@ -1,21 +1,24 @@
 package FrontendWebsocket
 
 import (
-	"CitadelDesktop/Server/GameCommands"
-	"CitadelDesktop/Server/GameFunctions"
-	"CitadelDesktop/Server/GameParser"
-	"CitadelDesktop/Server/Models"
-	dec "CitadelDesktop/Server/Models/Decoration"
-	equip "CitadelDesktop/Server/Models/Equipment"
-	"CitadelDesktop/Server/ReconfigureLoadout"
-	"CitadelDesktop/Server/ResponseRegistry"
-	"CitadelDesktop/Server/Scheduler"
-	"CitadelDesktop/Server/Version"
 	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
 	"time"
+
+	"CitadelDesktop/Server/GameCommands"
+	"CitadelDesktop/Server/GameFunctions"
+	"CitadelDesktop/Server/GameParser"
+	"CitadelDesktop/Server/Logging"
+	"CitadelDesktop/Server/Models"
+	dec "CitadelDesktop/Server/Models/Decoration"
+	equip "CitadelDesktop/Server/Models/Equipment"
+	sentbird "CitadelDesktop/Server/Models/SentBird"
+	"CitadelDesktop/Server/ReconfigureLoadout"
+	"CitadelDesktop/Server/ResponseRegistry"
+	"CitadelDesktop/Server/Scheduler"
+	"CitadelDesktop/Server/Version"
 )
 
 // triggerSelfUpdate is a wrapper that calls Version.PerformSelfUpdate
@@ -172,6 +175,7 @@ func ParseFrontendMessage(message []byte) {
 			GameFunctions.StopAutoBird()
 			Models.GetSettingsState().AutoBirdEnabled = false
 			SendAutoBirdStatus(false, 0)
+			Logging.AppendAutoBirdLine("toggle", "stopped (UI)")
 		} else {
 			Models.GetSettingsState().AutoBirdEnabled = true
 			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
@@ -210,7 +214,13 @@ func ParseFrontendMessage(message []byte) {
 			}
 			GameFunctions.StartAutoBird()
 			SendAutoBirdStatus(true, 0)
+			Logging.AppendAutoBirdLine("toggle", "started (UI)")
 		}
+	case "clearAutoBirdSentBirds":
+		log.Println("[frontend-ws] clear AutoBird sent-bird log")
+		sentbird.Clear()
+		Logging.AppendAutoBirdLine("sent_log_cleared", "persisted sent-bird list cleared")
+		SendAlertMessage("green", "AutoBird sent-bird log cleared")
 	case "toggleRecruitTroops":
 		wasRunning := GameFunctions.IsRecruitTroopsRunning()
 		log.Printf("[RecruitTroops] Toggle requested. Was running: %v", wasRunning)

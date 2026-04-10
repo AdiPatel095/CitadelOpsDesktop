@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import CastleFocusBadge from './CastleFocusBadge';
@@ -34,18 +34,18 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
     autoBirdEnabled,
     autoBirdNextWakeUp,
     toggleAutoBird,
+    sendMessage,
   } = useAuth();
   const { theme } = useTheme();
 
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
-    if (!gameLoggedIn || !autoBirdEnabled) return;
+    if (!autoBirdEnabled) return;
     const id = window.setInterval(() => setNowTick(Date.now()), 30000);
     return () => window.clearInterval(id);
-  }, [gameLoggedIn, autoBirdEnabled]);
+  }, [autoBirdEnabled]);
 
   const autoBirdPill = useMemo(() => {
-    if (!gameLoggedIn) return null;
     if (!autoBirdEnabled) {
       return { on: false as const, text: 'Auto Bird off' };
     }
@@ -54,7 +54,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
     }
     const left = autoBirdNextWakeUp - nowTick;
     return { on: true as const, text: `Next Bird in: ${formatNextBirdIn(left)}` };
-  }, [gameLoggedIn, autoBirdEnabled, autoBirdNextWakeUp, nowTick]);
+  }, [autoBirdEnabled, autoBirdNextWakeUp, nowTick]);
 
   return (
     <header className="h-16 bg-bg-card/80 backdrop-blur-md border-b border-border-base flex min-w-0 items-center px-6 fixed top-0 left-0 right-0 z-50 transition-colors duration-300">
@@ -114,8 +114,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
             </span>
           </div>
 
-          {autoBirdPill && (
-            <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -125,10 +124,32 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
                     ? '!border-success/40 !text-success hover:!bg-success/10 !shadow-[0_0_15px_rgba(16,185,129,0.1)]'
                     : '!border-error/40 !text-error hover:!bg-error/10 !shadow-[0_0_15px_rgba(239,68,68,0.1)]'
                 }`}
-                title="Click to turn Auto Bird on or off"
+                title={
+                  gameLoggedIn
+                    ? 'Click to turn Auto Bird on or off'
+                    : 'Last known Auto Bird status while bot is disconnected; reconnect to refresh'
+                }
               >
                 <div className={`w-2 h-2 rounded-full ${autoBirdPill.on ? 'bg-success animate-pulse' : 'bg-error'}`} />
                 {autoBirdPill.text}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (
+                    !window.confirm(
+                      'Clear the AutoBird sent-bird log? Reconciliation starts fresh; use this to manually reset AutoBird tracking.'
+                    )
+                  ) {
+                    return;
+                  }
+                  sendMessage('clearAutoBirdSentBirds');
+                }}
+                className="text-text-muted hover:text-error hover:bg-error/10"
+                title="Clear logged sent birds (reset AutoBird reconciliation)"
+              >
+                <Trash2 className="w-4 h-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -140,7 +161,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
                 <Settings className="w-4 h-4" />
               </Button>
             </div>
-          )}
         </div>
 
         {/* Right: bot controls */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { useEquipment } from '../context/EquipmentContext';
 import EquipmentSelection, { type EquipmentMode, type CombatMode } from './EquipmentSelection';
 import StatPriority from './StatPriority';
@@ -40,7 +40,9 @@ const EquipmentView: React.FC = () => {
   }, [fullArray, selectedIndex]);
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-8rem)]">
+    <div className="flex flex-col gap-4 h-[calc(100vh-8rem)]">
+      <StaleSessionBanner />
+      <div className="flex gap-6 flex-1 min-h-0">
       {/* Left Panel - Selection */}
       <div className="flex-1 min-w-0">
         <EquipmentSelection
@@ -63,6 +65,7 @@ const EquipmentView: React.FC = () => {
           selectedIndex={selectedIndex}
         />
       </div>
+    </div>
     </div>
   );
 };

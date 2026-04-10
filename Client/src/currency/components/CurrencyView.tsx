@@ -1,4 +1,5 @@
 import React from 'react';
+import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { useResources } from '../context/ResourceContext.tsx';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 
@@ -63,6 +64,7 @@ const CurrencyView: React.FC = () => {
   if (!globalResources) {
     return (
       <div className="flex flex-col gap-6 h-full items-center justify-center">
+        <StaleSessionBanner />
         <div className="text-primary animate-pulse">Loading resources...</div>
       </div>
     );
@@ -70,6 +72,7 @@ const CurrencyView: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-8 pb-8">
+      <StaleSessionBanner />
       {Object.entries(categories).map(([categoryName, resourceKeys]) => (
         <Card key={categoryName} className="flex flex-col border-border-base bg-bg-app/20">
           <CardHeader className="bg-bg-card-hover/50 pb-4 border-b border-border-base rounded-t-[calc(var(--radius-global)-1px)]">

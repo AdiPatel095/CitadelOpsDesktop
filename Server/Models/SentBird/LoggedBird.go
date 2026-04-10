@@ -102,3 +102,11 @@ func ReplaceBirds(playerID int, birds []LoggedBird) {
 	defer fileMu.Unlock()
 	saveInternal(&File{PlayerID: playerID, Birds: birds})
 }
+
+// Clear removes all logged sent birds; keeps playerId from the existing file for the next append cycle.
+func Clear() {
+	fileMu.Lock()
+	defer fileMu.Unlock()
+	f := loadUnlocked()
+	saveInternal(&File{PlayerID: f.PlayerID, Birds: []LoggedBird{}})
+}

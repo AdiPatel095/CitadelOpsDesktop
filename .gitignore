@@ -37,8 +37,7 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
-!Server/Models/DecorationCatalogInformation.json
-!Server/Data/GGEHtml5Assets/manifest.json
+
 
 # GGE HTML5 mirrored textures (go run ./Server/cmd/fetchggeassets)
 Server/Data/GGEHtml5Assets/mirror/

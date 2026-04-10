@@ -45,11 +45,13 @@ func cdsIncomingOK(parts []string) bool {
 // SendCDSUntilSuccess sends **cds** using HBW/PTT pairs chosen from gamePTT (GlobalResources.PTT):
 //   - gamePTT > 50000 → try (-1,1) first, then (1001,0)
 //   - otherwise       → try (1001,0) first, then (-1,1)
+//
 // Stops on first cds code 0.
-func SendCDSUntilSuccess(castleAID, targetX, targetY, sdiLID, delayHours int, gamePTT float64, troopsJSON string) bool {
+// onCDSResponse is optional: invoked with a copy of the inbound **cds** frame (%-split) before the waiter unblocks, so callers can parse **gam**-like JSON (e.g. **TT**).
+func SendCDSUntilSuccess(castleAID, targetX, targetY, sdiLID, delayHours int, gamePTT float64, troopsJSON string, onCDSResponse func([]string)) bool {
 	pairs := cdsPairsForGamePTT(gamePTT)
 	for i, v := range pairs {
-		waiter := ResponseRegistry.Global.RegisterWaiter("cds", cdsWaitPerVariant)
+		waiter := ResponseRegistry.Global.RegisterWaiterWithDeliver("cds", cdsWaitPerVariant, onCDSResponse)
 		SendCDS(castleAID, targetX, targetY, sdiLID, delayHours, v.HBW, v.PTT, troopsJSON)
 		resp, err := waiter.WaitWithTimeout()
 		waiter.Cleanup()

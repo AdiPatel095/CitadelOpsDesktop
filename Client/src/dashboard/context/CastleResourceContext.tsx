@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode, useCallback, useMemo } from 'react';
 import { FrontendWebsocket } from '../../websocket.ts';
+import { useAuth } from '../../context/AuthContext';
+import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
+import { CASTLE_SLOT_KEYS } from '../../utils/castleSnapshotHydration.ts';
 import { type PlayerCastleInfo } from '../models/PlayerCastleInfo.ts';
 
 // We now index by CastleID (number) instead of string location keys
@@ -32,6 +35,8 @@ interface WebsocketMessage {
 export const CastleResourceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [castleResources, setCastleResources] = useState<CastleResourceMap>(new Map());
     const [isCastleResourcesLoading, setIsCastleResourcesLoading] = useState<LoadingStatus>({});
+    const { gameLoggedIn } = useAuth();
+    const { snapshot } = useLastKnownSnapshot();
 
     const requestCastleResource = useCallback((castleId: number) => {
         setIsCastleResourcesLoading(prev => ({ ...prev, [castleId]: true }));
@@ -77,6 +82,30 @@ export const CastleResourceProvider: React.FC<{ children: ReactNode }> = ({ chil
             FrontendWebsocket.removeMessageListener(handleCastleUpdate);
         };
     }, []);
+
+    useEffect(() => {
+        if (!snapshot || gameLoggedIn) return;
+        const gs = snapshot.gameState;
+        if (!gs || typeof gs !== 'object') return;
+        const castleRoot = (gs as Record<string, unknown>).castle;
+        if (!castleRoot || typeof castleRoot !== 'object') return;
+        setCastleResources((prevMap) => {
+            const next = new Map(prevMap);
+            let changed = false;
+            for (const k of CASTLE_SLOT_KEYS) {
+                const raw = (castleRoot as Record<string, unknown>)[k];
+                if (!raw || typeof raw !== 'object') continue;
+                const info = raw as PlayerCastleInfo;
+                const aid = Math.trunc(Number(info.aid));
+                if (aid <= 0) continue;
+                if (!next.has(aid)) {
+                    next.set(aid, info);
+                    changed = true;
+                }
+            }
+            return changed ? next : prevMap;
+        });
+    }, [snapshot, gameLoggedIn]);
 
     const value = useMemo(() => ({ castleResources, isCastleResourcesLoading, getCastle, requestCastleResource }), [castleResources, isCastleResourcesLoading, getCastle, requestCastleResource]);
 
