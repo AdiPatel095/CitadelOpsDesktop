@@ -366,7 +366,10 @@ export function parseCastleFocusPayload(raw: unknown): CastleFocusState | null {
       .filter((c) => c.aid > 0);
     if (opts.length > 0) playerCastles = opts;
   }
-  let slotProductionByLid = parseSlotProductionByLid(p.slotProductionByLid);
+  const slotRaw =
+    (p as Record<string, unknown>).slotProductionByLid ??
+    (p as Record<string, unknown>).slotProductionByLID;
+  let slotProductionByLid = parseSlotProductionByLid(slotRaw);
   const craftingQueues = parseCraftingQueues(p.craftingQueues);
   const legacyBarracks = parseBarracksProduction(p.barracksProduction);
   if (legacyBarracks && !slotProductionByLid?.['0']) {

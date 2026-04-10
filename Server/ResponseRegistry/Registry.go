@@ -79,10 +79,13 @@ var ErrTimeout = errors.New("response timeout")
 type ResponseWaiter struct {
 	MessageType string
 	ResponseCh  chan []string
-	once        sync.Once     // Ensures only first match is delivered
-	timeout     time.Duration // Cooldown/timeout duration
-	createdAt   time.Time
-	registry    *Registry // Reference to parent registry for cleanup
+	// OnDeliver, if set, is invoked with a copy of the first matching frame before it is sent to ResponseCh.
+	// Use this to parse **cds** (or other) payloads synchronously in the MessageRouter goroutine.
+	OnDeliver func([]string)
+	once      sync.Once     // Ensures only first match is delivered
+	timeout   time.Duration // Cooldown/timeout duration
+	createdAt time.Time
+	registry  *Registry // Reference to parent registry for cleanup
 }
 
 // WaitWithTimeout blocks until a message is received or the timeout expires.
@@ -106,6 +109,10 @@ func (w *ResponseWaiter) Cleanup() {
 func (w *ResponseWaiter) deliver(message []string) bool {
 	delivered := false
 	w.once.Do(func() {
+		if w.OnDeliver != nil {
+			cp := append([]string(nil), message...)
+			w.OnDeliver(cp)
+		}
 		select {
 		case w.ResponseCh <- message:
 			delivered = true
@@ -135,9 +142,15 @@ var Global = NewRegistry()
 // RegisterWaiter registers a new waiter for the given message type with a timeout.
 // The waiter will receive a copy of the first matching message that arrives.
 func (r *Registry) RegisterWaiter(messageType string, timeout time.Duration) *ResponseWaiter {
+	return r.RegisterWaiterWithDeliver(messageType, timeout, nil)
+}
+
+// RegisterWaiterWithDeliver is like RegisterWaiter but runs onDeliver with a copy of the frame before pushing to ResponseCh.
+func (r *Registry) RegisterWaiterWithDeliver(messageType string, timeout time.Duration, onDeliver func([]string)) *ResponseWaiter {
 	waiter := &ResponseWaiter{
 		MessageType: messageType,
 		ResponseCh:  make(chan []string, 1), // Buffered to prevent blocking
+		OnDeliver:   onDeliver,
 		timeout:     timeout,
 		createdAt:   time.Now(),
 		registry:    r,

@@ -61,6 +61,21 @@ func (ms *MapState) Reset() {
 	ms.Kingdoms = make(map[int]map[string]MapNode)
 }
 
+// ExportKingdoms returns a copy of the kingdom tile maps for persistence (thread-safe snapshot).
+func (ms *MapState) ExportKingdoms() map[int]map[string]MapNode {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
+	out := make(map[int]map[string]MapNode, len(ms.Kingdoms))
+	for kid, m := range ms.Kingdoms {
+		inner := make(map[string]MapNode, len(m))
+		for k, v := range m {
+			inner[k] = v
+		}
+		out[kid] = inner
+	}
+	return out
+}
+
 func (ms *MapState) AddNode(kid int, n MapNode) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()

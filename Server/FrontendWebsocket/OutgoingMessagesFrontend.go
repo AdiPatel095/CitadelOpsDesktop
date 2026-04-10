@@ -87,6 +87,26 @@ func SendInitialData(client *Client) {
 	client.SendToClient("castleResourceUpdate", c.Capital, "capitalCastle")
 
 	client.SendToClient("castleFocus", Models.CastleFocusMessagePayload(), "")
+
+	SendLastKnownGameStateSnapshot(client)
+}
+
+// BroadcastLastKnownGameStateSnapshot pushes the on-disk snapshot to all connected clients (e.g. after game disconnect).
+func BroadcastLastKnownGameStateSnapshot() {
+	m, err := Models.ReadGameStateSnapshotMap()
+	if err != nil {
+		return
+	}
+	SendFrontendMessage("lastKnownGameStateSnapshot", m, "")
+}
+
+// SendLastKnownGameStateSnapshot sends one client's snapshot from disk (supplements in-memory SendInitialData when reconnecting).
+func SendLastKnownGameStateSnapshot(client *Client) {
+	m, err := Models.ReadGameStateSnapshotMap()
+	if err != nil {
+		return
+	}
+	client.SendToClient("lastKnownGameStateSnapshot", m, "")
 }
 
 // SendCastStat sends a single castle's stats by index (0-10)

@@ -3,6 +3,7 @@ package main
 import (
 	"CitadelDesktop/Server/FrontendWebsocket"
 	"CitadelDesktop/Server/Logging"
+	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"CitadelDesktop/Server/Version"
 	"embed"
@@ -42,6 +43,10 @@ func main() {
 
 	// Create WebSocket hub
 	FrontendWebsocket.InitHub()
+
+	ResponseRegistry.BroadcastStaleSnapshot = FrontendWebsocket.BroadcastLastKnownGameStateSnapshot
+
+	Models.StartPeriodicGameStateSnapshots()
 
 	// Set up callbacks for ResponseRegistry to notify frontend
 	ResponseRegistry.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)

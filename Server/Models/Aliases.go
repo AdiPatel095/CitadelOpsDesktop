@@ -1,6 +1,8 @@
 package Models
 
 import (
+	"time"
+
 	"CitadelDesktop/Server/Models/Alliance"
 	"CitadelDesktop/Server/Models/Castle"
 	"CitadelDesktop/Server/Models/Decoration"
@@ -28,6 +30,21 @@ func SetCastleFocusCoords(castleAID, kingdomID int) {
 
 func GetCastleFocusCoords() (castleAID, kingdomID, mapPX, mapPY int) {
 	return gamestate.GetCastleFocusCoords()
+}
+
+// PersistGameStateSnapshot writes the full GameState and map data to game_state_snapshot.json next to the executable.
+func PersistGameStateSnapshot() {
+	gamestate.PersistSnapshot()
+}
+
+// StartPeriodicGameStateSnapshots periodically persists game state so data survives disconnects and restarts.
+func StartPeriodicGameStateSnapshots() {
+	gamestate.StartPeriodicSnapshotSaver(90 * time.Second)
+}
+
+// ReadGameStateSnapshotMap reads the on-disk JSON snapshot (same file PersistGameStateSnapshot writes).
+func ReadGameStateSnapshotMap() (map[string]interface{}, error) {
+	return gamestate.ReadSnapshotForBroadcast()
 }
 
 const NumPlayerCastleSlots = castle.NumPlayerCastleSlots

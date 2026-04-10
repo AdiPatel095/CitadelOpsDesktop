@@ -39,6 +39,9 @@ var (
 
 	// SendRecruitTroopsStatusFunc is a callback to notify frontend of recruit troops status changes
 	SendRecruitTroopsStatusFunc func(bool)
+
+	// BroadcastStaleSnapshot is set from main to push lastKnownGameStateSnapshot after game disconnect (avoids import cycle with FrontendWebsocket).
+	BroadcastStaleSnapshot func()
 )
 
 // ServerURLMap maps frontend server display names to actual server identifiers
@@ -120,6 +123,10 @@ func handleCDPEvent(ev interface{}) {
 			delete(gameRequestIDs, string(ev.RequestID))
 			LoginStatus = false
 			LoginCooldown = 0
+			Models.PersistGameStateSnapshot()
+			if BroadcastStaleSnapshot != nil {
+				BroadcastStaleSnapshot()
+			}
 			if SendGameLoginStatusFunc != nil {
 				go SendGameLoginStatusFunc(false, 0)
 			}
@@ -327,7 +334,8 @@ func StartGameBrowser(dashboardURL string) {
 	chromedp.ListenTarget(gameCtx, handleCDPEvent)
 
 	go func() {
-		// Reset game state for fresh connection
+		// Reset game state for fresh connection (do not persist here: memory may still be empty on
+		// first launch and would overwrite a good on-disk snapshot from a previous run).
 		Models.GetGameState().Reset()
 
 		err := chromedp.Run(gameCtx,
@@ -357,6 +365,7 @@ func StartGameBrowser(dashboardURL string) {
 		<-gameCtx.Done()
 
 		// Cleanup
+		Models.PersistGameStateSnapshot()
 		LoginStatus = false
 		LoginCooldown = 0
 		if SendGameLoginStatusFunc != nil {
@@ -366,6 +375,7 @@ func StartGameBrowser(dashboardURL string) {
 }
 
 func StopGame() {
+	Models.PersistGameStateSnapshot()
 	if BrowserCancel != nil {
 		BrowserCancel() // Cancel chromedp context
 	}
@@ -404,6 +414,7 @@ func ReloadGameTab() {
 		return
 	}
 
+	Models.PersistGameStateSnapshot()
 	// Reset game state for fresh connection
 	Models.GetGameState().Reset()
 	gameRequestIDs = make(map[string]bool)

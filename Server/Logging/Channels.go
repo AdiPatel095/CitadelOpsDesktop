@@ -12,6 +12,7 @@ import (
 // Known channel IDs (each maps to Logs/channels/<id>.log).
 const (
 	ChannelWebSocketGame = "websocket_game"
+	ChannelAutoBird      = "autobird"
 )
 
 // ChannelMeta describes a dashboard log channel.
@@ -23,6 +24,7 @@ type ChannelMeta struct {
 // KnownChannels is the registry of channels the UI can show; add new entries as you add writers.
 var KnownChannels = []ChannelMeta{
 	{ID: ChannelWebSocketGame, Label: "Game WebSocket"},
+	{ID: ChannelAutoBird, Label: "AutoBird"},
 }
 
 var (
@@ -82,6 +84,14 @@ func AppendChannelLine(channelID, direction, cmdType, payload string) {
 	channelMu.Lock()
 	_, _ = f.WriteString(line)
 	channelMu.Unlock()
+}
+
+// AppendAutoBirdLine records an AutoBird action (direction INFO, event as cmdType).
+func AppendAutoBirdLine(event, detail string) {
+	if event == "" {
+		event = "event"
+	}
+	AppendChannelLine(ChannelAutoBird, "INFO", event, detail)
 }
 
 // CloseChannelLogs closes open channel file handles.

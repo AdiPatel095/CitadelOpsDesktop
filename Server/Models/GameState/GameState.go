@@ -14,13 +14,13 @@ import (
 // GameState holds all dynamic game state in a single unified struct.
 // Access via GetGameState() singleton and reset with Reset() on websocket connection.
 type GameState struct {
-	Alliance        alliance.Alliance
-	GlobalResources resources.PlayerGlobalResources
-	Castle          castle.PlayerCastles
-	Equipment       equipment.PlayerEquipment
-	Movement        movement.PlayerMovement
-	PlayerID        int // Session player OID; used by auto-bird persistence and parsers
-	CastleFocus     castle.CastleFocus
+	Alliance        alliance.Alliance               `json:"alliance"`
+	GlobalResources resources.PlayerGlobalResources `json:"globalResources"`
+	Castle          castle.PlayerCastles            `json:"castle"`
+	Equipment       equipment.PlayerEquipment       `json:"equipment"`
+	Movement        movement.PlayerMovement         `json:"movement"`
+	PlayerID        int                             `json:"playerId"` // Session player OID; used by auto-bird persistence and parsers
+	CastleFocus     castle.CastleFocus              `json:"castleFocus"`
 }
 
 var (

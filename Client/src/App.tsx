@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAuth } from './context/AuthContext.tsx';
-import { useCastleFocus } from './context/CastleFocusContext';
 import { Providers } from './Providers';
 
 import EquipmentView from './equipment/components/EquipmentView';

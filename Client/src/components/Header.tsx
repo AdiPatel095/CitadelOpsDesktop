@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import CastleFocusBadge from './CastleFocusBadge';
@@ -34,6 +34,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
     autoBirdEnabled,
     autoBirdNextWakeUp,
     toggleAutoBird,
+    sendMessage,
   } = useAuth();
   const { theme } = useTheme();
 
@@ -131,6 +132,24 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
               >
                 <div className={`w-2 h-2 rounded-full ${autoBirdPill.on ? 'bg-success animate-pulse' : 'bg-error'}`} />
                 {autoBirdPill.text}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (
+                    !window.confirm(
+                      'Clear the AutoBird sent-bird log? Reconciliation starts fresh; use this to manually reset AutoBird tracking.'
+                    )
+                  ) {
+                    return;
+                  }
+                  sendMessage('clearAutoBirdSentBirds');
+                }}
+                className="text-text-muted hover:text-error hover:bg-error/10"
+                title="Clear logged sent birds (reset AutoBird reconciliation)"
+              >
+                <Trash2 className="w-4 h-4" />
               </Button>
               <Button
                 variant="ghost"

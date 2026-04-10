@@ -8,8 +8,18 @@ import {
   type ReactNode,
 } from 'react';
 import { FrontendWebsocket } from '../websocket';
-import { parseCastleFocusPayload, type CastleFocusState } from '../types/castleFocusState.ts';
+import {
+  parseCastleFocusPayload,
+  type CastleFocusState,
+  type PlayerCastleOption,
+} from '../types/castleFocusState.ts';
+import {
+  buildCastleFocusFromSnapshot,
+  buildCastleFocusFromStoredSnapshotFocus,
+  playerCastleOptionsFromGameStateSnapshot,
+} from '../utils/castleSnapshotHydration.ts';
 import { useAuth } from './AuthContext';
+import { useLastKnownSnapshot } from './LastKnownSnapshotContext';
 
 export type PlayerCastleFocusParams = {
   castleId: number;
@@ -18,36 +28,54 @@ export type PlayerCastleFocusParams = {
   mapY: number;
 };
 
+function optionKey(c: Pick<PlayerCastleOption, 'aid' | 'kingdomID'>): string {
+  return `${c.aid}|${c.kingdomID}`;
+}
+
+function aidFromOptionKey(key: string | null): number {
+  if (!key) return 0;
+  const n = Number(key.split('|')[0]);
+  return Number.isFinite(n) ? n : 0;
+}
+
 export interface CastleFocusContextValue {
-  /** Latest server mirror of GameState castle focus (JAA + GCL directory). */
+  /** Effective focus for UI: live while connected; offline uses snapshot + optional user switch. */
   castleFocus: CastleFocusState | null;
-  /** Ask server to send the current focus snapshot (same as `getCastleFocus`). */
   refreshCastleFocus: () => void;
-  /** Ask server to move in-game focus to this castle (JAA/JCA + troop refresh). */
   requestPlayerCastleFocus: (params: PlayerCastleFocusParams) => void;
+  /** When disconnected, select which castle to show (key `aid|kingdomID`). Cleared on reconnect. */
+  setOfflineCastleFocusKey: (key: string | null) => void;
+  offlineCastleFocusKey: string | null;
 }
 
 const CastleFocusContext = createContext<CastleFocusContextValue | undefined>(undefined);
 
 /**
  * Owns websocket `castleFocus` mirror + explicit requests to read or change server focus.
- * Must render inside {@link AuthProvider} (uses game login state).
+ * Must render inside {@link AuthProvider} and {@link LastKnownSnapshotProvider}.
  */
 export function CastleFocusProvider({ children }: { children: ReactNode }) {
   const { gameLoggedIn } = useAuth();
-  const [castleFocus, setCastleFocus] = useState<CastleFocusState | null>(null);
+  const { snapshot } = useLastKnownSnapshot();
+  const [liveCastleFocus, setLiveCastleFocus] = useState<CastleFocusState | null>(null);
+  const [offlineFocusKey, setOfflineFocusKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (gameLoggedIn) {
+      setOfflineFocusKey(null);
+    }
+  }, [gameLoggedIn]);
 
   useEffect(() => {
     const handleMessage = (message: { type?: string; payload?: unknown }) => {
       if (message.type !== 'castleFocus' || message.payload == null) return;
-      setCastleFocus((prev) => {
+      setLiveCastleFocus((prev) => {
         const cf = parseCastleFocusPayload(message.payload);
         if (!cf) return prev;
         let next = cf;
         if ((!cf.playerCastles || cf.playerCastles.length === 0) && prev?.playerCastles?.length) {
           next = { ...next, playerCastles: prev.playerCastles };
         }
-        // JAA-only pushes may omit `slotProductionByLid`; keep prior strips for the same focused castle.
         if (
           prev &&
           cf.aid === prev.aid &&
@@ -75,12 +103,63 @@ export function CastleFocusProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!gameLoggedIn) {
-      setCastleFocus(null);
-      return;
+    if (gameLoggedIn) return;
+    const hasAid = liveCastleFocus?.aid != null && liveCastleFocus.aid > 0;
+    if (hasAid) return;
+    const syn = buildCastleFocusFromStoredSnapshotFocus(snapshot);
+    if (syn) {
+      setLiveCastleFocus(syn);
     }
+  }, [gameLoggedIn, liveCastleFocus, snapshot]);
+
+  useEffect(() => {
+    if (!gameLoggedIn) return;
     FrontendWebsocket.sendGetCastleFocus();
   }, [gameLoggedIn]);
+
+  const castleFocus = useMemo((): CastleFocusState | null => {
+    if (gameLoggedIn) {
+      return liveCastleFocus;
+    }
+
+    const snap = snapshot;
+    const optsFromSnap = snap ? playerCastleOptionsFromGameStateSnapshot(snap.gameState) : [];
+    const optsFromLive = liveCastleFocus?.playerCastles ?? [];
+    const opts = optsFromLive.length > 0 ? optsFromLive : optsFromSnap;
+
+    const base =
+      liveCastleFocus ?? (snap ? buildCastleFocusFromStoredSnapshotFocus(snap) : null);
+
+    if (!offlineFocusKey) {
+      if (base && (!base.playerCastles || base.playerCastles.length === 0) && opts.length > 0) {
+        return { ...base, playerCastles: opts };
+      }
+      return base;
+    }
+
+    const aid = aidFromOptionKey(offlineFocusKey);
+    const opt = opts.find((o) => optionKey(o) === offlineFocusKey);
+    const kid = opt?.kingdomID ?? 0;
+
+    if (base && Math.trunc(Number(base.aid)) === aid) {
+      return {
+        ...base,
+        playerCastles: opts.length > 0 ? opts : base.playerCastles,
+      };
+    }
+
+    const synthetic = snap ? buildCastleFocusFromSnapshot(snap, aid, kid) : null;
+    if (synthetic) {
+      return {
+        ...synthetic,
+        playerCastles: opts.length > 0 ? opts : synthetic.playerCastles,
+      };
+    }
+    if (base) {
+      return { ...base, playerCastles: opts.length > 0 ? opts : base.playerCastles };
+    }
+    return null;
+  }, [gameLoggedIn, liveCastleFocus, offlineFocusKey, snapshot]);
 
   const refreshCastleFocus = useCallback(() => {
     FrontendWebsocket.sendGetCastleFocus();
@@ -95,13 +174,19 @@ export function CastleFocusProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setOfflineCastleFocusKey = useCallback((key: string | null) => {
+    setOfflineFocusKey(key);
+  }, []);
+
   const value = useMemo<CastleFocusContextValue>(
     () => ({
       castleFocus,
       refreshCastleFocus,
       requestPlayerCastleFocus,
+      setOfflineCastleFocusKey,
+      offlineCastleFocusKey: offlineFocusKey,
     }),
-    [castleFocus, refreshCastleFocus, requestPlayerCastleFocus]
+    [castleFocus, refreshCastleFocus, requestPlayerCastleFocus, setOfflineCastleFocusKey, offlineFocusKey]
   );
 
   return <CastleFocusContext.Provider value={value}>{children}</CastleFocusContext.Provider>;

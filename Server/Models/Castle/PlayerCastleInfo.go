@@ -11,10 +11,9 @@ type PlayerCastleInfo struct {
 	BGRows []BuildingData `json:"bgRows,omitempty"`
 	BDRows []BuildingData `json:"bdRows,omitempty"`
 	// SlotProductionByLID is parsed from **spl** / **bup**.spl keyed by Empire LID (0=barracks/recruit, 1=tool workshop, …).
-	// JSON encoding uses string keys via CastleFocusMessagePayload only (map[int] is not JSON-native).
-	SlotProductionByLID map[int]*BarracksProductionQueue `json:"-"`
+	SlotProductionByLID map[int]*BarracksProductionQueue `json:"slotProductionByLID,omitempty"`
 	// CraftingQueues is parsed from **crin** (full list) / **crst** (single building); CRIDs index craftingRecipes.json.
-	CraftingQueues []CraftingBuildingSnapshot `json:"-"`
+	CraftingQueues []CraftingBuildingSnapshot `json:"craftingQueues,omitempty"`
 }
 
 // SetCastleBuildingRows stores JAA ground (BG) and building (BD) rows separately.
