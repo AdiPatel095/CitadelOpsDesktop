@@ -230,9 +230,9 @@ const DecorationPresetsPanel: React.FC = () => {
                 </div>
               </div>
               {selectedPreset && (
-                <div className="mt-3 text-xs text-text-muted">
+                <p className="mt-3 text-xs text-text-muted">
                   {selectedPreset.items?.length ?? 0} decoration placements
-                </div>
+                </p>
               )}
             </div>
           )}

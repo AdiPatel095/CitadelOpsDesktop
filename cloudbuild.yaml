@@ -33,6 +33,16 @@ steps:
         'gs://${_ARTIFACT_BUCKET}/windows-${_IMAGE_NAME}-${_VERSION}.exe',
       ]
 
+  # 3. Upload the Windows binary to Google Cloud Storage
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      [
+        'storage',
+        'cp',
+        './CitadelDesktop.exe',
+        'gs://${_ARTIFACT_BUCKET}/windows-${_IMAGE_NAME}.exe',
+      ]
+
   # 4. Upload the macOS ARM64 binary (Apple Silicon) to Google Cloud Storage
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
