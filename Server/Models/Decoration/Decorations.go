@@ -139,6 +139,37 @@ var (
 	buildingsJSONErr     error
 )
 
+var (
+	decorationIndexOnce sync.Once
+	decorationIndexName map[int]string // wodID → name from decorations/index.json (matches client MetadataContext)
+	decorationIndexErr  error
+)
+
+func loadDecorationIndexNames() {
+	decorationIndexOnce.Do(func() {
+		raw, err := os.ReadFile("Server/Data/decorations/index.json")
+		if err != nil {
+			decorationIndexErr = err
+			return
+		}
+		var rows []struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		}
+		if err := json.Unmarshal(raw, &rows); err != nil {
+			decorationIndexErr = err
+			return
+		}
+		decorationIndexName = make(map[int]string, len(rows))
+		for _, r := range rows {
+			nm := strings.TrimSpace(r.Name)
+			if r.ID != 0 && nm != "" {
+				decorationIndexName[r.ID] = nm
+			}
+		}
+	})
+}
+
 func loadBuildingsJSONNameMaps() {
 	buildingsJSONOnce.Do(func() {
 		raw, err := os.ReadFile("Server/Data/decorations/items.json")
@@ -147,10 +178,11 @@ func loadBuildingsJSONNameMaps() {
 			return
 		}
 		var rows []struct {
-			WodID    int    `json:"wodID"`
-			Name     string `json:"_display_name"`
-			Type     string `json:"type"`
-			Comment1 string `json:"comment1"`
+			WodID       int    `json:"wodID"`
+			DisplayName string `json:"_display_name"`
+			RawName     string `json:"name"`
+			Type        string `json:"type"`
+			Comment1    string `json:"comment1"`
 		}
 		if err := json.Unmarshal(raw, &rows); err != nil {
 			buildingsJSONErr = err
@@ -160,10 +192,14 @@ func loadBuildingsJSONNameMaps() {
 		allBuildingName = make(map[int]string, len(rows))
 		donationEventDecoWID = make(map[int]struct{})
 		for _, r := range rows {
-			allBuildingName[r.WodID] = r.Name
+			display := strings.TrimSpace(r.DisplayName)
+			if display == "" {
+				display = strings.TrimSpace(r.RawName)
+			}
+			allBuildingName[r.WodID] = display
 			if strings.EqualFold(r.Type, "deco") {
-				decoNameByWID[r.WodID] = r.Name
-				nm := strings.ToLower(strings.TrimSpace(r.Name))
+				decoNameByWID[r.WodID] = display
+				nm := strings.ToLower(display)
 				c1 := strings.ToLower(strings.TrimSpace(r.Comment1))
 				if strings.Contains(c1, "donationevent") || strings.Contains(nm, "donation event") {
 					donationEventDecoWID[r.WodID] = struct{}{}
@@ -264,11 +300,20 @@ func DecorationSummaryLinesForCastle(c *castle.PlayerCastleInfo) []string {
 	return out
 }
 
-// resolvedDisplayNameForWodID prefers WodDisplayNames.json (General's Camp–style lang + items),
-// then the raw buildings.json name field.
+// resolvedDisplayNameForWodID uses EmpireItems-style items.json (_display_name, else name),
+// then decorations/index.json (same ids/names as the client MetadataContext), then a generic fallback.
 func resolvedDisplayNameForWodID(wid int) string {
 	if s, ok := EmpireBuildingDisplayName(wid); ok {
 		return s
+	}
+	loadDecorationIndexNames()
+	if decorationIndexErr == nil && decorationIndexName != nil {
+		if s, ok := decorationIndexName[wid]; ok {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				return s
+			}
+		}
 	}
 	return fmt.Sprintf("Item #%d", wid)
 }

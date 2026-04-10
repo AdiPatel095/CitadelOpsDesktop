@@ -1,5 +1,6 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useMetadata } from '../context/MetadataContext';
 import {
   castleFocusDecorationTooltipContent,
   castleFocusDecorationsTooltip,
@@ -34,8 +35,9 @@ const CastleFocusHoverPopover: React.FC<Props> = ({
   align = 'center',
   expandToViewport = false,
 }) => {
-  const { heading, lines } = castleFocusDecorationTooltipContent(castleFocus);
-  const ariaLabel = castleFocusDecorationsTooltip(castleFocus);
+  const { getDecoration } = useMetadata();
+  const { heading, lines } = castleFocusDecorationTooltipContent(castleFocus, getDecoration);
+  const ariaLabel = castleFocusDecorationsTooltip(castleFocus, getDecoration);
   const linesSig = lines.join('\u0001');
 
   const triggerRef = useRef<HTMLSpanElement>(null);

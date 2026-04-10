@@ -398,8 +398,11 @@ export function mergedCastleFocusRows(cf: CastleFocusState | null): CastleBuildi
 }
 
 /** Single-line fallback for aria-label (native title is unreliable in desktop webviews). */
-export function castleFocusDecorationsTooltip(cf: CastleFocusState | null | undefined): string {
-  const { lines, heading } = castleFocusDecorationTooltipContent(cf);
+export function castleFocusDecorationsTooltip(
+  cf: CastleFocusState | null | undefined,
+  getDecoration?: (id: number) => { name: string } | undefined
+): string {
+  const { lines, heading } = castleFocusDecorationTooltipContent(cf, getDecoration);
   if (heading) {
     return `${heading}: ${lines.join(', ')}`;
   }
@@ -411,14 +414,71 @@ export type CastleFocusDecorationTooltipContent = {
   lines: string[];
 };
 
+/** One decoration aggregate from BG/BD rows, resolved via public `decorations/index.json` (MetadataContext). */
+export type PublicDecorationTooltipRow = {
+  wid: number;
+  count: number;
+  name: string;
+};
+
 /**
- * Content for the hover panel: server `decorationSummary` (EmpireItems deco WIDs present on BG/BD + counts), else JAA row fallback.
+ * Rows whose `buildingID` exists in the public decorations index (`/game-data/decorations/index.json`).
+ */
+export function decorationTooltipRowsFromPublicIndex(
+  cf: CastleFocusState | null | undefined,
+  getDecoration: (id: number) => { name: string } | undefined
+): PublicDecorationTooltipRow[] {
+  if (!cf) return [];
+  const rows = mergedCastleFocusRows(cf);
+  const countByWid = new Map<number, number>();
+  for (const r of rows) {
+    const meta = getDecoration(r.buildingID);
+    const nm = meta?.name?.trim();
+    if (!nm) continue;
+    countByWid.set(r.buildingID, (countByWid.get(r.buildingID) ?? 0) + 1);
+  }
+  if (countByWid.size === 0) return [];
+  const pairs: PublicDecorationTooltipRow[] = [...countByWid.entries()].map(([wid, count]) => {
+    const meta = getDecoration(wid)!;
+    return {
+      wid,
+      count,
+      name: meta.name.trim(),
+    };
+  });
+  pairs.sort((a, b) => {
+    const an = a.name.toLowerCase();
+    const bn = b.name.toLowerCase();
+    if (an !== bn) return an.localeCompare(bn, undefined, { sensitivity: 'base' });
+    return a.wid - b.wid;
+  });
+  return pairs;
+}
+
+/** Flat "Nx Name" strings for callers that only need text. */
+export function decorationSummaryLinesFromPublicIndex(
+  cf: CastleFocusState | null | undefined,
+  getDecoration: (id: number) => { name: string } | undefined
+): string[] {
+  return decorationTooltipRowsFromPublicIndex(cf, getDecoration).map((r) => `${r.count}x ${r.name}`);
+}
+
+/**
+ * Content for the hover panel: prefer client-resolved names from public decoration index, then server
+ * `decorationSummary`, else JAA row fallback.
  */
 export function castleFocusDecorationTooltipContent(
-  cf: CastleFocusState | null | undefined
+  cf: CastleFocusState | null | undefined,
+  getDecoration?: (id: number) => { name: string } | undefined
 ): CastleFocusDecorationTooltipContent {
   if (!cf || !cf.aid || cf.aid <= 0) {
     return { heading: '', lines: ['Focus a castle in the game (JAA) to see decorations here.'] };
+  }
+  if (getDecoration) {
+    const fromIndex = decorationSummaryLinesFromPublicIndex(cf, getDecoration);
+    if (fromIndex.length > 0) {
+      return { heading: 'Decorations', lines: fromIndex };
+    }
   }
   const summary = (cf.decorationSummary ?? []).map((s) => s.trim()).filter(Boolean);
   if (summary.length > 0) {
