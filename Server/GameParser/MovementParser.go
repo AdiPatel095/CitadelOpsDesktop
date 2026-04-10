@@ -2,9 +2,15 @@ package GameParser
 
 import (
 	"CitadelDesktop/Server/Models"
+	"CitadelDesktop/Server/Scheduler"
 	"encoding/json"
+	"fmt"
 	"log"
+	"time"
 )
+
+// OnGAMParsed is a callback hook that fires after GAM messages are parsed.
+var OnGAMParsed func()
 
 // ParseGAMMessage parses the GAM (Global Army Movement) message
 // GAM message contains all active movements for the player and alliance
@@ -60,7 +66,7 @@ func ParseGAMMessage(data string) {
 	}
 
 	gs := Models.GetGameState()
-	// gs.ActiveMovements is NOT cleared here anymore - handled by AutoBird/Scheduler before fetch
+	// gs.Movement.ActiveMovements is not cleared here; fetchers manage lifecycle.
 	var parsedMovements []Models.GAMMovement
 
 	for _, item := range mArray {
@@ -162,10 +168,24 @@ func ParseGAMMessage(data string) {
 			TroopArray:  troopArray,
 		}
 		parsedMovements = append(parsedMovements, movement)
+
+		// Set real travel time cooldown in Scheduler if target coordinates are present
+		if targetX != 0 && targetY != 0 && tt > 0 {
+			targetID := fmt.Sprintf("%d,%d", targetX, targetY)
+			// Apply a generic returning cooldown (time to target and back) + small safety buffer
+			totalCooldownMs := (tt * 2 * 1000) + 10000
+			Scheduler.GetScheduler().CooldownTracker.SetCooldown(targetID, time.Duration(totalCooldownMs)*time.Millisecond)
+		}
 	}
 
-	// Append new movements to the existing list (allows multiple GAM messages to be accumulated)
-	gs.ActiveMovements = append(gs.ActiveMovements, parsedMovements...)
+	// Replace with the latest snapshot so reconciliation always sees current movements only.
+	gs.Movement.ActiveMovements = parsedMovements
+	markGAMParsed()
+
+	// Trigger callback to auto-clean returned birds in real-time
+	if OnGAMParsed != nil {
+		go OnGAMParsed()
+	}
 }
 
 // Helper to safely get int from map

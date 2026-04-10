@@ -1,0 +1,69 @@
+---
+description: Go file naming under Server/Models and GameState field tree for CitadelOps server
+globs: Server/**/*.go
+---
+
+# Server `Models` layout and naming
+
+## File naming (Go)
+
+- Use **PascalCase** file names with a **capital first letter**, matching existing files such as `PlayerCastleInfo.go`, `MapState.go`, `EquipmentModel.go`.
+- Do **not** use `snake_case` or lowercase-only names (e.g. avoid `player_castles.go`, `state.go`, `aliases.go`).
+- Prefer names that reflect the **primary type** or concern in the file (e.g. `GAMMovement.go`, `Decorations.go`, `PlayerEquipment.go`).
+
+## Directory naming under `Server/Models/`
+
+- Subpackages use **PascalCase** directory names (same readability rule as files): `Alliance/`, `Castle/`, `Decoration/`, `Equipment/`, `GameState/`, `MapState/`, `Movement/`, `Resources/`, `SentBird/`, `Settings/`.
+- Import paths match those directories, e.g. `CitadelDesktop/Server/Models/Equipment`, `CitadelDesktop/Server/Models/GameState`.
+- The **`package`** clause inside each folder stays the conventional **lowercase** Go identifier (`package equipment`, `package gamestate`, …); only the **path** is PascalCase.
+
+The root import `CitadelDesktop/Server/Models` is still valid: **`Aliases.go`** re-exports types and helpers from subpackages for older call sites.
+
+## GameState tree (canonical: `gamestate` package)
+
+Singleton via `GetGameState()`; cleared with `Reset()` on websocket connect. **Map state** is a separate singleton (`mapstate.GetMapState()`), reset from `GameState.Reset()`.
+
+```
+GameState                          // Unified dynamic session state (gamestate.GameState; alias Models.GameState)
+├── Alliance                       // Player alliance + bird/castle locations on the map (alliance.Alliance)
+│   ├── AID                        // Alliance id
+│   ├── BirdLocations[]          // Alliance bird positions (coords, kingdom, timing, castle type)
+│   └── PlayerCastleLocations[]  // Own castles: kingdom id, castle id, map x/y
+├── GlobalResources                // Account-wide currencies and timers (resources.PlayerGlobalResources)
+│   ├── Rubies, Coins, RelicShard, Sceat, Ducat, …
+│   ├── ConstToken, UpgrToken, AfflTix, Plaster, DrgScale, DrgSpl
+│   ├── Min1, Min5, Min10, Min30, Hr1, Hr5, Hr24  // speed-up style buckets
+│   └── MightPt, GloryPt, GallanPt, PTT
+├── Castle                         // Fixed slots for “our” castles (castle.PlayerCastles; NumPlayerCastleSlots = 11)
+│   ├── MainCastle                 // PlayerCastleInfo
+│   ├── Outpost1, Outpost2, Outpost3
+│   ├── IceCastle, DesertCastle, DungeonCastle, StormCastle
+│   ├── Metropolis
+│   └── Capital
+│       └── (each PlayerCastleInfo)
+│           ├── Name, Aid
+│           ├── Amount             // CastleResourcesAmount (wood/stone/food/… in castle)
+│           ├── Production         // CastleProductionTotal (prod + consumptions, etc.)
+│           ├── Storage            // CastleStorageMax
+│           ├── Troops             // CastleTroopData (kingdom/x/y, TroopsI/TU/HI/SHI/Mixed)
+│           ├── BGRows, BDRows     // Building rows from JAA gca (ground vs buildings)
+│           └── (helpers) BuildingData per row: WID, OID, name, level, x, y
+├── Equipment                      // Inventory + commander/castellan “actual” arrays (equipment.PlayerEquipment)
+│   ├── EquipmentStorage[]         // Parsed gear (EquipmentModel)
+│   ├── GemsStorage[]              // Gems (Gem)
+│   ├── NonRelicGemIDs             // map gem id → count (non-relic stash)
+│   ├── CommActualArray[]          // Commander actual payloads (CommActualModel)
+│   └── CastActualArray[]          // Castellan actual payloads (CastActualModel)
+├── Movement                       // Movements relevant to automation / GAM (movement.PlayerMovement)
+│   ├── BirdMovements              // map castleID → []BirdMovement (auto-bird tracking)
+│   └── ActiveMovements            // []GAMMovement (parsed GAM)
+├── PlayerID                       // Session player OID (int); auto-bird persistence, parsers
+└── CastleFocus                    // UI-focused castle on map (castle.CastleFocus)
+    ├── CastleAID, KingdomID
+    └── MapPX, MapPY
+```
+
+### Related data not stored as fields on `GameState`
+
+- **Commander / castellan stat models** used by parsers, frontend, and reconfigure live as **package-level slices** in `equipment`: `CommStatArray`, `CastStatArray` (import as `equip "CitadelDesktop/Server/Models/Equipment"` when a local variable named `equipment` would shadow the package). They stay in sync with `Equipment.CommActualArray` / `CastActualArray` during parsing.
+- **Settings** (bot, auto-bird, scheduler, bird ignore lists, etc.) live in `settings.GetSettingsState()`, not on `GameState`.

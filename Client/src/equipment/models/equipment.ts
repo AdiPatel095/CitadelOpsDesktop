@@ -11,11 +11,11 @@ export interface EquipmentModel {
     equipRarity: number;
     placeHolder6: number;
     equipStats: EquipStat[];
-    placeHolder7: number;
+    templateId: number;
     placeHolder8: number;
     equipLevel: number;
     placeHolder9: number;
-    placeHolder10: number;
+    gemId: number;
     placeHolder11: number;
     gem?: any; // Define GemSlot type if available
 }
@@ -145,6 +145,8 @@ export interface CastStatObject {
     desertCastleCast: CastStat;
     dungeonCastleCast: CastStat;
     stormCastleCast: CastStat;
+    metropolisCastleCast: CastStat;
+    capitalCastleCast: CastStat;
     extraCast1: CastStat;
     extraCast2: CastStat;
     extraCast3: CastStat;

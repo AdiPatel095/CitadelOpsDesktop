@@ -6,9 +6,9 @@ dist
 Client/dist
 temp.go
 Temp.json
-Temp2.json
+gbd.json
 hardwareID.txt
-loginBytes.json
+jsonExamples/loginBytes.json
 Dockerfile
 cloudbuild.yaml
 task.md

@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import ReactDOM from 'react-dom';
 import { Icons } from '../../components/Icons';
 import { type CommStat, type CastStat, statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/equipment';
 import { FrontendWebsocket } from '../../websocket';
+import { Modal, Button, Badge } from '../../components/ui';
 
 interface ReconfigureComparisonModalProps {
     isOpen: boolean;
@@ -14,7 +14,6 @@ interface ReconfigureComparisonModalProps {
     equipmentMode: 'Commander' | 'Castellan';
 }
 
-// Process stats to combine base stats with CL/NPC stats based on combat mode
 const processStats = (stats: CommStat | CastStat, combatMode: 'PvP' | 'PvE', equipmentMode: 'Commander' | 'Castellan'): { [key: string]: number } => {
     const newStats: { [key: string]: number } = {};
     const statGroups = equipmentMode === 'Commander' ? commanderStatGroups : castellanStatGroups;
@@ -34,7 +33,6 @@ const processStats = (stats: CommStat | CastStat, combatMode: 'PvP' | 'PvE', equ
         if (!isSpecialStat) {
             let suffix = key;
 
-            // Special handling for Front/Flank limits
             if (key === 'frontLimit') {
                 suffix = 'Front';
             } else if (key === 'flankLimit') {
@@ -47,7 +45,6 @@ const processStats = (stats: CommStat | CastStat, combatMode: 'PvP' | 'PvE', equ
 
             const capitalizedSuffix = suffix.charAt(0).toUpperCase() + suffix.slice(1);
 
-            // Skip adding CL/NPC stats to frontCbtStr/flankCbtStr
             if (key !== 'frontCbtStr' && key !== 'flankCbtStr') {
                 if (combatMode === 'PvP') {
                     const clKey = `CL${capitalizedSuffix}`;
@@ -80,19 +77,19 @@ const StatRow: React.FC<StatRowProps> = ({ statKey, currentValue, newValue }) =>
     const hasChange = diff !== 0;
 
     return (
-        <div className={`flex items-center py-1.5 px-2 rounded ${hasChange ? 'bg-bg-app/30' : ''}`}>
-            <span className="flex-1 text-sm text-text-muted truncate">
+        <div className={`flex items-center py-2 px-3 rounded-lg border ${hasChange ? 'bg-bg-app/80 border-border-base' : 'border-transparent'}`}>
+            <span className="flex-1 text-sm text-text-muted truncate font-medium">
                 {statDisplayName[statKey] || statKey}
             </span>
-            <span className="w-16 text-right text-sm text-text-muted opacity-75">
+            <span className="w-16 text-right text-sm text-text-muted opacity-75 font-mono">
                 {currentValue.toFixed(1)}
             </span>
             <span className="w-8 text-center text-text-muted opacity-50">→</span>
-            <span className={`w-16 text-right text-sm font-medium ${diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-500' : 'text-text-muted'
+            <span className={`w-16 text-right text-sm font-bold font-mono ${diff > 0 ? 'text-success' : diff < 0 ? 'text-error' : 'text-text-main'
                 }`}>
                 {newValue.toFixed(1)}
             </span>
-            <span className={`w-16 text-right text-xs ${diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-500' : 'text-text-muted'
+            <span className={`w-16 text-right text-xs font-mono font-medium ${diff > 0 ? 'text-success' : diff < 0 ? 'text-error' : 'text-text-muted'
                 }`}>
                 {diff > 0 ? `+${diff.toFixed(1)}` : diff < 0 ? diff.toFixed(1) : '-'}
             </span>
@@ -114,13 +111,14 @@ const StatSection: React.FC<StatSectionProps> = ({ title, stats, currentProcesse
         return current !== next;
     });
 
+    if (!hasAnyChange) return null; // We can optionally hide unchanged sections entirely
+
     return (
-        <div className="mb-4">
-            <h4 className={`text-sm font-semibold mb-2 ${hasAnyChange ? 'text-primary' : 'text-text-muted'}`}>
+        <div className="mb-4 bg-bg-card-hover/40 p-3 rounded-global border border-border-base">
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${hasAnyChange ? 'text-primary' : 'text-text-muted'}`}>
                 {title}
-                {hasAnyChange && <span className="ml-2 text-xs text-primary/60">• Changes</span>}
             </h4>
-            <div className="space-y-0.5">
+            <div className="space-y-1">
                 {stats.map(stat => (
                     <StatRow
                         key={stat}
@@ -153,7 +151,6 @@ const ReconfigureComparisonModal: React.FC<ReconfigureComparisonModalProps> = ({
         return processStats(newLoadout, combatMode, equipmentMode);
     }, [newLoadout, combatMode, equipmentMode]);
 
-    // Select appropriate stat groups based on mode
     const statGroups = equipmentMode === 'Commander' ? commanderStatGroups : castellanStatGroups;
 
     if (!isOpen || !currentLoadout || !newLoadout) return null;
@@ -163,89 +160,60 @@ const ReconfigureComparisonModal: React.FC<ReconfigureComparisonModalProps> = ({
         onClose();
     };
 
-    // Use portal to render modal at document body level
-    return ReactDOM.createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-                onClick={onClose}
-            />
-
-            {/* Modal */}
-            <div className="relative glass-panel max-w-2xl w-full mx-4 max-h-[85vh] flex flex-col animate-fade-in bg-bg-card">
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-border-base">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                            <Icons.RefreshCw className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-text-main">Loadout Comparison</h3>
-                            <p className="text-sm text-text-muted">
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            maxWidth="2xl"
+            title={
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                        <Icons.RefreshCw className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex flex-col">
+                        <span>Loadout Comparison</span>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-text-muted font-medium uppercase tracking-wider">
                                 {currentLoadout.name || `${equipmentMode} ${targetIndex + 1}`}
-                                <span className={`ml-2 px-1.5 py-0.5 text-xs rounded ${combatMode === 'PvP'
-                                    ? 'bg-red-500/20 text-red-500'
-                                    : 'bg-blue-500/20 text-blue-500'
-                                    }`}>
-                                    {combatMode}
-                                </span>
-                            </p>
+                            </span>
+                            <Badge variant={combatMode === 'PvP' ? 'danger' : 'info'}>
+                                {combatMode}
+                            </Badge>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 rounded-global hover:bg-bg-app/50 text-text-muted hover:text-text-main transition-colors"
-                    >
-                        <Icons.X className="w-5 h-5" />
-                    </button>
                 </div>
-
-                {/* Column Headers */}
-                <div className="flex items-center px-6 py-2 bg-bg-app/50 border-b border-border-base/50 text-xs font-medium uppercase tracking-wider text-text-muted">
-                    <span className="flex-1">Stat</span>
-                    <span className="w-16 text-right">Current</span>
-                    <span className="w-8"></span>
-                    <span className="w-16 text-right">New</span>
-                    <span className="w-16 text-right">Change</span>
-                </div>
-
-                {/* Scrollable Content - Uses commanderStatGroups with section titles */}
-                <div className="flex-1 overflow-y-auto p-4"
-                    style={{
-                        scrollbarWidth: 'thin',
-                        scrollbarColor: 'var(--color-border-base) transparent'
-                    }}>
-                    {Object.entries(statGroups).map(([groupName, statKeys]) => (
-                        <StatSection
-                            key={groupName}
-                            title={statGroupDisplayName[groupName] || groupName}
-                            stats={statKeys}
-                            currentProcessed={currentProcessed}
-                            newProcessed={newProcessed}
-                        />
-                    ))}
-                </div>
-
-                {/* Footer with Buttons */}
-                <div className="flex gap-3 p-4 border-t border-border-base">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 btn-ghost border border-border-base"
-                    >
+            }
+            footer={
+                <>
+                    <Button variant="ghost" onClick={onClose} className="flex-1">
                         Cancel
-                    </button>
-                    <button
-                        onClick={handleConfirm}
-                        className="flex-1 px-4 py-2 font-semibold rounded-global bg-primary text-bg-app hover:bg-primary/80 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2"
-                    >
-                        <Icons.Check className="w-4 h-4" />
+                    </Button>
+                    <Button variant="primary" onClick={handleConfirm} className="flex-1" leftIcon={<Icons.Check className="w-4 h-4" />}>
                         Confirm Reconfiguration
-                    </button>
-                </div>
+                    </Button>
+                </>
+            }
+        >
+            <div className="flex items-center px-6 py-2 bg-bg-card border-b border-border-base text-[10px] font-bold uppercase tracking-wider text-text-muted sticky top-0 z-10 -mx-6 -mt-6 mb-4">
+                <span className="flex-1">Stat</span>
+                <span className="w-16 text-right">Current</span>
+                <span className="w-8"></span>
+                <span className="w-16 text-right">New</span>
+                <span className="w-16 text-right">Change</span>
             </div>
-        </div>,
-        document.body
+
+            <div className="flex flex-col">
+                {Object.entries(statGroups).map(([groupName, statKeys]) => (
+                    <StatSection
+                        key={groupName}
+                        title={statGroupDisplayName[groupName] || groupName}
+                        stats={statKeys}
+                        currentProcessed={currentProcessed}
+                        newProcessed={newProcessed}
+                    />
+                ))}
+            </div>
+        </Modal>
     );
 };
 

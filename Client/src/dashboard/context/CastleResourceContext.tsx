@@ -50,17 +50,16 @@ export const CastleResourceProvider: React.FC<{ children: ReactNode }> = ({ chil
         const handleCastleUpdate = (message: WebsocketMessage) => {
             if (message.type === 'castleResourceUpdate' && message.payload) {
                 const castleInfo = message.payload as PlayerCastleInfo;
-                if (!castleInfo.aid) return; // Must have an ID
+                const castleId = Math.trunc(Number(castleInfo.aid));
+                if (!castleId || castleId <= 0) return;
 
                 // Debug logging for Main Castle and Outpost 1
                 if (castleInfo.castleName === 'Main Castle' || castleInfo.castleName === 'Outpost 1') {
-                    console.log(`[CastleUpdate] Received data for ${castleInfo.castleName} (ID: ${castleInfo.aid}):`, {
+                    console.log(`[CastleUpdate] Received data for ${castleInfo.castleName} (ID: ${castleId}):`, {
                         troopsMixed: castleInfo.troops?.troopsMixed,
                         wood: castleInfo.amount.wood_amount
                     });
                 }
-
-                const castleId = castleInfo.aid;
 
                 setCastleResources(prevMap => {
                     const newMap = new Map(prevMap);

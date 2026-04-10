@@ -1,0 +1,4304 @@
+[
+  {
+    "id": null,
+    "name": "relicOffensiveMeleeBonus",
+    "type": "relicOffensiveMeleeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveRangeBonus",
+    "type": "relicOffensiveRangeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallReduction",
+    "type": "relicWallReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateReduction",
+    "type": "relicGateReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatReduction",
+    "type": "relicMoatReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicSpeedBonus",
+    "type": "relicSpeedBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicLootBonus",
+    "type": "relicLootBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFlank",
+    "type": "relicAttackUnitAmountFlank",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBoostYard",
+    "type": "relicAttackBoostYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFront",
+    "type": "relicAttackUnitAmountFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBonus",
+    "type": "relicAttackBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBoostFront",
+    "type": "relicAttackBoostFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBoostFlank",
+    "type": "relicAttackBoostFlank",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackSupportUnits",
+    "type": "relicAttackSupportUnits",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountReinforcementBonus",
+    "type": "attackUnitAmountReinforcementBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallReductionPVE",
+    "type": "relicWallReductionPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateReductionPVE",
+    "type": "relicGateReductionPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveMeleeBonusPVE",
+    "type": "relicOffensiveMeleeBonusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveRangeBonusPVE",
+    "type": "relicOffensiveRangeBonusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFlankPVE",
+    "type": "relicAttackUnitAmountFlankPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBoostYardPVE",
+    "type": "relicAttackBoostYardPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFrontPVE",
+    "type": "relicAttackUnitAmountFrontPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatReductionPVE",
+    "type": "relicMoatReductionPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicCoinLootBoostPVE",
+    "type": "relicCoinLootBoostPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicNomadTabletBoostNomad",
+    "type": "relicNomadTabletBoostNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicSamuraiTokenBoostSamurai",
+    "type": "relicSamuraiTokenBoostSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFactionPointGainBoostBerimond",
+    "type": "relicFactionPointGainBoostBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallReductionCapAPVP",
+    "type": "relicWallReductionCapAPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateReductionCapAPVP",
+    "type": "relicGateReductionCapAPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveMeleeBonusPVP",
+    "type": "relicOffensiveMeleeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveRangeBonusPVP",
+    "type": "relicOffensiveRangeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFlankPVP",
+    "type": "relicAttackUnitAmountFlankPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBoostYardCapAPVP",
+    "type": "relicAttackBoostYardCapAPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFrontPVP",
+    "type": "relicAttackUnitAmountFrontPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicStealthBonusPvP",
+    "type": "relicStealthBonusPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatReductionPVP",
+    "type": "relicMoatReductionPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFireBoostPVP",
+    "type": "relicFireBoostPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFameOffenseBonusPVP",
+    "type": "relicFameOffenseBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFameOffenseBonusAlien",
+    "type": "relicFameOffenseBonusAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallReductionNomad",
+    "type": "relicWallReductionNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateReductionNomad",
+    "type": "relicGateReductionNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveMeleeBonusNomad",
+    "type": "relicOffensiveMeleeBonusNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveRangeBonusNomad",
+    "type": "relicOffensiveRangeBonusNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFlankNomad",
+    "type": "relicAttackUnitAmountFlankNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBoostYardNomad",
+    "type": "relicAttackBoostYardNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFrontNomad",
+    "type": "relicAttackUnitAmountFrontNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatReductionNomad",
+    "type": "relicMoatReductionNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicNomadTabletBoostNomad",
+    "type": "relicNomadTabletBoostNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallReductionSamurai",
+    "type": "relicWallReductionSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateReductionSamurai",
+    "type": "relicGateReductionSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveMeleeBonusSamurai",
+    "type": "relicOffensiveMeleeBonusSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveRangeBonusSamurai",
+    "type": "relicOffensiveRangeBonusSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFlankSamurai",
+    "type": "relicAttackUnitAmountFlankSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBoostYardSamurai",
+    "type": "relicAttackBoostYardSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFrontSamurai",
+    "type": "relicAttackUnitAmountFrontSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatReductionSamurai",
+    "type": "relicMoatReductionSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicSamuraiTokenBoostSamurai",
+    "type": "relicSamuraiTokenBoostSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFameOffenseBonusAlien",
+    "type": "relicFameOffenseBonusAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallReductionAlien",
+    "type": "relicWallReductionAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateReductionAlien",
+    "type": "relicGateReductionAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatReductionAlien",
+    "type": "relicMoatReductionAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveMeleeBonusAlien",
+    "type": "relicOffensiveMeleeBonusAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveRangeBonusAlien",
+    "type": "relicOffensiveRangeBonusAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFlankAlien",
+    "type": "relicAttackUnitAmountFlankAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBoostYardAlien",
+    "type": "relicAttackBoostYardAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFrontAlien",
+    "type": "relicAttackUnitAmountFrontAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallReductionBerimond",
+    "type": "relicWallReductionBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateReductionBerimond",
+    "type": "relicGateReductionBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveMeleeBonusBerimond",
+    "type": "relicOffensiveMeleeBonusBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveRangeBonusBerimond",
+    "type": "relicOffensiveRangeBonusBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFlankBerimond",
+    "type": "relicAttackUnitAmountFlankBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBoostYardBerimond",
+    "type": "relicAttackBoostYardBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFrontBerimond",
+    "type": "relicAttackUnitAmountFrontBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatReductionBerimond",
+    "type": "relicMoatReductionBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFactionPointGainBoostBerimond",
+    "type": "relicFactionPointGainBoostBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicStealthBonusPvP",
+    "type": "relicStealthBonusPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatReductionPVP",
+    "type": "relicMoatReductionPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallReductionCapBPVP",
+    "type": "relicWallReductionCapBPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateReductionCapBPVP",
+    "type": "relicGateReductionCapBPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBoostYardCapBPVP",
+    "type": "relicAttackBoostYardCapBPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFlankPVP",
+    "type": "relicAttackUnitAmountFlankPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackUnitAmountFrontPVP",
+    "type": "relicAttackUnitAmountFrontPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveMeleeBonusPVP",
+    "type": "relicOffensiveMeleeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicOffensiveRangeBonusPVP",
+    "type": "relicOffensiveRangeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFireBoostPVP",
+    "type": "relicFireBoostPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFameOffenseBonusPVP",
+    "type": "relicFameOffenseBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicLootReduction",
+    "type": "relicLootReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallBonus",
+    "type": "relicWallBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateBonus",
+    "type": "relicGateBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatBonus",
+    "type": "relicMoatBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMeleeBonus",
+    "type": "relicMeleeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicRangeBonus",
+    "type": "relicRangeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseUnitAmountWall",
+    "type": "relicDefenseUnitAmountWall",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBoostYard",
+    "type": "relicDefenseBoostYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBonus",
+    "type": "relicDefenseBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBoostFront",
+    "type": "relicDefenseBoostFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBoostFlank",
+    "type": "relicDefenseBoostFlank",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseSupportUnits",
+    "type": "relicDefenseSupportUnits",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountYardBonus",
+    "type": "defenseUnitAmountYardBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallBonusCapAPvE",
+    "type": "relicWallBonusCapAPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateBonusCapAPvE",
+    "type": "relicGateBonusCapAPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMeleeBonusPvE",
+    "type": "relicMeleeBonusPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicRangeBonusPvE",
+    "type": "relicRangeBonusPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseUnitAmountWallPvE",
+    "type": "relicDefenseUnitAmountWallPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBoostYardPvE",
+    "type": "relicDefenseBoostYardPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatBonusPvE",
+    "type": "relicMoatBonusPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicCurrencyLootBoostNomadTabletsNomad",
+    "type": "relicCurrencyLootBoostNomadTabletsNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicCurrencyLootBoostSamuraiTokensSamurai",
+    "type": "relicCurrencyLootBoostSamuraiTokensSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicCurrencyLootBoostKhanMedalsNomad",
+    "type": "relicCurrencyLootBoostKhanMedalsNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicCurrencyLootBoostSamuraiMedalsSamurai",
+    "type": "relicCurrencyLootBoostSamuraiMedalsSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallBonusCapAPvP",
+    "type": "relicWallBonusCapAPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateBonusCapAPvP",
+    "type": "relicGateBonusCapAPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMeleeBonusPVP",
+    "type": "relicMeleeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicRangeBonusPVP",
+    "type": "relicRangeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseUnitAmountWallPVP",
+    "type": "relicDefenseUnitAmountWallPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBoostYardPvP",
+    "type": "relicDefenseBoostYardPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicPerceptionBonusPvP",
+    "type": "relicPerceptionBonusPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatBonusPvP",
+    "type": "relicMoatBonusPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFireBrigadeBoostPVP",
+    "type": "relicFireBrigadeBoostPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFameDefenseBonusPVP",
+    "type": "relicFameDefenseBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBonusMainCastleCapA",
+    "type": "relicDefenseBonusMainCastleCapA",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBonusNotMainCastleCapA",
+    "type": "relicDefenseBonusNotMainCastleCapA",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatBonusPvE",
+    "type": "relicMoatBonusPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallBonusCapBPvE",
+    "type": "relicWallBonusCapBPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateBonusCapBPvE",
+    "type": "relicGateBonusCapBPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMeleeBonusPvE",
+    "type": "relicMeleeBonusPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicRangeBonusPvE",
+    "type": "relicRangeBonusPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseUnitAmountWallPvE",
+    "type": "relicDefenseUnitAmountWallPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBoostYardPvE",
+    "type": "relicDefenseBoostYardPvE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicCurrencyLootBoostNomadTabletsNomad",
+    "type": "relicCurrencyLootBoostNomadTabletsNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicCurrencyLootBoostSamuraiTokensSamurai",
+    "type": "relicCurrencyLootBoostSamuraiTokensSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicCurrencyLootBoostKhanMedalsNomad",
+    "type": "relicCurrencyLootBoostKhanMedalsNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicCurrencyLootBoostSamuraiMedalsSamurai",
+    "type": "relicCurrencyLootBoostSamuraiMedalsSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBonusMainCastleCapB",
+    "type": "relicDefenseBonusMainCastleCapB",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBonusNotMainCastleCapB",
+    "type": "relicDefenseBonusNotMainCastleCapB",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicPerceptionBonusPvP",
+    "type": "relicPerceptionBonusPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMoatBonusPvP",
+    "type": "relicMoatBonusPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicWallBonusCapBPvP",
+    "type": "relicWallBonusCapBPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicGateBonusCapBPvP",
+    "type": "relicGateBonusCapBPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMeleeBonusPVP",
+    "type": "relicMeleeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicRangeBonusPVP",
+    "type": "relicRangeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseUnitAmountWallPVP",
+    "type": "relicDefenseUnitAmountWallPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicDefenseBoostYardPvP",
+    "type": "relicDefenseBoostYardPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFireBrigadeBoostPVP",
+    "type": "relicFireBrigadeBoostPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicFameDefenseBonusPVP",
+    "type": "relicFameDefenseBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBonusUnitKingsguardAttacker",
+    "type": "relicAttackBonusUnitKingsguardAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBonusUnitRankrewardAttacker",
+    "type": "relicAttackBonusUnitRankrewardAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBonusUnitBerimondAttacker",
+    "type": "relicAttackBonusUnitBerimondAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBonusUnitValkyrieAttacker",
+    "type": "relicAttackBonusUnitValkyrieAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBonusUnitRelicBarracksAttacker",
+    "type": "relicAttackBonusUnitRelicBarracksAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicSpeedBoostUnitShields",
+    "type": "relicSpeedBoostUnitShields",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicLootCapacityBoostUnitKingsguardAttacker",
+    "type": "relicLootCapacityBoostUnitKingsguardAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicLootCapacityBoostUnitRankrewardAttacker",
+    "type": "relicLootCapacityBoostUnitRankrewardAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicLootCapacityBoostUnitBerimondAttacker",
+    "type": "relicLootCapacityBoostUnitBerimondAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicLootCapacityBoostUnitValkyrieAttacker",
+    "type": "relicLootCapacityBoostUnitValkyrieAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicLootCapacityBoostUnitRelicBarracksAttacker",
+    "type": "relicLootCapacityBoostUnitRelicBarracksAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAttackBonusUnitMeadAttacker",
+    "type": "relicAttackBonusUnitMeadAttacker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicAdditionalWaves",
+    "type": "relicAdditionalWaves",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicCooldownReduction",
+    "type": "relicCooldownReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicReturnTravelBoost",
+    "type": "relicReturnTravelBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicRecuitmentSpeedBoostAll",
+    "type": "relicRecuitmentSpeedBoostAll",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicHospitalCapacityBonus",
+    "type": "relicHospitalCapacityBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicBuildSpeedBoost",
+    "type": "relicBuildSpeedBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicClassicResourceProductionBonus",
+    "type": "relicClassicResourceProductionBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicKingdomResourceProductionBonus",
+    "type": "relicKingdomResourceProductionBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicPublicOrderBonus",
+    "type": "relicPublicOrderBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicResearchBoost",
+    "type": "relicResearchBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMarketCarriageCapacityBonus",
+    "type": "relicMarketCarriageCapacityBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMeadProductionBoost",
+    "type": "relicMeadProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicHoneyProductionBoost",
+    "type": "relicHoneyProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicMeadCapacityBonus",
+    "type": "relicMeadCapacityBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "relicHoneyCapacityBonus",
+    "type": "relicHoneyCapacityBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseBoostYard",
+    "type": "defenseBoostYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "hideoutCapacity",
+    "type": "hideoutCapacity",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackUnitAmountFront",
+    "type": "AttackUnitAmountFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackBoostYard",
+    "type": "AttackBoostYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "LootCapacity",
+    "type": "LootCapacity",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "ReturnTravelBoost",
+    "type": "ReturnTravelBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "DefenseSupportUnitsWeak",
+    "type": "DefenseSupportUnitsWeak",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "DefenseSupportUnitsStrong",
+    "type": "DefenseSupportUnitsStrong",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "DefenseBoostFront",
+    "type": "DefenseBoostFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "DefenseBoostFlank",
+    "type": "DefenseBoostFlank",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackSupportUnitsWeak",
+    "type": "AttackSupportUnitsWeak",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackSupportUnitsStrong",
+    "type": "AttackSupportUnitsStrong",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackBoostFront",
+    "type": "AttackBoostFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackBoostFlank",
+    "type": "AttackBoostFlank",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fameDefenseBonus",
+    "type": "fameDefenseBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "conquerSpeedBonus",
+    "type": "conquerSpeedBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootReduction",
+    "type": "lootReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "perceptionBonus",
+    "type": "perceptionBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fireBrigadeBoost",
+    "type": "fireBrigadeBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "occupationTimeReduction",
+    "type": "occupationTimeReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallBonus",
+    "type": "wallBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateBonus",
+    "type": "gateBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "moatBonus",
+    "type": "moatBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "meleeBonus",
+    "type": "meleeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "rangeBonus",
+    "type": "rangeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "npcDefenseBonus",
+    "type": "npcDefenseBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountWall",
+    "type": "defenseUnitAmountWall",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fameOffenseBonus",
+    "type": "fameOffenseBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "honorBonus",
+    "type": "honorBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "speedBonus",
+    "type": "speedBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootBonus",
+    "type": "lootBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stealthBonus",
+    "type": "stealthBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fireBoost",
+    "type": "fireBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallReduction",
+    "type": "wallReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateReduction",
+    "type": "gateReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "moatReduction",
+    "type": "moatReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "magicFindBonus",
+    "type": "magicFindBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonus",
+    "type": "offensiveMeleeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonus",
+    "type": "offensiveRangeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "smashChance",
+    "type": "smashChance",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "travelCostReduction",
+    "type": "travelCostReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "cooldownReduction",
+    "type": "cooldownReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlank",
+    "type": "attackUnitAmountFlank",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "cooldownReductionDungeons",
+    "type": "cooldownReductionDungeons",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostFront2",
+    "type": "attackBoostFront2",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostFlank2",
+    "type": "attackBoostFlank2",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "additionalWaves",
+    "type": "additionalWaves",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "skin",
+    "type": "skin",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "skinBaron",
+    "type": "skinBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseBonusMainCastle",
+    "type": "defenseBonusMainCastle",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseBonusNotMainCastle",
+    "type": "defenseBonusNotMainCastle",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallBonusBaron",
+    "type": "wallBonusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateBonusBaron",
+    "type": "gateBonusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "moatBonusBaron",
+    "type": "moatBonusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountWallMainCastle",
+    "type": "defenseUnitAmountWallMainCastle",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountWallNotMainCastle",
+    "type": "defenseUnitAmountWallNotMainCastle",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountWallPVP",
+    "type": "defenseUnitAmountWallPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseBoostYardBaron",
+    "type": "defenseBoostYardBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "occupationTimeReductionBaron",
+    "type": "occupationTimeReductionBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusConquerBaron",
+    "type": "offensiveMeleeBonusConquerBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusConquerBaron",
+    "type": "offensiveRangeBonusConquerBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "speedBonusConquerBaron",
+    "type": "speedBonusConquerBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stealthBonusConquerBaron",
+    "type": "stealthBonusConquerBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardConquerBaron",
+    "type": "attackBoostYardConquerBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallReductionConquerBaron",
+    "type": "wallReductionConquerBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFrontConquerBaron",
+    "type": "attackUnitAmountFrontConquerBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankConquerBaron",
+    "type": "attackUnitAmountFlankConquerBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fameDefenseBonusBaron",
+    "type": "fameDefenseBonusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fireBrigadeBoostBaron",
+    "type": "fireBrigadeBoostBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "hideoutCapacityBaron",
+    "type": "hideoutCapacityBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootReductionBaron",
+    "type": "lootReductionBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "perceptionBonusBaron",
+    "type": "perceptionBonusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusConquerGeneral",
+    "type": "offensiveMeleeBonusConquerGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusConquerGeneral",
+    "type": "offensiveRangeBonusConquerGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "speedBonusConquerGeneral",
+    "type": "speedBonusConquerGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stealthBonusConquerGeneral",
+    "type": "stealthBonusConquerGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardConquerGeneral",
+    "type": "attackBoostYardConquerGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallReductionConquerGeneral",
+    "type": "wallReductionConquerGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFrontConquerGeneral",
+    "type": "attackUnitAmountFrontConquerGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankConquerGeneral",
+    "type": "attackUnitAmountFlankConquerGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonusMainCastle",
+    "type": "attackBonusMainCastle",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonusNotMainCastle",
+    "type": "attackBonusNotMainCastle",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stealthBonusGeneral",
+    "type": "stealthBonusGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardPVP",
+    "type": "attackBoostYardPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallReductionPVP",
+    "type": "wallReductionPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateReductionPVP",
+    "type": "gateReductionPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "moatReductionPVP",
+    "type": "moatReductionPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFrontPVP",
+    "type": "attackUnitAmountFrontPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankPVP",
+    "type": "attackUnitAmountFlankPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusPVP",
+    "type": "offensiveMeleeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusPVP",
+    "type": "offensiveRangeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusPVE",
+    "type": "offensiveMeleeBonusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusPVE",
+    "type": "offensiveRangeBonusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "speedBonusPVE",
+    "type": "speedBonusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardPVE",
+    "type": "attackBoostYardPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallReductionPVE",
+    "type": "wallReductionPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateReductionPVE",
+    "type": "gateReductionPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFrontPVE",
+    "type": "attackUnitAmountFrontPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankPVE",
+    "type": "attackUnitAmountFlankPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fameOffenseBonusGeneral",
+    "type": "fameOffenseBonusGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "honorBonusGeneral",
+    "type": "honorBonusGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootCapacityPVP",
+    "type": "lootCapacityPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "returnTravelBoostPVP",
+    "type": "returnTravelBoostPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "speedBonusPVP",
+    "type": "speedBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "travelCostReductionPVP",
+    "type": "travelCostReductionPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "smashChanceGeneral",
+    "type": "smashChanceGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fireBoostGeneral",
+    "type": "fireBoostGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "cooldownReductionPVP",
+    "type": "cooldownReductionPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "cooldownReductionPVE",
+    "type": "cooldownReductionPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "magicFindBonusGeneral",
+    "type": "magicFindBonusGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootBonusPVE",
+    "type": "lootBonusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootCapacityPVE",
+    "type": "lootCapacityPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "returnTravelBoostPVE",
+    "type": "returnTravelBoostPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "travelCostReductionPVE",
+    "type": "travelCostReductionPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "supportSpeedBonus",
+    "type": "supportSpeedBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stationingSpeedBonus",
+    "type": "stationingSpeedBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "supportTravelCostReduction",
+    "type": "supportTravelCostReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stationingTravelCostReduction",
+    "type": "stationingTravelCostReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fameDefenseMalusBaron",
+    "type": "fameDefenseMalusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateMalusBaron",
+    "type": "gateMalusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallMalusBaron",
+    "type": "wallMalusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootIncreaseBaron",
+    "type": "lootIncreaseBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallIncreasePVE",
+    "type": "wallIncreasePVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallIncreasePVP",
+    "type": "wallIncreasePVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stealthMalusGeneral",
+    "type": "stealthMalusGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateIncreasePVE",
+    "type": "gateIncreasePVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateIncreasePVP",
+    "type": "gateIncreasePVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "perceptionMalusBaron",
+    "type": "perceptionMalusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "moatMalusBaron",
+    "type": "moatMalusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackMalusConquerBaron",
+    "type": "attackMalusConquerBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackMalusPVE",
+    "type": "attackMalusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackMalusPVP",
+    "type": "attackMalusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fireBrigadeMalusBaron",
+    "type": "fireBrigadeMalusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseMalusBaron",
+    "type": "defenseMalusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "speedMalusGeneral",
+    "type": "speedMalusGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFrontMalusPVE",
+    "type": "attackUnitAmountFrontMalusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankMalusPVE",
+    "type": "attackUnitAmountFlankMalusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFrontMalusPVP",
+    "type": "attackUnitAmountFrontMalusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankMalusPVP",
+    "type": "attackUnitAmountFlankMalusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountwallMalusBaron",
+    "type": "defenseUnitAmountwallMalusBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fameMalusGeneral",
+    "type": "fameMalusGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootDecreaseGeneral",
+    "type": "lootDecreaseGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "occupationTimeIncreaseBaron",
+    "type": "occupationTimeIncreaseBaron",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "returnTravelMalusGeneral",
+    "type": "returnTravelMalusGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeMalusPVP",
+    "type": "offensiveMeleeMalusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeMalusPVE",
+    "type": "offensiveMeleeMalusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "travelCostIncreaseGeneral",
+    "type": "travelCostIncreaseGeneral",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeMalusPVP",
+    "type": "offensiveRangeMalusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "moatIncreasePVP",
+    "type": "moatIncreasePVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeMalusPVE",
+    "type": "offensiveRangeMalusPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "memberCount",
+    "type": "memberCount",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceTravelSupportBoost",
+    "type": "allianceTravelSupportBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceTravelMarketBoost",
+    "type": "allianceTravelMarketBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "resourceDepositBoost",
+    "type": "resourceDepositBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "warLootBoost",
+    "type": "warLootBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "travelWarAttackBoost",
+    "type": "travelWarAttackBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceAttackBoost",
+    "type": "allianceAttackBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceDefenseBoost",
+    "type": "allianceDefenseBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceFameBoost",
+    "type": "allianceFameBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "coinLootBoost",
+    "type": "coinLootBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "recruitmentCostDecrease",
+    "type": "recruitmentCostDecrease",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceFameGainBoost",
+    "type": "allianceFameGainBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "enableUnits",
+    "type": "enableUnits",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonusPvP",
+    "type": "attackBonusPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonus",
+    "type": "attackBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "toolProductionSpeedBoost",
+    "type": "toolProductionSpeedBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "islandKing",
+    "type": "islandKing",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoost",
+    "type": "foodProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "recruitmentSpeedBoost",
+    "type": "recruitmentSpeedBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "spyCountBoost",
+    "type": "spyCountBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "publicOrderBoost",
+    "type": "publicOrderBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "enemyFameBoost",
+    "type": "enemyFameBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "enemyLootBoost",
+    "type": "enemyLootBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "speedBonusBerimond",
+    "type": "speedBonusBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "auxiliaryCapacityBoost",
+    "type": "auxiliaryCapacityBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "moraleBoost",
+    "type": "moraleBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "factionPointGainBoost",
+    "type": "factionPointGainBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoostKingdoms",
+    "type": "foodProductionBoostKingdoms",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoostMain",
+    "type": "foodProductionBoostMain",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "recruitmentCostDecreaseAll",
+    "type": "recruitmentCostDecreaseAll",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "recruitmentSpeedBoostAll",
+    "type": "recruitmentSpeedBoostAll",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "unlockSkinIDs",
+    "type": "unlockSkinIDs",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "unlockAbility",
+    "type": "unlockAbility",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "enableBuildings",
+    "type": "enableBuildings",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "battleXPBoost",
+    "type": "battleXPBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "buildingXPBoost",
+    "type": "buildingXPBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "disableUnits",
+    "type": "disableUnits",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "espionageSpeedBoost",
+    "type": "espionageSpeedBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "woodProductionBoost",
+    "type": "woodProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stoneProductionBoost",
+    "type": "stoneProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "taxCollectorBoost",
+    "type": "taxCollectorBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "taxCollectorNoRubies",
+    "type": "taxCollectorNoRubies",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "marketCarriageCapacityBoost",
+    "type": "marketCarriageCapacityBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "marketSpeedOwnBoost",
+    "type": "marketSpeedOwnBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "amountGuardsBoost",
+    "type": "amountGuardsBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "amountSpiesBonus",
+    "type": "amountSpiesBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "amountPeasantBoost",
+    "type": "amountPeasantBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "amountPopulationBoost",
+    "type": "amountPopulationBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "amountPopulationBonus",
+    "type": "amountPopulationBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "unitSpeedBoost",
+    "type": "unitSpeedBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "travelKingdomTroopTimeBoost",
+    "type": "travelKingdomTroopTimeBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "travelKingdomMarketTimeBoost",
+    "type": "travelKingdomMarketTimeBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Glory bonus",
+    "type": "fameBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "hospitalSlotBonus",
+    "type": "hospitalSlotBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "researchBoost",
+    "type": "researchBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "researchBonus",
+    "type": "researchBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "forgeCostBoost",
+    "type": "forgeCostBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "recruitmentTimeBonus",
+    "type": "recruitmentTimeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "toolProductionTimeBonus",
+    "type": "toolProductionTimeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "woodProductionBonusMain",
+    "type": "woodProductionBonusMain",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stoneProductionBonusMain",
+    "type": "stoneProductionBonusMain",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootCapacityBoost",
+    "type": "lootCapacityBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "battleXPBonus",
+    "type": "battleXPBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "enableConstructionItemRecipes",
+    "type": "enableConstructionItemRecipes",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "toolProductionSpeedBoostAll",
+    "type": "toolProductionSpeedBoostAll",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "strongerPeasant",
+    "type": "strongerPeasant",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBonusMain",
+    "type": "foodProductionBonusMain",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "publicOrderBonusMain",
+    "type": "publicOrderBonusMain",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "MeadProductionIncrease",
+    "type": "MeadProductionIncrease",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "unboostedMeadProduction",
+    "type": "unboostedMeadProduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "HoneyProductionIncrease",
+    "type": "HoneyProductionIncrease",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "unboostedHoneyProduction",
+    "type": "unboostedHoneyProduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "meadProductionBoost",
+    "type": "meadProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "honeyProductionBoost",
+    "type": "honeyProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "refinedResourceQueueBoost",
+    "type": "refinedResourceQueueBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "componentQueueBoost",
+    "type": "componentQueueBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "healingSpeedIncreaseBoostPremium",
+    "type": "healingSpeedIncreaseBoostPremium",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "healingSpeedIncreaseBoostNonPremium",
+    "type": "healingSpeedIncreaseBoostNonPremium",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "transportTaxDecreaseBoostIce",
+    "type": "transportTaxDecreaseBoostIce",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "transportTaxDecreaseBoostSand",
+    "type": "transportTaxDecreaseBoostSand",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "transportTaxDecreaseBoostVulcano",
+    "type": "transportTaxDecreaseBoostVulcano",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "transportTaxDecreaseBoostIsland",
+    "type": "transportTaxDecreaseBoostIsland",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "transportTaxDecreaseBoostGreen",
+    "type": "transportTaxDecreaseBoostGreen",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "freeSkipBonus",
+    "type": "freeSkipBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "researchCostsBoost",
+    "type": "researchCostsBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "baseRecruitmentTimeBoost",
+    "type": "baseRecruitmentTimeBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "recruitmentSlotsBonus",
+    "type": "recruitmentSlotsBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "buildingCostsBoost",
+    "type": "buildingCostsBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gloryDecayBoost",
+    "type": "gloryDecayBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "coinLootBoostNomad",
+    "type": "coinLootBoostNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "PublicOrderBonusMain",
+    "type": "PublicOrderBonusMain",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "cooldownReductionKhan",
+    "type": "cooldownReductionKhan",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "cooldownReductionSamurai",
+    "type": "cooldownReductionSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "cooldownReductionNomad",
+    "type": "cooldownReductionNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "coinLootBoostSamurai",
+    "type": "coinLootBoostSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "woodProductionBoostMain",
+    "type": "woodProductionBoostMain",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stoneProductionBoostMain",
+    "type": "stoneProductionBoostMain",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "woodProductionBoostIce",
+    "type": "woodProductionBoostIce",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "woodProductionBoostDesert",
+    "type": "woodProductionBoostDesert",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "woodProductionBoostFire",
+    "type": "woodProductionBoostFire",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stoneProductionBoostIce",
+    "type": "stoneProductionBoostIce",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stoneProductionBoostDesert",
+    "type": "stoneProductionBoostDesert",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stoneProductionBoostFire",
+    "type": "stoneProductionBoostFire",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoostIce",
+    "type": "foodProductionBoostIce",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoostDesert",
+    "type": "foodProductionBoostDesert",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoostFire",
+    "type": "foodProductionBoostFire",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "ironProductionBoost",
+    "type": "ironProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "coalProductionBoost",
+    "type": "coalProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "oilProductionBoost",
+    "type": "oilProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "glassProductionBoost",
+    "type": "glassProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "charmBoost",
+    "type": "charmBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankShapeshifter",
+    "type": "attackUnitAmountFlankShapeshifter",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardShapeshifter",
+    "type": "attackBoostYardShapeshifter",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Khan chest",
+    "type": "nomadTabletBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "reputationPointGainBoost",
+    "type": "reputationPointGainBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "samuraiTokenBoost",
+    "type": "samuraiTokenBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "khanMedalBoost",
+    "type": "khanMedalBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "ragePointGainBoost",
+    "type": "ragePointGainBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardNomad",
+    "type": "attackBoostYardNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallReductionNomad",
+    "type": "wallReductionNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankNomad",
+    "type": "attackUnitAmountFlankNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateReductionNomad",
+    "type": "gateReductionNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusNomad",
+    "type": "offensiveRangeBonusNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardAlien",
+    "type": "attackBoostYardAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankAlien",
+    "type": "attackUnitAmountFlankAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "moatReductionAlien",
+    "type": "moatReductionAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusAlien",
+    "type": "offensiveMeleeBonusAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusAlien",
+    "type": "offensiveRangeBonusAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fameOffenseBonusAlien",
+    "type": "fameOffenseBonusAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostUnitAliens",
+    "type": "attackBoostUnitAliens",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostUnitBloodcrows",
+    "type": "attackBoostUnitBloodcrows",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostUnitNomad",
+    "type": "attackBoostUnitNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostUnitBerimond",
+    "type": "attackBoostUnitBerimond",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusBerimondKingdom",
+    "type": "offensiveMeleeBonusBerimondKingdom",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusBerimondKingdom",
+    "type": "offensiveRangeBonusBerimondKingdom",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankBerimondKingdom",
+    "type": "attackUnitAmountFlankBerimondKingdom",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "factionPointGainBoostBerimondKingdom",
+    "type": "factionPointGainBoostBerimondKingdom",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardBerimondKingdom",
+    "type": "attackBoostYardBerimondKingdom",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardSamurai",
+    "type": "attackBoostYardSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankSamurai",
+    "type": "attackUnitAmountFlankSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateReductionSamurai",
+    "type": "gateReductionSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallReductionSamurai",
+    "type": "wallReductionSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusSamurai",
+    "type": "offensiveRangeBonusSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusBerimondInvasion",
+    "type": "offensiveRangeBonusBerimondInvasion",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankBerimondInvasion",
+    "type": "attackUnitAmountFlankBerimondInvasion",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardBerimondInvasion",
+    "type": "attackBoostYardBerimondInvasion",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "factionPointGainBoostBerimondInvasion",
+    "type": "factionPointGainBoostBerimondInvasion",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "meleeBonusPVP",
+    "type": "meleeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "rangeBonusPVP",
+    "type": "rangeBonusPVP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseBoostYardPvP",
+    "type": "defenseBoostYardPvP",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "featureAutoSell",
+    "type": "featureAutoSell",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "featureAutoSpy",
+    "type": "featureAutoSpy",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "featureLoyaltyGift",
+    "type": "featureLoyaltyGift",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodCapacityBonusGreen",
+    "type": "foodCapacityBonusGreen",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "CollectorBoostSouls",
+    "type": "CollectorBoostSouls",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "CollectorBoostFurs",
+    "type": "CollectorBoostFurs",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "CollectorBoostBeads",
+    "type": "CollectorBoostBeads",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "CollectorBoostBees",
+    "type": "CollectorBoostBees",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "CollectorBoostEssence",
+    "type": "CollectorBoostEssence",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "CollectorBoostTea",
+    "type": "CollectorBoostTea",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "CollectorBoostPartyAnimal",
+    "type": "CollectorBoostPartyAnimal",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "tempServerCollectorBoost",
+    "type": "tempServerCollectorBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodConsumptionBoost",
+    "type": "foodConsumptionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonusUnit",
+    "type": "attackBonusUnit",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonusUnitNomad",
+    "type": "attackBonusUnitNomad",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonusUnitSamurai",
+    "type": "attackBonusUnitSamurai",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonusUnitAlien",
+    "type": "attackBonusUnitAlien",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonusUnitBloodcrows",
+    "type": "attackBonusUnitBloodcrows",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonusUnitBerimondInvasion",
+    "type": "attackBonusUnitBerimondInvasion",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceRageBoost",
+    "type": "allianceRageBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceKhanCooldownReduction",
+    "type": "allianceKhanCooldownReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceNomadCooldownReduction",
+    "type": "allianceNomadCooldownReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceSamuraiCooldownReduction",
+    "type": "allianceSamuraiCooldownReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceDaimyoCooldownReduction",
+    "type": "allianceDaimyoCooldownReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "fameBoostUnitAlienBC",
+    "type": "fameBoostUnitAlienBC",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "BGCollectorBoost",
+    "type": "BGCollectorBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceAttackBoostAliens",
+    "type": "allianceAttackBoostAliens",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceAttackBoostDaimyo",
+    "type": "allianceAttackBoostDaimyo",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceDefenseBoostKhan",
+    "type": "allianceDefenseBoostKhan",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceUnitHealingBoost",
+    "type": "allianceUnitHealingBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "burningChanceBonus",
+    "type": "burningChanceBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBonusCharge",
+    "type": "attackBonusCharge",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusCharge",
+    "type": "offensiveMeleeBonusCharge",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusCharge",
+    "type": "offensiveRangeBonusCharge",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallReductionCharge",
+    "type": "wallReductionCharge",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateReductionCharge",
+    "type": "gateReductionCharge",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackBoostYardCharge",
+    "type": "attackBoostYardCharge",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "tonicBoost",
+    "type": "tonicBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "wallBonusTower",
+    "type": "wallBonusTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "gateBonusTower",
+    "type": "gateBonusTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseBoostYardTower",
+    "type": "defenseBoostYardTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "meleeBonusTower",
+    "type": "meleeBonusTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "rangeBonusTower",
+    "type": "rangeBonusTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusResourceTower",
+    "type": "offensiveMeleeBonusResourceTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusResourceTower",
+    "type": "offensiveRangeBonusResourceTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootBonusResourceTower",
+    "type": "lootBonusResourceTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootCapacityResourceTower",
+    "type": "lootCapacityResourceTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "travelCostReductionResourceTower",
+    "type": "travelCostReductionResourceTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "speedBonusResourceTower",
+    "type": "speedBonusResourceTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "cooldownReductionResourceTower",
+    "type": "cooldownReductionResourceTower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBonusBaronEconomy",
+    "type": "foodProductionBonusBaronEconomy",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoostBaronEconomy",
+    "type": "foodProductionBoostBaronEconomy",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodCapacityBonusBaronEconomy",
+    "type": "foodCapacityBonusBaronEconomy",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "meadCapacityBonusBaronEconomy",
+    "type": "meadCapacityBonusBaronEconomy",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "currencyLootBoostBaronEconomy",
+    "type": "currencyLootBoostBaronEconomy",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "honeyCapacityBonusBaronEconomy",
+    "type": "honeyCapacityBonusBaronEconomy",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusTCI",
+    "type": "offensiveMeleeBonusTCI",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusTCI",
+    "type": "offensiveRangeBonusTCI",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "enableExpansion",
+    "type": "enableExpansion",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "enableCraftingRecipes",
+    "type": "enableCraftingRecipes",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "bonusWallCapacity",
+    "type": "bonusWallCapacity",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "bonusDefencePower",
+    "type": "bonusDefencePower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "bonusYardDefensePower",
+    "type": "bonusYardDefensePower",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "killAttackingMeleeTroopsYard",
+    "type": "killAttackingMeleeTroopsYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "killAttackingRangedTroopsYard",
+    "type": "killAttackingRangedTroopsYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "killDefendingMeleeTroopsYard",
+    "type": "killDefendingMeleeTroopsYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "killDefendingRangedTroopsYard",
+    "type": "killDefendingRangedTroopsYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "killAttackingAnyTroopsYard",
+    "type": "killAttackingAnyTroopsYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "killDefendingAnyTroopsYard",
+    "type": "killDefendingAnyTroopsYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "meleeBonusTCI",
+    "type": "meleeBonusTCI",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "rangeBonusTCI",
+    "type": "rangeBonusTCI",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountReinforcementBonus",
+    "type": "attackUnitAmountReinforcementBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountReinforcementBoost",
+    "type": "attackUnitAmountReinforcementBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountYardBonus",
+    "type": "defenseUnitAmountYardBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountYardBoost",
+    "type": "defenseUnitAmountYardBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "rangeBonus",
+    "type": "rangeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountYardMinorBoost",
+    "type": "defenseUnitAmountYardMinorBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceDefenseUnitAmountYardBonus",
+    "type": "allianceDefenseUnitAmountYardBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceDefenseUnitAmountYardBoost",
+    "type": "allianceDefenseUnitAmountYardBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "featureAutoSkipCooldown",
+    "type": "featureAutoSkipCooldown",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingWallBonus",
+    "type": "difficultyScalingWallBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingGateBonus",
+    "type": "difficultyScalingGateBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingMoatBonus",
+    "type": "difficultyScalingMoatBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingMeleeBonus",
+    "type": "difficultyScalingMeleeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingRangeBonus",
+    "type": "difficultyScalingRangeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingDefenseUnitAmountWall",
+    "type": "difficultyScalingDefenseUnitAmountWall",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingDefenseBoostYard",
+    "type": "difficultyScalingDefenseBoostYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingDefenseBonus",
+    "type": "difficultyScalingDefenseBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingWallReduction",
+    "type": "difficultyScalingWallReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingGateReduction",
+    "type": "difficultyScalingGateReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingMoatReduction",
+    "type": "difficultyScalingMoatReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingOffensiveMeleeBonus",
+    "type": "difficultyScalingOffensiveMeleeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingOffensiveRangedBonus",
+    "type": "difficultyScalingOffensiveRangedBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingAttackBoostYard",
+    "type": "difficultyScalingAttackBoostYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingAttackBoostFront",
+    "type": "difficultyScalingAttackBoostFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "difficultyScalingAttackBoostFlank",
+    "type": "difficultyScalingAttackBoostFlank",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "PowerSurge",
+    "type": "PowerSurge",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "RisetotheTask",
+    "type": "RisetotheTask",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "GiantSlayer",
+    "type": "GiantSlayer",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Intimidate",
+    "type": "Intimidate",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Hordebreaker",
+    "type": "Hordebreaker",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "EndlessPractice",
+    "type": "EndlessPractice",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "WayoftheSword",
+    "type": "WayoftheSword",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "IronWill",
+    "type": "IronWill",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Sabotage",
+    "type": "Sabotage",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "HeartofaWarrior",
+    "type": "HeartofaWarrior",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "ToweringShield",
+    "type": "ToweringShield",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "WallAmount",
+    "type": "WallAmount",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "HeroicDefense",
+    "type": "HeroicDefense",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "MindClarityEvenWave",
+    "type": "MindClarityEvenWave",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AspectoftheDragon",
+    "type": "AspectoftheDragon",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Ayala(Falcon)",
+    "type": "Ayala(Falcon)",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Ambush",
+    "type": "Ambush",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Longbows",
+    "type": "Longbows",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "ReinforcedArrows",
+    "type": "ReinforcedArrows",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Plunder",
+    "type": "Plunder",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "YourCut",
+    "type": "YourCut",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "HiddenTreasures",
+    "type": "HiddenTreasures",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "TheWayofPerfection",
+    "type": "TheWayofPerfection",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Vengence",
+    "type": "Vengence",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "WingsWhirlwind",
+    "type": "WingsWhirlwind",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Tailwhip",
+    "type": "Tailwhip",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "DragonscaleArmor",
+    "type": "DragonscaleArmor",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "Exhalted",
+    "type": "Exhalted",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "LastingWounds",
+    "type": "LastingWounds",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "MindClarityOddWave",
+    "type": "MindClarityOddWave",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackBoostYardDecoCapped",
+    "type": "AttackBoostYardDecoCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusDecoCapped",
+    "type": "offensiveMeleeBonusDecoCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusDecoCapped",
+    "type": "offensiveRangeBonusDecoCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "recruitmentSpeedBoostAllCapped",
+    "type": "recruitmentSpeedBoostAllCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "recruitmentCostDecreaseAllCapped",
+    "type": "recruitmentCostDecreaseAllCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "toolProductionSpeedBoostAllCapped",
+    "type": "toolProductionSpeedBoostAllCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "decosUnboostedHoneyProductionCapped",
+    "type": "decosUnboostedHoneyProductionCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "decosUnboostedFoodProductionBonusBaronEconomyCapped",
+    "type": "decosUnboostedFoodProductionBonusBaronEconomyCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "decoUnboostedMeadProductionCapped",
+    "type": "decoUnboostedMeadProductionCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeBonusTCICapped",
+    "type": "offensiveMeleeBonusTCICapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeBonusTCICapped",
+    "type": "offensiveRangeBonusTCICapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "attackUnitAmountFlankCapped",
+    "type": "attackUnitAmountFlankCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackUnitAmountFrontCapped",
+    "type": "AttackUnitAmountFrontCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseBoostYardCapped",
+    "type": "defenseBoostYardCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountYardBonusCapped",
+    "type": "defenseUnitAmountYardBonusCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "CraftingQueueProductionBoost",
+    "type": "CraftingQueueProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "BeefProductionIncrease",
+    "type": "BeefProductionIncrease",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "unboostedBeefProduction",
+    "type": "unboostedBeefProduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "beefProductionBoost",
+    "type": "beefProductionBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "beefCapacityBonus",
+    "type": "beefCapacityBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "enableCraftingRecipeGroups",
+    "type": "enableCraftingRecipeGroups",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "unboostedBeefProductionCapped",
+    "type": "unboostedBeefProductionCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "honeyCapacityBonusBaronEconomyCapped",
+    "type": "honeyCapacityBonusBaronEconomyCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodCapacityBonusBaronEconomyCapped",
+    "type": "foodCapacityBonusBaronEconomyCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "marketSpeedOwnBoostCapped",
+    "type": "marketSpeedOwnBoostCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "marketCarriageCapacityBoostCapped",
+    "type": "marketCarriageCapacityBoostCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "battleXPBoostCapped",
+    "type": "battleXPBoostCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "buildingXPBoostCapped",
+    "type": "buildingXPBoostCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "allianceDefenseUnitAmountYardBonusCapped",
+    "type": "allianceDefenseUnitAmountYardBonusCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackBoostYardCapped",
+    "type": "AttackBoostYardCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "defenseUnitAmountWallCapped",
+    "type": "defenseUnitAmountWallCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "woodProductionBoostMainCapped",
+    "type": "woodProductionBoostMainCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stoneProductionBoostMainCapped",
+    "type": "stoneProductionBoostMainCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "ironProductionBoostCapped",
+    "type": "ironProductionBoostCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "woodProductionBoostIceCapped",
+    "type": "woodProductionBoostIceCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stoneProductionBoostIceCapped",
+    "type": "stoneProductionBoostIceCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "coalProductionBoostCapped",
+    "type": "coalProductionBoostCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "woodProductionBoostDesertCapped",
+    "type": "woodProductionBoostDesertCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stoneProductionBoostDesertCapped",
+    "type": "stoneProductionBoostDesertCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "oilProductionBoostCapped",
+    "type": "oilProductionBoostCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "woodProductionBoostFireCapped",
+    "type": "woodProductionBoostFireCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "stoneProductionBoostFireCapped",
+    "type": "stoneProductionBoostFireCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "glassProductionBoostCapped",
+    "type": "glassProductionBoostCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "unboostedMeadProductionCapped",
+    "type": "unboostedMeadProductionCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "meadCapacityBonusBaronEconomyCapped",
+    "type": "meadCapacityBonusBaronEconomyCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoostBaronEconomyCapped",
+    "type": "foodProductionBoostBaronEconomyCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "meadProductionBoostCapped",
+    "type": "meadProductionBoostCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoostIceCapped",
+    "type": "foodProductionBoostIceCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoostDesertCapped",
+    "type": "foodProductionBoostDesertCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "foodProductionBoostFireCapped",
+    "type": "foodProductionBoostFireCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "constructionQueue",
+    "type": "constructionQueue",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "simultaneousConstruction",
+    "type": "simultaneousConstruction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "unitWallAbsoluteAmount",
+    "type": "unitWallAbsoluteAmount",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "DefenseBoostFrontCapped",
+    "type": "DefenseBoostFrontCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "DefenseBoostFlankCapped",
+    "type": "DefenseBoostFlankCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackBoostFrontCapped",
+    "type": "AttackBoostFrontCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "AttackBoostFlankCapped",
+    "type": "AttackBoostFlankCapped",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "cooldownReductionPVE",
+    "type": "cooldownReductionPVE",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "speedBonus",
+    "type": "speedBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "SurvivalBoost",
+    "type": "SurvivalBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "SightRadiusBonus",
+    "type": "SightRadiusBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "FireBrigadeBoostBuilding",
+    "type": "FireBrigadeBoostBuilding",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "xpBoost",
+    "type": "xpBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "lootBonus",
+    "type": "lootBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveRangeMalus",
+    "type": "offensiveRangeMalus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "offensiveMeleeMalus",
+    "type": "offensiveMeleeMalus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "infectionRateBaseBonus",
+    "type": "infectionRateBaseBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "infectionRateMeleeBonus",
+    "type": "infectionRateMeleeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "infectionRateRangeBonus",
+    "type": "infectionRateRangeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "infectionRateWallBonus",
+    "type": "infectionRateWallBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "infectionRateCourtyardBonus",
+    "type": "infectionRateCourtyardBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "infectionRateBaseMalus",
+    "type": "infectionRateBaseMalus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "infectionRateMeleeMalus",
+    "type": "infectionRateMeleeMalus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "infectionRateRangeMalus",
+    "type": "infectionRateRangeMalus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "infectionRateWallMalus",
+    "type": "infectionRateWallMalus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "infectionRateCourtyardMalus",
+    "type": "infectionRateCourtyardMalus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "raidBossWallRegeneration",
+    "type": "raidBossWallRegeneration",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "raidBossWallBonus",
+    "type": "raidBossWallBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "raidBossGateBonus",
+    "type": "raidBossGateBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREAdditionalWaves",
+    "type": "equipmentAREAdditionalWaves",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREWallProtection",
+    "type": "equipmentAREWallProtection",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREGateProtection",
+    "type": "equipmentAREGateProtection",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREOffensiveYardStrBonus",
+    "type": "equipmentAREOffensiveYardStrBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREAttackUnitAmountFlank",
+    "type": "equipmentAREAttackUnitAmountFlank",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREAttackUnitAmountFront",
+    "type": "equipmentAREAttackUnitAmountFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentARESpeedBonus",
+    "type": "equipmentARESpeedBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREOffensiveFrontStr",
+    "type": "equipmentAREOffensiveFrontStr",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREOffensiveMeleeBonus",
+    "type": "equipmentAREOffensiveMeleeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREOffensiveFlankStrBonus",
+    "type": "equipmentAREOffensiveFlankStrBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREOffensiveRangedBonus",
+    "type": "equipmentAREOffensiveRangedBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREReturnTravelBoost",
+    "type": "equipmentAREReturnTravelBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "equipmentAREAttackUnitAmountFront",
+    "type": "equipmentAREAttackUnitAmountFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "raidBossWallRegenerationDelayLeft",
+    "type": "raidBossWallRegenerationDelayLeft",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "raidBossWallRegenerationDelayFront",
+    "type": "raidBossWallRegenerationDelayFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "raidBossWallRegenerationDelayRight",
+    "type": "raidBossWallRegenerationDelayRight",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "raidBossWallRegenerationDelayAll",
+    "type": "raidBossWallRegenerationDelayAll",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "reserveUnitKill",
+    "type": "reserveUnitKill",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "spawnReserveUnit",
+    "type": "spawnReserveUnit",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "mutateReserveUnit",
+    "type": "mutateReserveUnit",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPOffensiveMeleeBonus",
+    "type": "newPVPOffensiveMeleeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPOffensiveRangeBonus",
+    "type": "newPVPOffensiveRangeBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPWallReduction",
+    "type": "newPVPWallReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPGateReduction",
+    "type": "newPVPGateReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPMoatReduction",
+    "type": "newPVPMoatReduction",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPSpeedBonus",
+    "type": "newPVPSpeedBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPLootBonus",
+    "type": "newPVPLootBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPAttackUnitAmountFlank",
+    "type": "newPVPAttackUnitAmountFlank",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPAttackBoostYard",
+    "type": "newPVPAttackBoostYard",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPAttackUnitAmountFront",
+    "type": "newPVPAttackUnitAmountFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPAttackBonus",
+    "type": "newPVPAttackBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPAttackBoostFront",
+    "type": "newPVPAttackBoostFront",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPAttackBoostFlank",
+    "type": "newPVPAttackBoostFlank",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPAttackSupportUnits",
+    "type": "newPVPAttackSupportUnits",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPStealthBonus",
+    "type": "newPVPStealthBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPReturnTravelBoost",
+    "type": "newPVPReturnTravelBoost",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPattackUnitAmountReinforcementBonus",
+    "type": "newPVPattackUnitAmountReinforcementBonus",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPAdditionalWaves",
+    "type": "newPVPAdditionalWaves",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPAttackBonusUnitMead",
+    "type": "newPVPAttackBonusUnitMead",
+    "image": null
+  },
+  {
+    "id": null,
+    "name": "newPVPAttackBonusUnitBeef",
+    "type": "newPVPAttackBonusUnitBeef",
+    "image": null
+  }
+]

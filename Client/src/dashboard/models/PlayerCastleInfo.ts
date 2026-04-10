@@ -51,6 +51,19 @@ export interface CastleTroopData {
   troopsMixed: { [unitID: string]: number };
 }
 
+/** Decoration instance from server: JAA row + full GGE items.json object for buildingID (WID) in `catalog`. */
+export interface CastleBuildingRow {
+  buildingID: number;
+  oid: number;
+  name: string;
+  level: number;
+  x: number;
+  y: number;
+  /** JAA gca row rotation (index 4); EBU R */
+  r?: number;
+  catalog?: Record<string, unknown>;
+}
+
 export interface PlayerCastleInfo {
   castleName: string;
   aid: number;
@@ -58,4 +71,6 @@ export interface PlayerCastleInfo {
   production: CastleProductionTotal;
   storage: CastleStorageMax;
   troops: CastleTroopData;
+  bgRows?: CastleBuildingRow[];
+  bdRows?: CastleBuildingRow[];
 }

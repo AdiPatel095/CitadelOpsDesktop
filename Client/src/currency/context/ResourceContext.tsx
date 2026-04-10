@@ -1,29 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FrontendWebsocket } from '../../websocket.ts';
-
-interface PlayerGlobalResources {
-  rubies: number;
-  coins: number;
-  relic_shard: number;
-  sceat: number;
-  ducat: number;
-  const_token: number;
-  upgr_token: number;
-  affl_tix: number;
-  plaster: number;
-  drg_scale: number;
-  drg_spl: number;
-  min1: number;
-  min5: number;
-  min10: number;
-  min30: number;
-  hr1: number;
-  hr5: number;
-  hr24: number;
-  might_pt: number;
-  glory_pt: number;
-  gallan_pt: number;
-}
+import type { PlayerGlobalResources } from '../../types/playerGlobalResources.ts';
 
 interface ResourceContextType {
   resources: PlayerGlobalResources | null;

@@ -9,6 +9,7 @@
     --color-bg-app: var(--bg-app);
     --color-bg-card: var(--bg-card);
     --color-bg-card-hover: var(--bg-card-hover);
+    --color-bg-input: var(--bg-input);
     --color-border-base: var(--border-base);
 
     --color-text-main: var(--text-main);
@@ -19,6 +20,12 @@
     --color-primary: var(--primary);
     --color-primary-hover: var(--primary-hover);
     --color-primary-glow: var(--primary-glow);
+
+    /* Semantic Status Colors */
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-error: var(--error);
+    --color-info: var(--info);
 
     /* Global Settings */
     --radius-global: 20px;
@@ -81,6 +88,8 @@
     /* White */
     --bg-card-hover: #f1f5f9;
     /* Slate 100 */
+    --bg-input: #f1f5f9;
+    /* Slate 100 */
 
     /* Neutral Borders (Replacing Orange) */
     --border-base: #cbd5e1;
@@ -100,6 +109,12 @@
     --primary-hover: #047857;
     /* Emerald 700 */
     --primary-glow: rgba(5, 150, 105, 0.3);
+
+    /* Status Colors */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
 }
 
 /* Dark Mode Palette (Matching logo-dark.svg) */
@@ -110,6 +125,8 @@
     /* Slate 800 */
     --bg-card-hover: #334155;
     /* Slate 700 */
+    --bg-input: #0f172a;
+    /* Slate 900 */
 
     /* Neutral Borders */
     --border-base: #334155;
@@ -129,6 +146,12 @@
     --primary-hover: #10b981;
     /* Emerald 500 */
     --primary-glow: rgba(52, 211, 153, 0.3);
+
+    /* Status Colors */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
 }
 
 @layer base {

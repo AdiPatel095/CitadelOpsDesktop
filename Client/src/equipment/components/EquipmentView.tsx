@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
 import { useEquipment } from '../context/EquipmentContext';
-import { useAuth } from '../../context/AuthContext';
 import EquipmentSelection, { type EquipmentMode, type CombatMode } from './EquipmentSelection';
 import StatPriority from './StatPriority';
 import { type CommStat, type CastStat } from '../models/equipment';
 
 const EquipmentView: React.FC = () => {
   const { equipmentData } = useEquipment();
-  const { credits, hardwareID } = useAuth();
   const [equipmentMode, setEquipmentMode] = useState<EquipmentMode>('Commander');
   const [combatMode, setCombatMode] = useState<CombatMode>('PvP');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -19,7 +17,7 @@ const EquipmentView: React.FC = () => {
       return equipmentData.commStats;
     }
     if (equipmentMode === 'Castellan') {
-      // Use castStats (index-based array) to preserve proper order (0-7)
+      // Use castStats (index-based array) to preserve proper order (0-10)
       return equipmentData.castStats;
     }
     return [];
@@ -62,8 +60,6 @@ const EquipmentView: React.FC = () => {
         <StatPriority
           equipmentMode={equipmentMode}
           combatMode={combatMode}
-          credits={credits}
-          hardwareID={hardwareID}
           selectedIndex={selectedIndex}
         />
       </div>

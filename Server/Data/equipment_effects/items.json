@@ -1,0 +1,2118 @@
+[
+  {
+    "equipmentEffectID": "334",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103",
+    "bonus": "25",
+    "effectID": "504",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "335",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1",
+    "bonus": "25",
+    "effectID": "501",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "1",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.6",
+    "enchantmentSecondaryBonus": "0.3",
+    "bonus": "15",
+    "effectID": "1",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "2",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "20",
+    "effectID": "2",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "3",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.3",
+    "bonus": "20",
+    "effectID": "3",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "4",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.8",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "20",
+    "effectID": "4",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "5",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.6",
+    "enchantmentSecondaryBonus": "0.3",
+    "bonus": "10",
+    "effectID": "5",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "6",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.6",
+    "enchantmentSecondaryBonus": "0.3",
+    "bonus": "10",
+    "effectID": "6",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "7",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.8",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "30",
+    "effectID": "7",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "8",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.8",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "30",
+    "effectID": "8",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "9",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.3",
+    "bonus": "25",
+    "effectID": "9",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "10",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "25",
+    "effectID": "10",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "11",
+    "dropRate": "1",
+    "wearerID": "1",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "25",
+    "effectID": "11",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "12",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "12",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "13",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "13",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "37",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "326",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "38",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "334",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "39",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "295",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "40",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "299",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "41",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "335",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "42",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "336",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "43",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "337",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "51",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.6",
+    "enchantmentSecondaryBonus": "0.3",
+    "bonus": "20",
+    "effectID": "51",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "52",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.9",
+    "enchantmentSecondaryBonus": "0.5",
+    "bonus": "25",
+    "effectID": "52",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "53",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "20",
+    "effectID": "53",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "54",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.3",
+    "bonus": "20",
+    "effectID": "54",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "55",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.8",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "20",
+    "effectID": "55",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "56",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.6",
+    "enchantmentSecondaryBonus": "0.3",
+    "bonus": "10",
+    "effectID": "56",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "57",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.8",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "30",
+    "effectID": "57",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "58",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.8",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "30",
+    "effectID": "58",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "59",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.3",
+    "bonus": "25",
+    "effectID": "59",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "60",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.8",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "20",
+    "effectID": "60",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "61",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "25",
+    "effectID": "61",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "62",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.4",
+    "bonus": "25",
+    "effectID": "62",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "63",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.1",
+    "enchantmentSecondaryBonus": "0.1",
+    "bonus": "2",
+    "effectID": "63",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "64",
+    "dropRate": "1",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.7",
+    "enchantmentSecondaryBonus": "0.3",
+    "bonus": "30",
+    "effectID": "64",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "65",
+    "dropRate": "0",
+    "wearerID": "2",
+    "effectID": "65",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "66",
+    "dropRate": "0",
+    "wearerID": "2",
+    "effectID": "66",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "151",
+    "dropRate": "0",
+    "wearerID": "2",
+    "effectID": "151",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "19",
+    "dropRate": "0",
+    "wearerID": "2",
+    "effectID": "24",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "20",
+    "dropRate": "0",
+    "wearerID": "2",
+    "effectID": "23",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "21",
+    "dropRate": "0",
+    "wearerID": "2",
+    "effectID": "29",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "101",
+    "wearerID": "2",
+    "effectID": "101",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "102",
+    "wearerID": "1",
+    "effectID": "102",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "201",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1",
+    "excludedMali": "316",
+    "ignoreCap": "1",
+    "bonus": "10",
+    "effectID": "201",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "202",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1",
+    "excludedMali": "316",
+    "ignoreCap": "1",
+    "bonus": "10",
+    "effectID": "202",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "203",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1",
+    "excludedMali": "303",
+    "ignoreCap": "1",
+    "bonus": "40",
+    "effectID": "203",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "204",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1",
+    "excludedMali": "302",
+    "ignoreCap": "1",
+    "bonus": "40",
+    "effectID": "204",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "205",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1",
+    "excludedMali": "311",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "205",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "206",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1",
+    "excludedMali": "322",
+    "ignoreCap": "1",
+    "bonus": "15",
+    "effectID": "206",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "207",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1",
+    "excludedMali": "322",
+    "ignoreCap": "1",
+    "bonus": "15",
+    "effectID": "207",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "267",
+    "dropRate": "0",
+    "wearerID": "1",
+    "itemGroupID": "1",
+    "ignoreCap": "1",
+    "bonus": "10",
+    "effectID": "267",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "208",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1",
+    "excludedMali": "316",
+    "ignoreCap": "1",
+    "bonus": "15",
+    "effectID": "208",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "209",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "2",
+    "excludedMali": "325",
+    "ignoreCap": "1",
+    "bonus": "15",
+    "effectID": "209",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "210",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "2",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "210",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "211",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "2",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "211",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "212",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "2",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "212",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "213",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "2",
+    "bonus": "25",
+    "effectID": "213",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "214",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "2",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "214",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "215",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "2",
+    "ignoreCap": "1",
+    "bonus": "40",
+    "effectID": "215",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "216",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "2",
+    "ignoreCap": "1",
+    "bonus": "20",
+    "effectID": "216",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "217",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "2",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "217",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "218",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "3",
+    "excludedMali": "301",
+    "ignoreCap": "1",
+    "bonus": "20",
+    "effectID": "218",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "219",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "3",
+    "excludedMali": "315",
+    "ignoreCap": "1",
+    "bonus": "15",
+    "effectID": "219",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "220",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "3",
+    "excludedMali": "304",
+    "ignoreCap": "1",
+    "bonus": "1250",
+    "effectID": "220",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "221",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "3",
+    "excludedMali": "304",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "221",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "222",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "3",
+    "excludedMali": "310",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "222",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "223",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101",
+    "excludedMali": "328,329",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "223",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "224",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101",
+    "excludedMali": "331,333",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "224",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "225",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101",
+    "excludedMali": "317,327",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "225",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "226",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101",
+    "excludedMali": "307",
+    "bonus": "25",
+    "effectID": "226",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "227",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "227",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "228",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101",
+    "excludedMali": "306",
+    "ignoreCap": "1",
+    "bonus": "35",
+    "effectID": "228",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "229",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101",
+    "ignoreCap": "1",
+    "bonus": "20",
+    "effectID": "229",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "230",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "230",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "231",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102",
+    "excludedMali": "314,313",
+    "ignoreCap": "1",
+    "bonus": "10",
+    "effectID": "231",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "232",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102",
+    "excludedMali": "314,313",
+    "ignoreCap": "1",
+    "bonus": "10",
+    "effectID": "232",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "233",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102",
+    "excludedMali": "307",
+    "bonus": "25",
+    "effectID": "233",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "234",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "234",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "235",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102",
+    "excludedMali": "306",
+    "ignoreCap": "1",
+    "bonus": "40",
+    "effectID": "235",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "236",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102",
+    "excludedMali": "309",
+    "ignoreCap": "1",
+    "bonus": "40",
+    "effectID": "236",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "237",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102",
+    "excludedMali": "332",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "237",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "238",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102",
+    "excludedMali": "320",
+    "ignoreCap": "1",
+    "bonus": "20",
+    "effectID": "238",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "239",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102",
+    "excludedMali": "321",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "239",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "152",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "152",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "153",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "153",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "240",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "103",
+    "excludedMali": "329",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "240",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "241",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "103",
+    "excludedMali": "333",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "241",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "242",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "103,105",
+    "excludedMali": "317",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "242",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "243",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "103",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "243",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "244",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "103",
+    "excludedMali": "305",
+    "ignoreCap": "1",
+    "bonus": "40",
+    "effectID": "244",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "245",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "103",
+    "excludedMali": "308",
+    "ignoreCap": "1",
+    "bonus": "40",
+    "effectID": "245",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "246",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "103",
+    "excludedMali": "318",
+    "ignoreCap": "1",
+    "bonus": "20",
+    "effectID": "246",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "247",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "103",
+    "excludedMali": "319",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "247",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "248",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "excludedMali": "323",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "248",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "249",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "excludedMali": "323",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "249",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "250",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "excludedMali": "324",
+    "ignoreCap": "1",
+    "bonus": "12500",
+    "effectID": "250",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "251",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "excludedMali": "327,317",
+    "ignoreCap": "1",
+    "bonus": "125",
+    "effectID": "251",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "252",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "excludedMali": "327,317",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "252",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "253",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "excludedMali": "330",
+    "ignoreCap": "1",
+    "bonus": "40",
+    "effectID": "253",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "254",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "ignoreCap": "1",
+    "bonus": "3",
+    "effectID": "254",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "255",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "ignoreCap": "1",
+    "bonus": "15",
+    "effectID": "255",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "256",
+    "dropRate": "0",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "ignoreCap": "1",
+    "bonus": "6",
+    "effectID": "256",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "257",
+    "dropRate": "0",
+    "wearerID": "2",
+    "itemGroupID": "105",
+    "ignoreCap": "1",
+    "bonus": "6",
+    "effectID": "257",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "258",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "105",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "258",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "259",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "105",
+    "excludedMali": "324",
+    "ignoreCap": "1",
+    "bonus": "25",
+    "effectID": "259",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "260",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "105",
+    "excludedMali": "324",
+    "ignoreCap": "1",
+    "bonus": "12500",
+    "effectID": "260",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "261",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "105",
+    "excludedMali": "327,317",
+    "ignoreCap": "1",
+    "bonus": "125",
+    "effectID": "261",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "262",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "105",
+    "excludedMali": "330",
+    "ignoreCap": "1",
+    "bonus": "40",
+    "effectID": "262",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "263",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "excludedMali": "327,317",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "263",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "264",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "105",
+    "excludedMali": "327,317",
+    "ignoreCap": "1",
+    "bonus": "30",
+    "effectID": "264",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "265",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "104",
+    "excludedMali": "330",
+    "ignoreCap": "1",
+    "bonus": "50",
+    "effectID": "265",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "266",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "105",
+    "excludedMali": "330",
+    "ignoreCap": "1",
+    "bonus": "50",
+    "effectID": "266",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "301",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-10",
+    "effectID": "301",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "302",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "302",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "303",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "303",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "304",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-10",
+    "effectID": "304",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "305",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,104",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "305",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "306",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,105",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "306",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "307",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,104,105",
+    "ignoreCap": "1",
+    "bonus": "-10",
+    "effectID": "307",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "308",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,104",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "308",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "309",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,105",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "309",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "310",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-10",
+    "effectID": "310",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "311",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "311",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "312",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "312",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "313",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,104",
+    "ignoreCap": "1",
+    "bonus": "-4",
+    "effectID": "313",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "314",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "103,105",
+    "ignoreCap": "1",
+    "bonus": "-4",
+    "effectID": "314",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "315",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-4",
+    "effectID": "315",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "316",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-4",
+    "effectID": "316",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "317",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,104,105",
+    "ignoreCap": "1",
+    "bonus": "-10",
+    "effectID": "317",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "318",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,104",
+    "ignoreCap": "1",
+    "bonus": "-10",
+    "effectID": "318",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "319",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,104",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "319",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "320",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "103,105",
+    "ignoreCap": "1",
+    "bonus": "-10",
+    "effectID": "320",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "321",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102,103,105",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "321",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "322",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-8",
+    "effectID": "322",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "323",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,104,105",
+    "ignoreCap": "1",
+    "bonus": "-10",
+    "effectID": "323",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "324",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,104,105",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "324",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "325",
+    "dropRate": "1",
+    "wearerID": "1",
+    "itemGroupID": "1,2,3",
+    "ignoreCap": "1",
+    "bonus": "-5",
+    "effectID": "325",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "327",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,104,105",
+    "ignoreCap": "1",
+    "bonus": "-10",
+    "effectID": "327",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "328",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102,103,105",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "328",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "329",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,103,104",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "329",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "330",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,102,103,104,105",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "330",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "331",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102,103,105",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "331",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "332",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "102,104,105",
+    "ignoreCap": "1",
+    "bonus": "-5",
+    "effectID": "332",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "333",
+    "dropRate": "1",
+    "wearerID": "2",
+    "itemGroupID": "101,103,104",
+    "ignoreCap": "1",
+    "bonus": "-15",
+    "effectID": "333",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "336",
+    "dropRate": "0",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "154",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "337",
+    "dropRate": "0",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "155",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "338",
+    "dropRate": "0",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "156",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "339",
+    "dropRate": "0",
+    "wearerID": "2",
+    "effectID": "158",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "340",
+    "dropRate": "0",
+    "wearerID": "2",
+    "effectID": "159",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "341",
+    "dropRate": "0",
+    "wearerID": "2",
+    "effectID": "160",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "342",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "161",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "343",
+    "dropRate": "0",
+    "wearerID": "2",
+    "effectID": "162",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "344",
+    "dropRate": "0",
+    "wearerID": "1",
+    "effectID": "162",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "14",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "147",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "15",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "148",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "16",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "149",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "17",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "150",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "18",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "157",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "345",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "163",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "346",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "164",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "347",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "165",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "350",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "168",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "351",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "169",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "364",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "182",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "348",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "166",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "349",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "167",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "352",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "170",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "353",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "171",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "354",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "172",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "355",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "173",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "356",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "174",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "357",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "175",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "358",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "176",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "359",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "177",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "360",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "178",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "361",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "179",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "362",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "180",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "363",
+    "wearerID": "2",
+    "ignoreCap": "1",
+    "effectID": "181",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "183",
+    "wearerID": "1",
+    "ignoreCap": "1",
+    "effectID": "183",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "184",
+    "wearerID": "1",
+    "ignoreCap": "1",
+    "effectID": "184",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "185",
+    "wearerID": "1",
+    "ignoreCap": "1",
+    "effectID": "185",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "365",
+    "wearerID": "1",
+    "effectID": "268",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "366",
+    "wearerID": "1",
+    "effectID": "269",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "367",
+    "wearerID": "1",
+    "effectID": "270",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "368",
+    "wearerID": "1",
+    "effectID": "274",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "369",
+    "wearerID": "1",
+    "effectID": "275",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "370",
+    "wearerID": "1",
+    "effectID": "293",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "371",
+    "wearerID": "1",
+    "effectID": "338",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "22",
+    "wearerID": "1",
+    "effectID": "39",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "23",
+    "wearerID": "1",
+    "effectID": "40",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "24",
+    "wearerID": "1",
+    "effectID": "41",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "25",
+    "wearerID": "1",
+    "effectID": "42",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "26",
+    "wearerID": "1",
+    "effectID": "139",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "30",
+    "wearerID": "1",
+    "effectID": "146",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "31",
+    "wearerID": "1",
+    "effectID": "287",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "32",
+    "wearerID": "1",
+    "effectID": "288",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "33",
+    "wearerID": "1",
+    "effectID": "289",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "34",
+    "wearerID": "1",
+    "effectID": "290",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "35",
+    "wearerID": "1",
+    "effectID": "291",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "36",
+    "wearerID": "1",
+    "effectID": "292",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "501",
+    "wearerID": "2",
+    "effectID": "48",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "700",
+    "wearerID": "2",
+    "effectID": "700",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "701",
+    "wearerID": "2",
+    "effectID": "701",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "702",
+    "wearerID": "1",
+    "effectID": "702",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "703",
+    "wearerID": "1",
+    "effectID": "703",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "44",
+    "wearerID": "1",
+    "effectID": "372",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "45",
+    "wearerID": "1",
+    "effectID": "374",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "46",
+    "wearerID": "1",
+    "effectID": "375",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "47",
+    "wearerID": "1",
+    "effectID": "376",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "154",
+    "wearerID": "2",
+    "effectID": "447",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "155",
+    "wearerID": "2",
+    "effectID": "448",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "156",
+    "wearerID": "2",
+    "effectID": "449",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "157",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "1.5",
+    "enchantmentSecondaryBonus": "1.5",
+    "effectID": "450",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "158",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "1.5",
+    "enchantmentSecondaryBonus": "1.5",
+    "effectID": "451",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "159",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "1.5",
+    "enchantmentSecondaryBonus": "1.5",
+    "effectID": "452",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "160",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.5",
+    "enchantmentSecondaryBonus": "0.5",
+    "effectID": "453",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "161",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "1.5",
+    "enchantmentSecondaryBonus": "1.5",
+    "effectID": "454",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "162",
+    "wearerID": "2",
+    "effectID": "455",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "163",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "1.5",
+    "enchantmentSecondaryBonus": "1.5",
+    "effectID": "456",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "164",
+    "wearerID": "2",
+    "effectID": "457",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "165",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "0.5",
+    "enchantmentSecondaryBonus": "0.5",
+    "effectID": "458",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "166",
+    "wearerID": "2",
+    "enchantmentPrimaryBonus": "1.5",
+    "enchantmentSecondaryBonus": "1.5",
+    "effectID": "459",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "167",
+    "wearerID": "2",
+    "effectID": "442",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "168",
+    "wearerID": "2",
+    "effectID": "440",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "169",
+    "wearerID": "2",
+    "effectID": "441",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "170",
+    "wearerID": "2",
+    "effectID": "443",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "171",
+    "wearerID": "2",
+    "effectID": "463",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "172",
+    "wearerID": "2",
+    "effectID": "464",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "173",
+    "wearerID": "2",
+    "effectID": "467",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "174",
+    "wearerID": "2",
+    "effectID": "468",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "175",
+    "wearerID": "2",
+    "effectID": "469",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "176",
+    "wearerID": "2",
+    "effectID": "470",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "177",
+    "wearerID": "2",
+    "effectID": "471",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "178",
+    "wearerID": "2",
+    "effectID": "472",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "179",
+    "wearerID": "2",
+    "effectID": "473",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "180",
+    "wearerID": "2",
+    "effectID": "474",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "181",
+    "wearerID": "2",
+    "effectID": "475",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "182",
+    "wearerID": "2",
+    "effectID": "476",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "193",
+    "wearerID": "2",
+    "effectID": "477",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "194",
+    "wearerID": "2",
+    "effectID": "478",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "195",
+    "wearerID": "2",
+    "effectID": "479",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "186",
+    "wearerID": "2",
+    "effectID": "480",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "187",
+    "wearerID": "2",
+    "effectID": "481",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "188",
+    "wearerID": "2",
+    "effectID": "482",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "189",
+    "wearerID": "2",
+    "effectID": "483",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "190",
+    "wearerID": "2",
+    "effectID": "484",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "191",
+    "wearerID": "2",
+    "effectID": "485",
+    "_display_name": "?"
+  },
+  {
+    "equipmentEffectID": "192",
+    "wearerID": "2",
+    "effectID": "486",
+    "_display_name": "?"
+  }
+]

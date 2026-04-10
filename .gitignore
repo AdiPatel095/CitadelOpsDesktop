@@ -5,7 +5,7 @@
 
 # Sensitive data files - contain credentials and hardware IDs
 hardwareID.txt
-loginBytes.json
+jsonExamples/loginBytes.json
 
 # Build output - Go binary
 /CitadelDesktop
@@ -16,6 +16,7 @@ loginBytes.json
 .DS_Store?
 ._*
 Thumbs.db
+.gocache
 
 # IDE directories
 .idea/
@@ -36,7 +37,11 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
-*.json
+!Server/Models/DecorationCatalogInformation.json
+!Server/Data/GGEHtml5Assets/manifest.json
+
+# GGE HTML5 mirrored textures (go run ./Server/cmd/fetchggeassets)
+Server/Data/GGEHtml5Assets/mirror/
 
 # Client build output
 Client/dist/
@@ -45,7 +50,6 @@ Client/node_modules/
 # NPM debug logs
 npm-debug.log*
 yarn-debug.log*
-*.json
 
 # Architecture notes (private design docs)
 **/ARCHITECTURE_NOTES.md
@@ -54,3 +58,6 @@ yarn-debug.log*
 
 #chrome-profile
 chrome-profile
+
+# Refactor persistence snapshots
+Server/refactor_state/

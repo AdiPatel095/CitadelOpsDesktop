@@ -1,0 +1,91 @@
+{
+  "playerId": 17334928,
+  "birds": [
+    {
+      "sourceCastleId": 14792345,
+      "sourceKid": 0,
+      "targetX": 999,
+      "targetY": 1150,
+      "troops": {
+        "215": 5250
+      },
+      "sentAtUnix": 1775851426
+    },
+    {
+      "sourceCastleId": 16236975,
+      "sourceKid": 0,
+      "targetX": 999,
+      "targetY": 1150,
+      "troops": {
+        "215": 3863
+      },
+      "sentAtUnix": 1775851427
+    },
+    {
+      "sourceCastleId": 16236976,
+      "sourceKid": 0,
+      "targetX": 999,
+      "targetY": 1150,
+      "troops": {
+        "215": 3604
+      },
+      "sentAtUnix": 1775851428
+    },
+    {
+      "sourceCastleId": 16326717,
+      "sourceKid": 0,
+      "targetX": 999,
+      "targetY": 1150,
+      "troops": {
+        "10": 15925,
+        "215": 570,
+        "216": 6159,
+        "223": 190,
+        "228": 190,
+        "606": 190,
+        "636": 190,
+        "754": 10
+      },
+      "sentAtUnix": 1775851429
+    },
+    {
+      "sourceCastleId": 16339029,
+      "sourceKid": 1,
+      "targetX": 679,
+      "targetY": 551,
+      "troops": {
+        "215": 6,
+        "216": 119868,
+        "688": 320,
+        "689": 320
+      },
+      "sentAtUnix": 1775851431
+    },
+    {
+      "sourceCastleId": 16339028,
+      "sourceKid": 2,
+      "targetX": 577,
+      "targetY": 528,
+      "troops": {
+        "215": 8,
+        "216": 180858,
+        "690": 340,
+        "691": 340
+      },
+      "sentAtUnix": 1775851432
+    },
+    {
+      "sourceCastleId": 16339030,
+      "sourceKid": 3,
+      "targetX": 653,
+      "targetY": 627,
+      "troops": {
+        "215": 2,
+        "216": 97559,
+        "692": 300,
+        "693": 300
+      },
+      "sentAtUnix": 1775851433
+    }
+  ]
+}

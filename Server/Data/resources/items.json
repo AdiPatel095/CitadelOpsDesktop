@@ -1,0 +1,80 @@
+[
+  {
+    "resourceID": "1",
+    "name": "currency1",
+    "JSONKey": "C1",
+    "_display_name": "currency1"
+  },
+  {
+    "resourceID": "2",
+    "name": "currency2",
+    "JSONKey": "C2",
+    "_display_name": "currency2"
+  },
+  {
+    "resourceID": "3",
+    "name": "wood",
+    "JSONKey": "W",
+    "_display_name": "wood"
+  },
+  {
+    "resourceID": "4",
+    "name": "stone",
+    "JSONKey": "S",
+    "_display_name": "stone"
+  },
+  {
+    "resourceID": "5",
+    "name": "food",
+    "JSONKey": "F",
+    "_display_name": "food"
+  },
+  {
+    "resourceID": "6",
+    "name": "coal",
+    "JSONKey": "C",
+    "_display_name": "coal"
+  },
+  {
+    "resourceID": "7",
+    "name": "oil",
+    "JSONKey": "O",
+    "_display_name": "oil"
+  },
+  {
+    "resourceID": "8",
+    "name": "glass",
+    "JSONKey": "G",
+    "_display_name": "glass"
+  },
+  {
+    "resourceID": "9",
+    "name": "aquamarine",
+    "JSONKey": "A",
+    "_display_name": "aquamarine"
+  },
+  {
+    "resourceID": "10",
+    "name": "iron",
+    "JSONKey": "I",
+    "_display_name": "iron"
+  },
+  {
+    "resourceID": "11",
+    "name": "honey",
+    "JSONKey": "HONEY",
+    "_display_name": "honey"
+  },
+  {
+    "resourceID": "12",
+    "name": "mead",
+    "JSONKey": "MEAD",
+    "_display_name": "mead"
+  },
+  {
+    "resourceID": "13",
+    "name": "beef",
+    "JSONKey": "BEEF",
+    "_display_name": "beef"
+  }
+]

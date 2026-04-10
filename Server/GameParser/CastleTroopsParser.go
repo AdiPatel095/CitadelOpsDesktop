@@ -66,8 +66,6 @@ func ParseCastleTroops(data string, kingdomID, x, y int) *Models.CastleTroops {
 	troopsHI := parseUnitArray("HI")
 	troopsSHI := parseUnitArray("SHI")
 
-	// Parse buildings from gca.BD and gca.BG
-
 	// Create mixed map (I + TU)
 	troopsMixed := make(map[int]int)
 	for id, count := range troopsI {

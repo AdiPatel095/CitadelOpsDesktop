@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getUnitBaseAndLevel } from '../config/constants';
+import { useMetadata } from '../context/MetadataContext';
 
 interface UnitImageProps {
     unitId: number;
@@ -10,11 +11,10 @@ interface UnitImageProps {
 
 /**
  * UnitImage Component
- * 
+ *
  * Renders a unit image with optional level badge overlay.
  * - Looks up unitId in UNIT_TO_BASE_MAP to find base image + level
- * - If found: renders base image with hexagonal level badge
- * - If not found: renders the unitId image directly (no level badge)
+ * - Fetches the image path from the metadata context
  */
 const UnitImage: React.FC<UnitImageProps> = ({
     unitId,
@@ -22,6 +22,9 @@ const UnitImage: React.FC<UnitImageProps> = ({
     showLevel = true,
     className = ''
 }) => {
+    const [imageFailed, setImageFailed] = useState(false);
+    const { getTroopImageUrl, getTroop } = useMetadata();
+
     // Check if this unit has a level mapping
     const levelInfo = getUnitBaseAndLevel(unitId);
 
@@ -29,25 +32,44 @@ const UnitImage: React.FC<UnitImageProps> = ({
     const imageId = levelInfo ? levelInfo.baseId : unitId;
     const level = levelInfo?.level;
 
-    // Path to the troop image
-    const imageSrc = `/assets/Troops/${imageId}.png`;
+    const imageSrc = useMemo(() => getTroopImageUrl(imageId), [imageId, getTroopImageUrl]);
+    const troopInfo = getTroop(unitId);
+    const altText = troopInfo?.name || `Unit ${unitId}`;
+
+    useEffect(() => {
+        setImageFailed(false);
+    }, [imageSrc]);
 
     return (
         <div
             className={`unit-image-container relative inline-block ${className}`}
             style={{ width: size, height: size }}
         >
-            {/* Unit Image */}
-            <img
-                src={imageSrc}
-                alt={`Unit ${unitId}`}
-                className="w-full h-full object-contain rounded-lg"
-                style={{ width: size, height: size }}
-                onError={(e) => {
-                    // Fallback to placeholder if image not found
-                    (e.target as HTMLImageElement).src = '/assets/Troops/6.png';
-                }}
-            />
+            {/* Unit Image — avoid chaining to another missing PNG on error */}
+            {imageFailed || !imageSrc ? (
+                <div
+                    className="w-full h-full object-contain rounded-lg flex items-center justify-center bg-bg-card border border-border-base"
+                    style={{ width: size, height: size }}
+                    title={`Missing asset for unit ${imageId}`}
+                >
+                    <span
+                        className="font-semibold text-text-muted tabular-nums text-center px-1 break-words"
+                        style={{ fontSize: Math.max(10, size * 0.22) }}
+                    >
+                        {troopInfo?.name || unitId}
+                    </span>
+                </div>
+            ) : (
+                <img
+                    src={imageSrc}
+                    alt={altText}
+                    className="w-full h-full object-contain rounded-lg"
+                    style={{ width: size, height: size }}
+                    loading="lazy"
+                    decoding="async"
+                    onError={() => setImageFailed(true)}
+                />
+            )}
 
             {/* Level Badge - Hexagonal style (smaller) */}
             {showLevel && level && (
@@ -70,12 +92,6 @@ const UnitImage: React.FC<UnitImageProps> = ({
                             stroke="rgba(255,255,255,0.4)"
                             strokeWidth="4"
                         />
-                        <defs>
-                            <linearGradient id="levelGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stopColor="#3b82f6" />
-                                <stop offset="100%" stopColor="#1d4ed8" />
-                            </linearGradient>
-                        </defs>
                     </svg>
                     {/* Level number */}
                     <span

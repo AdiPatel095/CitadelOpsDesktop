@@ -1,50 +1,42 @@
 import { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
 import { FrontendWebsocket } from '../websocket';
+import { loadAutoBirdSettingsFromStorage } from '../settings/components/AutoBirdSettingsModal';
 
 interface AuthContextType {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  hardwareID: string | null;
-  credits: number;
   gameLoggedIn: boolean;
   gameLoginCooldown: number;
   isGameDataReady: boolean;
+  recruitTroopsEnabled: boolean;
   autoBirdEnabled: boolean;
-  nextWakeUp: number | null;
+  autoBirdNextWakeUp: number;
   versionUpdate: { newVersion: string; downloadUrl: string } | null;
   isVersionBannerDismissed: boolean;
   ignoredVersion: string | null;
   updateProgress: { stage: string; percent: number } | null;
   isUpdating: boolean;
   restartRequired: boolean;
-  // Login credentials
-  hasStoredCredentials: boolean;
-  storedUsername: string | null;
-  storedServer: string | null;
+  // Memory stats
+  goMem: number;
+  chromeMem: number;
   dismissVersionBanner: () => void;
   ignoreVersion: (version: string) => void;
   triggerUpdate: (downloadUrl: string) => void;
-  startGame: (credentials?: { username: string; password: string; server: string }) => void;
+  startGame: () => void;
   stopGame: () => void;
-  changeLoginDetails: () => void;
+  toggleRecruitTroops: () => void;
   toggleAutoBird: () => void;
-  saveCredentials: (username: string, password: string, server: string) => void;
-  clearCredentials: () => void;
   sendMessage: (type: string, payload?: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hardwareID, setHardwareID] = useState<string | null>(null);
-  const [credits, setCredits] = useState(0);
   const [gameLoggedIn, setGameLoggedIn] = useState(false);
   const [gameLoginCooldown, setGameLoginCooldown] = useState(0);
   const [isGameDataReady, setIsGameDataReady] = useState(false);
+  const [recruitTroopsEnabled, setRecruitTroopsEnabled] = useState(false);
   const [autoBirdEnabled, setAutoBirdEnabled] = useState(false);
-  const [nextWakeUp, setNextWakeUp] = useState<number | null>(null);
+  const [autoBirdNextWakeUp, setAutoBirdNextWakeUp] = useState(0);
   const [versionUpdate, setVersionUpdate] = useState<{ newVersion: string; downloadUrl: string } | null>(null);
   const [isVersionBannerDismissed, setIsVersionBannerDismissed] = useState(false);
   const [ignoredVersion, setIgnoredVersion] = useState<string | null>(() => {
@@ -53,30 +45,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [updateProgress, setUpdateProgress] = useState<{ stage: string; percent: number } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [restartRequired, setRestartRequired] = useState(false);
-
-  // Login credentials state
-  const [hasStoredCredentials, setHasStoredCredentials] = useState(() => {
-    return !!(localStorage.getItem('citadel_username') && localStorage.getItem('citadel_password'));
-  });
-  const [storedUsername, setStoredUsername] = useState<string | null>(() => {
-    return localStorage.getItem('citadel_username');
-  });
-  const [storedServer, setStoredServer] = useState<string | null>(() => {
-    return localStorage.getItem('citadel_server') || 'United States';
-  });
+  const [goMem, setGoMem] = useState(0);
+  const [chromeMem, setChromeMem] = useState(0);
 
   useEffect(() => {
     const handleMessage = (message: any) => {
       // console.log('AuthContext received message:', message);
-      if (message.type === 'registrationStatus') {
-        setIsAuthenticated(message.payload.registered);
-        setHardwareID(message.payload.hardwareID);
-        setCredits(message.payload.credits);
-        setIsLoading(false);
-      } else if (message.type === 'creditsUpdate') {
-        console.log('Credits update received:', message.payload.credits);
-        setCredits(message.payload.credits);
-      } else if (message.type === 'gameLoginStatus') {
+      if (message.type === 'gameLoginStatus') {
         console.log('Game login status received:', message.payload);
         setGameLoggedIn(message.payload.loggedIn);
         setGameLoginCooldown(message.payload.cooldown);
@@ -85,9 +60,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsGameDataReady(false);
         }
+      } else if (message.type === 'memoryStats') {
+        setGoMem(message.payload.goMem);
+        setChromeMem(message.payload.chromeMem);
+      } else if (message.type === 'recruitTroopsStatus') {
+        setRecruitTroopsEnabled(message.payload.enabled);
       } else if (message.type === 'autoBirdStatus') {
-        setAutoBirdEnabled(message.payload.enabled);
-        setNextWakeUp(message.payload.nextWakeUp || null);
+        setAutoBirdEnabled(!!message.payload?.enabled);
+        const nw = message.payload?.nextWakeUp;
+        setAutoBirdNextWakeUp(typeof nw === 'number' ? nw : 0);
       } else if (message.type === 'versionUpdate') {
         console.log('Version update received:', message.payload);
         const currentIgnoredVersion = localStorage.getItem('ignoredVersion');
@@ -116,20 +97,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('Update error:', message.payload);
         setUpdateProgress(null);
         setIsUpdating(false);
-      } else if (message.type === 'requestCredentials') {
-        console.log('Backend requested credentials. Sending...');
-        // Use stored credentials directly
-        const storedPassword = localStorage.getItem('citadel_password');
-        const storedUsername = localStorage.getItem('citadel_username');
-        const storedServer = localStorage.getItem('citadel_server') || 'United States';
-
-        if (storedUsername && storedPassword) {
-          FrontendWebsocket.sendUpdateCredentials({
-            username: storedUsername,
-            password: storedPassword,
-            server: storedServer
-          });
-        }
       }
     };
 
@@ -157,89 +124,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [gameLoginCooldown]);
 
-  const startGame = (credentials?: { username: string; password: string; server: string }) => {
-    // If credentials provided, save them and send to backend
-    if (credentials) {
-      saveCredentials(credentials.username, credentials.password, credentials.server);
-      FrontendWebsocket.startGame(credentials);
-    } else {
-      // Use stored credentials
-      const storedPassword = localStorage.getItem('citadel_password');
-      if (storedUsername && storedPassword && storedServer) {
-        FrontendWebsocket.startGame({
-          username: storedUsername,
-          password: storedPassword,
-          server: storedServer
-        });
-      } else {
-        // No credentials available, backend will use legacy flow
-        FrontendWebsocket.startGame();
-      }
-    }
+  const startGame = () => {
+    FrontendWebsocket.startGame();
   };
 
   const stopGame = () => {
     FrontendWebsocket.stopGame();
   };
 
-  const changeLoginDetails = () => {
-    // Just clear the stored credentials, modal will be shown by UI
-    clearCredentials();
-    FrontendWebsocket.changeLoginDetails();
-  };
-
-  const saveCredentials = (username: string, password: string, server: string) => {
-    localStorage.setItem('citadel_username', username);
-    localStorage.setItem('citadel_password', password);
-    localStorage.setItem('citadel_server', server);
-    setStoredUsername(username);
-    setStoredServer(server);
-    setHasStoredCredentials(true);
-  };
-
-  const clearCredentials = () => {
-    localStorage.removeItem('citadel_username');
-    localStorage.removeItem('citadel_password');
-    localStorage.removeItem('citadel_server');
-    setStoredUsername(null);
-    setStoredServer(null);
-    setHasStoredCredentials(false);
-  };
-
   const toggleAutoBird = () => {
-    // Send settings payload so backend can update runtime configuration before starting
-    const savedSettings = localStorage.getItem('autoBird_ignoreList');
+    if (autoBirdEnabled) {
+      FrontendWebsocket.sendMessage({ type: 'toggleAutoBird' });
+      return;
+    }
+    const s = loadAutoBirdSettingsFromStorage();
+    FrontendWebsocket.sendMessage({
+      type: 'toggleAutoBird',
+      payload: {
+        settings: s.settings,
+        minDelay: s.minDelay,
+        maxDelay: s.maxDelay,
+        minSend: s.minSend,
+      },
+    });
+  };
+
+  const toggleRecruitTroops = () => {
+    const savedSettings = localStorage.getItem('recruitTroopsSettings');
     let settings = {};
     if (savedSettings) {
       try {
         settings = JSON.parse(savedSettings);
       } catch (e) {
-        console.error("Failed to parse settings for auto bird toggle", e);
+        console.error("Failed to parse settings for recruit troops toggle", e);
       }
     }
 
-    // Load Delay Settings
-    const savedDelays = localStorage.getItem('autoBird_delaySettings');
-    let minDelay = 6;
-    let maxDelay = 12;
-    let minSend = 0;
-
-    if (savedDelays) {
-      try {
-        const delays = JSON.parse(savedDelays);
-        minDelay = delays.min || 6;
-        maxDelay = delays.max || 12;
-        minSend = delays.minSend || 0;
-      } catch (e) {
-        console.error("Failed to parse delay settings", e);
-      }
-    }
-
-    console.log("[AutoBird] Toggling. Sending settings payload:", { settings, minDelay, maxDelay, minSend });
+    console.log("[RecruitTroops] Toggling. Sending settings payload:", { settings });
 
     FrontendWebsocket.sendMessage({
-      type: 'toggleAutoBird',
-      payload: { settings, minDelay, maxDelay, minSend }
+      type: 'toggleRecruitTroops',
+      payload: { settings }
     });
   };
 
@@ -266,33 +191,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{
-      isAuthenticated,
-      isLoading,
-      hardwareID,
-      credits,
       gameLoggedIn,
       gameLoginCooldown,
       isGameDataReady,
+      recruitTroopsEnabled,
       autoBirdEnabled,
-      nextWakeUp,
+      autoBirdNextWakeUp,
       versionUpdate,
       isVersionBannerDismissed,
       ignoredVersion,
       updateProgress,
       isUpdating,
       restartRequired,
+      goMem,
+      chromeMem,
       dismissVersionBanner,
       ignoreVersion,
       triggerUpdate,
       startGame,
       stopGame,
-      changeLoginDetails,
+      toggleRecruitTroops,
       toggleAutoBird,
-      hasStoredCredentials,
-      storedUsername,
-      storedServer,
-      saveCredentials,
-      clearCredentials,
       sendMessage
     }}>
       {children}
@@ -307,4 +226,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

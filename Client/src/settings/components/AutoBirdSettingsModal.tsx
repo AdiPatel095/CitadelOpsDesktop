@@ -1,840 +1,453 @@
-import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Search, Settings, AlertTriangle, Copy, Link as LinkIcon, Unlink, CheckSquare, Square } from 'lucide-react';
-import { TROOP_DEFINITIONS, TOOL_DEFINITIONS, getUnitBaseAndLevel, getUnitIdForLevel, UNIT_LEVEL_MAP } from '../../config/constants';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, Save, Plus, Trash2 } from 'lucide-react';
 import { FrontendWebsocket } from '../../websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
+import {
+  applyPresetToStoredShape,
+  loadPresetsFile,
+  savePresetsFile,
+  snapshotFromForm,
+  type AutoBirdPreset,
+} from '../autobirdPresets';
+import { Modal, Button, Input, Select, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 
-interface AutoBirdSettingsModalProps {
-    isOpen: boolean;
-    onClose: () => void;
+const STORAGE_KEY = 'autobirdSettings';
+
+export interface AutoBirdStoredSettings {
+  settings: Record<string, { id: number; amount: number }[]>;
+  minDelay: number;
+  maxDelay: number;
+  minSend: number;
 }
 
-interface IgnoreItem {
-    id: number;
-    amount: number;
+const defaultStored = (): AutoBirdStoredSettings => ({
+  settings: {},
+  minDelay: 6,
+  maxDelay: 12,
+  minSend: 0,
+});
+
+function clampDelayHours(value: number): number {
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(12, Math.max(1, value));
 }
 
-type IgnoreList = Record<number, IgnoreItem[]>; // Key is CastleID (number)
-type CastleLinks = Record<number, number>; // Key is ChildID, Value is ParentID
+export function loadAutoBirdSettingsFromStorage(): AutoBirdStoredSettings {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultStored();
+    const parsed = JSON.parse(raw) as Partial<AutoBirdStoredSettings>;
+    return {
+      ...defaultStored(),
+      ...parsed,
+      settings: parsed.settings && typeof parsed.settings === 'object' ? parsed.settings : {},
+    };
+  } catch {
+    return defaultStored();
+  }
+}
 
 interface Castle {
-    id: number;
-    name: string;
-    type: string;
+  id: number;
+  name: string;
+  type: string;
+}
+
+interface AutoBirdSettingsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function AutoBirdTroopTile({
+  unitId,
+  amount,
+  onRemove,
+}: {
+  unitId: number;
+  amount: number;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="group relative flex w-[84px] flex-col items-center">
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute -right-1 -top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-error text-[10px] font-bold text-white opacity-0 shadow-md transition-opacity hover:brightness-110 group-hover:opacity-100"
+        aria-label="Remove unit"
+      >
+        <X className="h-3 w-3" />
+      </button>
+      <div className="relative h-[76px] w-[76px] shrink-0">
+        <UnitImage unitId={unitId} size={76} showLevel={true} className="rounded-xl" />
+        <span className="absolute bottom-0 right-0 z-10 max-w-[calc(100%+8px)] translate-x-1/4 translate-y-1/4 truncate rounded-full bg-white px-2.5 py-0.5 text-center text-[10px] font-bold tabular-nums text-slate-900 shadow-md ring-1 ring-black/10">
+          {amount.toLocaleString()}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose }) => {
-    const [ignoreList, setIgnoreList] = useState<IgnoreList>({});
-    const [castles, setCastles] = useState<Castle[]>([]);
-    const [castleLinks, setCastleLinks] = useState<CastleLinks>({});
-    const [loading, setLoading] = useState(true);
-    const [delaySettings, setDelaySettings] = useState({ min: 6, max: 12, minSend: 0 });
+  const [castles, setCastles] = useState<Castle[]>([]);
+  const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
+  const [minDelay, setMinDelay] = useState(6);
+  const [maxDelay, setMaxDelay] = useState(12);
+  const [minSend, setMinSend] = useState(0);
+  const [presetsState, setPresetsState] = useState(() => loadPresetsFile());
+  const [presetDropdownId, setPresetDropdownId] = useState('');
+  const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null);
+  const [presetName, setPresetName] = useState('');
+  const [presetError, setPresetError] = useState('');
 
+  const hydrateFromStorage = useCallback(() => {
+    const s = loadAutoBirdSettingsFromStorage();
+    setSettings(s.settings);
+    setMinDelay(clampDelayHours(s.minDelay));
+    setMaxDelay(clampDelayHours(s.maxDelay));
+    setMinSend(s.minSend);
+  }, []);
 
-    // Edit Modal State
-    // keys: castleId, originalId (to track replacement), item (current state in modal)
-    const [editingUnit, setEditingUnit] = useState<{ castleId: number, originalId: number, item: IgnoreItem } | null>(null);
-    const [editAmount, setEditAmount] = useState<string>('');
+  useEffect(() => {
+    if (!isOpen) return;
+    FrontendWebsocket.sendMessage({ type: 'getCastleList' });
+    hydrateFromStorage();
+    const file = loadPresetsFile();
+    setPresetsState(file);
+    const last = file.lastSelectedPresetId;
+    setPresetDropdownId(last && file.presets.some((p) => p.id === last) ? last : '');
+    setAppliedPresetId(null);
+    setPresetName('');
+    setPresetError('');
+  }, [isOpen, hydrateFromStorage]);
 
-    // Management Modal State
-    const [managementMode, setManagementMode] = useState<'copy' | 'link' | null>(null);
-    const [managementSource, setManagementSource] = useState<number | null>(null);
-    const [selectedTargets, setSelectedTargets] = useState<number[]>([]);
-
-    // Helper: Persist Links
-    const persistLinks = (newLinks: CastleLinks) => {
-        setCastleLinks(newLinks);
-        localStorage.setItem('autoBird_links', JSON.stringify(newLinks));
-    };
-
-    // Helper: Update ignore list and persist
-    const updateIgnoreList = (newList: IgnoreList) => {
-        setIgnoreList(newList);
-        // We do strictly local update here, assuming main Save persists to server/storage.
-        // BUT logic requires offline persistence too.
-        localStorage.setItem('autoBird_ignoreList', JSON.stringify(newList));
-    };
-
-    // Management Handlers
-    const openManagement = (mode: 'copy' | 'link', castleId: number) => {
-        setManagementMode(mode);
-        setManagementSource(castleId);
-        setSelectedTargets([]);
-    };
-
-    const closeManagement = () => {
-        setManagementMode(null);
-        setManagementSource(null);
-        setSelectedTargets([]);
-    };
-
-    const handleToggleTarget = (id: number) => {
-        setSelectedTargets(prev =>
-            prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
-        );
-    };
-
-    const handleSelectAll = () => {
-        if (!managementSource) return;
-        // Filter out source and already linked (if linking)
-        // For Linking: Can only link castles that are not ALREADY linked (or overwrite?) -> Overwrite is fine.
-        // But preventing circular links is good.
-        // Only select castles that are NOT the source.
-        const targets = castles
-            .filter(c => c.id !== managementSource)
-            .map(c => c.id);
-        setSelectedTargets(targets);
-    };
-
-    const handleApplyManagement = () => {
-        if (!managementSource) return;
-
-        const sourceItems = ignoreList[managementSource] || [];
-
-        if (managementMode === 'copy') {
-            // Deep Copy Source -> Targets
-            const newList = { ...ignoreList };
-            selectedTargets.forEach(targetId => {
-                // Determine if target is a Child. If so, should we allow Copy?
-                // If target is Linked, it should follow Parent. Copying to it is temp override or broken link?
-                // Let's assume Copying OVERWRITES any link? Or just simple data copy.
-                // Simple data copy. If it's linked later, it will overwrite again.
-                // But if it IS linked, copying to it might be weird if it's read-only.
-                // For now, allow copy.
-
-                newList[targetId] = sourceItems.map(item => ({ ...item }));
-            });
-            updateIgnoreList(newList);
+  useEffect(() => {
+    const handleMessage = (msg: any) => {
+      if (msg.type === 'castleList') {
+        const list = msg.payload as Castle[];
+        if (list && list.length > 0) {
+          setCastles(list);
         }
-
-        if (managementMode === 'link') {
-            // Set Link: Targets -> Source (Parent)
-            const newLinks = { ...castleLinks };
-            const newList = { ...ignoreList };
-
-            selectedTargets.forEach(targetId => {
-                newLinks[targetId] = managementSource;
-                // Auto-sync immediately
-                newList[targetId] = sourceItems.map(item => ({ ...item }));
-            });
-
-            persistLinks(newLinks);
-            updateIgnoreList(newList);
-        }
-
-        closeManagement();
+      }
     };
+    FrontendWebsocket.addMessageListener(handleMessage);
+    return () => FrontendWebsocket.removeMessageListener(handleMessage);
+  }, []);
 
-    const handleUnlink = (childId: number) => {
-        const newLinks = { ...castleLinks };
-        delete newLinks[childId];
-        persistLinks(newLinks);
+  const handleAddItem = async (castleId: string) => {
+    const currentItems = settings[castleId] || [];
+    const preselectedQuantities: Record<number, number> = {};
+    currentItems.forEach((item) => {
+      if (item.id) preselectedQuantities[item.id] = item.amount;
+    });
+
+    const result = await showTroopPicker({
+      mode: 'multi',
+      title: `Keep in castle (not sent on bird) — ${castles.find((c) => c.id === parseInt(castleId, 10))?.name ?? castleId}`,
+      allowQuantity: true,
+      preselected: currentItems.map((i) => i.id),
+      preselectedQuantities,
+    });
+
+    if (Array.isArray(result)) {
+      const newItems = (result as UnitWithQuantity[]).map((u) => ({
+        id: u.unitId,
+        amount: u.quantity,
+      }));
+      setSettings((prev) => ({ ...prev, [castleId]: newItems }));
+    }
+  };
+
+  const handleRemoveItem = (castleId: string, unitId: number) => {
+    setSettings((prev) => ({
+      ...prev,
+      [castleId]: (prev[castleId] || []).filter((i) => i.id !== unitId),
+    }));
+  };
+
+  const handleApplyPreset = () => {
+    setPresetError('');
+    if (!presetDropdownId) {
+      hydrateFromStorage();
+      setAppliedPresetId(null);
+      setPresetName('');
+      return;
+    }
+    const preset = presetsState.presets.find((p) => p.id === presetDropdownId);
+    if (!preset) return;
+    const applied = applyPresetToStoredShape(preset);
+    setSettings(applied.settings);
+    setMinDelay(clampDelayHours(applied.minDelay));
+    setMaxDelay(clampDelayHours(applied.maxDelay));
+    setMinSend(applied.minSend);
+    setAppliedPresetId(preset.id);
+    setPresetName(preset.name);
+  };
+
+  const handleSaveAsNewPreset = () => {
+    setPresetError('');
+    const name = presetName.trim();
+    if (!name) {
+      setPresetError('Enter a preset name first.');
+      return;
+    }
+    const snap = snapshotFromForm(settings, minDelay, maxDelay, minSend);
+    const id = crypto.randomUUID();
+    const next: AutoBirdPreset = { id, name, ...snap };
+    const file = {
+      ...presetsState,
+      presets: [...presetsState.presets, next],
+      lastSelectedPresetId: id,
     };
+    savePresetsFile(file);
+    setPresetsState(file);
+    setPresetDropdownId(id);
+    setAppliedPresetId(id);
+  };
 
-    // Helper: Enforce links (Child follows Parent)
-    const enforceLinks = (list: IgnoreList, links: CastleLinks): IgnoreList => {
-        const enforced = { ...list };
-        Object.entries(links).forEach(([childIdStr, parentId]) => {
-            const childId = parseInt(childIdStr);
-            // Overwrite child with parent data if parent exists in list
-            if (enforced[parentId]) {
-                enforced[childId] = enforced[parentId].map(item => ({ ...item }));
-            }
-        });
-        return enforced;
+  const handleDeletePreset = () => {
+    const id = presetDropdownId;
+    if (!id) return;
+    if (!window.confirm('Delete this preset? This cannot be undone.')) return;
+    const file = {
+      ...presetsState,
+      presets: presetsState.presets.filter((p) => p.id !== id),
+      lastSelectedPresetId:
+        presetsState.lastSelectedPresetId === id ? null : presetsState.lastSelectedPresetId,
     };
+    savePresetsFile(file);
+    setPresetsState(file);
+    setPresetDropdownId('');
+    if (appliedPresetId === id) {
+      setAppliedPresetId(null);
+      hydrateFromStorage();
+      setPresetName('');
+    }
+  };
 
-    // Fetch data on open
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const handleMessage = (message: any) => {
-            if (message.type === 'castleList') {
-                const list = message.payload as Castle[];
-                // Only update if we have a valid list, otherwise keep cached version (Offline Mode)
-                if (list && list.length > 0) {
-                    setCastles(list);
-                    // Cache for offline use
-                    localStorage.setItem('autoBird_castleList', JSON.stringify(list));
-                }
-            }
-            if (message.type === 'birdSettings') {
-                // payload: Map<int, Map<int, int>>
-                // Convert to Record<number, IgnoreItem[]>
-                const rawSettings = message.payload as Record<string, Record<string, number>>;
-                let processed: IgnoreList = {};
-
-                Object.entries(rawSettings).forEach(([castleIdStr, itemsMap]) => {
-                    const castleId = parseInt(castleIdStr);
-                    const items: IgnoreItem[] = [];
-                    Object.entries(itemsMap).forEach(([unitIdStr, amount]) => {
-                        items.push({ id: parseInt(unitIdStr), amount: Number(amount) });
-                    });
-                    processed[castleId] = items;
-                });
-
-                // Enforce Links on Server Data
-                // Server doesn't know about links, so we must re-apply them to ensure consistency
-                try {
-                    const currentLinksRaw = localStorage.getItem('autoBird_links');
-                    if (currentLinksRaw) {
-                        const currentLinks = JSON.parse(currentLinksRaw);
-                        processed = enforceLinks(processed, currentLinks);
-                    }
-                } catch (e) {
-                    console.error("Failed to enforce links on server data", e);
-                }
-
-                // Only update if we have data or if the server explicitly sends empty but valid config
-                // But for offline persistence, let's treat empty server response as "not loaded" if we have cache?
-                // Actually, settings CAN be empty. But usually valid response.
-                if (Object.keys(processed).length > 0) {
-                    setIgnoreList(processed);
-                    // Cache for offline use
-                    localStorage.setItem('autoBird_ignoreList', JSON.stringify(processed));
-                    setLoading(false);
-                }
-            }
-        };
-
-        FrontendWebsocket.addMessageListener(handleMessage);
-
-        // Load cached data first (Offline Persistence)
-        const cachedCastles = localStorage.getItem('autoBird_castleList');
-        const cachedSettings = localStorage.getItem('autoBird_ignoreList');
-        const cachedLinks = localStorage.getItem('autoBird_links');
-
-        if (cachedCastles) {
-            try {
-                setCastles(JSON.parse(cachedCastles));
-            } catch (e) {
-                console.error("Failed to parse cached castles", e);
-            }
-        }
-
-        let loadedLinks: CastleLinks = {};
-        if (cachedLinks) {
-            try {
-                loadedLinks = JSON.parse(cachedLinks);
-                setCastleLinks(loadedLinks);
-            } catch (e) {
-                console.error("Failed to parse cached links", e);
-            }
-        }
-
-        if (cachedSettings) {
-            try {
-                let settings = JSON.parse(cachedSettings);
-                // Enforce links on cached data too
-                if (Object.keys(loadedLinks).length > 0) {
-                    settings = enforceLinks(settings, loadedLinks);
-                }
-                setIgnoreList(settings);
-            } catch (e) {
-                console.error("Failed to parse cached settings", e);
-            }
-        }
-
-        const cachedDelays = localStorage.getItem('autoBird_delaySettings');
-        if (cachedDelays) {
-            try {
-                const delays = JSON.parse(cachedDelays);
-                setDelaySettings({ min: delays.min || 6, max: delays.max || 12, minSend: delays.minSend || 0 });
-            } catch (e) {
-                console.error("Failed to parse cached delays", e);
-            }
-        }
-
-        // Always finish loading state after cache check so UI can render
-        setLoading(false);
-
-        // Request Data (will update cache if successful)
-        // Request Data (castles only - settings managed locally)
-        FrontendWebsocket.sendMessage({ type: 'getCastleList' });
-        // FrontendWebsocket.sendMessage({ type: 'getBirdSettings' }); // Removed - Frontend managed
-
-        return () => {
-            FrontendWebsocket.removeMessageListener(handleMessage);
-        };
-    }, [isOpen]);
-
-    if (!isOpen) return null;
-
-    const handleAddItem = async (castleId: number) => {
-        // Get current items to pre-fill
-        const currentItems = ignoreList[castleId] || [];
-        const preselectedQuantities: Record<number, number> = {};
-        currentItems.forEach(item => {
-            if (item.id) preselectedQuantities[item.id] = item.amount;
-        });
-
-        const result = await showTroopPicker({
-            mode: 'multi',
-            title: `Select Units to Ignore - ${castles.find(c => c.id === castleId)?.name}`,
-            allowQuantity: true,
-            preselected: currentItems.map(i => i.id),
-            preselectedQuantities
-        });
-
-        if (Array.isArray(result)) {
-            // Map result back to IgnoreItem
-            const newItems: IgnoreItem[] = (result as UnitWithQuantity[]).map(u => ({
-                id: u.unitId,
-                amount: u.quantity === 0 ? 100000000 : u.quantity
-            }));
-
-            // Compute new state
-            const updates: IgnoreList = {};
-            const children = Object.entries(castleLinks)
-                .filter(([_, parentId]) => parentId === castleId)
-                .map(([childId]) => parseInt(childId));
-
-            children.forEach(childId => {
-                updates[childId] = newItems.map(i => ({ ...i }));
-            });
-
-            const newList = {
-                ...ignoreList,
-                [castleId]: newItems,
-                ...updates
-            };
-
-            updateIgnoreList(newList);
-        }
+  const handleSave = () => {
+    setPresetError('');
+    const payload: AutoBirdStoredSettings = {
+      settings,
+      minDelay: clampDelayHours(minDelay),
+      maxDelay: clampDelayHours(maxDelay),
+      minSend: Math.max(0, minSend),
     };
+    if (payload.maxDelay < payload.minDelay) {
+      payload.maxDelay = payload.minDelay;
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 
-    const handleRemoveItem = (castleId: number, index: number) => {
-        setIgnoreList(prev => ({
-            ...prev,
-            [castleId]: prev[castleId]?.filter((_, i) => i !== index) || []
-        }));
+    const snap = snapshotFromForm(payload.settings, payload.minDelay, payload.maxDelay, payload.minSend);
+    const nameTrim = presetName.trim();
+    const updatedPresets = appliedPresetId
+      ? presetsState.presets.map((p) =>
+          p.id === appliedPresetId
+            ? { ...p, ...snap, name: nameTrim || p.name, id: p.id }
+            : p
+        )
+      : presetsState.presets;
+    const file = {
+      version: 1 as const,
+      lastSelectedPresetId: appliedPresetId,
+      presets: updatedPresets,
     };
+    savePresetsFile(file);
+    setPresetsState(file);
 
-    const handleUpdateItem = (castleId: number, index: number, field: keyof IgnoreItem, value: number) => {
-        setIgnoreList(prev => ({
-            ...prev,
-            [castleId]: prev[castleId]?.map((item, i) =>
-                i === index ? { ...item, [field]: value } : item
-            ) || []
-        }));
-    };
+    onClose();
+  };
 
-    const handleSave = () => {
-        // Transform back to map structure needed by backend
-        // Backend expects CastleID(string) -> List of {id, amount}
-        // Logic in parser expects this to check valid entries
+  const presetOptions = [
+    { value: '', label: '— Saved file on disk (default) —' },
+    ...presetsState.presets.map(p => ({ value: p.id, label: p.name }))
+  ];
 
-        // Actually, backend expects payload to be `map[string]interface{}` where items are list of objects
-        // My backend change: `payloadRaw` is the map.
-        // So I send object keyed by castleID.
-
-        // Prepare payload
-        const payload: Record<string, any> = {
-            minDelay: delaySettings.min,
-            maxDelay: delaySettings.max,
-            minSend: delaySettings.minSend
-        };
-        Object.entries(ignoreList).forEach(([castleId, items]) => {
-            payload[castleId] = items.map(item => ({ id: item.id, amount: item.amount }));
-        });
-
-        // Persist to local storage immediately (Offline Save)
-        localStorage.setItem('autoBird_ignoreList', JSON.stringify(ignoreList));
-        localStorage.setItem('autoBird_delaySettings', JSON.stringify(delaySettings));
-
-        FrontendWebsocket.sendMessage({ type: 'saveBirdSettings', payload });
-        onClose();
-    };
-
-    // Combine definitions for search
-    const allDefinitions = { ...TROOP_DEFINITIONS, ...TOOL_DEFINITIONS };
-
-    // Handle Edit Modal Actions
-    const openEditModal = (castleId: number, item: IgnoreItem) => {
-        setEditingUnit({ castleId, originalId: item.id, item });
-        setEditAmount(item.amount >= 100000000 ? '0' : item.amount.toLocaleString());
-    };
-
-    const closeEditModal = () => {
-        setEditingUnit(null);
-        setEditAmount('');
-    };
-
-    const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Allow digits and commas
-        const raw = e.target.value.replace(/,/g, '');
-        if (!/^\d*$/.test(raw)) return;
-
-        const num = parseInt(raw);
-        setEditAmount(isNaN(num) ? '' : num.toLocaleString());
-    };
-
-    const handleLevelChange = (newLevel: number) => {
-        if (!editingUnit) return;
-
-        // Find base ID to determine family
-        const currentId = editingUnit.item.id;
-        const info = getUnitBaseAndLevel(currentId);
-
-        let newItemId = currentId;
-        if (info) {
-            newItemId = getUnitIdForLevel(info.baseId, newLevel);
-        }
-
-        setEditingUnit({
-            ...editingUnit,
-            item: { ...editingUnit.item, id: newItemId }
-        });
-    };
-
-    const saveEditModal = () => {
-        if (!editingUnit) return;
-
-        let newAmount = parseInt(editAmount.replace(/,/g, '')) || 0;
-        if (newAmount === 0) newAmount = 100000000;
-        const castleItems = ignoreList[editingUnit.castleId] || [];
-        let updatedItems: IgnoreItem[];
-
-        if (editingUnit.originalId !== editingUnit.item.id) {
-            // Unit ID changed (e.g., level switch)
-            // Remove the original item and add the new one
-            updatedItems = castleItems.filter(item => item.id !== editingUnit.originalId);
-            updatedItems.push({ id: editingUnit.item.id, amount: newAmount });
-        } else {
-            // Unit ID is the same, just update the amount
-            updatedItems = castleItems.map(item =>
-                item.id === editingUnit.item.id ? { ...item, amount: newAmount } : item
-            );
-        }
-
-        // Check for Linked Children and propagate changes
-        const children = Object.entries(castleLinks)
-            .filter(([_, parentId]) => parentId === editingUnit.castleId)
-            .map(([childId]) => parseInt(childId));
-
-        const updates: IgnoreList = {};
-        if (children.length > 0) {
-            children.forEach(childId => {
-                updates[childId] = updatedItems.map(i => ({ ...i }));
-            });
-        }
-
-        const newList = {
-            ...ignoreList,
-            [editingUnit.castleId]: updatedItems,
-            ...updates
-        };
-
-        updateIgnoreList(newList);
-        closeEditModal();
-    };
-
-    const deleteFromEditModal = () => {
-        if (!editingUnit) return;
-
-        const parentList = ignoreList[editingUnit.castleId]?.filter(item => item.id !== editingUnit.item.id) || [];
-        const updates: IgnoreList = {};
-
-        // Apply to Children
-        const children = Object.entries(castleLinks)
-            .filter(([_, parentId]) => parentId === editingUnit.castleId)
-            .map(([childId]) => parseInt(childId));
-
-        children.forEach(childId => {
-            updates[childId] = parentList.map(i => ({ ...i }));
-        });
-
-        const newList = {
-            ...ignoreList,
-            [editingUnit.castleId]: parentList,
-            ...updates
-        };
-
-        updateIgnoreList(newList);
-        closeEditModal();
-    };
-
-    // Calculate level info for render
-    const levelInfo = editingUnit ? getUnitBaseAndLevel(editingUnit.item.id) : null;
-    const availableLevels = levelInfo && UNIT_LEVEL_MAP[levelInfo.baseId]
-        ? Object.keys(UNIT_LEVEL_MAP[levelInfo.baseId]).map(Number).sort((a, b) => a - b)
-        : [];
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
-            {/* Edit Unit Modal */}
-            {editingUnit && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-bg-app border border-border-light rounded-global p-6 w-full max-w-sm shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-lg font-bold text-primary mb-4 text-center truncate">
-                            Edit {TROOP_DEFINITIONS[editingUnit.item.id] || 'Unit'}
-                        </h3>
-
-                        <div className="flex flex-col items-center gap-6 mb-6">
-                            <UnitImage unitId={editingUnit.item.id} size={80} showLevel={true} />
-
-                            {/* Level Switcher */}
-                            {availableLevels.length > 0 && levelInfo && (
-                                <div className="w-full">
-                                    <label className="text-xs text-text-muted font-bold uppercase mb-1 block text-center">Level</label>
-                                    <select
-                                        value={levelInfo.level}
-                                        onChange={(e) => handleLevelChange(parseInt(e.target.value))}
-                                        className="w-full bg-bg-input border border-border-base rounded-global px-3 py-2 text-sm text-center focus:border-primary focus:outline-none appearance-none cursor-pointer hover:border-primary/50 transition-colors"
-                                    >
-                                        {availableLevels.map(lvl => (
-                                            <option key={lvl} value={lvl}>Level {lvl}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-
-                            <div className="w-full">
-                                <label className="text-xs text-text-muted font-bold uppercase mb-1 block text-center">Quantity to Ignore</label>
-                                <input
-                                    type="text"
-                                    value={editAmount}
-                                    onChange={handleQuantityChange}
-                                    className="w-full bg-bg-input border border-border-base rounded-global px-4 py-3 text-xl font-bold text-center focus:border-primary focus:outline-none placeholder-text-muted/20"
-                                    autoFocus
-                                    placeholder="0"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={deleteFromEditModal}
-                                className="flex-1 py-3 rounded-global bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white font-bold transition-colors flex items-center justify-center gap-2"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                                Remove
-                            </button>
-                            <button
-                                onClick={saveEditModal}
-                                className="flex-[2] py-3 rounded-global bg-primary text-bg-app font-bold hover:brightness-110 transition-colors"
-                            >
-                                Save Changes
-                            </button>
-                        </div>
-
-                        <button
-                            onClick={closeEditModal}
-                            className="absolute top-4 right-4 text-text-muted hover:text-white"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Management Modal (Copy / Link) */}
-            {managementMode && managementSource && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-                    <div className="bg-bg-app border border-border-light rounded-global p-6 w-full max-w-lg shadow-2xl animate-scale-in flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold text-white mb-2">
-                            {managementMode === 'copy' ? 'Batch Copy Settings' : 'Link Castles'}
-                        </h3>
-                        <p className="text-text-muted text-sm mb-4">
-                            {managementMode === 'copy'
-                                ? `Select castles to copy settings FROM ${castles.find(c => c.id === managementSource)?.name}.`
-                                : `Select castles to LINK to ${castles.find(c => c.id === managementSource)?.name}. Linked castles will automatically mirror these settings.`
-                            }
-                        </p>
-
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="text-xs text-text-muted uppercase font-bold">Targets ({selectedTargets.length})</div>
-                            <button onClick={handleSelectAll} className="text-xs text-primary hover:text-white font-bold">Select All Eligible</button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto bg-bg-input rounded-global border border-border-base p-2 space-y-1 mb-6">
-                            {castles.filter(c => c.id !== managementSource).map(castle => {
-                                const isSelected = selectedTargets.includes(castle.id);
-                                const isLinked = !!castleLinks[castle.id];
-                                // If Linking mode: Cannot link a castle that is already linked (unless we overwrite, which is fine, but maybe warn?)
-                                // For simplicity, let's allow overwrite.
-
-                                return (
-                                    <div
-                                        key={castle.id}
-                                        onClick={() => handleToggleTarget(castle.id)}
-                                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 border border-primary/30' : 'hover:bg-white/5 border border-transparent'}`}
-                                    >
-                                        <div className={`w-5 h-5 rounded flex items-center justify-center ${isSelected ? 'bg-primary text-bg-app' : 'bg-bg-app border border-border-base'}`}>
-                                            {isSelected && <CheckSquare className="w-3.5 h-3.5" />}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-bold text-sm truncate text-text-main">{castle.name}</div>
-                                            {isLinked && <div className="text-[10px] text-blue-400">Currently Linked</div>}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        <div className="flex justify-end gap-3 pt-4 border-t border-border-base">
-                            <button
-                                onClick={closeManagement}
-                                className="px-5 py-2 rounded-global text-text-muted hover:text-white font-bold transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleApplyManagement}
-                                disabled={selectedTargets.length === 0}
-                                className="px-6 py-2 rounded-global bg-primary text-bg-app font-bold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                            >
-                                {managementMode === 'copy' ? 'Copy Settings' : 'Link Castles'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className="w-full h-full bg-bg-app flex flex-col">
-                {/* Header */}
-                <div className="h-16 border-b border-border-base flex items-center justify-between px-6 bg-glass-gradient">
-                    <div className="flex items-center gap-3">
-                        <div className="w-2 h-8 rounded-full bg-primary shadow-[0_0_10px] shadow-primary/50" />
-                        <h2 className="heading-1">Auto Bird Settings</h2>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
-                    >
-                        <X className="w-6 h-6 text-text-muted hover:text-white" />
-                    </button>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-8 relative">
-                    <div className="max-w-[1800px] mx-auto space-y-6">
-                        <p className="text-text-muted">
-                            Configure troops to keep (ignore) for each castle when auto-birding.
-                            These units will NOT be sent.
-                        </p>
-
-                        {/* Global Config Section */}
-                        <div className="glass-panel p-5 bg-bg-card/30 border border-border-base/50">
-                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <Settings className="w-5 h-5 text-primary" />
-                                Global Settings
-                            </h3>
-                            <div className="flex items-end gap-6 flex-wrap">
-                                <div>
-                                    <label className="text-xs text-text-muted font-bold uppercase mb-2 block">Random Delay Range (Hours)</label>
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="12"
-                                                value={delaySettings.min}
-                                                onChange={e => {
-                                                    const val = Math.max(1, Math.min(12, parseInt(e.target.value) || 1));
-                                                    setDelaySettings(prev => ({ ...prev, min: val, max: Math.max(prev.max, val) }));
-                                                }}
-                                                className="w-24 bg-bg-input border border-border-base rounded-global px-3 py-2 text-center font-bold focus:border-primary focus:outline-none"
-                                            />
-                                            <span className="absolute right-2 top-2.5 text-xs text-text-muted">Min</span>
-                                        </div>
-                                        <span className="text-text-muted font-bold">-</span>
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="12"
-                                                value={delaySettings.max}
-                                                onChange={e => {
-                                                    const val = Math.max(1, Math.min(12, parseInt(e.target.value) || 12));
-                                                    setDelaySettings(prev => ({ ...prev, max: Math.max(prev.min, val) }));
-                                                }}
-                                                className="w-24 bg-bg-input border border-border-base rounded-global px-3 py-2 text-center font-bold focus:border-primary focus:outline-none"
-                                            />
-                                            <span className="absolute right-2 top-2.5 text-xs text-text-muted">Max</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="text-xs text-text-muted font-bold uppercase mb-2 block">Minimum to Send</label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={delaySettings.minSend}
-                                            onChange={e => {
-                                                const val = Math.max(0, parseInt(e.target.value) || 0);
-                                                setDelaySettings(prev => ({ ...prev, minSend: val }));
-                                            }}
-                                            className="w-32 bg-bg-input border border-border-base rounded-global px-3 py-2 text-center font-bold focus:border-primary focus:outline-none"
-                                            placeholder="0"
-                                        />
-                                        <span className="absolute right-2 top-2.5 text-xs text-text-muted">Troops</span>
-                                    </div>
-                                </div>
-                                <div className="pb-2 text-sm text-text-muted italic max-w-md">
-                                    Birds will be sent with a random return delay between these hours (Max 12h).
-                                </div>
-                            </div>
-                        </div>
-
-                        {loading ? (
-                            <div className="text-center py-10 text-text-muted">Loading configuration...</div>
-                        ) : !castles || castles.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 px-4 text-center h-full animate-fade-in">
-                                <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mb-6 border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-                                    <AlertTriangle className="w-10 h-10 text-yellow-500" />
-                                </div>
-                                <h3 className="heading-2 text-white mb-3">No Data Found</h3>
-                                <p className="text-text-muted max-w-md mb-8 leading-relaxed">
-                                    Please start the bot to load your castle data. <br />
-                                    <span className="text-text-muted/60 text-sm">Once loaded, data will be saved for offline editing.</span>
-                                </p>
-                                <button
-                                    onClick={onClose}
-                                    className="px-8 py-3 rounded-global bg-primary/10 border border-primary/30 text-primary font-bold hover:bg-primary hover:text-bg-app transition-all hover:scale-105 active:scale-95"
-                                >
-                                    Close Settings
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                {castles.map(castle => {
-                                    const castleItems = ignoreList[castle.id] || [];
-                                    const hasItems = castleItems.length > 0;
-                                    const parentLink = castleLinks[castle.id];
-                                    const parentName = parentLink ? castles.find(c => c.id === parentLink)?.name : null;
-                                    const isLinked = !!parentLink;
-
-                                    return (
-                                        <div
-                                            key={castle.id}
-                                            className="glass-panel p-4 flex flex-col h-[320px] relative group hover:border-primary/50 transition-colors"
-                                        >
-                                            {/* Castle Name Header */}
-                                            <div className="flex items-center justify-between mb-3 px-1 h-8">
-                                                <div className="flex items-center gap-2 overflow-hidden">
-                                                    <h3 className="text-lg font-bold text-primary truncate" title={castle.name}>
-                                                        {castle.name}
-                                                    </h3>
-                                                    {isLinked && (
-                                                        <span className="px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-400 text-[10px] font-bold border border-blue-500/30 whitespace-nowrap">
-                                                            Linked
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                {/* Header Actions */}
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    {isLinked ? (
-                                                        <button
-                                                            onClick={() => handleUnlink(castle.id)}
-                                                            className="p-1.5 rounded-md hover:bg-white/10 text-text-muted hover:text-red-400 transition-colors"
-                                                            title={`Unlink from ${parentName}`}
-                                                        >
-                                                            <Unlink className="w-4 h-4" />
-                                                        </button>
-                                                    ) : (
-                                                        <>
-                                                            <button
-                                                                onClick={() => openManagement('copy', castle.id)}
-                                                                className="p-1.5 rounded-md hover:bg-white/10 text-text-muted hover:text-primary transition-colors"
-                                                                title="Copy Settings To..."
-                                                            >
-                                                                <Copy className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => openManagement('link', castle.id)}
-                                                                className="p-1.5 rounded-md hover:bg-white/10 text-text-muted hover:text-blue-400 transition-colors"
-                                                                title="Link To..."
-                                                            >
-                                                                <LinkIcon className="w-4 h-4" />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Units Grid Area */}
-                                            <div className={`flex-1 overflow-y-auto bg-bg-app/30 rounded-lg p-3 border ${isLinked ? 'border-blue-500/30 bg-blue-500/5' : 'border-border-base/50'}`}>
-                                                {hasItems ? (
-                                                    <div className="flex flex-wrap gap-3 content-start">
-                                                        {castleItems.map((item, index) => (
-                                                            <div
-                                                                key={index}
-                                                                className={`relative group/unit transition-transform hover:scale-105 cursor-pointer ${isLinked ? 'cursor-default pointer-events-none opacity-90' : ''}`}
-                                                                title={`${allDefinitions[item.id] || 'Unknown Unit'} (x${item.amount})`}
-                                                                onClick={() => !isLinked && openEditModal(castle.id, item)}
-                                                            >
-                                                                <UnitImage unitId={item.id} size={60} showLevel={true} />
-                                                                {item.amount < 100000000 && (
-                                                                    <div className="absolute -bottom-2 -right-2 bg-text-main border-2 border-bg-card rounded-full px-2 py-0.5 text-[10px] font-black text-bg-app shadow-md z-10 min-w-[24px] text-center">
-                                                                        {item.amount.toLocaleString()}
-                                                                    </div>
-                                                                )}
-
-                                                                {/* Hover overlay hint */}
-                                                                {!isLinked && (
-                                                                    <div className="absolute inset-0 bg-black/20 rounded-lg opacity-0 group-hover/unit:opacity-100 transition-opacity flex items-center justify-center text-white pointer-events-none">
-                                                                        <Settings className="w-4 h-4 drop-shadow-md" />
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                        {/* Add Button Card */}
-                                                        {!isLinked && (
-                                                            <button
-                                                                onClick={() => handleAddItem(castle.id)}
-                                                                className="flex flex-col items-center justify-center w-[60px] h-[60px] rounded-global border-2 border-dashed border-border-base text-text-muted hover:text-primary hover:border-primary hover:bg-primary/5 transition-all group/add"
-                                                                title="Add Unit"
-                                                            >
-                                                                <Plus className="w-6 h-6 group-hover/add:scale-110 transition-transform" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <div className="h-full flex flex-col items-center justify-center">
-                                                        <div className="text-text-muted/40 text-xs italic text-center mb-4">
-                                                            No ignored units
-                                                        </div>
-                                                        {!isLinked && (
-                                                            <button
-                                                                onClick={() => handleAddItem(castle.id)}
-                                                                className="flex items-center gap-2 px-4 py-2 rounded-global bg-bg-card border border-border-light hover:border-primary text-text-muted hover:text-primary transition-all group/empty-add"
-                                                            >
-                                                                <Plus className="w-4 h-4" />
-                                                                <span className="font-bold text-sm">Add Unit</span>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="h-20 border-t border-border-base flex items-center justify-end px-8 bg-glass-gradient gap-4">
-                    <button
-                        onClick={onClose}
-                        className="px-6 py-2.5 rounded-global text-text-muted hover:text-white font-bold transition-colors"
-                    >
-                        CANCEL
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        className="px-8 py-2.5 rounded-global bg-primary text-bg-app font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 flex items-center gap-2"
-                    >
-                        SAVE CHANGES
-                    </button>
-                </div>
-            </div>
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="full"
+      title={
+        <div className="flex flex-col">
+          <span className="text-primary">Auto Bird Settings</span>
+          <p className="mt-1 text-sm text-text-muted font-normal">
+            Configure troops to keep (ignore) for each castle when auto-birding. These units will{' '}
+            <span className="font-bold text-text-main">not</span> be sent.
+          </p>
         </div>
-    );
+      }
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} className="px-6">Cancel</Button>
+          <Button variant="primary" onClick={handleSave} className="px-8" leftIcon={<Save className="w-4 h-4" />}>
+            Save changes
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full h-[calc(100vh-14rem)]">
+        {/* Global settings bar */}
+        <Card variant="solid" className="shrink-0 bg-bg-app border-border-base p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
+            <div className="flex flex-1 flex-wrap items-end gap-3">
+              <span className="w-full text-xs font-bold uppercase tracking-wider text-primary lg:w-auto lg:mr-2 mb-1.5 lg:mb-0">
+                Random delay range (hours)
+              </span>
+              <div className="flex flex-col gap-1 w-24">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Min</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={minDelay}
+                  onChange={(e) => setMinDelay(clampDelayHours(parseInt(e.target.value, 10)))}
+                  className="font-mono text-center"
+                />
+              </div>
+              <div className="flex flex-col gap-1 w-24">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Max</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={maxDelay}
+                  onChange={(e) => setMaxDelay(clampDelayHours(parseInt(e.target.value, 10)))}
+                  className="font-mono text-center"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1 lg:min-w-[200px]">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary">Minimum to send</span>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={0}
+                  value={minSend}
+                  onChange={(e) => setMinSend(parseInt(e.target.value, 10) || 0)}
+                  className="font-mono"
+                  rightIcon={<span className="text-xs font-medium uppercase text-text-muted">Troops</span>}
+                />
+              </div>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-text-muted">
+            Birds are sent with a random delay between min and max hours after travel completes.
+          </p>
+        </Card>
+
+        {/* Presets */}
+        <Card variant="solid" className="shrink-0 bg-bg-app border-border-base p-4">
+          <div className="mb-3 text-xs font-bold uppercase tracking-wider text-primary">Presets</div>
+          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
+            <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Preset name</span>
+              <Input
+                type="text"
+                placeholder="Name for new preset or rename on save"
+                value={presetName}
+                onChange={(e) => {
+                  setPresetName(e.target.value);
+                  setPresetError('');
+                }}
+                error={presetError}
+              />
+            </div>
+            <div className="flex min-w-[280px] flex-1 flex-col gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Load preset</span>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Select
+                    value={presetDropdownId}
+                    onChange={(v) => setPresetDropdownId(v)}
+                    options={presetOptions}
+                  />
+                </div>
+                <Button variant="outline" onClick={handleApplyPreset} className="shrink-0 bg-bg-card">
+                  Apply
+                </Button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleSaveAsNewPreset}
+                className="text-info border-info/40 hover:bg-info/10"
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
+                Save as new
+              </Button>
+              <Button
+                variant="danger"
+                disabled={!presetDropdownId}
+                onClick={handleDeletePreset}
+                leftIcon={<Trash2 className="w-4 h-4" />}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-text-muted">
+            Choose a preset and click <span className="font-semibold text-text-main">Apply</span> to load it into the grid.{' '}
+            <span className="font-semibold text-text-main">Save changes</span> writes Auto Bird settings and updates the applied preset
+            (including name).
+          </p>
+        </Card>
+
+        {/* Castle grid */}
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+          {castles.length === 0 && (
+            <p className="text-sm text-text-muted text-center py-8">Loading castles… reopen if this stays empty.</p>
+          )}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
+            {castles.map((castle) => {
+              const cid = String(castle.id);
+              const items = settings[cid] || [];
+              return (
+                <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
+                  <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border-base pb-2">
+                    <h3 className="text-sm font-bold text-primary">{castle.name}</h3>
+                  </div>
+                  {items.length === 0 ? (
+                    <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
+                      <p className="text-center text-xs text-text-muted font-medium uppercase tracking-wider">No ignored units</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAddItem(cid)}
+                        className="border-dashed"
+                        leftIcon={<Plus className="w-4 h-4" />}
+                      >
+                        Add unit
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap justify-center gap-4">
+                      {items.map((item) => (
+                        <AutoBirdTroopTile
+                          key={item.id}
+                          unitId={item.id}
+                          amount={item.amount}
+                          onRemove={() => handleRemoveItem(cid, item.id)}
+                        />
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => handleAddItem(cid)}
+                        className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-global border-2 border-dashed border-border-base text-text-muted transition-colors hover:border-primary/50 hover:text-primary hover:bg-primary/5"
+                        aria-label="Add unit"
+                      >
+                        <Plus className="h-8 w-8" strokeWidth={1.5} />
+                      </button>
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
 };

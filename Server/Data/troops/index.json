@@ -1,0 +1,3716 @@
+[
+  {
+    "id": 665,
+    "name": "Unknown",
+    "type": "Soldiers",
+    "image": null
+  },
+  {
+    "id": 652,
+    "name": "Armed citizen",
+    "type": "Peasant",
+    "image": null
+  },
+  {
+    "id": 746,
+    "name": "Militia",
+    "type": "Militia",
+    "image": null
+  },
+  {
+    "id": 602,
+    "name": "Spearman",
+    "type": "Speerman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Speerman/Barracks_Unit_Speerman--1650458944632.webp"
+  },
+  {
+    "id": 628,
+    "name": "Veteran spearman",
+    "type": "Elitespeerman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitespeerman/Barracks_Unit_Elitespeerman--1650458944632.webp"
+  },
+  {
+    "id": 603,
+    "name": "Maceman",
+    "type": "Mace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Mace/Barracks_Unit_Mace--1650458944632.webp"
+  },
+  {
+    "id": 630,
+    "name": "Veteran maceman",
+    "type": "Elitemace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitemace/Barracks_Unit_Elitemace--1650458944632.webp"
+  },
+  {
+    "id": 601,
+    "name": "Swordsman",
+    "type": "Swordman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Swordman/Barracks_Unit_Swordman--1650458944632.webp"
+  },
+  {
+    "id": 724,
+    "name": "Veteran swordsman",
+    "type": "Eliteswordman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteswordman/Barracks_Unit_Eliteswordman--1650458944632.webp"
+  },
+  {
+    "id": 604,
+    "name": "Halberdier",
+    "type": "Halberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Halberd/Barracks_Unit_Halberd--1650458944632.webp"
+  },
+  {
+    "id": 308,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 2000,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 2001,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 2002,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 2003,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 2004,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 2005,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 2006,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 2007,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 2008,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 2009,
+    "name": "Veteran halberdier",
+    "type": "Elitehalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitehalberd/Barracks_Unit_Elitehalberd--1650458944632.webp"
+  },
+  {
+    "id": 605,
+    "name": "Two-handed swordsman",
+    "type": "Twohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Twohandedsword/Barracks_Unit_Twohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 309,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 2010,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 2011,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 2012,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 2013,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 2014,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 2015,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 2016,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 2017,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 2018,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 2019,
+    "name": "Veteran two-handed swordsman",
+    "type": "Elitetwohandedsword",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitetwohandedsword/Barracks_Unit_Elitetwohandedsword--1650458944632.webp"
+  },
+  {
+    "id": 148,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 2020,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 2021,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 2022,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 2023,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 2024,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 2025,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 2026,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 2027,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 2028,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 2029,
+    "name": "Relic axeman",
+    "type": "RelicAxe",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicAxe/Barracks_Unit_RelicAxe--1650458944632.webp"
+  },
+  {
+    "id": 150,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 2030,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 2031,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 2032,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 2033,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 2034,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 2035,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 2036,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 2037,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 2038,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 2039,
+    "name": "Relic hammerman",
+    "type": "RelicHammer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicHammer/Barracks_Unit_RelicHammer--1650458944632.webp"
+  },
+  {
+    "id": 606,
+    "name": "Archer",
+    "type": "Archer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Archer/Barracks_Unit_Archer--1695386535542.webp"
+  },
+  {
+    "id": 608,
+    "name": "Bowman",
+    "type": "Bowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Bowman/Barracks_Unit_Bowman--1650458944632.webp"
+  },
+  {
+    "id": 631,
+    "name": "Veteran bowman",
+    "type": "Elitebowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitebowman/Barracks_Unit_Elitebowman--1650458944632.webp"
+  },
+  {
+    "id": 610,
+    "name": "Longbowman",
+    "type": "Longbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Longbowman/Barracks_Unit_Longbowman--1650458944632.webp"
+  },
+  {
+    "id": 311,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 2040,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 2041,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 2042,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 2043,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 2044,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 2045,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 2046,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 2047,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 2048,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 2049,
+    "name": "Veteran longbowman",
+    "type": "Elitelongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitelongbowman/Barracks_Unit_Elitelongbowman--1650458944632.webp"
+  },
+  {
+    "id": 607,
+    "name": "Crossbowman",
+    "type": "Crossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Crossbowman/Barracks_Unit_Crossbowman--1650458944632.webp"
+  },
+  {
+    "id": 636,
+    "name": "Veteran crossbowman",
+    "type": "Elitecrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitecrossbowman/Barracks_Unit_Elitecrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 609,
+    "name": "Heavy crossbowman",
+    "type": "Heavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Heavycrossbowman/Barracks_Unit_Heavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 312,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 2050,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 2051,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 2052,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 2053,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 2054,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 2055,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 2056,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 2057,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 2058,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 2059,
+    "name": "Veteran heavy crossbowman",
+    "type": "Eliteheavycrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Eliteheavycrossbowman/Barracks_Unit_Eliteheavycrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 149,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 2060,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 2061,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 2062,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 2063,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 2064,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 2065,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 2066,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 2067,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 2068,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 2069,
+    "name": "Relic shortbowman",
+    "type": "RelicShortBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicShortBow/Barracks_Unit_RelicShortBow--1650458944632.webp"
+  },
+  {
+    "id": 151,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 2070,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 2071,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 2072,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 2073,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 2074,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 2075,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 2076,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 2077,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 2078,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 2079,
+    "name": "Relic longbowman",
+    "type": "RelicLongBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_RelicLongBow/Barracks_Unit_RelicLongBow--1650458944632.webp"
+  },
+  {
+    "id": 9,
+    "name": "Veteran demon horror",
+    "type": "EliteRankrewardmelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Rewards/Eventunit_Unit_EliteRankrewardmelee/Eventunit_Unit_EliteRankrewardmelee--1573584429307.webp"
+  },
+  {
+    "id": 10,
+    "name": "Veteran deathly horror",
+    "type": "EliteRankrewardrange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Rewards/Eventunit_Unit_EliteRankrewardrange/Eventunit_Unit_EliteRankrewardrange--1573584429307.webp"
+  },
+  {
+    "id": 714,
+    "name": "Demon horror",
+    "type": "Rankrewardmelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Rewards/Eventunit_Unit_Rankrewardmelee/Eventunit_Unit_Rankrewardmelee--1573584429307.webp"
+  },
+  {
+    "id": 715,
+    "name": "Deathly horror",
+    "type": "Rankrewardrange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Rewards/Eventunit_Unit_Rankrewardrange/Eventunit_Unit_Rankrewardrange--1573584429307.webp"
+  },
+  {
+    "id": 58,
+    "name": "Star-spangled knight",
+    "type": "RankrewardmeleeUSA",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/USA/Eventunit_Unit_RankrewardmeleeUSA/Eventunit_Unit_RankrewardmeleeUSA--1573584429307.webp"
+  },
+  {
+    "id": 59,
+    "name": "Star-spangled crossbowman",
+    "type": "RankrewardrangeUSA",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/USA/Eventunit_Unit_RankrewardrangeUSA/Eventunit_Unit_RankrewardrangeUSA--1573584429307.webp"
+  },
+  {
+    "id": 40,
+    "name": "Skeleton warrior",
+    "type": "Renegadeskeletonspeerman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadeskeletonspeerman/Eventunit_Unit_Renegadeskeletonspeerman--1573584429307.webp"
+  },
+  {
+    "id": 41,
+    "name": "Skeleton bowman",
+    "type": "Renegadeskeletonbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadeskeletonbowman/Eventunit_Unit_Renegadeskeletonbowman--1573584429307.webp"
+  },
+  {
+    "id": 781,
+    "name": "Master swordsman",
+    "type": "Masterswordsman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Barracks_Unit_Masterswordsman/Barracks_Unit_Masterswordsman--1573584429307.webp"
+  },
+  {
+    "id": 782,
+    "name": "Master archer",
+    "type": "MasterArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Barracks_Unit_MasterArcher/Barracks_Unit_MasterArcher--1573584429307.webp"
+  },
+  {
+    "id": 655,
+    "name": "Traveling knight",
+    "type": "Eventknight",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Eventknight/Eventunit_Unit_Eventknight--1573584429307.webp"
+  },
+  {
+    "id": 656,
+    "name": "Traveling crossbowman",
+    "type": "Eventcrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Eventcrossbowman/Eventunit_Unit_Eventcrossbowman--1573584429307.webp"
+  },
+  {
+    "id": 672,
+    "name": "Knight of the Kingsguard",
+    "type": "Kingsmace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Kingsmace/Barracks_Unit_Kingsmace--1650458944632.webp"
+  },
+  {
+    "id": 664,
+    "name": "Crossbowman of the Kingsguard",
+    "type": "Kingscrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Kingscrossbowman/Barracks_Unit_Kingscrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 686,
+    "name": "Sentinel of the Kingsguard",
+    "type": "Kingsspeerman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Kingsspeerman/Barracks_Unit_Kingsspeerman--1650458944632.webp"
+  },
+  {
+    "id": 687,
+    "name": "Scout of the Kingsguard",
+    "type": "Kingsbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Kingsbowman/Barracks_Unit_Kingsbowman--1650458944632.webp"
+  },
+  {
+    "id": 75,
+    "name": "Knight of the Elite Guard",
+    "type": "Elitekingsmace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitekingsmace/Barracks_Unit_Elitekingsmace--1650458944632.webp"
+  },
+  {
+    "id": 76,
+    "name": "Crossbowman of the Elite Guard",
+    "type": "Elitekingscrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_Elitekingscrossbowman/Barracks_Unit_Elitekingscrossbowman--1650458944632.webp"
+  },
+  {
+    "id": 22,
+    "name": "Berserker",
+    "type": "ValkyrieMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ValkyrieMelee/Barracks_Unit_ValkyrieMelee--1650458944632.webp"
+  },
+  {
+    "id": 23,
+    "name": "Spear woman",
+    "type": "ValkyrieRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ValkyrieRange/Barracks_Unit_ValkyrieRange--1650458944632.webp"
+  },
+  {
+    "id": 126,
+    "name": "Shapeshifter legionnaire",
+    "type": "ShapeshifterMeleeJoker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ShapeshifterMeleeJoker/Eventunit_Unit_ShapeshifterMeleeJoker--1573584429307.webp"
+  },
+  {
+    "id": 127,
+    "name": "Shapeshifter sharpshooter",
+    "type": "ShapeshifterRangedJoker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ShapeshifterRangedJoker/Eventunit_Unit_ShapeshifterRangedJoker--1573584429307.webp"
+  },
+  {
+    "id": 684,
+    "name": "Marauder",
+    "type": "Marauder",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Marauder/Eventunit_Unit_Marauder--1573584429307.webp"
+  },
+  {
+    "id": 685,
+    "name": "Pyromaniac",
+    "type": "Firedevil",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Firedevil/Eventunit_Unit_Firedevil--1573584429307.webp"
+  },
+  {
+    "id": 765,
+    "name": "Veteran marauder",
+    "type": "Elitemarauder",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Elitemarauder/Eventunit_Unit_Elitemarauder--1573584429307.webp"
+  },
+  {
+    "id": 766,
+    "name": "Veteran pyromaniac",
+    "type": "Elitefiredevil",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Elitefiredevil/Eventunit_Unit_Elitefiredevil--1573584429307.webp"
+  },
+  {
+    "id": 677,
+    "name": "Norseman with axe",
+    "type": "Icemelee",
+    "image": null
+  },
+  {
+    "id": 678,
+    "name": "Norseman with bow",
+    "type": "Icerange",
+    "image": null
+  },
+  {
+    "id": 690,
+    "name": "Renegade Norseman warrior",
+    "type": "Iceeventmelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Iceeventmelee/Eventunit_Unit_Iceeventmelee--1573584429307.webp"
+  },
+  {
+    "id": 691,
+    "name": "Renegade Norseman bowman",
+    "type": "Iceeventrange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Iceeventrange/Eventunit_Unit_Iceeventrange--1573584429307.webp"
+  },
+  {
+    "id": 675,
+    "name": "Saber warrior",
+    "type": "Desertmelee",
+    "image": null
+  },
+  {
+    "id": 676,
+    "name": "Desert bowman",
+    "type": "Desertrange",
+    "image": null
+  },
+  {
+    "id": 688,
+    "name": "Renegade saber warrior",
+    "type": "Deserteventmelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Deserteventmelee/Eventunit_Unit_Deserteventmelee--1573584429307.webp"
+  },
+  {
+    "id": 689,
+    "name": "Renegade desert bowman",
+    "type": "Deserteventrange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Deserteventrange/Eventunit_Unit_Deserteventrange--1573584429307.webp"
+  },
+  {
+    "id": 679,
+    "name": "Cultist fanatic",
+    "type": "Firemelee",
+    "image": null
+  },
+  {
+    "id": 680,
+    "name": "Cultist bowman",
+    "type": "Firerange",
+    "image": null
+  },
+  {
+    "id": 692,
+    "name": "Renegade cultist warrior",
+    "type": "Fireeventmelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Fireeventmelee/Eventunit_Unit_Fireeventmelee--1573584429307.webp"
+  },
+  {
+    "id": 693,
+    "name": "Renegade cultist bowman",
+    "type": "Fireeventrange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Fireeventrange/Eventunit_Unit_Fireeventrange--1573584429307.webp"
+  },
+  {
+    "id": 673,
+    "name": "Dragon claws",
+    "type": "Dragonclaws",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Dragonclaws/Eventunit_Unit_Dragonclaws--1573584429307.webp"
+  },
+  {
+    "id": 674,
+    "name": "Dragon fire",
+    "type": "Dragonjaw",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Dragonjaw/Eventunit_Unit_Dragonjaw--1573584429307.webp"
+  },
+  {
+    "id": 720,
+    "name": "Wolfhound",
+    "type": "Tinoswolves",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/SlumPackages/Eventunit_Unit_Tinoswolves/Eventunit_Unit_Tinoswolves--1573584429307.webp"
+  },
+  {
+    "id": 49,
+    "name": "Direwolf",
+    "type": "Elitetinoswolves",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Elitetinoswolves/Eventunit_Unit_Elitetinoswolves--1573584429307.webp"
+  },
+  {
+    "id": 277,
+    "name": "Direwolf",
+    "type": "Elitetinoswolves",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Elitetinoswolves/Eventunit_Unit_Elitetinoswolves--1573584429307.webp"
+  },
+  {
+    "id": 721,
+    "name": "Barbarian",
+    "type": "Conan",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/SlumPackages/Eventunit_Unit_Conan/Eventunit_Unit_Conan--1573584429307.webp"
+  },
+  {
+    "id": 723,
+    "name": "Flame bearer",
+    "type": "Flamethrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/SlumPackages/Eventunit_Unit_Flamethrower/Eventunit_Unit_Flamethrower--1573584429307.webp"
+  },
+  {
+    "id": 722,
+    "name": "Composite bowman",
+    "type": "Arrowthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/SlumPackages/Eventunit_Unit_Arrowthrower/Eventunit_Unit_Arrowthrower--1573584429307.webp"
+  },
+  {
+    "id": 11,
+    "name": "Veteran flame bearer",
+    "type": "EliteFlamethrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Rewards/Eventunit_Unit_EliteFlamethrower/Eventunit_Unit_EliteFlamethrower--1573584429307.webp"
+  },
+  {
+    "id": 12,
+    "name": "Veteran composite bowman",
+    "type": "EliteArrowthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Rewards/Eventunit_Unit_EliteArrowthrower/Eventunit_Unit_EliteArrowthrower--1573584429307.webp"
+  },
+  {
+    "id": 118,
+    "name": "Bone rattler",
+    "type": "Bonerattler",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Bonerattler/Eventunit_Unit_Bonerattler--1573584429307.webp"
+  },
+  {
+    "id": 117,
+    "name": "Fire witch",
+    "type": "Firewitch",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Firewitch/Eventunit_Unit_Firewitch--1573584429307.webp"
+  },
+  {
+    "id": 120,
+    "name": "Skeletal scytheman",
+    "type": "Skeletalscytheman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Skeletalscytheman/Eventunit_Unit_Skeletalscytheman--1573584429307.webp"
+  },
+  {
+    "id": 119,
+    "name": "Skeletal hunter",
+    "type": "Skeletalarcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Skeletalarcher/Eventunit_Unit_Skeletalarcher--1573584429307.webp"
+  },
+  {
+    "id": 662,
+    "name": "Skeleton warrior",
+    "type": "Skeletonspeerman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Skeletonspeerman/Eventunit_Unit_Skeletonspeerman--1573584429307.webp"
+  },
+  {
+    "id": 663,
+    "name": "Skeleton bowman",
+    "type": "Skeletonbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Skeletonbowman/Eventunit_Unit_Skeletonbowman--1573584429307.webp"
+  },
+  {
+    "id": 698,
+    "name": "Cow berdier",
+    "type": "Cowhalberd",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Cowhalberd/Eventunit_Unit_Cowhalberd--1573584429307.webp"
+  },
+  {
+    "id": 699,
+    "name": "Longbow ox",
+    "type": "Cowbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Cowbowman/Eventunit_Unit_Cowbowman--1573584429307.webp"
+  },
+  {
+    "id": 753,
+    "name": "Demon slayer",
+    "type": "Crusademelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Crusademelee/Eventunit_Unit_Crusademelee--1573584429307.webp"
+  },
+  {
+    "id": 754,
+    "name": "Assassin",
+    "type": "Crusaderange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Crusaderange/Eventunit_Unit_Crusaderange--1573584429307.webp"
+  },
+  {
+    "id": 68,
+    "name": "Cave smasher",
+    "type": "Ogermace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Ogermace/Eventunit_Unit_Ogermace--1573584429307.webp"
+  },
+  {
+    "id": 74,
+    "name": "Cave hunter",
+    "type": "Ogercrossbow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Ogercrossbow/Eventunit_Unit_Ogercrossbow--1573584429307.webp"
+  },
+  {
+    "id": 78,
+    "name": "Renegade cave smasher",
+    "type": "Renegadeogermace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadeogermace/Eventunit_Unit_Renegadeogermace--1573584429307.webp"
+  },
+  {
+    "id": 79,
+    "name": "Renegade cave hunter",
+    "type": "Renegadeogercrossbow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadeogercrossbow/Eventunit_Unit_Renegadeogercrossbow--1573584429307.webp"
+  },
+  {
+    "id": 7,
+    "name": "Cave smasher",
+    "type": "Ogermace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Ogermace/Eventunit_Unit_Ogermace--1573584429307.webp"
+  },
+  {
+    "id": 8,
+    "name": "Cave hunter",
+    "type": "Ogercrossbow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Ogercrossbow/Eventunit_Unit_Ogercrossbow--1573584429307.webp"
+  },
+  {
+    "id": 716,
+    "name": "Swashbuckler",
+    "type": "Piratespeerman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Piratespeerman/Eventunit_Unit_Piratespeerman--1573584429307.webp"
+  },
+  {
+    "id": 701,
+    "name": "Swashbuckler",
+    "type": "Piratespeerman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Piratespeerman/Eventunit_Unit_Piratespeerman--1573584429307.webp"
+  },
+  {
+    "id": 702,
+    "name": "Swashbuckler",
+    "type": "Piratespeerman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Piratespeerman/Eventunit_Unit_Piratespeerman--1573584429307.webp"
+  },
+  {
+    "id": 717,
+    "name": "Sail ripper",
+    "type": "Piratebowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Piratebowman/Eventunit_Unit_Piratebowman--1573584429307.webp"
+  },
+  {
+    "id": 703,
+    "name": "Sail ripper",
+    "type": "Piratebowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Piratebowman/Eventunit_Unit_Piratebowman--1573584429307.webp"
+  },
+  {
+    "id": 704,
+    "name": "Sail ripper",
+    "type": "Piratebowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Piratebowman/Eventunit_Unit_Piratebowman--1573584429307.webp"
+  },
+  {
+    "id": 718,
+    "name": "Tentacle",
+    "type": "Tentacle",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Tentacle/Eventunit_Unit_Tentacle--1573584429307.webp"
+  },
+  {
+    "id": 719,
+    "name": "Kraken head",
+    "type": "Octopushead",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Octopushead/Eventunit_Unit_Octopushead--1573584429307.webp"
+  },
+  {
+    "id": 759,
+    "name": "Renegade swashbuckler",
+    "type": "Renegadepiratemelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadepiratemelee/Eventunit_Unit_Renegadepiratemelee--1573584429307.webp"
+  },
+  {
+    "id": 705,
+    "name": "Renegade swashbuckler",
+    "type": "Renegadepiratemelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadepiratemelee/Eventunit_Unit_Renegadepiratemelee--1573584429307.webp"
+  },
+  {
+    "id": 706,
+    "name": "Renegade swashbuckler",
+    "type": "Renegadepiratemelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadepiratemelee/Eventunit_Unit_Renegadepiratemelee--1573584429307.webp"
+  },
+  {
+    "id": 760,
+    "name": "Renegade sail ripper",
+    "type": "Renegadepiraterange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadepiraterange/Eventunit_Unit_Renegadepiraterange--1573584429307.webp"
+  },
+  {
+    "id": 707,
+    "name": "Renegade sail ripper",
+    "type": "Renegadepiraterange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadepiraterange/Eventunit_Unit_Renegadepiraterange--1573584429307.webp"
+  },
+  {
+    "id": 708,
+    "name": "Renegade sail ripper",
+    "type": "Renegadepiraterange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadepiraterange/Eventunit_Unit_Renegadepiraterange--1573584429307.webp"
+  },
+  {
+    "id": 13,
+    "name": "Muscle man",
+    "type": "AuxiliaryMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/SlumPackages/Eventunit_Unit_AuxiliaryMelee/Eventunit_Unit_AuxiliaryMelee--1573584429307.webp"
+  },
+  {
+    "id": 14,
+    "name": "Marksman",
+    "type": "AuxiliaryRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/SlumPackages/Eventunit_Unit_AuxiliaryRange/Eventunit_Unit_AuxiliaryRange--1573584429307.webp"
+  },
+  {
+    "id": 710,
+    "name": "Bear warrior",
+    "type": "Bluemelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Bluemelee/Eventunit_Unit_Bluemelee--1573584429307.webp"
+  },
+  {
+    "id": 711,
+    "name": "Bear bowman",
+    "type": "Bluerange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Bluerange/Eventunit_Unit_Bluerange--1573584429307.webp"
+  },
+  {
+    "id": 712,
+    "name": "Lion warrior",
+    "type": "Redmelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Redmelee/Eventunit_Unit_Redmelee--1573584429307.webp"
+  },
+  {
+    "id": 713,
+    "name": "Lion bowman",
+    "type": "Redrange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Redrange/Eventunit_Unit_Redrange--1573584429307.webp"
+  },
+  {
+    "id": 18,
+    "name": "Imperial guardsman",
+    "type": "BerimondRewardMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_BerimondRewardMelee/Eventunit_Unit_BerimondRewardMelee--1573584429307.webp"
+  },
+  {
+    "id": 19,
+    "name": "Imperial bowman",
+    "type": "BerimondRewardRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_BerimondRewardRange/Eventunit_Unit_BerimondRewardRange--1573584429307.webp"
+  },
+  {
+    "id": 20,
+    "name": "Imperial knight",
+    "type": "EliteBerimondRewardMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteBerimondRewardMelee/Eventunit_Unit_EliteBerimondRewardMelee--1573584429307.webp"
+  },
+  {
+    "id": 21,
+    "name": "Imperial marksman",
+    "type": "EliteBerimondRewardRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteBerimondRewardRange/Eventunit_Unit_EliteBerimondRewardRange--1573584429307.webp"
+  },
+  {
+    "id": 743,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 744,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 725,
+    "name": "Khan guard",
+    "type": "Khanguard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Khanguard/Eventunit_Unit_Khanguard--1573584429307.webp"
+  },
+  {
+    "id": 726,
+    "name": "Saber cleaver",
+    "type": "Saberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Saberslasher/Eventunit_Unit_Saberslasher--1573584429307.webp"
+  },
+  {
+    "id": 727,
+    "name": "Slingshot",
+    "type": "Slingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Slingshotmarksman/Eventunit_Unit_Slingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 5,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 6,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 728,
+    "name": "Renegade lancer",
+    "type": "Renegadepikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadepikeman/Eventunit_Unit_Renegadepikeman--1573584429307.webp"
+  },
+  {
+    "id": 729,
+    "name": "Renegade spear thrower",
+    "type": "Renegadespearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadespearthrower/Eventunit_Unit_Renegadespearthrower--1573584429307.webp"
+  },
+  {
+    "id": 34,
+    "name": "Renegade sai warrior",
+    "type": "SamuraiAttackerMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMelee/Eventunit_Unit_SamuraiAttackerMelee--1573584429307.webp"
+  },
+  {
+    "id": 35,
+    "name": "Renegade kunai thrower",
+    "type": "SamuraiAttackerRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRange/Eventunit_Unit_SamuraiAttackerRange--1573584429307.webp"
+  },
+  {
+    "id": 36,
+    "name": "Renegade katana warrior",
+    "type": "SamuraiDefenderMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMelee/Eventunit_Unit_SamuraiDefenderMelee--1573584429307.webp"
+  },
+  {
+    "id": 37,
+    "name": "Renegade bow master",
+    "type": "SamuraiDefenderRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRange/Eventunit_Unit_SamuraiDefenderRange--1573584429307.webp"
+  },
+  {
+    "id": 38,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 39,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 42,
+    "name": "Pumpkin butcher",
+    "type": "HalloweenMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_HalloweenMelee/Eventunit_Unit_HalloweenMelee--1573584429307.webp"
+  },
+  {
+    "id": 43,
+    "name": "Raven chomper",
+    "type": "HalloweenRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_HalloweenRange/Eventunit_Unit_HalloweenRange--1573584429307.webp"
+  },
+  {
+    "id": 48,
+    "name": "Bone huntress",
+    "type": "WinterAttackerMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_WinterAttackerMelee/Eventunit_Unit_WinterAttackerMelee--1573584429307.webp"
+  },
+  {
+    "id": 50,
+    "name": "Frost bowman",
+    "type": "WinterAttackerRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_WinterAttackerRange/Eventunit_Unit_WinterAttackerRange--1573584429307.webp"
+  },
+  {
+    "id": 51,
+    "name": "Master bone huntress",
+    "type": "EliteWinterAttackerMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteWinterAttackerMelee/Eventunit_Unit_EliteWinterAttackerMelee--1573584429307.webp"
+  },
+  {
+    "id": 52,
+    "name": "Master frost bowman",
+    "type": "EliteWinterAttackerRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteWinterAttackerRange/Eventunit_Unit_EliteWinterAttackerRange--1573584429307.webp"
+  },
+  {
+    "id": 83,
+    "name": "Forest warrior",
+    "type": "EliteSpringAttackerMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteSpringAttackerMelee/Eventunit_Unit_EliteSpringAttackerMelee--1573584429307.webp"
+  },
+  {
+    "id": 84,
+    "name": "Forest hunter",
+    "type": "EliteSpringAttackerRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteSpringAttackerRange/Eventunit_Unit_EliteSpringAttackerRange--1573584429307.webp"
+  },
+  {
+    "id": 85,
+    "name": "Forest guardian",
+    "type": "EliteSpringDefenderMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteSpringDefenderMelee/Eventunit_Unit_EliteSpringDefenderMelee--1573584429307.webp"
+  },
+  {
+    "id": 86,
+    "name": "Forest bowman",
+    "type": "EliteSpringDefenderRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteSpringDefenderRange/Eventunit_Unit_EliteSpringDefenderRange--1573584429307.webp"
+  },
+  {
+    "id": 132,
+    "name": "Gnomad warrior",
+    "type": "EliteChristmasAttackerMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteChristmasAttackerMelee/Eventunit_Unit_EliteChristmasAttackerMelee--1573584429307.webp"
+  },
+  {
+    "id": 133,
+    "name": "Gnomad archer",
+    "type": "EliteChristmasAttackerRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteChristmasAttackerRange/Eventunit_Unit_EliteChristmasAttackerRange--1573584429307.webp"
+  },
+  {
+    "id": 134,
+    "name": "Gingerbread brawler",
+    "type": "EliteChristmasDefenderMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteChristmasDefenderMelee/Eventunit_Unit_EliteChristmasDefenderMelee--1573584429307.webp"
+  },
+  {
+    "id": 135,
+    "name": "Gingerbread sniper",
+    "type": "EliteChristmasDefenderRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteChristmasDefenderRange/Eventunit_Unit_EliteChristmasDefenderRange--1573584429307.webp"
+  },
+  {
+    "id": 657,
+    "name": "Shark tooth warrior",
+    "type": "Nativemelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Nativemelee/Eventunit_Unit_Nativemelee--1573584429307.webp"
+  },
+  {
+    "id": 658,
+    "name": "Stone smasher",
+    "type": "Nativerange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Nativerange/Eventunit_Unit_Nativerange--1573584429307.webp"
+  },
+  {
+    "id": 767,
+    "name": "Renegade shark tooth warrior",
+    "type": "Renegadenativemelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadenativemelee/Eventunit_Unit_Renegadenativemelee--1573584429307.webp"
+  },
+  {
+    "id": 768,
+    "name": "Renegade stone smasher",
+    "type": "Renegadenativerange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadenativerange/Eventunit_Unit_Renegadenativerange--1573584429307.webp"
+  },
+  {
+    "id": 183,
+    "name": "Cultist brawler",
+    "type": "MayaMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_MayaMelee/Eventunit_Unit_MayaMelee--1573584429307.webp"
+  },
+  {
+    "id": 184,
+    "name": "Cultist slingshot",
+    "type": "MayaRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_MayaRange/Eventunit_Unit_MayaRange--1573584429307.webp"
+  },
+  {
+    "id": 185,
+    "name": "Cultist warrior",
+    "type": "MayaEliteMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_MayaEliteMelee/Eventunit_Unit_MayaEliteMelee--1573584429307.webp"
+  },
+  {
+    "id": 186,
+    "name": "Cultist hunter",
+    "type": "MayaEliteRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_MayaEliteRange/Eventunit_Unit_MayaEliteRange--1573584429307.webp"
+  },
+  {
+    "id": 187,
+    "name": "Wilderness brawler",
+    "type": "RenegadeMayaMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_RenegadeMayaMelee/Eventunit_Unit_RenegadeMayaMelee--1573584429307.webp"
+  },
+  {
+    "id": 188,
+    "name": "Wilderness slingshot",
+    "type": "RenegadeMayaRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_RenegadeMayaRange/Eventunit_Unit_RenegadeMayaRange--1573584429307.webp"
+  },
+  {
+    "id": 189,
+    "name": "Wilderness warrior",
+    "type": "RenegadeMayaEliteMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_RenegadeMayaEliteMelee/Eventunit_Unit_RenegadeMayaEliteMelee--1573584429307.webp"
+  },
+  {
+    "id": 190,
+    "name": "Wilderness hunter",
+    "type": "RenegadeMayaEliteRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_RenegadeMayaEliteRange/Eventunit_Unit_RenegadeMayaEliteRange--1573584429307.webp"
+  },
+  {
+    "id": 100,
+    "name": "Shamrock huntsman",
+    "type": "StpatricksDefenderMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_StpatricksDefenderMelee/Eventunit_Unit_StpatricksDefenderMelee--1573584429307.webp"
+  },
+  {
+    "id": 101,
+    "name": "Shamrock assassin",
+    "type": "StpatricksDefenderRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_StpatricksDefenderRange/Eventunit_Unit_StpatricksDefenderRange--1573584429307.webp"
+  },
+  {
+    "id": 102,
+    "name": "Spring huntress",
+    "type": "EasterDefenderMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EasterDefenderMelee/Eventunit_Unit_EasterDefenderMelee--1573584429307.webp"
+  },
+  {
+    "id": 103,
+    "name": "Spring footsoldier",
+    "type": "EasterDefenderRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EasterDefenderRange/Eventunit_Unit_EasterDefenderRange--1573584429307.webp"
+  },
+  {
+    "id": 146,
+    "name": "Knight of the Throne-watcher",
+    "type": "AlienRerollDefenderMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_AlienRerollDefenderMelee/Eventunit_Unit_AlienRerollDefenderMelee--1573584429307.webp"
+  },
+  {
+    "id": 147,
+    "name": "Marksman of the Throne-watcher",
+    "type": "AlienRerollDefenderRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_AlienRerollDefenderRange/Eventunit_Unit_AlienRerollDefenderRange--1573584429307.webp"
+  },
+  {
+    "id": 191,
+    "name": "Corrupted assassin",
+    "type": "CorruptedAssassin",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_CorruptedAssassin/Eventunit_Unit_CorruptedAssassin--1582215464505.webp"
+  },
+  {
+    "id": 192,
+    "name": "Corrupted crossbowman",
+    "type": "CorruptedCrossbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_CorruptedCrossbowman/Eventunit_Unit_CorruptedCrossbowman--1582215464505.webp"
+  },
+  {
+    "id": 193,
+    "name": "Corrupted veteran halberdier",
+    "type": "CorruptedEliteHalberdier",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_CorruptedEliteHalberdier/Eventunit_Unit_CorruptedEliteHalberdier--1582215464505.webp"
+  },
+  {
+    "id": 194,
+    "name": "Corrupted veteran longbowman",
+    "type": "CorruptedEliteLongbowman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_CorruptedEliteLongbowman/Eventunit_Unit_CorruptedEliteLongbowman--1582215464505.webp"
+  },
+  {
+    "id": 1337,
+    "name": "QuickAttack",
+    "type": "QuickAttack",
+    "image": null
+  },
+  {
+    "id": 205,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 206,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 207,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 208,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 209,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 210,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 211,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 212,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 213,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 214,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 216,
+    "name": "Valkyrie ranger",
+    "type": "MeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadRanger/Barracks_Unit_MeadRanger--1650458944632.webp"
+  },
+  {
+    "id": 217,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 218,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 219,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 220,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 221,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 222,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 223,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 224,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 225,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 226,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 227,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 489,
+    "name": "Protector of the north",
+    "type": "MeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadMace/Barracks_Unit_MeadMace--1650458944632.webp"
+  },
+  {
+    "id": 228,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 229,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 230,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 231,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 232,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 233,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 234,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 235,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 236,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 237,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 238,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 493,
+    "name": "Valkyrie sniper",
+    "type": "MeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadBow/Barracks_Unit_MeadBow--1650458944632.webp"
+  },
+  {
+    "id": 820,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 821,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 822,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 823,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 824,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 825,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 826,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 827,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 828,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 829,
+    "name": "Katana warrior",
+    "type": "SamuraiDefenderMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderMeleeNPC/Eventunit_Unit_SamuraiDefenderMeleeNPC--1573584429307.webp"
+  },
+  {
+    "id": 830,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 831,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 832,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 833,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 834,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 835,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 836,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 837,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 838,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 839,
+    "name": "Bow master",
+    "type": "SamuraiDefenderRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiDefenderRangeNPC/Eventunit_Unit_SamuraiDefenderRangeNPC--1573584429307.webp"
+  },
+  {
+    "id": 860,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMeleeNPC/Eventunit_Unit_SamuraiAttackerMeleeNPC--1638264179690.webp"
+  },
+  {
+    "id": 861,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMeleeNPC/Eventunit_Unit_SamuraiAttackerMeleeNPC--1638264179690.webp"
+  },
+  {
+    "id": 862,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMeleeNPC/Eventunit_Unit_SamuraiAttackerMeleeNPC--1638264179690.webp"
+  },
+  {
+    "id": 863,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMeleeNPC/Eventunit_Unit_SamuraiAttackerMeleeNPC--1638264179690.webp"
+  },
+  {
+    "id": 864,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMeleeNPC/Eventunit_Unit_SamuraiAttackerMeleeNPC--1638264179690.webp"
+  },
+  {
+    "id": 865,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMeleeNPC/Eventunit_Unit_SamuraiAttackerMeleeNPC--1638264179690.webp"
+  },
+  {
+    "id": 866,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMeleeNPC/Eventunit_Unit_SamuraiAttackerMeleeNPC--1638264179690.webp"
+  },
+  {
+    "id": 867,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMeleeNPC/Eventunit_Unit_SamuraiAttackerMeleeNPC--1638264179690.webp"
+  },
+  {
+    "id": 868,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMeleeNPC/Eventunit_Unit_SamuraiAttackerMeleeNPC--1638264179690.webp"
+  },
+  {
+    "id": 869,
+    "name": "Sai warrior",
+    "type": "SamuraiAttackerMeleeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerMeleeNPC/Eventunit_Unit_SamuraiAttackerMeleeNPC--1638264179690.webp"
+  },
+  {
+    "id": 870,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRangeNPC/Eventunit_Unit_SamuraiAttackerRangeNPC--1638264179690.webp"
+  },
+  {
+    "id": 871,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRangeNPC/Eventunit_Unit_SamuraiAttackerRangeNPC--1638264179690.webp"
+  },
+  {
+    "id": 872,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRangeNPC/Eventunit_Unit_SamuraiAttackerRangeNPC--1638264179690.webp"
+  },
+  {
+    "id": 873,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRangeNPC/Eventunit_Unit_SamuraiAttackerRangeNPC--1638264179690.webp"
+  },
+  {
+    "id": 874,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRangeNPC/Eventunit_Unit_SamuraiAttackerRangeNPC--1638264179690.webp"
+  },
+  {
+    "id": 875,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRangeNPC/Eventunit_Unit_SamuraiAttackerRangeNPC--1638264179690.webp"
+  },
+  {
+    "id": 876,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRangeNPC/Eventunit_Unit_SamuraiAttackerRangeNPC--1638264179690.webp"
+  },
+  {
+    "id": 877,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRangeNPC/Eventunit_Unit_SamuraiAttackerRangeNPC--1638264179690.webp"
+  },
+  {
+    "id": 878,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRangeNPC/Eventunit_Unit_SamuraiAttackerRangeNPC--1638264179690.webp"
+  },
+  {
+    "id": 879,
+    "name": "Kunai thrower",
+    "type": "SamuraiAttackerRangeNPC",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SamuraiAttackerRangeNPC/Eventunit_Unit_SamuraiAttackerRangeNPC--1638264179690.webp"
+  },
+  {
+    "id": 900,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 901,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 902,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 903,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 904,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 905,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 906,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 907,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 908,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 909,
+    "name": "Lancer",
+    "type": "Pikeman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Pikeman/Eventunit_Unit_Pikeman--1573584429307.webp"
+  },
+  {
+    "id": 910,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 911,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 912,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 913,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 914,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 915,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 916,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 917,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 918,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 919,
+    "name": "Spear thrower",
+    "type": "Spearthrower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Spearthrower/Eventunit_Unit_Spearthrower--1573584429307.webp"
+  },
+  {
+    "id": 940,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 941,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 942,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 943,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 944,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 945,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 946,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 947,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 948,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 949,
+    "name": "Veteran saber cleaver",
+    "type": "VeteranSaberslasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSaberslasher/Eventunit_Unit_VeteranSaberslasher--1573584429307.webp"
+  },
+  {
+    "id": 950,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 951,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 952,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 953,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 954,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 955,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 956,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 957,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 958,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 959,
+    "name": "Veteran slingshot",
+    "type": "VeteranSlingshotmarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_VeteranSlingshotmarksman/Eventunit_Unit_VeteranSlingshotmarksman--1573584429307.webp"
+  },
+  {
+    "id": 960,
+    "name": "Forest warrior",
+    "type": "EliteSpringAttackerMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteSpringAttackerMelee/Eventunit_Unit_EliteSpringAttackerMelee--1573584429307.webp"
+  },
+  {
+    "id": 961,
+    "name": "Forest hunter",
+    "type": "EliteSpringAttackerRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EliteSpringAttackerRange/Eventunit_Unit_EliteSpringAttackerRange--1573584429307.webp"
+  },
+  {
+    "id": 962,
+    "name": "Renegade swashbuckler",
+    "type": "Renegadepiratemelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadepiratemelee/Eventunit_Unit_Renegadepiratemelee--1573584429307.webp"
+  },
+  {
+    "id": 963,
+    "name": "Renegade sail ripper",
+    "type": "Renegadepiraterange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Renegadepiraterange/Eventunit_Unit_Renegadepiraterange--1573584429307.webp"
+  },
+  {
+    "id": 409,
+    "name": "Star-Spangled Veteran demon horror",
+    "type": "EliteRankrewardmeleeUSA",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/USA/Eventunit_Unit_EliteRankrewardmeleeUSA/Eventunit_Unit_EliteRankrewardmeleeUSA--1686822757368.webp"
+  },
+  {
+    "id": 410,
+    "name": "Star-Spangled Veteran deathly horror",
+    "type": "EliteRankrewardrangeUSA",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/USA/Eventunit_Unit_EliteRankrewardrangeUSA/Eventunit_Unit_EliteRankrewardrangeUSA--1686822757368.webp"
+  },
+  {
+    "id": 472,
+    "name": "Forsaken maiden",
+    "type": "ForsakenMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ForsakenMaiden/Barracks_Unit_ForsakenMaiden--1695118613307.webp"
+  },
+  {
+    "id": 473,
+    "name": "Forlorn ranger",
+    "type": "ForlornRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ForlornRanger/Eventunit_Unit_ForlornRanger--1729607115608.webp"
+  },
+  {
+    "id": 477,
+    "name": "Candy Cane Protector",
+    "type": "GingerBreadMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GingerBreadMaiden/Barracks_Unit_GingerBreadMaiden--1700561614699.webp"
+  },
+  {
+    "id": 478,
+    "name": "Jolly Gingerbread Sniper",
+    "type": "GingerBreadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GingerBreadRanger/Barracks_Unit_GingerBreadRanger--1700561614699.webp"
+  },
+  {
+    "id": 670,
+    "name": "Norseman with axe",
+    "type": "Axeviking",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Axeviking/Eventunit_Unit_Axeviking--1573584429307.webp"
+  },
+  {
+    "id": 671,
+    "name": "Norseman with bow",
+    "type": "Bowviking",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Bowviking/Eventunit_Unit_Bowviking--1573584429307.webp"
+  },
+  {
+    "id": 659,
+    "name": "Prince",
+    "type": "PrinceNoob",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_PrinceNoob/Eventunit_Unit_PrinceNoob--1573584429307.webp"
+  },
+  {
+    "id": 299,
+    "name": "Valkyrie Huntress",
+    "type": "EasterMeadRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EasterMeadRanger/Eventunit_Unit_EasterMeadRanger--1709722722825.webp"
+  },
+  {
+    "id": 336,
+    "name": "Guardian of Spring",
+    "type": "EasterMeadMace",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EasterMeadMace/Eventunit_Unit_EasterMeadMace--1709722722825.webp"
+  },
+  {
+    "id": 347,
+    "name": "Celestial Marksman",
+    "type": "EasterMeadBow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EasterMeadBow/Eventunit_Unit_EasterMeadBow--1709722722825.webp"
+  },
+  {
+    "id": 513,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 514,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 515,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 516,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 517,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 518,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 519,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 520,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 521,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 522,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 523,
+    "name": "Glasswing Archer",
+    "type": "GlassWingArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_GlassWingArcher/Barracks_Unit_GlassWingArcher--1716376709040.webp"
+  },
+  {
+    "id": 524,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 525,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 526,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 527,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 528,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 529,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 530,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 531,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 532,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 533,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 534,
+    "name": "Flamebreath Berserker",
+    "type": "FlameBreathBerserker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_FlameBreathBerserker/Barracks_Unit_FlameBreathBerserker--1716376709040.webp"
+  },
+  {
+    "id": 535,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 536,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 537,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 538,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 539,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 540,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 541,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 542,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 543,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 544,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 545,
+    "name": "Scalebound Guardian",
+    "type": "ScaleBoundGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleBoundGuardian/Barracks_Unit_ScaleBoundGuardian--1716381115754.webp"
+  },
+  {
+    "id": 546,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 547,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 548,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 549,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 550,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 551,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 552,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 553,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 554,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 555,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 556,
+    "name": "Scaleshard Marksman",
+    "type": "ScaleShardMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ScaleShardMarksman/Barracks_Unit_ScaleShardMarksman--1716381115754.webp"
+  },
+  {
+    "id": 15,
+    "name": "Fruit Pirate",
+    "type": "FruitPirate",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_FruitPirate/Eventunit_Unit_FruitPirate--1718030774379.webp"
+  },
+  {
+    "id": 358,
+    "name": "Summer Huntress",
+    "type": "SummerHuntress",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SummerHuntress/Eventunit_Unit_SummerHuntress--1718030774379.webp"
+  },
+  {
+    "id": 369,
+    "name": "Fruit Breaker",
+    "type": "FruitBreaker",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_FruitBreaker/Eventunit_Unit_FruitBreaker--1718030774379.webp"
+  },
+  {
+    "id": 461,
+    "name": "Summer Marksman",
+    "type": "SummerMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SummerMarksman/Eventunit_Unit_SummerMarksman--1718030774379.webp"
+  },
+  {
+    "id": 479,
+    "name": "Stein Smasher",
+    "type": "SteinSmasher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_SteinSmasher/Eventunit_Unit_SteinSmasher--1725355383633.webp"
+  },
+  {
+    "id": 480,
+    "name": "Cask Marksmann",
+    "type": "CaskMarksmann",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_CaskMarksmann/Eventunit_Unit_CaskMarksmann--1725355383633.webp"
+  },
+  {
+    "id": 481,
+    "name": "Pretzel Guardian",
+    "type": "PretzelGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_PretzelGuardian/Eventunit_Unit_PretzelGuardian--1725355383633.webp"
+  },
+  {
+    "id": 482,
+    "name": "Bavarian Brewer",
+    "type": "BavarianBrewer",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_BavarianBrewer/Eventunit_Unit_BavarianBrewer--1725355383633.webp"
+  },
+  {
+    "id": 483,
+    "name": "Forsaken maiden",
+    "type": "ForsakenMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_ForsakenMaiden/Barracks_Unit_ForsakenMaiden--1695118613307.webp"
+  },
+  {
+    "id": 484,
+    "name": "Forlorn ranger",
+    "type": "ForlornRanger",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ForlornRanger/Eventunit_Unit_ForlornRanger--1729607115608.webp"
+  },
+  {
+    "id": 485,
+    "name": "Glacial Amazon Warrior",
+    "type": "GlacialAmazonWarrior",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_GlacialAmazonWarrior/Eventunit_Unit_GlacialAmazonWarrior--1730207342160.webp"
+  },
+  {
+    "id": 486,
+    "name": "Glacial Amazon Archer",
+    "type": "GlacialAmazonArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_GlacialAmazonArcher/Eventunit_Unit_GlacialAmazonArcher--1730207342160.webp"
+  },
+  {
+    "id": 487,
+    "name": "Glacial Amazon Guardian",
+    "type": "GlacialAmazonGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_GlacialAmazonGuardian/Eventunit_Unit_GlacialAmazonGuardian--1730207342160.webp"
+  },
+  {
+    "id": 488,
+    "name": "Glacial Amazon Huntress",
+    "type": "GlacialAmazonHuntress",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_GlacialAmazonHuntress/Eventunit_Unit_GlacialAmazonHuntress--1730207342160.webp"
+  },
+  {
+    "id": 494,
+    "name": "Christmas Warrior",
+    "type": "ChristmasWarrior",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ChristmasWarrior/Eventunit_Unit_ChristmasWarrior--1732280717202.webp"
+  },
+  {
+    "id": 495,
+    "name": "Christmas Archer",
+    "type": "ChristmasArcher",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ChristmasArcher/Eventunit_Unit_ChristmasArcher--1732280717202.webp"
+  },
+  {
+    "id": 496,
+    "name": "Christmas Guardian",
+    "type": "ChristmasGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ChristmasGuardian/Eventunit_Unit_ChristmasGuardian--1732280717202.webp"
+  },
+  {
+    "id": 497,
+    "name": "Christmas Huntress",
+    "type": "ChristmasHuntress",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ChristmasHuntress/Eventunit_Unit_ChristmasHuntress--1732280717202.webp"
+  },
+  {
+    "id": 498,
+    "name": "Festive Warrior",
+    "type": "AnniversaryTroopMeleeOff",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_AnniversaryTroopMeleeOff/Eventunit_Unit_AnniversaryTroopMeleeOff--1753700607060.webp"
+  },
+  {
+    "id": 499,
+    "name": "Festive Archer",
+    "type": "AnniversaryTroopRangedOff",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_AnniversaryTroopRangedOff/Eventunit_Unit_AnniversaryTroopRangedOff--1753700607060.webp"
+  },
+  {
+    "id": 500,
+    "name": "Festive Guardian",
+    "type": "AnniversaryTroopMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_AnniversaryTroopMeleeDef/Eventunit_Unit_AnniversaryTroopMeleeDef--1753700607060.webp"
+  },
+  {
+    "id": 501,
+    "name": "Festive Huntress",
+    "type": "AnniversaryTroopRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_AnniversaryTroopRangedDef/Eventunit_Unit_AnniversaryTroopRangedDef--1753700607060.webp"
+  },
+  {
+    "id": 502,
+    "name": "Forsaken maiden",
+    "type": "Halloween2025TroopMeleeOff",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Halloween2025TroopMeleeOff/Eventunit_Unit_Halloween2025TroopMeleeOff--1760000576076.webp"
+  },
+  {
+    "id": 503,
+    "name": "Forlorn ranger",
+    "type": "Halloween2025TroopRangedOff",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_Halloween2025TroopRangedOff/Eventunit_Unit_Halloween2025TroopRangedOff--1760000576076.webp"
+  },
+  {
+    "id": 504,
+    "name": "Corrupted Subject",
+    "type": "ZombieDefender",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ZombieDefender/Eventunit_Unit_ZombieDefender--1761118324685.webp"
+  },
+  {
+    "id": 505,
+    "name": "Decayed Axe Bearer",
+    "type": "ZombieGuardian",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ZombieGuardian/Eventunit_Unit_ZombieGuardian--1761118324685.webp"
+  },
+  {
+    "id": 506,
+    "name": "Decayed Bolt Slinger",
+    "type": "ZombieMarksman",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_ZombieMarksman/Eventunit_Unit_ZombieMarksman--1761118324685.webp"
+  },
+  {
+    "id": 593,
+    "name": "Fungus Guard",
+    "type": "FungalNormalMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_FungalNormalMelee/Eventunit_Unit_FungalNormalMelee--1769771377029.webp"
+  },
+  {
+    "id": 594,
+    "name": "Dormant Spore Maw",
+    "type": "FungalSporeMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_FungalSporeMelee/Eventunit_Unit_FungalSporeMelee--1769771377029.webp"
+  },
+  {
+    "id": 595,
+    "name": "Spore Gnasher",
+    "type": "FungalStrongMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_FungalStrongMelee/Eventunit_Unit_FungalStrongMelee--1769771377029.webp"
+  },
+  {
+    "id": 596,
+    "name": "Spore Slinger",
+    "type": "FungalNormalRanged",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_FungalNormalRanged/Eventunit_Unit_FungalNormalRanged--1769771377029.webp"
+  },
+  {
+    "id": 597,
+    "name": "Dormant Spore Cyst",
+    "type": "FungalSporeRanged",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_FungalSporeRanged/Eventunit_Unit_FungalSporeRanged--1769771377029.webp"
+  },
+  {
+    "id": 598,
+    "name": "Cyst-born Sporecaster",
+    "type": "FungalStrongRanged",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_FungalStrongRanged/Eventunit_Unit_FungalStrongRanged--1769771377029.webp"
+  },
+  {
+    "id": 640,
+    "name": "Siege tower",
+    "type": "Siegetower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_Siegetower/Workshop_Unit_Siegetower--1573584429307.webp"
+  },
+  {
+    "id": 733,
+    "name": "Grappling hooks",
+    "type": "Grapplinghook",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Elitetool/Elitetool_Unit_Grapplinghook/Elitetool_Unit_Grapplinghook--1573584429307.webp"
+  },
+  {
+    "id": 3,
+    "name": "The wolf's howl",
+    "type": "Fenriswolfhorn",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Elitetool/Elitetool_Unit_Fenriswolfhorn/Elitetool_Unit_Fenriswolfhorn--1573584429307.webp"
+  },
+  {
+    "id": 165,
+    "name": "Case of the Shogun",
+    "type": "CaseOfTheShogun",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_CaseOfTheShogun/Eventtool_Unit_CaseOfTheShogun--1573584429307.webp"
+  },
+  {
+    "id": 111,
+    "name": "Reinforced portcullis",
+    "type": "NomadEliteDefenseGate",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Elitetool_Unit_NomadEliteDefenseGate/Elitetool_Unit_NomadEliteDefenseGate--1573584429307.webp"
+  },
+  {
+    "id": 109,
+    "name": "Nomadic murder hole",
+    "type": "NomadEliteDefenseWall",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Elitetool_Unit_NomadEliteDefenseWall/Elitetool_Unit_NomadEliteDefenseWall--1573584429307.webp"
+  },
+  {
+    "id": 110,
+    "name": "Balistraria",
+    "type": "NomadEliteDefenseRanged",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Elitetool_Unit_NomadEliteDefenseRanged/Elitetool_Unit_NomadEliteDefenseRanged--1573584429307.webp"
+  },
+  {
+    "id": 182,
+    "name": "Flaming arrows",
+    "type": "MayaArrow",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_MayaArrow/Eventtool_Unit_MayaArrow--1573584429307.webp"
+  },
+  {
+    "id": 108,
+    "name": "Plunderer's trunk",
+    "type": "NomadDefenseKeep",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Elitetool_Unit_NomadDefenseKeep/Elitetool_Unit_NomadDefenseKeep--1573584429307.webp"
+  },
+  {
+    "id": 245,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 246,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 247,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 248,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 249,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 250,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 251,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 252,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 253,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 254,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 255,
+    "name": "Fortified ram",
+    "type": "SceatAttGateDefRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttGateDefRange/Workshop_Unit_SceatAttGateDefRange--1629981650436.webp"
+  },
+  {
+    "id": 267,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallMelee/Workshop_Unit_SceatAttWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 268,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallMelee/Workshop_Unit_SceatAttWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 269,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallMelee/Workshop_Unit_SceatAttWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 270,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallMelee/Workshop_Unit_SceatAttWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 271,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallMelee/Workshop_Unit_SceatAttWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 272,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallMelee/Workshop_Unit_SceatAttWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 273,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallMelee/Workshop_Unit_SceatAttWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 274,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallMelee/Workshop_Unit_SceatAttWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 275,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallMelee/Workshop_Unit_SceatAttWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 276,
+    "name": "Hookshot cannon",
+    "type": "SceatAttWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallMelee/Workshop_Unit_SceatAttWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 289,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallAttRange/Workshop_Unit_SceatAttWallAttRange--1630666678405.webp"
+  },
+  {
+    "id": 290,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallAttRange/Workshop_Unit_SceatAttWallAttRange--1630666678405.webp"
+  },
+  {
+    "id": 291,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallAttRange/Workshop_Unit_SceatAttWallAttRange--1630666678405.webp"
+  },
+  {
+    "id": 292,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallAttRange/Workshop_Unit_SceatAttWallAttRange--1630666678405.webp"
+  },
+  {
+    "id": 293,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallAttRange/Workshop_Unit_SceatAttWallAttRange--1630666678405.webp"
+  },
+  {
+    "id": 294,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallAttRange/Workshop_Unit_SceatAttWallAttRange--1630666678405.webp"
+  },
+  {
+    "id": 295,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallAttRange/Workshop_Unit_SceatAttWallAttRange--1630666678405.webp"
+  },
+  {
+    "id": 296,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallAttRange/Workshop_Unit_SceatAttWallAttRange--1630666678405.webp"
+  },
+  {
+    "id": 297,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallAttRange/Workshop_Unit_SceatAttWallAttRange--1630666678405.webp"
+  },
+  {
+    "id": 298,
+    "name": "Siege mortar",
+    "type": "SceatAttWallAttRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatAttWallAttRange/Workshop_Unit_SceatAttWallAttRange--1630666678405.webp"
+  },
+  {
+    "id": 300,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 301,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 302,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 303,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 304,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 305,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 306,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 307,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 310,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 313,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 314,
+    "name": "Thunder crash bomb",
+    "type": "SceatDefGateRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefGateRange/Dworkshop_Unit_SceatDefGateRange--1629981650436.webp"
+  },
+  {
+    "id": 326,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatDefWallRange/Workshop_Unit_SceatDefWallRange--1628845890803.webp"
+  },
+  {
+    "id": 327,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatDefWallRange/Workshop_Unit_SceatDefWallRange--1628845890803.webp"
+  },
+  {
+    "id": 328,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatDefWallRange/Workshop_Unit_SceatDefWallRange--1628845890803.webp"
+  },
+  {
+    "id": 329,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatDefWallRange/Workshop_Unit_SceatDefWallRange--1628845890803.webp"
+  },
+  {
+    "id": 330,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatDefWallRange/Workshop_Unit_SceatDefWallRange--1628845890803.webp"
+  },
+  {
+    "id": 331,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatDefWallRange/Workshop_Unit_SceatDefWallRange--1628845890803.webp"
+  },
+  {
+    "id": 332,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatDefWallRange/Workshop_Unit_SceatDefWallRange--1628845890803.webp"
+  },
+  {
+    "id": 333,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatDefWallRange/Workshop_Unit_SceatDefWallRange--1628845890803.webp"
+  },
+  {
+    "id": 334,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatDefWallRange/Workshop_Unit_SceatDefWallRange--1628845890803.webp"
+  },
+  {
+    "id": 335,
+    "name": "Field cannon",
+    "type": "SceatDefWallRange",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatDefWallRange/Workshop_Unit_SceatDefWallRange--1628845890803.webp"
+  },
+  {
+    "id": 348,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefWallMelee/Dworkshop_Unit_SceatDefWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 349,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefWallMelee/Dworkshop_Unit_SceatDefWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 350,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefWallMelee/Dworkshop_Unit_SceatDefWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 351,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefWallMelee/Dworkshop_Unit_SceatDefWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 352,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefWallMelee/Dworkshop_Unit_SceatDefWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 353,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefWallMelee/Dworkshop_Unit_SceatDefWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 354,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefWallMelee/Dworkshop_Unit_SceatDefWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 355,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefWallMelee/Dworkshop_Unit_SceatDefWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 356,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefWallMelee/Dworkshop_Unit_SceatDefWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 357,
+    "name": "Spike board",
+    "type": "SceatDefWallMelee",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatDefWallMelee/Dworkshop_Unit_SceatDefWallMelee--1630666678405.webp"
+  },
+  {
+    "id": 359,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillMeleeDef/Workshop_Unit_SceatSuppKillMeleeDef--1638350944278.webp"
+  },
+  {
+    "id": 360,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillMeleeDef/Workshop_Unit_SceatSuppKillMeleeDef--1638350944278.webp"
+  },
+  {
+    "id": 361,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillMeleeDef/Workshop_Unit_SceatSuppKillMeleeDef--1638350944278.webp"
+  },
+  {
+    "id": 362,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillMeleeDef/Workshop_Unit_SceatSuppKillMeleeDef--1638350944278.webp"
+  },
+  {
+    "id": 363,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillMeleeDef/Workshop_Unit_SceatSuppKillMeleeDef--1638350944278.webp"
+  },
+  {
+    "id": 364,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillMeleeDef/Workshop_Unit_SceatSuppKillMeleeDef--1638350944278.webp"
+  },
+  {
+    "id": 365,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillMeleeDef/Workshop_Unit_SceatSuppKillMeleeDef--1638350944278.webp"
+  },
+  {
+    "id": 366,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillMeleeDef/Workshop_Unit_SceatSuppKillMeleeDef--1638350944278.webp"
+  },
+  {
+    "id": 367,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillMeleeDef/Workshop_Unit_SceatSuppKillMeleeDef--1638350944278.webp"
+  },
+  {
+    "id": 368,
+    "name": "Shrapnel bomb",
+    "type": "SceatSuppKillMeleeDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillMeleeDef/Workshop_Unit_SceatSuppKillMeleeDef--1638350944278.webp"
+  },
+  {
+    "id": 370,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillRangedDef/Workshop_Unit_SceatSuppKillRangedDef--1638350944278.webp"
+  },
+  {
+    "id": 371,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillRangedDef/Workshop_Unit_SceatSuppKillRangedDef--1638350944278.webp"
+  },
+  {
+    "id": 372,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillRangedDef/Workshop_Unit_SceatSuppKillRangedDef--1638350944278.webp"
+  },
+  {
+    "id": 373,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillRangedDef/Workshop_Unit_SceatSuppKillRangedDef--1638350944278.webp"
+  },
+  {
+    "id": 374,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillRangedDef/Workshop_Unit_SceatSuppKillRangedDef--1638350944278.webp"
+  },
+  {
+    "id": 375,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillRangedDef/Workshop_Unit_SceatSuppKillRangedDef--1638350944278.webp"
+  },
+  {
+    "id": 376,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillRangedDef/Workshop_Unit_SceatSuppKillRangedDef--1638350944278.webp"
+  },
+  {
+    "id": 377,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillRangedDef/Workshop_Unit_SceatSuppKillRangedDef--1638350944278.webp"
+  },
+  {
+    "id": 378,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillRangedDef/Workshop_Unit_SceatSuppKillRangedDef--1638350944278.webp"
+  },
+  {
+    "id": 379,
+    "name": "Organ cannon",
+    "type": "SceatSuppKillRangedDef",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppKillRangedDef/Workshop_Unit_SceatSuppKillRangedDef--1638350944278.webp"
+  },
+  {
+    "id": 381,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttAttackPower/Workshop_Unit_SceatSuppAttAttackPower--1638350944278.webp"
+  },
+  {
+    "id": 382,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttAttackPower/Workshop_Unit_SceatSuppAttAttackPower--1638350944278.webp"
+  },
+  {
+    "id": 383,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttAttackPower/Workshop_Unit_SceatSuppAttAttackPower--1638350944278.webp"
+  },
+  {
+    "id": 384,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttAttackPower/Workshop_Unit_SceatSuppAttAttackPower--1638350944278.webp"
+  },
+  {
+    "id": 385,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttAttackPower/Workshop_Unit_SceatSuppAttAttackPower--1638350944278.webp"
+  },
+  {
+    "id": 386,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttAttackPower/Workshop_Unit_SceatSuppAttAttackPower--1638350944278.webp"
+  },
+  {
+    "id": 387,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttAttackPower/Workshop_Unit_SceatSuppAttAttackPower--1638350944278.webp"
+  },
+  {
+    "id": 388,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttAttackPower/Workshop_Unit_SceatSuppAttAttackPower--1638350944278.webp"
+  },
+  {
+    "id": 389,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttAttackPower/Workshop_Unit_SceatSuppAttAttackPower--1638350944278.webp"
+  },
+  {
+    "id": 390,
+    "name": "Hand cannon",
+    "type": "SceatSuppAttAttackPower",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttAttackPower/Workshop_Unit_SceatSuppAttAttackPower--1638350944278.webp"
+  },
+  {
+    "id": 391,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttPowerYard/Workshop_Unit_SceatSuppAttPowerYard--1638350944278.webp"
+  },
+  {
+    "id": 392,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttPowerYard/Workshop_Unit_SceatSuppAttPowerYard--1638350944278.webp"
+  },
+  {
+    "id": 393,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttPowerYard/Workshop_Unit_SceatSuppAttPowerYard--1638350944278.webp"
+  },
+  {
+    "id": 394,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttPowerYard/Workshop_Unit_SceatSuppAttPowerYard--1638350944278.webp"
+  },
+  {
+    "id": 395,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttPowerYard/Workshop_Unit_SceatSuppAttPowerYard--1638350944278.webp"
+  },
+  {
+    "id": 396,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttPowerYard/Workshop_Unit_SceatSuppAttPowerYard--1638350944278.webp"
+  },
+  {
+    "id": 397,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttPowerYard/Workshop_Unit_SceatSuppAttPowerYard--1638350944278.webp"
+  },
+  {
+    "id": 398,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttPowerYard/Workshop_Unit_SceatSuppAttPowerYard--1638350944278.webp"
+  },
+  {
+    "id": 399,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttPowerYard/Workshop_Unit_SceatSuppAttPowerYard--1638350944278.webp"
+  },
+  {
+    "id": 400,
+    "name": "Assault flame thrower",
+    "type": "SceatSuppAttPowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttPowerYard/Workshop_Unit_SceatSuppAttPowerYard--1638350944278.webp"
+  },
+  {
+    "id": 401,
+    "name": "Warwagon",
+    "type": "SceatSuppAttWaves",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttWaves/Workshop_Unit_SceatSuppAttWaves--1638350944278.webp"
+  },
+  {
+    "id": 402,
+    "name": "Warwagon",
+    "type": "SceatSuppAttWaves",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttWaves/Workshop_Unit_SceatSuppAttWaves--1638350944278.webp"
+  },
+  {
+    "id": 403,
+    "name": "Warwagon",
+    "type": "SceatSuppAttWaves",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttWaves/Workshop_Unit_SceatSuppAttWaves--1638350944278.webp"
+  },
+  {
+    "id": 567,
+    "name": "Warwagon",
+    "type": "SceatSuppAttWaves",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Workshop/Workshop_Unit_SceatSuppAttWaves/Workshop_Unit_SceatSuppAttWaves--1638350944278.webp"
+  },
+  {
+    "id": 421,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillAttackers/Dworkshop_Unit_SceatSuppDefKillAttackers--1635414127809.webp"
+  },
+  {
+    "id": 422,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillAttackers/Dworkshop_Unit_SceatSuppDefKillAttackers--1635414127809.webp"
+  },
+  {
+    "id": 423,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillAttackers/Dworkshop_Unit_SceatSuppDefKillAttackers--1635414127809.webp"
+  },
+  {
+    "id": 424,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillAttackers/Dworkshop_Unit_SceatSuppDefKillAttackers--1635414127809.webp"
+  },
+  {
+    "id": 425,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillAttackers/Dworkshop_Unit_SceatSuppDefKillAttackers--1635414127809.webp"
+  },
+  {
+    "id": 426,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillAttackers/Dworkshop_Unit_SceatSuppDefKillAttackers--1635414127809.webp"
+  },
+  {
+    "id": 427,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillAttackers/Dworkshop_Unit_SceatSuppDefKillAttackers--1635414127809.webp"
+  },
+  {
+    "id": 428,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillAttackers/Dworkshop_Unit_SceatSuppDefKillAttackers--1635414127809.webp"
+  },
+  {
+    "id": 429,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillAttackers/Dworkshop_Unit_SceatSuppDefKillAttackers--1635414127809.webp"
+  },
+  {
+    "id": 430,
+    "name": "Spear trap",
+    "type": "SceatSuppDefKillAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillAttackers/Dworkshop_Unit_SceatSuppDefKillAttackers--1635414127809.webp"
+  },
+  {
+    "id": 431,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefDefensePowerYard/Dworkshop_Unit_SceatSuppDefDefensePowerYard--1635414127809.webp"
+  },
+  {
+    "id": 432,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefDefensePowerYard/Dworkshop_Unit_SceatSuppDefDefensePowerYard--1635414127809.webp"
+  },
+  {
+    "id": 433,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefDefensePowerYard/Dworkshop_Unit_SceatSuppDefDefensePowerYard--1635414127809.webp"
+  },
+  {
+    "id": 434,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefDefensePowerYard/Dworkshop_Unit_SceatSuppDefDefensePowerYard--1635414127809.webp"
+  },
+  {
+    "id": 435,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefDefensePowerYard/Dworkshop_Unit_SceatSuppDefDefensePowerYard--1635414127809.webp"
+  },
+  {
+    "id": 436,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefDefensePowerYard/Dworkshop_Unit_SceatSuppDefDefensePowerYard--1635414127809.webp"
+  },
+  {
+    "id": 437,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefDefensePowerYard/Dworkshop_Unit_SceatSuppDefDefensePowerYard--1635414127809.webp"
+  },
+  {
+    "id": 438,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefDefensePowerYard/Dworkshop_Unit_SceatSuppDefDefensePowerYard--1635414127809.webp"
+  },
+  {
+    "id": 439,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefDefensePowerYard/Dworkshop_Unit_SceatSuppDefDefensePowerYard--1635414127809.webp"
+  },
+  {
+    "id": 440,
+    "name": "Fire trap",
+    "type": "SceatSuppDefDefensePowerYard",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefDefensePowerYard/Dworkshop_Unit_SceatSuppDefDefensePowerYard--1635414127809.webp"
+  },
+  {
+    "id": 441,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefWallAmount/Dworkshop_Unit_SceatSuppDefWallAmount--1650458944632.webp"
+  },
+  {
+    "id": 442,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefWallAmount/Dworkshop_Unit_SceatSuppDefWallAmount--1650458944632.webp"
+  },
+  {
+    "id": 443,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefWallAmount/Dworkshop_Unit_SceatSuppDefWallAmount--1650458944632.webp"
+  },
+  {
+    "id": 444,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefWallAmount/Dworkshop_Unit_SceatSuppDefWallAmount--1650458944632.webp"
+  },
+  {
+    "id": 445,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefWallAmount/Dworkshop_Unit_SceatSuppDefWallAmount--1650458944632.webp"
+  },
+  {
+    "id": 446,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefWallAmount/Dworkshop_Unit_SceatSuppDefWallAmount--1650458944632.webp"
+  },
+  {
+    "id": 447,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefWallAmount/Dworkshop_Unit_SceatSuppDefWallAmount--1650458944632.webp"
+  },
+  {
+    "id": 448,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefWallAmount/Dworkshop_Unit_SceatSuppDefWallAmount--1650458944632.webp"
+  },
+  {
+    "id": 449,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefWallAmount/Dworkshop_Unit_SceatSuppDefWallAmount--1650458944632.webp"
+  },
+  {
+    "id": 450,
+    "name": "Wooden hoarding",
+    "type": "SceatSuppDefWallAmount",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefWallAmount/Dworkshop_Unit_SceatSuppDefWallAmount--1650458944632.webp"
+  },
+  {
+    "id": 451,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers--1650458944632.webp"
+  },
+  {
+    "id": 452,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers--1650458944632.webp"
+  },
+  {
+    "id": 453,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers--1650458944632.webp"
+  },
+  {
+    "id": 454,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers--1650458944632.webp"
+  },
+  {
+    "id": 455,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers--1650458944632.webp"
+  },
+  {
+    "id": 456,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers--1650458944632.webp"
+  },
+  {
+    "id": 457,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers--1650458944632.webp"
+  },
+  {
+    "id": 458,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers--1650458944632.webp"
+  },
+  {
+    "id": 459,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers--1650458944632.webp"
+  },
+  {
+    "id": 460,
+    "name": "Mobile cauldron",
+    "type": "SceatSuppDefKillMeleeAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers/Dworkshop_Unit_SceatSuppDefKillMeleeAttackers--1650458944632.webp"
+  },
+  {
+    "id": 462,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillRangedAttackers/Dworkshop_Unit_SceatSuppDefKillRangedAttackers--1650458944632.webp"
+  },
+  {
+    "id": 463,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillRangedAttackers/Dworkshop_Unit_SceatSuppDefKillRangedAttackers--1650458944632.webp"
+  },
+  {
+    "id": 464,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillRangedAttackers/Dworkshop_Unit_SceatSuppDefKillRangedAttackers--1650458944632.webp"
+  },
+  {
+    "id": 465,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillRangedAttackers/Dworkshop_Unit_SceatSuppDefKillRangedAttackers--1650458944632.webp"
+  },
+  {
+    "id": 466,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillRangedAttackers/Dworkshop_Unit_SceatSuppDefKillRangedAttackers--1650458944632.webp"
+  },
+  {
+    "id": 467,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillRangedAttackers/Dworkshop_Unit_SceatSuppDefKillRangedAttackers--1650458944632.webp"
+  },
+  {
+    "id": 468,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillRangedAttackers/Dworkshop_Unit_SceatSuppDefKillRangedAttackers--1650458944632.webp"
+  },
+  {
+    "id": 469,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillRangedAttackers/Dworkshop_Unit_SceatSuppDefKillRangedAttackers--1650458944632.webp"
+  },
+  {
+    "id": 470,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillRangedAttackers/Dworkshop_Unit_SceatSuppDefKillRangedAttackers--1650458944632.webp"
+  },
+  {
+    "id": 471,
+    "name": "Explosive arrows",
+    "type": "SceatSuppDefKillRangedAttackers",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Dworkshop/Dworkshop_Unit_SceatSuppDefKillRangedAttackers/Dworkshop_Unit_SceatSuppDefKillRangedAttackers--1650458944632.webp"
+  }
+]

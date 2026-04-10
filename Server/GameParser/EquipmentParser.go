@@ -2,6 +2,7 @@ package GameParser
 
 import (
 	"CitadelDesktop/Server/Models"
+	equip "CitadelDesktop/Server/Models/Equipment"
 	"math"
 )
 
@@ -16,11 +17,11 @@ func UpdateEquipmentList(gliMap map[string]interface{}) {
 		return // commArray is not a slice, skip processing
 	}
 
-	gs.CommActualArray = make([]Models.CommActualModel, len(commArray))
-	Models.CommStatArray = make([]Models.CommStatModel, len(commArray))
+	gs.Equipment.CommActualArray = make([]Models.CommActualModel, len(commArray))
+	equip.CommStatArray = make([]Models.CommStatModel, len(commArray))
 
-	gs.CastActualArray = make([]Models.CastActualModel, 0, len(castArray))
-	Models.CastStatArray = make([]Models.CastStatModel, 0, len(castArray))
+	gs.Equipment.CastActualArray = make([]Models.CastActualModel, 0, len(castArray))
+	equip.CastStatArray = make([]Models.CastStatModel, 0, len(castArray))
 
 	ProcessCastArray(castArray)
 	ProcessCommArray(commArray)
@@ -41,42 +42,48 @@ func ProcessCastArray(castArray []interface{}) {
 		var tempCastStat Models.CastStatModel
 		var tempCastActual Models.CastActualModel
 
-		// Set default or known values
+		c := &gs.Castle
+		// Set default or known values (CastlePosition 0..10 = fixed slots)
 		switch castleID {
-		case gs.MainCastle.Aid:
-			tempCastStat.Name = gs.MainCastle.Name
+		case c.MainCastle.Aid:
+			tempCastStat.Name = c.MainCastle.Name
 			tempCastStat.CastlePosition = 0
-		case gs.Outpost1.Aid:
-			tempCastStat.Name = gs.Outpost1.Name
+		case c.Outpost1.Aid:
+			tempCastStat.Name = c.Outpost1.Name
 			tempCastStat.CastlePosition = 1
-		case gs.Outpost2.Aid:
-			tempCastStat.Name = gs.Outpost2.Name
+		case c.Outpost2.Aid:
+			tempCastStat.Name = c.Outpost2.Name
 			tempCastStat.CastlePosition = 2
-		case gs.Outpost3.Aid:
-			tempCastStat.Name = gs.Outpost3.Name
+		case c.Outpost3.Aid:
+			tempCastStat.Name = c.Outpost3.Name
 			tempCastStat.CastlePosition = 3
-		case gs.IceCastle.Aid:
-			tempCastStat.Name = gs.IceCastle.Name
+		case c.IceCastle.Aid:
+			tempCastStat.Name = c.IceCastle.Name
 			tempCastStat.CastlePosition = 4
-		case gs.DesertCastle.Aid:
-			tempCastStat.Name = gs.DesertCastle.Name
+		case c.DesertCastle.Aid:
+			tempCastStat.Name = c.DesertCastle.Name
 			tempCastStat.CastlePosition = 5
-		case gs.DungeonCastle.Aid:
-			tempCastStat.Name = gs.DungeonCastle.Name
+		case c.DungeonCastle.Aid:
+			tempCastStat.Name = c.DungeonCastle.Name
 			tempCastStat.CastlePosition = 6
-		case gs.StormCastle.Aid:
-			tempCastStat.Name = gs.StormCastle.Name
+		case c.StormCastle.Aid:
+			tempCastStat.Name = c.StormCastle.Name
 			tempCastStat.CastlePosition = 7
+		case c.Metropolis.Aid:
+			tempCastStat.Name = c.Metropolis.Name
+			tempCastStat.CastlePosition = 8
+		case c.Capital.Aid:
+			tempCastStat.Name = c.Capital.Name
+			tempCastStat.CastlePosition = 9
 		default:
-			// Handle extra castles or unknown IDs
 			tempCastStat.Name = "Unknown Castle"
 			tempCastStat.CastlePosition = 99
 		}
 
 		ProcessCast(castMap, &tempCastActual, &tempCastStat)
 
-		gs.CastActualArray = append(gs.CastActualArray, tempCastActual)
-		Models.CastStatArray = append(Models.CastStatArray, tempCastStat)
+		gs.Equipment.CastActualArray = append(gs.Equipment.CastActualArray, tempCastActual)
+		equip.CastStatArray = append(equip.CastStatArray, tempCastStat)
 	}
 }
 
@@ -104,19 +111,19 @@ func ProcessCast(castMap map[string]interface{}, castActual *Models.CastActualMo
 		switch equipment.EquipSlotNumber {
 		case 1:
 			castStat.Equip1 = equipment.ID
-			ProcessEquipStatCast(equipment, &tempEquipStat, &Models.CastEquipCeiling)
+			ProcessEquipStatCast(equipment, &tempEquipStat, &equip.CastEquipCeiling)
 		case 2:
 			castStat.Equip2 = equipment.ID
-			ProcessEquipStatCast(equipment, &tempEquipStat, &Models.CastEquipCeiling)
+			ProcessEquipStatCast(equipment, &tempEquipStat, &equip.CastEquipCeiling)
 		case 3:
 			castStat.Equip3 = equipment.ID
-			ProcessEquipStatCast(equipment, &tempEquipStat, &Models.CastEquipCeiling)
+			ProcessEquipStatCast(equipment, &tempEquipStat, &equip.CastEquipCeiling)
 		case 4:
 			castStat.Equip4 = equipment.ID
-			ProcessEquipStatCast(equipment, &tempEquipStat, &Models.CastEquipCeiling)
+			ProcessEquipStatCast(equipment, &tempEquipStat, &equip.CastEquipCeiling)
 		case 6:
 			castStat.Hero = equipment.ID
-			ProcessEquipStatCast(equipment, &tempHeroStat, &Models.CastHeroCeiling)
+			ProcessEquipStatCast(equipment, &tempHeroStat, &equip.CastHeroCeiling)
 		}
 		// Process gems for Relic equipment (Rarity 5 or 15) with valid gems
 		if (equipment.EquipRarity == 5 || equipment.EquipRarity == 15) && equipment.GemSlot.Gem != nil {
@@ -133,11 +140,11 @@ func ProcessCast(castMap map[string]interface{}, castActual *Models.CastActualMo
 			case gemSlotNum == 104 || gemSlotNum == 4:
 				castStat.Gem4 = equipment.GemSlot.Gem.ID
 			}
-			ProcessGemStatCast(equipment, &tempGemStat, &Models.CastGemCeiling)
+			ProcessGemStatCast(equipment, &tempGemStat, &equip.CastGemCeiling)
 		}
 	}
 	MergeCast(castStat, &tempEquipStat, &tempHeroStat, &tempGemStat)
-	Models.ApplyCastCeiling(castStat, &Models.CastEquipCeiling)
+	Models.ApplyCastCeiling(castStat, &equip.CastEquipCeiling)
 }
 
 func ProcessEquipStatCast(equipment Models.EquipmentModel, dstCast *Models.CastStatModel, ceilingCast *Models.CastStatModel) {
@@ -227,7 +234,7 @@ func ProcessCommArray(commArray []interface{}) {
 }
 
 func ProcessComm(commMap map[string]interface{}, index int) {
-	actualComm := &Models.GetGameState().CommActualArray[index]
+	actualComm := &Models.GetGameState().Equipment.CommActualArray[index]
 	actualComm.ID = commMap["ID"].(float64)
 	actualComm.Name = commMap["N"].(string)
 	actualComm.VisiblePosition = commMap["VIS"].(float64) + 1
@@ -240,7 +247,7 @@ func ProcessComm(commMap map[string]interface{}, index int) {
 		equipmentArray = append(equipmentArray, equipmentFinal)
 	}
 	actualComm.Equipment = equipmentArray
-	statComm := &Models.CommStatArray[index]
+	statComm := &equip.CommStatArray[index]
 	statComm.ID = actualComm.ID
 	statComm.Name = actualComm.Name
 	var tempEquipStat Models.CommStatModel
@@ -250,19 +257,19 @@ func ProcessComm(commMap map[string]interface{}, index int) {
 		switch equipment.EquipSlotNumber {
 		case 1:
 			statComm.Equip1 = equipment.ID
-			ProcessEquipStatComm(equipment, &tempEquipStat, &Models.CommEquipCeiling)
+			ProcessEquipStatComm(equipment, &tempEquipStat, &equip.CommEquipCeiling)
 		case 2:
 			statComm.Equip2 = equipment.ID
-			ProcessEquipStatComm(equipment, &tempEquipStat, &Models.CommEquipCeiling)
+			ProcessEquipStatComm(equipment, &tempEquipStat, &equip.CommEquipCeiling)
 		case 3:
 			statComm.Equip3 = equipment.ID
-			ProcessEquipStatComm(equipment, &tempEquipStat, &Models.CommEquipCeiling)
+			ProcessEquipStatComm(equipment, &tempEquipStat, &equip.CommEquipCeiling)
 		case 4:
 			statComm.Equip4 = equipment.ID
-			ProcessEquipStatComm(equipment, &tempEquipStat, &Models.CommEquipCeiling)
+			ProcessEquipStatComm(equipment, &tempEquipStat, &equip.CommEquipCeiling)
 		case 6:
 			statComm.Hero = equipment.ID
-			ProcessEquipStatComm(equipment, &tempHeroStat, &Models.CommHeroCeiling)
+			ProcessEquipStatComm(equipment, &tempHeroStat, &equip.CommHeroCeiling)
 		}
 		// Check if the equipment is gem-capable AND a gem is actually present (Gem.ID will be non-zero).
 		if (equipment.EquipRarity == 5 || equipment.EquipRarity == 15) && equipment.GemSlot.Gem != nil && equipment.GemSlot.Gem.ID != 0 {
@@ -276,12 +283,12 @@ func ProcessComm(commMap map[string]interface{}, index int) {
 			case 4:
 				statComm.Gem4 = equipment.GemSlot.Gem.ID
 			}
-			ProcessGemStatComm(equipment, &tempGemStat, &Models.CommGemCeiling)
+			ProcessGemStatComm(equipment, &tempGemStat, &equip.CommGemCeiling)
 		}
 
 	}
 	MergeComm(statComm, &tempEquipStat, &tempHeroStat, &tempGemStat)
-	Models.ApplyCommCeiling(statComm, &Models.CommEquipCeiling)
+	Models.ApplyCommCeiling(statComm, &equip.CommEquipCeiling)
 }
 
 func ProcessEquipStatComm(equipment Models.EquipmentModel, dstComm *Models.CommStatModel, ceilingComm *Models.CommStatModel) {
@@ -362,9 +369,18 @@ func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.E
 	equipmentFinal.EquipSlotNumber, _ = equipmentDataArray[1].(float64)
 	equipmentFinal.EquipType, _ = equipmentDataArray[2].(float64)
 	equipmentFinal.EquipRarity, _ = equipmentDataArray[3].(float64)
+	equipmentFinal.PlaceHolder6, _ = equipmentDataArray[4].(float64)
 	equipmentFinal.EquipLevel, _ = equipmentDataArray[8].(float64)
 
 	equipStatsRawArray, _ := equipmentDataArray[5].([]interface{})
+
+	// Ensure array has enough elements to avoid panic
+	if len(equipmentDataArray) > 6 {
+		equipmentFinal.TemplateID, _ = equipmentDataArray[6].(float64)
+	}
+	if len(equipmentDataArray) > 10 {
+		equipmentFinal.GemID, _ = equipmentDataArray[10].(float64)
+	}
 	// Initialize a slice with 0 length but pre-allocated capacity.
 	equipStatsArray := make([]Models.Stat, 0, len(equipStatsRawArray))
 	for _, equipStatData := range equipStatsRawArray {
@@ -398,7 +414,21 @@ func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.E
 		}
 	}
 
-	// Case 2: Standard Relic/Hero (Rarity 5/15) - Expanded Data Structure (Index 12 = GemSlotRaw)
+	// Case 2: Special Post-2026 Sets - GemID stored at index 10 (without the expanded gem object at index 12)
+	if equipmentFinal.GemID > 0 {
+		var gemSlot Models.GemSlot
+		if len(equipmentDataArray) >= 12 {
+			gemSlot.SlotNumber, _ = equipmentDataArray[11].(float64)
+		}
+
+		gem := Models.Gem{
+			ID: equipmentFinal.GemID,
+		}
+		gemSlot.Gem = &gem
+		equipmentFinal.GemSlot = gemSlot
+	}
+
+	// Case 3: Standard Relic/Hero (Rarity 5/15) - Expanded Data Structure (Index 12 = GemSlotRaw)
 	// Applies to both Commander (Type 2) and Castellan (Type 1) if Rarity matches
 	if equipmentFinal.EquipRarity == 5 || equipmentFinal.EquipRarity == 15 {
 		if len(equipmentDataArray) > 12 {

@@ -101,3 +101,11 @@ func UpdateAlliance(galMap map[string]interface{}) {
 		Models.GetGameState().Alliance.AID = int(aid)
 	}
 }
+
+// UpdatePlayerInfo parses the player information from gpi and stores the PlayerID
+func UpdatePlayerInfo(gpiMap map[string]interface{}) {
+	pid, ok := gpiMap["PID"].(float64)
+	if ok {
+		Models.GetGameState().PlayerID = int(pid)
+	}
+}

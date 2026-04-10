@@ -6,104 +6,101 @@ import (
 	"sync"
 )
 
+// InitiateDetails parses the bundled gbd JSON and updates game state. Missing sections are skipped (logged); never panics the process.
 func InitiateDetails(data string) {
-	byteString := []byte(data)
-	var jsonDataInterface interface{}
-	err := json.Unmarshal(byteString, &jsonDataInterface)
-	if err != nil {
-		log.Printf("Error unmarshalling: %v", err)
-	}
-	jsonDataMap, ok := jsonDataInterface.(map[string]interface{})
-	if !ok {
-		log.Fatal("jsonDataMap is not a map")
+	var jsonDataMap map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &jsonDataMap); err != nil {
+		log.Printf("[parser] gbd unmarshal: %v", err)
+		return
 	}
 
-	var wgInitialDetail sync.WaitGroup
-	wgInitialDetail.Add(7)
+	var wg sync.WaitGroup
+	wg.Add(7)
 
 	go func() {
-		defer wgInitialDetail.Done()
+		defer wg.Done()
 		gcuMap, ok := jsonDataMap["gcu"].(map[string]interface{})
 		if !ok {
-			log.Fatal("gcuMap is not a map")
+			log.Printf("[parser] gbd: missing or invalid gcu")
+			return
 		}
 		UpdateCoins(gcuMap)
 	}()
 
 	go func() {
-		defer wgInitialDetail.Done()
+		defer wg.Done()
 		sceArray, ok := jsonDataMap["sce"].([]interface{})
 		if !ok {
-			log.Fatal("sceArray is not a slice")
+			log.Printf("[parser] gbd: missing or invalid sce")
+			return
 		}
 		UpdateSCE(sceArray)
 	}()
 
 	go func() {
-		defer wgInitialDetail.Done()
+		defer wg.Done()
 		gmuMap, ok := jsonDataMap["gmu"].(map[string]interface{})
 		if !ok {
-			log.Fatal("gmuMap is not a map")
+			log.Printf("[parser] gbd: missing or invalid gmu")
+			return
 		}
 		UpdateMight(gmuMap)
 	}()
 
 	go func() {
-		defer wgInitialDetail.Done()
+		defer wg.Done()
 		ufaMap, ok := jsonDataMap["ufa"].(map[string]interface{})
 		if !ok {
-			log.Fatal("ufaMap is not a map")
+			log.Printf("[parser] gbd: missing or invalid ufa")
+			return
 		}
 		UpdateGlory(ufaMap)
 	}()
 
 	go func() {
-		defer wgInitialDetail.Done()
+		defer wg.Done()
 		ufpMap, ok := jsonDataMap["ufp"].(map[string]interface{})
 		if !ok {
-			log.Fatal("ufpMap is not a map")
+			log.Printf("[parser] gbd: missing or invalid ufp")
+			return
 		}
 		UpdateGallantry(ufpMap)
 	}()
 
 	go func() {
-		defer wgInitialDetail.Done()
+		defer wg.Done()
 		gclMap, ok := jsonDataMap["gcl"].(map[string]interface{})
 		if !ok {
-			log.Fatal("gclMap is not a map")
+			log.Printf("[parser] gbd: missing or invalid gcl")
+			return
 		}
 		dclMap, ok := jsonDataMap["dcl"].(map[string]interface{})
 		if !ok {
-			log.Fatal("dclMap is not a map")
+			log.Printf("[parser] gbd: missing or invalid dcl")
+			return
 		}
 		CastleDetailParser(gclMap, dclMap)
 		gliMap, ok := jsonDataMap["gli"].(map[string]interface{})
 		if !ok {
-			log.Fatal("gliMap is not a map")
+			log.Printf("[parser] gbd: missing or invalid gli")
+			return
 		}
 		UpdateEquipmentList(gliMap)
 	}()
 
 	go func() {
-		defer wgInitialDetail.Done()
-		galMap, ok := jsonDataMap["gal"].(map[string]interface{})
-		if !ok {
-			log.Printf("galMap is not a map or doesn't exist")
-			return
+		defer wg.Done()
+		if galMap, ok := jsonDataMap["gal"].(map[string]interface{}); ok {
+			UpdateAlliance(galMap)
+		} else {
+			log.Printf("[parser] gbd: gal missing or not an object")
 		}
-		UpdateAlliance(galMap)
+		if gpiMap, ok := jsonDataMap["gpi"].(map[string]interface{}); ok {
+			UpdatePlayerInfo(gpiMap)
+		} else {
+			log.Printf("[parser] gbd: gpi missing or not an object")
+		}
 	}()
 
-	wgInitialDetail.Wait()
-
-}
-
-// contains checks if a string is present in a slice of strings.
-func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-	return false
+	wg.Wait()
 }

@@ -1,0 +1,1583 @@
+[
+  {
+    "effectTypeID": "0",
+    "sortCategory": "6",
+    "sortGroup": "9",
+    "name": "fameDefenseBonus",
+    "_display_name": "fameDefenseBonus"
+  },
+  {
+    "effectTypeID": "1",
+    "sortCategory": "5",
+    "sortGroup": "2",
+    "name": "conquerSpeedBonus",
+    "_display_name": "conquerSpeedBonus"
+  },
+  {
+    "effectTypeID": "2",
+    "sortCategory": "6",
+    "sortGroup": "6",
+    "name": "lootReduction",
+    "_display_name": "lootReduction"
+  },
+  {
+    "effectTypeID": "3",
+    "sortCategory": "5",
+    "sortGroup": "4",
+    "name": "perceptionBonus",
+    "_display_name": "perceptionBonus"
+  },
+  {
+    "effectTypeID": "4",
+    "sortCategory": "6",
+    "sortGroup": "10",
+    "name": "fireBrigadeBoost",
+    "_display_name": "fireBrigadeBoost"
+  },
+  {
+    "effectTypeID": "5",
+    "sortCategory": "6",
+    "sortGroup": "2",
+    "name": "occupationTimeReduction",
+    "_display_name": "occupationTimeReduction"
+  },
+  {
+    "effectTypeID": "6",
+    "sortCategory": "2",
+    "sortGroup": "1",
+    "name": "wallBonus",
+    "_display_name": "wallBonus"
+  },
+  {
+    "effectTypeID": "7",
+    "sortCategory": "2",
+    "sortGroup": "2",
+    "name": "gateBonus",
+    "_display_name": "gateBonus"
+  },
+  {
+    "effectTypeID": "8",
+    "sortCategory": "2",
+    "sortGroup": "3",
+    "name": "moatBonus",
+    "_display_name": "moatBonus"
+  },
+  {
+    "effectTypeID": "9",
+    "sortCategory": "1",
+    "sortGroup": "7",
+    "name": "meleeBonus",
+    "_display_name": "meleeBonus"
+  },
+  {
+    "effectTypeID": "10",
+    "sortCategory": "1",
+    "sortGroup": "8",
+    "name": "rangeBonus",
+    "_display_name": "rangeBonus"
+  },
+  {
+    "effectTypeID": "11",
+    "sortCategory": "1",
+    "sortGroup": "12",
+    "name": "npcDefenseBonus",
+    "_display_name": "npcDefenseBonus"
+  },
+  {
+    "effectTypeID": "12",
+    "combatType": "2",
+    "sortCategory": "4",
+    "sortGroup": "1",
+    "name": "defenseUnitAmountWall",
+    "_display_name": "defenseUnitAmountWall"
+  },
+  {
+    "effectTypeID": "47",
+    "sortCategory": "4",
+    "sortGroup": "2",
+    "name": "DefenseSupportUnits",
+    "_display_name": "DefenseSupportUnits"
+  },
+  {
+    "effectTypeID": "13",
+    "sortCategory": "6",
+    "sortGroup": "9",
+    "name": "fameOffenseBonus",
+    "_display_name": "fameOffenseBonus"
+  },
+  {
+    "effectTypeID": "14",
+    "sortCategory": "6",
+    "sortGroup": "8",
+    "name": "honorBonus",
+    "_display_name": "honorBonus"
+  },
+  {
+    "effectTypeID": "15",
+    "sortCategory": "5",
+    "sortGroup": "2",
+    "name": "speedBonus",
+    "_display_name": "speedBonus"
+  },
+  {
+    "effectTypeID": "16",
+    "sortCategory": "6",
+    "sortGroup": "5",
+    "name": "lootBonus",
+    "_display_name": "lootBonus"
+  },
+  {
+    "effectTypeID": "17",
+    "sortCategory": "5",
+    "sortGroup": "3",
+    "name": "stealthBonus",
+    "_display_name": "stealthBonus"
+  },
+  {
+    "effectTypeID": "18",
+    "sortCategory": "6",
+    "sortGroup": "11",
+    "name": "fireBoost",
+    "_display_name": "fireBoost"
+  },
+  {
+    "effectTypeID": "19",
+    "sortCategory": "2",
+    "sortGroup": "5",
+    "name": "wallReduction",
+    "_display_name": "wallReduction"
+  },
+  {
+    "effectTypeID": "20",
+    "sortCategory": "2",
+    "sortGroup": "6",
+    "name": "gateReduction",
+    "_display_name": "gateReduction"
+  },
+  {
+    "effectTypeID": "21",
+    "sortCategory": "2",
+    "sortGroup": "7",
+    "name": "moatReduction",
+    "_display_name": "moatReduction"
+  },
+  {
+    "effectTypeID": "22",
+    "sortCategory": "6",
+    "sortGroup": "7",
+    "name": "magicFindBonus",
+    "_display_name": "magicFindBonus"
+  },
+  {
+    "effectTypeID": "23",
+    "sortCategory": "1",
+    "sortGroup": "2",
+    "name": "offensiveMeleeBonus",
+    "_display_name": "offensiveMeleeBonus"
+  },
+  {
+    "effectTypeID": "24",
+    "sortCategory": "1",
+    "sortGroup": "3",
+    "name": "offensiveRangeBonus",
+    "_display_name": "offensiveRangeBonus"
+  },
+  {
+    "effectTypeID": "25",
+    "sortCategory": "6",
+    "sortGroup": "12",
+    "name": "smashChance",
+    "_display_name": "smashChance"
+  },
+  {
+    "effectTypeID": "26",
+    "sortCategory": "5",
+    "sortGroup": "1",
+    "name": "travelCostReduction",
+    "_display_name": "travelCostReduction"
+  },
+  {
+    "effectTypeID": "27",
+    "sortCategory": "6",
+    "sortGroup": "3",
+    "name": "cooldownReduction",
+    "_display_name": "cooldownReduction"
+  },
+  {
+    "effectTypeID": "28",
+    "combatType": "1",
+    "sortCategory": "3",
+    "sortGroup": "2",
+    "name": "attackUnitAmountFlank",
+    "_display_name": "attackUnitAmountFlank"
+  },
+  {
+    "effectTypeID": "29",
+    "name": "skin",
+    "_display_name": "skin"
+  },
+  {
+    "effectTypeID": "30",
+    "name": "skinBaron",
+    "_display_name": "skinBaron"
+  },
+  {
+    "effectTypeID": "31",
+    "sortCategory": "1",
+    "sortGroup": "13",
+    "name": "defenseBonus",
+    "_display_name": "defenseBonus"
+  },
+  {
+    "effectTypeID": "49",
+    "combatType": "2",
+    "sortCategory": "1",
+    "sortGroup": "10",
+    "name": "DefenseBoostFront",
+    "_display_name": "DefenseBoostFront"
+  },
+  {
+    "effectTypeID": "50",
+    "combatType": "2",
+    "sortCategory": "1",
+    "sortGroup": "11",
+    "name": "DefenseBoostFlank",
+    "_display_name": "DefenseBoostFlank"
+  },
+  {
+    "effectTypeID": "32",
+    "combatType": "2",
+    "sortCategory": "1",
+    "sortGroup": "9",
+    "name": "defenseBoostYard",
+    "_display_name": "defenseBoostYard"
+  },
+  {
+    "effectTypeID": "33",
+    "combatType": "1",
+    "sortCategory": "1",
+    "sortGroup": "6",
+    "name": "attackBoostYard",
+    "_display_name": "attackBoostYard"
+  },
+  {
+    "effectTypeID": "53",
+    "combatType": "1",
+    "sortCategory": "1",
+    "sortGroup": "4",
+    "name": "AttackBoostFront",
+    "_display_name": "AttackBoostFront"
+  },
+  {
+    "effectTypeID": "54",
+    "combatType": "1",
+    "sortCategory": "1",
+    "sortGroup": "5",
+    "name": "AttackBoostFlank",
+    "_display_name": "AttackBoostFlank"
+  },
+  {
+    "effectTypeID": "34",
+    "combatType": "1",
+    "sortCategory": "3",
+    "sortGroup": "1",
+    "name": "attackUnitAmountFront",
+    "_display_name": "attackUnitAmountFront"
+  },
+  {
+    "effectTypeID": "51",
+    "sortCategory": "3",
+    "sortGroup": "3",
+    "name": "AttackSupportUnits",
+    "_display_name": "AttackSupportUnits"
+  },
+  {
+    "effectTypeID": "35",
+    "sortCategory": "2",
+    "sortGroup": "4",
+    "name": "hideoutCapacity",
+    "_display_name": "hideoutCapacity"
+  },
+  {
+    "effectTypeID": "36",
+    "sortCategory": "1",
+    "sortGroup": "1",
+    "name": "attackBonus",
+    "_display_name": "attackBonus"
+  },
+  {
+    "effectTypeID": "37",
+    "sortCategory": "6",
+    "sortGroup": "4",
+    "name": "lootCapacity",
+    "_display_name": "lootCapacity"
+  },
+  {
+    "effectTypeID": "38",
+    "sortCategory": "6",
+    "sortGroup": "1",
+    "name": "returnTravelBoost",
+    "_display_name": "returnTravelBoost"
+  },
+  {
+    "effectTypeID": "39",
+    "sortCategory": "5",
+    "sortGroup": "2",
+    "name": "supportSpeedBonus",
+    "_display_name": "supportSpeedBonus"
+  },
+  {
+    "effectTypeID": "40",
+    "sortCategory": "5",
+    "sortGroup": "2",
+    "name": "stationingSpeedBonus",
+    "_display_name": "stationingSpeedBonus"
+  },
+  {
+    "effectTypeID": "41",
+    "sortCategory": "5",
+    "sortGroup": "1",
+    "name": "stationingTravelCostReduction",
+    "_display_name": "stationingTravelCostReduction"
+  },
+  {
+    "effectTypeID": "42",
+    "sortCategory": "5",
+    "sortGroup": "1",
+    "name": "supportTravelCostReduction",
+    "_display_name": "supportTravelCostReduction"
+  },
+  {
+    "effectTypeID": "43",
+    "sortCategory": "5",
+    "sortGroup": "2",
+    "name": "travelCostReductionPVP",
+    "_display_name": "travelCostReductionPVP"
+  },
+  {
+    "effectTypeID": "44",
+    "sortCategory": "5",
+    "sortGroup": "1",
+    "name": "speedBonusPVP",
+    "_display_name": "speedBonusPVP"
+  },
+  {
+    "effectTypeID": "45",
+    "sortCategory": "6",
+    "sortGroup": "1",
+    "name": "returnTravelBoostPVP",
+    "_display_name": "returnTravelBoostPVP"
+  },
+  {
+    "effectTypeID": "46",
+    "sortCategory": "4",
+    "sortGroup": "1",
+    "name": "defenseUnitAmountWallPVP",
+    "_display_name": "defenseUnitAmountWallPVP"
+  },
+  {
+    "effectTypeID": "48",
+    "sortCategory": "9",
+    "sortGroup": "3",
+    "name": "marketSpeedBonus",
+    "_display_name": "marketSpeedBonus"
+  },
+  {
+    "effectTypeID": "52",
+    "name": "resourceDepositBoost",
+    "_display_name": "resourceDepositBoost"
+  },
+  {
+    "effectTypeID": "55",
+    "sortCategory": "6",
+    "sortGroup": "26",
+    "name": "lootBonusPvP",
+    "_display_name": "lootBonusPvP"
+  },
+  {
+    "effectTypeID": "56",
+    "name": "memberCount",
+    "_display_name": "memberCount"
+  },
+  {
+    "effectTypeID": "69",
+    "sortCategory": "7",
+    "sortGroup": "24",
+    "name": "foodProductionBonus",
+    "_display_name": "foodProductionBonus"
+  },
+  {
+    "effectTypeID": "70",
+    "sortCategory": "9",
+    "sortGroup": "8",
+    "name": "recruitmentCostDecrease",
+    "_display_name": "recruitmentCostDecrease"
+  },
+  {
+    "effectTypeID": "71",
+    "sortCategory": "9",
+    "sortGroup": "5",
+    "name": "recuitmentSpeedBoost",
+    "_display_name": "recuitmentSpeedBoost"
+  },
+  {
+    "effectTypeID": "72",
+    "sortCategory": "9",
+    "sortGroup": "6",
+    "name": "toolProductionSpeedBoost",
+    "_display_name": "toolProductionSpeedBoost"
+  },
+  {
+    "effectTypeID": "73",
+    "sortCategory": "9",
+    "sortGroup": "1",
+    "name": "spyCountBoost",
+    "_display_name": "spyCountBoost"
+  },
+  {
+    "effectTypeID": "74",
+    "sortCategory": "7",
+    "sortGroup": "17",
+    "name": "publicOrderBoost",
+    "_display_name": "publicOrderBoost"
+  },
+  {
+    "effectTypeID": "75",
+    "sortCategory": "6",
+    "sortGroup": "20",
+    "name": "coinLootBoost",
+    "_display_name": "coinLootBoost"
+  },
+  {
+    "effectTypeID": "76",
+    "sortCategory": "6",
+    "sortGroup": "19",
+    "name": "factionPointGainBoost",
+    "_display_name": "factionPointGainBoost"
+  },
+  {
+    "effectTypeID": "77",
+    "sortCategory": "6",
+    "sortGroup": "29",
+    "name": "allianceFameGainBoost",
+    "_display_name": "allianceFameGainBoost"
+  },
+  {
+    "effectTypeID": "78",
+    "name": "auxiliaryCapacityBoost",
+    "_display_name": "auxiliaryCapacityBoost"
+  },
+  {
+    "effectTypeID": "79",
+    "name": "enableUnits",
+    "_display_name": "enableUnits"
+  },
+  {
+    "effectTypeID": "57",
+    "name": "enableBuildings",
+    "_display_name": "enableBuildings"
+  },
+  {
+    "effectTypeID": "80",
+    "sortCategory": "7",
+    "sortGroup": "25",
+    "name": "foodProductionBoost",
+    "_display_name": "foodProductionBoost"
+  },
+  {
+    "effectTypeID": "81",
+    "name": "islandKing",
+    "_display_name": "islandKing"
+  },
+  {
+    "effectTypeID": "82",
+    "name": "moraleBoost",
+    "_display_name": "moraleBoost"
+  },
+  {
+    "effectTypeID": "83",
+    "name": "enemyFameBoost",
+    "_display_name": "enemyFameBoost"
+  },
+  {
+    "effectTypeID": "84",
+    "name": "enemyLootBoost",
+    "_display_name": "enemyLootBoost"
+  },
+  {
+    "effectTypeID": "85",
+    "sortCategory": "9",
+    "sortGroup": "17",
+    "name": "recruitmentCostDecreaseAll",
+    "_display_name": "recruitmentCostDecreaseAll"
+  },
+  {
+    "effectTypeID": "86",
+    "sortCategory": "7",
+    "sortGroup": "7",
+    "name": "recuitmentSpeedBoostAll",
+    "_display_name": "recuitmentSpeedBoostAll"
+  },
+  {
+    "effectTypeID": "87",
+    "name": "unlockSkinIDs",
+    "_display_name": "unlockSkinIDs"
+  },
+  {
+    "effectTypeID": "88",
+    "sortCategory": "3",
+    "name": "battleXPBoost",
+    "_display_name": "battleXPBoost"
+  },
+  {
+    "effectTypeID": "89",
+    "sortCategory": "9",
+    "sortGroup": "9",
+    "name": "buildingXPBoost",
+    "_display_name": "buildingXPBoost"
+  },
+  {
+    "effectTypeID": "90",
+    "name": "disableUnits",
+    "_display_name": "disableUnits"
+  },
+  {
+    "effectTypeID": "91",
+    "name": "espionageSpeedBoost",
+    "_display_name": "espionageSpeedBoost"
+  },
+  {
+    "effectTypeID": "92",
+    "sortCategory": "7",
+    "sortGroup": "26",
+    "name": "woodProductionBoost",
+    "_display_name": "woodProductionBoost"
+  },
+  {
+    "effectTypeID": "93",
+    "sortCategory": "7",
+    "sortGroup": "27",
+    "name": "stoneProductionBoost",
+    "_display_name": "stoneProductionBoost"
+  },
+  {
+    "effectTypeID": "94",
+    "sortCategory": "9",
+    "sortGroup": "18",
+    "name": "taxCollectorBoost",
+    "_display_name": "taxCollectorBoost"
+  },
+  {
+    "effectTypeID": "95",
+    "sortCategory": "9",
+    "sortGroup": "10",
+    "name": "taxCollectorNoRubies",
+    "_display_name": "taxCollectorNoRubies"
+  },
+  {
+    "effectTypeID": "96",
+    "sortCategory": "9",
+    "sortGroup": "11",
+    "name": "marketCarriageCapacityBoost",
+    "_display_name": "marketCarriageCapacityBoost"
+  },
+  {
+    "effectTypeID": "97",
+    "sortCategory": "9",
+    "sortGroup": "2",
+    "name": "amountGuardsBoost",
+    "_display_name": "amountGuardsBoost"
+  },
+  {
+    "effectTypeID": "98",
+    "sortCategory": "9",
+    "sortGroup": "19",
+    "name": "amountSpiesBonus",
+    "_display_name": "amountSpiesBonus"
+  },
+  {
+    "effectTypeID": "99",
+    "sortCategory": "4",
+    "sortGroup": "5",
+    "name": "amountPeasantBoost",
+    "_display_name": "amountPeasantBoost"
+  },
+  {
+    "effectTypeID": "100",
+    "sortCategory": "7",
+    "sortGroup": "18",
+    "name": "amountPopulationBoost",
+    "_display_name": "amountPopulationBoost"
+  },
+  {
+    "effectTypeID": "101",
+    "sortCategory": "9",
+    "sortGroup": "21",
+    "name": "amountPopulationBonus",
+    "_display_name": "amountPopulationBonus"
+  },
+  {
+    "effectTypeID": "102",
+    "sortCategory": "5",
+    "sortGroup": "12",
+    "name": "unitSpeedBoost",
+    "_display_name": "unitSpeedBoost"
+  },
+  {
+    "effectTypeID": "103",
+    "sortCategory": "5",
+    "sortGroup": "13",
+    "name": "travelKingdomTroopTimeBoost",
+    "_display_name": "travelKingdomTroopTimeBoost"
+  },
+  {
+    "effectTypeID": "104",
+    "sortCategory": "9",
+    "sortGroup": "22",
+    "name": "travelKingdomMarketTimeBoost",
+    "_display_name": "travelKingdomMarketTimeBoost"
+  },
+  {
+    "effectTypeID": "105",
+    "sortCategory": "6",
+    "sortGroup": "9",
+    "name": "fameBoost",
+    "_display_name": "Glory bonus"
+  },
+  {
+    "effectTypeID": "106",
+    "sortCategory": "9",
+    "sortGroup": "23",
+    "name": "hospitalSlotBonus",
+    "_display_name": "hospitalSlotBonus"
+  },
+  {
+    "effectTypeID": "107",
+    "sortCategory": "7",
+    "sortGroup": "8",
+    "name": "researchBoost",
+    "_display_name": "researchBoost"
+  },
+  {
+    "effectTypeID": "108",
+    "sortCategory": "9",
+    "sortGroup": "24",
+    "name": "researchBonus",
+    "_display_name": "researchBonus"
+  },
+  {
+    "effectTypeID": "109",
+    "name": "forgeCostBoost",
+    "_display_name": "forgeCostBoost"
+  },
+  {
+    "effectTypeID": "110",
+    "sortCategory": "9",
+    "sortGroup": "12",
+    "name": "recruitmentTimeBonus",
+    "_display_name": "recruitmentTimeBonus"
+  },
+  {
+    "effectTypeID": "111",
+    "sortCategory": "9",
+    "sortGroup": "7",
+    "name": "toolProductionTimeBonus",
+    "_display_name": "toolProductionTimeBonus"
+  },
+  {
+    "effectTypeID": "112",
+    "sortCategory": "7",
+    "sortGroup": "19",
+    "name": "woodProductionBonus",
+    "_display_name": "woodProductionBonus"
+  },
+  {
+    "effectTypeID": "113",
+    "sortCategory": "7",
+    "sortGroup": "28",
+    "name": "stoneProductionBonus",
+    "_display_name": "stoneProductionBonus"
+  },
+  {
+    "effectTypeID": "114",
+    "sortCategory": "6",
+    "sortGroup": "21",
+    "name": "lootCapacityBoost",
+    "_display_name": "lootCapacityBoost"
+  },
+  {
+    "effectTypeID": "115",
+    "sortCategory": "6",
+    "sortGroup": "27",
+    "name": "battleXPBonus",
+    "_display_name": "battleXPBonus"
+  },
+  {
+    "effectTypeID": "116",
+    "name": "enableConstructionItemRecipes",
+    "_display_name": "enableConstructionItemRecipes"
+  },
+  {
+    "effectTypeID": "117",
+    "sortCategory": "9",
+    "sortGroup": "13",
+    "name": "toolProductionSpeedBoostAll",
+    "_display_name": "toolProductionSpeedBoostAll"
+  },
+  {
+    "effectTypeID": "118",
+    "sortCategory": "4",
+    "name": "strongerPeasant",
+    "_display_name": "strongerPeasant"
+  },
+  {
+    "effectTypeID": "119",
+    "sortCategory": "7",
+    "sortGroup": "6",
+    "name": "hospitalCapacityBonus",
+    "_display_name": "hospitalCapacityBonus"
+  },
+  {
+    "effectTypeID": "120",
+    "sortCategory": "9",
+    "sortGroup": "14",
+    "name": "premiumUnitHealingBoost",
+    "_display_name": "premiumUnitHealingBoost"
+  },
+  {
+    "effectTypeID": "121",
+    "sortCategory": "9",
+    "sortGroup": "15",
+    "name": "nonPremiumUnitHealingBoost",
+    "_display_name": "nonPremiumUnitHealingBoost"
+  },
+  {
+    "effectTypeID": "122",
+    "sortCategory": "9",
+    "sortGroup": "16",
+    "name": "transportTaxDecreaseBoost",
+    "_display_name": "transportTaxDecreaseBoost"
+  },
+  {
+    "effectTypeID": "123",
+    "sortCategory": "7",
+    "sortGroup": "3",
+    "name": "publicOrderBonus",
+    "_display_name": "publicOrderBonus"
+  },
+  {
+    "effectTypeID": "124",
+    "name": "freeSkipBonus",
+    "_display_name": "freeSkipBonus"
+  },
+  {
+    "effectTypeID": "125",
+    "sortCategory": "9",
+    "sortGroup": "25",
+    "name": "researchCostsBoost",
+    "_display_name": "researchCostsBoost"
+  },
+  {
+    "effectTypeID": "126",
+    "sortCategory": "9",
+    "sortGroup": "26",
+    "name": "baseRecruitmentTimeBoost",
+    "_display_name": "baseRecruitmentTimeBoost"
+  },
+  {
+    "effectTypeID": "127",
+    "sortCategory": "9",
+    "sortGroup": "27",
+    "name": "recruitmentSlotsBonus",
+    "_display_name": "recruitmentSlotsBonus"
+  },
+  {
+    "effectTypeID": "128",
+    "sortCategory": "7",
+    "sortGroup": "29",
+    "name": "buildingCostsBoost",
+    "_display_name": "buildingCostsBoost"
+  },
+  {
+    "effectTypeID": "129",
+    "sortCategory": "9",
+    "sortGroup": "28",
+    "name": "gloryDecayBoost",
+    "_display_name": "gloryDecayBoost"
+  },
+  {
+    "effectTypeID": "140",
+    "sortCategory": "7",
+    "sortGroup": "30",
+    "name": "coalProductionBoost",
+    "_display_name": "coalProductionBoost"
+  },
+  {
+    "effectTypeID": "141",
+    "sortCategory": "7",
+    "sortGroup": "13",
+    "name": "oilProductionBoost",
+    "_display_name": "oilProductionBoost"
+  },
+  {
+    "effectTypeID": "142",
+    "sortCategory": "7",
+    "sortGroup": "14",
+    "name": "glassProductionBoost",
+    "_display_name": "glassProductionBoost"
+  },
+  {
+    "effectTypeID": "143",
+    "sortCategory": "7",
+    "sortGroup": "15",
+    "name": "ironProductionBoost",
+    "_display_name": "ironProductionBoost"
+  },
+  {
+    "effectTypeID": "130",
+    "sortCategory": "6",
+    "sortGroup": "13",
+    "name": "charmBoost",
+    "_display_name": "charmBoost"
+  },
+  {
+    "effectTypeID": "131",
+    "sortCategory": "6",
+    "sortGroup": "14",
+    "name": "nomadTabletBoost",
+    "_display_name": "Khan chest"
+  },
+  {
+    "effectTypeID": "132",
+    "sortCategory": "6",
+    "sortGroup": "15",
+    "name": "reputationPointGainBoost",
+    "_display_name": "reputationPointGainBoost"
+  },
+  {
+    "effectTypeID": "133",
+    "sortCategory": "6",
+    "sortGroup": "16",
+    "name": "samuraiTokenBoost",
+    "_display_name": "samuraiTokenBoost"
+  },
+  {
+    "effectTypeID": "134",
+    "sortCategory": "6",
+    "sortGroup": "17",
+    "name": "khanMedalBoost",
+    "_display_name": "khanMedalBoost"
+  },
+  {
+    "effectTypeID": "135",
+    "sortCategory": "6",
+    "sortGroup": "18",
+    "name": "ragePointGainBoost",
+    "_display_name": "ragePointGainBoost"
+  },
+  {
+    "effectTypeID": "136",
+    "name": "featureAutoSell",
+    "_display_name": "featureAutoSell"
+  },
+  {
+    "effectTypeID": "137",
+    "name": "featureAutoSpy",
+    "_display_name": "featureAutoSpy"
+  },
+  {
+    "effectTypeID": "138",
+    "name": "foodCapacityBonus",
+    "_display_name": "foodCapacityBonus"
+  },
+  {
+    "effectTypeID": "153",
+    "name": "featureLoyaltyGift",
+    "_display_name": "featureLoyaltyGift"
+  },
+  {
+    "effectTypeID": "139",
+    "sortCategory": "6",
+    "sortGroup": "25",
+    "name": "CollectorBoost",
+    "_display_name": "CollectorBoost"
+  },
+  {
+    "effectTypeID": "144",
+    "sortCategory": "6",
+    "sortGroup": "25",
+    "name": "tempServerCollectorBoost",
+    "_display_name": "tempServerCollectorBoost"
+  },
+  {
+    "effectTypeID": "145",
+    "sortCategory": "7",
+    "sortGroup": "4",
+    "name": "buildSpeedBoost",
+    "_display_name": "buildSpeedBoost"
+  },
+  {
+    "effectTypeID": "146",
+    "sortCategory": "7",
+    "sortGroup": "2",
+    "name": "classicResourceProductionBonus",
+    "_display_name": "classicResourceProductionBonus"
+  },
+  {
+    "effectTypeID": "147",
+    "sortCategory": "7",
+    "sortGroup": "1",
+    "name": "kingdomResourceProductionBonus",
+    "_display_name": "kingdomResourceProductionBonus"
+  },
+  {
+    "effectTypeID": "148",
+    "sortCategory": "3",
+    "sortGroup": "5",
+    "name": "attackBonusUnit",
+    "_display_name": "attackBonusUnit"
+  },
+  {
+    "effectTypeID": "149",
+    "sortCategory": "5",
+    "sortGroup": "5",
+    "name": "speedBoostUnit",
+    "_display_name": "speedBoostUnit"
+  },
+  {
+    "effectTypeID": "150",
+    "sortCategory": "6",
+    "sortGroup": "22",
+    "name": "lootValueBoostUnit",
+    "_display_name": "lootValueBoostUnit"
+  },
+  {
+    "effectTypeID": "151",
+    "sortCategory": "7",
+    "sortGroup": "5",
+    "name": "marketCarriageCapacityBonus",
+    "_display_name": "marketCarriageCapacityBonus"
+  },
+  {
+    "effectTypeID": "152",
+    "sortCategory": "9",
+    "sortGroup": "4",
+    "name": "foodConsumptionBoost",
+    "_display_name": "foodConsumptionBoost"
+  },
+  {
+    "effectTypeID": "154",
+    "sortCategory": "6",
+    "sortGroup": "9",
+    "name": "fameBoostUnit",
+    "_display_name": "fameBoostUnit"
+  },
+  {
+    "effectTypeID": "155",
+    "name": "BGCollectorBoost",
+    "_display_name": "BGCollectorBoost"
+  },
+  {
+    "effectTypeID": "156",
+    "combatType": "1",
+    "sortCategory": "5",
+    "sortGroup": "6",
+    "name": "additionalWaves",
+    "_display_name": "additionalWaves"
+  },
+  {
+    "effectTypeID": "157",
+    "sortCategory": "6",
+    "sortGroup": "28",
+    "name": "burningChanceBonus",
+    "_display_name": "burningChanceBonus"
+  },
+  {
+    "effectTypeID": "158",
+    "name": "tonicBoost",
+    "_display_name": "tonicBoost"
+  },
+  {
+    "effectTypeID": "160",
+    "sortCategory": "7",
+    "sortGroup": "20",
+    "name": "MeadProductionIncrease",
+    "_display_name": "MeadProductionIncrease"
+  },
+  {
+    "effectTypeID": "161",
+    "sortCategory": "7",
+    "sortGroup": "21",
+    "name": "unboostedMeadProduction",
+    "_display_name": "unboostedMeadProduction"
+  },
+  {
+    "effectTypeID": "162",
+    "sortCategory": "7",
+    "sortGroup": "22",
+    "name": "HoneyProductionIncrease",
+    "_display_name": "HoneyProductionIncrease"
+  },
+  {
+    "effectTypeID": "163",
+    "sortCategory": "7",
+    "sortGroup": "16",
+    "name": "unboostedHoneyProduction",
+    "_display_name": "unboostedHoneyProduction"
+  },
+  {
+    "effectTypeID": "164",
+    "sortCategory": "7",
+    "sortGroup": "9",
+    "name": "meadProductionBoost",
+    "_display_name": "meadProductionBoost"
+  },
+  {
+    "effectTypeID": "165",
+    "sortCategory": "7",
+    "sortGroup": "10",
+    "name": "honeyProductionBoost",
+    "_display_name": "honeyProductionBoost"
+  },
+  {
+    "effectTypeID": "186",
+    "name": "refinedResourceQueueBoost",
+    "_display_name": "refinedResourceQueueBoost"
+  },
+  {
+    "effectTypeID": "187",
+    "name": "componentQueueBoost",
+    "_display_name": "componentQueueBoost"
+  },
+  {
+    "effectTypeID": "166",
+    "sortCategory": "7",
+    "sortGroup": "11",
+    "name": "meadCapacityBonus",
+    "_display_name": "meadCapacityBonus"
+  },
+  {
+    "effectTypeID": "167",
+    "sortCategory": "7",
+    "sortGroup": "12",
+    "name": "honeyCapacityBonus",
+    "_display_name": "honeyCapacityBonus"
+  },
+  {
+    "effectTypeID": "168",
+    "sortCategory": "6",
+    "sortGroup": "23",
+    "name": "currencyLootBoost",
+    "_display_name": "currencyLootBoost"
+  },
+  {
+    "effectTypeID": "169",
+    "name": "enableExpansion",
+    "_display_name": "enableExpansion"
+  },
+  {
+    "effectTypeID": "170",
+    "name": "enableCraftingRecipes",
+    "_display_name": "enableCraftingRecipes"
+  },
+  {
+    "effectTypeID": "178",
+    "name": "unlockAbility",
+    "_display_name": "unlockAbility"
+  },
+  {
+    "effectTypeID": "172",
+    "sortCategory": "8",
+    "sortGroup": "1",
+    "name": "killAttackingMeleeTroopsYard",
+    "_display_name": "killAttackingMeleeTroopsYard"
+  },
+  {
+    "effectTypeID": "173",
+    "sortCategory": "8",
+    "sortGroup": "1",
+    "name": "killAttackingRangedTroopsYard",
+    "_display_name": "killAttackingRangedTroopsYard"
+  },
+  {
+    "effectTypeID": "174",
+    "sortCategory": "8",
+    "sortGroup": "1",
+    "name": "killAttackingAnyTroopsYard",
+    "_display_name": "killAttackingAnyTroopsYard"
+  },
+  {
+    "effectTypeID": "175",
+    "sortCategory": "8",
+    "sortGroup": "2",
+    "name": "killDefendingMeleeTroopsYard",
+    "_display_name": "killDefendingMeleeTroopsYard"
+  },
+  {
+    "effectTypeID": "176",
+    "sortCategory": "8",
+    "sortGroup": "2",
+    "name": "killDefendingRangedTroopsYard",
+    "_display_name": "killDefendingRangedTroopsYard"
+  },
+  {
+    "effectTypeID": "177",
+    "sortCategory": "8",
+    "sortGroup": "2",
+    "name": "killDefendingAnyTroopsYard",
+    "_display_name": "killDefendingAnyTroopsYard"
+  },
+  {
+    "effectTypeID": "179",
+    "combatType": "1",
+    "sortCategory": "8",
+    "sortGroup": "3",
+    "name": "attackUnitAmountReinforcementBonus",
+    "_display_name": "attackUnitAmountReinforcementBonus"
+  },
+  {
+    "effectTypeID": "180",
+    "combatType": "1",
+    "sortCategory": "8",
+    "sortGroup": "3",
+    "name": "attackUnitAmountReinforcementBoost",
+    "_display_name": "attackUnitAmountReinforcementBoost"
+  },
+  {
+    "effectTypeID": "181",
+    "combatType": "2",
+    "sortCategory": "8",
+    "sortGroup": "4",
+    "name": "defenseUnitAmountYardBonus",
+    "_display_name": "defenseUnitAmountYardBonus"
+  },
+  {
+    "effectTypeID": "182",
+    "combatType": "2",
+    "sortCategory": "8",
+    "sortGroup": "4",
+    "name": "defenseUnitAmountYardBoost",
+    "_display_name": "defenseUnitAmountYardBoost"
+  },
+  {
+    "effectTypeID": "183",
+    "combatType": "1",
+    "sortCategory": "8",
+    "sortGroup": "5",
+    "name": "allianceDefenseUnitAmountYardBonus",
+    "_display_name": "allianceDefenseUnitAmountYardBonus"
+  },
+  {
+    "effectTypeID": "184",
+    "combatType": "1",
+    "sortCategory": "8",
+    "sortGroup": "5",
+    "name": "allianceDefenseUnitAmountYardBoost",
+    "_display_name": "allianceDefenseUnitAmountYardBoost"
+  },
+  {
+    "effectTypeID": "185",
+    "name": "featureAutoSkipCooldown",
+    "_display_name": "featureAutoSkipCooldown"
+  },
+  {
+    "effectTypeID": "1001",
+    "combatType": "3",
+    "name": "PowerSurge",
+    "_display_name": "PowerSurge"
+  },
+  {
+    "effectTypeID": "1002",
+    "combatType": "3",
+    "name": "RisetotheTask",
+    "_display_name": "RisetotheTask"
+  },
+  {
+    "effectTypeID": "1003",
+    "combatType": "3",
+    "name": "GiantSlayer",
+    "_display_name": "GiantSlayer"
+  },
+  {
+    "effectTypeID": "1005",
+    "combatType": "3",
+    "name": "Intimidate",
+    "_display_name": "Intimidate"
+  },
+  {
+    "effectTypeID": "1007",
+    "combatType": "3",
+    "name": "Hordebreaker",
+    "_display_name": "Hordebreaker"
+  },
+  {
+    "effectTypeID": "1010",
+    "combatType": "3",
+    "name": "EndlessPractice",
+    "_display_name": "EndlessPractice"
+  },
+  {
+    "effectTypeID": "1011",
+    "combatType": "3",
+    "name": "WayoftheSword",
+    "_display_name": "WayoftheSword"
+  },
+  {
+    "effectTypeID": "1012",
+    "combatType": "3",
+    "name": "IronWill",
+    "_display_name": "IronWill"
+  },
+  {
+    "effectTypeID": "1013",
+    "combatType": "3",
+    "name": "Sabotage",
+    "_display_name": "Sabotage"
+  },
+  {
+    "effectTypeID": "1014",
+    "combatType": "3",
+    "name": "HeartofaWarrior",
+    "_display_name": "HeartofaWarrior"
+  },
+  {
+    "effectTypeID": "1015",
+    "combatType": "3",
+    "name": "ToweringShield",
+    "_display_name": "ToweringShield"
+  },
+  {
+    "effectTypeID": "1016",
+    "combatType": "2",
+    "name": "WallAmount",
+    "_display_name": "WallAmount"
+  },
+  {
+    "effectTypeID": "1018",
+    "combatType": "2",
+    "name": "HeroicDefense",
+    "_display_name": "HeroicDefense"
+  },
+  {
+    "effectTypeID": "1019",
+    "combatType": "1",
+    "name": "MindClarityEvenWave",
+    "_display_name": "MindClarityEvenWave"
+  },
+  {
+    "effectTypeID": "1020",
+    "combatType": "3",
+    "name": "AspectoftheDragon",
+    "_display_name": "AspectoftheDragon"
+  },
+  {
+    "effectTypeID": "1021",
+    "combatType": "3",
+    "name": "Ayala(Falcon)",
+    "_display_name": "Ayala(Falcon)"
+  },
+  {
+    "effectTypeID": "1022",
+    "combatType": "3",
+    "name": "Ambush",
+    "_display_name": "Ambush"
+  },
+  {
+    "effectTypeID": "1023",
+    "combatType": "3",
+    "name": "Longbows",
+    "_display_name": "Longbows"
+  },
+  {
+    "effectTypeID": "1025",
+    "combatType": "3",
+    "name": "ReinforcedArrows",
+    "_display_name": "ReinforcedArrows"
+  },
+  {
+    "effectTypeID": "1026",
+    "combatType": "3",
+    "name": "Plunder",
+    "_display_name": "Plunder"
+  },
+  {
+    "effectTypeID": "1027",
+    "combatType": "3",
+    "name": "YourCut",
+    "_display_name": "YourCut"
+  },
+  {
+    "effectTypeID": "1028",
+    "combatType": "3",
+    "name": "HiddenTreasures",
+    "_display_name": "HiddenTreasures"
+  },
+  {
+    "effectTypeID": "1029",
+    "combatType": "3",
+    "name": "TheWayofPerfection",
+    "_display_name": "TheWayofPerfection"
+  },
+  {
+    "effectTypeID": "1030",
+    "combatType": "3",
+    "name": "Vengence",
+    "_display_name": "Vengence"
+  },
+  {
+    "effectTypeID": "1033",
+    "combatType": "3",
+    "name": "WingsWhirlwind",
+    "_display_name": "WingsWhirlwind"
+  },
+  {
+    "effectTypeID": "1034",
+    "combatType": "3",
+    "name": "Tailwhip",
+    "_display_name": "Tailwhip"
+  },
+  {
+    "effectTypeID": "1035",
+    "combatType": "3",
+    "name": "DragonscaleArmor",
+    "_display_name": "DragonscaleArmor"
+  },
+  {
+    "effectTypeID": "1038",
+    "combatType": "3",
+    "name": "Exhalted",
+    "_display_name": "Exhalted"
+  },
+  {
+    "effectTypeID": "1039",
+    "combatType": "3",
+    "name": "LastingWounds",
+    "_display_name": "LastingWounds"
+  },
+  {
+    "effectTypeID": "1040",
+    "combatType": "1",
+    "name": "MindClarityOddWave",
+    "_display_name": "MindClarityOddWave"
+  },
+  {
+    "effectTypeID": "188",
+    "name": "CraftingQueueProductionBoost",
+    "_display_name": "CraftingQueueProductionBoost"
+  },
+  {
+    "effectTypeID": "189",
+    "sortCategory": "7",
+    "sortGroup": "31",
+    "name": "BeefProductionIncrease",
+    "_display_name": "BeefProductionIncrease"
+  },
+  {
+    "effectTypeID": "190",
+    "sortCategory": "7",
+    "sortGroup": "23",
+    "name": "unboostedBeefProduction",
+    "_display_name": "unboostedBeefProduction"
+  },
+  {
+    "effectTypeID": "191",
+    "sortCategory": "7",
+    "sortGroup": "9",
+    "name": "beefProductionBoost",
+    "_display_name": "beefProductionBoost"
+  },
+  {
+    "effectTypeID": "192",
+    "sortCategory": "7",
+    "sortGroup": "11",
+    "name": "beefCapacityBonus",
+    "_display_name": "beefCapacityBonus"
+  },
+  {
+    "effectTypeID": "193",
+    "name": "enableCraftingRecipeGroups",
+    "_display_name": "enableCraftingRecipeGroups"
+  },
+  {
+    "effectTypeID": "194",
+    "sortCategory": "2",
+    "sortGroup": "1",
+    "name": "unitWallAbsoluteAmount",
+    "_display_name": "unitWallAbsoluteAmount"
+  },
+  {
+    "effectTypeID": "195",
+    "name": "constructionQueue",
+    "_display_name": "constructionQueue"
+  },
+  {
+    "effectTypeID": "196",
+    "name": "simultaneousConstruction",
+    "_display_name": "simultaneousConstruction"
+  },
+  {
+    "effectTypeID": "58",
+    "sortCategory": "4",
+    "sortGroup": "4",
+    "name": "SurvivalBoost",
+    "_display_name": "SurvivalBoost"
+  },
+  {
+    "effectTypeID": "59",
+    "sortCategory": "5",
+    "sortGroup": "11",
+    "name": "SightRadiusBonus",
+    "_display_name": "SightRadiusBonus"
+  },
+  {
+    "effectTypeID": "60",
+    "sortCategory": "1",
+    "sortGroup": "16",
+    "name": "xpBoost",
+    "_display_name": "xpBoost"
+  },
+  {
+    "effectTypeID": "197",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "32",
+    "name": "infectionRateBaseBonus",
+    "_display_name": "infectionRateBaseBonus"
+  },
+  {
+    "effectTypeID": "198",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "33",
+    "name": "infectionRateMeleeBonus",
+    "_display_name": "infectionRateMeleeBonus"
+  },
+  {
+    "effectTypeID": "199",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "34",
+    "name": "infectionRateRangeBonus",
+    "_display_name": "infectionRateRangeBonus"
+  },
+  {
+    "effectTypeID": "200",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "35",
+    "name": "infectionRateWallBonus",
+    "_display_name": "infectionRateWallBonus"
+  },
+  {
+    "effectTypeID": "201",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "36",
+    "name": "infectionRateCourtyardBonus",
+    "_display_name": "infectionRateCourtyardBonus"
+  },
+  {
+    "effectTypeID": "202",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "37",
+    "name": "infectionRateBaseMalus",
+    "_display_name": "infectionRateBaseMalus"
+  },
+  {
+    "effectTypeID": "203",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "38",
+    "name": "infectionRateMeleeMalus",
+    "_display_name": "infectionRateMeleeMalus"
+  },
+  {
+    "effectTypeID": "204",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "39",
+    "name": "infectionRateRangeMalus",
+    "_display_name": "infectionRateRangeMalus"
+  },
+  {
+    "effectTypeID": "205",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "40",
+    "name": "infectionRateWallMalus",
+    "_display_name": "infectionRateWallMalus"
+  },
+  {
+    "effectTypeID": "206",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "41",
+    "name": "infectionRateCourtyardMalus",
+    "_display_name": "infectionRateCourtyardMalus"
+  },
+  {
+    "effectTypeID": "207",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "42",
+    "name": "raidBossWallRegeneration",
+    "_display_name": "raidBossWallRegeneration"
+  },
+  {
+    "effectTypeID": "208",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "47",
+    "name": "reserveUnitKill",
+    "_display_name": "reserveUnitKill"
+  },
+  {
+    "effectTypeID": "209",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "43",
+    "name": "raidBossWallRegenerationDelayLeft",
+    "_display_name": "raidBossWallRegenerationDelayLeft"
+  },
+  {
+    "effectTypeID": "210",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "44",
+    "name": "raidBossWallRegenerationDelayFront",
+    "_display_name": "raidBossWallRegenerationDelayFront"
+  },
+  {
+    "effectTypeID": "211",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "45",
+    "name": "raidBossWallRegenerationDelayRight",
+    "_display_name": "raidBossWallRegenerationDelayRight"
+  },
+  {
+    "effectTypeID": "212",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "46",
+    "name": "raidBossWallRegenerationDelayAll",
+    "_display_name": "raidBossWallRegenerationDelayAll"
+  },
+  {
+    "effectTypeID": "213",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "46",
+    "name": "spawnReserveUnit",
+    "_display_name": "spawnReserveUnit"
+  },
+  {
+    "effectTypeID": "214",
+    "combatType": "3",
+    "sortCategory": "6",
+    "sortGroup": "46",
+    "name": "mutateReserveUnit",
+    "_display_name": "mutateReserveUnit"
+  }
+]

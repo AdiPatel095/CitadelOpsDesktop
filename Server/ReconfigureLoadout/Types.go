@@ -6,7 +6,6 @@ import "CitadelDesktop/Server/Models"
 // Tier 1 = Priority Stats (scored and weighted by position)
 // Tier 2 = Optimize Stats (just needs to be present, checked via bitmask)
 type ReconfigurePayload struct {
-	HardwareID    string `json:"hardwareID"`
 	EquipmentMode string `json:"equipmentMode"` // "Commander" or "Castellan"
 	CombatMode    string `json:"combatMode"`    // "PVP" or "NPC"
 	TargetIndex   int    `json:"targetIndex"`

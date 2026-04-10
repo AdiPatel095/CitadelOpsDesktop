@@ -6,12 +6,13 @@ import {
 } from '../models/equipment.ts';
 import { useAuth } from '../../context/AuthContext';
 
-// Castle index mapping (0-7)
-// 0 - MainCastle, 1 - Outpost1, 2 - Outpost2, 3 - Outpost3
-// 4 - IceCastle, 5 - DesertCastle, 6 - DungeonCastle, 7 - StormCastle
+// Castle index mapping (0-9) — matches server Models.NumPlayerCastleSlots / castStatUpdate optionalData
+// 0 Main … 7 Storm, 8 Metropolis, 9 Capital
+export const NUM_CASTLE_SLOTS = 10;
 export const CASTLE_LOCATIONS = [
     'MainCastle', 'Outpost1', 'Outpost2', 'Outpost3',
-    'IceCastle', 'DesertCastle', 'DungeonCastle', 'StormCastle'
+    'IceCastle', 'DesertCastle', 'DungeonCastle', 'StormCastle',
+    'MetropolisCastle', 'CapitalCastle',
 ];
 
 interface EquipmentData {
@@ -32,9 +33,9 @@ const defaultEquipmentContext: EquipmentContextType = {
     equipmentData: {
         commStats: [],
         castellanStats: [],
-        castStats: Array(8).fill(null),
+        castStats: Array(NUM_CASTLE_SLOTS).fill(null),
     },
-    isCastStatsLoading: Array(8).fill(true),
+    isCastStatsLoading: Array(NUM_CASTLE_SLOTS).fill(true),
     isCommStatsLoading: true,
 };
 
@@ -59,9 +60,9 @@ interface EquipmentProviderProps {
 
 export const EquipmentProvider: React.FC<EquipmentProviderProps> = ({ children }) => {
     const [commStats, setCommStats] = useState<CommStat[]>(Array(50).fill(null));
-    const [castStats, setCastStats] = useState<(CastStat | null)[]>(Array(8).fill(null));
+    const [castStats, setCastStats] = useState<(CastStat | null)[]>(Array(NUM_CASTLE_SLOTS).fill(null));
     const [isCommStatsLoading, setIsCommStatsLoading] = useState(true);
-    const [isCastStatsLoading, setIsCastStatsLoading] = useState<boolean[]>(Array(8).fill(true));
+    const [isCastStatsLoading, setIsCastStatsLoading] = useState<boolean[]>(Array(NUM_CASTLE_SLOTS).fill(true));
     const [commStatsLoadedCount, setCommStatsLoadedCount] = useState(0);
 
     useEffect(() => {
@@ -95,7 +96,7 @@ export const EquipmentProvider: React.FC<EquipmentProviderProps> = ({ children }
                     if (message.optionalData !== undefined && message.payload) {
                         const index = parseInt(message.optionalData, 10);
 
-                        if (!isNaN(index) && index >= 0 && index < 8) {
+                        if (!isNaN(index) && index >= 0 && index < NUM_CASTLE_SLOTS) {
                             const newStat = message.payload as CastStat;
                             setCastStats(prev => {
                                 const newStats = [...prev];

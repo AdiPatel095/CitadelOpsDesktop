@@ -1,58 +1,40 @@
 import React, { useState } from 'react';
 import { useAuth } from './context/AuthContext.tsx';
+import { useCastleFocus } from './context/CastleFocusContext';
 import { Providers } from './Providers';
 
 import EquipmentView from './equipment/components/EquipmentView';
 import SupportPage from './views/SupportPage';
-import Dashboard from './dashboard/components/Dashboard';
-import UnitsDashboard from './dashboard/components/UnitsDashboard';
+import CastleView from './dashboard/components/CastleView';
 import CurrencyView from './currency/components/CurrencyView';
 import EventModulesView from './event-modules/components/EventModulesView';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import RegistrationPending from './components/RegistrationPending';
-import InsufficientCreditsModal from './components/InsufficientCreditsModal';
 import UpdateModal from './components/UpdateModal';
-import LoginCredentialsModal from './components/LoginCredentialsModal';
 import { Alerts } from './components/Alerts';
+import { RecruitTroopsSettingsModal } from './settings/components/RecruitTroopsSettingsModal';
 import { AutoBirdSettingsModal } from './settings/components/AutoBirdSettingsModal';
-
-
+import SettingsView from './views/SettingsView';
 import { type ViewId } from './config/navigation';
+import { LoggerDock } from './components/LoggerDock';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading, hardwareID, versionUpdate, isVersionBannerDismissed, dismissVersionBanner, startGame, storedUsername, storedServer } = useAuth();
-  const [activeView, setActiveView] = useState<ViewId>('equipment');
+  const {
+    versionUpdate,
+    isVersionBannerDismissed,
+    dismissVersionBanner,
+  } = useAuth();
+
+  const [activeView, setActiveView] = useState<ViewId>('castle');
 
   // Modal states
+  const [isRecruitTroopsSettingsOpen, setIsRecruitTroopsSettingsOpen] = useState(false);
   const [isAutoBirdSettingsOpen, setIsAutoBirdSettingsOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
-  const handleSaveCredentials = (username: string, password: string, server: string) => {
-    setIsLoginModalOpen(false);
-    startGame({ username, password, server });
-  };
-
-  // Show loading state while waiting for registration status
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-bg-app flex items-center justify-center">
-        <div className="text-text-muted">Connecting to server...</div>
-      </div>
-    );
-  }
-
-  // Show registration pending if not authenticated
-  if (!isAuthenticated) {
-    return <RegistrationPending hardwareID={hardwareID} />;
-  }
 
   const renderView = () => {
     switch (activeView) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'units':
-        return <UnitsDashboard />;
+      case 'castle':
+        return <CastleView />;
       case 'equipment':
         return <EquipmentView />;
       case 'event-modules':
@@ -61,6 +43,8 @@ const AppContent: React.FC = () => {
         return <CurrencyView />;
       case 'support':
         return <SupportPage />;
+      case 'settings':
+        return <SettingsView />;
       default:
         return <EquipmentView />;
     }
@@ -73,22 +57,25 @@ const AppContent: React.FC = () => {
       <Sidebar
         currentView={activeView}
         onViewChange={setActiveView}
+        onOpenRecruitTroopsSettings={() => setIsRecruitTroopsSettingsOpen(true)}
       />
 
-      <main className="ml-64 h-screen overflow-y-auto transition-all duration-300 pt-16 relative">
+      <main
+        className="relative ml-64 h-screen overflow-y-auto transition-all duration-300 pt-16"
+      >
         <div className="p-6 max-w-[1600px] mx-auto animate-fade-in relative z-10">
           {renderView()}
         </div>
       </main>
 
-      <InsufficientCreditsModal />
       <Alerts />
 
-      {/* Settings Modals */}
-      <AutoBirdSettingsModal
-        isOpen={isAutoBirdSettingsOpen}
-        onClose={() => setIsAutoBirdSettingsOpen(false)}
+      <RecruitTroopsSettingsModal
+        isOpen={isRecruitTroopsSettingsOpen}
+        onClose={() => setIsRecruitTroopsSettingsOpen(false)}
       />
+
+      <AutoBirdSettingsModal isOpen={isAutoBirdSettingsOpen} onClose={() => setIsAutoBirdSettingsOpen(false)} />
 
       {/* Version Update Modal - displayed when new version available */}
       {versionUpdate && !isVersionBannerDismissed && (
@@ -99,14 +86,7 @@ const AppContent: React.FC = () => {
         />
       )}
 
-      {/* Login Credentials Modal */}
-      <LoginCredentialsModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onSave={handleSaveCredentials}
-        initialUsername={storedUsername || ''}
-        initialServer={storedServer || 'United States'}
-      />
+      <LoggerDock />
     </div>
   );
 };
