@@ -9,7 +9,7 @@ export interface AutoBirdPreset {
   minSend: number;
 }
 
-interface PresetsFileV1 {
+export interface PresetsFileV1 {
   version: 1;
   lastSelectedPresetId: string | null;
   presets: AutoBirdPreset[];
@@ -19,17 +19,27 @@ function emptyFile(): PresetsFileV1 {
   return { version: 1, lastSelectedPresetId: null, presets: [] };
 }
 
-export function loadPresetsFile(): PresetsFileV1 {
+/** Normalizes server or local JSON into PresetsFileV1. */
+export function parsePresetsPayload(raw: unknown): PresetsFileV1 {
   try {
-    const raw = localStorage.getItem(PRESETS_FILE_KEY);
-    if (!raw) return emptyFile();
-    const p = JSON.parse(raw) as Partial<PresetsFileV1>;
-    if (!p || p.version !== 1 || !Array.isArray(p.presets)) return emptyFile();
+    if (raw == null || typeof raw !== 'object') return emptyFile();
+    const p = raw as Partial<PresetsFileV1>;
+    if (p.version !== 1 || !Array.isArray(p.presets)) return emptyFile();
     return {
       version: 1,
       lastSelectedPresetId: typeof p.lastSelectedPresetId === 'string' ? p.lastSelectedPresetId : null,
       presets: p.presets.filter((x) => x && typeof x.id === 'string' && typeof x.name === 'string'),
     };
+  } catch {
+    return emptyFile();
+  }
+}
+
+export function loadPresetsFile(): PresetsFileV1 {
+  try {
+    const raw = localStorage.getItem(PRESETS_FILE_KEY);
+    if (!raw) return emptyFile();
+    return parsePresetsPayload(JSON.parse(raw));
   } catch {
     return emptyFile();
   }

@@ -13,7 +13,7 @@ func UpdateGemStorage(gemStorageString string) {
 		log.Printf("[parser] ggm unmarshal: %v", err)
 		return
 	}
-	gs.Equipment.NonRelicGemIDs = make(map[float64]float64)
+	gs.Equipment.NonRelicGemIDs = make(map[int]float64)
 	nonRelicGemArray, ok := gemStorageMap["GEM"].([]interface{})
 	if !ok {
 		log.Printf("[parser] ggm: GEM not an array")
@@ -29,7 +29,7 @@ func UpdateGemStorage(gemStorageString string) {
 		if !ok0 || !ok1 {
 			continue
 		}
-		gs.Equipment.NonRelicGemIDs[id] = count
+		gs.Equipment.NonRelicGemIDs[int(id)] = count
 	}
 
 	relicGemArray, ok := gemStorageMap["RGEM"].([]interface{})

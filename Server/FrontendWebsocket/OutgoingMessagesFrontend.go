@@ -1,11 +1,11 @@
 package FrontendWebsocket
 
 import (
+	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/GameFunctions"
 	"CitadelDesktop/Server/Models"
 	equip "CitadelDesktop/Server/Models/Equipment"
 	"CitadelDesktop/Server/ResponseRegistry"
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -160,7 +160,7 @@ func SellNonRelicEquipment(sellLookItems bool, sellSpecialPost2026 bool) int {
 	counter := 0
 	gs := Models.GetGameState()
 
-	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
+	GameCommands.SendGEI()
 	time.Sleep(2 * time.Second)
 
 	for _, equipment := range gs.Equipment.EquipmentStorage {
@@ -180,8 +180,7 @@ func SellNonRelicEquipment(sellLookItems bool, sellSpecialPost2026 bool) int {
 		shouldSell := id < 1366 || sellSpecialPost2026
 
 		if shouldSell && equipment.EquipRarity != 5 && equipment.EquipRarity != 15 {
-			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
-			ResponseRegistry.OutgoingMessages <- []byte(payload)
+			GameCommands.SendSEQSellEquipment(equipment.ID)
 			counter++
 		}
 	}
@@ -192,10 +191,10 @@ func SellNonRelicGems(sellSpecialPost2026 bool) int {
 	counter := 0
 	gs := Models.GetGameState()
 
-	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
+	GameCommands.SendGGM()
 	time.Sleep(2 * time.Second)
 	for id, count := range gs.Equipment.NonRelicGemIDs {
-		gemID := int(id)
+		gemID := id
 
 		// Selling Logic:
 		// 1. Sell if GemID < 450 (Old Pre-2026 Gems)
@@ -204,8 +203,7 @@ func SellNonRelicGems(sellSpecialPost2026 bool) int {
 
 		if shouldSell {
 			for i := 0; i < int(count); i++ {
-				payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%03.0f,"RGEM":0,"LFID":-1}%%`, id)
-				ResponseRegistry.OutgoingMessages <- []byte(payload)
+				GameCommands.SendSGENonRelicGem(float64(id))
 				counter++
 			}
 		}
@@ -217,14 +215,13 @@ func SellNonRelicGems(sellSpecialPost2026 bool) int {
 func SellRelic1Equipment() int {
 	counter := 0
 	gs := Models.GetGameState()
-	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
+	GameCommands.SendGEI()
 	time.Sleep(2 * time.Second)
 
 	for _, equipment := range gs.Equipment.EquipmentStorage {
 		// Relic 1.0 is Rarity 5 but NOT 4 stats (which is Relic 2.0)
 		if equipment.EquipRarity == 5 && len(equipment.EquipStats) < 4 {
-			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
-			ResponseRegistry.OutgoingMessages <- []byte(payload)
+			GameCommands.SendSEQSellEquipment(equipment.ID)
 			counter++
 		}
 	}
@@ -234,7 +231,7 @@ func SellRelic1Equipment() int {
 func SellRelic2Equipment(keepStars int) int {
 	counter := 0
 	gs := Models.GetGameState()
-	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gei%1%{}%`)
+	GameCommands.SendGEI()
 	time.Sleep(2 * time.Second)
 
 	for _, equipment := range gs.Equipment.EquipmentStorage {
@@ -252,8 +249,7 @@ func SellRelic2Equipment(keepStars int) int {
 
 			// Sell if below the keep threshold
 			if totalStars < keepStars {
-				payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipment.ID)
-				ResponseRegistry.OutgoingMessages <- []byte(payload)
+				GameCommands.SendSEQSellEquipment(equipment.ID)
 				counter++
 			}
 		}
@@ -264,13 +260,12 @@ func SellRelic2Equipment(keepStars int) int {
 func SellRelic1Gems() int {
 	counter := 0
 	gs := Models.GetGameState()
-	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
+	GameCommands.SendGGM()
 	time.Sleep(2 * time.Second)
 
 	for _, gem := range gs.Equipment.GemsStorage {
 		if len(gem.GemStats) == 3 {
-			payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%.0f,"RGEM":1,"LFID":-1}%%`, gem.ID)
-			ResponseRegistry.OutgoingMessages <- []byte(payload)
+			GameCommands.SendSGERelicGem(gem.ID)
 			counter++
 		}
 	}
@@ -280,7 +275,7 @@ func SellRelic1Gems() int {
 func SellRelic2Gems(keepStars int) int {
 	counter := 0
 	gs := Models.GetGameState()
-	ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%ggm%1%{}%`)
+	GameCommands.SendGGM()
 	time.Sleep(2 * time.Second)
 
 	for _, gem := range gs.Equipment.GemsStorage {
@@ -293,8 +288,7 @@ func SellRelic2Gems(keepStars int) int {
 
 			// Sell if below the keep threshold
 			if totalStars < keepStars {
-				payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%.0f,"RGEM":1,"LFID":-1}%%`, gem.ID)
-				ResponseRegistry.OutgoingMessages <- []byte(payload)
+				GameCommands.SendSGERelicGem(gem.ID)
 				counter++
 			}
 		}

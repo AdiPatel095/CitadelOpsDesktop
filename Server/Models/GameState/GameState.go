@@ -33,7 +33,7 @@ func GetGameState() *GameState {
 	onceGameState.Do(func() {
 		instanceGameState = &GameState{
 			Equipment: equipment.PlayerEquipment{
-				NonRelicGemIDs: make(map[float64]float64),
+				NonRelicGemIDs: make(map[int]float64),
 			},
 			Movement: movement.PlayerMovement{
 				BirdMovements: make(map[int][]movement.BirdMovement),
@@ -50,7 +50,7 @@ func (gs *GameState) Reset() {
 	gs.Alliance = alliance.Alliance{}
 	gs.GlobalResources = resources.PlayerGlobalResources{}
 	gs.Castle = castle.PlayerCastles{}
-	gs.Equipment = equipment.PlayerEquipment{NonRelicGemIDs: make(map[float64]float64)}
+	gs.Equipment = equipment.PlayerEquipment{NonRelicGemIDs: make(map[int]float64)}
 	gs.Movement = movement.PlayerMovement{
 		BirdMovements: make(map[int][]movement.BirdMovement),
 		LastSDI:       make(map[int]movement.SDIContext),

@@ -101,8 +101,8 @@ export const LoggerDock: React.FC = () => {
           <div className="flex shrink-0 items-center justify-between border-b border-border-base bg-bg-card-hover/80 px-4 py-3 backdrop-blur-md">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Icons.Activity className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold uppercase tracking-wide text-text-main">
+                <Icons.Activity className="w-5 h-5 text-primary" />
+                <span className="text-sm font-bold uppercase tracking-wide text-text-main">
                   System Logs
                 </span>
               </div>
@@ -113,7 +113,7 @@ export const LoggerDock: React.FC = () => {
                     key={c.id}
                     type="button"
                     onClick={() => setActiveId(c.id)}
-                    className={`rounded-global px-3 py-1 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                    className={`rounded-global px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${
                       activeId === c.id
                         ? 'bg-primary text-bg-app shadow-md shadow-primary/20'
                         : 'bg-bg-card border border-border-base text-text-muted hover:bg-primary/10 hover:border-primary/30 hover:text-primary'
@@ -127,39 +127,39 @@ export const LoggerDock: React.FC = () => {
 
             <div className="flex items-center gap-2">
               <div className="relative">
-                <Icons.List className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
+                <Icons.List className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search logs..."
-                  className="w-48 rounded-global border border-border-base bg-bg-card py-1.5 pl-8 pr-3 text-xs text-text-main placeholder:text-text-muted focus:border-primary focus:outline-none"
+                  className="w-52 rounded-global border border-border-base bg-bg-card py-2 pl-9 pr-3 text-sm text-text-main placeholder:text-text-muted focus:border-primary focus:outline-none"
                 />
               </div>
               {!isFollowingLive && (
                 <button
                   type="button"
                   onClick={jumpToLatest}
-                  className="rounded-global border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15 transition-colors flex items-center gap-1.5"
+                  className="rounded-global border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/15 transition-colors flex items-center gap-1.5"
                 >
-                  <Icons.ArrowRight className="w-3.5 h-3.5 rotate-90" />
+                  <Icons.ArrowRight className="w-4 h-4 rotate-90" />
                   Jump to latest
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => void fetchTail()}
-                className="rounded-global border border-border-base bg-bg-card px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-bg-input hover:text-text-main transition-colors flex items-center gap-1.5"
+                className="rounded-global border border-border-base bg-bg-card px-3 py-2 text-sm font-medium text-text-muted hover:bg-bg-input hover:text-text-main transition-colors flex items-center gap-1.5"
               >
-                <Icons.RefreshCw className="w-3.5 h-3.5" />
+                <Icons.RefreshCw className="w-4 h-4" />
                 Refresh
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-global border border-border-base bg-bg-card px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-error/10 hover:border-error/30 hover:text-error transition-colors flex items-center gap-1.5"
+                className="rounded-global border border-border-base bg-bg-card px-3 py-2 text-sm font-medium text-text-muted hover:bg-error/10 hover:border-error/30 hover:text-error transition-colors flex items-center gap-1.5"
               >
-                <Icons.X className="w-3.5 h-3.5" />
+                <Icons.X className="w-4 h-4" />
                 Close
               </button>
             </div>
@@ -167,17 +167,17 @@ export const LoggerDock: React.FC = () => {
 
           <div className="relative min-h-0 flex-1 overflow-hidden bg-[#0A0A0A]">
             {loadError && (
-              <div className="absolute inset-x-0 top-0 z-10 bg-error/15 border-b border-error/30 px-3 py-2 text-center text-xs font-medium text-error shadow-sm backdrop-blur-sm flex items-center justify-center gap-2">
+              <div className="absolute inset-x-0 top-0 z-10 bg-error/15 border-b border-error/30 px-3 py-2.5 text-center text-sm font-medium text-error shadow-sm backdrop-blur-sm flex items-center justify-center gap-2">
                 <Icons.AlertCircle className="w-4 h-4" />
                 {loadError}
               </div>
             )}
             <pre
               ref={preRef}
-              className="h-full overflow-auto p-4 font-mono text-[11px] leading-relaxed text-gray-300 selection:bg-primary/30 custom-scrollbar"
+              className="h-full overflow-auto p-4 font-mono text-base leading-relaxed text-gray-300 selection:bg-primary/30 custom-scrollbar"
             >
               {filteredLines.length === 0 ? (
-                <span className="text-gray-600 italic">
+                <span className="text-base text-gray-600 italic">
                   {lines.length === 0 ? 'No lines yet for this channel.' : 'No log lines match the current search.'}
                 </span>
               ) : (
@@ -200,9 +200,9 @@ export const LoggerDock: React.FC = () => {
               className="flex h-32 w-10 shrink-0 flex-col items-center justify-center gap-2 rounded-tl-xl border border-border-base border-r-0 border-b-0 bg-bg-card text-text-muted shadow-lg transition-all duration-300 hover:bg-bg-card-hover hover:text-primary hover:border-primary/50 group"
               title="Show logs"
             >
-              <Icons.Terminal className="w-4 h-4 group-hover:animate-pulse" />
+              <Icons.Terminal className="w-5 h-5 group-hover:animate-pulse" />
               <span
-                className="text-[10px] font-bold uppercase tracking-widest text-text-muted group-hover:text-primary transition-colors"
+                className="text-xs font-bold uppercase tracking-widest text-text-muted group-hover:text-primary transition-colors"
                 style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
               >
                 Logs

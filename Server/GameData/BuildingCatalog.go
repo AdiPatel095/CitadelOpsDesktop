@@ -1,6 +1,6 @@
-package castle
+package gamedata
 
-// BuildingInfo stores human-readable information about a building.
+// BuildingInfo stores human-readable information about a building type id (BD/BG buildingID).
 type BuildingInfo struct {
 	Name  string
 	Level int

@@ -15,6 +15,12 @@ export interface SelectProps {
   icon?: React.ReactNode;
   className?: string;
   disabled?: boolean;
+  /**
+   * When true, dropdown max-height follows space below the control (viewport),
+   * so short lists show a compact panel and long lists use available height before scrolling.
+   * When false/omitted, uses a fixed cap (legacy behavior for other selects).
+   */
+  menuGrowToViewport?: boolean;
 }
 
 export const Select: React.FC<SelectProps> = ({
@@ -25,10 +31,11 @@ export const Select: React.FC<SelectProps> = ({
   icon,
   className = '',
   disabled = false,
+  menuGrowToViewport = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0, maxHeightPx: 260 });
 
   const selectedOption = options.find((o) => o.value === value);
 
@@ -36,10 +43,13 @@ export const Select: React.FC<SelectProps> = ({
     if (disabled) return;
     if (!isOpen && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom - 12;
+      const maxHeightPx = menuGrowToViewport ? Math.max(120, spaceBelow) : 260;
       setDropdownPos({
         top: rect.bottom + window.scrollY,
         left: rect.left + window.scrollX,
         width: rect.width,
+        maxHeightPx,
       });
     }
     setIsOpen(!isOpen);
@@ -112,7 +122,7 @@ export const Select: React.FC<SelectProps> = ({
               top: dropdownPos.top,
               left: dropdownPos.left,
               width: dropdownPos.width,
-              maxHeight: '260px',
+              maxHeight: `${dropdownPos.maxHeightPx}px`,
             }}
           >
             <div className="py-1">

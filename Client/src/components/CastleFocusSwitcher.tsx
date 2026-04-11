@@ -105,6 +105,7 @@ const CastleFocusSwitcher: React.FC = () => {
       <Select
         value={selectValue}
         options={dropdownOptions}
+        menuGrowToViewport
         onChange={(v) => {
           const c = rawOptions.find((o) => optionKey(o) === v);
           if (!c) return;

@@ -25,7 +25,7 @@ func formatDuration(seconds int) string {
 
 // ParseAllianceInfo processes the ain (Alliance Info) response from the game server
 // and updates the Alliance data in GameState, specifically extracting bird locations
-// for members with non-zero RPT (Raven Post Time)
+// for members with non-zero RPT (bird post time)
 func ParseAllianceInfo(data string) {
 	var allianceData map[string]interface{}
 	err := json.Unmarshal([]byte(data), &allianceData)
@@ -57,7 +57,7 @@ func ParseAllianceInfo(data string) {
 			continue
 		}
 
-		// Check RPT (Raven Post Time) - skip if zero
+		// Check RPT (bird post time) - skip if zero
 		rpt, ok := member["RPT"].(float64)
 		if !ok || rpt == 0 {
 			continue

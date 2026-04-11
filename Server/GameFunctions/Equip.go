@@ -1,8 +1,8 @@
 package GameFunctions
 
 import (
+	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/ResponseRegistry"
-	"fmt"
 	"log"
 	"time"
 )
@@ -23,14 +23,11 @@ func EquipEquipment(equipmentMode string, targetIndex int, slotNumber int, equip
 		return false
 	}
 
-	// Game message format: %xt%EmpireEx_21%eeq%1%{"EID":equipmentId,"LID":leaderId,"E":1}%
-	// E:1 means equip
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%eeq%%1%%{"EID":%.0f,"LID":%.0f,"E":1}%%`, equipmentId, lidValue)
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("eeq", 5*time.Second)
 	defer waiter.Cleanup()
 
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
+	GameCommands.SendEEQ(equipmentId, lidValue, true)
 
 	// Wait for response and log
 	response, err := waiter.WaitWithTimeout()
@@ -63,13 +60,11 @@ func EquipGem(equipmentMode string, targetIndex int, equipmentId float64, gemId 
 		return false
 	}
 
-	// Game message format: %xt%EmpireEx_21%bge%1%{"GID":gemId,"EID":equipmentId,"LID":leaderId,"M":0,"RGEM":1}%
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%bge%%1%%{"GID":%.0f,"EID":%.0f,"LID":%.0f,"M":0,"RGEM":1}%%`, gemId, equipmentId, lidValue)
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("bge", 5*time.Second)
 	defer waiter.Cleanup()
 
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
+	GameCommands.SendBGE(gemId, equipmentId, lidValue)
 
 	// Wait for response and log
 	response, err := waiter.WaitWithTimeout()

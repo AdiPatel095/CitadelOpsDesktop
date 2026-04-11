@@ -1,22 +1,6 @@
-package castle
+package gamedata
 
-// CastleTroops represents troop counts for a single castle location
-type CastleTroops struct {
-	KingdomID   int            `json:"kingdomID"`
-	CastleID    int            `json:"castleID"`
-	X           int            `json:"x"`
-	Y           int            `json:"y"`
-	Troops      map[int]int    `json:"troops"`      // unitID -> count (troops only, no tools) - Legacy/I
-	TroopsI     map[int]int    `json:"troopsI"`     // Units currently in castle
-	TroopsTU    map[int]int    `json:"troopsTU"`    // Units travelling
-	TroopsHI    map[int]int    `json:"troopsHI"`    // Units in hospital
-	TroopsSHI   map[int]int    `json:"troopsSHI"`   // Units in special hospital
-	TroopsMixed map[int]int    `json:"troopsMixed"` // Combined I + TU
-	BGRows      []BuildingData `json:"bgRows,omitempty"`
-	BDRows      []BuildingData `json:"bdRows,omitempty"`
-}
-
-// TroopIDs contains all valid troop unit IDs and their names
+// TroopInfo is consumption metadata for one troop unit definition (wodID).
 type TroopInfo struct {
 	Name              string
 	ConsumptionType   string // "food", "mead", "beef"
@@ -434,6 +418,11 @@ var TroopIDs = map[int]TroopInfo{
 		ConsumptionType:   "food",
 		ConsumptionAmount: 3,
 	},
+	49: {
+		Name:              "Direwolf",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 3,
+	},
 	288: {
 		Name:              "Easter Championess",
 		ConsumptionType:   "mead",
@@ -586,6 +575,51 @@ var TroopIDs = map[int]TroopInfo{
 	},
 	503: {
 		Name:              "Forlorn Ranger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	504: {
+		Name:              "Corrupted Subject",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	505: {
+		Name:              "Decayed Axe Bearer",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	506: {
+		Name:              "Decayed Bolt Slinger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	593: {
+		Name:              "Fungus Guard",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	594: {
+		Name:              "Dormant Spore Maw",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	595: {
+		Name:              "Spore Gnasher",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	596: {
+		Name:              "Spore Slinger",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	597: {
+		Name:              "Dormant Spore Cyst",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	598: {
+		Name:              "Cyst-born Sporecaster",
 		ConsumptionType:   "mead",
 		ConsumptionAmount: 2,
 	},
@@ -1311,6 +1345,16 @@ var TroopIDs = map[int]TroopInfo{
 	// Forsaken Maiden - MEAD
 	472: {
 		Name:              "Forsaken Maiden",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	477: {
+		Name:              "Candy Cane Protector",
+		ConsumptionType:   "mead",
+		ConsumptionAmount: 2,
+	},
+	478: {
+		Name:              "Jolly Gingerbread Sniper",
 		ConsumptionType:   "mead",
 		ConsumptionAmount: 2,
 	},
@@ -2383,6 +2427,11 @@ var TroopIDs = map[int]TroopInfo{
 		Name:              "Relic Longbowman",
 		ConsumptionType:   "food",
 		ConsumptionAmount: 4,
+	},
+	1337: {
+		Name:              "QuickAttack",
+		ConsumptionType:   "food",
+		ConsumptionAmount: 1,
 	},
 }
 

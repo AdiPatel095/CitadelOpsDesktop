@@ -23,7 +23,8 @@ class FrontendWebsocketService {
     this.socket = new WebSocket(url);
 
     this.socket.onopen = () => {
-      // Connection established
+      // Pull durable UI state (same data dir as decoration presets)
+      this.sendMessage({ type: 'getAutoBirdClientState' });
     };
 
     this.socket.onclose = () => {

@@ -1,6 +1,13 @@
 import { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
 import { FrontendWebsocket } from '../websocket';
-import { loadAutoBirdSettingsFromStorage } from '../settings/components/AutoBirdSettingsModal';
+import { loadPresetsFile } from '../settings/autobirdPresets';
+import {
+  applyAutoBirdClientStateToLocalStorage,
+  buildAutoBirdClientState,
+  loadAutoBirdSettingsFromStorage,
+  parseAutoBirdClientState,
+  persistAutoBirdClientState,
+} from '../settings/autoBirdClientState';
 
 interface AuthContextType {
   gameLoggedIn: boolean;
@@ -69,6 +76,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAutoBirdEnabled(!!message.payload?.enabled);
         const nw = message.payload?.nextWakeUp;
         setAutoBirdNextWakeUp(typeof nw === 'number' ? nw : 0);
+      } else if (message.type === 'autoBirdClientState') {
+        let state = parseAutoBirdClientState(message.payload);
+        if (state.presets.presets.length === 0) {
+          const localPresets = loadPresetsFile();
+          const localIgnore = loadAutoBirdSettingsFromStorage();
+          const hadLocalData =
+            localPresets.presets.length > 0 ||
+            Object.keys(localIgnore.settings).length > 0 ||
+            localIgnore.minSend > 0 ||
+            localIgnore.minDelay !== 6 ||
+            localIgnore.maxDelay !== 12;
+          if (hadLocalData) {
+            state = buildAutoBirdClientState(localIgnore, localPresets);
+            persistAutoBirdClientState(state);
+          }
+        }
+        applyAutoBirdClientStateToLocalStorage(state);
       } else if (message.type === 'versionUpdate') {
         console.log('Version update received:', message.payload);
         const currentIgnoredVersion = localStorage.getItem('ignoredVersion');

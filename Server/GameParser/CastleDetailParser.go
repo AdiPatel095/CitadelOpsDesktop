@@ -1,6 +1,7 @@
 package GameParser
 
 import (
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Models"
 	"fmt"
 	"time"
@@ -70,8 +71,9 @@ func CastleDetailParser(gcl map[string]interface{}, dcl map[string]interface{}) 
 func parseGCL(gcl map[string]interface{}) error {
 	gs := Models.GetGameState()
 
-	// Clear previous player castle locations
+	// Clear previous player castle locations and gcl map coords on fixed slots
 	gs.Alliance.PlayerCastleLocations = nil
+	gs.Castle.ClearGCLMapPositions()
 
 	kingdomArray, ok := gcl[keyKingdoms].([]interface{})
 	if !ok {
@@ -167,6 +169,26 @@ func GetCastleLocationName(castleID int) string {
 	return ""
 }
 
+// sumTroopResourceConsumption returns hourly food/mead/beef consumption from unit counts (in castle + in transit).
+func sumTroopResourceConsumption(troopsI, troopsTU map[int]int) (foodConsumption, meadConsumption, beefConsumption float64) {
+	for _, m := range []map[int]int{troopsI, troopsTU} {
+		for unitID, count := range m {
+			if troopInfo, exists := Models.TroopIDs[unitID]; exists {
+				consumption := float64(count * troopInfo.ConsumptionAmount)
+				switch troopInfo.ConsumptionType {
+				case "food":
+					foodConsumption += consumption
+				case "mead":
+					meadConsumption += consumption
+				case "beef":
+					beefConsumption += consumption
+				}
+			}
+		}
+	}
+	return
+}
+
 // RecalculateCastleConsumption finds the specific castle by ID, recalculates its food/mead/beef consumption based on its troop data, and returns the castle location string so the frontend can be updated.
 func RecalculateCastleConsumption(castleID int) string {
 	gs := Models.GetGameState()
@@ -176,30 +198,34 @@ func RecalculateCastleConsumption(castleID int) string {
 		return ""
 	}
 
-	// Calculate new consumptions from the castle's troop data
-	foodConsumption := 0.0
-	meadConsumption := 0.0
-	beefConsumption := 0.0
+	foodConsumption, meadConsumption, beefConsumption := sumTroopResourceConsumption(
+		castle.Troops.TroopsI, castle.Troops.TroopsTU,
+	)
 
-	for unitID, count := range castle.Troops.TroopsI {
-		if troopInfo, exists := Models.TroopIDs[unitID]; exists {
-			consumption := float64(count * troopInfo.ConsumptionAmount)
-			switch troopInfo.ConsumptionType {
-			case "food":
-				foodConsumption += consumption
-			case "mead":
-				meadConsumption += consumption
-			case "beef":
-				beefConsumption += consumption
-			}
-		}
-	}
+	foodConsumption, meadConsumption, beefConsumption = gamedata.ApplyConsumptionBuildingReductions(
+		consumptionReductionWodIDs(castle.BGRows, castle.BDRows),
+		foodConsumption, meadConsumption, beefConsumption,
+	)
 
 	castle.Production.FoodConsumption = foodConsumption
 	castle.Production.MeadConsumption = meadConsumption
 	castle.Production.BeefConsumption = beefConsumption
 
 	return GetCastleLocationName(castleID)
+}
+
+// applyGCLCastleMapCoords copies GCL map position onto the matching GS.Castle slot (not Troops; those come from JAA/troop fetch).
+func applyGCLCastleMapCoords(gs *Models.GameState, castleID int, kingdomID int, x, y int) {
+	if x <= 0 || y <= 0 {
+		return
+	}
+	c := gs.GetCastleByID(castleID)
+	if c == nil {
+		return
+	}
+	c.MapKingdomID = kingdomID
+	c.MapX = x
+	c.MapY = y
 }
 
 // parseMainKingdomCastles handles Kingdom 0 where castles can be Main (type 1) or Outposts (type 4)
@@ -228,6 +254,7 @@ func parseMainKingdomCastles(castleArray []interface{}) {
 
 			// Store player castle location for AutoBird
 			if x > 0 && y > 0 {
+				applyGCLCastleMapCoords(gs, int(id), 0, x, y)
 				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
 					KingdomID: 0,
 					CastleID:  int(id),
@@ -252,6 +279,7 @@ func parseCastles(castleArray []interface{}, updaters []func(id float64, name st
 			updaters[i](id, name)
 			// Store player castle location for AutoBird
 			if x > 0 && y > 0 {
+				applyGCLCastleMapCoords(gs, int(id), kingdomID, x, y)
 				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
 					KingdomID: kingdomID,
 					CastleID:  int(id),
@@ -273,6 +301,7 @@ func parseSingleCastle(castleArray []interface{}, updater func(id float64, name 
 			updater(id, name)
 			// Store player castle location for AutoBird
 			if x > 0 && y > 0 {
+				applyGCLCastleMapCoords(gs, int(id), kingdomID, x, y)
 				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
 					KingdomID: kingdomID,
 					CastleID:  int(id),
@@ -443,7 +472,8 @@ func parseDCL(dcl map[string]interface{}) error {
 }
 
 // parseCastleResources is a generic function to parse resources for any castle.
-// It safely extracts amounts, production, and storage data, and calculates food consumption from troops.
+// It safely extracts amounts, production, and storage data, and calculates food/mead/beef consumption from
+// troops in castle (TroopsI) and in transit (TroopsTU), then applies consumption-building reductions.
 func parseCastleResources(castleMap map[string]interface{}, amount *Models.CastleResourcesAmount, production *Models.CastleProductionTotal, storage *Models.CastleStorageMax, castleID float64) {
 	// Helper to safely get a float64 from the map
 	getFloat := func(key string) float64 {
@@ -499,21 +529,18 @@ func parseCastleResources(castleMap map[string]interface{}, amount *Models.Castl
 
 	// Read troop data from the castle object itself
 	castle := gs.GetCastleByID(int(castleID))
+	var wodIDs []int
 	if castle != nil {
-		for unitID, count := range castle.Troops.TroopsI {
-			if troopInfo, exists := Models.TroopIDs[unitID]; exists {
-				consumption := float64(count * troopInfo.ConsumptionAmount)
-				switch troopInfo.ConsumptionType {
-				case "food":
-					foodConsumption += consumption
-				case "mead":
-					meadConsumption += consumption
-				case "beef":
-					beefConsumption += consumption
-				}
-			}
-		}
+		foodConsumption, meadConsumption, beefConsumption = sumTroopResourceConsumption(
+			castle.Troops.TroopsI, castle.Troops.TroopsTU,
+		)
+		wodIDs = consumptionReductionWodIDs(castle.BGRows, castle.BDRows)
 	}
+
+	foodConsumption, meadConsumption, beefConsumption = gamedata.ApplyConsumptionBuildingReductions(
+		wodIDs,
+		foodConsumption, meadConsumption, beefConsumption,
+	)
 
 	production.FoodConsumption = foodConsumption
 	production.MeadConsumption = meadConsumption
@@ -530,4 +557,24 @@ func parseCastleResources(castleMap map[string]interface{}, amount *Models.Castl
 	storage.HoneyMax = getGpaFloat(prefixStorage + keyH)
 	storage.MeadMax = getGpaFloat(prefixStorage + keyM)
 	storage.BeefMax = getGpaFloat(prefixStorage + keyB)
+}
+
+// consumptionReductionWodIDs collects JAA gca building IDs from BG/BD (same as items.json wodID) for consumption-reduction buildings.
+func consumptionReductionWodIDs(bg, bd []Models.BuildingData) []int {
+	n := len(bg) + len(bd)
+	if n == 0 {
+		return nil
+	}
+	out := make([]int, 0, n)
+	for _, r := range bg {
+		if r.BuildingID > 0 {
+			out = append(out, r.BuildingID)
+		}
+	}
+	for _, r := range bd {
+		if r.BuildingID > 0 {
+			out = append(out, r.BuildingID)
+		}
+	}
+	return out
 }

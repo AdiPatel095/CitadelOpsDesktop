@@ -27,6 +27,8 @@ const (
 	gamWaitTimeout = 12 * time.Second
 	ainSettleDelay = 1500 * time.Millisecond
 	sdiCdsGap      = 250 * time.Millisecond
+	// Max time to wait for GGE login after ReloadGameTab (cooldowns can run up to ~5 min).
+	sessionWaitAfterReload = 5*time.Minute + 10*time.Second
 )
 
 func autoBirdLog(event, detail string) {
@@ -36,6 +38,39 @@ func autoBirdLog(event, detail string) {
 		log.Printf("[AutoBird] %s", event)
 	}
 	Logging.AppendAutoBirdLine(event, detail)
+}
+
+// waitForGameLogin polls ResponseRegistry.LoginStatus until true, deadline, or ctx done.
+func waitForGameLogin(ctx context.Context, maxWait time.Duration) bool {
+	deadline := time.Now().Add(maxWait)
+	for {
+		if ResponseRegistry.LoginStatus {
+			return true
+		}
+		if !time.Now().Before(deadline) {
+			return ResponseRegistry.LoginStatus
+		}
+		select {
+		case <-ctx.Done():
+			return false
+		case <-time.After(1 * time.Second):
+		}
+	}
+}
+
+// ensureGameSessionOrReload returns true if the game reports an active session; otherwise reloads the tab and waits for login.
+func ensureGameSessionOrReload(ctx context.Context) bool {
+	if ResponseRegistry.LoginStatus {
+		return true
+	}
+	autoBirdLog("session_check", "no active game session; reloading game tab")
+	ResponseRegistry.ReloadGameTab()
+	if waitForGameLogin(ctx, sessionWaitAfterReload) {
+		autoBirdLog("session_check", "game session active after reload")
+		return true
+	}
+	autoBirdLog("session_check", "still disconnected after reload wait")
+	return false
 }
 
 // IsAutoBirdRunning reports whether the AutoBird loop is active.
@@ -107,8 +142,9 @@ func runAutoBird(ctx context.Context) {
 		default:
 		}
 
-		if !ResponseRegistry.LoginStatus {
-			time.Sleep(2 * time.Second)
+		// On each wake (including first iteration): require an active game session or reload the tab to establish one.
+		if !ensureGameSessionOrReload(ctx) {
+			time.Sleep(30 * time.Second)
 			continue
 		}
 
@@ -131,9 +167,10 @@ func runAutoBird(ctx context.Context) {
 		sentbird.ReplaceBirds(file.PlayerID, remaining)
 		autoBirdLog("reconcile", fmt.Sprintf("%d bird(s) remain logged after reconciliation", len(remaining)))
 
-		// --- Alliance / bird targets ---
+		// --- Alliance bird posts (RPT>0 members from **ain**) → local list for distance calcs only ---
 		GameCommands.SendAIN(gs.Alliance.AID)
 		time.Sleep(ainSettleDelay)
+		birdPosts := buildBirdPosts(gs)
 
 		st := Models.GetSettingsState()
 		minH, maxH := st.AutoBirdDelay.MinDelay, st.AutoBirdDelay.MaxDelay
@@ -151,8 +188,19 @@ func runAutoBird(ctx context.Context) {
 		var wakeNewSends time.Time
 		var maxTTLogged int
 
-		// --- Send birds from each castle ---
-		for _, loc := range gs.Alliance.PlayerCastleLocations {
+		// --- Send birds from each GameState.Castle slot that has AID + map location ---
+		for _, c := range []*Models.PlayerCastleInfo{
+			&gs.Castle.MainCastle,
+			&gs.Castle.Outpost1,
+			&gs.Castle.Outpost2,
+			&gs.Castle.Outpost3,
+			&gs.Castle.IceCastle,
+			&gs.Castle.DesertCastle,
+			&gs.Castle.DungeonCastle,
+			&gs.Castle.StormCastle,
+			&gs.Castle.Metropolis,
+			&gs.Castle.Capital,
+		} {
 			select {
 			case <-ctx.Done():
 				return
@@ -161,17 +209,21 @@ func runAutoBird(ctx context.Context) {
 			if !ResponseRegistry.LoginStatus {
 				break
 			}
-			castleID := loc.CastleID
-			c := gs.GetCastleByID(castleID)
-			if c == nil || int(c.Aid) != castleID {
+			if c.Aid <= 0 {
 				continue
 			}
-			bird := closestBirdTarget(gs, loc)
-			if bird == nil {
+			castleID := int(c.Aid)
+			kid, sx, sy, ok := castleMapCoords(gs, castleID, c)
+			if !ok {
+				autoBirdLog("castle_coords", fmt.Sprintf("skip castle %d: no map x/y on GameState yet", castleID))
 				continue
 			}
-			if !GameParser.FocusPlayerCastleTroops(loc.KingdomID, castleID, loc.X, loc.Y) {
-				autoBirdLog("focus_fail", fmt.Sprintf("castle %d (kid=%d)", castleID, loc.KingdomID))
+			post := closestBirdPost(birdPosts, kid, sx, sy)
+			if post == nil {
+				continue
+			}
+			if !GameParser.FocusPlayerCastleTroops(kid, castleID, sx, sy) {
+				autoBirdLog("focus_fail", fmt.Sprintf("castle %d (kid=%d)", castleID, kid))
 				continue
 			}
 			sendMap := troopsToSend(gs, castleID, c)
@@ -188,12 +240,12 @@ func runAutoBird(ctx context.Context) {
 				delayH = 1
 			}
 			troopsJSON := troopsMapToCDSJSON(sendMap)
-			GameCommands.SendSDI(bird.X, bird.Y, loc.X, loc.Y)
+			GameCommands.SendSDI(post.X, post.Y, sx, sy)
 			// CDS requires an LID derived from the SDI response (gaa.AI[17]).
 			// Wait briefly for the SDI parser to capture it.
 			sdiSentAt := time.Now().UnixNano()
 			lid := 0
-			deadline := time.Now().Add(2 * time.Second)
+			deadline := time.Now().Add(25 * time.Millisecond)
 			for time.Now().Before(deadline) {
 				if s, ok := gs.GetLastSDI(castleID); ok && s.ReceivedUnix >= sdiSentAt {
 					lid = s.LID
@@ -205,7 +257,7 @@ func runAutoBird(ctx context.Context) {
 				// Empirically, some kingdoms return 0 here; keep it as-is.
 				time.Sleep(sdiCdsGap)
 			}
-			if !GameCommands.SendCDSUntilSuccess(castleID, bird.X, bird.Y, lid, delayH, gs.GlobalResources.PTT, troopsJSON, func(parts []string) {
+			if !GameCommands.SendCDSUntilSuccess(castleID, post.X, post.Y, lid, delayH, gs.GlobalResources.PTT, troopsJSON, func(parts []string) {
 				if len(parts) <= 5 || parts[4] != "0" {
 					return
 				}
@@ -222,20 +274,34 @@ func runAutoBird(ctx context.Context) {
 				}
 				wakeNewSends = time.Now().Add(roundTrip + rndDelay)
 			}) {
-				autoBirdLog("cds_fail", fmt.Sprintf("castle %d -> (%d,%d) lid=%d gamePTT=%.0f", castleID, bird.X, bird.Y, lid, gs.GlobalResources.PTT))
+				autoBirdLog("cds_fail", fmt.Sprintf("castle %d -> (%d,%d) lid=%d gamePTT=%.0f", castleID, post.X, post.Y, lid, gs.GlobalResources.PTT))
 				continue
 			}
 
 			sentbird.Append(file.PlayerID, sentbird.LoggedBird{
 				SourceCastleID: castleID,
-				SourceKID:      loc.KingdomID,
-				TargetX:        bird.X,
-				TargetY:        bird.Y,
+				SourceKID:      kid,
+				TargetX:        post.X,
+				TargetY:        post.Y,
 				Troops:         copyIntMap(sendMap),
 				SentAtUnix:     time.Now().Unix(),
 			})
-			autoBirdLog("bird_sent", fmt.Sprintf("castle %d -> (%d,%d) units=%v", castleID, bird.X, bird.Y, sendMap))
-			time.Sleep(400 * time.Millisecond)
+			autoBirdLog("bird_sent", fmt.Sprintf("castle %d -> (%d,%d) units=%v", castleID, post.X, post.Y, sendMap))
+			time.Sleep(50 * time.Millisecond)
+		}
+
+		if !ResponseRegistry.LoginStatus {
+			autoBirdLog("session_lost", "lost during castle round; reloading game tab")
+			ResponseRegistry.ReloadGameTab()
+			if waitForGameLogin(ctx, sessionWaitAfterReload) {
+				autoBirdLog("session_lost", "game session restored; restarting round")
+				clearNextWake()
+				continue
+			}
+			autoBirdLog("session_lost", "still disconnected after reload wait; retry in 30s")
+			clearNextWake()
+			time.Sleep(61 * time.Second)
+			continue
 		}
 
 		// Sleep policy:
@@ -252,16 +318,9 @@ func runAutoBird(ctx context.Context) {
 		case !nextReconcile.IsZero():
 			sleepUntil = nextReconcile
 		default:
-			gs = Models.GetGameState()
-			travelSec := maxMovementTT(gs)
-			roundTrip := time.Duration(travelSec*2) * time.Second
-			if roundTrip < time.Minute {
-				roundTrip = time.Minute
-			}
-			sleepUntil = time.Now().Add(roundTrip + rndDelay)
-			if maxTTLogged == 0 {
-				maxTTLogged = travelSec
-			}
+			// No CDS TT this round and nothing to reconcile: sleep until the random delay only.
+			// Do not use max TT from ActiveMovements — it can be an unrelated alliance march.
+			sleepUntil = time.Now().Add(rndDelay)
 		}
 		if sleepUntil.Before(time.Now().Add(10 * time.Second)) {
 			sleepUntil = time.Now().Add(10 * time.Second)
@@ -279,14 +338,82 @@ func runAutoBird(ctx context.Context) {
 	}
 }
 
-func maxMovementTT(gs *Models.GameState) int {
-	max := 0
-	for _, m := range gs.Movement.ActiveMovements {
-		if m.TT > max {
-			max = m.TT
+// birdPost is one alliance bird post (from **ain** / BirdLocations: RPT>0) for distance checks only.
+type birdPost struct {
+	KingdomID int
+	X, Y      int
+	BirdTime  int
+}
+
+func buildBirdPosts(gs *Models.GameState) []birdPost {
+	bl := gs.Alliance.BirdLocations
+	out := make([]birdPost, 0, len(bl))
+	for i := range bl {
+		b := &bl[i]
+		out = append(out, birdPost{
+			KingdomID: b.KingdomID,
+			X:         b.X,
+			Y:         b.Y,
+			BirdTime:  b.BirdTime,
+		})
+	}
+	return out
+}
+
+// castleMapCoords returns kingdom + map tile: gcl fields on the castle slot, then JAA Troops, then ResolveCastleMapCoords / locations.
+func castleMapCoords(gs *Models.GameState, castleID int, c *Models.PlayerCastleInfo) (kingdomID, x, y int, ok bool) {
+	if c == nil {
+		return 0, 0, 0, false
+	}
+	if c.MapX != 0 || c.MapY != 0 {
+		return c.MapKingdomID, c.MapX, c.MapY, true
+	}
+	t := c.Troops
+	if t.X != 0 || t.Y != 0 {
+		return t.KingdomID, t.X, t.Y, true
+	}
+	px, py, found := gs.ResolveCastleMapCoords(castleID, t.KingdomID)
+	if !found {
+		return 0, 0, 0, false
+	}
+	kid := t.KingdomID
+	for _, loc := range gs.Alliance.PlayerCastleLocations {
+		if loc.CastleID != castleID {
+			continue
+		}
+		if loc.X == px && loc.Y == py {
+			return loc.KingdomID, px, py, true
+		}
+		if kid == 0 {
+			kid = loc.KingdomID
 		}
 	}
-	return max
+	if kid != 0 {
+		return kid, px, py, true
+	}
+	for _, loc := range gs.Alliance.PlayerCastleLocations {
+		if loc.CastleID == castleID {
+			return loc.KingdomID, px, py, true
+		}
+	}
+	return 0, px, py, true
+}
+
+func closestBirdPost(targets []birdPost, kingdomID, srcX, srcY int) *birdPost {
+	var best *birdPost
+	bestD := 0
+	for i := range targets {
+		t := &targets[i]
+		if t.KingdomID != kingdomID {
+			continue
+		}
+		d := manhattan(srcX, srcY, t.X, t.Y)
+		if best == nil || d < bestD {
+			best = t
+			bestD = d
+		}
+	}
+	return best
 }
 
 func troopMapFromGAM(a [][]int) map[int]int {
@@ -314,7 +441,7 @@ func troopMapsEqual(a, b map[int]int) bool {
 	return true
 }
 
-func movementMatchesBird(m Models.GAMMovement, b sentbird.LoggedBird, loc *Models.PlayerCastleLocation) bool {
+func movementMatchesBird(m Models.GAMMovement, b sentbird.LoggedBird, srcKID, srcX, srcY int) bool {
 	if m.TargetX != b.TargetX || m.TargetY != b.TargetY {
 		return false
 	}
@@ -324,20 +451,12 @@ func movementMatchesBird(m Models.GAMMovement, b sentbird.LoggedBird, loc *Model
 	if m.SID == b.SourceCastleID {
 		return true
 	}
-	if loc != nil && m.SourceX == loc.X && m.SourceY == loc.Y && m.KID == loc.KingdomID {
-		return true
-	}
-	return false
-}
-
-func findCastleLoc(gs *Models.GameState, castleID int) *Models.PlayerCastleLocation {
-	for i := range gs.Alliance.PlayerCastleLocations {
-		L := &gs.Alliance.PlayerCastleLocations[i]
-		if L.CastleID == castleID {
-			return L
+	if srcX != 0 || srcY != 0 {
+		if m.SourceX == srcX && m.SourceY == srcY && m.KID == srcKID {
+			return true
 		}
 	}
-	return nil
+	return false
 }
 
 func tuCoversBird(c *Models.PlayerCastleInfo, b sentbird.LoggedBird) bool {
@@ -359,8 +478,8 @@ func tuCoversBird(c *Models.PlayerCastleInfo, b sentbird.LoggedBird) bool {
 	return true
 }
 
-func movementStillActive(m Models.GAMMovement, b sentbird.LoggedBird, loc *Models.PlayerCastleLocation) bool {
-	if !movementMatchesBird(m, b, loc) {
+func movementStillActive(m Models.GAMMovement, b sentbird.LoggedBird, srcKID, srcX, srcY int) bool {
+	if !movementMatchesBird(m, b, srcKID, srcX, srcY) {
 		return false
 	}
 	if m.TT <= 0 {
@@ -387,14 +506,20 @@ func reconcileBirds(gs *Models.GameState, birds []sentbird.LoggedBird) ([]sentbi
 	now := time.Now()
 
 	for _, b := range birds {
-		loc := findCastleLoc(gs, b.SourceCastleID)
 		c := gs.GetCastleByID(b.SourceCastleID)
+		srcKID, srcX, srcY, ok := 0, 0, 0, false
+		if c != nil {
+			srcKID, srcX, srcY, ok = castleMapCoords(gs, b.SourceCastleID, c)
+		}
+		if !ok {
+			srcKID = b.SourceKID
+		}
 
 		activeMov := false
 		var matched *Models.GAMMovement
 		for i := range gs.Movement.ActiveMovements {
 			m := &gs.Movement.ActiveMovements[i]
-			if movementStillActive(*m, b, loc) {
+			if movementStillActive(*m, b, srcKID, srcX, srcY) {
 				activeMov = true
 				matched = m
 				break
@@ -456,23 +581,6 @@ func manhattan(ax, ay, bx, by int) int {
 		dy = -dy
 	}
 	return dx + dy
-}
-
-func closestBirdTarget(gs *Models.GameState, loc Models.PlayerCastleLocation) *Models.BirdLocation {
-	var best *Models.BirdLocation
-	bestD := 0
-	for i := range gs.Alliance.BirdLocations {
-		bl := &gs.Alliance.BirdLocations[i]
-		if bl.KingdomID != loc.KingdomID {
-			continue
-		}
-		d := manhattan(loc.X, loc.Y, bl.X, bl.Y)
-		if best == nil || d < bestD {
-			best = bl
-			bestD = d
-		}
-	}
-	return best
 }
 
 func troopsToSend(gs *Models.GameState, castleID int, c *Models.PlayerCastleInfo) map[int]int {

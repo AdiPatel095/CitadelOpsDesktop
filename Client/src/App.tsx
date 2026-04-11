@@ -14,6 +14,7 @@ import { Alerts } from './components/Alerts';
 import { RecruitTroopsSettingsModal } from './settings/components/RecruitTroopsSettingsModal';
 import { AutoBirdSettingsModal } from './settings/components/AutoBirdSettingsModal';
 import SettingsView from './views/SettingsView';
+import PatchNotesView from './views/PatchNotesView';
 import { type ViewId } from './config/navigation';
 import { LoggerDock } from './components/LoggerDock';
 
@@ -44,6 +45,8 @@ const AppContent: React.FC = () => {
         return <SupportPage />;
       case 'settings':
         return <SettingsView />;
+      case 'patch-notes':
+        return <PatchNotesView />;
       default:
         return <EquipmentView />;
     }

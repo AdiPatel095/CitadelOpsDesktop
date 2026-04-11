@@ -1,12 +1,16 @@
 package castle
 
 type PlayerCastleInfo struct {
-	Name       string                `json:"castleName"`
-	Aid        float64               `json:"aid"`
-	Amount     CastleResourcesAmount `json:"amount"`
-	Production CastleProductionTotal `json:"production"`
-	Storage    CastleStorageMax      `json:"storage"`
-	Troops     CastleTroopData       `json:"troops"`
+	Name string  `json:"castleName"`
+	Aid  float64 `json:"aid"`
+	// MapKingdomID, MapX, MapY are world-map position from gbd **gcl** (all player castles). Not troop-panel data.
+	MapKingdomID int                   `json:"mapKingdomID,omitempty"`
+	MapX         int                   `json:"mapX,omitempty"`
+	MapY         int                   `json:"mapY,omitempty"`
+	Amount       CastleResourcesAmount `json:"amount"`
+	Production   CastleProductionTotal `json:"production"`
+	Storage      CastleStorageMax      `json:"storage"`
+	Troops       CastleTroopData       `json:"troops"`
 	// BGRows / BDRows are parsed from JAA gca (same row shape as BuildingParser); not merged.
 	BGRows []BuildingData `json:"bgRows,omitempty"`
 	BDRows []BuildingData `json:"bdRows,omitempty"`

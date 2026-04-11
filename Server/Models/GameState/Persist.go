@@ -9,6 +9,7 @@ import (
 	"time"
 
 	mapstate "CitadelDesktop/Server/Models/MapState"
+	"CitadelDesktop/Server/paths"
 )
 
 const snapshotVersion = 1
@@ -18,14 +19,18 @@ const snapshotFileName = "game_state_snapshot.json"
 var persistMu sync.Mutex
 
 func snapshotFilePath() string {
+	return filepath.Join(paths.DataDir(), snapshotFileName)
+}
+
+func legacySnapshotBesideExe() string {
 	exe, err := os.Executable()
 	if err != nil {
-		return snapshotFileName
+		return ""
 	}
 	return filepath.Join(filepath.Dir(exe), snapshotFileName)
 }
 
-// PersistSnapshot writes the full in-memory GameState plus map kingdom tiles to JSON beside the executable.
+// PersistSnapshot writes the full in-memory GameState plus map kingdom tiles to JSON under paths.DataDir().
 func PersistSnapshot() {
 	gs := GetGameState()
 	kingdoms := mapstate.GetMapState().ExportKingdoms()
@@ -50,6 +55,7 @@ func PersistSnapshot() {
 		log.Printf("[gamestate] persist marshal: %v", err)
 		return
 	}
+	_ = os.MkdirAll(paths.DataDir(), 0755)
 	path := snapshotFilePath()
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0644); err != nil {
@@ -67,6 +73,14 @@ func ReadSnapshotForBroadcast() (map[string]interface{}, error) {
 	persistMu.Lock()
 	defer persistMu.Unlock()
 	data, err := os.ReadFile(snapshotFilePath())
+	if err != nil {
+		if leg := legacySnapshotBesideExe(); leg != "" {
+			if b, e := os.ReadFile(leg); e == nil && len(b) > 0 {
+				data = b
+				err = nil
+			}
+		}
+	}
 	if err != nil {
 		return nil, err
 	}

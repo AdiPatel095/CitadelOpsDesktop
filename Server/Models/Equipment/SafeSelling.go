@@ -3,7 +3,6 @@ package equipment
 import (
 	"encoding/json"
 	"log"
-	"os"
 	"sync"
 )
 
@@ -22,15 +21,14 @@ func initSellingBuckets() {
 		post2026GearIDs = make(map[int]struct{})
 		post2026GemIDs = make(map[int]struct{})
 
-		loadIDs := func(path string, target map[int]struct{}) {
-			data, err := os.ReadFile(path)
-			if err != nil {
-				log.Printf("[SellingBuckets] Warning: could not read %s: %v", path, err)
+		loadIDs := func(raw []byte, label string, target map[int]struct{}) {
+			if len(raw) == 0 {
+				log.Printf("[SellingBuckets] Warning: embedded %s is empty", label)
 				return
 			}
 			var ids []int
-			if err := json.Unmarshal(data, &ids); err != nil {
-				log.Printf("[SellingBuckets] Error parsing %s: %v", path, err)
+			if err := json.Unmarshal(raw, &ids); err != nil {
+				log.Printf("[SellingBuckets] Error parsing embedded %s: %v", label, err)
 				return
 			}
 			for _, id := range ids {
@@ -38,10 +36,10 @@ func initSellingBuckets() {
 			}
 		}
 
-		loadIDs("Server/Data/old_red_gear.json", oldRedGearIDs)
-		loadIDs("Server/Data/old_red_gems.json", oldRedGemIDs)
-		loadIDs("Server/Data/post_2026_gear.json", post2026GearIDs)
-		loadIDs("Server/Data/post_2026_gems.json", post2026GemIDs)
+		loadIDs(embeddedOldRedGearJSON, "old_red_gear", oldRedGearIDs)
+		loadIDs(embeddedOldRedGemsJSON, "old_red_gems", oldRedGemIDs)
+		loadIDs(embeddedPost2026GearJSON, "post_2026_gear", post2026GearIDs)
+		loadIDs(embeddedPost2026GemsJSON, "post_2026_gems", post2026GemIDs)
 
 		log.Printf("[SellingBuckets] Loaded %d old red gear, %d old red gems", len(oldRedGearIDs), len(oldRedGemIDs))
 		log.Printf("[SellingBuckets] Loaded %d special post-2026 gear, %d special post-2026 gems", len(post2026GearIDs), len(post2026GemIDs))

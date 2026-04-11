@@ -182,6 +182,16 @@ export const Icons = {
             <path d="M3 5h4"></path>
             <path d="M17 19h4"></path>
         </svg>
+    ),
+    /** Patch notes / changelog (system nav). */
+    PatchNotes: (props: IconProps) => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="8" y1="13" x2="16" y2="13"></line>
+            <line x1="8" y1="17" x2="16" y2="17"></line>
+            <line x1="8" y1="9" x2="12" y2="9"></line>
+        </svg>
     )
 };
 
