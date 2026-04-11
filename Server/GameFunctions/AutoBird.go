@@ -24,7 +24,6 @@ var (
 )
 
 const (
-	gamWaitTimeout = 12 * time.Second
 	ainSettleDelay = 1500 * time.Millisecond
 	sdiCdsGap      = 250 * time.Millisecond
 	// Max time to wait for GGE login after ReloadGameTab (cooldowns can run up to ~5 min).
@@ -151,12 +150,7 @@ func runAutoBird(ctx context.Context) {
 		gs := Models.GetGameState()
 		pid := gs.PlayerID
 
-		// --- Refresh movements ---
-		if !GameParser.SendGAMAndWait(gamWaitTimeout) {
-			autoBirdLog("gam_timeout", "refresh timed out, retry in 30s")
-			time.Sleep(30 * time.Second)
-			continue
-		}
+		// --- Movements: use GAM data already parsed from server traffic (no outgoing **gam** request) ---
 
 		// --- Reconcile logged birds ---
 		file := sentbird.Load()

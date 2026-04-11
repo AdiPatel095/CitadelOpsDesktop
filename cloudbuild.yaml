@@ -19,8 +19,6 @@ steps:
       - |
         docker create --name temp-container ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:$COMMIT_SHA
         docker cp temp-container:/app/CitadelDesktop.exe ./CitadelDesktop.exe
-        docker cp temp-container:/app/CitadelDesktop-macos-amd64 ./CitadelDesktop-macos-amd64
-        docker cp temp-container:/app/CitadelDesktop-macos-arm64 ./CitadelDesktop-macos-arm64
         docker rm temp-container
 
   # 3. Upload the Windows binary to Google Cloud Storage
@@ -41,26 +39,6 @@ steps:
         'cp',
         './CitadelDesktop.exe',
         'gs://${_ARTIFACT_BUCKET}/windows-${_IMAGE_NAME}.exe',
-      ]
-
-  # 4. Upload the macOS ARM64 binary (Apple Silicon) to Google Cloud Storage
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args:
-      [
-        'storage',
-        'cp',
-        './CitadelDesktop-macos-arm64',
-        'gs://${_ARTIFACT_BUCKET}/macos-arm64-${_IMAGE_NAME}-${_VERSION}',
-      ]
-
-  # 5. Upload the macOS AMD64 binary (Intel) to Google Cloud Storage
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args:
-      [
-        'storage',
-        'cp',
-        './CitadelDesktop-macos-amd64',
-        'gs://${_ARTIFACT_BUCKET}/macos-amd64-${_IMAGE_NAME}-${_VERSION}',
       ]
 
   # 6. Update Cloud Run backend service with new version environment variables
