@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"CitadelDesktop/Server/paths"
+	"CitadelDesktop/Server/Paths"
 )
 
 // PresetLayer is BG or BD from JAA gca.
@@ -53,7 +53,7 @@ func presetsFilePath() string {
 	if presetsPath != "" {
 		return presetsPath
 	}
-	return filepath.Join(paths.DataDir(), "DecorationPresets.json")
+	return filepath.Join(Paths.DataDir(), "DecorationPresets.json")
 }
 
 // SetDecorationPresetsPathForTest overrides the presets file path (call with empty to reset).
@@ -66,7 +66,7 @@ func SetDecorationPresetsPathForTest(p string) {
 
 func tryMigrateDecorationPresetsFromLegacy() *PresetsFile {
 	var legacyPaths []string
-	if d := paths.LegacyDotCitadelOpsDir(); d != "" {
+	if d := Paths.LegacyDotCitadelOpsDir(); d != "" {
 		legacyPaths = append(legacyPaths, filepath.Join(d, "DecorationPresets.json"))
 	}
 	if exe, err := os.Executable(); err == nil && exe != "" {

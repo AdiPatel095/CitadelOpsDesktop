@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"CitadelDesktop/Server/paths"
+	"CitadelDesktop/Server/Paths"
 )
 
 // LoggedBird is one outbound bird batch we sent; used to reconcile against GAM + TU.
@@ -29,7 +29,7 @@ type File struct {
 var fileMu sync.Mutex
 
 func filePath() string {
-	return filepath.Join(paths.DataDir(), "autobird_sent.json")
+	return filepath.Join(Paths.DataDir(), "autobird_sent.json")
 }
 
 func legacySentBirdBesideExe() string {

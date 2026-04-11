@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"CitadelDesktop/Server/paths"
+	"CitadelDesktop/Server/Paths"
 )
 
 // Auto Bird UI state (ignore list + delay + named presets) lives next to DecorationPresets.json
@@ -20,7 +20,7 @@ var (
 )
 
 func autoBirdClientPath() string {
-	return filepath.Join(paths.DataDir(), autoBirdClientFileName)
+	return filepath.Join(Paths.DataDir(), autoBirdClientFileName)
 }
 
 func legacyExeDirPresetsPath() string {
@@ -57,7 +57,7 @@ func ReadAutoBirdClientFile() []byte {
 	if err == nil && len(data) > 0 {
 		return data
 	}
-	if d := paths.LegacyDotCitadelOpsDir(); d != "" {
+	if d := Paths.LegacyDotCitadelOpsDir(); d != "" {
 		if leg, err := os.ReadFile(filepath.Join(d, autoBirdClientFileName)); err == nil && len(leg) > 0 {
 			return leg
 		}
@@ -88,7 +88,7 @@ func WriteAutoBirdClientFile(data []byte) error {
 	}
 	autoBirdClientMu.Lock()
 	defer autoBirdClientMu.Unlock()
-	_ = os.MkdirAll(paths.DataDir(), 0755)
+	_ = os.MkdirAll(Paths.DataDir(), 0755)
 	path := autoBirdClientPath()
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0644); err != nil {

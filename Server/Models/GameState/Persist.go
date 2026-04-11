@@ -9,7 +9,7 @@ import (
 	"time"
 
 	mapstate "CitadelDesktop/Server/Models/MapState"
-	"CitadelDesktop/Server/paths"
+	"CitadelDesktop/Server/Paths"
 )
 
 const snapshotVersion = 1
@@ -19,7 +19,7 @@ const snapshotFileName = "game_state_snapshot.json"
 var persistMu sync.Mutex
 
 func snapshotFilePath() string {
-	return filepath.Join(paths.DataDir(), snapshotFileName)
+	return filepath.Join(Paths.DataDir(), snapshotFileName)
 }
 
 func legacySnapshotBesideExe() string {
@@ -55,7 +55,7 @@ func PersistSnapshot() {
 		log.Printf("[gamestate] persist marshal: %v", err)
 		return
 	}
-	_ = os.MkdirAll(paths.DataDir(), 0755)
+	_ = os.MkdirAll(Paths.DataDir(), 0755)
 	path := snapshotFilePath()
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0644); err != nil {

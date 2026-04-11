@@ -17,11 +17,11 @@ import (
 	equip "CitadelDesktop/Server/Models/Equipment"
 	sentbird "CitadelDesktop/Server/Models/SentBird"
 	stsettings "CitadelDesktop/Server/Models/Settings"
+	"CitadelDesktop/Server/Paths"
 	"CitadelDesktop/Server/ReconfigureLoadout"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"CitadelDesktop/Server/Scheduler"
 	"CitadelDesktop/Server/Version"
-	"CitadelDesktop/Server/paths"
 )
 
 // triggerSelfUpdate is a wrapper that calls Version.PerformSelfUpdate
@@ -772,7 +772,7 @@ func ParseFrontendMessage(message []byte) {
 			SendAlertMessage("red", "Could not save Auto Bird settings to disk")
 			return
 		}
-		log.Println("[frontend-ws] Auto Bird client state saved:", filepath.Join(paths.DataDir(), "AutoBird.json"))
+		log.Println("[frontend-ws] Auto Bird client state saved:", filepath.Join(Paths.DataDir(), "AutoBird.json"))
 	case "saveSchedulerSettings":
 		payloadRaw, ok := data["payload"].(map[string]interface{})
 		if !ok {
