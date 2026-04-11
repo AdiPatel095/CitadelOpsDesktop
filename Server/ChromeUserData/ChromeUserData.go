@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"CitadelDesktop/Server/paths"
+	"CitadelDesktop/Server/Paths"
 )
 
 const chromeProfileDirName = "ChromeProfile"
@@ -18,7 +18,7 @@ const chromeProfileDirName = "ChromeProfile"
 // executable, else OS config dir / CitadelDesktop. ChromeProfile is a subdirectory
 // of that root, alongside paths.DataDir() (…/Data).
 func AppUserDataDir() (string, error) {
-	parent, err := paths.InstanceRoot()
+	parent, err := Paths.InstanceRoot()
 	if err != nil {
 		return "", err
 	}

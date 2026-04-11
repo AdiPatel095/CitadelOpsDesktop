@@ -61,3 +61,4 @@ chrome-profile
 # Refactor persistence snapshots
 Server/refactor_state/
 /ChromeProfile/
+/game_state_snapshot.json
