@@ -6,6 +6,78 @@
     "image": null
   },
   {
+    "id": 195,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 196,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 197,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 198,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 199,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 200,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 201,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 202,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 203,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 204,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 215,
+    "name": "Shield-maiden",
+    "type": "MeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Barracks/Barracks_Unit_MeadShieldMaiden/Barracks_Unit_MeadShieldMaiden--1650458944632.webp"
+  },
+  {
+    "id": 288,
+    "name": "Easter Championess",
+    "type": "EasterMeadShieldMaiden",
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventunit/Eventunit_Unit_EasterMeadShieldMaiden/Eventunit_Unit_EasterMeadShieldMaiden--1709722722825.webp"
+  },
+  {
     "id": 652,
     "name": "Armed citizen",
     "type": "Peasant",

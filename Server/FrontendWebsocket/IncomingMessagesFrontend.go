@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -15,10 +16,12 @@ import (
 	dec "CitadelDesktop/Server/Models/Decoration"
 	equip "CitadelDesktop/Server/Models/Equipment"
 	sentbird "CitadelDesktop/Server/Models/SentBird"
+	stsettings "CitadelDesktop/Server/Models/Settings"
 	"CitadelDesktop/Server/ReconfigureLoadout"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"CitadelDesktop/Server/Scheduler"
 	"CitadelDesktop/Server/Version"
+	"CitadelDesktop/Server/paths"
 )
 
 // triggerSelfUpdate is a wrapper that calls Version.PerformSelfUpdate
@@ -309,7 +312,7 @@ func ParseFrontendMessage(message []byte) {
 		}
 	case "reconfigureLoadout":
 		{
-			ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+			GameCommands.SendGLI()
 			time.Sleep(2 * time.Second)
 
 			// Parse the payload into ReconfigurePayload struct
@@ -492,7 +495,7 @@ func ParseFrontendMessage(message []byte) {
 
 			// Final Sync
 			SendAlertMessage("green", "Reconfiguration complete!")
-			ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+			GameCommands.SendGLI()
 			time.Sleep(2 * time.Second)
 
 			// Trigger frontend refresh
@@ -523,7 +526,7 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			// Fetch fresh data from game before attempting unequip
-			ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+			GameCommands.SendGLI()
 			time.Sleep(2 * time.Second)
 
 			// Process each selection
@@ -558,7 +561,7 @@ func ParseFrontendMessage(message []byte) {
 
 			// Refresh equipment data from game and update frontend via ParseFrontendMessage
 			go func() {
-				ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+				GameCommands.SendGLI()
 				time.Sleep(2 * time.Second)
 				// Call ParseFrontendMessage with getCommUpdate/getCastUpdate to trigger targeted refresh
 				var refreshMsg string
@@ -588,7 +591,7 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			// Fetch fresh data from game before attempting unequip
-			ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+			GameCommands.SendGLI()
 			time.Sleep(2 * time.Second)
 
 			// Process each selection
@@ -624,7 +627,7 @@ func ParseFrontendMessage(message []byte) {
 
 			// Refresh equipment data from game and update frontend via ParseFrontendMessage
 			go func() {
-				ResponseRegistry.OutgoingMessages <- []byte(`%xt%EmpireEx_21%gli%1%{}%`)
+				GameCommands.SendGLI()
 				time.Sleep(2 * time.Second)
 				// Call ParseFrontendMessage with getCommUpdate/getCastUpdate to trigger targeted refresh
 				var refreshMsg string
@@ -739,13 +742,37 @@ func ParseFrontendMessage(message []byte) {
 			return
 		}
 
-		// Format and send the message to the game server
-		formattedMessage := fmt.Sprintf("%%xt%%EmpireEx_21%%%s%%1%%{}%%", messageCode)
-		log.Printf("[Custom Message] Sending: %s", formattedMessage)
-		ResponseRegistry.OutgoingMessages <- []byte(formattedMessage)
+		log.Printf("[Custom Message] Sending EmpireEx_21 code: %s", messageCode)
+		GameCommands.SendEmpireEx21EmptyCommand(messageCode)
 		SendAlertMessage("green", fmt.Sprintf("Sent custom message: %s", messageCode))
 	case "getSchedulerSettings":
 		SendFrontendMessage("schedulerSettings", Models.GetSettingsState(), "")
+	case "getAutoBirdClientState":
+		raw := stsettings.ReadAutoBirdClientFile()
+		var payload interface{}
+		if err := json.Unmarshal(raw, &payload); err != nil {
+			log.Printf("[frontend-ws] getAutoBirdClientState parse: %v", err)
+			_ = json.Unmarshal(stsettings.DefaultAutoBirdClientJSON(), &payload)
+		}
+		SendFrontendMessage("autoBirdClientState", payload, "")
+	case "saveAutoBirdClientState":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			log.Println("[frontend-ws] saveAutoBirdClientState: missing payload")
+			return
+		}
+		out, err := json.Marshal(payloadRaw)
+		if err != nil {
+			log.Printf("[frontend-ws] saveAutoBirdClientState marshal: %v", err)
+			SendAlertMessage("red", "Auto Bird: invalid data")
+			return
+		}
+		if err := stsettings.WriteAutoBirdClientFile(out); err != nil {
+			log.Printf("[frontend-ws] saveAutoBirdClientState write: %v", err)
+			SendAlertMessage("red", "Could not save Auto Bird settings to disk")
+			return
+		}
+		log.Println("[frontend-ws] Auto Bird client state saved:", filepath.Join(paths.DataDir(), "AutoBird.json"))
 	case "saveSchedulerSettings":
 		payloadRaw, ok := data["payload"].(map[string]interface{})
 		if !ok {
@@ -960,8 +987,12 @@ func ParseFrontendMessage(message []byte) {
 		}
 		GameFunctions.StartDecorationPresetApply(castleID, kingdomID, mapX, mapY, presetID, func(msg string) {
 			SendFrontendMessage("decorationPlacerProgress", map[string]interface{}{"message": msg}, "")
+		}, func(category string, message string) {
+			SendAlertMessage(category, message)
+		}, func(shortfalls []GameFunctions.DecorationStorageShortfall) {
+			SendFrontendMessage("decorationPlacerStorageMismatch", map[string]interface{}{"items": shortfalls}, "")
 		})
-		SendAlertMessage("green", "Decoration preset apply started (watch progress in UI).")
+		SendAlertMessage("green", "Decoration preset apply started.")
 
 	case "cancelDecorationApply":
 		GameFunctions.CancelDecorationApply()

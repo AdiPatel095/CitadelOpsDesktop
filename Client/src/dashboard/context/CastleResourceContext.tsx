@@ -46,11 +46,6 @@ export const CastleResourceProvider: React.FC<{ children: ReactNode }> = ({ chil
         FrontendWebsocket.sendMessage({ type: 'getCastleResourceUpdate', castleId });
     }, []);
 
-    const getCastle = useCallback(
-        (castleId: number) => castleResources.get(castleId),
-        [castleResources]
-    );
-
     useEffect(() => {
         const handleCastleUpdate = (message: WebsocketMessage) => {
             if (message.type === 'castleResourceUpdate' && message.payload) {
@@ -83,31 +78,43 @@ export const CastleResourceProvider: React.FC<{ children: ReactNode }> = ({ chil
         };
     }, []);
 
-    useEffect(() => {
-        if (!snapshot || gameLoggedIn) return;
+    /**
+     * While disconnected, overlay persisted snapshot slots onto the map during render (not in useEffect).
+     * Otherwise castleFocus can update to the picked aid one frame before effect runs, and CastleView shows
+     * "No castle data" even though the snapshot already contains that castle.
+     */
+    const castleResourcesWithSnapshot = useMemo(() => {
+        if (gameLoggedIn || !snapshot) return castleResources;
         const gs = snapshot.gameState;
-        if (!gs || typeof gs !== 'object') return;
+        if (!gs || typeof gs !== 'object') return castleResources;
         const castleRoot = (gs as Record<string, unknown>).castle;
-        if (!castleRoot || typeof castleRoot !== 'object') return;
-        setCastleResources((prevMap) => {
-            const next = new Map(prevMap);
-            let changed = false;
-            for (const k of CASTLE_SLOT_KEYS) {
-                const raw = (castleRoot as Record<string, unknown>)[k];
-                if (!raw || typeof raw !== 'object') continue;
-                const info = raw as PlayerCastleInfo;
-                const aid = Math.trunc(Number(info.aid));
-                if (aid <= 0) continue;
-                if (!next.has(aid)) {
-                    next.set(aid, info);
-                    changed = true;
-                }
-            }
-            return changed ? next : prevMap;
-        });
-    }, [snapshot, gameLoggedIn]);
+        if (!castleRoot || typeof castleRoot !== 'object') return castleResources;
+        const next = new Map(castleResources);
+        for (const k of CASTLE_SLOT_KEYS) {
+            const raw = (castleRoot as Record<string, unknown>)[k];
+            if (!raw || typeof raw !== 'object') continue;
+            const info = raw as PlayerCastleInfo;
+            const aid = Math.trunc(Number(info.aid));
+            if (aid <= 0) continue;
+            next.set(aid, info);
+        }
+        return next;
+    }, [castleResources, snapshot, gameLoggedIn]);
 
-    const value = useMemo(() => ({ castleResources, isCastleResourcesLoading, getCastle, requestCastleResource }), [castleResources, isCastleResourcesLoading, getCastle, requestCastleResource]);
+    const getCastle = useCallback(
+        (castleId: number) => castleResourcesWithSnapshot.get(castleId),
+        [castleResourcesWithSnapshot]
+    );
+
+    const value = useMemo(
+        () => ({
+            castleResources: castleResourcesWithSnapshot,
+            isCastleResourcesLoading,
+            getCastle,
+            requestCastleResource,
+        }),
+        [castleResourcesWithSnapshot, isCastleResourcesLoading, getCastle, requestCastleResource]
+    );
 
     return (
         <CastleResourceContext.Provider value={value}>

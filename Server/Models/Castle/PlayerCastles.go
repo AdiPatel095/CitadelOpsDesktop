@@ -16,3 +16,20 @@ type PlayerCastles struct {
 	Metropolis    PlayerCastleInfo `json:"metropolis"`
 	Capital       PlayerCastleInfo `json:"capital"`
 }
+
+// ClearGCLMapPositions zeros gcl-derived map fields on every slot before a fresh **gcl** parse.
+func (pc *PlayerCastles) ClearGCLMapPositions() {
+	clear := func(p *PlayerCastleInfo) {
+		p.MapKingdomID, p.MapX, p.MapY = 0, 0, 0
+	}
+	clear(&pc.MainCastle)
+	clear(&pc.Outpost1)
+	clear(&pc.Outpost2)
+	clear(&pc.Outpost3)
+	clear(&pc.IceCastle)
+	clear(&pc.DesertCastle)
+	clear(&pc.DungeonCastle)
+	clear(&pc.StormCastle)
+	clear(&pc.Metropolis)
+	clear(&pc.Capital)
+}

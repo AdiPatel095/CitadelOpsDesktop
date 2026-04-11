@@ -17,9 +17,12 @@ func (gs *GameState) UpdateCastleFocusPosition(castleAID, kingdomID, mapPX, mapP
 	gs.CastleFocus.MapPY = mapPY
 }
 
-// ResolveCastleMapCoords returns map PX/PY for JAA, or stored X/Y for JCA castles that still carry coords in state.
+// ResolveCastleMapCoords returns map PX/PY: gcl fields on the castle slot, else JAA/troop Troops coords, else alliance list.
 func (gs *GameState) ResolveCastleMapCoords(castleAID, kingdomID int) (x, y int, ok bool) {
 	if c := gs.GetCastleByID(castleAID); c != nil {
+		if c.MapX != 0 || c.MapY != 0 {
+			return c.MapX, c.MapY, true
+		}
 		if c.Troops.X != 0 || c.Troops.Y != 0 {
 			return c.Troops.X, c.Troops.Y, true
 		}

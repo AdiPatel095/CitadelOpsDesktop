@@ -67,6 +67,10 @@ export interface CastleBuildingRow {
 export interface PlayerCastleInfo {
   castleName: string;
   aid: number;
+  /** World map kingdom index from gbd gcl */
+  mapKingdomID?: number;
+  mapX?: number;
+  mapY?: number;
   amount: CastleResourcesAmount;
   production: CastleProductionTotal;
   storage: CastleStorageMax;

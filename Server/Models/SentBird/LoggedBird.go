@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"CitadelDesktop/Server/paths"
 )
 
 // LoggedBird is one outbound bird batch we sent; used to reconcile against GAM + TU.
@@ -27,17 +29,40 @@ type File struct {
 var fileMu sync.Mutex
 
 func filePath() string {
+	return filepath.Join(paths.DataDir(), "autobird_sent.json")
+}
+
+func legacySentBirdBesideExe() string {
 	exe, err := os.Executable()
 	if err != nil {
-		return "autobird_sent.json"
+		return ""
 	}
 	return filepath.Join(filepath.Dir(exe), "autobird_sent.json")
+}
+
+// Copies autobird_sent.json from beside the executable into Data/ once (older builds).
+func tryMigrateSentBirdFromLegacyUnlocked() {
+	newPath := filePath()
+	if _, err := os.Stat(newPath); err == nil {
+		return
+	}
+	old := legacySentBirdBesideExe()
+	if old == "" || newPath == old {
+		return
+	}
+	b, err := os.ReadFile(old)
+	if err != nil || len(b) == 0 {
+		return
+	}
+	_ = os.MkdirAll(filepath.Dir(newPath), 0755)
+	_ = os.WriteFile(newPath, b, 0644)
 }
 
 // Load returns stored birds (empty if missing).
 func Load() *File {
 	fileMu.Lock()
 	defer fileMu.Unlock()
+	tryMigrateSentBirdFromLegacyUnlocked()
 	data, err := os.ReadFile(filePath())
 	if err != nil {
 		return &File{Birds: []LoggedBird{}}
@@ -82,6 +107,7 @@ func Append(playerID int, b LoggedBird) {
 }
 
 func loadUnlocked() *File {
+	tryMigrateSentBirdFromLegacyUnlocked()
 	data, err := os.ReadFile(filePath())
 	if err != nil {
 		return &File{Birds: []LoggedBird{}}

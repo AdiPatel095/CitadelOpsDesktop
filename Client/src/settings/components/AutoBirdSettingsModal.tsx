@@ -7,47 +7,20 @@ import UnitImage from '../../components/UnitImage';
 import {
   applyPresetToStoredShape,
   loadPresetsFile,
-  savePresetsFile,
+  parsePresetsPayload,
   snapshotFromForm,
   type AutoBirdPreset,
 } from '../autobirdPresets';
+import {
+  buildAutoBirdClientState,
+  loadAutoBirdSettingsFromStorage,
+  parseAutoBirdClientState,
+  persistAutoBirdClientState,
+  type AutoBirdStoredSettings,
+} from '../autoBirdClientState';
 import { Modal, Button, Input, Select, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 
-const STORAGE_KEY = 'autobirdSettings';
-
-export interface AutoBirdStoredSettings {
-  settings: Record<string, { id: number; amount: number }[]>;
-  minDelay: number;
-  maxDelay: number;
-  minSend: number;
-}
-
-const defaultStored = (): AutoBirdStoredSettings => ({
-  settings: {},
-  minDelay: 6,
-  maxDelay: 12,
-  minSend: 0,
-});
-
-function clampDelayHours(value: number): number {
-  if (!Number.isFinite(value)) return 1;
-  return Math.min(12, Math.max(1, value));
-}
-
-export function loadAutoBirdSettingsFromStorage(): AutoBirdStoredSettings {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultStored();
-    const parsed = JSON.parse(raw) as Partial<AutoBirdStoredSettings>;
-    return {
-      ...defaultStored(),
-      ...parsed,
-      settings: parsed.settings && typeof parsed.settings === 'object' ? parsed.settings : {},
-    };
-  } catch {
-    return defaultStored();
-  }
-}
+export { loadAutoBirdSettingsFromStorage } from '../autoBirdClientState';
 
 interface Castle {
   id: number;
@@ -89,6 +62,11 @@ function AutoBirdTroopTile({
   );
 }
 
+function clampDelayHours(value: number): number {
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(12, Math.max(1, value));
+}
+
 export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose }) => {
   const [castles, setCastles] = useState<Castle[]>([]);
   const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
@@ -101,6 +79,18 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const [presetName, setPresetName] = useState('');
   const [presetError, setPresetError] = useState('');
 
+  const currentIgnoreSettings = useCallback((): AutoBirdStoredSettings => {
+    let maxD = clampDelayHours(maxDelay);
+    const minD = clampDelayHours(minDelay);
+    if (maxD < minD) maxD = minD;
+    return {
+      settings,
+      minDelay: minD,
+      maxDelay: maxD,
+      minSend: Math.max(0, minSend),
+    };
+  }, [settings, minDelay, maxDelay, minSend]);
+
   const hydrateFromStorage = useCallback(() => {
     const s = loadAutoBirdSettingsFromStorage();
     setSettings(s.settings);
@@ -109,18 +99,43 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     setMinSend(s.minSend);
   }, []);
 
+  const applyFullClientState = useCallback((state: ReturnType<typeof parseAutoBirdClientState>) => {
+    const ig = state.ignoreSettings;
+    setSettings(ig.settings);
+    setMinDelay(clampDelayHours(ig.minDelay));
+    setMaxDelay(clampDelayHours(ig.maxDelay));
+    setMinSend(ig.minSend);
+    setPresetsState(state.presets);
+    const last = state.presets.lastSelectedPresetId;
+    setPresetDropdownId(last && state.presets.presets.some((p) => p.id === last) ? last : '');
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
     FrontendWebsocket.sendMessage({ type: 'getCastleList' });
     hydrateFromStorage();
-    const file = loadPresetsFile();
-    setPresetsState(file);
-    const last = file.lastSelectedPresetId;
-    setPresetDropdownId(last && file.presets.some((p) => p.id === last) ? last : '');
+
+    const onClientStateMessage = (msg: { type?: string; payload?: unknown }) => {
+      if (msg.type !== 'autoBirdClientState' || msg.payload == null) return;
+      applyFullClientState(parseAutoBirdClientState(msg.payload));
+    };
+
+    FrontendWebsocket.addMessageListener(onClientStateMessage);
+
+    if (FrontendWebsocket.getStatus() === 'Connected') {
+      FrontendWebsocket.sendMessage({ type: 'getAutoBirdClientState' });
+    } else {
+      applyFullClientState(
+        buildAutoBirdClientState(loadAutoBirdSettingsFromStorage(), loadPresetsFile())
+      );
+    }
+
     setAppliedPresetId(null);
     setPresetName('');
     setPresetError('');
-  }, [isOpen, hydrateFromStorage]);
+
+    return () => FrontendWebsocket.removeMessageListener(onClientStateMessage);
+  }, [isOpen, hydrateFromStorage, applyFullClientState]);
 
   useEffect(() => {
     const handleMessage = (msg: any) => {
@@ -195,13 +210,13 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     const snap = snapshotFromForm(settings, minDelay, maxDelay, minSend);
     const id = crypto.randomUUID();
     const next: AutoBirdPreset = { id, name, ...snap };
-    const file = {
+    const presetsFile = {
       ...presetsState,
       presets: [...presetsState.presets, next],
       lastSelectedPresetId: id,
     };
-    savePresetsFile(file);
-    setPresetsState(file);
+    persistAutoBirdClientState(buildAutoBirdClientState(currentIgnoreSettings(), presetsFile));
+    setPresetsState(presetsFile);
     setPresetDropdownId(id);
     setAppliedPresetId(id);
   };
@@ -210,14 +225,14 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     const id = presetDropdownId;
     if (!id) return;
     if (!window.confirm('Delete this preset? This cannot be undone.')) return;
-    const file = {
+    const presetsFile = {
       ...presetsState,
       presets: presetsState.presets.filter((p) => p.id !== id),
       lastSelectedPresetId:
         presetsState.lastSelectedPresetId === id ? null : presetsState.lastSelectedPresetId,
     };
-    savePresetsFile(file);
-    setPresetsState(file);
+    persistAutoBirdClientState(buildAutoBirdClientState(currentIgnoreSettings(), presetsFile));
+    setPresetsState(presetsFile);
     setPresetDropdownId('');
     if (appliedPresetId === id) {
       setAppliedPresetId(null);
@@ -228,16 +243,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
 
   const handleSave = () => {
     setPresetError('');
-    const payload: AutoBirdStoredSettings = {
-      settings,
-      minDelay: clampDelayHours(minDelay),
-      maxDelay: clampDelayHours(maxDelay),
-      minSend: Math.max(0, minSend),
-    };
-    if (payload.maxDelay < payload.minDelay) {
-      payload.maxDelay = payload.minDelay;
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    const payload = currentIgnoreSettings();
 
     const snap = snapshotFromForm(payload.settings, payload.minDelay, payload.maxDelay, payload.minSend);
     const nameTrim = presetName.trim();
@@ -248,20 +254,20 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
             : p
         )
       : presetsState.presets;
-    const file = {
+    const presetsFile = {
       version: 1 as const,
       lastSelectedPresetId: appliedPresetId,
       presets: updatedPresets,
     };
-    savePresetsFile(file);
-    setPresetsState(file);
+    persistAutoBirdClientState(buildAutoBirdClientState(payload, presetsFile));
+    setPresetsState(presetsFile);
 
     onClose();
   };
 
   const presetOptions = [
-    { value: '', label: '— Saved file on disk (default) —' },
-    ...presetsState.presets.map(p => ({ value: p.id, label: p.name }))
+    { value: '', label: '— Saved on disk (default) —' },
+    ...presetsState.presets.map((p) => ({ value: p.id, label: p.name })),
   ];
 
   return (
@@ -280,22 +286,24 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       }
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} className="px-6">Cancel</Button>
+          <Button variant="ghost" onClick={onClose} className="px-6">
+            Cancel
+          </Button>
           <Button variant="primary" onClick={handleSave} className="px-8" leftIcon={<Save className="w-4 h-4" />}>
             Save changes
           </Button>
         </>
       }
     >
-      <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full h-[calc(100vh-14rem)]">
+      <div className="flex h-[calc(100vh-14rem)] max-w-6xl w-full flex-col gap-6 mx-auto">
         {/* Global settings bar */}
         <Card variant="solid" className="shrink-0 bg-bg-app border-border-base p-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
             <div className="flex flex-1 flex-wrap items-end gap-3">
-              <span className="w-full text-xs font-bold uppercase tracking-wider text-primary lg:w-auto lg:mr-2 mb-1.5 lg:mb-0">
+              <span className="mb-1.5 w-full text-xs font-bold uppercase tracking-wider text-primary lg:mb-0 lg:mr-2 lg:w-auto">
                 Random delay range (hours)
               </span>
-              <div className="flex flex-col gap-1 w-24">
+              <div className="flex w-24 flex-col gap-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Min</span>
                 <Input
                   type="number"
@@ -303,10 +311,10 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                   max={12}
                   value={minDelay}
                   onChange={(e) => setMinDelay(clampDelayHours(parseInt(e.target.value, 10)))}
-                  className="font-mono text-center"
+                  className="text-center font-mono"
                 />
               </div>
-              <div className="flex flex-col gap-1 w-24">
+              <div className="flex w-24 flex-col gap-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Max</span>
                 <Input
                   type="number"
@@ -314,11 +322,11 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                   max={12}
                   value={maxDelay}
                   onChange={(e) => setMaxDelay(clampDelayHours(parseInt(e.target.value, 10)))}
-                  className="font-mono text-center"
+                  className="text-center font-mono"
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-1 lg:min-w-[200px]">
+            <div className="flex min-w-[200px] flex-col gap-1 lg:min-w-[200px]">
               <span className="text-xs font-bold uppercase tracking-wider text-primary">Minimum to send</span>
               <div className="flex items-center gap-2">
                 <Input
@@ -373,7 +381,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               <Button
                 variant="secondary"
                 onClick={handleSaveAsNewPreset}
-                className="text-info border-info/40 hover:bg-info/10"
+                className="border-info/40 text-info hover:bg-info/10"
                 leftIcon={<Plus className="w-4 h-4" />}
               >
                 Save as new
@@ -391,16 +399,16 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
           <p className="mt-3 text-xs text-text-muted">
             Choose a preset and click <span className="font-semibold text-text-main">Apply</span> to load it into the grid.{' '}
             <span className="font-semibold text-text-main">Save changes</span> writes Auto Bird settings and updates the applied preset
-            (including name).
+            (including name). Data is stored next to decoration presets (see AutoBird.json).
           </p>
         </Card>
 
         {/* Castle grid */}
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
           {castles.length === 0 && (
-            <p className="text-sm text-text-muted text-center py-8">Loading castles… reopen if this stays empty.</p>
+            <p className="py-8 text-center text-sm text-text-muted">Loading castles… reopen if this stays empty.</p>
           )}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
+          <div className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {castles.map((castle) => {
               const cid = String(castle.id);
               const items = settings[cid] || [];
@@ -411,7 +419,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                   </div>
                   {items.length === 0 ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
-                      <p className="text-center text-xs text-text-muted font-medium uppercase tracking-wider">No ignored units</p>
+                      <p className="text-center text-xs font-medium uppercase tracking-wider text-text-muted">No ignored units</p>
                       <Button
                         variant="outline"
                         size="sm"
@@ -435,7 +443,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                       <button
                         type="button"
                         onClick={() => handleAddItem(cid)}
-                        className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-global border-2 border-dashed border-border-base text-text-muted transition-colors hover:border-primary/50 hover:text-primary hover:bg-primary/5"
+                        className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-global border-2 border-dashed border-border-base text-text-muted transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
                         aria-label="Add unit"
                       >
                         <Plus className="h-8 w-8" strokeWidth={1.5} />

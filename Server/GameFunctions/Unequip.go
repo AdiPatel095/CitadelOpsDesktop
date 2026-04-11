@@ -1,6 +1,7 @@
 package GameFunctions
 
 import (
+	"CitadelDesktop/Server/GameCommands"
 	equip "CitadelDesktop/Server/Models/Equipment"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"fmt"
@@ -115,15 +116,11 @@ func UnequipEquipment(equipmentMode string, targetIndex int, slotNumber int, exp
 		}
 	}
 
-	// Game message format: %xt%EmpireEx_21%eeq%1%{"EID":equipmentId,"LID":leaderId,"E":0}%
-	// E:0 means unequip, E:1 means equip
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%eeq%%1%%{"EID":%.0f,"LID":%.0f,"E":0}%%`, payloadEquipmentId, lidValue)
-
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("eeq", 5*time.Second)
 	defer waiter.Cleanup()
 
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
+	GameCommands.SendEEQ(payloadEquipmentId, lidValue, false)
 
 	// Wait for response and verify success
 	response, err := waiter.WaitWithTimeout()
@@ -205,15 +202,12 @@ func UnequipGem(equipmentMode string, targetIndex int, slotNumber int, expectedG
 
 	}
 
-	// Game message format: %xt%EmpireEx_21%ege%1%{"EID":equipmentId,"LID":leaderId}%
-	// Note: Unequip gem payload DOES NOT use gem ID, it uses the EQUIPMENT ID the gem is in.
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%ege%%1%%{"EID":%.0f,"LID":%.0f}%%`, payloadEquipmentId, lidValue)
-
+	// Note: Unequip gem payload uses parent EQUIPMENT ID (not gem ID).
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("ege", 5*time.Second)
 	defer waiter.Cleanup()
 
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
+	GameCommands.SendEGE(payloadEquipmentId, lidValue)
 
 	// Wait for response and verify success
 	response, err := waiter.WaitWithTimeout()
@@ -238,14 +232,11 @@ func UnequipEquipmentRaw(equipmentMode string, targetIndex int, equipmentId floa
 		return UnequipResult{Success: false, Code: "", Message: "Invalid equipment mode"}
 	}
 
-	// Payload: %xt%EmpireEx_21%eeq%1%{"EID":equipmentId,"LID":leaderId,"E":0}%
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%eeq%%1%%{"EID":%.0f,"LID":%.0f,"E":0}%%`, equipmentId, lidValue)
-
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("eeq", 5*time.Second)
 	defer waiter.Cleanup()
 
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
+	GameCommands.SendEEQ(equipmentId, lidValue, false)
 
 	// Wait for response and verify success
 	response, err := waiter.WaitWithTimeout()
@@ -270,16 +261,11 @@ func UnequipGemRaw(equipmentMode string, targetIndex int, equipmentId float64) U
 		return UnequipResult{Success: false, Code: "", Message: "Invalid equipment mode"}
 	}
 
-	// Payload: %xt%EmpireEx_21%ege%1%{"EID":equipmentId,"LID":leaderId}%
-	// Note: Standard unequip doesn't seem to send GID, just EID+LID.
-	//%xt%EmpireEx_21%ege%1%{"EID":6365410569,"LID":2}%
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%ege%%1%%{"EID":%.0f,"LID":%.0f}%%`, equipmentId, lidValue)
-
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("ege", 5*time.Second)
 	defer waiter.Cleanup()
 
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
+	GameCommands.SendEGE(equipmentId, lidValue)
 
 	// Wait for response and verify success
 	response, err := waiter.WaitWithTimeout()

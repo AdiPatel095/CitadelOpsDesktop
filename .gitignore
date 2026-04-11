@@ -60,3 +60,4 @@ chrome-profile
 
 # Refactor persistence snapshots
 Server/refactor_state/
+/ChromeProfile/

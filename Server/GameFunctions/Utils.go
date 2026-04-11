@@ -1,10 +1,9 @@
 package GameFunctions
 
 import (
+	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/Models"
 	equip "CitadelDesktop/Server/Models/Equipment"
-	"CitadelDesktop/Server/ResponseRegistry"
-	"fmt"
 )
 
 // GetCommanderID returns the actual Commander ID (GUID) from the global model array.
@@ -76,6 +75,5 @@ func FetchAllianceInfo() {
 	if aid == 0 {
 		return
 	}
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%ain%%1%%{"AID":%d}%%`, aid)
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
+	GameCommands.SendAIN(aid)
 }

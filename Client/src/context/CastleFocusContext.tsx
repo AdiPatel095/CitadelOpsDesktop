@@ -125,7 +125,10 @@ export function CastleFocusProvider({ children }: { children: ReactNode }) {
     const snap = snapshot;
     const optsFromSnap = snap ? playerCastleOptionsFromGameStateSnapshot(snap.gameState) : [];
     const optsFromLive = liveCastleFocus?.playerCastles ?? [];
-    const opts = optsFromLive.length > 0 ? optsFromLive : optsFromSnap;
+    // Offline: prefer GCL from persisted snapshot so every castle has a stable aid|kingdomID row for the switcher
+    // and buildCastleFocusFromSnapshot lookups; live mirror may only list the last in-game focus.
+    const opts =
+      optsFromSnap.length > 0 ? optsFromSnap : optsFromLive.length > 0 ? optsFromLive : [];
 
     const base =
       liveCastleFocus ?? (snap ? buildCastleFocusFromStoredSnapshotFocus(snap) : null);
@@ -154,6 +157,16 @@ export function CastleFocusProvider({ children }: { children: ReactNode }) {
         ...synthetic,
         playerCastles: opts.length > 0 ? opts : synthetic.playerCastles,
       };
+    }
+    // Snapshot missing gameState/castle rows but GCL still has the pick — at least align aid/kingdom/name.
+    if (opt && aid > 0) {
+      const minimal = parseCastleFocusPayload({
+        aid,
+        kingdomID: kid,
+        castleName: opt.name,
+        playerCastles: opts.length > 0 ? opts : undefined,
+      });
+      if (minimal) return minimal;
     }
     if (base) {
       return { ...base, playerCastles: opts.length > 0 ? opts : base.playerCastles };

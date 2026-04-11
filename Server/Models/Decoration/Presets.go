@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"CitadelDesktop/Server/paths"
 )
 
 // PresetLayer is BG or BD from JAA gca.
@@ -51,19 +53,7 @@ func presetsFilePath() string {
 	if presetsPath != "" {
 		return presetsPath
 	}
-	if d := os.Getenv("CITADEL_DATA_DIR"); d != "" {
-		_ = os.MkdirAll(d, 0755)
-		presetsPath = filepath.Join(d, "DecorationPresets.json")
-		return presetsPath
-	}
-	if home, err := os.UserHomeDir(); err == nil && home != "" {
-		dir := filepath.Join(home, ".citadelops")
-		_ = os.MkdirAll(dir, 0755)
-		presetsPath = filepath.Join(dir, "DecorationPresets.json")
-		return presetsPath
-	}
-	presetsPath = "DecorationPresets.json"
-	return presetsPath
+	return filepath.Join(paths.DataDir(), "DecorationPresets.json")
 }
 
 // SetDecorationPresetsPathForTest overrides the presets file path (call with empty to reset).
@@ -74,6 +64,32 @@ func SetDecorationPresetsPathForTest(p string) {
 	presetsCached = nil
 }
 
+func tryMigrateDecorationPresetsFromLegacy() *PresetsFile {
+	var legacyPaths []string
+	if d := paths.LegacyDotCitadelOpsDir(); d != "" {
+		legacyPaths = append(legacyPaths, filepath.Join(d, "DecorationPresets.json"))
+	}
+	if exe, err := os.Executable(); err == nil && exe != "" {
+		legacyPaths = append(legacyPaths, filepath.Join(filepath.Dir(exe), "DecorationPresets.json"))
+	}
+	for _, p := range legacyPaths {
+		b, err := os.ReadFile(p)
+		if err != nil || len(b) == 0 {
+			continue
+		}
+		var f PresetsFile
+		if json.Unmarshal(b, &f) != nil {
+			continue
+		}
+		if f.Castles == nil {
+			f.Castles = make(map[string][]NamedPreset)
+		}
+		f.Version = presetsFileVersion
+		return &f
+	}
+	return nil
+}
+
 func loadPresetsUnlocked() *PresetsFile {
 	if presetsCached != nil {
 		return presetsCached
@@ -81,6 +97,10 @@ func loadPresetsUnlocked() *PresetsFile {
 	path := presetsFilePath()
 	b, err := os.ReadFile(path)
 	if err != nil || len(b) == 0 {
+		if migrated := tryMigrateDecorationPresetsFromLegacy(); migrated != nil {
+			_ = savePresetsUnlocked(migrated)
+			return presetsCached
+		}
 		presetsCached = &PresetsFile{Version: presetsFileVersion, Castles: make(map[string][]NamedPreset)}
 		return presetsCached
 	}

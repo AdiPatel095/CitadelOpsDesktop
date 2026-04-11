@@ -3,6 +3,8 @@ package GameFunctions
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,6 +18,14 @@ import (
 type decoRow struct {
 	b     Models.BuildingData
 	layer dec.PresetLayer
+}
+
+// DecorationStorageShortfall is one decoration type that is still short after **sin** storage + on-map SOB pickup counts.
+type DecorationStorageShortfall struct {
+	WID   int    `json:"wid"`
+	Count int    `json:"count"`
+	Name  string `json:"name"`
+	Line  string `json:"line"` // "1x Rose Bush" — same style as castle decoration summary lines
 }
 
 var (
@@ -153,12 +163,14 @@ func IsDecorationApplyRunning() bool {
 	return placerRunning
 }
 
-// StartDecorationPresetApply runs apply in a goroutine. onProgress receives short status strings.
-func StartDecorationPresetApply(castleID, kingdomID, mapX, mapY int, presetID string, onProgress func(string)) {
+// StartDecorationPresetApply runs apply in a goroutine. onProgress receives short status strings (SOB/EBU steps).
+// onAlert is optional; use for user-facing alerts.
+// onStorageMismatch is optional; called when **sin** shows insufficient stock — includes human-readable lines like the decoration hover summary.
+func StartDecorationPresetApply(castleID, kingdomID, mapX, mapY int, presetID string, onProgress func(string), onAlert func(category string, message string), onStorageMismatch func([]DecorationStorageShortfall)) {
 	preset, ok := dec.LookupPreset(castleID, presetID)
 	if !ok {
-		if onProgress != nil {
-			onProgress("error: preset not found")
+		if onAlert != nil {
+			onAlert("red", "Decoration preset not found for this castle.")
 		}
 		return
 	}
@@ -166,8 +178,8 @@ func StartDecorationPresetApply(castleID, kingdomID, mapX, mapY int, presetID st
 	placerMu.Lock()
 	if placerRunning {
 		placerMu.Unlock()
-		if onProgress != nil {
-			onProgress("error: apply already running")
+		if onAlert != nil {
+			onAlert("yellow", "A decoration preset apply is already running.")
 		}
 		return
 	}
@@ -191,32 +203,120 @@ func StartDecorationPresetApply(castleID, kingdomID, mapX, mapY int, presetID st
 			placerMu.Unlock()
 			cancel()
 		}()
-		msg := runDecorationApply(ctx, castleID, kingdomID, mapX, mapY, preset, onProgress)
-		if onProgress != nil && msg != "" {
+		msg := runDecorationApply(ctx, castleID, kingdomID, mapX, mapY, preset, onProgress, onAlert, onStorageMismatch)
+		if onProgress != nil && msg != "" && decorationApplyProgressShouldEmit(msg) {
 			onProgress(msg)
 		}
 	}(runCtx)
 }
 
-func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int, preset dec.NamedPreset, onProgress func(string)) string {
+// decorationApplyProgressShouldEmit avoids pushing error/cancel lines to the in-card footer; those use SendAlert (onAlert) instead.
+func decorationApplyProgressShouldEmit(msg string) bool {
+	s := strings.TrimSpace(msg)
+	if strings.HasPrefix(s, "error:") || strings.HasPrefix(s, "cancelled:") {
+		return false
+	}
+	// Internal steps — not shown in the UI progress strip (global alerts or dedicated storage panel handle these).
+	if strings.HasPrefix(s, "sin:") || strings.HasPrefix(s, "storage:") {
+		return false
+	}
+	return true
+}
+
+func computeDecorationStorageDelta(work *workCastle, preset dec.NamedPreset) (ebuNeed map[int]int, sobReturn map[int]int) {
+	current := work.collect()
+	desired := preset.Items
+	used := make([]bool, len(current))
+	satisfied := make([]bool, len(desired))
+	for pi := range desired {
+		for ci := range current {
+			if used[ci] {
+				continue
+			}
+			if placementMatches(desired[pi], current[ci].b, current[ci].layer) {
+				used[ci] = true
+				satisfied[pi] = true
+				break
+			}
+		}
+	}
+	ebuNeed = make(map[int]int)
+	for pi, ok := range satisfied {
+		if !ok {
+			ebuNeed[desired[pi].WID]++
+		}
+	}
+	sobReturn = make(map[int]int)
+	for ci, ok := range used {
+		if !ok {
+			sobReturn[current[ci].b.BuildingID]++
+		}
+	}
+	return ebuNeed, sobReturn
+}
+
+// decorationStorageShortfalls lists each WID still short after combining **sin** counts with on-map pickups (SOB return).
+func decorationStorageShortfalls(sto map[int]int, ebuNeed, sobReturn map[int]int) []DecorationStorageShortfall {
+	type row struct {
+		wid                 int
+		short               int
+		name, line, sortKey string
+	}
+	var tmp []row
+	for wid, need := range ebuNeed {
+		if need <= 0 {
+			continue
+		}
+		have := sto[wid] + sobReturn[wid]
+		if have >= need {
+			continue
+		}
+		short := need - have
+		name := dec.ResolvedWodDisplayName(wid)
+		line := fmt.Sprintf("%dx %s", short, name)
+		tmp = append(tmp, row{wid: wid, short: short, name: name, line: line, sortKey: strings.ToLower(name)})
+	}
+	sort.Slice(tmp, func(i, j int) bool {
+		if tmp[i].sortKey != tmp[j].sortKey {
+			return tmp[i].sortKey < tmp[j].sortKey
+		}
+		return tmp[i].wid < tmp[j].wid
+	})
+	out := make([]DecorationStorageShortfall, len(tmp))
+	for i, r := range tmp {
+		out[i] = DecorationStorageShortfall{WID: r.wid, Count: r.short, Name: r.name, Line: r.line}
+	}
+	return out
+}
+
+const sinResponseWait = 8 * time.Second
+
+func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int, preset dec.NamedPreset, onProgress func(string), onAlert func(category string, message string), onStorageMismatch func([]DecorationStorageShortfall)) string {
+	prog := func(s string) {
+		if onProgress != nil {
+			onProgress(s)
+		}
+	}
+	alert := func(category, msg string) {
+		if onAlert != nil {
+			onAlert(category, msg)
+		}
+	}
+
 	if ctx.Err() != nil {
 		return "cancelled"
 	}
 	if !ResponseRegistry.LoginStatus {
+		alert("red", "Decoration apply cancelled: not logged in to the game.")
 		return "error: not logged in"
 	}
 	if len(preset.Items) == 0 {
 		return "complete: empty preset"
 	}
 
-	prog := func(s string) {
-		if onProgress != nil {
-			onProgress(s)
-		}
-	}
-
 	// One JAA/JCA at start so GameState + workCastle match the live castle.
 	if !GameParser.FocusPlayerCastleWithRetry(kingdomID, castleID, mapX, mapY) {
+		alert("red", "Decoration apply failed: could not focus the castle (JAA/JCA timed out).")
 		return "error: focus castle (JAA/JCA) timed out"
 	}
 	time.Sleep(200 * time.Millisecond)
@@ -224,9 +324,38 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 	gs := Models.GetGameState()
 	c0 := gs.GetCastleByID(castleID)
 	if c0 == nil {
+		alert("red", "Decoration apply failed: castle not found in session state.")
 		return "error: castle not in GameState"
 	}
 	work := copyWorkFromCastle(c0)
+
+	ebuNeed, sobReturn := computeDecorationStorageDelta(&work, preset)
+	if len(ebuNeed) > 0 {
+		waiter := ResponseRegistry.Global.RegisterWaiter("sin", sinResponseWait)
+		GameCommands.SendSIN()
+		sinParts, err := waiter.WaitWithTimeout()
+		waiter.Cleanup()
+		if err != nil {
+			alert("red", "Decoration apply cancelled: timed out waiting for storage (sin).")
+			return ""
+		}
+		if ctx.Err() != nil {
+			return "cancelled"
+		}
+		sto, err := GameParser.ParseDecorationStorageCountsFromSINFrame(sinParts)
+		if err != nil {
+			alert("red", fmt.Sprintf("Decoration apply cancelled: could not parse storage (sin): %v", err))
+			return ""
+		}
+		shortfalls := decorationStorageShortfalls(sto, ebuNeed, sobReturn)
+		if len(shortfalls) > 0 {
+			if onStorageMismatch != nil {
+				onStorageMismatch(shortfalls)
+			}
+			// Red banner + bullet list are shown by the frontend Alerts stack (persistent until dismissed or apply completes).
+			return ""
+		}
+	}
 
 	const maxSteps = 500
 	workOIDSeq := 0 // negative OIDs for optimistic EBU rows (not sent to the game)
@@ -236,6 +365,7 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 			return "cancelled"
 		}
 		if !ResponseRegistry.LoginStatus {
+			alert("red", "Decoration apply stopped: game session is no longer logged in.")
 			return "error: not logged in"
 		}
 
@@ -265,10 +395,14 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 			}
 			b := current[ci].b
 			if b.OID <= 0 {
-				return fmt.Sprintf("error: unmatched work decoration without server OID (WID %d @ %d,%d)", b.BuildingID, b.X, b.Y)
+				msg := fmt.Sprintf("error: unmatched work decoration without server OID (WID %d @ %d,%d)", b.BuildingID, b.X, b.Y)
+				alert("red", "Decoration apply failed: internal layout state (missing server OID for a decoration).")
+				return msg
 			}
 			if dec.DecorationSOBBlockedWID(b.BuildingID) {
-				return fmt.Sprintf("error: cannot SOB blocked WID %d (OID %d)", b.BuildingID, b.OID)
+				msg := fmt.Sprintf("error: cannot SOB blocked WID %d (OID %d)", b.BuildingID, b.OID)
+				alert("red", fmt.Sprintf("Decoration apply failed: cannot pick up this decoration type (WID %d).", b.BuildingID))
+				return msg
 			}
 			sobOID = b.OID
 			break
@@ -278,6 +412,7 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 			prog(fmt.Sprintf("sob OID %d", sobOID))
 			GameCommands.SendSOB(castleID, sobOID)
 			if !removeDecorationByOID(&work, sobOID) {
+				alert("red", "Decoration apply failed: internal state after SOB.")
 				return fmt.Sprintf("error: internal SOB state (OID %d)", sobOID)
 			}
 			time.Sleep(150 * time.Millisecond)
@@ -307,11 +442,13 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 		break
 	}
 	if !done {
+		alert("red", "Decoration apply failed: too many steps (layout did not converge).")
 		return "error: max steps exceeded"
 	}
 
 	prog("verify layout (JAA)")
 	if !GameParser.FocusPlayerCastleWithRetry(kingdomID, castleID, mapX, mapY) {
+		alert("red", "Decoration apply failed: could not verify layout (final JAA timed out).")
 		return "error: final JAA verify timed out"
 	}
 	time.Sleep(200 * time.Millisecond)
@@ -319,11 +456,14 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 	gs = Models.GetGameState()
 	cFinal := gs.GetCastleByID(castleID)
 	if cFinal == nil {
+		alert("red", "Decoration apply failed: castle missing from state after verify.")
 		return "error: castle not in GameState after verify"
 	}
 	if !decorationLayoutMatchesPreset(cFinal, preset) {
+		alert("red", "Decoration apply failed: live castle layout still does not match the preset.")
 		return "error: layout mismatch after apply (preset vs live castle)"
 	}
+	alert("green", "Decoration preset applied successfully.")
 	return "complete"
 }
 

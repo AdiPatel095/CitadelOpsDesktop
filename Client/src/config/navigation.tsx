@@ -7,7 +7,8 @@ export type ViewId =
   | 'castle'
   | 'currency'
   | 'event-modules'
-  | 'settings';
+  | 'settings'
+  | 'patch-notes';
 
 export interface NavigationItem {
     id: ViewId;
@@ -22,5 +23,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     { id: 'event-modules', label: 'Event Modules', icon: <Icons.Trophy />, section: 'main' },
     { id: 'currency', label: 'Currency', icon: <Icons.Grid />, section: 'main' },
     { id: 'settings', label: 'Settings', icon: <Icons.Settings />, section: 'system' },
+    { id: 'patch-notes', label: 'Patch Notes', icon: <Icons.PatchNotes />, section: 'system' },
     { id: 'support', label: 'Support', icon: <Icons.Help />, section: 'system' },
 ];

@@ -12,17 +12,25 @@ func init() {
 }
 
 // MessageRouter dispatches %-split game websocket frames to parsers.
+// Waiters run after parsers (defer) so GameState matches the frame — e.g. **ain** updates BirdLocations
+// before anything blocked on RegisterWaiter("ain") resumes; **cds** TT callbacks see consistent ordering.
 func MessageRouter(messageParts []string) {
 	cmd, ok := CommandType(messageParts)
 	if !ok {
 		return
 	}
 
-	ResponseRegistry.Global.CheckWaiters(cmd, messageParts)
+	// Inbound frames often look like %xt%EmpireEx_21%<opcode>%1%<json> — index 2 is "EmpireEx_21" and the real opcode is index 3.
+	effectiveCmd := cmd
+	if cmd == "EmpireEx_21" && len(messageParts) > 3 {
+		effectiveCmd = messageParts[3]
+	}
 
 	payload, hasPayload := Payload(messageParts)
 
-	switch cmd {
+	defer ResponseRegistry.Global.CheckWaiters(effectiveCmd, messageParts)
+
+	switch effectiveCmd {
 	case "gbd":
 		if !hasPayload {
 			return

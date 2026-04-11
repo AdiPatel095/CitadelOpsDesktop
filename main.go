@@ -2,6 +2,7 @@ package main
 
 import (
 	"CitadelDesktop/Server/FrontendWebsocket"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ResponseRegistry"
@@ -47,6 +48,10 @@ func main() {
 	ResponseRegistry.BroadcastStaleSnapshot = FrontendWebsocket.BroadcastLastKnownGameStateSnapshot
 
 	Models.StartPeriodicGameStateSnapshots()
+
+	if err := gamedata.LoadConsumptionReductionBuildings(); err != nil {
+		log.Printf("Warning: failed to load consumption reduction building index: %v", err)
+	}
 
 	// Set up callbacks for ResponseRegistry to notify frontend
 	ResponseRegistry.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
@@ -98,7 +103,6 @@ func StartFrontendService() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/", http.FileServer(http.FS(subFS)))
-	mux.Handle("/api/game-data/", http.StripPrefix("/api/game-data/", http.FileServer(http.Dir("Server/Data"))))
 	Logging.RegisterLogHandlers(mux)
 	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)
 

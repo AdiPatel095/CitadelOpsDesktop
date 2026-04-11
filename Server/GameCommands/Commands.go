@@ -80,6 +80,13 @@ func SendEBUWithParams(wid, gridX, gridY, r, pwr, po, doid int) {
 	ResponseRegistry.OutgoingMessages <- payload
 }
 
+// SendSIN sends EmpireEx_21 **sin** — refresh decoration/building storage inventory (response lists RD rows per SID).
+// No JSON body (same family as other Empire commands; use fmt.Sprintf so %% → single % on the wire).
+// Response shape: Logs/JSONExamples/sin.json (array of {SID, RD, …}; each RD row [wodID, amount, …]).
+func SendSIN() {
+	ResponseRegistry.OutgoingMessages <- "%xt%EmpireEx_21%sin%1%"
+}
+
 // SendSOB sends EmpireEx_21 **sob** — pick up an existing instance into inventory / storage.
 //
 // Payload: {"CID":<castleInstanceId>,"OID":<perCastleBuildingInstanceId>}
@@ -209,4 +216,74 @@ func BGEPayload(gemID, equipmentID, leaderID float64) string {
 // Payload: {"EID":<equipmentId>,"LID":<leaderId>}
 func EGEPayload(equipmentID, leaderID float64) string {
 	return fmt.Sprintf(`%%xt%%EmpireEx_21%%ege%%1%%{"EID":%.0f,"LID":%.0f}%%`, equipmentID, leaderID)
+}
+
+// --- Equipment / gem storage refresh (empty JSON {}) ---
+
+// SendGEI requests EmpireEx_21 **gei** — refresh equipment inventory from the game server.
+func SendGEI() {
+	QueueOutgoingPayload(fmt.Sprintf(`%%xt%%EmpireEx_21%%gei%%1%%{}%%`))
+}
+
+// SendGGM requests EmpireEx_21 **ggm** — refresh gem storage.
+func SendGGM() {
+	QueueOutgoingPayload(fmt.Sprintf(`%%xt%%EmpireEx_21%%ggm%%1%%{}%%`))
+}
+
+// SendGLI requests EmpireEx_21 **gli** — equipment list (e.g. before reconfigure / GLI parsers).
+func SendGLI() {
+	QueueOutgoingPayload(fmt.Sprintf(`%%xt%%EmpireEx_21%%gli%%1%%{}%%`))
+}
+
+// SendEmpireEx21EmptyCommand queues **EmpireEx_21%<code>%1%{}%** (custom / debug tooling).
+func SendEmpireEx21EmptyCommand(messageCode string) {
+	if messageCode == "" {
+		return
+	}
+	QueueOutgoingPayload(fmt.Sprintf(`%%xt%%EmpireEx_21%%%s%%1%%{}%%`, messageCode))
+}
+
+// SEQSellEquipmentPayload is EmpireEx_21 **seq** — sell one stash equipment by instance EID.
+func SEQSellEquipmentPayload(equipmentID float64) string {
+	return fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipmentID)
+}
+
+// SendSEQSellEquipment queues **seq** for one equipment row.
+func SendSEQSellEquipment(equipmentID float64) {
+	QueueOutgoingPayload(SEQSellEquipmentPayload(equipmentID))
+}
+
+// SGESellNonRelicGemPayload is **sge** for non-relic gems (RGEM 0, GID zero-padded to 3 digits).
+func SGESellNonRelicGemPayload(gemID float64) string {
+	return fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%03.0f,"RGEM":0,"LFID":-1}%%`, gemID)
+}
+
+// SGESellRelicGemPayload is **sge** for relic gems (RGEM 1).
+func SGESellRelicGemPayload(gemID float64) string {
+	return fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%.0f,"RGEM":1,"LFID":-1}%%`, gemID)
+}
+
+// SendSGENonRelicGem queues **sge** with RGEM 0 (non-relic sell path).
+func SendSGENonRelicGem(gemID float64) {
+	QueueOutgoingPayload(SGESellNonRelicGemPayload(gemID))
+}
+
+// SendSGERelicGem queues **sge** with RGEM 1 (relic gem sell path).
+func SendSGERelicGem(gemID float64) {
+	QueueOutgoingPayload(SGESellRelicGemPayload(gemID))
+}
+
+// SendEEQ queues **eeq** using EEQPayload (equip or unequip).
+func SendEEQ(equipmentID, leaderID float64, equip bool) {
+	QueueOutgoingPayload(EEQPayload(equipmentID, leaderID, equip))
+}
+
+// SendEGE queues **ege** — remove gem from parent equipment.
+func SendEGE(equipmentID, leaderID float64) {
+	QueueOutgoingPayload(EGEPayload(equipmentID, leaderID))
+}
+
+// SendBGE queues **bge** — attach gem to equipment.
+func SendBGE(gemID, equipmentID, leaderID float64) {
+	QueueOutgoingPayload(BGEPayload(gemID, equipmentID, leaderID))
 }
