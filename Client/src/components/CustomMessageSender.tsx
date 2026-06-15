@@ -60,7 +60,7 @@ const CustomMessageSender: React.FC = () => {
         </div>
         <p className="text-xs text-text-muted mt-3 font-medium flex items-center gap-1.5">
           <Icons.Info className="w-4 h-4" />
-          Sends a raw formatted message (%%xt%%EmpireEx_21%%[code]%%1%%{`{ }`}%%) directly to the game server.
+          Sends a raw formatted message (%%xt%%EmpireEx_XXX%%[code]%%1%%{`{ }`}%%) directly to the game server.
         </p>
       </CardContent>
     </Card>

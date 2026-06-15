@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Save, Plus, Settings } from 'lucide-react';
-import { FrontendWebsocket } from '../../websocket';
+import { FrontendWebsocket } from '../../Websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
-import { TROOP_DEFINITIONS } from '../../config/constants';
+import { TROOP_DEFINITIONS } from '../../config/Constants';
 import { Modal, Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '../../components/ui';
 
 interface RecruitTroopsSettingsModalProps {

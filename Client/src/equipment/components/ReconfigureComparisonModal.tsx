@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Icons } from '../../components/Icons';
-import { type CommStat, type CastStat, statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/equipment';
-import { FrontendWebsocket } from '../../websocket';
+import { type CommStat, type CastStat, statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/Equipment';
+import { FrontendWebsocket } from '../../Websocket';
 import { Modal, Button, Badge } from '../../components/ui';
 
 interface ReconfigureComparisonModalProps {

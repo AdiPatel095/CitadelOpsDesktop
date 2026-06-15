@@ -15,7 +15,7 @@ var (
 	isFetchingTroops bool
 )
 
-// jaaTroopFetchWait is how long we wait for an inbound **jaa** after SendTroopFocus (see markJAAProcessed).
+// jaaTroopFetchWait is how long we wait for an inbound **jaa** after SendCastleFocus (see markJAAProcessed).
 const jaaTroopFetchWait = 8 * time.Second
 
 // FetchAllCastleTroopsAndConsumption runs once after GCL/DCL: send focus for the main castle; inbound jaa updates GameState.
@@ -97,7 +97,7 @@ func refocusMainCastleAfterTroopFetch(gs *Models.GameState) {
 	if !ResponseRegistry.LoginStatus {
 		return
 	}
-	GameCommands.SendTroopFocus(kingdomID, mainAID, mapX, mapY)
+	GameCommands.SendCastleFocus(kingdomID, mainAID, mapX, mapY)
 }
 
 func mainCastleMapCoords(gs *Models.GameState, mainAID int) (kingdomID, x, y int, ok bool) {
@@ -135,13 +135,29 @@ func FetchCastleTroops(kingdomID, castleID, x, y int) *Models.CastleTroops {
 	return nil
 }
 
+// jcaErrorSettle is how long we wait after the focus jaa for a trailing **jca** rejection. The game
+// sends the jca error a few hundred ms after the optimistic jaa, so we must let that window pass before
+// trusting the focus. Sized with margin over observed gaps (~400ms).
+const jcaErrorSettle = 600 * time.Millisecond
+
 func trySendAndAwaitJAA(gs *Models.GameState, kingdomID, castleID, mapX, mapY int) bool {
+	sendNs := time.Now().UnixNano()
 	prev := atomic.LoadInt64(&lastJAAProcessedNs)
-	GameCommands.SendTroopFocus(kingdomID, castleID, mapX, mapY)
+	GameCommands.SendCastleFocus(kingdomID, castleID, mapX, mapY)
 	if !awaitNextJAAAfter(prev, jaaTroopFetchWait) {
 		return false
 	}
-	return gs.CastleFocus.CastleAID == castleID
+	if gs.CastleFocus.CastleAID != castleID {
+		return false
+	}
+	// The jaa above is optimistic: a focus the server REJECTS still produces a jaa, then a trailing **jca**
+	// error that leaves CastleFocus on a stale castle/kingdom. Wait the settle window and fail if such a
+	// rejection arrived for this attempt, so callers never send sdi/cds (which carry no kingdom) under a
+	// focus the server didn't actually apply — the cause of birds landing in the wrong kingdom.
+	if jcaErrorAfter(sendNs, jcaErrorSettle) {
+		return false
+	}
+	return true
 }
 
 func troopSnapshotFromCastle(gs *Models.GameState, castleID int) *Models.CastleTroops {

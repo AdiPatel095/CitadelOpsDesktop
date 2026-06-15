@@ -6,13 +6,13 @@ import UnitImage from './UnitImage';
 import {
   TROOP_DEFINITIONS,
   TROOP_METADATA,
-} from '../config/constants';
+} from '../config/Constants';
 import {
   getFavorites,
   toggleFavorite,
   incrementUsage,
   getTopFrequent,
-} from '../config/unitPickerStorage';
+} from '../config/UnitPickerStorage';
 import { Modal, Button, Input, ToggleGroup, Badge } from './ui';
 
 // ============================================
@@ -38,6 +38,10 @@ export interface TroopPickerOptions {
   allowQuantity?: boolean;
   /** Pre-filled quantities when allowQuantity is true */
   preselectedQuantities?: Record<number, number>;
+  /** Restrict the list to these unit ids (e.g. main castle troopsI). */
+  allowedUnitIds?: number[];
+  /** Optional in-castle stock counts shown on each unit card. */
+  stockQuantities?: Record<number, number>;
 }
 
 // Result type varies based on options
@@ -118,6 +122,7 @@ interface VirtualizedUnitGridProps {
   favorites: Set<number>;
   quantities: Record<number, number>;
   allowQuantity: boolean;
+  stockQuantities?: Record<number, number>;
   quickAccessTab: QuickAccessTab;
   onUnitClick: (unitId: number) => void;
   onFavoriteClick: (e: React.MouseEvent, unitId: number) => void;
@@ -130,6 +135,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
   favorites,
   quantities,
   allowQuantity,
+  stockQuantities,
   quickAccessTab,
   onUnitClick,
   onFavoriteClick,
@@ -258,6 +264,11 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                       {/* Unit name */}
                       <span className="flex-1 text-sm font-semibold truncate">
                         {name}
+                        {stockQuantities?.[unitId] != null ? (
+                          <span className="ml-2 text-xs font-mono text-text-muted">
+                            ({stockQuantities[unitId].toLocaleString()})
+                          </span>
+                        ) : null}
                       </span>
 
                       {/* Inline quantity input when selected */}
@@ -342,6 +353,12 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                           <UnitImage unitId={unitId} size={84} showLevel={true} className="drop-shadow-md" />
                         </div>
 
+                        {stockQuantities?.[unitId] != null ? (
+                          <span className="absolute bottom-2 left-2 z-10 rounded-full bg-bg-app px-2 py-0.5 text-[10px] font-bold font-mono text-text-main ring-1 ring-border-base">
+                            {stockQuantities[unitId].toLocaleString()}
+                          </span>
+                        ) : null}
+
                         {/* Bottom area: Name or Quantity Input */}
                         {allowQuantity && isSelected ? (
                           <div className="px-2 pt-2 pb-1 w-full" onClick={(e) => e.stopPropagation()}>
@@ -381,7 +398,9 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
     title,
     preselected = [],
     allowQuantity = false,
-    preselectedQuantities = {}
+    preselectedQuantities = {},
+    allowedUnitIds,
+    stockQuantities,
   } = options;
 
   // Selection state
@@ -390,7 +409,8 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
-  const initialTab = getTopFrequent(50).length > 0 ? 'frequent' : 'all';
+  const restrictToAllowed = Boolean(allowedUnitIds?.length);
+  const initialTab: QuickAccessTab = restrictToAllowed ? 'all' : getTopFrequent(50).length > 0 ? 'frequent' : 'all';
   const [quickAccessTab, setQuickAccessTab] = useState<QuickAccessTab>(initialTab);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
@@ -404,7 +424,10 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
   useEffect(() => {
     setFavoritesState(getFavorites());
     setFrequentIds(getTopFrequent(50));
-  }, [isOpen]);
+    if (restrictToAllowed) {
+      setQuickAccessTab('all');
+    }
+  }, [isOpen, restrictToAllowed]);
 
   // Get definitions and metadata for troops
   const definitions = TROOP_DEFINITIONS;
@@ -413,6 +436,16 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
   // Filter units by all criteria
   const filteredUnits = useMemo(() => {
     let entries = Object.entries(definitions);
+
+    if (allowedUnitIds?.length) {
+      const allowed = new Set(allowedUnitIds);
+      entries = entries.filter(([id]) => allowed.has(parseInt(id)));
+      if (stockQuantities) {
+        entries.sort(
+          (a, b) => (stockQuantities[parseInt(b[0])] ?? 0) - (stockQuantities[parseInt(a[0])] ?? 0)
+        );
+      }
+    }
 
     // Filter by search query
     if (searchQuery.trim()) {
@@ -463,7 +496,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
     }
 
     return entries;
-  }, [definitions, metadata, searchQuery, typeFilter, roleFilter, foodFilter, quickAccessTab, favorites, frequentIds]);
+  }, [definitions, metadata, allowedUnitIds, stockQuantities, searchQuery, typeFilter, roleFilter, foodFilter, quickAccessTab, favorites, frequentIds]);
 
   // Handle unit selection
   const handleUnitClick = (unitId: number) => {
@@ -652,6 +685,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
           favorites={favorites}
           quantities={quantities}
           allowQuantity={allowQuantity}
+          stockQuantities={stockQuantities}
           quickAccessTab={quickAccessTab}
           onUnitClick={handleUnitClick}
           onFavoriteClick={handleFavoriteClick}

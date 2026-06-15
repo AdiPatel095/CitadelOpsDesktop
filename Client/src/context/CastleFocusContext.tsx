@@ -7,17 +7,17 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { FrontendWebsocket } from '../websocket';
+import { FrontendWebsocket } from '../Websocket';
 import {
   parseCastleFocusPayload,
   type CastleFocusState,
   type PlayerCastleOption,
-} from '../types/castleFocusState.ts';
+} from '../types/CastleFocusState.ts';
 import {
   buildCastleFocusFromSnapshot,
   buildCastleFocusFromStoredSnapshotFocus,
   playerCastleOptionsFromGameStateSnapshot,
-} from '../utils/castleSnapshotHydration.ts';
+} from '../utils/CastleSnapshotHydration.ts';
 import { useAuth } from './AuthContext';
 import { useLastKnownSnapshot } from './LastKnownSnapshotContext';
 

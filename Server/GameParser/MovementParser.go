@@ -11,6 +11,9 @@ import (
 // OnGAMParsed is a callback hook that fires after GAM messages are parsed.
 var OnGAMParsed func()
 
+// NotifyMovementChanged is wired by FrontendWebsocket to push active movements after GAM-like parses.
+var NotifyMovementChanged func()
+
 // movementItemsFromGAMLikeRoot splits a **gam** / **cds** / **cat** / **cra** JSON root into per-movement objects (each holds M, UM, A).
 func movementItemsFromGAMLikeRoot(gamData map[string]interface{}) []map[string]interface{} {
 	var mArray []interface{}
@@ -58,6 +61,38 @@ func movementItemsFromGAMLikeRoot(gamData map[string]interface{}) []map[string]i
 	return out
 }
 
+// CommanderAndTTFromGAMLikeJSON returns outbound (**M.D**=0) commander wire id and one-way **TT** from a **gam**-like payload.
+func CommanderAndTTFromGAMLikeJSON(data string) (commanderID, tt int, ok bool) {
+	var gamData map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &gamData); err != nil {
+		return 0, 0, false
+	}
+	items := movementItemsFromGAMLikeRoot(gamData)
+	for _, movObj := range items {
+		mDetails, okM := movObj["M"].(map[string]interface{})
+		if !okM {
+			continue
+		}
+		if getInt(mDetails, "D") != 0 {
+			continue
+		}
+		tt = getInt(mDetails, "TT")
+		if umObj, okUM := movObj["UM"].(map[string]interface{}); okUM {
+			if lObj, okL := umObj["L"].(map[string]interface{}); okL {
+				if idVal, okID := lObj["ID"]; okID {
+					if fID, okF := idVal.(float64); okF {
+						commanderID = int(fID)
+					}
+				}
+			}
+		}
+		if commanderID >= 0 && tt > 0 {
+			return commanderID, tt, true
+		}
+	}
+	return 0, 0, false
+}
+
 // ExtractMaxTTSecondsFromGAMLikeJSON returns the largest one-way travel time **TT** (seconds) from M blocks in a **gam**-like JSON payload (including **cds** responses).
 func ExtractMaxTTSecondsFromGAMLikeJSON(data string) int {
 	var gamData map[string]interface{}
@@ -91,12 +126,18 @@ func ParseGAMMessage(data string) {
 	//log.Printf("Raw GAM Data: %s", data)
 
 	items := movementItemsFromGAMLikeRoot(gamData)
-	if len(items) == 0 {
+	isFullSnapshot := gamPayloadIsFullSnapshot(gamData)
+	// An empty full **gam** snapshot ({"M":[],...}) is the authoritative "no active movements" frame
+	// the game sends once a march finishes (e.g. a commander reaching home). It must clear
+	// ActiveMovements so the commander frees; only bail when there is nothing to apply AND this is a
+	// partial delta (cat/cra) that carries no parsable leg.
+	if len(items) == 0 && !isFullSnapshot {
 		return
 	}
 
 	gs := Models.GetGameState()
 	// gs.Movement.ActiveMovements is not cleared here; fetchers manage lifecycle.
+	nowUnix := time.Now().Unix()
 	var parsedMovements []Models.GAMMovement
 
 	for _, movObj := range items {
@@ -115,10 +156,14 @@ func ParseGAMMessage(data string) {
 		sid := getInt(mDetails, "SID")
 		oid := getInt(mDetails, "OID")
 
-		// Extract target coordinates from TA array (indices 1 and 2)
+		// Extract target type and coordinates from TA array ([0]=type, [1]=X, [2]=Y)
+		targetType := 0
 		targetX := 0
 		targetY := 0
 		if taArray, ok := mDetails["TA"].([]interface{}); ok && len(taArray) > 2 {
+			if tt, ok := taArray[0].(float64); ok {
+				targetType = int(tt)
+			}
 			if tx, ok := taArray[1].(float64); ok {
 				targetX = int(tx)
 			}
@@ -156,9 +201,13 @@ func ParseGAMMessage(data string) {
 			}
 		}
 
-		// Extract CommanderID from UM.L.ID
+		// Extract CommanderID from UM.L.ID, plus the posted-wait window (UM.PWD/UM.TWD) used to keep a
+		// support/bird leg alive while it sits at its destination instead of expiring it mid-wait.
 		commanderID := -1
+		pwd, twd := 0, 0
 		if umObj, ok := movObj["UM"].(map[string]interface{}); ok {
+			pwd = getInt(umObj, "PWD")
+			twd = getInt(umObj, "TWD")
 			if lObj, ok := umObj["L"].(map[string]interface{}); ok {
 				// We can't use getInt directly because it returns 0 on missing/error.
 				// We need to check if "ID" actually exists in the map.
@@ -166,32 +215,29 @@ func ParseGAMMessage(data string) {
 					if fID, ok := idVal.(float64); ok {
 						commanderID = int(fID)
 					}
-				} else {
 				}
-			} else {
 			}
-		} else {
-		}
-
-		if commanderID >= 0 {
-		} else {
 		}
 
 		// Store ALL movements - we'll match by troop composition which is unique
 		movement := Models.GAMMovement{
-			MID:         mid,
-			PT:          pt,
-			TT:          tt,
-			D:           d,
-			KID:         kid,
-			SID:         sid,
-			OID:         oid,
-			TargetX:     targetX,
-			TargetY:     targetY,
-			SourceX:     sourceX,
-			SourceY:     sourceY,
-			CommanderID: commanderID,
-			TroopArray:  troopArray,
+			MID:          mid,
+			PT:           pt,
+			TT:           tt,
+			D:            d,
+			KID:          kid,
+			SID:          sid,
+			OID:          oid,
+			TargetType:   targetType,
+			TargetX:      targetX,
+			TargetY:      targetY,
+			SourceX:      sourceX,
+			SourceY:      sourceY,
+			CommanderID:  commanderID,
+			TroopArray:   troopArray,
+			PWD:          pwd,
+			TWD:          twd,
+			ReceivedUnix: nowUnix,
 		}
 		parsedMovements = append(parsedMovements, movement)
 
@@ -204,14 +250,132 @@ func ParseGAMMessage(data string) {
 		}
 	}
 
-	// Replace with the latest snapshot so reconciliation always sees current movements only.
-	gs.Movement.ActiveMovements = parsedMovements
+	movementReconcileMu.Lock()
+	// gam is delivered as MULTIPLE full-snapshot frames per request (pagination): a single request can
+	// return several {"M":[...]} messages, each carrying only a slice of the active movements. Any one
+	// frame is therefore a partial page, NOT the authoritative whole, so we must never replace the list
+	// from a single frame — doing so lets the last page clobber owned legs carried by earlier pages
+	// (observed: a commander's outbound leg in pages 1-2 wiped by a page 3 that omits it). Merge owned
+	// legs by MID across frames instead, and rely on mrm + the wall-clock expiry backstop to remove
+	// finished ones. The sole authoritative "nothing is in flight" signal is an explicitly empty full
+	// snapshot ({"M":[]}), which the game sends as a standalone frame, not as a page of a larger set.
+	if isFullSnapshot && len(items) == 0 {
+		gs.Movement.ActiveMovements = nil
+	} else {
+		// Full page or partial delta: admit a new MID only if it belongs to us; deltas for an
+		// already-tracked MID are always applied (it only got tracked by passing the ownership check).
+		gs.Movement.ActiveMovements = mergeOwnedMovementsByMID(gs, gs.Movement.ActiveMovements, parsedMovements)
+	}
+	rebindCommanderIDs(gs)
+	expireStaleMovements(gs, nowUnix)
+	movementReconcileMu.Unlock()
+
+	MaybeNotifyRiftCRALaunchBusyChanged()
+	if NotifyMovementChanged != nil {
+		NotifyMovementChanged()
+	}
 	markGAMParsed()
+	startMovementPollTicker()
 
 	// Trigger callback to auto-clean returned birds in real-time
 	if OnGAMParsed != nil {
 		go OnGAMParsed()
 	}
+}
+
+// ParseMRMRemoveMovement handles **mrm** — pushed by the game as {"MID": n} when a march ends
+// (e.g. a commander reaches home). Removing the leg immediately frees the commander without waiting
+// for the next **gam** poll.
+func ParseMRMRemoveMovement(payload string) {
+	var body struct {
+		MID int `json:"MID"`
+	}
+	if err := json.Unmarshal([]byte(payload), &body); err != nil || body.MID == 0 {
+		return
+	}
+
+	gs := Models.GetGameState()
+
+	movementReconcileMu.Lock()
+	removed := false
+	kept := make([]Models.GAMMovement, 0, len(gs.Movement.ActiveMovements))
+	for _, m := range gs.Movement.ActiveMovements {
+		if m.MID == body.MID {
+			removed = true
+			continue
+		}
+		kept = append(kept, m)
+	}
+	if removed {
+		gs.Movement.ActiveMovements = kept
+		delete(gs.Movement.CommanderByMID, body.MID)
+		rebindCommanderIDs(gs)
+	}
+	movementReconcileMu.Unlock()
+
+	if removed {
+		MaybeNotifyRiftCRALaunchBusyChanged()
+		if NotifyMovementChanged != nil {
+			NotifyMovementChanged()
+		}
+	}
+}
+
+// gamPayloadIsFullSnapshot is true for **gam** list payloads (root "M" is an array, possibly empty);
+// **cat**/**cra**/**cds** are single-leg deltas wrapped in "A"/"AAM".
+func gamPayloadIsFullSnapshot(gamData map[string]interface{}) bool {
+	mVal, ok := gamData["M"]
+	if !ok {
+		return false
+	}
+	_, ok = mVal.([]interface{})
+	return ok
+}
+
+// mergeOwnedMovementsByMID merges partial-delta legs into prev. A new MID is admitted only if it
+// belongs to us; deltas for an already-tracked MID are always applied (the MID is only present because
+// it passed the ownership check on insert). A re-delivered frame that does not advance PT preserves the
+// existing PT/ReceivedUnix so expiry aging is not reset by repeated identical frames.
+func mergeOwnedMovementsByMID(gs *Models.GameState, prev, incoming []Models.GAMMovement) []Models.GAMMovement {
+	if len(incoming) == 0 {
+		return prev
+	}
+	now := time.Now().Unix()
+	byMID := make(map[int]Models.GAMMovement, len(prev)+len(incoming))
+	order := make([]int, 0, len(prev)+len(incoming))
+	for _, m := range prev {
+		if m.MID == 0 {
+			continue
+		}
+		if _, exists := byMID[m.MID]; !exists {
+			order = append(order, m.MID)
+		}
+		byMID[m.MID] = m
+	}
+	for _, m := range incoming {
+		if m.MID == 0 {
+			continue
+		}
+		existing, tracked := byMID[m.MID]
+		if !tracked {
+			if !legBelongsToUs(gs, m) {
+				continue
+			}
+			order = append(order, m.MID)
+			byMID[m.MID] = m
+			continue
+		}
+		if m.D == existing.D && m.PT <= existing.EffectivePT(now) {
+			m.PT = existing.PT
+			m.ReceivedUnix = existing.ReceivedUnix
+		}
+		byMID[m.MID] = m
+	}
+	out := make([]Models.GAMMovement, 0, len(order))
+	for _, mid := range order {
+		out = append(out, byMID[mid])
+	}
+	return out
 }
 
 // Helper to safely get int from map

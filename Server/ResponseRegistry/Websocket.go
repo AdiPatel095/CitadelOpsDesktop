@@ -40,9 +40,38 @@ var (
 	// SendRecruitTroopsStatusFunc is a callback to notify frontend of recruit troops status changes
 	SendRecruitTroopsStatusFunc func(bool)
 
+	// SendAutoTCIStatusFunc notifies the frontend when AutoTCI (temporary construction items) is toggled.
+	SendAutoTCIStatusFunc func(bool)
+
+	// SendAutoBeriWorldStatusFunc notifies the frontend of Auto Beri World enabled + next pass (unix ms).
+	SendAutoBeriWorldStatusFunc func(enabled bool, nextWakeUp int64)
+
 	// BroadcastStaleSnapshot is set from main to push lastKnownGameStateSnapshot after game disconnect (avoids import cycle with FrontendWebsocket).
 	BroadcastStaleSnapshot func()
+
+	// GameSessionActiveHandler is called when the game reports logged-in (e.g. lli payload 0).
+	GameSessionActiveHandler func()
+	// GameSessionInactiveHandler is called whenever LoginStatus becomes false (disconnect, StopGame, etc.).
+	GameSessionInactiveHandler func()
+	// AfterGameStateReset runs after [Models.GetGameState().Reset] (fresh browser/tab load). Used so AutoTCI can re-fetch **gii**.
+	AfterGameStateReset func()
+
+	// EmpireExToken is dynamically parsed from incoming game messages and used for outgoing messages
+	EmpireExToken string = "EmpireEx_21"
 )
+
+// notifyGameSessionInactive runs the optional inactive handler (e.g. cancel AutoTCI ubc one-shots).
+func notifyGameSessionInactive() {
+	if GameSessionInactiveHandler != nil {
+		GameSessionInactiveHandler()
+	}
+}
+
+func notifyGameStateReset() {
+	if AfterGameStateReset != nil {
+		AfterGameStateReset()
+	}
+}
 
 // ServerURLMap maps frontend server display names to actual server identifiers
 var ServerURLMap = map[string]string{
@@ -97,6 +126,11 @@ func SetAutoBirdStatusCallback(fn func(bool, int64)) {
 	SendAutoBirdStatusFunc = fn
 }
 
+// SetAutoBeriWorldStatusCallback sets the callback for Auto Beri World status notification.
+func SetAutoBeriWorldStatusCallback(fn func(bool, int64)) {
+	SendAutoBeriWorldStatusFunc = fn
+}
+
 func SetMemoryStatsCallback(fn func(int, int)) {
 	SendMemoryStatsFunc = fn
 }
@@ -121,12 +155,14 @@ func handleCDPEvent(ev interface{}) {
 		if gameRequestIDs[string(ev.RequestID)] {
 			log.Println("[WebSocket] Game WebSocket closed (disconnected/kicked)")
 			delete(gameRequestIDs, string(ev.RequestID))
+			EmpireExToken = "EmpireEx_21"
 			LoginStatus = false
 			LoginCooldown = 0
 			Models.PersistGameStateSnapshot()
 			if BroadcastStaleSnapshot != nil {
 				BroadcastStaleSnapshot()
 			}
+			notifyGameSessionInactive()
 			if SendGameLoginStatusFunc != nil {
 				go SendGameLoginStatusFunc(false, 0)
 			}
@@ -137,8 +173,6 @@ func handleCDPEvent(ev interface{}) {
 			if decoded, err := base64.StdEncoding.DecodeString(payload); err == nil {
 				payload = string(decoded)
 			}
-			msgType := extractMessageType(payload)
-			Logging.AppendChannelLine(Logging.ChannelWebSocketGame, "RECV", msgType, payload)
 			messageParts := strings.Split(payload, "%")
 			go func() {
 				IncomingMessages <- messageParts
@@ -150,8 +184,22 @@ func handleCDPEvent(ev interface{}) {
 			if decoded, err := base64.StdEncoding.DecodeString(payload); err == nil {
 				payload = string(decoded)
 			}
+
+			// Dynamically capture the EmpireEx version token from native client SEND events
+			// Our own bot sends skip this parsing since they format using the existing token anyway
+			parts := strings.Split(payload, "%")
+			if len(parts) > 2 && strings.HasPrefix(parts[2], "EmpireEx_") {
+				if parts[2] != EmpireExToken {
+					EmpireExToken = parts[2]
+					log.Printf("[WebSocket] Captured dynamic EmpireExToken from outbound frame: %s", EmpireExToken)
+				}
+			}
+
 			msgType := extractMessageType(payload)
 			Logging.AppendChannelLine(Logging.ChannelWebSocketGame, "SEND", msgType, payload)
+			if OutboundGameWireSendHook != nil {
+				OutboundGameWireSendHook(payload)
+			}
 		}
 	}
 }
@@ -337,6 +385,7 @@ func StartGameBrowser(dashboardURL string) {
 		// Reset game state for fresh connection (do not persist here: memory may still be empty on
 		// first launch and would overwrite a good on-disk snapshot from a previous run).
 		Models.GetGameState().Reset()
+		notifyGameStateReset()
 
 		err := chromedp.Run(gameCtx,
 			chromedp.ActionFunc(func(ctx context.Context) error {
@@ -368,6 +417,7 @@ func StartGameBrowser(dashboardURL string) {
 		Models.PersistGameStateSnapshot()
 		LoginStatus = false
 		LoginCooldown = 0
+		notifyGameSessionInactive()
 		if SendGameLoginStatusFunc != nil {
 			SendGameLoginStatusFunc(false, 0)
 		}
@@ -381,6 +431,7 @@ func StopGame() {
 	}
 	LoginStatus = false
 	LoginCooldown = 0
+	notifyGameSessionInactive()
 	if SendGameLoginStatusFunc != nil {
 		SendGameLoginStatusFunc(false, 0)
 	}
@@ -400,7 +451,9 @@ func DisconnectGameWebSocket() {
 	}
 	// Clear stale WebSocket request IDs so they don't interfere on reconnect
 	gameRequestIDs = make(map[string]bool)
+	EmpireExToken = "EmpireEx_21"
 	LoginStatus = false
+	notifyGameSessionInactive()
 	if SendGameLoginStatusFunc != nil {
 		SendGameLoginStatusFunc(false, 0)
 	}
@@ -417,7 +470,9 @@ func ReloadGameTab() {
 	Models.PersistGameStateSnapshot()
 	// Reset game state for fresh connection
 	Models.GetGameState().Reset()
+	notifyGameStateReset()
 	gameRequestIDs = make(map[string]bool)
+	EmpireExToken = "EmpireEx_21"
 
 	go func() {
 		err := chromedp.Run(BrowserCtx,
@@ -438,6 +493,8 @@ func StartWebsocketChannels(ctx context.Context) {
 	// The read portion is now handled by the JS hook pushing to IncomingMessages
 
 	go func() {
+		log.Printf("[WebSocket] Starting OutgoingMessages loop with %s", EmpireExToken)
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -456,6 +513,7 @@ func StartWebsocketChannels(ctx context.Context) {
 				}
 
 				if BrowserCtx != nil && gameExecutionContextID != 0 {
+					logAppOutboundPayload(string(payload))
 					// Escape single quotes in payload
 					safePayload := strings.ReplaceAll(string(payload), "'", "\\'")
 					safePayload = strings.ReplaceAll(safePayload, "\n", "")
@@ -488,8 +546,16 @@ var MessageRouterFunc func([]string)
 func incomingMessageParserStartup() {
 	for message := range IncomingMessages {
 		if len(message) < 3 {
+			LogIncomingGameWireParts(message)
 			continue
 		}
+
+		// Dynamically capture the EmpireEx version token (e.g. EmpireEx_21)
+		if strings.HasPrefix(message[2], "EmpireEx_") && EmpireExToken != message[2] {
+			EmpireExToken = message[2]
+			log.Printf("[WebSocket] Captured dynamic EmpireExToken: %s", EmpireExToken)
+		}
+
 		if message[2] == "lli" {
 			checkLoginStatus(message)
 		}
@@ -506,6 +572,9 @@ func checkLoginStatus(message []string) {
 	if message[4] == "0" {
 		LoginStatus = true
 		LoginCooldown = 0
+		if GameSessionActiveHandler != nil {
+			go GameSessionActiveHandler()
+		}
 		if SendGameLoginStatusFunc != nil {
 			go SendGameLoginStatusFunc(LoginStatus, LoginCooldown)
 		}

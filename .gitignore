@@ -1190,3 +1190,10 @@ chrome-profile
 Server/refactor_state/
 /ChromeProfile/
 /game_state_snapshot.json
+/Logs/
+/Data/
+/cmd/
+/Logs/JSONExamples/
+/Server/.../
+/.claude/
+/.cursor/

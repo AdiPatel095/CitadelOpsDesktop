@@ -3,6 +3,8 @@ import React from 'react';
 export interface ToggleGroupOption {
   value: string;
   label: React.ReactNode;
+  /** Native tooltip (useful for truncated labels in scrollable groups) */
+  title?: string;
 }
 
 export interface ToggleGroupProps {
@@ -37,9 +39,9 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
   };
 
   const activeBtnSizes = {
-    sm: 'px-3 py-1.5 -mx-0.5 -my-0.5',
-    md: 'px-6 py-2.5 -mx-1 -my-1',
-    lg: 'px-8 py-3 -mx-1 -my-1',
+    sm: 'px-3 py-1.5 -mx-0.5 -my-0.5 first:ml-0 last:mr-0',
+    md: 'px-6 py-2.5 -mx-1 -my-1 first:ml-0 last:mr-0',
+    lg: 'px-8 py-3 -mx-1 -my-1 first:ml-0 last:mr-0',
   };
 
   const activeStyles = {
@@ -49,15 +51,19 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
 
   return (
     <div
-      className={`${fullWidth ? 'flex w-full' : 'inline-flex'} items-center bg-bg-app border border-border-base rounded-[24px] relative ${sizes[size]} ${className}`}
+      className={`${fullWidth ? 'flex w-full' : 'inline-flex'} flex-nowrap items-center bg-bg-app border border-border-base rounded-[24px] relative ${sizes[size]} ${className}`}
       role="group"
     >
       {options.map((option) => {
         const isActive = value === option.value;
+        const tip =
+          option.title ??
+          (typeof option.label === 'string' || typeof option.label === 'number' ? String(option.label) : undefined);
         return (
           <button
             key={option.value}
             type="button"
+            title={tip}
             onClick={() => onChange(option.value)}
             className={`
               relative z-10 font-semibold rounded-[24px] transition-all duration-200 ease-out whitespace-nowrap

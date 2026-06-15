@@ -47,6 +47,7 @@ GameState                          // Unified dynamic session state (gamestate.G
 │           ├── Storage            // CastleStorageMax
 │           ├── Troops             // CastleTroopData (kingdom/x/y, TroopsI/TU/HI/SHI/Mixed)
 │           ├── BGRows, BDRows     // Building rows from JAA gca (ground vs buildings)
+│           ├── ConstructionByBuilding  // gca.CI: TCI per building OID (jaa / rpc / ubc); slots: CID, S, remainingSec←RS, level
 │           └── (helpers) BuildingData per row: WID, OID, name, level, x, y
 ├── Equipment                      // Inventory + commander/castellan “actual” arrays (equipment.PlayerEquipment)
 │   ├── EquipmentStorage[]         // Parsed gear (EquipmentModel)

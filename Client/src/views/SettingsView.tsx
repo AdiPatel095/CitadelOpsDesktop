@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Icons } from '../components/Icons';
 import PriorityModal from '../components/PriorityModal';
-import { FrontendWebsocket } from '../websocket';
+import { FrontendWebsocket } from '../Websocket';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '../components/ui';
 
 const SettingsView: React.FC = () => {
   const [minTimer, setMinTimer] = useState<string>('4.0');
   const [maxTimer, setMaxTimer] = useState<string>('6.0');
+  const [upgradeEreDelayMs, setUpgradeEreDelayMs] = useState<string>('50');
+  const [upgradeCoinThreshold, setUpgradeCoinThreshold] = useState<string>('0');
   const [isPriorityModalOpen, setIsPriorityModalOpen] = useState(false);
 
   useEffect(() => {
@@ -14,6 +16,8 @@ const SettingsView: React.FC = () => {
       if (msg.type === 'schedulerSettings' && msg.payload) {
         setMinTimer(msg.payload.minAttackDelay?.toFixed(1) || '4.0');
         setMaxTimer(msg.payload.maxAttackDelay?.toFixed(1) || '6.0');
+        setUpgradeEreDelayMs(String(msg.payload.upgradeEreDelayMs ?? 50));
+        setUpgradeCoinThreshold(String(msg.payload.upgradeCoinThreshold ?? 0));
       }
     };
 
@@ -25,12 +29,24 @@ const SettingsView: React.FC = () => {
     };
   }, []);
 
-  const saveSettings = (min: string, max: string) => {
+  const saveSettings = (
+    min: string,
+    max: string,
+    ereDelayMs?: string,
+    coinThreshold?: string,
+  ) => {
     FrontendWebsocket.sendSaveSchedulerSettings({
       minAttackDelay: parseFloat(min),
-      maxAttackDelay: parseFloat(max)
+      maxAttackDelay: parseFloat(max),
+      upgradeEreDelayMs: parseInt(ereDelayMs ?? upgradeEreDelayMs, 10),
+      upgradeCoinThreshold: parseFloat(coinThreshold ?? upgradeCoinThreshold),
     });
   };
+
+  const parsedCoinThreshold = useMemo(() => {
+    const num = parseFloat(upgradeCoinThreshold);
+    return Number.isFinite(num) && num >= 0 ? num : 0;
+  }, [upgradeCoinThreshold]);
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
@@ -67,6 +83,32 @@ const SettingsView: React.FC = () => {
     }
     setMaxTimer(newVal);
     saveSettings(minTimer, newVal);
+  };
+
+  const handleUpgradeDelayBlur = () => {
+    let num = parseInt(upgradeEreDelayMs, 10);
+    let newVal = '50';
+    if (isNaN(num) || num < 10) {
+      newVal = '10';
+    } else if (num > 5000) {
+      newVal = '5000';
+    } else {
+      newVal = String(num);
+    }
+    setUpgradeEreDelayMs(newVal);
+    saveSettings(minTimer, maxTimer, newVal);
+  };
+
+  const handleUpgradeCoinThresholdBlur = () => {
+    let num = parseFloat(upgradeCoinThreshold);
+    let newVal = '0';
+    if (isNaN(num) || num < 0) {
+      newVal = '0';
+    } else {
+      newVal = String(Math.floor(num));
+    }
+    setUpgradeCoinThreshold(newVal);
+    saveSettings(minTimer, maxTimer, upgradeEreDelayMs, newVal);
   };
 
   return (
@@ -156,6 +198,68 @@ const SettingsView: React.FC = () => {
                   Manage Priorities
                 </Button>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden border-border-base">
+          <CardHeader className="bg-bg-card-hover/50 pb-4 border-b border-border-base rounded-t-[calc(var(--radius-global)-1px)]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <Icons.Shield className="w-4 h-4 text-emerald-400" />
+              </div>
+              <CardTitle className="text-lg">Equipment Upgrades</CardTitle>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-text-main mb-1">Upgrade Step Delay</h3>
+              <p className="text-xs text-text-muted mb-4">
+                Pause between each <span className="font-mono">ere</span> command when bulk-upgrading equipment or gems (10–5000 ms).
+              </p>
+            </div>
+
+            <div className="relative flex-1 max-w-[200px]">
+              <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+                Delay (ms)
+              </label>
+              <Input
+                type="number"
+                step="1"
+                min="10"
+                max="5000"
+                value={upgradeEreDelayMs}
+                onChange={(e) => setUpgradeEreDelayMs(e.target.value)}
+                onBlur={handleUpgradeDelayBlur}
+                className="font-mono"
+                rightIcon={<span className="text-xs">ms</span>}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-text-main mb-1">Coin Reserve Threshold</h3>
+              <p className="text-xs text-text-muted mb-4">
+                Block equipment and gem upgrades when your coin balance is at or below this reserve.
+              </p>
+            </div>
+
+            <div className="relative flex-1 max-w-[200px]">
+              <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+                Minimum Coins
+              </label>
+              <Input
+                type="number"
+                step="1"
+                min="0"
+                value={upgradeCoinThreshold}
+                onChange={(e) => setUpgradeCoinThreshold(e.target.value)}
+                onBlur={handleUpgradeCoinThresholdBlur}
+                className="font-mono"
+              />
+              <p className="mt-2 text-xs text-text-muted">
+                Reserve: <span className="font-mono font-semibold text-text-main">{parsedCoinThreshold.toLocaleString()}</span> coins
+              </p>
             </div>
           </CardContent>
         </Card>

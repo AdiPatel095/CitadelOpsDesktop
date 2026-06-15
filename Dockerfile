@@ -46,6 +46,10 @@ COPY --from=builder /app/CitadelDesktop.exe /app/CitadelDesktop.exe
 COPY --from=builder /app/CitadelDesktop-macos-amd64 /app/CitadelDesktop-macos-amd64
 COPY --from=builder /app/CitadelDesktop-macos-arm64 /app/CitadelDesktop-macos-arm64
 
+# Optional runtime overrides (LangEn cache, CidTrivialProduct); official catalogs are embedded in the binary.
+# Full Server/Data is also copied for Docker/dev overrides (e.g. updated buildings/items.json).
+COPY --from=builder /app/Server/Data /app/Server/Data
+
 # Expose port (optional, mostly for documentation)
 EXPOSE 8080
 

@@ -35,7 +35,8 @@ type NamedPreset struct {
 	Items []PresetPlacement `json:"items"`
 }
 
-// PresetsFile is the on-disk JSON root (castle instance id string -> presets).
+// PresetsFile is the on-disk JSON root (castle key string -> presets).
+// Keys are usually the castle instance id; Storm castle uses the stable slot key "stormCastle".
 type PresetsFile struct {
 	Version int                      `json:"version"`
 	Castles map[string][]NamedPreset `json:"castles"`
@@ -145,57 +146,105 @@ func LoadDecorationPresets() PresetsFile {
 	return out
 }
 
-// ListPresetsForCastle returns presets for the given castle instance id.
-func ListPresetsForCastle(castleID int) []NamedPreset {
+func mergePresetsUnique(dst, src []NamedPreset) []NamedPreset {
+	if len(src) == 0 {
+		return dst
+	}
+	seen := make(map[string]struct{}, len(dst))
+	for _, p := range dst {
+		seen[p.ID] = struct{}{}
+	}
+	for _, p := range src {
+		if _, ok := seen[p.ID]; ok {
+			continue
+		}
+		dst = append(dst, p)
+		seen[p.ID] = struct{}{}
+	}
+	return dst
+}
+
+// migrateLegacyNumericKey moves presets from a rotating castle's numeric instance key into storageKey.
+func migrateLegacyNumericKeyUnlocked(f *PresetsFile, storageKey, legacyNumericKey string) bool {
+	if storageKey == "" || legacyNumericKey == "" || storageKey == legacyNumericKey {
+		return false
+	}
+	legacy := f.Castles[legacyNumericKey]
+	if len(legacy) == 0 {
+		return false
+	}
+	f.Castles[storageKey] = mergePresetsUnique(append([]NamedPreset(nil), f.Castles[storageKey]...), legacy)
+	delete(f.Castles, legacyNumericKey)
+	return true
+}
+
+func maybeMigrateRotatingCastleKeyUnlocked(f *PresetsFile, storageKey string, castleID int) bool {
+	if castleID <= 0 || storageKey == fmt.Sprintf("%d", castleID) {
+		return false
+	}
+	return migrateLegacyNumericKeyUnlocked(f, storageKey, fmt.Sprintf("%d", castleID))
+}
+
+// ListPresetsForKey returns presets for the given storage key.
+// When storageKey differs from castleID (Storm castle), presets under the numeric id are migrated first.
+func ListPresetsForKey(storageKey string, castleID int) []NamedPreset {
 	presetsMu.Lock()
 	defer presetsMu.Unlock()
 	f := loadPresetsUnlocked()
-	key := fmt.Sprintf("%d", castleID)
-	return append([]NamedPreset(nil), f.Castles[key]...)
+	if maybeMigrateRotatingCastleKeyUnlocked(f, storageKey, castleID) {
+		_ = savePresetsUnlocked(f)
+	}
+	return append([]NamedPreset(nil), f.Castles[storageKey]...)
 }
 
-// SavePresetForCastle appends a new preset built from items (caller filters decorations).
-func SavePresetForCastle(castleID int, name string, items []PresetPlacement) (NamedPreset, error) {
+// SavePresetForKey appends a new preset built from items (caller filters decorations).
+func SavePresetForKey(storageKey string, castleID int, name string, items []PresetPlacement) (NamedPreset, error) {
 	if name == "" {
 		return NamedPreset{}, fmt.Errorf("preset name required")
 	}
 	presetsMu.Lock()
 	defer presetsMu.Unlock()
 	f := loadPresetsUnlocked()
-	key := fmt.Sprintf("%d", castleID)
+	if maybeMigrateRotatingCastleKeyUnlocked(f, storageKey, castleID) {
+		_ = savePresetsUnlocked(f)
+	}
 	id := fmt.Sprintf("%d", time.Now().UnixNano())
 	p := NamedPreset{ID: id, Name: name, Items: append([]PresetPlacement(nil), items...)}
-	f.Castles[key] = append(f.Castles[key], p)
+	f.Castles[storageKey] = append(f.Castles[storageKey], p)
 	if err := savePresetsUnlocked(f); err != nil {
 		return NamedPreset{}, err
 	}
 	return p, nil
 }
 
-// DeletePreset removes a preset by id for the castle.
-func DeletePreset(castleID int, presetID string) error {
+// DeletePresetForKey removes a preset by id for the storage key.
+func DeletePresetForKey(storageKey string, castleID int, presetID string) error {
 	presetsMu.Lock()
 	defer presetsMu.Unlock()
 	f := loadPresetsUnlocked()
-	key := fmt.Sprintf("%d", castleID)
-	list := f.Castles[key]
+	if maybeMigrateRotatingCastleKeyUnlocked(f, storageKey, castleID) {
+		_ = savePresetsUnlocked(f)
+	}
+	list := f.Castles[storageKey]
 	var out []NamedPreset
 	for _, p := range list {
 		if p.ID != presetID {
 			out = append(out, p)
 		}
 	}
-	f.Castles[key] = out
+	f.Castles[storageKey] = out
 	return savePresetsUnlocked(f)
 }
 
-// LookupPreset returns a deep copy of the named preset for the castle, if it exists.
-func LookupPreset(castleID int, presetID string) (NamedPreset, bool) {
+// LookupPresetForKey returns a deep copy of the named preset for the storage key, if it exists.
+func LookupPresetForKey(storageKey string, castleID int, presetID string) (NamedPreset, bool) {
 	presetsMu.Lock()
 	defer presetsMu.Unlock()
 	f := loadPresetsUnlocked()
-	key := fmt.Sprintf("%d", castleID)
-	for _, p := range f.Castles[key] {
+	if maybeMigrateRotatingCastleKeyUnlocked(f, storageKey, castleID) {
+		_ = savePresetsUnlocked(f)
+	}
+	for _, p := range f.Castles[storageKey] {
 		if p.ID != presetID {
 			continue
 		}

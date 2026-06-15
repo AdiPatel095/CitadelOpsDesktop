@@ -3,6 +3,7 @@ package GameParser
 import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Models"
+	castle "CitadelDesktop/Server/Models/Castle"
 	"fmt"
 	"time"
 )
@@ -19,17 +20,22 @@ const (
 	kingdomIDIce     = 2.0
 	kingdomIDDungeon = 3.0
 	kingdomIDStorm   = 4.0
+	kingdomIDBeri    = 10.0
 
-	// Kingdom 0 castle types from GCL details[0] (verify against live packets if Metropolis/Capital do not populate).
-	kingdomCastleTypeMain       = 1
-	kingdomCastleTypeOutpost    = 4
-	kingdomCastleTypeMetropolis = 5
-	kingdomCastleTypeCapital    = 6
+	// Kingdom 0 castle slot types — see MapCastleTypes.go (GCL AI[] details[0]).
+	// Aliases kept for readability in GCL parsing below.
+	kingdomCastleTypeMain       = CastleSlotMain
+	kingdomCastleTypeOutpost    = CastleSlotOutpost
+	kingdomCastleTypeMetropolis = CastleSlotMetropolis
+	kingdomCastleTypeCapital    = CastleSlotCapital
 
 	castleAIDIndex  = 3
 	castleNameIndex = 10
 	castleXIndex    = 1
 	castleYIndex    = 2
+
+	// KID 10 (Beri) GCL AI[] row: 4th element = Beri castle CID (fuc). Kut SCID is the main castle (KID 0).
+	gclBeriDetailsCIDIndex = 3
 
 	// Constants for resource keys in DCL data
 	keyGPA = "gpa"
@@ -124,6 +130,8 @@ func parseGCL(gcl map[string]interface{}) error {
 			parseSingleCastle(castleArray, func(id float64, name string) {
 				gs.Castle.StormCastle.Aid, gs.Castle.StormCastle.Name = id, name
 			}, 4)
+		case kingdomIDBeri:
+			parseBeriWorldCastlesFromGCL(castleArray)
 		}
 	}
 
@@ -158,6 +166,9 @@ func GetCastleLocationName(castleID int) string {
 	}
 	if int(c.StormCastle.Aid) == castleID {
 		return "stormCastle"
+	}
+	if int(c.BeriWorldCastle.Aid) == castleID {
+		return "beriWorldCastle"
 	}
 	if int(c.Metropolis.Aid) == castleID {
 		return "metropolisCastle"
@@ -237,6 +248,9 @@ func parseMainKingdomCastles(castleArray []interface{}) {
 		if ok {
 			if cType == kingdomCastleTypeMain {
 				gs.Castle.MainCastle.Aid, gs.Castle.MainCastle.Name = id, name
+				if NotifyMainCastleAIDForAutoBeri != nil {
+					go NotifyMainCastleAIDForAutoBeri(int(id))
+				}
 			} else if cType == kingdomCastleTypeOutpost {
 				if outpostIndex == 1 {
 					gs.Castle.Outpost1.Aid, gs.Castle.Outpost1.Name = id, name
@@ -289,6 +303,56 @@ func parseCastles(castleArray []interface{}, updaters []func(id float64, name st
 			}
 		}
 	}
+}
+
+// parseBeriWorldCastlesFromGCL records the Berimond castle (KID 10) from gbd **gcl**.
+// Beri rows use details[3]=CID (fuc). Kut SCID is the main castle instance id (KID 0 GCL).
+func parseBeriWorldCastlesFromGCL(castleArray []interface{}) {
+	gs := Models.GetGameState()
+	kid := castle.BeriWorldKingdomID
+	if len(castleArray) == 0 {
+		return
+	}
+	cid, name, mapX, mapY, ok := extractBeriGCLCastleDetails(castleArray[0], 0)
+	if !ok || cid <= 0 {
+		return
+	}
+	gs.Castle.BeriWorldCastle.Aid = cid
+	gs.Castle.BeriWorldCastle.Name = name
+	if mapX > 0 || mapY > 0 {
+		gs.Castle.BeriWorldCastle.MapKingdomID = kid
+		gs.Castle.BeriWorldCastle.MapX = mapX
+		gs.Castle.BeriWorldCastle.MapY = mapY
+		gs.UpsertPlayerCastleLocation(kid, int(cid), mapX, mapY)
+	}
+	if NotifyBeriCastleDiscovered != nil {
+		go NotifyBeriCastleDiscovered(int(cid), mapX, mapY)
+	}
+}
+
+// extractBeriGCLCastleDetails reads KID-10 GCL layout: details[3]=Beri castle CID (fuc).
+func extractBeriGCLCastleDetails(castleData interface{}, index int) (cid float64, name string, x, y int, ok bool) {
+	castleMap, okMap := castleData.(map[string]interface{})
+	if !okMap {
+		return 0, "", 0, 0, false
+	}
+	details, okArr := castleMap[keyCastleInfoArray].([]interface{})
+	if !okArr || len(details) <= castleNameIndex || len(details) <= gclBeriDetailsCIDIndex {
+		return 0, "", 0, 0, false
+	}
+	cidVal, cidOk := details[gclBeriDetailsCIDIndex].(float64)
+	name, nameOk := details[castleNameIndex].(string)
+	if !cidOk || !nameOk || cidVal <= 0 {
+		return 0, "", 0, 0, false
+	}
+	x, y = 0, 0
+	if xVal, xOk := details[castleXIndex].(float64); xOk {
+		x = int(xVal)
+	}
+	if yVal, yOk := details[castleYIndex].(float64); yOk {
+		y = int(yVal)
+	}
+	return cidVal, name, x, y, true
 }
 
 // parseSingleCastle handles kingdoms that are expected to have only one castle.

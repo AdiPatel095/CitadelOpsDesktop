@@ -1,5 +1,5 @@
 import React from 'react';
-import type { CraftingStripRow } from '../../types/castleFocusState.ts';
+import type { CraftingStripRow } from '../../types/CastleFocusState.ts';
 
 function formatQueueCount(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return '';

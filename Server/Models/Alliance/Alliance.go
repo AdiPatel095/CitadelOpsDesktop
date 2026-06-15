@@ -12,7 +12,7 @@ type BirdLocation struct {
 	Y          int `json:"y"`
 	KingdomID  int `json:"kingdomID"`
 	BirdTime   int `json:"birdTime"`
-	CastleType int `json:"castleType"` // 1=main, 4=outpost, 12=KW castle
+	CastleType int `json:"castleType"` // CastleSlot* — see GameParser.MapCastleTypes.go
 }
 
 // PlayerCastleLocation represents one of the player's castle locations.

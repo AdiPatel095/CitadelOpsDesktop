@@ -6,6 +6,9 @@ import (
 	"log"
 )
 
+// NotifyRiftMapCoordsChanged is wired by FrontendWebsocket to push riftMapCoords after **gaa**.
+var NotifyRiftMapCoordsChanged func()
+
 type GAAResponse struct {
 	KID int                `json:"KID"`
 	OI  []Models.MapPlayer `json:"OI"`
@@ -38,7 +41,7 @@ func ParseGAAMessage(payload string) {
 			continue
 		}
 
-		// 1st: Type, 2nd: X, 3rd: Y (Constant across all nodes)
+		// 1st: Type, 2nd: X, 3rd: Y (Constant across all nodes). See MapCastleTypes.go.
 		if val, ok := item[0].(float64); ok {
 			node.Type = int(val)
 		}
@@ -50,7 +53,14 @@ func ParseGAAMessage(payload string) {
 		}
 
 		switch length {
-		case 7: // Kingdom Tower
+		case GaaNodeRowLenTerrain:
+			// [31,X,Y] empty passable tile — no extra fields.
+		case GaaNodeRowLenCastleStub:
+			// [1,X,Y,-1] castle anchor without full metadata.
+			if val, ok := item[3].(float64); ok {
+				node.ID = int(val)
+			}
+		case GaaNodeRowLenTower: // Kingdom Tower (type GaaNodeKingdomTower)
 			if val, ok := item[3].(float64); ok {
 				node.ID = int(val)
 			}
@@ -60,21 +70,38 @@ func ParseGAAMessage(payload string) {
 			if val, ok := item[5].(float64); ok {
 				node.CooldownSeconds = int(val)
 			}
-		case 8: // Node with Cooldown & Last Hitter
+		case GaaNodeRowLenCooldownMarker: // Cooldown node / coord marker (types 11, 23, …)
 			if val, ok := item[5].(float64); ok {
 				node.CooldownSeconds = int(val)
 			}
 			if val, ok := item[6].(string); ok {
 				node.LastHitter = val
+				node.Name = val
 			}
-		case 9: // Named Node with Owner
+		case GaaNodeRowLenNamedOwner: // Named node (resource, camp, …)
+			if val, ok := item[3].(float64); ok {
+				node.ID = int(val)
+			}
 			if val, ok := item[4].(float64); ok {
 				node.PlayerID = int(val)
 			}
 			if val, ok := item[8].(string); ok {
 				node.Name = val
 			}
-		case 20: // Castle
+		case GaaNodeRowLenMonument:
+			if val, ok := item[3].(float64); ok {
+				node.CastleID = int(val)
+			}
+			if val, ok := item[4].(float64); ok {
+				node.PlayerID = int(val)
+			}
+			for _, prop := range item[3:] {
+				if strVal, ok := prop.(string); ok && strVal != "" {
+					node.Name = strVal
+					break
+				}
+			}
+		case GaaNodeRowLenCastle: // Castle rows (types 1, 3, 4, 12, 22, …)
 			if val, ok := item[3].(float64); ok {
 				node.CastleID = int(val)
 			}
@@ -117,6 +144,21 @@ func ParseGAAMessage(payload string) {
 		mapState.AddNode(kid, node)
 	}
 
-	// Optional: Debug print to confirm processing
-	// log.Printf("[MapParser] Processed %d map players, %d nodes", len(gaa.OI), len(gaa.AI))
+	if len(gaa.AI) > 0 && NotifyRiftMapCoordsChanged != nil {
+		notify := kid == 0
+		if !notify {
+			for _, item := range gaa.AI {
+				if len(item) < 1 {
+					continue
+				}
+				if t, ok := item[0].(float64); ok && int(t) == GaaNodeRift {
+					notify = true
+					break
+				}
+			}
+		}
+		if notify {
+			NotifyRiftMapCoordsChanged()
+		}
+	}
 }

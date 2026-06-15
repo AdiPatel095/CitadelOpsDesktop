@@ -2,6 +2,7 @@ package Logging
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,12 @@ import (
 const (
 	ChannelWebSocketGame = "websocket_game"
 	ChannelAutoBird      = "autobird"
+	ChannelAutoTCI       = "autotci"
+	ChannelAutoBeriWorld = "autoberiworld"
+	ChannelRift          = "rift"
+	// ChannelAppSend is Citadel-queued game commands (OutgoingMessages) plus inbound frames
+	// that match those sends (FIFO by opcode).
+	ChannelAppSend = "app_send"
 )
 
 // ChannelMeta describes a dashboard log channel.
@@ -24,7 +31,11 @@ type ChannelMeta struct {
 // KnownChannels is the registry of channels the UI can show; add new entries as you add writers.
 var KnownChannels = []ChannelMeta{
 	{ID: ChannelWebSocketGame, Label: "Game WebSocket"},
+	{ID: ChannelAppSend, Label: "Citadel sends"},
 	{ID: ChannelAutoBird, Label: "AutoBird"},
+	{ID: ChannelAutoTCI, Label: "Auto TCI"},
+	{ID: ChannelAutoBeriWorld, Label: "Auto Beri World"},
+	{ID: ChannelRift, Label: "Rift"},
 }
 
 var (
@@ -92,6 +103,117 @@ func AppendAutoBirdLine(event, detail string) {
 		event = "event"
 	}
 	AppendChannelLine(ChannelAutoBird, "INFO", event, detail)
+}
+
+// AppendAutoTCILine records an AutoTCI action (direction INFO, event as cmdType).
+func AppendAutoTCILine(event, detail string) {
+	if event == "" {
+		event = "event"
+	}
+	AppendChannelLine(ChannelAutoTCI, "INFO", event, detail)
+}
+
+// AppendAutoTCISendPayload records an outbound game wire frame on the Auto TCI channel.
+func AppendAutoTCISendPayload(payload string) {
+	op := wireOpcodeFromPayload(payload)
+	if op == "" {
+		op = "UNKNOWN"
+	}
+	AppendChannelLine(ChannelAutoTCI, "SEND", op, payload)
+}
+
+func wireOpcodeFromPayload(payload string) string {
+	parts := strings.Split(payload, "%")
+	if len(parts) <= 2 {
+		return ""
+	}
+	cmd := parts[2]
+	if strings.HasPrefix(cmd, "EmpireEx_") {
+		if len(parts) > 3 {
+			return parts[3]
+		}
+		return ""
+	}
+	return cmd
+}
+
+// AutoTCILog writes to the main log and the Auto TCI dashboard channel.
+func AutoTCILog(event, detail string) {
+	if detail != "" {
+		log.Printf("[AutoTCI] %s: %s", event, detail)
+	} else {
+		log.Printf("[AutoTCI] %s", event)
+	}
+	AppendAutoTCILine(event, detail)
+}
+
+// AutoTCILogf formats detail and calls [AutoTCILog].
+func AutoTCILogf(event, format string, args ...any) {
+	AutoTCILog(event, fmt.Sprintf(format, args...))
+}
+
+// AppendAutoBeriWorldLine records an Auto Beri World action (direction INFO, event as cmdType).
+func AppendAutoBeriWorldLine(event, detail string) {
+	if event == "" {
+		event = "event"
+	}
+	AppendChannelLine(ChannelAutoBeriWorld, "INFO", event, detail)
+}
+
+// AppendAutoBeriWorldSendPayload records an outbound game wire frame on the Auto Beri World channel.
+func AppendAutoBeriWorldSendPayload(payload string) {
+	op := wireOpcodeFromPayload(payload)
+	if op == "" {
+		op = "UNKNOWN"
+	}
+	AppendChannelLine(ChannelAutoBeriWorld, "SEND", op, payload)
+}
+
+// AutoBeriWorldLog writes to the main log and the Auto Beri World dashboard channel.
+func AutoBeriWorldLog(event, detail string) {
+	if detail != "" {
+		log.Printf("[AutoBeriWorld] %s: %s", event, detail)
+	} else {
+		log.Printf("[AutoBeriWorld] %s", event)
+	}
+	AppendAutoBeriWorldLine(event, detail)
+}
+
+// AutoBeriWorldLogf formats detail and calls [AutoBeriWorldLog].
+func AutoBeriWorldLogf(event, format string, args ...any) {
+	AutoBeriWorldLog(event, fmt.Sprintf(format, args...))
+}
+
+// AppendRiftLine records a Rift action (direction INFO, event as cmdType).
+func AppendRiftLine(event, detail string) {
+	if event == "" {
+		event = "event"
+	}
+	AppendChannelLine(ChannelRift, "INFO", event, detail)
+}
+
+// AppendRiftSendPayload records an outbound game wire frame on the Rift channel.
+func AppendRiftSendPayload(payload string) {
+	op := wireOpcodeFromPayload(payload)
+	if op == "" {
+		op = "UNKNOWN"
+	}
+	AppendChannelLine(ChannelRift, "SEND", op, payload)
+}
+
+// RiftLog writes to the main log and the Rift dashboard channel.
+func RiftLog(event, detail string) {
+	if detail != "" {
+		log.Printf("[Rift] %s: %s", event, detail)
+	} else {
+		log.Printf("[Rift] %s", event)
+	}
+	AppendRiftLine(event, detail)
+}
+
+// RiftLogf formats detail and calls [RiftLog].
+func RiftLogf(event, format string, args ...any) {
+	RiftLog(event, fmt.Sprintf(format, args...))
 }
 
 // CloseChannelLogs closes open channel file handles.

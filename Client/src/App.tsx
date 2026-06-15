@@ -6,16 +6,20 @@ import EquipmentView from './equipment/components/EquipmentView';
 import SupportPage from './views/SupportPage';
 import CastleView from './dashboard/components/CastleView';
 import CurrencyView from './currency/components/CurrencyView';
-import EventModulesView from './event-modules/components/EventModulesView';
+import EventModulesView from './EventModules/components/EventModulesView';
+import RiftView from './Rift/components/RiftView';
+import MovementView from './Movement/components/MovementView';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import UpdateModal from './components/UpdateModal';
 import { Alerts } from './components/Alerts';
 import { RecruitTroopsSettingsModal } from './settings/components/RecruitTroopsSettingsModal';
+import { AutoTCISettingsModal } from './settings/components/AutoTCISettingsModal';
 import { AutoBirdSettingsModal } from './settings/components/AutoBirdSettingsModal';
+import { AutoBeriWorldSettingsModal } from './settings/components/AutoBeriWorldSettingsModal';
 import SettingsView from './views/SettingsView';
 import PatchNotesView from './views/PatchNotesView';
-import { type ViewId } from './config/navigation';
+import { type ViewId } from './config/Navigation';
 import { LoggerDock } from './components/LoggerDock';
 
 const AppContent: React.FC = () => {
@@ -29,7 +33,9 @@ const AppContent: React.FC = () => {
 
   // Modal states
   const [isRecruitTroopsSettingsOpen, setIsRecruitTroopsSettingsOpen] = useState(false);
+  const [isAutoTCISettingsOpen, setIsAutoTCISettingsOpen] = useState(false);
   const [isAutoBirdSettingsOpen, setIsAutoBirdSettingsOpen] = useState(false);
+  const [isAutoBeriWorldSettingsOpen, setIsAutoBeriWorldSettingsOpen] = useState(false);
 
   const renderView = () => {
     switch (activeView) {
@@ -41,6 +47,10 @@ const AppContent: React.FC = () => {
         return <EventModulesView />;
       case 'currency':
         return <CurrencyView />;
+      case 'movement':
+        return <MovementView />;
+      case 'rift':
+        return <RiftView />;
       case 'support':
         return <SupportPage />;
       case 'settings':
@@ -60,6 +70,8 @@ const AppContent: React.FC = () => {
         currentView={activeView}
         onViewChange={setActiveView}
         onOpenRecruitTroopsSettings={() => setIsRecruitTroopsSettingsOpen(true)}
+        onOpenAutoTCISettings={() => setIsAutoTCISettingsOpen(true)}
+        onOpenAutoBeriWorldSettings={() => setIsAutoBeriWorldSettingsOpen(true)}
       />
 
       <main
@@ -77,7 +89,11 @@ const AppContent: React.FC = () => {
         onClose={() => setIsRecruitTroopsSettingsOpen(false)}
       />
 
+      <AutoTCISettingsModal isOpen={isAutoTCISettingsOpen} onClose={() => setIsAutoTCISettingsOpen(false)} />
+
       <AutoBirdSettingsModal isOpen={isAutoBirdSettingsOpen} onClose={() => setIsAutoBirdSettingsOpen(false)} />
+
+      <AutoBeriWorldSettingsModal isOpen={isAutoBeriWorldSettingsOpen} onClose={() => setIsAutoBeriWorldSettingsOpen(false)} />
 
       {/* Version Update Modal - displayed when new version available */}
       {versionUpdate && !isVersionBannerDismissed && (

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import EquipmentStats from './EquipmentStats';
-import { FrontendWebsocket } from '../../websocket';
+import { FrontendWebsocket } from '../../Websocket';
 import { Icons } from '../../components/Icons';
 import { Button, Modal, Card, CardHeader, CardContent, ToggleGroup, Switch } from '../../components/ui';
 
@@ -10,7 +10,7 @@ const img4Star = '/assets/Stars/4Star.png';
 const img7Star = '/assets/Stars/7Star.png';
 const img12Star = '/assets/Stars/12Star.png';
 
-import { type CommStat, type CastStat } from '../models/equipment';
+import { type CommStat, type CastStat } from '../models/Equipment';
 
 export type EquipmentMode = 'Commander' | 'Castellan';
 export type CombatMode = 'PvP' | 'PvE';

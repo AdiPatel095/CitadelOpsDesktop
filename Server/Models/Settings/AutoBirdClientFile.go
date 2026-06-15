@@ -16,7 +16,7 @@ const autoBirdClientFileName = "AutoBird.json"
 var (
 	autoBirdClientMu sync.Mutex
 	// defaultAutoBirdJSON matches Client autoBirdClientState.ts defaults.
-	defaultAutoBirdJSON = []byte(`{"version":1,"ignoreSettings":{"settings":{},"minDelay":6,"maxDelay":12,"minSend":0},"presets":{"version":1,"lastSelectedPresetId":null,"presets":[]}}`)
+	defaultAutoBirdJSON = []byte(`{"version":1,"ignoreSettings":{"settings":{},"minDelay":6,"maxDelay":12,"minSend":0,"minRPTDays":3},"presets":{"version":1,"lastSelectedPresetId":null,"presets":[]}}`)
 )
 
 func autoBirdClientPath() string {

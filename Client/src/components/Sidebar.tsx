@@ -1,22 +1,29 @@
 import React, { useState } from 'react';
 import { Settings, ChevronDown, ChevronRight } from 'lucide-react';
-import { NAVIGATION_ITEMS, type ViewId } from '../config/navigation';
+import { NAVIGATION_ITEMS, type ViewId } from '../config/Navigation';
 import { ThemeToggle } from './ThemeToggle';
 import { Button } from './ui';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   currentView: ViewId;
   onViewChange: (viewId: ViewId) => void;
   onOpenRecruitTroopsSettings: () => void;
+  onOpenAutoTCISettings: () => void;
+  onOpenAutoBeriWorldSettings: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   onViewChange,
   onOpenRecruitTroopsSettings,
+  onOpenAutoTCISettings,
+  onOpenAutoBeriWorldSettings,
 }) => {
+  const { autoTCIEnabled, toggleAutoTCI, autoBeriWorldEnabled, toggleAutoBeriWorld, gameLoggedIn } = useAuth();
+
   const [expandedSections, setExpandedSections] = useState({
-    gameFunctions: true,
+    features: true,
     mainMenu: true,
     system: true
   });
@@ -34,17 +41,79 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside className="w-64 bg-bg-card border-r border-border-base flex flex-col pt-20 pb-6 h-screen fixed left-0 top-0 z-40 transition-colors duration-300">
       <div className="flex-1 overflow-y-auto hidden-scrollbar">
-        {/* Game Functions Section */}
+        {/* Features */}
         <div className="px-4 mb-4">
           <div
             className="flex items-center justify-between text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-3 cursor-pointer hover:text-text-main transition-colors"
-            onClick={() => toggleSection('gameFunctions')}
+            onClick={() => toggleSection('features')}
           >
-            <span>Game Functions</span>
-            {expandedSections.gameFunctions ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            <span>Features</span>
+            {expandedSections.features ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
           </div>
-          {expandedSections.gameFunctions && (
+          {expandedSections.features && (
             <div className="px-2 space-y-2">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`flex-1 h-9 border-2 text-xs uppercase tracking-wider ${
+                    autoTCIEnabled
+                      ? '!border-success/40 !text-success hover:!bg-success/10'
+                      : '!border-error/40 !text-error hover:!bg-error/10'
+                  }`}
+                  onClick={() => toggleAutoTCI()}
+                  title={
+                    gameLoggedIn
+                      ? 'Toggle Auto TCI (temporary construction items)'
+                      : 'Last known Auto TCI status while bot is disconnected'
+                  }
+                  leftIcon={
+                    <div className={`w-1.5 h-1.5 rounded-full ${autoTCIEnabled ? 'bg-success animate-pulse' : 'bg-error'}`} />
+                  }
+                >
+                  Auto TCI {autoTCIEnabled ? 'on' : 'off'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-9 w-9 shrink-0 ${autoTCIEnabled ? 'text-amber-500 hover:bg-amber-500/10' : 'text-text-muted hover:bg-bg-card-hover'}`}
+                  onClick={onOpenAutoTCISettings}
+                  title="Auto TCI settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`flex-1 h-9 border-2 text-xs uppercase tracking-wider ${
+                    autoBeriWorldEnabled
+                      ? '!border-success/40 !text-success hover:!bg-success/10'
+                      : '!border-error/40 !text-error hover:!bg-error/10'
+                  }`}
+                  onClick={() => toggleAutoBeriWorld()}
+                  title={
+                    gameLoggedIn
+                      ? 'Toggle Auto Beri World (Berimond troop transfer)'
+                      : 'Last known Auto Beri World status while bot is disconnected'
+                  }
+                  leftIcon={
+                    <div className={`w-1.5 h-1.5 rounded-full ${autoBeriWorldEnabled ? 'bg-success animate-pulse' : 'bg-error'}`} />
+                  }
+                >
+                  Auto Beri {autoBeriWorldEnabled ? 'on' : 'off'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-9 w-9 shrink-0 ${autoBeriWorldEnabled ? 'text-amber-500 hover:bg-amber-500/10' : 'text-text-muted hover:bg-bg-card-hover'}`}
+                  onClick={onOpenAutoBeriWorldSettings}
+                  title="Auto Beri World settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              </div>
               <div className="flex gap-2">
                 <Button
                   disabled

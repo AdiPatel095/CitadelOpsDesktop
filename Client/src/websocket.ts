@@ -5,8 +5,18 @@ class FrontendWebsocketService {
   private listeners: MessageListener[] = [];
   private mock: boolean = import.meta.env.VITE_MOCK_WEBSOCKET === 'true';
   private status: string = 'Disconnected';
+  private url: string | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private reconnectAttempt = 0;
+  private intentionalClose = false;
 
   public connect(url: string) {
+    this.url = url;
+    this.intentionalClose = false;
+    this.openSocket();
+  }
+
+  private openSocket() {
     if (this.mock) {
       this.status = 'Connecting';
       setTimeout(() => {
@@ -16,20 +26,32 @@ class FrontendWebsocketService {
       return;
     }
 
-    if (this.socket) {
+    if (!this.url) {
       return;
     }
 
-    this.socket = new WebSocket(url);
+    if (this.socket) {
+      const state = this.socket.readyState;
+      if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) {
+        return;
+      }
+      this.socket = null;
+    }
+
+    this.status = 'Connecting';
+    this.socket = new WebSocket(this.url);
 
     this.socket.onopen = () => {
-      // Pull durable UI state (same data dir as decoration presets)
-      this.sendMessage({ type: 'getAutoBirdClientState' });
+      this.reconnectAttempt = 0;
+      this.status = 'Connected';
+      // Defer follow-up requests so server SendInitialData can drain first.
+      window.setTimeout(() => this.sendOnOpenRequests(), 300);
     };
 
     this.socket.onclose = () => {
       this.socket = null;
       this.status = 'Disconnected';
+      this.scheduleReconnect();
     };
 
     this.socket.onerror = (error) => {
@@ -44,6 +66,29 @@ class FrontendWebsocketService {
         console.error('Failed to parse WebSocket message:', error);
       }
     };
+  }
+
+  private sendOnOpenRequests() {
+    this.sendMessage({ type: 'getAutoBirdClientState' });
+    this.sendMessage({ type: 'getAutoTCIClientState' });
+    this.sendMessage({ type: 'getAutoBeriWorldSettings' });
+    this.sendGetRiftCRALaunch();
+    this.sendGetRiftMaidenCommsSettings();
+  }
+
+  private scheduleReconnect() {
+    if (this.mock || !this.url || this.intentionalClose) {
+      return;
+    }
+    if (this.reconnectTimer != null) {
+      return;
+    }
+    const delay = Math.min(30_000, 1000 * 2 ** this.reconnectAttempt);
+    this.reconnectAttempt += 1;
+    this.reconnectTimer = window.setTimeout(() => {
+      this.reconnectTimer = null;
+      this.openSocket();
+    }, delay);
   }
 
   private sendMockData() {
@@ -96,17 +141,28 @@ class FrontendWebsocketService {
     this.listeners = this.listeners.filter((l) => l !== listener);
   }
 
-  public sendMessage(message: object) {
+  public sendMessage(message: object): boolean {
     if (this.mock) {
-      // Mock mode - no actual message sent
-      return;
+      return true;
     }
 
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(message));
-    } else {
-      console.error('WebSocket is not connected. Cannot send message:', message);
+      return true;
     }
+    console.error('WebSocket is not connected. Cannot send message:', message);
+    this.emitLocalAlert('red', 'Dashboard disconnected — reconnecting. Try again in a moment.');
+    return false;
+  }
+
+  /** Show a toast in the global Alerts stack (works even when the server is not reached). */
+  public showAlert(category: 'green' | 'yellow' | 'red', message: string) {
+    const alert = { type: 'alert', payload: { category, message } };
+    this.listeners.forEach((listener) => listener(alert));
+  }
+
+  private emitLocalAlert(category: 'green' | 'yellow' | 'red', message: string) {
+    this.showAlert(category, message);
   }
 
   public getStatus(): string {
@@ -192,6 +248,8 @@ class FrontendWebsocketService {
   public sendSaveSchedulerSettings(payload: Partial<{
     minAttackDelay: number;
     maxAttackDelay: number;
+    upgradeEreDelayMs: number;
+    upgradeCoinThreshold: number;
     tabPriorities: Record<string, string>;
   }>) {
     this.sendMessage({
@@ -204,13 +262,55 @@ class FrontendWebsocketService {
     this.sendMessage({ type: 'getCastleFocus' });
   }
 
-  /** Ask server to send **spl** for the focused castle (refreshes barracks / production slots in GameState). */
-  public sendRequestSlotProduction(lid = 0) {
-    this.sendMessage({ type: 'requestSlotProduction', payload: { lid } });
+  /** Rift view: sole world Rift tile (GAA type 43). Set refresh to re-request GAA. */
+  public sendGetRiftMapCoords(refresh = false) {
+    this.sendMessage({ type: 'getRiftMapCoords', payload: { refresh } });
+  }
+
+  /** Rift view: last saved outbound cra launch targeting the Rift. */
+  public sendGetRiftCRALaunch() {
+    this.sendMessage({ type: 'getRiftCRALaunch' });
+  }
+
+  /** Movement view: active GAM movements. Set refresh to re-request **gam**. */
+  public sendGetMovement(refresh = false) {
+    this.sendMessage({ type: 'getMovement', payload: { refresh } });
+  }
+
+  /** Re-queue one saved Rift cra template (optional commander / source overrides). */
+  public sendReplayRiftCRALaunch(options: {
+    launchId: string;
+    commanderID?: number;
+    sourceX?: number;
+    sourceY?: number;
+    arriveAtUnix?: number;
+  }) {
+    this.sendMessage({ type: 'replayRiftCRALaunch', payload: options });
+  }
+
+  /** Queue dummy 1-wave Rift attacks for eligible shield-maiden commanders. */
+  public sendMaidenCommsWave(options?: { sourceX?: number; sourceY?: number; unitWodID?: number }): boolean {
+    return this.sendMessage({ type: 'sendMaidenCommsWave', payload: options ?? {} });
+  }
+
+  public sendRenameRiftCRALaunch(launchId: string, displayName: string) {
+    this.sendMessage({ type: 'renameRiftCRALaunch', payload: { launchId, displayName } });
+  }
+
+  public sendDeleteRiftCRALaunch(launchId: string) {
+    this.sendMessage({ type: 'deleteRiftCRALaunch', payload: { launchId } });
+  }
+
+  public sendGetRiftMaidenCommsSettings() {
+    this.sendMessage({ type: 'getRiftMaidenCommsSettings' });
+  }
+
+  public sendSaveRiftMaidenCommsSettings(unitWodID: number) {
+    this.sendMessage({ type: 'saveRiftMaidenCommsSettings', payload: { unitWodID } });
   }
 
   /**
-   * Ask server to send JCA/JAA for the castle (GameCommands.SendTroopFocus).
+   * Ask server to send JCA/JAA for the castle (GameCommands.SendCastleFocus).
    * Pass kingdom + map coords from castleResourceUpdate / initial details (troops.kingdomID, troops.x, troops.y).
    */
   public sendFocusPlayerCastle(payload: {

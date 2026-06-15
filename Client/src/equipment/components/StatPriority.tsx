@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Icons } from '../../components/Icons';
-import { type CommStat, statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/equipment';
-import { FrontendWebsocket } from '../../websocket';
+import { type CommStat, statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/Equipment';
+import { FrontendWebsocket } from '../../Websocket';
 import ReconfigureComparisonModal from './ReconfigureComparisonModal';
 import { Button, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 

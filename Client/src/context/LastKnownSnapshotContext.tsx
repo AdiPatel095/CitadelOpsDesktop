@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { FrontendWebsocket } from '../websocket';
+import { FrontendWebsocket } from '../Websocket';
 
 export interface LastKnownSnapshotContextValue {
   /** Latest `lastKnownGameStateSnapshot` message from the server (on-disk JSON). */

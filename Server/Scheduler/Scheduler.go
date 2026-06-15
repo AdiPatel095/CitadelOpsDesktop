@@ -92,26 +92,7 @@ func (s *Scheduler) runLoop(ctx context.Context) {
 				success := s.dispatchAttack(req)
 
 				if success {
-					// Apply dynamic delay between settings overrides
-					settings := Models.GetSettingsState()
-					minDelay := settings.MinAttackDelay
-					maxDelay := settings.MaxAttackDelay
-					if minDelay < 4.0 {
-						minDelay = 4.0
-					}
-					if maxDelay < minDelay {
-						maxDelay = minDelay
-					}
-
-					delayRange := (maxDelay - minDelay) * 1000 // in ms
-					var delayMs int
-					if delayRange <= 0 {
-						delayMs = int(minDelay * 1000)
-					} else {
-						// Pseudo-random jitter
-						delayMs = int(minDelay*1000) + (time.Now().Nanosecond() % int(delayRange))
-					}
-					nextDispatchTime = time.Now().Add(time.Duration(delayMs) * time.Millisecond)
+					nextDispatchTime = time.Now().Add(Models.RandomAttackDelay())
 				}
 			}
 		}

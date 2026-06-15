@@ -1,5 +1,5 @@
 import React from 'react';
-import { TROOP_DEFINITIONS } from '../../config/constants';
+import { TROOP_DEFINITIONS } from '../../config/Constants';
 import UnitImage from '../../components/UnitImage';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 

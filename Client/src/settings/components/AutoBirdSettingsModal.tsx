@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Save, Plus, Trash2 } from 'lucide-react';
-import { FrontendWebsocket } from '../../websocket';
+import { FrontendWebsocket } from '../../Websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
@@ -10,17 +10,17 @@ import {
   parsePresetsPayload,
   snapshotFromForm,
   type AutoBirdPreset,
-} from '../autobirdPresets';
+} from '../AutoBirdPresets';
 import {
   buildAutoBirdClientState,
   loadAutoBirdSettingsFromStorage,
   parseAutoBirdClientState,
   persistAutoBirdClientState,
   type AutoBirdStoredSettings,
-} from '../autoBirdClientState';
+} from '../AutoBirdClientState';
 import { Modal, Button, Input, Select, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 
-export { loadAutoBirdSettingsFromStorage } from '../autoBirdClientState';
+export { loadAutoBirdSettingsFromStorage } from '../AutoBirdClientState';
 
 interface Castle {
   id: number;
@@ -67,12 +67,18 @@ function clampDelayHours(value: number): number {
   return Math.min(12, Math.max(1, value));
 }
 
+function clampMinRPTDays(value: number): number {
+  if (!Number.isFinite(value)) return 3;
+  return Math.min(30, Math.max(0, value));
+}
+
 export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose }) => {
   const [castles, setCastles] = useState<Castle[]>([]);
   const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
   const [minDelay, setMinDelay] = useState(6);
   const [maxDelay, setMaxDelay] = useState(12);
   const [minSend, setMinSend] = useState(0);
+  const [minRPTDays, setMinRPTDays] = useState(3);
   const [presetsState, setPresetsState] = useState(() => loadPresetsFile());
   const [presetDropdownId, setPresetDropdownId] = useState('');
   const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null);
@@ -88,8 +94,9 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       minDelay: minD,
       maxDelay: maxD,
       minSend: Math.max(0, minSend),
+      minRPTDays: clampMinRPTDays(minRPTDays),
     };
-  }, [settings, minDelay, maxDelay, minSend]);
+  }, [settings, minDelay, maxDelay, minSend, minRPTDays]);
 
   const hydrateFromStorage = useCallback(() => {
     const s = loadAutoBirdSettingsFromStorage();
@@ -97,6 +104,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     setMinDelay(clampDelayHours(s.minDelay));
     setMaxDelay(clampDelayHours(s.maxDelay));
     setMinSend(s.minSend);
+    setMinRPTDays(clampMinRPTDays(s.minRPTDays));
   }, []);
 
   const applyFullClientState = useCallback((state: ReturnType<typeof parseAutoBirdClientState>) => {
@@ -105,6 +113,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     setMinDelay(clampDelayHours(ig.minDelay));
     setMaxDelay(clampDelayHours(ig.maxDelay));
     setMinSend(ig.minSend);
+    setMinRPTDays(clampMinRPTDays(ig.minRPTDays));
     setPresetsState(state.presets);
     const last = state.presets.lastSelectedPresetId;
     setPresetDropdownId(last && state.presets.presets.some((p) => p.id === last) ? last : '');
@@ -196,6 +205,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     setMinDelay(clampDelayHours(applied.minDelay));
     setMaxDelay(clampDelayHours(applied.maxDelay));
     setMinSend(applied.minSend);
+    setMinRPTDays(clampMinRPTDays(applied.minRPTDays));
     setAppliedPresetId(preset.id);
     setPresetName(preset.name);
   };
@@ -207,7 +217,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       setPresetError('Enter a preset name first.');
       return;
     }
-    const snap = snapshotFromForm(settings, minDelay, maxDelay, minSend);
+    const snap = snapshotFromForm(settings, minDelay, maxDelay, minSend, minRPTDays);
     const id = crypto.randomUUID();
     const next: AutoBirdPreset = { id, name, ...snap };
     const presetsFile = {
@@ -245,7 +255,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     setPresetError('');
     const payload = currentIgnoreSettings();
 
-    const snap = snapshotFromForm(payload.settings, payload.minDelay, payload.maxDelay, payload.minSend);
+    const snap = snapshotFromForm(payload.settings, payload.minDelay, payload.maxDelay, payload.minSend, payload.minRPTDays);
     const nameTrim = presetName.trim();
     const updatedPresets = appliedPresetId
       ? presetsState.presets.map((p) =>
@@ -339,9 +349,25 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                 />
               </div>
             </div>
+            <div className="flex min-w-[200px] flex-col gap-1 lg:min-w-[200px]">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary">Minimum RPT</span>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={0}
+                  max={30}
+                  value={minRPTDays}
+                  onChange={(e) => setMinRPTDays(clampMinRPTDays(parseInt(e.target.value, 10)))}
+                  className="font-mono"
+                  rightIcon={<span className="text-xs font-medium uppercase text-text-muted">Days</span>}
+                />
+              </div>
+            </div>
           </div>
           <p className="mt-3 text-xs text-text-muted">
-            Birds are sent with a random delay between min and max hours after travel completes.
+            Birds are sent with a random delay between min and max hours after travel completes. Alliance castles
+            are only used as bird targets when the member&apos;s RPT is greater than the minimum days setting (0 =
+            any active post).
           </p>
         </Card>
 

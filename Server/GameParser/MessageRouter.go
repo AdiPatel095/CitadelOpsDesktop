@@ -1,8 +1,12 @@
 package GameParser
 
 import (
+	"strings"
+
 	"CitadelDesktop/Server/Models"
+	gamestate "CitadelDesktop/Server/Models/GameState"
 	"CitadelDesktop/Server/ResponseRegistry"
+	"CitadelDesktop/Server/UTCTime"
 	"encoding/json"
 	"log"
 )
@@ -15,6 +19,8 @@ func init() {
 // Waiters run after parsers (defer) so GameState matches the frame — e.g. **ain** updates BirdLocations
 // before anything blocked on RegisterWaiter("ain") resumes; **cds** TT callbacks see consistent ordering.
 func MessageRouter(messageParts []string) {
+	ResponseRegistry.LogIncomingGameWireParts(messageParts)
+
 	cmd, ok := CommandType(messageParts)
 	if !ok {
 		return
@@ -22,15 +28,17 @@ func MessageRouter(messageParts []string) {
 
 	// Inbound frames often look like %xt%EmpireEx_21%<opcode>%1%<json> — index 2 is "EmpireEx_21" and the real opcode is index 3.
 	effectiveCmd := cmd
+	waiterCmd := cmd
 	if cmd == "EmpireEx_21" && len(messageParts) > 3 {
 		effectiveCmd = messageParts[3]
+		waiterCmd = strings.ToLower(effectiveCmd)
 	}
 
 	payload, hasPayload := Payload(messageParts)
 
-	defer ResponseRegistry.Global.CheckWaiters(effectiveCmd, messageParts)
+	defer ResponseRegistry.Global.CheckWaiters(waiterCmd, messageParts)
 
-	switch effectiveCmd {
+	switch strings.ToLower(effectiveCmd) {
 	case "gbd":
 		if !hasPayload {
 			return
@@ -41,6 +49,22 @@ func MessageRouter(messageParts []string) {
 			return
 		}
 		UpdateEquipmentStorage(payload)
+	case "gcu":
+		if !hasPayload {
+			return
+		}
+		var gcuMap map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &gcuMap); err == nil {
+			UpdateCoins(gcuMap)
+		}
+	case "eqe":
+		if !hasPayload {
+			return
+		}
+		var eqeMap map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &eqeMap); err == nil {
+			ApplyEQEResponse(eqeMap)
+		}
 	case "ggm":
 		if !hasPayload {
 			return
@@ -61,21 +85,59 @@ func MessageRouter(messageParts []string) {
 			return
 		}
 		ParseAllianceInfo(payload)
-	case "gam", "cat", "cra":
+	case "cra":
+		if !hasPayload {
+			return
+		}
+		ParseCRAResponse(messageParts, payload)
+	case "gam", "cat":
 		if !hasPayload {
 			return
 		}
 		ParseGAMMessage(payload)
-	case "sdi":
+	case "mrm":
+		// **mrm** is the game's remove-movement push ({"MID": n}) when a march ends; handling it frees
+		// the commander promptly on return instead of waiting for the next **gam** snapshot. Confirmed
+		// against live captures (websocket_game.log); **aam** is never pushed, so returns arrive via
+		// **gam** (a D=1 leg) and are cleared by the follow-up empty **gam**.
 		if !hasPayload {
 			return
 		}
-		ParseSDIMessage(payload)
+		ParseMRMRemoveMovement(payload)
 	case "gaa":
 		if !hasPayload {
 			return
 		}
 		ParseGAAMessage(payload)
+	case "gbc":
+		if !hasPayload {
+			return
+		}
+		rows, err := ParseGbcTrivialCIPLFromJSON(payload)
+		if err != nil {
+			return
+		}
+		gs := Models.GetGameState()
+		grows := make([]gamestate.GbcCIPLRow, len(rows))
+		for i := range rows {
+			grows[i] = gamestate.GbcCIPLRow{PID: rows[i].PID, AMT: rows[i].AMT}
+		}
+		gs.ReplaceGbcTrivialCIPL(grows, utctime.Now().UnixMilli())
+	case "sin":
+		if !hasPayload {
+			return
+		}
+		if m, err := ParseDecorationStorageCountsFromSINJSON(payload); err == nil && len(m) > 0 {
+			Models.GetGameState().MergeSINItemCountsFromMap(m)
+		}
+	case "gii":
+		if !hasPayload {
+			return
+		}
+		// Payload may be "{}" on error paths; parser requires root "CI" array of pairs.
+		if m, ok := ParseConstructionInventoryPairsFromRootJSON(payload); ok {
+			Models.GetGameState().ReplaceCIInventoryCountsFromMap(m)
+		}
 	case "jaa":
 		if !hasPayload {
 			return
@@ -84,10 +146,30 @@ func MessageRouter(messageParts []string) {
 		focusChanged := ApplyCastleFocusFromJAAPayload(gs, payload)
 		buildingsChanged := ApplyJAABuildingRowsFromPayload(gs, payload)
 		troopsChanged := ApplyJAATroopsFromPayload(gs, payload)
-		if (focusChanged || buildingsChanged || troopsChanged) && NotifyCastleFocusChanged != nil {
+		constructionChanged := ApplyJAAConstructionSlotsFromPayload(gs, payload)
+		if (focusChanged || buildingsChanged || troopsChanged || constructionChanged) && NotifyCastleFocusChanged != nil {
 			NotifyCastleFocusChanged()
 		}
+		if m, ok := ParseEmbeddedSINStorageCountsFromEnvelopeJSON(payload); ok {
+			gs.MergeSINItemCountsFromMap(m)
+		}
 		markJAAProcessed()
+	case "jca":
+		// A **jca** frame only arrives when a castle-focus was REJECTED by the server (a successful focus
+		// is answered with **jaa**). Record it so trySendAndAwaitJAA fails this attempt instead of acting
+		// on the stale optimistic focus. Verified in websocket_game.log: success => jaa code 0;
+		// rejected focus => jca code != 0 (observed code 6).
+		if code, ok := empireExResponseCode(messageParts); !ok || code != 0 {
+			markJCAError()
+		}
+	case "rpc", "ubc":
+		if !hasPayload {
+			return
+		}
+		gs := Models.GetGameState()
+		if ApplyFocusCastleConstructionCIFromPayload(gs, payload) && NotifyCastleFocusChanged != nil {
+			NotifyCastleFocusChanged()
+		}
 	case "spl", "bup":
 		if !hasPayload {
 			return
@@ -111,6 +193,21 @@ func MessageRouter(messageParts []string) {
 		gs := Models.GetGameState()
 		if ApplyCraftingFromCRSTJSON(gs, payload) && NotifyCastleFocusChanged != nil {
 			NotifyCastleFocusChanged()
+		}
+	case "fuc":
+		if !hasPayload {
+			return
+		}
+		gs := Models.GetGameState()
+		if gs == nil {
+			return
+		}
+		unitWID := 0
+		if st := Models.GetSettingsState(); st != nil {
+			unitWID = st.AutoBeriWorld.TransferTroopWID
+		}
+		if res, ok := ParseFucTroopCheckResponse(payload, unitWID); ok {
+			gs.SetAutoBeriWorldFucResult(res.TroopAmount, res.ParsedSCID)
 		}
 	}
 }

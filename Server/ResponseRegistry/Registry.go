@@ -216,3 +216,6 @@ func (r *Registry) GetWaiterCount(messageType string) int {
 // OutgoingMessages is the shared channel for sending commands to the game server.
 // Any package can send messages by pushing []byte or string onto this channel.
 var OutgoingMessages = make(chan interface{}, 100)
+
+// OutboundGameWireSendHook observes every native game websocket SEND (browser UI + Citadel queue).
+var OutboundGameWireSendHook func(payload string)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from './Icons';
-import { FrontendWebsocket } from '../websocket';
+import { FrontendWebsocket } from '../Websocket';
 import { Modal, Button, Card, CardHeader, CardContent } from './ui';
 
 interface PriorityModalProps {

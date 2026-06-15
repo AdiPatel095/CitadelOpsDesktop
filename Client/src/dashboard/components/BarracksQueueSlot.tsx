@@ -2,7 +2,7 @@ import React from 'react';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
 import { useMetadata } from '../../context/MetadataContext';
-import type { BarracksQueueRow } from '../../types/castleFocusState.ts';
+import type { BarracksQueueRow } from '../../types/CastleFocusState.ts';
 
 function formatQueueCount(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return '0';

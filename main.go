@@ -3,8 +3,10 @@ package main
 import (
 	"CitadelDesktop/Server/FrontendWebsocket"
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
+	"CitadelDesktop/Server/Paths"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"CitadelDesktop/Server/Version"
 	"embed"
@@ -31,6 +33,8 @@ func main() {
 	defer Logging.CloseLogger()
 	defer Logging.CloseChannelLogs()
 
+	log.Printf("Instance data directory: %s", Paths.DataDir())
+
 	// Clean up old binary from previous update (if exists)
 	Version.CleanupOldBinary()
 
@@ -51,6 +55,11 @@ func main() {
 
 	if err := gamedata.LoadConsumptionReductionBuildings(); err != nil {
 		log.Printf("Warning: failed to load consumption reduction building index: %v", err)
+	}
+	if n, err := GameParser.ConstructionItemGroupBuildingsReady(); err != nil {
+		log.Printf("Warning: construction item group→building map unavailable: %v", err)
+	} else {
+		log.Printf("[gamedata] construction item group→building wodIDs: %d groups loaded", n)
 	}
 
 	// Set up callbacks for ResponseRegistry to notify frontend
@@ -107,23 +116,20 @@ func StartFrontendService() {
 	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)
 
 	port := currentPort
-	log.Printf("Dashboard available at: http://localhost:%d", port)
-
-	// Allow CORS for development if needed, but since we are serving frontend from same origin, it's fine.
-	// Actually, for local dev (vite on 5173), we might need CORS or proxy.
-	// Assuming prod build for now or proxy in vite config.
-
-	// Wrap mux with CORS middleware if necessary, or simple serve
-	// For simplicity, just serve mux.
 	addr := fmt.Sprintf(":%d", port)
-
-	// Start ChromeDP with the dashboard URL right before starting the HTTP server
 	dashboardURL := fmt.Sprintf("http://localhost:%d", port)
 	ResponseRegistry.SetDashboardURL(dashboardURL)
+
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Dashboard available at: %s", dashboardURL)
+
+	// Listen before opening Chrome so the first websocket connect succeeds.
 	go ResponseRegistry.StartGameBrowser(dashboardURL)
 
-	err = http.ListenAndServe(addr, mux)
-	if err != nil {
+	if err := http.Serve(ln, mux); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -7,7 +7,7 @@ import {
   PATCH_NOTES_RELEASES,
   type PatchNoteKind,
   type PatchNotesRelease,
-} from '../config/patchNotes';
+} from '../config/PatchNotes';
 import type { BadgeProps } from '../components/ui/Badge';
 
 const PATCH_NOTE_BADGE_VARIANT: Record<PatchNoteKind, NonNullable<BadgeProps['variant']>> = {

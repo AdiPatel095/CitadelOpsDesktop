@@ -42,6 +42,31 @@ func (gs *GameState) ResolveCastleMapCoords(castleAID, kingdomID int) (x, y int,
 	return 0, 0, false
 }
 
+// UpsertPlayerCastleLocation records or updates a player-owned castle tile (e.g. Beri world KID 10 from JAA).
+func (gs *GameState) UpsertPlayerCastleLocation(kingdomID, castleID, x, y int) {
+	if gs == nil || castleID <= 0 {
+		return
+	}
+	for i := range gs.Alliance.PlayerCastleLocations {
+		L := &gs.Alliance.PlayerCastleLocations[i]
+		if L.CastleID == castleID && L.KingdomID == kingdomID {
+			if x > 0 {
+				L.X = x
+			}
+			if y > 0 {
+				L.Y = y
+			}
+			return
+		}
+	}
+	gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, alliance.PlayerCastleLocation{
+		KingdomID: kingdomID,
+		CastleID:  castleID,
+		X:         x,
+		Y:         y,
+	})
+}
+
 // IsKnownPlayerCastleID is true if this castle id is one of ours (GameState castle slots or alliance location list).
 func (gs *GameState) IsKnownPlayerCastleID(castleID int) bool {
 	if castleID <= 0 {

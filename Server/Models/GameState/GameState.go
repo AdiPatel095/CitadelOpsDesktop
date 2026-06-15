@@ -21,6 +21,10 @@ type GameState struct {
 	Movement        movement.PlayerMovement         `json:"movement"`
 	PlayerID        int                             `json:"playerId"` // Session player OID; used by auto-bird persistence and parsers
 	CastleFocus     castle.CastleFocus              `json:"castleFocus"`
+	// Tci is ephemeral (SIN, gbc PL) for AutoTCI buy/equip; not a substitute for gca.CI.
+	Tci TciSession `json:"tciSession,omitempty"`
+	// AutoBeriWorld holds ephemeral **fuc** parse results for the Beri troop-transfer loop.
+	AutoBeriWorld AutoBeriWorldSession `json:"autoBeriWorldSession,omitempty"`
 }
 
 var (
@@ -36,8 +40,11 @@ func GetGameState() *GameState {
 				NonRelicGemIDs: make(map[int]float64),
 			},
 			Movement: movement.PlayerMovement{
-				BirdMovements: make(map[int][]movement.BirdMovement),
-				LastSDI:       make(map[int]movement.SDIContext),
+				BirdMovements:  make(map[int][]movement.BirdMovement),
+				CommanderByMID: make(map[int]int),
+			},
+			Tci: TciSession{
+				SINItemCounts: make(map[int]int),
 			},
 		}
 	})
@@ -52,10 +59,14 @@ func (gs *GameState) Reset() {
 	gs.Castle = castle.PlayerCastles{}
 	gs.Equipment = equipment.PlayerEquipment{NonRelicGemIDs: make(map[int]float64)}
 	gs.Movement = movement.PlayerMovement{
-		BirdMovements: make(map[int][]movement.BirdMovement),
-		LastSDI:       make(map[int]movement.SDIContext),
+		BirdMovements:  make(map[int][]movement.BirdMovement),
+		CommanderByMID: make(map[int]int),
 	}
 	gs.CastleFocus = castle.CastleFocus{}
+	gs.Tci = TciSession{
+		SINItemCounts: make(map[int]int),
+	}
+	gs.AutoBeriWorld = AutoBeriWorldSession{}
 	mapstate.GetMapState().Reset()
 }
 
@@ -80,6 +91,8 @@ func (gs *GameState) GetCastleByID(castleID int) *castle.PlayerCastleInfo {
 		return &c.DungeonCastle
 	case c.StormCastle.Aid == cID:
 		return &c.StormCastle
+	case c.BeriWorldCastle.Aid == cID:
+		return &c.BeriWorldCastle
 	case c.Metropolis.Aid == cID:
 		return &c.Metropolis
 	case c.Capital.Aid == cID:

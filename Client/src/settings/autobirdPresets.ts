@@ -7,6 +7,7 @@ export interface AutoBirdPreset {
   minDelay: number;
   maxDelay: number;
   minSend: number;
+  minRPTDays?: number;
 }
 
 export interface PresetsFileV1 {
@@ -53,13 +54,15 @@ export function snapshotFromForm(
   settings: Record<string, { id: number; amount: number }[]>,
   minDelay: number,
   maxDelay: number,
-  minSend: number
-): Pick<AutoBirdPreset, 'settings' | 'minDelay' | 'maxDelay' | 'minSend'> {
+  minSend: number,
+  minRPTDays: number
+): Pick<AutoBirdPreset, 'settings' | 'minDelay' | 'maxDelay' | 'minSend' | 'minRPTDays'> {
   return {
     settings: JSON.parse(JSON.stringify(settings)) as Record<string, { id: number; amount: number }[]>,
     minDelay,
     maxDelay,
     minSend,
+    minRPTDays,
   };
 }
 
@@ -68,11 +71,13 @@ export function applyPresetToStoredShape(preset: AutoBirdPreset): {
   minDelay: number;
   maxDelay: number;
   minSend: number;
+  minRPTDays: number;
 } {
   return {
     settings: JSON.parse(JSON.stringify(preset.settings)) as Record<string, { id: number; amount: number }[]>,
     minDelay: preset.minDelay,
     maxDelay: preset.maxDelay,
     minSend: preset.minSend,
+    minRPTDays: typeof preset.minRPTDays === 'number' ? preset.minRPTDays : 3,
   };
 }

@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode, useCallback, useMemo } from 'react';
-import { FrontendWebsocket } from '../../websocket.ts';
+import { FrontendWebsocket } from '../../Websocket.ts';
 import { useAuth } from '../../context/AuthContext';
 import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
-import { CASTLE_SLOT_KEYS } from '../../utils/castleSnapshotHydration.ts';
+import { CASTLE_SLOT_KEYS } from '../../utils/CastleSnapshotHydration.ts';
 import { type PlayerCastleInfo } from '../models/PlayerCastleInfo.ts';
 
 // We now index by CastleID (number) instead of string location keys

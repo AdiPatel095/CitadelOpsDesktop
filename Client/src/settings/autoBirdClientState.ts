@@ -1,10 +1,10 @@
-import { FrontendWebsocket } from '../websocket';
+import { FrontendWebsocket } from '../Websocket';
 import {
   loadPresetsFile,
   parsePresetsPayload,
   savePresetsFile,
   type PresetsFileV1,
-} from './autobirdPresets';
+} from './AutoBirdPresets';
 
 export const AUTO_BIRD_IGNORE_STORAGE_KEY = 'autobirdSettings';
 
@@ -13,6 +13,7 @@ export interface AutoBirdStoredSettings {
   minDelay: number;
   maxDelay: number;
   minSend: number;
+  minRPTDays: number;
 }
 
 export interface AutoBirdClientStateV1 {
@@ -26,6 +27,7 @@ const defaultIgnore = (): AutoBirdStoredSettings => ({
   minDelay: 6,
   maxDelay: 12,
   minSend: 0,
+  minRPTDays: 3,
 });
 
 export function loadAutoBirdSettingsFromStorage(): AutoBirdStoredSettings {

@@ -2,9 +2,13 @@ package FrontendWebsocket
 
 import (
 	"CitadelDesktop/Server/GameCommands"
-	"CitadelDesktop/Server/GameFunctions"
+	equipmentview "CitadelDesktop/Server/GameFeatures/EquipmentView"
+	featureview "CitadelDesktop/Server/GameFeatures/FeatureView"
+	settingsview "CitadelDesktop/Server/GameFeatures/SettingsView"
+	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Models"
 	equip "CitadelDesktop/Server/Models/Equipment"
+	stsettings "CitadelDesktop/Server/Models/Settings"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"log"
 	"strconv"
@@ -42,6 +46,27 @@ func SendRecruitTroopsStatus(enabled bool) {
 	}, "")
 }
 
+// SendAutoTCIStatus sends whether AutoTCI (temporary construction items) automation is running.
+// nextWakeUp is the next scheduled wake: either login prep (1m before a slot expires) or the ubc window.
+func SendAutoTCIStatus(enabled bool) {
+	nextWakeUp := int64(0)
+	if enabled {
+		nextWakeUp = featureview.GetAutoTCINextWakeUp()
+	}
+	SendFrontendMessage("autoTCIStatus", map[string]interface{}{
+		"enabled":    enabled,
+		"nextWakeUp": nextWakeUp,
+	}, "")
+}
+
+// SendAutoBeriWorldStatus pushes Auto Beri World enabled state and next pass time (unix ms, 0 if none).
+func SendAutoBeriWorldStatus(enabled bool, nextWakeUp int64) {
+	SendFrontendMessage("autoBeriWorldStatus", map[string]interface{}{
+		"enabled":    enabled,
+		"nextWakeUp": nextWakeUp,
+	}, "")
+}
+
 func SendInitialData(client *Client) {
 	// Send current game login status so frontend knows if game is connected after page refresh
 	client.SendToClient("gameLoginStatus", map[string]interface{}{
@@ -50,13 +75,23 @@ func SendInitialData(client *Client) {
 	}, "")
 
 	client.SendToClient("autoBirdStatus", map[string]interface{}{
-		"enabled":    GameFunctions.IsAutoBirdRunning(),
-		"nextWakeUp": GameFunctions.GetAutoBirdNextWakeUp(),
+		"enabled":    featureview.IsAutoBirdRunning(),
+		"nextWakeUp": featureview.GetAutoBirdNextWakeUp(),
 	}, "")
 
 	// Send recruitTroops status
 	client.SendToClient("recruitTroopsStatus", map[string]interface{}{
-		"enabled": GameFunctions.IsRecruitTroopsRunning(),
+		"enabled": settingsview.IsRecruitTroopsRunning(),
+	}, "")
+
+	client.SendToClient("autoTCIStatus", map[string]interface{}{
+		"enabled":    featureview.IsAutoTCIRunning(),
+		"nextWakeUp": featureview.GetAutoTCINextWakeUp(),
+	}, "")
+
+	client.SendToClient("autoBeriWorldStatus", map[string]interface{}{
+		"enabled":    featureview.IsAutoBeriWorldRunning(),
+		"nextWakeUp": featureview.GetAutoBeriWorldNextWakeUp(),
 	}, "")
 
 	// Send all commanders
@@ -66,7 +101,7 @@ func SendInitialData(client *Client) {
 
 	// Send all castle stats with index-based identification (0-10)
 	for i := 0; i < Models.NumPlayerCastleSlots; i++ {
-		castStat := GameFunctions.GetCastellanStat(i)
+		castStat := equipmentview.GetCastellanStat(i)
 		client.SendToClient("castStatUpdate", castStat, strconv.Itoa(i))
 	}
 
@@ -87,6 +122,11 @@ func SendInitialData(client *Client) {
 	client.SendToClient("castleResourceUpdate", c.Capital, "capitalCastle")
 
 	client.SendToClient("castleFocus", Models.CastleFocusMessagePayload(), "")
+
+	SendRiftMapCoordsToClient(client)
+	SendRiftCRALaunchToClient(client)
+	SendRiftMaidenCommsSettingsToClient(client)
+	SendMovementUpdateToClient(client)
 
 	SendLastKnownGameStateSnapshot(client)
 }
@@ -112,7 +152,7 @@ func SendLastKnownGameStateSnapshot(client *Client) {
 // SendCastStat sends a single castle's stats by index (0-10)
 func SendCastStat(castleIndex int) {
 	if castleIndex >= 0 && castleIndex < Models.NumPlayerCastleSlots {
-		castStat := GameFunctions.GetCastellanStat(castleIndex)
+		castStat := equipmentview.GetCastellanStat(castleIndex)
 		SendFrontendMessage("castStatUpdate", castStat, strconv.Itoa(castleIndex))
 	}
 }
@@ -126,6 +166,41 @@ func SendCommStat(commanderIndex int) {
 
 func SendGlobalResourceUpdate() {
 	SendFrontendMessage("globalResourceUpdate", Models.GetGameState().GlobalResources, "")
+}
+
+func SendRiftMapCoords() {
+	SendFrontendMessage("riftMapCoords", Models.RiftMapCoordsPayload(), "")
+}
+
+func SendRiftMapCoordsToClient(client *Client) {
+	client.SendToClient("riftMapCoords", Models.RiftMapCoordsPayload(), "")
+}
+
+func SendRiftCRALaunch() {
+	ScheduleSendRiftCRALaunch()
+}
+
+func SendRiftCRALaunchToClient(client *Client) {
+	client.SendToClient("riftCRALaunch", GameParser.RiftCRALaunchWirePayload(), "")
+}
+
+func riftMaidenCommsSettingsPayload() map[string]interface{} {
+	cfg := stsettings.ReadRiftMaidenCommsSettings()
+	return map[string]interface{}{
+		"unitWodID": cfg.UnitWodID,
+	}
+}
+
+func SendRiftMaidenCommsSettingsToClient(client *Client) {
+	client.SendToClient("riftMaidenCommsSettings", riftMaidenCommsSettingsPayload(), "")
+}
+
+func SendMovementUpdate() {
+	SendFrontendMessage("movementUpdate", Models.MovementUpdatePayload(), "")
+}
+
+func SendMovementUpdateToClient(client *Client) {
+	client.SendToClient("movementUpdate", Models.MovementUpdatePayload(), "")
 }
 
 func SendCastleResource(castleLocation string) {

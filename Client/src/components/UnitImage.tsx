@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { getUnitBaseAndLevel } from '../config/constants';
+import { getUnitBaseAndLevel } from '../config/Constants';
 import { useMetadata } from '../context/MetadataContext';
 
 interface UnitImageProps {

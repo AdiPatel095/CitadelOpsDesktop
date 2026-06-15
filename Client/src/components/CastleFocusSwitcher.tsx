@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCastleFocus } from '../context/CastleFocusContext';
-import type { PlayerCastleOption } from '../types/castleFocusState.ts';
+import type { PlayerCastleOption } from '../types/CastleFocusState.ts';
 import { Select, type SelectOption } from './ui';
 
 function optionKey(c: Pick<PlayerCastleOption, 'aid' | 'kingdomID'>): string {

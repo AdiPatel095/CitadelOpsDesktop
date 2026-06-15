@@ -89,8 +89,13 @@ func ParseAllianceInfo(data string) {
 			// Get Castle Type (index 4 - 5th element) if available
 			castleTypeInt := 0
 			if len(castle) > 4 {
-				if castleType, ok := castle[4].(float64); ok {
-					castleTypeInt = int(castleType)
+				switch v := castle[4].(type) {
+				case float64:
+					castleTypeInt = int(v)
+				case int:
+					castleTypeInt = v
+				case string:
+					fmt.Sscanf(v, "%d", &castleTypeInt)
 				}
 			}
 

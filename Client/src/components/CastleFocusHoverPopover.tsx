@@ -5,7 +5,7 @@ import {
   castleFocusDecorationTooltipContent,
   castleFocusDecorationsTooltip,
   type CastleFocusState,
-} from '../types/castleFocusState.ts';
+} from '../types/CastleFocusState.ts';
 
 type Props = {
   castleFocus: CastleFocusState | null;

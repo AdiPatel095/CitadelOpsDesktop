@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCastleFocus } from '../context/CastleFocusContext';
-import { castleFocusDisplayName } from '../types/castleFocusState.ts';
+import { castleFocusDisplayName } from '../types/CastleFocusState.ts';
 
 /** Header chip: focused castle name only. */
 const CastleFocusBadge: React.FC = () => {

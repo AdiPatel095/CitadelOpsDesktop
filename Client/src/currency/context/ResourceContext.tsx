@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { FrontendWebsocket } from '../../websocket.ts';
-import type { PlayerGlobalResources } from '../../types/playerGlobalResources.ts';
+import { FrontendWebsocket } from '../../Websocket.ts';
+import type { PlayerGlobalResources } from '../../types/PlayerGlobalResources.ts';
 import { useAuth } from '../../context/AuthContext';
 import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
 

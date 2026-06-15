@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FrontendWebsocket } from '../websocket';
+import { FrontendWebsocket } from '../Websocket';
 import { Icons } from './Icons';
 
 type AlertCategory = 'green' | 'yellow' | 'red';

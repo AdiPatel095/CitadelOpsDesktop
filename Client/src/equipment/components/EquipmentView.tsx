@@ -3,7 +3,7 @@ import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { useEquipment } from '../context/EquipmentContext';
 import EquipmentSelection, { type EquipmentMode, type CombatMode } from './EquipmentSelection';
 import StatPriority from './StatPriority';
-import { type CommStat, type CastStat } from '../models/equipment';
+import { type CommStat, type CastStat } from '../models/Equipment';
 
 const EquipmentView: React.FC = () => {
   const { equipmentData } = useEquipment();

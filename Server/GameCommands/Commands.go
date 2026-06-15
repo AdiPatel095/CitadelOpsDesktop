@@ -6,6 +6,12 @@
 //   - Castle instance id (CID/AID): per-player castle id used in sob/jca payloads.
 //   - WID (wodID): global building/decoration type id from the items catalog — not the per-castle OID.
 //
+// Pattern (every command follows this so declarations and call sites stay uniform):
+//   - empireExFrame(op, jsonBody) builds the wire envelope %xt%<token>%<op>%1%<body>% in one place.
+//   - <OP>Payload(...) is a pure builder that returns the wire string (no side effects).
+//   - Send<OP>(...) queues that string via QueueOutgoingPayload — the single outbound entry point.
+//     A few opcodes are intentionally special and documented inline: sin (no JSON body) and aec (no token).
+//
 // Navigation before build/pickup: the game applies EBU/SOB to whichever castle view is focused.
 // Use SendJCA or SendJAA so the client is on the target castle before SendEBU / SendSOB.
 package GameCommands
@@ -13,50 +19,89 @@ package GameCommands
 import (
 	"CitadelDesktop/Server/ResponseRegistry"
 	"fmt"
-	"time"
 )
 
-func jcaPayload(cid, kid int) string {
-	return fmt.Sprintf(`%%xt%%EmpireEx_21%%jca%%1%%{"CID":%d,"KID":%d}%%`, cid, kid)
+// empireExFrame builds the standard EmpireEx command envelope: %xt%<token>%<op>%1%<jsonBody>%.
+// jsonBody is the raw JSON object/array string (e.g. `{}` or `{"CID":1}`). The dynamic
+// ResponseRegistry.EmpireExToken is injected here so individual builders never hard-code it.
+func empireExFrame(op, jsonBody string) string {
+	return fmt.Sprintf(`%%xt%%%s%%%s%%1%%%s%%`, ResponseRegistry.EmpireExToken, op, jsonBody)
 }
 
-func jaaPayload(px, py, kid int) string {
-	return fmt.Sprintf(`%%xt%%EmpireEx_21%%jaa%%1%%{"PX":%d,"PY":%d,"KID":%d}%%`, px, py, kid)
+// QueueOutgoingPayload enqueues a raw payload onto the single game websocket outbound queue.
+// Every Send* function routes through here so there is one place that touches OutgoingMessages.
+func QueueOutgoingPayload(payload string) {
+	ResponseRegistry.OutgoingMessages <- []byte(payload)
 }
 
-// SendJCA sends EmpireEx_21 **jca** — jump/focus a castle by castle id and kingdom.
+// --- Focus / navigation ---
+
+// JCAPayload builds EmpireEx_21 **jca** — jump/focus a castle by castle id and kingdom.
 //
 // Payload: {"CID":<castleInstanceId>,"KID":<kingdomId>}
 //
 // Use for kingdoms that address castles by CID (typically not KID 0/4/10; align with troop-fetch logic).
-func SendJCA(cid int, kid int) {
-	ResponseRegistry.OutgoingMessages <- jcaPayload(cid, kid)
+func JCAPayload(cid, kid int) string {
+	return empireExFrame("jca", fmt.Sprintf(`{"CID":%d,"KID":%d}`, cid, kid))
 }
 
-// SendJAA sends EmpireEx_21 **jaa** — focus map tile / area (main map, storm, beri, etc.).
+// JAAPayload builds EmpireEx_21 **jaa** — focus map tile / area (main map, storm, beri, etc.).
 //
 // Payload: {"PX":<mapX>,"PY":<mapY>,"KID":<kingdomId>}
 //
 // Use when the game expects map coordinates (e.g. KID 0, 4, 10) instead of JCA.
+func JAAPayload(px, py, kid int) string {
+	return empireExFrame("jaa", fmt.Sprintf(`{"PX":%d,"PY":%d,"KID":%d}`, px, py, kid))
+}
+
+// SendJCA queues **jca** — focus a castle by CID/KID.
+func SendJCA(cid int, kid int) {
+	QueueOutgoingPayload(JCAPayload(cid, kid))
+}
+
+// SendJAA queues **jaa** — focus a map tile by PX/PY/KID.
 func SendJAA(px int, py int, kid int) {
-	ResponseRegistry.OutgoingMessages <- jaaPayload(px, py, kid)
+	QueueOutgoingPayload(JAAPayload(px, py, kid))
 }
 
-// TroopFocusCommand returns the same JAA/JCA payload string used for troop fetching and castle focus
-// (KID 0, 4, 10 → JAA with map coords; otherwise JCA). Use with alternate outgoing channels if needed.
-func TroopFocusCommand(kingdomID, castleID, mapX, mapY int) string {
-	if kingdomID == 0 || kingdomID == 4 || kingdomID == 10 {
-		return jaaPayload(mapX, mapY, kingdomID)
+// GAAPayload builds EmpireEx_21 **gaa** — request map tiles for a rectangular viewport (inbound **gaa** response).
+//
+// Wire: %xt%EmpireEx_21%gaa%1%{"KID":0,"AX1":1196,"AY1":1144,"AX2":1208,"AY2":1156}%
+func GAAPayload(kid, ax1, ay1, ax2, ay2 int) string {
+	return empireExFrame("gaa", fmt.Sprintf(
+		`{"KID":%d,"AX1":%d,"AY1":%d,"AX2":%d,"AY2":%d}`, kid, ax1, ay1, ax2, ay2))
+}
+
+// SendGAAViewport requests map tiles for a rectangular viewport (**gaa**).
+func SendGAAViewport(kid, ax1, ay1, ax2, ay2 int) {
+	QueueOutgoingPayload(GAAPayload(kid, ax1, ay1, ax2, ay2))
+}
+
+// SendGAAAroundTile requests GAA for a Chebyshev square around (x,y) with the given padding (min 1).
+func SendGAAAroundTile(kid, x, y, padding int) {
+	if padding < 1 {
+		padding = 1
 	}
-	return jcaPayload(castleID, kingdomID)
+	SendGAAViewport(kid, x-padding, y-padding, x+padding, y+padding)
 }
 
-// SendTroopFocus sends JAA or JCA per troop-fetch rules so the client focuses the target castle.
-func SendTroopFocus(kingdomID, castleID, mapX, mapY int) {
-	ResponseRegistry.OutgoingMessages <- TroopFocusCommand(kingdomID, castleID, mapX, mapY)
+// CastleFocusCommand returns the same JAA/JCA payload string used for troop fetching and castle focus
+// (KID 0, 4, 10 → JAA with map coords; otherwise JCA). Use with alternate outgoing channels if needed.
+func CastleFocusCommand(kingdomID, castleID, mapX, mapY int) string {
+	if kingdomID == 0 || kingdomID == 4 || kingdomID == 10 {
+		return JAAPayload(mapX, mapY, kingdomID)
+	}
+	return JCAPayload(castleID, kingdomID)
 }
 
-// SendEBU sends EmpireEx_21 **ebu** — place/erect a building or decoration at grid coordinates.
+// SendCastleFocus sends JAA or JCA per kingdom rules so the client focuses the target castle.
+func SendCastleFocus(kingdomID, castleID, mapX, mapY int) {
+	QueueOutgoingPayload(CastleFocusCommand(kingdomID, castleID, mapX, mapY))
+}
+
+// --- Build / decoration / storage ---
+
+// EBUPayload builds EmpireEx_21 **ebu** — place/erect a building or decoration at grid coordinates.
 //
 // JSON shape (verified vs live client captures):
 //
@@ -64,91 +109,93 @@ func SendTroopFocus(kingdomID, castleID, mapX, mapY int) {
 //
 // WID is the global type id (same for all players). The payload does not include CID; the focused
 // castle in the client receives the command. Some third-party docs use "BT" for build type; this client uses "WID".
+func EBUPayload(wid, gridX, gridY int) string {
+	return EBUWithParamsPayload(wid, gridX, gridY, 0, 0, -1, -1)
+}
+
+// EBUWithParamsPayload is EBUPayload with explicit rotation/power/public-order/decoration-owner fields
+// when a capture from your client differs from the default EBUPayload constants.
+func EBUWithParamsPayload(wid, gridX, gridY, r, pwr, po, doid int) string {
+	return empireExFrame("ebu", fmt.Sprintf(
+		`{"WID":%d,"X":%d,"Y":%d,"R":%d,"PWR":%d,"PO":%d,"DOID":%d}`, wid, gridX, gridY, r, pwr, po, doid))
+}
+
+// SendEBU queues **ebu** with default rotation/power/order fields.
 func SendEBU(wid, gridX, gridY int) {
-	payload := fmt.Sprintf(
-		`%%xt%%EmpireEx_21%%ebu%%1%%{"WID":%d,"X":%d,"Y":%d,"R":0,"PWR":0,"PO":-1,"DOID":-1}%%`,
-		wid, gridX, gridY)
-	ResponseRegistry.OutgoingMessages <- payload
+	QueueOutgoingPayload(EBUPayload(wid, gridX, gridY))
 }
 
-// SendEBUWithParams is SendEBU with explicit rotation/power/public-order/decoration-owner fields
-// when a capture from your client differs from the default SendEBU constants.
+// SendEBUWithParams queues **ebu** with explicit rotation/power/public-order/decoration-owner fields.
 func SendEBUWithParams(wid, gridX, gridY, r, pwr, po, doid int) {
-	payload := fmt.Sprintf(
-		`%%xt%%EmpireEx_21%%ebu%%1%%{"WID":%d,"X":%d,"Y":%d,"R":%d,"PWR":%d,"PO":%d,"DOID":%d}%%`,
-		wid, gridX, gridY, r, pwr, po, doid)
-	ResponseRegistry.OutgoingMessages <- payload
+	QueueOutgoingPayload(EBUWithParamsPayload(wid, gridX, gridY, r, pwr, po, doid))
 }
 
-// SendSIN sends EmpireEx_21 **sin** — refresh decoration/building storage inventory (response lists RD rows per SID).
-// No JSON body (same family as other Empire commands; use fmt.Sprintf so %% → single % on the wire).
+// SINPayload builds EmpireEx_21 **sin** — refresh decoration/building storage inventory (response lists RD rows per SID).
+// Special case: sin carries NO JSON body, so it is the bare frame %xt%<token>%sin%1% (no trailing {} and no extra %).
 // Response shape: Logs/JSONExamples/sin.json (array of {SID, RD, …}; each RD row [wodID, amount, …]).
-func SendSIN() {
-	ResponseRegistry.OutgoingMessages <- "%xt%EmpireEx_21%sin%1%"
+func SINPayload() string {
+	return fmt.Sprintf(`%%xt%%%s%%sin%%1%%`, ResponseRegistry.EmpireExToken)
 }
 
-// SendSOB sends EmpireEx_21 **sob** — pick up an existing instance into inventory / storage.
+// SendSIN queues **sin** — refresh decoration/building storage inventory.
+func SendSIN() {
+	QueueOutgoingPayload(SINPayload())
+}
+
+// GIIPayload builds EmpireEx_21 **gii** — request construction-item inventory (response root **CI** as [[wireCID,count],…]).
+// Live shape: %xt%EmpireEx_21%gii%1%{}%
+func GIIPayload() string {
+	return empireExFrame("gii", "{}")
+}
+
+// SendGII queues **gii** — request construction-item inventory.
+func SendGII() {
+	QueueOutgoingPayload(GIIPayload())
+}
+
+// SOBPayload builds EmpireEx_21 **sob** — pick up an existing instance into inventory / storage.
 //
 // Payload: {"CID":<castleInstanceId>,"OID":<perCastleBuildingInstanceId>}
 //
 // OID comes from gca BG / Models.BuildingData.OID (not WID). If your captures use a different key than "OID", adjust here.
-func SendSOB(castleAID, castleSpecificBuildingID int) {
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%sob%%1%%{"CID":%d,"OID":%d}%%`, castleAID, castleSpecificBuildingID)
-	ResponseRegistry.OutgoingMessages <- payload
+func SOBPayload(castleAID, castleSpecificBuildingID int) string {
+	return empireExFrame("sob", fmt.Sprintf(`{"CID":%d,"OID":%d}`, castleAID, castleSpecificBuildingID))
 }
 
-// BarracksUnitPurchasePayload returns EmpireEx_21 **bup** — enqueue unit training at the barracks / production strip.
+// SendSOB queues **sob** — pick up an existing building/decoration instance.
+func SendSOB(castleAID, castleSpecificBuildingID int) {
+	QueueOutgoingPayload(SOBPayload(castleAID, castleSpecificBuildingID))
+}
+
+// --- Barracks / troops ---
+
+// BUPPayload builds EmpireEx_21 **bup** — enqueue unit training at the barracks / production strip.
 //
 // Live client shape: {"LID":0,"WID":<unitType>,"AMT":<count>,"PO":-1,"PWR":0,"SK":<sessionKey>,"SID":0,"AID":<castleInstanceId>}
 //
 // WID is the global unit type id (not a building WOD). SK must match the current game session (from a browser capture for your account).
-func BarracksUnitPurchasePayload(lid, unitWID, amount, po, pwr, sk, sid, castleAID int) string {
-	return fmt.Sprintf(
-		`%%xt%%EmpireEx_21%%bup%%1%%{"LID":%d,"WID":%d,"AMT":%d,"PO":%d,"PWR":%d,"SK":%d,"SID":%d,"AID":%d}%%`,
-		lid, unitWID, amount, po, pwr, sk, sid, castleAID)
+func BUPPayload(lid, unitWID, amount, po, pwr, sk, sid, castleAID int) string {
+	return empireExFrame("bup", fmt.Sprintf(
+		`{"LID":%d,"WID":%d,"AMT":%d,"PO":%d,"PWR":%d,"SK":%d,"SID":%d,"AID":%d}`,
+		lid, unitWID, amount, po, pwr, sk, sid, castleAID))
 }
 
-// SendBarracksUnitPurchase queues **bup** on OutgoingMessages (same as other commands in this package).
+// SendBarracksUnitPurchase queues **bup** — enqueue unit training.
 func SendBarracksUnitPurchase(lid, unitWID, amount, po, pwr, sk, sid, castleAID int) {
-	ResponseRegistry.OutgoingMessages <- BarracksUnitPurchasePayload(lid, unitWID, amount, po, pwr, sk, sid, castleAID)
+	QueueOutgoingPayload(BUPPayload(lid, unitWID, amount, po, pwr, sk, sid, castleAID))
 }
 
-// SendSPL requests EmpireEx_21 **spl** — production slot list for the focused castle (**LID** = strip: 0 barracks, 1 tool workshop, …).
-func SendSPL(lid int) {
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%spl%%1%%{"LID":%d}%%`, lid)
-	ResponseRegistry.OutgoingMessages <- payload
-}
+// --- Movement (bird dispatch) ---
 
-// SendSPLRefreshDefaultProductionLIDs requests **spl** for each LID in DefaultProductionSplLIDs (staggered)
-// so barracks, workshops, refinery, toolsmith, and dragon queues can populate without opening each panel.
-func SendSPLRefreshDefaultProductionLIDs() {
-	go func() {
-		time.Sleep(80 * time.Millisecond)
-		for i, lid := range DefaultProductionSplLIDs {
-			if i > 0 {
-				time.Sleep(110 * time.Millisecond)
-			}
-			SendSPL(lid)
-		}
-	}()
-}
-
-// QueueOutgoingPayload enqueues a raw payload onto the single game websocket outbound queue.
-func QueueOutgoingPayload(payload string) {
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
-}
-
-// SDIPayload returns EmpireEx_21 **sdi** — select/preview a bird dispatch route.
+// SDIPayload builds EmpireEx_21 **sdi** — select/preview a bird dispatch route.
 //
 // Payload: {"TX":<targetX>,"TY":<targetY>,"SX":<sourceX>,"SY":<sourceY>}
 func SDIPayload(targetX, targetY, sourceX, sourceY int) string {
-	return fmt.Sprintf(
-		`%%xt%%EmpireEx_21%%sdi%%1%%{"TX":%d,"TY":%d,"SX":%d,"SY":%d}%%`,
-		targetX, targetY, sourceX, sourceY,
-	)
+	return empireExFrame("sdi", fmt.Sprintf(
+		`{"TX":%d,"TY":%d,"SX":%d,"SY":%d}`, targetX, targetY, sourceX, sourceY))
 }
 
-// CDSPayload returns EmpireEx_21 **cds** — send a bird movement with a troop batch.
+// CDSPayload builds EmpireEx_21 **cds** — send a bird movement with a troop batch.
 //
 // troopsJSON must be a valid JSON array string for "A", e.g. [[unitId,amount],...].
 // JSON shape:
@@ -157,15 +204,14 @@ func SDIPayload(targetX, targetY, sourceX, sourceY int) string {
 //	 "HBW":<hbw>,"BPC":1,"PTT":<ptt>,"SD":0,"A":<troopsJSON>}
 //	 Valid (HBW,PTT) pairs: see CDSVariants.go (HBW=0,PTT=0 → code 5 in logs; app uses 1001/0 and -1/1).
 func CDSPayload(castleAID, targetX, targetY, sdiLID, delayHours, hbw, ptt int, troopsJSON string) string {
-	return fmt.Sprintf(
-		`%%xt%%EmpireEx_21%%cds%%1%%{"SID":%d,"TX":%d,"TY":%d,"LID":%d,"WT":%d,"HBW":%d,"BPC":1,"PTT":%d,"SD":0,"A":%s}%%`,
-		castleAID, targetX, targetY, sdiLID, delayHours, hbw, ptt, troopsJSON,
-	)
+	return empireExFrame("cds", fmt.Sprintf(
+		`{"SID":%d,"TX":%d,"TY":%d,"LID":%d,"WT":%d,"HBW":%d,"BPC":1,"PTT":%d,"SD":0,"A":%s}`,
+		castleAID, targetX, targetY, sdiLID, delayHours, hbw, ptt, troopsJSON))
 }
 
-// GAMPayload returns EmpireEx_21 **gam** — request active troop movements.
+// GAMPayload builds EmpireEx_21 **gam** — request active troop movements.
 func GAMPayload() string {
-	return `%xt%EmpireEx_21%gam%1%{}%`
+	return empireExFrame("gam", "{}")
 }
 
 // SendGAM requests active movements (**gam**). Parsed into GameState.Movement.ActiveMovements.
@@ -183,16 +229,24 @@ func SendCDS(castleAID, targetX, targetY, sdiLID, delayHours, hbw, ptt int, troo
 	QueueOutgoingPayload(CDSPayload(castleAID, targetX, targetY, sdiLID, delayHours, hbw, ptt, troopsJSON))
 }
 
-// SendAIN queues **ain** — alliance info refresh (bird targets, etc.). AID from alliance state.
+// --- Alliance ---
+
+// AINPayload builds EmpireEx_21 **ain** — alliance info refresh (bird targets, etc.).
+func AINPayload(allianceAID int) string {
+	return empireExFrame("ain", fmt.Sprintf(`{"AID":%d}`, allianceAID))
+}
+
+// SendAIN queues **ain** — alliance info refresh. AID from alliance state; no-op for non-positive AID.
 func SendAIN(allianceAID int) {
 	if allianceAID <= 0 {
 		return
 	}
-	payload := fmt.Sprintf(`%%xt%%EmpireEx_21%%ain%%1%%{"AID":%d}%%`, allianceAID)
-	QueueOutgoingPayload(payload)
+	QueueOutgoingPayload(AINPayload(allianceAID))
 }
 
-// EEQPayload returns EmpireEx_21 **eeq** — equip/unequip an equipment item.
+// --- Equipment / gems ---
+
+// EEQPayload builds EmpireEx_21 **eeq** — equip/unequip an equipment item.
 //
 // equip=true -> E=1 (equip), equip=false -> E=0 (unequip).
 // Payload: {"EID":<equipmentId>,"LID":<leaderId>,"E":<0|1>}
@@ -201,76 +255,96 @@ func EEQPayload(equipmentID, leaderID float64, equip bool) string {
 	if equip {
 		eFlag = 1
 	}
-	return fmt.Sprintf(`%%xt%%EmpireEx_21%%eeq%%1%%{"EID":%.0f,"LID":%.0f,"E":%d}%%`, equipmentID, leaderID, eFlag)
+	return empireExFrame("eeq", fmt.Sprintf(`{"EID":%.0f,"LID":%.0f,"E":%d}`, equipmentID, leaderID, eFlag))
 }
 
-// BGEPayload returns EmpireEx_21 **bge** — attach/equip a gem to a specific equipment item.
+// BGEPayload builds EmpireEx_21 **bge** — attach/equip a gem to a specific equipment item.
 //
 // Payload: {"GID":<gemId>,"EID":<equipmentId>,"LID":<leaderId>,"M":0,"RGEM":1}
 func BGEPayload(gemID, equipmentID, leaderID float64) string {
-	return fmt.Sprintf(`%%xt%%EmpireEx_21%%bge%%1%%{"GID":%.0f,"EID":%.0f,"LID":%.0f,"M":0,"RGEM":1}%%`, gemID, equipmentID, leaderID)
+	return empireExFrame("bge", fmt.Sprintf(
+		`{"GID":%.0f,"EID":%.0f,"LID":%.0f,"M":0,"RGEM":1}`, gemID, equipmentID, leaderID))
 }
 
-// EGEPayload returns EmpireEx_21 **ege** — remove a gem from an equipped item.
+// EGEPayload builds EmpireEx_21 **ege** — remove a gem from an equipped item.
 //
 // Payload: {"EID":<equipmentId>,"LID":<leaderId>}
 func EGEPayload(equipmentID, leaderID float64) string {
-	return fmt.Sprintf(`%%xt%%EmpireEx_21%%ege%%1%%{"EID":%.0f,"LID":%.0f}%%`, equipmentID, leaderID)
+	return empireExFrame("ege", fmt.Sprintf(`{"EID":%.0f,"LID":%.0f}`, equipmentID, leaderID))
 }
 
-// --- Equipment / gem storage refresh (empty JSON {}) ---
+// EREPayload builds EmpireEx_21 **ere** — upgrade one level on equipment/hero (EQ=1) or gem (EQ=0).
+// RIID is the instance id (equipment EID or gem GID). C2 selects cost currency (0 = default from captures).
+func EREPayload(riid float64, eqFlag, c2 int) string {
+	return empireExFrame("ere", fmt.Sprintf(`{"C2":%d,"RIID":%.0f,"EQ":%d}`, c2, riid, eqFlag))
+}
 
-// SendGEI requests EmpireEx_21 **gei** — refresh equipment inventory from the game server.
+// GEIPayload builds EmpireEx_21 **gei** — refresh equipment inventory from the game server.
+func GEIPayload() string {
+	return empireExFrame("gei", "{}")
+}
+
+// GGMPayload builds EmpireEx_21 **ggm** — refresh gem storage.
+func GGMPayload() string {
+	return empireExFrame("ggm", "{}")
+}
+
+// GLIPayload builds EmpireEx_21 **gli** — equipment list (e.g. before reconfigure / GLI parsers).
+func GLIPayload() string {
+	return empireExFrame("gli", "{}")
+}
+
+// GNRPayload builds EmpireEx_21 **gnr** — open the equipment/gem upgrade menu shell.
+func GNRPayload() string {
+	return empireExFrame("gnr", "{}")
+}
+
+// SEQPayload builds EmpireEx_21 **seq** — sell one stash equipment by instance EID.
+func SEQPayload(equipmentID float64) string {
+	return empireExFrame("seq", fmt.Sprintf(`{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}`, equipmentID))
+}
+
+// SGENonRelicGemPayload builds **sge** for non-relic gems (RGEM 0, GID zero-padded to 3 digits).
+func SGENonRelicGemPayload(gemID float64) string {
+	return empireExFrame("sge", fmt.Sprintf(`{"GID":%03.0f,"RGEM":0,"LFID":-1}`, gemID))
+}
+
+// SGERelicGemPayload builds **sge** for relic gems (RGEM 1).
+func SGERelicGemPayload(gemID float64) string {
+	return empireExFrame("sge", fmt.Sprintf(`{"GID":%.0f,"RGEM":1,"LFID":-1}`, gemID))
+}
+
+// SendGEI requests **gei** — refresh equipment inventory.
 func SendGEI() {
-	QueueOutgoingPayload(fmt.Sprintf(`%%xt%%EmpireEx_21%%gei%%1%%{}%%`))
+	QueueOutgoingPayload(GEIPayload())
 }
 
-// SendGGM requests EmpireEx_21 **ggm** — refresh gem storage.
+// SendGGM requests **ggm** — refresh gem storage.
 func SendGGM() {
-	QueueOutgoingPayload(fmt.Sprintf(`%%xt%%EmpireEx_21%%ggm%%1%%{}%%`))
+	QueueOutgoingPayload(GGMPayload())
 }
 
-// SendGLI requests EmpireEx_21 **gli** — equipment list (e.g. before reconfigure / GLI parsers).
+// SendGLI requests **gli** — equipment list.
 func SendGLI() {
-	QueueOutgoingPayload(fmt.Sprintf(`%%xt%%EmpireEx_21%%gli%%1%%{}%%`))
+	QueueOutgoingPayload(GLIPayload())
 }
 
-// SendEmpireEx21EmptyCommand queues **EmpireEx_21%<code>%1%{}%** (custom / debug tooling).
-func SendEmpireEx21EmptyCommand(messageCode string) {
-	if messageCode == "" {
-		return
-	}
-	QueueOutgoingPayload(fmt.Sprintf(`%%xt%%EmpireEx_21%%%s%%1%%{}%%`, messageCode))
+// SendGNR requests **gnr** — open the upgrade menu shell.
+func SendGNR() {
+	QueueOutgoingPayload(GNRPayload())
 }
 
-// SEQSellEquipmentPayload is EmpireEx_21 **seq** — sell one stash equipment by instance EID.
-func SEQSellEquipmentPayload(equipmentID float64) string {
-	return fmt.Sprintf(`%%xt%%EmpireEx_21%%seq%%1%%{"EID":%.0f,"LID":-1,"EX":0,"LFID":-1}%%`, equipmentID)
+// SendUpgradeMenuRefresh queues **gnr**, **ggm**, **gei**, **gli** — load upgrade UI inventory (live game sequence).
+func SendUpgradeMenuRefresh() {
+	SendGNR()
+	SendGGM()
+	SendGEI()
+	SendGLI()
 }
 
-// SendSEQSellEquipment queues **seq** for one equipment row.
-func SendSEQSellEquipment(equipmentID float64) {
-	QueueOutgoingPayload(SEQSellEquipmentPayload(equipmentID))
-}
-
-// SGESellNonRelicGemPayload is **sge** for non-relic gems (RGEM 0, GID zero-padded to 3 digits).
-func SGESellNonRelicGemPayload(gemID float64) string {
-	return fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%03.0f,"RGEM":0,"LFID":-1}%%`, gemID)
-}
-
-// SGESellRelicGemPayload is **sge** for relic gems (RGEM 1).
-func SGESellRelicGemPayload(gemID float64) string {
-	return fmt.Sprintf(`%%xt%%EmpireEx_21%%sge%%1%%{"GID":%.0f,"RGEM":1,"LFID":-1}%%`, gemID)
-}
-
-// SendSGENonRelicGem queues **sge** with RGEM 0 (non-relic sell path).
-func SendSGENonRelicGem(gemID float64) {
-	QueueOutgoingPayload(SGESellNonRelicGemPayload(gemID))
-}
-
-// SendSGERelicGem queues **sge** with RGEM 1 (relic gem sell path).
-func SendSGERelicGem(gemID float64) {
-	QueueOutgoingPayload(SGESellRelicGemPayload(gemID))
+// SendERE queues **ere** — single equipment or gem level upgrade.
+func SendERE(riid float64, eqFlag, c2 int) {
+	QueueOutgoingPayload(EREPayload(riid, eqFlag, c2))
 }
 
 // SendEEQ queues **eeq** using EEQPayload (equip or unequip).
@@ -286,4 +360,90 @@ func SendEGE(equipmentID, leaderID float64) {
 // SendBGE queues **bge** — attach gem to equipment.
 func SendBGE(gemID, equipmentID, leaderID float64) {
 	QueueOutgoingPayload(BGEPayload(gemID, equipmentID, leaderID))
+}
+
+// SendSEQSellEquipment queues **seq** for one equipment row.
+func SendSEQSellEquipment(equipmentID float64) {
+	QueueOutgoingPayload(SEQPayload(equipmentID))
+}
+
+// SendSGENonRelicGem queues **sge** with RGEM 0 (non-relic sell path).
+func SendSGENonRelicGem(gemID float64) {
+	QueueOutgoingPayload(SGENonRelicGemPayload(gemID))
+}
+
+// SendSGERelicGem queues **sge** with RGEM 1 (relic gem sell path).
+func SendSGERelicGem(gemID float64) {
+	QueueOutgoingPayload(SGERelicGemPayload(gemID))
+}
+
+// --- Construction items / trivial shop (TCI) ---
+
+// RPCPayload builds EmpireEx_21 **rpc** — equip a construction item (CID) on a building (OID) for a castle.
+// Live shape: {"OID":<bldInstance>,"CID":<constructionItemID>,"SID":0,"M":0,"KID":<k>,"AID":<castleInstance>}
+func RPCPayload(oid, cid, slotID, m, kid, aid int) string {
+	return empireExFrame("rpc", fmt.Sprintf(
+		`{"OID":%d,"CID":%d,"SID":%d,"M":%d,"KID":%d,"AID":%d}`, oid, cid, slotID, m, kid, aid))
+}
+
+// SendRPC queues **rpc** — equip construction item.
+func SendRPC(oid, cid, slotID, m, kid, aid int) {
+	QueueOutgoingPayload(RPCPayload(oid, cid, slotID, m, kid, aid))
+}
+
+// UBCPayload builds EmpireEx_21 **ubc** — upgrade an equipped TCI. SUC is a client offer/session code (e.g. 2001, 2002 from captures).
+// Shape: {"OID":<bld>,"SUC":<code>,"SID":0,"KID":<k>,"AID":<castle>,"CID":<currentCid>}
+func UBCPayload(oid, suc, slotID, kid, aid, cid int) string {
+	return empireExFrame("ubc", fmt.Sprintf(
+		`{"OID":%d,"SUC":%d,"SID":%d,"KID":%d,"AID":%d,"CID":%d}`, oid, suc, slotID, kid, aid, cid))
+}
+
+// SendUBC queues **ubc** — upgrade construction item in slot.
+func SendUBC(oid, suc, slotID, kid, aid, cid int) {
+	QueueOutgoingPayload(UBCPayload(oid, suc, slotID, kid, aid, cid))
+}
+
+// AECPayload is the exact wire frame to open the construction-item menu.
+// Special case: aec uses no EmpireEx token and a literal []-body — %xt%aec%1%0%[]% — so it does not use empireExFrame.
+func AECPayload() string {
+	return "%xt%aec%1%0%[]%"
+}
+
+// SendAEC queues **aec** — open the construction-item menu shell before gbc/sbp flows.
+func SendAEC() {
+	QueueOutgoingPayload(AECPayload())
+}
+
+// GBCPayload builds EmpireEx_21 **gbc** — open the trivial-CI purchase list for a castle.
+// Here CID is the castle instance id (AID), not a constructionItemID.
+func GBCPayload(castleInstanceID, kid int) string {
+	return empireExFrame("gbc", fmt.Sprintf(`{"CID":%d,"KID":%d}`, castleInstanceID, kid))
+}
+
+// SendGBC queues **gbc** — open purchase offers (response contains PL: PID+AMT rows).
+func SendGBC(castleInstanceID, kid int) {
+	QueueOutgoingPayload(GBCPayload(castleInstanceID, kid))
+}
+
+// SBPPayload builds EmpireEx_21 **sbp** — buy from the gbc list (product id, amount, type).
+// Shape from captures: {"PID":<product>,"BT":0,"TID":116,"AMT":<n>,"KID":0,"AID":-1,"PC2":-1,"BA":0,"PWR":0,"_PO":-1}
+func SBPPayload(pid, bt, tid, amt, kid, aid, pc2, ba, pwr, po int) string {
+	return empireExFrame("sbp", fmt.Sprintf(
+		`{"PID":%d,"BT":%d,"TID":%d,"AMT":%d,"KID":%d,"AID":%d,"PC2":%d,"BA":%d,"PWR":%d,"_PO":%d}`,
+		pid, bt, tid, amt, kid, aid, pc2, ba, pwr, po))
+}
+
+// SendSBP queues **sbp** — complete a trivial purchase after gbc.
+func SendSBP(pid, bt, tid, amt, kid, aid, pc2, ba, pwr, po int) {
+	QueueOutgoingPayload(SBPPayload(pid, bt, tid, amt, kid, aid, pc2, ba, pwr, po))
+}
+
+// --- Misc / tooling ---
+
+// SendEmpireEx21EmptyCommand queues **EmpireEx_21%<code>%1%{}%** (custom / debug tooling).
+func SendEmpireEx21EmptyCommand(messageCode string) {
+	if messageCode == "" {
+		return
+	}
+	QueueOutgoingPayload(empireExFrame(messageCode, "{}"))
 }

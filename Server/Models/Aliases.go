@@ -24,6 +24,14 @@ func CastleFocusMessagePayload() map[string]interface{} {
 	return gamestate.CastleFocusMessagePayload()
 }
 
+func RiftMapCoordsPayload() map[string]interface{} {
+	return gamestate.RiftMapCoordsPayload()
+}
+
+func MovementUpdatePayload() map[string]interface{} {
+	return gamestate.MovementUpdatePayload()
+}
+
 func SetCastleFocusCoords(castleAID, kingdomID int) {
 	gamestate.SetCastleFocusCoords(castleAID, kingdomID)
 }
@@ -53,16 +61,27 @@ func GetMapState() *mapstate.MapState { return mapstate.GetMapState() }
 
 func GetSettingsState() *settings.SettingsState { return settings.GetSettingsState() }
 
+// RandomAttackDelay returns a random pause from SettingsState min/max attack delays.
+func RandomAttackDelay() time.Duration {
+	return settings.RandomAttackDelay(settings.GetSettingsState())
+}
+
+// AttackDelayBetweenSends returns the random pause between consecutive attack dispatches.
+// Uses Settings view delays when SchedulerSettings.json exists; otherwise 4–5s.
+func AttackDelayBetweenSends() time.Duration { return settings.AttackDelayBetweenSends() }
+
 type (
-	PlayerCastleInfo      = castle.PlayerCastleInfo
-	PlayerCastles         = castle.PlayerCastles
-	CastleFocus           = castle.CastleFocus
-	CastleTroops          = castle.CastleTroops
-	BuildingData          = castle.BuildingData
-	CastleTroopData       = castle.CastleTroopData
-	CastleResourcesAmount = castle.CastleResourcesAmount
-	CastleProductionTotal = castle.CastleProductionTotal
-	CastleStorageMax      = castle.CastleStorageMax
+	PlayerCastleInfo        = castle.PlayerCastleInfo
+	PlayerCastles           = castle.PlayerCastles
+	CastleFocus             = castle.CastleFocus
+	CastleTroops            = castle.CastleTroops
+	BuildingData            = castle.BuildingData
+	GCAConstructionBuilding = castle.GCAConstructionBuilding
+	GCAConstructionSlot     = castle.GCAConstructionSlot
+	CastleTroopData         = castle.CastleTroopData
+	CastleResourcesAmount   = castle.CastleResourcesAmount
+	CastleProductionTotal   = castle.CastleProductionTotal
+	CastleStorageMax        = castle.CastleStorageMax
 
 	EquipmentModel       = equipment.EquipmentModel
 	Gem                  = equipment.Gem
@@ -89,6 +108,8 @@ type (
 	SaveInCastleTroops  = settings.SaveInCastleTroops
 	AutoBirdDelayConfig = settings.AutoBirdDelayConfig
 	RecruitTroopsConfig = settings.RecruitTroopsConfig
+	AutoTCIConfig       = settings.AutoTCIConfig
+	AutoBeriWorldConfig = settings.AutoBeriWorldConfig
 	TabPriority         = settings.TabPriority
 
 	LoggedBird = sentbird.LoggedBird
@@ -120,6 +141,8 @@ var (
 )
 
 var SetCastleBuildingRows = castle.SetCastleBuildingRows
+
+var SetCastleConstructionSlots = castle.SetCastleConstructionSlots
 
 var (
 	SentBirdLoad         = sentbird.Load

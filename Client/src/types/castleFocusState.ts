@@ -4,7 +4,7 @@ import {
   WODS_DRAGON_HOARD,
   WODS_REFINERY,
   WODS_TOOLSMITH,
-} from '../dashboard/castleQueueVisibility';
+} from '../dashboard/CastleQueueVisibility';
 
 /**
  * Empire **spl** LID per production strip. 0/1 are confirmed from captures; 2–5 match the dashboard
@@ -394,7 +394,7 @@ export function parseCastleFocusPayload(raw: unknown): CastleFocusState | null {
   };
 }
 
-/** BG + BD rows from focus (BuildingParser → GameState via JaaCastleFocus). */
+/** BG + BD rows from focus (GameParser GcaWodBuildings → GameState via JaaCastleFocus). */
 export function mergedCastleFocusRows(cf: CastleFocusState | null): CastleBuildingRow[] {
   if (!cf) return [];
   return [...(cf.bgRows ?? []), ...(cf.bdRows ?? [])];

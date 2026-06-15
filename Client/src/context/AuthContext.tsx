@@ -1,21 +1,38 @@
 import { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
-import { FrontendWebsocket } from '../websocket';
-import { loadPresetsFile } from '../settings/autobirdPresets';
+import { FrontendWebsocket } from '../Websocket';
+import { loadPresetsFile } from '../settings/AutoBirdPresets';
 import {
   applyAutoBirdClientStateToLocalStorage,
   buildAutoBirdClientState,
   loadAutoBirdSettingsFromStorage,
   parseAutoBirdClientState,
   persistAutoBirdClientState,
-} from '../settings/autoBirdClientState';
+} from '../settings/AutoBirdClientState';
+import { loadPresetsFile as loadAutoTCIPresetsFile } from '../settings/AutoTCIPresets';
+import {
+  applyAutoTCIClientStateToLocalStorage,
+  applyAutoTCISettingsToLocalStorage,
+  buildAutoTCIClientState,
+  loadAutoTCISettingsFromStorage,
+  parseAutoTCIClientState,
+  persistAutoTCIClientState,
+} from '../settings/AutoTCIClientState';
+import {
+  applyAutoBeriWorldSettingsToLocalStorage,
+  loadAutoBeriWorldSettingsFromStorage,
+} from '../settings/AutoBeriWorldClientState';
 
 interface AuthContextType {
   gameLoggedIn: boolean;
   gameLoginCooldown: number;
   isGameDataReady: boolean;
   recruitTroopsEnabled: boolean;
+  autoTCIEnabled: boolean;
+  autoTCINextWakeUp: number;
   autoBirdEnabled: boolean;
   autoBirdNextWakeUp: number;
+  autoBeriWorldEnabled: boolean;
+  autoBeriWorldNextWakeUp: number;
   versionUpdate: { newVersion: string; downloadUrl: string } | null;
   isVersionBannerDismissed: boolean;
   ignoredVersion: string | null;
@@ -31,7 +48,9 @@ interface AuthContextType {
   startGame: () => void;
   stopGame: () => void;
   toggleRecruitTroops: () => void;
+  toggleAutoTCI: () => void;
   toggleAutoBird: () => void;
+  toggleAutoBeriWorld: () => void;
   sendMessage: (type: string, payload?: any) => void;
 }
 
@@ -42,8 +61,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [gameLoginCooldown, setGameLoginCooldown] = useState(0);
   const [isGameDataReady, setIsGameDataReady] = useState(false);
   const [recruitTroopsEnabled, setRecruitTroopsEnabled] = useState(false);
+  const [autoTCIEnabled, setAutoTCIEnabled] = useState(false);
+  const [autoTCINextWakeUp, setAutoTCINextWakeUp] = useState(0);
   const [autoBirdEnabled, setAutoBirdEnabled] = useState(false);
   const [autoBirdNextWakeUp, setAutoBirdNextWakeUp] = useState(0);
+  const [autoBeriWorldEnabled, setAutoBeriWorldEnabled] = useState(false);
+  const [autoBeriWorldNextWakeUp, setAutoBeriWorldNextWakeUp] = useState(0);
   const [versionUpdate, setVersionUpdate] = useState<{ newVersion: string; downloadUrl: string } | null>(null);
   const [isVersionBannerDismissed, setIsVersionBannerDismissed] = useState(false);
   const [ignoredVersion, setIgnoredVersion] = useState<string | null>(() => {
@@ -72,10 +95,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setChromeMem(message.payload.chromeMem);
       } else if (message.type === 'recruitTroopsStatus') {
         setRecruitTroopsEnabled(message.payload.enabled);
+      } else if (message.type === 'autoTCIStatus') {
+        setAutoTCIEnabled(!!message.payload?.enabled);
+        const nw = message.payload?.nextWakeUp;
+        setAutoTCINextWakeUp(typeof nw === 'number' ? nw : 0);
       } else if (message.type === 'autoBirdStatus') {
         setAutoBirdEnabled(!!message.payload?.enabled);
         const nw = message.payload?.nextWakeUp;
         setAutoBirdNextWakeUp(typeof nw === 'number' ? nw : 0);
+      } else if (message.type === 'autoBeriWorldStatus') {
+        setAutoBeriWorldEnabled(!!message.payload?.enabled);
+        const nw = message.payload?.nextWakeUp;
+        setAutoBeriWorldNextWakeUp(typeof nw === 'number' ? nw : 0);
+      } else if (message.type === 'autoBeriWorldSettings') {
+        if (message.payload && typeof message.payload === 'object' && !Array.isArray(message.payload)) {
+          applyAutoBeriWorldSettingsToLocalStorage(message.payload);
+        }
       } else if (message.type === 'autoBirdClientState') {
         let state = parseAutoBirdClientState(message.payload);
         if (state.presets.presets.length === 0) {
@@ -93,6 +128,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
         applyAutoBirdClientStateToLocalStorage(state);
+      } else if (message.type === 'autoTCIClientState') {
+        let state = parseAutoTCIClientState(message.payload);
+        if (state.presets.presets.length === 0) {
+          const localPresets = loadAutoTCIPresetsFile();
+          const localTargets = loadAutoTCISettingsFromStorage();
+          const hadLocalData =
+            localPresets.presets.length > 0 || Object.keys(localTargets).length > 0;
+          if (hadLocalData) {
+            state = buildAutoTCIClientState(localTargets, localPresets);
+            persistAutoTCIClientState(state);
+          }
+        }
+        applyAutoTCIClientStateToLocalStorage(state);
+      } else if (message.type === 'autoTCISettings') {
+        if (message.payload && typeof message.payload === 'object' && !Array.isArray(message.payload)) {
+          applyAutoTCISettingsToLocalStorage(message.payload as Record<string, Record<string, number>>);
+        }
       } else if (message.type === 'versionUpdate') {
         console.log('Version update received:', message.payload);
         const currentIgnoredVersion = localStorage.getItem('ignoredVersion');
@@ -156,6 +208,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     FrontendWebsocket.stopGame();
   };
 
+  const toggleAutoTCI = () => {
+    if (autoTCIEnabled) {
+      setAutoTCIEnabled(false);
+      setAutoTCINextWakeUp(0);
+      FrontendWebsocket.sendMessage({ type: 'toggleAutoTCI' });
+      return;
+    }
+    setAutoTCIEnabled(true);
+    setAutoTCINextWakeUp(0);
+    const settings = loadAutoTCISettingsFromStorage();
+    FrontendWebsocket.sendMessage({ type: 'toggleAutoTCI', payload: { settings } });
+  };
+
   const toggleAutoBird = () => {
     if (autoBirdEnabled) {
       FrontendWebsocket.sendMessage({ type: 'toggleAutoBird' });
@@ -169,8 +234,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         minDelay: s.minDelay,
         maxDelay: s.maxDelay,
         minSend: s.minSend,
+        minRPTDays: s.minRPTDays,
       },
     });
+  };
+
+  const toggleAutoBeriWorld = () => {
+    if (autoBeriWorldEnabled) {
+      FrontendWebsocket.sendMessage({ type: 'toggleAutoBeriWorld' });
+      return;
+    }
+    const s = loadAutoBeriWorldSettingsFromStorage();
+    FrontendWebsocket.sendMessage({ type: 'toggleAutoBeriWorld', payload: s });
   };
 
   const toggleRecruitTroops = () => {
@@ -219,8 +294,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       gameLoginCooldown,
       isGameDataReady,
       recruitTroopsEnabled,
+      autoTCIEnabled,
+      autoTCINextWakeUp,
       autoBirdEnabled,
       autoBirdNextWakeUp,
+      autoBeriWorldEnabled,
+      autoBeriWorldNextWakeUp,
       versionUpdate,
       isVersionBannerDismissed,
       ignoredVersion,
@@ -235,7 +314,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       startGame,
       stopGame,
       toggleRecruitTroops,
+      toggleAutoTCI,
       toggleAutoBird,
+      toggleAutoBeriWorld,
       sendMessage
     }}>
       {children}

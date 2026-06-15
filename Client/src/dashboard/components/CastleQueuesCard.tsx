@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useCastleFocus } from '../../context/CastleFocusContext';
-import { FrontendWebsocket } from '../../websocket';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 import {
   craftingSnapshotForStrip,
@@ -16,8 +15,8 @@ import {
   slotProductionForLid,
   type CraftingManualStripId,
   type SlotStripLayout,
-} from '../../types/castleFocusState.ts';
-import { visibleCastleQueueIds } from '../castleQueueVisibility';
+} from '../../types/CastleFocusState.ts';
+import { visibleCastleQueueIds } from '../CastleQueueVisibility';
 import BarracksQueueSlot from './BarracksQueueSlot';
 import CraftingQueueSlot from './CraftingQueueSlot';
 
@@ -78,25 +77,6 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
     () => CASTLE_QUEUE_DEFINITIONS.filter((q) => visible.has(q.id)),
     [visible]
   );
-
-  const focusedAid = castleFocus?.aid && castleFocus.aid > 0 ? castleFocus.aid : 0;
-
-  const lidsToPoll = useMemo(() => {
-    if (focusedAid <= 0) return [];
-    return [...new Set(queuesToRender.map((q) => q.lid))].sort((a, b) => a - b);
-  }, [focusedAid, queuesToRender]);
-
-  useEffect(() => {
-    if (lidsToPoll.length === 0) return;
-    const timers: number[] = [];
-    let delay = 260;
-    for (const lid of lidsToPoll) {
-      const t = delay;
-      timers.push(window.setTimeout(() => FrontendWebsocket.sendRequestSlotProduction(lid), t));
-      delay += 170;
-    }
-    return () => timers.forEach((id) => window.clearTimeout(id));
-  }, [lidsToPoll]);
 
   return (
     <Card className="flex flex-col min-h-0">

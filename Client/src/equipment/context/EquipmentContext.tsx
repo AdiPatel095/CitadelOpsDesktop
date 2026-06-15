@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, type ReactNode, useEffect, useMemo } from 'react';
-import { FrontendWebsocket } from '../../websocket.ts';
+import { FrontendWebsocket } from '../../Websocket.ts';
 import {
     type CommStat,
     type CastStat,
-} from '../models/equipment.ts';
+} from '../models/Equipment.ts';
 import { useAuth } from '../../context/AuthContext';
 
 // Castle index mapping (0-9) — matches server Models.NumPlayerCastleSlots / castStatUpdate optionalData

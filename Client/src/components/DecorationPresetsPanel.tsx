@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Layers, Play, Save, Trash2 } from 'lucide-react';
 import { useCastleFocus } from '../context/CastleFocusContext';
-import { FrontendWebsocket } from '../websocket';
+import { FrontendWebsocket } from '../Websocket';
 import CastleFocusHoverPopover from './CastleFocusHoverPopover';
-import { castleFocusDisplayName } from '../types/castleFocusState.ts';
+import { castleFocusDisplayName } from '../types/CastleFocusState.ts';
 import { Icons } from './Icons';
 import { Card, CardHeader, CardTitle, CardContent, Input, Button, Select } from './ui';
 
@@ -154,7 +154,7 @@ const DecorationPresetsPanel: React.FC = () => {
             <div>
               <CardTitle className="text-base">Saved presets</CardTitle>
               <p className="text-xs text-text-muted mt-0.5">
-                Per castle. Apply runs the smart replacer (SOB / EBU) until the layout matches.
+                Per castle; Storm presets persist across monthly instance id changes. Apply runs the smart replacer (SOB / EBU) until the layout matches.
               </p>
             </div>
           </div>

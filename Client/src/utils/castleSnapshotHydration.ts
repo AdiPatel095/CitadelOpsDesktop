@@ -2,7 +2,7 @@ import {
   parseCastleFocusPayload,
   type CastleFocusState,
   type PlayerCastleOption,
-} from '../types/castleFocusState.ts';
+} from '../types/CastleFocusState.ts';
 
 /** JSON keys for GameState.Castle (matches Go `PlayerCastles` tags). */
 export const CASTLE_SLOT_KEYS = [

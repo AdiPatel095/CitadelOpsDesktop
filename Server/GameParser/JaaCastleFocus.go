@@ -9,6 +9,15 @@ import (
 // NotifyCastleFocusChanged is wired by FrontendWebsocket to push castleFocus when jaa updates the in-view castle.
 var NotifyCastleFocusChanged func()
 
+// NotifyAutoTCIConstructionUpdated is wired by GameFeatures to reschedule ubc timers when gca.CI changes (JAA, rpc, ubc).
+var NotifyAutoTCIConstructionUpdated func()
+
+// NotifyBeriCastleDiscovered is wired by FeatureView when GCL (KID 10) provides Beri CID.
+var NotifyBeriCastleDiscovered func(castleCID, mapX, mapY int)
+
+// NotifyMainCastleAIDForAutoBeri is wired by FeatureView when GCL (KID 0) sets the main castle (kut SCID).
+var NotifyMainCastleAIDForAutoBeri func(mainCastleAID int)
+
 // parseJAACastleIdentityFromPayload extracts kingdom id, player castle instance id, and map coordinates
 // from a jaa/jca response JSON body. Layout matches jsonExamples/jaa.json: root KID, gca.A[1]=PX, A[2]=PY, A[3]=castle CID.
 func parseJAACastleIdentityFromPayload(data string) (kid int, castleID int, mapPX int, mapPY int, ok bool) {
@@ -16,7 +25,7 @@ func parseJAACastleIdentityFromPayload(data string) (kid int, castleID int, mapP
 	if err := json.Unmarshal([]byte(data), &root); err != nil {
 		return
 	}
-	kid = jsonIntAny(root["KID"])
+	kid = gcaJSONInt(root["KID"])
 	gcaObj, _ := root["gca"].(map[string]interface{})
 	if gcaObj == nil {
 		return
@@ -25,30 +34,14 @@ func parseJAACastleIdentityFromPayload(data string) (kid int, castleID int, mapP
 	if len(aArr) < 4 {
 		return
 	}
-	mapPX = jsonIntAny(aArr[1])
-	mapPY = jsonIntAny(aArr[2])
-	castleID = jsonIntAny(aArr[3])
+	mapPX = gcaJSONInt(aArr[1])
+	mapPY = gcaJSONInt(aArr[2])
+	castleID = gcaJSONInt(aArr[3])
 	if castleID <= 0 {
 		return
 	}
 	ok = true
 	return
-}
-
-func jsonIntAny(v interface{}) int {
-	switch n := v.(type) {
-	case float64:
-		return int(n)
-	case int:
-		return n
-	case int64:
-		return int(n)
-	case json.Number:
-		i, _ := n.Int64()
-		return int(i)
-	default:
-		return 0
-	}
 }
 
 func castleFocusPositionChanged(prev, cur Models.CastleFocus) bool {
@@ -87,7 +80,7 @@ func buildingRowsSnapshotEqual(bg1, bd1, bg2, bd2 []Models.BuildingData) bool {
 }
 
 // ApplyJAABuildingRowsFromPayload parses gca BG/BD from jaa and stores them on the matching PlayerCastleInfo.
-// Row parsing is BuildingParser.ParseBGFromJAAResponseJSON / ParseBDFromJAAResponseJSON (gca.BG and gca.BD in the JSON body).
+// Row parsing is ParseBGFromJAAResponseJSON / ParseBDFromJAAResponseJSON (GcaWodBuildings, gca.BG / gca.BD).
 // Returns true if BG/BD changed (for pushing castleFocus to the frontend).
 func ApplyJAABuildingRowsFromPayload(gs *Models.GameState, data string) bool {
 	_, cid, _, _, ok := parseJAACastleIdentityFromPayload(data)
@@ -105,6 +98,43 @@ func ApplyJAABuildingRowsFromPayload(gs *Models.GameState, data string) bool {
 	}
 	Models.SetCastleBuildingRows(c, bg, bd)
 	return true
+}
+
+func applyConstructionCIToCastle(gs *Models.GameState, castleID int, data string) bool {
+	next := ParseGCAConstructionFromGameJSON(data)
+	if next == nil {
+		return false
+	}
+	c := gs.GetCastleByID(castleID)
+	if c == nil {
+		return false
+	}
+	if constructionSlotsEqual(c.ConstructionByBuilding, next) {
+		return false
+	}
+	Models.SetCastleConstructionSlots(c, next)
+	if NotifyAutoTCIConstructionUpdated != nil {
+		go NotifyAutoTCIConstructionUpdated()
+	}
+	return true
+}
+
+// ApplyJAAConstructionSlotsFromPayload parses gca.CI and stores equipped CIDs, remaining time (RS), and levels per OID.
+func ApplyJAAConstructionSlotsFromPayload(gs *Models.GameState, data string) bool {
+	_, cid, _, _, ok := parseJAACastleIdentityFromPayload(data)
+	if !ok || !gs.IsKnownPlayerCastleID(cid) {
+		return false
+	}
+	return applyConstructionCIToCastle(gs, cid, data)
+}
+
+// ApplyFocusCastleConstructionCIFromPayload applies root `CI` (e.g. **rpc** / **ubc** responses) to the currently focused castle.
+func ApplyFocusCastleConstructionCIFromPayload(gs *Models.GameState, data string) bool {
+	cid := gs.CastleFocus.CastleAID
+	if cid <= 0 || !gs.IsKnownPlayerCastleID(cid) {
+		return false
+	}
+	return applyConstructionCIToCastle(gs, cid, data)
 }
 
 // ApplyJAATroopsFromPayload parses gui troop arrays from the jaa JSON and updates the castle's CastleTroopData.

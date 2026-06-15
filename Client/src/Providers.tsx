@@ -7,6 +7,9 @@ import { EquipmentProvider } from './equipment/context/EquipmentContext';
 import { ResourceProvider } from './currency/context/ResourceContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TroopPickerProvider } from './components/TroopPickerModal';
+import { TCIPickerProvider } from './components/TCIPickerModal';
+import { RiftMapProvider } from './Rift/context/RiftMapContext';
+import { MovementProvider } from './Movement/context/MovementContext';
 import { MetadataProvider } from './context/MetadataContext';
 import SharedSvgDefs from './components/SharedSvgDefs';
 
@@ -19,12 +22,18 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({ children })
                         <CastleResourceProvider>
                             <ResourceProvider>
                                 <MetadataProvider>
-                                    <EquipmentProvider>
-                                        <TroopPickerProvider>
-                                            <SharedSvgDefs />
-                                            {children}
-                                        </TroopPickerProvider>
-                                    </EquipmentProvider>
+                                    <RiftMapProvider>
+                                        <MovementProvider>
+                                            <EquipmentProvider>
+                                                <TroopPickerProvider>
+                                                    <TCIPickerProvider>
+                                                        <SharedSvgDefs />
+                                                        {children}
+                                                    </TCIPickerProvider>
+                                                </TroopPickerProvider>
+                                            </EquipmentProvider>
+                                        </MovementProvider>
+                                    </RiftMapProvider>
                                 </MetadataProvider>
                             </ResourceProvider>
                         </CastleResourceProvider>

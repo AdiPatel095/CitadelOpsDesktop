@@ -34,7 +34,7 @@ type Hub struct {
 func InitHub() {
 	FrontendSocket = &Hub{
 		Clients:    make(map[*Client]bool),
-		Broadcast:  make(chan []byte),
+		Broadcast:  make(chan []byte, 256),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 	}
@@ -61,8 +61,16 @@ func (h *Hub) Run() {
 				select {
 				case client.Send <- message:
 				default:
-					close(client.Send)
-					delete(h.Clients, client)
+					// Drop one stale message and retry once — never disconnect on a full buffer.
+					select {
+					case <-client.Send:
+					default:
+					}
+					select {
+					case client.Send <- message:
+					default:
+						log.Printf("[frontend-ws] client send buffer full; dropping %d-byte broadcast", len(message))
+					}
 				}
 			}
 			h.Mutex.Unlock()
@@ -100,8 +108,14 @@ func (c *Client) ReadPump() {
 			log.Printf("error reading message: %v", err)
 			break
 		}
-		ParseFrontendMessage(message)
-		// Process the message
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("[frontend-ws] panic handling message: %v", r)
+				}
+			}()
+			ParseFrontendMessage(message)
+		}()
 	}
 }
 
@@ -111,7 +125,7 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	client := &Client{Conn: conn, Send: make(chan []byte, 256)}
+	client := &Client{Conn: conn, Send: make(chan []byte, 2048)}
 	FrontendSocket.Register <- client
 
 	go client.WritePump()
@@ -135,6 +149,10 @@ func (c *Client) SendToClient(messageType string, payload interface{}, optionalD
 }
 
 func SendFrontendMessage(messageType string, payload interface{}, optionalData string) {
+	if FrontendSocket == nil {
+		log.Printf("[frontend-ws] hub not ready; drop %s", messageType)
+		return
+	}
 	message := map[string]interface{}{
 		"type":         messageType,
 		"payload":      payload,
@@ -142,8 +160,8 @@ func SendFrontendMessage(messageType string, payload interface{}, optionalData s
 	}
 	jsonData, err := json.Marshal(message)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("[frontend-ws] marshal %s: %v", messageType, err)
+		return
 	}
 	FrontendSocket.Broadcast <- jsonData
-
 }

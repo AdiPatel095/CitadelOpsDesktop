@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// CDSHBWPTT is one (HBW, PTT) pair for EmpireEx_21 **cds**.
+// CDSHBWPTT is one (HBW, PTT) pair for EmpireEx **cds**.
 // HBW=0, PTT=0 is rejected (cds code 5 in captures); these two are what the app uses in practice.
 type CDSHBWPTT struct {
 	HBW int
@@ -16,8 +16,8 @@ type CDSHBWPTT struct {
 var (
 	// CDSHBWNegOnePTTOne is the common client-style bird send (-1 / 1).
 	CDSHBWNegOnePTTOne = CDSHBWPTT{HBW: -1, PTT: 1}
-	// CDSHBW1001PTTZero is the alternate working pair (1001 / 0).
-	CDSHBW1001PTTZero = CDSHBWPTT{HBW: 1001, PTT: 0}
+	// CDSHBW1007PTTZero is the alternate working pair (1001 / 0).
+	CDSHBW1007PTTZero = CDSHBWPTT{HBW: 1007, PTT: 0}
 )
 
 // Archived pairs (also returned cds code 0 in manual tests); kept for reference only — not used by the app.
@@ -30,9 +30,9 @@ const cdsPTTThreshold = 50000
 // When game PTT > threshold, prefer the CDS pair that sends PTT=1 (HBW -1); otherwise prefer 1001/0.
 func cdsPairsForGamePTT(gamePTT float64) []CDSHBWPTT {
 	if gamePTT > cdsPTTThreshold {
-		return []CDSHBWPTT{CDSHBWNegOnePTTOne, CDSHBW1001PTTZero}
+		return []CDSHBWPTT{CDSHBWNegOnePTTOne, CDSHBW1007PTTZero}
 	}
-	return []CDSHBWPTT{CDSHBW1001PTTZero, CDSHBWNegOnePTTOne}
+	return []CDSHBWPTT{CDSHBW1007PTTZero, CDSHBWNegOnePTTOne}
 }
 
 const cdsWaitPerVariant = 5 * time.Second

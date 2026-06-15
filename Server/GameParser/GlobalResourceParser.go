@@ -1,18 +1,60 @@
 package GameParser
 
 import (
+	"sync/atomic"
+
 	"CitadelDesktop/Server/Models"
 )
 
+// NotifyGlobalResourcesChanged is wired by FrontendWebsocket to push globalResourceUpdate after **gcu**.
+var NotifyGlobalResourcesChanged func()
+
+var coinUpdateGeneration uint64
+
+// CoinUpdateGeneration increments on each **gcu** coin/ruby apply (used to sync upgrade loop with live balances).
+func CoinUpdateGeneration() uint64 {
+	return atomic.LoadUint64(&coinUpdateGeneration)
+}
+
+func bumpCoinUpdateGeneration() {
+	atomic.AddUint64(&coinUpdateGeneration, 1)
+}
+
 func UpdateCoins(gcuMap map[string]interface{}) {
 	gs := Models.GetGameState()
-	coins, ok := gcuMap["C1"].(float64)
-	if ok {
+	changed := false
+	// Live **gcu** during **ere** upgrades: spend decreases **C1**; **C2** is rubies (see websocket captures).
+	if coins, ok := gcuMap["C1"].(float64); ok {
 		gs.GlobalResources.Coins = coins
+		changed = true
 	}
-	rubies, ok := gcuMap["C2"].(float64)
-	if ok {
+	if rubies, ok := gcuMap["C2"].(float64); ok {
 		gs.GlobalResources.Rubies = rubies
+		changed = true
+	}
+	if changed {
+		bumpCoinUpdateGeneration()
+	}
+	if NotifyGlobalResourcesChanged != nil {
+		NotifyGlobalResourcesChanged()
+	}
+}
+
+// UpdateCoinsFromPayload applies **gcu**-shaped or nested `gcu` coin updates from a response body.
+func UpdateCoinsFromPayload(payload map[string]interface{}) {
+	if payload == nil {
+		return
+	}
+	if nested, ok := payload["gcu"].(map[string]interface{}); ok {
+		UpdateCoins(nested)
+		return
+	}
+	if _, ok := payload["C1"].(float64); ok {
+		UpdateCoins(payload)
+		return
+	}
+	if _, ok := payload["C2"].(float64); ok {
+		UpdateCoins(payload)
 	}
 }
 
