@@ -1,0 +1,99 @@
+import React from 'react';
+import { MapPin, RefreshCw } from 'lucide-react';
+import { useCastleFocus } from '../../context/CastleFocusContext';
+import { useAuth } from '../../context/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle, Button } from '../../components/ui';
+import { useRiftMap } from '../context/RiftMapContext';
+import { formatRiftDelta } from '../types/RiftMapCoords';
+
+const RiftCoordDisplay: React.FC = () => {
+  const { gameLoggedIn } = useAuth();
+  const { castleFocus } = useCastleFocus();
+  const { riftMapCoords, refreshRiftMapCoords } = useRiftMap();
+
+  const centerX = riftMapCoords?.centerX ?? castleFocus?.mapPX ?? 0;
+  const centerY = riftMapCoords?.centerY ?? castleFocus?.mapPY ?? 0;
+  const kingdomID = riftMapCoords?.kingdomID ?? castleFocus?.kingdomID ?? 0;
+  const castleName = castleFocus?.castleName?.trim() || 'Castle';
+  const rift = riftMapCoords?.rift ?? null;
+  const found = riftMapCoords?.found ?? false;
+  const riftKid = riftMapCoords?.riftKingdomID ?? 0;
+  const hasCastleCoords = centerX !== 0 || centerY !== 0;
+
+  return (
+    <Card className="border-border-base bg-bg-app/20">
+      <CardHeader className="flex flex-row items-center justify-between gap-4 pb-3 border-b border-border-base bg-bg-card-hover/50 rounded-t-[calc(var(--radius-global)-1px)]">
+        <div>
+          <CardTitle className="text-lg text-primary">Rift location</CardTitle>
+          <p className="text-xs text-text-muted mt-1">
+            Single world Rift on K{riftKid || 0}
+            {hasCastleCoords ? (
+              <>
+                {' '}
+                · {castleName} at ({centerX}, {centerY}) · K{kingdomID}
+              </>
+            ) : null}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          disabled={!gameLoggedIn}
+          onClick={() => refreshRiftMapCoords(true)}
+          title={gameLoggedIn ? 'Refresh Rift coords from game (GAA)' : 'Connect to refresh live map data'}
+          leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+        >
+          Refresh
+        </Button>
+      </CardHeader>
+      <CardContent className="pt-4">
+        {!found || !rift ? (
+          <p className="text-sm text-text-muted">
+            {gameLoggedIn
+              ? 'Rift not in map cache yet. Open the world map near the Rift or press Refresh to request GAA.'
+              : 'No Rift tile in the last snapshot. Connect and refresh after the map has loaded once.'}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2.5 text-primary">
+                <MapPin className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">Coordinates</p>
+                <p className="text-2xl font-bold font-mono text-text-main mt-0.5">
+                  {rift.x}, {rift.y}
+                </p>
+                <p className="text-sm text-text-muted mt-1">
+                  {rift.typeLabel ?? 'Rift'}
+                  {rift.name?.trim() ? ` · ${rift.name.trim()}` : ''}
+                </p>
+              </div>
+            </div>
+
+            {hasCastleCoords ? (
+              <div className="rounded-lg border border-border-base bg-bg-card/40 px-4 py-3 min-w-[12rem]">
+                <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">
+                  From {castleName}
+                </p>
+                <p className="text-lg font-semibold text-text-main mt-1">
+                  {riftMapCoords?.distance ?? 0} tiles
+                </p>
+                <p className="text-xs font-mono text-text-muted mt-1">
+                  Δ {formatRiftDelta(riftMapCoords?.deltaX ?? 0, riftMapCoords?.deltaY ?? 0)}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-text-muted">
+                Focus a castle with map coords to see distance from your castle.
+              </p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default RiftCoordDisplay;
