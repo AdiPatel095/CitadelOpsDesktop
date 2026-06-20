@@ -1,0 +1,27 @@
+name: Enforce branch flow
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
+      - ready_for_review
+
+permissions:
+  contents: read
+
+jobs:
+  require-develop-into-main:
+    name: Require develop into main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate source branch
+        run: |
+          if [ "${{ github.head_ref }}" != "develop" ]; then
+            echo "Pull requests into main must come from the develop branch."
+            exit 1
+          fi
