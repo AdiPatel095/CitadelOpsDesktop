@@ -21,7 +21,8 @@ jobs:
     steps:
       - name: Validate source branch
         run: |
-          if [ "${{ github.head_ref }}" != "develop" ]; then
-            echo "Pull requests into main must come from the develop branch."
+          if [ "${{ github.head_ref }}" != "develop" ] || \
+             [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "Pull requests into main must come from this repository's develop branch."
             exit 1
           fi
