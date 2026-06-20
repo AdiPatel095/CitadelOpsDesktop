@@ -99,6 +99,7 @@ type (
 	PlayerMovement = movement.PlayerMovement
 
 	Alliance             = alliance.Alliance
+	AllianceMember       = alliance.AllianceMember
 	BirdLocation         = alliance.BirdLocation
 	PlayerCastleLocation = alliance.PlayerCastleLocation
 

@@ -72,8 +72,6 @@ class FrontendWebsocketService {
     this.sendMessage({ type: 'getAutoBirdClientState' });
     this.sendMessage({ type: 'getAutoTCIClientState' });
     this.sendMessage({ type: 'getAutoBeriWorldSettings' });
-    this.sendGetRiftCRALaunch();
-    this.sendGetRiftMaidenCommsSettings();
   }
 
   private scheduleReconnect() {
@@ -196,6 +194,10 @@ class FrontendWebsocketService {
 
   public refreshEquipment() {
     this.sendMessage({ type: 'refreshEquipment' });
+  }
+
+  public sendFetchAllianceInfo(): boolean {
+    return this.sendMessage({ type: 'fetchAllianceInfo' });
   }
 
   public refreshSingleCommander(equipmentMode: 'Commander' | 'Castellan', targetIndex: number) {

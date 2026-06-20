@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 
-import { statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName, type CommStat, type CastStat } from '../models/Equipment';
+import { displayStatName, commanderStatGroups, castellanStatGroups, statGroupDisplayName, type CommStat, type CastStat } from '../models/Equipment';
 import { FrontendWebsocket } from '../../Websocket';
 import { useResources } from '../../currency/context/ResourceContext';
 import { coinsUnderUpgradeReserve } from '../../utils/UpgradeCoinReserve';
@@ -698,7 +698,7 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
   }, [stats, combatMode, equipmentMode]);
 
   const renderStat = (statKey: string, value: number) => {
-    const label = statDisplayName[statKey] || statKey;
+    const label = displayStatName(statKey, { equipmentMode });
     return (
       <div className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-bg-card-hover transition-colors" key={statKey}>
         <span className="text-sm text-text-muted">{label}</span>

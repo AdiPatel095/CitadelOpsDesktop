@@ -149,28 +149,20 @@ func ProcessCast(castMap map[string]interface{}, castActual *Models.CastActualMo
 
 func ProcessEquipStatCast(equipment Models.EquipmentModel, dstCast *Models.CastStatModel, ceilingCast *Models.CastStatModel) {
 	for _, stat := range equipment.EquipStats {
-		updater, ok := Models.CastStatUpdaterMap[stat.ID]
-		if ok {
-			if (stat.ID >= 20012 && stat.ID <= 20017) || (stat.ID == 10118) {
-				updater(dstCast, stat.Value[1])
-			} else {
-				updater(dstCast, stat.Value[0])
-			}
-
+		if len(stat.Value) == 0 {
+			continue
 		}
+		equip.ApplyCastellanLiveStat(dstCast, stat.ID, stat.Value, equip.CatalogEffectSourceEquipment)
 		Models.ApplyCastCeiling(dstCast, ceilingCast)
 	}
 }
 
 func ProcessGemStatCast(equipment Models.EquipmentModel, dstCast *Models.CastStatModel, ceilingCast *Models.CastStatModel) {
 	for _, stat := range equipment.GemSlot.Gem.GemStats {
-		updater, ok := Models.CastStatUpdaterMap[stat.ID]
-		if ok {
-			if stat.ID >= 20012 && stat.ID <= 20017 {
-				updater(dstCast, stat.Value[1])
-			}
-			updater(dstCast, stat.Value[0])
+		if len(stat.Value) == 0 {
+			continue
 		}
+		equip.ApplyCastellanLiveStat(dstCast, stat.ID, stat.Value, equip.CatalogEffectSourceGem)
 		Models.ApplyCastCeiling(dstCast, ceilingCast)
 	}
 }
@@ -293,15 +285,10 @@ func ProcessComm(commMap map[string]interface{}, index int) {
 
 func ProcessEquipStatComm(equipment Models.EquipmentModel, dstComm *Models.CommStatModel, ceilingComm *Models.CommStatModel) {
 	for _, stat := range equipment.EquipStats {
-		updater, ok := Models.CommStatUpdaterMap[stat.ID]
-		if ok {
-			if (stat.ID >= 20012 && stat.ID <= 20017) || stat.ID == 121 {
-				updater(dstComm, stat.Value[1])
-			} else {
-				updater(dstComm, stat.Value[0])
-			}
-
+		if len(stat.Value) == 0 {
+			continue
 		}
+		equip.ApplyCommanderLiveStat(dstComm, stat.ID, stat.Value, equip.CatalogEffectSourceEquipment)
 		Models.ApplyCommCeiling(dstComm, ceilingComm)
 
 	}
@@ -309,13 +296,10 @@ func ProcessEquipStatComm(equipment Models.EquipmentModel, dstComm *Models.CommS
 
 func ProcessGemStatComm(equipment Models.EquipmentModel, dstComm *Models.CommStatModel, ceilingComm *Models.CommStatModel) {
 	for _, stat := range equipment.GemSlot.Gem.GemStats {
-		updater, ok := Models.CommStatUpdaterMap[stat.ID]
-		if ok {
-			if stat.ID >= 20012 && stat.ID <= 20017 {
-				updater(dstComm, stat.Value[1])
-			}
-			updater(dstComm, stat.Value[0])
+		if len(stat.Value) == 0 {
+			continue
 		}
+		equip.ApplyCommanderLiveStat(dstComm, stat.ID, stat.Value, equip.CatalogEffectSourceGem)
 		Models.ApplyCommCeiling(dstComm, ceilingComm)
 	}
 }

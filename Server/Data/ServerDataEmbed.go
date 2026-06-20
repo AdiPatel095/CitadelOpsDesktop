@@ -15,6 +15,9 @@ var embeddedConstructionItemsJSON []byte
 //go:embed effects/items.json
 var embeddedEffectsItemsJSON []byte
 
+//go:embed equipment_effects/items.json
+var embeddedEquipmentEffectsItemsJSON []byte
+
 //go:embed construction_item_group_buildings.json
 var embeddedConstructionItemGroupBuildingsJSON []byte
 
@@ -66,6 +69,11 @@ func ReadConstructionItemsJSON() ([]byte, error) {
 // ReadEffectsItemsJSON returns effects/items.json (disk first, else embedded).
 func ReadEffectsItemsJSON() ([]byte, error) {
 	return readFilePreferDisk(filepath.Join("effects", "items.json"), embeddedEffectsItemsJSON)
+}
+
+// ReadEquipmentEffectsItemsJSON returns equipment_effects/items.json (disk first, else embedded).
+func ReadEquipmentEffectsItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("equipment_effects", "items.json"), embeddedEquipmentEffectsItemsJSON)
 }
 
 // ReadBuildingsJSON returns buildings/items.json (official EmpireItems building catalog).

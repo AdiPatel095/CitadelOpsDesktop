@@ -6,7 +6,7 @@ import (
 )
 
 // EffectCoverageReport lists effect/stat IDs present in live websocket-style payloads that have no
-// matching entry in CommStatUpdaterMap / CastStatUpdaterMap. Use GameParser.RawEquipmentEffectCoverageFromGLI
+// matching live-row handler or catalog-backed resolver. Use GameParser.RawEquipmentEffectCoverageFromGLI
 // (and related helpers there) to read IDs from raw GLI/storage/RGEM maps at the same indices as
 // ProcessEquipment / ProcessGem—before ProcessEquipStat* drops unknown IDs.
 type EffectCoverageReport struct {

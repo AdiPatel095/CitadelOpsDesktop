@@ -85,6 +85,11 @@ func MessageRouter(messageParts []string) {
 			return
 		}
 		ParseAllianceInfo(payload)
+	case "sne":
+		if !hasPayload {
+			return
+		}
+		HandleSNESharedBattleReports(payload)
 	case "cra":
 		if !hasPayload {
 			return

@@ -9,6 +9,7 @@ Conventions for humans and AI assistants working in this repository. **Cursor ru
 - This is a **real** workspace: **run** commands, read files, and fix issues yourself. Do not stop after a single failed attempt; try alternatives and diagnose.
 - When investigation needs large logs (e.g. `websocket_game.log`), use **streaming**, **line ranges**, or **grep/Select-String**—do not load entire multi‑GB files into a single read or string.
 - **Today’s date** for user-facing or search defaults: use the **“Today’s date”** value from the active session / user_info (do not assume an old year).
+- This is **not a production application**. Testing is **not required** as a default definition of done; run tests only when the user explicitly asks, when diagnosing a test failure, or when a narrowly scoped check is clearly useful.
 
 ---
 

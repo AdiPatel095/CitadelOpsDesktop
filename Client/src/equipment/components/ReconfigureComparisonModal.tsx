@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Icons } from '../../components/Icons';
-import { type CommStat, type CastStat, statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/Equipment';
+import { type CommStat, type CastStat, displayStatName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/Equipment';
 import { FrontendWebsocket } from '../../Websocket';
 import { Modal, Button, Badge } from '../../components/ui';
 
@@ -70,16 +70,17 @@ interface StatRowProps {
     statKey: string;
     currentValue: number;
     newValue: number;
+    equipmentMode: 'Commander' | 'Castellan';
 }
 
-const StatRow: React.FC<StatRowProps> = ({ statKey, currentValue, newValue }) => {
+const StatRow: React.FC<StatRowProps> = ({ statKey, currentValue, newValue, equipmentMode }) => {
     const diff = newValue - currentValue;
     const hasChange = diff !== 0;
 
     return (
         <div className={`flex items-center py-2 px-3 rounded-lg border ${hasChange ? 'bg-bg-app/80 border-border-base' : 'border-transparent'}`}>
             <span className="flex-1 text-sm text-text-muted truncate font-medium">
-                {statDisplayName[statKey] || statKey}
+                {displayStatName(statKey, { equipmentMode })}
             </span>
             <span className="w-16 text-right text-sm text-text-muted opacity-75 font-mono">
                 {currentValue.toFixed(1)}
@@ -100,11 +101,12 @@ const StatRow: React.FC<StatRowProps> = ({ statKey, currentValue, newValue }) =>
 interface StatSectionProps {
     title: string;
     stats: string[];
+    equipmentMode: 'Commander' | 'Castellan';
     currentProcessed: { [key: string]: number };
     newProcessed: { [key: string]: number };
 }
 
-const StatSection: React.FC<StatSectionProps> = ({ title, stats, currentProcessed, newProcessed }) => {
+const StatSection: React.FC<StatSectionProps> = ({ title, stats, equipmentMode, currentProcessed, newProcessed }) => {
     const hasAnyChange = stats.some(stat => {
         const current = currentProcessed[stat] || 0;
         const next = newProcessed[stat] || 0;
@@ -125,6 +127,7 @@ const StatSection: React.FC<StatSectionProps> = ({ title, stats, currentProcesse
                         statKey={stat}
                         currentValue={currentProcessed[stat] || 0}
                         newValue={newProcessed[stat] || 0}
+                        equipmentMode={equipmentMode}
                     />
                 ))}
             </div>
@@ -208,6 +211,7 @@ const ReconfigureComparisonModal: React.FC<ReconfigureComparisonModalProps> = ({
                         key={groupName}
                         title={statGroupDisplayName[groupName] || groupName}
                         stats={statKeys}
+                        equipmentMode={equipmentMode}
                         currentProcessed={currentProcessed}
                         newProcessed={newProcessed}
                     />
