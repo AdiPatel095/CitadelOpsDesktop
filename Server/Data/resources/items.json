@@ -1,80 +1,80 @@
 [
   {
-    "resourceID": "1",
-    "name": "currency1",
     "JSONKey": "C1",
-    "_display_name": "currency1"
+    "_display_name": "currency1",
+    "name": "currency1",
+    "resourceID": "1"
   },
   {
-    "resourceID": "2",
-    "name": "currency2",
     "JSONKey": "C2",
-    "_display_name": "currency2"
+    "_display_name": "currency2",
+    "name": "currency2",
+    "resourceID": "2"
   },
   {
-    "resourceID": "3",
-    "name": "wood",
     "JSONKey": "W",
-    "_display_name": "wood"
+    "_display_name": "wood",
+    "name": "wood",
+    "resourceID": "3"
   },
   {
-    "resourceID": "4",
-    "name": "stone",
     "JSONKey": "S",
-    "_display_name": "stone"
+    "_display_name": "stone",
+    "name": "stone",
+    "resourceID": "4"
   },
   {
-    "resourceID": "5",
-    "name": "food",
     "JSONKey": "F",
-    "_display_name": "food"
+    "_display_name": "food",
+    "name": "food",
+    "resourceID": "5"
   },
   {
-    "resourceID": "6",
-    "name": "coal",
     "JSONKey": "C",
-    "_display_name": "coal"
+    "_display_name": "coal",
+    "name": "coal",
+    "resourceID": "6"
   },
   {
-    "resourceID": "7",
-    "name": "oil",
     "JSONKey": "O",
-    "_display_name": "oil"
+    "_display_name": "oil",
+    "name": "oil",
+    "resourceID": "7"
   },
   {
-    "resourceID": "8",
-    "name": "glass",
     "JSONKey": "G",
-    "_display_name": "glass"
+    "_display_name": "glass",
+    "name": "glass",
+    "resourceID": "8"
   },
   {
-    "resourceID": "9",
-    "name": "aquamarine",
     "JSONKey": "A",
-    "_display_name": "aquamarine"
+    "_display_name": "aquamarine",
+    "name": "aquamarine",
+    "resourceID": "9"
   },
   {
-    "resourceID": "10",
-    "name": "iron",
     "JSONKey": "I",
-    "_display_name": "iron"
+    "_display_name": "iron",
+    "name": "iron",
+    "resourceID": "10"
   },
   {
-    "resourceID": "11",
-    "name": "honey",
     "JSONKey": "HONEY",
-    "_display_name": "honey"
+    "_display_name": "honey",
+    "name": "honey",
+    "resourceID": "11"
   },
   {
-    "resourceID": "12",
-    "name": "mead",
     "JSONKey": "MEAD",
-    "_display_name": "mead"
+    "_display_name": "mead",
+    "name": "mead",
+    "resourceID": "12"
   },
   {
-    "resourceID": "13",
-    "name": "beef",
     "JSONKey": "BEEF",
-    "_display_name": "beef"
+    "_display_name": "beef",
+    "name": "beef",
+    "resourceID": "13"
   }
 ]

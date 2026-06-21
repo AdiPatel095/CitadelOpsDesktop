@@ -17,7 +17,12 @@ const ToolImage: React.FC<ToolImageProps> = ({ toolId, size = 40, showLevel = tr
   const level = metadataLevel(metadata?.level);
   const sources = useMemo(() => {
     const metadataSrc = typeof metadata?.image === 'string' ? metadata.image.trim() : '';
-    return uniqueSources([metadataSrc, `/game-data/tools/images/${toolId}.png`, `/assets/Tools/${toolId}.png`]);
+    const directMetadataSrc = metadataSrc.toLowerCase().endsWith('.png') ? '' : metadataSrc;
+    return uniqueSources([
+      webpVariant(metadataSrc),
+      `/game-data/tools/images/${toolId}.webp`,
+      directMetadataSrc,
+    ]);
   }, [metadata?.image, toolId]);
   const src = sources[sourceIndex];
   const failed = !src;
@@ -60,6 +65,13 @@ function uniqueSources(values: string[]): string[] {
     }
   }
   return out;
+}
+
+function webpVariant(value: string): string {
+  if (!value || !value.toLowerCase().endsWith('.png')) {
+    return '';
+  }
+  return `${value.slice(0, -4)}.webp`;
 }
 
 function metadataLevel(value: unknown): number | undefined {

@@ -7,6 +7,7 @@
     "client:dev": "cd Client && npm run dev",
     "client:build": "cd Client && npm run build",
     "server:dev": "cd Server && go run main.go",
+    "updateData": "go run ./Server/OfficialData -fetch-assets -prune-png",
     "serve": "npm run client:dev && npm run server:dev",
     "build:dev": "npm run client:build && go build -o CitadelDesktop.exe main.go && CitadelDesktop.exe"
   }

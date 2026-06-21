@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Shield } from 'lucide-react';
 import { getUnitBaseAndLevel } from '../config/Constants';
 import { useMetadata } from '../context/MetadataContext';
@@ -13,11 +13,25 @@ interface UnitImageProps {
 
 const UnitImage: React.FC<UnitImageProps> = ({ unitId, size = 40, showLevel = false, className = '' }) => {
   const { getTroop } = useMetadata();
-  const [failed, setFailed] = useState(false);
+  const [sourceIndex, setSourceIndex] = useState(0);
   const metadata = getTroop(unitId);
   const level = getUnitBaseAndLevel(unitId)?.level;
-  const src = metadata?.image || `/assets/Troops/${unitId}.png`;
+  const sources = useMemo(() => {
+    const metadataSrc = typeof metadata?.image === 'string' ? metadata.image.trim() : '';
+    const directMetadataSrc = metadataSrc.toLowerCase().endsWith('.png') ? '' : metadataSrc;
+    return uniqueSources([
+      webpVariant(metadataSrc),
+      `/game-data/troops/images/${unitId}.webp`,
+      directMetadataSrc,
+    ]);
+  }, [metadata?.image, unitId]);
+  const src = sources[sourceIndex];
+  const failed = !src;
   const title = metadata?.name ?? `Unit ${unitId}`;
+
+  useEffect(() => {
+    setSourceIndex(0);
+  }, [sources]);
 
   return (
     <span
@@ -34,7 +48,7 @@ const UnitImage: React.FC<UnitImageProps> = ({ unitId, size = 40, showLevel = fa
           height={size}
           className="h-full w-full object-contain"
           draggable={false}
-          onError={() => setFailed(true)}
+          onError={() => setSourceIndex((current) => current + 1)}
         />
       ) : (
         <Shield className="h-1/2 w-1/2 text-text-muted" />
@@ -43,5 +57,22 @@ const UnitImage: React.FC<UnitImageProps> = ({ unitId, size = 40, showLevel = fa
     </span>
   );
 };
+
+function uniqueSources(values: string[]): string[] {
+  const out: string[] = [];
+  for (const value of values) {
+    if (value && !out.includes(value)) {
+      out.push(value);
+    }
+  }
+  return out;
+}
+
+function webpVariant(value: string): string {
+  if (!value || !value.toLowerCase().endsWith('.png')) {
+    return '';
+  }
+  return `${value.slice(0, -4)}.webp`;
+}
 
 export default UnitImage;
