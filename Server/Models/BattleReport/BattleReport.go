@@ -227,14 +227,58 @@ func CaptureFromSNERow(root map[string]interface{}, row []interface{}) (Capture,
 		LID:                  lid,
 		NoticeType:           int(noticeType),
 		BattleKey:            battleKey,
-		SNERow:               row,
-		SNE:                  root,
+		SNERow:               cloneSNERow(row),
 	}
+	capture.SNE = compactSNEForCapture(capture, root)
 	return capture, true
 }
 
 func isSharedBattleReportNotice(noticeType int64, battleKey string) bool {
 	return noticeType == 6 && strings.Contains(battleKey, "#")
+}
+
+func compactSNEForCapture(capture Capture, root map[string]interface{}) map[string]interface{} {
+	if root == nil {
+		return nil
+	}
+	row := cloneSNERow(capture.SNERow)
+	if len(row) == 0 {
+		row = matchingSNERow(root, capture.MID)
+	}
+	if len(row) == 0 {
+		return nil
+	}
+	compact := make(map[string]interface{}, len(root))
+	for key, value := range root {
+		compact[key] = value
+	}
+	compact["MSG"] = []interface{}{row}
+	return compact
+}
+
+func matchingSNERow(root map[string]interface{}, mid int64) []interface{} {
+	rows, ok := root["MSG"].([]interface{})
+	if !ok {
+		return nil
+	}
+	for _, rawRow := range rows {
+		row, ok := rawRow.([]interface{})
+		if !ok {
+			continue
+		}
+		rowMID, ok := int64FromValue(rowValue(row, 0))
+		if ok && rowMID == mid {
+			return cloneSNERow(row)
+		}
+	}
+	return nil
+}
+
+func cloneSNERow(row []interface{}) []interface{} {
+	if len(row) == 0 {
+		return nil
+	}
+	return append([]interface{}(nil), row...)
 }
 
 func AppendCapture(capture Capture) error {
@@ -376,6 +420,7 @@ func cloudBattleReportFromCapture(capture Capture) (cloudBattleReportPayload, er
 	}
 	payloadCapture := capture
 	payloadCapture.ClientID = ""
+	payloadCapture.SNE = compactSNEForCapture(payloadCapture, payloadCapture.SNE)
 	rawCapture, err := json.Marshal(payloadCapture)
 	if err != nil {
 		return cloudBattleReportPayload{}, err
