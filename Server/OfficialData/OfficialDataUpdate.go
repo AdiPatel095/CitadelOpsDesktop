@@ -89,7 +89,19 @@ func main() {
 	flag.Parse()
 
 	if len(catalogs) == 0 {
-		catalogs = stringListFlag{"tools", "troops", "decorations", "resources"}
+		catalogs = stringListFlag{
+			"tools",
+			"troops",
+			"decorations",
+			"resources",
+			"effects",
+			"effect_caps",
+			"equipment_effects",
+			"relic_effects",
+			"equipments",
+			"gems",
+			"equipment_sets",
+		}
 	}
 
 	client := &http.Client{Timeout: 45 * time.Second}

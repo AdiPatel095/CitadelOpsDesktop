@@ -15,10 +15,12 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	serverdata "CitadelDesktop/Server/Data"
 	"CitadelDesktop/Server/Paths"
 )
 
@@ -774,10 +776,22 @@ func applyBattleMeta(report *ParsedReport, bls map[string]interface{}) {
 		}
 	}
 	report.Metrics = metricsFromPBI(bls)
-	report.CommanderEffects = effectsFromLeader(bls["AL"], "commander")
-	report.CastellanEffects = effectsFromLeader(bls["DB"], "castellan")
+	combatMode := reportBattleEffectCombatMode(report)
+	report.CommanderEffects = effectsFromLeader(bls["AL"], "commander", combatMode)
+	report.CastellanEffects = effectsFromLeader(bls["DB"], "castellan", combatMode)
 	report.Effects = append(report.Effects, report.CommanderEffects...)
 	report.Effects = append(report.Effects, report.CastellanEffects...)
+}
+
+func reportBattleEffectCombatMode(report *ParsedReport) battleEffectCombatMode {
+	if report != nil &&
+		report.Attacker != nil &&
+		report.Defender != nil &&
+		report.Attacker.PlayerID > 0 &&
+		report.Defender.PlayerID > 0 {
+		return battleEffectCombatPVP
+	}
+	return battleEffectCombatPVE
 }
 
 func pbiRoles(bls map[string]interface{}) map[int64]string {
@@ -866,64 +880,87 @@ func combatantFromPlayerInfo(oid int64, role string, info map[string]interface{}
 	}
 }
 
-func effectsFromLeader(value interface{}, side string) []Effect {
+func effectsFromLeader(value interface{}, side string, combatMode battleEffectCombatMode) []Effect {
 	leader, ok := value.(map[string]interface{})
 	if !ok {
 		return nil
 	}
-	rows, _ := leader["AE"].([]interface{})
+	rows := leaderEffectRows(leader, combatMode)
 	if len(rows) == 0 {
 		return nil
 	}
+	type groupedSource struct {
+		value  float64
+		cap    float64
+		hasCap bool
+	}
 	type groupedEffect struct {
-		effect Effect
-		meta   battleEffectMeta
-		order  int
+		effect  Effect
+		meta    battleEffectMeta
+		sources map[string]groupedSource
 	}
 	grouped := map[string]*groupedEffect{}
-	for _, raw := range rows {
-		row, ok := raw.([]interface{})
-		if !ok || len(row) < 2 {
+	for _, row := range rows {
+		meta := battleEffectDisplay(row.id, side)
+		if meta.skip || (meta.unknown && row.source != battleEffectSourceActive) {
 			continue
 		}
-		id := int64(numberFromValue(row[0]))
-		values := battleEffectValuesFromValue(row[1])
-		if len(values) == 0 {
-			continue
+		value := battleEffectValue(row.id, row.values)
+		if meta.scale != 0 {
+			value *= meta.scale
 		}
-		value := battleEffectValue(id, values)
 		if value == 0 {
 			continue
 		}
-		meta := battleEffectDisplay(id, side)
 		key := fmt.Sprintf("%s|%s|%s|%s", meta.label, meta.unit, meta.category, meta.template)
+		capKey := fmt.Sprintf("%d:%s", row.id, row.capKey)
+		if !row.hasCap {
+			capKey = fmt.Sprintf("%d:%s:%d:%d", row.id, row.source, row.rawID, row.index)
+		}
 		entry := grouped[key]
 		if entry == nil {
 			entry = &groupedEffect{
 				effect: Effect{
-					Code:      fmt.Sprintf("%d", id),
+					Code:      fmt.Sprintf("%d", row.rawID),
 					Label:     meta.label,
 					Name:      meta.label,
 					Category:  meta.category,
 					SortOrder: meta.order,
 					Side:      side,
 				},
-				meta:  meta,
-				order: meta.order,
+				meta:    meta,
+				sources: map[string]groupedSource{},
 			}
 			grouped[key] = entry
 		} else {
-			entry.effect.Code += "," + fmt.Sprintf("%d", id)
-			if meta.order < entry.order {
-				entry.order = meta.order
+			entry.effect.Code += "," + fmt.Sprintf("%d", row.rawID)
+			if meta.order < entry.effect.SortOrder {
 				entry.effect.SortOrder = meta.order
 			}
 		}
-		entry.effect.Value += value
+		source := entry.sources[capKey]
+		source.value += value
+		if row.hasCap {
+			source.cap = row.cap
+			source.hasCap = true
+		}
+		entry.sources[capKey] = source
 	}
 	effects := make([]Effect, 0, len(grouped))
 	for _, entry := range grouped {
-		entry.effect.Value = roundFloat(entry.effect.Value, 1)
+		var value float64
+		for _, source := range entry.sources {
+			if source.hasCap {
+				capped := math.Min(math.Abs(source.value), source.cap)
+				if source.value < 0 {
+					capped = -capped
+				}
+				value += capped
+			} else {
+				value += source.value
+			}
+		}
+		entry.effect.Value = roundFloat(value, 1)
 		entry.effect.FormattedValue = formatBattleEffectValue(entry.effect.Value, entry.meta.unit, entry.meta.negative)
 		entry.effect.DisplayText = formatBattleEffectText(entry.effect.Value, entry.meta)
 		effects = append(effects, entry.effect)
@@ -935,6 +972,343 @@ func effectsFromLeader(value interface{}, side string) []Effect {
 		return effects[i].Label < effects[j].Label
 	})
 	return effects
+}
+
+type battleEffectCombatMode string
+type battleEffectSource string
+
+const (
+	battleEffectCombatPVP battleEffectCombatMode = "pvp"
+	battleEffectCombatPVE battleEffectCombatMode = "pve"
+
+	battleEffectSourceActive    battleEffectSource = "active"
+	battleEffectSourceEquipment battleEffectSource = "equipment"
+	battleEffectSourceGem       battleEffectSource = "gem"
+	battleEffectSourceSet       battleEffectSource = "set"
+)
+
+type leaderEffectRow struct {
+	id     int64
+	rawID  int64
+	values []float64
+	source battleEffectSource
+	index  int
+	cap    float64
+	hasCap bool
+	capKey string
+}
+
+type battleEffectDefinition struct {
+	effectID int64
+	capID    int64
+	cap      float64
+	hasCap   bool
+	isPVP    bool
+	isPVE    bool
+}
+
+type battleCatalogEffect struct {
+	id     int64
+	values []float64
+}
+
+type battleEquipmentSetEffect struct {
+	needed  int64
+	effects []battleCatalogEffect
+}
+
+type battleEffectDataCache struct {
+	equipmentEffectIDs  map[int64]int64
+	effectDefinitions   map[int64]battleEffectDefinition
+	relicEffectIDs      map[int64]int64
+	equipmentEffects    map[int64][]battleCatalogEffect
+	gemEffects          map[int64][]battleCatalogEffect
+	equipmentSetEffects map[int64][]battleEquipmentSetEffect
+}
+
+var (
+	battleEffectDataOnce sync.Once
+	battleEffectData     battleEffectDataCache
+)
+
+func leaderEffectRows(leader map[string]interface{}, combatMode battleEffectCombatMode) []leaderEffectRow {
+	rows := []leaderEffectRow{}
+	index := 0
+	for _, raw := range arrayFromValue(leader["AE"]) {
+		row := arrayFromValue(raw)
+		if parsed, ok := effectRowFromArray(row, battleEffectSourceActive, combatMode, index); ok {
+			rows = append(rows, parsed)
+		}
+		index++
+	}
+
+	setCounts := map[int64]int64{}
+	data := loadBattleEffectData()
+	for _, raw := range arrayFromValue(leader["EQ"]) {
+		item := arrayFromValue(raw)
+		setID := int64FromValueDefault(rowValue(item, 7))
+		if setID > 0 {
+			setCounts[setID]++
+		}
+
+		equipmentID := int64FromValueDefault(rowValue(item, 6))
+		catalogEffects := data.equipmentEffects[equipmentID]
+		for effectIndex, effectRaw := range arrayFromValue(rowValue(item, 5)) {
+			effectRow := arrayFromValue(effectRaw)
+			rawID := int64FromValueDefault(rowValue(effectRow, 0))
+			values := battleEffectValuesFromRow(effectRow)
+			if effectIndex < len(catalogEffects) {
+				rawID = catalogEffects[effectIndex].id
+				if len(values) == 0 {
+					values = catalogEffects[effectIndex].values
+				}
+			}
+			if parsed, ok := normalizedLeaderEffectRow(rawID, values, battleEffectSourceEquipment, combatMode, index); ok {
+				rows = append(rows, parsed)
+			}
+			index++
+		}
+
+		catalogGemID := int64FromValueDefault(rowValue(item, 10))
+		for _, effect := range data.gemEffects[catalogGemID] {
+			if parsed, ok := normalizedLeaderEffectRow(effect.id, effect.values, battleEffectSourceGem, combatMode, index); ok {
+				rows = append(rows, parsed)
+			}
+			index++
+		}
+
+		gemRow := arrayFromValue(rowValue(arrayFromValue(rowValue(arrayFromValue(rowValue(item, 12)), 3)), 4))
+		for _, effectRaw := range gemRow {
+			effectRow := arrayFromValue(effectRaw)
+			if parsed, ok := normalizedLeaderEffectRow(
+				int64FromValueDefault(rowValue(effectRow, 0)),
+				battleEffectValuesFromRow(effectRow),
+				battleEffectSourceGem,
+				combatMode,
+				index,
+			); ok {
+				rows = append(rows, parsed)
+			}
+			index++
+		}
+	}
+
+	for setID, count := range setCounts {
+		for _, effect := range battleEffectSetEffects(setID, count) {
+			if parsed, ok := normalizedLeaderEffectRow(effect.id, effect.values, battleEffectSourceSet, combatMode, index); ok {
+				rows = append(rows, parsed)
+			}
+			index++
+		}
+	}
+
+	return rows
+}
+
+func effectRowFromArray(row []interface{}, source battleEffectSource, combatMode battleEffectCombatMode, index int) (leaderEffectRow, bool) {
+	return normalizedLeaderEffectRow(int64FromValueDefault(rowValue(row, 0)), battleEffectValuesFromRow(row), source, combatMode, index)
+}
+
+func normalizedLeaderEffectRow(rawID int64, values []float64, source battleEffectSource, combatMode battleEffectCombatMode, index int) (leaderEffectRow, bool) {
+	if rawID == 0 || len(values) == 0 {
+		return leaderEffectRow{}, false
+	}
+	data := loadBattleEffectData()
+	id := rawID
+	if source != battleEffectSourceActive {
+		if mapped := data.relicEffectIDs[rawID]; mapped > 0 {
+			id = mapped
+		} else if mapped := data.equipmentEffectIDs[rawID]; mapped > 0 {
+			id = mapped
+		}
+	}
+	definition, hasDefinition := data.effectDefinitions[id]
+	if hasDefinition {
+		if definition.isPVP && combatMode != battleEffectCombatPVP {
+			return leaderEffectRow{}, false
+		}
+		if definition.isPVE && combatMode != battleEffectCombatPVE {
+			return leaderEffectRow{}, false
+		}
+	}
+	capValue, hasCap := battleEffectCap(id, definition, hasDefinition, source)
+	capKey := fmt.Sprintf("%d", id)
+	if hasDefinition {
+		capKey = fmt.Sprintf("%d:%d", definition.effectID, definition.capID)
+	}
+	return leaderEffectRow{
+		id:     id,
+		rawID:  rawID,
+		values: values,
+		source: source,
+		index:  index,
+		cap:    capValue,
+		hasCap: hasCap,
+		capKey: capKey,
+	}, true
+}
+
+func battleEffectValuesFromRow(row []interface{}) []float64 {
+	if len(row) > 2 {
+		if values := floatSliceFromValue(row[2]); len(values) > 0 {
+			return values
+		}
+	}
+	return battleEffectValuesFromValue(rowValue(row, 1))
+}
+
+func battleEffectCap(id int64, definition battleEffectDefinition, hasDefinition bool, source battleEffectSource) (float64, bool) {
+	if source == battleEffectSourceActive && !battleEffectActiveCaps[id] {
+		return 0, false
+	}
+	if override, ok := battleEffectCapOverrides[id]; ok {
+		return override, true
+	}
+	if hasDefinition && definition.hasCap {
+		return definition.cap, true
+	}
+	return 0, false
+}
+
+func loadBattleEffectData() battleEffectDataCache {
+	battleEffectDataOnce.Do(func() {
+		battleEffectData = buildBattleEffectData()
+	})
+	return battleEffectData
+}
+
+func buildBattleEffectData() battleEffectDataCache {
+	data := battleEffectDataCache{
+		equipmentEffectIDs:  map[int64]int64{},
+		effectDefinitions:   map[int64]battleEffectDefinition{},
+		relicEffectIDs:      map[int64]int64{},
+		equipmentEffects:    map[int64][]battleCatalogEffect{},
+		gemEffects:          map[int64][]battleCatalogEffect{},
+		equipmentSetEffects: map[int64][]battleEquipmentSetEffect{},
+	}
+
+	caps := map[int64]float64{}
+	for _, entry := range readBattleDataArray(serverdata.ReadEffectCapsItemsJSON) {
+		capID := int64FromValueDefault(entry["capID"])
+		max := numberFromValue(entry["maxTotalBonus"])
+		if capID > 0 && max > 0 {
+			caps[capID] = max
+		}
+	}
+
+	for _, entry := range readBattleDataArray(serverdata.ReadEffectsItemsJSON) {
+		effectID := int64FromValueDefault(entry["effectID"])
+		if effectID == 0 {
+			continue
+		}
+		capID := int64FromValueDefault(entry["capID"])
+		cap, hasCap := caps[capID]
+		name := stringFromValue(entry["name"])
+		data.effectDefinitions[effectID] = battleEffectDefinition{
+			effectID: effectID,
+			capID:    capID,
+			cap:      cap,
+			hasCap:   hasCap,
+			isPVP:    stringFromValue(entry["isPvPFight"]) == "1" || strings.Contains(strings.ToLower(name), "pvp"),
+			isPVE:    stringFromValue(entry["isPvEFight"]) == "1" || strings.Contains(strings.ToLower(name), "pve"),
+		}
+	}
+
+	for _, entry := range readBattleDataArray(serverdata.ReadEquipmentEffectsItemsJSON) {
+		equipmentEffectID := int64FromValueDefault(entry["equipmentEffectID"])
+		effectID := int64FromValueDefault(entry["effectID"])
+		if equipmentEffectID > 0 && effectID > 0 {
+			data.equipmentEffectIDs[equipmentEffectID] = effectID
+		}
+	}
+
+	for _, entry := range readBattleDataArray(serverdata.ReadRelicEffectsItemsJSON) {
+		relicEffectID := int64FromValueDefault(entry["id"])
+		effectID := int64FromValueDefault(entry["effectID"])
+		if relicEffectID > 0 && effectID > 0 {
+			data.relicEffectIDs[relicEffectID] = effectID
+		}
+	}
+
+	for _, entry := range readBattleDataArray(serverdata.ReadEquipmentsItemsJSON) {
+		equipmentID := int64FromValueDefault(entry["equipmentID"])
+		effects := catalogEffectsFromString(stringFromValue(entry["effects"]))
+		if equipmentID > 0 && len(effects) > 0 {
+			data.equipmentEffects[equipmentID] = effects
+		}
+	}
+
+	for _, entry := range readBattleDataArray(serverdata.ReadGemsItemsJSON) {
+		gemID := int64FromValueDefault(entry["gemID"])
+		effects := catalogEffectsFromString(stringFromValue(entry["effects"]))
+		if gemID > 0 && len(effects) > 0 {
+			data.gemEffects[gemID] = effects
+		}
+	}
+
+	for _, entry := range readBattleDataArray(serverdata.ReadEquipmentSetsItemsJSON) {
+		setID := int64FromValueDefault(entry["setID"])
+		needed := int64FromValueDefault(entry["neededItems"])
+		effects := catalogEffectsFromString(stringFromValue(entry["effects"]))
+		if setID > 0 && needed > 0 && len(effects) > 0 {
+			data.equipmentSetEffects[setID] = append(data.equipmentSetEffects[setID], battleEquipmentSetEffect{needed: needed, effects: effects})
+		}
+	}
+
+	return data
+}
+
+func battleEffectSetEffects(setID, equippedCount int64) []battleCatalogEffect {
+	if setID <= 0 || equippedCount <= 0 {
+		return nil
+	}
+	var out []battleCatalogEffect
+	for _, entry := range loadBattleEffectData().equipmentSetEffects[setID] {
+		if entry.needed <= equippedCount {
+			out = append(out, entry.effects...)
+		}
+	}
+	return out
+}
+
+func readBattleDataArray(read func() ([]byte, error)) []map[string]interface{} {
+	raw, err := read()
+	if err != nil {
+		return nil
+	}
+	var rows []map[string]interface{}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	if err := decoder.Decode(&rows); err != nil {
+		return nil
+	}
+	return rows
+}
+
+func catalogEffectsFromString(value string) []battleCatalogEffect {
+	if value == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	out := make([]battleCatalogEffect, 0, len(parts))
+	for _, part := range parts {
+		pair := strings.SplitN(part, "&", 2)
+		id := int64FromString(strings.TrimSpace(pair[0]))
+		if id <= 0 || len(pair) < 2 {
+			continue
+		}
+		var values []float64
+		for _, valuePart := range strings.FieldsFunc(pair[1], func(r rune) bool { return r == '#' || r == '+' }) {
+			value := numberFromString(strings.TrimSpace(valuePart))
+			if value != 0 {
+				values = append(values, value)
+			}
+		}
+		if len(values) > 0 {
+			out = append(out, battleCatalogEffect{id: id, values: values})
+		}
+	}
+	return out
 }
 
 func applyBattleWaves(report *ParsedReport, data map[string]interface{}) {
@@ -1329,32 +1703,59 @@ type battleEffectMeta struct {
 	category string
 	order    int
 	negative bool
+	scale    float64
+	skip     bool
+	unknown  bool
+}
+
+var battleEffectActiveCaps = map[int64]bool{
+	5: true, 61: true, 62: true, 368: true, 369: true, 386: true, 410: true, 411: true, 412: true, 423: true, 424: true,
+}
+
+var battleEffectCapOverrides = map[int64]float64{
+	473: 150,
 }
 
 var battleEffectDisplayByID = map[int64]battleEffectMeta{
-	61:  battleEffect("Melee unit strength", "melee unit strength when attacking", "percent", "Unit effects", 10),
-	411: battleEffect("Melee units attack strength", "melee units attack strength", "percent", "Unit effects", 10),
-	613: battleEffect("Melee unit strength", "melee unit strength when attacking", "percent", "Unit effects", 10),
-	62:  battleEffect("Ranged unit strength", "ranged unit strength when attacking", "percent", "Unit effects", 11),
-	412: battleEffect("Ranged units attack strength", "ranged units attack strength", "percent", "Unit effects", 11),
-	614: battleEffect("Ranged unit strength", "ranged unit strength when attacking", "percent", "Unit effects", 11),
-	410: battleEffect("Courtyard attack combat strength", "courtyard attack combat strength", "percent", "Attack effects", 12),
-	504: battleEffect("Courtyard attack strength", "combat strength when attacking enemy courtyards", "percent", "Attack effects", 12),
-	386: battleEffect("Courtyard attack strength", "combat strength when attacking enemy courtyards", "percent", "Attack effects", 12),
-	423: battleEffect("Front combat strength", "combat strength on the front when attacking", "percent", "Attack effects", 13),
-	424: battleEffect("Flank combat strength", "combat strength on the flanks when attacking", "percent", "Attack effects", 14),
+	61:  battleEffect("Combat strength for melee units", "combat strength for melee units", "percent", "Unit effects", 10),
+	411: battleEffect("Combat strength for melee units", "combat strength for melee units", "percent", "Unit effects", 10),
+	613: battleEffect("Combat strength for melee units", "combat strength for melee units", "percent", "Unit effects", 10),
+	467: battleEffect("Combat strength for melee units", "combat strength for melee units", "percent", "Unit effects", 10),
+	62:  battleEffect("Combat strength for ranged units", "combat strength for ranged units", "percent", "Unit effects", 11),
+	412: battleEffect("Combat strength for ranged units", "combat strength for ranged units", "percent", "Unit effects", 11),
+	614: battleEffect("Combat strength for ranged units", "combat strength for ranged units", "percent", "Unit effects", 11),
+	468: battleEffect("Combat strength for ranged units", "combat strength for ranged units", "percent", "Unit effects", 11),
+	410: battleEffect("Combat strength when attacking enemy courtyard", "combat strength when attacking enemy courtyard", "percent", "Unit effects", 12),
+	504: battleEffect("Combat strength when attacking enemy courtyard", "combat strength when attacking enemy courtyard", "percent", "Unit effects", 12),
+	386: battleEffect("Combat strength when attacking enemy courtyard", "combat strength when attacking enemy courtyard", "percent", "Unit effects", 12),
+	475: battleEffect("Combat strength when attacking enemy courtyard", "combat strength when attacking enemy courtyard", "percent", "Unit effects", 12),
+	423: battleEffect("Combat strength for the front", "combat strength for the front when attacking", "percent", "Unit effects", 13),
+	478: battleEffect("Combat strength for the front", "combat strength for the front when attacking", "percent", "Unit effects", 13),
+	424: battleEffect("Combat strength for the flanks", "combat strength for the flanks when attacking", "percent", "Unit effects", 14),
+	479: battleEffect("Combat strength for the flanks", "combat strength for the flanks when attacking", "percent", "Unit effects", 14),
+	477: battleEffect("Unit combat strength when attacking", "unit combat strength when attacking", "percent", "Attack effects", 15),
+	469: battleEffectNegative("Wall protection", "wall protection of Castle Lords", "percent", "Defense structure effects", 16),
+	470: battleEffectNegative("Gate protection", "gate protection of Castle Lords", "percent", "Defense structure effects", 17),
+	471: battleEffectNegative("Moat protection", "moat protection of Castle Lords", "percent", "Defense structure effects", 18),
 	503: battleEffect("Front unit limit", "unit limit on the front", "percent", "Attack effects", 20),
 	369: battleEffect("Front unit limit", "unit limit on the front", "percent", "Attack effects", 20),
+	476: battleEffect("Front unit limit", "unit limit on the front", "percent", "Attack effects", 20),
 	66:  battleEffect("Flank unit limit", "unit limit on the flanks", "percent", "Attack effects", 21),
 	368: battleEffect("Flank unit limit", "flank unit limit when attacking", "percent", "Attack effects", 21),
+	474: battleEffect("Flank unit limit", "unit limit on the flanks", "percent", "Attack effects", 21),
 	700: battleEffect("Final assault capacity", "to troop capacity for final assault", "number", "Courtyard effects", 22),
 	701: battleEffect("Final assault capacity", "to troop capacity for final assault", "percent", "Courtyard effects", 23),
 	512: battleEffect("Courtyard support strength", "courtyard support unit strength", "percent", "Courtyard effects", 24),
+	29:  battleEffect("Additional waves", "additional wave(s)", "number", "Pre-battle effects", 29),
+	484: battleEffect("Additional waves", "additional wave(s)", "number", "Pre-battle effects", 29),
 	426: battleEffect("Army travel speed", "army travel speed", "percent", "Pre-battle effects", 30),
 	53:  battleEffect("Army travel speed", "army travel speed", "percent", "Pre-battle effects", 30),
+	472: battleEffect("Army travel speed", "army travel speed", "percent", "Pre-battle effects", 30),
 	97:  battleEffect("Travel speed", "Military, espionage and trade travel speed", "percent", "Pre-battle effects", 30),
 	19:  battleEffect("Attack travel speed", "Attack travel speed", "percent", "Pre-battle effects", 31),
 	55:  battleEffect("Later army detection", "later army detection", "percent", "Pre-battle effects", 32),
+	481: battleEffect("Later army detection", "later army detection", "percent", "Pre-battle effects", 32),
+	482: battleEffect("Army return travel speed", "army return travel speed against Castle Lords", "percent", "Post-battle effects", 33),
 	111: battleEffect("Loot capacity", "loot capacity", "percent", "Post-battle effects", 40),
 	431: battleEffect("Resources plundered", "resources plundered when looting", "percent", "Post-battle effects", 41),
 	54:  battleEffect("Resources plundered", "resources plundered when looting", "percent", "Post-battle effects", 41),
@@ -1371,31 +1772,57 @@ var battleEffectDisplayByID = map[int64]battleEffectMeta{
 	20:  battleEffect("Alliance attack strength", "Combat strength bonus for attacks", "percent", "Attack effects", 50),
 	25:  battleEffect("Event target attack strength", "Combat strength bonus against Foreign and Bloodcrow castles", "percent", "Attack effects", 51),
 
-	339: battleEffect("Melee defense", "combat strength for melee units when defending", "percent", "Unit effects", 110),
-	10:  battleEffect("Melee defense", "combat strength for melee units when defending", "percent", "Unit effects", 110),
-	340: battleEffect("Ranged defense", "combat strength for ranged units when defending", "percent", "Unit effects", 111),
-	11:  battleEffect("Ranged defense", "combat strength for ranged units when defending", "percent", "Unit effects", 111),
-	370: battleEffect("Courtyard defense", "combat strength when defending the courtyard", "percent", "Courtyard effects", 112),
-	501: battleEffect("Courtyard defense", "combat strength when defending the courtyard", "percent", "Courtyard effects", 112),
-	509: battleEffect("Front defense", "combat strength on the front when defending", "percent", "Defense unit effects", 113),
-	510: battleEffect("Flank defense", "combat strength on the flanks when defending", "percent", "Defense unit effects", 114),
-	420: battleEffect("Wall unit limit", "unit limit on the wall", "number", "Defense unit effects", 120),
-	387: battleEffect("Wall unit limit", "to troop capacity on wall defense", "percent", "Defense unit effects", 120),
-	702: battleEffect("Courtyard defense capacity", "to troop capacity in courtyard defense", "number", "Courtyard effects", 121),
-	371: battleEffect("Courtyard defense capacity", "to troop capacity in courtyard defense", "number", "Courtyard effects", 121),
-	705: battleEffect("Courtyard defense capacity", "to troop capacity in courtyard defense", "percent", "Courtyard effects", 121),
-	706: battleEffect("Alliance support capacity", "to alliance support troop capacity", "number", "Courtyard effects", 122),
-	385: battleEffect("Alliance support capacity", "to alliance support troop capacity", "number", "Courtyard effects", 122),
-	427: battleEffect("Surviving soldiers", "more surviving soldiers after defense", "percent", "Post-battle effects", 123),
-	428: battleEffect("Sight radius", "Sight Radius", "percent", "Pre-battle effects", 124),
-	4:   battleEffect("Earlier attack warning", "earlier attack warning", "percent", "Pre-battle effects", 125),
-	5:   battleEffectNegative("Fire damage suffered", "fire damage suffered when defending", "percent", "Post-battle effects", 126),
-	429: battleEffectNegative("Fire damage suffered", "fire damage suffered", "percent", "Post-battle effects", 126),
-	94:  battleEffect("Militia in the castle", "militia in the castle", "number", "Pre-battle effects", 127),
-	115: battleEffectFlag("Militia replacement", "Replaces the armed citizen with Militia", "Pre-battle effects", 128),
-	1:   battleEffect("Glory defense bonus", "glory points earned when defending", "percent", "Post-battle effects", 129),
-	21:  battleEffect("Alliance defense strength", "Combat strength bonus for defense", "percent", "Defense unit effects", 130),
-	27:  battleEffect("Khan defense strength", "Combat strength bonus against Khan attacks", "percent", "Defense unit effects", 131),
+	473: battleEffect("Resources plundered", "resources plundered when looting", "percent", "Post-battle effects", 41),
+
+	339:   battleEffect("Combat strength for defensive melee units", "combat strength bonus for defensive melee units", "percent", "Unit effects", 110),
+	10:    battleEffect("Combat strength for defensive melee units", "combat strength bonus for defensive melee units", "percent", "Unit effects", 110),
+	12105: battleEffect("Combat strength for defensive melee units", "combat strength bonus for defensive melee units", "percent", "Unit effects", 110),
+	12203: battleEffect("Combat strength for defensive melee units", "combat strength bonus for defensive melee units", "percent", "Unit effects", 110),
+	12303: battleEffect("Combat strength for defensive melee units", "combat strength bonus for defensive melee units", "percent", "Unit effects", 110),
+	12507: battleEffect("Combat strength for defensive melee units", "combat strength bonus for defensive melee units", "percent", "Unit effects", 110),
+	340:   battleEffect("Combat strength for defensive ranged units", "combat strength bonus for defensive ranged units", "percent", "Unit effects", 111),
+	11:    battleEffect("Combat strength for defensive ranged units", "combat strength bonus for defensive ranged units", "percent", "Unit effects", 111),
+	12106: battleEffect("Combat strength for defensive ranged units", "combat strength bonus for defensive ranged units", "percent", "Unit effects", 111),
+	12204: battleEffect("Combat strength for defensive ranged units", "combat strength bonus for defensive ranged units", "percent", "Unit effects", 111),
+	12304: battleEffect("Combat strength for defensive ranged units", "combat strength bonus for defensive ranged units", "percent", "Unit effects", 111),
+	12508: battleEffect("Combat strength for defensive ranged units", "combat strength bonus for defensive ranged units", "percent", "Unit effects", 111),
+	370:   battleEffect("Combat strength when defending the courtyard", "combat strength when defending the courtyard", "percent", "Unit effects", 112),
+	501:   battleEffect("Combat strength when defending the courtyard", "combat strength when defending the courtyard", "percent", "Unit effects", 112),
+	12108: battleEffect("Combat strength when defending the courtyard", "combat strength when defending the courtyard", "percent", "Unit effects", 112),
+	12206: battleEffect("Combat strength when defending the courtyard", "combat strength when defending the courtyard", "percent", "Unit effects", 112),
+	12306: battleEffect("Combat strength when defending the courtyard", "combat strength when defending the courtyard", "percent", "Unit effects", 112),
+	12510: battleEffect("Combat strength when defending the courtyard", "combat strength when defending the courtyard", "percent", "Unit effects", 112),
+	12109: battleEffect("Combat strength for defense units", "combat strength for defense units", "percent", "Unit effects", 113),
+	12501: battleEffect("Combat strength for defense units", "combat strength for defense units", "percent", "Unit effects", 113),
+	509:   battleEffect("Front defense", "combat strength on the front when defending", "percent", "Defense unit effects", 113),
+	510:   battleEffect("Flank defense", "combat strength on the flanks when defending", "percent", "Defense unit effects", 114),
+	12111: battleEffect("Flank defense", "combat strength for defense units of the flanks", "percent", "Defense unit effects", 114),
+	12102: battleEffect("Wall protection", "wall protection", "percent", "Defense structure effects", 115),
+	12103: battleEffect("Gate protection", "gate protection", "percent", "Defense structure effects", 116),
+	12104: battleEffect("Moat protection", "moat protection", "percent", "Defense structure effects", 117),
+	420:   battleEffect("Wall unit limit", "unit limit on the wall", "number", "Defense unit effects", 120),
+	387:   battleEffect("Wall unit limit", "to troop capacity on wall defense", "percent", "Defense unit effects", 120),
+	12107: battleEffect("Wall unit limit", "wall unit limit when defending", "percent", "Defense unit effects", 120),
+	702:   battleEffect("Courtyard defense capacity", "to troop capacity in courtyard defense", "number", "Courtyard effects", 121),
+	371:   battleEffect("Courtyard defense capacity", "to troop capacity in courtyard defense", "number", "Courtyard effects", 121),
+	705:   battleEffect("Courtyard defense capacity", "to troop capacity in courtyard defense", "percent", "Courtyard effects", 121),
+	706:   battleEffect("Alliance support capacity", "to alliance support troop capacity", "number", "Courtyard effects", 122),
+	385:   battleEffect("Alliance support capacity", "to alliance support troop capacity", "number", "Courtyard effects", 122),
+	12112: battleEffect("Protector support", "Level 10 Protector of the north in courtyard defense", "number", "Defense unit effects", 122),
+	427:   battleEffect("Surviving soldiers", "more surviving soldiers after defense", "percent", "Post-battle effects", 123),
+	428:   battleEffect("Sight radius", "Sight Radius", "percent", "Pre-battle effects", 124),
+	4:     battleEffect("Earlier attack warning", "earlier attack warning", "percent", "Pre-battle effects", 125),
+	12503: battleEffect("Earlier attack warning", "earlier attack warning when defending against Castle Lords", "percent", "Pre-battle effects", 125),
+	5:     battleEffectNegative("Fire damage suffered", "fire damage suffered when defending", "percent", "Defense structure effects", 126),
+	429:   battleEffectNegative("Fire damage suffered", "fire damage suffered when defending", "percent", "Defense structure effects", 126),
+	12309: battleEffectNegative("Fire damage suffered", "fire damage suffered when defending", "percent", "Defense structure effects", 126),
+	12511: battleEffectNegative("Fire damage suffered", "fire damage suffered when defending", "percent", "Defense structure effects", 126),
+	12101: battleEffectNegative("Resources lost", "resources lost after being looted", "percent", "Post-battle effects", 126),
+	94:    battleEffect("Militia in the castle", "militia in the castle", "number", "Pre-battle effects", 127),
+	115:   battleEffectFlag("Militia replacement", "Replaces the armed citizen with Militia", "Pre-battle effects", 128),
+	1:     battleEffect("Glory defense bonus", "glory points earned when defending", "percent", "Post-battle effects", 129),
+	21:    battleEffect("Alliance defense strength", "Combat strength bonus for defense", "percent", "Defense unit effects", 130),
+	27:    battleEffect("Khan defense strength", "Combat strength bonus against Khan attacks", "percent", "Defense unit effects", 131),
 }
 
 func battleEffect(label, template, unit, category string, order int) battleEffectMeta {
@@ -1688,9 +2115,25 @@ func int64FromValue(value interface{}) (int64, bool) {
 	case json.Number:
 		n, err := v.Int64()
 		return n, err == nil
+	case string:
+		n, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64)
+		return n, err == nil
 	default:
 		return 0, false
 	}
+}
+
+func int64FromValueDefault(value interface{}) int64 {
+	n, _ := int64FromValue(value)
+	return n
+}
+
+func int64FromString(value string) int64 {
+	n, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 func numberFromValue(value interface{}) float64 {
@@ -1704,9 +2147,19 @@ func numberFromValue(value interface{}) float64 {
 	case json.Number:
 		f, _ := v.Float64()
 		return f
+	case string:
+		return numberFromString(v)
 	default:
 		return 0
 	}
+}
+
+func numberFromString(value string) float64 {
+	n, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 func int64Abs(value int64) int64 {
