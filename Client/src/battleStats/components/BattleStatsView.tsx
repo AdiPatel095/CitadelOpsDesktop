@@ -730,8 +730,8 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
       </div>
 
       <div className="grid xl:grid-cols-2 gap-4">
-        <EffectList title="Commander" subtitle={combatantName(report.attacker)} effects={commanderEffects} tone="danger" />
-        <EffectList title="Castellan" subtitle={combatantName(report.defender)} effects={castellanEffects} tone="info" />
+        <EffectList title="Commander" subtitle={combatantName(report.attacker)} effects={commanderEffects} />
+        <EffectList title="Castellan" subtitle={combatantName(report.defender)} effects={castellanEffects} />
       </div>
 
       {report.waves && report.waves.length > 0 && (
@@ -906,9 +906,7 @@ const EffectList: React.FC<{
   title: string;
   subtitle: string;
   effects: BattleEffect[];
-  tone: 'danger' | 'info';
-}> = ({ title, subtitle, effects, tone }) => {
-  const valueClass = tone === 'danger' ? 'text-error' : 'text-info';
+}> = ({ title, subtitle, effects }) => {
   const groups = effectGroups(effects);
 
   return (
@@ -930,8 +928,14 @@ const EffectList: React.FC<{
                 </div>
                 <div className="divide-y divide-border-base rounded-global border border-border-base bg-bg-app">
                   {group.effects.map((effect, index) => (
-                    <div key={`${effectLabel(effect)}-${index}`} className="px-3 py-2.5">
-                      <span className={`text-sm font-medium ${valueClass}`}>{effectDisplayText(effect)}</span>
+                    <div
+                      key={`${effectLabel(effect)}-${index}`}
+                      className="flex items-start justify-between gap-3 px-3 py-2.5"
+                    >
+                      <span className="min-w-0 text-sm font-medium text-text-main">{effectDescription(effect)}</span>
+                      <span className="shrink-0 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-black tabular-nums text-success">
+                        {effectValue(effect)}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -2032,6 +2036,15 @@ function effectDisplayText(effect: BattleEffect): string {
   const value = effectValue(effect);
   const label = effectLabel(effect);
   return value && value !== '-' ? `${value} ${label}` : label;
+}
+
+function effectDescription(effect: BattleEffect): string {
+  const displayText = effectDisplayText(effect);
+  const value = effectValue(effect);
+  if (value && value !== '-' && displayText.startsWith(value)) {
+    return displayText.slice(value.length).trim() || effectLabel(effect);
+  }
+  return displayText;
 }
 
 function metricValue(metrics: BattleMetrics | undefined, ...keys: (keyof BattleMetrics)[]): number {
