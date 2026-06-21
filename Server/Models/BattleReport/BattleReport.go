@@ -3,6 +3,7 @@ package battlereport
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -45,6 +46,19 @@ type Capture struct {
 	BLM                  map[string]interface{} `json:"blm,omitempty"`
 	BLD                  map[string]interface{} `json:"bld,omitempty"`
 	Wire                 map[string]string      `json:"wire,omitempty"`
+}
+
+type cloudBattleReportPayload struct {
+	BattleDateUnixMillis int64  `json:"battleDateUnixMillis"`
+	MID                  int64  `json:"mid"`
+	LID                  int64  `json:"lid"`
+	AttackerPlayerID     int64  `json:"attackerPlayerID"`
+	AttackerAllianceID   int64  `json:"attackerAllianceID"`
+	DefenderPlayerID     int64  `json:"defenderPlayerID"`
+	DefenderAllianceID   int64  `json:"defenderAllianceID"`
+	AttackWon            bool   `json:"attackWon"`
+	RichnessScore        int    `json:"richnessScore"`
+	Payload              string `json:"payload"`
 }
 
 type ParsedReport struct {
@@ -144,7 +158,11 @@ var archiveMu sync.Mutex
 func RegisterStatsHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/battle-reports", handleListReports)
 	mux.HandleFunc("GET /api/battleReports", handleListReports)
+	mux.HandleFunc("GET /api/reports/battle", handleListReports)
+	mux.HandleFunc("GET /api/battle-reports/cloud", handleListCloudReports)
+	mux.HandleFunc("GET /api/battleReports/cloud", handleListCloudReports)
 	mux.HandleFunc("POST /api/battle-reports", handlePostReport)
+	mux.HandleFunc("POST /api/reports/battle", handlePostReport)
 }
 
 func RecordSNEPayload(payload string) ([]Capture, error) {
@@ -195,6 +213,9 @@ func CaptureFromSNERow(root map[string]interface{}, row []interface{}) (Capture,
 	}
 	noticeType, _ := int64FromValue(rowValue(row, 1))
 	battleKey := stringFromValue(rowValue(row, 2))
+	if !isSharedBattleReportNotice(noticeType, battleKey) {
+		return Capture{}, false
+	}
 	capture := Capture{
 		Version:              1,
 		ID:                   captureID(mid, lid),
@@ -208,6 +229,10 @@ func CaptureFromSNERow(root map[string]interface{}, row []interface{}) (Capture,
 		SNE:                  root,
 	}
 	return capture, true
+}
+
+func isSharedBattleReportNotice(noticeType int64, battleKey string) bool {
+	return noticeType == 6 && strings.Contains(battleKey, "#")
 }
 
 func AppendCapture(capture Capture) error {
@@ -290,12 +315,11 @@ func UploadCaptureToCloud(capture Capture) error {
 	if err := normalizeCapture(&capture); err != nil {
 		return err
 	}
-	clientID, err := reportUploadClientID()
+	envelope, err := cloudBattleReportFromCapture(capture)
 	if err != nil {
 		return err
 	}
-	capture.ClientID = clientID
-	payload, err := json.Marshal(capture)
+	payload, err := json.Marshal(envelope)
 	if err != nil {
 		return err
 	}
@@ -304,12 +328,7 @@ func UploadCaptureToCloud(capture Capture) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Citadel-Client-ID", clientID)
-	if key := strings.TrimSpace(os.Getenv("REPORT_UPLOAD_KEY")); key != "" {
-		req.Header.Set("X-Citadel-Report-Key", key)
-	} else if key := strings.TrimSpace(os.Getenv("CITADEL_REPORT_UPLOAD_KEY")); key != "" {
-		req.Header.Set("X-Citadel-Report-Key", key)
-	}
+	applyReportKeyHeader(req)
 	client := &http.Client{Timeout: cloudUploadTimeout}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -321,6 +340,291 @@ func UploadCaptureToCloud(capture Capture) error {
 	}
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 	return fmt.Errorf("cloud battle report upload failed: %s: %s", resp.Status, strings.TrimSpace(string(body)))
+}
+
+func cloudBattleReportFromCapture(capture Capture) (cloudBattleReportPayload, error) {
+	parsed := ParseCapture(&capture)
+	if parsed.ID == "" || !ReportHasBothPlayers(parsed) {
+		return cloudBattleReportPayload{}, errors.New("cloud battle report requires parsed attacker and defender")
+	}
+	if parsed.Attacker == nil || parsed.Defender == nil || parsed.Attacker.PlayerID <= 0 || parsed.Defender.PlayerID <= 0 {
+		return cloudBattleReportPayload{}, errors.New("cloud battle report requires attackerPlayerID and defenderPlayerID")
+	}
+	battleDateUnixMillis := parsed.DateMs
+	if battleDateUnixMillis <= 0 {
+		battleDateUnixMillis = capture.CapturedAtUnixMillis
+	}
+	if battleDateUnixMillis <= 0 {
+		return cloudBattleReportPayload{}, errors.New("cloud battle report requires battleDateUnixMillis")
+	}
+	richnessScore := ReportRichnessScore(capture)
+	if richnessScore <= 0 {
+		return cloudBattleReportPayload{}, errors.New("cloud battle report requires richnessScore")
+	}
+	payloadCapture := capture
+	payloadCapture.ClientID = ""
+	rawCapture, err := json.Marshal(payloadCapture)
+	if err != nil {
+		return cloudBattleReportPayload{}, err
+	}
+	return cloudBattleReportPayload{
+		BattleDateUnixMillis: battleDateUnixMillis,
+		MID:                  parsed.MID,
+		LID:                  parsed.LID,
+		AttackerPlayerID:     parsed.Attacker.PlayerID,
+		AttackerAllianceID:   parsed.Attacker.AllianceID,
+		DefenderPlayerID:     parsed.Defender.PlayerID,
+		DefenderAllianceID:   parsed.Defender.AllianceID,
+		AttackWon:            inferBinaryResult(parsed.Metrics) != "Defeat",
+		RichnessScore:        richnessScore,
+		Payload:              string(rawCapture),
+	}, nil
+}
+
+func ReportRichnessScore(capture Capture) int {
+	score := rawCaptureRichnessScore(capture)
+	report := ParseCapture(&capture)
+	score += parsedReportRichnessScore(report)
+	return score
+}
+
+func rawCaptureRichnessScore(capture Capture) int {
+	score := 0
+	if len(capture.SNE) > 0 {
+		score += 500
+	}
+	if len(capture.BLS) > 0 {
+		score += 1000
+	}
+	if len(capture.BLM) > 0 {
+		score += 1000
+	}
+	if len(capture.BLD) > 0 {
+		score += 1000
+	}
+	return score
+}
+
+func parsedReportRichnessScore(report ParsedReport) int {
+	score := 0
+	if report.ID != "" {
+		score += 25
+	}
+	if report.DateMs > 0 || report.OccurredAt != "" {
+		score += 25
+	}
+	if report.BattleKey != "" || report.CastleName != "" || report.TargetName != "" {
+		score += 25
+	}
+	score += combatantRichnessScore(report.Attacker)
+	score += combatantRichnessScore(report.Defender)
+	score += metricsRichnessScore(report.Metrics)
+	score += effectsRichnessScore(report.CommanderEffects)
+	score += effectsRichnessScore(report.CastellanEffects)
+	score += battleItemsRichnessScore(report.TopUnits)
+	score += battleItemsRichnessScore(report.SupportTools)
+	score += wavesRichnessScore(report.Waves)
+	score += defenderDetailRichnessScore(report)
+	return score
+}
+
+func combatantRichnessScore(combatant *Combatant) int {
+	if combatant == nil {
+		return 0
+	}
+	score := 10
+	if combatant.PlayerID > 0 {
+		score += 50
+	}
+	if combatant.AllianceID > 0 {
+		score += 25
+	}
+	if combatant.Name != "" || combatant.PlayerName != "" {
+		score += 10
+	}
+	if combatant.Alliance != "" || combatant.AllianceName != "" || combatant.AllianceTag != "" {
+		score += 10
+	}
+	if combatant.CastleName != "" || combatant.Role != "" {
+		score += 5
+	}
+	return score
+}
+
+func metricsRichnessScore(metrics Metrics) int {
+	score := 0
+	for _, value := range []int64{
+		metrics.AttackerSent,
+		metrics.AttackerLost,
+		metrics.AttackersKilled,
+		metrics.DefenderStationed,
+		metrics.DefenderLost,
+		metrics.DefendersKilled,
+		metrics.WallLosses,
+		metrics.CourtyardLosses,
+	} {
+		if value != 0 {
+			score += 8
+		}
+	}
+	if metrics.AttackTradeRatio != 0 {
+		score += 4
+	}
+	if metrics.DefenseTradeRatio != 0 {
+		score += 4
+	}
+	return score
+}
+
+func effectsRichnessScore(effects []Effect) int {
+	score := 0
+	for _, effect := range effects {
+		score += 5
+		if effect.Code != "" {
+			score += 2
+		}
+		if effect.Label != "" || effect.Name != "" {
+			score += 2
+		}
+		if effect.Value != 0 || effect.FormattedValue != "" || effect.DisplayText != "" {
+			score += 3
+		}
+		if effect.Category != "" || effect.Side != "" {
+			score += 2
+		}
+	}
+	return score
+}
+
+func battleItemsRichnessScore(items []BattleItemDetail) int {
+	score := 0
+	for _, item := range items {
+		if item.WodID <= 0 {
+			continue
+		}
+		score += 5
+		if item.Side != "" {
+			score++
+		}
+		if item.Phase != "" {
+			score++
+		}
+		if item.Lane != "" {
+			score++
+		}
+		if item.Amount != 0 {
+			score += 2
+		}
+		if item.Lost != 0 || item.Used != 0 {
+			score += 2
+		}
+	}
+	return score
+}
+
+func wavesRichnessScore(waves []Wave) int {
+	score := 0
+	for _, wave := range waves {
+		score += 10
+		if wave.Index != 0 || wave.Wave != 0 {
+			score += 2
+		}
+		for _, lane := range wave.Lanes {
+			score += waveLaneRichnessScore(lane)
+		}
+	}
+	return score
+}
+
+func waveLaneRichnessScore(lane WaveLane) int {
+	score := 5
+	if lane.Lane != "" || lane.Result != "" {
+		score += 4
+	}
+	for _, value := range []int64{lane.AttackerLost, lane.DefenderLost, lane.AttackerStart, lane.DefenderStart} {
+		if value != 0 {
+			score += 3
+		}
+	}
+	score += battleItemsRichnessScore(lane.AttackerUnitDetails)
+	score += battleItemsRichnessScore(lane.DefenderUnitDetails)
+	score += battleItemsRichnessScore(lane.AttackerToolDetails)
+	score += battleItemsRichnessScore(lane.DefenderToolDetails)
+	return score
+}
+
+func defenderDetailRichnessScore(report ParsedReport) int {
+	score := 0
+	score += defenderBattleItemDetailsRichnessScore(report.TopUnits, true)
+	score += defenderBattleItemDetailsRichnessScore(report.SupportTools, true)
+	for _, wave := range report.Waves {
+		for _, lane := range wave.Lanes {
+			if lane.DefenderStart != 0 || lane.DefenderLost != 0 {
+				score += 25
+			}
+			score += defenderBattleItemDetailsRichnessScore(lane.DefenderUnitDetails, false)
+			score += defenderBattleItemDetailsRichnessScore(lane.DefenderToolDetails, false)
+		}
+	}
+	return score
+}
+
+func defenderBattleItemDetailsRichnessScore(items []BattleItemDetail, requireDefenderSide bool) int {
+	score := 0
+	for _, item := range items {
+		if requireDefenderSide && item.Side != "defender" {
+			continue
+		}
+		if item.WodID <= 0 && item.Amount == 0 && item.Lost == 0 && item.Used == 0 {
+			continue
+		}
+		score += 15
+		if item.Amount != 0 {
+			score += 5
+		}
+		if item.Lost != 0 || item.Used != 0 {
+			score += 5
+		}
+	}
+	return score
+}
+
+func FetchCloudParsedReports(ctx context.Context) ([]ParsedReport, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, battleReportFetchURL(), nil)
+	if err != nil {
+		return nil, err
+	}
+	applyReportKeyHeader(req)
+
+	client := &http.Client{Timeout: cloudUploadTimeout}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return nil, fmt.Errorf("cloud battle report fetch failed: %s: %s", resp.Status, strings.TrimSpace(string(body)))
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	decoder.UseNumber()
+	var payload interface{}
+	if err := decoder.Decode(&payload); err != nil {
+		return nil, err
+	}
+
+	reports := parsedReportsFromCloudPayload(payload)
+	filtered := reports[:0]
+	for _, report := range reports {
+		if report.ID != "" && ReportHasBothPlayers(report) {
+			filtered = append(filtered, report)
+		}
+	}
+	sort.SliceStable(filtered, func(i, j int) bool {
+		return filtered[i].DateMs > filtered[j].DateMs
+	})
+	return filtered, nil
 }
 
 func ReadParsedReports() ([]ParsedReport, error) {
@@ -894,6 +1198,17 @@ func handleListReports(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"reports": reports})
 }
 
+func handleListCloudReports(w http.ResponseWriter, r *http.Request) {
+	reports, err := FetchCloudParsedReports(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"reports": reports})
+}
+
 func handlePostReport(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var capture Capture
@@ -901,20 +1216,102 @@ func handlePostReport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if capture.BLS != nil {
-		parsed := ParseCapture(&capture)
-		if parsed.ID != "" && !ReportHasBothPlayers(parsed) {
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(map[string]interface{}{"ok": true, "discarded": true, "id": capture.ID})
-			return
-		}
+	parsed := ParseCapture(&capture)
+	if capture.BLS == nil || parsed.ID == "" || !ReportHasBothPlayers(parsed) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"ok": true, "discarded": true, "id": capture.ID})
+		return
 	}
-	if err := AppendCapture(capture); err != nil {
+	if err := UpsertCapture(capture); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"ok": true, "id": capture.ID})
+}
+
+func parsedReportsFromCloudPayload(value interface{}) []ParsedReport {
+	switch v := value.(type) {
+	case []interface{}:
+		var reports []ParsedReport
+		for _, item := range v {
+			reports = append(reports, parsedReportsFromCloudPayload(item)...)
+		}
+		return reports
+	case string:
+		return parsedReportsFromCloudString(v)
+	case map[string]interface{}:
+		for _, key := range []string{"reports", "data", "items"} {
+			if nested, ok := v[key]; ok {
+				return parsedReportsFromCloudPayload(nested)
+			}
+		}
+		if rawPayload, ok := v["payload"].(string); ok {
+			return parsedReportsFromCloudString(rawPayload)
+		}
+		for _, key := range []string{"parsed", "parsedReport", "report"} {
+			if nested, ok := v[key]; ok {
+				return parsedReportsFromCloudPayload(nested)
+			}
+		}
+		if report, ok := parsedReportFromCloudMap(v); ok {
+			return []ParsedReport{report}
+		}
+		if report, ok := parsedCaptureFromCloudMap(v); ok {
+			return []ParsedReport{report}
+		}
+	}
+	return nil
+}
+
+func parsedReportsFromCloudString(value string) []ParsedReport {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	decoder := json.NewDecoder(strings.NewReader(value))
+	decoder.UseNumber()
+	var payload interface{}
+	if err := decoder.Decode(&payload); err != nil {
+		return nil
+	}
+	return parsedReportsFromCloudPayload(payload)
+}
+
+func parsedReportFromCloudMap(value map[string]interface{}) (ParsedReport, bool) {
+	raw, err := json.Marshal(value)
+	if err != nil {
+		return ParsedReport{}, false
+	}
+	var report ParsedReport
+	if err := json.Unmarshal(raw, &report); err != nil {
+		return ParsedReport{}, false
+	}
+	if report.ID == "" {
+		report.ID = report.ReportID
+	}
+	if report.ReportID == "" {
+		report.ReportID = report.ID
+	}
+	return report, report.ID != "" && ReportHasBothPlayers(report)
+}
+
+func parsedCaptureFromCloudMap(value map[string]interface{}) (ParsedReport, bool) {
+	if _, ok := value["bls"]; !ok {
+		if _, ok := value["BLS"]; !ok {
+			return ParsedReport{}, false
+		}
+	}
+	raw, err := json.Marshal(value)
+	if err != nil {
+		return ParsedReport{}, false
+	}
+	var capture Capture
+	if err := json.Unmarshal(raw, &capture); err != nil {
+		return ParsedReport{}, false
+	}
+	report := ParseCapture(&capture)
+	return report, report.ID != "" && ReportHasBothPlayers(report)
 }
 
 func battleEffectDisplay(id int64, side string) battleEffectMeta {
@@ -1175,6 +1572,31 @@ func battleReportUploadURL() string {
 		base = defaultCloudBackendURL
 	}
 	return strings.TrimRight(base, "/") + "/reports/battle"
+}
+
+func battleReportFetchURL() string {
+	if url := strings.TrimSpace(os.Getenv("BATTLE_REPORTS_FETCH_URL")); url != "" {
+		return url
+	}
+	if url := strings.TrimSpace(os.Getenv("BATTLE_REPORTS_UPLOAD_URL")); url != "" {
+		return url
+	}
+	base := strings.TrimSpace(os.Getenv("CLOUD_BACKEND_URL"))
+	if base == "" {
+		base = defaultCloudBackendURL
+	}
+	return strings.TrimRight(base, "/") + "/reports/battle"
+}
+
+func applyReportKeyHeader(req *http.Request) {
+	if req == nil {
+		return
+	}
+	if key := strings.TrimSpace(os.Getenv("REPORT_UPLOAD_KEY")); key != "" {
+		req.Header.Set("X-Citadel-Report-Key", key)
+	} else if key := strings.TrimSpace(os.Getenv("CITADEL_REPORT_UPLOAD_KEY")); key != "" {
+		req.Header.Set("X-Citadel-Report-Key", key)
+	}
 }
 
 func reportUploadClientID() (string, error) {

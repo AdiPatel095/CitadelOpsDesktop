@@ -1,15 +1,24 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+
 const battleReportRoutes = new Set([
   '/api/battle-reports',
   '/api/battleReports',
+  '/api/reports/battle',
   '/Data/BattleReports.jsonl',
   '/BattleReports.jsonl',
+])
+
+const cloudBattleReportRoutes = new Set([
+  '/api/battle-reports/cloud',
+  '/api/battleReports/cloud',
 ])
 
 function localBattleReportsPlugin(): Plugin {
@@ -20,6 +29,22 @@ function localBattleReportsPlugin(): Plugin {
 
       server.middlewares.use((req, res, next) => {
         const url = new URL(req.url ?? '/', 'http://localhost')
+        if (cloudBattleReportRoutes.has(url.pathname)) {
+          fetchCloudBattleReports()
+            .then(({ body, status, contentType }) => {
+              res.statusCode = status
+              res.setHeader('Content-Type', contentType)
+              res.setHeader('Cache-Control', 'no-store')
+              res.end(body)
+            })
+            .catch(() => {
+              res.statusCode = 404
+              res.setHeader('Content-Type', 'application/json; charset=utf-8')
+              res.end(JSON.stringify({ error: 'No cloud Battle Reports endpoint available.' }))
+            })
+          return
+        }
+
         if (!battleReportRoutes.has(url.pathname)) {
           next()
           return
@@ -53,6 +78,94 @@ function localBattleReportsPlugin(): Plugin {
   }
 }
 
+async function fetchCloudBattleReports(): Promise<{ body: string; status: number; contentType: string }> {
+  const response = await fetch(cloudBattleReportsURL(), {
+    headers: cloudBattleReportHeaders(),
+  })
+  const body = await response.text()
+  if (response.ok) {
+    const reports = parseCloudBattleReports(body)
+    return {
+      body: JSON.stringify({ reports }),
+      status: 200,
+      contentType: 'application/json; charset=utf-8',
+    }
+  }
+  return {
+    body,
+    status: response.status,
+    contentType: response.headers.get('content-type') || 'application/json; charset=utf-8',
+  }
+}
+
+function parseCloudBattleReports(text: string): LocalParsedReport[] {
+  const trimmed = text.trim()
+  if (!trimmed) {
+    return []
+  }
+  try {
+    return parsedCloudReportsFromUnknown(JSON.parse(trimmed))
+  } catch {
+    return []
+  }
+}
+
+function parsedCloudReportsFromUnknown(value: unknown): LocalParsedReport[] {
+  if (Array.isArray(value)) {
+    return value.flatMap(parsedCloudReportsFromUnknown)
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) {
+      return []
+    }
+    try {
+      return parsedCloudReportsFromUnknown(JSON.parse(trimmed))
+    } catch {
+      return []
+    }
+  }
+  const record = recordValue(value)
+  if (!record) {
+    return []
+  }
+  const nestedReports = Array.isArray(record.reports)
+    ? record.reports
+    : Array.isArray(record.data)
+      ? record.data
+      : Array.isArray(record.items)
+        ? record.items
+        : null
+  if (nestedReports) {
+    return nestedReports.flatMap(parsedCloudReportsFromUnknown)
+  }
+  if (typeof record.payload === 'string') {
+    return parsedCloudReportsFromUnknown(record.payload)
+  }
+  const parsed = recordValue(record.parsed) ?? recordValue(record.parsedReport) ?? recordValue(record.report)
+  if (parsed && reportHasBothPlayers(parsed as LocalParsedReport)) {
+    return [parsed as LocalParsedReport]
+  }
+  const report = parseLocalBattleReportCapture(record)
+  return reportHasBothPlayers(report) ? [report] : []
+}
+
+function cloudBattleReportsURL(): string {
+  const explicitFetchURL = process.env.BATTLE_REPORTS_FETCH_URL
+  const explicitUploadURL = process.env.BATTLE_REPORTS_UPLOAD_URL
+  const base = process.env.CLOUD_BACKEND_URL || 'https://citadelops.app/api'
+  return explicitFetchURL || explicitUploadURL || `${base.replace(/\/+$/, '')}/reports/battle`
+}
+
+function cloudBattleReportHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {}
+  const reportKey = process.env.REPORT_UPLOAD_KEY || process.env.CITADEL_REPORT_UPLOAD_KEY
+  if (reportKey) {
+    headers['X-Citadel-Report-Key'] = reportKey
+  }
+  return headers
+}
+
 function resolveBattleReportsFile(): string | null {
   const candidates = battleReportCandidates()
   return candidates.find((candidate) => fs.existsSync(candidate)) ?? null
@@ -66,9 +179,10 @@ function battleReportCandidates(): string[] {
   return [
     explicitFile,
     explicitDataDir ? path.join(explicitDataDir, 'BattleReports.jsonl') : '',
+    path.join(projectDir, 'BattleReports.jsonl'),
     path.join(process.cwd(), 'public', 'Data', 'BattleReports.jsonl'),
     path.join(process.cwd(), 'Data', 'BattleReports.jsonl'),
-    path.resolve(process.cwd(), '..', 'Data', 'BattleReports.jsonl'),
+    path.join(projectDir, 'Data', 'BattleReports.jsonl'),
     path.join(downloadsDir, 'Adolphus_Murtry', 'Data', 'BattleReports.jsonl'),
     path.join(downloadsDir, 'Adolphus_Murtry', 'CitadelOpsDesktop', 'Data', 'BattleReports.jsonl'),
     path.join(downloadsDir, 'Amos_Burton', 'Data', 'BattleReports.jsonl'),
@@ -163,6 +277,8 @@ interface LocalParsedReport {
   lid: number
   battleKey: string
   kingdomID?: number
+  targetX?: number
+  targetY?: number
   targetName: string
   castleName: string
   battleType: string
@@ -244,6 +360,10 @@ function applyLocalBattleMeta(report: LocalParsedReport, bls: JsonRecord | null)
     if (Number.isFinite(kingdomID)) {
       report.kingdomID = kingdomID
     }
+    if (isNumberLike(ai.X) && isNumberLike(ai.Y)) {
+      report.targetX = numericValue(ai.X)
+      report.targetY = numericValue(ai.Y)
+    }
   }
 
   const players = playerInfoByOID(bls)
@@ -261,9 +381,14 @@ function applyLocalBattleMeta(report: LocalParsedReport, bls: JsonRecord | null)
   })
 
   report.metrics = metricsFromPBI(bls)
-  report.commanderEffects = effectsFromLeader(bls.AL, 'commander')
-  report.castellanEffects = effectsFromLeader(bls.DB, 'castellan')
+  const combatMode = reportBattleEffectCombatMode(report)
+  report.commanderEffects = effectsFromLeader(bls.AL, 'commander', combatMode)
+  report.castellanEffects = effectsFromLeader(bls.DB, 'castellan', combatMode)
   report.effects = [...report.commanderEffects, ...report.castellanEffects]
+}
+
+function reportBattleEffectCombatMode(report: LocalParsedReport): BattleEffectCombatMode {
+  return report.attacker?.playerID && report.defender?.playerID ? 'pvp' : 'pve'
 }
 
 function playerInfoByOID(bls: JsonRecord): Map<number, JsonRecord> {
@@ -351,32 +476,39 @@ function combatantFromPlayerInfo(oid: number, role: string, info?: JsonRecord): 
   }
 }
 
-function effectsFromLeader(value: unknown, side: string): LocalEffect[] {
+function effectsFromLeader(value: unknown, side: string, combatMode: BattleEffectCombatMode): LocalEffect[] {
   const leader = recordValue(value)
   if (!leader) {
     return []
   }
 
-  const grouped = new Map<string, { effect: LocalEffect; meta: LocalEffectMeta }>()
-  arrayValue(leader.AE).forEach((raw) => {
-    const row = arrayValue(raw)
-    const id = numericValue(row[0])
-    const values = battleEffectValuesFromValue(row[1])
-    if (!id || values.length === 0) {
+  const grouped = new Map<string, {
+    effect: LocalEffect
+    meta: LocalEffectMeta
+    sources: Map<string, { value: number; cap?: number }>
+  }>()
+  leaderEffectRows(leader, combatMode).forEach((row) => {
+    const meta = battleEffectMeta(row.id)
+    if (meta.skip || (meta.unknown && row.source !== 'active')) {
       return
     }
 
-    const value = battleEffectValue(id, values)
+    const value = battleEffectValue(row.id, row.values) * (meta.scale ?? 1)
     if (value === 0) {
       return
     }
 
-    const meta = battleEffectMeta(id)
     const key = `${meta.label}|${meta.unit}|${meta.category}|${meta.template}`
+    const capKey = row.cap ? `${row.id}:${row.capKey}` : `${row.id}:${row.source}:${row.rawID}:${row.index}`
     const existing = grouped.get(key)
     if (existing) {
-      existing.effect.code = `${existing.effect.code},${id}`
-      existing.effect.value += value
+      existing.effect.code = `${existing.effect.code},${row.rawID}`
+      const source = existing.sources.get(capKey)
+      if (source) {
+        source.value += value
+      } else {
+        existing.sources.set(capKey, { value, cap: row.cap })
+      }
       if (meta.order < existing.effect.sortOrder) {
         existing.effect.sortOrder = meta.order
       }
@@ -386,22 +518,26 @@ function effectsFromLeader(value: unknown, side: string): LocalEffect[] {
     grouped.set(key, {
       meta,
       effect: {
-        code: String(id),
+        code: String(row.rawID),
         label: meta.label,
         name: meta.label,
-        value,
+        value: 0,
         formattedValue: '',
         displayText: '',
         category: meta.category,
         sortOrder: meta.order,
         side,
       },
+      sources: new Map([[capKey, { value, cap: row.cap }]]),
     })
   })
 
   return Array.from(grouped.values())
-    .map(({ effect, meta }) => {
-      const value = round(effect.value, 1)
+    .map(({ effect, meta, sources }) => {
+      const value = round(Array.from(sources.values()).reduce((total, source) => {
+        const capped = source.cap ? Math.min(Math.abs(source.value), source.cap) * Math.sign(source.value) : source.value
+        return total + capped
+      }, 0), 1)
       return {
         ...effect,
         value,
@@ -410,6 +546,322 @@ function effectsFromLeader(value: unknown, side: string): LocalEffect[] {
       }
     })
     .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label))
+}
+
+type BattleEffectCombatMode = 'pvp' | 'pve'
+type BattleEffectSource = 'active' | 'equipment' | 'gem' | 'set'
+
+interface LocalLeaderEffectRow {
+  id: number
+  rawID: number
+  values: number[]
+  source: BattleEffectSource
+  index: number
+  cap?: number
+  capKey: string
+}
+
+interface LocalBattleEffectDefinition {
+  effectID: number
+  capID: number
+  cap?: number
+  isPvp: boolean
+  isPve: boolean
+}
+
+interface LocalBattleEffectData {
+  equipmentEffectIDs: Map<number, number>
+  effectDefinitions: Map<number, LocalBattleEffectDefinition>
+  relicEffectIDs: Map<number, number>
+  equipmentEffects: Map<number, LocalCatalogEffect[]>
+  gemEffects: Map<number, LocalCatalogEffect[]>
+  equipmentSetEffects: Map<number, LocalEquipmentSetEffect[]>
+}
+
+interface LocalCatalogEffect {
+  id: number
+  values: number[]
+}
+
+interface LocalEquipmentSetEffect {
+  needed: number
+  effects: LocalCatalogEffect[]
+}
+
+let cachedBattleEffectData: LocalBattleEffectData | null = null
+
+function leaderEffectRows(leader: JsonRecord, combatMode: BattleEffectCombatMode): LocalLeaderEffectRow[] {
+  const rows: LocalLeaderEffectRow[] = []
+  let index = 0
+
+  arrayValue(leader.AE).forEach((raw) => {
+    const parsed = effectRowFromArray(arrayValue(raw), 'active', combatMode, index)
+    index += 1
+    if (parsed) {
+      rows.push(parsed)
+    }
+  })
+
+  const setCounts = new Map<number, number>()
+  arrayValue(leader.EQ).forEach((raw) => {
+    const item = arrayValue(raw)
+    const setID = numericValue(item[7])
+    if (setID > 0) {
+      setCounts.set(setID, (setCounts.get(setID) ?? 0) + 1)
+    }
+
+    const equipmentID = numericValue(item[6])
+    const catalogEffects = battleEffectData().equipmentEffects.get(equipmentID) ?? []
+    arrayValue(item[5]).forEach((effectRaw, effectIndex) => {
+      const effectRow = arrayValue(effectRaw)
+      const catalogEffect = catalogEffects[effectIndex]
+      const rawID = catalogEffect?.id ?? numericValue(effectRow[0])
+      const values = catalogEffect ? valuesFromCatalogEffect(catalogEffect, effectRow) : battleEffectValuesFromRow(effectRow)
+      const parsed = normalizedLeaderEffectRow(rawID, values, 'equipment', combatMode, index)
+      index += 1
+      if (parsed) {
+        rows.push(parsed)
+      }
+    })
+
+    const catalogGemID = numericValue(item[10])
+    battleEffectData().gemEffects.get(catalogGemID)?.forEach((effect) => {
+      const parsed = normalizedLeaderEffectRow(effect.id, effect.values, 'gem', combatMode, index)
+      index += 1
+      if (parsed) {
+        rows.push(parsed)
+      }
+    })
+
+    arrayValue(arrayValue(arrayValue(item[12])[3])[4]).forEach((effectRaw) => {
+      const effectRow = arrayValue(effectRaw)
+      const parsed = normalizedLeaderEffectRow(
+        numericValue(effectRow[0]),
+        battleEffectValuesFromRow(effectRow),
+        'gem',
+        combatMode,
+        index
+      )
+      index += 1
+      if (parsed) {
+        rows.push(parsed)
+      }
+    })
+  })
+
+  setCounts.forEach((count, setID) => {
+    battleEffectSetEffects(setID, count).forEach((effect) => {
+      const parsed = normalizedLeaderEffectRow(effect.id, effect.values, 'set', combatMode, index)
+      index += 1
+      if (parsed) {
+        rows.push(parsed)
+      }
+    })
+  })
+
+  return rows
+}
+
+function effectRowFromArray(
+  row: unknown[],
+  source: BattleEffectSource,
+  combatMode: BattleEffectCombatMode,
+  index: number
+): LocalLeaderEffectRow | null {
+  return normalizedLeaderEffectRow(numericValue(row[0]), battleEffectValuesFromRow(row), source, combatMode, index)
+}
+
+function normalizedLeaderEffectRow(
+  rawID: number,
+  values: number[],
+  source: BattleEffectSource,
+  combatMode: BattleEffectCombatMode,
+  index: number
+): LocalLeaderEffectRow | null {
+  if (!rawID || values.length === 0) {
+    return null
+  }
+
+  const data = battleEffectData()
+  let id = rawID
+  if (source !== 'active') {
+    id = data.relicEffectIDs.get(rawID) ?? data.equipmentEffectIDs.get(rawID) ?? rawID
+  }
+
+  const definition = data.effectDefinitions.get(id)
+  if (definition?.isPvp && combatMode !== 'pvp') {
+    return null
+  }
+  if (definition?.isPve && combatMode !== 'pve') {
+    return null
+  }
+
+  return {
+    id,
+    rawID,
+    values,
+    source,
+    index,
+    cap: battleEffectCap(id, definition, source),
+    capKey: definition ? `${definition.effectID}:${definition.capID}` : `${id}`,
+  }
+}
+
+function battleEffectValuesFromRow(row: unknown[]): number[] {
+  if (Array.isArray(row[2])) {
+    return numericArrayValue(row[2])
+  }
+  return battleEffectValuesFromValue(row[1])
+}
+
+function valuesFromCatalogEffect(effect: LocalCatalogEffect, row: unknown[]): number[] {
+  const rawValues = battleEffectValuesFromRow(row)
+  if (rawValues.length > 0) {
+    return rawValues
+  }
+  return effect.values
+}
+
+function battleEffectCap(
+  id: number,
+  definition: LocalBattleEffectDefinition | undefined,
+  source: BattleEffectSource
+): number | undefined {
+  if (source === 'active' && !battleEffectActiveCaps.has(id)) {
+    return undefined
+  }
+  if (id in battleEffectCapOverrides) {
+    return battleEffectCapOverrides[id]
+  }
+  return definition?.cap
+}
+
+function battleEffectData(): LocalBattleEffectData {
+  if (cachedBattleEffectData) {
+    return cachedBattleEffectData
+  }
+
+  const caps = new Map<number, number>()
+  readDataArray('effect_caps/items.json').forEach((entry) => {
+    const capID = numericValue(entry.capID)
+    const max = numericValue(entry.maxTotalBonus)
+    if (capID > 0 && max > 0) {
+      caps.set(capID, max)
+    }
+  })
+
+  const effectDefinitions = new Map<number, LocalBattleEffectDefinition>()
+  readDataArray('effects/items.json').forEach((entry) => {
+    const effectID = numericValue(entry.effectID)
+    if (!effectID) {
+      return
+    }
+    const name = stringValue(entry.name)
+    const capID = numericValue(entry.capID)
+    effectDefinitions.set(effectID, {
+      effectID,
+      capID,
+      cap: caps.get(capID),
+      isPvp: stringValue(entry.isPvPFight) === '1' || /pvp/i.test(name),
+      isPve: stringValue(entry.isPvEFight) === '1' || /pve/i.test(name),
+    })
+  })
+
+  const equipmentEffectIDs = new Map<number, number>()
+  readDataArray('equipment_effects/items.json').forEach((entry) => {
+    const equipmentEffectID = numericValue(entry.equipmentEffectID)
+    const effectID = numericValue(entry.effectID)
+    if (equipmentEffectID > 0 && effectID > 0) {
+      equipmentEffectIDs.set(equipmentEffectID, effectID)
+    }
+  })
+
+  const relicEffectIDs = new Map<number, number>()
+  readDataArray('relic_effects/items.json').forEach((entry) => {
+    const relicEffectID = numericValue(entry.id)
+    const effectID = numericValue(entry.effectID)
+    if (relicEffectID > 0 && effectID > 0) {
+      relicEffectIDs.set(relicEffectID, effectID)
+    }
+  })
+
+  const equipmentEffects = new Map<number, LocalCatalogEffect[]>()
+  readDataArray('equipments/items.json').forEach((entry) => {
+    const equipmentID = numericValue(entry.equipmentID)
+    const effects = catalogEffectsFromString(stringValue(entry.effects))
+    if (equipmentID > 0 && effects.length > 0) {
+      equipmentEffects.set(equipmentID, effects)
+    }
+  })
+
+  const gemEffects = new Map<number, LocalCatalogEffect[]>()
+  readDataArray('gems/items.json').forEach((entry) => {
+    const gemID = numericValue(entry.gemID)
+    const effects = catalogEffectsFromString(stringValue(entry.effects))
+    if (gemID > 0 && effects.length > 0) {
+      gemEffects.set(gemID, effects)
+    }
+  })
+
+  const equipmentSetEffects = new Map<number, LocalEquipmentSetEffect[]>()
+  readDataArray('equipment_sets/items.json').forEach((entry) => {
+    const setID = numericValue(entry.setID)
+    const needed = numericValue(entry.neededItems)
+    const effects = catalogEffectsFromString(stringValue(entry.effects))
+    if (setID > 0 && needed > 0 && effects.length > 0) {
+      const existing = equipmentSetEffects.get(setID) ?? []
+      existing.push({ needed, effects })
+      equipmentSetEffects.set(setID, existing)
+    }
+  })
+
+  cachedBattleEffectData = {
+    equipmentEffectIDs,
+    effectDefinitions,
+    relicEffectIDs,
+    equipmentEffects,
+    gemEffects,
+    equipmentSetEffects,
+  }
+  return cachedBattleEffectData
+}
+
+function battleEffectSetEffects(setID: number, equippedCount: number): LocalCatalogEffect[] {
+  if (setID <= 0 || equippedCount <= 0) {
+    return []
+  }
+  return (battleEffectData().equipmentSetEffects.get(setID) ?? []).flatMap((entry) =>
+    entry.needed <= equippedCount ? entry.effects : []
+  )
+}
+
+function catalogEffectsFromString(value: string): LocalCatalogEffect[] {
+  if (!value) {
+    return []
+  }
+  return value.split(',').flatMap((effect) => {
+    const [rawID, rawValues] = effect.split('&')
+    const id = numericValue(rawID)
+    const values = stringValue(rawValues)
+      .split('#')
+      .flatMap((part) => part.split('+'))
+      .map((part) => numericValue(part))
+      .filter((part) => part !== 0)
+    return id > 0 && values.length > 0 ? [{ id, values }] : []
+  })
+}
+
+function readDataArray(relativePath: string): JsonRecord[] {
+  try {
+    const text = fs.readFileSync(path.join(projectDir, 'Server', 'Data', relativePath), 'utf8')
+    const parsed = JSON.parse(text)
+    return Array.isArray(parsed) ? parsed.flatMap((entry) => {
+      const record = recordValue(entry)
+      return record ? [record] : []
+    }) : []
+  } catch {
+    return []
+  }
 }
 
 function applyLocalBattleItemSummaries(report: LocalParsedReport, data: JsonRecord | null) {
@@ -638,6 +1090,9 @@ interface LocalEffectMeta {
   category: string
   order: number
   negative?: boolean
+  scale?: number
+  skip?: boolean
+  unknown?: boolean
 }
 
 function battleEffectMeta(id: number): LocalEffectMeta {
@@ -647,6 +1102,7 @@ function battleEffectMeta(id: number): LocalEffectMeta {
     unit: 'percent',
     category: 'Other effects',
     order: 900,
+    unknown: true,
   }
 }
 
@@ -674,33 +1130,56 @@ function battleEffectFlag(label: string, template: string, category: string, ord
   return { label, template, unit: 'flag', category, order }
 }
 
+const battleEffectActiveCaps = new Set([5, 61, 62, 368, 369, 386, 410, 411, 412, 423, 424])
+
+const battleEffectCapOverrides: Partial<Record<number, number>> = {
+  473: 150,
+}
+
 const battleEffectMetadata: Record<number, LocalEffectMeta> = {
-  61: battleEffect('Melee unit strength', 'melee unit strength when attacking', 'percent', 'Unit effects', 10),
-  411: battleEffect('Melee units attack strength', 'melee units attack strength', 'percent', 'Unit effects', 10),
-  613: battleEffect('Melee unit strength', 'melee unit strength when attacking', 'percent', 'Unit effects', 10),
-  62: battleEffect('Ranged unit strength', 'ranged unit strength when attacking', 'percent', 'Unit effects', 11),
-  412: battleEffect('Ranged units attack strength', 'ranged units attack strength', 'percent', 'Unit effects', 11),
-  614: battleEffect('Ranged unit strength', 'ranged unit strength when attacking', 'percent', 'Unit effects', 11),
-  410: battleEffect('Courtyard attack combat strength', 'courtyard attack combat strength', 'percent', 'Attack effects', 12),
-  504: battleEffect('Courtyard attack strength', 'combat strength when attacking enemy courtyards', 'percent', 'Attack effects', 12),
-  386: battleEffect('Courtyard attack strength', 'combat strength when attacking enemy courtyards', 'percent', 'Attack effects', 12),
-  423: battleEffect('Front combat strength', 'combat strength on the front when attacking', 'percent', 'Attack effects', 13),
-  424: battleEffect('Flank combat strength', 'combat strength on the flanks when attacking', 'percent', 'Attack effects', 14),
+  61: battleEffect('Combat strength for melee units', 'combat strength for melee units', 'percent', 'Unit effects', 10),
+  411: battleEffect('Combat strength for melee units', 'combat strength for melee units', 'percent', 'Unit effects', 10),
+  613: battleEffect('Combat strength for melee units', 'combat strength for melee units', 'percent', 'Unit effects', 10),
+  467: battleEffect('Combat strength for melee units', 'combat strength for melee units', 'percent', 'Unit effects', 10),
+  62: battleEffect('Combat strength for ranged units', 'combat strength for ranged units', 'percent', 'Unit effects', 11),
+  412: battleEffect('Combat strength for ranged units', 'combat strength for ranged units', 'percent', 'Unit effects', 11),
+  614: battleEffect('Combat strength for ranged units', 'combat strength for ranged units', 'percent', 'Unit effects', 11),
+  468: battleEffect('Combat strength for ranged units', 'combat strength for ranged units', 'percent', 'Unit effects', 11),
+  410: battleEffect('Combat strength when attacking enemy courtyard', 'combat strength when attacking enemy courtyard', 'percent', 'Unit effects', 12),
+  504: battleEffect('Combat strength when attacking enemy courtyard', 'combat strength when attacking enemy courtyard', 'percent', 'Unit effects', 12),
+  386: battleEffect('Combat strength when attacking enemy courtyard', 'combat strength when attacking enemy courtyard', 'percent', 'Unit effects', 12),
+  475: battleEffect('Combat strength when attacking enemy courtyard', 'combat strength when attacking enemy courtyard', 'percent', 'Unit effects', 12),
+  423: battleEffect('Combat strength for the front', 'combat strength for the front when attacking', 'percent', 'Unit effects', 13),
+  478: battleEffect('Combat strength for the front', 'combat strength for the front when attacking', 'percent', 'Unit effects', 13),
+  424: battleEffect('Combat strength for the flanks', 'combat strength for the flanks when attacking', 'percent', 'Unit effects', 14),
+  479: battleEffect('Combat strength for the flanks', 'combat strength for the flanks when attacking', 'percent', 'Unit effects', 14),
+  477: battleEffect('Unit combat strength when attacking', 'unit combat strength when attacking', 'percent', 'Attack effects', 15),
+  469: battleEffectNegative('Wall protection', 'wall protection of Castle Lords', 'percent', 'Defense structure effects', 16),
+  470: battleEffectNegative('Gate protection', 'gate protection of Castle Lords', 'percent', 'Defense structure effects', 17),
+  471: battleEffectNegative('Moat protection', 'moat protection of Castle Lords', 'percent', 'Defense structure effects', 18),
   503: battleEffect('Front unit limit', 'unit limit on the front', 'percent', 'Attack effects', 20),
   369: battleEffect('Front unit limit', 'unit limit on the front', 'percent', 'Attack effects', 20),
+  476: battleEffect('Front unit limit', 'unit limit on the front', 'percent', 'Attack effects', 20),
   66: battleEffect('Flank unit limit', 'unit limit on the flanks', 'percent', 'Attack effects', 21),
-  368: battleEffect('Flank unit limit', 'flank unit limit when attacking', 'percent', 'Attack effects', 21),
+  368: battleEffect('Flank unit limit', 'unit limit on the flanks', 'percent', 'Attack effects', 21),
+  474: battleEffect('Flank unit limit', 'unit limit on the flanks', 'percent', 'Attack effects', 21),
   700: battleEffect('Final assault capacity', 'to troop capacity for final assault', 'number', 'Courtyard effects', 22),
   701: battleEffect('Final assault capacity', 'to troop capacity for final assault', 'percent', 'Courtyard effects', 23),
   512: battleEffect('Courtyard support strength', 'courtyard support unit strength', 'percent', 'Courtyard effects', 24),
+  29: battleEffect('Additional waves', 'additional wave(s)', 'number', 'Pre-battle effects', 29),
+  484: battleEffect('Additional waves', 'additional wave(s)', 'number', 'Pre-battle effects', 29),
   426: battleEffect('Army travel speed', 'army travel speed', 'percent', 'Pre-battle effects', 30),
   53: battleEffect('Army travel speed', 'army travel speed', 'percent', 'Pre-battle effects', 30),
+  472: battleEffect('Army travel speed', 'army travel speed', 'percent', 'Pre-battle effects', 30),
   97: battleEffect('Travel speed', 'Military, espionage and trade travel speed', 'percent', 'Pre-battle effects', 30),
   19: battleEffect('Attack travel speed', 'Attack travel speed', 'percent', 'Pre-battle effects', 31),
   55: battleEffect('Later army detection', 'later army detection', 'percent', 'Pre-battle effects', 32),
+  481: battleEffect('Later army detection', 'later army detection', 'percent', 'Pre-battle effects', 32),
+  482: battleEffect('Army return travel speed', 'army return travel speed against Castle Lords', 'percent', 'Post-battle effects', 33),
   111: battleEffect('Loot capacity', 'loot capacity', 'percent', 'Post-battle effects', 40),
   431: battleEffect('Resources plundered', 'resources plundered when looting', 'percent', 'Post-battle effects', 41),
   54: battleEffect('Resources plundered', 'resources plundered when looting', 'percent', 'Post-battle effects', 41),
+  473: battleEffect('Resources plundered', 'resources plundered when looting', 'percent', 'Post-battle effects', 41),
   51: battleEffect('Glory earned', 'glory points earned when attacking', 'percent', 'Post-battle effects', 42),
   100: battleEffect('Glory bonus', 'Glory bonus', 'percent', 'Post-battle effects', 42),
   45: battleEffect('Glory earned', 'glory points earned when attacking', 'percent', 'Post-battle effects', 42),
@@ -714,26 +1193,50 @@ const battleEffectMetadata: Record<number, LocalEffectMeta> = {
   20: battleEffect('Alliance attack strength', 'Combat strength bonus for attacks', 'percent', 'Attack effects', 50),
   25: battleEffect('Event target attack strength', 'Combat strength bonus against Foreign and Bloodcrow castles', 'percent', 'Attack effects', 51),
 
-  339: battleEffect('Melee defense', 'combat strength for melee units when defending', 'percent', 'Unit effects', 110),
-  10: battleEffect('Melee defense', 'combat strength for melee units when defending', 'percent', 'Unit effects', 110),
-  340: battleEffect('Ranged defense', 'combat strength for ranged units when defending', 'percent', 'Unit effects', 111),
-  11: battleEffect('Ranged defense', 'combat strength for ranged units when defending', 'percent', 'Unit effects', 111),
-  370: battleEffect('Courtyard defense', 'combat strength when defending the courtyard', 'percent', 'Courtyard effects', 112),
-  501: battleEffect('Courtyard defense', 'combat strength when defending the courtyard', 'percent', 'Courtyard effects', 112),
+  339: battleEffect('Combat strength for defensive melee units', 'combat strength bonus for defensive melee units', 'percent', 'Unit effects', 110),
+  10: battleEffect('Combat strength for defensive melee units', 'combat strength bonus for defensive melee units', 'percent', 'Unit effects', 110),
+  12105: battleEffect('Combat strength for defensive melee units', 'combat strength bonus for defensive melee units', 'percent', 'Unit effects', 110),
+  12203: battleEffect('Combat strength for defensive melee units', 'combat strength bonus for defensive melee units', 'percent', 'Unit effects', 110),
+  12303: battleEffect('Combat strength for defensive melee units', 'combat strength bonus for defensive melee units', 'percent', 'Unit effects', 110),
+  12507: battleEffect('Combat strength for defensive melee units', 'combat strength bonus for defensive melee units', 'percent', 'Unit effects', 110),
+  340: battleEffect('Combat strength for defensive ranged units', 'combat strength bonus for defensive ranged units', 'percent', 'Unit effects', 111),
+  11: battleEffect('Combat strength for defensive ranged units', 'combat strength bonus for defensive ranged units', 'percent', 'Unit effects', 111),
+  12106: battleEffect('Combat strength for defensive ranged units', 'combat strength bonus for defensive ranged units', 'percent', 'Unit effects', 111),
+  12204: battleEffect('Combat strength for defensive ranged units', 'combat strength bonus for defensive ranged units', 'percent', 'Unit effects', 111),
+  12304: battleEffect('Combat strength for defensive ranged units', 'combat strength bonus for defensive ranged units', 'percent', 'Unit effects', 111),
+  12508: battleEffect('Combat strength for defensive ranged units', 'combat strength bonus for defensive ranged units', 'percent', 'Unit effects', 111),
+  370: battleEffect('Combat strength when defending the courtyard', 'combat strength when defending the courtyard', 'percent', 'Unit effects', 112),
+  501: battleEffect('Combat strength when defending the courtyard', 'combat strength when defending the courtyard', 'percent', 'Unit effects', 112),
+  12108: battleEffect('Combat strength when defending the courtyard', 'combat strength when defending the courtyard', 'percent', 'Unit effects', 112),
+  12206: battleEffect('Combat strength when defending the courtyard', 'combat strength when defending the courtyard', 'percent', 'Unit effects', 112),
+  12306: battleEffect('Combat strength when defending the courtyard', 'combat strength when defending the courtyard', 'percent', 'Unit effects', 112),
+  12510: battleEffect('Combat strength when defending the courtyard', 'combat strength when defending the courtyard', 'percent', 'Unit effects', 112),
+  12109: battleEffect('Combat strength for defense units', 'combat strength for defense units', 'percent', 'Unit effects', 113),
+  12501: battleEffect('Combat strength for defense units', 'combat strength for defense units', 'percent', 'Unit effects', 113),
   509: battleEffect('Front defense', 'combat strength on the front when defending', 'percent', 'Defense unit effects', 113),
   510: battleEffect('Flank defense', 'combat strength on the flanks when defending', 'percent', 'Defense unit effects', 114),
+  12111: battleEffect('Flank defense', 'combat strength for defense units of the flanks', 'percent', 'Defense unit effects', 114),
+  12102: battleEffect('Wall protection', 'wall protection', 'percent', 'Defense structure effects', 115),
+  12103: battleEffect('Gate protection', 'gate protection', 'percent', 'Defense structure effects', 116),
+  12104: battleEffect('Moat protection', 'moat protection', 'percent', 'Defense structure effects', 117),
   420: battleEffect('Wall unit limit', 'unit limit on the wall', 'number', 'Defense unit effects', 120),
   387: battleEffect('Wall unit limit', 'to troop capacity on wall defense', 'percent', 'Defense unit effects', 120),
+  12107: battleEffect('Wall unit limit', 'wall unit limit when defending', 'percent', 'Defense unit effects', 120),
   702: battleEffect('Courtyard defense capacity', 'to troop capacity in courtyard defense', 'number', 'Courtyard effects', 121),
   371: battleEffect('Courtyard defense capacity', 'to troop capacity in courtyard defense', 'number', 'Courtyard effects', 121),
   705: battleEffect('Courtyard defense capacity', 'to troop capacity in courtyard defense', 'percent', 'Courtyard effects', 121),
   706: battleEffect('Alliance support capacity', 'to alliance support troop capacity', 'number', 'Courtyard effects', 122),
   385: battleEffect('Alliance support capacity', 'to alliance support troop capacity', 'number', 'Courtyard effects', 122),
+  12112: battleEffect('Protector support', 'Level 10 Protector of the north in courtyard defense', 'number', 'Defense unit effects', 122),
   427: battleEffect('Surviving soldiers', 'more surviving soldiers after defense', 'percent', 'Post-battle effects', 123),
   428: battleEffect('Sight radius', 'Sight Radius', 'percent', 'Pre-battle effects', 124),
   4: battleEffect('Earlier attack warning', 'earlier attack warning', 'percent', 'Pre-battle effects', 125),
-  5: battleEffectNegative('Fire damage suffered', 'fire damage suffered when defending', 'percent', 'Post-battle effects', 126),
-  429: battleEffectNegative('Fire damage suffered', 'fire damage suffered', 'percent', 'Post-battle effects', 126),
+  12503: battleEffect('Earlier attack warning', 'earlier attack warning when defending against Castle Lords', 'percent', 'Pre-battle effects', 125),
+  5: battleEffectNegative('Fire damage suffered', 'fire damage suffered when defending', 'percent', 'Defense structure effects', 126),
+  429: battleEffectNegative('Fire damage suffered', 'fire damage suffered when defending', 'percent', 'Defense structure effects', 126),
+  12309: battleEffectNegative('Fire damage suffered', 'fire damage suffered when defending', 'percent', 'Defense structure effects', 126),
+  12511: battleEffectNegative('Fire damage suffered', 'fire damage suffered when defending', 'percent', 'Defense structure effects', 126),
+  12101: battleEffectNegative('Resources lost', 'resources lost after being looted', 'percent', 'Post-battle effects', 126),
   94: battleEffect('Militia in the castle', 'militia in the castle', 'number', 'Pre-battle effects', 127),
   115: battleEffectFlag('Militia replacement', 'Replaces the armed citizen with Militia', 'Pre-battle effects', 128),
   1: battleEffect('Glory defense bonus', 'glory points earned when defending', 'percent', 'Post-battle effects', 129),

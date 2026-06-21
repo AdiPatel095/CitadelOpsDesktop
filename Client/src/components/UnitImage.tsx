@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Shield } from 'lucide-react';
 import { getUnitBaseAndLevel } from '../config/Constants';
 import { useMetadata } from '../context/MetadataContext';
+import LevelBadge from './LevelBadge';
 
 interface UnitImageProps {
   unitId: number;
@@ -20,7 +21,7 @@ const UnitImage: React.FC<UnitImageProps> = ({ unitId, size = 40, showLevel = fa
 
   return (
     <span
-      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-global bg-bg-app ${className}`}
+      className={`relative inline-flex shrink-0 items-center justify-center rounded-global bg-bg-app ${className}`}
       style={{ width: size, height: size }}
       title={title}
       aria-label={title}
@@ -38,11 +39,7 @@ const UnitImage: React.FC<UnitImageProps> = ({ unitId, size = 40, showLevel = fa
       ) : (
         <Shield className="h-1/2 w-1/2 text-text-muted" />
       )}
-      {showLevel && level && (
-        <span className="absolute left-0.5 top-0.5 rounded-full bg-bg-card px-1 text-[9px] font-bold leading-3 text-primary ring-1 ring-primary/30">
-          {level}
-        </span>
-      )}
+      {showLevel && level && <LevelBadge level={level} imageSize={size} />}
     </span>
   );
 };

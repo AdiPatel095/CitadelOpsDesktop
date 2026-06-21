@@ -37,6 +37,7 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
+.codex-local-tests/
 
 
 # GGE HTML5 mirrored textures (go run ./Server/cmd/fetchggeassets)

@@ -4,6 +4,9 @@ import {
   BarChart3,
   CalendarDays,
   Castle,
+  ChevronDown,
+  ChevronRight,
+  MapPin,
   RefreshCw,
   Search,
   Shield,
@@ -28,10 +31,13 @@ import type {
 } from '../types/BattleStats';
 
 const dataSources = [
-  '/Data/BattleReports.jsonl',
-  '/BattleReports.jsonl',
+  '/api/battle-reports/cloud',
+  '/api/battleReports/cloud',
+  '/api/reports/battle',
   '/api/battle-reports',
   '/api/battleReports',
+  '/Data/BattleReports.jsonl',
+  '/BattleReports.jsonl',
 ];
 
 const kingdomNames: Record<number, string> = {
@@ -265,6 +271,7 @@ const BattleStatsView: React.FC = () => {
       <ReportDetailPage
         report={detailReport}
         outcome={relativeOutcomeLabel(detailReport, selectedPlayer, allianceMemberKeys, homeAllianceKey)}
+        perspectiveSide={friendlySideForReport(detailReport, selectedPlayer, allianceMemberKeys, homeAllianceKey)}
         onBack={() => setSelectedReportID(null)}
       />
     );
@@ -518,6 +525,10 @@ interface PlayerAggregate {
   losses: number;
   unitsLost: number;
   unitsKilled: number;
+  attackDefendersKilled: number;
+  attackAttackersLost: number;
+  defenseDefendersLost: number;
+  defenseAttackersKilled: number;
 }
 
 interface AllianceAggregate {
@@ -528,6 +539,10 @@ interface AllianceAggregate {
   losses: number;
   unitsLost: number;
   unitsKilled: number;
+  attackDefendersKilled: number;
+  attackAttackersLost: number;
+  defenseDefendersLost: number;
+  defenseAttackersKilled: number;
 }
 
 const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) => (
@@ -547,8 +562,8 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
             <th className="px-4 py-3 font-semibold text-right">Reports</th>
             <th className="px-4 py-3 font-semibold text-right">A / D</th>
             <th className="px-4 py-3 font-semibold text-right">W / L</th>
-            <th className="px-4 py-3 font-semibold text-right">Lost</th>
-            <th className="px-4 py-3 font-semibold text-right">Killed</th>
+            <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost in attacks by this player">Attack Ratio</th>
+            <th className="px-4 py-3 font-semibold text-right" title="Defenders lost per attacker killed in defenses by this player">Defense Ratio</th>
           </tr>
         </thead>
         <tbody>
@@ -565,8 +580,12 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
                 <span className="text-text-muted"> / </span>
                 <span className="text-error font-semibold">{formatNumber(row.losses)}</span>
               </td>
-              <td className="px-4 py-3 text-right text-error font-semibold">{formatNumber(row.unitsLost)}</td>
-              <td className="px-4 py-3 text-right text-info font-semibold">{formatNumber(row.unitsKilled)}</td>
+              <td className="px-4 py-3 text-right text-info font-semibold">
+                {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
+              </td>
+              <td className="px-4 py-3 text-right text-error font-semibold">
+                {formatRatio(row.defenseDefendersLost, row.defenseAttackersKilled)}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -594,8 +613,8 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
             <th className="px-4 py-3 font-semibold">Alliance</th>
             <th className="px-4 py-3 font-semibold text-right">Reports</th>
             <th className="px-4 py-3 font-semibold text-right">W / L</th>
-            <th className="px-4 py-3 font-semibold text-right">Lost</th>
-            <th className="px-4 py-3 font-semibold text-right">Killed</th>
+            <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost when attacking this alliance">Attack Ratio</th>
+            <th className="px-4 py-3 font-semibold text-right" title="Defenders lost per attacker killed when defending against this alliance">Defense Ratio</th>
           </tr>
         </thead>
         <tbody>
@@ -608,8 +627,12 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
                 <span className="text-text-muted"> / </span>
                 <span className="text-error font-semibold">{formatNumber(row.losses)}</span>
               </td>
-              <td className="px-4 py-3 text-right text-error font-semibold">{formatNumber(row.unitsLost)}</td>
-              <td className="px-4 py-3 text-right text-info font-semibold">{formatNumber(row.unitsKilled)}</td>
+              <td className="px-4 py-3 text-right text-info font-semibold">
+                {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
+              </td>
+              <td className="px-4 py-3 text-right text-error font-semibold">
+                {formatRatio(row.defenseDefendersLost, row.defenseAttackersKilled)}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -621,9 +644,15 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
   </Card>
 );
 
-const ReportDetailPage: React.FC<{ report: ParsedReport; outcome: string; onBack: () => void }> = ({
+const ReportDetailPage: React.FC<{
+  report: ParsedReport;
+  outcome: string;
+  perspectiveSide: CombatantSide | '';
+  onBack: () => void;
+}> = ({
   report,
   outcome,
+  perspectiveSide,
   onBack,
 }) => (
   <div className="space-y-4">
@@ -636,11 +665,15 @@ const ReportDetailPage: React.FC<{ report: ParsedReport; outcome: string; onBack
         Back to aggregate
       </Button>
     </div>
-    <ReportDetails report={report} outcome={outcome} />
+    <ReportDetails report={report} outcome={outcome} perspectiveSide={perspectiveSide} />
   </div>
 );
 
-const ReportDetails: React.FC<{ report: ParsedReport; outcome: string }> = ({ report, outcome }) => {
+const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspectiveSide: CombatantSide | '' }> = ({
+  report,
+  outcome,
+  perspectiveSide,
+}) => {
   const commanderEffects = effectsForSide(report, 'commander');
   const castellanEffects = effectsForSide(report, 'castellan');
   const attackerUnits = itemsForSide(report.topUnits, 'attacker').slice(0, 12);
@@ -650,41 +683,9 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string }> = ({ re
 
   return (
     <div className="space-y-4">
-      <Card variant="solid">
-        <CardContent className="grid gap-4 xl:grid-cols-[1fr_auto_1fr_auto] xl:items-center">
-          <CombatantHero label="Attacker" combatant={report.attacker} accent="danger" />
-          <div className="text-center px-4">
-            <ResultBadge result={outcome} />
-            <div className="text-2xl font-bold text-text-main mt-2">{battleLocationLabel(report)}</div>
-            <div className="text-sm text-text-muted">{kingdomLabel(report)}</div>
-          </div>
-          <CombatantHero label="Defender" combatant={report.defender} accent="info" />
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <MetaItem label="Date" value={formatDate(report)} />
-            <MetaItem label="Battle type" value={report.battleType ?? 'Castle battle'} />
-          </div>
-        </CardContent>
-      </Card>
+      <BattleStatusBanner report={report} outcome={outcome} />
 
-      <Card variant="solid">
-        <CardHeader>
-          <div>
-            <CardTitle>All Unit Stats</CardTitle>
-            <p className="text-xs text-text-muted mt-1">Report totals inferred from parsed battle data</p>
-          </div>
-          <BarChart3 className="w-5 h-5 text-primary" />
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-            <MetricTile label="Attacker sent" value={metricValue(report.metrics, 'attackerSent', 'attackSent')} />
-            <MetricTile label="Attacker lost" value={metricValue(report.metrics, 'attackerLost', 'attackLost')} tone="danger" />
-            <MetricTile label="Attackers killed" value={metricValue(report.metrics, 'attackersKilled')} tone="success" />
-            <MetricTile label="Defender stationed" value={metricValue(report.metrics, 'defenderStationed')} tone="info" />
-            <MetricTile label="Defender lost" value={metricValue(report.metrics, 'defenderLost', 'defenseLost')} tone="danger" />
-            <MetricTile label="Defenders killed" value={metricValue(report.metrics, 'defendersKilled')} tone="success" />
-          </div>
-        </CardContent>
-      </Card>
+      <UnitStatsPanel report={report} perspectiveSide={perspectiveSide} />
 
       <div className="grid xl:grid-cols-2 gap-4">
         <ForcePanel
@@ -725,36 +726,138 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string }> = ({ re
   );
 };
 
-const CombatantHero: React.FC<{ label: string; combatant?: BattleCombatant; accent: 'danger' | 'info' }> = ({
-  label,
-  combatant,
-  accent,
-}) => {
-  const accentClass = accent === 'danger' ? 'text-error border-error/30' : 'text-info border-info/30';
+const BattleStatusBanner: React.FC<{ report: ParsedReport; outcome: string }> = ({ report, outcome }) => {
+  const attackWon = attackSucceeded(report);
+  const statusLabel = attackWon ? 'Castle breached' : 'Defense held';
+  const statusClass = attackWon ? 'text-warning' : 'text-success';
 
   return (
-    <div className={`border-l-2 pl-4 ${accentClass}`}>
+    <Card variant="solid" className="overflow-hidden">
+      <CardContent className="!p-0">
+        <div className="relative overflow-hidden bg-gradient-to-r from-error/10 via-bg-card to-info/10 p-5">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)_minmax(0,1fr)] xl:items-stretch">
+            <BattleBannerSide label="Attacker" combatant={report.attacker} tone="danger" />
+
+            <div className="flex min-w-0 flex-col items-center justify-center rounded-global border border-border-base bg-bg-card/90 px-5 py-4 text-center shadow-sm">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-global bg-primary/10 text-primary ring-1 ring-primary/20">
+                <Swords className="h-6 w-6" />
+              </div>
+              <ResultBadge result={outcome} />
+              <div className={`mt-3 text-2xl font-black uppercase tracking-wide ${statusClass}`}>{statusLabel}</div>
+              <div className="mt-1 text-sm font-semibold text-text-main">{battleLocationLabel(report)}</div>
+            </div>
+
+            <BattleBannerSide label="Defender" combatant={report.defender} tone="info" align="right" />
+          </div>
+
+          <div className="mt-4 grid gap-2 md:grid-cols-3">
+            <BannerFact icon={<CalendarDays className="h-4 w-4" />} label="Date" value={formatDate(report)} />
+            <BannerFact icon={<MapPin className="h-4 w-4" />} label="Coordinates" value={battleCoordinateLabel(report)} />
+            <BannerFact icon={<Shield className="h-4 w-4" />} label="Kingdom" value={kingdomLabel(report)} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const BattleBannerSide: React.FC<{
+  label: string;
+  combatant?: BattleCombatant;
+  tone: 'danger' | 'info';
+  align?: 'left' | 'right';
+}> = ({ label, combatant, tone, align = 'left' }) => {
+  const toneClass = tone === 'danger' ? 'border-error/30 text-error' : 'border-info/30 text-info';
+  const alignClass = align === 'right' ? 'items-start text-left xl:items-end xl:text-right' : 'items-start text-left';
+
+  return (
+    <div className={`flex min-w-0 flex-col justify-center rounded-global border bg-bg-card/80 p-4 shadow-sm ${toneClass} ${alignClass}`}>
       <div className="text-xs uppercase tracking-wider text-text-muted font-semibold">{label}</div>
-      <div className="text-xl font-bold text-text-main mt-1">{combatantName(combatant)}</div>
-      <div className="text-sm text-text-muted">{allianceName(combatant)}</div>
+      <div className="mt-2 max-w-full truncate text-2xl font-black text-text-main">{combatantName(combatant)}</div>
+      <div className="mt-1 max-w-full truncate text-sm font-medium text-text-muted">{allianceName(combatant)}</div>
       {combatant?.castleName && (
-        <div className="text-xs text-text-muted mt-1">{combatant.castleName}</div>
+        <div className="mt-3 max-w-full truncate rounded-full bg-bg-app px-3 py-1 text-xs font-semibold text-text-main ring-1 ring-border-base">
+          {combatant.castleName}
+        </div>
       )}
     </div>
   );
 };
 
-const MetaItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="border border-border-base rounded-global px-3 py-2 bg-bg-app">
-    <div className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">{label}</div>
-    <div className="text-sm text-text-main mt-1">{value}</div>
+const BannerFact: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
+  <div className="flex min-w-0 items-center gap-3 rounded-global border border-border-base bg-bg-card/80 px-3 py-2 shadow-sm">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
+    <div className="min-w-0">
+      <div className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">{label}</div>
+      <div className="truncate text-sm font-semibold text-text-main">{value}</div>
+    </div>
   </div>
 );
 
-const MetricTile: React.FC<{ label: string; value: number; tone?: 'neutral' | 'success' | 'danger' | 'info' }> = ({
+const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: CombatantSide | '' }> = ({
+  report,
+  perspectiveSide,
+}) => {
+  const side = perspectiveSide || 'attacker';
+  const attackerSent = metricValue(report.metrics, 'attackerSent', 'attackSent');
+  const attackerLost = metricValue(report.metrics, 'attackerLost', 'attackLost');
+  const defenderStationed = metricValue(report.metrics, 'defenderStationed');
+  const defenderLost = metricValue(report.metrics, 'defenderLost', 'defenseLost');
+  const isDefenseView = side === 'defender';
+  const ourForce = isDefenseView ? defenderStationed : attackerSent;
+  const ourLost = isDefenseView ? defenderLost : attackerLost;
+  const opponentForce = isDefenseView ? attackerSent : defenderStationed;
+  const opponentLost = isDefenseView ? attackerLost : defenderLost;
+  const totalLosses = attackerLost + defenderLost;
+  const tradeRatio = formatTradeRatio(opponentLost, ourLost);
+  const tradeTone = opponentLost > ourLost ? 'success' : opponentLost < ourLost ? 'danger' : 'neutral';
+
+  return (
+    <Card variant="solid" className="overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-error/5 via-bg-card to-info/5">
+        <div>
+          <CardTitle>All Unit Stats</CardTitle>
+          <p className="text-xs text-text-muted mt-1">
+            {isDefenseView ? 'Defense perspective' : 'Attack perspective'} based on the selected player or alliance.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant={isDefenseView ? 'primary' : 'danger'}>{isDefenseView ? 'Defender view' : 'Attacker view'}</Badge>
+          <BarChart3 className="w-5 h-5 text-primary" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <MetricTile
+            label={isDefenseView ? 'Our stationed' : 'Our sent'}
+            value={ourForce}
+            tone={isDefenseView ? 'info' : 'neutral'}
+          />
+          <MetricTile label="Our losses" value={ourLost} tone="danger" />
+          <MetricTile
+            label={isDefenseView ? 'Opponent sent' : 'Opponent stationed'}
+            value={opponentForce}
+            tone={isDefenseView ? 'neutral' : 'info'}
+          />
+          <MetricTile label="Opponent losses" value={opponentLost} tone="success" />
+          <MetricTile label="Trade ratio" value={tradeRatio} tone={tradeTone} caption="Opponent losses per our loss" />
+          <MetricTile label="Total losses" value={totalLosses} tone="danger" caption="Both sides combined" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const MetricTile: React.FC<{
+  label: string;
+  value: number | string;
+  tone?: 'neutral' | 'success' | 'danger' | 'info';
+  caption?: string;
+}> = ({
   label,
   value,
   tone = 'neutral',
+  caption,
 }) => {
   const toneClass = {
     neutral: 'text-text-main',
@@ -762,11 +865,19 @@ const MetricTile: React.FC<{ label: string; value: number; tone?: 'neutral' | 's
     danger: 'text-error',
     info: 'text-info',
   }[tone];
+  const borderClass = {
+    neutral: 'border-border-base',
+    success: 'border-success/20',
+    danger: 'border-error/20',
+    info: 'border-info/20',
+  }[tone];
+  const displayValue = typeof value === 'number' ? formatNumber(value) : value;
 
   return (
-    <div className="border border-border-base rounded-global px-3 py-3 bg-bg-app">
+    <div className={`border rounded-global px-3 py-3 bg-bg-app ${borderClass}`}>
       <div className="text-xs text-text-muted">{label}</div>
-      <div className={`text-lg font-bold mt-1 ${toneClass}`}>{formatNumber(value)}</div>
+      <div className={`text-lg font-bold mt-1 ${toneClass}`}>{displayValue}</div>
+      {caption && <div className="mt-1 text-[11px] text-text-muted">{caption}</div>}
     </div>
   );
 };
@@ -853,7 +964,7 @@ const RosterSection: React.FC<{
       <span className="text-xs text-text-muted">{items.length}</span>
     </div>
     {items.length > 0 ? (
-      <div className="grid sm:grid-cols-2 gap-2">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,6.5rem))] gap-3">
         {items.map((item, index) => (
           <BattleItemChip key={`${kind}-${itemKey(item)}-${index}`} item={item} kind={kind} valueClass={valueClass} />
         ))}
@@ -878,42 +989,107 @@ const BattleItemChip: React.FC<{
   const name = metadata?.name ?? `${kind === 'unit' ? 'Unit' : 'Tool'} ${id}`;
   const amount = numericValue(item.amount) ?? 0;
   const delta = kind === 'unit' ? numericValue(item.lost) ?? 0 : numericValue(item.used) ?? 0;
+  const changeValue = kind === 'unit' ? delta : delta || amount;
+  const size = compact ? 52 : 68;
+  const isDangerTone = valueClass.includes('error');
+  const cardSizeClass = compact ? 'h-[7.25rem] w-20 p-1.5' : 'h-36 w-[6.5rem] p-2';
+  const iconAreaClass = compact ? 'h-[52px]' : 'h-[68px]';
+  const cardToneClass = isDangerTone
+    ? 'border-error/20 hover:border-error/45'
+    : 'border-info/20 hover:border-info/45';
+  const deltaClass = isDangerTone
+    ? 'border-error/20 bg-error/10 text-error'
+    : 'border-info/20 bg-info/10 text-info';
+  const phase = phaseLabel(item.phase);
+  const title = [
+    name,
+    `x${formatNumber(amount)}`,
+    phase,
+    changeValue > 0 ? `${kind === 'unit' ? 'lost' : 'used'} ${formatNumber(changeValue)}` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
-    <div className={`border border-border-base rounded-global bg-bg-app flex items-center gap-2 ${compact ? 'p-2' : 'p-2.5'}`}>
-      {kind === 'unit' ? (
-        <UnitImage unitId={id} size={compact ? 30 : 40} showLevel className="rounded-md" />
-      ) : (
-        <ToolImage toolId={id} size={compact ? 30 : 40} className="rounded-md" />
-      )}
-      <div className="min-w-0 flex-1">
-        <div className="text-xs font-semibold text-text-main truncate" title={name}>{name}</div>
-        <div className="flex items-center gap-2 text-[11px] text-text-muted mt-0.5">
-          <span>x{formatNumber(amount)}</span>
-          {phaseLabel(item.phase) && <span>{phaseLabel(item.phase)}</span>}
-        </div>
+    <div
+      className={`group relative flex shrink-0 flex-col items-center justify-between overflow-hidden rounded-global border bg-bg-card/90 shadow-sm ring-1 ring-border-base/40 transition-all duration-200 hover:bg-bg-card-hover hover:shadow-glow ${cardSizeClass} ${cardToneClass}`}
+      title={title}
+      aria-label={title}
+    >
+      <div className={`relative flex w-full items-center justify-center ${iconAreaClass}`}>
+        {kind === 'unit' ? (
+          <UnitImage unitId={id} size={size} showLevel className="!bg-transparent drop-shadow-md" />
+        ) : (
+          <ToolImage toolId={id} size={size} className="!bg-transparent drop-shadow-md" />
+        )}
       </div>
-      <div className={`text-xs font-bold whitespace-nowrap ${valueClass}`}>
-        {kind === 'unit' ? `-${formatNumber(delta)}` : `used ${formatNumber(delta || amount)}`}
+      <div className="flex w-full shrink-0 flex-col items-center gap-1">
+        <span className="max-w-full rounded-full border border-border-base/70 bg-bg-app px-2 py-1 text-center text-sm font-bold leading-none text-text-main shadow-sm tabular-nums">
+          {formatNumber(amount)}
+        </span>
+        {changeValue > 0 && (
+          <span className={`max-w-full rounded-full border px-2 py-0.5 text-center text-[11px] font-bold leading-none tabular-nums ${deltaClass}`}>
+            -{formatNumber(changeValue)}
+          </span>
+        )}
       </div>
     </div>
   );
 };
 
-const WaveRow: React.FC<{ wave: BattleWave; index: number }> = ({ wave, index }) => (
-  <div className="border border-border-base rounded-global bg-bg-app p-3">
-    <div className="flex items-center justify-between gap-3 mb-3">
-      <div className="font-semibold text-text-main">Wave {wave.wave ?? wave.index ?? index + 1}</div>
-      <Badge variant={waveResult(wave) === 'HELD' ? 'success' : 'warning'}>{waveResult(wave)}</Badge>
+const WaveRow: React.FC<{ wave: BattleWave; index: number }> = ({ wave, index }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const lanes = wave.lanes ?? [];
+  const waveLabel = `Wave ${wave.wave ?? wave.index ?? index + 1}`;
+  const detailsId = `wave-details-${wave.wave ?? wave.index ?? index}-${index}`;
+
+  return (
+    <div className="border border-border-base rounded-global bg-bg-app p-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <button
+          type="button"
+          className="flex min-w-0 items-center gap-2 text-left font-semibold text-text-main transition-colors hover:text-primary"
+          aria-expanded={isExpanded}
+          aria-controls={detailsId}
+          onClick={() => setIsExpanded((current) => !current)}
+        >
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
+          ) : (
+            <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
+          )}
+          <span>{waveLabel}</span>
+        </button>
+        {lanes.length > 0 && <WaveLaneSummary lanes={lanes} />}
+      </div>
+      {isExpanded && lanes.length > 0 && (
+        <div id={detailsId} className="mt-3 grid xl:grid-cols-3 gap-3">
+          {lanes.map((lane, laneIndex) => (
+            <LaneDetailCard key={`${lane.lane ?? laneIndex}-${laneIndex}`} lane={lane} laneIndex={laneIndex} />
+          ))}
+        </div>
+      )}
+      {lanes.length === 0 && (
+        <div className="text-sm text-text-muted">No lane details parsed for this wave.</div>
+      )}
     </div>
-    <div className="grid xl:grid-cols-3 gap-3">
-      {(wave.lanes ?? []).map((lane, laneIndex) => (
-        <LaneDetailCard key={`${lane.lane ?? laneIndex}-${laneIndex}`} lane={lane} laneIndex={laneIndex} />
-      ))}
-    </div>
-    {(!wave.lanes || wave.lanes.length === 0) && (
-      <div className="text-sm text-text-muted">No lane details parsed for this wave.</div>
-    )}
+  );
+};
+
+const WaveLaneSummary: React.FC<{ lanes: BattleWaveLane[] }> = ({ lanes }) => (
+  <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:justify-end">
+    {lanes.map((lane, laneIndex) => {
+      const result = laneResult(lane);
+
+      return (
+        <div key={`${lane.lane ?? laneIndex}-${laneIndex}`} className="flex items-center gap-1.5">
+          <span className="text-[11px] uppercase tracking-wider text-text-muted font-semibold">
+            {laneLabel(lane, laneIndex)}
+          </span>
+          <Badge variant={result === 'HELD' ? 'success' : 'warning'}>{result}</Badge>
+        </div>
+      );
+    })}
   </div>
 );
 
@@ -932,21 +1108,50 @@ const LaneDetailCard: React.FC<{ lane: BattleWaveLane; laneIndex: number }> = ({
         </span>
         <Badge variant={result === 'HELD' ? 'success' : 'warning'}>{result}</Badge>
       </div>
-      <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
-        <div className="rounded-global border border-border-base bg-bg-app px-2 py-2">
-          <div className="text-[11px] text-text-muted">Attack lost</div>
-          <div className="font-semibold text-error">{formatNumber(lane.attackerLost ?? 0)}</div>
-        </div>
-        <div className="rounded-global border border-border-base bg-bg-app px-2 py-2">
-          <div className="text-[11px] text-text-muted">Def lost</div>
-          <div className="font-semibold text-info">{formatNumber(lane.defenderLost ?? 0)}</div>
-        </div>
+      <div className="mt-3 grid grid-cols-2 gap-4">
+        <LaneSidePanel
+          title="Attacker"
+          lost={lane.attackerLost ?? 0}
+          units={attackerUnits}
+          tools={attackerTools}
+          unitTitle="Units lost"
+          toolTitle="Tools used"
+          valueClass="text-error"
+        />
+        <LaneSidePanel
+          title="Defender"
+          lost={lane.defenderLost ?? 0}
+          units={defenderUnits}
+          tools={defenderTools}
+          unitTitle="Units lost"
+          toolTitle="Tools used"
+          valueClass="text-info"
+        />
       </div>
-      <div className="mt-3 space-y-3">
-        <LaneItemStrip title="Attackers lost" items={attackerUnits} kind="unit" valueClass="text-error" />
-        <LaneItemStrip title="Attack tools used" items={attackerTools} kind="tool" valueClass="text-error" />
-        <LaneItemStrip title="Defenders lost" items={defenderUnits} kind="unit" valueClass="text-info" />
-        <LaneItemStrip title="Defense tools used" items={defenderTools} kind="tool" valueClass="text-info" />
+    </div>
+  );
+};
+
+const LaneSidePanel: React.FC<{
+  title: string;
+  lost: number;
+  units: BattleItemDetail[];
+  tools: BattleItemDetail[];
+  unitTitle: string;
+  toolTitle: string;
+  valueClass: string;
+}> = ({ title, lost, units, tools, unitTitle, toolTitle, valueClass }) => {
+  return (
+    <div className="min-w-0">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] uppercase tracking-wider text-text-muted font-semibold">{title}</span>
+        <span className={`rounded-full bg-bg-card px-2 py-0.5 text-xs font-bold tabular-nums shadow-sm ring-1 ring-border-base/70 ${valueClass}`}>
+          {formatNumber(lost)}
+        </span>
+      </div>
+      <div className="mt-2 space-y-2">
+        <LaneItemStrip title={unitTitle} items={units} kind="unit" valueClass={valueClass} />
+        <LaneItemStrip title={toolTitle} items={tools} kind="tool" valueClass={valueClass} />
       </div>
     </div>
   );
@@ -965,14 +1170,11 @@ const LaneItemStrip: React.FC<{
   return (
     <div>
       <div className="text-[11px] uppercase tracking-wider text-text-muted font-semibold mb-1.5">{title}</div>
-      <div className="grid gap-1.5">
-        {items.slice(0, 6).map((item, index) => (
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(5rem,5rem))] gap-2">
+        {items.map((item, index) => (
           <BattleItemChip key={`${title}-${itemKey(item)}-${index}`} item={item} kind={kind} valueClass={valueClass} compact />
         ))}
       </div>
-      {items.length > 6 && (
-        <div className="text-[11px] text-text-muted mt-1">+{items.length - 6} more</div>
-      )}
     </div>
   );
 };
@@ -1274,6 +1476,10 @@ function addPlayerAggregate(rows: Map<string, PlayerAggregate>, report: ParsedRe
     losses: 0,
     unitsLost: 0,
     unitsKilled: 0,
+    attackDefendersKilled: 0,
+    attackAttackersLost: 0,
+    defenseDefendersLost: 0,
+    defenseAttackersKilled: 0,
   };
   const attackWon = attackSucceeded(report);
   const attackLost = metricValue(report.metrics, 'attackerLost', 'attackLost');
@@ -1284,12 +1490,16 @@ function addPlayerAggregate(rows: Map<string, PlayerAggregate>, report: ParsedRe
     row.attacks += 1;
     row.unitsLost += attackLost;
     row.unitsKilled += defenseLost;
+    row.attackAttackersLost += attackLost;
+    row.attackDefendersKilled += defenseLost;
     row.wins += attackWon ? 1 : 0;
     row.losses += attackWon ? 0 : 1;
   } else {
     row.defenses += 1;
     row.unitsLost += defenseLost;
     row.unitsKilled += attackLost;
+    row.defenseDefendersLost += defenseLost;
+    row.defenseAttackersKilled += attackLost;
     row.wins += attackWon ? 0 : 1;
     row.losses += attackWon ? 1 : 0;
   }
@@ -1329,6 +1539,10 @@ function addAllianceAggregate(rows: Map<string, AllianceAggregate>, report: Pars
     losses: 0,
     unitsLost: 0,
     unitsKilled: 0,
+    attackDefendersKilled: 0,
+    attackAttackersLost: 0,
+    defenseDefendersLost: 0,
+    defenseAttackersKilled: 0,
   };
   const attackWon = attackSucceeded(report);
   const attackLost = metricValue(report.metrics, 'attackerLost', 'attackLost');
@@ -1338,13 +1552,17 @@ function addAllianceAggregate(rows: Map<string, AllianceAggregate>, report: Pars
   if (side === 'attacker') {
     row.unitsLost += attackLost;
     row.unitsKilled += defenseLost;
-    row.wins += attackWon ? 1 : 0;
-    row.losses += attackWon ? 0 : 1;
+    row.defenseDefendersLost += defenseLost;
+    row.defenseAttackersKilled += attackLost;
+    row.wins += attackWon ? 0 : 1;
+    row.losses += attackWon ? 1 : 0;
   } else {
     row.unitsLost += defenseLost;
     row.unitsKilled += attackLost;
-    row.wins += attackWon ? 0 : 1;
-    row.losses += attackWon ? 1 : 0;
+    row.attackDefendersKilled += defenseLost;
+    row.attackAttackersLost += attackLost;
+    row.wins += attackWon ? 1 : 0;
+    row.losses += attackWon ? 0 : 1;
   }
 
   rows.set(key, row);
@@ -1566,6 +1784,38 @@ function battleLocationLabel(report: ParsedReport): string {
   }
 
   return 'Unknown castle';
+}
+
+function battleCoordinateLabel(report: ParsedReport): string {
+  const coordinates = battleCoordinates(report);
+  if (!coordinates) {
+    return 'Unknown coordinates';
+  }
+
+  return `(${formatNumber(coordinates.x)}, ${formatNumber(coordinates.y)})`;
+}
+
+function battleCoordinates(report: ParsedReport): { x: number; y: number } | null {
+  const direct = coordinatePair(report.targetX, report.targetY);
+  if (direct) {
+    return direct;
+  }
+
+  const raw = report as unknown as Record<string, unknown>;
+  const target = coordinatePair(raw.targetPX, raw.targetPY) ?? coordinatePair(raw.mapX, raw.mapY);
+  if (target) {
+    return target;
+  }
+
+  const bls = isRecord(raw.bls) ? raw.bls : null;
+  const ai = bls && isRecord(bls.AI) ? bls.AI : isRecord(raw.AI) ? raw.AI : null;
+  return ai ? coordinatePair(ai.X ?? ai.x, ai.Y ?? ai.y) : null;
+}
+
+function coordinatePair(rawX: unknown, rawY: unknown): { x: number; y: number } | null {
+  const x = numericValue(rawX);
+  const y = numericValue(rawY);
+  return x !== null && y !== null ? { x, y } : null;
 }
 
 function cleanBattleLocation(value: string): string {
@@ -1820,11 +2070,6 @@ function laneResult(lane: BattleWaveLane): 'HELD' | 'BREACHED' {
   return 'HELD';
 }
 
-function waveResult(wave: BattleWave): 'HELD' | 'BREACHED' {
-  const lanes = wave.lanes ?? [];
-  return lanes.some((lane) => laneResult(lane) === 'BREACHED') ? 'BREACHED' : 'HELD';
-}
-
 function laneLabel(lane: BattleWaveLane, index: number): string {
   const label = stringValue(lane.lane);
   if (label) {
@@ -1836,6 +2081,22 @@ function laneLabel(lane: BattleWaveLane, index: number): string {
 
 function formatNumber(value: number): string {
   return new Intl.NumberFormat().format(value);
+}
+
+function formatRatio(numerator: number, denominator: number): string {
+  if (denominator <= 0) {
+    return '--';
+  }
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(numerator / denominator);
+}
+
+function formatTradeRatio(opponentLost: number, ourLost: number): string {
+  if (ourLost <= 0) {
+    return opponentLost > 0 ? '∞ : 1' : '--';
+  }
+
+  const value = opponentLost / ourLost;
+  return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(value)} : 1`;
 }
 
 function numericValue(value: unknown): number | null {

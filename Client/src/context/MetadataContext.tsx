@@ -5,6 +5,7 @@ export interface MetadataItem {
   id: number;
   name: string;
   image?: string;
+  level?: number;
   [key: string]: unknown;
 }
 
@@ -97,7 +98,7 @@ export function useMetadata(): MetadataContextValue {
 async function fetchFirstIndex(urls: string[]): Promise<Record<number, MetadataItem>> {
   for (const url of urls) {
     try {
-      const response = await fetch(url, { cache: 'force-cache' });
+      const response = await fetch(url, { cache: 'no-cache' });
       if (!response.ok) {
         continue;
       }

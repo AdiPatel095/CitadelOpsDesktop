@@ -159,6 +159,26 @@ export interface EquipmentData {
     castStats: CastStatObject | null;
 }
 
+export type EquipmentMode = 'Commander' | 'Castellan';
+export type CombatMode = 'PvP' | 'PvE';
+
+export interface ProcessedEquipmentStatSource {
+    key: string;
+    label: string;
+    value: number;
+    cappedValue: number;
+    cap?: number;
+    capped: boolean;
+}
+
+export interface ProcessedEquipmentStat {
+    key: string;
+    value: number;
+    rawValue: number;
+    capped: boolean;
+    sources: ProcessedEquipmentStatSource[];
+}
+
 export const statDisplayName: { [key: string]: string } = {
     // CommStat & CastStat
     meleeCbtStr: 'Melee Strength',
@@ -342,3 +362,286 @@ export const castellanStatGroups = {
     economy: ['lootStr', 'recruit', 'meadProd', 'research', 'hospital', 'construction', 'baseRes', 'kingRes', 'po', 'resTransport', 'honeyProd', 'meadStorage', 'honeyStorage'],
     specialStats: ['glory', 'fire', 'early'],
 };
+
+const combatStatMap: Record<string, Partial<Record<CombatMode, string>>> = {
+    meleeCbtStr: { PvP: 'CLMelee', PvE: 'NPCMelee' },
+    rangeCbtStr: { PvP: 'CLRange', PvE: 'NPCRange' },
+    frontLimit: { PvP: 'CLFront', PvE: 'NPCFront' },
+    flankLimit: { PvP: 'CLFlank', PvE: 'NPCFlank' },
+    cyCbtStr: { PvP: 'CLCy', PvE: 'NPCCy' },
+    wallStr: { PvP: 'CLWall', PvE: 'NPCWall' },
+    gateStr: { PvP: 'CLGate', PvE: 'NPCGate' },
+    moatStr: { PvP: 'CLMoat', PvE: 'NPCMoat' },
+    wallLimit: { PvP: 'CLWallLimit', PvE: 'NPCWallLimit' },
+};
+
+const specialStatMap: Record<EquipmentMode, Record<string, Partial<Record<CombatMode, string>>>> = {
+    Commander: {
+        glory: { PvP: 'CLGlory', PvE: 'NPCGlory' },
+        later: { PvP: 'CLLater' },
+        fire: { PvP: 'CLFire' },
+    },
+    Castellan: {
+        glory: { PvP: 'CLGlory' },
+        fire: { PvP: 'CLFire' },
+        early: { PvP: 'CLEarly' },
+    },
+};
+
+const commanderCaps: Record<string, number> = {
+    meleeCbtStr: 210,
+    rangeCbtStr: 210,
+    frontCbtStr: 100,
+    flankCbtStr: 100,
+    allCbtStr: 30,
+    cyCbtStr: 180,
+    wallStr: 160,
+    gateStr: 160,
+    moatStr: 120,
+    flankLimit: 120,
+    frontLimit: 120,
+    meadStr: 20,
+    horrorStr: 50,
+    eliteStr: 50,
+    wave: 1,
+    cooldown: 50,
+    relicStr: 50,
+    beserkerStr: 50,
+    maidenSupp: 1050,
+    travel: 180,
+    loot: 155,
+    NPCMelee: 100,
+    NPCRange: 100,
+    NPCFront: 80,
+    NPCFlank: 80,
+    NPCCy: 120,
+    NPCWall: 120,
+    NPCGate: 120,
+    NPCMoat: 60,
+    NPCGlory: 150,
+    CLMelee: 360,
+    CLRange: 360,
+    CLFront: 195,
+    CLFlank: 195,
+    CLCy: 330,
+    CLWall: 420,
+    CLGate: 420,
+    CLMoat: 270,
+    CLLater: 180,
+    CLFire: 100,
+    CLGlory: 230,
+};
+
+const castellanCaps: Record<string, number> = {
+    meleeCbtStr: 140,
+    rangeCbtStr: 140,
+    opCbtStr: 50,
+    mainCbtStr: 50,
+    cyCbtStr: 230,
+    allCbtStr: 45,
+    frontCbtStr: 20,
+    flankCbtStr: 20,
+    wallStr: 160,
+    gateStr: 160,
+    moatStr: 120,
+    wallLimit: 210,
+    protectorSupp: 1050,
+    lootStr: 50,
+    recruit: 50,
+    meadProd: 50,
+    research: 50,
+    hospital: 50,
+    construction: 50,
+    baseRes: 50,
+    kingRes: 50,
+    po: 50,
+    resTransport: 50,
+    honeyProd: 50,
+    meadStorage: 50,
+    honeyStorage: 50,
+    NPCMelee: 100,
+    NPCRange: 100,
+    NPCFront: 50,
+    NPCFlank: 50,
+    NPCCy: 120,
+    NPCWall: 120,
+    NPCGate: 120,
+    NPCMoat: 60,
+    NPCWallLimit: 100,
+    CLMelee: 100,
+    CLRange: 100,
+    CLCy: 120,
+    CLWall: 120,
+    CLGate: 120,
+    CLMoat: 60,
+    CLWallLimit: 100,
+    CLFire: 100,
+    CLGlory: 60,
+    CLEarly: 180,
+};
+
+const allUnitStrengthTargets = new Set([
+    'meleeCbtStr',
+    'rangeCbtStr',
+    'frontCbtStr',
+    'flankCbtStr',
+]);
+
+const sourceLabelByKey: Record<string, string> = {
+    allCbtStr: 'All unit strength',
+    CLMelee: 'Castle Lord melee',
+    CLRange: 'Castle Lord ranged',
+    CLFront: 'Castle Lord front limit',
+    CLFlank: 'Castle Lord flank limit',
+    CLCy: 'Castle Lord courtyard',
+    CLWall: 'Castle Lord wall',
+    CLGate: 'Castle Lord gate',
+    CLMoat: 'Castle Lord moat',
+    CLWallLimit: 'Castle Lord wall limit',
+    CLLater: 'Castle Lord detection',
+    CLFire: 'Castle Lord fire',
+    CLGlory: 'Castle Lord glory',
+    CLEarly: 'Castle Lord warning',
+    NPCMelee: 'NPC melee',
+    NPCRange: 'NPC ranged',
+    NPCFront: 'NPC front limit',
+    NPCFlank: 'NPC flank limit',
+    NPCCy: 'NPC courtyard',
+    NPCWall: 'NPC wall',
+    NPCGate: 'NPC gate',
+    NPCMoat: 'NPC moat',
+    NPCWallLimit: 'NPC wall limit',
+    NPCGlory: 'NPC glory',
+};
+
+export function processEquipmentStats(
+    stats: CommStat | CastStat,
+    combatMode: CombatMode,
+    equipmentMode: EquipmentMode
+): Record<string, ProcessedEquipmentStat> {
+    const processed: Record<string, ProcessedEquipmentStat> = {};
+    const groups = equipmentMode === 'Commander' ? commanderStatGroups : castellanStatGroups;
+    const keys = Object.values(groups).flat();
+
+    keys.forEach((key) => {
+        processed[key] = processEquipmentStat(stats, key, combatMode, equipmentMode);
+    });
+
+    return processed;
+}
+
+export function getEquipmentShowcaseStats(
+    processedStats: Record<string, ProcessedEquipmentStat>,
+    equipmentMode: EquipmentMode
+): ProcessedEquipmentStat[] {
+    const keys = equipmentMode === 'Commander'
+        ? ['meleeCbtStr', 'rangeCbtStr', 'cyCbtStr', 'frontLimit', 'flankLimit', 'wallStr', 'gateStr', 'moatStr', 'travel', 'glory']
+        : ['meleeCbtStr', 'rangeCbtStr', 'cyCbtStr', 'wallLimit', 'wallStr', 'gateStr', 'moatStr', 'fire', 'early', 'lootStr'];
+
+    return keys
+        .map(key => processedStats[key])
+        .filter((stat): stat is ProcessedEquipmentStat => !!stat && stat.value !== 0)
+        .slice(0, 8);
+}
+
+export function formatEquipmentStatValue(statKey: string, value: number): string {
+    const abs = Math.abs(value);
+    const precision = Number.isInteger(abs) ? 0 : 1;
+    const formatted = abs.toLocaleString(undefined, {
+        minimumFractionDigits: precision,
+        maximumFractionDigits: precision,
+    });
+    const sign = value > 0 ? '+' : value < 0 ? '-' : '';
+    const unit = numericStatKeys.has(statKey) ? '' : '%';
+    return `${sign}${formatted}${unit}`;
+}
+
+function processEquipmentStat(
+    stats: CommStat | CastStat,
+    statKey: string,
+    combatMode: CombatMode,
+    equipmentMode: EquipmentMode
+): ProcessedEquipmentStat {
+    const sourceKeys = equipmentStatSourceKeys(statKey, combatMode, equipmentMode);
+    const sources = sourceKeys.map((sourceKey) => {
+        const value = readStatValue(stats, sourceKey);
+        const cap = capForStat(sourceKey, equipmentMode);
+        const cappedValue = capValue(value, cap);
+        return {
+            key: sourceKey,
+            label: sourceLabel(sourceKey, equipmentMode),
+            value,
+            cappedValue,
+            cap,
+            capped: value !== cappedValue,
+        };
+    }).filter(source => source.value !== 0);
+
+    const rawValue = roundStat(sources.reduce((total, source) => total + source.value, 0));
+    const value = roundStat(sources.reduce((total, source) => total + source.cappedValue, 0));
+
+    return {
+        key: statKey,
+        value,
+        rawValue,
+        capped: sources.some(source => source.capped),
+        sources,
+    };
+}
+
+function equipmentStatSourceKeys(
+    statKey: string,
+    combatMode: CombatMode,
+    equipmentMode: EquipmentMode
+): string[] {
+    const specialSource = specialStatMap[equipmentMode][statKey]?.[combatMode];
+    if (specialSource) {
+        return [specialSource];
+    }
+    if (statKey in specialStatMap[equipmentMode]) {
+        return [];
+    }
+
+    const sources = [statKey];
+    if (equipmentMode === 'Commander' && allUnitStrengthTargets.has(statKey)) {
+        sources.push('allCbtStr');
+    }
+
+    const combatSource = combatStatMap[statKey]?.[combatMode];
+    if (combatSource) {
+        sources.push(combatSource);
+    }
+
+    return sources;
+}
+
+function readStatValue(stats: CommStat | CastStat, key: string): number {
+    const value = (stats as any)[key];
+    return Number.isFinite(Number(value)) ? Number(value) : 0;
+}
+
+function capForStat(key: string, equipmentMode: EquipmentMode): number | undefined {
+    const caps = equipmentMode === 'Commander' ? commanderCaps : castellanCaps;
+    return caps[key] > 0 ? caps[key] : undefined;
+}
+
+function capValue(value: number, cap?: number): number {
+    if (!cap || cap <= 0) {
+        return value;
+    }
+    return Math.min(Math.abs(value), cap) * Math.sign(value);
+}
+
+function sourceLabel(key: string, equipmentMode: EquipmentMode): string {
+    return sourceLabelByKey[key] || displayStatName(key, { equipmentMode });
+}
+
+function roundStat(value: number): number {
+    return Math.round(value * 10) / 10;
+}
+
+const numericStatKeys = new Set([
+    'wave',
+    'maidenSupp',
+    'protectorSupp',
+]);

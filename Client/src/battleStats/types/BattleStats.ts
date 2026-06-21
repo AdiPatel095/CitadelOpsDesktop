@@ -82,6 +82,8 @@ export interface ParsedReport {
   lid?: string | number;
   kingdomID?: number;
   kingdomId?: number;
+  targetX?: number;
+  targetY?: number;
   targetName?: string;
   castleName?: string;
   battleType?: string;

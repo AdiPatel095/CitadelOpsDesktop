@@ -1,6 +1,17 @@
 import React, { useMemo, useState, useEffect } from 'react';
 
-import { displayStatName, commanderStatGroups, castellanStatGroups, statGroupDisplayName, type CommStat, type CastStat } from '../models/Equipment';
+import {
+  displayStatName,
+  commanderStatGroups,
+  castellanStatGroups,
+  statGroupDisplayName,
+  processEquipmentStats,
+  getEquipmentShowcaseStats,
+  formatEquipmentStatValue,
+  type CommStat,
+  type CastStat,
+  type ProcessedEquipmentStat,
+} from '../models/Equipment';
 import { FrontendWebsocket } from '../../Websocket';
 import { useResources } from '../../currency/context/ResourceContext';
 import { coinsUnderUpgradeReserve } from '../../utils/UpgradeCoinReserve';
@@ -645,64 +656,50 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
 
   const processedStats = useMemo(() => {
     if (!stats) return {};
-
-    const newStats: { [key: string]: number } = {};
-    const statGroups = equipmentMode === 'Commander' ? commanderStatGroups : castellanStatGroups;
-    const allKeys = Object.values(statGroups).flat();
-
-    for (const key of allKeys) {
-      const isSpecialStat = ['glory', 'later', 'fire', 'early'].includes(key);
-      let baseKey = key;
-      if (isSpecialStat) {
-        baseKey = combatMode === 'PvP' ? `CL${key.charAt(0).toUpperCase() + key.slice(1)}` : `NPC${key.charAt(0).toUpperCase() + key.slice(1)}`;
-      }
-
-      let finalValue = (stats as any)[baseKey] || 0;
-
-      if (!isSpecialStat) {
-        let suffix = key;
-
-        if (key === 'frontLimit') {
-          suffix = 'Front';
-        } else if (key === 'flankLimit') {
-          suffix = 'Flank';
-        } else if (key.endsWith('CbtStr')) {
-          suffix = key.replace('CbtStr', '');
-        } else if (key.endsWith('Str')) {
-          suffix = key.replace('Str', '');
-        }
-
-        const capitalizedSuffix = suffix.charAt(0).toUpperCase() + suffix.slice(1);
-
-        if (key === 'frontCbtStr' || key === 'flankCbtStr') {
-          // Do nothing
-        } else {
-          if (combatMode === 'PvP') {
-            const clKey = `CL${capitalizedSuffix}`;
-            if ((stats as any)[clKey]) {
-              finalValue += (stats as any)[clKey];
-            }
-          } else { // PvE
-            const npcKey = `NPC${capitalizedSuffix}`;
-            if ((stats as any)[npcKey]) {
-              finalValue += (stats as any)[npcKey];
-            }
-          }
-        }
-      }
-
-      newStats[key] = finalValue;
-    }
-
-    return newStats;
+    return processEquipmentStats(stats, combatMode, equipmentMode);
   }, [stats, combatMode, equipmentMode]);
 
-  const renderStat = (statKey: string, value: number) => {
+  const showcaseStats = useMemo(() => {
+    return getEquipmentShowcaseStats(processedStats, equipmentMode);
+  }, [processedStats, equipmentMode]);
+
+  const renderStat = (statKey: string, stat: ProcessedEquipmentStat) => {
     const label = displayStatName(statKey, { equipmentMode });
+    const visibleSources = stat.sources.filter(source => source.key !== statKey);
     return (
-      <div className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-bg-card-hover transition-colors" key={statKey}>
-        <span className="text-sm text-text-muted">{label}</span>
-        <span className="text-sm font-mono font-medium text-primary">{value.toFixed(2)}</span>
+      <div className="py-2 px-2 rounded hover:bg-bg-card-hover transition-colors" key={statKey}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-text-muted">{label}</span>
+              {stat.capped && (
+                <Badge variant="warning" className="text-[9px] px-1.5 py-0">
+                  Capped
+                </Badge>
+              )}
+            </div>
+            {visibleSources.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-text-muted/80">
+                {visibleSources.map(source => (
+                  <span key={source.key}>
+                    {source.label}: <span className="font-mono">{formatEquipmentStatValue(source.key, source.cappedValue)}</span>
+                    {source.capped && source.cap ? <span> cap {formatEquipmentStatValue(source.key, source.cap)}</span> : null}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="text-right shrink-0">
+            <div className="text-sm font-mono font-semibold text-primary">
+              {formatEquipmentStatValue(statKey, stat.value)}
+            </div>
+            {stat.capped && (
+              <div className="text-[11px] font-mono text-text-muted">
+                raw {formatEquipmentStatValue(statKey, stat.rawValue)}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
@@ -800,10 +797,40 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
           </div>
         )}
 
+        {stats && showcaseStats.length > 0 && (
+          <div className="rounded-global bg-bg-app border border-border-base p-3">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider">
+                Effective Battle Profile
+              </h4>
+              <Badge variant="secondary">{combatMode}</Badge>
+            </div>
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+              {showcaseStats.map(stat => (
+                <div key={stat.key} className="rounded-global border border-border-base bg-bg-card-hover/35 px-3 py-2.5 min-w-0">
+                  <div className="text-[11px] uppercase tracking-wider text-text-muted truncate">
+                    {displayStatName(stat.key, { equipmentMode })}
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-lg font-semibold font-mono text-text-main">
+                      {formatEquipmentStatValue(stat.key, stat.value)}
+                    </span>
+                    {stat.capped && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-warning">
+                        capped
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {stats && Object.entries(statGroups).map(([groupName, statKeys]) => {
           const visibleStats = statKeys.filter(key => {
-            const value = processedStats[key];
-            return !(value === undefined || value === 0);
+            const stat = processedStats[key];
+            return !(stat === undefined || stat.value === 0);
           });
 
           if (visibleStats.length === 0) return null;
