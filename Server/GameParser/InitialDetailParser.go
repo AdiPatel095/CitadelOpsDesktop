@@ -15,7 +15,7 @@ func InitiateDetails(data string) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(7)
+	wg.Add(8)
 
 	go func() {
 		defer wg.Done()
@@ -100,6 +100,11 @@ func InitiateDetails(data string) {
 		} else {
 			log.Printf("[parser] gbd: gpi missing or not an object")
 		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		HandleLoginInboxBattleReports(jsonDataMap)
 	}()
 
 	wg.Wait()

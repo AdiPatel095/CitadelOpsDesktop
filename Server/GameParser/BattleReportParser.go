@@ -33,6 +33,33 @@ func HandleSNESharedBattleReports(payload string) {
 	}
 }
 
+func HandleLoginInboxBattleReports(gbd map[string]interface{}) {
+	if gbd == nil {
+		return
+	}
+	sne, ok := gbd["sne"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	payload, err := json.Marshal(sne)
+	if err != nil {
+		log.Printf("[battle-report] login inbox sne marshal: %v", err)
+		return
+	}
+	captures, err := battlereport.RecordSNEPayload(string(payload))
+	if err != nil {
+		log.Printf("[battle-report] login inbox sne parse: %v", err)
+		return
+	}
+	for _, capture := range captures {
+		queueBattleReportFetch(capture)
+	}
+	if len(captures) > 0 {
+		log.Printf("[battle-report] queued %d shared battle reports from login inbox", len(captures))
+	}
+}
+
 func queueBattleReportFetch(capture battlereport.Capture) {
 	if capture.MID <= 0 {
 		return
