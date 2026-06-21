@@ -1998,9 +1998,9 @@ function friendlySideForReport(
 }
 
 function attackSucceeded(report: ParsedReport): boolean {
-  const waveResult = attackSucceededFromWaves(report);
-  if (waveResult !== null) {
-    return waveResult;
+  const phaseResult = attackSucceededFromBattlePhases(report);
+  if (phaseResult !== null) {
+    return phaseResult;
   }
   const result = stringValue(report.result ?? report.outcome).toLowerCase();
   if (result.includes('defeat') || result.includes('attack lost') || result.includes('defense win')) {
@@ -2014,7 +2014,18 @@ function attackSucceeded(report: ParsedReport): boolean {
   return !(attackerSent > 0 && attackerLost >= attackerSent);
 }
 
-function attackSucceededFromWaves(report: ParsedReport): boolean | null {
+function attackSucceededFromBattlePhases(report: ParsedReport): boolean | null {
+  const wall = wallPhaseResult(report);
+  if (!wall.hasAttackLane) {
+    return null;
+  }
+  if (!wall.breached) {
+    return false;
+  }
+  return attackSucceededFromCourtyard(report);
+}
+
+function wallPhaseResult(report: ParsedReport): { hasAttackLane: boolean; breached: boolean } {
   let hasAttackLane = false;
   for (const wave of report.waves ?? []) {
     for (const lane of wave.lanes ?? []) {
@@ -2023,11 +2034,50 @@ function attackSucceededFromWaves(report: ParsedReport): boolean | null {
       }
       hasAttackLane = true;
       if (laneResult(lane) === 'BREACHED') {
-        return true;
+        return { hasAttackLane, breached: true };
       }
     }
   }
-  return hasAttackLane ? false : null;
+  return { hasAttackLane, breached: false };
+}
+
+function attackSucceededFromCourtyard(report: ParsedReport): boolean | null {
+  const attacker = battlePhaseTotals(report.topUnits ?? [], 'attacker', 'courtyard');
+  const defender = battlePhaseTotals(report.topUnits ?? [], 'defender', 'courtyard');
+  if (attacker.started <= 0 && defender.started <= 0) {
+    return null;
+  }
+  if (attacker.started > 0 && attacker.lost >= attacker.started) {
+    return false;
+  }
+  if (defender.started > 0 && defender.lost < defender.started) {
+    return false;
+  }
+  if (attacker.started > 0 && attacker.lost < attacker.started) {
+    return true;
+  }
+  if (defender.started > 0 && defender.lost >= defender.started) {
+    return true;
+  }
+  return null;
+}
+
+function battlePhaseTotals(
+  items: BattleItemDetail[],
+  side: 'attacker' | 'defender',
+  phase: string
+): { started: number; lost: number } {
+  return items.reduce(
+    (totals, item) => {
+      if (stringValue(item.side).toLowerCase() !== side || stringValue(item.phase).toLowerCase() !== phase) {
+        return totals;
+      }
+      totals.started += numericValue(item.amount) ?? 0;
+      totals.lost += numericValue(item.lost) ?? 0;
+      return totals;
+    },
+    { started: 0, lost: 0 }
+  );
 }
 
 function kingdomLabel(report: ParsedReport): string {
@@ -2645,16 +2695,14 @@ function phaseLabel(value: unknown): string {
 }
 
 function laneResult(lane: BattleWaveLane): 'HELD' | 'BREACHED' {
-  const parsed = stringValue(lane.result).toUpperCase();
-  if (parsed === 'HELD' || parsed === 'BREACHED') {
-    return parsed;
-  }
-
   const defenderStart = lane.defenderStart ?? 0;
   const defenderLost = lane.defenderLost ?? 0;
   const attackerStart = lane.attackerStart ?? 0;
   const attackerLost = lane.attackerLost ?? 0;
 
+  if (attackerStart > 0 && attackerLost >= attackerStart) {
+    return 'HELD';
+  }
   if (defenderStart > 0 && defenderLost < defenderStart) {
     return 'HELD';
   }
@@ -2663,6 +2711,11 @@ function laneResult(lane: BattleWaveLane): 'HELD' | 'BREACHED' {
   }
   if (attackerStart > 0 && attackerLost < attackerStart) {
     return 'BREACHED';
+  }
+
+  const parsed = stringValue(lane.result).toUpperCase();
+  if (parsed === 'HELD' || parsed === 'BREACHED') {
+    return parsed;
   }
 
   return 'HELD';

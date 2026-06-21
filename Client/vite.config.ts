@@ -1058,14 +1058,25 @@ function reportHasBothPlayers(report: LocalParsedReport): boolean {
 }
 
 function inferBattleResult(report: LocalParsedReport): string {
-  const waveResult = inferBattleResultFromWaves(report.waves)
-  if (waveResult) {
-    return waveResult
+  const phaseResult = inferBattleResultFromBattlePhases(report)
+  if (phaseResult) {
+    return phaseResult
   }
   return inferBattleResultFromMetrics(report.metrics)
 }
 
-function inferBattleResultFromWaves(waves: LocalWave[]): string {
+function inferBattleResultFromBattlePhases(report: LocalParsedReport): string {
+  const wall = inferWallPhaseResult(report.waves)
+  if (!wall.hasAttackLane) {
+    return ''
+  }
+  if (!wall.breached) {
+    return 'Defeat'
+  }
+  return inferCourtyardPhaseResult(report.topUnits)
+}
+
+function inferWallPhaseResult(waves: LocalWave[]): { hasAttackLane: boolean; breached: boolean } {
   let hasAttackLane = false
   for (const wave of waves) {
     for (const lane of wave.lanes ?? []) {
@@ -1074,11 +1085,46 @@ function inferBattleResultFromWaves(waves: LocalWave[]): string {
       }
       hasAttackLane = true
       if (inferLaneResult(lane) === 'BREACHED') {
-        return 'Victory'
+        return { hasAttackLane, breached: true }
       }
     }
   }
-  return hasAttackLane ? 'Defeat' : ''
+  return { hasAttackLane, breached: false }
+}
+
+function inferCourtyardPhaseResult(items: LocalBattleItemDetail[]): string {
+  const attacker = battlePhaseTotals(items, 'attacker', 'courtyard')
+  const defender = battlePhaseTotals(items, 'defender', 'courtyard')
+  if (attacker.started <= 0 && defender.started <= 0) {
+    return ''
+  }
+  if (attacker.started > 0 && attacker.lost >= attacker.started) {
+    return 'Defeat'
+  }
+  if (defender.started > 0 && defender.lost < defender.started) {
+    return 'Defeat'
+  }
+  if (attacker.started > 0 && attacker.lost < attacker.started) {
+    return 'Victory'
+  }
+  if (defender.started > 0 && defender.lost >= defender.started) {
+    return 'Victory'
+  }
+  return ''
+}
+
+function battlePhaseTotals(items: LocalBattleItemDetail[], side: string, phase: string): { started: number; lost: number } {
+  return items.reduce(
+    (totals, item) => {
+      if (stringValue(item.side).toLowerCase() !== side || stringValue(item.phase).toLowerCase() !== phase) {
+        return totals
+      }
+      totals.started += item.amount ?? 0
+      totals.lost += item.lost ?? 0
+      return totals
+    },
+    { started: 0, lost: 0 }
+  )
 }
 
 function inferBattleResultFromMetrics(metrics: LocalMetrics): string {
@@ -1089,6 +1135,9 @@ function inferBattleResultFromMetrics(metrics: LocalMetrics): string {
 }
 
 function inferLaneResult(lane: LocalWaveLane): string {
+  if (lane.attackerStart > 0 && lane.attackerLost >= lane.attackerStart) {
+    return 'HELD'
+  }
   if (lane.defenderStart > 0 && lane.defenderLost < lane.defenderStart) {
     return 'HELD'
   }

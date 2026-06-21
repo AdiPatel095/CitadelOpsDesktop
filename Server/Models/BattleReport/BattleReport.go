@@ -1579,6 +1579,9 @@ func aggregateBattleItems(items []BattleItemDetail) []BattleItemDetail {
 }
 
 func inferLaneResult(lane WaveLane) string {
+	if lane.AttackerStart > 0 && lane.AttackerLost >= lane.AttackerStart {
+		return "HELD"
+	}
 	if lane.DefenderStart > 0 && lane.DefenderLost < lane.DefenderStart {
 		return "HELD"
 	}
@@ -1627,14 +1630,30 @@ func combatantHasPlayer(combatant *Combatant) bool {
 }
 
 func inferBattleResult(report ParsedReport) string {
-	waveResult := inferBattleResultFromWaves(report.Waves)
-	if waveResult != "" {
-		return waveResult
+	phaseResult := inferBattleResultFromBattlePhases(report)
+	if phaseResult != "" {
+		return phaseResult
 	}
 	return inferBinaryResultFromMetrics(report.Metrics)
 }
 
-func inferBattleResultFromWaves(waves []Wave) string {
+func inferBattleResultFromBattlePhases(report ParsedReport) string {
+	wall := inferWallPhaseResult(report.Waves)
+	if !wall.hasAttackLane {
+		return ""
+	}
+	if !wall.breached {
+		return "Defeat"
+	}
+	return inferCourtyardPhaseResult(report.TopUnits)
+}
+
+type battleWallPhaseResult struct {
+	hasAttackLane bool
+	breached      bool
+}
+
+func inferWallPhaseResult(waves []Wave) battleWallPhaseResult {
 	hasAttackLane := false
 	for _, wave := range waves {
 		for _, lane := range wave.Lanes {
@@ -1643,14 +1662,49 @@ func inferBattleResultFromWaves(waves []Wave) string {
 			}
 			hasAttackLane = true
 			if inferLaneResult(lane) == "BREACHED" {
-				return "Victory"
+				return battleWallPhaseResult{hasAttackLane: true, breached: true}
 			}
 		}
 	}
-	if hasAttackLane {
+	return battleWallPhaseResult{hasAttackLane: hasAttackLane}
+}
+
+func inferCourtyardPhaseResult(items []BattleItemDetail) string {
+	attacker := battlePhaseTotals(items, "attacker", "courtyard")
+	defender := battlePhaseTotals(items, "defender", "courtyard")
+	if attacker.started <= 0 && defender.started <= 0 {
+		return ""
+	}
+	if attacker.started > 0 && attacker.lost >= attacker.started {
 		return "Defeat"
 	}
+	if defender.started > 0 && defender.lost < defender.started {
+		return "Defeat"
+	}
+	if attacker.started > 0 && attacker.lost < attacker.started {
+		return "Victory"
+	}
+	if defender.started > 0 && defender.lost >= defender.started {
+		return "Victory"
+	}
 	return ""
+}
+
+type battlePhaseTotal struct {
+	started int64
+	lost    int64
+}
+
+func battlePhaseTotals(items []BattleItemDetail, side, phase string) battlePhaseTotal {
+	var totals battlePhaseTotal
+	for _, item := range items {
+		if strings.ToLower(item.Side) != side || strings.ToLower(item.Phase) != phase {
+			continue
+		}
+		totals.started += item.Amount
+		totals.lost += item.Lost
+	}
+	return totals
 }
 
 func inferBinaryResultFromMetrics(metrics Metrics) string {
