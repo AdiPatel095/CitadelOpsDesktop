@@ -1693,7 +1693,7 @@ func battleEffectDisplay(id int64, side string) battleEffectMeta {
 		return meta
 	}
 	label := fmt.Sprintf("Effect %d", id)
-	return battleEffectMeta{label: label, template: label, unit: "percent", category: "Other effects", order: 900}
+	return battleEffectMeta{label: label, template: label, unit: "percent", category: "Other effects", order: 900, unknown: true}
 }
 
 type battleEffectMeta struct {
