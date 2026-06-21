@@ -4,11 +4,10 @@ import { FrontendWebsocket } from '../../Websocket';
 import { Icons } from '../../components/Icons';
 import { Button, Modal, Card, CardHeader, CardContent, ToggleGroup, Switch } from '../../components/ui';
 
-// Asset paths from public directory
-const img1Star = '/assets/Stars/1Star.png';
-const img4Star = '/assets/Stars/4Star.png';
-const img7Star = '/assets/Stars/7Star.png';
-const img12Star = '/assets/Stars/12Star.png';
+const img1Star = '/game-data/stars/images/1Star.webp';
+const img4Star = '/game-data/stars/images/4Star.webp';
+const img7Star = '/game-data/stars/images/7Star.webp';
+const img12Star = '/game-data/stars/images/12Star.webp';
 
 import { type CommStat, type CastStat } from '../models/Equipment';
 

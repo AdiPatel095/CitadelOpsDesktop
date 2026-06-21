@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 
-// Asset paths from public directory
-const WoodIcon = '/assets/Resources/Wood.png';
-const StoneIcon = '/assets/Resources/Stone.png';
-const FoodIcon = '/assets/Resources/Food.png';
-const CharcoalIcon = '/assets/Resources/Charcoal.png';
-const OliveOilIcon = '/assets/Resources/OliveOil.png';
-const GlassIcon = '/assets/Resources/Glass.png';
-const IronOreIcon = '/assets/Resources/Iron_Ore.png';
-const HoneyIcon = '/assets/Resources/Honey.png';
-const MeadIcon = '/assets/Resources/Mead.png';
-const BeefIcon = '/assets/Resources/Beef.png';
+const WoodIcon = '/game-data/resources/images/Wood.webp';
+const StoneIcon = '/game-data/resources/images/Stone.webp';
+const FoodIcon = '/game-data/resources/images/Food.webp';
+const CharcoalIcon = '/game-data/resources/images/Charcoal.webp';
+const OliveOilIcon = '/game-data/resources/images/OliveOil.webp';
+const GlassIcon = '/game-data/resources/images/Glass.webp';
+const IronOreIcon = '/game-data/resources/images/Iron_Ore.webp';
+const HoneyIcon = '/game-data/resources/images/Honey.webp';
+const MeadIcon = '/game-data/resources/images/Mead.webp';
+const BeefIcon = '/game-data/resources/images/Beef.webp';
 
 import {
   type CastleResourcesAmount,

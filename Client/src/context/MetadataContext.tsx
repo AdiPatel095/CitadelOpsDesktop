@@ -154,7 +154,7 @@ function fallbackTroops(): Record<number, MetadataItem> {
     out[numericID] = {
       id: numericID,
       ...meta,
-      image: `/assets/Troops/${numericID}.png`,
+      image: `/game-data/troops/images/${numericID}.webp`,
     };
   }
   return out;
@@ -167,7 +167,7 @@ function fallbackTools(): Record<number, MetadataItem> {
     out[numericID] = {
       id: numericID,
       ...meta,
-      image: `/assets/Tools/${numericID}.png`,
+      image: `/game-data/tools/images/${numericID}.webp`,
     };
   }
   return out;
