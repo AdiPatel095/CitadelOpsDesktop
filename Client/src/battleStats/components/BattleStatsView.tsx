@@ -421,7 +421,7 @@ const BattleStatsView: React.FC = () => {
                         <CombatantCell combatant={report.defender} />
                       </td>
                       <td className="px-4 py-3">
-                        <ResultBadge result={relativeOutcomeLabel(report, selectedPlayer, allianceMemberKeys, homeAllianceKey)} />
+                        <ReportResultBadges result={relativeOutcomeLabel(report, selectedPlayer, allianceMemberKeys, homeAllianceKey)} />
                       </td>
                       <td className="px-4 py-3 text-text-main whitespace-nowrap">{battleLocationLabel(report)}</td>
                       <td className="px-4 py-3 text-right text-error font-semibold">
@@ -503,6 +503,31 @@ const CombatantCell: React.FC<{ combatant?: BattleCombatant }> = ({ combatant })
     <div className="text-xs text-text-muted">{allianceName(combatant)}</div>
   </div>
 );
+
+const ReportResultBadges: React.FC<{ result: string; size?: 'sm' | 'lg'; className?: string }> = ({
+  result,
+  size = 'sm',
+  className = '',
+}) => {
+  const parts = splitResultLabel(result);
+  if (!parts) {
+    return <Badge variant="secondary">Unknown</Badge>;
+  }
+
+  const roleClass =
+    parts.role === 'Attack'
+      ? 'border-warning/30 bg-warning/10 text-warning'
+      : 'border-info/30 bg-info/10 text-info';
+  const layoutClass = size === 'lg' ? 'justify-center gap-2' : 'min-w-[8rem] gap-1.5';
+  const badgeClass = size === 'lg' ? 'px-4 py-1.5 text-sm md:text-base' : '';
+
+  return (
+    <div className={`flex flex-wrap items-center ${layoutClass} ${className}`}>
+      <Badge variant="outline" className={`${roleClass} ${badgeClass}`}>{parts.role}</Badge>
+      <Badge variant={parts.won ? 'success' : 'danger'} className={badgeClass}>{parts.won ? 'Won' : 'Lost'}</Badge>
+    </div>
+  );
+};
 
 const ResultBadge: React.FC<{ result: string }> = ({ result }) => {
   if (result === 'Attack won' || result === 'Defense win') {
@@ -727,10 +752,6 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
 };
 
 const BattleStatusBanner: React.FC<{ report: ParsedReport; outcome: string }> = ({ report, outcome }) => {
-  const attackWon = attackSucceeded(report);
-  const statusLabel = attackWon ? 'Castle breached' : 'Defense held';
-  const statusClass = attackWon ? 'text-warning' : 'text-success';
-
   return (
     <Card variant="solid" className="overflow-hidden">
       <CardContent className="!p-0">
@@ -739,12 +760,11 @@ const BattleStatusBanner: React.FC<{ report: ParsedReport; outcome: string }> = 
             <BattleBannerSide label="Attacker" combatant={report.attacker} tone="danger" />
 
             <div className="flex min-w-0 flex-col items-center justify-center rounded-global border border-border-base bg-bg-card/90 px-5 py-4 text-center shadow-sm">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-global bg-primary/10 text-primary ring-1 ring-primary/20">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-global bg-primary/10 text-primary ring-1 ring-primary/20">
                 <Swords className="h-6 w-6" />
               </div>
-              <ResultBadge result={outcome} />
-              <div className={`mt-3 text-2xl font-black uppercase tracking-wide ${statusClass}`}>{statusLabel}</div>
-              <div className="mt-1 text-sm font-semibold text-text-main">{battleLocationLabel(report)}</div>
+              <ReportResultBadges result={outcome} size="lg" />
+              <div className="mt-3 text-sm font-semibold text-text-main">{battleLocationLabel(report)}</div>
             </div>
 
             <BattleBannerSide label="Defender" combatant={report.defender} tone="info" align="right" />
@@ -1729,6 +1749,21 @@ function relativeOutcomeLabel(
     return attackWon ? 'Defense lost' : 'Defense win';
   }
   return attackWon ? 'Attack won' : 'Attack lost';
+}
+
+function splitResultLabel(result: string): { role: 'Attack' | 'Defense'; won: boolean } | null {
+  const normalized = result.toLowerCase();
+  const role = normalized.startsWith('defense') ? 'Defense' : normalized.startsWith('attack') ? 'Attack' : null;
+  if (!role) {
+    return null;
+  }
+  if (normalized.includes('lost')) {
+    return { role, won: false };
+  }
+  if (normalized.includes('won') || normalized.includes('win')) {
+    return { role, won: true };
+  }
+  return null;
 }
 
 function friendlySideForReport(
