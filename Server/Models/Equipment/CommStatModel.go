@@ -105,6 +105,22 @@ var CommStatUpdaterMap = map[float64]CommDBUpdater{
 	120: func(c *CommStatModel, v float64) { c.FlankCbtStr += v },
 	121: func(c *CommStatModel, v float64) { c.MaidenSupp += v },
 
+	//relic samurai / npc scoped stats
+	501: func(c *CommStatModel, v float64) { c.NPCWall += v },
+	502: func(c *CommStatModel, v float64) { c.NPCGate += v },
+	503: func(c *CommStatModel, v float64) { c.NPCMelee += v },
+	504: func(c *CommStatModel, v float64) { c.NPCRange += v },
+	505: func(c *CommStatModel, v float64) { c.NPCFlank += v },
+	506: func(c *CommStatModel, v float64) { c.NPCCy += v },
+	507: func(c *CommStatModel, v float64) { c.NPCWall += v },
+	508: func(c *CommStatModel, v float64) { c.NPCGate += v },
+	509: func(c *CommStatModel, v float64) { c.NPCMelee += v },
+	510: func(c *CommStatModel, v float64) { c.NPCRange += v },
+	511: func(c *CommStatModel, v float64) { c.NPCFlank += v },
+	512: func(c *CommStatModel, v float64) { c.NPCCy += v },
+	513: func(c *CommStatModel, v float64) { c.NPCFront += v },
+	514: func(c *CommStatModel, v float64) { c.NPCMoat += v },
+
 	//gem stats castle lord
 	309: func(c *CommStatModel, v float64) { c.CLWall += v },
 	310: func(c *CommStatModel, v float64) { c.CLGate += v },

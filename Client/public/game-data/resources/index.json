@@ -1,80 +1,80 @@
 [
   {
-    "id": null,
+    "id": 1,
+    "image": null,
     "name": "currency1",
-    "type": "currency1",
-    "image": "/assets/Resources/Sceat.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 2,
+    "image": null,
     "name": "currency2",
-    "type": "currency2",
-    "image": "/assets/Resources/ImperialDucat.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 3,
+    "image": null,
     "name": "wood",
-    "type": "wood",
-    "image": "/assets/Resources/Wood.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 4,
+    "image": null,
     "name": "stone",
-    "type": "stone",
-    "image": "/assets/Resources/Stone.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 5,
+    "image": null,
     "name": "food",
-    "type": "food",
-    "image": "/assets/Resources/Food.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 6,
+    "image": null,
     "name": "coal",
-    "type": "coal",
-    "image": "/assets/Resources/Charcoal.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 7,
+    "image": null,
     "name": "oil",
-    "type": "oil",
-    "image": "/assets/Resources/OliveOil.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 8,
+    "image": null,
     "name": "glass",
-    "type": "glass",
-    "image": "/assets/Resources/Glass.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 9,
+    "image": null,
     "name": "aquamarine",
-    "type": "aquamarine",
-    "image": "/assets/Resources/Aquamarine.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 10,
+    "image": null,
     "name": "iron",
-    "type": "iron",
-    "image": "/assets/Resources/Iron_Ore.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 11,
+    "image": null,
     "name": "honey",
-    "type": "honey",
-    "image": "/assets/Resources/Honey.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 12,
+    "image": null,
     "name": "mead",
-    "type": "mead",
-    "image": "/assets/Resources/Mead.png"
+    "type": ""
   },
   {
-    "id": null,
+    "id": 13,
+    "image": null,
     "name": "beef",
-    "type": "beef",
-    "image": "/assets/Resources/Beef.png"
+    "type": ""
   }
 ]

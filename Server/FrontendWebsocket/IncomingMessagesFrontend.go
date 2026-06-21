@@ -18,7 +18,6 @@ import (
 	"CitadelDesktop/Server/Models"
 	dec "CitadelDesktop/Server/Models/Decoration"
 	equip "CitadelDesktop/Server/Models/Equipment"
-	mapstate "CitadelDesktop/Server/Models/MapState"
 	riftattack "CitadelDesktop/Server/Models/RiftAttack"
 	sentbird "CitadelDesktop/Server/Models/SentBird"
 	stsettings "CitadelDesktop/Server/Models/Settings"
@@ -66,6 +65,9 @@ func init() {
 	ResponseRegistry.SendAutoBeriWorldStatusFunc = SendAutoBeriWorldStatus
 	GameParser.NotifyCastleFocusChanged = func() {
 		SendFrontendMessage("castleFocus", Models.CastleFocusMessagePayload(), "")
+	}
+	GameParser.NotifyAllianceInfoUpdated = func() {
+		SendFrontendMessage("allianceInfo", Models.GetGameState().Alliance, "")
 	}
 	GameParser.NotifyGlobalResourcesChanged = SendGlobalResourceUpdate
 	GameParser.NotifyRiftMapCoordsChanged = SendRiftMapCoords
@@ -1186,32 +1188,6 @@ func ParseFrontendMessage(message []byte) {
 		}(sourceX, sourceY, unitWodID)
 
 	case "getRiftMapCoords":
-		refresh := false
-		if payload, ok := data["payload"].(map[string]interface{}); ok {
-			if v, ok := payload["refresh"].(bool); ok {
-				refresh = v
-			}
-		}
-		if refresh {
-			gs := Models.GetGameState()
-			f := gs.CastleFocus
-			if f.CastleAID > 0 {
-				if x, y, ok := gs.ResolveCastleMapCoords(f.CastleAID, f.KingdomID); ok {
-					GameCommands.SendCastleFocus(f.KingdomID, f.CastleAID, x, y)
-				}
-			}
-			if rift, riftKid, ok := Models.GetMapState().FindRift(); ok {
-				GameCommands.SendGAAAroundTile(riftKid, rift.X, rift.Y, 12)
-			} else if f.KingdomID == 0 {
-				cx, cy := f.MapPX, f.MapPY
-				if cx == 0 && cy == 0 {
-					cx, cy, _ = gs.ResolveCastleMapCoords(f.CastleAID, f.KingdomID)
-				}
-				if cx != 0 || cy != 0 {
-					GameCommands.SendGAAAroundTile(0, cx, cy, mapstate.RiftMapRadius)
-				}
-			}
-		}
 		SendRiftMapCoords()
 
 	case "focusPlayerCastle":

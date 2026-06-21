@@ -9,6 +9,7 @@ import CurrencyView from './currency/components/CurrencyView';
 import EventModulesView from './EventModules/components/EventModulesView';
 import RiftView from './Rift/components/RiftView';
 import MovementView from './Movement/components/MovementView';
+import BattleStatsView from './battleStats/components/BattleStatsView';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import UpdateModal from './components/UpdateModal';
@@ -49,6 +50,8 @@ const AppContent: React.FC = () => {
         return <CurrencyView />;
       case 'movement':
         return <MovementView />;
+      case 'battle-stats':
+        return <BattleStatsView />;
       case 'rift':
         return <RiftView />;
       case 'support':

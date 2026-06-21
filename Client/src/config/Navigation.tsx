@@ -7,6 +7,7 @@ export type ViewId =
   | 'castle'
   | 'currency'
   | 'movement'
+  | 'battle-stats'
   | 'rift'
   | 'event-modules'
   | 'settings'
@@ -24,6 +25,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     { id: 'equipment', label: 'Equipment', icon: <Icons.Shield />, section: 'main' },
     { id: 'currency', label: 'Currency', icon: <Icons.Grid />, section: 'main' },
     { id: 'movement', label: 'Movement', icon: <Icons.Activity />, section: 'main' },
+    { id: 'battle-stats', label: 'Battle Stats', icon: <Icons.Activity />, section: 'main' },
     { id: 'rift', label: 'Rift', icon: <Icons.Rift />, section: 'main' },
     { id: 'event-modules', label: 'Event Modules', icon: <Icons.Trophy />, section: 'main' },
     { id: 'settings', label: 'Settings', icon: <Icons.Settings />, section: 'system' },

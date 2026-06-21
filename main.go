@@ -6,6 +6,7 @@ import (
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
+	battlereport "CitadelDesktop/Server/Models/BattleReport"
 	"CitadelDesktop/Server/Paths"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"CitadelDesktop/Server/Version"
@@ -113,6 +114,7 @@ func StartFrontendService() {
 
 	mux.Handle("/", http.FileServer(http.FS(subFS)))
 	Logging.RegisterLogHandlers(mux)
+	battlereport.RegisterStatsHandlers(mux)
 	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)
 
 	port := currentPort

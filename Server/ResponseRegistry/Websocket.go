@@ -150,6 +150,7 @@ func handleCDPEvent(ev interface{}) {
 	case *network.EventWebSocketCreated:
 		if strings.Contains(ev.URL, "ep-live") {
 			gameRequestIDs[string(ev.RequestID)] = true
+			Logging.BeginWebSocketGameLogSession()
 		}
 	case *network.EventWebSocketClosed:
 		if gameRequestIDs[string(ev.RequestID)] {

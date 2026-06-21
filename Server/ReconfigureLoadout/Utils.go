@@ -30,14 +30,14 @@ var CommStatNameToIDs = map[string][]float64{
 	"cooldown":    {20019},
 
 	// NPC Stats
-	"NPCMelee": {211},
-	"NPCRange": {212},
-	"NPCFlank": {213},
-	"NPCCy":    {214},
-	"NPCFront": {215},
-	"NPCMoat":  {216},
-	"NPCWall":  {209},
-	"NPCGate":  {210},
+	"NPCMelee": {211, 503, 509},
+	"NPCRange": {212, 504, 510},
+	"NPCFlank": {213, 505, 511},
+	"NPCCy":    {214, 506, 512},
+	"NPCFront": {215, 513},
+	"NPCMoat":  {216, 514},
+	"NPCWall":  {209, 501, 507},
+	"NPCGate":  {210, 502, 508},
 	"NPCGlory": {320},
 
 	// CL Stats
@@ -63,14 +63,14 @@ var CommStatNameToIDs = map[string][]float64{
 var CastStatNameToIDs = map[string][]float64{
 	// Fixed Stats
 	"lootStr":     {10001, 10101, 10216, 10217, 10218, 10219, 10416, 10417},
-	"wallLimit":   {10002, 10113, 10201, 10301, 10207, 10213, 10307, 10313, 10415, 10815},
+	"wallLimit":   {10113, 10201, 10301, 10207, 10213, 10307, 10313, 10415, 10815, 10515},
 	"gateStr":     {10003, 10103, 10109, 10204, 10210, 10304, 10310, 10410, 10812},
 	"moatStr":     {10004, 10110, 10215, 10316, 10415, 10810},
-	"meleeCbtStr": {10005, 10111, 10205, 10211, 10305, 10311, 10411, 10813},
-	"rangeCbtStr": {10006, 10112, 10206, 10212, 10306, 10312, 10412, 10814},
+	"meleeCbtStr": {10005, 10105, 10111, 10205, 10211, 10305, 10311, 10411, 10813},
+	"rangeCbtStr": {10006, 10106, 10112, 10206, 10212, 10306, 10312, 10412, 10814},
 
 	// Random Relic Stats
-	"wallStr":       {10102, 10108},
+	"wallStr":       {10002, 10102, 10108},
 	"cyCbtStr":      {10114, 10202, 10208, 10302, 10308, 10414, 10816},
 	"allCbtStr":     {10115},
 	"frontCbtStr":   {10116},
@@ -78,22 +78,22 @@ var CastStatNameToIDs = map[string][]float64{
 	"protectorSupp": {10118},
 
 	// Hero Bonus
-	"research":     {30001},
+	"research":     {30001, 30007},
+	"construction": {30003, 30011},
+	"baseRes":      {30004, 30012},
+	"kingRes":      {30005, 30013},
+	"po":           {30006, 30014},
+	"resTransport": {30008, 30016},
 	"recruit":      {30009},
 	"hospital":     {30010},
-	"construction": {30011},
-	"baseRes":      {30012},
-	"kingRes":      {30013},
-	"po":           {30014},
-	"resTransport": {30016},
 	"meadProd":     {30017},
 	"honeyProd":    {30018},
 	"meadStorage":  {30019},
 	"honeyStorage": {30020},
 
 	// Hero Stats
-	"mainCbtStr": {10807},
-	"opCbtStr":   {10808},
+	"mainCbtStr": {10501, 10507, 10807},
+	"opCbtStr":   {10502, 10508, 10808},
 
 	// NPC Stats
 	"NPCWall":      {10203, 10209, 10409},
@@ -105,21 +105,21 @@ var CastStatNameToIDs = map[string][]float64{
 	"NPCMoat":      {10215, 10415},
 
 	// CL Stats
-	"CLWall":      {10303, 10309, 10811},
-	"CLGate":      {10304, 10310, 10812},
-	"CLMelee":     {10305, 10311, 10813},
-	"CLRange":     {10306, 10312, 10814},
-	"CLWallLimit": {10307, 10313, 10815},
-	"CLCy":        {10308, 10314, 10816},
-	"CLEarly":     {10315, 10809},
-	"CLMoat":      {10316, 10810},
-	"CLFire":      {10317, 10817},
-	"CLGlory":     {10318, 10818},
+	"CLWall":      {10303, 10309, 10505, 10511, 10811},
+	"CLGate":      {10304, 10310, 10506, 10512, 10812},
+	"CLMelee":     {10305, 10311, 10513, 10813},
+	"CLRange":     {10306, 10312, 10514, 10814},
+	"CLWallLimit": {10307, 10313, 10515, 10815},
+	"CLCy":        {10308, 10314, 10516, 10816},
+	"CLEarly":     {10315, 10503, 10509, 10809},
+	"CLMoat":      {10316, 10504, 10510, 10810},
+	"CLFire":      {10317, 10517, 10817},
+	"CLGlory":     {10318, 10518, 10818},
 
 	// Combined
-	"glory": {10318, 10818},
-	"fire":  {10317, 10817},
-	"early": {10315, 10809},
+	"glory": {10318, 10518, 10818},
+	"fire":  {10317, 10517, 10817},
+	"early": {10315, 10503, 10509, 10809},
 }
 
 // PriorityStat definition...

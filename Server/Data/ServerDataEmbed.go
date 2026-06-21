@@ -15,6 +15,24 @@ var embeddedConstructionItemsJSON []byte
 //go:embed effects/items.json
 var embeddedEffectsItemsJSON []byte
 
+//go:embed equipment_effects/items.json
+var embeddedEquipmentEffectsItemsJSON []byte
+
+//go:embed effect_caps/items.json
+var embeddedEffectCapsItemsJSON []byte
+
+//go:embed relic_effects/items.json
+var embeddedRelicEffectsItemsJSON []byte
+
+//go:embed equipments/items.json
+var embeddedEquipmentsItemsJSON []byte
+
+//go:embed gems/items.json
+var embeddedGemsItemsJSON []byte
+
+//go:embed equipment_sets/items.json
+var embeddedEquipmentSetsItemsJSON []byte
+
 //go:embed construction_item_group_buildings.json
 var embeddedConstructionItemGroupBuildingsJSON []byte
 
@@ -66,6 +84,36 @@ func ReadConstructionItemsJSON() ([]byte, error) {
 // ReadEffectsItemsJSON returns effects/items.json (disk first, else embedded).
 func ReadEffectsItemsJSON() ([]byte, error) {
 	return readFilePreferDisk(filepath.Join("effects", "items.json"), embeddedEffectsItemsJSON)
+}
+
+// ReadEquipmentEffectsItemsJSON returns equipment_effects/items.json (disk first, else embedded).
+func ReadEquipmentEffectsItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("equipment_effects", "items.json"), embeddedEquipmentEffectsItemsJSON)
+}
+
+// ReadEffectCapsItemsJSON returns effect_caps/items.json.
+func ReadEffectCapsItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("effect_caps", "items.json"), embeddedEffectCapsItemsJSON)
+}
+
+// ReadRelicEffectsItemsJSON returns relic_effects/items.json.
+func ReadRelicEffectsItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("relic_effects", "items.json"), embeddedRelicEffectsItemsJSON)
+}
+
+// ReadEquipmentsItemsJSON returns equipments/items.json.
+func ReadEquipmentsItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("equipments", "items.json"), embeddedEquipmentsItemsJSON)
+}
+
+// ReadGemsItemsJSON returns gems/items.json.
+func ReadGemsItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("gems", "items.json"), embeddedGemsItemsJSON)
+}
+
+// ReadEquipmentSetsItemsJSON returns equipment_sets/items.json.
+func ReadEquipmentSetsItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("equipment_sets", "items.json"), embeddedEquipmentSetsItemsJSON)
 }
 
 // ReadBuildingsJSON returns buildings/items.json (official EmpireItems building catalog).

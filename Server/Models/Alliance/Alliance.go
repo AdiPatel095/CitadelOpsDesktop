@@ -3,8 +3,14 @@ package alliance
 // Alliance represents the player's alliance information.
 type Alliance struct {
 	AID                   int                    `json:"aid"` // Ally Identification
+	Members               []AllianceMember       `json:"members"`
 	BirdLocations         []BirdLocation         `json:"birdLocations"`
 	PlayerCastleLocations []PlayerCastleLocation `json:"playerCastleLocations"` // Player's own castle locations
+}
+
+type AllianceMember struct {
+	PlayerID int    `json:"playerID"`
+	Name     string `json:"name"`
 }
 
 type BirdLocation struct {
