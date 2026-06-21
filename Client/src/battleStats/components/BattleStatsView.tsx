@@ -2110,8 +2110,7 @@ const effectAlignmentOrder: Record<string, number> = {
   courtyardDefenseCapacity: 24,
   allianceSupportCapacity: 25,
   armyTravelSpeed: 30,
-  armyDetection: 31,
-  attackWarning: 32,
+  attackDetectionWindow: 31,
   sightRadius: 33,
   lootCapacity: 40,
   resources: 41,
@@ -2217,7 +2216,7 @@ function effectComparisonCategory(effect: BattleEffect, alignmentKey: string): s
   if (['finalAssaultCapacity', 'courtyardDefenseCapacity', 'allianceSupportCapacity'].includes(alignmentKey)) {
     return 'Courtyard effects';
   }
-  if (['armyTravelSpeed', 'armyDetection', 'attackWarning', 'sightRadius'].includes(alignmentKey)) {
+  if (['armyTravelSpeed', 'attackDetectionWindow', 'sightRadius'].includes(alignmentKey)) {
     return 'Pre-battle effects';
   }
   if (['lootCapacity', 'resources', 'glory', 'honor', 'xp', 'coinLoot', 'equipmentFind'].includes(alignmentKey)) {
@@ -2278,10 +2277,10 @@ function effectAlignmentKey(effect: BattleEffect): string {
     return 'allianceSupportCapacity';
   }
   if (text.includes('later army detection')) {
-    return 'armyDetection';
+    return 'attackDetectionWindow';
   }
   if (text.includes('attack warning')) {
-    return 'attackWarning';
+    return 'attackDetectionWindow';
   }
   if (text.includes('sight radius')) {
     return 'sightRadius';
