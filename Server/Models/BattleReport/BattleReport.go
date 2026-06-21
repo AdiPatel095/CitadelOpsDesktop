@@ -314,14 +314,25 @@ func UpsertCapture(capture Capture) error {
 }
 
 func UploadCaptureToCloud(capture Capture) error {
-	if err := normalizeCapture(&capture); err != nil {
-		return err
+	return UploadCapturesToCloud([]Capture{capture})
+}
+
+func UploadCapturesToCloud(captures []Capture) error {
+	envelopes := make([]cloudBattleReportPayload, 0, len(captures))
+	for _, capture := range captures {
+		if err := normalizeCapture(&capture); err != nil {
+			return err
+		}
+		envelope, err := cloudBattleReportFromCapture(capture)
+		if err != nil {
+			return err
+		}
+		envelopes = append(envelopes, envelope)
 	}
-	envelope, err := cloudBattleReportFromCapture(capture)
-	if err != nil {
-		return err
+	if len(envelopes) == 0 {
+		return nil
 	}
-	payload, err := json.Marshal(envelope)
+	payload, err := json.Marshal(envelopes)
 	if err != nil {
 		return err
 	}
@@ -341,7 +352,7 @@ func UploadCaptureToCloud(capture Capture) error {
 		return nil
 	}
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-	return fmt.Errorf("cloud battle report upload failed: %s: %s", resp.Status, strings.TrimSpace(string(body)))
+	return fmt.Errorf("cloud battle report batch upload failed: %s: %s", resp.Status, strings.TrimSpace(string(body)))
 }
 
 func cloudBattleReportFromCapture(capture Capture) (cloudBattleReportPayload, error) {

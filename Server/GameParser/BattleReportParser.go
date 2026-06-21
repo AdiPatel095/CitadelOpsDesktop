@@ -13,7 +13,11 @@ import (
 	"CitadelDesktop/Server/ResponseRegistry"
 )
 
-const battleReportWireWait = 12 * time.Second
+const (
+	battleReportWireWait         = 12 * time.Second
+	battleReportFetchBatchMax    = 25
+	battleReportFetchBatchSettle = 250 * time.Millisecond
+)
 
 var (
 	battleReportFetchOnce  sync.Once
@@ -104,14 +108,46 @@ func startBattleReportFetchWorker() {
 }
 
 func battleReportFetchWorker() {
-	for capture := range battleReportFetchQueue {
-		if err := fetchBattleReportCapture(capture); err != nil {
-			log.Printf("[battle-report] fetch MID %d LID %d: %v", capture.MID, capture.LID, err)
+	for first := range battleReportFetchQueue {
+		batch := nextBattleReportFetchBatch(first)
+		uploadable := make([]battlereport.Capture, 0, len(batch))
+		for _, capture := range batch {
+			fetched, ready, err := fetchBattleReportCapture(capture)
+			if err != nil {
+				log.Printf("[battle-report] fetch MID %d LID %d: %v", capture.MID, capture.LID, err)
+			}
+			if ready {
+				uploadable = append(uploadable, fetched)
+			}
 		}
+		if len(uploadable) == 0 {
+			continue
+		}
+		if err := battlereport.UploadCapturesToCloud(uploadable); err != nil {
+			log.Printf("[battle-report] cloud batch upload %d reports: %v", len(uploadable), err)
+			continue
+		}
+		log.Printf("[battle-report] cloud batch uploaded %d reports", len(uploadable))
 	}
 }
 
-func fetchBattleReportCapture(capture battlereport.Capture) error {
+func nextBattleReportFetchBatch(first battlereport.Capture) []battlereport.Capture {
+	batch := []battlereport.Capture{first}
+	timer := time.NewTimer(battleReportFetchBatchSettle)
+	defer timer.Stop()
+
+	for len(batch) < battleReportFetchBatchMax {
+		select {
+		case capture := <-battleReportFetchQueue:
+			batch = append(batch, capture)
+		case <-timer.C:
+			return batch
+		}
+	}
+	return batch
+}
+
+func fetchBattleReportCapture(capture battlereport.Capture) (battlereport.Capture, bool, error) {
 	if capture.Wire == nil {
 		capture.Wire = map[string]string{}
 	}
@@ -134,14 +170,14 @@ func fetchBattleReportCapture(capture battlereport.Capture) error {
 				log.Printf("[battle-report] discard local cleanup %s: %v", capture.ID, err)
 			}
 			log.Printf("[battle-report] discarded %s without parsed players on both sides", capture.ID)
-			return nil
+			return capture, false, nil
 		}
 		persistBattleReportStage(capture, "bls")
 	}
 
 	if capture.LID <= 0 {
 		failures = append(failures, "missing LID")
-		return fmt.Errorf("%s", strings.Join(failures, "; "))
+		return capture, battleReportCaptureReadyForCloud(capture), fmt.Errorf("%s", strings.Join(failures, "; "))
 	}
 
 	if blm, wire, err := requestBattleReportPayload("blm", func() {
@@ -165,10 +201,10 @@ func fetchBattleReportCapture(capture battlereport.Capture) error {
 	}
 
 	if len(failures) > 0 {
-		return fmt.Errorf("%s", strings.Join(failures, "; "))
+		return capture, battleReportCaptureReadyForCloud(capture), fmt.Errorf("%s", strings.Join(failures, "; "))
 	}
-	log.Printf("[battle-report] captured and uploaded %s", capture.ID)
-	return nil
+	log.Printf("[battle-report] captured %s", capture.ID)
+	return capture, battleReportCaptureReadyForCloud(capture), nil
 }
 
 func requestBattleReportPayload(command string, send func()) (map[string]interface{}, string, error) {
@@ -200,11 +236,15 @@ func persistBattleReportStage(capture battlereport.Capture, stage string) {
 		log.Printf("[battle-report] local save %s %s: %v", stage, capture.ID, err)
 		return
 	}
-	if err := battlereport.UploadCaptureToCloud(capture); err != nil {
-		log.Printf("[battle-report] cloud upload %s %s: %v", stage, capture.ID, err)
-		return
+	log.Printf("[battle-report] local saved %s %s", stage, capture.ID)
+}
+
+func battleReportCaptureReadyForCloud(capture battlereport.Capture) bool {
+	if capture.BLS == nil {
+		return false
 	}
-	log.Printf("[battle-report] cloud uploaded %s %s", stage, capture.ID)
+	parsed := battlereport.ParseCapture(&capture)
+	return parsed.ID != "" && battlereport.ReportHasBothPlayers(parsed)
 }
 
 func setBattleReportWire(capture *battlereport.Capture, key, wire string) {
