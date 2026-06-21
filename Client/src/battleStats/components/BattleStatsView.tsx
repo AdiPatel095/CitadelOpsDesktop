@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import {
   ArrowRight,
   BarChart3,
@@ -19,6 +19,7 @@ import ToolImage from '../../components/ToolImage';
 import { useMetadata } from '../../context/MetadataContext';
 import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
 import { FrontendWebsocket } from '../../Websocket';
+import { TROOP_METADATA } from '../../config/Constants';
 import type {
   BattleCombatant,
   BattleEffect,
@@ -712,22 +713,14 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
 
       <UnitStatsPanel report={report} perspectiveSide={perspectiveSide} />
 
-      <div className="grid xl:grid-cols-2 gap-4">
-        <ForcePanel
-          title="Attacker forces"
-          combatant={report.attacker}
-          units={attackerUnits}
-          tools={attackerTools}
-          tone="danger"
-        />
-        <ForcePanel
-          title="Defender forces"
-          combatant={report.defender}
-          units={defenderUnits}
-          tools={defenderTools}
-          tone="info"
-        />
-      </div>
+      <ForcesAccordion
+        attacker={report.attacker}
+        attackerUnits={attackerUnits}
+        attackerTools={attackerTools}
+        defender={report.defender}
+        defenderUnits={defenderUnits}
+        defenderTools={defenderTools}
+      />
 
       <EffectComparison
         commanderName={combatantName(report.attacker)}
@@ -825,6 +818,7 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
   const attackerLost = metricValue(report.metrics, 'attackerLost', 'attackLost');
   const defenderStationed = metricValue(report.metrics, 'defenderStationed');
   const defenderLost = metricValue(report.metrics, 'defenderLost', 'defenseLost');
+  const defenderLossesByRole = defenderLossRoleTotals(report);
   const isDefenseView = side === 'defender';
   const ourForce = isDefenseView ? defenderStationed : attackerSent;
   const ourLost = isDefenseView ? defenderLost : attackerLost;
@@ -855,13 +849,37 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
             value={ourForce}
             tone={isDefenseView ? 'info' : 'neutral'}
           />
-          <MetricTile label="Our losses" value={ourLost} tone="danger" />
+          {isDefenseView ? (
+            <SplitMetricTile
+              label="Our losses"
+              leftLabel="Attack units"
+              leftValue={defenderLossesByRole.attack}
+              rightLabel="Defense units"
+              rightValue={defenderLossesByRole.defense}
+              tone="danger"
+              caption={defenderLossesByRole.unknown > 0 ? `Unclassified ${formatNumber(defenderLossesByRole.unknown)}` : undefined}
+            />
+          ) : (
+            <MetricTile label="Our losses" value={ourLost} tone="danger" />
+          )}
           <MetricTile
             label={isDefenseView ? 'Opponent sent' : 'Opponent stationed'}
             value={opponentForce}
             tone={isDefenseView ? 'neutral' : 'info'}
           />
-          <MetricTile label="Opponent losses" value={opponentLost} tone="success" />
+          {isDefenseView ? (
+            <MetricTile label="Opponent losses" value={opponentLost} tone="success" />
+          ) : (
+            <SplitMetricTile
+              label="Opponent losses"
+              leftLabel="Attack units"
+              leftValue={defenderLossesByRole.attack}
+              rightLabel="Defense units"
+              rightValue={defenderLossesByRole.defense}
+              tone="success"
+              caption={defenderLossesByRole.unknown > 0 ? `Unclassified ${formatNumber(defenderLossesByRole.unknown)}` : undefined}
+            />
+          )}
           <MetricTile label="Trade ratio" value={tradeRatio} tone={tradeTone} caption="Opponent losses per our loss" />
           <MetricTile label="Total losses" value={totalLosses} tone="danger" caption="Both sides combined" />
         </div>
@@ -904,6 +922,93 @@ const MetricTile: React.FC<{
   );
 };
 
+const SplitMetricTile: React.FC<{
+  label: string;
+  leftLabel: string;
+  leftValue: number;
+  rightLabel: string;
+  rightValue: number;
+  tone?: 'neutral' | 'success' | 'danger' | 'info';
+  caption?: string;
+}> = ({
+  label,
+  leftLabel,
+  leftValue,
+  rightLabel,
+  rightValue,
+  tone = 'neutral',
+  caption,
+}) => {
+  const toneClass = {
+    neutral: 'text-text-main',
+    success: 'text-success',
+    danger: 'text-error',
+    info: 'text-info',
+  }[tone];
+  const borderClass = {
+    neutral: 'border-border-base',
+    success: 'border-success/20',
+    danger: 'border-error/20',
+    info: 'border-info/20',
+  }[tone];
+
+  return (
+    <div className={`border rounded-global px-3 py-3 bg-bg-app ${borderClass}`}>
+      <div className="text-xs text-text-muted">{label}</div>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="rounded-global border border-border-base/70 bg-bg-card px-2 py-2">
+          <div className={`text-lg font-bold leading-none ${toneClass}`}>{formatNumber(leftValue)}</div>
+          <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">{leftLabel}</div>
+        </div>
+        <div className="rounded-global border border-border-base/70 bg-bg-card px-2 py-2">
+          <div className={`text-lg font-bold leading-none ${toneClass}`}>{formatNumber(rightValue)}</div>
+          <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">{rightLabel}</div>
+        </div>
+      </div>
+      {caption && <div className="mt-1 text-[11px] text-text-muted">{caption}</div>}
+    </div>
+  );
+};
+
+const CollapsibleDetailCard: React.FC<{
+  title: string;
+  subtitle?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}> = ({ title, subtitle, defaultOpen = false, children }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const contentId = useId();
+
+  return (
+    <Card variant="solid" className="overflow-hidden">
+      <CardHeader className="!p-0">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-bg-card-hover"
+          aria-expanded={isOpen}
+          aria-controls={contentId}
+          onClick={() => setIsOpen((current) => !current)}
+        >
+          <div className="min-w-0">
+            <CardTitle>{title}</CardTitle>
+            {subtitle && <p className="mt-1 truncate text-xs text-text-muted">{subtitle}</p>}
+          </div>
+          {isOpen ? (
+            <ChevronDown className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
+          ) : (
+            <ChevronRight className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
+          )}
+        </button>
+      </CardHeader>
+      {isOpen && (
+        <CardContent id={contentId}>
+          {children}
+        </CardContent>
+      )}
+    </Card>
+  );
+};
+
 const EffectComparison: React.FC<{
   commanderName: string;
   commanderEffects: BattleEffect[];
@@ -914,47 +1019,39 @@ const EffectComparison: React.FC<{
   const totalEffects = commanderEffects.length + castellanEffects.length;
 
   return (
-    <Card variant="solid">
-      <CardHeader>
-        <div>
-          <CardTitle>Commander / Castellan</CardTitle>
-        </div>
-        <Badge variant="secondary">{totalEffects} effects</Badge>
-      </CardHeader>
-      <CardContent>
-        {totalEffects > 0 ? (
-          <div className="overflow-x-auto">
-            <div className="min-w-[44rem] space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <EffectComparisonHeader label="Commander" name={commanderName} tone="danger" />
-                <EffectComparisonHeader label="Castellan" name={castellanName} tone="info" align="right" />
-              </div>
-
-              {groups.map((group) => (
-                <div key={group.category} className="space-y-2">
-                  <div className="text-[11px] uppercase tracking-wider font-bold text-text-muted">
-                    {group.category}
-                  </div>
-                  <div className="overflow-hidden rounded-global border border-border-base bg-bg-app">
-                    {group.rows.map((row) => (
-                      <div
-                        key={row.key}
-                        className="grid grid-cols-2 divide-x divide-border-base border-b border-border-base last:border-b-0"
-                      >
-                        <EffectComparisonCell effect={row.commander} side="commander" />
-                        <EffectComparisonCell effect={row.castellan} side="castellan" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+    <CollapsibleDetailCard title="Commander / Castellan" subtitle={`${commanderName} vs ${castellanName}`}>
+      {totalEffects > 0 ? (
+        <div className="overflow-x-auto">
+          <div className="min-w-[44rem] space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <EffectComparisonHeader label="Commander" name={commanderName} tone="danger" />
+              <EffectComparisonHeader label="Castellan" name={castellanName} tone="info" align="right" />
             </div>
+
+            {groups.map((group) => (
+              <div key={group.category} className="space-y-2">
+                <div className="text-[11px] uppercase tracking-wider font-bold text-text-muted">
+                  {group.category}
+                </div>
+                <div className="overflow-hidden rounded-global border border-border-base bg-bg-app">
+                  {group.rows.map((row) => (
+                    <div
+                      key={row.key}
+                      className="grid grid-cols-2 divide-x divide-border-base border-b border-border-base last:border-b-0"
+                    >
+                      <EffectComparisonCell effect={row.commander} side="commander" />
+                      <EffectComparisonCell effect={row.castellan} side="castellan" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        ) : (
-          <div className="text-sm text-text-muted py-8 text-center">No parsed leader effects for this report.</div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      ) : (
+        <div className="text-sm text-text-muted py-8 text-center">No parsed leader effects for this report.</div>
+      )}
+    </CollapsibleDetailCard>
   );
 };
 
@@ -1008,7 +1105,42 @@ const EffectComparisonCell: React.FC<{ effect?: BattleEffect; side: 'commander' 
   );
 };
 
-const ForcePanel: React.FC<{
+const ForcesAccordion: React.FC<{
+  attacker?: BattleCombatant;
+  attackerUnits: BattleItemDetail[];
+  attackerTools: BattleItemDetail[];
+  defender?: BattleCombatant;
+  defenderUnits: BattleItemDetail[];
+  defenderTools: BattleItemDetail[];
+}> = ({
+  attacker,
+  attackerUnits,
+  attackerTools,
+  defender,
+  defenderUnits,
+  defenderTools,
+}) => (
+  <CollapsibleDetailCard title="Forces" subtitle={`${combatantName(attacker)} vs ${combatantName(defender)}`}>
+    <div className="grid gap-4 xl:grid-cols-2">
+      <ForceSidePanel
+        title="Attacker"
+        combatant={attacker}
+        units={attackerUnits}
+        tools={attackerTools}
+        tone="danger"
+      />
+      <ForceSidePanel
+        title="Defender"
+        combatant={defender}
+        units={defenderUnits}
+        tools={defenderTools}
+        tone="info"
+      />
+    </div>
+  </CollapsibleDetailCard>
+);
+
+const ForceSidePanel: React.FC<{
   title: string;
   combatant?: BattleCombatant;
   units: BattleItemDetail[];
@@ -1018,19 +1150,16 @@ const ForcePanel: React.FC<{
   const accentClass = tone === 'danger' ? 'text-error' : 'text-info';
 
   return (
-    <Card variant="solid">
-      <CardHeader>
-        <div>
-          <CardTitle>{title}</CardTitle>
-          <p className="text-xs text-text-muted mt-1">{combatantName(combatant)}</p>
-        </div>
-        <Badge variant="secondary">{units.length + tools.length} parsed</Badge>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <section className="min-w-0 rounded-global border border-border-base bg-bg-app p-4">
+      <div className="mb-4 min-w-0">
+        <div className={`text-xs font-bold uppercase tracking-wider ${accentClass}`}>{title}</div>
+        <div className="mt-1 truncate text-sm font-semibold text-text-main">{combatantName(combatant)}</div>
+      </div>
+      <div className="space-y-4">
         <RosterSection title="Units fought" items={units} kind="unit" valueClass={accentClass} />
         <RosterSection title="Tools used" items={tools} kind="tool" valueClass={accentClass} />
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 };
 
@@ -2357,6 +2486,35 @@ function metricValue(metrics: BattleMetrics | undefined, ...keys: (keyof BattleM
   }
 
   return 0;
+}
+
+function defenderLossRoleTotals(report: ParsedReport): { attack: number; defense: number; unknown: number } {
+  const totals = { attack: 0, defense: 0, unknown: 0 };
+  const defenderLost = metricValue(report.metrics, 'defenderLost', 'defenseLost');
+  const defenderUnitLosses = itemsForSide(report.topUnits, 'defender');
+
+  defenderUnitLosses.forEach((item) => {
+    const lost = numericValue(item.lost) ?? 0;
+    if (lost <= 0) {
+      return;
+    }
+
+    const role = TROOP_METADATA[itemID(item)]?.role;
+    if (role === 'attack') {
+      totals.attack += lost;
+    } else if (role === 'defense') {
+      totals.defense += lost;
+    } else {
+      totals.unknown += lost;
+    }
+  });
+
+  const categorized = totals.attack + totals.defense + totals.unknown;
+  if (defenderLost > categorized) {
+    totals.unknown += defenderLost - categorized;
+  }
+
+  return totals;
 }
 
 function itemsForSide(items: BattleItemDetail[] | undefined, side: 'attacker' | 'defender'): BattleItemDetail[] {
