@@ -1,6 +1,15 @@
 import React, { useMemo } from 'react';
 import { Icons } from '../../components/Icons';
-import { type CommStat, type CastStat, statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/Equipment';
+import {
+    type CommStat,
+    type CastStat,
+    displayStatName,
+    commanderStatGroups,
+    castellanStatGroups,
+    statGroupDisplayName,
+    processEquipmentStats,
+    formatEquipmentStatValue,
+} from '../models/Equipment';
 import { FrontendWebsocket } from '../../Websocket';
 import { Modal, Button, Badge } from '../../components/ui';
 
@@ -15,83 +24,39 @@ interface ReconfigureComparisonModalProps {
 }
 
 const processStats = (stats: CommStat | CastStat, combatMode: 'PvP' | 'PvE', equipmentMode: 'Commander' | 'Castellan'): { [key: string]: number } => {
-    const newStats: { [key: string]: number } = {};
-    const statGroups = equipmentMode === 'Commander' ? commanderStatGroups : castellanStatGroups;
-    const allKeys = Object.values(statGroups).flat();
-
-    for (const key of allKeys) {
-        const isSpecialStat = ['glory', 'later', 'fire', 'early'].includes(key);
-        let baseKey = key;
-        if (isSpecialStat) {
-            baseKey = combatMode === 'PvP'
-                ? `CL${key.charAt(0).toUpperCase() + key.slice(1)}`
-                : `NPC${key.charAt(0).toUpperCase() + key.slice(1)}`;
-        }
-
-        let finalValue = (stats as any)[baseKey] || 0;
-
-        if (!isSpecialStat) {
-            let suffix = key;
-
-            if (key === 'frontLimit') {
-                suffix = 'Front';
-            } else if (key === 'flankLimit') {
-                suffix = 'Flank';
-            } else if (key.endsWith('CbtStr')) {
-                suffix = key.replace('CbtStr', '');
-            } else if (key.endsWith('Str')) {
-                suffix = key.replace('Str', '');
-            }
-
-            const capitalizedSuffix = suffix.charAt(0).toUpperCase() + suffix.slice(1);
-
-            if (key !== 'frontCbtStr' && key !== 'flankCbtStr') {
-                if (combatMode === 'PvP') {
-                    const clKey = `CL${capitalizedSuffix}`;
-                    if ((stats as any)[clKey]) {
-                        finalValue += (stats as any)[clKey];
-                    }
-                } else { // PvE
-                    const npcKey = `NPC${capitalizedSuffix}`;
-                    if ((stats as any)[npcKey]) {
-                        finalValue += (stats as any)[npcKey];
-                    }
-                }
-            }
-        }
-
-        newStats[key] = finalValue;
-    }
-
-    return newStats;
+    const processed = processEquipmentStats(stats, combatMode, equipmentMode);
+    return Object.fromEntries(
+        Object.entries(processed).map(([key, stat]) => [key, stat.value])
+    );
 };
 
 interface StatRowProps {
     statKey: string;
     currentValue: number;
     newValue: number;
+    equipmentMode: 'Commander' | 'Castellan';
 }
 
-const StatRow: React.FC<StatRowProps> = ({ statKey, currentValue, newValue }) => {
+const StatRow: React.FC<StatRowProps> = ({ statKey, currentValue, newValue, equipmentMode }) => {
     const diff = newValue - currentValue;
     const hasChange = diff !== 0;
 
     return (
         <div className={`flex items-center py-2 px-3 rounded-lg border ${hasChange ? 'bg-bg-app/80 border-border-base' : 'border-transparent'}`}>
             <span className="flex-1 text-sm text-text-muted truncate font-medium">
-                {statDisplayName[statKey] || statKey}
+                {displayStatName(statKey, { equipmentMode })}
             </span>
             <span className="w-16 text-right text-sm text-text-muted opacity-75 font-mono">
-                {currentValue.toFixed(1)}
+                {formatEquipmentStatValue(statKey, currentValue)}
             </span>
             <span className="w-8 text-center text-text-muted opacity-50">→</span>
             <span className={`w-16 text-right text-sm font-bold font-mono ${diff > 0 ? 'text-success' : diff < 0 ? 'text-error' : 'text-text-main'
                 }`}>
-                {newValue.toFixed(1)}
+                {formatEquipmentStatValue(statKey, newValue)}
             </span>
             <span className={`w-16 text-right text-xs font-mono font-medium ${diff > 0 ? 'text-success' : diff < 0 ? 'text-error' : 'text-text-muted'
                 }`}>
-                {diff > 0 ? `+${diff.toFixed(1)}` : diff < 0 ? diff.toFixed(1) : '-'}
+                {diff !== 0 ? formatEquipmentStatValue(statKey, diff) : '-'}
             </span>
         </div>
     );
@@ -100,11 +65,12 @@ const StatRow: React.FC<StatRowProps> = ({ statKey, currentValue, newValue }) =>
 interface StatSectionProps {
     title: string;
     stats: string[];
+    equipmentMode: 'Commander' | 'Castellan';
     currentProcessed: { [key: string]: number };
     newProcessed: { [key: string]: number };
 }
 
-const StatSection: React.FC<StatSectionProps> = ({ title, stats, currentProcessed, newProcessed }) => {
+const StatSection: React.FC<StatSectionProps> = ({ title, stats, equipmentMode, currentProcessed, newProcessed }) => {
     const hasAnyChange = stats.some(stat => {
         const current = currentProcessed[stat] || 0;
         const next = newProcessed[stat] || 0;
@@ -125,6 +91,7 @@ const StatSection: React.FC<StatSectionProps> = ({ title, stats, currentProcesse
                         statKey={stat}
                         currentValue={currentProcessed[stat] || 0}
                         newValue={newProcessed[stat] || 0}
+                        equipmentMode={equipmentMode}
                     />
                 ))}
             </div>
@@ -208,6 +175,7 @@ const ReconfigureComparisonModal: React.FC<ReconfigureComparisonModalProps> = ({
                         key={groupName}
                         title={statGroupDisplayName[groupName] || groupName}
                         stats={statKeys}
+                        equipmentMode={equipmentMode}
                         currentProcessed={currentProcessed}
                         newProcessed={newProcessed}
                     />

@@ -182,7 +182,7 @@ func statRowEffectIDs(stats []interface{}) []float64 {
 
 func recordMissingComm(ids []float64, miss map[float64]struct{}) {
 	for _, id := range ids {
-		if _, ok := equip.CommStatUpdaterMap[id]; !ok {
+		if !equip.CanApplyCommanderLiveStat(id) {
 			miss[id] = struct{}{}
 		}
 	}
@@ -190,7 +190,7 @@ func recordMissingComm(ids []float64, miss map[float64]struct{}) {
 
 func recordMissingCast(ids []float64, miss map[float64]struct{}) {
 	for _, id := range ids {
-		if _, ok := equip.CastStatUpdaterMap[id]; !ok {
+		if !equip.CanApplyCastellanLiveStat(id) {
 			miss[id] = struct{}{}
 		}
 	}
@@ -198,9 +198,7 @@ func recordMissingCast(ids []float64, miss map[float64]struct{}) {
 
 func recordMissingGemStash(ids []float64, miss map[float64]struct{}) {
 	for _, id := range ids {
-		_, inc := equip.CommStatUpdaterMap[id]
-		_, ink := equip.CastStatUpdaterMap[id]
-		if !inc && !ink {
+		if !equip.CanApplyCommanderLiveStat(id) && !equip.CanApplyCastellanLiveStat(id) {
 			miss[id] = struct{}{}
 		}
 	}
@@ -208,10 +206,10 @@ func recordMissingGemStash(ids []float64, miss map[float64]struct{}) {
 
 func recordMissingBothLoadoutMaps(ids []float64, commMiss, castMiss map[float64]struct{}) {
 	for _, id := range ids {
-		if _, ok := equip.CommStatUpdaterMap[id]; !ok {
+		if !equip.CanApplyCommanderLiveStat(id) {
 			commMiss[id] = struct{}{}
 		}
-		if _, ok := equip.CastStatUpdaterMap[id]; !ok {
+		if !equip.CanApplyCastellanLiveStat(id) {
 			castMiss[id] = struct{}{}
 		}
 	}

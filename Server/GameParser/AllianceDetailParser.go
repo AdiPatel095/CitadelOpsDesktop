@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+var NotifyAllianceInfoUpdated func()
+
 // formatDuration converts seconds to a readable string like "2d 1h 23m 45s"
 func formatDuration(seconds int) string {
 	days := seconds / 86400
@@ -47,7 +49,8 @@ func ParseAllianceInfo(data string) {
 		return
 	}
 
-	// Clear existing bird locations
+	// Clear existing roster-derived alliance data
+	gs.Alliance.Members = nil
 	gs.Alliance.BirdLocations = nil
 
 	// Process each member
@@ -55,6 +58,9 @@ func ParseAllianceInfo(data string) {
 		member, ok := memberRaw.(map[string]interface{})
 		if !ok {
 			continue
+		}
+		if parsed := allianceMemberFromAIN(member); parsed.PlayerID > 0 || parsed.Name != "" {
+			gs.Alliance.Members = append(gs.Alliance.Members, parsed)
 		}
 
 		// Check RPT (bird post time) - skip if zero
@@ -113,6 +119,26 @@ func ParseAllianceInfo(data string) {
 			gs.Alliance.BirdLocations = append(gs.Alliance.BirdLocations, birdLocation)
 		}
 	}
+
+	if NotifyAllianceInfoUpdated != nil {
+		go NotifyAllianceInfoUpdated()
+	}
+}
+
+func allianceMemberFromAIN(member map[string]interface{}) Models.AllianceMember {
+	return Models.AllianceMember{
+		PlayerID: intFromMapAny(member, "OID", "PID", "ID"),
+		Name:     stringFromMapAny(member, "N", "PN", "Name"),
+	}
+}
+
+func stringFromMapAny(m map[string]interface{}, keys ...string) string {
+	for _, key := range keys {
+		if value, ok := m[key].(string); ok {
+			return value
+		}
+	}
+	return ""
 }
 
 // getKingdomName returns a readable name for the kingdom ID

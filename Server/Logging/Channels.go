@@ -5,12 +5,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
-// Known channel IDs (each maps to Logs/channels/<id>.log).
+// Known channel IDs.
 const (
 	ChannelWebSocketGame = "websocket_game"
 	ChannelAutoBird      = "autobird"
@@ -38,10 +39,19 @@ var KnownChannels = []ChannelMeta{
 	{ID: ChannelRift, Label: "Rift"},
 }
 
+const webSocketGameLogRotation = 3 * time.Hour
+
+type rotatingChannelSession struct {
+	Path     string
+	UnixSlot int64
+}
+
 var (
-	channelsDir string
-	channelMu   sync.Mutex
-	channelFDs  = make(map[string]*os.File)
+	channelsDir             string
+	channelMu               sync.Mutex
+	channelFDs              = make(map[string]*os.File)
+	channelFDPaths          = make(map[string]string)
+	webSocketGameLogSession *rotatingChannelSession
 )
 
 // InitChannelLogs creates Logs/channels and prepares per-channel appenders.
@@ -55,7 +65,22 @@ func ChannelsDir() string {
 	return channelsDir
 }
 
-func channelPath(id string) string {
+// BeginWebSocketGameLogSession starts a fresh websocket_game log file for a newly-created game websocket.
+func BeginWebSocketGameLogSession() {
+	channelMu.Lock()
+	defer channelMu.Unlock()
+
+	now := time.Now()
+	if _, err := ensureWebSocketGameLogSessionLocked(now, true); err != nil {
+		log.Printf("[logging] start websocket_game session: %v", err)
+		return
+	}
+	if _, err := getChannelFileLocked(ChannelWebSocketGame, now); err != nil {
+		log.Printf("[logging] open websocket_game session: %v", err)
+	}
+}
+
+func safeChannelName(id string) string {
 	safe := strings.Map(func(r rune) rune {
 		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '_' {
 			return r
@@ -65,36 +90,163 @@ func channelPath(id string) string {
 	if safe == "" {
 		safe = "unknown"
 	}
+	return safe
+}
+
+func flatChannelPath(id string) string {
+	safe := safeChannelName(id)
 	return filepath.Join(channelsDir, safe+".log")
 }
 
-func getChannelFile(id string) (*os.File, error) {
+func activeChannelPath(id string) string {
 	channelMu.Lock()
 	defer channelMu.Unlock()
-	if f, ok := channelFDs[id]; ok {
+
+	if id == ChannelWebSocketGame {
+		if webSocketGameLogSession != nil && webSocketGameLogSession.Path != "" {
+			return webSocketGameLogSession.Path
+		}
+		if latest := latestWebSocketGameLogPathLocked(); latest != "" {
+			return latest
+		}
+	}
+	return flatChannelPath(id)
+}
+
+func getChannelFileLocked(id string, now time.Time) (*os.File, error) {
+	path, err := writableChannelPathLocked(id, now)
+	if err != nil {
+		return nil, err
+	}
+	if f, ok := channelFDs[id]; ok && channelFDPaths[id] == path {
 		return f, nil
 	}
-	path := channelPath(id)
+	closeChannelFileLocked(id)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return nil, err
+	}
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err
 	}
 	channelFDs[id] = f
+	channelFDPaths[id] = path
 	return f, nil
+}
+
+func writableChannelPathLocked(id string, now time.Time) (string, error) {
+	if id == ChannelWebSocketGame {
+		return ensureWebSocketGameLogSessionLocked(now, false)
+	}
+	return flatChannelPath(id), nil
+}
+
+func ensureWebSocketGameLogSessionLocked(now time.Time, forceNew bool) (string, error) {
+	slot := unixRotationSlot(now)
+	if !forceNew && webSocketGameLogSession != nil && webSocketGameLogSession.UnixSlot == slot {
+		return webSocketGameLogSession.Path, nil
+	}
+
+	oldPath := ""
+	if webSocketGameLogSession != nil {
+		oldPath = webSocketGameLogSession.Path
+	}
+	path, err := nextWebSocketGameLogPathLocked(now)
+	if err != nil {
+		return "", err
+	}
+	webSocketGameLogSession = &rotatingChannelSession{
+		Path:     path,
+		UnixSlot: slot,
+	}
+	if oldPath != "" && oldPath != path {
+		closeChannelFileLocked(ChannelWebSocketGame)
+	}
+	return path, nil
+}
+
+func unixRotationSlot(now time.Time) int64 {
+	return now.Unix() / int64(webSocketGameLogRotation/time.Second)
+}
+
+func webSocketGameLogDirLocked() string {
+	return filepath.Join(channelsDir, safeChannelName(ChannelWebSocketGame))
+}
+
+func nextWebSocketGameLogPathLocked(now time.Time) (string, error) {
+	dir := webSocketGameLogDirLocked()
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", err
+	}
+	prefix := now.Format("2006-01-02") + "-"
+	maxSuffix := 0
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return "", err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasPrefix(name, prefix) || !strings.HasSuffix(name, ".log") {
+			continue
+		}
+		rawSuffix := strings.TrimSuffix(strings.TrimPrefix(name, prefix), ".log")
+		suffix, err := strconv.Atoi(rawSuffix)
+		if err == nil && suffix > maxSuffix {
+			maxSuffix = suffix
+		}
+	}
+	return filepath.Join(dir, fmt.Sprintf("%s%d.log", prefix, maxSuffix+1)), nil
+}
+
+func latestWebSocketGameLogPathLocked() string {
+	dir := webSocketGameLogDirLocked()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return ""
+	}
+	var latestPath string
+	var latestMod time.Time
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".log") {
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+		if latestPath == "" || info.ModTime().After(latestMod) {
+			latestPath = filepath.Join(dir, entry.Name())
+			latestMod = info.ModTime()
+		}
+	}
+	return latestPath
+}
+
+func closeChannelFileLocked(id string) {
+	if f, ok := channelFDs[id]; ok {
+		_ = f.Close()
+	}
+	delete(channelFDs, id)
+	delete(channelFDPaths, id)
 }
 
 // AppendChannelLine appends one line: timestamp [DIRECTION] [cmdType] payload
 // direction should be SEND or RECV; cmdType is typically payload split by "%" index 2.
 func AppendChannelLine(channelID, direction, cmdType, payload string) {
-	f, err := getChannelFile(channelID)
+	now := time.Now()
+	ts := now.Format("2006-01-02 15:04:05.000000")
+	line := fmt.Sprintf("%s [%s] [%s] %s\n", ts, strings.ToUpper(direction), cmdType, payload)
+	channelMu.Lock()
+	defer channelMu.Unlock()
+
+	f, err := getChannelFileLocked(channelID, now)
 	if err != nil {
 		return
 	}
-	ts := time.Now().Format("2006-01-02 15:04:05.000000")
-	line := fmt.Sprintf("%s [%s] [%s] %s\n", ts, strings.ToUpper(direction), cmdType, payload)
-	channelMu.Lock()
 	_, _ = f.WriteString(line)
-	channelMu.Unlock()
 }
 
 // AppendAutoBirdLine records an AutoBird action (direction INFO, event as cmdType).
@@ -224,4 +376,6 @@ func CloseChannelLogs() {
 		_ = f.Close()
 	}
 	channelFDs = make(map[string]*os.File)
+	channelFDPaths = make(map[string]string)
+	webSocketGameLogSession = nil
 }

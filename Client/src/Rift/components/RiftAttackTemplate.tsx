@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { Pencil, Play, Trash2 } from 'lucide-react';
+import React, { Suspense, useCallback, useMemo, useState } from 'react';
+import { Pencil, Play, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCastleFocus } from '../../context/CastleFocusContext';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '../../components/ui';
@@ -7,6 +7,26 @@ import { useRiftMap } from '../context/RiftMapContext';
 import { formatSavedAt, riftLaunchLabel, type RiftCRALaunchEntry } from '../types/RiftCRALaunch';
 import { arriveAtUnixFromOffset, isEarliestOffset } from '../types/RiftArrivalTime';
 import RiftArrivalClock from './RiftArrivalClock';
+import type { AttackSetupDraft } from '../../components/AttackSetupModal';
+
+const AttackSetupModal = React.lazy(() => import('../../components/AttackSetupModal'));
+
+function summarizeAttackSetup(draft: AttackSetupDraft | undefined) {
+  if (!draft) return null;
+  let troops = 0;
+  let tools = 0;
+  for (const wave of draft.waves) {
+    for (const lane of [wave.L, wave.M, wave.R]) {
+      for (const slot of lane.troops) {
+        if (slot.itemId != null && slot.quantity > 0) troops += slot.quantity;
+      }
+      for (const slot of lane.tools) {
+        if (slot.itemId != null && slot.quantity > 0) tools += slot.quantity;
+      }
+    }
+  }
+  return `${draft.waves.length} wave${draft.waves.length === 1 ? '' : 's'} | ${troops.toLocaleString()} troops | ${tools.toLocaleString()} tools`;
+}
 
 const RiftAttackTemplate: React.FC = () => {
   const { gameLoggedIn } = useAuth();
@@ -15,8 +35,11 @@ const RiftAttackTemplate: React.FC = () => {
   const [offsetMinutesById, setOffsetMinutesById] = useState<Record<string, number>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState('');
+  const [attackSetupOpen, setAttackSetupOpen] = useState(false);
+  const [attackSetupDraft, setAttackSetupDraft] = useState<AttackSetupDraft | undefined>();
 
   const launches = riftCRALaunch?.launches ?? [];
+  const attackSetupSummary = useMemo(() => summarizeAttackSetup(attackSetupDraft), [attackSetupDraft]);
 
   const setOffsetFor = useCallback((launchId: string, offsetMinutes: number) => {
     setOffsetMinutesById((prev) => ({ ...prev, [launchId]: offsetMinutes }));
@@ -79,17 +102,32 @@ const RiftAttackTemplate: React.FC = () => {
   );
 
   return (
-    <Card className="border-border-base bg-bg-app/20">
-      <CardHeader className="pb-3 border-b border-border-base bg-bg-card-hover/50 rounded-t-[calc(var(--radius-global)-1px)]">
-        <div>
-          <CardTitle className="text-lg text-primary">Captured Rift attacks</CardTitle>
-          <p className="text-xs text-text-muted mt-1">
-            Name templates for quick recognition. Feather travel time from the last successful launch sets the earliest
-            arrival — use the clock to schedule later, then resend or schedule.
-          </p>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-4">
+    <>
+      <Card className="border-border-base bg-bg-app/20">
+        <CardHeader className="pb-3 border-b border-border-base bg-bg-card-hover/50 rounded-t-[calc(var(--radius-global)-1px)]">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <CardTitle className="text-lg text-primary">Captured Rift attacks</CardTitle>
+              <p className="text-xs text-text-muted mt-1">
+                Name templates for quick recognition. Feather travel time from the last successful launch sets the earliest
+                arrival — use the clock to schedule later, then resend or schedule.
+              </p>
+              {attackSetupSummary ? (
+                <p className="mt-2 text-xs font-mono text-text-muted">{attackSetupSummary}</p>
+              ) : null}
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setAttackSetupOpen(true)}
+              leftIcon={<SlidersHorizontal className="w-3.5 h-3.5" />}
+              className="shrink-0 self-start"
+            >
+              Attack setup
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
         {launches.length === 0 ? (
           <p className="text-sm text-text-muted">
             {gameLoggedIn
@@ -215,8 +253,22 @@ const RiftAttackTemplate: React.FC = () => {
             </table>
           </div>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      {attackSetupOpen ? (
+        <Suspense fallback={null}>
+          <AttackSetupModal
+            isOpen={attackSetupOpen}
+            initialDraft={attackSetupDraft}
+            onClose={() => setAttackSetupOpen(false)}
+            onSave={(nextDraft) => {
+              setAttackSetupDraft(nextDraft);
+              setAttackSetupOpen(false);
+            }}
+          />
+        </Suspense>
+      ) : null}
+    </>
   );
 };
 

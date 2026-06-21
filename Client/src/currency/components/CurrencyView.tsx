@@ -3,18 +3,17 @@ import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { useResources } from '../context/ResourceContext.tsx';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 
-// Asset paths from public directory
-const SceatIcon = '/assets/Resources/Sceat.png';
-const DucatIcon = '/assets/Resources/ImperialDucat.png';
-const RelicShardIcon = '/assets/Resources/Relic_Shards.png';
-const ConstTokenIcon = '/assets/Resources/ConstructionToken.png';
-const UpgrTokenIcon = '/assets/Resources/UpgradeToken.png';
-const AfflTixIcon = '/assets/Resources/AffluenceTickets.png';
-const PlasterIcon = '/assets/Resources/Plaster.png';
-const DrgScaleIcon = '/assets/Resources/DragonScaleTiles.png';
-const DrgSplIcon = '/assets/Resources/DragonScaleSplinters.png';
-const MightPtIcon = '/assets/Resources/MightPoints.png';
-const GloryPtIcon = '/assets/Resources/Glory.png';
+const SceatIcon = '/game-data/resources/images/Sceat.webp';
+const DucatIcon = '/game-data/resources/images/ImperialDucat.webp';
+const RelicShardIcon = '/game-data/resources/images/Relic_Shards.webp';
+const ConstTokenIcon = '/game-data/resources/images/ConstructionToken.webp';
+const UpgrTokenIcon = '/game-data/resources/images/UpgradeToken.webp';
+const AfflTixIcon = '/game-data/resources/images/AffluenceTickets.webp';
+const PlasterIcon = '/game-data/resources/images/Plaster.webp';
+const DrgScaleIcon = '/game-data/resources/images/DragonScaleTiles.webp';
+const DrgSplIcon = '/game-data/resources/images/DragonScaleSplinters.webp';
+const MightPtIcon = '/game-data/resources/images/MightPoints.webp';
+const GloryPtIcon = '/game-data/resources/images/Glory.webp';
 
 // Generic Speedup Icon
 const SpeedupIcon = () => (

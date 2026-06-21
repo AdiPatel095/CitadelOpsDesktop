@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Icons } from '../../components/Icons';
-import { type CommStat, statDisplayName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/Equipment';
+import { type CommStat, displayStatName, commanderStatGroups, castellanStatGroups, statGroupDisplayName } from '../models/Equipment';
 import { FrontendWebsocket } from '../../Websocket';
 import ReconfigureComparisonModal from './ReconfigureComparisonModal';
 import { Button, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
@@ -29,6 +29,7 @@ interface DragState {
 interface TierListProps {
     tier: TierType;
     stats: string[];
+    equipmentMode: 'Commander' | 'Castellan';
     dragState: DragState | null;
     dropTarget: { tier: TierType; index: number } | null;
     onDragStart: (e: React.DragEvent, stat: string, tier: TierType, index: number) => void;
@@ -41,6 +42,7 @@ interface TierListProps {
 const TierList: React.FC<TierListProps> = ({
     tier,
     stats,
+    equipmentMode,
     dragState,
     dropTarget,
     onDragStart,
@@ -115,7 +117,7 @@ const TierList: React.FC<TierListProps> = ({
                                         {index + 1}
                                     </span>
                                     <span className="text-sm text-text-muted flex-1 truncate">
-                                        {statDisplayName[stat] || stat}
+                                        {displayStatName(stat, { equipmentMode })}
                                     </span>
                                     <button
                                         onClick={(e) => {
@@ -347,7 +349,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                                                 onClick={() => addStat(stat)}
                                                 className="w-full text-left px-3 py-2.5 text-sm font-medium text-text-main hover:bg-primary/10 hover:text-primary transition-colors"
                                             >
-                                                {statDisplayName[stat] || stat}
+                                                {displayStatName(stat, { equipmentMode })}
                                             </button>
                                         ))}
                                     </div>
@@ -362,6 +364,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                 <TierList
                     tier={1}
                     stats={tier1Stats}
+                    equipmentMode={equipmentMode}
                     dragState={dragState}
                     dropTarget={dropTarget}
                     onDragStart={handleDragStart}
@@ -373,6 +376,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                 <TierList
                     tier={2}
                     stats={tier2Stats}
+                    equipmentMode={equipmentMode}
                     dragState={dragState}
                     dropTarget={dropTarget}
                     onDragStart={handleDragStart}

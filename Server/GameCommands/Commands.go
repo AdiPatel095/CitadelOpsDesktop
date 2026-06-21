@@ -438,6 +438,44 @@ func SendSBP(pid, bt, tid, amt, kid, aid, pc2, ba, pwr, po int) {
 	QueueOutgoingPayload(SBPPayload(pid, bt, tid, amt, kid, aid, pc2, ba, pwr, po))
 }
 
+// --- Battle reports ---
+
+// BLSPayload builds EmpireEx **bls** - request the summary for a battle report message id.
+//
+// The MID comes from SNE MSG row[0]. IM is 0 for shared battle reports observed in captures.
+func BLSPayload(mid int64, im int) string {
+	return empireExFrame("bls", fmt.Sprintf(`{"MID":%d,"IM":%d}`, mid, im))
+}
+
+// SendBLS queues **bls** - load battle-report summary by message id.
+func SendBLS(mid int64, im int) {
+	QueueOutgoingPayload(BLSPayload(mid, im))
+}
+
+// BLMPayload builds EmpireEx **blm** - request per-wave battle aggregates by report LID.
+//
+// The LID is returned in the BLS payload.
+func BLMPayload(lid int64) string {
+	return empireExFrame("blm", fmt.Sprintf(`{"LID":%d}`, lid))
+}
+
+// SendBLM queues **blm** - load battle-report per-wave aggregates.
+func SendBLM(lid int64) {
+	QueueOutgoingPayload(BLMPayload(lid))
+}
+
+// BLDPayload builds EmpireEx **bld** - request detailed battle-report units/tools by report LID.
+//
+// The LID is returned in the BLS payload.
+func BLDPayload(lid int64) string {
+	return empireExFrame("bld", fmt.Sprintf(`{"LID":%d}`, lid))
+}
+
+// SendBLD queues **bld** - load battle-report detailed rows.
+func SendBLD(lid int64) {
+	QueueOutgoingPayload(BLDPayload(lid))
+}
+
 // --- Misc / tooling ---
 
 // SendEmpireEx21EmptyCommand queues **EmpireEx_21%<code>%1%{}%** (custom / debug tooling).

@@ -108,6 +108,7 @@ func SendInitialData(client *Client) {
 	// Send global resources
 	gs := Models.GetGameState()
 	client.SendToClient("globalResourceUpdate", gs.GlobalResources, "")
+	client.SendToClient("allianceInfo", gs.Alliance, "")
 
 	c := &gs.Castle
 	client.SendToClient("castleResourceUpdate", c.MainCastle, "mainCastle")

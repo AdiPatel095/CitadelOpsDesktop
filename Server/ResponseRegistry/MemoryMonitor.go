@@ -1,8 +1,10 @@
 package ResponseRegistry
 
 import (
+	"CitadelDesktop/Server/ChromeUserData"
 	"context"
 	"log"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -44,6 +46,12 @@ func getMemoryStats() (int, int) {
 		log.Printf("[MemoryMonitor] Failed to list processes: %v", err)
 		return goMemMB, chromeMemMB
 	}
+	appChromeDir, err := ChromeUserData.AppUserDataDir()
+	if err != nil {
+		log.Printf("[MemoryMonitor] Failed to resolve app Chrome profile: %v", err)
+		return goMemMB, chromeMemMB
+	}
+	appChromeMarker := normalizePath(appChromeDir)
 
 	var totalChromeRSS uint64
 	for _, p := range procs {
@@ -52,8 +60,7 @@ func getMemoryStats() (int, int) {
 			continue
 		}
 
-		// Look for Chrome processes spawned by our app
-		if strings.Contains(strings.ToLower(cmdline), "chrome") {
+		if isAppChromeProcess(cmdline, appChromeMarker) {
 			mem, err := p.MemoryInfo()
 			if err == nil && mem != nil {
 				totalChromeRSS += mem.RSS
@@ -63,4 +70,20 @@ func getMemoryStats() (int, int) {
 
 	chromeMemMB = int(totalChromeRSS / 1024 / 1024)
 	return goMemMB, chromeMemMB
+}
+
+func isAppChromeProcess(cmdline, appChromeMarker string) bool {
+	if appChromeMarker == "" {
+		return false
+	}
+	normalized := normalizeCmdline(cmdline)
+	return strings.Contains(normalized, appChromeMarker)
+}
+
+func normalizePath(value string) string {
+	return strings.ToLower(filepath.ToSlash(filepath.Clean(value)))
+}
+
+func normalizeCmdline(value string) string {
+	return strings.ToLower(filepath.ToSlash(value))
 }

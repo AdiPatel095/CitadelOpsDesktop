@@ -72,7 +72,7 @@ type CastDBUpdater func(castDB *CastStatModel, value float64)
 var CastStatUpdaterMap = map[float64]CastDBUpdater{
 	//fixed stats
 	10001: func(c *CastStatModel, v float64) { c.Loot += v },
-	10002: func(c *CastStatModel, v float64) { c.WallLimit += v },
+	10002: func(c *CastStatModel, v float64) { c.WallStr += v },
 	10003: func(c *CastStatModel, v float64) { c.GateStr += v },
 	10004: func(c *CastStatModel, v float64) { c.MoatStr += v },
 	10005: func(c *CastStatModel, v float64) { c.MeleeCbtStr += v },
@@ -82,6 +82,8 @@ var CastStatUpdaterMap = map[float64]CastDBUpdater{
 	10101: func(c *CastStatModel, v float64) { c.Loot += v },
 	10102: func(c *CastStatModel, v float64) { c.WallStr += v },
 	10103: func(c *CastStatModel, v float64) { c.GateStr += v },
+	10105: func(c *CastStatModel, v float64) { c.MeleeCbtStr += v },
+	10106: func(c *CastStatModel, v float64) { c.RangeCbtStr += v },
 	10108: func(c *CastStatModel, v float64) { c.WallStr += v },
 	10109: func(c *CastStatModel, v float64) { c.GateStr += v },
 	10110: func(c *CastStatModel, v float64) { c.MoatStr += v },
@@ -149,6 +151,26 @@ var CastStatUpdaterMap = map[float64]CastDBUpdater{
 	10817: func(c *CastStatModel, v float64) { c.CLFire += v },
 	10818: func(c *CastStatModel, v float64) { c.CLGlory += v },
 
+	//relic hero castle lord
+	10501: func(c *CastStatModel, v float64) { c.MainCbtStr += v },
+	10502: func(c *CastStatModel, v float64) { c.OpCbtStr += v },
+	10503: func(c *CastStatModel, v float64) { c.CLEarly += v },
+	10504: func(c *CastStatModel, v float64) { c.CLMoat += v },
+	10505: func(c *CastStatModel, v float64) { c.CLWall += v },
+	10506: func(c *CastStatModel, v float64) { c.CLGate += v },
+	10507: func(c *CastStatModel, v float64) { c.MainCbtStr += v },
+	10508: func(c *CastStatModel, v float64) { c.OpCbtStr += v },
+	10509: func(c *CastStatModel, v float64) { c.CLEarly += v },
+	10510: func(c *CastStatModel, v float64) { c.CLMoat += v },
+	10511: func(c *CastStatModel, v float64) { c.CLWall += v },
+	10512: func(c *CastStatModel, v float64) { c.CLGate += v },
+	10513: func(c *CastStatModel, v float64) { c.CLMelee += v },
+	10514: func(c *CastStatModel, v float64) { c.CLRange += v },
+	10515: func(c *CastStatModel, v float64) { c.CLWallLimit += v },
+	10516: func(c *CastStatModel, v float64) { c.CLCy += v },
+	10517: func(c *CastStatModel, v float64) { c.CLFire += v },
+	10518: func(c *CastStatModel, v float64) { c.CLGlory += v },
+
 	//hero npc
 	10409: func(c *CastStatModel, v float64) { c.NPCWall += v },
 	10410: func(c *CastStatModel, v float64) { c.NPCGate += v },
@@ -162,6 +184,12 @@ var CastStatUpdaterMap = map[float64]CastDBUpdater{
 
 	//hero bonus
 	30001: func(castDB *CastStatModel, v float64) { castDB.Research += v },
+	30003: func(castDB *CastStatModel, v float64) { castDB.Construction += v },
+	30004: func(castDB *CastStatModel, v float64) { castDB.BaseRes += v },
+	30005: func(castDB *CastStatModel, v float64) { castDB.KingRes += v },
+	30006: func(castDB *CastStatModel, v float64) { castDB.PO += v },
+	30007: func(castDB *CastStatModel, v float64) { castDB.Research += v },
+	30008: func(castDB *CastStatModel, v float64) { castDB.ResTransport += v },
 	30009: func(castDB *CastStatModel, v float64) { castDB.Recruit += v },
 	30010: func(castDB *CastStatModel, v float64) { castDB.Hospital += v },
 	30011: func(castDB *CastStatModel, v float64) { castDB.Construction += v },

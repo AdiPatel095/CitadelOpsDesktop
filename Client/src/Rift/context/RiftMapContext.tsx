@@ -62,7 +62,7 @@ export function RiftMapProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshRiftMapCoords = useCallback((refresh = true) => {
-    FrontendWebsocket.sendGetRiftMapCoords(refresh);
+    void refresh;
   }, []);
 
   const refreshRiftCRALaunch = useCallback(() => {
@@ -101,24 +101,6 @@ export function RiftMapProvider({ children }: { children: ReactNode }) {
     });
     FrontendWebsocket.sendDeleteRiftCRALaunch(launchId);
   }, []);
-
-  const focusKey = useMemo(() => {
-    const aid = castleFocus?.aid ?? 0;
-    const kid = castleFocus?.kingdomID ?? 0;
-    const cx = castleFocus?.mapPX ?? 0;
-    const cy = castleFocus?.mapPY ?? 0;
-    return `${aid}|${kid}|${cx}|${cy}`;
-  }, [castleFocus?.aid, castleFocus?.kingdomID, castleFocus?.mapPX, castleFocus?.mapPY]);
-
-  useEffect(() => {
-    refreshRiftCRALaunch();
-  }, [refreshRiftCRALaunch]);
-
-  useEffect(() => {
-    if (!gameLoggedIn) return;
-    refreshRiftMapCoords(true);
-    refreshRiftCRALaunch();
-  }, [gameLoggedIn, focusKey, refreshRiftMapCoords, refreshRiftCRALaunch]);
 
   const riftMapCoords = useMemo((): RiftMapCoords | null => {
     if (gameLoggedIn && liveCoords) return liveCoords;
