@@ -433,7 +433,7 @@ func cloudBattleReportFromCapture(capture Capture) (cloudBattleReportPayload, er
 		AttackerAllianceID:   parsed.Attacker.AllianceID,
 		DefenderPlayerID:     parsed.Defender.PlayerID,
 		DefenderAllianceID:   parsed.Defender.AllianceID,
-		AttackWon:            inferBinaryResult(parsed.Metrics) != "Defeat",
+		AttackWon:            parsed.Result == "Victory",
 		RichnessScore:        richnessScore,
 		Payload:              string(rawCapture),
 	}, nil
@@ -795,7 +795,7 @@ func ParseCapture(capture *Capture) ParsedReport {
 	applyBattleWaves(&report, capture.BLM)
 	report.TopUnits = aggregateBattleItems(report.TopUnits)
 	report.SupportTools = aggregateBattleItems(report.SupportTools)
-	report.Result = inferBinaryResult(report.Metrics)
+	report.Result = inferBattleResult(report)
 	return report
 }
 
@@ -957,7 +957,7 @@ func effectsFromLeader(value interface{}, side string, combatMode battleEffectCo
 	}
 	grouped := map[string]*groupedEffect{}
 	for _, row := range rows {
-		meta := battleEffectDisplay(row.id, side)
+		meta := battleEffectDisplay(row.id, side, row.source, row.mapped)
 		if meta.skip || (meta.unknown && row.source != battleEffectSourceActive) {
 			continue
 		}
@@ -1048,6 +1048,7 @@ type leaderEffectRow struct {
 	rawID  int64
 	values []float64
 	source battleEffectSource
+	mapped bool
 	index  int
 	cap    float64
 	hasCap bool
@@ -1059,6 +1060,8 @@ type battleEffectDefinition struct {
 	capID    int64
 	cap      float64
 	hasCap   bool
+	name     string
+	typeID   int64
 	isPVP    bool
 	isPVE    bool
 }
@@ -1119,7 +1122,7 @@ func leaderEffectRows(leader map[string]interface{}, combatMode battleEffectComb
 					values = catalogEffects[effectIndex].values
 				}
 			}
-			if parsed, ok := normalizedLeaderEffectRow(rawID, values, battleEffectSourceEquipment, combatMode, index); ok {
+			if parsed, ok := normalizedLeaderEffectRowMapped(rawID, values, battleEffectSourceEquipment, combatMode, index, true); ok {
 				rows = append(rows, parsed)
 			}
 			index++
@@ -1166,19 +1169,28 @@ func effectRowFromArray(row []interface{}, source battleEffectSource, combatMode
 }
 
 func normalizedLeaderEffectRow(rawID int64, values []float64, source battleEffectSource, combatMode battleEffectCombatMode, index int) (leaderEffectRow, bool) {
+	return normalizedLeaderEffectRowMapped(rawID, values, source, combatMode, index, true)
+}
+
+func normalizedLeaderEffectRowMapped(rawID int64, values []float64, source battleEffectSource, combatMode battleEffectCombatMode, index int, mapCatalogIDs bool) (leaderEffectRow, bool) {
 	if rawID == 0 || len(values) == 0 {
 		return leaderEffectRow{}, false
 	}
 	data := loadBattleEffectData()
 	id := rawID
-	if source != battleEffectSourceActive {
+	wasMapped := false
+	if source != battleEffectSourceActive && mapCatalogIDs {
 		if mapped := data.relicEffectIDs[rawID]; mapped > 0 {
 			id = mapped
 		} else if mapped := data.equipmentEffectIDs[rawID]; mapped > 0 {
 			id = mapped
 		}
+		wasMapped = id != rawID
 	}
 	definition, hasDefinition := data.effectDefinitions[id]
+	if source != battleEffectSourceActive && !mapCatalogIDs {
+		hasDefinition = false
+	}
 	if hasDefinition {
 		if definition.isPVP && combatMode != battleEffectCombatPVP {
 			return leaderEffectRow{}, false
@@ -1197,6 +1209,7 @@ func normalizedLeaderEffectRow(rawID int64, values []float64, source battleEffec
 		rawID:  rawID,
 		values: values,
 		source: source,
+		mapped: wasMapped,
 		index:  index,
 		cap:    capValue,
 		hasCap: hasCap,
@@ -1265,6 +1278,8 @@ func buildBattleEffectData() battleEffectDataCache {
 			capID:    capID,
 			cap:      cap,
 			hasCap:   hasCap,
+			name:     name,
+			typeID:   int64FromValueDefault(entry["effectTypeID"]),
 			isPVP:    stringFromValue(entry["isPvPFight"]) == "1" || strings.Contains(strings.ToLower(name), "pvp"),
 			isPVE:    stringFromValue(entry["isPvEFight"]) == "1" || strings.Contains(strings.ToLower(name), "pve"),
 		}
@@ -1611,7 +1626,34 @@ func combatantHasPlayer(combatant *Combatant) bool {
 	return combatant != nil && (combatant.PlayerID > 0 || strings.TrimSpace(combatant.Name) != "" || strings.TrimSpace(combatant.PlayerName) != "")
 }
 
-func inferBinaryResult(metrics Metrics) string {
+func inferBattleResult(report ParsedReport) string {
+	waveResult := inferBattleResultFromWaves(report.Waves)
+	if waveResult != "" {
+		return waveResult
+	}
+	return inferBinaryResultFromMetrics(report.Metrics)
+}
+
+func inferBattleResultFromWaves(waves []Wave) string {
+	hasAttackLane := false
+	for _, wave := range waves {
+		for _, lane := range wave.Lanes {
+			if lane.AttackerStart <= 0 && lane.AttackerLost <= 0 {
+				continue
+			}
+			hasAttackLane = true
+			if inferLaneResult(lane) == "BREACHED" {
+				return "Victory"
+			}
+		}
+	}
+	if hasAttackLane {
+		return "Defeat"
+	}
+	return ""
+}
+
+func inferBinaryResultFromMetrics(metrics Metrics) string {
 	if metrics.AttackerSent > 0 && metrics.AttackerLost >= metrics.AttackerSent {
 		return "Defeat"
 	}
@@ -1744,12 +1786,200 @@ func parsedCaptureFromCloudMap(value map[string]interface{}) (ParsedReport, bool
 	return report, report.ID != "" && ReportHasBothPlayers(report)
 }
 
-func battleEffectDisplay(id int64, side string) battleEffectMeta {
+func battleEffectDisplay(id int64, side string, source battleEffectSource, mapped bool) battleEffectMeta {
+	if source != battleEffectSourceActive && mapped {
+		if meta, ok := battleEffectDisplayByID[id]; ok {
+			return meta
+		}
+		if meta, ok := battleOfficialEffectDisplay(id); ok {
+			return meta
+		}
+	}
+	if side == "commander" && source != battleEffectSourceActive {
+		if meta, ok := battleCommanderLiveEffectDisplayByID[id]; ok {
+			return meta
+		}
+	}
 	if meta, ok := battleEffectDisplayByID[id]; ok {
+		return meta
+	}
+	if meta, ok := battleOfficialEffectDisplay(id); ok {
 		return meta
 	}
 	label := fmt.Sprintf("Effect %d", id)
 	return battleEffectMeta{label: label, template: label, unit: "percent", category: "Other effects", order: 900, unknown: true}
+}
+
+func battleOfficialEffectDisplay(id int64) (battleEffectMeta, bool) {
+	definition, ok := loadBattleEffectData().effectDefinitions[id]
+	if !ok {
+		return battleEffectMeta{}, false
+	}
+	name := strings.ToLower(definition.name)
+	switch {
+	case strings.Contains(name, "offensivemeleebonus"):
+		return battleEffect("Combat strength for melee units", "combat strength for melee units", "percent", "Unit effects", 10), true
+	case strings.Contains(name, "offensiverangebonus"):
+		return battleEffect("Combat strength for ranged units", "combat strength for ranged units", "percent", "Unit effects", 11), true
+	case strings.Contains(name, "attackboostyard"):
+		return battleEffect("Combat strength when attacking enemy courtyard", "combat strength when attacking enemy courtyard", "percent", "Unit effects", 12), true
+	case strings.Contains(name, "attackunitamountfront"):
+		return battleEffect("Front unit limit", "unit limit on the front", "percent", "Attack effects", 20), true
+	case strings.Contains(name, "attackunitamountflank"):
+		return battleEffect("Flank unit limit", "unit limit on the flanks", "percent", "Attack effects", 21), true
+	case battleOfficialEffectIsAttackSupportUnits(definition, name):
+		return battleEffect("Attack support units", "attack support units", "number", "Attack effects", 24), true
+	case battleOfficialEffectIsUnitSpecificBonus(definition, name):
+		return battleEffect("Unit-specific attack strength", "attack strength for matching units", "number", "Unit effects", 25), true
+	case strings.Contains(name, "attackbonus"):
+		return battleEffect("Unit combat strength when attacking", "unit combat strength when attacking", "percent", "Attack effects", 15), true
+	case strings.Contains(name, "wallreduction"):
+		return battleEffectNegative("Wall protection", "wall protection", "percent", "Defense structure effects", 16), true
+	case strings.Contains(name, "gatereduction"):
+		return battleEffectNegative("Gate protection", "gate protection", "percent", "Defense structure effects", 17), true
+	case strings.Contains(name, "moatreduction"):
+		return battleEffectNegative("Moat protection", "moat protection", "percent", "Defense structure effects", 18), true
+	case strings.Contains(name, "melee") && strings.Contains(name, "defense"):
+		return battleEffect("Combat strength for defensive melee units", "combat strength bonus for defensive melee units", "percent", "Unit effects", 110), true
+	case strings.Contains(name, "range") && strings.Contains(name, "defense"):
+		return battleEffect("Combat strength for defensive ranged units", "combat strength bonus for defensive ranged units", "percent", "Unit effects", 111), true
+	case strings.Contains(name, "defenseboostyard"):
+		return battleEffect("Combat strength when defending the courtyard", "combat strength when defending the courtyard", "percent", "Unit effects", 112), true
+	case strings.Contains(name, "defenseunitamountwall"):
+		return battleEffect("Wall unit limit", "to troop capacity on wall defense", "percent", "Defense unit effects", 120), true
+	case battleOfficialEffectIsDefenseSupportUnits(definition, name):
+		return battleEffect("Defense support units", "defense support units", "number", "Defense unit effects", 122), true
+	case strings.Contains(name, "wallbonus"):
+		return battleEffect("Wall protection", "wall protection", "percent", "Defense structure effects", 115), true
+	case strings.Contains(name, "gatebonus"):
+		return battleEffect("Gate protection", "gate protection", "percent", "Defense structure effects", 116), true
+	case strings.Contains(name, "moatbonus"):
+		return battleEffect("Moat protection", "moat protection", "percent", "Defense structure effects", 117), true
+	case strings.Contains(name, "supporttroopcapacity"):
+		return battleEffect("Alliance support capacity", "to alliance support troop capacity", "number", "Courtyard effects", 122), true
+	case strings.Contains(name, "troopcapacity") || strings.Contains(name, "defensecapacity"):
+		return battleEffect("Courtyard defense capacity", "to troop capacity in courtyard defense", "number", "Courtyard effects", 121), true
+	case strings.Contains(name, "additionalwaves"):
+		return battleEffect("Additional waves", "additional wave(s)", "number", "Pre-battle effects", 29), true
+	case strings.Contains(name, "returntravelboost"):
+		return battleEffect("Army return travel speed", "army return travel speed", "percent", "Post-battle effects", 33), true
+	case strings.Contains(name, "speedbonus") || strings.Contains(name, "travelspeed"):
+		return battleEffect("Army travel speed", "army travel speed", "percent", "Pre-battle effects", 30), true
+	case strings.Contains(name, "stealthbonus"):
+		return battleEffect("Later army detection", "later army detection", "percent", "Pre-battle effects", 32), true
+	case strings.Contains(name, "perceptionbonus"):
+		return battleEffect("Earlier attack warning", "earlier attack warning", "percent", "Pre-battle effects", 125), true
+	case strings.Contains(name, "lootbonus"):
+		return battleEffect("Loot capacity", "loot capacity", "percent", "Post-battle effects", 40), true
+	case strings.Contains(name, "resourcesplundered"):
+		return battleEffect("Resources plundered", "resources plundered when looting", "percent", "Post-battle effects", 41), true
+	case strings.Contains(name, "honor"):
+		return battleEffect("Honor earned", "honor points earned in battle", "percent", "Post-battle effects", 43), true
+	case strings.Contains(name, "xp"):
+		return battleEffect("XP earned", "XP earned in battle", "percent", "Post-battle effects", 44), true
+	case strings.Contains(name, "fire"):
+		return battleEffectNegative("Fire damage suffered", "fire damage suffered when defending", "percent", "Defense structure effects", 126), true
+	case strings.Contains(name, "resourcelost") || strings.Contains(name, "lootreduction"):
+		return battleEffectNegative("Resources lost", "resources lost after being looted", "percent", "Post-battle effects", 126), true
+	case strings.Contains(name, "cooldownreduction"):
+		return battleEffect("Cooldown reduction", "cooldown reduction", "percent", "Post-battle effects", 45), true
+	case battleOfficialEffectIsEconomy(name):
+		label := humanizeBattleEffectName(definition.name)
+		if label == "" {
+			return battleEffectMeta{}, false
+		}
+		return battleEffect(label, strings.ToLower(label), "percent", "Economy effects", 800), true
+	}
+	label := humanizeBattleEffectName(definition.name)
+	if label == "" {
+		return battleEffectMeta{}, false
+	}
+	return battleEffect(label, strings.ToLower(label), "percent", battleOfficialEffectCategory(name), 850), true
+}
+
+func battleOfficialEffectCategory(name string) string {
+	switch {
+	case strings.Contains(name, "speed") || strings.Contains(name, "stealth") || strings.Contains(name, "warning") || strings.Contains(name, "sight"):
+		return "Pre-battle effects"
+	case strings.Contains(name, "loot") || strings.Contains(name, "honor") || strings.Contains(name, "glory") || strings.Contains(name, "fame") || strings.Contains(name, "xp"):
+		return "Post-battle effects"
+	case battleOfficialEffectIsEconomy(name):
+		return "Economy effects"
+	case strings.Contains(name, "wall") || strings.Contains(name, "gate") || strings.Contains(name, "moat") || strings.Contains(name, "fire"):
+		return "Defense structure effects"
+	case strings.Contains(name, "capacity") || strings.Contains(name, "yard") || strings.Contains(name, "courtyard"):
+		return "Courtyard effects"
+	case strings.Contains(name, "attack"):
+		return "Attack effects"
+	case strings.Contains(name, "defense"):
+		return "Defense unit effects"
+	default:
+		return "Other effects"
+	}
+}
+
+func battleOfficialEffectIsEconomy(name string) bool {
+	return strings.Contains(name, "production") ||
+		strings.Contains(name, "resource") ||
+		strings.Contains(name, "research") ||
+		strings.Contains(name, "collector") ||
+		strings.Contains(name, "loyalty") ||
+		strings.Contains(name, "publicorder")
+}
+
+func battleOfficialEffectIsAttackSupportUnits(definition battleEffectDefinition, name string) bool {
+	return definition.typeID == 51 || strings.Contains(name, "attacksupportunits")
+}
+
+func battleOfficialEffectIsDefenseSupportUnits(definition battleEffectDefinition, name string) bool {
+	return definition.typeID == 47 || strings.Contains(name, "defensesupportunits")
+}
+
+func battleOfficialEffectIsUnitSpecificBonus(definition battleEffectDefinition, name string) bool {
+	return definition.typeID == 148 || strings.Contains(name, "attackbonusunit")
+}
+
+func humanizeBattleEffectName(name string) string {
+	name = strings.TrimSpace(strings.TrimPrefix(name, "relic"))
+	if name == "" {
+		return ""
+	}
+	var builder strings.Builder
+	var previous byte
+	for i := 0; i < len(name); i++ {
+		current := name[i]
+		if current == '_' || current == '-' {
+			builder.WriteByte(' ')
+			previous = ' '
+			continue
+		}
+		if i > 0 && previous != ' ' && isASCIILowerOrDigit(previous) && isASCIIUpper(current) {
+			builder.WriteByte(' ')
+		}
+		builder.WriteByte(current)
+		previous = current
+	}
+	words := strings.Fields(builder.String())
+	for i, word := range words {
+		lower := strings.ToLower(word)
+		switch lower {
+		case "pvp":
+			words[i] = "PvP"
+		case "pve":
+			words[i] = "PvE"
+		default:
+			words[i] = strings.ToUpper(lower[:1]) + lower[1:]
+		}
+	}
+	return strings.Join(words, " ")
+}
+
+func isASCIIUpper(value byte) bool {
+	return value >= 'A' && value <= 'Z'
+}
+
+func isASCIILowerOrDigit(value byte) bool {
+	return (value >= 'a' && value <= 'z') || (value >= '0' && value <= '9')
 }
 
 type battleEffectMeta struct {
@@ -1770,6 +2000,34 @@ var battleEffectActiveCaps = map[int64]bool{
 
 var battleEffectCapOverrides = map[int64]float64{
 	473: 150,
+}
+
+var battleCommanderLiveEffectDisplayByID = map[int64]battleEffectMeta{
+	3:   battleEffectNegative("Wall protection", "wall protection", "percent", "Defense structure effects", 16),
+	103: battleEffectNegative("Wall protection", "wall protection", "percent", "Defense structure effects", 16),
+	110: battleEffectNegative("Wall protection", "wall protection", "percent", "Defense structure effects", 16),
+	4:   battleEffectNegative("Gate protection", "gate protection", "percent", "Defense structure effects", 17),
+	104: battleEffectNegative("Gate protection", "gate protection", "percent", "Defense structure effects", 17),
+	111: battleEffectNegative("Gate protection", "gate protection", "percent", "Defense structure effects", 17),
+	5:   battleEffectNegative("Moat protection", "moat protection", "percent", "Defense structure effects", 18),
+	105: battleEffectNegative("Moat protection", "moat protection", "percent", "Defense structure effects", 18),
+	112: battleEffectNegative("Moat protection", "moat protection", "percent", "Defense structure effects", 18),
+
+	209: battleEffectNegative("Wall protection", "wall protection against NPC targets", "percent", "Defense structure effects", 16),
+	501: battleEffectNegative("Wall protection", "wall protection against NPC targets", "percent", "Defense structure effects", 16),
+	507: battleEffectNegative("Wall protection", "wall protection against NPC targets", "percent", "Defense structure effects", 16),
+	210: battleEffectNegative("Gate protection", "gate protection against NPC targets", "percent", "Defense structure effects", 17),
+	502: battleEffectNegative("Gate protection", "gate protection against NPC targets", "percent", "Defense structure effects", 17),
+	508: battleEffectNegative("Gate protection", "gate protection against NPC targets", "percent", "Defense structure effects", 17),
+	216: battleEffectNegative("Moat protection", "moat protection against NPC targets", "percent", "Defense structure effects", 18),
+	514: battleEffectNegative("Moat protection", "moat protection against NPC targets", "percent", "Defense structure effects", 18),
+
+	309: battleEffectNegative("Wall protection", "wall protection of Castle Lords", "percent", "Defense structure effects", 16),
+	808: battleEffectNegative("Wall protection", "wall protection of Castle Lords", "percent", "Defense structure effects", 16),
+	310: battleEffectNegative("Gate protection", "gate protection of Castle Lords", "percent", "Defense structure effects", 17),
+	809: battleEffectNegative("Gate protection", "gate protection of Castle Lords", "percent", "Defense structure effects", 17),
+	317: battleEffectNegative("Moat protection", "moat protection of Castle Lords", "percent", "Defense structure effects", 18),
+	807: battleEffectNegative("Moat protection", "moat protection of Castle Lords", "percent", "Defense structure effects", 18),
 }
 
 var battleEffectDisplayByID = map[int64]battleEffectMeta{
@@ -1801,7 +2059,8 @@ var battleEffectDisplayByID = map[int64]battleEffectMeta{
 	474: battleEffect("Flank unit limit", "unit limit on the flanks", "percent", "Attack effects", 21),
 	700: battleEffect("Final assault capacity", "to troop capacity for final assault", "number", "Courtyard effects", 22),
 	701: battleEffect("Final assault capacity", "to troop capacity for final assault", "percent", "Courtyard effects", 23),
-	512: battleEffect("Courtyard support strength", "courtyard support unit strength", "percent", "Courtyard effects", 24),
+	511: battleEffect("Attack support units", "attack support units", "number", "Attack effects", 24),
+	512: battleEffect("Attack support units", "attack support units", "number", "Attack effects", 24),
 	29:  battleEffect("Additional waves", "additional wave(s)", "number", "Pre-battle effects", 29),
 	484: battleEffect("Additional waves", "additional wave(s)", "number", "Pre-battle effects", 29),
 	426: battleEffect("Army travel speed", "army travel speed", "percent", "Pre-battle effects", 30),
@@ -1824,8 +2083,8 @@ var battleEffectDisplayByID = map[int64]battleEffectMeta{
 	112: battleEffect("XP earned", "XP earned in battle", "percent", "Post-battle effects", 44),
 	43:  battleEffect("Coin loot", "Coins looted from NPC targets", "percent", "Post-battle effects", 45),
 	60:  battleEffect("Equipment find", "chance of finding better equipment", "percent", "Post-battle effects", 46),
-	48:  battleEffect("Attack strength bonus", "combat strength when attacking", "percent", "Attack effects", 49),
-	20:  battleEffect("Alliance attack strength", "Combat strength bonus for attacks", "percent", "Attack effects", 50),
+	48:  battleEffect("Unit combat strength when attacking", "unit combat strength when attacking", "percent", "Attack effects", 15),
+	20:  battleEffect("Unit combat strength when attacking", "unit combat strength when attacking", "percent", "Attack effects", 15),
 	25:  battleEffect("Event target attack strength", "Combat strength bonus against Foreign and Bloodcrow castles", "percent", "Attack effects", 51),
 
 	473: battleEffect("Resources plundered", "resources plundered when looting", "percent", "Post-battle effects", 41),
@@ -1858,12 +2117,14 @@ var battleEffectDisplayByID = map[int64]battleEffectMeta{
 	12104: battleEffect("Moat protection", "moat protection", "percent", "Defense structure effects", 117),
 	420:   battleEffect("Wall unit limit", "unit limit on the wall", "number", "Defense unit effects", 120),
 	387:   battleEffect("Wall unit limit", "to troop capacity on wall defense", "percent", "Defense unit effects", 120),
-	12107: battleEffect("Wall unit limit", "wall unit limit when defending", "percent", "Defense unit effects", 120),
+	12107: battleEffect("Wall unit limit", "to troop capacity on wall defense", "percent", "Defense unit effects", 120),
 	702:   battleEffect("Courtyard defense capacity", "to troop capacity in courtyard defense", "number", "Courtyard effects", 121),
 	371:   battleEffect("Courtyard defense capacity", "to troop capacity in courtyard defense", "number", "Courtyard effects", 121),
 	705:   battleEffect("Courtyard defense capacity", "to troop capacity in courtyard defense", "percent", "Courtyard effects", 121),
 	706:   battleEffect("Alliance support capacity", "to alliance support troop capacity", "number", "Courtyard effects", 122),
 	385:   battleEffect("Alliance support capacity", "to alliance support troop capacity", "number", "Courtyard effects", 122),
+	507:   battleEffect("Defense support units", "defense support units", "number", "Defense unit effects", 122),
+	508:   battleEffect("Defense support units", "defense support units", "number", "Defense unit effects", 122),
 	12112: battleEffect("Protector support", "Level 10 Protector of the north in courtyard defense", "number", "Defense unit effects", 122),
 	427:   battleEffect("Surviving soldiers", "more surviving soldiers after defense", "percent", "Post-battle effects", 123),
 	428:   battleEffect("Sight radius", "Sight Radius", "percent", "Pre-battle effects", 124),
@@ -1921,6 +2182,9 @@ func battleEffectValue(id int64, values []float64) float64 {
 	if len(values) == 0 {
 		return 0
 	}
+	if battleEffectUsesFirstPairedValue(id) && len(values) > 1 {
+		return values[1]
+	}
 	if len(values) > 1 && len(values)%2 == 0 && values[0] > 100 {
 		var sum float64
 		for i := 1; i < len(values); i += 2 {
@@ -1933,9 +2197,21 @@ func battleEffectValue(id int64, values []float64) float64 {
 	return values[0]
 }
 
+func battleEffectUsesFirstPairedValue(id int64) bool {
+	definition, ok := loadBattleEffectData().effectDefinitions[id]
+	if !ok {
+		return false
+	}
+	name := strings.ToLower(definition.name)
+	return definition.typeID == 148 || strings.Contains(name, "attackbonusunit")
+}
+
 func battleEffectValuesFromValue(value interface{}) []float64 {
 	if m, ok := value.(map[string]interface{}); ok {
 		return floatSliceFromValue(m["value"])
+	}
+	if isNumber(value) {
+		return []float64{numberFromValue(value)}
 	}
 	return floatSliceFromValue(value)
 }

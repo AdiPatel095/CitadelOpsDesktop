@@ -1015,8 +1015,10 @@ const EffectComparison: React.FC<{
   castellanName: string;
   castellanEffects: BattleEffect[];
 }> = ({ commanderName, commanderEffects, castellanName, castellanEffects }) => {
-  const groups = effectComparisonGroups(commanderEffects, castellanEffects);
-  const totalEffects = commanderEffects.length + castellanEffects.length;
+  const visibleCommanderEffects = commanderEffects.filter(isVisibleEffectComparisonEffect);
+  const visibleCastellanEffects = castellanEffects.filter(isVisibleEffectComparisonEffect);
+  const groups = effectComparisonGroups(visibleCommanderEffects, visibleCastellanEffects);
+  const totalEffects = visibleCommanderEffects.length + visibleCastellanEffects.length;
 
   return (
     <CollapsibleDetailCard title="Commander / Castellan" subtitle={`${commanderName} vs ${castellanName}`}>
@@ -1039,8 +1041,8 @@ const EffectComparison: React.FC<{
                       key={row.key}
                       className="grid grid-cols-2 divide-x divide-border-base border-b border-border-base last:border-b-0"
                     >
-                      <EffectComparisonCell effect={row.commander} side="commander" />
-                      <EffectComparisonCell effect={row.castellan} side="castellan" />
+                      <EffectComparisonCell effects={row.commander} side="commander" />
+                      <EffectComparisonCell effects={row.castellan} side="castellan" />
                     </div>
                   ))}
                 </div>
@@ -1072,35 +1074,46 @@ const EffectComparisonHeader: React.FC<{
   );
 };
 
-const EffectComparisonCell: React.FC<{ effect?: BattleEffect; side: 'commander' | 'castellan' }> = ({ effect, side }) => {
-  if (!effect) {
+function effectCellKey(effect: BattleEffect, index: number): string {
+  return `${effectLabel(effect)}|${effectDescription(effect)}|${effectValue(effect)}|${index}`;
+}
+
+const EffectComparisonCell: React.FC<{ effects?: BattleEffect[]; side: 'commander' | 'castellan' }> = ({ effects, side }) => {
+  const visibleEffects = effects ?? [];
+  if (visibleEffects.length === 0) {
     return <div className="min-h-12 px-3 py-2.5 text-xs font-semibold text-text-muted/50">-</div>;
   }
 
-  const value = (
-    <span className="shrink-0 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-black tabular-nums text-success">
-      {effectValue(effect)}
-    </span>
-  );
-  const description = (
-    <span className={`min-w-0 text-sm font-medium text-text-main ${side === 'castellan' ? 'text-right' : ''}`}>
-      {effectDescription(effect)}
-    </span>
-  );
-
   return (
-    <div className="flex min-h-12 items-start justify-between gap-3 px-3 py-2.5">
-      {side === 'commander' ? (
-        <>
-          {description}
-          {value}
-        </>
-      ) : (
-        <>
-          {value}
-          {description}
-        </>
-      )}
+    <div className="flex min-h-12 flex-col gap-2 px-3 py-2.5">
+      {visibleEffects.map((effect, index) => {
+        const value = (
+          <span className="shrink-0 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-black tabular-nums text-success">
+            {effectValue(effect)}
+          </span>
+        );
+        const description = (
+          <span className={`min-w-0 text-sm font-medium text-text-main ${side === 'castellan' ? 'text-right' : ''}`}>
+            {effectDescription(effect)}
+          </span>
+        );
+
+        return (
+          <div key={effectCellKey(effect, index)} className="flex items-start justify-between gap-3">
+            {side === 'commander' ? (
+              <>
+                {description}
+                {value}
+              </>
+            ) : (
+              <>
+                {value}
+                {description}
+              </>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -1985,9 +1998,36 @@ function friendlySideForReport(
 }
 
 function attackSucceeded(report: ParsedReport): boolean {
+  const waveResult = attackSucceededFromWaves(report);
+  if (waveResult !== null) {
+    return waveResult;
+  }
+  const result = stringValue(report.result ?? report.outcome).toLowerCase();
+  if (result.includes('defeat') || result.includes('attack lost') || result.includes('defense win')) {
+    return false;
+  }
+  if (result.includes('victory') || result.includes('attack won') || result.includes('defense lost')) {
+    return true;
+  }
   const attackerSent = metricValue(report.metrics, 'attackerSent', 'attackSent');
   const attackerLost = metricValue(report.metrics, 'attackerLost', 'attackLost');
   return !(attackerSent > 0 && attackerLost >= attackerSent);
+}
+
+function attackSucceededFromWaves(report: ParsedReport): boolean | null {
+  let hasAttackLane = false;
+  for (const wave of report.waves ?? []) {
+    for (const lane of wave.lanes ?? []) {
+      if ((lane.attackerStart ?? 0) <= 0 && (lane.attackerLost ?? 0) <= 0) {
+        continue;
+      }
+      hasAttackLane = true;
+      if (laneResult(lane) === 'BREACHED') {
+        return true;
+      }
+    }
+  }
+  return hasAttackLane ? false : null;
 }
 
 function kingdomLabel(report: ParsedReport): string {
@@ -2198,8 +2238,8 @@ interface EffectComparisonGroup {
 interface EffectComparisonRow {
   key: string;
   order: number;
-  commander?: BattleEffect;
-  castellan?: BattleEffect;
+  commander: BattleEffect[];
+  castellan: BattleEffect[];
 }
 
 interface EffectComparisonBucket {
@@ -2210,11 +2250,13 @@ interface EffectComparisonBucket {
   castellan: BattleEffect[];
 }
 
+const attackDefenseUnitEffectCategory = 'Bonus Effects';
+const attackDefenseUnitUnkeyedBucketKey = `${attackDefenseUnitEffectCategory}|unkeyed`;
+
 const effectCategoryOrder: Record<string, number> = {
   'Unit effects': 10,
-  'Attack effects': 20,
-  'Defense unit effects': 30,
-  'Defense structure effects': 40,
+  [attackDefenseUnitEffectCategory]: 20,
+  'Structure Effects': 40,
   'Courtyard effects': 50,
   'Pre-battle effects': 60,
   'Post-battle effects': 70,
@@ -2235,8 +2277,7 @@ const effectAlignmentOrder: Record<string, number> = {
   frontUnitLimit: 20,
   flankUnitLimit: 21,
   wallUnitLimit: 22,
-  finalAssaultCapacity: 23,
-  courtyardDefenseCapacity: 24,
+  courtyardCapacity: 23,
   allianceSupportCapacity: 25,
   armyTravelSpeed: 30,
   attackDetectionWindow: 31,
@@ -2250,10 +2291,25 @@ const effectAlignmentOrder: Record<string, number> = {
   equipmentFind: 46,
 };
 
+const hiddenEffectComparisonKeys = new Set([
+  'lootCapacity',
+  'resources',
+  'glory',
+  'honor',
+  'xp',
+  'coinLoot',
+  'equipmentFind',
+]);
+
+function isVisibleEffectComparisonEffect(effect: BattleEffect): boolean {
+  return !hiddenEffectComparisonKeys.has(effectAlignmentKey(effect));
+}
+
 function effectComparisonGroups(commanderEffects: BattleEffect[], castellanEffects: BattleEffect[]): EffectComparisonGroup[] {
   const buckets = new Map<string, EffectComparisonBucket>();
-  commanderEffects.forEach((effect) => addEffectComparisonBucket(buckets, effect, 'commander'));
-  castellanEffects.forEach((effect) => addEffectComparisonBucket(buckets, effect, 'castellan'));
+  const pairedAttackDefenseKeys = pairedAttackDefenseUnitKeys(commanderEffects, castellanEffects);
+  commanderEffects.forEach((effect) => addEffectComparisonBucket(buckets, effect, 'commander', pairedAttackDefenseKeys));
+  castellanEffects.forEach((effect) => addEffectComparisonBucket(buckets, effect, 'castellan', pairedAttackDefenseKeys));
 
   const groups = new Map<string, EffectComparisonGroup>();
   Array.from(buckets.values())
@@ -2265,6 +2321,8 @@ function effectComparisonGroups(commanderEffects: BattleEffect[], castellanEffec
       if (rowCount === 0) {
         return;
       }
+      const commanderRows = singleEffectRows(commander, rowCount);
+      const castellanRows = singleEffectRows(castellan, rowCount);
 
       const group = groups.get(bucket.category) ?? {
         category: bucket.category,
@@ -2275,8 +2333,8 @@ function effectComparisonGroups(commanderEffects: BattleEffect[], castellanEffec
         group.rows.push({
           key: `${bucket.key}-${index}`,
           order: bucket.order + index / 100,
-          commander: commander[index],
-          castellan: castellan[index],
+          commander: commanderRows[index] ?? [],
+          castellan: castellanRows[index] ?? [],
         });
       }
       groups.set(bucket.category, group);
@@ -2290,15 +2348,27 @@ function effectComparisonGroups(commanderEffects: BattleEffect[], castellanEffec
     .sort((a, b) => a.order - b.order || a.category.localeCompare(b.category));
 }
 
+function singleEffectRows(effects: BattleEffect[], rowCount: number): BattleEffect[][] {
+  return Array.from({ length: rowCount }, (_, index) => {
+    const effect = effects[index];
+    return effect ? [effect] : [];
+  });
+}
+
 function addEffectComparisonBucket(
   buckets: Map<string, EffectComparisonBucket>,
   effect: BattleEffect,
-  side: 'commander' | 'castellan'
+  side: 'commander' | 'castellan',
+  pairedAttackDefenseKeys: Set<string>
 ) {
   const alignmentKey = effectAlignmentKey(effect);
   const valueKind = effectValueKind(effect);
   const category = effectComparisonCategory(effect, alignmentKey);
-  const bucketKey = `${category}|${alignmentKey}|${valueKind}`;
+  const comparisonKey = `${alignmentKey}|${valueKind}`;
+  const hasPairedAttackDefenseKey = pairedAttackDefenseKeys.has(comparisonKey);
+  const bucketKey = category === attackDefenseUnitEffectCategory && !hasPairedAttackDefenseKey
+    ? attackDefenseUnitUnkeyedBucketKey
+    : `${category}|${comparisonKey}`;
   const order = effectComparisonOrder(effect, alignmentKey);
   const bucket = buckets.get(bucketKey) ?? {
     key: bucketKey,
@@ -2310,6 +2380,26 @@ function addEffectComparisonBucket(
   bucket.order = Math.min(bucket.order, order);
   bucket[side].push(effect);
   buckets.set(bucketKey, bucket);
+}
+
+function pairedAttackDefenseUnitKeys(commanderEffects: BattleEffect[], castellanEffects: BattleEffect[]): Set<string> {
+  const commanderKeys = attackDefenseUnitKeys(commanderEffects);
+  const castellanKeys = attackDefenseUnitKeys(castellanEffects);
+  return new Set(Array.from(commanderKeys).filter((key) => castellanKeys.has(key)));
+}
+
+function attackDefenseUnitKeys(effects: BattleEffect[]): Set<string> {
+  const keys = new Set<string>();
+  effects.forEach((effect) => {
+    const alignmentKey = effectAlignmentKey(effect);
+    if (alignmentKey.startsWith('effect:')) {
+      return;
+    }
+    if (effectComparisonCategory(effect, alignmentKey) === attackDefenseUnitEffectCategory) {
+      keys.add(`${alignmentKey}|${effectValueKind(effect)}`);
+    }
+  });
+  return keys;
 }
 
 function sortEffectsForComparison(effects: BattleEffect[]): BattleEffect[] {
@@ -2340,9 +2430,9 @@ function effectComparisonCategory(effect: BattleEffect, alignmentKey: string): s
     return 'Unit effects';
   }
   if (['wallProtection', 'gateProtection', 'moatProtection', 'fireDamage'].includes(alignmentKey)) {
-    return 'Defense structure effects';
+    return 'Structure Effects';
   }
-  if (['finalAssaultCapacity', 'courtyardDefenseCapacity', 'allianceSupportCapacity'].includes(alignmentKey)) {
+  if (['courtyardCapacity', 'allianceSupportCapacity'].includes(alignmentKey)) {
     return 'Courtyard effects';
   }
   if (['armyTravelSpeed', 'attackDetectionWindow', 'sightRadius'].includes(alignmentKey)) {
@@ -2351,7 +2441,11 @@ function effectComparisonCategory(effect: BattleEffect, alignmentKey: string): s
   if (['lootCapacity', 'resources', 'glory', 'honor', 'xp', 'coinLoot', 'equipmentFind'].includes(alignmentKey)) {
     return 'Post-battle effects';
   }
-  return stringValue(effect.category) || 'Other effects';
+  const category = stringValue(effect.category) || 'Other effects';
+  if (category === 'Attack effects' || category === 'Defense unit effects') {
+    return attackDefenseUnitEffectCategory;
+  }
+  return category;
 }
 
 function effectAlignmentKey(effect: BattleEffect): string {
@@ -2396,11 +2490,12 @@ function effectAlignmentKey(effect: BattleEffect): string {
   if (text.includes('unit limit') && text.includes('wall')) {
     return 'wallUnitLimit';
   }
-  if (text.includes('final assault')) {
-    return 'finalAssaultCapacity';
-  }
-  if (text.includes('courtyard defense capacity') || text.includes('troop capacity in courtyard defense')) {
-    return 'courtyardDefenseCapacity';
+  if (
+    text.includes('final assault') ||
+    text.includes('courtyard defense capacity') ||
+    text.includes('troop capacity in courtyard defense')
+  ) {
+    return 'courtyardCapacity';
   }
   if (text.includes('alliance support')) {
     return 'allianceSupportCapacity';

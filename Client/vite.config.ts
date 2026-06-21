@@ -333,7 +333,7 @@ function parseLocalBattleReportCapture(capture: JsonRecord): LocalParsedReport {
   applyLocalBattleWaves(report, blm)
   report.topUnits = aggregateBattleItems(report.topUnits)
   report.supportTools = aggregateBattleItems(report.supportTools)
-  report.result = inferBattleResult(report.metrics)
+  report.result = inferBattleResult(report)
   return report
 }
 
@@ -488,7 +488,7 @@ function effectsFromLeader(value: unknown, side: string, combatMode: BattleEffec
     sources: Map<string, { value: number; cap?: number }>
   }>()
   leaderEffectRows(leader, combatMode).forEach((row) => {
-    const meta = battleEffectMeta(row.id)
+    const meta = battleEffectMeta(row.id, side, row.source, row.mapped)
     if (meta.skip || (meta.unknown && row.source !== 'active')) {
       return
     }
@@ -556,6 +556,7 @@ interface LocalLeaderEffectRow {
   rawID: number
   values: number[]
   source: BattleEffectSource
+  mapped: boolean
   index: number
   cap?: number
   capKey: string
@@ -564,6 +565,8 @@ interface LocalLeaderEffectRow {
 interface LocalBattleEffectDefinition {
   effectID: number
   capID: number
+  name: string
+  effectTypeID: number
   cap?: number
   isPvp: boolean
   isPve: boolean
@@ -617,7 +620,7 @@ function leaderEffectRows(leader: JsonRecord, combatMode: BattleEffectCombatMode
       const catalogEffect = catalogEffects[effectIndex]
       const rawID = catalogEffect?.id ?? numericValue(effectRow[0])
       const values = catalogEffect ? valuesFromCatalogEffect(catalogEffect, effectRow) : battleEffectValuesFromRow(effectRow)
-      const parsed = normalizedLeaderEffectRow(rawID, values, 'equipment', combatMode, index)
+      const parsed = normalizedLeaderEffectRow(rawID, values, 'equipment', combatMode, index, true)
       index += 1
       if (parsed) {
         rows.push(parsed)
@@ -676,7 +679,8 @@ function normalizedLeaderEffectRow(
   values: number[],
   source: BattleEffectSource,
   combatMode: BattleEffectCombatMode,
-  index: number
+  index: number,
+  mapCatalogIDs = true
 ): LocalLeaderEffectRow | null {
   if (!rawID || values.length === 0) {
     return null
@@ -684,11 +688,16 @@ function normalizedLeaderEffectRow(
 
   const data = battleEffectData()
   let id = rawID
-  if (source !== 'active') {
+  let mapped = false
+  if (source !== 'active' && mapCatalogIDs) {
     id = data.relicEffectIDs.get(rawID) ?? data.equipmentEffectIDs.get(rawID) ?? rawID
+    mapped = id !== rawID
   }
 
-  const definition = data.effectDefinitions.get(id)
+  let definition = data.effectDefinitions.get(id)
+  if (source !== 'active' && !mapCatalogIDs) {
+    definition = undefined
+  }
   if (definition?.isPvp && combatMode !== 'pvp') {
     return null
   }
@@ -701,6 +710,7 @@ function normalizedLeaderEffectRow(
     rawID,
     values,
     source,
+    mapped,
     index,
     cap: battleEffectCap(id, definition, source),
     capKey: definition ? `${definition.effectID}:${definition.capID}` : `${id}`,
@@ -761,6 +771,8 @@ function battleEffectData(): LocalBattleEffectData {
     effectDefinitions.set(effectID, {
       effectID,
       capID,
+      name,
+      effectTypeID: numericValue(entry.effectTypeID),
       cap: caps.get(capID),
       isPvp: stringValue(entry.isPvPFight) === '1' || /pvp/i.test(name),
       isPve: stringValue(entry.isPvEFight) === '1' || /pve/i.test(name),
@@ -1045,7 +1057,31 @@ function reportHasBothPlayers(report: LocalParsedReport): boolean {
   return Boolean(report.attacker?.playerID && report.defender?.playerID)
 }
 
-function inferBattleResult(metrics: LocalMetrics): string {
+function inferBattleResult(report: LocalParsedReport): string {
+  const waveResult = inferBattleResultFromWaves(report.waves)
+  if (waveResult) {
+    return waveResult
+  }
+  return inferBattleResultFromMetrics(report.metrics)
+}
+
+function inferBattleResultFromWaves(waves: LocalWave[]): string {
+  let hasAttackLane = false
+  for (const wave of waves) {
+    for (const lane of wave.lanes ?? []) {
+      if ((lane.attackerStart ?? 0) <= 0 && (lane.attackerLost ?? 0) <= 0) {
+        continue
+      }
+      hasAttackLane = true
+      if (inferLaneResult(lane) === 'BREACHED') {
+        return 'Victory'
+      }
+    }
+  }
+  return hasAttackLane ? 'Defeat' : ''
+}
+
+function inferBattleResultFromMetrics(metrics: LocalMetrics): string {
   if (metrics.attackerSent > 0 && metrics.attackerLost >= metrics.attackerSent) {
     return 'Defeat'
   }
@@ -1095,8 +1131,17 @@ interface LocalEffectMeta {
   unknown?: boolean
 }
 
-function battleEffectMeta(id: number): LocalEffectMeta {
-  return battleEffectMetadata[id] ?? {
+function battleEffectMeta(id: number, side: string, source: BattleEffectSource, mapped: boolean): LocalEffectMeta {
+  if (source !== 'active' && mapped) {
+    const mappedMeta = battleEffectMetadata[id] ?? battleOfficialEffectMeta(id)
+    if (mappedMeta) {
+      return mappedMeta
+    }
+  }
+  if (side === 'commander' && source !== 'active' && id in battleCommanderLiveEffectMetadata) {
+    return battleCommanderLiveEffectMetadata[id]
+  }
+  return battleEffectMetadata[id] ?? battleOfficialEffectMeta(id) ?? {
     label: `Effect ${id}`,
     template: `Effect ${id}`,
     unit: 'percent',
@@ -1104,6 +1149,185 @@ function battleEffectMeta(id: number): LocalEffectMeta {
     order: 900,
     unknown: true,
   }
+}
+
+function battleOfficialEffectMeta(id: number): LocalEffectMeta | null {
+  const definition = battleEffectData().effectDefinitions.get(id)
+  if (!definition) {
+    return null
+  }
+  const name = definition.name.toLowerCase()
+  if (name.includes('offensivemeleebonus')) {
+    return battleEffect('Combat strength for melee units', 'combat strength for melee units', 'percent', 'Unit effects', 10)
+  }
+  if (name.includes('offensiverangebonus')) {
+    return battleEffect('Combat strength for ranged units', 'combat strength for ranged units', 'percent', 'Unit effects', 11)
+  }
+  if (name.includes('attackboostyard')) {
+    return battleEffect('Combat strength when attacking enemy courtyard', 'combat strength when attacking enemy courtyard', 'percent', 'Unit effects', 12)
+  }
+  if (name.includes('attackunitamountfront')) {
+    return battleEffect('Front unit limit', 'unit limit on the front', 'percent', 'Attack effects', 20)
+  }
+  if (name.includes('attackunitamountflank')) {
+    return battleEffect('Flank unit limit', 'unit limit on the flanks', 'percent', 'Attack effects', 21)
+  }
+  if (battleOfficialEffectIsAttackSupportUnits(definition, name)) {
+    return battleEffect('Attack support units', 'attack support units', 'number', 'Attack effects', 24)
+  }
+  if (battleOfficialEffectIsUnitSpecificBonus(definition, name)) {
+    return battleEffect('Unit-specific attack strength', 'attack strength for matching units', 'number', 'Unit effects', 25)
+  }
+  if (name.includes('attackbonus')) {
+    return battleEffect('Unit combat strength when attacking', 'unit combat strength when attacking', 'percent', 'Attack effects', 15)
+  }
+  if (name.includes('wallreduction')) {
+    return battleEffectNegative('Wall protection', 'wall protection', 'percent', 'Defense structure effects', 16)
+  }
+  if (name.includes('gatereduction')) {
+    return battleEffectNegative('Gate protection', 'gate protection', 'percent', 'Defense structure effects', 17)
+  }
+  if (name.includes('moatreduction')) {
+    return battleEffectNegative('Moat protection', 'moat protection', 'percent', 'Defense structure effects', 18)
+  }
+  if (name.includes('melee') && name.includes('defense')) {
+    return battleEffect('Combat strength for defensive melee units', 'combat strength bonus for defensive melee units', 'percent', 'Unit effects', 110)
+  }
+  if (name.includes('range') && name.includes('defense')) {
+    return battleEffect('Combat strength for defensive ranged units', 'combat strength bonus for defensive ranged units', 'percent', 'Unit effects', 111)
+  }
+  if (name.includes('defenseboostyard')) {
+    return battleEffect('Combat strength when defending the courtyard', 'combat strength when defending the courtyard', 'percent', 'Unit effects', 112)
+  }
+  if (name.includes('defenseunitamountwall')) {
+    return battleEffect('Wall unit limit', 'to troop capacity on wall defense', 'percent', 'Defense unit effects', 120)
+  }
+  if (battleOfficialEffectIsDefenseSupportUnits(definition, name)) {
+    return battleEffect('Defense support units', 'defense support units', 'number', 'Defense unit effects', 122)
+  }
+  if (name.includes('wallbonus')) {
+    return battleEffect('Wall protection', 'wall protection', 'percent', 'Defense structure effects', 115)
+  }
+  if (name.includes('gatebonus')) {
+    return battleEffect('Gate protection', 'gate protection', 'percent', 'Defense structure effects', 116)
+  }
+  if (name.includes('moatbonus')) {
+    return battleEffect('Moat protection', 'moat protection', 'percent', 'Defense structure effects', 117)
+  }
+  if (name.includes('supporttroopcapacity')) {
+    return battleEffect('Alliance support capacity', 'to alliance support troop capacity', 'number', 'Courtyard effects', 122)
+  }
+  if (name.includes('troopcapacity') || name.includes('defensecapacity')) {
+    return battleEffect('Courtyard defense capacity', 'to troop capacity in courtyard defense', 'number', 'Courtyard effects', 121)
+  }
+  if (name.includes('additionalwaves')) {
+    return battleEffect('Additional waves', 'additional wave(s)', 'number', 'Pre-battle effects', 29)
+  }
+  if (name.includes('returntravelboost')) {
+    return battleEffect('Army return travel speed', 'army return travel speed', 'percent', 'Post-battle effects', 33)
+  }
+  if (name.includes('speedbonus') || name.includes('travelspeed')) {
+    return battleEffect('Army travel speed', 'army travel speed', 'percent', 'Pre-battle effects', 30)
+  }
+  if (name.includes('stealthbonus')) {
+    return battleEffect('Later army detection', 'later army detection', 'percent', 'Pre-battle effects', 32)
+  }
+  if (name.includes('perceptionbonus')) {
+    return battleEffect('Earlier attack warning', 'earlier attack warning', 'percent', 'Pre-battle effects', 125)
+  }
+  if (name.includes('lootbonus')) {
+    return battleEffect('Loot capacity', 'loot capacity', 'percent', 'Post-battle effects', 40)
+  }
+  if (name.includes('resourcesplundered')) {
+    return battleEffect('Resources plundered', 'resources plundered when looting', 'percent', 'Post-battle effects', 41)
+  }
+  if (name.includes('honor')) {
+    return battleEffect('Honor earned', 'honor points earned in battle', 'percent', 'Post-battle effects', 43)
+  }
+  if (name.includes('xp')) {
+    return battleEffect('XP earned', 'XP earned in battle', 'percent', 'Post-battle effects', 44)
+  }
+  if (name.includes('fire')) {
+    return battleEffectNegative('Fire damage suffered', 'fire damage suffered when defending', 'percent', 'Defense structure effects', 126)
+  }
+  if (name.includes('resourcelost') || name.includes('lootreduction')) {
+    return battleEffectNegative('Resources lost', 'resources lost after being looted', 'percent', 'Post-battle effects', 126)
+  }
+  if (name.includes('cooldownreduction')) {
+    return battleEffect('Cooldown reduction', 'cooldown reduction', 'percent', 'Post-battle effects', 45)
+  }
+  if (battleOfficialEffectIsEconomy(name)) {
+    const label = humanizeBattleEffectName(definition.name)
+    return label ? battleEffect(label, label.toLowerCase(), 'percent', 'Economy effects', 800) : null
+  }
+  const label = humanizeBattleEffectName(definition.name)
+  return label
+    ? battleEffect(label, label.toLowerCase(), 'percent', battleOfficialEffectCategory(name), 850)
+    : null
+}
+
+function battleOfficialEffectCategory(name: string): string {
+  if (/speed|stealth|warning|sight/.test(name)) {
+    return 'Pre-battle effects'
+  }
+  if (/loot|honor|glory|fame|xp/.test(name)) {
+    return 'Post-battle effects'
+  }
+  if (battleOfficialEffectIsEconomy(name)) {
+    return 'Economy effects'
+  }
+  if (/wall|gate|moat|fire/.test(name)) {
+    return 'Defense structure effects'
+  }
+  if (/capacity|yard|courtyard/.test(name)) {
+    return 'Courtyard effects'
+  }
+  if (name.includes('attack')) {
+    return 'Attack effects'
+  }
+  if (name.includes('defense')) {
+    return 'Defense unit effects'
+  }
+  return 'Other effects'
+}
+
+function battleOfficialEffectIsEconomy(name: string): boolean {
+  return /production|resource|research|collector|loyalty|publicorder/.test(name)
+}
+
+function battleOfficialEffectIsAttackSupportUnits(definition: LocalBattleEffectDefinition, name: string): boolean {
+  return definition.effectTypeID === 51 || name.includes('attacksupportunits')
+}
+
+function battleOfficialEffectIsDefenseSupportUnits(definition: LocalBattleEffectDefinition, name: string): boolean {
+  return definition.effectTypeID === 47 || name.includes('defensesupportunits')
+}
+
+function battleOfficialEffectIsUnitSpecificBonus(definition: LocalBattleEffectDefinition, name: string): boolean {
+  return definition.effectTypeID === 148 || name.includes('attackbonusunit')
+}
+
+function humanizeBattleEffectName(name: string): string {
+  const trimmed = name.trim().replace(/^relic/, '')
+  if (!trimmed) {
+    return ''
+  }
+  return trimmed
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => {
+      const lower = word.toLowerCase()
+      if (lower === 'pvp') {
+        return 'PvP'
+      }
+      if (lower === 'pve') {
+        return 'PvE'
+      }
+      return `${lower.slice(0, 1).toUpperCase()}${lower.slice(1)}`
+    })
+    .join(' ')
 }
 
 function battleEffect(
@@ -1136,6 +1360,34 @@ const battleEffectCapOverrides: Partial<Record<number, number>> = {
   473: 150,
 }
 
+const battleCommanderLiveEffectMetadata: Record<number, LocalEffectMeta> = {
+  3: battleEffectNegative('Wall protection', 'wall protection', 'percent', 'Defense structure effects', 16),
+  103: battleEffectNegative('Wall protection', 'wall protection', 'percent', 'Defense structure effects', 16),
+  110: battleEffectNegative('Wall protection', 'wall protection', 'percent', 'Defense structure effects', 16),
+  4: battleEffectNegative('Gate protection', 'gate protection', 'percent', 'Defense structure effects', 17),
+  104: battleEffectNegative('Gate protection', 'gate protection', 'percent', 'Defense structure effects', 17),
+  111: battleEffectNegative('Gate protection', 'gate protection', 'percent', 'Defense structure effects', 17),
+  5: battleEffectNegative('Moat protection', 'moat protection', 'percent', 'Defense structure effects', 18),
+  105: battleEffectNegative('Moat protection', 'moat protection', 'percent', 'Defense structure effects', 18),
+  112: battleEffectNegative('Moat protection', 'moat protection', 'percent', 'Defense structure effects', 18),
+
+  209: battleEffectNegative('Wall protection', 'wall protection against NPC targets', 'percent', 'Defense structure effects', 16),
+  501: battleEffectNegative('Wall protection', 'wall protection against NPC targets', 'percent', 'Defense structure effects', 16),
+  507: battleEffectNegative('Wall protection', 'wall protection against NPC targets', 'percent', 'Defense structure effects', 16),
+  210: battleEffectNegative('Gate protection', 'gate protection against NPC targets', 'percent', 'Defense structure effects', 17),
+  502: battleEffectNegative('Gate protection', 'gate protection against NPC targets', 'percent', 'Defense structure effects', 17),
+  508: battleEffectNegative('Gate protection', 'gate protection against NPC targets', 'percent', 'Defense structure effects', 17),
+  216: battleEffectNegative('Moat protection', 'moat protection against NPC targets', 'percent', 'Defense structure effects', 18),
+  514: battleEffectNegative('Moat protection', 'moat protection against NPC targets', 'percent', 'Defense structure effects', 18),
+
+  309: battleEffectNegative('Wall protection', 'wall protection of Castle Lords', 'percent', 'Defense structure effects', 16),
+  808: battleEffectNegative('Wall protection', 'wall protection of Castle Lords', 'percent', 'Defense structure effects', 16),
+  310: battleEffectNegative('Gate protection', 'gate protection of Castle Lords', 'percent', 'Defense structure effects', 17),
+  809: battleEffectNegative('Gate protection', 'gate protection of Castle Lords', 'percent', 'Defense structure effects', 17),
+  317: battleEffectNegative('Moat protection', 'moat protection of Castle Lords', 'percent', 'Defense structure effects', 18),
+  807: battleEffectNegative('Moat protection', 'moat protection of Castle Lords', 'percent', 'Defense structure effects', 18),
+}
+
 const battleEffectMetadata: Record<number, LocalEffectMeta> = {
   61: battleEffect('Combat strength for melee units', 'combat strength for melee units', 'percent', 'Unit effects', 10),
   411: battleEffect('Combat strength for melee units', 'combat strength for melee units', 'percent', 'Unit effects', 10),
@@ -1165,7 +1417,8 @@ const battleEffectMetadata: Record<number, LocalEffectMeta> = {
   474: battleEffect('Flank unit limit', 'unit limit on the flanks', 'percent', 'Attack effects', 21),
   700: battleEffect('Final assault capacity', 'to troop capacity for final assault', 'number', 'Courtyard effects', 22),
   701: battleEffect('Final assault capacity', 'to troop capacity for final assault', 'percent', 'Courtyard effects', 23),
-  512: battleEffect('Courtyard support strength', 'courtyard support unit strength', 'percent', 'Courtyard effects', 24),
+  511: battleEffect('Attack support units', 'attack support units', 'number', 'Attack effects', 24),
+  512: battleEffect('Attack support units', 'attack support units', 'number', 'Attack effects', 24),
   29: battleEffect('Additional waves', 'additional wave(s)', 'number', 'Pre-battle effects', 29),
   484: battleEffect('Additional waves', 'additional wave(s)', 'number', 'Pre-battle effects', 29),
   426: battleEffect('Army travel speed', 'army travel speed', 'percent', 'Pre-battle effects', 30),
@@ -1189,8 +1442,8 @@ const battleEffectMetadata: Record<number, LocalEffectMeta> = {
   112: battleEffect('XP earned', 'XP earned in battle', 'percent', 'Post-battle effects', 44),
   43: battleEffect('Coin loot', 'Coins looted from NPC targets', 'percent', 'Post-battle effects', 45),
   60: battleEffect('Equipment find', 'chance of finding better equipment', 'percent', 'Post-battle effects', 46),
-  48: battleEffect('Attack strength bonus', 'combat strength when attacking', 'percent', 'Attack effects', 49),
-  20: battleEffect('Alliance attack strength', 'Combat strength bonus for attacks', 'percent', 'Attack effects', 50),
+  48: battleEffect('Unit combat strength when attacking', 'unit combat strength when attacking', 'percent', 'Attack effects', 15),
+  20: battleEffect('Unit combat strength when attacking', 'unit combat strength when attacking', 'percent', 'Attack effects', 15),
   25: battleEffect('Event target attack strength', 'Combat strength bonus against Foreign and Bloodcrow castles', 'percent', 'Attack effects', 51),
 
   339: battleEffect('Combat strength for defensive melee units', 'combat strength bonus for defensive melee units', 'percent', 'Unit effects', 110),
@@ -1221,12 +1474,14 @@ const battleEffectMetadata: Record<number, LocalEffectMeta> = {
   12104: battleEffect('Moat protection', 'moat protection', 'percent', 'Defense structure effects', 117),
   420: battleEffect('Wall unit limit', 'unit limit on the wall', 'number', 'Defense unit effects', 120),
   387: battleEffect('Wall unit limit', 'to troop capacity on wall defense', 'percent', 'Defense unit effects', 120),
-  12107: battleEffect('Wall unit limit', 'wall unit limit when defending', 'percent', 'Defense unit effects', 120),
+  12107: battleEffect('Wall unit limit', 'to troop capacity on wall defense', 'percent', 'Defense unit effects', 120),
   702: battleEffect('Courtyard defense capacity', 'to troop capacity in courtyard defense', 'number', 'Courtyard effects', 121),
   371: battleEffect('Courtyard defense capacity', 'to troop capacity in courtyard defense', 'number', 'Courtyard effects', 121),
   705: battleEffect('Courtyard defense capacity', 'to troop capacity in courtyard defense', 'percent', 'Courtyard effects', 121),
   706: battleEffect('Alliance support capacity', 'to alliance support troop capacity', 'number', 'Courtyard effects', 122),
   385: battleEffect('Alliance support capacity', 'to alliance support troop capacity', 'number', 'Courtyard effects', 122),
+  507: battleEffect('Defense support units', 'defense support units', 'number', 'Defense unit effects', 122),
+  508: battleEffect('Defense support units', 'defense support units', 'number', 'Defense unit effects', 122),
   12112: battleEffect('Protector support', 'Level 10 Protector of the north in courtyard defense', 'number', 'Defense unit effects', 122),
   427: battleEffect('Surviving soldiers', 'more surviving soldiers after defense', 'percent', 'Post-battle effects', 123),
   428: battleEffect('Sight radius', 'Sight Radius', 'percent', 'Pre-battle effects', 124),
@@ -1267,6 +1522,9 @@ function battleEffectValue(id: number, values: number[]): number {
   if (values.length === 0) {
     return 0
   }
+  if (battleEffectUsesFirstPairedValue(id) && values.length > 1) {
+    return values[1]
+  }
   if (values.length > 1 && values.length % 2 === 0 && values[0] > 100) {
     const total = values.reduce((sum, value, index) => index % 2 === 1 ? sum + value : sum, 0)
     if (total !== 0) {
@@ -1276,10 +1534,21 @@ function battleEffectValue(id: number, values: number[]): number {
   return values[0]
 }
 
+function battleEffectUsesFirstPairedValue(id: number): boolean {
+  const definition = battleEffectData().effectDefinitions.get(id)
+  if (!definition) {
+    return false
+  }
+  return definition.effectTypeID === 148 || definition.name.toLowerCase().includes('attackbonusunit')
+}
+
 function battleEffectValuesFromValue(value: unknown): number[] {
   const record = recordValue(value)
   if (record) {
     return numericArrayValue(record.value)
+  }
+  if (isNumberLike(value)) {
+    return [numericValue(value)]
   }
   return numericArrayValue(value)
 }
