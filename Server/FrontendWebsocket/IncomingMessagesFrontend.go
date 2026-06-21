@@ -66,6 +66,9 @@ func init() {
 	GameParser.NotifyCastleFocusChanged = func() {
 		SendFrontendMessage("castleFocus", Models.CastleFocusMessagePayload(), "")
 	}
+	GameParser.NotifyAllianceInfoUpdated = func() {
+		SendFrontendMessage("allianceInfo", Models.GetGameState().Alliance, "")
+	}
 	GameParser.NotifyGlobalResourcesChanged = SendGlobalResourceUpdate
 	GameParser.NotifyRiftMapCoordsChanged = SendRiftMapCoords
 	GameParser.NotifyRiftCRALaunchChanged = ScheduleSendRiftCRALaunch

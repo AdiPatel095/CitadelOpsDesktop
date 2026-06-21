@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+var NotifyAllianceInfoUpdated func()
+
 // formatDuration converts seconds to a readable string like "2d 1h 23m 45s"
 func formatDuration(seconds int) string {
 	days := seconds / 86400
@@ -116,6 +118,10 @@ func ParseAllianceInfo(data string) {
 			}
 			gs.Alliance.BirdLocations = append(gs.Alliance.BirdLocations, birdLocation)
 		}
+	}
+
+	if NotifyAllianceInfoUpdated != nil {
+		go NotifyAllianceInfoUpdated()
 	}
 }
 
