@@ -729,10 +729,12 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
         />
       </div>
 
-      <div className="grid xl:grid-cols-2 gap-4">
-        <EffectList title="Commander" subtitle={combatantName(report.attacker)} effects={commanderEffects} />
-        <EffectList title="Castellan" subtitle={combatantName(report.defender)} effects={castellanEffects} />
-      </div>
+      <EffectComparison
+        commanderName={combatantName(report.attacker)}
+        commanderEffects={commanderEffects}
+        castellanName={combatantName(report.defender)}
+        castellanEffects={castellanEffects}
+      />
 
       {report.waves && report.waves.length > 0 && (
         <Card variant="solid">
@@ -902,51 +904,107 @@ const MetricTile: React.FC<{
   );
 };
 
-const EffectList: React.FC<{
-  title: string;
-  subtitle: string;
-  effects: BattleEffect[];
-}> = ({ title, subtitle, effects }) => {
-  const groups = effectGroups(effects);
+const EffectComparison: React.FC<{
+  commanderName: string;
+  commanderEffects: BattleEffect[];
+  castellanName: string;
+  castellanEffects: BattleEffect[];
+}> = ({ commanderName, commanderEffects, castellanName, castellanEffects }) => {
+  const groups = effectComparisonGroups(commanderEffects, castellanEffects);
+  const totalEffects = commanderEffects.length + castellanEffects.length;
 
   return (
     <Card variant="solid">
       <CardHeader>
         <div>
-          <CardTitle>{title}</CardTitle>
-          <p className="text-xs text-text-muted mt-1">{subtitle}</p>
+          <CardTitle>Commander / Castellan</CardTitle>
         </div>
-        <Badge variant="secondary">{effects.length} effects</Badge>
+        <Badge variant="secondary">{totalEffects} effects</Badge>
       </CardHeader>
       <CardContent>
-        {effects.length > 0 ? (
-          <div className="space-y-4">
-            {groups.map((group) => (
-              <div key={group.category} className="space-y-2">
-                <div className="text-[11px] uppercase tracking-wider font-bold text-text-muted">
-                  {group.category}
-                </div>
-                <div className="divide-y divide-border-base rounded-global border border-border-base bg-bg-app">
-                  {group.effects.map((effect, index) => (
-                    <div
-                      key={`${effectLabel(effect)}-${index}`}
-                      className="flex items-start justify-between gap-3 px-3 py-2.5"
-                    >
-                      <span className="min-w-0 text-sm font-medium text-text-main">{effectDescription(effect)}</span>
-                      <span className="shrink-0 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-black tabular-nums text-success">
-                        {effectValue(effect)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+        {totalEffects > 0 ? (
+          <div className="overflow-x-auto">
+            <div className="min-w-[44rem] space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <EffectComparisonHeader label="Commander" name={commanderName} tone="danger" />
+                <EffectComparisonHeader label="Castellan" name={castellanName} tone="info" align="right" />
               </div>
-            ))}
+
+              {groups.map((group) => (
+                <div key={group.category} className="space-y-2">
+                  <div className="text-[11px] uppercase tracking-wider font-bold text-text-muted">
+                    {group.category}
+                  </div>
+                  <div className="overflow-hidden rounded-global border border-border-base bg-bg-app">
+                    {group.rows.map((row) => (
+                      <div
+                        key={row.key}
+                        className="grid grid-cols-2 divide-x divide-border-base border-b border-border-base last:border-b-0"
+                      >
+                        <EffectComparisonCell effect={row.commander} side="commander" />
+                        <EffectComparisonCell effect={row.castellan} side="castellan" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="text-sm text-text-muted py-8 text-center">No parsed effects for this side.</div>
+          <div className="text-sm text-text-muted py-8 text-center">No parsed leader effects for this report.</div>
         )}
       </CardContent>
     </Card>
+  );
+};
+
+const EffectComparisonHeader: React.FC<{
+  label: string;
+  name: string;
+  tone: 'danger' | 'info';
+  align?: 'left' | 'right';
+}> = ({ label, name, tone, align = 'left' }) => {
+  const toneClass = tone === 'danger' ? 'border-error/25 text-error' : 'border-info/25 text-info';
+  const alignClass = align === 'right' ? 'items-end text-right' : 'items-start text-left';
+
+  return (
+    <div className={`flex min-w-0 flex-col rounded-global border bg-bg-app px-3 py-2 ${toneClass} ${alignClass}`}>
+      <div className="text-[10px] font-bold uppercase tracking-wider">{label}</div>
+      <div className="mt-1 max-w-full truncate text-sm font-semibold text-text-main">{name}</div>
+    </div>
+  );
+};
+
+const EffectComparisonCell: React.FC<{ effect?: BattleEffect; side: 'commander' | 'castellan' }> = ({ effect, side }) => {
+  if (!effect) {
+    return <div className="min-h-12 px-3 py-2.5 text-xs font-semibold text-text-muted/50">-</div>;
+  }
+
+  const value = (
+    <span className="shrink-0 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-black tabular-nums text-success">
+      {effectValue(effect)}
+    </span>
+  );
+  const description = (
+    <span className={`min-w-0 text-sm font-medium text-text-main ${side === 'castellan' ? 'text-right' : ''}`}>
+      {effectDescription(effect)}
+    </span>
+  );
+
+  return (
+    <div className="flex min-h-12 items-start justify-between gap-3 px-3 py-2.5">
+      {side === 'commander' ? (
+        <>
+          {description}
+          {value}
+        </>
+      ) : (
+        <>
+          {value}
+          {description}
+        </>
+      )}
+    </div>
   );
 };
 
@@ -2002,29 +2060,269 @@ function effectValue(effect: BattleEffect): string {
   return `${prefix}${value.toFixed(1)}%`;
 }
 
-interface EffectGroup {
+interface EffectComparisonGroup {
   category: string;
-  effects: BattleEffect[];
+  order: number;
+  rows: EffectComparisonRow[];
 }
 
-function effectGroups(effects: BattleEffect[]): EffectGroup[] {
-  const byCategory = new Map<string, BattleEffect[]>();
+interface EffectComparisonRow {
+  key: string;
+  order: number;
+  commander?: BattleEffect;
+  castellan?: BattleEffect;
+}
 
-  effects
-    .slice()
-    .sort((a, b) => effectSortOrder(a) - effectSortOrder(b) || effectLabel(a).localeCompare(effectLabel(b)))
-    .forEach((effect) => {
-      const category = stringValue(effect.category) || 'Other effects';
-      const rows = byCategory.get(category) ?? [];
-      rows.push(effect);
-      byCategory.set(category, rows);
+interface EffectComparisonBucket {
+  key: string;
+  category: string;
+  order: number;
+  commander: BattleEffect[];
+  castellan: BattleEffect[];
+}
+
+const effectCategoryOrder: Record<string, number> = {
+  'Unit effects': 10,
+  'Attack effects': 20,
+  'Defense unit effects': 30,
+  'Defense structure effects': 40,
+  'Courtyard effects': 50,
+  'Pre-battle effects': 60,
+  'Post-battle effects': 70,
+  'Other effects': 90,
+};
+
+const effectAlignmentOrder: Record<string, number> = {
+  meleeStrength: 10,
+  rangedStrength: 11,
+  courtyardStrength: 12,
+  frontStrength: 13,
+  flankStrength: 14,
+  unitStrength: 15,
+  wallProtection: 16,
+  gateProtection: 17,
+  moatProtection: 18,
+  fireDamage: 19,
+  frontUnitLimit: 20,
+  flankUnitLimit: 21,
+  wallUnitLimit: 22,
+  finalAssaultCapacity: 23,
+  courtyardDefenseCapacity: 24,
+  allianceSupportCapacity: 25,
+  armyTravelSpeed: 30,
+  armyDetection: 31,
+  attackWarning: 32,
+  sightRadius: 33,
+  lootCapacity: 40,
+  resources: 41,
+  glory: 42,
+  honor: 43,
+  xp: 44,
+  coinLoot: 45,
+  equipmentFind: 46,
+};
+
+function effectComparisonGroups(commanderEffects: BattleEffect[], castellanEffects: BattleEffect[]): EffectComparisonGroup[] {
+  const buckets = new Map<string, EffectComparisonBucket>();
+  commanderEffects.forEach((effect) => addEffectComparisonBucket(buckets, effect, 'commander'));
+  castellanEffects.forEach((effect) => addEffectComparisonBucket(buckets, effect, 'castellan'));
+
+  const groups = new Map<string, EffectComparisonGroup>();
+  Array.from(buckets.values())
+    .sort((a, b) => a.order - b.order || a.key.localeCompare(b.key))
+    .forEach((bucket) => {
+      const commander = sortEffectsForComparison(bucket.commander);
+      const castellan = sortEffectsForComparison(bucket.castellan);
+      const rowCount = Math.max(commander.length, castellan.length);
+      if (rowCount === 0) {
+        return;
+      }
+
+      const group = groups.get(bucket.category) ?? {
+        category: bucket.category,
+        order: effectCategoryOrder[bucket.category] ?? 900,
+        rows: [],
+      };
+      for (let index = 0; index < rowCount; index += 1) {
+        group.rows.push({
+          key: `${bucket.key}-${index}`,
+          order: bucket.order + index / 100,
+          commander: commander[index],
+          castellan: castellan[index],
+        });
+      }
+      groups.set(bucket.category, group);
     });
 
-  return Array.from(byCategory.entries()).map(([category, rows]) => ({ category, effects: rows }));
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      rows: group.rows.sort((a, b) => a.order - b.order || a.key.localeCompare(b.key)),
+    }))
+    .sort((a, b) => a.order - b.order || a.category.localeCompare(b.category));
+}
+
+function addEffectComparisonBucket(
+  buckets: Map<string, EffectComparisonBucket>,
+  effect: BattleEffect,
+  side: 'commander' | 'castellan'
+) {
+  const alignmentKey = effectAlignmentKey(effect);
+  const valueKind = effectValueKind(effect);
+  const category = effectComparisonCategory(effect, alignmentKey);
+  const bucketKey = `${category}|${alignmentKey}|${valueKind}`;
+  const order = effectComparisonOrder(effect, alignmentKey);
+  const bucket = buckets.get(bucketKey) ?? {
+    key: bucketKey,
+    category,
+    order,
+    commander: [],
+    castellan: [],
+  };
+  bucket.order = Math.min(bucket.order, order);
+  bucket[side].push(effect);
+  buckets.set(bucketKey, bucket);
+}
+
+function sortEffectsForComparison(effects: BattleEffect[]): BattleEffect[] {
+  return effects
+    .slice()
+    .sort((a, b) => effectSortOrder(a) - effectSortOrder(b) || effectDescription(a).localeCompare(effectDescription(b)));
 }
 
 function effectSortOrder(effect: BattleEffect): number {
   return numericValue(effect.sortOrder) ?? 900;
+}
+
+function effectComparisonOrder(effect: BattleEffect, alignmentKey: string): number {
+  return effectAlignmentOrder[alignmentKey] ?? effectSortOrder(effect);
+}
+
+function effectComparisonCategory(effect: BattleEffect, alignmentKey: string): string {
+  if (
+    [
+      'meleeStrength',
+      'rangedStrength',
+      'courtyardStrength',
+      'frontStrength',
+      'flankStrength',
+      'unitStrength',
+    ].includes(alignmentKey)
+  ) {
+    return 'Unit effects';
+  }
+  if (['wallProtection', 'gateProtection', 'moatProtection', 'fireDamage'].includes(alignmentKey)) {
+    return 'Defense structure effects';
+  }
+  if (['finalAssaultCapacity', 'courtyardDefenseCapacity', 'allianceSupportCapacity'].includes(alignmentKey)) {
+    return 'Courtyard effects';
+  }
+  if (['armyTravelSpeed', 'armyDetection', 'attackWarning', 'sightRadius'].includes(alignmentKey)) {
+    return 'Pre-battle effects';
+  }
+  if (['lootCapacity', 'resources', 'glory', 'honor', 'xp', 'coinLoot', 'equipmentFind'].includes(alignmentKey)) {
+    return 'Post-battle effects';
+  }
+  return stringValue(effect.category) || 'Other effects';
+}
+
+function effectAlignmentKey(effect: BattleEffect): string {
+  const text = `${effectLabel(effect)} ${effectDescription(effect)}`.toLowerCase();
+
+  if (text.includes('melee')) {
+    return 'meleeStrength';
+  }
+  if (text.includes('ranged') || text.includes('range ')) {
+    return 'rangedStrength';
+  }
+  if (text.includes('combat strength') && text.includes('courtyard')) {
+    return 'courtyardStrength';
+  }
+  if (text.includes('combat strength') && text.includes('front')) {
+    return 'frontStrength';
+  }
+  if (text.includes('combat strength') && (text.includes('flank') || text.includes('flanks'))) {
+    return 'flankStrength';
+  }
+  if (text.includes('unit combat strength') || text.includes('combat strength for defense units')) {
+    return 'unitStrength';
+  }
+  if (text.includes('wall protection') || text.includes('wall reduction')) {
+    return 'wallProtection';
+  }
+  if (text.includes('gate protection') || text.includes('gate reduction')) {
+    return 'gateProtection';
+  }
+  if (text.includes('moat protection') || text.includes('moat reduction')) {
+    return 'moatProtection';
+  }
+  if (text.includes('fire damage')) {
+    return 'fireDamage';
+  }
+  if (text.includes('unit limit') && text.includes('front')) {
+    return 'frontUnitLimit';
+  }
+  if (text.includes('unit limit') && (text.includes('flank') || text.includes('flanks'))) {
+    return 'flankUnitLimit';
+  }
+  if (text.includes('unit limit') && text.includes('wall')) {
+    return 'wallUnitLimit';
+  }
+  if (text.includes('final assault')) {
+    return 'finalAssaultCapacity';
+  }
+  if (text.includes('courtyard defense capacity') || text.includes('troop capacity in courtyard defense')) {
+    return 'courtyardDefenseCapacity';
+  }
+  if (text.includes('alliance support')) {
+    return 'allianceSupportCapacity';
+  }
+  if (text.includes('later army detection')) {
+    return 'armyDetection';
+  }
+  if (text.includes('attack warning')) {
+    return 'attackWarning';
+  }
+  if (text.includes('sight radius')) {
+    return 'sightRadius';
+  }
+  if (text.includes('travel speed') || text.includes('speed')) {
+    return 'armyTravelSpeed';
+  }
+  if (text.includes('loot capacity')) {
+    return 'lootCapacity';
+  }
+  if (text.includes('resources')) {
+    return 'resources';
+  }
+  if (text.includes('glory')) {
+    return 'glory';
+  }
+  if (text.includes('honor')) {
+    return 'honor';
+  }
+  if (text.includes('xp')) {
+    return 'xp';
+  }
+  if (text.includes('coin')) {
+    return 'coinLoot';
+  }
+  if (text.includes('equipment')) {
+    return 'equipmentFind';
+  }
+
+  return `effect:${effectLabel(effect).toLowerCase()}:${effectDescription(effect).toLowerCase()}`;
+}
+
+function effectValueKind(effect: BattleEffect): string {
+  const value = effectValue(effect);
+  if (!value || value === '-') {
+    return 'none';
+  }
+  if (value.includes('%')) {
+    return 'percent';
+  }
+  return 'number';
 }
 
 function effectDisplayText(effect: BattleEffect): string {
