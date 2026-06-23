@@ -132,7 +132,7 @@ func SendEBUWithParams(wid, gridX, gridY, r, pwr, po, doid int) {
 
 // SINPayload builds EmpireEx_21 **sin** — refresh decoration/building storage inventory (response lists RD rows per SID).
 // Special case: sin carries NO JSON body, so it is the bare frame %xt%<token>%sin%1% (no trailing {} and no extra %).
-// Response shape: Logs/JSONExamples/sin.json (array of {SID, RD, …}; each RD row [wodID, amount, …]).
+// Response shape: Logs/RecvCommandsJSON/sin.json (array of {SID, RD, …}; each RD row [wodID, amount, …]).
 func SINPayload() string {
 	return fmt.Sprintf(`%%xt%%%s%%sin%%1%%`, ResponseRegistry.EmpireExToken)
 }

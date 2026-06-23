@@ -2,7 +2,7 @@ package GameCommands
 
 import "encoding/json"
 
-// Fixed slot counts per flank in EmpireEx **cra** (verified vs Logs/JSONExamples/cra_launch.json).
+// Fixed slot counts per flank in EmpireEx **cra** (verified vs Logs/RecvCommandsJSON/cra_launch.json).
 const (
 	CRALRFlankToolSlots       = 2
 	CRALRFlankUnitSlots       = 2
@@ -33,7 +33,7 @@ type CRAWave struct {
 }
 
 // CRALaunchBody is the JSON body for outbound **cra** (castle attack launch).
-// Inbound **cra** responses use a different shape (AAM); see Logs/JSONExamples/cra.json.
+// Inbound **cra** responses use a different shape (AAM); see Logs/RecvCommandsJSON/cra.json.
 type CRALaunchBody struct {
 	SX   int            `json:"SX"`
 	SY   int            `json:"SY"`
@@ -160,7 +160,7 @@ func CRAEmptyWave() CRAWave {
 	return CRAWaveFromFlanks(CRAEmptyFlankLR(), CRAEmptyFlankLR(), CRAEmptyFlankM())
 }
 
-// CRADummyMaidenProbeUnitWodID and count match Logs/JSONExamples/cra_launch.json outbound_empty_shell:
+// CRADummyMaidenProbeUnitWodID and count match Logs/RecvCommandsJSON/cra_launch.json outbound_empty_shell:
 // one wave, unit 216 × 11 on left, right, and middle flanks (minimal shield probe).
 const (
 	CRADummyMaidenProbeUnitWodID = 216
@@ -233,7 +233,7 @@ func CRALaunchBodyJSON(p CRALaunchParams) (string, error) {
 // **LID** is commander id. **HBW**/**PTT** from UseTravelFeather. **AST** = attack support tool ids;
 // **RW** = support troops as [unit wodID, count] pairs (same slot idea as AST, with quantity).
 // **AV** (AttackValid): 0 preview shell vs 1 full launch — if the server rejects **cra**, retry with the other AV.
-// Live shape: Logs/JSONExamples/cra_launch.json (outbound). Inbound AAM response: cra.json.
+// Live shape: Logs/RecvCommandsJSON/cra_launch.json (outbound). Inbound AAM response: cra.json.
 func CRAPayload(p CRALaunchParams) (string, error) {
 	body, err := CRALaunchBodyJSON(p)
 	if err != nil {
