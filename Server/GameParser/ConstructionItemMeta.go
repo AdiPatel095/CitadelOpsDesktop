@@ -24,6 +24,8 @@ type ConstructionItemMeta struct {
 	Comment1                string
 	HasAppearance           bool
 	Level                   int
+	StackSize               int
+	RecruitCostReduction    int
 	DisplayNameKey          string
 	ConstructionItemGroupID int
 	IsTCI                   bool
@@ -52,6 +54,8 @@ func buildConstructionItemMeta() {
 		LockRemoval             string `json:"lockRemoval"`
 		DisplayName             string `json:"_display_name"`
 		ConstructionItemGroupID string `json:"constructionItemGroupID"`
+		StackSize               string `json:"stackSize"`
+		RecruitCostReduction    string `json:"recruitCostReduction"`
 		Duration                string `json:"duration"`
 	}
 	if err := json.Unmarshal(b, &rows); err != nil {
@@ -68,6 +72,8 @@ func buildConstructionItemMeta() {
 		if lvl <= 0 {
 			lvl = 1
 		}
+		stackSize, _ := strconv.Atoi(strings.TrimSpace(r.StackSize))
+		recruitCostReduction, _ := strconv.Atoi(strings.TrimSpace(r.RecruitCostReduction))
 		gid, _ := strconv.Atoi(strings.TrimSpace(r.ConstructionItemGroupID))
 		c1 := strings.TrimSpace(r.Comment1)
 		hasApp := strings.EqualFold(c1, "Appearance")
@@ -80,6 +86,8 @@ func buildConstructionItemMeta() {
 			Comment1:                r.Comment1,
 			HasAppearance:           hasApp,
 			Level:                   lvl,
+			StackSize:               stackSize,
+			RecruitCostReduction:    recruitCostReduction,
 			DisplayNameKey:          r.DisplayName,
 			ConstructionItemGroupID: gid,
 			IsTCI:                   isTCI,

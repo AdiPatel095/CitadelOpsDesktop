@@ -101,6 +101,7 @@ func BuildCommStatModel(result OptimizationResult, equipment []Models.EquipmentM
 		GameParser.ProcessEquipStatComm(hero, &heroModel, &equip.CommHeroCeiling)
 		Models.ApplyCommCeiling(&heroModel, &equip.CommHeroCeiling)
 	}
+	applyCommanderSetBonuses(&equipModel, equip1, equip2, equip3, equip4, hero)
 
 	// Process Gem Stats (Bucket 3)
 	gemModel := Models.CommStatModel{}
@@ -219,6 +220,7 @@ func BuildCastStatModel(result OptimizationResult, equipment []Models.EquipmentM
 		GameParser.ProcessEquipStatCast(hero, &heroModel, &equip.CastHeroCeiling)
 		Models.ApplyCastCeiling(&heroModel, &equip.CastHeroCeiling)
 	}
+	applyCastellanSetBonuses(&equipModel, equip1, equip2, equip3, equip4, hero)
 
 	// Process Gem Stats (Bucket 3)
 	gemModel := Models.CastStatModel{}
@@ -297,6 +299,7 @@ func mergeCastStats(target *Models.CastStatModel, source Models.CastStatModel) {
 	target.CLFire += source.CLFire
 	target.CLGlory += source.CLGlory
 	target.CLEarly += source.CLEarly
+	target.ExtraStats = equip.MergeEquipmentExtraStats(target.ExtraStats, source.ExtraStats)
 }
 
 func findGemByID(id float64, gems []Models.Gem) Models.Gem {
@@ -350,6 +353,32 @@ func mergeCommStats(target *Models.CommStatModel, source Models.CommStatModel) {
 	target.CLLater += source.CLLater
 	target.CLFire += source.CLFire
 	target.CLGlory += source.CLGlory
+	target.ExtraStats = equip.MergeEquipmentExtraStats(target.ExtraStats, source.ExtraStats)
+}
+
+func applyCommanderSetBonuses(target *Models.CommStatModel, pieces ...Models.EquipmentModel) {
+	setCounts := equipmentSetCounts(pieces...)
+	for setID, equippedCount := range setCounts {
+		equip.ApplyCommanderSetBonusStats(target, setID, equippedCount)
+	}
+}
+
+func applyCastellanSetBonuses(target *Models.CastStatModel, pieces ...Models.EquipmentModel) {
+	setCounts := equipmentSetCounts(pieces...)
+	for setID, equippedCount := range setCounts {
+		equip.ApplyCastellanSetBonusStats(target, setID, equippedCount)
+	}
+}
+
+func equipmentSetCounts(pieces ...Models.EquipmentModel) map[float64]int {
+	setCounts := make(map[float64]int)
+	for _, piece := range pieces {
+		if piece.ID == 0 || piece.SetID <= 0 {
+			continue
+		}
+		setCounts[piece.SetID]++
+	}
+	return setCounts
 }
 
 // ValidateEquipmentSlots checks if any equipment slot type has 0 items

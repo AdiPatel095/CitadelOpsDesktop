@@ -13,8 +13,10 @@ type BarracksProductionSlot struct {
 
 // BarracksProductionQueue holds one **spl** strip for a single LID on this castle (see SlotProductionByLID).
 type BarracksProductionQueue struct {
-	LID    int                      `json:"lid"`
-	Active *BarracksProductionSlot  `json:"active,omitempty"`
-	Queued []BarracksProductionSlot `json:"queued"`
-	TCT    int                      `json:"tct,omitempty"`
+	LID           int                      `json:"lid"`
+	Active        *BarracksProductionSlot  `json:"active,omitempty"`
+	Queued        []BarracksProductionSlot `json:"queued"`
+	QueueCapacity int                      `json:"queueCapacity,omitempty"`
+	VIPSlots      int                      `json:"vipSlots,omitempty"`
+	TCT           int                      `json:"tct,omitempty"`
 }

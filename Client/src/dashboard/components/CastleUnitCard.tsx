@@ -21,12 +21,12 @@ const CastleUnitCard: React.FC<CastleUnitCardProps> = ({ title, troopsMixed, tro
     .sort((a, b) => (troopsMixed[b] || 0) - (troopsMixed[a] || 0));
 
   return (
-    <Card className="flex flex-col min-h-0">
-      <CardHeader className="pb-3">
+    <Card className="liquid-prominent-header-card flex flex-col min-h-0">
+      <CardHeader className="liquid-card-header-prominent">
         <CardTitle className="text-primary">{title}</CardTitle>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-y-auto custom-scrollbar pt-3">
+      <CardContent className="liquid-prominent-header-content flex-1 overflow-y-auto custom-scrollbar">
         {sortedUnitIds.length === 0 ? (
           <div className="text-center py-8 text-text-muted">
             <p className="text-sm">No units found</p>
@@ -40,8 +40,8 @@ const CastleUnitCard: React.FC<CastleUnitCardProps> = ({ title, troopsMixed, tro
 
               return (
                 <div key={unitId} className="relative pt-3 pb-2">
-                  <div className="relative flex min-h-[164px] flex-col items-center justify-center rounded-global border border-border-base bg-bg-card-hover px-2 pb-4 pt-4 transition-all duration-200 hover:border-primary/50">
-                    <span className="absolute left-1/2 top-0 z-10 max-w-[calc(100%-20px)] -translate-x-1/2 -translate-y-1/2 truncate rounded-full bg-bg-app px-3 py-1 text-center text-[10px] font-bold text-text-main shadow-sm ring-1 ring-border-base">
+                  <div className="relative flex min-h-[164px] flex-col items-center justify-center rounded-global border border-border-light bg-bg-card/45 px-2 pb-4 pt-4 shadow-sm backdrop-blur-xl transition-all duration-200 hover:border-primary/50 hover:bg-bg-card-hover/70">
+                    <span className="absolute left-1/2 top-0 z-10 max-w-[calc(100%-20px)] -translate-x-1/2 -translate-y-1/2 truncate rounded-full bg-bg-card/90 px-3 py-1 text-center text-[10px] font-bold text-text-main shadow-sm ring-1 ring-border-light backdrop-blur-xl">
                       {name}
                     </span>
 
@@ -49,7 +49,7 @@ const CastleUnitCard: React.FC<CastleUnitCardProps> = ({ title, troopsMixed, tro
                       <UnitImage unitId={unitId} size={104} showLevel={true} className="drop-shadow-md" />
                     </div>
                   </div>
-                  <span className="absolute bottom-0 left-0 z-10 min-w-[3rem] -translate-x-[8%] translate-y-[0%] rounded-full bg-white px-3 py-1 text-center text-[11px] font-bold tabular-nums text-slate-900 shadow-md ring-1 ring-black/10">
+                  <span className="absolute bottom-0 left-0 z-10 min-w-[3rem] -translate-x-[8%] translate-y-[0%] rounded-full bg-bg-card/95 px-3 py-1 text-center text-[11px] font-bold tabular-nums text-text-main shadow-md ring-1 ring-border-light backdrop-blur-xl">
                     {formatBadgeCount(inCastle)}
                   </span>
                   <span className="absolute bottom-0 right-0 z-10 min-w-[3rem] translate-x-[8%] translate-y-[0%] rounded-full bg-primary px-3 py-1 text-center text-[11px] font-bold tabular-nums text-text-inverted shadow-md ring-1 ring-primary/30">

@@ -3,6 +3,7 @@ import React from 'react';
 export interface ToggleGroupOption {
   value: string;
   label: React.ReactNode;
+  icon?: React.ReactNode;
   /** Native tooltip (useful for truncated labels in scrollable groups) */
   title?: string;
 }
@@ -26,32 +27,9 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
   fullWidth = false,
   variant = 'primary',
 }) => {
-  const sizes = {
-    sm: 'text-xs',
-    md: 'text-sm',
-    lg: 'text-base',
-  };
-
-  const btnSizes = {
-    sm: 'px-2.5 py-1',
-    md: 'px-5 py-1.5',
-    lg: 'px-7 py-2',
-  };
-
-  const activeBtnSizes = {
-    sm: 'px-3 py-1.5 -mx-0.5 -my-0.5 first:ml-0 last:mr-0',
-    md: 'px-6 py-2.5 -mx-1 -my-1 first:ml-0 last:mr-0',
-    lg: 'px-8 py-3 -mx-1 -my-1 first:ml-0 last:mr-0',
-  };
-
-  const activeStyles = {
-    primary: 'text-text-inverted shadow-[0_0_15px_rgba(16,185,129,0.2)] bg-primary',
-    neutral: 'bg-bg-card shadow-lg border border-border-base text-text-main',
-  };
-
   return (
     <div
-      className={`${fullWidth ? 'flex w-full' : 'inline-flex'} flex-nowrap items-center bg-bg-app border border-border-base rounded-[24px] relative ${sizes[size]} ${className}`}
+      className={`liquid-toggle-group liquid-toggle-group-${size} ${fullWidth ? 'liquid-toggle-group-full' : ''} ${className}`}
       role="group"
     >
       {options.map((option) => {
@@ -65,13 +43,13 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
             type="button"
             title={tip}
             onClick={() => onChange(option.value)}
-            className={`
-              relative z-10 font-semibold rounded-[24px] transition-all duration-200 ease-out whitespace-nowrap
-              ${fullWidth ? 'flex-1' : ''}
-              ${isActive ? activeBtnSizes[size] : btnSizes[size]}
-              ${isActive ? activeStyles[variant] : 'text-text-muted hover:text-text-main'}
-            `}
+            className={`liquid-toggle-btn liquid-toggle-btn-${size} ${fullWidth ? 'liquid-toggle-btn-full' : ''} ${
+              isActive
+                ? `liquid-toggle-btn-active liquid-toggle-btn-active-${variant}`
+                : 'liquid-toggle-btn-inactive'
+            }`}
           >
+            {option.icon && <span className="liquid-toggle-btn-icon">{option.icon}</span>}
             {option.label}
           </button>
         );

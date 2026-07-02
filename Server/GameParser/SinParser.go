@@ -8,7 +8,7 @@ import (
 )
 
 // ParseDecorationStorageCountsFromSINJSON parses the **sin** response JSON body.
-// Shape matches Logs/JSONExamples/sin.json: a top-level array of segments { "SID", "RD", "CD", "UD" }.
+// Shape matches Logs/RecvCommandsJSON/sin.json: a top-level array of segments { "SID", "RD", "CD", "UD" }.
 // Each RD row is [ typeId, amount, … ]; index 0 = type id, index 1 = count. Counts are summed across all segments and rows.
 // For decoration storage that id is a decor wodID; for other SIDs the same field is still the wire "WID"/wod slot
 // (e.g. construction-item rows use the same id as JAA gca.CI CIL.CID / construction_items constructionItemID — not decoration wodIDs).

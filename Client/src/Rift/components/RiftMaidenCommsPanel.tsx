@@ -144,8 +144,8 @@ const RiftMaidenCommsPanel: React.FC = () => {
   ]);
 
   return (
-    <Card className="border-border-base bg-bg-app/20">
-      <CardHeader className="pb-3 border-b border-border-base bg-bg-card-hover/50 rounded-t-[calc(var(--radius-global)-1px)]">
+    <Card className="liquid-prominent-header-card">
+      <CardHeader className="liquid-card-header-prominent">
         <div>
           <CardTitle className="text-lg text-primary">Maiden comms wave</CardTitle>
           <p className="text-xs text-text-muted mt-1">
@@ -154,7 +154,7 @@ const RiftMaidenCommsPanel: React.FC = () => {
           </p>
         </div>
       </CardHeader>
-      <CardContent className="pt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <CardContent className="liquid-prominent-header-content flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 min-w-0">
           <p className="text-sm text-text-muted">
             Launch point: focused castle. Attacks are staggered (4–5s apart, or Settings attack delay range).

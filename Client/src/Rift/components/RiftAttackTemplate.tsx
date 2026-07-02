@@ -103,8 +103,8 @@ const RiftAttackTemplate: React.FC = () => {
 
   return (
     <>
-      <Card className="border-border-base bg-bg-app/20">
-        <CardHeader className="pb-3 border-b border-border-base bg-bg-card-hover/50 rounded-t-[calc(var(--radius-global)-1px)]">
+      <Card className="liquid-prominent-header-card">
+        <CardHeader className="liquid-card-header-prominent">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <CardTitle className="text-lg text-primary">Captured Rift attacks</CardTitle>
@@ -127,7 +127,7 @@ const RiftAttackTemplate: React.FC = () => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="liquid-prominent-header-content">
         {launches.length === 0 ? (
           <p className="text-sm text-text-muted">
             {gameLoggedIn

@@ -114,7 +114,7 @@ const SettingsView: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="responsive-page-heading mb-6">
         <div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-text-main to-text-main/70 bg-clip-text text-transparent">
             System Settings
@@ -124,8 +124,8 @@ const SettingsView: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        <Card className="overflow-hidden border-border-base">
-          <CardHeader className="bg-bg-card-hover/50 pb-4 border-b border-border-base rounded-t-[calc(var(--radius-global)-1px)]">
+        <Card className="liquid-prominent-header-card">
+          <CardHeader className="liquid-card-header-prominent">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
                 <Icons.Activity className="w-4 h-4 text-indigo-400" />
@@ -134,7 +134,7 @@ const SettingsView: React.FC = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="p-6 space-y-8">
+          <CardContent className="liquid-prominent-header-content p-6 space-y-8">
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-text-main mb-1">Random Attack Timer Range</h3>
@@ -145,7 +145,7 @@ const SettingsView: React.FC = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="relative flex-1 max-w-[200px]">
+                <div className="relative flex-1 w-full sm:max-w-[200px]">
                   <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                     Min Delay (Sec)
                   </label>
@@ -163,7 +163,7 @@ const SettingsView: React.FC = () => {
 
                 <div className="hidden sm:block mt-6 text-text-muted font-bold">-</div>
 
-                <div className="relative flex-1 max-w-[200px]">
+                <div className="relative flex-1 w-full sm:max-w-[200px]">
                   <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                     Max Delay (Sec)
                   </label>
@@ -184,7 +184,7 @@ const SettingsView: React.FC = () => {
             <div className="h-px bg-border-base w-full"></div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-text-main mb-1">Priority Categorization</h3>
                   <p className="text-xs text-text-muted">
@@ -194,6 +194,7 @@ const SettingsView: React.FC = () => {
                 <Button
                   onClick={() => setIsPriorityModalOpen(true)}
                   leftIcon={<Icons.List className="w-4 h-4" />}
+                  className="w-full sm:w-auto"
                 >
                   Manage Priorities
                 </Button>
@@ -202,8 +203,8 @@ const SettingsView: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden border-border-base">
-          <CardHeader className="bg-bg-card-hover/50 pb-4 border-b border-border-base rounded-t-[calc(var(--radius-global)-1px)]">
+        <Card className="liquid-prominent-header-card">
+          <CardHeader className="liquid-card-header-prominent">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                 <Icons.Shield className="w-4 h-4 text-emerald-400" />
@@ -212,7 +213,7 @@ const SettingsView: React.FC = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="liquid-prominent-header-content p-6 space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-text-main mb-1">Upgrade Step Delay</h3>
               <p className="text-xs text-text-muted mb-4">
@@ -220,7 +221,7 @@ const SettingsView: React.FC = () => {
               </p>
             </div>
 
-            <div className="relative flex-1 max-w-[200px]">
+            <div className="relative flex-1 w-full sm:max-w-[200px]">
               <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                 Delay (ms)
               </label>
@@ -244,7 +245,7 @@ const SettingsView: React.FC = () => {
               </p>
             </div>
 
-            <div className="relative flex-1 max-w-[200px]">
+            <div className="relative flex-1 w-full sm:max-w-[200px]">
               <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                 Minimum Coins
               </label>

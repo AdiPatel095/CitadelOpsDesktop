@@ -69,7 +69,9 @@ type ParsedReport struct {
 	MID              int64              `json:"mid,omitempty"`
 	LID              int64              `json:"lid,omitempty"`
 	BattleKey        string             `json:"battleKey,omitempty"`
-	KingdomID        int                `json:"kingdomID,omitempty"`
+	KingdomID        *int               `json:"kingdomID,omitempty"`
+	TargetX          *int               `json:"targetX,omitempty"`
+	TargetY          *int               `json:"targetY,omitempty"`
 	TargetName       string             `json:"targetName,omitempty"`
 	CastleName       string             `json:"castleName,omitempty"`
 	BattleType       string             `json:"battleType,omitempty"`
@@ -814,7 +816,16 @@ func applyBattleMeta(report *ParsedReport, bls map[string]interface{}) {
 			report.CastleName = targetName
 		}
 		if kingdomID, ok := int64FromValue(ai["K"]); ok {
-			report.KingdomID = int(kingdomID)
+			value := int(kingdomID)
+			report.KingdomID = &value
+		}
+		if targetX, xOK := int64FromValue(ai["X"]); xOK {
+			if targetY, yOK := int64FromValue(ai["Y"]); yOK {
+				xValue := int(targetX)
+				yValue := int(targetY)
+				report.TargetX = &xValue
+				report.TargetY = &yValue
+			}
 		}
 	}
 	players := playerInfoByOID(bls)

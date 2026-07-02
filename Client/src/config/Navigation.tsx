@@ -9,7 +9,6 @@ export type ViewId =
   | 'movement'
   | 'battle-stats'
   | 'rift'
-  | 'event-modules'
   | 'settings'
   | 'patch-notes';
 
@@ -27,7 +26,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     { id: 'movement', label: 'Movement', icon: <Icons.Activity />, section: 'main' },
     { id: 'battle-stats', label: 'Battle Stats', icon: <Icons.Activity />, section: 'main' },
     { id: 'rift', label: 'Rift', icon: <Icons.Rift />, section: 'main' },
-    { id: 'event-modules', label: 'Event Modules', icon: <Icons.Trophy />, section: 'main' },
     { id: 'settings', label: 'Settings', icon: <Icons.Settings />, section: 'system' },
     { id: 'patch-notes', label: 'Patch Notes', icon: <Icons.PatchNotes />, section: 'system' },
     { id: 'support', label: 'Support', icon: <Icons.Help />, section: 'system' },

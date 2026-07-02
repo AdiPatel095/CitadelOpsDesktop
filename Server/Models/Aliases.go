@@ -71,6 +71,10 @@ func RandomAttackDelay() time.Duration {
 func AttackDelayBetweenSends() time.Duration { return settings.AttackDelayBetweenSends() }
 
 type (
+	VipState           = gamestate.VipState
+	ActiveSubscription = gamestate.ActiveSubscription
+	SubscriptionState  = gamestate.SubscriptionState
+
 	PlayerCastleInfo        = castle.PlayerCastleInfo
 	PlayerCastles           = castle.PlayerCastles
 	CastleFocus             = castle.CastleFocus
@@ -109,8 +113,11 @@ type (
 	SaveInCastleTroops  = settings.SaveInCastleTroops
 	AutoBirdDelayConfig = settings.AutoBirdDelayConfig
 	RecruitTroopsConfig = settings.RecruitTroopsConfig
+	AutoToolConfig      = settings.AutoToolConfig
 	AutoTCIConfig       = settings.AutoTCIConfig
 	AutoBeriWorldConfig = settings.AutoBeriWorldConfig
+	FeatureSchedule     = settings.FeatureSchedule
+	FeatureScheduleSlot = settings.FeatureScheduleSlot
 	TabPriority         = settings.TabPriority
 
 	LoggedBird = sentbird.LoggedBird

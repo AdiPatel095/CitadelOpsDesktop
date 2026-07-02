@@ -19,27 +19,28 @@ type CommStatModel struct {
 	Gem4   float64 `json:"gem4"`
 
 	//base stats
-	MeleeCbtStr float64 `json:"meleeCbtStr"`
-	RangeCbtStr float64 `json:"rangeCbtStr"`
-	FrontCbtStr float64 `json:"frontCbtStr"`
-	FlankCbtStr float64 `json:"flankCbtStr"`
-	AllCbtStr   float64 `json:"allCbtStr"`
-	CyCbtStr    float64 `json:"cyCbtStr"`
-	WallStr     float64 `json:"wallStr"`
-	GateStr     float64 `json:"gateStr"`
-	MoatStr     float64 `json:"moatStr"`
-	FlankLimit  float64 `json:"flankLimit"`
-	FrontLimit  float64 `json:"frontLimit"`
-	MeadStr     float64 `json:"meadStr"`
-	HorrorStr   float64 `json:"horrorStr"`
-	EliteStr    float64 `json:"eliteStr"`
-	Wave        float64 `json:"wave"`
-	Cooldown    float64 `json:"cooldown"`
-	RelicStr    float64 `json:"relicStr"`
-	BeserkerStr float64 `json:"beserkerStr"`
-	MaidenSupp  float64 `json:"maidenSupp"`
-	Travel      float64 `json:"travel"`
-	Loot        float64 `json:"loot"`
+	MeleeCbtStr         float64 `json:"meleeCbtStr"`
+	RangeCbtStr         float64 `json:"rangeCbtStr"`
+	FrontCbtStr         float64 `json:"frontCbtStr"`
+	FlankCbtStr         float64 `json:"flankCbtStr"`
+	AllCbtStr           float64 `json:"allCbtStr"`
+	CyCbtStr            float64 `json:"cyCbtStr"`
+	WallStr             float64 `json:"wallStr"`
+	GateStr             float64 `json:"gateStr"`
+	MoatStr             float64 `json:"moatStr"`
+	FlankLimit          float64 `json:"flankLimit"`
+	FrontLimit          float64 `json:"frontLimit"`
+	MeadStr             float64 `json:"meadStr"`
+	HorrorStr           float64 `json:"horrorStr"`
+	EliteStr            float64 `json:"eliteStr"`
+	Wave                float64 `json:"wave"`
+	Cooldown            float64 `json:"cooldown"`
+	RelicStr            float64 `json:"relicStr"`
+	BeserkerStr         float64 `json:"beserkerStr"`
+	MaidenSupp          float64 `json:"maidenSupp"`
+	AttackReinforcement float64 `json:"attackReinforcement"`
+	Travel              float64 `json:"travel"`
+	Loot                float64 `json:"loot"`
 
 	//NPCStats
 	NPCMelee float64 `json:"NPCMelee"`
@@ -64,6 +65,8 @@ type CommStatModel struct {
 	CLLater float64 `json:"CLLater"`
 	CLFire  float64 `json:"CLFire"`
 	CLGlory float64 `json:"CLGlory"`
+
+	ExtraStats []EquipmentExtraStat `json:"extraStats,omitempty"`
 }
 
 // CommDBUpdater defines the function signature for updating a CommStatModel field.
@@ -161,6 +164,7 @@ var CommStatUpdaterMap = map[float64]CommDBUpdater{
 	//hero bonus
 	20012: func(c *CommStatModel, v float64) { c.EliteStr += v },
 	20013: func(c *CommStatModel, v float64) { c.HorrorStr += v },
+	20014: func(c *CommStatModel, v float64) { c.EliteStr += v },
 	20015: func(c *CommStatModel, v float64) { c.BeserkerStr += v },
 	20016: func(c *CommStatModel, v float64) { c.RelicStr += v },
 	20017: func(c *CommStatModel, v float64) { c.MeadStr += v },
@@ -172,168 +176,171 @@ var CommStatUpdaterMap = map[float64]CommDBUpdater{
 var CommStatArray []CommStatModel
 
 var CommEquipCeiling = CommStatModel{
-	ID:          0,
-	Name:        "",
-	Equip1:      0,
-	Equip2:      0,
-	Equip3:      0,
-	Equip4:      0,
-	Hero:        0,
-	Gem1:        0,
-	Gem2:        0,
-	Gem3:        0,
-	Gem4:        0,
-	MeleeCbtStr: 140,
-	RangeCbtStr: 140,
-	FrontCbtStr: 20,
-	FlankCbtStr: 20,
-	AllCbtStr:   20,
-	CyCbtStr:    100,
-	WallStr:     160,
-	GateStr:     160,
-	MoatStr:     120,
-	FlankLimit:  50,
-	FrontLimit:  50,
-	MeadStr:     0,
-	HorrorStr:   0,
-	EliteStr:    0,
-	Wave:        0,
-	Cooldown:    0,
-	RelicStr:    0,
-	BeserkerStr: 0,
-	MaidenSupp:  1050,
-	Travel:      100,
-	Loot:        50,
-	NPCMelee:    0,
-	NPCRange:    0,
-	NPCFront:    0,
-	NPCFlank:    0,
-	NPCCy:       0,
-	NPCWall:     0,
-	NPCGate:     0,
-	NPCMoat:     0,
-	NPCGlory:    0,
-	CLMelee:     0,
-	CLRange:     0,
-	CLFront:     0,
-	CLFlank:     0,
-	CLCy:        0,
-	CLWall:      0,
-	CLGate:      0,
-	CLMoat:      0,
-	CLLater:     0,
-	CLFire:      0,
-	CLGlory:     0,
+	ID:                  0,
+	Name:                "",
+	Equip1:              0,
+	Equip2:              0,
+	Equip3:              0,
+	Equip4:              0,
+	Hero:                0,
+	Gem1:                0,
+	Gem2:                0,
+	Gem3:                0,
+	Gem4:                0,
+	MeleeCbtStr:         140,
+	RangeCbtStr:         140,
+	FrontCbtStr:         20,
+	FlankCbtStr:         20,
+	AllCbtStr:           20,
+	CyCbtStr:            100,
+	WallStr:             160,
+	GateStr:             160,
+	MoatStr:             120,
+	FlankLimit:          50,
+	FrontLimit:          50,
+	MeadStr:             0,
+	HorrorStr:           0,
+	EliteStr:            0,
+	Wave:                0,
+	Cooldown:            0,
+	RelicStr:            0,
+	BeserkerStr:         0,
+	MaidenSupp:          1050,
+	AttackReinforcement: 1500,
+	Travel:              100,
+	Loot:                50,
+	NPCMelee:            0,
+	NPCRange:            0,
+	NPCFront:            0,
+	NPCFlank:            0,
+	NPCCy:               0,
+	NPCWall:             0,
+	NPCGate:             0,
+	NPCMoat:             0,
+	NPCGlory:            0,
+	CLMelee:             0,
+	CLRange:             0,
+	CLFront:             0,
+	CLFlank:             0,
+	CLCy:                0,
+	CLWall:              0,
+	CLGate:              0,
+	CLMoat:              0,
+	CLLater:             0,
+	CLFire:              0,
+	CLGlory:             0,
 }
 
 var CommHeroCeiling = CommStatModel{
-	ID:          0,
-	Name:        "",
-	Equip1:      0,
-	Equip2:      0,
-	Equip3:      0,
-	Equip4:      0,
-	Hero:        0,
-	Gem1:        0,
-	Gem2:        0,
-	Gem3:        0,
-	Gem4:        0,
-	MeleeCbtStr: 0,
-	RangeCbtStr: 0,
-	FrontCbtStr: 0,
-	FlankCbtStr: 0,
-	AllCbtStr:   0,
-	CyCbtStr:    0,
-	WallStr:     0,
-	GateStr:     0,
-	MoatStr:     0,
-	FlankLimit:  0,
-	FrontLimit:  0,
-	MeadStr:     20,
-	HorrorStr:   0,
-	EliteStr:    0,
-	Wave:        1,
-	Cooldown:    0,
-	RelicStr:    0,
-	BeserkerStr: 0,
-	MaidenSupp:  0,
-	Travel:      0,
-	Loot:        0,
-	NPCMelee:    50,
-	NPCRange:    50,
-	NPCFront:    40,
-	NPCFlank:    40,
-	NPCCy:       60,
-	NPCWall:     60,
-	NPCGate:     60,
-	NPCMoat:     30,
-	NPCGlory:    120,
-	CLMelee:     50,
-	CLRange:     50,
-	CLFront:     40,
-	CLFlank:     40,
-	CLCy:        60,
-	CLWall:      60,
-	CLGate:      60,
-	CLMoat:      30,
-	CLLater:     90,
-	CLFire:      50,
-	CLGlory:     30,
+	ID:                  0,
+	Name:                "",
+	Equip1:              0,
+	Equip2:              0,
+	Equip3:              0,
+	Equip4:              0,
+	Hero:                0,
+	Gem1:                0,
+	Gem2:                0,
+	Gem3:                0,
+	Gem4:                0,
+	MeleeCbtStr:         0,
+	RangeCbtStr:         0,
+	FrontCbtStr:         0,
+	FlankCbtStr:         0,
+	AllCbtStr:           0,
+	CyCbtStr:            0,
+	WallStr:             0,
+	GateStr:             0,
+	MoatStr:             0,
+	FlankLimit:          0,
+	FrontLimit:          0,
+	MeadStr:             20,
+	HorrorStr:           0,
+	EliteStr:            0,
+	Wave:                1,
+	Cooldown:            0,
+	RelicStr:            0,
+	BeserkerStr:         0,
+	MaidenSupp:          0,
+	AttackReinforcement: 0,
+	Travel:              0,
+	Loot:                0,
+	NPCMelee:            50,
+	NPCRange:            50,
+	NPCFront:            40,
+	NPCFlank:            40,
+	NPCCy:               60,
+	NPCWall:             60,
+	NPCGate:             60,
+	NPCMoat:             30,
+	NPCGlory:            120,
+	CLMelee:             50,
+	CLRange:             50,
+	CLFront:             40,
+	CLFlank:             40,
+	CLCy:                60,
+	CLWall:              60,
+	CLGate:              60,
+	CLMoat:              30,
+	CLLater:             90,
+	CLFire:              50,
+	CLGlory:             30,
 }
 
 var CommGemCeiling = CommStatModel{
-	ID:          0,
-	Name:        "",
-	Equip1:      0,
-	Equip2:      0,
-	Equip3:      0,
-	Equip4:      0,
-	Hero:        0,
-	Gem1:        0,
-	Gem2:        0,
-	Gem3:        0,
-	Gem4:        0,
-	MeleeCbtStr: 140,
-	RangeCbtStr: 140,
-	FrontCbtStr: 0,
-	FlankCbtStr: 0,
-	AllCbtStr:   0,
-	CyCbtStr:    100,
-	WallStr:     160,
-	GateStr:     160,
-	MoatStr:     120,
-	FlankLimit:  50,
-	FrontLimit:  50,
-	MeadStr:     0,
-	HorrorStr:   0,
-	EliteStr:    0,
-	Wave:        0,
-	Cooldown:    0,
-	RelicStr:    0,
-	BeserkerStr: 0,
-	MaidenSupp:  0,
-	Travel:      0,
-	Loot:        0,
-	NPCMelee:    50,
-	NPCRange:    50,
-	NPCFront:    40,
-	NPCFlank:    40,
-	NPCCy:       60,
-	NPCWall:     60,
-	NPCGate:     60,
-	NPCMoat:     30,
-	NPCGlory:    30,
-	CLMelee:     50,
-	CLRange:     50,
-	CLFront:     40,
-	CLFlank:     40,
-	CLCy:        60,
-	CLWall:      60,
-	CLGate:      60,
-	CLMoat:      30,
-	CLLater:     90,
-	CLFire:      50,
-	CLGlory:     30,
+	ID:                  0,
+	Name:                "",
+	Equip1:              0,
+	Equip2:              0,
+	Equip3:              0,
+	Equip4:              0,
+	Hero:                0,
+	Gem1:                0,
+	Gem2:                0,
+	Gem3:                0,
+	Gem4:                0,
+	MeleeCbtStr:         140,
+	RangeCbtStr:         140,
+	FrontCbtStr:         0,
+	FlankCbtStr:         0,
+	AllCbtStr:           0,
+	CyCbtStr:            100,
+	WallStr:             160,
+	GateStr:             160,
+	MoatStr:             120,
+	FlankLimit:          50,
+	FrontLimit:          50,
+	MeadStr:             0,
+	HorrorStr:           0,
+	EliteStr:            0,
+	Wave:                0,
+	Cooldown:            0,
+	RelicStr:            0,
+	BeserkerStr:         0,
+	MaidenSupp:          0,
+	AttackReinforcement: 0,
+	Travel:              0,
+	Loot:                0,
+	NPCMelee:            50,
+	NPCRange:            50,
+	NPCFront:            40,
+	NPCFlank:            40,
+	NPCCy:               60,
+	NPCWall:             60,
+	NPCGate:             60,
+	NPCMoat:             30,
+	NPCGlory:            30,
+	CLMelee:             50,
+	CLRange:             50,
+	CLFront:             40,
+	CLFlank:             40,
+	CLCy:                60,
+	CLWall:              60,
+	CLGate:              60,
+	CLMoat:              30,
+	CLLater:             90,
+	CLFire:              50,
+	CLGlory:             30,
 }
 
 func ApplyCommCeiling(srcComm *CommStatModel, ceilingComm *CommStatModel) {
@@ -393,6 +400,9 @@ func ApplyCommCeiling(srcComm *CommStatModel, ceilingComm *CommStatModel) {
 	}
 	if ceilingComm.MaidenSupp > 0 {
 		srcComm.MaidenSupp = math.Min(srcComm.MaidenSupp, ceilingComm.MaidenSupp)
+	}
+	if ceilingComm.AttackReinforcement > 0 {
+		srcComm.AttackReinforcement = math.Min(srcComm.AttackReinforcement, ceilingComm.AttackReinforcement)
 	}
 	if ceilingComm.Travel > 0 {
 		srcComm.Travel = math.Min(srcComm.Travel, ceilingComm.Travel)

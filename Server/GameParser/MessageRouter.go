@@ -44,6 +44,12 @@ func MessageRouter(messageParts []string) {
 			return
 		}
 		InitiateDetails(payload)
+		ApplyGPCQueueableFromPayload(Models.GetGameState(), payload)
+	case "gpc":
+		if !hasPayload {
+			return
+		}
+		ApplyGPCQueueableFromPayload(Models.GetGameState(), payload)
 	case "gei":
 		if !hasPayload {
 			return
@@ -57,6 +63,19 @@ func MessageRouter(messageParts []string) {
 		if err := json.Unmarshal([]byte(payload), &gcuMap); err == nil {
 			UpdateCoins(gcuMap)
 		}
+	case "sce":
+		if !hasPayload {
+			return
+		}
+		var sceArray []interface{}
+		if err := json.Unmarshal([]byte(payload), &sceArray); err == nil {
+			UpdateSCE(sceArray)
+		}
+	case "sie", "upc":
+		if !hasPayload {
+			return
+		}
+		UpdateSubscriptionInfoFromPayload(payload)
 	case "eqe":
 		if !hasPayload {
 			return
@@ -152,7 +171,9 @@ func MessageRouter(messageParts []string) {
 		buildingsChanged := ApplyJAABuildingRowsFromPayload(gs, payload)
 		troopsChanged := ApplyJAATroopsFromPayload(gs, payload)
 		constructionChanged := ApplyJAAConstructionSlotsFromPayload(gs, payload)
-		if (focusChanged || buildingsChanged || troopsChanged || constructionChanged) && NotifyCastleFocusChanged != nil {
+		slotProductionChanged := ApplyJAASlotProductionFromPayload(gs, payload)
+		resourcesChanged := ApplyCastleResourceAmountsFromPayload(gs, payload)
+		if (focusChanged || buildingsChanged || troopsChanged || constructionChanged || slotProductionChanged || resourcesChanged) && NotifyCastleFocusChanged != nil {
 			NotifyCastleFocusChanged()
 		}
 		if m, ok := ParseEmbeddedSINStorageCountsFromEnvelopeJSON(payload); ok {
@@ -180,7 +201,30 @@ func MessageRouter(messageParts []string) {
 			return
 		}
 		gs := Models.GetGameState()
-		if ApplySlotProductionFromSPLJSON(gs, payload) && NotifyCastleFocusChanged != nil {
+		var root map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &root); err == nil {
+			UpdateCoinsFromPayload(root)
+			UpdateSCEFromPayload(root)
+		}
+		slotProductionChanged := ApplySlotProductionFromSPLJSON(gs, payload)
+		resourcesChanged := ApplyCastleResourceAmountsFromPayload(gs, payload)
+		if (slotProductionChanged || resourcesChanged) && NotifyCastleFocusChanged != nil {
+			NotifyCastleFocusChanged()
+		}
+	case "hru", "hdu":
+		if !hasPayload {
+			return
+		}
+		gs := Models.GetGameState()
+		var root map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &root); err == nil {
+			UpdateCoinsFromPayload(root)
+			UpdateSCEFromPayload(root)
+		}
+		troopsChanged := ApplyFocusedCastleTroopsFromPayload(gs, payload)
+		slotProductionChanged := ApplySlotProductionFromSPLJSON(gs, payload)
+		resourcesChanged := ApplyCastleResourceAmountsFromPayload(gs, payload)
+		if (troopsChanged || slotProductionChanged || resourcesChanged) && NotifyCastleFocusChanged != nil {
 			NotifyCastleFocusChanged()
 		}
 	case "crin":

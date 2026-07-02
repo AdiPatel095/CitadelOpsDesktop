@@ -100,6 +100,15 @@ func InitiateDetails(data string) {
 		} else {
 			log.Printf("[parser] gbd: gpi missing or not an object")
 		}
+		if vipMap, ok := jsonDataMap["vip"].(map[string]interface{}); ok {
+			UpdateVIPInfo(vipMap)
+		}
+		if subscriptionMap, ok := jsonDataMap["sie"].(map[string]interface{}); ok {
+			UpdateSubscriptionInfo(subscriptionMap)
+		}
+		if subscriptionMap, ok := jsonDataMap["upc"].(map[string]interface{}); ok {
+			UpdateSubscriptionInfo(subscriptionMap)
+		}
 	}()
 
 	go func() {

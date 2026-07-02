@@ -29,11 +29,11 @@ export const Switch: React.FC<SwitchProps> = ({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`
-        relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent 
+        relative inline-flex shrink-0 cursor-pointer rounded-full border
         transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 
         focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app
         ${currentSize.w} ${currentSize.h}
-        ${checked ? 'bg-primary' : 'bg-bg-card-hover border-border-base'}
+        ${checked ? 'bg-primary border-primary/40 shadow-glow' : 'bg-bg-card/55 border-border-base backdrop-blur-xl'}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
       `}
     >
@@ -41,7 +41,7 @@ export const Switch: React.FC<SwitchProps> = ({
       <span
         aria-hidden="true"
         className={`
-          pointer-events-none inline-block rounded-full bg-white shadow ring-0 
+          pointer-events-none inline-block rounded-full bg-white shadow-lg ring-0
           transition duration-200 ease-in-out ${currentSize.dot}
           ${checked ? currentSize.translate : 'translate-x-0'}
         `}

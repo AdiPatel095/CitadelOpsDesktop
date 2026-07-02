@@ -79,8 +79,8 @@ const DecorationPresetsPanel: React.FC = () => {
   return (
     <div className="grid grid-cols-1 gap-6 h-full">
       {/* Save from current scan */}
-      <Card variant="solid" className="flex flex-col min-h-0 border-border-base bg-bg-app/20">
-        <CardHeader className="bg-bg-card-hover/50 pb-4 border-b border-border-base rounded-t-[calc(var(--radius-global)-1px)]">
+      <Card variant="solid" className="liquid-prominent-header-card flex flex-col min-h-0">
+        <CardHeader className="liquid-card-header-prominent">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
               <Icons.Sparkles className="h-4 w-4 text-violet-400" />
@@ -94,7 +94,7 @@ const DecorationPresetsPanel: React.FC = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="flex flex-col flex-1 min-h-0 space-y-5 p-5">
+        <CardContent className="liquid-prominent-header-content flex flex-col flex-1 min-h-0 space-y-5 p-5">
           <div className="px-2 py-1">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
               <div className="min-w-0 lg:w-48">
@@ -145,8 +145,8 @@ const DecorationPresetsPanel: React.FC = () => {
       </Card>
 
       {/* Saved presets */}
-      <Card variant="solid" className="flex flex-col min-h-0 border-border-base bg-bg-app/20">
-        <CardHeader className="bg-bg-card-hover/50 pb-4 border-b border-border-base rounded-t-[calc(var(--radius-global)-1px)]">
+      <Card variant="solid" className="liquid-prominent-header-card flex flex-col min-h-0">
+        <CardHeader className="liquid-card-header-prominent">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
               <Layers className="h-4 w-4 text-teal-400" strokeWidth={2.25} />
@@ -160,7 +160,7 @@ const DecorationPresetsPanel: React.FC = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="flex flex-col flex-1 min-h-0 p-5">
+        <CardContent className="liquid-prominent-header-content flex flex-col flex-1 min-h-0 p-5">
           {castleId <= 0 ? (
             <p className="text-sm text-text-muted">Focus a castle in-game to load and manage presets for it.</p>
           ) : presets.length === 0 ? (

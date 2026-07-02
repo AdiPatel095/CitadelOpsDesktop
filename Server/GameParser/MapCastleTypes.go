@@ -8,16 +8,16 @@ import mapstate "CitadelDesktop/Server/Models/MapState"
 //
 //	go run ./cmd/ScanGaaAfterTime/  — RECV gaa after cutoff (default 12:49 local / Eastern)
 //	go run ./cmd/ScanGaaLog/        — full websocket_game.log
-//	go run ./cmd/ScanGaaTypes/      — Logs/JSONExamples/*.json
+//	go run ./cmd/ScanGaaTypes/      — Logs/RecvCommandsJSON/*.json
 //
-// Wire reference: Logs/JSONExamples/GaaWireExamples.json
-// Latest full viewport: Logs/JSONExamples/GaaInboundFresh.json
+// Wire reference: Logs/RecvCommandsJSON/GaaWireExamples.json
+// Latest full viewport: Logs/RecvCommandsJSON/GaaInboundFresh.json
 
 // --- Outbound **gaa** (client requests map viewport) -----------------------------
 //
 // Wire: %xt%EmpireEx_21%gaa%1%{"KID":0,"AX1":1196,"AY1":1144,"AX2":1208,"AY2":1156}%
 // AX1/AY1 and AX2/AY2 are inclusive map bounds (~13×13 tiles in captures; ~20-tile radius around focus).
-// Example: Logs/JSONExamples/GaaOutboundFresh.json
+// Example: Logs/RecvCommandsJSON/GaaOutboundFresh.json
 
 // --- Inbound **gaa** map tile types (AI[i][0]) ---------------------------------
 //

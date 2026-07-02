@@ -42,6 +42,12 @@ var embeddedLangEnJSON []byte
 //go:embed packages/items.json
 var embeddedPackagesItemsJSON []byte
 
+//go:embed vip_levels/items.json
+var embeddedVIPLevelsJSON []byte
+
+//go:embed subscriptions_buffs/items.json
+var embeddedSubscriptionBuffsJSON []byte
+
 func readFilePreferDisk(relPath string, embedded []byte) ([]byte, error) {
 	if b, err := readFromDisk(relPath); err == nil {
 		return b, nil
@@ -122,6 +128,16 @@ func ReadBuildingsJSON() ([]byte, error) {
 	return readFromDisk(filepath.Join("buildings", "items.json"))
 }
 
+// ReadToolsJSON returns tools/items.json (official EmpireItems tool catalog).
+func ReadToolsJSON() ([]byte, error) {
+	return readFromDisk(filepath.Join("tools", "items.json"))
+}
+
+// ReadTroopsJSON returns troops/items.json (official EmpireItems troop catalog).
+func ReadTroopsJSON() ([]byte, error) {
+	return readFromDisk(filepath.Join("troops", "items.json"))
+}
+
 // ReadConstructionItemGroupBuildingsJSON returns construction_item_group_buildings.json
 // (groupID → wodID list). Disk first for dev overrides, else embedded for production binaries.
 func ReadConstructionItemGroupBuildingsJSON() ([]byte, error) {
@@ -141,4 +157,16 @@ func ReadLangEnJSON() ([]byte, error) {
 // Disk first for dev overrides, else embedded for production binaries.
 func ReadPackagesItemsJSON() ([]byte, error) {
 	return readFilePreferDisk(filepath.Join("packages", "items.json"), embeddedPackagesItemsJSON)
+}
+
+// ReadVIPLevelsJSON returns vip_levels/items.json.
+// Disk first for dev overrides, else embedded for production binaries.
+func ReadVIPLevelsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("vip_levels", "items.json"), embeddedVIPLevelsJSON)
+}
+
+// ReadSubscriptionBuffsJSON returns subscriptions_buffs/items.json.
+// Disk first for dev overrides, else embedded for production binaries.
+func ReadSubscriptionBuffsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("subscriptions_buffs", "items.json"), embeddedSubscriptionBuffsJSON)
 }

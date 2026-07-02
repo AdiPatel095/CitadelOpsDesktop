@@ -1,15 +1,6 @@
 name: Enforce branch flow
 
 on:
-  pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - edited
-      - ready_for_review
   pull_request_review:
     types:
       - submitted

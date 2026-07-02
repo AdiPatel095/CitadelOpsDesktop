@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Trash2, Save, Plus, Minus } from 'lucide-react';
+import { CalendarDays, Trash2, Save, Plus, Minus } from 'lucide-react';
 import { FrontendWebsocket } from '../../Websocket';
 import {
   showTCIPicker,
@@ -11,6 +11,7 @@ import {
 import {
   fetchConstructionItemsCatalog,
   type ConstructionItemCatalogEntry,
+  formatEffectUpgradeLine,
   levelRangeLabel,
   formatGroupTiersLine,
 } from '../../components/TCICatalogCache';
@@ -31,6 +32,7 @@ import { Modal, Button, Card, CardHeader, CardTitle, CardContent, Badge, Input, 
 interface AutoTCISettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
 }
 
 interface Castle {
@@ -46,7 +48,7 @@ interface AutoTCIItem {
   minLevel?: number;
 }
 
-export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOpen, onClose }) => {
+export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
   const [castles, setCastles] = useState<Castle[]>([]);
   const [settings, setSettings] = useState<Record<string, AutoTCIItem[]>>({});
   const [catalog, setCatalog] = useState<ConstructionItemCatalogEntry[]>([]);
@@ -282,7 +284,8 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   const labelFor = (constructionItemId: number) => {
     const row = catalogByWireId.get(constructionItemId);
     if (row) {
-      const eff = row.effects ? ` — ${row.effects}` : '';
+      const effectLine = formatEffectUpgradeLine(row);
+      const eff = effectLine ? ` — ${effectLine}` : '';
       return `${row.label}${eff} (#${constructionItemId})`;
     }
     return `TCI #${constructionItemId}`;
@@ -330,24 +333,35 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       onClose={onClose}
       maxWidth="full"
       title={
-        <div className="flex flex-col">
-          <span className="flex items-center gap-2 text-amber-500">
-            <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
-            Auto TCI Settings
-          </span>
-          <p className="mt-1 text-sm font-normal text-text-muted">
-            Per castle, pick construction item variants and set a <span className="font-medium text-text-main">level floor and ceiling</span>{' '}
-            (1–{TCI_LEVEL_MAX}) with +/-. Use the floor when you only keep higher tiers in stash. Names and effects match the{' '}
-            <a
-              href="https://generalscamp.github.io/forum/overviews/building_items/index.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              GeneralsCamp building items
-            </a>{' '}
-            overview.
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <span className="flex items-center gap-2 text-amber-500">
+              <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+              Auto TCI Settings
+            </span>
+            <p className="mt-1 text-sm font-normal text-text-muted">
+              Per castle, pick construction item variants and set a <span className="font-medium text-text-main">level floor and ceiling</span>{' '}
+              (1–{TCI_LEVEL_MAX}) with +/-. Use the floor when you only keep higher tiers in stash. Names and effects match the{' '}
+              <a
+                href="https://generalscamp.github.io/forum/overviews/building_items/index.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                GeneralsCamp building items
+              </a>{' '}
+              overview.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={() => onOpenFeatureSchedule('autoTCI', 'Auto TCI')}
+            leftIcon={<CalendarDays className="h-4 w-4" />}
+          >
+            Calendar
+          </Button>
         </div>
       }
       footer={
@@ -366,7 +380,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
         </>
       }
     >
-      <div className="custom-scrollbar mx-auto flex h-[calc(100vh-10.5rem)] w-full max-w-[min(1840px,98vw)] flex-col gap-5 overflow-y-auto pb-4">
+      <div className="auto-tci-settings-workspace custom-scrollbar mx-auto flex w-full flex-col gap-5 overflow-y-auto pb-4">
         <Card variant="solid" className="shrink-0 border-border-base bg-bg-app p-5">
           <div className="mb-3 text-xs font-bold uppercase tracking-wider text-primary">Presets</div>
           <div className="flex flex-col gap-4 xl:flex-row xl:flex-wrap xl:items-end">
@@ -452,6 +466,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                         const floor = range.floor;
                         const ceil = range.ceiling;
                         const meta = catalogByWireId.get(item.id);
+                        const effectLine = meta ? formatEffectUpgradeLine(meta) : '';
                         return (
                           <div
                             key={`${item.id}-${index}`}
@@ -462,9 +477,9 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                               <div className="text-sm font-bold leading-snug text-text-main" title={meta?.label}>
                                 {meta?.label ?? `TCI #${item.id}`}
                               </div>
-                              {meta?.effects && (
-                                <div className="mt-1 text-xs leading-relaxed text-text-main/85" title={meta.effects}>
-                                  {meta.effects}
+                              {effectLine && (
+                                <div className="mt-1 text-xs leading-relaxed text-text-main/85" title={effectLine}>
+                                  {effectLine}
                                 </div>
                               )}
                               <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">

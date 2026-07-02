@@ -22,8 +22,8 @@ interface MetadataContextValue {
 const MetadataContext = createContext<MetadataContextValue | undefined>(undefined);
 
 const metadataSources = {
-  troops: ['/game-data/units/index.json', '/game-data/troops/index.json'],
-  tools: ['/game-data/tools/index.json'],
+  troops: ['/game-data/troops/items.json', '/game-data/troops/index.json', '/game-data/units/index.json'],
+  tools: ['/game-data/tools/items.json', '/game-data/tools/index.json'],
   decorations: ['/game-data/decorations/index.json'],
 };
 
@@ -136,12 +136,16 @@ function parseMetadataIndex(value: unknown): Record<number, MetadataItem> {
       continue;
     }
 
-    const name = stringValue(row.name ?? row.Name ?? row.title ?? row.label);
+    const name = stringValue(row._display_name ?? row.displayName ?? row.name ?? row.Name ?? row.title ?? row.label);
+    const level = toPositiveID(row.level ?? row.Level);
     out[id] = {
       ...row,
       id,
       name: name || `Item ${id}`,
     };
+    if (level > 0) {
+      out[id].level = level;
+    }
   }
 
   return out;
@@ -176,6 +180,11 @@ function fallbackTools(): Record<number, MetadataItem> {
 function toID(value: unknown): number {
   const parsed = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(parsed) ? Math.trunc(parsed) : 0;
+}
+
+function toPositiveID(value: unknown): number {
+  const parsed = toID(value);
+  return parsed > 0 ? parsed : 0;
 }
 
 function stringValue(value: unknown): string {

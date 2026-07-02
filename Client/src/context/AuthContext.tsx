@@ -21,12 +21,44 @@ import {
   applyAutoBeriWorldSettingsToLocalStorage,
   loadAutoBeriWorldSettingsFromStorage,
 } from '../settings/AutoBeriWorldClientState';
+import {
+  applyRecruitTroopsSettingsToLocalStorage,
+  DEFAULT_RECRUIT_CHECK_INTERVAL_SEC,
+  loadRecruitTroopsSettingsFromStorage,
+  normalizeRecruitTroopsSettings,
+  persistRecruitTroopsSettings,
+  RECRUIT_TROOPS_SETTINGS_CHANGED_EVENT,
+  type RecruitTroopsClientSettingsV1,
+  type RecruitTroopsMode,
+} from '../settings/RecruitTroopsClientState';
+import {
+  applyAutoToolSettingsToLocalStorage,
+  AUTO_TOOL_SETTINGS_CHANGED_EVENT,
+  DEFAULT_AUTO_TOOL_CHECK_INTERVAL_SEC,
+  loadAutoToolSettingsFromStorage,
+  normalizeAutoToolSettings,
+  persistAutoToolSettings,
+  type AutoToolClientSettingsV1,
+  type AutoToolMode,
+} from '../settings/AutoToolClientState';
+import {
+  applyAutoHospitalSettingsToLocalStorage,
+  DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_SEC,
+  loadAutoHospitalSettingsFromStorage,
+  normalizeAutoHospitalSettings,
+  persistAutoHospitalSettings,
+  type AutoHospitalClientSettingsV1,
+} from '../settings/AutoHospitalClientState';
 
 interface AuthContextType {
   gameLoggedIn: boolean;
   gameLoginCooldown: number;
   isGameDataReady: boolean;
   recruitTroopsEnabled: boolean;
+  autoRecruitMode: RecruitTroopsMode;
+  autoToolEnabled: boolean;
+  autoToolMode: AutoToolMode;
+  autoHospitalEnabled: boolean;
   autoTCIEnabled: boolean;
   autoTCINextWakeUp: number;
   autoBirdEnabled: boolean;
@@ -48,6 +80,8 @@ interface AuthContextType {
   startGame: () => void;
   stopGame: () => void;
   toggleRecruitTroops: () => void;
+  toggleAutoTool: () => void;
+  toggleAutoHospital: () => void;
   toggleAutoTCI: () => void;
   toggleAutoBird: () => void;
   toggleAutoBeriWorld: () => void;
@@ -56,11 +90,37 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function recruitSettingsHasData(settings: RecruitTroopsClientSettingsV1): boolean {
+  return (
+    settings.mode !== 'global' ||
+    settings.checkIntervalSec !== DEFAULT_RECRUIT_CHECK_INTERVAL_SEC ||
+    settings.globalItems.length > 0 ||
+    Object.keys(settings.castles).length > 0
+  );
+}
+
+function autoToolSettingsHasData(settings: AutoToolClientSettingsV1): boolean {
+  return (
+    settings.mode !== 'global' ||
+    settings.checkIntervalSec !== DEFAULT_AUTO_TOOL_CHECK_INTERVAL_SEC ||
+    settings.globalItems.length > 0 ||
+    Object.keys(settings.castles).length > 0
+  );
+}
+
+function autoHospitalSettingsHasData(settings: AutoHospitalClientSettingsV1): boolean {
+  return settings.checkIntervalSec !== DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_SEC;
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [gameLoggedIn, setGameLoggedIn] = useState(false);
   const [gameLoginCooldown, setGameLoginCooldown] = useState(0);
   const [isGameDataReady, setIsGameDataReady] = useState(false);
   const [recruitTroopsEnabled, setRecruitTroopsEnabled] = useState(false);
+  const [autoRecruitMode, setAutoRecruitMode] = useState<RecruitTroopsMode>(() => loadRecruitTroopsSettingsFromStorage().mode);
+  const [autoToolEnabled, setAutoToolEnabled] = useState(false);
+  const [autoToolMode, setAutoToolMode] = useState<AutoToolMode>(() => loadAutoToolSettingsFromStorage().mode);
+  const [autoHospitalEnabled, setAutoHospitalEnabled] = useState(false);
   const [autoTCIEnabled, setAutoTCIEnabled] = useState(false);
   const [autoTCINextWakeUp, setAutoTCINextWakeUp] = useState(0);
   const [autoBirdEnabled, setAutoBirdEnabled] = useState(false);
@@ -95,6 +155,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setChromeMem(message.payload.chromeMem);
       } else if (message.type === 'recruitTroopsStatus') {
         setRecruitTroopsEnabled(message.payload.enabled);
+      } else if (message.type === 'recruitTroopsSettings') {
+        let settings = normalizeRecruitTroopsSettings(message.payload);
+        const localSettings = loadRecruitTroopsSettingsFromStorage();
+        if (!recruitSettingsHasData(settings) && recruitSettingsHasData(localSettings)) {
+          settings = localSettings;
+          persistRecruitTroopsSettings(settings);
+        }
+        applyRecruitTroopsSettingsToLocalStorage(settings);
+        setAutoRecruitMode(settings.mode);
+      } else if (message.type === 'autoToolStatus') {
+        setAutoToolEnabled(message.payload.enabled);
+      } else if (message.type === 'autoHospitalStatus') {
+        setAutoHospitalEnabled(message.payload.enabled);
+      } else if (message.type === 'autoHospitalSettings') {
+        let settings = normalizeAutoHospitalSettings(message.payload);
+        const localSettings = loadAutoHospitalSettingsFromStorage();
+        if (!autoHospitalSettingsHasData(settings) && autoHospitalSettingsHasData(localSettings)) {
+          settings = localSettings;
+          persistAutoHospitalSettings(settings);
+        }
+        applyAutoHospitalSettingsToLocalStorage(settings);
+      } else if (message.type === 'autoToolSettings') {
+        let settings = normalizeAutoToolSettings(message.payload);
+        const localSettings = loadAutoToolSettingsFromStorage();
+        if (!autoToolSettingsHasData(settings) && autoToolSettingsHasData(localSettings)) {
+          settings = localSettings;
+          persistAutoToolSettings(settings);
+        }
+        applyAutoToolSettingsToLocalStorage(settings);
+        setAutoToolMode(settings.mode);
       } else if (message.type === 'autoTCIStatus') {
         setAutoTCIEnabled(!!message.payload?.enabled);
         const nw = message.payload?.nextWakeUp;
@@ -187,6 +277,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    const handleRecruitSettingsChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<RecruitTroopsClientSettingsV1>;
+      setAutoRecruitMode(normalizeRecruitTroopsSettings(customEvent.detail).mode);
+    };
+
+    window.addEventListener(RECRUIT_TROOPS_SETTINGS_CHANGED_EVENT, handleRecruitSettingsChanged);
+    return () => window.removeEventListener(RECRUIT_TROOPS_SETTINGS_CHANGED_EVENT, handleRecruitSettingsChanged);
+  }, []);
+
+  useEffect(() => {
+    const handleAutoToolSettingsChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<AutoToolClientSettingsV1>;
+      setAutoToolMode(normalizeAutoToolSettings(customEvent.detail).mode);
+    };
+
+    window.addEventListener(AUTO_TOOL_SETTINGS_CHANGED_EVENT, handleAutoToolSettingsChanged);
+    return () => window.removeEventListener(AUTO_TOOL_SETTINGS_CHANGED_EVENT, handleAutoToolSettingsChanged);
+  }, []);
+
+  useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
 
     if (gameLoginCooldown > 0) {
@@ -249,20 +359,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const toggleRecruitTroops = () => {
-    const savedSettings = localStorage.getItem('recruitTroopsSettings');
-    let settings = {};
-    if (savedSettings) {
-      try {
-        settings = JSON.parse(savedSettings);
-      } catch (e) {
-        console.error("Failed to parse settings for recruit troops toggle", e);
-      }
-    }
+    const settings = loadRecruitTroopsSettingsFromStorage();
 
     console.log("[RecruitTroops] Toggling. Sending settings payload:", { settings });
 
     FrontendWebsocket.sendMessage({
       type: 'toggleRecruitTroops',
+      payload: { settings }
+    });
+  };
+
+  const toggleAutoTool = () => {
+    const settings = loadAutoToolSettingsFromStorage();
+
+    console.log("[AutoTool] Toggling. Sending settings payload:", { settings });
+
+    FrontendWebsocket.sendMessage({
+      type: 'toggleAutoTool',
+      payload: { settings }
+    });
+  };
+
+  const toggleAutoHospital = () => {
+    const settings = loadAutoHospitalSettingsFromStorage();
+
+    FrontendWebsocket.sendMessage({
+      type: 'toggleAutoHospital',
       payload: { settings }
     });
   };
@@ -294,6 +416,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       gameLoginCooldown,
       isGameDataReady,
       recruitTroopsEnabled,
+      autoRecruitMode,
+      autoToolEnabled,
+      autoToolMode,
+      autoHospitalEnabled,
       autoTCIEnabled,
       autoTCINextWakeUp,
       autoBirdEnabled,
@@ -314,6 +440,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       startGame,
       stopGame,
       toggleRecruitTroops,
+      toggleAutoTool,
+      toggleAutoHospital,
       toggleAutoTCI,
       toggleAutoBird,
       toggleAutoBeriWorld,

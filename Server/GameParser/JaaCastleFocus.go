@@ -169,3 +169,39 @@ func ApplyJAATroopsFromPayload(gs *Models.GameState, data string) bool {
 	applyTroopFetchToCastle(gs, cid, troops)
 	return true
 }
+
+// ApplyFocusedCastleTroopsFromPayload parses a root gui object from a focused-castle response
+// such as **hru** and updates the currently focused castle's troop snapshot.
+func ApplyFocusedCastleTroopsFromPayload(gs *Models.GameState, data string) bool {
+	if gs == nil {
+		return false
+	}
+	cid := gs.CastleFocus.CastleAID
+	if cid <= 0 || !gs.IsKnownPlayerCastleID(cid) {
+		return false
+	}
+	troops := ParseCastleTroops(data, gs.CastleFocus.KingdomID, gs.CastleFocus.MapPX, gs.CastleFocus.MapPY)
+	if troops == nil {
+		return false
+	}
+	troops.CastleID = cid
+	castle := gs.GetCastleByID(cid)
+	if castle == nil {
+		return false
+	}
+	next := Models.CastleTroopData{
+		KingdomID:   troops.KingdomID,
+		X:           troops.X,
+		Y:           troops.Y,
+		TroopsI:     troops.TroopsI,
+		TroopsTU:    troops.TroopsTU,
+		TroopsHI:    troops.TroopsHI,
+		TroopsSHI:   troops.TroopsSHI,
+		TroopsMixed: troops.TroopsMixed,
+	}
+	if reflect.DeepEqual(castle.Troops, next) {
+		return false
+	}
+	applyTroopFetchToCastle(gs, cid, troops)
+	return true
+}

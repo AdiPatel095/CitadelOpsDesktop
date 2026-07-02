@@ -12,14 +12,19 @@ type PlayerCastleInfo struct {
 	Storage      CastleStorageMax      `json:"storage"`
 	Troops       CastleTroopData       `json:"troops"`
 	// BGRows / BDRows are parsed from JAA gca (GcaWodBuildings, same JAA row shape); not merged.
-	BGRows []BuildingData `json:"bgRows,omitempty"`
-	BDRows []BuildingData `json:"bdRows,omitempty"`
+	BuildingRowsLoaded bool           `json:"buildingRowsLoaded,omitempty"`
+	BGRows             []BuildingData `json:"bgRows,omitempty"`
+	BDRows             []BuildingData `json:"bdRows,omitempty"`
 	// SlotProductionByLID is parsed from **spl** / **bup**.spl keyed by Empire LID (0=barracks/recruit, 1=tool workshop, …).
 	SlotProductionByLID map[int]*BarracksProductionQueue `json:"slotProductionByLID,omitempty"`
 	// CraftingQueues is parsed from **crin** (full list) / **crst** (single building); CRIDs index craftingRecipes.json.
 	CraftingQueues []CraftingBuildingSnapshot `json:"craftingQueues,omitempty"`
 	// ConstructionByBuilding is from JAA gca.CI: equipped construction items (CID) per building OID.
 	ConstructionByBuilding []GCAConstructionBuilding `json:"constructionByBuilding,omitempty"`
+	// Queueable IDs are parsed from **gpc** U.U and reflect castle/account unlocks, including Hall of Legends.
+	QueueableIDsLoaded bool  `json:"queueableIdsLoaded,omitempty"`
+	QueueableUnitIDs   []int `json:"queueableUnitIds,omitempty"`
+	QueueableToolIDs   []int `json:"queueableToolIds,omitempty"`
 }
 
 // SetCastleBuildingRows stores JAA ground (BG) and building (BD) rows separately.
@@ -27,6 +32,7 @@ func SetCastleBuildingRows(c *PlayerCastleInfo, bg, bd []BuildingData) {
 	if c == nil {
 		return
 	}
+	c.BuildingRowsLoaded = true
 	c.BGRows = bg
 	c.BDRows = bd
 }

@@ -20,11 +20,17 @@ type GameState struct {
 	Equipment       equipment.PlayerEquipment       `json:"equipment"`
 	Movement        movement.PlayerMovement         `json:"movement"`
 	PlayerID        int                             `json:"playerId"` // Session player OID; used by auto-bird persistence and parsers
+	VIP             VipState                        `json:"vip,omitempty"`
+	Subscriptions   SubscriptionState               `json:"subscriptions,omitempty"`
 	CastleFocus     castle.CastleFocus              `json:"castleFocus"`
 	// Tci is ephemeral (SIN, gbc PL) for AutoTCI buy/equip; not a substitute for gca.CI.
 	Tci TciSession `json:"tciSession,omitempty"`
 	// AutoBeriWorld holds ephemeral **fuc** parse results for the Beri troop-transfer loop.
 	AutoBeriWorld AutoBeriWorldSession `json:"autoBeriWorldSession,omitempty"`
+	// AutoRecruit holds the resolved active unit per castle for the Auto Recruit queue loop.
+	AutoRecruit AutoRecruitSession `json:"autoRecruitSession,omitempty"`
+	// AutoTool holds the resolved active tool per castle for the Auto Tool queue loop.
+	AutoTool AutoToolSession `json:"autoToolSession,omitempty"`
 }
 
 var (
@@ -62,11 +68,15 @@ func (gs *GameState) Reset() {
 		BirdMovements:  make(map[int][]movement.BirdMovement),
 		CommanderByMID: make(map[int]int),
 	}
+	gs.VIP = VipState{}
+	gs.Subscriptions = SubscriptionState{}
 	gs.CastleFocus = castle.CastleFocus{}
 	gs.Tci = TciSession{
 		SINItemCounts: make(map[int]int),
 	}
 	gs.AutoBeriWorld = AutoBeriWorldSession{}
+	gs.AutoRecruit = AutoRecruitSession{}
+	gs.AutoTool = AutoToolSession{}
 	mapstate.GetMapState().Reset()
 }
 

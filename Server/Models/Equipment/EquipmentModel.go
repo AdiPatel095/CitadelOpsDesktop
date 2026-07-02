@@ -16,6 +16,7 @@ type EquipmentModel struct {
 	PlaceHolder6    float64 `json:"placeHolder6"`
 	EquipStats      []Stat  `json:"equipStats"`
 	TemplateID      float64 `json:"templateId"`
+	SetID           float64 `json:"setId"`
 	PlaceHolder8    float64 `json:"placeHolder8"`
 	EquipLevel      float64 `json:"equipLevel"`
 	PlaceHolder9    float64 `json:"placeHolder9"`

@@ -132,7 +132,7 @@ func SendEBUWithParams(wid, gridX, gridY, r, pwr, po, doid int) {
 
 // SINPayload builds EmpireEx_21 **sin** — refresh decoration/building storage inventory (response lists RD rows per SID).
 // Special case: sin carries NO JSON body, so it is the bare frame %xt%<token>%sin%1% (no trailing {} and no extra %).
-// Response shape: Logs/JSONExamples/sin.json (array of {SID, RD, …}; each RD row [wodID, amount, …]).
+// Response shape: Logs/RecvCommandsJSON/sin.json (array of {SID, RD, …}; each RD row [wodID, amount, …]).
 func SINPayload() string {
 	return fmt.Sprintf(`%%xt%%%s%%sin%%1%%`, ResponseRegistry.EmpireExToken)
 }
@@ -183,6 +183,32 @@ func BUPPayload(lid, unitWID, amount, po, pwr, sk, sid, castleAID int) string {
 // SendBarracksUnitPurchase queues **bup** — enqueue unit training.
 func SendBarracksUnitPurchase(lid, unitWID, amount, po, pwr, sk, sid, castleAID int) {
 	QueueOutgoingPayload(BUPPayload(lid, unitWID, amount, po, pwr, sk, sid, castleAID))
+}
+
+// HRUPayload builds EmpireEx_21 **hru** — enqueue healing for wounded hospital units in the focused castle.
+//
+// Live client shape: {"A":<count>,"U":<unitType>}. The command has no castle id, so callers must focus
+// the target castle first.
+func HRUPayload(unitWID, amount int) string {
+	return empireExFrame("hru", fmt.Sprintf(`{"A":%d,"U":%d}`, amount, unitWID))
+}
+
+// SendHospitalHealUnit queues **hru** — enqueue hospital healing in the focused castle.
+func SendHospitalHealUnit(unitWID, amount int) {
+	QueueOutgoingPayload(HRUPayload(unitWID, amount))
+}
+
+// HDUPayload builds EmpireEx_21 **hdu** — discard wounded hospital units from the focused castle.
+//
+// Live client shape mirrors hru: {"U":<unitType>,"A":<count>}. The command has no castle id, so
+// callers must focus the target castle first.
+func HDUPayload(unitWID, amount int) string {
+	return empireExFrame("hdu", fmt.Sprintf(`{"U":%d,"A":%d}`, unitWID, amount))
+}
+
+// SendHospitalDiscardUnit queues **hdu** — discard wounded hospital units in the focused castle.
+func SendHospitalDiscardUnit(unitWID, amount int) {
+	QueueOutgoingPayload(HDUPayload(unitWID, amount))
 }
 
 // --- Movement (bird dispatch) ---

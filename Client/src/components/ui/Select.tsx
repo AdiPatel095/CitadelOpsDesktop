@@ -91,7 +91,7 @@ export const Select: React.FC<SelectProps> = ({
         type="button"
         onClick={toggleDropdown}
         disabled={disabled}
-        className={`w-full bg-bg-input border px-4 py-2.5 text-sm font-medium text-text-main transition-colors duration-200 rounded-global flex items-center justify-between group focus:outline-none focus:ring-1 focus:ring-primary ${
+        className={`w-full bg-bg-input/70 border px-4 py-2.5 text-sm font-medium text-text-main transition-colors duration-200 rounded-global flex items-center justify-between group focus:outline-none focus:ring-1 focus:ring-primary shadow-inner backdrop-blur-xl ${
           disabled
             ? 'opacity-50 cursor-not-allowed border-border-base'
             : 'border-border-base hover:border-primary focus:border-primary cursor-pointer'
@@ -117,7 +117,7 @@ export const Select: React.FC<SelectProps> = ({
       {isOpen &&
         createPortal(
           <div
-            className="select-portal-content fixed z-[100] mt-1 bg-bg-card border border-border-base rounded-2xl shadow-xl overflow-hidden animate-fade-in custom-scrollbar overflow-y-auto"
+            className="select-portal-content fixed z-[100] mt-1 bg-bg-card/85 border border-border-light rounded-global shadow-[var(--shadow-glass-modal)] overflow-hidden animate-fade-in custom-scrollbar overflow-y-auto backdrop-blur-2xl"
             style={{
               top: dropdownPos.top,
               left: dropdownPos.left,
