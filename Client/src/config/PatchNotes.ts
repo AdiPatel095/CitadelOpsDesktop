@@ -33,14 +33,17 @@ export const APP_VERSION_CURRENT = '1.3.6';
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
   {
     version: '1.3.6',
-    subtitle: 'Scheduler, recruiting, tools, subscription state, and interface refresh',
+    subtitle: 'Scheduler, recruiting, tools, hospital automation, subscription state, and interface refresh',
     date: '2026-07-02',
     items: [
       { kind: 'added', text: 'Feature scheduling controls for automation windows and weekly run plans' },
       { kind: 'added', text: 'Recruit troops settings backed by production slot and capacity parsing' },
       { kind: 'added', text: 'Auto Tool settings with queueable tool catalog support' },
+      { kind: 'added', text: 'Auto Hospital automation with hospital slot detection, subscription stack capacity, scan interval settings, and weekly scheduling' },
+      { kind: 'added', text: 'Auto Hospital ruby-heal filtering that discards ruby-cost wounded units before queueing coin-healable units' },
       { kind: 'added', text: 'Subscription and VIP state parsing for game-state snapshots' },
       { kind: 'changed', text: 'Updated dashboard, equipment, TCI, troop picker, logger, and sidebar surfaces for the refreshed UI' },
+      { kind: 'changed', text: 'Hospital, recruit, and tool queue parsing now keeps automation state aligned with live focused-castle responses' },
       { kind: 'fixed', text: 'Improved battle report and live equipment stat mapping coverage' },
     ],
   },
