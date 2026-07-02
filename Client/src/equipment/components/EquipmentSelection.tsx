@@ -340,7 +340,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
   };
 
   return (
-    <Card className="h-full flex flex-col min-h-0">
+    <Card className="liquid-prominent-header-card h-full flex flex-col min-h-0">
       <CautionModal
         isOpen={showSellModal}
         onClose={() => setShowSellModal(false)}
@@ -348,7 +348,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
         itemType={sellType}
       />
 
-      <CardHeader className="flex flex-wrap items-center gap-4 border-b border-border-base pb-4">
+      <CardHeader className="liquid-card-header-prominent flex flex-wrap items-center gap-4">
         <ToggleGroup
           value={equipmentMode}
           onChange={(v) => setEquipmentMode(v as EquipmentMode)}
@@ -356,6 +356,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
             { value: 'Commander', label: 'Commander' },
             { value: 'Castellan', label: 'Castellan' }
           ]}
+          className="equipment-view-pills"
         />
         <ToggleGroup
           value={combatMode}
@@ -364,9 +365,10 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
             { value: 'PvP', label: 'PvP' },
             { value: 'PvE', label: 'PvE' }
           ]}
+          className="equipment-view-pills equipment-combat-pills"
         />
 
-        <div className="ml-auto flex gap-2">
+        <div className="equipment-actions ml-auto">
           <Button
             size="sm"
             onClick={() => openSellModal('Gems')}
@@ -384,9 +386,9 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className="flex flex-1 min-h-0 p-0">
-        <div className="w-56 border-r border-border-base overflow-y-auto custom-scrollbar p-2">
-          <div className="space-y-1">
+      <CardContent className="liquid-prominent-header-content liquid-prominent-header-content-flush equipment-selection-body p-0">
+        <div className="equipment-loadout-list custom-scrollbar">
+          <div className="equipment-loadout-list-items">
             {fullArray.every(item => item === null) ? (
               <div className="px-3 py-4 text-center text-text-muted text-sm font-medium">
                 No {equipmentMode.toLowerCase()}s available
@@ -398,6 +400,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
                   <div
                     key={index}
                     className={`
+                      equipment-loadout-item
                       rounded-global px-3 py-2.5 cursor-pointer transition-all duration-200
                       ${selectedIndex === index
                         ? 'bg-primary/10 text-primary border border-primary/30 shadow-[0_0_10px_rgba(52,211,153,0.1)]'
@@ -427,7 +430,7 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="equipment-stats-pane custom-scrollbar">
           <EquipmentStats
             equipmentMode={equipmentMode}
             combatMode={combatMode}

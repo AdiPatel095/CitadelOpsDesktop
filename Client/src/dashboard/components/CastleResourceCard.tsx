@@ -132,11 +132,11 @@ function ResourceDepletionTimer({ amount, netPerHour }: { amount: number; netPer
 
 const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resources, storage, production }) => {
   return (
-    <Card className="flex flex-col min-h-0">
-      <CardHeader className="pb-3">
+    <Card className="liquid-prominent-header-card flex flex-col min-h-0">
+      <CardHeader className="liquid-card-header-prominent">
         <CardTitle className="text-primary">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2 overflow-y-auto custom-scrollbar pt-3">
+      <CardContent className="liquid-prominent-header-content flex flex-col gap-2 overflow-y-auto custom-scrollbar">
         {resourceKeys.map(key => {
           const resourceBaseName = key.replace('_amount', '');
           const amount = resources[key] as number;
@@ -157,7 +157,7 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resource
           const prodPrefix = prod > 0 ? "+" : "";
 
           return (
-            <div key={key} className="flex items-center gap-3 p-2.5 rounded-global bg-bg-card-hover border border-border-base transition-colors hover:border-primary/30">
+            <div key={key} className="flex items-center gap-3 p-2.5 rounded-global bg-bg-card/45 border border-border-light shadow-sm backdrop-blur-xl transition-colors hover:border-primary/30 hover:bg-bg-card-hover/70">
               <img src={resourceIconMap[resourceBaseName]} alt={resourceBaseName} className="w-8 h-8 object-contain drop-shadow-sm shrink-0" />
               <div className="flex-1 flex flex-col gap-1.5 min-w-0">
                 <div className="flex justify-between items-center text-xs font-medium text-text-main">
@@ -165,7 +165,7 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resource
                   <span className={`${prodClass} shrink-0`}>({prodPrefix}{prod.toLocaleString()}/hr)</span>
                 </div>
                 <ResourceDepletionTimer amount={amount} netPerHour={prod} />
-                <div className="w-full h-1.5 bg-bg-app rounded-full overflow-hidden border border-border-base/50">
+                <div className="w-full h-1.5 bg-bg-app/55 rounded-full overflow-hidden border border-border-base/50 shadow-inner">
                   <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}></div>
                 </div>
               </div>

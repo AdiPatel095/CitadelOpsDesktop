@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Search, Check, Heart, List, Flame } from 'lucide-react';
+import { Search, Check, Heart, List, Flame } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import UnitImage from './UnitImage';
+import { useMetadata } from '../context/MetadataContext';
 import {
   TROOP_DEFINITIONS,
   TROOP_METADATA,
@@ -129,6 +129,35 @@ interface VirtualizedUnitGridProps {
   onQuantityChange: (unitId: number, value: string) => void;
 }
 
+const GRID_CARD_GAP_REM = 0.75;
+const GRID_CARD_ASPECT_WIDTH = 3;
+const GRID_CARD_ASPECT_HEIGHT = 4;
+const GRID_ICON_SCALE = 0.85;
+const DEFAULT_GRID_ROW_SIZE = 192;
+const DEFAULT_GRID_CARD_WIDTH = DEFAULT_GRID_ROW_SIZE * GRID_CARD_ASPECT_WIDTH / GRID_CARD_ASPECT_HEIGHT;
+const DEFAULT_GRID_ICON_SIZE = Math.round(DEFAULT_GRID_CARD_WIDTH * GRID_ICON_SCALE);
+const DEFAULT_GRID_ROW_GAP = 12;
+
+const estimateGridMetrics = (container?: HTMLDivElement | null, columnCount = 7) => {
+  if (!container || typeof window === 'undefined') {
+    return {
+      iconSize: DEFAULT_GRID_ICON_SIZE,
+      rowSize: DEFAULT_GRID_ROW_SIZE + DEFAULT_GRID_ROW_GAP,
+    };
+  }
+
+  const styles = window.getComputedStyle(container);
+  const paddingX = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+  const rootFontSize = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
+  const gap = rootFontSize * GRID_CARD_GAP_REM;
+  const contentWidth = Math.max(1, container.clientWidth - paddingX);
+  const cardWidth = (contentWidth - gap * Math.max(0, columnCount - 1)) / columnCount;
+  return {
+    iconSize: Math.round(cardWidth * GRID_ICON_SCALE),
+    rowSize: Math.round(cardWidth * GRID_CARD_ASPECT_HEIGHT / GRID_CARD_ASPECT_WIDTH + gap),
+  };
+};
+
 const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
   filteredUnits,
   selectedIds,
@@ -143,6 +172,8 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(8);
+  const [gridRowEstimate, setGridRowEstimate] = useState(() => estimateGridMetrics().rowSize);
+  const [gridIconSize, setGridIconSize] = useState(() => estimateGridMetrics().iconSize);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Determine column count and view mode based on container width
@@ -150,17 +181,20 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
     const updateColumns = () => {
       if (!parentRef.current) return;
       const width = parentRef.current.offsetWidth;
+      let nextColumns = 1;
       if (width < 500) {
         setViewMode('list');
-        setColumns(1);
       } else {
         setViewMode('grid');
-        if (width >= 1120) setColumns(8);
-        else if (width >= 920) setColumns(7);
-        else if (width >= 760) setColumns(6);
-        else if (width >= 500) setColumns(4);
-        else setColumns(4);
+        if (width >= 1080) nextColumns = 8;
+        else if (width >= 920) nextColumns = 7;
+        else if (width >= 760) nextColumns = 6;
+        else nextColumns = 4;
       }
+      setColumns(nextColumns);
+      const metrics = estimateGridMetrics(parentRef.current, nextColumns);
+      setGridRowEstimate(metrics.rowSize);
+      setGridIconSize(metrics.iconSize);
     };
 
     updateColumns();
@@ -168,7 +202,11 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
     if (parentRef.current) {
       observer.observe(parentRef.current);
     }
-    return () => observer.disconnect();
+    window.addEventListener('resize', updateColumns);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateColumns);
+    };
   }, []);
 
   // Group units into rows
@@ -189,15 +227,15 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => viewMode === 'list' ? 48 : 150,
+    estimateSize: () => viewMode === 'list' ? 76 : gridRowEstimate,
     overscan: 3,
-    measureElement: (el) => el?.getBoundingClientRect().height ?? (viewMode === 'list' ? 48 : 140),
+    measureElement: (el) => el?.getBoundingClientRect().height ?? (viewMode === 'list' ? 76 : gridRowEstimate),
   });
 
   if (filteredUnits.length === 0) {
     return (
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="text-center py-12 text-text-muted">
+        <div className="picker-empty-state">
           <p className="text-lg font-medium">No units found</p>
           <p className="text-sm mt-2">
             {quickAccessTab === 'favorites'
@@ -212,7 +250,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
   }
 
   return (
-    <div ref={parentRef} className="mx-auto flex-1 w-full max-w-[1120px] overflow-y-auto px-4 py-6 custom-scrollbar sm:px-6">
+    <div ref={parentRef} className="picker-results-scroll custom-scrollbar">
       <div
         style={{
           height: `${rowVirtualizer.getTotalSize()}px`,
@@ -248,30 +286,25 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                       onClick={() => onUnitClick(unitId)}
                       role="button"
                       tabIndex={0}
-                      className={`
-                        flex items-center gap-3 px-4 h-12 rounded-global border transition-all duration-200 cursor-pointer mb-2
-                        ${isSelected
-                          ? 'border-primary/50 bg-primary/10 shadow-[0_0_15px_var(--color-primary-glow)] text-primary'
-                          : 'border-border-base bg-bg-card hover:bg-bg-card-hover hover:border-primary/30 text-text-main'
-                        }
-                      `}
+                      className={`picker-list-row ${isSelected ? 'picker-list-row-selected' : ''}`}
                     >
-                      {/* Unit image */}
-                      <div className="shrink-0">
-                        <UnitImage unitId={unitId} size={32} showLevel={false} className="rounded-md" />
+                      <div className="picker-list-image">
+                        <UnitImage unitId={unitId} size={42} showLevel={false} className="!bg-transparent drop-shadow-md" />
                       </div>
 
-                      {/* Unit name */}
-                      <span className="flex-1 text-sm font-semibold truncate">
-                        {name}
-                        {stockQuantities?.[unitId] != null ? (
-                          <span className="ml-2 text-xs font-mono text-text-muted">
-                            ({stockQuantities[unitId].toLocaleString()})
-                          </span>
-                        ) : null}
-                      </span>
+                      <div className="picker-list-body">
+                        <div className="picker-list-name-row">
+                          <span className="picker-list-name">{name}</span>
+                          <span className="picker-card-id">#{unitId}</span>
+                        </div>
+                      </div>
 
-                      {/* Inline quantity input when selected */}
+                      {stockQuantities?.[unitId] != null ? (
+                        <span className="picker-list-stock">
+                          {stockQuantities[unitId].toLocaleString()}
+                        </span>
+                      ) : null}
+
                       {allowQuantity && isSelected && (
                         <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                           <Input
@@ -284,29 +317,24 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                         </div>
                       )}
 
-                      {/* Favorite button */}
                       <button
                         onClick={(e) => onFavoriteClick(e, unitId)}
-                        className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isFav
-                          ? 'bg-error/20 text-error hover:bg-error hover:text-white'
-                          : 'bg-transparent text-text-muted hover:bg-error/10 hover:text-error'
-                          }`}
+                        className={`picker-favorite-button ${isFav ? 'picker-favorite-button-active' : ''}`}
                       >
                         <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
                       </button>
 
-                      {/* Selection indicator */}
                       {isSelected && (
-                        <div className="shrink-0 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-                          <Check className="w-3.5 h-3.5 text-bg-app stroke-[3]" />
+                        <div className="picker-selection-indicator">
+                          <Check className="w-3.5 h-3.5 text-primary stroke-[3]" />
                         </div>
                       )}
                     </div>
                   );
                 })
               ) : (
-                // GRID MODE: existing card grid, unchanged
-                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+                // GRID MODE: card grid sized from the available picker width
+                <div className="picker-grid-row grid gap-3" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
                   {row.map(([idStr, name]) => {
                     const unitId = parseInt(idStr);
                     const isSelected = selectedIds.has(unitId);
@@ -318,50 +346,44 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                         onClick={() => onUnitClick(unitId)}
                         role="button"
                         tabIndex={0}
-                        className={`
-                          relative flex flex-col items-center rounded-xl transition-all duration-200
-                          border-2 hover:-translate-y-1 overflow-hidden cursor-pointer w-full py-2
-                          ${isSelected
-                            ? 'border-primary bg-primary/10 shadow-[0_0_20px_var(--color-primary-glow)]'
-                            : 'border-border-base bg-bg-card hover:border-primary/50 hover:bg-bg-card-hover shadow-sm'
-                          }
-                        `}
+                        className={`picker-grid-card ${isSelected ? 'picker-grid-card-selected' : ''}`}
                       >
-                        {/* Top-right icons container */}
-                        <div className="absolute top-1.5 right-1.5 flex flex-col gap-1.5 z-10">
-                          {/* Favorite button */}
+                        <div className="picker-card-topline">
+                          <span className="picker-card-id">#{unitId}</span>
+                          {stockQuantities?.[unitId] != null ? (
+                            <span className="picker-stock-pill">
+                              {stockQuantities[unitId].toLocaleString()}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="picker-grid-actions">
                           <button
                             onClick={(e) => onFavoriteClick(e, unitId)}
-                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-md ${isFav
-                              ? 'bg-error text-white'
-                              : 'bg-black/50 text-white/70 hover:bg-error/80 hover:text-white backdrop-blur-sm'
-                              }`}
+                            className={`picker-favorite-button ${isFav ? 'picker-favorite-button-active' : ''}`}
                           >
                             <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
                           </button>
 
-                          {/* Selection indicator */}
                           {isSelected && (
-                            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40">
-                              <Check className="w-4 h-4 text-bg-app stroke-[3]" />
+                            <div className="picker-selection-indicator">
+                              <Check className="w-4 h-4 text-primary stroke-[3]" />
                             </div>
                           )}
                         </div>
 
-                        {/* Unit Image - edge to edge */}
-                        <div className="w-full h-[90px] flex items-center justify-center pt-1">
-                          <UnitImage unitId={unitId} size={84} showLevel={true} className="drop-shadow-md" />
+                        <div className="picker-image-stage">
+                          <UnitImage unitId={unitId} size={gridIconSize} showLevel={true} className="!bg-transparent drop-shadow-md" />
                         </div>
 
-                        {stockQuantities?.[unitId] != null ? (
-                          <span className="absolute bottom-2 left-2 z-10 rounded-full bg-bg-app px-2 py-0.5 text-[10px] font-bold font-mono text-text-main ring-1 ring-border-base">
-                            {stockQuantities[unitId].toLocaleString()}
+                        <div className="picker-card-body">
+                          <span className={`picker-unit-name line-clamp-2 ${isSelected ? 'picker-unit-name-selected' : ''}`}>
+                            {name}
                           </span>
-                        ) : null}
+                        </div>
 
-                        {/* Bottom area: Name or Quantity Input */}
                         {allowQuantity && isSelected ? (
-                          <div className="px-2 pt-2 pb-1 w-full" onClick={(e) => e.stopPropagation()}>
+                          <div className="picker-card-quantity" onClick={(e) => e.stopPropagation()}>
                             <Input
                               type="text"
                               value={quantities[unitId] ? quantities[unitId].toLocaleString() : ''}
@@ -370,11 +392,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                               className="text-center font-mono h-8"
                             />
                           </div>
-                        ) : (
-                          <span className={`px-2 pt-2 pb-1 text-[11px] font-semibold text-center line-clamp-2 w-full ${isSelected ? 'text-primary' : 'text-text-main'}`}>
-                            {name}
-                          </span>
-                        )}
+                        ) : null}
                       </div>
                     );
                   })}
@@ -402,6 +420,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
     allowedUnitIds,
     stockQuantities,
   } = options;
+  const { troops } = useMetadata();
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set(preselected));
@@ -409,7 +428,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
-  const restrictToAllowed = Boolean(allowedUnitIds?.length);
+  const restrictToAllowed = allowedUnitIds !== undefined;
   const initialTab: QuickAccessTab = restrictToAllowed ? 'all' : getTopFrequent(50).length > 0 ? 'frequent' : 'all';
   const [quickAccessTab, setQuickAccessTab] = useState<QuickAccessTab>(initialTab);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
@@ -430,15 +449,28 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
   }, [isOpen, restrictToAllowed]);
 
   // Get definitions and metadata for troops
-  const definitions = TROOP_DEFINITIONS;
+  const definitions = useMemo<Record<number, string>>(() => {
+    if (!restrictToAllowed) {
+      return TROOP_DEFINITIONS;
+    }
+    const out: Record<number, string> = {};
+    for (const id of allowedUnitIds ?? []) {
+      if (!Number.isFinite(id) || id <= 0) {
+        continue;
+      }
+      const unitID = Math.floor(id);
+      out[unitID] = troops[unitID]?.name || TROOP_DEFINITIONS[unitID] || `Unit #${unitID}`;
+    }
+    return out;
+  }, [allowedUnitIds, restrictToAllowed, troops]);
   const metadata = TROOP_METADATA;
 
   // Filter units by all criteria
   const filteredUnits = useMemo(() => {
     let entries = Object.entries(definitions);
 
-    if (allowedUnitIds?.length) {
-      const allowed = new Set(allowedUnitIds);
+    if (restrictToAllowed) {
+      const allowed = new Set(allowedUnitIds ?? []);
       entries = entries.filter(([id]) => allowed.has(parseInt(id)));
       if (stockQuantities) {
         entries.sort(
@@ -496,7 +528,8 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
     }
 
     return entries;
-  }, [definitions, metadata, allowedUnitIds, stockQuantities, searchQuery, typeFilter, roleFilter, foodFilter, quickAccessTab, favorites, frequentIds]);
+  }, [definitions, metadata, allowedUnitIds, restrictToAllowed, stockQuantities, searchQuery, typeFilter, roleFilter, foodFilter, quickAccessTab, favorites, frequentIds]);
+  const visibleUnitLabel = filteredUnits.length === 1 ? 'unit' : 'units';
 
   // Handle unit selection
   const handleUnitClick = (unitId: number) => {
@@ -586,9 +619,9 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
       onClose={handleCancel}
       maxWidth="6xl"
       title={
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-6 rounded-full bg-primary shadow-[0_0_10px_var(--color-primary-glow)]" />
-          <span className="text-xl">
+        <div className="picker-modal-title">
+          <span className="picker-modal-title-mark" aria-hidden="true" />
+          <span className="picker-modal-title-text">
             {title || (mode === 'single' ? 'Select Troop' : 'Select Troops')}
           </span>
           {mode === 'multi' && selectedIds.size > 0 && (
@@ -615,12 +648,26 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
         </>
       }
     >
-      <div className="mx-auto flex h-[calc(100vh-14rem)] w-full max-w-[1120px] flex-col overflow-hidden rounded-global border border-border-base bg-bg-app">
-        {/* Filter Bar */}
-        <div className="px-5 py-4 border-b border-border-base bg-bg-card-hover/40 shrink-0 space-y-4">
-          {/* Row 1: Search + Quick Access */}
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="w-full md:flex-1">
+      <div className="picker-shell">
+        <div className="picker-toolbar">
+          <div className="picker-toolbar-overview">
+            <div className="picker-toolbar-copy">
+              <span className="picker-toolbar-kicker">
+                {allowQuantity ? 'Quantity picker' : mode === 'single' ? 'Single pick' : 'Multi pick'}
+              </span>
+              <span className="picker-toolbar-count">
+                {filteredUnits.length.toLocaleString()} {visibleUnitLabel}
+              </span>
+            </div>
+            <div className="picker-selection-summary">
+              <Check className="w-3.5 h-3.5" />
+              <span>{selectedIds.size.toLocaleString()}</span>
+              selected
+            </div>
+          </div>
+
+          <div className="picker-command-row">
+            <div className="picker-search-slot">
               <Input
                 type="text"
                 placeholder="Search by name or ID..."
@@ -638,43 +685,48 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
                 { value: 'favorites', label: 'Favorites', icon: <Heart className="w-3.5 h-3.5" /> },
                 { value: 'frequent', label: 'Frequent', icon: <Flame className="w-3.5 h-3.5" /> }
               ]}
-              className="w-full md:w-auto"
+              className="picker-pill-control picker-quick-pills"
             />
           </div>
 
-          {/* Row 2: Type + Role + Food filters */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <ToggleGroup
-              value={typeFilter}
-              onChange={(v) => setTypeFilter(v as TypeFilter)}
-              options={[
-                { value: 'all', label: 'All Types' },
-                { value: 'melee', label: 'Melee' },
-                { value: 'range', label: 'Range' }
-              ]}
-              size="sm"
-            />
-            <ToggleGroup
-              value={roleFilter}
-              onChange={(v) => setRoleFilter(v as RoleFilter)}
-              options={[
-                { value: 'all', label: 'All Roles' },
-                { value: 'attack', label: 'Attack' },
-                { value: 'defense', label: 'Defense' }
-              ]}
-              size="sm"
-            />
-            <ToggleGroup
-              value={foodFilter}
-              onChange={(v) => setFoodFilter(v as FoodFilter)}
-              options={[
-                { value: 'all', label: 'All Food' },
-                { value: 'mead', label: 'Mead' },
-                { value: 'beef', label: 'Beef' },
-                { value: 'food', label: 'Food' }
-              ]}
-              size="sm"
-            />
+          <div className="picker-filter-dock">
+            <span className="picker-filter-dock-label">Filters</span>
+            <div className="picker-filter-row">
+              <ToggleGroup
+                value={typeFilter}
+                onChange={(v) => setTypeFilter(v as TypeFilter)}
+                options={[
+                  { value: 'all', label: 'All Types' },
+                  { value: 'melee', label: 'Melee' },
+                  { value: 'range', label: 'Range' }
+                ]}
+                size="sm"
+                className="picker-pill-control"
+              />
+              <ToggleGroup
+                value={roleFilter}
+                onChange={(v) => setRoleFilter(v as RoleFilter)}
+                options={[
+                  { value: 'all', label: 'All Roles' },
+                  { value: 'attack', label: 'Attack' },
+                  { value: 'defense', label: 'Defense' }
+                ]}
+                size="sm"
+                className="picker-pill-control"
+              />
+              <ToggleGroup
+                value={foodFilter}
+                onChange={(v) => setFoodFilter(v as FoodFilter)}
+                options={[
+                  { value: 'all', label: 'All Food' },
+                  { value: 'mead', label: 'Mead' },
+                  { value: 'beef', label: 'Beef' },
+                  { value: 'food', label: 'Food' }
+                ]}
+                size="sm"
+                className="picker-pill-control"
+              />
+            </div>
           </div>
         </div>
 

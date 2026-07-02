@@ -40,7 +40,7 @@ const CastleView: React.FC = () => {
     return (
       <div className="flex flex-col gap-6">
         <StaleSessionBanner />
-        <div className="rounded-global border border-dashed border-border-light bg-bg-card/50 px-6 py-12 text-center">
+        <div className="rounded-global border border-dashed border-border-light bg-bg-card/50 px-6 py-12 text-center backdrop-blur-2xl">
           <p className="text-sm font-medium text-text-main">No castle in focus</p>
           <p className="mt-2 text-xs text-text-muted mx-auto max-w-md">
             Choose a castle from the Focus strip under the header, or focus one in-game (JAA). The Castle view shows
@@ -55,7 +55,7 @@ const CastleView: React.FC = () => {
     return (
       <div className="flex flex-col gap-6">
         <StaleSessionBanner />
-        <div className="rounded-global border border-border-base bg-bg-card/80 px-6 py-10 text-center">
+        <div className="rounded-global border border-border-light bg-bg-card/60 px-6 py-10 text-center backdrop-blur-2xl">
           <p className="text-sm text-text-muted">Loading {castleName}…</p>
         </div>
       </div>
@@ -66,7 +66,7 @@ const CastleView: React.FC = () => {
     return (
       <div className="flex flex-col gap-6">
         <StaleSessionBanner />
-        <div className="rounded-global border border-border-base bg-bg-card/80 px-6 py-10 text-center">
+        <div className="rounded-global border border-border-light bg-bg-card/60 px-6 py-10 text-center backdrop-blur-2xl">
           <p className="text-sm font-medium text-text-main">{castleName}</p>
           <p className="mt-2 text-xs text-text-muted mx-auto max-w-md">
             No castle data yet for this focus. Stay on the castle in-game; updates arrive over the websocket
@@ -80,21 +80,13 @@ const CastleView: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <StaleSessionBanner />
-      <header className="flex flex-col gap-1 border-b border-border-base pb-4">
-        <h1 className="text-2xl font-bold tracking-tight text-text-main">{castleName}</h1>
-        <p className="text-xs text-text-muted">
-          Focused castle (aid {focusedAid}
-          {castleFocus?.kingdomID != null && castleFocus.kingdomID !== 0 ? ` · kingdom ${castleFocus.kingdomID}` : ''}
-          ). Switch focus from the strip under the header to change castle.
-        </p>
-      </header>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch h-[calc(100vh-14rem)]">
-        <Card className="flex flex-col min-h-0">
-          <CardHeader className="pb-2 border-b-0">
+      <div className="castle-dashboard-grid md:items-stretch">
+        <Card className="liquid-prominent-header-card flex flex-col min-h-0">
+          <CardHeader className="liquid-card-header-prominent">
             <CardTitle className="text-primary">Decorations</CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 overflow-auto custom-scrollbar pt-0">
+          <CardContent className="liquid-prominent-header-content liquid-prominent-header-content-flush flex-1 overflow-auto custom-scrollbar">
             <DecorationPresetsPanel />
           </CardContent>
         </Card>

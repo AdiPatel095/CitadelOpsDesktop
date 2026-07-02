@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Save, Plus, Trash2 } from 'lucide-react';
+import { CalendarDays, X, Save, Plus, Trash2 } from 'lucide-react';
 import { FrontendWebsocket } from '../../Websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
@@ -31,6 +31,7 @@ interface Castle {
 interface AutoBirdSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
 }
 
 function AutoBirdTroopTile({
@@ -72,7 +73,7 @@ function clampMinRPTDays(value: number): number {
   return Math.min(30, Math.max(0, value));
 }
 
-export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose }) => {
+export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
   const [castles, setCastles] = useState<Castle[]>([]);
   const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
   const [minDelay, setMinDelay] = useState(6);
@@ -286,12 +287,23 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       onClose={onClose}
       maxWidth="full"
       title={
-        <div className="flex flex-col">
-          <span className="text-primary">Auto Bird Settings</span>
-          <p className="mt-1 text-sm text-text-muted font-normal">
-            Configure troops to keep (ignore) for each castle when auto-birding. These units will{' '}
-            <span className="font-bold text-text-main">not</span> be sent.
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <span className="text-primary">Auto Bird Settings</span>
+            <p className="mt-1 text-sm text-text-muted font-normal">
+              Configure troops to keep (ignore) for each castle when auto-birding. These units will{' '}
+              <span className="font-bold text-text-main">not</span> be sent.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={() => onOpenFeatureSchedule('autoBird', 'Auto Bird')}
+            leftIcon={<CalendarDays className="h-4 w-4" />}
+          >
+            Calendar
+          </Button>
         </div>
       }
       footer={
@@ -305,7 +317,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         </>
       }
     >
-      <div className="flex h-[calc(100vh-14rem)] max-w-6xl w-full flex-col gap-6 mx-auto">
+      <div className="auto-bird-settings-workspace flex w-full flex-col gap-6 mx-auto">
         {/* Global settings bar */}
         <Card variant="solid" className="shrink-0 bg-bg-app border-border-base p-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">

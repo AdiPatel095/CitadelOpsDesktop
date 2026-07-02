@@ -23,15 +23,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-global font-semibold transition-all duration-200 active:scale-95 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap';
+    const baseStyles = 'inline-flex items-center justify-center rounded-full font-semibold transition-all duration-200 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap';
     
     const variants = {
-      primary: 'bg-primary text-text-inverted shadow-glow hover:bg-primary-hover hover:shadow-glow-active',
-      secondary: 'bg-bg-card-hover text-text-main border border-border-base hover:border-border-light',
-      ghost: 'bg-transparent text-text-muted hover:text-text-main hover:bg-bg-card-hover',
-      danger: 'bg-error/10 text-error border border-error/20 hover:bg-error/20 hover:border-error/40 shadow-[0_0_15px_var(--color-error)]',
-      outline: 'bg-transparent border-2 border-primary/40 text-primary hover:bg-primary/10 shadow-[0_0_15px_rgba(16,185,129,0.1)]',
-      glass: 'bg-bg-card/80 backdrop-blur-md border border-border-base shadow-lg hover:bg-bg-card-hover text-text-main',
+      primary: 'bg-primary text-text-inverted border border-white/20 shadow-glow hover:bg-primary-hover hover:shadow-glow-active',
+      secondary: 'bg-bg-card/55 text-text-main border border-border-light shadow-[var(--glass-shadow-compact)] backdrop-blur-2xl hover:bg-bg-card-hover/80 hover:border-primary/25',
+      ghost: 'bg-transparent text-text-muted hover:text-text-main hover:bg-bg-card-hover/70',
+      danger: 'bg-error/10 text-error border border-error/25 hover:bg-error/18 hover:border-error/45 shadow-[0_0_18px_color-mix(in_srgb,var(--color-error)_24%,transparent)]',
+      outline: 'bg-bg-card/30 border border-primary/35 text-primary shadow-[0_0_18px_color-mix(in_srgb,var(--color-primary)_15%,transparent)] backdrop-blur-xl hover:bg-primary/10 hover:border-primary/55',
+      glass: 'bg-bg-card/45 backdrop-blur-2xl border border-border-light shadow-[var(--glass-shadow-compact)] hover:bg-bg-card-hover/75 text-text-main',
     };
 
     const sizes = {

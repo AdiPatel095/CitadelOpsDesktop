@@ -52,8 +52,9 @@ func TCIDisplayNameForItemMeta(m GameParser.ConstructionItemMeta) string {
 
 // CatalogGroupTier is one wire CID tier in a design group (all tiers of one temporary/appearance line).
 type CatalogGroupTier struct {
-	WireCID int `json:"wireCid"`
-	Level   int `json:"level"`
+	WireCID int    `json:"wireCid"`
+	Level   int    `json:"level"`
+	Effects string `json:"effects,omitempty"`
 }
 
 // ConstructionItemCatalogEntry is one TCI design group: several wire CIDs (one per in-game level tier) with
@@ -146,7 +147,6 @@ func ConstructionItemsCatalog() ([]ConstructionItemCatalogEntry, error) {
 			first := g.items[0]
 
 			label := TCIDisplayNameFromInternal(mapString(first, "name"), mapString(first, "_display_name"))
-			effects := buildTCIDisplayEffects(first)
 			category := mapString(first, "comment1")
 
 			tiers := make([]CatalogGroupTier, 0, len(g.items))
@@ -166,7 +166,7 @@ func ConstructionItemsCatalog() ([]ConstructionItemCatalogEntry, error) {
 				if lvl > maxLevel {
 					maxLevel = lvl
 				}
-				tiers = append(tiers, CatalogGroupTier{WireCID: cid, Level: lvl})
+				tiers = append(tiers, CatalogGroupTier{WireCID: cid, Level: lvl, Effects: buildTCIDisplayEffects(row)})
 			}
 			if len(tiers) == 0 {
 				continue
@@ -196,7 +196,7 @@ func ConstructionItemsCatalog() ([]ConstructionItemCatalogEntry, error) {
 				Internal:   mapString(first, "name"),
 				Level:      levelStr,
 				Category:   category,
-				Effects:    effects,
+				Effects:    tiers[0].Effects,
 			})
 			_ = key
 		}

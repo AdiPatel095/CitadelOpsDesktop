@@ -306,8 +306,8 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     }, []);
 
     return (
-        <Card className="h-full flex flex-col relative min-h-0">
-            <CardHeader className="pb-3 border-b border-border-base flex items-center justify-between gap-2">
+        <Card className="liquid-prominent-header-card h-full flex flex-col relative min-h-0">
+            <CardHeader className="liquid-card-header-prominent flex items-center justify-between gap-2">
                 <div className="flex flex-col">
                   <h3 className="text-base font-semibold text-text-main flex items-center gap-2">
                       <Icons.Activity className="w-4 h-4 text-primary" />
@@ -360,7 +360,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
                 </div>
             </CardHeader>
 
-            <CardContent className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+            <CardContent className="liquid-prominent-header-content flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
                 <TierList
                     tier={1}
                     stats={tier1Stats}

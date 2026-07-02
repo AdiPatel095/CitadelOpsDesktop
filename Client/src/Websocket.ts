@@ -1,3 +1,5 @@
+import type { FeatureSchedules } from './settings/SchedulerTypes';
+
 type MessageListener = (message: any) => void;
 
 class FrontendWebsocketService {
@@ -69,9 +71,11 @@ class FrontendWebsocketService {
   }
 
   private sendOnOpenRequests() {
+    this.sendMessage({ type: 'getSchedulerSettings' });
+    this.sendMessage({ type: 'getRecruitTroopsSettings' });
+    this.sendMessage({ type: 'getAutoToolSettings' });
     this.sendMessage({ type: 'getAutoBirdClientState' });
     this.sendMessage({ type: 'getAutoTCIClientState' });
-    this.sendMessage({ type: 'getAutoBeriWorldSettings' });
   }
 
   private scheduleReconnect() {
@@ -253,8 +257,9 @@ class FrontendWebsocketService {
     upgradeEreDelayMs: number;
     upgradeCoinThreshold: number;
     tabPriorities: Record<string, string>;
-  }>) {
-    this.sendMessage({
+    featureSchedules: FeatureSchedules;
+  }>): boolean {
+    return this.sendMessage({
       type: 'saveSchedulerSettings',
       payload: payload
     });

@@ -2,6 +2,167 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Icons } from './Icons';
 
 type ChannelMeta = { id: string; label: string };
+type LogTone = 'send' | 'recv' | 'info' | 'warn' | 'error' | 'debug' | 'plain';
+
+type ParsedLogLine = {
+  index: number;
+  raw: string;
+  timestamp: string;
+  primary: string;
+  secondary: string;
+  message: string;
+  tone: LogTone;
+  payloadParts: string[];
+  payloadMoreCount: number;
+  jsonPayload: string;
+  searchText: string;
+};
+
+const channelLinePattern = /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})(?:\.(\d{1,6}))?\s+\[([^\]]+)]\s+\[([^\]]+)]\s*(.*)$/;
+const goLogLinePattern = /^(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})(?:\.\d+)?\s*(.*)$/;
+const scopedMessagePattern = /^\[([^\]]+)]\s*(.*)$/;
+
+const formatLogTime = (time: string) => {
+  const [hourText, minute, second] = time.split(':');
+  const hour = Number(hourText);
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !minute || !second) {
+    return time;
+  }
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minute}:${second} ${suffix}`;
+};
+
+const toneFromToken = (value: string): LogTone => {
+  const token = value.toLowerCase();
+  if (token === 'send') return 'send';
+  if (token === 'recv' || token === 'receive' || token === 'received') return 'recv';
+  if (token.includes('error') || token.includes('failed') || token.includes('fail')) return 'error';
+  if (token.includes('warn')) return 'warn';
+  if (token.includes('debug') || token.includes('trace')) return 'debug';
+  if (token.includes('info') || token.includes('success') || token.includes('ready')) return 'info';
+  return 'plain';
+};
+
+const trimFrameSuffix = (value: string) => (value.endsWith('%') ? value.slice(0, -1) : value);
+
+const prettyJsonPayload = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+    return '';
+  }
+  try {
+    return JSON.stringify(JSON.parse(trimmed), null, 2);
+  } catch {
+    return '';
+  }
+};
+
+const humanizePayload = (payload: string, direction: string) => {
+  const parts = payload.split('%');
+
+  if (parts[1] !== 'xt') {
+    return {
+      message: payload,
+      messageType: '',
+      payloadParts: [] as string[],
+      payloadMoreCount: 0,
+      jsonPayload: prettyJsonPayload(payload),
+    };
+  }
+
+  const tokenOrType = parts[2]?.trim() ?? '';
+  let messageType = tokenOrType;
+  let sequenceIndex = 3;
+  if (tokenOrType.startsWith('EmpireEx_')) {
+    messageType = parts[3]?.trim() ?? '';
+    sequenceIndex = 4;
+  }
+
+  if (!messageType) {
+    return {
+      message: payload,
+      messageType: '',
+      payloadParts: [] as string[],
+      payloadMoreCount: 0,
+      jsonPayload: prettyJsonPayload(payload),
+    };
+  }
+
+  const responseStatus = direction.toUpperCase() !== 'SEND' ? (parts[sequenceIndex + 1]?.trim() ?? '') : '';
+  const bodyStartIndex = sequenceIndex + (responseStatus ? 2 : 1);
+  const message = trimFrameSuffix(parts.slice(bodyStartIndex).join('%')).trim() || payload;
+
+  return {
+    message,
+    messageType,
+    payloadParts: responseStatus ? [`status ${responseStatus}`] : [],
+    payloadMoreCount: 0,
+    jsonPayload: prettyJsonPayload(message),
+  };
+};
+
+const parseLogLine = (rawLine: string, index: number): ParsedLogLine => {
+  const raw = rawLine.trimEnd();
+  const channelMatch = raw.match(channelLinePattern);
+
+  if (channelMatch) {
+    const [, , time, , direction, opcode, payload] = channelMatch;
+    const payloadInfo = humanizePayload(payload, direction);
+    const primary = direction.toUpperCase();
+    const secondary = (payloadInfo.messageType || opcode).toUpperCase();
+    return {
+      index,
+      raw,
+      timestamp: formatLogTime(time),
+      primary,
+      secondary,
+      message: payloadInfo.message,
+      tone: toneFromToken(primary),
+      payloadParts: payloadInfo.payloadParts,
+      payloadMoreCount: payloadInfo.payloadMoreCount,
+      jsonPayload: payloadInfo.jsonPayload,
+      searchText: raw.toLowerCase(),
+    };
+  }
+
+  const goMatch = raw.match(goLogLinePattern);
+  if (goMatch) {
+    const [, , , , time, rest] = goMatch;
+    const scopedMatch = rest.match(scopedMessagePattern);
+    const primary = scopedMatch?.[1] ?? '';
+    const message = scopedMatch?.[2] ?? rest;
+    const tone = toneFromToken(`${primary} ${message}`);
+    return {
+      index,
+      raw,
+      timestamp: formatLogTime(time),
+      primary,
+      secondary: tone === 'plain' ? '' : tone.toUpperCase(),
+      message,
+      tone,
+      payloadParts: [],
+      payloadMoreCount: 0,
+      jsonPayload: '',
+      searchText: raw.toLowerCase(),
+    };
+  }
+
+  const tone = toneFromToken(raw);
+  return {
+    index,
+    raw,
+    timestamp: '',
+    primary: '',
+    secondary: tone === 'plain' ? '' : tone.toUpperCase(),
+    message: raw,
+    tone,
+    payloadParts: [],
+    payloadMoreCount: 0,
+    jsonPayload: '',
+    searchText: raw.toLowerCase(),
+  };
+};
 
 export const LoggerDock: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -11,13 +172,16 @@ export const LoggerDock: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFollowingLive, setIsFollowingLive] = useState(true);
-  const preRef = useRef<HTMLPreElement>(null);
+  const [expandedJsonRows, setExpandedJsonRows] = useState<Set<string>>(() => new Set());
+  const logStreamRef = useRef<HTMLDivElement>(null);
+
+  const parsedLines = useMemo(() => lines.map(parseLogLine), [lines]);
 
   const filteredLines = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return lines;
-    return lines.filter((line) => line.toLowerCase().includes(query));
-  }, [lines, searchQuery]);
+    if (!query) return parsedLines;
+    return parsedLines.filter((line) => line.searchText.includes(query));
+  }, [parsedLines, searchQuery]);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,7 +226,7 @@ export const LoggerDock: React.FC = () => {
   }, [open, activeId, fetchTail]);
 
   useEffect(() => {
-    const el = preRef.current;
+    const el = logStreamRef.current;
     if (!el) return;
     if (!isFollowingLive) return;
     el.scrollTop = el.scrollHeight;
@@ -74,7 +238,7 @@ export const LoggerDock: React.FC = () => {
   }, [open, activeId]);
 
   useEffect(() => {
-    const el = preRef.current;
+    const el = logStreamRef.current;
     if (!el || !open) return;
 
     const handleScroll = () => {
@@ -88,21 +252,33 @@ export const LoggerDock: React.FC = () => {
   }, [open, filteredLines]);
 
   const jumpToLatest = useCallback(() => {
-    const el = preRef.current;
+    const el = logStreamRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
     setIsFollowingLive(true);
   }, []);
 
+  const toggleJsonRow = useCallback((rowKey: string) => {
+    setExpandedJsonRows((current) => {
+      const next = new Set(current);
+      if (next.has(rowKey)) {
+        next.delete(rowKey);
+      } else {
+        next.add(rowKey);
+      }
+      return next;
+    });
+  }, []);
+
   return (
     <>
       {open && (
-        <div className="fixed top-16 left-64 right-0 bottom-0 z-[90] bg-bg-app border-l border-t border-border-base shadow-2xl flex flex-col animate-fade-in">
-          <div className="flex shrink-0 items-center justify-between border-b border-border-base bg-bg-card-hover/80 px-4 py-3 backdrop-blur-md">
+        <div className="liquid-logger-panel animate-fade-in">
+          <div className="liquid-logger-toolbar">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Icons.Activity className="w-5 h-5 text-primary" />
-                <span className="text-sm font-bold uppercase tracking-wide text-text-main">
+                <span className="text-sm font-bold uppercase text-text-main">
                   System Logs
                 </span>
               </div>
@@ -113,10 +289,10 @@ export const LoggerDock: React.FC = () => {
                     key={c.id}
                     type="button"
                     onClick={() => setActiveId(c.id)}
-                    className={`rounded-global px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                    className={`liquid-log-tab ${
                       activeId === c.id
-                        ? 'bg-primary text-bg-app shadow-md shadow-primary/20'
-                        : 'bg-bg-card border border-border-base text-text-muted hover:bg-primary/10 hover:border-primary/30 hover:text-primary'
+                        ? 'liquid-log-tab-active'
+                        : 'liquid-log-tab-idle'
                     }`}
                   >
                     {c.label}
@@ -133,14 +309,14 @@ export const LoggerDock: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search logs..."
-                  className="w-52 rounded-global border border-border-base bg-bg-card py-2 pl-9 pr-3 text-sm text-text-main placeholder:text-text-muted focus:border-primary focus:outline-none"
+                  className="liquid-log-search"
                 />
               </div>
               {!isFollowingLive && (
                 <button
                   type="button"
                   onClick={jumpToLatest}
-                  className="rounded-global border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/15 transition-colors flex items-center gap-1.5"
+                  className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
                 >
                   <Icons.ArrowRight className="w-4 h-4 rotate-90" />
                   Jump to latest
@@ -149,7 +325,7 @@ export const LoggerDock: React.FC = () => {
               <button
                 type="button"
                 onClick={() => void fetchTail()}
-                className="rounded-global border border-border-base bg-bg-card px-3 py-2 text-sm font-medium text-text-muted hover:bg-bg-input hover:text-text-main transition-colors flex items-center gap-1.5"
+                className="liquid-glass-edge flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:text-text-main"
               >
                 <Icons.RefreshCw className="w-4 h-4" />
                 Refresh
@@ -157,7 +333,7 @@ export const LoggerDock: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-global border border-border-base bg-bg-card px-3 py-2 text-sm font-medium text-text-muted hover:bg-error/10 hover:border-error/30 hover:text-error transition-colors flex items-center gap-1.5"
+                className="liquid-glass-edge flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:border-error/30 hover:text-error"
               >
                 <Icons.X className="w-4 h-4" />
                 Close
@@ -165,44 +341,101 @@ export const LoggerDock: React.FC = () => {
             </div>
           </div>
 
-          <div className="relative min-h-0 flex-1 overflow-hidden bg-[#0A0A0A]">
+          <div className="liquid-logger-body">
             {loadError && (
-              <div className="absolute inset-x-0 top-0 z-10 bg-error/15 border-b border-error/30 px-3 py-2.5 text-center text-sm font-medium text-error shadow-sm backdrop-blur-sm flex items-center justify-center gap-2">
+              <div className="liquid-log-error">
                 <Icons.AlertCircle className="w-4 h-4" />
                 {loadError}
               </div>
             )}
-            <pre
-              ref={preRef}
-              className="h-full overflow-auto p-4 font-mono text-base leading-relaxed text-gray-300 selection:bg-primary/30 custom-scrollbar"
+            <div
+              ref={logStreamRef}
+              className="liquid-log-stream custom-scrollbar"
+              role="log"
             >
               {filteredLines.length === 0 ? (
-                <span className="text-base text-gray-600 italic">
+                <span className="liquid-log-empty">
                   {lines.length === 0 ? 'No lines yet for this channel.' : 'No log lines match the current search.'}
                 </span>
               ) : (
-                filteredLines.join('\n')
+                filteredLines.map((line) => {
+                  const rowKey = `${line.index}-${line.raw}`;
+                  const isJsonExpanded = expandedJsonRows.has(rowKey);
+
+                  return (
+                    <div
+                      key={rowKey}
+                      className={`liquid-log-row liquid-log-row-${line.tone}`}
+                      title={line.raw}
+                    >
+                      <div className="liquid-log-row-meta">
+                        <span className="liquid-log-time">
+                          {line.timestamp || `#${line.index + 1}`}
+                        </span>
+                        {line.primary && (
+                          <span className={`liquid-log-badge liquid-log-badge-${line.tone}`}>
+                            {line.primary}
+                          </span>
+                        )}
+                        {line.secondary && (
+                          <span className="liquid-log-chip">
+                            {line.secondary}
+                          </span>
+                        )}
+                        {line.payloadParts.map((part, partIndex) => (
+                          <span key={`${line.index}-${partIndex}-${part}`} className="liquid-log-chip">
+                            {part}
+                          </span>
+                        ))}
+                        {line.payloadMoreCount > 0 && (
+                          <span className="liquid-log-chip">
+                            +{line.payloadMoreCount}
+                          </span>
+                        )}
+                      </div>
+                      <div className="liquid-log-row-content">
+                        {line.jsonPayload ? (
+                          <div className="liquid-log-json">
+                            <button
+                              type="button"
+                              className={`liquid-log-json-toggle ${isJsonExpanded ? 'liquid-log-json-toggle-open' : ''}`}
+                              onClick={() => toggleJsonRow(rowKey)}
+                              aria-expanded={isJsonExpanded}
+                            >
+                              <Icons.ArrowRight className="liquid-log-json-icon" />
+                              JSON payload
+                            </button>
+                            {isJsonExpanded && (
+                              <pre className="liquid-log-json-pre custom-scrollbar">
+                                {line.jsonPayload}
+                              </pre>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="liquid-log-message">{line.message || line.raw}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
               )}
-            </pre>
+            </div>
           </div>
         </div>
       )}
 
       {!open && (
-        <div
-          className="fixed bottom-0 right-0 z-[100] flex flex-row items-end pointer-events-none p-0"
-          aria-live="polite"
-        >
+        <div className="liquid-log-handle" aria-live="polite">
           <div className="pointer-events-auto flex flex-row items-stretch shadow-2xl">
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex h-32 w-10 shrink-0 flex-col items-center justify-center gap-2 rounded-tl-xl border border-border-base border-r-0 border-b-0 bg-bg-card text-text-muted shadow-lg transition-all duration-300 hover:bg-bg-card-hover hover:text-primary hover:border-primary/50 group"
+              className="liquid-glass-edge group flex h-32 w-10 shrink-0 flex-col items-center justify-center gap-2 rounded-l-[16px] border-r-0 text-text-muted transition-all duration-300 hover:border-primary/50 hover:text-primary"
               title="Show logs"
             >
               <Icons.Terminal className="w-5 h-5 group-hover:animate-pulse" />
               <span
-                className="text-xs font-bold uppercase tracking-widest text-text-muted group-hover:text-primary transition-colors"
+                className="text-xs font-bold uppercase text-text-muted transition-colors group-hover:text-primary"
                 style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
               >
                 Logs

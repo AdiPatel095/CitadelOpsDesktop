@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Search, Check, Minus, Plus } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Modal, Button, Input, ToggleGroup, Badge } from './ui';
+import { Modal, Button, Input, Badge } from './ui';
 import {
   fetchConstructionItemsCatalog,
   type ConstructionItemCatalogEntry,
+  formatEffectUpgradeLine,
   formatGroupTiersLine,
   levelRangeLabel,
 } from './TCICatalogCache';
@@ -151,92 +152,39 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
     return m;
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [nameFilter, setNameFilter] = useState<string>('all');
-  const [effectFilter, setEffectFilter] = useState<string>('all');
-
-  const nameOptions = useMemo(() => {
-    const s = new Set<string>();
-    catalog.forEach((c) => {
-      if (c.label) {
-        s.add(c.label);
-      }
-    });
-    return Array.from(s).sort((a, b) => a.localeCompare(b));
-  }, [catalog]);
-
-  const effectOptions = useMemo(() => {
-    let rows = catalog;
-    if (nameFilter !== 'all') {
-      rows = rows.filter((c) => c.label === nameFilter);
-    }
-    const s = new Set<string>();
-    rows.forEach((c) => {
-      const fx = (c.effects || '').trim();
-      s.add(fx || '(no listed effects)');
-    });
-    return Array.from(s).sort((a, b) => a.localeCompare(b));
-  }, [catalog, nameFilter]);
-
-  useEffect(() => {
-    setEffectFilter('all');
-  }, [nameFilter]);
-
-  const categories = useMemo(() => {
-    const s = new Set<string>();
-    const isLimitedTime = (cat: string) => {
-      const lower = cat.toLowerCase();
-      const terms = [
-        'sale', 'pack', 'test', 'offer', 'bundle', 'event', 'season',
-        'january', 'february', 'march', 'april', 'may', 'june', 
-        'july', 'august', 'september', 'october', 'november', 'december'
-      ];
-      return terms.some((term) => lower.includes(term));
-    };
-
-    catalog.forEach((c) => {
-      if (c.category && !isLimitedTime(c.category)) {
-        s.add(c.category);
-      }
-    });
-    return Array.from(s).sort();
-  }, [catalog]);
 
   const filtered = useMemo(() => {
     let rows = catalog;
-    if (nameFilter !== 'all') {
-      rows = rows.filter((c) => c.label === nameFilter);
-    }
-    if (effectFilter !== 'all') {
-      rows = rows.filter((c) => {
-        const fx = (c.effects || '').trim();
-        const key = fx || '(no listed effects)';
-        return key === effectFilter;
-      });
-    }
-    if (categoryFilter !== 'all') {
-      rows = rows.filter((c) => c.category === categoryFilter);
-    }
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
+      const qCompact = q.replace(/,/g, '');
+      const matches = (value: string | number | undefined) => {
+        const text = String(value ?? '').toLowerCase();
+        return text.includes(q) || text.replace(/,/g, '').includes(qCompact);
+      };
       rows = rows.filter((c) => {
-        const tierLine = formatGroupTiersLine(c).toLowerCase();
+        const effectLine = formatEffectUpgradeLine(c);
+        const tierLine = formatGroupTiersLine(c);
         return (
-          c.label.toLowerCase().includes(q) ||
-          c.internal.toLowerCase().includes(q) ||
-          c.effects.toLowerCase().includes(q) ||
-          c.category.toLowerCase().includes(q) ||
-          String(c.id).includes(q) ||
-          c.level.toLowerCase().includes(q) ||
-          tierLine.includes(q) ||
+          matches(c.label) ||
+          matches(c.internal) ||
+          matches(c.effects) ||
+          matches(effectLine) ||
+          matches(c.category) ||
+          matches(c.id) ||
+          matches(c.level) ||
+          matches(tierLine) ||
           c.groupTiers?.some(
-            (t) => String(t.wireCid).includes(q) || String(t.level).includes(q)
+            (t) =>
+              matches(t.wireCid) ||
+              matches(t.level) ||
+              matches(t.effects)
           )
         );
       });
     }
     return rows;
-  }, [catalog, nameFilter, effectFilter, categoryFilter, searchQuery]);
+  }, [catalog, searchQuery]);
 
   const handleUnitClick = (id: number) => {
     if (mode === 'single') {
@@ -322,9 +270,9 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
       onClose={handleCancel}
       maxWidth="5xl"
       title={
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-6 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]" />
-          <span className="text-xl">
+        <div className="picker-modal-title">
+          <span className="picker-modal-title-mark" aria-hidden="true" />
+          <span className="picker-modal-title-text">
             {title || (mode === 'single' ? 'Select construction item' : 'Select construction items')}
           </span>
           {mode === 'multi' && selectedIds.size > 0 && (
@@ -351,76 +299,18 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
         </>
       }
     >
-      <div className="mx-auto flex h-[calc(100vh-14rem)] w-full min-w-0 max-w-4xl flex-col overflow-hidden rounded-global border border-border-base bg-bg-app">
-        <div className="shrink-0 space-y-3 border-b border-border-base bg-bg-card-hover/40 px-4 py-4 sm:px-5">
+      <div className="picker-shell picker-shell-narrow">
+        <div className="picker-toolbar">
           <Input
             type="text"
-            placeholder="Search by name, effect, category, or ID…"
+            placeholder="Search effects, names, categories, or IDs…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             leftIcon={<Search className="w-4 h-4" />}
           />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="min-w-0 w-full">
-              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">Name</div>
-              <div className="relative -mx-1 px-1">
-                <div className="flex overflow-x-auto overflow-y-hidden pb-2 pt-0.5 scroll-smooth custom-scrollbar">
-                  <ToggleGroup
-                    value={nameFilter}
-                    onChange={(v) => setNameFilter(v)}
-                    size="sm"
-                    options={[
-                      { value: 'all', label: 'All names', title: 'All construction item names' },
-                      ...nameOptions.map((n) => ({ value: n, label: n, title: n })),
-                    ]}
-                    className="shrink-0 shadow-sm"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="min-w-0 w-full">
-              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">Effect</div>
-              <div className="relative -mx-1 px-1">
-                <div className="flex overflow-x-auto overflow-y-hidden pb-2 pt-0.5 scroll-smooth custom-scrollbar">
-                  <ToggleGroup
-                    value={effectFilter}
-                    onChange={(v) => setEffectFilter(v)}
-                    size="sm"
-                    options={[
-                      { value: 'all', label: 'All effects', title: 'All effect variants' },
-                      ...effectOptions.map((fx) => ({
-                        value: fx,
-                        label: fx.length > 42 ? `${fx.slice(0, 39)}…` : fx,
-                        title: fx,
-                      })),
-                    ]}
-                    className="shrink-0 shadow-sm"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="min-w-0 w-full">
-            <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">Category</div>
-            <div className="relative -mx-1 px-1">
-              <div className="flex overflow-x-auto overflow-y-hidden pb-2 pt-0.5 scroll-smooth custom-scrollbar">
-                <ToggleGroup
-                  value={categoryFilter}
-                  onChange={(v) => setCategoryFilter(v)}
-                  size="sm"
-                  options={[
-                    { value: 'all', label: 'All', title: 'All categories' },
-                    ...categories.map((c) => ({ value: c, label: c, title: c })),
-                  ]}
-                  className="shrink-0 shadow-sm"
-                />
-              </div>
-            </div>
-          </div>
-          <p className="text-xs leading-relaxed text-text-muted">
-            Same display name can have multiple effect variants (General&apos;s Camp style). Pick the name, then narrow by
-            effect if needed. Set a <span className="font-semibold text-text-main">level floor and ceiling</span> (1–4) per
-            variant when you only keep higher tiers in stash.
+          <p className="picker-helper-copy">
+            Search by the effect you want, then set a <span className="font-semibold text-text-main">level floor and ceiling</span>{' '}
+            (1–4) per variant when you only keep higher tiers in stash.
           </p>
         </div>
         <VirtualizedTCIList
@@ -471,7 +361,7 @@ const VirtualizedTCIList: React.FC<VirtualizedTCIListProps> = ({
 
   if (filtered.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center p-12 text-text-muted">
+      <div className="picker-empty-state">
         <p>
           {catalogCount === 0
             ? 'Construction item catalog not loaded. Reconnect to the server and try again.'
@@ -482,7 +372,7 @@ const VirtualizedTCIList: React.FC<VirtualizedTCIListProps> = ({
   }
 
   return (
-    <div ref={parentRef} className="custom-scrollbar mx-auto min-w-0 flex-1 w-full max-w-4xl overflow-y-auto px-4 py-4 sm:px-6">
+    <div ref={parentRef} className="picker-results-scroll picker-results-scroll-narrow custom-scrollbar">
       <div
         style={{
           height: `${rowVirtualizer.getTotalSize()}px`,
@@ -493,6 +383,7 @@ const VirtualizedTCIList: React.FC<VirtualizedTCIListProps> = ({
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const item = filtered[virtualRow.index];
           const isSelected = selectedIds.has(item.id);
+          const effectUpgradeLine = formatEffectUpgradeLine(item);
           const range = normalizeLevelRange(levelFloors[item.id] ?? TCI_LEVEL_MIN, levelCeilings[item.id] ?? TCI_LEVEL_MIN);
           const floor = range.floor;
           const ceil = range.ceiling;
@@ -520,59 +411,52 @@ const VirtualizedTCIList: React.FC<VirtualizedTCIListProps> = ({
                     onRowClick(item.id);
                   }
                 }}
-                className={`
-                  flex min-h-0 cursor-pointer items-center gap-3 rounded-xl border-2 px-3 py-2.5 transition-colors
-                  ${
-                    isSelected
-                      ? 'border-primary bg-primary/10 shadow-[0_0_12px_var(--color-primary-glow)]'
-                      : 'border-border-base bg-bg-card hover:border-primary/50 hover:bg-bg-card-hover'
-                  }
-                `}
+                className={`tci-picker-row ${isSelected ? 'tci-picker-row-selected' : ''}`}
               >
                 <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 ${
-                    isSelected ? 'border-primary bg-primary text-bg-app' : 'border-border-base bg-bg-app text-transparent'
-                  }`}
+                  className={`tci-picker-check ${isSelected ? 'tci-picker-check-selected' : ''}`}
                 >
                   {isSelected && <Check className="h-4 w-4 stroke-[3]" />}
                 </div>
                 <div className="min-w-0 flex-1 text-left">
-                  <div className={`text-sm font-semibold leading-tight ${isSelected ? 'text-primary' : 'text-text-main'}`}>
+                  <div className={`tci-picker-title ${isSelected ? 'tci-picker-title-selected' : ''}`}>
                     {item.label}
                   </div>
-                  {item.effects ? (
-                    <div className="mt-1 text-xs font-medium leading-snug text-text-main/90">{item.effects}</div>
+                  {effectUpgradeLine ? (
+                    <div className="tci-picker-effect" title={effectUpgradeLine}>
+                      {effectUpgradeLine}
+                    </div>
                   ) : (
-                    <div className="mt-1 text-xs italic text-text-muted">No effect line parsed</div>
+                    <div className="tci-picker-effect tci-picker-effect-empty">No effect line parsed</div>
                   )}
-                  <div className="mt-1 text-[10px] font-medium uppercase tracking-wide text-text-muted">
+                  <div className="tci-picker-meta">
                     {levelRangeLabel(item)}
                     {item.category ? ` · ${item.category}` : ''}
                   </div>
                   <div
-                    className="mt-0.5 font-mono text-[10px] leading-snug text-text-muted/70 line-clamp-2"
+                    className="tci-picker-tiers line-clamp-2"
                     title={formatGroupTiersLine(item)}
                   >
                     {formatGroupTiersLine(item)}
                   </div>
                 </div>
                 {isSelected && (
-                  <div className="flex shrink-0 flex-col items-end gap-1" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-1">
-                      <span className="w-8 text-right text-[9px] font-bold uppercase tracking-wide text-text-muted">Max</span>
+                  <div className="tci-level-controls" onClick={(e) => e.stopPropagation()}>
+                    <div className="tci-level-row">
+                      <span className="tci-level-label">Max</span>
                       <button
                         type="button"
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-base bg-bg-app text-text-main hover:bg-bg-card-hover disabled:opacity-40"
+                        className="tci-level-button"
                         disabled={ceil <= floor}
                         onClick={() => onCeilingStep(item.id, -1)}
                         aria-label="Decrease level ceiling"
                       >
                         <Minus className="h-3.5 w-3.5" />
                       </button>
-                      <span className="min-w-[24px] text-center font-mono text-sm font-bold tabular-nums">{ceil}</span>
+                      <span className="tci-level-value">{ceil}</span>
                       <button
                         type="button"
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-base bg-bg-app text-text-main hover:bg-bg-card-hover disabled:opacity-40"
+                        className="tci-level-button"
                         disabled={ceil >= TCI_LEVEL_MAX}
                         onClick={() => onCeilingStep(item.id, 1)}
                         aria-label="Increase level ceiling"
@@ -580,21 +464,21 @@ const VirtualizedTCIList: React.FC<VirtualizedTCIListProps> = ({
                         <Plus className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="w-8 text-right text-[9px] font-bold uppercase tracking-wide text-text-muted">Min</span>
+                    <div className="tci-level-row">
+                      <span className="tci-level-label">Min</span>
                       <button
                         type="button"
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-base bg-bg-app text-text-main hover:bg-bg-card-hover disabled:opacity-40"
+                        className="tci-level-button"
                         disabled={floor <= TCI_LEVEL_MIN}
                         onClick={() => onFloorStep(item.id, -1)}
                         aria-label="Decrease level floor"
                       >
                         <Minus className="h-3.5 w-3.5" />
                       </button>
-                      <span className="min-w-[24px] text-center font-mono text-sm font-bold tabular-nums">{floor}</span>
+                      <span className="tci-level-value">{floor}</span>
                       <button
                         type="button"
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-base bg-bg-app text-text-main hover:bg-bg-card-hover disabled:opacity-40"
+                        className="tci-level-button"
                         disabled={floor >= ceil}
                         onClick={() => onFloorStep(item.id, 1)}
                         aria-label="Increase level floor"

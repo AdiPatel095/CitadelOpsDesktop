@@ -55,16 +55,353 @@ func autoTCILevelTargetFromClientItem(item map[string]interface{}) stsettings.Au
 	return stsettings.AutoTCILevelTarget{MinLevel: minLevel, MaxLevel: maxLevel}.Normalize()
 }
 
+func frontendNumberToInt(raw interface{}) (int, bool) {
+	switch v := raw.(type) {
+	case float64:
+		return int(v), true
+	case int:
+		return v, true
+	case json.Number:
+		i, err := strconv.Atoi(v.String())
+		return i, err == nil
+	case string:
+		i, err := strconv.Atoi(v)
+		return i, err == nil
+	default:
+		return 0, false
+	}
+}
+
+func recruitTargetsFromClientItems(raw interface{}) map[int]int {
+	targets := make(map[int]int)
+
+	switch items := raw.(type) {
+	case []interface{}:
+		for _, itemRaw := range items {
+			item, ok := itemRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			unitID, unitOK := frontendNumberToInt(item["id"])
+			amount, amountOK := frontendNumberToInt(item["amount"])
+			if unitOK && amountOK && unitID > 0 && amount >= 0 {
+				targets[unitID] = amount
+			}
+		}
+	case map[string]interface{}:
+		for unitIDRaw, amountRaw := range items {
+			unitID, err := strconv.Atoi(unitIDRaw)
+			if err != nil || unitID <= 0 {
+				continue
+			}
+			amount, ok := frontendNumberToInt(amountRaw)
+			if ok && amount >= 0 {
+				targets[unitID] = amount
+			}
+		}
+	case map[int]int:
+		for unitID, amount := range items {
+			if unitID > 0 && amount >= 0 {
+				targets[unitID] = amount
+			}
+		}
+	}
+
+	return targets
+}
+
+func recruitEnabledCastlesFromClient(raw interface{}) map[int]bool {
+	enabled := make(map[int]bool)
+	if raw == nil {
+		return enabled
+	}
+
+	switch items := raw.(type) {
+	case map[string]interface{}:
+		for castleIDRaw, enabledRaw := range items {
+			castleID, err := strconv.Atoi(castleIDRaw)
+			if err != nil || castleID <= 0 {
+				continue
+			}
+			if value, ok := enabledRaw.(bool); ok {
+				enabled[castleID] = value
+			}
+		}
+	case map[int]bool:
+		for castleID, value := range items {
+			if castleID > 0 {
+				enabled[castleID] = value
+			}
+		}
+	}
+
+	return enabled
+}
+
+func recruitTargetsByCastleFromClient(raw interface{}, enabledRaw interface{}) (map[int]map[int]int, map[int]bool) {
+	targets := make(map[int]map[int]int)
+	enabled := recruitEnabledCastlesFromClient(enabledRaw)
+
+	switch castles := raw.(type) {
+	case map[string]interface{}:
+		for castleIDRaw, itemsRaw := range castles {
+			castleID, err := strconv.Atoi(castleIDRaw)
+			if err != nil || castleID <= 0 {
+				continue
+			}
+			castleTargets := recruitTargetsFromClientItems(itemsRaw)
+			targets[castleID] = castleTargets
+			if _, exists := enabled[castleID]; !exists && len(castleTargets) > 0 {
+				enabled[castleID] = true
+			}
+		}
+	case map[int]map[int]int:
+		for castleID, castleTargets := range castles {
+			if castleID <= 0 {
+				continue
+			}
+			targets[castleID] = recruitTargetsFromClientItems(castleTargets)
+			if _, exists := enabled[castleID]; !exists && len(targets[castleID]) > 0 {
+				enabled[castleID] = true
+			}
+		}
+	}
+
+	return targets, enabled
+}
+
+func parseRecruitTroopsConfigFromFrontend(raw interface{}) stsettings.RecruitTroopsConfig {
+	cfg := stsettings.DefaultRecruitTroopsConfig()
+	payload, ok := raw.(map[string]interface{})
+	if !ok {
+		return cfg
+	}
+
+	hasModernShape := false
+	for _, key := range []string{"mode", "checkIntervalSec", "globalItems", "globalTargets", "enabledCastles", "castles", "targets"} {
+		if _, exists := payload[key]; exists {
+			hasModernShape = true
+			break
+		}
+	}
+
+	if !hasModernShape {
+		targets, enabled := recruitTargetsByCastleFromClient(payload, nil)
+		cfg.Mode = stsettings.RecruitTroopsModePerCastle
+		cfg.Targets = targets
+		cfg.EnabledCastles = enabled
+		return cfg.Normalize()
+	}
+
+	if mode, ok := payload["mode"].(string); ok {
+		cfg.Mode = mode
+	}
+	if interval, ok := frontendNumberToInt(payload["checkIntervalSec"]); ok {
+		cfg.CheckIntervalSec = interval
+	}
+	if globalItems, exists := payload["globalItems"]; exists {
+		cfg.GlobalTargets = recruitTargetsFromClientItems(globalItems)
+	} else if globalTargets, exists := payload["globalTargets"]; exists {
+		cfg.GlobalTargets = recruitTargetsFromClientItems(globalTargets)
+	}
+
+	if targetsRaw, exists := payload["targets"]; exists {
+		targets, enabled := recruitTargetsByCastleFromClient(targetsRaw, payload["enabledCastles"])
+		cfg.Targets = targets
+		cfg.EnabledCastles = enabled
+	}
+
+	if castlesRaw, ok := payload["castles"].(map[string]interface{}); ok {
+		if cfg.Targets == nil {
+			cfg.Targets = make(map[int]map[int]int)
+		}
+		if cfg.EnabledCastles == nil {
+			cfg.EnabledCastles = make(map[int]bool)
+		}
+		for castleIDRaw, castleRaw := range castlesRaw {
+			castleID, err := strconv.Atoi(castleIDRaw)
+			if err != nil || castleID <= 0 {
+				continue
+			}
+			castlePayload, ok := castleRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			cfg.Targets[castleID] = recruitTargetsFromClientItems(castlePayload["items"])
+			if enabled, ok := castlePayload["enabled"].(bool); ok {
+				cfg.EnabledCastles[castleID] = enabled
+			} else if _, exists := cfg.EnabledCastles[castleID]; !exists && len(cfg.Targets[castleID]) > 0 {
+				cfg.EnabledCastles[castleID] = true
+			}
+		}
+	}
+
+	return cfg.Normalize()
+}
+
+func parseAutoToolConfigFromFrontend(raw interface{}) stsettings.AutoToolConfig {
+	cfg := stsettings.DefaultAutoToolConfig()
+	payload, ok := raw.(map[string]interface{})
+	if !ok {
+		return cfg
+	}
+
+	hasModernShape := false
+	for _, key := range []string{"mode", "checkIntervalSec", "globalItems", "globalTargets", "enabledCastles", "castles", "targets"} {
+		if _, exists := payload[key]; exists {
+			hasModernShape = true
+			break
+		}
+	}
+
+	if !hasModernShape {
+		targets, enabled := recruitTargetsByCastleFromClient(payload, nil)
+		cfg.Mode = stsettings.AutoToolModePerCastle
+		cfg.Targets = targets
+		cfg.EnabledCastles = enabled
+		return cfg.Normalize()
+	}
+
+	if mode, ok := payload["mode"].(string); ok {
+		cfg.Mode = mode
+	}
+	if interval, ok := frontendNumberToInt(payload["checkIntervalSec"]); ok {
+		cfg.CheckIntervalSec = interval
+	}
+	if globalItems, exists := payload["globalItems"]; exists {
+		cfg.GlobalTargets = recruitTargetsFromClientItems(globalItems)
+	} else if globalTargets, exists := payload["globalTargets"]; exists {
+		cfg.GlobalTargets = recruitTargetsFromClientItems(globalTargets)
+	}
+
+	if targetsRaw, exists := payload["targets"]; exists {
+		targets, enabled := recruitTargetsByCastleFromClient(targetsRaw, payload["enabledCastles"])
+		cfg.Targets = targets
+		cfg.EnabledCastles = enabled
+	}
+
+	if castlesRaw, ok := payload["castles"].(map[string]interface{}); ok {
+		if cfg.Targets == nil {
+			cfg.Targets = make(map[int]map[int]int)
+		}
+		if cfg.EnabledCastles == nil {
+			cfg.EnabledCastles = make(map[int]bool)
+		}
+		for castleIDRaw, castleRaw := range castlesRaw {
+			castleID, err := strconv.Atoi(castleIDRaw)
+			if err != nil || castleID <= 0 {
+				continue
+			}
+			castlePayload, ok := castleRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			cfg.Targets[castleID] = recruitTargetsFromClientItems(castlePayload["items"])
+			if enabled, ok := castlePayload["enabled"].(bool); ok {
+				cfg.EnabledCastles[castleID] = enabled
+			} else if _, exists := cfg.EnabledCastles[castleID]; !exists && len(cfg.Targets[castleID]) > 0 {
+				cfg.EnabledCastles[castleID] = true
+			}
+		}
+	}
+
+	return cfg.Normalize()
+}
+
+func parseAutoHospitalConfigFromFrontend(raw interface{}) stsettings.AutoHospitalConfig {
+	cfg := stsettings.DefaultAutoHospitalConfig()
+	payload, ok := raw.(map[string]interface{})
+	if !ok {
+		return cfg
+	}
+	if interval, ok := frontendNumberToInt(payload["checkIntervalSec"]); ok {
+		cfg.CheckIntervalSec = interval
+	}
+	return cfg.Normalize()
+}
+
+func sendRecruitTroopsSettings() {
+	state := Models.GetSettingsState()
+	cfg := state.RecruitTroopsList.Normalize()
+	state.RecruitTroopsList = cfg
+	SendFrontendMessage("recruitTroopsSettings", cfg, "")
+}
+
+func sendAutoToolSettings() {
+	state := Models.GetSettingsState()
+	cfg := state.AutoToolList.Normalize()
+	state.AutoToolList = cfg
+	SendFrontendMessage("autoToolSettings", cfg, "")
+}
+
+func sendAutoHospitalSettings() {
+	state := Models.GetSettingsState()
+	cfg := state.AutoHospital.Normalize()
+	state.AutoHospital = cfg
+	SendFrontendMessage("autoHospitalSettings", cfg, "")
+}
+
+func sendQueueableProductionCatalog() {
+	gs := Models.GetGameState()
+	type CastleQueueableProduction struct {
+		CastleID           int   `json:"castleID"`
+		BuildingRowsLoaded bool  `json:"buildingRowsLoaded"`
+		RecruitUnitIDs     []int `json:"recruitUnitIds"`
+		ToolIDs            []int `json:"toolIds"`
+	}
+	var catalog []CastleQueueableProduction
+
+	addCastle := func(aid float64) {
+		if aid <= 0 {
+			return
+		}
+		c := gs.GetCastleByID(int(aid))
+		if c == nil {
+			return
+		}
+		production := GameParser.QueueableProductionForCastle(c)
+		if production.RecruitUnitIDs == nil {
+			production.RecruitUnitIDs = []int{}
+		}
+		if production.ToolIDs == nil {
+			production.ToolIDs = []int{}
+		}
+		catalog = append(catalog, CastleQueueableProduction{
+			CastleID:           int(aid),
+			BuildingRowsLoaded: production.BuildingRowsLoaded,
+			RecruitUnitIDs:     production.RecruitUnitIDs,
+			ToolIDs:            production.ToolIDs,
+		})
+	}
+
+	c := &gs.Castle
+	addCastle(c.MainCastle.Aid)
+	addCastle(c.Outpost1.Aid)
+	addCastle(c.Outpost2.Aid)
+	addCastle(c.Outpost3.Aid)
+	addCastle(c.IceCastle.Aid)
+	addCastle(c.DesertCastle.Aid)
+	addCastle(c.DungeonCastle.Aid)
+	addCastle(c.StormCastle.Aid)
+	addCastle(c.Metropolis.Aid)
+	addCastle(c.Capital.Aid)
+
+	SendFrontendMessage("queueableProductionCatalog", catalog, "")
+}
+
 func init() {
 	// Wire up callback so GameParser can notify frontend when castle data changes
 	GameParser.UpdateCastleResourceFunc = func(castleLocation string) {
 		SendCastleResource(castleLocation)
 	}
 	ResponseRegistry.SendRecruitTroopsStatusFunc = SendRecruitTroopsStatus
+	ResponseRegistry.SendAutoToolStatusFunc = SendAutoToolStatus
+	ResponseRegistry.SendAutoHospitalStatusFunc = SendAutoHospitalStatus
 	ResponseRegistry.SendAutoTCIStatusFunc = SendAutoTCIStatus
 	ResponseRegistry.SendAutoBeriWorldStatusFunc = SendAutoBeriWorldStatus
 	GameParser.NotifyCastleFocusChanged = func() {
 		SendFrontendMessage("castleFocus", Models.CastleFocusMessagePayload(), "")
+		sendQueueableProductionCatalog()
 	}
 	GameParser.NotifyAllianceInfoUpdated = func() {
 		SendFrontendMessage("allianceInfo", Models.GetGameState().Alliance, "")
@@ -234,43 +571,74 @@ func ParseFrontendMessage(message []byte) {
 	case "toggleRecruitTroops":
 		wasRunning := settingsview.IsRecruitTroopsRunning()
 		log.Printf("[RecruitTroops] Toggle requested. Was running: %v", wasRunning)
+		Logging.AutoRecruitLogf("toggle", "requested wasRunning=%v", wasRunning)
 
 		if wasRunning {
 			log.Println("[RecruitTroops] Calling StopRecruitTroops...")
+			Logging.AutoRecruitLog("toggle", "stop requested")
 			settingsview.StopRecruitTroops()
 			Models.GetSettingsState().RecruitTroopsEnabled = false
 			SendRecruitTroopsStatus(false)
 		} else {
 			Models.GetSettingsState().RecruitTroopsEnabled = true
 			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
-				newSettings := make(map[int]map[int]int)
-				if settingsRaw, ok := payloadRaw["settings"].(map[string]interface{}); ok {
-					for castleIDStr, itemsRaw := range settingsRaw {
-						castleID, _ := strconv.Atoi(castleIDStr)
-						if castleID == 0 {
-							continue
-						}
-
-						if items, ok := itemsRaw.([]interface{}); ok {
-							castleMap := make(map[int]int)
-							for _, itemRaw := range items {
-								if item, ok := itemRaw.(map[string]interface{}); ok {
-									unitID := int(item["id"].(float64))
-									amount := int(item["amount"].(float64))
-									if unitID > 0 && amount >= 0 {
-										castleMap[unitID] = amount
-									}
-								}
-							}
-							newSettings[castleID] = castleMap
-						}
-					}
-					Models.GetSettingsState().UpdateRecruitTroopsList(newSettings)
+				if settingsRaw, ok := payloadRaw["settings"]; ok {
+					Models.GetSettingsState().UpdateRecruitTroopsConfig(parseRecruitTroopsConfigFromFrontend(settingsRaw))
+					settingsview.NotifyRecruitTroopsSettingsChanged()
 				}
-				log.Println("[RecruitTroops] Calling StartRecruitTroops...")
-				settingsview.StartRecruitTroops()
-				SendRecruitTroopsStatus(true)
 			}
+			log.Println("[RecruitTroops] Calling StartRecruitTroops...")
+			Logging.AutoRecruitLog("toggle", "start requested")
+			settingsview.StartRecruitTroops()
+			SendRecruitTroopsStatus(true)
+		}
+	case "toggleAutoTool":
+		wasRunning := settingsview.IsAutoToolRunning()
+		log.Printf("[AutoTool] Toggle requested. Was running: %v", wasRunning)
+		Logging.AutoToolLogf("toggle", "requested wasRunning=%v", wasRunning)
+
+		if wasRunning {
+			log.Println("[AutoTool] Calling StopAutoTool...")
+			Logging.AutoToolLog("toggle", "stop requested")
+			settingsview.StopAutoTool()
+			Models.GetSettingsState().AutoToolEnabled = false
+			SendAutoToolStatus(false)
+		} else {
+			Models.GetSettingsState().AutoToolEnabled = true
+			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
+				if settingsRaw, ok := payloadRaw["settings"]; ok {
+					Models.GetSettingsState().UpdateAutoToolConfig(parseAutoToolConfigFromFrontend(settingsRaw))
+					settingsview.NotifyAutoToolSettingsChanged()
+				}
+			}
+			log.Println("[AutoTool] Calling StartAutoTool...")
+			Logging.AutoToolLog("toggle", "start requested")
+			settingsview.StartAutoTool()
+			SendAutoToolStatus(true)
+		}
+	case "toggleAutoHospital":
+		wasRunning := settingsview.IsAutoHospitalRunning()
+		log.Printf("[AutoHospital] Toggle requested. Was running: %v", wasRunning)
+		Logging.AutoHospitalLogf("toggle", "requested wasRunning=%v", wasRunning)
+
+		if wasRunning {
+			log.Println("[AutoHospital] Calling StopAutoHospital...")
+			Logging.AutoHospitalLog("toggle", "stop requested")
+			settingsview.StopAutoHospital()
+			Models.GetSettingsState().AutoHospitalEnabled = false
+			SendAutoHospitalStatus(false)
+		} else {
+			Models.GetSettingsState().AutoHospitalEnabled = true
+			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
+				if settingsRaw, ok := payloadRaw["settings"]; ok {
+					Models.GetSettingsState().UpdateAutoHospitalConfig(parseAutoHospitalConfigFromFrontend(settingsRaw))
+					settingsview.NotifyAutoHospitalSettingsChanged()
+				}
+			}
+			log.Println("[AutoHospital] Calling StartAutoHospital...")
+			Logging.AutoHospitalLog("toggle", "start requested")
+			settingsview.StartAutoHospital()
+			SendAutoHospitalStatus(true)
 		}
 	case "toggleAutoTCI":
 		wasRunning := featureview.IsAutoTCIRunning()
@@ -310,21 +678,10 @@ func ParseFrontendMessage(message []byte) {
 			Logging.AppendAutoTCILine("toggle", "started (UI)")
 		}
 	case "toggleAutoBeriWorld":
-		wasRunning := featureview.IsAutoBeriWorldRunning()
-		if wasRunning {
-			featureview.StopAutoBeriWorld()
-			Models.GetSettingsState().AutoBeriWorldEnabled = false
-			SendAutoBeriWorldStatus(false, 0)
-			Logging.AppendAutoBeriWorldLine("toggle", "stopped (UI)")
-		} else {
-			Models.GetSettingsState().AutoBeriWorldEnabled = true
-			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
-				applyAutoBeriWorldConfigFromMap(payloadRaw)
-			}
-			featureview.StartAutoBeriWorld()
-			SendAutoBeriWorldStatus(true, 0)
-			Logging.AppendAutoBeriWorldLine("toggle", "started (UI)")
-		}
+		featureview.StopAutoBeriWorld()
+		Models.GetSettingsState().AutoBeriWorldEnabled = false
+		SendAutoBeriWorldStatus(false, 0)
+		Logging.AppendAutoBeriWorldLine("toggle", "ignored (disabled)")
 	case "refreshEquipment":
 		// Trigger updates for equipment
 		for i, comm := range equip.CommStatArray {
@@ -851,42 +1208,73 @@ func ParseFrontendMessage(message []byte) {
 		SendFrontendMessage("castleList", castles, "")
 
 	case "getRecruitTroopsSettings":
-		if Models.GetSettingsState().RecruitTroopsList.Targets == nil {
-			Models.GetSettingsState().RecruitTroopsList.Targets = make(map[int]map[int]int)
-		}
-		SendFrontendMessage("recruitTroopsSettings", Models.GetSettingsState().RecruitTroopsList.Targets, "")
+		sendRecruitTroopsSettings()
+
+	case "getQueueableProductionCatalog":
+		sendQueueableProductionCatalog()
 
 	case "saveRecruitTroopsSettings":
 		payloadRaw, ok := data["payload"].(map[string]interface{})
 		if !ok {
 			return
 		}
-
-		newSettings := make(map[int]map[int]int)
-
-		for castleIDStr, itemsRaw := range payloadRaw {
-			castleID, _ := strconv.Atoi(castleIDStr)
-			if castleID == 0 {
-				continue
-			}
-
-			if items, ok := itemsRaw.([]interface{}); ok {
-				castleMap := make(map[int]int)
-				for _, itemRaw := range items {
-					if item, ok := itemRaw.(map[string]interface{}); ok {
-						unitID := int(item["id"].(float64))
-						amount := int(item["amount"].(float64))
-						if unitID > 0 && amount >= 0 {
-							castleMap[unitID] = amount
-						}
-					}
-				}
-				newSettings[castleID] = castleMap
-			}
+		state := Models.GetSettingsState()
+		state.UpdateRecruitTroopsConfig(parseRecruitTroopsConfigFromFrontend(payloadRaw))
+		settingsview.NotifyRecruitTroopsSettingsChanged()
+		if err := stsettings.WriteRecruitTroopsConfig(state.RecruitTroopsList); err != nil {
+			log.Printf("[frontend-ws] saveRecruitTroopsSettings write: %v", err)
+			Logging.AutoRecruitLogf("settings", "disk write failed: %v", err)
+			SendAlertMessage("red", "Could not save Auto Recruit settings to disk")
+			return
 		}
+		sendRecruitTroopsSettings()
+		SendAlertMessage("green", "Auto Recruit settings saved")
+		log.Println("[frontend-ws] Auto Recruit settings saved:", stsettings.RecruitTroopsSettingsPath())
+		Logging.AutoRecruitLogf("settings", "saved %s", stsettings.RecruitTroopsSettingsPath())
 
-		Models.GetSettingsState().UpdateRecruitTroopsList(newSettings)
-		SendFrontendMessage("recruitTroopsSettings", newSettings, "")
+	case "getAutoToolSettings":
+		sendAutoToolSettings()
+
+	case "saveAutoToolSettings":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		state := Models.GetSettingsState()
+		state.UpdateAutoToolConfig(parseAutoToolConfigFromFrontend(payloadRaw))
+		settingsview.NotifyAutoToolSettingsChanged()
+		if err := stsettings.WriteAutoToolConfig(state.AutoToolList); err != nil {
+			log.Printf("[frontend-ws] saveAutoToolSettings write: %v", err)
+			Logging.AutoToolLogf("settings", "disk write failed: %v", err)
+			SendAlertMessage("red", "Could not save Auto Tool settings to disk")
+			return
+		}
+		sendAutoToolSettings()
+		SendAlertMessage("green", "Auto Tool settings saved")
+		log.Println("[frontend-ws] Auto Tool settings saved:", stsettings.AutoToolSettingsPath())
+		Logging.AutoToolLogf("settings", "saved %s", stsettings.AutoToolSettingsPath())
+
+	case "getAutoHospitalSettings":
+		sendAutoHospitalSettings()
+
+	case "saveAutoHospitalSettings":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		state := Models.GetSettingsState()
+		state.UpdateAutoHospitalConfig(parseAutoHospitalConfigFromFrontend(payloadRaw))
+		settingsview.NotifyAutoHospitalSettingsChanged()
+		if err := stsettings.WriteAutoHospitalConfig(state.AutoHospital); err != nil {
+			log.Printf("[frontend-ws] saveAutoHospitalSettings write: %v", err)
+			Logging.AutoHospitalLogf("settings", "disk write failed: %v", err)
+			SendAlertMessage("red", "Could not save Auto Hospital settings to disk")
+			return
+		}
+		sendAutoHospitalSettings()
+		SendAlertMessage("green", "Auto Hospital settings saved")
+		log.Println("[frontend-ws] Auto Hospital settings saved:", stsettings.AutoHospitalSettingsPath())
+		Logging.AutoHospitalLogf("settings", "saved %s", stsettings.AutoHospitalSettingsPath())
 
 	case "getConstructionItemsCatalog":
 		cat, err := featureview.ConstructionItemsCatalog()
@@ -1030,6 +1418,25 @@ func ParseFrontendMessage(message []byte) {
 				}
 			}
 		}
+		if schedulesRaw, ok := payloadRaw["featureSchedules"]; ok {
+			data, err := json.Marshal(schedulesRaw)
+			if err != nil {
+				log.Printf("[frontend-ws] saveSchedulerSettings schedules marshal: %v", err)
+			} else {
+				var schedules map[string]stsettings.FeatureSchedule
+				if err := json.Unmarshal(data, &schedules); err != nil {
+					log.Printf("[frontend-ws] saveSchedulerSettings schedules parse: %v", err)
+				} else {
+					if state.FeatureSchedules == nil {
+						state.FeatureSchedules = make(map[string]stsettings.FeatureSchedule)
+					}
+					for featureID, schedule := range stsettings.NormalizeFeatureSchedules(schedules) {
+						state.FeatureSchedules[featureID] = schedule
+					}
+					state.FeatureSchedules = stsettings.NormalizeFeatureSchedules(state.FeatureSchedules)
+				}
+			}
+		}
 
 		// Echo back confirmed settings
 		if err := stsettings.PersistSchedulerSettings(state); err != nil {
@@ -1038,8 +1445,11 @@ func ParseFrontendMessage(message []byte) {
 			return
 		}
 		SendFrontendMessage("schedulerSettings", state, "")
+		settingsview.NotifyRecruitTroopsSettingsChanged()
+		settingsview.NotifyAutoToolSettingsChanged()
+		settingsview.NotifyAutoHospitalSettingsChanged()
 		SendAlertMessage("green", "Scheduler Settings saved")
-		log.Println("[frontend-ws] Scheduler settings saved:", filepath.Join(Paths.DataDir(), "SchedulerSettings.json"))
+		log.Println("[frontend-ws] Scheduler settings saved:", stsettings.SchedulerSettingsPath())
 
 	case "getCastleFocus":
 		SendFrontendMessage("castleFocus", Models.CastleFocusMessagePayload(), "")

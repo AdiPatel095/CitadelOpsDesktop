@@ -21,8 +21,8 @@ const RiftCoordDisplay: React.FC = () => {
   const hasCastleCoords = centerX !== 0 || centerY !== 0;
 
   return (
-    <Card className="border-border-base bg-bg-app/20">
-      <CardHeader className="flex flex-row items-center justify-between gap-4 pb-3 border-b border-border-base bg-bg-card-hover/50 rounded-t-[calc(var(--radius-global)-1px)]">
+    <Card className="liquid-prominent-header-card">
+      <CardHeader className="liquid-card-header-prominent flex flex-row items-center justify-between gap-4">
         <div>
           <CardTitle className="text-lg text-primary">Rift location</CardTitle>
           <p className="text-xs text-text-muted mt-1">
@@ -47,7 +47,7 @@ const RiftCoordDisplay: React.FC = () => {
           Refresh
         </Button>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="liquid-prominent-header-content">
         {!found || !rift ? (
           <p className="text-sm text-text-muted">
             {gameLoggedIn

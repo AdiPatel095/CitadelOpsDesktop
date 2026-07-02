@@ -21,7 +21,7 @@ var CommStatNameToIDs = map[string][]float64{
 	"maidenSupp":  {121},
 
 	// Hero Bonus
-	"eliteStr":    {20012},
+	"eliteStr":    {20012, 20014},
 	"horrorStr":   {20013},
 	"beserkerStr": {20015},
 	"relicStr":    {20016},

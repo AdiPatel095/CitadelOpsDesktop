@@ -79,17 +79,17 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
   );
 
   return (
-    <Card className="flex flex-col min-h-0">
-      <CardHeader className="pb-1">
+    <Card className="liquid-prominent-header-card flex flex-col min-h-0">
+      <CardHeader className="liquid-card-header-prominent">
         <div className="flex flex-col">
           <CardTitle className="text-primary">{title}</CardTitle>
           <p className="text-xs text-text-muted mt-1 uppercase tracking-wider font-bold">Queuing Coming Soon</p>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-y-auto custom-scrollbar pt-3">
+      <CardContent className="liquid-prominent-header-content flex-1 overflow-y-auto custom-scrollbar">
         {queuesToRender.length === 0 ? (
-          <div className="rounded-global border border-dashed border-border-light bg-bg-app/30 px-4 py-8 text-center">
+          <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-8 text-center backdrop-blur-xl">
             <p className="text-sm font-medium text-text-main">
               No matching production buildings in this focus snapshot yet.
             </p>
@@ -109,7 +109,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
               const splRows = productionQueueRows(bp, q.layout);
               return (
                 <div key={q.id} className="flex flex-col gap-2.5">
-                  <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider border-b border-border-base/50 pb-1">{q.label}</h4>
+                  <h4 className="text-xs font-bold text-text-muted uppercase border-b border-border-base/50 pb-1">{q.label}</h4>
                   <div className="flex flex-wrap gap-2">
                     {[...Array(nCells)].map((_, i) => {
                       if (useCrafting && craftRows) {
@@ -119,7 +119,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
                             <CraftingQueueSlot key={`${q.id}-cr-${i}-${row.crid}-${row.qty}`} row={row} boxSize={48} />
                           );
                         }
-                        return <div key={i} className="w-12 h-12 rounded-global bg-bg-card-hover border border-border-base border-dashed" />;
+                        return <div key={i} className="w-12 h-12 rounded-global bg-bg-card/45 border border-border-light border-dashed backdrop-blur-xl" />;
                       }
                       const row = splRows[i] ?? null;
                       if (row) {
@@ -133,7 +133,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
                           />
                         );
                       }
-                      return <div key={i} className="w-12 h-12 rounded-global bg-bg-card-hover border border-border-base border-dashed" />;
+                      return <div key={i} className="w-12 h-12 rounded-global bg-bg-card/45 border border-border-light border-dashed backdrop-blur-xl" />;
                     })}
                   </div>
                 </div>

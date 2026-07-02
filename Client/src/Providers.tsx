@@ -7,6 +7,7 @@ import { EquipmentProvider } from './equipment/context/EquipmentContext';
 import { ResourceProvider } from './currency/context/ResourceContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TroopPickerProvider } from './components/TroopPickerModal';
+import { ToolPickerProvider } from './components/ToolPickerModal';
 import { TCIPickerProvider } from './components/TCIPickerModal';
 import { RiftMapProvider } from './Rift/context/RiftMapContext';
 import { MovementProvider } from './Movement/context/MovementContext';
@@ -26,10 +27,12 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({ children })
                                         <MovementProvider>
                                             <EquipmentProvider>
                                                 <TroopPickerProvider>
-                                                    <TCIPickerProvider>
-                                                        <SharedSvgDefs />
-                                                        {children}
-                                                    </TCIPickerProvider>
+                                                    <ToolPickerProvider>
+                                                        <TCIPickerProvider>
+                                                            <SharedSvgDefs />
+                                                            {children}
+                                                        </TCIPickerProvider>
+                                                    </ToolPickerProvider>
                                                 </TroopPickerProvider>
                                             </EquipmentProvider>
                                         </MovementProvider>
