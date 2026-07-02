@@ -41,6 +41,8 @@ const dataSources = [
   '/BattleReports.jsonl',
 ];
 
+const REPORT_ROWS_PAGE_SIZE = 250;
+
 const kingdomNames: Record<number, string> = {
   0: 'The Great Empire (Green)',
   1: 'The Burning Sands (Sand)',
@@ -78,6 +80,7 @@ const BattleStatsView: React.FC = () => {
   const [startDate, setStartDate] = useState(() => inputDateFromDaysAgo(90));
   const [endDate, setEndDate] = useState(() => inputDateFromDate(new Date()));
   const [selectedReportID, setSelectedReportID] = useState<string | null>(null);
+  const [visibleReportLimit, setVisibleReportLimit] = useState(REPORT_ROWS_PAGE_SIZE);
 
   const loadReports = async () => {
     setIsLoading(true);
@@ -137,6 +140,10 @@ const BattleStatsView: React.FC = () => {
     () => resolveHomeAllianceKey(reports, allianceMemberKeys),
     [reports, allianceMemberKeys]
   );
+  const reportsWithBothPlayers = useMemo(
+    () => reports.filter(hasBothPlayers),
+    [reports]
+  );
 
   const playerOptions = useMemo(
     () => buildAlliancePlayerOptions(reports, allianceMembers, allianceMemberKeys, homeAllianceKey),
@@ -144,8 +151,7 @@ const BattleStatsView: React.FC = () => {
   );
 
   const allianceOptions = useMemo(() => {
-    const allianceOptionReports = reports
-      .filter(hasBothPlayers)
+    const allianceOptionReports = reportsWithBothPlayers
       .filter((report) =>
         selectedOpponentPlayer === allOption ||
         reportMatchesOpponentPlayer(report, selectedPlayer, selectedOpponentPlayer, allianceMemberKeys, homeAllianceKey)
@@ -161,11 +167,11 @@ const BattleStatsView: React.FC = () => {
       { value: allOption, label: 'All opponent alliances' },
       ...rows.map((row) => ({ value: row.key, label: row.name })),
     ];
-  }, [reports, selectedPlayer, selectedOpponentPlayer, allianceMemberKeys, homeAllianceKey]);
+  }, [reportsWithBothPlayers, selectedPlayer, selectedOpponentPlayer, allianceMemberKeys, homeAllianceKey]);
 
   const opponentPlayerOptions = useMemo(
-    () => buildOpponentPlayerOptions(reports.filter(hasBothPlayers), selectedPlayer, selectedAlliance, allianceMemberKeys, homeAllianceKey),
-    [reports, selectedPlayer, selectedAlliance, allianceMemberKeys, homeAllianceKey]
+    () => buildOpponentPlayerOptions(reportsWithBothPlayers, selectedPlayer, selectedAlliance, allianceMemberKeys, homeAllianceKey),
+    [reportsWithBothPlayers, selectedPlayer, selectedAlliance, allianceMemberKeys, homeAllianceKey]
   );
 
   useEffect(() => {
@@ -186,13 +192,16 @@ const BattleStatsView: React.FC = () => {
     }
   }, [allianceOptions, selectedAlliance]);
 
+  useEffect(() => {
+    setVisibleReportLimit(REPORT_ROWS_PAGE_SIZE);
+  }, [searchTerm, selectedAlliance, selectedOpponentPlayer, selectedPlayer, selectedResult, selectedRole, startDate, endDate]);
+
   const filteredReports = useMemo(() => {
     const startMs = dateStartMs(startDate);
     const endMs = dateEndMs(endDate);
     const query = searchTerm.trim().toLowerCase();
 
-    return reports
-      .filter(hasBothPlayers)
+    return reportsWithBothPlayers
       .filter((report) => {
         const reportTime = reportTimeMs(report);
         if (startMs !== null && reportTime !== null && reportTime < startMs) {
@@ -234,7 +243,7 @@ const BattleStatsView: React.FC = () => {
         return true;
       })
       .sort((a, b) => (reportTimeMs(b) ?? 0) - (reportTimeMs(a) ?? 0));
-  }, [reports, searchTerm, selectedAlliance, selectedOpponentPlayer, selectedPlayer, selectedResult, selectedRole, startDate, endDate, allianceMemberKeys, homeAllianceKey]);
+  }, [reportsWithBothPlayers, searchTerm, selectedAlliance, selectedOpponentPlayer, selectedPlayer, selectedResult, selectedRole, startDate, endDate, allianceMemberKeys, homeAllianceKey]);
 
   const summary = useMemo(
     () => summarizeReports(filteredReports, selectedPlayer, allianceMemberKeys, homeAllianceKey),
@@ -254,6 +263,10 @@ const BattleStatsView: React.FC = () => {
   const allianceAggregates = useMemo(
     () => buildAllianceAggregates(filteredReports, selectedPlayer, allianceMemberKeys, homeAllianceKey),
     [filteredReports, selectedPlayer, allianceMemberKeys, homeAllianceKey]
+  );
+  const visibleReports = useMemo(
+    () => filteredReports.slice(0, visibleReportLimit),
+    [filteredReports, visibleReportLimit]
   );
 
   const resetFilters = () => {
@@ -281,12 +294,12 @@ const BattleStatsView: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
-        <aside className="xl:w-80 shrink-0">
-          <Card variant="solid">
-            <CardHeader>
+        <aside className="xl:w-[21.5rem] shrink-0">
+          <Card variant="solid" className="liquid-prominent-header-card">
+            <CardHeader className="liquid-card-header-prominent">
               <div>
                 <CardTitle>Battle Stats</CardTitle>
-                <p className="text-xs text-text-muted mt-1">{sourceLabel}</p>
+                <p className="mt-1.5 text-xs font-semibold text-text-muted">{sourceLabel}</p>
               </div>
               <Button
                 variant="ghost"
@@ -298,7 +311,7 @@ const BattleStatsView: React.FC = () => {
                 <RefreshCw className="w-4 h-4" />
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="liquid-prominent-header-content battle-filters-grid">
               <Input
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
@@ -307,7 +320,7 @@ const BattleStatsView: React.FC = () => {
               />
 
               <FilterField label="Date range" icon={<CalendarDays className="w-4 h-4" />}>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
                   <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
                 </div>
@@ -370,7 +383,7 @@ const BattleStatsView: React.FC = () => {
         </aside>
 
         <section className="flex-1 min-w-0 space-y-4">
-          <div className="grid grid-cols-2 xl:grid-cols-6 gap-3">
+          <div className="battle-summary-grid">
             <StatCard label="Reports counted" value={formatNumber(summary.reports)} tone="neutral" />
             <StatCard label="Wins" value={formatNumber(summary.victories)} tone="success" />
             <StatCard label="Losses" value={formatNumber(summary.defeats)} tone="danger" />
@@ -384,18 +397,19 @@ const BattleStatsView: React.FC = () => {
             <AllianceAggregateTable rows={allianceAggregates} />
           </div>
 
-          <Card variant="solid">
-            <CardHeader>
+          <Card variant="solid" className="liquid-prominent-header-card">
+            <CardHeader className="liquid-card-header-prominent">
               <div>
                 <CardTitle>Reports</CardTitle>
                 <p className="text-xs text-text-muted mt-1">
-                  Showing {formatNumber(filteredReports.length)} of {formatNumber(reports.filter(hasBothPlayers).length)} parsed player reports
+                  Showing {formatNumber(visibleReports.length)} of {formatNumber(filteredReports.length)} filtered reports
+                  <span className="text-text-muted/70"> · {formatNumber(reportsWithBothPlayers.length)} parsed</span>
                 </p>
               </div>
               <Badge variant="secondary">{isLoading ? 'Loading' : 'Ready'}</Badge>
             </CardHeader>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="liquid-prominent-header-content liquid-prominent-header-content-flush overflow-x-auto">
+              <table className="battle-table w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
                     <th className="px-4 py-3 font-semibold">Time</th>
@@ -409,7 +423,7 @@ const BattleStatsView: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredReports.map((report) => (
+                  {visibleReports.map((report) => (
                     <tr
                       key={reportID(report)}
                       className="border-b border-border-base/70 hover:bg-bg-card-hover transition-colors"
@@ -435,7 +449,7 @@ const BattleStatsView: React.FC = () => {
                         <Button
                           variant="secondary"
                           size="icon"
-                          className="h-9 w-9 border-primary/40 text-primary hover:border-primary hover:bg-primary/10"
+                          className="battle-stats-flat-control h-9 w-9 border-primary/40 text-primary hover:border-primary hover:bg-primary/10"
                           onClick={() => setSelectedReportID(reportID(report))}
                           title="Go to report details"
                           aria-label={`Go to details for ${combatantName(report.attacker)} vs ${combatantName(report.defender)}`}
@@ -447,6 +461,17 @@ const BattleStatsView: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+              {visibleReports.length < filteredReports.length && (
+                <div className="flex justify-center border-t border-border-base/70 px-4 py-4">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setVisibleReportLimit((current) => current + REPORT_ROWS_PAGE_SIZE)}
+                  >
+                    Show {formatNumber(Math.min(REPORT_ROWS_PAGE_SIZE, filteredReports.length - visibleReports.length))} more
+                  </Button>
+                </div>
+              )}
             </div>
             {filteredReports.length === 0 && (
               <div className="px-5 py-12 text-center text-text-muted">
@@ -520,7 +545,7 @@ const ReportResultBadges: React.FC<{ result: string; size?: 'sm' | 'lg'; classNa
       ? 'border-warning/30 bg-warning/10 text-warning'
       : 'border-info/30 bg-info/10 text-info';
   const layoutClass = size === 'lg' ? 'justify-center gap-2' : 'min-w-[8rem] gap-1.5';
-  const badgeClass = size === 'lg' ? 'px-4 py-1.5 text-sm md:text-base' : '';
+  const badgeClass = size === 'lg' ? 'px-4 py-1.5 text-sm md:text-base' : 'battle-stats-flat-control';
 
   return (
     <div className={`flex flex-wrap items-center ${layoutClass} ${className}`}>
@@ -572,101 +597,105 @@ interface AllianceAggregate {
 }
 
 const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) => (
-  <Card variant="solid">
-    <CardHeader>
+  <Card variant="solid" className="liquid-prominent-header-card">
+    <CardHeader className="liquid-card-header-prominent">
       <div>
         <CardTitle>Player Aggregate</CardTitle>
         <p className="text-xs text-text-muted mt-1">Filtered battle totals by player</p>
       </div>
       <Badge variant="secondary">{rows.length} players</Badge>
     </CardHeader>
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
-            <th className="px-4 py-3 font-semibold">Player</th>
-            <th className="px-4 py-3 font-semibold text-right">Reports</th>
-            <th className="px-4 py-3 font-semibold text-right">A / D</th>
-            <th className="px-4 py-3 font-semibold text-right">W / L</th>
-            <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost in attacks by this player">Attack Ratio</th>
-            <th className="px-4 py-3 font-semibold text-right" title="Defenders lost per attacker killed in defenses by this player">Defense Ratio</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.slice(0, 10).map((row) => (
-            <tr key={row.key} className="border-b border-border-base/70">
-              <td className="px-4 py-3">
-                <div className="font-semibold text-text-main">{row.name}</div>
-                <div className="text-xs text-text-muted">{row.alliance}</div>
-              </td>
-              <td className="px-4 py-3 text-right text-text-main font-semibold">{formatNumber(row.reports)}</td>
-              <td className="px-4 py-3 text-right text-text-muted">{formatNumber(row.attacks)} / {formatNumber(row.defenses)}</td>
-              <td className="px-4 py-3 text-right">
-                <span className="text-success font-semibold">{formatNumber(row.wins)}</span>
-                <span className="text-text-muted"> / </span>
-                <span className="text-error font-semibold">{formatNumber(row.losses)}</span>
-              </td>
-              <td className="px-4 py-3 text-right text-info font-semibold">
-                {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
-              </td>
-              <td className="px-4 py-3 text-right text-error font-semibold">
-                {formatRatio(row.defenseDefendersLost, row.defenseAttackersKilled)}
-              </td>
+    <div className="liquid-prominent-header-content liquid-prominent-header-content-flush">
+      <div className="overflow-x-auto">
+        <table className="battle-aggregate-table w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
+              <th className="px-4 py-3 font-semibold">Player</th>
+              <th className="px-4 py-3 font-semibold text-right">Reports</th>
+              <th className="px-4 py-3 font-semibold text-right">A / D</th>
+              <th className="px-4 py-3 font-semibold text-right">W / L</th>
+              <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost in attacks by this player">Attack Ratio</th>
+              <th className="px-4 py-3 font-semibold text-right" title="Defenders lost per attacker killed in defenses by this player">Defense Ratio</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.slice(0, 10).map((row) => (
+              <tr key={row.key} className="border-b border-border-base/70">
+                <td className="px-4 py-3">
+                  <div className="font-semibold text-text-main">{row.name}</div>
+                  <div className="text-xs text-text-muted">{row.alliance}</div>
+                </td>
+                <td className="px-4 py-3 text-right text-text-main font-semibold">{formatNumber(row.reports)}</td>
+                <td className="px-4 py-3 text-right text-text-muted">{formatNumber(row.attacks)} / {formatNumber(row.defenses)}</td>
+                <td className="px-4 py-3 text-right">
+                  <span className="text-success font-semibold">{formatNumber(row.wins)}</span>
+                  <span className="text-text-muted"> / </span>
+                  <span className="text-error font-semibold">{formatNumber(row.losses)}</span>
+                </td>
+                <td className="px-4 py-3 text-right text-info font-semibold">
+                  {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
+                </td>
+                <td className="px-4 py-3 text-right text-error font-semibold">
+                  {formatRatio(row.defenseDefendersLost, row.defenseAttackersKilled)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {rows.length === 0 && (
+        <div className="px-5 py-10 text-center text-text-muted">No player aggregate for the current filters.</div>
+      )}
     </div>
-    {rows.length === 0 && (
-      <div className="px-5 py-10 text-center text-text-muted">No player aggregate for the current filters.</div>
-    )}
   </Card>
 );
 
 const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows }) => (
-  <Card variant="solid">
-    <CardHeader>
+  <Card variant="solid" className="liquid-prominent-header-card">
+    <CardHeader className="liquid-card-header-prominent">
       <div>
         <CardTitle>Alliance Aggregate</CardTitle>
         <p className="text-xs text-text-muted mt-1">Filtered battle totals by alliance</p>
       </div>
       <Badge variant="secondary">{rows.length} alliances</Badge>
     </CardHeader>
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
-            <th className="px-4 py-3 font-semibold">Alliance</th>
-            <th className="px-4 py-3 font-semibold text-right">Reports</th>
-            <th className="px-4 py-3 font-semibold text-right">W / L</th>
-            <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost when attacking this alliance">Attack Ratio</th>
-            <th className="px-4 py-3 font-semibold text-right" title="Defenders lost per attacker killed when defending against this alliance">Defense Ratio</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.slice(0, 10).map((row) => (
-            <tr key={row.key} className="border-b border-border-base/70">
-              <td className="px-4 py-3 font-semibold text-text-main">{row.name}</td>
-              <td className="px-4 py-3 text-right text-text-main font-semibold">{formatNumber(row.reports)}</td>
-              <td className="px-4 py-3 text-right">
-                <span className="text-success font-semibold">{formatNumber(row.wins)}</span>
-                <span className="text-text-muted"> / </span>
-                <span className="text-error font-semibold">{formatNumber(row.losses)}</span>
-              </td>
-              <td className="px-4 py-3 text-right text-info font-semibold">
-                {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
-              </td>
-              <td className="px-4 py-3 text-right text-error font-semibold">
-                {formatRatio(row.defenseDefendersLost, row.defenseAttackersKilled)}
-              </td>
+    <div className="liquid-prominent-header-content liquid-prominent-header-content-flush">
+      <div className="overflow-x-auto">
+        <table className="battle-aggregate-table w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
+              <th className="px-4 py-3 font-semibold">Alliance</th>
+              <th className="px-4 py-3 font-semibold text-right">Reports</th>
+              <th className="px-4 py-3 font-semibold text-right">W / L</th>
+              <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost when attacking this alliance">Attack Ratio</th>
+              <th className="px-4 py-3 font-semibold text-right" title="Defenders lost per attacker killed when defending against this alliance">Defense Ratio</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.slice(0, 10).map((row) => (
+              <tr key={row.key} className="border-b border-border-base/70">
+                <td className="px-4 py-3 font-semibold text-text-main">{row.name}</td>
+                <td className="px-4 py-3 text-right text-text-main font-semibold">{formatNumber(row.reports)}</td>
+                <td className="px-4 py-3 text-right">
+                  <span className="text-success font-semibold">{formatNumber(row.wins)}</span>
+                  <span className="text-text-muted"> / </span>
+                  <span className="text-error font-semibold">{formatNumber(row.losses)}</span>
+                </td>
+                <td className="px-4 py-3 text-right text-info font-semibold">
+                  {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
+                </td>
+                <td className="px-4 py-3 text-right text-error font-semibold">
+                  {formatRatio(row.defenseDefendersLost, row.defenseAttackersKilled)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {rows.length === 0 && (
+        <div className="px-5 py-10 text-center text-text-muted">No alliance aggregate for the current filters.</div>
+      )}
     </div>
-    {rows.length === 0 && (
-      <div className="px-5 py-10 text-center text-text-muted">No alliance aggregate for the current filters.</div>
-    )}
   </Card>
 );
 
@@ -682,15 +711,7 @@ const ReportDetailPage: React.FC<{
   onBack,
 }) => (
   <div className="space-y-4">
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <div className="text-xs uppercase tracking-wider text-text-muted font-semibold">Battle report</div>
-        <h2 className="text-2xl font-bold text-text-main mt-1">{battleLocationLabel(report)}</h2>
-      </div>
-      <Button variant="outline" onClick={onBack}>
-        Back to aggregate
-      </Button>
-    </div>
+    <BattleDetailsHeader report={report} outcome={outcome} onBack={onBack} />
     <ReportDetails report={report} outcome={outcome} perspectiveSide={perspectiveSide} />
   </div>
 );
@@ -709,8 +730,6 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
 
   return (
     <div className="space-y-4">
-      <BattleStatusBanner report={report} outcome={outcome} />
-
       <UnitStatsPanel report={report} perspectiveSide={perspectiveSide} />
 
       <ForcesAccordion
@@ -730,12 +749,12 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
       />
 
       {report.waves && report.waves.length > 0 && (
-        <Card variant="solid">
-          <CardHeader>
+        <Card variant="solid" className="liquid-prominent-header-card">
+          <CardHeader className="liquid-card-header-prominent">
             <CardTitle>Wall Waves</CardTitle>
             <Badge variant="secondary">{report.waves.length} waves</Badge>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="liquid-prominent-header-content space-y-3">
             {report.waves.map((wave, index) => (
               <WaveRow key={`${wave.wave ?? wave.index ?? index}-${index}`} wave={wave} index={index} />
             ))}
@@ -746,32 +765,48 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
   );
 };
 
-const BattleStatusBanner: React.FC<{ report: ParsedReport; outcome: string }> = ({ report, outcome }) => {
+const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onBack: () => void }> = ({
+  report,
+  outcome,
+  onBack,
+}) => {
   return (
-    <Card variant="solid" className="overflow-hidden">
-      <CardContent className="!p-0">
-        <div className="relative overflow-hidden bg-gradient-to-r from-error/10 via-bg-card to-info/10 p-5">
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)_minmax(0,1fr)] xl:items-stretch">
-            <BattleBannerSide label="Attacker" combatant={report.attacker} tone="danger" />
-
-            <div className="flex min-w-0 flex-col items-center justify-center rounded-global border border-border-base bg-bg-card/90 px-5 py-4 text-center shadow-sm">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-global bg-primary/10 text-primary ring-1 ring-primary/20">
-                <Swords className="h-6 w-6" />
-              </div>
-              <ReportResultBadges result={outcome} size="lg" />
-              <div className="mt-3 text-sm font-semibold text-text-main">{battleLocationLabel(report)}</div>
-            </div>
-
-            <BattleBannerSide label="Defender" combatant={report.defender} tone="info" align="right" />
+    <Card variant="solid" className="battle-report-dossier">
+      <div className="battle-report-dossier-top">
+        <div className="battle-report-title-block">
+          <div className="battle-report-mark">
+            <Swords className="h-6 w-6" />
           </div>
-
-          <div className="mt-4 grid gap-2 md:grid-cols-3">
-            <BannerFact icon={<CalendarDays className="h-4 w-4" />} label="Date" value={formatDate(report)} />
-            <BannerFact icon={<MapPin className="h-4 w-4" />} label="Coordinates" value={battleCoordinateLabel(report)} />
-            <BannerFact icon={<Shield className="h-4 w-4" />} label="Kingdom" value={kingdomLabel(report)} />
+          <div className="min-w-0">
+            <div className="battle-report-eyebrow">Battle report dossier</div>
+            <CardTitle className="battle-report-dossier-title">{battleLocationLabel(report)}</CardTitle>
           </div>
         </div>
-      </CardContent>
+        <Button variant="outline" className="battle-report-back" onClick={onBack}>
+          Back to aggregate
+        </Button>
+      </div>
+
+      <div className="battle-report-matchup">
+        <BattleBannerSide label="Attacker" combatant={report.attacker} tone="danger" />
+
+        <div className="battle-report-outcome-seal">
+          <div className="battle-report-seal-ring">
+            <Swords className="h-7 w-7" />
+          </div>
+          <div className="battle-report-seal-label">Final result</div>
+          <ReportResultBadges result={outcome} size="lg" className="battle-report-result-badges" />
+          <div className="battle-report-seal-location">{battleLocationLabel(report)}</div>
+        </div>
+
+        <BattleBannerSide label="Defender" combatant={report.defender} tone="info" align="right" />
+      </div>
+
+      <div className="battle-report-intel-strip">
+        <BannerFact icon={<CalendarDays className="h-4 w-4" />} label="Date" value={formatDate(report)} />
+        <BannerFact icon={<MapPin className="h-4 w-4" />} label="Coordinates" value={battleCoordinateLabel(report)} />
+        <BannerFact icon={<Shield className="h-4 w-4" />} label="Kingdom" value={kingdomLabel(report)} />
+      </div>
     </Card>
   );
 };
@@ -782,16 +817,16 @@ const BattleBannerSide: React.FC<{
   tone: 'danger' | 'info';
   align?: 'left' | 'right';
 }> = ({ label, combatant, tone, align = 'left' }) => {
-  const toneClass = tone === 'danger' ? 'border-error/30 text-error' : 'border-info/30 text-info';
-  const alignClass = align === 'right' ? 'items-start text-left xl:items-end xl:text-right' : 'items-start text-left';
+  const toneClass = tone === 'danger' ? 'battle-report-side-danger' : 'battle-report-side-info';
+  const alignClass = align === 'right' ? 'battle-report-side-defender' : 'battle-report-side-attacker';
 
   return (
-    <div className={`flex min-w-0 flex-col justify-center rounded-global border bg-bg-card/80 p-4 shadow-sm ${toneClass} ${alignClass}`}>
-      <div className="text-xs uppercase tracking-wider text-text-muted font-semibold">{label}</div>
-      <div className="mt-2 max-w-full truncate text-2xl font-black text-text-main">{combatantName(combatant)}</div>
-      <div className="mt-1 max-w-full truncate text-sm font-medium text-text-muted">{allianceName(combatant)}</div>
+    <div className={`battle-report-side ${toneClass} ${alignClass}`}>
+      <div className="battle-report-side-label">{label}</div>
+      <div className="battle-report-side-name">{combatantName(combatant)}</div>
+      <div className="battle-report-side-alliance">{allianceName(combatant)}</div>
       {combatant?.castleName && (
-        <div className="mt-3 max-w-full truncate rounded-full bg-bg-app px-3 py-1 text-xs font-semibold text-text-main ring-1 ring-border-base">
+        <div className="battle-report-side-castle">
           {combatant.castleName}
         </div>
       )}
@@ -800,11 +835,11 @@ const BattleBannerSide: React.FC<{
 };
 
 const BannerFact: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
-  <div className="flex min-w-0 items-center gap-3 rounded-global border border-border-base bg-bg-card/80 px-3 py-2 shadow-sm">
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>
+  <div className="battle-report-intel-item">
+    <span className="battle-report-intel-icon">{icon}</span>
     <div className="min-w-0">
-      <div className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">{label}</div>
-      <div className="truncate text-sm font-semibold text-text-main">{value}</div>
+      <div className="battle-report-intel-label">{label}</div>
+      <div className="battle-report-intel-value">{value}</div>
     </div>
   </div>
 );
@@ -829,8 +864,8 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
   const tradeTone = opponentLost > ourLost ? 'success' : opponentLost < ourLost ? 'danger' : 'neutral';
 
   return (
-    <Card variant="solid" className="overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-error/5 via-bg-card to-info/5">
+    <Card variant="solid" className="liquid-prominent-header-card">
+      <CardHeader className="liquid-card-header-prominent">
         <div>
           <CardTitle>All Unit Stats</CardTitle>
           <p className="text-xs text-text-muted mt-1">
@@ -842,7 +877,7 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
           <BarChart3 className="w-5 h-5 text-primary" />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="liquid-prominent-header-content">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           <MetricTile
             label={isDefenseView ? 'Our stationed' : 'Our sent'}
@@ -980,11 +1015,11 @@ const CollapsibleDetailCard: React.FC<{
   const contentId = useId();
 
   return (
-    <Card variant="solid" className="overflow-hidden">
-      <CardHeader className="!p-0">
+    <Card variant="solid" className="liquid-prominent-header-card">
+      <CardHeader className="liquid-card-header-prominent !p-0">
         <button
           type="button"
-          className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-bg-card-hover"
+          className="flex min-h-[4.75rem] w-full items-center justify-between gap-3 rounded-global px-6 py-5 text-left transition-colors hover:text-primary"
           aria-expanded={isOpen}
           aria-controls={contentId}
           onClick={() => setIsOpen((current) => !current)}
@@ -1001,7 +1036,7 @@ const CollapsibleDetailCard: React.FC<{
         </button>
       </CardHeader>
       {isOpen && (
-        <CardContent id={contentId}>
+        <CardContent id={contentId} className="liquid-prominent-header-content">
           {children}
         </CardContent>
       )}

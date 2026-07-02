@@ -153,6 +153,19 @@ func runAutoBird(ctx context.Context) {
 		default:
 		}
 
+		st := Models.GetSettingsState()
+		if sleepUntil, blocked := featureScheduleBlockedUntil(st, "autoBird", time.Now(), 30*time.Second, 10*time.Second); blocked {
+			setNextWakeUnixMs(sleepUntil)
+			autoBirdLog("schedule", fmt.Sprintf("inactive; next check at %s", sleepUntil.Format(time.RFC3339)))
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(time.Until(sleepUntil)):
+			}
+			clearNextWake()
+			continue
+		}
+
 		// On each wake (including first iteration): require an active game session or reload the tab to establish one.
 		if !EnsureGameSessionOrReload(ctx) {
 			time.Sleep(30 * time.Second)
@@ -161,7 +174,6 @@ func runAutoBird(ctx context.Context) {
 
 		gs := Models.GetGameState()
 		pid := gs.PlayerID
-		st := Models.GetSettingsState()
 
 		if pid == 0 || gs.Alliance.AID <= 0 {
 			autoBirdLog("wait_data", "Game state not fully loaded (PID or AID is 0). Waiting...")

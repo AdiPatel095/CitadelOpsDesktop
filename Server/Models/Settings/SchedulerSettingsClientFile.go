@@ -14,26 +14,28 @@ const schedulerSettingsFileName = "SchedulerSettings.json"
 var schedulerSettingsMu sync.Mutex
 
 type schedulerSettingsFile struct {
-	Version              int               `json:"version"`
-	MinAttackDelay       float64           `json:"minAttackDelay"`
-	MaxAttackDelay       float64           `json:"maxAttackDelay"`
-	UpgradeEreDelayMs    int               `json:"upgradeEreDelayMs"`
-	UpgradeCoinThreshold float64           `json:"upgradeCoinThreshold"`
-	TabPriorities        map[string]string `json:"tabPriorities"`
+	Version              int                        `json:"version"`
+	MinAttackDelay       float64                    `json:"minAttackDelay"`
+	MaxAttackDelay       float64                    `json:"maxAttackDelay"`
+	UpgradeEreDelayMs    int                        `json:"upgradeEreDelayMs"`
+	UpgradeCoinThreshold float64                    `json:"upgradeCoinThreshold"`
+	TabPriorities        map[string]string          `json:"tabPriorities"`
+	FeatureSchedules     map[string]FeatureSchedule `json:"featureSchedules"`
 }
 
-func schedulerSettingsPath() string {
+func SchedulerSettingsPath() string {
 	return filepath.Join(Paths.DataDir(), schedulerSettingsFileName)
 }
 
 func defaultSchedulerSettingsFile() schedulerSettingsFile {
 	return schedulerSettingsFile{
-		Version:              1,
+		Version:              2,
 		MinAttackDelay:       4.0,
 		MaxAttackDelay:       6.0,
 		UpgradeEreDelayMs:    50,
 		UpgradeCoinThreshold: 0,
 		TabPriorities:        map[string]string{},
+		FeatureSchedules:     map[string]FeatureSchedule{},
 	}
 }
 
@@ -59,6 +61,7 @@ func normalizeSchedulerSettings(s *SettingsState) {
 	if s.TabPriorities == nil {
 		s.TabPriorities = make(map[string]TabPriority)
 	}
+	s.FeatureSchedules = NormalizeFeatureSchedules(s.FeatureSchedules)
 }
 
 // LoadSchedulerSettingsInto merges persisted SettingsView values from SchedulerSettings.json.
@@ -69,7 +72,7 @@ func LoadSchedulerSettingsInto(s *SettingsState) {
 	schedulerSettingsMu.Lock()
 	defer schedulerSettingsMu.Unlock()
 
-	data, err := os.ReadFile(schedulerSettingsPath())
+	data, err := os.ReadFile(SchedulerSettingsPath())
 	if err != nil || len(data) == 0 {
 		if d := Paths.LegacyDotCitadelOpsDir(); d != "" {
 			if leg, err := os.ReadFile(filepath.Join(d, schedulerSettingsFileName)); err == nil && len(leg) > 0 {
@@ -107,10 +110,13 @@ func LoadSchedulerSettingsInto(s *SettingsState) {
 			s.TabPriorities[tabID] = TabPriority(p)
 		}
 	}
+	if f.FeatureSchedules != nil {
+		s.FeatureSchedules = NormalizeFeatureSchedules(f.FeatureSchedules)
+	}
 	normalizeSchedulerSettings(s)
 }
 
-// PersistSchedulerSettings writes SettingsView scheduler fields to SchedulerSettings.json.
+// PersistSchedulerSettings writes scheduler settings to SchedulerSettings.json under Paths.DataDir().
 func PersistSchedulerSettings(s *SettingsState) error {
 	if s == nil {
 		return nil
@@ -123,12 +129,13 @@ func PersistSchedulerSettings(s *SettingsState) error {
 	}
 
 	f := schedulerSettingsFile{
-		Version:              1,
+		Version:              2,
 		MinAttackDelay:       s.MinAttackDelay,
 		MaxAttackDelay:       s.MaxAttackDelay,
 		UpgradeEreDelayMs:    s.UpgradeEreDelayMs,
 		UpgradeCoinThreshold: s.UpgradeCoinThreshold,
 		TabPriorities:        priorities,
+		FeatureSchedules:     NormalizeFeatureSchedules(s.FeatureSchedules),
 	}
 	data, err := json.MarshalIndent(f, "", "  ")
 	if err != nil {
@@ -138,8 +145,10 @@ func PersistSchedulerSettings(s *SettingsState) error {
 
 	schedulerSettingsMu.Lock()
 	defer schedulerSettingsMu.Unlock()
-	_ = os.MkdirAll(Paths.DataDir(), 0755)
-	path := schedulerSettingsPath()
+	path := SchedulerSettingsPath()
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0644); err != nil {
 		return err

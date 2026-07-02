@@ -19,6 +19,7 @@ var (
 const (
 	autoBeriWorldDefaultCheckSec = 30
 	autoBeriWorldMinCheckSec     = 5
+	autoBeriWorldDisabled        = true
 )
 
 // IsAutoBeriWorldRunning reports whether the Auto Beri World loop is active.
@@ -47,6 +48,15 @@ func setAutoBeriWorldNextWake(t time.Time) {
 
 // StartAutoBeriWorld starts the Auto Beri World goroutine (no-op if already running).
 func StartAutoBeriWorld() {
+	if autoBeriWorldDisabled {
+		Models.GetSettingsState().AutoBeriWorldEnabled = false
+		if ResponseRegistry.SendAutoBeriWorldStatusFunc != nil {
+			go ResponseRegistry.SendAutoBeriWorldStatusFunc(false, 0)
+		}
+		Logging.AutoBeriWorldLog("disabled", "start ignored")
+		return
+	}
+
 	autoBeriWorldMu.Lock()
 	defer autoBeriWorldMu.Unlock()
 	if autoBeriWorldCancel != nil {
@@ -87,6 +97,18 @@ func runAutoBeriWorld(ctx context.Context) {
 	defer Logging.AutoBeriWorldLog("stopped", "")
 
 	for {
+		st := Models.GetSettingsState()
+		if sleepUntil, blocked := featureScheduleBlockedUntil(st, "autoBeriWorld", time.Now(), autoBeriWorldCheckInterval(), autoBeriWorldMinCheckSec*time.Second); blocked {
+			setAutoBeriWorldNextWake(sleepUntil)
+			Logging.AutoBeriWorldLogf("schedule", "inactive; next check at %s", sleepUntil.Format(time.RFC3339))
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(time.Until(sleepUntil)):
+			}
+			continue
+		}
+
 		if !EnsureGameSessionOrReload(ctx) {
 			select {
 			case <-ctx.Done():

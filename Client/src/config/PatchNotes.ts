@@ -28,9 +28,22 @@ export interface PatchNotesRelease {
   items: PatchNoteItem[];
 }
 
-export const APP_VERSION_CURRENT = '1.3.3';
+export const APP_VERSION_CURRENT = '1.3.6';
 
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
+  {
+    version: '1.3.6',
+    subtitle: 'Scheduler, recruiting, tools, subscription state, and interface refresh',
+    date: '2026-07-02',
+    items: [
+      { kind: 'added', text: 'Feature scheduling controls for automation windows and weekly run plans' },
+      { kind: 'added', text: 'Recruit troops settings backed by production slot and capacity parsing' },
+      { kind: 'added', text: 'Auto Tool settings with queueable tool catalog support' },
+      { kind: 'added', text: 'Subscription and VIP state parsing for game-state snapshots' },
+      { kind: 'changed', text: 'Updated dashboard, equipment, TCI, troop picker, logger, and sidebar surfaces for the refreshed UI' },
+      { kind: 'fixed', text: 'Improved battle report and live equipment stat mapping coverage' },
+    ],
+  },
   {
     version: '1.3.3',
     subtitle: 'Offline snapshot UI; Auto Bird; decoration preset alerts',

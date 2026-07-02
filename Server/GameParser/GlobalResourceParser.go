@@ -151,3 +151,13 @@ func UpdatePlayerInfo(gpiMap map[string]interface{}) {
 		Models.GetGameState().PlayerID = int(pid)
 	}
 }
+
+// UpdateVIPInfo parses gbd.vip and stores the active player VIP state.
+func UpdateVIPInfo(vipMap map[string]interface{}) {
+	Models.GetGameState().VIP = Models.VipState{
+		Points:       jsonIntFromMap(vipMap, "VP"),
+		Level:        jsonIntFromMap(vipMap, "VRL"),
+		RemainingSec: jsonIntFromMap(vipMap, "VRS"),
+		Upgrade:      jsonIntFromMap(vipMap, "UPG"),
+	}
+}

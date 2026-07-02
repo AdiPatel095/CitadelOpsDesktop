@@ -107,7 +107,11 @@ func ProcessCast(castMap map[string]interface{}, castActual *Models.CastActualMo
 	var tempEquipStat Models.CastStatModel
 	var tempHeroStat Models.CastStatModel
 	var tempGemStat Models.CastStatModel
+	setCounts := make(map[float64]int)
 	for _, equipment := range castActual.Equipment {
+		if equipment.SetID > 0 {
+			setCounts[equipment.SetID]++
+		}
 		switch equipment.EquipSlotNumber {
 		case 1:
 			castStat.Equip1 = equipment.ID
@@ -125,10 +129,7 @@ func ProcessCast(castMap map[string]interface{}, castActual *Models.CastActualMo
 			castStat.Hero = equipment.ID
 			ProcessEquipStatCast(equipment, &tempHeroStat, &equip.CastHeroCeiling)
 		}
-		// Process gems for Relic equipment (Rarity 5 or 15) with valid gems
-		if (equipment.EquipRarity == 5 || equipment.EquipRarity == 15) && equipment.GemSlot.Gem != nil {
-			// Castellan gem slots use 101-104 for equipment, 161 for hero
-			// We need to map these to Gem1-4
+		if equipment.GemSlot.Gem != nil && equipment.GemSlot.Gem.ID != 0 {
 			gemSlotNum := equipment.GemSlot.SlotNumber
 			switch {
 			case gemSlotNum == 101 || gemSlotNum == 1:
@@ -140,8 +141,19 @@ func ProcessCast(castMap map[string]interface{}, castActual *Models.CastActualMo
 			case gemSlotNum == 104 || gemSlotNum == 4:
 				castStat.Gem4 = equipment.GemSlot.Gem.ID
 			}
-			ProcessGemStatCast(equipment, &tempGemStat, &equip.CastGemCeiling)
+			if gemSetID := equip.CatalogGemSetID(equipment.GemSlot.Gem.ID); gemSetID > 0 {
+				setCounts[gemSetID]++
+			}
+			if len(equipment.GemSlot.Gem.GemStats) > 0 {
+				ProcessGemStatCast(equipment, &tempGemStat, &equip.CastGemCeiling)
+			} else {
+				equip.ApplyCastellanCatalogGemStats(&tempGemStat, equipment.GemSlot.Gem.ID)
+				Models.ApplyCastCeiling(&tempGemStat, &equip.CastGemCeiling)
+			}
 		}
+	}
+	for setID, equippedCount := range setCounts {
+		equip.ApplyCastellanSetBonusStats(&tempEquipStat, setID, equippedCount)
 	}
 	MergeCast(castStat, &tempEquipStat, &tempHeroStat, &tempGemStat)
 	Models.ApplyCastCeiling(castStat, &equip.CastEquipCeiling)
@@ -152,7 +164,7 @@ func ProcessEquipStatCast(equipment Models.EquipmentModel, dstCast *Models.CastS
 		if len(stat.Value) == 0 {
 			continue
 		}
-		equip.ApplyCastellanLiveStat(dstCast, stat.ID, stat.Value, equip.CatalogEffectSourceEquipment)
+		equip.ApplyCastellanLiveStat(dstCast, stat.ID, stat.Value, catalogEquipmentSource(equipment.EquipRarity))
 		Models.ApplyCastCeiling(dstCast, ceilingCast)
 	}
 }
@@ -162,9 +174,23 @@ func ProcessGemStatCast(equipment Models.EquipmentModel, dstCast *Models.CastSta
 		if len(stat.Value) == 0 {
 			continue
 		}
-		equip.ApplyCastellanLiveStat(dstCast, stat.ID, stat.Value, equip.CatalogEffectSourceGem)
+		equip.ApplyCastellanLiveStat(dstCast, stat.ID, stat.Value, catalogGemSource(equipment.EquipRarity))
 		Models.ApplyCastCeiling(dstCast, ceilingCast)
 	}
+}
+
+func catalogEquipmentSource(equipRarity float64) equip.CatalogEffectSource {
+	if equipRarity == 5 || equipRarity == 15 {
+		return equip.CatalogEffectSourceRelicEquipment
+	}
+	return equip.CatalogEffectSourceEquipment
+}
+
+func catalogGemSource(equipRarity float64) equip.CatalogEffectSource {
+	if equipRarity == 5 || equipRarity == 15 {
+		return equip.CatalogEffectSourceRelicGem
+	}
+	return equip.CatalogEffectSourceGem
 }
 
 func MergeCast(dstCast *Models.CastStatModel, tempEquipStat *Models.CastStatModel, tempHeroStat *Models.CastStatModel, tempGemStat *Models.CastStatModel) {
@@ -213,6 +239,7 @@ func MergeCast(dstCast *Models.CastStatModel, tempEquipStat *Models.CastStatMode
 	dstCast.CLFire += tempEquipStat.CLFire + tempHeroStat.CLFire + tempGemStat.CLFire
 	dstCast.CLGlory += tempEquipStat.CLGlory + tempHeroStat.CLGlory + tempGemStat.CLGlory
 	dstCast.CLEarly += tempEquipStat.CLEarly + tempHeroStat.CLEarly + tempGemStat.CLEarly
+	dstCast.ExtraStats = equip.MergeEquipmentExtraStats(dstCast.ExtraStats, tempEquipStat.ExtraStats, tempHeroStat.ExtraStats, tempGemStat.ExtraStats)
 }
 
 func ProcessCommArray(commArray []interface{}) {
@@ -245,7 +272,11 @@ func ProcessComm(commMap map[string]interface{}, index int) {
 	var tempEquipStat Models.CommStatModel
 	var tempHeroStat Models.CommStatModel
 	var tempGemStat Models.CommStatModel
+	setCounts := make(map[float64]int)
 	for _, equipment := range actualComm.Equipment {
+		if equipment.SetID > 0 {
+			setCounts[equipment.SetID]++
+		}
 		switch equipment.EquipSlotNumber {
 		case 1:
 			statComm.Equip1 = equipment.ID
@@ -263,8 +294,7 @@ func ProcessComm(commMap map[string]interface{}, index int) {
 			statComm.Hero = equipment.ID
 			ProcessEquipStatComm(equipment, &tempHeroStat, &equip.CommHeroCeiling)
 		}
-		// Check if the equipment is gem-capable AND a gem is actually present (Gem.ID will be non-zero).
-		if (equipment.EquipRarity == 5 || equipment.EquipRarity == 15) && equipment.GemSlot.Gem != nil && equipment.GemSlot.Gem.ID != 0 {
+		if equipment.GemSlot.Gem != nil && equipment.GemSlot.Gem.ID != 0 {
 			switch equipment.GemSlot.SlotNumber {
 			case 1:
 				statComm.Gem1 = equipment.GemSlot.Gem.ID
@@ -275,9 +305,20 @@ func ProcessComm(commMap map[string]interface{}, index int) {
 			case 4:
 				statComm.Gem4 = equipment.GemSlot.Gem.ID
 			}
-			ProcessGemStatComm(equipment, &tempGemStat, &equip.CommGemCeiling)
+			if gemSetID := equip.CatalogGemSetID(equipment.GemSlot.Gem.ID); gemSetID > 0 {
+				setCounts[gemSetID]++
+			}
+			if len(equipment.GemSlot.Gem.GemStats) > 0 {
+				ProcessGemStatComm(equipment, &tempGemStat, &equip.CommGemCeiling)
+			} else {
+				equip.ApplyCommanderCatalogGemStats(&tempGemStat, equipment.GemSlot.Gem.ID)
+				Models.ApplyCommCeiling(&tempGemStat, &equip.CommGemCeiling)
+			}
 		}
 
+	}
+	for setID, equippedCount := range setCounts {
+		equip.ApplyCommanderSetBonusStats(&tempEquipStat, setID, equippedCount)
 	}
 	MergeComm(statComm, &tempEquipStat, &tempHeroStat, &tempGemStat)
 	Models.ApplyCommCeiling(statComm, &equip.CommEquipCeiling)
@@ -288,7 +329,7 @@ func ProcessEquipStatComm(equipment Models.EquipmentModel, dstComm *Models.CommS
 		if len(stat.Value) == 0 {
 			continue
 		}
-		equip.ApplyCommanderLiveStat(dstComm, stat.ID, stat.Value, equip.CatalogEffectSourceEquipment)
+		equip.ApplyCommanderLiveStat(dstComm, stat.ID, stat.Value, catalogEquipmentSource(equipment.EquipRarity))
 		Models.ApplyCommCeiling(dstComm, ceilingComm)
 
 	}
@@ -299,7 +340,7 @@ func ProcessGemStatComm(equipment Models.EquipmentModel, dstComm *Models.CommSta
 		if len(stat.Value) == 0 {
 			continue
 		}
-		equip.ApplyCommanderLiveStat(dstComm, stat.ID, stat.Value, equip.CatalogEffectSourceGem)
+		equip.ApplyCommanderLiveStat(dstComm, stat.ID, stat.Value, catalogGemSource(equipment.EquipRarity))
 		Models.ApplyCommCeiling(dstComm, ceilingComm)
 	}
 }
@@ -346,6 +387,7 @@ func MergeComm(dstComm *Models.CommStatModel, tempEquipStat *Models.CommStatMode
 	dstComm.CLLater += tempEquipStat.CLLater + tempHeroStat.CLLater + tempGemStat.CLLater
 	dstComm.CLFire += tempEquipStat.CLFire + tempHeroStat.CLFire + tempGemStat.CLFire
 	dstComm.CLGlory += tempEquipStat.CLGlory + tempHeroStat.CLGlory + tempGemStat.CLGlory
+	dstComm.ExtraStats = equip.MergeEquipmentExtraStats(dstComm.ExtraStats, tempEquipStat.ExtraStats, tempHeroStat.ExtraStats, tempGemStat.ExtraStats)
 }
 
 func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.EquipmentModel) {
@@ -361,6 +403,10 @@ func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.E
 	// Ensure array has enough elements to avoid panic
 	if len(equipmentDataArray) > 6 {
 		equipmentFinal.TemplateID, _ = equipmentDataArray[6].(float64)
+	}
+	if len(equipmentDataArray) > 7 {
+		equipmentFinal.SetID, _ = equipmentDataArray[7].(float64)
+		equipmentFinal.PlaceHolder8 = equipmentFinal.SetID
 	}
 	if len(equipmentDataArray) > 10 {
 		equipmentFinal.GemID, _ = equipmentDataArray[10].(float64)

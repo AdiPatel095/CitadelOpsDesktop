@@ -64,6 +64,8 @@ type CastStatModel struct {
 	CLFire      float64 `json:"CLFire"`
 	CLGlory     float64 `json:"CLGlory"`
 	CLEarly     float64 `json:"CLEarly"`
+
+	ExtraStats []EquipmentExtraStat `json:"extraStats,omitempty"`
 }
 
 type CastDBUpdater func(castDB *CastStatModel, value float64)

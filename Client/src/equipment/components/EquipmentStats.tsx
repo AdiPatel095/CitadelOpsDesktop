@@ -11,6 +11,7 @@ import {
   type CommStat,
   type CastStat,
   type ProcessedEquipmentStat,
+  type EquipmentExtraStat,
 } from '../models/Equipment';
 import { FrontendWebsocket } from '../../Websocket';
 import { useResources } from '../../currency/context/ResourceContext';
@@ -663,6 +664,29 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
     return getEquipmentShowcaseStats(processedStats, equipmentMode);
   }, [processedStats, equipmentMode]);
 
+  const extraStatsByCategory = useMemo(() => {
+    const grouped: Record<string, EquipmentExtraStat[]> = {};
+    for (const stat of stats?.extraStats ?? []) {
+      if (!Number.isFinite(Number(stat.value)) || Number(stat.value) === 0) continue;
+      const category = stat.category || 'Other Stats';
+      grouped[category] = grouped[category] ?? [];
+      grouped[category].push(stat);
+    }
+    return grouped;
+  }, [stats]);
+
+  const formatExtraStatValue = (stat: EquipmentExtraStat): string => {
+    const value = Number(stat.value);
+    const abs = Math.abs(value);
+    const precision = Number.isInteger(abs) ? 0 : 1;
+    const formatted = abs.toLocaleString(undefined, {
+      minimumFractionDigits: precision,
+      maximumFractionDigits: precision,
+    });
+    const sign = value > 0 ? '+' : value < 0 ? '-' : '';
+    return `${sign}${formatted}${stat.unit === 'number' ? '' : '%'}`;
+  };
+
   const renderStat = (statKey: string, stat: ProcessedEquipmentStat) => {
     const label = displayStatName(statKey, { equipmentMode });
     const visibleSources = stat.sources.filter(source => source.key !== statKey);
@@ -840,6 +864,28 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
               <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{statGroupDisplayName[groupName] || groupName}</h4>
               <div className="space-y-0.5">
                 {visibleStats.map(key => renderStat(key, processedStats[key]))}
+              </div>
+            </div>
+          );
+        })}
+
+        {stats && Object.entries(extraStatsByCategory).map(([category, extraStats]) => {
+          if (extraStats.length === 0) return null;
+
+          return (
+            <div key={category} className="rounded-global bg-bg-app border border-border-base p-3">
+              <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{category}</h4>
+              <div className="space-y-0.5">
+                {extraStats.map(stat => (
+                  <div className="py-2 px-2 rounded hover:bg-bg-card-hover transition-colors" key={stat.key}>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-sm text-text-muted min-w-0">{stat.label || stat.name || `Effect ${stat.effectId}`}</span>
+                      <span className="text-sm font-mono font-semibold text-primary shrink-0">
+                        {formatExtraStatValue(stat)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           );

@@ -4,6 +4,7 @@ import { FrontendWebsocket } from '../Websocket';
 export interface CatalogGroupTier {
   wireCid: number;
   level: number;
+  effects?: string;
 }
 
 export interface ConstructionItemCatalogEntry {
@@ -44,6 +45,64 @@ export function formatGroupTiersLine(entry: ConstructionItemCatalogEntry): strin
     return entry.groupTiers.map((t) => `L${t.level} #${t.wireCid}`).join(' · ');
   }
   return `Levels ${entry.level} · #${entry.id}`;
+}
+
+function splitEffectLines(effects: string): string[] {
+  return effects
+    .split(' • ')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function splitEffectLabelValue(line: string): { label: string; value: string } | null {
+  const index = line.indexOf(':');
+  if (index < 0) {
+    return null;
+  }
+  const label = line.slice(0, index).trim();
+  const value = line.slice(index + 1).trim();
+  if (!label || !value) {
+    return null;
+  }
+  return { label, value };
+}
+
+export function formatEffectUpgradeLine(entry: ConstructionItemCatalogEntry): string {
+  const tiers = (entry.groupTiers ?? [])
+    .filter((tier) => tier.effects?.trim())
+    .slice()
+    .sort((a, b) => a.level - b.level || a.wireCid - b.wireCid);
+
+  if (tiers.length <= 1) {
+    return tiers[0]?.effects?.trim() || entry.effects || '';
+  }
+
+  const tierLines = tiers.map((tier) => ({
+    level: tier.level,
+    effects: tier.effects?.trim() ?? '',
+    lines: splitEffectLines(tier.effects ?? ''),
+  }));
+  const lineCount = tierLines[0].lines.length;
+  const sameShape = lineCount > 0 && tierLines.every((tier) => tier.lines.length === lineCount);
+
+  if (sameShape) {
+    const collapsed: string[] = [];
+    for (let i = 0; i < lineCount; i += 1) {
+      const parsed = tierLines.map((tier) => splitEffectLabelValue(tier.lines[i]));
+      const firstLabel = parsed[0]?.label;
+      if (!firstLabel || parsed.some((part) => !part || part.label !== firstLabel)) {
+        return tierLines.map((tier) => `L${tier.level} ${tier.effects}`).join(' → ');
+      }
+      collapsed.push(
+        `${firstLabel}: ${parsed
+          .map((part, index) => `L${tierLines[index].level} ${part?.value ?? ''}`)
+          .join(' → ')}`
+      );
+    }
+    return collapsed.join(' • ');
+  }
+
+  return tierLines.map((tier) => `L${tier.level} ${tier.effects}`).join(' → ');
 }
 
 export function levelRangeLabel(entry: ConstructionItemCatalogEntry): string {
@@ -94,7 +153,7 @@ function normalizeCatalogEntry(
   const maxLevel = e.maxLevel ?? minLevel;
   let groupTiers = e.groupTiers;
   if (!groupTiers || groupTiers.length === 0) {
-    groupTiers = groupIds.map((wireCid) => ({ wireCid, level: minLevel }));
+    groupTiers = groupIds.map((wireCid) => ({ wireCid, level: minLevel, effects: e.effects }));
   }
   return {
     ...e,

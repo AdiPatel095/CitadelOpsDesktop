@@ -40,32 +40,32 @@ const EquipmentView: React.FC = () => {
   }, [fullArray, selectedIndex]);
 
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-8rem)]">
+    <div className="equipment-view-shell">
       <StaleSessionBanner />
-      <div className="flex gap-6 flex-1 min-h-0">
-      {/* Left Panel - Selection */}
-      <div className="flex-1 min-w-0">
-        <EquipmentSelection
-          equipmentMode={equipmentMode}
-          setEquipmentMode={setEquipmentMode}
-          combatMode={combatMode}
-          setCombatMode={setCombatMode}
-          selectedIndex={selectedIndex}
-          setSelectedIndex={setSelectedIndex}
-          fullArray={fullArray}
-          selectedItem={selectedItem}
-        />
-      </div>
+      <div className="equipment-layout">
+        {/* Left Panel - Selection */}
+        <div className="equipment-main-panel">
+          <EquipmentSelection
+            equipmentMode={equipmentMode}
+            setEquipmentMode={setEquipmentMode}
+            combatMode={combatMode}
+            setCombatMode={setCombatMode}
+            selectedIndex={selectedIndex}
+            setSelectedIndex={setSelectedIndex}
+            fullArray={fullArray}
+            selectedItem={selectedItem}
+          />
+        </div>
 
-      {/* Right Panel - Stat Priority */}
-      <div className="w-80 flex-shrink-0">
-        <StatPriority
-          equipmentMode={equipmentMode}
-          combatMode={combatMode}
-          selectedIndex={selectedIndex}
-        />
+        {/* Right Panel - Stat Priority */}
+        <div className="equipment-priority-panel">
+          <StatPriority
+            equipmentMode={equipmentMode}
+            combatMode={combatMode}
+            selectedIndex={selectedIndex}
+          />
+        </div>
       </div>
-    </div>
     </div>
   );
 };

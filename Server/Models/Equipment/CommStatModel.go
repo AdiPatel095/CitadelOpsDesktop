@@ -64,6 +64,8 @@ type CommStatModel struct {
 	CLLater float64 `json:"CLLater"`
 	CLFire  float64 `json:"CLFire"`
 	CLGlory float64 `json:"CLGlory"`
+
+	ExtraStats []EquipmentExtraStat `json:"extraStats,omitempty"`
 }
 
 // CommDBUpdater defines the function signature for updating a CommStatModel field.

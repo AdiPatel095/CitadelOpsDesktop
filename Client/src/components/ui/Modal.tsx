@@ -51,7 +51,7 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div className="liquid-modal-overlay animate-fade-in">
       <div
         ref={overlayRef}
         className="absolute inset-0"
@@ -59,14 +59,14 @@ export const Modal: React.FC<ModalProps> = ({
         aria-hidden="true"
       />
       <div
-        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-bg-app border border-border-base shadow-2xl rounded-2xl flex flex-col max-h-[90vh]`}
+        className={`liquid-modal-surface ${maxWidthClasses[maxWidth]}`}
         role="dialog"
         aria-modal="true"
       >
         {(title || !hideCloseButton) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border-base shrink-0">
+          <div className="liquid-modal-header">
             {title && (
-              <h2 className="text-xl font-bold text-text-main tracking-tight">
+              <h2 className="liquid-modal-title">
                 {title}
               </h2>
             )}
@@ -75,7 +75,7 @@ export const Modal: React.FC<ModalProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                className="ml-auto -mr-2"
+                className="liquid-modal-close"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -83,11 +83,11 @@ export const Modal: React.FC<ModalProps> = ({
             )}
           </div>
         )}
-        <div className="px-6 py-6 overflow-y-auto custom-scrollbar flex-1">
+        <div className="liquid-modal-body custom-scrollbar">
           {children}
         </div>
         {footer && (
-          <div className="px-6 py-4 border-t border-border-base bg-bg-card/50 rounded-b-2xl shrink-0 flex items-center justify-end gap-3">
+          <div className="liquid-modal-footer">
             {footer}
           </div>
         )}

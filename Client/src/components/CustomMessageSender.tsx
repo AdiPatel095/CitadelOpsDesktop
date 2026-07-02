@@ -24,8 +24,8 @@ const CustomMessageSender: React.FC = () => {
   };
 
   return (
-    <Card className="w-full mb-6">
-      <CardHeader className="pb-3 border-b border-border-base bg-bg-card-hover/50 rounded-t-[calc(var(--radius-global)-1px)]">
+    <Card className="liquid-prominent-header-card w-full mb-6">
+      <CardHeader className="liquid-card-header-prominent">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
             <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,7 +35,7 @@ const CustomMessageSender: React.FC = () => {
           <CardTitle className="text-lg">Send Custom Message</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="liquid-prominent-header-content p-6">
         <div className="flex gap-3">
           <div className="flex-1">
             <Input

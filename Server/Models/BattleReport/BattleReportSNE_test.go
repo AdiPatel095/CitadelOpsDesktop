@@ -76,3 +76,47 @@ func TestCompactSNEForCaptureNarrowsExistingFullMessageList(t *testing.T) {
 		t.Fatalf("compact row MID = %d (ok=%t), want %d", rowMID, ok, capture.MID)
 	}
 }
+
+func TestParseCaptureExtractsBattleLocationFromBLSAI(t *testing.T) {
+	capture := Capture{
+		MID:                  2150313880,
+		LID:                  40,
+		BattleKey:            "2+0+0#0+-203",
+		CapturedAtUnixMillis: 123,
+		BLS: map[string]interface{}{
+			"LID": float64(40),
+			"AI": map[string]interface{}{
+				"N": "2+0+0#0+-203",
+				"K": float64(0),
+				"X": float64(742),
+				"Y": float64(613),
+			},
+		},
+	}
+
+	report := ParseCapture(&capture)
+	if report.KingdomID == nil || *report.KingdomID != 0 {
+		t.Fatalf("KingdomID = %v, want 0", report.KingdomID)
+	}
+	if report.TargetX == nil || *report.TargetX != 742 {
+		t.Fatalf("TargetX = %v, want 742", report.TargetX)
+	}
+	if report.TargetY == nil || *report.TargetY != 613 {
+		t.Fatalf("TargetY = %v, want 613", report.TargetY)
+	}
+
+	raw, err := json.Marshal(report)
+	if err != nil {
+		t.Fatalf("json.Marshal() error = %v", err)
+	}
+	var encoded map[string]interface{}
+	if err := json.Unmarshal(raw, &encoded); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	if encoded["kingdomID"] != float64(0) {
+		t.Fatalf("encoded kingdomID = %v, want 0", encoded["kingdomID"])
+	}
+	if encoded["targetX"] != float64(742) || encoded["targetY"] != float64(613) {
+		t.Fatalf("encoded target coords = (%v, %v), want (742, 613)", encoded["targetX"], encoded["targetY"])
+	}
+}

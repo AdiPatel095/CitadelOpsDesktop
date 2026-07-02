@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Save, Users } from 'lucide-react';
+import { CalendarDays, Save, Users } from 'lucide-react';
 import { FrontendWebsocket } from '../../Websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import { Modal, Button, Input } from '../../components/ui';
@@ -14,9 +14,10 @@ import {
 interface AutoBeriWorldSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
 }
 
-export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProps> = ({ isOpen, onClose }) => {
+export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
   const [minTroopsToTransfer, setMinTroopsToTransfer] = useState(
     DEFAULT_AUTO_BERI_WORLD_SETTINGS.minTroopsToTransfer,
   );
@@ -86,7 +87,25 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Auto Beri World"
+      title={
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <span className="text-primary">Auto Beri World</span>
+            <p className="mt-1 text-sm font-normal text-text-muted">
+              Configure Berimond troop transfers and the runtime schedule for this feature.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={() => onOpenFeatureSchedule('autoBeriWorld', 'Auto Beri World')}
+            leftIcon={<CalendarDays className="h-4 w-4" />}
+          >
+            Calendar
+          </Button>
+        </div>
+      }
       maxWidth="md"
       footer={
         <>

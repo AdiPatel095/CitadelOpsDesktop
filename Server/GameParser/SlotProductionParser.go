@@ -5,6 +5,8 @@ import (
 	gamestate "CitadelDesktop/Server/Models/GameState"
 	"encoding/json"
 	"reflect"
+	"strconv"
+	"strings"
 )
 
 func jsonIntFromMap(m map[string]interface{}, key string) int {
@@ -70,6 +72,62 @@ func queuedFromQS(qs []interface{}) []castle.BarracksProductionSlot {
 	return out
 }
 
+func usableQueueSlot(item map[string]interface{}) bool {
+	if item == nil {
+		return false
+	}
+	if pRaw, ok := item["P"]; ok && pRaw != nil {
+		if p, ok := pRaw.(map[string]interface{}); ok && jsonIntFromMap(p, "WID") != 0 {
+			return true
+		}
+	}
+	siRaw, ok := item["SI"]
+	if !ok || siRaw == nil {
+		return false
+	}
+	si, ok := siRaw.(map[string]interface{})
+	if !ok {
+		return false
+	}
+	return jsonIntFromMap(si, "RUT") != 0
+}
+
+func queueCapacityFromQS(qs []interface{}) int {
+	count := 0
+	for _, raw := range qs {
+		item, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if usableQueueSlot(item) {
+			count++
+		}
+	}
+	return count
+}
+
+func vipSlotsFromQS(qs []interface{}) int {
+	count := 0
+	for _, raw := range qs {
+		item, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		siRaw, ok := item["SI"]
+		if !ok || siRaw == nil {
+			continue
+		}
+		si, ok := siRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if jsonIntFromMap(si, "VIP") > 0 && usableQueueSlot(item) {
+			count++
+		}
+	}
+	return count
+}
+
 func parseSPLObject(splObj map[string]interface{}) (q castle.BarracksProductionQueue, ok bool) {
 	if splObj == nil {
 		return
@@ -86,6 +144,8 @@ func parseSPLObject(splObj map[string]interface{}) (q castle.BarracksProductionQ
 		q.Active = activeSlotFromPS(psMap)
 	}
 	if qsArr, okq := qsRaw.([]interface{}); okq {
+		q.QueueCapacity = queueCapacityFromQS(qsArr)
+		q.VIPSlots = vipSlotsFromQS(qsArr)
 		q.Queued = queuedFromQS(qsArr)
 	}
 	ok = true
@@ -109,22 +169,11 @@ func extractSPLRoot(data string) (map[string]interface{}, bool) {
 	return nil, false
 }
 
-// ApplySlotProductionFromSPLJSON parses **spl** or **bup** JSON (latter nests under "spl") and
-// stores slots on the focused castle under **spl**.LID so recruit (LID 0) and workshop (LID 1) do not clobber each other.
-func ApplySlotProductionFromSPLJSON(gs *gamestate.GameState, data string) bool {
-	splObj, ok := extractSPLRoot(data)
-	if !ok {
+func applySlotProductionQueueToCastle(gs *gamestate.GameState, castleID int, q castle.BarracksProductionQueue) bool {
+	if castleID <= 0 || !gs.IsKnownPlayerCastleID(castleID) {
 		return false
 	}
-	q, ok := parseSPLObject(splObj)
-	if !ok {
-		return false
-	}
-	cid := gs.CastleFocus.CastleAID
-	if cid <= 0 || !gs.IsKnownPlayerCastleID(cid) {
-		return false
-	}
-	c := gs.GetCastleByID(cid)
+	c := gs.GetCastleByID(castleID)
 	if c == nil {
 		return false
 	}
@@ -139,6 +188,56 @@ func ApplySlotProductionFromSPLJSON(gs *gamestate.GameState, data string) bool {
 	qcopy := q
 	c.SlotProductionByLID[lid] = &qcopy
 	return true
+}
+
+// ApplySlotProductionFromSPLJSON parses **spl** or **bup** JSON (latter nests under "spl") and
+// stores slots on the focused castle under **spl**.LID so recruit (LID 0) and workshop (LID 1) do not clobber each other.
+func ApplySlotProductionFromSPLJSON(gs *gamestate.GameState, data string) bool {
+	splObj, ok := extractSPLRoot(data)
+	if !ok {
+		return false
+	}
+	q, ok := parseSPLObject(splObj)
+	if !ok {
+		return false
+	}
+	return applySlotProductionQueueToCastle(gs, gs.CastleFocus.CastleAID, q)
+}
+
+// ApplyJAASlotProductionFromPayload parses root **spl0** / **spl1** / ... objects embedded in **jaa**.
+// JAA focus snapshots can carry the current recruit and tool queues before any standalone **spl** frame arrives.
+func ApplyJAASlotProductionFromPayload(gs *gamestate.GameState, data string) bool {
+	_, cid, _, _, ok := parseJAACastleIdentityFromPayload(data)
+	if !ok || !gs.IsKnownPlayerCastleID(cid) {
+		return false
+	}
+	var root map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &root); err != nil || root == nil {
+		return false
+	}
+	changed := false
+	for key, raw := range root {
+		if !strings.HasPrefix(key, "spl") || key == "spl" {
+			continue
+		}
+		splObj, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		q, ok := parseSPLObject(splObj)
+		if !ok {
+			continue
+		}
+		if q.LID == 0 && key != "spl0" {
+			if lid, err := strconv.Atoi(strings.TrimPrefix(key, "spl")); err == nil {
+				q.LID = lid
+			}
+		}
+		if applySlotProductionQueueToCastle(gs, cid, q) {
+			changed = true
+		}
+	}
+	return changed
 }
 
 func barracksQueuesEqual(a, b *castle.BarracksProductionQueue) bool {

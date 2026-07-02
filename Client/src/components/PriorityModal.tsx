@@ -115,7 +115,7 @@ const PriorityModal: React.FC<PriorityModalProps> = ({ isOpen, onClose }) => {
         </Button>
       }
     >
-      <div className="flex gap-4 h-[calc(100vh-14rem)] min-w-max p-2 pb-6 custom-scrollbar overflow-x-auto">
+      <div className="priority-board flex min-w-max gap-4 overflow-x-auto p-2 pb-6 custom-scrollbar">
         {columns.map(col => (
           <Card
             key={col.id}

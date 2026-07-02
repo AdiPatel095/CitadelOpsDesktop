@@ -41,33 +41,24 @@ const MovementView: React.FC = () => {
     <div className="flex flex-col gap-6">
       <StaleSessionBanner />
 
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-text-main mb-1">Movement</h1>
-          <p className="text-sm text-text-muted">
-            Active troop marches parsed from GAM and related movement frames.
-          </p>
-        </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={!gameLoggedIn}
-          onClick={() => refreshMovement(true)}
-          title={gameLoggedIn ? 'Request fresh GAM from the game client' : 'Connect to refresh'}
-        >
-          <RefreshCw className="w-4 h-4 mr-1.5" />
-          Refresh
-        </Button>
-      </div>
-
-      <Card className="border-border-base bg-bg-app/20">
-        <CardHeader className="pb-3 border-b border-border-base bg-bg-card-hover/50 rounded-t-[calc(var(--radius-global)-1px)]">
+      <Card className="liquid-prominent-header-card">
+        <CardHeader className="liquid-card-header-prominent">
           <CardTitle className="text-lg text-primary">
             Active movements
             <span className="ml-2 text-sm font-normal text-text-muted">({rows.length})</span>
           </CardTitle>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={!gameLoggedIn}
+            onClick={() => refreshMovement(true)}
+            title={gameLoggedIn ? 'Request fresh GAM from the game client' : 'Connect to refresh'}
+          >
+            <RefreshCw className="w-4 h-4 mr-1.5" />
+            Refresh
+          </Button>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="liquid-prominent-header-content">
           {rows.length === 0 ? (
             <p className="text-sm text-text-muted">
               {gameLoggedIn
@@ -75,8 +66,8 @@ const MovementView: React.FC = () => {
                 : 'No movements in the last saved session. Connect and refresh to pull live GAM data.'}
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-border-base">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto rounded-lg border border-border-base custom-scrollbar">
+              <table className="min-w-[58rem] w-full text-sm">
                 <thead>
                   <tr className="border-b border-border-base bg-bg-card/50 text-left text-[10px] uppercase tracking-wider text-text-muted">
                     <th className="px-3 py-2 font-semibold">Commander</th>

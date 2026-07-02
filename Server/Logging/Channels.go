@@ -15,6 +15,8 @@ import (
 const (
 	ChannelWebSocketGame = "websocket_game"
 	ChannelAutoBird      = "autobird"
+	ChannelAutoRecruit   = "autorecruit"
+	ChannelAutoTool      = "autotool"
 	ChannelAutoTCI       = "autotci"
 	ChannelAutoBeriWorld = "autoberiworld"
 	ChannelRift          = "rift"
@@ -34,6 +36,8 @@ var KnownChannels = []ChannelMeta{
 	{ID: ChannelWebSocketGame, Label: "Game WebSocket"},
 	{ID: ChannelAppSend, Label: "Citadel sends"},
 	{ID: ChannelAutoBird, Label: "AutoBird"},
+	{ID: ChannelAutoRecruit, Label: "Auto Recruit"},
+	{ID: ChannelAutoTool, Label: "Auto Tool"},
 	{ID: ChannelAutoTCI, Label: "Auto TCI"},
 	{ID: ChannelAutoBeriWorld, Label: "Auto Beri World"},
 	{ID: ChannelRift, Label: "Rift"},
@@ -257,6 +261,40 @@ func AppendAutoBirdLine(event, detail string) {
 	AppendChannelLine(ChannelAutoBird, "INFO", event, detail)
 }
 
+// AppendAutoRecruitLine records an Auto Recruit action (direction INFO, event as cmdType).
+func AppendAutoRecruitLine(event, detail string) {
+	if event == "" {
+		event = "event"
+	}
+	AppendChannelLine(ChannelAutoRecruit, "INFO", event, detail)
+}
+
+// AppendAutoRecruitSendPayload records an outbound game wire frame on the Auto Recruit channel.
+func AppendAutoRecruitSendPayload(payload string) {
+	op := wireOpcodeFromPayload(payload)
+	if op == "" {
+		op = "UNKNOWN"
+	}
+	AppendChannelLine(ChannelAutoRecruit, "SEND", op, payload)
+}
+
+// AppendAutoToolLine records an Auto Tool action (direction INFO, event as cmdType).
+func AppendAutoToolLine(event, detail string) {
+	if event == "" {
+		event = "event"
+	}
+	AppendChannelLine(ChannelAutoTool, "INFO", event, detail)
+}
+
+// AppendAutoToolSendPayload records an outbound game wire frame on the Auto Tool channel.
+func AppendAutoToolSendPayload(payload string) {
+	op := wireOpcodeFromPayload(payload)
+	if op == "" {
+		op = "UNKNOWN"
+	}
+	AppendChannelLine(ChannelAutoTool, "SEND", op, payload)
+}
+
 // AppendAutoTCILine records an AutoTCI action (direction INFO, event as cmdType).
 func AppendAutoTCILine(event, detail string) {
 	if event == "" {
@@ -302,6 +340,36 @@ func AutoTCILog(event, detail string) {
 // AutoTCILogf formats detail and calls [AutoTCILog].
 func AutoTCILogf(event, format string, args ...any) {
 	AutoTCILog(event, fmt.Sprintf(format, args...))
+}
+
+// AutoRecruitLog writes to the main log and the Auto Recruit dashboard channel.
+func AutoRecruitLog(event, detail string) {
+	if detail != "" {
+		log.Printf("[AutoRecruit] %s: %s", event, detail)
+	} else {
+		log.Printf("[AutoRecruit] %s", event)
+	}
+	AppendAutoRecruitLine(event, detail)
+}
+
+// AutoRecruitLogf formats detail and calls [AutoRecruitLog].
+func AutoRecruitLogf(event, format string, args ...any) {
+	AutoRecruitLog(event, fmt.Sprintf(format, args...))
+}
+
+// AutoToolLog writes to the main log and the Auto Tool dashboard channel.
+func AutoToolLog(event, detail string) {
+	if detail != "" {
+		log.Printf("[AutoTool] %s: %s", event, detail)
+	} else {
+		log.Printf("[AutoTool] %s", event)
+	}
+	AppendAutoToolLine(event, detail)
+}
+
+// AutoToolLogf formats detail and calls [AutoToolLog].
+func AutoToolLogf(event, format string, args ...any) {
+	AutoToolLog(event, fmt.Sprintf(format, args...))
 }
 
 // AppendAutoBeriWorldLine records an Auto Beri World action (direction INFO, event as cmdType).

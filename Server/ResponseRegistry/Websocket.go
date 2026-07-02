@@ -40,6 +40,9 @@ var (
 	// SendRecruitTroopsStatusFunc is a callback to notify frontend of recruit troops status changes
 	SendRecruitTroopsStatusFunc func(bool)
 
+	// SendAutoToolStatusFunc is a callback to notify frontend of Auto Tool status changes
+	SendAutoToolStatusFunc func(bool)
+
 	// SendAutoTCIStatusFunc notifies the frontend when AutoTCI (temporary construction items) is toggled.
 	SendAutoTCIStatusFunc func(bool)
 
@@ -206,9 +209,9 @@ func handleCDPEvent(ev interface{}) {
 }
 
 func extractMessageType(payload string) string {
-	parts := strings.Split(payload, "%")
-	if len(parts) > 2 {
-		return parts[2]
+	op := effectiveWireOpcode(strings.Split(payload, "%"))
+	if op != "" {
+		return op
 	}
 	return "UNKNOWN"
 }

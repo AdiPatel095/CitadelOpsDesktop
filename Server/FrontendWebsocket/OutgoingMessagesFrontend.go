@@ -46,6 +46,13 @@ func SendRecruitTroopsStatus(enabled bool) {
 	}, "")
 }
 
+// SendAutoToolStatus sends the current Auto Tool enabled state to all clients.
+func SendAutoToolStatus(enabled bool) {
+	SendFrontendMessage("autoToolStatus", map[string]interface{}{
+		"enabled": enabled,
+	}, "")
+}
+
 // SendAutoTCIStatus sends whether AutoTCI (temporary construction items) automation is running.
 // nextWakeUp is the next scheduled wake: either login prep (1m before a slot expires) or the ubc window.
 func SendAutoTCIStatus(enabled bool) {
@@ -83,6 +90,17 @@ func SendInitialData(client *Client) {
 	client.SendToClient("recruitTroopsStatus", map[string]interface{}{
 		"enabled": settingsview.IsRecruitTroopsRunning(),
 	}, "")
+	state := Models.GetSettingsState()
+	recruitTroopsConfig := state.RecruitTroopsList.Normalize()
+	state.RecruitTroopsList = recruitTroopsConfig
+	client.SendToClient("recruitTroopsSettings", recruitTroopsConfig, "")
+	client.SendToClient("autoToolStatus", map[string]interface{}{
+		"enabled": settingsview.IsAutoToolRunning(),
+	}, "")
+	autoToolConfig := state.AutoToolList.Normalize()
+	state.AutoToolList = autoToolConfig
+	client.SendToClient("autoToolSettings", autoToolConfig, "")
+	client.SendToClient("schedulerSettings", state, "")
 
 	client.SendToClient("autoTCIStatus", map[string]interface{}{
 		"enabled":    featureview.IsAutoTCIRunning(),

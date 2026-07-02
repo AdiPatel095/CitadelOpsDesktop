@@ -73,12 +73,12 @@ const CurrencyView: React.FC = () => {
     <div className="flex flex-col gap-8 pb-8">
       <StaleSessionBanner />
       {Object.entries(categories).map(([categoryName, resourceKeys]) => (
-        <Card key={categoryName} className="flex flex-col border-border-base bg-bg-app/20">
-          <CardHeader className="bg-bg-card-hover/50 pb-4 border-b border-border-base rounded-t-[calc(var(--radius-global)-1px)]">
+        <Card key={categoryName} className="liquid-prominent-header-card flex flex-col">
+          <CardHeader className="liquid-card-header-prominent">
             <CardTitle className="text-xl text-primary">{categoryName}</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <CardContent className="liquid-prominent-header-content p-6">
+            <div className="currency-responsive-grid">
               {resourceKeys.map(key => {
                 const value = globalResources[key as keyof typeof globalResources];
                 const IconComponent = iconMap[key];

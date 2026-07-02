@@ -24,11 +24,11 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
     <Card
       className={
         isLatest
-          ? 'border-primary/25 shadow-[0_0_24px_-8px_rgba(52,211,153,0.35)]'
-          : 'border-border-base opacity-95'
+          ? 'liquid-prominent-header-card border-primary/25 shadow-[0_0_24px_-8px_rgba(52,211,153,0.35)]'
+          : 'liquid-prominent-header-card border-border-base opacity-95'
       }
     >
-      <CardHeader className="pb-2 border-b border-border-base/80">
+      <CardHeader className="liquid-card-header-prominent">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <CardTitle className="text-xl flex items-center gap-2">
             <span className="font-mono text-primary">v{release.version}</span>
@@ -46,7 +46,7 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
           <p className="text-sm text-text-muted mt-1 leading-relaxed">{release.subtitle}</p>
         )}
       </CardHeader>
-      <CardContent className="pt-5">
+      <CardContent className="liquid-prominent-header-content">
         {release.items.length > 0 && (
           <ul className="space-y-3 text-sm text-text-main leading-relaxed">
             {release.items.map((item, idx) => (

@@ -20,7 +20,9 @@ import (
 
 const (
 	autoTCIUpgradeTimerMaxSec      = 5
-	autoTCIUBCSessionCode          = 2001
+	autoTCIUBCRareBooster          = 2000
+	autoTCIUBCEpicBooster          = 2001
+	autoTCIUBCLegendaryBooster     = 2002
 	autoTCIRebuyLeadSec            = 120
 	autoTCIJAAFocusWait            = 8 * time.Second
 	upgradeDedupWindow             = 20 * time.Second
@@ -143,13 +145,26 @@ func runAutoTCI(ctx context.Context) {
 		default:
 		}
 
-		if !EnsureGameSessionOrReload(ctx) {
+		st := Models.GetSettingsState()
+		if st == nil || !st.AutoTCIEnabled || st.AutoTCIList.Targets == nil || len(st.AutoTCIList.Targets) == 0 {
 			time.Sleep(autoTCISessionRetry)
 			continue
 		}
 
-		st := Models.GetSettingsState()
-		if st == nil || !st.AutoTCIEnabled || st.AutoTCIList.Targets == nil || len(st.AutoTCIList.Targets) == 0 {
+		now := utctime.Now()
+		if sleepUntil, blocked := featureScheduleBlockedUntil(st, "autoTCI", now, autoTCIIdleRetry, autoTCIMinSleep); blocked {
+			setAutoTCINextWake(sleepUntil)
+			Logging.AutoTCILogf("schedule", "inactive; next check at %s", sleepUntil.Format(time.RFC3339))
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(utctime.Until(sleepUntil)):
+			}
+			clearAutoTCINextWake()
+			continue
+		}
+
+		if !EnsureGameSessionOrReload(ctx) {
 			time.Sleep(autoTCISessionRetry)
 			continue
 		}
@@ -350,7 +365,7 @@ func collectAutoTCIUpgradeScheduleSlots(
 			if !hasAuto {
 				continue
 			}
-			nextTier, haveNext := nextTierIndexAfterUpgrade(entry, sl.CID)
+			nextTier, _, haveNext := nextTierAfterUpgrade(entry, sl.CID)
 			canUbc := haveNext && nextTier <= ceiling && nextTier >= minLevel
 			if !canUbc {
 				continue
@@ -477,7 +492,7 @@ func runAutoTCIMainRebuyPurchases(gs *Models.GameState, st *Models.SettingsState
 				if !ok {
 					continue
 				}
-				nextTier, haveNext := nextTierIndexAfterUpgrade(entry, sl.CID)
+				nextTier, _, haveNext := nextTierAfterUpgrade(entry, sl.CID)
 				if haveNext && nextTier <= ceiling {
 					continue
 				}
@@ -528,7 +543,7 @@ func collectDueRebuySlots(gs *Models.GameState, st *Models.SettingsState, catalo
 				if !ok {
 					continue
 				}
-				nextTier, haveNext := nextTierIndexAfterUpgrade(entry, sl.CID)
+				nextTier, _, haveNext := nextTierAfterUpgrade(entry, sl.CID)
 				if haveNext && nextTier <= ceiling {
 					continue
 				}
@@ -1015,7 +1030,7 @@ func executeRebuyAutoTCIForSlot(castleID, oid, slotS int) {
 			if !ok {
 				return
 			}
-			nextTier, haveNext := nextTierIndexAfterUpgrade(entry, sl.CID)
+			nextTier, _, haveNext := nextTierAfterUpgrade(entry, sl.CID)
 			if haveNext && nextTier <= ceiling {
 				return
 			}
@@ -1053,6 +1068,9 @@ func executeOrRetryAutoTCIForSlot(castleID, oid, slotS int) {
 		return
 	}
 	gs := Models.GetGameState()
+	if gs == nil {
+		return
+	}
 	c := gs.GetCastleByID(castleID)
 	if c == nil {
 		return
@@ -1078,19 +1096,25 @@ func executeOrRetryAutoTCIForSlot(castleID, oid, slotS int) {
 			if !hasAuto {
 				return
 			}
-			nextTier, haveNext := nextTierIndexAfterUpgrade(entry, sl.CID)
+			nextTier, nextCID, haveNext := nextTierAfterUpgrade(entry, sl.CID)
 			if !haveNext || nextTier > ceiling || nextTier < minLevel {
 				return
 			}
-			tryExecuteSingleAutoTCIUpgrade(gs, c, castleID, b, sl, nextTier, ceiling)
+			tryExecuteSingleAutoTCIUpgrade(gs, c, castleID, b, sl, nextTier, nextCID, ceiling)
 			return
 		}
 	}
 }
 
-func tryExecuteSingleAutoTCIUpgrade(gs *Models.GameState, c *castle.PlayerCastleInfo, castleID int, b Models.GCAConstructionBuilding, sl Models.GCAConstructionSlot, nextTier, ceiling int) {
+func tryExecuteSingleAutoTCIUpgrade(gs *Models.GameState, c *castle.PlayerCastleInfo, castleID int, b Models.GCAConstructionBuilding, sl Models.GCAConstructionSlot, nextTier, nextCID, ceiling int) {
 	castleAID := autoTCICastleAID(c, castleID)
 	if castleAID <= 0 {
+		return
+	}
+	suc, ok := autoTCIUBCSUCForTargetTier(nextTier)
+	if !ok {
+		Logging.AutoTCILogf("ubc skip", "AID=%d OID=%d slot=%d currentCID=%d nextTier=%d nextCID=%d has no SUC mapping",
+			castleAID, b.OID, sl.S, sl.CID, nextTier, nextCID)
 		return
 	}
 	dk := fmt.Sprintf("%d:%d:%d", castleAID, b.OID, sl.CID)
@@ -1105,10 +1129,23 @@ func tryExecuteSingleAutoTCIUpgrade(gs *Models.GameState, c *castle.PlayerCastle
 	kid := autoTCICastleKID(gs, c, castleAID)
 	aid := castleAID
 	Logging.AutoTCILogf("ubc upgrade",
-		"AID=%d OID=%d slot=%d KID=%d currentCID=%d (next tier %d, cap %d) RS=%d",
-		castleAID, b.OID, sl.S, kid, sl.CID, nextTier, ceiling, derefInt(sl.RemainingSec))
-	GameCommands.SendUBCAutoTCI(b.OID, autoTCIUBCSessionCode, sl.S, kid, aid, sl.CID)
+		"AID=%d OID=%d slot=%d KID=%d currentCID=%d nextCID=%d (next tier %d, cap %d) SUC=%d RS=%d",
+		castleAID, b.OID, sl.S, kid, sl.CID, nextCID, nextTier, ceiling, suc, derefInt(sl.RemainingSec))
+	GameCommands.SendUBCAutoTCI(b.OID, suc, sl.S, kid, aid, sl.CID)
 	upgradeLastSent.Store(dk, utctime.Now())
+}
+
+func autoTCIUBCSUCForTargetTier(targetTier int) (int, bool) {
+	switch targetTier {
+	case 2:
+		return autoTCIUBCRareBooster, true
+	case 3:
+		return autoTCIUBCEpicBooster, true
+	case 4:
+		return autoTCIUBCLegendaryBooster, true
+	default:
+		return 0, false
+	}
 }
 
 func catalogEntryForWireCID(catalog []ConstructionItemCatalogEntry, wireCID int) *ConstructionItemCatalogEntry {
@@ -1676,8 +1713,13 @@ func sortCIDsByConstructionLevel(cids []int) []int {
 }
 
 func nextTierIndexAfterUpgrade(entry *ConstructionItemCatalogEntry, currentCID int) (nextTier1Based int, ok bool) {
+	nextTier, _, ok := nextTierAfterUpgrade(entry, currentCID)
+	return nextTier, ok
+}
+
+func nextTierAfterUpgrade(entry *ConstructionItemCatalogEntry, currentCID int) (nextTier1Based, nextWireCID int, ok bool) {
 	if entry == nil || currentCID <= 0 {
-		return 0, false
+		return 0, 0, false
 	}
 	sorted := sortCIDsByConstructionLevel(entry.GroupIDs)
 	cur := -1
@@ -1688,9 +1730,13 @@ func nextTierIndexAfterUpgrade(entry *ConstructionItemCatalogEntry, currentCID i
 		}
 	}
 	if cur < 0 || cur+1 >= len(sorted) {
-		return 0, false
+		return 0, 0, false
 	}
-	return cur + 2, true
+	nextWireCID = sorted[cur+1]
+	if lvl := tierLevelForWireCID(entry, nextWireCID); lvl > 0 {
+		return lvl, nextWireCID, true
+	}
+	return cur + 2, nextWireCID, true
 }
 
 func slotReadyForUbcUpgrade(sl Models.GCAConstructionSlot) bool {

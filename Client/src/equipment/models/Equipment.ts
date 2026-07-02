@@ -12,12 +12,23 @@ export interface EquipmentModel {
     placeHolder6: number;
     equipStats: EquipStat[];
     templateId: number;
+    setId: number;
     placeHolder8: number;
     equipLevel: number;
     placeHolder9: number;
     gemId: number;
     placeHolder11: number;
     gem?: any; // Define GemSlot type if available
+}
+
+export interface EquipmentExtraStat {
+    key: string;
+    effectId: number;
+    name: string;
+    label: string;
+    category: string;
+    unit: 'percent' | 'number';
+    value: number;
 }
 
 export interface CommStat {
@@ -73,6 +84,7 @@ export interface CommStat {
     CLLater: number;
     CLFire: number;
     CLGlory: number;
+    extraStats?: EquipmentExtraStat[];
 }
 
 export interface CastStat {
@@ -134,6 +146,7 @@ export interface CastStat {
     CLFire: number;
     CLGlory: number;
     CLEarly: number;
+    extraStats?: EquipmentExtraStat[];
 }
 
 export interface CastStatObject {

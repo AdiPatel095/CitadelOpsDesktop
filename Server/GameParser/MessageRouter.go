@@ -44,6 +44,12 @@ func MessageRouter(messageParts []string) {
 			return
 		}
 		InitiateDetails(payload)
+		ApplyGPCQueueableFromPayload(Models.GetGameState(), payload)
+	case "gpc":
+		if !hasPayload {
+			return
+		}
+		ApplyGPCQueueableFromPayload(Models.GetGameState(), payload)
 	case "gei":
 		if !hasPayload {
 			return
@@ -57,6 +63,11 @@ func MessageRouter(messageParts []string) {
 		if err := json.Unmarshal([]byte(payload), &gcuMap); err == nil {
 			UpdateCoins(gcuMap)
 		}
+	case "sie", "upc":
+		if !hasPayload {
+			return
+		}
+		UpdateSubscriptionInfoFromPayload(payload)
 	case "eqe":
 		if !hasPayload {
 			return
@@ -152,7 +163,8 @@ func MessageRouter(messageParts []string) {
 		buildingsChanged := ApplyJAABuildingRowsFromPayload(gs, payload)
 		troopsChanged := ApplyJAATroopsFromPayload(gs, payload)
 		constructionChanged := ApplyJAAConstructionSlotsFromPayload(gs, payload)
-		if (focusChanged || buildingsChanged || troopsChanged || constructionChanged) && NotifyCastleFocusChanged != nil {
+		slotProductionChanged := ApplyJAASlotProductionFromPayload(gs, payload)
+		if (focusChanged || buildingsChanged || troopsChanged || constructionChanged || slotProductionChanged) && NotifyCastleFocusChanged != nil {
 			NotifyCastleFocusChanged()
 		}
 		if m, ok := ParseEmbeddedSINStorageCountsFromEnvelopeJSON(payload); ok {
