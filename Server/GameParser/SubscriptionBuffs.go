@@ -10,6 +10,7 @@ import (
 )
 
 const recruitmentSlotCapacityEffectID = 189
+const hospitalSlotCapacitySubscriptionBonus = 5
 
 var (
 	subscriptionBuffsOnce                          sync.Once
@@ -104,4 +105,23 @@ func ActiveSubscriptionRecruitmentSlotCapacityBonus(activeSubscriptionTypeIDs []
 		}
 	}
 	return total
+}
+
+// ActiveSubscriptionHospitalSlotCapacityBonus returns the hospital per-queue unit bonus for subscription
+// types that carry the same recruit stack-capacity benefit.
+func ActiveSubscriptionHospitalSlotCapacityBonus(activeSubscriptionTypeIDs []int) int {
+	seen := make(map[int]struct{}, len(activeSubscriptionTypeIDs))
+	for _, typeID := range activeSubscriptionTypeIDs {
+		if typeID <= 0 {
+			continue
+		}
+		if _, ok := seen[typeID]; ok {
+			continue
+		}
+		seen[typeID] = struct{}{}
+		if _, ok := SubscriptionRecruitmentSlotCapacityBonus(typeID); ok {
+			return hospitalSlotCapacitySubscriptionBonus
+		}
+	}
+	return 0
 }

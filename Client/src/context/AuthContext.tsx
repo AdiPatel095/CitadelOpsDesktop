@@ -41,6 +41,14 @@ import {
   type AutoToolClientSettingsV1,
   type AutoToolMode,
 } from '../settings/AutoToolClientState';
+import {
+  applyAutoHospitalSettingsToLocalStorage,
+  DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_SEC,
+  loadAutoHospitalSettingsFromStorage,
+  normalizeAutoHospitalSettings,
+  persistAutoHospitalSettings,
+  type AutoHospitalClientSettingsV1,
+} from '../settings/AutoHospitalClientState';
 
 interface AuthContextType {
   gameLoggedIn: boolean;
@@ -50,6 +58,7 @@ interface AuthContextType {
   autoRecruitMode: RecruitTroopsMode;
   autoToolEnabled: boolean;
   autoToolMode: AutoToolMode;
+  autoHospitalEnabled: boolean;
   autoTCIEnabled: boolean;
   autoTCINextWakeUp: number;
   autoBirdEnabled: boolean;
@@ -72,6 +81,7 @@ interface AuthContextType {
   stopGame: () => void;
   toggleRecruitTroops: () => void;
   toggleAutoTool: () => void;
+  toggleAutoHospital: () => void;
   toggleAutoTCI: () => void;
   toggleAutoBird: () => void;
   toggleAutoBeriWorld: () => void;
@@ -98,6 +108,10 @@ function autoToolSettingsHasData(settings: AutoToolClientSettingsV1): boolean {
   );
 }
 
+function autoHospitalSettingsHasData(settings: AutoHospitalClientSettingsV1): boolean {
+  return settings.checkIntervalSec !== DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_SEC;
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [gameLoggedIn, setGameLoggedIn] = useState(false);
   const [gameLoginCooldown, setGameLoginCooldown] = useState(0);
@@ -106,6 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [autoRecruitMode, setAutoRecruitMode] = useState<RecruitTroopsMode>(() => loadRecruitTroopsSettingsFromStorage().mode);
   const [autoToolEnabled, setAutoToolEnabled] = useState(false);
   const [autoToolMode, setAutoToolMode] = useState<AutoToolMode>(() => loadAutoToolSettingsFromStorage().mode);
+  const [autoHospitalEnabled, setAutoHospitalEnabled] = useState(false);
   const [autoTCIEnabled, setAutoTCIEnabled] = useState(false);
   const [autoTCINextWakeUp, setAutoTCINextWakeUp] = useState(0);
   const [autoBirdEnabled, setAutoBirdEnabled] = useState(false);
@@ -151,6 +166,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAutoRecruitMode(settings.mode);
       } else if (message.type === 'autoToolStatus') {
         setAutoToolEnabled(message.payload.enabled);
+      } else if (message.type === 'autoHospitalStatus') {
+        setAutoHospitalEnabled(message.payload.enabled);
+      } else if (message.type === 'autoHospitalSettings') {
+        let settings = normalizeAutoHospitalSettings(message.payload);
+        const localSettings = loadAutoHospitalSettingsFromStorage();
+        if (!autoHospitalSettingsHasData(settings) && autoHospitalSettingsHasData(localSettings)) {
+          settings = localSettings;
+          persistAutoHospitalSettings(settings);
+        }
+        applyAutoHospitalSettingsToLocalStorage(settings);
       } else if (message.type === 'autoToolSettings') {
         let settings = normalizeAutoToolSettings(message.payload);
         const localSettings = loadAutoToolSettingsFromStorage();
@@ -355,6 +380,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const toggleAutoHospital = () => {
+    const settings = loadAutoHospitalSettingsFromStorage();
+
+    FrontendWebsocket.sendMessage({
+      type: 'toggleAutoHospital',
+      payload: { settings }
+    });
+  };
+
   const dismissVersionBanner = () => {
     setIsVersionBannerDismissed(true);
   };
@@ -385,6 +419,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       autoRecruitMode,
       autoToolEnabled,
       autoToolMode,
+      autoHospitalEnabled,
       autoTCIEnabled,
       autoTCINextWakeUp,
       autoBirdEnabled,
@@ -406,6 +441,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       stopGame,
       toggleRecruitTroops,
       toggleAutoTool,
+      toggleAutoHospital,
       toggleAutoTCI,
       toggleAutoBird,
       toggleAutoBeriWorld,

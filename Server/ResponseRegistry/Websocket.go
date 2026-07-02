@@ -43,6 +43,9 @@ var (
 	// SendAutoToolStatusFunc is a callback to notify frontend of Auto Tool status changes
 	SendAutoToolStatusFunc func(bool)
 
+	// SendAutoHospitalStatusFunc is a callback to notify frontend of Auto Hospital status changes
+	SendAutoHospitalStatusFunc func(bool)
+
 	// SendAutoTCIStatusFunc notifies the frontend when AutoTCI (temporary construction items) is toggled.
 	SendAutoTCIStatusFunc func(bool)
 

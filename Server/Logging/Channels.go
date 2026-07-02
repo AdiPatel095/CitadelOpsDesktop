@@ -17,6 +17,7 @@ const (
 	ChannelAutoBird      = "autobird"
 	ChannelAutoRecruit   = "autorecruit"
 	ChannelAutoTool      = "autotool"
+	ChannelAutoHospital  = "autohospital"
 	ChannelAutoTCI       = "autotci"
 	ChannelAutoBeriWorld = "autoberiworld"
 	ChannelRift          = "rift"
@@ -38,6 +39,7 @@ var KnownChannels = []ChannelMeta{
 	{ID: ChannelAutoBird, Label: "AutoBird"},
 	{ID: ChannelAutoRecruit, Label: "Auto Recruit"},
 	{ID: ChannelAutoTool, Label: "Auto Tool"},
+	{ID: ChannelAutoHospital, Label: "Auto Hospital"},
 	{ID: ChannelAutoTCI, Label: "Auto TCI"},
 	{ID: ChannelAutoBeriWorld, Label: "Auto Beri World"},
 	{ID: ChannelRift, Label: "Rift"},
@@ -295,6 +297,23 @@ func AppendAutoToolSendPayload(payload string) {
 	AppendChannelLine(ChannelAutoTool, "SEND", op, payload)
 }
 
+// AppendAutoHospitalLine records an Auto Hospital action (direction INFO, event as cmdType).
+func AppendAutoHospitalLine(event, detail string) {
+	if event == "" {
+		event = "event"
+	}
+	AppendChannelLine(ChannelAutoHospital, "INFO", event, detail)
+}
+
+// AppendAutoHospitalSendPayload records an outbound game wire frame on the Auto Hospital channel.
+func AppendAutoHospitalSendPayload(payload string) {
+	op := wireOpcodeFromPayload(payload)
+	if op == "" {
+		op = "UNKNOWN"
+	}
+	AppendChannelLine(ChannelAutoHospital, "SEND", op, payload)
+}
+
 // AppendAutoTCILine records an AutoTCI action (direction INFO, event as cmdType).
 func AppendAutoTCILine(event, detail string) {
 	if event == "" {
@@ -370,6 +389,21 @@ func AutoToolLog(event, detail string) {
 // AutoToolLogf formats detail and calls [AutoToolLog].
 func AutoToolLogf(event, format string, args ...any) {
 	AutoToolLog(event, fmt.Sprintf(format, args...))
+}
+
+// AutoHospitalLog writes to the main log and the Auto Hospital dashboard channel.
+func AutoHospitalLog(event, detail string) {
+	if detail != "" {
+		log.Printf("[AutoHospital] %s: %s", event, detail)
+	} else {
+		log.Printf("[AutoHospital] %s", event)
+	}
+	AppendAutoHospitalLine(event, detail)
+}
+
+// AutoHospitalLogf formats detail and calls [AutoHospitalLog].
+func AutoHospitalLogf(event, format string, args ...any) {
+	AutoHospitalLog(event, fmt.Sprintf(format, args...))
 }
 
 // AppendAutoBeriWorldLine records an Auto Beri World action (direction INFO, event as cmdType).

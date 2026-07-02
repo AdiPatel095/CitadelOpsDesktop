@@ -211,6 +211,22 @@ func MessageRouter(messageParts []string) {
 		if (slotProductionChanged || resourcesChanged) && NotifyCastleFocusChanged != nil {
 			NotifyCastleFocusChanged()
 		}
+	case "hru", "hdu":
+		if !hasPayload {
+			return
+		}
+		gs := Models.GetGameState()
+		var root map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &root); err == nil {
+			UpdateCoinsFromPayload(root)
+			UpdateSCEFromPayload(root)
+		}
+		troopsChanged := ApplyFocusedCastleTroopsFromPayload(gs, payload)
+		slotProductionChanged := ApplySlotProductionFromSPLJSON(gs, payload)
+		resourcesChanged := ApplyCastleResourceAmountsFromPayload(gs, payload)
+		if (troopsChanged || slotProductionChanged || resourcesChanged) && NotifyCastleFocusChanged != nil {
+			NotifyCastleFocusChanged()
+		}
 	case "crin":
 		if !hasPayload {
 			return

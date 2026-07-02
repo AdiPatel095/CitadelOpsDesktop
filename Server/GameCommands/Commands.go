@@ -185,6 +185,32 @@ func SendBarracksUnitPurchase(lid, unitWID, amount, po, pwr, sk, sid, castleAID 
 	QueueOutgoingPayload(BUPPayload(lid, unitWID, amount, po, pwr, sk, sid, castleAID))
 }
 
+// HRUPayload builds EmpireEx_21 **hru** — enqueue healing for wounded hospital units in the focused castle.
+//
+// Live client shape: {"A":<count>,"U":<unitType>}. The command has no castle id, so callers must focus
+// the target castle first.
+func HRUPayload(unitWID, amount int) string {
+	return empireExFrame("hru", fmt.Sprintf(`{"A":%d,"U":%d}`, amount, unitWID))
+}
+
+// SendHospitalHealUnit queues **hru** — enqueue hospital healing in the focused castle.
+func SendHospitalHealUnit(unitWID, amount int) {
+	QueueOutgoingPayload(HRUPayload(unitWID, amount))
+}
+
+// HDUPayload builds EmpireEx_21 **hdu** — discard wounded hospital units from the focused castle.
+//
+// Live client shape mirrors hru: {"U":<unitType>,"A":<count>}. The command has no castle id, so
+// callers must focus the target castle first.
+func HDUPayload(unitWID, amount int) string {
+	return empireExFrame("hdu", fmt.Sprintf(`{"U":%d,"A":%d}`, unitWID, amount))
+}
+
+// SendHospitalDiscardUnit queues **hdu** — discard wounded hospital units in the focused castle.
+func SendHospitalDiscardUnit(unitWID, amount int) {
+	QueueOutgoingPayload(HDUPayload(unitWID, amount))
+}
+
 // --- Movement (bird dispatch) ---
 
 // SDIPayload builds EmpireEx_21 **sdi** — select/preview a bird dispatch route.

@@ -112,6 +112,9 @@ func TestSubscriptionRecruitmentSlotCapacityBonusIsDataDriven(t *testing.T) {
 	if got := ActiveSubscriptionRecruitmentSlotCapacityBonus([]int{1, 1, 2}); got != 40 {
 		t.Fatalf("ActiveSubscriptionRecruitmentSlotCapacityBonus([1,1,2]) = %d, want 40", got)
 	}
+	if got := ActiveSubscriptionHospitalSlotCapacityBonus([]int{1, 1, 2}); got != 5 {
+		t.Fatalf("ActiveSubscriptionHospitalSlotCapacityBonus([1,1,2]) = %d, want 5", got)
+	}
 }
 
 func TestBarracksRecruitCostReductionPercentUsesEquippedCI(t *testing.T) {

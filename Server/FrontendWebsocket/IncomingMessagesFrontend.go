@@ -308,6 +308,18 @@ func parseAutoToolConfigFromFrontend(raw interface{}) stsettings.AutoToolConfig 
 	return cfg.Normalize()
 }
 
+func parseAutoHospitalConfigFromFrontend(raw interface{}) stsettings.AutoHospitalConfig {
+	cfg := stsettings.DefaultAutoHospitalConfig()
+	payload, ok := raw.(map[string]interface{})
+	if !ok {
+		return cfg
+	}
+	if interval, ok := frontendNumberToInt(payload["checkIntervalSec"]); ok {
+		cfg.CheckIntervalSec = interval
+	}
+	return cfg.Normalize()
+}
+
 func sendRecruitTroopsSettings() {
 	state := Models.GetSettingsState()
 	cfg := state.RecruitTroopsList.Normalize()
@@ -320,6 +332,13 @@ func sendAutoToolSettings() {
 	cfg := state.AutoToolList.Normalize()
 	state.AutoToolList = cfg
 	SendFrontendMessage("autoToolSettings", cfg, "")
+}
+
+func sendAutoHospitalSettings() {
+	state := Models.GetSettingsState()
+	cfg := state.AutoHospital.Normalize()
+	state.AutoHospital = cfg
+	SendFrontendMessage("autoHospitalSettings", cfg, "")
 }
 
 func sendQueueableProductionCatalog() {
@@ -377,6 +396,7 @@ func init() {
 	}
 	ResponseRegistry.SendRecruitTroopsStatusFunc = SendRecruitTroopsStatus
 	ResponseRegistry.SendAutoToolStatusFunc = SendAutoToolStatus
+	ResponseRegistry.SendAutoHospitalStatusFunc = SendAutoHospitalStatus
 	ResponseRegistry.SendAutoTCIStatusFunc = SendAutoTCIStatus
 	ResponseRegistry.SendAutoBeriWorldStatusFunc = SendAutoBeriWorldStatus
 	GameParser.NotifyCastleFocusChanged = func() {
@@ -595,6 +615,30 @@ func ParseFrontendMessage(message []byte) {
 			Logging.AutoToolLog("toggle", "start requested")
 			settingsview.StartAutoTool()
 			SendAutoToolStatus(true)
+		}
+	case "toggleAutoHospital":
+		wasRunning := settingsview.IsAutoHospitalRunning()
+		log.Printf("[AutoHospital] Toggle requested. Was running: %v", wasRunning)
+		Logging.AutoHospitalLogf("toggle", "requested wasRunning=%v", wasRunning)
+
+		if wasRunning {
+			log.Println("[AutoHospital] Calling StopAutoHospital...")
+			Logging.AutoHospitalLog("toggle", "stop requested")
+			settingsview.StopAutoHospital()
+			Models.GetSettingsState().AutoHospitalEnabled = false
+			SendAutoHospitalStatus(false)
+		} else {
+			Models.GetSettingsState().AutoHospitalEnabled = true
+			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
+				if settingsRaw, ok := payloadRaw["settings"]; ok {
+					Models.GetSettingsState().UpdateAutoHospitalConfig(parseAutoHospitalConfigFromFrontend(settingsRaw))
+					settingsview.NotifyAutoHospitalSettingsChanged()
+				}
+			}
+			log.Println("[AutoHospital] Calling StartAutoHospital...")
+			Logging.AutoHospitalLog("toggle", "start requested")
+			settingsview.StartAutoHospital()
+			SendAutoHospitalStatus(true)
 		}
 	case "toggleAutoTCI":
 		wasRunning := featureview.IsAutoTCIRunning()
@@ -1210,6 +1254,28 @@ func ParseFrontendMessage(message []byte) {
 		log.Println("[frontend-ws] Auto Tool settings saved:", stsettings.AutoToolSettingsPath())
 		Logging.AutoToolLogf("settings", "saved %s", stsettings.AutoToolSettingsPath())
 
+	case "getAutoHospitalSettings":
+		sendAutoHospitalSettings()
+
+	case "saveAutoHospitalSettings":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		state := Models.GetSettingsState()
+		state.UpdateAutoHospitalConfig(parseAutoHospitalConfigFromFrontend(payloadRaw))
+		settingsview.NotifyAutoHospitalSettingsChanged()
+		if err := stsettings.WriteAutoHospitalConfig(state.AutoHospital); err != nil {
+			log.Printf("[frontend-ws] saveAutoHospitalSettings write: %v", err)
+			Logging.AutoHospitalLogf("settings", "disk write failed: %v", err)
+			SendAlertMessage("red", "Could not save Auto Hospital settings to disk")
+			return
+		}
+		sendAutoHospitalSettings()
+		SendAlertMessage("green", "Auto Hospital settings saved")
+		log.Println("[frontend-ws] Auto Hospital settings saved:", stsettings.AutoHospitalSettingsPath())
+		Logging.AutoHospitalLogf("settings", "saved %s", stsettings.AutoHospitalSettingsPath())
+
 	case "getConstructionItemsCatalog":
 		cat, err := featureview.ConstructionItemsCatalog()
 		if err != nil {
@@ -1381,6 +1447,7 @@ func ParseFrontendMessage(message []byte) {
 		SendFrontendMessage("schedulerSettings", state, "")
 		settingsview.NotifyRecruitTroopsSettingsChanged()
 		settingsview.NotifyAutoToolSettingsChanged()
+		settingsview.NotifyAutoHospitalSettingsChanged()
 		SendAlertMessage("green", "Scheduler Settings saved")
 		log.Println("[frontend-ws] Scheduler settings saved:", stsettings.SchedulerSettingsPath())
 

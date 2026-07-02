@@ -53,6 +53,13 @@ func SendAutoToolStatus(enabled bool) {
 	}, "")
 }
 
+// SendAutoHospitalStatus sends the current Auto Hospital enabled state to all clients.
+func SendAutoHospitalStatus(enabled bool) {
+	SendFrontendMessage("autoHospitalStatus", map[string]interface{}{
+		"enabled": enabled,
+	}, "")
+}
+
 // SendAutoTCIStatus sends whether AutoTCI (temporary construction items) automation is running.
 // nextWakeUp is the next scheduled wake: either login prep (1m before a slot expires) or the ubc window.
 func SendAutoTCIStatus(enabled bool) {
@@ -101,6 +108,13 @@ func SendInitialData(client *Client) {
 	state.AutoToolList = autoToolConfig
 	client.SendToClient("autoToolSettings", autoToolConfig, "")
 	client.SendToClient("schedulerSettings", state, "")
+
+	client.SendToClient("autoHospitalStatus", map[string]interface{}{
+		"enabled": settingsview.IsAutoHospitalRunning(),
+	}, "")
+	autoHospitalConfig := state.AutoHospital.Normalize()
+	state.AutoHospital = autoHospitalConfig
+	client.SendToClient("autoHospitalSettings", autoHospitalConfig, "")
 
 	client.SendToClient("autoTCIStatus", map[string]interface{}{
 		"enabled":    featureview.IsAutoTCIRunning(),

@@ -365,6 +365,7 @@ func MergeComm(dstComm *Models.CommStatModel, tempEquipStat *Models.CommStatMode
 	dstComm.RelicStr += tempEquipStat.RelicStr + tempHeroStat.RelicStr + tempGemStat.RelicStr
 	dstComm.BeserkerStr += tempEquipStat.BeserkerStr + tempHeroStat.BeserkerStr + tempGemStat.BeserkerStr
 	dstComm.MaidenSupp += tempEquipStat.MaidenSupp + tempHeroStat.MaidenSupp + tempGemStat.MaidenSupp
+	dstComm.AttackReinforcement += tempEquipStat.AttackReinforcement + tempHeroStat.AttackReinforcement + tempGemStat.AttackReinforcement
 	dstComm.Travel += tempEquipStat.Travel + tempHeroStat.Travel + tempGemStat.Travel
 	dstComm.Loot += tempEquipStat.Loot + tempHeroStat.Loot + tempGemStat.Loot
 	dstComm.NPCMelee += tempEquipStat.NPCMelee + tempHeroStat.NPCMelee + tempGemStat.NPCMelee

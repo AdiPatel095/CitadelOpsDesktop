@@ -17,6 +17,7 @@ import { RecruitTroopsSettingsModal } from './settings/components/RecruitTroopsS
 import { AutoToolSettingsModal } from './settings/components/AutoToolSettingsModal';
 import { AutoTCISettingsModal } from './settings/components/AutoTCISettingsModal';
 import { AutoBirdSettingsModal } from './settings/components/AutoBirdSettingsModal';
+import { AutoHospitalSettingsModal } from './settings/components/AutoHospitalSettingsModal';
 import { FeatureScheduleModal } from './settings/components/FeatureScheduleModal';
 import SettingsView from './views/SettingsView';
 import PatchNotesView from './views/PatchNotesView';
@@ -37,6 +38,7 @@ const AppContent: React.FC = () => {
   const [isAutoToolSettingsOpen, setIsAutoToolSettingsOpen] = useState(false);
   const [isAutoTCISettingsOpen, setIsAutoTCISettingsOpen] = useState(false);
   const [isAutoBirdSettingsOpen, setIsAutoBirdSettingsOpen] = useState(false);
+  const [isAutoHospitalSettingsOpen, setIsAutoHospitalSettingsOpen] = useState(false);
   const [scheduleTarget, setScheduleTarget] = useState<{ id: string; label: string } | null>(null);
 
   const renderView = () => {
@@ -76,6 +78,7 @@ const AppContent: React.FC = () => {
         onOpenRecruitTroopsSettings={() => setIsRecruitTroopsSettingsOpen(true)}
         onOpenAutoToolSettings={() => setIsAutoToolSettingsOpen(true)}
         onOpenAutoTCISettings={() => setIsAutoTCISettingsOpen(true)}
+        onOpenAutoHospitalSettings={() => setIsAutoHospitalSettingsOpen(true)}
       />
 
       <main className="liquid-main custom-scrollbar">
@@ -107,6 +110,12 @@ const AppContent: React.FC = () => {
       <AutoBirdSettingsModal
         isOpen={isAutoBirdSettingsOpen}
         onClose={() => setIsAutoBirdSettingsOpen(false)}
+        onOpenFeatureSchedule={(id, label) => setScheduleTarget({ id, label })}
+      />
+
+      <AutoHospitalSettingsModal
+        isOpen={isAutoHospitalSettingsOpen}
+        onClose={() => setIsAutoHospitalSettingsOpen(false)}
         onOpenFeatureSchedule={(id, label) => setScheduleTarget({ id, label })}
       />
 

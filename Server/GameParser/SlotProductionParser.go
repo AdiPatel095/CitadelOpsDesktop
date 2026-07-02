@@ -72,6 +72,48 @@ func queuedFromQS(qs []interface{}) []castle.BarracksProductionSlot {
 	return out
 }
 
+func queueCapacityFromPIDL(pidl []interface{}) int {
+	count := 0
+	for _, raw := range pidl {
+		row, ok := raw.([]interface{})
+		if !ok || len(row) == 0 {
+			continue
+		}
+		count++
+	}
+	return count
+}
+
+func queuedFromPIDL(pidl []interface{}) []castle.BarracksProductionSlot {
+	var out []castle.BarracksProductionSlot
+	for _, raw := range pidl {
+		row, ok := raw.([]interface{})
+		if !ok || len(row) < 2 {
+			continue
+		}
+		wid := gcaJSONInt(row[0])
+		tua := gcaJSONInt(row[1])
+		if wid <= 0 || tua <= 0 {
+			continue
+		}
+		slot := castle.BarracksProductionSlot{
+			WID: wid,
+			TUA: tua,
+		}
+		if len(row) > 2 {
+			slot.RCT = gcaJSONInt(row[2])
+		}
+		if len(row) > 3 {
+			slot.ICT = gcaJSONInt(row[3])
+		}
+		if len(row) > 5 {
+			slot.PID = gcaJSONInt(row[5])
+		}
+		out = append(out, slot)
+	}
+	return out
+}
+
 func usableQueueSlot(item map[string]interface{}) bool {
 	if item == nil {
 		return false
@@ -135,7 +177,8 @@ func parseSPLObject(splObj map[string]interface{}) (q castle.BarracksProductionQ
 	lid := jsonIntFromMap(splObj, "LID")
 	psRaw, hasPS := splObj["PS"]
 	qsRaw, hasQS := splObj["QS"]
-	if !hasPS && !hasQS {
+	pidlRaw, hasPIDL := splObj["PIDL"]
+	if !hasPS && !hasQS && !hasPIDL {
 		return
 	}
 	q.LID = lid
@@ -147,6 +190,10 @@ func parseSPLObject(splObj map[string]interface{}) (q castle.BarracksProductionQ
 		q.QueueCapacity = queueCapacityFromQS(qsArr)
 		q.VIPSlots = vipSlotsFromQS(qsArr)
 		q.Queued = queuedFromQS(qsArr)
+	}
+	if pidlArr, okp := pidlRaw.([]interface{}); okp {
+		q.QueueCapacity = queueCapacityFromPIDL(pidlArr)
+		q.Queued = queuedFromPIDL(pidlArr)
 	}
 	ok = true
 	return

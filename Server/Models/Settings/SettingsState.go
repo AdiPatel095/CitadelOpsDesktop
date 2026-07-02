@@ -46,6 +46,10 @@ const (
 	DefaultAutoToolCheckIntervalSec = 300
 	MinAutoToolCheckIntervalSec     = 30
 	MaxAutoToolCheckIntervalSec     = 86400
+
+	DefaultAutoHospitalCheckIntervalSec = 300
+	MinAutoHospitalCheckIntervalSec     = 30
+	MaxAutoHospitalCheckIntervalSec     = 86400
 )
 
 // RecruitTroopsConfig represents the Auto Recruit unit selections.
@@ -268,6 +272,36 @@ func (c AutoToolConfig) EffectiveTargets() map[int]map[int]int {
 	return output
 }
 
+// AutoHospitalConfig holds the simple global options for the Auto Hospital loop.
+type AutoHospitalConfig struct {
+	CheckIntervalSec int `json:"checkIntervalSec"`
+}
+
+func clampAutoHospitalCheckIntervalSec(value int) int {
+	if value <= 0 {
+		return DefaultAutoHospitalCheckIntervalSec
+	}
+	if value < MinAutoHospitalCheckIntervalSec {
+		return MinAutoHospitalCheckIntervalSec
+	}
+	if value > MaxAutoHospitalCheckIntervalSec {
+		return MaxAutoHospitalCheckIntervalSec
+	}
+	return value
+}
+
+func DefaultAutoHospitalConfig() AutoHospitalConfig {
+	return AutoHospitalConfig{
+		CheckIntervalSec: DefaultAutoHospitalCheckIntervalSec,
+	}
+}
+
+func (c AutoHospitalConfig) Normalize() AutoHospitalConfig {
+	return AutoHospitalConfig{
+		CheckIntervalSec: clampAutoHospitalCheckIntervalSec(c.CheckIntervalSec),
+	}
+}
+
 // AutoTCILevelTarget is the allowed in-game tier range (1–4) for one construction item group.
 // MaxLevel is the level ceiling (legacy JSON key "amount"); MinLevel is the floor (default 1).
 type AutoTCILevelTarget struct {
@@ -380,6 +414,7 @@ type SettingsState struct {
 	AutoBirdEnabled      bool `json:"autoBirdEnabled"`
 	RecruitTroopsEnabled bool `json:"recruitTroopsEnabled"`
 	AutoToolEnabled      bool `json:"autoToolEnabled"`
+	AutoHospitalEnabled  bool `json:"autoHospitalEnabled"`
 	AutoTCIEnabled       bool `json:"autoTCIEnabled"`
 	AutoBeriWorldEnabled bool `json:"autoBeriWorldEnabled"`
 
@@ -391,6 +426,9 @@ type SettingsState struct {
 
 	// Auto Tool Configuration
 	AutoToolList AutoToolConfig `json:"autoToolList"`
+
+	// Auto Hospital Configuration
+	AutoHospital AutoHospitalConfig `json:"autoHospital"`
 
 	// Auto TCI (construction items) per castle
 	AutoTCIList AutoTCIConfig `json:"autoTCIList"`
@@ -435,12 +473,14 @@ func GetSettingsState() *SettingsState {
 			AutoBirdEnabled:      false,
 			RecruitTroopsEnabled: false,
 			AutoToolEnabled:      false,
+			AutoHospitalEnabled:  false,
 			AutoTCIEnabled:       false,
 			AutoBeriWorldEnabled: false,
 			AutoBirdDelay:        AutoBirdDelayConfig{MinDelay: 6, MaxDelay: 12, MinSend: 0, MinRPTDays: 3},
 			BirdIgnoreList:       SaveInCastleTroops{Troops: make(map[int]map[int]int)},
 			RecruitTroopsList:    DefaultRecruitTroopsConfig(),
 			AutoToolList:         DefaultAutoToolConfig(),
+			AutoHospital:         DefaultAutoHospitalConfig(),
 			AutoTCIList: AutoTCIConfig{
 				Targets: make(map[int]map[int]AutoTCILevelTarget),
 			},
@@ -451,6 +491,7 @@ func GetSettingsState() *SettingsState {
 		LoadSchedulerSettingsInto(instanceSettingsState)
 		instanceSettingsState.RecruitTroopsList = ReadRecruitTroopsConfig()
 		instanceSettingsState.AutoToolList = ReadAutoToolConfig()
+		instanceSettingsState.AutoHospital = ReadAutoHospitalConfig()
 		instanceSettingsState.AutoBeriWorld = ReadAutoBeriWorldConfig()
 	})
 	return instanceSettingsState
@@ -466,12 +507,14 @@ func (s *SettingsState) Reset() {
 	s.AutoBirdEnabled = false
 	s.RecruitTroopsEnabled = false
 	s.AutoToolEnabled = false
+	s.AutoHospitalEnabled = false
 	s.AutoTCIEnabled = false
 	s.AutoBeriWorldEnabled = false
 	s.AutoBirdDelay = AutoBirdDelayConfig{MinDelay: 6, MaxDelay: 12, MinSend: 0, MinRPTDays: 3}
 	s.BirdIgnoreList.Troops = make(map[int]map[int]int)
 	s.RecruitTroopsList = DefaultRecruitTroopsConfig()
 	s.AutoToolList = DefaultAutoToolConfig()
+	s.AutoHospital = DefaultAutoHospitalConfig()
 	s.AutoTCIList.Targets = make(map[int]map[int]AutoTCILevelTarget)
 	s.AutoBeriWorld = DefaultAutoBeriWorldConfig()
 	s.UpgradeEreDelayMs = 50
@@ -562,6 +605,12 @@ func (s *SettingsState) UpdateAutoToolConfig(cfg AutoToolConfig) {
 func (s *SettingsState) ClearAutoToolList() {
 	s.AutoToolList = DefaultAutoToolConfig()
 	log.Println("[AutoToolList] Cleared from memory")
+}
+
+// UpdateAutoHospitalConfig updates the in-memory Auto Hospital config from the UI.
+func (s *SettingsState) UpdateAutoHospitalConfig(cfg AutoHospitalConfig) {
+	s.AutoHospital = cfg.Normalize()
+	Logging.AutoHospitalLogf("settings", "updated interval=%ds", s.AutoHospital.CheckIntervalSec)
 }
 
 // UpdateAutoTCIList updates in-memory Auto TCI targets from the UI and persists to AutoTCI.json.

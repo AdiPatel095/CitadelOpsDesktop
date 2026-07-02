@@ -11,6 +11,7 @@ interface SidebarProps {
   onOpenRecruitTroopsSettings: () => void;
   onOpenAutoToolSettings: () => void;
   onOpenAutoTCISettings: () => void;
+  onOpenAutoHospitalSettings: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -19,6 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onOpenRecruitTroopsSettings,
   onOpenAutoToolSettings,
   onOpenAutoTCISettings,
+  onOpenAutoHospitalSettings,
 }) => {
   const {
     autoTCIEnabled,
@@ -27,6 +29,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     toggleRecruitTroops,
     autoToolEnabled,
     toggleAutoTool,
+    autoHospitalEnabled,
+    toggleAutoHospital,
     gameLoggedIn
   } = useAuth();
 
@@ -154,6 +158,37 @@ const Sidebar: React.FC<SidebarProps> = ({
                     className={`${featureIconClass} ${autoToolEnabled ? 'text-warning hover:bg-warning/10' : 'text-text-muted hover:bg-bg-card-hover'}`}
                     onClick={onOpenAutoToolSettings}
                     title="Auto Tool settings"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className={featureRowClass}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`${featureToggleClass} ${
+                      autoHospitalEnabled
+                        ? '!border-success/40 !text-success hover:!bg-success/10'
+                        : '!border-error/40 !text-error hover:!bg-error/10'
+                    }`}
+                    onClick={() => toggleAutoHospital()}
+                    title={
+                      gameLoggedIn
+                        ? 'Toggle Auto Hospital'
+                        : 'Last known Auto Hospital status while bot is disconnected'
+                    }
+                    leftIcon={
+                      <div className={`w-1.5 h-1.5 rounded-full ${autoHospitalEnabled ? 'bg-success animate-pulse' : 'bg-error'}`} />
+                    }
+                  >
+                    <span className="liquid-feature-toggle-label">Auto Hospital</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`${featureIconClass} ${autoHospitalEnabled ? 'text-warning hover:bg-warning/10' : 'text-text-muted hover:bg-bg-card-hover'}`}
+                    onClick={onOpenAutoHospitalSettings}
+                    title="Auto Hospital settings"
                   >
                     <Settings className="w-4 h-4" />
                   </Button>

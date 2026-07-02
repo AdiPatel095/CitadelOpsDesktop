@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -54,12 +55,15 @@ type liveEffectDataCache struct {
 	GemEffects          map[int64][]liveCatalogEffect
 	GemSetIDs           map[int64]int64
 	EquipmentSetEffects map[int64][]liveEquipmentSetEffect
+	Lang                map[string]string
 }
 
 var (
 	liveEffectDataOnce sync.Once
 	liveEffectData     liveEffectDataCache
 )
+
+var liveLangPlaceholderPattern = regexp.MustCompile(`[+\-]?\s*\{[0-9]+\}\s*%?`)
 
 func ApplyCommanderSetBonusStats(dst *CommStatModel, setID float64, equippedCount int) {
 	if dst == nil || setID <= 0 || equippedCount <= 0 {
@@ -229,6 +233,7 @@ func buildLiveEffectData() liveEffectDataCache {
 		GemEffects:          map[int64][]liveCatalogEffect{},
 		GemSetIDs:           map[int64]int64{},
 		EquipmentSetEffects: map[int64][]liveEquipmentSetEffect{},
+		Lang:                readLiveLang(),
 	}
 
 	for _, entry := range readLiveDataArray(serverdata.ReadEffectsItemsJSON) {
@@ -303,6 +308,27 @@ func readLiveDataArray(read func() ([]byte, error)) []map[string]interface{} {
 		return nil
 	}
 	return rows
+}
+
+func readLiveLang() map[string]string {
+	raw, err := serverdata.ReadLangEnJSON()
+	if err != nil {
+		return nil
+	}
+	var rows map[string]interface{}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	if err := decoder.Decode(&rows); err != nil {
+		return nil
+	}
+	out := make(map[string]string, len(rows))
+	for key, value := range rows {
+		if text, ok := value.(string); ok {
+			out[key] = text
+			out[strings.ToLower(key)] = text
+		}
+	}
+	return out
 }
 
 func liveCatalogEffectsFromString(value string) []liveCatalogEffect {
@@ -421,6 +447,9 @@ func liveEffectLabel(def liveEffectDefinition) string {
 	if name == "" {
 		return fmt.Sprintf("Effect %d", def.EffectID)
 	}
+	if label := officialLiveEffectLabel(name); label != "" {
+		return label
+	}
 	for _, prefix := range []string{"relic", "newPVP", "equipmentARE"} {
 		name = strings.TrimPrefix(name, prefix)
 	}
@@ -455,6 +484,53 @@ func liveEffectLabel(def liveEffectDefinition) string {
 		return fmt.Sprintf("Effect %d", def.EffectID)
 	}
 	return strings.Join(words, " ")
+}
+
+func officialLiveEffectLabel(name string) string {
+	lang := loadLiveEffectData().Lang
+	if len(lang) == 0 || strings.TrimSpace(name) == "" {
+		return ""
+	}
+	for _, key := range []string{
+		"effect_name_" + name,
+		"equip_effect_description_short_" + name,
+		"equip_effect_description_" + name,
+		"relicequip_effect_description_" + name + "_undefined",
+		"relicequip_effect_description_" + name,
+		"effect_description_" + name,
+		"ci_effect_" + name,
+	} {
+		if label := cleanLiveLangLabel(lang[key]); label != "" {
+			return label
+		}
+		if label := cleanLiveLangLabel(lang[strings.ToLower(key)]); label != "" {
+			return label
+		}
+	}
+	return ""
+}
+
+func cleanLiveLangLabel(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	value = strings.NewReplacer(
+		"↵", " ",
+		"\n", " ",
+		"\\n", " ",
+		"\t", " ",
+	).Replace(value)
+	value = liveLangPlaceholderPattern.ReplaceAllString(value, " ")
+	value = strings.Join(strings.Fields(value), " ")
+	value = strings.Trim(value, " +-:.,")
+	if len(value) > 3 && strings.HasPrefix(strings.ToLower(value), "to ") {
+		value = strings.TrimSpace(value[3:])
+	}
+	if value == "" {
+		return ""
+	}
+	return strings.ToUpper(value[:1]) + value[1:]
 }
 
 func liveEffectCategory(def liveEffectDefinition) string {

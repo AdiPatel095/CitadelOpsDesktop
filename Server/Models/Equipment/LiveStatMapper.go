@@ -142,6 +142,8 @@ func applyCommanderCatalogEffect(dst *CommStatModel, effect liveResolvedEffect, 
 		dst.FlankCbtStr += value
 	case 51:
 		dst.MaidenSupp += value
+	case 179:
+		dst.AttackReinforcement += value
 	case 156:
 		dst.Wave += value
 	case 27:
@@ -164,7 +166,7 @@ func applyCommanderCatalogEffect(dst *CommStatModel, effect liveResolvedEffect, 
 			dst.BeserkerStr += value
 		case strings.Contains(name, "rankreward"):
 			dst.HorrorStr += value
-		case strings.Contains(name, "kingsguard"):
+		case strings.Contains(name, "kingsguard") || strings.Contains(name, "berimond"):
 			dst.EliteStr += value
 		default:
 			return false
@@ -276,20 +278,20 @@ func applyCastellanScoped(scope string, value float64, generic *float64, pve *fl
 }
 
 func commanderLiveStatValue(id float64, values []float64, source CatalogEffectSource) float64 {
-	if (source == CatalogEffectSourceEquipment || source == CatalogEffectSourceRelicEquipment) && (id == 121 || inRange(id, 20012, 20017)) {
+	if (source == CatalogEffectSourceEquipment || source == CatalogEffectSourceRelicEquipment) && (id == 121 || inRange(id, 20012, 20020)) {
 		return valueAt(values, 1)
 	}
-	if (source == CatalogEffectSourceGem || source == CatalogEffectSourceRelicGem) && inRange(id, 20012, 20017) {
+	if (source == CatalogEffectSourceGem || source == CatalogEffectSourceRelicGem) && inRange(id, 20012, 20020) {
 		return valueAt(values, 1)
 	}
 	return valueAt(values, 0)
 }
 
 func castellanLiveStatValue(id float64, values []float64, source CatalogEffectSource) float64 {
-	if (source == CatalogEffectSourceEquipment || source == CatalogEffectSourceRelicEquipment) && (id == 10118 || inRange(id, 20012, 20017)) {
+	if (source == CatalogEffectSourceEquipment || source == CatalogEffectSourceRelicEquipment) && (id == 10118 || inRange(id, 20012, 20020)) {
 		return valueAt(values, 1)
 	}
-	if (source == CatalogEffectSourceGem || source == CatalogEffectSourceRelicGem) && inRange(id, 20012, 20017) {
+	if (source == CatalogEffectSourceGem || source == CatalogEffectSourceRelicGem) && inRange(id, 20012, 20020) {
 		return valueAt(values, 1)
 	}
 	return valueAt(values, 0)

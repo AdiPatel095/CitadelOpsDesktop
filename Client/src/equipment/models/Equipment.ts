@@ -62,6 +62,7 @@ export interface CommStat {
     relicStr: number;
     beserkerStr: number;
     maidenSupp: number;
+    attackReinforcement: number;
     travel: number;
     loot: number;
     NPCMelee: number;
@@ -192,6 +193,31 @@ export interface ProcessedEquipmentStat {
     sources: ProcessedEquipmentStatSource[];
 }
 
+export type EquipmentEffectScope = 'Always' | 'PvP' | 'PvE';
+export type EquipmentEffectRowKind = 'total' | 'parsed' | 'extra';
+
+export interface EquipmentEffectRow {
+    key: string;
+    label: string;
+    value: number;
+    rawValue?: number;
+    capped?: boolean;
+    cap?: number;
+    unit: 'percent' | 'number';
+    scope: EquipmentEffectScope;
+    kind: EquipmentEffectRowKind;
+    sources?: ProcessedEquipmentStatSource[];
+    effectId?: number;
+    sourceLabel?: string;
+}
+
+export interface EquipmentEffectSection {
+    key: string;
+    title: string;
+    description: string;
+    rows: EquipmentEffectRow[];
+}
+
 export const statDisplayName: { [key: string]: string } = {
     // CommStat & CastStat
     meleeCbtStr: 'Melee Strength',
@@ -211,14 +237,15 @@ export const statDisplayName: { [key: string]: string } = {
     // CommStat only
     flankLimit: 'Flank Unit Limit',
     frontLimit: 'Front Unit Limit',
-    meadStr: 'Mead Strength Bonus',
-    horrorStr: 'Horror Strength Bonus',
-    eliteStr: 'Elite Strength Bonus',
+    meadStr: 'Mead Unit Attack Strength',
+    horrorStr: 'Horror Unit Attack Strength',
+    eliteStr: 'Kingsguard/Imperial Unit Attack Strength',
     wave: 'Additional Waves',
     cooldown: 'Cooldown Reduction',
-    relicStr: 'Relic Strength Bonus',
-    beserkerStr: 'Beserker Strength Bonus',
+    relicStr: 'Relic Unit Attack Strength',
+    beserkerStr: 'Beef/Berserker Unit Attack Strength',
     maidenSupp: 'Maiden Support Bonus',
+    attackReinforcement: 'Troop Capacity for Final Assault',
     travel: 'Army Travel Speed',
 
 
@@ -278,6 +305,21 @@ export const statDisplayName: { [key: string]: string } = {
 export type StatDisplayContext = {
     equipmentMode?: 'Commander' | 'Castellan';
     source?: string;
+    combatMode?: CombatMode;
+    scope?: EquipmentEffectScope;
+};
+
+const commanderPvpStatDisplayName: { [key: string]: string } = {
+    frontCbtStr: 'Combat Strength on the Front Against Castle Lords',
+    flankCbtStr: 'Combat Strength on the Flanks Against Castle Lords',
+    allCbtStr: 'Attack Unit Combat Strength Against Castle Lords',
+    meadStr: 'Attack Strength for Mead Units Against Castle Lords',
+    horrorStr: 'Attack Strength for Horror Units Against Castle Lords',
+    eliteStr: 'Attack Strength for Kingsguard/Imperial Units Against Castle Lords',
+    relicStr: 'Attack Strength for Relic Barracks Units Against Castle Lords',
+    beserkerStr: 'Attack Strength for Beef/Berserker Units Against Castle Lords',
+    wave: 'Additional Waves Against Castle Lords',
+    attackReinforcement: 'Troop Capacity for Final Assault Against Castle Lords',
 };
 
 const commanderStatDisplayName: { [key: string]: string } = {
@@ -316,6 +358,10 @@ const castellanStatDisplayName: { [key: string]: string } = {
 
 export function displayStatName(statKey: string, context: StatDisplayContext = {}): string {
     const mode = context.equipmentMode || displayModeFromSource(context.source);
+    const scope = context.scope || context.combatMode;
+    if (mode === 'Commander' && scope === 'PvP' && commanderPvpStatDisplayName[statKey]) {
+        return commanderPvpStatDisplayName[statKey];
+    }
     if (mode === 'Commander' && commanderStatDisplayName[statKey]) {
         return commanderStatDisplayName[statKey];
     }
@@ -360,11 +406,48 @@ export const statGroupDisplayName: { [key: string]: string } = {
     economy: 'Economy Stats',
 };
 
+const effectSectionOrder = ['effective', 'combat', 'capacity', 'fortification', 'special', 'mobility', 'economy', 'other'];
+
+const effectSectionMeta: Record<string, { title: string; description: string }> = {
+    effective: {
+        title: 'Effective Totals',
+        description: 'Current mode totals after generic, PvP/PvE, all-unit, and caps are combined.',
+    },
+    combat: {
+        title: 'Combat Effects',
+        description: 'Direct strength effects parsed from the selected loadout.',
+    },
+    capacity: {
+        title: 'Capacity Effects',
+        description: 'Unit limit, waves, support, and reinforcement effects.',
+    },
+    fortification: {
+        title: 'Wall, Gate, Moat, and Warning Effects',
+        description: 'Attack/defense obstacle, detection, warning, and fire effects.',
+    },
+    special: {
+        title: 'Special and Event Effects',
+        description: 'Targeted, event, and named unit effects.',
+    },
+    mobility: {
+        title: 'Mobility and Cooldown Effects',
+        description: 'Travel speed and cooldown effects.',
+    },
+    economy: {
+        title: 'Economy Effects',
+        description: 'Production, storage, loot, construction, research, and recruitment effects.',
+    },
+    other: {
+        title: 'Other Resolved Effects',
+        description: 'Known effects that do not fit a standard battle bucket yet.',
+    },
+};
+
 export const commanderStatGroups = {
     core: ['meleeCbtStr', 'rangeCbtStr', 'cyCbtStr', 'wallStr', 'gateStr', 'moatStr', 'flankLimit', 'frontLimit', 'wave', 'maidenSupp'],
     relic2: ['frontCbtStr', 'flankCbtStr', 'allCbtStr'],
     hero: ['meadStr', 'horrorStr', 'eliteStr', 'relicStr', 'beserkerStr', 'cooldown'],
-    specialStats: ['glory', 'later', 'fire'],
+    specialStats: ['glory', 'later', 'fire', 'attackReinforcement'],
     miscellaneous: ['travel', 'loot'],
 };
 
@@ -374,6 +457,121 @@ export const castellanStatGroups = {
     defense: ['protectorSupp', 'opCbtStr', 'mainCbtStr'],
     economy: ['lootStr', 'recruit', 'meadProd', 'research', 'hospital', 'construction', 'baseRes', 'kingRes', 'po', 'resTransport', 'honeyProd', 'meadStorage', 'honeyStorage'],
     specialStats: ['glory', 'fire', 'early'],
+};
+
+const identityAndSlotKeys = new Set([
+    'id',
+    'name',
+    'castleID',
+    'castlePosition',
+    'equip1',
+    'equip2',
+    'equip3',
+    'equip4',
+    'hero',
+    'gem1',
+    'gem2',
+    'gem3',
+    'gem4',
+    'extraStats',
+]);
+
+const effectiveTotalKeysByMode: Record<EquipmentMode, string[]> = {
+    Commander: [
+        'meleeCbtStr',
+        'rangeCbtStr',
+        'cyCbtStr',
+        'wallStr',
+        'gateStr',
+        'moatStr',
+        'frontLimit',
+        'flankLimit',
+        'frontCbtStr',
+        'flankCbtStr',
+        'allCbtStr',
+        'wave',
+        'glory',
+        'later',
+        'fire',
+        'maidenSupp',
+        'attackReinforcement',
+        'meadStr',
+        'horrorStr',
+        'eliteStr',
+        'relicStr',
+        'beserkerStr',
+        'cooldown',
+        'travel',
+        'loot',
+    ],
+    Castellan: [
+        'meleeCbtStr',
+        'rangeCbtStr',
+        'cyCbtStr',
+        'wallStr',
+        'gateStr',
+        'moatStr',
+        'wallLimit',
+        'frontCbtStr',
+        'flankCbtStr',
+        'allCbtStr',
+        'glory',
+        'fire',
+        'early',
+        'protectorSupp',
+        'opCbtStr',
+        'mainCbtStr',
+        'lootStr',
+        'recruit',
+        'meadProd',
+        'research',
+        'hospital',
+        'construction',
+        'baseRes',
+        'kingRes',
+        'po',
+        'resTransport',
+        'honeyProd',
+        'meadStorage',
+        'honeyStorage',
+    ],
+};
+
+const rawStatPriority: Record<string, number> = {
+    meleeCbtStr: 10,
+    rangeCbtStr: 11,
+    cyCbtStr: 12,
+    allCbtStr: 13,
+    frontCbtStr: 14,
+    flankCbtStr: 15,
+    CLMelee: 20,
+    CLRange: 21,
+    CLCy: 22,
+    NPCMelee: 30,
+    NPCRange: 31,
+    NPCCy: 32,
+    wallStr: 40,
+    gateStr: 41,
+    moatStr: 42,
+    CLWall: 43,
+    CLGate: 44,
+    CLMoat: 45,
+    NPCWall: 46,
+    NPCGate: 47,
+    NPCMoat: 48,
+    frontLimit: 60,
+    flankLimit: 61,
+    wallLimit: 62,
+    CLFront: 63,
+    CLFlank: 64,
+    CLWallLimit: 65,
+    NPCFront: 66,
+    NPCFlank: 67,
+    NPCWallLimit: 68,
+    wave: 69,
+    maidenSupp: 70,
+    protectorSupp: 71,
+    attackReinforcement: 72,
 };
 
 const combatStatMap: Record<string, Partial<Record<CombatMode, string>>> = {
@@ -393,6 +591,7 @@ const specialStatMap: Record<EquipmentMode, Record<string, Partial<Record<Combat
         glory: { PvP: 'CLGlory', PvE: 'NPCGlory' },
         later: { PvP: 'CLLater' },
         fire: { PvP: 'CLFire' },
+        attackReinforcement: { PvP: 'attackReinforcement' },
     },
     Castellan: {
         glory: { PvP: 'CLGlory' },
@@ -421,6 +620,7 @@ const commanderCaps: Record<string, number> = {
     relicStr: 50,
     beserkerStr: 50,
     maidenSupp: 1050,
+    attackReinforcement: 1500,
     travel: 180,
     loot: 155,
     NPCMelee: 100,
@@ -533,14 +733,88 @@ export function processEquipmentStats(
     equipmentMode: EquipmentMode
 ): Record<string, ProcessedEquipmentStat> {
     const processed: Record<string, ProcessedEquipmentStat> = {};
-    const groups = equipmentMode === 'Commander' ? commanderStatGroups : castellanStatGroups;
-    const keys = Object.values(groups).flat();
+    const keys = effectiveTotalKeysByMode[equipmentMode];
 
     keys.forEach((key) => {
         processed[key] = processEquipmentStat(stats, key, combatMode, equipmentMode);
-    });
+		});
 
     return processed;
+}
+
+export function buildEquipmentEffectSections(
+    stats: CommStat | CastStat,
+    processedStats: Record<string, ProcessedEquipmentStat>,
+    combatMode: CombatMode,
+    equipmentMode: EquipmentMode
+): EquipmentEffectSection[] {
+    const grouped = new Map<string, EquipmentEffectRow[]>();
+
+    const addRow = (sectionKey: string, row: EquipmentEffectRow) => {
+        const rows = grouped.get(sectionKey) ?? [];
+        rows.push(row);
+        grouped.set(sectionKey, rows);
+    };
+
+    for (const key of effectiveTotalKeysByMode[equipmentMode]) {
+        const stat = processedStats[key];
+        if (!stat || stat.value === 0) continue;
+        addRow('effective', {
+            key,
+            label: displayStatName(key, { equipmentMode, combatMode }),
+            value: stat.value,
+            rawValue: stat.rawValue,
+            capped: stat.capped,
+            unit: statUnit(key),
+            scope: combatMode,
+            kind: 'total',
+            sources: stat.sources,
+        });
+    }
+
+    for (const [key, raw] of Object.entries(stats as Record<string, unknown>)) {
+        if (!isRawStatKey(key)) continue;
+        const value = Number(raw);
+        if (!Number.isFinite(value) || value === 0) continue;
+        const scope = scopeForRawStatKey(key);
+        addRow(sectionForRawStatKey(key), {
+            key,
+            label: displayStatName(key, { equipmentMode, scope }),
+            value: roundStat(value),
+            unit: statUnit(key),
+            scope,
+            kind: 'parsed',
+        });
+    }
+
+    for (const extra of stats.extraStats ?? []) {
+        const value = Number(extra.value);
+        if (!Number.isFinite(value) || value === 0) continue;
+        addRow(sectionForExtraStat(extra), {
+            key: `extra:${extra.key || extra.effectId}`,
+            label: extra.label || extra.name || extra.category || 'Unmapped effect',
+            value: roundStat(value),
+            unit: extra.unit === 'number' ? 'number' : 'percent',
+            scope: scopeForExtraStat(extra),
+            kind: 'extra',
+            effectId: extra.effectId,
+            sourceLabel: extra.category,
+        });
+    }
+
+    return effectSectionOrder
+        .filter(sectionKey => grouped.has(sectionKey))
+        .map((sectionKey) => {
+            const meta = effectSectionMeta[sectionKey] ?? effectSectionMeta.other;
+            const rows = grouped.get(sectionKey) ?? [];
+            rows.sort(compareEffectRows);
+            return {
+                key: sectionKey,
+                title: meta.title,
+                description: meta.description,
+                rows,
+            };
+        });
 }
 
 export function getEquipmentShowcaseStats(
@@ -555,6 +829,12 @@ export function getEquipmentShowcaseStats(
         .map(key => processedStats[key])
         .filter((stat): stat is ProcessedEquipmentStat => !!stat && stat.value !== 0)
         .slice(0, 8);
+}
+
+export function getEquipmentShowcaseRows(sections: EquipmentEffectSection[]): EquipmentEffectRow[] {
+    const effective = sections.find(section => section.key === 'effective');
+    if (!effective) return [];
+    return effective.rows.slice(0, 8);
 }
 
 export function formatEquipmentStatValue(statKey: string, value: number): string {
@@ -582,7 +862,7 @@ function processEquipmentStat(
         const cappedValue = capValue(value, cap);
         return {
             key: sourceKey,
-            label: sourceLabel(sourceKey, equipmentMode),
+            label: sourceLabel(sourceKey, equipmentMode, combatMode),
             value,
             cappedValue,
             cap,
@@ -628,6 +908,122 @@ function equipmentStatSourceKeys(
     return sources;
 }
 
+function isRawStatKey(key: string): boolean {
+    if (identityAndSlotKeys.has(key)) {
+        return false;
+    }
+    if (key.startsWith('placeHolder')) {
+        return false;
+    }
+    return true;
+}
+
+function scopeForRawStatKey(key: string): EquipmentEffectScope {
+    if (key.startsWith('CL')) {
+        return 'PvP';
+    }
+    if (key.startsWith('NPC')) {
+        return 'PvE';
+    }
+    return 'Always';
+}
+
+function scopeForExtraStat(stat: EquipmentExtraStat): EquipmentEffectScope {
+    const text = `${stat.name || ''} ${stat.label || ''} ${stat.category || ''}`.toLowerCase();
+    if (text.includes('pvp') || text.includes('castle lord')) {
+        return 'PvP';
+    }
+    if (text.includes('pve') || text.includes('npc') || text.includes('nomad') || text.includes('samurai') || text.includes('khan') || text.includes('daimyo') || text.includes('berimond') || text.includes('bloodcrow')) {
+        return 'PvE';
+    }
+    return 'Always';
+}
+
+function sectionForRawStatKey(key: string): string {
+    if (isEconomyStatKey(key)) return 'economy';
+    if (isMobilityStatKey(key)) return 'mobility';
+    if (isCapacityStatKey(key)) return 'capacity';
+    if (isFortificationStatKey(key)) return 'fortification';
+    if (isSpecialStatKey(key)) return 'special';
+    if (isCombatStatKey(key)) return 'combat';
+    return 'other';
+}
+
+function sectionForExtraStat(stat: EquipmentExtraStat): string {
+    const category = String(stat.category || '').toLowerCase();
+    const text = `${stat.name || ''} ${stat.label || ''}`.toLowerCase();
+    if (category.includes('economy')) return 'economy';
+    if (category.includes('capacity')) return 'capacity';
+    if (category.includes('wall') || category.includes('gate') || category.includes('moat')) return 'fortification';
+    if (category.includes('unit')) return 'combat';
+    if (category.includes('event') || isSpecialText(text)) return 'special';
+    if (isEconomyText(text)) return 'economy';
+    if (isCapacityText(text)) return 'capacity';
+    if (isFortificationText(text)) return 'fortification';
+    if (isMobilityText(text)) return 'mobility';
+    if (isSpecialText(text)) return 'special';
+    return 'other';
+}
+
+function isCombatStatKey(key: string): boolean {
+    const normalized = key.toLowerCase();
+    return /melee|range|cbtstr|cy/.test(normalized) || ['allcbtstr', 'meadstr', 'horrorstr', 'elitestr', 'relicstr', 'beserkerstr'].includes(normalized);
+}
+
+function isCapacityStatKey(key: string): boolean {
+    const normalized = key.toLowerCase();
+    return /limit|supp|reinforcement/.test(normalized) || ['wave', 'protectorsupp', 'maidensupp'].includes(normalized);
+}
+
+function isFortificationStatKey(key: string): boolean {
+    return /wall|gate|moat|fire|later|early/i.test(key);
+}
+
+function isMobilityStatKey(key: string): boolean {
+    return ['travel', 'cooldown'].includes(key);
+}
+
+function isEconomyStatKey(key: string): boolean {
+    return /loot|recruit|prod|research|hospital|construction|res|storage|po/i.test(key);
+}
+
+function isSpecialStatKey(key: string): boolean {
+    return /glory/i.test(key);
+}
+
+function isEconomyText(text: string): boolean {
+    return /loot|resource|production|storage|recruit|research|hospital|construction|public order|transport/.test(text);
+}
+
+function isCapacityText(text: string): boolean {
+    return /limit|capacity|support|wave|reinforcement/.test(text);
+}
+
+function isFortificationText(text: string): boolean {
+    return /wall|gate|moat|fire|warning|detection/.test(text);
+}
+
+function isMobilityText(text: string): boolean {
+    return /travel|speed|cooldown/.test(text);
+}
+
+function isSpecialText(text: string): boolean {
+    return /glory|nomad|samurai|khan|daimyo|berimond|bloodcrow|event/.test(text);
+}
+
+function statUnit(key: string): 'percent' | 'number' {
+    return numericStatKeys.has(key) ? 'number' : 'percent';
+}
+
+function compareEffectRows(a: EquipmentEffectRow, b: EquipmentEffectRow): number {
+    const scopeOrder: Record<EquipmentEffectScope, number> = { Always: 0, PvP: 1, PvE: 2 };
+    const priorityA = rawStatPriority[a.key] ?? 1000;
+    const priorityB = rawStatPriority[b.key] ?? 1000;
+    if (priorityA !== priorityB) return priorityA - priorityB;
+    if (scopeOrder[a.scope] !== scopeOrder[b.scope]) return scopeOrder[a.scope] - scopeOrder[b.scope];
+    return a.label.localeCompare(b.label);
+}
+
 function readStatValue(stats: CommStat | CastStat, key: string): number {
     const value = (stats as any)[key];
     return Number.isFinite(Number(value)) ? Number(value) : 0;
@@ -645,8 +1041,8 @@ function capValue(value: number, cap?: number): number {
     return Math.min(Math.abs(value), cap) * Math.sign(value);
 }
 
-function sourceLabel(key: string, equipmentMode: EquipmentMode): string {
-    return sourceLabelByKey[key] || displayStatName(key, { equipmentMode });
+function sourceLabel(key: string, equipmentMode: EquipmentMode, combatMode?: CombatMode): string {
+    return sourceLabelByKey[key] || displayStatName(key, { equipmentMode, combatMode });
 }
 
 function roundStat(value: number): number {
@@ -657,4 +1053,5 @@ const numericStatKeys = new Set([
     'wave',
     'maidenSupp',
     'protectorSupp',
+    'attackReinforcement',
 ]);

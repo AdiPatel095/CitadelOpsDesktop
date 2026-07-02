@@ -1,17 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
 
 import {
-  displayStatName,
-  commanderStatGroups,
-  castellanStatGroups,
-  statGroupDisplayName,
   processEquipmentStats,
-  getEquipmentShowcaseStats,
+  buildEquipmentEffectSections,
+  getEquipmentShowcaseRows,
   formatEquipmentStatValue,
   type CommStat,
   type CastStat,
-  type ProcessedEquipmentStat,
-  type EquipmentExtraStat,
+  type EquipmentEffectRow,
 } from '../models/Equipment';
 import { FrontendWebsocket } from '../../Websocket';
 import { useResources } from '../../currency/context/ResourceContext';
@@ -660,23 +656,16 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
     return processEquipmentStats(stats, combatMode, equipmentMode);
   }, [stats, combatMode, equipmentMode]);
 
-  const showcaseStats = useMemo(() => {
-    return getEquipmentShowcaseStats(processedStats, equipmentMode);
-  }, [processedStats, equipmentMode]);
+  const effectSections = useMemo(() => {
+    if (!stats) return [];
+    return buildEquipmentEffectSections(stats, processedStats, combatMode, equipmentMode);
+  }, [stats, processedStats, combatMode, equipmentMode]);
 
-  const extraStatsByCategory = useMemo(() => {
-    const grouped: Record<string, EquipmentExtraStat[]> = {};
-    for (const stat of stats?.extraStats ?? []) {
-      if (!Number.isFinite(Number(stat.value)) || Number(stat.value) === 0) continue;
-      const category = stat.category || 'Other Stats';
-      grouped[category] = grouped[category] ?? [];
-      grouped[category].push(stat);
-    }
-    return grouped;
-  }, [stats]);
+  const showcaseRows = useMemo(() => {
+    return getEquipmentShowcaseRows(effectSections);
+  }, [effectSections]);
 
-  const formatExtraStatValue = (stat: EquipmentExtraStat): string => {
-    const value = Number(stat.value);
+  const formatEffectRowValue = (row: EquipmentEffectRow, value = row.value): string => {
     const abs = Math.abs(value);
     const precision = Number.isInteger(abs) ? 0 : 1;
     const formatted = abs.toLocaleString(undefined, {
@@ -684,19 +673,27 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
       maximumFractionDigits: precision,
     });
     const sign = value > 0 ? '+' : value < 0 ? '-' : '';
-    return `${sign}${formatted}${stat.unit === 'number' ? '' : '%'}`;
+    return `${sign}${formatted}${row.unit === 'number' ? '' : '%'}`;
   };
 
-  const renderStat = (statKey: string, stat: ProcessedEquipmentStat) => {
-    const label = displayStatName(statKey, { equipmentMode });
-    const visibleSources = stat.sources.filter(source => source.key !== statKey);
+  const scopeBadgeVariant = (scope: EquipmentEffectRow['scope']) => {
+    if (scope === 'PvP') return 'danger' as const;
+    if (scope === 'PvE') return 'success' as const;
+    return 'secondary' as const;
+  };
+
+  const renderEffectRow = (row: EquipmentEffectRow) => {
+    const visibleSources = row.sources?.filter(source => source.value !== 0) ?? [];
     return (
-      <div className="py-2 px-2 rounded hover:bg-bg-card-hover transition-colors" key={statKey}>
+      <div className="py-2 px-2 rounded hover:bg-bg-card-hover transition-colors" key={`${row.kind}:${row.key}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-text-muted">{label}</span>
-              {stat.capped && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-text-muted">{row.label}</span>
+              <Badge variant={scopeBadgeVariant(row.scope)} className="text-[9px] px-1.5 py-0">
+                {row.scope}
+              </Badge>
+              {row.capped && (
                 <Badge variant="warning" className="text-[9px] px-1.5 py-0">
                   Capped
                 </Badge>
@@ -712,14 +709,19 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
                 ))}
               </div>
             )}
+            {row.sourceLabel && row.kind === 'extra' && (
+              <div className="mt-1 text-[11px] text-text-muted/80">
+                {row.sourceLabel}
+              </div>
+            )}
           </div>
           <div className="text-right shrink-0">
             <div className="text-sm font-mono font-semibold text-primary">
-              {formatEquipmentStatValue(statKey, stat.value)}
+              {formatEffectRowValue(row)}
             </div>
-            {stat.capped && (
+            {row.capped && row.rawValue !== undefined && (
               <div className="text-[11px] font-mono text-text-muted">
-                raw {formatEquipmentStatValue(statKey, stat.rawValue)}
+                raw {formatEffectRowValue(row, row.rawValue)}
               </div>
             )}
           </div>
@@ -727,8 +729,6 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
       </div>
     );
   };
-
-  const statGroups = equipmentMode === 'Commander' ? commanderStatGroups : castellanStatGroups;
 
   return (
     <div className="p-4">
@@ -774,7 +774,7 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
 
         {name && (
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={combatMode === 'PvP' ? 'danger' : 'info'}>
+            <Badge variant={combatMode === 'PvP' ? 'danger' : 'success'}>
               {combatMode} Stats
             </Badge>
 
@@ -821,7 +821,7 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
           </div>
         )}
 
-        {stats && showcaseStats.length > 0 && (
+        {stats && showcaseRows.length > 0 && (
           <div className="rounded-global bg-bg-app border border-border-base p-3">
             <div className="flex items-center justify-between gap-3 mb-3">
               <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider">
@@ -830,16 +830,16 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
               <Badge variant="secondary">{combatMode}</Badge>
             </div>
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
-              {showcaseStats.map(stat => (
-                <div key={stat.key} className="rounded-global border border-border-base bg-bg-card-hover/35 px-3 py-2.5 min-w-0">
+              {showcaseRows.map(row => (
+                <div key={row.key} className="rounded-global border border-border-base bg-bg-card-hover/35 px-3 py-2.5 min-w-0">
                   <div className="text-[11px] uppercase tracking-wider text-text-muted truncate">
-                    {displayStatName(stat.key, { equipmentMode })}
+                    {row.label}
                   </div>
                   <div className="mt-1 flex items-baseline gap-2">
                     <span className="text-lg font-semibold font-mono text-text-main">
-                      {formatEquipmentStatValue(stat.key, stat.value)}
+                      {formatEffectRowValue(row)}
                     </span>
-                    {stat.capped && (
+                    {row.capped && (
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-warning">
                         capped
                       </span>
@@ -851,41 +851,20 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
           </div>
         )}
 
-        {stats && Object.entries(statGroups).map(([groupName, statKeys]) => {
-          const visibleStats = statKeys.filter(key => {
-            const stat = processedStats[key];
-            return !(stat === undefined || stat.value === 0);
-          });
-
-          if (visibleStats.length === 0) return null;
-
+        {stats && effectSections.map((section) => {
           return (
-            <div key={groupName} className="rounded-global bg-bg-app border border-border-base p-3">
-              <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{statGroupDisplayName[groupName] || groupName}</h4>
-              <div className="space-y-0.5">
-                {visibleStats.map(key => renderStat(key, processedStats[key]))}
+            <div key={section.key} className="rounded-global bg-bg-app border border-border-base p-3">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider">{section.title}</h4>
+                  <p className="mt-1 text-[11px] text-text-muted/80">{section.description}</p>
+                </div>
+                <Badge variant="outline" className="text-[10px] shrink-0">
+                  {section.rows.length}
+                </Badge>
               </div>
-            </div>
-          );
-        })}
-
-        {stats && Object.entries(extraStatsByCategory).map(([category, extraStats]) => {
-          if (extraStats.length === 0) return null;
-
-          return (
-            <div key={category} className="rounded-global bg-bg-app border border-border-base p-3">
-              <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">{category}</h4>
               <div className="space-y-0.5">
-                {extraStats.map(stat => (
-                  <div className="py-2 px-2 rounded hover:bg-bg-card-hover transition-colors" key={stat.key}>
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="text-sm text-text-muted min-w-0">{stat.label || stat.name || `Effect ${stat.effectId}`}</span>
-                      <span className="text-sm font-mono font-semibold text-primary shrink-0">
-                        {formatExtraStatValue(stat)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                {section.rows.map(renderEffectRow)}
               </div>
             </div>
           );
