@@ -3,6 +3,7 @@ package GameParser
 import (
 	"testing"
 
+	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/Models/Castle"
 )
 
@@ -110,5 +111,55 @@ func TestSubscriptionRecruitmentSlotCapacityBonusIsDataDriven(t *testing.T) {
 
 	if got := ActiveSubscriptionRecruitmentSlotCapacityBonus([]int{1, 1, 2}); got != 40 {
 		t.Fatalf("ActiveSubscriptionRecruitmentSlotCapacityBonus([1,1,2]) = %d, want 40", got)
+	}
+}
+
+func TestBarracksRecruitCostReductionPercentUsesEquippedCI(t *testing.T) {
+	c := &castle.PlayerCastleInfo{
+		ConstructionByBuilding: []castle.GCAConstructionBuilding{
+			{
+				OID: 1001,
+				Slots: []castle.GCAConstructionSlot{
+					{CID: 10, Level: 10},
+				},
+			},
+			{
+				OID: 9999,
+				Slots: []castle.GCAConstructionSlot{
+					{CID: 10, Level: 10},
+				},
+			},
+		},
+	}
+
+	if got := BarracksRecruitCostReductionPercent(c, 1001, 3116); got != 40 {
+		t.Fatalf("BarracksRecruitCostReductionPercent = %d, want 40", got)
+	}
+}
+
+func TestRecruitUnitResourceCostCheckUsesCoinsReductionAndReservations(t *testing.T) {
+	gs := &Models.GameState{}
+	gs.GlobalResources.Coins = 6000
+	c := &castle.PlayerCastleInfo{Aid: 1234}
+	reservations := map[string]float64{}
+
+	check := RecruitUnitResourceCostCheck(gs, c, 216, 10, 40, reservations)
+	if !check.CanAfford() {
+		t.Fatalf("first check cannot afford: %s", check.MissingSummary())
+	}
+	if len(check.Costs) != 1 {
+		t.Fatalf("len(Costs) = %d, want 1", len(check.Costs))
+	}
+	if check.Costs[0].Key != "coins" || check.Costs[0].Required != 3072 {
+		t.Fatalf("cost = %+v, want coins required 3072", check.Costs[0])
+	}
+
+	ReserveRecruitResourceCosts(reservations, check)
+	check = RecruitUnitResourceCostCheck(gs, c, 216, 10, 40, reservations)
+	if check.CanAfford() {
+		t.Fatalf("second check can afford after reservation, want missing coins")
+	}
+	if len(check.Missing) != 1 || check.Missing[0].Key != "coins" {
+		t.Fatalf("missing = %+v, want coins", check.Missing)
 	}
 }

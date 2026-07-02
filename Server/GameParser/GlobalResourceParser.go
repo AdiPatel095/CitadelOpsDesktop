@@ -58,6 +58,16 @@ func UpdateCoinsFromPayload(payload map[string]interface{}) {
 	}
 }
 
+// UpdateSCEFromPayload applies nested `sce` account currency updates from a response body.
+func UpdateSCEFromPayload(payload map[string]interface{}) {
+	if payload == nil {
+		return
+	}
+	if nested, ok := payload["sce"].([]interface{}); ok {
+		UpdateSCE(nested)
+	}
+}
+
 func UpdateMight(gmuMap map[string]interface{}) {
 	might, ok := gmuMap["MP"].(float64)
 	if ok {
@@ -80,6 +90,7 @@ func UpdateGallantry(ufpMap map[string]interface{}) {
 }
 
 func UpdateSCE(sceArray []interface{}) {
+	changed := false
 	for _, item := range sceArray {
 		valueArray, ok := item.([]interface{})
 		if !ok || len(valueArray) != 2 {
@@ -92,11 +103,16 @@ func UpdateSCE(sceArray []interface{}) {
 		if !labelOk || !valueOk {
 			continue
 		}
-		updateResourceByLabel(label, value)
+		if updateResourceByLabel(label, value) {
+			changed = true
+		}
+	}
+	if changed && NotifyGlobalResourcesChanged != nil {
+		NotifyGlobalResourcesChanged()
 	}
 }
 
-func updateResourceByLabel(label string, value float64) {
+func updateResourceByLabel(label string, value float64) bool {
 	playerResources := &Models.GetGameState().GlobalResources
 	switch label {
 	case "STP":
@@ -106,6 +122,7 @@ func updateResourceByLabel(label string, value float64) {
 	case "LM":
 		playerResources.ConstToken = value
 	case "LT":
+		playerResources.LegendaryToken = value
 		playerResources.UpgrToken = value
 	case "SLWT":
 		playerResources.AfflTix = value
@@ -115,6 +132,30 @@ func updateResourceByLabel(label string, value float64) {
 		playerResources.DrgScale = value
 	case "DSS":
 		playerResources.DrgSpl = value
+	case "DGA":
+		playerResources.DrgGlassArrow = value
+	case "DSAM":
+		playerResources.DrgScaleArmor = value
+	case "DSAW":
+		playerResources.DrgScaleArrow = value
+	case "TFA":
+		playerResources.TwinFlameAxes = value
+	case "CO1":
+		playerResources.Component1 = value
+	case "CO2":
+		playerResources.Component2 = value
+	case "CO3":
+		playerResources.Component3 = value
+	case "CO4":
+		playerResources.Component4 = value
+	case "CO5":
+		playerResources.Component5 = value
+	case "CO6":
+		playerResources.Component6 = value
+	case "CO7":
+		playerResources.Component7 = value
+	case "CO8":
+		playerResources.Component8 = value
 	case "RF":
 		playerResources.RelicShard = value
 	case "MS1":
@@ -133,7 +174,10 @@ func updateResourceByLabel(label string, value float64) {
 		playerResources.Hr24 = value
 	case "PTT":
 		playerResources.PTT = value
+	default:
+		return false
 	}
+	return true
 }
 
 // UpdateAlliance parses the alliance data from gal and updates the global Alliance

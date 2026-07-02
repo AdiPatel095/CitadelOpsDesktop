@@ -63,6 +63,14 @@ func MessageRouter(messageParts []string) {
 		if err := json.Unmarshal([]byte(payload), &gcuMap); err == nil {
 			UpdateCoins(gcuMap)
 		}
+	case "sce":
+		if !hasPayload {
+			return
+		}
+		var sceArray []interface{}
+		if err := json.Unmarshal([]byte(payload), &sceArray); err == nil {
+			UpdateSCE(sceArray)
+		}
 	case "sie", "upc":
 		if !hasPayload {
 			return
@@ -164,7 +172,8 @@ func MessageRouter(messageParts []string) {
 		troopsChanged := ApplyJAATroopsFromPayload(gs, payload)
 		constructionChanged := ApplyJAAConstructionSlotsFromPayload(gs, payload)
 		slotProductionChanged := ApplyJAASlotProductionFromPayload(gs, payload)
-		if (focusChanged || buildingsChanged || troopsChanged || constructionChanged || slotProductionChanged) && NotifyCastleFocusChanged != nil {
+		resourcesChanged := ApplyCastleResourceAmountsFromPayload(gs, payload)
+		if (focusChanged || buildingsChanged || troopsChanged || constructionChanged || slotProductionChanged || resourcesChanged) && NotifyCastleFocusChanged != nil {
 			NotifyCastleFocusChanged()
 		}
 		if m, ok := ParseEmbeddedSINStorageCountsFromEnvelopeJSON(payload); ok {
@@ -192,7 +201,14 @@ func MessageRouter(messageParts []string) {
 			return
 		}
 		gs := Models.GetGameState()
-		if ApplySlotProductionFromSPLJSON(gs, payload) && NotifyCastleFocusChanged != nil {
+		var root map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &root); err == nil {
+			UpdateCoinsFromPayload(root)
+			UpdateSCEFromPayload(root)
+		}
+		slotProductionChanged := ApplySlotProductionFromSPLJSON(gs, payload)
+		resourcesChanged := ApplyCastleResourceAmountsFromPayload(gs, payload)
+		if (slotProductionChanged || resourcesChanged) && NotifyCastleFocusChanged != nil {
 			NotifyCastleFocusChanged()
 		}
 	case "crin":

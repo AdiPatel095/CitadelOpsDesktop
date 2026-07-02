@@ -454,6 +454,7 @@ func runRecruitTroops(ctx context.Context) {
 			Logging.AutoRecruitLog("schedule", "shared schedule inactive")
 			sleepDuration = recruitSleepDuration(state, "autoRecruit", now, sleepDuration)
 		} else if len(unitsByCastle) > 0 {
+			resourceReservations := make(map[string]float64)
 			for _, castleID := range orderedRecruitCastleIDs(gs, unitsByCastle) {
 				select {
 				case <-ctx.Done():
@@ -529,11 +530,32 @@ func runRecruitTroops(ctx context.Context) {
 					stackPlan.SubscriptionTypeIDs,
 					stackPlan.ObservedTUA,
 				)
+				costReductionPercent := GameParser.BarracksRecruitCostReductionPercent(
+					castleInfo,
+					stackPlan.Breakdown.BuildingOID,
+					stackPlan.Breakdown.BuildingWID,
+				)
 				for occupiedQueueStacks < queueCapacity {
 					select {
 					case <-ctx.Done():
 						return
 					default:
+					}
+
+					costCheck := GameParser.RecruitUnitResourceCostCheck(gs, castleInfo, unitID, stackPlan.Amount, costReductionPercent, resourceReservations)
+					if costCheck.UnknownUnitCost {
+						Logging.AutoRecruitLogf("resource_unknown", "castle=%d unit=%d amount=%d cost data unavailable; attempting queue", castleID, unitID, stackPlan.Amount)
+					} else if !costCheck.CanAfford() {
+						Logging.AutoRecruitLogf(
+							"resource_skip",
+							"castle=%d unit=%d amount=%d costReduction=%d missing=%s",
+							castleID,
+							unitID,
+							stackPlan.Amount,
+							costReductionPercent,
+							costCheck.MissingSummary(),
+						)
+						break
 					}
 
 					Logging.AutoRecruitLogf("queue", "castle=%d unit=%d amount=%d occupied=%d capacity=%d", castleID, unitID, stackPlan.Amount, occupiedQueueStacks, queueCapacity)
@@ -542,6 +564,7 @@ func runRecruitTroops(ctx context.Context) {
 					payload := GameCommands.BUPPayload(0, unitID, stackPlan.Amount, -1, 0, recruitSessionKey, 0, castleID)
 					Logging.AppendAutoRecruitSendPayload(payload)
 					GameCommands.QueueOutgoingPayload(payload)
+					GameParser.ReserveRecruitResourceCosts(resourceReservations, costCheck)
 					occupiedQueueStacks++
 					if !recruitPause(ctx, recruitActionDelay) {
 						return

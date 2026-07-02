@@ -358,6 +358,7 @@ func runAutoTool(ctx context.Context) {
 			Logging.AutoToolLog("schedule", "shared schedule inactive")
 			sleepDuration = autoToolSleepDuration(state, "autoTool", now, sleepDuration)
 		} else if len(toolsByCastle) > 0 {
+			resourceReservations := make(map[string]float64)
 			for _, castleID := range orderedAutoToolCastleIDs(gs, toolsByCastle) {
 				select {
 				case <-ctx.Done():
@@ -400,6 +401,9 @@ func runAutoTool(ctx context.Context) {
 				if !autoToolPause(ctx, autoToolActionDelay) {
 					return
 				}
+				if refreshed := gs.GetCastleByID(castleID); refreshed != nil {
+					castleInfo = refreshed
+				}
 
 				occupiedQueueStacks := autoToolOccupiedQueueStacks(castleInfo)
 				queueCapacity := autoToolQueueCapacity(castleInfo)
@@ -431,12 +435,26 @@ func runAutoTool(ctx context.Context) {
 					default:
 					}
 
+					costCheck := GameParser.ToolProductionResourceCostCheck(gs, castleInfo, toolID, stackPlan.Amount, resourceReservations)
+					if !costCheck.CanAfford() {
+						Logging.AutoToolLogf(
+							"resource_skip",
+							"castle=%d tool=%d amount=%d missing=%s",
+							castleID,
+							toolID,
+							stackPlan.Amount,
+							costCheck.MissingSummary(),
+						)
+						break
+					}
+
 					Logging.AutoToolLogf("queue", "castle=%d tool=%d amount=%d occupied=%d capacity=%d", castleID, toolID, stackPlan.Amount, occupiedQueueStacks, queueCapacity)
 					// SK must match live session (captured from browser bup); TODO: read from game state when available.
 					const autoToolSessionKey = 73
 					payload := GameCommands.BUPPayload(autoToolQueueLID, toolID, stackPlan.Amount, -1, 0, autoToolSessionKey, 0, castleID)
 					Logging.AppendAutoToolSendPayload(payload)
 					GameCommands.QueueOutgoingPayload(payload)
+					GameParser.ReserveToolResourceCosts(resourceReservations, costCheck)
 					occupiedQueueStacks++
 					if !autoToolPause(ctx, autoToolActionDelay) {
 						return
