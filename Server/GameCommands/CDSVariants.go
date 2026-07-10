@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+type sendLease interface {
+	Active() bool
+}
+
 // CDSHBWPTT is one (HBW, PTT) pair for EmpireEx **cds**.
 // HBW=0, PTT=0 is rejected (cds code 5 in captures); these two are what the app uses in practice.
 type CDSHBWPTT struct {
@@ -49,12 +53,23 @@ func cdsIncomingOK(parts []string) bool {
 // Stops on first cds code 0.
 // onCDSResponse is optional: invoked with a copy of the inbound **cds** frame (%-split) before the waiter unblocks, so callers can parse **gam**-like JSON (e.g. **TT**).
 func SendCDSUntilSuccess(castleAID, targetX, targetY, sdiLID, delayHours int, gamePTT float64, troopsJSON string, onCDSResponse func([]string)) bool {
+	return SendCDSUntilSuccessWithLease(nil, castleAID, targetX, targetY, sdiLID, delayHours, gamePTT, troopsJSON, onCDSResponse)
+}
+
+func SendCDSUntilSuccessWithLease(lease sendLease, castleAID, targetX, targetY, sdiLID, delayHours int, gamePTT float64, troopsJSON string, onCDSResponse func([]string)) bool {
 	pairs := cdsPairsForGamePTT(gamePTT)
 	for i, v := range pairs {
 		waiter := ResponseRegistry.Global.RegisterWaiterWithDeliver("cds", cdsWaitPerVariant, onCDSResponse)
+		if lease != nil && !lease.Active() {
+			waiter.Cleanup()
+			return false
+		}
 		SendCDS(castleAID, targetX, targetY, sdiLID, delayHours, v.HBW, v.PTT, troopsJSON)
 		resp, err := waiter.WaitWithTimeout()
 		waiter.Cleanup()
+		if lease != nil && !lease.Active() {
+			return false
+		}
 		if err == nil && cdsIncomingOK(resp) {
 			return true
 		}

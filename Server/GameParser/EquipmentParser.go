@@ -25,6 +25,25 @@ func UpdateEquipmentList(gliMap map[string]interface{}) {
 
 	ProcessCastArray(castArray)
 	ProcessCommArray(commArray)
+	syncCommanderRoster(gs)
+	if NotifyMovementChanged != nil {
+		NotifyMovementChanged()
+	}
+}
+
+func syncCommanderRoster(gs *Models.GameState) {
+	if gs == nil {
+		return
+	}
+	roster := make([]Models.CommanderRosterEntry, 0, len(gs.Equipment.CommActualArray))
+	for _, commander := range gs.Equipment.CommActualArray {
+		roster = append(roster, Models.CommanderRosterEntry{
+			CommanderID:     int(commander.ID),
+			Name:            commander.Name,
+			VisiblePosition: int(commander.VisiblePosition),
+		})
+	}
+	gs.Movement.SetCommanderRoster(roster)
 }
 
 func ProcessCastArray(castArray []interface{}) {

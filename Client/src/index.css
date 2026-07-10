@@ -985,6 +985,13 @@
         gap: 0.45rem;
     }
 
+    .liquid-log-json-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
     .liquid-log-json-toggle {
         display: inline-flex;
         width: fit-content;
@@ -1007,6 +1014,33 @@
         border-color: color-mix(in srgb, var(--primary) 52%, var(--border-base));
         background: color-mix(in srgb, var(--primary) 13%, var(--bg-card));
         color: var(--text-main);
+    }
+
+    .liquid-log-json-copy {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.32rem;
+        border: 1px solid color-mix(in srgb, var(--border-base) 88%, transparent);
+        border-radius: calc(var(--radius-global) - 8px);
+        background: color-mix(in srgb, var(--bg-input) 78%, var(--bg-card));
+        padding: 0.28rem 0.52rem;
+        color: var(--text-muted);
+        font-size: 0.76rem;
+        font-weight: 800;
+        line-height: 1.2;
+        transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+    }
+
+    .liquid-log-json-copy:hover {
+        border-color: color-mix(in srgb, var(--primary) 40%, var(--border-base));
+        background: color-mix(in srgb, var(--primary) 9%, var(--bg-card));
+        color: var(--text-main);
+    }
+
+    .liquid-log-json-copy-icon {
+        width: 0.82rem;
+        height: 0.82rem;
+        flex: 0 0 auto;
     }
 
     .liquid-log-json-icon {
@@ -2073,18 +2107,11 @@
         gap: 0.55rem;
     }
 
-    .picker-pill-control {
-        border-color: color-mix(in srgb, var(--primary) 20%, var(--border-base));
-        background:
-            linear-gradient(135deg, color-mix(in srgb, var(--primary) 9%, transparent), transparent 54%),
-            color-mix(in srgb, var(--glass-control) 78%, transparent);
-    }
-
     .picker-quick-pills {
         flex-shrink: 0;
     }
 
-    .equipment-view-pills {
+    .liquid-pill-selector {
         border-color: color-mix(in srgb, var(--primary) 24%, var(--border-light));
         background:
             linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, transparent), transparent 52%),
@@ -2092,15 +2119,11 @@
         box-shadow: 0 10px 26px color-mix(in srgb, var(--primary) 12%, transparent), inset 0 1px 0 var(--glass-highlight);
     }
 
-    .equipment-view-pills .liquid-toggle-btn-active-primary {
+    .liquid-pill-selector .liquid-toggle-btn-active-primary {
         color: var(--primary);
         background:
             linear-gradient(180deg, color-mix(in srgb, var(--primary) 20%, var(--glass-panel-strong)), color-mix(in srgb, var(--primary) 12%, var(--glass-panel)));
         outline-color: color-mix(in srgb, var(--primary) 50%, var(--border-light));
-    }
-
-    .equipment-combat-pills .liquid-toggle-btn-active-primary {
-        color: color-mix(in srgb, var(--primary) 84%, var(--text-main));
     }
 
     .picker-filter-label {
@@ -2686,6 +2709,16 @@
 
     .liquid-prominent-header-content-flush {
         padding: var(--liquid-header-overlap) 0 0 !important;
+    }
+
+    .decoration-card-content {
+        border: 0;
+        box-shadow: none;
+    }
+
+    .decoration-card-content::before,
+    .decoration-card-content::after {
+        display: none;
     }
 
     .recruit-modal-shell {

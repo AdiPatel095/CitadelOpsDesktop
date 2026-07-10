@@ -3,8 +3,6 @@ package GameParser
 import (
 	"sync/atomic"
 	"time"
-
-	"CitadelDesktop/Server/GameCommands"
 )
 
 // lastGAMParsedNs advances after each full GAM parse (see MovementParser).
@@ -29,6 +27,6 @@ func AwaitNextGAMAfter(prevNs int64, timeout time.Duration) bool {
 // SendGAMAndWait sends **gam** and waits until movements are parsed into GameState.
 func SendGAMAndWait(timeout time.Duration) bool {
 	prev := atomic.LoadInt64(&lastGAMParsedNs)
-	GameCommands.SendGAM()
+	RequestGAMSnapshot()
 	return AwaitNextGAMAfter(prev, timeout)
 }

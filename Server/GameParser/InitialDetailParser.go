@@ -1,6 +1,7 @@
 package GameParser
 
 import (
+	"CitadelDesktop/Server/Models"
 	"encoding/json"
 	"log"
 	"sync"
@@ -117,4 +118,7 @@ func InitiateDetails(data string) {
 	}()
 
 	wg.Wait()
+	if Models.GetGameState().PlayerID > 0 {
+		go Models.PersistGameStateSnapshot()
+	}
 }

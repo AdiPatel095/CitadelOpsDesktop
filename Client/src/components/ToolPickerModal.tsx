@@ -11,6 +11,8 @@ export interface ToolPickerOptions {
   title?: string;
   preselected?: number[];
   allowedToolIds?: number[];
+  /** Optional available stock counts shown on each tool card. */
+  stockQuantities?: Record<number, number>;
 }
 
 export type ToolPickerResult = number | number[] | null;
@@ -70,7 +72,7 @@ export const ToolPickerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
 const ToolPickerModal: React.FC<ToolPickerModalProps> = ({ isOpen, options, onClose }) => {
   const { tools, isLoading } = useMetadata();
-  const { mode, title, preselected = [], allowedToolIds } = options;
+  const { mode, title, preselected = [], allowedToolIds, stockQuantities } = options;
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set(preselected));
   const [searchQuery, setSearchQuery] = useState('');
   const restrictToAllowed = allowedToolIds !== undefined;
@@ -231,7 +233,11 @@ const ToolPickerModal: React.FC<ToolPickerModalProps> = ({ isOpen, options, onCl
                   >
                     <div className="picker-card-topline">
                       <span className="picker-card-id">#{tool.id}</span>
-                      <span className="picker-stock-pill">{toolType(tool)}</span>
+                      <span className="picker-stock-pill">
+                        {stockQuantities?.[tool.id] != null
+                          ? stockQuantities[tool.id].toLocaleString()
+                          : toolType(tool)}
+                      </span>
                     </div>
 
                     {isSelected && (
@@ -250,6 +256,11 @@ const ToolPickerModal: React.FC<ToolPickerModalProps> = ({ isOpen, options, onCl
                       <span className={`picker-unit-name line-clamp-2 ${isSelected ? 'picker-unit-name-selected' : ''}`}>
                         {tool.name}
                       </span>
+                      {stockQuantities?.[tool.id] != null ? (
+                        <span className="mt-1 block truncate text-[10px] font-semibold text-text-muted">
+                          {toolType(tool)} · available
+                        </span>
+                      ) : null}
                     </div>
                   </button>
                 );

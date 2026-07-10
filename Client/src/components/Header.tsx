@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Settings, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import CastleFocusBadge from './CastleFocusBadge';
 import CastleFocusSwitcher from './CastleFocusSwitcher';
 import { Button, Badge } from './ui';
 
@@ -19,6 +18,13 @@ function formatNextBirdIn(msLeft: number): string {
   return `${Math.max(1, m)}m`;
 }
 
+function formatConnectionSeconds(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return remainder > 0 ? `${minutes}m ${remainder}s` : `${minutes}m`;
+}
+
 interface HeaderProps {
   onOpenAutoBirdSettings: () => void;
 }
@@ -27,6 +33,13 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
   const {
     gameLoggedIn,
     gameLoginCooldown,
+    gameLoginRetrySeconds,
+    gameConnectionState,
+    gameSocketConnected,
+    gameBrowserRunning,
+    gameConnectionDetail,
+    dashboardConnectionStatus,
+    hasGameConnectionStatus,
     startGame,
     stopGame,
     goMem,
@@ -56,6 +69,131 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
     return { on: true as const, text: `Next Bird in: ${formatNextBirdIn(left)}` };
   }, [autoBirdEnabled, autoBirdNextWakeUp, nowTick]);
 
+  const connectionPill = useMemo(() => {
+    if (dashboardConnectionStatus !== 'Connected') {
+      return {
+        tone: 'warning' as const,
+        pulse: true,
+        label: dashboardConnectionStatus === 'Connecting' ? 'Dashboard connecting…' : 'Dashboard reconnecting…',
+        title: 'Game connection status is unavailable while the dashboard reconnects to CitadelOps.',
+      };
+    }
+    if (!hasGameConnectionStatus) {
+      return {
+        tone: 'warning' as const,
+        pulse: true,
+        label: 'Checking game status…',
+        title: 'Dashboard connected; waiting for the current game WebSocket status.',
+      };
+    }
+
+    switch (gameConnectionState) {
+      case 'connected':
+        return {
+          tone: gameLoggedIn ? 'success' as const : 'warning' as const,
+          pulse: true,
+          label: gameLoggedIn ? 'Game connected' : 'Checking game status…',
+          title: gameSocketConnected
+            ? 'Game WebSocket is open and the game login is confirmed.'
+            : 'Game login was reported, but the WebSocket is not currently open.',
+        };
+      case 'starting':
+        return {
+          tone: 'warning' as const,
+          pulse: true,
+          label: 'Starting game…',
+          title: 'Chrome is starting and loading the game client.',
+        };
+      case 'reconnecting':
+        return {
+          tone: 'warning' as const,
+          pulse: true,
+          label: 'Reloading game…',
+          title: 'The game tab is reloading to establish a fresh WebSocket.',
+        };
+      case 'connecting':
+        return {
+          tone: 'warning' as const,
+          pulse: true,
+          label: 'Opening game socket…',
+          title: 'The game WebSocket handshake is in progress.',
+        };
+      case 'authenticating':
+        return {
+          tone: 'warning' as const,
+          pulse: true,
+          label: 'Authenticating game…',
+          title: 'Game WebSocket is open; waiting for the game login to complete.',
+        };
+      case 'cooldown':
+        return {
+          tone: 'warning' as const,
+          pulse: true,
+          label: gameLoginCooldown > 0
+            ? `Login cooldown (${formatConnectionSeconds(gameLoginCooldown)})`
+            : gameLoginRetrySeconds > 0
+              ? `Retrying in ${formatConnectionSeconds(gameLoginRetrySeconds)}`
+              : 'Retrying login…',
+          title: gameConnectionDetail || 'The game server requested a login cooldown; CitadelOps will retry automatically.',
+        };
+      case 'error':
+        return {
+          tone: 'error' as const,
+          pulse: false,
+          label: 'Connection error',
+          title: gameConnectionDetail || 'The game connection failed. Start the bot to retry.',
+        };
+      case 'stopped':
+        return {
+          tone: 'error' as const,
+          pulse: false,
+          label: 'Game stopped',
+          title: gameBrowserRunning
+            ? 'The game WebSocket was stopped; Chrome remains open.'
+            : 'The game browser and WebSocket are stopped.',
+        };
+      default:
+        return {
+          tone: 'error' as const,
+          pulse: false,
+          label: 'Game disconnected',
+          title: gameConnectionDetail || 'No active game WebSocket is available.',
+        };
+    }
+  }, [
+    dashboardConnectionStatus,
+    gameBrowserRunning,
+    gameConnectionDetail,
+    gameConnectionState,
+    gameLoggedIn,
+    gameLoginCooldown,
+    gameLoginRetrySeconds,
+    gameSocketConnected,
+    hasGameConnectionStatus,
+  ]);
+
+  const connectionToneClass = connectionPill.tone === 'success'
+    ? 'text-success shadow-[0_0_15px_var(--color-success)]'
+    : connectionPill.tone === 'warning'
+      ? 'text-warning shadow-[0_0_15px_var(--color-warning)]'
+      : 'text-error shadow-[0_0_15px_var(--color-error)]';
+  const connectionDotClass = connectionPill.tone === 'success'
+    ? 'bg-success shadow-success/50'
+    : connectionPill.tone === 'warning'
+      ? 'bg-warning shadow-warning/50'
+      : 'bg-error shadow-error/50';
+  const gameConnectionActive = hasGameConnectionStatus && (
+    gameConnectionState === 'connecting' ||
+    gameConnectionState === 'authenticating' ||
+    gameConnectionState === 'connected' ||
+    gameConnectionState === 'cooldown' ||
+    gameConnectionState === 'reconnecting'
+  );
+  const connectionControlsReady =
+    dashboardConnectionStatus === 'Connected' &&
+    hasGameConnectionStatus &&
+    gameConnectionState !== 'starting';
+
   return (
     <header className="liquid-header transition-colors duration-300">
       <div className="liquid-header-inner relative z-10">
@@ -77,7 +215,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
         {/* Center: Status Indicators */}
         <div className="liquid-header-status-strip custom-scrollbar">
           <div className="flex min-w-0 items-center gap-2">
-            <CastleFocusBadge />
             <CastleFocusSwitcher />
           </div>
           
@@ -95,24 +232,13 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
           )}
 
           {/* Bot Status */}
-          <div className={`liquid-bot-status liquid-glass-edge flex shrink-0 items-center gap-3 rounded-full px-4 py-1.5 transition-all duration-300 ${
-            gameLoggedIn
-              ? 'text-success shadow-[0_0_15px_var(--color-success)]'
-              : gameLoginCooldown > 0
-                ? 'text-warning shadow-[0_0_15px_var(--color-warning)]'
-                : 'text-error shadow-[0_0_15px_var(--color-error)]'
-            }`}>
-            <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_10px] animate-pulse ${
-              gameLoggedIn ? 'bg-success shadow-success/50' 
-              : gameLoginCooldown > 0 ? 'bg-warning shadow-warning/50' 
-              : 'bg-error shadow-error/50'
-            }`} />
-            <span className={`liquid-bot-status-text text-sm font-semibold ${
-              gameLoggedIn ? 'text-success' 
-              : gameLoginCooldown > 0 ? 'text-warning' 
-              : 'text-error'
-            }`}>
-              {gameLoggedIn ? 'Connected' : gameLoginCooldown > 0 ? `Reconnecting (${gameLoginCooldown}s)` : 'Disconnected'}
+          <div
+            className={`liquid-bot-status liquid-glass-edge flex shrink-0 items-center gap-3 rounded-full px-4 py-1.5 transition-all duration-300 ${connectionToneClass}`}
+            title={connectionPill.title}
+          >
+            <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_10px] ${connectionPill.pulse ? 'animate-pulse' : ''} ${connectionDotClass}`} />
+            <span className="liquid-bot-status-text text-sm font-semibold">
+              {connectionPill.label}
             </span>
           </div>
 
@@ -167,21 +293,24 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings }) => {
 
         {/* Right: bot controls */}
         <div className="liquid-header-controls">
-          {!gameLoggedIn ? (
+          {!gameConnectionActive ? (
             <Button
               variant="primary"
               size="sm"
               onClick={() => startGame()}
+              disabled={!connectionControlsReady}
+              title={connectionControlsReady ? 'Start or retry the game connection' : 'Waiting for current connection status'}
               className="uppercase text-[11px]"
               leftIcon={<div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />}
             >
-              Start Bot
+              {gameConnectionState === 'starting' ? 'Starting…' : 'Start Bot'}
             </Button>
           ) : (
             <Button
               variant="danger"
               size="sm"
               onClick={stopGame}
+              disabled={!connectionControlsReady}
               className="uppercase text-[11px]"
               leftIcon={<div className="w-1.5 h-1.5 rounded-full bg-error shadow-[0_0_8px] shadow-error/80" />}
             >

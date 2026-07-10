@@ -99,6 +99,20 @@ func SendCastleFocus(kingdomID, castleID, mapX, mapY int) {
 	QueueOutgoingPayload(CastleFocusCommand(kingdomID, castleID, mapX, mapY))
 }
 
+// GDIPayload builds EmpireEx_21 **gdi** — request the public player summary for a player id.
+// The response includes current might (O.MP) and glory (O.CF).
+func GDIPayload(playerID int) string {
+	return empireExFrame("gdi", fmt.Sprintf(`{"PID":%d}`, playerID))
+}
+
+// SendGDI requests a current public player summary (**gdi**).
+func SendGDI(playerID int) {
+	if playerID <= 0 {
+		return
+	}
+	QueueOutgoingPayload(GDIPayload(playerID))
+}
+
 // --- Build / decoration / storage ---
 
 // EBUPayload builds EmpireEx_21 **ebu** — place/erect a building or decoration at grid coordinates.

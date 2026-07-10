@@ -17,8 +17,8 @@ const fileName = "autotci_upgrade_schedule.json"
 
 // Lead times for the AutoTCI schedule (see GameFeatures AutoTCI upgrade constants).
 const (
-	LoginLeadMillis int64 = 60 * 1000 // wake / prep session this long before expiry
-	UbcWindowMillis int64 = 5 * 1000  // ubc is issued in the last 5s of RS (autoTCIUpgradeTimerMaxSec)
+	LoginLeadMillis int64 = 60 * 1000     // wake / prep session this long before expiry
+	UbcWindowMillis int64 = 5 * 60 * 1000 // ubc is issued in the last 5m of RS (autoTCIUpgradeTimerMaxSec)
 )
 
 // SlotRecord is one equipped slot the user is tracking for auto-upgrade, with times derived
@@ -146,13 +146,14 @@ func nextSlotEventMillis(s *SlotRecord, now int64) (eventMillis int64, overdueUB
 	if !ok {
 		return 0, false, true
 	}
-	if now < L {
-		return L, false, false
+	if now >= U {
+		return 0, true, false
 	}
-	if now < U {
-		return U, false, false
+	next := U
+	if now < L && L < next {
+		next = L
 	}
-	return 0, true, false
+	return next, false, false
 }
 
 // NextScheduleWakeMillis is the next absolute time to run the AutoTCI wake loop: either login prep

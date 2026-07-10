@@ -63,6 +63,65 @@ func MessageRouter(messageParts []string) {
 		if err := json.Unmarshal([]byte(payload), &gcuMap); err == nil {
 			UpdateCoins(gcuMap)
 		}
+	case "gmu":
+		if !hasPayload {
+			return
+		}
+		var gmuMap map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &gmuMap); err == nil {
+			UpdateMight(gmuMap)
+			if NotifyGlobalResourcesChanged != nil {
+				NotifyGlobalResourcesChanged()
+			}
+		}
+	case "ufa":
+		if !hasPayload {
+			return
+		}
+		var ufaMap map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &ufaMap); err == nil {
+			UpdateGlory(ufaMap)
+			if NotifyGlobalResourcesChanged != nil {
+				NotifyGlobalResourcesChanged()
+			}
+		}
+	case "ufp":
+		if !hasPayload {
+			return
+		}
+		var ufpMap map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &ufpMap); err == nil {
+			UpdateGallantry(ufpMap)
+			if NotifyGlobalResourcesChanged != nil {
+				NotifyGlobalResourcesChanged()
+			}
+		}
+	case "gdi":
+		if !hasPayload {
+			return
+		}
+		var gdiMap map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &gdiMap); err == nil && UpdateSelfPlayerSummary(gdiMap) {
+			if NotifyGlobalResourcesChanged != nil {
+				NotifyGlobalResourcesChanged()
+			}
+		}
+	case "dcl":
+		if !hasPayload {
+			return
+		}
+		var dclMap map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &dclMap); err != nil {
+			log.Printf("[parser] dcl unmarshal: %v", err)
+			return
+		}
+		if err := parseDCL(dclMap); err != nil {
+			log.Printf("[parser] dcl parse: %v", err)
+			return
+		}
+		if NotifyCastleFocusChanged != nil {
+			NotifyCastleFocusChanged()
+		}
 	case "sce":
 		if !hasPayload {
 			return

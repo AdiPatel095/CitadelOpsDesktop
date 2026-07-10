@@ -5,4 +5,4 @@ export * from './Badge';
 export * from './Modal';
 export * from './Switch';
 export * from './Select';
-export * from './ToggleGroup';
+export * from './PillSelector';

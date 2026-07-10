@@ -5,8 +5,15 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
+)
+
+const (
+	frontendWriteWait = 10 * time.Second
+	frontendPongWait  = 45 * time.Second
+	frontendPingEvery = frontendPongWait * 9 / 10
 )
 
 var upgrader = websocket.Upgrader{
@@ -19,8 +26,9 @@ var upgrader = websocket.Upgrader{
 var FrontendSocket *Hub
 
 type Client struct {
-	Conn *websocket.Conn
-	Send chan []byte
+	Conn    *websocket.Conn
+	Send    chan []byte
+	Receive chan []byte
 }
 
 type Hub struct {
@@ -79,28 +87,41 @@ func (h *Hub) Run() {
 }
 
 func (c *Client) WritePump() {
+	ticker := time.NewTicker(frontendPingEvery)
 	defer func() {
+		ticker.Stop()
 		c.Conn.Close()
 	}()
 	for {
-		message, ok := <-c.Send
-		if !ok {
-			c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-			return
+		select {
+		case message, ok := <-c.Send:
+			_ = c.Conn.SetWriteDeadline(time.Now().Add(frontendWriteWait))
+			if !ok {
+				_ = c.Conn.WriteMessage(websocket.CloseMessage, nil)
+				return
+			}
+			if err := c.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
+				return
+			}
+		case <-ticker.C:
+			_ = c.Conn.SetWriteDeadline(time.Now().Add(frontendWriteWait))
+			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
-		c.Conn.WriteMessage(websocket.TextMessage, message)
 	}
 }
 
 func (c *Client) ReadPump() {
 	defer func() {
+		close(c.Receive)
 		FrontendSocket.Unregister <- c
 		c.Conn.Close()
 	}()
-	// You can configure read limits for security
-	// c.Conn.SetReadLimit(maxMessageSize)
-	// c.Conn.SetReadDeadline(time.Now().Add(pongWait))
-	// c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	_ = c.Conn.SetReadDeadline(time.Now().Add(frontendPongWait))
+	c.Conn.SetPongHandler(func(string) error {
+		return c.Conn.SetReadDeadline(time.Now().Add(frontendPongWait))
+	})
 
 	for {
 		_, message, err := c.Conn.ReadMessage()
@@ -108,6 +129,12 @@ func (c *Client) ReadPump() {
 			log.Printf("error reading message: %v", err)
 			break
 		}
+		c.Receive <- message
+	}
+}
+
+func (c *Client) MessagePump() {
+	for message := range c.Receive {
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
@@ -125,11 +152,16 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	client := &Client{Conn: conn, Send: make(chan []byte, 2048)}
+	client := &Client{
+		Conn:    conn,
+		Send:    make(chan []byte, 2048),
+		Receive: make(chan []byte, 256),
+	}
 	FrontendSocket.Register <- client
 
 	go client.WritePump()
 	go client.ReadPump()
+	go client.MessagePump()
 
 	SendInitialData(client)
 }

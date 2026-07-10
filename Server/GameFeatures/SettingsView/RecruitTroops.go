@@ -2,6 +2,7 @@ package settingsview
 
 import (
 	"CitadelDesktop/Server/GameCommands"
+	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
@@ -424,20 +425,14 @@ func runRecruitTroops(ctx context.Context) {
 		state.RecruitTroopsList = settings
 		sleepDuration := time.Duration(settings.CheckIntervalSec) * time.Second
 
-		// If disconnected, handle reload
-		if !ResponseRegistry.LoginStatus {
-			Logging.AutoRecruitLog("login", "disconnected; waiting for login")
-		LoginWaitLoop:
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(5 * time.Second):
-					if ResponseRegistry.LoginStatus {
-						break LoginWaitLoop
-					}
-				}
+		if !ResponseRegistry.IsGameWebSocketReady() {
+			Logging.AutoRecruitLogf("login", "game websocket not ready; skipping cycle, next cycle in %s", sleepDuration)
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(sleepDuration):
 			}
+			continue
 		}
 
 		Logging.AutoRecruitLog("cycle", "start")
@@ -490,85 +485,116 @@ func runRecruitTroops(ctx context.Context) {
 					continue
 				}
 
-				// Focus castle; inbound **jaa** updates troops/buildings/focus in MessageRouter.
-				Logging.AutoRecruitLogf("focus", "castle=%d kid=%d x=%d y=%d", castleID, kingdomID, x, y)
-				if GameParser.FetchCastleTroops(kingdomID, castleID, x, y) == nil {
-					Logging.AutoRecruitLogf("castle_skip", "castle=%d focus failed; queue state not trusted", castleID)
-					continue
-				}
-				if !recruitPause(ctx, recruitActionDelay) {
+				lease, ok := GameFocus.Acquire(ctx, GameFocus.Request{
+					Owner:   GameFocus.OwnerAutoRecruit,
+					Reason:  fmt.Sprintf("castle=%d", castleID),
+					MaxHold: 30 * time.Second,
+				})
+				if !ok {
 					return
 				}
+				leaseRevoked := false
+				func() {
+					defer lease.Release()
 
-				occupiedQueueStacks := recruitOccupiedQueueStacks(castleInfo)
-				queueCapacity := recruitEffectiveQueueCapacity(expectedQueue, castleInfo)
-				if queueCapacity != expectedQueue.Capacity {
-					Logging.AutoRecruitLogf("capacity", "castle=%d parsed=%d expected=%d", castleID, queueCapacity, expectedQueue.Capacity)
-				}
-				if occupiedQueueStacks >= queueCapacity {
-					Logging.AutoRecruitLogf("queue_full", "castle=%d occupied=%d capacity=%d", castleID, occupiedQueueStacks, queueCapacity)
-					continue
-				}
-
-				stackPlan := recruitStackAmountForUnit(gs, castleInfo, unitID)
-				Logging.AutoRecruitLogf(
-					"stack_capacity",
-					"castle=%d unit=%d amount=%d source=%s barracksOID=%d wid=%d level=%d base=%d ciBonus=%d subBonus=%d calcTotal=%d total=%d boosts=%d activeSubs=%v observedTUA=%d",
-					castleID,
-					unitID,
-					stackPlan.Amount,
-					stackPlan.Source,
-					stackPlan.Breakdown.BuildingOID,
-					stackPlan.Breakdown.BuildingWID,
-					stackPlan.Breakdown.BuildingLevel,
-					stackPlan.Breakdown.BaseStackSize,
-					stackPlan.Breakdown.ConstructionBonus,
-					stackPlan.SubscriptionBonus,
-					stackPlan.CalculatedStackAmount,
-					stackPlan.Breakdown.TotalStackSize,
-					len(stackPlan.Breakdown.Boosts),
-					stackPlan.SubscriptionTypeIDs,
-					stackPlan.ObservedTUA,
-				)
-				costReductionPercent := GameParser.BarracksRecruitCostReductionPercent(
-					castleInfo,
-					stackPlan.Breakdown.BuildingOID,
-					stackPlan.Breakdown.BuildingWID,
-				)
-				for occupiedQueueStacks < queueCapacity {
-					select {
-					case <-ctx.Done():
+					// Focus castle; inbound **jaa** updates troops/buildings/focus in MessageRouter.
+					Logging.AutoRecruitLogf("focus", "castle=%d kid=%d x=%d y=%d", castleID, kingdomID, x, y)
+					if GameParser.FetchCastleTroopsWithLease(lease, kingdomID, castleID, x, y) == nil {
+						if !lease.Active() {
+							leaseRevoked = true
+							Logging.AutoRecruitLogf("lease_revoked", "castle=%d", castleID)
+							return
+						}
+						Logging.AutoRecruitLogf("castle_skip", "castle=%d focus failed; queue state not trusted", castleID)
 						return
-					default:
 					}
-
-					costCheck := GameParser.RecruitUnitResourceCostCheck(gs, castleInfo, unitID, stackPlan.Amount, costReductionPercent, resourceReservations)
-					if costCheck.UnknownUnitCost {
-						Logging.AutoRecruitLogf("resource_unknown", "castle=%d unit=%d amount=%d cost data unavailable; attempting queue", castleID, unitID, stackPlan.Amount)
-					} else if !costCheck.CanAfford() {
-						Logging.AutoRecruitLogf(
-							"resource_skip",
-							"castle=%d unit=%d amount=%d costReduction=%d missing=%s",
-							castleID,
-							unitID,
-							stackPlan.Amount,
-							costReductionPercent,
-							costCheck.MissingSummary(),
-						)
-						break
-					}
-
-					Logging.AutoRecruitLogf("queue", "castle=%d unit=%d amount=%d occupied=%d capacity=%d", castleID, unitID, stackPlan.Amount, occupiedQueueStacks, queueCapacity)
-					// SK must match live session (captured from browser bup); TODO: read from game state when available.
-					const recruitSessionKey = 73
-					payload := GameCommands.BUPPayload(0, unitID, stackPlan.Amount, -1, 0, recruitSessionKey, 0, castleID)
-					Logging.AppendAutoRecruitSendPayload(payload)
-					GameCommands.QueueOutgoingPayload(payload)
-					GameParser.ReserveRecruitResourceCosts(resourceReservations, costCheck)
-					occupiedQueueStacks++
 					if !recruitPause(ctx, recruitActionDelay) {
 						return
 					}
+					if !lease.Active() {
+						leaseRevoked = true
+						Logging.AutoRecruitLogf("lease_revoked", "castle=%d", castleID)
+						return
+					}
+
+					occupiedQueueStacks := recruitOccupiedQueueStacks(castleInfo)
+					queueCapacity := recruitEffectiveQueueCapacity(expectedQueue, castleInfo)
+					if queueCapacity != expectedQueue.Capacity {
+						Logging.AutoRecruitLogf("capacity", "castle=%d parsed=%d expected=%d", castleID, queueCapacity, expectedQueue.Capacity)
+					}
+					if occupiedQueueStacks >= queueCapacity {
+						Logging.AutoRecruitLogf("queue_full", "castle=%d occupied=%d capacity=%d", castleID, occupiedQueueStacks, queueCapacity)
+						return
+					}
+
+					stackPlan := recruitStackAmountForUnit(gs, castleInfo, unitID)
+					Logging.AutoRecruitLogf(
+						"stack_capacity",
+						"castle=%d unit=%d amount=%d source=%s barracksOID=%d wid=%d level=%d base=%d ciBonus=%d subBonus=%d calcTotal=%d total=%d boosts=%d activeSubs=%v observedTUA=%d",
+						castleID,
+						unitID,
+						stackPlan.Amount,
+						stackPlan.Source,
+						stackPlan.Breakdown.BuildingOID,
+						stackPlan.Breakdown.BuildingWID,
+						stackPlan.Breakdown.BuildingLevel,
+						stackPlan.Breakdown.BaseStackSize,
+						stackPlan.Breakdown.ConstructionBonus,
+						stackPlan.SubscriptionBonus,
+						stackPlan.CalculatedStackAmount,
+						stackPlan.Breakdown.TotalStackSize,
+						len(stackPlan.Breakdown.Boosts),
+						stackPlan.SubscriptionTypeIDs,
+						stackPlan.ObservedTUA,
+					)
+					costReductionPercent := GameParser.BarracksRecruitCostReductionPercent(
+						castleInfo,
+						stackPlan.Breakdown.BuildingOID,
+						stackPlan.Breakdown.BuildingWID,
+					)
+					for occupiedQueueStacks < queueCapacity {
+						select {
+						case <-ctx.Done():
+							return
+						default:
+						}
+
+						costCheck := GameParser.RecruitUnitResourceCostCheck(gs, castleInfo, unitID, stackPlan.Amount, costReductionPercent, resourceReservations)
+						if costCheck.UnknownUnitCost {
+							Logging.AutoRecruitLogf("resource_unknown", "castle=%d unit=%d amount=%d cost data unavailable; attempting queue", castleID, unitID, stackPlan.Amount)
+						} else if !costCheck.CanAfford() {
+							Logging.AutoRecruitLogf(
+								"resource_skip",
+								"castle=%d unit=%d amount=%d costReduction=%d missing=%s",
+								castleID,
+								unitID,
+								stackPlan.Amount,
+								costReductionPercent,
+								costCheck.MissingSummary(),
+							)
+							break
+						}
+
+						if !lease.Active() {
+							leaseRevoked = true
+							Logging.AutoRecruitLogf("lease_revoked", "castle=%d send skipped", castleID)
+							return
+						}
+						Logging.AutoRecruitLogf("queue", "castle=%d unit=%d amount=%d occupied=%d capacity=%d", castleID, unitID, stackPlan.Amount, occupiedQueueStacks, queueCapacity)
+						// SK must match live session (captured from browser bup); TODO: read from game state when available.
+						const recruitSessionKey = 73
+						payload := GameCommands.BUPPayload(0, unitID, stackPlan.Amount, -1, 0, recruitSessionKey, 0, castleID)
+						Logging.AppendAutoRecruitSendPayload(payload)
+						GameCommands.QueueOutgoingPayload(payload)
+						GameParser.ReserveRecruitResourceCosts(resourceReservations, costCheck)
+						occupiedQueueStacks++
+						if !recruitPause(ctx, recruitActionDelay) {
+							return
+						}
+					}
+				}()
+				if leaseRevoked {
+					break
 				}
 			}
 		}

@@ -1,16 +1,21 @@
 import type { FeatureSchedules } from './settings/SchedulerTypes';
+import { CommandJsonMockRuntime } from './dev/CommandJsonMock';
 
 type MessageListener = (message: any) => void;
+export type FrontendWebsocketStatus = 'Disconnected' | 'Connecting' | 'Connected';
+type StatusListener = (status: FrontendWebsocketStatus) => void;
 
 class FrontendWebsocketService {
   private socket: WebSocket | null = null;
   private listeners: MessageListener[] = [];
+  private statusListeners: StatusListener[] = [];
   private mock: boolean = import.meta.env.VITE_MOCK_WEBSOCKET === 'true';
-  private status: string = 'Disconnected';
+  private status: FrontendWebsocketStatus = 'Disconnected';
   private url: string | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempt = 0;
   private intentionalClose = false;
+  private mockRuntime: CommandJsonMockRuntime | null = null;
 
   public connect(url: string) {
     this.url = url;
@@ -20,11 +25,17 @@ class FrontendWebsocketService {
 
   private openSocket() {
     if (this.mock) {
-      this.status = 'Connecting';
+      this.setStatus('Connecting');
       setTimeout(() => {
-        this.status = 'Connected';
-        this.sendMockData();
-      }, 1000);
+        this.setStatus('Connected');
+        if (!this.mockRuntime) {
+          this.mockRuntime = new CommandJsonMockRuntime((message) => this.emitMessage(message));
+        }
+        this.mockRuntime.start().catch((error) => {
+          console.error('Failed to start command JSON mock:', error);
+          this.emitLocalAlert('red', 'Could not load dev mock command JSON. Check Logs/RecvCommandsJSON/gbd.json.');
+        });
+      }, 250);
       return;
     }
 
@@ -40,30 +51,43 @@ class FrontendWebsocketService {
       this.socket = null;
     }
 
-    this.status = 'Connecting';
-    this.socket = new WebSocket(this.url);
+    this.setStatus('Connecting');
+    let socket: WebSocket;
+    try {
+      socket = new WebSocket(this.url);
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error);
+      this.setStatus('Disconnected');
+      this.scheduleReconnect();
+      return;
+    }
+    this.socket = socket;
 
-    this.socket.onopen = () => {
+    socket.onopen = () => {
+      if (this.socket !== socket) return;
       this.reconnectAttempt = 0;
-      this.status = 'Connected';
+      this.setStatus('Connected');
       // Defer follow-up requests so server SendInitialData can drain first.
       window.setTimeout(() => this.sendOnOpenRequests(), 300);
     };
 
-    this.socket.onclose = () => {
+    socket.onclose = () => {
+      if (this.socket !== socket) return;
       this.socket = null;
-      this.status = 'Disconnected';
+      this.setStatus('Disconnected');
       this.scheduleReconnect();
     };
 
-    this.socket.onerror = (error) => {
+    socket.onerror = (error) => {
+      if (this.socket !== socket) return;
       console.error('WebSocket error:', error);
     };
 
-    this.socket.onmessage = (event) => {
+    socket.onmessage = (event) => {
+      if (this.socket !== socket) return;
       try {
         const message = JSON.parse(event.data);
-        this.listeners.forEach((listener) => listener(message));
+        this.emitMessage(message);
       } catch (error) {
         console.error('Failed to parse WebSocket message:', error);
       }
@@ -93,46 +117,14 @@ class FrontendWebsocketService {
     }, delay);
   }
 
-  private sendMockData() {
-    // Mock resource update
-    const mockResources = {
-      type: 'globalResourceUpdate',
-      payload: {
-        rubies: 1234,
-        coins: 567890,
-        relic_shard: 100,
-        sceat: 2500,
-        ducat: 50,
-        const_token: 5,
-        upgr_token: 2,
-        affl_tix: 10,
-        plaster: 500,
-        drg_scale: 20,
-        drg_spl: 15,
-        min1: 30,
-        min5: 10,
-        min10: 5,
-        min30: 2,
-        hr1: 1,
-        hr5: 0,
-        hr24: 0,
-        might_pt: 15000,
-        glory_pt: 7500,
-        gallan_pt: 1000,
-      },
-    };
-    this.listeners.forEach((listener) => listener(mockResources));
+  private emitMessage(message: any) {
+    this.listeners.forEach((listener) => listener(message));
+  }
 
-    // Mock alert
-    setTimeout(() => {
-      this.listeners.forEach((listener) => listener({
-        type: 'alert',
-        payload: {
-          category: 'green',
-          message: 'Successfully connected and synced with CitadelOps Network.'
-        }
-      }));
-    }, 2000);
+  private setStatus(status: FrontendWebsocketStatus) {
+    if (this.status === status) return;
+    this.status = status;
+    this.statusListeners.forEach((listener) => listener(status));
   }
 
   public addMessageListener(listener: MessageListener) {
@@ -143,9 +135,18 @@ class FrontendWebsocketService {
     this.listeners = this.listeners.filter((l) => l !== listener);
   }
 
+  public addStatusListener(listener: StatusListener) {
+    this.statusListeners.push(listener);
+    listener(this.status);
+  }
+
+  public removeStatusListener(listener: StatusListener) {
+    this.statusListeners = this.statusListeners.filter((l) => l !== listener);
+  }
+
   public sendMessage(message: object): boolean {
     if (this.mock) {
-      return true;
+      return this.mockRuntime?.handleClientMessage(message) ?? true;
     }
 
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -160,32 +161,15 @@ class FrontendWebsocketService {
   /** Show a toast in the global Alerts stack (works even when the server is not reached). */
   public showAlert(category: 'green' | 'yellow' | 'red', message: string) {
     const alert = { type: 'alert', payload: { category, message } };
-    this.listeners.forEach((listener) => listener(alert));
+    this.emitMessage(alert);
   }
 
   private emitLocalAlert(category: 'green' | 'yellow' | 'red', message: string) {
     this.showAlert(category, message);
   }
 
-  public getStatus(): string {
-    if (this.mock) {
-      return this.status;
-    }
-    if (!this.socket) {
-      return 'Disconnected';
-    }
-    switch (this.socket.readyState) {
-      case WebSocket.OPEN:
-        return 'Connected';
-      case WebSocket.CONNECTING:
-        return 'Connecting';
-      case WebSocket.CLOSING:
-        return 'Closing';
-      case WebSocket.CLOSED:
-        return 'Disconnected';
-      default:
-        return 'Unknown';
-    }
+  public getStatus(): FrontendWebsocketStatus {
+    return this.status;
   }
 
   public startGame() {
@@ -256,6 +240,7 @@ class FrontendWebsocketService {
     maxAttackDelay: number;
     upgradeEreDelayMs: number;
     upgradeCoinThreshold: number;
+    manualFocusIdleSec: number;
     tabPriorities: Record<string, string>;
     featureSchedules: FeatureSchedules;
   }>): boolean {

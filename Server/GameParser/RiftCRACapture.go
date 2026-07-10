@@ -14,7 +14,7 @@ import (
 	"CitadelDesktop/Server/ResponseRegistry"
 )
 
-// NotifyRiftCRALaunchChanged is wired by FrontendWebsocket after a Rift **cra** template is saved or busy state changes.
+// NotifyRiftCRALaunchChanged is wired by FrontendWebsocket after a Rift **cra** template is saved or availability changes.
 var NotifyRiftCRALaunchChanged func()
 
 var (
@@ -127,7 +127,7 @@ func launchWireItem(launch riftattack.SavedLaunch, gs *Models.GameState, schedul
 			"savedAtUnix": launch.SavedAtUnix,
 		}
 	}
-	commanderBusy := gs != nil && CommanderMarchingForLaunch(gs, body.LID, body.SX, body.SY, body.TX, body.TY)
+	commanderStatus, commanderBusy := riftCommanderStatus(gs, body.LID)
 	useFeather := body.HBW == -1 && body.PTT == 1
 	item := map[string]interface{}{
 		"id":               launch.ID,
@@ -142,6 +142,7 @@ func launchWireItem(launch riftattack.SavedLaunch, gs *Models.GameState, schedul
 		"attackValid":      body.AV,
 		"waveCount":        len(body.A),
 		"useTravelFeather": useFeather,
+		"commanderStatus":  commanderStatus,
 		"commanderBusy":    commanderBusy,
 		"canResend":        !commanderBusy,
 	}
@@ -158,6 +159,17 @@ func launchWireItem(launch riftattack.SavedLaunch, gs *Models.GameState, schedul
 		}
 	}
 	return item
+}
+
+func riftCommanderStatus(gs *Models.GameState, commanderID int) (string, bool) {
+	if gs == nil {
+		return "unknown", true
+	}
+	status, known := gs.Movement.CommanderStatus(commanderID, time.Now().Unix())
+	if !known {
+		return "unknown", true
+	}
+	return string(status.Status), status.Busy
 }
 
 // RecordRiftCRASuccess stores feather **TT** from a successful inbound **cra** ack for the matching captured launch.
@@ -221,7 +233,7 @@ func TryCaptureOutboundRiftCRA(payload string) {
 	}
 }
 
-// MaybeNotifyRiftCRALaunchBusyChanged pushes an update when commander busy flags change for saved launches.
+// MaybeNotifyRiftCRALaunchBusyChanged pushes an update when commander status changes for saved launches.
 func MaybeNotifyRiftCRALaunchBusyChanged() {
 	if NotifyRiftCRALaunchChanged == nil {
 		return
@@ -237,8 +249,8 @@ func MaybeNotifyRiftCRALaunchBusyChanged() {
 		if err != nil {
 			continue
 		}
-		busy := CommanderMarchingForLaunch(gs, body.LID, body.SX, body.SY, body.TX, body.TY)
-		parts = append(parts, fmt.Sprintf("%d:%t", body.LID, busy))
+		status, busy := riftCommanderStatus(gs, body.LID)
+		parts = append(parts, fmt.Sprintf("%d:%s:%t", body.LID, status, busy))
 	}
 	key := strings.Join(parts, ",")
 
@@ -310,9 +322,10 @@ func ReplaySavedRiftCRA(launchID string, commanderID, sourceX, sourceY int) erro
 		effectiveCommander = commanderID
 	}
 	gs := Models.GetGameState()
-	if CommanderMarchingForLaunch(gs, effectiveCommander, body.SX, body.SY, body.TX, body.TY) {
-		Logging.RiftLogf("resend_blocked", "commander LID=%d busy", effectiveCommander)
-		return errRiftCRACommanderBusy
+	commanderStatus, commanderBusy := riftCommanderStatus(gs, effectiveCommander)
+	if commanderBusy {
+		Logging.RiftLogf("resend_blocked", "commander LID=%d unavailable status=%s", effectiveCommander, commanderStatus)
+		return errRiftCRACommanderUnavailable
 	}
 
 	if commanderID >= 0 {
@@ -346,7 +359,7 @@ type riftCRAError string
 func (e riftCRAError) Error() string { return string(e) }
 
 const (
-	errNoRiftCRATemplate    riftCRAError = "no saved Rift CRA launch template"
-	errRiftCRACommanderBusy riftCRAError = "commander is busy on another attack march"
-	errRiftGameNotConnected riftCRAError = "game not connected — log in before resending"
+	errNoRiftCRATemplate           riftCRAError = "no saved Rift CRA launch template"
+	errRiftCRACommanderUnavailable riftCRAError = "commander is unavailable; wait for an up-to-date free status"
+	errRiftGameNotConnected        riftCRAError = "game not connected — log in before resending"
 )

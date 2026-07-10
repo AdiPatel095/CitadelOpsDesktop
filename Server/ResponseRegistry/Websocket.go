@@ -2,16 +2,18 @@ package ResponseRegistry
 
 import (
 	"CitadelDesktop/Server/ChromeUserData"
+	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/chromedp/cdproto/network"
@@ -20,19 +22,14 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-var gameRequestIDs = make(map[string]bool)
-
 var (
-	LoginStatus            bool
-	LoginCooldown          int
+	browserLifecycleMu     sync.RWMutex
 	BrowserCtx             context.Context
 	BrowserCancel          context.CancelFunc
 	gameExecutionContextID runtime.ExecutionContextID
+	activeBrowserSession   uint64
 	IncomingMessages       = make(chan []string, 100)
 	DashboardURL           string
-
-	// SendGameLoginStatusFunc is a callback to notify frontend of login status changes
-	SendGameLoginStatusFunc func(bool, int)
 
 	// SendAutoBirdStatusFunc is a callback to notify frontend of auto bird enabled + next wake (unix ms).
 	SendAutoBirdStatusFunc func(enabled bool, nextWakeUp int64)
@@ -65,6 +62,111 @@ var (
 	// EmpireExToken is dynamically parsed from incoming game messages and used for outgoing messages
 	EmpireExToken string = "EmpireEx_21"
 )
+
+var (
+	incomingMessageQueueMu    sync.Mutex
+	incomingMessageQueueCond  = sync.NewCond(&incomingMessageQueueMu)
+	incomingMessageQueue      [][]string
+	incomingMessageParserOnce sync.Once
+)
+
+func enqueueIncomingMessage(message []string) {
+	incomingMessageQueueMu.Lock()
+	incomingMessageQueue = append(incomingMessageQueue, message)
+	incomingMessageQueueCond.Signal()
+	incomingMessageQueueMu.Unlock()
+}
+
+func dispatchIncomingMessages() {
+	for {
+		incomingMessageQueueMu.Lock()
+		for len(incomingMessageQueue) == 0 {
+			incomingMessageQueueCond.Wait()
+		}
+		message := incomingMessageQueue[0]
+		incomingMessageQueue[0] = nil
+		incomingMessageQueue = incomingMessageQueue[1:]
+		if len(incomingMessageQueue) == 0 {
+			incomingMessageQueue = nil
+		}
+		incomingMessageQueueMu.Unlock()
+		IncomingMessages <- message
+	}
+}
+
+func startIncomingMessageParser() {
+	incomingMessageParserOnce.Do(func() {
+		go dispatchIncomingMessages()
+		go incomingMessageParserStartup()
+	})
+}
+
+func browserStateSnapshot() (context.Context, context.CancelFunc, runtime.ExecutionContextID, uint64) {
+	browserLifecycleMu.RLock()
+	ctx := BrowserCtx
+	cancel := BrowserCancel
+	executionContextID := gameExecutionContextID
+	browserSession := activeBrowserSession
+	browserLifecycleMu.RUnlock()
+	return ctx, cancel, executionContextID, browserSession
+}
+
+func installBrowserSession(
+	browserSession uint64,
+	ctx context.Context,
+	cancel context.CancelFunc,
+) {
+	browserLifecycleMu.Lock()
+	activeBrowserSession = browserSession
+	BrowserCtx = ctx
+	BrowserCancel = cancel
+	gameExecutionContextID = 0
+	browserLifecycleMu.Unlock()
+}
+
+func clearBrowserSession(browserSession uint64) {
+	browserLifecycleMu.Lock()
+	if activeBrowserSession == browserSession {
+		activeBrowserSession = 0
+		BrowserCtx = nil
+		BrowserCancel = nil
+		gameExecutionContextID = 0
+	}
+	browserLifecycleMu.Unlock()
+}
+
+func clearGameExecutionContext(browserSession uint64) {
+	browserLifecycleMu.Lock()
+	if activeBrowserSession == browserSession {
+		gameExecutionContextID = 0
+	}
+	browserLifecycleMu.Unlock()
+}
+
+func isActiveBrowserSession(browserSession uint64) bool {
+	browserLifecycleMu.RLock()
+	active := activeBrowserSession == browserSession
+	browserLifecycleMu.RUnlock()
+	return active
+}
+
+func setGameExecutionContext(browserSession uint64, executionContextID runtime.ExecutionContextID) bool {
+	browserLifecycleMu.Lock()
+	defer browserLifecycleMu.Unlock()
+	if activeBrowserSession != browserSession {
+		return false
+	}
+	gameExecutionContextID = executionContextID
+	return true
+}
+
+// IsGameWebSocketReady reports whether automation can safely send game commands.
+// It intentionally does not launch, reload, or otherwise reconnect the game tab.
+func IsGameWebSocketReady() bool {
+	status := GetGameConnectionStatus()
+	ctx, _, executionContextID, _ := browserStateSnapshot()
+	return status.LoggedIn && hasTrackedOpenGameSocket() && ctx != nil && executionContextID != 0
+}
 
 // notifyGameSessionInactive runs the optional inactive handler (e.g. cancel AutoTCI ubc one-shots).
 func notifyGameSessionInactive() {
@@ -122,11 +224,6 @@ var ServerURLMap = map[string]string{
 	"Spain: 2":              "ep-live-mz-cz1-es2-game",
 }
 
-// SetGameLoginStatusCallback sets the callback for game login status notification
-func SetGameLoginStatusCallback(fn func(bool, int)) {
-	SendGameLoginStatusFunc = fn
-}
-
 // SetAutoBirdStatusCallback sets the callback for auto bird status notification.
 func SetAutoBirdStatusCallback(fn func(bool, int64)) {
 	SendAutoBirdStatusFunc = fn
@@ -147,46 +244,97 @@ func SetDashboardURL(url string) {
 	DashboardURL = url
 }
 
-func handleCDPEvent(ev interface{}) {
+func handleCDPEvent(browserSession uint64, ev interface{}) {
+	if !isActiveBrowserSession(browserSession) {
+		return
+	}
+
 	switch ev := ev.(type) {
 	case *runtime.EventBindingCalled:
 		if ev.Name == "citadelNotify" {
-			gameExecutionContextID = ev.ExecutionContextID
+			if !handleCitadelNotifyPayload(ev.Payload) {
+				if setGameExecutionContext(browserSession, ev.ExecutionContextID) &&
+					GetGameConnectionStatus().State == GameConnectionStopped {
+					ctx, _, _, currentBrowserSession := browserStateSnapshot()
+					go func(executionContextID runtime.ExecutionContextID) {
+						if ctx == nil || currentBrowserSession != browserSession ||
+							GetGameConnectionStatus().State != GameConnectionStopped {
+							return
+						}
+						if _, err := disconnectGameSocketInContext(ctx, executionContextID); err != nil {
+							log.Printf("[WebSocket] Stop pending socket: %v", err)
+						}
+						clearGameExecutionContext(browserSession)
+					}(ev.ExecutionContextID)
+				}
+			}
 		}
 	case *network.EventWebSocketCreated:
 		if strings.Contains(ev.URL, "ep-live") {
-			gameRequestIDs[string(ev.RequestID)] = true
-			Logging.BeginWebSocketGameLogSession()
+			if trackGameRequestIDURL(browserSession, string(ev.RequestID), ev.URL) {
+				if !GetGameConnectionStatus().LoggedIn {
+					Models.GetGameState().Movement.InvalidateSnapshot()
+				}
+				Logging.BeginWebSocketGameLogSession()
+			}
+		}
+	case *network.EventWebSocketHandshakeResponseReceived:
+		requestID := string(ev.RequestID)
+		if !isTrackedGameRequestID(browserSession, requestID) {
+			break
+		}
+		if ev.Response != nil && ev.Response.Status == 101 {
+			markGameSocketOpen(browserSession, requestID)
+		} else {
+			status := int64(0)
+			if ev.Response != nil {
+				status = ev.Response.Status
+			}
+			detail := fmt.Sprintf("Game WebSocket handshake failed (HTTP %d)", status)
+			if markGameSocketFailure(browserSession, requestID, detail) {
+				log.Printf("[WebSocket] %s", detail)
+				Models.GetGameState().Movement.InvalidateSnapshot()
+			}
 		}
 	case *network.EventWebSocketClosed:
-		if gameRequestIDs[string(ev.RequestID)] {
+		if tracked, connectionLost := closeTrackedGameSocket(browserSession, string(ev.RequestID)); tracked {
 			log.Println("[WebSocket] Game WebSocket closed (disconnected/kicked)")
-			delete(gameRequestIDs, string(ev.RequestID))
-			EmpireExToken = "EmpireEx_21"
-			LoginStatus = false
-			LoginCooldown = 0
+			if connectionLost {
+				EmpireExToken = "EmpireEx_21"
+				Models.GetGameState().Movement.InvalidateSnapshot()
+				Models.PersistGameStateSnapshot()
+				if BroadcastStaleSnapshot != nil {
+					BroadcastStaleSnapshot()
+				}
+				notifyGameSessionInactive()
+			}
+		}
+	case *network.EventWebSocketFrameError:
+		requestID := string(ev.RequestID)
+		if markGameSocketFailure(browserSession, requestID, ev.ErrorMessage) {
+			log.Printf("[WebSocket] Game WebSocket frame error: %s", ev.ErrorMessage)
+			Models.GetGameState().Movement.InvalidateSnapshot()
 			Models.PersistGameStateSnapshot()
 			if BroadcastStaleSnapshot != nil {
 				BroadcastStaleSnapshot()
 			}
 			notifyGameSessionInactive()
-			if SendGameLoginStatusFunc != nil {
-				go SendGameLoginStatusFunc(false, 0)
-			}
 		}
 	case *network.EventWebSocketFrameReceived:
-		if gameRequestIDs[string(ev.RequestID)] {
+		requestID := string(ev.RequestID)
+		if markGameSocketOpen(browserSession, requestID) {
 			payload := ev.Response.PayloadData
 			if decoded, err := base64.StdEncoding.DecodeString(payload); err == nil {
 				payload = string(decoded)
 			}
 			messageParts := strings.Split(payload, "%")
-			go func() {
-				IncomingMessages <- messageParts
-			}()
+			if len(messageParts) > 2 && messageParts[2] == "lli" {
+				checkLoginStatus(browserSession, requestID, messageParts)
+			}
+			enqueueIncomingMessage(messageParts)
 		}
 	case *network.EventWebSocketFrameSent:
-		if gameRequestIDs[string(ev.RequestID)] {
+		if isTrackedGameRequestID(browserSession, string(ev.RequestID)) {
 			payload := ev.Response.PayloadData
 			if decoded, err := base64.StdEncoding.DecodeString(payload); err == nil {
 				payload = string(decoded)
@@ -211,6 +359,19 @@ func handleCDPEvent(ev interface{}) {
 	}
 }
 
+func handleCitadelNotifyPayload(payload string) bool {
+	var msg struct {
+		Type string `json:"type"`
+		Kind string `json:"kind"`
+	}
+	if err := json.Unmarshal([]byte(payload), &msg); err != nil || msg.Type != "gameActivity" {
+		return false
+	}
+	st := Models.GetSettingsState()
+	GameFocus.RecordManualActivity(msg.Kind, st.ManualFocusIdleDuration())
+	return true
+}
+
 func extractMessageType(payload string) string {
 	op := effectiveWireOpcode(strings.Split(payload, "%"))
 	if op != "" {
@@ -228,17 +389,37 @@ const gameInjectionJS = `
 				if (!OriginalWebSocket) return;
 
 				globalObj.activeGameSockets = [];
+				globalObj.authenticatedGameSocket = null;
 
 				const handler = {
 					construct(target, args) {
 						const url = args[0] || "";
 						const ws = new target(...args);
 
-						const isGameServer = typeof url === 'string' && url.includes("ep-live");
+							const isGameServer = typeof url === 'string' && url.includes("ep-live");
 						if (isGameServer) {
 							globalObj.activeGameSockets.push(ws);
-							if (globalObj.citadelNotify) {
-								globalObj.citadelNotify(url);
+							ws.addEventListener("message", function(event) {
+								if (typeof event.data !== "string") return;
+								const parts = event.data.split("%");
+								if (parts.length > 4 && parts[2] === "lli") {
+									if (parts[4] === "0") {
+										globalObj.authenticatedGameSocket = ws;
+									} else if (globalObj.authenticatedGameSocket === ws) {
+										globalObj.authenticatedGameSocket = null;
+									}
+								}
+							});
+							ws.addEventListener("close", function() {
+								if (globalObj.authenticatedGameSocket === ws) {
+									globalObj.authenticatedGameSocket = null;
+								}
+									globalObj.activeGameSockets = globalObj.activeGameSockets.filter(function(socket) {
+										return socket !== ws;
+									});
+								}, { once: true });
+								if (globalObj.citadelNotify) {
+									globalObj.citadelNotify(url);
 							}
 						}
 						return ws;
@@ -247,25 +428,61 @@ const gameInjectionJS = `
 
 				globalObj.WebSocket = new Proxy(OriginalWebSocket, handler);
 			
-				const senderFunc = function(data) {
-					if (globalObj.activeGameSockets.length > 0 && globalObj.activeGameSockets[0].readyState === 1) {
-						globalObj.activeGameSockets[0].send(data);
-					}
-				};
+					const senderFunc = function(data) {
+						const authenticated = globalObj.authenticatedGameSocket;
+						if (authenticated && authenticated.readyState === 1) {
+							authenticated.send(data);
+							return true;
+						}
+						for (let i = 0; i < globalObj.activeGameSockets.length; i++) {
+							const socket = globalObj.activeGameSockets[i];
+							if (socket && socket.readyState === 1) {
+								socket.send(data);
+								return true;
+							}
+						}
+						return false;
+					};
 
 				globalObj.sendToGameSocket = senderFunc;
 
-				const disconnectFunc = function() {
-					if (globalObj.activeGameSockets.length > 0) {
-						for (let i = 0; i < globalObj.activeGameSockets.length; i++) {
-							globalObj.activeGameSockets[i].close();
+					const disconnectFunc = function() {
+						const count = globalObj.activeGameSockets.length;
+						if (globalObj.activeGameSockets.length > 0) {
+							const sockets = globalObj.activeGameSockets.slice();
+							globalObj.activeGameSockets = [];
+							for (let i = 0; i < sockets.length; i++) {
+								sockets[i].close();
+							}
 						}
-						globalObj.activeGameSockets = [];
-					}
+						globalObj.authenticatedGameSocket = null;
+						return count;
 				};
 
-				globalObj.disconnectGameSocket = disconnectFunc;
-			};
+					globalObj.disconnectGameSocket = disconnectFunc;
+
+					if (globalObj.document && !globalObj._citadelActivityHooked) {
+						globalObj._citadelActivityHooked = true;
+						let lastMoveNotify = 0;
+						let lastAnyNotify = 0;
+						const notifyActivity = function(kind) {
+							const now = Date.now();
+							if (kind === "pointermove" && now - lastMoveNotify < 1500) return;
+							if (kind !== "pointermove" && now - lastAnyNotify < 250) return;
+							if (kind === "pointermove") lastMoveNotify = now;
+							lastAnyNotify = now;
+							if (globalObj.citadelNotify) {
+								globalObj.citadelNotify(JSON.stringify({ type: "gameActivity", kind: kind }));
+							}
+						};
+						const opts = { capture: true, passive: true };
+						globalObj.document.addEventListener("pointerdown", () => notifyActivity("pointerdown"), opts);
+						globalObj.document.addEventListener("pointermove", () => notifyActivity("pointermove"), opts);
+						globalObj.document.addEventListener("wheel", () => notifyActivity("wheel"), opts);
+						globalObj.document.addEventListener("keydown", () => notifyActivity("keydown"), true);
+						globalObj.addEventListener("focus", () => notifyActivity("focus"), true);
+					}
+				};
 
 			if (typeof globalThis !== 'undefined') applyHook(globalThis);
 			if (typeof window !== 'undefined') applyHook(window);
@@ -327,8 +544,14 @@ const gameInjectionJS = `
 // StartGameBrowser launches ChromeDP and hooks the game socket
 func StartGameBrowser(dashboardURL string) {
 
-	if BrowserCancel != nil {
+	_, currentCancel, _, _ := browserStateSnapshot()
+	if currentCancel != nil {
 		log.Println("Browser already running")
+		return
+	}
+	startGeneration, browserSession, started := beginGameBrowserStart()
+	if !started {
+		log.Println("Browser start already in progress")
 		return
 	}
 
@@ -371,28 +594,39 @@ func StartGameBrowser(dashboardURL string) {
 			log.Printf("Failed to initialize browser: %v", err)
 		}
 	}
+	if !isCurrentGameBrowserStart(startGeneration) {
+		browserCancel()
+		allocCancel()
+		return
+	}
 
 	// Create a 2nd tab for the game
 	gameCtx, gameCancel := chromedp.NewContext(browserCtx)
 
-	BrowserCtx = gameCtx
-	BrowserCancel = func() {
+	cancelThisBrowser := func() {
 		if gameCancel != nil {
 			gameCancel()
 		}
 		browserCancel()
 		allocCancel()
-		BrowserCancel = nil
-		BrowserCtx = nil
+		clearBrowserSession(browserSession)
+	}
+	installBrowserSession(browserSession, gameCtx, cancelThisBrowser)
+	if !isCurrentGameBrowserStart(startGeneration) {
+		cancelThisBrowser()
+		return
 	}
 
-	chromedp.ListenTarget(gameCtx, handleCDPEvent)
+	chromedp.ListenTarget(gameCtx, func(ev interface{}) {
+		handleCDPEvent(browserSession, ev)
+	})
 
 	go func() {
 		// Reset game state for fresh connection (do not persist here: memory may still be empty on
 		// first launch and would overwrite a good on-disk snapshot from a previous run).
 		Models.GetGameState().Reset()
 		notifyGameStateReset()
+		startIncomingMessageParser()
 
 		err := chromedp.Run(gameCtx,
 			chromedp.ActionFunc(func(ctx context.Context) error {
@@ -410,79 +644,133 @@ func StartGameBrowser(dashboardURL string) {
 
 		if err != nil {
 			log.Printf("Chromedp setup error: %v", err)
-			StopGame()
+			if markGameConnectionError(startGeneration, false, "Could not start the game browser") {
+				cancelThisBrowser()
+				notifyGameSessionInactive()
+			}
 			return
 		}
 
-		go StartWebsocketChannels(gameCtx)
-		go incomingMessageParserStartup()
+		go StartWebsocketChannels(gameCtx, browserSession)
 		go StartMemoryMonitor(gameCtx)
 
 		<-gameCtx.Done()
 
 		// Cleanup
+		Models.GetGameState().Movement.InvalidateSnapshot()
 		Models.PersistGameStateSnapshot()
-		LoginStatus = false
-		LoginCooldown = 0
-		notifyGameSessionInactive()
-		if SendGameLoginStatusFunc != nil {
-			SendGameLoginStatusFunc(false, 0)
+		cancelThisBrowser()
+		if markGameContextEnded(browserSession) {
+			notifyGameSessionInactive()
 		}
 	}()
 }
 
 func StopGame() {
+	Models.GetGameState().Movement.InvalidateSnapshot()
 	Models.PersistGameStateSnapshot()
-	if BrowserCancel != nil {
-		BrowserCancel() // Cancel chromedp context
+	markGameConnectionStopped(false)
+	_, cancel, _, _ := browserStateSnapshot()
+	if cancel != nil {
+		cancel() // Cancel chromedp context
 	}
-	LoginStatus = false
-	LoginCooldown = 0
 	notifyGameSessionInactive()
-	if SendGameLoginStatusFunc != nil {
-		SendGameLoginStatusFunc(false, 0)
-	}
 }
 
 // DisconnectGameWebSocket securely closes out the WebSocket specifically without shutting down the ChromeDP instance
-func DisconnectGameWebSocket() {
-	if BrowserCtx != nil && gameExecutionContextID != 0 {
-		err := chromedp.Run(BrowserCtx, chromedp.ActionFunc(func(ctx context.Context) error {
-			exp := "if (window.disconnectGameSocket) window.disconnectGameSocket();"
-			_, _, err := runtime.Evaluate(exp).WithContextID(gameExecutionContextID).Do(ctx)
-			return err
-		}))
-		if err != nil {
-			log.Println("Failed to disconnect game websocket via CDP:", err)
+func disconnectGameSocketInContext(ctx context.Context, executionContextID runtime.ExecutionContextID) (int, error) {
+	closed := -1
+	err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+		expression := `(() => {
+			if (typeof globalThis.disconnectGameSocket !== "function") return -1;
+			return globalThis.disconnectGameSocket();
+		})()`
+		result, exception, evalErr := runtime.Evaluate(expression).
+			WithContextID(executionContextID).
+			WithReturnByValue(true).
+			Do(ctx)
+		if evalErr != nil {
+			return evalErr
 		}
+		if exception != nil {
+			return exception
+		}
+		if result == nil || len(result.Value) == 0 {
+			return fmt.Errorf("game socket disconnect returned no result")
+		}
+		if err := json.Unmarshal(result.Value, &closed); err != nil {
+			return fmt.Errorf("decode game socket disconnect result: %w", err)
+		}
+		if closed < 0 {
+			return fmt.Errorf("disconnectGameSocket is unavailable in the game execution context")
+		}
+		return nil
+	}))
+	return closed, err
+}
+
+func DisconnectGameWebSocket() {
+	ctx, _, executionContextID, browserSession := browserStateSnapshot()
+	status := GetGameConnectionStatus()
+	if ctx == nil || executionContextID == 0 {
+		if status.LoggedIn || status.SocketConnected {
+			log.Println("Failed to disconnect game websocket: game execution context is not ready")
+			return
+		}
+		markGameConnectionStopped(ctx != nil)
+		Models.GetGameState().Movement.InvalidateSnapshot()
+		notifyGameSessionInactive()
+		return
 	}
-	// Clear stale WebSocket request IDs so they don't interfere on reconnect
-	gameRequestIDs = make(map[string]bool)
+
+	stopGeneration := beginGameConnectionStop()
+	closed, err := disconnectGameSocketInContext(ctx, executionContextID)
+	if err != nil || (closed == 0 && (status.LoggedIn || status.SocketConnected)) {
+		finishGameConnectionStop(stopGeneration, ctx.Err() == nil, false)
+		if err == nil {
+			err = fmt.Errorf("game execution context reported no active game sockets")
+		}
+		log.Println("Failed to disconnect game websocket via CDP:", err)
+		if status.State == GameConnectionCooldown && status.RetryAt > 0 {
+			scheduleGameLoginRetry(stopGeneration, status.RetryAt, status.Cooldown)
+		}
+		return
+	}
+	if !finishGameConnectionStop(stopGeneration, ctx.Err() == nil, true) {
+		return
+	}
+	Models.GetGameState().Movement.InvalidateSnapshot()
+	clearGameExecutionContext(browserSession)
 	EmpireExToken = "EmpireEx_21"
-	LoginStatus = false
 	notifyGameSessionInactive()
-	if SendGameLoginStatusFunc != nil {
-		SendGameLoginStatusFunc(false, 0)
-	}
 }
 
 // ReloadGameTab reloads the game tab to trigger a fresh login without restarting the browser
 func ReloadGameTab() {
-	if BrowserCtx == nil {
+	ctx, cancel, _, browserSession := browserStateSnapshot()
+	if ctx == nil || ctx.Err() != nil {
 		log.Println("Browser not running. Launching browser first...")
+		if cancel != nil {
+			cancel()
+		}
 		StartGameBrowser(DashboardURL)
 		return
 	}
 
 	Models.PersistGameStateSnapshot()
+	wasLoggedIn := GetGameConnectionStatus().LoggedIn
+	reloadGeneration := beginGameConnectionAttempt(GameConnectionReconnecting, true)
+	clearGameExecutionContext(browserSession)
+	if wasLoggedIn {
+		notifyGameSessionInactive()
+	}
 	// Reset game state for fresh connection
 	Models.GetGameState().Reset()
 	notifyGameStateReset()
-	gameRequestIDs = make(map[string]bool)
 	EmpireExToken = "EmpireEx_21"
 
 	go func() {
-		err := chromedp.Run(BrowserCtx,
+		err := chromedp.Run(ctx,
 			chromedp.ActionFunc(func(ctx context.Context) error {
 				return page.BringToFront().Do(ctx)
 			}),
@@ -492,11 +780,12 @@ func ReloadGameTab() {
 		)
 		if err != nil {
 			log.Printf("Failed to reload game tab: %v", err)
+			markGameConnectionError(reloadGeneration, ctx.Err() == nil, "Could not reload the game tab")
 		}
 	}()
 }
 
-func StartWebsocketChannels(ctx context.Context) {
+func StartWebsocketChannels(ctx context.Context, browserSession uint64) {
 	// The read portion is now handled by the JS hook pushing to IncomingMessages
 
 	go func() {
@@ -519,28 +808,41 @@ func StartWebsocketChannels(ctx context.Context) {
 					continue
 				}
 
-				if BrowserCtx != nil && gameExecutionContextID != 0 {
-					logAppOutboundPayload(string(payload))
-					// Escape single quotes in payload
-					safePayload := strings.ReplaceAll(string(payload), "'", "\\'")
-					safePayload = strings.ReplaceAll(safePayload, "\n", "")
-					safePayload = strings.ReplaceAll(safePayload, "\r", "")
-
-					// Run CDP command asynchronously so we don't add CDP overhead to the strict 25ms rate limit
-					go func(sp string) {
-						err := chromedp.Run(BrowserCtx, chromedp.ActionFunc(func(ctx context.Context) error {
-							exp := fmt.Sprintf("window.sendToGameSocket('%s')", sp)
-							_, _, err := runtime.Evaluate(exp).WithContextID(gameExecutionContextID).Do(ctx)
-							return err
-						}))
-						if err != nil {
-							log.Println("write via CDP:", err)
-						}
-					}(safePayload)
-
-					// We still sleep to preserve rate limiting
-					time.Sleep(25 * time.Millisecond)
+				browserCtx, _, executionContextID, currentBrowserSession := browserStateSnapshot()
+				if browserCtx == nil || executionContextID == 0 || currentBrowserSession != browserSession {
+					log.Println("write via CDP: game execution context is not ready")
+					continue
 				}
+
+				payloadLiteral, err := json.Marshal(string(payload))
+				if err != nil {
+					log.Println("write via CDP: encode payload:", err)
+					continue
+				}
+				expression := fmt.Sprintf("globalThis.sendToGameSocket && globalThis.sendToGameSocket(%s)", payloadLiteral)
+				sent := false
+				err = chromedp.Run(browserCtx, chromedp.ActionFunc(func(ctx context.Context) error {
+					result, exception, evalErr := runtime.Evaluate(expression).
+						WithContextID(executionContextID).
+						WithReturnByValue(true).
+						Do(ctx)
+					if evalErr != nil {
+						return evalErr
+					}
+					if exception != nil {
+						return fmt.Errorf("game socket send exception: %s", exception.Text)
+					}
+					sent = result != nil && string(result.Value) == "true"
+					return nil
+				}))
+				if err != nil {
+					log.Println("write via CDP:", err)
+				} else if !sent {
+					log.Println("write via CDP: no open game websocket")
+				} else {
+					logAppOutboundPayload(string(payload))
+				}
+				time.Sleep(25 * time.Millisecond)
 			}
 		}
 	}()
@@ -563,54 +865,63 @@ func incomingMessageParserStartup() {
 			log.Printf("[WebSocket] Captured dynamic EmpireExToken: %s", EmpireExToken)
 		}
 
-		if message[2] == "lli" {
-			checkLoginStatus(message)
-		}
 		if MessageRouterFunc != nil {
 			MessageRouterFunc(message)
 		}
 	}
 }
 
-func checkLoginStatus(message []string) {
+func scheduleGameLoginRetry(generation uint64, retryAt int64, cooldown int) {
+	go func() {
+		waitDuration := time.Until(time.UnixMilli(retryAt))
+		log.Printf("[Login] Cooldown %ds detected. Will reload game tab in %v", cooldown, waitDuration.Round(time.Second))
+		if waitDuration > 0 {
+			timer := time.NewTimer(waitDuration)
+			defer timer.Stop()
+			<-timer.C
+		}
+		if isCurrentGameLoginRetry(generation, retryAt) {
+			log.Println("[Login] Cooldown expired. Reloading game tab...")
+			ReloadGameTab()
+		}
+	}()
+}
+
+func checkLoginStatus(browserSession uint64, requestID string, message []string) {
 	if len(message) <= 4 {
 		return
 	}
 	if message[4] == "0" {
-		LoginStatus = true
-		LoginCooldown = 0
+		if !markGameLoginSucceeded(browserSession, requestID) {
+			return
+		}
 		if GameSessionActiveHandler != nil {
 			go GameSessionActiveHandler()
 		}
-		if SendGameLoginStatusFunc != nil {
-			go SendGameLoginStatusFunc(LoginStatus, LoginCooldown)
+		ctx, _, _, _ := browserStateSnapshot()
+		if ctx != nil {
+			go chromedp.Run(ctx, chromedp.Evaluate(`window.hideInitializingOverlay()`, nil))
 		}
-		if BrowserCtx != nil {
-			go chromedp.Run(BrowserCtx, chromedp.Evaluate(`window.hideInitializingOverlay()`, nil))
-		}
+		return
 	}
 	if message[4] == "453" {
 		if len(message) <= 5 {
 			return
 		}
-		cooldownString := message[5]
-		cooldownStr := strings.TrimPrefix(cooldownString, "{\"CD\":")
-		cooldownStr = strings.TrimSuffix(cooldownStr, "}")
-		LoginCooldown, _ = strconv.Atoi(cooldownStr)
-		if SendGameLoginStatusFunc != nil {
-			go SendGameLoginStatusFunc(LoginStatus, LoginCooldown)
+		var payload struct {
+			Cooldown int `json:"CD"`
 		}
+		if err := json.Unmarshal([]byte(message[5]), &payload); err != nil {
+			log.Printf("[Login] Could not parse cooldown payload: %v", err)
+			return
+		}
+		cooldown := payload.Cooldown
+		generation, retryAt, ok := markGameLoginCooldown(browserSession, requestID, cooldown)
+		if !ok {
+			return
+		}
+		Models.GetGameState().Movement.InvalidateSnapshot()
 		// Auto-reload 5 seconds after cooldown expires
-		if LoginCooldown > 0 {
-			go func(cd int) {
-				waitDuration := time.Duration(cd+5) * time.Second
-				log.Printf("[Login] Cooldown %ds detected. Will reload game tab in %v", cd, waitDuration)
-				time.Sleep(waitDuration)
-				if !LoginStatus {
-					log.Println("[Login] Cooldown expired. Reloading game tab...")
-					ReloadGameTab()
-				}
-			}(LoginCooldown)
-		}
+		scheduleGameLoginRetry(generation, retryAt, cooldown)
 	}
 }

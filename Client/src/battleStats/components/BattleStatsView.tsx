@@ -136,30 +136,44 @@ const BattleStatsView: React.FC = () => {
     [snapshot, allianceInfo]
   );
   const allianceMemberKeys = useMemo(() => allianceMemberKeysFromOptions(allianceMembers), [allianceMembers]);
-  const homeAllianceKey = useMemo(
+  const ownPlayerKeys = useMemo(() => ownPlayerKeysFromSnapshot(snapshot), [snapshot]);
+  const playerHasAllianceEntry = useMemo(
+    () => allianceMemberKeys.size > 0 && (ownPlayerKeys.size === 0 || setsOverlap(allianceMemberKeys, ownPlayerKeys)),
+    [allianceMemberKeys, ownPlayerKeys]
+  );
+  const visibilityPlayerKeys = useMemo(
+    () => (playerHasAllianceEntry ? allianceMemberKeys : ownPlayerKeys),
+    [playerHasAllianceEntry, allianceMemberKeys, ownPlayerKeys]
+  );
+  const rosterHomeAllianceKey = useMemo(
     () => resolveHomeAllianceKey(reports, allianceMemberKeys),
     [reports, allianceMemberKeys]
   );
+  const homeAllianceKey = playerHasAllianceEntry ? rosterHomeAllianceKey : '';
   const reportsWithBothPlayers = useMemo(
     () => reports.filter(hasBothPlayers),
     [reports]
   );
+  const scopedReports = useMemo(
+    () => reportsWithBothPlayers.filter((report) => reportIncludesAllianceLens(report, visibilityPlayerKeys, homeAllianceKey)),
+    [reportsWithBothPlayers, visibilityPlayerKeys, homeAllianceKey]
+  );
 
   const playerOptions = useMemo(
-    () => buildAlliancePlayerOptions(reports, allianceMembers, allianceMemberKeys, homeAllianceKey),
-    [reports, allianceMembers, allianceMemberKeys, homeAllianceKey]
+    () => buildAlliancePlayerOptions(scopedReports, allianceMembers, visibilityPlayerKeys, homeAllianceKey),
+    [scopedReports, allianceMembers, visibilityPlayerKeys, homeAllianceKey]
   );
 
   const allianceOptions = useMemo(() => {
-    const allianceOptionReports = reportsWithBothPlayers
+    const allianceOptionReports = scopedReports
       .filter((report) =>
         selectedOpponentPlayer === allOption ||
-        reportMatchesOpponentPlayer(report, selectedPlayer, selectedOpponentPlayer, allianceMemberKeys, homeAllianceKey)
+        reportMatchesOpponentPlayer(report, selectedPlayer, selectedOpponentPlayer, visibilityPlayerKeys, homeAllianceKey)
       );
     const rows = buildAllianceAggregates(
       allianceOptionReports,
       selectedPlayer,
-      allianceMemberKeys,
+      visibilityPlayerKeys,
       homeAllianceKey
     );
 
@@ -167,11 +181,11 @@ const BattleStatsView: React.FC = () => {
       { value: allOption, label: 'All opponent alliances' },
       ...rows.map((row) => ({ value: row.key, label: row.name })),
     ];
-  }, [reportsWithBothPlayers, selectedPlayer, selectedOpponentPlayer, allianceMemberKeys, homeAllianceKey]);
+  }, [scopedReports, selectedPlayer, selectedOpponentPlayer, visibilityPlayerKeys, homeAllianceKey]);
 
   const opponentPlayerOptions = useMemo(
-    () => buildOpponentPlayerOptions(reportsWithBothPlayers, selectedPlayer, selectedAlliance, allianceMemberKeys, homeAllianceKey),
-    [reportsWithBothPlayers, selectedPlayer, selectedAlliance, allianceMemberKeys, homeAllianceKey]
+    () => buildOpponentPlayerOptions(scopedReports, selectedPlayer, selectedAlliance, visibilityPlayerKeys, homeAllianceKey),
+    [scopedReports, selectedPlayer, selectedAlliance, visibilityPlayerKeys, homeAllianceKey]
   );
 
   useEffect(() => {
@@ -201,7 +215,7 @@ const BattleStatsView: React.FC = () => {
     const endMs = dateEndMs(endDate);
     const query = searchTerm.trim().toLowerCase();
 
-    return reportsWithBothPlayers
+    return scopedReports
       .filter((report) => {
         const reportTime = reportTimeMs(report);
         if (startMs !== null && reportTime !== null && reportTime < startMs) {
@@ -212,29 +226,29 @@ const BattleStatsView: React.FC = () => {
         }
         if (
           selectedResult !== allOption &&
-          relativeOutcomeLabel(report, selectedPlayer, allianceMemberKeys, homeAllianceKey) !== selectedResult
+          relativeOutcomeLabel(report, selectedPlayer, visibilityPlayerKeys, homeAllianceKey) !== selectedResult
         ) {
           return false;
         }
         if (selectedPlayer !== allOption && !reportIncludesPlayer(report, selectedPlayer)) {
           return false;
         }
-        if (selectedPlayer === allOption && !reportIncludesAllianceLens(report, allianceMemberKeys, homeAllianceKey)) {
+        if (selectedPlayer === allOption && !reportIncludesAllianceLens(report, visibilityPlayerKeys, homeAllianceKey)) {
           return false;
         }
         if (
           selectedAlliance !== allOption &&
-          !reportMatchesOpponentAlliance(report, selectedPlayer, selectedAlliance, allianceMemberKeys, homeAllianceKey)
+          !reportMatchesOpponentAlliance(report, selectedPlayer, selectedAlliance, visibilityPlayerKeys, homeAllianceKey)
         ) {
           return false;
         }
         if (
           selectedOpponentPlayer !== allOption &&
-          !reportMatchesOpponentPlayer(report, selectedPlayer, selectedOpponentPlayer, allianceMemberKeys, homeAllianceKey)
+          !reportMatchesOpponentPlayer(report, selectedPlayer, selectedOpponentPlayer, visibilityPlayerKeys, homeAllianceKey)
         ) {
           return false;
         }
-        if (selectedRole !== allOption && reportRole(report, selectedPlayer) !== selectedRole) {
+        if (selectedRole !== allOption && reportRole(report, selectedPlayer, visibilityPlayerKeys, homeAllianceKey) !== selectedRole) {
           return false;
         }
         if (query && !searchBlob(report).includes(query)) {
@@ -243,26 +257,26 @@ const BattleStatsView: React.FC = () => {
         return true;
       })
       .sort((a, b) => (reportTimeMs(b) ?? 0) - (reportTimeMs(a) ?? 0));
-  }, [reportsWithBothPlayers, searchTerm, selectedAlliance, selectedOpponentPlayer, selectedPlayer, selectedResult, selectedRole, startDate, endDate, allianceMemberKeys, homeAllianceKey]);
+  }, [scopedReports, searchTerm, selectedAlliance, selectedOpponentPlayer, selectedPlayer, selectedResult, selectedRole, startDate, endDate, visibilityPlayerKeys, homeAllianceKey]);
 
   const summary = useMemo(
-    () => summarizeReports(filteredReports, selectedPlayer, allianceMemberKeys, homeAllianceKey),
-    [filteredReports, selectedPlayer, allianceMemberKeys, homeAllianceKey]
+    () => summarizeReports(filteredReports, selectedPlayer, visibilityPlayerKeys, homeAllianceKey),
+    [filteredReports, selectedPlayer, visibilityPlayerKeys, homeAllianceKey]
   );
   const detailReport = useMemo(() => {
     if (!selectedReportID) {
       return null;
     }
 
-    return reports.find((report) => reportID(report) === selectedReportID) ?? null;
-  }, [reports, selectedReportID]);
+    return filteredReports.find((report) => reportID(report) === selectedReportID) ?? null;
+  }, [filteredReports, selectedReportID]);
   const playerAggregates = useMemo(
-    () => buildPlayerAggregates(filteredReports, selectedPlayer, allianceMemberKeys, homeAllianceKey),
-    [filteredReports, selectedPlayer, allianceMemberKeys, homeAllianceKey]
+    () => buildPlayerAggregates(filteredReports, selectedPlayer, visibilityPlayerKeys, homeAllianceKey),
+    [filteredReports, selectedPlayer, visibilityPlayerKeys, homeAllianceKey]
   );
   const allianceAggregates = useMemo(
-    () => buildAllianceAggregates(filteredReports, selectedPlayer, allianceMemberKeys, homeAllianceKey),
-    [filteredReports, selectedPlayer, allianceMemberKeys, homeAllianceKey]
+    () => buildAllianceAggregates(filteredReports, selectedPlayer, visibilityPlayerKeys, homeAllianceKey),
+    [filteredReports, selectedPlayer, visibilityPlayerKeys, homeAllianceKey]
   );
   const visibleReports = useMemo(
     () => filteredReports.slice(0, visibleReportLimit),
@@ -284,8 +298,8 @@ const BattleStatsView: React.FC = () => {
     return (
       <ReportDetailPage
         report={detailReport}
-        outcome={relativeOutcomeLabel(detailReport, selectedPlayer, allianceMemberKeys, homeAllianceKey)}
-        perspectiveSide={friendlySideForReport(detailReport, selectedPlayer, allianceMemberKeys, homeAllianceKey)}
+        outcome={relativeOutcomeLabel(detailReport, selectedPlayer, visibilityPlayerKeys, homeAllianceKey)}
+        perspectiveSide={friendlySideForReport(detailReport, selectedPlayer, visibilityPlayerKeys, homeAllianceKey)}
         onBack={() => setSelectedReportID(null)}
       />
     );
@@ -403,7 +417,7 @@ const BattleStatsView: React.FC = () => {
                 <CardTitle>Reports</CardTitle>
                 <p className="text-xs text-text-muted mt-1">
                   Showing {formatNumber(visibleReports.length)} of {formatNumber(filteredReports.length)} filtered reports
-                  <span className="text-text-muted/70"> · {formatNumber(reportsWithBothPlayers.length)} parsed</span>
+                  <span className="text-text-muted/70"> · {formatNumber(scopedReports.length)} parsed</span>
                 </p>
               </div>
               <Badge variant="secondary">{isLoading ? 'Loading' : 'Ready'}</Badge>
@@ -436,7 +450,7 @@ const BattleStatsView: React.FC = () => {
                         <CombatantCell combatant={report.defender} />
                       </td>
                       <td className="px-4 py-3">
-                        <ReportResultBadges result={relativeOutcomeLabel(report, selectedPlayer, allianceMemberKeys, homeAllianceKey)} />
+                        <ReportResultBadges result={relativeOutcomeLabel(report, selectedPlayer, visibilityPlayerKeys, homeAllianceKey)} />
                       </td>
                       <td className="px-4 py-3 text-text-main whitespace-nowrap">{battleLocationLabel(report)}</td>
                       <td className="px-4 py-3 text-right text-error font-semibold">
@@ -1588,6 +1602,36 @@ function allianceMemberKeysFromOptions(options: AllianceMemberOption[]): Set<str
   return keys;
 }
 
+function setsOverlap(left: Set<string>, right: Set<string>): boolean {
+  for (const value of left) {
+    if (right.has(value)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function ownPlayerKeysFromSnapshot(snapshot: Record<string, unknown> | null): Set<string> {
+  const keys = new Set<string>();
+  const gameState = isRecord(snapshot?.gameState) ? snapshot.gameState : null;
+  const player = isRecord(gameState?.player) ? gameState.player : null;
+  const id = stringValue(
+    gameState?.playerId ??
+    gameState?.playerID ??
+    gameState?.PlayerID ??
+    player?.id ??
+    player?.ID ??
+    player?.playerID ??
+    player?.playerId
+  );
+
+  if (id) {
+    keys.add(id);
+  }
+
+  return keys;
+}
+
 function buildAlliancePlayerOptions(
   reports: ParsedReport[],
   allianceMembers: AllianceMemberOption[],
@@ -1603,6 +1647,18 @@ function buildAlliancePlayerOptions(
 
   const options = new Map<string, string>();
   reports.forEach((report) => {
+    const explicitSide = allianceMemberKeys.size === 0 && homeAllianceKey === ''
+      ? explicitOwnSideForReport(report)
+      : '';
+    if (explicitSide) {
+      const combatant = combatantForSide(report, explicitSide);
+      const key = combatantKey(combatant);
+      if (key) {
+        options.set(key, combatantName(combatant));
+      }
+      return;
+    }
+
     [report.attacker, report.defender].forEach((combatant) => {
       const key = combatantKey(combatant);
       if (key && combatantInAllianceLens(combatant, allianceMemberKeys, homeAllianceKey)) {
@@ -1612,7 +1668,7 @@ function buildAlliancePlayerOptions(
   });
 
   return [
-    { value: allOption, label: 'All alliance players' },
+    { value: allOption, label: 'Own reports' },
     ...Array.from(options.entries())
       .sort((a, b) => a[1].localeCompare(b[1]))
       .map(([value, label]) => ({ value, label })),
@@ -1637,17 +1693,6 @@ function resolveHomeAllianceKey(reports: ParsedReport[], allianceMemberKeys: Set
       }
     });
   });
-
-  if (counts.size === 0) {
-    reports.forEach((report) => {
-      [report.attacker, report.defender].forEach((combatant) => {
-        const key = allianceKey(combatant);
-        if (key) {
-          counts.set(key, (counts.get(key) ?? 0) + 1);
-        }
-      });
-    });
-  }
 
   return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
 }
@@ -1679,7 +1724,7 @@ function reportIncludesAllianceLens(
   homeAllianceKey: string
 ): boolean {
   if (allianceMemberKeys.size === 0 && homeAllianceKey === '') {
-    return true;
+    return explicitOwnSideForReport(report) !== '';
   }
   return (
     combatantInAllianceLens(report.attacker, allianceMemberKeys, homeAllianceKey) ||
@@ -1703,6 +1748,14 @@ function buildPlayerAggregates(
       if (combatantMatches(report.defender, selectedPlayerKey)) {
         addPlayerAggregate(rows, report, 'defender');
       }
+      return;
+    }
+
+    const explicitSide = allianceMemberKeys.size === 0 && homeAllianceKey === ''
+      ? explicitOwnSideForReport(report)
+      : '';
+    if (explicitSide) {
+      addPlayerAggregate(rows, report, explicitSide);
       return;
     }
 
@@ -1903,6 +1956,17 @@ function opponentSidesForReport(
     return sides;
   }
 
+  if (allianceMemberKeys.size === 0 && homeAllianceKey === '') {
+    const ownSide = explicitOwnSideForReport(report);
+    if (ownSide === 'attacker') {
+      return ['defender'];
+    }
+    if (ownSide === 'defender') {
+      return ['attacker'];
+    }
+    return [];
+  }
+
   const attackerHome = combatantInAllianceLens(report.attacker, allianceMemberKeys, homeAllianceKey);
   const defenderHome = combatantInAllianceLens(report.defender, allianceMemberKeys, homeAllianceKey);
 
@@ -1919,24 +1983,54 @@ function combatantForSide(report: ParsedReport, side: CombatantSide): BattleComb
   return side === 'attacker' ? report.attacker : report.defender;
 }
 
-function reportRole(report: ParsedReport, selectedPlayerKey: string): string {
-  if (selectedPlayerKey !== allOption) {
-    if (combatantMatches(report.attacker, selectedPlayerKey)) {
-      return 'Attacker';
-    }
-    if (combatantMatches(report.defender, selectedPlayerKey)) {
-      return 'Defender';
-    }
-  }
-
-  const role = stringValue(report.role).toLowerCase();
-  if (role.includes('attack')) {
+function reportRole(
+  report: ParsedReport,
+  selectedPlayerKey: string,
+  allianceMemberKeys: Set<string>,
+  homeAllianceKey: string
+): string {
+  const side = friendlySideForReport(report, selectedPlayerKey, allianceMemberKeys, homeAllianceKey);
+  if (side === 'attacker') {
     return 'Attacker';
   }
-  if (role.includes('defend')) {
+  if (side === 'defender') {
+    return 'Defender';
+  }
+
+  const ownSide = explicitOwnSideForReport(report);
+  if (ownSide === 'attacker') {
+    return 'Attacker';
+  }
+  if (ownSide === 'defender') {
     return 'Defender';
   }
   return 'Unknown';
+}
+
+function explicitOwnSideForReport(report: ParsedReport): CombatantSide | '' {
+  const record = report as unknown as Record<string, unknown>;
+  const role = [
+    report.role,
+    record.ownRole,
+    record.playerRole,
+    record.viewerRole,
+    record.perspective,
+    record.perspectiveRole,
+    record.perspectiveSide,
+    record.friendlySide,
+    record.ownSide,
+  ]
+    .map(stringValue)
+    .find(Boolean)
+    ?.toLowerCase() ?? '';
+
+  if (role.includes('attack')) {
+    return 'attacker';
+  }
+  if (role.includes('defend')) {
+    return 'defender';
+  }
+  return '';
 }
 
 function searchBlob(report: ParsedReport): string {
@@ -2019,6 +2113,10 @@ function friendlySideForReport(
       return 'defender';
     }
     return '';
+  }
+
+  if (allianceMemberKeys.size === 0 && homeAllianceKey === '') {
+    return explicitOwnSideForReport(report);
   }
 
   const attackerHome = combatantInAllianceLens(report.attacker, allianceMemberKeys, homeAllianceKey);
