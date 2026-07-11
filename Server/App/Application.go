@@ -9,11 +9,14 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/API"
+	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
+	"CitadelDesktop/Server/Telemetry"
 )
 
 const GameDataRefreshInterval = 6 * time.Hour
@@ -26,18 +29,29 @@ type Config struct {
 }
 
 type Application struct {
-	State      *State.Store
-	GameData   *GameData.Manager
-	Ingest     *Ingest.Pipeline
-	Session    *Session.Controller
-	Intents    *Intent.Engine
-	API        *API.Server
-	StartupErr error
+	State         *State.Store
+	GameData      *GameData.Manager
+	Configuration *Configuration.Store
+	History       *History.Store
+	Telemetry     *Telemetry.Store
+	Ingest        *Ingest.Pipeline
+	Session       *Session.Controller
+	Intents       *Intent.Engine
+	API           *API.Server
+	StartupErr    error
 }
 
 func New(ctx context.Context, config Config) (*Application, error) {
 	if config.DataDir == "" {
 		return nil, fmt.Errorf("application data directory is required")
+	}
+	configuration, err := Configuration.Open(config.DataDir, defaultConfiguration())
+	if err != nil {
+		return nil, err
+	}
+	history, err := History.Open(config.DataDir)
+	if err != nil {
+		return nil, err
 	}
 	gameData := GameData.NewManager(GameData.UpdaterConfig{
 		CacheDir: filepath.Join(config.DataDir, "GameData", "Items"),
@@ -60,6 +74,8 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		return nil, fmt.Errorf("register protocol reducers: %w", err)
 	}
 	ingest := Ingest.NewPipeline(state, gameData, registry)
+	telemetry := Telemetry.NewStore(5000)
+	ingest.SetTelemetry(telemetry)
 	transport := config.Transport
 	if transport == nil {
 		transport = Session.NewUnavailableTransport()
@@ -72,8 +88,8 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	intentRegistry := Intent.NewRegistry()
 	intents := Intent.NewEngine(intentRegistry, state, gameData, session, ingest)
 	application := &Application{
-		State: state, GameData: gameData, Ingest: ingest, Session: session,
-		Intents: intents, StartupErr: startupErr,
+		State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
+		Ingest: ingest, Session: session, Intents: intents, StartupErr: startupErr,
 	}
 	if err := application.registerCoreIntents(); err != nil {
 		return nil, err
@@ -82,7 +98,8 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		return nil, err
 	}
 	application.API = API.NewServer(API.Config{
-		Version: Version, State: state, GameData: gameData, Intents: intents, Session: session,
+		Version: Version, State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
+		Intents: intents, Session: session,
 	})
 	return application, nil
 }
@@ -102,6 +119,50 @@ func (application *Application) Start(ctx context.Context) {
 			}
 		}
 	}()
+	go application.capturePlayerHistory(ctx)
+}
+
+func (application *Application) capturePlayerHistory(ctx context.Context) {
+	events, unsubscribe := application.State.Subscribe(32)
+	defer unsubscribe()
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	var debounce *time.Timer
+	var debounceChannel <-chan time.Time
+	lastCaptured := time.Time{}
+	capture := func() {
+		snapshot := application.State.Snapshot()
+		if snapshot.Player.ID == 0 || time.Since(lastCaptured) < 55*time.Second {
+			return
+		}
+		if application.History.Append(History.CollectionPlayerSamples, History.NewPlayerSample(snapshot, application.GameData)) == nil {
+			lastCaptured = time.Now()
+		}
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			if debounce != nil {
+				debounce.Stop()
+			}
+			return
+		case <-events:
+			if lastCaptured.IsZero() {
+				if debounce == nil {
+					debounce = time.NewTimer(250 * time.Millisecond)
+					debounceChannel = debounce.C
+				} else if debounce.Stop() {
+					debounce.Reset(250 * time.Millisecond)
+				}
+			}
+		case <-debounceChannel:
+			capture()
+			debounce = nil
+			debounceChannel = nil
+		case <-ticker.C:
+			capture()
+		}
+	}
 }
 
 func (application *Application) registerCoreIntents() error {
@@ -114,6 +175,14 @@ func (application *Application) registerCoreIntents() error {
 				return err
 			}
 			return application.Session.SelectBrowser(preference)
+		},
+		"config.update": func(_ context.Context, arguments json.RawMessage) error {
+			update, err := decodeConfigurationUpdate(arguments)
+			if err != nil {
+				return err
+			}
+			_, err = application.Configuration.UpdateExpected(update.Section, update.Value, update.ExpectedRevision)
+			return err
 		},
 		"game_data.refresh": ignoreArguments(application.refreshGameData),
 	} {
@@ -151,6 +220,23 @@ func (application *Application) registerCoreIntents() error {
 					Claims: []string{"session"}, Summary: fmt.Sprintf("Use %s for game sessions", candidate.Name),
 					Steps: []Intent.Step{{
 						Name: "Select browser", Action: "session.select_browser", ActionArguments: canonical,
+					}},
+				}, nil
+			},
+		},
+		{
+			Name: "config.update", Description: "Atomically update one versioned user-configuration section", Effect: Intent.EffectWrite,
+			Planner: func(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+				update, err := decodeConfigurationUpdate(arguments)
+				if err != nil {
+					return Intent.Plan{}, err
+				}
+				canonical, _ := json.Marshal(update)
+				return Intent.Plan{
+					Claims:  []string{"configuration:" + update.Section},
+					Summary: fmt.Sprintf("Update %s configuration", update.Section),
+					Steps: []Intent.Step{{
+						Name: "Save configuration", Action: "config.update", ActionArguments: canonical,
 					}},
 				}, nil
 			},
@@ -216,4 +302,29 @@ func browserPreference(arguments json.RawMessage) (string, error) {
 		return "", fmt.Errorf("browser is required")
 	}
 	return input.Browser, nil
+}
+
+type configurationUpdate struct {
+	Section          string          `json:"section"`
+	Value            json.RawMessage `json:"value"`
+	ExpectedRevision *uint64         `json:"expectedRevision,omitempty"`
+}
+
+func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, error) {
+	var input configurationUpdate
+	if err := json.Unmarshal(arguments, &input); err != nil {
+		return input, fmt.Errorf("decode configuration update: %w", err)
+	}
+	input.Section = strings.TrimSpace(input.Section)
+	if err := Configuration.Validate(input.Section, input.Value); err != nil {
+		return input, err
+	}
+	return input, nil
+}
+
+func defaultConfiguration() map[string]json.RawMessage {
+	return map[string]json.RawMessage{
+		"scheduler":          json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"manualFocusIdleSec":30,"tabPriorities":{},"featureSchedules":{}}`),
+		"automation.enabled": json.RawMessage(`{}`),
+	}
 }

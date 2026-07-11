@@ -1,4 +1,4 @@
-import { FrontendWebsocket } from '../Websocket';
+import { queueConfigurationUpdate } from './Configuration';
 
 export const AUTO_HOSPITAL_SETTINGS_STORAGE_KEY = 'autoHospitalSettings';
 export const AUTO_HOSPITAL_SETTINGS_CHANGED_EVENT = 'autoHospitalSettingsChanged';
@@ -85,5 +85,5 @@ export function applyAutoHospitalSettingsToLocalStorage(settings: AutoHospitalCl
 export function persistAutoHospitalSettings(settings: AutoHospitalClientSettingsV1): boolean {
   const normalized = normalizeAutoHospitalSettings(settings);
   applyAutoHospitalSettingsToLocalStorage(normalized);
-  return FrontendWebsocket.sendMessage({ type: 'saveAutoHospitalSettings', payload: normalized });
+  return queueConfigurationUpdate('automation.autoHospital', normalized);
 }

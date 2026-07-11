@@ -11,6 +11,23 @@ import type { CastleStateV2, GameStateV2, MovementStateV2 } from './Contracts';
 
 type DefinitionNames = Record<number, { name: string }>;
 
+export interface CastleOptionV2 {
+	id: number;
+	name: string;
+	type: string;
+}
+
+export function castleOptionsFromState(state: GameStateV2 | null): CastleOptionV2[] {
+	if (!state) return [];
+	return Object.values(state.castles)
+		.map((castle) => ({
+			id: castle.id,
+			name: castle.name ?? `Castle ${castle.id}`,
+			type: castle.slotType != null ? `Slot ${castle.slotType}` : `Kingdom ${castle.kingdomId}`,
+		}))
+		.sort((left, right) => left.name.localeCompare(right.name) || left.id - right.id);
+}
+
 export function castleFocusFromState(
 	state: GameStateV2 | null,
 	selectedCastleId?: number,

@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "tsc && vite",
-    "dev:mock": "tsc && VITE_MOCK_WEBSOCKET=true vite",
     "build": "tsc && vite build",
     "preview": "tsc && vite preview"
   },

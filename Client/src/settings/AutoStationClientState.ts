@@ -1,4 +1,4 @@
-import { FrontendWebsocket } from '../Websocket';
+import { queueConfigurationUpdate } from './Configuration';
 
 export const AUTO_STATION_STORAGE_KEY = 'autoStationSettings';
 
@@ -74,7 +74,5 @@ export function applyAutoStationClientStateToLocalStorage(state: AutoStationClie
 export function persistAutoStationClientState(state: AutoStationClientStateV1): void {
   const normalized = parseAutoStationClientState(state);
   applyAutoStationClientStateToLocalStorage(normalized);
-  if (FrontendWebsocket.getStatus() === 'Connected') {
-    FrontendWebsocket.sendMessage({ type: 'saveAutoStationClientState', payload: normalized });
-  }
+  queueConfigurationUpdate('automation.autoStation', normalized);
 }

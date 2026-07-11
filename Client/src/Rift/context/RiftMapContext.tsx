@@ -2,21 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
   type ReactNode,
 } from 'react';
-import { FrontendWebsocket } from '../../Websocket';
-import { useAuth } from '../../context/AuthContext';
 import { useCastleFocus } from '../../context/CastleFocusContext';
 import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
-import {
-  parseRiftMapCoordsPayload,
-  riftMapCoordsFromSnapshot,
-  type RiftMapCoords,
-} from '../types/RiftMapCoords';
+import { riftMapCoordsFromSnapshot, type RiftMapCoords } from '../types/RiftMapCoords';
 import { parseRiftCRALaunchPayload, type RiftCRALaunchState } from '../types/RiftCRALaunch';
+import { useCitadelAPI } from '../../api/ApiContext';
 
 export interface ReplayRiftCRALaunchOptions {
   launchId: string;
@@ -40,70 +33,41 @@ export interface RiftMapContextValue {
 const RiftMapContext = createContext<RiftMapContextValue | undefined>(undefined);
 
 export function RiftMapProvider({ children }: { children: ReactNode }) {
-  const { gameLoggedIn } = useAuth();
+  const { configuration, submitIntent, updateConfiguration } = useCitadelAPI();
   const { castleFocus } = useCastleFocus();
   const { snapshot } = useLastKnownSnapshot();
-  const [liveCoords, setLiveCoords] = useState<RiftMapCoords | null>(null);
-  const [riftCRALaunch, setRiftCRALaunch] = useState<RiftCRALaunchState | null>(null);
-
-  useEffect(() => {
-    const handleMessage = (message: { type?: string; payload?: unknown }) => {
-      if (message.type === 'riftMapCoords' && message.payload != null) {
-        const parsed = parseRiftMapCoordsPayload(message.payload);
-        if (parsed) setLiveCoords(parsed);
-      }
-      if (message.type === 'riftCRALaunch' && message.payload != null) {
-        const parsed = parseRiftCRALaunchPayload(message.payload);
-        if (parsed) setRiftCRALaunch(parsed);
-      }
-    };
-    FrontendWebsocket.addMessageListener(handleMessage);
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, []);
+  const riftCRALaunch = useMemo(
+    () => parseRiftCRALaunchPayload(configuration?.sections['rift.launches']),
+    [configuration?.sections],
+  );
 
   const refreshRiftMapCoords = useCallback((refresh = true) => {
     void refresh;
   }, []);
 
   const refreshRiftCRALaunch = useCallback(() => {
-    FrontendWebsocket.sendGetRiftCRALaunch();
   }, []);
 
   const replayRiftCRALaunch = useCallback((options: ReplayRiftCRALaunchOptions) => {
     if (!options.launchId) return;
-    FrontendWebsocket.sendReplayRiftCRALaunch(options);
-  }, []);
+    void submitIntent('rift.launch.replay', options);
+  }, [submitIntent]);
 
   const renameRiftCRALaunch = useCallback((launchId: string, displayName: string) => {
     if (!launchId) return;
-    setRiftCRALaunch((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        launches: prev.launches.map((entry) =>
-          entry.id === launchId ? { ...entry, displayName: displayName.trim() } : entry
-        ),
-      };
-    });
-    FrontendWebsocket.sendRenameRiftCRALaunch(launchId, displayName);
-  }, []);
+    const launches = riftCRALaunch.launches.map((entry) =>
+      entry.id === launchId ? { ...entry, displayName: displayName.trim() } : entry
+    );
+    void updateConfiguration('rift.launches', { ...riftCRALaunch, launches, launchCount: launches.length });
+  }, [riftCRALaunch, updateConfiguration]);
 
   const deleteRiftCRALaunch = useCallback((launchId: string) => {
     if (!launchId) return;
-    setRiftCRALaunch((prev) => {
-      if (!prev) return prev;
-      const launches = prev.launches.filter((entry) => entry.id !== launchId);
-      return {
-        ...prev,
-        launches,
-        launchCount: launches.length,
-      };
-    });
-    FrontendWebsocket.sendDeleteRiftCRALaunch(launchId);
-  }, []);
+    const launches = riftCRALaunch.launches.filter((entry) => entry.id !== launchId);
+    void updateConfiguration('rift.launches', { ...riftCRALaunch, launches, launchCount: launches.length });
+  }, [riftCRALaunch, updateConfiguration]);
 
   const riftMapCoords = useMemo((): RiftMapCoords | null => {
-    if (gameLoggedIn && liveCoords) return liveCoords;
     const aid = castleFocus?.aid ?? 0;
     const kid = castleFocus?.kingdomID ?? 0;
     let cx = castleFocus?.mapPX ?? 0;
@@ -115,11 +79,11 @@ export function RiftMapProvider({ children }: { children: ReactNode }) {
         cy = match.mapY;
       }
     }
-    if (!gameLoggedIn && snapshot) {
+    if (snapshot) {
       return riftMapCoordsFromSnapshot(snapshot, aid, kid, cx, cy);
     }
-    return liveCoords;
-  }, [gameLoggedIn, liveCoords, snapshot, castleFocus]);
+    return null;
+  }, [snapshot, castleFocus]);
 
   const value = useMemo<RiftMapContextValue>(
     () => ({

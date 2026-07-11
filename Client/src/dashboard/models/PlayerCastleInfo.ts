@@ -51,7 +51,7 @@ export interface CastleTroopData {
   troopsMixed: { [unitID: string]: number };
 }
 
-/** Decoration instance from server: JAA row + full GGE items.json object for buildingID (WID) in `catalog`. */
+/** Decoration instance from state, with official runtime metadata for its building definition id. */
 export interface CastleBuildingRow {
   buildingID: number;
   oid: number;

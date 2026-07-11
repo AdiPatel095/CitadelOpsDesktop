@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Castle, Layers, Play, Save, Sparkles, Trash2 } from 'lucide-react';
 import { useCastleFocus } from '../context/CastleFocusContext';
-import { FrontendWebsocket } from '../Websocket';
 import CastleFocusHoverPopover from './CastleFocusHoverPopover';
 import { castleFocusDisplayName } from '../types/CastleFocusState.ts';
 import { Input, Button, Select } from './ui';
+import { useCitadelAPI } from '../api/ApiContext';
+import { useMetadata } from '../context/MetadataContext';
 
 interface NamedPreset {
   id: string;
@@ -12,65 +13,87 @@ interface NamedPreset {
   items: { wid: number; x: number; y: number; r: number; layer: string }[];
 }
 
+interface DecorationPresetDocument {
+  version: 1;
+  castles: Record<string, NamedPreset[]>;
+}
+
+const EMPTY_PRESETS: NamedPreset[] = [];
+
 const DecorationPresetsPanel: React.FC = () => {
   const { castleFocus } = useCastleFocus();
-  const [presets, setPresets] = useState<NamedPreset[]>([]);
+  const { configuration, submitIntent, updateConfiguration } = useCitadelAPI();
+  const { decorations } = useMetadata();
   const [newName, setNewName] = useState('');
   const [selectedPresetId, setSelectedPresetId] = useState('');
+  const [operationError, setOperationError] = useState('');
 
   const castleId = castleFocus?.aid && castleFocus.aid > 0 ? castleFocus.aid : 0;
   const focusLabel = castleFocusDisplayName(castleFocus);
-
-  /** Latest focused castle id for websocket handlers (avoid applying stale preset lists). */
-  const castleIdRef = useRef(castleId);
-  castleIdRef.current = castleId;
-
-  useEffect(() => {
-    setPresets([]);
-    setSelectedPresetId('');
-    if (castleId > 0) {
-      FrontendWebsocket.sendGetDecorationPresets(castleId);
-    }
-  }, [castleId]);
+  const presetDocument = useMemo(
+    () => parsePresetDocument(configuration?.sections['decorations.presets']),
+    [configuration?.sections],
+  );
+  const presets = presetDocument.castles[String(castleId)] ?? EMPTY_PRESETS;
 
   useEffect(() => {
-    const onMsg = (msg: { type?: string; payload?: unknown; optionalData?: string }) => {
-      if (msg.type === 'decorationPresets' && Array.isArray(msg.payload)) {
-        const tag = msg.optionalData?.trim() ?? '';
-        const responseCastleId = tag === '' ? NaN : parseInt(tag, 10);
-        const current = castleIdRef.current;
-        if (!Number.isFinite(responseCastleId)) {
-          return;
-        }
-        if (responseCastleId !== current) {
-          return;
-        }
-        const nextPresets = msg.payload as NamedPreset[];
-        setPresets(nextPresets);
-        setSelectedPresetId((prev) =>
-          prev && nextPresets.some((preset) => preset.id === prev) ? prev : nextPresets[0]?.id ?? ''
-        );
-      }
-    };
-    FrontendWebsocket.addMessageListener(onMsg);
-    return () => FrontendWebsocket.removeMessageListener(onMsg);
-  }, []);
+    setSelectedPresetId((previous) => (
+      previous && presets.some((preset) => preset.id === previous) ? previous : presets[0]?.id ?? ''
+    ));
+    setOperationError('');
+  }, [castleId, presets]);
 
   const handleSave = () => {
-    if (!newName.trim()) return;
-    FrontendWebsocket.sendSaveDecorationPreset(newName.trim(), castleId > 0 ? castleId : undefined);
+    if (!newName.trim() || castleId <= 0) return;
+    const items = [
+      ...(castleFocus?.bgRows ?? []).map((row) => ({ row, layer: 'BG' })),
+      ...(castleFocus?.bdRows ?? []).map((row) => ({ row, layer: 'BD' })),
+    ]
+      .filter(({ row }) => decorations[row.buildingID] != null)
+      .map(({ row, layer }) => ({
+        wid: row.buildingID,
+        x: row.x,
+        y: row.y,
+        r: row.r ?? 0,
+        layer,
+      }));
+    const preset: NamedPreset = {
+      id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      name: newName.trim(),
+      items,
+    };
+    setOperationError('');
+    void updateConfiguration('decorations.presets', {
+      ...presetDocument,
+      castles: { ...presetDocument.castles, [String(castleId)]: [...presets, preset] },
+    }).catch((error) => setOperationError(error instanceof Error ? error.message : 'Could not save preset'));
     setNewName('');
   };
 
   const handleApply = (presetId: string) => {
     if (castleId <= 0) return;
-    FrontendWebsocket.sendApplyDecorationPreset(castleId, presetId, castleFocus?.kingdomID);
+    const preset = presets.find((candidate) => candidate.id === presetId);
+    if (!preset) return;
+    setOperationError('');
+    void submitIntent('decoration.apply_preset', {
+      castleId,
+      kingdomId: castleFocus?.kingdomID,
+      presetId,
+      items: preset.items,
+    }).catch((error) => setOperationError(error instanceof Error ? error.message : 'Could not apply preset'));
   };
 
   const handleDelete = (presetId: string) => {
     if (castleId <= 0) return;
     if (!window.confirm('Delete this decoration preset?')) return;
-    FrontendWebsocket.sendDeleteDecorationPreset(castleId, presetId);
+    setOperationError('');
+    void updateConfiguration('decorations.presets', {
+      ...presetDocument,
+      castles: {
+        ...presetDocument.castles,
+        [String(castleId)]: presets.filter((preset) => preset.id !== presetId),
+      },
+    }).catch((error) => setOperationError(error instanceof Error ? error.message : 'Could not delete preset'));
   };
 
   const selectedPreset = presets.find((preset) => preset.id === selectedPresetId) ?? null;
@@ -205,8 +228,31 @@ const DecorationPresetsPanel: React.FC = () => {
           )}
         </div>
       </div>
+      {operationError && <p className="text-xs text-error">{operationError}</p>}
     </div>
   );
 };
+
+function parsePresetDocument(value: unknown): DecorationPresetDocument {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { version: 1, castles: {} };
+  }
+  const raw = value as { castles?: unknown };
+  if (!raw.castles || typeof raw.castles !== 'object' || Array.isArray(raw.castles)) {
+    return { version: 1, castles: {} };
+  }
+  const castles: Record<string, NamedPreset[]> = {};
+  for (const [castleId, presets] of Object.entries(raw.castles as Record<string, unknown>)) {
+    if (!Array.isArray(presets)) continue;
+    castles[castleId] = presets.filter(isNamedPreset);
+  }
+  return { version: 1, castles };
+}
+
+function isNamedPreset(value: unknown): value is NamedPreset {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const preset = value as Partial<NamedPreset>;
+  return typeof preset.id === 'string' && typeof preset.name === 'string' && Array.isArray(preset.items);
+}
 
 export default DecorationPresetsPanel;

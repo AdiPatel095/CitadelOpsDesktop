@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icons } from './Icons';
-import { FrontendWebsocket } from '../Websocket';
+import { Notifications } from './Notifications';
 
 type ChannelMeta = { id: string; label: string };
 type LogTone = 'send' | 'recv' | 'info' | 'warn' | 'error' | 'debug' | 'plain';
@@ -211,7 +211,7 @@ export const LoggerDock: React.FC = () => {
 
   useEffect(() => {
     if (loadError) {
-      FrontendWebsocket.showAlert('red', loadError);
+      Notifications.error(loadError, 'logger-load');
     }
   }, [loadError]);
 
@@ -220,7 +220,7 @@ export const LoggerDock: React.FC = () => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/logs/channels');
+	  const res = await fetch('/api/v2/telemetry/channels');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as { channels?: ChannelMeta[] };
         const list = data.channels ?? [];
@@ -241,7 +241,7 @@ export const LoggerDock: React.FC = () => {
   const fetchTail = useCallback(async () => {
     if (!activeId) return;
     try {
-      const res = await fetch(`/api/logs/${encodeURIComponent(activeId)}/tail?n=800`);
+	  const res = await fetch(`/api/v2/telemetry/${encodeURIComponent(activeId)}?limit=800`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { lines?: string[] };
       setLines(data.lines ?? []);

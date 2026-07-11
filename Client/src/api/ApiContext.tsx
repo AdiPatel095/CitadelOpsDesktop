@@ -13,19 +13,23 @@ import type {
   APIConnectionStatus,
   CatalogManifest,
   CatalogResponse,
+  ConfigurationSnapshot,
   GameStateV2,
   IntentReceipt,
   SubmitIntentOptions,
 } from './Contracts';
+import { Notifications } from '../components/Notifications';
 
 interface APIContextValue {
   connectionStatus: APIConnectionStatus;
   state: GameStateV2 | null;
   catalogs: CatalogManifest | null;
+  configuration: ConfigurationSnapshot | null;
   operations: Record<string, IntentReceipt>;
   error: string | null;
   refreshState: () => Promise<void>;
   refreshCatalogs: () => Promise<void>;
+  refreshConfiguration: () => Promise<void>;
   getCatalog: <T extends Record<string, unknown>>(name: string) => Promise<CatalogResponse<T>>;
   localize: (keys: string[]) => Promise<Record<string, string>>;
   submitIntent: (
@@ -33,6 +37,7 @@ interface APIContextValue {
     argumentsValue?: Record<string, unknown>,
     options?: SubmitIntentOptions,
   ) => Promise<IntentReceipt>;
+  updateConfiguration: (section: string, value: unknown) => Promise<IntentReceipt>;
 }
 
 const APIContext = createContext<APIContextValue | undefined>(undefined);
@@ -41,6 +46,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
   const [connectionStatus, setConnectionStatus] = useState<APIConnectionStatus>('Disconnected');
   const [state, setState] = useState<GameStateV2 | null>(null);
   const [catalogs, setCatalogs] = useState<CatalogManifest | null>(null);
+  const [configuration, setConfiguration] = useState<ConfigurationSnapshot | null>(null);
   const [operations, setOperations] = useState<Record<string, IntentReceipt>>({});
   const [error, setError] = useState<string | null>(null);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,6 +69,15 @@ export function APIProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const refreshConfiguration = useCallback(async () => {
+    try {
+      setConfiguration(await CitadelAPI.getConfiguration());
+      setError(null);
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    }
+  }, []);
+
   useEffect(() => {
     const unsubscribeStatus = CitadelAPI.subscribeStatus(setConnectionStatus);
     const unsubscribeEvents = CitadelAPI.subscribe((message) => {
@@ -79,42 +94,81 @@ export function APIProvider({ children }: { children: ReactNode }) {
         setCatalogs(message.payload);
         return;
       }
+      if (message.type === 'config.changed' && isConfigurationSnapshot(message.payload)) {
+        setConfiguration(message.payload);
+        return;
+      }
       if ((message.type === 'operation.changed' || message.type === 'intent.receipt') && isIntentReceipt(message.payload)) {
         setOperations((current) => ({ ...current, [message.payload.id]: message.payload }));
+		if (message.payload.status === 'failed' && message.payload.error) {
+			Notifications.error(message.payload.error, `operation-${message.payload.id}`);
+		}
+		return;
+	  }
+	  if (message.type === 'notification' && isNotification(message.payload)) {
+		Notifications.publish(message.payload);
       }
     });
     CitadelAPI.connect();
-    void Promise.all([refreshState(), refreshCatalogs()]);
+    void Promise.all([refreshState(), refreshCatalogs(), refreshConfiguration()]);
     return () => {
       unsubscribeEvents();
       unsubscribeStatus();
       if (refreshTimer.current != null) clearTimeout(refreshTimer.current);
       CitadelAPI.disconnect();
     };
-  }, [refreshCatalogs, refreshState]);
+  }, [refreshCatalogs, refreshConfiguration, refreshState]);
 
   const submitIntent = useCallback(async (
     name: string,
     argumentsValue: Record<string, unknown> = {},
     options: SubmitIntentOptions = {},
   ) => {
-    const receipt = await CitadelAPI.submitIntent(name, argumentsValue, options);
-    setOperations((current) => ({ ...current, [receipt.id]: receipt }));
-    return receipt;
+	try {
+	  const receipt = await CitadelAPI.submitIntent(name, argumentsValue, options);
+	  setOperations((current) => ({ ...current, [receipt.id]: receipt }));
+	  return receipt;
+	} catch (requestError) {
+	  Notifications.error(errorMessage(requestError));
+	  throw requestError;
+	}
   }, []);
+
+  const updateConfiguration = useCallback((section: string, value: unknown) => (
+    submitIntent('config.update', {
+      section,
+      value,
+      expectedRevision: configuration?.revision,
+    })
+  ), [configuration?.revision, submitIntent]);
 
   const value = useMemo<APIContextValue>(() => ({
     connectionStatus,
     state,
     catalogs,
+    configuration,
     operations,
     error,
     refreshState,
     refreshCatalogs,
+    refreshConfiguration,
     getCatalog: (name) => CitadelAPI.getCatalog(name),
     localize: (keys) => CitadelAPI.localize(keys),
     submitIntent,
-  }), [catalogs, connectionStatus, error, operations, refreshCatalogs, refreshState, state, submitIntent]);
+    updateConfiguration,
+  }), [
+    catalogs,
+    configuration,
+    connectionStatus,
+    error,
+    operations,
+    refreshCatalogs,
+    refreshConfiguration,
+    refreshState,
+    state,
+    submitIntent,
+    updateConfiguration,
+  ]);
 
   return <APIContext.Provider value={value}>{children}</APIContext.Provider>;
 }
@@ -133,8 +187,24 @@ function isCatalogManifest(value: unknown): value is CatalogManifest {
   return isRecord(value) && isRecord(value.metadata) && Array.isArray(value.catalogs);
 }
 
+function isConfigurationSnapshot(value: unknown): value is ConfigurationSnapshot {
+  return isRecord(value) && typeof value.revision === 'number' && isRecord(value.sections);
+}
+
 function isIntentReceipt(value: unknown): value is IntentReceipt {
   return isRecord(value) && typeof value.id === 'string' && typeof value.status === 'string';
+}
+
+function isNotification(value: unknown): value is {
+	category: 'green' | 'yellow' | 'red';
+	message: string;
+	id?: string;
+	lines?: string[];
+	persistent?: boolean;
+} {
+	return isRecord(value)
+		&& (value.category === 'green' || value.category === 'yellow' || value.category === 'red')
+		&& typeof value.message === 'string';
 }
 
 function isRecord(value: unknown): value is Record<string, any> {

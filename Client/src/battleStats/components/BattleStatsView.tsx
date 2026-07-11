@@ -17,10 +17,8 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Select 
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
 import DetailBackButton from '../../components/DetailBackButton';
-import { useMetadata } from '../../context/MetadataContext';
+import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
-import { FrontendWebsocket } from '../../Websocket';
-import { TROOP_METADATA } from '../../config/Constants';
 import type {
   BattleCombatant,
   BattleEffect,
@@ -32,15 +30,7 @@ import type {
   ParsedReport,
 } from '../types/BattleStats';
 
-const dataSources = [
-  '/api/battle-reports/cloud',
-  '/api/battleReports/cloud',
-  '/api/reports/battle',
-  '/api/battle-reports',
-  '/api/battleReports',
-  '/Data/BattleReports.jsonl',
-  '/BattleReports.jsonl',
-];
+const dataSources = ['/api/v2/history/battle-reports'];
 
 const REPORT_ROWS_PAGE_SIZE = 250;
 
@@ -68,7 +58,6 @@ type CombatantSide = 'attacker' | 'defender';
 const BattleStatsView: React.FC = () => {
   const { snapshot } = useLastKnownSnapshot();
   const [reports, setReports] = useState<ParsedReport[]>([]);
-  const [allianceInfo, setAllianceInfo] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sourceLabel, setSourceLabel] = useState<string>('Not loaded');
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,12 +95,8 @@ const BattleStatsView: React.FC = () => {
       setSourceLabel(emptySource ? `${emptySource} is empty` : 'No local archive found');
       setSelectedReportID(null);
     } catch (error) {
-      FrontendWebsocket.showAlert(
-        'red',
-        error instanceof Error ? error.message : 'Could not load battle reports'
-      );
       setReports([]);
-      setSourceLabel('Load failed');
+      setSourceLabel(error instanceof Error ? `Load failed: ${error.message}` : 'Load failed');
       setSelectedReportID(null);
     } finally {
       setIsLoading(false);
@@ -119,22 +104,12 @@ const BattleStatsView: React.FC = () => {
   };
 
   useEffect(() => {
-    const handleMessage = (message: { type?: string; payload?: unknown }) => {
-      if (message.type === 'allianceInfo' && isRecord(message.payload)) {
-        setAllianceInfo(message.payload);
-      }
-    };
-
-    FrontendWebsocket.addMessageListener(handleMessage);
-    FrontendWebsocket.sendFetchAllianceInfo();
     void loadReports();
-
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
   }, []);
 
   const allianceMembers = useMemo(
-    () => allianceMemberOptionsFromSources(snapshot, allianceInfo),
-    [snapshot, allianceInfo]
+    () => allianceMemberOptionsFromSources(snapshot, null),
+    [snapshot]
   );
   const allianceMemberKeys = useMemo(() => allianceMemberKeysFromOptions(allianceMembers), [allianceMembers]);
   const ownPlayerKeys = useMemo(() => ownPlayerKeysFromSnapshot(snapshot), [snapshot]);
@@ -856,12 +831,13 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
   report,
   perspectiveSide,
 }) => {
+	const { getTroop } = useMetadata();
   const side = perspectiveSide || 'attacker';
   const attackerSent = metricValue(report.metrics, 'attackerSent', 'attackSent');
   const attackerLost = metricValue(report.metrics, 'attackerLost', 'attackLost');
   const defenderStationed = metricValue(report.metrics, 'defenderStationed');
   const defenderLost = metricValue(report.metrics, 'defenderLost', 'defenseLost');
-  const defenderLossesByRole = defenderLossRoleTotals(report);
+	const defenderLossesByRole = defenderLossRoleTotals(report, getTroop);
   const isDefenseView = side === 'defender';
   const ourForce = isDefenseView ? defenderStationed : attackerSent;
   const ourLost = isDefenseView ? defenderLost : attackerLost;
@@ -2760,7 +2736,10 @@ function metricValue(metrics: BattleMetrics | undefined, ...keys: (keyof BattleM
   return 0;
 }
 
-function defenderLossRoleTotals(report: ParsedReport): { attack: number; defense: number; unknown: number } {
+function defenderLossRoleTotals(
+	report: ParsedReport,
+	getTroop: (id: number) => MetadataItem | undefined,
+): { attack: number; defense: number; unknown: number } {
   const totals = { attack: 0, defense: 0, unknown: 0 };
   const defenderLost = metricValue(report.metrics, 'defenderLost', 'defenseLost');
   const defenderUnitLosses = itemsForSide(report.topUnits, 'defender');
@@ -2771,7 +2750,10 @@ function defenderLossRoleTotals(report: ParsedReport): { attack: number; defense
       return;
     }
 
-    const role = TROOP_METADATA[itemID(item)]?.role;
+	const troop = getTroop(itemID(item));
+	const attack = Math.max(Number(troop?.meleeAttack) || 0, Number(troop?.rangeAttack) || 0);
+	const defense = Math.max(Number(troop?.meleeDefence) || 0, Number(troop?.rangeDefence) || 0);
+	const role = attack > defense ? 'attack' : defense > attack ? 'defense' : undefined;
     if (role === 'attack') {
       totals.attack += lost;
     } else if (role === 'defense') {

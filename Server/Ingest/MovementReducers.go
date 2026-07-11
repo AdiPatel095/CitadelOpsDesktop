@@ -57,6 +57,7 @@ func newMovementReducer(authoritative bool) Reducer {
 			return nil, false, nil
 		}
 		gameState.Movements = next
+		syncCommanderAvailability(gameState)
 		return []string{"movements", "commanders"}, true, nil
 	}
 }
@@ -81,6 +82,7 @@ func reduceMovementRemoval(
 		return nil, false, nil
 	}
 	delete(gameState.Movements, id)
+	syncCommanderAvailability(gameState)
 	return []string{"movements", "commanders"}, true, nil
 }
 
@@ -160,7 +162,8 @@ func parseMovement(raw json.RawMessage, observedAt time.Time) (State.MovementSta
 		} `json:"L"`
 	}
 	if json.Unmarshal(item["UM"], &unitMovement) == nil && unitMovement.Leader.ID != nil && *unitMovement.Leader.ID >= 0 {
-		movement.CommanderID = State.CommanderID(*unitMovement.Leader.ID)
+		commanderID := State.CommanderID(*unitMovement.Leader.ID)
+		movement.CommanderID = &commanderID
 	}
 	for id, amount := range decodeUnitCounts(item["A"]) {
 		movement.Units[State.UnitID(id)] = amount

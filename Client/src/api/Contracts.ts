@@ -32,6 +32,13 @@ export interface BrowserInventory {
   selectionIntent: 'session.select_browser';
 }
 
+export interface ConfigurationSnapshot {
+	schemaVersion: number;
+	revision: number;
+	updatedAt: string;
+	sections: Record<string, unknown>;
+}
+
 export interface PlayerStateV2 {
   id: number;
   name?: string;
@@ -93,7 +100,75 @@ export interface CastleStateV2 {
 export interface CommanderStateV2 {
 	id: number;
 	name?: string;
+	visiblePosition?: number;
 	available: boolean;
+	equipment: Record<string, number>;
+	gems: Record<string, number>;
+}
+
+export interface CastellanStateV2 {
+	id: number;
+	castleId?: number;
+	name?: string;
+	equipment: Record<string, number>;
+	gems: Record<string, number>;
+}
+
+export interface EquipmentInstanceV2 {
+	id: number;
+	definitionId: number;
+	slot: number;
+	typeId?: number;
+	rarityId?: number;
+	setId?: number;
+	level?: number;
+	wearerId?: number;
+	wearerKind?: string;
+	effects: Record<string, number[]>;
+}
+
+export interface GemInstanceV2 {
+	id: number;
+	definitionId: number;
+	slot?: number;
+	level?: number;
+	wearerId?: number;
+	wearerKind?: string;
+	effects: Record<string, number[]>;
+}
+
+export interface InventoryStateV2 {
+	constructionItems: Record<string, number>;
+	equipment: Record<string, EquipmentInstanceV2>;
+	gems: Record<string, GemInstanceV2>;
+	items: Record<string, Record<string, number>>;
+}
+
+export interface AllianceMemberV2 {
+	playerId: number;
+	name?: string;
+	rankId?: number;
+	level?: number;
+	legendLevel?: number;
+	might?: number;
+}
+
+export interface AllianceStateV2 {
+	id: number;
+	name?: string;
+	members: AllianceMemberV2[];
+}
+
+export interface MapObservationV2 {
+	kingdomId: number;
+	x: number;
+	y: number;
+	typeId: number;
+	name?: string;
+	level?: number;
+	ownerId?: number;
+	objectId?: number;
+	observedAt: string;
 }
 
 export interface MovementStateV2 {
@@ -139,10 +214,11 @@ export interface GameStateV2 {
   player: PlayerStateV2;
 	castles: Record<string, CastleStateV2>;
 	commanders: Record<string, CommanderStateV2>;
+	castellans: Record<string, CastellanStateV2>;
 	movements: Record<string, MovementStateV2>;
-  inventory: Record<string, unknown>;
-  alliance: Record<string, unknown>;
-  map: Record<string, unknown>;
+  inventory: InventoryStateV2;
+  alliance: AllianceStateV2;
+  map: Record<string, Record<string, MapObservationV2>>;
 	observations: Record<string, ProtocolObservationV2>;
 }
 
@@ -216,6 +292,12 @@ export interface IntentReceipt {
   submittedAt: string;
   startedAt?: string;
   completedAt?: string;
+}
+
+export interface IntentDefinition {
+	name: string;
+	description: string;
+	effect: 'read' | 'write' | 'launch' | 'external';
 }
 
 export interface SubmitIntentOptions {

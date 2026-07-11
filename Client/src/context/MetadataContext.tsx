@@ -16,10 +16,16 @@ interface MetadataContextValue {
   decorations: Record<number, MetadataItem>;
 	resources: Record<number, MetadataItem>;
 	currencies: Record<number, MetadataItem>;
+	equipments: Record<number, MetadataItem>;
+	gems: Record<number, MetadataItem>;
+	effects: Record<number, MetadataItem>;
   isLoading: boolean;
   getTroop: (id: number) => MetadataItem | undefined;
   getTool: (id: number) => MetadataItem | undefined;
 	getBuilding: (id: number) => MetadataItem | undefined;
+	getEquipment: (id: number) => MetadataItem | undefined;
+	getGem: (id: number) => MetadataItem | undefined;
+	getEffect: (id: number) => MetadataItem | undefined;
   getDecoration: (id: number) => MetadataItem | undefined;
 }
 
@@ -32,6 +38,9 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
   const [decorations, setDecorations] = useState<Record<number, MetadataItem>>({});
 	const [resources, setResources] = useState<Record<number, MetadataItem>>({});
 	const [currencies, setCurrencies] = useState<Record<number, MetadataItem>>({});
+	const [equipments, setEquipments] = useState<Record<number, MetadataItem>>({});
+	const [gems, setGems] = useState<Record<number, MetadataItem>>({});
+	const [effects, setEffects] = useState<Record<number, MetadataItem>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -39,14 +48,31 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
     const load = async () => {
       setIsLoading(true);
       try {
-		const [unitsResponse, buildingsResponse, resourcesResponse, currenciesResponse] = await Promise.all([
+		const [
+			unitsResponse,
+			buildingsResponse,
+			resourcesResponse,
+			currenciesResponse,
+			equipmentsResponse,
+			gemsResponse,
+			effectsResponse,
+		] = await Promise.all([
           CitadelAPI.getCatalog<OfficialRecord>('units'),
           CitadelAPI.getCatalog<OfficialRecord>('buildings'),
 			CitadelAPI.getCatalog<OfficialRecord>('resources'),
 			CitadelAPI.getCatalog<OfficialRecord>('currencies'),
+			CitadelAPI.getCatalog<OfficialRecord>('equipments'),
+			CitadelAPI.getCatalog<OfficialRecord>('gems'),
+			CitadelAPI.getCatalog<OfficialRecord>('effects'),
         ]);
 		const keys = localizationKeys([
-			...unitsResponse.items, ...buildingsResponse.items, ...resourcesResponse.items, ...currenciesResponse.items,
+			...unitsResponse.items,
+			...buildingsResponse.items,
+			...resourcesResponse.items,
+			...currenciesResponse.items,
+			...equipmentsResponse.items,
+			...gemsResponse.items,
+			...effectsResponse.items,
 		]);
         const translations = await CitadelAPI.localize(keys);
         if (cancelled) return;
@@ -85,12 +111,18 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
         }
 		const nextResources = definitionMetadata(resourcesResponse.items, 'resourceID', translations, 'Resource');
 		const nextCurrencies = definitionMetadata(currenciesResponse.items, 'currencyID', translations, 'Currency');
+		const nextEquipments = definitionMetadata(equipmentsResponse.items, 'equipmentID', translations, 'Equipment');
+		const nextGems = definitionMetadata(gemsResponse.items, 'gemID', translations, 'Gem');
+		const nextEffects = definitionMetadata(effectsResponse.items, 'effectID', translations, 'Effect');
         setTroops(nextTroops);
         setTools(nextTools);
 		setBuildings(nextBuildings);
         setDecorations(nextDecorations);
 		setResources(nextResources);
 		setCurrencies(nextCurrencies);
+		setEquipments(nextEquipments);
+		setGems(nextGems);
+		setEffects(nextEffects);
       } catch (error) {
         if (!cancelled) console.error('Could not load official game metadata', error);
       } finally {
@@ -106,6 +138,9 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
   const getTroop = useCallback((id: number) => troops[id], [troops]);
   const getTool = useCallback((id: number) => tools[id], [tools]);
 	const getBuilding = useCallback((id: number) => buildings[id], [buildings]);
+	const getEquipment = useCallback((id: number) => equipments[id], [equipments]);
+	const getGem = useCallback((id: number) => gems[id], [gems]);
+	const getEffect = useCallback((id: number) => effects[id], [effects]);
   const getDecoration = useCallback((id: number) => decorations[id], [decorations]);
   const value = useMemo<MetadataContextValue>(() => ({
     troops,
@@ -114,12 +149,36 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
     decorations,
 		resources,
 		currencies,
+		equipments,
+		gems,
+		effects,
     isLoading,
     getTroop,
     getTool,
 		getBuilding,
+		getEquipment,
+		getGem,
+		getEffect,
     getDecoration,
-	}), [buildings, currencies, decorations, getBuilding, getDecoration, getTool, getTroop, isLoading, resources, tools, troops]);
+	}), [
+		buildings,
+		currencies,
+		decorations,
+		effects,
+		equipments,
+		gems,
+		getBuilding,
+		getDecoration,
+		getEffect,
+		getEquipment,
+		getGem,
+		getTool,
+		getTroop,
+		isLoading,
+		resources,
+		tools,
+		troops,
+	]);
 
   return <MetadataContext.Provider value={value}>{children}</MetadataContext.Provider>;
 }
@@ -147,7 +206,7 @@ function isDecoration(row: OfficialRecord): boolean {
 function localizationKeys(rows: OfficialRecord[]): string[] {
   const keys = new Set<string>();
   for (const row of rows) {
-    for (const value of [row.type, row.name, row.Name, row.JSONKey]) {
+    for (const value of [row.type, row.name, row.Name, row.JSONKey, row.comment2]) {
       if (typeof value !== 'string' || value.trim() === '') continue;
       keys.add(`${value}_name`);
       keys.add(value);
@@ -158,12 +217,12 @@ function localizationKeys(rows: OfficialRecord[]): string[] {
 
 function displayName(row: OfficialRecord, translations: Record<string, string>, fallback: string): string {
   if (typeof row._display_name === 'string' && row._display_name.trim() !== '') return row._display_name;
-  for (const value of [row.type, row.name, row.Name, row.JSONKey]) {
+  for (const value of [row.type, row.name, row.Name, row.JSONKey, row.comment2]) {
     if (typeof value !== 'string' || value.trim() === '') continue;
     const translated = translations[`${value}_name`] ?? translations[value];
     if (translated?.trim()) return translated;
   }
-  for (const value of [row.type, row.name, row.Name]) {
+  for (const value of [row.type, row.name, row.Name, row.comment2]) {
     if (typeof value === 'string' && value.trim()) return value;
   }
   return fallback;

@@ -68,6 +68,13 @@ func reduceInitialState(
 		}
 		changed = changed || updated
 	}
+	if raw := root["gli"]; len(raw) > 0 {
+		updated, err := applyLeaders(raw, gameState)
+		if err != nil {
+			return nil, false, err
+		}
+		changed = changed || updated
+	}
 	for section, field := range map[string]string{"gmu": "MP", "ufa": "CF", "ufp": "CFP"} {
 		if raw := root[section]; len(raw) > 0 {
 			updated, err := applyPlayerMetric(raw, field, section, gameState)
@@ -77,7 +84,7 @@ func reduceInitialState(
 			changed = changed || updated
 		}
 	}
-	return []string{"player", "castles", "resources", "alliance"}, changed, nil
+	return []string{"player", "castles", "resources", "alliance", "commanders", "castellans", "equipment"}, changed, nil
 }
 
 func reducePlayerInfo(
@@ -144,7 +151,7 @@ func reduceAllianceInfo(
 		}
 		members = append(members, State.AllianceMember{
 			PlayerID: State.PlayerID(member.ID), Name: member.Name, RankID: member.RankID,
-			Level: member.Level, LegendLevel: member.LegendLevel,
+			Level: member.Level, LegendLevel: member.LegendLevel, Might: float64(member.Might),
 		})
 		if State.PlayerID(member.ID) == gameState.Player.ID {
 			if gameState.Player.Level != member.Level || gameState.Player.LegendLevel != member.LegendLevel ||

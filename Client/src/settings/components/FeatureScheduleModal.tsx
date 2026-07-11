@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, Save } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
 import { Badge, Button, Modal } from '../../components/ui';
 import {
   createEmptyWeeklySchedule,
@@ -8,17 +7,19 @@ import {
   type FeatureSchedules,
   type WeeklySchedule,
 } from '../SchedulerTypes';
-import { loadAutoToolSettingsFromStorage } from '../AutoToolClientState';
-import { loadRecruitTroopsSettingsFromStorage } from '../RecruitTroopsClientState';
+import { loadAutoToolSettingsFromStorage, normalizeAutoToolSettings } from '../AutoToolClientState';
+import { loadRecruitTroopsSettingsFromStorage, normalizeRecruitTroopsSettings } from '../RecruitTroopsClientState';
 import {
-  normalizeQueueableProductionCatalog,
+  buildQueueableProductionCatalog,
   queueableBuildingRowsLoaded,
   queueableIDsForCastle,
   queueableIDsForCastles,
-  type QueueableProductionCatalog,
   type QueueableProductionField,
 } from '../QueueableProductionCatalog';
 import { WeeklyScheduler, type ScheduleSlotOptionsConfig } from './WeeklyScheduler';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { configurationSection } from '../Configuration';
+import { useMetadata } from '../../context/MetadataContext';
 
 interface FeatureScheduleModalProps {
   isOpen: boolean;
@@ -33,10 +34,14 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
   featureLabel,
   onClose,
 }) => {
+  const { configuration, state, updateConfiguration } = useCitadelAPI();
+  const { buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
   const [featureSchedules, setFeatureSchedules] = useState<FeatureSchedules>({});
-  const [queueableCatalog, setQueueableCatalog] = useState<QueueableProductionCatalog>({});
-  const [queueableCatalogLoaded, setQueueableCatalogLoaded] = useState(false);
+  const queueableCatalog = buildQueueableProductionCatalog(state, buildings, troops, tools);
+  const queueableCatalogLoaded = state != null && !metadataLoading;
   const [isDirty, setIsDirty] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
   const dirtyRef = useRef(false);
 
   const setDirty = (dirty: boolean) => {
@@ -45,30 +50,15 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
   };
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'queueableProductionCatalog') {
-        setQueueableCatalog(normalizeQueueableProductionCatalog(msg.payload));
-        setQueueableCatalogLoaded(true);
-        return;
-      }
-      if (msg.type !== 'schedulerSettings' || !msg.payload || dirtyRef.current) return;
-      setFeatureSchedules(normalizeFeatureSchedules(msg.payload.featureSchedules));
-    };
-
-    FrontendWebsocket.addMessageListener(handleMessage);
-    FrontendWebsocket.sendGetSchedulerSettings();
-    FrontendWebsocket.sendMessage({ type: 'getQueueableProductionCatalog' });
-
-    return () => {
-      FrontendWebsocket.removeMessageListener(handleMessage);
-    };
-  }, [isOpen]);
+    if (!isOpen || dirtyRef.current) return;
+    const scheduler = configurationSection(configuration, 'scheduler');
+    setFeatureSchedules(normalizeFeatureSchedules(scheduler.featureSchedules));
+  }, [configuration?.sections.scheduler, isOpen]);
 
   useEffect(() => {
     if (isOpen) return;
     setDirty(false);
+    setSaveError('');
   }, [isOpen]);
 
   const selectedSchedule = useMemo(() => {
@@ -89,10 +79,14 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
     );
     let enabledCastleIDs: string[] = [];
     if (featureID === 'autoRecruit') {
-      const settings = loadRecruitTroopsSettingsFromStorage();
+      const settings = normalizeRecruitTroopsSettings(
+        configuration?.sections['automation.recruitTroops'] ?? loadRecruitTroopsSettingsFromStorage(),
+      );
       enabledCastleIDs = knownCastleIDs.filter((id) => settings.castles[id]?.enabled);
     } else if (featureID === 'autoTool') {
-      const settings = loadAutoToolSettingsFromStorage();
+      const settings = normalizeAutoToolSettings(
+        configuration?.sections['automation.autoTool'] ?? loadAutoToolSettingsFromStorage(),
+      );
       enabledCastleIDs = knownCastleIDs.filter((id) => settings.castles[id]?.enabled);
     }
     if (enabledCastleIDs.length > 0) {
@@ -160,10 +154,16 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
     if (!featureID) return;
     const normalized = normalizeFeatureSchedules(featureSchedules);
     setFeatureSchedules(normalized);
-    const sent = FrontendWebsocket.sendSaveSchedulerSettings({ featureSchedules: normalized });
-    if (!sent) return;
-    setDirty(false);
-    onClose();
+    const scheduler = configurationSection(configuration, 'scheduler');
+    setSaving(true);
+    setSaveError('');
+    void updateConfiguration('scheduler', { ...scheduler, featureSchedules: normalized })
+      .then(() => {
+        setDirty(false);
+        onClose();
+      })
+      .catch((error) => setSaveError(error instanceof Error ? error.message : 'Could not save schedule'))
+      .finally(() => setSaving(false));
   };
 
   return (
@@ -188,15 +188,16 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
           <Button
             variant="primary"
             onClick={handleSave}
-            disabled={!isDirty}
+            disabled={!isDirty || saving}
             leftIcon={<Save className="h-4 w-4" />}
           >
-            Save Schedule
+            {saving ? 'Saving…' : 'Save Schedule'}
           </Button>
         </>
       }
     >
       <div className="scheduler-modal-shell">
+        {saveError && <p className="mb-3 text-xs text-error">{saveError}</p>}
         <WeeklyScheduler
           value={selectedSchedule}
           onChange={handleScheduleChange}

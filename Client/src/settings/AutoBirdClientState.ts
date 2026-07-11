@@ -1,4 +1,4 @@
-import { FrontendWebsocket } from '../Websocket';
+import { queueConfigurationUpdate } from './Configuration';
 import {
   loadPresetsFile,
   parsePresetsPayload,
@@ -85,7 +85,5 @@ export function buildAutoBirdClientState(
 /** Persists to localStorage and the Go data dir (same folder as DecorationPresets.json). */
 export function persistAutoBirdClientState(state: AutoBirdClientStateV1): void {
   applyAutoBirdClientStateToLocalStorage(state);
-  if (FrontendWebsocket.getStatus() === 'Connected') {
-    FrontendWebsocket.sendMessage({ type: 'saveAutoBirdClientState', payload: state });
-  }
+  queueConfigurationUpdate('automation.autoBird', state);
 }

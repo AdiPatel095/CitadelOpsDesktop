@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Shield } from 'lucide-react';
-import { getUnitBaseAndLevel } from '../config/Constants';
 import { useMetadata } from '../context/MetadataContext';
 import LevelBadge from './LevelBadge';
 
@@ -15,7 +14,8 @@ const UnitImage: React.FC<UnitImageProps> = ({ unitId, size = 40, showLevel = fa
   const { getTroop } = useMetadata();
   const [sourceIndex, setSourceIndex] = useState(0);
   const metadata = getTroop(unitId);
-  const level = getUnitBaseAndLevel(unitId)?.level;
+  const levelValue = Number(metadata?.level);
+  const level = Number.isFinite(levelValue) && levelValue > 0 ? levelValue : undefined;
   const sources = useMemo(() => {
     const metadataSrc = typeof metadata?.image === 'string' ? metadata.image.trim() : '';
     const directMetadataSrc = metadataSrc.toLowerCase().endsWith('.png') ? '' : metadataSrc;

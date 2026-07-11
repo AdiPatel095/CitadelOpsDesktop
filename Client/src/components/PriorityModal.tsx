@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from './Icons';
-import { FrontendWebsocket } from '../Websocket';
+import { useCitadelAPI } from '../api/ApiContext';
+import { asRecord, configurationSection } from '../settings/Configuration';
 import { Modal, Button, Card, CardHeader, CardContent } from './ui';
 
 interface PriorityModalProps {
@@ -17,6 +18,9 @@ interface TabItem {
 }
 
 const PriorityModal: React.FC<PriorityModalProps> = ({ isOpen, onClose }) => {
+  const { configuration, updateConfiguration } = useCitadelAPI();
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [tabs, setTabs] = useState<TabItem[]>([
     { id: 't1', name: 'Main Castle Defense', group: 'Ignored' },
     { id: 't2', name: 'Outpost 1 Farm', group: 'Ignored' },
@@ -26,25 +30,15 @@ const PriorityModal: React.FC<PriorityModalProps> = ({ isOpen, onClose }) => {
   ]);
 
   useEffect(() => {
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'schedulerSettings' && msg.payload && msg.payload.tabPriorities) {
-        const priorities = msg.payload.tabPriorities as Record<string, string>;
-        setTabs(prev => prev.map(t => ({
-          ...t,
-          group: (priorities[t.id] as PriorityGroup) || t.group
-        })));
-      }
-    };
-
-    if (isOpen) {
-      FrontendWebsocket.addMessageListener(handleMessage);
-      FrontendWebsocket.sendGetSchedulerSettings();
-    }
-
-    return () => {
-      FrontendWebsocket.removeMessageListener(handleMessage);
-    };
-  }, [isOpen]);
+    if (!isOpen) return;
+    const scheduler = configurationSection(configuration, 'scheduler');
+    const priorities = asRecord(scheduler.tabPriorities);
+    setTabs(prev => prev.map(t => ({
+      ...t,
+      group: isPriorityGroup(priorities[t.id]) ? priorities[t.id] : t.group,
+    })));
+    setSaveError('');
+  }, [configuration?.sections.scheduler, isOpen]);
 
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
 
@@ -91,8 +85,13 @@ const PriorityModal: React.FC<PriorityModalProps> = ({ isOpen, onClose }) => {
   const handleSave = () => {
     const priorityMap: Record<string, string> = {};
     tabs.forEach(t => priorityMap[t.id] = t.group);
-    FrontendWebsocket.sendSaveSchedulerSettings({ tabPriorities: priorityMap });
-    onClose();
+    const scheduler = configurationSection(configuration, 'scheduler');
+    setSaving(true);
+    setSaveError('');
+    void updateConfiguration('scheduler', { ...scheduler, tabPriorities: priorityMap })
+      .then(onClose)
+      .catch((error) => setSaveError(error instanceof Error ? error.message : 'Could not save priorities'))
+      .finally(() => setSaving(false));
   };
 
   return (
@@ -110,11 +109,12 @@ const PriorityModal: React.FC<PriorityModalProps> = ({ isOpen, onClose }) => {
         </div>
       }
       footer={
-        <Button variant="primary" onClick={handleSave} className="ml-auto">
-          Save & Close
+        <Button variant="primary" onClick={handleSave} className="ml-auto" disabled={saving}>
+          {saving ? 'Saving…' : 'Save & Close'}
         </Button>
       }
     >
+      {saveError && <p className="px-2 pb-2 text-xs text-error">{saveError}</p>}
       <div className="priority-board flex min-w-max gap-4 overflow-x-auto p-2 pb-6 custom-scrollbar">
         {columns.map(col => (
           <Card
@@ -168,5 +168,9 @@ const PriorityModal: React.FC<PriorityModalProps> = ({ isOpen, onClose }) => {
     </Modal>
   );
 };
+
+function isPriorityGroup(value: unknown): value is PriorityGroup {
+  return value === 'P1' || value === 'P2' || value === 'P3' || value === 'Ignored';
+}
 
 export default PriorityModal;

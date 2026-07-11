@@ -5,7 +5,6 @@ import { showTroopPicker } from '../../components/TroopPickerModal';
 import { showToolPicker } from '../../components/ToolPickerModal';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
-import { getUnitBaseAndLevel, TROOP_DEFINITIONS } from '../../config/Constants';
 import { useMetadata } from '../../context/MetadataContext';
 import {
   DAY_MINUTES,
@@ -262,7 +261,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
   slotOptionsConfig,
   className = '',
 }) => {
-  const { getTool } = useMetadata();
+  const { getTool, getTroop } = useMetadata();
   const schedule = useMemo(() => normalizeWeeklySchedule(value), [value]);
   const slotOptionsEnabled = !!slotOptionsConfig && !!schedule.slotOptionsEnabled;
   const [editingSlot, setEditingSlot] = useState<SlotFormState | null>(null);
@@ -734,8 +733,10 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
     if (!slotOptionsEnabled || !slotOptionsConfig) return null;
     const troopID = troopIDFromSlot(slot, slotOptionsConfig);
     if (troopID != null) {
-      const unitName = TROOP_DEFINITIONS[troopID] || `Unit ${troopID}`;
-      const level = getUnitBaseAndLevel(troopID)?.level;
+	  const troop = getTroop(troopID);
+	  const unitName = troop?.name || `Unit ${troopID}`;
+	  const rawLevel = Number(troop?.level);
+	  const level = Number.isFinite(rawLevel) && rawLevel > 0 ? rawLevel : undefined;
       const label = level ? `${unitName} L${level}` : unitName;
       const slotUsableWidth = Math.max(0, slotLaneWidth - SLOT_OPTION_HORIZONTAL_INSET);
       const shouldShowIcon = visualHeight / Math.max(1, slotUsableWidth) > SLOT_OPTION_ICON_MIN_HEIGHT_RATIO;
@@ -1169,7 +1170,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                           <div className="schedule-troop-picker-copy">
                             <div className="schedule-troop-picker-name">
                               {Number(editingSlot.options[field.id]) > 0
-                                ? TROOP_DEFINITIONS[Number(editingSlot.options[field.id])] || `Unit ${editingSlot.options[field.id]}`
+								? getTroop(Number(editingSlot.options[field.id]))?.name || `Unit ${editingSlot.options[field.id]}`
                                 : 'No unit selected'}
                             </div>
                             <div className="schedule-troop-picker-id">

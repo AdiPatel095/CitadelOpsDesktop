@@ -1,4 +1,4 @@
-import { FrontendWebsocket } from '../Websocket';
+import { queueConfigurationUpdate } from './Configuration';
 
 export const AUTO_SCEAT_RES_SETTINGS_STORAGE_KEY = 'autoSceatResSettings';
 export const AUTO_SCEAT_RES_SETTINGS_CHANGED_EVENT = 'autoSceatResSettingsChanged';
@@ -252,7 +252,7 @@ export function applyAutoSceatResSettingsToLocalStorage(settings: AutoSceatResCl
 export function persistAutoSceatResSettings(settings: AutoSceatResClientSettings): boolean {
   const normalized = normalizeAutoSceatResSettings(settings);
   applyAutoSceatResSettingsToLocalStorage(normalized);
-  return FrontendWebsocket.sendMessage({ type: 'saveAutoSceatResSettings', payload: normalized });
+  return queueConfigurationUpdate('automation.autoSceatResources', normalized);
 }
 
 export function emptyAutoSceatResCatalog(): AutoSceatResCatalog {

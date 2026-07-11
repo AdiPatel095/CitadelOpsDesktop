@@ -76,6 +76,7 @@ type Command struct {
 	Opcode    string          `json:"opcode"`
 	Sequence  string          `json:"sequence,omitempty"`
 	Payload   json.RawMessage `json:"payload"`
+	Bare      bool            `json:"bare,omitempty"`
 }
 
 func Encode(command Command) ([]byte, error) {
@@ -92,6 +93,12 @@ func Encode(command Command) ([]byte, error) {
 	}
 	if opcode == "" {
 		return nil, fmt.Errorf("command opcode is required")
+	}
+	if command.Bare {
+		if namespace == "" {
+			return []byte(fmt.Sprintf("%%xt%%%s%%%s%%", opcode, sequence)), nil
+		}
+		return []byte(fmt.Sprintf("%%xt%%%s%%%s%%%s%%", namespace, opcode, sequence)), nil
 	}
 	payload := command.Payload
 	if len(payload) == 0 {

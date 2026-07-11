@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarDays, Save, Users } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import { Modal, Button, Input } from '../../components/ui';
 import {
@@ -10,6 +9,8 @@ import {
   persistAutoBeriWorldSettingsToLocalStorage,
   type AutoBeriWorldSettings,
 } from '../AutoBeriWorldClientState';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { queueConfigurationUpdate } from '../Configuration';
 
 interface AutoBeriWorldSettingsModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface AutoBeriWorldSettingsModalProps {
 }
 
 export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
+  const { configuration } = useCitadelAPI();
   const [minTroopsToTransfer, setMinTroopsToTransfer] = useState(
     DEFAULT_AUTO_BERI_WORLD_SETTINGS.minTroopsToTransfer,
   );
@@ -42,21 +44,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 
   useEffect(() => {
     if (!isOpen) return;
-    hydrate(loadAutoBeriWorldSettingsFromStorage());
-    FrontendWebsocket.sendMessage({ type: 'getAutoBeriWorldSettings' });
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleMessage = (msg: { type?: string; payload?: unknown }) => {
-      if (msg.type === 'autoBeriWorldSettings') {
-        const parsed = parseAutoBeriWorldSettings(msg.payload);
-        persistAutoBeriWorldSettingsToLocalStorage(parsed);
-        hydrate(parsed);
-      }
-    };
-    FrontendWebsocket.addMessageListener(handleMessage);
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, []);
+    const settings = parseAutoBeriWorldSettings(
+      configuration?.sections['automation.beriWorld'] ?? loadAutoBeriWorldSettingsFromStorage(),
+    );
+    persistAutoBeriWorldSettingsToLocalStorage(settings);
+    hydrate(settings);
+  }, [configuration?.sections, isOpen]);
 
   const handlePickTroop = async () => {
     const result = await showTroopPicker({
@@ -79,7 +72,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
       troopSpaceCheckIntervalSec,
     });
     persistAutoBeriWorldSettingsToLocalStorage(settings);
-    FrontendWebsocket.sendMessage({ type: 'saveAutoBeriWorldSettings', payload: settings });
+    queueConfigurationUpdate('automation.beriWorld', settings);
     onClose();
   };
 

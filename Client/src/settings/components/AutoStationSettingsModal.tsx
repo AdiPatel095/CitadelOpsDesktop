@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Save, Shield, X } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
 import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import { Button, Card, Input, Modal, Switch } from '../../components/ui';
@@ -10,12 +9,8 @@ import {
   persistAutoStationClientState,
   type AutoStationClientStateV1,
 } from '../AutoStationClientState';
-
-interface Castle {
-  id: number;
-  name: string;
-  type: string;
-}
+import { useCitadelAPI } from '../../api/ApiContext';
+import { castleOptionsFromState, type CastleOptionV2 } from '../../api/StateAdapters';
 
 interface AutoStationSettingsModalProps {
   isOpen: boolean;
@@ -62,26 +57,18 @@ function ReserveTile({
 }
 
 export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> = ({ isOpen, onClose }) => {
-  const [castles, setCastles] = useState<Castle[]>([]);
+  const { state: gameState, configuration } = useCitadelAPI();
+  const castles = castleOptionsFromState(gameState);
   const [state, setState] = useState<AutoStationClientStateV1>(() => loadAutoStationClientState());
 
   useEffect(() => {
     if (!isOpen) return;
-    setState(loadAutoStationClientState());
-    const handleMessage = (message: any) => {
-      if (message.type === 'castleList' && Array.isArray(message.payload)) {
-        setCastles(message.payload as Castle[]);
-      } else if (message.type === 'autoStationClientState') {
-        setState(parseAutoStationClientState(message.payload));
-      }
-    };
-    FrontendWebsocket.addMessageListener(handleMessage);
-    FrontendWebsocket.sendMessage({ type: 'getCastleList' });
-    FrontendWebsocket.sendMessage({ type: 'getAutoStationClientState' });
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, [isOpen]);
+    setState(parseAutoStationClientState(
+      configuration?.sections['automation.autoStation'] ?? loadAutoStationClientState(),
+    ));
+  }, [configuration?.sections, isOpen]);
 
-  const selectReserve = async (castle: Castle) => {
+  const selectReserve = async (castle: CastleOptionV2) => {
     const castleID = String(castle.id);
     const current = state.settings[castleID] ?? [];
     const preselectedQuantities: Record<number, number> = {};

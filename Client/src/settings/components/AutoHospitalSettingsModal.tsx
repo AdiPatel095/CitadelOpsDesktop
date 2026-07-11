@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarDays, Clock3, Save, Settings } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Modal } from '../../components/ui';
 import {
   autoHospitalCheckIntervalMinutesToSec,
@@ -18,9 +17,10 @@ import {
   normalizeFeatureSchedules,
   scheduleSummary,
   WEEK_DAYS,
-  type FeatureSchedules,
   type WeeklySchedule,
 } from '../SchedulerTypes';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { configurationSection } from '../Configuration';
 
 interface AutoHospitalSettingsModalProps {
   isOpen: boolean;
@@ -33,31 +33,19 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
   onClose,
   onOpenFeatureSchedule,
 }) => {
+  const { configuration } = useCitadelAPI();
   const [settings, setSettings] = useState<AutoHospitalClientSettingsV1>(() => loadAutoHospitalSettingsFromStorage());
-  const [featureSchedules, setFeatureSchedules] = useState<FeatureSchedules>({});
+  const featureSchedules = normalizeFeatureSchedules(
+    configurationSection(configuration, 'scheduler').featureSchedules,
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
-    setSettings(loadAutoHospitalSettingsFromStorage());
-    FrontendWebsocket.sendMessage({ type: 'getAutoHospitalSettings' });
-    FrontendWebsocket.sendGetSchedulerSettings();
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'autoHospitalSettings') {
-        setSettings(normalizeAutoHospitalSettings(msg.payload));
-        setIsSaving(false);
-      }
-      if (msg.type === 'schedulerSettings' && msg.payload) {
-        setFeatureSchedules(normalizeFeatureSchedules(msg.payload.featureSchedules));
-      }
-    };
-
-    FrontendWebsocket.addMessageListener(handleMessage);
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, []);
+    setSettings(normalizeAutoHospitalSettings(
+      configuration?.sections['automation.autoHospital'] ?? loadAutoHospitalSettingsFromStorage(),
+    ));
+  }, [configuration?.sections, isOpen]);
 
   const updateCheckIntervalMinutes = (value: string) => {
     const raw = value.replace(/,/g, '');

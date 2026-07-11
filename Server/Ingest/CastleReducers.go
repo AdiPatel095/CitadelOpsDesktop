@@ -413,6 +413,18 @@ func ensureCastleMaps(castle *State.CastleState) {
 	if castle.Queues == nil {
 		castle.Queues = map[string][]State.QueueItem{}
 	}
+	if castle.Crafting.Buildings == nil {
+		castle.Crafting.Buildings = map[State.BuildingInstanceID]State.CraftingBuilding{}
+	}
+	if castle.Crafting.EnabledRecipeIDs == nil {
+		castle.Crafting.EnabledRecipeIDs = []int64{}
+	}
+	if castle.Crafting.EnabledRecipeGroupIDs == nil {
+		castle.Crafting.EnabledRecipeGroupIDs = []int64{}
+	}
+	if castle.Crafting.OutputBoostByQueueType == nil {
+		castle.Crafting.OutputBoostByQueueType = map[int]float64{}
+	}
 }
 
 func copyResourceBalances(source map[State.ResourceID]State.ResourceBalance) map[State.ResourceID]State.ResourceBalance {

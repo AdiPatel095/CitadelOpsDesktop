@@ -17,14 +17,13 @@ import StaleSessionBanner from '../../components/StaleSessionBanner';
 import type { FoodFilter, RoleFilter, TypeFilter } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector } from '../../components/ui';
-import { getUnitBaseAndLevel, TROOP_METADATA } from '../../config/Constants';
 import { useAuth } from '../../context/AuthContext';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { useResources } from '../../currency/context/ResourceContext';
 import { useCastleResources } from '../../dashboard/context/CastleResourceContext';
 import type { PlayerCastleInfo } from '../../dashboard/models/PlayerCastleInfo';
 import type { PlayerGlobalResources } from '../../types/PlayerGlobalResources';
-import { FrontendWebsocket } from '../../Websocket';
+import { Notifications } from '../../components/Notifications';
 
 interface PlayerTrackerSample {
   timestampUnix: number;
@@ -211,7 +210,7 @@ const PlayerTrackerView = () => {
 
   useEffect(() => {
     if (loadError) {
-      FrontendWebsocket.showAlert('red', loadError);
+      Notifications.error(loadError, 'player-tracker-load');
     }
   }, [loadError]);
 
@@ -254,7 +253,7 @@ const PlayerTrackerView = () => {
         const primarySeconds = ranges.find((range) => range.key === selectedRange)?.seconds ?? 365 * 24 * 60 * 60;
         const troopSeconds = ranges.find((range) => range.key === troopRange)?.seconds ?? 365 * 24 * 60 * 60;
         const rangeSeconds = Math.max(primarySeconds, troopSeconds);
-        const response = await fetch(`/api/player-tracker?rangeSeconds=${rangeSeconds}`, { cache: 'no-store' });
+		const response = await fetch(`/api/v2/history/player-tracker?rangeSeconds=${rangeSeconds}`, { cache: 'no-store' });
         if (!response.ok) throw new Error(`Tracker returned HTTP ${response.status}`);
         const payload = await response.json() as PlayerTrackerResponse;
         if (!active) return;
@@ -1219,8 +1218,10 @@ function buildTroopTrendLines(
   const rawLines: TrendLineSeries[] = [];
 
   rankedUnits.forEach((unit, index) => {
-    const name = TROOP_METADATA[unit.unitID]?.name || metadata[unit.unitID]?.name || `Unit #${unit.unitID}`;
-    const level = getUnitBaseAndLevel(unit.unitID)?.level;
+	const item = metadata[unit.unitID];
+	const name = item?.name || `Unit #${unit.unitID}`;
+	const rawLevel = Number(item?.level);
+	const level = Number.isFinite(rawLevel) && rawLevel > 0 ? rawLevel : undefined;
     rawLines.push({
       key: `unit-${unit.unitID}`,
       label: level ? `${name} · Lv ${level}` : name,
@@ -1335,11 +1336,12 @@ function troopMatchesFilters(
 
 function troopUnitClassification(unitID: number, metadata: Record<number, MetadataItem>): TroopUnitClassification {
   const item = metadata[unitID];
-  const fallback = TROOP_METADATA[unitID];
-  const inferredType = troopWeaponType(item, undefined);
-  const weaponType = fallback?.type ?? (inferredType === 'ranged' ? 'range' : inferredType);
-  const combatRole = fallback?.role ?? troopCombatRole(item, undefined);
-  const rawFood = String(fallback?.food ?? item?.food ?? item?.consumptionType ?? 'food').toLowerCase();
+	const inferredType = troopWeaponType(item);
+	const weaponType = inferredType === 'ranged' ? 'range' : inferredType;
+	const combatRole = troopCombatRole(item);
+	const rawFood = metadataNumber(item?.meadSupply) > 0
+	  ? 'mead'
+	  : metadataNumber(item?.beefSupply) > 0 ? 'beef' : 'food';
   const foodType = rawFood === 'mead' || rawFood === 'beef' ? rawFood : 'food';
   return { weaponType, combatRole, foodType };
 }
@@ -1405,8 +1407,7 @@ function calculateTroopCombatComposition(
 
         composition.total += amount;
         const item = metadata[unitID];
-        const fallback = TROOP_METADATA[unitID];
-        const weaponType = troopWeaponType(item, fallback?.type);
+		const weaponType = troopWeaponType(item);
         if (weaponType === 'melee') {
           composition.melee += amount;
           composition.typeClassified += amount;
@@ -1415,7 +1416,7 @@ function calculateTroopCombatComposition(
           composition.typeClassified += amount;
         }
 
-        const combatRole = troopCombatRole(item, fallback?.role);
+		const combatRole = troopCombatRole(item);
         if (combatRole === 'attack') {
           composition.attack += amount;
           composition.roleClassified += amount;
@@ -1431,11 +1432,8 @@ function calculateTroopCombatComposition(
 }
 
 function troopWeaponType(
-  item: MetadataItem | undefined,
-  fallback: 'melee' | 'range' | undefined,
+	item: MetadataItem | undefined,
 ): 'melee' | 'ranged' | null {
-  if (fallback === 'melee') return 'melee';
-  if (fallback === 'range') return 'ranged';
   const value = String(item?.role ?? '').toLowerCase();
   if (value.includes('melee')) return 'melee';
   if (value.includes('range')) return 'ranged';
@@ -1443,10 +1441,8 @@ function troopWeaponType(
 }
 
 function troopCombatRole(
-  item: MetadataItem | undefined,
-  fallback: 'attack' | 'defense' | undefined,
+	item: MetadataItem | undefined,
 ): 'attack' | 'defense' | null {
-  if (fallback) return fallback;
   const attack = Math.max(metadataNumber(item?.meleeAttack), metadataNumber(item?.rangeAttack));
   const defense = Math.max(metadataNumber(item?.meleeDefence), metadataNumber(item?.rangeDefence));
   if (attack > defense) return 'attack';

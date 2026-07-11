@@ -1,7 +1,7 @@
 import React from 'react';
-import { TROOP_DEFINITIONS } from '../../config/Constants';
 import UnitImage from '../../components/UnitImage';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
+import { useMetadata } from '../../context/MetadataContext';
 
 interface CastleUnitCardProps {
   title: string;
@@ -15,6 +15,7 @@ function formatBadgeCount(value: number): string {
 }
 
 const CastleUnitCard: React.FC<CastleUnitCardProps> = ({ title, troopsMixed, troopsI, troopsTU }) => {
+  const { getTroop } = useMetadata();
   const sortedUnitIds = Object.keys(troopsMixed)
     .map(Number)
     .filter(id => !isNaN(id) && troopsMixed[id] > 0)
@@ -34,7 +35,7 @@ const CastleUnitCard: React.FC<CastleUnitCardProps> = ({ title, troopsMixed, tro
         ) : (
           <div className="grid grid-cols-3 gap-x-3 gap-y-5 pb-3 pt-2 sm:grid-cols-4 md:grid-cols-5">
             {sortedUnitIds.map(unitId => {
-              const name = TROOP_DEFINITIONS[unitId] || `Unit ${unitId}`;
+              const name = getTroop(unitId)?.name || `Unit ${unitId}`;
               const inCastle = troopsI[unitId] || 0;
               const travelling = troopsTU[unitId] || 0;
 

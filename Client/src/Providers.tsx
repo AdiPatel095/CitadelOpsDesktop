@@ -3,7 +3,6 @@ import { AuthProvider } from './context/AuthContext';
 import { CastleFocusProvider } from './context/CastleFocusContext';
 import { LastKnownSnapshotProvider } from './context/LastKnownSnapshotContext';
 import { CastleResourceProvider } from './dashboard/context/CastleResourceContext';
-import { EquipmentProvider } from './equipment/context/EquipmentContext';
 import { ResourceProvider } from './currency/context/ResourceContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TroopPickerProvider } from './components/TroopPickerModal';
@@ -27,16 +26,14 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({ children })
 									<ResourceProvider>
                                     <RiftMapProvider>
                                         <MovementProvider>
-                                            <EquipmentProvider>
-                                                <TroopPickerProvider>
+                                            <TroopPickerProvider>
                                                     <ToolPickerProvider>
                                                         <TCIPickerProvider>
                                                             <SharedSvgDefs />
                                                             {children}
                                                         </TCIPickerProvider>
                                                     </ToolPickerProvider>
-                                                </TroopPickerProvider>
-                                            </EquipmentProvider>
+                                            </TroopPickerProvider>
                                         </MovementProvider>
                                     </RiftMapProvider>
 									</ResourceProvider>

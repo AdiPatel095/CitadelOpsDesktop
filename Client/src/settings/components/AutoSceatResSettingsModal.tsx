@@ -13,10 +13,8 @@ import {
   Truck,
   Warehouse,
 } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Modal, Select, Switch } from '../../components/ui';
 import {
-  applyAutoSceatResSettingsToLocalStorage,
   emptyAutoSceatResCatalog,
   loadAutoSceatResSettingsFromStorage,
   normalizeAutoSceatResSettings,
@@ -29,7 +27,10 @@ import {
   type AutoSceatResClientSettings,
   type AutoSceatStorageNode,
 } from '../AutoSceatResClientState';
-import { normalizeFeatureSchedules, scheduleSummary, type FeatureSchedules } from '../SchedulerTypes';
+import { normalizeFeatureSchedules, scheduleSummary } from '../SchedulerTypes';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { CitadelAPI } from '../../api/CitadelClient';
+import { configurationSection } from '../Configuration';
 import { AutoSceatRecipePickerModal } from './AutoSceatRecipePickerModal';
 
 interface AutoSceatResSettingsModalProps {
@@ -79,40 +80,54 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
   onClose,
   onOpenFeatureSchedule,
 }) => {
+  const { configuration, state, submitIntent } = useCitadelAPI();
   const [settings, setSettings] = useState<AutoSceatResClientSettings>(() => loadAutoSceatResSettingsFromStorage());
   const [catalog, setCatalog] = useState<AutoSceatResCatalog>(() => emptyAutoSceatResCatalog());
-  const [featureSchedules, setFeatureSchedules] = useState<FeatureSchedules>({});
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const featureSchedules = normalizeFeatureSchedules(
+    configurationSection(configuration, 'scheduler').featureSchedules,
+  );
   const [pickerTarget, setPickerTarget] = useState<{ castleID: number; building: AutoSceatBuildingState } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const craftingRevision = state?.observations.crin?.lastRevision ?? 0;
 
   useEffect(() => {
     if (!isOpen) return;
-    setSettings(loadAutoSceatResSettingsFromStorage());
-    FrontendWebsocket.sendMessage({ type: 'getAutoSceatResSettings' });
-    FrontendWebsocket.sendMessage({ type: 'refreshAutoSceatResCatalog' });
-    FrontendWebsocket.sendGetSchedulerSettings();
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleMessage = (message: any) => {
-      if (message.type === 'autoSceatResSettings') {
-        const normalized = normalizeAutoSceatResSettings(message.payload);
-        setSettings(normalized);
-        applyAutoSceatResSettingsToLocalStorage(normalized);
-        setIsSaving(false);
-        return;
-      }
-      if (message.type === 'autoSceatResCatalog') {
-        setCatalog(normalizeAutoSceatResCatalog(message.payload));
-        return;
-      }
-      if (message.type === 'schedulerSettings' && message.payload) {
-        setFeatureSchedules(normalizeFeatureSchedules(message.payload.featureSchedules));
+    setSettings(normalizeAutoSceatResSettings(
+      configuration?.sections['automation.autoSceatResources'] ?? loadAutoSceatResSettingsFromStorage(),
+    ));
+    let active = true;
+    const load = async () => {
+      try {
+        if (state?.session.socketReady) {
+          await submitIntent('crafting.refresh');
+        }
+        const projection = await CitadelAPI.getProjection<AutoSceatResCatalog>('crafting');
+        if (!active) return;
+        setCatalog(normalizeAutoSceatResCatalog(projection));
+        setCatalogError(null);
+      } catch (error) {
+        if (active) setCatalogError(error instanceof Error ? error.message : 'Could not load crafting data.');
       }
     };
-    FrontendWebsocket.addMessageListener(handleMessage);
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, []);
+    void load();
+    return () => { active = false; };
+  }, [configuration?.sections, isOpen, state?.session.socketReady, submitIntent]);
+
+  useEffect(() => {
+    if (!isOpen || craftingRevision === 0) return;
+    let active = true;
+    void CitadelAPI.getProjection<AutoSceatResCatalog>('crafting')
+      .then((projection) => {
+        if (!active) return;
+        setCatalog(normalizeAutoSceatResCatalog(projection));
+        setCatalogError(null);
+      })
+      .catch((error) => {
+        if (active) setCatalogError(error instanceof Error ? error.message : 'Could not load crafting data.');
+      });
+    return () => { active = false; };
+  }, [craftingRevision, isOpen]);
 
   const craftingNodes = useMemo(() => catalog.nodes.filter((node) => node.canCraft && node.buildings.length > 0), [catalog.nodes]);
   const storageNodes = useMemo(() => catalog.nodes.filter((node) => !node.canCraft), [catalog.nodes]);
@@ -162,6 +177,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
       setIsSaving(false);
       return;
     }
+    setIsSaving(false);
     onClose();
   };
 
@@ -239,6 +255,11 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
         }
       >
         <div className="mx-auto flex w-full max-w-[1780px] flex-col gap-5 pb-2">
+          {catalogError && (
+            <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+              {catalogError}
+            </div>
+          )}
           <Card variant="solid" className="liquid-prominent-header-card">
             <CardHeader className="liquid-card-header-prominent">
               <div>

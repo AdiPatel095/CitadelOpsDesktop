@@ -25,6 +25,11 @@ type Pipeline struct {
 	watchMu   sync.RWMutex
 	watchers  map[uint64]frameWatcher
 	nextWatch atomic.Uint64
+	telemetry frameTelemetry
+}
+
+type frameTelemetry interface {
+	Record(frame Protocol.CommittedFrame, reduceErr error)
 }
 
 type frameWatcher struct {
@@ -45,6 +50,10 @@ func NewPipeline(state *State.Store, gameData GameDataProvider, registry *Regist
 
 func (pipeline *Pipeline) Registry() *Registry {
 	return pipeline.registry
+}
+
+func (pipeline *Pipeline) SetTelemetry(telemetry frameTelemetry) {
+	pipeline.telemetry = telemetry
 }
 
 func (pipeline *Pipeline) HandleRaw(ctx context.Context, raw string, direction Protocol.Direction) (Protocol.CommittedFrame, error) {
@@ -89,10 +98,16 @@ func (pipeline *Pipeline) HandleFrame(ctx context.Context, frame Protocol.Frame)
 		}
 		committed := Protocol.CommittedFrame{Frame: frame, Revision: event.Revision, Domains: event.Domains}
 		pipeline.publish(committed)
+		if pipeline.telemetry != nil {
+			pipeline.telemetry.Record(committed, reduceErr)
+		}
 		return committed, reduceErr
 	}
 	committed := Protocol.CommittedFrame{Frame: frame, Revision: event.Revision, Domains: event.Domains}
 	pipeline.publish(committed)
+	if pipeline.telemetry != nil {
+		pipeline.telemetry.Record(committed, nil)
+	}
 	return committed, nil
 }
 

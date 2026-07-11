@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Icons } from '../components/Icons';
 import PriorityModal from '../components/PriorityModal';
-import { FrontendWebsocket } from '../Websocket';
 import { CitadelAPI } from '../api/CitadelClient';
 import { useCitadelAPI } from '../api/ApiContext';
 import type { BrowserInventory } from '../api/Contracts';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Select } from '../components/ui';
+import { configurationSection, numericSetting } from '../settings/Configuration';
 
 const SettingsView: React.FC = () => {
-	const { state, submitIntent } = useCitadelAPI();
+	const { state, configuration, submitIntent, updateConfiguration } = useCitadelAPI();
   const [minTimer, setMinTimer] = useState<string>('4.0');
   const [maxTimer, setMaxTimer] = useState<string>('6.0');
   const [upgradeEreDelayMs, setUpgradeEreDelayMs] = useState<string>('50');
@@ -18,6 +18,11 @@ const SettingsView: React.FC = () => {
 	const [browserInventory, setBrowserInventory] = useState<BrowserInventory | null>(null);
 	const [browserSelectionPending, setBrowserSelectionPending] = useState(false);
 	const [browserSelectionError, setBrowserSelectionError] = useState('');
+	const [settingsSaveError, setSettingsSaveError] = useState('');
+	const schedulerConfiguration = useMemo(
+		() => configurationSection(configuration, 'scheduler'),
+		[configuration?.sections.scheduler],
+	);
 
 	useEffect(() => {
 		let active = true;
@@ -34,23 +39,12 @@ const SettingsView: React.FC = () => {
 	}, []);
 
   useEffect(() => {
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'schedulerSettings' && msg.payload) {
-        setMinTimer(msg.payload.minAttackDelay?.toFixed(1) || '4.0');
-        setMaxTimer(msg.payload.maxAttackDelay?.toFixed(1) || '6.0');
-        setUpgradeEreDelayMs(String(msg.payload.upgradeEreDelayMs ?? 50));
-        setUpgradeCoinThreshold(String(msg.payload.upgradeCoinThreshold ?? 0));
-        setManualFocusIdleSec(String(msg.payload.manualFocusIdleSec ?? 30));
-      }
-    };
-
-    FrontendWebsocket.addMessageListener(handleMessage);
-    FrontendWebsocket.sendGetSchedulerSettings();
-
-    return () => {
-      FrontendWebsocket.removeMessageListener(handleMessage);
-    };
-  }, []);
+		setMinTimer(numericSetting(schedulerConfiguration.minAttackDelay, 4).toFixed(1));
+		setMaxTimer(numericSetting(schedulerConfiguration.maxAttackDelay, 6).toFixed(1));
+		setUpgradeEreDelayMs(String(numericSetting(schedulerConfiguration.upgradeEreDelayMs, 50)));
+		setUpgradeCoinThreshold(String(numericSetting(schedulerConfiguration.upgradeCoinThreshold, 0)));
+		setManualFocusIdleSec(String(numericSetting(schedulerConfiguration.manualFocusIdleSec, 30)));
+	}, [schedulerConfiguration]);
 
   const saveSettings = (
     min: string,
@@ -59,13 +53,17 @@ const SettingsView: React.FC = () => {
     coinThreshold?: string,
     focusIdleSec?: string,
   ) => {
-    FrontendWebsocket.sendSaveSchedulerSettings({
+		setSettingsSaveError('');
+		void updateConfiguration('scheduler', {
+			...schedulerConfiguration,
       minAttackDelay: parseFloat(min),
       maxAttackDelay: parseFloat(max),
       upgradeEreDelayMs: parseInt(ereDelayMs ?? upgradeEreDelayMs, 10),
       upgradeCoinThreshold: parseFloat(coinThreshold ?? upgradeCoinThreshold),
       manualFocusIdleSec: parseInt(focusIdleSec ?? manualFocusIdleSec, 10),
-    });
+		}).catch((error) => {
+			setSettingsSaveError(error instanceof Error ? error.message : 'Could not save settings');
+		});
   };
 
   const parsedCoinThreshold = useMemo(() => {
@@ -261,6 +259,7 @@ const SettingsView: React.FC = () => {
           </CardHeader>
 
           <CardContent className="liquid-prominent-header-content p-6 space-y-8">
+			{settingsSaveError && <p className="text-xs text-error">{settingsSaveError}</p>}
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-text-main mb-1">Random Attack Timer Range</h3>
@@ -272,10 +271,11 @@ const SettingsView: React.FC = () => {
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="relative flex-1 w-full sm:max-w-[200px]">
-                  <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+                  <label htmlFor="min-attack-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                     Min Delay (Sec)
                   </label>
                   <Input
+					id="min-attack-delay"
                     type="number"
                     step="0.1"
                     min="4.0"
@@ -290,10 +290,11 @@ const SettingsView: React.FC = () => {
                 <div className="hidden sm:block mt-6 text-text-muted font-bold">-</div>
 
                 <div className="relative flex-1 w-full sm:max-w-[200px]">
-                  <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+                  <label htmlFor="max-attack-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                     Max Delay (Sec)
                   </label>
                   <Input
+					id="max-attack-delay"
                     type="number"
                     step="0.1"
                     min={minTimer}
@@ -318,10 +319,11 @@ const SettingsView: React.FC = () => {
               </div>
 
               <div className="relative flex-1 w-full sm:max-w-[200px]">
-                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+                <label htmlFor="manual-focus-idle" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                   Idle Timeout
                 </label>
                 <Input
+				  id="manual-focus-idle"
                   type="number"
                   step="1"
                   min="5"
@@ -376,10 +378,11 @@ const SettingsView: React.FC = () => {
             </div>
 
             <div className="relative flex-1 w-full sm:max-w-[200px]">
-              <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+              <label htmlFor="upgrade-step-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                 Delay (ms)
               </label>
               <Input
+				id="upgrade-step-delay"
                 type="number"
                 step="1"
                 min="10"
@@ -400,10 +403,11 @@ const SettingsView: React.FC = () => {
             </div>
 
             <div className="relative flex-1 w-full sm:max-w-[200px]">
-              <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+              <label htmlFor="upgrade-coin-reserve" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                 Minimum Coins
               </label>
               <Input
+				id="upgrade-coin-reserve"
                 type="number"
                 step="1"
                 min="0"

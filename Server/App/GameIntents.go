@@ -24,6 +24,15 @@ func (application *Application) registerGameIntents() error {
 			},
 		},
 		{
+			Name: "equipment.refresh", Description: "Request the current commander and castellan loadouts", Effect: Intent.EffectRead,
+			Planner: func(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
+				return Intent.Plan{
+					Claims: []string{"game:equipment"}, Summary: "Refresh equipment",
+					Steps: []Intent.Step{commandStep("Refresh equipment", "gli", json.RawMessage(`{}`), "gli")},
+				}, nil
+			},
+		},
+		{
 			Name: "game.focus_castle", Description: "Focus and refresh one of the player's castles", Effect: Intent.EffectRead,
 			Planner: planCastleFocus,
 		},
@@ -47,6 +56,35 @@ func (application *Application) registerGameIntents() error {
 			Name: "construction.shop", Description: "Request the live construction-item offers for a castle", Effect: Intent.EffectRead,
 			Planner: planConstructionShop,
 		},
+		{
+			Name: "crafting.refresh", Description: "Request all sovereign crafting queues and research entitlements", Effect: Intent.EffectRead,
+			Planner: func(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
+				return Intent.Plan{
+					Claims: []string{"game:crafting"}, Summary: "Refresh crafting queues",
+					Steps: []Intent.Step{commandStep("Refresh crafting queues", "crin", json.RawMessage(`{}`), "crin")},
+				}, nil
+			},
+		},
+		{
+			Name: "crafting.start", Description: "Start or queue one official crafting recipe", Effect: Intent.EffectWrite,
+			Planner: planCraftingStart,
+		},
+		{
+			Name: "spy.launch", Description: "Launch a military espionage mission from an owned castle", Effect: Intent.EffectLaunch,
+			Planner: planSpyLaunch,
+		},
+		{
+			Name: "rift.maiden_wave.launch", Description: "Launch deterministic Rift probe waves with eligible shield-maiden commanders", Effect: Intent.EffectLaunch,
+			Planner: planMaidenCommsWave,
+		},
+		{
+			Name: "rift.launch.replay", Description: "Replay a captured Rift attack template", Effect: Intent.EffectLaunch,
+			Planner: application.planRiftReplay,
+		},
+		{
+			Name: "decoration.apply_preset", Description: "Reconcile one castle's decoration layout with an official-definition preset", Effect: Intent.EffectWrite,
+			Planner: planDecorationPreset,
+		},
 	}
 	for _, definition := range definitions {
 		if err := application.Intents.Registry().Register(definition); err != nil {
@@ -54,6 +92,51 @@ func (application *Application) registerGameIntents() error {
 		}
 	}
 	return nil
+}
+
+func planCraftingStart(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request struct {
+		CastleID           State.CastleID           `json:"castleId"`
+		BuildingInstanceID State.BuildingInstanceID `json:"buildingInstanceId"`
+		RecipeID           int64                    `json:"recipeId"`
+		Power              int                      `json:"power,omitempty"`
+	}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	castle, ok := input.State.Castles[request.CastleID]
+	if !ok || request.CastleID <= 0 {
+		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
+	}
+	building, ok := castle.Crafting.Buildings[request.BuildingInstanceID]
+	if !ok || request.BuildingInstanceID <= 0 {
+		return Intent.Plan{}, fmt.Errorf("crafting building %d is not in castle %d", request.BuildingInstanceID, request.CastleID)
+	}
+	if request.RecipeID <= 0 || input.GameData == nil {
+		return Intent.Plan{}, fmt.Errorf("recipeId must reference the loaded official catalog")
+	}
+	catalog, err := input.GameData.Catalog("craftingRecipes")
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	if _, exists := catalog.Find(strconv.FormatInt(request.RecipeID, 10)); !exists {
+		return Intent.Plan{}, fmt.Errorf("crafting recipe %d is not in the current official catalog", request.RecipeID)
+	}
+	payload, _ := json.Marshal(struct {
+		KingdomID  State.KingdomID          `json:"KID"`
+		CastleID   State.CastleID           `json:"AID"`
+		BuildingID State.BuildingInstanceID `json:"OID"`
+		Power      int                      `json:"PWR"`
+		RecipeID   int64                    `json:"CRID"`
+	}{castle.KingdomID, castle.ID, building.InstanceID, request.Power, request.RecipeID})
+	return Intent.Plan{
+		Claims: []string{
+			"castle:" + strconv.FormatInt(int64(castle.ID), 10),
+			"crafting-building:" + strconv.FormatInt(int64(building.InstanceID), 10),
+		},
+		Summary: fmt.Sprintf("Queue crafting recipe %d at %s", request.RecipeID, castleLabel(castle)),
+		Steps:   []Intent.Step{commandStep("Queue crafting recipe", "crst", payload, "crst")},
+	}, nil
 }
 
 func planCastleFocus(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {

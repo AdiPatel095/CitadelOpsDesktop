@@ -417,7 +417,7 @@ export type CastleFocusDecorationTooltipContent = {
   lines: string[];
 };
 
-/** One decoration aggregate from BG/BD rows, resolved via public `decorations/index.json` (MetadataContext). */
+/** One decoration aggregate from BG/BD rows, resolved through the runtime official catalog. */
 export type PublicDecorationTooltipRow = {
   wid: number;
   count: number;
@@ -425,7 +425,7 @@ export type PublicDecorationTooltipRow = {
 };
 
 /**
- * Rows whose `buildingID` exists in the public decorations index (`/game-data/decorations/index.json`).
+ * Rows whose `buildingID` exists in the official runtime decorations projection.
  */
 export function decorationTooltipRowsFromPublicIndex(
   cf: CastleFocusState | null | undefined,

@@ -2,11 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Search, Check, Heart, List, Flame } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import UnitImage from './UnitImage';
-import { useMetadata } from '../context/MetadataContext';
-import {
-  TROOP_DEFINITIONS,
-  TROOP_METADATA,
-} from '../config/Constants';
+import { useMetadata, type MetadataItem } from '../context/MetadataContext';
 import {
   getFavorites,
   toggleFavorite,
@@ -451,7 +447,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
   // Get definitions and metadata for troops
   const definitions = useMemo<Record<number, string>>(() => {
     if (!restrictToAllowed) {
-      return TROOP_DEFINITIONS;
+	  return Object.fromEntries(Object.entries(troops).map(([id, item]) => [Number(id), item.name]));
     }
     const out: Record<number, string> = {};
     for (const id of allowedUnitIds ?? []) {
@@ -459,11 +455,13 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
         continue;
       }
       const unitID = Math.floor(id);
-      out[unitID] = troops[unitID]?.name || TROOP_DEFINITIONS[unitID] || `Unit #${unitID}`;
+	  out[unitID] = troops[unitID]?.name || `Unit #${unitID}`;
     }
     return out;
   }, [allowedUnitIds, restrictToAllowed, troops]);
-  const metadata = TROOP_METADATA;
+  const metadata = useMemo(() => Object.fromEntries(
+	Object.entries(troops).map(([id, item]) => [Number(id), pickerUnitMetadata(item)]),
+  ), [troops]);
 
   // Filter units by all criteria
   const filteredUnits = useMemo(() => {
@@ -744,5 +742,27 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
     </Modal>
   );
 };
+
+function pickerUnitMetadata(item: MetadataItem) {
+  const officialRole = String(item.role ?? '').toLowerCase();
+  const type: 'melee' | 'range' = officialRole.includes('range') ? 'range' : 'melee';
+  const attack = Math.max(metadataNumber(item.meleeAttack), metadataNumber(item.rangeAttack));
+  const defense = Math.max(metadataNumber(item.meleeDefence), metadataNumber(item.rangeDefence));
+  const role: 'attack' | 'defense' = attack >= defense ? 'attack' : 'defense';
+  const mead = metadataNumber(item.meadSupply);
+  const beef = metadataNumber(item.beefSupply);
+  const food = metadataNumber(item.foodSupply);
+  return {
+    type,
+    role,
+    food: mead > 0 ? 'mead' as const : beef > 0 ? 'beef' as const : 'food' as const,
+    consumption: mead || beef || food,
+  };
+}
+
+function metadataNumber(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
 export default TroopPickerModal;

@@ -1,4 +1,4 @@
-import { FrontendWebsocket } from '../Websocket';
+import { CitadelAPI } from '../api/CitadelClient';
 
 /** One wire CID tier in a TCI design group (same name/effect line, different in-game level). */
 export interface CatalogGroupTier {
@@ -123,45 +123,87 @@ export function fetchConstructionItemsCatalog(): Promise<ConstructionItemCatalog
   if (inFlight) {
     return inFlight;
   }
-  inFlight = new Promise((resolve, reject) => {
-    const handler = (msg: any) => {
-      if (msg.type !== 'constructionItemsCatalog') {
-        return;
-      }
-      FrontendWebsocket.removeMessageListener(handler);
+  inFlight = loadOfficialConstructionItems()
+    .then((items) => {
+      cache = items;
+      return items;
+    })
+    .finally(() => {
       inFlight = null;
-      const payload = msg.payload;
-      if (!Array.isArray(payload)) {
-        cache = [];
-        resolve(cache);
-        return;
-      }
-      cache = (payload as ConstructionItemCatalogEntry[]).map(normalizeCatalogEntry);
-      resolve(cache);
-    };
-    FrontendWebsocket.addMessageListener(handler);
-    FrontendWebsocket.sendMessage({ type: 'getConstructionItemsCatalog' });
-  });
+    });
   return inFlight;
 }
 
-function normalizeCatalogEntry(
-  e: ConstructionItemCatalogEntry & { groupTiers?: CatalogGroupTier[]; minLevel?: number; maxLevel?: number }
-): ConstructionItemCatalogEntry {
-  const groupIds = e.groupIds?.length ? e.groupIds : [e.id];
-  const minLevel = e.minLevel ?? 1;
-  const maxLevel = e.maxLevel ?? minLevel;
-  let groupTiers = e.groupTiers;
-  if (!groupTiers || groupTiers.length === 0) {
-    groupTiers = groupIds.map((wireCid) => ({ wireCid, level: minLevel, effects: e.effects }));
+async function loadOfficialConstructionItems(): Promise<ConstructionItemCatalogEntry[]> {
+  const response = await CitadelAPI.getCatalog<Record<string, unknown>>('constructionItems');
+  const localizationNames = Array.from(new Set(response.items
+    .map((row) => typeof row.name === 'string' ? row.name : '')
+    .filter(Boolean)));
+  const localizationKeys = localizationNames.flatMap((name) => [`${name}_name`, name]).slice(0, 5000);
+  const translations = await CitadelAPI.localize(localizationKeys);
+  const groups = new Map<number, CatalogGroupTier[]>();
+  const records = new Map<number, Record<string, unknown>>();
+  for (const row of response.items) {
+    const id = positiveInteger(row.constructionItemID);
+    if (id === 0) continue;
+    const groupID = positiveInteger(row.constructionItemGroupID) || id;
+    const tier: CatalogGroupTier = {
+      wireCid: id,
+      level: positiveInteger(row.level) || 1,
+      effects: formatOfficialEffects(row),
+    };
+    groups.set(groupID, [...(groups.get(groupID) ?? []), tier]);
+    if (!records.has(groupID)) records.set(groupID, row);
   }
-  return {
-    ...e,
-    groupIds,
-    groupTiers,
-    minLevel,
-    maxLevel,
-  };
+  return Array.from(groups, ([groupID, unsortedTiers]) => {
+    const groupTiers = unsortedTiers.sort((left, right) => left.level - right.level || left.wireCid - right.wireCid);
+    const row = records.get(groupID) ?? {};
+    const internal = typeof row.name === 'string' ? row.name : `constructionItem${groupID}`;
+    const label = translations[`${internal}_name`] ?? translations[internal] ?? humanize(internal);
+    const minLevel = groupTiers[0]?.level ?? 1;
+    const maxLevel = groupTiers[groupTiers.length - 1]?.level ?? minLevel;
+    return {
+      id: groupTiers[0]?.wireCid ?? groupID,
+      groupIds: groupTiers.map((tier) => tier.wireCid),
+      groupTiers,
+      minLevel,
+      maxLevel,
+      label,
+      internal,
+      level: minLevel === maxLevel ? String(minLevel) : `${minLevel}-${maxLevel}`,
+      category: typeof row.comment1 === 'string' ? row.comment1 : `Slot ${row.slotTypeID ?? ''}`.trim(),
+      effects: groupTiers[0]?.effects ?? '',
+    };
+  }).sort((left, right) => left.category.localeCompare(right.category) || left.label.localeCompare(right.label));
+}
+
+const constructionMetadataFields = new Set([
+  'constructionItemID', 'constructionItemGroupID', 'constructionItemEffectGroupID',
+  'name', 'comment1', 'comment2', 'level', 'rarenessID', 'slotTypeID',
+  'removalCostC1', 'lockRemoval', 'isPremium', 'effects',
+]);
+
+function formatOfficialEffects(row: Record<string, unknown>): string {
+  const effects: string[] = [];
+  for (const [key, value] of Object.entries(row)) {
+    if (constructionMetadataFields.has(key) || key.startsWith('add') || key.startsWith('cost')) continue;
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount === 0) continue;
+    effects.push(`${humanize(key)}: ${amount.toLocaleString()}`);
+  }
+  return effects.join(' • ');
+}
+
+function positiveInteger(value: unknown): number {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? Math.floor(number) : 0;
+}
+
+function humanize(value: string): string {
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/^./, (character) => character.toUpperCase());
 }
 
 export function getCachedConstructionCatalog(): ConstructionItemCatalogEntry[] | null {

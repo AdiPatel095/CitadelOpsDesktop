@@ -150,6 +150,17 @@ func cloneGameState(source GameState) GameState {
 			}
 			castle.Queues[name] = clonedItems
 		}
+		castle.Crafting.Buildings = make(map[BuildingInstanceID]CraftingBuilding, len(source.Castles[id].Crafting.Buildings))
+		for buildingID, building := range source.Castles[id].Crafting.Buildings {
+			building.ActiveSlotRentals = append([]int(nil), building.ActiveSlotRentals...)
+			building.QueueSlotRentals = append([]int(nil), building.QueueSlotRentals...)
+			building.Active = cloneCraftingQueue(building.Active)
+			building.Queued = cloneCraftingQueue(building.Queued)
+			castle.Crafting.Buildings[buildingID] = building
+		}
+		castle.Crafting.EnabledRecipeIDs = append([]int64(nil), source.Castles[id].Crafting.EnabledRecipeIDs...)
+		castle.Crafting.EnabledRecipeGroupIDs = append([]int64(nil), source.Castles[id].Crafting.EnabledRecipeGroupIDs...)
+		castle.Crafting.OutputBoostByQueueType = cloneMap(source.Castles[id].Crafting.OutputBoostByQueueType)
 		clone.Castles[id] = castle
 	}
 	clone.Commanders = make(map[CommanderID]CommanderState, len(source.Commanders))
@@ -158,22 +169,29 @@ func cloneGameState(source GameState) GameState {
 		commander.Gems = cloneMap(commander.Gems)
 		clone.Commanders[id] = commander
 	}
+	clone.Castellans = make(map[CastellanID]CastellanState, len(source.Castellans))
+	for id, castellan := range source.Castellans {
+		castellan.Equipment = cloneMap(castellan.Equipment)
+		castellan.Gems = cloneMap(castellan.Gems)
+		clone.Castellans[id] = castellan
+	}
 	clone.Movements = make(map[MovementID]MovementState, len(source.Movements))
 	for id, movement := range source.Movements {
 		movement.Units = cloneMap(movement.Units)
 		movement.ArrivesAt = cloneTimePointer(movement.ArrivesAt)
 		movement.ReturnsAt = cloneTimePointer(movement.ReturnsAt)
+		movement.CommanderID = cloneCommanderIDPointer(movement.CommanderID)
 		clone.Movements[id] = movement
 	}
 	clone.Inventory.ConstructionItems = cloneMap(source.Inventory.ConstructionItems)
 	clone.Inventory.Equipment = make(map[EquipmentInstanceID]EquipmentInstance, len(source.Inventory.Equipment))
 	for id, item := range source.Inventory.Equipment {
-		item.Effects = cloneMap(item.Effects)
+		item.Effects = cloneEffectValues(item.Effects)
 		clone.Inventory.Equipment[id] = item
 	}
 	clone.Inventory.Gems = make(map[GemInstanceID]GemInstance, len(source.Inventory.Gems))
 	for id, gem := range source.Inventory.Gems {
-		gem.Effects = cloneMap(gem.Effects)
+		gem.Effects = cloneEffectValues(gem.Effects)
 		clone.Inventory.Gems[id] = gem
 	}
 	clone.Inventory.Items = make(map[string]map[int64]int64, len(source.Inventory.Items))
@@ -186,6 +204,15 @@ func cloneGameState(source GameState) GameState {
 		clone.Map[kingdomID] = cloneMap(observations)
 	}
 	clone.Observations = cloneMap(source.Observations)
+	return clone
+}
+
+func cloneCraftingQueue(source []CraftingQueueItem) []CraftingQueueItem {
+	clone := append([]CraftingQueueItem(nil), source...)
+	for index := range clone {
+		clone[index].RemainingSec = cloneIntPointer(clone[index].RemainingSec)
+		clone[index].RuntimeSec = cloneIntPointer(clone[index].RuntimeSec)
+	}
 	return clone
 }
 
@@ -206,6 +233,22 @@ func cloneIntPointer(source *int) *int {
 	}
 	value := *source
 	return &value
+}
+
+func cloneCommanderIDPointer(source *CommanderID) *CommanderID {
+	if source == nil {
+		return nil
+	}
+	value := *source
+	return &value
+}
+
+func cloneEffectValues(source map[int64][]float64) map[int64][]float64 {
+	clone := make(map[int64][]float64, len(source))
+	for id, values := range source {
+		clone[id] = append([]float64(nil), values...)
+	}
+	return clone
 }
 
 func cloneTimePointer(source *time.Time) *time.Time {

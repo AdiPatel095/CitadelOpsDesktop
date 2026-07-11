@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, Castle, Clock3, Copy, Trash2, Save, Plus, Settings } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
-import { TROOP_DEFINITIONS } from '../../config/Constants';
+import { useMetadata } from '../../context/MetadataContext';
 import { Modal, Button, Input, Card, CardHeader, CardTitle, CardContent, Badge, Switch, PillSelector } from '../../components/ui';
 import {
   DEFAULT_RECRUIT_CHECK_INTERVAL_MIN,
@@ -22,16 +21,17 @@ import {
   formatMinuteOfDay,
   normalizeFeatureSchedules,
   WEEK_DAYS,
-  type FeatureSchedules,
   type WeeklySchedule,
 } from '../SchedulerTypes';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { configurationSection } from '../Configuration';
+import { castleOptionsFromState, type CastleOptionV2 } from '../../api/StateAdapters';
 import {
-  normalizeQueueableProductionCatalog,
+  buildQueueableProductionCatalog,
   queueableBuildingRowsLoaded,
   queueableCastleEligible,
   queueableIDsForCastle,
   queueableIDsForCastles,
-  type QueueableProductionCatalog,
 } from '../QueueableProductionCatalog';
 
 interface RecruitTroopsSettingsModalProps {
@@ -40,60 +40,28 @@ interface RecruitTroopsSettingsModalProps {
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
 }
 
-interface Castle {
-  id: number;
-  name: string;
-  type: string;
-}
-
 type RecruitItemScope = { type: 'global' } | { type: 'castle'; castleId: string };
 
 export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
-  const [castles, setCastles] = useState<Castle[]>([]);
+  const { configuration, state } = useCitadelAPI();
+  const { getTroop, buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
+  const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<RecruitTroopsClientSettingsV1>(() => loadRecruitTroopsSettingsFromStorage());
-  const [featureSchedules, setFeatureSchedules] = useState<FeatureSchedules>({});
-  const [queueableCatalog, setQueueableCatalog] = useState<QueueableProductionCatalog>({});
-  const [queueableCatalogLoaded, setQueueableCatalogLoaded] = useState(false);
+  const featureSchedules = normalizeFeatureSchedules(
+    configurationSection(configuration, 'scheduler').featureSchedules,
+  );
+  const queueableCatalog = buildQueueableProductionCatalog(state, buildings, troops, tools);
+  const queueableCatalogLoaded = state != null && !metadataLoading;
   const [isSaving, setIsSaving] = useState(false);
 
   const [editingUnit, setEditingUnit] = useState<{ scope: RecruitItemScope, item: RecruitTroopsItem } | null>(null);
   useEffect(() => {
     if (isOpen) {
-      setSettings(loadRecruitTroopsSettingsFromStorage());
-      FrontendWebsocket.sendMessage({ type: 'getRecruitTroopsSettings' });
-      FrontendWebsocket.sendMessage({ type: 'getCastleList' });
-      FrontendWebsocket.sendMessage({ type: 'getQueueableProductionCatalog' });
-      FrontendWebsocket.sendGetSchedulerSettings();
+      setSettings(normalizeRecruitTroopsSettings(
+        configuration?.sections['automation.recruitTroops'] ?? loadRecruitTroopsSettingsFromStorage(),
+      ));
     }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'castleList') {
-        const list = msg.payload as Castle[];
-        if (list && list.length > 0) {
-          setCastles(list);
-        }
-      }
-
-      if (msg.type === 'recruitTroopsSettings') {
-        setSettings(normalizeRecruitTroopsSettings(msg.payload));
-        setIsSaving(false);
-      }
-
-      if (msg.type === 'queueableProductionCatalog') {
-        setQueueableCatalog(normalizeQueueableProductionCatalog(msg.payload));
-        setQueueableCatalogLoaded(true);
-      }
-
-      if (msg.type === 'schedulerSettings' && msg.payload) {
-        setFeatureSchedules(normalizeFeatureSchedules(msg.payload.featureSchedules));
-      }
-    };
-
-    FrontendWebsocket.addMessageListener(handleMessage);
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, []);
+  }, [configuration?.sections, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -290,12 +258,12 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
             key={`${scope.type}-${scope.type === 'castle' ? scope.castleId : 'global'}-${item.id}`}
             type="button"
             className="group/unit relative flex w-[5.75rem] flex-col items-center gap-2 rounded-global border border-border-base bg-bg-card/70 p-3 text-center shadow-sm transition-transform hover:-translate-y-1 hover:border-primary/45"
-            title={TROOP_DEFINITIONS[item.id] || 'Unknown Unit'}
+            title={getTroop(item.id)?.name || 'Unknown Unit'}
             onClick={() => openEditModal(scope, item)}
           >
             <UnitImage unitId={item.id} size={66} showLevel={true} className="rounded-xl" />
             <span className="line-clamp-2 min-h-[2rem] text-xs font-bold leading-tight text-text-main">
-              {TROOP_DEFINITIONS[item.id] || `Unit #${item.id}`}
+              {getTroop(item.id)?.name || `Unit #${item.id}`}
             </span>
             <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-global bg-black/30 opacity-0 transition-opacity group-hover/unit:opacity-100">
               <Settings className="h-5 w-5 text-white drop-shadow-md" />
@@ -374,7 +342,7 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
             {visibleSlots.map((slot) => {
               const unitID = unitIDFromScheduleSlot(slot) ?? options.fallbackUnitID ?? null;
               const unitName = unitID
-                ? TROOP_DEFINITIONS[unitID] || `Unit #${unitID}`
+                ? getTroop(unitID)?.name || `Unit #${unitID}`
                 : options.emptyUnitLabel ?? 'No unit selected';
               const day = WEEK_DAYS[slot.day]?.short ?? 'Day';
               return (
@@ -464,7 +432,7 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
     );
   };
 
-  const renderCastleScheduleSlots = (schedule: WeeklySchedule, castle: Castle) => renderScheduleSlots(schedule, {
+  const renderCastleScheduleSlots = (schedule: WeeklySchedule, castle: CastleOptionV2) => renderScheduleSlots(schedule, {
     description: 'Unit choices come from this castle\'s calendar slots.',
     editTitle: `${castle.name} Auto Recruit schedule`,
     onEdit: () => onOpenFeatureSchedule(recruitCastleScheduleID(castle.id), `Auto Recruit - ${castle.name}`),
@@ -812,7 +780,7 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
         isOpen={!!editingUnit}
         onClose={closeEditModal}
         maxWidth="sm"
-        title={editingUnit ? TROOP_DEFINITIONS[editingUnit.item.id] || 'Unit' : 'Unit'}
+        title={editingUnit ? getTroop(editingUnit.item.id)?.name || 'Unit' : 'Unit'}
         footer={
           <>
             <Button variant="danger" onClick={deleteFromEditModal} leftIcon={<Trash2 className="w-4 h-4" />}>Remove</Button>

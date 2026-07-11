@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Binoculars, RefreshCw, Shield, Swords } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
 import DetailBackButton from '../../components/DetailBackButton';
-import { FrontendWebsocket } from '../../Websocket';
+import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 
@@ -50,12 +50,12 @@ const SpyReportsView = () => {
   const load = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/spy-reports', { cache: 'no-cache' });
+	  const response = await fetch('/api/v2/history/spy-reports', { cache: 'no-cache' });
       if (!response.ok) throw new Error(`Spy reports request failed (${response.status})`);
       const payload = await response.json();
       setReports(Array.isArray(payload) ? payload : []);
     } catch (reason) {
-      FrontendWebsocket.showAlert('red', reason instanceof Error ? reason.message : 'Could not load spy reports.');
+      Notifications.error(reason instanceof Error ? reason.message : 'Could not load spy reports.', 'spy-reports-load');
     } finally {
       setLoading(false);
     }

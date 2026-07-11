@@ -1,4 +1,4 @@
-import { FrontendWebsocket } from '../Websocket';
+import { queueConfigurationUpdate } from './Configuration';
 
 export const RECRUIT_TROOPS_SETTINGS_STORAGE_KEY = 'recruitTroopsSettings';
 export const RECRUIT_TROOPS_SETTINGS_CHANGED_EVENT = 'recruitTroopsSettingsChanged';
@@ -213,5 +213,5 @@ export function applyRecruitTroopsSettingsToLocalStorage(settings: RecruitTroops
 export function persistRecruitTroopsSettings(settings: RecruitTroopsClientSettingsV1): boolean {
   const normalized = normalizeRecruitTroopsSettings(settings);
   applyRecruitTroopsSettingsToLocalStorage(normalized);
-  return FrontendWebsocket.sendMessage({ type: 'saveRecruitTroopsSettings', payload: normalized });
+  return queueConfigurationUpdate('automation.recruitTroops', normalized);
 }

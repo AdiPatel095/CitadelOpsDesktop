@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { CalendarDays, X, Save, Plus, Trash2 } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
@@ -19,14 +18,10 @@ import {
   type AutoBirdStoredSettings,
 } from '../AutoBirdClientState';
 import { Modal, Button, Input, Select, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { castleOptionsFromState } from '../../api/StateAdapters';
 
 export { loadAutoBirdSettingsFromStorage } from '../AutoBirdClientState';
-
-interface Castle {
-  id: number;
-  name: string;
-  type: string;
-}
 
 interface AutoBirdSettingsModalProps {
   isOpen: boolean;
@@ -74,7 +69,8 @@ function clampMinRPTDays(value: number): number {
 }
 
 export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
-  const [castles, setCastles] = useState<Castle[]>([]);
+  const { state, configuration } = useCitadelAPI();
+  const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
   const [minDelay, setMinDelay] = useState(6);
   const [maxDelay, setMaxDelay] = useState(12);
@@ -122,43 +118,16 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
 
   useEffect(() => {
     if (!isOpen) return;
-    FrontendWebsocket.sendMessage({ type: 'getCastleList' });
-    hydrateFromStorage();
-
-    const onClientStateMessage = (msg: { type?: string; payload?: unknown }) => {
-      if (msg.type !== 'autoBirdClientState' || msg.payload == null) return;
-      applyFullClientState(parseAutoBirdClientState(msg.payload));
-    };
-
-    FrontendWebsocket.addMessageListener(onClientStateMessage);
-
-    if (FrontendWebsocket.getStatus() === 'Connected') {
-      FrontendWebsocket.sendMessage({ type: 'getAutoBirdClientState' });
-    } else {
-      applyFullClientState(
-        buildAutoBirdClientState(loadAutoBirdSettingsFromStorage(), loadPresetsFile())
-      );
-    }
+    applyFullClientState(parseAutoBirdClientState(
+      configuration?.sections['automation.autoBird']
+        ?? buildAutoBirdClientState(loadAutoBirdSettingsFromStorage(), loadPresetsFile()),
+    ));
 
     setAppliedPresetId(null);
     setPresetName('');
     setPresetError('');
 
-    return () => FrontendWebsocket.removeMessageListener(onClientStateMessage);
-  }, [isOpen, hydrateFromStorage, applyFullClientState]);
-
-  useEffect(() => {
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'castleList') {
-        const list = msg.payload as Castle[];
-        if (list && list.length > 0) {
-          setCastles(list);
-        }
-      }
-    };
-    FrontendWebsocket.addMessageListener(handleMessage);
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, []);
+  }, [configuration?.sections, isOpen, applyFullClientState]);
 
   const handleAddItem = async (castleId: string) => {
     const currentItems = settings[castleId] || [];

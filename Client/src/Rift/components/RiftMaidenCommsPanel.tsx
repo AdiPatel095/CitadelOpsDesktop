@@ -6,9 +6,7 @@ import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
 import { useCastleResources } from '../../dashboard/context/CastleResourceContext';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
-import { TROOP_DEFINITIONS } from '../../config/Constants';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '../../components/ui';
-import { FrontendWebsocket } from '../../Websocket';
 import {
   mainCastleAvailableUnitIds,
   mainCastleStockQuantities,
@@ -18,18 +16,21 @@ import {
   DEFAULT_MAIDEN_PROBE_UNIT_ID,
   parseRiftMaidenCommsSettings,
 } from '../types/RiftMaidenCommsSettings';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { useMetadata } from '../../context/MetadataContext';
 
 const RiftMaidenCommsPanel: React.FC = () => {
+  const { configuration, connectionStatus, submitIntent, updateConfiguration } = useCitadelAPI();
+  const { getTroop } = useMetadata();
   const { gameLoggedIn } = useAuth();
   const { castleFocus } = useCastleFocus();
   const { castleResources } = useCastleResources();
   const { snapshot } = useLastKnownSnapshot();
   const [unitWodID, setUnitWodID] = useState(DEFAULT_MAIDEN_PROBE_UNIT_ID);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
-  const [dashboardConnected, setDashboardConnected] = useState(
-    () => FrontendWebsocket.getStatus() === 'Connected'
-  );
+  const [sending, setSending] = useState(false);
   const [sendStatus, setSendStatus] = useState<string | null>(null);
+  const dashboardConnected = connectionStatus === 'Connected';
 
   const mainCastle = useMemo(
     () => resolveMainCastleTroops(castleResources, snapshot?.gameState),
@@ -52,33 +53,18 @@ const RiftMaidenCommsPanel: React.FC = () => {
     const preferred =
       availableUnitIds.find((id) => id === DEFAULT_MAIDEN_PROBE_UNIT_ID) ?? availableUnitIds[0];
     setUnitWodID(preferred);
-    FrontendWebsocket.sendSaveRiftMaidenCommsSettings(preferred);
-  }, [availableUnitIds, settingsLoaded, unitWodID]);
+    void updateConfiguration('rift.maidenComms', { unitWodID: preferred });
+  }, [availableUnitIds, settingsLoaded, unitWodID, updateConfiguration]);
 
   useEffect(() => {
-    const sync = () => setDashboardConnected(FrontendWebsocket.getStatus() === 'Connected');
-    sync();
-    const id = window.setInterval(sync, 500);
-    const onMessage = (message: { type?: string; payload?: unknown }) => {
-      if (message.type === 'maidenCommsWaveResult' || message.type === 'alert') {
-        setSendStatus(null);
-      }
-      if (message.type === 'riftMaidenCommsSettings' && message.payload != null) {
-        const parsed = parseRiftMaidenCommsSettings(message.payload);
-        setUnitWodID(parsed.unitWodID);
-        setSettingsLoaded(true);
-      }
-    };
-    FrontendWebsocket.addMessageListener(onMessage);
-    FrontendWebsocket.sendGetRiftMaidenCommsSettings();
-    return () => {
-      window.clearInterval(id);
-      FrontendWebsocket.removeMessageListener(onMessage);
-    };
-  }, []);
+    if (!configuration) return;
+    const parsed = parseRiftMaidenCommsSettings(configuration.sections['rift.maidenComms']);
+    setUnitWodID(parsed.unitWodID);
+    setSettingsLoaded(true);
+  }, [configuration]);
 
   const selectedInStock = unitWodID > 0 && (stockQuantities[unitWodID] ?? 0) > 0;
-  const unitLabel = TROOP_DEFINITIONS[unitWodID] ?? `Unit ${unitWodID}`;
+  const unitLabel = getTroop(unitWodID)?.name ?? `Unit ${unitWodID}`;
 
   const handlePickUnit = useCallback(async () => {
     if (availableUnitIds.length === 0) return;
@@ -91,47 +77,43 @@ const RiftMaidenCommsPanel: React.FC = () => {
     });
     if (typeof result === 'number' && result > 0) {
       setUnitWodID(result);
-      FrontendWebsocket.sendSaveRiftMaidenCommsSettings(result);
+      void updateConfiguration('rift.maidenComms', { unitWodID: result });
     }
-  }, [availableUnitIds, stockQuantities, unitWodID]);
+  }, [availableUnitIds, stockQuantities, unitWodID, updateConfiguration]);
 
   const handleSend = useCallback(() => {
-    if (sendStatus != null) {
+    if (sending) {
       return;
     }
     if (!dashboardConnected) {
-      FrontendWebsocket.showAlert('red', 'Dashboard disconnected — wait for reconnect, then try again.');
+      setSendStatus('Dashboard disconnected — wait for reconnect, then try again.');
       return;
     }
     if (!gameLoggedIn) {
-      FrontendWebsocket.showAlert('red', 'Game not connected — log in before sending maiden comms.');
+      setSendStatus('Game not connected — log in before sending maiden comms.');
       return;
     }
     if (!mainCastle || availableUnitIds.length === 0) {
-      FrontendWebsocket.showAlert(
-        'yellow',
-        'No main castle troop data yet — connect, wait for castle sync, then try again.'
-      );
+      setSendStatus('No main castle troop data yet — connect and wait for castle sync.');
       return;
     }
     if (!selectedInStock) {
-      FrontendWebsocket.showAlert('yellow', 'Pick a probe unit that is in main castle stock.');
+      setSendStatus('Pick a probe unit that is in main castle stock.');
       return;
     }
     const useFocusCoords =
       castleFocus?.mapPX != null &&
       castleFocus?.mapPY != null &&
       (castleFocus.mapPX !== 0 || castleFocus.mapPY !== 0);
+    setSending(true);
     setSendStatus('Sending maiden comms wave…');
-    FrontendWebsocket.showAlert('yellow', 'Maiden comms wave requested…');
-    const sent = FrontendWebsocket.sendMaidenCommsWave({
+    void submitIntent('rift.maiden_wave.launch', {
       unitWodID,
       ...(useFocusCoords ? { sourceX: castleFocus!.mapPX, sourceY: castleFocus!.mapPY } : {}),
-    });
-    if (!sent) {
-      setSendStatus(null);
-      FrontendWebsocket.showAlert('red', 'Could not send — dashboard websocket is not open.');
-    }
+    })
+      .then(() => setSendStatus('Maiden comms wave submitted.'))
+      .catch((error) => setSendStatus(error instanceof Error ? error.message : 'Could not send maiden comms.'))
+      .finally(() => setSending(false));
   }, [
     availableUnitIds.length,
     castleFocus,
@@ -139,7 +121,8 @@ const RiftMaidenCommsPanel: React.FC = () => {
     gameLoggedIn,
     mainCastle,
     selectedInStock,
-    sendStatus,
+    sending,
+    submitIntent,
     unitWodID,
   ]);
 
@@ -167,6 +150,7 @@ const RiftMaidenCommsPanel: React.FC = () => {
           ) : (
             <p className="text-xs text-amber-400/90">No main castle troop data yet — connect and wait for castle sync.</p>
           )}
+          {sendStatus && <p className="text-xs text-warning">{sendStatus}</p>}
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
@@ -207,12 +191,12 @@ const RiftMaidenCommsPanel: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            disabled={sendStatus != null}
+            disabled={sending}
             onClick={handleSend}
             title="Send maiden comms wave to the Rift"
             leftIcon={<Shield className="w-3.5 h-3.5" />}
           >
-            {sendStatus ? 'Sending…' : 'Send maiden comms'}
+            {sending ? 'Sending…' : 'Send maiden comms'}
           </Button>
         </div>
       </CardContent>

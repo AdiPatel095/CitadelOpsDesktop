@@ -12,9 +12,10 @@ import {
   Search,
   Users,
 } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
 import { Badge, Button, Card, CardHeader, CardTitle, Input, Select } from '../../components/ui';
 import { SpyReportDetail, type SpyReport } from '../../spyReports/components/SpyReportsView';
+import { useCitadelAPI } from '../../api/ApiContext';
+import type { GameStateV2, MapObservationV2 } from '../../api/Contracts';
 
 interface AllianceOption {
   externalId: string;
@@ -72,6 +73,7 @@ const statusFilterOptions = [
 ];
 
 const AllianceTargetsView = () => {
+  const { state, submitIntent } = useCitadelAPI();
   const [data, setData] = useState<AllianceTargetViewData | null>(null);
   const [selectedAlliance, setSelectedAlliance] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -84,32 +86,15 @@ const AllianceTargetsView = () => {
   const [sendingTarget, setSendingTarget] = useState('');
   const [loadingIntelTarget, setLoadingIntelTarget] = useState('');
   const [selectedSpyReport, setSelectedSpyReport] = useState<SpyReport | null>(null);
+  const [viewError, setViewError] = useState('');
 
   useEffect(() => {
-    const listener = (message: { type?: string; payload?: unknown }) => {
-      if (message.type === 'allianceTargets') {
-        const next = message.payload as AllianceTargetViewData;
-        setData(next);
-        setSelectedAlliance(next.selectedAlliance?.externalId ?? '');
-        setPage(1);
-        setLoading(false);
-        return;
-      }
-      if (message.type === 'allianceTargetsError') {
-        const payload = message.payload as { error?: string };
-        FrontendWebsocket.showAlert('red', payload.error || 'Could not load alliance targets.');
-        setLoading(false);
-        return;
-      }
-      if (message.type === 'allianceTargetSpySent') {
-        setSendingTarget('');
-      }
-    };
-
-    FrontendWebsocket.addMessageListener(listener);
-    FrontendWebsocket.sendGetAllianceTargets();
-    return () => FrontendWebsocket.removeMessageListener(listener);
-  }, []);
+    const next = allianceTargetsFromState(state);
+    setData(next);
+    setSelectedAlliance(next.selectedAlliance?.externalId ?? '');
+    setPage(1);
+    setLoading(false);
+  }, [state]);
 
   const allianceOptions = useMemo(() => (data?.alliances ?? []).map((alliance) => ({
     value: alliance.externalId,
@@ -149,14 +134,15 @@ const AllianceTargetsView = () => {
 
   const selectAlliance = useCallback((allianceId: string) => {
     setSelectedAlliance(allianceId);
-    setLoading(true);
-    FrontendWebsocket.sendGetAllianceTargets(allianceId);
   }, []);
 
   const refresh = useCallback(() => {
     setLoading(true);
-    FrontendWebsocket.sendGetAllianceTargets(selectedAlliance);
-  }, [selectedAlliance]);
+    setViewError('');
+    void submitIntent('alliance.refresh')
+      .catch((error) => setViewError(error instanceof Error ? error.message : 'Could not refresh alliance'))
+      .finally(() => setLoading(false));
+  }, [submitIntent]);
 
   const changeSort = useCallback((key: SortKey) => {
     if (sortKey === key) {
@@ -170,34 +156,20 @@ const AllianceTargetsView = () => {
   const sendSpy = useCallback((target: AllianceTarget) => {
     const targetKey = castleKey(target.targetCastle);
     setSendingTarget(targetKey);
-    if (!FrontendWebsocket.sendAllianceTargetSpy(target.targetCastle.x, target.targetCastle.y)) {
-      setSendingTarget('');
-    }
-  }, []);
+    setViewError('');
+    void submitIntent('spy.launch', {
+      targetX: target.targetCastle.x,
+      targetY: target.targetCastle.y,
+    })
+      .catch((error) => setViewError(error instanceof Error ? error.message : 'Could not launch spy mission'))
+      .finally(() => setSendingTarget(''));
+  }, [submitIntent]);
 
   const openCastleIntel = useCallback(async (target: AllianceTarget) => {
     const targetKey = castleKey(target.targetCastle);
     setLoadingIntelTarget(targetKey);
-    try {
-      const response = await fetch('/api/spy-reports', { cache: 'no-cache' });
-      if (!response.ok) throw new Error(`Spy reports request failed (${response.status})`);
-      const reports = await response.json() as SpyReport[];
-      const report = (Array.isArray(reports) ? reports : []).find((candidate) => {
-        if (target.targetCastle.castleId && candidate.castle.id) {
-          return candidate.castle.id === target.targetCastle.castleId;
-        }
-        return candidate.castle.x === target.targetCastle.x && candidate.castle.y === target.targetCastle.y;
-      });
-      if (!report) {
-        FrontendWebsocket.showAlert('yellow', `No captured spy report is available for ${target.targetCastle.name || targetKey}.`);
-        return;
-      }
-      setSelectedSpyReport(report);
-    } catch (reason) {
-      FrontendWebsocket.showAlert('red', reason instanceof Error ? reason.message : 'Could not load castle intelligence.');
-    } finally {
-      setLoadingIntelTarget('');
-    }
+    setViewError(`No normalized spy report has been captured for ${target.targetCastle.name || targetKey}.`);
+    setLoadingIntelTarget('');
   }, []);
 
   if (selectedSpyReport) {
@@ -211,6 +183,7 @@ const AllianceTargetsView = () => {
 
   return (
     <div className="space-y-4">
+      {viewError && <p className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">{viewError}</p>}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="rounded-xl border border-primary/20 bg-primary/10 p-2.5 text-primary">
@@ -477,6 +450,94 @@ function compareTargets(left: AllianceTarget, right: AllianceTarget, key: SortKe
     case 'distance':
       return left.distance - right.distance;
   }
+}
+
+function allianceTargetsFromState(state: GameStateV2 | null): AllianceTargetViewData {
+  if (!state) {
+    return { alliances: [], targets: [], spies: emptySpyAvailability() };
+  }
+  const alliance = state.alliance;
+  const option: AllianceOption | undefined = alliance.id > 0 ? {
+    externalId: String(alliance.id),
+    allianceId: alliance.id,
+    name: alliance.name || `Alliance ${alliance.id}`,
+    rank: 0,
+    might: alliance.members.reduce((total, member) => total + (member.might ?? 0), 0),
+    playerCount: alliance.members.length,
+  } : undefined;
+  const members = new Map(alliance.members.map((member) => [member.playerId, member]));
+  const ownCastles = Object.values(state.castles);
+  const observations = Object.values(state.map).flatMap((kingdom) => Object.values(kingdom));
+  const targets: AllianceTarget[] = [];
+  for (const observation of observations) {
+    if (!observation.ownerId || observation.ownerId === state.player.id) continue;
+    const member = members.get(observation.ownerId);
+    if (!member) continue;
+    const closest = closestCastle(observation, ownCastles);
+    if (!closest) continue;
+    targets.push({
+      playerId: member.playerId,
+      name: member.name || `Player ${member.playerId}`,
+      might: member.might ?? 0,
+      underBird: false,
+      rptSeconds: 0,
+      targetCastle: {
+        castleId: observation.objectId,
+        name: observation.name || `Castle ${observation.x}:${observation.y}`,
+        typeName: `Map type ${observation.typeId}`,
+        x: observation.x,
+        y: observation.y,
+        type: observation.typeId,
+      },
+      closestOwnCastle: {
+        castleId: closest.id,
+        name: closest.name || `Castle ${closest.id}`,
+        typeName: `Kingdom ${closest.kingdomId}`,
+        x: closest.x,
+        y: closest.y,
+      },
+      distance: Math.hypot(observation.x - closest.x, observation.y - closest.y),
+    });
+  }
+  const source = ownCastles.find((castle) => castle.focused) ?? ownCastles[0];
+  return {
+    alliances: option ? [option] : [],
+    selectedAlliance: option,
+    targets,
+    spies: source ? {
+      available: 0,
+      buildingRowsLoaded: Object.keys(source.buildings).length > 0,
+      sourceCastle: {
+        castleId: source.id,
+        name: source.name || `Castle ${source.id}`,
+        typeName: `Kingdom ${source.kingdomId}`,
+        x: source.x,
+        y: source.y,
+      },
+    } : emptySpyAvailability(),
+  };
+}
+
+function closestCastle(
+  target: MapObservationV2,
+  castles: Array<GameStateV2['castles'][string]>,
+): GameStateV2['castles'][string] | undefined {
+  const candidates = castles.filter((castle) => castle.kingdomId === target.kingdomId);
+  const pool = candidates.length > 0 ? candidates : castles;
+  return pool.reduce<GameStateV2['castles'][string] | undefined>((best, castle) => {
+    if (!best) return castle;
+    const bestDistance = Math.hypot(target.x - best.x, target.y - best.y);
+    const distance = Math.hypot(target.x - castle.x, target.y - castle.y);
+    return distance < bestDistance ? castle : best;
+  }, undefined);
+}
+
+function emptySpyAvailability(): SpyAvailability {
+  return {
+    available: 0,
+    buildingRowsLoaded: false,
+    sourceCastle: { name: '', x: 0, y: 0 },
+  };
 }
 
 export default AllianceTargetsView;

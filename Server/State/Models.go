@@ -16,6 +16,7 @@ type (
 	ResourceID          int64
 	CurrencyID          int64
 	CommanderID         int64
+	CastellanID         int64
 	MovementID          int64
 	EquipmentInstanceID int64
 	EquipmentID         int64
@@ -66,6 +67,7 @@ type CastleState struct {
 	Buildings         map[BuildingInstanceID]Building           `json:"buildings"`
 	ConstructionSlots map[BuildingInstanceID][]ConstructionSlot `json:"constructionSlots"`
 	Queues            map[string][]QueueItem                    `json:"queues"`
+	Crafting          CraftingState                             `json:"crafting"`
 }
 
 type ResourceBalance struct {
@@ -105,10 +107,47 @@ type QueueItem struct {
 	CompletesAt *time.Time    `json:"completesAt,omitempty"`
 }
 
+type CraftingState struct {
+	Buildings              map[BuildingInstanceID]CraftingBuilding `json:"buildings"`
+	EnabledRecipeIDs       []int64                                 `json:"enabledRecipeIds"`
+	EnabledRecipeGroupIDs  []int64                                 `json:"enabledRecipeGroupIds"`
+	OutputBoostByQueueType map[int]float64                         `json:"outputBoostByQueueType"`
+}
+
+type CraftingBuilding struct {
+	KingdomID         KingdomID           `json:"kingdomId"`
+	CastleID          CastleID            `json:"castleId"`
+	InstanceID        BuildingInstanceID  `json:"instanceId"`
+	DefinitionID      BuildingID          `json:"definitionId"`
+	QueueTypeID       int                 `json:"queueTypeId"`
+	SlotCount         int                 `json:"slotCount,omitempty"`
+	ActiveSlotRentals []int               `json:"activeSlotRentals"`
+	QueueSlotRentals  []int               `json:"queueSlotRentals"`
+	Active            []CraftingQueueItem `json:"active"`
+	Queued            []CraftingQueueItem `json:"queued"`
+	ObservedAt        time.Time           `json:"observedAt"`
+}
+
+type CraftingQueueItem struct {
+	RecipeID     int64   `json:"recipeId"`
+	BatchValue   float64 `json:"batchValue,omitempty"`
+	RemainingSec *int    `json:"remainingSec,omitempty"`
+	RuntimeSec   *int    `json:"runtimeSec,omitempty"`
+}
+
 type CommanderState struct {
-	ID        CommanderID                    `json:"id"`
+	ID              CommanderID                    `json:"id"`
+	Name            string                         `json:"name,omitempty"`
+	VisiblePosition int                            `json:"visiblePosition,omitempty"`
+	Available       bool                           `json:"available"`
+	Equipment       map[string]EquipmentInstanceID `json:"equipment"`
+	Gems            map[string]GemInstanceID       `json:"gems"`
+}
+
+type CastellanState struct {
+	ID        CastellanID                    `json:"id"`
+	CastleID  CastleID                       `json:"castleId,omitempty"`
 	Name      string                         `json:"name,omitempty"`
-	Available bool                           `json:"available"`
 	Equipment map[string]EquipmentInstanceID `json:"equipment"`
 	Gems      map[string]GemInstanceID       `json:"gems"`
 }
@@ -121,7 +160,7 @@ type MovementState struct {
 	TargetPlayerID  PlayerID         `json:"targetPlayerId,omitempty"`
 	SourceCastleID  CastleID         `json:"sourceCastleId,omitempty"`
 	TargetCastleID  CastleID         `json:"targetCastleId,omitempty"`
-	CommanderID     CommanderID      `json:"commanderId,omitempty"`
+	CommanderID     *CommanderID     `json:"commanderId,omitempty"`
 	KingdomID       KingdomID        `json:"kingdomId"`
 	SourceX         int              `json:"sourceX,omitempty"`
 	SourceY         int              `json:"sourceY,omitempty"`
@@ -137,15 +176,24 @@ type MovementState struct {
 type EquipmentInstance struct {
 	ID           EquipmentInstanceID `json:"id"`
 	DefinitionID EquipmentID         `json:"definitionId"`
+	Slot         int                 `json:"slot"`
+	TypeID       int                 `json:"typeId,omitempty"`
+	RarityID     int                 `json:"rarityId,omitempty"`
+	SetID        int64               `json:"setId,omitempty"`
+	Level        int                 `json:"level,omitempty"`
 	WearerID     int64               `json:"wearerId,omitempty"`
-	Effects      map[int64]float64   `json:"effects"`
+	WearerKind   string              `json:"wearerKind,omitempty"`
+	Effects      map[int64][]float64 `json:"effects"`
 }
 
 type GemInstance struct {
-	ID           GemInstanceID     `json:"id"`
-	DefinitionID GemID             `json:"definitionId"`
-	WearerID     int64             `json:"wearerId,omitempty"`
-	Effects      map[int64]float64 `json:"effects"`
+	ID           GemInstanceID       `json:"id"`
+	DefinitionID GemID               `json:"definitionId"`
+	Slot         int                 `json:"slot,omitempty"`
+	Level        int                 `json:"level,omitempty"`
+	WearerID     int64               `json:"wearerId,omitempty"`
+	WearerKind   string              `json:"wearerKind,omitempty"`
+	Effects      map[int64][]float64 `json:"effects"`
 }
 
 type InventoryState struct {
@@ -161,6 +209,7 @@ type AllianceMember struct {
 	RankID      int      `json:"rankId,omitempty"`
 	Level       int      `json:"level,omitempty"`
 	LegendLevel int      `json:"legendLevel,omitempty"`
+	Might       float64  `json:"might,omitempty"`
 }
 
 type AllianceState struct {
@@ -203,6 +252,7 @@ type GameState struct {
 	Player          PlayerState                             `json:"player"`
 	Castles         map[CastleID]CastleState                `json:"castles"`
 	Commanders      map[CommanderID]CommanderState          `json:"commanders"`
+	Castellans      map[CastellanID]CastellanState          `json:"castellans"`
 	Movements       map[MovementID]MovementState            `json:"movements"`
 	Inventory       InventoryState                          `json:"inventory"`
 	Alliance        AllianceState                           `json:"alliance"`
@@ -221,6 +271,7 @@ func NewGameState() GameState {
 		},
 		Castles:    map[CastleID]CastleState{},
 		Commanders: map[CommanderID]CommanderState{},
+		Castellans: map[CastellanID]CastellanState{},
 		Movements:  map[MovementID]MovementState{},
 		Inventory: InventoryState{
 			ConstructionItems: map[ConstructionItemID]int64{},

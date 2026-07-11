@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { CalendarDays, Trash2, Save, Plus, Minus } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
 import {
   showTCIPicker,
   type TCIWithLevelCeiling,
@@ -28,17 +27,13 @@ import {
   persistAutoTCIClientState,
 } from '../AutoTCIClientState';
 import { Modal, Button, Card, CardHeader, CardTitle, CardContent, Badge, Input, Select } from '../../components/ui';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { castleOptionsFromState } from '../../api/StateAdapters';
 
 interface AutoTCISettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
-}
-
-interface Castle {
-  id: number;
-  name: string;
-  type: string;
 }
 
 /** `amount` is the level ceiling; optional `minLevel` is the floor (default 1). */
@@ -49,7 +44,8 @@ interface AutoTCIItem {
 }
 
 export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
-  const [castles, setCastles] = useState<Castle[]>([]);
+  const { state, configuration } = useCitadelAPI();
+  const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, AutoTCIItem[]>>({});
   const [catalog, setCatalog] = useState<ConstructionItemCatalogEntry[]>([]);
   const [presetsState, setPresetsState] = useState(() => loadPresetsFile());
@@ -82,45 +78,17 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
 
   useEffect(() => {
     if (!isOpen) return;
-    FrontendWebsocket.sendMessage({ type: 'getCastleList' });
     fetchConstructionItemsCatalog().then(setCatalog).catch(() => setCatalog([]));
-    hydrateFromStorage();
-
-    const onClientStateMessage = (msg: { type?: string; payload?: unknown }) => {
-      if (msg.type !== 'autoTCIClientState' || msg.payload == null) return;
-      applyFullClientState(parseAutoTCIClientState(msg.payload));
-    };
-
-    FrontendWebsocket.addMessageListener(onClientStateMessage);
-
-    if (FrontendWebsocket.getStatus() === 'Connected') {
-      FrontendWebsocket.sendMessage({ type: 'getAutoTCIClientState' });
-    } else {
-      applyFullClientState(
-        buildAutoTCIClientState(loadAutoTCISettingsFromStorage(), loadPresetsFile()),
-      );
-    }
+    applyFullClientState(parseAutoTCIClientState(
+      configuration?.sections['automation.constructionItems']
+        ?? buildAutoTCIClientState(loadAutoTCISettingsFromStorage(), loadPresetsFile()),
+    ));
 
     setAppliedPresetId(null);
     setPresetName('');
     setPresetError('');
 
-    return () => FrontendWebsocket.removeMessageListener(onClientStateMessage);
-  }, [isOpen, hydrateFromStorage, applyFullClientState]);
-
-  useEffect(() => {
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'castleList') {
-        const list = msg.payload as Castle[];
-        if (list && list.length > 0) {
-          setCastles(list);
-        }
-      }
-    };
-
-    FrontendWebsocket.addMessageListener(handleMessage);
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, []);
+  }, [configuration?.sections, isOpen, applyFullClientState]);
 
   const handleAddItem = async (castleId: string) => {
     const currentItems = settings[castleId] || [];

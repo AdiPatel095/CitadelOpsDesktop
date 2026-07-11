@@ -5,8 +5,10 @@ import type {
   BrowserInventory,
   CatalogManifest,
   CatalogResponse,
+  ConfigurationSnapshot,
   GameStateV2,
   IntentReceipt,
+	IntentDefinition,
   SubmitIntentOptions,
 } from './Contracts';
 
@@ -98,6 +100,10 @@ class CitadelClient {
     return this.request<BrowserInventory>('/api/v2/browsers');
   }
 
+  getConfiguration(): Promise<ConfigurationSnapshot> {
+    return this.request<ConfigurationSnapshot>('/api/v2/config');
+  }
+
   selectBrowser(browser: string, options: SubmitIntentOptions = {}): Promise<IntentReceipt> {
     return this.submitIntent('session.select_browser', { browser }, options);
   }
@@ -110,12 +116,20 @@ class CitadelClient {
     return this.request<CatalogResponse<T>>(`/api/v2/game-data/${encodeURIComponent(name)}`);
   }
 
+  getProjection<T>(name: string): Promise<T> {
+    return this.request<T>(`/api/v2/projections/${encodeURIComponent(name)}`);
+  }
+
   async localize(keys: string[]): Promise<Record<string, string>> {
     const response = await this.request<{ values: Record<string, string> }>('/api/v2/game-data/localize', {
       method: 'POST',
       body: JSON.stringify({ keys }),
     });
     return response.values;
+  }
+
+  getIntentDefinitions(): Promise<IntentDefinition[]> {
+	return this.request<IntentDefinition[]>('/api/v2/intents');
   }
 
   submitIntent(

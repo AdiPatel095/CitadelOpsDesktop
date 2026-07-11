@@ -10,19 +10,25 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
+	"CitadelDesktop/Server/Telemetry"
 	"github.com/gorilla/websocket"
 )
 
 type Config struct {
-	Version  string
-	State    *State.Store
-	GameData *GameData.Manager
-	Intents  *Intent.Engine
-	Session  interface{ Status() Session.Status }
+	Version       string
+	State         *State.Store
+	GameData      *GameData.Manager
+	Configuration *Configuration.Store
+	History       *History.Store
+	Telemetry     *Telemetry.Store
+	Intents       *Intent.Engine
+	Session       interface{ Status() Session.Status }
 }
 
 type Server struct {
@@ -45,9 +51,17 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/health", server.handleHealth)
 	mux.HandleFunc("GET /api/v2/state", server.handleState)
 	mux.HandleFunc("GET /api/v2/browsers", server.handleBrowsers)
+	mux.HandleFunc("GET /api/v2/config", server.handleConfiguration)
+	mux.HandleFunc("GET /api/v2/config/{section}", server.handleConfigurationSection)
 	mux.HandleFunc("GET /api/v2/game-data", server.handleGameDataManifest)
 	mux.HandleFunc("GET /api/v2/game-data/{collection}", server.handleGameDataCollection)
 	mux.HandleFunc("POST /api/v2/game-data/localize", server.handleLocalization)
+	mux.HandleFunc("GET /api/v2/projections/crafting", server.handleCraftingProjection)
+	mux.HandleFunc("GET /api/v2/history/player-tracker", server.handlePlayerTrackerHistory)
+	mux.HandleFunc("GET /api/v2/history/spy-reports", server.handleSpyReportHistory)
+	mux.HandleFunc("GET /api/v2/history/battle-reports", server.handleBattleReportHistory)
+	mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
+	mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
 	mux.HandleFunc("GET /api/v2/intents", server.handleIntentDefinitions)
 	mux.HandleFunc("POST /api/v2/intents/{name}", server.handleIntentSubmit)
 	mux.HandleFunc("GET /api/v2/operations/{id}", server.handleOperation)
@@ -70,6 +84,35 @@ func (server *Server) handleBrowsers(writer http.ResponseWriter, _ *http.Request
 	})
 }
 
+func (server *Server) handleConfiguration(writer http.ResponseWriter, _ *http.Request) {
+	if server.config.Configuration == nil {
+		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable")
+		return
+	}
+	writeJSON(writer, http.StatusOK, server.config.Configuration.Snapshot())
+}
+
+func (server *Server) handleConfigurationSection(writer http.ResponseWriter, request *http.Request) {
+	if server.config.Configuration == nil {
+		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable")
+		return
+	}
+	section := request.PathValue("section")
+	value, ok := server.config.Configuration.Section(section)
+	if !ok {
+		writeError(writer, http.StatusNotFound, "configuration_section_not_found", fmt.Sprintf("Configuration section %q was not found", section))
+		return
+	}
+	snapshot := server.config.Configuration.Snapshot()
+	writeJSON(writer, http.StatusOK, map[string]any{
+		"schemaVersion": snapshot.SchemaVersion,
+		"revision":      snapshot.Revision,
+		"updatedAt":     snapshot.UpdatedAt,
+		"section":       section,
+		"value":         value,
+	})
+}
+
 func (server *Server) handleHealth(writer http.ResponseWriter, _ *http.Request) {
 	response := map[string]any{
 		"status":  "ok",
@@ -81,6 +124,9 @@ func (server *Server) handleHealth(writer http.ResponseWriter, _ *http.Request) 
 	}
 	if server.config.Session != nil {
 		response["session"] = server.config.Session.Status()
+	}
+	if server.config.Configuration != nil {
+		response["configurationRevision"] = server.config.Configuration.Snapshot().Revision
 	}
 	if server.config.GameData == nil {
 		response["status"] = "degraded"
@@ -246,6 +292,12 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	defer cancelState()
 	operationEvents, cancelOperations := server.config.Intents.Subscribe(64)
 	defer cancelOperations()
+	var configurationEvents <-chan Configuration.Event
+	cancelConfiguration := func() {}
+	if server.config.Configuration != nil {
+		configurationEvents, cancelConfiguration = server.config.Configuration.Subscribe(16)
+	}
+	defer cancelConfiguration()
 	incoming := make(chan Envelope, 8)
 	readErrors := make(chan error, 1)
 	responses := make(chan Envelope, 8)
@@ -253,6 +305,11 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 
 	if err := connection.WriteJSON(newEnvelope("", "state.snapshot", server.config.State.Revision(), server.config.State.Snapshot())); err != nil {
 		return
+	}
+	if server.config.Configuration != nil {
+		if err := connection.WriteJSON(newEnvelope("", "config.changed", server.config.State.Revision(), server.config.Configuration.Snapshot())); err != nil {
+			return
+		}
 	}
 	if store, ready := server.config.GameData.Current(); ready {
 		if err := connection.WriteJSON(newEnvelope("", "catalog.changed", server.config.State.Revision(), map[string]any{
@@ -282,6 +339,10 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 			if err := connection.WriteJSON(newEnvelope(receipt.ID, "operation.changed", server.config.State.Revision(), receipt)); err != nil {
 				return
 			}
+		case event := <-configurationEvents:
+			if err := connection.WriteJSON(newEnvelope("", "config.changed", server.config.State.Revision(), event.Snapshot)); err != nil {
+				return
+			}
 		case response := <-responses:
 			if err := connection.WriteJSON(response); err != nil {
 				return
@@ -297,6 +358,12 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 					})
 				} else {
 					responses <- errorEnvelope(message.ID, "game_data_unavailable", "Official game data is unavailable")
+				}
+			case "query.config":
+				if server.config.Configuration != nil {
+					responses <- newEnvelope(message.ID, "config.changed", server.config.State.Revision(), server.config.Configuration.Snapshot())
+				} else {
+					responses <- errorEnvelope(message.ID, "configuration_unavailable", "Configuration store is unavailable")
 				}
 			case "intent.submit":
 				var intentRequest Intent.Request

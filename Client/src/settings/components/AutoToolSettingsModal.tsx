@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, Castle, Clock3, Copy, Trash2, Save, Plus, Settings } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
 import { showToolPicker } from '../../components/ToolPickerModal';
 import ToolImage from '../../components/ToolImage';
 import { useMetadata } from '../../context/MetadataContext';
@@ -22,16 +21,17 @@ import {
   formatMinuteOfDay,
   normalizeFeatureSchedules,
   WEEK_DAYS,
-  type FeatureSchedules,
   type WeeklySchedule,
 } from '../SchedulerTypes';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { configurationSection } from '../Configuration';
+import { castleOptionsFromState, type CastleOptionV2 } from '../../api/StateAdapters';
 import {
-  normalizeQueueableProductionCatalog,
+  buildQueueableProductionCatalog,
   queueableBuildingRowsLoaded,
   queueableCastleEligible,
   queueableIDsForCastle,
   queueableIDsForCastles,
-  type QueueableProductionCatalog,
 } from '../QueueableProductionCatalog';
 
 interface AutoToolSettingsModalProps {
@@ -40,61 +40,28 @@ interface AutoToolSettingsModalProps {
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
 }
 
-interface Castle {
-  id: number;
-  name: string;
-  type: string;
-}
-
 type AutoToolItemScope = { type: 'global' } | { type: 'castle'; castleId: string };
 
 export const AutoToolSettingsModal: React.FC<AutoToolSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
-  const { getTool } = useMetadata();
-  const [castles, setCastles] = useState<Castle[]>([]);
+  const { getTool, buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
+  const { configuration, state } = useCitadelAPI();
+  const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<AutoToolClientSettingsV1>(() => loadAutoToolSettingsFromStorage());
-  const [featureSchedules, setFeatureSchedules] = useState<FeatureSchedules>({});
-  const [queueableCatalog, setQueueableCatalog] = useState<QueueableProductionCatalog>({});
-  const [queueableCatalogLoaded, setQueueableCatalogLoaded] = useState(false);
+  const featureSchedules = normalizeFeatureSchedules(
+    configurationSection(configuration, 'scheduler').featureSchedules,
+  );
+  const queueableCatalog = buildQueueableProductionCatalog(state, buildings, troops, tools);
+  const queueableCatalogLoaded = state != null && !metadataLoading;
   const [isSaving, setIsSaving] = useState(false);
 
   const [editingTool, setEditingTool] = useState<{ scope: AutoToolItemScope, item: AutoToolItem } | null>(null);
   useEffect(() => {
     if (isOpen) {
-      setSettings(loadAutoToolSettingsFromStorage());
-      FrontendWebsocket.sendMessage({ type: 'getAutoToolSettings' });
-      FrontendWebsocket.sendMessage({ type: 'getCastleList' });
-      FrontendWebsocket.sendMessage({ type: 'getQueueableProductionCatalog' });
-      FrontendWebsocket.sendGetSchedulerSettings();
+      setSettings(normalizeAutoToolSettings(
+        configuration?.sections['automation.autoTool'] ?? loadAutoToolSettingsFromStorage(),
+      ));
     }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'castleList') {
-        const list = msg.payload as Castle[];
-        if (list && list.length > 0) {
-          setCastles(list);
-        }
-      }
-
-      if (msg.type === 'autoToolSettings') {
-        setSettings(normalizeAutoToolSettings(msg.payload));
-        setIsSaving(false);
-      }
-
-      if (msg.type === 'queueableProductionCatalog') {
-        setQueueableCatalog(normalizeQueueableProductionCatalog(msg.payload));
-        setQueueableCatalogLoaded(true);
-      }
-
-      if (msg.type === 'schedulerSettings' && msg.payload) {
-        setFeatureSchedules(normalizeFeatureSchedules(msg.payload.featureSchedules));
-      }
-    };
-
-    FrontendWebsocket.addMessageListener(handleMessage);
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, []);
+  }, [configuration?.sections, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -467,7 +434,7 @@ export const AutoToolSettingsModal: React.FC<AutoToolSettingsModalProps> = ({ is
     );
   };
 
-  const renderCastleScheduleSlots = (schedule: WeeklySchedule, castle: Castle) => renderScheduleSlots(schedule, {
+  const renderCastleScheduleSlots = (schedule: WeeklySchedule, castle: CastleOptionV2) => renderScheduleSlots(schedule, {
     description: 'Tool choices come from this castle\'s calendar slots.',
     editTitle: `${castle.name} Auto Tool schedule`,
     onEdit: () => onOpenFeatureSchedule(autoToolCastleScheduleID(castle.id), `Auto Tool - ${castle.name}`),

@@ -1,4 +1,4 @@
-import { FrontendWebsocket } from '../Websocket';
+import { queueConfigurationUpdate } from './Configuration';
 import { clampLevelCeiling, normalizeLevelRange } from '../components/TCIPickerModal';
 import {
   loadPresetsFile,
@@ -108,7 +108,5 @@ export function buildAutoTCIClientState(
 /** Persists to localStorage and the Go data dir (same folder as AutoBird.json). */
 export function persistAutoTCIClientState(state: AutoTCIClientStateV1): void {
   applyAutoTCIClientStateToLocalStorage(state);
-  if (FrontendWebsocket.getStatus() === 'Connected') {
-    FrontendWebsocket.sendMessage({ type: 'saveAutoTCIClientState', payload: state });
-  }
+  queueConfigurationUpdate('automation.constructionItems', state);
 }

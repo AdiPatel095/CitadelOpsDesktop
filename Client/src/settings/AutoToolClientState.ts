@@ -1,4 +1,4 @@
-import { FrontendWebsocket } from '../Websocket';
+import { queueConfigurationUpdate } from './Configuration';
 
 export const AUTO_TOOL_SETTINGS_STORAGE_KEY = 'autoToolSettings';
 export const AUTO_TOOL_SETTINGS_CHANGED_EVENT = 'autoToolSettingsChanged';
@@ -213,5 +213,5 @@ export function applyAutoToolSettingsToLocalStorage(settings: AutoToolClientSett
 export function persistAutoToolSettings(settings: AutoToolClientSettingsV1): boolean {
   const normalized = normalizeAutoToolSettings(settings);
   applyAutoToolSettingsToLocalStorage(normalized);
-  return FrontendWebsocket.sendMessage({ type: 'saveAutoToolSettings', payload: normalized });
+  return queueConfigurationUpdate('automation.autoTool', normalized);
 }
