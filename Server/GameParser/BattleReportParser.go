@@ -2,6 +2,7 @@ package GameParser
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -20,6 +21,7 @@ const (
 )
 
 var (
+	errReportUnavailable   = errors.New("report unavailable")
 	battleReportFetchOnce  sync.Once
 	battleReportFetchQueue = make(chan battlereport.Capture, 128)
 	battleReportQueuedMu   sync.Mutex
@@ -148,6 +150,7 @@ func nextBattleReportFetchBatch(first battlereport.Capture) []battlereport.Captu
 }
 
 func fetchBattleReportCapture(capture battlereport.Capture) (battlereport.Capture, bool, error) {
+	noticeCapture := capture
 	if capture.Wire == nil {
 		capture.Wire = map[string]string{}
 	}
@@ -156,6 +159,10 @@ func fetchBattleReportCapture(capture battlereport.Capture) (battlereport.Captur
 	if bls, wire, err := requestBattleReportPayload("bls", func() {
 		GameCommands.SendBLS(capture.MID, 0)
 	}); err != nil {
+		if errors.Is(err, errReportUnavailable) {
+			discardUnavailableBattleReport(noticeCapture, capture, "bls")
+			return capture, false, nil
+		}
 		failures = append(failures, fmt.Sprintf("bls: %v", err))
 	} else {
 		capture.BLS = bls
@@ -217,9 +224,9 @@ func requestBattleReportPayload(command string, send func()) (map[string]interfa
 		return nil, "", err
 	}
 	wire := strings.Join(parts, "%")
-	payload, ok := Payload(parts)
-	if !ok {
-		return nil, wire, fmt.Errorf("missing payload")
+	payload, err := reportResponsePayload(parts)
+	if err != nil {
+		return nil, wire, err
 	}
 
 	decoder := json.NewDecoder(strings.NewReader(payload))
@@ -229,6 +236,32 @@ func requestBattleReportPayload(command string, send func()) (map[string]interfa
 		return nil, wire, err
 	}
 	return data, wire, nil
+}
+
+func reportResponsePayload(parts []string) (string, error) {
+	if len(parts) > 4 && parts[4] != "0" {
+		if parts[4] == "130" {
+			return "", fmt.Errorf("%w: server status 130", errReportUnavailable)
+		}
+		return "", fmt.Errorf("server status %s", parts[4])
+	}
+	payload, ok := Payload(parts)
+	if !ok || strings.TrimSpace(payload) == "" {
+		return "", fmt.Errorf("missing payload")
+	}
+	return payload, nil
+}
+
+func discardUnavailableBattleReport(noticeCapture, capture battlereport.Capture, stage string) {
+	if err := battlereport.DeleteCapture(noticeCapture); err != nil {
+		log.Printf("[battle-report] unavailable cleanup MID %d: %v", capture.MID, err)
+	}
+	if capture.LID != noticeCapture.LID {
+		if err := battlereport.DeleteCapture(capture); err != nil {
+			log.Printf("[battle-report] unavailable cleanup %s: %v", capture.ID, err)
+		}
+	}
+	log.Printf("[battle-report] discarded unavailable %s report MID %d", stage, capture.MID)
 }
 
 func persistBattleReportStage(capture battlereport.Capture, stage string) {

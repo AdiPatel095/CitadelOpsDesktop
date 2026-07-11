@@ -51,8 +51,8 @@ const (
 	// Mirrors CastleSlotForeign (12) on the player AP list, but this is the map-node type id.
 	GaaNodeCastleForeignKingdom = 12
 
-	// GaaNodeCastleUnknown22 — len 20; rare castle variant (sample "THE GREAT") — label TBD.
-	GaaNodeCastleUnknown22 = 22
+	// GaaNodeCastleMetropolis — len 20; metropolis-class castle tile.
+	GaaNodeCastleMetropolis = 22
 
 	// GaaNodeCoordMarker — len 8; coord label in name field (sample "214:942"). Bird/scout marker?
 	GaaNodeCoordMarker = 23
@@ -117,17 +117,17 @@ const (
 // For CastleSlotForeign (12), kingdomId is 1=desert, 2=ice, 3=fire, 4=storm.
 
 const (
-	CastleSlotMain       = 1  // main castle (KID 0)
-	CastleSlotUnknown3   = 3  // rare in AP scan (n=4) — likely metropolis or special; verify
-	CastleSlotOutpost    = 4  // outpost (KID 0)
-	CastleSlotMetropolis = 5  // GCL KID 0; not in latest AP scan
-	CastleSlotCapital    = 6  // GCL KID 0; not in latest AP scan
-	CastleSlotForeign    = 12 // ice/desert/dungeon/storm; AP[0]=sub-kingdom
-	CastleSlotUnknown22  = 22 // AP scan n=5 — label TBD
-	CastleSlotUnknown23  = 23 // AP scan n=27 — label TBD
-	CastleSlotUnknown24  = 24 // AP scan n=44 — label TBD
-	CastleSlotMonument   = 26 // player monument building; confirmed (695,799) KID 0
-	CastleSlotLaboratory = 28 // player laboratory building; confirmed (708,786) KID 0
+	CastleSlotMain             = 1  // main castle (KID 0)
+	CastleSlotCapital          = 3  // capital-class castle; can appear outside KID 0 in GCL
+	CastleSlotOutpost          = 4  // outpost (KID 0)
+	CastleSlotMetropolisLegacy = 5  // older GCL/AP metropolis value; accepted for compatibility
+	CastleSlotCapitalLegacy    = 6  // older GCL/AP capital value; accepted for compatibility
+	CastleSlotForeign          = 12 // ice/desert/dungeon/storm; AP[0]=sub-kingdom
+	CastleSlotMetropolis       = 22 // metropolis-class castle in current GBD/GCL captures
+	CastleSlotUnknown23        = 23 // AP scan n=27 — label TBD
+	CastleSlotUnknown24        = 24 // AP scan n=44 — label TBD
+	CastleSlotMonument         = 26 // player monument building; confirmed (695,799) KID 0
+	CastleSlotLaboratory       = 28 // player laboratory building; confirmed (708,786) KID 0
 )
 
 // GaaCastleNodeTypes are gaa AI[0] values that use the len-20 castle row parser branch.
@@ -136,7 +136,7 @@ var GaaCastleNodeTypes = map[int]string{
 	GaaNodeCastleCapital:        "capital",
 	GaaNodeCastleOccupied:       "occupied/outpost",
 	GaaNodeCastleForeignKingdom: "foreign kingdom",
-	GaaNodeCastleUnknown22:      "unknown-22",
+	GaaNodeCastleMetropolis:     "metropolis",
 }
 
 // GaaNodeTypeLabels re-exports mapstate labels for callers in GameParser.
@@ -148,7 +148,7 @@ var CastleSlotTypeLabels = mapstate.CastleSlotTypeLabels
 // IsBirdTargetCastleSlot returns true for ain/AP castle types AutoBird treats as valid bird posts.
 func IsBirdTargetCastleSlot(ct int) bool {
 	switch ct {
-	case 0, CastleSlotMain, CastleSlotOutpost, CastleSlotForeign:
+	case 0, CastleSlotMain, CastleSlotCapital, CastleSlotOutpost, CastleSlotMetropolisLegacy, CastleSlotCapitalLegacy, CastleSlotForeign, CastleSlotMetropolis:
 		return true
 	default:
 		return false

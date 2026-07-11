@@ -2,6 +2,7 @@ package settingsview
 
 import (
 	"CitadelDesktop/Server/GameCommands"
+	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
@@ -331,19 +332,14 @@ func runAutoTool(ctx context.Context) {
 		state.AutoToolList = settings
 		sleepDuration := time.Duration(settings.CheckIntervalSec) * time.Second
 
-		if !ResponseRegistry.LoginStatus {
-			Logging.AutoToolLog("login", "disconnected; waiting for login")
-		LoginWaitLoop:
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(5 * time.Second):
-					if ResponseRegistry.LoginStatus {
-						break LoginWaitLoop
-					}
-				}
+		if !ResponseRegistry.IsGameWebSocketReady() {
+			Logging.AutoToolLogf("login", "game websocket not ready; skipping cycle, next cycle in %s", sleepDuration)
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(sleepDuration):
 			}
+			continue
 		}
 
 		Logging.AutoToolLog("cycle", "start")
@@ -393,72 +389,103 @@ func runAutoTool(ctx context.Context) {
 					continue
 				}
 
-				Logging.AutoToolLogf("focus", "castle=%d kid=%d x=%d y=%d", castleID, kingdomID, x, y)
-				if GameParser.FetchCastleTroops(kingdomID, castleID, x, y) == nil {
-					Logging.AutoToolLogf("castle_skip", "castle=%d focus failed; queue state not trusted", castleID)
-					continue
-				}
-				if !autoToolPause(ctx, autoToolActionDelay) {
+				lease, ok := GameFocus.Acquire(ctx, GameFocus.Request{
+					Owner:   GameFocus.OwnerAutoTool,
+					Reason:  fmt.Sprintf("castle=%d", castleID),
+					MaxHold: 30 * time.Second,
+				})
+				if !ok {
 					return
 				}
-				if refreshed := gs.GetCastleByID(castleID); refreshed != nil {
-					castleInfo = refreshed
-				}
+				leaseRevoked := false
+				func() {
+					defer lease.Release()
 
-				occupiedQueueStacks := autoToolOccupiedQueueStacks(castleInfo)
-				queueCapacity := autoToolQueueCapacity(castleInfo)
-				if occupiedQueueStacks >= queueCapacity {
-					Logging.AutoToolLogf("queue_full", "castle=%d occupied=%d capacity=%d", castleID, occupiedQueueStacks, queueCapacity)
-					continue
-				}
-
-				stackPlan := autoToolStackAmountForCastle(castleInfo, toolID)
-				if stackPlan.Amount <= 0 {
-					Logging.AutoToolLogf("castle_skip", "castle=%d missing workshop stack capacity", castleID)
-					continue
-				}
-				Logging.AutoToolLogf(
-					"stack_capacity",
-					"castle=%d tool=%d amount=%d source=%s workshopOID=%d wid=%d level=%d",
-					castleID,
-					toolID,
-					stackPlan.Amount,
-					stackPlan.Source,
-					stackPlan.Breakdown.BuildingOID,
-					stackPlan.Breakdown.BuildingWID,
-					stackPlan.Breakdown.BuildingLevel,
-				)
-				for occupiedQueueStacks < queueCapacity {
-					select {
-					case <-ctx.Done():
+					Logging.AutoToolLogf("focus", "castle=%d kid=%d x=%d y=%d", castleID, kingdomID, x, y)
+					if GameParser.FetchCastleTroopsWithLease(lease, kingdomID, castleID, x, y) == nil {
+						if !lease.Active() {
+							leaseRevoked = true
+							Logging.AutoToolLogf("lease_revoked", "castle=%d", castleID)
+							return
+						}
+						Logging.AutoToolLogf("castle_skip", "castle=%d focus failed; queue state not trusted", castleID)
 						return
-					default:
 					}
-
-					costCheck := GameParser.ToolProductionResourceCostCheck(gs, castleInfo, toolID, stackPlan.Amount, resourceReservations)
-					if !costCheck.CanAfford() {
-						Logging.AutoToolLogf(
-							"resource_skip",
-							"castle=%d tool=%d amount=%d missing=%s",
-							castleID,
-							toolID,
-							stackPlan.Amount,
-							costCheck.MissingSummary(),
-						)
-						break
-					}
-
-					Logging.AutoToolLogf("queue", "castle=%d tool=%d amount=%d occupied=%d capacity=%d", castleID, toolID, stackPlan.Amount, occupiedQueueStacks, queueCapacity)
-					// SK must match live session (captured from browser bup); TODO: read from game state when available.
-					const autoToolSessionKey = 73
-					payload := GameCommands.BUPPayload(autoToolQueueLID, toolID, stackPlan.Amount, -1, 0, autoToolSessionKey, 0, castleID)
-					Logging.AppendAutoToolSendPayload(payload)
-					GameCommands.QueueOutgoingPayload(payload)
-					GameParser.ReserveToolResourceCosts(resourceReservations, costCheck)
-					occupiedQueueStacks++
 					if !autoToolPause(ctx, autoToolActionDelay) {
 						return
 					}
+					if !lease.Active() {
+						leaseRevoked = true
+						Logging.AutoToolLogf("lease_revoked", "castle=%d", castleID)
+						return
+					}
+					if refreshed := gs.GetCastleByID(castleID); refreshed != nil {
+						castleInfo = refreshed
+					}
+
+					occupiedQueueStacks := autoToolOccupiedQueueStacks(castleInfo)
+					queueCapacity := autoToolQueueCapacity(castleInfo)
+					if occupiedQueueStacks >= queueCapacity {
+						Logging.AutoToolLogf("queue_full", "castle=%d occupied=%d capacity=%d", castleID, occupiedQueueStacks, queueCapacity)
+						return
+					}
+
+					stackPlan := autoToolStackAmountForCastle(castleInfo, toolID)
+					if stackPlan.Amount <= 0 {
+						Logging.AutoToolLogf("castle_skip", "castle=%d missing workshop stack capacity", castleID)
+						return
+					}
+					Logging.AutoToolLogf(
+						"stack_capacity",
+						"castle=%d tool=%d amount=%d source=%s workshopOID=%d wid=%d level=%d",
+						castleID,
+						toolID,
+						stackPlan.Amount,
+						stackPlan.Source,
+						stackPlan.Breakdown.BuildingOID,
+						stackPlan.Breakdown.BuildingWID,
+						stackPlan.Breakdown.BuildingLevel,
+					)
+					for occupiedQueueStacks < queueCapacity {
+						select {
+						case <-ctx.Done():
+							return
+						default:
+						}
+
+						costCheck := GameParser.ToolProductionResourceCostCheck(gs, castleInfo, toolID, stackPlan.Amount, resourceReservations)
+						if !costCheck.CanAfford() {
+							Logging.AutoToolLogf(
+								"resource_skip",
+								"castle=%d tool=%d amount=%d missing=%s",
+								castleID,
+								toolID,
+								stackPlan.Amount,
+								costCheck.MissingSummary(),
+							)
+							break
+						}
+
+						if !lease.Active() {
+							leaseRevoked = true
+							Logging.AutoToolLogf("lease_revoked", "castle=%d send skipped", castleID)
+							return
+						}
+						Logging.AutoToolLogf("queue", "castle=%d tool=%d amount=%d occupied=%d capacity=%d", castleID, toolID, stackPlan.Amount, occupiedQueueStacks, queueCapacity)
+						// SK must match live session (captured from browser bup); TODO: read from game state when available.
+						const autoToolSessionKey = 73
+						payload := GameCommands.BUPPayload(autoToolQueueLID, toolID, stackPlan.Amount, -1, 0, autoToolSessionKey, 0, castleID)
+						Logging.AppendAutoToolSendPayload(payload)
+						GameCommands.QueueOutgoingPayload(payload)
+						GameParser.ReserveToolResourceCosts(resourceReservations, costCheck)
+						occupiedQueueStacks++
+						if !autoToolPause(ctx, autoToolActionDelay) {
+							return
+						}
+					}
+				}()
+				if leaseRevoked {
+					break
 				}
 			}
 		}

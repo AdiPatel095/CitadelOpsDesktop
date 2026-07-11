@@ -2,6 +2,7 @@ package featureview
 
 import (
 	"CitadelDesktop/Server/GameCommands"
+	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
@@ -28,8 +29,6 @@ const (
 	sdiCdsGap      = 250 * time.Millisecond
 	// autoBirdCDSLID is the fixed CDS "LID" for bird sends (SDI is still sent for route preview; LID is not parsed from it).
 	autoBirdCDSLID = -14
-	// Extra buffer after full round-trip to ensure troops are fully returned server-side.
-	autoBirdReturnSafetyBuffer = 10 * time.Minute
 	// Max time to wait for GGE login after ReloadGameTab (cooldowns can run up to ~5 min).
 	sessionWaitAfterReload = 5*time.Minute + 10*time.Second
 	// Minimum alliance member RPT (bird post time, seconds) for a castle to count as a bird target.
@@ -206,6 +205,9 @@ func runAutoBird(ctx context.Context) {
 		}
 
 		minH, maxH := st.AutoBirdDelay.MinDelay, st.AutoBirdDelay.MaxDelay
+		if minH < 1 {
+			minH = 1
+		}
 		if maxH < minH {
 			maxH = minH
 		}
@@ -215,10 +217,9 @@ func runAutoBird(ctx context.Context) {
 		}
 		rndDelay := time.Duration(rndH) * time.Hour
 
-		// Per successful **cds**, we compute wake = now + 2×TT + safety buffer + rndDelay for that send.
-		// Multiple castles in one round: **last** successful send overwrites (end of last bird's window), not max TT at end of loop.
-		var wakeNewSends time.Time
-		var maxTTLogged int
+		// Track the farthest successful bird movement so the round sleeps for its full out-and-back
+		// travel time plus the configured random wait.
+		var maxTravelSeconds int
 		// refreshedAIN gates a single mid-round AIN re-request: if a castle finds no same-kingdom post we
 		// refetch alliance data once (in case this round's snapshot was stale) and retry before skipping.
 		refreshedAIN := false
@@ -278,57 +279,77 @@ func runAutoBird(ctx context.Context) {
 				autoBirdLog("no_post", fmt.Sprintf("skip castle %d: no same-kingdom bird post (resolvedKid=%d slotKid=%d posts=%d)", castleID, resolvedKID, defaultKID, len(birdPosts)))
 				continue
 			}
-			if !GameParser.FocusPlayerCastleTroops(resolvedKID, castleID, sx, sy) {
-				autoBirdLog("focus_fail", fmt.Sprintf("castle %d (kid=%d)", castleID, resolvedKID))
-				continue
-			}
-			sendMap := troopsToSend(gs, castleID, c)
-			total := sumMap(sendMap)
-			if total < st.AutoBirdDelay.MinSend {
-				continue
-			}
-			if len(sendMap) == 0 {
-				continue
-			}
-
-			delayH := rndH
-			if delayH < 1 {
-				delayH = 1
-			}
-			troopsJSON := troopsMapToCDSJSON(sendMap)
-			GameCommands.SendSDI(post.X, post.Y, sx, sy)
-			time.Sleep(sdiCdsGap)
-			if !GameCommands.SendCDSUntilSuccess(castleID, post.X, post.Y, autoBirdCDSLID, delayH, gs.GlobalResources.PTT, troopsJSON, func(parts []string) {
-				if len(parts) <= 5 || parts[4] != "0" {
-					return
-				}
-				tt := GameParser.ExtractMaxTTSecondsFromGAMLikeJSON(parts[5])
-				if tt <= 0 {
-					return
-				}
-				if tt > maxTTLogged {
-					maxTTLogged = tt
-				}
-				roundTrip := time.Duration(tt*2) * time.Second
-				if roundTrip < time.Minute {
-					roundTrip = time.Minute
-				}
-				wakeNewSends = time.Now().Add(roundTrip + autoBirdReturnSafetyBuffer + rndDelay)
-			}) {
-				autoBirdLog("cds_fail", fmt.Sprintf("castle %d -> (%d,%d) lid=%d gamePTT=%.0f", castleID, post.X, post.Y, autoBirdCDSLID, gs.GlobalResources.PTT))
-				continue
-			}
-
-			sentbird.Append(file.PlayerID, sentbird.LoggedBird{
-				SourceCastleID: castleID,
-				SourceKID:      resolvedKID,
-				TargetX:        post.X,
-				TargetY:        post.Y,
-				Troops:         copyIntMap(sendMap),
-				SentAtUnix:     time.Now().Unix(),
+			lease, ok := GameFocus.Acquire(ctx, GameFocus.Request{
+				Owner:   GameFocus.OwnerAutoBird,
+				Reason:  fmt.Sprintf("castle=%d", castleID),
+				MaxHold: 30 * time.Second,
 			})
-			autoBirdLog("bird_sent", fmt.Sprintf("castle %d -> (%d,%d) units=%v", castleID, post.X, post.Y, sendMap))
-			time.Sleep(50 * time.Millisecond)
+			if !ok {
+				return
+			}
+			leaseRevoked := false
+			func() {
+				defer lease.Release()
+
+				if !GameParser.FocusPlayerCastleTroopsWithLease(lease, resolvedKID, castleID, sx, sy) {
+					if !lease.Active() {
+						leaseRevoked = true
+						autoBirdLog("lease_revoked", fmt.Sprintf("castle %d", castleID))
+						return
+					}
+					autoBirdLog("focus_fail", fmt.Sprintf("castle %d (kid=%d)", castleID, resolvedKID))
+					return
+				}
+				sendMap := troopsToSend(gs, castleID, c)
+				total := sumMap(sendMap)
+				if total < st.AutoBirdDelay.MinSend {
+					return
+				}
+				if len(sendMap) == 0 {
+					return
+				}
+
+				troopsJSON := troopsMapToCDSJSON(sendMap)
+				if !lease.Active() {
+					leaseRevoked = true
+					autoBirdLog("lease_revoked", fmt.Sprintf("castle %d sdi skipped", castleID))
+					return
+				}
+				GameCommands.SendSDI(post.X, post.Y, sx, sy)
+				time.Sleep(sdiCdsGap)
+				if !GameCommands.SendCDSUntilSuccessWithLease(lease, castleID, post.X, post.Y, autoBirdCDSLID, rndH, gs.GlobalResources.PTT, troopsJSON, func(parts []string) {
+					if len(parts) <= 5 || parts[4] != "0" {
+						return
+					}
+					tt := GameParser.ExtractMaxTTSecondsFromGAMLikeJSON(parts[5])
+					if tt <= 0 {
+						return
+					}
+					maxTravelSeconds = autoBirdFarthestTravelSeconds(maxTravelSeconds, tt)
+				}) {
+					if !lease.Active() {
+						leaseRevoked = true
+						autoBirdLog("lease_revoked", fmt.Sprintf("castle %d cds skipped", castleID))
+						return
+					}
+					autoBirdLog("cds_fail", fmt.Sprintf("castle %d -> (%d,%d) lid=%d gamePTT=%.0f", castleID, post.X, post.Y, autoBirdCDSLID, gs.GlobalResources.PTT))
+					return
+				}
+
+				sentbird.Append(file.PlayerID, sentbird.LoggedBird{
+					SourceCastleID: castleID,
+					SourceKID:      resolvedKID,
+					TargetX:        post.X,
+					TargetY:        post.Y,
+					Troops:         copyIntMap(sendMap),
+					SentAtUnix:     time.Now().Unix(),
+				})
+				autoBirdLog("bird_sent", fmt.Sprintf("castle %d -> (%d,%d) units=%v", castleID, post.X, post.Y, sendMap))
+				time.Sleep(50 * time.Millisecond)
+			}()
+			if leaseRevoked {
+				break
+			}
 		}
 
 		if !ResponseRegistry.LoginStatus {
@@ -345,17 +366,12 @@ func runAutoBird(ctx context.Context) {
 			continue
 		}
 
-		// Sleep policy:
-		// - **Reconciled** birds (still in transit from the log): wake at the **earliest** re-check time (nextReconcile).
-		// - **New** sends this round: wake at the **last** send's deadline (each cds overwrites; final send wins).
-		// When both apply, wake at whichever comes first so we do not oversleep past the next reconcile check.
+		// New sends take precedence: wait for the farthest movement's round trip plus the configured
+		// random delay. If no movement was sent, use the existing reconciliation/fallback schedule.
 		var sleepUntil time.Time
 		switch {
-		case !wakeNewSends.IsZero():
-			sleepUntil = wakeNewSends
-			if !nextReconcile.IsZero() && nextReconcile.Before(sleepUntil) {
-				sleepUntil = nextReconcile
-			}
+		case maxTravelSeconds > 0:
+			sleepUntil = time.Now().Add(autoBirdSleepDuration(maxTravelSeconds, rndDelay))
 		case !nextReconcile.IsZero():
 			sleepUntil = nextReconcile
 		default:
@@ -367,8 +383,8 @@ func runAutoBird(ctx context.Context) {
 			sleepUntil = time.Now().Add(10 * time.Second)
 		}
 		setNextWakeUnixMs(sleepUntil)
-		autoBirdLog("sleep_until", fmt.Sprintf("%s (reconcileEarliest=%v newSendLatest=%v cdsTT1way~=%ds rnd=%dh)",
-			sleepUntil.Format(time.RFC3339), !nextReconcile.IsZero(), !wakeNewSends.IsZero(), maxTTLogged, rndH))
+		autoBirdLog("sleep_until", fmt.Sprintf("%s (reconcileEarliest=%v newSend=%v farthestTT1way=%ds rnd=%dh)",
+			sleepUntil.Format(time.RFC3339), !nextReconcile.IsZero(), maxTravelSeconds > 0, maxTravelSeconds, rndH))
 
 		select {
 		case <-ctx.Done():
@@ -377,6 +393,17 @@ func runAutoBird(ctx context.Context) {
 		}
 		clearNextWake()
 	}
+}
+
+func autoBirdSleepDuration(maxTravelSeconds int, waitDelay time.Duration) time.Duration {
+	return 2*time.Duration(maxTravelSeconds)*time.Second + waitDelay
+}
+
+func autoBirdFarthestTravelSeconds(current, candidate int) int {
+	if candidate > current {
+		return candidate
+	}
+	return current
 }
 
 // birdPost is one alliance bird post (from **ain** / BirdLocations) for distance checks only.
@@ -541,6 +568,7 @@ func reconcileBirds(gs *Models.GameState, birds []sentbird.LoggedBird, st *Model
 	var earliest time.Time
 	now := time.Now()
 	minRPT := autoBirdMinRPTSeconds(st)
+	activeMovements, _, _, _ := gs.Movement.Snapshot()
 
 	for _, b := range birds {
 		c := gs.GetCastleByID(b.SourceCastleID)
@@ -554,8 +582,8 @@ func reconcileBirds(gs *Models.GameState, birds []sentbird.LoggedBird, st *Model
 
 		activeMov := false
 		var matched *Models.GAMMovement
-		for i := range gs.Movement.ActiveMovements {
-			m := &gs.Movement.ActiveMovements[i]
+		for i := range activeMovements {
+			m := &activeMovements[i]
 			if movementStillActive(*m, b, srcKID, srcX, srcY) {
 				activeMov = true
 				matched = m

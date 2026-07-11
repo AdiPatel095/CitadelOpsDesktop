@@ -9,6 +9,7 @@ const SettingsView: React.FC = () => {
   const [maxTimer, setMaxTimer] = useState<string>('6.0');
   const [upgradeEreDelayMs, setUpgradeEreDelayMs] = useState<string>('50');
   const [upgradeCoinThreshold, setUpgradeCoinThreshold] = useState<string>('0');
+  const [manualFocusIdleSec, setManualFocusIdleSec] = useState<string>('30');
   const [isPriorityModalOpen, setIsPriorityModalOpen] = useState(false);
 
   useEffect(() => {
@@ -18,6 +19,7 @@ const SettingsView: React.FC = () => {
         setMaxTimer(msg.payload.maxAttackDelay?.toFixed(1) || '6.0');
         setUpgradeEreDelayMs(String(msg.payload.upgradeEreDelayMs ?? 50));
         setUpgradeCoinThreshold(String(msg.payload.upgradeCoinThreshold ?? 0));
+        setManualFocusIdleSec(String(msg.payload.manualFocusIdleSec ?? 30));
       }
     };
 
@@ -34,12 +36,14 @@ const SettingsView: React.FC = () => {
     max: string,
     ereDelayMs?: string,
     coinThreshold?: string,
+    focusIdleSec?: string,
   ) => {
     FrontendWebsocket.sendSaveSchedulerSettings({
       minAttackDelay: parseFloat(min),
       maxAttackDelay: parseFloat(max),
       upgradeEreDelayMs: parseInt(ereDelayMs ?? upgradeEreDelayMs, 10),
       upgradeCoinThreshold: parseFloat(coinThreshold ?? upgradeCoinThreshold),
+      manualFocusIdleSec: parseInt(focusIdleSec ?? manualFocusIdleSec, 10),
     });
   };
 
@@ -111,6 +115,22 @@ const SettingsView: React.FC = () => {
     saveSettings(minTimer, maxTimer, upgradeEreDelayMs, newVal);
   };
 
+  const handleManualFocusIdleBlur = () => {
+    let num = parseInt(manualFocusIdleSec, 10);
+    let newVal = '30';
+    if (isNaN(num) || num <= 0) {
+      newVal = '30';
+    } else if (num < 5) {
+      newVal = '5';
+    } else if (num > 300) {
+      newVal = '300';
+    } else {
+      newVal = String(num);
+    }
+    setManualFocusIdleSec(newVal);
+    saveSettings(minTimer, maxTimer, upgradeEreDelayMs, upgradeCoinThreshold, newVal);
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
       {/* Header */}
@@ -178,6 +198,34 @@ const SettingsView: React.FC = () => {
                     rightIcon={<span className="text-xs">s</span>}
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-border-base w-full"></div>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-text-main mb-1">Manual Focus Hold</h3>
+                <p className="text-xs text-text-muted mb-4">
+                  Pause automation focus leases after game-tab input (5-300 seconds).
+                </p>
+              </div>
+
+              <div className="relative flex-1 w-full sm:max-w-[200px]">
+                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+                  Idle Timeout
+                </label>
+                <Input
+                  type="number"
+                  step="1"
+                  min="5"
+                  max="300"
+                  value={manualFocusIdleSec}
+                  onChange={(e) => setManualFocusIdleSec(e.target.value)}
+                  onBlur={handleManualFocusIdleBlur}
+                  className="font-mono"
+                  rightIcon={<span className="text-xs">s</span>}
+                />
               </div>
             </div>
 

@@ -4,6 +4,7 @@ import (
 	"CitadelDesktop/Server/Logging"
 	"log"
 	"sync"
+	"time"
 )
 
 // SaveInCastleTroops is per-castle “keep at home” amounts (AutoBird subtracts these from **I**).
@@ -399,6 +400,12 @@ const (
 	Ignored   TabPriority = "Ignored"
 )
 
+const (
+	DefaultManualFocusIdleSec = 30
+	MinManualFocusIdleSec     = 5
+	MaxManualFocusIdleSec     = 300
+)
+
 // SettingsState holds the global settings configurations for the user.
 // This includes preferences for the Attack Scheduler like random timers and tab priorities.
 type SettingsState struct {
@@ -408,6 +415,9 @@ type SettingsState struct {
 
 	// FeatureSchedules optionally limits when automation features are allowed to run.
 	FeatureSchedules map[string]FeatureSchedule `json:"featureSchedules"`
+
+	// ManualFocusIdleSec keeps automation focus leases paused after player input in the game tab.
+	ManualFocusIdleSec int `json:"manualFocusIdleSec"`
 
 	// Global Connection/Feature Flags
 	BotEnabled           bool `json:"botEnabled"`
@@ -443,6 +453,23 @@ type SettingsState struct {
 	UpgradeCoinThreshold float64 `json:"upgradeCoinThreshold"`
 }
 
+func ClampManualFocusIdleSec(value int) int {
+	if value <= 0 {
+		return DefaultManualFocusIdleSec
+	}
+	if value < MinManualFocusIdleSec {
+		return MinManualFocusIdleSec
+	}
+	if value > MaxManualFocusIdleSec {
+		return MaxManualFocusIdleSec
+	}
+	return value
+}
+
+func (s *SettingsState) ManualFocusIdleDuration() time.Duration {
+	return time.Duration(ClampManualFocusIdleSec(s.ManualFocusIdleSec)) * time.Second
+}
+
 // UpgradeCoinReserveThreshold returns the configured minimum coin reserve (never negative).
 func (s *SettingsState) UpgradeCoinReserveThreshold() float64 {
 	if s == nil || s.UpgradeCoinThreshold < 0 {
@@ -469,6 +496,7 @@ func GetSettingsState() *SettingsState {
 			MaxAttackDelay:       6.0,
 			TabPriorities:        make(map[string]TabPriority),
 			FeatureSchedules:     make(map[string]FeatureSchedule),
+			ManualFocusIdleSec:   DefaultManualFocusIdleSec,
 			BotEnabled:           false,
 			AutoBirdEnabled:      false,
 			RecruitTroopsEnabled: false,
@@ -503,6 +531,7 @@ func (s *SettingsState) Reset() {
 	s.MaxAttackDelay = 6.0
 	s.TabPriorities = make(map[string]TabPriority)
 	s.FeatureSchedules = make(map[string]FeatureSchedule)
+	s.ManualFocusIdleSec = DefaultManualFocusIdleSec
 	s.BotEnabled = false
 	s.AutoBirdEnabled = false
 	s.RecruitTroopsEnabled = false

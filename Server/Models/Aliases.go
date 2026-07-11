@@ -98,9 +98,11 @@ type (
 	PlayerEquipment      = equipment.PlayerEquipment
 	EffectCoverageReport = equipment.EffectCoverageReport
 
-	BirdMovement   = movement.BirdMovement
-	GAMMovement    = movement.GAMMovement
-	PlayerMovement = movement.PlayerMovement
+	BirdMovement         = movement.BirdMovement
+	GAMMovement          = movement.GAMMovement
+	PlayerMovement       = movement.PlayerMovement
+	CommanderRosterEntry = movement.CommanderRosterEntry
+	CommanderStatusRow   = movement.CommanderStatusRow
 
 	Alliance             = alliance.Alliance
 	AllianceMember       = alliance.AllianceMember

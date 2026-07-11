@@ -2,6 +2,7 @@ package GameParser
 
 import (
 	"CitadelDesktop/Server/Models"
+	spyreport "CitadelDesktop/Server/Models/SpyReport"
 	"encoding/json"
 	"fmt"
 )
@@ -40,6 +41,11 @@ func ParseAllianceInfo(data string) {
 	// Get the "A" wrapper object first
 	aWrapper, ok := allianceData["A"].(map[string]interface{})
 	if !ok {
+		return
+	}
+	// Alliance Targets can request another alliance's live AIN roster. Keep that
+	// response out of the signed-in alliance state used by AutoBird.
+	if responseAID := intFromMapAny(aWrapper, "AID"); responseAID > 0 && gs.Alliance.AID > 0 && responseAID != gs.Alliance.AID {
 		return
 	}
 
@@ -123,6 +129,13 @@ func ParseAllianceInfo(data string) {
 	if NotifyAllianceInfoUpdated != nil {
 		go NotifyAllianceInfoUpdated()
 	}
+	memberIDs := make([]int, 0, len(gs.Alliance.Members))
+	for _, member := range gs.Alliance.Members {
+		if member.PlayerID > 0 {
+			memberIDs = append(memberIDs, member.PlayerID)
+		}
+	}
+	go spyreport.RefreshAllianceSession(gs.PlayerID, gs.Alliance.AID, memberIDs)
 }
 
 func allianceMemberFromAIN(member map[string]interface{}) Models.AllianceMember {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import EquipmentStats from './EquipmentStats';
 import { FrontendWebsocket } from '../../Websocket';
 import { Icons } from '../../components/Icons';
-import { Button, Modal, Card, CardHeader, CardContent, ToggleGroup, Switch } from '../../components/ui';
+import { Button, Modal, Card, CardHeader, CardContent, PillSelector, Switch, Input } from '../../components/ui';
 
 const img1Star = '/game-data/stars/images/1Star.webp';
 const img4Star = '/game-data/stars/images/4Star.webp';
@@ -28,12 +28,213 @@ interface EquipmentSelectionProps {
 type SellItemType = 'Equipment' | 'Gems';
 type RelicTab = 'Non Relic' | 'Relic 1.0' | 'Relic 2.0';
 
+const BASE_EQUIPMENT_SLOTS = [
+  { key: 'equip1', label: 'Armor' },
+  { key: 'equip2', label: 'Weapon' },
+  { key: 'equip3', label: 'Helmet' },
+  { key: 'equip4', label: 'Artifact' },
+  { key: 'hero', label: 'Hero' },
+] as const;
+
+const AUTO_SELL_EQUIPMENT_STORAGE_KEY = 'equipmentAutoSellNonRelicEquipment';
+const AUTO_SELL_EQUIPMENT_INTERVAL_STORAGE_KEY = 'equipmentAutoSellNonRelicEquipmentIntervalMinutes';
+const DEFAULT_AUTO_SELL_EQUIPMENT_INTERVAL_MIN = 1;
+const MIN_AUTO_SELL_EQUIPMENT_INTERVAL_MIN = 1;
+const MAX_AUTO_SELL_EQUIPMENT_INTERVAL_MIN = 1440;
+
 interface SellConfig {
   relicType: RelicTab;
   sellLookItems?: boolean;
   sellSpecialPost2026?: boolean;
   keepStars?: number;
 }
+
+interface SwapEquipmentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (firstIndex: number, secondIndex: number) => void;
+  equipmentMode: EquipmentMode;
+  fullArray: (CommStat | CastStat | null)[];
+  selectedIndex: number | null;
+}
+
+const baseEquipmentCount = (item: CommStat | CastStat): number => {
+  return BASE_EQUIPMENT_SLOTS.reduce((count, slot) => count + (item[slot.key] !== 0 ? 1 : 0), 0);
+};
+
+const baseEquipmentSummary = (item: CommStat | CastStat): string => {
+  const labels = BASE_EQUIPMENT_SLOTS
+    .filter(slot => item[slot.key] !== 0)
+    .map(slot => slot.label);
+  return labels.length > 0 ? labels.join(', ') : 'No base pieces';
+};
+
+const clampAutoSellEquipmentIntervalMinutes = (value: number): number => {
+  if (!Number.isFinite(value)) return DEFAULT_AUTO_SELL_EQUIPMENT_INTERVAL_MIN;
+  return Math.min(
+    MAX_AUTO_SELL_EQUIPMENT_INTERVAL_MIN,
+    Math.max(MIN_AUTO_SELL_EQUIPMENT_INTERVAL_MIN, Math.round(value)),
+  );
+};
+
+const loadAutoSellEquipmentIntervalMinutes = (): number => {
+  try {
+    const raw = localStorage.getItem(AUTO_SELL_EQUIPMENT_INTERVAL_STORAGE_KEY);
+    return clampAutoSellEquipmentIntervalMinutes(raw ? Number(raw) : DEFAULT_AUTO_SELL_EQUIPMENT_INTERVAL_MIN);
+  } catch {
+    return DEFAULT_AUTO_SELL_EQUIPMENT_INTERVAL_MIN;
+  }
+};
+
+const SwapEquipmentModal: React.FC<SwapEquipmentModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  equipmentMode,
+  fullArray,
+  selectedIndex,
+}) => {
+  const [selectedIndexes, setSelectedIndexes] = useState<number[]>([]);
+  const availableItems = fullArray
+    .map((item, index) => ({ item, index }))
+    .filter((entry): entry is { item: CommStat | CastStat; index: number } => entry.item !== null);
+  const selectedFirst = selectedIndexes[0] ?? null;
+  const selectedSecond = selectedIndexes[1] ?? null;
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    if (selectedIndex !== null && fullArray[selectedIndex] !== null) {
+      setSelectedIndexes([selectedIndex]);
+    } else {
+      setSelectedIndexes([]);
+    }
+  }, [isOpen, selectedIndex]);
+
+  if (!isOpen) return null;
+
+  const toggleIndex = (index: number) => {
+    setSelectedIndexes(prev => {
+      if (prev.includes(index)) {
+        return prev.filter(value => value !== index);
+      }
+      if (prev.length === 0) {
+        return [index];
+      }
+      if (prev.length === 1) {
+        return [prev[0], index];
+      }
+      return [prev[0], index];
+    });
+  };
+
+  const handleClose = () => {
+    setSelectedIndexes([]);
+    onClose();
+  };
+
+  const handleConfirm = () => {
+    if (selectedFirst === null || selectedSecond === null) return;
+    onConfirm(selectedFirst, selectedSecond);
+    setSelectedIndexes([]);
+  };
+
+  const leaderLabel = equipmentMode.toLowerCase();
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      maxWidth="2xl"
+      title={
+        <div className="flex flex-col items-center pt-2">
+          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+            <Icons.RefreshCw className="w-8 h-8 text-primary" />
+          </div>
+          Swap Base Equipment
+        </div>
+      }
+      footer={
+        <>
+          <Button variant="ghost" onClick={handleClose} className="flex-1">
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleConfirm}
+            disabled={selectedFirst === null || selectedSecond === null}
+            className="flex-1"
+          >
+            Swap Pieces
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col items-center">
+        <p className="text-text-muted text-center mb-4">
+          Select two {leaderLabel}s. Base equipment and heroes move across; socketed gems stay on those pieces.
+        </p>
+
+        <div className="w-full rounded-global border border-border-base bg-bg-app p-3 mb-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-wider text-text-muted mb-1">First</div>
+              <div className="text-sm font-semibold text-text-main truncate">
+                {selectedFirst !== null ? fullArray[selectedFirst]?.name : 'Select first'}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-wider text-text-muted mb-1">Second</div>
+              <div className="text-sm font-semibold text-text-main truncate">
+                {selectedSecond !== null ? fullArray[selectedSecond]?.name : 'Select second'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full max-h-[55dvh] overflow-y-auto custom-scrollbar space-y-2 pr-1">
+          {availableItems.length < 2 ? (
+            <p className="text-text-muted text-center py-4">At least two {leaderLabel}s are required</p>
+          ) : (
+            availableItems.map(({ item, index }) => {
+              const selectionNumber = selectedIndexes.indexOf(index) + 1;
+              const isSelected = selectionNumber > 0;
+              const equippedCount = baseEquipmentCount(item);
+
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  className={`
+                    w-full text-left flex items-center gap-3 p-3 rounded-global border transition-all duration-200
+                    ${isSelected
+                      ? 'bg-primary/10 border-primary/50 text-text-main'
+                      : 'bg-bg-app/50 border-border-base hover:bg-bg-card-hover text-text-muted'
+                    }
+                  `}
+                  onClick={() => toggleIndex(index)}
+                >
+                  <span className={`
+                    rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold shrink-0
+                    ${isSelected ? 'bg-primary text-bg-app' : 'bg-bg-app border border-border-base text-text-muted'}
+                  `}>
+                    {isSelected ? selectionNumber : index + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium truncate">{item.name}</span>
+                    <span className="block text-xs text-text-muted truncate">{baseEquipmentSummary(item)}</span>
+                  </span>
+                  <span className="text-xs font-mono text-text-muted shrink-0">
+                    {equippedCount}/5
+                  </span>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </Modal>
+  );
+};
 
 interface CautionModalProps {
   isOpen: boolean;
@@ -181,14 +382,10 @@ const CautionModal: React.FC<CautionModalProps> = ({ isOpen, onClose, onConfirm,
       onClose={onClose}
       title={
         <div className="flex w-full mt-2 shrink-0 mb-4 px-1">
-          <ToggleGroup
+          <PillSelector
             value={relicTab}
             onChange={(v) => setRelicTab(v as RelicTab)}
-            options={[
-              { value: 'Non Relic', label: 'Non Relic' },
-              { value: 'Relic 1.0', label: 'Relic 1.0' },
-              { value: 'Relic 2.0', label: 'Relic 2.0' },
-            ]}
+            options={['Non Relic', 'Relic 1.0', 'Relic 2.0']}
             size="sm"
             fullWidth={true}
             variant="primary"
@@ -284,11 +481,73 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
   selectedItem,
 }) => {
   const [showSellModal, setShowSellModal] = useState(false);
+  const [showSwapModal, setShowSwapModal] = useState(false);
   const [sellType, setSellType] = useState<SellItemType>('Equipment');
+  const [autoSellEquipment, setAutoSellEquipment] = useState(() => {
+    try {
+      return localStorage.getItem(AUTO_SELL_EQUIPMENT_STORAGE_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [autoSellIntervalMinutes, setAutoSellIntervalMinutes] = useState(loadAutoSellEquipmentIntervalMinutes);
+  const autoSellLastRunRef = React.useRef(0);
 
   const openSellModal = (type: SellItemType) => {
     setSellType(type);
     setShowSellModal(true);
+  };
+
+  const sendAutoSellEquipment = React.useCallback(() => {
+    const now = Date.now();
+    const intervalMs = autoSellIntervalMinutes * 60_000;
+    const cooldownMs = Math.max(0, intervalMs - 5_000);
+    if (now - autoSellLastRunRef.current < cooldownMs) return;
+    if (FrontendWebsocket.getStatus() !== 'Connected') return;
+    const sent = FrontendWebsocket.sendMessage({
+      type: 'sellNonRelicEquipment',
+      payload: {
+        sellLookItems: false,
+        sellSpecialPost2026: false,
+        silentZero: true,
+      }
+    });
+    if (sent) {
+      autoSellLastRunRef.current = now;
+    }
+  }, [autoSellIntervalMinutes]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(AUTO_SELL_EQUIPMENT_INTERVAL_STORAGE_KEY, String(autoSellIntervalMinutes));
+    } catch {
+      // Ignore storage failures; the live interval still works for this session.
+    }
+  }, [autoSellIntervalMinutes]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(AUTO_SELL_EQUIPMENT_STORAGE_KEY, autoSellEquipment ? 'true' : 'false');
+    } catch {
+      // Ignore storage failures; the live toggle still works for this session.
+    }
+
+    if (!autoSellEquipment) return;
+    sendAutoSellEquipment();
+    const interval = window.setInterval(sendAutoSellEquipment, autoSellIntervalMinutes * 60_000);
+    return () => window.clearInterval(interval);
+  }, [autoSellEquipment, autoSellIntervalMinutes, sendAutoSellEquipment]);
+
+  const handleSwapConfirm = (firstIndex: number, secondIndex: number) => {
+    FrontendWebsocket.sendMessage({
+      type: 'swapEquipmentLoadouts',
+      payload: {
+        equipmentMode,
+        firstIndex,
+        secondIndex,
+      }
+    });
+    setShowSwapModal(false);
   };
 
   const handleSellConfirm = (config: SellConfig) => {
@@ -347,28 +606,61 @@ const EquipmentSelection: React.FC<EquipmentSelectionProps> = ({
         onConfirm={handleSellConfirm}
         itemType={sellType}
       />
+      <SwapEquipmentModal
+        isOpen={showSwapModal}
+        onClose={() => setShowSwapModal(false)}
+        onConfirm={handleSwapConfirm}
+        equipmentMode={equipmentMode}
+        fullArray={fullArray}
+        selectedIndex={selectedIndex}
+      />
 
       <CardHeader className="liquid-card-header-prominent flex flex-wrap items-center gap-4">
-        <ToggleGroup
+        <PillSelector
           value={equipmentMode}
           onChange={(v) => setEquipmentMode(v as EquipmentMode)}
-          options={[
-            { value: 'Commander', label: 'Commander' },
-            { value: 'Castellan', label: 'Castellan' }
-          ]}
-          className="equipment-view-pills"
+          options={['Commander', 'Castellan']}
         />
-        <ToggleGroup
+        <PillSelector
           value={combatMode}
           onChange={(v) => setCombatMode(v as CombatMode)}
-          options={[
-            { value: 'PvP', label: 'PvP' },
-            { value: 'PvE', label: 'PvE' }
-          ]}
-          className="equipment-view-pills equipment-combat-pills"
+          options={['PvP', 'PvE']}
         />
 
         <div className="equipment-actions ml-auto">
+          <div
+            className="flex items-center gap-2 rounded-global border border-primary/25 bg-primary/5 px-3 py-1.5 text-sm text-text-main"
+            title="Automatically sells old non-relic equipment with look items and special post-2026 gear excluded."
+          >
+            <span className="font-medium">AutoSell</span>
+            <Switch
+              checked={autoSellEquipment}
+              onChange={setAutoSellEquipment}
+              size="sm"
+            />
+            <span className="text-xs text-text-muted">Every</span>
+            <div className="w-16">
+              <Input
+                type="number"
+                min={MIN_AUTO_SELL_EQUIPMENT_INTERVAL_MIN}
+                max={MAX_AUTO_SELL_EQUIPMENT_INTERVAL_MIN}
+                value={autoSellIntervalMinutes}
+                onChange={(e) => {
+                  setAutoSellIntervalMinutes(clampAutoSellEquipmentIntervalMinutes(Number(e.target.value)));
+                }}
+                className="h-8 px-2 py-1 text-center"
+              />
+            </div>
+            <span className="text-xs text-text-muted">min</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowSwapModal(true)}
+          >
+            <Icons.RefreshCw className="w-4 h-4 mr-1.5" />
+            Swap Gear
+          </Button>
           <Button
             size="sm"
             onClick={() => openSellModal('Gems')}

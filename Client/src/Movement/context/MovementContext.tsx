@@ -48,7 +48,18 @@ export function MovementProvider({ children }: { children: ReactNode }) {
   }, [gameLoggedIn, refreshMovement]);
 
   const movement = useMemo((): MovementState | null => {
-    if (gameLoggedIn) return liveMovement ?? { activeMovements: [] };
+    if (gameLoggedIn) {
+      return (
+        liveMovement ?? {
+          activeMovements: [],
+          commanderStatuses: [],
+          snapshotReady: false,
+          snapshotFresh: false,
+          lastSnapshotUnix: 0,
+          freshnessWindowSec: 45,
+        }
+      );
+    }
     return movementFromSnapshot(snapshot);
   }, [gameLoggedIn, liveMovement, snapshot]);
 

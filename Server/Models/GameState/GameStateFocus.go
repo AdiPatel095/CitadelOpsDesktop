@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	alliance "CitadelDesktop/Server/Models/Alliance"
+	castle "CitadelDesktop/Server/Models/Castle"
 	"CitadelDesktop/Server/Models/Decoration"
 )
 
@@ -83,22 +84,92 @@ func (gs *GameState) IsKnownPlayerCastleID(castleID int) bool {
 	return false
 }
 
-// playerCastlesPayload lists all player castles from GCL (alliance locations) with JAA/JCA inputs — global app data, not tied to resource views.
+type playerCastleSlot struct {
+	c          *castle.PlayerCastleInfo
+	defaultKID int
+	rank       int
+}
+
+func playerCastleSlots(gs *GameState) []playerCastleSlot {
+	c := &gs.Castle
+	return []playerCastleSlot{
+		{&c.MainCastle, 0, 0},
+		{&c.Outpost1, 0, 1},
+		{&c.Outpost2, 0, 2},
+		{&c.Outpost3, 0, 3},
+		{&c.IceCastle, 2, 4},
+		{&c.DesertCastle, 1, 5},
+		{&c.DungeonCastle, 3, 6},
+		{&c.StormCastle, 4, 7},
+		{&c.Metropolis, 0, 8},
+		{&c.Capital, 0, 9},
+		{&c.BeriWorldCastle, castle.BeriWorldKingdomID, 10},
+	}
+}
+
+func playerCastleRank(gs *GameState, castleID int) int {
+	if castleID <= 0 {
+		return 1000
+	}
+	aid := float64(castleID)
+	for _, slot := range playerCastleSlots(gs) {
+		if slot.c != nil && slot.c.Aid == aid {
+			return slot.rank
+		}
+	}
+	return 1000
+}
+
+func appendKnownSlotLocations(gs *GameState, locs []alliance.PlayerCastleLocation) []alliance.PlayerCastleLocation {
+	seenAid := make(map[int]bool, len(locs))
+	for _, loc := range locs {
+		if loc.CastleID > 0 {
+			seenAid[loc.CastleID] = true
+		}
+	}
+
+	for _, slot := range playerCastleSlots(gs) {
+		if slot.c == nil {
+			continue
+		}
+		aid := int(slot.c.Aid)
+		if aid <= 0 || seenAid[aid] {
+			continue
+		}
+		kid := slot.defaultKID
+		if slot.c.MapKingdomID != 0 {
+			kid = slot.c.MapKingdomID
+		}
+		x, y := slot.c.MapX, slot.c.MapY
+		if x == 0 && y == 0 {
+			x, y = slot.c.Troops.X, slot.c.Troops.Y
+			if slot.c.Troops.KingdomID != 0 {
+				kid = slot.c.Troops.KingdomID
+			}
+		}
+		locs = append(locs, alliance.PlayerCastleLocation{
+			KingdomID: kid,
+			CastleID:  aid,
+			X:         x,
+			Y:         y,
+		})
+		seenAid[aid] = true
+	}
+	return locs
+}
+
+// playerCastlesPayload lists all known player castles with JAA/JCA inputs — global app data, not tied to resource views.
 func playerCastlesPayload(gs *GameState) []map[string]interface{} {
 	locs := append([]alliance.PlayerCastleLocation(nil), gs.Alliance.PlayerCastleLocations...)
-	mainAID := gs.Castle.MainCastle.Aid
+	locs = appendKnownSlotLocations(gs, locs)
 	sort.SliceStable(locs, func(i, j int) bool {
 		c1, c2 := locs[i], locs[j]
+		r1, r2 := playerCastleRank(gs, c1.CastleID), playerCastleRank(gs, c2.CastleID)
+		if r1 != r2 {
+			return r1 < r2
+		}
 		if c1.KingdomID != c2.KingdomID {
 			return c1.KingdomID < c2.KingdomID
-		}
-		if c1.KingdomID == 0 {
-			if float64(c1.CastleID) == mainAID {
-				return true
-			}
-			if float64(c2.CastleID) == mainAID {
-				return false
-			}
 		}
 		return c1.CastleID < c2.CastleID
 	})

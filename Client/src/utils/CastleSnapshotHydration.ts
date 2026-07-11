@@ -35,20 +35,63 @@ function castleNameForAid(castleRoot: Record<string, unknown> | undefined, aid: 
   return undefined;
 }
 
+function defaultKingdomIDForSlot(key: typeof CASTLE_SLOT_KEYS[number]): number {
+  switch (key) {
+    case 'iceCastle':
+      return 2;
+    case 'desertCastle':
+      return 1;
+    case 'dungeonCastle':
+      return 3;
+    case 'stormCastle':
+      return 4;
+    default:
+      return 0;
+  }
+}
+
+function castleSlotRank(castleRoot: Record<string, unknown> | undefined, aid: number): number {
+  if (!castleRoot || aid <= 0) return 1000;
+  const idx = CASTLE_SLOT_KEYS.findIndex((k) => {
+    const slot = castleRoot[k];
+    return isRecord(slot) && Math.trunc(Number(slot.aid)) === aid;
+  });
+  return idx >= 0 ? idx : 1000;
+}
+
+function slotMapCoords(slot: Record<string, unknown>, key: typeof CASTLE_SLOT_KEYS[number]) {
+  let kingdomID = Math.trunc(Number(slot.mapKingdomID));
+  if (!Number.isFinite(kingdomID) || kingdomID === 0) {
+    kingdomID = defaultKingdomIDForSlot(key);
+  }
+  let mapX = Math.trunc(Number(slot.mapX)) || 0;
+  let mapY = Math.trunc(Number(slot.mapY)) || 0;
+  if ((mapX === 0 && mapY === 0) && isRecord(slot.troops)) {
+    mapX = Math.trunc(Number(slot.troops.x)) || 0;
+    mapY = Math.trunc(Number(slot.troops.y)) || 0;
+    const troopKid = Math.trunc(Number(slot.troops.kingdomID));
+    if (Number.isFinite(troopKid) && troopKid !== 0) {
+      kingdomID = troopKid;
+    }
+  }
+  return { kingdomID, mapX, mapY };
+}
+
 /** Build player castle dropdown options from persisted `gameState` (alliance locations + castle names). */
 export function playerCastleOptionsFromGameStateSnapshot(gameState: unknown): PlayerCastleOption[] {
   if (!isRecord(gameState)) return [];
-  const alliance = gameState.alliance;
-  if (!isRecord(alliance)) return [];
-  const locs = alliance.playerCastleLocations;
-  if (!Array.isArray(locs)) return [];
+  const alliance = isRecord(gameState.alliance) ? gameState.alliance : undefined;
+  const rawLocs = alliance?.playerCastleLocations;
+  const locs = Array.isArray(rawLocs) ? rawLocs : [];
   const castle = isRecord(gameState.castle) ? gameState.castle : undefined;
   const out: PlayerCastleOption[] = [];
+  const seenAid = new Set<number>();
   for (const loc of locs) {
     if (!isRecord(loc)) continue;
     const aid = Math.trunc(Number(loc.castleID));
     if (aid <= 0) continue;
     const nm = castleNameForAid(castle, aid) || `Castle ${aid}`;
+    seenAid.add(aid);
     out.push({
       aid,
       kingdomID: Math.trunc(Number(loc.kingdomID)) || 0,
@@ -57,7 +100,30 @@ export function playerCastleOptionsFromGameStateSnapshot(gameState: unknown): Pl
       mapY: Math.trunc(Number(loc.y)) || 0,
     });
   }
-  return out;
+  if (castle) {
+    for (const key of CASTLE_SLOT_KEYS) {
+      const slot = castle[key];
+      if (!isRecord(slot)) continue;
+      const aid = Math.trunc(Number(slot.aid));
+      if (aid <= 0 || seenAid.has(aid)) continue;
+      const { kingdomID, mapX, mapY } = slotMapCoords(slot, key);
+      out.push({
+        aid,
+        kingdomID,
+        name: typeof slot.castleName === 'string' && slot.castleName.trim() ? slot.castleName.trim() : `Castle ${aid}`,
+        mapX,
+        mapY,
+      });
+      seenAid.add(aid);
+    }
+  }
+  return out.sort((a, b) => {
+    const rankA = castleSlotRank(castle, a.aid);
+    const rankB = castleSlotRank(castle, b.aid);
+    if (rankA !== rankB) return rankA - rankB;
+    if (a.kingdomID !== b.kingdomID) return a.kingdomID - b.kingdomID;
+    return a.aid - b.aid;
+  });
 }
 
 function findCastleSlotByAid(

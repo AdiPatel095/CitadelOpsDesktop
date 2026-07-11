@@ -20,6 +20,7 @@ type GameState struct {
 	Equipment       equipment.PlayerEquipment       `json:"equipment"`
 	Movement        movement.PlayerMovement         `json:"movement"`
 	PlayerID        int                             `json:"playerId"` // Session player OID; used by auto-bird persistence and parsers
+	PlayerName      string                          `json:"playerName,omitempty"`
 	VIP             VipState                        `json:"vip,omitempty"`
 	Subscriptions   SubscriptionState               `json:"subscriptions,omitempty"`
 	CastleFocus     castle.CastleFocus              `json:"castleFocus"`
@@ -45,10 +46,7 @@ func GetGameState() *GameState {
 			Equipment: equipment.PlayerEquipment{
 				NonRelicGemIDs: make(map[int]float64),
 			},
-			Movement: movement.PlayerMovement{
-				BirdMovements:  make(map[int][]movement.BirdMovement),
-				CommanderByMID: make(map[int]int),
-			},
+			Movement: movement.NewPlayerMovement(),
 			Tci: TciSession{
 				SINItemCounts: make(map[int]int),
 			},
@@ -63,11 +61,10 @@ func (gs *GameState) Reset() {
 	gs.Alliance = alliance.Alliance{}
 	gs.GlobalResources = resources.PlayerGlobalResources{}
 	gs.Castle = castle.PlayerCastles{}
+	gs.PlayerID = 0
+	gs.PlayerName = ""
 	gs.Equipment = equipment.PlayerEquipment{NonRelicGemIDs: make(map[int]float64)}
-	gs.Movement = movement.PlayerMovement{
-		BirdMovements:  make(map[int][]movement.BirdMovement),
-		CommanderByMID: make(map[int]int),
-	}
+	gs.Movement.Reset()
 	gs.VIP = VipState{}
 	gs.Subscriptions = SubscriptionState{}
 	gs.CastleFocus = castle.CastleFocus{}

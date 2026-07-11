@@ -1,3 +1,5 @@
+import type { CommanderState } from '../../Movement/types/MovementState';
+
 export interface RiftCRALaunchEntry {
   id: string;
   displayName?: string;
@@ -11,6 +13,7 @@ export interface RiftCRALaunchEntry {
   attackValid?: number;
   waveCount?: number;
   useTravelFeather?: boolean;
+  commanderStatus?: CommanderState;
   commanderBusy?: boolean;
   canResend?: boolean;
   /** Feather one-way TT (seconds) from last successful inbound cra ack. */
@@ -38,6 +41,7 @@ function parseEntry(raw: unknown): RiftCRALaunchEntry | null {
   };
 
   const displayName = typeof p.displayName === 'string' ? p.displayName : undefined;
+  const commanderStatus = parseCommanderState(p.commanderStatus);
 
   return {
     id,
@@ -52,6 +56,7 @@ function parseEntry(raw: unknown): RiftCRALaunchEntry | null {
     attackValid: num('attackValid'),
     waveCount: num('waveCount'),
     useTravelFeather: typeof p.useTravelFeather === 'boolean' ? p.useTravelFeather : undefined,
+    commanderStatus,
     commanderBusy: typeof p.commanderBusy === 'boolean' ? p.commanderBusy : undefined,
     canResend: typeof p.canResend === 'boolean' ? p.canResend : undefined,
     oneWayTTSeconds: num('oneWayTTSeconds'),
@@ -59,6 +64,21 @@ function parseEntry(raw: unknown): RiftCRALaunchEntry | null {
     lastSuccessAtUnix: num('lastSuccessAtUnix'),
     scheduledArriveAtUnix: num('scheduledArriveAtUnix'),
   };
+}
+
+const COMMANDER_STATES = new Set<CommanderState>([
+  'syncing',
+  'unknown',
+  'free',
+  'outbound',
+  'busy',
+  'posted',
+  'returning',
+]);
+
+function parseCommanderState(raw: unknown): CommanderState | undefined {
+  if (typeof raw !== 'string' || !COMMANDER_STATES.has(raw as CommanderState)) return undefined;
+  return raw as CommanderState;
 }
 
 export function parseRiftCRALaunchPayload(raw: unknown): RiftCRALaunchState {

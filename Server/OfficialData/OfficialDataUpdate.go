@@ -20,9 +20,11 @@ import (
 )
 
 const (
-	maxOfficialAssetBytes      = 20 << 20
-	defaultOfficialItemVersion = "https://empire-html5.goodgamestudios.com/default/items/ItemsVersion.properties"
-	defaultOfficialItemPattern = "https://empire-html5.goodgamestudios.com/default/items/items_v{version}.json"
+	maxOfficialAssetBytes       = 20 << 20
+	defaultOfficialItemVersion  = "https://empire-html5.goodgamestudios.com/default/items/ItemsVersion.properties"
+	defaultOfficialItemPattern  = "https://empire-html5.goodgamestudios.com/default/items/items_v{version}.json"
+	defaultOfficialLangMetadata = "https://langserv.public.ggs-ep.com/12/fr/@metadata"
+	defaultOfficialLangPattern  = "https://langserv.public.ggs-ep.com/12@{version}/{language}/*"
 )
 
 type OfficialCatalog struct {
@@ -80,6 +82,7 @@ func main() {
 	baseURL := flag.String("base-url", strings.TrimSpace(os.Getenv("GGE_OFFICIAL_DATA_BASE_URL")), "official data base URL; catalog paths are derived as <base>/<catalog>/{items,index}.json")
 	manifestPath := flag.String("manifest", strings.TrimSpace(os.Getenv("GGE_OFFICIAL_DATA_MANIFEST")), "optional JSON manifest with explicit catalog URLs")
 	officialURL := flag.String("official-url", defaultOfficialURL(), "official GGE ItemsVersion.properties, items_v<version>.json, or items directory URL")
+	fetchLang := flag.Bool("fetch-lang", true, "update LangEn.json from the official language service")
 	serverData := flag.String("server-data", "Server/Data", "official Server/Data directory")
 	clientData := flag.String("client-data", filepath.Join("Client", "public", "game-data"), "app-ready client game-data directory")
 	fetchAssets := flag.Bool("fetch-assets", false, "download missing local assets from each row image_url")
@@ -130,6 +133,12 @@ func main() {
 	} else {
 		fmt.Println("No official data URL configured; converting existing Server/Data only.")
 	}
+	if *fetchLang {
+		fetcher := PublicOfficialDataFetcher{Client: client, ServerData: *serverData, DryRun: *dryRun}
+		if err := fetcher.FetchOfficialLanguage(ctx, "en"); err != nil {
+			fatal(err)
+		}
+	}
 
 	converter := AppReadyConverter{
 		Client:          client,
@@ -151,6 +160,32 @@ func main() {
 			fatal(err)
 		}
 	}
+}
+
+func (fetcher PublicOfficialDataFetcher) FetchOfficialLanguage(ctx context.Context, language string) error {
+	metadata, err := fetcher.fetchBytes(ctx, defaultOfficialLangMetadata, 0)
+	if err != nil {
+		return err
+	}
+	var root struct {
+		Metadata struct {
+			Version string `json:"versionNo"`
+		} `json:"@metadata"`
+	}
+	if err := json.Unmarshal(metadata, &root); err != nil {
+		return fmt.Errorf("decode official language metadata: %w", err)
+	}
+	version := strings.TrimSpace(root.Metadata.Version)
+	if version == "" {
+		return fmt.Errorf("official language metadata has no versionNo")
+	}
+	languageURL := strings.NewReplacer(
+		"{version}", url.PathEscape(version),
+		"{language}", url.PathEscape(language),
+	).Replace(defaultOfficialLangPattern)
+	target := filepath.Join(fetcher.ServerData, "Lang"+strings.ToUpper(language[:1])+language[1:]+".json")
+	fmt.Printf("official language %s %s\n", language, version)
+	return fetcher.fetchJSON(ctx, languageURL, target)
 }
 
 func officialCatalogList(catalogs []string, baseURL string, manifestPath string) ([]OfficialCatalog, error) {
@@ -390,6 +425,10 @@ func officialCatalogSource(catalogName string) (string, func(map[string]interfac
 		return "units", func(map[string]interface{}) bool { return true }
 	case "decorations":
 		return "buildings", officialBuildingIsDecoration
+	case "equipment_effects", "equipment_sets":
+		return catalogName, func(map[string]interface{}) bool { return true }
+	case "effect_types":
+		return "effecttypes", func(map[string]interface{}) bool { return true }
 	default:
 		return officialCatalogKey(catalogName), func(map[string]interface{}) bool { return true }
 	}
@@ -1043,7 +1082,19 @@ func writeFile(path string, data []byte, dryRun bool) error {
 }
 
 func rowID(row map[string]interface{}) int64 {
-	for _, key := range []string{"id", "wodID", "wid", "resourceID", "ID"} {
+	for _, key := range []string{
+		"id",
+		"wodID",
+		"wid",
+		"resourceID",
+		"effectID",
+		"effectTypeID",
+		"capID",
+		"equipmentEffectID",
+		"equipmentID",
+		"gemID",
+		"ID",
+	} {
 		if id := int64Field(row, key); id > 0 {
 			return id
 		}

@@ -1,8 +1,10 @@
-import React, { Suspense, useCallback, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pencil, Play, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCastleFocus } from '../../context/CastleFocusContext';
-import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '../../components/ui';
+import { Badge, Card, CardContent, CardHeader, CardTitle, Button, Input } from '../../components/ui';
+import { useMovement } from '../../Movement/context/MovementContext';
+import type { CommanderState, GAMMovement, MovementState } from '../../Movement/types/MovementState';
 import { useRiftMap } from '../context/RiftMapContext';
 import { formatSavedAt, riftLaunchLabel, type RiftCRALaunchEntry } from '../types/RiftCRALaunch';
 import { arriveAtUnixFromOffset, isEarliestOffset } from '../types/RiftArrivalTime';
@@ -10,6 +12,60 @@ import RiftArrivalClock from './RiftArrivalClock';
 import type { AttackSetupDraft } from '../../components/AttackSetupModal';
 
 const AttackSetupModal = React.lazy(() => import('../../components/AttackSetupModal'));
+
+const COMMANDER_STATUS_META: Record<
+  CommanderState,
+  { label: string; variant: 'secondary' | 'success' | 'warning' | 'danger' | 'outline' }
+> = {
+  syncing: { label: 'Syncing', variant: 'secondary' },
+  unknown: { label: 'Unknown', variant: 'danger' },
+  free: { label: 'Free', variant: 'success' },
+  outbound: { label: 'Outbound', variant: 'warning' },
+  busy: { label: 'Busy', variant: 'warning' },
+  posted: { label: 'Posted', variant: 'warning' },
+  returning: { label: 'Returning', variant: 'outline' },
+};
+
+function effectivePT(movement: GAMMovement, nowUnix: number): number {
+  if (movement.receivedUnix <= 0) return movement.pt;
+  return movement.pt + Math.max(0, nowUnix - movement.receivedUnix);
+}
+
+function commanderStatusForLaunch(
+  movement: MovementState | null,
+  commanderID: number | undefined,
+  gameLoggedIn: boolean,
+  nowUnix: number,
+  fallbackStatus: CommanderState | undefined
+): CommanderState {
+  if (!gameLoggedIn || commanderID == null || commanderID < 0) return 'unknown';
+  if (!movement) return fallbackStatus ?? 'syncing';
+  if (!movement?.snapshotReady) return 'syncing';
+  const snapshotFresh =
+    movement.lastSnapshotUnix > 0 &&
+    nowUnix >= movement.lastSnapshotUnix &&
+    nowUnix - movement.lastSnapshotUnix <= movement.freshnessWindowSec;
+  if (!snapshotFresh) return 'unknown';
+  const row = movement.commanderStatuses.find((candidate) => candidate.commanderID === commanderID);
+  if (!row) return 'unknown';
+  if (
+    row.status === 'outbound' &&
+    row.movement != null &&
+    row.movement.tt > 0 &&
+    effectivePT(row.movement, nowUnix) >= row.movement.tt
+  ) {
+    return row.movement.twd > 0 ? 'posted' : 'busy';
+  }
+  return row.status;
+}
+
+function commanderStatusTitle(status: CommanderState, commanderID: number | undefined): string {
+  const lid = commanderID ?? '—';
+  if (status === 'free') return `Commander LID ${lid} is available`;
+  if (status === 'syncing') return `Waiting for Commander LID ${lid} status`;
+  if (status === 'unknown') return `Commander LID ${lid} status is unavailable or stale`;
+  return `Commander LID ${lid} is ${COMMANDER_STATUS_META[status].label.toLowerCase()}`;
+}
 
 function summarizeAttackSetup(draft: AttackSetupDraft | undefined) {
   if (!draft) return null;
@@ -31,15 +87,22 @@ function summarizeAttackSetup(draft: AttackSetupDraft | undefined) {
 const RiftAttackTemplate: React.FC = () => {
   const { gameLoggedIn } = useAuth();
   const { castleFocus } = useCastleFocus();
+  const { movement } = useMovement();
   const { riftCRALaunch, replayRiftCRALaunch, renameRiftCRALaunch, deleteRiftCRALaunch } = useRiftMap();
   const [offsetMinutesById, setOffsetMinutesById] = useState<Record<string, number>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState('');
   const [attackSetupOpen, setAttackSetupOpen] = useState(false);
   const [attackSetupDraft, setAttackSetupDraft] = useState<AttackSetupDraft | undefined>();
+  const [nowUnix, setNowUnix] = useState(() => Math.floor(Date.now() / 1000));
 
   const launches = riftCRALaunch?.launches ?? [];
   const attackSetupSummary = useMemo(() => summarizeAttackSetup(attackSetupDraft), [attackSetupDraft]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowUnix(Math.floor(Date.now() / 1000)), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const setOffsetFor = useCallback((launchId: string, offsetMinutes: number) => {
     setOffsetMinutesById((prev) => ({ ...prev, [launchId]: offsetMinutes }));
@@ -81,8 +144,8 @@ const RiftAttackTemplate: React.FC = () => {
   );
 
   const handleAttack = useCallback(
-    (entry: RiftCRALaunchEntry) => {
-      if (!entry.canResend) return;
+    (entry: RiftCRALaunchEntry, commanderAvailable: boolean) => {
+      if (!commanderAvailable) return;
       const useFocusCoords =
         castleFocus?.mapPX != null &&
         castleFocus?.mapPY != null &&
@@ -149,8 +212,16 @@ const RiftAttackTemplate: React.FC = () => {
               </thead>
               <tbody>
                 {launches.map((entry) => {
-                  const canAttack = gameLoggedIn && entry.canResend === true;
-                  const busy = entry.commanderBusy === true;
+                  const commanderStatus = commanderStatusForLaunch(
+                    movement,
+                    entry.commanderID,
+                    gameLoggedIn,
+                    nowUnix,
+                    entry.commanderStatus
+                  );
+                  const commanderAvailable = commanderStatus === 'free';
+                  const canAttack = gameLoggedIn && commanderAvailable;
+                  const commanderStatusMeta = COMMANDER_STATUS_META[commanderStatus];
                   const offsetMinutes = offsetMinutesById[entry.id] ?? 0;
                   const scheduled = !isEarliestOffset(offsetMinutes);
                   const isEditing = editingId === entry.id;
@@ -199,7 +270,15 @@ const RiftAttackTemplate: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td className="px-3 py-3 font-mono text-text-main">LID {entry.commanderID ?? '—'}</td>
+                      <td className="px-3 py-3 text-text-main">
+                        <div className="font-mono">LID {entry.commanderID ?? '—'}</div>
+                        <Badge
+                          variant={commanderStatusMeta.variant}
+                          className="mt-1 normal-case tracking-normal"
+                        >
+                          {commanderStatusMeta.label}
+                        </Badge>
+                      </td>
                       <td className="px-3 py-3 text-text-main">
                         {entry.waveCount ?? 0} wave{(entry.waveCount ?? 0) === 1 ? '' : 's'}
                         {entry.useTravelFeather ? (
@@ -230,12 +309,12 @@ const RiftAttackTemplate: React.FC = () => {
                             variant="primary"
                             size="sm"
                             disabled={!canAttack}
-                            onClick={() => handleAttack(entry)}
+                            onClick={() => handleAttack(entry, commanderAvailable)}
                             title={
                               !gameLoggedIn
                                 ? 'Connect to attack'
-                                : busy
-                                  ? `Commander LID ${entry.commanderID ?? '—'} is on an attack march`
+                                : !commanderAvailable
+                                  ? commanderStatusTitle(commanderStatus, entry.commanderID)
                                   : scheduled
                                     ? 'Schedule attack for the selected arrival time'
                                     : 'Resend now (earliest feather arrival)'

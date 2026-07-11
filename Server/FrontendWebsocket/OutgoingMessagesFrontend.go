@@ -15,12 +15,9 @@ import (
 	"time"
 )
 
-// SendGameLoginStatusMessage sends the current game login status
-func SendGameLoginStatusMessage(loggedIn bool, cooldown int) {
-	SendFrontendMessage("gameLoginStatus", map[string]interface{}{
-		"loggedIn": loggedIn,
-		"cooldown": cooldown,
-	}, "")
+// SendGameLoginStatusMessage sends the current game browser/WebSocket lifecycle snapshot.
+func SendGameLoginStatusMessage(status ResponseRegistry.GameConnectionStatus) {
+	SendFrontendMessage("gameLoginStatus", status, "")
 }
 
 // SendMemoryStatsMessage sends memory usage stats to the frontend
@@ -83,10 +80,7 @@ func SendAutoBeriWorldStatus(enabled bool, nextWakeUp int64) {
 
 func SendInitialData(client *Client) {
 	// Send current game login status so frontend knows if game is connected after page refresh
-	client.SendToClient("gameLoginStatus", map[string]interface{}{
-		"loggedIn": ResponseRegistry.LoginStatus,
-		"cooldown": ResponseRegistry.LoginCooldown,
-	}, "")
+	client.SendToClient("gameLoginStatus", ResponseRegistry.GetGameConnectionStatus(), "")
 
 	client.SendToClient("autoBirdStatus", map[string]interface{}{
 		"enabled":    featureview.IsAutoBirdRunning(),

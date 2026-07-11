@@ -19,6 +19,7 @@ type schedulerSettingsFile struct {
 	MaxAttackDelay       float64                    `json:"maxAttackDelay"`
 	UpgradeEreDelayMs    int                        `json:"upgradeEreDelayMs"`
 	UpgradeCoinThreshold float64                    `json:"upgradeCoinThreshold"`
+	ManualFocusIdleSec   int                        `json:"manualFocusIdleSec"`
 	TabPriorities        map[string]string          `json:"tabPriorities"`
 	FeatureSchedules     map[string]FeatureSchedule `json:"featureSchedules"`
 }
@@ -34,6 +35,7 @@ func defaultSchedulerSettingsFile() schedulerSettingsFile {
 		MaxAttackDelay:       6.0,
 		UpgradeEreDelayMs:    50,
 		UpgradeCoinThreshold: 0,
+		ManualFocusIdleSec:   DefaultManualFocusIdleSec,
 		TabPriorities:        map[string]string{},
 		FeatureSchedules:     map[string]FeatureSchedule{},
 	}
@@ -58,6 +60,7 @@ func normalizeSchedulerSettings(s *SettingsState) {
 	if s.UpgradeCoinThreshold < 0 {
 		s.UpgradeCoinThreshold = 0
 	}
+	s.ManualFocusIdleSec = ClampManualFocusIdleSec(s.ManualFocusIdleSec)
 	if s.TabPriorities == nil {
 		s.TabPriorities = make(map[string]TabPriority)
 	}
@@ -102,6 +105,9 @@ func LoadSchedulerSettingsInto(s *SettingsState) {
 		s.UpgradeEreDelayMs = f.UpgradeEreDelayMs
 	}
 	s.UpgradeCoinThreshold = f.UpgradeCoinThreshold
+	if f.ManualFocusIdleSec > 0 {
+		s.ManualFocusIdleSec = f.ManualFocusIdleSec
+	}
 	if f.TabPriorities != nil {
 		if s.TabPriorities == nil {
 			s.TabPriorities = make(map[string]TabPriority, len(f.TabPriorities))
@@ -134,6 +140,7 @@ func PersistSchedulerSettings(s *SettingsState) error {
 		MaxAttackDelay:       s.MaxAttackDelay,
 		UpgradeEreDelayMs:    s.UpgradeEreDelayMs,
 		UpgradeCoinThreshold: s.UpgradeCoinThreshold,
+		ManualFocusIdleSec:   s.ManualFocusIdleSec,
 		TabPriorities:        priorities,
 		FeatureSchedules:     NormalizeFeatureSchedules(s.FeatureSchedules),
 	}

@@ -21,6 +21,9 @@ var embeddedEquipmentEffectsItemsJSON []byte
 //go:embed effect_caps/items.json
 var embeddedEffectCapsItemsJSON []byte
 
+//go:embed effect_types/items.json
+var embeddedEffectTypesItemsJSON []byte
+
 //go:embed relic_effects/items.json
 var embeddedRelicEffectsItemsJSON []byte
 
@@ -100,6 +103,11 @@ func ReadEquipmentEffectsItemsJSON() ([]byte, error) {
 // ReadEffectCapsItemsJSON returns effect_caps/items.json.
 func ReadEffectCapsItemsJSON() ([]byte, error) {
 	return readFilePreferDisk(filepath.Join("effect_caps", "items.json"), embeddedEffectCapsItemsJSON)
+}
+
+// ReadEffectTypesItemsJSON returns effect_types/items.json.
+func ReadEffectTypesItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("effect_types", "items.json"), embeddedEffectTypesItemsJSON)
 }
 
 // ReadRelicEffectsItemsJSON returns relic_effects/items.json.

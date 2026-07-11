@@ -6140,88 +6140,46 @@
     "type": "AlienInvasionAntiShields"
   },
   {
-    "id": 568,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffNormal/Eventtool_Unit_AREWallDebuffNormal--1762857156746.webp",
-    "name": "Raid ladder",
-    "type": "AREWallDebuffNormal"
+    "id": 572,
+    "image": null,
+    "name": "Eventtool",
+    "type": "AREWallDebuffCurrencyBoostNormal"
   },
   {
-    "id": 583,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffNormal/Eventtool_Unit_AREWallDebuffNormal--1762857156746.webp",
-    "name": "Raid ladder",
-    "type": "AREWallDebuffNormal"
+    "id": 573,
+    "image": null,
+    "name": "Eventtool",
+    "type": "AREWallDebuffCurrencyBoostPremium"
   },
   {
-    "id": 584,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffNormal/Eventtool_Unit_AREWallDebuffNormal--1762857156746.webp",
-    "name": "Raid ladder",
-    "type": "AREWallDebuffNormal"
+    "id": 574,
+    "image": null,
+    "name": "Eventtool",
+    "type": "AREGateDebuffCurrencyBoostNormal"
   },
   {
-    "id": 585,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffNormal/Eventtool_Unit_AREWallDebuffNormal--1762857156746.webp",
-    "name": "Raid ladder",
-    "type": "AREWallDebuffNormal"
+    "id": 575,
+    "image": null,
+    "name": "Eventtool",
+    "type": "AREGateDebuffCurrencyBoostPremium"
   },
   {
-    "id": 569,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffPremium/Eventtool_Unit_AREWallDebuffPremium--1762857156746.webp",
-    "name": "Exalted raid ladder",
-    "type": "AREWallDebuffPremium"
+    "id": 576,
+    "image": null,
+    "name": "Eventtool",
+    "type": "AREEventCurrencyBoostWeak"
   },
   {
-    "id": 586,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffPremium/Eventtool_Unit_AREWallDebuffPremium--1762857156746.webp",
-    "name": "Exalted raid ladder",
-    "type": "AREWallDebuffPremium"
+    "id": 577,
+    "image": null,
+    "name": "Eventtool",
+    "type": "AREEventCurrencyBoostMedium"
   },
   {
-    "id": 587,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffPremium/Eventtool_Unit_AREWallDebuffPremium--1762857156746.webp",
-    "name": "Exalted raid ladder",
-    "type": "AREWallDebuffPremium"
-  },
-  {
-    "id": 570,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffNormal/Eventtool_Unit_AREGateDebuffNormal--1762857156746.webp",
-    "name": "Raid ram",
-    "type": "AREGateDebuffNormal"
-  },
-  {
-    "id": 588,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffNormal/Eventtool_Unit_AREGateDebuffNormal--1762857156746.webp",
-    "name": "Raid ram",
-    "type": "AREGateDebuffNormal"
-  },
-  {
-    "id": 589,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffNormal/Eventtool_Unit_AREGateDebuffNormal--1762857156746.webp",
-    "name": "Raid ram",
-    "type": "AREGateDebuffNormal"
-  },
-  {
-    "id": 590,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffNormal/Eventtool_Unit_AREGateDebuffNormal--1762857156746.webp",
-    "name": "Raid ram",
-    "type": "AREGateDebuffNormal"
-  },
-  {
-    "id": 571,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffPremium/Eventtool_Unit_AREGateDebuffPremium--1762857156746.webp",
-    "name": "Exalted raid ram",
-    "type": "AREGateDebuffPremium"
-  },
-  {
-    "id": 591,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffPremium/Eventtool_Unit_AREGateDebuffPremium--1762857156746.webp",
-    "name": "Exalted raid ram",
-    "type": "AREGateDebuffPremium"
-  },
-  {
-    "id": 592,
-    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffPremium/Eventtool_Unit_AREGateDebuffPremium--1762857156746.webp",
-    "name": "Exalted raid ram",
-    "type": "AREGateDebuffPremium"
+    "id": 578,
+    "image": null,
+    "name": "Eventtool",
+    "type": "AREEventCurrencyBoostStrong"
   },
   {
     "id": 579,
@@ -6492,5 +6450,89 @@
     "image": null,
     "name": "Gold Obsidian Siege Shield",
     "type": "ARELegendaryDragonWeakeningToolRangedStrong"
+  },
+  {
+    "id": 568,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffNormal/Eventtool_Unit_AREWallDebuffNormal--1762857156746.webp",
+    "name": "Raid ladder",
+    "type": "AREWallDebuffNormal60"
+  },
+  {
+    "id": 583,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffNormal/Eventtool_Unit_AREWallDebuffNormal--1762857156746.webp",
+    "name": "Raid ladder",
+    "type": "AREWallDebuffNormal80"
+  },
+  {
+    "id": 584,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffNormal/Eventtool_Unit_AREWallDebuffNormal--1762857156746.webp",
+    "name": "Raid ladder",
+    "type": "AREWallDebuffNormal125"
+  },
+  {
+    "id": 585,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffNormal/Eventtool_Unit_AREWallDebuffNormal--1762857156746.webp",
+    "name": "Raid ladder",
+    "type": "AREWallDebuffNormal200"
+  },
+  {
+    "id": 569,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffPremium/Eventtool_Unit_AREWallDebuffPremium--1762857156746.webp",
+    "name": "Exalted raid ladder",
+    "type": "AREWallDebuffPremium250"
+  },
+  {
+    "id": 586,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffPremium/Eventtool_Unit_AREWallDebuffPremium--1762857156746.webp",
+    "name": "Exalted raid ladder",
+    "type": "AREWallDebuffPremium340"
+  },
+  {
+    "id": 587,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREWallDebuffPremium/Eventtool_Unit_AREWallDebuffPremium--1762857156746.webp",
+    "name": "Exalted raid ladder",
+    "type": "AREWallDebuffPremium500"
+  },
+  {
+    "id": 570,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffNormal/Eventtool_Unit_AREGateDebuffNormal--1762857156746.webp",
+    "name": "Raid ram",
+    "type": "AREGateDebuffNormal60"
+  },
+  {
+    "id": 588,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffNormal/Eventtool_Unit_AREGateDebuffNormal--1762857156746.webp",
+    "name": "Raid ram",
+    "type": "AREGateDebuffNormal80"
+  },
+  {
+    "id": 589,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffNormal/Eventtool_Unit_AREGateDebuffNormal--1762857156746.webp",
+    "name": "Raid ram",
+    "type": "AREGateDebuffNormal125"
+  },
+  {
+    "id": 590,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffNormal/Eventtool_Unit_AREGateDebuffNormal--1762857156746.webp",
+    "name": "Raid ram",
+    "type": "AREGateDebuffNormal200"
+  },
+  {
+    "id": 571,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffPremium/Eventtool_Unit_AREGateDebuffPremium--1762857156746.webp",
+    "name": "Exalted raid ram",
+    "type": "AREGateDebuffPremium250"
+  },
+  {
+    "id": 591,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffPremium/Eventtool_Unit_AREGateDebuffPremium--1762857156746.webp",
+    "name": "Exalted raid ram",
+    "type": "AREGateDebuffPremium340"
+  },
+  {
+    "id": 592,
+    "image": "https://empire-html5.goodgamestudios.com/default/assets/itemassets/Units/Eventtool/Eventtool_Unit_AREGateDebuffPremium/Eventtool_Unit_AREGateDebuffPremium--1762857156746.webp",
+    "name": "Exalted raid ram",
+    "type": "AREGateDebuffPremium500"
   }
 ]

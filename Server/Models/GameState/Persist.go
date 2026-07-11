@@ -33,6 +33,9 @@ func legacySnapshotBesideExe() string {
 // PersistSnapshot writes the full in-memory GameState plus map kingdom tiles to JSON under paths.DataDir().
 func PersistSnapshot() {
 	gs := GetGameState()
+	if gs.PlayerID <= 0 {
+		return
+	}
 	kingdoms := mapstate.GetMapState().ExportKingdoms()
 
 	persistMu.Lock()
@@ -41,12 +44,12 @@ func PersistSnapshot() {
 	payload := struct {
 		Version     int                                 `json:"version"`
 		SavedAtUnix int64                               `json:"savedAtUnix"`
-		GameState   GameState                           `json:"gameState"`
+		GameState   *GameState                          `json:"gameState"`
 		MapKingdoms map[int]map[string]mapstate.MapNode `json:"mapKingdoms"`
 	}{
 		Version:     snapshotVersion,
 		SavedAtUnix: time.Now().Unix(),
-		GameState:   *gs,
+		GameState:   gs,
 		MapKingdoms: kingdoms,
 	}
 

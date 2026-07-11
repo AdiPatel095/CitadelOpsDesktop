@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icons } from './Icons';
+import { FrontendWebsocket } from '../Websocket';
 
 type ChannelMeta = { id: string; label: string };
 type LogTone = 'send' | 'recv' | 'info' | 'warn' | 'error' | 'debug' | 'plain';
@@ -55,6 +56,29 @@ const prettyJsonPayload = (value: string) => {
     return JSON.stringify(JSON.parse(trimmed), null, 2);
   } catch {
     return '';
+  }
+};
+
+const writeClipboardText = async (value: string) => {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {
+      // Fall through for environments where clipboard permission is unavailable.
+    }
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = value;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand('copy');
+  textarea.remove();
+  if (!copied) {
+    throw new Error('Could not copy JSON payload');
   }
 };
 
@@ -173,7 +197,9 @@ export const LoggerDock: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFollowingLive, setIsFollowingLive] = useState(true);
   const [expandedJsonRows, setExpandedJsonRows] = useState<Set<string>>(() => new Set());
+  const [copiedJsonRow, setCopiedJsonRow] = useState<string | null>(null);
   const logStreamRef = useRef<HTMLDivElement>(null);
+  const copyFeedbackTimerRef = useRef<number | null>(null);
 
   const parsedLines = useMemo(() => lines.map(parseLogLine), [lines]);
 
@@ -182,6 +208,12 @@ export const LoggerDock: React.FC = () => {
     if (!query) return parsedLines;
     return parsedLines.filter((line) => line.searchText.includes(query));
   }, [parsedLines, searchQuery]);
+
+  useEffect(() => {
+    if (loadError) {
+      FrontendWebsocket.showAlert('red', loadError);
+    }
+  }, [loadError]);
 
   useEffect(() => {
     let cancelled = false;
@@ -270,6 +302,24 @@ export const LoggerDock: React.FC = () => {
     });
   }, []);
 
+  const copyJsonPayload = useCallback(async (rowKey: string, jsonPayload: string) => {
+    await writeClipboardText(jsonPayload);
+    setCopiedJsonRow(rowKey);
+    if (copyFeedbackTimerRef.current != null) {
+      window.clearTimeout(copyFeedbackTimerRef.current);
+    }
+    copyFeedbackTimerRef.current = window.setTimeout(() => {
+      setCopiedJsonRow((current) => current === rowKey ? null : current);
+      copyFeedbackTimerRef.current = null;
+    }, 1800);
+  }, []);
+
+  useEffect(() => () => {
+    if (copyFeedbackTimerRef.current != null) {
+      window.clearTimeout(copyFeedbackTimerRef.current);
+    }
+  }, []);
+
   return (
     <>
       {open && (
@@ -342,12 +392,6 @@ export const LoggerDock: React.FC = () => {
           </div>
 
           <div className="liquid-logger-body">
-            {loadError && (
-              <div className="liquid-log-error">
-                <Icons.AlertCircle className="w-4 h-4" />
-                {loadError}
-              </div>
-            )}
             <div
               ref={logStreamRef}
               className="liquid-log-stream custom-scrollbar"
@@ -396,15 +440,36 @@ export const LoggerDock: React.FC = () => {
                       <div className="liquid-log-row-content">
                         {line.jsonPayload ? (
                           <div className="liquid-log-json">
-                            <button
-                              type="button"
-                              className={`liquid-log-json-toggle ${isJsonExpanded ? 'liquid-log-json-toggle-open' : ''}`}
-                              onClick={() => toggleJsonRow(rowKey)}
-                              aria-expanded={isJsonExpanded}
-                            >
-                              <Icons.ArrowRight className="liquid-log-json-icon" />
-                              JSON payload
-                            </button>
+                            <div className="liquid-log-json-actions">
+                              <button
+                                type="button"
+                                className={`liquid-log-json-toggle ${isJsonExpanded ? 'liquid-log-json-toggle-open' : ''}`}
+                                onClick={() => toggleJsonRow(rowKey)}
+                                aria-expanded={isJsonExpanded}
+                              >
+                                <Icons.ArrowRight className="liquid-log-json-icon" />
+                                JSON payload
+                              </button>
+                              <button
+                                type="button"
+                                className="liquid-log-json-copy"
+                                onClick={() => void copyJsonPayload(rowKey, line.jsonPayload)}
+                                aria-label="Copy JSON payload"
+                                title="Copy JSON payload"
+                              >
+                                {copiedJsonRow === rowKey ? (
+                                  <>
+                                    <Icons.Check className="liquid-log-json-copy-icon" />
+                                    Copied
+                                  </>
+                                ) : (
+                                  <>
+                                    <Icons.Copy className="liquid-log-json-copy-icon" />
+                                    Copy
+                                  </>
+                                )}
+                              </button>
+                            </div>
                             {isJsonExpanded && (
                               <pre className="liquid-log-json-pre custom-scrollbar">
                                 {line.jsonPayload}

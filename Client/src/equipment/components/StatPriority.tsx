@@ -150,7 +150,6 @@ const StatPriority: React.FC<StatPriorityProps> = ({
     const [dragState, setDragState] = useState<DragState | null>(null);
     const [dropTarget, setDropTarget] = useState<{ tier: TierType; index: number } | null>(null);
     const [isReconfiguring, setIsReconfiguring] = useState(false);
-    const [reconfigureError, setReconfigureError] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [showComparisonModal, setShowComparisonModal] = useState(false);
     const [comparisonData, setComparisonData] = useState<ComparisonData | null>(null);
@@ -246,8 +245,6 @@ const StatPriority: React.FC<StatPriorityProps> = ({
         if (totalStats === 0 || selectedIndex === null) return;
 
         setIsReconfiguring(true);
-        setReconfigureError(null);
-
         try {
             const reconfigurePayload = {
                 equipmentMode: equipmentMode,
@@ -261,7 +258,7 @@ const StatPriority: React.FC<StatPriorityProps> = ({
 
             FrontendWebsocket.sendReconfigureLoadout(reconfigurePayload);
         } catch (error) {
-            setReconfigureError('An unexpected error occurred');
+            FrontendWebsocket.showAlert('red', 'An unexpected error occurred');
             setIsReconfiguring(false);
         }
     };
@@ -282,7 +279,6 @@ const StatPriority: React.FC<StatPriorityProps> = ({
             ? commanderStatGroups.core
             : castellanStatGroups.core;
         setTier2Stats(defaultStats);
-        setReconfigureError(null);
     }, [equipmentMode]);
 
     useEffect(() => {
@@ -388,11 +384,6 @@ const StatPriority: React.FC<StatPriorityProps> = ({
             </CardContent>
 
             <div className="p-3 border-t border-border-base bg-bg-card-hover/50 rounded-b-[calc(var(--radius-global)-1px)] shrink-0">
-                {reconfigureError && (
-                    <div className="rounded-global mb-3 p-2 bg-error/10 border border-error/30">
-                        <p className="text-xs text-error font-medium">{reconfigureError}</p>
-                    </div>
-                )}
                 <Button
                     onClick={handleReconfigure}
                     disabled={isReconfiguring || totalStats === 0}

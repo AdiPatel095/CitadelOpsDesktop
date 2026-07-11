@@ -21,6 +21,89 @@ const cloudBattleReportRoutes = new Set([
   '/api/battleReports/cloud',
 ])
 
+function localCommandJsonPlugin(): Plugin {
+  return {
+    name: 'citadel-local-command-json',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = new URL(req.url ?? '/', 'http://localhost')
+        if (url.pathname === '/__citadel_mock/commands') {
+          try {
+            const commands = listLocalCommandJsonFiles()
+            res.statusCode = 200
+            res.setHeader('Content-Type', 'application/json; charset=utf-8')
+            res.setHeader('Cache-Control', 'no-store')
+            res.end(JSON.stringify({ commands }))
+          } catch (error) {
+            next(error)
+          }
+          return
+        }
+
+        const match = /^\/__citadel_mock\/command\/([A-Za-z0-9_-]+)\.json$/.exec(url.pathname)
+        if (!match) {
+          next()
+          return
+        }
+
+        const commandName = match[1]
+        const source = resolveCommandJsonFile(commandName)
+        if (!source) {
+          res.statusCode = 404
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify({ error: `No local command JSON found for ${commandName}.` }))
+          return
+        }
+
+        try {
+          const body = fs.readFileSync(source, 'utf8')
+          res.statusCode = 200
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.setHeader('Cache-Control', 'no-store')
+          res.end(body)
+        } catch (error) {
+          next(error)
+        }
+      })
+    },
+  }
+}
+
+function commandJsonDirectories(): string[] {
+  return [
+    process.env.CITADEL_MOCK_COMMAND_DIR,
+    path.join(projectDir, 'Logs', 'RecvCommandsJSON'),
+  ].filter((entry): entry is string => typeof entry === 'string' && entry.trim() !== '')
+}
+
+function listLocalCommandJsonFiles(): string[] {
+  const names = new Set<string>()
+  for (const dir of commandJsonDirectories()) {
+    if (!fs.existsSync(dir)) {
+      continue
+    }
+    for (const entry of fs.readdirSync(dir)) {
+      if (/^[A-Za-z0-9_-]+\.json$/.test(entry)) {
+        names.add(entry.replace(/\.json$/, ''))
+      }
+    }
+  }
+  return Array.from(names).sort()
+}
+
+function resolveCommandJsonFile(commandName: string): string | null {
+  if (!/^[A-Za-z0-9_-]+$/.test(commandName)) {
+    return null
+  }
+  for (const dir of commandJsonDirectories()) {
+    const candidate = path.join(dir, `${commandName}.json`)
+    if (fs.existsSync(candidate)) {
+      return candidate
+    }
+  }
+  return null
+}
+
 function localBattleReportsPlugin(): Plugin {
   return {
     name: 'citadel-local-battle-reports',
@@ -1640,7 +1723,7 @@ function round(value: number, decimals: number): number {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [localBattleReportsPlugin(), react(), tailwindcss()],
+  plugins: [localCommandJsonPlugin(), localBattleReportsPlugin(), react(), tailwindcss()],
   server: {
     proxy: {
       '/api': {

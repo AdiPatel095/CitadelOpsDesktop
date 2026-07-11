@@ -1041,6 +1041,11 @@ func effectsFromLeader(value interface{}, side string, combatMode battleEffectCo
 	return effects
 }
 
+// ParsePlayerCastellanEffects returns the aggregated PvP defense effects visible in a leader block.
+func ParsePlayerCastellanEffects(leader map[string]interface{}) []Effect {
+	return effectsFromLeader(leader, "castellan", battleEffectCombatPVP)
+}
+
 type battleEffectCombatMode string
 type battleEffectSource string
 

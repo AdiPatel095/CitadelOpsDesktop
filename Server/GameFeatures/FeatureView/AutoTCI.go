@@ -2,6 +2,7 @@ package featureview
 
 import (
 	"CitadelDesktop/Server/GameCommands"
+	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
@@ -19,7 +20,7 @@ import (
 )
 
 const (
-	autoTCIUpgradeTimerMaxSec      = 5
+	autoTCIUpgradeTimerMaxSec      = 5 * 60
 	autoTCIUBCRareBooster          = 2000
 	autoTCIUBCEpicBooster          = 2001
 	autoTCIUBCLegendaryBooster     = 2002
@@ -48,6 +49,22 @@ var (
 	equipLastSent    sync.Map
 	buyGoroutineLast sync.Map
 )
+
+func acquireAutoTCILease(ctx context.Context, reason string, maxHold time.Duration) (*GameFocus.Lease, bool) {
+	return GameFocus.Acquire(ctx, GameFocus.Request{
+		Owner:   GameFocus.OwnerAutoTCI,
+		Reason:  reason,
+		MaxHold: maxHold,
+	})
+}
+
+func autoTCILeaseActive(lease *GameFocus.Lease, event, detail string) bool {
+	if lease == nil || lease.Active() {
+		return true
+	}
+	Logging.AutoTCILog(event, detail)
+	return false
+}
 
 // AutoTCIPresenceStatus is the outcome of checking one settings target against stash + equipped slots.
 type AutoTCIPresenceStatus string
@@ -231,7 +248,7 @@ func runAutoTCIRound(ctx context.Context, gs *Models.GameState, st *Models.Setti
 
 	// Phase 2: upgrades from fresh CI; earliest RS wake wins.
 	var scheduleSlots []autotcisched.SlotRecord
-	upgradeWake, ranUpgrade := runAutoTCIUpgradePhase(gs, st, catalog, now, nowMs, &scheduleSlots)
+	upgradeWake, ranUpgrade := runAutoTCIUpgradePhase(ctx, gs, st, catalog, now, nowMs, &scheduleSlots)
 	if !upgradeWake.IsZero() {
 		sleepUntil = upgradeWake
 	}
@@ -244,7 +261,7 @@ func runAutoTCIRound(ctx context.Context, gs *Models.GameState, st *Models.Setti
 
 	// Phase 3a: main castle — gii + bulk purchase all stash deficits (sbp only works on main).
 	// Phase 3b: per-castle equip round (rpc only; no purchase).
-	stashPending := runAutoTCIStashEquipPhase(gs, st, catalog)
+	stashPending := runAutoTCIStashEquipPhase(ctx, gs, st, catalog)
 	if stashPending {
 		hasPendingWork = true
 	}
@@ -285,7 +302,20 @@ func focusAllAutoTCICastles(ctx context.Context, gs *Models.GameState, st *Model
 		kid, _, _, mapOK := resolveAutoTCICastleMapCoords(gs, castleAID, c)
 		Logging.AutoTCILogf("jaa sweep", "focus key=%d AID=%d KID=%d mapOK=%v items=%d",
 			castleID, castleAID, kid, mapOK, len(perCastle))
-		if !ensureClientFocusedOnCastle(gs, c, castleAID, true) {
+		lease, leaseOK := acquireAutoTCILease(ctx, fmt.Sprintf("jaa sweep castle=%d", castleAID), 20*time.Second)
+		if !leaseOK {
+			return false
+		}
+		focusOK := false
+		func() {
+			defer lease.Release()
+			focusOK = ensureClientFocusedOnCastleWithLease(lease, gs, c, castleAID, true)
+		}()
+		if !focusOK {
+			if lease.Revoked() {
+				Logging.AutoTCILogf("lease revoked", "jaa sweep AID=%d", castleAID)
+				return false
+			}
 			Logging.AutoTCILogf("jaa sweep", "focus failed AID=%d", castleAID)
 			skipped++
 			continue
@@ -301,6 +331,7 @@ func focusAllAutoTCICastles(ctx context.Context, gs *Models.GameState, st *Model
 
 // runAutoTCIUpgradePhase scans equipped slots, fires due ubc, returns earliest scheduled wake.
 func runAutoTCIUpgradePhase(
+	ctx context.Context,
 	gs *Models.GameState,
 	st *Models.SettingsState,
 	catalog []ConstructionItemCatalogEntry,
@@ -330,7 +361,7 @@ func runAutoTCIUpgradePhase(
 		Logging.AutoTCILogf("upgrade", "immediate ubc slots=%d", len(immediate))
 	}
 	for i := range immediate {
-		executeOrRetryAutoTCIForSlot(immediate[i][0], immediate[i][1], immediate[i][2])
+		executeOrRetryAutoTCIForSlot(ctx, immediate[i][0], immediate[i][1], immediate[i][2])
 		ranUpgrade = true
 	}
 	if nextMs := autotcisched.NextScheduleWakeMillis(&autotcisched.File{Slots: *scheduleSlots}, nowMs); nextMs > 0 {
@@ -402,7 +433,7 @@ func collectAutoTCIUpgradeScheduleSlots(
 }
 
 // runAutoTCIStashEquipPhase runs after jaa + ubc: bulk buy on main, then a separate equip round.
-func runAutoTCIStashEquipPhase(gs *Models.GameState, st *Models.SettingsState, catalog []ConstructionItemCatalogEntry) (hasPendingWork bool) {
+func runAutoTCIStashEquipPhase(ctx context.Context, gs *Models.GameState, st *Models.SettingsState, catalog []ConstructionItemCatalogEntry) (hasPendingWork bool) {
 	if gs == nil || st == nil {
 		return false
 	}
@@ -413,12 +444,12 @@ func runAutoTCIStashEquipPhase(gs *Models.GameState, st *Models.SettingsState, c
 		return false
 	}
 
-	runAutoTCIMainBulkPurchasePhase(gs, st, catalog)
+	runAutoTCIMainBulkPurchasePhase(ctx, gs, st, catalog)
 	presence = evaluateAutoTCIPresence(gs, catalog, st.AutoTCIList.Targets)
 	logAutoTCIPresenceAudit(presence)
 
 	Logging.AutoTCILog("equip-round", "start — rpc per castle (purchases already done on main)")
-	tryAutoTCIEquipFromPresence(gs, catalog, presence)
+	tryAutoTCIEquipFromPresence(ctx, gs, catalog, presence)
 
 	for _, row := range presence {
 		switch row.Status {
@@ -432,27 +463,39 @@ func runAutoTCIStashEquipPhase(gs *Models.GameState, st *Models.SettingsState, c
 
 // runAutoTCIMainBulkPurchasePhase focuses main, gii once, buys every deficit from main, gii again.
 // Trivial-shop sbp only succeeds on the main castle — outpost AIDs return wire code 203.
-func runAutoTCIMainBulkPurchasePhase(gs *Models.GameState, st *Models.SettingsState, catalog []ConstructionItemCatalogEntry) {
+func runAutoTCIMainBulkPurchasePhase(ctx context.Context, gs *Models.GameState, st *Models.SettingsState, catalog []ConstructionItemCatalogEntry) {
 	if gs == nil || st == nil {
 		return
 	}
 	Logging.AutoTCILog("purchase-bulk", "start — focus main, gii, buy all deficits (before equip round)")
-	if !ensureAutoTCIFocusedOnMainCastle(gs) {
-		Logging.AutoTCILog("purchase-bulk", "defer — could not focus main castle")
+	lease, ok := acquireAutoTCILease(ctx, "purchase bulk main refresh", 30*time.Second)
+	if !ok {
 		return
 	}
-	refreshAutoTCIStashOnce()
+	mainRefreshOK := false
+	func() {
+		defer lease.Release()
+		if !ensureAutoTCIFocusedOnMainCastleWithLease(lease, gs) {
+			Logging.AutoTCILog("purchase-bulk", "defer — could not focus main castle")
+			return
+		}
+		refreshAutoTCIStashOnceWithLease(lease)
+		mainRefreshOK = lease.Active()
+	}()
+	if !mainRefreshOK {
+		return
+	}
 	presence := evaluateAutoTCIPresence(gs, catalog, st.AutoTCIList.Targets)
 	logAutoTCIPresenceAudit(presence)
 
-	autoTCIPurchaseStashDeficits(gs, presence)
-	runAutoTCIMainRebuyPurchases(gs, st, catalog)
+	autoTCIPurchaseStashDeficits(ctx, gs, presence)
+	runAutoTCIMainRebuyPurchases(ctx, gs, st, catalog)
 
-	refreshAutoTCIStashOnce()
+	refreshAutoTCIStashOnce(ctx)
 	Logging.AutoTCILog("purchase-bulk", "done — final gii on main; equip round follows")
 }
 
-func runAutoTCIMainRebuyPurchases(gs *Models.GameState, st *Models.SettingsState, catalog []ConstructionItemCatalogEntry) {
+func runAutoTCIMainRebuyPurchases(ctx context.Context, gs *Models.GameState, st *Models.SettingsState, catalog []ConstructionItemCatalogEntry) {
 	if gs == nil || st == nil {
 		return
 	}
@@ -498,7 +541,7 @@ func runAutoTCIMainRebuyPurchases(gs *Models.GameState, st *Models.SettingsState
 				}
 				en := *entry
 				Logging.AutoTCILogf("purchase-bulk", "rebuy mainAID=%d castle=%d firstCID=%d", mainAID, castleID, first)
-				runAutoTCIMainPurchaseUnit(mainC, mainAID, &en, first, tinfo, "rebuy-ceil", false)
+				runAutoTCIMainPurchaseUnit(ctx, mainC, mainAID, &en, first, tinfo, "rebuy-ceil", false)
 				return
 			}
 		}
@@ -627,7 +670,7 @@ func planAutoTCIPurchaseDeficits(gs *Models.GameState, presence []AutoTCITargetP
 }
 
 // autoTCIPurchaseStashDeficits buys when account stash is short for unequipped targets (uses post-gii counts).
-func autoTCIPurchaseStashDeficits(gs *Models.GameState, presence []AutoTCITargetPresence) {
+func autoTCIPurchaseStashDeficits(ctx context.Context, gs *Models.GameState, presence []AutoTCITargetPresence) {
 	if gs == nil {
 		return
 	}
@@ -664,7 +707,7 @@ func autoTCIPurchaseStashDeficits(gs *Models.GameState, presence []AutoTCITarget
 			have := ciStashCountForFirstTierWireCID(gs, plan.FirstTierWireCID)
 			Logging.AutoTCILogf("purchase-batch", "deficit firstCID=%d demand=%d have=%d buy=%d/%d mainAID=%d",
 				plan.FirstTierWireCID, plan.Demand, have, i+1, plan.Deficit, mainAID)
-			if !runAutoTCIMainPurchaseUnit(mainC, mainAID, &entry, plan.FirstTierWireCID, tinfo, "purchase-batch", false) {
+			if !runAutoTCIMainPurchaseUnit(ctx, mainC, mainAID, &entry, plan.FirstTierWireCID, tinfo, "purchase-batch", false) {
 				break
 			}
 			if gs2 := Models.GetGameState(); gs2 != nil {
@@ -674,13 +717,29 @@ func autoTCIPurchaseStashDeficits(gs *Models.GameState, presence []AutoTCITarget
 	}
 }
 
-func refreshAutoTCIStashOnce() {
+func refreshAutoTCIStashOnce(ctx context.Context) {
+	lease, ok := acquireAutoTCILease(ctx, "gii refresh", 20*time.Second)
+	if !ok {
+		return
+	}
+	defer lease.Release()
+	refreshAutoTCIStashOnceWithLease(lease)
+}
+
+func refreshAutoTCIStashOnceWithLease(lease *GameFocus.Lease) {
 	if !ResponseRegistry.LoginStatus || !IsAutoTCIRunning() {
 		return
 	}
 	Logging.AutoTCILog("gii", "account stash refresh")
+	if !autoTCILeaseActive(lease, "lease revoked", "aec skipped") {
+		return
+	}
 	GameCommands.SendAECAutoTCI()
 	w := ResponseRegistry.Global.RegisterWaiter("gii", 8*time.Second)
+	if !autoTCILeaseActive(lease, "lease revoked", "gii skipped") {
+		w.Cleanup()
+		return
+	}
 	GameCommands.SendGIIAutoTCI()
 	_, err := w.WaitWithTimeout()
 	w.Cleanup()
@@ -816,7 +875,7 @@ func logAutoTCIPresenceAudit(rows []AutoTCITargetPresence) {
 	}
 }
 
-func tryAutoTCIEquipFromPresence(gs *Models.GameState, catalog []ConstructionItemCatalogEntry, presence []AutoTCITargetPresence) {
+func tryAutoTCIEquipFromPresence(ctx context.Context, gs *Models.GameState, catalog []ConstructionItemCatalogEntry, presence []AutoTCITargetPresence) {
 	if gs == nil || !ResponseRegistry.LoginStatus || len(presence) == 0 {
 		return
 	}
@@ -850,60 +909,101 @@ func tryAutoTCIEquipFromPresence(gs *Models.GameState, catalog []ConstructionIte
 			Logging.AutoTCILogf("equip skip", "CID %d not in catalog (group %d)", row.FirstTierWireCID, row.GroupID)
 			continue
 		}
-		if !ensureClientFocusedOnCastle(gs, c, row.CastleID) {
+		lease, leaseOK := acquireAutoTCILease(ctx, fmt.Sprintf("rpc castle=%d", row.CastleID), 20*time.Second)
+		if !leaseOK {
+			return
+		}
+		focusOK := false
+		func() {
+			defer lease.Release()
+			if !ensureClientFocusedOnCastleWithLease(lease, gs, c, row.CastleID) {
+				return
+			}
+			focusOK = true
+			c = gs.GetCastleByID(row.CastleID)
+			if c == nil {
+				return
+			}
+			oid, pickHint := pickConstructionHostOIDForEquip(c, catalog, &row.Entry)
+			if oid <= 0 {
+				Logging.AutoTCILogf("equip skip", "no OID for group %d firstCID=%d (%s)", row.GroupID, row.FirstTierWireCID, pickHint)
+				return
+			}
+			aid := autoTCICastleAID(c, row.CastleID)
+			if aid <= 0 {
+				return
+			}
+			dk := presenceRowDedupKey("eq", row)
+			if t, ok := equipLastSent.Load(dk); ok {
+				if utctime.Since(t.(time.Time)) < autoTCIEquipDedupWindow {
+					return
+				}
+			}
+			kid := autoTCICastleKID(gs, c, aid)
+			bName := buildingNameForOID(c, oid)
+			Logging.AutoTCILogf("equip", "rpc AID=%d OID=%d (%s) KID=%d firstCID=%d group=%d stash=%d hint=%s",
+				aid, oid, bName, kid, row.FirstTierWireCID, row.GroupID, row.StashCount, pickHint)
+			if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("rpc skipped AID=%d", aid)) {
+				return
+			}
+			GameCommands.SendRPCAutoTCI(oid, row.FirstTierWireCID, 0, 0, kid, aid)
+			equipLastSent.Store(dk, utctime.Now())
+			virtualStash[row.FirstTierWireCID]--
+			equips++
+		}()
+		if !focusOK {
+			if lease.Revoked() {
+				Logging.AutoTCILogf("lease revoked", "equip castle=%d", row.CastleID)
+				return
+			}
 			Logging.AutoTCILogf("equip", "focus failed castle=%d", row.CastleID)
 			continue
 		}
-		c = gs.GetCastleByID(row.CastleID)
-		if c == nil {
-			continue
-		}
-		oid, pickHint := pickConstructionHostOIDForEquip(c, catalog, &row.Entry)
-		if oid <= 0 {
-			Logging.AutoTCILogf("equip skip", "no OID for group %d firstCID=%d (%s)", row.GroupID, row.FirstTierWireCID, pickHint)
-			continue
-		}
-		aid := autoTCICastleAID(c, row.CastleID)
-		if aid <= 0 {
-			continue
-		}
-		dk := presenceRowDedupKey("eq", row)
-		if t, ok := equipLastSent.Load(dk); ok {
-			if utctime.Since(t.(time.Time)) < autoTCIEquipDedupWindow {
-				continue
-			}
-		}
-		kid := autoTCICastleKID(gs, c, aid)
-		bName := buildingNameForOID(c, oid)
-		Logging.AutoTCILogf("equip", "rpc AID=%d OID=%d (%s) KID=%d firstCID=%d group=%d stash=%d hint=%s",
-			aid, oid, bName, kid, row.FirstTierWireCID, row.GroupID, row.StashCount, pickHint)
-		GameCommands.SendRPCAutoTCI(oid, row.FirstTierWireCID, 0, 0, kid, aid)
-		equipLastSent.Store(dk, utctime.Now())
-		virtualStash[row.FirstTierWireCID]--
-		equips++
 	}
 }
 
 // runAutoTCIMainPurchaseUnit buys one trivial-shop unit from the main castle (gbc/sbp require main focus).
 // refreshGiiAfter: bulk phase passes false and relies on one final gii; standalone rebuy may pass true.
-func runAutoTCIMainPurchaseUnit(c *castle.PlayerCastleInfo, mainAID int, entry *ConstructionItemCatalogEntry, firstCID int, tinfo GameParser.TrivialCIPurchaseInfo, reason string, refreshGiiAfter bool) bool {
+func runAutoTCIMainPurchaseUnit(ctx context.Context, c *castle.PlayerCastleInfo, mainAID int, entry *ConstructionItemCatalogEntry, firstCID int, tinfo GameParser.TrivialCIPurchaseInfo, reason string, refreshGiiAfter bool) bool {
 	gs := Models.GetGameState()
 	if c == nil || gs == nil || mainAID <= 0 || !ResponseRegistry.LoginStatus || !IsAutoTCIRunning() {
 		return false
 	}
-	if !ensureAutoTCIFocusedOnMainCastle(gs) {
+	lease, ok := acquireAutoTCILease(ctx, fmt.Sprintf("%s main purchase", reason), 45*time.Second)
+	if !ok {
+		return false
+	}
+	defer lease.Release()
+	if !ensureAutoTCIFocusedOnMainCastleWithLease(lease, gs) {
+		if !lease.Active() {
+			Logging.AutoTCILogf("lease revoked", "%s mainAID=%d", reason, mainAID)
+			return false
+		}
 		Logging.AutoTCILogf(reason, "focus main failed AID=%d", mainAID)
 		return false
 	}
 	kid := autoTCICastleKID(gs, c, mainAID)
 
 	w := ResponseRegistry.Global.RegisterWaiter("gbc", 6*time.Second)
-	GameCommands.AutoTCISendGbcTrivialCIPurchaseList(mainAID, kid)
+	if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("%s gbc skipped", reason)) {
+		w.Cleanup()
+		return false
+	}
+	Logging.AutoTCILogf("buy gbc", "CID(AID)=%d KID=%d", mainAID, kid)
+	GameCommands.SendAECAutoTCI()
+	if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("%s gbc skipped", reason)) {
+		w.Cleanup()
+		return false
+	}
+	GameCommands.QueueAutoTCIOutgoing(GameCommands.GBCPayload(mainAID, kid))
 	_, err := w.WaitWithTimeout()
 	if err != nil {
 		Logging.AutoTCILogf(reason, "gbc wait: %v", err)
 	}
 	w.Cleanup()
+	if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("%s after gbc", reason)) {
+		return false
+	}
 
 	gs2 := Models.GetGameState()
 	if gs2 == nil {
@@ -923,9 +1023,29 @@ func runAutoTCIMainPurchaseUnit(c *castle.PlayerCastleInfo, mainAID int, entry *
 	}
 	Logging.AutoTCILogf(reason, "sbp PID=%d AMT=%d (need=%d, firstCID=%d, mainAID=%d)", tinfo.PID, amt, needAmt, firstCID, mainAID)
 	wSbp := ResponseRegistry.Global.RegisterWaiter("sbp", 6*time.Second)
-	GameCommands.AutoTCISendSbpTrivialCIPurchase(tinfo.PID, amt, kid, mainAID)
+	if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("%s sbp skipped", reason)) {
+		wSbp.Cleanup()
+		return false
+	}
+	Logging.AutoTCILogf("buy sbp", "PID=%d AMT=%d KID=%d AID=%d (TID=%d BT=%d)",
+		tinfo.PID, amt, kid, mainAID, GameCommands.AutoTCITrivialSBPTypeID, GameCommands.AutoTCITrivialSBPBuildType)
+	GameCommands.QueueAutoTCIOutgoing(GameCommands.SBPPayload(
+		tinfo.PID,
+		GameCommands.AutoTCITrivialSBPBuildType,
+		GameCommands.AutoTCITrivialSBPTypeID,
+		amt,
+		kid,
+		mainAID,
+		GameCommands.AutoTCITrivialSBPPC2,
+		GameCommands.AutoTCITrivialSBPBuildAux,
+		GameCommands.AutoTCITrivialSBPPower,
+		GameCommands.AutoTCITrivialSBPPO,
+	))
 	sbpResp, sbpErr := wSbp.WaitWithTimeout()
 	wSbp.Cleanup()
+	if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("%s after sbp", reason)) {
+		return false
+	}
 	if sbpErr != nil {
 		Logging.AutoTCILogf(reason, "sbp wait: %v", sbpErr)
 		return false
@@ -939,6 +1059,10 @@ func runAutoTCIMainPurchaseUnit(c *castle.PlayerCastleInfo, mainAID int, entry *
 	time.Sleep(autoTCIPostPurchaseSettlePause)
 	if refreshGiiAfter {
 		wG := ResponseRegistry.Global.RegisterWaiter("gii", autoTCIPostPurchaseGIIWait)
+		if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("%s gii skipped", reason)) {
+			wG.Cleanup()
+			return false
+		}
 		GameCommands.SendGIIAutoTCI()
 		if _, err := wG.WaitWithTimeout(); err != nil {
 			Logging.AutoTCILogf(reason, "gii after purchase: %v", err)
@@ -969,6 +1093,15 @@ func ensureAutoTCIFocusedOnMainCastle(gs *Models.GameState) bool {
 		return false
 	}
 	return ensureClientFocusedOnCastle(gs, c, aid, true)
+}
+
+func ensureAutoTCIFocusedOnMainCastleWithLease(lease *GameFocus.Lease, gs *Models.GameState) bool {
+	c, aid, ok := resolveAutoTCIMainCastle(gs)
+	if !ok {
+		Logging.AutoTCILog("focus main", "skip: MainCastle AID unknown")
+		return false
+	}
+	return ensureClientFocusedOnCastleWithLease(lease, gs, c, aid, true)
 }
 
 func autoTCIWireStatusCode(parts []string) string {
@@ -1049,13 +1182,13 @@ func executeRebuyAutoTCIForSlot(castleID, oid, slotS int) {
 				return
 			}
 			en := *entry
-			runAutoTCIMainPurchaseUnit(mainC, mainAID, &en, first, tinfo, "rebuy-ceil", true)
+			runAutoTCIMainPurchaseUnit(context.Background(), mainC, mainAID, &en, first, tinfo, "rebuy-ceil", true)
 			return
 		}
 	}
 }
 
-func executeOrRetryAutoTCIForSlot(castleID, oid, slotS int) {
+func executeOrRetryAutoTCIForSlot(ctx context.Context, castleID, oid, slotS int) {
 	if !ResponseRegistry.LoginStatus || !IsAutoTCIRunning() {
 		return
 	}
@@ -1100,13 +1233,13 @@ func executeOrRetryAutoTCIForSlot(castleID, oid, slotS int) {
 			if !haveNext || nextTier > ceiling || nextTier < minLevel {
 				return
 			}
-			tryExecuteSingleAutoTCIUpgrade(gs, c, castleID, b, sl, nextTier, nextCID, ceiling)
+			tryExecuteSingleAutoTCIUpgrade(ctx, gs, c, castleID, b, sl, nextTier, nextCID, ceiling)
 			return
 		}
 	}
 }
 
-func tryExecuteSingleAutoTCIUpgrade(gs *Models.GameState, c *castle.PlayerCastleInfo, castleID int, b Models.GCAConstructionBuilding, sl Models.GCAConstructionSlot, nextTier, nextCID, ceiling int) {
+func tryExecuteSingleAutoTCIUpgrade(ctx context.Context, gs *Models.GameState, c *castle.PlayerCastleInfo, castleID int, b Models.GCAConstructionBuilding, sl Models.GCAConstructionSlot, nextTier, nextCID, ceiling int) {
 	castleAID := autoTCICastleAID(c, castleID)
 	if castleAID <= 0 {
 		return
@@ -1123,7 +1256,12 @@ func tryExecuteSingleAutoTCIUpgrade(gs *Models.GameState, c *castle.PlayerCastle
 			return
 		}
 	}
-	if !ensureClientFocusedOnCastle(gs, c, castleAID) {
+	lease, leaseOK := acquireAutoTCILease(ctx, fmt.Sprintf("ubc castle=%d", castleAID), 20*time.Second)
+	if !leaseOK {
+		return
+	}
+	defer lease.Release()
+	if !ensureClientFocusedOnCastleWithLease(lease, gs, c, castleAID) {
 		return
 	}
 	kid := autoTCICastleKID(gs, c, castleAID)
@@ -1131,6 +1269,9 @@ func tryExecuteSingleAutoTCIUpgrade(gs *Models.GameState, c *castle.PlayerCastle
 	Logging.AutoTCILogf("ubc upgrade",
 		"AID=%d OID=%d slot=%d KID=%d currentCID=%d nextCID=%d (next tier %d, cap %d) SUC=%d RS=%d",
 		castleAID, b.OID, sl.S, kid, sl.CID, nextCID, nextTier, ceiling, suc, derefInt(sl.RemainingSec))
+	if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("ubc skipped AID=%d", castleAID)) {
+		return
+	}
 	GameCommands.SendUBCAutoTCI(b.OID, suc, sl.S, kid, aid, sl.CID)
 	upgradeLastSent.Store(dk, utctime.Now())
 }
@@ -1546,6 +1687,10 @@ func constructionCIBuildingOIDs(c *castle.PlayerCastleInfo) map[int]struct{} {
 }
 
 func ensureClientFocusedOnCastle(gs *Models.GameState, c *castle.PlayerCastleInfo, castleAID int, forceRefresh ...bool) bool {
+	return ensureClientFocusedOnCastleWithLease(nil, gs, c, castleAID, forceRefresh...)
+}
+
+func ensureClientFocusedOnCastleWithLease(lease *GameFocus.Lease, gs *Models.GameState, c *castle.PlayerCastleInfo, castleAID int, forceRefresh ...bool) bool {
 	if gs == nil || c == nil || castleAID <= 0 {
 		return false
 	}
@@ -1565,8 +1710,14 @@ func ensureClientFocusedOnCastle(gs *Models.GameState, c *castle.PlayerCastleInf
 	tryFocus := func(kingdomID int) bool {
 		prev := GameParser.JAAProcessedSnapshot()
 		Logging.AutoTCILogf("focus", "send jaa/jca AID=%d KID=%d X=%d Y=%d", castleAID, kingdomID, x, y)
+		if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("focus skipped AID=%d", castleAID)) {
+			return false
+		}
 		GameCommands.SendCastleFocusAutoTCI(kingdomID, castleAID, x, y)
 		if !GameParser.AwaitJAAProcessedAfter(prev, autoTCIJAAFocusWait) {
+			return false
+		}
+		if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("focus wait AID=%d", castleAID)) {
 			return false
 		}
 		return gs.CastleFocus.CastleAID == castleAID

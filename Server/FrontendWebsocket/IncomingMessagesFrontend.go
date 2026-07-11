@@ -1,6 +1,7 @@
 package FrontendWebsocket
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -13,6 +14,7 @@ import (
 	equipmentview "CitadelDesktop/Server/GameFeatures/EquipmentView"
 	featureview "CitadelDesktop/Server/GameFeatures/FeatureView"
 	settingsview "CitadelDesktop/Server/GameFeatures/SettingsView"
+	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
@@ -464,13 +466,16 @@ func ParseFrontendMessage(message []byte) {
 		log.Println("Received request to sell non-relic equipment")
 
 		// Parse payload
-		var sellLookItems, sellSpecialPost2026 bool
+		var sellLookItems, sellSpecialPost2026, silentZero bool
 		if payload, ok := data["payload"].(map[string]interface{}); ok {
 			if val, ok := payload["sellLookItems"].(bool); ok {
 				sellLookItems = val
 			}
 			if val, ok := payload["sellSpecialPost2026"].(bool); ok {
 				sellSpecialPost2026 = val
+			}
+			if val, ok := payload["silentZero"].(bool); ok {
+				silentZero = val
 			}
 		}
 
@@ -479,6 +484,9 @@ func ParseFrontendMessage(message []byte) {
 		go func() {
 			soldCount := SellNonRelicEquipment(sellLookItems, sellSpecialPost2026)
 			log.Printf("SoldCount: %v", soldCount)
+			if silentZero && soldCount == 0 {
+				return
+			}
 			SendAlertMessage("green", fmt.Sprintf("Sold %d non-relic equipment items", soldCount))
 		}()
 	case "sellNonRelicGems":
@@ -547,6 +555,44 @@ func ParseFrontendMessage(message []byte) {
 		ResponseRegistry.DisconnectGameWebSocket()
 	case "fetchAllianceInfo":
 		featureview.FetchAllianceInfo()
+	case "getAllianceTargets":
+		selectedAllianceID := ""
+		if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
+			if value, ok := payloadRaw["allianceId"].(string); ok {
+				selectedAllianceID = value
+			}
+		}
+		go func() {
+			view, err := featureview.LoadAllianceTargetView(context.Background(), selectedAllianceID)
+			if err != nil {
+				SendFrontendMessage("allianceTargetsError", map[string]interface{}{"error": err.Error()}, "")
+				return
+			}
+			SendFrontendMessage("allianceTargets", view, "")
+		}()
+	case "sendAllianceTargetSpy":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			SendAlertMessage("red", "Spy target is missing")
+			return
+		}
+		targetX, okX := frontendNumberToInt(payloadRaw["targetX"])
+		targetY, okY := frontendNumberToInt(payloadRaw["targetY"])
+		if !okX || !okY {
+			SendAlertMessage("red", "Spy target coordinates are invalid")
+			return
+		}
+		spyCount, err := featureview.SendAllianceTargetSpy(targetX, targetY)
+		if err != nil {
+			SendAlertMessage("red", err.Error())
+			return
+		}
+		SendFrontendMessage("allianceTargetSpySent", map[string]interface{}{
+			"targetX":  targetX,
+			"targetY":  targetY,
+			"spyCount": spyCount,
+		}, "")
+		SendAlertMessage("green", fmt.Sprintf("Sent %d spies to %d:%d", spyCount, targetX, targetY))
 	case "toggleAutoBird":
 		wasRunning := featureview.IsAutoBirdRunning()
 		if wasRunning {
@@ -923,6 +969,54 @@ func ParseFrontendMessage(message []byte) {
 				refreshMsg = fmt.Sprintf(`{"type":"getCastUpdate","castleIndex":%d}`, targetIndex)
 			}
 			ParseFrontendMessage([]byte(refreshMsg))
+		}
+
+	case "swapEquipmentLoadouts":
+		{
+			payloadRaw, ok := data["payload"].(map[string]interface{})
+			if !ok {
+				SendAlertMessage("red", "Invalid equipment swap request")
+				return
+			}
+
+			equipmentMode, _ := payloadRaw["equipmentMode"].(string)
+			firstIndex, firstOk := frontendNumberToInt(payloadRaw["firstIndex"])
+			secondIndex, secondOk := frontendNumberToInt(payloadRaw["secondIndex"])
+			if equipmentMode != "Commander" && equipmentMode != "Castellan" {
+				SendAlertMessage("red", "Invalid equipment mode")
+				return
+			}
+			if !firstOk || !secondOk {
+				SendAlertMessage("red", "Select two loadouts to swap")
+				return
+			}
+			if firstIndex == secondIndex {
+				SendAlertMessage("red", "Select two different loadouts")
+				return
+			}
+
+			go func() {
+				SendAlertMessage("yellow", "Starting equipment swap...")
+				GameCommands.SendGLI()
+				time.Sleep(2 * time.Second)
+
+				result := equipmentview.SwapBaseEquipment(equipmentMode, firstIndex, secondIndex)
+				if result.Success {
+					SendAlertMessage("green", result.Message)
+				} else {
+					SendAlertMessage("red", result.Message)
+				}
+
+				GameCommands.SendGLI()
+				time.Sleep(2 * time.Second)
+				if equipmentMode == "Commander" {
+					SendCommStat(firstIndex)
+					SendCommStat(secondIndex)
+				} else {
+					SendCastStat(firstIndex)
+					SendCastStat(secondIndex)
+				}
+			}()
 		}
 
 	case "unequipEquipment":
@@ -1410,6 +1504,9 @@ func ParseFrontendMessage(message []byte) {
 		if coinThreshold, ok := payloadRaw["upgradeCoinThreshold"].(float64); ok {
 			state.UpgradeCoinThreshold = coinThreshold
 		}
+		if manualFocusIdleSec, ok := payloadRaw["manualFocusIdleSec"].(float64); ok {
+			state.ManualFocusIdleSec = stsettings.ClampManualFocusIdleSec(int(manualFocusIdleSec))
+		}
 
 		if priorities, ok := payloadRaw["tabPriorities"].(map[string]interface{}); ok {
 			for tabID, pRaw := range priorities {
@@ -1489,7 +1586,7 @@ func ParseFrontendMessage(message []byte) {
 			}
 		}
 		if refresh && ResponseRegistry.LoginStatus {
-			GameCommands.SendGAM()
+			GameParser.RequestGAMSnapshot()
 		}
 		SendMovementUpdate()
 
@@ -1669,6 +1766,7 @@ func ParseFrontendMessage(message []byte) {
 				return
 			}
 		}
+		GameFocus.RecordManualActivity("focus switcher", Models.GetSettingsState().ManualFocusIdleDuration())
 		if !GameParser.FocusPlayerCastleTroops(kingdomID, castleID, mapX, mapY) {
 			SendAlertMessage("red", "Focus timed out — ensure the game client is connected.")
 			return
