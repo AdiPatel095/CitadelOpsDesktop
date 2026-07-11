@@ -18,6 +18,7 @@ package GameCommands
 
 import (
 	"CitadelDesktop/Server/ResponseRegistry"
+	"encoding/json"
 	"fmt"
 )
 
@@ -97,6 +98,20 @@ func CastleFocusCommand(kingdomID, castleID, mapX, mapY int) string {
 // SendCastleFocus sends JAA or JCA per kingdom rules so the client focuses the target castle.
 func SendCastleFocus(kingdomID, castleID, mapX, mapY int) {
 	QueueOutgoingPayload(CastleFocusCommand(kingdomID, castleID, mapX, mapY))
+}
+
+// GDIPayload builds EmpireEx_21 **gdi** — request the public player summary for a player id.
+// The response includes current might (O.MP) and glory (O.CF).
+func GDIPayload(playerID int) string {
+	return empireExFrame("gdi", fmt.Sprintf(`{"PID":%d}`, playerID))
+}
+
+// SendGDI requests a current public player summary (**gdi**).
+func SendGDI(playerID int) {
+	if playerID <= 0 {
+		return
+	}
+	QueueOutgoingPayload(GDIPayload(playerID))
 }
 
 // --- Build / decoration / storage ---
@@ -268,6 +283,22 @@ func SendAIN(allianceAID int) {
 		return
 	}
 	QueueOutgoingPayload(AINPayload(allianceAID))
+}
+
+// CSMPayload builds EmpireEx_21 **csm** — dispatch a military spy mission from the main castle.
+// SC is the number of agents selected; the remaining fixed fields mirror the live client payload.
+func CSMPayload(sourceCastleAID, targetX, targetY, spyCount int) string {
+	return empireExFrame("csm", fmt.Sprintf(
+		`{"SID":%d,"TX":%d,"TY":%d,"SC":%d,"ST":0,"SE":100,"HBW":-1,"KID":0,"PTT":1,"SD":0}`,
+		sourceCastleAID, targetX, targetY, spyCount))
+}
+
+// SendCSM queues a military spy mission using all caller-selected agents.
+func SendCSM(sourceCastleAID, targetX, targetY, spyCount int) {
+	if sourceCastleAID <= 0 || targetX < 0 || targetY < 0 || spyCount <= 0 {
+		return
+	}
+	QueueOutgoingPayload(CSMPayload(sourceCastleAID, targetX, targetY, spyCount))
 }
 
 // --- Equipment / gems ---
@@ -500,6 +531,43 @@ func BLDPayload(lid int64) string {
 // SendBLD queues **bld** - load battle-report detailed rows.
 func SendBLD(lid int64) {
 	QueueOutgoingPayload(BLDPayload(lid))
+}
+
+// BSDPayload builds EmpireEx **bsd** - request an espionage report by inbox message id.
+func BSDPayload(mid int64) string {
+	return empireExFrame("bsd", fmt.Sprintf(`{"MID":%d}`, mid))
+}
+
+// SendBSD queues **bsd** - load the intelligence discovered by an espionage mission.
+func SendBSD(mid int64) {
+	QueueOutgoingPayload(BSDPayload(mid))
+}
+
+// SSIPayload builds EmpireEx **ssi** - open spy information for a target tile.
+// SSI does not share a report; its response contains target data, available spies, and guard count.
+func SSIPayload(targetX, targetY, kingdomID int) string {
+	return empireExFrame("ssi", fmt.Sprintf(`{"TX":%d,"TY":%d,"KID":%d}`, targetX, targetY, kingdomID))
+}
+
+func SendSSI(targetX, targetY, kingdomID int) {
+	QueueOutgoingPayload(SSIPayload(targetX, targetY, kingdomID))
+}
+
+// MFSPayload builds EmpireEx **mfs** - forward an inbox report to selected player IDs.
+// Observed spy-report share shape: {"MID":<message id>,"PID":[<alliance member ids>]}.
+func MFSPayload(mid int64, playerIDs []int) string {
+	body, _ := json.Marshal(struct {
+		MID int64 `json:"MID"`
+		PID []int `json:"PID"`
+	}{MID: mid, PID: playerIDs})
+	return empireExFrame("mfs", string(body))
+}
+
+func SendMFS(mid int64, playerIDs []int) {
+	if mid <= 0 || len(playerIDs) == 0 {
+		return
+	}
+	QueueOutgoingPayload(MFSPayload(mid, playerIDs))
 }
 
 // --- Misc / tooling ---

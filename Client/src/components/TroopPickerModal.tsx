@@ -13,7 +13,7 @@ import {
   incrementUsage,
   getTopFrequent,
 } from '../config/UnitPickerStorage';
-import { Modal, Button, Input, ToggleGroup, Badge } from './ui';
+import { Modal, Button, Input, PillSelector, Badge } from './ui';
 
 // ============================================
 // Types
@@ -677,7 +677,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
               />
             </div>
 
-            <ToggleGroup
+            <PillSelector
               value={quickAccessTab}
               onChange={(v) => setQuickAccessTab(v as QuickAccessTab)}
               options={[
@@ -685,14 +685,14 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
                 { value: 'favorites', label: 'Favorites', icon: <Heart className="w-3.5 h-3.5" /> },
                 { value: 'frequent', label: 'Frequent', icon: <Flame className="w-3.5 h-3.5" /> }
               ]}
-              className="picker-pill-control picker-quick-pills"
+              className="picker-quick-pills"
             />
           </div>
 
           <div className="picker-filter-dock">
             <span className="picker-filter-dock-label">Filters</span>
             <div className="picker-filter-row">
-              <ToggleGroup
+              <PillSelector
                 value={typeFilter}
                 onChange={(v) => setTypeFilter(v as TypeFilter)}
                 options={[
@@ -701,9 +701,8 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
                   { value: 'range', label: 'Range' }
                 ]}
                 size="sm"
-                className="picker-pill-control"
               />
-              <ToggleGroup
+              <PillSelector
                 value={roleFilter}
                 onChange={(v) => setRoleFilter(v as RoleFilter)}
                 options={[
@@ -712,9 +711,8 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
                   { value: 'defense', label: 'Defense' }
                 ]}
                 size="sm"
-                className="picker-pill-control"
               />
-              <ToggleGroup
+              <PillSelector
                 value={foodFilter}
                 onChange={(v) => setFoodFilter(v as FoodFilter)}
                 options={[
@@ -724,7 +722,6 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
                   { value: 'food', label: 'Food' }
                 ]}
                 size="sm"
-                className="picker-pill-control"
               />
             </div>
           </div>

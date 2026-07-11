@@ -2,6 +2,7 @@ package settingsview
 
 import (
 	"CitadelDesktop/Server/GameCommands"
+	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
@@ -9,6 +10,7 @@ import (
 	stsettings "CitadelDesktop/Server/Models/Settings"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"context"
+	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -171,7 +173,7 @@ func autoHospitalWoundedUnits(castleInfo *Models.PlayerCastleInfo) []autoHospita
 	return units
 }
 
-func autoHospitalDiscardRubyHealingUnits(ctx context.Context, castleID int, wounded []autoHospitalWoundedUnit) ([]autoHospitalWoundedUnit, bool) {
+func autoHospitalDiscardRubyHealingUnits(ctx context.Context, lease *GameFocus.Lease, castleID int, wounded []autoHospitalWoundedUnit) ([]autoHospitalWoundedUnit, bool) {
 	if len(wounded) == 0 {
 		return wounded, true
 	}
@@ -189,6 +191,10 @@ func autoHospitalDiscardRubyHealingUnits(ctx context.Context, castleID int, woun
 				cost.CoinCost,
 			)
 			payload := GameCommands.HDUPayload(unit.UnitID, unit.Amount)
+			if !lease.Active() {
+				Logging.AutoHospitalLogf("lease_revoked", "castle=%d discard skipped", castleID)
+				return nil, false
+			}
 			Logging.AppendAutoHospitalSendPayload(payload)
 			GameCommands.QueueOutgoingPayload(payload)
 			if !autoHospitalPause(ctx, autoHospitalActionDelay) {
@@ -310,19 +316,15 @@ func runAutoHospital(ctx context.Context) {
 		state.AutoHospital = settings
 		sleepDuration := time.Duration(settings.CheckIntervalSec) * time.Second
 
-		if !ResponseRegistry.LoginStatus {
-			Logging.AutoHospitalLog("login", "disconnected; waiting for login")
-		LoginWaitLoop:
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(5 * time.Second):
-					if ResponseRegistry.LoginStatus {
-						break LoginWaitLoop
-					}
-				}
+		if !ResponseRegistry.IsGameWebSocketReady() {
+			Logging.AutoHospitalLogf("login", "game websocket not ready; skipping cycle, next cycle in %s", sleepDuration)
+			select {
+			case <-ctx.Done():
+				return
+			case <-autoHospitalWake:
+			case <-time.After(sleepDuration):
 			}
+			continue
 		}
 
 		now := time.Now()
@@ -362,86 +364,118 @@ func runAutoHospital(ctx context.Context) {
 				continue
 			}
 
-			Logging.AutoHospitalLogf("focus", "castle=%d kid=%d x=%d y=%d", castleID, kingdomID, x, y)
-			if GameParser.FetchCastleTroops(kingdomID, castleID, x, y) == nil {
-				Logging.AutoHospitalLogf("castle_skip", "castle=%d focus failed; queue state not trusted", castleID)
-				continue
-			}
-			if !autoHospitalPause(ctx, autoHospitalActionDelay) {
-				return
-			}
-			if refreshed := gs.GetCastleByID(castleID); refreshed != nil {
-				castleInfo = refreshed
-			}
-
-			queueCapacity, capacityBreakdown, capacitySource := autoHospitalQueueCapacity(castleInfo)
-			if queueCapacity <= 0 {
-				Logging.AutoHospitalLogf("castle_skip", "castle=%d missing hospital queue capacity", castleID)
-				continue
-			}
-			occupiedQueueStacks := autoHospitalOccupiedQueueStacks(castleInfo)
-			if occupiedQueueStacks >= queueCapacity {
-				Logging.AutoHospitalLogf("queue_full", "castle=%d occupied=%d capacity=%d", castleID, occupiedQueueStacks, queueCapacity)
-				continue
-			}
-
-			wounded := autoHospitalWoundedUnits(castleInfo)
-			if len(wounded) == 0 {
-				Logging.AutoHospitalLogf("castle_skip", "castle=%d no wounded units in HI", castleID)
-				continue
-			}
-			filteredWounded, ok := autoHospitalDiscardRubyHealingUnits(ctx, castleID, wounded)
+			lease, ok := GameFocus.Acquire(ctx, GameFocus.Request{
+				Owner:   GameFocus.OwnerAutoHospital,
+				Reason:  fmt.Sprintf("castle=%d", castleID),
+				MaxHold: 30 * time.Second,
+			})
 			if !ok {
 				return
 			}
-			wounded = filteredWounded
-			if len(wounded) == 0 {
-				Logging.AutoHospitalLogf("castle_skip", "castle=%d no coin-healable wounded units in HI", castleID)
-				continue
-			}
-			Logging.AutoHospitalLogf(
-				"queue_capacity",
-				"castle=%d occupied=%d capacity=%d source=%s hospitalOID=%d wid=%d level=%d",
-				castleID,
-				occupiedQueueStacks,
-				queueCapacity,
-				capacitySource,
-				capacityBreakdown.BuildingOID,
-				capacityBreakdown.BuildingWID,
-				capacityBreakdown.BuildingLevel,
-			)
+			leaseRevoked := false
+			func() {
+				defer lease.Release()
 
-			for occupiedQueueStacks < queueCapacity && len(wounded) > 0 {
-				select {
-				case <-ctx.Done():
+				Logging.AutoHospitalLogf("focus", "castle=%d kid=%d x=%d y=%d", castleID, kingdomID, x, y)
+				if GameParser.FetchCastleTroopsWithLease(lease, kingdomID, castleID, x, y) == nil {
+					if !lease.Active() {
+						leaseRevoked = true
+						Logging.AutoHospitalLogf("lease_revoked", "castle=%d", castleID)
+						return
+					}
+					Logging.AutoHospitalLogf("castle_skip", "castle=%d focus failed; queue state not trusted", castleID)
 					return
-				default:
 				}
-
-				unit := wounded[0]
-				amount := stackPlan.Amount
-				if unit.Amount < amount {
-					amount = unit.Amount
-				}
-				if amount <= 0 {
-					wounded = wounded[1:]
-					continue
-				}
-
-				Logging.AutoHospitalLogf("queue", "castle=%d unit=%d amount=%d available=%d occupied=%d capacity=%d",
-					castleID, unit.UnitID, amount, unit.Amount, occupiedQueueStacks, queueCapacity)
-				payload := GameCommands.HRUPayload(unit.UnitID, amount)
-				Logging.AppendAutoHospitalSendPayload(payload)
-				GameCommands.QueueOutgoingPayload(payload)
-
-				wounded[0].Amount -= amount
-				if wounded[0].Amount <= 0 {
-					wounded = wounded[1:]
-				}
-				occupiedQueueStacks++
 				if !autoHospitalPause(ctx, autoHospitalActionDelay) {
 					return
 				}
+				if !lease.Active() {
+					leaseRevoked = true
+					Logging.AutoHospitalLogf("lease_revoked", "castle=%d", castleID)
+					return
+				}
+				if refreshed := gs.GetCastleByID(castleID); refreshed != nil {
+					castleInfo = refreshed
+				}
+
+				queueCapacity, capacityBreakdown, capacitySource := autoHospitalQueueCapacity(castleInfo)
+				if queueCapacity <= 0 {
+					Logging.AutoHospitalLogf("castle_skip", "castle=%d missing hospital queue capacity", castleID)
+					return
+				}
+				occupiedQueueStacks := autoHospitalOccupiedQueueStacks(castleInfo)
+				if occupiedQueueStacks >= queueCapacity {
+					Logging.AutoHospitalLogf("queue_full", "castle=%d occupied=%d capacity=%d", castleID, occupiedQueueStacks, queueCapacity)
+					return
+				}
+
+				wounded := autoHospitalWoundedUnits(castleInfo)
+				if len(wounded) == 0 {
+					Logging.AutoHospitalLogf("castle_skip", "castle=%d no wounded units in HI", castleID)
+					return
+				}
+				filteredWounded, ok := autoHospitalDiscardRubyHealingUnits(ctx, lease, castleID, wounded)
+				if !ok {
+					leaseRevoked = !lease.Active()
+					return
+				}
+				wounded = filteredWounded
+				if len(wounded) == 0 {
+					Logging.AutoHospitalLogf("castle_skip", "castle=%d no coin-healable wounded units in HI", castleID)
+					return
+				}
+				Logging.AutoHospitalLogf(
+					"queue_capacity",
+					"castle=%d occupied=%d capacity=%d source=%s hospitalOID=%d wid=%d level=%d",
+					castleID,
+					occupiedQueueStacks,
+					queueCapacity,
+					capacitySource,
+					capacityBreakdown.BuildingOID,
+					capacityBreakdown.BuildingWID,
+					capacityBreakdown.BuildingLevel,
+				)
+
+				for occupiedQueueStacks < queueCapacity && len(wounded) > 0 {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+					}
+
+					unit := wounded[0]
+					amount := stackPlan.Amount
+					if unit.Amount < amount {
+						amount = unit.Amount
+					}
+					if amount <= 0 {
+						wounded = wounded[1:]
+						continue
+					}
+
+					payload := GameCommands.HRUPayload(unit.UnitID, amount)
+					if !lease.Active() {
+						leaseRevoked = true
+						Logging.AutoHospitalLogf("lease_revoked", "castle=%d heal skipped", castleID)
+						return
+					}
+					Logging.AutoHospitalLogf("queue", "castle=%d unit=%d amount=%d available=%d occupied=%d capacity=%d",
+						castleID, unit.UnitID, amount, unit.Amount, occupiedQueueStacks, queueCapacity)
+					Logging.AppendAutoHospitalSendPayload(payload)
+					GameCommands.QueueOutgoingPayload(payload)
+
+					wounded[0].Amount -= amount
+					if wounded[0].Amount <= 0 {
+						wounded = wounded[1:]
+					}
+					occupiedQueueStacks++
+					if !autoHospitalPause(ctx, autoHospitalActionDelay) {
+						return
+					}
+				}
+			}()
+			if leaseRevoked {
+				break
 			}
 		}
 

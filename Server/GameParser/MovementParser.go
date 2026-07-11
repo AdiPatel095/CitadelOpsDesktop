@@ -2,9 +2,7 @@ package GameParser
 
 import (
 	"CitadelDesktop/Server/Models"
-	"CitadelDesktop/Server/Scheduler"
 	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -35,6 +33,9 @@ func movementItemsFromGAMLikeRoot(gamData map[string]interface{}) []map[string]i
 		}
 		if aArr, ok := wrapper["A"].([]interface{}); ok {
 			movObj["A"] = aArr
+		}
+		if spyObj, ok := wrapper["S"].(map[string]interface{}); ok {
+			movObj["S"] = spyObj
 		}
 		mArray = []interface{}{movObj}
 	} else if mVal, ok := gamData["M"]; ok {
@@ -69,6 +70,7 @@ func CommanderAndTTFromGAMLikeJSON(data string) (commanderID, tt int, ok bool) {
 	}
 	items := movementItemsFromGAMLikeRoot(gamData)
 	for _, movObj := range items {
+		commanderID = -1
 		mDetails, okM := movObj["M"].(map[string]interface{})
 		if !okM {
 			continue
@@ -135,8 +137,6 @@ func ParseGAMMessage(data string) {
 		return
 	}
 
-	gs := Models.GetGameState()
-	// gs.Movement.ActiveMovements is not cleared here; fetchers manage lifecycle.
 	nowUnix := time.Now().Unix()
 	var parsedMovements []Models.GAMMovement
 
@@ -155,6 +155,11 @@ func ParseGAMMessage(data string) {
 		kid := getInt(mDetails, "KID")
 		sid := getInt(mDetails, "SID")
 		oid := getInt(mDetails, "OID")
+		movementType := getInt(mDetails, "T")
+		spyCount := 0
+		if spyDetails, ok := movObj["S"].(map[string]interface{}); ok {
+			spyCount = getInt(spyDetails, "SC")
+		}
 
 		// Extract target type and coordinates from TA array ([0]=type, [1]=X, [2]=Y)
 		targetType := 0
@@ -228,6 +233,8 @@ func ParseGAMMessage(data string) {
 			KID:          kid,
 			SID:          sid,
 			OID:          oid,
+			MovementType: movementType,
+			SpyCount:     spyCount,
 			TargetType:   targetType,
 			TargetX:      targetX,
 			TargetY:      targetY,
@@ -241,46 +248,17 @@ func ParseGAMMessage(data string) {
 		}
 		parsedMovements = append(parsedMovements, movement)
 
-		// Set real travel time cooldown in Scheduler if target coordinates are present
-		if targetX != 0 && targetY != 0 && tt > 0 {
-			targetID := fmt.Sprintf("%d,%d", targetX, targetY)
-			// Apply a generic returning cooldown (time to target and back) + small safety buffer
-			totalCooldownMs := (tt * 2 * 1000) + 10000
-			Scheduler.GetScheduler().CooldownTracker.SetCooldown(targetID, time.Duration(totalCooldownMs)*time.Millisecond)
-		}
 	}
-
-	movementReconcileMu.Lock()
-	// gam is delivered as MULTIPLE full-snapshot frames per request (pagination): a single request can
-	// return several {"M":[...]} messages, each carrying only a slice of the active movements. Any one
-	// frame is therefore a partial page, NOT the authoritative whole, so we must never replace the list
-	// from a single frame — doing so lets the last page clobber owned legs carried by earlier pages
-	// (observed: a commander's outbound leg in pages 1-2 wiped by a page 3 that omits it). Merge owned
-	// legs by MID across frames instead, and rely on mrm + the wall-clock expiry backstop to remove
-	// finished ones. The sole authoritative "nothing is in flight" signal is an explicitly empty full
-	// snapshot ({"M":[]}), which the game sends as a standalone frame, not as a page of a larger set.
-	if isFullSnapshot && len(items) == 0 {
-		gs.Movement.ActiveMovements = nil
-	} else {
-		// Full page or partial delta: admit a new MID only if it belongs to us; deltas for an
-		// already-tracked MID are always applied (it only got tracked by passing the ownership check).
-		gs.Movement.ActiveMovements = mergeOwnedMovementsByMID(gs, gs.Movement.ActiveMovements, parsedMovements)
-	}
-	rebindCommanderIDs(gs)
-	expireStaleMovements(gs, nowUnix)
-	movementReconcileMu.Unlock()
-
-	MaybeNotifyRiftCRALaunchBusyChanged()
-	if NotifyMovementChanged != nil {
-		NotifyMovementChanged()
-	}
-	markGAMParsed()
 	startMovementPollTicker()
-
-	// Trigger callback to auto-clean returned birds in real-time
-	if OnGAMParsed != nil {
-		go OnGAMParsed()
+	if isFullSnapshot {
+		pageSize := len(items)
+		if rawPage, ok := gamData["M"].([]interface{}); ok {
+			pageSize = len(rawPage)
+		}
+		queueGAMSnapshotPage(parsedMovements, pageSize, nowUnix)
+		return
 	}
+	applyGAMMovementDeltas(parsedMovements)
 }
 
 // ParseMRMRemoveMovement handles **mrm** — pushed by the game as {"MID": n} when a march ends
@@ -294,24 +272,8 @@ func ParseMRMRemoveMovement(payload string) {
 		return
 	}
 
-	gs := Models.GetGameState()
-
-	movementReconcileMu.Lock()
-	removed := false
-	kept := make([]Models.GAMMovement, 0, len(gs.Movement.ActiveMovements))
-	for _, m := range gs.Movement.ActiveMovements {
-		if m.MID == body.MID {
-			removed = true
-			continue
-		}
-		kept = append(kept, m)
-	}
-	if removed {
-		gs.Movement.ActiveMovements = kept
-		delete(gs.Movement.CommanderByMID, body.MID)
-		rebindCommanderIDs(gs)
-	}
-	movementReconcileMu.Unlock()
+	removePendingGAMMovement(body.MID)
+	removed := Models.GetGameState().Movement.RemoveMovement(body.MID)
 
 	if removed {
 		MaybeNotifyRiftCRALaunchBusyChanged()
@@ -330,52 +292,6 @@ func gamPayloadIsFullSnapshot(gamData map[string]interface{}) bool {
 	}
 	_, ok = mVal.([]interface{})
 	return ok
-}
-
-// mergeOwnedMovementsByMID merges partial-delta legs into prev. A new MID is admitted only if it
-// belongs to us; deltas for an already-tracked MID are always applied (the MID is only present because
-// it passed the ownership check on insert). A re-delivered frame that does not advance PT preserves the
-// existing PT/ReceivedUnix so expiry aging is not reset by repeated identical frames.
-func mergeOwnedMovementsByMID(gs *Models.GameState, prev, incoming []Models.GAMMovement) []Models.GAMMovement {
-	if len(incoming) == 0 {
-		return prev
-	}
-	now := time.Now().Unix()
-	byMID := make(map[int]Models.GAMMovement, len(prev)+len(incoming))
-	order := make([]int, 0, len(prev)+len(incoming))
-	for _, m := range prev {
-		if m.MID == 0 {
-			continue
-		}
-		if _, exists := byMID[m.MID]; !exists {
-			order = append(order, m.MID)
-		}
-		byMID[m.MID] = m
-	}
-	for _, m := range incoming {
-		if m.MID == 0 {
-			continue
-		}
-		existing, tracked := byMID[m.MID]
-		if !tracked {
-			if !legBelongsToUs(gs, m) {
-				continue
-			}
-			order = append(order, m.MID)
-			byMID[m.MID] = m
-			continue
-		}
-		if m.D == existing.D && m.PT <= existing.EffectivePT(now) {
-			m.PT = existing.PT
-			m.ReceivedUnix = existing.ReceivedUnix
-		}
-		byMID[m.MID] = m
-	}
-	out := make([]Models.GAMMovement, 0, len(order))
-	for _, mid := range order {
-		out = append(out, byMID[mid])
-	}
-	return out
 }
 
 // Helper to safely get int from map

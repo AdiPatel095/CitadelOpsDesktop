@@ -709,9 +709,12 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
                 ))}
               </div>
             )}
-            {row.sourceLabel && row.kind === 'extra' && (
+            {row.sourceLabel && (row.kind === 'extra' || row.kind === 'catalog') && (
               <div className="mt-1 text-[11px] text-text-muted/80">
                 {row.sourceLabel}
+                {row.maxTotalBonus !== undefined
+                  ? <span> · max {formatEffectRowValue(row, row.maxTotalBonus)}</span>
+                  : null}
               </div>
             )}
           </div>
@@ -827,7 +830,7 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
               <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider">
                 Effective Battle Profile
               </h4>
-              <Badge variant="secondary">{combatMode}</Badge>
+              <Badge variant="secondary">Always + {combatMode}</Badge>
             </div>
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
               {showcaseRows.map(row => (
@@ -851,7 +854,7 @@ const EquipmentStats: React.FC<EquipmentStatsProps> = ({ equipmentMode, combatMo
           </div>
         )}
 
-        {stats && effectSections.map((section) => {
+        {stats && effectSections.filter(section => section.key !== 'effective').map((section) => {
           return (
             <div key={section.key} className="rounded-global bg-bg-app border border-border-base p-3">
               <div className="flex items-start justify-between gap-3 mb-2">

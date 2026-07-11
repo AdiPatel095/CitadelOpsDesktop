@@ -17,6 +17,11 @@ func DCLRefreshPayload() string {
 	return empireExFrame("dcl", `{"CD":0}`)
 }
 
+// SendDCLRefresh requests current resource and troop snapshots for every owned castle.
+func SendDCLRefresh() {
+	QueueOutgoingPayload(DCLRefreshPayload())
+}
+
 // KUTPayload sends troops to the Beri world (**kut**).
 // scid is the source castle instance id; kutCID is the wire CID field (often -1); troopsJSON is e.g. [[10,1]].
 func KUTPayload(scid, kutCID, skid, tkid int, troopsJSON string) string {

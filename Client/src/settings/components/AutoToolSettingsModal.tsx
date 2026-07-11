@@ -4,7 +4,7 @@ import { FrontendWebsocket } from '../../Websocket';
 import { showToolPicker } from '../../components/ToolPickerModal';
 import ToolImage from '../../components/ToolImage';
 import { useMetadata } from '../../context/MetadataContext';
-import { Modal, Button, Input, Card, CardHeader, CardTitle, CardContent, Badge, Switch, ToggleGroup } from '../../components/ui';
+import { Modal, Button, Input, Card, CardHeader, CardTitle, CardContent, Badge, Switch, PillSelector } from '../../components/ui';
 import {
   DEFAULT_AUTO_TOOL_CHECK_INTERVAL_MIN,
   MIN_AUTO_TOOL_CHECK_INTERVAL_MIN,
@@ -661,7 +661,7 @@ export const AutoToolSettingsModal: React.FC<AutoToolSettingsModalProps> = ({ is
                 </div>
               </CardHeader>
               <CardContent className="liquid-prominent-header-content p-5">
-                <ToggleGroup
+                <PillSelector
                   value={settings.mode}
                   onChange={(value) => updateMode(value === 'perCastle' ? 'perCastle' : 'global')}
                   options={[

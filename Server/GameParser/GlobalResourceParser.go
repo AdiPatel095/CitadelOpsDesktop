@@ -89,6 +89,35 @@ func UpdateGallantry(ufpMap map[string]interface{}) {
 	}
 }
 
+// UpdateSelfPlayerSummary applies the public **gdi** summary only when it belongs to the logged-in player.
+// This makes an explicit tracker refresh authoritative without allowing a lookup of another player to
+// overwrite the current account's state.
+func UpdateSelfPlayerSummary(gdiMap map[string]interface{}) bool {
+	player, ok := gdiMap["O"].(map[string]interface{})
+	if !ok {
+		return false
+	}
+	playerID, ok := player["OID"].(float64)
+	if !ok {
+		return false
+	}
+	gs := Models.GetGameState()
+	if gs == nil || int(playerID) != gs.PlayerID {
+		return false
+	}
+
+	changed := false
+	if might, ok := player["MP"].(float64); ok {
+		gs.GlobalResources.MightPt = might
+		changed = true
+	}
+	if glory, ok := player["CF"].(float64); ok {
+		gs.GlobalResources.GloryPt = glory
+		changed = true
+	}
+	return changed
+}
+
 func UpdateSCE(sceArray []interface{}) {
 	changed := false
 	for _, item := range sceArray {
@@ -188,11 +217,16 @@ func UpdateAlliance(galMap map[string]interface{}) {
 	}
 }
 
-// UpdatePlayerInfo parses the player information from gpi and stores the PlayerID
+// UpdatePlayerInfo parses the player information from gpi and stores the player identity.
 func UpdatePlayerInfo(gpiMap map[string]interface{}) {
+	gs := Models.GetGameState()
 	pid, ok := gpiMap["PID"].(float64)
 	if ok {
-		Models.GetGameState().PlayerID = int(pid)
+		gs.PlayerID = int(pid)
+		applyDeferredGAMSnapshot()
+	}
+	if playerName, ok := gpiMap["PN"].(string); ok {
+		gs.PlayerName = playerName
 	}
 }
 

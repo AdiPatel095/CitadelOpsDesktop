@@ -4,7 +4,7 @@ import { FrontendWebsocket } from '../../Websocket';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import { TROOP_DEFINITIONS } from '../../config/Constants';
-import { Modal, Button, Input, Card, CardHeader, CardTitle, CardContent, Badge, Switch, ToggleGroup } from '../../components/ui';
+import { Modal, Button, Input, Card, CardHeader, CardTitle, CardContent, Badge, Switch, PillSelector } from '../../components/ui';
 import {
   DEFAULT_RECRUIT_CHECK_INTERVAL_MIN,
   MIN_RECRUIT_CHECK_INTERVAL_MIN,
@@ -658,7 +658,7 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
                 </div>
               </CardHeader>
               <CardContent className="liquid-prominent-header-content p-5">
-                <ToggleGroup
+                <PillSelector
                   value={settings.mode}
                   onChange={(value) => updateMode(value === 'perCastle' ? 'perCastle' : 'global')}
                   options={[

@@ -106,28 +106,19 @@ func parseGCL(gcl map[string]interface{}) error {
 		case kingdomIDMain:
 			parseMainKingdomCastles(castleArray)
 		case kingdomIDIce:
-			updaters := []func(id float64, name string){
-				func(id float64, name string) {
-					gs.Castle.IceCastle.Aid, gs.Castle.IceCastle.Name = id, name
-				},
-			}
-			parseCastles(castleArray, updaters, 2)
+			parseForeignKingdomCastles(castleArray, func(id float64, name string) {
+				gs.Castle.IceCastle.Aid, gs.Castle.IceCastle.Name = id, name
+			}, 2)
 		case kingdomIDDesert:
-			updaters := []func(id float64, name string){
-				func(id float64, name string) {
-					gs.Castle.DesertCastle.Aid, gs.Castle.DesertCastle.Name = id, name
-				},
-			}
-			parseCastles(castleArray, updaters, 1)
+			parseForeignKingdomCastles(castleArray, func(id float64, name string) {
+				gs.Castle.DesertCastle.Aid, gs.Castle.DesertCastle.Name = id, name
+			}, 1)
 		case kingdomIDDungeon:
-			updaters := []func(id float64, name string){
-				func(id float64, name string) {
-					gs.Castle.DungeonCastle.Aid, gs.Castle.DungeonCastle.Name = id, name
-				},
-			}
-			parseCastles(castleArray, updaters, 3)
+			parseForeignKingdomCastles(castleArray, func(id float64, name string) {
+				gs.Castle.DungeonCastle.Aid, gs.Castle.DungeonCastle.Name = id, name
+			}, 3)
 		case kingdomIDStorm:
-			parseSingleCastle(castleArray, func(id float64, name string) {
+			parseForeignKingdomCastles(castleArray, func(id float64, name string) {
 				gs.Castle.StormCastle.Aid, gs.Castle.StormCastle.Name = id, name
 			}, 4)
 		case kingdomIDBeri:
@@ -239,6 +230,36 @@ func applyGCLCastleMapCoords(gs *Models.GameState, castleID int, kingdomID int, 
 	c.MapY = y
 }
 
+func isMetropolisCastleType(cType int) bool {
+	return cType == kingdomCastleTypeMetropolis || cType == CastleSlotMetropolisLegacy
+}
+
+func isCapitalCastleType(cType int) bool {
+	return cType == kingdomCastleTypeCapital || cType == CastleSlotCapitalLegacy
+}
+
+func recordGCLPlayerCastleLocation(gs *Models.GameState, kingdomID int, id float64, x, y int) {
+	if x <= 0 || y <= 0 {
+		return
+	}
+	castleID := int(id)
+	applyGCLCastleMapCoords(gs, castleID, kingdomID, x, y)
+	gs.UpsertPlayerCastleLocation(kingdomID, castleID, x, y)
+}
+
+func setSpecialCastleSlot(gs *Models.GameState, id float64, name string, cType int) bool {
+	switch {
+	case isMetropolisCastleType(cType):
+		gs.Castle.Metropolis.Aid, gs.Castle.Metropolis.Name = id, name
+		return true
+	case isCapitalCastleType(cType):
+		gs.Castle.Capital.Aid, gs.Castle.Capital.Name = id, name
+		return true
+	default:
+		return false
+	}
+}
+
 // parseMainKingdomCastles handles Kingdom 0 where castles can be Main (type 1) or Outposts (type 4)
 func parseMainKingdomCastles(castleArray []interface{}) {
 	gs := Models.GetGameState()
@@ -260,23 +281,46 @@ func parseMainKingdomCastles(castleArray []interface{}) {
 					gs.Castle.Outpost3.Aid, gs.Castle.Outpost3.Name = id, name
 				}
 				outpostIndex++
-			} else if cType == kingdomCastleTypeMetropolis {
-				gs.Castle.Metropolis.Aid, gs.Castle.Metropolis.Name = id, name
-			} else if cType == kingdomCastleTypeCapital {
-				gs.Castle.Capital.Aid, gs.Castle.Capital.Name = id, name
+			} else {
+				setSpecialCastleSlot(gs, id, name, cType)
 			}
 
-			// Store player castle location for AutoBird
-			if x > 0 && y > 0 {
-				applyGCLCastleMapCoords(gs, int(id), 0, x, y)
-				gs.Alliance.PlayerCastleLocations = append(gs.Alliance.PlayerCastleLocations, Models.PlayerCastleLocation{
-					KingdomID: 0,
-					CastleID:  int(id),
-					X:         x,
-					Y:         y,
-				})
+			recordGCLPlayerCastleLocation(gs, 0, id, x, y)
+		}
+	}
+}
+
+// parseForeignKingdomCastles handles one normal kingdom castle plus optional metropolis/capital rows in the same GCL kingdom.
+func parseForeignKingdomCastles(castleArray []interface{}, updater func(id float64, name string), kingdomID int) {
+	gs := Models.GetGameState()
+	assignedKingdomCastle := false
+	var fallbackID float64
+	var fallbackName string
+
+	for i, castle := range castleArray {
+		id, name, x, y, cType, ok := extractCastleDetails(castle, i)
+		if !ok {
+			continue
+		}
+
+		switch {
+		case setSpecialCastleSlot(gs, id, name, cType):
+		case cType == CastleSlotForeign:
+			if !assignedKingdomCastle {
+				updater(id, name)
+				assignedKingdomCastle = true
+			}
+		default:
+			if fallbackID <= 0 {
+				fallbackID, fallbackName = id, name
 			}
 		}
+
+		recordGCLPlayerCastleLocation(gs, kingdomID, id, x, y)
+	}
+
+	if !assignedKingdomCastle && fallbackID > 0 {
+		updater(fallbackID, fallbackName)
 	}
 }
 
@@ -414,125 +458,89 @@ func extractCastleDetails(castleData interface{}, index int) (id float64, name s
 
 func parseDCL(dcl map[string]interface{}) error {
 	gs := Models.GetGameState()
-	// DCL data seems to be a map of castles, not a kingdom array.
-	// The top-level keys are string representations of castle IDs.
 
-	kingdomArray := dcl[keyKingdoms].([]interface{})
+	kingdomArray, ok := dcl[keyKingdoms].([]interface{})
+	if !ok {
+		return fmt.Errorf("dcl kingdomArray type assertion failed")
+	}
 	for _, item := range kingdomArray {
 		kingdomMap, ok := item.(map[string]interface{})
 		if !ok {
 			continue
 		}
-		kingdomID, ok := kingdomMap[keyKingdomID].(float64)
+		kingdomID := 0
+		if value, ok := kingdomMap[keyKingdomID].(float64); ok {
+			kingdomID = int(value)
+		}
+
+		castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
 		if !ok {
 			continue
 		}
-		switch kingdomID {
-		case 0:
-			{
-				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
-				if !ok {
-					continue
-				}
-				for _, castleData := range castleArray {
-					castleMap, ok := castleData.(map[string]interface{})
-					if !ok {
-						continue
-					}
-					castleID, ok := castleMap[keyCastleID].(float64)
-					c := &gs.Castle
-					switch castleID {
-					case c.MainCastle.Aid:
-						parseCastleResources(castleMap, &c.MainCastle.Amount, &c.MainCastle.Production, &c.MainCastle.Storage, castleID)
-					case c.Outpost1.Aid:
-						parseCastleResources(castleMap, &c.Outpost1.Amount, &c.Outpost1.Production, &c.Outpost1.Storage, castleID)
-					case c.Outpost2.Aid:
-						parseCastleResources(castleMap, &c.Outpost2.Amount, &c.Outpost2.Production, &c.Outpost2.Storage, castleID)
-					case c.Outpost3.Aid:
-						parseCastleResources(castleMap, &c.Outpost3.Amount, &c.Outpost3.Production, &c.Outpost3.Storage, castleID)
-					case c.Metropolis.Aid:
-						parseCastleResources(castleMap, &c.Metropolis.Amount, &c.Metropolis.Production, &c.Metropolis.Storage, castleID)
-					case c.Capital.Aid:
-						parseCastleResources(castleMap, &c.Capital.Amount, &c.Capital.Production, &c.Capital.Storage, castleID)
-					}
-				}
-
-			}
-		case 2:
-			{
-				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
-				if !ok {
-					continue
-				}
-				for _, castleData := range castleArray {
-					castleMap, ok := castleData.(map[string]interface{})
-					if !ok {
-						continue
-					}
-					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == gs.Castle.IceCastle.Aid {
-						parseCastleResources(castleMap, &gs.Castle.IceCastle.Amount, &gs.Castle.IceCastle.Production, &gs.Castle.IceCastle.Storage, castleID)
-					}
-				}
-
-			}
-		case 1:
-			{
-				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
-				if !ok {
-					continue
-				}
-				for _, castleData := range castleArray {
-					castleMap, ok := castleData.(map[string]interface{})
-					if !ok {
-						continue
-					}
-					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == gs.Castle.DesertCastle.Aid {
-						parseCastleResources(castleMap, &gs.Castle.DesertCastle.Amount, &gs.Castle.DesertCastle.Production, &gs.Castle.DesertCastle.Storage, castleID)
-					}
-				}
-
-			}
-		case 3:
-			{
-				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
-				if !ok {
-					continue
-				}
-				for _, castleData := range castleArray {
-					castleMap, ok := castleData.(map[string]interface{})
-					if !ok {
-						continue
-					}
-					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == gs.Castle.DungeonCastle.Aid {
-						parseCastleResources(castleMap, &gs.Castle.DungeonCastle.Amount, &gs.Castle.DungeonCastle.Production, &gs.Castle.DungeonCastle.Storage, castleID)
-					}
-				}
-
-			}
-		case 4:
-			{
-				castleArray, ok := kingdomMap[keyCastleInfoArray].([]interface{})
-				if !ok {
-					continue
-				}
-				for _, castleData := range castleArray {
-					castleMap, ok := castleData.(map[string]interface{})
-					if !ok {
-						continue
-					}
-					castleID, ok := castleMap[keyCastleID].(float64)
-					if castleID == gs.Castle.StormCastle.Aid {
-						parseCastleResources(castleMap, &gs.Castle.StormCastle.Amount, &gs.Castle.StormCastle.Production, &gs.Castle.StormCastle.Storage, castleID)
-					}
-				}
-
-			}
+		for _, castleData := range castleArray {
+			parseDCLCastleResources(gs, castleData, kingdomID)
 		}
 	}
 	return nil
+}
+
+func parseDCLCastleResources(gs *Models.GameState, castleData interface{}, kingdomID int) {
+	castleMap, ok := castleData.(map[string]interface{})
+	if !ok {
+		return
+	}
+	castleID, ok := castleMap[keyCastleID].(float64)
+	if !ok || castleID <= 0 {
+		return
+	}
+	castle := gs.GetCastleByID(int(castleID))
+	if castle == nil {
+		return
+	}
+
+	parseUnitArray := func(key string) map[int]int {
+		units := make(map[int]int)
+		rows, ok := castleMap[key].([]interface{})
+		if !ok {
+			return units
+		}
+		for _, row := range rows {
+			pair, ok := row.([]interface{})
+			if !ok || len(pair) < 2 {
+				continue
+			}
+			unitID, unitOK := pair[0].(float64)
+			count, countOK := pair[1].(float64)
+			if !unitOK || !countOK || count < 0 || !Models.IsTroop(int(unitID)) {
+				continue
+			}
+			units[int(unitID)] += int(count)
+		}
+		return units
+	}
+
+	stationed := parseUnitArray("AC")
+	traveling := parseUnitArray("TU")
+	hospital := parseUnitArray("HI")
+	specialHospital := parseUnitArray("SHI")
+	mixed := make(map[int]int, len(stationed)+len(traveling))
+	for unitID, count := range stationed {
+		mixed[unitID] += count
+	}
+	for unitID, count := range traveling {
+		mixed[unitID] += count
+	}
+	castle.Troops = Models.CastleTroopData{
+		KingdomID:   kingdomID,
+		X:           castle.Troops.X,
+		Y:           castle.Troops.Y,
+		TroopsI:     stationed,
+		TroopsTU:    traveling,
+		TroopsHI:    hospital,
+		TroopsSHI:   specialHospital,
+		TroopsMixed: mixed,
+	}
+	parseCastleResources(castleMap, &castle.Amount, &castle.Production, &castle.Storage, castleID)
 }
 
 // parseCastleResources is a generic function to parse resources for any castle.

@@ -1,11 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Layers, Play, Save, Trash2 } from 'lucide-react';
+import { Castle, Layers, Play, Save, Sparkles, Trash2 } from 'lucide-react';
 import { useCastleFocus } from '../context/CastleFocusContext';
 import { FrontendWebsocket } from '../Websocket';
 import CastleFocusHoverPopover from './CastleFocusHoverPopover';
 import { castleFocusDisplayName } from '../types/CastleFocusState.ts';
-import { Icons } from './Icons';
-import { Card, CardHeader, CardTitle, CardContent, Input, Button, Select } from './ui';
+import { Input, Button, Select } from './ui';
 
 interface NamedPreset {
   id: string;
@@ -75,147 +74,137 @@ const DecorationPresetsPanel: React.FC = () => {
   };
 
   const selectedPreset = presets.find((preset) => preset.id === selectedPresetId) ?? null;
+  const presetCountLabel = `${presets.length.toLocaleString()} ${presets.length === 1 ? 'preset' : 'presets'}`;
+  const selectedPlacementCount = selectedPreset?.items?.length ?? 0;
+  const selectedPlacementLabel = selectedPreset
+    ? `${selectedPlacementCount.toLocaleString()} ${
+        selectedPlacementCount === 1 ? 'decoration placement' : 'decoration placements'
+      }`
+    : 'No preset selected';
+  const canUseCastle = castleId > 0;
+  const canSave = canUseCastle && Boolean(newName.trim());
+  const hasPresets = presets.length > 0;
 
   return (
-    <div className="grid grid-cols-1 gap-6 h-full">
-      {/* Save from current scan */}
-      <Card variant="solid" className="liquid-prominent-header-card flex flex-col min-h-0">
-        <CardHeader className="liquid-card-header-prominent">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
-              <Icons.Sparkles className="h-4 w-4 text-violet-400" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Save layout as preset</CardTitle>
-              <p className="text-xs text-text-muted mt-0.5">
-                Stores pickup-eligible decoration rows from your current in-game castle focus (JAA).
-              </p>
-            </div>
+    <div className="flex h-full min-h-0 flex-col gap-5">
+      <div className="grid grid-cols-1 gap-x-5 gap-y-3 xl:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
+            <Castle className="h-3.5 w-3.5" strokeWidth={2.25} />
+            Focused castle
           </div>
-        </CardHeader>
-
-        <CardContent className="liquid-prominent-header-content flex flex-col flex-1 min-h-0 space-y-5 p-5">
-          <div className="px-2 py-1">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-              <div className="min-w-0 lg:w-48">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Focused castle</div>
-                <div className="mt-1.5 flex min-h-[42px] items-center">
-                  <CastleFocusHoverPopover
-                    castleFocus={castleFocus}
-                    align="start"
-                    expandToViewport
-                    className="min-w-0 max-w-full"
-                  >
-                    <span className="cursor-help truncate border-b border-dotted border-text-muted/50 font-medium text-text-main">
-                      {focusLabel}
-                    </span>
-                  </CastleFocusHoverPopover>
-                </div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                  Preset name
-                </label>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <Input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSave();
-                    }}
-                    placeholder="e.g. Event layout"
-                    className="flex-1"
-                  />
-                  <Button
-                    disabled={castleId <= 0 || !newName.trim()}
-                    onClick={handleSave}
-                    leftIcon={<Save className="h-4 w-4" strokeWidth={2.25} />}
-                    className="shrink-0 shadow-none hover:shadow-none"
-                  >
-                    Save preset
-                  </Button>
-                </div>
-              </div>
-            </div>
-            {castleId <= 0 && (
-              <div className="mt-3 text-xs text-warning">Focus a castle in the game to enable saving.</div>
-            )}
+          <div className="mt-1.5 flex min-h-[1.75rem] items-center">
+            <CastleFocusHoverPopover
+              castleFocus={castleFocus}
+              align="start"
+              expandToViewport
+              className="min-w-0 max-w-full"
+            >
+              <span className="cursor-help truncate border-b border-dotted border-text-muted/50 font-semibold text-text-main">
+                {focusLabel}
+              </span>
+            </CastleFocusHoverPopover>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Saved presets */}
-      <Card variant="solid" className="liquid-prominent-header-card flex flex-col min-h-0">
-        <CardHeader className="liquid-card-header-prominent">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
-              <Layers className="h-4 w-4 text-teal-400" strokeWidth={2.25} />
+        <div className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-[minmax(8rem,10rem)_minmax(10rem,14rem)] xl:min-w-[22rem]">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
+              <Layers className="h-3.5 w-3.5" strokeWidth={2.25} />
+              Saved
             </div>
-            <div>
-              <CardTitle className="text-base">Saved presets</CardTitle>
-              <p className="text-xs text-text-muted mt-0.5">
-                Per castle; Storm presets persist across monthly instance id changes. Apply runs the smart replacer (SOB / EBU) until the layout matches.
-              </p>
-            </div>
+            <div className="mt-1.5 truncate text-sm font-semibold text-text-main">{presetCountLabel}</div>
           </div>
-        </CardHeader>
-
-        <CardContent className="liquid-prominent-header-content flex flex-col flex-1 min-h-0 p-5">
-          {castleId <= 0 ? (
-            <p className="text-sm text-text-muted">Focus a castle in-game to load and manage presets for it.</p>
-          ) : presets.length === 0 ? (
-            <div className="rounded-global border border-dashed border-border-base bg-bg-card px-4 py-8 text-center h-full flex flex-col justify-center">
-              <p className="text-sm text-text-muted font-medium">No presets yet for this castle.</p>
-              <p className="mt-1 text-xs text-text-muted/80">Name a layout above and save from your current focus.</p>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
+              <Sparkles className="h-3.5 w-3.5" strokeWidth={2.25} />
+              Selected
             </div>
-          ) : (
-            <div className="px-2 py-1 space-y-4">
-              <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                Saved preset
-              </label>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Select
-                  value={selectedPresetId}
-                  options={presets.map((preset) => ({
-                    value: preset.id,
-                    label: preset.name,
-                  }))}
-                  onChange={setSelectedPresetId}
-                  placeholder="Select a preset"
-                  className="min-w-0 flex-1"
-                />
-                <div className="flex shrink-0 gap-2">
-                  <Button
-                    size="sm"
-                    disabled={castleId <= 0 || !selectedPreset}
-                    onClick={() => selectedPreset && handleApply(selectedPreset.id)}
-                    title="Run smart replacer until layout matches this preset"
-                    leftIcon={<Play className="h-3.5 w-3.5" strokeWidth={2.5} />}
-                    className="shadow-none hover:shadow-none"
-                  >
-                    Apply
-                  </Button>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    disabled={!selectedPreset}
-                    onClick={() => selectedPreset && handleDelete(selectedPreset.id)}
-                    leftIcon={<Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
-                    className="shadow-none hover:shadow-none"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
-              {selectedPreset && (
-                <p className="text-xs text-text-muted">
-                  {selectedPreset.items?.length ?? 0} decoration placements
-                </p>
-              )}
+            <div className="mt-1.5 truncate text-sm font-semibold text-text-main">{selectedPlacementLabel}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-x-5 gap-y-5 2xl:grid-cols-[minmax(16rem,0.92fr)_minmax(0,1.08fr)]">
+        <div className="min-w-0">
+          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
+            <Save className="h-3.5 w-3.5" strokeWidth={2.25} />
+            Capture current layout
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center 2xl:flex-col 2xl:items-stretch">
+            <Input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSave();
+              }}
+              placeholder="Preset name"
+              className="flex-1"
+            />
+            <Button
+              disabled={!canSave}
+              onClick={handleSave}
+              leftIcon={<Save className="h-4 w-4" strokeWidth={2.25} />}
+              className="shrink-0 shadow-none hover:shadow-none"
+            >
+              Save preset
+            </Button>
+          </div>
+          {!canUseCastle && (
+            <div className="mt-3 text-xs font-medium text-warning">
+              Castle focus required.
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="min-w-0">
+          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
+            <Layers className="h-3.5 w-3.5" strokeWidth={2.25} />
+            Saved layout
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Select
+              value={selectedPresetId}
+              options={presets.map((preset) => ({
+                value: preset.id,
+                label: preset.name,
+              }))}
+              onChange={setSelectedPresetId}
+              placeholder={hasPresets ? 'Select a preset' : 'No presets saved'}
+              disabled={!canUseCastle || !hasPresets}
+              className="min-w-0 flex-1"
+              menuGrowToViewport
+            />
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
+              <Button
+                size="sm"
+                disabled={!canUseCastle || !selectedPreset}
+                onClick={() => selectedPreset && handleApply(selectedPreset.id)}
+                title="Apply selected preset"
+                leftIcon={<Play className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                className="shadow-none hover:shadow-none"
+              >
+                Apply
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                disabled={!selectedPreset}
+                onClick={() => selectedPreset && handleDelete(selectedPreset.id)}
+                leftIcon={<Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
+                className="shadow-none hover:shadow-none"
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+          {canUseCastle && !hasPresets && (
+            <div className="mt-3 text-xs font-medium text-text-muted">
+              No saved presets for this castle.
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

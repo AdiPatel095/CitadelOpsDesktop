@@ -7,7 +7,9 @@ import (
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
 	battlereport "CitadelDesktop/Server/Models/BattleReport"
+	spyreport "CitadelDesktop/Server/Models/SpyReport"
 	"CitadelDesktop/Server/Paths"
+	"CitadelDesktop/Server/PlayerTracker"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"CitadelDesktop/Server/Version"
 	"embed"
@@ -53,6 +55,18 @@ func main() {
 	ResponseRegistry.BroadcastStaleSnapshot = FrontendWebsocket.BroadcastLastKnownGameStateSnapshot
 
 	Models.StartPeriodicGameStateSnapshots()
+	playertracker.Start()
+	GameParser.OnGAMParsed = func() {
+		gs := Models.GetGameState()
+		movements, _, _, _ := gs.Movement.Snapshot()
+		memberIDs := make([]int, 0, len(gs.Alliance.Members))
+		for _, member := range gs.Alliance.Members {
+			if member.PlayerID > 0 {
+				memberIDs = append(memberIDs, member.PlayerID)
+			}
+		}
+		spyreport.UploadMatchingMovements(movements, gs.PlayerID, gs.Alliance.AID, memberIDs)
+	}
 
 	if err := gamedata.LoadConsumptionReductionBuildings(); err != nil {
 		log.Printf("Warning: failed to load consumption reduction building index: %v", err)
@@ -115,6 +129,8 @@ func StartFrontendService() {
 	mux.Handle("/", http.FileServer(http.FS(subFS)))
 	Logging.RegisterLogHandlers(mux)
 	battlereport.RegisterStatsHandlers(mux)
+	spyreport.RegisterHandlers(mux)
+	playertracker.RegisterHandlers(mux)
 	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)
 
 	port := currentPort

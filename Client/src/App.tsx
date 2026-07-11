@@ -5,10 +5,11 @@ import { Providers } from './Providers';
 import EquipmentView from './equipment/components/EquipmentView';
 import SupportPage from './views/SupportPage';
 import CastleView from './dashboard/components/CastleView';
-import CurrencyView from './currency/components/CurrencyView';
 import RiftView from './Rift/components/RiftView';
 import MovementView from './Movement/components/MovementView';
 import BattleStatsView from './battleStats/components/BattleStatsView';
+import PlayerTrackerView from './playerTracker/components/PlayerTrackerView';
+import AllianceTargetsView from './allianceTargets/components/AllianceTargetsView';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import UpdateModal from './components/UpdateModal';
@@ -47,12 +48,14 @@ const AppContent: React.FC = () => {
         return <CastleView />;
       case 'equipment':
         return <EquipmentView />;
-      case 'currency':
-        return <CurrencyView />;
       case 'movement':
         return <MovementView />;
       case 'battle-stats':
         return <BattleStatsView />;
+      case 'player-tracker':
+        return <PlayerTrackerView />;
+      case 'alliance-targets':
+        return <AllianceTargetsView />;
       case 'rift':
         return <RiftView />;
       case 'support':

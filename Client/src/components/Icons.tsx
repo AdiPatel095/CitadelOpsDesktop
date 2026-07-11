@@ -61,6 +61,20 @@ export const Icons = {
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
     ),
+    Crosshair: (props: IconProps) => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <circle cx="12" cy="12" r="9"></circle>
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>
+        </svg>
+    ),
+    Binoculars: (props: IconProps) => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <path d="M3 10l2-6h3l2 6M14 10l2-6h3l2 6" />
+            <path d="M8 10h8M10 10v8M14 10v8" />
+            <circle cx="6" cy="17" r="4" /><circle cx="18" cy="17" r="4" />
+        </svg>
+    ),
     Settings: (props: IconProps) => (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
             <circle cx="12" cy="12" r="3"></circle>
@@ -208,4 +222,3 @@ export const Icons = {
         </svg>
     )
 };
-

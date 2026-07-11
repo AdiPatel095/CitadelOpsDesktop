@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
-import { FrontendWebsocket } from '../Websocket';
+import { FrontendWebsocket, type FrontendWebsocketStatus } from '../Websocket';
 import { loadPresetsFile } from '../settings/AutoBirdPresets';
 import {
   applyAutoBirdClientStateToLocalStorage,
@@ -50,9 +50,93 @@ import {
   type AutoHospitalClientSettingsV1,
 } from '../settings/AutoHospitalClientState';
 
+export type GameConnectionState =
+  | 'stopped'
+  | 'starting'
+  | 'connecting'
+  | 'authenticating'
+  | 'connected'
+  | 'cooldown'
+  | 'reconnecting'
+  | 'disconnected'
+  | 'error';
+
+interface GameConnectionSnapshot {
+  state: GameConnectionState;
+  loggedIn: boolean;
+  browserRunning: boolean;
+  socketConnected: boolean;
+  cooldownUntil: number;
+  retryAt: number;
+  revision: number;
+  changedAt: number;
+  detail: string;
+}
+
+const GAME_CONNECTION_STATES = new Set<GameConnectionState>([
+  'stopped',
+  'starting',
+  'connecting',
+  'authenticating',
+  'connected',
+  'cooldown',
+  'reconnecting',
+  'disconnected',
+  'error',
+]);
+
+const INITIAL_GAME_CONNECTION: GameConnectionSnapshot = {
+  state: 'disconnected',
+  loggedIn: false,
+  browserRunning: false,
+  socketConnected: false,
+  cooldownUntil: 0,
+  retryAt: 0,
+  revision: 0,
+  changedAt: 0,
+  detail: '',
+};
+
+function finiteNumber(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function parseGameConnectionSnapshot(payload: any): GameConnectionSnapshot {
+  const loggedIn = payload?.loggedIn === true;
+  const legacyCooldown = Math.max(0, Math.floor(finiteNumber(payload?.cooldown)));
+  const state = GAME_CONNECTION_STATES.has(payload?.state)
+    ? payload.state as GameConnectionState
+    : loggedIn
+      ? 'connected'
+      : legacyCooldown > 0
+        ? 'cooldown'
+        : 'disconnected';
+  const cooldownUntil = finiteNumber(payload?.cooldownUntil) ||
+    (legacyCooldown > 0 ? Date.now() + legacyCooldown * 1000 : 0);
+
+  return {
+    state,
+    loggedIn,
+    browserRunning: typeof payload?.browserRunning === 'boolean' ? payload.browserRunning : loggedIn,
+    socketConnected: typeof payload?.socketConnected === 'boolean' ? payload.socketConnected : loggedIn,
+    cooldownUntil,
+    retryAt: finiteNumber(payload?.retryAt) || cooldownUntil,
+    revision: Math.max(0, Math.floor(finiteNumber(payload?.revision))),
+    changedAt: finiteNumber(payload?.changedAt),
+    detail: typeof payload?.detail === 'string' ? payload.detail : '',
+  };
+}
+
 interface AuthContextType {
   gameLoggedIn: boolean;
   gameLoginCooldown: number;
+  gameLoginRetrySeconds: number;
+  gameConnectionState: GameConnectionState;
+  gameSocketConnected: boolean;
+  gameBrowserRunning: boolean;
+  gameConnectionDetail: string;
+  dashboardConnectionStatus: FrontendWebsocketStatus;
+  hasGameConnectionStatus: boolean;
   isGameDataReady: boolean;
   recruitTroopsEnabled: boolean;
   autoRecruitMode: RecruitTroopsMode;
@@ -113,9 +197,12 @@ function autoHospitalSettingsHasData(settings: AutoHospitalClientSettingsV1): bo
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [gameLoggedIn, setGameLoggedIn] = useState(false);
-  const [gameLoginCooldown, setGameLoginCooldown] = useState(0);
-  const [isGameDataReady, setIsGameDataReady] = useState(false);
+  const [gameConnection, setGameConnection] = useState<GameConnectionSnapshot>(INITIAL_GAME_CONNECTION);
+  const [dashboardConnectionStatus, setDashboardConnectionStatus] = useState<FrontendWebsocketStatus>(
+    FrontendWebsocket.getStatus(),
+  );
+  const [hasGameConnectionStatus, setHasGameConnectionStatus] = useState(false);
+  const [gameConnectionClock, setGameConnectionClock] = useState(() => Date.now());
   const [recruitTroopsEnabled, setRecruitTroopsEnabled] = useState(false);
   const [autoRecruitMode, setAutoRecruitMode] = useState<RecruitTroopsMode>(() => loadRecruitTroopsSettingsFromStorage().mode);
   const [autoToolEnabled, setAutoToolEnabled] = useState(false);
@@ -138,18 +225,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [goMem, setGoMem] = useState(0);
   const [chromeMem, setChromeMem] = useState(0);
 
+  const gameLoggedIn =
+    dashboardConnectionStatus === 'Connected' &&
+    hasGameConnectionStatus &&
+    gameConnection.state === 'connected' &&
+    gameConnection.loggedIn &&
+    gameConnection.socketConnected;
+  const gameLoginCooldown = gameConnection.cooldownUntil > gameConnectionClock
+    ? Math.ceil((gameConnection.cooldownUntil - gameConnectionClock) / 1000)
+    : 0;
+  const gameLoginRetrySeconds = gameConnection.retryAt > gameConnectionClock
+    ? Math.ceil((gameConnection.retryAt - gameConnectionClock) / 1000)
+    : 0;
+  const isGameDataReady = gameLoggedIn;
+
   useEffect(() => {
+    let previousDashboardStatus = FrontendWebsocket.getStatus();
     const handleMessage = (message: any) => {
       // console.log('AuthContext received message:', message);
       if (message.type === 'gameLoginStatus') {
         console.log('Game login status received:', message.payload);
-        setGameLoggedIn(message.payload.loggedIn);
-        setGameLoginCooldown(message.payload.cooldown);
-        if (message.payload.loggedIn) {
-          setIsGameDataReady(true);
-        } else {
-          setIsGameDataReady(false);
-        }
+        const next = parseGameConnectionSnapshot(message.payload);
+        setGameConnectionClock(Date.now());
+        setGameConnection((current) => {
+          if (next.revision > 0 && current.revision > next.revision) {
+            return current;
+          }
+          return next;
+        });
+        setHasGameConnectionStatus(true);
       } else if (message.type === 'memoryStats') {
         setGoMem(message.payload.goMem);
         setChromeMem(message.payload.chromeMem);
@@ -266,13 +370,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
+    const handleDashboardStatus = (status: FrontendWebsocketStatus) => {
+      const changed = status !== previousDashboardStatus;
+      previousDashboardStatus = status;
+      setDashboardConnectionStatus(status);
+      if (status !== 'Connected' || changed) {
+        setHasGameConnectionStatus(false);
+      }
+      if (status !== 'Connected') {
+        setGameConnection((current) => ({ ...current, revision: 0 }));
+      }
+    };
+
     FrontendWebsocket.addMessageListener(handleMessage);
+    FrontendWebsocket.addStatusListener(handleDashboardStatus);
     // Connect to WebSocket using the current page's host (supports dynamic port)
     const wsUrl = `ws://${window.location.host}/ws`;
     FrontendWebsocket.connect(wsUrl);
 
     return () => {
       FrontendWebsocket.removeMessageListener(handleMessage);
+      FrontendWebsocket.removeStatusListener(handleDashboardStatus);
     };
   }, []);
 
@@ -297,18 +415,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
+    const deadline = Math.max(gameConnection.cooldownUntil, gameConnection.retryAt);
+    setGameConnectionClock(Date.now());
+    if (deadline <= Date.now()) return;
 
-    if (gameLoginCooldown > 0) {
-      interval = setInterval(() => {
-        setGameLoginCooldown((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [gameLoginCooldown]);
+    const interval = window.setInterval(() => {
+      const now = Date.now();
+      setGameConnectionClock(now);
+      if (now >= deadline) {
+        window.clearInterval(interval);
+      }
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [gameConnection.cooldownUntil, gameConnection.retryAt]);
 
   const startGame = () => {
     FrontendWebsocket.startGame();
@@ -414,6 +533,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider value={{
       gameLoggedIn,
       gameLoginCooldown,
+      gameLoginRetrySeconds,
+      gameConnectionState: gameConnection.state,
+      gameSocketConnected: gameConnection.socketConnected,
+      gameBrowserRunning: gameConnection.browserRunning,
+      gameConnectionDetail: gameConnection.detail,
+      dashboardConnectionStatus,
+      hasGameConnectionStatus,
       isGameDataReady,
       recruitTroopsEnabled,
       autoRecruitMode,

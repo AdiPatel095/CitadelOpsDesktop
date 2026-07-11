@@ -86,7 +86,7 @@ const CastleView: React.FC = () => {
           <CardHeader className="liquid-card-header-prominent">
             <CardTitle className="text-primary">Decorations</CardTitle>
           </CardHeader>
-          <CardContent className="liquid-prominent-header-content liquid-prominent-header-content-flush flex-1 overflow-auto custom-scrollbar">
+          <CardContent className="liquid-prominent-header-content decoration-card-content flex-1 overflow-auto custom-scrollbar">
             <DecorationPresetsPanel />
           </CardContent>
         </Card>

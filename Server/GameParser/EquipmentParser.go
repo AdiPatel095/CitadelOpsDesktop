@@ -25,6 +25,25 @@ func UpdateEquipmentList(gliMap map[string]interface{}) {
 
 	ProcessCastArray(castArray)
 	ProcessCommArray(commArray)
+	syncCommanderRoster(gs)
+	if NotifyMovementChanged != nil {
+		NotifyMovementChanged()
+	}
+}
+
+func syncCommanderRoster(gs *Models.GameState) {
+	if gs == nil {
+		return
+	}
+	roster := make([]Models.CommanderRosterEntry, 0, len(gs.Equipment.CommActualArray))
+	for _, commander := range gs.Equipment.CommActualArray {
+		roster = append(roster, Models.CommanderRosterEntry{
+			CommanderID:     int(commander.ID),
+			Name:            commander.Name,
+			VisiblePosition: int(commander.VisiblePosition),
+		})
+	}
+	gs.Movement.SetCommanderRoster(roster)
 }
 
 func ProcessCastArray(castArray []interface{}) {
@@ -240,6 +259,7 @@ func MergeCast(dstCast *Models.CastStatModel, tempEquipStat *Models.CastStatMode
 	dstCast.CLGlory += tempEquipStat.CLGlory + tempHeroStat.CLGlory + tempGemStat.CLGlory
 	dstCast.CLEarly += tempEquipStat.CLEarly + tempHeroStat.CLEarly + tempGemStat.CLEarly
 	dstCast.ExtraStats = equip.MergeEquipmentExtraStats(dstCast.ExtraStats, tempEquipStat.ExtraStats, tempHeroStat.ExtraStats, tempGemStat.ExtraStats)
+	dstCast.Effects = equip.MergeEquipmentEffects(dstCast.Effects, tempEquipStat.Effects, tempHeroStat.Effects, tempGemStat.Effects)
 }
 
 func ProcessCommArray(commArray []interface{}) {
@@ -389,6 +409,7 @@ func MergeComm(dstComm *Models.CommStatModel, tempEquipStat *Models.CommStatMode
 	dstComm.CLFire += tempEquipStat.CLFire + tempHeroStat.CLFire + tempGemStat.CLFire
 	dstComm.CLGlory += tempEquipStat.CLGlory + tempHeroStat.CLGlory + tempGemStat.CLGlory
 	dstComm.ExtraStats = equip.MergeEquipmentExtraStats(dstComm.ExtraStats, tempEquipStat.ExtraStats, tempHeroStat.ExtraStats, tempGemStat.ExtraStats)
+	dstComm.Effects = equip.MergeEquipmentEffects(dstComm.Effects, tempEquipStat.Effects, tempHeroStat.Effects, tempGemStat.Effects)
 }
 
 func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.EquipmentModel) {
