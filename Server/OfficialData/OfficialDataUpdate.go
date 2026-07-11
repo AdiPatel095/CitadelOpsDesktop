@@ -427,6 +427,8 @@ func officialCatalogSource(catalogName string) (string, func(map[string]interfac
 		return "buildings", officialBuildingIsDecoration
 	case "equipment_effects", "equipment_sets":
 		return catalogName, func(map[string]interface{}) bool { return true }
+	case "effect_types":
+		return "effecttypes", func(map[string]interface{}) bool { return true }
 	default:
 		return officialCatalogKey(catalogName), func(map[string]interface{}) bool { return true }
 	}
@@ -1086,6 +1088,7 @@ func rowID(row map[string]interface{}) int64 {
 		"wid",
 		"resourceID",
 		"effectID",
+		"effectTypeID",
 		"capID",
 		"equipmentEffectID",
 		"equipmentID",

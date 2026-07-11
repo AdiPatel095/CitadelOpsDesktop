@@ -31,6 +31,11 @@ type EquipmentEffect struct {
 	Name          string              `json:"name"`
 	Label         string              `json:"label"`
 	Category      string              `json:"category"`
+	EffectTypeID  float64             `json:"effectTypeId"`
+	SortCategory  string              `json:"sortCategory,omitempty"`
+	SortGroup     string              `json:"sortGroup,omitempty"`
+	CategoryLabel string              `json:"categoryLabel,omitempty"`
+	GroupLabel    string              `json:"groupLabel,omitempty"`
 	Unit          string              `json:"unit"`
 	Scope         string              `json:"scope"`
 	Source        CatalogEffectSource `json:"source"`
@@ -43,15 +48,26 @@ type EquipmentEffect struct {
 }
 
 type liveEffectDefinition struct {
-	EffectID  int64
-	Name      string
-	TypeID    int64
-	CapID     int64
-	SortOrder string
-	Template  string
-	IsPercent bool
-	IsPVP     bool
-	IsPVE     bool
+	EffectID      int64
+	Name          string
+	TypeID        int64
+	CapID         int64
+	SortOrder     string
+	Template      string
+	IsPercent     bool
+	IsPVP         bool
+	IsPVE         bool
+	SortCategory  string
+	SortGroup     string
+	CategoryLabel string
+	GroupLabel    string
+}
+
+type liveEffectTypeDefinition struct {
+	EffectTypeID int64
+	SortCategory string
+	SortGroup    string
+	Name         string
 }
 
 type liveResolvedEffect struct {
@@ -76,6 +92,7 @@ type liveEffectDataCache struct {
 	EquipmentEffectWearers map[int64]int64
 	RelicEffectIDs         map[int64]int64
 	EffectDefinitions      map[int64]liveEffectDefinition
+	EffectTypes            map[int64]liveEffectTypeDefinition
 	GemEffects             map[int64][]liveCatalogEffect
 	GemSetIDs              map[int64]int64
 	EquipmentSetEffects    map[int64][]liveEquipmentSetEffect
@@ -293,6 +310,7 @@ func buildLiveEffectData() liveEffectDataCache {
 		EquipmentEffectWearers: map[int64]int64{},
 		RelicEffectIDs:         map[int64]int64{},
 		EffectDefinitions:      map[int64]liveEffectDefinition{},
+		EffectTypes:            map[int64]liveEffectTypeDefinition{},
 		GemEffects:             map[int64][]liveCatalogEffect{},
 		GemSetIDs:              map[int64]int64{},
 		EquipmentSetEffects:    map[int64][]liveEquipmentSetEffect{},
@@ -305,6 +323,16 @@ func buildLiveEffectData() liveEffectDataCache {
 		capID := liveIntFromValue(entry["capID"])
 		if capID > 0 {
 			data.EffectCaps[capID] = liveFloatFromValue(entry["maxTotalBonus"])
+		}
+	}
+
+	for _, entry := range readLiveDataArray(serverdata.ReadEffectTypesItemsJSON) {
+		typeID := liveIntFromValue(entry["effectTypeID"])
+		data.EffectTypes[typeID] = liveEffectTypeDefinition{
+			EffectTypeID: typeID,
+			SortCategory: liveStringFromValue(entry["sortCategory"]),
+			SortGroup:    liveStringFromValue(entry["sortGroup"]),
+			Name:         liveStringFromValue(entry["name"]),
 		}
 	}
 
@@ -335,6 +363,12 @@ func buildLiveEffectData() liveEffectDataCache {
 		}
 		definition.Template = liveEffectTemplate(data.Lang, definition)
 		definition.IsPercent = liveEffectIsPercent(definition)
+		if effectType, ok := data.EffectTypes[definition.TypeID]; ok {
+			definition.SortCategory = effectType.SortCategory
+			definition.SortGroup = effectType.SortGroup
+			definition.CategoryLabel = liveEffectCategoryLabel(data.Lang, effectType)
+			definition.GroupLabel = liveEffectGroupLabel(data.Lang, effectType)
+		}
 		data.EffectDefinitions[effectID] = definition
 	}
 
@@ -557,6 +591,11 @@ func addEquipmentEffects(stats *[]EquipmentEffect, effect liveResolvedEffect, va
 			Name:          definition.Name,
 			Label:         label,
 			Category:      liveEffectCategory(definition),
+			EffectTypeID:  float64(definition.TypeID),
+			SortCategory:  definition.SortCategory,
+			SortGroup:     definition.SortGroup,
+			CategoryLabel: definition.CategoryLabel,
+			GroupLabel:    definition.GroupLabel,
 			Unit:          liveEffectUnit(definition),
 			Scope:         liveEffectScope(effect),
 			Source:        source,
@@ -726,6 +765,9 @@ func cleanLiveLangLabel(value string) string {
 }
 
 func liveEffectCategory(def liveEffectDefinition) string {
+	if def.CategoryLabel != "" {
+		return def.CategoryLabel
+	}
 	name := strings.ToLower(def.Name)
 	switch {
 	case def.TypeID == 23 || def.TypeID == 24 || def.TypeID == 33 || def.TypeID == 36 || def.TypeID == 53 || def.TypeID == 54 || def.TypeID == 148:
@@ -741,6 +783,26 @@ func liveEffectCategory(def liveEffectDefinition) string {
 	default:
 		return "Other Stats"
 	}
+}
+
+func liveEffectCategoryLabel(lang map[string]string, effectType liveEffectTypeDefinition) string {
+	if effectType.SortCategory == "" {
+		return effectType.Name
+	}
+	return liveLangText(lang, "effect_category_"+effectType.SortCategory, effectType.Name)
+}
+
+func liveEffectGroupLabel(lang map[string]string, effectType liveEffectTypeDefinition) string {
+	if effectType.SortCategory == "" || effectType.SortGroup == "" {
+		return effectType.Name
+	}
+	prefix := "effect_group_" + effectType.SortCategory + "_" + effectType.SortGroup
+	for _, suffix := range []string{"_passive", "_active"} {
+		if label := cleanLiveLangLabel(liveLangText(lang, prefix+suffix, "")); label != "" {
+			return label
+		}
+	}
+	return effectType.Name
 }
 
 func liveEffectUnit(def liveEffectDefinition) string {

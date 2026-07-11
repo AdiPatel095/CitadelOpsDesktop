@@ -60,6 +60,26 @@ func TestCommanderCatalogEffectIncludesCanonicalMetadata(t *testing.T) {
 	if effect.CapID != 2001 || effect.MaxTotalBonus == nil {
 		t.Fatalf("canonical cap metadata missing: %+v", effect)
 	}
+	if effect.SortCategory != "2" || effect.SortGroup != "5" || effect.CategoryLabel != "Defense structure effects" {
+		t.Fatalf("official effect group metadata missing: %+v", effect)
+	}
+}
+
+func TestNewCanonicalEffectUsesOfficialGroupInsteadOfOther(t *testing.T) {
+	var stat CommStatModel
+
+	ApplyCommanderLiveStat(&stat, 167, []float64{12}, CatalogEffectSourceEquipment)
+
+	if len(stat.Effects) != 1 {
+		t.Fatalf("len(Effects) = %d, want 1", len(stat.Effects))
+	}
+	effect := stat.Effects[0]
+	if effect.EffectID != 442 || effect.SortCategory != "6" || effect.SortGroup != "40" {
+		t.Fatalf("unexpected official effect grouping: %+v", effect)
+	}
+	if effect.CategoryLabel != "Post-battle effects" || effect.GroupLabel != "Zombie infection rate decrease on wall area" {
+		t.Fatalf("unexpected official effect labels: %+v", effect)
+	}
 }
 
 func TestLiveEffectLabelUsesOfficialLangDescription(t *testing.T) {
