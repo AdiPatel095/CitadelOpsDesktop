@@ -115,6 +115,7 @@ func InitiateDetails(data string) {
 	go func() {
 		defer wg.Done()
 		HandleLoginInboxBattleReports(jsonDataMap)
+		HandleLoginInboxSpyReports(jsonDataMap)
 	}()
 
 	wg.Wait()

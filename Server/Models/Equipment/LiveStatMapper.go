@@ -31,8 +31,10 @@ func ApplyCommanderLiveStat(dst *CommStatModel, id float64, values []float64, so
 	if dst == nil || len(values) == 0 {
 		return false
 	}
-	if preferCatalogLiveEffect(source) {
-		if applyCommanderResolvedLiveStat(dst, id, values, source) {
+	effect, resolved := resolveLiveCatalogEffect(id, source, 2)
+	if resolved {
+		addEquipmentEffects(&dst.Effects, effect, values, source)
+		if applyCommanderCatalogEffect(dst, effect, values) {
 			return true
 		}
 	}
@@ -40,7 +42,11 @@ func ApplyCommanderLiveStat(dst *CommStatModel, id float64, values []float64, so
 		updater(dst, commanderLiveStatValue(id, values, source))
 		return true
 	}
-	return applyCommanderResolvedLiveStat(dst, id, values, source)
+	if resolved {
+		addEquipmentExtraStat(&dst.ExtraStats, effect, values)
+		return true
+	}
+	return false
 }
 
 func ApplyCastellanLiveStat(dst *CastStatModel, id float64, values []float64, source CatalogEffectSource) bool {
@@ -48,8 +54,10 @@ func ApplyCastellanLiveStat(dst *CastStatModel, id float64, values []float64, so
 	if dst == nil || len(values) == 0 {
 		return false
 	}
-	if preferCatalogLiveEffect(source) {
-		if applyCastellanResolvedLiveStat(dst, id, values, source) {
+	effect, resolved := resolveLiveCatalogEffect(id, source, 1)
+	if resolved {
+		addEquipmentEffects(&dst.Effects, effect, values, source)
+		if applyCastellanCatalogEffect(dst, effect, values) {
 			return true
 		}
 	}
@@ -57,35 +65,11 @@ func ApplyCastellanLiveStat(dst *CastStatModel, id float64, values []float64, so
 		updater(dst, castellanLiveStatValue(id, values, source))
 		return true
 	}
-	return applyCastellanResolvedLiveStat(dst, id, values, source)
-}
-
-func preferCatalogLiveEffect(source CatalogEffectSource) bool {
-	return source == CatalogEffectSourceGem || source == CatalogEffectSourceSetBonus
-}
-
-func applyCommanderResolvedLiveStat(dst *CommStatModel, id float64, values []float64, source CatalogEffectSource) bool {
-	effect, ok := resolveLiveCatalogEffect(id, source)
-	if !ok {
-		return false
-	}
-	if applyCommanderCatalogEffect(dst, effect, values) {
+	if resolved {
+		addEquipmentExtraStat(&dst.ExtraStats, effect, values)
 		return true
 	}
-	addEquipmentExtraStat(&dst.ExtraStats, effect, values)
-	return true
-}
-
-func applyCastellanResolvedLiveStat(dst *CastStatModel, id float64, values []float64, source CatalogEffectSource) bool {
-	effect, ok := resolveLiveCatalogEffect(id, source)
-	if !ok {
-		return false
-	}
-	if applyCastellanCatalogEffect(dst, effect, values) {
-		return true
-	}
-	addEquipmentExtraStat(&dst.ExtraStats, effect, values)
-	return true
+	return false
 }
 
 func canResolveAnyLiveCatalogEffect(id float64) bool {
@@ -96,7 +80,7 @@ func canResolveAnyLiveCatalogEffect(id float64) bool {
 		CatalogEffectSourceRelicGem,
 		CatalogEffectSourceSetBonus,
 	} {
-		if _, ok := resolveLiveCatalogEffect(id, source); ok {
+		if _, ok := resolveLiveCatalogEffect(id, source, 0); ok {
 			return true
 		}
 	}
@@ -141,7 +125,11 @@ func applyCommanderCatalogEffect(dst *CommStatModel, effect liveResolvedEffect, 
 	case 54:
 		dst.FlankCbtStr += value
 	case 51:
-		dst.MaidenSupp += value
+		if strings.Contains(name, "reinforcement") {
+			dst.AttackReinforcement += value
+		} else {
+			dst.MaidenSupp += value
+		}
 	case 179:
 		dst.AttackReinforcement += value
 	case 156:

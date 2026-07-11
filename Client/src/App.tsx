@@ -9,6 +9,7 @@ import RiftView from './Rift/components/RiftView';
 import MovementView from './Movement/components/MovementView';
 import BattleStatsView from './battleStats/components/BattleStatsView';
 import PlayerTrackerView from './playerTracker/components/PlayerTrackerView';
+import AllianceTargetsView from './allianceTargets/components/AllianceTargetsView';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import UpdateModal from './components/UpdateModal';
@@ -53,6 +54,8 @@ const AppContent: React.FC = () => {
         return <BattleStatsView />;
       case 'player-tracker':
         return <PlayerTrackerView />;
+      case 'alliance-targets':
+        return <AllianceTargetsView />;
       case 'rift':
         return <RiftView />;
       case 'support':

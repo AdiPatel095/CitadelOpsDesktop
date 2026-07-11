@@ -11107,5 +11107,159 @@
     "level": 1,
     "name": "Deco",
     "type": "octoberfestParty"
+  },
+  {
+    "id": 4436,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "BronzeRiftshiver"
+  },
+  {
+    "id": 4437,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "SilverRiftshiver"
+  },
+  {
+    "id": 4438,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "GoldRiftshiver"
+  },
+  {
+    "id": 4439,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "DiamondRiftshiver"
+  },
+  {
+    "id": 4440,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "RedBronzeRiftshiver"
+  },
+  {
+    "id": 4441,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "RedSilverRiftshiver"
+  },
+  {
+    "id": 4442,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "RedGoldRiftshiver"
+  },
+  {
+    "id": 4443,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "RedDiamondRiftshiver"
+  },
+  {
+    "id": 4444,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "GreenBronzeRiftshiver"
+  },
+  {
+    "id": 4445,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "GreenSilverRiftshiver"
+  },
+  {
+    "id": 4446,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "GreenGoldRiftshiver"
+  },
+  {
+    "id": 4447,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "GreenDiamondRiftshiver"
+  },
+  {
+    "id": 4448,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "PurpleBronzeRiftshiver"
+  },
+  {
+    "id": 4449,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "PurpleSilverRiftshiver"
+  },
+  {
+    "id": 4450,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "PurpleGoldRiftshiver"
+  },
+  {
+    "id": 4451,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "PurpleDiamondRiftshiver"
+  },
+  {
+    "id": 4452,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "ExaltedGreenOxOasis"
+  },
+  {
+    "id": 4453,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "ExaltedRedWatermelonSwing"
+  },
+  {
+    "id": 4454,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "ExaltedPurpleWatermelonSwing"
+  },
+  {
+    "id": 4455,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "ExaltedGreenWatermelonSwing"
+  },
+  {
+    "id": 4456,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "ExaltedGreenWatermelonSwing"
+  },
+  {
+    "id": 4457,
+    "image": null,
+    "level": 1,
+    "name": "Deco",
+    "type": "ExaltedGreenWatermelonSwing"
   }
 ]

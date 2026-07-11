@@ -76,6 +76,22 @@ func (ms *MapState) ExportKingdoms() map[int]map[string]MapNode {
 	return out
 }
 
+// NodesAt returns only the requested kingdom tiles without copying the entire map.
+func (ms *MapState) NodesAt(kid int, coordinates [][2]int) map[string]MapNode {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
+
+	nodes := make(map[string]MapNode, len(coordinates))
+	kingdom := ms.Kingdoms[kid]
+	for _, coordinate := range coordinates {
+		key := fmt.Sprintf("%d_%d", coordinate[0], coordinate[1])
+		if node, ok := kingdom[key]; ok {
+			nodes[key] = node
+		}
+	}
+	return nodes
+}
+
 func (ms *MapState) AddNode(kid int, n MapNode) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()

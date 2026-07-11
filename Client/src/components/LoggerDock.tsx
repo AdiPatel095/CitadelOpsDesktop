@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icons } from './Icons';
+import { FrontendWebsocket } from '../Websocket';
 
 type ChannelMeta = { id: string; label: string };
 type LogTone = 'send' | 'recv' | 'info' | 'warn' | 'error' | 'debug' | 'plain';
@@ -209,6 +210,12 @@ export const LoggerDock: React.FC = () => {
   }, [parsedLines, searchQuery]);
 
   useEffect(() => {
+    if (loadError) {
+      FrontendWebsocket.showAlert('red', loadError);
+    }
+  }, [loadError]);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
@@ -385,12 +392,6 @@ export const LoggerDock: React.FC = () => {
           </div>
 
           <div className="liquid-logger-body">
-            {loadError && (
-              <div className="liquid-log-error">
-                <Icons.AlertCircle className="w-4 h-4" />
-                {loadError}
-              </div>
-            )}
             <div
               ref={logStreamRef}
               className="liquid-log-stream custom-scrollbar"

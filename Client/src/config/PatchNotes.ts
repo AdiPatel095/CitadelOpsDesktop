@@ -33,7 +33,7 @@ export const APP_VERSION_CURRENT = '1.3.7';
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
   {
     version: '1.3.7',
-    subtitle: 'Player analytics, movement state, attack planning, connection recovery, and automation coordination',
+    subtitle: 'Player analytics, alliance intelligence, equipment data, attack planning, and connection recovery',
     date: '2026-07-10',
     items: [
       { kind: 'added', text: 'My Stats analytics with one-minute history for player scores, troops, currencies, and speedups' },
@@ -43,6 +43,10 @@ export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
       { kind: 'added', text: 'Commander roster and movement status tracking backed by reconciled game movement snapshots' },
       { kind: 'added', text: 'Multi-wave attack planning with inventory-aware troop and tool allocation, reusable presets, and improved Rift launch handling' },
       { kind: 'added', text: 'Commander and castellan base-equipment loadout swapping' },
+      { kind: 'added', text: 'Alliance target intelligence with castle selection, travel distance, spy availability, and live espionage launching' },
+      { kind: 'added', text: 'Alliance spy-report sharing with six-hour visibility, movement correlation, and battle-training context' },
+      { kind: 'changed', text: 'Equipment effects now use the latest official catalogs, localized labels, wearer-aware mappings, PvP and PvE scopes, caps, gems, and set bonuses' },
+      { kind: 'changed', text: 'Effective Battle Profile now shows every applicable always-on plus PvP or PvE total instead of an eight-stat preview' },
       { kind: 'changed', text: 'Game connection status and retry handling now provide consistent login, cooldown, reconnecting, and stale-session state across the dashboard' },
       { kind: 'changed', text: 'Automation features coordinate castle focus so manual actions and higher-priority tasks do not compete for the active castle' },
       { kind: 'fixed', text: 'Improved Auto Bird, Auto TCI, recruiting, tool, hospital, movement, and castle-state synchronization during refreshes and reconnects' },

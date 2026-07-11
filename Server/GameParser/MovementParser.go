@@ -34,6 +34,9 @@ func movementItemsFromGAMLikeRoot(gamData map[string]interface{}) []map[string]i
 		if aArr, ok := wrapper["A"].([]interface{}); ok {
 			movObj["A"] = aArr
 		}
+		if spyObj, ok := wrapper["S"].(map[string]interface{}); ok {
+			movObj["S"] = spyObj
+		}
 		mArray = []interface{}{movObj}
 	} else if mVal, ok := gamData["M"]; ok {
 		switch v := mVal.(type) {
@@ -152,6 +155,11 @@ func ParseGAMMessage(data string) {
 		kid := getInt(mDetails, "KID")
 		sid := getInt(mDetails, "SID")
 		oid := getInt(mDetails, "OID")
+		movementType := getInt(mDetails, "T")
+		spyCount := 0
+		if spyDetails, ok := movObj["S"].(map[string]interface{}); ok {
+			spyCount = getInt(spyDetails, "SC")
+		}
 
 		// Extract target type and coordinates from TA array ([0]=type, [1]=X, [2]=Y)
 		targetType := 0
@@ -225,6 +233,8 @@ func ParseGAMMessage(data string) {
 			KID:          kid,
 			SID:          sid,
 			OID:          oid,
+			MovementType: movementType,
+			SpyCount:     spyCount,
 			TargetType:   targetType,
 			TargetX:      targetX,
 			TargetY:      targetY,

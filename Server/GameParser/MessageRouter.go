@@ -168,12 +168,13 @@ func MessageRouter(messageParts []string) {
 			return
 		}
 		HandleSNESharedBattleReports(payload)
+		HandleSNESpyReports(payload)
 	case "cra":
 		if !hasPayload {
 			return
 		}
 		ParseCRAResponse(messageParts, payload)
-	case "gam", "cat":
+	case "gam", "cat", "csm":
 		if !hasPayload {
 			return
 		}
@@ -192,6 +193,18 @@ func MessageRouter(messageParts []string) {
 			return
 		}
 		ParseGAAMessage(payload)
+	case "ssi":
+		if !hasPayload {
+			return
+		}
+		var response map[string]interface{}
+		if json.Unmarshal([]byte(payload), &response) == nil {
+			if gaa, ok := response["gaa"]; ok {
+				if nested, err := json.Marshal(gaa); err == nil {
+					ParseGAAMessage(string(nested))
+				}
+			}
+		}
 	case "gbc":
 		if !hasPayload {
 			return

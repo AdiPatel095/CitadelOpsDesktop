@@ -215,11 +215,6 @@ const RiftMaidenCommsPanel: React.FC = () => {
             {sendStatus ? 'Sending…' : 'Send maiden comms'}
           </Button>
         </div>
-        {sendStatus ? (
-          <p className="text-xs text-amber-400/90 text-right">{sendStatus}</p>
-        ) : !dashboardConnected ? (
-          <p className="text-xs text-red-400/90 text-right">Dashboard websocket disconnected.</p>
-        ) : null}
       </CardContent>
     </Card>
   );

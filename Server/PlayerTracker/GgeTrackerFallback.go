@@ -232,6 +232,19 @@ func supportedGGETrackerServers(ctx context.Context) ([]string, error) {
 	return servers, nil
 }
 
+// ActiveGGETrackerServer resolves the connected game socket to the GGE Tracker server code.
+func ActiveGGETrackerServer(ctx context.Context) (string, error) {
+	servers, err := supportedGGETrackerServers(ctx)
+	if err != nil {
+		return "", err
+	}
+	candidates := serverCandidates(ResponseRegistry.CurrentGameServerURL(), servers)
+	if len(candidates) == 0 {
+		return "", fmt.Errorf("could not identify the active GGE server")
+	}
+	return candidates[0], nil
+}
+
 func serverCandidates(socketURL string, supported []string) []string {
 	parsed, err := url.Parse(socketURL)
 	if err != nil {

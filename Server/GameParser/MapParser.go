@@ -117,7 +117,7 @@ func ParseGAAMessage(payload string) {
 			if val, ok := item[7].(float64); ok {
 				node.GateLevel = int(val)
 			}
-			if val, ok := item[8].(string); ok {
+			if val, ok := item[10].(string); ok {
 				node.Name = val // Castle Name
 			}
 			if val, ok := item[14].(float64); ok {

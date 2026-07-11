@@ -259,6 +259,7 @@ func MergeCast(dstCast *Models.CastStatModel, tempEquipStat *Models.CastStatMode
 	dstCast.CLGlory += tempEquipStat.CLGlory + tempHeroStat.CLGlory + tempGemStat.CLGlory
 	dstCast.CLEarly += tempEquipStat.CLEarly + tempHeroStat.CLEarly + tempGemStat.CLEarly
 	dstCast.ExtraStats = equip.MergeEquipmentExtraStats(dstCast.ExtraStats, tempEquipStat.ExtraStats, tempHeroStat.ExtraStats, tempGemStat.ExtraStats)
+	dstCast.Effects = equip.MergeEquipmentEffects(dstCast.Effects, tempEquipStat.Effects, tempHeroStat.Effects, tempGemStat.Effects)
 }
 
 func ProcessCommArray(commArray []interface{}) {
@@ -408,6 +409,7 @@ func MergeComm(dstComm *Models.CommStatModel, tempEquipStat *Models.CommStatMode
 	dstComm.CLFire += tempEquipStat.CLFire + tempHeroStat.CLFire + tempGemStat.CLFire
 	dstComm.CLGlory += tempEquipStat.CLGlory + tempHeroStat.CLGlory + tempGemStat.CLGlory
 	dstComm.ExtraStats = equip.MergeEquipmentExtraStats(dstComm.ExtraStats, tempEquipStat.ExtraStats, tempHeroStat.ExtraStats, tempGemStat.ExtraStats)
+	dstComm.Effects = equip.MergeEquipmentEffects(dstComm.Effects, tempEquipStat.Effects, tempHeroStat.Effects, tempGemStat.Effects)
 }
 
 func ProcessEquipment(equipmentDataArray []interface{}, equipmentFinal *Models.EquipmentModel) {

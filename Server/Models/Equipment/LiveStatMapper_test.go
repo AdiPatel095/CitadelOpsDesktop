@@ -13,10 +13,52 @@ func TestCommander2026SalesSetBonusMapsReinforcement(t *testing.T) {
 	if stat.Wave != 3 {
 		t.Fatalf("Wave = %v, want 3", stat.Wave)
 	}
+	var foundReinforcement bool
+	for _, effect := range stat.Effects {
+		if effect.EffectID == 483 {
+			foundReinforcement = true
+			if effect.Source != CatalogEffectSourceSetBonus || effect.Value != 1500 {
+				t.Fatalf("unexpected canonical reinforcement effect: %+v", effect)
+			}
+		}
+	}
+	if !foundReinforcement {
+		t.Fatal("canonical reinforcement effect 483 was not emitted")
+	}
 	for _, extra := range stat.ExtraStats {
 		if extra.EffectID == 483 {
 			t.Fatalf("effect 483 should be compiled into AttackReinforcement, got extra stat %+v", extra)
 		}
+	}
+}
+
+func TestCommanderLegacyEffectDoesNotUseCastellanCatalogMapping(t *testing.T) {
+	var stat CommStatModel
+
+	ApplyCommanderLiveStat(&stat, 1, []float64{12}, CatalogEffectSourceEquipment)
+
+	if stat.MeleeCbtStr != 12 {
+		t.Fatalf("MeleeCbtStr = %v, want 12", stat.MeleeCbtStr)
+	}
+	if len(stat.Effects) != 0 {
+		t.Fatalf("commander legacy effect resolved through castellan catalog: %+v", stat.Effects)
+	}
+}
+
+func TestCommanderCatalogEffectIncludesCanonicalMetadata(t *testing.T) {
+	var stat CommStatModel
+
+	ApplyCommanderLiveStat(&stat, 175, []float64{25}, CatalogEffectSourceEquipment)
+
+	if len(stat.Effects) != 1 {
+		t.Fatalf("len(Effects) = %d, want 1", len(stat.Effects))
+	}
+	effect := stat.Effects[0]
+	if effect.RawEffectID != 175 || effect.EffectID != 469 || effect.Scope != "pvp" || effect.Value != -25 {
+		t.Fatalf("unexpected canonical effect: %+v", effect)
+	}
+	if effect.CapID != 2001 || effect.MaxTotalBonus == nil {
+		t.Fatalf("canonical cap metadata missing: %+v", effect)
 	}
 }
 
@@ -31,7 +73,7 @@ func TestLiveEffectLabelUsesOfficialLangDescription(t *testing.T) {
 		},
 		{
 			name: "newPVPattackUnitAmountReinforcementBonus",
-			want: "Troop capacity for final assault against Castle Lords",
+			want: "Mead ranged units for final assault against Castle Lords",
 		},
 		{
 			name: "equipmentAREAttackUnitAmountFront",
@@ -78,6 +120,9 @@ func TestRelicUnitToolEffectsUsePreviousCommanderBuckets(t *testing.T) {
 			}
 			if len(stat.ExtraStats) != 0 {
 				t.Fatalf("relic effect should not be exposed as extra stats, got %+v", stat.ExtraStats)
+			}
+			if len(stat.Effects) != 1 {
+				t.Fatalf("canonical effect rows = %d, want 1", len(stat.Effects))
 			}
 		})
 	}

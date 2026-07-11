@@ -776,27 +776,6 @@
             );
     }
 
-    .liquid-log-error {
-        position: absolute;
-        inset-inline: 0;
-        top: 0;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        border-bottom: 1px solid color-mix(in srgb, var(--error) 38%, transparent);
-        background: color-mix(in srgb, var(--error) 18%, var(--glass-panel-strong));
-        padding: 0.62rem 0.75rem;
-        color: var(--error);
-        text-align: center;
-        font-size: 0.875rem;
-        font-weight: 700;
-        box-shadow: inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 40%, transparent);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-    }
-
     .liquid-log-stream {
         position: relative;
         z-index: 1;
@@ -2840,8 +2819,30 @@
         line-height: 1;
     }
 
-    .battle-report-back {
+    .detail-back-button {
         flex-shrink: 0;
+        min-height: 2.5rem;
+        padding: 0.35rem 0.9rem 0.35rem 0.4rem;
+        border-color: color-mix(in srgb, var(--primary) 24%, var(--border-light));
+        background: linear-gradient(135deg, color-mix(in srgb, var(--bg-card) 82%, transparent), color-mix(in srgb, var(--primary) 8%, var(--bg-card)));
+        box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow-compact);
+    }
+
+    .detail-back-button:hover {
+        border-color: color-mix(in srgb, var(--primary) 44%, var(--border-light));
+        background: color-mix(in srgb, var(--primary) 10%, var(--bg-card));
+    }
+
+    .detail-back-button-icon {
+        display: inline-flex;
+        width: 1.8rem;
+        height: 1.8rem;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border-base));
+        border-radius: 9999px;
+        background: color-mix(in srgb, var(--primary) 12%, transparent);
+        color: var(--primary);
     }
 
     .battle-report-matchup {
@@ -3067,7 +3068,7 @@
             flex-direction: column;
         }
 
-        .battle-report-back {
+        .detail-back-button {
             width: 100%;
         }
     }

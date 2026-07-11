@@ -188,6 +188,14 @@ class FrontendWebsocketService {
     return this.sendMessage({ type: 'fetchAllianceInfo' });
   }
 
+  public sendGetAllianceTargets(allianceId = ''): boolean {
+    return this.sendMessage({ type: 'getAllianceTargets', payload: { allianceId } });
+  }
+
+  public sendAllianceTargetSpy(targetX: number, targetY: number): boolean {
+    return this.sendMessage({ type: 'sendAllianceTargetSpy', payload: { targetX, targetY } });
+  }
+
   public refreshSingleCommander(equipmentMode: 'Commander' | 'Castellan', targetIndex: number) {
     this.sendMessage({
       type: 'refreshSingleCommander',

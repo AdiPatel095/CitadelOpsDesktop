@@ -1,6 +1,7 @@
 package FrontendWebsocket
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -554,6 +555,44 @@ func ParseFrontendMessage(message []byte) {
 		ResponseRegistry.DisconnectGameWebSocket()
 	case "fetchAllianceInfo":
 		featureview.FetchAllianceInfo()
+	case "getAllianceTargets":
+		selectedAllianceID := ""
+		if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
+			if value, ok := payloadRaw["allianceId"].(string); ok {
+				selectedAllianceID = value
+			}
+		}
+		go func() {
+			view, err := featureview.LoadAllianceTargetView(context.Background(), selectedAllianceID)
+			if err != nil {
+				SendFrontendMessage("allianceTargetsError", map[string]interface{}{"error": err.Error()}, "")
+				return
+			}
+			SendFrontendMessage("allianceTargets", view, "")
+		}()
+	case "sendAllianceTargetSpy":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			SendAlertMessage("red", "Spy target is missing")
+			return
+		}
+		targetX, okX := frontendNumberToInt(payloadRaw["targetX"])
+		targetY, okY := frontendNumberToInt(payloadRaw["targetY"])
+		if !okX || !okY {
+			SendAlertMessage("red", "Spy target coordinates are invalid")
+			return
+		}
+		spyCount, err := featureview.SendAllianceTargetSpy(targetX, targetY)
+		if err != nil {
+			SendAlertMessage("red", err.Error())
+			return
+		}
+		SendFrontendMessage("allianceTargetSpySent", map[string]interface{}{
+			"targetX":  targetX,
+			"targetY":  targetY,
+			"spyCount": spyCount,
+		}, "")
+		SendAlertMessage("green", fmt.Sprintf("Sent %d spies to %d:%d", spyCount, targetX, targetY))
 	case "toggleAutoBird":
 		wasRunning := featureview.IsAutoBirdRunning()
 		if wasRunning {

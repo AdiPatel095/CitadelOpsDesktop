@@ -31,6 +31,24 @@ export interface EquipmentExtraStat {
     value: number;
 }
 
+export interface ResolvedEquipmentEffect {
+    key: string;
+    rawEffectId: number;
+    effectId: number;
+    name: string;
+    label: string;
+    category: string;
+    unit: 'percent' | 'number';
+    scope: 'generic' | 'pvp' | 'pve';
+    source: 'equipment' | 'relic_equipment' | 'gem' | 'relic_gem' | 'set_bonus';
+    value: number;
+    argumentId?: number;
+    argumentLabel?: string;
+    capId?: number;
+    maxTotalBonus?: number;
+    sortOrder?: string;
+}
+
 export interface CommStat {
     id: number;
     name: string;
@@ -86,6 +104,7 @@ export interface CommStat {
     CLFire: number;
     CLGlory: number;
     extraStats?: EquipmentExtraStat[];
+    effects?: ResolvedEquipmentEffect[];
 }
 
 export interface CastStat {
@@ -148,6 +167,7 @@ export interface CastStat {
     CLGlory: number;
     CLEarly: number;
     extraStats?: EquipmentExtraStat[];
+    effects?: ResolvedEquipmentEffect[];
 }
 
 export interface CastStatObject {
@@ -194,7 +214,7 @@ export interface ProcessedEquipmentStat {
 }
 
 export type EquipmentEffectScope = 'Always' | 'PvP' | 'PvE';
-export type EquipmentEffectRowKind = 'total' | 'parsed' | 'extra';
+export type EquipmentEffectRowKind = 'total' | 'parsed' | 'catalog' | 'extra';
 
 export interface EquipmentEffectRow {
     key: string;
@@ -209,6 +229,8 @@ export interface EquipmentEffectRow {
     sources?: ProcessedEquipmentStatSource[];
     effectId?: number;
     sourceLabel?: string;
+    maxTotalBonus?: number;
+    sortOrder?: string;
 }
 
 export interface EquipmentEffectSection {
@@ -474,6 +496,7 @@ const identityAndSlotKeys = new Set([
     'gem3',
     'gem4',
     'extraStats',
+    'effects',
 ]);
 
 const effectiveTotalKeysByMode: Record<EquipmentMode, string[]> = {
@@ -772,34 +795,55 @@ export function buildEquipmentEffectSections(
         });
     }
 
-    for (const [key, raw] of Object.entries(stats as Record<string, unknown>)) {
-        if (!isRawStatKey(key)) continue;
-        const value = Number(raw);
-        if (!Number.isFinite(value) || value === 0) continue;
-        const scope = scopeForRawStatKey(key);
-        addRow(sectionForRawStatKey(key), {
-            key,
-            label: displayStatName(key, { equipmentMode, scope }),
-            value: roundStat(value),
-            unit: statUnit(key),
-            scope,
-            kind: 'parsed',
-        });
-    }
+    const catalogEffects = stats.effects ?? [];
+    if (catalogEffects.length > 0) {
+        for (const effect of catalogEffects) {
+            const value = Number(effect.value);
+            if (!Number.isFinite(value) || value === 0) continue;
+            const scope = scopeForCatalogEffect(effect.scope);
+            addRow(sectionForCatalogEffect(effect.category, effect.label), {
+                key: `catalog:${effect.key}`,
+                label: effect.label || effect.name || `Effect ${effect.effectId}`,
+                value: roundStat(value),
+                unit: effect.unit === 'number' ? 'number' : 'percent',
+                scope,
+                kind: 'catalog',
+                effectId: effect.effectId,
+                sourceLabel: catalogEffectSourceLabel(effect.source, effect.argumentLabel),
+                maxTotalBonus: effect.maxTotalBonus,
+                sortOrder: effect.sortOrder,
+            });
+        }
+    } else {
+        for (const [key, raw] of Object.entries(stats as Record<string, unknown>)) {
+            if (!isRawStatKey(key)) continue;
+            const value = Number(raw);
+            if (!Number.isFinite(value) || value === 0) continue;
+            const scope = scopeForRawStatKey(key);
+            addRow(sectionForRawStatKey(key), {
+                key,
+                label: displayStatName(key, { equipmentMode, scope }),
+                value: roundStat(value),
+                unit: statUnit(key),
+                scope,
+                kind: 'parsed',
+            });
+        }
 
-    for (const extra of stats.extraStats ?? []) {
-        const value = Number(extra.value);
-        if (!Number.isFinite(value) || value === 0) continue;
-        addRow(sectionForExtraStat(extra), {
-            key: `extra:${extra.key || extra.effectId}`,
-            label: extra.label || extra.name || extra.category || 'Unmapped effect',
-            value: roundStat(value),
-            unit: extra.unit === 'number' ? 'number' : 'percent',
-            scope: scopeForExtraStat(extra),
-            kind: 'extra',
-            effectId: extra.effectId,
-            sourceLabel: extra.category,
-        });
+        for (const extra of stats.extraStats ?? []) {
+            const value = Number(extra.value);
+            if (!Number.isFinite(value) || value === 0) continue;
+            addRow(sectionForExtraStat(extra), {
+                key: `extra:${extra.key || extra.effectId}`,
+                label: extra.label || extra.name || extra.category || 'Unmapped effect',
+                value: roundStat(value),
+                unit: extra.unit === 'number' ? 'number' : 'percent',
+                scope: scopeForExtraStat(extra),
+                kind: 'extra',
+                effectId: extra.effectId,
+                sourceLabel: extra.category,
+            });
+        }
     }
 
     return effectSectionOrder
@@ -827,14 +871,13 @@ export function getEquipmentShowcaseStats(
 
     return keys
         .map(key => processedStats[key])
-        .filter((stat): stat is ProcessedEquipmentStat => !!stat && stat.value !== 0)
-        .slice(0, 8);
+        .filter((stat): stat is ProcessedEquipmentStat => !!stat && stat.value !== 0);
 }
 
 export function getEquipmentShowcaseRows(sections: EquipmentEffectSection[]): EquipmentEffectRow[] {
     const effective = sections.find(section => section.key === 'effective');
     if (!effective) return [];
-    return effective.rows.slice(0, 8);
+    return effective.rows;
 }
 
 export function formatEquipmentStatValue(statKey: string, value: number): string {
@@ -939,6 +982,39 @@ function scopeForExtraStat(stat: EquipmentExtraStat): EquipmentEffectScope {
     return 'Always';
 }
 
+function scopeForCatalogEffect(scope: 'generic' | 'pvp' | 'pve'): EquipmentEffectScope {
+    if (scope === 'pvp') return 'PvP';
+    if (scope === 'pve') return 'PvE';
+    return 'Always';
+}
+
+function catalogEffectSourceLabel(source: ResolvedEquipmentEffect['source'], argumentLabel?: string): string {
+    const sourceLabel: Record<ResolvedEquipmentEffect['source'], string> = {
+        equipment: 'Equipment',
+        relic_equipment: 'Relic equipment',
+        gem: 'Gem',
+        relic_gem: 'Relic gem',
+        set_bonus: 'Set bonus',
+    };
+    return argumentLabel ? `${sourceLabel[source]} · ${argumentLabel}` : sourceLabel[source];
+}
+
+function sectionForCatalogEffect(category: string, label: string): string {
+    const normalized = String(category || '').toLowerCase();
+    const text = String(label || '').toLowerCase();
+    if (normalized.includes('economy')) return 'economy';
+    if (normalized.includes('capacity')) return 'capacity';
+    if (normalized.includes('wall') || normalized.includes('gate') || normalized.includes('moat')) return 'fortification';
+    if (normalized.includes('unit')) return 'combat';
+    if (normalized.includes('event')) return 'special';
+    if (isEconomyText(text)) return 'economy';
+    if (isCapacityText(text)) return 'capacity';
+    if (isFortificationText(text)) return 'fortification';
+    if (isMobilityText(text)) return 'mobility';
+    if (isSpecialText(text)) return 'special';
+    return 'other';
+}
+
 function sectionForRawStatKey(key: string): string {
     if (isEconomyStatKey(key)) return 'economy';
     if (isMobilityStatKey(key)) return 'mobility';
@@ -1017,11 +1093,27 @@ function statUnit(key: string): 'percent' | 'number' {
 
 function compareEffectRows(a: EquipmentEffectRow, b: EquipmentEffectRow): number {
     const scopeOrder: Record<EquipmentEffectScope, number> = { Always: 0, PvP: 1, PvE: 2 };
+    if (a.sortOrder || b.sortOrder) {
+        const sortOrder = compareCatalogSortOrder(a.sortOrder, b.sortOrder);
+        if (sortOrder !== 0) return sortOrder;
+    }
     const priorityA = rawStatPriority[a.key] ?? 1000;
     const priorityB = rawStatPriority[b.key] ?? 1000;
     if (priorityA !== priorityB) return priorityA - priorityB;
     if (scopeOrder[a.scope] !== scopeOrder[b.scope]) return scopeOrder[a.scope] - scopeOrder[b.scope];
     return a.label.localeCompare(b.label);
+}
+
+function compareCatalogSortOrder(left = '', right = ''): number {
+    const leftParts = left.split('.').map(Number);
+    const rightParts = right.split('.').map(Number);
+    const length = Math.max(leftParts.length, rightParts.length);
+    for (let index = 0; index < length; index += 1) {
+        const leftValue = Number.isFinite(leftParts[index]) ? leftParts[index] : 0;
+        const rightValue = Number.isFinite(rightParts[index]) ? rightParts[index] : 0;
+        if (leftValue !== rightValue) return leftValue - rightValue;
+    }
+    return 0;
 }
 
 function readStatValue(stats: CommStat | CastStat, key: string): number {

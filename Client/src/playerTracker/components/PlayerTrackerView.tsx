@@ -24,6 +24,7 @@ import { useResources } from '../../currency/context/ResourceContext';
 import { useCastleResources } from '../../dashboard/context/CastleResourceContext';
 import type { PlayerCastleInfo } from '../../dashboard/models/PlayerCastleInfo';
 import type { PlayerGlobalResources } from '../../types/PlayerGlobalResources';
+import { FrontendWebsocket } from '../../Websocket';
 
 interface PlayerTrackerSample {
   timestampUnix: number;
@@ -193,6 +194,12 @@ const PlayerTrackerView = () => {
   const [troopFoodFilter, setTroopFoodFilter] = useState<FoodFilter>('all');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (loadError) {
+      FrontendWebsocket.showAlert('red', loadError);
+    }
+  }, [loadError]);
 
   const liveSample = useMemo<PlayerTrackerSample | null>(() => {
     if (!resources || !gameLoggedIn) return null;

@@ -16,6 +16,7 @@ import {
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Select } from '../../components/ui';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
+import DetailBackButton from '../../components/DetailBackButton';
 import { useMetadata } from '../../context/MetadataContext';
 import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
 import { FrontendWebsocket } from '../../Websocket';
@@ -69,7 +70,6 @@ const BattleStatsView: React.FC = () => {
   const [reports, setReports] = useState<ParsedReport[]>([]);
   const [allianceInfo, setAllianceInfo] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [sourceLabel, setSourceLabel] = useState<string>('Not loaded');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPlayer, setSelectedPlayer] = useState(allOption);
@@ -84,8 +84,6 @@ const BattleStatsView: React.FC = () => {
 
   const loadReports = async () => {
     setIsLoading(true);
-    setLoadError(null);
-
     try {
       let emptySource = '';
       for (const source of dataSources) {
@@ -108,7 +106,10 @@ const BattleStatsView: React.FC = () => {
       setSourceLabel(emptySource ? `${emptySource} is empty` : 'No local archive found');
       setSelectedReportID(null);
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'Could not load battle reports');
+      FrontendWebsocket.showAlert(
+        'red',
+        error instanceof Error ? error.message : 'Could not load battle reports'
+      );
       setReports([]);
       setSourceLabel('Load failed');
       setSelectedReportID(null);
@@ -387,11 +388,6 @@ const BattleStatsView: React.FC = () => {
                 Reset filters
               </Button>
 
-              {loadError && (
-                <div className="text-sm text-error bg-error/10 border border-error/20 rounded-global px-3 py-2">
-                  {loadError}
-                </div>
-              )}
             </CardContent>
           </Card>
         </aside>
@@ -796,9 +792,7 @@ const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onB
             <CardTitle className="battle-report-dossier-title">{battleLocationLabel(report)}</CardTitle>
           </div>
         </div>
-        <Button variant="outline" className="battle-report-back" onClick={onBack}>
-          Back to aggregate
-        </Button>
+        <DetailBackButton label="Back to battle stats" onClick={onBack} />
       </div>
 
       <div className="battle-report-matchup">

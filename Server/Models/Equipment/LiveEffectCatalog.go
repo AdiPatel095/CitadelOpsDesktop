@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math"
 	"regexp"
 	"sort"
 	"strconv"
@@ -23,12 +24,34 @@ type EquipmentExtraStat struct {
 	Value    float64 `json:"value"`
 }
 
+type EquipmentEffect struct {
+	Key           string              `json:"key"`
+	RawEffectID   float64             `json:"rawEffectId"`
+	EffectID      float64             `json:"effectId"`
+	Name          string              `json:"name"`
+	Label         string              `json:"label"`
+	Category      string              `json:"category"`
+	Unit          string              `json:"unit"`
+	Scope         string              `json:"scope"`
+	Source        CatalogEffectSource `json:"source"`
+	Value         float64             `json:"value"`
+	ArgumentID    float64             `json:"argumentId,omitempty"`
+	ArgumentLabel string              `json:"argumentLabel,omitempty"`
+	CapID         float64             `json:"capId,omitempty"`
+	MaxTotalBonus *float64            `json:"maxTotalBonus,omitempty"`
+	SortOrder     string              `json:"sortOrder,omitempty"`
+}
+
 type liveEffectDefinition struct {
-	EffectID int64
-	Name     string
-	TypeID   int64
-	IsPVP    bool
-	IsPVE    bool
+	EffectID  int64
+	Name      string
+	TypeID    int64
+	CapID     int64
+	SortOrder string
+	Template  string
+	IsPercent bool
+	IsPVP     bool
+	IsPVE     bool
 }
 
 type liveResolvedEffect struct {
@@ -49,13 +72,16 @@ type liveEquipmentSetEffect struct {
 }
 
 type liveEffectDataCache struct {
-	EquipmentEffectIDs  map[int64]int64
-	RelicEffectIDs      map[int64]int64
-	EffectDefinitions   map[int64]liveEffectDefinition
-	GemEffects          map[int64][]liveCatalogEffect
-	GemSetIDs           map[int64]int64
-	EquipmentSetEffects map[int64][]liveEquipmentSetEffect
-	Lang                map[string]string
+	EquipmentEffectIDs     map[int64]int64
+	EquipmentEffectWearers map[int64]int64
+	RelicEffectIDs         map[int64]int64
+	EffectDefinitions      map[int64]liveEffectDefinition
+	GemEffects             map[int64][]liveCatalogEffect
+	GemSetIDs              map[int64]int64
+	EquipmentSetEffects    map[int64][]liveEquipmentSetEffect
+	EffectCaps             map[int64]float64
+	UnitNames              map[int64]string
+	Lang                   map[string]string
 }
 
 var (
@@ -64,6 +90,8 @@ var (
 )
 
 var liveLangPlaceholderPattern = regexp.MustCompile(`[+\-]?\s*\{[0-9]+\}\s*%?`)
+var liveNegativeValuePattern = regexp.MustCompile(`-\s*\{0\}|\{0\}\s*-`)
+var livePositiveValuePattern = regexp.MustCompile(`\+\s*\{0\}|\{0\}\s*\+`)
 
 func ApplyCommanderSetBonusStats(dst *CommStatModel, setID float64, equippedCount int) {
 	if dst == nil || setID <= 0 || equippedCount <= 0 {
@@ -142,12 +170,43 @@ func MergeEquipmentExtraStats(existing []EquipmentExtraStat, groups ...[]Equipme
 	return merged
 }
 
-func resolveLiveCatalogEffect(rawID float64, source CatalogEffectSource) (liveResolvedEffect, bool) {
+func MergeEquipmentEffects(existing []EquipmentEffect, groups ...[]EquipmentEffect) []EquipmentEffect {
+	merged := make([]EquipmentEffect, 0, len(existing))
+	byKey := make(map[string]int)
+	add := func(effect EquipmentEffect) {
+		if idx, ok := byKey[effect.Key]; ok {
+			merged[idx].Value += effect.Value
+			return
+		}
+		byKey[effect.Key] = len(merged)
+		merged = append(merged, effect)
+	}
+	for _, effect := range existing {
+		add(effect)
+	}
+	for _, group := range groups {
+		for _, effect := range group {
+			add(effect)
+		}
+	}
+	sort.SliceStable(merged, func(i, j int) bool {
+		if merged[i].SortOrder != merged[j].SortOrder {
+			return compareLiveSortOrder(merged[i].SortOrder, merged[j].SortOrder) < 0
+		}
+		return merged[i].Label < merged[j].Label
+	})
+	return merged
+}
+
+func resolveLiveCatalogEffect(rawID float64, source CatalogEffectSource, wearerID int64) (liveResolvedEffect, bool) {
 	raw := int64(rawID)
 	if raw <= 0 {
 		return liveResolvedEffect{}, false
 	}
 	data := loadLiveEffectData()
+	equipmentMappedID := data.EquipmentEffectIDs[raw]
+	equipmentWearerID := data.EquipmentEffectWearers[raw]
+	equipmentMappingMatches := equipmentMappedID > 0 && (wearerID == 0 || equipmentWearerID == 0 || equipmentWearerID == wearerID)
 
 	resolve := func(id int64) (liveResolvedEffect, bool) {
 		def, ok := data.EffectDefinitions[id]
@@ -167,8 +226,8 @@ func resolveLiveCatalogEffect(rawID float64, source CatalogEffectSource) (liveRe
 		if effect, ok := resolve(raw); ok {
 			return effect, true
 		}
-		if mapped := data.EquipmentEffectIDs[raw]; mapped > 0 {
-			if effect, ok := resolve(mapped); ok {
+		if equipmentMappingMatches {
+			if effect, ok := resolve(equipmentMappedID); ok {
 				return effect, true
 			}
 		}
@@ -176,8 +235,8 @@ func resolveLiveCatalogEffect(rawID float64, source CatalogEffectSource) (liveRe
 		if effect, ok := resolve(raw); ok {
 			return effect, true
 		}
-		if mapped := data.EquipmentEffectIDs[raw]; mapped > 0 {
-			if effect, ok := resolve(mapped); ok {
+		if equipmentMappingMatches {
+			if effect, ok := resolve(equipmentMappedID); ok {
 				return effect, true
 			}
 		}
@@ -187,10 +246,13 @@ func resolveLiveCatalogEffect(rawID float64, source CatalogEffectSource) (liveRe
 			}
 		}
 	default:
-		if mapped := data.EquipmentEffectIDs[raw]; mapped > 0 {
-			if effect, ok := resolve(mapped); ok {
+		if equipmentMappingMatches {
+			if effect, ok := resolve(equipmentMappedID); ok {
 				return effect, true
 			}
+		}
+		if equipmentMappedID > 0 && !equipmentMappingMatches {
+			return liveResolvedEffect{ID: raw, RawID: raw}, false
 		}
 		if effect, ok := resolve(raw); ok {
 			return effect, true
@@ -227,13 +289,32 @@ func loadLiveEffectData() liveEffectDataCache {
 
 func buildLiveEffectData() liveEffectDataCache {
 	data := liveEffectDataCache{
-		EquipmentEffectIDs:  map[int64]int64{},
-		RelicEffectIDs:      map[int64]int64{},
-		EffectDefinitions:   map[int64]liveEffectDefinition{},
-		GemEffects:          map[int64][]liveCatalogEffect{},
-		GemSetIDs:           map[int64]int64{},
-		EquipmentSetEffects: map[int64][]liveEquipmentSetEffect{},
-		Lang:                readLiveLang(),
+		EquipmentEffectIDs:     map[int64]int64{},
+		EquipmentEffectWearers: map[int64]int64{},
+		RelicEffectIDs:         map[int64]int64{},
+		EffectDefinitions:      map[int64]liveEffectDefinition{},
+		GemEffects:             map[int64][]liveCatalogEffect{},
+		GemSetIDs:              map[int64]int64{},
+		EquipmentSetEffects:    map[int64][]liveEquipmentSetEffect{},
+		EffectCaps:             map[int64]float64{},
+		UnitNames:              map[int64]string{},
+		Lang:                   readLiveLang(),
+	}
+
+	for _, entry := range readLiveDataArray(serverdata.ReadEffectCapsItemsJSON) {
+		capID := liveIntFromValue(entry["capID"])
+		if capID > 0 {
+			data.EffectCaps[capID] = liveFloatFromValue(entry["maxTotalBonus"])
+		}
+	}
+
+	for _, entry := range readLiveDataArray(serverdata.ReadTroopsJSON) {
+		unitID := liveIntFromValue(entry["wodID"])
+		unitType := liveStringFromValue(entry["type"])
+		if unitID <= 0 || unitType == "" {
+			continue
+		}
+		data.UnitNames[unitID] = liveLangText(data.Lang, unitType+"_name", unitType)
 	}
 
 	for _, entry := range readLiveDataArray(serverdata.ReadEffectsItemsJSON) {
@@ -243,13 +324,18 @@ func buildLiveEffectData() liveEffectDataCache {
 		}
 		name := liveStringFromValue(entry["name"])
 		lowerName := strings.ToLower(name)
-		data.EffectDefinitions[effectID] = liveEffectDefinition{
-			EffectID: effectID,
-			Name:     name,
-			TypeID:   liveIntFromValue(entry["effectTypeID"]),
-			IsPVP:    liveStringFromValue(entry["isPvPFight"]) == "1" || strings.Contains(lowerName, "pvp"),
-			IsPVE:    liveStringFromValue(entry["isPvEFight"]) == "1" || strings.Contains(lowerName, "pve"),
+		definition := liveEffectDefinition{
+			EffectID:  effectID,
+			Name:      name,
+			TypeID:    liveIntFromValue(entry["effectTypeID"]),
+			CapID:     liveIntFromValue(entry["capID"]),
+			SortOrder: liveStringFromValue(entry["sortOrder"]),
+			IsPVP:     liveStringFromValue(entry["isPvPFight"]) == "1" || strings.Contains(lowerName, "pvp"),
+			IsPVE:     liveStringFromValue(entry["isPvEFight"]) == "1" || strings.Contains(lowerName, "pve"),
 		}
+		definition.Template = liveEffectTemplate(data.Lang, definition)
+		definition.IsPercent = liveEffectIsPercent(definition)
+		data.EffectDefinitions[effectID] = definition
 	}
 
 	for _, entry := range readLiveDataArray(serverdata.ReadEquipmentEffectsItemsJSON) {
@@ -257,6 +343,7 @@ func buildLiveEffectData() liveEffectDataCache {
 		effectID := liveIntFromValue(entry["effectID"])
 		if equipmentEffectID > 0 && effectID > 0 {
 			data.EquipmentEffectIDs[equipmentEffectID] = effectID
+			data.EquipmentEffectWearers[equipmentEffectID] = liveIntFromValue(entry["wearerID"])
 		}
 	}
 
@@ -442,7 +529,73 @@ func addEquipmentExtraStat(stats *[]EquipmentExtraStat, effect liveResolvedEffec
 	*stats = MergeEquipmentExtraStats(*stats, []EquipmentExtraStat{extra})
 }
 
+func addEquipmentEffects(stats *[]EquipmentEffect, effect liveResolvedEffect, values []float64, source CatalogEffectSource) {
+	if stats == nil || !effect.HasDef {
+		return
+	}
+	definition := effect.Definition
+	data := loadLiveEffectData()
+	add := func(value float64, argumentID int64) {
+		if value == 0 {
+			return
+		}
+		value = liveEffectSemanticValue(definition, value)
+		argumentLabel := data.UnitNames[argumentID]
+		if argumentID > 0 && argumentLabel == "" {
+			argumentLabel = strconv.FormatInt(argumentID, 10)
+		}
+		label := liveEffectLabel(definition)
+		if argumentLabel != "" {
+			label = strings.ReplaceAll(label, "{1}", argumentLabel)
+		}
+		label = cleanLiveLangLabel(label)
+		key := fmt.Sprintf("%d:%d:%s", effect.ID, argumentID, source)
+		resolved := EquipmentEffect{
+			Key:           key,
+			RawEffectID:   float64(effect.RawID),
+			EffectID:      float64(effect.ID),
+			Name:          definition.Name,
+			Label:         label,
+			Category:      liveEffectCategory(definition),
+			Unit:          liveEffectUnit(definition),
+			Scope:         liveEffectScope(effect),
+			Source:        source,
+			Value:         value,
+			ArgumentID:    float64(argumentID),
+			ArgumentLabel: argumentLabel,
+			CapID:         float64(definition.CapID),
+			SortOrder:     definition.SortOrder,
+		}
+		if capValue, ok := data.EffectCaps[definition.CapID]; ok {
+			resolved.MaxTotalBonus = &capValue
+		}
+		*stats = MergeEquipmentEffects(*stats, []EquipmentEffect{resolved})
+	}
+
+	if strings.Contains(definition.Template, "{1}") && len(values) >= 2 && len(values)%2 == 0 {
+		for i := 0; i < len(values); i += 2 {
+			add(values[i+1], int64(values[i]))
+		}
+		return
+	}
+	add(liveCatalogEffectValue(effect, values), 0)
+}
+
+func liveEffectSemanticValue(def liveEffectDefinition, value float64) float64 {
+	switch {
+	case liveNegativeValuePattern.MatchString(def.Template):
+		return -math.Abs(value)
+	case livePositiveValuePattern.MatchString(def.Template):
+		return math.Abs(value)
+	default:
+		return value
+	}
+}
+
 func liveEffectLabel(def liveEffectDefinition) string {
+	if strings.TrimSpace(def.Template) != "" {
+		return def.Template
+	}
 	name := strings.TrimSpace(def.Name)
 	if name == "" {
 		return fmt.Sprintf("Effect %d", def.EffectID)
@@ -484,6 +637,45 @@ func liveEffectLabel(def liveEffectDefinition) string {
 		return fmt.Sprintf("Effect %d", def.EffectID)
 	}
 	return strings.Join(words, " ")
+}
+
+func liveEffectTemplate(lang map[string]string, def liveEffectDefinition) string {
+	name := strings.TrimSpace(def.Name)
+	if name == "" {
+		return ""
+	}
+	key := strings.ToLower(name)
+	for _, candidate := range []string{
+		"equip_effect_description_" + key,
+		"ci_effect_" + key,
+		"effect_name_" + key,
+		"effect_desc_" + key,
+		"equip_effect_description_short_" + key,
+		key,
+	} {
+		value := liveLangText(lang, candidate, "")
+		if value == "" || strings.Contains(strings.ToLower(value), "lost its powers") || strings.Contains(strings.ToLower(value), "seems to have run out") {
+			continue
+		}
+		return value
+	}
+	return ""
+}
+
+func liveEffectIsPercent(def liveEffectDefinition) bool {
+	template := def.Template
+	isPercent := strings.Contains(template, "%") || strings.Contains(strings.ToLower(def.Name), "boost")
+	return isPercent && !strings.Contains(strings.ToLower(def.Name), "unboosted")
+}
+
+func liveLangText(lang map[string]string, key string, fallback string) string {
+	if value := strings.TrimSpace(lang[key]); value != "" {
+		return value
+	}
+	if value := strings.TrimSpace(lang[strings.ToLower(key)]); value != "" {
+		return value
+	}
+	return fallback
 }
 
 func officialLiveEffectLabel(name string) string {
@@ -552,12 +744,40 @@ func liveEffectCategory(def liveEffectDefinition) string {
 }
 
 func liveEffectUnit(def liveEffectDefinition) string {
+	if def.IsPercent {
+		return "percent"
+	}
 	switch def.TypeID {
 	case 47, 51, 148, 150, 156, 179, 181:
 		return "number"
 	default:
 		return "percent"
 	}
+}
+
+func compareLiveSortOrder(left string, right string) int {
+	leftParts := strings.Split(left, ".")
+	rightParts := strings.Split(right, ".")
+	length := len(leftParts)
+	if len(rightParts) > length {
+		length = len(rightParts)
+	}
+	for i := 0; i < length; i++ {
+		var leftValue, rightValue int64
+		if i < len(leftParts) {
+			leftValue = liveIntFromString(leftParts[i])
+		}
+		if i < len(rightParts) {
+			rightValue = liveIntFromString(rightParts[i])
+		}
+		if leftValue < rightValue {
+			return -1
+		}
+		if leftValue > rightValue {
+			return 1
+		}
+	}
+	return 0
 }
 
 func liveIntFromValue(v interface{}) int64 {
@@ -586,6 +806,24 @@ func liveIntFromString(value string) int64 {
 func liveFloatFromString(value string) float64 {
 	n, _ := strconv.ParseFloat(strings.TrimSpace(value), 64)
 	return n
+}
+
+func liveFloatFromValue(v interface{}) float64 {
+	switch x := v.(type) {
+	case json.Number:
+		n, _ := x.Float64()
+		return n
+	case float64:
+		return x
+	case int:
+		return float64(x)
+	case int64:
+		return float64(x)
+	case string:
+		return liveFloatFromString(x)
+	default:
+		return 0
+	}
 }
 
 func liveStringFromValue(v interface{}) string {
