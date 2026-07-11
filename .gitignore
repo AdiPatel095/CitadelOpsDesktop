@@ -9,7 +9,10 @@ jsonExamples/loginBytes.json
 
 # Build output - Go binary
 /CitadelDesktop
+/CitadelOpsDesktop
+/CitadelOpsDesktopNext
 /Build
+/Data/
 
 # OS-generated files
 .DS_Store

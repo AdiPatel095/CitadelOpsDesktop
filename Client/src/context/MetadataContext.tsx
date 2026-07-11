@@ -1,5 +1,5 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { TOOL_METADATA, TROOP_METADATA } from '../config/Constants';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { CitadelAPI } from '../api/CitadelClient';
 
 export interface MetadataItem {
   id: number;
@@ -12,56 +12,92 @@ export interface MetadataItem {
 interface MetadataContextValue {
   troops: Record<number, MetadataItem>;
   tools: Record<number, MetadataItem>;
+	buildings: Record<number, MetadataItem>;
   decorations: Record<number, MetadataItem>;
+	resources: Record<number, MetadataItem>;
+	currencies: Record<number, MetadataItem>;
   isLoading: boolean;
   getTroop: (id: number) => MetadataItem | undefined;
   getTool: (id: number) => MetadataItem | undefined;
+	getBuilding: (id: number) => MetadataItem | undefined;
   getDecoration: (id: number) => MetadataItem | undefined;
 }
 
 const MetadataContext = createContext<MetadataContextValue | undefined>(undefined);
 
-const metadataSources = {
-  troops: ['/game-data/troops/items.json', '/game-data/troops/index.json', '/game-data/units/index.json'],
-  tools: ['/game-data/tools/items.json', '/game-data/tools/index.json'],
-  decorations: ['/game-data/decorations/index.json'],
-};
-
-export const MetadataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [troops, setTroops] = useState<Record<number, MetadataItem>>(() => fallbackTroops());
-  const [tools, setTools] = useState<Record<number, MetadataItem>>(() => fallbackTools());
+export function MetadataProvider({ children }: { children: React.ReactNode }) {
+  const [troops, setTroops] = useState<Record<number, MetadataItem>>({});
+  const [tools, setTools] = useState<Record<number, MetadataItem>>({});
+	const [buildings, setBuildings] = useState<Record<number, MetadataItem>>({});
   const [decorations, setDecorations] = useState<Record<number, MetadataItem>>({});
+	const [resources, setResources] = useState<Record<number, MetadataItem>>({});
+	const [currencies, setCurrencies] = useState<Record<number, MetadataItem>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-
     const load = async () => {
       setIsLoading(true);
-      const [loadedTroops, loadedTools, loadedDecorations] = await Promise.all([
-        fetchFirstIndex(metadataSources.troops),
-        fetchFirstIndex(metadataSources.tools),
-        fetchFirstIndex(metadataSources.decorations),
-      ]);
+      try {
+		const [unitsResponse, buildingsResponse, resourcesResponse, currenciesResponse] = await Promise.all([
+          CitadelAPI.getCatalog<OfficialRecord>('units'),
+          CitadelAPI.getCatalog<OfficialRecord>('buildings'),
+			CitadelAPI.getCatalog<OfficialRecord>('resources'),
+			CitadelAPI.getCatalog<OfficialRecord>('currencies'),
+        ]);
+		const keys = localizationKeys([
+			...unitsResponse.items, ...buildingsResponse.items, ...resourcesResponse.items, ...currenciesResponse.items,
+		]);
+        const translations = await CitadelAPI.localize(keys);
+        if (cancelled) return;
 
-      if (cancelled) {
-        return;
-      }
+        const nextTroops: Record<number, MetadataItem> = {};
+        const nextTools: Record<number, MetadataItem> = {};
+        for (const row of unitsResponse.items) {
+          const id = positiveID(row.wodID);
+          if (id === 0) continue;
+          const item: MetadataItem = {
+            ...row,
+            id,
+            name: displayName(row, translations, `Unit ${id}`),
+            image: `/game-data/${isTool(row) ? 'tools' : 'troops'}/images/${id}.webp`,
+          };
+          if (isTool(row)) nextTools[id] = item;
+          else nextTroops[id] = item;
+        }
 
-      if (Object.keys(loadedTroops).length > 0) {
-        setTroops((current) => ({ ...current, ...loadedTroops }));
+		const nextBuildings: Record<number, MetadataItem> = {};
+        const nextDecorations: Record<number, MetadataItem> = {};
+        for (const row of buildingsResponse.items) {
+          const id = positiveID(row.wodID);
+          if (id === 0) continue;
+          const level = positiveID(row.level);
+			const item: MetadataItem = {
+            ...row,
+            id,
+			name: displayName(row, translations, `Building ${id}`),
+            ...(level > 0 ? { level } : {}),
+          };
+			nextBuildings[id] = item;
+			if (isDecoration(row)) {
+				nextDecorations[id] = { ...item, image: `/game-data/decorations/images/${id}.webp` };
+			}
+        }
+		const nextResources = definitionMetadata(resourcesResponse.items, 'resourceID', translations, 'Resource');
+		const nextCurrencies = definitionMetadata(currenciesResponse.items, 'currencyID', translations, 'Currency');
+        setTroops(nextTroops);
+        setTools(nextTools);
+		setBuildings(nextBuildings);
+        setDecorations(nextDecorations);
+		setResources(nextResources);
+		setCurrencies(nextCurrencies);
+      } catch (error) {
+        if (!cancelled) console.error('Could not load official game metadata', error);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-      if (Object.keys(loadedTools).length > 0) {
-        setTools((current) => ({ ...current, ...loadedTools }));
-      }
-      if (Object.keys(loadedDecorations).length > 0) {
-        setDecorations(loadedDecorations);
-      }
-      setIsLoading(false);
     };
-
     void load();
-
     return () => {
       cancelled = true;
     };
@@ -69,128 +105,96 @@ export const MetadataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const getTroop = useCallback((id: number) => troops[id], [troops]);
   const getTool = useCallback((id: number) => tools[id], [tools]);
+	const getBuilding = useCallback((id: number) => buildings[id], [buildings]);
   const getDecoration = useCallback((id: number) => decorations[id], [decorations]);
-
-  const value = useMemo<MetadataContextValue>(
-    () => ({
-      troops,
-      tools,
-      decorations,
-      isLoading,
-      getTroop,
-      getTool,
-      getDecoration,
-    }),
-    [decorations, getDecoration, getTool, getTroop, isLoading, tools, troops]
-  );
+  const value = useMemo<MetadataContextValue>(() => ({
+    troops,
+    tools,
+		buildings,
+    decorations,
+		resources,
+		currencies,
+    isLoading,
+    getTroop,
+    getTool,
+		getBuilding,
+    getDecoration,
+	}), [buildings, currencies, decorations, getBuilding, getDecoration, getTool, getTroop, isLoading, resources, tools, troops]);
 
   return <MetadataContext.Provider value={value}>{children}</MetadataContext.Provider>;
-};
+}
 
 export function useMetadata(): MetadataContextValue {
   const context = useContext(MetadataContext);
-  if (!context) {
-    throw new Error('useMetadata must be used within a MetadataProvider');
-  }
+  if (!context) throw new Error('useMetadata must be used within MetadataProvider');
   return context;
 }
 
-async function fetchFirstIndex(urls: string[]): Promise<Record<number, MetadataItem>> {
-  for (const url of urls) {
-    try {
-      const response = await fetch(url, { cache: 'no-cache' });
-      if (!response.ok) {
-        continue;
-      }
+type OfficialRecord = Record<string, unknown>;
 
-      const payload = await response.json();
-      const parsed = parseMetadataIndex(payload);
-      if (Object.keys(parsed).length > 0) {
-        return parsed;
-      }
-    } catch {
-      continue;
-    }
-  }
-
-  return {};
+function isTool(row: OfficialRecord): boolean {
+  if (Array.isArray(row.slotTypes)) return row.slotTypes.length > 0;
+  return typeof row.slotTypes === 'string' && row.slotTypes.trim() !== '';
 }
 
-function parseMetadataIndex(value: unknown): Record<number, MetadataItem> {
-  const rows = Array.isArray(value)
-    ? value
-    : isRecord(value) && Array.isArray(value.items)
-      ? value.items
-      : isRecord(value)
-        ? Object.entries(value).map(([id, item]) => ({ id, ...(isRecord(item) ? item : { name: String(item) }) }))
-        : [];
+function isDecoration(row: OfficialRecord): boolean {
+  return row.buildingGroundType === 'DECO'
+    || row.shopCategory === 'DECO'
+    || row.name === 'Deco'
+    || (typeof row.type === 'string' && row.type.includes('Deco'));
+}
 
-  const out: Record<number, MetadataItem> = {};
+function localizationKeys(rows: OfficialRecord[]): string[] {
+  const keys = new Set<string>();
   for (const row of rows) {
-    if (!isRecord(row)) {
-      continue;
-    }
-
-    const id = toID(row.id ?? row.wodID ?? row.wid ?? row.ID);
-    if (id <= 0) {
-      continue;
-    }
-
-    const name = stringValue(row._display_name ?? row.displayName ?? row.name ?? row.Name ?? row.title ?? row.label);
-    const level = toPositiveID(row.level ?? row.Level);
-    out[id] = {
-      ...row,
-      id,
-      name: name || `Item ${id}`,
-    };
-    if (level > 0) {
-      out[id].level = level;
+    for (const value of [row.type, row.name, row.Name, row.JSONKey]) {
+      if (typeof value !== 'string' || value.trim() === '') continue;
+      keys.add(`${value}_name`);
+      keys.add(value);
     }
   }
-
-  return out;
+  return Array.from(keys).slice(0, 5000);
 }
 
-function fallbackTroops(): Record<number, MetadataItem> {
-  const out: Record<number, MetadataItem> = {};
-  for (const [id, meta] of Object.entries(TROOP_METADATA)) {
-    const numericID = Number(id);
-    out[numericID] = {
-      id: numericID,
-      ...meta,
-      image: `/game-data/troops/images/${numericID}.webp`,
-    };
+function displayName(row: OfficialRecord, translations: Record<string, string>, fallback: string): string {
+  if (typeof row._display_name === 'string' && row._display_name.trim() !== '') return row._display_name;
+  for (const value of [row.type, row.name, row.Name, row.JSONKey]) {
+    if (typeof value !== 'string' || value.trim() === '') continue;
+    const translated = translations[`${value}_name`] ?? translations[value];
+    if (translated?.trim()) return translated;
   }
-  return out;
-}
-
-function fallbackTools(): Record<number, MetadataItem> {
-  const out: Record<number, MetadataItem> = {};
-  for (const [id, meta] of Object.entries(TOOL_METADATA)) {
-    const numericID = Number(id);
-    out[numericID] = {
-      id: numericID,
-      ...meta,
-      image: `/game-data/tools/images/${numericID}.webp`,
-    };
+  for (const value of [row.type, row.name, row.Name]) {
+    if (typeof value === 'string' && value.trim()) return value;
   }
-  return out;
+  return fallback;
 }
 
-function toID(value: unknown): number {
+function positiveID(value: unknown): number {
   const parsed = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(parsed) ? Math.trunc(parsed) : 0;
+  if (!Number.isFinite(parsed)) return 0;
+  const integer = Math.trunc(parsed);
+  return integer > 0 ? integer : 0;
 }
 
-function toPositiveID(value: unknown): number {
-  const parsed = toID(value);
-  return parsed > 0 ? parsed : 0;
-}
-
-function stringValue(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+function definitionMetadata(
+	rows: OfficialRecord[],
+	idField: string,
+	translations: Record<string, string>,
+	fallbackPrefix: string,
+): Record<number, MetadataItem> {
+	const result: Record<number, MetadataItem> = {};
+	for (const row of rows) {
+		const id = positiveID(row[idField]);
+		if (id === 0) continue;
+		result[id] = {
+			...row,
+			id,
+			internalName: typeof row.name === 'string' ? row.name : undefined,
+			name: displayName(row, translations, `${fallbackPrefix} ${id}`),
+			image: typeof row.assetName === 'string' && row.assetName.trim()
+				? `/game-data/resources/images/${row.assetName}.webp`
+				: undefined,
+		};
+	}
+	return result;
 }

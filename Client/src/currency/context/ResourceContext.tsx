@@ -1,54 +1,39 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { FrontendWebsocket } from '../../Websocket.ts';
-import type { PlayerGlobalResources } from '../../types/PlayerGlobalResources.ts';
-import { useAuth } from '../../context/AuthContext';
-import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { useMetadata } from '../../context/MetadataContext';
+import type { PlayerGlobalResources } from '../../types/PlayerGlobalResources';
 
 interface ResourceContextType {
-  resources: PlayerGlobalResources | null;
+	resources: PlayerGlobalResources | null;
 }
 
 const ResourceContext = createContext<ResourceContextType | undefined>(undefined);
 
-export const useResources = () => {
-  const context = useContext(ResourceContext);
-  if (!context) {
-    throw new Error('useResources must be used within a ResourceProvider');
-  }
-  return context;
-};
+export function useResources(): ResourceContextType {
+	const context = useContext(ResourceContext);
+	if (!context) throw new Error('useResources must be used within a ResourceProvider');
+	return context;
+}
 
-export const ResourceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [resources, setResources] = useState<PlayerGlobalResources | null>(null);
-  const { gameLoggedIn } = useAuth();
-  const { snapshot } = useLastKnownSnapshot();
-
-  useEffect(() => {
-    const handleResourceUpdate = (data: any) => {
-      if (data.type === 'globalResourceUpdate') {
-        setResources(data.payload as PlayerGlobalResources);
-      }
-    };
-
-    FrontendWebsocket.addMessageListener(handleResourceUpdate);
-
-    return () => {
-      FrontendWebsocket.removeMessageListener(handleResourceUpdate);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!snapshot || gameLoggedIn) return;
-    const gs = snapshot.gameState;
-    if (!gs || typeof gs !== 'object') return;
-    const gr = (gs as Record<string, unknown>).globalResources;
-    if (!gr || typeof gr !== 'object') return;
-    setResources((prev) => (prev == null ? (gr as PlayerGlobalResources) : prev));
-  }, [snapshot, gameLoggedIn]);
-
-  return (
-    <ResourceContext.Provider value={{ resources }}>
-      {children}
-    </ResourceContext.Provider>
-  );
-};
+export function ResourceProvider({ children }: { children: ReactNode }) {
+	const { state } = useCitadelAPI();
+	const { resources: definitions } = useMetadata();
+	const resources = useMemo((): PlayerGlobalResources | null => {
+		if (!state) return null;
+		let coins = 0;
+		let rubies = 0;
+		for (const [rawID, amount] of Object.entries(state.player.resources)) {
+			const internalName = definitions[Number(rawID)]?.internalName;
+			if (internalName === 'currency1') coins = amount;
+			if (internalName === 'currency2') rubies = amount;
+		}
+		return {
+			coins,
+			rubies,
+			might_pt: state.player.might ?? 0,
+			glory_pt: state.player.glory ?? 0,
+			gallan_pt: state.player.gallantry ?? 0,
+		};
+	}, [definitions, state]);
+	return <ResourceContext.Provider value={{ resources }}>{children}</ResourceContext.Provider>;
+}

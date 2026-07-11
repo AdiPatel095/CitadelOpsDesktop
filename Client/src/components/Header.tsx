@@ -47,13 +47,14 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
     gameConnectionState,
     gameSocketConnected,
     gameBrowserRunning,
+		gameBrowserName,
     gameConnectionDetail,
     dashboardConnectionStatus,
     hasGameConnectionStatus,
     startGame,
     stopGame,
     goMem,
-    chromeMem,
+		browserMem,
     autoBirdEnabled,
     autoBirdNextWakeUp,
     toggleAutoBird,
@@ -148,7 +149,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
           tone: 'warning' as const,
           pulse: true,
           label: 'Starting game…',
-          title: 'Chrome is starting and loading the game client.',
+			title: `${gameBrowserName} is starting and loading the game client.`,
         };
       case 'reconnecting':
         return {
@@ -194,9 +195,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
           tone: 'error' as const,
           pulse: false,
           label: 'Game stopped',
-          title: gameBrowserRunning
-            ? 'The game WebSocket was stopped; Chrome remains open.'
-            : 'The game browser and WebSocket are stopped.',
+			title: gameBrowserRunning
+				? `The ${gameBrowserName} session is stopping.`
+				: 'The game browser and WebSocket are stopped.',
         };
       default:
         return {
@@ -209,6 +210,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
   }, [
     dashboardConnectionStatus,
     gameBrowserRunning,
+		gameBrowserName,
     gameConnectionDetail,
     gameConnectionState,
     gameLoggedIn,
@@ -271,8 +273,8 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
                 <span className="font-mono">{goMem ? `${goMem} MB` : '--'}</span>
               </Badge>
               <Badge className="liquid-memory-badge bg-warning/10 text-warning border border-warning/30 gap-2 px-3 py-1.5">
-                <span className="text-[9px] font-bold text-warning/80 uppercase tracking-wider">CHROME RAM</span>
-                <span className="font-mono">{chromeMem ? `${chromeMem} MB` : '--'}</span>
+				<span className="text-[9px] font-bold text-warning/80 uppercase tracking-wider">BROWSER RAM</span>
+				<span className="font-mono">{browserMem ? `${browserMem} MB` : '--'}</span>
               </Badge>
             </>
           )}

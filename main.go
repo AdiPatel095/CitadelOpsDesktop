@@ -1,154 +1,115 @@
 package main
 
 import (
-	"CitadelDesktop/Server/FrontendWebsocket"
-	"CitadelDesktop/Server/GameData"
-	"CitadelDesktop/Server/GameParser"
-	"CitadelDesktop/Server/Logging"
-	"CitadelDesktop/Server/Models"
-	battlereport "CitadelDesktop/Server/Models/BattleReport"
-	spyreport "CitadelDesktop/Server/Models/SpyReport"
-	"CitadelDesktop/Server/Paths"
-	"CitadelDesktop/Server/PlayerTracker"
-	"CitadelDesktop/Server/ResponseRegistry"
-	"CitadelDesktop/Server/Version"
-	"embed"
-	"fmt"
-	"io/fs"
+	"context"
+	"encoding/json"
+	"flag"
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+	"time"
+
+	"CitadelDesktop/Server/App"
+	"CitadelDesktop/Server/Paths"
+	"CitadelDesktop/Server/Session"
 )
 
-//go:embed all:Client/dist
-var frontendAssets embed.FS
-
-var currentPort int
-
 func main() {
-	// Initialize custom file logger (pipes to both stdout and file)
-	if err := Logging.InitLogger(); err != nil {
-		log.Printf("Warning: Failed to initialize file logger: %v", err)
-	}
-	if err := Logging.InitChannelLogs(); err != nil {
-		log.Printf("Warning: Failed to initialize channel logs: %v", err)
-	}
-	defer Logging.CloseLogger()
-	defer Logging.CloseChannelLogs()
+	address := flag.String("addr", "127.0.0.1:8080", "HTTP listen address")
+	offline := flag.Bool("offline", false, "start without refreshing official game data")
+	browser := flag.String("browser", os.Getenv("CITADEL_BROWSER"), "Chromium browser id, executable, or auto")
+	browserPath := flag.String("browser-path", os.Getenv("CITADEL_BROWSER_PATH"), "explicit Chromium browser executable path")
+	browserHeadless := flag.Bool("browser-headless", false, "run the game browser without visible windows")
+	replayLog := flag.String("replay-log", "", "stream a captured websocket log instead of launching a browser")
+	replaySpeed := flag.Float64("replay-speed", 0, "capture replay speed multiplier; zero replays immediately")
+	flag.Parse()
 
-	log.Printf("Instance data directory: %s", Paths.DataDir())
-
-	// Clean up old binary from previous update (if exists)
-	Version.CleanupOldBinary()
-
-	// Initialize the port for the frontend service
-	port, err := findAvailablePort(8080)
+	rootContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	dataDir, err := Paths.DataDir()
 	if err != nil {
-		log.Printf("Warning: Failed to initialize port: %v", err)
+		log.Fatal(err)
 	}
-	currentPort = port
-	log.Printf("Frontend port initialized: %d", currentPort)
-
-	// Create WebSocket hub
-	FrontendWebsocket.InitHub()
-
-	ResponseRegistry.BroadcastStaleSnapshot = FrontendWebsocket.BroadcastLastKnownGameStateSnapshot
-
-	Models.StartPeriodicGameStateSnapshots()
-	playertracker.Start()
-	GameParser.OnGAMParsed = func() {
-		gs := Models.GetGameState()
-		movements, _, _, _ := gs.Movement.Snapshot()
-		memberIDs := make([]int, 0, len(gs.Alliance.Members))
-		for _, member := range gs.Alliance.Members {
-			if member.PlayerID > 0 {
-				memberIDs = append(memberIDs, member.PlayerID)
-			}
-		}
-		spyreport.UploadMatchingMovements(movements, gs.PlayerID, gs.Alliance.AID, memberIDs)
-	}
-
-	if err := gamedata.LoadConsumptionReductionBuildings(); err != nil {
-		log.Printf("Warning: failed to load consumption reduction building index: %v", err)
-	}
-	if n, err := GameParser.ConstructionItemGroupBuildingsReady(); err != nil {
-		log.Printf("Warning: construction item group→building map unavailable: %v", err)
+	var transport Session.Transport
+	if *replayLog != "" {
+		transport = Session.NewReplayTransport(Session.ReplayConfig{Path: *replayLog, Speed: *replaySpeed})
 	} else {
-		log.Printf("[gamedata] construction item group→building wodIDs: %d groups loaded", n)
+		transport = Session.NewChromiumTransport(Session.ChromiumConfig{
+			DataDir: dataDir, DashboardURL: localDashboardURL(*address),
+			Browser: *browser, ExecutablePath: *browserPath, Headless: *browserHeadless,
+		})
 	}
-
-	// Set up callbacks for ResponseRegistry to notify frontend
-	ResponseRegistry.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
-	ResponseRegistry.SetAutoBirdStatusCallback(FrontendWebsocket.SendAutoBirdStatus)
-	ResponseRegistry.SetAutoStationStatusCallback(FrontendWebsocket.SendAutoStationStatus)
-	ResponseRegistry.SetMemoryStatsCallback(FrontendWebsocket.SendMemoryStatsMessage)
-
-	// Set up callbacks for Version package
-	Version.SetVersionUpdateCallback(FrontendWebsocket.SendVersionUpdateMessage)
-	Version.SetUpdateProgressCallback(FrontendWebsocket.SendUpdateProgressMessage)
-	Version.SetUpdateCompleteCallback(FrontendWebsocket.SendUpdateCompleteMessage)
-	Version.SetUpdateErrorCallback(FrontendWebsocket.SendUpdateErrorMessage)
-
-	// Startup frontend server
-	go StartFrontendService()
-
-	// Start version check service (runs in background)
-	Version.StartVersionCheck()
-
-	// Block forever
-	select {}
-}
-
-func findAvailablePort(preferredPort int) (int, error) {
-	// Try a preferred port first, if available
-	if preferredPort > 0 {
-		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", preferredPort))
-		if err == nil {
-			_ = ln.Close()
-			return preferredPort, nil
-		}
-	}
-
-	// Otherwise, let the OS choose
-	listener, err := net.Listen("tcp", ":0")
+	startupContext, cancelStartup := context.WithTimeout(rootContext, 90*time.Second)
+	application, err := App.New(startupContext, App.Config{
+		DataDir: dataDir, Offline: *offline, Transport: transport, RuntimeContext: rootContext,
+	})
+	cancelStartup()
 	if err != nil {
-		return 0, err
+		log.Fatal(err)
 	}
-	defer listener.Close()
-	return listener.Addr().(*net.TCPAddr).Port, nil
-}
-
-func StartFrontendService() {
-	// Create a sub-filesystem that starts from the 'Client/dist' directory
-	subFS, err := fs.Sub(frontendAssets, "Client/dist")
-	if err != nil {
-		log.Fatal("Failed to create sub-filesystem for frontend assets:", err)
+	if application.StartupErr != nil {
+		log.Printf("Official game data is unavailable: %v", application.StartupErr)
 	}
+	application.Start(rootContext)
 
 	mux := http.NewServeMux()
+	mux.Handle("/api/", application.API.Handler())
+	mux.Handle("/", frontendHandler("Client/dist"))
+	server := &http.Server{
+		Addr:              *address,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       90 * time.Second,
+	}
+	go func() {
+		<-rootContext.Done()
+		shutdownContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_ = server.Shutdown(shutdownContext)
+	}()
 
-	mux.Handle("/", http.FileServer(http.FS(subFS)))
-	Logging.RegisterLogHandlers(mux)
-	battlereport.RegisterStatsHandlers(mux)
-	spyreport.RegisterHandlers(mux)
-	playertracker.RegisterHandlers(mux)
-	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)
+	log.Printf("CitadelOps %s listening at http://%s", App.Version, *address)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatal(err)
+	}
+}
 
-	port := currentPort
-	addr := fmt.Sprintf(":%d", port)
-	dashboardURL := fmt.Sprintf("http://localhost:%d", port)
-	ResponseRegistry.SetDashboardURL(dashboardURL)
-
-	ln, err := net.Listen("tcp", addr)
+func localDashboardURL(address string) string {
+	host, port, err := net.SplitHostPort(address)
 	if err != nil {
-		log.Fatal(err)
+		return "http://" + address
 	}
-	log.Printf("Dashboard available at: %s", dashboardURL)
-
-	// Listen before opening Chrome so the first websocket connect succeeds.
-	go ResponseRegistry.StartGameBrowser(dashboardURL)
-
-	if err := http.Serve(ln, mux); err != nil {
-		log.Fatal(err)
+	switch host {
+	case "", "0.0.0.0":
+		host = "127.0.0.1"
+	case "::":
+		host = "::1"
 	}
+	return "http://" + net.JoinHostPort(host, port)
+}
+
+func frontendHandler(directory string) http.Handler {
+	indexPath := filepath.Join(directory, "index.html")
+	if _, err := os.Stat(indexPath); err == nil {
+		files := http.FileServer(http.Dir(directory))
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			path := filepath.Join(directory, filepath.Clean(request.URL.Path))
+			if info, err := os.Stat(path); err == nil && !info.IsDir() {
+				files.ServeHTTP(writer, request)
+				return
+			}
+			http.ServeFile(writer, request, indexPath)
+		})
+	}
+	return http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		_ = json.NewEncoder(writer).Encode(map[string]any{
+			"name": "CitadelOps", "version": App.Version,
+			"detail": "Build Client/ or run the Vite development server for the desktop UI.",
+		})
+	})
 }

@@ -4,7 +4,6 @@ import {
     type CommStat,
     type CastStat,
 } from '../models/Equipment.ts';
-import { useAuth } from '../../context/AuthContext';
 
 // Castle index mapping (0-9) — matches server Models.NumPlayerCastleSlots / castStatUpdate optionalData
 // 0 Main … 7 Storm, 8 Metropolis, 9 Capital
@@ -114,12 +113,6 @@ export const EquipmentProvider: React.FC<EquipmentProviderProps> = ({ children }
                     }
                     break;
 
-                case 'refreshEquipment':
-                    // Backend notifies us to refresh all equipment data
-                    console.log('Received refreshEquipment notification from backend');
-                    FrontendWebsocket.refreshEquipment();
-                    break;
-
                 default:
                     // console.log('Unknown websocket message type:', message.type);
                     break;
@@ -132,28 +125,6 @@ export const EquipmentProvider: React.FC<EquipmentProviderProps> = ({ children }
             FrontendWebsocket.removeMessageListener(handleEquipmentUpdate);
         };
     }, []); // Empty dependency array: This effect runs only once to set up the listener.
-
-    const { isGameDataReady } = useAuth();
-
-    useEffect(() => {
-        if (!isGameDataReady) return;
-
-        // Fetch data 3 seconds after connection
-        const timeout = setTimeout(() => {
-            console.log('Initial equipment data fetch...');
-            FrontendWebsocket.refreshEquipment();
-        }, 3000);
-
-        const interval = setInterval(() => {
-            console.log('Refreshing equipment data...');
-            FrontendWebsocket.refreshEquipment();
-        }, 15000);
-
-        return () => {
-            clearTimeout(timeout);
-            clearInterval(interval);
-        };
-    }, [isGameDataReady]);
 
     // This effect correctly determines the loading state for commStats.
     useEffect(() => {

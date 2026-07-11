@@ -1,372 +1,194 @@
+import { CitadelAPI } from './api/CitadelClient';
+import type { APIConnectionStatus, APIEnvelope } from './api/Contracts';
 import type { FeatureSchedules } from './settings/SchedulerTypes';
-import { CommandJsonMockRuntime } from './dev/CommandJsonMock';
 
 type MessageListener = (message: any) => void;
-export type FrontendWebsocketStatus = 'Disconnected' | 'Connecting' | 'Connected';
+export type FrontendWebsocketStatus = APIConnectionStatus;
 type StatusListener = (status: FrontendWebsocketStatus) => void;
 
-class FrontendWebsocketService {
-  private socket: WebSocket | null = null;
-  private listeners: MessageListener[] = [];
-  private statusListeners: StatusListener[] = [];
-  private mock: boolean = import.meta.env.VITE_MOCK_WEBSOCKET === 'true';
-  private status: FrontendWebsocketStatus = 'Disconnected';
-  private url: string | null = null;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private reconnectAttempt = 0;
-  private intentionalClose = false;
-  private mockRuntime: CommandJsonMockRuntime | null = null;
+/**
+ * Temporary source-compatibility surface for feature views that have not yet moved to useCitadelAPI.
+ * It does not own a websocket: all traffic is submitted through the versioned v2 client as intents.
+ */
+class LegacyIntentBridge {
+	private listeners = new Set<MessageListener>();
+	private statusListeners = new Set<StatusListener>();
+	private status: FrontendWebsocketStatus = 'Disconnected';
 
-  public connect(url: string) {
-    this.url = url;
-    this.intentionalClose = false;
-    this.openSocket();
-  }
+	constructor() {
+		CitadelAPI.subscribeStatus((status) => {
+			this.status = status;
+			for (const listener of this.statusListeners) listener(status);
+		});
+		CitadelAPI.subscribe((message) => this.forwardEvent(message));
+	}
 
-  private openSocket() {
-    if (this.mock) {
-      this.setStatus('Connecting');
-      setTimeout(() => {
-        this.setStatus('Connected');
-        if (!this.mockRuntime) {
-          this.mockRuntime = new CommandJsonMockRuntime((message) => this.emitMessage(message));
-        }
-        this.mockRuntime.start().catch((error) => {
-          console.error('Failed to start command JSON mock:', error);
-          this.emitLocalAlert('red', 'Could not load dev mock command JSON. Check Logs/RecvCommandsJSON/gbd.json.');
-        });
-      }, 250);
-      return;
-    }
+	connect() {
+		CitadelAPI.connect();
+	}
 
-    if (!this.url) {
-      return;
-    }
+	addMessageListener(listener: MessageListener) {
+		this.listeners.add(listener);
+	}
 
-    if (this.socket) {
-      const state = this.socket.readyState;
-      if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) {
-        return;
-      }
-      this.socket = null;
-    }
+	removeMessageListener(listener: MessageListener) {
+		this.listeners.delete(listener);
+	}
 
-    this.setStatus('Connecting');
-    let socket: WebSocket;
-    try {
-      socket = new WebSocket(this.url);
-    } catch (error) {
-      console.error('Failed to create WebSocket:', error);
-      this.setStatus('Disconnected');
-      this.scheduleReconnect();
-      return;
-    }
-    this.socket = socket;
+	addStatusListener(listener: StatusListener) {
+		this.statusListeners.add(listener);
+		listener(this.status);
+	}
 
-    socket.onopen = () => {
-      if (this.socket !== socket) return;
-      this.reconnectAttempt = 0;
-      this.setStatus('Connected');
-      // Defer follow-up requests so server SendInitialData can drain first.
-      window.setTimeout(() => this.sendOnOpenRequests(), 300);
-    };
+	removeStatusListener(listener: StatusListener) {
+		this.statusListeners.delete(listener);
+	}
 
-    socket.onclose = () => {
-      if (this.socket !== socket) return;
-      this.socket = null;
-      this.setStatus('Disconnected');
-      this.scheduleReconnect();
-    };
+	getStatus(): FrontendWebsocketStatus {
+		return this.status;
+	}
 
-    socket.onerror = (error) => {
-      if (this.socket !== socket) return;
-      console.error('WebSocket error:', error);
-    };
+	sendMessage(message: Record<string, any>): boolean {
+		const type = typeof message.type === 'string' ? message.type : '';
+		if (!type) return false;
+		const { type: _type, payload, ...fields } = message;
+		const argumentsValue = isRecord(payload) ? payload : fields;
+		return this.submit(legacyIntentName(type), argumentsValue);
+	}
 
-    socket.onmessage = (event) => {
-      if (this.socket !== socket) return;
-      try {
-        const message = JSON.parse(event.data);
-        this.emitMessage(message);
-      } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
-      }
-    };
-  }
+	showAlert(category: 'green' | 'yellow' | 'red', message: string) {
+		this.emit({ type: 'alert', payload: { category, message } });
+	}
 
-  private sendOnOpenRequests() {
-    this.sendMessage({ type: 'getSchedulerSettings' });
-    this.sendMessage({ type: 'getRecruitTroopsSettings' });
-    this.sendMessage({ type: 'getAutoToolSettings' });
-    this.sendMessage({ type: 'getAutoBirdClientState' });
-    this.sendMessage({ type: 'getAutoStationClientState' });
-    this.sendMessage({ type: 'getAutoTCIClientState' });
-  }
+	startGame() { return this.submit('session.start'); }
+	stopGame() { return this.submit('session.stop'); }
+	refreshEquipment() { return this.submit('equipment.refresh'); }
+	sendFetchAllianceInfo() { return this.submit('alliance.refresh'); }
+	sendGetAllianceTargets(allianceId = '') { return this.submit('alliance_targets.query', { allianceId }); }
+	sendAllianceTargetSpy(targetX: number, targetY: number) { return this.submit('spy.launch', { targetX, targetY }); }
 
-  private scheduleReconnect() {
-    if (this.mock || !this.url || this.intentionalClose) {
-      return;
-    }
-    if (this.reconnectTimer != null) {
-      return;
-    }
-    const delay = Math.min(30_000, 1000 * 2 ** this.reconnectAttempt);
-    this.reconnectAttempt += 1;
-    this.reconnectTimer = window.setTimeout(() => {
-      this.reconnectTimer = null;
-      this.openSocket();
-    }, delay);
-  }
+	refreshSingleCommander(equipmentMode: 'Commander' | 'Castellan', targetIndex: number) {
+		return this.submit('equipment.refresh_leader', { equipmentMode, targetIndex });
+	}
 
-  private emitMessage(message: any) {
-    this.listeners.forEach((listener) => listener(message));
-  }
+	sendReconfigureLoadout(payload: {
+		equipmentMode: 'Commander' | 'Castellan';
+		combatMode: 'PvP' | 'PvE';
+		targetIndex: number;
+		stats: Array<{ stat: string; tier: number; position: number }>;
+	}) {
+		return this.submit('equipment.plan_loadout', payload);
+	}
 
-  private setStatus(status: FrontendWebsocketStatus) {
-    if (this.status === status) return;
-    this.status = status;
-    this.statusListeners.forEach((listener) => listener(status));
-  }
+	sendConfirmReconfigure(targetIndex: number, currentLoadout: any, newLoadout: any, equipmentMode: 'Commander' | 'Castellan') {
+		return this.submit('equipment.apply_loadout', { targetIndex, currentLoadout, newLoadout, equipmentMode });
+	}
 
-  public addMessageListener(listener: MessageListener) {
-    this.listeners.push(listener);
-  }
+	triggerUpdate(downloadUrl: string) { return this.submit('application.update', { downloadUrl }); }
+	sendGetSchedulerSettings() { return this.submit('settings.query'); }
 
-  public removeMessageListener(listener: MessageListener) {
-    this.listeners = this.listeners.filter((l) => l !== listener);
-  }
+	sendSaveSchedulerSettings(payload: Partial<{
+		minAttackDelay: number;
+		maxAttackDelay: number;
+		upgradeEreDelayMs: number;
+		upgradeCoinThreshold: number;
+		manualFocusIdleSec: number;
+		tabPriorities: Record<string, string>;
+		featureSchedules: FeatureSchedules;
+	}>) {
+		return this.submit('settings.update', payload);
+	}
 
-  public addStatusListener(listener: StatusListener) {
-    this.statusListeners.push(listener);
-    listener(this.status);
-  }
+	sendGetCastleFocus() { return true; }
+	sendGetRiftMapCoords(refresh = false) { return this.submit('rift.query_map', { refresh }); }
+	sendGetRiftCRALaunch() { return this.submit('rift.launches.query'); }
+	sendGetMovement(refresh = false) { return refresh ? this.submit('game.refresh_movements') : true; }
 
-  public removeStatusListener(listener: StatusListener) {
-    this.statusListeners = this.statusListeners.filter((l) => l !== listener);
-  }
+	sendReplayRiftCRALaunch(options: {
+		launchId: string;
+		commanderID?: number;
+		sourceX?: number;
+		sourceY?: number;
+		arriveAtUnix?: number;
+	}) {
+		return this.submit('rift.launch.replay', options);
+	}
 
-  public sendMessage(message: object): boolean {
-    if (this.mock) {
-      return this.mockRuntime?.handleClientMessage(message) ?? true;
-    }
+	sendMaidenCommsWave(options: { sourceX?: number; sourceY?: number; unitWodID?: number } = {}) {
+		return this.submit('rift.maiden_wave.launch', options);
+	}
 
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(message));
-      return true;
-    }
-    console.error('WebSocket is not connected. Cannot send message:', message);
-    this.emitLocalAlert('red', 'Dashboard disconnected — reconnecting. Try again in a moment.');
-    return false;
-  }
+	sendRenameRiftCRALaunch(launchId: string, displayName: string) {
+		return this.submit('rift.launch.rename', { launchId, displayName });
+	}
 
-  /** Show a toast in the global Alerts stack (works even when the server is not reached). */
-  public showAlert(category: 'green' | 'yellow' | 'red', message: string) {
-    const alert = { type: 'alert', payload: { category, message } };
-    this.emitMessage(alert);
-  }
+	sendDeleteRiftCRALaunch(launchId: string) {
+		return this.submit('rift.launch.delete', { launchId });
+	}
 
-  private emitLocalAlert(category: 'green' | 'yellow' | 'red', message: string) {
-    this.showAlert(category, message);
-  }
+	sendGetRiftMaidenCommsSettings() { return this.submit('rift.maiden_settings.query'); }
+	sendSaveRiftMaidenCommsSettings(unitWodID: number) { return this.submit('rift.maiden_settings.update', { unitWodID }); }
 
-  public getStatus(): FrontendWebsocketStatus {
-    return this.status;
-  }
+	sendFocusPlayerCastle(payload: { castleId: number; kingdomId: number; mapX: number; mapY: number }) {
+		return this.submit('game.focus_castle', { castleId: payload.castleId });
+	}
 
-  public startGame() {
-    this.sendMessage({ type: 'startGame' });
-  }
+	sendGetDecorationPresets(castleId?: number) {
+		return this.submit('decoration_presets.query', castleId && castleId > 0 ? { castleId } : {});
+	}
 
-  public stopGame() {
-    this.sendMessage({ type: 'stopGame' });
-  }
+	sendSaveDecorationPreset(name: string, castleId?: number) {
+		return this.submit('decoration_presets.save', { name, ...(castleId && castleId > 0 ? { castleId } : {}) });
+	}
 
-  public refreshEquipment() {
-    this.sendMessage({ type: 'refreshEquipment' });
-  }
+	sendDeleteDecorationPreset(castleId: number, presetId: string) {
+		return this.submit('decoration_presets.delete', { castleId, presetId });
+	}
 
-  public sendFetchAllianceInfo(): boolean {
-    return this.sendMessage({ type: 'fetchAllianceInfo' });
-  }
+	sendApplyDecorationPreset(castleId: number, presetId: string, kingdomId?: number) {
+		return this.submit('decoration_presets.apply', { castleId, presetId, ...(kingdomId != null ? { kingdomId } : {}) });
+	}
 
-  public sendGetAllianceTargets(allianceId = ''): boolean {
-    return this.sendMessage({ type: 'getAllianceTargets', payload: { allianceId } });
-  }
+	sendCancelDecorationApply() { return this.submit('decoration_presets.cancel'); }
 
-  public sendAllianceTargetSpy(targetX: number, targetY: number): boolean {
-    return this.sendMessage({ type: 'sendAllianceTargetSpy', payload: { targetX, targetY } });
-  }
+	private submit(name: string, argumentsValue: Record<string, unknown> = {}): boolean {
+		void CitadelAPI.submitIntent(name, argumentsValue, { actor: 'legacy-ui-bridge' }).catch((error) => {
+			const message = error instanceof Error ? error.message : `Intent ${name} failed`;
+			if (isPassiveQuery(name)) {
+				console.debug(`Compatibility query ${name} is not implemented yet: ${message}`);
+			} else {
+				this.showAlert('red', message);
+			}
+		});
+		return true;
+	}
 
-  public refreshSingleCommander(equipmentMode: 'Commander' | 'Castellan', targetIndex: number) {
-    this.sendMessage({
-      type: 'refreshSingleCommander',
-      payload: { equipmentMode, targetIndex }
-    });
-  }
+	private forwardEvent(message: APIEnvelope) {
+		this.emit({ type: message.type, payload: message.payload, revision: message.revision, id: message.id });
+	}
 
-  public sendReconfigureLoadout(payload: {
-    equipmentMode: 'Commander' | 'Castellan';
-    combatMode: 'PvP' | 'PvE';
-    targetIndex: number;
-    stats: Array<{
-      stat: string;
-      tier: number;
-      position: number;
-    }>;
-  }) {
-    this.sendMessage({
-      type: 'reconfigureLoadout',
-      payload: payload
-    });
-  }
-
-  public sendConfirmReconfigure(targetIndex: number, currentLoadout: any, newLoadout: any, equipmentMode: 'Commander' | 'Castellan') {
-    this.sendMessage({
-      type: 'confirmReconfigure',
-      payload: {
-        targetIndex,
-        currentLoadout,
-        newLoadout,
-        equipmentMode
-      }
-    });
-  }
-
-  public triggerUpdate(downloadUrl: string) {
-    this.sendMessage({
-      type: 'triggerUpdate',
-      payload: { downloadUrl }
-    });
-  }
-  public sendGetSchedulerSettings() {
-    this.sendMessage({
-      type: 'getSchedulerSettings'
-    });
-  }
-
-  public sendSaveSchedulerSettings(payload: Partial<{
-    minAttackDelay: number;
-    maxAttackDelay: number;
-    upgradeEreDelayMs: number;
-    upgradeCoinThreshold: number;
-    manualFocusIdleSec: number;
-    tabPriorities: Record<string, string>;
-    featureSchedules: FeatureSchedules;
-  }>): boolean {
-    return this.sendMessage({
-      type: 'saveSchedulerSettings',
-      payload: payload
-    });
-  }
-
-  public sendGetCastleFocus() {
-    this.sendMessage({ type: 'getCastleFocus' });
-  }
-
-  /** Rift view: sole world Rift tile (GAA type 43). Set refresh to re-request GAA. */
-  public sendGetRiftMapCoords(refresh = false) {
-    this.sendMessage({ type: 'getRiftMapCoords', payload: { refresh } });
-  }
-
-  /** Rift view: last saved outbound cra launch targeting the Rift. */
-  public sendGetRiftCRALaunch() {
-    this.sendMessage({ type: 'getRiftCRALaunch' });
-  }
-
-  /** Movement view: active GAM movements. Set refresh to re-request **gam**. */
-  public sendGetMovement(refresh = false) {
-    this.sendMessage({ type: 'getMovement', payload: { refresh } });
-  }
-
-  /** Re-queue one saved Rift cra template (optional commander / source overrides). */
-  public sendReplayRiftCRALaunch(options: {
-    launchId: string;
-    commanderID?: number;
-    sourceX?: number;
-    sourceY?: number;
-    arriveAtUnix?: number;
-  }) {
-    this.sendMessage({ type: 'replayRiftCRALaunch', payload: options });
-  }
-
-  /** Queue dummy 1-wave Rift attacks for eligible shield-maiden commanders. */
-  public sendMaidenCommsWave(options?: { sourceX?: number; sourceY?: number; unitWodID?: number }): boolean {
-    return this.sendMessage({ type: 'sendMaidenCommsWave', payload: options ?? {} });
-  }
-
-  public sendRenameRiftCRALaunch(launchId: string, displayName: string) {
-    this.sendMessage({ type: 'renameRiftCRALaunch', payload: { launchId, displayName } });
-  }
-
-  public sendDeleteRiftCRALaunch(launchId: string) {
-    this.sendMessage({ type: 'deleteRiftCRALaunch', payload: { launchId } });
-  }
-
-  public sendGetRiftMaidenCommsSettings() {
-    this.sendMessage({ type: 'getRiftMaidenCommsSettings' });
-  }
-
-  public sendSaveRiftMaidenCommsSettings(unitWodID: number) {
-    this.sendMessage({ type: 'saveRiftMaidenCommsSettings', payload: { unitWodID } });
-  }
-
-  /**
-   * Ask server to send JCA/JAA for the castle (GameCommands.SendCastleFocus).
-   * Pass kingdom + map coords from castleResourceUpdate / initial details (troops.kingdomID, troops.x, troops.y).
-   */
-  public sendFocusPlayerCastle(payload: {
-    castleId: number;
-    kingdomId: number;
-    mapX: number;
-    mapY: number;
-  }) {
-    this.sendMessage({
-      type: 'focusPlayerCastle',
-      payload: {
-        castleId: payload.castleId,
-        kingdomId: payload.kingdomId,
-        mapX: payload.mapX,
-        mapY: payload.mapY,
-      },
-    });
-  }
-
-  public sendGetDecorationPresets(castleId?: number) {
-    this.sendMessage({
-      type: 'getDecorationPresets',
-      payload: castleId != null && castleId > 0 ? { castleId } : {}
-    });
-  }
-
-  public sendSaveDecorationPreset(name: string, castleId?: number) {
-    this.sendMessage({
-      type: 'saveDecorationPreset',
-      payload: { name, ...(castleId != null && castleId > 0 ? { castleId } : {}) }
-    });
-  }
-
-  public sendDeleteDecorationPreset(castleId: number, presetId: string) {
-    this.sendMessage({
-      type: 'deleteDecorationPreset',
-      payload: { castleId, presetId }
-    });
-  }
-
-  public sendApplyDecorationPreset(castleId: number, presetId: string, kingdomId?: number) {
-    this.sendMessage({
-      type: 'applyDecorationPreset',
-      payload: {
-        castleId,
-        presetId,
-        ...(kingdomId != null ? { kingdomId } : {})
-      }
-    });
-  }
-
-  public sendCancelDecorationApply() {
-    this.sendMessage({ type: 'cancelDecorationApply' });
-  }
+	private emit(message: unknown) {
+		for (const listener of this.listeners) listener(message);
+	}
 }
 
+function legacyIntentName(type: string): string {
+	const mappings: Record<string, string> = {
+		startGame: 'session.start',
+		stopGame: 'session.stop',
+		fetchAllianceInfo: 'alliance.refresh',
+		getMovement: 'game.refresh_movements',
+		focusPlayerCastle: 'game.focus_castle',
+	};
+	return mappings[type] ?? `legacy.${type.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase()}`;
+}
 
-export const FrontendWebsocket = new FrontendWebsocketService();
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isPassiveQuery(name: string): boolean {
+	return name.endsWith('.query') || name.startsWith('legacy.get_');
+}
+
+export const FrontendWebsocket = new LegacyIntentBridge();

@@ -13,16 +13,18 @@ import { RiftMapProvider } from './Rift/context/RiftMapContext';
 import { MovementProvider } from './Movement/context/MovementContext';
 import { MetadataProvider } from './context/MetadataContext';
 import SharedSvgDefs from './components/SharedSvgDefs';
+import { APIProvider } from './api/ApiContext';
 
 export const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
-        <AuthProvider>
-            <LastKnownSnapshotProvider>
-                <CastleFocusProvider>
-                    <ThemeProvider>
-                        <CastleResourceProvider>
-                            <ResourceProvider>
-                                <MetadataProvider>
+        <APIProvider>
+			<MetadataProvider>
+				<AuthProvider>
+					<LastKnownSnapshotProvider>
+						<CastleFocusProvider>
+							<ThemeProvider>
+								<CastleResourceProvider>
+									<ResourceProvider>
                                     <RiftMapProvider>
                                         <MovementProvider>
                                             <EquipmentProvider>
@@ -37,12 +39,13 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({ children })
                                             </EquipmentProvider>
                                         </MovementProvider>
                                     </RiftMapProvider>
-                                </MetadataProvider>
-                            </ResourceProvider>
-                        </CastleResourceProvider>
-                    </ThemeProvider>
-                </CastleFocusProvider>
-            </LastKnownSnapshotProvider>
-        </AuthProvider>
+									</ResourceProvider>
+								</CastleResourceProvider>
+							</ThemeProvider>
+						</CastleFocusProvider>
+					</LastKnownSnapshotProvider>
+				</AuthProvider>
+			</MetadataProvider>
+        </APIProvider>
     );
 };

@@ -15,6 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const mainItems = NAVIGATION_ITEMS.filter(item => item.section === 'main');
   const systemItems = NAVIGATION_ITEMS.filter(item => item.section === 'system');
   const isSystemView = systemItems.some(item => item.id === currentView);
+  const [systemMenuOpen, setSystemMenuOpen] = useState(isSystemView);
 
   const [expandedSections, setExpandedSections] = useState({
     mainMenu: true
@@ -25,6 +26,19 @@ const Sidebar: React.FC<SidebarProps> = ({
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  const systemMenuExpanded = isSystemView || systemMenuOpen;
+
+  const openView = (viewId: ViewId) => {
+    onViewChange(viewId);
+    if (systemItems.some(item => item.id === viewId)) setSystemMenuOpen(true);
+  };
+
+  const handleNavigationKey = (event: React.KeyboardEvent, viewId: ViewId) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openView(viewId);
   };
 
   return (
@@ -46,7 +60,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <div
                     key={item.id}
                     className={`liquid-nav-item group ${currentView === item.id ? 'liquid-nav-item-active' : ''}`}
-                    onClick={() => onViewChange(item.id)}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openView(item.id)}
+                    onKeyDown={(event) => handleNavigationKey(event, item.id)}
                     title={item.label}
                   >
                     <span className={`liquid-nav-icon transition-colors duration-200 ${currentView === item.id ? 'text-primary' : 'text-text-muted group-hover:text-text-main'}`}>
@@ -64,9 +81,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      <div className={`liquid-sidebar-system-island ${isSystemView ? 'liquid-sidebar-system-island-active' : ''}`}>
+      <div className={`liquid-sidebar-system-island ${systemMenuExpanded ? 'liquid-sidebar-system-island-active' : ''}`}>
         <div
           className="liquid-section-label liquid-system-section-label"
+          role="button"
+          tabIndex={0}
+          aria-expanded={systemMenuExpanded}
+          onClick={() => setSystemMenuOpen(open => !open)}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            setSystemMenuOpen(open => !open);
+          }}
         >
           <span className="liquid-sidebar-section-title">System</span>
           <ChevronDown className="liquid-system-chevron w-3 h-3" />
@@ -77,7 +103,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div
               key={item.id}
               className={`liquid-nav-item group ${currentView === item.id ? 'liquid-nav-item-active' : ''}`}
-              onClick={() => onViewChange(item.id)}
+              role="button"
+              tabIndex={0}
+              onClick={() => openView(item.id)}
+              onKeyDown={(event) => handleNavigationKey(event, item.id)}
               title={item.label}
             >
               <span className={`liquid-nav-icon transition-colors duration-200 ${currentView === item.id ? 'text-primary' : 'text-text-muted group-hover:text-text-main'}`}>

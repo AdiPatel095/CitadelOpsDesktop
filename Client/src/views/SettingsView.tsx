@@ -2,15 +2,36 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Icons } from '../components/Icons';
 import PriorityModal from '../components/PriorityModal';
 import { FrontendWebsocket } from '../Websocket';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '../components/ui';
+import { CitadelAPI } from '../api/CitadelClient';
+import { useCitadelAPI } from '../api/ApiContext';
+import type { BrowserInventory } from '../api/Contracts';
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, Select } from '../components/ui';
 
 const SettingsView: React.FC = () => {
+	const { state, submitIntent } = useCitadelAPI();
   const [minTimer, setMinTimer] = useState<string>('4.0');
   const [maxTimer, setMaxTimer] = useState<string>('6.0');
   const [upgradeEreDelayMs, setUpgradeEreDelayMs] = useState<string>('50');
   const [upgradeCoinThreshold, setUpgradeCoinThreshold] = useState<string>('0');
   const [manualFocusIdleSec, setManualFocusIdleSec] = useState<string>('30');
   const [isPriorityModalOpen, setIsPriorityModalOpen] = useState(false);
+	const [browserInventory, setBrowserInventory] = useState<BrowserInventory | null>(null);
+	const [browserSelectionPending, setBrowserSelectionPending] = useState(false);
+	const [browserSelectionError, setBrowserSelectionError] = useState('');
+
+	useEffect(() => {
+		let active = true;
+		void CitadelAPI.getBrowsers()
+			.then((inventory) => {
+				if (active) setBrowserInventory(inventory);
+			})
+			.catch((error) => {
+				if (active) setBrowserSelectionError(error instanceof Error ? error.message : 'Could not discover browsers');
+			});
+		return () => {
+			active = false;
+		};
+	}, []);
 
   useEffect(() => {
     const handleMessage = (msg: any) => {
@@ -51,6 +72,42 @@ const SettingsView: React.FC = () => {
     const num = parseFloat(upgradeCoinThreshold);
     return Number.isFinite(num) && num >= 0 ? num : 0;
   }, [upgradeCoinThreshold]);
+
+	const selectedBrowserID = state?.session.browserId ?? browserInventory?.selected?.id ?? '';
+	const selectedBrowser = browserInventory?.available.find((browser) => browser.id === selectedBrowserID);
+	const browserOptions = useMemo(() => {
+		const options = (browserInventory?.available ?? []).map((browser) => ({
+			value: browser.id,
+			label: browser.name,
+		}));
+		if (selectedBrowserID && !options.some((option) => option.value === selectedBrowserID)) {
+			options.unshift({
+				value: selectedBrowserID,
+				label: state?.session.browserName ?? browserInventory?.selected?.name ?? selectedBrowserID,
+			});
+		}
+		return options;
+	}, [browserInventory, selectedBrowserID, state?.session.browserName]);
+	const browserPlaceholder = browserInventory == null
+		? 'Discovering browsers…'
+		: browserOptions.length > 0
+			? 'Select a browser'
+			: 'No compatible browser detected';
+	const browserCanChange = state?.session.status === 'stopped' || state?.session.status === 'unavailable';
+
+	const selectBrowser = (browser: string) => {
+		if (!browser || browser === selectedBrowserID) return;
+		setBrowserSelectionPending(true);
+		setBrowserSelectionError('');
+		void submitIntent('session.select_browser', { browser })
+			.then(async () => {
+				setBrowserInventory(await CitadelAPI.getBrowsers());
+			})
+			.catch((error) => {
+				setBrowserSelectionError(error instanceof Error ? error.message : 'Could not select browser');
+			})
+			.finally(() => setBrowserSelectionPending(false));
+	};
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
@@ -144,6 +201,55 @@ const SettingsView: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
+		<Card className="liquid-prominent-header-card">
+			<CardHeader className="liquid-card-header-prominent">
+				<div className="flex items-center gap-3">
+					<div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
+						<Icons.Monitor className="w-4 h-4 text-sky-400" />
+					</div>
+					<CardTitle className="text-lg">Game Browser</CardTitle>
+				</div>
+			</CardHeader>
+
+			<CardContent className="liquid-prominent-header-content p-6 space-y-4">
+				<div>
+					<h3 className="text-sm font-semibold text-text-main mb-1">Chromium Browser</h3>
+					<p className="text-xs text-text-muted mb-4">
+						Choose any detected CDP-capable browser. CitadelOps uses a dedicated profile for each browser,
+						so your normal browser profile remains untouched.
+					</p>
+				</div>
+
+				<div className="w-full sm:max-w-[360px]">
+					<label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+						Browser
+					</label>
+					<Select
+						value={selectedBrowserID}
+						options={browserOptions}
+						onChange={selectBrowser}
+						placeholder={browserPlaceholder}
+						icon={<Icons.Monitor className="w-4 h-4" />}
+						disabled={!browserCanChange || browserSelectionPending || browserInventory == null}
+					/>
+					{selectedBrowser?.executablePath && (
+						<p className="mt-2 text-[11px] text-text-muted font-mono break-all">{selectedBrowser.executablePath}</p>
+					)}
+					{browserInventory != null && browserInventory.available.length > 0 && !selectedBrowser && (
+						<p className="mt-2 text-xs text-text-muted">
+							Detected: {browserInventory.available.map((browser) => browser.name).join(', ')}
+						</p>
+					)}
+					{!browserCanChange && (
+						<p className="mt-2 text-xs text-warning">Stop the game session before changing browsers.</p>
+					)}
+					{browserSelectionError && (
+						<p className="mt-2 text-xs text-error">{browserSelectionError}</p>
+					)}
+				</div>
+			</CardContent>
+		</Card>
+
         <Card className="liquid-prominent-header-card">
           <CardHeader className="liquid-card-header-prominent">
             <div className="flex items-center gap-3">

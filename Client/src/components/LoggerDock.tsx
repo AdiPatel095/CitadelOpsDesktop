@@ -216,6 +216,7 @@ export const LoggerDock: React.FC = () => {
   }, [loadError]);
 
   useEffect(() => {
+	if (!open) return;
     let cancelled = false;
     (async () => {
       try {
@@ -235,7 +236,7 @@ export const LoggerDock: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+	}, [open]);
 
   const fetchTail = useCallback(async () => {
     if (!activeId) return;
