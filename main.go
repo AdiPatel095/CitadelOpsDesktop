@@ -80,6 +80,7 @@ func main() {
 	// Set up callbacks for ResponseRegistry to notify frontend
 	ResponseRegistry.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
 	ResponseRegistry.SetAutoBirdStatusCallback(FrontendWebsocket.SendAutoBirdStatus)
+	ResponseRegistry.SetAutoStationStatusCallback(FrontendWebsocket.SendAutoStationStatus)
 	ResponseRegistry.SetMemoryStatsCallback(FrontendWebsocket.SendMemoryStatsMessage)
 
 	// Set up callbacks for Version package

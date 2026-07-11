@@ -100,6 +100,7 @@ type (
 
 	BirdMovement         = movement.BirdMovement
 	GAMMovement          = movement.GAMMovement
+	GAMMarketGood        = movement.GAMMarketGood
 	PlayerMovement       = movement.PlayerMovement
 	CommanderRosterEntry = movement.CommanderRosterEntry
 	CommanderStatusRow   = movement.CommanderStatusRow
@@ -114,6 +115,7 @@ type (
 	SettingsState       = settings.SettingsState
 	SaveInCastleTroops  = settings.SaveInCastleTroops
 	AutoBirdDelayConfig = settings.AutoBirdDelayConfig
+	AutoStationConfig   = settings.AutoStationConfig
 	RecruitTroopsConfig = settings.RecruitTroopsConfig
 	AutoToolConfig      = settings.AutoToolConfig
 	AutoTCIConfig       = settings.AutoTCIConfig

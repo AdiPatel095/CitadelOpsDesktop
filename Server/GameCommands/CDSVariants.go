@@ -6,7 +6,8 @@ import (
 )
 
 type sendLease interface {
-	Active() bool
+	commandLease
+	Owner() string
 }
 
 // CDSHBWPTT is one (HBW, PTT) pair for EmpireEx **cds**.
@@ -64,7 +65,15 @@ func SendCDSUntilSuccessWithLease(lease sendLease, castleAID, targetX, targetY, 
 			waiter.Cleanup()
 			return false
 		}
-		SendCDS(castleAID, targetX, targetY, sdiLID, delayHours, v.HBW, v.PTT, troopsJSON)
+		payload := CDSPayload(castleAID, targetX, targetY, sdiLID, delayHours, v.HBW, v.PTT, troopsJSON)
+		if lease != nil {
+			if !QueueFeaturePayload(lease.Owner(), payload, lease) {
+				waiter.Cleanup()
+				return false
+			}
+		} else {
+			QueueOutgoingPayload(payload)
+		}
 		resp, err := waiter.WaitWithTimeout()
 		waiter.Cleanup()
 		if lease != nil && !lease.Active() {

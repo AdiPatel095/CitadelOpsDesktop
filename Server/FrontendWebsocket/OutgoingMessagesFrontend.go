@@ -1,6 +1,7 @@
 package FrontendWebsocket
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	equipmentview "CitadelDesktop/Server/GameFeatures/EquipmentView"
 	featureview "CitadelDesktop/Server/GameFeatures/FeatureView"
@@ -28,11 +29,26 @@ func SendMemoryStatsMessage(goMemMB int, chromeMemMB int) {
 	}, "")
 }
 
+func SendAutomationControlStatus() {
+	SendFrontendMessage("automationControlStatus", Automation.ControlSnapshot(), "")
+}
+
 // SendAutoBirdStatus pushes auto bird enabled state and next wake time (unix ms, 0 if none).
 func SendAutoBirdStatus(enabled bool, nextWakeUp int64) {
 	SendFrontendMessage("autoBirdStatus", map[string]interface{}{
 		"enabled":    enabled,
 		"nextWakeUp": nextWakeUp,
+	}, "")
+}
+
+// SendAutoStationStatus pushes the current threat/evacuation state.
+func SendAutoStationStatus(enabled bool, state string, threatCount int, nextImpactUnixMs int64, detail string) {
+	SendFrontendMessage("autoStationStatus", map[string]interface{}{
+		"enabled":          enabled,
+		"state":            state,
+		"threatCount":      threatCount,
+		"nextImpactUnixMs": nextImpactUnixMs,
+		"detail":           detail,
 	}, "")
 }
 
@@ -46,6 +62,13 @@ func SendRecruitTroopsStatus(enabled bool) {
 // SendAutoToolStatus sends the current Auto Tool enabled state to all clients.
 func SendAutoToolStatus(enabled bool) {
 	SendFrontendMessage("autoToolStatus", map[string]interface{}{
+		"enabled": enabled,
+	}, "")
+}
+
+// SendAutoSceatResStatus sends the current Auto Sceat Resources enabled state.
+func SendAutoSceatResStatus(enabled bool) {
+	SendFrontendMessage("autoSceatResStatus", map[string]interface{}{
 		"enabled": enabled,
 	}, "")
 }
@@ -81,10 +104,20 @@ func SendAutoBeriWorldStatus(enabled bool, nextWakeUp int64) {
 func SendInitialData(client *Client) {
 	// Send current game login status so frontend knows if game is connected after page refresh
 	client.SendToClient("gameLoginStatus", ResponseRegistry.GetGameConnectionStatus(), "")
+	client.SendToClient("automationControlStatus", Automation.ControlSnapshot(), "")
 
 	client.SendToClient("autoBirdStatus", map[string]interface{}{
 		"enabled":    featureview.IsAutoBirdRunning(),
 		"nextWakeUp": featureview.GetAutoBirdNextWakeUp(),
+	}, "")
+
+	autoStationEnabled, autoStationState, threatCount, nextImpactUnixMs, detail := featureview.GetAutoStationStatus()
+	client.SendToClient("autoStationStatus", map[string]interface{}{
+		"enabled":          autoStationEnabled,
+		"state":            autoStationState,
+		"threatCount":      threatCount,
+		"nextImpactUnixMs": nextImpactUnixMs,
+		"detail":           detail,
 	}, "")
 
 	// Send recruitTroops status
@@ -101,6 +134,12 @@ func SendInitialData(client *Client) {
 	autoToolConfig := state.AutoToolList.Normalize()
 	state.AutoToolList = autoToolConfig
 	client.SendToClient("autoToolSettings", autoToolConfig, "")
+	client.SendToClient("autoSceatResStatus", map[string]interface{}{
+		"enabled": settingsview.IsAutoSceatResRunning(),
+	}, "")
+	autoSceatResConfig := state.AutoSceatRes.Normalize()
+	state.AutoSceatRes = autoSceatResConfig
+	client.SendToClient("autoSceatResSettings", autoSceatResConfig, "")
 	client.SendToClient("schedulerSettings", state, "")
 
 	client.SendToClient("autoHospitalStatus", map[string]interface{}{
@@ -259,11 +298,19 @@ func SendCastleResource(castleLocation string) {
 }
 
 func SellNonRelicEquipment(sellLookItems bool, sellSpecialPost2026 bool) int {
+	lease, finish, ok := beginManualWork("sell non-relic equipment", []Automation.Claim{
+		Automation.ExclusiveClaim(Automation.ClaimEquipment),
+	}, 10*time.Minute)
+	if !ok {
+		return 0
+	}
+	defer finish()
 	counter := 0
 	gs := Models.GetGameState()
 
-	GameCommands.SendGEI()
-	time.Sleep(2 * time.Second)
+	if !refreshStateForManualWork(lease, "gei", GameCommands.GEIPayload(), 5*time.Second) {
+		return 0
+	}
 
 	for _, equipment := range gs.Equipment.EquipmentStorage {
 		// Filter Look Items (Slot 5) if sellLookItems is false
@@ -282,7 +329,7 @@ func SellNonRelicEquipment(sellLookItems bool, sellSpecialPost2026 bool) int {
 		shouldSell := id < 1366 || sellSpecialPost2026
 
 		if shouldSell && equipment.EquipRarity != 5 && equipment.EquipRarity != 15 {
-			GameCommands.SendSEQSellEquipment(equipment.ID)
+			GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.SEQPayload(equipment.ID), lease)
 			counter++
 		}
 	}
@@ -290,11 +337,19 @@ func SellNonRelicEquipment(sellLookItems bool, sellSpecialPost2026 bool) int {
 }
 
 func SellNonRelicGems(sellSpecialPost2026 bool) int {
+	lease, finish, ok := beginManualWork("sell non-relic gems", []Automation.Claim{
+		Automation.ExclusiveClaim(Automation.ClaimEquipment),
+	}, 10*time.Minute)
+	if !ok {
+		return 0
+	}
+	defer finish()
 	counter := 0
 	gs := Models.GetGameState()
 
-	GameCommands.SendGGM()
-	time.Sleep(2 * time.Second)
+	if !refreshStateForManualWork(lease, "ggm", GameCommands.GGMPayload(), 5*time.Second) {
+		return 0
+	}
 	for id, count := range gs.Equipment.NonRelicGemIDs {
 		gemID := id
 
@@ -305,7 +360,7 @@ func SellNonRelicGems(sellSpecialPost2026 bool) int {
 
 		if shouldSell {
 			for i := 0; i < int(count); i++ {
-				GameCommands.SendSGENonRelicGem(float64(id))
+				GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.SGENonRelicGemPayload(float64(id)), lease)
 				counter++
 			}
 		}
@@ -315,15 +370,23 @@ func SellNonRelicGems(sellSpecialPost2026 bool) int {
 }
 
 func SellRelic1Equipment() int {
+	lease, finish, ok := beginManualWork("sell relic equipment", []Automation.Claim{
+		Automation.ExclusiveClaim(Automation.ClaimEquipment),
+	}, 10*time.Minute)
+	if !ok {
+		return 0
+	}
+	defer finish()
 	counter := 0
 	gs := Models.GetGameState()
-	GameCommands.SendGEI()
-	time.Sleep(2 * time.Second)
+	if !refreshStateForManualWork(lease, "gei", GameCommands.GEIPayload(), 5*time.Second) {
+		return 0
+	}
 
 	for _, equipment := range gs.Equipment.EquipmentStorage {
 		// Relic 1.0 is Rarity 5 but NOT 4 stats (which is Relic 2.0)
 		if equipment.EquipRarity == 5 && len(equipment.EquipStats) < 4 {
-			GameCommands.SendSEQSellEquipment(equipment.ID)
+			GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.SEQPayload(equipment.ID), lease)
 			counter++
 		}
 	}
@@ -331,10 +394,18 @@ func SellRelic1Equipment() int {
 }
 
 func SellRelic2Equipment(keepStars int) int {
+	lease, finish, ok := beginManualWork("sell relic 2 equipment", []Automation.Claim{
+		Automation.ExclusiveClaim(Automation.ClaimEquipment),
+	}, 10*time.Minute)
+	if !ok {
+		return 0
+	}
+	defer finish()
 	counter := 0
 	gs := Models.GetGameState()
-	GameCommands.SendGEI()
-	time.Sleep(2 * time.Second)
+	if !refreshStateForManualWork(lease, "gei", GameCommands.GEIPayload(), 5*time.Second) {
+		return 0
+	}
 
 	for _, equipment := range gs.Equipment.EquipmentStorage {
 		// Relic 2.0 Filters:
@@ -351,7 +422,7 @@ func SellRelic2Equipment(keepStars int) int {
 
 			// Sell if below the keep threshold
 			if totalStars < keepStars {
-				GameCommands.SendSEQSellEquipment(equipment.ID)
+				GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.SEQPayload(equipment.ID), lease)
 				counter++
 			}
 		}
@@ -360,14 +431,22 @@ func SellRelic2Equipment(keepStars int) int {
 }
 
 func SellRelic1Gems() int {
+	lease, finish, ok := beginManualWork("sell relic gems", []Automation.Claim{
+		Automation.ExclusiveClaim(Automation.ClaimEquipment),
+	}, 10*time.Minute)
+	if !ok {
+		return 0
+	}
+	defer finish()
 	counter := 0
 	gs := Models.GetGameState()
-	GameCommands.SendGGM()
-	time.Sleep(2 * time.Second)
+	if !refreshStateForManualWork(lease, "ggm", GameCommands.GGMPayload(), 5*time.Second) {
+		return 0
+	}
 
 	for _, gem := range gs.Equipment.GemsStorage {
 		if len(gem.GemStats) == 3 {
-			GameCommands.SendSGERelicGem(gem.ID)
+			GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.SGERelicGemPayload(gem.ID), lease)
 			counter++
 		}
 	}
@@ -375,10 +454,18 @@ func SellRelic1Gems() int {
 }
 
 func SellRelic2Gems(keepStars int) int {
+	lease, finish, ok := beginManualWork("sell relic 2 gems", []Automation.Claim{
+		Automation.ExclusiveClaim(Automation.ClaimEquipment),
+	}, 10*time.Minute)
+	if !ok {
+		return 0
+	}
+	defer finish()
 	counter := 0
 	gs := Models.GetGameState()
-	GameCommands.SendGGM()
-	time.Sleep(2 * time.Second)
+	if !refreshStateForManualWork(lease, "ggm", GameCommands.GGMPayload(), 5*time.Second) {
+		return 0
+	}
 
 	for _, gem := range gs.Equipment.GemsStorage {
 		// Filter for Relic 2.0 Gems (Type 131 and 132) AND 4 Stats
@@ -390,7 +477,7 @@ func SellRelic2Gems(keepStars int) int {
 
 			// Sell if below the keep threshold
 			if totalStars < keepStars {
-				GameCommands.SendSGERelicGem(gem.ID)
+				GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.SGERelicGemPayload(gem.ID), lease)
 				counter++
 			}
 		}

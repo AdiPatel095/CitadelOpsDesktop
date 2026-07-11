@@ -95,7 +95,7 @@ func gameRecvLogCmdType(parts []string) string {
 }
 
 // logAppInboundIfMatched appends to the app_send channel when the game returns a frame whose
-// opcode matches the next pending opcode from our OutgoingMessages queue (FIFO).
+// opcode matches the next pending opcode from our outbound lanes (FIFO by actual send order).
 func logAppInboundIfMatched(payload string) {
 	parts := strings.Split(payload, "%")
 	inOp := effectiveWireOpcode(parts)

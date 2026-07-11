@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, type Plugin, type PreviewServer, type ViteDevServer } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -24,49 +24,67 @@ const cloudBattleReportRoutes = new Set([
 function localCommandJsonPlugin(): Plugin {
   return {
     name: 'citadel-local-command-json',
-    configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        const url = new URL(req.url ?? '/', 'http://localhost')
-        if (url.pathname === '/__citadel_mock/commands') {
-          try {
-            const commands = listLocalCommandJsonFiles()
-            res.statusCode = 200
-            res.setHeader('Content-Type', 'application/json; charset=utf-8')
-            res.setHeader('Cache-Control', 'no-store')
-            res.end(JSON.stringify({ commands }))
-          } catch (error) {
-            next(error)
-          }
-          return
-        }
-
-        const match = /^\/__citadel_mock\/command\/([A-Za-z0-9_-]+)\.json$/.exec(url.pathname)
-        if (!match) {
-          next()
-          return
-        }
-
-        const commandName = match[1]
-        const source = resolveCommandJsonFile(commandName)
-        if (!source) {
-          res.statusCode = 404
-          res.setHeader('Content-Type', 'application/json; charset=utf-8')
-          res.end(JSON.stringify({ error: `No local command JSON found for ${commandName}.` }))
-          return
-        }
-
-        try {
-          const body = fs.readFileSync(source, 'utf8')
-          res.statusCode = 200
-          res.setHeader('Content-Type', 'application/json; charset=utf-8')
-          res.setHeader('Cache-Control', 'no-store')
-          res.end(body)
-        } catch (error) {
-          next(error)
-        }
-      })
-    },
+    configureServer: configureLocalCommandJson,
+    configurePreviewServer: configureLocalCommandJson,
   }
+}
+
+function configureLocalCommandJson(server: ViteDevServer | PreviewServer) {
+  server.middlewares.use((req, res, next) => {
+    const url = new URL(req.url ?? '/', 'http://localhost')
+    if (process.env.CITADEL_PERFORMANCE_HARNESS === 'true' && url.pathname === '/api/player-tracker') {
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.setHeader('Cache-Control', 'no-store')
+      res.end(JSON.stringify({
+        current: null,
+        samples: [],
+        series: {},
+        intervalSeconds: 60,
+        fallback: { provider: 'performance-harness', status: 'not-needed' },
+        coverage: { loot: false, eventScores: false },
+      }))
+      return
+    }
+
+    if (url.pathname === '/__citadel_mock/commands') {
+      try {
+        const commands = listLocalCommandJsonFiles()
+        res.statusCode = 200
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.setHeader('Cache-Control', 'no-store')
+        res.end(JSON.stringify({ commands }))
+      } catch (error) {
+        next(error)
+      }
+      return
+    }
+
+    const match = /^\/__citadel_mock\/command\/([A-Za-z0-9_-]+)\.json$/.exec(url.pathname)
+    if (!match) {
+      next()
+      return
+    }
+
+    const commandName = match[1]
+    const source = resolveCommandJsonFile(commandName)
+    if (!source) {
+      res.statusCode = 404
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.end(JSON.stringify({ error: `No local command JSON found for ${commandName}.` }))
+      return
+    }
+
+    try {
+      const body = fs.readFileSync(source, 'utf8')
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.setHeader('Cache-Control', 'no-store')
+      res.end(body)
+    } catch (error) {
+      next(error)
+    }
+  })
 }
 
 function commandJsonDirectories(): string[] {
@@ -107,58 +125,68 @@ function resolveCommandJsonFile(commandName: string): string | null {
 function localBattleReportsPlugin(): Plugin {
   return {
     name: 'citadel-local-battle-reports',
-    configureServer(server) {
-      let announcedSource = ''
-
-      server.middlewares.use((req, res, next) => {
-        const url = new URL(req.url ?? '/', 'http://localhost')
-        if (cloudBattleReportRoutes.has(url.pathname)) {
-          fetchCloudBattleReports()
-            .then(({ body, status, contentType }) => {
-              res.statusCode = status
-              res.setHeader('Content-Type', contentType)
-              res.setHeader('Cache-Control', 'no-store')
-              res.end(body)
-            })
-            .catch(() => {
-              res.statusCode = 404
-              res.setHeader('Content-Type', 'application/json; charset=utf-8')
-              res.end(JSON.stringify({ error: 'No cloud Battle Reports endpoint available.' }))
-            })
-          return
-        }
-
-        if (!battleReportRoutes.has(url.pathname)) {
-          next()
-          return
-        }
-
-        const source = resolveBattleReportsFile()
-        if (!source) {
-          res.statusCode = 404
-          res.setHeader('Content-Type', 'application/json; charset=utf-8')
-          res.end(JSON.stringify({ error: 'No local BattleReports.jsonl archive found.' }))
-          return
-        }
-
-        try {
-          const reports = readLocalParsedBattleReports(source)
-          const announcement = `${source}:${reports.length}`
-          if (announcedSource !== announcement) {
-            announcedSource = announcement
-            server.config.logger.info(`Serving ${reports.length} parsed local battle reports from ${source}`)
-          }
-
-          res.statusCode = 200
-          res.setHeader('Content-Type', 'application/json; charset=utf-8')
-          res.setHeader('Cache-Control', 'no-store')
-          res.end(JSON.stringify({ reports }))
-        } catch (error) {
-          next(error)
-        }
-      })
-    },
+    configureServer: configureLocalBattleReports,
+    configurePreviewServer: configureLocalBattleReports,
   }
+}
+
+function configureLocalBattleReports(server: ViteDevServer | PreviewServer) {
+  let announcedSource = ''
+
+  server.middlewares.use((req, res, next) => {
+    const url = new URL(req.url ?? '/', 'http://localhost')
+    if (cloudBattleReportRoutes.has(url.pathname)) {
+      if (process.env.CITADEL_LOCAL_BATTLE_REPORTS_ONLY === 'true') {
+        res.statusCode = 200
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.setHeader('Cache-Control', 'no-store')
+        res.end(JSON.stringify({ reports: [] }))
+      } else {
+        fetchCloudBattleReports()
+          .then(({ body, status, contentType }) => {
+            res.statusCode = status
+            res.setHeader('Content-Type', contentType)
+            res.setHeader('Cache-Control', 'no-store')
+            res.end(body)
+          })
+          .catch(() => {
+            res.statusCode = 404
+            res.setHeader('Content-Type', 'application/json; charset=utf-8')
+            res.end(JSON.stringify({ error: 'No cloud Battle Reports endpoint available.' }))
+          })
+      }
+      return
+    }
+
+    if (!battleReportRoutes.has(url.pathname)) {
+      next()
+      return
+    }
+
+    const source = resolveBattleReportsFile()
+    if (!source) {
+      res.statusCode = 404
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.end(JSON.stringify({ error: 'No local BattleReports.jsonl archive found.' }))
+      return
+    }
+
+    try {
+      const reports = readLocalParsedBattleReports(source)
+      const announcement = `${source}:${reports.length}`
+      if (announcedSource !== announcement) {
+        announcedSource = announcement
+        server.config.logger.info(`Serving ${reports.length} parsed local battle reports from ${source}`)
+      }
+
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.setHeader('Cache-Control', 'no-store')
+      res.end(JSON.stringify({ reports }))
+    } catch (error) {
+      next(error)
+    }
+  })
 }
 
 async function fetchCloudBattleReports(): Promise<{ body: string; status: number; contentType: string }> {

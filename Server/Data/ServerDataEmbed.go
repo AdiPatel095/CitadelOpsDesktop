@@ -51,6 +51,21 @@ var embeddedVIPLevelsJSON []byte
 //go:embed subscriptions_buffs/items.json
 var embeddedSubscriptionBuffsJSON []byte
 
+//go:embed crafting_recipes/items.json
+var embeddedCraftingRecipesJSON []byte
+
+//go:embed rewards/items.json
+var embeddedRewardsItemsJSON []byte
+
+//go:embed currencies/items.json
+var embeddedCurrenciesItemsJSON []byte
+
+//go:embed buildings/items.json
+var embeddedBuildingsItemsJSON []byte
+
+//go:embed level_boosters/items.json
+var embeddedLevelBoostersItemsJSON []byte
+
 func readFilePreferDisk(relPath string, embedded []byte) ([]byte, error) {
 	if b, err := readFromDisk(relPath); err == nil {
 		return b, nil
@@ -131,9 +146,8 @@ func ReadEquipmentSetsItemsJSON() ([]byte, error) {
 }
 
 // ReadBuildingsJSON returns buildings/items.json (official EmpireItems building catalog).
-// Used for dev/Docker overrides; production exe-only installs use the embedded compact map instead.
 func ReadBuildingsJSON() ([]byte, error) {
-	return readFromDisk(filepath.Join("buildings", "items.json"))
+	return readFilePreferDisk(filepath.Join("buildings", "items.json"), embeddedBuildingsItemsJSON)
 }
 
 // ReadToolsJSON returns tools/items.json (official EmpireItems tool catalog).
@@ -177,4 +191,24 @@ func ReadVIPLevelsJSON() ([]byte, error) {
 // Disk first for dev overrides, else embedded for production binaries.
 func ReadSubscriptionBuffsJSON() ([]byte, error) {
 	return readFilePreferDisk(filepath.Join("subscriptions_buffs", "items.json"), embeddedSubscriptionBuffsJSON)
+}
+
+// ReadCraftingRecipesJSON returns the official crafting_recipes/items.json catalog.
+func ReadCraftingRecipesJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("crafting_recipes", "items.json"), embeddedCraftingRecipesJSON)
+}
+
+// ReadRewardsItemsJSON returns the official rewards/items.json catalog.
+func ReadRewardsItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("rewards", "items.json"), embeddedRewardsItemsJSON)
+}
+
+// ReadCurrenciesItemsJSON returns the official currencies/items.json catalog.
+func ReadCurrenciesItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("currencies", "items.json"), embeddedCurrenciesItemsJSON)
+}
+
+// ReadLevelBoostersItemsJSON returns the official level_boosters/items.json catalog.
+func ReadLevelBoostersItemsJSON() ([]byte, error) {
+	return readFilePreferDisk(filepath.Join("level_boosters", "items.json"), embeddedLevelBoostersItemsJSON)
 }

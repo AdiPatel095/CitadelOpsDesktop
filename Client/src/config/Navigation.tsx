@@ -5,6 +5,7 @@ export type ViewId =
   | 'equipment'
   | 'support'
   | 'castle'
+  | 'automation'
   | 'movement'
   | 'battle-stats'
   | 'player-tracker'
@@ -22,6 +23,7 @@ export interface NavigationItem {
 
 export const NAVIGATION_ITEMS: NavigationItem[] = [
     { id: 'castle', label: 'Castle', icon: <Icons.Castle />, section: 'main' },
+    { id: 'automation', label: 'Automation', icon: <Icons.Grid />, section: 'main' },
     { id: 'equipment', label: 'Equipment', icon: <Icons.Shield />, section: 'main' },
     { id: 'movement', label: 'Movement', icon: <Icons.Activity />, section: 'main' },
     { id: 'battle-stats', label: 'Battle Stats', icon: <Icons.Activity />, section: 'main' },

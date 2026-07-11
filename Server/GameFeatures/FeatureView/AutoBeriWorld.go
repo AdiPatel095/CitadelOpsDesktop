@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ResponseRegistry"
@@ -75,6 +76,7 @@ func StopAutoBeriWorld() {
 	defer autoBeriWorldMu.Unlock()
 	if autoBeriWorldCancel != nil {
 		autoBeriWorldCancel()
+		Automation.CancelOwner(Automation.OwnerAutoBeri)
 		autoBeriWorldCancel = nil
 	}
 	autoBeriWorldNextWakeUp = 0

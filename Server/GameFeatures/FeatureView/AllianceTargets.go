@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/Models"
 	castle "CitadelDesktop/Server/Models/Castle"
@@ -218,7 +219,7 @@ func loadLiveAllianceRoster(allianceID int) (liveAllianceRoster, error) {
 	if allianceID <= 0 || !ResponseRegistry.IsGameWebSocketReady() {
 		return roster, fmt.Errorf("live alliance roster is unavailable")
 	}
-	waiter := ResponseRegistry.Global.RegisterWaiter("ain", 5*time.Second)
+	waiter := ResponseRegistry.Global.RegisterWaiterMatching("ain", 5*time.Second, matchAINAlliance(allianceID), nil)
 	defer waiter.Cleanup()
 	GameCommands.SendAIN(allianceID)
 	parts, err := waiter.WaitWithTimeout()
@@ -235,6 +236,20 @@ func loadLiveAllianceRoster(allianceID int) (liveAllianceRoster, error) {
 		return roster, fmt.Errorf("AIN returned alliance %d", roster.Alliance.AllianceID)
 	}
 	return roster, nil
+}
+
+func matchAINAlliance(allianceID int) func([]string) bool {
+	return func(parts []string) bool {
+		if len(parts) <= 5 {
+			return false
+		}
+		var envelope struct {
+			Alliance struct {
+				AllianceID int `json:"AID"`
+			} `json:"A"`
+		}
+		return json.Unmarshal([]byte(parts[5]), &envelope) == nil && envelope.Alliance.AllianceID == allianceID
+	}
 }
 
 func loadTopAlliances(ctx context.Context, server string) ([]AllianceTargetAlliance, error) {
@@ -617,19 +632,49 @@ func SendAllianceTargetSpy(targetX, targetY int) (int, error) {
 	if !ResponseRegistry.IsGameWebSocketReady() {
 		return 0, fmt.Errorf("game connection is not ready")
 	}
-	spies := currentSpyAvailability()
-	if spies.SourceCastle.CastleID <= 0 {
+	initial := currentSpyAvailability()
+	if initial.SourceCastle.CastleID <= 0 {
 		return 0, fmt.Errorf("main castle is not available")
 	}
-	if !spies.BuildingRowsLoaded {
+	if !initial.BuildingRowsLoaded {
 		return 0, fmt.Errorf("main castle building data is not loaded")
 	}
-	if spies.Available <= 0 {
+	if initial.Available <= 0 {
 		return 0, fmt.Errorf("no spies are currently available")
 	}
 	if targetX < 0 || targetY < 0 {
 		return 0, fmt.Errorf("invalid target coordinates")
 	}
-	GameCommands.SendCSM(spies.SourceCastle.CastleID, targetX, targetY, spies.Available)
-	return spies.Available, nil
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	sent := 0
+	err := Automation.RunWork(ctx, Automation.WorkItem{
+		Request: Automation.Request{
+			Owner:        Automation.OwnerManual,
+			Priority:     Automation.PriorityManual,
+			Reason:       "send alliance target spies",
+			Claims:       []Automation.Claim{Automation.CastleClaim(initial.SourceCastle.CastleID, "spy-missions")},
+			MaxHold:      10 * time.Second,
+			PreemptLower: true,
+		},
+		Run: func(_ context.Context, lease *Automation.Lease) error {
+			spies := currentSpyAvailability()
+			if spies.SourceCastle.CastleID != initial.SourceCastle.CastleID || spies.Available <= 0 {
+				return fmt.Errorf("no spies are currently available")
+			}
+			if !GameCommands.QueueFeaturePayload(
+				Automation.OwnerManual,
+				GameCommands.CSMPayload(spies.SourceCastle.CastleID, targetX, targetY, spies.Available),
+				lease,
+			) {
+				return Automation.ErrWorkCancelled
+			}
+			sent = spies.Available
+			return nil
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return sent, nil
 }

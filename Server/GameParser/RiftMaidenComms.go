@@ -1,10 +1,13 @@
 package GameParser
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
+	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
 	equip "CitadelDesktop/Server/Models/Equipment"
@@ -110,7 +113,7 @@ func EligibleMaidenComms(gs *Models.GameState, sourceX, sourceY, targetX, target
 
 // SendMaidenCommsWave queues dummy 1-wave rift attacks for eligible shield-maiden commanders.
 // unitWodID selects the probe troop; when <= 0 the default from cra_launch.json empty shell is used.
-// Attacks are staggered with a random delay between each (4–5s default, or Settings view min/max).
+// The dedicated attack websocket lane applies the configured random delay between launches.
 func SendMaidenCommsWave(sourceX, sourceY, unitWodID int) (MaidenCommsWaveResult, error) {
 	if !ResponseRegistry.LoginStatus {
 		Logging.RiftLog("maiden_comms_blocked", "game websocket not logged in")
@@ -175,32 +178,17 @@ func SendMaidenCommsWave(sourceX, sourceY, unitWodID int) (MaidenCommsWaveResult
 	result.Sent = len(wireIDs)
 	result.CommanderIDs = append(result.CommanderIDs, wireIDs...)
 
-	go dispatchMaidenCommsStaggered(wireIDs, sx, sy, rift.X, rift.Y, riftKid, effectiveUnit, wave)
+	go dispatchMaidenCommsQueued(wireIDs, sx, sy, rift.X, rift.Y, riftKid, effectiveUnit, wave)
 
 	return result, nil
 }
 
-func dispatchMaidenCommsStaggered(
+func dispatchMaidenCommsQueued(
 	wireIDs []int,
 	sx, sy, targetX, targetY, kingdomID, unitWodID int,
 	wave GameCommands.CRAWave,
 ) {
-	for i, wireID := range wireIDs {
-		if i > 0 {
-			delay := Models.AttackDelayBetweenSends()
-			Logging.RiftLogf("maiden_comms_stagger", "wait %s before LID=%d", delay.Round(time.Millisecond), wireID)
-			time.Sleep(delay)
-			if !ResponseRegistry.LoginStatus {
-				Logging.RiftLog("maiden_comms_stagger_abort", "game disconnected")
-				return
-			}
-			gs := Models.GetGameState()
-			if CommanderMarchingForLaunch(gs, wireID, sx, sy, targetX, targetY) {
-				Logging.RiftLogf("maiden_comms_stagger_skip", "LID=%d busy after delay", wireID)
-				continue
-			}
-		}
-
+	for _, wireID := range wireIDs {
 		params := GameCommands.CRALaunchParams{
 			SourceX:          sx,
 			SourceY:          sy,
@@ -217,10 +205,23 @@ func dispatchMaidenCommsStaggered(
 			Logging.RiftLogf("maiden_comms_failed", "LID=%d payload: %v", wireID, err)
 			continue
 		}
-		GameCommands.QueueOutgoingPayload(payload)
+		commanderID := wireID
+		receipt := GameCommands.DispatchPayload(context.Background(), "cra", "rift_maiden_probe", payload, Automation.CommandOptions{
+			Owner:    Automation.OwnerManual,
+			Priority: Automation.PriorityManual,
+			Guard: func() bool {
+				return ResponseRegistry.LoginStatus && !CommanderMarchingForLaunch(
+					Models.GetGameState(), commanderID, sx, sy, targetX, targetY,
+				)
+			},
+		})
+		if !receipt.Accepted {
+			Logging.RiftLogf("maiden_comms_failed", "LID=%d queue: %s", wireID, receipt.Message)
+			continue
+		}
 		Logging.AppendRiftSendPayload(payload)
-		Logging.RiftLogf("maiden_comms", "queued dummy wave LID=%d unit=%d (%d,%d)→(%d,%d) K%d",
-			wireID, unitWodID, sx, sy, targetX, targetY, kingdomID)
+		Logging.RiftLogf("maiden_comms", "queued submission=%d dummy wave LID=%d unit=%d (%d,%d)→(%d,%d) K%d",
+			receipt.SubmissionID, wireID, unitWodID, sx, sy, targetX, targetY, kingdomID)
 	}
 	MaybeNotifyRiftCRALaunchBusyChanged()
 }
@@ -269,7 +270,22 @@ func refreshMainCastleTroopsForMaidenComms(gs *Models.GameState) {
 	if x == 0 && y == 0 {
 		return
 	}
-	FocusPlayerCastleTroops(kid, castleID, x, y)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	lease, ok := GameFocus.Acquire(ctx, GameFocus.Request{
+		Owner:           GameFocus.OwnerManual,
+		Priority:        GameFocus.PriorityManual,
+		Reason:          "rift maiden comms troop refresh",
+		MaxHold:         10 * time.Second,
+		Claims:          []GameFocus.Claim{GameFocus.CastleClaim(castleID, "troop-refresh")},
+		PreemptLower:    true,
+		SupersedeManual: true,
+	})
+	if !ok {
+		return
+	}
+	defer lease.Release()
+	FocusPlayerCastleTroopsWithLease(lease, kid, castleID, x, y)
 }
 
 func resolveMaidenCommsSource(sourceX, sourceY int) (int, int, bool) {

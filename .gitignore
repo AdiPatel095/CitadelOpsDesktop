@@ -38,6 +38,7 @@ Thumbs.db
 *.temp
 *.log
 .codex-local-tests/
+/PerformanceArtifacts/
 
 
 # GGE HTML5 mirrored textures (go run ./Server/cmd/fetchggeassets)

@@ -49,6 +49,7 @@ const (
 	keyH   = "HONEY"
 	keyM   = "MEAD"
 	keyB   = "BEEF"
+	keyMC  = "MC"
 
 	// Prefixes for production and storage keys
 	prefixProd    = "D"
@@ -539,6 +540,9 @@ func parseDCLCastleResources(gs *Models.GameState, castleData interface{}, kingd
 		TroopsHI:    hospital,
 		TroopsSHI:   specialHospital,
 		TroopsMixed: mixed,
+	}
+	if marketBarrows, exists := castleMap[keyMC]; exists {
+		castle.MarketBarrowsAvailable = jsonIntFromAny(marketBarrows)
 	}
 	parseCastleResources(castleMap, &castle.Amount, &castle.Production, &castle.Storage, castleID)
 }

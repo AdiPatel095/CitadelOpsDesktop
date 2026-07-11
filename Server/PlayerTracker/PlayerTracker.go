@@ -1,6 +1,7 @@
 package playertracker
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/Models"
 	castle "CitadelDesktop/Server/Models/Castle"
@@ -183,15 +185,17 @@ func refreshAndRecordCurrent() {
 		return
 	}
 
-	gdiWaiter := ResponseRegistry.Global.RegisterWaiter("gdi", refreshTimeout)
-	dclWaiter := ResponseRegistry.Global.RegisterWaiter("dcl", refreshTimeout)
-	defer gdiWaiter.Cleanup()
-	defer dclWaiter.Cleanup()
+	gdiKey := Automation.StateOpcode("gdi")
+	dclKey := Automation.StateOpcode("dcl")
+	gdiVersion := Automation.StateSnapshot(gdiKey).Version
+	dclVersion := Automation.StateSnapshot(dclKey).Version
 
-	GameCommands.SendGDI(gs.PlayerID)
-	GameCommands.SendDCLRefresh()
-	_, _ = gdiWaiter.WaitWithTimeout()
-	_, _ = dclWaiter.WaitWithTimeout()
+	GameCommands.QueueBackgroundRefresh(GameCommands.GDIPayload(gs.PlayerID))
+	GameCommands.QueueBackgroundRefresh(GameCommands.DCLRefreshPayload())
+	ctx, cancel := context.WithTimeout(context.Background(), refreshTimeout)
+	_, _ = Automation.AwaitStateAfter(ctx, gdiKey, gdiVersion)
+	_, _ = Automation.AwaitStateAfter(ctx, dclKey, dclVersion)
+	cancel()
 	RecordCurrent()
 }
 

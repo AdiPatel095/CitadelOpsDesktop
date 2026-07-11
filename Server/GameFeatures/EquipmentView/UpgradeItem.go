@@ -1,12 +1,14 @@
 package equipmentview
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Models"
@@ -152,8 +154,16 @@ func upgradeToLevel(riid float64, eqFlag int, targetLevel int) UpgradeResult {
 		log.Printf("[Upgrade] stopping before loop: %s", msg)
 		return UpgradeResult{Success: false, Message: msg}
 	}
+	lease, cancel, acquired := acquireEquipmentControl("upgrade equipment", true, 10*time.Minute)
+	if !acquired {
+		return UpgradeResult{Success: false, Message: "Equipment control is busy"}
+	}
+	defer cancel()
+	defer lease.Release()
 
-	GameCommands.SendUpgradeMenuRefresh()
+	if !GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.GNRPayload(), lease) {
+		return UpgradeResult{Success: false, Message: "Upgrade was cancelled"}
+	}
 	time.Sleep(upgradeMenuWait)
 
 	currentLevel, ok := findItemLevel(riid, eqFlag)
@@ -188,7 +198,7 @@ func upgradeToLevel(riid float64, eqFlag int, targetLevel int) UpgradeResult {
 			}
 		}
 
-		newLevel, code, ignored, err := sendSingleUpgrade(riid, eqFlag)
+		newLevel, code, ignored, err := sendSingleUpgrade(lease, riid, eqFlag)
 		if err != nil {
 			return UpgradeResult{
 				Success:      false,
@@ -236,7 +246,7 @@ func upgradeToLevel(riid float64, eqFlag int, targetLevel int) UpgradeResult {
 	}
 }
 
-func sendSingleUpgrade(riid float64, eqFlag int) (newLevel int, code string, ignored bool, err error) {
+func sendSingleUpgrade(lease *Automation.Lease, riid float64, eqFlag int) (newLevel int, code string, ignored bool, err error) {
 	waitTypes := []string{"ere"}
 	if eqFlag == upgradeEQEquipment {
 		waitTypes = append(waitTypes, "eqe")
@@ -248,9 +258,11 @@ func sendSingleUpgrade(riid float64, eqFlag int) (newLevel int, code string, ign
 	defer cleanup()
 
 	coinGenBefore := GameParser.CoinUpdateGeneration()
-	GameCommands.SendERE(riid, eqFlag, upgradeDefaultC2)
+	if !GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.EREPayload(riid, eqFlag, upgradeDefaultC2), lease) {
+		return 0, "", false, fmt.Errorf("upgrade was cancelled")
+	}
 
-	response, waitErr := waitOnChannel(ch, upgradeResponseWait)
+	response, waitErr := waitOnChannel(lease.Context(), ch, upgradeResponseWait)
 	if waitErr != nil {
 		return 0, "", false, fmt.Errorf("timeout waiting for upgrade response")
 	}
@@ -305,12 +317,16 @@ func registerMultiWaiters(types []string, timeout time.Duration) (chan []string,
 	return ch, cleanup
 }
 
-func waitOnChannel(ch chan []string, timeout time.Duration) ([]string, error) {
+func waitOnChannel(ctx context.Context, ch chan []string, timeout time.Duration) ([]string, error) {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 	select {
 	case msg := <-ch:
 		return msg, nil
-	case <-time.After(timeout):
+	case <-timer.C:
 		return nil, ResponseRegistry.ErrTimeout
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
 }
 

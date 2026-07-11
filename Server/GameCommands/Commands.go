@@ -1,4 +1,5 @@
-// Package GameCommands queues raw %%xt%%EmpireEx_21%%…%% payloads onto ResponseRegistry.OutgoingMessages.
+// Package GameCommands builds raw %%xt%%EmpireEx_21%%…%% payloads and submits
+// typed command envelopes through the Automation command harness.
 // The browser/game client must be connected; these mirror what the live Flash/HTML5 client sends.
 //
 // Conventions:
@@ -10,6 +11,7 @@
 //   - empireExFrame(op, jsonBody) builds the wire envelope %xt%<token>%<op>%1%<body>% in one place.
 //   - <OP>Payload(...) is a pure builder that returns the wire string (no side effects).
 //   - Send<OP>(...) queues that string via QueueOutgoingPayload — the single outbound entry point.
+//   - The command harness validates shapes and routes **cra** attack launches separately.
 //     A few opcodes are intentionally special and documented inline: sin (no JSON body) and aec (no token).
 //
 // Navigation before build/pickup: the game applies EBU/SOB to whichever castle view is focused.
@@ -17,7 +19,10 @@
 package GameCommands
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/ResponseRegistry"
+	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 )
@@ -29,10 +34,122 @@ func empireExFrame(op, jsonBody string) string {
 	return fmt.Sprintf(`%%xt%%%s%%%s%%1%%%s%%`, ResponseRegistry.EmpireExToken, op, jsonBody)
 }
 
-// QueueOutgoingPayload enqueues a raw payload onto the single game websocket outbound queue.
-// Every Send* function routes through here so there is one place that touches OutgoingMessages.
+type commandLease interface {
+	ID() int64
+	Active() bool
+	Priority() Automation.Priority
+	WorkID() string
+}
+
+func firstCommandLease(leases []commandLease) commandLease {
+	if len(leases) == 0 {
+		return nil
+	}
+	return leases[0]
+}
+
+// QueueOutgoingPayload submits a manual/view command. Automation features should use
+// QueueFeaturePayload so priority and lease cancellation survive into the outbound queue.
 func QueueOutgoingPayload(payload string) {
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
+	QueueOutgoingPayloadWithOptions(payload, Automation.CommandOptions{
+		Owner:    Automation.OwnerManual,
+		Priority: Automation.PriorityManual,
+	})
+}
+
+func QueueOutgoingPayloadWithOptions(payload string, options Automation.CommandOptions) bool {
+	receipt := DispatchPayload(context.Background(), options.Builder, options.Intent, payload, options)
+	return receipt.Accepted
+}
+
+// DispatchPayload queues one built command through the shared harness and returns its portable receipt.
+func DispatchPayload(
+	ctx context.Context,
+	command string,
+	intent string,
+	payload string,
+	options Automation.CommandOptions,
+) Automation.CommandReceipt {
+	return DispatchPayloads(ctx, command, intent, []string{payload}, options)
+}
+
+// DispatchPayloads is the internal-app adapter to the shared command harness. Toolkit and future
+// transport adapters use the same submission/receipt contract, including atomic multi-frame queues.
+func DispatchPayloads(
+	ctx context.Context,
+	command string,
+	intent string,
+	payloads []string,
+	options Automation.CommandOptions,
+) Automation.CommandReceipt {
+	if options.Surface == "" {
+		if options.Owner == Automation.OwnerToolkit {
+			options.Surface = Automation.CommandSurfaceToolkit
+		} else {
+			options.Surface = Automation.CommandSurfaceInternalApp
+		}
+	}
+	frames := make([]Automation.CommandFrame, len(payloads))
+	for index, payload := range payloads {
+		frames[index] = Automation.CommandFrame{Payload: []byte(payload)}
+	}
+	return Automation.DispatchCommands(ctx, Automation.CommandSubmission{
+		ContractVersion: Automation.CommandContractVersion,
+		Command:         command,
+		Intent:          intent,
+		Surface:         options.Surface,
+		Effect:          options.Effect,
+		Frames:          frames,
+		Options:         options,
+	})
+}
+
+// QueueFeaturePayload submits automation-owned work and binds it to the active lease when supplied.
+// A queued command whose lease is later revoked is discarded before it reaches the websocket.
+func QueueFeaturePayload(owner, payload string, lease commandLease) bool {
+	return QueueOutgoingPayloadWithOptions(payload, featureCommandOptions(owner, lease))
+}
+
+// QueueFeatureRefresh coalesces identical queued refreshes so several readers can share the
+// same authoritative inbound state update instead of spamming duplicate websocket requests.
+func QueueFeatureRefresh(owner, payload string, lease commandLease) bool {
+	options := featureCommandOptions(owner, lease)
+	options.CoalesceKey = refreshCoalesceKey(payload)
+	return QueueOutgoingPayloadWithOptions(payload, options)
+}
+
+func featureCommandOptions(owner string, lease commandLease) Automation.CommandOptions {
+	options := Automation.CommandOptions{
+		Owner:    owner,
+		Intent:   owner,
+		Priority: Automation.DefaultPriority(owner),
+	}
+	if lease != nil {
+		options.WorkID = lease.WorkID()
+		options.Priority = lease.Priority()
+		options.Guard = lease.Active
+	}
+	return options
+}
+
+func QueueBackgroundPayload(payload string) bool {
+	return QueueOutgoingPayloadWithOptions(payload, Automation.CommandOptions{
+		Owner:    Automation.OwnerBackground,
+		Priority: Automation.PriorityBackground,
+	})
+}
+
+func QueueBackgroundRefresh(payload string) bool {
+	return QueueOutgoingPayloadWithOptions(payload, Automation.CommandOptions{
+		Owner:       Automation.OwnerBackground,
+		Priority:    Automation.PriorityBackground,
+		CoalesceKey: refreshCoalesceKey(payload),
+	})
+}
+
+func refreshCoalesceKey(payload string) string {
+	sum := sha256.Sum256([]byte(payload))
+	return fmt.Sprintf("refresh:%x", sum[:12])
 }
 
 // --- Focus / navigation ---
@@ -258,6 +375,19 @@ func GAMPayload() string {
 // SendGAM requests active movements (**gam**). Parsed into GameState.Movement.ActiveMovements.
 func SendGAM() {
 	QueueOutgoingPayload(GAMPayload())
+}
+
+// MCMPayload builds EmpireEx_21 **mcm** — recall an active movement by movement id.
+func MCMPayload(mid int) string {
+	return empireExFrame("mcm", fmt.Sprintf(`{"MID":%d}`, mid))
+}
+
+// SendMCM recalls an active movement. A successful response keeps the MID and changes the leg to D=1.
+func SendMCM(mid int) {
+	if mid <= 0 {
+		return
+	}
+	QueueOutgoingPayload(MCMPayload(mid))
 }
 
 // SendSDI queues **sdi** — preview bird route source → target map tiles.

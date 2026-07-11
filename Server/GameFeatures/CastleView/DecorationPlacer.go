@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/GameCommands"
+	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Models"
 	dec "CitadelDesktop/Server/Models/Decoration"
@@ -313,9 +314,22 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 	if len(preset.Items) == 0 {
 		return "complete: empty preset"
 	}
+	lease, ok := GameFocus.Acquire(ctx, GameFocus.Request{
+		Owner:           GameFocus.OwnerDecoration,
+		Priority:        GameFocus.PriorityManual,
+		Reason:          fmt.Sprintf("decoration preset castle=%d", castleID),
+		MaxHold:         2 * time.Minute,
+		Claims:          []GameFocus.Claim{GameFocus.CastleClaim(castleID, "decoration-layout")},
+		PreemptLower:    true,
+		SupersedeManual: true,
+	})
+	if !ok {
+		return "cancelled"
+	}
+	defer lease.Release()
 
 	// One JAA/JCA at start so GameState + workCastle match the live castle.
-	if !GameParser.FocusPlayerCastleWithRetry(kingdomID, castleID, mapX, mapY) {
+	if !GameParser.FocusPlayerCastleWithRetryAndLease(lease, kingdomID, castleID, mapX, mapY) {
 		alert("red", "Decoration apply failed: could not focus the castle (JAA/JCA timed out).")
 		return "error: focus castle (JAA/JCA) timed out"
 	}
@@ -332,8 +346,11 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 	ebuNeed, sobReturn := computeDecorationStorageDelta(&work, preset)
 	if len(ebuNeed) > 0 {
 		waiter := ResponseRegistry.Global.RegisterWaiter("sin", sinResponseWait)
-		GameCommands.SendSIN()
-		sinParts, err := waiter.WaitWithTimeout()
+		if !GameCommands.QueueFeaturePayload(GameFocus.OwnerDecoration, GameCommands.SINPayload(), lease) {
+			waiter.Cleanup()
+			return "cancelled"
+		}
+		sinParts, err := waiter.WaitWithContext(lease.Context())
 		waiter.Cleanup()
 		if err != nil {
 			alert("red", "Decoration apply cancelled: timed out waiting for storage (sin).")
@@ -361,7 +378,7 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 	workOIDSeq := 0 // negative OIDs for optimistic EBU rows (not sent to the game)
 	done := false
 	for step := 0; step < maxSteps; step++ {
-		if ctx.Err() != nil {
+		if ctx.Err() != nil || !lease.Active() {
 			return "cancelled"
 		}
 		if !ResponseRegistry.LoginStatus {
@@ -410,7 +427,9 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 
 		if sobOID != 0 {
 			prog(fmt.Sprintf("sob OID %d", sobOID))
-			GameCommands.SendSOB(castleID, sobOID)
+			if !GameCommands.QueueFeaturePayload(GameFocus.OwnerDecoration, GameCommands.SOBPayload(castleID, sobOID), lease) {
+				return "cancelled"
+			}
 			if !removeDecorationByOID(&work, sobOID) {
 				alert("red", "Decoration apply failed: internal state after SOB.")
 				return fmt.Sprintf("error: internal SOB state (OID %d)", sobOID)
@@ -431,7 +450,13 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 		if ebuPI >= 0 {
 			ep := desired[ebuPI]
 			prog(fmt.Sprintf("ebu WID %d @ %d,%d R%d", ep.WID, ep.X, ep.Y, ep.R))
-			GameCommands.SendEBUWithParams(ep.WID, ep.X, ep.Y, ep.R, 0, -1, -1)
+			if !GameCommands.QueueFeaturePayload(
+				GameFocus.OwnerDecoration,
+				GameCommands.EBUWithParamsPayload(ep.WID, ep.X, ep.Y, ep.R, 0, -1, -1),
+				lease,
+			) {
+				return "cancelled"
+			}
 			workOIDSeq--
 			appendPresetPlacementToWork(&work, ep, workOIDSeq)
 			time.Sleep(150 * time.Millisecond)
@@ -447,7 +472,7 @@ func runDecorationApply(ctx context.Context, castleID, kingdomID, mapX, mapY int
 	}
 
 	prog("verify layout (JAA)")
-	if !GameParser.FocusPlayerCastleWithRetry(kingdomID, castleID, mapX, mapY) {
+	if !GameParser.FocusPlayerCastleWithRetryAndLease(lease, kingdomID, castleID, mapX, mapY) {
 		alert("red", "Decoration apply failed: could not verify layout (final JAA timed out).")
 		return "error: final JAA verify timed out"
 	}

@@ -6,6 +6,7 @@
   "scripts": {
     "client:dev": "cd Client && npm run dev",
     "client:build": "cd Client && npm run build",
+    "client:perf": "go run ./Tools/UIPerformance",
     "server:dev": "cd Server && go run main.go",
     "updateData": "go run ./Server/OfficialData -fetch-assets -prune-png",
     "serve": "npm run client:dev && npm run server:dev",

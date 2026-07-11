@@ -281,6 +281,12 @@ export class CommandJsonMockRuntime {
       case 'getAutoBirdClientState':
         this.emitIfReady('autoBirdClientState', { presets: { presets: [] }, settings: {}, minSend: 0, minDelay: 6, maxDelay: 12 });
         break;
+      case 'getAutoStationClientState':
+        this.emitIfReady('autoStationClientState', { version: 1, leadTimeSec: 60, recallWhenClear: true, minRPTDays: 3, settings: {} });
+        break;
+      case 'saveAutoStationClientState':
+        this.emitIfReady('autoStationClientState', msg.payload ?? {});
+        break;
       case 'getAutoTCIClientState':
         this.emitIfReady('autoTCIClientState', { presets: { presets: [] }, settings: {} });
         break;
@@ -304,6 +310,9 @@ export class CommandJsonMockRuntime {
         break;
       case 'toggleAutoBird':
         this.emitIfReady('autoBirdStatus', { enabled: false, nextWakeUp: 0 });
+        break;
+      case 'toggleAutoStation':
+        this.emitIfReady('autoStationStatus', { enabled: false, state: 'off', threatCount: 0, nextImpactUnixMs: 0, detail: '' });
         break;
       case 'toggleAutoBeriWorld':
         this.emitIfReady('autoBeriWorldStatus', { enabled: false, nextWakeUp: 0 });
@@ -341,6 +350,7 @@ export class CommandJsonMockRuntime {
     this.emit({ type: 'autoHospitalStatus', payload: { enabled: false } });
     this.emit({ type: 'autoTCIStatus', payload: { enabled: false, nextWakeUp: 0 } });
     this.emit({ type: 'autoBirdStatus', payload: { enabled: false, nextWakeUp: 0 } });
+    this.emit({ type: 'autoStationStatus', payload: { enabled: false, state: 'off', threatCount: 0, nextImpactUnixMs: 0, detail: '' } });
     this.emit({ type: 'autoBeriWorldStatus', payload: { enabled: false, nextWakeUp: 0 } });
     this.emit({ type: 'globalResourceUpdate', payload: state.globalResources });
     this.emit({ type: 'allianceInfo', payload: state.alliance });

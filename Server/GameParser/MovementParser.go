@@ -12,7 +12,7 @@ var OnGAMParsed func()
 // NotifyMovementChanged is wired by FrontendWebsocket to push active movements after GAM-like parses.
 var NotifyMovementChanged func()
 
-// movementItemsFromGAMLikeRoot splits a **gam** / **cds** / **cat** / **cra** JSON root into per-movement objects (each holds M, UM, A).
+// movementItemsFromGAMLikeRoot splits a **gam** / **cds** / **cat** / **cra** / **crm** JSON root into per-movement objects.
 func movementItemsFromGAMLikeRoot(gamData map[string]interface{}) []map[string]interface{} {
 	var mArray []interface{}
 
@@ -36,6 +36,9 @@ func movementItemsFromGAMLikeRoot(gamData map[string]interface{}) []map[string]i
 		}
 		if spyObj, ok := wrapper["S"].(map[string]interface{}); ok {
 			movObj["S"] = spyObj
+		}
+		if marketObj, ok := wrapper["MM"].(map[string]interface{}); ok {
+			movObj["MM"] = marketObj
 		}
 		mArray = []interface{}{movObj}
 	} else if mVal, ok := gamData["M"]; ok {
@@ -116,6 +119,26 @@ func ExtractMaxTTSecondsFromGAMLikeJSON(data string) int {
 	return maxTT
 }
 
+// MovementMIDAndTTFromGAMLikeJSON returns the movement id and travel time from a successful
+// movement response such as **cds** or **mcm**.
+func MovementMIDAndTTFromGAMLikeJSON(data string) (mid, tt int, ok bool) {
+	var root map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &root); err != nil {
+		return 0, 0, false
+	}
+	for _, item := range movementItemsFromGAMLikeRoot(root) {
+		movement, exists := item["M"].(map[string]interface{})
+		if !exists {
+			continue
+		}
+		mid, tt = getInt(movement, "MID"), getInt(movement, "TT")
+		if mid > 0 {
+			return mid, tt, true
+		}
+	}
+	return 0, 0, false
+}
+
 // ParseGAMMessage parses the GAM (Global Army Movement) message
 // GAM message contains all active movements for the player and alliance
 // We store ALL movements since troop composition matching is unique
@@ -155,6 +178,7 @@ func ParseGAMMessage(data string) {
 		kid := getInt(mDetails, "KID")
 		sid := getInt(mDetails, "SID")
 		oid := getInt(mDetails, "OID")
+		targetPlayerID := getInt(mDetails, "TID")
 		movementType := getInt(mDetails, "T")
 		spyCount := 0
 		if spyDetails, ok := movObj["S"].(map[string]interface{}); ok {
@@ -165,6 +189,8 @@ func ParseGAMMessage(data string) {
 		targetType := 0
 		targetX := 0
 		targetY := 0
+		targetCastleID := 0
+		targetName := ""
 		if taArray, ok := mDetails["TA"].([]interface{}); ok && len(taArray) > 2 {
 			if tt, ok := taArray[0].(float64); ok {
 				targetType = int(tt)
@@ -175,17 +201,46 @@ func ParseGAMMessage(data string) {
 			if ty, ok := taArray[2].(float64); ok {
 				targetY = int(ty)
 			}
+			if len(taArray) > 3 {
+				if castleID, ok := taArray[3].(float64); ok {
+					targetCastleID = int(castleID)
+				}
+			}
+			if len(taArray) > 4 {
+				if playerID, ok := taArray[4].(float64); ok {
+					targetPlayerID = int(playerID)
+				}
+			}
+			if len(taArray) > 10 {
+				targetName, _ = taArray[10].(string)
+			}
 		}
 
 		// Extract source coordinates from SA array (indices 1 and 2)
 		sourceX := 0
 		sourceY := 0
+		sourceCastleID := 0
+		sourcePlayerID := oid
+		sourceName := ""
 		if saArray, ok := mDetails["SA"].([]interface{}); ok && len(saArray) > 2 {
 			if sx, ok := saArray[1].(float64); ok {
 				sourceX = int(sx)
 			}
 			if sy, ok := saArray[2].(float64); ok {
 				sourceY = int(sy)
+			}
+			if len(saArray) > 3 {
+				if castleID, ok := saArray[3].(float64); ok {
+					sourceCastleID = int(castleID)
+				}
+			}
+			if len(saArray) > 4 {
+				if playerID, ok := saArray[4].(float64); ok {
+					sourcePlayerID = int(playerID)
+				}
+			}
+			if len(saArray) > 10 {
+				sourceName, _ = saArray[10].(string)
 			}
 		}
 
@@ -202,6 +257,29 @@ func ParseGAMMessage(data string) {
 							}
 						}
 					}
+				}
+			}
+		}
+
+		marketBarrows := 0
+		var marketGoods []Models.GAMMarketGood
+		if marketObj, ok := movObj["MM"].(map[string]interface{}); ok {
+			marketBarrows = getInt(marketObj, "C")
+			if goods, ok := marketObj["G"].([]interface{}); ok {
+				for _, rawGood := range goods {
+					pair, ok := rawGood.([]interface{})
+					if !ok || len(pair) < 2 {
+						continue
+					}
+					resource, ok := pair[0].(string)
+					if !ok || resource == "" {
+						continue
+					}
+					amount, ok := pair[1].(float64)
+					if !ok || amount <= 0 {
+						continue
+					}
+					marketGoods = append(marketGoods, Models.GAMMarketGood{Resource: resource, Amount: amount})
 				}
 			}
 		}
@@ -226,25 +304,33 @@ func ParseGAMMessage(data string) {
 
 		// Store ALL movements - we'll match by troop composition which is unique
 		movement := Models.GAMMovement{
-			MID:          mid,
-			PT:           pt,
-			TT:           tt,
-			D:            d,
-			KID:          kid,
-			SID:          sid,
-			OID:          oid,
-			MovementType: movementType,
-			SpyCount:     spyCount,
-			TargetType:   targetType,
-			TargetX:      targetX,
-			TargetY:      targetY,
-			SourceX:      sourceX,
-			SourceY:      sourceY,
-			CommanderID:  commanderID,
-			TroopArray:   troopArray,
-			PWD:          pwd,
-			TWD:          twd,
-			ReceivedUnix: nowUnix,
+			MID:            mid,
+			PT:             pt,
+			TT:             tt,
+			D:              d,
+			KID:            kid,
+			SID:            sid,
+			OID:            oid,
+			MovementType:   movementType,
+			SpyCount:       spyCount,
+			TargetType:     targetType,
+			TargetX:        targetX,
+			TargetY:        targetY,
+			TargetCastleID: targetCastleID,
+			TargetPlayerID: targetPlayerID,
+			TargetName:     targetName,
+			SourceX:        sourceX,
+			SourceY:        sourceY,
+			SourceCastleID: sourceCastleID,
+			SourcePlayerID: sourcePlayerID,
+			SourceName:     sourceName,
+			CommanderID:    commanderID,
+			TroopArray:     troopArray,
+			MarketBarrows:  marketBarrows,
+			MarketGoods:    marketGoods,
+			PWD:            pwd,
+			TWD:            twd,
+			ReceivedUnix:   nowUnix,
 		}
 		parsedMovements = append(parsedMovements, movement)
 

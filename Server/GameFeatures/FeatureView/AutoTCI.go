@@ -1,6 +1,7 @@
 package featureview
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
@@ -50,11 +51,13 @@ var (
 	buyGoroutineLast sync.Map
 )
 
-func acquireAutoTCILease(ctx context.Context, reason string, maxHold time.Duration) (*GameFocus.Lease, bool) {
+func acquireAutoTCILease(ctx context.Context, reason string, maxHold time.Duration, claims ...GameFocus.Claim) (*GameFocus.Lease, bool) {
+	claims = append([]GameFocus.Claim{GameFocus.ExclusiveClaim(Automation.ClaimTCIInventory)}, claims...)
 	return GameFocus.Acquire(ctx, GameFocus.Request{
 		Owner:   GameFocus.OwnerAutoTCI,
 		Reason:  reason,
 		MaxHold: maxHold,
+		Claims:  claims,
 	})
 }
 
@@ -121,8 +124,9 @@ func StopAutoTCI() {
 	defer autoTCIMu.Unlock()
 	if autoTCICancel != nil {
 		autoTCICancel()
+		Automation.CancelOwner(Automation.OwnerAutoTCI)
 		autoTCICancel = nil
-		clearAutoTCINextWake()
+		autoTCINextWakeUpMs = 0
 	}
 }
 
@@ -734,13 +738,13 @@ func refreshAutoTCIStashOnceWithLease(lease *GameFocus.Lease) {
 	if !autoTCILeaseActive(lease, "lease revoked", "aec skipped") {
 		return
 	}
-	GameCommands.SendAECAutoTCI()
+	GameCommands.SendAECAutoTCI(lease)
 	w := ResponseRegistry.Global.RegisterWaiter("gii", 8*time.Second)
 	if !autoTCILeaseActive(lease, "lease revoked", "gii skipped") {
 		w.Cleanup()
 		return
 	}
-	GameCommands.SendGIIAutoTCI()
+	GameCommands.SendGIIAutoTCI(lease)
 	_, err := w.WaitWithTimeout()
 	w.Cleanup()
 	time.Sleep(80 * time.Millisecond)
@@ -946,7 +950,7 @@ func tryAutoTCIEquipFromPresence(ctx context.Context, gs *Models.GameState, cata
 			if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("rpc skipped AID=%d", aid)) {
 				return
 			}
-			GameCommands.SendRPCAutoTCI(oid, row.FirstTierWireCID, 0, 0, kid, aid)
+			GameCommands.SendRPCAutoTCI(oid, row.FirstTierWireCID, 0, 0, kid, aid, lease)
 			equipLastSent.Store(dk, utctime.Now())
 			virtualStash[row.FirstTierWireCID]--
 			equips++
@@ -969,7 +973,12 @@ func runAutoTCIMainPurchaseUnit(ctx context.Context, c *castle.PlayerCastleInfo,
 	if c == nil || gs == nil || mainAID <= 0 || !ResponseRegistry.LoginStatus || !IsAutoTCIRunning() {
 		return false
 	}
-	lease, ok := acquireAutoTCILease(ctx, fmt.Sprintf("%s main purchase", reason), 45*time.Second)
+	lease, ok := acquireAutoTCILease(
+		ctx,
+		fmt.Sprintf("%s main purchase", reason),
+		45*time.Second,
+		GameFocus.ExclusiveClaim(Automation.ClaimAccountResources),
+	)
 	if !ok {
 		return false
 	}
@@ -990,12 +999,12 @@ func runAutoTCIMainPurchaseUnit(ctx context.Context, c *castle.PlayerCastleInfo,
 		return false
 	}
 	Logging.AutoTCILogf("buy gbc", "CID(AID)=%d KID=%d", mainAID, kid)
-	GameCommands.SendAECAutoTCI()
+	GameCommands.SendAECAutoTCI(lease)
 	if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("%s gbc skipped", reason)) {
 		w.Cleanup()
 		return false
 	}
-	GameCommands.QueueAutoTCIOutgoing(GameCommands.GBCPayload(mainAID, kid))
+	GameCommands.QueueAutoTCIOutgoing(GameCommands.GBCPayload(mainAID, kid), lease)
 	_, err := w.WaitWithTimeout()
 	if err != nil {
 		Logging.AutoTCILogf(reason, "gbc wait: %v", err)
@@ -1040,7 +1049,7 @@ func runAutoTCIMainPurchaseUnit(ctx context.Context, c *castle.PlayerCastleInfo,
 		GameCommands.AutoTCITrivialSBPBuildAux,
 		GameCommands.AutoTCITrivialSBPPower,
 		GameCommands.AutoTCITrivialSBPPO,
-	))
+	), lease)
 	sbpResp, sbpErr := wSbp.WaitWithTimeout()
 	wSbp.Cleanup()
 	if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("%s after sbp", reason)) {
@@ -1063,7 +1072,7 @@ func runAutoTCIMainPurchaseUnit(ctx context.Context, c *castle.PlayerCastleInfo,
 			wG.Cleanup()
 			return false
 		}
-		GameCommands.SendGIIAutoTCI()
+		GameCommands.SendGIIAutoTCI(lease)
 		if _, err := wG.WaitWithTimeout(); err != nil {
 			Logging.AutoTCILogf(reason, "gii after purchase: %v", err)
 		}
@@ -1272,7 +1281,7 @@ func tryExecuteSingleAutoTCIUpgrade(ctx context.Context, gs *Models.GameState, c
 	if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("ubc skipped AID=%d", castleAID)) {
 		return
 	}
-	GameCommands.SendUBCAutoTCI(b.OID, suc, sl.S, kid, aid, sl.CID)
+	GameCommands.SendUBCAutoTCI(b.OID, suc, sl.S, kid, aid, sl.CID, lease)
 	upgradeLastSent.Store(dk, utctime.Now())
 }
 
@@ -1713,7 +1722,7 @@ func ensureClientFocusedOnCastleWithLease(lease *GameFocus.Lease, gs *Models.Gam
 		if !autoTCILeaseActive(lease, "lease revoked", fmt.Sprintf("focus skipped AID=%d", castleAID)) {
 			return false
 		}
-		GameCommands.SendCastleFocusAutoTCI(kingdomID, castleAID, x, y)
+		GameCommands.SendCastleFocusAutoTCI(kingdomID, castleAID, x, y, lease)
 		if !GameParser.AwaitJAAProcessedAfter(prev, autoTCIJAAFocusWait) {
 			return false
 		}

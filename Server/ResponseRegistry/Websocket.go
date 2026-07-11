@@ -1,6 +1,7 @@
 package ResponseRegistry
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/ChromeUserData"
 	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/Logging"
@@ -34,11 +35,17 @@ var (
 	// SendAutoBirdStatusFunc is a callback to notify frontend of auto bird enabled + next wake (unix ms).
 	SendAutoBirdStatusFunc func(enabled bool, nextWakeUp int64)
 
+	// SendAutoStationStatusFunc reports evacuation monitoring and recall state.
+	SendAutoStationStatusFunc func(enabled bool, state string, threatCount int, nextImpactUnixMs int64, detail string)
+
 	// SendRecruitTroopsStatusFunc is a callback to notify frontend of recruit troops status changes
 	SendRecruitTroopsStatusFunc func(bool)
 
 	// SendAutoToolStatusFunc is a callback to notify frontend of Auto Tool status changes
 	SendAutoToolStatusFunc func(bool)
+
+	// SendAutoSceatResStatusFunc notifies the frontend when Auto Sceat Resources is toggled.
+	SendAutoSceatResStatusFunc func(bool)
 
 	// SendAutoHospitalStatusFunc is a callback to notify frontend of Auto Hospital status changes
 	SendAutoHospitalStatusFunc func(bool)
@@ -229,6 +236,11 @@ func SetAutoBirdStatusCallback(fn func(bool, int64)) {
 	SendAutoBirdStatusFunc = fn
 }
 
+// SetAutoStationStatusCallback sets the callback for Auto Station status notification.
+func SetAutoStationStatusCallback(fn func(bool, string, int, int64, string)) {
+	SendAutoStationStatusFunc = fn
+}
+
 // SetAutoBeriWorldStatusCallback sets the callback for Auto Beri World status notification.
 func SetAutoBeriWorldStatusCallback(fn func(bool, int64)) {
 	SendAutoBeriWorldStatusFunc = fn
@@ -350,6 +362,7 @@ func handleCDPEvent(browserSession uint64, ev interface{}) {
 				}
 			}
 
+			Automation.ObserveNativeCommandSent([]byte(payload))
 			msgType := extractMessageType(payload)
 			Logging.AppendChannelLine(Logging.ChannelWebSocketGame, "SEND", msgType, payload)
 			if OutboundGameWireSendHook != nil {
@@ -788,64 +801,136 @@ func ReloadGameTab() {
 func StartWebsocketChannels(ctx context.Context, browserSession uint64) {
 	// The read portion is now handled by the JS hook pushing to IncomingMessages
 
-	go func() {
-		log.Printf("[WebSocket] Starting OutgoingMessages loop with %s", EmpireExToken)
+	var sendMu sync.Mutex
+	go runOutgoingLane(ctx, browserSession, Automation.LaneCommand, &sendMu, func() time.Duration {
+		return 25 * time.Millisecond
+	})
+	go runOutgoingLane(ctx, browserSession, Automation.LaneAttackLaunch, &sendMu, Models.RandomAttackDelay)
+}
 
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case message := <-OutgoingMessages:
-				var payload []byte
+func runOutgoingLane(
+	ctx context.Context,
+	browserSession uint64,
+	lane Automation.Lane,
+	sendMu *sync.Mutex,
+	delay func() time.Duration,
+) {
+	log.Printf("[WebSocket] Starting outgoing %s lane with %s", lane, EmpireExToken)
 
-				switch v := message.(type) {
-				case []byte:
-					payload = v
-				case string:
-					payload = []byte(v)
-				default:
-					log.Printf("Unknown message type in OutgoingMessages: %T", v)
-					continue
-				}
+	for {
+		if !waitForGameWebSocketReady(ctx) {
+			return
+		}
+		command, ok := Automation.NextCommand(ctx, lane)
+		if !ok {
+			return
+		}
+		if command.Guard != nil && !command.Guard() {
+			Automation.ObserveCommandCancelled(command, "command guard became inactive before dispatch")
+			Automation.CompleteCommand(command.ID)
+			continue
+		}
 
-				browserCtx, _, executionContextID, currentBrowserSession := browserStateSnapshot()
-				if browserCtx == nil || executionContextID == 0 || currentBrowserSession != browserSession {
-					log.Println("write via CDP: game execution context is not ready")
-					continue
-				}
+		sendMu.Lock()
+		if ctx.Err() != nil {
+			sendMu.Unlock()
+			if !Automation.RetryCommand(command, 100*time.Millisecond) {
+				Automation.ObserveCommandFailed(command, "outbound context ended before dispatch")
+			}
+			return
+		}
+		sent := false
+		if command.Guard == nil || command.Guard() {
+			Automation.ObserveCommandDispatch(command)
+			sent = sendGameWebSocketPayload(browserSession, command.Payload)
+		}
+		sendMu.Unlock()
+		if !sent && command.Attempts < 3 && Automation.RetryCommand(command, 250*time.Millisecond) {
+			continue
+		}
+		if sent {
+			Automation.ObserveCommandSent(command)
+		} else if command.Guard != nil && !command.Guard() {
+			Automation.ObserveCommandCancelled(command, "command guard became inactive during dispatch")
+		} else {
+			Automation.ObserveCommandFailed(command, "game websocket transport did not accept the command")
+		}
+		Automation.CompleteCommand(command.ID)
 
-				payloadLiteral, err := json.Marshal(string(payload))
-				if err != nil {
-					log.Println("write via CDP: encode payload:", err)
-					continue
-				}
-				expression := fmt.Sprintf("globalThis.sendToGameSocket && globalThis.sendToGameSocket(%s)", payloadLiteral)
-				sent := false
-				err = chromedp.Run(browserCtx, chromedp.ActionFunc(func(ctx context.Context) error {
-					result, exception, evalErr := runtime.Evaluate(expression).
-						WithContextID(executionContextID).
-						WithReturnByValue(true).
-						Do(ctx)
-					if evalErr != nil {
-						return evalErr
-					}
-					if exception != nil {
-						return fmt.Errorf("game socket send exception: %s", exception.Text)
-					}
-					sent = result != nil && string(result.Value) == "true"
-					return nil
-				}))
-				if err != nil {
-					log.Println("write via CDP:", err)
-				} else if !sent {
-					log.Println("write via CDP: no open game websocket")
-				} else {
-					logAppOutboundPayload(string(payload))
-				}
-				time.Sleep(25 * time.Millisecond)
+		if !waitForOutgoingLaneDelay(ctx, delay()) {
+			return
+		}
+	}
+}
+
+func sendGameWebSocketPayload(browserSession uint64, payload []byte) bool {
+	browserCtx, _, executionContextID, currentBrowserSession := browserStateSnapshot()
+	if browserCtx == nil || executionContextID == 0 || currentBrowserSession != browserSession {
+		log.Println("write via CDP: game execution context is not ready")
+		return false
+	}
+
+	payloadLiteral, err := json.Marshal(string(payload))
+	if err != nil {
+		log.Println("write via CDP: encode payload:", err)
+		return false
+	}
+	expression := fmt.Sprintf("globalThis.sendToGameSocket && globalThis.sendToGameSocket(%s)", payloadLiteral)
+	sent := false
+	err = chromedp.Run(browserCtx, chromedp.ActionFunc(func(ctx context.Context) error {
+		result, exception, evalErr := runtime.Evaluate(expression).
+			WithContextID(executionContextID).
+			WithReturnByValue(true).
+			Do(ctx)
+		if evalErr != nil {
+			return evalErr
+		}
+		if exception != nil {
+			return fmt.Errorf("game socket send exception: %s", exception.Text)
+		}
+		sent = result != nil && string(result.Value) == "true"
+		return nil
+	}))
+	if err != nil {
+		log.Println("write via CDP:", err)
+	} else if !sent {
+		log.Println("write via CDP: no open game websocket")
+	} else {
+		logAppOutboundPayload(string(payload))
+	}
+	return err == nil && sent
+}
+
+func waitForGameWebSocketReady(ctx context.Context) bool {
+	if IsGameWebSocketReady() {
+		return true
+	}
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return false
+		case <-ticker.C:
+			if IsGameWebSocketReady() {
+				return true
 			}
 		}
-	}()
+	}
+}
+
+func waitForOutgoingLaneDelay(ctx context.Context, delay time.Duration) bool {
+	if delay <= 0 {
+		return true
+	}
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return true
+	}
 }
 
 // MessageRouterFunc is set by GameParser to route incoming messages.

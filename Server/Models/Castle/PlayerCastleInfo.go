@@ -18,7 +18,11 @@ type PlayerCastleInfo struct {
 	// SlotProductionByLID is parsed from **spl** / **bup**.spl keyed by Empire LID (0=barracks/recruit, 1=tool workshop, …).
 	SlotProductionByLID map[int]*BarracksProductionQueue `json:"slotProductionByLID,omitempty"`
 	// CraftingQueues is parsed from **crin** (full list) / **crst** (single building); CRIDs index craftingRecipes.json.
-	CraftingQueues []CraftingBuildingSnapshot `json:"craftingQueues,omitempty"`
+	CraftingQueues       []CraftingBuildingSnapshot `json:"craftingQueues,omitempty"`
+	CraftingEntitlements CraftingEntitlements       `json:"craftingEntitlements,omitempty"`
+	// Market barrows are refreshed from cmi. DCL MC supplies the available count between cmi snapshots.
+	MarketBarrowsTotal     int `json:"marketBarrowsTotal,omitempty"`
+	MarketBarrowsAvailable int `json:"marketBarrowsAvailable,omitempty"`
 	// ConstructionByBuilding is from JAA gca.CI: equipped construction items (CID) per building OID.
 	ConstructionByBuilding []GCAConstructionBuilding `json:"constructionByBuilding,omitempty"`
 	// Queueable IDs are parsed from **gpc** U.U and reflect castle/account unlocks, including Hall of Legends.

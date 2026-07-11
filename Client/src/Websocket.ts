@@ -99,6 +99,7 @@ class FrontendWebsocketService {
     this.sendMessage({ type: 'getRecruitTroopsSettings' });
     this.sendMessage({ type: 'getAutoToolSettings' });
     this.sendMessage({ type: 'getAutoBirdClientState' });
+    this.sendMessage({ type: 'getAutoStationClientState' });
     this.sendMessage({ type: 'getAutoTCIClientState' });
   }
 

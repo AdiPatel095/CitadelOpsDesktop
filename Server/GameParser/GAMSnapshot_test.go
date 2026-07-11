@@ -104,3 +104,25 @@ func TestGAMSnapshotPagesReplaceAndFilterByOwner(t *testing.T) {
 		t.Fatalf("standalone empty snapshot retained %d movements", len(empty))
 	}
 }
+
+func TestCRMDeltaPreservesMarketMovement(t *testing.T) {
+	resetGAMSnapshotTestState()
+	defer resetGAMSnapshotTestState()
+
+	gs := Models.GetGameState()
+	gs.Reset()
+	gs.PlayerID = 77
+	ParseGAMMessage(`{"A":{"M":{"MID":801,"PT":3,"TT":120,"D":0,"KID":0,"SID":123,"OID":77,"TA":[0,500,600],"SA":[0,100,200]},"MM":{"C":4,"G":[["G",2400],["I",800]]}}}`)
+
+	movements, _, _, _ := gs.Movement.Snapshot()
+	if len(movements) != 1 {
+		t.Fatalf("movement count = %d, want 1", len(movements))
+	}
+	movement := movements[0]
+	if movement.MarketBarrows != 4 || len(movement.MarketGoods) != 2 {
+		t.Fatalf("market movement = %+v", movement)
+	}
+	if movement.MarketGoods[0].Resource != "G" || movement.MarketGoods[0].Amount != 2400 {
+		t.Fatalf("first market good = %+v", movement.MarketGoods[0])
+	}
+}

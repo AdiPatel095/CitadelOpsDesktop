@@ -1,8 +1,5 @@
-// Package ResponseRegistry provides game communication infrastructure:
-// the outgoing message channel for sending commands, and a request/response
-// matching pattern for waiting on specific response types.
-//
-// a command, then block until the expected response arrives (or timeout).
+// Package ResponseRegistry provides game websocket lifecycle handling and an exact-one
+// request/response matching pattern for callers that must wait for specific response types.
 //
 // # Data Flow
 //
@@ -11,7 +8,7 @@
 //	│                                                                             │
 //	│  1. waiter := Global.RegisterWaiter("eeq", 5*time.Second)                   │
 //	│  2. defer waiter.Cleanup()                                                  │
-//	│  3. OutgoingMessages <- payload                                             │
+//	│  3. GameCommands.QueueOutgoingPayload(payload)                              │
 //	│  4. response, err := waiter.WaitWithTimeout()  // blocks here               │
 //	│  5. Process response or handle timeout                                      │
 //	└─────────────────────────────────────────────────────────────────────────────┘
@@ -50,14 +47,14 @@
 //   - First-match semantics: sync.Once ensures only the first matching message is delivered
 //   - Self-cleaning: Cleanup() removes waiter from registry after use
 //   - Timeout support: WaitWithTimeout returns ErrTimeout if no response arrives
-//   - Multiple waiters: Multiple callers can wait for the same message type
+//   - Multiple waiters: one frame is delivered to the oldest waiter whose matcher accepts it
 //
 // # Usage Example
 //
 //	waiter := ResponseRegistry.Global.RegisterWaiter("eeq", 5*time.Second)
 //	defer waiter.Cleanup()
 //
-//	ResponseRegistry.OutgoingMessages <- payload
+//	GameCommands.QueueOutgoingPayload(payload)
 //
 //	response, err := waiter.WaitWithTimeout()
 //	if err == ResponseRegistry.ErrTimeout {
@@ -67,6 +64,7 @@
 package ResponseRegistry
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -79,6 +77,8 @@ var ErrTimeout = errors.New("response timeout")
 type ResponseWaiter struct {
 	MessageType string
 	ResponseCh  chan []string
+	// Match optionally narrows same-opcode responses to the request that owns this waiter.
+	Match func([]string) bool
 	// OnDeliver, if set, is invoked with a copy of the first matching frame before it is sent to ResponseCh.
 	// Use this to parse **cds** (or other) payloads synchronously in the MessageRouter goroutine.
 	OnDeliver func([]string)
@@ -96,6 +96,23 @@ func (w *ResponseWaiter) WaitWithTimeout() ([]string, error) {
 		return msg, nil
 	case <-time.After(w.timeout):
 		return nil, ErrTimeout
+	}
+}
+
+// WaitWithContext waits for the matching response, the configured timeout, or caller cancellation.
+func (w *ResponseWaiter) WaitWithContext(ctx context.Context) ([]string, error) {
+	if ctx == nil {
+		return w.WaitWithTimeout()
+	}
+	timer := time.NewTimer(w.timeout)
+	defer timer.Stop()
+	select {
+	case msg := <-w.ResponseCh:
+		return msg, nil
+	case <-timer.C:
+		return nil, ErrTimeout
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
 }
 
@@ -142,14 +159,21 @@ var Global = NewRegistry()
 // RegisterWaiter registers a new waiter for the given message type with a timeout.
 // The waiter will receive a copy of the first matching message that arrives.
 func (r *Registry) RegisterWaiter(messageType string, timeout time.Duration) *ResponseWaiter {
-	return r.RegisterWaiterWithDeliver(messageType, timeout, nil)
+	return r.RegisterWaiterMatching(messageType, timeout, nil, nil)
 }
 
 // RegisterWaiterWithDeliver is like RegisterWaiter but runs onDeliver with a copy of the frame before pushing to ResponseCh.
 func (r *Registry) RegisterWaiterWithDeliver(messageType string, timeout time.Duration, onDeliver func([]string)) *ResponseWaiter {
+	return r.RegisterWaiterMatching(messageType, timeout, nil, onDeliver)
+}
+
+// RegisterWaiterMatching registers an exact-one waiter. When several callers wait on the same
+// opcode, the oldest waiter whose matcher accepts the frame receives it; other waiters remain queued.
+func (r *Registry) RegisterWaiterMatching(messageType string, timeout time.Duration, match func([]string) bool, onDeliver func([]string)) *ResponseWaiter {
 	waiter := &ResponseWaiter{
 		MessageType: messageType,
 		ResponseCh:  make(chan []string, 1), // Buffered to prevent blocking
+		Match:       match,
 		OnDeliver:   onDeliver,
 		timeout:     timeout,
 		createdAt:   time.Now(),
@@ -163,20 +187,33 @@ func (r *Registry) RegisterWaiterWithDeliver(messageType string, timeout time.Du
 	return waiter
 }
 
-// CheckWaiters checks if any waiters are registered for the given message type
-// and delivers the message to them. This should be called by the message router.
+// CheckWaiters delivers a frame to exactly one matching waiter. This prevents concurrent
+// same-opcode operations from all accepting the first response.
 func (r *Registry) CheckWaiters(messageType string, message []string) {
-	r.mu.RLock()
-	waiters, exists := r.waiters[messageType]
-	r.mu.RUnlock()
-
-	if !exists || len(waiters) == 0 {
-		return
+	r.mu.Lock()
+	waiters := r.waiters[messageType]
+	matchIndex := -1
+	var selected *ResponseWaiter
+	for i, waiter := range waiters {
+		if waiter == nil || (waiter.Match != nil && !waiter.Match(message)) {
+			continue
+		}
+		matchIndex = i
+		selected = waiter
+		break
 	}
+	if matchIndex >= 0 {
+		waiters = append(waiters[:matchIndex], waiters[matchIndex+1:]...)
+		if len(waiters) == 0 {
+			delete(r.waiters, messageType)
+		} else {
+			r.waiters[messageType] = waiters
+		}
+	}
+	r.mu.Unlock()
 
-	// Deliver to all registered waiters for this type
-	for _, waiter := range waiters {
-		waiter.deliver(message)
+	if selected != nil {
+		selected.deliver(message)
 	}
 }
 
@@ -190,12 +227,11 @@ func (r *Registry) removeWaiter(waiter *ResponseWaiter) {
 		return
 	}
 
-	// Find and remove the waiter
+	// Find and remove the waiter while preserving registration order. CheckWaiters
+	// intentionally gives a same-opcode frame to the oldest matching waiter.
 	for i, w := range waiters {
 		if w == waiter {
-			// Remove by swapping with last element and truncating
-			waiters[i] = waiters[len(waiters)-1]
-			r.waiters[waiter.MessageType] = waiters[:len(waiters)-1]
+			r.waiters[waiter.MessageType] = append(waiters[:i], waiters[i+1:]...)
 			break
 		}
 	}
@@ -212,10 +248,6 @@ func (r *Registry) GetWaiterCount(messageType string) int {
 	defer r.mu.RUnlock()
 	return len(r.waiters[messageType])
 }
-
-// OutgoingMessages is the shared channel for sending commands to the game server.
-// Any package can send messages by pushing []byte or string onto this channel.
-var OutgoingMessages = make(chan interface{}, 100)
 
 // OutboundGameWireSendHook observes every native game websocket SEND (browser UI + Citadel queue).
 var OutboundGameWireSendHook func(payload string)

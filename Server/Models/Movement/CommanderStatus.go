@@ -45,6 +45,7 @@ type CommanderStatusSnapshot struct {
 
 func cloneGAMMovement(m GAMMovement) GAMMovement {
 	m.TroopArray = cloneTroopArray(m.TroopArray)
+	m.MarketGoods = append([]GAMMarketGood(nil), m.MarketGoods...)
 	return m
 }
 
@@ -108,6 +109,26 @@ func normalizeGAMMovements(src []GAMMovement) []GAMMovement {
 	return out
 }
 
+func normalizeIncomingGAMMovements(src []GAMMovement) []GAMMovement {
+	reversed := make([]GAMMovement, 0, len(src))
+	seenMIDs := make(map[int]struct{})
+	for i := len(src) - 1; i >= 0; i-- {
+		movement := src[i]
+		if movement.MID != 0 {
+			if _, seen := seenMIDs[movement.MID]; seen {
+				continue
+			}
+			seenMIDs[movement.MID] = struct{}{}
+		}
+		reversed = append(reversed, cloneGAMMovement(movement))
+	}
+	out := make([]GAMMovement, len(reversed))
+	for i := range reversed {
+		out[len(reversed)-1-i] = reversed[i]
+	}
+	return out
+}
+
 func (pm *PlayerMovement) rebuildCommanderByMIDLocked() {
 	pm.CommanderByMID = make(map[int]int)
 	for _, m := range pm.ActiveMovements {
@@ -119,10 +140,18 @@ func (pm *PlayerMovement) rebuildCommanderByMIDLocked() {
 
 // ReplaceSnapshot atomically replaces all owned movements with one fully assembled GAM snapshot.
 func (pm *PlayerMovement) ReplaceSnapshot(movements []GAMMovement, observedUnix int64) {
+	pm.ReplaceSnapshotWithIncoming(movements, nil, observedUnix)
+}
+
+// ReplaceSnapshotWithIncoming atomically publishes one fully assembled GAM snapshot, including
+// hostile outbound attacks which must not enter commander availability state.
+func (pm *PlayerMovement) ReplaceSnapshotWithIncoming(movements, incoming []GAMMovement, observedUnix int64) {
 	pm.mu.Lock()
 	pm.ActiveMovements = normalizeGAMMovements(movements)
+	pm.IncomingAttacks = normalizeIncomingGAMMovements(incoming)
 	pm.SnapshotReady = true
 	pm.LastSnapshotUnix = observedUnix
+	pm.SnapshotVersion++
 	pm.rebuildCommanderByMIDLocked()
 	pm.mu.Unlock()
 }
@@ -173,6 +202,15 @@ func (pm *PlayerMovement) RemoveMovement(mid int) bool {
 		pm.ActiveMovements = kept
 		pm.rebuildCommanderByMIDLocked()
 	}
+	incoming := make([]GAMMovement, 0, len(pm.IncomingAttacks))
+	for _, movement := range pm.IncomingAttacks {
+		if movement.MID == mid {
+			removed = true
+			continue
+		}
+		incoming = append(incoming, movement)
+	}
+	pm.IncomingAttacks = incoming
 	pm.mu.Unlock()
 	return removed
 }
@@ -216,6 +254,17 @@ func (pm *PlayerMovement) Snapshot() ([]GAMMovement, []CommanderRosterEntry, boo
 	lastSnapshotUnix := pm.LastSnapshotUnix
 	pm.mu.RUnlock()
 	return movements, roster, ready, lastSnapshotUnix
+}
+
+// IncomingSnapshot returns the hostile incoming movements from the latest authoritative GAM frame.
+func (pm *PlayerMovement) IncomingSnapshot() ([]GAMMovement, bool, int64, uint64) {
+	pm.mu.RLock()
+	movements := cloneGAMMovements(pm.IncomingAttacks)
+	ready := pm.SnapshotReady
+	lastSnapshotUnix := pm.LastSnapshotUnix
+	version := pm.SnapshotVersion
+	pm.mu.RUnlock()
+	return movements, ready, lastSnapshotUnix, version
 }
 
 func classifyCommanderMovement(m GAMMovement, nowUnix int64) CommanderState {

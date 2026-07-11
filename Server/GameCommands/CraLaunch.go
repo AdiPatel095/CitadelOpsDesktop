@@ -1,6 +1,12 @@
 package GameCommands
 
-import "encoding/json"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"CitadelDesktop/Server/Automation"
+)
 
 // Fixed slot counts per flank in EmpireEx **cra** (verified vs Logs/RecvCommandsJSON/cra_launch.json).
 const (
@@ -251,7 +257,7 @@ func CRAPayloadFromBody(body CRALaunchBody) (string, error) {
 	return empireExFrame("cra", string(b)), nil
 }
 
-// SendCRA queues **cra** on OutgoingMessages.
+// SendCRA queues **cra** on the attack-launch lane.
 // On failure, callers may retry the same params with AttackValid toggled (0 ↔ 1).
 // Before dispatch, check gamestate.GetGameState().IsCommanderWireIDBusy(CommanderID) so busy commanders are not reused.
 func SendCRA(p CRALaunchParams) error {
@@ -259,6 +265,12 @@ func SendCRA(p CRALaunchParams) error {
 	if err != nil {
 		return err
 	}
-	QueueOutgoingPayload(payload)
+	receipt := DispatchPayload(context.Background(), "cra", "manual_attack", payload, Automation.CommandOptions{
+		Owner:    Automation.OwnerManual,
+		Priority: Automation.PriorityManual,
+	})
+	if !receipt.Accepted {
+		return fmt.Errorf("command harness rejected cra: %s", receipt.Message)
+	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package equipmentview
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/ResponseRegistry"
 	"log"
@@ -22,15 +23,23 @@ func EquipEquipment(equipmentMode string, targetIndex int, slotNumber int, equip
 	} else {
 		return false
 	}
+	lease, cancel, ok := acquireEquipmentControl("equip equipment", false, 10*time.Second)
+	if !ok {
+		return false
+	}
+	defer cancel()
+	defer lease.Release()
 
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("eeq", 5*time.Second)
 	defer waiter.Cleanup()
 
-	GameCommands.SendEEQ(equipmentId, lidValue, true)
+	if !GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.EEQPayload(equipmentId, lidValue, true), lease) {
+		return false
+	}
 
 	// Wait for response and log
-	response, err := waiter.WaitWithTimeout()
+	response, err := waiter.WaitWithContext(lease.Context())
 	if err != nil {
 		log.Printf("[Equip] Timeout waiting for response")
 		return false
@@ -59,15 +68,23 @@ func EquipGem(equipmentMode string, targetIndex int, equipmentId float64, gemId 
 	} else {
 		return false
 	}
+	lease, cancel, ok := acquireEquipmentControl("equip gem", false, 10*time.Second)
+	if !ok {
+		return false
+	}
+	defer cancel()
+	defer lease.Release()
 
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("bge", 5*time.Second)
 	defer waiter.Cleanup()
 
-	GameCommands.SendBGE(gemId, equipmentId, lidValue)
+	if !GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.BGEPayload(gemId, equipmentId, lidValue), lease) {
+		return false
+	}
 
 	// Wait for response and log
-	response, err := waiter.WaitWithTimeout()
+	response, err := waiter.WaitWithContext(lease.Context())
 	if err != nil {
 		log.Printf("[EquipGem] Timeout waiting for response")
 		return false

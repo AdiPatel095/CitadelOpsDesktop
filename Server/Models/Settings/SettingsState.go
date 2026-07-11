@@ -34,6 +34,57 @@ type AutoBirdDelayConfig struct {
 }
 
 const (
+	DefaultAutoStationLeadTimeSec = 60
+	MinAutoStationLeadTimeSec     = 60
+	MaxAutoStationLeadTimeSec     = 3600
+)
+
+// AutoStationConfig controls when threatened castles evacuate and which troops remain to defend.
+type AutoStationConfig struct {
+	LeadTimeSec     int                 `json:"leadTimeSec"`
+	RecallWhenClear bool                `json:"recallWhenClear"`
+	MinRPTDays      int                 `json:"minRPTDays"`
+	DefenseByCastle map[int]map[int]int `json:"defenseByCastle"`
+}
+
+func DefaultAutoStationConfig() AutoStationConfig {
+	return AutoStationConfig{
+		LeadTimeSec:     DefaultAutoStationLeadTimeSec,
+		RecallWhenClear: true,
+		MinRPTDays:      3,
+		DefenseByCastle: make(map[int]map[int]int),
+	}
+}
+
+// Normalize clamps timing and removes invalid castle, unit, and amount entries.
+func (c AutoStationConfig) Normalize() AutoStationConfig {
+	if c.LeadTimeSec <= 0 {
+		c.LeadTimeSec = DefaultAutoStationLeadTimeSec
+	}
+	if c.LeadTimeSec < MinAutoStationLeadTimeSec {
+		c.LeadTimeSec = MinAutoStationLeadTimeSec
+	}
+	if c.LeadTimeSec > MaxAutoStationLeadTimeSec {
+		c.LeadTimeSec = MaxAutoStationLeadTimeSec
+	}
+	if c.MinRPTDays < 0 {
+		c.MinRPTDays = 0
+	}
+	if c.MinRPTDays > 30 {
+		c.MinRPTDays = 30
+	}
+	c.DefenseByCastle = sanitizeRecruitTroopsNestedMap(c.DefenseByCastle)
+	return c
+}
+
+func (c AutoStationConfig) DefenseAmount(castleID, unitID int) int {
+	if units := c.DefenseByCastle[castleID]; units != nil {
+		return units[unitID]
+	}
+	return 0
+}
+
+const (
 	RecruitTroopsModeGlobal    = "global"
 	RecruitTroopsModePerCastle = "perCastle"
 
@@ -422,20 +473,26 @@ type SettingsState struct {
 	// Global Connection/Feature Flags
 	BotEnabled           bool `json:"botEnabled"`
 	AutoBirdEnabled      bool `json:"autoBirdEnabled"`
+	AutoStationEnabled   bool `json:"autoStationEnabled"`
 	RecruitTroopsEnabled bool `json:"recruitTroopsEnabled"`
 	AutoToolEnabled      bool `json:"autoToolEnabled"`
+	AutoSceatResEnabled  bool `json:"autoSceatResEnabled"`
 	AutoHospitalEnabled  bool `json:"autoHospitalEnabled"`
 	AutoTCIEnabled       bool `json:"autoTCIEnabled"`
 	AutoBeriWorldEnabled bool `json:"autoBeriWorldEnabled"`
 
 	AutoBirdDelay  AutoBirdDelayConfig `json:"autoBirdDelay"`
 	BirdIgnoreList SaveInCastleTroops  `json:"birdIgnoreList"`
+	AutoStation    AutoStationConfig   `json:"autoStation"`
 
 	// Recruit Troops Configuration
 	RecruitTroopsList RecruitTroopsConfig `json:"recruitTroopsList"`
 
 	// Auto Tool Configuration
 	AutoToolList AutoToolConfig `json:"autoToolList"`
+
+	// Auto Sceat Resources crafting queues and logistics.
+	AutoSceatRes AutoSceatResConfig `json:"autoSceatRes"`
 
 	// Auto Hospital Configuration
 	AutoHospital AutoHospitalConfig `json:"autoHospital"`
@@ -499,15 +556,19 @@ func GetSettingsState() *SettingsState {
 			ManualFocusIdleSec:   DefaultManualFocusIdleSec,
 			BotEnabled:           false,
 			AutoBirdEnabled:      false,
+			AutoStationEnabled:   false,
 			RecruitTroopsEnabled: false,
 			AutoToolEnabled:      false,
+			AutoSceatResEnabled:  false,
 			AutoHospitalEnabled:  false,
 			AutoTCIEnabled:       false,
 			AutoBeriWorldEnabled: false,
 			AutoBirdDelay:        AutoBirdDelayConfig{MinDelay: 6, MaxDelay: 12, MinSend: 0, MinRPTDays: 3},
 			BirdIgnoreList:       SaveInCastleTroops{Troops: make(map[int]map[int]int)},
+			AutoStation:          DefaultAutoStationConfig(),
 			RecruitTroopsList:    DefaultRecruitTroopsConfig(),
 			AutoToolList:         DefaultAutoToolConfig(),
+			AutoSceatRes:         DefaultAutoSceatResConfig(),
 			AutoHospital:         DefaultAutoHospitalConfig(),
 			AutoTCIList: AutoTCIConfig{
 				Targets: make(map[int]map[int]AutoTCILevelTarget),
@@ -519,8 +580,10 @@ func GetSettingsState() *SettingsState {
 		LoadSchedulerSettingsInto(instanceSettingsState)
 		instanceSettingsState.RecruitTroopsList = ReadRecruitTroopsConfig()
 		instanceSettingsState.AutoToolList = ReadAutoToolConfig()
+		instanceSettingsState.AutoSceatRes = ReadAutoSceatResConfig()
 		instanceSettingsState.AutoHospital = ReadAutoHospitalConfig()
 		instanceSettingsState.AutoBeriWorld = ReadAutoBeriWorldConfig()
+		instanceSettingsState.AutoStation = ReadAutoStationConfig()
 	})
 	return instanceSettingsState
 }
@@ -534,15 +597,19 @@ func (s *SettingsState) Reset() {
 	s.ManualFocusIdleSec = DefaultManualFocusIdleSec
 	s.BotEnabled = false
 	s.AutoBirdEnabled = false
+	s.AutoStationEnabled = false
 	s.RecruitTroopsEnabled = false
 	s.AutoToolEnabled = false
+	s.AutoSceatResEnabled = false
 	s.AutoHospitalEnabled = false
 	s.AutoTCIEnabled = false
 	s.AutoBeriWorldEnabled = false
 	s.AutoBirdDelay = AutoBirdDelayConfig{MinDelay: 6, MaxDelay: 12, MinSend: 0, MinRPTDays: 3}
 	s.BirdIgnoreList.Troops = make(map[int]map[int]int)
+	s.AutoStation = DefaultAutoStationConfig()
 	s.RecruitTroopsList = DefaultRecruitTroopsConfig()
 	s.AutoToolList = DefaultAutoToolConfig()
+	s.AutoSceatRes = DefaultAutoSceatResConfig()
 	s.AutoHospital = DefaultAutoHospitalConfig()
 	s.AutoTCIList.Targets = make(map[int]map[int]AutoTCILevelTarget)
 	s.AutoBeriWorld = DefaultAutoBeriWorldConfig()
@@ -560,6 +627,12 @@ func (s *SettingsState) UpdateBirdIgnoreList(data map[int]map[int]int) {
 func (s *SettingsState) ClearBirdIgnoreList() {
 	s.BirdIgnoreList.Troops = nil
 	log.Println("[BirdIgnoreList] cleared")
+}
+
+// UpdateAutoStationConfig normalizes and stores the evacuation policy.
+func (s *SettingsState) UpdateAutoStationConfig(cfg AutoStationConfig) {
+	s.AutoStation = cfg.Normalize()
+	log.Printf("[AutoStation] settings updated for %d castles", len(s.AutoStation.DefenseByCastle))
 }
 
 // UpdateRecruitTroopsList updates the in-memory recruit troops list from the given map
@@ -634,6 +707,12 @@ func (s *SettingsState) UpdateAutoToolConfig(cfg AutoToolConfig) {
 func (s *SettingsState) ClearAutoToolList() {
 	s.AutoToolList = DefaultAutoToolConfig()
 	log.Println("[AutoToolList] Cleared from memory")
+}
+
+// UpdateAutoSceatResConfig normalizes and stores the current crafting/logistics plan in memory.
+func (s *SettingsState) UpdateAutoSceatResConfig(cfg AutoSceatResConfig) {
+	s.AutoSceatRes = cfg.Normalize()
+	log.Printf("[AutoSceatRes] Updated castles=%d interval=%ds", len(s.AutoSceatRes.Castles), s.AutoSceatRes.CheckIntervalSec)
 }
 
 // UpdateAutoHospitalConfig updates the in-memory Auto Hospital config from the UI.

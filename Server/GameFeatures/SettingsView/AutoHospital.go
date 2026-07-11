@@ -1,6 +1,7 @@
 package settingsview
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
@@ -72,6 +73,7 @@ func StopAutoHospital() {
 
 	if autoHospitalCancel != nil {
 		autoHospitalCancel()
+		Automation.CancelOwner(Automation.OwnerAutoHospital)
 		autoHospitalCancel = nil
 		if ResponseRegistry.SendAutoHospitalStatusFunc != nil {
 			go ResponseRegistry.SendAutoHospitalStatusFunc(false)
@@ -196,7 +198,7 @@ func autoHospitalDiscardRubyHealingUnits(ctx context.Context, lease *GameFocus.L
 				return nil, false
 			}
 			Logging.AppendAutoHospitalSendPayload(payload)
-			GameCommands.QueueOutgoingPayload(payload)
+			GameCommands.QueueFeaturePayload(Automation.OwnerAutoHospital, payload, lease)
 			if !autoHospitalPause(ctx, autoHospitalActionDelay) {
 				return nil, false
 			}
@@ -368,6 +370,10 @@ func runAutoHospital(ctx context.Context) {
 				Owner:   GameFocus.OwnerAutoHospital,
 				Reason:  fmt.Sprintf("castle=%d", castleID),
 				MaxHold: 30 * time.Second,
+				Claims: []GameFocus.Claim{
+					GameFocus.CastleClaim(castleID, "hospital-queue"),
+					GameFocus.ExclusiveClaim(Automation.ClaimAccountResources),
+				},
 			})
 			if !ok {
 				return
@@ -462,7 +468,7 @@ func runAutoHospital(ctx context.Context) {
 					Logging.AutoHospitalLogf("queue", "castle=%d unit=%d amount=%d available=%d occupied=%d capacity=%d",
 						castleID, unit.UnitID, amount, unit.Amount, occupiedQueueStacks, queueCapacity)
 					Logging.AppendAutoHospitalSendPayload(payload)
-					GameCommands.QueueOutgoingPayload(payload)
+					GameCommands.QueueFeaturePayload(Automation.OwnerAutoHospital, payload, lease)
 
 					wounded[0].Amount -= amount
 					if wounded[0].Amount <= 0 {

@@ -1,49 +1,22 @@
 import React, { useState } from 'react';
-import { Settings, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { NAVIGATION_ITEMS, type ViewId } from '../config/Navigation';
 import { ThemeToggle } from './ThemeToggle';
-import { Button } from './ui';
-import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   currentView: ViewId;
   onViewChange: (viewId: ViewId) => void;
-  onOpenRecruitTroopsSettings: () => void;
-  onOpenAutoToolSettings: () => void;
-  onOpenAutoTCISettings: () => void;
-  onOpenAutoHospitalSettings: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   onViewChange,
-  onOpenRecruitTroopsSettings,
-  onOpenAutoToolSettings,
-  onOpenAutoTCISettings,
-  onOpenAutoHospitalSettings,
 }) => {
-  const {
-    autoTCIEnabled,
-    toggleAutoTCI,
-    recruitTroopsEnabled,
-    toggleRecruitTroops,
-    autoToolEnabled,
-    toggleAutoTool,
-    autoHospitalEnabled,
-    toggleAutoHospital,
-    gameLoggedIn
-  } = useAuth();
-
-  const featureRowClass = 'liquid-feature-row';
-  const featureToggleClass = 'liquid-feature-toggle';
-  const featureIconClass = 'liquid-feature-icon';
-
   const mainItems = NAVIGATION_ITEMS.filter(item => item.section === 'main');
   const systemItems = NAVIGATION_ITEMS.filter(item => item.section === 'system');
   const isSystemView = systemItems.some(item => item.id === currentView);
 
   const [expandedSections, setExpandedSections] = useState({
-    features: true,
     mainMenu: true
   });
 
@@ -58,145 +31,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     <aside className="liquid-sidebar transition-colors duration-300">
       <div className="liquid-sidebar-main-island">
         <div className="liquid-sidebar-scroll custom-scrollbar">
-          {/* Features */}
-          <div className="mb-4">
-            <div
-              className="liquid-section-label mb-2"
-              onClick={() => toggleSection('features')}
-            >
-              <span className="liquid-sidebar-section-title">Features</span>
-              {expandedSections.features ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-            </div>
-            {expandedSections.features && (
-              <div className="px-2 space-y-2">
-                <div className={featureRowClass}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={`${featureToggleClass} ${
-                      autoTCIEnabled
-                        ? '!border-success/40 !text-success hover:!bg-success/10'
-                        : '!border-error/40 !text-error hover:!bg-error/10'
-                    }`}
-                    onClick={() => toggleAutoTCI()}
-                    title={
-                      gameLoggedIn
-                        ? 'Toggle Auto TCI (temporary construction items)'
-                        : 'Last known Auto TCI status while bot is disconnected'
-                    }
-                    leftIcon={
-                      <div className={`w-1.5 h-1.5 rounded-full ${autoTCIEnabled ? 'bg-success animate-pulse' : 'bg-error'}`} />
-                    }
-                  >
-                    <span className="liquid-feature-toggle-label">Auto TCI</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`${featureIconClass} ${autoTCIEnabled ? 'text-warning hover:bg-warning/10' : 'text-text-muted hover:bg-bg-card-hover'}`}
-                    onClick={onOpenAutoTCISettings}
-                    title="Auto TCI settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className={featureRowClass}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={`${featureToggleClass} ${
-                      recruitTroopsEnabled
-                        ? '!border-success/40 !text-success hover:!bg-success/10'
-                        : '!border-error/40 !text-error hover:!bg-error/10'
-                    }`}
-                    onClick={() => toggleRecruitTroops()}
-                    title={
-                      gameLoggedIn
-                        ? 'Toggle Auto Recruit'
-                        : 'Last known Auto Recruit status while bot is disconnected'
-                    }
-                    leftIcon={
-                      <div className={`w-1.5 h-1.5 rounded-full ${recruitTroopsEnabled ? 'bg-success animate-pulse' : 'bg-error'}`} />
-                    }
-                  >
-                    <span className="liquid-feature-toggle-label">Auto Recruit</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`${featureIconClass} ${recruitTroopsEnabled ? 'text-warning hover:bg-warning/10' : 'text-text-muted hover:bg-bg-card-hover'}`}
-                    onClick={onOpenRecruitTroopsSettings}
-                    title="Auto Recruit settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className={featureRowClass}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={`${featureToggleClass} ${
-                      autoToolEnabled
-                        ? '!border-success/40 !text-success hover:!bg-success/10'
-                        : '!border-error/40 !text-error hover:!bg-error/10'
-                    }`}
-                    onClick={() => toggleAutoTool()}
-                    title={
-                      gameLoggedIn
-                        ? 'Toggle Auto Tool'
-                        : 'Last known Auto Tool status while bot is disconnected'
-                    }
-                    leftIcon={
-                      <div className={`w-1.5 h-1.5 rounded-full ${autoToolEnabled ? 'bg-success animate-pulse' : 'bg-error'}`} />
-                    }
-                  >
-                    <span className="liquid-feature-toggle-label">Auto Tool</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`${featureIconClass} ${autoToolEnabled ? 'text-warning hover:bg-warning/10' : 'text-text-muted hover:bg-bg-card-hover'}`}
-                    onClick={onOpenAutoToolSettings}
-                    title="Auto Tool settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className={featureRowClass}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={`${featureToggleClass} ${
-                      autoHospitalEnabled
-                        ? '!border-success/40 !text-success hover:!bg-success/10'
-                        : '!border-error/40 !text-error hover:!bg-error/10'
-                    }`}
-                    onClick={() => toggleAutoHospital()}
-                    title={
-                      gameLoggedIn
-                        ? 'Toggle Auto Hospital'
-                        : 'Last known Auto Hospital status while bot is disconnected'
-                    }
-                    leftIcon={
-                      <div className={`w-1.5 h-1.5 rounded-full ${autoHospitalEnabled ? 'bg-success animate-pulse' : 'bg-error'}`} />
-                    }
-                  >
-                    <span className="liquid-feature-toggle-label">Auto Hospital</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`${featureIconClass} ${autoHospitalEnabled ? 'text-warning hover:bg-warning/10' : 'text-text-muted hover:bg-bg-card-hover'}`}
-                    onClick={onOpenAutoHospitalSettings}
-                    title="Auto Hospital settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Main Navigation */}
           <div className="mb-4">
             <div

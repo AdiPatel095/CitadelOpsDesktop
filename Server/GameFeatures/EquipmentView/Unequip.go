@@ -1,6 +1,7 @@
 package equipmentview
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	equip "CitadelDesktop/Server/Models/Equipment"
 	"CitadelDesktop/Server/ResponseRegistry"
@@ -116,14 +117,23 @@ func UnequipEquipment(equipmentMode string, targetIndex int, slotNumber int, exp
 		}
 	}
 
+	lease, cancel, ok := acquireEquipmentControl("unequip equipment", false, 10*time.Second)
+	if !ok {
+		return UnequipResult{Success: false, Message: "Equipment control is busy"}
+	}
+	defer cancel()
+	defer lease.Release()
+
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("eeq", 5*time.Second)
 	defer waiter.Cleanup()
 
-	GameCommands.SendEEQ(payloadEquipmentId, lidValue, false)
+	if !GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.EEQPayload(payloadEquipmentId, lidValue, false), lease) {
+		return UnequipResult{Success: false, Message: "Equipment action was cancelled"}
+	}
 
 	// Wait for response and verify success
-	response, err := waiter.WaitWithTimeout()
+	response, err := waiter.WaitWithContext(lease.Context())
 	if err != nil {
 		return UnequipResult{Success: false, Code: "", Message: "Timeout waiting for response"}
 	}
@@ -202,15 +212,24 @@ func UnequipGem(equipmentMode string, targetIndex int, slotNumber int, expectedG
 
 	}
 
+	lease, cancel, ok := acquireEquipmentControl("unequip gem", false, 10*time.Second)
+	if !ok {
+		return UnequipResult{Success: false, Message: "Equipment control is busy"}
+	}
+	defer cancel()
+	defer lease.Release()
+
 	// Note: Unequip gem payload uses parent EQUIPMENT ID (not gem ID).
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("ege", 5*time.Second)
 	defer waiter.Cleanup()
 
-	GameCommands.SendEGE(payloadEquipmentId, lidValue)
+	if !GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.EGEPayload(payloadEquipmentId, lidValue), lease) {
+		return UnequipResult{Success: false, Message: "Equipment action was cancelled"}
+	}
 
 	// Wait for response and verify success
-	response, err := waiter.WaitWithTimeout()
+	response, err := waiter.WaitWithContext(lease.Context())
 	if err != nil {
 		return UnequipResult{Success: false, Code: "", Message: "Timeout waiting for response"}
 	}
@@ -232,14 +251,23 @@ func UnequipEquipmentRaw(equipmentMode string, targetIndex int, equipmentId floa
 		return UnequipResult{Success: false, Code: "", Message: "Invalid equipment mode"}
 	}
 
+	lease, cancel, ok := acquireEquipmentControl("unequip equipment batch step", false, 10*time.Second)
+	if !ok {
+		return UnequipResult{Success: false, Message: "Equipment control is busy"}
+	}
+	defer cancel()
+	defer lease.Release()
+
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("eeq", 5*time.Second)
 	defer waiter.Cleanup()
 
-	GameCommands.SendEEQ(equipmentId, lidValue, false)
+	if !GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.EEQPayload(equipmentId, lidValue, false), lease) {
+		return UnequipResult{Success: false, Message: "Equipment action was cancelled"}
+	}
 
 	// Wait for response and verify success
-	response, err := waiter.WaitWithTimeout()
+	response, err := waiter.WaitWithContext(lease.Context())
 	if err != nil {
 		return UnequipResult{Success: false, Code: "", Message: "Timeout waiting for response"}
 	}
@@ -261,14 +289,23 @@ func UnequipGemRaw(equipmentMode string, targetIndex int, equipmentId float64) U
 		return UnequipResult{Success: false, Code: "", Message: "Invalid equipment mode"}
 	}
 
+	lease, cancel, ok := acquireEquipmentControl("unequip gem batch step", false, 10*time.Second)
+	if !ok {
+		return UnequipResult{Success: false, Message: "Equipment control is busy"}
+	}
+	defer cancel()
+	defer lease.Release()
+
 	// Register waiter for response before sending
 	waiter := ResponseRegistry.Global.RegisterWaiter("ege", 5*time.Second)
 	defer waiter.Cleanup()
 
-	GameCommands.SendEGE(equipmentId, lidValue)
+	if !GameCommands.QueueFeaturePayload(Automation.OwnerManual, GameCommands.EGEPayload(equipmentId, lidValue), lease) {
+		return UnequipResult{Success: false, Message: "Equipment action was cancelled"}
+	}
 
 	// Wait for response and verify success
-	response, err := waiter.WaitWithTimeout()
+	response, err := waiter.WaitWithContext(lease.Context())
 	if err != nil {
 		return UnequipResult{Success: false, Code: "", Message: "Timeout waiting for response"}
 	}

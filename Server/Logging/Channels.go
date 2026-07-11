@@ -15,13 +15,15 @@ import (
 const (
 	ChannelWebSocketGame = "websocket_game"
 	ChannelAutoBird      = "autobird"
+	ChannelAutoStation   = "autostation"
 	ChannelAutoRecruit   = "autorecruit"
 	ChannelAutoTool      = "autotool"
+	ChannelAutoSceatRes  = "autosceatres"
 	ChannelAutoHospital  = "autohospital"
 	ChannelAutoTCI       = "autotci"
 	ChannelAutoBeriWorld = "autoberiworld"
 	ChannelRift          = "rift"
-	// ChannelAppSend is Citadel-queued game commands (OutgoingMessages) plus inbound frames
+	// ChannelAppSend is Citadel-queued game commands (both outbound lanes) plus inbound frames
 	// that match those sends (FIFO by opcode).
 	ChannelAppSend = "app_send"
 )
@@ -37,8 +39,10 @@ var KnownChannels = []ChannelMeta{
 	{ID: ChannelWebSocketGame, Label: "Game WebSocket"},
 	{ID: ChannelAppSend, Label: "Citadel sends"},
 	{ID: ChannelAutoBird, Label: "AutoBird"},
+	{ID: ChannelAutoStation, Label: "Auto Station"},
 	{ID: ChannelAutoRecruit, Label: "Auto Recruit"},
 	{ID: ChannelAutoTool, Label: "Auto Tool"},
+	{ID: ChannelAutoSceatRes, Label: "Auto Sceat Res"},
 	{ID: ChannelAutoHospital, Label: "Auto Hospital"},
 	{ID: ChannelAutoTCI, Label: "Auto TCI"},
 	{ID: ChannelAutoBeriWorld, Label: "Auto Beri World"},
@@ -263,6 +267,14 @@ func AppendAutoBirdLine(event, detail string) {
 	AppendChannelLine(ChannelAutoBird, "INFO", event, detail)
 }
 
+// AppendAutoStationLine records an Auto Station action.
+func AppendAutoStationLine(event, detail string) {
+	if event == "" {
+		event = "event"
+	}
+	AppendChannelLine(ChannelAutoStation, "INFO", event, detail)
+}
+
 // AppendAutoRecruitLine records an Auto Recruit action (direction INFO, event as cmdType).
 func AppendAutoRecruitLine(event, detail string) {
 	if event == "" {
@@ -295,6 +307,23 @@ func AppendAutoToolSendPayload(payload string) {
 		op = "UNKNOWN"
 	}
 	AppendChannelLine(ChannelAutoTool, "SEND", op, payload)
+}
+
+// AppendAutoSceatResLine records an Auto Sceat Resources action.
+func AppendAutoSceatResLine(event, detail string) {
+	if event == "" {
+		event = "event"
+	}
+	AppendChannelLine(ChannelAutoSceatRes, "INFO", event, detail)
+}
+
+// AppendAutoSceatResSendPayload records an outbound crafting/logistics wire frame.
+func AppendAutoSceatResSendPayload(payload string) {
+	op := wireOpcodeFromPayload(payload)
+	if op == "" {
+		op = "UNKNOWN"
+	}
+	AppendChannelLine(ChannelAutoSceatRes, "SEND", op, payload)
 }
 
 // AppendAutoHospitalLine records an Auto Hospital action (direction INFO, event as cmdType).
@@ -389,6 +418,21 @@ func AutoToolLog(event, detail string) {
 // AutoToolLogf formats detail and calls [AutoToolLog].
 func AutoToolLogf(event, format string, args ...any) {
 	AutoToolLog(event, fmt.Sprintf(format, args...))
+}
+
+// AutoSceatResLog writes to the main log and Auto Sceat Res dashboard channel.
+func AutoSceatResLog(event, detail string) {
+	if detail != "" {
+		log.Printf("[AutoSceatRes] %s: %s", event, detail)
+	} else {
+		log.Printf("[AutoSceatRes] %s", event)
+	}
+	AppendAutoSceatResLine(event, detail)
+}
+
+// AutoSceatResLogf formats detail and calls AutoSceatResLog.
+func AutoSceatResLogf(event, format string, args ...any) {
+	AutoSceatResLog(event, fmt.Sprintf(format, args...))
 }
 
 // AutoHospitalLog writes to the main log and the Auto Hospital dashboard channel.

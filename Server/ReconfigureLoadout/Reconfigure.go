@@ -1,24 +1,69 @@
 package ReconfigureLoadout
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/GameParser"
 	"CitadelDesktop/Server/Models"
 	equip "CitadelDesktop/Server/Models/Equipment"
+	"context"
 	"log"
 	"time"
 )
+
+func acquireReconfigureSnapshot(reason string) (*Automation.Lease, context.CancelFunc, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	lease, ok := Automation.Acquire(ctx, Automation.Request{
+		Owner:        Automation.OwnerManual,
+		Priority:     Automation.PriorityManual,
+		Reason:       reason,
+		Claims:       []Automation.Claim{Automation.ExclusiveClaim(Automation.ClaimEquipment)},
+		MaxHold:      2 * time.Minute,
+		PreemptLower: true,
+	})
+	if !ok {
+		cancel()
+		return nil, func() {}, Automation.ErrWorkCancelled
+	}
+	refreshes := []struct {
+		opcode  string
+		payload string
+		version uint64
+	}{
+		{opcode: "gei", payload: GameCommands.GEIPayload()},
+		{opcode: "ggm", payload: GameCommands.GGMPayload()},
+	}
+	for i := range refreshes {
+		refreshes[i].version = Automation.StateSnapshot(Automation.StateOpcode(refreshes[i].opcode)).Version
+		if !GameCommands.QueueFeatureRefresh(Automation.OwnerManual, refreshes[i].payload, lease) {
+			lease.Release()
+			cancel()
+			return nil, func() {}, Automation.ErrWorkCancelled
+		}
+	}
+	refreshCtx, refreshCancel := context.WithTimeout(lease.Context(), 15*time.Second)
+	defer refreshCancel()
+	for _, refresh := range refreshes {
+		if _, ok := Automation.AwaitStateAfter(refreshCtx, Automation.StateOpcode(refresh.opcode), refresh.version); !ok {
+			lease.Release()
+			cancel()
+			return nil, func() {}, Automation.ErrWorkCancelled
+		}
+	}
+	return lease, cancel, nil
+}
 
 // ReconfigureCommander is the entry point for Commander loadout optimization
 // It filters equipment, heroes, and gems for Commander type before calling the shared optimizer
 // Returns the result and an error string (empty if successful)
 func ReconfigureCommander(payload ReconfigurePayload) (Models.CommStatModel, string) {
 	log.Println("[Reconfigure] Starting Commander reconfiguration")
-	// 1. Refresh game state
-	GameCommands.SendGEI()
-	time.Sleep(2 * time.Second)
-	GameCommands.SendGGM()
-	time.Sleep(2 * time.Second)
+	lease, cancel, err := acquireReconfigureSnapshot("calculate commander reconfiguration")
+	if err != nil {
+		return Models.CommStatModel{}, "Cannot reconfigure: equipment state refresh timed out"
+	}
+	defer cancel()
+	defer lease.Release()
 
 	// 2. Filter equipment for Commander (EquipType == 2)
 	gs := Models.GetGameState()
@@ -133,11 +178,12 @@ func BuildCommStatModel(result OptimizationResult, equipment []Models.EquipmentM
 // Returns the result and an error string (empty if successful)
 func ReconfigureCastellan(payload ReconfigurePayload) (Models.CastStatModel, string) {
 	log.Println("[Reconfigure] Starting Castellan reconfiguration")
-	// 1. Refresh game state
-	GameCommands.SendGEI()
-	time.Sleep(2 * time.Second)
-	GameCommands.SendGGM()
-	time.Sleep(2 * time.Second)
+	lease, cancel, err := acquireReconfigureSnapshot("calculate castellan reconfiguration")
+	if err != nil {
+		return Models.CastStatModel{}, "Cannot reconfigure: equipment state refresh timed out"
+	}
+	defer cancel()
+	defer lease.Release()
 
 	// 2. Filter equipment for Castellan (EquipType == 1)
 	gs := Models.GetGameState()

@@ -131,30 +131,31 @@ const metricDefinitions: Array<{
   shortLabel: string;
   color: string;
   icon: typeof Activity;
+  imageUrl?: string;
   category: MetricCategory | 'Troops';
 }> = [
-  { key: 'might', label: 'Might points', shortLabel: 'Might', color: '#34d399', icon: ShieldCheck, category: 'Player stats' },
-  { key: 'glory', label: 'Glory points', shortLabel: 'Glory', color: '#60a5fa', icon: Trophy, category: 'Player stats' },
-  { key: 'loot', label: 'Loot', shortLabel: 'Loot', color: '#2dd4bf', icon: CircleDollarSign, category: 'Player stats' },
-  { key: 'gallantry', label: 'Gallantry points', shortLabel: 'Gallantry', color: '#f59e0b', icon: Sparkles, category: 'Player stats' },
-  { key: 'coins', label: 'Coins', shortLabel: 'Coins', color: '#facc15', icon: Coins, category: 'Wallet' },
-  { key: 'rubies', label: 'Rubies', shortLabel: 'Rubies', color: '#fb7185', icon: CircleDollarSign, category: 'Wallet' },
-  { key: 'relic_shard', label: 'Relic Shards', shortLabel: 'Relic Shards', color: '#a78bfa', icon: Sparkles, category: 'Building' },
-  { key: 'sceat', label: 'Sceats', shortLabel: 'Sceats', color: '#60a5fa', icon: Coins, category: 'Building' },
-  { key: 'ducat', label: 'Imperial Ducats', shortLabel: 'Ducats', color: '#f59e0b', icon: Coins, category: 'Building' },
-  { key: 'const_token', label: 'Construction Tokens', shortLabel: 'Construction', color: '#2dd4bf', icon: ShieldCheck, category: 'Building' },
-  { key: 'upgr_token', label: 'Upgrade Tokens', shortLabel: 'Upgrade', color: '#34d399', icon: ShieldCheck, category: 'Building' },
-  { key: 'plaster', label: 'Plaster', shortLabel: 'Plaster', color: '#94a3b8', icon: ShieldCheck, category: 'Building' },
-  { key: 'affl_tix', label: 'Affluence Tickets', shortLabel: 'Affluence', color: '#f97316', icon: Sparkles, category: 'Combat' },
-  { key: 'drg_scale', label: 'Dragon Scale Tiles', shortLabel: 'Scale Tiles', color: '#ef4444', icon: Swords, category: 'Combat' },
-  { key: 'drg_spl', label: 'Dragon Scale Splinters', shortLabel: 'Splinters', color: '#ec4899', icon: Swords, category: 'Combat' },
-  { key: 'min1', label: '1 Minute Speedups', shortLabel: '1 Min', color: '#22d3ee', icon: Clock3, category: 'Speedups' },
-  { key: 'min5', label: '5 Minute Speedups', shortLabel: '5 Min', color: '#22d3ee', icon: Clock3, category: 'Speedups' },
-  { key: 'min10', label: '10 Minute Speedups', shortLabel: '10 Min', color: '#22d3ee', icon: Clock3, category: 'Speedups' },
-  { key: 'min30', label: '30 Minute Speedups', shortLabel: '30 Min', color: '#22d3ee', icon: Clock3, category: 'Speedups' },
-  { key: 'hr1', label: '1 Hour Speedups', shortLabel: '1 Hour', color: '#06b6d4', icon: Clock3, category: 'Speedups' },
-  { key: 'hr5', label: '5 Hour Speedups', shortLabel: '5 Hours', color: '#0891b2', icon: Clock3, category: 'Speedups' },
-  { key: 'hr24', label: '24 Hour Speedups', shortLabel: '24 Hours', color: '#0e7490', icon: Clock3, category: 'Speedups' },
+  { key: 'might', label: 'Might points', shortLabel: 'Might', color: '#34d399', icon: ShieldCheck, imageUrl: '/game-data/resources/images/MightPoints.webp', category: 'Player stats' },
+  { key: 'glory', label: 'Glory points', shortLabel: 'Glory', color: '#60a5fa', icon: Trophy, imageUrl: '/game-data/resources/images/Glory.webp', category: 'Player stats' },
+  { key: 'loot', label: 'Loot', shortLabel: 'Loot', color: '#2dd4bf', icon: CircleDollarSign, imageUrl: '/game-data/resources/images/Loot.webp', category: 'Player stats' },
+  { key: 'gallantry', label: 'Gallantry points', shortLabel: 'Gallantry', color: '#f59e0b', icon: Sparkles, imageUrl: '/game-data/resources/images/Gallantry.webp', category: 'Player stats' },
+  { key: 'coins', label: 'Coins', shortLabel: 'Coins', color: '#facc15', icon: Coins, imageUrl: '/game-data/resources/images/Coins.webp', category: 'Wallet' },
+  { key: 'rubies', label: 'Rubies', shortLabel: 'Rubies', color: '#fb7185', icon: CircleDollarSign, imageUrl: '/game-data/resources/images/Ruby.webp', category: 'Wallet' },
+  { key: 'relic_shard', label: 'Relic Shards', shortLabel: 'Relic Shards', color: '#a78bfa', icon: Sparkles, imageUrl: '/game-data/resources/images/Relic_Shards.webp', category: 'Building' },
+  { key: 'sceat', label: 'Sceats', shortLabel: 'Sceats', color: '#60a5fa', icon: Coins, imageUrl: '/game-data/resources/images/Sceat.webp', category: 'Building' },
+  { key: 'ducat', label: 'Imperial Ducats', shortLabel: 'Ducats', color: '#f59e0b', icon: Coins, imageUrl: '/game-data/resources/images/ImperialDucat.webp', category: 'Building' },
+  { key: 'const_token', label: 'Construction Tokens', shortLabel: 'Construction', color: '#2dd4bf', icon: ShieldCheck, imageUrl: '/game-data/resources/images/ConstructionToken.webp', category: 'Building' },
+  { key: 'upgr_token', label: 'Upgrade Tokens', shortLabel: 'Upgrade', color: '#34d399', icon: ShieldCheck, imageUrl: '/game-data/resources/images/UpgradeToken.webp', category: 'Building' },
+  { key: 'plaster', label: 'Plaster', shortLabel: 'Plaster', color: '#94a3b8', icon: ShieldCheck, imageUrl: '/game-data/resources/images/Plaster.webp', category: 'Building' },
+  { key: 'affl_tix', label: 'Affluence Tickets', shortLabel: 'Affluence', color: '#f97316', icon: Sparkles, imageUrl: '/game-data/resources/images/AffluenceTickets.webp', category: 'Combat' },
+  { key: 'drg_scale', label: 'Dragon Scale Tiles', shortLabel: 'Scale Tiles', color: '#ef4444', icon: Swords, imageUrl: '/game-data/resources/images/DragonScaleTiles.webp', category: 'Combat' },
+  { key: 'drg_spl', label: 'Dragon Scale Splinters', shortLabel: 'Splinters', color: '#ec4899', icon: Swords, imageUrl: '/game-data/resources/images/DragonScaleSplinters.webp', category: 'Combat' },
+  { key: 'min1', label: '1 Minute Speedups', shortLabel: '1 Min', color: '#22d3ee', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip1Minute.webp', category: 'Speedups' },
+  { key: 'min5', label: '5 Minute Speedups', shortLabel: '5 Min', color: '#22d3ee', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip5Minutes.webp', category: 'Speedups' },
+  { key: 'min10', label: '10 Minute Speedups', shortLabel: '10 Min', color: '#22d3ee', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip10Minutes.webp', category: 'Speedups' },
+  { key: 'min30', label: '30 Minute Speedups', shortLabel: '30 Min', color: '#22d3ee', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip30Minutes.webp', category: 'Speedups' },
+  { key: 'hr1', label: '1 Hour Speedups', shortLabel: '1 Hour', color: '#06b6d4', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip1Hour.webp', category: 'Speedups' },
+  { key: 'hr5', label: '5 Hour Speedups', shortLabel: '5 Hours', color: '#0891b2', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip5Hours.webp', category: 'Speedups' },
+  { key: 'hr24', label: '24 Hour Speedups', shortLabel: '24 Hours', color: '#0e7490', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip24Hours.webp', category: 'Speedups' },
   { key: 'troopsTotal', label: 'Total troops', shortLabel: 'Troops', color: '#a78bfa', icon: Swords, category: 'Troops' },
 ];
 
@@ -176,6 +177,19 @@ const emptyResponse: PlayerTrackerResponse = {
   intervalSeconds: 60,
   fallback: { provider: 'gge-tracker', status: 'not-needed' },
   coverage: { loot: false, eventScores: false },
+};
+
+const MetricIcon = ({ definition, className }: { definition: (typeof metricDefinitions)[number]; className: string }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+  const FallbackIcon = definition.icon;
+
+  useEffect(() => setImageFailed(false), [definition.imageUrl]);
+
+  if (definition.imageUrl && !imageFailed) {
+    return <img src={definition.imageUrl} alt="" className={`${className} shrink-0 object-contain`} onError={() => setImageFailed(true)} />;
+  }
+
+  return <FallbackIcon className={`${className} shrink-0`} style={{ color: definition.color }} />;
 };
 
 const PlayerTrackerView = () => {
@@ -271,7 +285,6 @@ const PlayerTrackerView = () => {
     [series, selectedRange],
   );
   const selectedDefinition = metricDefinitions.find((definition) => definition.key === selectedMetric)!;
-  const SelectedMetricIcon = selectedDefinition.icon;
   const selectedPoints = visibleSeries[selectedMetric] ?? [];
   const chartPoints = useMemo(
     () => bucketMetricPoints(selectedPoints, selectedRange),
@@ -435,7 +448,7 @@ const PlayerTrackerView = () => {
               <div className="flex w-full flex-wrap items-center justify-between gap-4">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <SelectedMetricIcon className="h-5 w-5" style={{ color: selectedDefinition.color }} />
+                    <MetricIcon definition={selectedDefinition} className="h-5 w-5" />
                     {selectedDefinition.label} trend
                   </CardTitle>
                   <div className="mt-2 flex items-baseline gap-3">
@@ -468,12 +481,13 @@ const PlayerTrackerView = () => {
                     key={definition.key}
                     type="button"
                     onClick={() => setSelectedMetric(definition.key)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                       selectedMetric === definition.key
                         ? 'border-primary/40 bg-primary/10 text-primary'
                         : 'border-border-base text-text-muted hover:bg-bg-card-hover hover:text-text-main'
                     }`}
                   >
+                    <MetricIcon definition={definition} className="h-4 w-4" />
                     {definition.shortLabel}
                   </button>
                 ))}

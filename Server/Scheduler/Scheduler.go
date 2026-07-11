@@ -1,8 +1,9 @@
 package Scheduler
 
 import (
+	"CitadelDesktop/Server/Automation"
+	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/Models"
-	"CitadelDesktop/Server/ResponseRegistry"
 	"context"
 	"log"
 	"sync"
@@ -66,6 +67,7 @@ func (s *Scheduler) Stop() {
 	if s.cancel != nil {
 		s.cancel()
 		s.cancel = nil
+		Automation.CancelOwner(Automation.OwnerAttack)
 	}
 }
 
@@ -74,26 +76,15 @@ func (s *Scheduler) runLoop(ctx context.Context) {
 	ticker := time.NewTicker(50 * time.Millisecond) // Fast ticker for checking priority queues
 	defer ticker.Stop()
 
-	var nextDispatchTime time.Time
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			// 1. Check if we are ready to send the next attack
-			if time.Now().Before(nextDispatchTime) {
-				continue // Wait for attack cooldown
-			}
-
-			// Attempt to dispatch
+			// Attack pacing belongs to the dedicated websocket lane. The scheduler only
+			// contributes prioritized intents so it cannot block ordinary commands.
 			if req := s.getNextTarget(); req != nil {
-				// Process the attack
-				success := s.dispatchAttack(req)
-
-				if success {
-					nextDispatchTime = time.Now().Add(Models.RandomAttackDelay())
-				}
+				s.dispatchAttack(req)
 			}
 		}
 	}
@@ -152,9 +143,33 @@ func (s *Scheduler) dispatchAttack(req *AttackRequest) bool {
 
 	log.Printf("[Scheduler] Dispatching attack payload to %s (Priority %s)", req.TargetID, req.Priority)
 
-	// Mark as in-flight tracking
-	s.CooldownTracker.SetInFlight(req.TargetID)
+	dispatchCtx := s.ctx
+	if dispatchCtx == nil {
+		dispatchCtx = context.Background()
+	}
+	receipt := GameCommands.DispatchPayload(dispatchCtx, "cra", "scheduled_attack", payload, Automation.CommandOptions{
+		Owner:    Automation.OwnerAttack,
+		Priority: schedulerCommandPriority(req.Priority),
+	})
+	if !receipt.Accepted {
+		log.Printf("[Scheduler] Command harness rejected target %s: %s", req.TargetID, receipt.Message)
+		return false
+	}
 
-	ResponseRegistry.OutgoingMessages <- []byte(payload)
+	// Mark as in-flight only after the control plane accepts the launch.
+	s.CooldownTracker.SetInFlight(req.TargetID)
 	return true
+}
+
+func schedulerCommandPriority(priority Models.TabPriority) Automation.Priority {
+	switch priority {
+	case Models.Priority1:
+		return 80
+	case Models.Priority2:
+		return 70
+	case Models.Priority3:
+		return 60
+	default:
+		return 50
+	}
 }

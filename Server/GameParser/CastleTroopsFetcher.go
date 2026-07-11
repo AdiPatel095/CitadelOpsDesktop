@@ -1,9 +1,12 @@
 package GameParser
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
+	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/Models"
 	"CitadelDesktop/Server/ResponseRegistry"
+	"context"
 	"log"
 	"sync"
 	"sync/atomic"
@@ -16,7 +19,11 @@ var (
 )
 
 type focusLease interface {
+	ID() int64
+	Owner() string
+	Priority() Automation.Priority
 	Active() bool
+	WorkID() string
 }
 
 // jaaTroopFetchWait is how long we wait for an inbound **jaa** after SendCastleFocus (see markJAAProcessed).
@@ -106,7 +113,20 @@ func refocusMainCastleAfterTroopFetch(gs *Models.GameState) {
 	if !ResponseRegistry.LoginStatus {
 		return
 	}
-	GameCommands.SendCastleFocus(kingdomID, mainAID, mapX, mapY)
+	ctx, cancel := context.WithTimeout(context.Background(), jaaTroopFetchWait)
+	defer cancel()
+	lease, acquired := GameFocus.Acquire(ctx, GameFocus.Request{
+		Owner:    Automation.OwnerBackground,
+		Priority: Automation.PriorityBackground,
+		Reason:   "startup main castle refresh",
+		MaxHold:  jaaTroopFetchWait,
+		Claims:   []GameFocus.Claim{GameFocus.CastleClaim(mainAID, "startup-refresh")},
+	})
+	if !acquired {
+		return
+	}
+	defer lease.Release()
+	trySendAndAwaitJAAWithLease(lease, gs, kingdomID, mainAID, mapX, mapY)
 }
 
 func mainCastleMapCoords(gs *Models.GameState, mainAID int) (kingdomID, x, y int, ok bool) {
@@ -133,8 +153,18 @@ func FetchCastleTroops(kingdomID, castleID, x, y int) *Models.CastleTroops {
 
 // FetchCastleTroopsWithLease sends focus only while the provided lease remains active.
 func FetchCastleTroopsWithLease(lease focusLease, kingdomID, castleID, x, y int) *Models.CastleTroops {
+	return FetchCastleTroopsWithLeaseQueue(lease, kingdomID, castleID, x, y, nil)
+}
+
+// FetchCastleTroopsWithLeaseQueue lets a command runtime supply the focus admission function while
+// retaining the same parser wait, rejection settling, lease guard, and state validation flow.
+func FetchCastleTroopsWithLeaseQueue(
+	lease focusLease,
+	kingdomID, castleID, x, y int,
+	queue func(payload string) bool,
+) *Models.CastleTroops {
 	gs := Models.GetGameState()
-	if trySendAndAwaitJAAWithLease(lease, gs, kingdomID, castleID, x, y) {
+	if trySendAndAwaitJAAWithLeaseQueue(lease, gs, kingdomID, castleID, x, y, queue) {
 		return troopSnapshotFromCastle(gs, castleID)
 	}
 	if kingdomID == 1 || kingdomID == 2 {
@@ -142,7 +172,7 @@ func FetchCastleTroopsWithLease(lease focusLease, kingdomID, castleID, x, y int)
 		if kingdomID == 2 {
 			swapped = 1
 		}
-		if trySendAndAwaitJAAWithLease(lease, gs, swapped, castleID, x, y) {
+		if trySendAndAwaitJAAWithLeaseQueue(lease, gs, swapped, castleID, x, y, queue) {
 			return troopSnapshotFromCastle(gs, castleID)
 		}
 	}
@@ -159,6 +189,15 @@ func trySendAndAwaitJAA(gs *Models.GameState, kingdomID, castleID, mapX, mapY in
 }
 
 func trySendAndAwaitJAAWithLease(lease focusLease, gs *Models.GameState, kingdomID, castleID, mapX, mapY int) bool {
+	return trySendAndAwaitJAAWithLeaseQueue(lease, gs, kingdomID, castleID, mapX, mapY, nil)
+}
+
+func trySendAndAwaitJAAWithLeaseQueue(
+	lease focusLease,
+	gs *Models.GameState,
+	kingdomID, castleID, mapX, mapY int,
+	queue func(payload string) bool,
+) bool {
 	if lease != nil && !lease.Active() {
 		return false
 	}
@@ -167,7 +206,18 @@ func trySendAndAwaitJAAWithLease(lease focusLease, gs *Models.GameState, kingdom
 	if lease != nil && !lease.Active() {
 		return false
 	}
-	GameCommands.SendCastleFocus(kingdomID, castleID, mapX, mapY)
+	payload := GameCommands.CastleFocusCommand(kingdomID, castleID, mapX, mapY)
+	if queue != nil {
+		if !queue(payload) {
+			return false
+		}
+	} else if lease != nil {
+		if !GameCommands.QueueFeaturePayload(lease.Owner(), payload, lease) {
+			return false
+		}
+	} else {
+		GameCommands.QueueOutgoingPayload(payload)
+	}
 	if !awaitNextJAAAfter(prev, jaaTroopFetchWait) {
 		return false
 	}

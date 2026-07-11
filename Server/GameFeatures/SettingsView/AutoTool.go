@@ -1,6 +1,7 @@
 package settingsview
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
@@ -60,6 +61,7 @@ func StopAutoTool() {
 
 	if autoToolCancel != nil {
 		autoToolCancel()
+		Automation.CancelOwner(Automation.OwnerAutoTool)
 		autoToolCancel = nil
 		Models.GetGameState().ClearAutoToolActiveTools()
 		if ResponseRegistry.SendAutoToolStatusFunc != nil {
@@ -393,6 +395,10 @@ func runAutoTool(ctx context.Context) {
 					Owner:   GameFocus.OwnerAutoTool,
 					Reason:  fmt.Sprintf("castle=%d", castleID),
 					MaxHold: 30 * time.Second,
+					Claims: []GameFocus.Claim{
+						GameFocus.CastleClaim(castleID, "workshop-queue"),
+						GameFocus.ExclusiveClaim(Automation.ClaimAccountResources),
+					},
 				})
 				if !ok {
 					return
@@ -476,7 +482,7 @@ func runAutoTool(ctx context.Context) {
 						const autoToolSessionKey = 73
 						payload := GameCommands.BUPPayload(autoToolQueueLID, toolID, stackPlan.Amount, -1, 0, autoToolSessionKey, 0, castleID)
 						Logging.AppendAutoToolSendPayload(payload)
-						GameCommands.QueueOutgoingPayload(payload)
+						GameCommands.QueueFeaturePayload(Automation.OwnerAutoTool, payload, lease)
 						GameParser.ReserveToolResourceCosts(resourceReservations, costCheck)
 						occupiedQueueStacks++
 						if !autoToolPause(ctx, autoToolActionDelay) {

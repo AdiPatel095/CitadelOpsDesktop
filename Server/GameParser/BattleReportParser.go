@@ -157,7 +157,7 @@ func fetchBattleReportCapture(capture battlereport.Capture) (battlereport.Captur
 
 	var failures []string
 	if bls, wire, err := requestBattleReportPayload("bls", func() {
-		GameCommands.SendBLS(capture.MID, 0)
+		GameCommands.QueueBackgroundPayload(GameCommands.BLSPayload(capture.MID, 0))
 	}); err != nil {
 		if errors.Is(err, errReportUnavailable) {
 			discardUnavailableBattleReport(noticeCapture, capture, "bls")
@@ -188,7 +188,7 @@ func fetchBattleReportCapture(capture battlereport.Capture) (battlereport.Captur
 	}
 
 	if blm, wire, err := requestBattleReportPayload("blm", func() {
-		GameCommands.SendBLM(capture.LID)
+		GameCommands.QueueBackgroundPayload(GameCommands.BLMPayload(capture.LID))
 	}); err != nil {
 		failures = append(failures, fmt.Sprintf("blm: %v", err))
 	} else {
@@ -198,7 +198,7 @@ func fetchBattleReportCapture(capture battlereport.Capture) (battlereport.Captur
 	}
 
 	if bld, wire, err := requestBattleReportPayload("bld", func() {
-		GameCommands.SendBLD(capture.LID)
+		GameCommands.QueueBackgroundPayload(GameCommands.BLDPayload(capture.LID))
 	}); err != nil {
 		failures = append(failures, fmt.Sprintf("bld: %v", err))
 	} else {

@@ -1,6 +1,7 @@
 package settingsview
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
@@ -67,6 +68,7 @@ func StopRecruitTroops() {
 
 	if recruitTroopsCancel != nil {
 		recruitTroopsCancel()
+		Automation.CancelOwner(Automation.OwnerAutoRecruit)
 		recruitTroopsCancel = nil
 		Models.GetGameState().ClearAutoRecruitActiveUnits()
 		if ResponseRegistry.SendRecruitTroopsStatusFunc != nil {
@@ -489,6 +491,10 @@ func runRecruitTroops(ctx context.Context) {
 					Owner:   GameFocus.OwnerAutoRecruit,
 					Reason:  fmt.Sprintf("castle=%d", castleID),
 					MaxHold: 30 * time.Second,
+					Claims: []GameFocus.Claim{
+						GameFocus.CastleClaim(castleID, "barracks-queue"),
+						GameFocus.ExclusiveClaim(Automation.ClaimAccountResources),
+					},
 				})
 				if !ok {
 					return
@@ -585,7 +591,7 @@ func runRecruitTroops(ctx context.Context) {
 						const recruitSessionKey = 73
 						payload := GameCommands.BUPPayload(0, unitID, stackPlan.Amount, -1, 0, recruitSessionKey, 0, castleID)
 						Logging.AppendAutoRecruitSendPayload(payload)
-						GameCommands.QueueOutgoingPayload(payload)
+						GameCommands.QueueFeaturePayload(Automation.OwnerAutoRecruit, payload, lease)
 						GameParser.ReserveRecruitResourceCosts(resourceReservations, costCheck)
 						occupiedQueueStacks++
 						if !recruitPause(ctx, recruitActionDelay) {

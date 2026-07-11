@@ -322,6 +322,18 @@ func parseAutoHospitalConfigFromFrontend(raw interface{}) stsettings.AutoHospita
 	return cfg.Normalize()
 }
 
+func parseAutoSceatResConfigFromFrontend(raw interface{}) stsettings.AutoSceatResConfig {
+	cfg := stsettings.DefaultAutoSceatResConfig()
+	encoded, err := json.Marshal(raw)
+	if err != nil {
+		return cfg
+	}
+	if err := json.Unmarshal(encoded, &cfg); err != nil {
+		return stsettings.DefaultAutoSceatResConfig()
+	}
+	return cfg.Normalize()
+}
+
 func sendRecruitTroopsSettings() {
 	state := Models.GetSettingsState()
 	cfg := state.RecruitTroopsList.Normalize()
@@ -334,6 +346,23 @@ func sendAutoToolSettings() {
 	cfg := state.AutoToolList.Normalize()
 	state.AutoToolList = cfg
 	SendFrontendMessage("autoToolSettings", cfg, "")
+}
+
+func sendAutoSceatResSettings() {
+	state := Models.GetSettingsState()
+	cfg := state.AutoSceatRes.Normalize()
+	state.AutoSceatRes = cfg
+	SendFrontendMessage("autoSceatResSettings", cfg, "")
+}
+
+func sendAutoSceatResCatalog() {
+	catalog, err := settingsview.BuildAutoSceatResCatalog()
+	if err != nil {
+		log.Printf("[frontend-ws] Auto Sceat Res catalog: %v", err)
+		SendFrontendMessage("autoSceatResCatalog", settingsview.AutoSceatResCatalog{}, "")
+		return
+	}
+	SendFrontendMessage("autoSceatResCatalog", catalog, "")
 }
 
 func sendAutoHospitalSettings() {
@@ -398,6 +427,8 @@ func init() {
 	}
 	ResponseRegistry.SendRecruitTroopsStatusFunc = SendRecruitTroopsStatus
 	ResponseRegistry.SendAutoToolStatusFunc = SendAutoToolStatus
+	ResponseRegistry.SendAutoStationStatusFunc = SendAutoStationStatus
+	ResponseRegistry.SendAutoSceatResStatusFunc = SendAutoSceatResStatus
 	ResponseRegistry.SendAutoHospitalStatusFunc = SendAutoHospitalStatus
 	ResponseRegistry.SendAutoTCIStatusFunc = SendAutoTCIStatus
 	ResponseRegistry.SendAutoBeriWorldStatusFunc = SendAutoBeriWorldStatus
@@ -609,6 +640,17 @@ func ParseFrontendMessage(message []byte) {
 			SendAutoBirdStatus(true, 0)
 			Logging.AppendAutoBirdLine("toggle", "started (UI)")
 		}
+	case "toggleAutoStation":
+		state := Models.GetSettingsState()
+		if featureview.IsAutoStationRunning() {
+			featureview.StopAutoStation()
+			state.AutoStationEnabled = false
+			Logging.AppendAutoStationLine("toggle", "stopped (UI); active movements retain one-hour fallback")
+		} else {
+			state.AutoStationEnabled = true
+			featureview.StartAutoStation()
+			Logging.AppendAutoStationLine("toggle", "started (UI)")
+		}
 	case "clearAutoBirdSentBirds":
 		log.Println("[frontend-ws] clear AutoBird sent-bird log")
 		sentbird.Clear()
@@ -661,6 +703,24 @@ func ParseFrontendMessage(message []byte) {
 			Logging.AutoToolLog("toggle", "start requested")
 			settingsview.StartAutoTool()
 			SendAutoToolStatus(true)
+		}
+	case "toggleAutoSceatRes":
+		wasRunning := settingsview.IsAutoSceatResRunning()
+		Logging.AutoSceatResLogf("toggle", "requested wasRunning=%v", wasRunning)
+		if wasRunning {
+			settingsview.StopAutoSceatRes()
+			Models.GetSettingsState().AutoSceatResEnabled = false
+			SendAutoSceatResStatus(false)
+		} else {
+			state := Models.GetSettingsState()
+			state.AutoSceatResEnabled = true
+			if payloadRaw, ok := data["payload"].(map[string]interface{}); ok {
+				if settingsRaw, ok := payloadRaw["settings"]; ok {
+					state.UpdateAutoSceatResConfig(parseAutoSceatResConfigFromFrontend(settingsRaw))
+				}
+			}
+			settingsview.StartAutoSceatRes()
+			SendAutoSceatResStatus(true)
 		}
 	case "toggleAutoHospital":
 		wasRunning := settingsview.IsAutoHospitalRunning()
@@ -775,8 +835,10 @@ func ParseFrontendMessage(message []byte) {
 		}
 	case "reconfigureLoadout":
 		{
-			GameCommands.SendGLI()
-			time.Sleep(2 * time.Second)
+			if !refreshEquipmentListForView() {
+				SendAlertMessage("red", "Could not refresh equipment state")
+				return
+			}
 
 			// Parse the payload into ReconfigurePayload struct
 			var msg struct {
@@ -958,8 +1020,7 @@ func ParseFrontendMessage(message []byte) {
 
 			// Final Sync
 			SendAlertMessage("green", "Reconfiguration complete!")
-			GameCommands.SendGLI()
-			time.Sleep(2 * time.Second)
+			_ = refreshEquipmentListForView()
 
 			// Trigger frontend refresh
 			var refreshMsg string
@@ -997,8 +1058,10 @@ func ParseFrontendMessage(message []byte) {
 
 			go func() {
 				SendAlertMessage("yellow", "Starting equipment swap...")
-				GameCommands.SendGLI()
-				time.Sleep(2 * time.Second)
+				if !refreshEquipmentListForView() {
+					SendAlertMessage("red", "Could not refresh equipment state")
+					return
+				}
 
 				result := equipmentview.SwapBaseEquipment(equipmentMode, firstIndex, secondIndex)
 				if result.Success {
@@ -1007,8 +1070,7 @@ func ParseFrontendMessage(message []byte) {
 					SendAlertMessage("red", result.Message)
 				}
 
-				GameCommands.SendGLI()
-				time.Sleep(2 * time.Second)
+				_ = refreshEquipmentListForView()
 				if equipmentMode == "Commander" {
 					SendCommStat(firstIndex)
 					SendCommStat(secondIndex)
@@ -1037,8 +1099,10 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			// Fetch fresh data from game before attempting unequip
-			GameCommands.SendGLI()
-			time.Sleep(2 * time.Second)
+			if !refreshEquipmentListForView() {
+				SendAlertMessage("red", "Could not refresh equipment state")
+				return
+			}
 
 			// Process each selection
 			successCount := 0
@@ -1072,8 +1136,7 @@ func ParseFrontendMessage(message []byte) {
 
 			// Refresh equipment data from game and update frontend via ParseFrontendMessage
 			go func() {
-				GameCommands.SendGLI()
-				time.Sleep(2 * time.Second)
+				_ = refreshEquipmentListForView()
 				// Call ParseFrontendMessage with getCommUpdate/getCastUpdate to trigger targeted refresh
 				var refreshMsg string
 				if equipmentMode == "Commander" {
@@ -1102,8 +1165,10 @@ func ParseFrontendMessage(message []byte) {
 			}
 
 			// Fetch fresh data from game before attempting unequip
-			GameCommands.SendGLI()
-			time.Sleep(2 * time.Second)
+			if !refreshEquipmentListForView() {
+				SendAlertMessage("red", "Could not refresh equipment state")
+				return
+			}
 
 			// Process each selection
 			successCount := 0
@@ -1138,8 +1203,7 @@ func ParseFrontendMessage(message []byte) {
 
 			// Refresh equipment data from game and update frontend via ParseFrontendMessage
 			go func() {
-				GameCommands.SendGLI()
-				time.Sleep(2 * time.Second)
+				_ = refreshEquipmentListForView()
 				// Call ParseFrontendMessage with getCommUpdate/getCastUpdate to trigger targeted refresh
 				var refreshMsg string
 				if equipmentMode == "Commander" {
@@ -1163,8 +1227,10 @@ func ParseFrontendMessage(message []byte) {
 				SendAlertMessage("red", "Invalid equipment mode")
 				return
 			}
-			GameCommands.SendUpgradeMenuRefresh()
-			time.Sleep(2 * time.Second)
+			if !refreshUpgradeMenuForView() {
+				SendAlertMessage("red", "Could not refresh equipment upgrade state")
+				return
+			}
 			info := equipmentview.BuildUpgradeInfo(equipmentMode, int(targetIndex))
 			SendFrontendMessage("equipmentUpgradeInfo", info, "")
 		}
@@ -1197,8 +1263,7 @@ func ParseFrontendMessage(message []byte) {
 				} else {
 					SendAlertMessage("red", result.Message)
 				}
-				GameCommands.SendGLI()
-				time.Sleep(2 * time.Second)
+				_ = refreshEquipmentListForView()
 				var refreshMsg string
 				if equipmentMode == "Commander" {
 					refreshMsg = fmt.Sprintf(`{"type":"getCommUpdate","commanderIndex":%d}`, int(targetIndex))
@@ -1237,8 +1302,7 @@ func ParseFrontendMessage(message []byte) {
 				} else {
 					SendAlertMessage("red", result.Message)
 				}
-				GameCommands.SendGLI()
-				time.Sleep(2 * time.Second)
+				_ = refreshEquipmentListForView()
 				var refreshMsg string
 				if equipmentMode == "Commander" {
 					refreshMsg = fmt.Sprintf(`{"type":"getCommUpdate","commanderIndex":%d}`, int(targetIndex))
@@ -1347,6 +1411,33 @@ func ParseFrontendMessage(message []byte) {
 		SendAlertMessage("green", "Auto Tool settings saved")
 		log.Println("[frontend-ws] Auto Tool settings saved:", stsettings.AutoToolSettingsPath())
 		Logging.AutoToolLogf("settings", "saved %s", stsettings.AutoToolSettingsPath())
+
+	case "getAutoSceatResSettings":
+		sendAutoSceatResSettings()
+
+	case "getAutoSceatResCatalog":
+		sendAutoSceatResCatalog()
+
+	case "refreshAutoSceatResCatalog":
+		go refreshAutoSceatResCatalogForView()
+
+	case "saveAutoSceatResSettings":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		state := Models.GetSettingsState()
+		state.UpdateAutoSceatResConfig(parseAutoSceatResConfigFromFrontend(payloadRaw))
+		settingsview.NotifyAutoSceatResSettingsChanged()
+		if err := stsettings.WriteAutoSceatResConfig(state.AutoSceatRes); err != nil {
+			log.Printf("[frontend-ws] saveAutoSceatResSettings write: %v", err)
+			Logging.AutoSceatResLogf("settings", "disk write failed: %v", err)
+			SendAlertMessage("red", "Could not save Auto Sceat Res settings to disk")
+			return
+		}
+		sendAutoSceatResSettings()
+		SendAlertMessage("green", "Auto Sceat Res settings saved")
+		Logging.AutoSceatResLogf("settings", "saved %s", stsettings.AutoSceatResSettingsPath())
 
 	case "getAutoHospitalSettings":
 		sendAutoHospitalSettings()
@@ -1457,6 +1548,8 @@ func ParseFrontendMessage(message []byte) {
 		SendAlertMessage("green", fmt.Sprintf("Sent custom message: %s", messageCode))
 	case "getSchedulerSettings":
 		SendFrontendMessage("schedulerSettings", Models.GetSettingsState(), "")
+	case "getAutomationControlStatus":
+		SendAutomationControlStatus()
 	case "getAutoBirdClientState":
 		raw := stsettings.ReadAutoBirdClientFile()
 		var payload interface{}
@@ -1465,6 +1558,40 @@ func ParseFrontendMessage(message []byte) {
 			_ = json.Unmarshal(stsettings.DefaultAutoBirdClientJSON(), &payload)
 		}
 		SendFrontendMessage("autoBirdClientState", payload, "")
+	case "getAutoStationClientState":
+		raw := stsettings.ReadAutoStationClientFile()
+		var payload interface{}
+		if err := json.Unmarshal(raw, &payload); err != nil {
+			log.Printf("[frontend-ws] getAutoStationClientState parse: %v", err)
+			_ = json.Unmarshal(stsettings.DefaultAutoStationClientJSON(), &payload)
+		}
+		SendFrontendMessage("autoStationClientState", payload, "")
+	case "saveAutoStationClientState":
+		payloadRaw, ok := data["payload"].(map[string]interface{})
+		if !ok {
+			log.Println("[frontend-ws] saveAutoStationClientState: missing payload")
+			return
+		}
+		out, err := json.Marshal(payloadRaw)
+		if err != nil {
+			SendAlertMessage("red", "Auto Station: invalid data")
+			return
+		}
+		var clientState stsettings.AutoStationClientState
+		if err := json.Unmarshal(out, &clientState); err != nil {
+			SendAlertMessage("red", "Auto Station: invalid settings")
+			return
+		}
+		if err := stsettings.WriteAutoStationClientFile(out); err != nil {
+			log.Printf("[frontend-ws] saveAutoStationClientState write: %v", err)
+			SendAlertMessage("red", "Could not save Auto Station settings to disk")
+			return
+		}
+		config := clientState.Config()
+		Models.GetSettingsState().UpdateAutoStationConfig(config)
+		Logging.AppendAutoStationLine("settings", fmt.Sprintf("saved castles=%d lead=%ds recall=%v",
+			len(config.DefenseByCastle), config.LeadTimeSec, config.RecallWhenClear))
+		SendFrontendMessage("autoStationClientState", stsettings.AutoStationClientStateFromConfig(config), "")
 	case "saveAutoBirdClientState":
 		payloadRaw, ok := data["payload"].(map[string]interface{})
 		if !ok {
@@ -1544,6 +1671,7 @@ func ParseFrontendMessage(message []byte) {
 		SendFrontendMessage("schedulerSettings", state, "")
 		settingsview.NotifyRecruitTroopsSettingsChanged()
 		settingsview.NotifyAutoToolSettingsChanged()
+		settingsview.NotifyAutoSceatResSettingsChanged()
 		settingsview.NotifyAutoHospitalSettingsChanged()
 		SendAlertMessage("green", "Scheduler Settings saved")
 		log.Println("[frontend-ws] Scheduler settings saved:", stsettings.SchedulerSettingsPath())

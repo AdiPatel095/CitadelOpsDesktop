@@ -1,6 +1,7 @@
 package featureview
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/Models"
 )
@@ -11,5 +12,5 @@ func FetchAllianceInfo() {
 	if aid == 0 {
 		return
 	}
-	GameCommands.SendAIN(aid)
+	GameCommands.QueueFeatureRefresh(Automation.OwnerManual, GameCommands.AINPayload(aid), nil)
 }

@@ -16,7 +16,7 @@ func InitiateDetails(data string) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(8)
+	wg.Add(9)
 
 	go func() {
 		defer wg.Done()
@@ -110,12 +110,22 @@ func InitiateDetails(data string) {
 		if subscriptionMap, ok := jsonDataMap["upc"].(map[string]interface{}); ok {
 			UpdateSubscriptionInfo(subscriptionMap)
 		}
+		if boosterMap, ok := jsonDataMap["boi"].(map[string]interface{}); ok {
+			ApplyMarketBoosterMap(boosterMap)
+		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		HandleLoginInboxBattleReports(jsonDataMap)
 		HandleLoginInboxSpyReports(jsonDataMap)
+	}()
+
+	go func() {
+		defer wg.Done()
+		if kpiMap, ok := jsonDataMap["kpi"].(map[string]interface{}); ok {
+			ApplyKingdomTransportMap(kpiMap)
+		}
 	}()
 
 	wg.Wait()

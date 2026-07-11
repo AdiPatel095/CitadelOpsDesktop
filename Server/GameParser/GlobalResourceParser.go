@@ -149,10 +149,20 @@ func updateResourceByLabel(label string, value float64) bool {
 	case "IDCT":
 		playerResources.Ducat = value
 	case "LM":
-		playerResources.ConstToken = value
-	case "LT":
-		playerResources.LegendaryToken = value
 		playerResources.UpgrToken = value
+	case "LT":
+		playerResources.ConstToken = value
+		playerResources.LegendaryToken = value
+	case "RL":
+		playerResources.RefinedLumber = value
+	case "RS":
+		playerResources.RefinedStone = value
+	case "STEEL":
+		playerResources.Steel = value
+	case "DG":
+		playerResources.DragonGlass = value
+	case "DC":
+		playerResources.DragonCharm = value
 	case "SLWT":
 		playerResources.AfflTix = value
 	case "PL":

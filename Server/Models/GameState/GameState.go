@@ -32,6 +32,10 @@ type GameState struct {
 	AutoRecruit AutoRecruitSession `json:"autoRecruitSession,omitempty"`
 	// AutoTool holds the resolved active tool per castle for the Auto Tool queue loop.
 	AutoTool AutoToolSession `json:"autoToolSession,omitempty"`
+	// KingdomTransport is the latest **kpi** unlock and pending resource-transfer snapshot.
+	KingdomTransport KingdomTransportState `json:"kingdomTransport,omitempty"`
+	// MarketTransport holds cmi barrow state, the permanent caravan level, and sends started this session.
+	MarketTransport MarketTransportState `json:"marketTransport,omitempty"`
 }
 
 var (
@@ -74,6 +78,8 @@ func (gs *GameState) Reset() {
 	gs.AutoBeriWorld = AutoBeriWorldSession{}
 	gs.AutoRecruit = AutoRecruitSession{}
 	gs.AutoTool = AutoToolSession{}
+	gs.KingdomTransport = KingdomTransportState{}
+	gs.MarketTransport = MarketTransportState{}
 	mapstate.GetMapState().Reset()
 }
 

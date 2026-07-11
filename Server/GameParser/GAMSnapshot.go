@@ -47,7 +47,7 @@ func RequestGAMSnapshot() bool {
 	}
 	gamRequestState.inFlightUntil = now.Add(gamRequestTimeout)
 	gamRequestState.Unlock()
-	GameCommands.SendGAM()
+	GameCommands.QueueBackgroundRefresh(GameCommands.GAMPayload())
 	return true
 }
 
@@ -173,15 +173,20 @@ func applyAuthoritativeGAMSnapshot(allMovements []Models.GAMMovement, observedUn
 	}
 	clearDeferredGAMSnapshot()
 	owned := make([]Models.GAMMovement, 0, len(allMovements))
+	incoming := make([]Models.GAMMovement, 0)
 	for _, movement := range allMovements {
 		if movement.OID != gs.PlayerID {
+			if movement.D == 0 && movement.MovementType == 0 &&
+				movement.TargetPlayerID == gs.PlayerID && movement.TargetCastleID > 0 {
+				incoming = append(incoming, movement)
+			}
 			continue
 		}
 		movement = resolveMovementCommander(gs, movement)
 		owned = append(owned, movement)
 		setMovementTargetCooldown(movement)
 	}
-	gs.Movement.ReplaceSnapshot(owned, observedUnix)
+	gs.Movement.ReplaceSnapshotWithIncoming(owned, incoming, observedUnix)
 	publishMovementState(true)
 }
 

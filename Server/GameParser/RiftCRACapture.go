@@ -1,12 +1,14 @@
 package GameParser
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
@@ -347,10 +349,16 @@ func ReplaySavedRiftCRA(launchID string, commanderID, sourceX, sourceY int) erro
 		Logging.RiftLogf("resend_failed", "launch %q payload: %v", launchID, err)
 		return err
 	}
-	GameCommands.QueueOutgoingPayload(payload)
+	receipt := GameCommands.DispatchPayload(context.Background(), "cra", "rift_saved_attack", payload, Automation.CommandOptions{
+		Owner:    Automation.OwnerManual,
+		Priority: Automation.PriorityManual,
+	})
+	if !receipt.Accepted {
+		return fmt.Errorf("command harness rejected saved rift attack: %s", receipt.Message)
+	}
 	Logging.AppendRiftSendPayload(payload)
-	Logging.RiftLogf("resend", "queued cra launch=%s LID=%d (%d,%d)→(%d,%d) K%d waves=%d",
-		launchID, body.LID, body.SX, body.SY, body.TX, body.TY, body.KID, len(body.A))
+	Logging.RiftLogf("resend", "queued submission=%d cra launch=%s LID=%d (%d,%d)→(%d,%d) K%d waves=%d",
+		receipt.SubmissionID, launchID, body.LID, body.SX, body.SY, body.TX, body.TY, body.KID, len(body.A))
 	return nil
 }
 

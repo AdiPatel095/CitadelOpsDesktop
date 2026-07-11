@@ -1,6 +1,7 @@
 package featureview
 
 import (
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/GameFocus"
 	"CitadelDesktop/Server/GameParser"
@@ -25,8 +26,8 @@ var (
 )
 
 const (
-	ainSettleDelay = 1500 * time.Millisecond
-	sdiCdsGap      = 250 * time.Millisecond
+	ainResponseWait = 5 * time.Second
+	sdiCdsGap       = 250 * time.Millisecond
 	// autoBirdCDSLID is the fixed CDS "LID" for bird sends (SDI is still sent for route preview; LID is not parsed from it).
 	autoBirdCDSLID = -14
 	// Max time to wait for GGE login after ReloadGameTab (cooldowns can run up to ~5 min).
@@ -34,6 +35,18 @@ const (
 	// Minimum alliance member RPT (bird post time, seconds) for a castle to count as a bird target.
 	autoBirdDefaultMinRPTDays = 3
 )
+
+func refreshAutoBirdAlliance(ctx context.Context, allianceID int) bool {
+	stateKey := Automation.StateEntity("alliance", allianceID)
+	previous := Automation.StateSnapshot(stateKey).Version
+	if !GameCommands.QueueFeatureRefresh(Automation.OwnerAutoBird, GameCommands.AINPayload(allianceID), nil) {
+		return false
+	}
+	waitCtx, cancel := context.WithTimeout(ctx, ainResponseWait)
+	defer cancel()
+	_, ok := Automation.AwaitStateAfter(waitCtx, stateKey, previous)
+	return ok
+}
 
 // isBirdTargetCastleType returns true for alliance **ain** castle slot types we treat as valid bird posts.
 // See GameParser.MapCastleTypes.go (CastleSlotMain, CastleSlotOutpost, CastleSlotForeign).
@@ -133,6 +146,7 @@ func StopAutoBird() {
 	defer autoBirdMu.Unlock()
 	if autoBirdCancel != nil {
 		autoBirdCancel()
+		Automation.CancelOwner(Automation.OwnerAutoBird)
 		autoBirdCancel = nil
 		autoBirdNextWakeUp = 0
 		if ResponseRegistry.SendAutoBirdStatusFunc != nil {
@@ -193,8 +207,9 @@ func runAutoBird(ctx context.Context) {
 
 		// --- Alliance bird posts (configurable min RPT from **ain**) → local list for distance calcs only ---
 		autoBirdLog("ain_send", fmt.Sprintf("Sending AIN for AID=%d", gs.Alliance.AID))
-		GameCommands.SendAIN(gs.Alliance.AID)
-		time.Sleep(ainSettleDelay)
+		if !refreshAutoBirdAlliance(ctx, gs.Alliance.AID) {
+			autoBirdLog("ain_receive", "AIN refresh timed out; retaining the last parsed alliance state")
+		}
 		autoBirdLog("ain_receive", fmt.Sprintf("BirdLocations count=%d", len(gs.Alliance.BirdLocations)))
 		birdPosts := buildBirdPosts(gs, st)
 
@@ -254,6 +269,10 @@ func runAutoBird(ctx context.Context) {
 				continue
 			}
 			castleID := int(c.Aid)
+			if IsCastleUnderAutoStationThreat(castleID) {
+				autoBirdLog("threat_skip", fmt.Sprintf("skip castle %d: Auto Station reports an incoming attack", castleID))
+				continue
+			}
 			resolvedKID, sx, sy, ok := resolveAutoTCICastleMapCoords(gs, castleID, c)
 			if !ok {
 				autoBirdLog("castle_coords", fmt.Sprintf("skip castle %d: no map x/y on GameState yet", castleID))
@@ -270,8 +289,7 @@ func runAutoBird(ctx context.Context) {
 				// we skip — we never fall back to another kingdom (that would hit a non-alliance tile).
 				refreshedAIN = true
 				autoBirdLog("ain_refresh", fmt.Sprintf("no same-kingdom post for castle %d (kid=%d); re-requesting AIN", castleID, resolvedKID))
-				GameCommands.SendAIN(gs.Alliance.AID)
-				time.Sleep(ainSettleDelay)
+				_ = refreshAutoBirdAlliance(ctx, gs.Alliance.AID)
 				birdPosts = buildBirdPosts(gs, st)
 				post = pickBirdPostForCastle(birdPosts, resolvedKID, sx, sy)
 			}
@@ -283,6 +301,7 @@ func runAutoBird(ctx context.Context) {
 				Owner:   GameFocus.OwnerAutoBird,
 				Reason:  fmt.Sprintf("castle=%d", castleID),
 				MaxHold: 30 * time.Second,
+				Claims:  []GameFocus.Claim{GameFocus.CastleClaim(castleID, "movement")},
 			})
 			if !ok {
 				return
@@ -315,7 +334,11 @@ func runAutoBird(ctx context.Context) {
 					autoBirdLog("lease_revoked", fmt.Sprintf("castle %d sdi skipped", castleID))
 					return
 				}
-				GameCommands.SendSDI(post.X, post.Y, sx, sy)
+				GameCommands.QueueFeaturePayload(
+					Automation.OwnerAutoBird,
+					GameCommands.SDIPayload(post.X, post.Y, sx, sy),
+					lease,
+				)
 				time.Sleep(sdiCdsGap)
 				if !GameCommands.SendCDSUntilSuccessWithLease(lease, castleID, post.X, post.Y, autoBirdCDSLID, rndH, gs.GlobalResources.PTT, troopsJSON, func(parts []string) {
 					if len(parts) <= 5 || parts[4] != "0" {

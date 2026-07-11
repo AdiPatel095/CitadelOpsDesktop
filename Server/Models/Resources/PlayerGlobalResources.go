@@ -9,6 +9,11 @@ type PlayerGlobalResources struct {
 	ConstToken     float64 `json:"const_token"`
 	UpgrToken      float64 `json:"upgr_token"`
 	LegendaryToken float64 `json:"legendary_token"`
+	RefinedLumber  float64 `json:"refined_lumber"`
+	RefinedStone   float64 `json:"refined_stone"`
+	Steel          float64 `json:"steel"`
+	DragonGlass    float64 `json:"dragon_glass"`
+	DragonCharm    float64 `json:"dragon_charm"`
 	AfflTix        float64 `json:"affl_tix"`
 	Plaster        float64 `json:"plaster"`
 	DrgScale       float64 `json:"drg_scale"`

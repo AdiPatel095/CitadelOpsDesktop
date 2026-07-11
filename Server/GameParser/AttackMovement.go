@@ -142,6 +142,11 @@ func empireExResponseCode(messageParts []string) (int, bool) {
 	return code, true
 }
 
+// EmpireExResponseCode exposes the numeric response code for feature waiters.
+func EmpireExResponseCode(messageParts []string) (int, bool) {
+	return empireExResponseCode(messageParts)
+}
+
 func ParseCRAResponse(messageParts []string, payload string) {
 	ParseGAMMessage(payload)
 	code, ok := empireExResponseCode(messageParts)

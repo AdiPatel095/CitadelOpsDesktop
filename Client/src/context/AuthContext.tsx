@@ -49,6 +49,17 @@ import {
   persistAutoHospitalSettings,
   type AutoHospitalClientSettingsV1,
 } from '../settings/AutoHospitalClientState';
+import {
+  applyAutoSceatResSettingsToLocalStorage,
+  loadAutoSceatResSettingsFromStorage,
+  normalizeAutoSceatResSettings,
+} from '../settings/AutoSceatResClientState';
+import {
+  applyAutoStationClientStateToLocalStorage,
+  loadAutoStationClientState,
+  parseAutoStationClientState,
+  persistAutoStationClientState,
+} from '../settings/AutoStationClientState';
 
 export type GameConnectionState =
   | 'stopped'
@@ -142,11 +153,17 @@ interface AuthContextType {
   autoRecruitMode: RecruitTroopsMode;
   autoToolEnabled: boolean;
   autoToolMode: AutoToolMode;
+  autoSceatResEnabled: boolean;
   autoHospitalEnabled: boolean;
   autoTCIEnabled: boolean;
   autoTCINextWakeUp: number;
   autoBirdEnabled: boolean;
   autoBirdNextWakeUp: number;
+  autoStationEnabled: boolean;
+  autoStationState: string;
+  autoStationThreatCount: number;
+  autoStationNextImpact: number;
+  autoStationDetail: string;
   autoBeriWorldEnabled: boolean;
   autoBeriWorldNextWakeUp: number;
   versionUpdate: { newVersion: string; downloadUrl: string } | null;
@@ -165,9 +182,11 @@ interface AuthContextType {
   stopGame: () => void;
   toggleRecruitTroops: () => void;
   toggleAutoTool: () => void;
+  toggleAutoSceatRes: () => void;
   toggleAutoHospital: () => void;
   toggleAutoTCI: () => void;
   toggleAutoBird: () => void;
+  toggleAutoStation: () => void;
   toggleAutoBeriWorld: () => void;
   sendMessage: (type: string, payload?: any) => void;
 }
@@ -207,11 +226,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [autoRecruitMode, setAutoRecruitMode] = useState<RecruitTroopsMode>(() => loadRecruitTroopsSettingsFromStorage().mode);
   const [autoToolEnabled, setAutoToolEnabled] = useState(false);
   const [autoToolMode, setAutoToolMode] = useState<AutoToolMode>(() => loadAutoToolSettingsFromStorage().mode);
+  const [autoSceatResEnabled, setAutoSceatResEnabled] = useState(false);
   const [autoHospitalEnabled, setAutoHospitalEnabled] = useState(false);
   const [autoTCIEnabled, setAutoTCIEnabled] = useState(false);
   const [autoTCINextWakeUp, setAutoTCINextWakeUp] = useState(0);
   const [autoBirdEnabled, setAutoBirdEnabled] = useState(false);
   const [autoBirdNextWakeUp, setAutoBirdNextWakeUp] = useState(0);
+  const [autoStationEnabled, setAutoStationEnabled] = useState(false);
+  const [autoStationState, setAutoStationState] = useState('off');
+  const [autoStationThreatCount, setAutoStationThreatCount] = useState(0);
+  const [autoStationNextImpact, setAutoStationNextImpact] = useState(0);
+  const [autoStationDetail, setAutoStationDetail] = useState('');
   const [autoBeriWorldEnabled, setAutoBeriWorldEnabled] = useState(false);
   const [autoBeriWorldNextWakeUp, setAutoBeriWorldNextWakeUp] = useState(0);
   const [versionUpdate, setVersionUpdate] = useState<{ newVersion: string; downloadUrl: string } | null>(null);
@@ -270,6 +295,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAutoRecruitMode(settings.mode);
       } else if (message.type === 'autoToolStatus') {
         setAutoToolEnabled(message.payload.enabled);
+      } else if (message.type === 'autoSceatResStatus') {
+        setAutoSceatResEnabled(message.payload?.enabled === true);
+      } else if (message.type === 'autoSceatResSettings') {
+        applyAutoSceatResSettingsToLocalStorage(normalizeAutoSceatResSettings(message.payload));
       } else if (message.type === 'autoHospitalStatus') {
         setAutoHospitalEnabled(message.payload.enabled);
       } else if (message.type === 'autoHospitalSettings') {
@@ -297,6 +326,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAutoBirdEnabled(!!message.payload?.enabled);
         const nw = message.payload?.nextWakeUp;
         setAutoBirdNextWakeUp(typeof nw === 'number' ? nw : 0);
+      } else if (message.type === 'autoStationStatus') {
+        setAutoStationEnabled(message.payload?.enabled === true);
+        setAutoStationState(typeof message.payload?.state === 'string' ? message.payload.state : 'off');
+        setAutoStationThreatCount(Math.max(0, Math.floor(finiteNumber(message.payload?.threatCount))));
+        setAutoStationNextImpact(Math.max(0, finiteNumber(message.payload?.nextImpactUnixMs)));
+        setAutoStationDetail(typeof message.payload?.detail === 'string' ? message.payload.detail : '');
       } else if (message.type === 'autoBeriWorldStatus') {
         setAutoBeriWorldEnabled(!!message.payload?.enabled);
         const nw = message.payload?.nextWakeUp;
@@ -322,6 +357,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
         applyAutoBirdClientStateToLocalStorage(state);
+      } else if (message.type === 'autoStationClientState') {
+        const state = parseAutoStationClientState(message.payload);
+        applyAutoStationClientStateToLocalStorage(state);
       } else if (message.type === 'autoTCIClientState') {
         let state = parseAutoTCIClientState(message.payload);
         if (state.presets.presets.length === 0) {
@@ -468,6 +506,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const toggleAutoStation = () => {
+    if (!autoStationEnabled) {
+      persistAutoStationClientState(loadAutoStationClientState());
+    }
+    FrontendWebsocket.sendMessage({ type: 'toggleAutoStation' });
+  };
+
   const toggleAutoBeriWorld = () => {
     if (autoBeriWorldEnabled) {
       FrontendWebsocket.sendMessage({ type: 'toggleAutoBeriWorld' });
@@ -496,6 +541,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     FrontendWebsocket.sendMessage({
       type: 'toggleAutoTool',
       payload: { settings }
+    });
+  };
+
+  const toggleAutoSceatRes = () => {
+    const settings = loadAutoSceatResSettingsFromStorage();
+    FrontendWebsocket.sendMessage({
+      type: 'toggleAutoSceatRes',
+      payload: { settings },
     });
   };
 
@@ -545,11 +598,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       autoRecruitMode,
       autoToolEnabled,
       autoToolMode,
+      autoSceatResEnabled,
       autoHospitalEnabled,
       autoTCIEnabled,
       autoTCINextWakeUp,
       autoBirdEnabled,
       autoBirdNextWakeUp,
+      autoStationEnabled,
+      autoStationState,
+      autoStationThreatCount,
+      autoStationNextImpact,
+      autoStationDetail,
       autoBeriWorldEnabled,
       autoBeriWorldNextWakeUp,
       versionUpdate,
@@ -567,9 +626,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       stopGame,
       toggleRecruitTroops,
       toggleAutoTool,
+      toggleAutoSceatRes,
       toggleAutoHospital,
       toggleAutoTCI,
       toggleAutoBird,
+      toggleAutoStation,
       toggleAutoBeriWorld,
       sendMessage
     }}>

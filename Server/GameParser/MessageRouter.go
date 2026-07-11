@@ -1,8 +1,10 @@
 package GameParser
 
 import (
+	"strconv"
 	"strings"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Models"
 	gamestate "CitadelDesktop/Server/Models/GameState"
 	"CitadelDesktop/Server/ResponseRegistry"
@@ -36,7 +38,16 @@ func MessageRouter(messageParts []string) {
 
 	payload, hasPayload := Payload(messageParts)
 
-	defer ResponseRegistry.Global.CheckWaiters(waiterCmd, messageParts)
+	defer func() {
+		Automation.ObserveState(automationStateKeysForFrame(effectiveCmd, payload)...)
+		responseCodeField := ""
+		if len(messageParts) > 4 {
+			responseCodeField = messageParts[4]
+		}
+		responseCode, responseCodeErr := strconv.Atoi(strings.TrimSpace(responseCodeField))
+		Automation.ObserveCommandResponse(effectiveCmd, []byte(payload), responseCode, responseCodeErr == nil)
+		ResponseRegistry.Global.CheckWaiters(waiterCmd, messageParts)
+	}()
 
 	switch strings.ToLower(effectiveCmd) {
 	case "gbd":
@@ -62,6 +73,18 @@ func MessageRouter(messageParts []string) {
 		var gcuMap map[string]interface{}
 		if err := json.Unmarshal([]byte(payload), &gcuMap); err == nil {
 			UpdateCoins(gcuMap)
+		}
+	case "boi":
+		if !hasPayload {
+			return
+		}
+		ApplyMarketBoosterFromJSON(payload)
+	case "cmi":
+		if !hasPayload {
+			return
+		}
+		if ApplyMarketInfoFromJSON(payload) && NotifyCastleFocusChanged != nil {
+			NotifyCastleFocusChanged()
 		}
 	case "gmu":
 		if !hasPayload {
@@ -130,6 +153,23 @@ func MessageRouter(messageParts []string) {
 		if err := json.Unmarshal([]byte(payload), &sceArray); err == nil {
 			UpdateSCE(sceArray)
 		}
+	case "kpi", "kgt", "msk":
+		if !hasPayload {
+			return
+		}
+		ApplyKingdomTransportFromJSON(payload)
+	case "crm":
+		if !hasPayload {
+			return
+		}
+		ParseGAMMessage(payload)
+		var root map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &root); err == nil {
+			UpdateCoinsFromPayload(root)
+		}
+		if ApplyCastleResourceAmountsFromPayload(Models.GetGameState(), payload) && NotifyCastleFocusChanged != nil {
+			NotifyCastleFocusChanged()
+		}
 	case "sie", "upc":
 		if !hasPayload {
 			return
@@ -174,7 +214,7 @@ func MessageRouter(messageParts []string) {
 			return
 		}
 		ParseCRAResponse(messageParts, payload)
-	case "gam", "cat", "csm":
+	case "gam", "cat", "csm", "mcm":
 		if !hasPayload {
 			return
 		}
@@ -307,9 +347,13 @@ func MessageRouter(messageParts []string) {
 		if ApplyCraftingFromCRINJSON(gs, payload) && NotifyCastleFocusChanged != nil {
 			NotifyCastleFocusChanged()
 		}
-	case "crst":
+	case "crst", "crun", "crsk", "crca":
 		if !hasPayload {
 			return
+		}
+		var root map[string]interface{}
+		if err := json.Unmarshal([]byte(payload), &root); err == nil {
+			UpdateCoinsFromPayload(root)
 		}
 		gs := Models.GetGameState()
 		if ApplyCraftingFromCRSTJSON(gs, payload) && NotifyCastleFocusChanged != nil {

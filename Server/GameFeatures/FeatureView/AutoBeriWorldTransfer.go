@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameCommands"
 	"CitadelDesktop/Server/Logging"
 	"CitadelDesktop/Server/Models"
@@ -44,7 +45,21 @@ func maybeTransferBeriTroops(ctx context.Context) {
 	if ctx.Err() != nil {
 		return
 	}
-	troopAmount, err := runBeriTroopSpaceCheck(ctx, beriCID, cfg.TransferTroopWID)
+	lease, ok := Automation.Acquire(ctx, Automation.Request{
+		Owner:    Automation.OwnerAutoBeri,
+		Priority: Automation.PriorityAutoBeri,
+		Reason:   "Beri troop transfer",
+		Claims: []Automation.Claim{
+			Automation.ExclusiveClaim(Automation.ClaimTransport),
+			Automation.ExclusiveClaim("beri:troop-transfer"),
+		},
+		MaxHold: 3*autoBeriWorldWireWait + autoBeriWorldPostKutPause,
+	})
+	if !ok {
+		return
+	}
+	defer lease.Release()
+	troopAmount, err := runBeriTroopSpaceCheck(ctx, beriCID, cfg.TransferTroopWID, lease)
 	if err != nil {
 		Logging.AutoBeriWorldLogf("transfer", "troop-space check failed: %v", err)
 		return
@@ -73,7 +88,7 @@ func maybeTransferBeriTroops(ctx context.Context) {
 
 	Logging.AutoBeriWorldLogf("transfer", "kut SCID=%d CID=%d unit=%d amt=%d (from fuc)", scid, kutCID, cfg.TransferTroopWID, kutAmount)
 	wKut := ResponseRegistry.Global.RegisterWaiter("kut", autoBeriWorldWireWait)
-	GameCommands.SendBeriKutTransfer(scid, kutCID, cfg.TransferTroopWID, kutAmount)
+	GameCommands.SendBeriKutTransfer(scid, kutCID, cfg.TransferTroopWID, kutAmount, lease)
 	if _, err := wKut.WaitWithTimeout(); err != nil {
 		Logging.AutoBeriWorldLogf("transfer", "kut wait: %v", err)
 		wKut.Cleanup()
@@ -88,7 +103,7 @@ func maybeTransferBeriTroops(ctx context.Context) {
 	}
 
 	wMsk := ResponseRegistry.Global.RegisterWaiter("msk", autoBeriWorldWireWait)
-	GameCommands.SendBeriMskSpeedup()
+	GameCommands.SendBeriMskSpeedup(lease)
 	if _, err := wMsk.WaitWithTimeout(); err != nil {
 		Logging.AutoBeriWorldLogf("transfer", "msk wait: %v", err)
 	} else {
@@ -139,7 +154,7 @@ func waitForFucTroopAmountAtLeast(ctx context.Context, timeout time.Duration, ba
 }
 
 // runBeriTroopSpaceCheck sends **fuc** and returns the kut send amount from the **fuc** response.
-func runBeriTroopSpaceCheck(ctx context.Context, beriCastleCID, unitWID int) (int, error) {
+func runBeriTroopSpaceCheck(ctx context.Context, beriCastleCID, unitWID int, lease *Automation.Lease) (int, error) {
 	if ctx.Err() != nil {
 		return 0, ctx.Err()
 	}
@@ -147,7 +162,7 @@ func runBeriTroopSpaceCheck(ctx context.Context, beriCastleCID, unitWID int) (in
 		gs.ClearAutoBeriWorldFucResult()
 	}
 
-	GameCommands.SendBeriFucTroopSpaceCheck(beriCastleCID)
+	GameCommands.SendBeriFucTroopSpaceCheck(beriCastleCID, lease)
 	amt := waitForFucTroopAmount(ctx, autoBeriWorldWireWait)
 	if amt <= 0 {
 		return 0, fmt.Errorf("%w (unitWID=%d)", errFucTroopAmountMissing, unitWID)

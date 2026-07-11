@@ -80,7 +80,7 @@ func queueSpyReportFetch(notice spyreport.Notice) {
 func spyReportFetchWorker() {
 	for notice := range spyReportQueue {
 		waiter := ResponseRegistry.Global.RegisterWaiter("bsd", battleReportWireWait)
-		GameCommands.SendBSD(notice.MID)
+		GameCommands.QueueBackgroundPayload(GameCommands.BSDPayload(notice.MID))
 		parts, err := waiter.WaitWithTimeout()
 		waiter.Cleanup()
 		if err != nil {
@@ -115,7 +115,7 @@ func spyReportFetchWorker() {
 		if notice.AutoShare && parsed.Status != "failed" && spyreport.IsPlayerCastleTarget(capture) {
 			recipients := allianceShareRecipients(members, Models.GetGameState().PlayerID)
 			if len(recipients) > 0 {
-				GameCommands.SendMFS(capture.MID, recipients)
+				GameCommands.QueueBackgroundPayload(GameCommands.MFSPayload(capture.MID, recipients))
 				log.Printf("[spy-report] shared MID %d with %d alliance members", capture.MID, len(recipients))
 			}
 		}

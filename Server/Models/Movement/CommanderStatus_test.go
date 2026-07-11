@@ -72,3 +72,19 @@ func TestCommanderStatusLifecycle(t *testing.T) {
 		t.Fatal("stale snapshot must fail closed")
 	}
 }
+
+func TestMovementSnapshotClonesMarketGoods(t *testing.T) {
+	state := NewPlayerMovement()
+	state.ReplaceSnapshot([]GAMMovement{{
+		MID:         22,
+		CommanderID: -1,
+		MarketGoods: []GAMMarketGood{{Resource: "G", Amount: 2400}},
+	}}, 1)
+
+	first, _, _, _ := state.Snapshot()
+	first[0].MarketGoods[0].Amount = 1
+	second, _, _, _ := state.Snapshot()
+	if second[0].MarketGoods[0].Amount != 2400 {
+		t.Fatalf("market goods leaked through snapshot clone: %+v", second[0].MarketGoods)
+	}
+}
