@@ -4,13 +4,12 @@ import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPi
 import UnitImage from '../../components/UnitImage';
 import { Button, Card, Input, Modal, Switch } from '../../components/ui';
 import {
-  loadAutoStationClientState,
   parseAutoStationClientState,
   persistAutoStationClientState,
   type AutoStationClientStateV1,
 } from '../AutoStationClientState';
 import { useCitadelAPI } from '../../api/ApiContext';
-import { castleOptionsFromState, type CastleOptionV2 } from '../../api/StateAdapters';
+import { castleOptionsFromState, type CastleOptionV2 } from '../../api/Selectors';
 
 interface AutoStationSettingsModalProps {
   isOpen: boolean;
@@ -59,12 +58,12 @@ function ReserveTile({
 export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> = ({ isOpen, onClose }) => {
   const { state: gameState, configuration } = useCitadelAPI();
   const castles = castleOptionsFromState(gameState);
-  const [state, setState] = useState<AutoStationClientStateV1>(() => loadAutoStationClientState());
+  const [state, setState] = useState<AutoStationClientStateV1>(() => parseAutoStationClientState(null));
 
   useEffect(() => {
     if (!isOpen) return;
     setState(parseAutoStationClientState(
-      configuration?.sections['automation.autoStation'] ?? loadAutoStationClientState(),
+      configuration?.sections['automation.autoStation'],
     ));
   }, [configuration?.sections, isOpen]);
 

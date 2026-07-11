@@ -1,9 +1,6 @@
 import React from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { CastleFocusProvider } from './context/CastleFocusContext';
-import { LastKnownSnapshotProvider } from './context/LastKnownSnapshotContext';
-import { CastleResourceProvider } from './dashboard/context/CastleResourceContext';
-import { ResourceProvider } from './currency/context/ResourceContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TroopPickerProvider } from './components/TroopPickerModal';
 import { ToolPickerProvider } from './components/ToolPickerModal';
@@ -19,11 +16,8 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({ children })
         <APIProvider>
 			<MetadataProvider>
 				<AuthProvider>
-					<LastKnownSnapshotProvider>
-						<CastleFocusProvider>
+					<CastleFocusProvider>
 							<ThemeProvider>
-								<CastleResourceProvider>
-									<ResourceProvider>
                                     <RiftMapProvider>
                                         <MovementProvider>
                                             <TroopPickerProvider>
@@ -36,11 +30,8 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({ children })
                                             </TroopPickerProvider>
                                         </MovementProvider>
                                     </RiftMapProvider>
-									</ResourceProvider>
-								</CastleResourceProvider>
 							</ThemeProvider>
-						</CastleFocusProvider>
-					</LastKnownSnapshotProvider>
+					</CastleFocusProvider>
 				</AuthProvider>
 			</MetadataProvider>
         </APIProvider>

@@ -1,18 +1,18 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCastleFocus } from '../context/CastleFocusContext';
-import { castleFocusDisplayName } from '../types/CastleFocusState.ts';
+import { castleDisplayName } from '../api/Selectors';
 
 /** Header chip: focused castle name only. */
 const CastleFocusBadge: React.FC = () => {
   const { gameLoggedIn } = useAuth();
-  const { castleFocus } = useCastleFocus();
+  const { castle } = useCastleFocus();
 
   if (!gameLoggedIn) {
     return null;
   }
 
-  const label = castleFocusDisplayName(castleFocus);
+  const label = castleDisplayName(castle);
 
   return (
     <div className="liquid-glass-edge flex w-full min-w-0 items-center gap-2 rounded-full px-3 py-1.5 text-primary">

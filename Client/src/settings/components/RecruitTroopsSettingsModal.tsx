@@ -7,9 +7,8 @@ import { Modal, Button, Input, Card, CardHeader, CardTitle, CardContent, Badge, 
 import {
   DEFAULT_RECRUIT_CHECK_INTERVAL_MIN,
   MIN_RECRUIT_CHECK_INTERVAL_MIN,
-  loadRecruitTroopsSettingsFromStorage,
+  defaultRecruitTroopsSettings,
   normalizeRecruitTroopsSettings,
-  notifyRecruitTroopsSettingsChanged,
   persistRecruitTroopsSettings,
   recruitCheckIntervalMinutesToSec,
   recruitCheckIntervalSecToMinutes,
@@ -25,7 +24,7 @@ import {
 } from '../SchedulerTypes';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { configurationSection } from '../Configuration';
-import { castleOptionsFromState, type CastleOptionV2 } from '../../api/StateAdapters';
+import { castleOptionsFromState, type CastleOptionV2 } from '../../api/Selectors';
 import {
   buildQueueableProductionCatalog,
   queueableBuildingRowsLoaded,
@@ -46,7 +45,7 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
   const { configuration, state } = useCitadelAPI();
   const { getTroop, buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
   const castles = castleOptionsFromState(state);
-  const [settings, setSettings] = useState<RecruitTroopsClientSettingsV1>(() => loadRecruitTroopsSettingsFromStorage());
+  const [settings, setSettings] = useState<RecruitTroopsClientSettingsV1>(() => defaultRecruitTroopsSettings());
   const featureSchedules = normalizeFeatureSchedules(
     configurationSection(configuration, 'scheduler').featureSchedules,
   );
@@ -58,15 +57,10 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
   useEffect(() => {
     if (isOpen) {
       setSettings(normalizeRecruitTroopsSettings(
-        configuration?.sections['automation.recruitTroops'] ?? loadRecruitTroopsSettingsFromStorage(),
+        configuration?.sections['automation.recruitTroops'] ?? defaultRecruitTroopsSettings(),
       ));
     }
   }, [configuration?.sections, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    notifyRecruitTroopsSettingsChanged(settings);
-  }, [isOpen, settings.mode]);
 
   const currentItemsForScope = (scope: RecruitItemScope) => {
     if (scope.type === 'global') return settings.globalItems;
@@ -212,7 +206,6 @@ export const RecruitTroopsSettingsModal: React.FC<RecruitTroopsSettingsModalProp
   };
 
   const handleClose = () => {
-    notifyRecruitTroopsSettingsChanged(loadRecruitTroopsSettingsFromStorage());
     onClose();
   };
 

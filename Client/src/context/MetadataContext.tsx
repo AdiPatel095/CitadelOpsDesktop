@@ -19,6 +19,7 @@ interface MetadataContextValue {
 	equipments: Record<number, MetadataItem>;
 	gems: Record<number, MetadataItem>;
 	effects: Record<number, MetadataItem>;
+	craftingRecipes: Record<number, MetadataItem>;
   isLoading: boolean;
   getTroop: (id: number) => MetadataItem | undefined;
   getTool: (id: number) => MetadataItem | undefined;
@@ -26,6 +27,7 @@ interface MetadataContextValue {
 	getEquipment: (id: number) => MetadataItem | undefined;
 	getGem: (id: number) => MetadataItem | undefined;
 	getEffect: (id: number) => MetadataItem | undefined;
+	getCraftingRecipe: (id: number) => MetadataItem | undefined;
   getDecoration: (id: number) => MetadataItem | undefined;
 }
 
@@ -41,6 +43,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const [equipments, setEquipments] = useState<Record<number, MetadataItem>>({});
 	const [gems, setGems] = useState<Record<number, MetadataItem>>({});
 	const [effects, setEffects] = useState<Record<number, MetadataItem>>({});
+	const [craftingRecipes, setCraftingRecipes] = useState<Record<number, MetadataItem>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -56,6 +59,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			equipmentsResponse,
 			gemsResponse,
 			effectsResponse,
+			craftingResponse,
 		] = await Promise.all([
           CitadelAPI.getCatalog<OfficialRecord>('units'),
           CitadelAPI.getCatalog<OfficialRecord>('buildings'),
@@ -64,6 +68,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			CitadelAPI.getCatalog<OfficialRecord>('equipments'),
 			CitadelAPI.getCatalog<OfficialRecord>('gems'),
 			CitadelAPI.getCatalog<OfficialRecord>('effects'),
+			CitadelAPI.getProjection<CraftingProjection>('crafting'),
         ]);
 		const keys = localizationKeys([
 			...unitsResponse.items,
@@ -101,6 +106,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			const item: MetadataItem = {
             ...row,
             id,
+			internalName: typeof row.name === 'string' ? row.name : undefined,
 			name: displayName(row, translations, `Building ${id}`),
             ...(level > 0 ? { level } : {}),
           };
@@ -114,6 +120,20 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 		const nextEquipments = definitionMetadata(equipmentsResponse.items, 'equipmentID', translations, 'Equipment');
 		const nextGems = definitionMetadata(gemsResponse.items, 'gemID', translations, 'Gem');
 		const nextEffects = definitionMetadata(effectsResponse.items, 'effectID', translations, 'Effect');
+		const nextCraftingRecipes: Record<number, MetadataItem> = {};
+		for (const recipe of craftingResponse.recipes ?? []) {
+			const id = positiveID(recipe.recipeID);
+			if (id === 0) continue;
+			const outputName = typeof recipe.output?.name === 'string' && recipe.output.name.trim()
+				? recipe.output.name.trim()
+				: `Recipe ${id}`;
+			nextCraftingRecipes[id] = {
+				...recipe,
+				id,
+				name: recipe.level > 0 ? `${outputName} · L${recipe.level}` : outputName,
+				image: recipe.output?.iconUrl,
+			};
+		}
         setTroops(nextTroops);
         setTools(nextTools);
 		setBuildings(nextBuildings);
@@ -123,6 +143,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 		setEquipments(nextEquipments);
 		setGems(nextGems);
 		setEffects(nextEffects);
+		setCraftingRecipes(nextCraftingRecipes);
       } catch (error) {
         if (!cancelled) console.error('Could not load official game metadata', error);
       } finally {
@@ -141,6 +162,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const getEquipment = useCallback((id: number) => equipments[id], [equipments]);
 	const getGem = useCallback((id: number) => gems[id], [gems]);
 	const getEffect = useCallback((id: number) => effects[id], [effects]);
+	const getCraftingRecipe = useCallback((id: number) => craftingRecipes[id], [craftingRecipes]);
   const getDecoration = useCallback((id: number) => decorations[id], [decorations]);
   const value = useMemo<MetadataContextValue>(() => ({
     troops,
@@ -152,6 +174,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 		equipments,
 		gems,
 		effects,
+		craftingRecipes,
     isLoading,
     getTroop,
     getTool,
@@ -159,9 +182,11 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 		getEquipment,
 		getGem,
 		getEffect,
+		getCraftingRecipe,
     getDecoration,
 	}), [
 		buildings,
+		craftingRecipes,
 		currencies,
 		decorations,
 		effects,
@@ -170,6 +195,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 		getBuilding,
 		getDecoration,
 		getEffect,
+		getCraftingRecipe,
 		getEquipment,
 		getGem,
 		getTool,
@@ -190,6 +216,15 @@ export function useMetadata(): MetadataContextValue {
 }
 
 type OfficialRecord = Record<string, unknown>;
+
+interface CraftingProjection {
+	recipes?: Array<{
+		recipeID: number;
+		level?: number;
+		output?: { name?: string; iconUrl?: string };
+		[key: string]: unknown;
+	}>;
+}
 
 function isTool(row: OfficialRecord): boolean {
   if (Array.isArray(row.slotTypes)) return row.slotTypes.length > 0;
@@ -245,15 +280,24 @@ function definitionMetadata(
 	for (const row of rows) {
 		const id = positiveID(row[idField]);
 		if (id === 0) continue;
+		const internalName = [row.name, row.Name, row.assetName]
+			.find((value): value is string => typeof value === 'string' && value.trim() !== '');
 		result[id] = {
 			...row,
 			id,
-			internalName: typeof row.name === 'string' ? row.name : undefined,
-			name: displayName(row, translations, `${fallbackPrefix} ${id}`),
+			internalName,
+			name: displayName(row, translations, internalName ? splitIdentifier(internalName) : `${fallbackPrefix} ${id}`),
 			image: typeof row.assetName === 'string' && row.assetName.trim()
 				? `/game-data/resources/images/${row.assetName}.webp`
 				: undefined,
 		};
 	}
 	return result;
+}
+
+function splitIdentifier(value: string): string {
+	return value
+		.replace(/[_-]+/g, ' ')
+		.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+		.trim();
 }

@@ -1,7 +1,5 @@
 import { queueConfigurationUpdate } from './Configuration';
 
-export const AUTO_STATION_STORAGE_KEY = 'autoStationSettings';
-
 export interface AutoStationTroopReserve {
   id: number;
   amount: number;
@@ -58,21 +56,7 @@ export function parseAutoStationClientState(raw: unknown): AutoStationClientStat
   };
 }
 
-export function loadAutoStationClientState(): AutoStationClientStateV1 {
-  try {
-    const raw = localStorage.getItem(AUTO_STATION_STORAGE_KEY);
-    return raw ? parseAutoStationClientState(JSON.parse(raw)) : parseAutoStationClientState(null);
-  } catch {
-    return parseAutoStationClientState(null);
-  }
-}
-
-export function applyAutoStationClientStateToLocalStorage(state: AutoStationClientStateV1): void {
-  localStorage.setItem(AUTO_STATION_STORAGE_KEY, JSON.stringify(parseAutoStationClientState(state)));
-}
-
 export function persistAutoStationClientState(state: AutoStationClientStateV1): void {
   const normalized = parseAutoStationClientState(state);
-  applyAutoStationClientStateToLocalStorage(normalized);
   queueConfigurationUpdate('automation.autoStation', normalized);
 }

@@ -7,8 +7,8 @@ import {
   type FeatureSchedules,
   type WeeklySchedule,
 } from '../SchedulerTypes';
-import { loadAutoToolSettingsFromStorage, normalizeAutoToolSettings } from '../AutoToolClientState';
-import { loadRecruitTroopsSettingsFromStorage, normalizeRecruitTroopsSettings } from '../RecruitTroopsClientState';
+import { defaultAutoToolSettings, normalizeAutoToolSettings } from '../AutoToolClientState';
+import { defaultRecruitTroopsSettings, normalizeRecruitTroopsSettings } from '../RecruitTroopsClientState';
 import {
   buildQueueableProductionCatalog,
   queueableBuildingRowsLoaded,
@@ -80,12 +80,12 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
     let enabledCastleIDs: string[] = [];
     if (featureID === 'autoRecruit') {
       const settings = normalizeRecruitTroopsSettings(
-        configuration?.sections['automation.recruitTroops'] ?? loadRecruitTroopsSettingsFromStorage(),
+        configuration?.sections['automation.recruitTroops'] ?? defaultRecruitTroopsSettings(),
       );
       enabledCastleIDs = knownCastleIDs.filter((id) => settings.castles[id]?.enabled);
     } else if (featureID === 'autoTool') {
       const settings = normalizeAutoToolSettings(
-        configuration?.sections['automation.autoTool'] ?? loadAutoToolSettingsFromStorage(),
+        configuration?.sections['automation.autoTool'] ?? defaultAutoToolSettings(),
       );
       enabledCastleIDs = knownCastleIDs.filter((id) => settings.castles[id]?.enabled);
     }

@@ -82,6 +82,44 @@ export interface ConstructionSlotV2 {
 	level?: number;
 }
 
+export interface QueueItemV2 {
+	definition: {
+		collection: string;
+		id: number;
+	};
+	amount?: number;
+	startedAt?: string;
+	completesAt?: string;
+}
+
+export interface CraftingQueueItemV2 {
+	recipeId: number;
+	batchValue?: number;
+	remainingSec?: number;
+	runtimeSec?: number;
+}
+
+export interface CraftingBuildingV2 {
+	kingdomId: number;
+	castleId: number;
+	instanceId: number;
+	definitionId: number;
+	queueTypeId: number;
+	slotCount?: number;
+	activeSlotRentals: number[];
+	queueSlotRentals: number[];
+	active: CraftingQueueItemV2[];
+	queued: CraftingQueueItemV2[];
+	observedAt: string;
+}
+
+export interface CraftingStateV2 {
+	buildings: Record<string, CraftingBuildingV2>;
+	enabledRecipeIds: number[];
+	enabledRecipeGroupIds: number[];
+	outputBoostByQueueType: Record<string, number>;
+}
+
 export interface CastleStateV2 {
 	id: number;
 	kingdomId: number;
@@ -94,7 +132,8 @@ export interface CastleStateV2 {
 	units: CastleUnitsV2;
 	buildings: Record<string, CastleBuildingV2>;
 	constructionSlots: Record<string, ConstructionSlotV2[]>;
-	queues: Record<string, unknown[]>;
+	queues: Record<string, QueueItemV2[]>;
+	crafting: CraftingStateV2;
 }
 
 export interface CommanderStateV2 {

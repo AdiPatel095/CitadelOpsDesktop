@@ -14,8 +14,6 @@ export interface AutoBeriWorldSettings {
   troopSpaceCheckIntervalSec: number;
 }
 
-const STORAGE_KEY = 'autoBeriWorldSettings';
-
 export const DEFAULT_AUTO_BERI_WORLD_SETTINGS: AutoBeriWorldSettings = {
   minTroopsToTransfer: 1,
   beriCastleCID: 0,
@@ -64,27 +62,4 @@ export function parseAutoBeriWorldSettings(payload: unknown): AutoBeriWorldSetti
         : clampKutCID(Number(kutCastleCID)),
     troopSpaceCheckIntervalSec: clampTroopSpaceCheckSec(Number(obj.troopSpaceCheckIntervalSec)),
   };
-}
-
-/** Mirrors server AutoBeriWorld.json into localStorage so the sidebar toggle can send it while disconnected. */
-export function applyAutoBeriWorldSettingsToLocalStorage(payload: unknown): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(parseAutoBeriWorldSettings(payload)));
-}
-
-/** Loads the cached settings from localStorage (defaults if missing/invalid). */
-export function loadAutoBeriWorldSettingsFromStorage(): AutoBeriWorldSettings {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    return { ...DEFAULT_AUTO_BERI_WORLD_SETTINGS };
-  }
-  try {
-    return parseAutoBeriWorldSettings(JSON.parse(raw));
-  } catch {
-    return { ...DEFAULT_AUTO_BERI_WORLD_SETTINGS };
-  }
-}
-
-/** Writes settings to localStorage. */
-export function persistAutoBeriWorldSettingsToLocalStorage(settings: AutoBeriWorldSettings): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(parseAutoBeriWorldSettings(settings)));
 }

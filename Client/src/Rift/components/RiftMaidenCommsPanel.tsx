@@ -2,8 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Shield, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCastleFocus } from '../../context/CastleFocusContext';
-import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
-import { useCastleResources } from '../../dashboard/context/CastleResourceContext';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '../../components/ui';
@@ -20,12 +18,10 @@ import { useCitadelAPI } from '../../api/ApiContext';
 import { useMetadata } from '../../context/MetadataContext';
 
 const RiftMaidenCommsPanel: React.FC = () => {
-  const { configuration, connectionStatus, submitIntent, updateConfiguration } = useCitadelAPI();
+  const { state, configuration, connectionStatus, submitIntent, updateConfiguration } = useCitadelAPI();
   const { getTroop } = useMetadata();
   const { gameLoggedIn } = useAuth();
-  const { castleFocus } = useCastleFocus();
-  const { castleResources } = useCastleResources();
-  const { snapshot } = useLastKnownSnapshot();
+  const { castle } = useCastleFocus();
   const [unitWodID, setUnitWodID] = useState(DEFAULT_MAIDEN_PROBE_UNIT_ID);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [sending, setSending] = useState(false);
@@ -33,8 +29,8 @@ const RiftMaidenCommsPanel: React.FC = () => {
   const dashboardConnected = connectionStatus === 'Connected';
 
   const mainCastle = useMemo(
-    () => resolveMainCastleTroops(castleResources, snapshot?.gameState),
-    [castleResources, snapshot?.gameState]
+    () => resolveMainCastleTroops(state),
+    [state]
   );
 
   const availableUnitIds = useMemo(
@@ -101,22 +97,19 @@ const RiftMaidenCommsPanel: React.FC = () => {
       setSendStatus('Pick a probe unit that is in main castle stock.');
       return;
     }
-    const useFocusCoords =
-      castleFocus?.mapPX != null &&
-      castleFocus?.mapPY != null &&
-      (castleFocus.mapPX !== 0 || castleFocus.mapPY !== 0);
+    const useFocusCoords = castle != null && (castle.x !== 0 || castle.y !== 0);
     setSending(true);
     setSendStatus('Sending maiden comms wave…');
     void submitIntent('rift.maiden_wave.launch', {
       unitWodID,
-      ...(useFocusCoords ? { sourceX: castleFocus!.mapPX, sourceY: castleFocus!.mapPY } : {}),
+      ...(useFocusCoords ? { sourceX: castle!.x, sourceY: castle!.y } : {}),
     })
       .then(() => setSendStatus('Maiden comms wave submitted.'))
       .catch((error) => setSendStatus(error instanceof Error ? error.message : 'Could not send maiden comms.'))
       .finally(() => setSending(false));
   }, [
     availableUnitIds.length,
-    castleFocus,
+    castle,
     dashboardConnected,
     gameLoggedIn,
     mainCastle,

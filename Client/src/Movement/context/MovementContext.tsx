@@ -1,10 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { useCitadelAPI } from '../../api/ApiContext';
-import { movementFromState } from '../../api/StateAdapters';
-import type { MovementState } from '../types/MovementState';
+import { movementViewFromState, type MovementViewModel } from '../types/MovementState';
 
 export interface MovementContextValue {
-	movement: MovementState | null;
+	movement: MovementViewModel | null;
 	refreshMovement: (refresh?: boolean) => void;
 }
 
@@ -12,7 +11,7 @@ const MovementContext = createContext<MovementContextValue | undefined>(undefine
 
 export function MovementProvider({ children }: { children: ReactNode }) {
 	const { state, submitIntent } = useCitadelAPI();
-	const movement = useMemo(() => movementFromState(state), [state]);
+	const movement = useMemo(() => movementViewFromState(state), [state]);
 	const refreshMovement = useCallback((refresh = true) => {
 		if (!refresh) return;
 		void submitIntent('game.refresh_movements').catch((error) => {

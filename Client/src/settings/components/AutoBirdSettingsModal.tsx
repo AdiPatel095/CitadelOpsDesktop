@@ -5,23 +5,21 @@ import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import {
   applyPresetToStoredShape,
-  loadPresetsFile,
+  emptyPresetsFile,
   parsePresetsPayload,
   snapshotFromForm,
   type AutoBirdPreset,
 } from '../AutoBirdPresets';
 import {
   buildAutoBirdClientState,
-  loadAutoBirdSettingsFromStorage,
+  defaultAutoBirdSettings,
   parseAutoBirdClientState,
   persistAutoBirdClientState,
   type AutoBirdStoredSettings,
 } from '../AutoBirdClientState';
 import { Modal, Button, Input, Select, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
-import { castleOptionsFromState } from '../../api/StateAdapters';
-
-export { loadAutoBirdSettingsFromStorage } from '../AutoBirdClientState';
+import { castleOptionsFromState } from '../../api/Selectors';
 
 interface AutoBirdSettingsModalProps {
   isOpen: boolean;
@@ -76,7 +74,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const [maxDelay, setMaxDelay] = useState(12);
   const [minSend, setMinSend] = useState(0);
   const [minRPTDays, setMinRPTDays] = useState(3);
-  const [presetsState, setPresetsState] = useState(() => loadPresetsFile());
+  const [presetsState, setPresetsState] = useState(() => emptyPresetsFile());
   const [presetDropdownId, setPresetDropdownId] = useState('');
   const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null);
   const [presetName, setPresetName] = useState('');
@@ -95,14 +93,14 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
   }, [settings, minDelay, maxDelay, minSend, minRPTDays]);
 
-  const hydrateFromStorage = useCallback(() => {
-    const s = loadAutoBirdSettingsFromStorage();
+  const hydrateFromConfiguration = useCallback(() => {
+    const s = parseAutoBirdClientState(configuration?.sections['automation.autoBird']).ignoreSettings;
     setSettings(s.settings);
     setMinDelay(clampDelayHours(s.minDelay));
     setMaxDelay(clampDelayHours(s.maxDelay));
     setMinSend(s.minSend);
     setMinRPTDays(clampMinRPTDays(s.minRPTDays));
-  }, []);
+  }, [configuration?.sections]);
 
   const applyFullClientState = useCallback((state: ReturnType<typeof parseAutoBirdClientState>) => {
     const ig = state.ignoreSettings;
@@ -120,7 +118,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     if (!isOpen) return;
     applyFullClientState(parseAutoBirdClientState(
       configuration?.sections['automation.autoBird']
-        ?? buildAutoBirdClientState(loadAutoBirdSettingsFromStorage(), loadPresetsFile()),
+        ?? buildAutoBirdClientState(defaultAutoBirdSettings(), emptyPresetsFile()),
     ));
 
     setAppliedPresetId(null);
@@ -163,7 +161,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const handleApplyPreset = () => {
     setPresetError('');
     if (!presetDropdownId) {
-      hydrateFromStorage();
+      hydrateFromConfiguration();
       setAppliedPresetId(null);
       setPresetName('');
       return;
@@ -216,7 +214,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     setPresetDropdownId('');
     if (appliedPresetId === id) {
       setAppliedPresetId(null);
-      hydrateFromStorage();
+      hydrateFromConfiguration();
       setPresetName('');
     }
   };
@@ -246,7 +244,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   };
 
   const presetOptions = [
-    { value: '', label: '— Saved on disk (default) —' },
+    { value: '', label: '— Saved configuration —' },
     ...presetsState.presets.map((p) => ({ value: p.id, label: p.name })),
   ];
 

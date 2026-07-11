@@ -1,12 +1,9 @@
 import { queueConfigurationUpdate } from './Configuration';
 import {
-  loadPresetsFile,
+  emptyPresetsFile,
   parsePresetsPayload,
-  savePresetsFile,
   type PresetsFileV1,
 } from './AutoBirdPresets';
-
-export const AUTO_BIRD_IGNORE_STORAGE_KEY = 'autobirdSettings';
 
 export interface AutoBirdStoredSettings {
   settings: Record<string, { id: number; amount: number }[]>;
@@ -22,7 +19,7 @@ export interface AutoBirdClientStateV1 {
   presets: PresetsFileV1;
 }
 
-const defaultIgnore = (): AutoBirdStoredSettings => ({
+export const defaultAutoBirdSettings = (): AutoBirdStoredSettings => ({
   settings: {},
   minDelay: 6,
   maxDelay: 12,
@@ -30,49 +27,27 @@ const defaultIgnore = (): AutoBirdStoredSettings => ({
   minRPTDays: 3,
 });
 
-export function loadAutoBirdSettingsFromStorage(): AutoBirdStoredSettings {
-  try {
-    const raw = localStorage.getItem(AUTO_BIRD_IGNORE_STORAGE_KEY);
-    if (!raw) return defaultIgnore();
-    const parsed = JSON.parse(raw) as Partial<AutoBirdStoredSettings>;
-    return {
-      ...defaultIgnore(),
-      ...parsed,
-      settings: parsed.settings && typeof parsed.settings === 'object' ? parsed.settings : {},
-    };
-  } catch {
-    return defaultIgnore();
-  }
-}
-
-/** Normalizes server payload into a full v1 client document. */
 export function parseAutoBirdClientState(raw: unknown): AutoBirdClientStateV1 {
   if (raw == null || typeof raw !== 'object') {
     return {
       version: 1,
-      ignoreSettings: loadAutoBirdSettingsFromStorage(),
-      presets: loadPresetsFile(),
+      ignoreSettings: defaultAutoBirdSettings(),
+      presets: emptyPresetsFile(),
     };
   }
   const o = raw as Record<string, unknown>;
   const ignoreRaw = o.ignoreSettings;
-  let ignoreSettings = defaultIgnore();
+  let ignoreSettings = defaultAutoBirdSettings();
   if (ignoreRaw && typeof ignoreRaw === 'object') {
     const ig = ignoreRaw as Partial<AutoBirdStoredSettings>;
     ignoreSettings = {
-      ...defaultIgnore(),
+      ...defaultAutoBirdSettings(),
       ...ig,
       settings: ig.settings && typeof ig.settings === 'object' ? ig.settings : {},
     };
   }
   const presets = parsePresetsPayload(o.presets);
   return { version: 1, ignoreSettings, presets };
-}
-
-/** Mirrors server state into localStorage (for offline toggle + troop picker). */
-export function applyAutoBirdClientStateToLocalStorage(state: AutoBirdClientStateV1): void {
-  localStorage.setItem(AUTO_BIRD_IGNORE_STORAGE_KEY, JSON.stringify(state.ignoreSettings));
-  savePresetsFile(state.presets);
 }
 
 export function buildAutoBirdClientState(
@@ -82,8 +57,6 @@ export function buildAutoBirdClientState(
   return { version: 1, ignoreSettings, presets };
 }
 
-/** Persists to localStorage and the Go data dir (same folder as DecorationPresets.json). */
 export function persistAutoBirdClientState(state: AutoBirdClientStateV1): void {
-  applyAutoBirdClientStateToLocalStorage(state);
   queueConfigurationUpdate('automation.autoBird', state);
 }

@@ -16,13 +16,13 @@ import {
   formatTroopSummary,
   labelKingdom,
   labelTargetType,
-  type CommanderState,
+  type CommanderActivity,
   type CommanderStatusRow,
-  type GAMMovement,
 } from '../types/MovementState';
+import type { MovementStateV2 } from '../../api/Contracts';
 
 const STATUS_META: Record<
-  CommanderState,
+  CommanderActivity,
   {
     label: string;
     variant: 'secondary' | 'success' | 'warning' | 'danger' | 'outline';
@@ -43,13 +43,16 @@ function sortCommanders(rows: CommanderStatusRow[]): CommanderStatusRow[] {
     if (left.visiblePosition !== right.visiblePosition) {
       return left.visiblePosition - right.visiblePosition;
     }
-    return left.commanderID - right.commanderID;
+    return left.commanderId - right.commanderId;
   });
 }
 
-function effectivePT(movement: GAMMovement, nowUnix: number): number {
-  if (movement.receivedUnix <= 0) return movement.pt;
-  return movement.pt + Math.max(0, nowUnix - movement.receivedUnix);
+function effectiveProgress(movement: MovementStateV2, nowUnix: number): number {
+  if (movement.arrivesAt && movement.travelSeconds) {
+    const remaining = Math.max(0, Math.floor(Date.parse(movement.arrivesAt) / 1000) - nowUnix);
+    return Math.max(0, movement.travelSeconds - remaining);
+  }
+  return movement.progressSeconds ?? 0;
 }
 
 function statusForRow(
@@ -58,24 +61,24 @@ function statusForRow(
   snapshotReady: boolean,
   snapshotFresh: boolean,
   nowUnix: number
-): CommanderState {
+): CommanderActivity {
   if (!gameLoggedIn) return 'unknown';
   if (!snapshotReady) return 'syncing';
   if (!snapshotFresh) return 'unknown';
   if (
     row.status === 'outbound' &&
     row.movement != null &&
-    row.movement.tt > 0 &&
-    effectivePT(row.movement, nowUnix) >= row.movement.tt
+    (row.movement.travelSeconds ?? 0) > 0 &&
+    effectiveProgress(row.movement, nowUnix) >= (row.movement.travelSeconds ?? 0)
   ) {
-    return row.movement.twd > 0 ? 'posted' : 'busy';
+    return row.movement.returnsAt ? 'posted' : 'busy';
   }
   return row.status;
 }
 
 function formatTiming(
-  movement: GAMMovement | null,
-  status: CommanderState,
+  movement: MovementStateV2 | null,
+  status: CommanderActivity,
   nowUnix: number
 ): string {
   if (status === 'free') return 'Available';
@@ -83,19 +86,21 @@ function formatTiming(
   if (status === 'unknown') return 'Last state is stale';
   if (!movement) return 'In use';
 
-  const pt = effectivePT(movement, nowUnix);
-  if (status === 'posted' && movement.twd > 0) {
-    const posted = Math.min(movement.twd, Math.max(0, pt - movement.tt));
-    return `${posted}s / ${movement.twd}s posted`;
+  for (const [timestamp, label] of [[movement.returnsAt, 'to return'], [movement.arrivesAt, 'to arrival']] as const) {
+    if (!timestamp) continue;
+    const remaining = Math.max(0, Math.floor(Date.parse(timestamp) / 1000) - nowUnix);
+    if (remaining > 0) return `${remaining.toLocaleString()}s ${label}`;
   }
   if (status === 'busy') return 'Awaiting return state';
-  if (movement.tt <= 0) return `${pt}s elapsed`;
-  const capped = Math.min(pt, movement.tt);
-  const percent = Math.min(100, Math.round((capped / movement.tt) * 100));
-  return `${capped}s / ${movement.tt}s (${percent}%)`;
+  const travelSeconds = movement.travelSeconds ?? 0;
+  const progress = effectiveProgress(movement, nowUnix);
+  if (travelSeconds <= 0) return `${progress}s elapsed`;
+  const capped = Math.min(progress, travelSeconds);
+  const percent = Math.min(100, Math.round(capped / travelSeconds * 100));
+  return `${capped}s / ${travelSeconds}s (${percent}%)`;
 }
 
-function StatusBadge({ status }: { status: CommanderState }) {
+function StatusBadge({ status }: { status: CommanderActivity }) {
   const meta = STATUS_META[status];
   const Icon = meta.icon;
   return (
@@ -202,15 +207,15 @@ const MovementView: React.FC = () => {
                     const active = row.movement;
                     return (
                       <tr
-                        key={row.commanderID}
+                        key={row.commanderId}
                         className="h-[4.25rem] border-b border-border-base/70 last:border-b-0"
                       >
                         <td className="px-3 py-3">
                           <div className="truncate font-medium text-text-main">
-                            {row.name || `Commander ${row.commanderID}`}
+                            {row.name || `Commander ${row.commanderId}`}
                           </div>
                           <div className="mt-0.5 font-mono text-xs text-text-muted">
-                            LID {row.commanderID}
+                            LID {row.commanderId}
                             {Number.isFinite(row.visiblePosition) &&
                             row.visiblePosition < Number.MAX_SAFE_INTEGER
                               ? ` · Slot ${row.visiblePosition}`
@@ -221,24 +226,24 @@ const MovementView: React.FC = () => {
                           <StatusBadge status={status} />
                         </td>
                         <td className="truncate px-3 py-3 text-text-main">
-                          {active ? labelKingdom(active.kid) : '—'}
+                          {active ? labelKingdom(active.kingdomId) : '—'}
                         </td>
                         <td className="px-3 py-3 text-text-main">
-                          {active ? labelTargetType(active.targetType) : '—'}
+                          {active ? labelTargetType(active.typeId) : '—'}
                         </td>
                         <td className="truncate px-3 py-3 font-mono text-xs text-text-muted">
                           {active
-                            ? `(${active.sourceX}, ${active.sourceY}) → (${active.targetX}, ${active.targetY})`
+                            ? `(${active.sourceX ?? 0}, ${active.sourceY ?? 0}) → (${active.targetX}, ${active.targetY})`
                             : '—'}
                         </td>
                         <td className="px-3 py-3 text-text-muted">
                           {formatTiming(active, status, nowUnix)}
                         </td>
                         <td className="truncate px-3 py-3 text-text-muted">
-                          {active ? formatTroopSummary(active.troopArray) : '—'}
+                          {active ? formatTroopSummary(active.units) : '—'}
                         </td>
                         <td className="px-3 py-3 font-mono text-text-muted">
-                          {active ? active.mid : '—'}
+                          {active ? active.id : '—'}
                         </td>
                       </tr>
                     );

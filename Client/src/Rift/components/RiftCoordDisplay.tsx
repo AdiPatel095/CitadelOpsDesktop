@@ -8,13 +8,13 @@ import { formatRiftDelta } from '../types/RiftMapCoords';
 
 const RiftCoordDisplay: React.FC = () => {
   const { gameLoggedIn } = useAuth();
-  const { castleFocus } = useCastleFocus();
+  const { castle } = useCastleFocus();
   const { riftMapCoords, refreshRiftMapCoords } = useRiftMap();
 
-  const centerX = riftMapCoords?.centerX ?? castleFocus?.mapPX ?? 0;
-  const centerY = riftMapCoords?.centerY ?? castleFocus?.mapPY ?? 0;
-  const kingdomID = riftMapCoords?.kingdomID ?? castleFocus?.kingdomID ?? 0;
-  const castleName = castleFocus?.castleName?.trim() || 'Castle';
+  const centerX = riftMapCoords?.centerX ?? castle?.x ?? 0;
+  const centerY = riftMapCoords?.centerY ?? castle?.y ?? 0;
+  const kingdomID = riftMapCoords?.kingdomID ?? castle?.kingdomId ?? 0;
+  const castleName = castle?.name?.trim() || 'Castle';
   const rift = riftMapCoords?.rift ?? null;
   const found = riftMapCoords?.found ?? false;
   const riftKid = riftMapCoords?.riftKingdomID ?? 0;
@@ -66,7 +66,7 @@ const RiftCoordDisplay: React.FC = () => {
                   {rift.x}, {rift.y}
                 </p>
                 <p className="text-sm text-text-muted mt-1">
-                  {rift.typeLabel ?? 'Rift'}
+                  Rift
                   {rift.name?.trim() ? ` · ${rift.name.trim()}` : ''}
                 </p>
               </div>

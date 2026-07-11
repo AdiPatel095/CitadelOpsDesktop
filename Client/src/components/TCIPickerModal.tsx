@@ -11,22 +11,30 @@ import {
 } from './TCICatalogCache';
 
 export const TCI_LEVEL_MIN = 1;
-export const TCI_LEVEL_MAX = 4;
 
-export function clampLevelCeiling(n: number): number {
+export function clampLevelCeiling(
+  n: number,
+  minLevel = TCI_LEVEL_MIN,
+  maxLevel = Number.MAX_SAFE_INTEGER,
+): number {
   if (Number.isNaN(n)) {
-    return TCI_LEVEL_MIN;
+    return minLevel;
   }
-  return Math.min(TCI_LEVEL_MAX, Math.max(TCI_LEVEL_MIN, Math.floor(n)));
+  return Math.min(maxLevel, Math.max(minLevel, Math.floor(n)));
 }
 
-export function clampLevelFloor(n: number): number {
-  return clampLevelCeiling(n);
+export function clampLevelFloor(n: number, minLevel = TCI_LEVEL_MIN, maxLevel = Number.MAX_SAFE_INTEGER): number {
+  return clampLevelCeiling(n, minLevel, maxLevel);
 }
 
-export function normalizeLevelRange(floor: number, ceiling: number): { floor: number; ceiling: number } {
-  const f = clampLevelFloor(floor);
-  const c = clampLevelCeiling(ceiling);
+export function normalizeLevelRange(
+  floor: number,
+  ceiling: number,
+  minLevel = TCI_LEVEL_MIN,
+  maxLevel = Number.MAX_SAFE_INTEGER,
+): { floor: number; ceiling: number } {
+  const f = clampLevelFloor(floor, minLevel, maxLevel);
+  const c = clampLevelCeiling(ceiling, minLevel, maxLevel);
   return f <= c ? { floor: f, ceiling: c } : { floor: c, ceiling: c };
 }
 
@@ -39,9 +47,6 @@ export interface TCIWithLevelCeiling {
   levelFloor: number;
 }
 
-/** @deprecated Use TCIWithLevelCeiling */
-export type TCIWithQuantity = TCIWithLevelCeiling;
-
 export interface TCIPickerOptions {
   mode: TCISelectionMode;
   title?: string;
@@ -53,6 +58,11 @@ export interface TCIPickerOptions {
 }
 
 export type TCIPickerResult = TCIWithLevelCeiling | TCIWithLevelCeiling[] | null;
+
+function catalogLevelBounds(catalog: ConstructionItemCatalogEntry[], id: number): [number, number] {
+  const entry = catalog.find((candidate) => candidate.id === id || candidate.groupIds.includes(id));
+  return entry ? [entry.minLevel, entry.maxLevel] : [TCI_LEVEL_MIN, Number.MAX_SAFE_INTEGER];
+}
 
 let resolvePickerPromise: ((value: TCIPickerResult) => void) | null = null;
 let setPickerState: React.Dispatch<
@@ -135,6 +145,7 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
       const range = normalizeLevelRange(
         preselectedLevelFloors[id] ?? TCI_LEVEL_MIN,
         preselectedLevelCeilings[id] ?? TCI_LEVEL_MIN,
+        ...catalogLevelBounds(catalog, id),
       );
       m[id] = range.ceiling;
     });
@@ -146,6 +157,7 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
       const range = normalizeLevelRange(
         preselectedLevelFloors[id] ?? TCI_LEVEL_MIN,
         preselectedLevelCeilings[id] ?? TCI_LEVEL_MIN,
+        ...catalogLevelBounds(catalog, id),
       );
       m[id] = range.floor;
     });
@@ -190,7 +202,7 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
     if (mode === 'single') {
       setSelectedIds(new Set([id]));
       setLevelCeilings((prev) => {
-        const range = normalizeLevelRange(levelFloors[id] ?? TCI_LEVEL_MIN, prev[id] ?? TCI_LEVEL_MIN);
+        const range = normalizeLevelRange(levelFloors[id] ?? TCI_LEVEL_MIN, prev[id] ?? TCI_LEVEL_MIN, ...catalogLevelBounds(catalog, id));
         setLevelFloors((floors) => ({ ...floors, [id]: range.floor }));
         return { ...prev, [id]: range.ceiling };
       });
@@ -208,7 +220,7 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
     });
     if (!deselecting) {
       setLevelCeilings((prev) => {
-        const range = normalizeLevelRange(levelFloors[id] ?? TCI_LEVEL_MIN, prev[id] ?? TCI_LEVEL_MIN);
+        const range = normalizeLevelRange(levelFloors[id] ?? TCI_LEVEL_MIN, prev[id] ?? TCI_LEVEL_MIN, ...catalogLevelBounds(catalog, id));
         setLevelFloors((floors) => ({ ...floors, [id]: range.floor }));
         return { ...prev, [id]: range.ceiling };
       });
@@ -217,7 +229,7 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
 
   const handleCeilingStep = (id: number, delta: number) => {
     setLevelCeilings((prev) => {
-      const range = normalizeLevelRange(levelFloors[id] ?? TCI_LEVEL_MIN, (prev[id] ?? TCI_LEVEL_MIN) + delta);
+      const range = normalizeLevelRange(levelFloors[id] ?? TCI_LEVEL_MIN, (prev[id] ?? TCI_LEVEL_MIN) + delta, ...catalogLevelBounds(catalog, id));
       setLevelFloors((floors) => ({ ...floors, [id]: range.floor }));
       return { ...prev, [id]: range.ceiling };
     });
@@ -225,7 +237,7 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
 
   const handleFloorStep = (id: number, delta: number) => {
     setLevelFloors((prev) => {
-      const range = normalizeLevelRange((prev[id] ?? TCI_LEVEL_MIN) + delta, levelCeilings[id] ?? TCI_LEVEL_MIN);
+      const range = normalizeLevelRange((prev[id] ?? TCI_LEVEL_MIN) + delta, levelCeilings[id] ?? TCI_LEVEL_MIN, ...catalogLevelBounds(catalog, id));
       setLevelCeilings((ceilings) => ({ ...ceilings, [id]: range.ceiling }));
       return { ...prev, [id]: range.floor };
     });
@@ -239,7 +251,7 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
     }
     if (mode === 'single') {
       const id = selectedArray[0];
-      const range = normalizeLevelRange(levelFloors[id] ?? TCI_LEVEL_MIN, levelCeilings[id] ?? TCI_LEVEL_MIN);
+      const range = normalizeLevelRange(levelFloors[id] ?? TCI_LEVEL_MIN, levelCeilings[id] ?? TCI_LEVEL_MIN, ...catalogLevelBounds(catalog, id));
       onClose({
         constructionItemId: id,
         levelFloor: range.floor,
@@ -248,7 +260,7 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
       return;
     }
     const selected: TCIWithLevelCeiling[] = selectedArray.map((id) => {
-      const range = normalizeLevelRange(levelFloors[id] ?? TCI_LEVEL_MIN, levelCeilings[id] ?? TCI_LEVEL_MIN);
+      const range = normalizeLevelRange(levelFloors[id] ?? TCI_LEVEL_MIN, levelCeilings[id] ?? TCI_LEVEL_MIN, ...catalogLevelBounds(catalog, id));
       return {
         constructionItemId: id,
         levelFloor: range.floor,
@@ -384,7 +396,7 @@ const VirtualizedTCIList: React.FC<VirtualizedTCIListProps> = ({
           const item = filtered[virtualRow.index];
           const isSelected = selectedIds.has(item.id);
           const effectUpgradeLine = formatEffectUpgradeLine(item);
-          const range = normalizeLevelRange(levelFloors[item.id] ?? TCI_LEVEL_MIN, levelCeilings[item.id] ?? TCI_LEVEL_MIN);
+          const range = normalizeLevelRange(levelFloors[item.id] ?? item.minLevel, levelCeilings[item.id] ?? item.minLevel, item.minLevel, item.maxLevel);
           const floor = range.floor;
           const ceil = range.ceiling;
           return (
@@ -457,7 +469,7 @@ const VirtualizedTCIList: React.FC<VirtualizedTCIListProps> = ({
                       <button
                         type="button"
                         className="tci-level-button"
-                        disabled={ceil >= TCI_LEVEL_MAX}
+                        disabled={ceil >= item.maxLevel}
                         onClick={() => onCeilingStep(item.id, 1)}
                         aria-label="Increase level ceiling"
                       >
@@ -469,7 +481,7 @@ const VirtualizedTCIList: React.FC<VirtualizedTCIListProps> = ({
                       <button
                         type="button"
                         className="tci-level-button"
-                        disabled={floor <= TCI_LEVEL_MIN}
+                        disabled={floor <= item.minLevel}
                         onClick={() => onFloorStep(item.id, -1)}
                         aria-label="Decrease level floor"
                       >

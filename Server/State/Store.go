@@ -152,14 +152,14 @@ func cloneGameState(source GameState) GameState {
 		}
 		castle.Crafting.Buildings = make(map[BuildingInstanceID]CraftingBuilding, len(source.Castles[id].Crafting.Buildings))
 		for buildingID, building := range source.Castles[id].Crafting.Buildings {
-			building.ActiveSlotRentals = append([]int(nil), building.ActiveSlotRentals...)
-			building.QueueSlotRentals = append([]int(nil), building.QueueSlotRentals...)
+			building.ActiveSlotRentals = append([]int{}, building.ActiveSlotRentals...)
+			building.QueueSlotRentals = append([]int{}, building.QueueSlotRentals...)
 			building.Active = cloneCraftingQueue(building.Active)
 			building.Queued = cloneCraftingQueue(building.Queued)
 			castle.Crafting.Buildings[buildingID] = building
 		}
-		castle.Crafting.EnabledRecipeIDs = append([]int64(nil), source.Castles[id].Crafting.EnabledRecipeIDs...)
-		castle.Crafting.EnabledRecipeGroupIDs = append([]int64(nil), source.Castles[id].Crafting.EnabledRecipeGroupIDs...)
+		castle.Crafting.EnabledRecipeIDs = append([]int64{}, source.Castles[id].Crafting.EnabledRecipeIDs...)
+		castle.Crafting.EnabledRecipeGroupIDs = append([]int64{}, source.Castles[id].Crafting.EnabledRecipeGroupIDs...)
 		castle.Crafting.OutputBoostByQueueType = cloneMap(source.Castles[id].Crafting.OutputBoostByQueueType)
 		clone.Castles[id] = castle
 	}
@@ -198,7 +198,7 @@ func cloneGameState(source GameState) GameState {
 	for collection, items := range source.Inventory.Items {
 		clone.Inventory.Items[collection] = cloneMap(items)
 	}
-	clone.Alliance.Members = append([]AllianceMember(nil), source.Alliance.Members...)
+	clone.Alliance.Members = append([]AllianceMember{}, source.Alliance.Members...)
 	clone.Map = make(map[KingdomID]map[string]MapObservation, len(source.Map))
 	for kingdomID, observations := range source.Map {
 		clone.Map[kingdomID] = cloneMap(observations)
@@ -208,7 +208,7 @@ func cloneGameState(source GameState) GameState {
 }
 
 func cloneCraftingQueue(source []CraftingQueueItem) []CraftingQueueItem {
-	clone := append([]CraftingQueueItem(nil), source...)
+	clone := append([]CraftingQueueItem{}, source...)
 	for index := range clone {
 		clone[index].RemainingSec = cloneIntPointer(clone[index].RemainingSec)
 		clone[index].RuntimeSec = cloneIntPointer(clone[index].RuntimeSec)

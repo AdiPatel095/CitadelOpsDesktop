@@ -16,7 +16,7 @@ import {
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Modal, Select, Switch } from '../../components/ui';
 import {
   emptyAutoSceatResCatalog,
-  loadAutoSceatResSettingsFromStorage,
+  defaultAutoSceatResSettings,
   normalizeAutoSceatResSettings,
   normalizeAutoSceatResCatalog,
   persistAutoSceatResSettings,
@@ -32,22 +32,13 @@ import { useCitadelAPI } from '../../api/ApiContext';
 import { CitadelAPI } from '../../api/CitadelClient';
 import { configurationSection } from '../Configuration';
 import { AutoSceatRecipePickerModal } from './AutoSceatRecipePickerModal';
+import { useMetadata } from '../../context/MetadataContext';
 
 interface AutoSceatResSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
 }
-
-const TIME_SKIPS = [
-  { id: 'MS1', label: '1m' },
-  { id: 'MS2', label: '5m' },
-  { id: 'MS3', label: '10m' },
-  { id: 'MS4', label: '30m' },
-  { id: 'MS5', label: '1h' },
-  { id: 'MS6', label: '5h' },
-  { id: 'MS7', label: '24h' },
-] as const;
 
 const EMPTY_BUILDING_PLAN: AutoSceatBuildingPlan = {
   enabled: false,
@@ -81,7 +72,8 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
   onOpenFeatureSchedule,
 }) => {
   const { configuration, state, submitIntent } = useCitadelAPI();
-  const [settings, setSettings] = useState<AutoSceatResClientSettings>(() => loadAutoSceatResSettingsFromStorage());
+  const { currencies } = useMetadata();
+  const [settings, setSettings] = useState<AutoSceatResClientSettings>(() => defaultAutoSceatResSettings());
   const [catalog, setCatalog] = useState<AutoSceatResCatalog>(() => emptyAutoSceatResCatalog());
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const featureSchedules = normalizeFeatureSchedules(
@@ -94,7 +86,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
   useEffect(() => {
     if (!isOpen) return;
     setSettings(normalizeAutoSceatResSettings(
-      configuration?.sections['automation.autoSceatResources'] ?? loadAutoSceatResSettingsFromStorage(),
+      configuration?.sections['automation.autoSceatResources'] ?? defaultAutoSceatResSettings(),
     ));
     let active = true;
     const load = async () => {
@@ -132,6 +124,13 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
   const craftingNodes = useMemo(() => catalog.nodes.filter((node) => node.canCraft && node.buildings.length > 0), [catalog.nodes]);
   const storageNodes = useMemo(() => catalog.nodes.filter((node) => !node.canCraft), [catalog.nodes]);
   const schedule = featureSchedules.autoSceatRes;
+  const timeSkips = useMemo(() => Object.values(currencies)
+    .map((currency) => ({
+      id: typeof currency.JSONKey === 'string' ? currency.JSONKey.toUpperCase() : '',
+      label: currency.name,
+    }))
+    .filter((currency) => /^MS\d+$/.test(currency.id))
+    .sort((left, right) => Number(left.id.slice(2)) - Number(right.id.slice(2))), [currencies]);
 
   const buildingPlan = (castleID: number, queueTypeID: number): AutoSceatBuildingPlan => (
     settings.castles[String(castleID)]?.buildings[String(queueTypeID)] ?? EMPTY_BUILDING_PLAN
@@ -182,7 +181,9 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
   };
 
   const handleClose = () => {
-    setSettings(loadAutoSceatResSettingsFromStorage());
+    setSettings(normalizeAutoSceatResSettings(
+      configuration?.sections['automation.autoSceatResources'] ?? defaultAutoSceatResSettings(),
+    ));
     onClose();
   };
 
@@ -321,7 +322,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                 <div>
                   <div className="text-xs font-black uppercase tracking-wide text-text-muted">Allowed transport skips</div>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {TIME_SKIPS.map((skip) => {
+                    {timeSkips.map((skip) => {
                       const selected = settings.allowedTimeSkips.includes(skip.id);
                       return (
                         <button
@@ -343,7 +344,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                   </div>
                   {settings.useKingdomTimeSkips && settings.autoKingdomTransport && (
                     <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {TIME_SKIPS.filter((skip) => settings.allowedTimeSkips.includes(skip.id)).map((skip) => (
+                      {timeSkips.filter((skip) => settings.allowedTimeSkips.includes(skip.id)).map((skip) => (
                         <label key={skip.id} className="grid gap-1 text-[10px] font-bold text-text-muted">
                           Keep {skip.label}
                           <Input

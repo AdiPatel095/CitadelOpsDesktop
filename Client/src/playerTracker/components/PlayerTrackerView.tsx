@@ -19,11 +19,9 @@ import UnitImage from '../../components/UnitImage';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
-import { useResources } from '../../currency/context/ResourceContext';
-import { useCastleResources } from '../../dashboard/context/CastleResourceContext';
-import type { PlayerCastleInfo } from '../../dashboard/models/PlayerCastleInfo';
-import type { PlayerGlobalResources } from '../../types/PlayerGlobalResources';
 import { Notifications } from '../../components/Notifications';
+import { useCitadelAPI } from '../../api/ApiContext';
+import type { CastleStateV2, GameStateV2 } from '../../api/Contracts';
 
 interface PlayerTrackerSample {
   timestampUnix: number;
@@ -38,7 +36,7 @@ interface PlayerTrackerSample {
   troopsByUnit?: Record<string, number>;
   coins: number;
   rubies: number;
-  currencies?: PlayerGlobalResources;
+  currencies?: Record<string, number>;
 }
 
 interface TrackerMetricPoint {
@@ -98,33 +96,12 @@ interface PlayerTrackerResponse {
   };
 }
 
-type CurrencyKey =
-  | 'coins'
-  | 'rubies'
-  | 'relic_shard'
-  | 'sceat'
-  | 'ducat'
-  | 'const_token'
-  | 'upgr_token'
-  | 'plaster'
-  | 'affl_tix'
-  | 'drg_scale'
-  | 'drg_spl'
-  | 'might_pt'
-  | 'glory_pt'
-  | 'gallan_pt'
-  | 'min1'
-  | 'min5'
-  | 'min10'
-  | 'min30'
-  | 'hr1'
-  | 'hr5'
-  | 'hr24';
-type MetricKey = 'might' | 'glory' | 'loot' | 'gallantry' | 'troopsTotal' | CurrencyKey;
+type CurrencyKey = string;
+type MetricKey = string;
 type RangeKey = '24h' | '7d' | '30d' | 'all';
-type MetricCategory = 'Player stats' | 'Wallet' | 'Building' | 'Combat' | 'Speedups';
+type MetricCategory = 'Player stats' | 'Wallet';
 
-const metricDefinitions: Array<{
+interface MetricDefinition {
   key: MetricKey;
   label: string;
   shortLabel: string;
@@ -132,35 +109,17 @@ const metricDefinitions: Array<{
   icon: typeof Activity;
   imageUrl?: string;
   category: MetricCategory | 'Troops';
-}> = [
+}
+
+const CORE_METRIC_DEFINITIONS: MetricDefinition[] = [
   { key: 'might', label: 'Might points', shortLabel: 'Might', color: '#34d399', icon: ShieldCheck, imageUrl: '/game-data/resources/images/MightPoints.webp', category: 'Player stats' },
   { key: 'glory', label: 'Glory points', shortLabel: 'Glory', color: '#60a5fa', icon: Trophy, imageUrl: '/game-data/resources/images/Glory.webp', category: 'Player stats' },
   { key: 'loot', label: 'Loot', shortLabel: 'Loot', color: '#2dd4bf', icon: CircleDollarSign, imageUrl: '/game-data/resources/images/Loot.webp', category: 'Player stats' },
   { key: 'gallantry', label: 'Gallantry points', shortLabel: 'Gallantry', color: '#f59e0b', icon: Sparkles, imageUrl: '/game-data/resources/images/Gallantry.webp', category: 'Player stats' },
   { key: 'coins', label: 'Coins', shortLabel: 'Coins', color: '#facc15', icon: Coins, imageUrl: '/game-data/resources/images/Coins.webp', category: 'Wallet' },
   { key: 'rubies', label: 'Rubies', shortLabel: 'Rubies', color: '#fb7185', icon: CircleDollarSign, imageUrl: '/game-data/resources/images/Ruby.webp', category: 'Wallet' },
-  { key: 'relic_shard', label: 'Relic Shards', shortLabel: 'Relic Shards', color: '#a78bfa', icon: Sparkles, imageUrl: '/game-data/resources/images/Relic_Shards.webp', category: 'Building' },
-  { key: 'sceat', label: 'Sceats', shortLabel: 'Sceats', color: '#60a5fa', icon: Coins, imageUrl: '/game-data/resources/images/Sceat.webp', category: 'Building' },
-  { key: 'ducat', label: 'Imperial Ducats', shortLabel: 'Ducats', color: '#f59e0b', icon: Coins, imageUrl: '/game-data/resources/images/ImperialDucat.webp', category: 'Building' },
-  { key: 'const_token', label: 'Construction Tokens', shortLabel: 'Construction', color: '#2dd4bf', icon: ShieldCheck, imageUrl: '/game-data/resources/images/ConstructionToken.webp', category: 'Building' },
-  { key: 'upgr_token', label: 'Upgrade Tokens', shortLabel: 'Upgrade', color: '#34d399', icon: ShieldCheck, imageUrl: '/game-data/resources/images/UpgradeToken.webp', category: 'Building' },
-  { key: 'plaster', label: 'Plaster', shortLabel: 'Plaster', color: '#94a3b8', icon: ShieldCheck, imageUrl: '/game-data/resources/images/Plaster.webp', category: 'Building' },
-  { key: 'affl_tix', label: 'Affluence Tickets', shortLabel: 'Affluence', color: '#f97316', icon: Sparkles, imageUrl: '/game-data/resources/images/AffluenceTickets.webp', category: 'Combat' },
-  { key: 'drg_scale', label: 'Dragon Scale Tiles', shortLabel: 'Scale Tiles', color: '#ef4444', icon: Swords, imageUrl: '/game-data/resources/images/DragonScaleTiles.webp', category: 'Combat' },
-  { key: 'drg_spl', label: 'Dragon Scale Splinters', shortLabel: 'Splinters', color: '#ec4899', icon: Swords, imageUrl: '/game-data/resources/images/DragonScaleSplinters.webp', category: 'Combat' },
-  { key: 'min1', label: '1 Minute Speedups', shortLabel: '1 Min', color: '#22d3ee', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip1Minute.webp', category: 'Speedups' },
-  { key: 'min5', label: '5 Minute Speedups', shortLabel: '5 Min', color: '#22d3ee', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip5Minutes.webp', category: 'Speedups' },
-  { key: 'min10', label: '10 Minute Speedups', shortLabel: '10 Min', color: '#22d3ee', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip10Minutes.webp', category: 'Speedups' },
-  { key: 'min30', label: '30 Minute Speedups', shortLabel: '30 Min', color: '#22d3ee', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip30Minutes.webp', category: 'Speedups' },
-  { key: 'hr1', label: '1 Hour Speedups', shortLabel: '1 Hour', color: '#06b6d4', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip1Hour.webp', category: 'Speedups' },
-  { key: 'hr5', label: '5 Hour Speedups', shortLabel: '5 Hours', color: '#0891b2', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip5Hours.webp', category: 'Speedups' },
-  { key: 'hr24', label: '24 Hour Speedups', shortLabel: '24 Hours', color: '#0e7490', icon: Clock3, imageUrl: '/game-data/resources/images/TimeSkip24Hours.webp', category: 'Speedups' },
   { key: 'troopsTotal', label: 'Total troops', shortLabel: 'Troops', color: '#a78bfa', icon: Swords, category: 'Troops' },
 ];
-
-const primaryMetricDefinitions = metricDefinitions.filter((definition) => definition.key !== 'troopsTotal');
-const troopMetricDefinition = metricDefinitions.find((definition) => definition.key === 'troopsTotal')!;
-const metricCategories: MetricCategory[] = ['Player stats', 'Wallet', 'Building', 'Combat', 'Speedups'];
 
 const ranges: Array<{ key: RangeKey; label: string; seconds: number | null }> = [
   { key: '24h', label: '24H', seconds: 24 * 60 * 60 },
@@ -178,7 +137,7 @@ const emptyResponse: PlayerTrackerResponse = {
   coverage: { loot: false, eventScores: false },
 };
 
-const MetricIcon = ({ definition, className }: { definition: (typeof metricDefinitions)[number]; className: string }) => {
+const MetricIcon = ({ definition, className }: { definition: MetricDefinition; className: string }) => {
   const [imageFailed, setImageFailed] = useState(false);
   const FallbackIcon = definition.icon;
 
@@ -192,10 +151,23 @@ const MetricIcon = ({ definition, className }: { definition: (typeof metricDefin
 };
 
 const PlayerTrackerView = () => {
-  const { resources } = useResources();
-  const { castleResources } = useCastleResources();
+  const { state } = useCitadelAPI();
   const { gameLoggedIn } = useAuth();
-  const { troops: troopMetadata } = useMetadata();
+  const { troops: troopMetadata, resources: resourceMetadata, currencies: currencyMetadata } = useMetadata();
+  const metricDefinitions = useMemo(
+    () => buildMetricDefinitions(state, resourceMetadata, currencyMetadata),
+    [currencyMetadata, resourceMetadata, state],
+  );
+  const primaryMetricDefinitions = useMemo(
+    () => metricDefinitions.filter((definition) => definition.key !== 'troopsTotal'),
+    [metricDefinitions],
+  );
+  const troopMetricDefinition = metricDefinitions.find((definition) => definition.key === 'troopsTotal')!;
+  const metricCategories = useMemo(
+    () => Array.from(new Set(primaryMetricDefinitions.map((definition) => definition.category)))
+      .filter((category): category is MetricCategory => category !== 'Troops'),
+    [primaryMetricDefinitions],
+  );
   const [tracker, setTracker] = useState<PlayerTrackerResponse>(emptyResponse);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('might');
   const [selectedRange, setSelectedRange] = useState<RangeKey>('7d');
@@ -215,36 +187,37 @@ const PlayerTrackerView = () => {
   }, [loadError]);
 
   const liveSample = useMemo<PlayerTrackerSample | null>(() => {
-    if (!resources || !gameLoggedIn) return null;
+    if (!state || !gameLoggedIn) return null;
     let stationed = 0;
     let traveling = 0;
     let hospital = 0;
     const troopsByUnit: Record<string, number> = {};
-    for (const playerCastle of castleResources.values()) {
-      stationed += sumRecord(playerCastle.troops?.troopsI);
-      traveling += sumRecord(playerCastle.troops?.troopsTU);
-      hospital += sumRecord(playerCastle.troops?.troopsHI) + sumRecord(playerCastle.troops?.troopsSHI);
-      addTroopsByUnit(troopsByUnit, playerCastle.troops?.troopsI);
-      addTroopsByUnit(troopsByUnit, playerCastle.troops?.troopsTU);
-      addTroopsByUnit(troopsByUnit, playerCastle.troops?.troopsHI);
-      addTroopsByUnit(troopsByUnit, playerCastle.troops?.troopsSHI);
+    for (const playerCastle of Object.values(state.castles)) {
+      stationed += sumRecord(playerCastle.units.stationed);
+      traveling += sumRecord(playerCastle.units.traveling);
+      hospital += sumRecord(playerCastle.units.hospital) + sumRecord(playerCastle.units.specialHospital);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.stationed);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.traveling);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.hospital);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.specialHospital);
     }
+    const wallet = playerWallet(state.player.resources, state.player.currencies, resourceMetadata);
     return {
       timestampUnix: Math.floor(Date.now() / 1000),
-      playerId: tracker.current?.playerId ?? 0,
-      might: finite(resources.might_pt),
-      glory: finite(resources.glory_pt),
-      gallantry: finite(resources.gallan_pt),
+      playerId: state.player.id,
+      might: finite(state.player.might),
+      glory: finite(state.player.glory),
+      gallantry: finite(state.player.gallantry),
       troopsTotal: stationed + traveling + hospital,
       troopsStationed: stationed,
       troopsTraveling: traveling,
       troopsHospital: hospital,
       troopsByUnit,
-      coins: finite(resources.coins),
-      rubies: finite(resources.rubies),
-      currencies: resources,
+      coins: finite(wallet.coins),
+      rubies: finite(wallet.rubies),
+      currencies: wallet,
     };
-  }, [resources, castleResources, tracker.current, gameLoggedIn]);
+  }, [gameLoggedIn, resourceMetadata, state]);
 
   useEffect(() => {
     let active = true;
@@ -257,7 +230,7 @@ const PlayerTrackerView = () => {
         if (!response.ok) throw new Error(`Tracker returned HTTP ${response.status}`);
         const payload = await response.json() as PlayerTrackerResponse;
         if (!active) return;
-        setTracker(normalizeResponse(payload));
+        setTracker(normalizeResponse(payload, metricDefinitions));
         setLoadError(null);
       } catch (error) {
         if (!active) return;
@@ -272,16 +245,16 @@ const PlayerTrackerView = () => {
       active = false;
       window.clearInterval(timer);
     };
-  }, [selectedRange, troopRange]);
+  }, [metricDefinitions, selectedRange, troopRange]);
 
   const current = liveSample ?? tracker.current;
   const series = useMemo(
-    () => mergeLiveSampleIntoSeries(tracker.series, liveSample),
-    [tracker.series, liveSample],
+    () => mergeLiveSampleIntoSeries(tracker.series, liveSample, metricDefinitions),
+    [tracker.series, liveSample, metricDefinitions],
   );
   const visibleSeries = useMemo(
-    () => filterSeriesRange(series, selectedRange),
-    [series, selectedRange],
+    () => filterSeriesRange(series, selectedRange, metricDefinitions),
+    [series, selectedRange, metricDefinitions],
   );
   const selectedDefinition = metricDefinitions.find((definition) => definition.key === selectedMetric)!;
   const selectedPoints = visibleSeries[selectedMetric] ?? [];
@@ -368,8 +341,8 @@ const PlayerTrackerView = () => {
     ? latestTroopRatePoint.value - previousTroopRatePoint.value
     : undefined;
   const troopComposition = useMemo(
-    () => calculateTroopCombatComposition(castleResources, troopMetadata),
-    [castleResources, troopMetadata],
+    () => calculateTroopCombatComposition(Object.values(state?.castles ?? {}), troopMetadata),
+    [state?.castles, troopMetadata],
   );
   const troopTrendLines = useMemo(
     () => buildTroopTrendLines(
@@ -805,7 +778,7 @@ function TrendChart({
     ? lines
     : [{
         key: metric,
-        label: metricDefinitions.find((definition) => definition.key === metric)?.shortLabel ?? metric,
+        label: metric,
         color,
         points: metricPoints,
       }];
@@ -1377,8 +1350,66 @@ function addTroopsByUnit(target: Record<string, number>, values: Record<string, 
   }
 }
 
+function playerWallet(
+  resources: Record<string, number>,
+  currencies: Record<string, number>,
+  resourceDefinitions: Record<number, MetadataItem>,
+): Record<string, number> {
+  const wallet: Record<string, number> = {};
+  for (const [rawID, amount] of Object.entries(resources)) {
+    const definition = resourceDefinitions[Number(rawID)];
+    const internalName = typeof definition?.internalName === 'string' ? definition.internalName : '';
+    const jsonKey = typeof definition?.JSONKey === 'string' ? definition.JSONKey : '';
+    wallet[`resource:${rawID}`] = amount;
+    if (jsonKey === 'C1' || internalName === 'currency1') wallet.coins = amount;
+    if (jsonKey === 'C2' || internalName === 'currency2') wallet.rubies = amount;
+  }
+  for (const [rawID, amount] of Object.entries(currencies)) {
+    wallet[`currency:${rawID}`] = amount;
+  }
+  return wallet;
+}
+
+function buildMetricDefinitions(
+  state: GameStateV2 | null,
+  resourceDefinitions: Record<number, MetadataItem>,
+  currencyDefinitions: Record<number, MetadataItem>,
+): MetricDefinition[] {
+  const definitions = CORE_METRIC_DEFINITIONS.map((definition) => ({ ...definition }));
+  if (!state) return definitions;
+  const palette = ['#22d3ee', '#a78bfa', '#f59e0b', '#34d399', '#fb7185', '#60a5fa', '#2dd4bf', '#f97316'];
+  const append = (kind: 'resource' | 'currency', rawID: string, metadata: MetadataItem | undefined) => {
+    const id = Number(rawID);
+    if (!Number.isFinite(id) || id <= 0) return;
+    const jsonKey = typeof metadata?.JSONKey === 'string' ? metadata.JSONKey : '';
+    const internalName = typeof metadata?.internalName === 'string' ? metadata.internalName : '';
+    if (kind === 'resource' && (jsonKey === 'C1' || jsonKey === 'C2' || internalName === 'currency1' || internalName === 'currency2')) return;
+    const name = metadata?.name?.trim() || `${kind === 'resource' ? 'Resource' : 'Currency'} ${id}`;
+    definitions.push({
+      key: `${kind}:${id}`,
+      label: name,
+      shortLabel: name.length > 24 ? `${name.slice(0, 22)}…` : name,
+      color: palette[Math.abs(id) % palette.length],
+      icon: Coins,
+      imageUrl: metadata?.image,
+      category: 'Wallet',
+    });
+  };
+  Object.entries(state.player.resources)
+    .filter(([, amount]) => amount !== 0)
+    .forEach(([id]) => append('resource', id, resourceDefinitions[Number(id)]));
+  Object.entries(state.player.currencies)
+    .filter(([, amount]) => amount !== 0)
+    .forEach(([id]) => append('currency', id, currencyDefinitions[Number(id)]));
+  const troop = definitions.find((definition) => definition.key === 'troopsTotal');
+  return [
+    ...definitions.filter((definition) => definition.key !== 'troopsTotal'),
+    ...(troop ? [troop] : []),
+  ];
+}
+
 function calculateTroopCombatComposition(
-  castles: Map<number, PlayerCastleInfo>,
+  castles: CastleStateV2[],
   metadata: Record<number, MetadataItem>,
 ): TroopCombatComposition {
   const composition: TroopCombatComposition = {
@@ -1391,12 +1422,12 @@ function calculateTroopCombatComposition(
     roleClassified: 0,
   };
 
-  for (const castle of castles.values()) {
+  for (const castle of castles) {
     const troopPools = [
-      castle.troops?.troopsI,
-      castle.troops?.troopsTU,
-      castle.troops?.troopsHI,
-      castle.troops?.troopsSHI,
+      castle.units.stationed,
+      castle.units.traveling,
+      castle.units.hospital,
+      castle.units.specialHospital,
     ];
     for (const pool of troopPools) {
       if (!pool) continue;
@@ -1455,14 +1486,14 @@ function metadataNumber(value: unknown): number {
   return Number.isFinite(number) ? number : 0;
 }
 
-function normalizeResponse(value: PlayerTrackerResponse): PlayerTrackerResponse {
+function normalizeResponse(value: PlayerTrackerResponse, definitions: MetricDefinition[]): PlayerTrackerResponse {
   const samples = Array.isArray(value?.samples)
     ? value.samples.filter((sample) => Number.isFinite(sample?.timestampUnix)).sort((a, b) => a.timestampUnix - b.timestampUnix)
     : [];
   return {
     current: value?.current ?? null,
     samples,
-    series: normalizeSeries(value?.series, samples, value?.current ?? null),
+    series: normalizeSeries(value?.series, samples, value?.current ?? null, definitions),
     intervalSeconds: finite(value?.intervalSeconds) || 60,
     fallback: {
       provider: value?.fallback?.provider || 'gge-tracker',
@@ -1483,9 +1514,10 @@ function normalizeSeries(
   raw: Partial<Record<MetricKey, TrackerMetricPoint[]>> | undefined,
   samples: PlayerTrackerSample[],
   current: PlayerTrackerSample | null,
+  definitions: MetricDefinition[],
 ): Partial<Record<MetricKey, TrackerMetricPoint[]>> {
   const normalized: Partial<Record<MetricKey, TrackerMetricPoint[]>> = {};
-  for (const definition of metricDefinitions) {
+  for (const definition of definitions) {
     const points = raw?.[definition.key];
     if (Array.isArray(points)) {
       normalized[definition.key] = points
@@ -1499,7 +1531,7 @@ function normalizeSeries(
     }
   }
   const localSamples = current ? [...samples, current] : samples;
-  for (const definition of metricDefinitions) {
+  for (const definition of definitions) {
     if (normalized[definition.key] != null) continue;
     normalized[definition.key] = localSamples.flatMap((sample) => {
       const value = metricValue(sample, definition.key);
@@ -1514,21 +1546,23 @@ function normalizeSeries(
 function mergeLiveSampleIntoSeries(
   series: Partial<Record<MetricKey, TrackerMetricPoint[]>>,
   liveSample: PlayerTrackerSample | null,
+  definitions: MetricDefinition[],
 ): Partial<Record<MetricKey, TrackerMetricPoint[]>> {
   const merged: Partial<Record<MetricKey, TrackerMetricPoint[]>> = {};
-  for (const definition of metricDefinitions) {
+  for (const definition of definitions) {
     merged[definition.key] = [...(series[definition.key] ?? [])];
   }
-  if (liveSample) addSampleToSeries(merged, liveSample, true);
+  if (liveSample) addSampleToSeries(merged, liveSample, definitions, true);
   return merged;
 }
 
 function addSampleToSeries(
   series: Partial<Record<MetricKey, TrackerMetricPoint[]>>,
   sample: PlayerTrackerSample,
+  definitions: MetricDefinition[],
   replaceNearby = false,
 ) {
-  for (const definition of metricDefinitions) {
+  for (const definition of definitions) {
     const value = metricValue(sample, definition.key);
     if (value == null) continue;
     let points = series[definition.key] ?? [];
@@ -1544,12 +1578,13 @@ function addSampleToSeries(
 function filterSeriesRange(
   series: Partial<Record<MetricKey, TrackerMetricPoint[]>>,
   range: RangeKey,
+  definitions: MetricDefinition[],
 ): Partial<Record<MetricKey, TrackerMetricPoint[]>> {
   const definition = ranges.find((candidate) => candidate.key === range);
   if (!definition?.seconds) return series;
   const cutoff = Math.floor(Date.now() / 1000) - definition.seconds;
   const filtered: Partial<Record<MetricKey, TrackerMetricPoint[]>> = {};
-  for (const metric of metricDefinitions) {
+  for (const metric of definitions) {
     filtered[metric.key] = (series[metric.key] ?? []).filter((point) => point.timestampUnix >= cutoff);
   }
   return filtered;

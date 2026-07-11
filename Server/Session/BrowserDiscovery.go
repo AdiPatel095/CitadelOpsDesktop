@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const browserSelectionFile = "Selection.json"
+const browserSelectionFile = "Browser.json"
 
 type BrowserCandidate struct {
 	ID             string `json:"id"`
@@ -97,7 +97,7 @@ func ResolveChromiumBrowser(preference string, executablePath string) (BrowserCa
 }
 
 func loadBrowserPreference(dataDir string) string {
-	contents, err := os.ReadFile(filepath.Join(dataDir, "Browser", browserSelectionFile))
+	contents, err := os.ReadFile(filepath.Join(dataDir, "Config", browserSelectionFile))
 	if err != nil {
 		return ""
 	}
@@ -111,7 +111,7 @@ func loadBrowserPreference(dataDir string) string {
 }
 
 func saveBrowserPreference(dataDir string, candidate BrowserCandidate) error {
-	directory := filepath.Join(dataDir, "Browser")
+	directory := filepath.Join(dataDir, "Config")
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return fmt.Errorf("create browser settings directory: %w", err)
 	}

@@ -1,7 +1,5 @@
 import { queueConfigurationUpdate } from './Configuration';
 
-export const AUTO_TOOL_SETTINGS_STORAGE_KEY = 'autoToolSettings';
-export const AUTO_TOOL_SETTINGS_CHANGED_EVENT = 'autoToolSettingsChanged';
 export const DEFAULT_AUTO_TOOL_CHECK_INTERVAL_SEC = 300;
 export const MIN_AUTO_TOOL_CHECK_INTERVAL_SEC = 30;
 export const MAX_AUTO_TOOL_CHECK_INTERVAL_SEC = 86400;
@@ -122,7 +120,7 @@ function targetsMapToCastles(raw: unknown, enabledRaw?: unknown): Record<string,
   return castles;
 }
 
-function defaultAutoToolSettings(): AutoToolClientSettingsV1 {
+export function defaultAutoToolSettings(): AutoToolClientSettingsV1 {
   return {
     version: 1,
     mode: 'global',
@@ -190,28 +188,7 @@ export function normalizeAutoToolSettings(raw: unknown): AutoToolClientSettingsV
   };
 }
 
-export function loadAutoToolSettingsFromStorage(): AutoToolClientSettingsV1 {
-  try {
-    const raw = localStorage.getItem(AUTO_TOOL_SETTINGS_STORAGE_KEY);
-    if (!raw) return defaultAutoToolSettings();
-    return normalizeAutoToolSettings(JSON.parse(raw));
-  } catch {
-    return defaultAutoToolSettings();
-  }
-}
-
-export function notifyAutoToolSettingsChanged(settings: AutoToolClientSettingsV1): void {
-  window.dispatchEvent(new CustomEvent(AUTO_TOOL_SETTINGS_CHANGED_EVENT, { detail: settings }));
-}
-
-export function applyAutoToolSettingsToLocalStorage(settings: AutoToolClientSettingsV1): void {
-  const normalized = normalizeAutoToolSettings(settings);
-  localStorage.setItem(AUTO_TOOL_SETTINGS_STORAGE_KEY, JSON.stringify(normalized));
-  notifyAutoToolSettingsChanged(normalized);
-}
-
 export function persistAutoToolSettings(settings: AutoToolClientSettingsV1): boolean {
   const normalized = normalizeAutoToolSettings(settings);
-  applyAutoToolSettingsToLocalStorage(normalized);
   return queueConfigurationUpdate('automation.autoTool', normalized);
 }

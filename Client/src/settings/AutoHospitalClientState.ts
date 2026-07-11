@@ -1,7 +1,5 @@
 import { queueConfigurationUpdate } from './Configuration';
 
-export const AUTO_HOSPITAL_SETTINGS_STORAGE_KEY = 'autoHospitalSettings';
-export const AUTO_HOSPITAL_SETTINGS_CHANGED_EVENT = 'autoHospitalSettingsChanged';
 export const DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_SEC = 300;
 export const MIN_AUTO_HOSPITAL_CHECK_INTERVAL_SEC = 30;
 export const MAX_AUTO_HOSPITAL_CHECK_INTERVAL_SEC = 86400;
@@ -21,7 +19,7 @@ export interface AutoHospitalClientSettingsV1 {
   checkIntervalSec: number;
 }
 
-function defaultAutoHospitalSettings(): AutoHospitalClientSettingsV1 {
+export function defaultAutoHospitalSettings(): AutoHospitalClientSettingsV1 {
   return {
     version: 1,
     checkIntervalSec: DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_SEC,
@@ -62,28 +60,7 @@ export function normalizeAutoHospitalSettings(raw: unknown): AutoHospitalClientS
   };
 }
 
-export function loadAutoHospitalSettingsFromStorage(): AutoHospitalClientSettingsV1 {
-  try {
-    const raw = localStorage.getItem(AUTO_HOSPITAL_SETTINGS_STORAGE_KEY);
-    if (!raw) return defaultAutoHospitalSettings();
-    return normalizeAutoHospitalSettings(JSON.parse(raw));
-  } catch {
-    return defaultAutoHospitalSettings();
-  }
-}
-
-export function notifyAutoHospitalSettingsChanged(settings: AutoHospitalClientSettingsV1): void {
-  window.dispatchEvent(new CustomEvent(AUTO_HOSPITAL_SETTINGS_CHANGED_EVENT, { detail: settings }));
-}
-
-export function applyAutoHospitalSettingsToLocalStorage(settings: AutoHospitalClientSettingsV1): void {
-  const normalized = normalizeAutoHospitalSettings(settings);
-  localStorage.setItem(AUTO_HOSPITAL_SETTINGS_STORAGE_KEY, JSON.stringify(normalized));
-  notifyAutoHospitalSettingsChanged(normalized);
-}
-
 export function persistAutoHospitalSettings(settings: AutoHospitalClientSettingsV1): boolean {
   const normalized = normalizeAutoHospitalSettings(settings);
-  applyAutoHospitalSettingsToLocalStorage(normalized);
   return queueConfigurationUpdate('automation.autoHospital', normalized);
 }

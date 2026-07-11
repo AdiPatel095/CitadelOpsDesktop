@@ -4,9 +4,7 @@ import { showTroopPicker } from '../../components/TroopPickerModal';
 import { Modal, Button, Input } from '../../components/ui';
 import {
   DEFAULT_AUTO_BERI_WORLD_SETTINGS,
-  loadAutoBeriWorldSettingsFromStorage,
   parseAutoBeriWorldSettings,
-  persistAutoBeriWorldSettingsToLocalStorage,
   type AutoBeriWorldSettings,
 } from '../AutoBeriWorldClientState';
 import { useCitadelAPI } from '../../api/ApiContext';
@@ -45,9 +43,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
   useEffect(() => {
     if (!isOpen) return;
     const settings = parseAutoBeriWorldSettings(
-      configuration?.sections['automation.beriWorld'] ?? loadAutoBeriWorldSettingsFromStorage(),
+      configuration?.sections['automation.beriWorld'] ?? DEFAULT_AUTO_BERI_WORLD_SETTINGS,
     );
-    persistAutoBeriWorldSettingsToLocalStorage(settings);
     hydrate(settings);
   }, [configuration?.sections, isOpen]);
 
@@ -71,7 +68,6 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
       kutCastleCID,
       troopSpaceCheckIntervalSec,
     });
-    persistAutoBeriWorldSettingsToLocalStorage(settings);
     queueConfigurationUpdate('automation.beriWorld', settings);
     onClose();
   };

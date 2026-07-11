@@ -6,8 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useCastleFocus } from '../../context/CastleFocusContext';
-import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
-import { riftMapCoordsFromSnapshot, type RiftMapCoords } from '../types/RiftMapCoords';
+import { riftMapCoordsFromState, type RiftMapCoords } from '../types/RiftMapCoords';
 import { parseRiftCRALaunchPayload, type RiftCRALaunchState } from '../types/RiftCRALaunch';
 import { useCitadelAPI } from '../../api/ApiContext';
 
@@ -33,17 +32,23 @@ export interface RiftMapContextValue {
 const RiftMapContext = createContext<RiftMapContextValue | undefined>(undefined);
 
 export function RiftMapProvider({ children }: { children: ReactNode }) {
-  const { configuration, submitIntent, updateConfiguration } = useCitadelAPI();
-  const { castleFocus } = useCastleFocus();
-  const { snapshot } = useLastKnownSnapshot();
+  const { state, configuration, submitIntent, updateConfiguration } = useCitadelAPI();
+  const { castle } = useCastleFocus();
   const riftCRALaunch = useMemo(
     () => parseRiftCRALaunchPayload(configuration?.sections['rift.launches']),
     [configuration?.sections],
   );
 
   const refreshRiftMapCoords = useCallback((refresh = true) => {
-    void refresh;
-  }, []);
+    if (!refresh || !castle) return;
+    void submitIntent('map.query', {
+      kingdomId: castle.kingdomId,
+      x1: castle.x - 25,
+      y1: castle.y - 25,
+      x2: castle.x + 25,
+      y2: castle.y + 25,
+    });
+  }, [castle, submitIntent]);
 
   const refreshRiftCRALaunch = useCallback(() => {
   }, []);
@@ -67,23 +72,10 @@ export function RiftMapProvider({ children }: { children: ReactNode }) {
     void updateConfiguration('rift.launches', { ...riftCRALaunch, launches, launchCount: launches.length });
   }, [riftCRALaunch, updateConfiguration]);
 
-  const riftMapCoords = useMemo((): RiftMapCoords | null => {
-    const aid = castleFocus?.aid ?? 0;
-    const kid = castleFocus?.kingdomID ?? 0;
-    let cx = castleFocus?.mapPX ?? 0;
-    let cy = castleFocus?.mapPY ?? 0;
-    if ((cx === 0 && cy === 0) && castleFocus?.playerCastles?.length) {
-      const match = castleFocus.playerCastles.find((c) => c.aid === aid && c.kingdomID === kid);
-      if (match) {
-        cx = match.mapX;
-        cy = match.mapY;
-      }
-    }
-    if (snapshot) {
-      return riftMapCoordsFromSnapshot(snapshot, aid, kid, cx, cy);
-    }
-    return null;
-  }, [snapshot, castleFocus]);
+  const riftMapCoords = useMemo(
+    () => riftMapCoordsFromState(state, castle),
+    [castle, state],
+  );
 
   const value = useMemo<RiftMapContextValue>(
     () => ({

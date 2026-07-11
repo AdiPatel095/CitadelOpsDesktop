@@ -1,7 +1,5 @@
 import { queueConfigurationUpdate } from './Configuration';
 
-export const AUTO_SCEAT_RES_SETTINGS_STORAGE_KEY = 'autoSceatResSettings';
-export const AUTO_SCEAT_RES_SETTINGS_CHANGED_EVENT = 'autoSceatResSettingsChanged';
 export const DEFAULT_AUTO_SCEAT_RES_CHECK_INTERVAL_SEC = 300;
 export const MIN_AUTO_SCEAT_RES_CHECK_INTERVAL_SEC = 30;
 export const MAX_AUTO_SCEAT_RES_CHECK_INTERVAL_SEC = 86400;
@@ -118,8 +116,6 @@ export interface AutoSceatResCatalog {
   researchLoaded: boolean;
 }
 
-const VALID_TIME_SKIPS = new Set(['MS1', 'MS2', 'MS3', 'MS4', 'MS5', 'MS6', 'MS7']);
-
 export function defaultAutoSceatResSettings(): AutoSceatResClientSettings {
   return {
     checkIntervalSec: DEFAULT_AUTO_SCEAT_RES_CHECK_INTERVAL_SEC,
@@ -128,7 +124,7 @@ export function defaultAutoSceatResSettings(): AutoSceatResClientSettings {
     overflowThresholdPercent: 90,
     autoKingdomTransport: false,
     useKingdomTimeSkips: false,
-    allowedTimeSkips: ['MS5'],
+    allowedTimeSkips: [],
     timeSkipReserve: {},
     useStormBuffer: true,
     allowRubyRecipes: false,
@@ -200,13 +196,13 @@ export function normalizeAutoSceatResSettings(raw: unknown): AutoSceatResClientS
   const allowedTimeSkips = Array.isArray(value.allowedTimeSkips)
     ? [...new Set(value.allowedTimeSkips
         .map((entry) => String(entry).trim().toUpperCase())
-        .filter((entry) => VALID_TIME_SKIPS.has(entry)))]
+        .filter((entry) => /^[A-Z][A-Z0-9_:-]*$/.test(entry)))]
     : defaults.allowedTimeSkips;
   const timeSkipReserve: Record<string, number> = {};
   if (value.timeSkipReserve && typeof value.timeSkipReserve === 'object' && !Array.isArray(value.timeSkipReserve)) {
     Object.entries(value.timeSkipReserve as Record<string, unknown>).forEach(([id, reserve]) => {
       const normalizedID = id.toUpperCase();
-      if (!VALID_TIME_SKIPS.has(normalizedID)) return;
+      if (!/^[A-Z][A-Z0-9_:-]*$/.test(normalizedID)) return;
       timeSkipReserve[normalizedID] = finiteInteger(reserve, 0, 0, Number.MAX_SAFE_INTEGER);
     });
   }
@@ -234,24 +230,8 @@ export function normalizeAutoSceatResSettings(raw: unknown): AutoSceatResClientS
   };
 }
 
-export function loadAutoSceatResSettingsFromStorage(): AutoSceatResClientSettings {
-  try {
-    const raw = localStorage.getItem(AUTO_SCEAT_RES_SETTINGS_STORAGE_KEY);
-    return raw ? normalizeAutoSceatResSettings(JSON.parse(raw)) : defaultAutoSceatResSettings();
-  } catch {
-    return defaultAutoSceatResSettings();
-  }
-}
-
-export function applyAutoSceatResSettingsToLocalStorage(settings: AutoSceatResClientSettings): void {
-  const normalized = normalizeAutoSceatResSettings(settings);
-  localStorage.setItem(AUTO_SCEAT_RES_SETTINGS_STORAGE_KEY, JSON.stringify(normalized));
-  window.dispatchEvent(new CustomEvent(AUTO_SCEAT_RES_SETTINGS_CHANGED_EVENT, { detail: normalized }));
-}
-
 export function persistAutoSceatResSettings(settings: AutoSceatResClientSettings): boolean {
   const normalized = normalizeAutoSceatResSettings(settings);
-  applyAutoSceatResSettingsToLocalStorage(normalized);
   return queueConfigurationUpdate('automation.autoSceatResources', normalized);
 }
 

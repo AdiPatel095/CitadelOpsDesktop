@@ -12,7 +12,8 @@ import {
   Swords,
 } from 'lucide-react';
 import { useMetadata, type MetadataItem } from '../context/MetadataContext';
-import { useCastleResources } from '../dashboard/context/CastleResourceContext';
+import { useCitadelAPI } from '../api/ApiContext';
+import type { CastleStateV2 } from '../api/Contracts';
 import { showToolPicker } from './ToolPickerModal';
 import { showTroopPicker } from './TroopPickerModal';
 import { Badge, Button, Card, CardContent, CardHeader, Input, Modal, PillSelector } from './ui';
@@ -74,7 +75,7 @@ const laneKeys: LaneKey[] = ['L', 'M', 'R'];
 const MAX_WAVES = 10;
 
 const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraft, inventory: inventoryOverride, onClose, onSave }) => {
-  const { castleResources } = useCastleResources();
+  const { state } = useCitadelAPI();
   const { troops, tools, isLoading: isMetadataLoading } = useMetadata();
   const [draft, setDraft] = useState<AttackSetupDraft>(() => normalizeDraft(initialDraft));
   const [activeWaveIndex, setActiveWaveIndex] = useState(0);
@@ -82,9 +83,9 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraf
 
   const allCastlesInventory = useMemo(
     () => isMetadataLoading
-      ? { troops: {}, tools: {}, castleCount: castleResources.size }
-      : aggregateCastleInventory(castleResources, troops, tools),
-    [castleResources, isMetadataLoading, tools, troops]
+      ? { troops: {}, tools: {}, castleCount: Object.keys(state?.castles ?? {}).length }
+      : aggregateCastleInventory(Object.values(state?.castles ?? {}), troops, tools),
+    [isMetadataLoading, state?.castles, tools, troops]
   );
   const inventory = useMemo(
     () => inventoryOverride
@@ -716,16 +717,16 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
 };
 
 function aggregateCastleInventory(
-  castles: Map<number, { troops?: { troopsI?: Record<string, number> } }>,
+  castles: CastleStateV2[],
   troopMetadata: Record<number, MetadataItem>,
   toolMetadata: Record<number, MetadataItem>
 ): { troops: Record<number, number>; tools: Record<number, number>; castleCount: number } {
   const troopStock: Record<number, number> = {};
   const toolStock: Record<number, number> = {};
   let castleCount = 0;
-  for (const castle of castles.values()) {
+  for (const castle of castles) {
     castleCount += 1;
-    for (const [rawID, rawCount] of Object.entries(castle.troops?.troopsI ?? {})) {
+    for (const [rawID, rawCount] of Object.entries(castle.units.stationed)) {
       const id = Number(rawID);
       const count = positiveInteger(rawCount);
       if (!Number.isFinite(id) || id <= 0 || count <= 0) continue;

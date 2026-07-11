@@ -49,7 +49,7 @@ func TestBrowserPreferenceRoundTrip(t *testing.T) {
 	if actual := loadBrowserPreference(dataDir); actual != "brave" {
 		t.Fatalf("loadBrowserPreference() = %q, want brave", actual)
 	}
-	info, err := os.Stat(filepath.Join(dataDir, "Browser", browserSelectionFile))
+	info, err := os.Stat(filepath.Join(dataDir, "Config", browserSelectionFile))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -3,7 +3,9 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -29,6 +31,7 @@ type Config struct {
 }
 
 type Application struct {
+	DataDir       string
 	State         *State.Store
 	GameData      *GameData.Manager
 	Configuration *Configuration.Store
@@ -64,6 +67,11 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	}
 
 	initial := State.NewGameState()
+	if recovered, recoveryErr := State.LoadSnapshot(config.DataDir); recoveryErr == nil {
+		initial = recovered
+	} else if !os.IsNotExist(recoveryErr) {
+		startupErr = errors.Join(startupErr, recoveryErr)
+	}
 	if current, ready := gameData.Current(); ready {
 		initial.CatalogVersion = current.Metadata().ItemVersion
 		initial.LanguageVersion = current.Metadata().LanguageVersion
@@ -88,7 +96,8 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	intentRegistry := Intent.NewRegistry()
 	intents := Intent.NewEngine(intentRegistry, state, gameData, session, ingest)
 	application := &Application{
-		State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
+		DataDir: config.DataDir,
+		State:   state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
 		Ingest: ingest, Session: session, Intents: intents, StartupErr: startupErr,
 	}
 	if err := application.registerCoreIntents(); err != nil {
@@ -120,6 +129,38 @@ func (application *Application) Start(ctx context.Context) {
 		}
 	}()
 	go application.capturePlayerHistory(ctx)
+	go application.persistState(ctx)
+}
+
+func (application *Application) persistState(ctx context.Context) {
+	events, unsubscribe := application.State.Subscribe(128)
+	defer unsubscribe()
+	var timer *time.Timer
+	var timerChannel <-chan time.Time
+	flush := func() {
+		_ = State.SaveSnapshot(application.DataDir, application.State.Snapshot())
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			if timer != nil {
+				timer.Stop()
+			}
+			flush()
+			return
+		case <-events:
+			if timer == nil {
+				timer = time.NewTimer(2 * time.Second)
+				timerChannel = timer.C
+			} else if timer.Stop() {
+				timer.Reset(2 * time.Second)
+			}
+		case <-timerChannel:
+			flush()
+			timer = nil
+			timerChannel = nil
+		}
+	}
 }
 
 func (application *Application) capturePlayerHistory(ctx context.Context) {

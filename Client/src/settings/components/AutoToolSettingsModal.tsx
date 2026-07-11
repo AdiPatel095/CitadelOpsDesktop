@@ -10,9 +10,8 @@ import {
   autoToolCheckIntervalMinutesToSec,
   autoToolCheckIntervalSecToMinutes,
   autoToolCastleScheduleID,
-  loadAutoToolSettingsFromStorage,
+  defaultAutoToolSettings,
   normalizeAutoToolSettings,
-  notifyAutoToolSettingsChanged,
   persistAutoToolSettings,
   type AutoToolClientSettingsV1,
   type AutoToolItem,
@@ -25,7 +24,7 @@ import {
 } from '../SchedulerTypes';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { configurationSection } from '../Configuration';
-import { castleOptionsFromState, type CastleOptionV2 } from '../../api/StateAdapters';
+import { castleOptionsFromState, type CastleOptionV2 } from '../../api/Selectors';
 import {
   buildQueueableProductionCatalog,
   queueableBuildingRowsLoaded,
@@ -46,7 +45,7 @@ export const AutoToolSettingsModal: React.FC<AutoToolSettingsModalProps> = ({ is
   const { getTool, buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
   const { configuration, state } = useCitadelAPI();
   const castles = castleOptionsFromState(state);
-  const [settings, setSettings] = useState<AutoToolClientSettingsV1>(() => loadAutoToolSettingsFromStorage());
+  const [settings, setSettings] = useState<AutoToolClientSettingsV1>(() => defaultAutoToolSettings());
   const featureSchedules = normalizeFeatureSchedules(
     configurationSection(configuration, 'scheduler').featureSchedules,
   );
@@ -58,15 +57,10 @@ export const AutoToolSettingsModal: React.FC<AutoToolSettingsModalProps> = ({ is
   useEffect(() => {
     if (isOpen) {
       setSettings(normalizeAutoToolSettings(
-        configuration?.sections['automation.autoTool'] ?? loadAutoToolSettingsFromStorage(),
+        configuration?.sections['automation.autoTool'] ?? defaultAutoToolSettings(),
       ));
     }
   }, [configuration?.sections, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    notifyAutoToolSettingsChanged(settings);
-  }, [isOpen, settings.mode]);
 
   const toolName = (toolID: number) => getTool(toolID)?.name || `Tool #${toolID}`;
 
@@ -214,7 +208,6 @@ export const AutoToolSettingsModal: React.FC<AutoToolSettingsModalProps> = ({ is
   };
 
   const handleClose = () => {
-    notifyAutoToolSettingsChanged(loadAutoToolSettingsFromStorage());
     onClose();
   };
 

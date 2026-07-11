@@ -16,7 +16,7 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-const SchemaVersion = 1
+const SchemaVersion = 2
 
 const (
 	CollectionPlayerSamples = "PlayerSamples"
@@ -166,15 +166,12 @@ func NewPlayerSample(snapshot State.GameState, gameData *GameData.Manager) Playe
 		TroopsByUnit: map[string]int64{}, Currencies: map[string]float64{},
 	}
 	for id, amount := range snapshot.Player.Resources {
-		key := fmt.Sprintf("resource_%d", id)
+		key := fmt.Sprintf("resource:%d", id)
 		if gameData != nil {
 			if definition, err := gameData.Resource(int64(id)); err == nil {
-				key = lowerCamel(definition.InternalName)
 				if definition.JSONKey == "C1" {
-					key = "coins"
 					sample.Coins = amount
 				} else if definition.JSONKey == "C2" {
-					key = "rubies"
 					sample.Rubies = amount
 				}
 			}
@@ -182,16 +179,7 @@ func NewPlayerSample(snapshot State.GameState, gameData *GameData.Manager) Playe
 		sample.Currencies[key] = amount
 	}
 	for id, amount := range snapshot.Player.Currencies {
-		key := fmt.Sprintf("currency_%d", id)
-		if gameData != nil {
-			if definition, err := gameData.Currency(int64(id)); err == nil {
-				key = lowerCamel(definition.InternalName)
-				if definition.JSONKey != "" {
-					sample.Currencies[definition.JSONKey] = amount
-				}
-			}
-		}
-		sample.Currencies[key] = amount
+		sample.Currencies[fmt.Sprintf("currency:%d", id)] = amount
 	}
 	for _, castle := range snapshot.Castles {
 		for id, amount := range castle.Units.Stationed {
@@ -222,12 +210,4 @@ func (store *Store) collectionPath(collection string) (string, error) {
 	default:
 		return "", fmt.Errorf("unknown history collection %q", collection)
 	}
-}
-
-func lowerCamel(value string) string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return "unknown"
-	}
-	return strings.ToLower(value[:1]) + value[1:]
 }

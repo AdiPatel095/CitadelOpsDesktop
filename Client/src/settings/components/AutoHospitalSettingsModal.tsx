@@ -5,10 +5,9 @@ import {
   autoHospitalCheckIntervalMinutesToSec,
   autoHospitalCheckIntervalSecToMinutes,
   DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_MIN,
-  loadAutoHospitalSettingsFromStorage,
+  defaultAutoHospitalSettings,
   MIN_AUTO_HOSPITAL_CHECK_INTERVAL_MIN,
   normalizeAutoHospitalSettings,
-  notifyAutoHospitalSettingsChanged,
   persistAutoHospitalSettings,
   type AutoHospitalClientSettingsV1,
 } from '../AutoHospitalClientState';
@@ -34,7 +33,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
   onOpenFeatureSchedule,
 }) => {
   const { configuration } = useCitadelAPI();
-  const [settings, setSettings] = useState<AutoHospitalClientSettingsV1>(() => loadAutoHospitalSettingsFromStorage());
+  const [settings, setSettings] = useState<AutoHospitalClientSettingsV1>(() => defaultAutoHospitalSettings());
   const featureSchedules = normalizeFeatureSchedules(
     configurationSection(configuration, 'scheduler').featureSchedules,
   );
@@ -43,7 +42,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
   useEffect(() => {
     if (!isOpen) return;
     setSettings(normalizeAutoHospitalSettings(
-      configuration?.sections['automation.autoHospital'] ?? loadAutoHospitalSettingsFromStorage(),
+      configuration?.sections['automation.autoHospital'] ?? defaultAutoHospitalSettings(),
     ));
   }, [configuration?.sections, isOpen]);
 
@@ -64,7 +63,6 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
   };
 
   const handleClose = () => {
-    notifyAutoHospitalSettingsChanged(loadAutoHospitalSettingsFromStorage());
     onClose();
   };
 

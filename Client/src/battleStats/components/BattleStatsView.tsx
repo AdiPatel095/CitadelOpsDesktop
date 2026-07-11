@@ -18,7 +18,8 @@ import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
 import DetailBackButton from '../../components/DetailBackButton';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
-import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
+import { useCitadelAPI } from '../../api/ApiContext';
+import type { GameStateV2 } from '../../api/Contracts';
 import type {
   BattleCombatant,
   BattleEffect,
@@ -56,7 +57,7 @@ interface AllianceMemberOption extends FilterOption {
 type CombatantSide = 'attacker' | 'defender';
 
 const BattleStatsView: React.FC = () => {
-  const { snapshot } = useLastKnownSnapshot();
+  const { state } = useCitadelAPI();
   const [reports, setReports] = useState<ParsedReport[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sourceLabel, setSourceLabel] = useState<string>('Not loaded');
@@ -108,11 +109,11 @@ const BattleStatsView: React.FC = () => {
   }, []);
 
   const allianceMembers = useMemo(
-    () => allianceMemberOptionsFromSources(snapshot, null),
-    [snapshot]
+    () => allianceMemberOptionsFromState(state),
+    [state]
   );
   const allianceMemberKeys = useMemo(() => allianceMemberKeysFromOptions(allianceMembers), [allianceMembers]);
-  const ownPlayerKeys = useMemo(() => ownPlayerKeysFromSnapshot(snapshot), [snapshot]);
+  const ownPlayerKeys = useMemo(() => ownPlayerKeysFromState(state), [state]);
   const playerHasAllianceEntry = useMemo(
     () => allianceMemberKeys.size > 0 && (ownPlayerKeys.size === 0 || setsOverlap(allianceMemberKeys, ownPlayerKeys)),
     [allianceMemberKeys, ownPlayerKeys]
@@ -1516,50 +1517,21 @@ function summarizeReports(
   );
 }
 
-function allianceMemberOptionsFromSources(
-  snapshot: Record<string, unknown> | null,
-  allianceInfo: Record<string, unknown> | null
-): AllianceMemberOption[] {
+function allianceMemberOptionsFromState(state: GameStateV2 | null): AllianceMemberOption[] {
   const rows = new Map<string, AllianceMemberOption>();
-  const gameState = isRecord(snapshot?.gameState) ? snapshot.gameState : null;
-  addAllianceMemberOptions(rows, isRecord(gameState?.alliance) ? gameState.alliance : null);
-  addAllianceMemberOptions(rows, allianceInfo);
-
-  return Array.from(rows.values()).sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function addAllianceMemberOptions(
-  rows: Map<string, AllianceMemberOption>,
-  alliance: Record<string, unknown> | null
-) {
-  const members = Array.isArray(alliance?.members) ? alliance.members : [];
-
-  members.forEach((member) => {
-    if (!isRecord(member)) {
-      return;
-    }
-
-    const id = stringValue(member.playerID ?? member.playerId ?? member.oid ?? member.OID ?? member.id ?? member.ID);
-    const name = stringValue(member.name ?? member.playerName ?? member.N ?? member.PN ?? member.Name);
+  for (const member of state?.alliance.members ?? []) {
+    const id = String(member.playerId || '');
+    const name = member.name?.trim() || '';
     const value = id || name.toLowerCase();
-    if (!value) {
-      return;
-    }
-
-    const keys = new Set<string>();
-    if (id) {
-      keys.add(id);
-    }
-    if (name) {
-      keys.add(name.toLowerCase());
-    }
-
+    if (!value) continue;
     rows.set(value, {
       value,
       label: name || `Player ${id}`,
-      keys: Array.from(keys),
+      keys: [id, name.toLowerCase()].filter(Boolean),
     });
-  });
+  }
+
+  return Array.from(rows.values()).sort((a, b) => a.label.localeCompare(b.label));
 }
 
 function allianceMemberKeysFromOptions(options: AllianceMemberOption[]): Set<string> {
@@ -1581,23 +1553,10 @@ function setsOverlap(left: Set<string>, right: Set<string>): boolean {
   return false;
 }
 
-function ownPlayerKeysFromSnapshot(snapshot: Record<string, unknown> | null): Set<string> {
+function ownPlayerKeysFromState(state: GameStateV2 | null): Set<string> {
   const keys = new Set<string>();
-  const gameState = isRecord(snapshot?.gameState) ? snapshot.gameState : null;
-  const player = isRecord(gameState?.player) ? gameState.player : null;
-  const id = stringValue(
-    gameState?.playerId ??
-    gameState?.playerID ??
-    gameState?.PlayerID ??
-    player?.id ??
-    player?.ID ??
-    player?.playerID ??
-    player?.playerId
-  );
-
-  if (id) {
-    keys.add(id);
-  }
+  if (state?.player.id) keys.add(String(state.player.id));
+  if (state?.player.name?.trim()) keys.add(state.player.name.trim().toLowerCase());
 
   return keys;
 }

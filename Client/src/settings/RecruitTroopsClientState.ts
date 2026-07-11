@@ -1,7 +1,5 @@
 import { queueConfigurationUpdate } from './Configuration';
 
-export const RECRUIT_TROOPS_SETTINGS_STORAGE_KEY = 'recruitTroopsSettings';
-export const RECRUIT_TROOPS_SETTINGS_CHANGED_EVENT = 'recruitTroopsSettingsChanged';
 export const DEFAULT_RECRUIT_CHECK_INTERVAL_SEC = 300;
 export const MIN_RECRUIT_CHECK_INTERVAL_SEC = 30;
 export const MAX_RECRUIT_CHECK_INTERVAL_SEC = 86400;
@@ -122,7 +120,7 @@ function targetsMapToCastles(raw: unknown, enabledRaw?: unknown): Record<string,
   return castles;
 }
 
-function defaultRecruitTroopsSettings(): RecruitTroopsClientSettingsV1 {
+export function defaultRecruitTroopsSettings(): RecruitTroopsClientSettingsV1 {
   return {
     version: 1,
     mode: 'global',
@@ -190,28 +188,7 @@ export function normalizeRecruitTroopsSettings(raw: unknown): RecruitTroopsClien
   };
 }
 
-export function loadRecruitTroopsSettingsFromStorage(): RecruitTroopsClientSettingsV1 {
-  try {
-    const raw = localStorage.getItem(RECRUIT_TROOPS_SETTINGS_STORAGE_KEY);
-    if (!raw) return defaultRecruitTroopsSettings();
-    return normalizeRecruitTroopsSettings(JSON.parse(raw));
-  } catch {
-    return defaultRecruitTroopsSettings();
-  }
-}
-
-export function notifyRecruitTroopsSettingsChanged(settings: RecruitTroopsClientSettingsV1): void {
-  window.dispatchEvent(new CustomEvent(RECRUIT_TROOPS_SETTINGS_CHANGED_EVENT, { detail: settings }));
-}
-
-export function applyRecruitTroopsSettingsToLocalStorage(settings: RecruitTroopsClientSettingsV1): void {
-  const normalized = normalizeRecruitTroopsSettings(settings);
-  localStorage.setItem(RECRUIT_TROOPS_SETTINGS_STORAGE_KEY, JSON.stringify(normalized));
-  notifyRecruitTroopsSettingsChanged(normalized);
-}
-
 export function persistRecruitTroopsSettings(settings: RecruitTroopsClientSettingsV1): boolean {
   const normalized = normalizeRecruitTroopsSettings(settings);
-  applyRecruitTroopsSettingsToLocalStorage(normalized);
   return queueConfigurationUpdate('automation.recruitTroops', normalized);
 }

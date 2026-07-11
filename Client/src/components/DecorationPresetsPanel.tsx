@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Castle, Layers, Play, Save, Sparkles, Trash2 } from 'lucide-react';
 import { useCastleFocus } from '../context/CastleFocusContext';
 import CastleFocusHoverPopover from './CastleFocusHoverPopover';
-import { castleFocusDisplayName } from '../types/CastleFocusState.ts';
+import { castleDisplayName } from '../api/Selectors';
 import { Input, Button, Select } from './ui';
 import { useCitadelAPI } from '../api/ApiContext';
 import { useMetadata } from '../context/MetadataContext';
@@ -21,15 +21,15 @@ interface DecorationPresetDocument {
 const EMPTY_PRESETS: NamedPreset[] = [];
 
 const DecorationPresetsPanel: React.FC = () => {
-  const { castleFocus } = useCastleFocus();
+  const { castle } = useCastleFocus();
   const { configuration, submitIntent, updateConfiguration } = useCitadelAPI();
   const { decorations } = useMetadata();
   const [newName, setNewName] = useState('');
   const [selectedPresetId, setSelectedPresetId] = useState('');
   const [operationError, setOperationError] = useState('');
 
-  const castleId = castleFocus?.aid && castleFocus.aid > 0 ? castleFocus.aid : 0;
-  const focusLabel = castleFocusDisplayName(castleFocus);
+  const castleId = castle?.id && castle.id > 0 ? castle.id : 0;
+  const focusLabel = castleDisplayName(castle);
   const presetDocument = useMemo(
     () => parsePresetDocument(configuration?.sections['decorations.presets']),
     [configuration?.sections],
@@ -45,17 +45,14 @@ const DecorationPresetsPanel: React.FC = () => {
 
   const handleSave = () => {
     if (!newName.trim() || castleId <= 0) return;
-    const items = [
-      ...(castleFocus?.bgRows ?? []).map((row) => ({ row, layer: 'BG' })),
-      ...(castleFocus?.bdRows ?? []).map((row) => ({ row, layer: 'BD' })),
-    ]
-      .filter(({ row }) => decorations[row.buildingID] != null)
-      .map(({ row, layer }) => ({
-        wid: row.buildingID,
-        x: row.x,
-        y: row.y,
-        r: row.r ?? 0,
-        layer,
+    const items = Object.values(castle?.buildings ?? {})
+      .filter((building) => decorations[building.definitionId] != null)
+      .map((building) => ({
+        wid: building.definitionId,
+        x: building.gridX ?? 0,
+        y: building.gridY ?? 0,
+        r: building.rotation ?? 0,
+        layer: 'BG',
       }));
     const preset: NamedPreset = {
       id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -77,7 +74,7 @@ const DecorationPresetsPanel: React.FC = () => {
     setOperationError('');
     void submitIntent('decoration.apply_preset', {
       castleId,
-      kingdomId: castleFocus?.kingdomID,
+      kingdomId: castle?.kingdomId,
       presetId,
       items: preset.items,
     }).catch((error) => setOperationError(error instanceof Error ? error.message : 'Could not apply preset'));
@@ -118,7 +115,7 @@ const DecorationPresetsPanel: React.FC = () => {
           </div>
           <div className="mt-1.5 flex min-h-[1.75rem] items-center">
             <CastleFocusHoverPopover
-              castleFocus={castleFocus}
+              castle={castle}
               align="start"
               expandToViewport
               className="min-w-0 max-w-full"

@@ -5,7 +5,6 @@ import {
   type TCIWithLevelCeiling,
   normalizeLevelRange,
   TCI_LEVEL_MIN,
-  TCI_LEVEL_MAX,
 } from '../../components/TCIPickerModal';
 import {
   fetchConstructionItemsCatalog,
@@ -16,19 +15,18 @@ import {
 } from '../../components/TCICatalogCache';
 import {
   applyPresetToStoredShape,
-  loadPresetsFile,
+  emptyPresetsFile,
   snapshotFromForm,
   type AutoTCIPreset,
 } from '../AutoTCIPresets';
 import {
   buildAutoTCIClientState,
-  loadAutoTCISettingsFromStorage,
   parseAutoTCIClientState,
   persistAutoTCIClientState,
 } from '../AutoTCIClientState';
 import { Modal, Button, Card, CardHeader, CardTitle, CardContent, Badge, Input, Select } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
-import { castleOptionsFromState } from '../../api/StateAdapters';
+import { castleOptionsFromState } from '../../api/Selectors';
 
 interface AutoTCISettingsModalProps {
   isOpen: boolean;
@@ -48,7 +46,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, AutoTCIItem[]>>({});
   const [catalog, setCatalog] = useState<ConstructionItemCatalogEntry[]>([]);
-  const [presetsState, setPresetsState] = useState(() => loadPresetsFile());
+  const [presetsState, setPresetsState] = useState(() => emptyPresetsFile());
   const [presetDropdownId, setPresetDropdownId] = useState('');
   const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null);
   const [presetName, setPresetName] = useState('');
@@ -65,9 +63,9 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     return m;
   }, [catalog]);
 
-  const hydrateFromStorage = useCallback(() => {
-    setSettings(loadAutoTCISettingsFromStorage());
-  }, []);
+  const hydrateFromConfiguration = useCallback(() => {
+    setSettings(parseAutoTCIClientState(configuration?.sections['automation.constructionItems']).targets);
+  }, [configuration?.sections]);
 
   const applyFullClientState = useCallback((state: ReturnType<typeof parseAutoTCIClientState>) => {
     setSettings(state.targets);
@@ -81,7 +79,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     fetchConstructionItemsCatalog().then(setCatalog).catch(() => setCatalog([]));
     applyFullClientState(parseAutoTCIClientState(
       configuration?.sections['automation.constructionItems']
-        ?? buildAutoTCIClientState(loadAutoTCISettingsFromStorage(), loadPresetsFile()),
+        ?? buildAutoTCIClientState({}, emptyPresetsFile()),
     ));
 
     setAppliedPresetId(null);
@@ -96,7 +94,13 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     const preselectedLevelFloors: Record<number, number> = {};
     currentItems.forEach((item) => {
       if (item.id) {
-        const range = normalizeLevelRange(item.minLevel ?? TCI_LEVEL_MIN, item.amount);
+        const meta = catalogByWireId.get(item.id);
+        const range = normalizeLevelRange(
+          item.minLevel ?? meta?.minLevel ?? TCI_LEVEL_MIN,
+          item.amount,
+          meta?.minLevel ?? TCI_LEVEL_MIN,
+          meta?.maxLevel ?? Number.MAX_SAFE_INTEGER,
+        );
         preselectedLevelCeilings[item.id] = range.ceiling;
         preselectedLevelFloors[item.id] = range.floor;
       }
@@ -134,7 +138,13 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       const list = prev[castleId] || [];
       const next = list.map((it) => {
         if (it.id !== itemId) return it;
-        const range = normalizeLevelRange(it.minLevel ?? TCI_LEVEL_MIN, it.amount + delta);
+        const meta = catalogByWireId.get(itemId);
+        const range = normalizeLevelRange(
+          it.minLevel ?? meta?.minLevel ?? TCI_LEVEL_MIN,
+          it.amount + delta,
+          meta?.minLevel ?? TCI_LEVEL_MIN,
+          meta?.maxLevel ?? Number.MAX_SAFE_INTEGER,
+        );
         const row: AutoTCIItem = { ...it, amount: range.ceiling };
         if (range.floor > 1) row.minLevel = range.floor;
         else delete row.minLevel;
@@ -149,7 +159,13 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       const list = prev[castleId] || [];
       const next = list.map((it) => {
         if (it.id !== itemId) return it;
-        const range = normalizeLevelRange((it.minLevel ?? TCI_LEVEL_MIN) + delta, it.amount);
+        const meta = catalogByWireId.get(itemId);
+        const range = normalizeLevelRange(
+          (it.minLevel ?? meta?.minLevel ?? TCI_LEVEL_MIN) + delta,
+          it.amount,
+          meta?.minLevel ?? TCI_LEVEL_MIN,
+          meta?.maxLevel ?? Number.MAX_SAFE_INTEGER,
+        );
         const row: AutoTCIItem = { ...it, amount: range.ceiling };
         if (range.floor > 1) row.minLevel = range.floor;
         else delete row.minLevel;
@@ -169,7 +185,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   const handleApplyPreset = () => {
     setPresetError('');
     if (!presetDropdownId) {
-      hydrateFromStorage();
+      hydrateFromConfiguration();
       setAppliedPresetId(null);
       setPresetName('');
       return;
@@ -218,7 +234,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     setPresetDropdownId('');
     if (appliedPresetId === id) {
       setAppliedPresetId(null);
-      hydrateFromStorage();
+      hydrateFromConfiguration();
       setPresetName('');
     }
   };
@@ -245,7 +261,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   };
 
   const presetOptions = [
-    { value: '', label: '— Saved on disk (default) —' },
+    { value: '', label: '— Saved configuration —' },
     ...presetsState.presets.map((p) => ({ value: p.id, label: p.name })),
   ];
 
@@ -309,16 +325,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
             </span>
             <p className="mt-1 text-sm font-normal text-text-muted">
               Per castle, pick construction item variants and set a <span className="font-medium text-text-main">level floor and ceiling</span>{' '}
-              (1–{TCI_LEVEL_MAX}) with +/-. Use the floor when you only keep higher tiers in stash. Names and effects match the{' '}
-              <a
-                href="https://generalscamp.github.io/forum/overviews/building_items/index.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                GeneralsCamp building items
-              </a>{' '}
-              overview.
+              using the level range supplied by the current official construction-item catalog.
             </p>
           </div>
           <Button
@@ -430,10 +437,15 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                   <div className="w-full">
                     <div className="flex flex-col gap-3">
                       {castleItems.map((item, index) => {
-                        const range = normalizeLevelRange(item.minLevel ?? TCI_LEVEL_MIN, item.amount);
+                        const meta = catalogByWireId.get(item.id);
+                        const range = normalizeLevelRange(
+                          item.minLevel ?? meta?.minLevel ?? TCI_LEVEL_MIN,
+                          item.amount,
+                          meta?.minLevel ?? TCI_LEVEL_MIN,
+                          meta?.maxLevel ?? Number.MAX_SAFE_INTEGER,
+                        );
                         const floor = range.floor;
                         const ceil = range.ceiling;
-                        const meta = catalogByWireId.get(item.id);
                         const effectLine = meta ? formatEffectUpgradeLine(meta) : '';
                         return (
                           <div
@@ -467,7 +479,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                                 floor,
                                 () => bumpFloor(castleId, item.id, -1),
                                 () => bumpFloor(castleId, item.id, 1),
-                                floor <= TCI_LEVEL_MIN,
+                                floor <= (meta?.minLevel ?? TCI_LEVEL_MIN),
                                 floor >= ceil,
                                 'Decrease level floor',
                                 'Increase level floor',
@@ -478,7 +490,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                                 () => bumpCeiling(castleId, item.id, -1),
                                 () => bumpCeiling(castleId, item.id, 1),
                                 ceil <= floor,
-                                ceil >= TCI_LEVEL_MAX,
+                                ceil >= (meta?.maxLevel ?? ceil),
                                 'Decrease level ceiling',
                                 'Increase level ceiling',
                               )}
