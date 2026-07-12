@@ -439,11 +439,10 @@ func eligibleMaidenCommanders(state State.GameState) []State.CommanderID {
 		if equipment.WearerKind != "commander" || (equipment.RarityID != 5 && equipment.RarityID != 15) {
 			continue
 		}
-		values := equipment.Effects[maidenSupportEffectID]
-		if len(values) == 0 {
+		value, found := equipmentWireEffectLastValue(equipment.Effects, maidenSupportEffectID)
+		if !found {
 			continue
 		}
-		value := values[len(values)-1]
 		commanderID := State.CommanderID(equipment.WearerID)
 		commander, ok := state.Commanders[commanderID]
 		if ok && commanderID > 0 && commander.Available && value >= maidenSupportMinimum && value <= maidenSupportMaximum {
@@ -456,6 +455,15 @@ func eligibleMaidenCommanders(state State.GameState) []State.CommanderID {
 	}
 	sort.Slice(result, func(left, right int) bool { return result[left] < result[right] })
 	return result
+}
+
+func equipmentWireEffectLastValue(effects State.EquipmentEffects, wireID int64) (float64, bool) {
+	for _, effect := range effects {
+		if effect.WireID == wireID && len(effect.Values) > 0 {
+			return effect.Values[len(effect.Values)-1], true
+		}
+	}
+	return 0, false
 }
 
 type attackPair [2]int64

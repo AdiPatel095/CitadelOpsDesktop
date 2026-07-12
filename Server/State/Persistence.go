@@ -161,8 +161,26 @@ func normalizeStateMaps(state *GameState) {
 	if state.Commanders == nil {
 		state.Commanders = defaults.Commanders
 	}
+	for id, commander := range state.Commanders {
+		if commander.Equipment == nil {
+			commander.Equipment = map[string]EquipmentInstanceID{}
+		}
+		if commander.Gems == nil {
+			commander.Gems = map[string]GemInstanceID{}
+		}
+		state.Commanders[id] = commander
+	}
 	if state.Castellans == nil {
 		state.Castellans = defaults.Castellans
+	}
+	for id, castellan := range state.Castellans {
+		if castellan.Equipment == nil {
+			castellan.Equipment = map[string]EquipmentInstanceID{}
+		}
+		if castellan.Gems == nil {
+			castellan.Gems = map[string]GemInstanceID{}
+		}
+		state.Castellans[id] = castellan
 	}
 	if state.Movements == nil {
 		state.Movements = defaults.Movements
@@ -188,8 +206,23 @@ func normalizeStateMaps(state *GameState) {
 	if state.Inventory.Equipment == nil {
 		state.Inventory.Equipment = defaults.Inventory.Equipment
 	}
+	for id, item := range state.Inventory.Equipment {
+		if item.Effects == nil {
+			item.Effects = EquipmentEffects{}
+		}
+		state.Inventory.Equipment[id] = item
+	}
 	if state.Inventory.Gems == nil {
 		state.Inventory.Gems = defaults.Inventory.Gems
+	}
+	for id, gem := range state.Inventory.Gems {
+		if gem.Effects == nil {
+			gem.Effects = EquipmentEffects{}
+		}
+		state.Inventory.Gems[id] = gem
+	}
+	if state.Inventory.GemStacks == nil {
+		state.Inventory.GemStacks = defaults.Inventory.GemStacks
 	}
 	if state.Inventory.Items == nil {
 		state.Inventory.Items = defaults.Inventory.Items

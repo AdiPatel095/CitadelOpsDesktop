@@ -69,7 +69,7 @@ func reduceInitialState(
 		changed = changed || updated
 	}
 	if raw := root["gli"]; len(raw) > 0 {
-		updated, err := applyLeaders(raw, gameState)
+		updated, err := applyLeaders(raw, gameState, gameData)
 		if err != nil {
 			return nil, false, err
 		}

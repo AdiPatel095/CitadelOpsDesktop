@@ -2,6 +2,7 @@ package State
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 )
 
@@ -194,23 +195,63 @@ type EquipmentInstance struct {
 	Level        int                 `json:"level,omitempty"`
 	WearerID     int64               `json:"wearerId,omitempty"`
 	WearerKind   string              `json:"wearerKind,omitempty"`
-	Effects      map[int64][]float64 `json:"effects"`
+	Effects      EquipmentEffects    `json:"effects"`
+}
+
+type EquipmentEffect struct {
+	WireID       int64     `json:"wireId"`
+	DefinitionID int64     `json:"definitionId"`
+	RollPercent  *float64  `json:"rollPercent,omitempty"`
+	Values       []float64 `json:"values"`
+}
+
+type EquipmentEffects []EquipmentEffect
+
+func (effects *EquipmentEffects) UnmarshalJSON(raw []byte) error {
+	var ordered []EquipmentEffect
+	if err := json.Unmarshal(raw, &ordered); err == nil {
+		*effects = ordered
+		return nil
+	}
+	// Schema 2 snapshots written before ordered effects used an id-keyed map.
+	// Accept it for migration; the next live equipment refresh restores exact
+	// roll percentages and any duplicate rows that the old shape could not hold.
+	var legacy map[string][]float64
+	if err := json.Unmarshal(raw, &legacy); err != nil {
+		return err
+	}
+	ordered = make([]EquipmentEffect, 0, len(legacy))
+	for rawID, values := range legacy {
+		id, err := strconv.ParseInt(rawID, 10, 64)
+		if err != nil {
+			continue
+		}
+		ordered = append(ordered, EquipmentEffect{WireID: id, DefinitionID: id, Values: append([]float64(nil), values...)})
+	}
+	*effects = ordered
+	return nil
 }
 
 type GemInstance struct {
-	ID           GemInstanceID       `json:"id"`
-	DefinitionID GemID               `json:"definitionId"`
-	Slot         int                 `json:"slot,omitempty"`
-	Level        int                 `json:"level,omitempty"`
-	WearerID     int64               `json:"wearerId,omitempty"`
-	WearerKind   string              `json:"wearerKind,omitempty"`
-	Effects      map[int64][]float64 `json:"effects"`
+	ID                  GemInstanceID       `json:"id"`
+	DefinitionID        GemID               `json:"definitionId"`
+	TypeID              int                 `json:"typeId,omitempty"`
+	CompatibleWearerID  int                 `json:"compatibleWearerId,omitempty"`
+	CombatMode          string              `json:"combatMode,omitempty"`
+	SetID               int64               `json:"setId,omitempty"`
+	Slot                int                 `json:"slot,omitempty"`
+	Level               int                 `json:"level,omitempty"`
+	EquipmentInstanceID EquipmentInstanceID `json:"equipmentInstanceId,omitempty"`
+	WearerID            int64               `json:"wearerId,omitempty"`
+	WearerKind          string              `json:"wearerKind,omitempty"`
+	Effects             EquipmentEffects    `json:"effects"`
 }
 
 type InventoryState struct {
 	ConstructionItems map[ConstructionItemID]int64              `json:"constructionItems"`
 	Equipment         map[EquipmentInstanceID]EquipmentInstance `json:"equipment"`
 	Gems              map[GemInstanceID]GemInstance             `json:"gems"`
+	GemStacks         map[GemID]int64                           `json:"gemStacks"`
 	Items             map[string]map[int64]int64                `json:"items"`
 }
 
@@ -412,6 +453,7 @@ func NewGameState() GameState {
 			ConstructionItems: map[ConstructionItemID]int64{},
 			Equipment:         map[EquipmentInstanceID]EquipmentInstance{},
 			Gems:              map[GemInstanceID]GemInstance{},
+			GemStacks:         map[GemID]int64{},
 			Items:             map[string]map[int64]int64{},
 		},
 		Alliance:    AllianceState{Members: []AllianceMember{}, Holdings: []AllianceHolding{}},

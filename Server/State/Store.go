@@ -199,14 +199,15 @@ func cloneGameState(source GameState) GameState {
 	clone.Inventory.ConstructionItems = cloneMap(source.Inventory.ConstructionItems)
 	clone.Inventory.Equipment = make(map[EquipmentInstanceID]EquipmentInstance, len(source.Inventory.Equipment))
 	for id, item := range source.Inventory.Equipment {
-		item.Effects = cloneEffectValues(item.Effects)
+		item.Effects = cloneEquipmentEffects(item.Effects)
 		clone.Inventory.Equipment[id] = item
 	}
 	clone.Inventory.Gems = make(map[GemInstanceID]GemInstance, len(source.Inventory.Gems))
 	for id, gem := range source.Inventory.Gems {
-		gem.Effects = cloneEffectValues(gem.Effects)
+		gem.Effects = cloneEquipmentEffects(gem.Effects)
 		clone.Inventory.Gems[id] = gem
 	}
+	clone.Inventory.GemStacks = cloneMap(source.Inventory.GemStacks)
 	clone.Inventory.Items = make(map[string]map[int64]int64, len(source.Inventory.Items))
 	for collection, items := range source.Inventory.Items {
 		clone.Inventory.Items[collection] = cloneMap(items)
@@ -297,10 +298,11 @@ func cloneCommanderIDPointer(source *CommanderID) *CommanderID {
 	return &value
 }
 
-func cloneEffectValues(source map[int64][]float64) map[int64][]float64 {
-	clone := make(map[int64][]float64, len(source))
-	for id, values := range source {
-		clone[id] = append([]float64(nil), values...)
+func cloneEquipmentEffects(source EquipmentEffects) EquipmentEffects {
+	clone := append(EquipmentEffects(nil), source...)
+	for index := range clone {
+		clone[index].RollPercent = cloneFloatPointer(source[index].RollPercent)
+		clone[index].Values = append([]float64(nil), source[index].Values...)
 	}
 	return clone
 }

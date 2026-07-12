@@ -6,6 +6,8 @@ import type {
   CatalogManifest,
   CatalogResponse,
   ConfigurationSnapshot,
+	EquipmentOptimizeRequest,
+	EquipmentOptimizeResponse,
   GameStateV2,
   IntentReceipt,
 	IntentDefinition,
@@ -119,6 +121,13 @@ class CitadelClient {
   getProjection<T>(name: string): Promise<T> {
     return this.request<T>(`/api/v2/projections/${encodeURIComponent(name)}`);
   }
+
+	optimizeEquipment(input: EquipmentOptimizeRequest): Promise<EquipmentOptimizeResponse> {
+		return this.request<EquipmentOptimizeResponse>('/api/v2/equipment/optimize', {
+			method: 'POST',
+			body: JSON.stringify(input),
+		});
+	}
 
   async localize(keys: string[]): Promise<Record<string, string>> {
     const response = await this.request<{ values: Record<string, string> }>('/api/v2/game-data/localize', {

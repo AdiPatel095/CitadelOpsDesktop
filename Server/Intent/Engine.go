@@ -211,13 +211,14 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 	if err != nil {
 		return err
 	}
+	awaitOpcodes := stepAwaitOpcodes(step)
 	var observed <-chan Protocol.CommittedFrame
 	cancelWatch := func() {}
-	if step.AwaitOpcode != "" {
+	if len(awaitOpcodes) > 0 {
 		if engine.observer == nil {
 			return fmt.Errorf("response observer is unavailable")
 		}
-		observed, cancelWatch = engine.observer.Watch(step.AwaitOpcode, afterRevision)
+		observed, cancelWatch = engine.watchAny(ctx, awaitOpcodes, afterRevision)
 	}
 	defer cancelWatch()
 	if err := engine.sender.Send(ctx, payload); err != nil {
@@ -236,7 +237,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-timer.C:
-		return fmt.Errorf("timed out waiting for %s", step.AwaitOpcode)
+		return fmt.Errorf("timed out waiting for %s", strings.Join(awaitOpcodes, " or "))
 	case frame := <-observed:
 		if len(step.SuccessCodes) > 0 {
 			if frame.Frame.ResponseCode == nil || !containsInt(step.SuccessCodes, *frame.Frame.ResponseCode) {
@@ -286,8 +287,63 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 		}
 		plan.Steps[index].Opcode = strings.ToLower(plan.Steps[index].Opcode)
 		plan.Steps[index].AwaitOpcode = strings.ToLower(plan.Steps[index].AwaitOpcode)
+		plan.Steps[index].AwaitOpcodes = normalizeAwaitOpcodes(plan.Steps[index].AwaitOpcodes)
 	}
 	return plan
+}
+
+func (engine *Engine) watchAny(ctx context.Context, opcodes []string, afterRevision uint64) (<-chan Protocol.CommittedFrame, func()) {
+	watchContext, stop := context.WithCancel(ctx)
+	merged := make(chan Protocol.CommittedFrame, 1)
+	cancellations := make([]func(), 0, len(opcodes))
+	for _, opcode := range opcodes {
+		source, cancel := engine.observer.Watch(opcode, afterRevision)
+		cancellations = append(cancellations, cancel)
+		go func(frames <-chan Protocol.CommittedFrame) {
+			select {
+			case frame := <-frames:
+				select {
+				case merged <- frame:
+				case <-watchContext.Done():
+				}
+			case <-watchContext.Done():
+			}
+		}(source)
+	}
+	var once sync.Once
+	return merged, func() {
+		once.Do(func() {
+			stop()
+			for _, cancel := range cancellations {
+				cancel()
+			}
+		})
+	}
+}
+
+func stepAwaitOpcodes(step Step) []string {
+	opcodes := append([]string(nil), step.AwaitOpcodes...)
+	if step.AwaitOpcode != "" {
+		opcodes = append(opcodes, step.AwaitOpcode)
+	}
+	return normalizeAwaitOpcodes(opcodes)
+}
+
+func normalizeAwaitOpcodes(opcodes []string) []string {
+	seen := map[string]struct{}{}
+	result := make([]string, 0, len(opcodes))
+	for _, opcode := range opcodes {
+		opcode = strings.ToLower(strings.TrimSpace(opcode))
+		if opcode == "" {
+			continue
+		}
+		if _, exists := seen[opcode]; exists {
+			continue
+		}
+		seen[opcode] = struct{}{}
+		result = append(result, opcode)
+	}
+	return result
 }
 
 func stepLabel(step Step) string {

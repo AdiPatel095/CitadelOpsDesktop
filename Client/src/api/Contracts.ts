@@ -171,24 +171,75 @@ export interface EquipmentInstanceV2 {
 	level?: number;
 	wearerId?: number;
 	wearerKind?: string;
-	effects: Record<string, number[]>;
+	effects: EquipmentEffectV2[];
+}
+
+export interface EquipmentEffectV2 {
+	wireId: number;
+	definitionId: number;
+	rollPercent?: number;
+	values: number[];
 }
 
 export interface GemInstanceV2 {
 	id: number;
 	definitionId: number;
+	typeId?: number;
+	compatibleWearerId?: number;
+	combatMode?: 'pvp' | 'pve' | 'any';
+	setId?: number;
 	slot?: number;
 	level?: number;
+	equipmentInstanceId?: number;
 	wearerId?: number;
 	wearerKind?: string;
-	effects: Record<string, number[]>;
+	effects: EquipmentEffectV2[];
 }
 
 export interface InventoryStateV2 {
 	constructionItems: Record<string, number>;
 	equipment: Record<string, EquipmentInstanceV2>;
 	gems: Record<string, GemInstanceV2>;
+	gemStacks: Record<string, number>;
 	items: Record<string, Record<string, number>>;
+}
+
+export interface EquipmentPriorityV2 {
+	effectId: number;
+	tier: 1 | 2;
+	position: number;
+}
+
+export interface EquipmentOptimizeRequest {
+	leaderKind: 'commander' | 'castellan';
+	leaderId: number;
+	combatMode: 'pvp' | 'pve';
+	priorities: EquipmentPriorityV2[];
+}
+
+export interface EquipmentEffectTotalV2 {
+	definitionId: number;
+	value: number;
+	cap?: number;
+	capped: boolean;
+}
+
+export interface EquipmentLoadoutV2 {
+	equipment: Record<string, number>;
+	gems: Record<string, number>;
+	effects: EquipmentEffectTotalV2[];
+	score: number;
+}
+
+export interface EquipmentOptimizeResponse {
+	leaderKind: 'commander' | 'castellan';
+	leaderId: number;
+	current: EquipmentLoadoutV2;
+	proposed: EquipmentLoadoutV2;
+	candidates: {
+		equipmentBySlot: Record<string, number>;
+		gems: number;
+	};
 }
 
 export interface AllianceMemberV2 {

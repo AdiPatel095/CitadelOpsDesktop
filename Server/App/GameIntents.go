@@ -18,6 +18,9 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("movement.track_station", application.trackStationMovement); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("equipment.verify_coin_reserve", application.verifyEquipmentCoinReserve); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("rift.template.rename", application.renameRiftTemplate); err != nil {
 		return err
 	}
@@ -43,13 +46,40 @@ func (application *Application) registerGameIntents() error {
 			Planner: planMovementRecall,
 		},
 		{
-			Name: "equipment.refresh", Description: "Request the current commander and castellan loadouts", Effect: Intent.EffectRead,
-			Planner: func(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
-				return Intent.Plan{
-					Claims: []string{"game:equipment"}, Summary: "Refresh equipment",
-					Steps: []Intent.Step{commandStep("Refresh equipment", "gli", json.RawMessage(`{}`), "gli")},
-				}, nil
-			},
+			Name: "equipment.refresh", Description: "Refresh loadouts, equipment storage, and gem storage", Effect: Intent.EffectRead,
+			Planner: planEquipmentRefresh,
+		},
+		{
+			Name: "equipment.equip", Description: "Equip a validated storage item on a commander or castellan", Effect: Intent.EffectWrite,
+			Planner: planEquipmentEquip,
+		},
+		{
+			Name: "equipment.unequip", Description: "Unequip one or more validated items from a commander or castellan", Effect: Intent.EffectWrite,
+			Planner: planEquipmentUnequip,
+		},
+		{
+			Name: "equipment.gem.equip", Description: "Socket a validated relic gem into equipped gear", Effect: Intent.EffectWrite,
+			Planner: planGemEquip,
+		},
+		{
+			Name: "equipment.gem.unequip", Description: "Remove a socketed gem from equipped gear", Effect: Intent.EffectWrite,
+			Planner: planGemUnequip,
+		},
+		{
+			Name: "equipment.swap", Description: "Swap base equipment and attached gems between two leaders", Effect: Intent.EffectWrite,
+			Planner: planEquipmentSwap,
+		},
+		{
+			Name: "equipment.reconfigure", Description: "Apply a validated optimizer loadout to one commander or castellan", Effect: Intent.EffectWrite,
+			Planner: planEquipmentReconfigure,
+		},
+		{
+			Name: "equipment.upgrade", Description: "Upgrade equipment or a relic gem to a validated target level", Effect: Intent.EffectWrite,
+			Planner: application.planEquipmentUpgrade,
+		},
+		{
+			Name: "equipment.sell", Description: "Sell a deterministic equipment or gem storage selection", Effect: Intent.EffectWrite,
+			Planner: planEquipmentSell,
 		},
 		{
 			Name: "game.focus_castle", Description: "Focus and refresh one of the player's castles", Effect: Intent.EffectRead,

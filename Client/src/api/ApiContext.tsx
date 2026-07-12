@@ -14,6 +14,8 @@ import type {
   CatalogManifest,
   CatalogResponse,
   ConfigurationSnapshot,
+	EquipmentOptimizeRequest,
+	EquipmentOptimizeResponse,
   GameStateV2,
   IntentReceipt,
   SubmitIntentOptions,
@@ -32,6 +34,7 @@ interface APIContextValue {
   refreshConfiguration: () => Promise<void>;
   getCatalog: <T extends Record<string, unknown>>(name: string) => Promise<CatalogResponse<T>>;
   localize: (keys: string[]) => Promise<Record<string, string>>;
+	optimizeEquipment: (input: EquipmentOptimizeRequest) => Promise<EquipmentOptimizeResponse>;
   submitIntent: (
     name: string,
     argumentsValue?: Record<string, unknown>,
@@ -154,6 +157,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
     refreshConfiguration,
     getCatalog: (name) => CitadelAPI.getCatalog(name),
     localize: (keys) => CitadelAPI.localize(keys),
+	optimizeEquipment: (input) => CitadelAPI.optimizeEquipment(input),
     submitIntent,
     updateConfiguration,
   }), [

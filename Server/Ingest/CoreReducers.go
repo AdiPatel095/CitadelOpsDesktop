@@ -17,6 +17,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"ain", reduceAllianceInfo},
 		{"gli", reduceLeaders},
 		{"gei", reduceEquipmentStorage},
+		{"ggm", reduceGemStorage},
 		{"gii", reduceConstructionInventory},
 		{"jaa", reduceCastleSnapshot},
 		{"jca", reduceCastleSnapshot},
@@ -44,6 +45,16 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"bls", reduceBattleSummaryCapture},
 		{"blm", reduceBattleWaveCapture},
 		{"bld", reduceBattleDetailCapture},
+		{"eeq", reduceEquipmentMutation},
+		{"bge", reduceEquipmentMutation},
+		{"ege", reduceEquipmentMutation},
+		{"ere", reduceEquipmentMutation},
+		{"eqe", reduceEquipmentMutation},
+		{"gsue", reduceEquipmentMutation},
+		{"guse", reduceEquipmentMutation},
+		{"seq", reduceEquipmentMutation},
+		{"sge", reduceEquipmentMutation},
+		{"gnr", reduceEquipmentMutation},
 	}
 	for _, entry := range reducers {
 		if err := registry.Register(entry.opcode, entry.reducer); err != nil {

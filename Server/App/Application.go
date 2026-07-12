@@ -13,6 +13,7 @@ import (
 	"CitadelDesktop/Server/API"
 	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Configuration"
+	EquipmentDomain "CitadelDesktop/Server/Equipment"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/Ingest"
@@ -81,6 +82,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if current, ready := gameData.Current(); ready {
 		initial.CatalogVersion = current.Metadata().ItemVersion
 		initial.LanguageVersion = current.Metadata().LanguageVersion
+		EquipmentDomain.HydrateState(&initial, current)
 	}
 	state := State.NewStore(initial)
 	registry := Ingest.NewRegistry()
@@ -347,12 +349,16 @@ func (application *Application) refreshGameData(ctx context.Context) error {
 	version := current.Metadata().ItemVersion
 	languageVersion := current.Metadata().LanguageVersion
 	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		if gameState.CatalogVersion == version && gameState.LanguageVersion == languageVersion {
+		changed := EquipmentDomain.HydrateState(gameState, current)
+		if gameState.CatalogVersion != version || gameState.LanguageVersion != languageVersion {
+			gameState.CatalogVersion = version
+			gameState.LanguageVersion = languageVersion
+			changed = true
+		}
+		if !changed {
 			return nil, false, nil
 		}
-		gameState.CatalogVersion = version
-		gameState.LanguageVersion = languageVersion
-		return []string{"game-data"}, true, nil
+		return []string{"game-data", "equipment", "gems"}, true, nil
 	})
 	return err
 }
