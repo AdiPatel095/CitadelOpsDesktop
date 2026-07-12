@@ -2,6 +2,7 @@ import { API_CONFIG } from '../config/Api';
 import type {
   APIConnectionStatus,
   APIEnvelope,
+	AllianceTargetViewV2,
   BrowserInventory,
   CatalogManifest,
   CatalogResponse,
@@ -121,6 +122,15 @@ class CitadelClient {
   getProjection<T>(name: string): Promise<T> {
     return this.request<T>(`/api/v2/projections/${encodeURIComponent(name)}`);
   }
+
+	getAllianceTargets(allianceId = '', server = '', refresh = false): Promise<AllianceTargetViewV2> {
+		const query = new URLSearchParams();
+		if (allianceId) query.set('allianceId', allianceId);
+		if (server) query.set('server', server);
+		if (refresh) query.set('refresh', '1');
+		const suffix = query.size > 0 ? `?${query.toString()}` : '';
+		return this.request<AllianceTargetViewV2>(`/api/v2/alliance-targets${suffix}`);
+	}
 
 	optimizeEquipment(input: EquipmentOptimizeRequest): Promise<EquipmentOptimizeResponse> {
 		return this.request<EquipmentOptimizeResponse>('/api/v2/equipment/optimize', {

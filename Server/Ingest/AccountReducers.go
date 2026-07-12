@@ -142,6 +142,7 @@ func reduceAllianceInfo(
 	members := make([]State.AllianceMember, 0, len(payload.Alliance.Members))
 	holdings := make([]State.AllianceHolding, 0, len(payload.Alliance.Members)*4)
 	playerChanged := false
+	containsCurrentPlayer := false
 	for _, raw := range payload.Alliance.Members {
 		var member struct {
 			ID                  wireInt64           `json:"OID"`
@@ -178,6 +179,7 @@ func reduceAllianceInfo(
 			}
 		}
 		if State.PlayerID(member.ID) == gameState.Player.ID {
+			containsCurrentPlayer = true
 			if gameState.Player.Level != member.Level || gameState.Player.LegendLevel != member.LegendLevel ||
 				gameState.Player.AllianceID != State.AllianceID(member.AllianceID) ||
 				gameState.Player.Might != float64(member.Might) || gameState.Player.Glory != float64(member.Glory) {
@@ -195,12 +197,22 @@ func reduceAllianceInfo(
 	}
 	next := State.AllianceState{
 		ID: State.AllianceID(payload.Alliance.ID), Name: payload.Alliance.Name, Members: members, Holdings: holdings,
+		ObservedAt: frame.ReceivedAt,
 	}
-	if reflect.DeepEqual(gameState.Alliance, next) && !playerChanged {
+	if gameState.Alliances == nil {
+		gameState.Alliances = map[State.AllianceID]State.AllianceState{}
+	}
+	directoryChanged := !reflect.DeepEqual(gameState.Alliances[next.ID], next)
+	gameState.Alliances[next.ID] = next
+	isOwnAlliance := containsCurrentPlayer || next.ID > 0 && next.ID == gameState.Player.AllianceID
+	allianceChanged := isOwnAlliance && !reflect.DeepEqual(gameState.Alliance, next)
+	if allianceChanged {
+		gameState.Alliance = next
+	}
+	if !directoryChanged && !allianceChanged && !playerChanged {
 		return nil, false, nil
 	}
-	gameState.Alliance = next
-	return []string{"alliance", "player"}, true, nil
+	return []string{"alliance", "alliances", "player"}, true, nil
 }
 
 func applyPlayerInfo(raw json.RawMessage, gameState *State.GameState) (bool, error) {

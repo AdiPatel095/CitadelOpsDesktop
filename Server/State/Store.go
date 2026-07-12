@@ -214,6 +214,12 @@ func cloneGameState(source GameState) GameState {
 	}
 	clone.Alliance.Members = append([]AllianceMember{}, source.Alliance.Members...)
 	clone.Alliance.Holdings = append([]AllianceHolding{}, source.Alliance.Holdings...)
+	clone.Alliances = make(map[AllianceID]AllianceState, len(source.Alliances))
+	for id, alliance := range source.Alliances {
+		alliance.Members = append([]AllianceMember{}, alliance.Members...)
+		alliance.Holdings = append([]AllianceHolding{}, alliance.Holdings...)
+		clone.Alliances[id] = alliance
+	}
 	clone.Map = make(map[KingdomID]map[string]MapObservation, len(source.Map))
 	for kingdomID, observations := range source.Map {
 		clone.Map[kingdomID] = cloneMap(observations)

@@ -18,6 +18,7 @@ func TestReportNoticeReducerClassifiesSpyAndBattleNotices(t *testing.T) {
 		ReceivedAt: time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC),
 		Payload: json.RawMessage(`{"MSG":[
 			[101,3,"spy-key","",-1,0],
+			[104,3,"shared-spy","",77,0],
 			[102,6,"2+0+0#0+-209","",-1,0],
 			[103,3,"expired","",-1,21600]
 		]}`),
@@ -28,6 +29,9 @@ func TestReportNoticeReducerClassifiesSpyAndBattleNotices(t *testing.T) {
 	}
 	if !changed || gameState.Reports.Notices[101].TypeID != 3 || gameState.Reports.Notices[102].TypeID != 6 {
 		t.Fatalf("unexpected notices: %#v", gameState.Reports.Notices)
+	}
+	if !gameState.Reports.Notices[101].OwnedByPlayer || gameState.Reports.Notices[104].OwnedByPlayer {
+		t.Fatalf("spy ownership = own:%t shared:%t", gameState.Reports.Notices[101].OwnedByPlayer, gameState.Reports.Notices[104].OwnedByPlayer)
 	}
 	if gameState.Reports.Notices[103].Status != "expired" {
 		t.Fatalf("expired notice status = %q", gameState.Reports.Notices[103].Status)

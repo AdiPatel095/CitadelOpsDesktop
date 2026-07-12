@@ -4,12 +4,14 @@ type Player struct {
 	ID       int64  `json:"id,omitempty"`
 	Name     string `json:"name,omitempty"`
 	Alliance string `json:"alliance,omitempty"`
+	Dummy    *bool  `json:"dummy,omitempty"`
 }
 
 type Castle struct {
 	ID        int64  `json:"id,omitempty"`
 	Name      string `json:"name,omitempty"`
 	KingdomID int    `json:"kingdomID,omitempty"`
+	TypeID    int    `json:"typeID,omitempty"`
 	X         int    `json:"x,omitempty"`
 	Y         int    `json:"y,omitempty"`
 }

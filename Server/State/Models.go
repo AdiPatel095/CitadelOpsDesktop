@@ -180,6 +180,7 @@ type MovementState struct {
 	TargetY         int              `json:"targetY"`
 	TravelSeconds   int              `json:"travelSeconds,omitempty"`
 	ProgressSeconds int              `json:"progressSeconds,omitempty"`
+	SpyCount        int              `json:"spyCount,omitempty"`
 	ArrivesAt       *time.Time       `json:"arrivesAt,omitempty"`
 	ReturnsAt       *time.Time       `json:"returnsAt,omitempty"`
 	Units           map[UnitID]int64 `json:"units"`
@@ -275,10 +276,11 @@ type AllianceHolding struct {
 }
 
 type AllianceState struct {
-	ID       AllianceID        `json:"id"`
-	Name     string            `json:"name,omitempty"`
-	Members  []AllianceMember  `json:"members"`
-	Holdings []AllianceHolding `json:"holdings"`
+	ID         AllianceID        `json:"id"`
+	Name       string            `json:"name,omitempty"`
+	Members    []AllianceMember  `json:"members"`
+	Holdings   []AllianceHolding `json:"holdings"`
+	ObservedAt time.Time         `json:"observedAt,omitempty"`
 }
 
 type MovementSnapshot struct {
@@ -358,13 +360,14 @@ type ProtocolObservation struct {
 }
 
 type ReportNotice struct {
-	MessageID  int64     `json:"messageId"`
-	TypeID     int       `json:"typeId"`
-	BattleKey  string    `json:"battleKey,omitempty"`
-	ReportID   int64     `json:"reportId,omitempty"`
-	AgeSec     int64     `json:"ageSec,omitempty"`
-	Status     string    `json:"status"`
-	ObservedAt time.Time `json:"observedAt"`
+	MessageID     int64     `json:"messageId"`
+	TypeID        int       `json:"typeId"`
+	BattleKey     string    `json:"battleKey,omitempty"`
+	ReportID      int64     `json:"reportId,omitempty"`
+	AgeSec        int64     `json:"ageSec,omitempty"`
+	Status        string    `json:"status"`
+	OwnedByPlayer bool      `json:"ownedByPlayer,omitempty"`
+	ObservedAt    time.Time `json:"observedAt"`
 }
 
 type SpyReportCapture struct {
@@ -426,6 +429,7 @@ type GameState struct {
 	Rift             RiftState                               `json:"rift"`
 	Inventory        InventoryState                          `json:"inventory"`
 	Alliance         AllianceState                           `json:"alliance"`
+	Alliances        map[AllianceID]AllianceState            `json:"alliances"`
 	Map              map[KingdomID]map[string]MapObservation `json:"map"`
 	CommandContext   CommandContextState                     `json:"commandContext"`
 	Automations      map[string]AutomationState              `json:"automations"`
@@ -457,6 +461,7 @@ func NewGameState() GameState {
 			Items:             map[string]map[int64]int64{},
 		},
 		Alliance:    AllianceState{Members: []AllianceMember{}, Holdings: []AllianceHolding{}},
+		Alliances:   map[AllianceID]AllianceState{},
 		Map:         map[KingdomID]map[string]MapObservation{},
 		Automations: map[string]AutomationState{},
 		Reports: ReportState{

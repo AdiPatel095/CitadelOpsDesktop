@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/State"
 )
 
 func planSpyReportFetch(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -27,6 +28,45 @@ func planSpyReportFetch(_ context.Context, input Intent.PlanningContext, argumen
 		Claims:  []string{"reports", "report-message:" + strconv.FormatInt(request.MessageID, 10)},
 		Summary: fmt.Sprintf("Fetch spy report %d", request.MessageID),
 		Steps:   []Intent.Step{commandStep("Fetch spy report", "bsd", payload, "bsd")},
+	}, nil
+}
+
+func planSpyReportShare(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request struct {
+		MessageID int64 `json:"messageId"`
+	}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	if request.MessageID <= 0 {
+		return Intent.Plan{}, fmt.Errorf("messageId is required")
+	}
+	if _, exists := input.State.Reports.SpyCaptures[request.MessageID]; !exists {
+		return Intent.Plan{}, fmt.Errorf("spy report %d is not available for sharing", request.MessageID)
+	}
+	recipients := make([]State.PlayerID, 0, len(input.State.Alliance.Members))
+	seen := map[State.PlayerID]struct{}{}
+	for _, member := range input.State.Alliance.Members {
+		if member.PlayerID <= 0 || member.PlayerID == input.State.Player.ID {
+			continue
+		}
+		if _, duplicate := seen[member.PlayerID]; duplicate {
+			continue
+		}
+		seen[member.PlayerID] = struct{}{}
+		recipients = append(recipients, member.PlayerID)
+	}
+	if len(recipients) == 0 {
+		return Intent.Plan{}, fmt.Errorf("the current alliance has no report-share recipients")
+	}
+	payload, _ := json.Marshal(struct {
+		MessageID  int64            `json:"MID"`
+		Recipients []State.PlayerID `json:"PID"`
+	}{MessageID: request.MessageID, Recipients: recipients})
+	return Intent.Plan{
+		Claims:  []string{"reports", "report-message:" + strconv.FormatInt(request.MessageID, 10)},
+		Summary: fmt.Sprintf("Share spy report %d with %d alliance member(s)", request.MessageID, len(recipients)),
+		Steps:   []Intent.Step{commandStep("Share spy report", "mfs", payload, "mfs")},
 	}, nil
 }
 

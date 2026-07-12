@@ -30,7 +30,9 @@ func LoadSnapshot(dataDir string) (GameState, error) {
 	}
 	state := document.State
 	normalizeStateMaps(&state)
+	lastServerURL := state.Session.ServerURL
 	state.Session = NewGameState().Session
+	state.Session.ServerURL = lastServerURL
 	return state, nil
 }
 
@@ -232,6 +234,30 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.Alliance.Holdings == nil {
 		state.Alliance.Holdings = defaults.Alliance.Holdings
+	}
+	if state.Alliances == nil {
+		state.Alliances = defaults.Alliances
+	}
+	if state.Alliance.ID > 0 {
+		state.Alliances[state.Alliance.ID] = state.Alliance
+	}
+	if state.Player.AllianceID > 0 && state.Alliance.ID != state.Player.AllianceID {
+		if own, found := state.Alliances[state.Player.AllianceID]; found {
+			state.Alliance = own
+		} else {
+			state.Alliance = AllianceState{
+				ID: state.Player.AllianceID, Members: []AllianceMember{}, Holdings: []AllianceHolding{},
+			}
+		}
+	}
+	for id, alliance := range state.Alliances {
+		if alliance.Members == nil {
+			alliance.Members = []AllianceMember{}
+		}
+		if alliance.Holdings == nil {
+			alliance.Holdings = []AllianceHolding{}
+		}
+		state.Alliances[id] = alliance
 	}
 	if state.Map == nil {
 		state.Map = defaults.Map

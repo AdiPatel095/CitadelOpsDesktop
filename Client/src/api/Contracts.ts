@@ -266,6 +266,54 @@ export interface AllianceStateV2 {
 	name?: string;
 	members: AllianceMemberV2[];
 	holdings: AllianceHoldingV2[];
+	observedAt?: string;
+}
+
+export interface AllianceTargetOptionV2 {
+	externalId: string;
+	allianceId: number;
+	name: string;
+	rank: number;
+	might: number;
+	playerCount: number;
+}
+
+export interface AllianceTargetCastleV2 {
+	castleId?: number;
+	name: string;
+	typeName?: string;
+	x: number;
+	y: number;
+	type?: number;
+}
+
+export interface AllianceTargetV2 {
+	playerId: number;
+	name: string;
+	might: number;
+	underBird: boolean;
+	rptSeconds: number;
+	birdUntil?: string;
+	updatedAt?: string;
+	targetCastle: AllianceTargetCastleV2;
+	closestOwnCastle: AllianceTargetCastleV2;
+	distance: number;
+}
+
+export interface AllianceTargetViewV2 {
+	server: string;
+	alliances: AllianceTargetOptionV2[];
+	selectedAlliance?: AllianceTargetOptionV2;
+	targets: AllianceTargetV2[];
+	spies: {
+		capacity: number;
+		active: number;
+		available: number;
+		buildingRowsLoaded: boolean;
+		sourceCastle: AllianceTargetCastleV2;
+		taverns: Array<{ level: number; capacity: number }>;
+	};
+	fetchedAt: string;
 }
 
 export interface MapObservationV2 {
@@ -296,6 +344,7 @@ export interface MovementStateV2 {
 	targetY: number;
 	travelSeconds?: number;
 	progressSeconds?: number;
+	spyCount?: number;
 	arrivesAt?: string;
 	returnsAt?: string;
 	units: Record<string, number>;
@@ -426,6 +475,7 @@ export interface GameStateV2 {
 	rift: RiftStateV2;
   inventory: InventoryStateV2;
   alliance: AllianceStateV2;
+  alliances: Record<string, AllianceStateV2>;
   map: Record<string, Record<string, MapObservationV2>>;
 	commandContext: CommandContextStateV2;
 	automations: Record<string, AutomationStateV2>;

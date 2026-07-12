@@ -22,6 +22,7 @@ func ParseSpyCapture(capture State.SpyReportCapture) (SpyReport, error) {
 		AI  struct {
 			Name      string `json:"N"`
 			KingdomID int    `json:"K"`
+			TypeID    int    `json:"AT"`
 			X         int    `json:"X"`
 			Y         int    `json:"Y"`
 		} `json:"AI"`
@@ -39,7 +40,7 @@ func ParseSpyCapture(capture State.SpyReportCapture) (SpyReport, error) {
 		CapturedAtUnixMillis: capture.CapturedAt.UnixMilli(), Status: "failed",
 		Accuracy: wire.SA, Risk: wire.SR, SpyCount: wire.SC, GuardCount: wire.GC,
 		Target: wire.OI.player(), Source: wire.SO.player(),
-		Castle: Castle{ID: wire.CID, Name: wire.AI.Name, KingdomID: wire.AI.KingdomID, X: wire.AI.X, Y: wire.AI.Y},
+		Castle: Castle{ID: wire.CID, Name: wire.AI.Name, KingdomID: wire.AI.KingdomID, TypeID: wire.AI.TypeID, X: wire.AI.X, Y: wire.AI.Y},
 		Setup:  []SpySection{},
 	}
 	if capture.CapturedAt.IsZero() {
@@ -100,10 +101,11 @@ type spyPlayerWire struct {
 	ID       int64  `json:"OID"`
 	Name     string `json:"N"`
 	Alliance string `json:"AN"`
+	Dummy    *bool  `json:"DUM"`
 }
 
 func (wire spyPlayerWire) player() Player {
-	return Player{ID: wire.ID, Name: wire.Name, Alliance: wire.Alliance}
+	return Player{ID: wire.ID, Name: wire.Name, Alliance: wire.Alliance, Dummy: wire.Dummy}
 }
 
 func rawInteger(raw json.RawMessage) (int64, bool) {

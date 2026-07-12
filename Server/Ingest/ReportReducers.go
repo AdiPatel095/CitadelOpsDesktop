@@ -53,12 +53,19 @@ func applyReportNotices(raw json.RawMessage, observedAt time.Time, gameState *St
 		notice := State.ReportNotice{
 			MessageID: messageID, TypeID: int(typeID), Status: "pending", ObservedAt: observedAt,
 		}
+		if typeID == 3 {
+			notice.OwnedByPlayer = len(row) <= 4
+		}
 		if len(row) > 2 {
 			notice.BattleKey = rowString(row, 2)
 		}
 		if len(row) > 4 {
-			if reportID, exists := rawInt64(row[4]); exists && reportID > 0 {
-				notice.ReportID = reportID
+			if value, exists := rawInt64(row[4]); exists {
+				if typeID == 3 {
+					notice.OwnedByPlayer = value <= 0
+				} else if value > 0 {
+					notice.ReportID = value
+				}
 			}
 		}
 		if len(row) > 5 {

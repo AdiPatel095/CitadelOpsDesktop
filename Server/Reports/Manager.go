@@ -72,7 +72,7 @@ func (manager *Manager) processNext(ctx context.Context) {
 		switch notice.TypeID {
 		case 3:
 			if capture, exists := snapshot.Reports.SpyCaptures[notice.MessageID]; exists {
-				manager.archiveSpy(notice, capture)
+				manager.archiveSpy(ctx, notice, capture)
 				snapshot = manager.state.Snapshot()
 				continue
 			}
@@ -134,7 +134,7 @@ func (manager *Manager) fetch(ctx context.Context, notice State.ReportNotice, na
 	manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
 }
 
-func (manager *Manager) archiveSpy(notice State.ReportNotice, capture State.SpyReportCapture) {
+func (manager *Manager) archiveSpy(ctx context.Context, notice State.ReportNotice, capture State.SpyReportCapture) {
 	report, err := ParseSpyCapture(capture)
 	if err != nil {
 		manager.setNoticeStatus(notice.MessageID, "error")
@@ -145,6 +145,12 @@ func (manager *Manager) archiveSpy(notice State.ReportNotice, capture State.SpyR
 		manager.setNoticeStatus(notice.MessageID, "error")
 		manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
 		return
+	}
+	if notice.OwnedByPlayer && report.Status != "failed" && report.Castle.ID > 0 && report.Target.ID > 0 && report.Target.Dummy != nil && !*report.Target.Dummy {
+		arguments, _ := json.Marshal(map[string]int64{"messageId": notice.MessageID})
+		manager.intents.Submit(ctx, Intent.Request{
+			Name: "report.spy.share", Actor: "report-manager", Arguments: arguments,
+		})
 	}
 	manager.completeNotice(notice.MessageID)
 }

@@ -11,6 +11,7 @@ import {
 import { CitadelAPI } from './CitadelClient';
 import type {
   APIConnectionStatus,
+	AllianceTargetViewV2,
   CatalogManifest,
   CatalogResponse,
   ConfigurationSnapshot,
@@ -34,6 +35,7 @@ interface APIContextValue {
   refreshConfiguration: () => Promise<void>;
   getCatalog: <T extends Record<string, unknown>>(name: string) => Promise<CatalogResponse<T>>;
   localize: (keys: string[]) => Promise<Record<string, string>>;
+	getAllianceTargets: (allianceId?: string, server?: string, refresh?: boolean) => Promise<AllianceTargetViewV2>;
 	optimizeEquipment: (input: EquipmentOptimizeRequest) => Promise<EquipmentOptimizeResponse>;
   submitIntent: (
     name: string,
@@ -137,6 +139,10 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	}
   }, []);
 
+  const getAllianceTargets = useCallback((allianceId = '', server = '', refresh = false) => (
+	CitadelAPI.getAllianceTargets(allianceId, server, refresh)
+  ), []);
+
   const updateConfiguration = useCallback((section: string, value: unknown) => (
     submitIntent('config.update', {
       section,
@@ -157,6 +163,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
     refreshConfiguration,
     getCatalog: (name) => CitadelAPI.getCatalog(name),
     localize: (keys) => CitadelAPI.localize(keys),
+	getAllianceTargets,
 	optimizeEquipment: (input) => CitadelAPI.optimizeEquipment(input),
     submitIntent,
     updateConfiguration,
@@ -171,6 +178,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
     refreshState,
     state,
     submitIntent,
+    getAllianceTargets,
     updateConfiguration,
   ]);
 

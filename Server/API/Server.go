@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/AllianceTargets"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/History"
@@ -21,14 +22,15 @@ import (
 )
 
 type Config struct {
-	Version       string
-	State         *State.Store
-	GameData      *GameData.Manager
-	Configuration *Configuration.Store
-	History       *History.Store
-	Telemetry     *Telemetry.Store
-	Intents       *Intent.Engine
-	Session       interface{ Status() Session.Status }
+	Version         string
+	State           *State.Store
+	GameData        *GameData.Manager
+	Configuration   *Configuration.Store
+	History         *History.Store
+	Telemetry       *Telemetry.Store
+	Intents         *Intent.Engine
+	AllianceTargets *AllianceTargets.Service
+	Session         interface{ Status() Session.Status }
 }
 
 type Server struct {
@@ -37,6 +39,9 @@ type Server struct {
 }
 
 func NewServer(config Config) *Server {
+	if config.AllianceTargets == nil {
+		config.AllianceTargets = AllianceTargets.NewService(nil)
+	}
 	server := &Server{config: config}
 	server.upgrader = websocket.Upgrader{
 		ReadBufferSize:  4096,
@@ -58,6 +63,7 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v2/game-data/localize", server.handleLocalization)
 	mux.HandleFunc("GET /api/v2/projections/crafting", server.handleCraftingProjection)
 	mux.HandleFunc("POST /api/v2/equipment/optimize", server.handleEquipmentOptimize)
+	mux.HandleFunc("GET /api/v2/alliance-targets", server.handleAllianceTargets)
 	mux.HandleFunc("GET /api/v2/history/player-tracker", server.handlePlayerTrackerHistory)
 	mux.HandleFunc("GET /api/v2/history/spy-reports", server.handleSpyReportHistory)
 	mux.HandleFunc("GET /api/v2/history/battle-reports", server.handleBattleReportHistory)

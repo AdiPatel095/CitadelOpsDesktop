@@ -21,6 +21,9 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("equipment.verify_coin_reserve", application.verifyEquipmentCoinReserve); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("alliance.verify_inspection", application.verifyAllianceInspection); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("rift.template.rename", application.renameRiftTemplate); err != nil {
 		return err
 	}
@@ -90,6 +93,10 @@ func (application *Application) registerGameIntents() error {
 			Planner: planAllianceRefresh,
 		},
 		{
+			Name: "alliance.inspect", Description: "Fetch a selected alliance into the canonical alliance directory", Effect: Intent.EffectRead,
+			Planner: planAllianceInspect,
+		},
+		{
 			Name: "map.query", Description: "Query an inclusive rectangular world-map viewport", Effect: Intent.EffectRead,
 			Planner: planMapQuery,
 		},
@@ -157,6 +164,10 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "report.spy.fetch", Description: "Fetch one spy report from an observed inbox notice", Effect: Intent.EffectRead,
 			Planner: planSpyReportFetch,
+		},
+		{
+			Name: "report.spy.share", Description: "Share one captured player-castle spy report with alliance members", Effect: Intent.EffectWrite,
+			Planner: planSpyReportShare,
 		},
 		{
 			Name: "report.battle.summary", Description: "Fetch one battle report summary from an observed inbox notice", Effect: Intent.EffectRead,
@@ -267,9 +278,46 @@ func planAllianceRefresh(_ context.Context, input Intent.PlanningContext, _ json
 		AllianceID State.AllianceID `json:"AID"`
 	}{AllianceID: input.State.Alliance.ID})
 	return Intent.Plan{
-		Claims: []string{"alliance"}, Summary: "Refresh alliance",
+		Claims: []string{"alliance-directory"}, Summary: "Refresh alliance",
 		Steps: []Intent.Step{commandStep("Refresh alliance", "ain", payload, "ain")},
 	}, nil
+}
+
+func planAllianceInspect(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request struct {
+		AllianceID State.AllianceID `json:"allianceId"`
+	}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	if request.AllianceID <= 0 {
+		return Intent.Plan{}, fmt.Errorf("allianceId must be positive")
+	}
+	payload, _ := json.Marshal(struct {
+		AllianceID State.AllianceID `json:"AID"`
+	}{AllianceID: request.AllianceID})
+	verification, _ := json.Marshal(request)
+	return Intent.Plan{
+		Claims: []string{"alliance-directory"}, Summary: fmt.Sprintf("Inspect alliance %d", request.AllianceID),
+		Steps: []Intent.Step{
+			commandStep("Inspect alliance", "ain", payload, "ain"),
+			{Name: "Verify inspected alliance", Action: "alliance.verify_inspection", ActionArguments: verification},
+		},
+	}, nil
+}
+
+func (application *Application) verifyAllianceInspection(_ context.Context, arguments json.RawMessage) error {
+	var request struct {
+		AllianceID State.AllianceID `json:"allianceId"`
+	}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	alliance, found := application.State.Snapshot().Alliances[request.AllianceID]
+	if !found || alliance.ID != request.AllianceID {
+		return fmt.Errorf("alliance %d did not return a matching live roster", request.AllianceID)
+	}
+	return nil
 }
 
 func planMapQuery(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {

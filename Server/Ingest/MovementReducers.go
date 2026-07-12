@@ -145,6 +145,12 @@ func parseMovement(raw json.RawMessage, observedAt time.Time) (State.MovementSta
 		KingdomID: State.KingdomID(details.KingdomID), TravelSeconds: details.Travel,
 		ProgressSeconds: details.Progress, Units: map[State.UnitID]int64{},
 	}
+	var spyDetails struct {
+		Count int `json:"SC"`
+	}
+	if json.Unmarshal(item["S"], &spyDetails) == nil && spyDetails.Count > 0 {
+		movement.SpyCount = spyDetails.Count
+	}
 	if len(details.Source) > 4 {
 		movement.SourceX = int(rowInt(details.Source, 1))
 		movement.SourceY = int(rowInt(details.Source, 2))
