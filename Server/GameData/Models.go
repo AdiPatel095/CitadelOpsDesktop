@@ -232,6 +232,7 @@ var collectionPrimaryKeys = map[string]string{
 	"gems":              "gemID",
 	"rewards":           "rewardID",
 	"craftingRecipes":   "craftingRecipeId",
+	"kingdoms":          "kID",
 }
 
 func discoverSchema(rows []json.RawMessage) ([]string, string) {

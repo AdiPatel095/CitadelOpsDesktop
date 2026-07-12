@@ -5,7 +5,9 @@ import {
   Coins,
   Hammer,
   HeartPulse,
+	Send,
   Settings,
+	Shield,
   Users,
   Wrench,
 } from 'lucide-react';
@@ -13,6 +15,8 @@ import { useAuth } from '../context/AuthContext';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Switch } from '../components/ui';
 
 interface AutomationViewProps {
+	onOpenAutoBirdSettings: () => void;
+	onOpenAutoStationSettings: () => void;
   onOpenAutoTCISettings: () => void;
   onOpenAutoSceatResSettings: () => void;
   onOpenRecruitTroopsSettings: () => void;
@@ -49,6 +53,8 @@ function modeLabel(mode: 'global' | 'perCastle'): string {
 }
 
 export const AutomationView: React.FC<AutomationViewProps> = ({
+	onOpenAutoBirdSettings,
+	onOpenAutoStationSettings,
   onOpenAutoTCISettings,
   onOpenAutoSceatResSettings,
   onOpenRecruitTroopsSettings,
@@ -65,11 +71,18 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoHospitalEnabled,
     autoTCIEnabled,
     autoTCINextWakeUp,
+	autoBirdEnabled,
+	autoBirdNextWakeUp,
+	autoStationEnabled,
+	autoStationDetail,
     toggleRecruitTroops,
     toggleAutoTool,
     toggleAutoSceatRes,
     toggleAutoHospital,
     toggleAutoTCI,
+	toggleAutoBird,
+	toggleAutoStation,
+		automationStates,
   } = useAuth();
   const [now, setNow] = useState(() => Date.now());
 
@@ -80,11 +93,37 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 
   const features = useMemo<AutomationFeature[]>(() => [
     {
+		id: 'autoBird',
+		name: 'Auto Bird',
+		description: 'Stations troops above each castle reserve at protected same-kingdom alliance holdings.',
+		enabled: autoBirdEnabled,
+		detail: autoBirdEnabled
+			? automationStates.autoBird?.detail ?? formatNextWake(autoBirdNextWakeUp, now)
+			: 'Alliance stationing is paused',
+		icon: Send,
+		onToggle: toggleAutoBird,
+		onOpenSettings: onOpenAutoBirdSettings,
+	},
+	{
+		id: 'autoStation',
+		name: 'Auto Station',
+		description: 'Evacuates troops before incoming attacks and recalls them after a fresh clear snapshot.',
+		enabled: autoStationEnabled,
+		detail: autoStationEnabled
+			? autoStationDetail || automationStates.autoStation?.detail || 'Monitoring incoming movements'
+			: 'Threat protection is paused',
+		icon: Shield,
+		onToggle: toggleAutoStation,
+		onOpenSettings: onOpenAutoStationSettings,
+	},
+	{
       id: 'autoRecruit',
       name: 'Auto Recruit',
       description: 'Keeps troop recruitment queues stocked from the configured plans.',
       enabled: recruitTroopsEnabled,
-      detail: `${modeLabel(autoRecruitMode)}${recruitTroopsEnabled ? ' · recruiting' : ' · paused'}`,
+		detail: recruitTroopsEnabled
+			? automationStates.autoRecruit?.detail ?? `${modeLabel(autoRecruitMode)} · waiting for policy status`
+			: `${modeLabel(autoRecruitMode)} · paused`,
       icon: Users,
       onToggle: toggleRecruitTroops,
       onOpenSettings: onOpenRecruitTroopsSettings,
@@ -94,7 +133,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Tool',
       description: 'Maintains tool production queues across configured castles.',
       enabled: autoToolEnabled,
-      detail: `${modeLabel(autoToolMode)}${autoToolEnabled ? ' · producing' : ' · paused'}`,
+		detail: autoToolEnabled
+			? automationStates.autoTool?.detail ?? `${modeLabel(autoToolMode)} · waiting for policy status`
+			: `${modeLabel(autoToolMode)} · paused`,
       icon: Wrench,
       onToggle: toggleAutoTool,
       onOpenSettings: onOpenAutoToolSettings,
@@ -104,7 +145,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Hospital',
       description: 'Processes hospital queues using the configured healing priorities.',
       enabled: autoHospitalEnabled,
-      detail: autoHospitalEnabled ? 'Hospital queues are being maintained' : 'Automatic healing is paused',
+		detail: autoHospitalEnabled
+			? automationStates.autoHospital?.detail ?? 'Waiting for hospital policy status'
+			: 'Automatic healing is paused',
       icon: HeartPulse,
       onToggle: toggleAutoHospital,
       onOpenSettings: onOpenAutoHospitalSettings,
@@ -114,7 +157,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto TCI',
       description: 'Equips and renews temporary construction items automatically.',
       enabled: autoTCIEnabled,
-      detail: autoTCIEnabled ? formatNextWake(autoTCINextWakeUp, now) : 'Construction-item automation is paused',
+		detail: autoTCIEnabled
+			? automationStates.autoTCI?.detail ?? formatNextWake(autoTCINextWakeUp, now)
+			: 'Construction-item automation is paused',
       icon: Hammer,
       onToggle: toggleAutoTCI,
       onOpenSettings: onOpenAutoTCISettings,
@@ -124,26 +169,37 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       name: 'Auto Sceat Resources',
       description: 'Balances kingdom resources and maintains Refinery, Toolsmith, Dragon Hoard, and Dragon Forge queues.',
       enabled: autoSceatResEnabled,
-      detail: autoSceatResEnabled ? 'Crafting and logistics are active' : 'Crafting and logistics are paused',
+		detail: autoSceatResEnabled
+			? automationStates.autoSceatRes?.detail ?? 'Waiting for crafting policy status'
+			: 'Crafting and logistics are paused',
       icon: Coins,
       onToggle: toggleAutoSceatRes,
       onOpenSettings: onOpenAutoSceatResSettings,
     },
   ], [
+	autoBirdEnabled,
+	autoBirdNextWakeUp,
     autoHospitalEnabled,
     autoRecruitMode,
     autoSceatResEnabled,
+	autoStationDetail,
+	autoStationEnabled,
     autoTCIEnabled,
     autoTCINextWakeUp,
     autoToolEnabled,
     autoToolMode,
+		automationStates,
     now,
     onOpenAutoHospitalSettings,
+	onOpenAutoBirdSettings,
+	onOpenAutoStationSettings,
     onOpenAutoSceatResSettings,
     onOpenAutoTCISettings,
     onOpenAutoToolSettings,
     onOpenRecruitTroopsSettings,
     toggleAutoHospital,
+	toggleAutoBird,
+	toggleAutoStation,
     toggleAutoSceatRes,
     toggleAutoTCI,
     toggleAutoTool,
@@ -164,7 +220,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={activeCount > 0 ? 'success' : 'secondary'}>{activeCount} of {features.length} active</Badge>
+					<Badge variant={activeCount > 0 ? 'success' : 'secondary'}>{activeCount} of {features.length} enabled</Badge>
           <Badge variant={gameLoggedIn ? 'outline' : 'warning'}>{gameLoggedIn ? 'Live game state' : 'Last known game state'}</Badge>
         </div>
       </div>

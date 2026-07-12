@@ -83,7 +83,7 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resource
           const percentage = capacity > 0 ? amount / capacity * 100 : 0;
           const internalName = typeof definition?.internalName === 'string' ? definition.internalName : '';
           const name = definition?.name || internalName || `Resource ${id}`;
-          const icon = definition?.image || resourceImage(internalName);
+						const icon = definition?.image;
           return (
             <div key={id} className="flex items-center gap-3 rounded-global border border-border-light bg-bg-card/45 p-2.5 shadow-sm backdrop-blur-xl transition-colors hover:border-primary/30 hover:bg-bg-card-hover/70">
               {icon ? <img src={icon} alt={name} className="h-8 w-8 shrink-0 object-contain drop-shadow-sm" /> : null}
@@ -106,12 +106,5 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resource
     </Card>
   );
 };
-
-function resourceImage(internalName: string): string | undefined {
-  if (!internalName) return undefined;
-  const aliases: Record<string, string> = { coal: 'Charcoal', oil: 'OliveOil', iron: 'Iron_Ore' };
-  const asset = aliases[internalName.toLowerCase()] ?? `${internalName.charAt(0).toUpperCase()}${internalName.slice(1)}`;
-  return `/game-data/resources/images/${asset}.webp`;
-}
 
 export default CastleResourceCard;

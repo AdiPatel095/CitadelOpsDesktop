@@ -53,12 +53,17 @@ func newMovementReducer(authoritative bool) Reducer {
 			}
 			next[movement.ID] = movement
 		}
-		if reflect.DeepEqual(before, next) {
+		movementChanged := !reflect.DeepEqual(before, next)
+		if authoritative {
+			gameState.MovementSnapshot.Version++
+			gameState.MovementSnapshot.ObservedAt = frame.ReceivedAt
+		}
+		if !movementChanged && !authoritative {
 			return nil, false, nil
 		}
 		gameState.Movements = next
 		syncCommanderAvailability(gameState)
-		return []string{"movements", "commanders"}, true, nil
+		return []string{"movements", "commanders", "movement-snapshot"}, true, nil
 	}
 }
 

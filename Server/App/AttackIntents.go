@@ -12,6 +12,7 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Protocol"
+	"CitadelDesktop/Server/Scheduling"
 	"CitadelDesktop/Server/State"
 )
 
@@ -145,34 +146,12 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	if request.LaunchID == "" {
 		return Intent.Plan{}, fmt.Errorf("launchId is required")
 	}
-	if request.ArriveAt > time.Now().Unix()+30 {
-		return Intent.Plan{}, fmt.Errorf("scheduled Rift replay is not available until the 2.0 operation scheduler owns delayed intents")
-	}
-	raw, ok := application.Configuration.Section("rift.launches")
-	if !ok {
-		return Intent.Plan{}, fmt.Errorf("no Rift launch templates have been captured")
-	}
-	var document struct {
-		Launches []struct {
-			ID   string          `json:"id"`
-			Body json.RawMessage `json:"body"`
-		} `json:"launches"`
-	}
-	if json.Unmarshal(raw, &document) != nil {
-		return Intent.Plan{}, fmt.Errorf("Rift launch configuration is invalid")
-	}
-	var body json.RawMessage
-	for _, candidate := range document.Launches {
-		if candidate.ID == request.LaunchID {
-			body = candidate.Body
-			break
-		}
-	}
-	if len(body) == 0 {
+	launch, exists := input.State.Rift.Launches[request.LaunchID]
+	if !exists || len(launch.Body) == 0 {
 		return Intent.Plan{}, fmt.Errorf("Rift launch %q has no captured 2.0 command body", request.LaunchID)
 	}
 	var fields map[string]json.RawMessage
-	if json.Unmarshal(body, &fields) != nil {
+	if json.Unmarshal(launch.Body, &fields) != nil {
 		return Intent.Plan{}, fmt.Errorf("Rift launch %q has an invalid command body", request.LaunchID)
 	}
 	if request.CommanderID != nil {
@@ -186,7 +165,36 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	}
 	commanderID := State.CommanderID(rawMapInt(fields, "LID"))
 	commander, exists := input.State.Commanders[commanderID]
-	if !exists || !commander.Available {
+	if !exists {
+		return Intent.Plan{}, fmt.Errorf("commander %d is not in the current player state", commanderID)
+	}
+	now := time.Now().UTC()
+	if request.ArriveAt > now.Unix()+30 {
+		if launch.OneWayTTSeconds <= 0 {
+			return Intent.Plan{}, fmt.Errorf("Rift launch %q has no observed one-way travel time", request.LaunchID)
+		}
+		minimumArrival := roundUpUnixMinute(now.Unix() + int64(launch.OneWayTTSeconds))
+		normalizedArrival := roundUpUnixMinute(request.ArriveAt)
+		if normalizedArrival > minimumArrival {
+			fireAt := normalizedArrival - int64(launch.OneWayTTSeconds)
+			immediateArguments, _ := json.Marshal(struct {
+				LaunchID    string `json:"launchId"`
+				CommanderID *int64 `json:"commanderID,omitempty"`
+				SourceX     *int   `json:"sourceX,omitempty"`
+				SourceY     *int   `json:"sourceY,omitempty"`
+			}{request.LaunchID, request.CommanderID, request.SourceX, request.SourceY})
+			schedule, _ := json.Marshal(Scheduling.Request{
+				ID: "rift:" + request.LaunchID, Intent: "rift.launch.replay", Actor: "scheduler:rift",
+				Arguments: immediateArguments, ExecuteAt: time.Unix(fireAt, 0).UTC(),
+			})
+			return Intent.Plan{
+				Claims:  []string{"scheduled-operation:rift:" + request.LaunchID},
+				Summary: fmt.Sprintf("Schedule Rift launch %s for %s", request.LaunchID, time.Unix(normalizedArrival, 0).Format(time.RFC3339)),
+				Steps:   []Intent.Step{{Name: "Schedule Rift replay", Action: "operation.schedule", ActionArguments: schedule}},
+			}, nil
+		}
+	}
+	if !commander.Available {
 		return Intent.Plan{}, fmt.Errorf("commander %d is not currently available", commanderID)
 	}
 	canonical, _ := json.Marshal(fields)
@@ -195,6 +203,103 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		Summary: fmt.Sprintf("Replay Rift launch %s with commander %d", request.LaunchID, commanderID),
 		Steps:   []Intent.Step{commandStep("Replay Rift launch", "cra", canonical, "cra")},
 	}, nil
+}
+
+func planRiftTemplateRename(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request struct {
+		LaunchID    string `json:"launchId"`
+		DisplayName string `json:"displayName"`
+	}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	request.LaunchID = strings.TrimSpace(request.LaunchID)
+	request.DisplayName = strings.TrimSpace(request.DisplayName)
+	if _, exists := input.State.Rift.Launches[request.LaunchID]; !exists {
+		return Intent.Plan{}, fmt.Errorf("Rift launch %q was not found", request.LaunchID)
+	}
+	if len(request.DisplayName) > 80 {
+		return Intent.Plan{}, fmt.Errorf("Rift template names may contain at most 80 characters")
+	}
+	canonical, _ := json.Marshal(request)
+	return Intent.Plan{
+		Claims: []string{"rift-launch:" + request.LaunchID}, Summary: "Rename Rift launch " + request.LaunchID,
+		Steps: []Intent.Step{{Name: "Rename Rift template", Action: "rift.template.rename", ActionArguments: canonical}},
+	}, nil
+}
+
+func planRiftTemplateDelete(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request struct {
+		LaunchID string `json:"launchId"`
+	}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	request.LaunchID = strings.TrimSpace(request.LaunchID)
+	if _, exists := input.State.Rift.Launches[request.LaunchID]; !exists {
+		return Intent.Plan{}, fmt.Errorf("Rift launch %q was not found", request.LaunchID)
+	}
+	canonical, _ := json.Marshal(request)
+	cancel, _ := json.Marshal(map[string]string{"id": "rift:" + request.LaunchID})
+	return Intent.Plan{
+		Claims:  []string{"rift-launch:" + request.LaunchID, "scheduled-operation:rift:" + request.LaunchID},
+		Summary: "Delete Rift launch " + request.LaunchID,
+		Steps: []Intent.Step{
+			{Name: "Delete Rift template", Action: "rift.template.delete", ActionArguments: canonical},
+			{Name: "Cancel scheduled replay", Action: "operation.cancel", ActionArguments: cancel},
+		},
+	}, nil
+}
+
+func (application *Application) renameRiftTemplate(_ context.Context, arguments json.RawMessage) error {
+	var request struct {
+		LaunchID    string `json:"launchId"`
+		DisplayName string `json:"displayName"`
+	}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		launch, exists := gameState.Rift.Launches[request.LaunchID]
+		if !exists {
+			return nil, false, fmt.Errorf("Rift launch %q was not found", request.LaunchID)
+		}
+		name := strings.TrimSpace(request.DisplayName)
+		if launch.DisplayName == name {
+			return nil, false, nil
+		}
+		launch.DisplayName = name
+		gameState.Rift.Launches[request.LaunchID] = launch
+		return []string{"rift"}, true, nil
+	})
+	return err
+}
+
+func (application *Application) deleteRiftTemplate(_ context.Context, arguments json.RawMessage) error {
+	var request struct {
+		LaunchID string `json:"launchId"`
+	}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		if _, exists := gameState.Rift.Launches[request.LaunchID]; !exists {
+			return nil, false, nil
+		}
+		delete(gameState.Rift.Launches, request.LaunchID)
+		if gameState.Rift.PendingLaunchID == request.LaunchID {
+			gameState.Rift.PendingLaunchID = ""
+		}
+		return []string{"rift"}, true, nil
+	})
+	return err
+}
+
+func roundUpUnixMinute(value int64) int64 {
+	if value <= 0 {
+		return 0
+	}
+	return ((value + 59) / 60) * 60
 }
 
 func planDecorationPreset(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {

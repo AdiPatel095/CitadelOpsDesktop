@@ -18,6 +18,7 @@ const SettingsView: React.FC = () => {
 	const [browserInventory, setBrowserInventory] = useState<BrowserInventory | null>(null);
 	const [browserSelectionPending, setBrowserSelectionPending] = useState(false);
 	const [browserSelectionError, setBrowserSelectionError] = useState('');
+	const [customBrowserPath, setCustomBrowserPath] = useState('');
 	const [settingsSaveError, setSettingsSaveError] = useState('');
 	const schedulerConfiguration = useMemo(
 		() => configurationSection(configuration, 'scheduler'),
@@ -105,6 +106,12 @@ const SettingsView: React.FC = () => {
 				setBrowserSelectionError(error instanceof Error ? error.message : 'Could not select browser');
 			})
 			.finally(() => setBrowserSelectionPending(false));
+	};
+
+	const selectCustomBrowser = () => {
+		const executable = customBrowserPath.trim();
+		if (!executable) return;
+		selectBrowser(executable);
 	};
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,7 +225,7 @@ const SettingsView: React.FC = () => {
 					</p>
 				</div>
 
-				<div className="w-full sm:max-w-[360px]">
+				<div className="w-full sm:max-w-[520px]">
 					<label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
 						Browser
 					</label>
@@ -244,6 +251,32 @@ const SettingsView: React.FC = () => {
 					{browserSelectionError && (
 						<p className="mt-2 text-xs text-error">{browserSelectionError}</p>
 					)}
+					<div className="mt-4 border-t border-border-base pt-4">
+						<label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+							Custom Chromium executable
+						</label>
+						<div className="flex flex-col gap-2 sm:flex-row">
+							<Input
+								aria-label="Custom Chromium executable"
+								value={customBrowserPath}
+								onChange={(event) => setCustomBrowserPath(event.target.value)}
+								placeholder="Absolute path or executable command"
+								className="font-mono"
+								disabled={!browserCanChange || browserSelectionPending}
+							/>
+							<Button
+								variant="secondary"
+								onClick={selectCustomBrowser}
+								disabled={!browserCanChange || browserSelectionPending || !customBrowserPath.trim()}
+								className="shrink-0"
+							>
+								Use executable
+							</Button>
+						</div>
+						<p className="mt-2 text-xs text-text-muted">
+							Use this for Chromium-based builds that are not detected automatically.
+						</p>
+					</div>
 				</div>
 			</CardContent>
 		</Card>

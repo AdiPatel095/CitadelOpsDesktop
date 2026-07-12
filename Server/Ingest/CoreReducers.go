@@ -6,6 +6,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	if registry == nil {
 		return fmt.Errorf("ingest registry is required")
 	}
+	craMovements := newMovementReducer(false)
 	reducers := []struct {
 		opcode  string
 		reducer Reducer
@@ -21,8 +22,10 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"jca", reduceCastleSnapshot},
 		{"gui", reduceFocusedUnits},
 		{"hru", reduceFocusedUnits},
+		{"hdu", reduceFocusedUnits},
 		{"rpc", reduceFocusedConstructionItems},
 		{"ubc", reduceFocusedConstructionItems},
+		{"spl", reduceProductionSnapshot},
 		{"crin", reduceCraftingSnapshot},
 		{"crst", reduceCraftingBuilding},
 		{"crun", reduceCraftingBuilding},
@@ -30,15 +33,31 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"crca", reduceCraftingBuilding},
 		{"gam", newMovementReducer(true)},
 		{"cat", newMovementReducer(false)},
-		{"cra", newMovementReducer(false)},
+		{"cra", combineReducers(craMovements, reduceRiftLaunchAck)},
 		{"cds", newMovementReducer(false)},
 		{"mcm", newMovementReducer(false)},
 		{"crm", newMovementReducer(false)},
 		{"mrm", reduceMovementRemoval},
 		{"gaa", reduceMapSnapshot},
+		{"sne", reduceReportNotices},
+		{"bsd", reduceSpyReportCapture},
+		{"bls", reduceBattleSummaryCapture},
+		{"blm", reduceBattleWaveCapture},
+		{"bld", reduceBattleDetailCapture},
 	}
 	for _, entry := range reducers {
 		if err := registry.Register(entry.opcode, entry.reducer); err != nil {
+			return err
+		}
+	}
+	if err := registry.RegisterOutbound("bup", reduceProductionCommandContext); err != nil {
+		return err
+	}
+	if err := registry.RegisterOutbound("cra", reduceRiftLaunchCapture); err != nil {
+		return err
+	}
+	for _, opcode := range []string{"blm", "bld"} {
+		if err := registry.RegisterOutbound(opcode, reduceBattleCommandContext); err != nil {
 			return err
 		}
 	}

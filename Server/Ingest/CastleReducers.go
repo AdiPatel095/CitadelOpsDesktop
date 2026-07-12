@@ -189,6 +189,14 @@ func reduceFocusedUnits(
 	raw := frame.Payload
 	if nested, exists := root["gui"]; exists {
 		raw = nested
+	} else if _, hasStationed := root["I"]; !hasStationed {
+		if _, hasTraveling := root["TU"]; !hasTraveling {
+			if _, hasHospital := root["HI"]; !hasHospital {
+				if _, hasSpecialHospital := root["SHI"]; !hasSpecialHospital {
+					return nil, false, nil
+				}
+			}
+		}
 	}
 	units, err := parseCastleUnits(raw)
 	if err != nil {
@@ -410,8 +418,8 @@ func ensureCastleMaps(castle *State.CastleState) {
 	if castle.ConstructionSlots == nil {
 		castle.ConstructionSlots = map[State.BuildingInstanceID][]State.ConstructionSlot{}
 	}
-	if castle.Queues == nil {
-		castle.Queues = map[string][]State.QueueItem{}
+	if castle.Production == nil {
+		castle.Production = map[int]State.ProductionQueue{}
 	}
 	if castle.Crafting.Buildings == nil {
 		castle.Crafting.Buildings = map[State.BuildingInstanceID]State.CraftingBuilding{}

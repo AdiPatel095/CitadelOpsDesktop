@@ -141,14 +141,11 @@ func cloneGameState(source GameState) GameState {
 			}
 			castle.ConstructionSlots[buildingID] = clonedSlots
 		}
-		castle.Queues = make(map[string][]QueueItem, len(castle.Queues))
-		for name, items := range source.Castles[id].Queues {
-			clonedItems := append([]QueueItem(nil), items...)
-			for index := range clonedItems {
-				clonedItems[index].StartedAt = cloneTimePointer(clonedItems[index].StartedAt)
-				clonedItems[index].CompletesAt = cloneTimePointer(clonedItems[index].CompletesAt)
-			}
-			castle.Queues[name] = clonedItems
+		castle.Production = make(map[int]ProductionQueue, len(castle.Production))
+		for lineID, queue := range source.Castles[id].Production {
+			queue.Active = cloneQueueItemPointer(queue.Active)
+			queue.Queued = cloneQueueItems(queue.Queued)
+			castle.Production[lineID] = queue
 		}
 		castle.Crafting.Buildings = make(map[BuildingInstanceID]CraftingBuilding, len(source.Castles[id].Crafting.Buildings))
 		for buildingID, building := range source.Castles[id].Crafting.Buildings {
@@ -183,6 +180,22 @@ func cloneGameState(source GameState) GameState {
 		movement.CommanderID = cloneCommanderIDPointer(movement.CommanderID)
 		clone.Movements[id] = movement
 	}
+	clone.Stationing = make(map[string]StationingOperation, len(source.Stationing))
+	for id, operation := range source.Stationing {
+		operation.Units = cloneMap(operation.Units)
+		operation.SafeAfter = cloneTimePointer(operation.SafeAfter)
+		clone.Stationing[id] = operation
+	}
+	clone.Scheduled = make(map[string]ScheduledOperation, len(source.Scheduled))
+	for id, operation := range source.Scheduled {
+		operation.Arguments = append([]byte(nil), operation.Arguments...)
+		clone.Scheduled[id] = operation
+	}
+	clone.Rift.Launches = make(map[string]RiftLaunch, len(source.Rift.Launches))
+	for id, launch := range source.Rift.Launches {
+		launch.Body = append([]byte(nil), launch.Body...)
+		clone.Rift.Launches[id] = launch
+	}
 	clone.Inventory.ConstructionItems = cloneMap(source.Inventory.ConstructionItems)
 	clone.Inventory.Equipment = make(map[EquipmentInstanceID]EquipmentInstance, len(source.Inventory.Equipment))
 	for id, item := range source.Inventory.Equipment {
@@ -199,12 +212,53 @@ func cloneGameState(source GameState) GameState {
 		clone.Inventory.Items[collection] = cloneMap(items)
 	}
 	clone.Alliance.Members = append([]AllianceMember{}, source.Alliance.Members...)
+	clone.Alliance.Holdings = append([]AllianceHolding{}, source.Alliance.Holdings...)
 	clone.Map = make(map[KingdomID]map[string]MapObservation, len(source.Map))
 	for kingdomID, observations := range source.Map {
 		clone.Map[kingdomID] = cloneMap(observations)
 	}
+	clone.CommandContext.ProductionObservedAt = cloneTimePointer(source.CommandContext.ProductionObservedAt)
+	clone.Automations = make(map[string]AutomationState, len(source.Automations))
+	for id, automation := range source.Automations {
+		automation.NextCheckAt = cloneTimePointer(automation.NextCheckAt)
+		automation.LastRunAt = cloneTimePointer(automation.LastRunAt)
+		automation.Metrics = cloneMap(automation.Metrics)
+		clone.Automations[id] = automation
+	}
+	clone.Reports.Notices = cloneMap(source.Reports.Notices)
+	clone.Reports.SpyCaptures = make(map[int64]SpyReportCapture, len(source.Reports.SpyCaptures))
+	for id, capture := range source.Reports.SpyCaptures {
+		capture.Payload = append([]byte(nil), capture.Payload...)
+		clone.Reports.SpyCaptures[id] = capture
+	}
+	clone.Reports.BattleCaptures = make(map[int64]BattleReportCapture, len(source.Reports.BattleCaptures))
+	for id, capture := range source.Reports.BattleCaptures {
+		capture.Summary = append([]byte(nil), capture.Summary...)
+		capture.Waves = append([]byte(nil), capture.Waves...)
+		capture.Details = append([]byte(nil), capture.Details...)
+		clone.Reports.BattleCaptures[id] = capture
+	}
 	clone.Observations = cloneMap(source.Observations)
 	return clone
+}
+
+func cloneQueueItems(source []QueueItem) []QueueItem {
+	clone := append([]QueueItem{}, source...)
+	for index := range clone {
+		clone[index].StartedAt = cloneTimePointer(clone[index].StartedAt)
+		clone[index].CompletesAt = cloneTimePointer(clone[index].CompletesAt)
+	}
+	return clone
+}
+
+func cloneQueueItemPointer(source *QueueItem) *QueueItem {
+	if source == nil {
+		return nil
+	}
+	clone := *source
+	clone.StartedAt = cloneTimePointer(source.StartedAt)
+	clone.CompletesAt = cloneTimePointer(source.CompletesAt)
+	return &clone
 }
 
 func cloneCraftingQueue(source []CraftingQueueItem) []CraftingQueueItem {

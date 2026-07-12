@@ -19,11 +19,12 @@ interface CastleQueueStripDef {
   label: string;
   activeSlots: number;
   queueSlots: number;
+	productionLineId?: number;
 }
 
 const QUEUE_DEFINITIONS: CastleQueueStripDef[] = [
-  { id: 'recruitment', label: 'Recruitment queue', activeSlots: 1, queueSlots: 5 },
-  { id: 'tool', label: 'Tool queue', activeSlots: 1, queueSlots: 5 },
+  { id: 'recruitment', label: 'Recruitment queue', activeSlots: 1, queueSlots: 5, productionLineId: 0 },
+  { id: 'tool', label: 'Tool queue', activeSlots: 1, queueSlots: 5, productionLineId: 1 },
   { id: 'refinery', label: 'Refinery', activeSlots: 2, queueSlots: 4 },
   { id: 'toolsmith', label: 'Toolsmith', activeSlots: 2, queueSlots: 4 },
   { id: 'dragon-hoard', label: 'Dragon Hoard', activeSlots: 2, queueSlots: 4 },
@@ -71,14 +72,20 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
                   active: false,
                 })),
               ] : [];
-              const productionRows: ProductionQueueRow[] = (castle.queues[queue.id] ?? []).map((item, index) => ({
+								const production = queue.productionLineId == null
+									? undefined
+									: castle.production[String(queue.productionLineId)];
+								const productionItems = production
+									? [...(production.active ? [production.active] : []), ...(production.queued ?? [])]
+									: [];
+              const productionRows: ProductionQueueRow[] = productionItems.map((item, index) => ({
                 definitionId: item.definition.id,
                 amount: item.amount ?? 0,
-                active: item.startedAt != null || (index < queue.activeSlots && item.completesAt != null),
+								active: index === 0 && production?.active != null,
               }));
               const totalSlots = crafting
                 ? Math.max(queue.activeSlots + queue.queueSlots, crafting.slotCount ?? 0)
-                : queue.activeSlots + queue.queueSlots;
+								: Math.max(queue.activeSlots + queue.queueSlots, 1 + (production?.capacity ?? 0));
               return (
                 <div key={queue.id} className="flex flex-col gap-2.5">
                   <h4 className="border-b border-border-base/50 pb-1 text-xs font-bold uppercase text-text-muted">{queue.label}</h4>

@@ -153,7 +153,7 @@ func (controller *Controller) run(ctx context.Context) {
 			if controller.ingest == nil {
 				continue
 			}
-			decoded, err := controller.ingest.HandleRaw(ctx, frame.Payload, frame.Direction)
+			decoded, err := controller.ingest.HandleRawAt(ctx, frame.Payload, frame.Direction, frame.ObservedAt)
 			if err == nil && decoded.Frame.Namespace != "" {
 				status := controller.Status()
 				if status.Namespace != decoded.Frame.Namespace {

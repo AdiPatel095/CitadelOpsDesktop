@@ -1,6 +1,5 @@
 import React from 'react';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
-import { Card, CardContent } from '../../components/ui';
 import RiftAttackTemplate from './RiftAttackTemplate';
 import RiftMaidenCommsPanel from './RiftMaidenCommsPanel';
 
@@ -12,12 +11,6 @@ const RiftView: React.FC = () => {
       <RiftMaidenCommsPanel />
 
       <RiftAttackTemplate />
-
-      <Card>
-        <CardContent className="flex items-center justify-center py-20">
-          <p className="text-text-muted font-medium">Rift features coming soon...</p>
-        </CardContent>
-      </Card>
     </div>
   );
 };

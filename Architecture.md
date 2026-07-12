@@ -244,6 +244,18 @@ Owns policies, not transport mechanics.
   to the intent engine.
 - An automation may not mutate state optimistically or call a payload builder.
 
+### `Server/Scheduling`
+
+Owns delayed execution without creating a second command path.
+
+- Persist the named intent, canonical arguments, actor, and execution time in
+  revisioned state.
+- Re-submit due work through `Intent`, where current state, official data,
+  claims, and preconditions are re-evaluated immediately before sending.
+- Record scheduled, running, succeeded, failed, and cancelled status for every
+  delayed operation.
+- Never persist a serialized websocket frame or bypass intent receipts.
+
 ### `Server/API`
 
 Owns versioned DTOs and transport only.

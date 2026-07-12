@@ -168,7 +168,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
             <div className="flex items-center justify-between gap-4 rounded-global border border-border-base bg-bg-card/50 px-4 py-3">
               <div>
                 <div className="text-xs font-bold uppercase tracking-wider text-primary">Recall when clear</div>
-                <p className="mt-1 text-xs text-text-muted">Use MCM after the last attack lands and three fresh checks show no incoming threat.</p>
+                <p className="mt-1 text-xs text-text-muted">Use MCM after the last attack lands and a fresh authoritative movement snapshot confirms the castle is clear.</p>
               </div>
               <Switch
                 checked={state.recallWhenClear}

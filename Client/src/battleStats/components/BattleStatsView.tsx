@@ -35,14 +35,6 @@ const dataSources = ['/api/v2/history/battle-reports'];
 
 const REPORT_ROWS_PAGE_SIZE = 250;
 
-const kingdomNames: Record<number, string> = {
-  0: 'The Great Empire (Green)',
-  1: 'The Burning Sands (Sand)',
-  2: 'The Everwinter Glacier (Ice)',
-  3: 'The Fire Peaks (Fire)',
-  4: 'The Storm Islands (Storm)',
-};
-
 const allOption = 'all';
 
 interface FilterOption {
@@ -756,6 +748,7 @@ const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onB
   outcome,
   onBack,
 }) => {
+	const { kingdoms } = useMetadata();
   return (
     <Card variant="solid" className="battle-report-dossier">
       <div className="battle-report-dossier-top">
@@ -789,7 +782,7 @@ const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onB
       <div className="battle-report-intel-strip">
         <BannerFact icon={<CalendarDays className="h-4 w-4" />} label="Date" value={formatDate(report)} />
         <BannerFact icon={<MapPin className="h-4 w-4" />} label="Coordinates" value={battleCoordinateLabel(report)} />
-        <BannerFact icon={<Shield className="h-4 w-4" />} label="Kingdom" value={kingdomLabel(report)} />
+		<BannerFact icon={<Shield className="h-4 w-4" />} label="Kingdom" value={kingdomLabel(report, kingdoms)} />
       </div>
     </Card>
   );
@@ -2142,10 +2135,10 @@ function battlePhaseTotals(
   );
 }
 
-function kingdomLabel(report: ParsedReport): string {
+function kingdomLabel(report: ParsedReport, kingdoms: Record<number, MetadataItem> = {}): string {
   const id = numericValue(report.kingdomID ?? report.kingdomId);
   if (id !== null) {
-    return kingdomNames[id] ?? `Kingdom ${id}`;
+		return kingdoms[id]?.name ?? `Kingdom ${id}`;
   }
   return 'Kingdom unknown';
 }

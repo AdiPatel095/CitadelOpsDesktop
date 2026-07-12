@@ -68,6 +68,9 @@ func (server *Server) handleRawHistory(writer http.ResponseWriter, request *http
 	}
 	items := make([]json.RawMessage, len(rows))
 	copy(items, rows)
+	for left, right := 0, len(items)-1; left < right; left, right = left+1, right-1 {
+		items[left], items[right] = items[right], items[left]
+	}
 	if wrapped {
 		writeJSON(writer, http.StatusOK, map[string]any{"reports": items})
 		return

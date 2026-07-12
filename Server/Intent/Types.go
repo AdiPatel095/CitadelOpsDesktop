@@ -41,6 +41,7 @@ type Step struct {
 	Payload         json.RawMessage  `json:"payload,omitempty"`
 	AwaitOpcode     string           `json:"awaitOpcode,omitempty"`
 	TimeoutMillis   int              `json:"timeoutMillis,omitempty"`
+	DelayMillis     int              `json:"delayMillis,omitempty"`
 	SuccessCodes    []int            `json:"successCodes,omitempty"`
 	Command         Protocol.Command `json:"-"`
 }

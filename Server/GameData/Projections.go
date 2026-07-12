@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type UnitDefinition struct {
@@ -309,6 +310,18 @@ func intList(record Record, field string) []int64 {
 	raw := record[field]
 	if len(raw) == 0 {
 		return nil
+	}
+	if scalar, ok := scalarKey(raw); ok {
+		parts := strings.FieldsFunc(scalar, func(character rune) bool {
+			return character == ',' || character == '#'
+		})
+		result := make([]int64, 0, len(parts))
+		for _, part := range parts {
+			if integer, err := strconv.ParseInt(strings.TrimSpace(part), 10, 64); err == nil {
+				result = append(result, integer)
+			}
+		}
+		return result
 	}
 	var values []json.RawMessage
 	if json.Unmarshal(raw, &values) != nil {

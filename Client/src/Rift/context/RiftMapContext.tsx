@@ -32,12 +32,23 @@ export interface RiftMapContextValue {
 const RiftMapContext = createContext<RiftMapContextValue | undefined>(undefined);
 
 export function RiftMapProvider({ children }: { children: ReactNode }) {
-  const { state, configuration, submitIntent, updateConfiguration } = useCitadelAPI();
+  const { state, submitIntent } = useCitadelAPI();
   const { castle } = useCastleFocus();
-  const riftCRALaunch = useMemo(
-    () => parseRiftCRALaunchPayload(configuration?.sections['rift.launches']),
-    [configuration?.sections],
-  );
+  const riftCRALaunch = useMemo(() => {
+    const launches = Object.values(state?.rift?.launches ?? {}).map((entry) => {
+      const scheduled = state?.scheduled?.[`rift:${entry.id}`];
+      const executeAt = scheduled?.status === 'scheduled' || scheduled?.status === 'running'
+        ? Date.parse(scheduled.executeAt)
+        : Number.NaN;
+      return {
+        ...entry,
+        ...(Number.isFinite(executeAt) && (entry.oneWayTTSeconds ?? 0) > 0
+          ? { scheduledArriveAtUnix: Math.floor(executeAt / 1000) + (entry.oneWayTTSeconds ?? 0) }
+          : {}),
+      };
+    });
+    return parseRiftCRALaunchPayload({ launches, launchCount: launches.length });
+  }, [state?.rift?.launches, state?.scheduled]);
 
   const refreshRiftMapCoords = useCallback((refresh = true) => {
     if (!refresh || !castle) return;
@@ -60,17 +71,13 @@ export function RiftMapProvider({ children }: { children: ReactNode }) {
 
   const renameRiftCRALaunch = useCallback((launchId: string, displayName: string) => {
     if (!launchId) return;
-    const launches = riftCRALaunch.launches.map((entry) =>
-      entry.id === launchId ? { ...entry, displayName: displayName.trim() } : entry
-    );
-    void updateConfiguration('rift.launches', { ...riftCRALaunch, launches, launchCount: launches.length });
-  }, [riftCRALaunch, updateConfiguration]);
+    void submitIntent('rift.template.rename', { launchId, displayName: displayName.trim() });
+  }, [submitIntent]);
 
   const deleteRiftCRALaunch = useCallback((launchId: string) => {
     if (!launchId) return;
-    const launches = riftCRALaunch.launches.filter((entry) => entry.id !== launchId);
-    void updateConfiguration('rift.launches', { ...riftCRALaunch, launches, launchCount: launches.length });
-  }, [riftCRALaunch, updateConfiguration]);
+    void submitIntent('rift.template.delete', { launchId });
+  }, [submitIntent]);
 
   const riftMapCoords = useMemo(
     () => riftMapCoordsFromState(state, castle),

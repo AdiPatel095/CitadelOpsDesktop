@@ -57,7 +57,11 @@ func (pipeline *Pipeline) SetTelemetry(telemetry frameTelemetry) {
 }
 
 func (pipeline *Pipeline) HandleRaw(ctx context.Context, raw string, direction Protocol.Direction) (Protocol.CommittedFrame, error) {
-	frame, err := Protocol.Decode(raw, direction, time.Now().UTC())
+	return pipeline.HandleRawAt(ctx, raw, direction, time.Now().UTC())
+}
+
+func (pipeline *Pipeline) HandleRawAt(ctx context.Context, raw string, direction Protocol.Direction, observedAt time.Time) (Protocol.CommittedFrame, error) {
+	frame, err := Protocol.Decode(raw, direction, observedAt)
 	if err != nil {
 		return Protocol.CommittedFrame{}, err
 	}
@@ -72,11 +76,11 @@ func (pipeline *Pipeline) HandleFrame(ctx context.Context, frame Protocol.Frame)
 	if pipeline.gameData != nil {
 		currentData, _ = pipeline.gameData.Current()
 	}
-	reducer := pipeline.registry.reducer(frame.Opcode)
+	reducer := pipeline.registry.reducer(frame.Opcode, frame.Direction)
 	event, err := pipeline.state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
 		recordObservation(gameState, frame, "")
 		domains := []string{"protocol"}
-		if reducer != nil && frame.Direction == Protocol.DirectionInbound {
+		if reducer != nil {
 			reducerDomains, reducerChanged, reduceErr := reducer(ctx, frame, gameState, currentData)
 			if reduceErr != nil {
 				return nil, false, fmt.Errorf("reduce %s: %w", frame.Opcode, reduceErr)

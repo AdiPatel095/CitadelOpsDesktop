@@ -1,8 +1,8 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
 import type { RecruitTroopsMode } from '../settings/RecruitTroopsClientState';
 import type { AutoToolMode } from '../settings/AutoToolClientState';
-import { Notifications } from '../components/Notifications';
+import type { AutomationStateV2 } from '../api/Contracts';
 
 export type GameConnectionState =
   | 'stopped'
@@ -44,19 +44,9 @@ interface AuthContextType {
   autoStationThreatCount: number;
   autoStationNextImpact: number;
   autoStationDetail: string;
-  autoBeriWorldEnabled: boolean;
-  autoBeriWorldNextWakeUp: number;
-  versionUpdate: { newVersion: string; downloadUrl: string } | null;
-  isVersionBannerDismissed: boolean;
-  ignoredVersion: string | null;
-  updateProgress: { stage: string; percent: number } | null;
-  isUpdating: boolean;
-  restartRequired: boolean;
   goMem: number;
-	browserMem: number;
-  dismissVersionBanner: () => void;
-  ignoreVersion: (version: string) => void;
-  triggerUpdate: (downloadUrl: string) => void;
+  browserMem: number;
+	automationStates: Record<string, AutomationStateV2>;
   startGame: () => void;
   stopGame: () => void;
   toggleRecruitTroops: () => void;
@@ -66,18 +56,12 @@ interface AuthContextType {
   toggleAutoTCI: () => void;
   toggleAutoBird: () => void;
   toggleAutoStation: () => void;
-  toggleAutoBeriWorld: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { connectionStatus, state, catalogs, configuration, submitIntent, updateConfiguration } = useCitadelAPI();
-  const [isVersionBannerDismissed, setIsVersionBannerDismissed] = useState(false);
-  const [ignoredVersion, setIgnoredVersion] = useState<string | null>(() => localStorage.getItem('ignoredVersion'));
-  const [updateProgress, setUpdateProgress] = useState<{ stage: string; percent: number } | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-
   const session = state?.session;
 	const automationEnabled = isRecord(configuration?.sections['automation.enabled'])
 		? configuration.sections['automation.enabled'] as Record<string, unknown>
@@ -89,7 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const autoTCIEnabled = automationEnabled.auto_tci === true;
 	const autoBirdEnabled = automationEnabled.auto_bird === true;
 	const autoStationEnabled = automationEnabled.auto_station === true;
-	const autoBeriWorldEnabled = automationEnabled.auto_beri_world === true;
+	const automationStates = state?.automations ?? {};
+	const autoBirdState = automationStates.autoBird;
+	const autoStationState = automationStates.autoStation;
   const gameLoggedIn = connectionStatus === 'Connected' && session?.loggedIn === true && session.socketReady === true;
   const gameConnectionState = normalizeConnectionState(session?.status, gameLoggedIn);
 
@@ -101,13 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const toggle = (feature: string, enabled: boolean) => {
 	void updateConfiguration('automation.enabled', { ...automationEnabled, [feature]: !enabled });
-  };
-
-  const triggerUpdate = (downloadUrl: string) => {
-	void downloadUrl;
-	setIsUpdating(false);
-	setUpdateProgress(null);
-	Notifications.warning('The 2.0 updater is not enabled; install releases through the normal release channel.');
   };
 
   const value = useMemo<AuthContextType>(() => ({
@@ -129,31 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     autoSceatResEnabled,
     autoHospitalEnabled,
     autoTCIEnabled,
-    autoTCINextWakeUp: 0,
+    autoTCINextWakeUp: automationWakeMillis(automationStates.autoTCI),
     autoBirdEnabled,
-    autoBirdNextWakeUp: 0,
+    autoBirdNextWakeUp: automationWakeMillis(autoBirdState),
     autoStationEnabled,
-    autoStationState: autoStationEnabled ? 'active' : 'off',
-    autoStationThreatCount: 0,
-    autoStationNextImpact: 0,
-    autoStationDetail: '',
-    autoBeriWorldEnabled,
-    autoBeriWorldNextWakeUp: 0,
-    versionUpdate: null,
-    isVersionBannerDismissed,
-    ignoredVersion,
-    updateProgress,
-    isUpdating,
-    restartRequired: false,
+    autoStationState: autoStationEnabled ? (autoStationState?.status ?? 'waiting') : 'off',
+    autoStationThreatCount: Math.max(0, Math.trunc(autoStationState?.metrics?.threatCount ?? 0)),
+    autoStationNextImpact: Math.max(0, autoStationState?.metrics?.nextImpactUnixMs ?? 0),
+    autoStationDetail: autoStationState?.detail ?? autoStationState?.lastError ?? '',
     goMem: 0,
-		browserMem: 0,
-    dismissVersionBanner: () => setIsVersionBannerDismissed(true),
-    ignoreVersion: (version) => {
-      localStorage.setItem('ignoredVersion', version);
-      setIgnoredVersion(version);
-      setIsVersionBannerDismissed(true);
-    },
-    triggerUpdate,
+	browserMem: 0,
+	automationStates,
     startGame: () => submit('session.start'),
     stopGame: () => submit('session.stop'),
 	toggleRecruitTroops: () => toggle('recruit_troops', recruitTroopsEnabled),
@@ -163,31 +128,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	toggleAutoTCI: () => toggle('auto_tci', autoTCIEnabled),
 	toggleAutoBird: () => toggle('auto_bird', autoBirdEnabled),
 	toggleAutoStation: () => toggle('auto_station', autoStationEnabled),
-	toggleAutoBeriWorld: () => toggle('auto_beri_world', autoBeriWorldEnabled),
   }), [
-    autoBeriWorldEnabled,
     autoBirdEnabled,
+	autoBirdState,
     autoHospitalEnabled,
     autoSceatResEnabled,
     autoStationEnabled,
+	autoStationState,
     autoTCIEnabled,
     autoToolEnabled,
+	automationStates,
     catalogs,
 	configuration,
     connectionStatus,
     gameConnectionState,
     gameLoggedIn,
-    ignoredVersion,
-    isUpdating,
-    isVersionBannerDismissed,
     recruitTroopsEnabled,
     session,
     submitIntent,
 	updateConfiguration,
-    updateProgress,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+function automationWakeMillis(state: AutomationStateV2 | undefined): number {
+	if (!state?.nextCheckAt) return 0;
+	const value = Date.parse(state.nextCheckAt);
+	return Number.isFinite(value) ? value : 0;
 }
 
 export function useAuth(): AuthContextType {

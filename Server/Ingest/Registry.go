@@ -19,30 +19,45 @@ type Reducer func(
 ) (domains []string, changed bool, err error)
 
 type Registry struct {
-	mu       sync.RWMutex
-	reducers map[string]Reducer
+	mu               sync.RWMutex
+	inboundReducers  map[string]Reducer
+	outboundReducers map[string]Reducer
 }
 
 func NewRegistry() *Registry {
-	return &Registry{reducers: map[string]Reducer{}}
+	return &Registry{
+		inboundReducers:  map[string]Reducer{},
+		outboundReducers: map[string]Reducer{},
+	}
 }
 
 func (registry *Registry) Register(opcode string, reducer Reducer) error {
+	return registry.register(opcode, reducer, registry.inboundReducers)
+}
+
+func (registry *Registry) RegisterOutbound(opcode string, reducer Reducer) error {
+	return registry.register(opcode, reducer, registry.outboundReducers)
+}
+
+func (registry *Registry) register(opcode string, reducer Reducer, reducers map[string]Reducer) error {
 	opcode = strings.ToLower(strings.TrimSpace(opcode))
 	if opcode == "" || reducer == nil {
 		return fmt.Errorf("opcode and reducer are required")
 	}
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
-	if _, exists := registry.reducers[opcode]; exists {
+	if _, exists := reducers[opcode]; exists {
 		return fmt.Errorf("reducer already registered for %s", opcode)
 	}
-	registry.reducers[opcode] = reducer
+	reducers[opcode] = reducer
 	return nil
 }
 
-func (registry *Registry) reducer(opcode string) Reducer {
+func (registry *Registry) reducer(opcode string, direction Protocol.Direction) Reducer {
 	registry.mu.RLock()
 	defer registry.mu.RUnlock()
-	return registry.reducers[strings.ToLower(opcode)]
+	if direction == Protocol.DirectionOutbound {
+		return registry.outboundReducers[strings.ToLower(opcode)]
+	}
+	return registry.inboundReducers[strings.ToLower(opcode)]
 }

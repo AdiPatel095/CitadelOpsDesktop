@@ -18,7 +18,7 @@ export interface SelectProps {
   /**
    * When true, dropdown max-height follows space below the control (viewport),
    * so short lists show a compact panel and long lists use available height before scrolling.
-   * When false/omitted, uses a fixed cap (legacy behavior for other selects).
+   * When false or omitted, the menu uses a fixed height cap.
    */
   menuGrowToViewport?: boolean;
 }

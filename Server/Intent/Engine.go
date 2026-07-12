@@ -173,6 +173,18 @@ func (engine *Engine) Subscribe(buffer int) (<-chan Receipt, func()) {
 }
 
 func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, step Step) error {
+	if step.DelayMillis > 0 {
+		timer := time.NewTimer(time.Duration(step.DelayMillis) * time.Millisecond)
+		defer timer.Stop()
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-timer.C:
+		}
+		if step.Action == "" && step.Opcode == "" && step.Command.Opcode == "" {
+			return nil
+		}
+	}
 	if step.Action != "" {
 		engine.mu.RLock()
 		action := engine.actions[step.Action]

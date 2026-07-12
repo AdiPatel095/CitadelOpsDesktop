@@ -75,6 +75,13 @@ func reduceInitialState(
 		}
 		changed = changed || updated
 	}
+	if raw := root["sne"]; len(raw) > 0 {
+		updated, err := applyReportNotices(raw, frame.ReceivedAt, gameState)
+		if err != nil {
+			return nil, false, err
+		}
+		changed = changed || updated
+	}
 	for section, field := range map[string]string{"gmu": "MP", "ufa": "CF", "ufp": "CFP"} {
 		if raw := root[section]; len(raw) > 0 {
 			updated, err := applyPlayerMetric(raw, field, section, gameState)
@@ -84,7 +91,7 @@ func reduceInitialState(
 			changed = changed || updated
 		}
 	}
-	return []string{"player", "castles", "resources", "alliance", "commanders", "castellans", "equipment"}, changed, nil
+	return []string{"player", "castles", "resources", "alliance", "commanders", "castellans", "equipment", "reports"}, changed, nil
 }
 
 func reducePlayerInfo(
@@ -133,18 +140,21 @@ func reduceAllianceInfo(
 		return nil, false, fmt.Errorf("decode alliance: %w", err)
 	}
 	members := make([]State.AllianceMember, 0, len(payload.Alliance.Members))
+	holdings := make([]State.AllianceHolding, 0, len(payload.Alliance.Members)*4)
 	playerChanged := false
 	for _, raw := range payload.Alliance.Members {
 		var member struct {
-			ID          wireInt64   `json:"OID"`
-			Name        string      `json:"N"`
-			RankID      int         `json:"AR"`
-			Level       int         `json:"L"`
-			LegendLevel int         `json:"LL"`
-			Might       wireFloat64 `json:"MP"`
-			Glory       wireFloat64 `json:"CF"`
-			AllianceID  wireInt64   `json:"AID"`
-			Alliance    string      `json:"AN"`
+			ID                  wireInt64           `json:"OID"`
+			Name                string              `json:"N"`
+			RankID              int                 `json:"AR"`
+			Level               int                 `json:"L"`
+			LegendLevel         int                 `json:"LL"`
+			Might               wireFloat64         `json:"MP"`
+			Glory               wireFloat64         `json:"CF"`
+			AllianceID          wireInt64           `json:"AID"`
+			Alliance            string              `json:"AN"`
+			ReturnProtectionSec int                 `json:"RPT"`
+			Holdings            [][]json.RawMessage `json:"AP"`
 		}
 		if json.Unmarshal(raw, &member) != nil || member.ID <= 0 {
 			continue
@@ -152,7 +162,21 @@ func reduceAllianceInfo(
 		members = append(members, State.AllianceMember{
 			PlayerID: State.PlayerID(member.ID), Name: member.Name, RankID: member.RankID,
 			Level: member.Level, LegendLevel: member.LegendLevel, Might: float64(member.Might),
+			ReturnProtectionSec: member.ReturnProtectionSec,
 		})
+		for _, row := range member.Holdings {
+			if len(row) < 5 {
+				continue
+			}
+			holding := State.AllianceHolding{
+				KingdomID: State.KingdomID(rowInt(row, 0)), CastleID: State.CastleID(rowInt(row, 1)),
+				X: int(rowInt(row, 2)), Y: int(rowInt(row, 3)), SlotType: int(rowInt(row, 4)),
+				PlayerID: State.PlayerID(member.ID),
+			}
+			if holding.CastleID > 0 && holding.X >= 0 && holding.Y >= 0 {
+				holdings = append(holdings, holding)
+			}
+		}
 		if State.PlayerID(member.ID) == gameState.Player.ID {
 			if gameState.Player.Level != member.Level || gameState.Player.LegendLevel != member.LegendLevel ||
 				gameState.Player.AllianceID != State.AllianceID(member.AllianceID) ||
@@ -170,7 +194,7 @@ func reduceAllianceInfo(
 		}
 	}
 	next := State.AllianceState{
-		ID: State.AllianceID(payload.Alliance.ID), Name: payload.Alliance.Name, Members: members,
+		ID: State.AllianceID(payload.Alliance.ID), Name: payload.Alliance.Name, Members: members, Holdings: holdings,
 	}
 	if reflect.DeepEqual(gameState.Alliance, next) && !playerChanged {
 		return nil, false, nil

@@ -14,6 +14,8 @@ export function visibleCastleQueueIds(
   definitions: Record<number, MetadataItem>,
 ): Set<CastleQueueStripId> {
   const result = new Set<CastleQueueStripId>();
+	if (castle.production['0']) result.add('recruitment');
+	if (castle.production['1']) result.add('tool');
   for (const building of Object.values(castle.buildings)) {
     const identity = buildingIdentity(definitions[building.definitionId]);
     if (identity.includes('barrack')) result.add('recruitment');

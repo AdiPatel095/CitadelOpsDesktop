@@ -6,13 +6,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
 func (application *Application) registerGameIntents() error {
+	if err := application.Intents.RegisterAction("movement.track_station", application.trackStationMovement); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("rift.template.rename", application.renameRiftTemplate); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("rift.template.delete", application.deleteRiftTemplate); err != nil {
+		return err
+	}
 	definitions := []Intent.Definition{
 		{
 			Name: "game.refresh_movements", Description: "Request a fresh movement snapshot", Effect: Intent.EffectRead,
@@ -22,6 +33,14 @@ func (application *Application) registerGameIntents() error {
 					Steps: []Intent.Step{commandStep("Refresh movements", "gam", json.RawMessage(`{}`), "gam")},
 				}, nil
 			},
+		},
+		{
+			Name: "troops.station", Description: "Station validated troop stacks at a same-kingdom alliance holding", Effect: Intent.EffectLaunch,
+			Planner: planTroopsStation,
+		},
+		{
+			Name: "movement.recall", Description: "Recall an active player-owned movement", Effect: Intent.EffectLaunch,
+			Planner: planMovementRecall,
 		},
 		{
 			Name: "equipment.refresh", Description: "Request the current commander and castellan loadouts", Effect: Intent.EffectRead,
@@ -70,6 +89,18 @@ func (application *Application) registerGameIntents() error {
 			Planner: planCraftingStart,
 		},
 		{
+			Name: "production.enqueue", Description: "Enqueue an official troop or tool definition using observed production context", Effect: Intent.EffectWrite,
+			Planner: planProductionEnqueue,
+		},
+		{
+			Name: "hospital.heal", Description: "Heal a non-premium wounded unit stack at an owned castle", Effect: Intent.EffectWrite,
+			Planner: planHospitalHeal,
+		},
+		{
+			Name: "hospital.discard", Description: "Discard a wounded unit stack at an owned castle", Effect: Intent.EffectWrite,
+			Planner: planHospitalDiscard,
+		},
+		{
 			Name: "spy.launch", Description: "Launch a military espionage mission from an owned castle", Effect: Intent.EffectLaunch,
 			Planner: planSpyLaunch,
 		},
@@ -82,8 +113,28 @@ func (application *Application) registerGameIntents() error {
 			Planner: application.planRiftReplay,
 		},
 		{
+			Name: "rift.template.rename", Description: "Rename a captured Rift attack template", Effect: Intent.EffectWrite,
+			Planner: planRiftTemplateRename,
+		},
+		{
+			Name: "rift.template.delete", Description: "Delete a captured Rift attack template and cancel its schedule", Effect: Intent.EffectWrite,
+			Planner: planRiftTemplateDelete,
+		},
+		{
 			Name: "decoration.apply_preset", Description: "Reconcile one castle's decoration layout with an official-definition preset", Effect: Intent.EffectWrite,
 			Planner: planDecorationPreset,
+		},
+		{
+			Name: "report.spy.fetch", Description: "Fetch one spy report from an observed inbox notice", Effect: Intent.EffectRead,
+			Planner: planSpyReportFetch,
+		},
+		{
+			Name: "report.battle.summary", Description: "Fetch one battle report summary from an observed inbox notice", Effect: Intent.EffectRead,
+			Planner: planBattleReportSummary,
+		},
+		{
+			Name: "report.battle.details", Description: "Fetch battle waves, units, and tools using summary-derived report context", Effect: Intent.EffectRead,
+			Planner: planBattleReportDetails,
 		},
 	}
 	for _, definition := range definitions {
@@ -119,8 +170,30 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 	if err != nil {
 		return Intent.Plan{}, err
 	}
-	if _, exists := catalog.Find(strconv.FormatInt(request.RecipeID, 10)); !exists {
+	rawRecipe, exists := catalog.Find(strconv.FormatInt(request.RecipeID, 10))
+	if !exists {
 		return Intent.Plan{}, fmt.Errorf("crafting recipe %d is not in the current official catalog", request.RecipeID)
+	}
+	recipe, err := GameData.DecodeRecord(rawRecipe)
+	if err != nil {
+		return Intent.Plan{}, fmt.Errorf("decode crafting recipe %d: %w", request.RecipeID, err)
+	}
+	queueTypeID, _ := recipe.Int64("queueTypeId")
+	if int(queueTypeID) != building.QueueTypeID {
+		return Intent.Plan{}, fmt.Errorf("crafting recipe %d belongs to queue %d, not queue %d", request.RecipeID, queueTypeID, building.QueueTypeID)
+	}
+	if required, _ := recipe.String("requiredCraftingBuildings"); strings.TrimSpace(required) != "" {
+		allowed := false
+		for _, part := range strings.FieldsFunc(required, func(character rune) bool { return character == ',' || character == '#' }) {
+			definitionID, parseErr := strconv.ParseInt(strings.TrimSpace(part), 10, 64)
+			if parseErr == nil && State.BuildingID(definitionID) == building.DefinitionID {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
+			return Intent.Plan{}, fmt.Errorf("crafting recipe %d is not valid for building definition %d", request.RecipeID, building.DefinitionID)
+		}
 	}
 	payload, _ := json.Marshal(struct {
 		KingdomID  State.KingdomID          `json:"KID"`

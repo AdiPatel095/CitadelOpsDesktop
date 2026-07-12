@@ -11,11 +11,14 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/API"
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Reports"
+	"CitadelDesktop/Server/Scheduling"
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
 	"CitadelDesktop/Server/Telemetry"
@@ -40,6 +43,9 @@ type Application struct {
 	Ingest        *Ingest.Pipeline
 	Session       *Session.Controller
 	Intents       *Intent.Engine
+	Automation    *Automation.Coordinator
+	Reports       *Reports.Manager
+	Scheduler     *Scheduling.Scheduler
 	API           *API.Server
 	StartupErr    error
 }
@@ -100,12 +106,24 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		State:   state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
 		Ingest: ingest, Session: session, Intents: intents, StartupErr: startupErr,
 	}
+	application.Scheduler = Scheduling.NewScheduler(state, intents)
 	if err := application.registerCoreIntents(); err != nil {
 		return nil, err
 	}
 	if err := application.registerGameIntents(); err != nil {
 		return nil, err
 	}
+	application.Automation = Automation.NewCoordinator(
+		state, configuration, gameData, intents,
+		Automation.NewRecruitPolicy(),
+		Automation.NewToolPolicy(),
+		Automation.NewHospitalPolicy(),
+		Automation.NewConstructionPolicy(),
+		Automation.NewCraftingPolicy(),
+		Automation.NewAutoBirdPolicy(),
+		Automation.NewAutoStationPolicy(),
+	)
+	application.Reports = Reports.NewManager(state, history, intents)
 	application.API = API.NewServer(API.Config{
 		Version: Version, State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
 		Intents: intents, Session: session,
@@ -130,6 +148,9 @@ func (application *Application) Start(ctx context.Context) {
 	}()
 	go application.capturePlayerHistory(ctx)
 	go application.persistState(ctx)
+	go application.Automation.Run(ctx)
+	go application.Reports.Run(ctx)
+	go application.Scheduler.Run(ctx)
 }
 
 func (application *Application) persistState(ctx context.Context) {
@@ -225,7 +246,9 @@ func (application *Application) registerCoreIntents() error {
 			_, err = application.Configuration.UpdateExpected(update.Section, update.Value, update.ExpectedRevision)
 			return err
 		},
-		"game_data.refresh": ignoreArguments(application.refreshGameData),
+		"game_data.refresh":  ignoreArguments(application.refreshGameData),
+		"operation.schedule": application.scheduleOperation,
+		"operation.cancel":   application.cancelOperation,
 	} {
 		if err := application.Intents.RegisterAction(name, action); err != nil {
 			return err
@@ -293,6 +316,24 @@ func (application *Application) registerCoreIntents() error {
 		}
 	}
 	return nil
+}
+
+func (application *Application) scheduleOperation(_ context.Context, arguments json.RawMessage) error {
+	var request Scheduling.Request
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return fmt.Errorf("decode scheduled operation: %w", err)
+	}
+	return application.Scheduler.Schedule(request)
+}
+
+func (application *Application) cancelOperation(_ context.Context, arguments json.RawMessage) error {
+	var request struct {
+		ID string `json:"id"`
+	}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return fmt.Errorf("decode scheduled-operation cancellation: %w", err)
+	}
+	return application.Scheduler.Cancel(request.ID)
 }
 
 func (application *Application) refreshGameData(ctx context.Context) error {

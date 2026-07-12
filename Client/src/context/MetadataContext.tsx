@@ -19,6 +19,7 @@ interface MetadataContextValue {
 	equipments: Record<number, MetadataItem>;
 	gems: Record<number, MetadataItem>;
 	effects: Record<number, MetadataItem>;
+	kingdoms: Record<number, MetadataItem>;
 	craftingRecipes: Record<number, MetadataItem>;
   isLoading: boolean;
   getTroop: (id: number) => MetadataItem | undefined;
@@ -43,6 +44,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const [equipments, setEquipments] = useState<Record<number, MetadataItem>>({});
 	const [gems, setGems] = useState<Record<number, MetadataItem>>({});
 	const [effects, setEffects] = useState<Record<number, MetadataItem>>({});
+	const [kingdoms, setKingdoms] = useState<Record<number, MetadataItem>>({});
 	const [craftingRecipes, setCraftingRecipes] = useState<Record<number, MetadataItem>>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -59,6 +61,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			equipmentsResponse,
 			gemsResponse,
 			effectsResponse,
+			kingdomsResponse,
 			craftingResponse,
 		] = await Promise.all([
           CitadelAPI.getCatalog<OfficialRecord>('units'),
@@ -68,9 +71,11 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			CitadelAPI.getCatalog<OfficialRecord>('equipments'),
 			CitadelAPI.getCatalog<OfficialRecord>('gems'),
 			CitadelAPI.getCatalog<OfficialRecord>('effects'),
+			CitadelAPI.getCatalog<OfficialRecord>('kingdoms'),
 			CitadelAPI.getProjection<CraftingProjection>('crafting'),
         ]);
 		const keys = localizationKeys([
+			...kingdomsResponse.items,
 			...unitsResponse.items,
 			...buildingsResponse.items,
 			...resourcesResponse.items,
@@ -120,6 +125,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 		const nextEquipments = definitionMetadata(equipmentsResponse.items, 'equipmentID', translations, 'Equipment');
 		const nextGems = definitionMetadata(gemsResponse.items, 'gemID', translations, 'Gem');
 		const nextEffects = definitionMetadata(effectsResponse.items, 'effectID', translations, 'Effect');
+		const nextKingdoms = definitionMetadata(kingdomsResponse.items, 'kID', translations, 'Kingdom');
 		const nextCraftingRecipes: Record<number, MetadataItem> = {};
 		for (const recipe of craftingResponse.recipes ?? []) {
 			const id = positiveID(recipe.recipeID);
@@ -143,6 +149,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 		setEquipments(nextEquipments);
 		setGems(nextGems);
 		setEffects(nextEffects);
+		setKingdoms(nextKingdoms);
 		setCraftingRecipes(nextCraftingRecipes);
       } catch (error) {
         if (!cancelled) console.error('Could not load official game metadata', error);
@@ -174,6 +181,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 		equipments,
 		gems,
 		effects,
+		kingdoms,
 		craftingRecipes,
     isLoading,
     getTroop,
@@ -201,6 +209,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 		getTool,
 		getTroop,
 		isLoading,
+		kingdoms,
 		resources,
 		tools,
 		troops,
@@ -241,7 +250,7 @@ function isDecoration(row: OfficialRecord): boolean {
 function localizationKeys(rows: OfficialRecord[]): string[] {
   const keys = new Set<string>();
   for (const row of rows) {
-    for (const value of [row.type, row.name, row.Name, row.JSONKey, row.comment2]) {
+    for (const value of [row.type, row.name, row.Name, row.JSONKey, row.kingdomName, row.comment2]) {
       if (typeof value !== 'string' || value.trim() === '') continue;
       keys.add(`${value}_name`);
       keys.add(value);
@@ -252,12 +261,12 @@ function localizationKeys(rows: OfficialRecord[]): string[] {
 
 function displayName(row: OfficialRecord, translations: Record<string, string>, fallback: string): string {
   if (typeof row._display_name === 'string' && row._display_name.trim() !== '') return row._display_name;
-  for (const value of [row.type, row.name, row.Name, row.JSONKey, row.comment2]) {
+  for (const value of [row.type, row.name, row.Name, row.JSONKey, row.kingdomName, row.comment2]) {
     if (typeof value !== 'string' || value.trim() === '') continue;
     const translated = translations[`${value}_name`] ?? translations[value];
     if (translated?.trim()) return translated;
   }
-  for (const value of [row.type, row.name, row.Name, row.comment2]) {
+  for (const value of [row.type, row.name, row.Name, row.kingdomName, row.comment2]) {
     if (typeof value === 'string' && value.trim()) return value;
   }
   return fallback;
@@ -280,7 +289,7 @@ function definitionMetadata(
 	for (const row of rows) {
 		const id = positiveID(row[idField]);
 		if (id === 0) continue;
-		const internalName = [row.name, row.Name, row.assetName]
+		const internalName = [row.name, row.Name, row.kingdomName, row.assetName]
 			.find((value): value is string => typeof value === 'string' && value.trim() !== '');
 		result[id] = {
 			...row,

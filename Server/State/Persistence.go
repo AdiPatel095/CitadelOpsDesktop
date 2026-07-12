@@ -83,6 +83,9 @@ func snapshotPath(dataDir string) string {
 
 func normalizeStateMaps(state *GameState) {
 	defaults := NewGameState()
+	if state.CommandContext.ProductionObservedAt != nil && state.CommandContext.ProductionObservedAt.IsZero() {
+		state.CommandContext.ProductionObservedAt = nil
+	}
 	if state.Player.Resources == nil {
 		state.Player.Resources = defaults.Player.Resources
 	}
@@ -117,8 +120,14 @@ func normalizeStateMaps(state *GameState) {
 		if castle.ConstructionSlots == nil {
 			castle.ConstructionSlots = map[BuildingInstanceID][]ConstructionSlot{}
 		}
-		if castle.Queues == nil {
-			castle.Queues = map[string][]QueueItem{}
+		if castle.Production == nil {
+			castle.Production = map[int]ProductionQueue{}
+		}
+		for lineID, queue := range castle.Production {
+			if queue.Queued == nil {
+				queue.Queued = []QueueItem{}
+			}
+			castle.Production[lineID] = queue
 		}
 		if castle.Crafting.Buildings == nil {
 			castle.Crafting.Buildings = map[BuildingInstanceID]CraftingBuilding{}
@@ -158,6 +167,21 @@ func normalizeStateMaps(state *GameState) {
 	if state.Movements == nil {
 		state.Movements = defaults.Movements
 	}
+	if state.Stationing == nil {
+		state.Stationing = defaults.Stationing
+	}
+	for id, operation := range state.Stationing {
+		if operation.Units == nil {
+			operation.Units = map[UnitID]int64{}
+		}
+		state.Stationing[id] = operation
+	}
+	if state.Scheduled == nil {
+		state.Scheduled = defaults.Scheduled
+	}
+	if state.Rift.Launches == nil {
+		state.Rift.Launches = defaults.Rift.Launches
+	}
 	if state.Inventory.ConstructionItems == nil {
 		state.Inventory.ConstructionItems = defaults.Inventory.ConstructionItems
 	}
@@ -173,8 +197,29 @@ func normalizeStateMaps(state *GameState) {
 	if state.Alliance.Members == nil {
 		state.Alliance.Members = defaults.Alliance.Members
 	}
+	if state.Alliance.Holdings == nil {
+		state.Alliance.Holdings = defaults.Alliance.Holdings
+	}
 	if state.Map == nil {
 		state.Map = defaults.Map
+	}
+	if state.Automations == nil {
+		state.Automations = defaults.Automations
+	}
+	for id, automation := range state.Automations {
+		if automation.Metrics == nil {
+			automation.Metrics = map[string]float64{}
+		}
+		state.Automations[id] = automation
+	}
+	if state.Reports.Notices == nil {
+		state.Reports.Notices = defaults.Reports.Notices
+	}
+	if state.Reports.SpyCaptures == nil {
+		state.Reports.SpyCaptures = defaults.Reports.SpyCaptures
+	}
+	if state.Reports.BattleCaptures == nil {
+		state.Reports.BattleCaptures = defaults.Reports.BattleCaptures
 	}
 	if state.Observations == nil {
 		state.Observations = defaults.Observations

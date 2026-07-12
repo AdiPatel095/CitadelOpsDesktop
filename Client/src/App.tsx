@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAuth } from './context/AuthContext.tsx';
 import { Providers } from './Providers';
 
 import EquipmentView from './equipment/components/EquipmentView';
@@ -13,7 +12,6 @@ import AllianceTargetsView from './allianceTargets/components/AllianceTargetsVie
 import AutomationView from './views/AutomationView';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import UpdateModal from './components/UpdateModal';
 import { Alerts } from './components/Alerts';
 import { RecruitTroopsSettingsModal } from './settings/components/RecruitTroopsSettingsModal';
 import { AutoToolSettingsModal } from './settings/components/AutoToolSettingsModal';
@@ -29,12 +27,6 @@ import { type ViewId } from './config/Navigation';
 import { LoggerDock } from './components/LoggerDock';
 
 const AppContent: React.FC = () => {
-  const {
-    versionUpdate,
-    isVersionBannerDismissed,
-    dismissVersionBanner,
-  } = useAuth();
-
   const [activeView, setActiveView] = useState<ViewId>('castle');
 
   // Modal states
@@ -153,15 +145,6 @@ const AppContent: React.FC = () => {
         featureLabel={scheduleTarget?.label ?? ''}
         onClose={() => setScheduleTarget(null)}
       />
-
-      {/* Version Update Modal - displayed when new version available */}
-      {versionUpdate && !isVersionBannerDismissed && (
-        <UpdateModal
-          newVersion={versionUpdate.newVersion}
-          downloadUrl={versionUpdate.downloadUrl}
-          onDismiss={dismissVersionBanner}
-        />
-      )}
 
       <LoggerDock />
     </div>

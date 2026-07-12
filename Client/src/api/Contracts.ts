@@ -92,6 +92,14 @@ export interface QueueItemV2 {
 	completesAt?: string;
 }
 
+export interface ProductionQueueV2 {
+	lineId: number;
+	active?: QueueItemV2;
+	queued: QueueItemV2[];
+	capacity: number;
+	observedAt: string;
+}
+
 export interface CraftingQueueItemV2 {
 	recipeId: number;
 	batchValue?: number;
@@ -132,7 +140,7 @@ export interface CastleStateV2 {
 	units: CastleUnitsV2;
 	buildings: Record<string, CastleBuildingV2>;
 	constructionSlots: Record<string, ConstructionSlotV2[]>;
-	queues: Record<string, QueueItemV2[]>;
+	production: Record<string, ProductionQueueV2>;
 	crafting: CraftingStateV2;
 }
 
@@ -190,12 +198,23 @@ export interface AllianceMemberV2 {
 	level?: number;
 	legendLevel?: number;
 	might?: number;
+	returnProtectionSec?: number;
+}
+
+export interface AllianceHoldingV2 {
+	castleId: number;
+	playerId: number;
+	kingdomId: number;
+	x: number;
+	y: number;
+	slotType: number;
 }
 
 export interface AllianceStateV2 {
 	id: number;
 	name?: string;
 	members: AllianceMemberV2[];
+	holdings: AllianceHoldingV2[];
 }
 
 export interface MapObservationV2 {
@@ -243,6 +262,101 @@ export interface ProtocolObservationV2 {
 	lastRevision: number;
 }
 
+export interface CommandContextStateV2 {
+	productionSessionKey?: number;
+	productionObservedAt?: string;
+}
+
+export interface AutomationStateV2 {
+	id: string;
+	enabled: boolean;
+	status: string;
+	detail?: string;
+	nextCheckAt?: string;
+	lastRunAt?: string;
+	lastOperationId?: string;
+	lastError?: string;
+	metrics?: Record<string, number>;
+	updatedAt: string;
+}
+
+export interface MovementSnapshotV2 {
+	version: number;
+	observedAt?: string;
+}
+
+export interface StationingOperationV2 {
+	id: string;
+	purpose: string;
+	sourceCastleId: number;
+	targetCastleId: number;
+	movementId?: number;
+	units: Record<string, number>;
+	safeAfter?: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface ScheduledOperationV2 {
+	id: string;
+	intent: string;
+	actor: string;
+	arguments: Record<string, unknown>;
+	executeAt: string;
+	createdAt: string;
+	status: string;
+	lastOperationId?: string;
+	lastError?: string;
+}
+
+export interface RiftLaunchV2 {
+	id: string;
+	displayName?: string;
+	savedAtUnix: number;
+	body: Record<string, unknown>;
+	commanderID?: number;
+	sourceX?: number;
+	sourceY?: number;
+	targetX?: number;
+	targetY?: number;
+	kingdomID?: number;
+	attackValid?: number;
+	waveCount?: number;
+	useTravelFeather: boolean;
+	oneWayTTSeconds?: number;
+	lastSuccessAtUnix?: number;
+}
+
+export interface RiftStateV2 {
+	launches: Record<string, RiftLaunchV2>;
+	pendingLaunchId?: string;
+}
+
+export interface ReportNoticeV2 {
+	messageId: number;
+	typeId: number;
+	battleKey?: string;
+	reportId?: number;
+	ageSec?: number;
+	status: string;
+	observedAt: string;
+}
+
+export interface ReportStateV2 {
+	notices: Record<string, ReportNoticeV2>;
+	spyCaptures: Record<string, { messageId: number; payload: Record<string, unknown>; capturedAt: string }>;
+	battleCaptures: Record<string, {
+		messageId: number;
+		reportId?: number;
+		battleKey?: string;
+		summary?: Record<string, unknown>;
+		waves?: Record<string, unknown>;
+		details?: Record<string, unknown>;
+		capturedAt: string;
+	}>;
+	activeBattleReport?: number;
+}
+
 export interface GameStateV2 {
   schemaVersion: number;
   revision: number;
@@ -255,9 +369,16 @@ export interface GameStateV2 {
 	commanders: Record<string, CommanderStateV2>;
 	castellans: Record<string, CastellanStateV2>;
 	movements: Record<string, MovementStateV2>;
+	movementSnapshot: MovementSnapshotV2;
+	stationing: Record<string, StationingOperationV2>;
+	scheduled: Record<string, ScheduledOperationV2>;
+	rift: RiftStateV2;
   inventory: InventoryStateV2;
   alliance: AllianceStateV2;
   map: Record<string, Record<string, MapObservationV2>>;
+	commandContext: CommandContextStateV2;
+	automations: Record<string, AutomationStateV2>;
+	reports: ReportStateV2;
 	observations: Record<string, ProtocolObservationV2>;
 }
 
