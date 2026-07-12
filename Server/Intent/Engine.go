@@ -3,6 +3,7 @@ package Intent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -25,6 +26,7 @@ type Engine struct {
 	mu            sync.RWMutex
 	actions       map[string]Action
 	executionGate ExecutionGate
+	active        map[string]context.CancelFunc
 	operations    map[string]Receipt
 	subscribers   map[uint64]chan Receipt
 	nextID        atomic.Uint64
@@ -37,7 +39,8 @@ func NewEngine(registry *Registry, state StateReader, gameData GameDataProvider,
 	}
 	return &Engine{
 		registry: registry, state: state, gameData: gameData, sender: sender, observer: observer,
-		claims: newClaimManager(), actions: map[string]Action{}, operations: map[string]Receipt{}, subscribers: map[uint64]chan Receipt{},
+		claims: newClaimManager(), actions: map[string]Action{}, active: map[string]context.CancelFunc{},
+		operations: map[string]Receipt{}, subscribers: map[uint64]chan Receipt{},
 	}
 }
 
@@ -81,7 +84,20 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		ID: request.ID, Intent: request.Name, Actor: request.Actor,
 		Status: StatusPlanning, SubmittedAt: time.Now().UTC(),
 	}
+	executionContext, cancel := context.WithCancel(ctx)
+	if !engine.registerActive(request.ID, cancel) {
+		cancel()
+		now := time.Now().UTC()
+		receipt.Status = StatusFailed
+		receipt.Error = fmt.Sprintf("operation %q is already running", request.ID)
+		receipt.CompletedAt = &now
+		return receipt
+	}
 	engine.update(receipt)
+	defer func() {
+		cancel()
+		engine.unregisterActive(request.ID)
+	}()
 
 	definition, exists := engine.registry.Definition(request.Name)
 	if !exists {
@@ -98,7 +114,7 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 	if engine.gameData != nil {
 		gameDataStore, _ = engine.gameData.Current()
 	}
-	plan, err := definition.Planner(ctx, PlanningContext{State: initial, GameData: gameDataStore}, request.Arguments)
+	plan, err := definition.Planner(executionContext, PlanningContext{State: initial, GameData: gameDataStore}, request.Arguments)
 	if err != nil {
 		return engine.fail(receipt, err)
 	}
@@ -111,11 +127,11 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		engine.update(receipt)
 		return receipt
 	}
-	if err := engine.awaitExecutionGate(ctx, request, plan); err != nil {
+	if err := engine.awaitExecutionGate(executionContext, request, plan); err != nil {
 		return engine.fail(receipt, err)
 	}
 
-	release, err := engine.claims.acquire(ctx, plan.Claims)
+	release, err := engine.claims.acquire(executionContext, plan.Claims)
 	if err != nil {
 		return engine.fail(receipt, err)
 	}
@@ -128,7 +144,7 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 	if engine.gameData != nil {
 		gameDataStore, _ = engine.gameData.Current()
 	}
-	revalidated, err := definition.Planner(ctx, PlanningContext{State: current, GameData: gameDataStore}, request.Arguments)
+	revalidated, err := definition.Planner(executionContext, PlanningContext{State: current, GameData: gameDataStore}, request.Arguments)
 	if err != nil {
 		return engine.fail(receipt, err)
 	}
@@ -138,7 +154,7 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 	}
 	plan = revalidated
 	receipt.Plan = &plan
-	if err := engine.awaitExecutionGate(ctx, request, plan); err != nil {
+	if err := engine.awaitExecutionGate(executionContext, request, plan); err != nil {
 		return engine.fail(receipt, err)
 	}
 	started := time.Now().UTC()
@@ -147,10 +163,10 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 	engine.update(receipt)
 
 	for _, step := range plan.Steps {
-		if err := engine.awaitExecutionGate(ctx, request, plan); err != nil {
+		if err := engine.awaitExecutionGate(executionContext, request, plan); err != nil {
 			return engine.fail(receipt, err)
 		}
-		if err := engine.executeStep(ctx, current.Revision, step); err != nil {
+		if err := engine.executeStep(executionContext, current.Revision, step); err != nil {
 			return engine.fail(receipt, fmt.Errorf("%s: %w", stepLabel(step), err))
 		}
 		current = engine.state.Snapshot()
@@ -160,6 +176,34 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 	receipt.CompletedAt = &completed
 	engine.update(receipt)
 	return receipt
+}
+
+func (engine *Engine) Cancel(id string) bool {
+	id = strings.TrimSpace(id)
+	engine.mu.RLock()
+	cancel := engine.active[id]
+	engine.mu.RUnlock()
+	if cancel == nil {
+		return false
+	}
+	cancel()
+	return true
+}
+
+func (engine *Engine) registerActive(id string, cancel context.CancelFunc) bool {
+	engine.mu.Lock()
+	defer engine.mu.Unlock()
+	if _, exists := engine.active[id]; exists {
+		return false
+	}
+	engine.active[id] = cancel
+	return true
+}
+
+func (engine *Engine) unregisterActive(id string) {
+	engine.mu.Lock()
+	delete(engine.active, id)
+	engine.mu.Unlock()
 }
 
 func (engine *Engine) awaitExecutionGate(ctx context.Context, request Request, plan Plan) error {
@@ -276,6 +320,9 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 
 func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 	receipt.Status = StatusFailed
+	if errors.Is(err, context.Canceled) {
+		receipt.Status = StatusCancelled
+	}
 	receipt.Error = err.Error()
 	now := time.Now().UTC()
 	receipt.CompletedAt = &now

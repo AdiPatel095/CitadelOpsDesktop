@@ -6,6 +6,7 @@ import { castleDisplayName } from '../api/Selectors';
 import { Input, Button, Select } from './ui';
 import { useCitadelAPI } from '../api/ApiContext';
 import { useMetadata } from '../context/MetadataContext';
+import { Notifications } from './Notifications';
 
 interface NamedPreset {
   id: string;
@@ -22,11 +23,14 @@ const EMPTY_PRESETS: NamedPreset[] = [];
 
 const DecorationPresetsPanel: React.FC = () => {
   const { castle } = useCastleFocus();
-  const { configuration, submitIntent, updateConfiguration } = useCitadelAPI();
+  const { configuration, submitIntent, cancelOperation, updateConfiguration } = useCitadelAPI();
   const { decorations } = useMetadata();
   const [newName, setNewName] = useState('');
   const [selectedPresetId, setSelectedPresetId] = useState('');
   const [operationError, setOperationError] = useState('');
+  const [applyOperationId, setApplyOperationId] = useState('');
+  const [applyStatus, setApplyStatus] = useState('');
+  const [cancellingApply, setCancellingApply] = useState(false);
 
   const castleId = castle?.id && castle.id > 0 ? castle.id : 0;
   const focusLabel = castleDisplayName(castle);
@@ -68,16 +72,65 @@ const DecorationPresetsPanel: React.FC = () => {
   };
 
   const handleApply = (presetId: string) => {
-    if (castleId <= 0) return;
+    if (castleId <= 0 || applyOperationId) return;
     const preset = presets.find((candidate) => candidate.id === presetId);
     if (!preset) return;
+    const operationId = `decoration-${crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
     setOperationError('');
+    setApplyOperationId(operationId);
+    setApplyStatus('Applying decoration preset…');
+    Notifications.publish({
+      id: 'decoration-apply',
+      category: 'yellow',
+      message: 'Decoration preset apply is running.',
+      persistent: true,
+      action: { label: 'Cancel apply', onClick: () => requestCancelApply(operationId) },
+    });
     void submitIntent('decoration.apply_preset', {
       castleId,
       kingdomId: castle?.kingdomId,
       presetId,
       items: preset.items,
-    }).catch((error) => setOperationError(error instanceof Error ? error.message : 'Could not apply preset'));
+    }, { id: operationId, actor: 'ui:decoration' })
+      .then((receipt) => {
+        const cancelled = receipt.status === 'cancelled';
+        const message = cancelled ? 'Decoration apply cancelled.' : 'Decoration preset applied.';
+        setApplyStatus(message);
+        Notifications.publish({ id: 'decoration-apply', category: cancelled ? 'yellow' : 'green', message });
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : 'Could not apply preset';
+        setOperationError(message);
+        Notifications.publish({ id: 'decoration-apply', category: 'red', message });
+      })
+      .finally(() => {
+        setApplyOperationId('');
+        setCancellingApply(false);
+      });
+  };
+
+  const requestCancelApply = (operationId: string) => {
+    if (!operationId) return;
+    setCancellingApply(true);
+    setApplyStatus('Cancelling decoration apply…');
+    Notifications.publish({
+      id: 'decoration-apply',
+      category: 'yellow',
+      message: 'Decoration apply cancellation requested…',
+      persistent: true,
+    });
+    void cancelOperation(operationId)
+      .catch((error) => {
+        setCancellingApply(false);
+        const message = error instanceof Error ? error.message : 'Could not cancel decoration apply';
+        setOperationError(message);
+        Notifications.publish({ id: 'decoration-apply', category: 'red', message });
+      });
+  };
+
+  const handleCancelApply = () => {
+    if (cancellingApply) return;
+    requestCancelApply(applyOperationId);
   };
 
   const handleDelete = (presetId: string) => {
@@ -191,25 +244,26 @@ const DecorationPresetsPanel: React.FC = () => {
               }))}
               onChange={setSelectedPresetId}
               placeholder={hasPresets ? 'Select a preset' : 'No presets saved'}
-              disabled={!canUseCastle || !hasPresets}
+              disabled={!canUseCastle || !hasPresets || Boolean(applyOperationId)}
               className="min-w-0 flex-1"
               menuGrowToViewport
             />
             <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
               <Button
+                variant={applyOperationId ? 'danger' : 'primary'}
                 size="sm"
-                disabled={!canUseCastle || !selectedPreset}
-                onClick={() => selectedPreset && handleApply(selectedPreset.id)}
-                title="Apply selected preset"
+                disabled={(!applyOperationId && (!canUseCastle || !selectedPreset)) || cancellingApply}
+                onClick={() => applyOperationId ? handleCancelApply() : selectedPreset && handleApply(selectedPreset.id)}
+                title={applyOperationId ? 'Cancel the running preset application' : 'Apply selected preset'}
                 leftIcon={<Play className="h-3.5 w-3.5" strokeWidth={2.5} />}
                 className="shadow-none hover:shadow-none"
               >
-                Apply
+                {applyOperationId ? (cancellingApply ? 'Cancelling…' : 'Cancel apply') : 'Apply'}
               </Button>
               <Button
                 variant="danger"
                 size="sm"
-                disabled={!selectedPreset}
+                disabled={!selectedPreset || Boolean(applyOperationId)}
                 onClick={() => selectedPreset && handleDelete(selectedPreset.id)}
                 leftIcon={<Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
                 className="shadow-none hover:shadow-none"
@@ -225,6 +279,7 @@ const DecorationPresetsPanel: React.FC = () => {
           )}
         </div>
       </div>
+      {applyStatus && <p className="text-xs text-warning">{applyStatus}</p>}
       {operationError && <p className="text-xs text-error">{operationError}</p>}
     </div>
   );

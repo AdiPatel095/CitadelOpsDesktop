@@ -50,6 +50,7 @@ interface APIContextValue {
     argumentsValue?: Record<string, unknown>,
     options?: SubmitIntentOptions,
   ) => Promise<IntentReceipt>;
+  cancelOperation: (id: string) => Promise<void>;
   updateConfiguration: (section: string, value: unknown) => Promise<IntentReceipt>;
 }
 
@@ -183,6 +184,10 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	CitadelAPI.getAllianceTargets(allianceId, server, refresh)
   ), []);
 
+  const cancelOperation = useCallback(async (id: string) => {
+	await CitadelAPI.cancelOperation(id);
+  }, []);
+
   const updateConfiguration = useCallback((section: string, value: unknown) => (
     submitIntent('config.update', {
       section,
@@ -210,6 +215,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	getAllianceTargets,
 	optimizeEquipment: (input) => CitadelAPI.optimizeEquipment(input),
     submitIntent,
+    cancelOperation,
     updateConfiguration,
   }), [
     catalogs,
@@ -226,7 +232,8 @@ export function APIProvider({ children }: { children: ReactNode }) {
     refreshState,
     state,
     submitIntent,
-    getAllianceTargets,
+	getAllianceTargets,
+	cancelOperation,
     updateConfiguration,
   ]);
 

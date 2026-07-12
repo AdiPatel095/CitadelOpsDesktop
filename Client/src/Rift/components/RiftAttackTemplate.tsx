@@ -10,7 +10,9 @@ import { useRiftMap } from '../context/RiftMapContext';
 import { formatSavedAt, riftLaunchLabel, type RiftCRALaunchEntry } from '../types/RiftCRALaunch';
 import { arriveAtUnixFromOffset, isEarliestOffset } from '../types/RiftArrivalTime';
 import RiftArrivalClock from './RiftArrivalClock';
-import type { AttackSetupDraft } from '../../components/AttackSetupModal';
+import type { AttackSetupDraft, AttackSetupInventory } from '../../components/AttackSetupModal';
+import { useMetadata } from '../../context/MetadataContext';
+import { useCitadelAPI } from '../../api/ApiContext';
 
 const AttackSetupModal = React.lazy(() => import('../../components/AttackSetupModal'));
 
@@ -88,9 +90,19 @@ function summarizeAttackSetup(draft: AttackSetupDraft | undefined) {
   return `${draft.waves.length} wave${draft.waves.length === 1 ? '' : 's'} | ${troops.toLocaleString()} troops | ${tools.toLocaleString()} tools`;
 }
 
+function storedAttackSetup(value: unknown): AttackSetupDraft | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const draft = value as Partial<AttackSetupDraft>;
+  if (typeof draft.name !== 'string' || !Array.isArray(draft.waves) || draft.waves.length === 0) return undefined;
+  if (!draft.waves.every((wave) => wave && typeof wave === 'object' && !Array.isArray(wave))) return undefined;
+  return draft as AttackSetupDraft;
+}
+
 const RiftAttackTemplate: React.FC = () => {
+  const { configuration, updateConfiguration } = useCitadelAPI();
   const { gameLoggedIn } = useAuth();
   const { castle } = useCastleFocus();
+  const { troops, tools } = useMetadata();
   const { movement } = useMovement();
   const { riftCRALaunch, replayRiftCRALaunch, renameRiftCRALaunch, deleteRiftCRALaunch } = useRiftMap();
   const [offsetMinutesById, setOffsetMinutesById] = useState<Record<string, number>>({});
@@ -102,11 +114,36 @@ const RiftAttackTemplate: React.FC = () => {
 
   const launches = riftCRALaunch?.launches ?? [];
   const attackSetupSummary = useMemo(() => summarizeAttackSetup(attackSetupDraft), [attackSetupDraft]);
+  const savedAttackSetup = useMemo(
+    () => storedAttackSetup(configuration?.sections['rift.attackSetup']),
+    [configuration?.sections['rift.attackSetup']],
+  );
+  const attackSetupInventory = useMemo<AttackSetupInventory | undefined>(() => {
+    if (!castle) return undefined;
+    const troopStock: Record<number, number> = {};
+    const toolStock: Record<number, number> = {};
+    for (const [rawID, rawAmount] of Object.entries(castle.units.stationed)) {
+      const id = Number(rawID);
+      const amount = Number(rawAmount);
+      if (!Number.isFinite(id) || id <= 0 || !Number.isFinite(amount) || amount <= 0) continue;
+      if (tools[id]) toolStock[id] = Math.trunc(amount);
+      else if (troops[id]) troopStock[id] = Math.trunc(amount);
+    }
+    return {
+      label: `${castle.name || `Castle ${castle.id}`} inventory`,
+      troopStock,
+      toolStock,
+    };
+  }, [castle, tools, troops]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowUnix(Math.floor(Date.now() / 1000)), 1000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!attackSetupDraft && savedAttackSetup) setAttackSetupDraft(savedAttackSetup);
+  }, [attackSetupDraft, savedAttackSetup]);
 
   const setOffsetFor = useCallback((launchId: string, offsetMinutes: number) => {
     setOffsetMinutesById((prev) => ({ ...prev, [launchId]: offsetMinutes }));
@@ -157,12 +194,14 @@ const RiftAttackTemplate: React.FC = () => {
       replayRiftCRALaunch({
         launchId: entry.id,
         commanderID: entry.commanderID != null && entry.commanderID >= 0 ? entry.commanderID : undefined,
+        sourceCastleId: castle?.id,
         sourceX: useFocusCoords ? castle!.x : undefined,
         sourceY: useFocusCoords ? castle!.y : undefined,
+        ...(attackSetupDraft ? { attackSetup: attackSetupDraft } : {}),
         ...(scheduled && arriveAtUnix != null ? { arriveAtUnix } : {}),
       });
     },
-    [offsetMinutesById, castle, replayRiftCRALaunch]
+    [attackSetupDraft, offsetMinutesById, castle, replayRiftCRALaunch]
   );
 
   return (
@@ -184,6 +223,8 @@ const RiftAttackTemplate: React.FC = () => {
               variant="secondary"
               size="sm"
               onClick={() => setAttackSetupOpen(true)}
+              disabled={!attackSetupInventory}
+              title={attackSetupInventory ? 'Configure the formation used for Rift replays' : 'Castle inventory is not available'}
               leftIcon={<SlidersHorizontal className="w-3.5 h-3.5" />}
               className="shrink-0 self-start"
             >
@@ -340,9 +381,11 @@ const RiftAttackTemplate: React.FC = () => {
           <AttackSetupModal
             isOpen={attackSetupOpen}
             initialDraft={attackSetupDraft}
+            inventory={attackSetupInventory}
             onClose={() => setAttackSetupOpen(false)}
             onSave={(nextDraft) => {
               setAttackSetupDraft(nextDraft);
+              void updateConfiguration('rift.attackSetup', nextDraft);
               setAttackSetupOpen(false);
             }}
           />

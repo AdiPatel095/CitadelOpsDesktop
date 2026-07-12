@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Icons } from '../components/Icons';
-import PriorityModal from '../components/PriorityModal';
 import { CitadelAPI } from '../api/CitadelClient';
 import { useCitadelAPI } from '../api/ApiContext';
 import type { BrowserInventory } from '../api/Contracts';
@@ -14,7 +13,6 @@ const SettingsView: React.FC = () => {
   const [upgradeEreDelayMs, setUpgradeEreDelayMs] = useState<string>('50');
   const [upgradeCoinThreshold, setUpgradeCoinThreshold] = useState<string>('0');
   const [manualFocusIdleSec, setManualFocusIdleSec] = useState<string>('30');
-  const [isPriorityModalOpen, setIsPriorityModalOpen] = useState(false);
 	const [browserInventory, setBrowserInventory] = useState<BrowserInventory | null>(null);
 	const [browserSelectionPending, setBrowserSelectionPending] = useState(false);
 	const [browserSelectionError, setBrowserSelectionError] = useState('');
@@ -369,26 +367,6 @@ const SettingsView: React.FC = () => {
                 />
               </div>
             </div>
-
-            <div className="h-px bg-border-base w-full"></div>
-
-            <div className="space-y-4">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-text-main mb-1">Priority Categorization</h3>
-                  <p className="text-xs text-text-muted">
-                    Manage which tabs fall into which priority buckets (P1, P2, P3, Ignored).
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setIsPriorityModalOpen(true)}
-                  leftIcon={<Icons.List className="w-4 h-4" />}
-                  className="w-full sm:w-auto"
-                >
-                  Manage Priorities
-                </Button>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
@@ -456,11 +434,6 @@ const SettingsView: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      <PriorityModal
-        isOpen={isPriorityModalOpen}
-        onClose={() => setIsPriorityModalOpen(false)}
-      />
     </div>
   );
 };

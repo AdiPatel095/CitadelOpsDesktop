@@ -78,6 +78,7 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/intents", server.handleIntentDefinitions)
 	mux.HandleFunc("POST /api/v2/intents/{name}", server.handleIntentSubmit)
 	mux.HandleFunc("GET /api/v2/operations/{id}", server.handleOperation)
+	mux.HandleFunc("POST /api/v2/operations/{id}/cancel", server.handleOperationCancel)
 	mux.HandleFunc("GET /api/v2/events", server.handleEvents)
 	return mux
 }
@@ -285,6 +286,19 @@ func (server *Server) handleOperation(writer http.ResponseWriter, request *http.
 		return
 	}
 	writeJSON(writer, http.StatusOK, receipt)
+}
+
+func (server *Server) handleOperationCancel(writer http.ResponseWriter, request *http.Request) {
+	if server.config.Intents == nil {
+		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable")
+		return
+	}
+	id := request.PathValue("id")
+	if !server.config.Intents.Cancel(id) {
+		writeError(writer, http.StatusConflict, "operation_not_running", "Operation is not currently running")
+		return
+	}
+	writeJSON(writer, http.StatusAccepted, map[string]any{"id": id, "cancelled": true})
 }
 
 func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Request) {

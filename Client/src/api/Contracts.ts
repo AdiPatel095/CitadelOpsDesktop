@@ -600,7 +600,7 @@ export interface CatalogResponse<T extends Record<string, unknown> = Record<stri
   items: T[];
 }
 
-export type IntentStatus = 'planning' | 'planned' | 'running' | 'succeeded' | 'failed';
+export type IntentStatus = 'planning' | 'planned' | 'running' | 'succeeded' | 'cancelled' | 'failed';
 
 export interface IntentStep {
   name?: string;
@@ -640,6 +640,7 @@ export interface IntentDefinition {
 }
 
 export interface SubmitIntentOptions {
+  id?: string;
   actor?: string;
   expectedRevision?: number;
   dryRun?: boolean;

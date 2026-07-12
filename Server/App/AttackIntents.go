@@ -131,14 +131,39 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	}, nil
 }
 
+type riftReplayRequest struct {
+	LaunchID     string              `json:"launchId"`
+	CommanderID  *int64              `json:"commanderID,omitempty"`
+	SourceCastle State.CastleID      `json:"sourceCastleId,omitempty"`
+	SourceX      *int                `json:"sourceX,omitempty"`
+	SourceY      *int                `json:"sourceY,omitempty"`
+	ArriveAt     int64               `json:"arriveAtUnix,omitempty"`
+	AttackSetup  *attackSetupRequest `json:"attackSetup,omitempty"`
+}
+
+type attackSetupRequest struct {
+	Name  string                   `json:"name,omitempty"`
+	Waves []attackSetupWaveRequest `json:"waves"`
+}
+
+type attackSetupWaveRequest struct {
+	Left   attackSetupLaneRequest `json:"L"`
+	Middle attackSetupLaneRequest `json:"M"`
+	Right  attackSetupLaneRequest `json:"R"`
+}
+
+type attackSetupLaneRequest struct {
+	Troops []attackSetupSlotRequest `json:"troops"`
+	Tools  []attackSetupSlotRequest `json:"tools"`
+}
+
+type attackSetupSlotRequest struct {
+	ItemID   *int64 `json:"itemId"`
+	Quantity int64  `json:"quantity"`
+}
+
 func (application *Application) planRiftReplay(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
-	var request struct {
-		LaunchID    string `json:"launchId"`
-		CommanderID *int64 `json:"commanderID,omitempty"`
-		SourceX     *int   `json:"sourceX,omitempty"`
-		SourceY     *int   `json:"sourceY,omitempty"`
-		ArriveAt    int64  `json:"arriveAtUnix,omitempty"`
-	}
+	var request riftReplayRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
 	}
@@ -163,6 +188,28 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	if request.SourceY != nil {
 		fields["SY"], _ = json.Marshal(*request.SourceY)
 	}
+	claims := []string{"rift-launch:" + request.LaunchID}
+	if request.AttackSetup != nil {
+		source, err := sourceCastle(input.State, request.SourceCastle)
+		if err != nil {
+			return Intent.Plan{}, err
+		}
+		waves, err := buildAttackSetupWaves(*request.AttackSetup, source, input.GameData)
+		if err != nil {
+			return Intent.Plan{}, err
+		}
+		fields["A"], _ = json.Marshal(waves)
+		fields["AST"], _ = json.Marshal([]int64{-1, -1, -1})
+		empty := attackPair{-1, 0}
+		fields["RW"], _ = json.Marshal([]attackPair{empty, empty, empty, empty, empty, empty, empty, empty})
+		fields["ASCT"] = json.RawMessage(`0`)
+		fields["SX"], _ = json.Marshal(source.X)
+		fields["SY"], _ = json.Marshal(source.Y)
+		claims = append(claims,
+			"castle:"+strconv.FormatInt(int64(source.ID), 10),
+			"attack-inventory:"+strconv.FormatInt(int64(source.ID), 10),
+		)
+	}
 	commanderID := State.CommanderID(rawMapInt(fields, "LID"))
 	commander, exists := input.State.Commanders[commanderID]
 	if !exists {
@@ -177,12 +224,9 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		normalizedArrival := roundUpUnixMinute(request.ArriveAt)
 		if normalizedArrival > minimumArrival {
 			fireAt := normalizedArrival - int64(launch.OneWayTTSeconds)
-			immediateArguments, _ := json.Marshal(struct {
-				LaunchID    string `json:"launchId"`
-				CommanderID *int64 `json:"commanderID,omitempty"`
-				SourceX     *int   `json:"sourceX,omitempty"`
-				SourceY     *int   `json:"sourceY,omitempty"`
-			}{request.LaunchID, request.CommanderID, request.SourceX, request.SourceY})
+			immediateRequest := request
+			immediateRequest.ArriveAt = 0
+			immediateArguments, _ := json.Marshal(immediateRequest)
 			schedule, _ := json.Marshal(Scheduling.Request{
 				ID: "rift:" + request.LaunchID, Intent: "rift.launch.replay", Actor: "scheduler:rift",
 				Arguments: immediateArguments, ExecuteAt: time.Unix(fireAt, 0).UTC(),
@@ -198,11 +242,110 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		return Intent.Plan{}, fmt.Errorf("commander %d is not currently available", commanderID)
 	}
 	canonical, _ := json.Marshal(fields)
+	claims = append(claims, "commander:"+strconv.FormatInt(int64(commanderID), 10))
 	return Intent.Plan{
-		Claims:  []string{"rift-launch:" + request.LaunchID, "commander:" + strconv.FormatInt(int64(commanderID), 10)},
+		Claims:  claims,
 		Summary: fmt.Sprintf("Replay Rift launch %s with commander %d", request.LaunchID, commanderID),
 		Steps:   []Intent.Step{commandStep("Replay Rift launch", "cra", canonical, "cra")},
 	}, nil
+}
+
+func buildAttackSetupWaves(setup attackSetupRequest, source State.CastleState, gameData *GameData.Store) ([]attackWave, error) {
+	if len(setup.Waves) < 1 || len(setup.Waves) > 10 {
+		return nil, fmt.Errorf("attack setup must contain between 1 and 10 waves")
+	}
+	requested := map[State.UnitID]int64{}
+	unitTotal := int64(0)
+	result := make([]attackWave, 0, len(setup.Waves))
+	for waveIndex, wave := range setup.Waves {
+		left, units, err := buildAttackSetupLane(wave.Left, 2, 2, gameData, requested)
+		if err != nil {
+			return nil, fmt.Errorf("wave %d left flank: %w", waveIndex+1, err)
+		}
+		unitTotal += units
+		middle, units, err := buildAttackSetupLane(wave.Middle, 6, 3, gameData, requested)
+		if err != nil {
+			return nil, fmt.Errorf("wave %d middle flank: %w", waveIndex+1, err)
+		}
+		unitTotal += units
+		right, units, err := buildAttackSetupLane(wave.Right, 2, 2, gameData, requested)
+		if err != nil {
+			return nil, fmt.Errorf("wave %d right flank: %w", waveIndex+1, err)
+		}
+		unitTotal += units
+		result = append(result, attackWave{Left: left, Middle: middle, Right: right})
+	}
+	if unitTotal <= 0 {
+		return nil, fmt.Errorf("attack setup must allocate at least one troop")
+	}
+	for id, amount := range requested {
+		available := source.Units.Stationed[id]
+		if amount > available {
+			return nil, fmt.Errorf("castle %d has %d of item %d; attack setup requires %d", source.ID, available, id, amount)
+		}
+	}
+	return result, nil
+}
+
+func buildAttackSetupLane(
+	lane attackSetupLaneRequest,
+	unitCapacity int,
+	toolCapacity int,
+	gameData *GameData.Store,
+	requested map[State.UnitID]int64,
+) (attackFlank, int64, error) {
+	units, unitTotal, err := buildAttackSetupPairs(lane.Troops, unitCapacity, "units", gameData, requested)
+	if err != nil {
+		return attackFlank{}, 0, err
+	}
+	tools, _, err := buildAttackSetupPairs(lane.Tools, toolCapacity, "tools", gameData, requested)
+	if err != nil {
+		return attackFlank{}, 0, err
+	}
+	return attackFlank{Units: units, Tools: tools}, unitTotal, nil
+}
+
+func buildAttackSetupPairs(
+	slots []attackSetupSlotRequest,
+	capacity int,
+	collection string,
+	gameData *GameData.Store,
+	requested map[State.UnitID]int64,
+) ([]attackPair, int64, error) {
+	if len(slots) > capacity {
+		return nil, 0, fmt.Errorf("%s has %d slots; at most %d are supported", collection, len(slots), capacity)
+	}
+	empty := attackPair{-1, 0}
+	result := make([]attackPair, capacity)
+	for index := range result {
+		result[index] = empty
+	}
+	total := int64(0)
+	for index, slot := range slots {
+		if slot.Quantity < 0 {
+			return nil, 0, fmt.Errorf("%s slot %d has a negative quantity", collection, index+1)
+		}
+		if slot.ItemID == nil {
+			if slot.Quantity > 0 {
+				return nil, 0, fmt.Errorf("%s slot %d has a quantity without an item", collection, index+1)
+			}
+			continue
+		}
+		if slot.Quantity == 0 {
+			continue
+		}
+		if *slot.ItemID <= 0 {
+			return nil, 0, fmt.Errorf("%s slot %d has an invalid item", collection, index+1)
+		}
+		if err := requireOfficialDefinition(gameData, collection, *slot.ItemID); err != nil {
+			return nil, 0, err
+		}
+		id := State.UnitID(*slot.ItemID)
+		requested[id] += slot.Quantity
+		total += slot.Quantity
+		result[index] = attackPair{*slot.ItemID, slot.Quantity}
+	}
+	return result, total, nil
 }
 
 func planRiftTemplateRename(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {

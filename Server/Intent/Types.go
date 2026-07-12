@@ -72,6 +72,7 @@ const (
 	StatusPlanned   Status = "planned"
 	StatusRunning   Status = "running"
 	StatusSucceeded Status = "succeeded"
+	StatusCancelled Status = "cancelled"
 	StatusFailed    Status = "failed"
 )
 

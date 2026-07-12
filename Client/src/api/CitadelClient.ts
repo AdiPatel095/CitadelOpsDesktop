@@ -169,11 +169,18 @@ class CitadelClient {
     return this.request<IntentReceipt>(`/api/v2/intents/${encodeURIComponent(name)}`, {
       method: 'POST',
       body: JSON.stringify({
+        id: options.id,
         actor: options.actor ?? 'ui',
         arguments: argumentsValue,
         expectedRevision: options.expectedRevision,
         dryRun: options.dryRun,
       }),
+    });
+  }
+
+  cancelOperation(id: string): Promise<{ id: string; cancelled: boolean }> {
+    return this.request<{ id: string; cancelled: boolean }>(`/api/v2/operations/${encodeURIComponent(id)}/cancel`, {
+      method: 'POST',
     });
   }
 

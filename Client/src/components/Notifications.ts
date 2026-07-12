@@ -6,6 +6,10 @@ export interface AppNotification {
   message: string;
   lines?: string[];
   persistent?: boolean;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 type NotificationListener = (notification: AppNotification) => void;

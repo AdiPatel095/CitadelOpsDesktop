@@ -441,7 +441,7 @@ func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, 
 
 func defaultConfiguration() map[string]json.RawMessage {
 	return map[string]json.RawMessage{
-		"scheduler":                json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"manualFocusIdleSec":30,"tabPriorities":{},"featureSchedules":{}}`),
+		"scheduler":                json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"manualFocusIdleSec":30,"featureSchedules":{}}`),
 		"automation.enabled":       json.RawMessage(`{}`),
 		"automation.autoBeriWorld": json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30}`),
 	}

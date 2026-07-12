@@ -59,6 +59,15 @@ const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: ()
             {alert.lines?.map((line, index) => <li key={`${line}-${index}`}>{line}</li>)}
           </ul>
         )}
+        {alert.action && (
+          <button
+            type="button"
+            onClick={alert.action.onClick}
+            className={`self-start rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${style.border} hover:bg-white/10`}
+          >
+            {alert.action.label}
+          </button>
+        )}
       </div>
       <button
         type="button"

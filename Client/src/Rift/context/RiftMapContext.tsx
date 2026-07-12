@@ -9,12 +9,15 @@ import { useCastleFocus } from '../../context/CastleFocusContext';
 import { riftMapCoordsFromState, type RiftMapCoords } from '../types/RiftMapCoords';
 import { parseRiftCRALaunchPayload, type RiftCRALaunchState } from '../types/RiftCRALaunch';
 import { useCitadelAPI } from '../../api/ApiContext';
+import type { AttackSetupDraft } from '../../components/AttackSetupModal';
 
 export interface ReplayRiftCRALaunchOptions {
   launchId: string;
   commanderID?: number;
+  sourceCastleId?: number;
   sourceX?: number;
   sourceY?: number;
+  attackSetup?: AttackSetupDraft;
   /** Local wall-clock arrival at the Rift (unix seconds). Omit or 0 for immediate resend. */
   arriveAtUnix?: number;
 }
@@ -23,7 +26,6 @@ export interface RiftMapContextValue {
   riftMapCoords: RiftMapCoords | null;
   riftCRALaunch: RiftCRALaunchState | null;
   refreshRiftMapCoords: (refresh?: boolean) => void;
-  refreshRiftCRALaunch: () => void;
   replayRiftCRALaunch: (options?: ReplayRiftCRALaunchOptions) => void;
   renameRiftCRALaunch: (launchId: string, displayName: string) => void;
   deleteRiftCRALaunch: (launchId: string) => void;
@@ -61,9 +63,6 @@ export function RiftMapProvider({ children }: { children: ReactNode }) {
     });
   }, [castle, submitIntent]);
 
-  const refreshRiftCRALaunch = useCallback(() => {
-  }, []);
-
   const replayRiftCRALaunch = useCallback((options: ReplayRiftCRALaunchOptions) => {
     if (!options.launchId) return;
     void submitIntent('rift.launch.replay', options);
@@ -89,7 +88,6 @@ export function RiftMapProvider({ children }: { children: ReactNode }) {
       riftMapCoords,
       riftCRALaunch,
       refreshRiftMapCoords,
-      refreshRiftCRALaunch,
       replayRiftCRALaunch,
       renameRiftCRALaunch,
       deleteRiftCRALaunch,
@@ -98,7 +96,6 @@ export function RiftMapProvider({ children }: { children: ReactNode }) {
       riftMapCoords,
       riftCRALaunch,
       refreshRiftMapCoords,
-      refreshRiftCRALaunch,
       replayRiftCRALaunch,
       renameRiftCRALaunch,
       deleteRiftCRALaunch,
