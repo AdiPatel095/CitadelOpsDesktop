@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -15,8 +16,20 @@ import (
 type CraftingPolicy struct{}
 
 type craftingSettings struct {
-	CheckIntervalSec int                           `json:"checkIntervalSec"`
-	Castles          map[string]craftingCastlePlan `json:"castles"`
+	CheckIntervalSec         int                           `json:"checkIntervalSec"`
+	MinimumShipmentSize      int64                         `json:"minimumShipmentSize"`
+	SourceReservePercent     int                           `json:"sourceReservePercent"`
+	OverflowThresholdPercent int                           `json:"overflowThresholdPercent"`
+	AutoKingdomTransport     bool                          `json:"autoKingdomTransport"`
+	UseKingdomTimeSkips      bool                          `json:"useKingdomTimeSkips"`
+	AllowedTimeSkips         []string                      `json:"allowedTimeSkips"`
+	TimeSkipReserve          map[string]int64              `json:"timeSkipReserve"`
+	UseStormBuffer           bool                          `json:"useStormBuffer"`
+	AllowRubyRecipes         bool                          `json:"allowRubyRecipes"`
+	UseRubyOverflowSkip      bool                          `json:"useRubyOverflowSkip"`
+	MinimumCoinReserve       float64                       `json:"minimumCoinReserve"`
+	MinimumRubyReserve       float64                       `json:"minimumRubyReserve"`
+	Castles                  map[string]craftingCastlePlan `json:"castles"`
 }
 
 type craftingCastlePlan struct {
@@ -24,9 +37,11 @@ type craftingCastlePlan struct {
 }
 
 type craftingBuildingPlan struct {
-	Enabled bool                 `json:"enabled"`
-	Steps   []craftingRecipeStep `json:"steps"`
-	Cursor  int                  `json:"cursor"`
+	Enabled            bool                 `json:"enabled"`
+	Steps              []craftingRecipeStep `json:"steps"`
+	Cursor             int                  `json:"cursor"`
+	AutoRentActiveSlot bool                 `json:"autoRentActiveSlot"`
+	AutoRentQueueSlots int                  `json:"autoRentQueueSlots"`
 }
 
 type craftingRecipeStep struct {
@@ -41,7 +56,11 @@ func (*CraftingPolicy) ID() string { return "autoSceatRes" }
 func (*CraftingPolicy) EnabledKey() string { return "auto_sceat_resources" }
 
 func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
-	settings := craftingSettings{CheckIntervalSec: 300, Castles: map[string]craftingCastlePlan{}}
+	settings := craftingSettings{
+		CheckIntervalSec: 300, MinimumShipmentSize: 10_000, SourceReservePercent: 10,
+		OverflowThresholdPercent: 90, UseStormBuffer: true,
+		TimeSkipReserve: map[string]int64{}, Castles: map[string]craftingCastlePlan{},
+	}
 	raw := snapshot.Configuration.Sections["automation.autoSceatResources"]
 	if len(raw) == 0 || json.Unmarshal(raw, &settings) != nil {
 		return Decision{
@@ -50,9 +69,22 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		}, nil
 	}
 	interval := policyInterval(settings.CheckIntervalSec, 300)
+	if settings.AutoKingdomTransport {
+		if craftingLogisticsStale(snapshot, interval) {
+			return Decision{
+				Status: "ready", Detail: "Refresh market and kingdom-resource logistics",
+				NextCheckAt: snapshot.Now.Add(2 * time.Second),
+				Request:     &Intent.Request{Name: "resource.logistics.refresh", Arguments: json.RawMessage(`{}`)},
+			}, nil
+		}
+		if decision, ready := pendingKingdomSkipDecision(settings, snapshot, interval); ready {
+			return decision, nil
+		}
+	}
 	plans := 0
 	observed := 0
 	full := 0
+	waitingForResources := 0
 	for _, castleKey := range sortedNumericKeys(settings.Castles) {
 		castleIDValue, _ := strconv.ParseInt(castleKey, 10, 64)
 		castleID := State.CastleID(castleIDValue)
@@ -74,20 +106,43 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 				continue
 			}
 			observed++
-			capacity := building.SlotCount
-			if capacity <= 0 {
-				capacity = 1
-			}
-			if len(building.Active)+len(building.Queued) >= capacity {
-				full++
-				continue
-			}
 			cursor := plan.Cursor % len(cycle)
 			if cursor < 0 {
 				cursor = 0
 			}
 			recipeID := cycle[cursor]
 			if !craftingRecipeMatches(snapshot, recipeID, queueType) {
+				continue
+			}
+			costs, costErr := craftingRecipeCostState(snapshot, castle, recipeID, settings)
+			if costErr != nil {
+				return Decision{}, costErr
+			}
+			occupied := len(building.Active) + len(building.Queued)
+			capacity := 2 + len(building.ActiveSlotRentals) + len(building.QueueSlotRentals)
+			if occupied >= capacity {
+				full++
+				if costs.Blocked == "" && len(costs.Missing) == 0 {
+					if decision, ready := craftingRentalDecision(settings, snapshot, castle, building, plan); ready {
+						return decision, nil
+					}
+				}
+				if costs.Blocked != "" || len(costs.Missing) > 0 {
+					waitingForResources++
+				}
+				continue
+			}
+			if costs.Blocked != "" {
+				waitingForResources++
+				continue
+			}
+			if len(costs.Missing) > 0 {
+				waitingForResources++
+				if settings.AutoKingdomTransport {
+					if decision, handled := craftingTransportDecision(settings, snapshot, castle, costs.Missing, interval); handled {
+						return decision, nil
+					}
+				}
 				continue
 			}
 			arguments, _ := json.Marshal(map[string]any{
@@ -112,11 +167,24 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			}, nil
 		}
 	}
+	if settings.AutoKingdomTransport {
+		if decision, ready := marketOverflowDecision(settings, snapshot, interval); ready {
+			return decision, nil
+		}
+		if decision, ready := stormOverflowDecision(settings, snapshot, interval); ready {
+			return decision, nil
+		}
+	}
+	if decision, ready := rubyOverflowSkipDecision(settings, snapshot); ready {
+		return decision, nil
+	}
 	detail := "No enabled crafting sequence is configured"
 	if plans > 0 && observed == 0 {
 		detail = "Waiting for configured crafting buildings to be observed"
 	} else if plans > 0 && observed == full {
 		detail = "All configured crafting queues are full"
+	} else if plans > 0 && waitingForResources > 0 {
+		detail = "Configured crafting recipes are waiting for resources or configured reserves"
 	} else if plans > 0 {
 		detail = "Configured recipes are not available for the observed crafting queues"
 	}

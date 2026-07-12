@@ -73,7 +73,7 @@ func reduceRiftLaunchAck(
 	_ context.Context,
 	frame Protocol.Frame,
 	gameState *State.GameState,
-	_ *GameData.Store,
+	gameData *GameData.Store,
 ) ([]string, bool, error) {
 	if !frameSucceeded(frame) || gameState.Rift.PendingLaunchID == "" || len(frame.Payload) == 0 {
 		return nil, false, nil
@@ -84,7 +84,7 @@ func reduceRiftLaunchAck(
 	}
 	travelSeconds := 0
 	for _, raw := range items {
-		movement, ok := parseMovement(raw, frame.ReceivedAt)
+		movement, ok := parseMovement(raw, frame.ReceivedAt, gameData)
 		if ok && movement.TravelSeconds > travelSeconds {
 			travelSeconds = movement.TravelSeconds
 		}

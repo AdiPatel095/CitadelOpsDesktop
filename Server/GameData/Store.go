@@ -13,8 +13,14 @@ type Store struct {
 	metadata    SourceMetadata
 	collections map[string]json.RawMessage
 
-	mu       sync.RWMutex
-	catalogs map[string]*Catalog
+	mu                       sync.RWMutex
+	catalogs                 map[string]*Catalog
+	marketOnce               sync.Once
+	marketProjection         marketProjection
+	marketErr                error
+	constructionShopOnce     sync.Once
+	constructionShopProducts map[int64][]ConstructionShopProduct
+	constructionShopErr      error
 }
 
 func DecodeStore(raw []byte, metadata SourceMetadata) (*Store, error) {

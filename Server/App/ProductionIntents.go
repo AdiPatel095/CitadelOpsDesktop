@@ -146,12 +146,27 @@ func requireOfficialDefinition(store *GameData.Store, collection string, id int6
 	if store == nil || id <= 0 {
 		return fmt.Errorf("%s definition %d requires the loaded official catalog", collection, id)
 	}
-	catalog, err := store.Catalog(collection)
+	catalogName := collection
+	if collection == "tools" {
+		catalogName = "units"
+	}
+	catalog, err := store.Catalog(catalogName)
 	if err != nil {
 		return err
 	}
-	if _, exists := catalog.Find(strconv.FormatInt(id, 10)); !exists {
+	raw, exists := catalog.Find(strconv.FormatInt(id, 10))
+	if !exists {
 		return fmt.Errorf("%s definition %d is not in the current official catalog", collection, id)
+	}
+	if collection == "units" || collection == "tools" {
+		record, decodeErr := GameData.DecodeRecord(raw)
+		if decodeErr != nil {
+			return fmt.Errorf("decode %s definition %d: %w", collection, id, decodeErr)
+		}
+		isTool := GameData.IsToolRecord(record)
+		if collection == "tools" && !isTool || collection == "units" && isTool {
+			return fmt.Errorf("definition %d is not an official %s item", id, collection)
+		}
 	}
 	return nil
 }

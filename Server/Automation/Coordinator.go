@@ -60,6 +60,17 @@ func NewCoordinator(
 	}
 }
 
+func (coordinator *Coordinator) PolicyIDs() []string {
+	if coordinator == nil {
+		return nil
+	}
+	ids := make([]string, 0, len(coordinator.policies))
+	for _, policy := range coordinator.policies {
+		ids = append(ids, policy.ID())
+	}
+	return ids
+}
+
 func (coordinator *Coordinator) Run(ctx context.Context) {
 	if coordinator == nil || coordinator.state == nil || coordinator.configuration == nil || coordinator.intents == nil {
 		return

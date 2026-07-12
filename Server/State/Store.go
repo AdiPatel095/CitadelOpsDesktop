@@ -147,6 +147,10 @@ func cloneGameState(source GameState) GameState {
 			queue.Queued = cloneQueueItems(queue.Queued)
 			castle.Production[lineID] = queue
 		}
+		castle.QueueableProduction = make(map[int][]DefinitionRef, len(source.Castles[id].QueueableProduction))
+		for lineID, definitions := range source.Castles[id].QueueableProduction {
+			castle.QueueableProduction[lineID] = append([]DefinitionRef(nil), definitions...)
+		}
 		castle.Crafting.Buildings = make(map[BuildingInstanceID]CraftingBuilding, len(source.Castles[id].Crafting.Buildings))
 		for buildingID, building := range source.Castles[id].Crafting.Buildings {
 			building.ActiveSlotRentals = append([]int{}, building.ActiveSlotRentals...)
@@ -175,6 +179,7 @@ func cloneGameState(source GameState) GameState {
 	clone.Movements = make(map[MovementID]MovementState, len(source.Movements))
 	for id, movement := range source.Movements {
 		movement.Units = cloneMap(movement.Units)
+		movement.MarketGoods = append([]KingdomTransportGood(nil), movement.MarketGoods...)
 		movement.ArrivesAt = cloneTimePointer(movement.ArrivesAt)
 		movement.ReturnsAt = cloneTimePointer(movement.ReturnsAt)
 		movement.CommanderID = cloneCommanderIDPointer(movement.CommanderID)
@@ -197,6 +202,7 @@ func cloneGameState(source GameState) GameState {
 		clone.Rift.Launches[id] = launch
 	}
 	clone.Inventory.ConstructionItems = cloneMap(source.Inventory.ConstructionItems)
+	clone.Inventory.ConstructionOffers = cloneMap(source.Inventory.ConstructionOffers)
 	clone.Inventory.Equipment = make(map[EquipmentInstanceID]EquipmentInstance, len(source.Inventory.Equipment))
 	for id, item := range source.Inventory.Equipment {
 		item.Effects = cloneEquipmentEffects(item.Effects)
@@ -212,6 +218,22 @@ func cloneGameState(source GameState) GameState {
 	for collection, items := range source.Inventory.Items {
 		clone.Inventory.Items[collection] = cloneMap(items)
 	}
+	clone.Subscriptions = cloneMap(source.Subscriptions)
+	clone.Market.Castles = make(map[CastleID]MarketCastleState, len(source.Market.Castles))
+	for id, castle := range source.Market.Castles {
+		castle.Resources = cloneMap(castle.Resources)
+		castle.AreaEffects = append([]MarketAreaEffect(nil), castle.AreaEffects...)
+		for index := range castle.AreaEffects {
+			castle.AreaEffects[index].Values = append([]float64(nil), castle.AreaEffects[index].Values...)
+		}
+		clone.Market.Castles[id] = castle
+	}
+	clone.KingdomTransport.Unlocks = cloneMap(source.KingdomTransport.Unlocks)
+	clone.KingdomTransport.Pending = append([]KingdomResourceTransport(nil), source.KingdomTransport.Pending...)
+	for index := range clone.KingdomTransport.Pending {
+		clone.KingdomTransport.Pending[index].Goods = append([]KingdomTransportGood(nil), source.KingdomTransport.Pending[index].Goods...)
+	}
+	clone.Beri.TroopsByUnit = cloneMap(source.Beri.TroopsByUnit)
 	clone.Alliance.Members = append([]AllianceMember{}, source.Alliance.Members...)
 	clone.Alliance.Holdings = append([]AllianceHolding{}, source.Alliance.Holdings...)
 	clone.Alliances = make(map[AllianceID]AllianceState, len(source.Alliances))

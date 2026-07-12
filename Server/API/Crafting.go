@@ -24,7 +24,24 @@ type craftingNode struct {
 	StormBuffer bool               `json:"stormBuffer"`
 	Resources   map[string]float64 `json:"resources"`
 	Storage     map[string]float64 `json:"storage"`
+	Market      *craftingMarket    `json:"market,omitempty"`
 	Buildings   []craftingBuilding `json:"buildings"`
+}
+
+type craftingMarket struct {
+	Loaded                    bool    `json:"loaded"`
+	BaseBarrows               int     `json:"baseBarrows"`
+	BuildItemBarrows          int     `json:"buildItemBarrows"`
+	OtherBarrows              int     `json:"otherBarrows"`
+	TotalBarrows              int     `json:"totalBarrows"`
+	AvailableBarrows          int     `json:"availableBarrows"`
+	BusyBarrows               int     `json:"busyBarrows"`
+	CaravanLevel              int     `json:"caravanLevel"`
+	CaravanBoostPercent       float64 `json:"caravanBoostPercent"`
+	AreaCapacityBoostPercent  float64 `json:"areaCapacityBoostPercent"`
+	CapacityBonus             float64 `json:"capacityBonus"`
+	CapacityPerBarrow         int     `json:"capacityPerBarrow"`
+	AvailableShipmentCapacity int     `json:"availableShipmentCapacity"`
 }
 
 type craftingBuilding struct {
@@ -42,6 +59,11 @@ type craftingBuilding struct {
 func (server *Server) handleCraftingProjection(writer http.ResponseWriter, _ *http.Request) {
 	if server.config.GameData == nil || server.config.State == nil {
 		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", "Crafting data is unavailable")
+		return
+	}
+	store, ready := server.config.GameData.Current()
+	if !ready {
+		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", "Official game data is unavailable")
 		return
 	}
 	catalog, err := server.config.GameData.CraftingCatalog()
@@ -83,6 +105,7 @@ func (server *Server) handleCraftingProjection(writer http.ResponseWriter, _ *ht
 			}
 			node.Buildings = append(node.Buildings, item)
 		}
+		node.Market = craftingMarketProjection(store, snapshot, castle)
 		sort.Slice(node.Buildings, func(left, right int) bool {
 			return node.Buildings[left].QueueTypeID < node.Buildings[right].QueueTypeID
 		})
@@ -99,6 +122,52 @@ func (server *Server) handleCraftingProjection(writer http.ResponseWriter, _ *ht
 		return projection.Nodes[left].CastleID < projection.Nodes[right].CastleID
 	})
 	writeJSON(writer, http.StatusOK, projection)
+}
+
+func craftingMarketProjection(store *GameData.Store, snapshot State.GameState, castle State.CastleState) *craftingMarket {
+	marketBuildingID := State.BuildingInstanceID(0)
+	baseBarrows := 0
+	for instanceID, building := range castle.Buildings {
+		barrows, err := store.MarketBarrowsForBuilding(int64(building.DefinitionID))
+		if err == nil && barrows > baseBarrows {
+			baseBarrows = barrows
+			marketBuildingID = instanceID
+		}
+	}
+	buildItemBarrows := 0
+	for _, slot := range castle.ConstructionSlots[marketBuildingID] {
+		barrows, err := store.MarketBarrowsForConstructionItem(int64(slot.DefinitionID))
+		if err == nil {
+			buildItemBarrows += barrows
+		}
+	}
+	marketCastle, loaded := snapshot.Market.Castles[castle.ID]
+	totalBarrows := marketCastle.TotalBarrows
+	availableBarrows := marketCastle.AvailableBarrows
+	if totalBarrows <= 0 {
+		totalBarrows = baseBarrows + buildItemBarrows
+	}
+	if totalBarrows <= 0 {
+		return nil
+	}
+	availableBarrows = max(0, min(availableBarrows, totalBarrows))
+	effects := make([]GameData.MarketEffect, 0, len(marketCastle.AreaEffects))
+	for _, effect := range marketCastle.AreaEffects {
+		effects = append(effects, GameData.MarketEffect{EffectID: effect.EffectID, Values: effect.Values})
+	}
+	capacity, err := store.MarketCapacity(snapshot.Market.CaravanLevel, effects)
+	if err != nil {
+		return nil
+	}
+	otherBarrows := max(0, totalBarrows-baseBarrows-buildItemBarrows)
+	return &craftingMarket{
+		Loaded:      loaded && snapshot.Market.CaravanLevelLoaded,
+		BaseBarrows: baseBarrows, BuildItemBarrows: buildItemBarrows, OtherBarrows: otherBarrows,
+		TotalBarrows: totalBarrows, AvailableBarrows: availableBarrows, BusyBarrows: totalBarrows - availableBarrows,
+		CaravanLevel: snapshot.Market.CaravanLevel, CaravanBoostPercent: capacity.CaravanBoostPercent,
+		AreaCapacityBoostPercent: capacity.AreaCapacityBoostPercent, CapacityBonus: capacity.CapacityBonus,
+		CapacityPerBarrow: capacity.CapacityPerBarrow, AvailableShipmentCapacity: availableBarrows * capacity.CapacityPerBarrow,
+	}
 }
 
 func availableCraftingRecipes(recipes []GameData.CraftingRecipe, building State.CraftingBuilding, crafting State.CraftingState) []int64 {

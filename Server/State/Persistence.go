@@ -131,6 +131,14 @@ func normalizeStateMaps(state *GameState) {
 			}
 			castle.Production[lineID] = queue
 		}
+		if castle.QueueableProduction == nil {
+			castle.QueueableProduction = map[int][]DefinitionRef{}
+		}
+		for lineID, definitions := range castle.QueueableProduction {
+			if definitions == nil {
+				castle.QueueableProduction[lineID] = []DefinitionRef{}
+			}
+		}
 		if castle.Crafting.Buildings == nil {
 			castle.Crafting.Buildings = map[BuildingInstanceID]CraftingBuilding{}
 		}
@@ -205,6 +213,9 @@ func normalizeStateMaps(state *GameState) {
 	if state.Inventory.ConstructionItems == nil {
 		state.Inventory.ConstructionItems = defaults.Inventory.ConstructionItems
 	}
+	if state.Inventory.ConstructionOffers == nil {
+		state.Inventory.ConstructionOffers = defaults.Inventory.ConstructionOffers
+	}
 	if state.Inventory.Equipment == nil {
 		state.Inventory.Equipment = defaults.Inventory.Equipment
 	}
@@ -228,6 +239,35 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.Inventory.Items == nil {
 		state.Inventory.Items = defaults.Inventory.Items
+	}
+	if state.Subscriptions == nil {
+		state.Subscriptions = defaults.Subscriptions
+	}
+	if state.Market.Castles == nil {
+		state.Market.Castles = defaults.Market.Castles
+	}
+	for id, castle := range state.Market.Castles {
+		if castle.Resources == nil {
+			castle.Resources = map[ResourceID]float64{}
+		}
+		if castle.AreaEffects == nil {
+			castle.AreaEffects = []MarketAreaEffect{}
+		}
+		state.Market.Castles[id] = castle
+	}
+	if state.KingdomTransport.Unlocks == nil {
+		state.KingdomTransport.Unlocks = defaults.KingdomTransport.Unlocks
+	}
+	if state.KingdomTransport.Pending == nil {
+		state.KingdomTransport.Pending = defaults.KingdomTransport.Pending
+	}
+	for index := range state.KingdomTransport.Pending {
+		if state.KingdomTransport.Pending[index].Goods == nil {
+			state.KingdomTransport.Pending[index].Goods = []KingdomTransportGood{}
+		}
+	}
+	if state.Beri.TroopsByUnit == nil {
+		state.Beri.TroopsByUnit = defaults.Beri.TroopsByUnit
 	}
 	if state.Alliance.Members == nil {
 		state.Alliance.Members = defaults.Alliance.Members

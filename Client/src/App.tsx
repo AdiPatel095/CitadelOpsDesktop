@@ -20,6 +20,7 @@ import { AutoTCISettingsModal } from './settings/components/AutoTCISettingsModal
 import { AutoBirdSettingsModal } from './settings/components/AutoBirdSettingsModal';
 import { AutoStationSettingsModal } from './settings/components/AutoStationSettingsModal';
 import { AutoHospitalSettingsModal } from './settings/components/AutoHospitalSettingsModal';
+import { AutoBeriWorldSettingsModal } from './settings/components/AutoBeriWorldSettingsModal';
 import { FeatureScheduleModal } from './settings/components/FeatureScheduleModal';
 import SettingsView from './views/SettingsView';
 import PatchNotesView from './views/PatchNotesView';
@@ -37,6 +38,7 @@ const AppContent: React.FC = () => {
   const [isAutoBirdSettingsOpen, setIsAutoBirdSettingsOpen] = useState(false);
   const [isAutoStationSettingsOpen, setIsAutoStationSettingsOpen] = useState(false);
   const [isAutoHospitalSettingsOpen, setIsAutoHospitalSettingsOpen] = useState(false);
+  const [isAutoBeriWorldSettingsOpen, setIsAutoBeriWorldSettingsOpen] = useState(false);
   const [scheduleTarget, setScheduleTarget] = useState<{ id: string; label: string } | null>(null);
 
   const renderView = () => {
@@ -55,6 +57,7 @@ const AppContent: React.FC = () => {
             onOpenRecruitTroopsSettings={() => setIsRecruitTroopsSettingsOpen(true)}
             onOpenAutoToolSettings={() => setIsAutoToolSettingsOpen(true)}
             onOpenAutoHospitalSettings={() => setIsAutoHospitalSettingsOpen(true)}
+			onOpenAutoBeriWorldSettings={() => setIsAutoBeriWorldSettingsOpen(true)}
           />
         );
       case 'movement':
@@ -138,6 +141,12 @@ const AppContent: React.FC = () => {
         onClose={() => setIsAutoHospitalSettingsOpen(false)}
         onOpenFeatureSchedule={(id, label) => setScheduleTarget({ id, label })}
       />
+
+	  <AutoBeriWorldSettingsModal
+		isOpen={isAutoBeriWorldSettingsOpen}
+		onClose={() => setIsAutoBeriWorldSettingsOpen(false)}
+		onOpenFeatureSchedule={(id, label) => setScheduleTarget({ id, label })}
+	  />
 
       <FeatureScheduleModal
         isOpen={scheduleTarget != null}

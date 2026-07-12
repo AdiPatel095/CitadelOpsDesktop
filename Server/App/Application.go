@@ -85,6 +85,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		EquipmentDomain.HydrateState(&initial, current)
 	}
 	state := State.NewStore(initial)
+	if migrationErr := Reports.MigrateLegacyHistory(config.DataDir, history, initial.Player.ID); migrationErr != nil {
+		startupErr = errors.Join(startupErr, migrationErr)
+	}
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		return nil, fmt.Errorf("register protocol reducers: %w", err)
@@ -124,6 +127,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewCraftingPolicy(),
 		Automation.NewAutoBirdPolicy(),
 		Automation.NewAutoStationPolicy(),
+		Automation.NewBeriPolicy(),
 	)
 	application.Reports = Reports.NewManager(state, history, intents)
 	application.API = API.NewServer(API.Config{
@@ -412,7 +416,8 @@ func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, 
 
 func defaultConfiguration() map[string]json.RawMessage {
 	return map[string]json.RawMessage{
-		"scheduler":          json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"manualFocusIdleSec":30,"tabPriorities":{},"featureSchedules":{}}`),
-		"automation.enabled": json.RawMessage(`{}`),
+		"scheduler":                json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"manualFocusIdleSec":30,"tabPriorities":{},"featureSchedules":{}}`),
+		"automation.enabled":       json.RawMessage(`{}`),
+		"automation.autoBeriWorld": json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30}`),
 	}
 }

@@ -47,6 +47,20 @@ func reduceInitialState(
 		}
 		changed = changed || updated
 	}
+	if raw := root["gpc"]; len(raw) > 0 {
+		updated, err := applyQueueableProduction(raw, gameState, gameData, frame.ReceivedAt)
+		if err != nil {
+			return nil, false, err
+		}
+		changed = changed || updated
+	}
+	if raw := root["vip"]; len(raw) > 0 {
+		updated, err := applyVIPInfo(raw, gameState)
+		if err != nil {
+			return nil, false, err
+		}
+		changed = changed || updated
+	}
 	if raw := root["gcu"]; len(raw) > 0 {
 		updated, err := applyPlayerResources(raw, gameState, gameData)
 		if err != nil {
@@ -91,7 +105,30 @@ func reduceInitialState(
 			changed = changed || updated
 		}
 	}
-	return []string{"player", "castles", "resources", "alliance", "commanders", "castellans", "equipment", "reports"}, changed, nil
+	for _, embedded := range []struct {
+		opcode  string
+		reducer Reducer
+	}{
+		{"sie", reduceSubscriptions}, {"upc", reduceSubscriptions},
+		{"boi", reduceMarketBooster}, {"cmi", reduceMarketInfo}, {"kpi", reduceKingdomTransport},
+	} {
+		raw := root[embedded.opcode]
+		if len(raw) == 0 {
+			continue
+		}
+		nestedFrame := frame
+		nestedFrame.Opcode = embedded.opcode
+		nestedFrame.Payload = raw
+		_, updated, err := embedded.reducer(context.Background(), nestedFrame, gameState, gameData)
+		if err != nil {
+			return nil, false, err
+		}
+		changed = changed || updated
+	}
+	return []string{
+		"player", "castles", "resources", "currencies", "alliance", "commanders", "castellans",
+		"equipment", "reports", "subscriptions", "market", "kingdom-transport", "production",
+	}, changed, nil
 }
 
 func reducePlayerInfo(
@@ -118,6 +155,80 @@ func reduceGlobalResources(
 	}
 	changed, err := applyPlayerResources(frame.Payload, gameState, gameData)
 	return []string{"resources"}, changed, err
+}
+
+func reducePlayerCurrencies(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	changed, err := applyPlayerCurrencies(frame.Payload, gameState, gameData)
+	return []string{"resources", "currencies"}, changed, err
+}
+
+func newPlayerMetricReducer(field string, metric string) Reducer {
+	return func(
+		_ context.Context,
+		frame Protocol.Frame,
+		gameState *State.GameState,
+		_ *GameData.Store,
+	) ([]string, bool, error) {
+		if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+			return nil, false, nil
+		}
+		changed, err := applyPlayerMetric(frame.Payload, field, metric, gameState)
+		return []string{"player", "resources"}, changed, err
+	}
+}
+
+func reducePlayerSummary(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+		return nil, false, fmt.Errorf("decode player summary: %w", err)
+	}
+	beforePlayer := gameState.Player
+	beforeAlliance := gameState.Alliance
+	applyCastleOwner(root["O"], gameState)
+	changed := !reflect.DeepEqual(beforePlayer, gameState.Player) || !reflect.DeepEqual(beforeAlliance, gameState.Alliance)
+	return []string{"player", "alliance", "resources"}, changed, nil
+}
+
+func reduceCastleDetails(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	changed, err := applyCastleDetails(frame.Payload, gameState, gameData)
+	return []string{"castles", "resources", "units"}, changed, err
+}
+
+func reduceVIPInfo(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	changed, err := applyVIPInfo(frame.Payload, gameState)
+	return []string{"player"}, changed, err
 }
 
 func reduceAllianceInfo(
@@ -233,6 +344,22 @@ func applyPlayerInfo(raw json.RawMessage, gameState *State.GameState) (bool, err
 		changed = true
 	}
 	return changed, nil
+}
+
+func applyVIPInfo(raw json.RawMessage, gameState *State.GameState) (bool, error) {
+	var values map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &values); err != nil {
+		return false, fmt.Errorf("decode VIP state: %w", err)
+	}
+	next := State.VIPState{
+		Points: rawInteger(values["VP"]), Level: int(rawInteger(values["VRL"])),
+		RemainingSec: int(rawInteger(values["VRS"])), Upgrade: int(rawInteger(values["UPG"])),
+	}
+	if reflect.DeepEqual(gameState.Player.VIP, next) {
+		return false, nil
+	}
+	gameState.Player.VIP = next
+	return true, nil
 }
 
 func applyPlayerResources(raw json.RawMessage, gameState *State.GameState, gameData *GameData.Store) (bool, error) {

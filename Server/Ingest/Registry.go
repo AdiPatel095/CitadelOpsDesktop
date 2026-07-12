@@ -3,6 +3,7 @@ package Ingest
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 
@@ -22,6 +23,31 @@ type Registry struct {
 	mu               sync.RWMutex
 	inboundReducers  map[string]Reducer
 	outboundReducers map[string]Reducer
+}
+
+func (registry *Registry) HasInbound(opcode string) bool {
+	registry.mu.RLock()
+	defer registry.mu.RUnlock()
+	_, exists := registry.inboundReducers[strings.ToLower(strings.TrimSpace(opcode))]
+	return exists
+}
+
+func (registry *Registry) HasOutbound(opcode string) bool {
+	registry.mu.RLock()
+	defer registry.mu.RUnlock()
+	_, exists := registry.outboundReducers[strings.ToLower(strings.TrimSpace(opcode))]
+	return exists
+}
+
+func (registry *Registry) InboundOpcodes() []string {
+	registry.mu.RLock()
+	defer registry.mu.RUnlock()
+	opcodes := make([]string, 0, len(registry.inboundReducers))
+	for opcode := range registry.inboundReducers {
+		opcodes = append(opcodes, opcode)
+	}
+	sort.Strings(opcodes)
+	return opcodes
 }
 
 func NewRegistry() *Registry {

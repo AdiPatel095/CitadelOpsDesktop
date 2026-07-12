@@ -22,6 +22,20 @@ export function buildQueueableProductionCatalog(
   for (const castle of Object.values(state.castles)) {
     const recruitUnitIds = new Set<number>();
     const toolIds = new Set<number>();
+		if (castle.queueableObservedAt) {
+			for (const definition of castle.queueableProduction['0'] ?? []) {
+				if (definition.collection === 'units' && troops[definition.id]) recruitUnitIds.add(definition.id);
+			}
+			for (const definition of castle.queueableProduction['1'] ?? []) {
+				if (definition.collection === 'tools' && tools[definition.id]) toolIds.add(definition.id);
+			}
+			catalog[String(castle.id)] = {
+				buildingRowsLoaded: true,
+				recruitUnitIds: Array.from(recruitUnitIds).sort((left, right) => left - right),
+				toolIds: Array.from(toolIds).sort((left, right) => left - right),
+			};
+			continue;
+		}
     const buildingRows = Object.values(castle.buildings);
     for (const building of buildingRows) {
       const definition = buildings[building.definitionId];

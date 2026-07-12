@@ -209,10 +209,11 @@ func reduceConstructionInventory(
 			next[State.ConstructionItemID(id)] = amount
 		}
 	}
-	if reflect.DeepEqual(gameState.Inventory.ConstructionItems, next) {
+	if reflect.DeepEqual(gameState.Inventory.ConstructionItems, next) && gameState.Inventory.ConstructionItemsObservedAt.Equal(frame.ReceivedAt) {
 		return nil, false, nil
 	}
 	gameState.Inventory.ConstructionItems = next
+	gameState.Inventory.ConstructionItemsObservedAt = frame.ReceivedAt
 	return []string{"inventory", "construction-items"}, true, nil
 }
 

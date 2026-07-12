@@ -44,6 +44,8 @@ interface AuthContextType {
   autoStationThreatCount: number;
   autoStationNextImpact: number;
   autoStationDetail: string;
+	autoBeriWorldEnabled: boolean;
+	autoBeriWorldNextWakeUp: number;
   goMem: number;
   browserMem: number;
 	automationStates: Record<string, AutomationStateV2>;
@@ -56,6 +58,7 @@ interface AuthContextType {
   toggleAutoTCI: () => void;
   toggleAutoBird: () => void;
   toggleAutoStation: () => void;
+	toggleAutoBeriWorld: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const autoTCIEnabled = automationEnabled.auto_tci === true;
 	const autoBirdEnabled = automationEnabled.auto_bird === true;
 	const autoStationEnabled = automationEnabled.auto_station === true;
+	const autoBeriWorldEnabled = automationEnabled.auto_beri_world === true;
 	const automationStates = state?.automations ?? {};
 	const autoBirdState = automationStates.autoBird;
 	const autoStationState = automationStates.autoStation;
@@ -116,6 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     autoStationThreatCount: Math.max(0, Math.trunc(autoStationState?.metrics?.threatCount ?? 0)),
     autoStationNextImpact: Math.max(0, autoStationState?.metrics?.nextImpactUnixMs ?? 0),
     autoStationDetail: autoStationState?.detail ?? autoStationState?.lastError ?? '',
+	autoBeriWorldEnabled,
+	autoBeriWorldNextWakeUp: automationWakeMillis(automationStates.autoBeriWorld),
     goMem: 0,
 	browserMem: 0,
 	automationStates,
@@ -128,9 +134,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	toggleAutoTCI: () => toggle('auto_tci', autoTCIEnabled),
 	toggleAutoBird: () => toggle('auto_bird', autoBirdEnabled),
 	toggleAutoStation: () => toggle('auto_station', autoStationEnabled),
+	toggleAutoBeriWorld: () => toggle('auto_beri_world', autoBeriWorldEnabled),
   }), [
     autoBirdEnabled,
 	autoBirdState,
+	autoBeriWorldEnabled,
     autoHospitalEnabled,
     autoSceatResEnabled,
     autoStationEnabled,

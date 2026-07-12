@@ -53,8 +53,10 @@ func Open(dataDir string, defaults map[string]json.RawMessage) (*Store, error) {
 		Sections:      map[string]json.RawMessage{},
 	}
 	contents, err := os.ReadFile(path)
+	loaded := false
 	switch {
 	case err == nil:
+		loaded = true
 		if err := json.Unmarshal(contents, &snapshot); err != nil {
 			return nil, fmt.Errorf("decode configuration: %w", err)
 		}
@@ -71,6 +73,12 @@ func Open(dataDir string, defaults map[string]json.RawMessage) (*Store, error) {
 	case err != nil:
 		return nil, fmt.Errorf("read configuration: %w", err)
 	}
+	changed := !loaded
+	migrated, err := migrateLegacySections(dataDir, snapshot.Sections)
+	if err != nil {
+		return nil, err
+	}
+	changed = changed || migrated
 	for section, value := range defaults {
 		if _, exists := snapshot.Sections[section]; exists {
 			continue
@@ -80,13 +88,26 @@ func Open(dataDir string, defaults map[string]json.RawMessage) (*Store, error) {
 			return nil, fmt.Errorf("default configuration %s: %w", section, err)
 		}
 		snapshot.Sections[section] = canonical
+		changed = true
 	}
 	for section, value := range snapshot.Sections {
 		canonical, err := canonicalSection(section, value)
 		if err != nil {
 			return nil, fmt.Errorf("configuration %s: %w", section, err)
 		}
+		if !bytes.Equal(value, canonical) {
+			changed = true
+		}
 		snapshot.Sections[section] = canonical
+	}
+	if changed {
+		if loaded {
+			snapshot.Revision++
+		}
+		snapshot.UpdatedAt = now
+		if err := writeSnapshot(path, snapshot); err != nil {
+			return nil, err
+		}
 	}
 	return &Store{
 		path: path, snapshot: snapshot, subscribers: map[uint64]chan Event{},

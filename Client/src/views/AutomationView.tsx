@@ -7,7 +7,8 @@ import {
   HeartPulse,
 	Send,
   Settings,
-	Shield,
+  Shield,
+	Swords,
   Users,
   Wrench,
 } from 'lucide-react';
@@ -22,6 +23,7 @@ interface AutomationViewProps {
   onOpenRecruitTroopsSettings: () => void;
   onOpenAutoToolSettings: () => void;
   onOpenAutoHospitalSettings: () => void;
+	onOpenAutoBeriWorldSettings: () => void;
 }
 
 interface AutomationFeature {
@@ -60,6 +62,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenRecruitTroopsSettings,
   onOpenAutoToolSettings,
   onOpenAutoHospitalSettings,
+	onOpenAutoBeriWorldSettings,
 }) => {
   const {
     gameLoggedIn,
@@ -83,6 +86,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 	toggleAutoBird,
 	toggleAutoStation,
 		automationStates,
+		autoBeriWorldEnabled,
+		autoBeriWorldNextWakeUp,
+		toggleAutoBeriWorld,
   } = useAuth();
   const [now, setNow] = useState(() => Date.now());
 
@@ -92,6 +98,18 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   }, []);
 
   const features = useMemo<AutomationFeature[]>(() => [
+	{
+		id: 'autoBeriWorld',
+		name: 'Auto Beri World',
+		description: 'Checks Berimond capacity, transfers the configured troop batch, and applies the fixed march speed-up.',
+		enabled: autoBeriWorldEnabled,
+		detail: autoBeriWorldEnabled
+			? automationStates.autoBeriWorld?.detail ?? formatNextWake(autoBeriWorldNextWakeUp, now)
+			: 'Berimond troop transfers are paused',
+		icon: Swords,
+		onToggle: toggleAutoBeriWorld,
+		onOpenSettings: onOpenAutoBeriWorldSettings,
+	},
     {
 		id: 'autoBird',
 		name: 'Auto Bird',
@@ -179,6 +197,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   ], [
 	autoBirdEnabled,
 	autoBirdNextWakeUp,
+	autoBeriWorldEnabled,
+	autoBeriWorldNextWakeUp,
     autoHospitalEnabled,
     autoRecruitMode,
     autoSceatResEnabled,
@@ -192,6 +212,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     now,
     onOpenAutoHospitalSettings,
 	onOpenAutoBirdSettings,
+	onOpenAutoBeriWorldSettings,
 	onOpenAutoStationSettings,
     onOpenAutoSceatResSettings,
     onOpenAutoTCISettings,
@@ -199,6 +220,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     onOpenRecruitTroopsSettings,
     toggleAutoHospital,
 	toggleAutoBird,
+	toggleAutoBeriWorld,
 	toggleAutoStation,
     toggleAutoSceatRes,
     toggleAutoTCI,

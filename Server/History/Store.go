@@ -59,7 +59,11 @@ func Open(dataDir string) (*Store, error) {
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, fmt.Errorf("create history directory: %w", err)
 	}
-	return &Store{directory: directory}, nil
+	store := &Store{directory: directory}
+	if _, err := store.migrateLegacyPlayerTracker(filepath.Join(dataDir, "PlayerTracker.json")); err != nil {
+		return nil, fmt.Errorf("migrate legacy player history: %w", err)
+	}
+	return store, nil
 }
 
 func (store *Store) Append(collection string, value any) error {
@@ -125,7 +129,7 @@ func (store *Store) Read(collection string, since time.Time, limit int) ([]json.
 	for scanner.Scan() {
 		var item entry
 		decoder := json.NewDecoder(bytes.NewReader(scanner.Bytes()))
-		if decoder.Decode(&item) != nil || item.SchemaVersion != SchemaVersion || len(item.Payload) == 0 {
+		if decoder.Decode(&item) != nil || item.SchemaVersion < 1 || item.SchemaVersion > SchemaVersion || len(item.Payload) == 0 {
 			continue
 		}
 		if !since.IsZero() && item.CapturedAt.Before(since) {

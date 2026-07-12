@@ -421,6 +421,9 @@ func ensureCastleMaps(castle *State.CastleState) {
 	if castle.Production == nil {
 		castle.Production = map[int]State.ProductionQueue{}
 	}
+	if castle.QueueableProduction == nil {
+		castle.QueueableProduction = map[int][]State.DefinitionRef{}
+	}
 	if castle.Crafting.Buildings == nil {
 		castle.Crafting.Buildings = map[State.BuildingInstanceID]State.CraftingBuilding{}
 	}

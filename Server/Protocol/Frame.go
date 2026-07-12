@@ -75,6 +75,7 @@ type Command struct {
 	Namespace string          `json:"namespace,omitempty"`
 	Opcode    string          `json:"opcode"`
 	Sequence  string          `json:"sequence,omitempty"`
+	Route     string          `json:"route,omitempty"`
 	Payload   json.RawMessage `json:"payload"`
 	Bare      bool            `json:"bare,omitempty"`
 }
@@ -83,10 +84,11 @@ func Encode(command Command) ([]byte, error) {
 	namespace := strings.TrimSpace(command.Namespace)
 	opcode := strings.ToLower(strings.TrimSpace(command.Opcode))
 	sequence := strings.TrimSpace(command.Sequence)
+	route := strings.TrimSpace(command.Route)
 	if sequence == "" {
 		sequence = "1"
 	}
-	for name, value := range map[string]string{"namespace": namespace, "opcode": opcode, "sequence": sequence} {
+	for name, value := range map[string]string{"namespace": namespace, "opcode": opcode, "sequence": sequence, "route": route} {
 		if strings.Contains(value, "%") {
 			return nil, fmt.Errorf("command %s contains a delimiter", name)
 		}
@@ -108,6 +110,9 @@ func Encode(command Command) ([]byte, error) {
 		return nil, fmt.Errorf("command payload is not valid JSON")
 	}
 	if namespace == "" {
+		if route != "" {
+			return []byte(fmt.Sprintf("%%xt%%%s%%%s%%%s%%%s%%", opcode, sequence, route, payload)), nil
+		}
 		return []byte(fmt.Sprintf("%%xt%%%s%%%s%%%s%%", opcode, sequence, payload)), nil
 	}
 	return []byte(fmt.Sprintf("%%xt%%%s%%%s%%%s%%%s%%", namespace, opcode, sequence, payload)), nil

@@ -24,6 +24,9 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("alliance.verify_inspection", application.verifyAllianceInspection); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("beri.consume_capacity", application.consumeBeriCapacity); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("rift.template.rename", application.renameRiftTemplate); err != nil {
 		return err
 	}
@@ -113,6 +116,14 @@ func (application *Application) registerGameIntents() error {
 			Planner: planConstructionShop,
 		},
 		{
+			Name: "construction.inventory.refresh", Description: "Refresh the account construction-item inventory", Effect: Intent.EffectRead,
+			Planner: planConstructionInventoryRefresh,
+		},
+		{
+			Name: "construction.purchase", Description: "Buy an official construction-item package from a live shop offer", Effect: Intent.EffectWrite,
+			Planner: planConstructionPurchase,
+		},
+		{
 			Name: "crafting.refresh", Description: "Request all sovereign crafting queues and research entitlements", Effect: Intent.EffectRead,
 			Planner: func(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
 				return Intent.Plan{
@@ -124,6 +135,30 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "crafting.start", Description: "Start or queue one official crafting recipe", Effect: Intent.EffectWrite,
 			Planner: planCraftingStart,
+		},
+		{
+			Name: "crafting.rent_slot", Description: "Rent the next configured sovereign crafting slot", Effect: Intent.EffectWrite,
+			Planner: planCraftingSlotRental,
+		},
+		{
+			Name: "crafting.skip", Description: "Complete one active sovereign craft at its official remaining-time ruby price", Effect: Intent.EffectWrite,
+			Planner: planCraftingSkip,
+		},
+		{
+			Name: "resource.logistics.refresh", Description: "Refresh market, caravan, and kingdom-resource transport state", Effect: Intent.EffectRead,
+			Planner: planResourceLogisticsRefresh,
+		},
+		{
+			Name: "resource.market.ship", Description: "Send a validated same-kingdom market shipment between owned castles", Effect: Intent.EffectLaunch,
+			Planner: planMarketResourceShipment,
+		},
+		{
+			Name: "resource.kingdom.ship", Description: "Send a validated resource shipment to another owned kingdom", Effect: Intent.EffectLaunch,
+			Planner: planKingdomResourceShipment,
+		},
+		{
+			Name: "resource.kingdom.skip", Description: "Apply an available official time skip to a pending kingdom-resource shipment", Effect: Intent.EffectWrite,
+			Planner: planKingdomResourceSkip,
 		},
 		{
 			Name: "production.enqueue", Description: "Enqueue an official troop or tool definition using observed production context", Effect: Intent.EffectWrite,
@@ -140,6 +175,14 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "spy.launch", Description: "Launch a military espionage mission from an owned castle", Effect: Intent.EffectLaunch,
 			Planner: planSpyLaunch,
+		},
+		{
+			Name: "beri.capacity.refresh", Description: "Refresh the active Berimond castle troop-transfer capacity", Effect: Intent.EffectRead,
+			Planner: planBeriCapacityRefresh,
+		},
+		{
+			Name: "beri.transfer", Description: "Transfer a validated troop batch to Berimond and apply its fixed speed-up", Effect: Intent.EffectLaunch,
+			Planner: planBeriTransfer,
 		},
 		{
 			Name: "rift.maiden_wave.launch", Description: "Launch deterministic Rift probe waves with eligible shield-maiden commanders", Effect: Intent.EffectLaunch,
@@ -408,7 +451,7 @@ func planConstructionUpgrade(_ context.Context, input Intent.PlanningContext, ar
 		return Intent.Plan{}, err
 	}
 	if request.OfferCode <= 0 {
-		return Intent.Plan{}, fmt.Errorf("offerCode must come from the current live upgrade offer")
+		return Intent.Plan{}, fmt.Errorf("offerCode must identify the official target tier")
 	}
 	var equipped State.ConstructionItemID
 	for _, slot := range castle.ConstructionSlots[request.BuildingInstanceID] {
@@ -419,6 +462,39 @@ func planConstructionUpgrade(_ context.Context, input Intent.PlanningContext, ar
 	}
 	if equipped <= 0 {
 		return Intent.Plan{}, fmt.Errorf("building %d has no construction item in slot %d", request.BuildingInstanceID, request.Slot)
+	}
+	if input.GameData == nil {
+		return Intent.Plan{}, fmt.Errorf("official construction-item data is unavailable")
+	}
+	catalog, err := input.GameData.Catalog("constructionItems")
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	rawCurrent, exists := catalog.Find(strconv.FormatInt(int64(equipped), 10))
+	if !exists {
+		return Intent.Plan{}, fmt.Errorf("construction item %d is not in the current official catalog", equipped)
+	}
+	current, err := GameData.DecodeRecord(rawCurrent)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	groupID, _ := current.Int64("constructionItemGroupID")
+	currentLevel, _ := current.Int64("level")
+	nextLevel := int64(0)
+	for _, raw := range catalog.Rows() {
+		record, decodeErr := GameData.DecodeRecord(raw)
+		if decodeErr != nil {
+			continue
+		}
+		candidateGroup, _ := record.Int64("constructionItemGroupID")
+		candidateLevel, _ := record.Int64("level")
+		if candidateGroup == groupID && candidateLevel > currentLevel && (nextLevel == 0 || candidateLevel < nextLevel) {
+			nextLevel = candidateLevel
+		}
+	}
+	expectedCode := map[int64]int{2: 2000, 3: 2001, 4: 2002}[nextLevel]
+	if expectedCode == 0 || request.OfferCode != expectedCode {
+		return Intent.Plan{}, fmt.Errorf("offerCode %d does not match official target level %d", request.OfferCode, nextLevel)
 	}
 	payload, _ := json.Marshal(struct {
 		BuildingID State.BuildingInstanceID `json:"OID"`
@@ -453,7 +529,7 @@ func planConstructionShop(_ context.Context, input Intent.PlanningContext, argum
 		KingdomID State.KingdomID `json:"KID"`
 	}{castle.ID, castle.KingdomID})
 	steps := castleContextSteps(castle)
-	steps = append(steps, commandStep("Load construction-item offers", "gbc", payload, "gbc"))
+	steps = append(steps, constructionMenuStep(), commandStep("Load construction-item offers", "gbc", payload, "gbc"))
 	return Intent.Plan{
 		Claims:  []string{"castle-focus", "castle:" + strconv.FormatInt(int64(castle.ID), 10), "construction-shop"},
 		Summary: fmt.Sprintf("Load construction-item offers for %s", castleLabel(castle)), Steps: steps,

@@ -20,7 +20,7 @@ func newMovementReducer(authoritative bool) Reducer {
 		_ context.Context,
 		frame Protocol.Frame,
 		gameState *State.GameState,
-		_ *GameData.Store,
+		gameData *GameData.Store,
 	) ([]string, bool, error) {
 		if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 			return nil, false, nil
@@ -47,7 +47,7 @@ func newMovementReducer(authoritative bool) Reducer {
 			}
 		}
 		for _, raw := range items {
-			movement, ok := parseMovement(raw, frame.ReceivedAt)
+			movement, ok := parseMovement(raw, frame.ReceivedAt, gameData)
 			if !ok {
 				continue
 			}
@@ -119,7 +119,7 @@ func movementItems(raw json.RawMessage) ([]json.RawMessage, bool, error) {
 	return nil, false, nil
 }
 
-func parseMovement(raw json.RawMessage, observedAt time.Time) (State.MovementState, bool) {
+func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData.Store) (State.MovementState, bool) {
 	var item map[string]json.RawMessage
 	if json.Unmarshal(raw, &item) != nil {
 		return State.MovementState{}, false
@@ -178,6 +178,27 @@ func parseMovement(raw json.RawMessage, observedAt time.Time) (State.MovementSta
 	}
 	for id, amount := range decodeUnitCounts(item["A"]) {
 		movement.Units[State.UnitID(id)] = amount
+	}
+	var market struct {
+		Barrows int                 `json:"C"`
+		Goods   [][]json.RawMessage `json:"G"`
+	}
+	if json.Unmarshal(item["MM"], &market) == nil {
+		movement.MarketBarrows = market.Barrows
+		for _, good := range market.Goods {
+			if len(good) < 2 {
+				continue
+			}
+			jsonKey := rowString(good, 0)
+			definitionID, found := officialDefinitionID(gameData, "resources", "resourceID", jsonKey)
+			amount, exists := rawFloat64(good[1])
+			if !found || !exists || amount <= 0 {
+				continue
+			}
+			movement.MarketGoods = append(movement.MarketGoods, State.KingdomTransportGood{
+				ResourceID: State.ResourceID(definitionID), Amount: amount,
+			})
+		}
 	}
 	remaining := details.Travel - details.Progress
 	if remaining < 0 {

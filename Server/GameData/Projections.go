@@ -10,6 +10,7 @@ import (
 
 type UnitDefinition struct {
 	ID           int64  `json:"id"`
+	IsTool       bool   `json:"isTool"`
 	InternalName string `json:"internalName,omitempty"`
 	Type         string `json:"type,omitempty"`
 	Group        string `json:"group,omitempty"`
@@ -104,12 +105,26 @@ func (manager *Manager) Unit(id int64) (UnitDefinition, error) {
 	}
 	return UnitDefinition{
 		ID:           id,
+		IsTool:       IsToolRecord(record),
 		InternalName: stringValue(record, "name"),
 		Type:         stringValue(record, "type"),
 		Group:        stringValue(record, "group"),
 		SortOrder:    intValue(record, "sortOrder"),
 		DisplayName:  manager.displayName(record, strconv.FormatInt(id, 10)),
 	}, nil
+}
+
+func IsToolRecord(record Record) bool {
+	raw := record["slotTypes"]
+	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) || bytes.Equal(raw, []byte(`""`)) || bytes.Equal(raw, []byte("[]")) {
+		return false
+	}
+	var text string
+	if json.Unmarshal(raw, &text) == nil {
+		return strings.TrimSpace(text) != ""
+	}
+	var values []json.RawMessage
+	return json.Unmarshal(raw, &values) == nil && len(values) > 0
 }
 
 func (manager *Manager) Building(id int64) (BuildingDefinition, error) {

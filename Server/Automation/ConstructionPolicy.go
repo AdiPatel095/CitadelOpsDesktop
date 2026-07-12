@@ -34,6 +34,12 @@ type constructionMetadata struct {
 	slot    int
 }
 
+type equippedConstruction struct {
+	buildingID State.BuildingInstanceID
+	slot       State.ConstructionSlot
+	item       constructionMetadata
+}
+
 func NewConstructionPolicy() *ConstructionPolicy { return &ConstructionPolicy{} }
 
 func (*ConstructionPolicy) ID() string { return "autoTCI" }
@@ -52,8 +58,17 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 	if err != nil {
 		return Decision{}, err
 	}
+	if snapshot.State.Inventory.ConstructionItemsObservedAt.IsZero() ||
+		snapshot.Now.Sub(snapshot.State.Inventory.ConstructionItemsObservedAt) >= constructionCheckInterval {
+		return Decision{
+			Status: "ready", Detail: "Refresh construction-item inventory",
+			NextCheckAt: snapshot.Now.Add(2 * time.Second),
+			Request:     &Intent.Request{Name: "construction.inventory.refresh", Arguments: json.RawMessage(`{}`)},
+		}, nil
+	}
 	missingInventory := 0
 	missingHost := 0
+	blockedShop := 0
 	targets := 0
 	nextCheck := snapshot.Now.Add(constructionCheckInterval)
 	for _, castleKey := range sortedNumericKeys(settings.Targets) {
@@ -77,20 +92,62 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 			if ceiling < floor {
 				ceiling = floor
 			}
-			if equipped, remaining := equippedConstructionTarget(castle, metadata, representative.groupID, floor, ceiling); equipped {
-				if remaining != nil && *remaining > 120 {
-					candidate := snapshot.Now.Add(time.Duration(*remaining-120) * time.Second)
+			equipped, hasEquipped := equippedConstructionForGroup(castle, metadata, representative.groupID)
+			if hasEquipped {
+				if nextTier, hasNext := nextConstructionTier(tiersByGroup[representative.groupID], equipped.item.id); hasNext &&
+					nextTier.level >= floor && nextTier.level <= ceiling && equipped.slot.RemainingSec != nil {
+					remaining := *equipped.slot.RemainingSec
+					if remaining == 0 || remaining > 0 && remaining <= 300 {
+						offerCode, mapped := constructionUpgradeCode(nextTier.level)
+						if mapped {
+							arguments, _ := json.Marshal(map[string]any{
+								"castleId": castle.ID, "buildingInstanceId": equipped.buildingID,
+								"slot": equipped.slot.Slot, "offerCode": offerCode,
+							})
+							return Decision{
+								Status: "ready", Detail: fmt.Sprintf("Upgrade construction item %d to level %d at %s", equipped.item.id, nextTier.level, castleName(castle)),
+								NextCheckAt: snapshot.Now.Add(10 * time.Second),
+								Request:     &Intent.Request{Name: "construction.upgrade", Arguments: arguments},
+							}, nil
+						}
+					}
+					candidate := snapshot.Now.Add(time.Duration(max(0, remaining-300)) * time.Second)
 					if candidate.Before(nextCheck) {
 						nextCheck = candidate
 					}
+					continue
 				}
-				continue
+				if equipped.item.level >= floor && equipped.item.level <= ceiling {
+					if equipped.slot.RemainingSec != nil {
+						remaining := *equipped.slot.RemainingSec
+						if remaining > 120 {
+							candidate := snapshot.Now.Add(time.Duration(remaining-120) * time.Second)
+							if candidate.Before(nextCheck) {
+								nextCheck = candidate
+							}
+						} else if !constructionInventoryAvailable(tiersByGroup[representative.groupID], snapshot.State.Inventory.ConstructionItems, floor, ceiling) {
+							if decision, status := constructionPurchaseDecision(snapshot, tiersByGroup[representative.groupID], floor, ceiling); status != "" {
+								if decision.Request != nil {
+									return decision, nil
+								}
+								blockedShop++
+							}
+						}
+					}
+					continue
+				}
 			}
 			tier, available := bestConstructionInventoryTier(
 				tiersByGroup[representative.groupID], snapshot.State.Inventory.ConstructionItems, floor, ceiling,
 			)
 			if !available {
 				missingInventory++
+				if decision, status := constructionPurchaseDecision(snapshot, tiersByGroup[representative.groupID], floor, ceiling); status != "" {
+					if decision.Request != nil {
+						return decision, nil
+					}
+					blockedShop++
+				}
 				continue
 			}
 			hostID := constructionHost(castle, snapshot.GameData, metadata, representative.groupID)
@@ -115,6 +172,9 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 		detail = "No valid official construction-item targets are configured"
 	} else if missingInventory > 0 {
 		detail = fmt.Sprintf("%d construction-item target(s) are waiting for matching inventory", missingInventory)
+		if blockedShop > 0 {
+			detail = fmt.Sprintf("%d construction-item target(s) have no matching live official shop offer", blockedShop)
+		}
 	} else if missingHost > 0 {
 		detail = fmt.Sprintf("%d construction-item target(s) have no compatible observed building", missingHost)
 	}
@@ -161,22 +221,138 @@ func constructionCatalog(store *GameData.Store) (
 	return byID, byGroup, nil
 }
 
-func equippedConstructionTarget(
+func equippedConstructionForGroup(
 	castle State.CastleState,
 	metadata map[State.ConstructionItemID]constructionMetadata,
 	groupID int64,
-	floor int,
-	ceiling int,
-) (bool, *int) {
-	for _, slots := range castle.ConstructionSlots {
+) (equippedConstruction, bool) {
+	buildingIDs := make([]State.BuildingInstanceID, 0, len(castle.ConstructionSlots))
+	for buildingID := range castle.ConstructionSlots {
+		buildingIDs = append(buildingIDs, buildingID)
+	}
+	sort.Slice(buildingIDs, func(left, right int) bool { return buildingIDs[left] < buildingIDs[right] })
+	for _, buildingID := range buildingIDs {
+		slots := append([]State.ConstructionSlot(nil), castle.ConstructionSlots[buildingID]...)
+		sort.Slice(slots, func(left, right int) bool { return slots[left].Slot < slots[right].Slot })
 		for _, slot := range slots {
 			item, exists := metadata[slot.DefinitionID]
-			if exists && item.groupID == groupID && item.level >= floor && item.level <= ceiling {
-				return true, slot.RemainingSec
+			if exists && item.groupID == groupID {
+				return equippedConstruction{buildingID: buildingID, slot: slot, item: item}, true
 			}
 		}
 	}
-	return false, nil
+	return equippedConstruction{}, false
+}
+
+func nextConstructionTier(tiers []constructionMetadata, currentID State.ConstructionItemID) (constructionMetadata, bool) {
+	currentLevel := 0
+	for _, tier := range tiers {
+		if tier.id == currentID {
+			currentLevel = tier.level
+			break
+		}
+	}
+	if currentLevel <= 0 {
+		return constructionMetadata{}, false
+	}
+	next := constructionMetadata{}
+	for _, tier := range tiers {
+		if tier.level > currentLevel && (next.level == 0 || tier.level < next.level) {
+			next = tier
+		}
+	}
+	return next, next.id > 0
+}
+
+func constructionUpgradeCode(targetLevel int) (int, bool) {
+	switch targetLevel {
+	case 2:
+		return 2000, true
+	case 3:
+		return 2001, true
+	case 4:
+		return 2002, true
+	default:
+		return 0, false
+	}
+}
+
+func constructionInventoryAvailable(
+	tiers []constructionMetadata,
+	inventory map[State.ConstructionItemID]int64,
+	floor int,
+	ceiling int,
+) bool {
+	_, available := bestConstructionInventoryTier(tiers, inventory, floor, ceiling)
+	return available
+}
+
+func constructionPurchaseDecision(
+	snapshot Snapshot,
+	tiers []constructionMetadata,
+	floor int,
+	ceiling int,
+) (Decision, string) {
+	mainCastle, exists := constructionShopCastle(snapshot.State)
+	if !exists {
+		return Decision{}, "no-main-castle"
+	}
+	if snapshot.State.Inventory.ConstructionOffersObservedAt.IsZero() ||
+		snapshot.Now.Sub(snapshot.State.Inventory.ConstructionOffersObservedAt) >= constructionCheckInterval {
+		arguments, _ := json.Marshal(map[string]any{"castleId": mainCastle.ID})
+		return Decision{
+			Status: "ready", Detail: "Refresh live construction-item shop offers",
+			NextCheckAt: snapshot.Now.Add(2 * time.Second),
+			Request:     &Intent.Request{Name: "construction.shop", Arguments: arguments},
+		}, "refresh-shop"
+	}
+	ascending := append([]constructionMetadata(nil), tiers...)
+	sort.Slice(ascending, func(left, right int) bool { return ascending[left].level < ascending[right].level })
+	for _, tier := range ascending {
+		if tier.level < floor || tier.level > ceiling {
+			continue
+		}
+		products, err := snapshot.GameData.ConstructionShopProducts(int64(tier.id))
+		if err != nil {
+			continue
+		}
+		for _, product := range products {
+			liveAmount := snapshot.State.Inventory.ConstructionOffers[State.PackageID(product.PackageID)]
+			if liveAmount <= 0 {
+				continue
+			}
+			amount := min(product.Amount, liveAmount)
+			if amount <= 0 {
+				amount = 1
+			}
+			arguments, _ := json.Marshal(map[string]any{
+				"castleId": mainCastle.ID, "productId": product.PackageID, "amount": amount,
+			})
+			return Decision{
+				Status: "ready", Detail: fmt.Sprintf("Buy construction item %d for configured targets", tier.id),
+				NextCheckAt: snapshot.Now.Add(10 * time.Second),
+				Request:     &Intent.Request{Name: "construction.purchase", Arguments: arguments},
+			}, "purchase"
+		}
+	}
+	return Decision{Status: "blocked", Detail: "No matching live official construction-item shop offer", NextCheckAt: snapshot.Now.Add(constructionCheckInterval)}, "no-offer"
+}
+
+func constructionShopCastle(gameState State.GameState) (State.CastleState, bool) {
+	castleIDs := sortedCastleIDs(gameState.Castles)
+	for _, castleID := range castleIDs {
+		castle := gameState.Castles[castleID]
+		if castle.KingdomID == 0 && castle.SlotType == 1 {
+			return castle, true
+		}
+	}
+	for _, castleID := range castleIDs {
+		castle := gameState.Castles[castleID]
+		if castle.KingdomID == 0 {
+			return castle, true
+		}
+	}
+	return State.CastleState{}, false
 }
 
 func bestConstructionInventoryTier(

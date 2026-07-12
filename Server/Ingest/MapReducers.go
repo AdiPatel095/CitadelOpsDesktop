@@ -72,3 +72,24 @@ func reduceMapSnapshot(
 	}
 	return []string{"map"}, changed, nil
 }
+
+func reduceNestedMapSnapshot(
+	ctx context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+		return nil, false, fmt.Errorf("decode nested map snapshot: %w", err)
+	}
+	nested := root["gaa"]
+	if len(nested) == 0 {
+		return nil, false, nil
+	}
+	frame.Payload = nested
+	return reduceMapSnapshot(ctx, frame, gameState, gameData)
+}

@@ -26,6 +26,7 @@ type (
 	EquipmentID         int64
 	GemInstanceID       int64
 	GemID               int64
+	PackageID           int64
 )
 
 type DefinitionRef struct {
@@ -56,22 +57,32 @@ type PlayerState struct {
 	Gallantry   float64                `json:"gallantry,omitempty"`
 	Resources   map[ResourceID]float64 `json:"resources"`
 	Currencies  map[CurrencyID]float64 `json:"currencies"`
+	VIP         VIPState               `json:"vip"`
+}
+
+type VIPState struct {
+	Points       int64 `json:"points,omitempty"`
+	Level        int   `json:"level,omitempty"`
+	RemainingSec int   `json:"remainingSec,omitempty"`
+	Upgrade      int   `json:"upgrade,omitempty"`
 }
 
 type CastleState struct {
-	ID                CastleID                                  `json:"id"`
-	KingdomID         KingdomID                                 `json:"kingdomId"`
-	SlotType          int                                       `json:"slotType,omitempty"`
-	Name              string                                    `json:"name,omitempty"`
-	X                 int                                       `json:"x"`
-	Y                 int                                       `json:"y"`
-	Focused           bool                                      `json:"focused"`
-	Resources         map[ResourceID]ResourceBalance            `json:"resources"`
-	Units             CastleUnits                               `json:"units"`
-	Buildings         map[BuildingInstanceID]Building           `json:"buildings"`
-	ConstructionSlots map[BuildingInstanceID][]ConstructionSlot `json:"constructionSlots"`
-	Production        map[int]ProductionQueue                   `json:"production"`
-	Crafting          CraftingState                             `json:"crafting"`
+	ID                  CastleID                                  `json:"id"`
+	KingdomID           KingdomID                                 `json:"kingdomId"`
+	SlotType            int                                       `json:"slotType,omitempty"`
+	Name                string                                    `json:"name,omitempty"`
+	X                   int                                       `json:"x"`
+	Y                   int                                       `json:"y"`
+	Focused             bool                                      `json:"focused"`
+	Resources           map[ResourceID]ResourceBalance            `json:"resources"`
+	Units               CastleUnits                               `json:"units"`
+	Buildings           map[BuildingInstanceID]Building           `json:"buildings"`
+	ConstructionSlots   map[BuildingInstanceID][]ConstructionSlot `json:"constructionSlots"`
+	Production          map[int]ProductionQueue                   `json:"production"`
+	QueueableProduction map[int][]DefinitionRef                   `json:"queueableProduction"`
+	QueueableObservedAt time.Time                                 `json:"queueableObservedAt,omitempty"`
+	Crafting            CraftingState                             `json:"crafting"`
 }
 
 type ResourceBalance struct {
@@ -165,25 +176,27 @@ type CastellanState struct {
 }
 
 type MovementState struct {
-	ID              MovementID       `json:"id"`
-	TypeID          int              `json:"typeId,omitempty"`
-	Direction       int              `json:"direction"`
-	OwnerPlayerID   PlayerID         `json:"ownerPlayerId,omitempty"`
-	TargetPlayerID  PlayerID         `json:"targetPlayerId,omitempty"`
-	SourceCastleID  CastleID         `json:"sourceCastleId,omitempty"`
-	TargetCastleID  CastleID         `json:"targetCastleId,omitempty"`
-	CommanderID     *CommanderID     `json:"commanderId,omitempty"`
-	KingdomID       KingdomID        `json:"kingdomId"`
-	SourceX         int              `json:"sourceX,omitempty"`
-	SourceY         int              `json:"sourceY,omitempty"`
-	TargetX         int              `json:"targetX"`
-	TargetY         int              `json:"targetY"`
-	TravelSeconds   int              `json:"travelSeconds,omitempty"`
-	ProgressSeconds int              `json:"progressSeconds,omitempty"`
-	SpyCount        int              `json:"spyCount,omitempty"`
-	ArrivesAt       *time.Time       `json:"arrivesAt,omitempty"`
-	ReturnsAt       *time.Time       `json:"returnsAt,omitempty"`
-	Units           map[UnitID]int64 `json:"units"`
+	ID              MovementID             `json:"id"`
+	TypeID          int                    `json:"typeId,omitempty"`
+	Direction       int                    `json:"direction"`
+	OwnerPlayerID   PlayerID               `json:"ownerPlayerId,omitempty"`
+	TargetPlayerID  PlayerID               `json:"targetPlayerId,omitempty"`
+	SourceCastleID  CastleID               `json:"sourceCastleId,omitempty"`
+	TargetCastleID  CastleID               `json:"targetCastleId,omitempty"`
+	CommanderID     *CommanderID           `json:"commanderId,omitempty"`
+	KingdomID       KingdomID              `json:"kingdomId"`
+	SourceX         int                    `json:"sourceX,omitempty"`
+	SourceY         int                    `json:"sourceY,omitempty"`
+	TargetX         int                    `json:"targetX"`
+	TargetY         int                    `json:"targetY"`
+	TravelSeconds   int                    `json:"travelSeconds,omitempty"`
+	ProgressSeconds int                    `json:"progressSeconds,omitempty"`
+	SpyCount        int                    `json:"spyCount,omitempty"`
+	ArrivesAt       *time.Time             `json:"arrivesAt,omitempty"`
+	ReturnsAt       *time.Time             `json:"returnsAt,omitempty"`
+	Units           map[UnitID]int64       `json:"units"`
+	MarketBarrows   int                    `json:"marketBarrows,omitempty"`
+	MarketGoods     []KingdomTransportGood `json:"marketGoods,omitempty"`
 }
 
 type EquipmentInstance struct {
@@ -249,11 +262,74 @@ type GemInstance struct {
 }
 
 type InventoryState struct {
-	ConstructionItems map[ConstructionItemID]int64              `json:"constructionItems"`
-	Equipment         map[EquipmentInstanceID]EquipmentInstance `json:"equipment"`
-	Gems              map[GemInstanceID]GemInstance             `json:"gems"`
-	GemStacks         map[GemID]int64                           `json:"gemStacks"`
-	Items             map[string]map[int64]int64                `json:"items"`
+	ConstructionItems            map[ConstructionItemID]int64              `json:"constructionItems"`
+	ConstructionItemsObservedAt  time.Time                                 `json:"constructionItemsObservedAt,omitempty"`
+	ConstructionOffers           map[PackageID]int64                       `json:"constructionOffers"`
+	ConstructionOffersObservedAt time.Time                                 `json:"constructionOffersObservedAt,omitempty"`
+	Equipment                    map[EquipmentInstanceID]EquipmentInstance `json:"equipment"`
+	Gems                         map[GemInstanceID]GemInstance             `json:"gems"`
+	GemStacks                    map[GemID]int64                           `json:"gemStacks"`
+	Items                        map[string]map[int64]int64                `json:"items"`
+}
+
+type SubscriptionState struct {
+	TypeID         int `json:"typeId"`
+	RemainingSec   int `json:"remainingSec,omitempty"`
+	GracePeriodSec int `json:"gracePeriodSec,omitempty"`
+}
+
+type MarketAreaEffect struct {
+	EffectID int64     `json:"effectId"`
+	Values   []float64 `json:"values"`
+	Source   string    `json:"source,omitempty"`
+}
+
+type MarketCastleState struct {
+	CastleID         CastleID               `json:"castleId"`
+	KingdomID        KingdomID              `json:"kingdomId"`
+	TotalBarrows     int                    `json:"totalBarrows"`
+	AvailableBarrows int                    `json:"availableBarrows"`
+	Resources        map[ResourceID]float64 `json:"resources"`
+	AreaEffects      []MarketAreaEffect     `json:"areaEffects"`
+}
+
+type MarketState struct {
+	Castles            map[CastleID]MarketCastleState `json:"castles"`
+	CaravanLevel       int                            `json:"caravanLevel,omitempty"`
+	CaravanLevelLoaded bool                           `json:"caravanLevelLoaded"`
+	ObservedAt         time.Time                      `json:"observedAt,omitempty"`
+}
+
+type KingdomTransportUnlock struct {
+	KingdomID KingdomID `json:"kingdomId"`
+	Unlocked  bool      `json:"unlocked"`
+	Created   bool      `json:"created"`
+	Stage     int       `json:"stage,omitempty"`
+}
+
+type KingdomTransportGood struct {
+	ResourceID ResourceID `json:"resourceId"`
+	Amount     float64    `json:"amount"`
+}
+
+type KingdomResourceTransport struct {
+	KingdomID    KingdomID              `json:"kingdomId"`
+	RemainingSec int                    `json:"remainingSec,omitempty"`
+	Goods        []KingdomTransportGood `json:"goods"`
+}
+
+type KingdomTransportState struct {
+	Unlocks    map[KingdomID]KingdomTransportUnlock `json:"unlocks"`
+	Pending    []KingdomResourceTransport           `json:"pending"`
+	ObservedAt time.Time                            `json:"observedAt,omitempty"`
+}
+
+type BeriState struct {
+	AvailableTroops int64            `json:"availableTroops"`
+	TroopsByUnit    map[UnitID]int64 `json:"troopsByUnit"`
+	ParsedSourceID  CastleID         `json:"parsedSourceId,omitempty"`
+	ObservedAt      time.Time        `json:"observedAt,omitempty"`
+	ConsumedAt      time.Time        `json:"consumedAt,omitempty"`
 }
 
 type AllianceMember struct {
@@ -428,6 +504,10 @@ type GameState struct {
 	Scheduled        map[string]ScheduledOperation           `json:"scheduled"`
 	Rift             RiftState                               `json:"rift"`
 	Inventory        InventoryState                          `json:"inventory"`
+	Subscriptions    map[int]SubscriptionState               `json:"subscriptions"`
+	Market           MarketState                             `json:"market"`
+	KingdomTransport KingdomTransportState                   `json:"kingdomTransport"`
+	Beri             BeriState                               `json:"beri"`
 	Alliance         AllianceState                           `json:"alliance"`
 	Alliances        map[AllianceID]AllianceState            `json:"alliances"`
 	Map              map[KingdomID]map[string]MapObservation `json:"map"`
@@ -454,12 +534,19 @@ func NewGameState() GameState {
 		Scheduled:  map[string]ScheduledOperation{},
 		Rift:       RiftState{Launches: map[string]RiftLaunch{}},
 		Inventory: InventoryState{
-			ConstructionItems: map[ConstructionItemID]int64{},
-			Equipment:         map[EquipmentInstanceID]EquipmentInstance{},
-			Gems:              map[GemInstanceID]GemInstance{},
-			GemStacks:         map[GemID]int64{},
-			Items:             map[string]map[int64]int64{},
+			ConstructionItems:  map[ConstructionItemID]int64{},
+			ConstructionOffers: map[PackageID]int64{},
+			Equipment:          map[EquipmentInstanceID]EquipmentInstance{},
+			Gems:               map[GemInstanceID]GemInstance{},
+			GemStacks:          map[GemID]int64{},
+			Items:              map[string]map[int64]int64{},
 		},
+		Subscriptions: map[int]SubscriptionState{},
+		Market:        MarketState{Castles: map[CastleID]MarketCastleState{}},
+		KingdomTransport: KingdomTransportState{
+			Unlocks: map[KingdomID]KingdomTransportUnlock{}, Pending: []KingdomResourceTransport{},
+		},
+		Beri:        BeriState{TroopsByUnit: map[UnitID]int64{}},
 		Alliance:    AllianceState{Members: []AllianceMember{}, Holdings: []AllianceHolding{}},
 		Alliances:   map[AllianceID]AllianceState{},
 		Map:         map[KingdomID]map[string]MapObservation{},

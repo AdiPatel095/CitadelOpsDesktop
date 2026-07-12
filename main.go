@@ -52,7 +52,7 @@ func main() {
 		log.Fatal(err)
 	}
 	if application.StartupErr != nil {
-		log.Printf("Official game data is unavailable: %v", application.StartupErr)
+		log.Printf("Startup completed with degraded services: %v", application.StartupErr)
 	}
 	application.Start(rootContext)
 

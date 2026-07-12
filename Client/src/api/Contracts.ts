@@ -50,6 +50,7 @@ export interface PlayerStateV2 {
 	gallantry?: number;
 	resources: Record<string, number>;
 	currencies: Record<string, number>;
+	vip: { points?: number; level?: number; remainingSec?: number; upgrade?: number };
 }
 
 export interface ResourceBalanceV2 {
@@ -141,6 +142,8 @@ export interface CastleStateV2 {
 	buildings: Record<string, CastleBuildingV2>;
 	constructionSlots: Record<string, ConstructionSlotV2[]>;
 	production: Record<string, ProductionQueueV2>;
+	queueableProduction: Record<string, Array<{ collection: string; id: number }>>;
+	queueableObservedAt?: string;
 	crafting: CraftingStateV2;
 }
 
@@ -198,10 +201,56 @@ export interface GemInstanceV2 {
 
 export interface InventoryStateV2 {
 	constructionItems: Record<string, number>;
+	constructionItemsObservedAt?: string;
+	constructionOffers: Record<string, number>;
+	constructionOffersObservedAt?: string;
 	equipment: Record<string, EquipmentInstanceV2>;
 	gems: Record<string, GemInstanceV2>;
 	gemStacks: Record<string, number>;
 	items: Record<string, Record<string, number>>;
+}
+
+export interface SubscriptionStateV2 {
+	typeId: number;
+	remainingSec?: number;
+	gracePeriodSec?: number;
+}
+
+export interface MarketStateV2 {
+	castles: Record<string, {
+		castleId: number;
+		kingdomId: number;
+		totalBarrows: number;
+		availableBarrows: number;
+		resources: Record<string, number>;
+		areaEffects: Array<{ effectId: number; values: number[]; source?: string }>;
+	}>;
+	caravanLevel?: number;
+	caravanLevelLoaded: boolean;
+	observedAt?: string;
+}
+
+export interface KingdomTransportStateV2 {
+	unlocks: Record<string, {
+		kingdomId: number;
+		unlocked: boolean;
+		created: boolean;
+		stage?: number;
+	}>;
+	pending: Array<{
+		kingdomId: number;
+		remainingSec?: number;
+		goods: Array<{ resourceId: number; amount: number }>;
+	}>;
+	observedAt?: string;
+}
+
+export interface BeriStateV2 {
+	availableTroops: number;
+	troopsByUnit: Record<string, number>;
+	parsedSourceId?: number;
+	observedAt?: string;
+	consumedAt?: string;
 }
 
 export interface EquipmentPriorityV2 {
@@ -348,6 +397,8 @@ export interface MovementStateV2 {
 	arrivesAt?: string;
 	returnsAt?: string;
 	units: Record<string, number>;
+	marketBarrows?: number;
+	marketGoods?: Array<{ resourceId: number; amount: number }>;
 }
 
 export interface ProtocolObservationV2 {
@@ -474,6 +525,10 @@ export interface GameStateV2 {
 	scheduled: Record<string, ScheduledOperationV2>;
 	rift: RiftStateV2;
   inventory: InventoryStateV2;
+	subscriptions: Record<string, SubscriptionStateV2>;
+	market: MarketStateV2;
+	kingdomTransport: KingdomTransportStateV2;
+	beri: BeriStateV2;
   alliance: AllianceStateV2;
   alliances: Record<string, AllianceStateV2>;
   map: Record<string, Record<string, MapObservationV2>>;
