@@ -35,6 +35,7 @@ type ChromiumTransport struct {
 	resolveErr error
 	frames     chan RawFrame
 	statuses   chan Status
+	activities chan Activity
 
 	mu                 sync.RWMutex
 	status             Status
@@ -65,7 +66,7 @@ func NewChromiumTransport(config ChromiumConfig) *ChromiumTransport {
 	}
 	return &ChromiumTransport{
 		config: config, browser: browser, resolveErr: resolveErr,
-		frames: make(chan RawFrame, 8192), statuses: make(chan Status, 32),
+		frames: make(chan RawFrame, 8192), statuses: make(chan Status, 32), activities: make(chan Activity, 64),
 		status: Status{
 			State: state, Namespace: "EmpireEx_21", Detail: detail,
 			BrowserID: browser.ID, BrowserName: browser.Name, ChangedAt: time.Now().UTC(),
@@ -246,6 +247,10 @@ func (transport *ChromiumTransport) StatusChanges() <-chan Status {
 	return transport.statuses
 }
 
+func (transport *ChromiumTransport) Activities() <-chan Activity {
+	return transport.activities
+}
+
 func (transport *ChromiumTransport) Status() Status {
 	transport.mu.RLock()
 	defer transport.mu.RUnlock()
@@ -295,15 +300,31 @@ func (transport *ChromiumTransport) handleEvent(generation uint64, event any) {
 		var notice struct {
 			Type string `json:"type"`
 			URL  string `json:"url"`
+			Kind string `json:"kind"`
 		}
-		if json.Unmarshal([]byte(typed.Payload), &notice) != nil || notice.Type != "socket" || !isGameSocketURL(notice.URL) {
+		if json.Unmarshal([]byte(typed.Payload), &notice) != nil {
 			return
 		}
-		transport.mu.Lock()
-		if transport.generation == generation {
-			transport.executionContextID = typed.ExecutionContextID
+		switch notice.Type {
+		case "socket":
+			if !isGameSocketURL(notice.URL) {
+				return
+			}
+			transport.mu.Lock()
+			if transport.generation == generation {
+				transport.executionContextID = typed.ExecutionContextID
+			}
+			transport.mu.Unlock()
+		case "activity":
+			notice.Kind = strings.TrimSpace(notice.Kind)
+			if notice.Kind == "" {
+				return
+			}
+			select {
+			case transport.activities <- Activity{Kind: notice.Kind, ObservedAt: time.Now().UTC()}:
+			default:
+			}
 		}
-		transport.mu.Unlock()
 	case *network.EventWebSocketCreated:
 		if !isGameSocketURL(typed.URL) {
 			return
@@ -382,15 +403,22 @@ func (transport *ChromiumTransport) observeLoginFrame(generation uint64, payload
 		status.LoggedIn = true
 		status.SocketReady = true
 		status.Detail = ""
+		status.CooldownUntil = nil
+		status.RetryAt = nil
 		transport.publishStatus(status)
 	case 453:
 		var cooldown struct {
 			Seconds int `json:"CD"`
 		}
 		_ = json.Unmarshal(frame.Payload, &cooldown)
+		now := time.Now().UTC()
+		cooldownUntil := now.Add(time.Duration(max(0, cooldown.Seconds)) * time.Second)
+		retryAt := cooldownUntil.Add(5 * time.Second)
 		status.State = "cooldown"
 		status.LoggedIn = false
 		status.Detail = fmt.Sprintf("Login cooldown: %ds", cooldown.Seconds)
+		status.CooldownUntil = &cooldownUntil
+		status.RetryAt = &retryAt
 		transport.publishStatus(status)
 		if cooldown.Seconds > 0 {
 			go transport.reloadAfter(generation, time.Duration(cooldown.Seconds)*time.Second+5*time.Second)
@@ -398,6 +426,8 @@ func (transport *ChromiumTransport) observeLoginFrame(generation uint64, payload
 	default:
 		status.State = "error"
 		status.LoggedIn = false
+		status.CooldownUntil = nil
+		status.RetryAt = nil
 		status.Detail = fmt.Sprintf("Game login failed with code %d", *frame.ResponseCode)
 		transport.publishStatus(status)
 	}
@@ -548,9 +578,9 @@ const chromiumTransportInjection = `
     const NativeWebSocket = root.WebSocket;
     const sockets = [];
     let authenticated = null;
-    const notify = (url) => {
+    const notify = (message) => {
       if (typeof root.citadelTransportNotify === 'function') {
-        root.citadelTransportNotify(JSON.stringify({ type: 'socket', url: String(url || '') }));
+        root.citadelTransportNotify(JSON.stringify(message));
       }
     };
     root.WebSocket = new Proxy(NativeWebSocket, {
@@ -559,7 +589,7 @@ const chromiumTransportInjection = `
         const url = args[0];
         if (typeof url === 'string' && url.toLowerCase().includes('ep-live')) {
           sockets.push(socket);
-          notify(url);
+          notify({ type: 'socket', url: String(url || '') });
           socket.addEventListener('message', (event) => {
             if (typeof event.data !== 'string') return;
             const parts = event.data.split('%');
@@ -586,6 +616,25 @@ const chromiumTransportInjection = `
       socket.send(payload);
       return true;
     };
+    if (root.document && !root.__citadelActivityInstalled) {
+      root.__citadelActivityInstalled = true;
+      let lastMoveNotice = 0;
+      let lastNotice = 0;
+      const notifyActivity = (kind) => {
+        const now = Date.now();
+        if (kind === 'pointermove' && now - lastMoveNotice < 1500) return;
+        if (kind !== 'pointermove' && now - lastNotice < 250) return;
+        if (kind === 'pointermove') lastMoveNotice = now;
+        lastNotice = now;
+        notify({ type: 'activity', kind });
+      };
+      const options = { capture: true, passive: true };
+      root.document.addEventListener('pointerdown', () => notifyActivity('pointerdown'), options);
+      root.document.addEventListener('pointermove', () => notifyActivity('pointermove'), options);
+      root.document.addEventListener('wheel', () => notifyActivity('wheel'), options);
+      root.document.addEventListener('keydown', () => notifyActivity('keydown'), true);
+      root.addEventListener('focus', () => notifyActivity('focus'), true);
+    }
   };
 
   install(globalThis);

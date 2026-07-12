@@ -1,5 +1,26 @@
 export type APIConnectionStatus = 'Disconnected' | 'Connecting' | 'Connected';
 
+export interface ApplicationUpdateV2 {
+	currentVersion: string;
+	latestVersion?: string;
+	available: boolean;
+	downloadUrl?: string;
+	expectedSha256?: string;
+	installSupported: boolean;
+	status: 'idle' | 'checking' | 'current' | 'available' | 'downloading' | 'installing' | 'restart-required' | 'error' | 'unavailable';
+	stage?: string;
+	progress: number;
+	error?: string;
+	checkedAt?: string;
+	restartRequired: boolean;
+}
+
+export interface RuntimeDiagnosticsV2 {
+	applicationMemoryMb: number;
+	browserMemoryMb: number;
+	observedAt: string;
+}
+
 export interface APIEnvelope<T = unknown> {
   v: 2;
   id?: string;
@@ -17,6 +38,8 @@ export interface SessionStateV2 {
   serverUrl?: string;
   namespace?: string;
   detail?: string;
+	cooldownUntil?: string;
+	retryAt?: string;
   changedAt: string;
 }
 

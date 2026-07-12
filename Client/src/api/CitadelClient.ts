@@ -3,6 +3,7 @@ import type {
   APIConnectionStatus,
   APIEnvelope,
 	AllianceTargetViewV2,
+	ApplicationUpdateV2,
   BrowserInventory,
   CatalogManifest,
   CatalogResponse,
@@ -12,6 +13,7 @@ import type {
   GameStateV2,
   IntentReceipt,
 	IntentDefinition,
+	RuntimeDiagnosticsV2,
   SubmitIntentOptions,
 } from './Contracts';
 
@@ -98,6 +100,14 @@ class CitadelClient {
   getState(): Promise<GameStateV2> {
     return this.request<GameStateV2>('/api/v2/state');
   }
+
+  getApplicationUpdate(): Promise<ApplicationUpdateV2> {
+	return this.request<ApplicationUpdateV2>('/api/v2/update');
+  }
+
+	getDiagnostics(): Promise<RuntimeDiagnosticsV2> {
+		return this.request<RuntimeDiagnosticsV2>('/api/v2/diagnostics');
+	}
 
   getBrowsers(): Promise<BrowserInventory> {
     return this.request<BrowserInventory>('/api/v2/browsers');

@@ -106,3 +106,7 @@ type Observer interface {
 }
 
 type Action func(ctx context.Context, arguments json.RawMessage) error
+
+// ExecutionGate can delay or reject a mutating plan immediately before it
+// acquires claims and before each step is executed.
+type ExecutionGate func(ctx context.Context, request Request, plan Plan) error

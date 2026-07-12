@@ -26,6 +26,7 @@ import SettingsView from './views/SettingsView';
 import PatchNotesView from './views/PatchNotesView';
 import { type ViewId } from './config/Navigation';
 import { LoggerDock } from './components/LoggerDock';
+import UpdateModal from './components/UpdateModal';
 
 const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewId>('castle');
@@ -156,6 +157,7 @@ const AppContent: React.FC = () => {
       />
 
       <LoggerDock />
+	  <UpdateModal />
     </div>
   );
 };

@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/AllianceTargets"
+	"CitadelDesktop/Server/AppUpdate"
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/Diagnostics"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/Intent"
@@ -30,6 +32,8 @@ type Config struct {
 	Telemetry       *Telemetry.Store
 	Intents         *Intent.Engine
 	AllianceTargets *AllianceTargets.Service
+	Updates         *AppUpdate.Manager
+	Diagnostics     *Diagnostics.Monitor
 	Session         interface{ Status() Session.Status }
 }
 
@@ -54,6 +58,8 @@ func NewServer(config Config) *Server {
 func (server *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v2/health", server.handleHealth)
+	mux.HandleFunc("GET /api/v2/update", server.handleApplicationUpdate)
+	mux.HandleFunc("GET /api/v2/diagnostics", server.handleDiagnostics)
 	mux.HandleFunc("GET /api/v2/state", server.handleState)
 	mux.HandleFunc("GET /api/v2/browsers", server.handleBrowsers)
 	mux.HandleFunc("GET /api/v2/config", server.handleConfiguration)

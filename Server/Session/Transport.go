@@ -11,20 +11,27 @@ import (
 var ErrTransportUnavailable = errors.New("game transport is unavailable")
 
 type Status struct {
-	State       string    `json:"state"`
-	LoggedIn    bool      `json:"loggedIn"`
-	SocketReady bool      `json:"socketReady"`
-	BrowserID   string    `json:"browserId,omitempty"`
-	BrowserName string    `json:"browserName,omitempty"`
-	ServerURL   string    `json:"serverUrl,omitempty"`
-	Namespace   string    `json:"namespace,omitempty"`
-	Detail      string    `json:"detail,omitempty"`
-	ChangedAt   time.Time `json:"changedAt"`
+	State         string     `json:"state"`
+	LoggedIn      bool       `json:"loggedIn"`
+	SocketReady   bool       `json:"socketReady"`
+	BrowserID     string     `json:"browserId,omitempty"`
+	BrowserName   string     `json:"browserName,omitempty"`
+	ServerURL     string     `json:"serverUrl,omitempty"`
+	Namespace     string     `json:"namespace,omitempty"`
+	Detail        string     `json:"detail,omitempty"`
+	CooldownUntil *time.Time `json:"cooldownUntil,omitempty"`
+	RetryAt       *time.Time `json:"retryAt,omitempty"`
+	ChangedAt     time.Time  `json:"changedAt"`
 }
 
 type RawFrame struct {
 	Payload    string
 	Direction  Protocol.Direction
+	ObservedAt time.Time
+}
+
+type Activity struct {
+	Kind       string
 	ObservedAt time.Time
 }
 
@@ -39,6 +46,10 @@ type Transport interface {
 
 type BrowserSelector interface {
 	SelectBrowser(preference string) error
+}
+
+type ActivitySource interface {
+	Activities() <-chan Activity
 }
 
 type UnavailableTransport struct {

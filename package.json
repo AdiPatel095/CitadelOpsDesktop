@@ -10,7 +10,7 @@
     "server:dev": "go run .",
     "cli": "go run ./cmd/CitadelOpsCLI",
     "serve": "npm run client:dev && npm run server:dev",
-    "build": "npm run client:build && go build -o CitadelOpsDesktop .",
+    "build": "npm run client:build && go build -tags desktop -o CitadelOpsDesktop .",
     "build:server": "go build -o CitadelOpsDesktop ."
   }
 }

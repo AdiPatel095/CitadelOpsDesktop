@@ -12,6 +12,7 @@ import { CitadelAPI } from './CitadelClient';
 import type {
   APIConnectionStatus,
 	AllianceTargetViewV2,
+	ApplicationUpdateV2,
   CatalogManifest,
   CatalogResponse,
   ConfigurationSnapshot,
@@ -19,20 +20,27 @@ import type {
 	EquipmentOptimizeResponse,
   GameStateV2,
   IntentReceipt,
+	RuntimeDiagnosticsV2,
   SubmitIntentOptions,
 } from './Contracts';
 import { Notifications } from '../components/Notifications';
+
+const runtimeDiagnosticsEnabled = import.meta.env.DEV === true || import.meta.env.VITE_SHOW_HEADER_MEMORY === 'true';
 
 interface APIContextValue {
   connectionStatus: APIConnectionStatus;
   state: GameStateV2 | null;
   catalogs: CatalogManifest | null;
   configuration: ConfigurationSnapshot | null;
+	applicationUpdate: ApplicationUpdateV2 | null;
+	diagnostics: RuntimeDiagnosticsV2 | null;
   operations: Record<string, IntentReceipt>;
   error: string | null;
   refreshState: () => Promise<void>;
   refreshCatalogs: () => Promise<void>;
   refreshConfiguration: () => Promise<void>;
+	refreshApplicationUpdate: () => Promise<void>;
+	refreshDiagnostics: () => Promise<void>;
   getCatalog: <T extends Record<string, unknown>>(name: string) => Promise<CatalogResponse<T>>;
   localize: (keys: string[]) => Promise<Record<string, string>>;
 	getAllianceTargets: (allianceId?: string, server?: string, refresh?: boolean) => Promise<AllianceTargetViewV2>;
@@ -52,6 +60,8 @@ export function APIProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameStateV2 | null>(null);
   const [catalogs, setCatalogs] = useState<CatalogManifest | null>(null);
   const [configuration, setConfiguration] = useState<ConfigurationSnapshot | null>(null);
+	const [applicationUpdate, setApplicationUpdate] = useState<ApplicationUpdateV2 | null>(null);
+	const [diagnostics, setDiagnostics] = useState<RuntimeDiagnosticsV2 | null>(null);
   const [operations, setOperations] = useState<Record<string, IntentReceipt>>({});
   const [error, setError] = useState<string | null>(null);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,6 +92,22 @@ export function APIProvider({ children }: { children: ReactNode }) {
       setError(errorMessage(requestError));
     }
   }, []);
+
+	const refreshApplicationUpdate = useCallback(async () => {
+		try {
+			setApplicationUpdate(await CitadelAPI.getApplicationUpdate());
+		} catch (requestError) {
+			console.warn('Could not refresh application update state', requestError);
+		}
+	}, []);
+
+	const refreshDiagnostics = useCallback(async () => {
+		try {
+			setDiagnostics(await CitadelAPI.getDiagnostics());
+		} catch (requestError) {
+			console.warn('Could not refresh runtime diagnostics', requestError);
+		}
+	}, []);
 
   useEffect(() => {
     const unsubscribeStatus = CitadelAPI.subscribeStatus(setConnectionStatus);
@@ -115,14 +141,28 @@ export function APIProvider({ children }: { children: ReactNode }) {
       }
     });
     CitadelAPI.connect();
-    void Promise.all([refreshState(), refreshCatalogs(), refreshConfiguration()]);
+    void Promise.all([
+		refreshState(), refreshCatalogs(), refreshConfiguration(), refreshApplicationUpdate(),
+		runtimeDiagnosticsEnabled ? refreshDiagnostics() : Promise.resolve(),
+	]);
     return () => {
       unsubscribeEvents();
       unsubscribeStatus();
       if (refreshTimer.current != null) clearTimeout(refreshTimer.current);
       CitadelAPI.disconnect();
     };
-  }, [refreshCatalogs, refreshConfiguration, refreshState]);
+  }, [refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshState]);
+
+	useEffect(() => {
+		const interval = window.setInterval(() => void refreshApplicationUpdate(), 5_000);
+		return () => window.clearInterval(interval);
+	}, [refreshApplicationUpdate]);
+
+	useEffect(() => {
+		if (!runtimeDiagnosticsEnabled) return;
+		const interval = window.setInterval(() => void refreshDiagnostics(), 5_000);
+		return () => window.clearInterval(interval);
+	}, [refreshDiagnostics]);
 
   const submitIntent = useCallback(async (
     name: string,
@@ -156,11 +196,15 @@ export function APIProvider({ children }: { children: ReactNode }) {
     state,
     catalogs,
     configuration,
+	applicationUpdate,
+	diagnostics,
     operations,
     error,
     refreshState,
     refreshCatalogs,
     refreshConfiguration,
+	refreshApplicationUpdate,
+	refreshDiagnostics,
     getCatalog: (name) => CitadelAPI.getCatalog(name),
     localize: (keys) => CitadelAPI.localize(keys),
 	getAllianceTargets,
@@ -169,11 +213,15 @@ export function APIProvider({ children }: { children: ReactNode }) {
     updateConfiguration,
   }), [
     catalogs,
+	applicationUpdate,
+	diagnostics,
     configuration,
     connectionStatus,
     error,
     operations,
     refreshCatalogs,
+	refreshApplicationUpdate,
+	refreshDiagnostics,
     refreshConfiguration,
     refreshState,
     state,

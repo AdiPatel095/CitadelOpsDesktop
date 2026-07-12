@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
 import type { RecruitTroopsMode } from '../settings/RecruitTroopsClientState';
 import type { AutoToolMode } from '../settings/AutoToolClientState';
@@ -64,7 +64,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { connectionStatus, state, catalogs, configuration, submitIntent, updateConfiguration } = useCitadelAPI();
+  const { connectionStatus, state, catalogs, configuration, diagnostics, submitIntent, updateConfiguration } = useCitadelAPI();
   const session = state?.session;
 	const automationEnabled = isRecord(configuration?.sections['automation.enabled'])
 		? configuration.sections['automation.enabled'] as Record<string, unknown>
@@ -82,6 +82,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const autoStationState = automationStates.autoStation;
   const gameLoggedIn = connectionStatus === 'Connected' && session?.loggedIn === true && session.socketReady === true;
   const gameConnectionState = normalizeConnectionState(session?.status, gameLoggedIn);
+	const [now, setNow] = useState(() => Date.now());
+	useEffect(() => {
+		if (gameConnectionState !== 'cooldown') return;
+		const interval = window.setInterval(() => setNow(Date.now()), 1000);
+		return () => window.clearInterval(interval);
+	}, [gameConnectionState]);
+	const cooldownSeconds = secondsUntil(session?.cooldownUntil, now);
+	const retrySeconds = cooldownSeconds > 0 ? 0 : secondsUntil(session?.retryAt, now);
 
   const submit = (name: string, argumentsValue: Record<string, unknown> = {}) => {
     void submitIntent(name, argumentsValue).catch((error) => {
@@ -95,8 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthContextType>(() => ({
     gameLoggedIn,
-    gameLoginCooldown: 0,
-    gameLoginRetrySeconds: 0,
+    gameLoginCooldown: cooldownSeconds,
+    gameLoginRetrySeconds: retrySeconds,
     gameConnectionState,
     gameSocketConnected: session?.socketReady === true,
     gameBrowserRunning: session != null && session.status !== 'stopped' && session.status !== 'unavailable',
@@ -122,8 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     autoStationDetail: autoStationState?.detail ?? autoStationState?.lastError ?? '',
 	autoBeriWorldEnabled,
 	autoBeriWorldNextWakeUp: automationWakeMillis(automationStates.autoBeriWorld),
-    goMem: 0,
-	browserMem: 0,
+    goMem: Math.max(0, Math.trunc(diagnostics?.applicationMemoryMb ?? 0)),
+	browserMem: Math.max(0, Math.trunc(diagnostics?.browserMemoryMb ?? 0)),
 	automationStates,
     startGame: () => submit('session.start'),
     stopGame: () => submit('session.stop'),
@@ -149,9 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     catalogs,
 	configuration,
     connectionStatus,
+	diagnostics,
+	cooldownSeconds,
     gameConnectionState,
     gameLoggedIn,
     recruitTroopsEnabled,
+	retrySeconds,
     session,
     submitIntent,
 	updateConfiguration,
@@ -195,4 +206,10 @@ function normalizeConnectionState(status: string | undefined, loggedIn: boolean)
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function secondsUntil(value: string | undefined, now: number): number {
+	if (!value) return 0;
+	const target = Date.parse(value);
+	return Number.isFinite(target) ? Math.max(0, Math.ceil((target - now) / 1000)) : 0;
 }

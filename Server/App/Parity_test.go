@@ -15,10 +15,11 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 	capabilities := map[string][]string{
-		"session":  {"session.start", "session.stop", "session.select_browser"},
-		"castle":   {"game.focus_castle", "decoration.apply_preset"},
-		"movement": {"game.refresh_movements", "movement.recall", "troops.station", "spy.launch"},
-		"alliance": {"alliance.refresh", "alliance.inspect"},
+		"application": {"app.update.check", "app.update.install", "game_data.refresh"},
+		"session":     {"session.start", "session.stop", "session.select_browser"},
+		"castle":      {"game.focus_castle", "decoration.apply_preset"},
+		"movement":    {"game.refresh_movements", "movement.recall", "troops.station", "spy.launch"},
+		"alliance":    {"alliance.refresh", "alliance.inspect"},
 		"equipment": {
 			"equipment.refresh", "equipment.equip", "equipment.unequip", "equipment.gem.equip",
 			"equipment.gem.unequip", "equipment.swap", "equipment.reconfigure", "equipment.upgrade", "equipment.sell",

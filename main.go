@@ -2,18 +2,17 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
 	"CitadelDesktop/Server/App"
+	"CitadelDesktop/Server/AppUpdate"
 	"CitadelDesktop/Server/Paths"
 	"CitadelDesktop/Server/Session"
 )
@@ -24,12 +23,23 @@ func main() {
 	browser := flag.String("browser", os.Getenv("CITADEL_BROWSER"), "Chromium browser id, executable, or auto")
 	browserPath := flag.String("browser-path", os.Getenv("CITADEL_BROWSER_PATH"), "explicit Chromium browser executable path")
 	browserHeadless := flag.Bool("browser-headless", false, "run the game browser without visible windows")
+	noAutoStart := flag.Bool("no-auto-start", false, "serve the dashboard without starting the game browser")
 	replayLog := flag.String("replay-log", "", "stream a captured websocket log instead of launching a browser")
 	replaySpeed := flag.Float64("replay-speed", 0, "capture replay speed multiplier; zero replays immediately")
 	flag.Parse()
 
 	rootContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	if desktopBuild {
+		if err := AppUpdate.CleanupOldExecutable(); err != nil {
+			log.Printf("Could not remove the previous application binary: %v", err)
+		}
+	}
+	listener, err := listenDashboard(*address)
+	if err != nil {
+		log.Fatal(err)
+	}
+	dashboardURL := localDashboardURL(listener.Addr().String())
 	dataDir, err := Paths.DataDir()
 	if err != nil {
 		log.Fatal(err)
@@ -39,13 +49,14 @@ func main() {
 		transport = Session.NewReplayTransport(Session.ReplayConfig{Path: *replayLog, Speed: *replaySpeed})
 	} else {
 		transport = Session.NewChromiumTransport(Session.ChromiumConfig{
-			DataDir: dataDir, DashboardURL: localDashboardURL(*address),
+			DataDir: dataDir, DashboardURL: dashboardURL,
 			Browser: *browser, ExecutablePath: *browserPath, Headless: *browserHeadless,
 		})
 	}
 	startupContext, cancelStartup := context.WithTimeout(rootContext, 90*time.Second)
 	application, err := App.New(startupContext, App.Config{
 		DataDir: dataDir, Offline: *offline, Transport: transport, RuntimeContext: rootContext,
+		UpdateEndpoint: os.Getenv("CITADEL_UPDATE_URL"), UpdateInstallSupported: desktopBuild,
 	})
 	cancelStartup()
 	if err != nil {
@@ -60,22 +71,47 @@ func main() {
 	mux.Handle("/api/", application.API.Handler())
 	mux.Handle("/", frontendHandler("Client/dist"))
 	server := &http.Server{
-		Addr:              *address,
 		Handler:           mux,
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       90 * time.Second,
 	}
-	go func() {
-		<-rootContext.Done()
-		shutdownContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		_ = server.Shutdown(shutdownContext)
-	}()
-
-	log.Printf("CitadelOps %s listening at http://%s", App.Version, *address)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal(err)
+	serveErrors := make(chan error, 1)
+	go func() { serveErrors <- server.Serve(listener) }()
+	log.Printf("CitadelOps %s listening at %s", App.Version, dashboardURL)
+	if !*noAutoStart {
+		go func() {
+			if err := application.Session.Start(rootContext); err != nil {
+				log.Printf("Game session did not auto-start: %v", err)
+			}
+		}()
 	}
+	select {
+	case <-rootContext.Done():
+	case serveErr := <-serveErrors:
+		if serveErr != nil && serveErr != http.ErrServerClosed {
+			log.Printf("Dashboard server stopped: %v", serveErr)
+		}
+		stop()
+	}
+	shutdownContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_ = server.Shutdown(shutdownContext)
+}
+
+func listenDashboard(address string) (net.Listener, error) {
+	listener, err := net.Listen("tcp", address)
+	if err == nil {
+		return listener, nil
+	}
+	host, port, splitErr := net.SplitHostPort(address)
+	if splitErr != nil || port != "8080" {
+		return nil, err
+	}
+	fallback, fallbackErr := net.Listen("tcp", net.JoinHostPort(host, "0"))
+	if fallbackErr != nil {
+		return nil, err
+	}
+	return fallback, nil
 }
 
 func localDashboardURL(address string) string {
@@ -90,26 +126,4 @@ func localDashboardURL(address string) string {
 		host = "::1"
 	}
 	return "http://" + net.JoinHostPort(host, port)
-}
-
-func frontendHandler(directory string) http.Handler {
-	indexPath := filepath.Join(directory, "index.html")
-	if _, err := os.Stat(indexPath); err == nil {
-		files := http.FileServer(http.Dir(directory))
-		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			path := filepath.Join(directory, filepath.Clean(request.URL.Path))
-			if info, err := os.Stat(path); err == nil && !info.IsDir() {
-				files.ServeHTTP(writer, request)
-				return
-			}
-			http.ServeFile(writer, request, indexPath)
-		})
-	}
-	return http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
-		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-		_ = json.NewEncoder(writer).Encode(map[string]any{
-			"name": "CitadelOps", "version": App.Version,
-			"detail": "Build Client/ or run the Vite development server for the desktop UI.",
-		})
-	})
 }

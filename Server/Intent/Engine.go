@@ -22,12 +22,13 @@ type Engine struct {
 	observer Observer
 	claims   *claimManager
 
-	mu          sync.RWMutex
-	actions     map[string]Action
-	operations  map[string]Receipt
-	subscribers map[uint64]chan Receipt
-	nextID      atomic.Uint64
-	nextSubID   atomic.Uint64
+	mu            sync.RWMutex
+	actions       map[string]Action
+	executionGate ExecutionGate
+	operations    map[string]Receipt
+	subscribers   map[uint64]chan Receipt
+	nextID        atomic.Uint64
+	nextSubID     atomic.Uint64
 }
 
 func NewEngine(registry *Registry, state StateReader, gameData GameDataProvider, sender Sender, observer Observer) *Engine {
@@ -56,6 +57,12 @@ func (engine *Engine) RegisterAction(name string, action Action) error {
 	}
 	engine.actions[name] = action
 	return nil
+}
+
+func (engine *Engine) SetExecutionGate(gate ExecutionGate) {
+	engine.mu.Lock()
+	engine.executionGate = gate
+	engine.mu.Unlock()
 }
 
 func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
@@ -104,6 +111,9 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		engine.update(receipt)
 		return receipt
 	}
+	if err := engine.awaitExecutionGate(ctx, request, plan); err != nil {
+		return engine.fail(receipt, err)
+	}
 
 	release, err := engine.claims.acquire(ctx, plan.Claims)
 	if err != nil {
@@ -128,12 +138,18 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 	}
 	plan = revalidated
 	receipt.Plan = &plan
+	if err := engine.awaitExecutionGate(ctx, request, plan); err != nil {
+		return engine.fail(receipt, err)
+	}
 	started := time.Now().UTC()
 	receipt.StartedAt = &started
 	receipt.Status = StatusRunning
 	engine.update(receipt)
 
 	for _, step := range plan.Steps {
+		if err := engine.awaitExecutionGate(ctx, request, plan); err != nil {
+			return engine.fail(receipt, err)
+		}
 		if err := engine.executeStep(ctx, current.Revision, step); err != nil {
 			return engine.fail(receipt, fmt.Errorf("%s: %w", stepLabel(step), err))
 		}
@@ -144,6 +160,16 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 	receipt.CompletedAt = &completed
 	engine.update(receipt)
 	return receipt
+}
+
+func (engine *Engine) awaitExecutionGate(ctx context.Context, request Request, plan Plan) error {
+	engine.mu.RLock()
+	gate := engine.executionGate
+	engine.mu.RUnlock()
+	if gate == nil {
+		return nil
+	}
+	return gate(ctx, request, plan)
 }
 
 func (engine *Engine) Operation(id string) (Receipt, bool) {

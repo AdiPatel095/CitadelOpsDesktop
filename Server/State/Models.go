@@ -35,15 +35,17 @@ type DefinitionRef struct {
 }
 
 type SessionState struct {
-	Status      string    `json:"status"`
-	LoggedIn    bool      `json:"loggedIn"`
-	SocketReady bool      `json:"socketReady"`
-	BrowserID   string    `json:"browserId,omitempty"`
-	BrowserName string    `json:"browserName,omitempty"`
-	ServerURL   string    `json:"serverUrl,omitempty"`
-	Namespace   string    `json:"namespace,omitempty"`
-	Detail      string    `json:"detail,omitempty"`
-	ChangedAt   time.Time `json:"changedAt"`
+	Status        string     `json:"status"`
+	LoggedIn      bool       `json:"loggedIn"`
+	SocketReady   bool       `json:"socketReady"`
+	BrowserID     string     `json:"browserId,omitempty"`
+	BrowserName   string     `json:"browserName,omitempty"`
+	ServerURL     string     `json:"serverUrl,omitempty"`
+	Namespace     string     `json:"namespace,omitempty"`
+	Detail        string     `json:"detail,omitempty"`
+	CooldownUntil *time.Time `json:"cooldownUntil,omitempty"`
+	RetryAt       *time.Time `json:"retryAt,omitempty"`
+	ChangedAt     time.Time  `json:"changedAt"`
 }
 
 type PlayerState struct {

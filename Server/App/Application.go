@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/API"
+	"CitadelDesktop/Server/AppUpdate"
 	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/Diagnostics"
 	EquipmentDomain "CitadelDesktop/Server/Equipment"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/History"
@@ -28,10 +30,12 @@ import (
 const GameDataRefreshInterval = 6 * time.Hour
 
 type Config struct {
-	DataDir        string
-	Offline        bool
-	Transport      Session.Transport
-	RuntimeContext context.Context
+	DataDir                string
+	Offline                bool
+	Transport              Session.Transport
+	RuntimeContext         context.Context
+	UpdateEndpoint         string
+	UpdateInstallSupported bool
 }
 
 type Application struct {
@@ -48,6 +52,8 @@ type Application struct {
 	Reports       *Reports.Manager
 	Scheduler     *Scheduling.Scheduler
 	API           *API.Server
+	Updates       *AppUpdate.Manager
+	Diagnostics   *Diagnostics.Monitor
 	StartupErr    error
 }
 
@@ -110,7 +116,15 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		DataDir: config.DataDir,
 		State:   state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
 		Ingest: ingest, Session: session, Intents: intents, StartupErr: startupErr,
+		Updates: AppUpdate.NewManager(AppUpdate.Config{
+			CurrentVersion: Version, Endpoint: config.UpdateEndpoint,
+			InstallSupported: config.UpdateInstallSupported,
+		}),
+		Diagnostics: Diagnostics.NewMonitor(config.DataDir),
 	}
+	session.SetAttackDelayProvider(application.attackLaunchDelay)
+	session.SetManualFocusHoldProvider(application.manualFocusHold)
+	intents.SetExecutionGate(application.executionGate)
 	application.Scheduler = Scheduling.NewScheduler(state, intents)
 	if err := application.registerCoreIntents(); err != nil {
 		return nil, err
@@ -132,12 +146,13 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	application.Reports = Reports.NewManager(state, history, intents)
 	application.API = API.NewServer(API.Config{
 		Version: Version, State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
-		Intents: intents, Session: session,
+		Intents: intents, Session: session, Updates: application.Updates, Diagnostics: application.Diagnostics,
 	})
 	return application, nil
 }
 
 func (application *Application) Start(ctx context.Context) {
+	go application.Updates.Run(ctx)
 	go func() {
 		ticker := time.NewTicker(GameDataRefreshInterval)
 		defer ticker.Stop()
@@ -253,6 +268,8 @@ func (application *Application) registerCoreIntents() error {
 			return err
 		},
 		"game_data.refresh":  ignoreArguments(application.refreshGameData),
+		"app.update.check":   ignoreArguments(application.Updates.Check),
+		"app.update.install": ignoreArguments(application.Updates.Install),
 		"operation.schedule": application.scheduleOperation,
 		"operation.cancel":   application.cancelOperation,
 	} {
@@ -314,6 +331,14 @@ func (application *Application) registerCoreIntents() error {
 		{
 			Name: "game_data.refresh", Description: "Refresh the official versioned game-data snapshot", Effect: Intent.EffectExternal,
 			Planner: actionPlanner("game_data.refresh", "game-data", "Refresh official game data"),
+		},
+		{
+			Name: "app.update.check", Description: "Check the trusted CitadelOps release endpoint for a newer application version", Effect: Intent.EffectRead,
+			Planner: actionPlanner("app.update.check", "application-update", "Check for a CitadelOps update"),
+		},
+		{
+			Name: "app.update.install", Description: "Download and atomically install the checked platform-specific CitadelOps release", Effect: Intent.EffectExternal,
+			Planner: actionPlanner("app.update.install", "application-update", "Install the checked CitadelOps update"),
 		},
 	}
 	for _, definition := range definitions {
