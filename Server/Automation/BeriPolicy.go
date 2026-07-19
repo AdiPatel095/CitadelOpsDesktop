@@ -28,6 +28,10 @@ func (*BeriPolicy) ID() string { return "autoBeriWorld" }
 
 func (*BeriPolicy) EnabledKey() string { return "auto_beri_world" }
 
+func (*BeriPolicy) WakeDomains() []string { return []string{"beri", "castles", "units"} }
+
+func (*BeriPolicy) WakeSections() []string { return []string{"automation.autoBeriWorld"} }
+
 func (*BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	settings := beriSettings{WireCastleID: -1, TroopSpaceCheckIntervalSec: 30}
 	decodeSection(snapshot.Configuration, "automation.autoBeriWorld", &settings)
@@ -56,9 +60,11 @@ func (*BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, err
 	if capacityExpired {
 		arguments, _ := json.Marshal(map[string]any{"beriCastleId": settings.BeriCastleID})
 		return Decision{
-			Status: "ready", Detail: "Refresh Berimond troop-transfer capacity",
-			NextCheckAt: snapshot.Now.Add(time.Second),
-			Request:     &Intent.Request{Name: "beri.capacity.refresh", Arguments: arguments},
+			Status:              "ready",
+			Detail:              "Refresh Berimond troop-transfer capacity",
+			NextCheckAt:         snapshot.Now.Add(time.Second),
+			Request:             &Intent.Request{Name: "beri.capacity.refresh", Arguments: arguments},
+			ReevaluateOnSuccess: true,
 		}, nil
 	}
 	available := snapshot.State.Beri.AvailableTroops

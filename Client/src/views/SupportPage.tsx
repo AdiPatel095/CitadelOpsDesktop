@@ -10,7 +10,7 @@
 import React from 'react';
 import { Icons } from '../components/Icons';
 import IntentConsole from '../components/IntentConsole';
-import { Card, CardContent } from '../components/ui';
+import { Card, CardContent, PageHeader } from '../components/ui';
 
 // Discord invite link
 const DISCORD_LINK = "https://discord.gg/zANyxDqfP3";
@@ -25,10 +25,11 @@ const DISCORD_LINK = "https://discord.gg/zANyxDqfP3";
 const SupportPage: React.FC = () => {
     return (
         <div className="max-w-4xl mx-auto py-8">
-            <h1 className="text-3xl font-bold tracking-tight text-text-main mb-2">Support & Community</h1>
-            <p className="text-text-muted mb-8 text-lg">
-				Get help, report issues, or inspect deterministic 2.0 operations.
-            </p>
+            <PageHeader
+                className="mb-8"
+                title="Support & Community"
+                description="Get help, report issues, or inspect deterministic 2.0 operations."
+            />
 
 			<IntentConsole />
 

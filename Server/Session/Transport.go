@@ -11,28 +11,27 @@ import (
 var ErrTransportUnavailable = errors.New("game transport is unavailable")
 
 type Status struct {
-	State         string     `json:"state"`
-	LoggedIn      bool       `json:"loggedIn"`
-	SocketReady   bool       `json:"socketReady"`
-	BrowserID     string     `json:"browserId,omitempty"`
-	BrowserName   string     `json:"browserName,omitempty"`
-	ServerURL     string     `json:"serverUrl,omitempty"`
-	Namespace     string     `json:"namespace,omitempty"`
-	Detail        string     `json:"detail,omitempty"`
-	CooldownUntil *time.Time `json:"cooldownUntil,omitempty"`
-	RetryAt       *time.Time `json:"retryAt,omitempty"`
-	ChangedAt     time.Time  `json:"changedAt"`
+	State                string     `json:"state"`
+	LoggedIn             bool       `json:"loggedIn"`
+	SocketReady          bool       `json:"socketReady"`
+	ConnectionGeneration uint64     `json:"connectionGeneration,omitempty"`
+	BrowserID            string     `json:"browserId,omitempty"`
+	BrowserName          string     `json:"browserName,omitempty"`
+	ServerURL            string     `json:"serverUrl,omitempty"`
+	Namespace            string     `json:"namespace,omitempty"`
+	Detail               string     `json:"detail,omitempty"`
+	CooldownUntil        *time.Time `json:"cooldownUntil,omitempty"`
+	RetryAt              *time.Time `json:"retryAt,omitempty"`
+	ChangedAt            time.Time  `json:"changedAt"`
 }
 
 type RawFrame struct {
-	Payload    string
-	Direction  Protocol.Direction
-	ObservedAt time.Time
-}
-
-type Activity struct {
-	Kind       string
-	ObservedAt time.Time
+	Payload              string
+	Direction            Protocol.Direction
+	ObservedAt           time.Time
+	ConnectionGeneration uint64
+	ResponseToken        string
+	CausationOperationID string
 }
 
 type Transport interface {
@@ -48,8 +47,15 @@ type BrowserSelector interface {
 	SelectBrowser(preference string) error
 }
 
-type ActivitySource interface {
-	Activities() <-chan Activity
+type ResponseCorrelationTransport interface {
+	CorrelatesResponses() bool
+}
+
+// OutboundCausationTransport guarantees that outbound RawFrame values carry
+// CausationOperationID for sends initiated by CitadelOps. An empty causation
+// value can therefore be treated as direct browser traffic.
+type OutboundCausationTransport interface {
+	ReportsOutboundCausation() bool
 }
 
 type UnavailableTransport struct {

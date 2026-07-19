@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { Search, Check, Heart, List, Flame } from 'lucide-react';
+import { Check, Heart, List, Flame } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import UnitImage from './UnitImage';
 import { useMetadata, type MetadataItem } from '../context/MetadataContext';
@@ -9,7 +9,7 @@ import {
   incrementUsage,
   getTopFrequent,
 } from '../config/UnitPickerStorage';
-import { Modal, Button, Input, PillSelector, Badge } from './ui';
+import { CatalogPickerModal, EmptyState, Input, PillSelector } from './ui';
 
 // ============================================
 // Types
@@ -231,16 +231,16 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
   if (filteredUnits.length === 0) {
     return (
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="picker-empty-state">
-          <p className="text-lg font-medium">No units found</p>
-          <p className="text-sm mt-2">
-            {quickAccessTab === 'favorites'
+        <EmptyState
+          surface="plain"
+          title="No units found"
+          description={quickAccessTab === 'favorites'
               ? 'Click the heart icon on units to add favorites'
               : quickAccessTab === 'frequent'
                 ? 'Select units to build your frequently used list'
                 : 'Try adjusting your filters'}
-          </p>
-        </div>
+          className="picker-empty-state"
+        />
       </div>
     );
   }
@@ -612,134 +612,86 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
   if (!isOpen) return null;
 
   return (
-    <Modal
+    <CatalogPickerModal
       isOpen={isOpen}
       onClose={handleCancel}
-      maxWidth="6xl"
-      title={
-        <div className="picker-modal-title">
-          <span className="picker-modal-title-mark" aria-hidden="true" />
-          <span className="picker-modal-title-text">
-            {title || (mode === 'single' ? 'Select Troop' : 'Select Troops')}
-          </span>
-          {mode === 'multi' && selectedIds.size > 0 && (
-            <Badge variant="primary" className="ml-2">
-              {selectedIds.size} selected
-            </Badge>
-          )}
-        </div>
-      }
-      footer={
-        <>
-          <Button variant="ghost" onClick={handleCancel} className="px-8">
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleConfirm}
-            disabled={selectedIds.size === 0}
-            className="px-10"
-            leftIcon={<Check className="w-4 h-4" />}
-          >
-            Confirm Selection
-          </Button>
-        </>
-      }
-    >
-      <div className="picker-shell">
-        <div className="picker-toolbar">
-          <div className="picker-toolbar-overview">
-            <div className="picker-toolbar-copy">
-              <span className="picker-toolbar-kicker">
-                {allowQuantity ? 'Quantity picker' : mode === 'single' ? 'Single pick' : 'Multi pick'}
-              </span>
-              <span className="picker-toolbar-count">
-                {filteredUnits.length.toLocaleString()} {visibleUnitLabel}
-              </span>
-            </div>
-            <div className="picker-selection-summary">
-              <Check className="w-3.5 h-3.5" />
-              <span>{selectedIds.size.toLocaleString()}</span>
-              selected
-            </div>
-          </div>
-
-          <div className="picker-command-row">
-            <div className="picker-search-slot">
-              <Input
-                type="text"
-                placeholder="Search by name or ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                leftIcon={<Search className="w-4 h-4" />}
-              />
-            </div>
-
+      onConfirm={handleConfirm}
+      title={title || (mode === 'single' ? 'Select Troop' : 'Select Troops')}
+      modeLabel={allowQuantity ? 'Quantity picker' : mode === 'single' ? 'Single pick' : 'Multi pick'}
+      selectedCount={selectedIds.size}
+      resultCount={filteredUnits.length}
+      resultLabel={visibleUnitLabel}
+      searchValue={searchQuery}
+      onSearchChange={setSearchQuery}
+      searchPlaceholder="Search by name or ID..."
+      commandExtras={(
+        <PillSelector
+          ariaLabel="Unit collection"
+          value={quickAccessTab}
+          onChange={(v) => setQuickAccessTab(v as QuickAccessTab)}
+          options={[
+            { value: 'all', label: 'All', icon: <List className="w-3.5 h-3.5" /> },
+            { value: 'favorites', label: 'Favorites', icon: <Heart className="w-3.5 h-3.5" /> },
+            { value: 'frequent', label: 'Frequent', icon: <Flame className="w-3.5 h-3.5" /> },
+          ]}
+          className="picker-quick-pills"
+        />
+      )}
+      filterDock={(
+        <div className="picker-filter-dock">
+          <span className="ui-kicker picker-filter-dock-label">Filters</span>
+          <div className="picker-filter-row">
             <PillSelector
-              value={quickAccessTab}
-              onChange={(v) => setQuickAccessTab(v as QuickAccessTab)}
+              ariaLabel="Unit type filter"
+              value={typeFilter}
+              onChange={(v) => setTypeFilter(v as TypeFilter)}
               options={[
-                { value: 'all', label: 'All', icon: <List className="w-3.5 h-3.5" /> },
-                { value: 'favorites', label: 'Favorites', icon: <Heart className="w-3.5 h-3.5" /> },
-                { value: 'frequent', label: 'Frequent', icon: <Flame className="w-3.5 h-3.5" /> }
+                { value: 'all', label: 'All Types' },
+                { value: 'melee', label: 'Melee' },
+                { value: 'range', label: 'Range' },
               ]}
-              className="picker-quick-pills"
+              size="sm"
+            />
+            <PillSelector
+              ariaLabel="Unit role filter"
+              value={roleFilter}
+              onChange={(v) => setRoleFilter(v as RoleFilter)}
+              options={[
+                { value: 'all', label: 'All Roles' },
+                { value: 'attack', label: 'Attack' },
+                { value: 'defense', label: 'Defense' },
+              ]}
+              size="sm"
+            />
+            <PillSelector
+              ariaLabel="Unit food filter"
+              value={foodFilter}
+              onChange={(v) => setFoodFilter(v as FoodFilter)}
+              options={[
+                { value: 'all', label: 'All Food' },
+                { value: 'mead', label: 'Mead' },
+                { value: 'beef', label: 'Beef' },
+                { value: 'food', label: 'Food' },
+              ]}
+              size="sm"
             />
           </div>
-
-          <div className="picker-filter-dock">
-            <span className="picker-filter-dock-label">Filters</span>
-            <div className="picker-filter-row">
-              <PillSelector
-                value={typeFilter}
-                onChange={(v) => setTypeFilter(v as TypeFilter)}
-                options={[
-                  { value: 'all', label: 'All Types' },
-                  { value: 'melee', label: 'Melee' },
-                  { value: 'range', label: 'Range' }
-                ]}
-                size="sm"
-              />
-              <PillSelector
-                value={roleFilter}
-                onChange={(v) => setRoleFilter(v as RoleFilter)}
-                options={[
-                  { value: 'all', label: 'All Roles' },
-                  { value: 'attack', label: 'Attack' },
-                  { value: 'defense', label: 'Defense' }
-                ]}
-                size="sm"
-              />
-              <PillSelector
-                value={foodFilter}
-                onChange={(v) => setFoodFilter(v as FoodFilter)}
-                options={[
-                  { value: 'all', label: 'All Food' },
-                  { value: 'mead', label: 'Mead' },
-                  { value: 'beef', label: 'Beef' },
-                  { value: 'food', label: 'Food' }
-                ]}
-                size="sm"
-              />
-            </div>
-          </div>
         </div>
-
-        {/* Unit Grid - Virtualized */}
-        <VirtualizedUnitGrid
-          filteredUnits={filteredUnits}
-          selectedIds={selectedIds}
-          favorites={favorites}
-          quantities={quantities}
-          allowQuantity={allowQuantity}
-          stockQuantities={stockQuantities}
-          quickAccessTab={quickAccessTab}
-          onUnitClick={handleUnitClick}
-          onFavoriteClick={handleFavoriteClick}
-          onQuantityChange={handleQuantityChange}
-        />
-      </div>
-    </Modal>
+      )}
+    >
+      <VirtualizedUnitGrid
+        filteredUnits={filteredUnits}
+        selectedIds={selectedIds}
+        favorites={favorites}
+        quantities={quantities}
+        allowQuantity={allowQuantity}
+        stockQuantities={stockQuantities}
+        quickAccessTab={quickAccessTab}
+        onUnitClick={handleUnitClick}
+        onFavoriteClick={handleFavoriteClick}
+        onQuantityChange={handleQuantityChange}
+      />
+    </CatalogPickerModal>
   );
 };
 

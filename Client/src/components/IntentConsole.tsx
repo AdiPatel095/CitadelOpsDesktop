@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Braces, Play, ScanSearch } from 'lucide-react';
 import { CitadelAPI } from '../api/CitadelClient';
 import type { IntentDefinition, IntentReceipt } from '../api/Contracts';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Select } from './ui';
+import { Badge, Button, SectionCard, Select } from './ui';
 
 const EMPTY_ARGUMENTS = '{}';
 
@@ -34,6 +34,14 @@ const IntentConsole = () => {
     [definitions, intentName],
   );
 
+	const selectIntent = (name: string) => {
+		setIntentName(name);
+		const next = definitions.find((candidate) => candidate.name === name);
+		setArgumentsText(next?.argumentsExample ? JSON.stringify(next.argumentsExample, null, 2) : EMPTY_ARGUMENTS);
+		setReceipt(null);
+		setError('');
+	};
+
   const submit = async (dryRun: boolean) => {
     if (!intentName || submitting) return;
     let argumentsValue: Record<string, unknown>;
@@ -60,22 +68,12 @@ const IntentConsole = () => {
   };
 
   return (
-    <Card className="liquid-prominent-header-card mb-6 w-full">
-      <CardHeader className="liquid-card-header-prominent">
-        <div className="flex items-center gap-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400">
-            <Braces className="h-4 w-4" />
-          </span>
-          <div>
-            <CardTitle className="text-lg">Intent Console</CardTitle>
-            <p className="mt-1 text-xs font-semibold text-text-muted">Inspect or submit the same deterministic operations used by the UI and CLI.</p>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="liquid-prominent-header-content space-y-4 p-6">
+    <SectionCard variant="glass" className="mb-6 w-full" title="Intent Console"
+      icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400"><Braces className="h-4 w-4" /></span>}
+      description="Inspect or submit the same deterministic operations used by the UI and CLI." contentClassName="space-y-4 p-6">
         <Select
           value={intentName}
-          onChange={(value) => { setIntentName(value); setReceipt(null); setError(''); }}
+          onChange={selectIntent}
           options={definitions.map((item) => ({ value: item.name, label: item.name }))}
           placeholder="Select an intent"
           menuGrowToViewport
@@ -110,8 +108,7 @@ const IntentConsole = () => {
             {JSON.stringify(receipt, null, 2)}
           </pre>
         )}
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 };
 

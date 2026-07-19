@@ -1,94 +1,161 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, ArrowDown, ArrowUp, Info, Plus, RefreshCw, Search, X } from 'lucide-react';
 import type { EquipmentOptimizeResponse, EquipmentPriorityV2, GameStateV2 } from '../../api/Contracts';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { Notifications } from '../../components/Notifications';
-import { Badge, Button, Card, CardContent, CardHeader, Input, Modal } from '../../components/ui';
+import { Badge, Button, Input, MetricTile, Modal } from '../../components/ui';
 import { useMetadata } from '../../context/MetadataContext';
-import type { CombatMode, EquipmentLeader } from './EquipmentTypes';
+import type { CombatMode, EquipmentLeader, EquipmentTarget } from './EquipmentTypes';
+import {
+	cacheEquipmentPriorityProfile,
+	equipmentPrioritySection,
+	inferredEquipmentPriorityProfile,
+	groupEquipmentPriorityEffects,
+	normalizeEquipmentPriorityProfile,
+	readCachedEquipmentPriorityProfile,
+	readEquipmentPriorityProfile,
+	storedEquipmentPriorityProfile,
+	targetCandidateEffectIDs,
+	type EquipmentPriorityGroup,
+	type EquipmentPriorityProfile,
+} from './EquipmentOptimizerState';
 
 type Tier = 1 | 2;
 
 export default function EquipmentOptimizer({
+	isOpen,
+	onClose,
 	leader,
 	combatMode,
+	target,
 	candidateEffectIDs,
 	disabled,
 }: {
+	isOpen: boolean;
+	onClose: () => void;
 	leader: EquipmentLeader | null;
 	combatMode: CombatMode;
+	target: EquipmentTarget;
 	candidateEffectIDs: number[];
 	disabled: boolean;
 }) {
-	const { state, submitIntent, optimizeEquipment } = useCitadelAPI();
+	const { state, configuration, submitIntent, optimizeEquipment } = useCitadelAPI();
 	const { effects, getEffect, getEquipment, getGem } = useMetadata();
-	const [tier1, setTier1] = useState<number[]>([]);
-	const [tier2, setTier2] = useState<number[]>([]);
+	const [priorityProfile, setPriorityProfile] = useState<EquipmentPriorityProfile>({ tier1: [], tier2: [] });
 	const [showPicker, setShowPicker] = useState(false);
 	const [showInfo, setShowInfo] = useState(false);
 	const [search, setSearch] = useState('');
 	const [optimizing, setOptimizing] = useState(false);
 	const [applying, setApplying] = useState(false);
 	const [preview, setPreview] = useState<EquipmentOptimizeResponse | null>(null);
+	const priorityRef = useRef<EquipmentPriorityProfile>({ tier1: [], tier2: [] });
+	const optimisticProfiles = useRef<Record<string, EquipmentPriorityProfile>>({});
+	const optimizeRequest = useRef(0);
+	const candidateEffectKey = candidateEffectIDs.join(',');
+	const candidateEffects = useMemo(() => candidateEffectKey === '' ? [] : candidateEffectKey.split(',').map(Number), [candidateEffectKey]);
+	const prioritySection = useMemo(() => equipmentPrioritySection(state?.player.id, leader, target.id), [leader, state?.player.id, target.id]);
+	const storedProfileJSON = useMemo(() => {
+		try {
+			return JSON.stringify(prioritySection ? configuration?.sections[prioritySection] ?? null : null);
+		} catch {
+			return 'null';
+		}
+	}, [configuration?.sections, prioritySection]);
+	const targetEffects = useMemo(() => targetCandidateEffectIDs(candidateEffects, effects, target.castleTypeID), [candidateEffects, effects, target.castleTypeID]);
+	const storedProfile = useMemo(() => {
+		try {
+			return readEquipmentPriorityProfile(JSON.parse(storedProfileJSON), targetEffects);
+		} catch {
+			return null;
+		}
+	}, [storedProfileJSON, targetEffects]);
+	const cachedProfile = useMemo(() => readCachedEquipmentPriorityProfile(prioritySection, targetEffects), [prioritySection, targetEffects]);
+	const inferredProfile = useMemo(() => inferredEquipmentPriorityProfile(candidateEffects, effects, leader?.kind, target.castleTypeID), [candidateEffects, effects, leader?.kind, target.castleTypeID]);
 
 	useEffect(() => {
-		setTier1([]);
-		const matcher = leader?.kind === 'castellan'
-			? /(defensive|defense).*(melee|range)|(melee|range).*defen/i
-			: /(offensive|attack).*(melee|range)|(melee|range).*offen/i;
-		const defaults = candidateEffectIDs
-			.filter((id) => matcher.test(String(effects[id]?.internalName ?? effects[id]?.name ?? '')))
-			.slice(0, 2);
-		setTier2(defaults);
+		optimizeRequest.current++;
+		const initial = prioritySection && targetEffects.length > 0
+			? optimisticProfiles.current[prioritySection] ?? cachedProfile ?? storedProfile ?? inferredProfile
+			: { tier1: [], tier2: [] };
+		const next = normalizeEquipmentPriorityProfile(initial, targetEffects);
+		priorityRef.current = next;
+		setPriorityProfile(next);
 		setPreview(null);
-	}, [candidateEffectIDs, effects, leader?.kind]);
+	}, [cachedProfile, inferredProfile, prioritySection, storedProfile, targetEffects]);
+
+	const tier1 = priorityProfile.tier1;
+	const tier2 = priorityProfile.tier2;
 
 	const used = useMemo(() => new Set([...tier1, ...tier2]), [tier1, tier2]);
-	const unused = useMemo(() => candidateEffectIDs.filter((id) => !used.has(id)), [candidateEffectIDs, used]);
-	const available = useMemo(() => unused
-		.filter((id) => {
+	const priorityGroups = useMemo(() => groupEquipmentPriorityEffects(targetEffects, effects), [effects, targetEffects]);
+	const availableGroups = useMemo(() => priorityGroups
+		.map((group) => ({ ...group, effectIDs: group.effectIDs.filter((id) => !used.has(id)) }))
+		.filter((group) => {
+			if (group.effectIDs.length === 0) return false;
 			const query = search.trim().toLowerCase();
 			if (!query) return true;
-			const effect = getEffect(id);
-			return String(effect?.name ?? '').toLowerCase().includes(query)
-				|| String(effect?.internalName ?? '').toLowerCase().includes(query)
-				|| String(id).includes(query);
+			return group.label.toLowerCase().includes(query)
+				|| group.effectIDs.some((id) => {
+					const effect = getEffect(id);
+					return String(effect?.name ?? '').toLowerCase().includes(query)
+						|| String(effect?.internalName ?? '').toLowerCase().includes(query)
+						|| String(id).includes(query);
+				});
 		})
-		.sort((left, right) => effectName(left, getEffect).localeCompare(effectName(right, getEffect)) || left - right),
-	[getEffect, search, unused]);
+		.sort((left, right) => left.label.localeCompare(right.label) || left.key.localeCompare(right.key)),
+	[getEffect, priorityGroups, search, used]);
 
-	const add = (id: number, tier: Tier) => {
-		if (tier === 1) setTier1((current) => [...current, id]);
-		else setTier2((current) => [...current, id]);
+	const updatePriorities = (change: (current: EquipmentPriorityProfile) => EquipmentPriorityProfile) => {
+		const next = normalizeEquipmentPriorityProfile(change(priorityRef.current), targetEffects);
+		priorityRef.current = next;
+		setPriorityProfile(next);
+		optimizeRequest.current++;
+		setPreview(null);
+		if (prioritySection) {
+			optimisticProfiles.current[prioritySection] = next;
+			cacheEquipmentPriorityProfile(prioritySection, next);
+			void submitIntent('config.update', {
+				section: prioritySection,
+				value: storedEquipmentPriorityProfile(next),
+			}, { actor: 'ui:equipment-priority' }).catch(() => undefined);
+		}
+	};
+	const addGroup = (group: EquipmentPriorityGroup, tier: Tier) => {
+		updatePriorities((current) => tier === 1
+			? { ...current, tier1: [...current.tier1, ...group.effectIDs] }
+			: { ...current, tier2: [...current.tier2, ...group.effectIDs] });
 		setSearch('');
 	};
 	const remove = (id: number) => {
-		setTier1((current) => current.filter((value) => value !== id));
-		setTier2((current) => current.filter((value) => value !== id));
+		updatePriorities((current) => ({
+			tier1: current.tier1.filter((value) => value !== id),
+			tier2: current.tier2.filter((value) => value !== id),
+		}));
 	};
 	const moveTier = (id: number, from: Tier) => {
-		remove(id);
-		if (from === 1) setTier2((current) => [...current, id]);
-		else setTier1((current) => [...current, id]);
+		updatePriorities((current) => from === 1
+			? { tier1: current.tier1.filter((value) => value !== id), tier2: [...current.tier2.filter((value) => value !== id), id] }
+			: { tier1: [...current.tier1.filter((value) => value !== id), id], tier2: current.tier2.filter((value) => value !== id) });
 	};
 	const reorder = (tier: Tier, index: number, direction: -1 | 1) => {
-		const setter = tier === 1 ? setTier1 : setTier2;
-		setter((current) => {
+		updatePriorities((current) => {
+			const values = tier === 1 ? current.tier1 : current.tier2;
 			const target = index + direction;
-			if (target < 0 || target >= current.length) return current;
-			const next = [...current];
+			if (target < 0 || target >= values.length) return current;
+			const next = [...values];
 			[next[index], next[target]] = [next[target], next[index]];
-			return next;
+			return tier === 1 ? { ...current, tier1: next } : { ...current, tier2: next };
 		});
 	};
 
-	const priorities = (): EquipmentPriorityV2[] => [
+	const priorities = useMemo<EquipmentPriorityV2[]>(() => [
 		...tier1.map((effectId, position) => ({ effectId, tier: 1 as const, position })),
 		...tier2.map((effectId, position) => ({ effectId, tier: 2 as const, position })),
-	];
+	], [tier1, tier2]);
 
 	const optimize = async () => {
 		if (!leader || tier1.length + tier2.length === 0) return;
+		const requestID = ++optimizeRequest.current;
 		setOptimizing(true);
 		try {
 			await submitIntent('equipment.refresh');
@@ -97,9 +164,9 @@ export default function EquipmentOptimizer({
 					leaderKind: leader.kind,
 					leaderId: leader.id,
 					combatMode: combatMode === 'PvP' ? 'pvp' : 'pve',
-					priorities: priorities(),
+					priorities,
 				});
-				setPreview(result);
+				if (requestID === optimizeRequest.current) setPreview(result);
 			} catch (error) {
 				Notifications.error(error instanceof Error ? error.message : 'Could not optimize this loadout');
 			}
@@ -117,7 +184,7 @@ export default function EquipmentOptimizer({
 				leaderId: preview.leaderId,
 				equipment: preview.proposed.equipment,
 				gems: preview.proposed.gems,
-			});
+			}, { expectedRevision: preview.stateRevision });
 			Notifications.success(`Reconfigured ${leader?.name ?? preview.leaderKind}`);
 			setPreview(null);
 		} finally {
@@ -126,50 +193,76 @@ export default function EquipmentOptimizer({
 	};
 
 	return (
-		<Card className="liquid-prominent-header-card h-full min-h-0 flex flex-col relative">
-			<CardHeader className="liquid-card-header-prominent flex-row items-center justify-between gap-2">
-				<div>
-					<h3 className="flex items-center gap-2 text-base font-semibold text-text-main">
-						<Activity className="h-4 w-4 text-primary" /> Stat Priority
-						<button type="button" onClick={() => setShowInfo(true)} className="text-text-muted hover:text-primary" aria-label="Explain optimizer"><Info className="h-3.5 w-3.5" /></button>
-					</h3>
-					<p className="mt-0.5 text-xs text-text-muted">Official effects, deterministic beam search</p>
+		<>
+			<Modal
+				isOpen={isOpen}
+				onClose={onClose}
+				title={(
+					<span className="flex min-w-0 items-center gap-2">
+						<Activity className="h-5 w-5 shrink-0 text-primary" />
+						<span className="truncate">Stat Priority &amp; Reconfigure</span>
+					</span>
+				)}
+				maxWidth="4xl"
+				footer={(
+					<>
+						<Button variant="ghost" onClick={onClose}>Cancel</Button>
+						<Button
+							onClick={optimize}
+							disabled={disabled || !leader || tier1.length + tier2.length === 0}
+							isLoading={optimizing}
+							leftIcon={<RefreshCw className="h-4 w-4" />}
+						>
+							Preview Reconfiguration
+						</Button>
+					</>
+				)}
+			>
+				<div className="space-y-4">
+					<div className="flex flex-wrap items-start justify-between gap-3 rounded-global border border-border-base bg-bg-app/45 p-3">
+						<div className="min-w-0 flex-1">
+							<div className="flex flex-wrap items-center gap-2">
+								<span className="truncate text-sm font-semibold text-text-main">{leader?.name ?? 'No loadout selected'}</span>
+								<Badge variant={combatMode === 'PvP' ? 'danger' : 'success'}>{target.label}</Badge>
+							</div>
+							<p className="mt-1 text-xs leading-relaxed text-text-muted">{target.description} Priorities are saved per leader and target.</p>
+						</div>
+						<div className="flex shrink-0 items-center gap-2">
+							<Button size="icon" variant="ghost" onClick={() => setShowInfo(true)} aria-label="Explain stat priority"><Info className="h-4 w-4" /></Button>
+							<Button
+								size="sm"
+								variant="outline"
+								onClick={() => { setSearch(''); setShowPicker(true); }}
+								disabled={availableGroups.length === 0}
+								leftIcon={<Plus className="h-4 w-4" />}
+							>
+								Add Stat Group
+							</Button>
+						</div>
+					</div>
+
+					<div className="grid gap-4 md:grid-cols-2">
+						<PriorityTier title="Maximize" tier={1} ids={tier1} getName={(id) => effectName(id, getEffect)} onRemove={remove} onMoveTier={moveTier} onReorder={reorder} />
+						<PriorityTier title="Coverage" tier={2} ids={tier2} getName={(id) => effectName(id, getEffect)} onRemove={remove} onMoveTier={moveTier} onReorder={reorder} />
+					</div>
 				</div>
-				<Button size="icon" variant="outline" onClick={() => { setSearch(''); setShowPicker(true); }} disabled={unused.length === 0} aria-label="Add effect"><Plus className="h-4 w-4" /></Button>
-			</CardHeader>
+			</Modal>
 
-			<CardContent className="flex-1 space-y-3 overflow-y-auto p-3 custom-scrollbar">
-				<PriorityTier title="Maximize" tier={1} ids={tier1} getName={(id) => effectName(id, getEffect)} onRemove={remove} onMoveTier={moveTier} onReorder={reorder} />
-				<PriorityTier title="Coverage" tier={2} ids={tier2} getName={(id) => effectName(id, getEffect)} onRemove={remove} onMoveTier={moveTier} onReorder={reorder} />
-			</CardContent>
-
-			<div className="border-t border-border-base bg-bg-card-hover/40 p-3">
-				<Button
-					className="w-full"
-					onClick={optimize}
-					disabled={disabled || !leader || tier1.length + tier2.length === 0}
-					isLoading={optimizing}
-					leftIcon={<RefreshCw className="h-4 w-4" />}
-				>
-					Preview Reconfiguration
-				</Button>
-			</div>
-
-			<Modal isOpen={showPicker} onClose={() => setShowPicker(false)} title="Add Official Effect" maxWidth="2xl">
+			<Modal isOpen={showPicker} onClose={() => setShowPicker(false)} title="Add Stat Group" maxWidth="2xl">
 				<div className="space-y-3">
-					<Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search effects" leftIcon={<Search className="h-4 w-4" />} />
+					<Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search stat groups or effects" leftIcon={<Search className="h-4 w-4" />} />
 					<div className="max-h-[60vh] space-y-2 overflow-y-auto custom-scrollbar">
-						{available.map((id) => (
-							<div key={id} className="flex items-center gap-2 rounded-global border border-border-base bg-bg-app/50 p-3">
+						{availableGroups.map((group) => (
+							<div key={group.key} className="flex items-center gap-2 rounded-global border border-border-base bg-bg-app/50 p-3">
 								<span className="min-w-0 flex-1">
-									<span className="block truncate text-sm font-medium text-text-main">{effectName(id, getEffect)}</span>
-									<span className="block font-mono text-[10px] text-text-muted">Effect {id}</span>
+									<span className="block truncate text-sm font-medium text-text-main">{group.label}</span>
+									<span className="block truncate text-[10px] text-text-muted" title={group.effectIDs.map((id) => effectName(id, getEffect)).join(' · ')}>{group.effectIDs.length} eligible stat{group.effectIDs.length === 1 ? '' : 's'} · {group.effectIDs.map((id) => effectName(id, getEffect)).join(' · ')}</span>
 								</span>
-								<Button size="sm" variant="danger" onClick={() => add(id, 1)}>Maximize</Button>
-								<Button size="sm" variant="outline" onClick={() => add(id, 2)}>Coverage</Button>
+								<Button size="sm" variant="danger" onClick={() => addGroup(group, 1)}>Maximize all</Button>
+								<Button size="sm" variant="outline" onClick={() => addGroup(group, 2)}>Coverage all</Button>
 							</div>
 						))}
-						{available.length === 0 && <p className="py-6 text-center text-sm text-text-muted">No matching unused effects.</p>}
+						{availableGroups.length === 0 && <p className="py-6 text-center text-sm text-text-muted">No matching unused stat groups.</p>}
 					</div>
 				</div>
 			</Modal>
@@ -185,6 +278,7 @@ export default function EquipmentOptimizer({
 			<OptimizerPreview
 				preview={preview}
 				state={state}
+				priorityIDs={priorities.map((priority) => priority.effectId)}
 				getEffectName={(id) => effectName(id, getEffect)}
 				getEquipmentName={(id) => getEquipment(state?.inventory.equipment[String(id)]?.definitionId ?? 0)?.name ?? `Equipment ${id}`}
 				getGemName={(id) => getGem(state?.inventory.gems[String(id)]?.definitionId ?? 0)?.name ?? `Gem ${id}`}
@@ -192,7 +286,7 @@ export default function EquipmentOptimizer({
 				onApply={apply}
 				applying={applying}
 			/>
-		</Card>
+		</>
 	);
 }
 
@@ -239,6 +333,7 @@ function PriorityTier({
 function OptimizerPreview({
 	preview,
 	state,
+	priorityIDs,
 	getEffectName,
 	getEquipmentName,
 	getGemName,
@@ -248,6 +343,7 @@ function OptimizerPreview({
 }: {
 	preview: EquipmentOptimizeResponse | null;
 	state: GameStateV2 | null;
+	priorityIDs: number[];
 	getEffectName: (id: number) => string;
 	getEquipmentName: (id: number) => string;
 	getGemName: (id: number) => string;
@@ -264,6 +360,11 @@ function OptimizerPreview({
 			.filter((row) => row.current !== row.proposed)
 			.sort((left, right) => Math.abs(right.proposed - right.current) - Math.abs(left.proposed - left.current));
 	}, [preview]);
+	const unavailablePriorities = useMemo(() => {
+		if (!preview) return [];
+		const proposed = new Map(preview.proposed.effects.map((effect) => [effect.definitionId, effect.value]));
+		return priorityIDs.filter((id) => proposed.get(id) === undefined || proposed.get(id) === 0);
+	}, [preview, priorityIDs]);
 	void state;
 	return (
 		<Modal
@@ -280,10 +381,15 @@ function OptimizerPreview({
 		>
 			{preview && (
 				<div className="space-y-5">
+					{unavailablePriorities.length > 0 && (
+						<p className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+							No eligible value was found for {unavailablePriorities.map(getEffectName).join(' · ')}. This is still the best available loadout.
+						</p>
+					)}
 					<div className="grid gap-3 sm:grid-cols-3">
-						<Metric label="Current score" value={formatNumber(preview.current.score)} />
-						<Metric label="Proposed score" value={formatNumber(preview.proposed.score)} emphasis />
-						<Metric label="Improvement" value={`+${formatNumber(preview.proposed.score - preview.current.score)}`} emphasis />
+						<MetricTile className="p-3 [&_.ui-metric-value]:text-lg" label="Current score" value={formatNumber(preview.current.score)} />
+						<MetricTile className="border-primary/30 bg-primary/5 p-3 [&_.ui-metric-value]:text-lg" label="Proposed score" value={formatNumber(preview.proposed.score)} tone="brand" />
+						<MetricTile className="border-primary/30 bg-primary/5 p-3 [&_.ui-metric-value]:text-lg" label="Improvement" value={`+${formatNumber(preview.proposed.score - preview.current.score)}`} tone="brand" />
 					</div>
 					<div className="grid gap-4 lg:grid-cols-2">
 						<LoadoutColumn title="Current" equipment={preview.current.equipment} gems={preview.current.gems} getEquipmentName={getEquipmentName} getGemName={getGemName} />
@@ -338,10 +444,6 @@ function LoadoutColumn({
 			</div>
 		</div>
 	);
-}
-
-function Metric({ label, value, emphasis = false }: { label: string; value: string; emphasis?: boolean }) {
-	return <div className={`rounded-global border p-3 ${emphasis ? 'border-primary/30 bg-primary/5' : 'border-border-base bg-bg-app/40'}`}><p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{label}</p><p className={`mt-1 font-mono text-lg font-bold ${emphasis ? 'text-primary' : 'text-text-main'}`}>{value}</p></div>;
 }
 
 function effectName(id: number, getEffect: (id: number) => { name?: string } | undefined): string {

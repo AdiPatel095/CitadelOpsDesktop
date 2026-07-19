@@ -5,12 +5,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
 
 type HospitalPolicy struct{}
+
+const (
+	hospitalLineID                       = 2
+	hospitalBaseStackAmount        int64 = 10
+	hospitalSubscriptionStackBonus int64 = 5
+	hospitalMaximumStackAmount     int64 = 15
+	hospitalSubscriptionEffectID         = 189
+)
 
 type hospitalSettings struct {
 	CheckIntervalSec int `json:"checkIntervalSec"`
@@ -27,6 +38,12 @@ func (*HospitalPolicy) ID() string { return "autoHospital" }
 
 func (*HospitalPolicy) EnabledKey() string { return "auto_hospital" }
 
+func (*HospitalPolicy) WakeDomains() []string {
+	return []string{"production", "subscriptions", "units"}
+}
+
+func (*HospitalPolicy) WakeSections() []string { return []string{"automation.autoHospital"} }
+
 func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	settings := hospitalSettings{CheckIntervalSec: 300}
 	decodeSection(snapshot.Configuration, "automation.autoHospital", &settings)
@@ -41,31 +58,49 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	for _, castleID := range castleIDs {
 		castle := snapshot.State.Castles[castleID]
 		wounded := orderedWounded(castle.Units.Hospital)
+		queue, exists := castle.Production[hospitalLineID]
+		queueObserved := exists && !queue.ObservedAt.IsZero()
+		if queueObserved {
+			occupied := len(queue.Queued)
+			if queue.Active != nil {
+				occupied++
+			}
+			queueCapacity := hospitalQueueCapacity(castle, snapshot.GameData)
+			if queueCapacity <= 0 {
+				queueCapacity = queue.Capacity
+			}
+			if queueCapacity > 0 && occupied >= queueCapacity {
+				if productionID := eligibleAllianceHelpProductionID(queue); productionID > 0 {
+					arguments, _ := json.Marshal(map[string]any{"productionId": productionID})
+					return Decision{
+						Status: "ready", Detail: fmt.Sprintf("Request alliance help for hospital queue at %s", castleName(castle)),
+						NextCheckAt:         snapshot.Now.Add(coordinatorTick),
+						Request:             &Intent.Request{Name: "alliance.help.request", Arguments: arguments},
+						ReevaluateOnSuccess: true,
+					}, nil
+				}
+				continue
+			}
+			if len(wounded) > 0 && queueCapacity <= 0 {
+				woundedCastles++
+				observedQueues++
+				continue
+			}
+		}
 		if len(wounded) == 0 {
 			continue
 		}
 		woundedCastles++
-		queue, exists := castle.Production[2]
-		if !exists || queue.ObservedAt.IsZero() {
+		if !queueObserved {
 			continue
 		}
 		observedQueues++
-		occupied := len(queue.Queued)
-		if queue.Active != nil {
-			occupied++
-		}
-		if queue.Capacity <= 0 || occupied >= queue.Capacity {
-			continue
-		}
 		for _, stack := range wounded {
 			rubyCost, known := recordNumber(snapshot.GameData, "units", int64(stack.unitID), "healingCostC2")
-			if !known {
-				continue
-			}
 			intentName := "hospital.heal"
-			amount := observedHospitalStack(queue)
+			amount := hospitalStackAmount(snapshot.State, snapshot.GameData)
 			detail := fmt.Sprintf("Heal unit %d at %s", stack.unitID, castleName(castle))
-			if rubyCost > 0 {
+			if known && rubyCost > 0 {
 				intentName = "hospital.discard"
 				amount = stack.amount
 				detail = fmt.Sprintf("Discard ruby-only wounded unit %d at %s", stack.unitID, castleName(castle))
@@ -80,8 +115,11 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 				"castleId": castleID, "unitId": stack.unitID, "amount": amount,
 			})
 			return Decision{
-				Status: "ready", Detail: detail, NextCheckAt: snapshot.Now.Add(interval),
-				Request: &Intent.Request{Name: intentName, Arguments: arguments},
+				Status:              "ready",
+				Detail:              detail,
+				NextCheckAt:         snapshot.Now.Add(coordinatorTick),
+				Request:             &Intent.Request{Name: intentName, Arguments: arguments},
+				ReevaluateOnSuccess: true,
 			}, nil
 		}
 	}
@@ -89,7 +127,7 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	if woundedCastles > 0 && observedQueues == 0 {
 		detail = "Waiting for hospital queues to be observed"
 	} else if woundedCastles > 0 {
-		detail = "Hospital queues are full or their safe healing stack size is not yet known"
+		detail = "Hospital queues are full or their capacity is not yet known"
 	}
 	return Decision{Status: "idle", Detail: detail, NextCheckAt: snapshot.Now.Add(interval)}, nil
 }
@@ -110,15 +148,80 @@ func orderedWounded(units map[State.UnitID]int64) []woundedStack {
 	return result
 }
 
-func observedHospitalStack(queue State.ProductionQueue) int64 {
-	var amount int64
-	if queue.Active != nil && queue.Active.Amount > amount {
-		amount = queue.Active.Amount
+func hospitalStackAmount(state State.GameState, gameData *GameData.Store) int64 {
+	amount := hospitalBaseStackAmount
+	if hasHospitalSubscriptionStackBonus(state, gameData) {
+		amount += hospitalSubscriptionStackBonus
 	}
-	for _, item := range queue.Queued {
-		if item.Amount > amount {
-			amount = item.Amount
-		}
+	if amount > hospitalMaximumStackAmount {
+		return hospitalMaximumStackAmount
 	}
 	return amount
+}
+
+func hasHospitalSubscriptionStackBonus(state State.GameState, gameData *GameData.Store) bool {
+	if gameData == nil || len(state.Subscriptions) == 0 {
+		return false
+	}
+	activeTypeIDs := map[int]struct{}{}
+	for typeID, subscription := range state.Subscriptions {
+		if subscription.TypeID > 0 {
+			typeID = subscription.TypeID
+		}
+		if typeID > 0 && subscription.RemainingSec > 0 {
+			activeTypeIDs[typeID] = struct{}{}
+		}
+	}
+	if len(activeTypeIDs) == 0 {
+		return false
+	}
+	raw, exists := gameData.RawCollection("subscriptionsBuffs")
+	if !exists {
+		return false
+	}
+	var buffs []struct {
+		SubscriptionTypeID string `json:"subscriptionTypeID"`
+		Effects            string `json:"effects"`
+	}
+	if err := json.Unmarshal(raw, &buffs); err != nil {
+		return false
+	}
+	for _, buff := range buffs {
+		typeID, err := strconv.Atoi(strings.TrimSpace(buff.SubscriptionTypeID))
+		if err != nil || typeID <= 0 {
+			continue
+		}
+		if _, active := activeTypeIDs[typeID]; !active {
+			continue
+		}
+		for _, effect := range strings.Split(buff.Effects, ",") {
+			effectIDText, valueText, found := strings.Cut(strings.TrimSpace(effect), "&")
+			if !found {
+				continue
+			}
+			effectID, effectErr := strconv.Atoi(strings.TrimSpace(effectIDText))
+			value, valueErr := strconv.Atoi(strings.TrimSpace(valueText))
+			if effectErr == nil && valueErr == nil && effectID == hospitalSubscriptionEffectID && value > 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func hospitalQueueCapacity(castle State.CastleState, gameData *GameData.Store) int {
+	if gameData == nil {
+		return 0
+	}
+	var capacity int
+	for _, building := range castle.Buildings {
+		slots := recordInteger(gameData, "buildings", int64(building.DefinitionID), "hospitalSlots")
+		if int(slots) > capacity {
+			capacity = int(slots)
+		}
+	}
+	if capacity > 5 {
+		return 5
+	}
+	return capacity
 }

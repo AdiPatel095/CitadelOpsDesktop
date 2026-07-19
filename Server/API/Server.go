@@ -17,6 +17,7 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Outbound"
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
 	"CitadelDesktop/Server/Telemetry"
@@ -35,6 +36,7 @@ type Config struct {
 	Updates         *AppUpdate.Manager
 	Diagnostics     *Diagnostics.Monitor
 	Session         interface{ Status() Session.Status }
+	Persistence     interface{ PersistenceError() error }
 }
 
 type Server struct {
@@ -65,10 +67,17 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/config", server.handleConfiguration)
 	mux.HandleFunc("GET /api/v2/config/{section}", server.handleConfigurationSection)
 	mux.HandleFunc("GET /api/v2/game-data", server.handleGameDataManifest)
+	mux.HandleFunc("GET /api/v2/game-data/currency-icons", server.handleCurrencyIcons)
+	mux.HandleFunc("GET /api/v2/game-data/construction-item-icons", server.handleConstructionItemIcons)
 	mux.HandleFunc("GET /api/v2/game-data/{collection}", server.handleGameDataCollection)
 	mux.HandleFunc("POST /api/v2/game-data/localize", server.handleLocalization)
 	mux.HandleFunc("GET /api/v2/projections/crafting", server.handleCraftingProjection)
 	mux.HandleFunc("POST /api/v2/equipment/optimize", server.handleEquipmentOptimize)
+	mux.HandleFunc("GET /api/v2/buildings/catalog", server.handleBuildingCatalog)
+	mux.HandleFunc("POST /api/v2/buildings/preview", server.handleBuildingPreview)
+	mux.HandleFunc("POST /api/v2/buildings/target/capture", server.handleBuildingTargetCapture)
+	mux.HandleFunc("POST /api/v2/buildings/target/diff", server.handleBuildingTargetDiff)
+	mux.HandleFunc("POST /api/v2/buildings/expansion/preview", server.handleExpansionPreview)
 	mux.HandleFunc("GET /api/v2/alliance-targets", server.handleAllianceTargets)
 	mux.HandleFunc("GET /api/v2/history/player-tracker", server.handlePlayerTrackerHistory)
 	mux.HandleFunc("GET /api/v2/history/spy-reports", server.handleSpyReportHistory)
@@ -77,6 +86,7 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
 	mux.HandleFunc("GET /api/v2/intents", server.handleIntentDefinitions)
 	mux.HandleFunc("POST /api/v2/intents/{name}", server.handleIntentSubmit)
+	mux.HandleFunc("GET /api/v2/operations", server.handleOperations)
 	mux.HandleFunc("GET /api/v2/operations/{id}", server.handleOperation)
 	mux.HandleFunc("POST /api/v2/operations/{id}/cancel", server.handleOperationCancel)
 	mux.HandleFunc("GET /api/v2/events", server.handleEvents)
@@ -138,9 +148,20 @@ func (server *Server) handleHealth(writer http.ResponseWriter, _ *http.Request) 
 	}
 	if server.config.Session != nil {
 		response["session"] = server.config.Session.Status()
+		if provider, ok := server.config.Session.(interface {
+			DispatchLatency() Outbound.DispatchLatencyStats
+		}); ok {
+			response["dispatchLatency"] = provider.DispatchLatency()
+		}
 	}
 	if server.config.Configuration != nil {
 		response["configurationRevision"] = server.config.Configuration.Snapshot().Revision
+	}
+	if server.config.Persistence != nil {
+		if err := server.config.Persistence.PersistenceError(); err != nil {
+			response["status"] = "degraded"
+			response["persistenceError"] = err.Error()
+		}
 	}
 	if server.config.GameData == nil {
 		response["status"] = "degraded"
@@ -267,6 +288,8 @@ func (server *Server) handleIntentSubmit(writer http.ResponseWriter, request *ht
 		return
 	}
 	intentRequest.Name = request.PathValue("name")
+	intentRequest.Actor = "ui"
+	intentRequest.Priority = Outbound.PriorityInteractive
 	receipt := server.config.Intents.Submit(request.Context(), intentRequest)
 	status := http.StatusOK
 	if receipt.Status == Intent.StatusFailed {
@@ -286,6 +309,28 @@ func (server *Server) handleOperation(writer http.ResponseWriter, request *http.
 		return
 	}
 	writeJSON(writer, http.StatusOK, receipt)
+}
+
+func (server *Server) handleOperations(writer http.ResponseWriter, request *http.Request) {
+	if server.config.Intents == nil {
+		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable")
+		return
+	}
+	limit := 100
+	if raw := strings.TrimSpace(request.URL.Query().Get("limit")); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < 1 || parsed > 1000 {
+			writeError(writer, http.StatusBadRequest, "invalid_limit", "Operation limit must be between 1 and 1000")
+			return
+		}
+		limit = parsed
+	}
+	receipts, err := server.config.Intents.RecentOperations(request.Context(), limit)
+	if err != nil {
+		writeError(writer, http.StatusServiceUnavailable, "operations_unavailable", err.Error())
+		return
+	}
+	writeJSON(writer, http.StatusOK, receipts)
 }
 
 func (server *Server) handleOperationCancel(writer http.ResponseWriter, request *http.Request) {
@@ -328,13 +373,20 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	incoming := make(chan Envelope, 8)
 	readErrors := make(chan error, 1)
 	responses := make(chan Envelope, 8)
-	go readEnvelopes(connection, incoming, readErrors)
+	go readEnvelopes(ctx, connection, incoming, readErrors)
 
-	if err := connection.WriteJSON(newEnvelope("", "state.snapshot", server.config.State.Revision(), server.config.State.Snapshot())); err != nil {
+	initialState, initialRevision := server.config.State.SnapshotWithRevision()
+	if err := connection.WriteJSON(streamEnvelope("", "state.snapshot", initialRevision, initialRevision, false, initialState)); err != nil {
 		return
 	}
 	if server.config.Configuration != nil {
-		if err := connection.WriteJSON(newEnvelope("", "config.changed", server.config.State.Revision(), server.config.Configuration.Snapshot())); err != nil {
+		snapshot := server.config.Configuration.Snapshot()
+		if err := connection.WriteJSON(streamEnvelope("", "config.changed", server.config.State.Revision(), snapshot.Revision, false, snapshot)); err != nil {
+			return
+		}
+	}
+	if receipts, err := server.config.Intents.RecentOperations(ctx, 100); err == nil {
+		if err := connection.WriteJSON(newEnvelope("", "operations.snapshot", server.config.State.Revision(), receipts)); err != nil {
 			return
 		}
 	}
@@ -359,15 +411,20 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 				return
 			}
 		case event := <-stateEvents:
-			if err := connection.WriteJSON(newEnvelope("", "state.changed", event.Revision, event)); err != nil {
+			if err := connection.WriteJSON(streamEnvelope("", "state.changed", event.Revision, event.Sequence, event.Gap, event)); err != nil {
 				return
 			}
 		case receipt := <-operationEvents:
-			if err := connection.WriteJSON(newEnvelope(receipt.ID, "operation.changed", server.config.State.Revision(), receipt)); err != nil {
+			if err := connection.WriteJSON(streamEnvelope(
+				receipt.ID, "operation.changed", server.config.State.Revision(),
+				receipt.StreamSequence, receipt.StreamGap, receipt,
+			)); err != nil {
 				return
 			}
 		case event := <-configurationEvents:
-			if err := connection.WriteJSON(newEnvelope("", "config.changed", server.config.State.Revision(), event.Snapshot)); err != nil {
+			if err := connection.WriteJSON(streamEnvelope(
+				"", "config.changed", server.config.State.Revision(), event.Sequence, event.Gap, event.Snapshot,
+			)); err != nil {
 				return
 			}
 		case response := <-responses:
@@ -377,36 +434,56 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 		case message := <-incoming:
 			switch message.Type {
 			case "query.state":
-				responses <- newEnvelope(message.ID, "state.snapshot", server.config.State.Revision(), server.config.State.Snapshot())
+				state, revision := server.config.State.SnapshotWithRevision()
+				if err := connection.WriteJSON(newEnvelope(message.ID, "state.snapshot", revision, state)); err != nil {
+					return
+				}
 			case "query.catalogs":
 				if store, ready := server.config.GameData.Current(); ready {
-					responses <- newEnvelope(message.ID, "catalog.changed", server.config.State.Revision(), map[string]any{
+					if err := connection.WriteJSON(newEnvelope(message.ID, "catalog.changed", server.config.State.Revision(), map[string]any{
 						"metadata": store.Metadata(), "catalogs": store.Summaries(),
-					})
+					})); err != nil {
+						return
+					}
 				} else {
-					responses <- errorEnvelope(message.ID, "game_data_unavailable", "Official game data is unavailable")
+					if err := connection.WriteJSON(errorEnvelope(message.ID, "game_data_unavailable", "Official game data is unavailable")); err != nil {
+						return
+					}
 				}
 			case "query.config":
 				if server.config.Configuration != nil {
-					responses <- newEnvelope(message.ID, "config.changed", server.config.State.Revision(), server.config.Configuration.Snapshot())
+					if err := connection.WriteJSON(newEnvelope(message.ID, "config.changed", server.config.State.Revision(), server.config.Configuration.Snapshot())); err != nil {
+						return
+					}
 				} else {
-					responses <- errorEnvelope(message.ID, "configuration_unavailable", "Configuration store is unavailable")
+					if err := connection.WriteJSON(errorEnvelope(message.ID, "configuration_unavailable", "Configuration store is unavailable")); err != nil {
+						return
+					}
 				}
 			case "intent.submit":
 				var intentRequest Intent.Request
 				if err := json.Unmarshal(message.Payload, &intentRequest); err != nil {
-					responses <- errorEnvelope(message.ID, "invalid_request", err.Error())
+					if writeErr := connection.WriteJSON(errorEnvelope(message.ID, "invalid_request", err.Error())); writeErr != nil {
+						return
+					}
 					continue
 				}
 				if intentRequest.ID == "" {
 					intentRequest.ID = message.ID
 				}
+				intentRequest.Actor = "ui"
+				intentRequest.Priority = Outbound.PriorityInteractive
 				go func() {
 					receipt := server.config.Intents.Submit(ctx, intentRequest)
-					responses <- newEnvelope(message.ID, "intent.receipt", server.config.State.Revision(), receipt)
+					select {
+					case responses <- newEnvelope(message.ID, "intent.receipt", server.config.State.Revision(), receipt):
+					case <-ctx.Done():
+					}
 				}()
 			default:
-				responses <- errorEnvelope(message.ID, "unsupported_message", "Unsupported websocket message type")
+				if err := connection.WriteJSON(errorEnvelope(message.ID, "unsupported_message", "Unsupported websocket message type")); err != nil {
+					return
+				}
 			}
 		}
 	}
@@ -438,18 +515,28 @@ func (server *Server) originAllowed(request *http.Request) bool {
 	return hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1"
 }
 
-func readEnvelopes(connection *websocket.Conn, output chan<- Envelope, errors chan<- error) {
+func readEnvelopes(ctx context.Context, connection *websocket.Conn, output chan<- Envelope, errors chan<- error) {
+	reportError := func(err error) {
+		select {
+		case errors <- err:
+		case <-ctx.Done():
+		}
+	}
 	for {
 		var envelope Envelope
 		if err := connection.ReadJSON(&envelope); err != nil {
-			errors <- err
+			reportError(err)
 			return
 		}
 		if envelope.Version != ContractVersion {
-			errors <- fmt.Errorf("unsupported API contract version %d", envelope.Version)
+			reportError(fmt.Errorf("unsupported API contract version %d", envelope.Version))
 			return
 		}
-		output <- envelope
+		select {
+		case output <- envelope:
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 

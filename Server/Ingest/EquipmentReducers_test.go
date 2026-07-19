@@ -2,7 +2,9 @@ package Ingest
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
@@ -11,11 +13,12 @@ import (
 
 func TestApplyLeadersNormalizesEquipmentAndCommanderZero(t *testing.T) {
 	gameState := State.NewGameState()
+	gameState.Player.ID = 1
 	commanderID := State.CommanderID(0)
-	gameState.Movements[12] = State.MovementState{ID: 12, CommanderID: &commanderID}
+	gameState.Movements[12] = State.MovementState{ID: 12, OwnerPlayerID: 1, CommanderID: &commanderID}
 	gameState.Castles[99] = State.CastleState{ID: 99, Name: "Main"}
 	payload := json.RawMessage(`{
-		"C":[{"ID":0,"VIS":0,"N":"Rift1","EQ":[[1001,1,2,5,0,[[164,75,[510]]],1375,1086,20,-1,457,1,[1,0,0,[457,9,0,0,[[301,50,[22]]],12]]]]}],
+		"C":[{"ID":0,"VIS":0,"N":"Rift1","GID":101,"EQ":[[1001,1,2,5,0,[[164,75,[510]]],1375,1086,20,-1,457,1,[1,0,0,[457,9,0,0,[[301,50,[22]]],12]]]]}],
 		"B":[{"ID":1,"LICID":99,"N":"","EQ":[[2001,2,1,0,0,[[268,[175]]],1535,1101,3,-1,521,2]]}]
 	}`)
 	changed, err := applyLeaders(payload, &gameState, nil)
@@ -32,7 +35,7 @@ func TestApplyLeadersNormalizesEquipmentAndCommanderZero(t *testing.T) {
 	if commander.Available {
 		t.Fatal("commander with an active movement is marked available")
 	}
-	if commander.Name != "Rift1" || commander.VisiblePosition != 1 || commander.Equipment["1"] != 1001 {
+	if commander.Name != "Rift1" || commander.VisiblePosition != 1 || commander.GeneralID != 101 || commander.Equipment["1"] != 1001 {
 		t.Fatalf("unexpected commander: %+v", commander)
 	}
 	if commander.Gems["1"] != 457 {
@@ -55,6 +58,29 @@ func TestApplyLeadersNormalizesEquipmentAndCommanderZero(t *testing.T) {
 	castellan := gameState.Castellans[1]
 	if castellan.CastleID != 99 || castellan.Name != "Main" || castellan.Equipment["2"] != 2001 {
 		t.Fatalf("unexpected castellan: %+v", castellan)
+	}
+}
+
+func TestReduceGeneralsCapturesActiveSkillIDs(t *testing.T) {
+	gameState := State.NewGameState()
+	observedAt := time.Date(2026, time.July, 14, 12, 0, 0, 0, time.UTC)
+	frame := testSuccessfulFrame("gie", `{
+		"G":[
+			{"GID":101,"SIDS":[101036,"10110333",-1]},
+			{"GID":102,"SIDS":[]}
+		]
+	}`)
+	frame.ReceivedAt = observedAt
+	_, changed, err := reduceGenerals(t.Context(), frame, &gameState, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !changed || len(gameState.Generals) != 2 {
+		t.Fatalf("generals = %#v", gameState.Generals)
+	}
+	general := gameState.Generals[101]
+	if !slices.Equal(general.ActiveSkillIDs, []int64{101036, 10110333}) || !general.ObservedAt.Equal(observedAt) {
+		t.Fatalf("general 101 = %#v", general)
 	}
 }
 

@@ -16,17 +16,19 @@ const (
 )
 
 type Frame struct {
-	Direction    Direction       `json:"direction"`
-	Transport    string          `json:"transport"`
-	Namespace    string          `json:"namespace,omitempty"`
-	Opcode       string          `json:"opcode"`
-	Route        string          `json:"route,omitempty"`
-	ResponseCode *int            `json:"responseCode,omitempty"`
-	ResponseText string          `json:"responseText,omitempty"`
-	Payload      json.RawMessage `json:"payload,omitempty"`
-	PayloadText  string          `json:"payloadText,omitempty"`
-	ReceivedAt   time.Time       `json:"receivedAt"`
-	Raw          string          `json:"-"`
+	Direction            Direction       `json:"direction"`
+	Transport            string          `json:"transport"`
+	Namespace            string          `json:"namespace,omitempty"`
+	Opcode               string          `json:"opcode"`
+	Route                string          `json:"route,omitempty"`
+	ResponseCode         *int            `json:"responseCode,omitempty"`
+	ResponseText         string          `json:"responseText,omitempty"`
+	Payload              json.RawMessage `json:"payload,omitempty"`
+	PayloadText          string          `json:"payloadText,omitempty"`
+	ReceivedAt           time.Time       `json:"receivedAt"`
+	Raw                  string          `json:"-"`
+	ResponseToken        string          `json:"-"`
+	CausationOperationID string          `json:"causationOperationId,omitempty"`
 }
 
 func Decode(raw string, direction Direction, receivedAt time.Time) (Frame, error) {
@@ -72,16 +74,20 @@ func Decode(raw string, direction Direction, receivedAt time.Time) (Frame, error
 }
 
 type Command struct {
-	Namespace string          `json:"namespace,omitempty"`
-	Opcode    string          `json:"opcode"`
-	Sequence  string          `json:"sequence,omitempty"`
-	Route     string          `json:"route,omitempty"`
-	Payload   json.RawMessage `json:"payload"`
-	Bare      bool            `json:"bare,omitempty"`
+	Namespace     string          `json:"namespace,omitempty"`
+	Opcode        string          `json:"opcode"`
+	Sequence      string          `json:"sequence,omitempty"`
+	Route         string          `json:"route,omitempty"`
+	Payload       json.RawMessage `json:"payload"`
+	Bare          bool            `json:"bare,omitempty"`
+	OmitNamespace bool            `json:"omitNamespace,omitempty"`
 }
 
 func Encode(command Command) ([]byte, error) {
 	namespace := strings.TrimSpace(command.Namespace)
+	if command.OmitNamespace {
+		namespace = ""
+	}
 	opcode := strings.ToLower(strings.TrimSpace(command.Opcode))
 	sequence := strings.TrimSpace(command.Sequence)
 	route := strings.TrimSpace(command.Route)
@@ -119,7 +125,9 @@ func Encode(command Command) ([]byte, error) {
 }
 
 type CommittedFrame struct {
-	Frame    Frame    `json:"frame"`
-	Revision uint64   `json:"revision"`
-	Domains  []string `json:"domains,omitempty"`
+	Frame       Frame    `json:"frame"`
+	IngressID   uint64   `json:"ingressId,omitempty"`
+	Revision    uint64   `json:"revision"`
+	Domains     []string `json:"domains,omitempty"`
+	ReduceError string   `json:"-"`
 }

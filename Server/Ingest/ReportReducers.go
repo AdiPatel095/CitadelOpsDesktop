@@ -221,7 +221,119 @@ func reduceBattleDetailCapture(
 	capture.Details = append(json.RawMessage(nil), frame.Payload...)
 	capture.CapturedAt = frame.ReceivedAt
 	gameState.Reports.BattleCaptures[messageID] = capture
-	return []string{"reports"}, true, nil
+	stormChanged, err := reconcileStormIslandBattleReport(gameState, capture)
+	if err != nil {
+		return nil, false, err
+	}
+	domains := []string{"reports"}
+	if stormChanged {
+		domains = append(domains, "storm")
+	}
+	return domains, true, nil
+}
+
+func reconcileStormIslandBattleReport(gameState *State.GameState, capture State.BattleReportCapture) (bool, error) {
+	if gameState.Player.ID <= 0 || len(capture.Summary) == 0 || len(capture.Details) == 0 {
+		return false, nil
+	}
+	var summary struct {
+		MessageID    wireInt64           `json:"MID"`
+		ReportID     wireInt64           `json:"LID"`
+		Participants [][]json.RawMessage `json:"PBI"`
+		Target       struct {
+			TypeID    int       `json:"AT"`
+			KingdomID wireInt64 `json:"K"`
+			X         int       `json:"X"`
+			Y         int       `json:"Y"`
+		} `json:"AI"`
+	}
+	if err := json.Unmarshal(capture.Summary, &summary); err != nil {
+		return false, fmt.Errorf("decode Storm island battle summary: %w", err)
+	}
+	if summary.Target.TypeID != 24 || State.KingdomID(summary.Target.KingdomID) != State.KingdomID(GameData.StormKingdomID) ||
+		!battleSummaryHasOwnAttacker(summary.Participants, gameState.Player.ID) {
+		return false, nil
+	}
+	key := State.StormIslandReturnKey(State.KingdomID(summary.Target.KingdomID), summary.Target.X, summary.Target.Y)
+	operation, exists := gameState.Storm.IslandReturns[key]
+	if !exists || operation.Status != State.StormIslandReturnAwaitingReport {
+		return false, nil
+	}
+	battleAt := capture.CapturedAt
+	if notice, found := gameState.Reports.Notices[capture.MessageID]; found && !notice.ObservedAt.IsZero() {
+		battleAt = notice.ObservedAt
+		if notice.AgeSec > 0 {
+			battleAt = battleAt.Add(-time.Duration(notice.AgeSec) * time.Second)
+		}
+	}
+	if !operation.LaunchedAt.IsZero() && battleAt.Add(2*time.Second).Before(operation.LaunchedAt) {
+		return false, nil
+	}
+	if !battleSummaryAttackerWon(summary.Participants) {
+		delete(gameState.Storm.IslandReturns, key)
+		return true, nil
+	}
+	survivors, found, err := stormIslandBattleSurvivors(capture.Details, gameState.Player.ID)
+	if err != nil {
+		return false, err
+	}
+	if !found {
+		return false, nil
+	}
+	operation.Survivors = survivors
+	if len(operation.UnitsToReturn()) == 0 {
+		delete(gameState.Storm.IslandReturns, key)
+		return true, nil
+	}
+	reportID := int64(summary.ReportID)
+	if reportID <= 0 {
+		reportID = capture.ReportID
+	}
+	if reportID <= 0 {
+		reportID = int64(summary.MessageID)
+	}
+	if reportID <= 0 {
+		reportID = capture.MessageID
+	}
+	operation.ReportID = reportID
+	operation.Status = State.StormIslandReturnReady
+	operation.ReportedAt = capture.CapturedAt
+	gameState.Storm.IslandReturns[key] = operation
+	return true, nil
+}
+
+func stormIslandBattleSurvivors(raw json.RawMessage, playerID State.PlayerID) (map[State.UnitID]int64, bool, error) {
+	var payload struct {
+		Units [][]json.RawMessage `json:"Y"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode Storm island battle details: %w", err)
+	}
+	survivors := map[State.UnitID]int64{}
+	found := false
+	for _, row := range payload.Units {
+		if len(row) < 2 || State.PlayerID(rowInt(row, 0)) != playerID {
+			continue
+		}
+		found = true
+		for _, rawUnit := range row[1:] {
+			var unit []json.RawMessage
+			if err := json.Unmarshal(rawUnit, &unit); err != nil || len(unit) < 2 {
+				continue
+			}
+			unitID := State.UnitID(rowInt(unit, 0))
+			amount := rowInt(unit, 1)
+			lost := rowInt(unit, 2)
+			if lost < 0 {
+				lost = -lost
+			}
+			remaining := amount - lost
+			if unitID > 0 && remaining > 0 {
+				survivors[unitID] += remaining
+			}
+		}
+	}
+	return survivors, found, nil
 }
 
 func reduceBattleCommandContext(

@@ -175,10 +175,6 @@ func availableCraftingRecipes(recipes []GameData.CraftingRecipe, building State.
 	for _, id := range crafting.EnabledRecipeIDs {
 		enabledRecipes[id] = struct{}{}
 	}
-	enabledGroups := make(map[int64]struct{}, len(crafting.EnabledRecipeGroupIDs))
-	for _, id := range crafting.EnabledRecipeGroupIDs {
-		enabledGroups[id] = struct{}{}
-	}
 	result := make([]int64, 0)
 	for _, recipe := range recipes {
 		if recipe.QueueTypeID != building.QueueTypeID || !buildingAllowed(recipe.RequiredBuildingWIDs, int64(building.DefinitionID)) {
@@ -186,8 +182,7 @@ func availableCraftingRecipes(recipes []GameData.CraftingRecipe, building State.
 		}
 		if recipe.ResearchGroupID != 0 {
 			_, recipeEnabled := enabledRecipes[recipe.RecipeID]
-			_, groupEnabled := enabledGroups[recipe.RecipeGroupID]
-			if !recipeEnabled && !groupEnabled {
+			if !recipeEnabled {
 				continue
 			}
 		}

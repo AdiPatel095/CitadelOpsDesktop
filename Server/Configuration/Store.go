@@ -25,6 +25,8 @@ type Snapshot struct {
 }
 
 type Event struct {
+	Sequence  uint64          `json:"sequence"`
+	Gap       bool            `json:"gap,omitempty"`
 	Revision  uint64          `json:"revision"`
 	Section   string          `json:"section"`
 	Value     json.RawMessage `json:"value"`
@@ -132,9 +134,25 @@ func (store *Store) Update(section string, value json.RawMessage) (Snapshot, err
 }
 
 func (store *Store) UpdateExpected(section string, value json.RawMessage, expectedRevision *uint64) (Snapshot, error) {
+	return store.UpdateConditional(section, value, expectedRevision, nil)
+}
+
+func (store *Store) UpdateConditional(
+	section string,
+	value json.RawMessage,
+	expectedRevision *uint64,
+	expectedValue *json.RawMessage,
+) (Snapshot, error) {
 	canonical, err := canonicalSection(section, value)
 	if err != nil {
 		return Snapshot{}, err
+	}
+	var expectedCanonical json.RawMessage
+	if expectedValue != nil {
+		expectedCanonical, err = canonicalSection(section, *expectedValue)
+		if err != nil {
+			return Snapshot{}, fmt.Errorf("expected configuration %s: %w", section, err)
+		}
 	}
 	store.mu.Lock()
 	if expectedRevision != nil && store.snapshot.Revision != *expectedRevision {
@@ -143,6 +161,10 @@ func (store *Store) UpdateExpected(section string, value json.RawMessage, expect
 		return Snapshot{}, fmt.Errorf("configuration revision changed: expected %d, current %d", *expectedRevision, actual)
 	}
 	current, exists := store.snapshot.Sections[section]
+	if expectedValue != nil && (!exists || !bytes.Equal(current, expectedCanonical)) {
+		store.mu.Unlock()
+		return Snapshot{}, fmt.Errorf("configuration section %q changed", section)
+	}
 	if exists && bytes.Equal(current, canonical) {
 		snapshot := cloneSnapshot(store.snapshot)
 		store.mu.Unlock()
@@ -158,14 +180,22 @@ func (store *Store) UpdateExpected(section string, value json.RawMessage, expect
 	}
 	store.snapshot = next
 	event := Event{
-		Revision: next.Revision, Section: section, Value: cloneRaw(canonical),
+		Sequence: next.Revision, Revision: next.Revision, Section: section, Value: cloneRaw(canonical),
 		UpdatedAt: next.UpdatedAt, Snapshot: cloneSnapshot(next),
 	}
 	for _, subscriber := range store.subscribers {
+		delivery := event
 		select {
-		case subscriber <- event:
+		case subscriber <- delivery:
+			continue
 		default:
 		}
+		select {
+		case <-subscriber:
+			delivery.Gap = true
+		default:
+		}
+		subscriber <- delivery
 	}
 	snapshot := cloneSnapshot(next)
 	store.mu.Unlock()

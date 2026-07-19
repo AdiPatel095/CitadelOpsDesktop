@@ -9,16 +9,33 @@ import (
 )
 
 type Event struct {
-	Revision   uint64    `json:"revision"`
-	Domains    []string  `json:"domains"`
-	OccurredAt time.Time `json:"occurredAt"`
+	Sequence   uint64             `json:"sequence"`
+	Gap        bool               `json:"gap,omitempty"`
+	Revision   uint64             `json:"revision"`
+	Domains    []string           `json:"domains"`
+	Partitions []PartitionVersion `json:"partitions,omitempty"`
+	OccurredAt time.Time          `json:"occurredAt"`
 }
 
 type Mutation func(state *GameState) (domains []string, changed bool, err error)
 
+type ScopedChange struct {
+	Domains    []string
+	Partitions []PartitionKey
+	Changed    bool
+}
+
+type ScopedMutation func(state *GameState) (ScopedChange, error)
+
+type storeGeneration struct {
+	state    GameState
+	versions *partitionVersionSnapshot
+	protocol ProtocolContextState
+}
+
 type Store struct {
-	mu    sync.RWMutex
-	state GameState
+	writeMu    sync.Mutex
+	generation atomic.Pointer[storeGeneration]
 
 	subMu       sync.RWMutex
 	subscribers map[uint64]chan Event
@@ -29,44 +46,168 @@ func NewStore(initial GameState) *Store {
 	if initial.SchemaVersion == 0 {
 		initial = NewGameState()
 	}
-	return &Store{state: initial, subscribers: map[uint64]chan Event{}}
+	normalizeStateMaps(&initial)
+	normalizeFocusedCastle(&initial, 0)
+	owned := cloneGameState(initial)
+	store := &Store{subscribers: map[uint64]chan Event{}}
+	store.generation.Store(&storeGeneration{
+		state:    owned,
+		versions: &partitionVersionSnapshot{values: map[string]PartitionVersion{}},
+		protocol: initialProtocolContext(owned),
+	})
+	return store
 }
 
 func (store *Store) Revision() uint64 {
-	store.mu.RLock()
-	defer store.mu.RUnlock()
-	return store.state.Revision
+	generation := store.generation.Load()
+	if generation == nil {
+		return 0
+	}
+	return generation.state.Revision
 }
 
 func (store *Store) Snapshot() GameState {
-	store.mu.RLock()
-	defer store.mu.RUnlock()
-	return cloneGameState(store.state)
+	generation := store.generation.Load()
+	if generation == nil {
+		return NewGameState()
+	}
+	return cloneGameState(generation.state)
+}
+
+// SnapshotWithRevision returns a defensive snapshot and the revision from the
+// same immutable generation. Callers must not combine separate Snapshot and
+// Revision calls when the revision describes the returned body.
+func (store *Store) SnapshotWithRevision() (GameState, uint64) {
+	generation := store.generation.Load()
+	if generation == nil {
+		state := NewGameState()
+		return state, state.Revision
+	}
+	return cloneGameState(generation.state), generation.state.Revision
+}
+
+// PlanningView returns one immutable state generation and its capability
+// versions without cloning the full account. Callers must treat State as
+// read-only. Store mutations always clone before changing a generation.
+func (store *Store) PlanningView() PlanningView {
+	generation := store.generation.Load()
+	if generation == nil {
+		state := NewGameState()
+		return PlanningView{State: state}
+	}
+	return PlanningView{
+		State:           generation.state,
+		Partitions:      PartitionVersions{snapshot: generation.versions},
+		ProtocolContext: generation.protocol,
+	}
+}
+
+func (store *Store) PartitionVersions() []PartitionVersion {
+	generation := store.generation.Load()
+	if generation == nil {
+		return []PartitionVersion{}
+	}
+	return PartitionVersions{snapshot: generation.versions}.List()
+}
+
+func (store *Store) ProtocolContext() ProtocolContextState {
+	generation := store.generation.Load()
+	if generation == nil {
+		return ProtocolContextState{}
+	}
+	return generation.protocol
+}
+
+func (store *Store) Session() SessionState {
+	generation := store.generation.Load()
+	if generation == nil {
+		return SessionState{}
+	}
+	return cloneSessionState(generation.state.Session)
 }
 
 func (store *Store) Apply(mutation Mutation) (Event, error) {
 	if mutation == nil {
 		return Event{}, fmt.Errorf("state mutation is required")
 	}
-	store.mu.Lock()
-	candidate := cloneGameState(store.state)
-	domains, changed, err := mutation(&candidate)
+	return store.ApplyScoped(func(state *GameState) (ScopedChange, error) {
+		domains, changed, err := mutation(state)
+		return ScopedChange{Domains: domains, Changed: changed}, err
+	})
+}
+
+func (store *Store) ApplyScoped(mutation ScopedMutation) (Event, error) {
+	if mutation == nil {
+		return Event{}, fmt.Errorf("scoped state mutation is required")
+	}
+	store.writeMu.Lock()
+	defer store.writeMu.Unlock()
+	current := store.generation.Load()
+	if current == nil {
+		initial := NewGameState()
+		current = &storeGeneration{
+			state:    initial,
+			versions: &partitionVersionSnapshot{values: map[string]PartitionVersion{}},
+			protocol: initialProtocolContext(initial),
+		}
+	}
+	candidate := cloneGameState(current.state)
+	change, err := mutation(&candidate)
 	if err != nil {
-		store.mu.Unlock()
 		return Event{}, err
 	}
-	if !changed {
-		store.mu.Unlock()
-		return Event{Revision: store.state.Revision}, nil
+	if !change.Changed {
+		return Event{Revision: current.state.Revision}, nil
 	}
+	normalizeFocusedCastle(&candidate, current.protocol.FocusedCastleID)
 	candidate.Revision++
 	candidate.UpdatedAt = time.Now().UTC()
-	domains = normalizeDomains(domains)
-	store.state = candidate
-	event := Event{Revision: candidate.Revision, Domains: domains, OccurredAt: candidate.UpdatedAt}
-	store.mu.Unlock()
+	domains := normalizeDomains(change.Domains)
+	partitions := append(defaultPartitionKeys(candidate, domains), change.Partitions...)
+	partitionSnapshot, changedPartitions := advancePartitionVersions(
+		current.versions, partitions, candidate.Revision, candidate.UpdatedAt,
+	)
+	protocol := nextProtocolContext(current.protocol, candidate, domains, change.Partitions, candidate.UpdatedAt)
+	store.generation.Store(&storeGeneration{state: candidate, versions: partitionSnapshot, protocol: protocol})
+	event := Event{
+		Sequence: candidate.Revision, Revision: candidate.Revision, Domains: domains,
+		Partitions: changedPartitions, OccurredAt: candidate.UpdatedAt,
+	}
 	store.publish(event)
 	return event, nil
+}
+
+func normalizeFocusedCastle(state *GameState, preferred CastleID) {
+	if state == nil || len(state.Castles) == 0 {
+		return
+	}
+	selected := CastleID(0)
+	if preferred > 0 && state.Castles[preferred].Focused {
+		selected = preferred
+	}
+	if selected == 0 {
+		for castleID, castle := range state.Castles {
+			if castle.Focused && (selected == 0 || castleID < selected) {
+				selected = castleID
+			}
+		}
+	}
+	if selected == 0 {
+		return
+	}
+	for castleID, castle := range state.Castles {
+		focused := castleID == selected
+		if castle.Focused != focused {
+			castle.Focused = focused
+			state.Castles[castleID] = castle
+		}
+	}
+}
+
+func cloneSessionState(session SessionState) SessionState {
+	session.CooldownUntil = cloneTimePointer(session.CooldownUntil)
+	session.RetryAt = cloneTimePointer(session.RetryAt)
+	return session
 }
 
 func (store *Store) Subscribe(buffer int) (<-chan Event, func()) {
@@ -95,9 +236,64 @@ func (store *Store) publish(event Event) {
 	for _, channel := range store.subscribers {
 		select {
 		case channel <- event:
+			continue
 		default:
 		}
+
+		coalesced := event
+		select {
+		case pending := <-channel:
+			coalesced = coalesceEvents(pending, event)
+		default:
+		}
+		// The first send only fails when the buffered channel is full. After
+		// removing one pending event, no other Store publisher can refill it:
+		// ApplyScoped holds store.writeMu until publication completes.
+		channel <- coalesced
 	}
+}
+
+func coalesceEvents(left Event, right Event) Event {
+	merged := Event{
+		Sequence: left.Sequence,
+		Gap:      true,
+		Revision: left.Revision,
+		Domains:  normalizeDomains(append(append([]string(nil), left.Domains...), right.Domains...)),
+		Partitions: mergePartitionVersions(
+			append(append([]PartitionVersion(nil), left.Partitions...), right.Partitions...),
+		),
+		OccurredAt: left.OccurredAt,
+	}
+	if right.Revision > merged.Revision {
+		merged.Revision = right.Revision
+	}
+	if right.Sequence > merged.Sequence {
+		merged.Sequence = right.Sequence
+	}
+	if right.OccurredAt.After(merged.OccurredAt) {
+		merged.OccurredAt = right.OccurredAt
+	}
+	return merged
+}
+
+func mergePartitionVersions(versions []PartitionVersion) []PartitionVersion {
+	latest := make(map[string]PartitionVersion, len(versions))
+	for _, version := range versions {
+		canonical := version.Key.Canonical()
+		if current, found := latest[canonical]; !found || version.Version > current.Version {
+			latest[canonical] = version
+		}
+	}
+	keys := make([]string, 0, len(latest))
+	for key := range latest {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	out := make([]PartitionVersion, 0, len(keys))
+	for _, key := range keys {
+		out = append(out, latest[key])
+	}
+	return out
 }
 
 func normalizeDomains(domains []string) []string {
@@ -119,11 +315,16 @@ func cloneGameState(source GameState) GameState {
 	clone := source
 	clone.Player.Resources = cloneMap(source.Player.Resources)
 	clone.Player.Currencies = cloneMap(source.Player.Currencies)
+	clone.Player.LegendSkills.ActiveIDs = append([]int64(nil), source.Player.LegendSkills.ActiveIDs...)
+	clone.Player.LegendSkills.SceatSkillIDs = append([]int64(nil), source.Player.LegendSkills.SceatSkillIDs...)
+	clone.Player.LegendSkills.SceatActivations = append([]SceatSkillActivation(nil), source.Player.LegendSkills.SceatActivations...)
 	clone.Castles = make(map[CastleID]CastleState, len(source.Castles))
 	for id, castle := range source.Castles {
 		castle.Resources = make(map[ResourceID]ResourceBalance, len(source.Castles[id].Resources))
 		for resourceID, balance := range source.Castles[id].Resources {
 			balance.ProductionPerHour = cloneFloatPointer(balance.ProductionPerHour)
+			balance.ConsumptionPerHour = cloneFloatPointer(balance.ConsumptionPerHour)
+			balance.ConsumptionMultiplier = cloneFloatPointer(balance.ConsumptionMultiplier)
 			balance.Capacity = cloneFloatPointer(balance.Capacity)
 			castle.Resources[resourceID] = balance
 		}
@@ -132,7 +333,23 @@ func cloneGameState(source GameState) GameState {
 		castle.Units.Hospital = cloneMap(castle.Units.Hospital)
 		castle.Units.SpecialHospital = cloneMap(castle.Units.SpecialHospital)
 		castle.Units.Total = cloneMap(castle.Units.Total)
+		castle.Defense.RangedUnitIDs = append([]UnitID{}, castle.Defense.RangedUnitIDs...)
+		castle.Defense.MeleeUnitIDs = append([]UnitID{}, castle.Defense.MeleeUnitIDs...)
+		castle.Defense.Inventory = cloneMap(castle.Defense.Inventory)
+		castle.Defense.OpenGateUntil = cloneTimePointer(castle.Defense.OpenGateUntil)
+		castle.Defense.Wall.Left.ToolSlots = append([]DefenseToolSlot{}, castle.Defense.Wall.Left.ToolSlots...)
+		castle.Defense.Wall.Middle.ToolSlots = append([]DefenseToolSlot{}, castle.Defense.Wall.Middle.ToolSlots...)
+		castle.Defense.Wall.Right.ToolSlots = append([]DefenseToolSlot{}, castle.Defense.Wall.Right.ToolSlots...)
+		castle.Defense.Keep.PrimaryToolSlots = append([]DefenseToolSlot{}, castle.Defense.Keep.PrimaryToolSlots...)
+		castle.Defense.Keep.SecondaryToolSlots = append([]DefenseToolSlot{}, castle.Defense.Keep.SecondaryToolSlots...)
+		castle.Defense.Moat.LeftToolSlots = append([]DefenseToolSlot{}, castle.Defense.Moat.LeftToolSlots...)
+		castle.Defense.Moat.MiddleToolSlots = append([]DefenseToolSlot{}, castle.Defense.Moat.MiddleToolSlots...)
+		castle.Defense.Moat.RightToolSlots = append([]DefenseToolSlot{}, castle.Defense.Moat.RightToolSlots...)
 		castle.Buildings = cloneMap(castle.Buildings)
+		castle.Layout.Ground = cloneMap(castle.Layout.Ground)
+		castle.Layout.Objects = cloneMap(castle.Layout.Objects)
+		castle.Layout.Fixed = cloneMap(castle.Layout.Fixed)
+		castle.BuildingQueue.Slots = append([]BuildingConstructionQueueSlot(nil), castle.BuildingQueue.Slots...)
 		castle.ConstructionSlots = make(map[BuildingInstanceID][]ConstructionSlot, len(castle.ConstructionSlots))
 		for buildingID, slots := range source.Castles[id].ConstructionSlots {
 			clonedSlots := append([]ConstructionSlot(nil), slots...)
@@ -170,6 +387,11 @@ func cloneGameState(source GameState) GameState {
 		commander.Gems = cloneMap(commander.Gems)
 		clone.Commanders[id] = commander
 	}
+	clone.Generals = make(map[int64]GeneralState, len(source.Generals))
+	for id, general := range source.Generals {
+		general.ActiveSkillIDs = append([]int64(nil), general.ActiveSkillIDs...)
+		clone.Generals[id] = general
+	}
 	clone.Castellans = make(map[CastellanID]CastellanState, len(source.Castellans))
 	for id, castellan := range source.Castellans {
 		castellan.Equipment = cloneMap(castellan.Equipment)
@@ -201,6 +423,7 @@ func cloneGameState(source GameState) GameState {
 		launch.Body = append([]byte(nil), launch.Body...)
 		clone.Rift.Launches[id] = launch
 	}
+	clone.Rift.DeletedLaunchIDs = cloneMap(source.Rift.DeletedLaunchIDs)
 	clone.Inventory.ConstructionItems = cloneMap(source.Inventory.ConstructionItems)
 	clone.Inventory.ConstructionOffers = cloneMap(source.Inventory.ConstructionOffers)
 	clone.Inventory.Equipment = make(map[EquipmentInstanceID]EquipmentInstance, len(source.Inventory.Equipment))
@@ -233,6 +456,10 @@ func cloneGameState(source GameState) GameState {
 	for index := range clone.KingdomTransport.Pending {
 		clone.KingdomTransport.Pending[index].Goods = append([]KingdomTransportGood(nil), source.KingdomTransport.Pending[index].Goods...)
 	}
+	clone.KingdomTransport.PendingUnits = append([]KingdomUnitTransport(nil), source.KingdomTransport.PendingUnits...)
+	for index := range clone.KingdomTransport.PendingUnits {
+		clone.KingdomTransport.PendingUnits[index].Units = append([]KingdomTransportUnit(nil), source.KingdomTransport.PendingUnits[index].Units...)
+	}
 	clone.Beri.TroopsByUnit = cloneMap(source.Beri.TroopsByUnit)
 	clone.Alliance.Members = append([]AllianceMember{}, source.Alliance.Members...)
 	clone.Alliance.Holdings = append([]AllianceHolding{}, source.Alliance.Holdings...)
@@ -246,6 +473,47 @@ func cloneGameState(source GameState) GameState {
 	for kingdomID, observations := range source.Map {
 		clone.Map[kingdomID] = cloneMap(observations)
 	}
+	clone.TowerCooldowns = cloneMap(source.TowerCooldowns)
+	clone.TowerQueue.EntriesByCastle = make(map[CastleID][]TowerQueueEntry, len(source.TowerQueue.EntriesByCastle))
+	for castleID, entries := range source.TowerQueue.EntriesByCastle {
+		clone.TowerQueue.EntriesByCastle[castleID] = append([]TowerQueueEntry(nil), entries...)
+	}
+	clone.TowerQueue.LastScannedAt = cloneMap(source.TowerQueue.LastScannedAt)
+	clone.Invasion.LastScannedAt = cloneMap(source.Invasion.LastScannedAt)
+	clone.Invasion.FortifiedTargets = cloneMap(source.Invasion.FortifiedTargets)
+	clone.Storm.LastScannedAt = cloneMap(source.Storm.LastScannedAt)
+	clone.Storm.Map.Targets = cloneMap(source.Storm.Map.Targets)
+	clone.Storm.IslandReturns = make(map[string]StormIslandReturnState, len(source.Storm.IslandReturns))
+	for key, operation := range source.Storm.IslandReturns {
+		operation.Survivors = cloneMap(operation.Survivors)
+		clone.Storm.IslandReturns[key] = operation
+	}
+	clone.NomadCamps.LastScannedAt = cloneMap(source.NomadCamps.LastScannedAt)
+	clone.NomadCamps.Cooldowns = cloneMap(source.NomadCamps.Cooldowns)
+	if source.NomadCamps.LockedTarget != nil {
+		lockedTarget := *source.NomadCamps.LockedTarget
+		clone.NomadCamps.LockedTarget = &lockedTarget
+	}
+	if source.NomadCamps.RBCTest != nil {
+		rbcTest := *source.NomadCamps.RBCTest
+		rbcTest.Launches = append([]NomadRBCTestLaunch(nil), source.NomadCamps.RBCTest.Launches...)
+		clone.NomadCamps.RBCTest = &rbcTest
+	}
+	clone.Khan.Launches = append([]KhanLaunchState(nil), source.Khan.Launches...)
+	clone.Khan.Taunts = cloneMap(source.Khan.Taunts)
+	clone.AttackDialog.ActiveEffects = append([]AttackDialogEffect(nil), source.AttackDialog.ActiveEffects...)
+	for index := range clone.AttackDialog.ActiveEffects {
+		clone.AttackDialog.ActiveEffects[index].Values = append([]float64(nil), source.AttackDialog.ActiveEffects[index].Values...)
+	}
+	clone.AttackPresets = append([]AttackPreset(nil), source.AttackPresets...)
+	for presetIndex := range clone.AttackPresets {
+		for lane := range clone.AttackPresets[presetIndex].Units {
+			clone.AttackPresets[presetIndex].Units[lane] = append([]AttackPresetStack(nil), source.AttackPresets[presetIndex].Units[lane]...)
+			clone.AttackPresets[presetIndex].Tools[lane] = append([]AttackPresetStack(nil), source.AttackPresets[presetIndex].Tools[lane]...)
+		}
+	}
+	clone.EventScores.ByEvent = cloneMap(source.EventScores.ByEvent)
+	clone.EventScores.ShopByPackage = cloneMap(source.EventScores.ShopByPackage)
 	clone.CommandContext.ProductionObservedAt = cloneTimePointer(source.CommandContext.ProductionObservedAt)
 	clone.Automations = make(map[string]AutomationState, len(source.Automations))
 	for id, automation := range source.Automations {

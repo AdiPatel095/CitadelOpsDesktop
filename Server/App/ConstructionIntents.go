@@ -8,7 +8,6 @@ import (
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
-	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
@@ -78,6 +77,7 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 		Position  int             `json:"_PO"`
 	}{request.ProductID, 0, 116, request.Amount, castle.KingdomID, castle.ID, -1, 0, 0, -1})
 	steps := castleContextSteps(castle)
+	steps = append(steps, constructionShopContextSteps(castle)...)
 	steps = append(steps, commandStep("Buy construction item", "sbp", payload, "sbp"))
 	return Intent.Plan{
 		Claims: []string{
@@ -87,11 +87,4 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 		Summary: fmt.Sprintf("Buy construction-item package %d from %s", request.ProductID, castleLabel(castle)),
 		Steps:   steps,
 	}, nil
-}
-
-func constructionMenuStep() Intent.Step {
-	return Intent.Step{
-		Name: "Open construction-item menu", Opcode: "aec",
-		Command: Protocol.Command{Opcode: "aec", Route: "0", Payload: json.RawMessage(`[]`)},
-	}
 }

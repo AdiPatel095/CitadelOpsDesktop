@@ -19,13 +19,65 @@ type UnitDefinition struct {
 }
 
 type BuildingDefinition struct {
-	ID                       int64   `json:"id"`
-	InternalName             string  `json:"internalName,omitempty"`
-	Type                     string  `json:"type,omitempty"`
-	Group                    string  `json:"group,omitempty"`
-	Level                    int64   `json:"level,omitempty"`
-	ConstructionItemGroupIDs []int64 `json:"constructionItemGroupIds,omitempty"`
-	DisplayName              string  `json:"displayName"`
+	ID                       int64                    `json:"id"`
+	InternalName             string                   `json:"internalName,omitempty"`
+	Type                     string                   `json:"type,omitempty"`
+	Group                    string                   `json:"group,omitempty"`
+	ShopCategory             string                   `json:"shopCategory,omitempty"`
+	GroundType               string                   `json:"groundType,omitempty"`
+	Level                    int64                    `json:"level,omitempty"`
+	Width                    int                      `json:"width,omitempty"`
+	Height                   int                      `json:"height,omitempty"`
+	RotateType               int                      `json:"rotateType,omitempty"`
+	UpgradeDefinitionID      int64                    `json:"upgradeDefinitionId,omitempty"`
+	DowngradeDefinitionID    int64                    `json:"downgradeDefinitionId,omitempty"`
+	RequiredLevel            *int64                   `json:"requiredLevel,omitempty"`
+	RequiredLegendLevel      *int64                   `json:"requiredLegendLevel,omitempty"`
+	EarlyUnlockRequiredLevel *int64                   `json:"earlyUnlockRequiredLevel,omitempty"`
+	MaximumCount             *int64                   `json:"maximumCount,omitempty"`
+	KingdomIDs               []int64                  `json:"kingdomIds,omitempty"`
+	EventIDs                 []int64                  `json:"eventIds,omitempty"`
+	AreaTypeIDs              []int64                  `json:"areaTypeIds,omitempty"`
+	MapIDs                   []int64                  `json:"mapIds,omitempty"`
+	DurationSec              int64                    `json:"durationSec,omitempty"`
+	LowLevelDurationSec      int64                    `json:"lowLevelDurationSec,omitempty"`
+	ForcedPosition           string                   `json:"forcedPosition,omitempty"`
+	Storeable                *bool                    `json:"storeable,omitempty"`
+	Movable                  *bool                    `json:"movable,omitempty"`
+	Destructable             *bool                    `json:"destructable,omitempty"`
+	BattleGround             *bool                    `json:"battleGround,omitempty"`
+	District                 *bool                    `json:"district,omitempty"`
+	ConstructionItemGroupIDs []int64                  `json:"constructionItemGroupIds,omitempty"`
+	UnlockIDs                []int64                  `json:"unlockIds,omitempty"`
+	QuestObjectives          []BuildingQuestObjective `json:"questObjectives,omitempty"`
+	Costs                    []BuildingCost           `json:"costs"`
+	Values                   map[string]float64       `json:"values"`
+	LocalizationKeys         []string                 `json:"localizationKeys,omitempty"`
+	DisplayName              string                   `json:"displayName"`
+}
+
+type BuildingCost struct {
+	Field        string  `json:"field"`
+	Key          string  `json:"key"`
+	Scope        string  `json:"scope"`
+	DefinitionID int64   `json:"definitionId,omitempty"`
+	Amount       float64 `json:"amount"`
+	Premium      bool    `json:"premium"`
+}
+
+type BuildingQuestObjective struct {
+	QuestID             int64   `json:"questId"`
+	RequiredCount       int64   `json:"requiredCount"`
+	RequiredLevel       *int64  `json:"requiredLevel,omitempty"`
+	RequiredLegendLevel *int64  `json:"requiredLegendLevel,omitempty"`
+	RequiredQuestID     int64   `json:"requiredQuestId,omitempty"`
+	OrRequiredQuestID   int64   `json:"orRequiredQuestId,omitempty"`
+	EventID             int64   `json:"eventId,omitempty"`
+	ShownKingdomID      int64   `json:"shownKingdomId"`
+	TriggerKingdomID    int64   `json:"triggerKingdomId"`
+	XP                  float64 `json:"xp,omitempty"`
+	Hidden              bool    `json:"hidden"`
+	SortPriority        int64   `json:"sortPriority,omitempty"`
 }
 
 type ConstructionItemDefinition struct {
@@ -132,15 +184,20 @@ func (manager *Manager) Building(id int64) (BuildingDefinition, error) {
 	if err != nil {
 		return BuildingDefinition{}, err
 	}
-	return BuildingDefinition{
-		ID:                       id,
-		InternalName:             stringValue(record, "name"),
-		Type:                     stringValue(record, "type"),
-		Group:                    stringValue(record, "group"),
-		Level:                    intValue(record, "level"),
-		ConstructionItemGroupIDs: intList(record, "constructionItemGroupIDs"),
-		DisplayName:              manager.displayName(record, strconv.FormatInt(id, 10)),
-	}, nil
+	store, ready := manager.Current()
+	if !ready {
+		return BuildingDefinition{}, fmt.Errorf("official game data is unavailable")
+	}
+	catalog, err := store.BuildingCatalog()
+	if err != nil {
+		return BuildingDefinition{}, err
+	}
+	definition, found := catalog.Definition(id)
+	if !found {
+		return BuildingDefinition{}, fmt.Errorf("buildings definition %d was not found", id)
+	}
+	definition.DisplayName = manager.displayName(record, strconv.FormatInt(id, 10))
+	return definition, nil
 }
 
 func (manager *Manager) ConstructionItem(id int64) (ConstructionItemDefinition, error) {

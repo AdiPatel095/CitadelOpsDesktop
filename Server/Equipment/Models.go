@@ -35,9 +35,10 @@ type CandidateCounts struct {
 }
 
 type OptimizeResponse struct {
-	LeaderKind string          `json:"leaderKind"`
-	LeaderID   int64           `json:"leaderId"`
-	Current    Loadout         `json:"current"`
-	Proposed   Loadout         `json:"proposed"`
-	Candidates CandidateCounts `json:"candidates"`
+	LeaderKind    string          `json:"leaderKind"`
+	LeaderID      int64           `json:"leaderId"`
+	StateRevision uint64          `json:"stateRevision"`
+	Current       Loadout         `json:"current"`
+	Proposed      Loadout         `json:"proposed"`
+	Candidates    CandidateCounts `json:"candidates"`
 }

@@ -170,7 +170,7 @@ func (catalog *Catalog) Find(id string) (json.RawMessage, bool) {
 func (catalog *Catalog) FindByField(field string, value string) (json.RawMessage, bool) {
 	field = strings.TrimSpace(field)
 	value = strings.TrimSpace(value)
-	if field == "" || value == "" || !containsString(catalog.fields, field) {
+	if field == "" || value == "" {
 		return nil, false
 	}
 	if field == catalog.primaryKey {
@@ -220,23 +220,29 @@ var preferredPrimaryKeys = []string{
 }
 
 var collectionPrimaryKeys = map[string]string{
-	"buildings":         "wodID",
-	"units":             "wodID",
-	"constructionItems": "constructionItemID",
-	"packages":          "packageID",
-	"resources":         "resourceID",
-	"currencies":        "currencyID",
-	"effects":           "effectID",
-	"effecttypes":       "effectTypeID",
-	"effectCaps":        "capID",
-	"equipment_effects": "equipmentEffectID",
-	"relicEffects":      "id",
-	"relicTypes":        "id",
-	"equipments":        "equipmentID",
-	"gems":              "gemID",
-	"rewards":           "rewardID",
-	"craftingRecipes":   "craftingRecipeId",
-	"kingdoms":          "kID",
+	"achievements":                 "achievementID",
+	"buildings":                    "wodID",
+	"units":                        "wodID",
+	"constructionItems":            "constructionItemID",
+	"packages":                     "packageID",
+	"resources":                    "resourceID",
+	"currencies":                   "currencyID",
+	"effects":                      "effectID",
+	"effecttypes":                  "effectTypeID",
+	"effectCaps":                   "capID",
+	"equipment_effects":            "equipmentEffectID",
+	"generalSkills":                "skillID",
+	"legendskills":                 "skillID",
+	"sceatSkills":                  "skillID",
+	"relicEffects":                 "id",
+	"relicTypes":                   "id",
+	"equipments":                   "equipmentID",
+	"gems":                         "gemID",
+	"rewards":                      "rewardID",
+	"craftingRecipes":              "craftingRecipeId",
+	"eventAutoScalingCamps":        "eventAutoScalingCampID",
+	"eventAutoScalingDifficulties": "difficultyID",
+	"kingdoms":                     "kID",
 }
 
 func discoverSchema(rows []json.RawMessage) ([]string, string) {

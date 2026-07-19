@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { ResourceBalanceV2 } from '../../api/Contracts';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
+import { SectionCard } from '../../components/ui';
 import { useMetadata } from '../../context/MetadataContext';
 
 interface CastleResourceCardProps {
@@ -71,11 +71,13 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resource
     .sort((left, right) => right.id - left.id), [definitions, resources]);
 
   return (
-    <Card className="liquid-prominent-header-card flex min-h-0 flex-col">
-      <CardHeader className="liquid-card-header-prominent">
-        <CardTitle className="text-primary">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="liquid-prominent-header-content custom-scrollbar flex flex-col gap-2 overflow-y-auto">
+    <SectionCard
+      variant="glass"
+      title={title}
+      titleClassName="text-primary"
+      className="flex min-h-0 flex-col"
+      contentClassName="custom-scrollbar flex flex-col gap-2 overflow-y-auto"
+    >
         {rows.map(({ id, balance, definition }) => {
           const amount = balance.amount ?? 0;
           const capacity = balance.capacity ?? 0;
@@ -102,8 +104,7 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resource
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 };
 

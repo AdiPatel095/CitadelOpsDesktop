@@ -10,6 +10,7 @@ export interface AutoStationClientStateV1 {
   leadTimeSec: number;
   recallWhenClear: boolean;
   minRPTDays: number;
+  openGateFallback: boolean;
   settings: Record<string, AutoStationTroopReserve[]>;
 }
 
@@ -18,6 +19,7 @@ export const DEFAULT_AUTO_STATION_STATE: AutoStationClientStateV1 = {
   leadTimeSec: 60,
   recallWhenClear: true,
   minRPTDays: 3,
+  openGateFallback: false,
   settings: {},
 };
 
@@ -52,6 +54,7 @@ export function parseAutoStationClientState(raw: unknown): AutoStationClientStat
     leadTimeSec: clampInteger(source.leadTimeSec, 60, 60, 3600),
     recallWhenClear: source.recallWhenClear !== false,
     minRPTDays: clampInteger(source.minRPTDays, 3, 0, 30),
+    openGateFallback: source.openGateFallback === true,
     settings,
   };
 }

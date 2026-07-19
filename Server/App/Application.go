@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"CitadelDesktop/Server/API"
@@ -21,6 +22,7 @@ import (
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Reports"
+	RuntimeKernel "CitadelDesktop/Server/Runtime"
 	"CitadelDesktop/Server/Scheduling"
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
@@ -39,28 +41,45 @@ type Config struct {
 }
 
 type Application struct {
-	DataDir       string
-	State         *State.Store
-	GameData      *GameData.Manager
-	Configuration *Configuration.Store
-	History       *History.Store
-	Telemetry     *Telemetry.Store
-	Ingest        *Ingest.Pipeline
-	Session       *Session.Controller
-	Intents       *Intent.Engine
-	Automation    *Automation.Coordinator
-	Reports       *Reports.Manager
-	Scheduler     *Scheduling.Scheduler
-	API           *API.Server
-	Updates       *AppUpdate.Manager
-	Diagnostics   *Diagnostics.Monitor
-	StartupErr    error
+	DataDir        string
+	State          *State.Store
+	GameData       *GameData.Manager
+	Configuration  *Configuration.Store
+	History        *History.Store
+	Telemetry      *Telemetry.Store
+	Ingest         *Ingest.Pipeline
+	Session        *Session.Controller
+	Intents        *Intent.Engine
+	OperationStore *Intent.SQLiteOperationStore
+	ProfileLease   *RuntimeKernel.ProfileLease
+	Automation     *Automation.Coordinator
+	Reports        *Reports.Manager
+	Scheduler      *Scheduling.Scheduler
+	API            *API.Server
+	Updates        *AppUpdate.Manager
+	Diagnostics    *Diagnostics.Monitor
+	StartupErr     error
+
+	statePersistenceMu  sync.Mutex
+	persistenceHealthMu sync.RWMutex
+	statePersistenceErr error
+	startOnce           sync.Once
 }
 
 func New(ctx context.Context, config Config) (*Application, error) {
 	if config.DataDir == "" {
 		return nil, fmt.Errorf("application data directory is required")
 	}
+	profileLease, err := RuntimeKernel.AcquireProfileLease(config.DataDir)
+	if err != nil {
+		return nil, err
+	}
+	closeProfileLease := true
+	defer func() {
+		if closeProfileLease {
+			_ = profileLease.Close()
+		}
+	}()
 	configuration, err := Configuration.Open(config.DataDir, defaultConfiguration())
 	if err != nil {
 		return nil, err
@@ -99,7 +118,11 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		return nil, fmt.Errorf("register protocol reducers: %w", err)
 	}
 	ingest := Ingest.NewPipeline(state, gameData, registry)
+	ingest.SetProfileID(profileLease.ProfileID)
 	telemetry := Telemetry.NewStore(5000)
+	if telemetryErr := telemetry.SetDataDir(config.DataDir); telemetryErr != nil {
+		startupErr = errors.Join(startupErr, fmt.Errorf("initialize logger: %w", telemetryErr))
+	}
 	ingest.SetTelemetry(telemetry)
 	transport := config.Transport
 	if transport == nil {
@@ -111,11 +134,26 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	}
 	session := Session.NewController(runtimeContext, transport, ingest, state)
 	intentRegistry := Intent.NewRegistry()
+	intentRegistry.EnforceResourceDeclarations()
 	intents := Intent.NewEngine(intentRegistry, state, gameData, session, ingest)
+	operationStore, err := Intent.OpenOperationStore(config.DataDir)
+	if err != nil {
+		return nil, fmt.Errorf("open intent operation store: %w", err)
+	}
+	closeOperationStore := true
+	defer func() {
+		if closeOperationStore {
+			_ = operationStore.Close()
+		}
+	}()
+	if err := intents.SetOperationStore(ctx, operationStore); err != nil {
+		return nil, fmt.Errorf("recover intent operations: %w", err)
+	}
 	application := &Application{
 		DataDir: config.DataDir,
 		State:   state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
-		Ingest: ingest, Session: session, Intents: intents, StartupErr: startupErr,
+		Ingest: ingest, Session: session, Intents: intents, OperationStore: operationStore,
+		ProfileLease: profileLease, StartupErr: startupErr,
 		Updates: AppUpdate.NewManager(AppUpdate.Config{
 			CurrentVersion: Version, Endpoint: config.UpdateEndpoint,
 			InstallSupported: config.UpdateInstallSupported,
@@ -123,13 +161,23 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Diagnostics: Diagnostics.NewMonitor(config.DataDir),
 	}
 	session.SetAttackDelayProvider(application.attackLaunchDelay)
-	session.SetManualFocusHoldProvider(application.manualFocusHold)
+	session.SetAutomationLocked(application.automationLocked())
 	intents.SetExecutionGate(application.executionGate)
+	intents.SetAdmissionWeightProvider(application.attackAdmissionWeight)
 	application.Scheduler = Scheduling.NewScheduler(state, intents)
 	if err := application.registerCoreIntents(); err != nil {
 		return nil, err
 	}
 	if err := application.registerGameIntents(); err != nil {
+		return nil, err
+	}
+	if err := application.registerBuildingIntents(); err != nil {
+		return nil, err
+	}
+	if err := application.registerShopIntents(); err != nil {
+		return nil, err
+	}
+	if err := application.registerStormIntents(); err != nil {
 		return nil, err
 	}
 	application.Automation = Automation.NewCoordinator(
@@ -142,16 +190,45 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewAutoBirdPolicy(),
 		Automation.NewAutoStationPolicy(),
 		Automation.NewBeriPolicy(),
+		Automation.NewFoodBalancePolicy(),
+		Automation.NewAutoTowerPolicy(),
+		Automation.NewAutoInvasionPolicy(),
+		Automation.NewAutoNomadPolicy(),
+		Automation.NewAutoKhanPolicy(),
+		Automation.NewAutoStormPolicy(),
 	)
 	application.Reports = Reports.NewManager(state, history, intents)
 	application.API = API.NewServer(API.Config{
 		Version: Version, State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
 		Intents: intents, Session: session, Updates: application.Updates, Diagnostics: application.Diagnostics,
+		Persistence: application,
 	})
+	closeOperationStore = false
+	closeProfileLease = false
 	return application, nil
 }
 
 func (application *Application) Start(ctx context.Context) {
+	if application == nil {
+		return
+	}
+	application.startOnce.Do(func() {
+		application.start(ctx)
+	})
+}
+
+func (application *Application) start(ctx context.Context) {
+	go application.captureIntentLogs(ctx)
+	go func() {
+		<-ctx.Done()
+		application.Telemetry.Close()
+		if application.OperationStore != nil {
+			_ = application.OperationStore.Close()
+		}
+		if application.ProfileLease != nil {
+			_ = application.ProfileLease.Close()
+		}
+	}()
 	go application.Updates.Run(ctx)
 	go func() {
 		ticker := time.NewTicker(GameDataRefreshInterval)
@@ -169,9 +246,43 @@ func (application *Application) Start(ctx context.Context) {
 	}()
 	go application.capturePlayerHistory(ctx)
 	go application.persistState(ctx)
+	go application.runMovementClock(ctx)
 	go application.Automation.Run(ctx)
 	go application.Reports.Run(ctx)
 	go application.Scheduler.Run(ctx)
+}
+
+func (application *Application) captureIntentLogs(ctx context.Context) {
+	if application == nil || application.Intents == nil || application.Telemetry == nil {
+		return
+	}
+	events, unsubscribe := application.Intents.Subscribe(512)
+	defer unsubscribe()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case receipt := <-events:
+			application.recordIntentLog(receipt)
+		}
+	}
+}
+
+func (application *Application) recordIntentLog(receipt Intent.Receipt) {
+	if application == nil || application.Telemetry == nil {
+		return
+	}
+	detail := ""
+	if receipt.Plan != nil {
+		detail = receipt.Plan.Summary
+	}
+	if receipt.Error != "" {
+		if detail != "" {
+			detail += ": "
+		}
+		detail += receipt.Error
+	}
+	application.Telemetry.RecordIntent(receipt.Actor, receipt.Intent, string(receipt.Status), receipt.ID, detail)
 }
 
 func (application *Application) persistState(ctx context.Context) {
@@ -179,8 +290,8 @@ func (application *Application) persistState(ctx context.Context) {
 	defer unsubscribe()
 	var timer *time.Timer
 	var timerChannel <-chan time.Time
-	flush := func() {
-		_ = State.SaveSnapshot(application.DataDir, application.State.Snapshot())
+	flush := func() bool {
+		return application.saveStateSnapshot() == nil
 	}
 	for {
 		select {
@@ -198,11 +309,48 @@ func (application *Application) persistState(ctx context.Context) {
 				timer.Reset(2 * time.Second)
 			}
 		case <-timerChannel:
-			flush()
-			timer = nil
-			timerChannel = nil
+			if flush() {
+				timer = nil
+				timerChannel = nil
+			} else {
+				timer = time.NewTimer(2 * time.Second)
+				timerChannel = timer.C
+			}
 		}
 	}
+}
+
+func (application *Application) saveStateSnapshot() error {
+	if application == nil || application.State == nil || strings.TrimSpace(application.DataDir) == "" {
+		return nil
+	}
+	application.statePersistenceMu.Lock()
+	defer application.statePersistenceMu.Unlock()
+	err := State.SaveSnapshot(application.DataDir, application.State.Snapshot())
+	application.persistenceHealthMu.Lock()
+	application.statePersistenceErr = err
+	application.persistenceHealthMu.Unlock()
+	return err
+}
+
+func (application *Application) PersistenceError() error {
+	if application == nil {
+		return nil
+	}
+	application.persistenceHealthMu.RLock()
+	stateErr := application.statePersistenceErr
+	application.persistenceHealthMu.RUnlock()
+	var operationErr error
+	if application.Intents != nil {
+		operationErr = application.Intents.PersistenceError()
+	}
+	if stateErr != nil {
+		stateErr = fmt.Errorf("state snapshot persistence: %w", stateErr)
+	}
+	if operationErr != nil {
+		operationErr = fmt.Errorf("operation journal persistence: %w", operationErr)
+	}
+	return errors.Join(stateErr, operationErr)
 }
 
 func (application *Application) capturePlayerHistory(ctx context.Context) {
@@ -264,7 +412,12 @@ func (application *Application) registerCoreIntents() error {
 			if err != nil {
 				return err
 			}
-			_, err = application.Configuration.UpdateExpected(update.Section, update.Value, update.ExpectedRevision)
+			_, err = application.Configuration.UpdateConditional(
+				update.Section, update.Value, update.ExpectedRevision, update.ExpectedValue,
+			)
+			if err == nil && update.Section == "scheduler" {
+				application.Session.SetAutomationLocked(application.automationLocked())
+			}
 			return err
 		},
 		"game_data.refresh":  ignoreArguments(application.refreshGameData),
@@ -422,9 +575,10 @@ func browserPreference(arguments json.RawMessage) (string, error) {
 }
 
 type configurationUpdate struct {
-	Section          string          `json:"section"`
-	Value            json.RawMessage `json:"value"`
-	ExpectedRevision *uint64         `json:"expectedRevision,omitempty"`
+	Section          string           `json:"section"`
+	Value            json.RawMessage  `json:"value"`
+	ExpectedRevision *uint64          `json:"expectedRevision,omitempty"`
+	ExpectedValue    *json.RawMessage `json:"expectedValue,omitempty"`
 }
 
 func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, error) {
@@ -436,13 +590,26 @@ func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, 
 	if err := Configuration.Validate(input.Section, input.Value); err != nil {
 		return input, err
 	}
+	if input.ExpectedValue != nil {
+		if err := Configuration.Validate(input.Section, *input.ExpectedValue); err != nil {
+			return input, fmt.Errorf("expected configuration value: %w", err)
+		}
+	}
 	return input, nil
 }
 
 func defaultConfiguration() map[string]json.RawMessage {
 	return map[string]json.RawMessage{
-		"scheduler":                json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"manualFocusIdleSec":30,"featureSchedules":{}}`),
-		"automation.enabled":       json.RawMessage(`{}`),
-		"automation.autoBeriWorld": json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30}`),
+		"scheduler":                    json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"botLocked":false,"attackPriorities":{"autoTowers":50,"autoStorm":50,"riftMaiden":50,"riftReplay":50},"featureSchedules":{}}`),
+		"automation.enabled":           json.RawMessage(`{}`),
+		"automation.autoBeriWorld":     json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30}`),
+		"automation.commanderFeatures": json.RawMessage(`{"version":1,"assignments":{}}`),
+		"automation.autoFoodBalance":   json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true}`),
+		"automation.autoTowers":        json.RawMessage(`{"version":2,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"horseTravelBoostId":-1,"castles":{}}`),
+		"automation.autoInvasion":      json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"fortifyCurrency":"","horseTravelBoostId":-1}`),
+		"automation.autoNomad":         json.RawMessage(`{"version":4,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
+		"automation.autoKhan":          json.RawMessage(`{"version":1,"sourceCastleId":0,"attackPresetId":"","defensePresetId":"","minimumRemainingSec":300,"checkIntervalSec":30,"defenseRefreshIntervalSec":30,"mapRefreshIntervalSec":30,"skipCooldowns":true,"timeSkipReserve":{},"openGateProtection":true,"offensiveUnitThreshold":1000,"horseTravelBoostId":-1,"nomadPointThreshold":0,"replenishDefenseTools":false}`),
+		"automation.autoStorm":         json.RawMessage(`{"version":1,"decorationPresetCastleId":0,"decorationPresetId":"","build":{"allowPremium":false,"allowDemolition":false,"allowResourceTransport":true,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"harbor":{"enabled":false,"targetLevel":1},"forts":{"enabled":false,"levels":[40,50,60,70,80],"minimumWins":0,"presetId":""},"islands":{"enabled":false,"resources":["wood","stone","aquamarine"],"sizes":["large","small"],"presetId":"","defenseUnits":[]},"troopImport":{"enabled":false,"donorCastleIds":[]},"aquamarine":{"reserve":0,"shopTableId":0,"purchases":[]},"combatOrder":"forts_first","checkIntervalSec":30,"mapRefreshIntervalSec":21600,"horseTravelBoostId":-1}`),
+		"rift.attackPreferences":       json.RawMessage(`{"version":1,"replayHorseTravelBoostId":-1,"maidenHorseTravelBoostId":-1}`),
 	}
 }

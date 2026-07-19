@@ -91,7 +91,6 @@ func planBeriTransfer(_ context.Context, input Intent.PlanningContext, arguments
 		Summary: fmt.Sprintf("Transfer %d of unit %d from %s to Berimond", request.Amount, request.UnitID, castleLabel(source)),
 		Steps: []Intent.Step{
 			commandStep("Transfer troops to Berimond", "kut", payload, "kut"),
-			{Name: "Allow the transfer movement to commit", DelayMillis: 500},
 			commandStep("Apply Berimond transfer speed-up", "msk", json.RawMessage(`{"MST":"MS5","KID":"10","TT":"1"}`), "msk"),
 			{Name: "Consume refreshed Berimond capacity", Action: "beri.consume_capacity", ActionArguments: consume},
 		},

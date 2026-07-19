@@ -3,6 +3,8 @@ package GameData
 import (
 	"fmt"
 	"math"
+
+	"CitadelDesktop/Server/State"
 )
 
 const marketBaseCapacityPerBarrow = 100
@@ -41,6 +43,19 @@ func (store *Store) MarketBarrowsForConstructionItem(definitionID int64) (int, e
 		return 0, err
 	}
 	return projection.barrowsByConstructionItem[definitionID], nil
+}
+
+func (store *Store) CastleHasMarketplace(castle State.CastleState) (bool, error) {
+	projection, err := store.marketData()
+	if err != nil {
+		return false, err
+	}
+	for _, building := range castle.Buildings {
+		if projection.barrowsByBuilding[int64(building.DefinitionID)] > 0 {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (store *Store) MarketCapacity(caravanLevel int, effects []MarketEffect) (MarketCapacity, error) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Save } from 'lucide-react';
-import { Badge, Button, Modal } from '../../components/ui';
+import { CalendarDays } from 'lucide-react';
+import { Badge, SettingsModal } from '../../components/ui';
 import {
   createEmptyWeeklySchedule,
   normalizeFeatureSchedules,
@@ -167,34 +167,18 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
   };
 
   return (
-    <Modal
+    <SettingsModal
       isOpen={isOpen && !!featureID}
       onClose={onClose}
       maxWidth="full"
-      title={
-        <div className="scheduler-modal-title">
-          <span className="scheduler-modal-title-mark" aria-hidden="true">
-            <CalendarDays className="h-5 w-5" />
-          </span>
-          <span className="scheduler-modal-title-text">{featureLabel} Schedule</span>
-          {isDirty && <Badge variant="warning">Unsaved</Badge>}
-        </div>
-      }
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>
-            Close
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            disabled={!isDirty || saving}
-            leftIcon={<Save className="h-4 w-4" />}
-          >
-            {saving ? 'Saving…' : 'Save Schedule'}
-          </Button>
-        </>
-      }
+      title={`${featureLabel} Schedule`}
+      icon={<CalendarDays className="h-5 w-5" />}
+      titleTrailing={isDirty ? <Badge variant="warning">Unsaved</Badge> : undefined}
+      onSave={handleSave}
+      saveLabel="Save Schedule"
+      saveDisabled={!isDirty}
+      isSaving={saving}
+      cancelLabel="Close"
     >
       <div className="scheduler-modal-shell">
         {saveError && <p className="mb-3 text-xs text-error">{saveError}</p>}
@@ -204,6 +188,6 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
           slotOptionsConfig={slotOptionsConfig}
         />
       </div>
-    </Modal>
+    </SettingsModal>
   );
 };

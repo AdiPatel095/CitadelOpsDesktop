@@ -16,7 +16,7 @@ import {
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import type { FoodFilter, RoleFilter, TypeFilter } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector } from '../../components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector, Select } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { Notifications } from '../../components/Notifications';
@@ -121,6 +121,8 @@ const CORE_METRIC_DEFINITIONS: MetricDefinition[] = [
   { key: 'troopsTotal', label: 'Total troops', shortLabel: 'Troops', color: '#a78bfa', icon: Swords, category: 'Troops' },
 ];
 
+const HIGHLIGHT_METRIC_KEYS = new Set<MetricKey>(['might', 'glory', 'coins', 'rubies']);
+
 const ranges: Array<{ key: RangeKey; label: string; seconds: number | null }> = [
   { key: '24h', label: '24H', seconds: 24 * 60 * 60 },
   { key: '7d', label: '7D', seconds: 7 * 24 * 60 * 60 },
@@ -144,7 +146,7 @@ const MetricIcon = ({ definition, className }: { definition: MetricDefinition; c
   useEffect(() => setImageFailed(false), [definition.imageUrl]);
 
   if (definition.imageUrl && !imageFailed) {
-    return <img src={definition.imageUrl} alt="" className={`${className} shrink-0 object-contain`} onError={() => setImageFailed(true)} />;
+    return <img src={definition.imageUrl} alt="" loading="lazy" decoding="async" className={`${className} shrink-0 object-contain`} onError={() => setImageFailed(true)} />;
   }
 
   return <FallbackIcon className={`${className} shrink-0`} style={{ color: definition.color }} />;
@@ -162,12 +164,15 @@ const PlayerTrackerView = () => {
     () => metricDefinitions.filter((definition) => definition.key !== 'troopsTotal'),
     [metricDefinitions],
   );
+	const highlightMetricDefinitions = useMemo(
+		() => primaryMetricDefinitions.filter((definition) => HIGHLIGHT_METRIC_KEYS.has(definition.key)),
+		[primaryMetricDefinitions],
+	);
+	const extraMetricDefinitions = useMemo(
+		() => primaryMetricDefinitions.filter((definition) => !HIGHLIGHT_METRIC_KEYS.has(definition.key)),
+		[primaryMetricDefinitions],
+	);
   const troopMetricDefinition = metricDefinitions.find((definition) => definition.key === 'troopsTotal')!;
-  const metricCategories = useMemo(
-    () => Array.from(new Set(primaryMetricDefinitions.map((definition) => definition.category)))
-      .filter((category): category is MetricCategory => category !== 'Troops'),
-    [primaryMetricDefinitions],
-  );
   const [tracker, setTracker] = useState<PlayerTrackerResponse>(emptyResponse);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('might');
   const [selectedRange, setSelectedRange] = useState<RangeKey>('7d');
@@ -179,6 +184,12 @@ const PlayerTrackerView = () => {
   const [troopFoodFilter, setTroopFoodFilter] = useState<FoodFilter>('all');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+	const selectedExtraMetric = extraMetricDefinitions.find((definition) => definition.key === selectedMetric);
+
+	useEffect(() => {
+		if (metricDefinitions.some((definition) => definition.key === selectedMetric)) return;
+		setSelectedMetric('might');
+	}, [metricDefinitions, selectedMetric]);
 
   useEffect(() => {
     if (loadError) {
@@ -256,8 +267,8 @@ const PlayerTrackerView = () => {
     () => filterSeriesRange(series, selectedRange, metricDefinitions),
     [series, selectedRange, metricDefinitions],
   );
-  const selectedDefinition = metricDefinitions.find((definition) => definition.key === selectedMetric)!;
-  const selectedPoints = visibleSeries[selectedMetric] ?? [];
+  const selectedDefinition = metricDefinitions.find((definition) => definition.key === selectedMetric) ?? CORE_METRIC_DEFINITIONS[0];
+  const selectedPoints = visibleSeries[selectedDefinition.key] ?? [];
   const chartPoints = useMemo(
     () => bucketMetricPoints(selectedPoints, selectedRange),
     [selectedPoints, selectedRange],
@@ -376,23 +387,14 @@ const PlayerTrackerView = () => {
     <div className="flex flex-col gap-6 pb-8">
       <StaleSessionBanner />
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
-              <Activity className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-text-main">My Stats</h1>
-              <p className="text-sm text-text-muted">
-                {tracker.fallback.playerName
-                  ? `${tracker.fallback.playerName}${tracker.fallback.server ? ` · ${tracker.fallback.server}` : ''}`
-                  : current?.playerId ? `Your account · Player ${current.playerId}` : 'Your account analytics'}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <PageHeader
+        title="My Stats"
+        description={tracker.fallback.playerName
+          ? `${tracker.fallback.playerName}${tracker.fallback.server ? ` · ${tracker.fallback.server}` : ''}`
+          : current?.playerId ? `Your account · Player ${current.playerId}` : 'Your account analytics'}
+        icon={<Activity className="h-6 w-6" />}
+        meta={(
+          <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="gap-1.5">
             <Clock3 className="h-3.5 w-3.5" />
             {formatSampleInterval(tracker.intervalSeconds)} samples
@@ -404,8 +406,9 @@ const PlayerTrackerView = () => {
             </Badge>
           )}
           {loadError && <Badge variant="danger">Live values only</Badge>}
-        </div>
-      </div>
+          </div>
+        )}
+      />
 
       {!current ? (
         <Card>
@@ -439,6 +442,7 @@ const PlayerTrackerView = () => {
                   </div>
                 </div>
                 <PillSelector
+                  ariaLabel="Player history range"
                   value={selectedRange}
                   onChange={(value) => setSelectedRange(value as RangeKey)}
                   options={ranges.map((range) => ({ value: range.key, label: range.label }))}
@@ -448,21 +452,39 @@ const PlayerTrackerView = () => {
             </CardHeader>
             <CardContent className="liquid-prominent-header-content p-5 sm:p-6">
               <div className="mb-4 flex flex-wrap gap-2">
-                {primaryMetricDefinitions.map((definition) => (
-                  <button
-                    key={definition.key}
-                    type="button"
-                    onClick={() => setSelectedMetric(definition.key)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      selectedMetric === definition.key
-                        ? 'border-primary/40 bg-primary/10 text-primary'
-                        : 'border-border-base text-text-muted hover:bg-bg-card-hover hover:text-text-main'
-                    }`}
-                  >
-                    <MetricIcon definition={definition} className="h-4 w-4" />
-                    {definition.shortLabel}
-                  </button>
-                ))}
+                <PillSelector
+                  ariaLabel="Highlighted player metric"
+                  value={selectedMetric}
+                  onChange={(value) => setSelectedMetric(value as MetricKey)}
+                  options={highlightMetricDefinitions.map((definition) => ({
+                    value: definition.key,
+                    label: definition.shortLabel,
+                    icon: <MetricIcon definition={definition} className="h-4 w-4" />,
+                  }))}
+                  size="sm"
+                />
+				{extraMetricDefinitions.length > 0 && (
+					<Select
+						value={selectedExtraMetric?.key ?? ''}
+						onChange={setSelectedMetric}
+						placeholder="More metrics"
+						className="w-full sm:w-72"
+						menuGrowToViewport
+						searchable
+						searchPlaceholder="Filter metrics"
+						options={extraMetricDefinitions.map((definition) => ({
+							value: definition.key,
+							searchText: `${definition.label} ${definition.shortLabel} ${definition.category} ${definition.key}`,
+							label: (
+								<span className="flex min-w-0 items-center gap-2">
+									<MetricIcon definition={definition} className="h-4 w-4" />
+									<span className="min-w-0 flex-1 truncate">{definition.label}</span>
+									<span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-text-muted">{definition.category}</span>
+								</span>
+							),
+						}))}
+					/>
+				)}
               </div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
                 <span>{hoverPointHint(selectedRange)} Drag horizontally to inspect a custom time period.</span>
@@ -479,7 +501,7 @@ const PlayerTrackerView = () => {
               </div>
               <TrendChart
                 points={chartPoints}
-                metric={selectedMetric}
+                metric={selectedDefinition.key}
                 color={selectedDefinition.color}
                 range={selectedRange}
                 selectedWindow={customWindow}
@@ -530,6 +552,7 @@ const PlayerTrackerView = () => {
                   </div>
                 </div>
                 <PillSelector
+                  ariaLabel="Troop history range"
                   value={troopRange}
                   onChange={(value) => setTroopRange(value as RangeKey)}
                   options={ranges.map((range) => ({ value: range.key, label: range.label }))}
@@ -560,6 +583,7 @@ const PlayerTrackerView = () => {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <PillSelector
+                    ariaLabel="Troop type filter"
                     value={troopTypeFilter}
                     onChange={(value) => setTroopTypeFilter(value as TypeFilter)}
                     options={[
@@ -570,6 +594,7 @@ const PlayerTrackerView = () => {
                     size="sm"
                   />
                   <PillSelector
+                    ariaLabel="Troop role filter"
                     value={troopRoleFilter}
                     onChange={(value) => setTroopRoleFilter(value as RoleFilter)}
                     options={[
@@ -580,6 +605,7 @@ const PlayerTrackerView = () => {
                     size="sm"
                   />
                   <PillSelector
+                    ariaLabel="Troop food filter"
                     value={troopFoodFilter}
                     onChange={(value) => setTroopFoodFilter(value as FoodFilter)}
                     options={[

@@ -1,0 +1,385 @@
+package Automation
+
+import (
+	"encoding/json"
+	"strings"
+	"testing"
+	"time"
+
+	"CitadelDesktop/Server/AttackPresets"
+	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/State"
+)
+
+func TestAutoStormMapScanBoundsAdaptToServerState(t *testing.T) {
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.X, storm.Y = 679, 596
+	state.Castles[storm.ID] = storm
+
+	bounds := autoStormMapScanBounds(state, storm)
+	if bounds != (State.StormMapBounds{X1: 0, Y1: 0, X2: 807, Y2: 706}) {
+		t.Fatalf("initial bounds = %#v", bounds)
+	}
+	state.Storm.Map = State.StormMapState{
+		SourceCastleID: storm.ID,
+		NextBounds:     State.StormMapBounds{X1: 0, Y1: 0, X2: 908, Y2: 807},
+		Targets:        map[string]State.MapObservation{},
+	}
+	if learned := autoStormMapScanBounds(state, storm); learned != state.Storm.Map.NextBounds {
+		t.Fatalf("learned bounds = %#v, want %#v", learned, state.Storm.Map.NextBounds)
+	}
+}
+
+func TestNormalizeAutoStormSettingsFixesMapRefreshAtSixHours(t *testing.T) {
+	settings := defaultAutoStormSettings()
+	settings.MapRefreshIntervalSec = 300
+	normalizeAutoStormSettings(&settings)
+	if settings.MapRefreshIntervalSec != 21_600 {
+		t.Fatalf("map refresh = %d, want 21600", settings.MapRefreshIntervalSec)
+	}
+}
+
+func TestAutoStormFullMapAttemptUsesSixHourSafetyInterval(t *testing.T) {
+	now := time.Date(2026, time.July, 15, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.X, storm.Y = 679, 596
+	state.Castles[storm.ID] = storm
+	settings := defaultAutoStormSettings()
+	settings.Forts.Enabled = true
+
+	decision, detail, err := evaluateAutoStormCombat(Snapshot{State: state, Now: now}, settings, storm, map[string]float64{})
+	if err != nil || detail != "" || decision == nil || decision.Request == nil || decision.Request.Name != "storm.map.scan" {
+		t.Fatalf("map scan decision = %#v detail=%q err=%v", decision, detail, err)
+	}
+	if want := now.Add(6 * time.Hour); !decision.NextCheckAt.Equal(want) {
+		t.Fatalf("failed-scan retry = %s, want %s", decision.NextCheckAt, want)
+	}
+	var request struct {
+		FullMap bool                 `json:"fullMap"`
+		Bounds  State.StormMapBounds `json:"bounds"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if !request.FullMap || request.Bounds != (State.StormMapBounds{X1: 0, Y1: 0, X2: 807, Y2: 706}) {
+		t.Fatalf("map scan request = %#v", request)
+	}
+
+	state.Storm.Map = State.StormMapState{
+		SourceCastleID: storm.ID,
+		LastAttemptAt:  now.Add(-time.Hour),
+		Targets:        map[string]State.MapObservation{},
+	}
+	decision, detail, err = evaluateAutoStormCombat(Snapshot{State: state, Now: now}, settings, storm, map[string]float64{})
+	if err != nil || decision != nil || !strings.Contains(detail, "six-hour scan safety interval") {
+		t.Fatalf("incomplete-scan decision = %#v detail=%q err=%v", decision, detail, err)
+	}
+}
+
+func TestAutoStormTroopImportUsesSelectedDonorsInOrder(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	first := autoStormTestCastle(10, 0, "First donor")
+	second := autoStormTestCastle(20, 0, "Second donor")
+	first.Units.Stationed[10] = 3
+	second.Units.Stationed[10] = 20
+	state.Castles[storm.ID] = storm
+	state.Castles[first.ID] = first
+	state.Castles[second.ID] = second
+	state.KingdomTransport.ObservedAt = now
+	state.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	settings := defaultAutoStormSettings()
+	settings.TroopImport = autoStormTroopImportSettings{Enabled: true, DonorCastleIDs: []State.CastleID{first.ID, second.ID}}
+
+	decision, detail := autoStormTroopImportDecision(Snapshot{
+		State: state, GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[State.UnitID]int64{10: 8}, map[string]float64{})
+	if decision == nil || decision.Request == nil || decision.Request.Name != "troops.kingdom.ship" || detail != "" {
+		t.Fatalf("troop import decision = %#v detail=%q", decision, detail)
+	}
+	var arguments struct {
+		SourceCastleID State.CastleID `json:"sourceCastleId"`
+		Units          []struct {
+			UnitID State.UnitID `json:"unitId"`
+			Amount int64        `json:"amount"`
+		} `json:"units"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+		t.Fatal(err)
+	}
+	if arguments.SourceCastleID != first.ID || len(arguments.Units) != 1 || arguments.Units[0].UnitID != 10 || arguments.Units[0].Amount != 3 {
+		t.Fatalf("troop import arguments = %#v", arguments)
+	}
+}
+
+func TestAutoStormIslandLaunchWaitsForReportBeforeChoosingOccupier(t *testing.T) {
+	now := time.Date(2026, time.July, 15, 18, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.X, storm.Y = 100, 100
+	storm.Units.Stationed[10] = 5
+	storm.Units.Stationed[11] = 100
+	storm.Units.Stationed[12] = 2
+	state.Castles[storm.ID] = storm
+	state.Commanders[1] = State.CommanderState{ID: 1, Available: true}
+	target := State.MapObservation{
+		KingdomID: 4, X: 101, Y: 101, TypeID: autoStormIslandMapTypeID, OwnerID: -403,
+		ObjectID: 777, StormIsleID: 4, StormReadyAt: now, StormExpiresAt: now.Add(time.Hour), ObservedAt: now,
+	}
+	state.Storm.Map = State.StormMapState{
+		SourceCastleID: storm.ID, LastAttemptAt: now, LastCompletedAt: now,
+		Targets: map[string]State.MapObservation{"101:101": target},
+	}
+	settings := defaultAutoStormSettings()
+	settings.Islands.Enabled = true
+	settings.Islands.PresetID = "island"
+	presets := json.RawMessage(`{"version":1,"presets":[{"id":"island","name":"Island","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":10,"quantity":5}],"tools":[]},"R":{"troops":[],"tools":[]}}]}]}`)
+
+	decision, detail, err := evaluateAutoStormCombat(Snapshot{
+		State: state,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+			AttackPresets.ConfigurationSection: presets,
+		}},
+		GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[string]float64{})
+	if err != nil || detail != "" || decision == nil || decision.Request == nil || decision.Request.Name != "storm.attack" {
+		t.Fatalf("island attack decision = %#v detail=%q err=%v", decision, detail, err)
+	}
+	var arguments struct {
+		DefenseUnits []autoStormDefenseUnit `json:"defenseUnits"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+		t.Fatal(err)
+	}
+	if len(arguments.DefenseUnits) != 0 {
+		t.Fatalf("launch-time occupation defense = %#v, want report-gated selection", arguments.DefenseUnits)
+	}
+	if !strings.Contains(decision.Detail, "victory report") {
+		t.Fatalf("island decision detail = %q", decision.Detail)
+	}
+}
+
+func TestAutoStormIslandReturnUsesReportConfirmedSurvivors(t *testing.T) {
+	now := time.Date(2026, time.July, 15, 18, 5, 0, 0, time.UTC)
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	state.Castles[storm.ID] = storm
+	key := State.StormIslandReturnKey(4, 101, 102)
+	state.Storm.IslandReturns[key] = State.StormIslandReturnState{
+		KingdomID: 4, SourceCastleID: storm.ID, TargetX: 101, TargetY: 102,
+		IslandObjectID: 777, ReportID: 202, Status: State.StormIslandReturnReady, LeaveBehind: 1,
+		Survivors: map[State.UnitID]int64{10: 4, 12: 5}, LaunchedAt: now.Add(-time.Minute), ReportedAt: now,
+	}
+	metrics := map[string]float64{}
+	decision, detail := autoStormIslandReturnDecision(Snapshot{State: state, Now: now}, storm, metrics)
+	if detail != "" || decision == nil || decision.Request == nil || decision.Request.Name != "storm.island.return" {
+		t.Fatalf("island return decision = %#v detail=%q", decision, detail)
+	}
+	var arguments struct {
+		Units []autoStormDefenseUnit `json:"units"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+		t.Fatal(err)
+	}
+	if len(arguments.Units) != 2 || arguments.Units[0] != (autoStormDefenseUnit{UnitID: 10, Amount: 4}) ||
+		arguments.Units[1] != (autoStormDefenseUnit{UnitID: 12, Amount: 4}) {
+		t.Fatalf("report-confirmed return units = %#v", arguments.Units)
+	}
+	if metrics["islandReportSurvivors"] != 9 || metrics["islandTroopsReturning"] != 8 || metrics["islandTroopsLeftBehind"] != 1 {
+		t.Fatalf("island return metrics = %#v", metrics)
+	}
+}
+
+func TestAutoStormFortCandidatesEnforceMinimumWins(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.X, storm.Y = 100, 100
+	state.Castles[storm.ID] = storm
+	target := State.MapObservation{
+		KingdomID: 4, X: 101, Y: 101, TypeID: autoStormFortMapTypeID,
+		StormIsleID: 7, StormVictoryCount: 4, ObservedAt: now,
+	}
+	state.Map[4] = map[string]State.MapObservation{"101:101": target}
+	settings := defaultAutoStormSettings()
+	settings.Forts.Enabled = true
+	settings.Forts.MinimumWins = 5
+	state.Storm.Map = State.StormMapState{
+		SourceCastleID: storm.ID, LastAttemptAt: now, LastCompletedAt: now,
+		Targets: map[string]State.MapObservation{"101:101": target},
+	}
+	snapshot := Snapshot{State: state, GameData: autoStormTestGameData(t), Now: now}
+
+	if candidates := autoStormCombatCandidates(snapshot, settings, storm, now); len(candidates) != 0 {
+		t.Fatalf("candidates below minimum wins = %#v", candidates)
+	}
+	target.StormVictoryCount = 5
+	state.Map[4]["101:101"] = target
+	state.Storm.Map.Targets["101:101"] = target
+	snapshot.State = state
+	if candidates := autoStormCombatCandidates(snapshot, settings, storm, now); len(candidates) != 1 {
+		t.Fatalf("candidates at minimum wins = %#v", candidates)
+	}
+}
+
+func TestAutoStormCandidatesUseReadyAtAndIslandExpiryLabels(t *testing.T) {
+	now := time.Date(2026, time.July, 15, 16, 20, 0, 0, time.UTC)
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.X, storm.Y = 100, 100
+	state.Castles[storm.ID] = storm
+	unoccupied := State.MapObservation{
+		KingdomID: 4, X: 101, Y: 101, TypeID: autoStormIslandMapTypeID, OwnerID: -403,
+		StormIsleID: 4, StormCooldownRemaining: 3_600, StormReadyAt: now, StormExpiresAt: now.Add(time.Hour), ObservedAt: now,
+	}
+	occupied := State.MapObservation{
+		KingdomID: 4, X: 102, Y: 102, TypeID: autoStormIslandMapTypeID, OwnerID: 99,
+		StormIsleID: 4, StormCooldownRemaining: 120, StormReadyAt: now.Add(120 * time.Second),
+		StormExpiresAt: now.Add((120 + 115_200) * time.Second), ObservedAt: now,
+	}
+	state.Storm.Map.Targets = map[string]State.MapObservation{"101:101": unoccupied, "102:102": occupied}
+	settings := defaultAutoStormSettings()
+	settings.Islands.Enabled = true
+	snapshot := Snapshot{State: state, GameData: autoStormTestGameData(t), Now: now}
+
+	candidates := autoStormCombatCandidates(snapshot, settings, storm, now)
+	if len(candidates) != 1 || candidates[0].Observation.X != unoccupied.X {
+		t.Fatalf("ready island candidates = %#v", candidates)
+	}
+	if next := autoStormNextOpportunityAt(snapshot, settings, storm); !next.Equal(occupied.StormReadyAt) {
+		t.Fatalf("next Storm opportunity = %s, want %s", next, occupied.StormReadyAt)
+	}
+
+	delete(state.Storm.Map.Targets, "101:101")
+	snapshot.State = state
+	snapshot.Now = occupied.StormReadyAt.Add(time.Second)
+	candidates = autoStormCombatCandidates(snapshot, settings, storm, now)
+	if len(candidates) != 1 || candidates[0].Observation.X != occupied.X {
+		t.Fatalf("released island candidates = %#v", candidates)
+	}
+
+	occupied.OwnerID = -403
+	occupied.StormReadyAt = now
+	occupied.StormExpiresAt = now
+	state.Storm.Map.Targets["102:102"] = occupied
+	snapshot.State = state
+	snapshot.Now = now.Add(time.Second)
+	if candidates = autoStormCombatCandidates(snapshot, settings, storm, now); len(candidates) != 0 {
+		t.Fatalf("expired island candidates = %#v", candidates)
+	}
+}
+
+func TestAutoStormFortReadyAtTriggersAuthoritativeVictoryRefresh(t *testing.T) {
+	now := time.Date(2026, time.July, 15, 16, 20, 0, 0, time.UTC)
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	state.Castles[storm.ID] = storm
+	target := State.MapObservation{
+		KingdomID: 4, X: 101, Y: 101, TypeID: autoStormFortMapTypeID, StormIsleID: 7,
+		StormVictoryCount: 0, StormCooldownRemaining: 60, StormReadyAt: now.Add(time.Minute), ObservedAt: now,
+	}
+	state.Storm.Map.Targets = map[string]State.MapObservation{"101:101": target}
+	settings := defaultAutoStormSettings()
+	settings.Forts.Enabled = true
+	settings.Forts.MinimumWins = 5
+	snapshot := Snapshot{State: state, GameData: autoStormTestGameData(t), Now: now}
+
+	if candidates := autoStormCombatCandidates(snapshot, settings, storm, now); len(candidates) != 0 {
+		t.Fatalf("cooling fort candidates = %#v", candidates)
+	}
+	if next := autoStormNextOpportunityAt(snapshot, settings, storm); !next.Equal(target.StormReadyAt) {
+		t.Fatalf("fort next readyAt = %s, want %s", next, target.StormReadyAt)
+	}
+	snapshot.Now = target.StormReadyAt
+	if candidates := autoStormCombatCandidates(snapshot, settings, storm, now); len(candidates) != 1 {
+		t.Fatalf("fort readyAt verification candidates = %#v", candidates)
+	}
+}
+
+func TestAutoStormShopUnlimitedKeepsBuying(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Resources = map[State.ResourceID]State.ResourceBalance{
+		GameData.StormAquamarineID: {Amount: 100_000},
+	}
+	state.Castles[storm.ID] = storm
+	state.Inventory.ConstructionOffersCastleID = storm.ID
+	state.Inventory.ConstructionOffersKingdomID = storm.KingdomID
+	state.Inventory.ConstructionOffersObservedAt = now
+	state.Inventory.ConstructionOffers[245] = 12
+	settings := defaultAutoStormSettings()
+	settings.Aquamarine.ShopTableID = 7
+	settings.Aquamarine.Purchases = []autoStormShopPurchase{{
+		PackageID: 245, TargetPurchases: 1, Unlimited: true, Priority: 1,
+	}}
+
+	decision, complete, detail, err := evaluateAutoStormShop(Snapshot{
+		State: state, GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[string]float64{})
+	if err != nil || complete || detail != "" || decision == nil || decision.Request == nil {
+		t.Fatalf("unlimited Luna decision = %#v complete=%t detail=%q err=%v", decision, complete, detail, err)
+	}
+	if decision.Request.Name != "storm.shop.purchase" || decision.Detail != "Buy War horn from Luna for 2960 Aquamarine (unlimited goal)" {
+		t.Fatalf("unlimited Luna request = %#v detail=%q", decision.Request, decision.Detail)
+	}
+}
+
+func TestAutoStormShopUnlimitedStopsAtPackageStock(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Resources = map[State.ResourceID]State.ResourceBalance{
+		GameData.StormAquamarineID: {Amount: 100_000},
+	}
+	state.Castles[storm.ID] = storm
+	state.Inventory.ConstructionOffersCastleID = storm.ID
+	state.Inventory.ConstructionOffersKingdomID = storm.KingdomID
+	state.Inventory.ConstructionOffersObservedAt = now
+	state.Inventory.ConstructionOffers[3119] = 3
+	settings := defaultAutoStormSettings()
+	settings.Aquamarine.ShopTableID = 7
+	settings.Aquamarine.Purchases = []autoStormShopPurchase{{
+		PackageID: 3119, TargetPurchases: 1, Unlimited: true, Priority: 1,
+	}}
+
+	decision, complete, detail, err := evaluateAutoStormShop(Snapshot{
+		State: state, GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[string]float64{})
+	if err != nil || !complete || decision != nil || detail != "Aquamarine shop goals complete" {
+		t.Fatalf("stock-limited Luna decision = %#v complete=%t detail=%q err=%v", decision, complete, detail, err)
+	}
+}
+
+func autoStormTestGameData(t *testing.T) *GameData.Store {
+	t.Helper()
+	store, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[{"wodID":10},{"wodID":11,"slotTypes":"tool"},{"wodID":12}],
+		"isles":[
+			{"IsleID":4,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
+			{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"countVictories":"0#1#5"}
+		],
+		"packages":[
+			{"packageID":245,"comment1":"War horn","comment2":"Luna's trade boat","packageType":"tool","packagePriceAquamarine":2960},
+			{"packageID":3119,"comment1":"Silver Coins","comment2":"Luna's trade boat","packageType":"currency","packagePriceAquamarine":10000,"stock":3}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return store
+}
+
+func autoStormTestCastle(id State.CastleID, kingdom State.KingdomID, name string) State.CastleState {
+	return State.CastleState{
+		ID: id, KingdomID: kingdom, Name: name,
+		Units: State.CastleUnits{
+			Stationed: map[State.UnitID]int64{}, Traveling: map[State.UnitID]int64{},
+			Hospital: map[State.UnitID]int64{}, SpecialHospital: map[State.UnitID]int64{}, Total: map[State.UnitID]int64{},
+		},
+	}
+}

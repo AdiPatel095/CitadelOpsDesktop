@@ -13,11 +13,13 @@ func TestEncodeBareCommand(t *testing.T) {
 }
 
 func TestEncodeRoutedLegacyCommand(t *testing.T) {
-	payload, err := Encode(Command{Opcode: "aec", Route: "0", Payload: []byte(`[]`)})
+	payload, err := Encode(Command{
+		Namespace: "EmpireEx_21", Opcode: "legacy", Route: "0", Payload: []byte(`[]`), OmitNamespace: true,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(payload) != "%xt%aec%1%0%[]%" {
+	if string(payload) != "%xt%legacy%1%0%[]%" {
 		t.Fatalf("unexpected routed command: %s", payload)
 	}
 }

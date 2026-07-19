@@ -11,12 +11,18 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+const (
+	defaultProductionSessionKey = 73
+	productionBaseQueueCapacity = 2
+)
+
 func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct {
-		CastleID     State.CastleID `json:"castleId"`
-		LineID       int            `json:"lineId"`
-		DefinitionID int64          `json:"definitionId"`
-		Amount       int64          `json:"amount,omitempty"`
+		CastleID      State.CastleID `json:"castleId"`
+		LineID        int            `json:"lineId"`
+		DefinitionID  int64          `json:"definitionId"`
+		Amount        int64          `json:"amount,omitempty"`
+		FillAvailable bool           `json:"fillAvailable,omitempty"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -32,7 +38,10 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	if !ok || queue.ObservedAt.IsZero() {
 		return Intent.Plan{}, fmt.Errorf("production line %d has not been observed for castle %d", request.LineID, request.CastleID)
 	}
-	if queue.Capacity <= 0 || len(queue.Queued) >= queue.Capacity {
+	// Queue capacity represents the QS slots, not the active production stack.
+	occupied := len(queue.Queued)
+	queueCapacity := productionQueueCapacity(input.State, request.LineID, queue, input.GameData)
+	if queueCapacity <= 0 || occupied >= queueCapacity {
 		return Intent.Plan{}, fmt.Errorf("production line %d is full", request.LineID)
 	}
 	collection := "units"
@@ -48,8 +57,9 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	if request.Amount <= 0 {
 		return Intent.Plan{}, fmt.Errorf("production stack size is unknown; create one %s stack in-game so CitadelOps can learn the live amount", collection)
 	}
-	if input.State.CommandContext.ProductionSessionKey <= 0 {
-		return Intent.Plan{}, fmt.Errorf("production session key is unknown; enqueue one stack in-game so CitadelOps can learn the current command context")
+	sessionKey := input.State.CommandContext.ProductionSessionKey
+	if sessionKey <= 0 {
+		sessionKey = defaultProductionSessionKey
 	}
 	payload, _ := json.Marshal(struct {
 		LineID       int            `json:"LID"`
@@ -60,17 +70,65 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		SessionKey   int            `json:"SK"`
 		SlotID       int            `json:"SID"`
 		CastleID     State.CastleID `json:"AID"`
-	}{request.LineID, request.DefinitionID, request.Amount, -1, 0, input.State.CommandContext.ProductionSessionKey, 0, request.CastleID})
+	}{request.LineID, request.DefinitionID, request.Amount, -1, 0, sessionKey, 0, request.CastleID})
+	stackCount := 1
+	if request.FillAvailable {
+		stackCount = queueCapacity - occupied
+	}
 	steps := castleContextSteps(castle)
-	steps = append(steps, commandStep("Enqueue production stack", "bup", payload, "bup"))
+	for stack := 0; stack < stackCount; stack++ {
+		steps = append(steps, commandStep("Enqueue production stack", "bup", payload, "bup"))
+	}
+	summary := fmt.Sprintf("Queue %d of %s definition %d at %s", request.Amount, collection, request.DefinitionID, castleLabel(castle))
+	if stackCount > 1 {
+		summary = fmt.Sprintf("Queue %d stacks of %d %s definition %d at %s", stackCount, request.Amount, collection, request.DefinitionID, castleLabel(castle))
+	}
 	return Intent.Plan{
 		Claims: []string{
 			"castle-focus", "castle:" + strconv.FormatInt(int64(castle.ID), 10),
 			"production-line:" + strconv.Itoa(request.LineID), "account-resources",
 		},
-		Summary: fmt.Sprintf("Queue %d of %s definition %d at %s", request.Amount, collection, request.DefinitionID, castleLabel(castle)),
+		Summary: summary,
 		Steps:   steps,
 	}, nil
+}
+
+func productionQueueCapacity(state State.GameState, lineID int, queue State.ProductionQueue, gameData *GameData.Store) int {
+	expected, known := productionVIPQueueCapacity(state, lineID, gameData)
+	if queue.Capacity <= 0 {
+		return expected
+	}
+	if !known || queue.Capacity < expected {
+		return queue.Capacity
+	}
+	return expected
+}
+
+func productionVIPQueueCapacity(state State.GameState, lineID int, gameData *GameData.Store) (int, bool) {
+	if gameData == nil || state.Player.VIP.Level <= 0 {
+		return productionBaseQueueCapacity, false
+	}
+	catalog, err := gameData.Catalog("viplevels")
+	if err != nil {
+		return productionBaseQueueCapacity, false
+	}
+	raw, found := catalog.Find(strconv.Itoa(state.Player.VIP.Level))
+	if !found {
+		return productionBaseQueueCapacity, false
+	}
+	record, err := GameData.DecodeRecord(raw)
+	if err != nil {
+		return productionBaseQueueCapacity, false
+	}
+	field := "recruitmentBonusSlots"
+	if lineID == 1 {
+		field = "productionBonusSlots"
+	}
+	bonus, exists := record.Int64(field)
+	if !exists || bonus < 0 {
+		return productionBaseQueueCapacity, false
+	}
+	return productionBaseQueueCapacity + int(bonus), true
 }
 
 func planHospitalHeal(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {

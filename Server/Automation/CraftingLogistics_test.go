@@ -125,6 +125,7 @@ func TestCraftingPolicyMovesSameKingdomOverflowIntoFreeStorage(t *testing.T) {
 	target := craftingLogisticsCastle(20, 0, 20, 20)
 	capacity := float64(100_000)
 	source.Resources[6] = State.ResourceBalance{Amount: 95_000, Capacity: &capacity}
+	source.Buildings[100] = State.Building{InstanceID: 100, DefinitionID: 137}
 	target.Resources[6] = State.ResourceBalance{Amount: 0, Capacity: &capacity}
 	gameState.Castles[source.ID] = source
 	gameState.Castles[target.ID] = target
@@ -148,6 +149,79 @@ func TestCraftingPolicyMovesSameKingdomOverflowIntoFreeStorage(t *testing.T) {
 	}
 	if decision.Request == nil || decision.Request.Name != "resource.market.ship" || string(decision.Request.Arguments) != `{"amount":5000,"resourceId":6,"sourceCastleId":10,"targetCastleId":20}` {
 		t.Fatalf("unexpected market overflow decision: %+v", decision)
+	}
+	if !decision.ReevaluateOnSuccess {
+		t.Fatal("market overflow shipment did not request response-driven continuation")
+	}
+}
+
+func TestCraftingPolicyRequiresMarketplaceForSameKingdomShipment(t *testing.T) {
+	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	source := craftingLogisticsCastle(10, 0, 10, 10)
+	target := craftingLogisticsCastle(20, 0, 20, 20)
+	capacity := float64(100_000)
+	source.Resources[6] = State.ResourceBalance{Amount: 50_000, Capacity: &capacity}
+	target.Resources[6] = State.ResourceBalance{Amount: 0, Capacity: &capacity}
+	target.Crafting.Buildings[200] = State.CraftingBuilding{
+		CastleID: target.ID, InstanceID: 200, QueueTypeID: 1, SlotCount: 1, ObservedAt: now,
+		Active: []State.CraftingQueueItem{}, Queued: []State.CraftingQueueItem{},
+	}
+	gameState.Castles[source.ID] = source
+	gameState.Castles[target.ID] = target
+	gameState.Market.ObservedAt = now
+	gameState.Market.CaravanLevelLoaded = true
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{
+		CastleID: source.ID, KingdomID: source.KingdomID, AvailableBarrows: 100,
+	}
+	gameState.KingdomTransport.ObservedAt = now
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.autoSceatResources": json.RawMessage(`{
+			"autoKingdomTransport":true,"minimumShipmentSize":1000,
+			"castles":{"20":{"buildings":{"1":{"enabled":true,"steps":[{"recipeID":100,"repeat":1}]}}}}
+		}`),
+	}}
+	decision, err := NewCraftingPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Configuration: configuration, GameData: craftingLogisticsGameData(t), Now: now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil {
+		t.Fatalf("expected no market shipment without a marketplace, got %+v", decision)
+	}
+}
+
+func TestCraftingPolicyRequiresMarketplaceForOverflowShipment(t *testing.T) {
+	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	source := craftingLogisticsCastle(10, 0, 10, 10)
+	target := craftingLogisticsCastle(20, 0, 20, 20)
+	capacity := float64(100_000)
+	source.Resources[6] = State.ResourceBalance{Amount: 95_000, Capacity: &capacity}
+	target.Resources[6] = State.ResourceBalance{Amount: 0, Capacity: &capacity}
+	gameState.Castles[source.ID] = source
+	gameState.Castles[target.ID] = target
+	gameState.Player.Resources[1] = 1_000_000
+	gameState.Market.ObservedAt = now
+	gameState.Market.CaravanLevelLoaded = true
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{
+		CastleID: source.ID, KingdomID: source.KingdomID, AvailableBarrows: 100,
+	}
+	gameState.KingdomTransport.ObservedAt = now
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.autoSceatResources": json.RawMessage(`{
+			"autoKingdomTransport":true,"minimumShipmentSize":1000,"overflowThresholdPercent":90
+		}`),
+	}}
+	decision, err := NewCraftingPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Configuration: configuration, GameData: craftingLogisticsGameData(t), Now: now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil {
+		t.Fatalf("expected no overflow shipment without a marketplace, got %+v", decision)
 	}
 }
 
@@ -220,7 +294,7 @@ func TestCraftingPolicyRubySkipsOneCraftWhenOverflowCannotMove(t *testing.T) {
 func craftingLogisticsGameData(t *testing.T) *GameData.Store {
 	t.Helper()
 	store, err := GameData.DecodeStore([]byte(`{
-		"versionInfo":[],"buildings":[{"wodID":1}],"units":[{"wodID":1}],
+		"versionInfo":[],"buildings":[{"wodID":1},{"wodID":137,"name":"Market","marketCarriages":5}],"units":[{"wodID":1}],
 		"constructionItems":[{"constructionItemID":1}],
 		"resources":[
 			{"resourceID":1,"JSONKey":"C1","name":"currency1"},

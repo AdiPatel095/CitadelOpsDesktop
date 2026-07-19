@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
+import { SectionCard } from '../../components/ui';
 import { useCastleFocus } from '../../context/CastleFocusContext';
 import { useMetadata } from '../../context/MetadataContext';
 import {
@@ -41,14 +41,15 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
   const queues = useMemo(() => QUEUE_DEFINITIONS.filter((queue) => visible.has(queue.id)), [visible]);
 
   return (
-    <Card className="liquid-prominent-header-card flex min-h-0 flex-col">
-      <CardHeader className="liquid-card-header-prominent">
-        <div className="flex flex-col">
-          <CardTitle className="text-primary">{title}</CardTitle>
-          <p className="mt-1 text-xs font-bold uppercase tracking-wider text-text-muted">Canonical game queues</p>
-        </div>
-      </CardHeader>
-      <CardContent className="liquid-prominent-header-content custom-scrollbar flex-1 overflow-y-auto">
+    <SectionCard
+      variant="glass"
+      title={title}
+      description="Canonical game queues"
+      titleClassName="text-primary"
+      descriptionClassName="font-bold uppercase tracking-wider"
+      className="flex min-h-0 flex-col"
+      contentClassName="custom-scrollbar flex-1 overflow-y-auto"
+    >
         {!castle || queues.length === 0 ? (
           <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-8 text-center backdrop-blur-xl">
             <p className="text-sm font-medium text-text-main">No production queues observed for this castle.</p>
@@ -103,8 +104,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
             })}
           </div>
         )}
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 };
 

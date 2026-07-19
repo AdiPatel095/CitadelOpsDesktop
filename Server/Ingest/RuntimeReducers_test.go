@@ -125,9 +125,10 @@ func TestRuntimeTransportAndSubscriptionReducers(t *testing.T) {
 
 	_, changed, err = reduceKingdomTransport(t.Context(), Protocol.Frame{
 		Opcode: "kgt", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
-		Payload: json.RawMessage(`{"kpi":{"UL":[{"KID":1,"U":1,"C":1,"SL":4}],"RT":[{"KID":1,"RS":3600,"G":[["W",35249]]}]}}`),
+		Payload: json.RawMessage(`{"kpi":{"UL":[{"KID":1,"U":1,"C":1,"SL":4}],"RT":[{"KID":1,"RS":3600,"G":[["W",35249]]}],"UT":[{"KID":4,"RS":1800,"I":[[10,25]]}]}}`),
 	}, &gameState, gameData)
-	if err != nil || !changed || !gameState.KingdomTransport.Unlocks[1].Unlocked || gameState.KingdomTransport.Pending[0].Goods[0].ResourceID != 3 {
+	if err != nil || !changed || !gameState.KingdomTransport.Unlocks[1].Unlocked || gameState.KingdomTransport.Pending[0].Goods[0].ResourceID != 3 ||
+		gameState.KingdomTransport.PendingUnits[0].KingdomID != 4 || gameState.KingdomTransport.PendingUnits[0].Units[0].UnitID != 10 {
 		t.Fatalf("kingdom transport: changed=%t state=%#v err=%v", changed, gameState.KingdomTransport, err)
 	}
 

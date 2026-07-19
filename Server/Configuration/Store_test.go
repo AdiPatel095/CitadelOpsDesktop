@@ -27,7 +27,7 @@ func TestStorePersistsVersionedSections(t *testing.T) {
 	}
 	select {
 	case event := <-events:
-		if event.Section != "scheduler" || event.Revision != 1 {
+		if event.Section != "scheduler" || event.Revision != 1 || event.Sequence != 1 || event.Gap {
 			t.Fatalf("unexpected event: %+v", event)
 		}
 	case <-time.After(time.Second):
@@ -47,6 +47,30 @@ func TestStorePersistsVersionedSections(t *testing.T) {
 	}
 	if info.Mode().Perm()&0o077 != 0 {
 		t.Fatalf("configuration permissions = %o, want owner-only", info.Mode().Perm())
+	}
+}
+
+func TestStoreMarksSubscriberGapAndCarriesLatestSnapshot(t *testing.T) {
+	store, err := Open(t.TempDir(), map[string]json.RawMessage{
+		"feature": json.RawMessage(`{"value":0}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	events, cancel := store.Subscribe(1)
+	defer cancel()
+	if _, err := store.Update("feature", json.RawMessage(`{"value":1}`)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.Update("feature", json.RawMessage(`{"value":2}`)); err != nil {
+		t.Fatal(err)
+	}
+	event := <-events
+	if event.Sequence != 2 || event.Revision != 2 || !event.Gap {
+		t.Fatalf("stream metadata = sequence %d revision %d gap %t", event.Sequence, event.Revision, event.Gap)
+	}
+	if got := string(event.Snapshot.Sections["feature"]); got != `{"value":2}` {
+		t.Fatalf("latest snapshot value = %s", got)
 	}
 }
 
@@ -80,5 +104,38 @@ func TestStoreNoOpKeepsRevision(t *testing.T) {
 	}
 	if snapshot.Revision != 0 {
 		t.Fatalf("no-op revision = %d, want 0", snapshot.Revision)
+	}
+}
+
+func TestStoreConditionalUpdateTracksItsSectionInsteadOfGlobalRevision(t *testing.T) {
+	store, err := Open(t.TempDir(), map[string]json.RawMessage{
+		"automation.crafting": json.RawMessage(`{"cursor":0}`),
+		"unrelated":           json.RawMessage(`{"enabled":false}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected, exists := store.Section("automation.crafting")
+	if !exists {
+		t.Fatal("crafting section was not initialized")
+	}
+	if _, err := store.Update("unrelated", json.RawMessage(`{"enabled":true}`)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.UpdateConditional(
+		"automation.crafting",
+		json.RawMessage(`{"cursor":1}`),
+		nil,
+		&expected,
+	); err != nil {
+		t.Fatalf("unrelated revision blocked section-scoped update: %v", err)
+	}
+	if _, err := store.UpdateConditional(
+		"automation.crafting",
+		json.RawMessage(`{"cursor":2}`),
+		nil,
+		&expected,
+	); err == nil {
+		t.Fatal("stale section value did not block a conflicting update")
 	}
 }

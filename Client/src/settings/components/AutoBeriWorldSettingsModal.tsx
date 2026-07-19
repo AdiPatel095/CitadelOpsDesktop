@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Save, Swords, Users } from 'lucide-react';
+import { CalendarDays, Swords, Users } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
-import { Button, Input, Modal, Select } from '../../components/ui';
+import { Button, Input, Select, SettingsModal } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { configurationSection } from '../Configuration';
 import {
@@ -66,17 +66,13 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	};
 
 	return (
-		<Modal
+		<SettingsModal
 			isOpen={isOpen}
 			onClose={onClose}
-			title={(
-				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-					<div className="min-w-0">
-						<span className="flex items-center gap-2 text-primary"><Swords className="h-5 w-5" />Auto Beri World</span>
-						<p className="mt-1 text-sm font-normal text-text-muted">
-							Configure deterministic Berimond capacity checks and troop transfers.
-						</p>
-					</div>
+			title="Auto Beri World"
+			icon={<Swords className="h-5 w-5" />}
+			description="Configure deterministic Berimond capacity checks and troop transfers."
+			titleTrailing={(
 					<Button
 						variant="outline"
 						size="sm"
@@ -86,15 +82,10 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					>
 						Calendar
 					</Button>
-				</div>
 			)}
 			maxWidth="md"
-			footer={(
-				<>
-					<Button variant="ghost" onClick={onClose}>Cancel</Button>
-					<Button variant="primary" leftIcon={<Save className="h-4 w-4" />} onClick={save}>Save</Button>
-				</>
-			)}
+			onSave={save}
+			saveLabel="Save"
 		>
 			<div className="space-y-5">
 				<p className="text-sm text-text-muted">
@@ -168,7 +159,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 
 				{saveError && <p className="text-xs text-error">{saveError}</p>}
 			</div>
-		</Modal>
+		</SettingsModal>
 	);
 };
 

@@ -1,0 +1,255 @@
+import type {
+  CastleStateV2,
+  DefenseMoatStateV2,
+  DefenseToolSlotV2,
+  DefenseWallSectionV2,
+} from '../api/Contracts';
+
+export const DEFENSE_PRESETS_SECTION = 'defense.presets';
+
+export interface DefensePresetKeep {
+  mauct: number;
+  unitTypePercent: number;
+}
+
+export interface DefensePresetDraft {
+  name: string;
+  wall: {
+    left: DefenseWallSectionV2;
+    middle: DefenseWallSectionV2;
+    right: DefenseWallSectionV2;
+  };
+  moat: Pick<DefenseMoatStateV2, 'leftToolSlots' | 'middleToolSlots' | 'rightToolSlots'>;
+  keep?: DefensePresetKeep;
+  sourceCastleId?: number;
+  sourceCastleName?: string;
+}
+
+export interface AppDefensePreset extends DefensePresetDraft {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DefensePresetDocument {
+  version: 1;
+  presets: AppDefensePreset[];
+}
+
+export interface DefensePresetSummary {
+  toolAmount: number;
+  toolTypes: number[];
+  wallSlots: number;
+  moatSlots: number;
+}
+
+export function emptyDefensePresetDocument(): DefensePresetDocument {
+  return { version: 1, presets: [] };
+}
+
+export function emptyDefensePresetDraft(): DefensePresetDraft {
+  return {
+    name: '',
+    wall: {
+      left: emptyWallSection(4, 33),
+      middle: emptyWallSection(6, 34),
+      right: emptyWallSection(4, 33),
+    },
+    moat: {
+      leftToolSlots: emptyToolSlots(1),
+      middleToolSlots: emptyToolSlots(1),
+      rightToolSlots: emptyToolSlots(1),
+    },
+  };
+}
+
+export function defensePresetDraftFromCastle(castle: CastleStateV2): DefensePresetDraft {
+  return {
+    name: `${castle.name?.trim() || `Castle ${castle.id}`} defense`,
+    wall: {
+      left: cloneWallSection(castle.defense.wall.left),
+      middle: cloneWallSection(castle.defense.wall.middle),
+      right: cloneWallSection(castle.defense.wall.right),
+    },
+    moat: {
+      leftToolSlots: cloneToolSlots(castle.defense.moat.leftToolSlots),
+      middleToolSlots: cloneToolSlots(castle.defense.moat.middleToolSlots),
+      rightToolSlots: cloneToolSlots(castle.defense.moat.rightToolSlots),
+    },
+    keep: {
+      mauct: Math.max(0, Math.trunc(castle.defense.keep.mauct ?? 0)),
+      unitTypePercent: clampPercent(castle.defense.keep.unitTypePercent),
+    },
+    sourceCastleId: castle.id,
+    sourceCastleName: castle.name?.trim() || undefined,
+  };
+}
+
+export function cloneDefensePresetDraft(preset: DefensePresetDraft): DefensePresetDraft {
+  return {
+    name: preset.name,
+    wall: {
+      left: cloneWallSection(preset.wall.left),
+      middle: cloneWallSection(preset.wall.middle),
+      right: cloneWallSection(preset.wall.right),
+    },
+    moat: {
+      leftToolSlots: cloneToolSlots(preset.moat.leftToolSlots),
+      middleToolSlots: cloneToolSlots(preset.moat.middleToolSlots),
+      rightToolSlots: cloneToolSlots(preset.moat.rightToolSlots),
+    },
+    ...(preset.keep ? { keep: { ...preset.keep } } : {}),
+    ...(preset.sourceCastleId != null ? { sourceCastleId: preset.sourceCastleId } : {}),
+    ...(preset.sourceCastleName ? { sourceCastleName: preset.sourceCastleName } : {}),
+  };
+}
+
+export function parseDefensePresetDocument(value: unknown): DefensePresetDocument {
+  if (!isRecord(value) || !Array.isArray(value.presets)) return emptyDefensePresetDocument();
+  return {
+    version: 1,
+    presets: value.presets.map(parseDefensePreset).filter((preset): preset is AppDefensePreset => preset != null),
+  };
+}
+
+export function summarizeDefensePreset(preset: DefensePresetDraft): DefensePresetSummary {
+  const slots = [
+    ...preset.wall.left.toolSlots,
+    ...preset.wall.middle.toolSlots,
+    ...preset.wall.right.toolSlots,
+    ...preset.moat.leftToolSlots,
+    ...preset.moat.middleToolSlots,
+    ...preset.moat.rightToolSlots,
+  ];
+  const toolTypes = new Set<number>();
+  let toolAmount = 0;
+  for (const slot of slots) {
+    if (slot.definitionId <= 0 || slot.amount <= 0) continue;
+    toolTypes.add(slot.definitionId);
+    toolAmount += slot.amount;
+  }
+  return {
+    toolAmount,
+    toolTypes: Array.from(toolTypes),
+    wallSlots: preset.wall.left.toolSlots.length + preset.wall.middle.toolSlots.length + preset.wall.right.toolSlots.length,
+    moatSlots: preset.moat.leftToolSlots.length + preset.moat.middleToolSlots.length + preset.moat.rightToolSlots.length,
+  };
+}
+
+function parseDefensePreset(value: unknown): AppDefensePreset | null {
+  if (!isRecord(value) || typeof value.id !== 'string' || typeof value.name !== 'string') return null;
+  const draft = parseDefensePresetDraft(value);
+  if (!draft) return null;
+  const createdAt = validDate(value.createdAt) ?? new Date(0).toISOString();
+  return {
+    ...draft,
+    id: value.id,
+    createdAt,
+    updatedAt: validDate(value.updatedAt) ?? createdAt,
+  };
+}
+
+function parseDefensePresetDraft(value: Record<string, unknown>): DefensePresetDraft | null {
+  if (!isRecord(value.wall) || !isRecord(value.moat)) return null;
+  const left = parseWallSection(value.wall.left);
+  const middle = parseWallSection(value.wall.middle);
+  const right = parseWallSection(value.wall.right);
+  const leftToolSlots = parseToolSlots(value.moat.leftToolSlots);
+  const middleToolSlots = parseToolSlots(value.moat.middleToolSlots);
+  const rightToolSlots = parseToolSlots(value.moat.rightToolSlots);
+  if (!left || !middle || !right || !leftToolSlots || !middleToolSlots || !rightToolSlots) return null;
+  const keep = value.keep == null ? undefined : parseKeep(value.keep);
+  if (value.keep != null && !keep) return null;
+  const sourceCastleId = positiveInteger(value.sourceCastleId);
+  return {
+    name: typeof value.name === 'string' ? value.name : '',
+    wall: { left, middle, right },
+    moat: { leftToolSlots, middleToolSlots, rightToolSlots },
+    ...(keep ? { keep } : {}),
+    ...(sourceCastleId != null ? { sourceCastleId } : {}),
+    ...(typeof value.sourceCastleName === 'string' && value.sourceCastleName.trim()
+      ? { sourceCastleName: value.sourceCastleName.trim() }
+      : {}),
+  };
+}
+
+function parseWallSection(value: unknown): DefenseWallSectionV2 | null {
+  if (!isRecord(value)) return null;
+  const toolSlots = parseToolSlots(value.toolSlots);
+  const unitPercent = integerInRange(value.unitPercent, 0, 100);
+  const unitTypePercent = integerInRange(value.unitTypePercent, 0, 100);
+  return toolSlots && unitPercent != null && unitTypePercent != null
+    ? { toolSlots, unitPercent, unitTypePercent }
+    : null;
+}
+
+function parseToolSlots(value: unknown): DefenseToolSlotV2[] | null {
+  if (!Array.isArray(value)) return null;
+  const slots: DefenseToolSlotV2[] = [];
+  for (const candidate of value) {
+    const slot = parseToolSlot(candidate);
+    if (!slot) return null;
+    slots.push(slot);
+  }
+  return slots;
+}
+
+function parseToolSlot(value: unknown): DefenseToolSlotV2 | null {
+  if (!isRecord(value)) return null;
+  const definitionId = Number(value.definitionId);
+  const amount = Number(value.amount);
+  if (!Number.isInteger(definitionId) || !Number.isInteger(amount)) return null;
+  if (definitionId === -1 && amount === 0) return { definitionId, amount };
+  if (definitionId <= 0 || amount <= 0 || amount > 999) return null;
+  return { definitionId, amount };
+}
+
+function parseKeep(value: unknown): DefensePresetKeep | null {
+  if (!isRecord(value)) return null;
+  const mauct = Number(value.mauct);
+  const unitTypePercent = integerInRange(value.unitTypePercent, 0, 100);
+  if (!Number.isSafeInteger(mauct) || mauct < 0 || unitTypePercent == null) return null;
+  return { mauct, unitTypePercent };
+}
+
+function cloneWallSection(section: DefenseWallSectionV2): DefenseWallSectionV2 {
+  return {
+    toolSlots: cloneToolSlots(section.toolSlots),
+    unitPercent: Math.trunc(section.unitPercent),
+    unitTypePercent: Math.trunc(section.unitTypePercent),
+  };
+}
+
+function cloneToolSlots(slots: DefenseToolSlotV2[]): DefenseToolSlotV2[] {
+  return slots.map((slot) => ({ definitionId: Math.trunc(slot.definitionId), amount: Math.trunc(slot.amount) }));
+}
+
+function emptyWallSection(slotCount: number, unitPercent: number): DefenseWallSectionV2 {
+  return { toolSlots: emptyToolSlots(slotCount), unitPercent, unitTypePercent: 0 };
+}
+
+function emptyToolSlots(count: number): DefenseToolSlotV2[] {
+  return Array.from({ length: count }, () => ({ definitionId: -1, amount: 0 }));
+}
+
+function clampPercent(value: number): number {
+  return Math.max(0, Math.min(100, Math.trunc(value)));
+}
+
+function integerInRange(value: unknown, minimum: number, maximum: number): number | null {
+  const numeric = Number(value);
+  return Number.isInteger(numeric) && numeric >= minimum && numeric <= maximum ? numeric : null;
+}
+
+function positiveInteger(value: unknown): number | null {
+  const numeric = Number(value);
+  return Number.isSafeInteger(numeric) && numeric > 0 ? numeric : null;
+}
+
+function validDate(value: unknown): string | null {
+  return typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}

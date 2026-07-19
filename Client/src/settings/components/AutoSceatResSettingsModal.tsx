@@ -2,18 +2,30 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
-  CalendarDays,
   Coins,
   Factory,
   Gem,
   Plus,
-  Save,
   ShieldCheck,
   Trash2,
   Truck,
   Warehouse,
 } from 'lucide-react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Modal, Select, Switch } from '../../components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  ChoiceChipGroup,
+  Input,
+  ScheduleSummaryRow,
+  Select,
+  SettingsToggleRow,
+  SettingsModal,
+  Switch,
+} from '../../components/ui';
 import {
   emptyAutoSceatResCatalog,
   defaultAutoSceatResSettings,
@@ -194,13 +206,13 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
     onChange: (checked: boolean) => void,
     disabled = false,
   ) => (
-    <div className={`flex items-center justify-between gap-4 rounded-global border border-border-base bg-bg-input/35 px-4 py-3 ${disabled ? 'opacity-55' : ''}`}>
-      <div className="min-w-0">
-        <div className="text-sm font-bold text-text-main">{label}</div>
-        <div className="mt-0.5 text-[11px] font-medium text-text-muted">{detail}</div>
-      </div>
-      <Switch checked={checked} onChange={onChange} disabled={disabled} size="sm" />
-    </div>
+    <SettingsToggleRow
+      title={label}
+      description={detail}
+      checked={checked}
+      onChange={onChange}
+      disabled={disabled}
+    />
   );
 
   const renderStorageNode = (node: AutoSceatStorageNode) => {
@@ -233,27 +245,15 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
 
   return (
     <>
-      <Modal
+      <SettingsModal
         isOpen={isOpen}
         onClose={handleClose}
         maxWidth="full"
-        title={
-          <div className="scheduler-modal-title">
-            <span className="scheduler-modal-title-mark" aria-hidden="true"><Factory className="h-5 w-5" /></span>
-            <span className="flex min-w-0 flex-col">
-              <span className="scheduler-modal-title-text">Auto Sceat Resources</span>
-              <span className="mt-1 text-xs font-semibold text-text-muted">Research-aware crafting queues and kingdom-resource logistics</span>
-            </span>
-          </div>
-        }
-        footer={
-          <>
-            <Button variant="ghost" onClick={handleClose}>Cancel</Button>
-            <Button variant="primary" onClick={handleSave} disabled={isSaving} leftIcon={<Save className="h-4 w-4" />}>
-              {isSaving ? 'Saving…' : 'Save Settings'}
-            </Button>
-          </>
-        }
+        title="Auto Sceat Resources"
+        icon={<Factory className="h-5 w-5" />}
+        description="Research-aware crafting queues and kingdom-resource logistics"
+        onSave={handleSave}
+        isSaving={isSaving}
       >
         <div className="mx-auto flex w-full max-w-[1780px] flex-col gap-5 pb-2">
           {catalogError && (
@@ -285,13 +285,10 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                     <Input type="number" min={0} value={settings.minimumShipmentSize} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, minimumShipmentSize: Number(event.target.value) }))} />
                   </label>
                 </div>
-                <div className="flex items-center justify-between gap-3 rounded-global border border-border-base bg-bg-input/35 px-4 py-3">
-                  <div>
-                    <div className="text-sm font-bold text-text-main">Weekly schedule</div>
-                    <div className="mt-0.5 text-[11px] font-medium text-text-muted">{schedule ? scheduleSummary(schedule) : 'Runs any time'}</div>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => onOpenFeatureSchedule('autoSceatRes', 'Auto Sceat Resources')} leftIcon={<CalendarDays className="h-4 w-4" />}>Schedule</Button>
-                </div>
+                <ScheduleSummaryRow
+                  summary={schedule ? scheduleSummary(schedule) : 'Runs any time'}
+                  onEdit={() => onOpenFeatureSchedule('autoSceatRes', 'Auto Sceat Resources')}
+                />
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <label className="grid gap-1.5 text-xs font-bold text-text-muted">Overflow starts
                     <Input type="number" min={50} max={100} value={settings.overflowThresholdPercent} onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, overflowThresholdPercent: Number(event.target.value) }))} rightIcon={<span className="text-xs font-black">%</span>} />
@@ -321,27 +318,19 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
               <div className="grid content-start gap-3">
                 <div>
                   <div className="text-xs font-black uppercase tracking-wide text-text-muted">Allowed transport skips</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {timeSkips.map((skip) => {
-                      const selected = settings.allowedTimeSkips.includes(skip.id);
-                      return (
-                        <button
-                          type="button"
-                          key={skip.id}
-                          disabled={!settings.useKingdomTimeSkips || !settings.autoKingdomTransport}
-                          onClick={() => setSettings((current) => normalizeAutoSceatResSettings({
-                            ...current,
-                            allowedTimeSkips: selected
-                              ? current.allowedTimeSkips.filter((id) => id !== skip.id)
-                              : [...current.allowedTimeSkips, skip.id],
-                          }))}
-                          className={`rounded-full border px-3 py-1.5 text-xs font-black transition disabled:opacity-45 ${selected ? 'border-primary/50 bg-primary/12 text-primary' : 'border-border-base bg-bg-input/40 text-text-muted hover:text-text-main'}`}
-                        >
-                          {skip.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <ChoiceChipGroup
+                    className="mt-2"
+                    ariaLabel="Allowed transport skips"
+                    options={timeSkips.map((skip) => ({ value: skip.id, label: skip.label }))}
+                    selected={settings.allowedTimeSkips}
+                    disabled={!settings.useKingdomTimeSkips || !settings.autoKingdomTransport}
+                    onToggle={(skipID) => setSettings((current) => normalizeAutoSceatResSettings({
+                      ...current,
+                      allowedTimeSkips: current.allowedTimeSkips.includes(skipID)
+                        ? current.allowedTimeSkips.filter((id) => id !== skipID)
+                        : [...current.allowedTimeSkips, skipID],
+                    }))}
+                  />
                   {settings.useKingdomTimeSkips && settings.autoKingdomTransport && (
                     <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {timeSkips.filter((skip) => settings.allowedTimeSkips.includes(skip.id)).map((skip) => (
@@ -410,19 +399,34 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                               </div>
                               <Switch checked={plan.autoRentActiveSlot} onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, autoRentActiveSlot: checked }))} size="sm" />
                             </div>
-                            <div>
-                              <div className="mb-1 text-xs font-bold text-text-main">Extra queue slots</div>
-                              <Select
-                                value={String(plan.autoRentQueueSlots)}
-                                onChange={(value) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, autoRentQueueSlots: Number(value) }))}
-                                options={[
-                                  { value: '0', label: 'None' },
-                                  { value: '1', label: '+1 · 0.5m' },
-                                  { value: '2', label: '+2 · 3.5m total' },
-                                  { value: '3', label: '+3 · 10m total' },
-                                ]}
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-xs font-bold text-text-main">Rent extra queue slots</div>
+                                <div className="text-[10px] font-semibold text-text-muted">0.5m–10m coins / 7 days</div>
+                              </div>
+                              <Switch
+                                checked={plan.autoRentQueueSlots > 0}
+                                onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({
+                                  ...current,
+                                  autoRentQueueSlots: checked ? Math.max(1, current.autoRentQueueSlots) : 0,
+                                }))}
+                                size="sm"
                               />
                             </div>
+                            {plan.autoRentQueueSlots > 0 && (
+                              <div className="sm:col-span-2">
+                                <div className="mb-1 text-xs font-bold text-text-main">Queue slots to rent</div>
+                                <Select
+                                  value={String(plan.autoRentQueueSlots)}
+                                  onChange={(value) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, autoRentQueueSlots: Number(value) }))}
+                                  options={[
+                                    { value: '1', label: '+1 · 0.5m' },
+                                    { value: '2', label: '+2 · 3.5m total' },
+                                    { value: '3', label: '+3 · 10m total' },
+                                  ]}
+                                />
+                              </div>
+                            )}
                             {weeklyRental > 0 && <div className="sm:col-span-2 text-[10px] font-bold text-warning">Maximum selected renewal: {formatCompact(weeklyRental)} coins per 7 days for this building.</div>}
                           </div>
 
@@ -513,7 +517,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
             </Card>
           </div>
         </div>
-      </Modal>
+      </SettingsModal>
 
       <AutoSceatRecipePickerModal
         isOpen={pickerTarget != null}

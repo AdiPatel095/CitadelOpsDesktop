@@ -28,6 +28,15 @@ export const Icons = {
             <rect x="3" y="14" width="7" height="7"></rect>
         </svg>
     ),
+    Automation: (props: IconProps) => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <rect x="4" y="7" width="16" height="12" rx="3" />
+            <path d="M12 7V4" />
+            <circle cx="12" cy="3" r="1" />
+            <path d="M8.5 12h.01M15.5 12h.01M9 16h6" />
+            <path d="M4 11H2v4h2M20 11h2v4h-2" />
+        </svg>
+    ),
     Activity: (props: IconProps) => (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>

@@ -45,6 +45,8 @@ const ToolImage: React.FC<ToolImageProps> = ({ toolId, size = 40, showLevel = tr
           alt={title}
           width={size}
           height={size}
+          loading="lazy"
+          decoding="async"
           className="h-full w-full object-contain"
           draggable={false}
           onError={() => setSourceIndex((current) => current + 1)}

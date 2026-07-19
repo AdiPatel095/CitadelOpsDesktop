@@ -2,12 +2,19 @@ package Automation
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/State"
 )
+
+func TestBeriPolicyDeclaresStateDependencies(t *testing.T) {
+	if got, want := NewBeriPolicy().WakeDomains(), []string{"beri", "castles", "units"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("wake domains = %v, want %v", got, want)
+	}
+}
 
 func TestBeriPolicyRefreshesThenTransfersExactCapacity(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)

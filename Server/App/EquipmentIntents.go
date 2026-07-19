@@ -104,7 +104,7 @@ func planEquipmentUnequip(_ context.Context, input Intent.PlanningContext, argum
 		return Intent.Plan{}, fmt.Errorf("at least one equipmentId is required")
 	}
 	steps := make([]Intent.Step, 0, len(ids)+2)
-	for index, id := range ids {
+	for _, id := range ids {
 		item, ok := input.State.Inventory.Equipment[id]
 		if !ok || item.WearerKind != leader.kind || item.WearerID != leader.id {
 			return Intent.Plan{}, fmt.Errorf("equipment %d is not worn by %s %d", id, leader.kind, leader.id)
@@ -115,9 +115,6 @@ func planEquipmentUnequip(_ context.Context, input Intent.PlanningContext, argum
 			Equip       int                       `json:"E"`
 		}{id, leader.id, 0})
 		step := commandStep(fmt.Sprintf("Unequip equipment %d", id), "eeq", payload, "eeq")
-		if index > 0 {
-			step.DelayMillis = 150
-		}
 		steps = append(steps, step)
 	}
 	steps = append(steps, equipmentMutationRefreshSteps()...)
@@ -245,7 +242,6 @@ func planEquipmentSwap(_ context.Context, input Intent.PlanningContext, argument
 				Equip       int                       `json:"E"`
 			}{id, move.leader.id, 0})
 			step := commandStep(fmt.Sprintf("Unequip equipment %d", id), "eeq", payload, "eeq")
-			step.DelayMillis = 150
 			steps = append(steps, step)
 		}
 	}
@@ -260,7 +256,6 @@ func planEquipmentSwap(_ context.Context, input Intent.PlanningContext, argument
 				Equip       int                       `json:"E"`
 			}{id, move.leader.id, 1})
 			step := commandStep(fmt.Sprintf("Equip equipment %d", id), "eeq", payload, "eeq")
-			step.DelayMillis = 250
 			steps = append(steps, step)
 		}
 	}
@@ -337,31 +332,22 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		selectedGems[id] = struct{}{}
 	}
 
-	steps := make([]Intent.Step, 0, 32)
-	for _, slot := range baseEquipmentSlots {
-		id := leader.equipment[strconv.Itoa(slot)]
-		if id <= 0 {
-			continue
+	// Index current sockets once. The previous planner scanned every stored gem
+	// for each target slot, then rebuilt every equipment slot even when the
+	// preview already matched it.
+	gemsByEquipment := make(map[State.EquipmentInstanceID]State.GemInstance, len(input.State.Inventory.Gems))
+	for _, gem := range input.State.Inventory.Gems {
+		if gem.EquipmentInstanceID > 0 {
+			gemsByEquipment[gem.EquipmentInstanceID] = gem
 		}
-		payload, _ := json.Marshal(struct {
-			EquipmentID State.EquipmentInstanceID `json:"EID"`
-			LeaderID    int64                     `json:"LID"`
-			Equip       int                       `json:"E"`
-		}{id, leader.id, 0})
-		step := commandStep(fmt.Sprintf("Clear equipment slot %d", slot), "eeq", payload, "eeq")
-		step.DelayMillis = 150
-		steps = append(steps, step)
 	}
-
 	alreadyAttached := map[int]bool{}
 	gemsToDetach := map[State.GemInstanceID]State.GemInstance{}
 	for slot := 1; slot <= 4; slot++ {
 		gemID := request.Gems[strconv.Itoa(slot)]
 		destinationEquipmentID := request.Equipment[strconv.Itoa(slot)]
-		for id, attached := range input.State.Inventory.Gems {
-			if attached.EquipmentInstanceID == destinationEquipmentID && id != gemID {
-				gemsToDetach[id] = attached
-			}
+		if attached, found := gemsByEquipment[destinationEquipmentID]; found && attached.ID != gemID {
+			gemsToDetach[attached.ID] = attached
 		}
 		if gemID == 0 {
 			continue
@@ -375,6 +361,47 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			gemsToDetach[gem.ID] = gem
 		}
 	}
+
+	// Clear only slots that change. A detached gem can require an otherwise
+	// retained slot to be temporarily clear so its carrier can be mounted.
+	clearSlots := map[int]bool{}
+	detachCarrierCounts := map[int]int{}
+	for _, slot := range baseEquipmentSlots {
+		if leader.equipment[strconv.Itoa(slot)] != request.Equipment[strconv.Itoa(slot)] {
+			clearSlots[slot] = true
+		}
+	}
+	for _, gem := range gemsToDetach {
+		parent, found := input.State.Inventory.Equipment[gem.EquipmentInstanceID]
+		if !found || parent.WearerKind != "" && (parent.WearerKind != leader.kind || parent.WearerID != leader.id) {
+			return Intent.Plan{}, fmt.Errorf("cannot detach gem %d from unavailable equipment %d", gem.ID, gem.EquipmentInstanceID)
+		}
+		parentSlot := strconv.Itoa(parent.Slot)
+		detachCarrierCounts[parent.Slot]++
+		if leader.equipment[parentSlot] == request.Equipment[parentSlot] && request.Equipment[parentSlot] != parent.ID {
+			clearSlots[parent.Slot] = true
+		}
+	}
+
+	steps := make([]Intent.Step, 0, 32)
+	mountedBySlot := map[int]State.EquipmentInstanceID{}
+	for _, slot := range baseEquipmentSlots {
+		id := leader.equipment[strconv.Itoa(slot)]
+		if id <= 0 {
+			continue
+		}
+		if !clearSlots[slot] {
+			mountedBySlot[slot] = id
+			continue
+		}
+		payload, _ := json.Marshal(struct {
+			EquipmentID State.EquipmentInstanceID `json:"EID"`
+			LeaderID    int64                     `json:"LID"`
+			Equip       int                       `json:"E"`
+		}{id, leader.id, 0})
+		step := commandStep(fmt.Sprintf("Clear equipment slot %d", slot), "eeq", payload, "eeq")
+		steps = append(steps, step)
+	}
 	detachIDs := make([]State.GemInstanceID, 0, len(gemsToDetach))
 	for id := range gemsToDetach {
 		detachIDs = append(detachIDs, id)
@@ -382,33 +409,37 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 	sort.Slice(detachIDs, func(left, right int) bool { return detachIDs[left] < detachIDs[right] })
 	for _, gemID := range detachIDs {
 		gem := gemsToDetach[gemID]
-		parent, ok := input.State.Inventory.Equipment[gem.EquipmentInstanceID]
-		if !ok || parent.WearerKind != "" && (parent.WearerKind != leader.kind || parent.WearerID != leader.id) {
-			return Intent.Plan{}, fmt.Errorf("cannot detach gem %d from unavailable equipment %d", gem.ID, gem.EquipmentInstanceID)
+		parent := input.State.Inventory.Equipment[gem.EquipmentInstanceID]
+		if mountedBySlot[parent.Slot] != parent.ID {
+			if mountedBySlot[parent.Slot] != 0 {
+				return Intent.Plan{}, fmt.Errorf("cannot mount gem carrier %d while slot %d is occupied", parent.ID, parent.Slot)
+			}
+			equipPayload, _ := json.Marshal(struct {
+				EquipmentID State.EquipmentInstanceID `json:"EID"`
+				LeaderID    int64                     `json:"LID"`
+				Equip       int                       `json:"E"`
+			}{parent.ID, leader.id, 1})
+			equipStep := commandStep(fmt.Sprintf("Mount gem carrier %d", parent.ID), "eeq", equipPayload, "eeq")
+			steps = append(steps, equipStep)
+			mountedBySlot[parent.Slot] = parent.ID
 		}
-		equipPayload, _ := json.Marshal(struct {
-			EquipmentID State.EquipmentInstanceID `json:"EID"`
-			LeaderID    int64                     `json:"LID"`
-			Equip       int                       `json:"E"`
-		}{parent.ID, leader.id, 1})
-		equipStep := commandStep(fmt.Sprintf("Mount gem carrier %d", parent.ID), "eeq", equipPayload, "eeq")
-		equipStep.DelayMillis = 250
-		steps = append(steps, equipStep)
 		detachPayload, _ := json.Marshal(struct {
 			EquipmentID State.EquipmentInstanceID `json:"EID"`
 			LeaderID    int64                     `json:"LID"`
 		}{parent.ID, leader.id})
 		detachStep := commandStep(fmt.Sprintf("Detach gem %d", gem.ID), "ege", detachPayload, "ege")
-		detachStep.DelayMillis = 150
 		steps = append(steps, detachStep)
+		if request.Equipment[strconv.Itoa(parent.Slot)] == parent.ID && detachCarrierCounts[parent.Slot] == 1 {
+			continue
+		}
 		unequipPayload, _ := json.Marshal(struct {
 			EquipmentID State.EquipmentInstanceID `json:"EID"`
 			LeaderID    int64                     `json:"LID"`
 			Equip       int                       `json:"E"`
 		}{parent.ID, leader.id, 0})
 		unequipStep := commandStep(fmt.Sprintf("Return gem carrier %d", parent.ID), "eeq", unequipPayload, "eeq")
-		unequipStep.DelayMillis = 150
 		steps = append(steps, unequipStep)
+		delete(mountedBySlot, parent.Slot)
 	}
 
 	for _, slot := range baseEquipmentSlots {
@@ -416,14 +447,20 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		if id <= 0 {
 			continue
 		}
+		if mountedBySlot[slot] == id {
+			continue
+		}
+		if mountedBySlot[slot] != 0 {
+			return Intent.Plan{}, fmt.Errorf("equipment slot %d is unexpectedly occupied", slot)
+		}
 		payload, _ := json.Marshal(struct {
 			EquipmentID State.EquipmentInstanceID `json:"EID"`
 			LeaderID    int64                     `json:"LID"`
 			Equip       int                       `json:"E"`
 		}{id, leader.id, 1})
 		step := commandStep(fmt.Sprintf("Equip optimized slot %d", slot), "eeq", payload, "eeq")
-		step.DelayMillis = 250
 		steps = append(steps, step)
+		mountedBySlot[slot] = id
 	}
 	for slot := 1; slot <= 4; slot++ {
 		gemID := request.Gems[strconv.Itoa(slot)]
@@ -445,7 +482,6 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			RelicGem    int                       `json:"RGEM"`
 		}{commandGemID, request.Equipment[strconv.Itoa(slot)], leader.id, 0, relicGem})
 		step := commandStep(fmt.Sprintf("Socket optimized gem in slot %d", slot), "bge", payload, "bge")
-		step.DelayMillis = 250
 		steps = append(steps, step)
 	}
 	steps = append(steps, equipmentRefreshSteps()...)
@@ -496,13 +532,10 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 		return Intent.Plan{}, err
 	}
 	delay := application.equipmentUpgradeDelay()
-	steps := []Intent.Step{commandStep("Open equipment upgrade menu", "gnr", json.RawMessage(`{}`), "gnr")}
+	steps := []Intent.Step{equipmentUpgradeContextStep()}
 	for level := currentLevel + 1; level <= request.TargetLevel; level++ {
 		guard := Intent.Step{Name: "Verify coin reserve", Action: "equipment.verify_coin_reserve", DelayMillis: delay}
-		if level == currentLevel+1 && guard.DelayMillis < 2_000 {
-			guard.DelayMillis = 2_000
-		}
-		steps = append(steps, guard)
+		steps = append(steps, Intent.RebuildOnResume(guard))
 		payload, _ := json.Marshal(struct {
 			CostMode  int   `json:"C2"`
 			ItemID    int64 `json:"RIID"`
@@ -559,7 +592,6 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 				FilterID    int                       `json:"LFID"`
 			}{id, -1, 0, -1})
 			step := commandStep(fmt.Sprintf("Sell equipment %d", id), "seq", payload, "seq")
-			step.DelayMillis = 25
 			steps = append(steps, step)
 		}
 		count = len(ids)
@@ -583,7 +615,6 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 					FilterID int         `json:"LFID"`
 				}{id, 0, -1})
 				step := commandStep(fmt.Sprintf("Sell gem %d", id), "sge", payload, "sge")
-				step.DelayMillis = 25
 				steps = append(steps, step)
 				count++
 			}
@@ -607,7 +638,6 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 				FilterID int                 `json:"LFID"`
 			}{id, 1, -1})
 			step := commandStep(fmt.Sprintf("Sell relic gem %d", id), "sge", payload, "sge")
-			step.DelayMillis = 25
 			steps = append(steps, step)
 		}
 		count = len(ids)
@@ -761,7 +791,11 @@ func equipmentMatchesSale(item State.EquipmentInstance, category string, sellLoo
 		if item.RarityID == 5 || item.RarityID == 15 || item.Slot == 5 && !sellLookItems {
 			return false
 		}
-		return int64(item.DefinitionID) < 1366 || sellPost2026
+		// Some ordinary storage rows do not include a catalog definition. The
+		// parser then retains the instance ID as the only stable identity; that
+		// must not make an otherwise eligible item look like post-2026 equipment.
+		definitionUnknown := item.ID > 0 && item.DefinitionID == State.EquipmentID(item.ID)
+		return definitionUnknown || int64(item.DefinitionID) < 1366 || sellPost2026
 	case "relic1_equipment":
 		return item.RarityID == 5 && len(item.Effects) < 4
 	case "relic2_equipment":

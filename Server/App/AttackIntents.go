@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -72,11 +73,17 @@ func planSpyLaunch(_ context.Context, input Intent.PlanningContext, arguments js
 
 func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct {
-		SourceX *int         `json:"sourceX,omitempty"`
-		SourceY *int         `json:"sourceY,omitempty"`
-		UnitID  State.UnitID `json:"unitWodID"`
+		SourceX            *int                          `json:"sourceX,omitempty"`
+		SourceY            *int                          `json:"sourceY,omitempty"`
+		UnitID             State.UnitID                  `json:"unitWodID"`
+		CommanderIDs       []State.CommanderID           `json:"commanderIds,omitempty"`
+		HorseTravelBoostID int                           `json:"horseTravelBoostId"`
+		CommanderSelection *craCommanderSelectionRequest `json:"commanderSelection,omitempty"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	if err := validateHorseTravelBoostID(request.HorseTravelBoostID); err != nil {
 		return Intent.Plan{}, err
 	}
 	source, err := sourceCastle(input.State, 0)
@@ -108,37 +115,83 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	if !ok {
 		return Intent.Plan{}, fmt.Errorf("the Rift map tile is unknown; refresh the surrounding map first")
 	}
-	commanders := eligibleMaidenCommanders(input.State)
-	maximumByStock := int(availableUnits / (maidenProbeCountPerFlank * 3))
-	if len(commanders) > maximumByStock {
-		commanders = commanders[:maximumByStock]
+	eligibleCommanders := maidenCandidateCommanders(input.State)
+	if request.CommanderIDs != nil {
+		allowed := make(map[State.CommanderID]struct{}, len(request.CommanderIDs))
+		for _, commanderID := range request.CommanderIDs {
+			allowed[commanderID] = struct{}{}
+		}
+		eligibleCommanders = slicesMatchingCommanders(eligibleCommanders, allowed)
 	}
-	if len(commanders) == 0 {
+	maximumByStock := int(availableUnits / (maidenProbeCountPerFlank * 3))
+	availableEligible := 0
+	eligibleSet := make(map[State.CommanderID]struct{}, len(eligibleCommanders))
+	for _, commanderID := range eligibleCommanders {
+		eligibleSet[commanderID] = struct{}{}
+		if input.State.Commanders[commanderID].Available {
+			availableEligible++
+		}
+	}
+	defaultCount := min(availableEligible, maximumByStock)
+	if request.CommanderSelection == nil && defaultCount == 0 {
 		return Intent.Plan{}, fmt.Errorf("no free commander has a shield-maiden relic in the supported effect range")
 	}
-	steps := make([]Intent.Step, 0, len(commanders))
-	claims := []string{"rift-maiden-wave", "castle:" + strconv.FormatInt(int64(source.ID), 10)}
-	for _, commanderID := range commanders {
-		body := maidenAttackBody(sourceX, sourceY, target, commanderID, request.UnitID)
-		payload, _ := json.Marshal(body)
-		steps = append(steps, commandStep(fmt.Sprintf("Launch Rift probe with commander %d", commanderID), "cra", payload, "cra"))
-		claims = append(claims, "commander:"+strconv.FormatInt(int64(commanderID), 10))
+	if request.CommanderSelection != nil {
+		requestedCount := request.CommanderSelection.Count
+		if requestedCount == 0 {
+			requestedCount = 1
+		}
+		if requestedCount > maximumByStock {
+			return Intent.Plan{}, fmt.Errorf("main castle probe stock supports %d commander(s), not %d", maximumByStock, requestedCount)
+		}
+		defaultCount = 1
 	}
+	resolution, err := resolveCRACommanders(input.State, request.CommanderSelection, craCommanderSelectionOptions{
+		DefaultCandidates: eligibleCommanders,
+		DefaultCount:      defaultCount,
+		Eligible:          eligibleSet,
+		RequireAvailable:  true,
+	})
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	steps, err := buildCRACommandSteps(source, resolution.Selected, "Launch Rift probe", func(commanderID State.CommanderID) (json.RawMessage, error) {
+		return json.Marshal(maidenAttackBody(sourceX, sourceY, target, commanderID, request.UnitID, request.HorseTravelBoostID))
+	})
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	castleID := strconv.FormatInt(int64(source.ID), 10)
+	claims := []string{
+		"castle-focus", "attack-context", "attack-inventory:" + castleID,
+		"rift-maiden-wave", "castle:" + castleID,
+	}
+	claimCommanders := resolution.Selected
+	if request.CommanderSelection != nil {
+		claimCommanders = resolution.Candidates
+	}
+	claims = append(claims, craCommanderClaims(claimCommanders)...)
 	return Intent.Plan{
-		Claims:  claims,
-		Summary: fmt.Sprintf("Launch %d shield-maiden Rift probe(s)", len(commanders)),
+		Claims: claims,
+		Admission: &Intent.Admission{
+			Class: Intent.AdmissionAttackLaunch, Module: "riftMaiden",
+			Affinity: "castle:" + strconv.FormatInt(int64(source.ID), 10),
+		},
+		Summary: fmt.Sprintf("Launch %d shield-maiden Rift probe(s)", len(resolution.Selected)),
 		Steps:   steps,
 	}, nil
 }
 
 type riftReplayRequest struct {
-	LaunchID     string              `json:"launchId"`
-	CommanderID  *int64              `json:"commanderID,omitempty"`
-	SourceCastle State.CastleID      `json:"sourceCastleId,omitempty"`
-	SourceX      *int                `json:"sourceX,omitempty"`
-	SourceY      *int                `json:"sourceY,omitempty"`
-	ArriveAt     int64               `json:"arriveAtUnix,omitempty"`
-	AttackSetup  *attackSetupRequest `json:"attackSetup,omitempty"`
+	LaunchID           string                        `json:"launchId"`
+	CommanderID        *int64                        `json:"commanderID,omitempty"`
+	CommanderSelection *craCommanderSelectionRequest `json:"commanderSelection,omitempty"`
+	SourceCastle       State.CastleID                `json:"sourceCastleId,omitempty"`
+	SourceX            *int                          `json:"sourceX,omitempty"`
+	SourceY            *int                          `json:"sourceY,omitempty"`
+	ArriveAt           int64                         `json:"arriveAtUnix,omitempty"`
+	AttackSetup        *attackSetupRequest           `json:"attackSetup,omitempty"`
+	HorseTravelBoostID *int                          `json:"horseTravelBoostId,omitempty"`
 }
 
 type attackSetupRequest struct {
@@ -167,6 +220,14 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
 	}
+	if request.CommanderID != nil && request.CommanderSelection != nil {
+		return Intent.Plan{}, fmt.Errorf("commanderID and commanderSelection are mutually exclusive")
+	}
+	if request.HorseTravelBoostID != nil {
+		if err := validateHorseTravelBoostID(*request.HorseTravelBoostID); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	request.LaunchID = strings.TrimSpace(request.LaunchID)
 	if request.LaunchID == "" {
 		return Intent.Plan{}, fmt.Errorf("launchId is required")
@@ -182,11 +243,37 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	if request.CommanderID != nil {
 		fields["LID"], _ = json.Marshal(*request.CommanderID)
 	}
+	if request.SourceCastle > 0 {
+		source, err := sourceCastle(input.State, request.SourceCastle)
+		if err != nil {
+			return Intent.Plan{}, err
+		}
+		fields["SX"], _ = json.Marshal(source.X)
+		fields["SY"], _ = json.Marshal(source.Y)
+	}
 	if request.SourceX != nil {
 		fields["SX"], _ = json.Marshal(*request.SourceX)
 	}
 	if request.SourceY != nil {
 		fields["SY"], _ = json.Marshal(*request.SourceY)
+	}
+	if request.HorseTravelBoostID != nil {
+		booster, premiumTravel := horseTravelBoostFields(*request.HorseTravelBoostID)
+		fields["HBW"], _ = json.Marshal(booster)
+		fields["PTT"], _ = json.Marshal(premiumTravel)
+	}
+	now := time.Now().UTC()
+	fireAt, normalizedArrival, scheduled, err := riftReplayTiming(launch, request.ArriveAt, now)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	resolution, err := resolveCRACommanders(input.State, request.CommanderSelection, craCommanderSelectionOptions{
+		DefaultCandidates: []State.CommanderID{State.CommanderID(rawMapInt(fields, "LID"))},
+		DefaultCount:      1,
+		RequireAvailable:  !scheduled,
+	})
+	if err != nil {
+		return Intent.Plan{}, err
 	}
 	claims := []string{"rift-launch:" + request.LaunchID}
 	if request.AttackSetup != nil {
@@ -194,7 +281,7 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		if err != nil {
 			return Intent.Plan{}, err
 		}
-		waves, err := buildAttackSetupWaves(*request.AttackSetup, source, input.GameData)
+		waves, err := buildAttackSetupWavesForCommanders(*request.AttackSetup, source, input.GameData, len(resolution.Selected))
 		if err != nil {
 			return Intent.Plan{}, err
 		}
@@ -209,48 +296,85 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 			"castle:"+strconv.FormatInt(int64(source.ID), 10),
 			"attack-inventory:"+strconv.FormatInt(int64(source.ID), 10),
 		)
-	}
-	commanderID := State.CommanderID(rawMapInt(fields, "LID"))
-	commander, exists := input.State.Commanders[commanderID]
-	if !exists {
-		return Intent.Plan{}, fmt.Errorf("commander %d is not in the current player state", commanderID)
-	}
-	now := time.Now().UTC()
-	if request.ArriveAt > now.Unix()+30 {
-		if launch.OneWayTTSeconds <= 0 {
-			return Intent.Plan{}, fmt.Errorf("Rift launch %q has no observed one-way travel time", request.LaunchID)
+	} else if len(resolution.Selected) > 1 {
+		source, err := riftReplaySourceCastle(input.State, request.SourceCastle, fields)
+		if err != nil {
+			return Intent.Plan{}, err
 		}
-		minimumArrival := roundUpUnixMinute(now.Unix() + int64(launch.OneWayTTSeconds))
-		normalizedArrival := roundUpUnixMinute(request.ArriveAt)
-		if normalizedArrival > minimumArrival {
-			fireAt := normalizedArrival - int64(launch.OneWayTTSeconds)
-			immediateRequest := request
-			immediateRequest.ArriveAt = 0
-			immediateArguments, _ := json.Marshal(immediateRequest)
-			schedule, _ := json.Marshal(Scheduling.Request{
-				ID: "rift:" + request.LaunchID, Intent: "rift.launch.replay", Actor: "scheduler:rift",
-				Arguments: immediateArguments, ExecuteAt: time.Unix(fireAt, 0).UTC(),
-			})
-			return Intent.Plan{
-				Claims:  []string{"scheduled-operation:rift:" + request.LaunchID},
-				Summary: fmt.Sprintf("Schedule Rift launch %s for %s", request.LaunchID, time.Unix(normalizedArrival, 0).Format(time.RFC3339)),
-				Steps:   []Intent.Step{{Name: "Schedule Rift replay", Action: "operation.schedule", ActionArguments: schedule}},
-			}, nil
+		if err := validateRepeatedAttackInventory(fields, source, len(resolution.Selected)); err != nil {
+			return Intent.Plan{}, err
 		}
+		claims = append(claims,
+			"castle:"+strconv.FormatInt(int64(source.ID), 10),
+			"attack-inventory:"+strconv.FormatInt(int64(source.ID), 10),
+		)
 	}
-	if !commander.Available {
-		return Intent.Plan{}, fmt.Errorf("commander %d is not currently available", commanderID)
+	if scheduled {
+		immediateRequest := request
+		immediateRequest.ArriveAt = 0
+		immediateArguments, _ := json.Marshal(immediateRequest)
+		schedule, _ := json.Marshal(Scheduling.Request{
+			ID: "rift:" + request.LaunchID, Intent: "rift.launch.replay", Actor: "scheduler:rift",
+			Arguments: immediateArguments, ExecuteAt: time.Unix(fireAt, 0).UTC(),
+		})
+		return Intent.Plan{
+			Claims:  []string{"scheduled-operation:rift:" + request.LaunchID},
+			Summary: fmt.Sprintf("Schedule Rift launch %s for %s", request.LaunchID, time.Unix(normalizedArrival, 0).Format(time.RFC3339)),
+			Steps:   []Intent.Step{{Name: "Schedule Rift replay", Action: "operation.schedule", ActionArguments: schedule}},
+		}, nil
 	}
-	canonical, _ := json.Marshal(fields)
-	claims = append(claims, "commander:"+strconv.FormatInt(int64(commanderID), 10))
+	source, err := riftReplaySourceCastle(input.State, request.SourceCastle, fields)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	castleID := strconv.FormatInt(int64(source.ID), 10)
+	claims = append(claims, "castle-focus", "castle:"+castleID, "attack-inventory:"+castleID)
+	steps, err := buildCRACommandSteps(source, resolution.Selected, "Replay Rift launch", func(commanderID State.CommanderID) (json.RawMessage, error) {
+		return craPayloadWithCommander(fields, commanderID)
+	})
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	claims = append(claims, "attack-context")
+	claims = append(claims, craCommanderClaims(resolution.Candidates)...)
+	summary := fmt.Sprintf("Replay Rift launch %s with commander %d", request.LaunchID, resolution.Selected[0])
+	if len(resolution.Selected) > 1 {
+		summary = fmt.Sprintf("Replay Rift launch %s with %d commanders", request.LaunchID, len(resolution.Selected))
+	}
 	return Intent.Plan{
-		Claims:  claims,
-		Summary: fmt.Sprintf("Replay Rift launch %s with commander %d", request.LaunchID, commanderID),
-		Steps:   []Intent.Step{commandStep("Replay Rift launch", "cra", canonical, "cra")},
+		Claims: claims,
+		Admission: &Intent.Admission{
+			Class: Intent.AdmissionAttackLaunch, Module: "riftReplay",
+			Affinity: "castle:" + castleID,
+		},
+		Summary: summary,
+		Steps:   steps,
 	}, nil
 }
 
+func riftReplayTiming(launch State.RiftLaunch, arriveAt int64, now time.Time) (int64, int64, bool, error) {
+	if arriveAt <= now.Unix()+30 {
+		return 0, 0, false, nil
+	}
+	if launch.OneWayTTSeconds <= 0 {
+		return 0, 0, false, fmt.Errorf("Rift launch %q has no observed one-way travel time", launch.ID)
+	}
+	minimumArrival := roundUpUnixMinute(now.Unix() + int64(launch.OneWayTTSeconds))
+	normalizedArrival := roundUpUnixMinute(arriveAt)
+	if normalizedArrival <= minimumArrival {
+		return 0, normalizedArrival, false, nil
+	}
+	return normalizedArrival - int64(launch.OneWayTTSeconds), normalizedArrival, true, nil
+}
+
 func buildAttackSetupWaves(setup attackSetupRequest, source State.CastleState, gameData *GameData.Store) ([]attackWave, error) {
+	return buildAttackSetupWavesForCommanders(setup, source, gameData, 1)
+}
+
+func buildAttackSetupWavesForCommanders(setup attackSetupRequest, source State.CastleState, gameData *GameData.Store, copies int) ([]attackWave, error) {
+	if copies < 1 {
+		return nil, fmt.Errorf("attack setup requires at least one commander")
+	}
 	if len(setup.Waves) < 1 || len(setup.Waves) > 10 {
 		return nil, fmt.Errorf("attack setup must contain between 1 and 10 waves")
 	}
@@ -279,9 +403,13 @@ func buildAttackSetupWaves(setup attackSetupRequest, source State.CastleState, g
 		return nil, fmt.Errorf("attack setup must allocate at least one troop")
 	}
 	for id, amount := range requested {
+		if amount > math.MaxInt64/int64(copies) {
+			return nil, fmt.Errorf("attack setup quantity for item %d is too large", id)
+		}
+		required := amount * int64(copies)
 		available := source.Units.Stationed[id]
-		if amount > available {
-			return nil, fmt.Errorf("castle %d has %d of item %d; attack setup requires %d", source.ID, available, id, amount)
+		if required > available {
+			return nil, fmt.Errorf("castle %d has %d of item %d; %d commander(s) require %d", source.ID, available, id, copies, required)
 		}
 	}
 	return result, nil
@@ -415,7 +543,10 @@ func (application *Application) renameRiftTemplate(_ context.Context, arguments 
 		gameState.Rift.Launches[request.LaunchID] = launch
 		return []string{"rift"}, true, nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	return application.saveStateSnapshot()
 }
 
 func (application *Application) deleteRiftTemplate(_ context.Context, arguments json.RawMessage) error {
@@ -429,13 +560,20 @@ func (application *Application) deleteRiftTemplate(_ context.Context, arguments 
 		if _, exists := gameState.Rift.Launches[request.LaunchID]; !exists {
 			return nil, false, nil
 		}
+		if gameState.Rift.DeletedLaunchIDs == nil {
+			gameState.Rift.DeletedLaunchIDs = map[string]int64{}
+		}
+		gameState.Rift.DeletedLaunchIDs[request.LaunchID] = time.Now().UTC().UnixMilli()
 		delete(gameState.Rift.Launches, request.LaunchID)
 		if gameState.Rift.PendingLaunchID == request.LaunchID {
 			gameState.Rift.PendingLaunchID = ""
 		}
 		return []string{"rift"}, true, nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	return application.saveStateSnapshot()
 }
 
 func roundUpUnixMinute(value int64) int64 {
@@ -515,10 +653,10 @@ func planDecorationPreset(_ context.Context, input Intent.PlanningContext, argum
 	sort.Slice(remove, func(left, right int) bool { return remove[left] < remove[right] })
 	steps := castleContextSteps(castle)
 	if len(remove) > 0 || unmatchedCount(matched) > 0 {
-		steps = append(steps, Intent.Step{
+		steps = append(steps, Intent.RebuildOnResume(Intent.Step{
 			Name: "Refresh decoration storage", Opcode: "sin", AwaitOpcode: "sin", TimeoutMillis: 10_000,
 			SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "sin", Bare: true},
-		})
+		}))
 	}
 	for _, instanceID := range remove {
 		payload, _ := json.Marshal(struct {
@@ -577,6 +715,17 @@ func riftTarget(state State.GameState) (State.MapObservation, bool) {
 }
 
 func eligibleMaidenCommanders(state State.GameState) []State.CommanderID {
+	candidates := maidenCandidateCommanders(state)
+	result := make([]State.CommanderID, 0, len(candidates))
+	for _, commanderID := range candidates {
+		if state.Commanders[commanderID].Available {
+			result = append(result, commanderID)
+		}
+	}
+	return result
+}
+
+func maidenCandidateCommanders(state State.GameState) []State.CommanderID {
 	eligible := map[State.CommanderID]struct{}{}
 	for _, equipment := range state.Inventory.Equipment {
 		if equipment.WearerKind != "commander" || (equipment.RarityID != 5 && equipment.RarityID != 15) {
@@ -587,8 +736,8 @@ func eligibleMaidenCommanders(state State.GameState) []State.CommanderID {
 			continue
 		}
 		commanderID := State.CommanderID(equipment.WearerID)
-		commander, ok := state.Commanders[commanderID]
-		if ok && commanderID > 0 && commander.Available && value >= maidenSupportMinimum && value <= maidenSupportMaximum {
+		_, ok := state.Commanders[commanderID]
+		if ok && commanderID > 0 && value >= maidenSupportMinimum && value <= maidenSupportMaximum {
 			eligible[commanderID] = struct{}{}
 		}
 	}
@@ -647,7 +796,13 @@ type attackBody struct {
 	AttackSupportCount int               `json:"ASCT"`
 }
 
-func maidenAttackBody(sourceX, sourceY int, target State.MapObservation, commanderID State.CommanderID, unitID State.UnitID) attackBody {
+func maidenAttackBody(
+	sourceX, sourceY int,
+	target State.MapObservation,
+	commanderID State.CommanderID,
+	unitID State.UnitID,
+	horseTravelBoostIDs ...int,
+) attackBody {
 	empty := attackPair{-1, 0}
 	pair := attackPair{int64(unitID), maidenProbeCountPerFlank}
 	wave := attackWave{
@@ -658,13 +813,32 @@ func maidenAttackBody(sourceX, sourceY int, target State.MapObservation, command
 			Units: []attackPair{pair, empty, empty, empty, empty, empty},
 		},
 	}
-	return attackBody{
+	body := attackBody{
 		SourceX: sourceX, SourceY: sourceY, TargetX: target.X, TargetY: target.Y,
 		Kingdom: target.KingdomID, Leader: commanderID, Booster: -1, Valid: 1,
 		PremiumTravel: 1, Cooldown: 99, Waves: []attackWave{wave}, Books: []any{},
 		AttackSupportTools: []int64{-1, -1, -1},
 		SupportTroops:      []attackPair{empty, empty, empty, empty, empty, empty, empty, empty},
 	}
+	horseTravelBoostID := defaultHorseTravelBoostID
+	if len(horseTravelBoostIDs) > 0 {
+		horseTravelBoostID = horseTravelBoostIDs[0]
+	}
+	applyHorseTravelBoost(&body, horseTravelBoostID)
+	return body
+}
+
+func slicesMatchingCommanders(
+	candidates []State.CommanderID,
+	allowed map[State.CommanderID]struct{},
+) []State.CommanderID {
+	result := make([]State.CommanderID, 0, len(candidates))
+	for _, commanderID := range candidates {
+		if _, exists := allowed[commanderID]; exists {
+			result = append(result, commanderID)
+		}
+	}
+	return result
 }
 
 func officialDecoration(record GameData.Record) bool {

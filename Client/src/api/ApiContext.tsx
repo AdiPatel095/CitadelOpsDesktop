@@ -13,6 +13,8 @@ import type {
   APIConnectionStatus,
 	AllianceTargetViewV2,
 	ApplicationUpdateV2,
+	BuildingTargetCaptureRequest,
+	BuildingTargetCaptureResponse,
   CatalogManifest,
   CatalogResponse,
   ConfigurationSnapshot,
@@ -45,6 +47,7 @@ interface APIContextValue {
   localize: (keys: string[]) => Promise<Record<string, string>>;
 	getAllianceTargets: (allianceId?: string, server?: string, refresh?: boolean) => Promise<AllianceTargetViewV2>;
 	optimizeEquipment: (input: EquipmentOptimizeRequest) => Promise<EquipmentOptimizeResponse>;
+	captureBuildingTarget: (input: BuildingTargetCaptureRequest) => Promise<BuildingTargetCaptureResponse>;
   submitIntent: (
     name: string,
     argumentsValue?: Record<string, unknown>,
@@ -110,6 +113,18 @@ export function APIProvider({ children }: { children: ReactNode }) {
 		}
 	}, []);
 
+	const refreshOperations = useCallback(async () => {
+		try {
+			const receipts = await CitadelAPI.getOperations();
+			setOperations((current) => ({
+				...current,
+				...Object.fromEntries(receipts.map((receipt) => [receipt.id, receipt])),
+			}));
+		} catch (requestError) {
+			console.warn('Could not resynchronize operation stream', requestError);
+		}
+	}, []);
+
   useEffect(() => {
     const unsubscribeStatus = CitadelAPI.subscribeStatus(setConnectionStatus);
     const unsubscribeEvents = CitadelAPI.subscribe((message) => {
@@ -128,12 +143,23 @@ export function APIProvider({ children }: { children: ReactNode }) {
       }
       if (message.type === 'config.changed' && isConfigurationSnapshot(message.payload)) {
         setConfiguration(message.payload);
+		if (message.gap) void refreshConfiguration();
         return;
       }
+	  if (message.type === 'operations.snapshot' && isIntentReceiptArray(message.payload)) {
+		const receipts = message.payload;
+		setOperations((current) => ({
+			...current,
+			...Object.fromEntries(receipts.map((receipt) => [receipt.id, receipt])),
+		}));
+		return;
+	  }
       if ((message.type === 'operation.changed' || message.type === 'intent.receipt') && isIntentReceipt(message.payload)) {
-        setOperations((current) => ({ ...current, [message.payload.id]: message.payload }));
-		if (message.payload.status === 'failed' && message.payload.error) {
-			Notifications.error(message.payload.error, `operation-${message.payload.id}`);
+		const receipt = message.payload;
+		setOperations((current) => ({ ...current, [receipt.id]: receipt }));
+		if (message.gap) void refreshOperations();
+		if (receipt.status === 'failed' && receipt.error) {
+			Notifications.error(receipt.error, `operation-${receipt.id}`);
 		}
 		return;
 	  }
@@ -143,7 +169,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
     });
     CitadelAPI.connect();
     void Promise.all([
-		refreshState(), refreshCatalogs(), refreshConfiguration(), refreshApplicationUpdate(),
+		refreshState(), refreshCatalogs(), refreshConfiguration(), refreshOperations(), refreshApplicationUpdate(),
 		runtimeDiagnosticsEnabled ? refreshDiagnostics() : Promise.resolve(),
 	]);
     return () => {
@@ -152,7 +178,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
       if (refreshTimer.current != null) clearTimeout(refreshTimer.current);
       CitadelAPI.disconnect();
     };
-  }, [refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshState]);
+  }, [refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState]);
 
 	useEffect(() => {
 		const interval = window.setInterval(() => void refreshApplicationUpdate(), 5_000);
@@ -214,6 +240,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
     localize: (keys) => CitadelAPI.localize(keys),
 	getAllianceTargets,
 	optimizeEquipment: (input) => CitadelAPI.optimizeEquipment(input),
+	captureBuildingTarget: (input) => CitadelAPI.captureBuildingTarget(input),
     submitIntent,
     cancelOperation,
     updateConfiguration,
@@ -260,6 +287,10 @@ function isConfigurationSnapshot(value: unknown): value is ConfigurationSnapshot
 
 function isIntentReceipt(value: unknown): value is IntentReceipt {
   return isRecord(value) && typeof value.id === 'string' && typeof value.status === 'string';
+}
+
+function isIntentReceiptArray(value: unknown): value is IntentReceipt[] {
+  return Array.isArray(value) && value.every(isIntentReceipt);
 }
 
 function isNotification(value: unknown): value is {

@@ -19,7 +19,7 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		"session":     {"session.start", "session.stop", "session.select_browser"},
 		"castle":      {"game.focus_castle", "decoration.apply_preset"},
 		"movement":    {"game.refresh_movements", "movement.recall", "troops.station", "spy.launch"},
-		"alliance":    {"alliance.refresh", "alliance.inspect"},
+		"alliance":    {"alliance.refresh", "alliance.inspect", "alliance.help.request"},
 		"equipment": {
 			"equipment.refresh", "equipment.equip", "equipment.unequip", "equipment.gem.equip",
 			"equipment.gem.unequip", "equipment.swap", "equipment.reconfigure", "equipment.upgrade", "equipment.sell",
@@ -28,6 +28,7 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		"construction": {"construction.equip", "construction.upgrade", "construction.shop", "construction.inventory.refresh", "construction.purchase"},
 		"crafting":     {"crafting.refresh", "crafting.start", "crafting.rent_slot", "crafting.skip", "resource.logistics.refresh", "resource.market.ship", "resource.kingdom.ship", "resource.kingdom.skip"},
 		"rift":         {"rift.maiden_wave.launch", "rift.launch.replay", "rift.template.rename", "rift.template.delete"},
+		"towers":       {"tower.queue.scan", "tower.context.refresh", "tower.attack", "tower.launch"},
 		"reports":      {"report.spy.fetch", "report.spy.share", "report.battle.summary", "report.battle.details"},
 		"beri":         {"beri.capacity.refresh", "beri.transfer"},
 	}
@@ -44,7 +45,7 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		policyIDs[id] = true
 	}
 	for _, id := range []string{
-		"autoRecruit", "autoTool", "autoHospital", "autoTCI", "autoSceatRes", "autoBird", "autoStation", "autoBeriWorld",
+		"autoRecruit", "autoTool", "autoHospital", "autoTCI", "autoSceatRes", "autoBird", "autoStation", "autoBeriWorld", "autoFoodBalance", "autoTowers",
 	} {
 		if !policyIDs[id] {
 			t.Errorf("1.3.8 automation %q has no 2.0 policy", id)

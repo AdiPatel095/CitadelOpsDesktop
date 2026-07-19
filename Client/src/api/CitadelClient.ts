@@ -4,6 +4,14 @@ import type {
   APIEnvelope,
 	AllianceTargetViewV2,
 	ApplicationUpdateV2,
+	BuildingCatalogQuery,
+	BuildingCatalogResponse,
+	BuildingPreviewRequest,
+	BuildingPreviewResponse,
+	BuildingTargetCaptureRequest,
+	BuildingTargetCaptureResponse,
+	ExpansionPreviewRequest,
+	ExpansionPreviewResponse,
   BrowserInventory,
   CatalogManifest,
   CatalogResponse,
@@ -40,6 +48,7 @@ class CitadelClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempt = 0;
   private intentionalClose = false;
+  private pendingIntents = new Map<string, Promise<IntentReceipt>>();
 
   connect() {
     this.intentionalClose = false;
@@ -149,6 +158,43 @@ class CitadelClient {
 		});
 	}
 
+	getBuildingCatalog(input: BuildingCatalogQuery = {}): Promise<BuildingCatalogResponse> {
+		const query = new URLSearchParams();
+		for (const id of input.ids ?? []) query.append('id', String(id));
+		if (input.kingdomId != null) query.set('kingdomId', String(input.kingdomId));
+		if (input.eventId != null) query.set('eventId', String(input.eventId));
+		if (input.areaTypeId != null) query.set('areaTypeId', String(input.areaTypeId));
+		if (input.mapId != null) query.set('mapId', String(input.mapId));
+		if (input.maxLevel != null) query.set('maxLevel', String(input.maxLevel));
+		if (input.rootOnly != null) query.set('rootOnly', input.rootOnly ? '1' : '0');
+		if (input.query) query.set('q', input.query);
+		if (input.offset != null) query.set('offset', String(input.offset));
+		if (input.limit != null) query.set('limit', String(input.limit));
+		const suffix = query.size > 0 ? `?${query.toString()}` : '';
+		return this.request<BuildingCatalogResponse>(`/api/v2/buildings/catalog${suffix}`);
+	}
+
+	previewBuildings(input: BuildingPreviewRequest): Promise<BuildingPreviewResponse> {
+		return this.request<BuildingPreviewResponse>('/api/v2/buildings/preview', {
+			method: 'POST',
+			body: JSON.stringify(input),
+		});
+	}
+
+	previewExpansion(input: ExpansionPreviewRequest): Promise<ExpansionPreviewResponse> {
+		return this.request<ExpansionPreviewResponse>('/api/v2/buildings/expansion/preview', {
+			method: 'POST',
+			body: JSON.stringify(input),
+		});
+	}
+
+	captureBuildingTarget(input: BuildingTargetCaptureRequest): Promise<BuildingTargetCaptureResponse> {
+		return this.request<BuildingTargetCaptureResponse>('/api/v2/buildings/target/capture', {
+			method: 'POST',
+			body: JSON.stringify(input),
+		});
+	}
+
   async localize(keys: string[]): Promise<Record<string, string>> {
     const response = await this.request<{ values: Record<string, string> }>('/api/v2/game-data/localize', {
       method: 'POST',
@@ -166,22 +212,38 @@ class CitadelClient {
     argumentsValue: Record<string, unknown> = {},
     options: SubmitIntentOptions = {},
   ): Promise<IntentReceipt> {
-    return this.request<IntentReceipt>(`/api/v2/intents/${encodeURIComponent(name)}`, {
+	const operationId = options.id?.trim() || this.newOperationId();
+	const requestKey = `${name}\u0000${JSON.stringify(argumentsValue)}\u0000${options.expectedRevision ?? ''}\u0000${options.dryRun ?? false}`;
+	const duplicateKey = options.id?.trim() ? `id:${operationId}\u0000${requestKey}` : `intent:${requestKey}`;
+	const pending = this.pendingIntents.get(duplicateKey);
+	if (pending) return pending;
+	const request = this.request<IntentReceipt>(`/api/v2/intents/${encodeURIComponent(name)}`, {
       method: 'POST',
       body: JSON.stringify({
-        id: options.id,
+        id: operationId,
         actor: options.actor ?? 'ui',
+        priority: options.priority,
         arguments: argumentsValue,
         expectedRevision: options.expectedRevision,
         dryRun: options.dryRun,
       }),
     });
+	this.pendingIntents.set(duplicateKey, request);
+	void request.finally(() => {
+	  if (this.pendingIntents.get(duplicateKey) === request) this.pendingIntents.delete(duplicateKey);
+	}).catch(() => undefined);
+	return request;
   }
 
   cancelOperation(id: string): Promise<{ id: string; cancelled: boolean }> {
     return this.request<{ id: string; cancelled: boolean }>(`/api/v2/operations/${encodeURIComponent(id)}/cancel`, {
       method: 'POST',
     });
+  }
+
+  getOperations(limit = 100): Promise<IntentReceipt[]> {
+    const bounded = Math.max(1, Math.min(1000, Math.trunc(limit)));
+    return this.request<IntentReceipt[]>(`/api/v2/operations?limit=${bounded}`);
   }
 
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -219,6 +281,11 @@ class CitadelClient {
     const url = new URL('/api/v2/events', base);
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     return url.toString();
+  }
+
+  private newOperationId(): string {
+	return globalThis.crypto?.randomUUID?.()
+	  ?? `ui-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   }
 
   private scheduleReconnect() {

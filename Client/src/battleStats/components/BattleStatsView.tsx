@@ -13,7 +13,7 @@ import {
   Swords,
   Users,
 } from 'lucide-react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Select } from '../../components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, MetricTile, SectionCard, Select } from '../../components/ui';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
 import DetailBackButton from '../../components/DetailBackButton';
@@ -278,86 +278,83 @@ const BattleStatsView: React.FC = () => {
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
         <aside className="xl:w-[21.5rem] shrink-0">
-          <Card variant="solid" className="liquid-prominent-header-card">
-            <CardHeader className="liquid-card-header-prominent">
-              <div>
-                <CardTitle>Battle Stats</CardTitle>
-                <p className="mt-1.5 text-xs font-semibold text-text-muted">{sourceLabel}</p>
+          <SectionCard
+            title="Battle Stats"
+            description={sourceLabel}
+            descriptionClassName="mt-1.5 font-semibold"
+            actions={<Button
+              variant="ghost"
+              size="icon"
+              onClick={() => void loadReports()}
+              isLoading={isLoading}
+              title="Refresh battle reports"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>}
+            contentClassName="battle-filters-grid"
+          >
+            <Input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Find player, alliance, castle"
+              leftIcon={<Search className="w-4 h-4" />}
+            />
+
+            <FilterField label="Date range" icon={<CalendarDays className="w-4 h-4" />}>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+                <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => void loadReports()}
-                isLoading={isLoading}
-                title="Refresh battle reports"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="liquid-prominent-header-content battle-filters-grid">
-              <Input
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Find player, alliance, castle"
-                leftIcon={<Search className="w-4 h-4" />}
+            </FilterField>
+
+            <FilterField label="Alliance player" icon={<Users className="w-4 h-4" />}>
+              <Select value={selectedPlayer} options={playerOptions} onChange={setSelectedPlayer} menuGrowToViewport />
+            </FilterField>
+
+            <FilterField label="Opponent player" icon={<Swords className="w-4 h-4" />}>
+              <Select
+                value={selectedOpponentPlayer}
+                options={opponentPlayerOptions}
+                onChange={setSelectedOpponentPlayer}
+                menuGrowToViewport
               />
+            </FilterField>
 
-              <FilterField label="Date range" icon={<CalendarDays className="w-4 h-4" />}>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
-                  <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
-                </div>
-              </FilterField>
+            <FilterField label="Opponent alliance" icon={<Shield className="w-4 h-4" />}>
+              <Select value={selectedAlliance} options={allianceOptions} onChange={setSelectedAlliance} menuGrowToViewport />
+            </FilterField>
 
-              <FilterField label="Alliance player" icon={<Users className="w-4 h-4" />}>
-                <Select value={selectedPlayer} options={playerOptions} onChange={setSelectedPlayer} menuGrowToViewport />
-              </FilterField>
+            <FilterField label="Result" icon={<BarChart3 className="w-4 h-4" />}>
+              <Select
+                value={selectedResult}
+                onChange={setSelectedResult}
+                options={[
+                  { value: allOption, label: 'All results' },
+                  { value: 'Attack won', label: 'Attack won' },
+                  { value: 'Attack lost', label: 'Attack lost' },
+                  { value: 'Defense win', label: 'Defense win' },
+                  { value: 'Defense lost', label: 'Defense lost' },
+                ]}
+              />
+            </FilterField>
 
-              <FilterField label="Opponent player" icon={<Swords className="w-4 h-4" />}>
-                <Select
-                  value={selectedOpponentPlayer}
-                  options={opponentPlayerOptions}
-                  onChange={setSelectedOpponentPlayer}
-                  menuGrowToViewport
-                />
-              </FilterField>
+            <FilterField label="Role" icon={<Castle className="w-4 h-4" />}>
+              <Select
+                value={selectedRole}
+                onChange={setSelectedRole}
+                options={[
+                  { value: allOption, label: 'All roles' },
+                  { value: 'Attacker', label: 'Attacker' },
+                  { value: 'Defender', label: 'Defender' },
+                ]}
+              />
+            </FilterField>
 
-              <FilterField label="Opponent alliance" icon={<Shield className="w-4 h-4" />}>
-                <Select value={selectedAlliance} options={allianceOptions} onChange={setSelectedAlliance} menuGrowToViewport />
-              </FilterField>
+            <Button variant="outline" className="w-full" onClick={resetFilters}>
+              Reset filters
+            </Button>
 
-              <FilterField label="Result" icon={<BarChart3 className="w-4 h-4" />}>
-                <Select
-                  value={selectedResult}
-                  onChange={setSelectedResult}
-                  options={[
-                    { value: allOption, label: 'All results' },
-                    { value: 'Attack won', label: 'Attack won' },
-                    { value: 'Attack lost', label: 'Attack lost' },
-                    { value: 'Defense win', label: 'Defense win' },
-                    { value: 'Defense lost', label: 'Defense lost' },
-                  ]}
-                />
-              </FilterField>
-
-              <FilterField label="Role" icon={<Castle className="w-4 h-4" />}>
-                <Select
-                  value={selectedRole}
-                  onChange={setSelectedRole}
-                  options={[
-                    { value: allOption, label: 'All roles' },
-                    { value: 'Attacker', label: 'Attacker' },
-                    { value: 'Defender', label: 'Defender' },
-                  ]}
-                />
-              </FilterField>
-
-              <Button variant="outline" className="w-full" onClick={resetFilters}>
-                Reset filters
-              </Button>
-
-            </CardContent>
-          </Card>
+          </SectionCard>
         </aside>
 
         <section className="flex-1 min-w-0 space-y-4">
@@ -375,21 +372,22 @@ const BattleStatsView: React.FC = () => {
             <AllianceAggregateTable rows={allianceAggregates} />
           </div>
 
-          <Card variant="solid" className="liquid-prominent-header-card">
-            <CardHeader className="liquid-card-header-prominent">
-              <div>
-                <CardTitle>Reports</CardTitle>
-                <p className="text-xs text-text-muted mt-1">
-                  Showing {formatNumber(visibleReports.length)} of {formatNumber(filteredReports.length)} filtered reports
-                  <span className="text-text-muted/70"> · {formatNumber(scopedReports.length)} parsed</span>
-                </p>
-              </div>
-              <Badge variant="secondary">{isLoading ? 'Loading' : 'Ready'}</Badge>
-            </CardHeader>
-            <div className="liquid-prominent-header-content liquid-prominent-header-content-flush overflow-x-auto">
-              <table className="battle-table w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
+          <SectionCard
+            title="Reports"
+            description={(
+              <>
+                Showing {formatNumber(visibleReports.length)} of {formatNumber(filteredReports.length)} filtered reports
+                <span className="text-text-muted/70"> · {formatNumber(scopedReports.length)} parsed</span>
+              </>
+            )}
+            descriptionClassName=""
+            actions={<Badge variant="secondary">{isLoading ? 'Loading' : 'Ready'}</Badge>}
+            contentClassName="overflow-x-auto"
+            flush
+          >
+            <table className="battle-table w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
                     <th className="px-4 py-3 font-semibold">Time</th>
                     <th className="px-4 py-3 font-semibold">Attacker</th>
                     <th className="px-4 py-3 font-semibold">Defender</th>
@@ -398,9 +396,9 @@ const BattleStatsView: React.FC = () => {
                     <th className="px-4 py-3 font-semibold text-right">Attack lost</th>
                     <th className="px-4 py-3 font-semibold text-right">Def lost</th>
                     <th className="px-3 py-3 font-semibold text-right w-12" aria-label="Open details"></th>
-                  </tr>
-                </thead>
-                <tbody>
+                </tr>
+              </thead>
+              <tbody>
                   {visibleReports.map((report) => (
                     <tr
                       key={reportID(report)}
@@ -436,27 +434,26 @@ const BattleStatsView: React.FC = () => {
                         </Button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              {visibleReports.length < filteredReports.length && (
-                <div className="flex justify-center border-t border-border-base/70 px-4 py-4">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setVisibleReportLimit((current) => current + REPORT_ROWS_PAGE_SIZE)}
-                  >
-                    Show {formatNumber(Math.min(REPORT_ROWS_PAGE_SIZE, filteredReports.length - visibleReports.length))} more
-                  </Button>
-                </div>
-              )}
-            </div>
+                ))}
+              </tbody>
+            </table>
+            {visibleReports.length < filteredReports.length && (
+              <div className="flex justify-center border-t border-border-base/70 px-4 py-4">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setVisibleReportLimit((current) => current + REPORT_ROWS_PAGE_SIZE)}
+                >
+                  Show {formatNumber(Math.min(REPORT_ROWS_PAGE_SIZE, filteredReports.length - visibleReports.length))} more
+                </Button>
+              </div>
+            )}
             {filteredReports.length === 0 && (
               <div className="px-5 py-12 text-center text-text-muted">
                 No player battle reports match the current filters.
               </div>
             )}
-          </Card>
+          </SectionCard>
         </section>
       </div>
     </div>
@@ -575,16 +572,8 @@ interface AllianceAggregate {
 }
 
 const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) => (
-  <Card variant="solid" className="liquid-prominent-header-card">
-    <CardHeader className="liquid-card-header-prominent">
-      <div>
-        <CardTitle>Player Aggregate</CardTitle>
-        <p className="text-xs text-text-muted mt-1">Filtered battle totals by player</p>
-      </div>
-      <Badge variant="secondary">{rows.length} players</Badge>
-    </CardHeader>
-    <div className="liquid-prominent-header-content liquid-prominent-header-content-flush">
-      <div className="overflow-x-auto">
+  <SectionCard title="Player Aggregate" description="Filtered battle totals by player" descriptionClassName="" actions={<Badge variant="secondary">{rows.length} players</Badge>} flush>
+    <div className="overflow-x-auto">
         <table className="battle-aggregate-table w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
@@ -620,25 +609,16 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
             ))}
           </tbody>
         </table>
-      </div>
-      {rows.length === 0 && (
-        <div className="px-5 py-10 text-center text-text-muted">No player aggregate for the current filters.</div>
-      )}
     </div>
-  </Card>
+    {rows.length === 0 && (
+      <div className="px-5 py-10 text-center text-text-muted">No player aggregate for the current filters.</div>
+    )}
+  </SectionCard>
 );
 
 const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows }) => (
-  <Card variant="solid" className="liquid-prominent-header-card">
-    <CardHeader className="liquid-card-header-prominent">
-      <div>
-        <CardTitle>Alliance Aggregate</CardTitle>
-        <p className="text-xs text-text-muted mt-1">Filtered battle totals by alliance</p>
-      </div>
-      <Badge variant="secondary">{rows.length} alliances</Badge>
-    </CardHeader>
-    <div className="liquid-prominent-header-content liquid-prominent-header-content-flush">
-      <div className="overflow-x-auto">
+  <SectionCard title="Alliance Aggregate" description="Filtered battle totals by alliance" descriptionClassName="" actions={<Badge variant="secondary">{rows.length} alliances</Badge>} flush>
+    <div className="overflow-x-auto">
         <table className="battle-aggregate-table w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
@@ -669,12 +649,11 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
             ))}
           </tbody>
         </table>
-      </div>
-      {rows.length === 0 && (
-        <div className="px-5 py-10 text-center text-text-muted">No alliance aggregate for the current filters.</div>
-      )}
     </div>
-  </Card>
+    {rows.length === 0 && (
+      <div className="px-5 py-10 text-center text-text-muted">No alliance aggregate for the current filters.</div>
+    )}
+  </SectionCard>
 );
 
 const ReportDetailPage: React.FC<{
@@ -727,17 +706,11 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
       />
 
       {report.waves && report.waves.length > 0 && (
-        <Card variant="solid" className="liquid-prominent-header-card">
-          <CardHeader className="liquid-card-header-prominent">
-            <CardTitle>Wall Waves</CardTitle>
-            <Badge variant="secondary">{report.waves.length} waves</Badge>
-          </CardHeader>
-          <CardContent className="liquid-prominent-header-content space-y-3">
+        <SectionCard title="Wall Waves" actions={<Badge variant="secondary">{report.waves.length} waves</Badge>} contentClassName="space-y-3">
             {report.waves.map((wave, index) => (
               <WaveRow key={`${wave.wave ?? wave.index ?? index}-${index}`} wave={wave} index={index} />
             ))}
-          </CardContent>
-        </Card>
+        </SectionCard>
       )}
     </div>
   );
@@ -839,28 +812,23 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
   const opponentLost = isDefenseView ? attackerLost : defenderLost;
   const totalLosses = attackerLost + defenderLost;
   const tradeRatio = formatTradeRatio(opponentLost, ourLost);
-  const tradeTone = opponentLost > ourLost ? 'success' : opponentLost < ourLost ? 'danger' : 'neutral';
+  const tradeTone = opponentLost > ourLost ? 'success' : opponentLost < ourLost ? 'danger' : 'default';
 
   return (
-    <Card variant="solid" className="liquid-prominent-header-card">
-      <CardHeader className="liquid-card-header-prominent">
-        <div>
-          <CardTitle>All Unit Stats</CardTitle>
-          <p className="text-xs text-text-muted mt-1">
-            {isDefenseView ? 'Defense perspective' : 'Attack perspective'} based on the selected player or alliance.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={isDefenseView ? 'primary' : 'danger'}>{isDefenseView ? 'Defender view' : 'Attacker view'}</Badge>
-          <BarChart3 className="w-5 h-5 text-primary" />
-        </div>
-      </CardHeader>
-      <CardContent className="liquid-prominent-header-content">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+    <SectionCard
+      title="All Unit Stats"
+      description={`${isDefenseView ? 'Defense' : 'Attack'} perspective based on the selected player or alliance.`}
+      descriptionClassName=""
+      actions={<div className="flex items-center gap-2">
+        <Badge variant={isDefenseView ? 'primary' : 'danger'}>{isDefenseView ? 'Defender view' : 'Attacker view'}</Badge>
+        <BarChart3 className="w-5 h-5 text-primary" />
+      </div>}
+    >
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           <MetricTile
             label={isDefenseView ? 'Our stationed' : 'Our sent'}
             value={ourForce}
-            tone={isDefenseView ? 'info' : 'neutral'}
+            tone={isDefenseView ? 'info' : 'default'}
           />
           {isDefenseView ? (
             <SplitMetricTile
@@ -878,7 +846,7 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
           <MetricTile
             label={isDefenseView ? 'Opponent sent' : 'Opponent stationed'}
             value={opponentForce}
-            tone={isDefenseView ? 'neutral' : 'info'}
+            tone={isDefenseView ? 'default' : 'info'}
           />
           {isDefenseView ? (
             <MetricTile label="Opponent losses" value={opponentLost} tone="success" />
@@ -895,43 +863,8 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
           )}
           <MetricTile label="Trade ratio" value={tradeRatio} tone={tradeTone} caption="Opponent losses per our loss" />
           <MetricTile label="Total losses" value={totalLosses} tone="danger" caption="Both sides combined" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const MetricTile: React.FC<{
-  label: string;
-  value: number | string;
-  tone?: 'neutral' | 'success' | 'danger' | 'info';
-  caption?: string;
-}> = ({
-  label,
-  value,
-  tone = 'neutral',
-  caption,
-}) => {
-  const toneClass = {
-    neutral: 'text-text-main',
-    success: 'text-success',
-    danger: 'text-error',
-    info: 'text-info',
-  }[tone];
-  const borderClass = {
-    neutral: 'border-border-base',
-    success: 'border-success/20',
-    danger: 'border-error/20',
-    info: 'border-info/20',
-  }[tone];
-  const displayValue = typeof value === 'number' ? formatNumber(value) : value;
-
-  return (
-    <div className={`border rounded-global px-3 py-3 bg-bg-app ${borderClass}`}>
-      <div className="text-xs text-text-muted">{label}</div>
-      <div className={`text-lg font-bold mt-1 ${toneClass}`}>{displayValue}</div>
-      {caption && <div className="mt-1 text-[11px] text-text-muted">{caption}</div>}
-    </div>
+      </div>
+    </SectionCard>
   );
 };
 

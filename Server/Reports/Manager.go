@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"CitadelDesktop/Server/History"
@@ -24,6 +25,7 @@ type Manager struct {
 		Submit(context.Context, Intent.Request) Intent.Receipt
 	}
 	nextAttempt map[int64]time.Time
+	started     atomic.Bool
 }
 
 func NewManager(state *State.Store, history *History.Store, intents interface {
@@ -34,6 +36,9 @@ func NewManager(state *State.Store, history *History.Store, intents interface {
 
 func (manager *Manager) Run(ctx context.Context) {
 	if manager == nil || manager.state == nil || manager.history == nil || manager.intents == nil {
+		return
+	}
+	if !manager.started.CompareAndSwap(false, true) {
 		return
 	}
 	ticker := time.NewTicker(reportPollInterval)

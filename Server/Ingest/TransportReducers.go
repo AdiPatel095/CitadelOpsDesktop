@@ -160,12 +160,13 @@ func reduceKingdomTransport(
 			return nil, false, fmt.Errorf("decode nested kingdom transport: %w", err)
 		}
 	}
-	if len(root["UL"]) == 0 && len(root["RT"]) == 0 {
+	if len(root["UL"]) == 0 && len(root["RT"]) == 0 && len(root["UT"]) == 0 {
 		return nil, false, nil
 	}
 	next := State.KingdomTransportState{
 		Unlocks: map[State.KingdomID]State.KingdomTransportUnlock{},
-		Pending: []State.KingdomResourceTransport{}, ObservedAt: frame.ReceivedAt,
+		Pending: []State.KingdomResourceTransport{}, PendingUnits: []State.KingdomUnitTransport{},
+		ObservedAt: frame.ReceivedAt,
 	}
 	var unlocks []map[string]json.RawMessage
 	_ = json.Unmarshal(root["UL"], &unlocks)
@@ -200,6 +201,24 @@ func reduceKingdomTransport(
 			})
 		}
 		next.Pending = append(next.Pending, transport)
+	}
+	var pendingUnits []map[string]json.RawMessage
+	_ = json.Unmarshal(root["UT"], &pendingUnits)
+	for _, row := range pendingUnits {
+		transport := State.KingdomUnitTransport{
+			KingdomID:    State.KingdomID(rawInteger(row["KID"])),
+			RemainingSec: int(rawInteger(row["RS"])), Units: []State.KingdomTransportUnit{},
+		}
+		var units [][]json.RawMessage
+		_ = json.Unmarshal(row["I"], &units)
+		for _, unit := range units {
+			unitID, amount := State.UnitID(rowInt(unit, 0)), rowInt(unit, 1)
+			if unitID <= 0 || amount <= 0 {
+				continue
+			}
+			transport.Units = append(transport.Units, State.KingdomTransportUnit{UnitID: unitID, Amount: amount})
+		}
+		next.PendingUnits = append(next.PendingUnits, transport)
 	}
 	if reflect.DeepEqual(gameState.KingdomTransport, next) {
 		return nil, false, nil

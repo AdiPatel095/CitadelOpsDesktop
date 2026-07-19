@@ -63,9 +63,12 @@ func craftingRentalDecision(
 		"slotType": slotType, "slot": slot,
 	})
 	return Decision{
-		Status: "ready", Detail: fmt.Sprintf("Rent %s crafting slot %d at %s", slotType, slot, castleName(castle)),
-		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: map[string]float64{"coinCost": cost},
-		Request: &Intent.Request{Name: "crafting.rent_slot", Arguments: arguments},
+		Status:              "ready",
+		Detail:              fmt.Sprintf("Rent %s crafting slot %d at %s", slotType, slot, castleName(castle)),
+		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+		Metrics:             map[string]float64{"coinCost": cost},
+		Request:             &Intent.Request{Name: "crafting.rent_slot", Arguments: arguments},
+		ReevaluateOnSuccess: true,
 	}, true
 }
 
@@ -93,9 +96,11 @@ func pendingKingdomSkipDecision(settings craftingSettings, snapshot Snapshot, in
 		}
 		arguments, _ := json.Marshal(map[string]any{"targetKingdomId": transport.KingdomID, "timeSkipId": skipID})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Apply %s to the kingdom %d resource shipment", skipID, transport.KingdomID),
-			NextCheckAt: snapshot.Now.Add(2 * time.Second),
-			Request:     &Intent.Request{Name: "resource.kingdom.skip", Arguments: arguments},
+			Status:              "ready",
+			Detail:              fmt.Sprintf("Apply %s to the kingdom %d resource shipment", skipID, transport.KingdomID),
+			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+			Request:             &Intent.Request{Name: "resource.kingdom.skip", Arguments: arguments},
+			ReevaluateOnSuccess: true,
 		}, true
 	}
 	return Decision{NextCheckAt: snapshot.Now.Add(interval)}, false
@@ -293,6 +298,9 @@ func sameKingdomShipmentDecision(
 		if source.ID == target.ID || source.KingdomID != target.KingdomID {
 			continue
 		}
+		if !craftingHasMarketplace(snapshot.GameData, source) {
+			continue
+		}
 		market, observed := snapshot.State.Market.Castles[source.ID]
 		if !observed || market.AvailableBarrows <= 0 {
 			continue
@@ -329,9 +337,12 @@ func sameKingdomShipmentDecision(
 		"resourceId": resourceID, "amount": int64(amount),
 	})
 	return Decision{
-		Status: "ready", Detail: fmt.Sprintf("Ship %.0f resource %d from %s to %s", amount, resourceID, castleName(best), castleName(target)),
-		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: map[string]float64{"shipmentAmount": amount, "coinCost": coinCost},
-		Request: &Intent.Request{Name: "resource.market.ship", Arguments: arguments},
+		Status:              "ready",
+		Detail:              fmt.Sprintf("Ship %.0f resource %d from %s to %s", amount, resourceID, castleName(best), castleName(target)),
+		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+		Metrics:             map[string]float64{"shipmentAmount": amount, "coinCost": coinCost},
+		Request:             &Intent.Request{Name: "resource.market.ship", Arguments: arguments},
+		ReevaluateOnSuccess: true,
 	}, true
 }
 
@@ -398,9 +409,12 @@ func crossKingdomShipmentDecision(
 		"resourceId": resourceID, "amount": int64(amount),
 	})
 	return Decision{
-		Status: "ready", Detail: fmt.Sprintf("Ship %.0f resource %d from kingdom %d to %d", amount, resourceID, best.KingdomID, target.KingdomID),
-		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: map[string]float64{"shipmentAmount": amount},
-		Request: &Intent.Request{Name: "resource.kingdom.ship", Arguments: arguments},
+		Status:              "ready",
+		Detail:              fmt.Sprintf("Ship %.0f resource %d from kingdom %d to %d", amount, resourceID, best.KingdomID, target.KingdomID),
+		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+		Metrics:             map[string]float64{"shipmentAmount": amount},
+		Request:             &Intent.Request{Name: "resource.kingdom.ship", Arguments: arguments},
+		ReevaluateOnSuccess: true,
 	}, true
 }
 
@@ -419,6 +433,10 @@ func protectedCraftingDemand(settings craftingSettings, snapshot Snapshot, castl
 	if !exists {
 		return 0
 	}
+	castle, exists := snapshot.State.Castles[castleID]
+	if !exists {
+		return 0
+	}
 	protected := float64(0)
 	for queueKey, plan := range castlePlan.Buildings {
 		if !plan.Enabled {
@@ -433,7 +451,8 @@ func protectedCraftingDemand(settings craftingSettings, snapshot Snapshot, castl
 			cursor = 0
 		}
 		queueType, _ := strconv.Atoi(queueKey)
-		if !craftingRecipeMatches(snapshot, cycle[cursor], queueType) {
+		building, buildingExists := craftingBuildingForQueue(castle, queueType)
+		if !buildingExists || !craftingRecipeMatches(snapshot, cycle[cursor], building, castle.Crafting) {
 			continue
 		}
 		if amount := craftingRecipeResourceCost(snapshot.GameData, cycle[cursor], resourceID); amount > 0 {
@@ -501,6 +520,16 @@ func nextMarketArrival(snapshot Snapshot, target State.CastleState, resourceID S
 		}
 	}
 	return next
+}
+
+func craftingHasMarketplace(store *GameData.Store, castle State.CastleState) bool {
+	for _, building := range castle.Buildings {
+		barrows, err := store.MarketBarrowsForBuilding(int64(building.DefinitionID))
+		if err == nil && barrows > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func marketCapacityPerBarrow(snapshot Snapshot, market State.MarketCastleState) int {

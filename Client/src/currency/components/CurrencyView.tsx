@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Icons } from '../../components/Icons';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
+import { SectionCard } from '../../components/ui';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 
 interface DefinitionAmount {
@@ -51,16 +51,11 @@ export default function CurrencyView() {
 		<div className="flex flex-col gap-8 pb-8">
 			<StaleSessionBanner />
 			{groups.map((group) => (
-				<Card key={group.name} className="liquid-prominent-header-card flex flex-col">
-					<CardHeader className="liquid-card-header-prominent">
-						<CardTitle className="text-xl text-primary">{group.name}</CardTitle>
-					</CardHeader>
-					<CardContent className="liquid-prominent-header-content p-6">
-						<div className="currency-responsive-grid">
-							{group.items.map((item) => <AmountCard key={`${group.name}-${item.id}`} item={item} />)}
-						</div>
-					</CardContent>
-				</Card>
+				<SectionCard key={group.name} variant="glass" title={group.name} titleClassName="text-xl text-primary" className="flex flex-col" contentClassName="p-6">
+					<div className="currency-responsive-grid">
+						{group.items.map((item) => <AmountCard key={`${group.name}-${item.id}`} item={item} />)}
+					</div>
+				</SectionCard>
 			))}
 		</div>
 	);
@@ -74,7 +69,7 @@ function AmountCard({ item }: { item: DefinitionAmount }) {
 			</span>
 			<div className="h-14 flex items-center justify-center">
 				{item.image ? (
-					<img src={item.image} alt="" className="w-12 h-12 object-contain drop-shadow-md" />
+					<img src={item.image} alt="" loading="lazy" decoding="async" className="w-12 h-12 object-contain drop-shadow-md" />
 				) : (
 					<Icons.Database className="w-10 h-10 text-primary" />
 				)}

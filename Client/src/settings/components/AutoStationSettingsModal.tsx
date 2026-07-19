@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Save, Shield, X } from 'lucide-react';
+import { Plus, Shield } from 'lucide-react';
 import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
-import { Button, Card, Input, Modal, Switch } from '../../components/ui';
+import {
+  AddSlot,
+  Button,
+  Card,
+  Input,
+  QuantityAssetTile,
+  SettingsModal,
+  SettingsToggleRow,
+} from '../../components/ui';
 import {
   parseAutoStationClientState,
   persistAutoStationClientState,
@@ -24,35 +32,6 @@ function clampMinutes(value: number): number {
 function clampDays(value: number): number {
   if (!Number.isFinite(value)) return 3;
   return Math.min(30, Math.max(0, Math.round(value)));
-}
-
-function ReserveTile({
-  unitID,
-  amount,
-  onRemove,
-}: {
-  unitID: number;
-  amount: number;
-  onRemove: () => void;
-}) {
-  return (
-    <div className="group relative flex w-[84px] flex-col items-center">
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute -right-1 -top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-error text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100"
-        aria-label="Remove defense troop"
-      >
-        <X className="h-3 w-3" />
-      </button>
-      <div className="relative h-[76px] w-[76px]">
-        <UnitImage unitId={unitID} size={76} showLevel={true} className="rounded-xl" />
-        <span className="absolute bottom-0 right-0 z-10 translate-x-1/4 translate-y-1/4 rounded-full bg-white px-2.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-900 shadow-md ring-1 ring-black/10">
-          {amount.toLocaleString()}
-        </span>
-      </div>
-    </div>
-  );
 }
 
 export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> = ({ isOpen, onClose }) => {
@@ -108,33 +87,19 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
   };
 
   return (
-    <Modal
+    <SettingsModal
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="full"
-      title={
-        <div className="min-w-0">
-          <span className="flex items-center gap-2 text-primary">
-            <Shield className="h-5 w-5" />
-            Auto Station Settings
-          </span>
-          <p className="mt-1 text-sm font-normal text-text-muted">
-            Choose the exact troops that stay behind to defend. Every other troop currently in the threatened castle is temporarily stationed away.
-          </p>
-        </div>
-      }
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose} className="px-6">Cancel</Button>
-          <Button variant="primary" onClick={save} className="px-8" leftIcon={<Save className="h-4 w-4" />}>
-            Save changes
-          </Button>
-        </>
-      }
+      title="Auto Station Settings"
+      icon={<Shield className="h-5 w-5" />}
+      description="Choose the exact troops that stay behind to defend. Every other troop currently in the threatened castle is temporarily stationed away."
+      onSave={save}
+      saveLabel="Save changes"
     >
       <div className="flex w-full flex-col gap-6">
         <Card variant="solid" className="bg-bg-app p-4">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <label className="flex flex-col gap-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-primary">Evacuate at</span>
               <Input
@@ -151,7 +116,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
               />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">Minimum target RPT</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary">Minimum Bird Days on Target</span>
               <Input
                 type="number"
                 min={0}
@@ -165,16 +130,16 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                 rightIcon={<span className="text-xs font-medium uppercase text-text-muted">Days</span>}
               />
             </label>
-            <div className="flex items-center justify-between gap-4 rounded-global border border-border-base bg-bg-card/50 px-4 py-3">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-primary">Recall when clear</div>
-                <p className="mt-1 text-xs text-text-muted">Use MCM after the last attack lands and a fresh authoritative movement snapshot confirms the castle is clear.</p>
-              </div>
-              <Switch
-                checked={state.recallWhenClear}
-                onChange={(checked) => setState((previous) => ({ ...previous, recallWhenClear: checked }))}
-              />
-            </div>
+            <SettingsToggleRow
+              title="Recall when clear"
+              checked={state.recallWhenClear}
+              onChange={(checked) => setState((previous) => ({ ...previous, recallWhenClear: checked }))}
+            />
+            <SettingsToggleRow
+              title="Open Gate Fallback"
+              checked={state.openGateFallback}
+              onChange={(checked) => setState((previous) => ({ ...previous, openGateFallback: checked }))}
+            />
           </div>
           <p className="mt-4 text-xs leading-relaxed text-text-muted">
             Station targets are the nearest protected alliance castle in the same kingdom. Sends use a one-hour station timer as a fallback even when recall is enabled. If an attack is already inside the configured window when detected, evacuation starts immediately.
@@ -205,21 +170,21 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                   ) : (
                     <div className="flex flex-wrap justify-center gap-4">
                       {reserves.map((troop) => (
-                        <ReserveTile
+                        <QuantityAssetTile
                           key={troop.id}
-                          unitID={troop.id}
-                          amount={troop.amount}
+                          visual={<UnitImage unitId={troop.id} size={76} showLevel className="rounded-xl" />}
+                          quantity={troop.amount}
                           onRemove={() => removeReserve(castleID, troop.id)}
+                          removeLabel="Remove defense troop"
                         />
                       ))}
-                      <button
-                        type="button"
+                      <AddSlot
+                        label="Edit defense troops"
+                        layout="icon"
                         onClick={() => selectReserve(castle)}
-                        className="flex h-[76px] w-[76px] items-center justify-center rounded-global border-2 border-dashed border-border-base text-text-muted transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
-                        aria-label="Edit defense troops"
-                      >
-                        <Plus className="h-8 w-8" strokeWidth={1.5} />
-                      </button>
+                        className="h-[76px] w-[76px]"
+                        icon={<Plus className="h-8 w-8" strokeWidth={1.5} />}
+                      />
                     </div>
                   )}
                 </Card>
@@ -228,6 +193,6 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
           </div>
         </div>
       </div>
-    </Modal>
+    </SettingsModal>
   );
 };

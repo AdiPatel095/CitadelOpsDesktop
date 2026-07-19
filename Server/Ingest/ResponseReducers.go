@@ -46,6 +46,17 @@ func reduceResponseResources(
 		}
 		changed = changed || updated
 	}
+	production := root["gpa"]
+	if len(production) == 0 && frame.Opcode == "gpa" {
+		production = frame.Payload
+	}
+	if len(production) > 0 {
+		updated, err := applyFocusedCastleProduction(production, gameState, gameData)
+		if err != nil {
+			return nil, false, err
+		}
+		changed = changed || updated
+	}
 	return []string{"player", "castles", "resources", "currencies"}, changed, nil
 }
 
@@ -70,6 +81,27 @@ func applyCastleResourceUpdate(
 	ensureCastleMaps(&castle)
 	before := copyResourceBalances(castle.Resources)
 	applyCastleResourceValues(values, &castle, gameData)
+	if reflect.DeepEqual(before, castle.Resources) {
+		return false, nil
+	}
+	gameState.Castles[castleID] = castle
+	return true, nil
+}
+
+func applyFocusedCastleProduction(
+	raw json.RawMessage,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) (bool, error) {
+	castleID, castle, focused := focusedCastle(gameState)
+	if !focused {
+		return false, nil
+	}
+	ensureCastleMaps(&castle)
+	before := copyResourceBalances(castle.Resources)
+	if err := applyCastleProductionValues(raw, &castle, gameData); err != nil {
+		return false, err
+	}
 	if reflect.DeepEqual(before, castle.Resources) {
 		return false, nil
 	}

@@ -44,6 +44,12 @@ func reduceRiftLaunchCapture(
 	canonical, _ := json.Marshal(fingerprintBody)
 	digest := sha256.Sum256(canonical)
 	id := fmt.Sprintf("rift-%x", digest[:8])
+	if deletedAt, deleted := gameState.Rift.DeletedLaunchIDs[id]; deleted {
+		if frame.ReceivedAt.UnixMilli() <= deletedAt {
+			return nil, false, nil
+		}
+		delete(gameState.Rift.DeletedLaunchIDs, id)
+	}
 	var waves []json.RawMessage
 	_ = json.Unmarshal(body["A"], &waves)
 	existing := gameState.Rift.Launches[id]

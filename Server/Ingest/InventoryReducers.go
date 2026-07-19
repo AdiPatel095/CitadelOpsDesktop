@@ -204,3 +204,35 @@ func reduceConstructionOffers(
 	gameState.Inventory.ConstructionOffersObservedAt = frame.ReceivedAt
 	return []string{"inventory", "construction-offers"}, true, nil
 }
+
+func reduceConstructionOffersCommand(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if frame.Direction != Protocol.DirectionOutbound || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var payload struct {
+		CastleID  wireInt64 `json:"CID"`
+		KingdomID wireInt64 `json:"KID"`
+	}
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode construction-offer request context: %w", err)
+	}
+	if payload.CastleID <= 0 || payload.KingdomID < 0 {
+		return nil, false, nil
+	}
+	castleID := State.CastleID(payload.CastleID)
+	kingdomID := State.KingdomID(payload.KingdomID)
+	if gameState.Inventory.ConstructionOffersCastleID == castleID &&
+		gameState.Inventory.ConstructionOffersKingdomID == kingdomID {
+		return nil, false, nil
+	}
+	gameState.Inventory.ConstructionOffersCastleID = castleID
+	gameState.Inventory.ConstructionOffersKingdomID = kingdomID
+	gameState.Inventory.ConstructionOffers = map[State.PackageID]int64{}
+	gameState.Inventory.ConstructionOffersObservedAt = time.Time{}
+	return []string{"inventory", "construction-offers"}, true, nil
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Settings, Shield } from 'lucide-react';
+import { Lock, Settings, Shield, Unlock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import CastleFocusSwitcher from './CastleFocusSwitcher';
@@ -64,6 +64,8 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
     autoStationNextImpact,
     autoStationDetail,
 		toggleAutoStation,
+		botLocked,
+		toggleBotLock,
   } = useAuth();
   const { theme } = useTheme();
 
@@ -351,6 +353,20 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
 
         {/* Right: bot controls */}
         <div className="liquid-header-controls">
+			<Button
+				variant={botLocked ? 'danger' : 'outline'}
+				size="sm"
+				onClick={toggleBotLock}
+				disabled={dashboardConnectionStatus !== 'Connected'}
+				aria-pressed={botLocked}
+				title={botLocked
+					? 'Automation and scheduled game actions are locked. Click to resume them.'
+					: 'Automation is allowed to control the game. Click to lock all automated actions.'}
+				className="uppercase text-[11px]"
+				leftIcon={botLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+			>
+				{botLocked ? 'Unlock Bot' : 'Lock Bot'}
+			</Button>
           {!gameConnectionActive ? (
             <Button
               variant="primary"

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/GameData"
@@ -55,6 +56,14 @@ func (*CraftingPolicy) ID() string { return "autoSceatRes" }
 
 func (*CraftingPolicy) EnabledKey() string { return "auto_sceat_resources" }
 
+func (*CraftingPolicy) WakeDomains() []string {
+	return []string{"crafting", "currencies", "kingdom-transport", "market", "movements", "resources"}
+}
+
+func (*CraftingPolicy) WakeSections() []string {
+	return []string{"automation.autoSceatResources"}
+}
+
 func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	settings := craftingSettings{
 		CheckIntervalSec: 300, MinimumShipmentSize: 10_000, SourceReservePercent: 10,
@@ -72,9 +81,11 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	if settings.AutoKingdomTransport {
 		if craftingLogisticsStale(snapshot, interval) {
 			return Decision{
-				Status: "ready", Detail: "Refresh market and kingdom-resource logistics",
-				NextCheckAt: snapshot.Now.Add(2 * time.Second),
-				Request:     &Intent.Request{Name: "resource.logistics.refresh", Arguments: json.RawMessage(`{}`)},
+				Status:              "ready",
+				Detail:              "Refresh market and kingdom-resource logistics",
+				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+				Request:             &Intent.Request{Name: "resource.logistics.refresh", Arguments: json.RawMessage(`{}`)},
+				ReevaluateOnSuccess: true,
 			}, nil
 		}
 		if decision, ready := pendingKingdomSkipDecision(settings, snapshot, interval); ready {
@@ -110,8 +121,9 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			if cursor < 0 {
 				cursor = 0
 			}
-			recipeID := cycle[cursor]
-			if !craftingRecipeMatches(snapshot, recipeID, queueType) {
+			configuredRecipeID := cycle[cursor]
+			recipeID := resolveCraftingRecipe(snapshot, configuredRecipeID, building, castle.Crafting)
+			if recipeID <= 0 {
 				continue
 			}
 			costs, costErr := craftingRecipeCostState(snapshot, castle, recipeID, settings)
@@ -154,16 +166,35 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			if updateErr != nil {
 				return Decision{}, updateErr
 			}
+			if recipeID != configuredRecipeID {
+				if updateErr = replaceCraftingRecipeID(updated, castleKey, queueKey, configuredRecipeID, recipeID); updateErr != nil {
+					return Decision{}, updateErr
+				}
+			}
 			followUpArguments, _ := json.Marshal(map[string]any{
 				"section": "automation.autoSceatResources", "value": updated,
-				"expectedRevision": snapshot.Configuration.Revision,
+				"expectedValue": json.RawMessage(raw),
 			})
+			detail := fmt.Sprintf("Queue crafting recipe %d at %s", recipeID, castleName(castle))
+			metrics := map[string]float64(nil)
+			if recipeID != configuredRecipeID {
+				detail = fmt.Sprintf(
+					"Queue highest unlocked recipe %d at %s and replace unavailable recipe %d",
+					recipeID, castleName(castle), configuredRecipeID,
+				)
+				metrics = map[string]float64{
+					"configuredRecipeId": float64(configuredRecipeID),
+					"resolvedRecipeId":   float64(recipeID),
+				}
+			}
 			return Decision{
-				Status:      "ready",
-				Detail:      fmt.Sprintf("Queue crafting recipe %d at %s", recipeID, castleName(castle)),
-				NextCheckAt: snapshot.Now.Add(interval),
-				Request:     &Intent.Request{Name: "crafting.start", Arguments: arguments},
-				FollowUp:    &Intent.Request{Name: "config.update", Arguments: followUpArguments},
+				Status:              "ready",
+				Detail:              detail,
+				NextCheckAt:         snapshot.Now.Add(interval),
+				Metrics:             metrics,
+				Request:             &Intent.Request{Name: "crafting.start", Arguments: arguments},
+				FollowUp:            &Intent.Request{Name: "config.update", Arguments: followUpArguments},
+				ReevaluateOnSuccess: true,
 			}, nil
 		}
 	}
@@ -226,7 +257,12 @@ func craftingBuildingForQueue(castle State.CastleState, queueType int) (State.Cr
 	return State.CraftingBuilding{}, false
 }
 
-func craftingRecipeMatches(snapshot Snapshot, recipeID int64, queueType int) bool {
+func craftingRecipeMatches(
+	snapshot Snapshot,
+	recipeID int64,
+	building State.CraftingBuilding,
+	crafting State.CraftingState,
+) bool {
 	if snapshot.GameData == nil {
 		return false
 	}
@@ -242,8 +278,71 @@ func craftingRecipeMatches(snapshot Snapshot, recipeID int64, queueType int) boo
 	if err != nil {
 		return false
 	}
-	value, _ := record.Int64("queueTypeId")
-	return int(value) == queueType
+	return craftingRecipeAvailable(record, recipeID, building, crafting)
+}
+
+// resolveCraftingRecipe keeps plans saved by the former group-level entitlement
+// logic usable. That logic exposed every level in an unlocked recipe group, so
+// some plans contain a level the account has never unlocked. Preserve the
+// selected output and duration type while choosing the highest unlocked level
+// at or below the configured level.
+func resolveCraftingRecipe(
+	snapshot Snapshot,
+	configuredID int64,
+	building State.CraftingBuilding,
+	crafting State.CraftingState,
+) int64 {
+	if craftingRecipeMatches(snapshot, configuredID, building, crafting) {
+		return configuredID
+	}
+	if snapshot.GameData == nil {
+		return 0
+	}
+	catalog, err := snapshot.GameData.Catalog("craftingRecipes")
+	if err != nil {
+		return 0
+	}
+	targetRaw, exists := catalog.Find(strconv.FormatInt(configuredID, 10))
+	if !exists {
+		return 0
+	}
+	target, err := GameData.DecodeRecord(targetRaw)
+	if err != nil {
+		return 0
+	}
+	targetQueue, _ := target.Int64("queueTypeId")
+	targetGroup, _ := target.Int64("recipeGroupID")
+	targetLevel, _ := target.Int64("level")
+	targetType, _ := target.String("type")
+	if int(targetQueue) != building.QueueTypeID || targetGroup <= 0 || targetLevel <= 0 || strings.TrimSpace(targetType) == "" {
+		return 0
+	}
+
+	bestID := int64(0)
+	bestLevel := int64(0)
+	for _, raw := range catalog.Rows() {
+		record, decodeErr := GameData.DecodeRecord(raw)
+		if decodeErr != nil {
+			continue
+		}
+		queueType, _ := record.Int64("queueTypeId")
+		groupID, _ := record.Int64("recipeGroupID")
+		level, _ := record.Int64("level")
+		recipeType, _ := record.String("type")
+		if queueType != targetQueue || groupID != targetGroup || level <= 0 || level > targetLevel ||
+			!strings.EqualFold(strings.TrimSpace(recipeType), strings.TrimSpace(targetType)) {
+			continue
+		}
+		candidateID, _ := record.Int64("craftingRecipeId")
+		if candidateID <= 0 || !craftingRecipeAvailable(record, candidateID, building, crafting) {
+			continue
+		}
+		if level > bestLevel || level == bestLevel && candidateID > bestID {
+			bestID = candidateID
+			bestLevel = level
+		}
+	}
+	return bestID
 }
 
 func advanceCraftingCursor(raw json.RawMessage, castleKey string, queueKey string, cursor int) (map[string]any, error) {
@@ -269,4 +368,49 @@ func advanceCraftingCursor(raw json.RawMessage, castleKey string, queueKey strin
 	}
 	building["cursor"] = cursor
 	return document, nil
+}
+
+func replaceCraftingRecipeID(
+	document map[string]any,
+	castleKey string,
+	queueKey string,
+	configuredID int64,
+	resolvedID int64,
+) error {
+	castles, ok := document["castles"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("crafting configuration has no castles object")
+	}
+	castle, ok := castles[castleKey].(map[string]any)
+	if !ok {
+		return fmt.Errorf("crafting configuration has no castle %s", castleKey)
+	}
+	buildings, ok := castle["buildings"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("crafting configuration has no buildings for castle %s", castleKey)
+	}
+	building, ok := buildings[queueKey].(map[string]any)
+	if !ok {
+		return fmt.Errorf("crafting configuration has no queue %s for castle %s", queueKey, castleKey)
+	}
+	steps, ok := building["steps"].([]any)
+	if !ok {
+		return fmt.Errorf("crafting configuration has no recipe steps for queue %s at castle %s", queueKey, castleKey)
+	}
+	replaced := false
+	for _, rawStep := range steps {
+		step, stepOK := rawStep.(map[string]any)
+		if !stepOK {
+			continue
+		}
+		value, valueOK := step["recipeID"].(float64)
+		if valueOK && int64(value) == configuredID {
+			step["recipeID"] = resolvedID
+			replaced = true
+		}
+	}
+	if !replaced {
+		return fmt.Errorf("crafting configuration recipe %d was not found for queue %s at castle %s", configuredID, queueKey, castleKey)
+	}
+	return nil
 }

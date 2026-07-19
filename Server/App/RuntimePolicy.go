@@ -3,25 +3,24 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/rand/v2"
-	"strings"
 	"time"
 
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Outbound"
 )
 
 const (
 	defaultAttackDelayMinSec = 4.0
 	defaultAttackDelayMaxSec = 6.0
-	defaultManualFocusSec    = 30
-	minimumManualFocusSec    = 5
-	maximumManualFocusSec    = 300
 )
 
 type runtimeSchedulerSettings struct {
-	MinAttackDelay  float64 `json:"minAttackDelay"`
-	MaxAttackDelay  float64 `json:"maxAttackDelay"`
-	ManualFocusIdle int     `json:"manualFocusIdleSec"`
+	MinAttackDelay   float64        `json:"minAttackDelay"`
+	MaxAttackDelay   float64        `json:"maxAttackDelay"`
+	BotLocked        bool           `json:"botLocked"`
+	AttackPriorities map[string]int `json:"attackPriorities"`
 }
 
 func (application *Application) attackLaunchDelay() time.Duration {
@@ -41,24 +40,11 @@ func (application *Application) attackLaunchDelay() time.Duration {
 	return time.Duration(seconds * float64(time.Second))
 }
 
-func (application *Application) manualFocusHold() time.Duration {
-	seconds := application.runtimeSchedulerSettings().ManualFocusIdle
-	switch {
-	case seconds <= 0:
-		seconds = defaultManualFocusSec
-	case seconds < minimumManualFocusSec:
-		seconds = minimumManualFocusSec
-	case seconds > maximumManualFocusSec:
-		seconds = maximumManualFocusSec
-	}
-	return time.Duration(seconds) * time.Second
-}
-
 func (application *Application) runtimeSchedulerSettings() runtimeSchedulerSettings {
 	settings := runtimeSchedulerSettings{
-		MinAttackDelay:  defaultAttackDelayMinSec,
-		MaxAttackDelay:  defaultAttackDelayMaxSec,
-		ManualFocusIdle: defaultManualFocusSec,
+		MinAttackDelay:   defaultAttackDelayMinSec,
+		MaxAttackDelay:   defaultAttackDelayMaxSec,
+		AttackPriorities: map[string]int{},
 	}
 	if application == nil || application.Configuration == nil {
 		return settings
@@ -70,13 +56,55 @@ func (application *Application) runtimeSchedulerSettings() runtimeSchedulerSetti
 	return settings
 }
 
-func (application *Application) executionGate(ctx context.Context, request Intent.Request, plan Intent.Plan) error {
-	if application == nil || application.Session == nil || !strings.HasPrefix(request.Actor, "automation:") {
+func (application *Application) automationLocked() bool {
+	return application.runtimeSchedulerSettings().BotLocked
+}
+
+func (application *Application) attackAdmissionWeight(_ Intent.Request, admission Intent.Admission) int {
+	weight := application.runtimeSchedulerSettings().AttackPriorities[admission.Module]
+	if weight <= 0 {
+		weight = application.defaultAttackAdmissionWeight(admission.Module)
+	}
+	if weight > 100 {
+		return 100
+	}
+	return weight
+}
+
+func (application *Application) defaultAttackAdmissionWeight(moduleID string) int {
+	if application != nil && application.Intents != nil {
+		for _, definition := range application.Intents.Registry().Definitions() {
+			if definition.AttackModule != nil && definition.AttackModule.ID == moduleID {
+				return definition.AttackModule.DefaultWeight
+			}
+		}
+	}
+	return 50
+}
+
+func (application *Application) executionGate(
+	ctx context.Context,
+	request Intent.Request,
+	plan Intent.Plan,
+	point Intent.ExecutionPoint,
+) error {
+	if application == nil {
 		return nil
 	}
-	for _, claim := range plan.Claims {
-		if claim == "castle-focus" {
-			return application.Session.WaitForManualFocusIdle(ctx)
+	if plan.Effect != Intent.EffectRead {
+		if err := application.PersistenceError(); err != nil {
+			return fmt.Errorf("durable storage is unavailable: %w", err)
+		}
+	}
+	if application.Session == nil || !Outbound.YieldsToAutomationLock(request.Actor) {
+		return nil
+	}
+	switch point {
+	case Intent.ExecutionBeforeClaims:
+		return application.Session.WaitForAutomationUnlocked(ctx)
+	case Intent.ExecutionBeforeStep:
+		if application.Session.AutomationLocked() {
+			return Outbound.ErrAutomationLocked
 		}
 	}
 	return nil

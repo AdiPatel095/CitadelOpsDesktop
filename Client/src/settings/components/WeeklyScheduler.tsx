@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, Clock, Plus, Search, Trash2, Wand2 } from 'lucide-react';
-import { Badge, Button, Input, Modal, Select, Switch } from '../../components/ui';
+import { Badge, Button, Input, Select, SettingsModal, Switch } from '../../components/ui';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import { showToolPicker } from '../../components/ToolPickerModal';
 import UnitImage from '../../components/UnitImage';
@@ -1067,39 +1067,19 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
         </div>
       </div>
 
-      <Modal
+      <SettingsModal
         isOpen={editingSlot != null}
         onClose={() => setEditingSlot(null)}
         maxWidth="md"
-        title={
-          <div className="scheduler-modal-title scheduler-slot-modal-title">
-            <span className="scheduler-modal-title-mark" aria-hidden="true">
-              <Clock className="h-4 w-4" />
-            </span>
-            <span className="scheduler-modal-title-text">
-              {editingSlot?.id ? 'Edit Schedule Slot' : 'Add Schedule Slot'}
-            </span>
-          </div>
-        }
-        footer={
-          <>
-            {editingSlot?.id && (
-              <Button
-                variant="danger"
-                onClick={deleteEditingSlot}
-                leftIcon={<Trash2 className="h-4 w-4" />}
-              >
-                Delete
-              </Button>
-            )}
-            <Button variant="ghost" onClick={() => setEditingSlot(null)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={saveSlotForm}>
-              Save Slot
-            </Button>
-          </>
-        }
+        title={editingSlot?.id ? 'Edit Schedule Slot' : 'Add Schedule Slot'}
+        icon={<Clock className="h-4 w-4" />}
+        onSave={saveSlotForm}
+        saveLabel="Save Slot"
+        footerLeading={editingSlot?.id ? (
+          <Button variant="danger" onClick={deleteEditingSlot} leftIcon={<Trash2 className="h-4 w-4" />}>
+            Delete
+          </Button>
+        ) : undefined}
       >
         {editingSlot && (
           <div className="schedule-slot-form">
@@ -1141,7 +1121,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
 
             {slotOptionsEnabled && slotOptionsConfig && (
               <div className="schedule-option-panel">
-                <div className="schedule-option-panel-title">
+                <div className="ui-kicker schedule-option-panel-title">
                   {slotOptionsConfig.formTitle}
                 </div>
                 <div className="schedule-option-fields">
@@ -1252,7 +1232,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
             )}
           </div>
         )}
-      </Modal>
+      </SettingsModal>
     </div>
   );
 };

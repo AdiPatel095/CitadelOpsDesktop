@@ -31,7 +31,7 @@ func TestPlanBeriTransferUsesRefreshedAmountAndCanonicalWireShape(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "kut" || plan.Steps[2].Opcode != "msk" {
+	if len(plan.Steps) != 3 || plan.Steps[0].Opcode != "kut" || plan.Steps[1].Opcode != "msk" {
 		t.Fatalf("unexpected Beri plan: %#v", plan.Steps)
 	}
 	var payload struct {

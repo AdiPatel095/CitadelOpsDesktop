@@ -34,31 +34,42 @@ interface AuthContextType {
   autoToolEnabled: boolean;
   autoToolMode: AutoToolMode;
   autoSceatResEnabled: boolean;
+  autoFoodBalanceEnabled: boolean;
   autoHospitalEnabled: boolean;
   autoTCIEnabled: boolean;
-  autoTCINextWakeUp: number;
-  autoBirdEnabled: boolean;
+	autoTCINextWakeUp: number;
+	autoTowerEnabled: boolean;
+	autoInvasionEnabled: boolean;
+	autoNomadEnabled: boolean;
+	autoKhanEnabled: boolean;
+	autoStormEnabled: boolean;
+	autoBirdEnabled: boolean;
   autoBirdNextWakeUp: number;
   autoStationEnabled: boolean;
   autoStationState: string;
   autoStationThreatCount: number;
   autoStationNextImpact: number;
   autoStationDetail: string;
-	autoBeriWorldEnabled: boolean;
-	autoBeriWorldNextWakeUp: number;
   goMem: number;
   browserMem: number;
+	botLocked: boolean;
 	automationStates: Record<string, AutomationStateV2>;
   startGame: () => void;
   stopGame: () => void;
   toggleRecruitTroops: () => void;
   toggleAutoTool: () => void;
   toggleAutoSceatRes: () => void;
+  toggleAutoFoodBalance: () => void;
   toggleAutoHospital: () => void;
-  toggleAutoTCI: () => void;
-  toggleAutoBird: () => void;
+	toggleAutoTCI: () => void;
+	toggleAutoTower: () => void;
+	toggleAutoInvasion: () => void;
+	toggleAutoNomad: () => void;
+	toggleAutoKhan: () => void;
+	toggleAutoStorm: () => void;
+	toggleAutoBird: () => void;
   toggleAutoStation: () => void;
-	toggleAutoBeriWorld: () => void;
+	toggleBotLock: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,14 +80,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const automationEnabled = isRecord(configuration?.sections['automation.enabled'])
 		? configuration.sections['automation.enabled'] as Record<string, unknown>
 		: {};
+	const schedulerConfiguration = isRecord(configuration?.sections.scheduler)
+		? configuration.sections.scheduler as Record<string, unknown>
+		: {};
+	const botLocked = schedulerConfiguration.botLocked === true;
 	const recruitTroopsEnabled = automationEnabled.recruit_troops === true;
 	const autoToolEnabled = automationEnabled.auto_tool === true;
 	const autoSceatResEnabled = automationEnabled.auto_sceat_resources === true;
+	const autoFoodBalanceEnabled = automationEnabled.auto_food_balance === true;
 	const autoHospitalEnabled = automationEnabled.auto_hospital === true;
 	const autoTCIEnabled = automationEnabled.auto_tci === true;
+	const autoTowerEnabled = automationEnabled.auto_towers === true;
+	const autoInvasionEnabled = automationEnabled.auto_invasion === true;
+	const autoNomadEnabled = automationEnabled.auto_nomad === true;
+	const autoKhanEnabled = automationEnabled.auto_khan === true;
+	const autoStormEnabled = automationEnabled.auto_storm === true;
 	const autoBirdEnabled = automationEnabled.auto_bird === true;
 	const autoStationEnabled = automationEnabled.auto_station === true;
-	const autoBeriWorldEnabled = automationEnabled.auto_beri_world === true;
 	const automationStates = state?.automations ?? {};
 	const autoBirdState = automationStates.autoBird;
 	const autoStationState = automationStates.autoStation;
@@ -118,40 +138,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     autoToolEnabled,
     autoToolMode: 'global' as AutoToolMode,
     autoSceatResEnabled,
+    autoFoodBalanceEnabled,
     autoHospitalEnabled,
     autoTCIEnabled,
-    autoTCINextWakeUp: automationWakeMillis(automationStates.autoTCI),
-    autoBirdEnabled,
+		autoTCINextWakeUp: automationWakeMillis(automationStates.autoTCI),
+		autoTowerEnabled,
+		autoInvasionEnabled,
+		autoNomadEnabled,
+		autoKhanEnabled,
+		autoStormEnabled,
+		autoBirdEnabled,
     autoBirdNextWakeUp: automationWakeMillis(autoBirdState),
     autoStationEnabled,
     autoStationState: autoStationEnabled ? (autoStationState?.status ?? 'waiting') : 'off',
     autoStationThreatCount: Math.max(0, Math.trunc(autoStationState?.metrics?.threatCount ?? 0)),
     autoStationNextImpact: Math.max(0, autoStationState?.metrics?.nextImpactUnixMs ?? 0),
     autoStationDetail: autoStationState?.detail ?? autoStationState?.lastError ?? '',
-	autoBeriWorldEnabled,
-	autoBeriWorldNextWakeUp: automationWakeMillis(automationStates.autoBeriWorld),
     goMem: Math.max(0, Math.trunc(diagnostics?.applicationMemoryMb ?? 0)),
 	browserMem: Math.max(0, Math.trunc(diagnostics?.browserMemoryMb ?? 0)),
+	botLocked,
 	automationStates,
     startGame: () => submit('session.start'),
     stopGame: () => submit('session.stop'),
 	toggleRecruitTroops: () => toggle('recruit_troops', recruitTroopsEnabled),
 	toggleAutoTool: () => toggle('auto_tool', autoToolEnabled),
 	toggleAutoSceatRes: () => toggle('auto_sceat_resources', autoSceatResEnabled),
+	toggleAutoFoodBalance: () => toggle('auto_food_balance', autoFoodBalanceEnabled),
 	toggleAutoHospital: () => toggle('auto_hospital', autoHospitalEnabled),
 	toggleAutoTCI: () => toggle('auto_tci', autoTCIEnabled),
-	toggleAutoBird: () => toggle('auto_bird', autoBirdEnabled),
+		toggleAutoTower: () => toggle('auto_towers', autoTowerEnabled),
+		toggleAutoInvasion: () => toggle('auto_invasion', autoInvasionEnabled),
+		toggleAutoNomad: () => toggle('auto_nomad', autoNomadEnabled),
+		toggleAutoKhan: () => toggle('auto_khan', autoKhanEnabled),
+		toggleAutoStorm: () => toggle('auto_storm', autoStormEnabled),
+		toggleAutoBird: () => toggle('auto_bird', autoBirdEnabled),
 	toggleAutoStation: () => toggle('auto_station', autoStationEnabled),
-	toggleAutoBeriWorld: () => toggle('auto_beri_world', autoBeriWorldEnabled),
+	toggleBotLock: () => {
+		void updateConfiguration('scheduler', { ...schedulerConfiguration, botLocked: !botLocked });
+	},
   }), [
     autoBirdEnabled,
 	autoBirdState,
-	autoBeriWorldEnabled,
+	botLocked,
     autoHospitalEnabled,
     autoSceatResEnabled,
+	autoFoodBalanceEnabled,
     autoStationEnabled,
 	autoStationState,
-    autoTCIEnabled,
+		autoTCIEnabled,
+		autoTowerEnabled,
+		autoInvasionEnabled,
+		autoNomadEnabled,
+		autoKhanEnabled,
+		autoStormEnabled,
     autoToolEnabled,
 	automationStates,
     catalogs,

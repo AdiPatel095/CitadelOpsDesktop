@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { CalendarDays, Trash2, Save, Plus, Minus } from 'lucide-react';
+import { CalendarDays, Hammer, Trash2, Plus, Minus } from 'lucide-react';
 import {
   showTCIPicker,
   type TCIWithLevelCeiling,
@@ -24,7 +24,16 @@ import {
   parseAutoTCIClientState,
   persistAutoTCIClientState,
 } from '../AutoTCIClientState';
-import { Modal, Button, Card, CardHeader, CardTitle, CardContent, Badge, Input, Select } from '../../components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  NamedPresetControls,
+  SettingsModal,
+} from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 
@@ -312,106 +321,54 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   );
 
   return (
-    <Modal
+    <SettingsModal
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="full"
-      title={
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <span className="flex items-center gap-2 text-amber-500">
-              <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
-              Auto TCI Settings
-            </span>
-            <p className="mt-1 text-sm font-normal text-text-muted">
+      title={<span className="text-amber-500">Auto TCI Settings</span>}
+      icon={<Hammer className="h-5 w-5 text-amber-500" />}
+      description={(
+            <>
               Per castle, pick construction item variants and set a <span className="font-medium text-text-main">level floor and ceiling</span>{' '}
               using the level range supplied by the current official construction-item catalog.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0"
-            onClick={() => onOpenFeatureSchedule('autoTCI', 'Auto TCI')}
-            leftIcon={<CalendarDays className="h-4 w-4" />}
-          >
-            Calendar
-          </Button>
-        </div>
-      }
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose} className="px-6">
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            className="px-8"
-            leftIcon={<Save className="h-4 w-4" />}
-          >
-            Save changes
-          </Button>
-        </>
-      }
+            </>
+      )}
+      titleTrailing={(
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => onOpenFeatureSchedule('autoTCI', 'Auto TCI')}
+              leftIcon={<CalendarDays className="h-4 w-4" />}
+            >
+              Calendar
+            </Button>
+      )}
+      onSave={handleSave}
+      saveLabel="Save changes"
     >
       <div className="auto-tci-settings-workspace custom-scrollbar mx-auto flex w-full flex-col gap-5 overflow-y-auto pb-4">
-        <Card variant="solid" className="shrink-0 border-border-base bg-bg-app p-5">
-          <div className="mb-3 text-xs font-bold uppercase tracking-wider text-primary">Presets</div>
-          <div className="flex flex-col gap-4 xl:flex-row xl:flex-wrap xl:items-end">
-            <div className="flex min-w-[220px] flex-1 flex-col gap-1.5 xl:max-w-sm">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Preset name</span>
-              <Input
-                type="text"
-                placeholder="Name for new preset or rename on save"
-                value={presetName}
-                onChange={(e) => {
-                  setPresetName(e.target.value);
-                  setPresetError('');
-                }}
-                error={presetError}
-              />
-            </div>
-            <div className="flex min-w-[320px] flex-[2] flex-col gap-1.5 xl:min-w-[360px]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Load preset</span>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Select
-                    value={presetDropdownId}
-                    onChange={(v) => setPresetDropdownId(v)}
-                    options={presetOptions}
-                  />
-                </div>
-                <Button variant="outline" onClick={handleApplyPreset} className="shrink-0 bg-bg-card">
-                  Apply
-                </Button>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleSaveAsNewPreset}
-                className="border-info/40 text-info hover:bg-info/10"
-                leftIcon={<Plus className="h-4 w-4" />}
-              >
-                Save as new
-              </Button>
-              <Button
-                variant="danger"
-                disabled={!presetDropdownId}
-                onClick={handleDeletePreset}
-                leftIcon={<Trash2 className="h-4 w-4" />}
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-text-muted">
+        <NamedPresetControls
+          name={presetName}
+          onNameChange={(value) => {
+            setPresetName(value);
+            setPresetError('');
+          }}
+          nameError={presetError}
+          selectedID={presetDropdownId}
+          onSelectedIDChange={setPresetDropdownId}
+          options={presetOptions}
+          onApply={handleApplyPreset}
+          onSaveAsNew={handleSaveAsNewPreset}
+          onDelete={handleDeletePreset}
+          help={(
+            <>
             Choose a preset and click <span className="font-semibold text-text-main">Apply</span> to load it into the grid.{' '}
             <span className="font-semibold text-text-main">Save changes</span> writes Auto TCI settings and updates the applied preset
             (including name). Data is stored next to Auto Bird settings (see AutoTCI.json).
-          </p>
-        </Card>
+            </>
+          )}
+        />
 
         <div className="grid w-full auto-rows-max grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
         {castles.map((castle) => {
@@ -532,6 +489,6 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
         })}
         </div>
       </div>
-    </Modal>
+    </SettingsModal>
   );
 };

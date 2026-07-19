@@ -9,14 +9,22 @@ import { useCastleFocus } from '../../context/CastleFocusContext';
 import { riftMapCoordsFromState, type RiftMapCoords } from '../types/RiftMapCoords';
 import { parseRiftCRALaunchPayload, type RiftCRALaunchState } from '../types/RiftCRALaunch';
 import { useCitadelAPI } from '../../api/ApiContext';
+import type { CRACommanderSelection } from '../../api/Contracts';
 import type { AttackSetupDraft } from '../../components/AttackSetupModal';
+import type { HorseTravelBoostID } from '../../settings/HorseTravelBoost';
+
+export type { CRACommanderSelection, CRACommanderSelectionStrategy } from '../../api/Contracts';
 
 export interface ReplayRiftCRALaunchOptions {
   launchId: string;
+  /** Exact legacy override. Mutually exclusive with commanderSelection. */
   commanderID?: number;
+  /** Deterministic candidate pool; each selected commander produces one CRA command. */
+  commanderSelection?: CRACommanderSelection;
   sourceCastleId?: number;
   sourceX?: number;
   sourceY?: number;
+  horseTravelBoostId?: HorseTravelBoostID;
   attackSetup?: AttackSetupDraft;
   /** Local wall-clock arrival at the Rift (unix seconds). Omit or 0 for immediate resend. */
   arriveAtUnix?: number;
@@ -26,9 +34,9 @@ export interface RiftMapContextValue {
   riftMapCoords: RiftMapCoords | null;
   riftCRALaunch: RiftCRALaunchState | null;
   refreshRiftMapCoords: (refresh?: boolean) => void;
-  replayRiftCRALaunch: (options?: ReplayRiftCRALaunchOptions) => void;
-  renameRiftCRALaunch: (launchId: string, displayName: string) => void;
-  deleteRiftCRALaunch: (launchId: string) => void;
+  replayRiftCRALaunch: (options: ReplayRiftCRALaunchOptions) => Promise<void>;
+  renameRiftCRALaunch: (launchId: string, displayName: string) => Promise<void>;
+  deleteRiftCRALaunch: (launchId: string) => Promise<void>;
 }
 
 const RiftMapContext = createContext<RiftMapContextValue | undefined>(undefined);
@@ -63,19 +71,19 @@ export function RiftMapProvider({ children }: { children: ReactNode }) {
     });
   }, [castle, submitIntent]);
 
-  const replayRiftCRALaunch = useCallback((options: ReplayRiftCRALaunchOptions) => {
+  const replayRiftCRALaunch = useCallback(async (options: ReplayRiftCRALaunchOptions) => {
     if (!options.launchId) return;
-    void submitIntent('rift.launch.replay', options);
+    await submitIntent('rift.launch.replay', options);
   }, [submitIntent]);
 
-  const renameRiftCRALaunch = useCallback((launchId: string, displayName: string) => {
+  const renameRiftCRALaunch = useCallback(async (launchId: string, displayName: string) => {
     if (!launchId) return;
-    void submitIntent('rift.template.rename', { launchId, displayName: displayName.trim() });
+    await submitIntent('rift.template.rename', { launchId, displayName: displayName.trim() });
   }, [submitIntent]);
 
-  const deleteRiftCRALaunch = useCallback((launchId: string) => {
+  const deleteRiftCRALaunch = useCallback(async (launchId: string) => {
     if (!launchId) return;
-    void submitIntent('rift.template.delete', { launchId });
+    await submitIntent('rift.template.delete', { launchId });
   }, [submitIntent]);
 
   const riftMapCoords = useMemo(

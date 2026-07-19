@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
@@ -58,7 +61,7 @@ func applyCastleList(raw json.RawMessage, gameState *State.GameState) (bool, err
 	return true, nil
 }
 
-func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameData *GameData.Store) (bool, error) {
+func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameData *GameData.Store, observedAt time.Time) (bool, error) {
 	var payload struct {
 		Kingdoms []struct {
 			ID      wireInt64         `json:"KID"`
@@ -87,17 +90,47 @@ func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameDat
 			beforeKingdomID := castle.KingdomID
 			beforeResources := copyResourceBalances(castle.Resources)
 			beforeUnits := castle.Units
+			beforeUnitsObservedAt := castle.UnitsObservedAt
+			beforeOpenGateUntil := castle.Defense.OpenGateUntil
 			castle.KingdomID = State.KingdomID(kingdom.ID)
 			ensureCastleMaps(&castle)
 			applyCastleResourceValues(values, &castle, gameData)
 			castle.Units = castleUnitsFromGroups(values["AC"], values["TU"], values["HI"], values["SHI"])
-			if beforeKingdomID != castle.KingdomID || !reflect.DeepEqual(beforeResources, castle.Resources) || !reflect.DeepEqual(beforeUnits, castle.Units) {
+			if remaining, present := rawInt64(values["OGT"]); present {
+				castle.Defense.OpenGateUntil = castleOpenGateUntil(remaining, observedAt)
+			}
+			if !observedAt.IsZero() {
+				castle.UnitsObservedAt = observedAt.UTC()
+			}
+			if beforeKingdomID != castle.KingdomID || !reflect.DeepEqual(beforeResources, castle.Resources) ||
+				!reflect.DeepEqual(beforeUnits, castle.Units) || !beforeUnitsObservedAt.Equal(castle.UnitsObservedAt) ||
+				!reflect.DeepEqual(beforeOpenGateUntil, castle.Defense.OpenGateUntil) {
 				gameState.Castles[castleID] = castle
 				changed = true
 			}
 		}
 	}
 	return changed, nil
+}
+
+func castleOpenGateUntil(value int64, observedAt time.Time) *time.Time {
+	if value <= 0 {
+		return nil
+	}
+	observedAt = defenseObservedAt(observedAt)
+	var until time.Time
+	switch {
+	case value >= 1_000_000_000_000:
+		until = time.UnixMilli(value).UTC()
+	case value >= 1_000_000_000:
+		until = time.Unix(value, 0).UTC()
+	default:
+		until = observedAt.Add(time.Duration(value) * time.Second)
+	}
+	if !until.After(observedAt) {
+		return nil
+	}
+	return &until
 }
 
 func reduceCastleSnapshot(
@@ -139,7 +172,11 @@ func reduceCastleSnapshot(
 	}
 	castle = gameState.Castles[castleID]
 	beforeCastle := castle
-	castle.KingdomID = State.KingdomID(rawInteger(root["KID"]))
+	if rawKingdomID, found := root["KID"]; found {
+		castle.KingdomID = State.KingdomID(rawInteger(rawKingdomID))
+	} else if len(identity) > 16 {
+		castle.KingdomID = State.KingdomID(rowInt(identity, 16))
+	}
 	castle.SlotType = int(rowInt(identity, 0))
 	castle.X = int(rowInt(identity, 1))
 	castle.Y = int(rowInt(identity, 2))
@@ -147,26 +184,60 @@ func reduceCastleSnapshot(
 		castle.Name = name
 	}
 	ensureCastleMaps(&castle)
-	if _, hasBG := gca["BG"]; hasBG {
-		castle.Buildings = parseCastleBuildings(gca["BG"], gca["BD"], gameData)
-	} else if _, hasBD := gca["BD"]; hasBD {
-		castle.Buildings = parseCastleBuildings(gca["BG"], gca["BD"], gameData)
+	hasLayout := false
+	for _, key := range []string{"BG", "BD", "T", "G", "D"} {
+		if _, found := gca[key]; found {
+			hasLayout = true
+			break
+		}
 	}
-	if raw, exists := gca["CI"]; exists {
-		castle.ConstructionSlots = parseConstructionSlots(raw, gameData)
+	if hasLayout {
+		castle.Buildings, castle.Layout = parseCastleLayoutLayers([]castleWireLayer{
+			{State.BuildingLayerBG, gca["BG"]}, {State.BuildingLayerBD, gca["BD"]},
+			{State.BuildingLayerT, gca["T"]}, {State.BuildingLayerG, gca["G"]}, {State.BuildingLayerD, gca["D"]},
+		}, gameData)
+		castle.Layout.ObservedAt = frame.ReceivedAt.UTC()
 	}
-	if raw, exists := root["gui"]; exists {
-		units, err := parseCastleUnits(raw)
+	buildingQueueRaw, hasBuildingQueue := gca["scl"]
+	if hasBuildingQueue {
+		castle.BuildingQueue = parseBuildingConstructionQueue(buildingQueueRaw)
+		castle.BuildingQueue.ObservedAt = frame.ReceivedAt.UTC()
+	}
+	constructionItemsRaw, hasConstructionItems := gca["CI"]
+	if hasConstructionItems {
+		castle.ConstructionSlots = parseConstructionSlots(constructionItemsRaw, gameData)
+		castle.ConstructionSlotsObservedAt = frame.ReceivedAt.UTC()
+	}
+	unitsRaw, hasUnits := root["gui"]
+	if hasUnits {
+		units, err := parseCastleUnits(unitsRaw)
 		if err != nil {
 			return nil, false, err
 		}
 		castle.Units = units
+		castle.UnitsObservedAt = frame.ReceivedAt.UTC()
+	}
+	if !frame.ReceivedAt.IsZero() {
+		castle.FoodStateObservedAt = frame.ReceivedAt.UTC()
 	}
 	gameState.Castles[castleID] = castle
 	applyCastleOwner(gca["O"], gameState)
 	changed = changed || !reflect.DeepEqual(beforeCastle, castle) ||
 		!reflect.DeepEqual(beforePlayer, gameState.Player) || !reflect.DeepEqual(beforeAlliance, gameState.Alliance)
-	return []string{"castles", "player", "alliance"}, changed, nil
+	domains := []string{"castles", "player", "alliance"}
+	if hasLayout {
+		domains = append(domains, "building-layout")
+	}
+	if hasBuildingQueue {
+		domains = append(domains, "building-construction")
+	}
+	if hasConstructionItems {
+		domains = append(domains, "construction-items")
+	}
+	if hasUnits {
+		domains = append(domains, "units")
+	}
+	return domains, changed, nil
 }
 
 func reduceFocusedUnits(
@@ -202,10 +273,12 @@ func reduceFocusedUnits(
 	if err != nil {
 		return nil, false, err
 	}
-	if reflect.DeepEqual(castle.Units, units) {
+	observedAt := frame.ReceivedAt.UTC()
+	if reflect.DeepEqual(castle.Units, units) && castle.UnitsObservedAt.Equal(observedAt) {
 		return nil, false, nil
 	}
 	castle.Units = units
+	castle.UnitsObservedAt = observedAt
 	gameState.Castles[castleID] = castle
 	return []string{"castles", "units"}, true, nil
 }
@@ -232,18 +305,48 @@ func reduceFocusedConstructionItems(
 		return nil, false, nil
 	}
 	next := parseConstructionSlots(raw, gameData)
-	if reflect.DeepEqual(castle.ConstructionSlots, next) {
+	observedAt := frame.ReceivedAt.UTC()
+	if reflect.DeepEqual(castle.ConstructionSlots, next) && castle.ConstructionSlotsObservedAt.Equal(observedAt) {
 		return nil, false, nil
 	}
 	castle.ConstructionSlots = next
+	castle.ConstructionSlotsObservedAt = observedAt
 	gameState.Castles[castleID] = castle
 	return []string{"castles", "construction-items"}, true, nil
 }
 
 func parseCastleBuildings(bg json.RawMessage, bd json.RawMessage, gameData *GameData.Store) map[State.BuildingInstanceID]State.Building {
+	buildings, _ := parseCastleLayout(bg, bd, gameData)
+	return buildings
+}
+
+func parseCastleLayout(
+	bg json.RawMessage,
+	bd json.RawMessage,
+	gameData *GameData.Store,
+) (map[State.BuildingInstanceID]State.Building, State.CastleLayout) {
+	return parseCastleLayoutLayers([]castleWireLayer{
+		{State.BuildingLayerBG, bg}, {State.BuildingLayerBD, bd},
+	}, gameData)
+}
+
+type castleWireLayer struct {
+	name State.BuildingLayer
+	raw  json.RawMessage
+}
+
+func parseCastleLayoutLayers(
+	layers []castleWireLayer,
+	gameData *GameData.Store,
+) (map[State.BuildingInstanceID]State.Building, State.CastleLayout) {
 	buildings := map[State.BuildingInstanceID]State.Building{}
-	for _, raw := range []json.RawMessage{bg, bd} {
-		rows, ok := decodeRows(raw)
+	layout := State.CastleLayout{
+		Ground:  map[State.BuildingInstanceID]State.Building{},
+		Objects: map[State.BuildingInstanceID]State.Building{},
+		Fixed:   map[State.BuildingInstanceID]State.Building{},
+	}
+	for _, layer := range layers {
+		rows, ok := decodeRows(layer.raw)
 		if !ok {
 			continue
 		}
@@ -253,17 +356,85 @@ func parseCastleBuildings(bg json.RawMessage, bd json.RawMessage, gameData *Game
 			if definitionID <= 0 || instanceID <= 0 {
 				continue
 			}
+			constructionState := int(rowInt(row, 6))
+			if constructionState == State.BuildingStateDisassembledCompleted {
+				continue
+			}
 			level := int(rowInt(row, 14))
 			if level < 0 {
 				level = officialLevel(gameData, "buildings", definitionID)
 			}
-			buildings[State.BuildingInstanceID(instanceID)] = State.Building{
+			building := State.Building{
 				InstanceID: State.BuildingInstanceID(instanceID), DefinitionID: State.BuildingID(definitionID),
-				GridX: int(rowInt(row, 2)), GridY: int(rowInt(row, 3)), Rotation: int(rowInt(row, 4)), Level: level,
+				GridX: int(rowInt(row, 2)), GridY: int(rowInt(row, 3)), Rotation: int(rowInt(row, 4)),
+				ProgressSec: rowInt(row, 5), ConstructionState: constructionState, Level: level,
+				Layer: layer.name,
+			}
+			building.Placed = building.GridX >= 0 && building.GridY >= 0
+			if layer.name == State.BuildingLayerBG || layer.name == State.BuildingLayerBD {
+				buildings[building.InstanceID] = building
+			}
+			if officialBuildingGroup(gameData, definitionID) == "Ground" {
+				layout.Ground[building.InstanceID] = building
+			} else if layer.name == State.BuildingLayerT || layer.name == State.BuildingLayerG || layer.name == State.BuildingLayerD {
+				layout.Fixed[building.InstanceID] = building
+			} else {
+				layout.Objects[building.InstanceID] = building
 			}
 		}
 	}
-	return buildings
+	return buildings, layout
+}
+
+func parseBuildingConstructionQueue(raw json.RawMessage) State.BuildingConstructionQueue {
+	queue := State.BuildingConstructionQueue{Slots: []State.BuildingConstructionQueueSlot{}}
+	var wire struct {
+		ObjectIDs []wireInt64 `json:"OIDL"`
+		SlotCount wireInt64   `json:"SSC"`
+	}
+	if json.Unmarshal(raw, &wire) != nil {
+		return queue
+	}
+	queue.SlotCount = int(wire.SlotCount)
+	queue.Slots = make([]State.BuildingConstructionQueueSlot, 0, len(wire.ObjectIDs))
+	for index, rawObjectID := range wire.ObjectIDs {
+		wireValue := int64(rawObjectID)
+		slot := State.BuildingConstructionQueueSlot{Index: index, WireValue: wireValue, Status: State.BuildingQueueSlotUnknown}
+		switch {
+		case wireValue > 0:
+			slot.Status = State.BuildingQueueSlotOccupied
+			slot.BuildingID = State.BuildingInstanceID(wireValue)
+		case wireValue == -1:
+			slot.Status = State.BuildingQueueSlotAvailable
+		case wireValue == -2:
+			slot.Status = State.BuildingQueueSlotLocked
+		}
+		queue.Slots = append(queue.Slots, slot)
+	}
+	return queue
+}
+
+func officialBuildingGroup(gameData *GameData.Store, definitionID int64) string {
+	if definitionID == 200 || definitionID == 201 {
+		return "Ground"
+	}
+	if gameData == nil || definitionID <= 0 {
+		return ""
+	}
+	catalog, err := gameData.Catalog("buildings")
+	if err != nil {
+		return ""
+	}
+	raw, found := catalog.Find(strconv.FormatInt(definitionID, 10))
+	if !found {
+		return ""
+	}
+	record, err := GameData.DecodeRecord(raw)
+	if err != nil {
+		return ""
+	}
+	group, _ := record.String("group")
+	return strings.TrimSpace(group)
 }
 
 func parseConstructionSlots(raw json.RawMessage, gameData *GameData.Store) map[State.BuildingInstanceID][]State.ConstructionSlot {
@@ -339,14 +510,71 @@ func applyCastleResourceValues(values map[string]json.RawMessage, castle *State.
 		if !ok {
 			continue
 		}
-		balance := State.ResourceBalance{Amount: amount}
-		if value, exists := rawFloat64(production["D"+jsonKey]); exists {
-			balance.ProductionPerHour = floatPointer(value / 10)
+		resourceID := State.ResourceID(definitionID)
+		balance := castle.Resources[resourceID]
+		balance.Amount = amount
+		applyResourceProductionValues(&balance, jsonKey, production)
+		castle.Resources[resourceID] = balance
+	}
+}
+
+func applyCastleProductionValues(raw json.RawMessage, castle *State.CastleState, gameData *GameData.Store) error {
+	var production map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &production); err != nil {
+		return fmt.Errorf("decode castle production: %w", err)
+	}
+	resources, err := gameData.Catalog("resources")
+	if err != nil {
+		return err
+	}
+	for _, rawResource := range resources.Rows() {
+		record, decodeErr := GameData.DecodeRecord(rawResource)
+		if decodeErr != nil {
+			continue
 		}
-		if value, exists := rawFloat64(production["MR"+jsonKey]); exists {
-			balance.Capacity = floatPointer(value)
+		definitionID, idExists := record.Int64("resourceID")
+		jsonKey, keyExists := record.String("JSONKey")
+		if !idExists || !keyExists || definitionID <= 0 || jsonKey == "" {
+			continue
 		}
-		castle.Resources[State.ResourceID(definitionID)] = balance
+		resourceID := State.ResourceID(definitionID)
+		balance := castle.Resources[resourceID]
+		before := balance
+		applyResourceProductionValues(&balance, jsonKey, production)
+		if !reflect.DeepEqual(before, balance) {
+			castle.Resources[resourceID] = balance
+		}
+	}
+	return nil
+}
+
+func applyResourceProductionValues(balance *State.ResourceBalance, jsonKey string, production map[string]json.RawMessage) {
+	if value, exists := rawFloat64(production["D"+jsonKey]); exists {
+		balance.ProductionPerHour = floatPointer(value / 10)
+	}
+	if value, exists := rawFloat64(production["D"+jsonKey+"C"]); exists {
+		balance.ConsumptionPerHour = floatPointer(value / 10)
+	}
+	if multiplierKey := consumptionMultiplierKey(jsonKey); multiplierKey != "" {
+		if value, exists := rawFloat64(production[multiplierKey]); exists {
+			balance.ConsumptionMultiplier = floatPointer(value / 100)
+		}
+	}
+	if value, exists := rawFloat64(production["MR"+jsonKey]); exists {
+		balance.Capacity = floatPointer(value)
+	}
+}
+
+func consumptionMultiplierKey(resourceJSONKey string) string {
+	switch resourceJSONKey {
+	case "F":
+		return "FCR"
+	case "MEAD":
+		return "MEADCR"
+	case "BEEF":
+		return "BEEFCR"
+	default:
+		return ""
 	}
 }
 
@@ -412,8 +640,21 @@ func ensureCastleMaps(castle *State.CastleState) {
 	if castle.Units.Total == nil {
 		castle.Units.Total = map[State.UnitID]int64{}
 	}
+	ensureDefenseSlices(&castle.Defense)
 	if castle.Buildings == nil {
 		castle.Buildings = map[State.BuildingInstanceID]State.Building{}
+	}
+	if castle.Layout.Ground == nil {
+		castle.Layout.Ground = map[State.BuildingInstanceID]State.Building{}
+	}
+	if castle.Layout.Objects == nil {
+		castle.Layout.Objects = map[State.BuildingInstanceID]State.Building{}
+	}
+	if castle.Layout.Fixed == nil {
+		castle.Layout.Fixed = map[State.BuildingInstanceID]State.Building{}
+	}
+	if castle.BuildingQueue.Slots == nil {
+		castle.BuildingQueue.Slots = []State.BuildingConstructionQueueSlot{}
 	}
 	if castle.ConstructionSlots == nil {
 		castle.ConstructionSlots = map[State.BuildingInstanceID][]State.ConstructionSlot{}
@@ -435,6 +676,42 @@ func ensureCastleMaps(castle *State.CastleState) {
 	}
 	if castle.Crafting.OutputBoostByQueueType == nil {
 		castle.Crafting.OutputBoostByQueueType = map[int]float64{}
+	}
+}
+
+func ensureDefenseSlices(defense *State.CastleDefenseState) {
+	if defense.RangedUnitIDs == nil {
+		defense.RangedUnitIDs = []State.UnitID{}
+	}
+	if defense.MeleeUnitIDs == nil {
+		defense.MeleeUnitIDs = []State.UnitID{}
+	}
+	if defense.Inventory == nil {
+		defense.Inventory = map[State.UnitID]int64{}
+	}
+	if defense.Wall.Left.ToolSlots == nil {
+		defense.Wall.Left.ToolSlots = []State.DefenseToolSlot{}
+	}
+	if defense.Wall.Middle.ToolSlots == nil {
+		defense.Wall.Middle.ToolSlots = []State.DefenseToolSlot{}
+	}
+	if defense.Wall.Right.ToolSlots == nil {
+		defense.Wall.Right.ToolSlots = []State.DefenseToolSlot{}
+	}
+	if defense.Keep.PrimaryToolSlots == nil {
+		defense.Keep.PrimaryToolSlots = []State.DefenseToolSlot{}
+	}
+	if defense.Keep.SecondaryToolSlots == nil {
+		defense.Keep.SecondaryToolSlots = []State.DefenseToolSlot{}
+	}
+	if defense.Moat.LeftToolSlots == nil {
+		defense.Moat.LeftToolSlots = []State.DefenseToolSlot{}
+	}
+	if defense.Moat.MiddleToolSlots == nil {
+		defense.Moat.MiddleToolSlots = []State.DefenseToolSlot{}
+	}
+	if defense.Moat.RightToolSlots == nil {
+		defense.Moat.RightToolSlots = []State.DefenseToolSlot{}
 	}
 }
 

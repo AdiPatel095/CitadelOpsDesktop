@@ -24,12 +24,33 @@ type Decision struct {
 	Metrics     map[string]float64
 	Request     *Intent.Request
 	FollowUp    *Intent.Request
+	// ScheduleKey identifies an additional decision-specific schedule, such as
+	// a per-castle production window, that must remain open while the request waits.
+	ScheduleKey string
+	// ReevaluateOnSuccess continues a response-gated workflow immediately
+	// after both the request and its optional follow-up have succeeded.
+	ReevaluateOnSuccess bool
 }
 
 type Policy interface {
 	ID() string
 	EnabledKey() string
 	Evaluate(context.Context, Snapshot) (Decision, error)
+}
+
+// StateWakePolicy declares authoritative state domains that can make an idle
+// policy actionable before its scheduled check. Successful operation chains
+// use Decision.ReevaluateOnSuccess instead, so response events cannot override
+// an intentionally paced decision.
+type StateWakePolicy interface {
+	WakeDomains() []string
+}
+
+// ConfigurationWakePolicy declares the configuration sections that affect a
+// policy. The coordinator separately fingerprints each policy's own enable bit
+// and top-level or per-castle schedules.
+type ConfigurationWakePolicy interface {
+	WakeSections() []string
 }
 
 type GameDataProvider interface {

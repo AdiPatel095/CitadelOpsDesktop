@@ -67,4 +67,8 @@ Server/refactor_state/
 /Server/.../
 /.claude/
 /.cursor/
-/cmd/
+/cmd/*
+!/cmd/CitadelOpsCLI/
+!/cmd/CitadelOpsCLI/Main.go
+!/cmd/StormValidation/
+!/cmd/StormValidation/Main.go

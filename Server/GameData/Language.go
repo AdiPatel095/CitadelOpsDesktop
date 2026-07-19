@@ -19,6 +19,7 @@ type LanguageMetadata struct {
 type LanguageStore struct {
 	metadata LanguageMetadata
 	values   map[string]string
+	folded   map[string]string
 }
 
 func DecodeLanguage(raw []byte, metadata LanguageMetadata) (*LanguageStore, error) {
@@ -27,6 +28,8 @@ func DecodeLanguage(raw []byte, metadata LanguageMetadata) (*LanguageStore, erro
 		return nil, fmt.Errorf("decode official language document: %w", err)
 	}
 	values := make(map[string]string, len(document))
+	folded := make(map[string]string, len(document))
+	ambiguousFolds := make(map[string]struct{})
 	for key, value := range document {
 		if key == "@metadata" {
 			continue
@@ -34,13 +37,23 @@ func DecodeLanguage(raw []byte, metadata LanguageMetadata) (*LanguageStore, erro
 		var text string
 		if json.Unmarshal(value, &text) == nil {
 			values[key] = text
+			foldedKey := strings.ToLower(key)
+			if _, ambiguous := ambiguousFolds[foldedKey]; ambiguous {
+				continue
+			}
+			if _, collision := folded[foldedKey]; collision {
+				delete(folded, foldedKey)
+				ambiguousFolds[foldedKey] = struct{}{}
+				continue
+			}
+			folded[foldedKey] = text
 		}
 	}
 	if len(values) == 0 {
 		return nil, fmt.Errorf("official language document contains no strings")
 	}
 	metadata.LoadedAt = time.Now().UTC()
-	return &LanguageStore{metadata: metadata, values: values}, nil
+	return &LanguageStore{metadata: metadata, values: values, folded: folded}, nil
 }
 
 func (store *LanguageStore) Metadata() LanguageMetadata {
@@ -72,6 +85,10 @@ func (store *LanguageStore) ResolveMany(keys []string) map[string]string {
 	resolved := make(map[string]string, len(keys))
 	for _, key := range keys {
 		if value, ok := store.Text(key); ok {
+			resolved[key] = value
+			continue
+		}
+		if value, ok := store.folded[strings.ToLower(key)]; ok {
 			resolved[key] = value
 		}
 	}

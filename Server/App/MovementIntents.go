@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Intent"
-	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
@@ -89,12 +88,6 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 	for _, unitID := range unitIDs {
 		wireUnits = append(wireUnits, [2]int64{unitID, amounts[State.UnitID(unitID)]})
 	}
-	preview, _ := json.Marshal(struct {
-		TargetX int `json:"TX"`
-		TargetY int `json:"TY"`
-		SourceX int `json:"SX"`
-		SourceY int `json:"SY"`
-	}{target.X, target.Y, source.X, source.Y})
 	dispatch, _ := json.Marshal(struct {
 		SourceID State.CastleID `json:"SID"`
 		TargetX  int            `json:"TX"`
@@ -108,11 +101,8 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 		Units    [][2]int64     `json:"A"`
 	}{source.ID, target.X, target.Y, stationLeaderID, request.DelayHours, -1, 1, 1, 0, wireUnits})
 	steps := castleContextSteps(source)
-	steps = append(steps,
-		Intent.Step{Name: "Preview station route", Opcode: "sdi", Command: Protocol.Command{Opcode: "sdi", Payload: preview}},
-		Intent.Step{Name: "Allow route context to commit", DelayMillis: 250},
-		commandStep("Station troops", "cds", dispatch, "cds"),
-	)
+	steps = append(steps, stationRouteContextSteps(source, target)...)
+	steps = append(steps, commandStep("Station troops", "cds", dispatch, "cds"))
 	request.Purpose = strings.TrimSpace(request.Purpose)
 	request.TrackingID = strings.TrimSpace(request.TrackingID)
 	if request.Purpose != "" {

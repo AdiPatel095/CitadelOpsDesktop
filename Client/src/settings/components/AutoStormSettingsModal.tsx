@@ -1,0 +1,1255 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Anchor,
+  Camera,
+  Castle,
+  Clock3,
+  Crosshair,
+  FastForward,
+  Hammer,
+  Package,
+  Search,
+  Shield,
+  Sparkles,
+  Swords,
+  Trash2,
+  Truck,
+  Waves,
+} from 'lucide-react';
+import type { BuildingTargetCaptureMode } from '../../api/Contracts';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { CitadelAPI } from '../../api/CitadelClient';
+import {
+  ATTACK_PRESETS_SECTION,
+  parseAttackPresetDocument,
+  summarizeAttackPreset,
+} from '../../attackPresets/AttackPresetTypes';
+import { Notifications } from '../../components/Notifications';
+import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
+import UnitImage from '../../components/UnitImage';
+import { Badge, Button, Card, ChoiceChipGroup, Input, Select, SettingsModal, SettingsToggleRow, Switch } from '../../components/ui';
+import { useMetadata } from '../../context/MetadataContext';
+import {
+  AUTO_STORM_LUNA_PACKAGE_IDS,
+  AUTO_STORM_SECTION,
+  clampAutoStormInteger,
+  defaultAutoStormClientState,
+  parseAutoStormClientState,
+  type AutoStormClientStateV1,
+  type AutoStormCombatOrder,
+  type AutoStormIslandSize,
+  type AutoStormResource,
+} from '../AutoStormClientState';
+import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+
+interface AutoStormSettingsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface DecorationPresetOption {
+  value: string;
+  castleId: number;
+  presetId: string;
+  label: string;
+  itemCount: number;
+}
+
+interface LunaPackage {
+  id: number;
+  name: string;
+  type: string;
+  price: number;
+  stock: number;
+  unitId: number;
+  unitAmount: number;
+  buildingId: number;
+  buildingAmount: number;
+  rewardDetail: string;
+}
+
+const FORT_LEVELS = [40, 50, 60, 70, 80];
+const RESOURCE_OPTIONS: Array<{ value: AutoStormResource; label: string }> = [
+  { value: 'wood', label: 'Wood' },
+  { value: 'stone', label: 'Stone' },
+  { value: 'aquamarine', label: 'Aquamarine' },
+];
+const SIZE_OPTIONS: Array<{ value: AutoStormIslandSize; label: string }> = [
+  { value: 'large', label: 'Large' },
+  { value: 'small', label: 'Small' },
+];
+const RESOURCE_RESERVES = [
+  { key: '3', label: 'Wood' },
+  { key: '4', label: 'Stone' },
+  { key: '9', label: 'Aquamarine' },
+];
+const TIME_SKIP_RESERVES = [
+  { key: 'MS1', label: '1m' },
+  { key: 'MS2', label: '5m' },
+  { key: 'MS3', label: '10m' },
+  { key: 'MS4', label: '30m' },
+  { key: 'MS5', label: '1h' },
+  { key: 'MS6', label: '5h' },
+  { key: 'MS7', label: '24h' },
+];
+const LUNA_PACKAGE_ID_SET = new Set(AUTO_STORM_LUNA_PACKAGE_IDS);
+
+export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { state, configuration, captureBuildingTarget, updateConfiguration } = useCitadelAPI();
+  const { getTool, getTroop } = useMetadata();
+  const [draft, setDraft] = useState<AutoStormClientStateV1>(defaultAutoStormClientState);
+  const [captureCastleId, setCaptureCastleId] = useState(0);
+  const [capturing, setCapturing] = useState<BuildingTargetCaptureMode | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [lunaPackages, setLunaPackages] = useState<LunaPackage[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(false);
+  const [lunaSearch, setLunaSearch] = useState('');
+
+  const stormCastles = useMemo(() => Object.values(state?.castles ?? {})
+    .filter((castle) => castle.kingdomId === 4)
+    .sort((left, right) => left.id - right.id), [state?.castles]);
+  const troopDonorCastles = useMemo(() => Object.values(state?.castles ?? {})
+    .filter((castle) => castle.kingdomId !== 4)
+    .sort((left, right) => left.kingdomId - right.kingdomId || left.id - right.id), [state?.castles]);
+  const stormCastle = stormCastles.find((castle) => castle.id === captureCastleId) ?? stormCastles[0];
+  const attackPresets = useMemo(
+    () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
+    [configuration?.sections],
+  );
+  const decorationOptions = useMemo(
+    () => parseDecorationPresetOptions(configuration?.sections['decorations.presets'], state?.castles ?? {}),
+    [configuration?.sections, state?.castles],
+  );
+  const selectedDecorationValue = decorationOptions.find((option) => (
+    option.castleId === draft.decorationPresetCastleId && option.presetId === draft.decorationPresetId
+  ))?.value ?? '';
+  const selectedFortPreset = attackPresets.presets.find((preset) => preset.id === draft.forts.presetId);
+  const selectedIslandPreset = attackPresets.presets.find((preset) => preset.id === draft.islands.presetId);
+  const detectedLunaTableId = state?.storm.lunaShopTableId ?? 0;
+  const stormMapState = state?.storm.map;
+  const stormMapCoverage = stormMapState && stormMapState.windowCount
+    ? `${stormMapState.coveredBounds.x2 - stormMapState.coveredBounds.x1 + 1} × ${stormMapState.coveredBounds.y2 - stormMapState.coveredBounds.y1 + 1} · ${stormMapState.windowCount} windows`
+    : 'Learns on first sweep';
+  const stormOpportunities = useMemo(() => {
+    const now = Date.now();
+    let ready = 0;
+    let nextReadyAt = Number.POSITIVE_INFINITY;
+    for (const target of Object.values(stormMapState?.targets ?? {})) {
+      const observedAt = Date.parse(target.observedAt);
+      const inferredReadyAt = observedAt + (
+        target.stormCooldownRemaining
+        && (target.typeId === 25 || (target.typeId === 24 && (target.ownerId ?? 0) > 0))
+          ? target.stormCooldownRemaining * 1000
+          : 0
+      );
+      const readyAt = target.stormReadyAt ? Date.parse(target.stormReadyAt) : inferredReadyAt;
+      const expiresAt = target.stormExpiresAt ? Date.parse(target.stormExpiresAt) : Number.POSITIVE_INFINITY;
+      if (Number.isFinite(expiresAt) && expiresAt <= now) continue;
+      if (Number.isFinite(readyAt) && readyAt <= now) ready += 1;
+      else if (Number.isFinite(readyAt)) nextReadyAt = Math.min(nextReadyAt, readyAt);
+    }
+    return { ready, nextReadyAt };
+  }, [stormMapState?.targets]);
+  const effectiveLunaTableId = draft.aquamarine.shopTableId || detectedLunaTableId;
+  const configuredLunaPurchases = useMemo(
+    () => new Map(draft.aquamarine.purchases.map((purchase) => [purchase.packageId, purchase])),
+    [draft.aquamarine.purchases],
+  );
+  const visibleLunaPackages = useMemo(() => {
+    const query = lunaSearch.trim().toLowerCase();
+    if (!query) return lunaPackages;
+    return lunaPackages.filter((item) => {
+      const displayName = lunaPackageDisplayName(item, getTroop, getTool);
+      return `${displayName} ${item.name} ${lunaPackageTypeLabel(item.type)} ${item.id} ${item.rewardDetail}`
+        .toLowerCase()
+        .includes(query);
+    });
+  }, [getTool, getTroop, lunaPackages, lunaSearch]);
+  const lunaCountersCurrent = Boolean(
+    stormCastle
+    && state?.inventory.constructionOffersCastleId === stormCastle.id
+    && state.inventory.constructionOffersKingdomId === 4
+    && state.inventory.constructionOffersObservedAt,
+  );
+
+  const savedConfiguration = configuration?.sections[AUTO_STORM_SECTION];
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const current = parseAutoStormClientState(savedConfiguration);
+    setDraft(current);
+    setCaptureCastleId(current.target?.castleId ?? 0);
+  }, [isOpen, savedConfiguration]);
+
+  useEffect(() => {
+    if (!isOpen || captureCastleId > 0 || stormCastles.length === 0) return;
+    setCaptureCastleId(stormCastles[0].id);
+  }, [captureCastleId, isOpen, stormCastles]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setLoadingPackages(true);
+    void CitadelAPI.getCatalog<Record<string, unknown>>('packages')
+      .then((response) => {
+        if (!cancelled) setLunaPackages(parseLunaPackages(response.items));
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setLunaPackages([]);
+          Notifications.error(error instanceof Error ? error.message : 'Could not load Luna shop packages.');
+        }
+      })
+      .finally(() => { if (!cancelled) setLoadingPackages(false); });
+    return () => { cancelled = true; };
+  }, [isOpen]);
+
+  const capture = async (mode: BuildingTargetCaptureMode) => {
+    if (!stormCastle || capturing) return;
+    setCapturing(mode);
+    try {
+      const target = await captureBuildingTarget({
+        castleId: stormCastle.id,
+        mode,
+        expectedRevision: state?.revision,
+      });
+      setDraft((current) => ({
+        ...current,
+        target,
+        ...(mode === 'full' ? { decorationPresetCastleId: 0, decorationPresetId: '' } : {}),
+      }));
+      Notifications.success(mode === 'full' ? 'Full Storm target captured.' : 'Storm building target captured.');
+    } catch (error) {
+      Notifications.error(error instanceof Error ? error.message : 'Could not capture the Storm layout.');
+    } finally {
+      setCapturing(null);
+    }
+  };
+
+  const chooseDefenseUnits = async () => {
+    const quantities = Object.fromEntries(draft.islands.defenseUnits.map((unit) => [unit.unitId, unit.amount]));
+    const result = await showTroopPicker({
+      mode: 'multi',
+      title: 'Troops left to defend captured islands',
+      allowQuantity: true,
+      preselected: draft.islands.defenseUnits.map((unit) => unit.unitId),
+      preselectedQuantities: quantities,
+      stockQuantities: stormCastle?.units.stationed,
+    });
+    if (!Array.isArray(result)) return;
+    const defenseUnits = (result as UnitWithQuantity[])
+      .filter((unit) => unit.unitId > 0 && unit.quantity > 0)
+      .slice(0, 8)
+      .map((unit) => ({ unitId: unit.unitId, amount: unit.quantity }));
+    setDraft((current) => ({
+      ...current,
+      islands: { ...current.islands, defenseUnits },
+    }));
+  };
+
+  const fortValid = !draft.forts.enabled || (draft.forts.levels.length > 0 && Boolean(draft.forts.presetId));
+  const islandsValid = !draft.islands.enabled || (
+    draft.islands.resources.length > 0
+    && draft.islands.sizes.length > 0
+    && Boolean(draft.islands.presetId)
+    && draft.islands.defenseUnits.every((unit) => unit.unitId > 0 && unit.amount > 0)
+  );
+  const shopIDs = draft.aquamarine.purchases.map((purchase) => purchase.packageId);
+  const shopValid = draft.aquamarine.purchases.length === 0 || (
+    shopIDs.every((id) => id > 0)
+    && new Set(shopIDs).size === shopIDs.length
+    && draft.aquamarine.purchases.every((purchase) => purchase.unlimited || purchase.targetPurchases > 0)
+  );
+  const targetValid = draft.target == null || draft.target.kingdomId === 4;
+  const validDonorIDs = new Set(troopDonorCastles.map((castle) => castle.id));
+  const troopImportValid = !draft.troopImport.enabled || (
+    draft.troopImport.donorCastleIds.length > 0
+    && draft.troopImport.donorCastleIds.every((castleId) => validDonorIDs.has(castleId))
+  );
+  const canSave = fortValid && islandsValid && shopValid && targetValid && troopImportValid;
+
+  const save = async () => {
+    if (!canSave || saving) return;
+    setSaving(true);
+    try {
+      await updateConfiguration(AUTO_STORM_SECTION, parseAutoStormClientState(draft));
+      Notifications.success('Auto Storm settings saved.');
+      onClose();
+    } catch (error) {
+      Notifications.error(error instanceof Error ? error.message : 'Could not save Auto Storm settings.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const target = draft.target;
+  const targetCastle = target ? state?.castles[String(target.castleId)] : undefined;
+  const aquamarineBalance = stormCastle?.resources['9']?.amount ?? 0;
+
+  return (
+    <SettingsModal
+      isOpen={isOpen}
+      onClose={() => { if (!saving && !capturing) onClose(); }}
+      maxWidth="full"
+      title="Auto Storm"
+      icon={<Waves className="h-5 w-5" />}
+      description="Reconcile a captured Storm castle, attack selected forts and resource islands, and spend Aquamarine through guarded goals."
+      onSave={() => void save()}
+      isSaving={saving}
+      saveDisabled={!canSave}
+      cancelDisabled={capturing != null}
+    >
+      <div className="space-y-4">
+        <Card variant="solid" className="p-4">
+          <SectionHeading
+            icon={Camera}
+            title="Target castle state"
+            description="Capture the end state from the live Storm castle. Expansions, fixed buildings, upgrades, and placements become a dependency-aware target."
+          />
+          <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
+            <label className="block">
+              <FieldLabel>Storm castle</FieldLabel>
+              <Select
+                value={stormCastle ? String(stormCastle.id) : ''}
+                onChange={(value) => setCaptureCastleId(Number(value) || 0)}
+                options={stormCastles.map((castle) => ({
+                  value: String(castle.id),
+                  label: `${castle.name?.trim() || `Castle ${castle.id}`} · ${castle.x}:${castle.y}`,
+                }))}
+                placeholder={stormCastles.length > 0 ? 'Choose Storm castle' : 'Unlock Storm first'}
+                disabled={stormCastles.length === 0 || capturing != null}
+                menuGrowToViewport
+              />
+            </label>
+            <Button
+              variant="outline"
+              disabled={!stormCastle || capturing != null}
+              isLoading={capturing === 'buildings'}
+              onClick={() => void capture('buildings')}
+              leftIcon={<Hammer className="h-4 w-4" />}
+            >
+              Capture buildings
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!stormCastle || capturing != null}
+              isLoading={capturing === 'full'}
+              onClick={() => void capture('full')}
+              leftIcon={<Castle className="h-4 w-4" />}
+            >
+              Capture full state
+            </Button>
+          </div>
+
+          {target ? (
+            <div className="mt-4 rounded-global border border-primary/20 bg-primary/5 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="success">{target.mode === 'full' ? 'Full state' : 'Buildings only'}</Badge>
+                    <span className="text-sm font-bold text-text-main">
+                      {targetCastle?.name?.trim() || `Castle ${target.castleId}`}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-text-muted">Captured {formatDate(target.capturedAt)} from revision {target.revision.toLocaleString()}.</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setDraft((current) => {
+                    const { target: _target, ...rest } = current;
+                    return rest;
+                  })}
+                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                >
+                  Clear target
+                </Button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge variant="outline">{target.summary.groundCount} ground tiles</Badge>
+                <Badge variant="outline">{target.summary.buildingCount} buildings</Badge>
+                <Badge variant="outline">{target.summary.fixedCount} fixed</Badge>
+                <Badge variant="outline">{target.summary.decorationCount} decorations</Badge>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
+              No castle target is required for combat-only automation. Capturing one enables automated expansions, storage dependencies, logistics, construction, and layout reconciliation.
+            </p>
+          )}
+
+          {target?.mode === 'buildings' ? (
+            <label className="mt-4 block border-t border-border-base pt-4">
+              <FieldLabel icon={Sparkles}>Decoration preset applied after construction</FieldLabel>
+              <Select
+                value={selectedDecorationValue}
+                onChange={(value) => {
+                  const option = decorationOptions.find((candidate) => candidate.value === value);
+                  setDraft((current) => ({
+                    ...current,
+                    decorationPresetCastleId: option?.castleId ?? 0,
+                    decorationPresetId: option?.presetId ?? '',
+                  }));
+                }}
+                options={decorationOptions.map((option) => ({ value: option.value, label: option.label }))}
+                placeholder={decorationOptions.length > 0 ? 'Optional saved decoration preset' : 'Save a decoration preset first'}
+                disabled={decorationOptions.length === 0}
+                searchable
+                menuGrowToViewport
+              />
+              <p className="mt-2 text-xs text-text-muted">The preset may come from any castle. Its exact decoration IDs and coordinates are applied only after the building target is complete.</p>
+            </label>
+          ) : null}
+        </Card>
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          <Card variant="solid" className="p-4">
+            <SectionHeading
+              icon={Hammer}
+              title="Construction and logistics"
+              description="Gift packets are cleared after expansions. Storage dependencies and upgrade chains are inferred automatically."
+            />
+            <div className="mt-4 space-y-3">
+              <SettingsToggleRow
+                icon={<Truck className="h-3.5 w-3.5" />}
+                title="Transport missing resources"
+                description="Ship available resources from another owned kingdom castle when Storm cannot afford the next dependency."
+                checked={draft.build.allowResourceTransport}
+                onChange={(allowResourceTransport) => updateBuild(setDraft, { allowResourceTransport })}
+              />
+              <SettingsToggleRow
+                icon={<FastForward className="h-3.5 w-3.5" />}
+                title="Use time skips"
+                description="Advance construction, resource transport, or troop transport while preserving the reserves below."
+                checked={draft.build.allowTimeSkips}
+                onChange={(allowTimeSkips) => updateBuild(setDraft, { allowTimeSkips })}
+              />
+              <SettingsToggleRow
+                icon={<Sparkles className="h-3.5 w-3.5" />}
+                title="Allow premium costs"
+                description="Permit premium construction paths. Harbor levels 2 and 3 require this permission."
+                checked={draft.build.allowPremium}
+                onChange={(allowPremium) => updateBuild(setDraft, { allowPremium })}
+                tone="warning"
+              />
+              <SettingsToggleRow
+                icon={<Trash2 className="h-3.5 w-3.5" />}
+                title="Allow demolition"
+                description="Permit exact reconciliation to demolish unmanaged buildings that cannot be stored or moved."
+                checked={draft.build.allowDemolition}
+                onChange={(allowDemolition) => updateBuild(setDraft, { allowDemolition })}
+                warning
+              />
+            </div>
+
+            <div className="mt-4 border-t border-border-base pt-4">
+              <FieldLabel>Protected building resource reserves</FieldLabel>
+              <div className="grid grid-cols-3 gap-2">
+                {RESOURCE_RESERVES.map((resource) => (
+                  <label key={resource.key} className="block">
+                    <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={draft.build.resourceReserves[resource.key] ?? 0}
+                      onChange={(event) => updateNumberMap(
+                        setDraft,
+                        'resourceReserves',
+                        resource.key,
+                        clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                      )}
+                      className="font-mono"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {draft.build.allowTimeSkips ? (
+              <div className="mt-4 border-t border-border-base pt-4">
+                <FieldLabel>Time skips kept in reserve</FieldLabel>
+                <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                  {TIME_SKIP_RESERVES.map((skip) => (
+                    <label key={skip.key} className="block">
+                      <span className="mb-1 block text-center text-[10px] font-semibold text-text-muted">{skip.label}</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={draft.build.timeSkipReserve[skip.key] ?? 0}
+                        onChange={(event) => updateNumberMap(
+                          setDraft,
+                          'timeSkipReserve',
+                          skip.key,
+                          clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                        )}
+                        className="px-2 text-center font-mono"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-4 border-t border-border-base pt-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Anchor className="h-4 w-4 text-primary" /> Upgrade Harbor</div>
+                  <p className="mt-1 text-xs text-text-muted">Override the captured Harbor path and maintain it at a chosen level.</p>
+                </div>
+                <Switch
+                  checked={draft.harbor.enabled}
+                  onChange={(enabled) => setDraft((current) => ({ ...current, harbor: { ...current.harbor, enabled } }))}
+                  ariaLabel="Automate Storm Harbor upgrades"
+                />
+              </div>
+              {draft.harbor.enabled ? (
+                <div className="mt-3">
+                  <Select
+                    value={String(draft.harbor.targetLevel)}
+                    onChange={(value) => setDraft((current) => ({
+                      ...current,
+                      harbor: { ...current.harbor, targetLevel: Number(value) || 1 },
+                    }))}
+                    options={[1, 2, 3].map((level) => ({ value: String(level), label: `Harbor level ${level}` }))}
+                  />
+                  {draft.harbor.targetLevel > 1 && !draft.build.allowPremium ? (
+                    <p className="mt-2 text-xs text-warning">Harbor levels 2–3 are premium paths and will wait until premium costs are allowed.</p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </Card>
+
+          <Card variant="solid" className="p-4">
+            <SectionHeading
+              icon={Swords}
+              title="Forts and resource islands"
+              description="Each target type has its own attack preset. Live attack capacity and troop inventory are validated before launch."
+            />
+
+            <div className="mt-4 rounded-global border border-border-base bg-bg-app/30 p-3">
+              <HorseTravelBoostSelect
+                value={draft.horseTravelBoostId}
+                onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
+              />
+            </div>
+
+            <div className="mt-4 rounded-global border border-border-base bg-bg-app/30 p-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-sm font-bold text-text-main">Storm forts</div>
+                  <p className="mt-1 text-xs text-text-muted">Attack only the selected official fort levels.</p>
+                </div>
+                <Switch
+                  checked={draft.forts.enabled}
+                  onChange={(enabled) => setDraft((current) => ({ ...current, forts: { ...current.forts, enabled } }))}
+                  ariaLabel="Attack Storm forts"
+                />
+              </div>
+              {draft.forts.enabled ? (
+                <div className="mt-3 space-y-3 border-t border-border-base pt-3">
+                  <ChoiceChipGroup
+                    ariaLabel="Storm fort levels"
+                    options={FORT_LEVELS.map((level) => ({ value: level, label: `Level ${level}` }))}
+                    selected={draft.forts.levels}
+                    onToggle={(level) => setDraft((current) => ({
+                      ...current,
+                      forts: { ...current.forts, levels: toggleChoice(current.forts.levels, level) },
+                    }))}
+                  />
+                  <label className="block">
+                    <FieldLabel>Minimum wins on fort</FieldLabel>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={draft.forts.minimumWins}
+                      onChange={(event) => setDraft((current) => ({
+                        ...current,
+                        forts: {
+                          ...current.forts,
+                          minimumWins: clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                        },
+                      }))}
+                      className="font-mono"
+                    />
+                    <p className="mt-1 text-[11px] text-text-muted">Only launch against forts whose live victory count is at least this value. Use 0 for no minimum.</p>
+                  </label>
+                  <PresetSelect
+                    value={draft.forts.presetId}
+                    onChange={(presetId) => setDraft((current) => ({ ...current, forts: { ...current.forts, presetId } }))}
+                    presets={attackPresets.presets}
+                    placeholder="Fort attack preset"
+                  />
+                  {selectedFortPreset ? <PresetSummary preset={selectedFortPreset} /> : null}
+                  {draft.forts.levels.length === 0 ? <p className="text-xs text-error">Select at least one fort level.</p> : null}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-sm font-bold text-text-main">Resource islands</div>
+                  <p className="mt-1 text-xs text-text-muted">Capture matching resources and sizes, then return the report-confirmed surviving attack army to the Storm castle.</p>
+                </div>
+                <Switch
+                  checked={draft.islands.enabled}
+                  onChange={(enabled) => setDraft((current) => ({ ...current, islands: { ...current.islands, enabled } }))}
+                  ariaLabel="Attack Storm resource islands"
+                />
+              </div>
+              {draft.islands.enabled ? (
+                <div className="mt-3 space-y-3 border-t border-border-base pt-3">
+                  <div>
+                    <FieldLabel>Resources</FieldLabel>
+                    <ChoiceChipGroup
+                      ariaLabel="Storm island resources"
+                      options={RESOURCE_OPTIONS}
+                      selected={draft.islands.resources}
+                      onToggle={(resource) => setDraft((current) => ({
+                        ...current,
+                        islands: { ...current.islands, resources: toggleChoice(current.islands.resources, resource) },
+                      }))}
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel>Island sizes</FieldLabel>
+                    <ChoiceChipGroup
+                      ariaLabel="Storm island sizes"
+                      options={SIZE_OPTIONS}
+                      selected={draft.islands.sizes}
+                      onToggle={(size) => setDraft((current) => ({
+                        ...current,
+                        islands: { ...current.islands, sizes: toggleChoice(current.islands.sizes, size) },
+                      }))}
+                    />
+                  </div>
+                  <PresetSelect
+                    value={draft.islands.presetId}
+                    onChange={(presetId) => setDraft((current) => ({ ...current, islands: { ...current.islands, presetId } }))}
+                    presets={attackPresets.presets}
+                    placeholder="Island attack preset"
+                  />
+                  {selectedIslandPreset ? <PresetSummary preset={selectedIslandPreset} /> : null}
+
+                  <div className="border-t border-border-base pt-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2 text-xs font-bold text-text-main"><Shield className="h-3.5 w-3.5 text-primary" /> Island defense units</div>
+                        <p className="mt-1 text-[11px] text-text-muted">Choose dedicated occupation defenders. If empty, one survivor stays only after the successful battle report confirms the island army.</p>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => void chooseDefenseUnits()} leftIcon={<Shield className="h-3.5 w-3.5" />}>
+                        Choose units
+                      </Button>
+                    </div>
+                    {draft.islands.defenseUnits.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {draft.islands.defenseUnits.map((unit) => (
+                          <div key={unit.unitId} className="flex items-center gap-2 rounded-global border border-border-base bg-bg-card/45 p-2">
+                            <UnitImage unitId={unit.unitId} size={32} />
+                            <div>
+                              <div className="max-w-32 truncate text-xs font-bold text-text-main">{getTroop(unit.unitId)?.name ?? `Unit ${unit.unitId}`}</div>
+                              <div className="text-[10px] text-text-muted">{unit.amount.toLocaleString()}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <p className="mt-2 text-[11px] text-text-muted">Automatic minimum occupation: after victory is reported, every surviving attack troop except one returns to the Storm castle.</p>}
+                  </div>
+
+                  {draft.islands.resources.length === 0 || draft.islands.sizes.length === 0 ? (
+                    <p className="text-xs text-error">Select at least one resource and one island size.</p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Truck className="h-4 w-4 text-primary" /> Import missing troops</div>
+                  <p className="mt-1 text-xs text-text-muted">Import missing attack or configured-defense troops from selected donor castles into the Storm castle before launch. Donors never send directly to an island.</p>
+                </div>
+                <Switch
+                  checked={draft.troopImport.enabled}
+                  onChange={(enabled) => setDraft((current) => ({
+                    ...current,
+                    troopImport: { ...current.troopImport, enabled },
+                  }))}
+                  ariaLabel="Import missing Storm troops"
+                />
+              </div>
+              {draft.troopImport.enabled ? (
+                <div className="mt-3 border-t border-border-base pt-3">
+                  <FieldLabel>Donor castles</FieldLabel>
+                  {troopDonorCastles.length > 0 ? (
+                    <ChoiceChipGroup
+                      ariaLabel="Storm troop donor castles"
+                      options={troopDonorCastles.map((castle) => ({
+                        value: castle.id,
+                        label: `${castle.name?.trim() || `Castle ${castle.id}`} · K${castle.kingdomId}`,
+                      }))}
+                      selected={draft.troopImport.donorCastleIds}
+                      onToggle={(castleId) => setDraft((current) => ({
+                        ...current,
+                        troopImport: {
+                          ...current.troopImport,
+                          donorCastleIds: toggleChoice(current.troopImport.donorCastleIds, castleId),
+                        },
+                      }))}
+                    />
+                  ) : <p className="text-xs text-text-muted">No non-Storm donor castles are currently observed.</p>}
+                  <p className="mt-2 text-[11px] text-text-muted">Donors are checked in the displayed order, and partial shortages can be filled across several transfers. Time skips use the construction-and-logistics reserve above. Attack tools must already be stationed in Storm.</p>
+                  {!troopImportValid ? <p className="mt-2 text-xs text-error">Select at least one currently observed donor castle.</p> : null}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-4 grid gap-3 border-t border-border-base pt-4 sm:grid-cols-2">
+              <label>
+                <FieldLabel>Combat order</FieldLabel>
+                <Select
+                  value={draft.combatOrder}
+                  onChange={(value) => setDraft((current) => ({ ...current, combatOrder: value as AutoStormCombatOrder }))}
+                  options={[
+                    { value: 'forts_first', label: 'Forts first' },
+                    { value: 'islands_first', label: 'Islands first' },
+                    { value: 'nearest', label: 'Nearest first' },
+                  ]}
+                />
+              </label>
+              <div>
+                <FieldLabel>Map coverage</FieldLabel>
+                <Input readOnly value={stormMapCoverage} />
+                <p className="mt-1 text-[11px] text-text-muted">
+                  {stormMapState?.windowCount && stormMapState.lastCompletedAt ? `Last completed ${formatDate(stormMapState.lastCompletedAt)}. ` : ''}
+                  Coverage is scoped to the current server and account, then expanded when a completed sweep reaches an observed map edge.
+                </p>
+                <p className="mt-1 text-[11px] text-text-muted">
+                  {stormOpportunities.ready} learned targets are ready now.
+                  {Number.isFinite(stormOpportunities.nextReadyAt) ? ` Next readyAt label: ${formatDate(new Date(stormOpportunities.nextReadyAt).toISOString())}.` : ''}
+                  {' '}Auto Storm wakes on these labels between full sweeps.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <Card variant="solid" className="p-4">
+          <SectionHeading
+            icon={Package}
+            title="Aquamarine spending"
+            description="Buy prioritized Luna packages only after the castle target is complete and the protected Aquamarine reserve remains intact."
+          />
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <label>
+              <FieldLabel>Keep Aquamarine</FieldLabel>
+              <Input
+                type="number"
+                min={0}
+                value={draft.aquamarine.reserve}
+                onChange={(event) => setDraft((current) => ({
+                  ...current,
+                  aquamarine: {
+                    ...current.aquamarine,
+                    reserve: clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                  },
+                }))}
+                className="font-mono"
+              />
+              <p className="mt-1 text-[11px] text-text-muted">Current: {Math.trunc(aquamarineBalance).toLocaleString()}</p>
+            </label>
+            <label>
+              <FieldLabel>Luna table ID (advanced)</FieldLabel>
+              <Input
+                type="number"
+                min={1}
+                value={effectiveLunaTableId || ''}
+                onChange={(event) => setDraft((current) => ({
+                  ...current,
+                  aquamarine: {
+                    ...current.aquamarine,
+                    shopTableId: clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                  },
+                }))}
+                placeholder="Auto-detected TID"
+                className="font-mono"
+              />
+              <p className="mt-1 text-[11px] text-text-muted">
+                {detectedLunaTableId > 0 ? `Detected from live Luna shop${state?.storm.lunaShopObservedAt ? ` · ${formatDate(state.storm.lunaShopObservedAt)}` : ''}` : 'Learned automatically after a live Luna purchase; manual override is available.'}
+              </p>
+            </label>
+            <label>
+              <FieldLabel>Find a Luna reward</FieldLabel>
+              <Input
+                value={lunaSearch}
+                onChange={(event) => setLunaSearch(event.target.value)}
+                placeholder="Reward, category, or package ID"
+                leftIcon={<Search className="h-4 w-4" />}
+              />
+              <p className="mt-1 text-[11px] text-text-muted">
+                {loadingPackages ? 'Loading official catalog…' : `${lunaPackages.length} Luna rewards available`}
+              </p>
+            </label>
+          </div>
+
+          <p className="mt-3 rounded-global border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-text-muted">
+            These 17 rewards were captured from the current Luna storefront; reward amounts, Aquamarine prices, and shop caps come from official game data. The table ID is learned from live purchase traffic and is never guessed. Unlimited goals obey the protected reserve and stop at Luna's stock cap when one exists.
+          </p>
+
+          {loadingPackages ? (
+            <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 px-4 py-8 text-center text-sm text-text-muted">
+              Loading Luna's official rewards…
+            </div>
+          ) : lunaPackages.length > 0 ? (
+            <div className="mt-3 overflow-hidden rounded-global border border-border-base bg-bg-app/30">
+              <div className="max-h-[min(34rem,52dvh)] overflow-auto custom-scrollbar">
+                <table className="w-full min-w-[72rem] table-fixed text-left text-xs">
+                  <thead className="sticky top-0 z-10 border-b border-border-base bg-bg-card/95 text-[10px] uppercase tracking-wider text-text-muted backdrop-blur-xl">
+                    <tr>
+                      <th className="w-[5rem] px-3 py-2.5 text-center font-black">Use</th>
+                      <th className="w-[28%] px-3 py-2.5 font-black">Reward</th>
+                      <th className="w-[9rem] px-3 py-2.5 text-right font-black">Cost</th>
+                      <th className="w-[8rem] px-3 py-2.5 text-center font-black">Purchased / cap</th>
+                      <th className="w-[10rem] px-3 py-2.5 font-black">Target total</th>
+                      <th className="w-[10rem] px-3 py-2.5 font-black">Unlimited</th>
+                      <th className="w-[7rem] px-3 py-2.5 font-black">Priority</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-base/70">
+                    {visibleLunaPackages.map((item) => {
+                      const purchase = configuredLunaPurchases.get(item.id);
+                      const enabled = purchase != null;
+                      const displayName = lunaPackageDisplayName(item, getTroop, getTool);
+                      const purchased = lunaCountersCurrent
+                        ? (state?.inventory.constructionOffers[String(item.id)] ?? 0)
+                        : undefined;
+                      return (
+                        <tr key={item.id} className={`transition-colors ${enabled ? 'bg-primary/5' : 'hover:bg-bg-card-hover/40'}`}>
+                          <td className="px-3 py-3 text-center align-middle">
+                            <Switch
+                              size="sm"
+                              checked={enabled}
+                              onChange={(checked) => toggleShopPurchase(setDraft, item.id, checked)}
+                              ariaLabel={`${enabled ? 'Disable' : 'Enable'} ${displayName}`}
+                            />
+                          </td>
+                          <td className="px-3 py-3 align-middle">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <Badge variant="outline">{lunaPackageTypeLabel(item.type)}</Badge>
+                              <div className="min-w-0">
+                                <div className="truncate font-bold text-text-main" title={displayName}>{displayName}</div>
+                                <div className="mt-0.5 truncate text-[10px] text-text-muted">
+                                  PID {item.id}{item.rewardDetail ? ` · ${item.rewardDetail}` : ''}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-right align-middle font-mono font-bold text-text-main">
+                            {item.price.toLocaleString()} Aqua
+                          </td>
+                          <td className="px-3 py-3 text-center align-middle">
+                            <div className="font-mono font-bold text-text-main">
+                              {purchased == null ? '—' : purchased.toLocaleString()}{item.stock > 0 ? ` / ${item.stock.toLocaleString()}` : ''}
+                            </div>
+                            <div className="mt-0.5 text-[10px] text-text-muted">
+                              {item.stock > 0 ? 'shop cap' : 'no shop cap'}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 align-middle">
+                            <Input
+                              type="number"
+                              min={1}
+                              max={item.stock > 0 ? item.stock : undefined}
+                              value={purchase?.targetPurchases ?? 1}
+                              disabled={!enabled || purchase?.unlimited === true}
+                              onChange={(event) => updateShopPurchase(setDraft, item.id, {
+                                targetPurchases: clampAutoStormInteger(
+                                  event.target.value,
+                                  1,
+                                  item.stock > 0 ? item.stock : Number.MAX_SAFE_INTEGER,
+                                  1,
+                                ),
+                              })}
+                              className="font-mono"
+                            />
+                          </td>
+                          <td className="px-3 py-3 align-middle">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                size="sm"
+                                checked={purchase?.unlimited === true}
+                                disabled={!enabled}
+                                onChange={(unlimited) => updateShopPurchase(setDraft, item.id, { unlimited })}
+                                ariaLabel={`Unlimited purchases for ${displayName}`}
+                              />
+                              <span className="text-[10px] leading-tight text-text-muted">
+                                {item.stock > 0 ? `Until cap ${item.stock}` : 'Keep buying'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 align-middle">
+                            <Input
+                              type="number"
+                              min={0}
+                              value={purchase?.priority ?? ''}
+                              disabled={!enabled}
+                              onChange={(event) => updateShopPurchase(setDraft, item.id, {
+                                priority: clampAutoStormInteger(event.target.value, 0, 1_000_000, purchase?.priority ?? 1),
+                              })}
+                              className="font-mono"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {visibleLunaPackages.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-10 text-center text-sm text-text-muted">
+                          No Luna rewards match “{lunaSearch.trim()}”.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-3 rounded-global border border-error/20 bg-error/5 px-4 py-6 text-center text-sm text-text-muted">
+              No Luna rewards were found in the loaded official package catalog.
+            </div>
+          )}
+          {!shopValid ? <p className="mt-2 text-xs text-error">Use one unique Luna product per goal and a positive target count for finite goals.</p> : null}
+          {draft.aquamarine.purchases.length > 0 && effectiveLunaTableId <= 0 ? (
+            <p className="mt-2 text-xs text-warning">
+              These goals can be saved now. Auto Storm will wait to purchase until the live Luna table ID has been captured.
+            </p>
+          ) : null}
+          {draft.aquamarine.purchases.length > 0 ? (
+            <p className="mt-1 text-[11px] text-text-muted">
+              Lower priority numbers run first. An uncapped unlimited goal can consume all Aquamarine above the reserve before lower-priority rewards.
+            </p>
+          ) : null}
+        </Card>
+
+        <Card variant="solid" className="p-4">
+          <SectionHeading icon={Clock3} title="Cadence" description="Map refreshes are authoritative scans; policy checks react sooner to resource, build, troop, and movement changes." />
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label>
+              <FieldLabel>Policy check interval</FieldLabel>
+              <Input
+                type="number"
+                min={30}
+                max={3600}
+                value={draft.checkIntervalSec}
+                onChange={(event) => setDraft((current) => ({
+                  ...current,
+                  checkIntervalSec: clampAutoStormInteger(event.target.value, 30, 3600, current.checkIntervalSec),
+                }))}
+                rightIcon={<span className="text-xs text-text-muted">sec</span>}
+                className="font-mono"
+              />
+            </label>
+            <label>
+              <FieldLabel>Map refresh interval</FieldLabel>
+              <Input
+                readOnly
+                value={draft.mapRefreshIntervalSec / 3600}
+                rightIcon={<span className="text-xs text-text-muted">hours</span>}
+                className="font-mono"
+              />
+              <p className="mt-1 text-[11px] text-text-muted">Failed or interrupted full sweeps are also held to this interval.</p>
+            </label>
+          </div>
+        </Card>
+      </div>
+    </SettingsModal>
+  );
+};
+
+function SectionHeading({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 text-sm font-black text-text-main"><Icon className="h-4 w-4 text-primary" /> {title}</div>
+      <p className="mt-1 text-xs leading-relaxed text-text-muted">{description}</p>
+    </div>
+  );
+}
+
+function FieldLabel({ children, icon: Icon }: { children: React.ReactNode; icon?: React.ComponentType<{ className?: string }> }) {
+  return (
+    <span className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-text-muted">
+      {Icon ? <Icon className="h-3.5 w-3.5" /> : null}{children}
+    </span>
+  );
+}
+
+function PresetSelect({
+  value,
+  onChange,
+  presets,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  presets: ReturnType<typeof parseAttackPresetDocument>['presets'];
+  placeholder: string;
+}) {
+  return (
+    <label className="block">
+      <FieldLabel icon={Crosshair}>Attack preset</FieldLabel>
+      <Select
+        value={value}
+        onChange={onChange}
+        options={presets.map((preset) => ({ value: preset.id, label: preset.name }))}
+        placeholder={presets.length > 0 ? placeholder : 'Create an Attack Preset first'}
+        disabled={presets.length === 0}
+        searchable
+        menuGrowToViewport
+      />
+    </label>
+  );
+}
+
+function PresetSummary({ preset }: { preset: ReturnType<typeof parseAttackPresetDocument>['presets'][number] }) {
+  const summary = summarizeAttackPreset(preset);
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Badge variant="outline">{summary.waves} waves</Badge>
+      <Badge variant="outline">{summary.troops.toLocaleString()} troops</Badge>
+      <Badge variant="outline">{summary.tools.toLocaleString()} tools</Badge>
+    </div>
+  );
+}
+
+function updateBuild(
+  setDraft: React.Dispatch<React.SetStateAction<AutoStormClientStateV1>>,
+  update: Partial<AutoStormClientStateV1['build']>,
+) {
+  setDraft((current) => ({ ...current, build: { ...current.build, ...update } }));
+}
+
+function updateNumberMap(
+  setDraft: React.Dispatch<React.SetStateAction<AutoStormClientStateV1>>,
+  field: 'resourceReserves' | 'timeSkipReserve',
+  key: string,
+  value: number,
+) {
+  setDraft((current) => {
+    const next = { ...current.build[field] };
+    if (value > 0) next[key] = value;
+    else delete next[key];
+    return { ...current, build: { ...current.build, [field]: next } };
+  });
+}
+
+function toggleChoice<T>(values: T[], value: T): T[] {
+  return values.includes(value) ? values.filter((candidate) => candidate !== value) : [...values, value];
+}
+
+function toggleShopPurchase(
+  setDraft: React.Dispatch<React.SetStateAction<AutoStormClientStateV1>>,
+  packageId: number,
+  enabled: boolean,
+) {
+  setDraft((current) => {
+    const purchases = current.aquamarine.purchases.filter((purchase) => purchase.packageId !== packageId);
+    if (!enabled || packageId <= 0) {
+      return { ...current, aquamarine: { ...current.aquamarine, purchases } };
+    }
+    const priority = current.aquamarine.purchases.reduce((maximum, purchase) => Math.max(maximum, purchase.priority), 0) + 1;
+    return {
+      ...current,
+      aquamarine: {
+        ...current.aquamarine,
+        purchases: [...purchases, { packageId, targetPurchases: 1, unlimited: false, priority }],
+      },
+    };
+  });
+}
+
+function updateShopPurchase(
+  setDraft: React.Dispatch<React.SetStateAction<AutoStormClientStateV1>>,
+  packageId: number,
+  update: Partial<AutoStormClientStateV1['aquamarine']['purchases'][number]>,
+) {
+  setDraft((current) => ({
+    ...current,
+    aquamarine: {
+      ...current.aquamarine,
+      purchases: current.aquamarine.purchases.map((purchase) => (
+        purchase.packageId === packageId ? { ...purchase, ...update } : purchase
+      )),
+    },
+  }));
+}
+
+function parseDecorationPresetOptions(
+  value: unknown,
+  castles: Record<string, { id: number; name?: string }>,
+): DecorationPresetOption[] {
+  if (!isRecord(value) || !isRecord(value.castles)) return [];
+  const result: DecorationPresetOption[] = [];
+  for (const [castleKey, rawPresets] of Object.entries(value.castles)) {
+    const castleId = Number(castleKey);
+    if (!Number.isFinite(castleId) || castleId <= 0 || !Array.isArray(rawPresets)) continue;
+    for (const rawPreset of rawPresets) {
+      if (!isRecord(rawPreset) || typeof rawPreset.id !== 'string' || typeof rawPreset.name !== 'string' || !Array.isArray(rawPreset.items)) continue;
+      result.push({
+        value: `${castleKey}:${rawPreset.id}`,
+        castleId,
+        presetId: rawPreset.id,
+        label: `${rawPreset.name} · ${castles[castleKey]?.name?.trim() || `Castle ${castleKey}`} · ${rawPreset.items.length} decorations`,
+        itemCount: rawPreset.items.length,
+      });
+    }
+  }
+  return result.sort((left, right) => left.label.localeCompare(right.label));
+}
+
+function parseLunaPackages(rows: Record<string, unknown>[]): LunaPackage[] {
+  const byID = new Map<number, LunaPackage>();
+  for (const row of rows) {
+    const id = positiveInteger(row.packageID);
+    if (!LUNA_PACKAGE_ID_SET.has(id) || stringValue(row.comment2).toLowerCase() !== "luna's trade boat") continue;
+    const price = positiveInteger(row.packagePriceAquamarine);
+    if (id <= 0 || price <= 0) continue;
+    const type = id === 3124 || id === 3125 ? 'relicGem' : stringValue(row.packageType);
+    const unitId = positiveInteger(row.unitID);
+    const unitAmount = positiveInteger(row.unitAmount);
+    const buildingId = positiveInteger(row.buildingID);
+    const buildingAmount = positiveInteger(row.buildingAmount);
+    byID.set(id, {
+      id,
+      price,
+      name: lunaPackageName(id, row),
+      type,
+      stock: positiveInteger(row.stock),
+      unitId,
+      unitAmount,
+      buildingId,
+      buildingAmount,
+      rewardDetail: lunaRewardDetail(id, row, type, unitAmount, buildingAmount),
+    });
+  }
+  return AUTO_STORM_LUNA_PACKAGE_IDS.flatMap((id) => {
+    const item = byID.get(id);
+    return item ? [item] : [];
+  });
+}
+
+function lunaPackageName(id: number, row: Record<string, unknown>): string {
+  switch (id) {
+    case 3116: return 'Crab rock (3,500 PO)';
+    case 3117: return 'Whale lagoon (3,750 PO)';
+    case 3118: return 'Tide garden (3,500 PO)';
+    case 3119: return 'Silver pieces';
+    case 3120: return 'Gold pieces';
+    case 3122: return 'Skip 5 hours';
+    case 3123: return 'Skip 24 hours';
+    case 3124: return 'Castellan generation-2 gem';
+    case 3125: return 'Commander generation-2 gem';
+    case 2795:
+    case 2796:
+    case 2797:
+    case 2798: {
+      const amount = positiveInteger(row.amountC1);
+      return amount > 0 ? `${amount.toLocaleString()} coins` : 'Coins';
+    }
+    default: return humanizeLunaName(stringValue(row.comment1)) || `Luna package ${id}`;
+  }
+}
+
+type LunaNameLookup = (id: number) => { name: string } | undefined;
+
+function lunaPackageDisplayName(
+  item: LunaPackage,
+  getTroop: LunaNameLookup,
+  getTool: LunaNameLookup,
+): string {
+  if (item.type === 'deco') return item.name;
+  const metadata = item.type === 'tool' && item.unitId > 0
+    ? getTool(item.unitId)
+    : item.type === 'soldier' && item.unitId > 0
+      ? getTroop(item.unitId)
+      : undefined;
+  return metadata?.name?.trim() || item.name;
+}
+
+function lunaPackageTypeLabel(value: string): string {
+  switch (value.toLowerCase()) {
+    case 'currency': return 'Currency';
+    case 'deco': return 'Decoration';
+    case 'gem': return 'Gem';
+    case 'item': return 'Equipment';
+    case 'minuteskip': return 'Time skips';
+    case 'relicgem': return 'Relic gem';
+    case 'relicitem': return 'Relic equipment';
+    case 'soldier': return 'Troops';
+    case 'tool': return 'Attack tools';
+    case 'xp': return 'Experience';
+    default: return humanizeLunaName(value) || 'Package';
+  }
+}
+
+function lunaRewardDetail(
+  id: number,
+  row: Record<string, unknown>,
+  type: string,
+  unitAmount: number,
+  buildingAmount: number,
+): string {
+  if (id === 3124) return '1 random generation-2 Castellan gem per purchase';
+  if (id === 3125) return '1 random generation-2 Commander gem per purchase';
+  const rewards: string[] = [];
+  if (unitAmount > 0) rewards.push(`${unitAmount.toLocaleString()} ${type === 'tool' ? 'tools' : 'troops'} per purchase`);
+  if (buildingAmount > 0) rewards.push(`${buildingAmount.toLocaleString()} ${buildingAmount === 1 ? 'decoration' : 'decorations'} per purchase`);
+  const knownRewards: Array<[string, string]> = [
+    ['amountC1', 'coins'],
+    ['amountXP', 'XP'],
+    ['addSceatToken', 'Sceat tokens'],
+    ['addSilverToken', 'silver pieces'],
+    ['addGoldToken', 'gold pieces'],
+    ['add5HourSkip', '5-hour skips'],
+    ['add24HourSkip', '24-hour skips'],
+  ];
+  for (const [field, label] of knownRewards) {
+    const amount = positiveInteger(row[field]);
+    if (amount > 0) rewards.push(`${amount.toLocaleString()} ${label} per purchase`);
+  }
+  return rewards.join(' · ');
+}
+
+function humanizeLunaName(value: string): string {
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function positiveInteger(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 0;
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function formatDate(value: string): string {
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? new Date(timestamp).toLocaleString() : value;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}

@@ -8,8 +8,15 @@ import (
 )
 
 type Registry struct {
-	mu          sync.RWMutex
-	definitions map[string]Definition
+	mu               sync.RWMutex
+	definitions      map[string]Definition
+	requireResources bool
+}
+
+func (registry *Registry) EnforceResourceDeclarations() {
+	registry.mu.Lock()
+	registry.requireResources = true
+	registry.mu.Unlock()
 }
 
 func NewRegistry() *Registry {
@@ -21,8 +28,25 @@ func (registry *Registry) Register(definition Definition) error {
 	if definition.Name == "" || definition.Planner == nil {
 		return fmt.Errorf("intent name and planner are required")
 	}
+	if definition.AttackModule != nil {
+		module := *definition.AttackModule
+		module.ID = strings.TrimSpace(module.ID)
+		module.Label = strings.TrimSpace(module.Label)
+		module.Description = strings.TrimSpace(module.Description)
+		if module.ID == "" {
+			return fmt.Errorf("intent %q attack module id is required", definition.Name)
+		}
+		if module.Label == "" {
+			module.Label = module.ID
+		}
+		module.DefaultWeight = normalizeAdmissionWeight(module.DefaultWeight)
+		definition.AttackModule = &module
+	}
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
+	if registry.requireResources {
+		definition.RequireResources = true
+	}
 	if _, exists := registry.definitions[definition.Name]; exists {
 		return fmt.Errorf("intent %q is already registered", definition.Name)
 	}

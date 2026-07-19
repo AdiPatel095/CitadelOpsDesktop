@@ -25,6 +25,9 @@ func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interv
 	best := candidate{}
 	for _, sourceID := range sortedCastleIDs(snapshot.State.Castles) {
 		source := snapshot.State.Castles[sourceID]
+		if !craftingHasMarketplace(snapshot.GameData, source) {
+			continue
+		}
 		market, observed := snapshot.State.Market.Castles[source.ID]
 		if !observed || market.AvailableBarrows <= 0 {
 			continue
@@ -72,11 +75,12 @@ func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interv
 		"resourceId": best.resource, "amount": int64(best.amount),
 	})
 	return Decision{
-		Status:      "ready",
-		Detail:      fmt.Sprintf("Move %.0f overflow resource %d from %s to %s", best.amount, best.resource, castleName(best.source), castleName(best.target)),
-		NextCheckAt: snapshot.Now.Add(interval),
-		Metrics:     map[string]float64{"shipmentAmount": best.amount, "coinCost": coinCost},
-		Request:     &Intent.Request{Name: "resource.market.ship", Arguments: arguments},
+		Status:              "ready",
+		Detail:              fmt.Sprintf("Move %.0f overflow resource %d from %s to %s", best.amount, best.resource, castleName(best.source), castleName(best.target)),
+		NextCheckAt:         snapshot.Now.Add(interval),
+		Metrics:             map[string]float64{"shipmentAmount": best.amount, "coinCost": coinCost},
+		Request:             &Intent.Request{Name: "resource.market.ship", Arguments: arguments},
+		ReevaluateOnSuccess: true,
 	}, true
 }
 
@@ -140,8 +144,9 @@ func stormOverflowDecision(settings craftingSettings, snapshot Snapshot, interva
 	return Decision{
 		Status:      "ready",
 		Detail:      fmt.Sprintf("Move %.0f overflow resource %d from kingdom %d to Storm", best.amount, best.resource, best.source.KingdomID),
-		NextCheckAt: snapshot.Now.Add(interval), Metrics: map[string]float64{"shipmentAmount": best.amount},
-		Request: &Intent.Request{Name: "resource.kingdom.ship", Arguments: arguments},
+		NextCheckAt: snapshot.Now.Add(interval),
+		Metrics:     map[string]float64{"shipmentAmount": best.amount},
+		Request:     &Intent.Request{Name: "resource.kingdom.ship", Arguments: arguments},
 	}, true
 }
 
@@ -228,11 +233,12 @@ func rubyOverflowSkipDecision(settings craftingSettings, snapshot Snapshot) (Dec
 		"slot": best.slot,
 	})
 	return Decision{
-		Status:      "ready",
-		Detail:      fmt.Sprintf("Complete crafting recipe %d for %d rubies so recipe %d can consume overflow resource %d", best.activeID, best.price, best.nextID, best.resource),
-		NextCheckAt: snapshot.Now.Add(2 * time.Second),
-		Metrics:     map[string]float64{"rubyCost": float64(best.price), "remainingSec": float64(best.remaining)},
-		Request:     &Intent.Request{Name: "crafting.skip", Arguments: arguments},
+		Status:              "ready",
+		Detail:              fmt.Sprintf("Complete crafting recipe %d for %d rubies so recipe %d can consume overflow resource %d", best.activeID, best.price, best.nextID, best.resource),
+		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+		Metrics:             map[string]float64{"rubyCost": float64(best.price), "remainingSec": float64(best.remaining)},
+		Request:             &Intent.Request{Name: "crafting.skip", Arguments: arguments},
+		ReevaluateOnSuccess: true,
 	}, true
 }
 
@@ -353,8 +359,7 @@ func craftingRecipeAvailable(record GameData.Record, recipeID int64, building St
 	if researchGroupID <= 0 {
 		return true
 	}
-	recipeGroupID, _ := record.Int64("recipeGroupID")
-	return containsInt64(crafting.EnabledRecipeIDs, recipeID) || containsInt64(crafting.EnabledRecipeGroupIDs, recipeGroupID)
+	return containsInt64(crafting.EnabledRecipeIDs, recipeID)
 }
 
 func craftingRecipeIsRuby(record GameData.Record) bool {

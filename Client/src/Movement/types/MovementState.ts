@@ -21,7 +21,7 @@ export interface MovementViewModel {
 
 export function movementViewFromState(state: GameStateV2 | null): MovementViewModel | null {
   if (!state) return null;
-  const movements = Object.values(state.movements);
+  const movements = Object.values(state.movements).filter((movement) => isCurrentPlayerMovement(state, movement));
   const byCommander = new Map<number, MovementStateV2>();
   for (const movement of movements) {
     if (movement.commanderId != null && movement.commanderId >= 0) byCommander.set(movement.commanderId, movement);
@@ -59,6 +59,14 @@ export function movementViewFromState(state: GameStateV2 | null): MovementViewMo
     lastSnapshotUnix: observation ? Math.floor(Date.parse(observation.lastSeenAt) / 1000) : 0,
     freshnessWindowSec: 45,
   };
+}
+
+function isCurrentPlayerMovement(state: GameStateV2, movement: MovementStateV2): boolean {
+  if ((movement.ownerPlayerId ?? 0) > 0) {
+    return state.player.id > 0 && movement.ownerPlayerId === state.player.id;
+  }
+  if ((movement.sourceCastleId ?? 0) <= 0) return false;
+  return Object.prototype.hasOwnProperty.call(state.castles, movement.sourceCastleId);
 }
 
 export function labelTargetType(typeId: number | undefined): string {

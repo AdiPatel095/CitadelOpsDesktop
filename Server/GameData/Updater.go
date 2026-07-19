@@ -21,8 +21,11 @@ const (
 	DefaultItemsURL            = "https://empire-html5.goodgamestudios.com/default/items/items_v{version}.json"
 	DefaultLanguageMetadataURL = "https://langserv.public.ggs-ep.com/12/fr/@metadata"
 	DefaultLanguageURL         = "https://langserv.public.ggs-ep.com/12@{version}/{language}/*"
+	DefaultAssetIndexURL       = "https://empire-html5.goodgamestudios.com/default/index.html"
+	DefaultAssetRootURL        = "https://empire-html5.goodgamestudios.com/default/assets/itemassets/"
 	DefaultMaxBytes            = int64(256 << 20)
 	DefaultLanguageMaxBytes    = int64(64 << 20)
+	DefaultAssetDLLMaxBytes    = int64(16 << 20)
 )
 
 type UpdaterConfig struct {
@@ -31,20 +34,28 @@ type UpdaterConfig struct {
 	ItemsURL            string
 	LanguageMetadataURL string
 	LanguageURL         string
+	AssetIndexURL       string
+	AssetRootURL        string
 	Language            string
 	Client              *http.Client
 	MaxBytes            int64
 	LanguageMaxBytes    int64
+	AssetDLLMaxBytes    int64
 	RequestTimeout      time.Duration
 }
 
 type Manager struct {
 	config UpdaterConfig
 
-	mu       sync.RWMutex
-	store    *Store
-	language *LanguageStore
-	lastErr  error
+	refreshMu sync.Mutex
+	mu        sync.RWMutex
+	store     *Store
+	language  *LanguageStore
+	lastErr   error
+
+	assetMu                sync.Mutex
+	currencyAssets         *CurrencyAssetManifest
+	constructionItemAssets *ConstructionItemAssetManifest
 }
 
 func NewManager(config UpdaterConfig) *Manager {
@@ -60,6 +71,12 @@ func NewManager(config UpdaterConfig) *Manager {
 	if config.LanguageURL == "" {
 		config.LanguageURL = DefaultLanguageURL
 	}
+	if config.AssetIndexURL == "" {
+		config.AssetIndexURL = DefaultAssetIndexURL
+	}
+	if config.AssetRootURL == "" {
+		config.AssetRootURL = DefaultAssetRootURL
+	}
 	if config.Language == "" {
 		config.Language = "en"
 	}
@@ -68,6 +85,9 @@ func NewManager(config UpdaterConfig) *Manager {
 	}
 	if config.LanguageMaxBytes <= 0 {
 		config.LanguageMaxBytes = DefaultLanguageMaxBytes
+	}
+	if config.AssetDLLMaxBytes <= 0 {
+		config.AssetDLLMaxBytes = DefaultAssetDLLMaxBytes
 	}
 	if config.RequestTimeout <= 0 {
 		config.RequestTimeout = 60 * time.Second
@@ -97,6 +117,11 @@ func (manager *Manager) LoadCache() error {
 }
 
 func (manager *Manager) Refresh(ctx context.Context) error {
+	manager.refreshMu.Lock()
+	defer manager.refreshMu.Unlock()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if strings.TrimSpace(manager.config.CacheDir) == "" {
 		return fmt.Errorf("official-data cache directory is required")
 	}

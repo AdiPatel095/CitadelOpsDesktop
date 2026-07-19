@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 
 	EquipmentDomain "CitadelDesktop/Server/Equipment"
 	"CitadelDesktop/Server/GameData"
@@ -24,6 +25,53 @@ func reduceLeaders(
 	}
 	changed, err := applyLeaders(frame.Payload, gameState, gameData)
 	return []string{"commanders", "castellans", "equipment", "inventory"}, changed, err
+}
+
+func reduceGenerals(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	changed, err := applyGenerals(frame.Payload, frame.ReceivedAt, gameState)
+	return []string{"generals", "general-skills"}, changed, err
+}
+
+func applyGenerals(raw json.RawMessage, observedAt time.Time, gameState *State.GameState) (bool, error) {
+	var payload struct {
+		Generals []struct {
+			ID             wireInt64   `json:"GID"`
+			ActiveSkillIDs []wireInt64 `json:"SIDS"`
+		} `json:"G"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return false, fmt.Errorf("decode generals: %w", err)
+	}
+	if payload.Generals == nil {
+		return false, fmt.Errorf("general payload does not contain G rows")
+	}
+	next := make(map[int64]State.GeneralState, len(payload.Generals))
+	for _, row := range payload.Generals {
+		if row.ID <= 0 {
+			continue
+		}
+		activeSkillIDs := make([]int64, 0, len(row.ActiveSkillIDs))
+		for _, skillID := range row.ActiveSkillIDs {
+			if skillID > 0 {
+				activeSkillIDs = append(activeSkillIDs, int64(skillID))
+			}
+		}
+		id := int64(row.ID)
+		next[id] = State.GeneralState{ID: id, ActiveSkillIDs: activeSkillIDs, ObservedAt: observedAt}
+	}
+	if reflect.DeepEqual(gameState.Generals, next) {
+		return false, nil
+	}
+	gameState.Generals = next
+	return true, nil
 }
 
 func reduceEquipmentStorage(
@@ -260,7 +308,7 @@ func applyLeaders(raw json.RawMessage, gameState *State.GameState, gameData *Gam
 		id := State.CommanderID(leader.ID)
 		commander := State.CommanderState{
 			ID: id, Name: leader.Name, VisiblePosition: leader.VisiblePosition,
-			Available: commanderAvailable(gameState.Movements, id),
+			Available: commanderAvailable(gameState, id), GeneralID: leader.GeneralID,
 			Equipment: map[string]State.EquipmentInstanceID{}, Gems: map[string]State.GemInstanceID{},
 		}
 		applyLeaderEquipment(leader.Equipment, "commander", leader.ID, commander.Equipment, commander.Gems, equipment, gems, gameData)
@@ -304,6 +352,7 @@ type decodedLeader struct {
 	Name            string
 	VisiblePosition int
 	CastleID        int64
+	GeneralID       int64
 	Equipment       [][]json.RawMessage
 }
 
@@ -320,11 +369,15 @@ func decodeLeader(raw json.RawMessage) (decodedLeader, bool) {
 	_ = json.Unmarshal(fields["N"], &name)
 	visible, _ := rawInt64(fields["VIS"])
 	castleID, _ := rawInt64(fields["LICID"])
+	generalID, _ := rawInt64(fields["GID"])
+	if generalID < 0 {
+		generalID = 0
+	}
 	var equipment [][]json.RawMessage
 	_ = json.Unmarshal(fields["EQ"], &equipment)
 	return decodedLeader{
 		ID: id, Name: name, VisiblePosition: int(visible) + 1,
-		CastleID: castleID, Equipment: equipment,
+		CastleID: castleID, GeneralID: generalID, Equipment: equipment,
 	}, true
 }
 
@@ -507,9 +560,13 @@ func rowAt(row []json.RawMessage, index int) json.RawMessage {
 	return row[index]
 }
 
-func commanderAvailable(movements map[State.MovementID]State.MovementState, commanderID State.CommanderID) bool {
-	for _, movement := range movements {
-		if movement.CommanderID != nil && *movement.CommanderID == commanderID {
+func commanderAvailable(gameState *State.GameState, commanderID State.CommanderID) bool {
+	return commanderAvailableAt(gameState, commanderID, time.Now().UTC())
+}
+
+func commanderAvailableAt(gameState *State.GameState, commanderID State.CommanderID, now time.Time) bool {
+	for _, movement := range gameState.Movements {
+		if movementActiveAt(movement, now) && movementBelongsToCurrentPlayer(gameState, movement) && movement.CommanderID != nil && *movement.CommanderID == commanderID {
 			return false
 		}
 	}
@@ -518,7 +575,7 @@ func commanderAvailable(movements map[State.MovementID]State.MovementState, comm
 
 func syncCommanderAvailability(gameState *State.GameState) {
 	for id, commander := range gameState.Commanders {
-		commander.Available = commanderAvailable(gameState.Movements, id)
+		commander.Available = commanderAvailable(gameState, id)
 		gameState.Commanders[id] = commander
 	}
 }

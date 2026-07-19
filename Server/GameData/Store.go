@@ -21,6 +21,15 @@ type Store struct {
 	constructionShopOnce     sync.Once
 	constructionShopProducts map[int64][]ConstructionShopProduct
 	constructionShopErr      error
+	buildingCatalogOnce      sync.Once
+	buildingCatalog          *BuildingCatalog
+	buildingCatalogErr       error
+	expansionCatalogOnce     sync.Once
+	expansionCatalog         *ExpansionCatalog
+	expansionCatalogErr      error
+	defenseToolShopOnce      sync.Once
+	defenseToolShopProducts  map[int64][]DefenseToolShopPackage
+	defenseToolShopErr       error
 }
 
 func DecodeStore(raw []byte, metadata SourceMetadata) (*Store, error) {

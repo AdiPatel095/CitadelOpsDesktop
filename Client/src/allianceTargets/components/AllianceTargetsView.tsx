@@ -12,7 +12,7 @@ import {
   Search,
   Users,
 } from 'lucide-react';
-import { Badge, Button, Card, CardHeader, CardTitle, Input, Select } from '../../components/ui';
+import { Badge, Button, Input, PageHeader, SectionCard, Select } from '../../components/ui';
 import { SpyReportDetail, type SpyReport } from '../../spyReports/components/SpyReportsView';
 import { useCitadelAPI } from '../../api/ApiContext';
 import type {
@@ -199,17 +199,12 @@ const AllianceTargetsView = () => {
   return (
     <div className="space-y-4">
       {viewError && <p className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">{viewError}</p>}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-primary/20 bg-primary/10 p-2.5 text-primary">
-            <Crosshair className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-text-main">Alliance Targets</h1>
-            <p className="text-sm text-text-muted">Nearby castles from a top-50 alliance.</p>
-          </div>
-        </div>
-        <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto">
+      <PageHeader
+        title="Alliance Targets"
+        description="Nearby castles from a top-50 alliance."
+        icon={<Crosshair className="h-5 w-5" />}
+        actions={(
+          <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto">
           <div className="min-w-[18rem] flex-1 xl:w-[28rem] xl:flex-none">
             <Select
               value={selectedAlliance}
@@ -238,30 +233,28 @@ const AllianceTargetsView = () => {
           >
             Refresh
           </Button>
-        </div>
-      </div>
-
-      <Card variant="solid" className="liquid-prominent-header-card">
-        <CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
-          <div>
-            <CardTitle>{data?.selectedAlliance?.name || 'Player targets'}</CardTitle>
-            <p className="mt-1 text-xs text-text-muted">
-              {loading ? 'Loading targets…' : `${sortedTargets.length} matching castles`}
-            </p>
           </div>
-          <div className="w-full max-w-sm">
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Player, castle, or coordinates"
-              leftIcon={<Search className="h-4 w-4" />}
-            />
-          </div>
-        </CardHeader>
+        )}
+      />
 
-        <div className="liquid-prominent-header-content liquid-prominent-header-content-flush overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] table-fixed text-left text-sm">
+      <SectionCard
+        title={data?.selectedAlliance?.name || 'Player targets'}
+        description={loading ? 'Loading targets…' : `${sortedTargets.length} matching castles`}
+        descriptionClassName=""
+        headerClassName="flex-wrap gap-3"
+        actions={<div className="w-full max-w-sm">
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Player, castle, or coordinates"
+            leftIcon={<Search className="h-4 w-4" />}
+          />
+        </div>}
+        contentClassName="overflow-hidden"
+        flush
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[980px] table-fixed text-left text-sm">
             <thead className="border-b border-border-base bg-bg-card/80 text-xs uppercase text-text-muted">
               <tr>
                 <SortableHeader label="Player" column="player" width="w-[14%]" activeColumn={sortKey} direction={sortDirection} onSort={changeSort} />
@@ -273,63 +266,62 @@ const AllianceTargetsView = () => {
                 <th className="w-[13%] px-4 py-3 text-right font-semibold">Action</th>
               </tr>
             </thead>
-              <tbody className="divide-y divide-border-base/60">
-                {pageTargets.map((target) => {
-                  const key = castleKey(target.targetCastle);
-                  return (
-                    <TargetRow
-                      key={`${target.playerId}-${key}`}
-                      target={target}
-                      canSpy={canSpy}
-                      sending={sendingTarget === key}
-                      sendingBlocked={Boolean(sendingTarget)}
-                      loadingIntel={loadingIntelTarget === key}
-                      intelBlocked={Boolean(loadingIntelTarget)}
-                      onSpy={sendSpy}
-                      onIntel={openCastleIntel}
-                    />
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {!loading && sortedTargets.length === 0 && (
-            <div className="px-5 py-12 text-center text-sm text-text-muted">No castles match the current filters.</div>
-          )}
-
-          {sortedTargets.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-base bg-bg-card/35 px-4 py-3">
-              <span className="text-xs text-text-muted">
-                Showing {firstResult}–{lastResult} of {sortedTargets.length}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={safePage <= 1}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="min-w-20 text-center text-xs font-medium text-text-main">
-                  Page {safePage} of {pageCount}
-                </span>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={safePage >= pageCount}
-                  onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
-                  aria-label="Next page"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+            <tbody className="divide-y divide-border-base/60">
+              {pageTargets.map((target) => {
+                const key = castleKey(target.targetCastle);
+                return (
+                  <TargetRow
+                    key={`${target.playerId}-${key}`}
+                    target={target}
+                    canSpy={canSpy}
+                    sending={sendingTarget === key}
+                    sendingBlocked={Boolean(sendingTarget)}
+                    loadingIntel={loadingIntelTarget === key}
+                    intelBlocked={Boolean(loadingIntelTarget)}
+                    onSpy={sendSpy}
+                    onIntel={openCastleIntel}
+                  />
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      </Card>
+
+        {!loading && sortedTargets.length === 0 && (
+          <div className="px-5 py-12 text-center text-sm text-text-muted">No castles match the current filters.</div>
+        )}
+
+        {sortedTargets.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-base bg-bg-card/35 px-4 py-3">
+            <span className="text-xs text-text-muted">
+              Showing {firstResult}–{lastResult} of {sortedTargets.length}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={safePage <= 1}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="min-w-20 text-center text-xs font-medium text-text-main">
+                Page {safePage} of {pageCount}
+              </span>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={safePage >= pageCount}
+                onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
+                aria-label="Next page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </SectionCard>
     </div>
   );
 };

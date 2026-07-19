@@ -3,8 +3,27 @@ import { Icons } from '../components/Icons';
 import { CitadelAPI } from '../api/CitadelClient';
 import { useCitadelAPI } from '../api/ApiContext';
 import type { BrowserInventory } from '../api/Contracts';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, Select } from '../components/ui';
-import { configurationSection, numericSetting } from '../settings/Configuration';
+import { Button, Input, PageHeader, SectionCard, Select } from '../components/ui';
+import { asRecord, configurationSection, numericSetting } from '../settings/Configuration';
+
+interface AttackPriorityFeature {
+	id: string;
+	label: string;
+	detail: string;
+	defaultWeight: number;
+}
+
+const defaultAttackPriorityFeatures: AttackPriorityFeature[] = [
+	{ id: 'autoTowers', label: 'Auto Towers', detail: 'Robber-baron and kingdom tower attacks', defaultWeight: 50 },
+	{ id: 'riftMaiden', label: 'Rift Maiden Waves', detail: 'Shield-maiden probe and wave launches', defaultWeight: 50 },
+	{ id: 'riftReplay', label: 'Rift Replays', detail: 'Captured Rift attack templates', defaultWeight: 50 },
+];
+
+function normalizedAttackPriority(value: unknown, fallback = 50): number {
+	const numeric = Number(value);
+	if (!Number.isFinite(numeric)) return fallback;
+	return Math.min(100, Math.max(1, Math.round(numeric)));
+}
 
 const SettingsView: React.FC = () => {
 	const { state, configuration, submitIntent, updateConfiguration } = useCitadelAPI();
@@ -12,7 +31,8 @@ const SettingsView: React.FC = () => {
   const [maxTimer, setMaxTimer] = useState<string>('6.0');
   const [upgradeEreDelayMs, setUpgradeEreDelayMs] = useState<string>('50');
   const [upgradeCoinThreshold, setUpgradeCoinThreshold] = useState<string>('0');
-  const [manualFocusIdleSec, setManualFocusIdleSec] = useState<string>('30');
+	const [attackPriorities, setAttackPriorities] = useState<Record<string, string>>({});
+	const [attackPriorityFeatures, setAttackPriorityFeatures] = useState<AttackPriorityFeature[]>(defaultAttackPriorityFeatures);
 	const [browserInventory, setBrowserInventory] = useState<BrowserInventory | null>(null);
 	const [browserSelectionPending, setBrowserSelectionPending] = useState(false);
 	const [browserSelectionError, setBrowserSelectionError] = useState('');
@@ -42,15 +62,44 @@ const SettingsView: React.FC = () => {
 		setMaxTimer(numericSetting(schedulerConfiguration.maxAttackDelay, 6).toFixed(1));
 		setUpgradeEreDelayMs(String(numericSetting(schedulerConfiguration.upgradeEreDelayMs, 50)));
 		setUpgradeCoinThreshold(String(numericSetting(schedulerConfiguration.upgradeCoinThreshold, 0)));
-		setManualFocusIdleSec(String(numericSetting(schedulerConfiguration.manualFocusIdleSec, 30)));
-	}, [schedulerConfiguration]);
+		const storedPriorities = asRecord(schedulerConfiguration.attackPriorities);
+		setAttackPriorities(Object.fromEntries(attackPriorityFeatures.map((feature) => [
+			feature.id,
+			String(normalizedAttackPriority(storedPriorities[feature.id], feature.defaultWeight)),
+		])));
+	}, [attackPriorityFeatures, schedulerConfiguration]);
+
+	useEffect(() => {
+		let active = true;
+		void CitadelAPI.getIntentDefinitions()
+			.then((definitions) => {
+				if (!active) return;
+				const modules = new Map<string, AttackPriorityFeature>();
+				definitions.forEach((definition) => {
+					const module = definition.attackModule;
+					if (!module?.id || modules.has(module.id)) return;
+					modules.set(module.id, {
+						id: module.id,
+						label: module.label || module.id,
+						detail: module.description || definition.description,
+						defaultWeight: normalizedAttackPriority(module.defaultWeight),
+					});
+				});
+				if (modules.size > 0) {
+					setAttackPriorityFeatures([...modules.values()].sort((left, right) => left.label.localeCompare(right.label)));
+				}
+			})
+			.catch(() => undefined);
+		return () => {
+			active = false;
+		};
+	}, []);
 
   const saveSettings = (
     min: string,
     max: string,
     ereDelayMs?: string,
     coinThreshold?: string,
-    focusIdleSec?: string,
   ) => {
 		setSettingsSaveError('');
 		void updateConfiguration('scheduler', {
@@ -59,7 +108,6 @@ const SettingsView: React.FC = () => {
       maxAttackDelay: parseFloat(max),
       upgradeEreDelayMs: parseInt(ereDelayMs ?? upgradeEreDelayMs, 10),
       upgradeCoinThreshold: parseFloat(coinThreshold ?? upgradeCoinThreshold),
-      manualFocusIdleSec: parseInt(focusIdleSec ?? manualFocusIdleSec, 10),
 		}).catch((error) => {
 			setSettingsSaveError(error instanceof Error ? error.message : 'Could not save settings');
 		});
@@ -175,46 +223,31 @@ const SettingsView: React.FC = () => {
     saveSettings(minTimer, maxTimer, upgradeEreDelayMs, newVal);
   };
 
-  const handleManualFocusIdleBlur = () => {
-    let num = parseInt(manualFocusIdleSec, 10);
-    let newVal = '30';
-    if (isNaN(num) || num <= 0) {
-      newVal = '30';
-    } else if (num < 5) {
-      newVal = '5';
-    } else if (num > 300) {
-      newVal = '300';
-    } else {
-      newVal = String(num);
-    }
-    setManualFocusIdleSec(newVal);
-    saveSettings(minTimer, maxTimer, upgradeEreDelayMs, upgradeCoinThreshold, newVal);
-  };
+	const saveAttackPriority = (featureID: string) => {
+		const fallback = attackPriorityFeatures.find((feature) => feature.id === featureID)?.defaultWeight ?? 50;
+		const priority = normalizedAttackPriority(attackPriorities[featureID], fallback);
+		setAttackPriorities((current) => ({ ...current, [featureID]: String(priority) }));
+		void updateConfiguration('scheduler', {
+			...schedulerConfiguration,
+			attackPriorities: {
+				...asRecord(schedulerConfiguration.attackPriorities),
+				[featureID]: priority,
+			},
+		}).catch((error) => {
+			setSettingsSaveError(error instanceof Error ? error.message : 'Could not save attack priorities');
+		});
+	};
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      {/* Header */}
-      <div className="responsive-page-heading mb-6">
-        <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-text-main to-text-main/70 bg-clip-text text-transparent">
-            System Settings
-          </h1>
-          <p className="text-text-muted mt-1 text-sm">Configure system behaviors and attack scheduling</p>
-        </div>
-      </div>
+      <PageHeader
+        className="mb-6"
+        title="System Settings"
+        description="Configure system behaviors and attack scheduling."
+      />
 
       <div className="grid grid-cols-1 gap-6">
-		<Card className="liquid-prominent-header-card">
-			<CardHeader className="liquid-card-header-prominent">
-				<div className="flex items-center gap-3">
-					<div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
-						<Icons.Monitor className="w-4 h-4 text-sky-400" />
-					</div>
-					<CardTitle className="text-lg">Game Browser</CardTitle>
-				</div>
-			</CardHeader>
-
-			<CardContent className="liquid-prominent-header-content p-6 space-y-4">
+		<SectionCard variant="glass" title="Game Browser" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-4">
 				<div>
 					<h3 className="text-sm font-semibold text-text-main mb-1">Chromium Browser</h3>
 					<p className="text-xs text-text-muted mb-4">
@@ -276,20 +309,9 @@ const SettingsView: React.FC = () => {
 						</p>
 					</div>
 				</div>
-			</CardContent>
-		</Card>
+		</SectionCard>
 
-        <Card className="liquid-prominent-header-card">
-          <CardHeader className="liquid-card-header-prominent">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                <Icons.Activity className="w-4 h-4 text-indigo-400" />
-              </div>
-              <CardTitle className="text-lg">Attack Scheduler</CardTitle>
-            </div>
-          </CardHeader>
-
-          <CardContent className="liquid-prominent-header-content p-6 space-y-8">
+        <SectionCard variant="glass" title="Attack Scheduler" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName="p-6 space-y-8">
 			{settingsSaveError && <p className="text-xs text-error">{settingsSaveError}</p>}
             <div className="space-y-4">
               <div>
@@ -341,46 +363,37 @@ const SettingsView: React.FC = () => {
 
             <div className="h-px bg-border-base w-full"></div>
 
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-text-main mb-1">Manual Focus Hold</h3>
-                <p className="text-xs text-text-muted mb-4">
-                  Pause automation focus leases after game-tab input (5-300 seconds).
-                </p>
-              </div>
+			<div className="space-y-4">
+				<div>
+					<h3 className="text-sm font-semibold text-text-main mb-1">Automated Attack Priority</h3>
+					<p className="text-xs text-text-muted mb-4">
+						Choose which automated attack modules receive open launch slots first. Waiting time gradually raises older work; manual and scheduled attacks retain protected priority.
+					</p>
+				</div>
 
-              <div className="relative flex-1 w-full sm:max-w-[200px]">
-                <label htmlFor="manual-focus-idle" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-                  Idle Timeout
-                </label>
-                <Input
-				  id="manual-focus-idle"
-                  type="number"
-                  step="1"
-                  min="5"
-                  max="300"
-                  value={manualFocusIdleSec}
-                  onChange={(e) => setManualFocusIdleSec(e.target.value)}
-                  onBlur={handleManualFocusIdleBlur}
-                  className="font-mono"
-                  rightIcon={<span className="text-xs">s</span>}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+				<div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+					{attackPriorityFeatures.map((feature) => (
+						<label key={feature.id} className="rounded-xl border border-border-base bg-bg-app/45 p-3">
+							<span className="block text-xs font-bold text-text-main">{feature.label}</span>
+							<span className="mt-0.5 block min-h-8 text-[11px] leading-4 text-text-muted">{feature.detail}</span>
+							<Input
+								type="number"
+								min={1}
+								max={100}
+								value={attackPriorities[feature.id] ?? '50'}
+								onChange={(event) => setAttackPriorities((current) => ({ ...current, [feature.id]: event.target.value }))}
+								onBlur={() => saveAttackPriority(feature.id)}
+								className="mt-3 text-center font-mono"
+								rightIcon={<span className="text-[10px] text-text-muted">1–100</span>}
+							/>
+						</label>
+					))}
+				</div>
+			</div>
 
-        <Card className="liquid-prominent-header-card">
-          <CardHeader className="liquid-card-header-prominent">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <Icons.Shield className="w-4 h-4 text-emerald-400" />
-              </div>
-              <CardTitle className="text-lg">Equipment Upgrades</CardTitle>
-            </div>
-          </CardHeader>
+        </SectionCard>
 
-          <CardContent className="liquid-prominent-header-content p-6 space-y-4">
+        <SectionCard variant="glass" title="Equipment Upgrades" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName="p-6 space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-text-main mb-1">Upgrade Step Delay</h3>
               <p className="text-xs text-text-muted mb-4">
@@ -431,8 +444,7 @@ const SettingsView: React.FC = () => {
                 Reserve: <span className="font-mono font-semibold text-text-main">{parsedCoinThreshold.toLocaleString()}</span> coins
               </p>
             </div>
-          </CardContent>
-        </Card>
+        </SectionCard>
       </div>
     </div>
   );

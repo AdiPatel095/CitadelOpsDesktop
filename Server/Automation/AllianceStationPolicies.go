@@ -12,6 +12,11 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+const (
+	allianceRosterRefreshInterval = 5 * time.Minute
+	allianceRefreshAwaitInterval  = 10 * time.Second
+)
+
 type reserveSetting struct {
 	ID     State.UnitID `json:"id"`
 	Amount int64        `json:"amount"`
@@ -42,6 +47,12 @@ func (*AutoBirdPolicy) ID() string { return "autoBird" }
 
 func (*AutoBirdPolicy) EnabledKey() string { return "auto_bird" }
 
+func (*AutoBirdPolicy) WakeDomains() []string {
+	return []string{"alliance", "movements", "units"}
+}
+
+func (*AutoBirdPolicy) WakeSections() []string { return []string{"automation.autoBird"} }
+
 func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	settings := autoBirdConfiguration{}
 	settings.IgnoreSettings.Settings = map[string][]reserveSetting{}
@@ -51,6 +62,9 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	decodeSection(snapshot.Configuration, "automation.autoBird", &settings)
 	minimumDelay := clampInt(settings.IgnoreSettings.MinDelay, 1, 12)
 	maximumDelay := clampInt(settings.IgnoreSettings.MaxDelay, minimumDelay, 12)
+	if decision, refresh := allianceRosterRefreshDecision(snapshot, "Refreshing alliance roster before checking bird targets"); refresh {
+		return decision, nil
+	}
 	holdings := protectedHoldings(snapshot.State.Alliance, settings.IgnoreSettings.MinRPTDays)
 	if len(holdings) == 0 {
 		return allianceRefreshDecision(snapshot, "Waiting for protected alliance station targets"), nil
@@ -77,9 +91,11 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			"units": units,
 		})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Station %d troops from %s", sumStationUnits(units), castleName(castle)),
-			NextCheckAt: snapshot.Now.Add(2 * time.Second),
-			Request:     &Intent.Request{Name: "troops.station", Arguments: arguments},
+			Status:              "ready",
+			Detail:              fmt.Sprintf("Station %d troops from %s", sumStationUnits(units), castleName(castle)),
+			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+			Request:             &Intent.Request{Name: "troops.station", Arguments: arguments},
+			ReevaluateOnSuccess: true,
 		}, nil
 	}
 	delayHours := deterministicDelayHours(minimumDelay, maximumDelay, snapshot.State.Revision, 0)
@@ -97,17 +113,28 @@ func (*AutoStationPolicy) ID() string { return "autoStation" }
 
 func (*AutoStationPolicy) EnabledKey() string { return "auto_station" }
 
+func (*AutoStationPolicy) WakeDomains() []string {
+	return []string{"alliance", "movement-snapshot", "movements", "stationing", "units"}
+}
+
+func (*AutoStationPolicy) WakeSections() []string { return []string{"automation.autoStation"} }
+
 func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	settings := autoStationConfiguration{
 		LeadTimeSec: 60, RecallWhenClear: true, MinRPTDays: 3, Settings: map[string][]reserveSetting{},
 	}
 	decodeSection(snapshot.Configuration, "automation.autoStation", &settings)
 	settings.LeadTimeSec = clampInt(settings.LeadTimeSec, 60, 3600)
-	holdings := protectedHoldings(snapshot.State.Alliance, settings.MinRPTDays)
+	protectedTargets := protectedHoldings(snapshot.State.Alliance, settings.MinRPTDays)
 	threats, threatCount, earliestImpact, latestImpact := incomingThreats(snapshot.State, snapshot.Now)
 	metrics := stationMetrics(threatCount, earliestImpact)
 	if threatCount > 0 {
-		if len(holdings) == 0 {
+		if decision, refresh := allianceRosterRefreshDecision(snapshot, "Incoming attack detected; refreshing alliance roster before evacuation"); refresh {
+			decision.Status = "threat"
+			decision.Metrics = metrics
+			return decision, nil
+		}
+		if len(protectedTargets) == 0 {
 			decision := allianceRefreshDecision(snapshot, "Incoming attack detected; refreshing protected alliance targets")
 			decision.Status = "threat"
 			decision.Metrics = metrics
@@ -129,7 +156,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			if activeTrackedStation(snapshot.State, castle.ID) {
 				continue
 			}
-			target, found := nearestHolding(holdings, castle)
+			target, found := nearestHolding(protectedTargets, castle)
 			if !found {
 				continue
 			}
@@ -143,9 +170,12 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 				"purpose": "autoStation", "trackingId": trackingID, "safeAfterUnix": latestImpact.Unix(), "units": units,
 			})
 			return Decision{
-				Status: "evacuating", Detail: fmt.Sprintf("Evacuating %d troops from %s", sumStationUnits(units), castleName(castle)),
-				NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
-				Request: &Intent.Request{Name: "troops.station", Arguments: arguments},
+				Status:              "evacuating",
+				Detail:              fmt.Sprintf("Evacuating %d troops from %s", sumStationUnits(units), castleName(castle)),
+				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+				Metrics:             metrics,
+				Request:             &Intent.Request{Name: "troops.station", Arguments: arguments},
+				ReevaluateOnSuccess: true,
 			}, nil
 		}
 		return Decision{
@@ -171,16 +201,22 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		}
 		if operation.SafeAfter != nil && !snapshot.State.MovementSnapshot.ObservedAt.After(*operation.SafeAfter) {
 			return Decision{
-				Status: "waiting", Detail: "Confirming a fresh movement snapshot before recall",
-				NextCheckAt: snapshot.Now.Add(3 * time.Second), Metrics: metrics,
-				Request: &Intent.Request{Name: "game.refresh_movements", Arguments: json.RawMessage(`{}`)},
+				Status:              "waiting",
+				Detail:              "Confirming a fresh movement snapshot before recall",
+				NextCheckAt:         snapshot.Now.Add(3 * time.Second),
+				Metrics:             metrics,
+				Request:             &Intent.Request{Name: "game.refresh_movements", Arguments: json.RawMessage(`{}`)},
+				ReevaluateOnSuccess: true,
 			}, nil
 		}
 		arguments, _ := json.Marshal(map[string]any{"movementId": movement.ID})
 		return Decision{
-			Status: "recalling", Detail: fmt.Sprintf("Recalling protected troops from castle %d", operation.SourceCastleID),
-			NextCheckAt: snapshot.Now.Add(5 * time.Second), Metrics: metrics,
-			Request: &Intent.Request{Name: "movement.recall", Arguments: arguments},
+			Status:              "recalling",
+			Detail:              fmt.Sprintf("Recalling protected troops from castle %d", operation.SourceCastleID),
+			NextCheckAt:         snapshot.Now.Add(5 * time.Second),
+			Metrics:             metrics,
+			Request:             &Intent.Request{Name: "movement.recall", Arguments: arguments},
+			ReevaluateOnSuccess: true,
 		}, nil
 	}
 	return Decision{
@@ -248,16 +284,10 @@ func incomingThreats(gameState State.GameState, now time.Time) (map[State.Castle
 	var earliest time.Time
 	var latest time.Time
 	for _, movement := range gameState.Movements {
-		if movement.Direction != 0 || movement.TypeID != 0 || movement.OwnerPlayerID == gameState.Player.ID {
-			continue
-		}
-		if _, owned := gameState.Castles[movement.TargetCastleID]; !owned {
+		if !State.IsIncomingPlayerAttack(gameState, movement, now) {
 			continue
 		}
 		impact := movement.ArrivesAt
-		if impact == nil || !impact.After(now) {
-			continue
-		}
 		window := result[movement.TargetCastleID]
 		window.CastleID = movement.TargetCastleID
 		window.Count++
@@ -356,10 +386,30 @@ func allianceRefreshDecision(snapshot Snapshot, detail string) Decision {
 	if snapshot.State.Alliance.ID <= 0 {
 		return Decision{Status: "waiting", Detail: detail, NextCheckAt: snapshot.Now.Add(30 * time.Second)}
 	}
-	return Decision{
-		Status: "waiting", Detail: detail, NextCheckAt: snapshot.Now.Add(30 * time.Second),
-		Request: &Intent.Request{Name: "alliance.refresh", Arguments: json.RawMessage(`{}`)},
+	if observation, found := snapshot.State.Observations["ain"]; found && observation.LastDirection == "outbound" {
+		nextCheck := observation.LastSeenAt.Add(allianceRefreshAwaitInterval)
+		if nextCheck.After(snapshot.Now) {
+			return Decision{Status: "waiting", Detail: "Waiting for the requested alliance roster", NextCheckAt: nextCheck}
+		}
 	}
+	return Decision{
+		Status:              "waiting",
+		Detail:              detail,
+		NextCheckAt:         snapshot.Now.Add(30 * time.Second),
+		Request:             &Intent.Request{Name: "alliance.refresh", Arguments: json.RawMessage(`{}`)},
+		ReevaluateOnSuccess: true,
+	}
+}
+
+func allianceRosterRefreshDecision(snapshot Snapshot, detail string) (Decision, bool) {
+	if snapshot.State.Alliance.ID <= 0 {
+		return Decision{}, false
+	}
+	if !snapshot.State.Alliance.ObservedAt.IsZero() &&
+		snapshot.Now.Sub(snapshot.State.Alliance.ObservedAt) < allianceRosterRefreshInterval {
+		return Decision{}, false
+	}
+	return allianceRefreshDecision(snapshot, detail), true
 }
 
 func stationMetrics(threatCount int, earliestImpact time.Time) map[string]float64 {

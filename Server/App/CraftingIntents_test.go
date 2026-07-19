@@ -69,6 +69,12 @@ func TestPlanConstructionPurchaseUsesOnlyLiveOfficialOffer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "jaa" || plan.Steps[1].Opcode != "aec" || plan.Steps[2].Opcode != "gbc" {
+		t.Fatalf("construction purchase context = %#v", plan.Steps)
+	}
+	if plan.Steps[1].ResumePolicy != Intent.ResumeRebuild || plan.Steps[2].ResumePolicy != Intent.ResumeRebuild {
+		t.Fatalf("construction shop context is not resumable: %#v", plan.Steps[1:3])
+	}
 	purchase := plan.Steps[len(plan.Steps)-1]
 	if purchase.Opcode != "sbp" || string(purchase.Command.Payload) != `{"PID":500,"BT":0,"TID":116,"AMT":1,"KID":0,"AID":10,"PC2":-1,"BA":0,"PWR":0,"_PO":-1}` {
 		t.Fatalf("unexpected construction purchase: %+v payload=%s", plan, purchase.Command.Payload)

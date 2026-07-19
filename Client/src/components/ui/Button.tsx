@@ -23,7 +23,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-full font-semibold transition-all duration-200 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap';
+    const baseStyles = 'inline-flex items-center justify-center rounded-global font-semibold transition-all duration-200 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap';
     
     const variants = {
       primary: 'bg-primary text-text-inverted border border-white/20 shadow-glow hover:bg-primary-hover hover:shadow-glow-active',

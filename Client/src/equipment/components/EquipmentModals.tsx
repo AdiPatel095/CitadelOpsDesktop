@@ -65,7 +65,7 @@ export function EquipmentSellModal({
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
-			title={<PillSelector value={relicTab} onChange={(value) => setRelicTab(value as RelicTab)} options={['Non Relic', 'Relic 1.0', 'Relic 2.0']} fullWidth />}
+			title={<PillSelector ariaLabel="Equipment category" value={relicTab} onChange={(value) => setRelicTab(value as RelicTab)} options={['Non Relic', 'Relic 1.0', 'Relic 2.0']} fullWidth />}
 			footer={(
 				<>
 					<Button variant="ghost" onClick={onClose}>Cancel</Button>
