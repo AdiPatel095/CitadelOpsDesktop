@@ -177,6 +177,7 @@ func historyIdentity(collection string, payload json.RawMessage) string {
 		ReportID      string `json:"reportID"`
 		MID           int64  `json:"mid"`
 		LID           int64  `json:"lid"`
+		UID           int64  `json:"uid"`
 		PlayerID      int64  `json:"playerId"`
 		TimestampUnix int64  `json:"timestampUnix"`
 	}
@@ -184,6 +185,9 @@ func historyIdentity(collection string, payload json.RawMessage) string {
 		switch collection {
 		case CollectionPlayerSamples:
 			if fields.TimestampUnix > 0 {
+				if fields.UID > 0 {
+					return "player-uid:" + strconv.FormatInt(fields.UID, 10) + ":" + strconv.FormatInt(fields.TimestampUnix, 10)
+				}
 				return "player:" + strconv.FormatInt(fields.PlayerID, 10) + ":" + strconv.FormatInt(fields.TimestampUnix, 10)
 			}
 		case CollectionSpyReports:

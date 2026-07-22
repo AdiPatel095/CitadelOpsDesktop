@@ -3,6 +3,7 @@ package App
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"CitadelDesktop/Server/State"
 )
@@ -29,6 +30,31 @@ func TestResolveCRACommandersPreservesCandidateOrderAndSkipsBusy(t *testing.T) {
 	}
 	if !reflect.DeepEqual(resolution.Candidates, []State.CommanderID{7, 5, 9}) {
 		t.Fatalf("candidates = %#v", resolution.Candidates)
+	}
+}
+
+func TestResolveCRACommandersRejectsActiveMovementWhenRosterSaysAvailable(t *testing.T) {
+	now := time.Now().UTC()
+	arrivesAt := now.Add(10 * time.Minute)
+	commanderID := State.CommanderID(7)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = State.CastleState{ID: 100}
+	gameState.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: true}
+	gameState.Commanders[9] = State.CommanderState{ID: 9, Available: true}
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, Direction: 0, OwnerPlayerID: 1, SourceCastleID: 100,
+		CommanderID: &commanderID, ArrivesAt: &arrivesAt,
+	}
+
+	resolution, err := resolveCRACommanders(gameState, &craCommanderSelectionRequest{
+		Candidates: []State.CommanderID{7, 9}, Count: 1, Strategy: "lowest_id",
+	}, craCommanderSelectionOptions{DefaultCount: 1, RequireAvailable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(resolution.Selected, []State.CommanderID{9}) {
+		t.Fatalf("selected = %#v, want inactive commander 9", resolution.Selected)
 	}
 }
 

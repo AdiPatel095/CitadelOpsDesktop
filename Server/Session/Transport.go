@@ -8,7 +8,10 @@ import (
 	"CitadelDesktop/Server/Protocol"
 )
 
-var ErrTransportUnavailable = errors.New("game transport is unavailable")
+var (
+	ErrTransportUnavailable           = errors.New("game transport is unavailable")
+	ErrFrontendInteractionUnavailable = errors.New("game frontend interaction is unavailable")
+)
 
 type Status struct {
 	State                string     `json:"state"`
@@ -45,6 +48,10 @@ type Transport interface {
 
 type BrowserSelector interface {
 	SelectBrowser(preference string) error
+}
+
+type FrontendInteractionTransport interface {
+	CloseGameUI(ctx context.Context) error
 }
 
 type ResponseCorrelationTransport interface {

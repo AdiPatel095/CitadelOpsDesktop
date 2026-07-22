@@ -5,6 +5,7 @@ export type BattleResult = 'Victory' | 'Defeat' | 'Unknown';
 export interface BattleCombatant {
   playerID?: string | number;
   playerId?: string | number;
+  dummy?: boolean;
   name?: string;
   playerName?: string;
   alliance?: string;

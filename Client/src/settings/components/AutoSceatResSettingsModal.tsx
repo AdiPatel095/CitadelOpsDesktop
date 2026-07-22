@@ -303,7 +303,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
               </div>
 
               <div className="grid content-start gap-2.5">
-                {renderToggle('Resource logistics', 'Moves resources within and between kingdoms when a queue needs them.', settings.autoKingdomTransport, (checked) => setSettings((current) => ({ ...current, autoKingdomTransport: checked })))}
+                {renderToggle('Resource logistics', 'Drains sovereign-resource surplus into configured future queue refills, even while queues are full.', settings.autoKingdomTransport, (checked) => setSettings((current) => ({ ...current, autoKingdomTransport: checked })))}
                 {renderToggle('Use transport time skips', 'Applies only selected skips to kingdom resource transports (TT 2).', settings.useKingdomTimeSkips, (checked) => setSettings((current) => ({ ...current, useKingdomTimeSkips: checked })), !settings.autoKingdomTransport)}
                 {renderToggle('Use Storm as overflow buffer', 'Storm can hold kingdom resources even though it cannot craft them.', settings.useStormBuffer, (checked) => setSettings((current) => ({ ...current, useStormBuffer: checked })))}
                 {renderToggle('Allow ruby recipes', 'Explicit permission for recipes whose official cost includes C2/rubies.', settings.allowRubyRecipes, (checked) => setSettings((current) => ({ ...current, allowRubyRecipes: checked })))}
@@ -503,8 +503,8 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
             <Card variant="solid" className="h-fit 2xl:sticky 2xl:top-0">
               <CardHeader>
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-base"><Warehouse className="h-4 w-4 text-primary" />Storage Nodes</CardTitle>
-                  <p className="mt-1 text-xs text-text-muted">Outposts, capitals, metropolis, and Storm are buffer nodes.</p>
+                  <CardTitle className="flex items-center gap-2 text-base"><Warehouse className="h-4 w-4 text-primary" />Additional Storage Nodes</CardTitle>
+                  <p className="mt-1 text-xs text-text-muted">The four crafting castles are donors and storage too; outposts, capitals, metropolis, and Storm add more buffers.</p>
                 </div>
               </CardHeader>
               <CardContent className="grid gap-3 p-4">

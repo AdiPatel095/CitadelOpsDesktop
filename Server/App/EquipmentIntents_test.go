@@ -193,6 +193,19 @@ func TestPlanEquipmentSellRequiresFreshStorageAndFreezesSelection(t *testing.T) 
 	}
 }
 
+func TestEquipmentFreshnessSurvivesOverlappingOutboundRefresh(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	observedAt := time.Now().UTC()
+	gameState.Observations["ggm"] = State.ProtocolObservation{
+		Opcode: "ggm", LastDirection: "outbound", LastCode: &code, LastSeenAt: observedAt.Add(time.Millisecond),
+		LastSuccessfulInboundAt: observedAt,
+	}
+	if err := requireRecentEquipmentSnapshot(gameState, "ggm"); err != nil {
+		t.Fatalf("fresh successful inbound was hidden by outbound refresh: %v", err)
+	}
+}
+
 func TestPlanEquipmentSellSellsAllEligibleNonRelicGemStacks(t *testing.T) {
 	gameState := State.NewGameState()
 	code := 0

@@ -26,7 +26,7 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		},
 		"production":   {"production.enqueue", "hospital.heal", "hospital.discard"},
 		"construction": {"construction.equip", "construction.upgrade", "construction.shop", "construction.inventory.refresh", "construction.purchase"},
-		"crafting":     {"crafting.refresh", "crafting.start", "crafting.rent_slot", "crafting.skip", "resource.logistics.refresh", "resource.market.ship", "resource.kingdom.ship", "resource.kingdom.skip"},
+		"crafting":     {"crafting.refresh", "crafting.start", "crafting.rent_slot", "crafting.skip", "resource.logistics.refresh", "resource.ship", "resource.market.ship", "resource.kingdom.ship", "resource.kingdom.skip", "resource.kingdom.settle"},
 		"rift":         {"rift.maiden_wave.launch", "rift.launch.replay", "rift.template.rename", "rift.template.delete"},
 		"towers":       {"tower.queue.scan", "tower.context.refresh", "tower.attack", "tower.launch"},
 		"reports":      {"report.spy.fetch", "report.spy.share", "report.battle.summary", "report.battle.details"},

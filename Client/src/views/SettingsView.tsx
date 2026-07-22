@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { Icons } from '../components/Icons';
 import { CitadelAPI } from '../api/CitadelClient';
 import { useCitadelAPI } from '../api/ApiContext';
@@ -25,14 +26,31 @@ function normalizedAttackPriority(value: unknown, fallback = 50): number {
 	return Math.min(100, Math.max(1, Math.round(numeric)));
 }
 
+function orderedAttackPriorityIDs(features: AttackPriorityFeature[], storedPriorities: Record<string, unknown>): string[] {
+	return features
+		.map((feature, index) => ({
+			id: feature.id,
+			index,
+			weight: normalizedAttackPriority(storedPriorities[feature.id], feature.defaultWeight),
+		}))
+		.sort((left, right) => right.weight - left.weight || left.index - right.index)
+		.map((feature) => feature.id);
+}
+
+function rankedAttackPriorities(featureIDs: string[]): Record<string, number> {
+	return Object.fromEntries(featureIDs.map((featureID, index) => [featureID, Math.max(1, 100 - index)]));
+}
+
 const SettingsView: React.FC = () => {
 	const { state, configuration, submitIntent, updateConfiguration } = useCitadelAPI();
   const [minTimer, setMinTimer] = useState<string>('4.0');
   const [maxTimer, setMaxTimer] = useState<string>('6.0');
   const [upgradeEreDelayMs, setUpgradeEreDelayMs] = useState<string>('50');
   const [upgradeCoinThreshold, setUpgradeCoinThreshold] = useState<string>('0');
-	const [attackPriorities, setAttackPriorities] = useState<Record<string, string>>({});
+	const [attackPriorityOrder, setAttackPriorityOrder] = useState<string[]>([]);
 	const [attackPriorityFeatures, setAttackPriorityFeatures] = useState<AttackPriorityFeature[]>(defaultAttackPriorityFeatures);
+	const [draggedAttackPriorityID, setDraggedAttackPriorityID] = useState<string | null>(null);
+	const [attackPriorityDropTargetID, setAttackPriorityDropTargetID] = useState<string | null>(null);
 	const [browserInventory, setBrowserInventory] = useState<BrowserInventory | null>(null);
 	const [browserSelectionPending, setBrowserSelectionPending] = useState(false);
 	const [browserSelectionError, setBrowserSelectionError] = useState('');
@@ -63,11 +81,13 @@ const SettingsView: React.FC = () => {
 		setUpgradeEreDelayMs(String(numericSetting(schedulerConfiguration.upgradeEreDelayMs, 50)));
 		setUpgradeCoinThreshold(String(numericSetting(schedulerConfiguration.upgradeCoinThreshold, 0)));
 		const storedPriorities = asRecord(schedulerConfiguration.attackPriorities);
-		setAttackPriorities(Object.fromEntries(attackPriorityFeatures.map((feature) => [
-			feature.id,
-			String(normalizedAttackPriority(storedPriorities[feature.id], feature.defaultWeight)),
-		])));
+		setAttackPriorityOrder(orderedAttackPriorityIDs(attackPriorityFeatures, storedPriorities));
 	}, [attackPriorityFeatures, schedulerConfiguration]);
+
+	const orderedAttackPriorityFeatures = useMemo(() => {
+		const features = new Map(attackPriorityFeatures.map((feature) => [feature.id, feature]));
+		return attackPriorityOrder.map((featureID) => features.get(featureID)).filter((feature): feature is AttackPriorityFeature => feature != null);
+	}, [attackPriorityFeatures, attackPriorityOrder]);
 
 	useEffect(() => {
 		let active = true;
@@ -223,19 +243,40 @@ const SettingsView: React.FC = () => {
     saveSettings(minTimer, maxTimer, upgradeEreDelayMs, newVal);
   };
 
-	const saveAttackPriority = (featureID: string) => {
-		const fallback = attackPriorityFeatures.find((feature) => feature.id === featureID)?.defaultWeight ?? 50;
-		const priority = normalizedAttackPriority(attackPriorities[featureID], fallback);
-		setAttackPriorities((current) => ({ ...current, [featureID]: String(priority) }));
+	const saveAttackPriorityOrder = (featureIDs: string[]) => {
+		setSettingsSaveError('');
+		setAttackPriorityOrder(featureIDs);
 		void updateConfiguration('scheduler', {
 			...schedulerConfiguration,
 			attackPriorities: {
 				...asRecord(schedulerConfiguration.attackPriorities),
-				[featureID]: priority,
+				...rankedAttackPriorities(featureIDs),
 			},
 		}).catch((error) => {
 			setSettingsSaveError(error instanceof Error ? error.message : 'Could not save attack priorities');
 		});
+	};
+
+	const moveAttackPriority = (featureID: string, targetFeatureID: string) => {
+		const sourceIndex = attackPriorityOrder.indexOf(featureID);
+		const targetIndex = attackPriorityOrder.indexOf(targetFeatureID);
+		if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
+		const next = [...attackPriorityOrder];
+		const [moved] = next.splice(sourceIndex, 1);
+		next.splice(targetIndex, 0, moved);
+		saveAttackPriorityOrder(next);
+	};
+
+	const moveAttackPriorityBy = (featureID: string, direction: -1 | 1) => {
+		const sourceIndex = attackPriorityOrder.indexOf(featureID);
+		const targetFeatureID = attackPriorityOrder[sourceIndex + direction];
+		if (sourceIndex < 0 || targetFeatureID == null) return;
+		moveAttackPriority(featureID, targetFeatureID);
+	};
+
+	const finishAttackPriorityDrag = () => {
+		setDraggedAttackPriorityID(null);
+		setAttackPriorityDropTargetID(null);
 	};
 
   return (
@@ -367,26 +408,73 @@ const SettingsView: React.FC = () => {
 				<div>
 					<h3 className="text-sm font-semibold text-text-main mb-1">Automated Attack Priority</h3>
 					<p className="text-xs text-text-muted mb-4">
-						Choose which automated attack modules receive open launch slots first. Waiting time gradually raises older work; manual and scheduled attacks retain protected priority.
+						Drag modules into priority order, highest first. Waiting time gradually raises older work; manual and scheduled attacks retain protected priority.
 					</p>
 				</div>
 
-				<div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-					{attackPriorityFeatures.map((feature) => (
-						<label key={feature.id} className="rounded-xl border border-border-base bg-bg-app/45 p-3">
-							<span className="block text-xs font-bold text-text-main">{feature.label}</span>
-							<span className="mt-0.5 block min-h-8 text-[11px] leading-4 text-text-muted">{feature.detail}</span>
-							<Input
-								type="number"
-								min={1}
-								max={100}
-								value={attackPriorities[feature.id] ?? '50'}
-								onChange={(event) => setAttackPriorities((current) => ({ ...current, [feature.id]: event.target.value }))}
-								onBlur={() => saveAttackPriority(feature.id)}
-								className="mt-3 text-center font-mono"
-								rightIcon={<span className="text-[10px] text-text-muted">1–100</span>}
-							/>
-						</label>
+				<div className="space-y-2" role="list" aria-label="Automated attack priority order">
+					{orderedAttackPriorityFeatures.map((feature, index) => (
+						<div
+							key={feature.id}
+							role="listitem"
+							draggable
+							onDragStart={(event) => {
+								event.dataTransfer.effectAllowed = 'move';
+								event.dataTransfer.setData('text/plain', feature.id);
+								setDraggedAttackPriorityID(feature.id);
+							}}
+							onDragOver={(event) => {
+								event.preventDefault();
+								event.dataTransfer.dropEffect = 'move';
+								if (feature.id !== draggedAttackPriorityID) setAttackPriorityDropTargetID(feature.id);
+							}}
+							onDragLeave={(event) => {
+								if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setAttackPriorityDropTargetID(null);
+							}}
+							onDrop={(event) => {
+								event.preventDefault();
+								const sourceID = draggedAttackPriorityID ?? event.dataTransfer.getData('text/plain');
+								if (sourceID) moveAttackPriority(sourceID, feature.id);
+								finishAttackPriorityDrag();
+							}}
+							onDragEnd={finishAttackPriorityDrag}
+							className={`flex cursor-grab items-center gap-3 rounded-global border bg-bg-app/45 p-3 transition-colors active:cursor-grabbing ${
+								draggedAttackPriorityID === feature.id
+									? 'border-primary/40 opacity-45'
+									: attackPriorityDropTargetID === feature.id
+										? 'border-primary bg-primary/10'
+										: 'border-border-base hover:border-primary/30'
+							}`}
+						>
+							<Icons.GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
+							<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-card text-xs font-bold tabular-nums text-primary ring-1 ring-border-base">
+								{index + 1}
+							</span>
+							<span className="min-w-0 flex-1">
+								<span className="block text-xs font-bold text-text-main">{feature.label}</span>
+								<span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{feature.detail}</span>
+							</span>
+							<span className="flex shrink-0 items-center gap-1">
+								<button
+									type="button"
+									disabled={index === 0}
+									onClick={() => moveAttackPriorityBy(feature.id, -1)}
+									className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+									aria-label={`Move ${feature.label} up`}
+								>
+									<ArrowUp className="h-3.5 w-3.5" />
+								</button>
+								<button
+									type="button"
+									disabled={index === orderedAttackPriorityFeatures.length - 1}
+									onClick={() => moveAttackPriorityBy(feature.id, 1)}
+									className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+									aria-label={`Move ${feature.label} down`}
+								>
+									<ArrowDown className="h-3.5 w-3.5" />
+								</button>
+							</span>
+						</div>
 					))}
 				</div>
 			</div>

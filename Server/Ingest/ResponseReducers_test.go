@@ -80,3 +80,28 @@ func TestFocusedCastleProductionReducerAppliesStandaloneGPA(t *testing.T) {
 		t.Fatalf("unexpected gpa balance: %#v", balance)
 	}
 }
+
+func TestCastleResourceReducerAppliesStandaloneGRC(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[{"wodID":1}],"units":[{"wodID":1}],
+		"resources":[{"resourceID":3,"JSONKey":"W"}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	castle := newCastleState(100)
+	castle.Resources[3] = State.ResourceBalance{Amount: 50_000}
+	gameState.Castles[100] = castle
+	code := 0
+	_, changed, err := reduceResponseResources(t.Context(), Protocol.Frame{
+		Opcode: "grc", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		Payload: json.RawMessage(`{"AID":100,"KID":1,"W":14999}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("reduce grc: changed=%t err=%v", changed, err)
+	}
+	if got := gameState.Castles[100].Resources[3].Amount; got != 14_999 {
+		t.Fatalf("standalone grc balance = %.0f, want 14999", got)
+	}
+}

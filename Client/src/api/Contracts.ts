@@ -49,6 +49,7 @@ export interface SessionStateV2 {
 }
 
 export interface AccountBindingStateV2 {
+  uid?: number;
   worldId?: string;
   playerId?: number;
   boundAt?: string;
@@ -238,6 +239,7 @@ export interface ProductionQueueV2 {
 
 export interface CraftingQueueItemV2 {
 	recipeId: number;
+	/** Per-job output boost percentage captured when this recipe was queued. */
 	batchValue?: number;
 	remainingSec?: number;
 	runtimeSec?: number;
@@ -779,11 +781,15 @@ export interface AllianceStateV2 {
 
 export interface AllianceTargetOptionV2 {
 	externalId: string;
-	allianceId: number;
 	name: string;
 	rank: number;
-	might: number;
 	playerCount: number;
+}
+
+export interface AllianceTargetSelectionV2 {
+	externalId: string;
+	allianceId: number;
+	name: string;
 }
 
 export interface AllianceTargetCastleV2 {
@@ -792,36 +798,51 @@ export interface AllianceTargetCastleV2 {
 	typeName?: string;
 	x: number;
 	y: number;
-	type?: number;
+}
+
+export interface AllianceTargetOwnCastleV2 {
+	name: string;
+	x: number;
+	y: number;
 }
 
 export interface AllianceTargetV2 {
-	playerId: number;
 	name: string;
 	might: number;
 	underBird: boolean;
 	rptSeconds: number;
-	birdUntil?: string;
-	updatedAt?: string;
 	targetCastle: AllianceTargetCastleV2;
-	closestOwnCastle: AllianceTargetCastleV2;
+	closestOwnCastle: AllianceTargetOwnCastleV2;
 	distance: number;
+}
+
+export interface AllianceTargetQueryV2 {
+	allianceId?: string;
+	server?: string;
+	refresh?: boolean;
+	search?: string;
+	status?: 'all' | 'under-bird' | 'attackable';
+	sort?: 'player' | 'might' | 'rpt' | 'target' | 'closestCastle' | 'distance';
+	direction?: 'asc' | 'desc';
+	page?: number;
+	includeAlliances?: boolean;
 }
 
 export interface AllianceTargetViewV2 {
 	server: string;
 	alliances: AllianceTargetOptionV2[];
-	selectedAlliance?: AllianceTargetOptionV2;
+	selectedAlliance?: AllianceTargetSelectionV2;
 	targets: AllianceTargetV2[];
+	totalTargets: number;
+	page: number;
+	pageSize: number;
+	pageCount: number;
+	canInspect: boolean;
 	spies: {
-		capacity: number;
-		active: number;
+		canLaunch: boolean;
 		available: number;
-		buildingRowsLoaded: boolean;
-		sourceCastle: AllianceTargetCastleV2;
-		taverns: Array<{ level: number; capacity: number }>;
+		sourceCastleId?: number;
 	};
-	fetchedAt: string;
 }
 
 export interface MapObservationV2 {
@@ -936,6 +957,7 @@ export interface MovementStateV2 {
 	targetX: number;
 	targetY: number;
 	travelSeconds?: number;
+	waitSeconds?: number;
 	progressSeconds?: number;
 	spyCount?: number;
 	startedAt?: string;
@@ -957,6 +979,8 @@ export interface ProtocolObservationV2 {
 	lastError?: string;
 	lastSeenAt: string;
 	lastRevision: number;
+	lastSuccessfulInboundAt?: string;
+	lastSuccessfulInboundRevision?: number;
 }
 
 export interface CommandContextStateV2 {
@@ -990,6 +1014,7 @@ export interface StationingOperationV2 {
 	movementId?: number;
 	units: Record<string, number>;
 	safeAfter?: string;
+	expectedReturnAt?: string;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -1080,17 +1105,112 @@ export interface ScalableEventScoreV2 {
 	playerRank?: number;
 	allianceRank?: number;
 	remainingSec?: number;
+	leagueId?: number;
+	allianceLeagueId?: number;
+	rewardSetId?: number;
+	rewardPagesReached?: number;
+	rewardPagesTotal?: number;
+	nextRewardScore?: number;
+	advisorActive?: boolean;
+	advisorCurrencyId?: number;
+	advisorFree?: boolean;
 	observedAt: string;
+}
+
+export interface EventCombatTotalsV2 {
+	launches: number;
+	battles: number;
+	victories: number;
+	defeats: number;
+	troopLosses: number;
+	toolsUsed: number;
+	loot: number;
+}
+
+export interface EventActivityStateV2 {
+	eventId: number;
+	occurrenceEndsAt?: string;
+	observedFrom: string;
+	invasion: EventCombatTotalsV2;
+	camp: EventCombatTotalsV2;
+	advisor: EventCombatTotalsV2;
+	khan: EventCombatTotalsV2;
+	khanDefense: EventCombatTotalsV2;
+	advisorObservedAt?: string;
+}
+
+export interface EventRankingEntryV2 {
+	alliance?: string;
+	allianceId?: number;
+	memberCount?: number;
+	famePoints?: number;
+	rank: number;
+	score: number;
+}
+
+export interface EventRankingStateV2 {
+	eventId: number;
+	scope?: string;
+	leagueId: number;
+	listType: number;
+	totalAlliances: number;
+	ownAllianceId?: number;
+	searchValue?: string;
+	firstRank?: number;
+	globalFlag?: number;
+	entries: EventRankingEntryV2[];
+	pending?: boolean;
+	observedAt?: string;
 }
 
 export interface EventScoreStateV2 {
 	activeEventId?: number;
 	byEvent: Record<string, ScalableEventScoreV2>;
+	activityByEvent?: Record<string, EventActivityStateV2>;
+	rankingByEvent?: Record<string, EventRankingStateV2>;
+}
+
+export interface AdvisorRunStateV2 {
+	eventId: number;
+	eventEndsAt?: string;
+	sourceCastleId: number;
+	kingdomId: number;
+	targetTypeId: number;
+	targetX: number;
+	targetY: number;
+	commanderId: number;
+	movementId: number;
+	requestedAttacks: number;
+	currentAttack: number;
+	launchState: number;
+	status: 'running' | 'completed' | 'cancelled' | string;
+	startedAt: string;
+	lastAttackAt: string;
+	updatedAt: string;
+}
+
+export interface AdvisorSummaryStateV2 {
+	advisorType?: number;
+	count?: number;
+	gains: Record<string, number>;
+	costs: Record<string, number>;
+	unitsLost?: number;
+	toolsLost?: number;
+	wins?: number;
+	defeats?: number;
+	pendingAttacks?: number;
+	observedAt?: string;
+}
+
+export interface AdvisorStateV2 {
+	run?: AdvisorRunStateV2;
+	summary: AdvisorSummaryStateV2;
 }
 
 export interface InvasionStateV2 {
 	lastScannedAt: Record<string, string>;
 	fortifiedTargets: Record<string, string>;
+	fortifyCurrencies: string[];
 	fortifyResourceCount: number;
 	fortifyRubyCount: number;
 }
@@ -1172,6 +1292,13 @@ export interface KhanStateV2 {
 	protection: KhanProtectionStateV2;
 }
 
+export interface DailyAttackStateV2 {
+	count: number;
+	serverThreshold: number;
+	growthRate: number;
+	observedAt?: string;
+}
+
 export interface GameStateV2 {
   schemaVersion: number;
   revision: number;
@@ -1203,7 +1330,9 @@ export interface GameStateV2 {
 	storm: StormStateV2;
 	nomadCamps: NomadCampStateV2;
 	khan: KhanStateV2;
+	dailyAttacks: DailyAttackStateV2;
 	eventScores: EventScoreStateV2;
+	advisor: AdvisorStateV2;
 	commandContext: CommandContextStateV2;
 	automations: Record<string, AutomationStateV2>;
 	reports: ReportStateV2;

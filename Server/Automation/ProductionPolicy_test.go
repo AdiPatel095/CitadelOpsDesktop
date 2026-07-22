@@ -43,6 +43,86 @@ func TestRecruitPolicyAddsActiveSubscriptionStackBonus(t *testing.T) {
 	}
 }
 
+func TestRecruitPolicyDoesNotReuseStaleOversizedStack(t *testing.T) {
+	now := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	castle := snapshot.State.Castles[77]
+	castle.ConstructionSlots[1] = nil
+	queue := castle.Production[0]
+	queue.Active = &State.QueueItem{Definition: State.DefinitionRef{Collection: "units", ID: 489}, Amount: 36}
+	queue.Queued = []State.QueueItem{
+		{Definition: State.DefinitionRef{Collection: "units", ID: 489}, Amount: 180},
+	}
+	castle.Production[0] = queue
+	snapshot.State.Castles[77] = castle
+	snapshot.State.Subscriptions[1] = State.SubscriptionState{TypeID: 1, RemainingSec: 60}
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil {
+		t.Fatalf("evaluate policy: %v", err)
+	}
+	if arguments := productionIntentArguments(t, decision); arguments.Amount != 150 {
+		t.Fatalf("recruit stack amount = %d, want current inferred amount 150", arguments.Amount)
+	}
+}
+
+func TestRecruitPolicyWaitsWithoutCalculatedStackCapacity(t *testing.T) {
+	now := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	castle := snapshot.State.Castles[77]
+	queue := castle.Production[0]
+	queue.Queued = []State.QueueItem{
+		{Definition: State.DefinitionRef{Collection: "units", ID: 489}, Amount: 180},
+	}
+	castle.Production[0] = queue
+	snapshot.State.Castles[77] = castle
+	snapshot.GameData = nil
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil {
+		t.Fatalf("evaluate policy: %v", err)
+	}
+	if decision.Request != nil || decision.Detail != "Waiting for the official building stack capacity" {
+		t.Fatalf("unexpected decision: %#v", decision)
+	}
+}
+
+func TestRecruitPolicyRotatesGlobalCastlesInDisplayOrder(t *testing.T) {
+	now := time.Date(2026, 7, 21, 14, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	for _, castle := range []State.CastleState{
+		{ID: 1, Name: "Castle Amos_Bur", KingdomID: 4},
+		{ID: 902, Name: "Tycho", KingdomID: 0},
+		{ID: 900, Name: "Baltimore", KingdomID: 0},
+		{ID: 901, Name: "Ganymede", KingdomID: 0},
+	} {
+		castle.Production = map[int]State.ProductionQueue{
+			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+		}
+		gameState.Castles[castle.ID] = castle
+	}
+	snapshot := Snapshot{
+		State: gameState,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+			"automation.recruitTroops": json.RawMessage(`{
+				"mode":"global","globalItems":[{"id":489,"amount":25}],
+				"castles":{"1":{"enabled":true},"900":{"enabled":true},"901":{"enabled":true},"902":{"enabled":true}}
+			}`),
+		}},
+		Now: now,
+	}
+	policy := NewRecruitPolicy()
+	for index, want := range []State.CastleID{900, 901, 902, 1, 900} {
+		decision, err := policy.Evaluate(context.Background(), snapshot)
+		if err != nil || decision.Request == nil || decision.Request.Name != "production.enqueue" {
+			t.Fatalf("evaluation %d: decision=%#v err=%v", index+1, decision, err)
+		}
+		if got := productionIntentArguments(t, decision).CastleID; got != want {
+			t.Fatalf("evaluation %d castle = %d, want %d", index+1, got, want)
+		}
+	}
+}
+
 func TestRecruitPolicyDoesNotCountActiveStackAgainstQueueSlots(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	snapshot := recruitPolicySnapshot(t, now)

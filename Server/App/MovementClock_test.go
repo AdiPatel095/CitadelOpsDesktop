@@ -34,3 +34,16 @@ func TestMovementClockReleasesReturnedCommander(t *testing.T) {
 	}
 	t.Fatal("movement clock did not release the returned commander")
 }
+
+func TestMovementClockWaitsForGameReportedStationReturn(t *testing.T) {
+	now := time.Now().UTC()
+	arrivedAt := now.Add(-time.Hour)
+	gameState := State.NewGameState()
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, Direction: 0, WaitSeconds: 6 * 3600, ArrivesAt: &arrivedAt,
+	}
+
+	if next := nextMovementCompletion(gameState); !next.IsZero() {
+		t.Fatalf("station wait scheduled a locally predicted completion at %s", next)
+	}
+}

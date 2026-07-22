@@ -38,6 +38,34 @@ func TestReportNoticeReducerClassifiesSpyAndBattleNotices(t *testing.T) {
 	}
 }
 
+func TestDeletedReportMessagesBecomeUnavailableBeforeFetch(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Reports.Notices[101] = State.ReportNotice{MessageID: 101, TypeID: 6, Status: "pending"}
+	gameState.Reports.Notices[102] = State.ReportNotice{MessageID: 102, TypeID: 6, Status: "archived"}
+	gameState.Reports.SpyCaptures[103] = State.SpyReportCapture{MessageID: 103}
+	gameState.Reports.BattleCaptures[101] = State.BattleReportCapture{MessageID: 101, ReportID: 202}
+	gameState.Reports.ActiveBattleReport = 202
+	code := 0
+	frame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "dms", ResponseCode: &code,
+		ReceivedAt: time.Date(2026, 7, 21, 19, 24, 53, 0, time.UTC),
+		Payload:    json.RawMessage(`{"MID":[101,102,103,104]}`),
+	}
+	domains, changed, err := reduceDeletedReportMessages(t.Context(), frame, &gameState, nil)
+	if err != nil || !changed || len(domains) != 1 || domains[0] != "reports" {
+		t.Fatalf("deleted reports reduction: changed=%t domains=%v err=%v", changed, domains, err)
+	}
+	if gameState.Reports.Notices[101].Status != "unavailable" ||
+		gameState.Reports.Notices[102].Status != "archived" ||
+		gameState.Reports.Notices[103].Status != "unavailable" ||
+		gameState.Reports.Notices[104].Status != "unavailable" {
+		t.Fatalf("deleted report statuses = %#v", gameState.Reports.Notices)
+	}
+	if len(gameState.Reports.SpyCaptures) != 0 || len(gameState.Reports.BattleCaptures) != 0 || gameState.Reports.ActiveBattleReport != 0 {
+		t.Fatalf("deleted report captures remain: %#v", gameState.Reports)
+	}
+}
+
 func TestBattleResponsesUseSummaryAndOutboundReportContext(t *testing.T) {
 	gameState := State.NewGameState()
 	code := 0

@@ -55,7 +55,7 @@ func reduceInvasionFortification(
 
 func validInvasionFortifyCurrency(currency string) bool {
 	switch currency {
-	case "GTO", "STO", "KM", "C2":
+	case "GTO", "STO", "KM", "ST", "C2":
 		return true
 	default:
 		return false
@@ -119,6 +119,7 @@ func reduceMapSnapshot(
 	changed := false
 	cooldownChanged := false
 	eventCampChanged := false
+	stormChanged := false
 	for _, row := range payload.Nodes {
 		if len(row) < 3 {
 			continue
@@ -161,11 +162,14 @@ func reduceMapSnapshot(
 		if refreshNomadCampCooldownFromMap(gameState, observation) {
 			eventCampChanged = true
 		}
+		if refreshTrackedStormOpportunityFromMap(gameState, observation) {
+			stormChanged = true
+		}
 	}
 	if changed {
 		gameState.Map[kingdomID] = observations
 	}
-	if cooldownChanged || eventCampChanged {
+	if cooldownChanged || eventCampChanged || stormChanged {
 		changed = true
 	}
 	domains := []string{"map"}
@@ -174,6 +178,9 @@ func reduceMapSnapshot(
 	}
 	if eventCampChanged {
 		domains = append(domains, "nomad-camps")
+	}
+	if stormChanged {
+		domains = append(domains, "storm")
 	}
 	return domains, changed, nil
 }
@@ -245,6 +252,26 @@ func labelStormOpportunity(observation *State.MapObservation, gameData *GameData
 	if timer > 0 {
 		observation.StormExpiresAt = observation.ObservedAt.Add(timer)
 	}
+}
+
+func refreshTrackedStormOpportunityFromMap(gameState *State.GameState, observation State.MapObservation) bool {
+	if gameState == nil || observation.KingdomID != State.KingdomID(GameData.StormKingdomID) || gameState.Storm.Map.Targets == nil {
+		return false
+	}
+	key := fmt.Sprintf("%d:%d", observation.X, observation.Y)
+	current, tracked := gameState.Storm.Map.Targets[key]
+	if !tracked || current.ObservedAt.After(observation.ObservedAt) {
+		return false
+	}
+	if !isStormMapType(observation.TypeID) {
+		delete(gameState.Storm.Map.Targets, key)
+		return true
+	}
+	if reflect.DeepEqual(current, observation) {
+		return false
+	}
+	gameState.Storm.Map.Targets[key] = observation
+	return true
 }
 
 func populateEventCampObservation(observation *State.MapObservation, row []json.RawMessage, gameData *GameData.Store) {
@@ -416,5 +443,5 @@ func reduceNestedMapSnapshot(
 		return nil, false, nil
 	}
 	frame.Payload = nested
-	return reduceMapSnapshot(ctx, frame, gameState, gameData)
+	return combineReducers(reduceMapSnapshot, reducePlayerProtectionMode)(ctx, frame, gameState, gameData)
 }

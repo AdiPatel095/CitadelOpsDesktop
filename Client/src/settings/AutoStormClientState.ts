@@ -11,7 +11,16 @@ export const AUTO_STORM_LUNA_PACKAGE_IDS: readonly number[] = [
 
 export type AutoStormResource = 'wood' | 'stone' | 'aquamarine';
 export type AutoStormIslandSize = 'large' | 'small';
-export type AutoStormCombatOrder = 'forts_first' | 'islands_first' | 'nearest';
+export const AUTO_STORM_TARGET_PRIORITIES = [
+  'fort:80',
+  'fort:70',
+  'fort:60',
+  'fort:50',
+  'fort:40',
+  'island:large',
+  'island:small',
+] as const;
+export type AutoStormTargetPriority = typeof AUTO_STORM_TARGET_PRIORITIES[number];
 
 export interface AutoStormDefenseUnit {
   unitId: number;
@@ -64,9 +73,10 @@ export interface AutoStormClientStateV1 {
     shopTableId: number;
     purchases: AutoStormShopPurchase[];
   };
-  combatOrder: AutoStormCombatOrder;
+  targetPriority: AutoStormTargetPriority[];
   checkIntervalSec: number;
   mapRefreshIntervalSec: number;
+  dailyAttackLimit: number;
   horseTravelBoostId: HorseTravelBoostID;
 }
 
@@ -99,9 +109,10 @@ export function defaultAutoStormClientState(): AutoStormClientStateV1 {
     },
     troopImport: { enabled: false, donorCastleIds: [] },
     aquamarine: { reserve: 0, shopTableId: 0, purchases: [] },
-    combatOrder: 'forts_first',
+    targetPriority: [...AUTO_STORM_TARGET_PRIORITIES],
     checkIntervalSec: 30,
     mapRefreshIntervalSec: AUTO_STORM_MAP_REFRESH_INTERVAL_SEC,
+    dailyAttackLimit: 0,
     horseTravelBoostId: -1,
   };
 }
@@ -157,9 +168,10 @@ export function parseAutoStormClientState(value: unknown): AutoStormClientStateV
       shopTableId: positiveInteger(aquamarine.shopTableId),
       purchases: parseShopPurchases(aquamarine.purchases),
     },
-    combatOrder: parseCombatOrder(value.combatOrder),
+    targetPriority: parseTargetPriority(value.targetPriority, value.combatOrder),
     checkIntervalSec: clampAutoStormInteger(value.checkIntervalSec, 30, 3600, fallback.checkIntervalSec),
     mapRefreshIntervalSec: AUTO_STORM_MAP_REFRESH_INTERVAL_SEC,
+    dailyAttackLimit: clampAutoStormInteger(value.dailyAttackLimit, 0, Number.MAX_SAFE_INTEGER, 0),
     horseTravelBoostId: parseHorseTravelBoostID(value.horseTravelBoostId),
   };
 }
@@ -236,8 +248,23 @@ function parsePositiveIntegerArray(value: unknown): number[] {
   return result;
 }
 
-function parseCombatOrder(value: unknown): AutoStormCombatOrder {
-  return value === 'islands_first' || value === 'nearest' ? value : 'forts_first';
+function parseTargetPriority(value: unknown, legacyCombatOrder: unknown): AutoStormTargetPriority[] {
+  const fallback: AutoStormTargetPriority[] = legacyCombatOrder === 'islands_first'
+    ? ['island:large', 'island:small', 'fort:80', 'fort:70', 'fort:60', 'fort:50', 'fort:40']
+    : [...AUTO_STORM_TARGET_PRIORITIES];
+  if (!Array.isArray(value)) return fallback;
+
+  const allowed = new Set<string>(AUTO_STORM_TARGET_PRIORITIES);
+  const result: AutoStormTargetPriority[] = [];
+  const seen = new Set<string>();
+  const append = (candidate: unknown) => {
+    if (typeof candidate !== 'string' || !allowed.has(candidate) || seen.has(candidate)) return;
+    seen.add(candidate);
+    result.push(candidate as AutoStormTargetPriority);
+  };
+  value.forEach(append);
+  fallback.forEach(append);
+  return result;
 }
 
 function parseChoiceArray<T extends string | number>(value: unknown, allowed: readonly T[]): T[] {

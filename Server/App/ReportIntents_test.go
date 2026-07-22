@@ -34,3 +34,19 @@ func TestPlanSpyReportShareBuildsAllianceRecipients(t *testing.T) {
 		t.Fatalf("share payload = %+v", payload)
 	}
 }
+
+func TestReportFetchSkipsDeletedNotice(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Reports.Notices[99] = State.ReportNotice{
+		MessageID: 99, TypeID: 6, Status: "unavailable",
+	}
+	plan, err := planBattleReportSummary(
+		t.Context(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{"messageId":99}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 0 {
+		t.Fatalf("deleted report still emitted a command: %#v", plan.Steps)
+	}
+}

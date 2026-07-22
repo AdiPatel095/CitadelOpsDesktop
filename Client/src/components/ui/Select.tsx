@@ -19,6 +19,7 @@ export interface SelectProps {
   searchable?: boolean;
   searchPlaceholder?: string;
   ariaLabel?: string;
+  closeOnScroll?: boolean;
   /**
    * When true, dropdown max-height follows space below the control (viewport),
    * so short lists show a compact panel and long lists use available height before scrolling.
@@ -38,6 +39,7 @@ export const Select: React.FC<SelectProps> = ({
   searchable = false,
   searchPlaceholder = 'Filter options',
   ariaLabel,
+  closeOnScroll = true,
   menuGrowToViewport = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -105,20 +107,23 @@ export const Select: React.FC<SelectProps> = ({
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      const handleScroll = (e: Event) => {
-        if ((e.target as Element)?.closest?.('.select-portal-content')) return;
-        setIsOpen(false);
-      };
-      const handleResize = () => setIsOpen(false);
+    if (!isOpen) return;
+    const handleScroll = (e: Event) => {
+      if ((e.target as Element)?.closest?.('.select-portal-content')) return;
+      setIsOpen(false);
+    };
+    const handleResize = () => setIsOpen(false);
+    if (closeOnScroll) {
       window.addEventListener('scroll', handleScroll, true);
-      window.addEventListener('resize', handleResize);
-      return () => {
-        window.removeEventListener('scroll', handleScroll, true);
-        window.removeEventListener('resize', handleResize);
-      };
     }
-  }, [isOpen]);
+    window.addEventListener('resize', handleResize);
+    return () => {
+      if (closeOnScroll) {
+        window.removeEventListener('scroll', handleScroll, true);
+      }
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [closeOnScroll, isOpen]);
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>

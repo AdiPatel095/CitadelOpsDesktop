@@ -128,6 +128,41 @@ func TestPlanningViewKeepsImmutableGenerationAfterMutation(t *testing.T) {
 	}
 }
 
+func TestApplyWithoutMapMutationKeepsSharedMapImmutableAcrossLaterMapWrite(t *testing.T) {
+	initial := NewGameState()
+	initial.Map[4] = map[string]MapObservation{
+		"100:101": {KingdomID: 4, X: 100, Y: 101, Name: "before"},
+	}
+	store := NewStore(initial)
+	before := store.ReadOnlyView()
+
+	if _, err := store.ApplyWithoutMapMutation(func(state *GameState) ([]string, bool, error) {
+		state.Player.Level = 70
+		return []string{"player"}, true, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	shared := store.ReadOnlyView()
+	if shared.Player.Level != 70 || shared.Map[4]["100:101"].Name != "before" {
+		t.Fatalf("map-preserving mutation = %#v", shared)
+	}
+
+	if _, err := store.Apply(func(state *GameState) ([]string, bool, error) {
+		observation := state.Map[4]["100:101"]
+		observation.Name = "after"
+		state.Map[4]["100:101"] = observation
+		return []string{"map"}, true, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if before.Map[4]["100:101"].Name != "before" || shared.Map[4]["100:101"].Name != "before" {
+		t.Fatal("a later full map mutation changed an immutable earlier generation")
+	}
+	if latest := store.ReadOnlyView().Map[4]["100:101"].Name; latest != "after" {
+		t.Fatalf("latest map observation = %q, want after", latest)
+	}
+}
+
 func TestApplyScopedAdvancesOnlyDeclaredPartition(t *testing.T) {
 	initial := NewGameState()
 	initial.Session.ServerURL = "https://example.invalid"
@@ -228,6 +263,27 @@ func TestStorePreservesCurrentFocusWhenMutationSetsMultipleFlags(t *testing.T) {
 	}
 	if context := store.ProtocolContext(); context.FocusedCastleID != 11 || context.FocusEpoch != 1 {
 		t.Fatalf("focus epoch changed for normalized duplicate: %+v", context)
+	}
+}
+
+func TestStoreReconcilesTrackedStormTargetWithNewerLiveMap(t *testing.T) {
+	initial := NewGameState()
+	initial.Storm.Map.Targets["612:667"] = MapObservation{
+		KingdomID: 4, X: 612, Y: 667, TypeID: stormFortMapObservationTypeID, StormIsleID: 9,
+		ObservedAt: time.Date(2026, time.July, 21, 17, 33, 0, 0, time.UTC),
+	}
+	readyAt := time.Date(2026, time.July, 22, 5, 3, 0, 0, time.UTC)
+	initial.Map[4] = map[string]MapObservation{
+		"612:667": {
+			KingdomID: 4, X: 612, Y: 667, TypeID: stormFortMapObservationTypeID, StormIsleID: 7,
+			StormCooldownRemaining: 36_000, StormReadyAt: readyAt,
+			ObservedAt: time.Date(2026, time.July, 21, 19, 18, 0, 0, time.UTC),
+		},
+	}
+
+	tracked := NewStore(initial).Snapshot().Storm.Map.Targets["612:667"]
+	if tracked.StormIsleID != 7 || tracked.StormCooldownRemaining != 36_000 || !tracked.StormReadyAt.Equal(readyAt) {
+		t.Fatalf("reconciled Storm target = %#v", tracked)
 	}
 }
 

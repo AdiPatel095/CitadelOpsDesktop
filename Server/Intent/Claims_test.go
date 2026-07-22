@@ -27,6 +27,7 @@ func TestLegacyClaimsUseHierarchicalResources(t *testing.T) {
 		{name: "commander aliases", left: []string{"commander:7"}, right: []string{"leader:commander:7"}, overlaps: true},
 		{name: "shop parent and offer", left: []string{"shop"}, right: []string{"shop:offer"}, overlaps: true},
 		{name: "different responses", left: []string{"response:ain"}, right: []string{"response:rpc"}, overlaps: false},
+		{name: "game UI and attack context", left: []string{"game-ui"}, right: []string{"attack-context"}, overlaps: true},
 		{name: "global crafting and castle crafting", left: []string{"game:crafting"}, right: []string{"castle:1", "crafting-building:7"}, overlaps: true},
 		{name: "target aliases at same coordinate", left: []string{"tower-target:9:12:13"}, right: []string{"spy-target:9:12:13"}, overlaps: true},
 		{name: "same unit in different castles remains independent", left: []string{"castle:1", "unit:5"}, right: []string{"castle:2", "unit:5"}, overlaps: false},
@@ -39,6 +40,21 @@ func TestLegacyClaimsUseHierarchicalResources(t *testing.T) {
 				t.Fatalf("resourcesOverlap() = %t, want %t\nleft: %#v\nright: %#v", actual, test.overlaps, left, right)
 			}
 		})
+	}
+}
+
+func TestAdvisorClaimsDeclareTypedResources(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Session.ServerURL = "https://world.example"
+	gameState.Player.ID = 42
+	resources := legacyClaimsToResources(gameState, []string{
+		"advisor:activation",
+		"advisor:overview",
+		"advisor:event:72",
+		"event:72",
+	})
+	if hasLegacyResource(resources) {
+		t.Fatalf("advisor claims resolved to legacy resources: %#v", resources)
 	}
 }
 

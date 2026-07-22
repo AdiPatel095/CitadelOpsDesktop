@@ -116,6 +116,10 @@ func legacyClaimResource(
 		return ResourceKey{Scope: ResourceScopeApplication, Capability: "application-update", ResourceKind: "release", ResourceID: "*"}
 	case "event-difficulty":
 		return accountKey("events", "difficulty", "*")
+	case "event":
+		return accountKey("events", "event", value)
+	case "advisor":
+		return accountKey("combat", "advisor", value)
 	case "khan-protection":
 		return accountKey("combat", "khan-protection", "*")
 	case "session":
@@ -124,7 +128,7 @@ func legacyClaimResource(
 		return sessionKey("session", "focus", "*")
 	case "response":
 		return sessionKey("protocol", "response", value)
-	case "attack-context":
+	case "game-ui", "attack-context":
 		return sessionKey("combat", "attack-context", "*")
 	case "castle":
 		id, _ := strconv.ParseInt(value, 10, 64)

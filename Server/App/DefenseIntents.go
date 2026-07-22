@@ -19,6 +19,12 @@ type defenseRefreshRequest struct {
 	CastleID State.CastleID `json:"castleId"`
 }
 
+type defenseOpenGateRequest struct {
+	CastleID              State.CastleID `json:"castleId"`
+	RequireIncomingAttack bool           `json:"requireIncomingAttack,omitempty"`
+	RequireProtectionMode bool           `json:"requireProtectionMode,omitempty"`
+}
+
 type defenseRefreshVerification struct {
 	CastleID                    State.CastleID `json:"castleId"`
 	PreviousDefenseObservedAt   time.Time      `json:"previousDefenseObservedAt"`
@@ -84,6 +90,47 @@ func planDefenseRefresh(_ context.Context, input Intent.PlanningContext, argumen
 	})
 	return Intent.Plan{
 		Claims: defenseClaims(castle.ID), Summary: "Refresh defense setup for " + castleLabel(castle), Steps: steps,
+	}, nil
+}
+
+func planDefenseOpenGate(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request defenseOpenGateRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	castle, err := defenseCastle(input, request.CastleID)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	now := time.Now().UTC()
+	if request.RequireProtectionMode && !input.State.Player.ProtectionMode.PreparingOrActive(now) {
+		return Intent.Plan{}, fmt.Errorf("purchased Protection Mode is no longer preparing or active")
+	}
+	if request.RequireIncomingAttack {
+		incoming := false
+		for _, movement := range input.State.Movements {
+			if movement.TargetCastleID == castle.ID && State.IsIncomingPlayerAttack(input.State, movement, now) {
+				incoming = true
+				break
+			}
+		}
+		if !incoming {
+			return Intent.Plan{}, fmt.Errorf("castle %d no longer has an incoming player attack", castle.ID)
+		}
+	}
+	if castle.Defense.OpenGateUntil != nil && castle.Defense.OpenGateUntil.After(now) {
+		return Intent.Plan{}, fmt.Errorf("castle %d gates are already open until %s", castle.ID, castle.Defense.OpenGateUntil.UTC().Format(time.RFC3339))
+	}
+	payload, _ := json.Marshal(struct {
+		CastleID  State.CastleID  `json:"CID"`
+		KingdomID State.KingdomID `json:"KID"`
+		Cooldown  int             `json:"CD"`
+	}{castle.ID, castle.KingdomID, 0})
+	id := strconv.FormatInt(int64(castle.ID), 10)
+	return Intent.Plan{
+		Claims:  []string{"castle:" + id, "defense:" + id, "account-resources"},
+		Summary: "Open gates at " + castleLabel(castle),
+		Steps:   []Intent.Step{commandStep("Open castle gates for six hours", "mos", payload, "mos")},
 	}, nil
 }
 

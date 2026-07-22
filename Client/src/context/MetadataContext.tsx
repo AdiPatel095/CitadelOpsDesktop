@@ -6,6 +6,7 @@ export interface MetadataItem {
   name: string;
   image?: string;
   level?: number;
+  outputAmount?: number;
   [key: string]: unknown;
 }
 
@@ -167,6 +168,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 				id,
 				name: recipe.level > 0 ? `${outputName} · L${recipe.level}` : outputName,
 				image: recipe.output?.iconUrl,
+				outputAmount: recipe.output?.amount,
 			};
 		}
         setTroops(nextTroops);
@@ -259,7 +261,7 @@ interface CraftingProjection {
 	recipes?: Array<{
 		recipeID: number;
 		level?: number;
-		output?: { name?: string; iconUrl?: string };
+		output?: { name?: string; amount?: number; iconUrl?: string };
 		[key: string]: unknown;
 	}>;
 }

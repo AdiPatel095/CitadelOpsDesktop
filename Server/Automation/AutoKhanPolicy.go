@@ -38,6 +38,7 @@ type autoKhanSettings struct {
 	CheckIntervalSec          int              `json:"checkIntervalSec"`
 	DefenseRefreshIntervalSec int              `json:"defenseRefreshIntervalSec"`
 	MapRefreshIntervalSec     int              `json:"mapRefreshIntervalSec"`
+	DailyAttackLimit          int64            `json:"dailyAttackLimit"`
 	SkipCooldowns             bool             `json:"skipCooldowns"`
 	TimeSkipReserve           map[string]int64 `json:"timeSkipReserve"`
 	OpenGateProtection        bool             `json:"openGateProtection"`
@@ -55,7 +56,7 @@ func (*AutoKhanPolicy) EnabledKey() string { return "auto_khan" }
 
 func (*AutoKhanPolicy) WakeDomains() []string {
 	return []string{
-		"achievements", "commanders", "currencies", "defense", "events", "event-scores", "inventory", "khan", "map",
+		"achievements", "attacks", "commanders", "currencies", "defense", "events", "event-scores", "inventory", "khan", "map",
 		"movement-snapshot", "movements", "resources", "stationing", "tower-cooldowns", "units",
 	}
 }
@@ -336,6 +337,11 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	}
 	remainingCooldown := towerCooldownRemaining(target, snapshot.Now)
 	metrics["cooldownRemaining"] = float64(remainingCooldown)
+	if _, blocked := dailyAttackLimitAllowance(
+		snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, defaultKhanCheckIntervalSec), metrics,
+	); blocked != nil {
+		return *blocked, nil
+	}
 	if remainingCooldown > 0 {
 		if oneCommandDungeonSkipCount(snapshot.State, settings.TimeSkipReserve, 3*60*60) < 1 {
 			return autoKhanWaiting(snapshot.Now, "No five-hour or one-day time skip is available above reserves", settings.CheckIntervalSec, metrics), nil
@@ -391,6 +397,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		"defensePreset": defensePreset, "openGateProtection": settings.OpenGateProtection,
 		"offensiveUnitThreshold": settings.OffensiveUnitThreshold,
 		"horseTravelBoostId":     settings.HorseTravelBoostID,
+		"dailyAttackLimit":       settings.DailyAttackLimit,
 	})
 	return Decision{
 		Status: "ready", Detail: fmt.Sprintf("Launch the next Khan chain attack with commander %d from %s", commanderID, castleName(source)),

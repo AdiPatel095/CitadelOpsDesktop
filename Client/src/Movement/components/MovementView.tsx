@@ -40,6 +40,7 @@ const COMMANDER_FEATURES: Array<{ id: CommanderFeatureID; label: string }> = [
   { id: 'autoTowers', label: 'Auto Towers' },
   { id: 'autoInvasion', label: 'Auto Invasion' },
   { id: 'autoNomad', label: 'Auto Nomad / Samurai' },
+  { id: 'autoAdvisor', label: 'Auto Advisor' },
   { id: 'autoKhan', label: 'Auto Khan' },
   { id: 'autoStorm', label: 'Auto Storm' },
   { id: 'riftMaiden', label: 'Rift Maiden Waves' },
@@ -177,8 +178,6 @@ const MovementView: React.FC = () => {
   const availableCount = rows.filter(
     (row) => statusForRow(row, gameLoggedIn, snapshotReady, snapshotFresh, nowUnix) === 'free'
   ).length;
-  const knownCommanderIDs = rows.map((row) => row.commanderId);
-
   const toggleCommanderFeature = (
     featureID: CommanderFeatureID,
     commanderID: number,
@@ -189,7 +188,6 @@ const MovementView: React.FC = () => {
       featureID,
       commanderID,
       assigned,
-      knownCommanderIDs,
     ));
     setAssignmentsDirty(true);
   };
@@ -201,7 +199,6 @@ const MovementView: React.FC = () => {
         feature.id,
         commanderID,
         assigned,
-        knownCommanderIDs,
       ),
       current,
     ));
@@ -241,7 +238,7 @@ const MovementView: React.FC = () => {
             value={mode}
             options={['Movement', 'Features']}
             onChange={(value) => setMode(value as MovementMode)}
-            size="sm"
+            size="header"
           />
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 max-[720px]:w-full max-[720px]:flex-none">
             <CardTitle className="text-lg text-primary">
@@ -285,7 +282,7 @@ const MovementView: React.FC = () => {
               <div className="rounded-global border border-border-light bg-bg-card/45 px-4 py-3 shadow-[var(--glass-shadow-compact)] backdrop-blur-xl">
                 <p className="text-sm font-semibold text-text-main">Choose the commanders each automation may launch.</p>
                 <p className="mt-1 text-xs text-text-muted">
-                  Features without a saved assignment continue to use every commander. Live availability and feature-specific requirements are still checked before each launch.
+                  Only explicitly assigned commanders can launch for a feature. Live availability and feature-specific requirements are still checked before each launch.
                 </p>
               </div>
               {rows.length === 0 ? (

@@ -18,16 +18,19 @@ import (
 )
 
 const (
-	autoStormSection            = "automation.autoStorm"
-	autoStormKingdomID          = State.KingdomID(GameData.StormKingdomID)
-	autoStormIslandMapTypeID    = 24
-	autoStormFortMapTypeID      = 25
-	autoStormTransportDelivery  = 0.8
-	autoStormMaximumTroopStacks = 20
-	autoStormMapRefreshInterval = 6 * time.Hour
-	autoStormMapRefreshSeconds  = int(autoStormMapRefreshInterval / time.Second)
-	autoStormMapWindowSize      = 101
-	autoStormMapMinimumWindows  = 6
+	autoStormSection               = "automation.autoStorm"
+	autoStormKingdomID             = State.KingdomID(GameData.StormKingdomID)
+	autoStormIslandMapTypeID       = 24
+	autoStormFortMapTypeID         = 25
+	autoStormTransportDelivery     = 0.8
+	autoStormMaximumTroopStacks    = 20
+	autoStormMapRefreshInterval    = 6 * time.Hour
+	autoStormMapRefreshSeconds     = int(autoStormMapRefreshInterval / time.Second)
+	autoStormMapWindowSize         = 101
+	autoStormMapMinimumWindows     = 6
+	autoStormTargetVerificationAge = 30 * time.Second
+	autoStormPriorityFortPrefix    = "fort:"
+	autoStormPriorityIslandPrefix  = "island:"
 )
 
 type AutoStormPolicy struct{}
@@ -43,9 +46,11 @@ type autoStormSettings struct {
 	Islands                  autoStormIslandSettings        `json:"islands"`
 	TroopImport              autoStormTroopImportSettings   `json:"troopImport"`
 	Aquamarine               autoStormAquamarineSettings    `json:"aquamarine"`
-	CombatOrder              string                         `json:"combatOrder"`
+	TargetPriority           []string                       `json:"targetPriority"`
+	LegacyCombatOrder        string                         `json:"combatOrder,omitempty"`
 	CheckIntervalSec         int                            `json:"checkIntervalSec"`
 	MapRefreshIntervalSec    int                            `json:"mapRefreshIntervalSec"`
+	DailyAttackLimit         int64                          `json:"dailyAttackLimit"`
 	HorseTravelBoostID       int                            `json:"horseTravelBoostId"`
 }
 
@@ -95,6 +100,11 @@ type autoStormShopPurchase struct {
 	Priority        int             `json:"priority"`
 }
 
+type autoStormShopPurchaseLine struct {
+	ProductID State.PackageID `json:"productId"`
+	Amount    int64           `json:"amount"`
+}
+
 type autoStormAquamarineSettings struct {
 	Reserve     int64                   `json:"reserve"`
 	ShopTableID int64                   `json:"shopTableId"`
@@ -135,7 +145,7 @@ func (*AutoStormPolicy) EnabledKey() string { return "auto_storm" }
 
 func (*AutoStormPolicy) WakeDomains() []string {
 	return []string{
-		"buildings", "castles", "construction-items", "construction-offers", "inventory", "map", "movements",
+		"attacks", "buildings", "castles", "construction-items", "construction-offers", "inventory", "map", "movements",
 		"reports", "resources", "storm", "units", "kingdom-transport",
 	}
 }
@@ -191,26 +201,24 @@ func (*AutoStormPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}
 	}
 
+	shopComplete := len(settings.Aquamarine.Purchases) == 0
+	shopDetail := ""
+	shopDecision, complete, detail, shopErr := evaluateAutoStormShop(snapshot, settings, castle, metrics)
+	if shopErr != nil {
+		return Decision{}, shopErr
+	}
+	shopComplete = complete
+	shopDetail = detail
+	if shopDecision != nil {
+		return *shopDecision, nil
+	}
+
 	buildDecision, buildComplete, buildDetail, err := evaluateAutoStormBuild(snapshot, settings, castle, metrics)
 	if err != nil {
 		return Decision{}, err
 	}
 	if buildDecision != nil {
 		return *buildDecision, nil
-	}
-
-	shopComplete := len(settings.Aquamarine.Purchases) == 0
-	shopDetail := ""
-	if buildComplete {
-		shopDecision, complete, detail, shopErr := evaluateAutoStormShop(snapshot, settings, castle, metrics)
-		if shopErr != nil {
-			return Decision{}, shopErr
-		}
-		shopComplete = complete
-		shopDetail = detail
-		if shopDecision != nil {
-			return *shopDecision, nil
-		}
 	}
 
 	details := make([]string, 0, 4)
@@ -252,9 +260,9 @@ func defaultAutoStormSettings() autoStormSettings {
 			Resources: []string{"wood", "stone", "aquamarine"}, Sizes: []string{"large", "small"},
 			DefenseUnits: []autoStormDefenseUnit{},
 		},
-		TroopImport: autoStormTroopImportSettings{DonorCastleIDs: []State.CastleID{}},
-		Aquamarine:  autoStormAquamarineSettings{Purchases: []autoStormShopPurchase{}},
-		CombatOrder: "forts_first", CheckIntervalSec: 30, MapRefreshIntervalSec: autoStormMapRefreshSeconds,
+		TroopImport:    autoStormTroopImportSettings{DonorCastleIDs: []State.CastleID{}},
+		Aquamarine:     autoStormAquamarineSettings{Purchases: []autoStormShopPurchase{}},
+		TargetPriority: nil, CheckIntervalSec: 30, MapRefreshIntervalSec: autoStormMapRefreshSeconds,
 		HorseTravelBoostID: -1,
 	}
 }
@@ -301,10 +309,7 @@ func normalizeAutoStormSettings(settings *autoStormSettings) {
 	settings.DecorationPresetID = strings.TrimSpace(settings.DecorationPresetID)
 	settings.Forts.PresetID = strings.TrimSpace(settings.Forts.PresetID)
 	settings.Islands.PresetID = strings.TrimSpace(settings.Islands.PresetID)
-	settings.CombatOrder = strings.ToLower(strings.TrimSpace(settings.CombatOrder))
-	if settings.CombatOrder != "forts_first" && settings.CombatOrder != "islands_first" && settings.CombatOrder != "nearest" {
-		settings.CombatOrder = "forts_first"
-	}
+	settings.TargetPriority = normalizeAutoStormTargetPriority(settings.TargetPriority, settings.LegacyCombatOrder)
 	if settings.CheckIntervalSec < 30 || settings.CheckIntervalSec > 3600 {
 		settings.CheckIntervalSec = 30
 	}
@@ -786,7 +791,7 @@ func autoStormExpansionPaymentUnavailable(preview Buildings.ExpansionPreviewResu
 
 func autoStormExpansionActionAllowed(action Buildings.ExpansionAction, settings autoStormSettings) bool {
 	switch action.Intent {
-	case "resource.logistics.refresh", "resource.kingdom.ship":
+	case "resource.logistics.refresh", "resource.ship", "resource.kingdom.ship":
 		return settings.Build.AllowResourceTransport
 	case "resource.kingdom.skip":
 		return settings.Build.AllowResourceTransport && settings.Build.AllowTimeSkips
@@ -956,16 +961,16 @@ func autoStormTargetTransportDecision(
 	if !observed || !unlock.Unlocked {
 		return nil, "Kingdom resource transport to Storm is not unlocked"
 	}
-	for _, pending := range snapshot.State.KingdomTransport.Pending {
-		if pending.KingdomID != castle.KingdomID || pending.RemainingSec <= 0 {
-			continue
-		}
-		if settings.Build.AllowTimeSkips {
+	if pending, found := pendingKingdomResourceTransport(snapshot.State, castle.KingdomID); found {
+		if pending.RemainingSec > 0 && settings.Build.AllowTimeSkips {
 			if key, _, reserve, found := autoStormTransportTimeSkip(snapshot.State, settings.Build.TimeSkipReserve, pending.RemainingSec); found {
 				return autoStormIntentDecision(snapshot.Now, metrics, "Advance the pending Storm resource shipment", "resource.kingdom.skip", map[string]any{
 					"targetKingdomId": castle.KingdomID, "timeSkipId": key, "minimumRemaining": reserve,
 				}), ""
 			}
+		}
+		if pending.RemainingSec <= 0 {
+			return nil, "Waiting for the pending Storm resource shipment to settle"
 		}
 		return nil, fmt.Sprintf("Waiting for the pending Storm resource shipment (%d seconds)", pending.RemainingSec)
 	}
@@ -999,8 +1004,8 @@ func autoStormTargetTransportDecision(
 		if len(goods) == 0 {
 			continue
 		}
-		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Transport resources from %s toward the Storm target", autoStormCastleName(source)), "resource.kingdom.ship", map[string]any{
-			"sourceCastleId": source.ID, "targetCastleId": castle.ID, "targetKingdomId": castle.KingdomID, "goods": goods,
+		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Transport resources from %s toward the Storm target", autoStormCastleName(source)), "resource.ship", map[string]any{
+			"sourceCastleId": source.ID, "targetCastleId": castle.ID, "goods": goods,
 		}), ""
 	}
 	return nil, "No owned castle can currently supply the missing Storm building resources"
@@ -1140,14 +1145,6 @@ func evaluateAutoStormShop(
 	if settings.Aquamarine.Reserve < 0 {
 		return nil, false, "Aquamarine reserve cannot be negative", nil
 	}
-	shopTableID := settings.Aquamarine.ShopTableID
-	if shopTableID <= 0 {
-		shopTableID = snapshot.State.Storm.LunaShopTableID
-	}
-	if shopTableID <= 0 {
-		return nil, false, "Luna shop table ID has not been captured", nil
-	}
-	metrics["lunaShopTableId"] = float64(shopTableID)
 	if snapshot.State.Inventory.ConstructionOffersCastleID != castle.ID ||
 		snapshot.State.Inventory.ConstructionOffersKingdomID != castle.KingdomID ||
 		snapshot.State.Inventory.ConstructionOffersObservedAt.IsZero() ||
@@ -1168,10 +1165,20 @@ func evaluateAutoStormShop(
 		return leftPriority < rightPriority
 	})
 	aquamarine := int64(math.Floor(castle.Resources[State.ResourceID(GameData.StormAquamarineID)].Amount))
+	spendable := aquamarine - settings.Aquamarine.Reserve
+	purchases := make([]autoStormShopPurchaseLine, 0, len(rules))
+	purchaseLabels := make([]string, 0, len(rules))
+	totalCost := int64(0)
+	includesUnlimited := false
+	seenPackages := map[State.PackageID]struct{}{}
 	for _, rule := range rules {
 		if rule.PackageID <= 0 || (!rule.Unlimited && rule.TargetPurchases <= 0) {
 			continue
 		}
+		if _, duplicate := seenPackages[rule.PackageID]; duplicate {
+			continue
+		}
+		seenPackages[rule.PackageID] = struct{}{}
 		item, found := snapshot.GameData.StormShopPackage(int64(rule.PackageID))
 		if !found {
 			return nil, false, fmt.Sprintf("Configured package %d is not sold by Luna", rule.PackageID), nil
@@ -1180,37 +1187,77 @@ func evaluateAutoStormShop(
 		if item.Stock > 0 && purchased >= item.Stock {
 			continue
 		}
+		remaining := int64(0)
 		if !rule.Unlimited {
 			if purchased >= rule.TargetPurchases {
 				continue
 			}
-			metrics["shopPurchasesRemaining"] = float64(rule.TargetPurchases - purchased)
+			remaining = rule.TargetPurchases - purchased
+			metrics["shopPurchasesRemaining"] = float64(remaining)
 		} else {
 			metrics["shopPurchaseUnlimited"] = 1
 			if item.Stock > 0 {
-				metrics["shopPurchasesRemaining"] = float64(item.Stock - purchased)
+				remaining = item.Stock - purchased
+				metrics["shopPurchasesRemaining"] = float64(remaining)
 			}
 		}
-		if aquamarine-item.AquamarinePrice < settings.Aquamarine.Reserve {
-			return nil, false, fmt.Sprintf("Waiting for %d Aquamarine above reserve to buy %s", item.AquamarinePrice, item.Name), nil
+		affordable := spendable / item.AquamarinePrice
+		if affordable <= 0 {
+			if len(purchases) == 0 {
+				return nil, false, fmt.Sprintf("Waiting for %d Aquamarine above reserve to buy %s", item.AquamarinePrice, item.Name), nil
+			}
+			break
 		}
-		arguments, _ := json.Marshal(map[string]any{
-			"castleId": castle.ID, "productId": rule.PackageID, "tableId": shopTableID,
-			"amount": 1, "aquamarineReserve": settings.Aquamarine.Reserve,
-		})
-		followUp, _ := json.Marshal(map[string]any{"castleId": castle.ID, "kingdomId": castle.KingdomID})
-		detail := fmt.Sprintf("Buy %s from Luna for %d Aquamarine", item.Name, item.AquamarinePrice)
+		desired := remaining
+		if item.Stock > 0 {
+			stockRemaining := item.Stock - purchased
+			if desired == 0 || desired > stockRemaining {
+				desired = stockRemaining
+			}
+		}
+		amount := affordable
+		if desired > 0 && amount > desired {
+			amount = desired
+		}
+		if amount <= 0 {
+			continue
+		}
+		cost := amount * item.AquamarinePrice
+		purchases = append(purchases, autoStormShopPurchaseLine{ProductID: rule.PackageID, Amount: amount})
+		purchaseLabels = append(purchaseLabels, fmt.Sprintf("%d x %s", amount, item.Name))
+		totalCost += cost
+		spendable -= cost
 		if rule.Unlimited {
-			detail += " (unlimited goal)"
+			includesUnlimited = true
 		}
-		return &Decision{
-			Status: "ready", Detail: detail,
-			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
-			Request:  &Intent.Request{Name: "storm.shop.purchase", Arguments: arguments},
-			FollowUp: &Intent.Request{Name: "shop.package.history", Arguments: followUp}, ReevaluateOnSuccess: true,
-		}, false, "", nil
+		if (desired > 0 && amount < desired) || (rule.Unlimited && item.Stock <= 0) {
+			break
+		}
 	}
-	return nil, true, "Aquamarine shop goals complete", nil
+	if len(purchases) == 0 {
+		return nil, true, "Aquamarine shop goals complete", nil
+	}
+	arguments, _ := json.Marshal(map[string]any{
+		"castleId": castle.ID, "purchases": purchases, "aquamarineReserve": settings.Aquamarine.Reserve,
+	})
+	followUp, _ := json.Marshal(map[string]any{"castleId": castle.ID, "kingdomId": castle.KingdomID})
+	detail := fmt.Sprintf("Buy %s from Luna for %d Aquamarine", autoStormShopFriendlyList(purchaseLabels), totalCost)
+	if includesUnlimited {
+		detail += " (unlimited goal)"
+	}
+	return &Decision{
+		Status: "ready", Detail: detail,
+		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
+		Request:  &Intent.Request{Name: "storm.shop.purchase", Arguments: arguments},
+		FollowUp: &Intent.Request{Name: "shop.package.history", Arguments: followUp}, ReevaluateOnSuccess: true,
+	}, false, "", nil
+}
+
+func autoStormShopFriendlyList(values []string) string {
+	if len(values) == 1 {
+		return values[0]
+	}
+	return strings.Join(values[:len(values)-1], ", ") + " and " + values[len(values)-1]
 }
 
 func autoStormIslandReturnDecision(
@@ -1321,7 +1368,7 @@ func evaluateAutoStormCombat(
 	if restricted && len(commanderIDs) == 0 {
 		return nil, "No commanders are assigned to Auto Storm", nil
 	}
-	if !hasAvailableFeatureCommander(snapshot.State, commanderIDs, restricted) {
+	if !hasAvailableFeatureCommander(snapshot.State, commanderIDs, restricted, snapshot.Now) {
 		return nil, "No assigned Auto Storm commander is currently available", nil
 	}
 	candidates := autoStormCombatCandidates(snapshot, settings, castle, mapState.LastCompletedAt)
@@ -1333,6 +1380,11 @@ func evaluateAutoStormCombat(
 		}
 		return nil, "No eligible Storm fort or resource island is available in the latest map scan", nil
 	}
+	if _, blocked := dailyAttackLimitAllowance(
+		snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, 30), metrics,
+	); blocked != nil {
+		return nil, blocked.Detail, nil
+	}
 	waitingDetail := ""
 	for _, candidate := range candidates {
 		preset, found := AttackPresets.Find(document, candidate.PresetID)
@@ -1343,6 +1395,23 @@ func evaluateAutoStormCombat(
 		required, valid := autoStormPresetRequirements(preset, defense)
 		if !valid {
 			continue
+		}
+		if autoStormTargetNeedsVerification(candidate.Observation, snapshot.Now) {
+			metrics["stormTargetVerification"] = 1
+			return autoStormIntentDecision(
+				snapshot.Now,
+				metrics,
+				fmt.Sprintf("Refresh Storm target %d:%d before attack", candidate.Observation.X, candidate.Observation.Y),
+				"storm.map.scan",
+				map[string]any{
+					"sourceCastleId": castle.ID,
+					"targeted":       true,
+					"bounds": State.StormMapBounds{
+						X1: candidate.Observation.X, Y1: candidate.Observation.Y,
+						X2: candidate.Observation.X, Y2: candidate.Observation.Y,
+					},
+				},
+			), "", nil
 		}
 		shortages := autoStormUnitShortages(required, castle)
 		if len(shortages) > 0 {
@@ -1361,6 +1430,7 @@ func evaluateAutoStormCombat(
 			"stormIsleId": candidate.Observation.StormIsleID, "victoryCount": candidate.Observation.StormVictoryCount,
 			"preset":             preset,
 			"horseTravelBoostId": settings.HorseTravelBoostID,
+			"dailyAttackLimit":   settings.DailyAttackLimit,
 		}
 		if candidate.Definition.Kind == GameData.StormIsleKindFort {
 			arguments["minimumVictoryCount"] = settings.Forts.MinimumWins
@@ -1404,7 +1474,8 @@ func autoStormCombatCandidates(
 ) []autoStormCombatCandidate {
 	active := autoStormActiveTargets(snapshot.State, castle.ID, snapshot.Now)
 	result := make([]autoStormCombatCandidate, 0)
-	for _, target := range snapshot.State.Storm.Map.Targets {
+	for _, scannedTarget := range snapshot.State.Storm.Map.Targets {
+		target := autoStormLatestTargetObservation(snapshot.State, scannedTarget)
 		if _, busy := active[fmt.Sprintf("%d:%d", target.X, target.Y)]; busy {
 			continue
 		}
@@ -1419,8 +1490,8 @@ func autoStormCombatCandidates(
 		result = append(result, candidate)
 	}
 	sort.Slice(result, func(left, right int) bool {
-		leftRank := autoStormCombatKindRank(settings.CombatOrder, result[left].Definition.Kind)
-		rightRank := autoStormCombatKindRank(settings.CombatOrder, result[right].Definition.Kind)
+		leftRank := autoStormTargetPriorityRank(settings.TargetPriority, result[left].Definition)
+		rightRank := autoStormTargetPriorityRank(settings.TargetPriority, result[right].Definition)
 		if leftRank != rightRank {
 			return leftRank < rightRank
 		}
@@ -1449,7 +1520,8 @@ func autoStormCombatCandidates(
 func autoStormNextOpportunityAt(snapshot Snapshot, settings autoStormSettings, castle State.CastleState) time.Time {
 	active := autoStormActiveTargets(snapshot.State, castle.ID, snapshot.Now)
 	next := time.Time{}
-	for _, target := range snapshot.State.Storm.Map.Targets {
+	for _, scannedTarget := range snapshot.State.Storm.Map.Targets {
+		target := autoStormLatestTargetObservation(snapshot.State, scannedTarget)
 		if _, busy := active[fmt.Sprintf("%d:%d", target.X, target.Y)]; busy {
 			continue
 		}
@@ -1521,20 +1593,76 @@ func autoStormStringSelected(values []string, candidate string) bool {
 	return false
 }
 
-func autoStormCombatKindRank(order string, kind string) int {
-	if order == "nearest" {
-		return 0
+func defaultAutoStormTargetPriority() []string {
+	return []string{
+		"fort:80", "fort:70", "fort:60", "fort:50", "fort:40",
+		"island:large", "island:small",
 	}
-	if order == "islands_first" {
-		if kind == GameData.StormIsleKindIsland {
-			return 0
+}
+
+func normalizeAutoStormTargetPriority(priority []string, legacyOrder string) []string {
+	fallback := defaultAutoStormTargetPriority()
+	if len(priority) == 0 && strings.EqualFold(strings.TrimSpace(legacyOrder), "islands_first") {
+		fallback = []string{
+			"island:large", "island:small",
+			"fort:80", "fort:70", "fort:60", "fort:50", "fort:40",
 		}
-		return 1
 	}
-	if kind == GameData.StormIsleKindFort {
-		return 0
+	allowed := make(map[string]struct{}, len(fallback))
+	for _, id := range defaultAutoStormTargetPriority() {
+		allowed[id] = struct{}{}
 	}
-	return 1
+	result := make([]string, 0, len(allowed))
+	seen := make(map[string]struct{}, len(allowed))
+	appendID := func(raw string) {
+		id := strings.ToLower(strings.TrimSpace(raw))
+		if _, valid := allowed[id]; !valid {
+			return
+		}
+		if _, duplicate := seen[id]; duplicate {
+			return
+		}
+		seen[id] = struct{}{}
+		result = append(result, id)
+	}
+	for _, id := range priority {
+		appendID(id)
+	}
+	for _, id := range fallback {
+		appendID(id)
+	}
+	return result
+}
+
+func autoStormTargetPriorityRank(priority []string, definition GameData.StormIsleDefinition) int {
+	if len(priority) == 0 {
+		priority = defaultAutoStormTargetPriority()
+	}
+	id := ""
+	switch definition.Kind {
+	case GameData.StormIsleKindFort:
+		id = autoStormPriorityFortPrefix + strconv.Itoa(definition.Level)
+	case GameData.StormIsleKindIsland:
+		id = autoStormPriorityIslandPrefix + strings.ToLower(strings.TrimSpace(definition.Size))
+	}
+	for rank, candidate := range priority {
+		if candidate == id {
+			return rank
+		}
+	}
+	return len(priority)
+}
+
+func autoStormLatestTargetObservation(state State.GameState, scanned State.MapObservation) State.MapObservation {
+	key := fmt.Sprintf("%d:%d", scanned.X, scanned.Y)
+	if current, found := state.Map[scanned.KingdomID][key]; found && current.ObservedAt.After(scanned.ObservedAt) {
+		return current
+	}
+	return scanned
+}
+
+func autoStormTargetNeedsVerification(target State.MapObservation, now time.Time) bool {
+	return target.ObservedAt.IsZero() || now.After(target.ObservedAt.Add(autoStormTargetVerificationAge))
 }
 
 func autoStormPresetRequirements(preset AttackPresets.Preset, defense []autoStormDefenseUnit) (map[State.UnitID]int64, bool) {

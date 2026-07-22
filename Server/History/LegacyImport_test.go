@@ -6,6 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/State"
 )
 
 func TestReadAcceptsEarlierHistoryEnvelopeSchema(t *testing.T) {
@@ -72,6 +75,57 @@ func TestOpenImportsChangedLegacyPlayerTrackerWithoutDuplicates(t *testing.T) {
 	contents, err := os.ReadFile(sourcePath)
 	if err != nil || string(contents) != second {
 		t.Fatal("legacy player tracker was modified")
+	}
+}
+
+func TestPlayerSamplesForAccountScopesHistoryByUID(t *testing.T) {
+	store, err := Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, sample := range []PlayerSample{
+		{TimestampUnix: 100, UID: 11, PlayerID: 7, Might: 100},
+		{TimestampUnix: 110, UID: 22, PlayerID: 8, Might: 200},
+		{TimestampUnix: 120, PlayerID: 7, Might: 110},
+	} {
+		if err := store.Append(CollectionPlayerSamples, sample); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	samples, err := store.PlayerSamplesForAccount(time.Time{}, 10, 11, 7)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(samples) != 2 || samples[0].Might != 100 || samples[1].Might != 110 {
+		t.Fatalf("UID 11 history = %+v", samples)
+	}
+	for _, sample := range samples {
+		if sample.UID != 11 || sample.PlayerID != 7 {
+			t.Fatalf("history sample was not attached to UID 11: %+v", sample)
+		}
+	}
+}
+
+func TestNormalizePlayerSampleTroopsExcludesTools(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":{},
+		"buildings":[{"wodID":1}],
+		"units":[{"wodID":10,"slotTypes":[]},{"wodID":20,"slotTypes":[1]}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	catalog, err := gameData.Catalog("units")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sample := normalizePlayerSampleTroops(PlayerSample{
+		TroopsTotal:  60,
+		TroopsByUnit: map[string]int64{"10": 10, "20": 20, "30": 30},
+	}, &troopClassifier{catalog: catalog, cache: map[State.UnitID]bool{}, enabled: true})
+	if sample.TroopsTotal != 10 || len(sample.TroopsByUnit) != 1 || sample.TroopsByUnit["10"] != 10 {
+		t.Fatalf("troop-only sample = %+v", sample)
 	}
 }
 

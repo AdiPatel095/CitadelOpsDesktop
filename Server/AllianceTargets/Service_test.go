@@ -47,14 +47,15 @@ func TestServiceLoadsTopAllianceTargets(t *testing.T) {
 	gameState.Session.ServerURL = "wss://ep-live-us1-game.example.test/socket"
 	gameState.Castles[100] = State.CastleState{ID: 100, KingdomID: 0, SlotType: 1, Name: "Main", X: 10, Y: 10}
 
-	view, err := service.View(t.Context(), gameState, nil, "", "101000", false)
+	view, err := service.View(t.Context(), gameState, nil, "", "101000", false, Query{IncludeAlliances: true})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if view.Server != "US1" || len(view.Alliances) != 50 || view.SelectedAlliance == nil || view.SelectedAlliance.AllianceID != 101 {
 		t.Fatalf("alliance view = %+v", view)
 	}
-	if len(view.Targets) != 1 || view.Targets[0].PlayerID != 7 || view.Targets[0].Distance != 5 {
+	if len(view.Targets) != 1 || view.TotalTargets != 1 || view.Page != 1 || view.PageCount != 1 ||
+		view.Targets[0].Name != "Target" || view.Targets[0].Distance != 5 {
 		t.Fatalf("target view = %+v", view.Targets)
 	}
 }

@@ -33,6 +33,7 @@ type Request struct {
 type PlanningContext struct {
 	State           State.GameState
 	GameData        *GameData.Store
+	Language        *GameData.LanguageStore
 	Partitions      State.PartitionVersions
 	ProtocolContext State.ProtocolContextState
 }

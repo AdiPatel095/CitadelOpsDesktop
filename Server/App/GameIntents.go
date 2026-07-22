@@ -20,6 +20,12 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("attack.cra.send.guard", application.guardCRASend); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("attack.daily_limit.guard", application.guardDailyAttackLimit); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("event.ranking.begin", application.beginEventRankingRefresh); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("defense.verify_refresh", application.verifyDefenseRefresh); err != nil {
 		return err
 	}
@@ -53,10 +59,19 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("attack.inventory.guard", application.guardCRAInventory); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("attack.analytics.capture", application.captureAttackFeatureLaunch); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("movement.track_station", application.trackStationMovement); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("troops.kingdom.consume_source", application.consumeKingdomTroopSource); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("resources.kingdom.consume_source", application.consumeKingdomResourceSource); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("resources.kingdom.complete_workflow", application.completeKingdomResourceWorkflow); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("equipment.verify_coin_reserve", application.verifyEquipmentCoinReserve); err != nil {
@@ -66,6 +81,15 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	if err := application.Intents.RegisterAction("alliance.help.mark_requested", application.markAllianceHelpRequested); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterStepResolver("alliance.help.build", application.resolveAllianceHelpRequestStep); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("production.enqueue.verify_capacity", application.verifyProductionQueueCapacity); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("kingdom.transport.verify_available", application.verifyKingdomTransportAvailable); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("beri.consume_capacity", application.consumeBeriCapacity); err != nil {
@@ -83,7 +107,16 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("tower.queue.consume", application.consumeTowerQueueEntry); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("tower.queue.defer", application.deferTowerQueueEntry); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("tower.queue.rotate_stale", application.rotateStaleTowerQueueEntry); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("tower.attack.guard", application.guardTowerAttackInventory); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("tower.capacity.capture", application.captureTowerCapacity); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterStepResolver("tower.attack.build", application.resolveTowerAttackStep); err != nil {
@@ -95,10 +128,16 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("invasion.attack.guard", application.guardInvasionAttack); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("invasion.target.guard", application.guardInvasionTarget); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("invasion.fortify.guard", application.guardInvasionFortify); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterStepResolver("invasion.attack.build", application.resolveInvasionAttackStep); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("invasion.attack.capture", application.captureInvasionLaunch); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("invasion.target.consume", application.consumeInvasionTarget); err != nil {
@@ -122,6 +161,9 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("nomad.attack.arrival.guard", application.guardNomadChainArrival); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("nomad.attack.capture", application.captureNomadCampLaunch); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("nomad.cooldown.guard", application.guardNomadCooldownSkip); err != nil {
 		return err
 	}
@@ -135,6 +177,9 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	if err := application.Intents.RegisterStepResolver("nomad.attack.build", application.resolveNomadCampAttackStep); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterStepResolver("advisor.attack.build", application.resolveAdvisorAttackStep); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("nomad.rbc_test.begin", application.beginNomadRBCTest); err != nil {
@@ -246,12 +291,16 @@ func (application *Application) registerGameIntents() error {
 			Planner: planEquipmentSell,
 		},
 		{
-			Name: "game.focus_castle", Description: "Focus and refresh one of the player's castles", Effect: Intent.EffectRead,
+			Name: "game.focus_castle", Description: "Focus one of the player's castles when it is not already focused", Effect: Intent.EffectRead,
 			Planner: planCastleFocus,
 		},
 		{
 			Name: "defense.refresh", Description: "Refresh one castle's defense setup and current troop/tool inventory", Effect: Intent.EffectRead,
 			Planner: planDefenseRefresh,
+		},
+		{
+			Name: "defense.open_gate", Description: "Open an owned Great Empire castle's gates for six hours", Effect: Intent.EffectWrite,
+			Planner: planDefenseOpenGate,
 		},
 		{
 			Name: "defense.keep.update", Description: "Apply and read back captured DFK scalar settings while preserving unconfirmed S/STS rows", Effect: Intent.EffectWrite,
@@ -331,6 +380,10 @@ func (application *Application) registerGameIntents() error {
 			Planner: planResourceLogisticsRefresh,
 		},
 		{
+			Name: "resource.ship", Description: "Send resources between owned castles using the transport mode required by their kingdoms", Effect: Intent.EffectLaunch,
+			Planner: planResourceShipment,
+		},
+		{
 			Name: "resource.market.ship", Description: "Send a validated same-kingdom market shipment between owned castles", Effect: Intent.EffectLaunch,
 			Planner: planMarketResourceShipment,
 		},
@@ -341,6 +394,10 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "resource.kingdom.skip", Description: "Apply an available official time skip to a pending kingdom-resource shipment", Effect: Intent.EffectWrite,
 			Planner: planKingdomResourceSkip,
+		},
+		{
+			Name: "resource.kingdom.settle", Description: "Refresh an automation-owned kingdom-resource destination after delivery", Effect: Intent.EffectRead,
+			Planner: planKingdomResourceSettlement,
 		},
 		{
 			Name: "production.enqueue", Description: "Enqueue an official troop or tool definition using observed production context", Effect: Intent.EffectWrite,
@@ -361,6 +418,10 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "tower.queue.scan", Description: "Focus one configured castle, refresh its tower map, and capture a fresh target batch", Effect: Intent.EffectRead,
 			Planner: planTowerQueueScan,
+		},
+		{
+			Name: "tower.queue.target.refresh", Description: "Refresh one queued tower and rotate it behind other targets when the response remains stale", Effect: Intent.EffectRead,
+			Planner: planTowerQueueTargetRefresh,
 		},
 		{
 			Name: "tower.context.refresh", Description: "Refresh selected kingdom-tower attack context and saved formations", Effect: Intent.EffectRead,
@@ -418,6 +479,23 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "nomad.cooldown.minute_skip", Description: "Apply an inventory time skip to a tower, Nomad, or Samurai cooldown", Effect: Intent.EffectWrite,
 			Planner: planDungeonMinuteSkip,
+		},
+		{
+			Name: "advisor.activate", Description: "Explicitly consume one available event advisor token after confirmation", Effect: Intent.EffectWrite,
+			Planner: planAdvisorActivation,
+		},
+		{
+			Name: "advisor.overview.refresh", Description: "Refresh cumulative advisor gains, costs, losses, wins, and remaining attacks", Effect: Intent.EffectRead,
+			Planner: planAdvisorOverview,
+		},
+		{
+			Name: "event.ranking.refresh", Description: "Fetch the active Nomad alliance leaderboard from GGE", Effect: Intent.EffectRead,
+			Planner: planEventRankingRefresh,
+		},
+		{
+			Name: "advisor.run.launch", Description: "Launch one guarded server-managed Nomad or Samurai advisor run", Effect: Intent.EffectLaunch,
+			AttackModule: &Intent.AttackModuleDefinition{ID: "autoAdvisor", Label: "Auto Advisor", Description: "Server-managed Nomad and Samurai advisor attack runs", DefaultWeight: 50},
+			Planner:      planAdvisorAttack,
 		},
 		{
 			Name: "khan.attack", Description: "Launch one guarded attack against the active Nomad Khan camp", Effect: Intent.EffectLaunch,
@@ -509,6 +587,9 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 	if !ok || request.CastleID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
 	}
+	if !castle.SupportsSovereignCrafting() {
+		return Intent.Plan{}, fmt.Errorf("castle %d is a sovereign-resource storage node, not a crafting castle", request.CastleID)
+	}
 	building, ok := castle.Crafting.Buildings[request.BuildingInstanceID]
 	if !ok || request.BuildingInstanceID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("crafting building %d is not in castle %d", request.BuildingInstanceID, request.CastleID)
@@ -545,6 +626,9 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 			return Intent.Plan{}, fmt.Errorf("crafting recipe %d is not valid for building definition %d", request.RecipeID, building.DefinitionID)
 		}
 	}
+	if err := validateCraftingStartAvailability(input.State, input.GameData, castle, building, request.RecipeID); err != nil {
+		return Intent.Plan{}, err
+	}
 	payload, _ := json.Marshal(struct {
 		KingdomID  State.KingdomID          `json:"KID"`
 		CastleID   State.CastleID           `json:"AID"`
@@ -556,6 +640,7 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 		Claims: []string{
 			"castle:" + strconv.FormatInt(int64(castle.ID), 10),
 			"crafting-building:" + strconv.FormatInt(int64(building.InstanceID), 10),
+			"account-resources",
 		},
 		Summary: fmt.Sprintf("Queue crafting recipe %d at %s", request.RecipeID, castleLabel(castle)),
 		Steps:   []Intent.Step{commandStep("Queue crafting recipe", "crst", payload, "crst")},
@@ -575,7 +660,7 @@ func planCastleFocus(_ context.Context, input Intent.PlanningContext, arguments 
 	}
 	return Intent.Plan{
 		Claims: []string{"castle-focus"}, Summary: fmt.Sprintf("Focus %s", castleLabel(castle)),
-		Steps: []Intent.Step{castleFocusStep(castle)},
+		Steps: castleContextSteps(castle),
 	}, nil
 }
 
@@ -654,7 +739,7 @@ func planMapQuery(_ context.Context, _ Intent.PlanningContext, arguments json.Ra
 		Y2        int             `json:"AY2"`
 	}{request.KingdomID, request.X1, request.Y1, request.X2, request.Y2})
 	return Intent.Plan{
-		Claims:  []string{"map:" + strconv.FormatInt(int64(request.KingdomID), 10)},
+		Claims:  []string{"castle-focus", "map:" + strconv.FormatInt(int64(request.KingdomID), 10)},
 		Summary: fmt.Sprintf("Query map %d (%d,%d)-(%d,%d)", request.KingdomID, request.X1, request.Y1, request.X2, request.Y2),
 		Steps:   []Intent.Step{commandStep("Query map", "gaa", payload, "gaa")},
 	}, nil
@@ -751,8 +836,16 @@ func validatedConstructionEquipContext(input Intent.PlanningContext, request con
 		input.State.Inventory.ConstructionItems[request.DefinitionID] <= 0 {
 		return State.CastleState{}, fmt.Errorf("construction item %d is not in observed inventory", request.DefinitionID)
 	}
-	if requireFreeSlot && hasEquippedConstructionItem(castle.ConstructionSlots[request.BuildingInstanceID]) {
-		return State.CastleState{}, fmt.Errorf("building %d already has a construction item equipped", request.BuildingInstanceID)
+	targetSlot := request.Slot
+	if slotType, exists := item.Int64("slotTypeID"); exists {
+		targetSlot = int(slotType)
+	}
+	if requireFreeSlot && hasEquippedConstructionItemInSlot(
+		castle.ConstructionSlots[request.BuildingInstanceID], catalog, targetSlot,
+	) {
+		return State.CastleState{}, fmt.Errorf(
+			"building %d already has a construction item equipped in slot %d", request.BuildingInstanceID, targetSlot,
+		)
 	}
 	return castle, nil
 }
@@ -914,8 +1007,26 @@ func constructionClaims(castleID State.CastleID, buildingID State.BuildingInstan
 	}
 }
 
-func hasEquippedConstructionItem(slots []State.ConstructionSlot) bool {
-	return len(slots) > 0
+func hasEquippedConstructionItemInSlot(slots []State.ConstructionSlot, catalog *GameData.Catalog, targetSlot int) bool {
+	for _, slot := range slots {
+		raw, exists := catalog.Find(strconv.FormatInt(int64(slot.DefinitionID), 10))
+		if !exists {
+			return true
+		}
+		item, err := GameData.DecodeRecord(raw)
+		if err != nil {
+			return true
+		}
+		slotType, exists := item.Int64("slotTypeID")
+		if exists && int(slotType) != targetSlot {
+			continue
+		}
+		if GameData.ConstructionItemIsTemporary(item) && slot.RemainingSec != nil && *slot.RemainingSec <= 0 {
+			continue
+		}
+		return true
+	}
+	return false
 }
 
 func castleLabel(castle State.CastleState) string {

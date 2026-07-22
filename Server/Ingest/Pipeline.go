@@ -260,7 +260,11 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 		currentData, _ = pipeline.gameData.Current()
 	}
 	reducer := pipeline.registry.reducer(frame.Opcode, frame.Direction)
-	event, err := pipeline.state.ApplyScoped(func(gameState *State.GameState) (State.ScopedChange, error) {
+	applyScoped := pipeline.state.ApplyScopedWithoutMapMutation
+	if frameMutatesWorldMap(frame) {
+		applyScoped = pipeline.state.ApplyScoped
+	}
+	event, err := applyScoped(func(gameState *State.GameState) (State.ScopedChange, error) {
 		if validateErr := validateCommit(gameState, false); validateErr != nil {
 			return State.ScopedChange{}, validateErr
 		}
@@ -291,7 +295,7 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			return Protocol.CommittedFrame{}, err
 		}
 		reduceErr := err
-		event, err = pipeline.state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		event, err = pipeline.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 			if validateErr := validateCommit(gameState, false); validateErr != nil {
 				return nil, false, validateErr
 			}
@@ -321,6 +325,18 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 		pipeline.telemetry.Record(committed, nil)
 	}
 	return committed, nil
+}
+
+func frameMutatesWorldMap(frame Protocol.Frame) bool {
+	if frame.Direction != Protocol.DirectionInbound {
+		return false
+	}
+	switch strings.ToLower(strings.TrimSpace(frame.Opcode)) {
+	case "gaa", "ssi", "adi":
+		return true
+	default:
+		return false
+	}
 }
 
 func observationAuthoritativePlayerID(frame Protocol.Frame) (State.PlayerID, bool) {
@@ -482,6 +498,10 @@ func recordObservation(gameState *State.GameState, frame Protocol.Frame, lastErr
 	observation.LastError = lastError
 	observation.LastSeenAt = frame.ReceivedAt
 	observation.LastRevision = gameState.Revision + 1
+	if frame.Direction == Protocol.DirectionInbound && frame.ResponseCode != nil && *frame.ResponseCode == 0 && lastError == "" {
+		observation.LastSuccessfulInboundAt = frame.ReceivedAt
+		observation.LastSuccessfulInboundRevision = gameState.Revision + 1
+	}
 	gameState.Observations[frame.Opcode] = observation
 }
 

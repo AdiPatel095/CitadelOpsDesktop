@@ -26,6 +26,35 @@ func TestPlanDefenseRefreshUsesCapturedDFCShape(t *testing.T) {
 	}
 }
 
+func TestPlanDefenseOpenGateUsesCapturedMOSShapeWithAutomationGuards(t *testing.T) {
+	gameState := defenseIntentState()
+	now := time.Now().UTC()
+	gameState.Player.ID = 7
+	gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
+		ModeState: 1, RemainingSec: 3600, ObservedAt: now,
+	}
+	castle := gameState.Castles[10]
+	castle.SlotType = 1
+	gameState.Castles[10] = castle
+	arrives := now.Add(time.Minute)
+	gameState.Movements[1] = State.MovementState{
+		ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7,
+		SourceTypeID: 1, SourceCastleID: 20, TargetTypeID: 1, TargetCastleID: 10, ArrivesAt: &arrives,
+	}
+	plan, err := planDefenseOpenGate(context.Background(), Intent.PlanningContext{State: gameState}, json.RawMessage(
+		`{"castleId":10,"requireIncomingAttack":true,"requireProtectionMode":true}`,
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 1 || plan.Steps[0].Command.Opcode != "mos" || plan.Steps[0].AwaitOpcode != "mos" {
+		t.Fatalf("Open Gate steps = %#v", plan.Steps)
+	}
+	if got := string(plan.Steps[0].Command.Payload); got != `{"CID":10,"KID":0,"CD":0}` {
+		t.Fatalf("MOS payload = %s", got)
+	}
+}
+
 func TestResolveDefenseKeepBuildsValidatedDFKPayload(t *testing.T) {
 	gameState := defenseIntentState()
 	now := time.Now().UTC()

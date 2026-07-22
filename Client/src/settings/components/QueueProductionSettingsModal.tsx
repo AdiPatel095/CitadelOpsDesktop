@@ -716,6 +716,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                       title: `Use separate ${kind === 'recruit' ? 'recruit units' : 'tools'} and schedules per castle`,
                     },
                   ]}
+                  size="body"
                   fullWidth
                 />
             </SectionCard>

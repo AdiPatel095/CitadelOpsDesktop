@@ -6,8 +6,10 @@ import {
   scheduleAllowsAt,
   type WeeklySchedule,
 } from './SchedulerTypes';
+import { useAuth } from '../context/AuthContext';
 
 export const AUTO_EQUIPMENT_CLEANUP_FEATURE_ID = 'autoEquipmentCleanup';
+export const AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY = 'auto_equipment_cleanup';
 
 const enabledStorageKey = 'equipmentAutoSellNonRelicEquipment';
 const intervalStorageKey = 'equipmentAutoSellNonRelicEquipmentIntervalMinutes';
@@ -22,9 +24,17 @@ export interface AutoEquipmentCleanupController {
 
 export function useAutoEquipmentCleanup(): AutoEquipmentCleanupController {
   const { state, configuration, submitIntent } = useCitadelAPI();
-  const [enabled, setEnabled] = useState(() => readBoolean(enabledStorageKey));
+  const { automationEnabledByKey, setAutomationEnabled } = useAuth();
+  const [legacyEnabled, setLegacyEnabled] = useState(() => readBoolean(enabledStorageKey));
   const [intervalMinutes, setIntervalMinutes] = useState(() => readInterval());
   const runningRef = useRef(false);
+  const hasSharedControl = Object.prototype.hasOwnProperty.call(
+    automationEnabledByKey,
+    AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY,
+  );
+  const enabled = hasSharedControl
+    ? automationEnabledByKey[AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY] === true
+    : legacyEnabled;
   const schedule = useMemo(() => (
     normalizeFeatureSchedules(configurationSection(configuration, 'scheduler').featureSchedules)[AUTO_EQUIPMENT_CLEANUP_FEATURE_ID]
   ), [configuration?.sections.scheduler]);
@@ -72,11 +82,16 @@ export function useAutoEquipmentCleanup(): AutoEquipmentCleanupController {
     setIntervalMinutes(clampInterval(minutes));
   }, []);
 
+  const updateEnabled = useCallback((value: boolean) => {
+    setLegacyEnabled(value);
+    void setAutomationEnabled(AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY, value);
+  }, [setAutomationEnabled]);
+
   return {
     enabled,
     intervalMinutes,
     schedule,
-    setEnabled,
+    setEnabled: updateEnabled,
     setIntervalMinutes: updateIntervalMinutes,
   };
 }

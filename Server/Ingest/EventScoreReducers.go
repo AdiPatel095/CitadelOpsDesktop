@@ -1,10 +1,12 @@
 package Ingest
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -15,19 +17,40 @@ import (
 )
 
 type eventPointScore struct {
-	Points wireInt64 `json:"OP"`
-	Rank   wireInt64 `json:"OR"`
+	Points      wireInt64 `json:"OP"`
+	Rank        wireInt64 `json:"OR"`
+	LeagueID    wireInt64 `json:"LID"`
+	RewardSetID wireInt64 `json:"RSID"`
+}
+
+func (score *eventPointScore) UnmarshalJSON(raw []byte) error {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || raw[0] != '{' {
+		*score = eventPointScore{}
+		return nil
+	}
+	type scoreAlias eventPointScore
+	var decoded scoreAlias
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		return err
+	}
+	*score = eventPointScore(decoded)
+	return nil
 }
 
 type scalableEventSnapshot struct {
-	EventID          wireInt64       `json:"EID"`
-	RemainingSec     wireInt64       `json:"RS"`
-	DifficultyID     wireInt64       `json:"EDID"`
-	AutoScaling      wireInt64       `json:"EASE"`
-	PlayerProgress   eventPointScore `json:"SP"`
-	AllianceProgress eventPointScore `json:"A"`
-	PackageIDs       string          `json:"PIDS"`
-	Packages         []wireInt64     `json:"PID"`
+	EventID           wireInt64       `json:"EID"`
+	RemainingSec      wireInt64       `json:"RS"`
+	DifficultyID      wireInt64       `json:"EDID"`
+	AutoScaling       wireInt64       `json:"EASE"`
+	PlayerProgress    eventPointScore `json:"SP"`
+	AllianceProgress  eventPointScore `json:"A"`
+	PackageIDs        string          `json:"PIDS"`
+	Packages          json.RawMessage `json:"PID"`
+	AdvisorCurrency   wireInt64       `json:"ACI"`
+	AdvisorActive     wireInt64       `json:"AAA"`
+	AdvisorFree       wireInt64       `json:"AAF"`
+	FortifyCurrencies []string        `json:"RCKS"`
 }
 
 func reduceScalableEventSnapshot(
@@ -74,6 +97,7 @@ func applyScalableEventSnapshot(
 		changed = true
 	}
 	activeEventID := int64(0)
+	fortifyCurrencies := []string{}
 	for _, event := range payload.Events {
 		if int64(event.AutoScaling) != 1 || int64(event.EventID) <= 0 {
 			continue
@@ -94,28 +118,64 @@ func applyScalableEventSnapshot(
 			PlayerRank:         int64(event.PlayerProgress.Rank),
 			AllianceRank:       int64(event.AllianceProgress.Rank),
 			RemainingSec:       int64(event.RemainingSec),
+			LeagueID:           int64(event.PlayerProgress.LeagueID),
+			AllianceLeagueID:   int64(event.AllianceProgress.LeagueID),
+			RewardSetID:        int64(event.PlayerProgress.RewardSetID),
+			AdvisorActive:      int64(event.AdvisorActive) == 1,
+			AdvisorCurrencyID:  State.CurrencyID(event.AdvisorCurrency),
+			AdvisorFree:        int64(event.AdvisorFree) == 1,
 			ObservedAt:         observedAt.UTC(),
 		}
 		if score.LocalizationKey == "" {
 			score.LocalizationKey = fmt.Sprintf("event_title_%d", eventID)
 		}
+		rewards := gameData.ScalableEventRewardProgress(
+			eventID, difficultyID, score.LeagueID, score.RewardSetID, score.PlayerScore,
+		)
+		score.RewardPagesReached = rewards.Reached
+		score.RewardPagesTotal = rewards.Total
+		score.NextRewardScore = rewards.NextScore
 		if previous, found := gameState.EventScores.ByEvent[eventID]; !found || previous != score {
 			gameState.EventScores.ByEvent[eventID] = score
 			changed = true
 		}
+		State.EnsureEventActivity(gameState, eventID, observedAt)
 		if activeEventID == 0 {
 			activeEventID = eventID
+			fortifyCurrencies = normalizedInvasionFortifyCurrencies(event.FortifyCurrencies)
 		}
 	}
 	if gameState.EventScores.ActiveEventID != activeEventID {
 		gameState.EventScores.ActiveEventID = activeEventID
 		changed = true
 	}
+	if !slices.Equal(gameState.Invasion.FortifyCurrencies, fortifyCurrencies) {
+		gameState.Invasion.FortifyCurrencies = fortifyCurrencies
+		changed = true
+	}
 	return changed, nil
 }
 
+func normalizedInvasionFortifyCurrencies(values []string) []string {
+	result := make([]string, 0, len(values))
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		value = strings.ToUpper(strings.TrimSpace(value))
+		if value == "" {
+			continue
+		}
+		if _, duplicate := seen[value]; duplicate {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	return result
+}
+
 func eventShopPackageIDs(event scalableEventSnapshot) []int64 {
-	result := make([]int64, 0, len(event.Packages)+8)
+	packageIDs := eventPackageWireIDs(event.Packages)
+	result := make([]int64, 0, len(packageIDs)+8)
 	seen := map[int64]struct{}{}
 	appendID := func(packageID int64) {
 		if packageID <= 0 {
@@ -127,7 +187,7 @@ func eventShopPackageIDs(event scalableEventSnapshot) []int64 {
 		seen[packageID] = struct{}{}
 		result = append(result, packageID)
 	}
-	for _, packageID := range event.Packages {
+	for _, packageID := range packageIDs {
 		appendID(int64(packageID))
 	}
 	for _, raw := range strings.Split(event.PackageIDs, ",") {
@@ -137,6 +197,18 @@ func eventShopPackageIDs(event scalableEventSnapshot) []int64 {
 		}
 	}
 	return result
+}
+
+func eventPackageWireIDs(raw json.RawMessage) []wireInt64 {
+	var packageIDs []wireInt64
+	if err := json.Unmarshal(raw, &packageIDs); err == nil {
+		return packageIDs
+	}
+	var packageID wireInt64
+	if err := json.Unmarshal(raw, &packageID); err == nil && packageID > 0 {
+		return []wireInt64{packageID}
+	}
+	return nil
 }
 
 func reduceEventPoints(
@@ -191,6 +263,12 @@ func reduceEventPoints(
 	if value, found := eventPointValue(payload.Ranks, 1); found {
 		score.AllianceRank = value
 	}
+	rewards := gameData.ScalableEventRewardProgress(
+		eventID, score.DifficultyID, score.LeagueID, score.RewardSetID, score.PlayerScore,
+	)
+	score.RewardPagesReached = rewards.Reached
+	score.RewardPagesTotal = rewards.Total
+	score.NextRewardScore = rewards.NextScore
 	if score.RemainingSec > 0 && !score.ObservedAt.IsZero() && frame.ReceivedAt.After(score.ObservedAt) {
 		score.RemainingSec = max(0, score.RemainingSec-int64(frame.ReceivedAt.Sub(score.ObservedAt).Seconds()))
 	}
@@ -218,5 +296,11 @@ func ensureEventScoreMap(gameState *State.GameState) {
 	}
 	if gameState.EventScores.ShopByPackage == nil {
 		gameState.EventScores.ShopByPackage = map[State.PackageID]State.EventShopRoute{}
+	}
+	if gameState.EventScores.ActivityByEvent == nil {
+		gameState.EventScores.ActivityByEvent = map[int64]State.EventActivityState{}
+	}
+	if gameState.EventScores.RankingByEvent == nil {
+		gameState.EventScores.RankingByEvent = map[int64]State.EventRankingState{}
 	}
 }

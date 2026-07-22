@@ -30,6 +30,61 @@ func TestConstructionPolicyUpgradesDueOfficialTier(t *testing.T) {
 	}
 }
 
+func TestConstructionPolicyWaitsUntilFiveMinutesRemainBeforeUpgrade(t *testing.T) {
+	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	gameState := constructionPolicyState(now)
+	remaining := 301
+	castle := gameState.Castles[10]
+	castle.ConstructionSlots[100] = []State.ConstructionSlot{{DefinitionID: 101, Slot: 0, RemainingSec: &remaining, Level: 1}}
+	gameState.Castles[10] = castle
+
+	decision, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Configuration: constructionPolicyConfiguration(),
+		GameData: constructionPolicyGameData(t), Now: now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil {
+		t.Fatalf("unexpected early upgrade decision: %+v", decision)
+	}
+	if want := now.Add(time.Second); !decision.NextCheckAt.Equal(want) {
+		t.Fatalf("next check = %v, want %v", decision.NextCheckAt, want)
+	}
+}
+
+func TestConstructionPolicyEquipsLowestAvailableConfiguredTier(t *testing.T) {
+	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	gameState := constructionPolicyState(now)
+	gameState.Inventory.ConstructionItems[101] = 1
+	gameState.Inventory.ConstructionItems[102] = 1
+	gameState.Inventory.ConstructionItems[103] = 1
+	gameState.Inventory.ConstructionItems[104] = 1
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.constructionItems": json.RawMessage(`{"targets":{"10":[{"id":101,"minLevel":2,"amount":4}]}}`),
+	}}
+
+	decision, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Configuration: configuration,
+		GameData: constructionPolicyGameData(t), Now: now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request == nil || decision.Request.Name != "construction.equip" {
+		t.Fatalf("unexpected decision: %+v", decision)
+	}
+	var request struct {
+		ConstructionItemID State.ConstructionItemID `json:"constructionItemId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.ConstructionItemID != 102 {
+		t.Fatalf("construction item = %d, want lowest configured tier 102", request.ConstructionItemID)
+	}
+}
+
 func TestConstructionPolicyPurchasesMissingTierFromLiveOfficialOffer(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := constructionPolicyState(now)
@@ -47,6 +102,23 @@ func TestConstructionPolicyPurchasesMissingTierFromLiveOfficialOffer(t *testing.
 	}
 	if decision.FollowUp == nil || decision.FollowUp.Name != "construction.inventory.refresh" {
 		t.Fatalf("purchase inventory follow-up = %+v", decision.FollowUp)
+	}
+}
+
+func TestConstructionPolicyPurchasesOfficialTrivialTierOutsideLiveOffers(t *testing.T) {
+	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	gameState := constructionPolicyState(now)
+	gameState.Inventory.ConstructionOffersObservedAt = now
+
+	decision, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Configuration: constructionPolicyConfiguration(),
+		GameData: constructionPolicyGameData(t), Now: now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request == nil || decision.Request.Name != "construction.purchase" || string(decision.Request.Arguments) != `{"amount":1,"castleId":10,"productId":501}` {
+		t.Fatalf("unexpected trivial purchase decision: %+v", decision)
 	}
 }
 
@@ -82,6 +154,7 @@ func TestConstructionPolicyPreservesSelectedVariantWhenGroupIDIsReused(t *testin
 	}
 	var request struct {
 		ConstructionItemID State.ConstructionItemID `json:"constructionItemId"`
+		Slot               int                      `json:"slot"`
 	}
 	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
 		t.Fatal(err)
@@ -89,9 +162,12 @@ func TestConstructionPolicyPreservesSelectedVariantWhenGroupIDIsReused(t *testin
 	if request.ConstructionItemID != 101 {
 		t.Fatalf("construction item = %d, want selected variant tier 101", request.ConstructionItemID)
 	}
+	if request.Slot != 1 {
+		t.Fatalf("construction slot = %d, want catalog slot 1", request.Slot)
+	}
 }
 
-func TestConstructionPolicyWaitsForHostOccupiedByPermanentItem(t *testing.T) {
+func TestConstructionPolicyUsesFreeTargetSlotWhenDifferentSlotIsOccupied(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := constructionPolicyState(now)
 	gameState.Inventory.ConstructionItems[101] = 1
@@ -106,7 +182,7 @@ func TestConstructionPolicyWaitsForHostOccupiedByPermanentItem(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decision.Request != nil || !strings.Contains(decision.Detail, "occupied construction slot") {
+	if decision.Request == nil || decision.Request.Name != "construction.equip" {
 		t.Fatalf("unexpected decision: %+v", decision)
 	}
 }
@@ -263,10 +339,15 @@ func constructionPolicyGameData(t *testing.T) *GameData.Store {
 		"constructionItems":[
 			{"constructionItemID":101,"constructionItemGroupID":1,"name":"Target","duration":3600,"level":1,"slotTypeID":0},
 			{"constructionItemID":102,"constructionItemGroupID":1,"name":"Target","duration":3600,"level":2,"slotTypeID":0},
+			{"constructionItemID":103,"constructionItemGroupID":1,"name":"Target","duration":3600,"level":3,"slotTypeID":0},
+			{"constructionItemID":104,"constructionItemGroupID":1,"name":"Target","duration":3600,"level":4,"slotTypeID":0},
 			{"constructionItemID":201,"constructionItemGroupID":1,"name":"Permanent","level":1,"slotTypeID":1},
 			{"constructionItemID":301,"constructionItemGroupID":1,"name":"OtherTemporary","duration":3600,"level":1,"slotTypeID":0}
 		],
-		"packages":[{"packageID":500,"packageType":"constructionItem","constructionItemID":101,"constructionItemAmount":1}]
+		"packages":[
+			{"packageID":500,"packageType":"constructionItem","constructionItemID":101,"constructionItemAmount":1},
+			{"packageID":501,"packageType":"constructionItem","comment2":"Central Silver Shop - keep like this ","constructionItemID":101,"constructionItemAmount":1}
+		]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)

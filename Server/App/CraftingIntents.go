@@ -27,6 +27,9 @@ func planCraftingSkip(_ context.Context, input Intent.PlanningContext, arguments
 	if !exists || request.CastleID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
 	}
+	if !castle.SupportsSovereignCrafting() {
+		return Intent.Plan{}, fmt.Errorf("castle %d is a sovereign-resource storage node, not a crafting castle", request.CastleID)
+	}
 	building, exists := castle.Crafting.Buildings[request.BuildingInstanceID]
 	if !exists || request.BuildingInstanceID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("crafting building %d is not in castle %d", request.BuildingInstanceID, request.CastleID)
@@ -99,6 +102,9 @@ func planCraftingSlotRental(_ context.Context, input Intent.PlanningContext, arg
 	if !exists || request.CastleID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
 	}
+	if !castle.SupportsSovereignCrafting() {
+		return Intent.Plan{}, fmt.Errorf("castle %d is a sovereign-resource storage node, not a crafting castle", request.CastleID)
+	}
 	building, exists := castle.Crafting.Buildings[request.BuildingInstanceID]
 	if !exists || request.BuildingInstanceID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("crafting building %d is not in castle %d", request.BuildingInstanceID, request.CastleID)
@@ -161,4 +167,45 @@ func playerResourceByOfficialKey(state State.GameState, store *GameData.Store, j
 		return state.Player.Resources[State.ResourceID(id)]
 	}
 	return 0
+}
+
+func validateCraftingStartAvailability(
+	state State.GameState,
+	store *GameData.Store,
+	castle State.CastleState,
+	building State.CraftingBuilding,
+	recipeID int64,
+) error {
+	capacity := 2 + len(building.ActiveSlotRentals) + len(building.QueueSlotRentals)
+	occupied := len(building.Active) + len(building.Queued)
+	if capacity <= 0 || occupied >= capacity {
+		return fmt.Errorf("crafting building %d is full", building.InstanceID)
+	}
+	costs, err := GameData.CraftingRecipeCosts(store, recipeID)
+	if err != nil {
+		return err
+	}
+	for _, cost := range costs {
+		available := float64(0)
+		switch {
+		case cost.ResourceID > 0:
+			available = castle.Resources[State.ResourceID(cost.ResourceID)].Amount
+			if strings.EqualFold(cost.JSONKey, "C1") || strings.EqualFold(cost.JSONKey, "C2") {
+				available = state.Player.Resources[State.ResourceID(cost.ResourceID)]
+			}
+		case cost.CurrencyID > 0:
+			available = state.Player.Currencies[State.CurrencyID(cost.CurrencyID)]
+		}
+		if available < cost.Amount {
+			label := strings.TrimSpace(cost.JSONKey)
+			if label == "" {
+				label = strings.TrimPrefix(cost.Field, "cost")
+			}
+			return fmt.Errorf(
+				"crafting recipe %d needs %.0f %s; %.0f are observed",
+				recipeID, cost.Amount, label, available,
+			)
+		}
+	}
+	return nil
 }

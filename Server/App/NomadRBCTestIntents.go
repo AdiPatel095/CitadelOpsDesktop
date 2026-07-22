@@ -27,6 +27,7 @@ type nomadRBCTestAttackRequest struct {
 	Preset             AttackPresets.Preset `json:"preset"`
 	CommanderIDs       []State.CommanderID  `json:"commanderIds"`
 	HorseTravelBoostID int                  `json:"horseTravelBoostId"`
+	DailyAttackLimit   int64                `json:"dailyAttackLimit"`
 }
 
 type resolvedNomadRBCTestAttackRequest struct {
@@ -48,6 +49,11 @@ func planNomadRBCTestAttack(
 	request, source, target, err := nomadRBCTestAttackContext(input, arguments)
 	if err != nil {
 		return Intent.Plan{}, err
+	}
+	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
+		return Intent.Plan{}, err
+	} else if blocked {
+		return blockedPlan, nil
 	}
 	if current := input.State.NomadCamps.RBCTest; current != nil && current.RunID == request.RunID && current.SafetyError != "" {
 		return Intent.Plan{}, fmt.Errorf("RBC trial %s is blocked: %s", request.RunID, current.SafetyError)
@@ -92,6 +98,7 @@ func planNomadRBCTestAttack(
 		capture, _ := json.Marshal(nomadRBCTestLaunchCapture{
 			RunID: request.RunID, BatchID: request.BatchID, CommanderID: commanderID,
 		})
+		steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 		steps = append(steps,
 			deferredCRACommandStep(
 				fmt.Sprintf("Build and launch RBC trial attack with commander %d", commanderID),
@@ -228,7 +235,7 @@ func (application *Application) resolveNomadRBCTestAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve RBC trial attack capacity: %w", err)
 	}
-	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity)
+	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity, capacity.MaximumWaves)
 	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build RBC trial preset %q: %w", request.Preset.Name, err)

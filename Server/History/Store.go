@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -37,6 +38,7 @@ type entry struct {
 
 type PlayerSample struct {
 	TimestampUnix   int64              `json:"timestampUnix"`
+	UID             int64              `json:"uid,omitempty"`
 	PlayerID        State.PlayerID     `json:"playerId"`
 	Might           float64            `json:"might"`
 	Glory           float64            `json:"glory"`
@@ -163,9 +165,51 @@ func (store *Store) PlayerSamples(since time.Time, limit int) ([]PlayerSample, e
 	return samples, nil
 }
 
+func (store *Store) PlayerSamplesForAccount(
+	since time.Time,
+	limit int,
+	uid int64,
+	playerID State.PlayerID,
+) ([]PlayerSample, error) {
+	if uid <= 0 && playerID <= 0 {
+		return []PlayerSample{}, nil
+	}
+	samples, err := store.PlayerSamples(since, 100_000)
+	if err != nil {
+		return nil, err
+	}
+	filtered := make([]PlayerSample, 0, min(len(samples), max(1, limit)))
+	for _, sample := range samples {
+		if uid > 0 {
+			if sample.UID == uid {
+				filtered = append(filtered, sample)
+				continue
+			}
+			if sample.UID == 0 && playerID > 0 && sample.PlayerID == playerID {
+				sample.UID = uid
+				filtered = append(filtered, sample)
+			}
+			continue
+		}
+		if sample.PlayerID == playerID {
+			filtered = append(filtered, sample)
+		}
+	}
+	if limit < 1 {
+		limit = 1000
+	}
+	if limit > 100_000 {
+		limit = 100_000
+	}
+	if len(filtered) > limit {
+		filtered = filtered[len(filtered)-limit:]
+	}
+	return filtered, nil
+}
+
 func NewPlayerSample(snapshot State.GameState, gameData *GameData.Manager) PlayerSample {
 	sample := PlayerSample{
-		TimestampUnix: time.Now().Unix(), PlayerID: snapshot.Player.ID,
+		TimestampUnix: time.Now().Unix(), UID: snapshot.Account.UID, PlayerID: snapshot.Player.ID,
 		Might: snapshot.Player.Might, Glory: snapshot.Player.Glory, Gallantry: snapshot.Player.Gallantry,
 		TroopsByUnit: map[string]int64{}, Currencies: map[string]float64{},
 	}
@@ -185,26 +229,93 @@ func NewPlayerSample(snapshot State.GameState, gameData *GameData.Manager) Playe
 	for id, amount := range snapshot.Player.Currencies {
 		sample.Currencies[fmt.Sprintf("currency:%d", id)] = amount
 	}
+	classifier := newTroopClassifier(gameData)
+	addGroup := func(values map[State.UnitID]int64, total *int64) {
+		for id, amount := range values {
+			if amount <= 0 || !classifier.isTroop(id) {
+				continue
+			}
+			*total += amount
+			sample.TroopsByUnit[strconv.FormatInt(int64(id), 10)] += amount
+		}
+	}
 	for _, castle := range snapshot.Castles {
-		for id, amount := range castle.Units.Stationed {
-			sample.TroopsStationed += amount
-			sample.TroopsByUnit[fmt.Sprint(id)] += amount
-		}
-		for id, amount := range castle.Units.Traveling {
-			sample.TroopsTraveling += amount
-			sample.TroopsByUnit[fmt.Sprint(id)] += amount
-		}
-		for id, amount := range castle.Units.Hospital {
-			sample.TroopsHospital += amount
-			sample.TroopsByUnit[fmt.Sprint(id)] += amount
-		}
-		for id, amount := range castle.Units.SpecialHospital {
-			sample.TroopsHospital += amount
-			sample.TroopsByUnit[fmt.Sprint(id)] += amount
-		}
+		addGroup(castle.Units.Stationed, &sample.TroopsStationed)
+		addGroup(castle.Units.Traveling, &sample.TroopsTraveling)
+		addGroup(castle.Units.Hospital, &sample.TroopsHospital)
+		addGroup(castle.Units.SpecialHospital, &sample.TroopsHospital)
 	}
 	sample.TroopsTotal = sample.TroopsStationed + sample.TroopsTraveling + sample.TroopsHospital
 	return sample
+}
+
+func NormalizePlayerSamplesTroops(samples []PlayerSample, gameData *GameData.Manager) []PlayerSample {
+	classifier := newTroopClassifier(gameData)
+	for index := range samples {
+		samples[index] = normalizePlayerSampleTroops(samples[index], classifier)
+	}
+	return samples
+}
+
+func normalizePlayerSampleTroops(sample PlayerSample, classifier *troopClassifier) PlayerSample {
+	if len(sample.TroopsByUnit) == 0 || classifier == nil || !classifier.enabled {
+		return sample
+	}
+	filtered := make(map[string]int64, len(sample.TroopsByUnit))
+	var total int64
+	for rawID, amount := range sample.TroopsByUnit {
+		id, err := strconv.ParseInt(rawID, 10, 64)
+		if err != nil || amount <= 0 || !classifier.isTroop(State.UnitID(id)) {
+			continue
+		}
+		filtered[rawID] = amount
+		total += amount
+	}
+	sample.TroopsByUnit = filtered
+	sample.TroopsTotal = total
+	return sample
+}
+
+type troopClassifier struct {
+	catalog *GameData.Catalog
+	cache   map[State.UnitID]bool
+	enabled bool
+}
+
+func newTroopClassifier(gameData *GameData.Manager) *troopClassifier {
+	classifier := &troopClassifier{cache: map[State.UnitID]bool{}}
+	if gameData == nil {
+		return classifier
+	}
+	store, ready := gameData.Current()
+	if !ready {
+		return classifier
+	}
+	catalog, err := store.Catalog("units")
+	if err != nil {
+		return classifier
+	}
+	classifier.catalog = catalog
+	classifier.enabled = true
+	return classifier
+}
+
+func (classifier *troopClassifier) isTroop(id State.UnitID) bool {
+	if classifier == nil || !classifier.enabled {
+		return true
+	}
+	if troop, known := classifier.cache[id]; known {
+		return troop
+	}
+	raw, found := classifier.catalog.Find(strconv.FormatInt(int64(id), 10))
+	if !found {
+		classifier.cache[id] = false
+		return false
+	}
+	record, err := GameData.DecodeRecord(raw)
+	troop := err == nil && !GameData.IsToolRecord(record)
+	classifier.cache[id] = troop
+	return troop
 }
 
 func (store *Store) collectionPath(collection string) (string, error) {

@@ -5,16 +5,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand/v2"
+	"strconv"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/State"
 )
 
 const (
 	defaultAttackDelayMinSec = 4.0
 	defaultAttackDelayMaxSec = 6.0
+	commanderFeatureSection  = "automation.commanderFeatures"
 )
+
+type runtimeCommanderFeatureSettings struct {
+	Assignments map[string][]State.CommanderID `json:"assignments"`
+}
 
 type runtimeSchedulerSettings struct {
 	MinAttackDelay   float64        `json:"minAttackDelay"`
@@ -96,6 +104,11 @@ func (application *Application) executionGate(
 			return fmt.Errorf("durable storage is unavailable: %w", err)
 		}
 	}
+	if point == Intent.ExecutionBeforeClaims {
+		if err := application.requireAssignedAttackCommanders(plan); err != nil {
+			return err
+		}
+	}
 	if application.Session == nil || !Outbound.YieldsToAutomationLock(request.Actor) {
 		return nil
 	}
@@ -108,4 +121,83 @@ func (application *Application) executionGate(
 		}
 	}
 	return nil
+}
+
+func (application *Application) requireAssignedAttackCommanders(plan Intent.Plan) error {
+	if plan.Admission == nil || plan.Admission.Class != Intent.AdmissionAttackLaunch {
+		return nil
+	}
+	moduleID := strings.TrimSpace(plan.Admission.Module)
+	if moduleID == "" {
+		return fmt.Errorf("attack launch does not identify its commander feature")
+	}
+	label := application.attackModuleLabel(moduleID)
+	if application.Configuration == nil {
+		return fmt.Errorf("%s commander assignments are unavailable", label)
+	}
+	raw, exists := application.Configuration.Section(commanderFeatureSection)
+	if !exists {
+		return fmt.Errorf("assign at least one commander to %s before launching", label)
+	}
+	settings := runtimeCommanderFeatureSettings{}
+	if len(raw) == 0 || json.Unmarshal(raw, &settings) != nil {
+		return fmt.Errorf("%s commander assignments are invalid", label)
+	}
+	assigned := settings.Assignments[moduleID]
+	allowed := make(map[State.CommanderID]struct{}, len(assigned))
+	for _, commanderID := range assigned {
+		if commanderID >= 0 {
+			allowed[commanderID] = struct{}{}
+		}
+	}
+	if len(allowed) == 0 {
+		return fmt.Errorf("assign at least one commander to %s before launching", label)
+	}
+	commanders, err := attackPlanCommanderIDs(plan)
+	if err != nil {
+		return fmt.Errorf("validate %s commander assignment: %w", label, err)
+	}
+	for _, commanderID := range commanders {
+		if _, permitted := allowed[commanderID]; !permitted {
+			return fmt.Errorf("commander %d is not assigned to %s", commanderID, label)
+		}
+	}
+	return nil
+}
+
+func (application *Application) attackModuleLabel(moduleID string) string {
+	if application != nil && application.Intents != nil {
+		for _, definition := range application.Intents.Registry().Definitions() {
+			if definition.AttackModule != nil && definition.AttackModule.ID == moduleID {
+				return definition.AttackModule.Label
+			}
+		}
+	}
+	return moduleID
+}
+
+func attackPlanCommanderIDs(plan Intent.Plan) ([]State.CommanderID, error) {
+	seen := map[State.CommanderID]struct{}{}
+	commanders := make([]State.CommanderID, 0)
+	for _, claim := range plan.Claims {
+		claim = strings.TrimSpace(claim)
+		if !strings.HasPrefix(claim, "commander:") {
+			continue
+		}
+		rawID := strings.TrimSpace(strings.TrimPrefix(claim, "commander:"))
+		wireID, err := strconv.ParseInt(rawID, 10, 64)
+		if err != nil || wireID < 0 {
+			return nil, fmt.Errorf("invalid commander claim %q", claim)
+		}
+		commanderID := State.CommanderID(wireID)
+		if _, duplicate := seen[commanderID]; duplicate {
+			continue
+		}
+		seen[commanderID] = struct{}{}
+		commanders = append(commanders, commanderID)
+	}
+	if len(commanders) == 0 {
+		return nil, fmt.Errorf("attack plan does not claim a commander")
+	}
+	return commanders, nil
 }

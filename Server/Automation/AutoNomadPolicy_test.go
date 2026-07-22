@@ -32,8 +32,9 @@ func TestAutoNomadPolicyLevelsFourThenLocksWeakestAndChainsCommanders(t *testing
 	if err := json.Unmarshal(decision.Request.Arguments, &leveling); err != nil {
 		t.Fatal(err)
 	}
-	if leveling.Mode != "level" || leveling.TargetX != 99 || leveling.TargetY != 100 || len(leveling.CommanderIDs) != 1 {
-		t.Fatalf("leveling did not isolate the lowest camp and one commander: %#v", leveling)
+	if leveling.Mode != "level" || leveling.TargetX != 99 || leveling.TargetY != 100 ||
+		len(leveling.CommanderIDs) != 2 || leveling.CommanderIDs[0] != 1 || leveling.CommanderIDs[1] != 2 {
+		t.Fatalf("leveling did not preserve the eligible commander pool: %#v", leveling)
 	}
 
 	maxed := snapshot.State.Map[0]["99:100"]

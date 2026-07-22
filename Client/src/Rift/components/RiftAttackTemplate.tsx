@@ -158,7 +158,7 @@ const RiftAttackTemplate: React.FC = () => {
     () => parseCommanderFeatureAssignments(configuration?.sections[COMMANDER_FEATURE_SECTION]),
     [configuration?.sections],
   );
-  const assignedReplayCommanders = commanderAssignments.assignments.riftReplay;
+  const assignedReplayCommanders = commanderAssignments.assignments.riftReplay ?? [];
   const attackSetupInventory = useMemo<AttackSetupInventory | undefined>(() => {
     if (!castle) return undefined;
     const troopStock: Record<number, number> = {};
@@ -193,14 +193,12 @@ const RiftAttackTemplate: React.FC = () => {
 
   const freeCommanderCount = useMemo(
     () => (movement?.commanderStatuses ?? []).filter((row) => (
-      (assignedReplayCommanders == null || assignedReplayCommanders.includes(row.commanderId))
+      assignedReplayCommanders.includes(row.commanderId)
       && commanderStatusForLaunch(movement, row.commanderId, gameLoggedIn, nowUnix, row.status) === 'free'
     )).length,
     [assignedReplayCommanders, gameLoggedIn, movement, nowUnix]
   );
-  const commanderCount = assignedReplayCommanders == null
-    ? movement?.commanderStatuses.length ?? 0
-    : assignedReplayCommanders.length;
+  const commanderCount = assignedReplayCommanders.length;
 
   const updateReplayHorseTravelBoost = useCallback((next: HorseTravelBoostID) => {
     setHorseTravelBoostId(next);
@@ -288,7 +286,7 @@ const RiftAttackTemplate: React.FC = () => {
         launchId: entry.id,
         ...(commanderMode === 'any'
           ? { commanderSelection: {
-            ...(assignedReplayCommanders == null ? {} : { candidates: assignedReplayCommanders }),
+            candidates: assignedReplayCommanders,
             count: 1,
             strategy: 'first_available' as const,
           } }
@@ -414,7 +412,6 @@ const RiftAttackTemplate: React.FC = () => {
                   const scheduled = !isEarliestOffset(offsetMinutes);
                   const hasCapturedCommander = entry.commanderID != null && entry.commanderID >= 0;
                   const capturedCommanderAssigned = !hasCapturedCommander
-                    || assignedReplayCommanders == null
                     || assignedReplayCommanders.includes(entry.commanderID!);
                   const commanderReady = commanderMode === 'any'
                     ? scheduled ? commanderCount > 0 : freeCommanderCount > 0

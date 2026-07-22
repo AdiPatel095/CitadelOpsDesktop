@@ -15,17 +15,21 @@ import (
 )
 
 type coordinatorTestPolicy struct {
-	id       string
-	domains  []string
-	sections []string
-	decision Decision
+	id        string
+	domains   []string
+	sections  []string
+	decision  Decision
+	snapshots chan Snapshot
 }
 
 func (policy *coordinatorTestPolicy) ID() string { return policy.id }
 
 func (policy *coordinatorTestPolicy) EnabledKey() string { return policy.id }
 
-func (policy *coordinatorTestPolicy) Evaluate(context.Context, Snapshot) (Decision, error) {
+func (policy *coordinatorTestPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+	if policy.snapshots != nil {
+		policy.snapshots <- snapshot
+	}
 	return policy.decision, nil
 }
 
@@ -200,6 +204,31 @@ func TestCoordinatorConfigurationFingerprintTracksOnlyRelevantSections(t *testin
 	}
 	if policyConfigurationFingerprint(beta, before) != policyConfigurationFingerprint(beta, after) {
 		t.Fatal("unrelated section change changed another policy fingerprint")
+	}
+}
+
+func TestCoordinatorMarksPolicyConfigurationChangesAfterInitialEvaluation(t *testing.T) {
+	state := State.NewStore(coordinatorReadyState())
+	configuration := openCoordinatorTestConfiguration(t, "configured")
+	if _, err := configuration.Update("automation.configured", json.RawMessage(`{"value":1}`)); err != nil {
+		t.Fatal(err)
+	}
+	policy := &coordinatorTestPolicy{
+		id: "configured", sections: []string{"automation.configured"}, snapshots: make(chan Snapshot, 2),
+		decision: Decision{Status: "idle", NextCheckAt: time.Now().UTC().Add(time.Hour)},
+	}
+	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)
+	runtime := map[string]*policyRuntime{"configured": {}}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	if snapshot := <-policy.snapshots; snapshot.PolicyConfigurationChanged {
+		t.Fatal("initial policy evaluation was reported as a user configuration change")
+	}
+	if _, err := configuration.Update("automation.configured", json.RawMessage(`{"value":2}`)); err != nil {
+		t.Fatal(err)
+	}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	if snapshot := <-policy.snapshots; !snapshot.PolicyConfigurationChanged {
+		t.Fatal("policy configuration change was not exposed to the next evaluation")
 	}
 }
 
@@ -921,6 +950,40 @@ func TestCoordinatorProgressingChainsDoNotConsumeNoProgressCap(t *testing.T) {
 	}
 }
 
+func TestCoordinatorRetryableTowerStaleDoesNotPauseQueue(t *testing.T) {
+	now := time.Date(2026, time.July, 22, 18, 45, 0, 0, time.UTC)
+	current := &policyRuntime{running: true}
+	result, wakeImmediately := completePolicyRun(current, operationResult{
+		policyID: "autoTowers",
+		receipt: Intent.Receipt{
+			Status: Intent.StatusPartiallySucceeded,
+			Error:  "Build and launch tower attack: " + Intent.ErrPlanStale.Error() + ": fresh troop shortage",
+		},
+		nextCheck:         now.Add(2 * time.Second),
+		reevaluateOnStale: true,
+	}, now)
+	if !wakeImmediately || !result.nextCheck.IsZero() || !current.failureBlockedUntil.IsZero() || current.running {
+		t.Fatalf("retryable tower stale paused the queue: result=%+v runtime=%+v", result, current)
+	}
+}
+
+func TestCoordinatorNonStaleTowerFailureKeepsSafetyPause(t *testing.T) {
+	now := time.Date(2026, time.July, 22, 18, 45, 0, 0, time.UTC)
+	current := &policyRuntime{running: true}
+	result, wakeImmediately := completePolicyRun(current, operationResult{
+		policyID: "autoTowers",
+		receipt: Intent.Receipt{
+			Status: Intent.StatusPartiallySucceeded,
+			Error:  "tower response was indeterminate",
+		},
+		nextCheck:         now.Add(2 * time.Second),
+		reevaluateOnStale: true,
+	}, now)
+	if wakeImmediately || result.nextCheck.Before(now.Add(defaultRetry)) || !current.failureBlockedUntil.Equal(result.nextCheck) {
+		t.Fatalf("non-stale tower failure bypassed the safety pause: result=%+v runtime=%+v", result, current)
+	}
+}
+
 func TestCoordinatorRepeatedDecisionFingerprintPausesSubmission(t *testing.T) {
 	state := State.NewStore(coordinatorReadyState())
 	configuration := openCoordinatorTestConfiguration(t, "repeat")
@@ -1098,6 +1161,20 @@ func TestCoordinatorAutoTowerFailureUsesRetryBackoff(t *testing.T) {
 	want := now.Add(defaultRetry)
 	if wakeImmediately || !result.nextCheck.Equal(want) || !current.nextCheck.Equal(want) {
 		t.Fatalf("Auto Tower failure did not use retry backoff: result=%+v runtime=%+v", result, current)
+	}
+}
+
+func TestCoordinatorEveryShortFailureUsesRetryBackoff(t *testing.T) {
+	now := time.Date(2026, time.July, 21, 12, 0, 0, 0, time.UTC)
+	current := &policyRuntime{running: true}
+	result, wakeImmediately := completePolicyRun(current, operationResult{
+		policyID:  "autoRecruit",
+		receipt:   Intent.Receipt{Status: Intent.StatusFailed},
+		nextCheck: now.Add(coordinatorTick),
+	}, now)
+	want := now.Add(defaultRetry)
+	if wakeImmediately || !result.nextCheck.Equal(want) || !current.failureBlockedUntil.Equal(want) {
+		t.Fatalf("short failure did not establish retry backoff: result=%+v runtime=%+v", result, current)
 	}
 }
 

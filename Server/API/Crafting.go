@@ -56,7 +56,7 @@ type craftingBuilding struct {
 	AvailableRecipeIDs []int64                  `json:"availableRecipeIDs"`
 }
 
-func (server *Server) handleCraftingProjection(writer http.ResponseWriter, _ *http.Request) {
+func (server *Server) handleCraftingProjection(writer http.ResponseWriter, request *http.Request) {
 	if server.config.GameData == nil || server.config.State == nil {
 		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", "Crafting data is unavailable")
 		return
@@ -70,6 +70,9 @@ func (server *Server) handleCraftingProjection(writer http.ResponseWriter, _ *ht
 	if err != nil {
 		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", err.Error())
 		return
+	}
+	if assets, assetErr := server.config.GameData.CurrencyAssets(request.Context()); assetErr == nil {
+		applyCraftingIconURLs(&catalog, assets.Icons)
 	}
 	snapshot := server.config.State.Snapshot()
 	projection := craftingProjection{
@@ -109,7 +112,7 @@ func (server *Server) handleCraftingProjection(writer http.ResponseWriter, _ *ht
 		sort.Slice(node.Buildings, func(left, right int) bool {
 			return node.Buildings[left].QueueTypeID < node.Buildings[right].QueueTypeID
 		})
-		node.CanCraft = len(node.Buildings) > 0
+		node.CanCraft = castle.SupportsSovereignCrafting() && len(node.Buildings) > 0
 		if len(castle.Crafting.EnabledRecipeIDs) > 0 || len(castle.Crafting.EnabledRecipeGroupIDs) > 0 {
 			projection.ResearchLoaded = true
 		}
@@ -122,6 +125,24 @@ func (server *Server) handleCraftingProjection(writer http.ResponseWriter, _ *ht
 		return projection.Nodes[left].CastleID < projection.Nodes[right].CastleID
 	})
 	writeJSON(writer, http.StatusOK, projection)
+}
+
+func applyCraftingIconURLs(catalog *GameData.CraftingCatalog, icons map[string]string) {
+	if catalog == nil || len(icons) == 0 {
+		return
+	}
+	for key, resource := range catalog.Resources {
+		if iconURL := icons[resource.AssetName]; iconURL != "" {
+			resource.IconURL = iconURL
+			catalog.Resources[key] = resource
+		}
+	}
+	for index := range catalog.Recipes {
+		resource, found := catalog.Resources[catalog.Recipes[index].Output.Key]
+		if found && resource.IconURL != "" {
+			catalog.Recipes[index].Output.IconURL = resource.IconURL
+		}
+	}
 }
 
 func craftingMarketProjection(store *GameData.Store, snapshot State.GameState, castle State.CastleState) *craftingMarket {

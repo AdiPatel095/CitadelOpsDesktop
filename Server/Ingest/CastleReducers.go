@@ -225,6 +225,13 @@ func reduceCastleSnapshot(
 	changed = changed || !reflect.DeepEqual(beforeCastle, castle) ||
 		!reflect.DeepEqual(beforePlayer, gameState.Player) || !reflect.DeepEqual(beforeAlliance, gameState.Alliance)
 	domains := []string{"castles", "player", "alliance"}
+	if gameState.Session.LoggedIn && gameState.Session.SocketReady &&
+		gameState.Session.Generation > 0 && !frame.ReceivedAt.Before(gameState.Session.ChangedAt) &&
+		gameState.Session.BaselineGeneration != gameState.Session.Generation {
+		gameState.Session.BaselineGeneration = gameState.Session.Generation
+		changed = true
+		domains = append(domains, "session")
+	}
 	if hasLayout {
 		domains = append(domains, "building-layout")
 	}

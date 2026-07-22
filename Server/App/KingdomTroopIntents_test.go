@@ -31,10 +31,12 @@ func TestKingdomTroopShipmentUsesCapturedKutShape(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 3 || plan.Steps[0].Opcode != "kpi" || plan.Steps[1].Opcode != "kut" || plan.Steps[2].Action != "troops.kingdom.consume_source" {
+	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "kpi" ||
+		plan.Steps[1].Action != "kingdom.transport.verify_available" || plan.Steps[2].Opcode != "kut" ||
+		plan.Steps[3].Action != "troops.kingdom.consume_source" {
 		t.Fatalf("unexpected troop transfer steps: %#v", plan.Steps)
 	}
-	if got := string(plan.Steps[1].Command.Payload); got != `{"SCID":10,"SKID":0,"TKID":4,"CID":-1,"A":[[10,5],[20,7]]}` {
+	if got := string(plan.Steps[2].Command.Payload); got != `{"SCID":10,"SKID":0,"TKID":4,"CID":-1,"A":[[10,5],[20,7]]}` {
 		t.Fatalf("KUT payload = %s", got)
 	}
 }
@@ -69,6 +71,9 @@ func TestKingdomTroopShipmentRejectsToolsAndSkipUsesTroopTransportType(t *testin
 	if got := string(plan.Steps[0].Command.Payload); got != `{"KID":"4","MST":"MS5","TT":"1"}` {
 		t.Fatalf("troop time-skip payload = %s", got)
 	}
+	if plan.Summary != "Apply a 1-hour time skip to kingdom 4 troop transport" {
+		t.Fatalf("troop time-skip summary = %q", plan.Summary)
+	}
 }
 
 func kingdomTroopIntentGameData(t *testing.T) *GameData.Store {
@@ -76,7 +81,8 @@ func kingdomTroopIntentGameData(t *testing.T) *GameData.Store {
 	store, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],
 		"units":[{"wodID":10},{"wodID":20},{"wodID":30,"slotTypes":"1,2"}],
-		"currencies":[{"currencyID":1005,"JSONKey":"MS5"}]
+		"currencies":[{"currencyID":1005,"JSONKey":"MS5"}],
+		"currencyMinutesSkipValues":[{"currencyID":"1005","MinutesSkipValue":"60"}]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)

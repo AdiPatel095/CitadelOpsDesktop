@@ -32,6 +32,7 @@ import {
   type AutoKhanClientStateV1,
 } from '../AutoKhanClientState';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+import { DailyAttackLimitField } from './DailyAttackLimitField';
 
 interface AutoKhanSettingsModalProps {
   isOpen: boolean;
@@ -340,6 +341,12 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             </div>
           ) : null}
         </Card>
+
+        <DailyAttackLimitField
+          value={draft.dailyAttackLimit}
+          onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
+          serverState={state?.dailyAttacks}
+        />
       </div>
     </SettingsModal>
   );

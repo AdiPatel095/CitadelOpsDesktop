@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
@@ -73,5 +74,82 @@ func TestCraftingBuildingUpdateMergesOneQueue(t *testing.T) {
 	}
 	if !changed || len(gameState.Castles[100].Crafting.Buildings) != 2 {
 		t.Fatalf("crafting building was not merged: %#v", gameState.Castles[100].Crafting.Buildings)
+	}
+}
+
+func TestCraftingStartDeductsAcceptedRecipeCostsFromObservedState(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"resources":[
+			{"resourceID":8,"name":"glass","JSONKey":"G"},
+			{"resourceID":10,"name":"iron","JSONKey":"I"}
+		],
+		"craftingRecipes":[{
+			"craftingRecipeId":110,"costGlass":21200,"costIron":19200
+		}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	castle := newCastleState(100)
+	castle.Resources[8] = State.ResourceBalance{Amount: 492004}
+	castle.Resources[10] = State.ResourceBalance{Amount: 35368}
+	castle.Crafting.Buildings[2] = State.CraftingBuilding{
+		CastleID: 100, InstanceID: 2,
+		Active: []State.CraftingQueueItem{{RecipeID: 110}},
+	}
+	gameState.Castles[100] = castle
+	code := 0
+	_, changed, err := reduceCraftingBuilding(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "crst", ResponseCode: &code,
+		Payload: json.RawMessage(`{
+			"KID":0,"AID":100,"OID":2,"CQID":2,"S":4,"WID":2177,
+			"QS":{"CRID":[],"BV":[],"RUT":[]},
+			"PS":{"CRID":[110,110],"BV":[10,10],"RUT":[],"RCT":[900,3600]}
+		}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("crafting start changed=%t err=%v", changed, err)
+	}
+	updated := gameState.Castles[100]
+	if updated.Resources[8].Amount != 470804 || updated.Resources[10].Amount != 16168 {
+		t.Fatalf("resources after accepted recipe = %#v", updated.Resources)
+	}
+}
+
+func TestRejectedCraftingStartReconcilesReturnedResourceStocks(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"resources":[
+			{"resourceID":8,"name":"glass","JSONKey":"G"},
+			{"resourceID":10,"name":"iron","JSONKey":"I"}
+		],
+		"craftingRecipes":[{
+			"craftingRecipeId":110,"costGlass":21200,"costIron":19200
+		}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	castle := newCastleState(100)
+	castle.Resources[8] = State.ResourceBalance{Amount: 513204}
+	castle.Resources[10] = State.ResourceBalance{Amount: 35368}
+	castle.Crafting.Buildings[2] = State.CraftingBuilding{CastleID: 100, InstanceID: 2}
+	gameState.Castles[100] = castle
+	code := 55
+	_, changed, err := reduceCraftingBuilding(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "crst", ResponseCode: &code,
+		Payload: json.RawMessage(`{
+			"OID":2,"CRID":110,"G":21200,"GS":492004,"I":19200,"IS":16168
+		}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("rejected crafting start changed=%t err=%v", changed, err)
+	}
+	updated := gameState.Castles[100]
+	if updated.Resources[8].Amount != 492004 || updated.Resources[10].Amount != 16168 {
+		t.Fatalf("reconciled resources = %#v", updated.Resources)
 	}
 }

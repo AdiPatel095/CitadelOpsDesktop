@@ -19,6 +19,7 @@ import {
   type AutoNomadClientStateV4,
 } from '../AutoNomadClientState';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+import { DailyAttackLimitField } from './DailyAttackLimitField';
 
 interface AutoNomadSettingsModalProps {
   isOpen: boolean;
@@ -139,6 +140,12 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             </div>
           ) : null}
         </Card>
+
+        <DailyAttackLimitField
+          value={draft.dailyAttackLimit}
+          onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
+          serverState={state?.dailyAttacks}
+        />
 
         <Card variant="solid" className="p-4">
           <div className="mb-3 flex items-start justify-between gap-3">

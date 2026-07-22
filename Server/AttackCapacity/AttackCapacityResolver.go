@@ -15,6 +15,8 @@ import (
 const (
 	flankEffectTypeID = 28
 	frontEffectTypeID = 34
+	waveEffectTypeID  = 156
+	baseAttackWaves   = 4
 )
 
 type Lane string
@@ -126,6 +128,16 @@ type Modifier struct {
 	Percent     float64    `json:"percent"`
 }
 
+// WaveModifier is one target-applicable effect that adds whole attack waves.
+type WaveModifier struct {
+	SourceKind  SourceKind `json:"sourceKind"`
+	SourceID    string     `json:"sourceId,omitempty"`
+	SourceLabel string     `json:"sourceLabel,omitempty"`
+	EffectID    int64      `json:"effectId"`
+	EffectName  string     `json:"effectName"`
+	Waves       int        `json:"waves"`
+}
+
 type SkippedEffect struct {
 	SourceKind SourceKind `json:"sourceKind"`
 	SourceID   string     `json:"sourceId,omitempty"`
@@ -152,21 +164,27 @@ type Context struct {
 	SourceCastleID State.CastleID    `json:"sourceCastleId"`
 	CommanderID    State.CommanderID `json:"commanderId"`
 	Target         TargetContext     `json:"target"`
+	BaseWaves      int               `json:"baseWaves"`
+	WaveModifiers  []WaveModifier    `json:"waveModifiers,omitempty"`
 	Modifiers      []Modifier        `json:"modifiers"`
 	Skipped        []SkippedEffect   `json:"skipped,omitempty"`
 	CapLimits      map[int64]float64 `json:"-"`
 }
 
 type Result struct {
-	SourceCastleID State.CastleID    `json:"sourceCastleId"`
-	CommanderID    State.CommanderID `json:"commanderId"`
-	Target         TargetContext     `json:"target"`
-	BaseCapacity   LaneCapacity      `json:"baseCapacity"`
-	BonusPercent   LaneBonus         `json:"bonusPercent"`
-	Capacity       LaneCapacity      `json:"capacity"`
-	Modifiers      []Modifier        `json:"modifiers"`
-	CapGroups      []CapGroup        `json:"capGroups"`
-	Skipped        []SkippedEffect   `json:"skipped,omitempty"`
+	SourceCastleID  State.CastleID    `json:"sourceCastleId"`
+	CommanderID     State.CommanderID `json:"commanderId"`
+	Target          TargetContext     `json:"target"`
+	BaseWaves       int               `json:"baseWaves"`
+	AdditionalWaves int               `json:"additionalWaves"`
+	MaximumWaves    int               `json:"maximumWaves"`
+	WaveModifiers   []WaveModifier    `json:"waveModifiers,omitempty"`
+	BaseCapacity    LaneCapacity      `json:"baseCapacity"`
+	BonusPercent    LaneBonus         `json:"bonusPercent"`
+	Capacity        LaneCapacity      `json:"capacity"`
+	Modifiers       []Modifier        `json:"modifiers"`
+	CapGroups       []CapGroup        `json:"capGroups"`
+	Skipped         []SkippedEffect   `json:"skipped,omitempty"`
 }
 
 type Resolver struct{}
@@ -227,6 +245,7 @@ func (Resolver) BuildContext(gameState State.GameState, gameData *GameData.Store
 		SourceCastleID: sourceCastleID,
 		CommanderID:    request.CommanderID,
 		Target:         target,
+		BaseWaves:      baseAttackWaves,
 		CapLimits:      loadCapLimits(gameData),
 	}
 	evaluatedAt := request.EvaluatedAt.UTC()
@@ -271,6 +290,9 @@ func (Resolver) BuildContext(gameState State.GameState, gameData *GameData.Store
 	sort.Slice(context.Modifiers, func(left, right int) bool {
 		return modifierKey(context.Modifiers[left]) < modifierKey(context.Modifiers[right])
 	})
+	sort.Slice(context.WaveModifiers, func(left, right int) bool {
+		return waveModifierKey(context.WaveModifiers[left]) < waveModifierKey(context.WaveModifiers[right])
+	})
 	sort.Slice(context.Skipped, func(left, right int) bool {
 		return skippedEffectKey(context.Skipped[left]) < skippedEffectKey(context.Skipped[right])
 	})
@@ -299,6 +321,18 @@ func (builder contextBuilder) addLegendSkills(skills State.LegendSkillState) err
 		}
 		effectType, exists := record.String("effectType")
 		if !exists {
+			continue
+		}
+		if effectType == "additionalWave" {
+			waves, exists := record.Float64("totalEffectValue")
+			if !exists || waves <= 0 || !isFinite(waves) {
+				continue
+			}
+			builder.context.WaveModifiers = append(builder.context.WaveModifiers, WaveModifier{
+				SourceKind: SourceLegendSkill, SourceID: strconv.FormatInt(skillID, 10),
+				SourceLabel: "Hall of Legends", EffectID: skillID, EffectName: effectType,
+				Waves: int(math.Floor(waves)),
+			})
 			continue
 		}
 		var lane Lane
@@ -377,6 +411,20 @@ func (Resolver) ResolveContext(context Context) (Result, error) {
 	if err := validateTarget(context.Target); err != nil {
 		return Result{}, err
 	}
+	baseWaves := context.BaseWaves
+	if baseWaves <= 0 {
+		baseWaves = baseAttackWaves
+	}
+	additionalWaves := 0
+	for _, modifier := range context.WaveModifiers {
+		if modifier.Waves < 0 {
+			return Result{}, fmt.Errorf("effect %d has an invalid wave bonus", modifier.EffectID)
+		}
+		if modifier.Waves > math.MaxInt-additionalWaves {
+			return Result{}, fmt.Errorf("attack wave capacity is too large")
+		}
+		additionalWaves += modifier.Waves
+	}
 	groups := map[capGroupKey]*capGroupAccumulator{}
 	for _, modifier := range context.Modifiers {
 		if modifier.Lane != LaneFlank && modifier.Lane != LaneFront {
@@ -441,7 +489,9 @@ func (Resolver) ResolveContext(context Context) (Result, error) {
 	}
 	return Result{
 		SourceCastleID: context.SourceCastleID, CommanderID: context.CommanderID, Target: context.Target,
-		BaseCapacity: context.Target.BaseCapacity, BonusPercent: bonus, Capacity: capacity,
+		BaseWaves: baseWaves, AdditionalWaves: additionalWaves, MaximumWaves: baseWaves + additionalWaves,
+		WaveModifiers: append([]WaveModifier(nil), context.WaveModifiers...),
+		BaseCapacity:  context.Target.BaseCapacity, BonusPercent: bonus, Capacity: capacity,
 		Modifiers: append([]Modifier(nil), context.Modifiers...), CapGroups: capGroups,
 		Skipped: append([]SkippedEffect(nil), context.Skipped...),
 	}, nil
@@ -654,6 +704,23 @@ func (builder contextBuilder) addSource(source EffectSource) {
 			continue
 		}
 		name := effectName(record)
+		if effectTypeID, exists := record.Int64("effectTypeID"); exists && effectTypeID == waveEffectTypeID {
+			if reason := targetMismatch(record, name, builder.target); reason != "" {
+				builder.context.Skipped = append(builder.context.Skipped, SkippedEffect{
+					SourceKind: source.Kind, SourceID: source.ID, EffectID: effectID, EffectName: name, Reason: reason,
+				})
+				continue
+			}
+			waves := effectMagnitude(effect.Values)
+			if waves <= 0 || !isFinite(waves) {
+				continue
+			}
+			builder.context.WaveModifiers = append(builder.context.WaveModifiers, WaveModifier{
+				SourceKind: source.Kind, SourceID: source.ID, SourceLabel: source.Label,
+				EffectID: effectID, EffectName: name, Waves: int(math.Floor(waves)),
+			})
+			continue
+		}
 		lane, capacityEffect := capacityLane(record, name)
 		if !capacityEffect {
 			continue
@@ -1137,6 +1204,12 @@ func modifierKey(modifier Modifier) string {
 	return strings.Join([]string{
 		string(modifier.Lane), strconv.FormatInt(modifier.CapID, 10), string(modifier.SourceKind),
 		modifier.SourceID, strconv.FormatInt(modifier.EffectID, 10), strconv.FormatFloat(modifier.Percent, 'f', -1, 64),
+	}, "\x00")
+}
+
+func waveModifierKey(modifier WaveModifier) string {
+	return strings.Join([]string{
+		string(modifier.SourceKind), modifier.SourceID, strconv.FormatInt(modifier.EffectID, 10), strconv.Itoa(modifier.Waves),
 	}, "\x00")
 }
 

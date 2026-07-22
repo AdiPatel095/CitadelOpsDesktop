@@ -11,6 +11,7 @@ export interface AutoKhanClientStateV1 {
   checkIntervalSec: number;
   defenseRefreshIntervalSec: number;
   mapRefreshIntervalSec: number;
+  dailyAttackLimit: number;
   skipCooldowns: boolean;
   timeSkipReserve: Record<string, number>;
   openGateProtection: boolean;
@@ -30,6 +31,7 @@ export function defaultAutoKhanClientState(): AutoKhanClientStateV1 {
     checkIntervalSec: 30,
     defenseRefreshIntervalSec: 30,
     mapRefreshIntervalSec: 30,
+    dailyAttackLimit: 0,
     skipCooldowns: true,
     timeSkipReserve: {},
     openGateProtection: true,
@@ -61,6 +63,7 @@ export function parseAutoKhanClientState(value: unknown): AutoKhanClientStateV1 
       fallback.defenseRefreshIntervalSec,
     ),
     mapRefreshIntervalSec: clampAutoKhanInteger(raw.mapRefreshIntervalSec, 30, 3600, fallback.mapRefreshIntervalSec),
+    dailyAttackLimit: clampAutoKhanInteger(raw.dailyAttackLimit, 0, Number.MAX_SAFE_INTEGER, 0),
     skipCooldowns: raw.skipCooldowns !== false,
     timeSkipReserve: Object.fromEntries(
       ['MS1', 'MS2', 'MS3', 'MS4', 'MS5', 'MS6', 'MS7'].map((key) => [

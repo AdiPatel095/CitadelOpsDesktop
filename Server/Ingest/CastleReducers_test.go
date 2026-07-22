@@ -4,12 +4,39 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
+
+func TestCastleSnapshotCompletesOnlyCurrentSessionBaseline(t *testing.T) {
+	now := time.Date(2026, 7, 21, 19, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Castles[100] = newCastleState(100)
+	gameState.Session = State.SessionState{
+		Generation: 7, LoggedIn: true, SocketReady: true, ChangedAt: now.Add(-time.Second),
+	}
+	code := 0
+	frame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "jaa", ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"KID":0,"gca":{"A":[1,10,20,100]}}`),
+	}
+	domains, changed, err := reduceCastleSnapshot(t.Context(), frame, &gameState, nil)
+	if err != nil || !changed || gameState.Session.BaselineGeneration != 7 || !slices.Contains(domains, "session") {
+		t.Fatalf("current castle baseline: changed=%t domains=%v session=%+v err=%v", changed, domains, gameState.Session, err)
+	}
+
+	gameState.Session.Generation = 8
+	gameState.Session.BaselineGeneration = 0
+	gameState.Session.ChangedAt = now.Add(time.Second)
+	domains, _, err = reduceCastleSnapshot(t.Context(), frame, &gameState, nil)
+	if err != nil || gameState.Session.BaselineGeneration != 0 || slices.Contains(domains, "session") {
+		t.Fatalf("stale castle snapshot completed newer baseline: domains=%v session=%+v err=%v", domains, gameState.Session, err)
+	}
+}
 
 func TestCastleSnapshotKeepsConstructionSlots(t *testing.T) {
 	gameState := State.NewGameState()

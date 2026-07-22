@@ -68,6 +68,7 @@ type operationResult struct {
 	nextCheck           time.Time
 	detail              string
 	reevaluateOnSuccess bool
+	reevaluateOnStale   bool
 }
 
 func NewCoordinator(
@@ -120,6 +121,31 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 	for _, policy := range coordinator.policies {
 		runtime[policy.ID()] = &policyRuntime{}
 	}
+	var expirationTimer *time.Timer
+	var expirationChannel <-chan time.Time
+	resetExpirationTimer := func() {
+		if expirationTimer != nil {
+			expirationTimer.Stop()
+		}
+		expirationTimer = nil
+		expirationChannel = nil
+		now := time.Now().UTC()
+		next := nextAutomationExpiration(coordinator.configuration.Snapshot(), now)
+		if next.IsZero() {
+			return
+		}
+		delay := next.Sub(now)
+		if delay <= 0 {
+			delay = 100 * time.Millisecond
+		}
+		expirationTimer = time.NewTimer(delay)
+		expirationChannel = expirationTimer.C
+	}
+	defer func() {
+		if expirationTimer != nil {
+			expirationTimer.Stop()
+		}
+	}()
 	var debounce *time.Timer
 	var debounceChannel <-chan time.Time
 	evaluate := func() {
@@ -130,7 +156,7 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 			return false
 		}
 		if stateEventHasDomain(event, "session") {
-			coordinator.cancelRunsForUnavailableSession(runtime, coordinator.state.Snapshot())
+			coordinator.cancelRunsForUnavailableSession(runtime, coordinator.state.ReadOnlyView())
 		}
 		return wakePoliciesForStateEvent(runtime, coordinator.stateWakeByDomain, event)
 	}
@@ -138,6 +164,8 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 		coordinator.cancelDisallowedPolicyRuns(runtime, event, time.Now().UTC())
 		return coordinator.wakePoliciesForConfigurationEvent(runtime, event)
 	}
+	coordinator.expireTimedAutomations(time.Now().UTC())
+	resetExpirationTimer()
 	evaluate()
 	for {
 		select {
@@ -167,9 +195,16 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 			debounceChannel = nil
 			evaluate()
 		case event := <-configurationEvents:
+			resetExpirationTimer()
 			if handleConfigurationEvent(event) {
 				evaluate()
 			}
+		case <-expirationChannel:
+			expirationTimer = nil
+			expirationChannel = nil
+			coordinator.expireTimedAutomations(time.Now().UTC())
+			resetExpirationTimer()
+			evaluate()
 		case result := <-results:
 			current := runtime[result.policyID]
 			if current == nil {
@@ -199,11 +234,11 @@ func (coordinator *Coordinator) evaluate(
 ) {
 	now := time.Now().UTC()
 	configuration := coordinator.configuration.Snapshot()
-	state := coordinator.state.Snapshot()
+	state := coordinator.state.ReadOnlyView()
 	coordinator.cancelRunsDisallowedByConfiguration(runtime, configuration, now)
 	coordinator.cancelRunsForUnavailableSession(runtime, state)
 	var gameDataStore = coordinator.currentGameData()
-	enabled := enabledFeatures(configuration)
+	enabled := enabledFeatures(configuration, now)
 	sessionReady := automationSessionReady(state.Session)
 	for _, policy := range coordinator.policies {
 		current := runtime[policy.ID()]
@@ -212,6 +247,7 @@ func (coordinator *Coordinator) evaluate(
 		}
 		isEnabled := enabled[policy.EnabledKey()]
 		configurationFingerprint := policyConfigurationFingerprint(policy, configuration)
+		previouslyEvaluated := current.evaluatedSessionKnown
 		if !isEnabled {
 			current.evaluatedStateRevision = state.Revision
 			current.evaluatedConfigRevision = configuration.Revision
@@ -274,6 +310,7 @@ func (coordinator *Coordinator) evaluate(
 		current.failureBlockedUntil = time.Time{}
 		decision, err := policy.Evaluate(ctx, Snapshot{
 			State: state, Configuration: configuration, GameData: gameDataStore, Now: now,
+			PolicyConfigurationChanged: previouslyEvaluated && configurationChanged,
 		})
 		if err != nil {
 			resetContinuation(current)
@@ -354,6 +391,7 @@ func (coordinator *Coordinator) evaluate(
 			nextCheck time.Time,
 			detail string,
 			reevaluateOnSuccess bool,
+			reevaluateOnStale bool,
 		) {
 			defer cancelOperation()
 			receipt := coordinator.intents.Submit(operationContext, request)
@@ -367,11 +405,13 @@ func (coordinator *Coordinator) evaluate(
 			case results <- operationResult{
 				policyID: policyID, receipt: receipt, followUp: followUpReceipt,
 				nextCheck: nextCheck, detail: detail, reevaluateOnSuccess: reevaluateOnSuccess,
+				reevaluateOnStale: reevaluateOnStale,
 			}:
 			}
 		}(
 			policy.ID(), operationContext, cancelOperation, request, followUp,
 			decision.NextCheckAt, decision.Detail, decision.ReevaluateOnSuccess,
+			decision.ReevaluateOnStale,
 		)
 	}
 }
@@ -446,7 +486,7 @@ func (coordinator *Coordinator) cancelRunsDisallowedByConfiguration(
 	configuration Configuration.Snapshot,
 	now time.Time,
 ) {
-	enabled := enabledFeatures(configuration)
+	enabled := enabledFeatures(configuration, now)
 	for _, policy := range coordinator.policies {
 		current := runtime[policy.ID()]
 		if current == nil || !current.running || current.cancelRun == nil {
@@ -534,6 +574,14 @@ func operationResultSucceeded(result operationResult) bool {
 		(result.followUp == nil || result.followUp.Status == Intent.StatusSucceeded)
 }
 
+func operationResultRetryableStale(result operationResult) bool {
+	if !result.reevaluateOnStale ||
+		result.receipt.Status != Intent.StatusFailed && result.receipt.Status != Intent.StatusPartiallySucceeded {
+		return false
+	}
+	return strings.Contains(result.receipt.Error, Intent.ErrPlanStale.Error())
+}
+
 func completePolicyRun(current *policyRuntime, result operationResult, now time.Time) (operationResult, bool) {
 	if current.cancelRun != nil {
 		current.cancelRun()
@@ -550,12 +598,14 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 	current.stateProgressPending = false
 	current.configurationWakePending = false
 	succeeded := operationResultSucceeded(result)
-	if succeeded {
+	retryableStale := operationResultRetryableStale(result)
+	if succeeded || retryableStale {
 		current.failureBlockedUntil = time.Time{}
 	} else {
 		retryAt := result.nextCheck
-		if retryAt.IsZero() || result.policyID == "autoInvasion" || result.policyID == "autoTowers" {
-			retryAt = now.Add(defaultRetry)
+		minimumRetryAt := now.Add(defaultRetry)
+		if retryAt.IsZero() || retryAt.Before(minimumRetryAt) || result.policyID == "autoInvasion" || result.policyID == "autoTowers" {
+			retryAt = minimumRetryAt
 		}
 		current.failureBlockedUntil = retryAt
 		result.nextCheck = retryAt
@@ -564,7 +614,7 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 	if succeeded && result.reevaluateOnSuccess && !authoritativeProgress {
 		current.rejectRepeatedDecision = true
 	}
-	immediate := runtimeWakePending || configurationWakePending || succeeded && result.reevaluateOnSuccess
+	immediate := runtimeWakePending || configurationWakePending || succeeded && result.reevaluateOnSuccess || retryableStale
 	if !immediate {
 		resetContinuation(current)
 		current.nextCheck = result.nextCheck
@@ -596,7 +646,7 @@ func resetContinuation(current *policyRuntime) {
 }
 
 func (coordinator *Coordinator) updateAutomation(id string, update func(State.AutomationState) State.AutomationState) {
-	_, _ = coordinator.state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, _ = coordinator.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 		if gameState.Automations == nil {
 			gameState.Automations = map[string]State.AutomationState{}
 		}
@@ -610,13 +660,6 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 		gameState.Automations[id] = next
 		return []string{"automation"}, true, nil
 	})
-}
-
-func enabledFeatures(snapshot Configuration.Snapshot) map[string]bool {
-	result := map[string]bool{}
-	raw := snapshot.Sections["automation.enabled"]
-	_ = json.Unmarshal(raw, &result)
-	return result
 }
 
 func automationSessionReady(session State.SessionState) bool {
@@ -697,7 +740,7 @@ func indexPolicyWakeSections(policies []Policy) map[string][]string {
 }
 
 func policyConfigurationFingerprint(policy Policy, configuration Configuration.Snapshot) string {
-	enabled := enabledFeatures(configuration)[policy.EnabledKey()]
+	enabled := configuredEnabledFeatures(configuration)[policy.EnabledKey()]
 	parts := []string{"enabled", "false", "schedule", policyScheduleConfiguration(policy.ID(), configuration.Sections["scheduler"])}
 	if enabled {
 		parts[1] = "true"

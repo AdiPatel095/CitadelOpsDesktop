@@ -87,6 +87,10 @@ func TestReduceMapSnapshotLabelsStormReadyAndExpiryTimes(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	gameState.Storm.Map.Targets["104:105"] = State.MapObservation{
+		KingdomID: 4, X: 104, Y: 105, TypeID: stormFortMapTypeID, StormIsleID: 99,
+		ObservedAt: time.Date(2026, 7, 15, 15, 0, 0, 0, time.UTC),
+	}
 	code := 0
 	observedAt := time.Date(2026, 7, 15, 16, 20, 0, 0, time.UTC)
 	_, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
@@ -113,6 +117,9 @@ func TestReduceMapSnapshotLabelsStormReadyAndExpiryTimes(t *testing.T) {
 	if !fort.StormReadyAt.Equal(observedAt.Add(300*time.Second)) || !fort.StormExpiresAt.IsZero() {
 		t.Fatalf("fort labels = %#v", fort)
 	}
+	if tracked := gameState.Storm.Map.Targets["104:105"]; tracked != fort {
+		t.Fatalf("tracked Storm fort was not refreshed from the newer map row: %#v", tracked)
+	}
 }
 
 func TestInvasionFortificationTracksReceiptUntilServerCountersReset(t *testing.T) {
@@ -120,9 +127,9 @@ func TestInvasionFortificationTracksReceiptUntilServerCountersReset(t *testing.T
 	code := 0
 	_, changed, err := reduceInvasionFortification(t.Context(), Protocol.Frame{
 		Opcode: "rae", Direction: Protocol.DirectionInbound, ResponseCode: &code,
-		Payload: json.RawMessage(`{"XPOS":1165.0,"YPOS":1166.0,"RCK":"STO"}`),
+		Payload: json.RawMessage(`{"XPOS":1165.0,"YPOS":1166.0,"RCK":"ST"}`),
 	}, &gameState, nil)
-	if err != nil || !changed || gameState.Invasion.FortifiedTargets["0:1165:1166"] != "STO" {
+	if err != nil || !changed || gameState.Invasion.FortifiedTargets["0:1165:1166"] != "ST" {
 		t.Fatalf("fortification receipt: state=%#v changed=%t err=%v", gameState.Invasion, changed, err)
 	}
 	_, changed, err = reduceInvasionFortificationCounters(t.Context(), Protocol.Frame{

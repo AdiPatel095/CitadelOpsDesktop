@@ -21,6 +21,7 @@ type SettingsModalId =
   | 'tower'
   | 'invasion'
   | 'nomad'
+  | 'advisor'
   | 'khan'
   | 'storm';
 
@@ -60,6 +61,12 @@ const FeatureScheduleModal = lazyNamed<{
   featureLabel: string;
   onClose: () => void;
 }>(() => import('./settings/components/FeatureScheduleModal'), 'FeatureScheduleModal');
+const AutomationDurationModal = lazyNamed<{
+  isOpen: boolean;
+  featureKey: string;
+  featureLabel: string;
+  onClose: () => void;
+}>(() => import('./settings/components/AutomationDurationModal'), 'AutomationDurationModal');
 const lazySettingsModal = (loader: () => Promise<unknown>, exportName: string) => (
   lazyNamed<SettingsModalProps>(loader, exportName)
 );
@@ -76,6 +83,7 @@ const settingsModals: Record<SettingsModalId, React.LazyExoticComponent<Componen
   tower: lazySettingsModal(() => import('./settings/components/AutoTowerSettingsModal'), 'AutoTowerSettingsModal'),
   invasion: lazySettingsModal(() => import('./settings/components/AutoInvasionSettingsModal'), 'AutoInvasionSettingsModal'),
   nomad: lazySettingsModal(() => import('./settings/components/AutoNomadSettingsModal'), 'AutoNomadSettingsModal'),
+  advisor: lazySettingsModal(() => import('./settings/components/AutoAdvisorSettingsModal'), 'AutoAdvisorSettingsModal'),
   khan: lazySettingsModal(() => import('./settings/components/AutoKhanSettingsModal'), 'AutoKhanSettingsModal'),
   storm: lazySettingsModal(() => import('./settings/components/AutoStormSettingsModal'), 'AutoStormSettingsModal'),
 };
@@ -91,9 +99,11 @@ const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewId>('castle');
   const [activeSettingsModal, setActiveSettingsModal] = useState<SettingsModalId | null>(null);
   const [scheduleTarget, setScheduleTarget] = useState<{ id: string; label: string } | null>(null);
+  const [durationTarget, setDurationTarget] = useState<{ key: string; label: string } | null>(null);
   const autoEquipmentCleanup = useAutoEquipmentCleanup();
   const openSettings = (id: SettingsModalId) => () => setActiveSettingsModal(id);
   const openSchedule = (id: string, label: string) => setScheduleTarget({ id, label });
+  const openDuration = (key: string, label: string) => setDurationTarget({ key, label });
   const SettingsModal = activeSettingsModal ? settingsModals[activeSettingsModal] : null;
 
   const workspace = activeView === 'automation' ? (
@@ -107,10 +117,12 @@ const AppContent: React.FC = () => {
       onOpenAutoTowerSettings={openSettings('tower')}
       onOpenAutoInvasionSettings={openSettings('invasion')}
       onOpenAutoNomadSettings={openSettings('nomad')}
+      onOpenAutoAdvisorSettings={openSettings('advisor')}
       onOpenAutoKhanSettings={openSettings('khan')}
       onOpenAutoStormSettings={openSettings('storm')}
       autoEquipmentCleanup={autoEquipmentCleanup}
       onOpenFeatureSchedule={openSchedule}
+      onOpenAutomationDuration={openDuration}
     />
   ) : React.createElement(viewComponents[activeView]);
 
@@ -119,6 +131,7 @@ const AppContent: React.FC = () => {
       <Header
         onOpenAutoBirdSettings={openSettings('bird')}
         onOpenAutoStationSettings={openSettings('station')}
+        onOpenAutomationDuration={openDuration}
       />
       <Sidebar currentView={activeView} onViewChange={setActiveView} />
 
@@ -145,6 +158,16 @@ const AppContent: React.FC = () => {
             featureID={scheduleTarget.id}
             featureLabel={scheduleTarget.label}
             onClose={() => setScheduleTarget(null)}
+          />
+        </Suspense>
+      )}
+      {durationTarget && (
+        <Suspense fallback={null}>
+          <AutomationDurationModal
+            isOpen
+            featureKey={durationTarget.key}
+            featureLabel={durationTarget.label}
+            onClose={() => setDurationTarget(null)}
           />
         </Suspense>
       )}

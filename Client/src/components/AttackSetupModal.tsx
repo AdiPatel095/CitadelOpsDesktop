@@ -4,10 +4,8 @@ import {
   Copy,
   Eraser,
   Minus,
-  MousePointerClick,
   Plus,
   Swords,
-  X,
 } from 'lucide-react';
 import { useMetadata, type MetadataItem } from '../context/MetadataContext';
 import { useCitadelAPI } from '../api/ApiContext';
@@ -16,7 +14,7 @@ import ToolImage from './ToolImage';
 import { showToolPicker } from './ToolPickerModal';
 import UnitImage from './UnitImage';
 import { showTroopPicker } from './TroopPickerModal';
-import { Badge, Button, Card, CardContent, CardHeader, Input, MetricTile, Modal, ModalTitle, PillSelector } from './ui';
+import { AddSlot, Badge, Button, Card, CardContent, CardHeader, Input, MetricTile, Modal, ModalTitle, PillSelector, QuantityAssetTile } from './ui';
 
 export interface AttackSetupSlot {
   itemId: number | null;
@@ -73,7 +71,7 @@ interface InventoryIssue {
 }
 
 const laneKeys: LaneKey[] = ['L', 'M', 'R'];
-const MAX_WAVES = 10;
+const MAX_WAVES = 30;
 
 const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
   isOpen,
@@ -293,28 +291,37 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
 
         <section className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-border-base bg-bg-card/55 p-3 shadow-[var(--glass-shadow-compact)] backdrop-blur-2xl">
           <div className="min-w-0 flex-1 overflow-x-auto custom-scrollbar">
-            <PillSelector
-              ariaLabel="Attack wave"
-              value={String(activeWaveIndex)}
-              onChange={(value) => selectWave(Number(value))}
-              options={draft.waves.map((wave, index) => {
-                const waveTotals = summarizeWave(wave);
-                return {
-                  value: String(index),
-                  label: `Wave ${index + 1}`,
-                  title: `${waveTotals.troops.toLocaleString()} troops · ${waveTotals.tools.toLocaleString()} tools`,
-                };
-              })}
-              size="sm"
-            />
+            <div className="w-max p-1">
+              <PillSelector
+                ariaLabel="Attack wave"
+                value={String(activeWaveIndex)}
+                onChange={(value) => selectWave(Number(value))}
+                options={draft.waves.map((wave, index) => {
+                  const waveTotals = summarizeWave(wave);
+                  return {
+                    value: String(index),
+                    label: `Wave ${index + 1}`,
+                    title: `${waveTotals.troops.toLocaleString()} troops · ${waveTotals.tools.toLocaleString()} tools`,
+                  };
+                })}
+                size="header"
+              />
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="ghost" size="sm" onClick={duplicateWave} disabled={draft.waves.length >= MAX_WAVES} leftIcon={<Copy className="h-3.5 w-3.5" />}>
               Duplicate selected
             </Button>
-            <Button variant="ghost" size="sm" onClick={fillAllWaves} disabled={draft.waves.length <= 1} leftIcon={<Boxes className="h-3.5 w-3.5" />}>
-              Fill all
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fillAllWaves}
+              disabled={draft.waves.length <= 1}
+              leftIcon={<Boxes className="h-3.5 w-3.5" />}
+              title={`Replace every wave with Wave ${activeWaveIndex + 1}`}
+            >
+              Copy selected to all
             </Button>
             <Button variant="ghost" size="sm" onClick={() => updateActiveWave(() => emptyWave())} leftIcon={<Eraser className="h-3.5 w-3.5" />}>
               Clear selected
@@ -464,7 +471,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
               { value: 'troop', label: 'Units · 10' },
               { value: 'tool', label: 'Tools · 7' },
             ]}
-            size="sm"
+            size="header"
           />
           <MetricTile size="sm" className="min-w-[4.75rem]" label="Troops" value={waveTotals.troops.toLocaleString()} />
           <MetricTile size="sm" className="min-w-[4.75rem]" label="Tools" value={waveTotals.tools.toLocaleString()} />
@@ -525,6 +532,7 @@ const FormationRow: React.FC<FormationRowProps> = ({ kind, label, wave, items, s
           {laneKeys.map((laneKey) => {
             const lane = wave[laneKey];
             const slots = lane[slotKey];
+            const filledSlots = slots.filter((slot) => slot.itemId != null).length;
             return (
               <div key={laneKey} className={`min-w-0 rounded-global border px-3 pb-3 pt-2.5 ${laneKey === 'M' ? 'border-primary/25 bg-primary/5' : 'border-border-base bg-bg-card/35'}`}>
                 <div className="mb-2.5 flex items-center justify-between gap-2">
@@ -532,10 +540,10 @@ const FormationRow: React.FC<FormationRowProps> = ({ kind, label, wave, items, s
                     {laneLabel(laneKey)}
                   </span>
                   <span className="font-mono text-[9px] font-bold text-text-muted">
-                    {slots.length} slot{slots.length === 1 ? '' : 's'}
+                    {filledSlots}/{slots.length} filled
                   </span>
                 </div>
-                <div className="grid grid-flow-col auto-cols-fr items-stretch gap-2">
+                <div className="flex items-start justify-center gap-2">
                   {slots.map((slot, slotIndex) => (
                     <InventorySlotCard
                       key={slotIndex}
@@ -597,87 +605,85 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
   const remainingAfterPreset = available - allocated;
   const overAllocated = hasItem && allocated > available;
   const slotLabel = `${laneLabel(laneKey)} ${itemKindLabel} slot ${index + 1}`;
+  const slotCode = `${kind === 'troop' ? 'U' : 'T'}${index + 1}`;
   const pickerDisabled = items.length === 0;
 
   return (
-    <div
-      className={`group relative flex min-h-[10.75rem] w-full min-w-0 flex-col overflow-hidden rounded-[0.95rem] border p-2 transition-all hover:-translate-y-0.5 hover:shadow-[var(--glass-shadow-compact)] ${
-        overAllocated
-          ? 'border-error/45 bg-error/7'
-          : hasItem
-            ? 'border-primary/45 bg-primary/8 shadow-[0_0_16px_color-mix(in_srgb,var(--primary)_14%,transparent)]'
-            : 'border-border-base bg-bg-card/60 hover:border-primary/30'
-      }`}
-    >
-      <div className="flex h-3.5 items-center justify-between gap-1 text-[9px] font-black uppercase text-text-muted">
-        <span className={hasItem ? 'text-primary' : ''}>{kind === 'troop' ? 'U' : 'T'}{index + 1}</span>
-        {hasItem ? (
-          <span className="flex min-w-0 items-center gap-0.5">
-            <span className="max-w-[2.75rem] truncate font-mono">#{slot.itemId}</span>
-            <button
-              type="button"
-              onClick={() => onChange({ itemId: null, quantity: 0 })}
-              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-text-muted transition hover:bg-error/10 hover:text-error"
-              title={`Clear ${slotLabel}`}
-              aria-label={`Clear ${slotLabel}`}
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </span>
-        ) : (
-          <span>Empty</span>
-        )}
+    <div className="flex w-[5.25rem] shrink-0 flex-col items-center">
+      <div className="mb-1 flex w-full items-center justify-between gap-1 px-0.5 text-[9px] font-black uppercase text-text-muted">
+        <span className={hasItem ? 'text-primary' : ''}>{slotCode}</span>
+        <span className="max-w-[3.25rem] truncate font-mono">{hasItem ? `#${slot.itemId}` : 'Empty'}</span>
       </div>
 
-      <button
-        type="button"
-        onClick={onPick}
-        disabled={pickerDisabled}
-        className={`mt-1.5 flex h-[4.25rem] w-full min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1.5 text-center transition focus:outline-none focus:ring-2 focus:ring-primary/45 disabled:cursor-not-allowed disabled:opacity-40 ${hasItem ? 'border-primary/25 bg-bg-app/65 hover:border-primary/55 hover:bg-primary/8' : 'border-dashed border-border-base bg-bg-input/45 text-text-muted hover:border-primary/40 hover:text-primary'}`}
-        title={pickerDisabled ? `No available ${itemKindLabel}s in this inventory` : `${hasItem ? 'Change' : 'Choose'} ${itemKindLabel}`}
-        aria-label={`${hasItem ? 'Change' : 'Choose'} ${slotLabel}`}
-      >
-        {hasItem ? (
-          <>
-            {kind === 'troop' ? (
-              <UnitImage unitId={slot.itemId} size={36} showLevel />
-            ) : (
-              <ToolImage toolId={slot.itemId} size={36} />
+      {hasItem ? (
+        <>
+          <QuantityAssetTile
+            size={76}
+            visual={(
+              <button
+                type="button"
+                onClick={onPick}
+                disabled={pickerDisabled}
+                className={`flex h-full w-full items-center justify-center rounded-xl border bg-bg-input/55 transition focus:outline-none focus:ring-2 focus:ring-primary/45 disabled:cursor-not-allowed disabled:opacity-40 ${overAllocated ? 'border-error/55' : 'border-primary/35 hover:border-primary/70 hover:bg-primary/8'}`}
+                title={pickerDisabled ? `No available ${itemKindLabel}s in this inventory` : `Change ${itemKindLabel}`}
+                aria-label={`Change ${slotLabel}`}
+              >
+                {kind === 'troop' ? (
+                  <UnitImage unitId={slot.itemId} size={68} showLevel className="rounded-xl" />
+                ) : (
+                  <ToolImage toolId={slot.itemId} size={68} className="rounded-xl" />
+                )}
+              </button>
             )}
-            <span className="line-clamp-2 w-full text-[10px] font-bold leading-[1.05] text-text-main" title={itemName}>
-              {itemName}
-            </span>
-          </>
-        ) : (
-          <>
-            <MousePointerClick className="h-4 w-4" />
-            <span className="text-[10px] font-bold">Choose {itemKindLabel}</span>
-          </>
-        )}
-      </button>
-
-      <label className="mt-2 block">
-        <span className="mb-1 block text-[9px] font-black uppercase tracking-wider text-text-muted">Amount</span>
-        <input
-          type="number"
-          min={0}
-          max={available || undefined}
-          value={slot.quantity || ''}
-          onChange={(event) => onChange({ quantity: positiveInteger(event.target.value) })}
-          placeholder="0"
-          disabled={!hasItem}
-          className="h-8 w-full min-w-0 rounded-md border border-border-base bg-bg-input/65 px-1.5 text-center font-mono text-xs font-black text-text-main outline-none transition focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-45"
-          aria-label={`${slotLabel} amount`}
-        />
-      </label>
-
-      <div className={`mt-1.5 truncate text-center font-mono text-[9px] leading-none ${overAllocated ? 'text-error' : 'text-text-muted'}`}>
-        {hasItem
-          ? overAllocated
-            ? `${allocated.toLocaleString()}/${available.toLocaleString()} used`
-            : `${Math.max(0, remainingAfterPreset).toLocaleString()} left`
-          : 'No item selected'}
-      </div>
+            quantity={(
+              <input
+                type="number"
+                min={0}
+                max={available || undefined}
+                value={slot.quantity || ''}
+                onChange={(event) => onChange({ quantity: positiveInteger(event.target.value) })}
+                onClick={(event) => event.stopPropagation()}
+                placeholder="0"
+                className="w-12 bg-transparent p-0 text-center font-mono text-[10px] font-black tabular-nums text-slate-900 outline-none"
+                aria-label={`${slotLabel} amount`}
+                title={`${slotLabel} amount`}
+              />
+            )}
+            onRemove={() => onChange({ itemId: null, quantity: 0 })}
+            removeLabel={`Clear ${slotLabel}`}
+          />
+          <button
+            type="button"
+            onClick={onPick}
+            disabled={pickerDisabled}
+            className="mt-1.5 line-clamp-2 h-7 w-full text-center text-[10px] font-bold leading-[1.05] text-text-main transition hover:text-primary disabled:cursor-not-allowed"
+            title={itemName}
+          >
+            {itemName}
+          </button>
+          <div className={`mt-1 truncate text-center font-mono text-[9px] leading-none ${overAllocated ? 'text-error' : 'text-text-muted'}`}>
+            {overAllocated
+              ? `${allocated.toLocaleString()}/${available.toLocaleString()} used`
+              : `${Math.max(0, remainingAfterPreset).toLocaleString()} left`}
+          </div>
+        </>
+      ) : (
+        <>
+          <AddSlot
+            label={`Choose ${itemKindLabel}`}
+            layout="stacked"
+            onClick={onPick}
+            disabled={pickerDisabled}
+            className="h-[76px] w-[76px] shrink-0 px-1 text-[9px] disabled:cursor-not-allowed disabled:opacity-40"
+            title={pickerDisabled ? `No available ${itemKindLabel}s in this inventory` : `Choose ${itemKindLabel}`}
+            aria-label={`Choose ${slotLabel}`}
+          />
+          <span className="mt-1.5 flex h-7 items-center text-center text-[10px] font-bold leading-[1.05] text-text-muted">
+            Empty {itemKindLabel} slot
+          </span>
+          <span className="mt-1 font-mono text-[9px] leading-none text-text-muted">Available</span>
+        </>
+      )}
     </div>
   );
 };

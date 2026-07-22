@@ -6,7 +6,10 @@ import (
 	"strings"
 )
 
-const ConfigurationSection = "attacks.presets"
+const (
+	ConfigurationSection = "attacks.presets"
+	MaximumWaves         = 30
+)
 
 type Document struct {
 	Version int      `json:"version"`
@@ -73,8 +76,8 @@ func validatePreset(preset Preset) error {
 	if strings.TrimSpace(preset.Name) == "" {
 		return fmt.Errorf("name is required")
 	}
-	if len(preset.Waves) < 1 || len(preset.Waves) > 10 {
-		return fmt.Errorf("must contain between 1 and 10 waves")
+	if len(preset.Waves) < 1 || len(preset.Waves) > MaximumWaves {
+		return fmt.Errorf("must contain between 1 and %d waves", MaximumWaves)
 	}
 	for waveIndex, wave := range preset.Waves {
 		for label, lane := range map[string]Lane{"left": wave.Left, "middle": wave.Middle, "right": wave.Right} {

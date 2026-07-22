@@ -11,8 +11,8 @@ export interface PillSelectorProps extends Omit<ToggleGroupProps, 'options'> {
   options: readonly PillSelectorOption[];
 }
 
-// PillSelector is the shared segmented-pill control. Callers provide only the selected value,
-// option list, and optional sizing/layout props; the visual treatment stays consistent app-wide.
+// PillSelector is the shared segmented-pill control. Its required context size keeps header and
+// body instances on the same two geometries across the app.
 export const PillSelector: React.FC<PillSelectorProps> = ({ options, className = '', ...props }) => {
   const normalizedOptions = options.map((option) => (
     typeof option === 'string' ? { value: option, label: option } : option

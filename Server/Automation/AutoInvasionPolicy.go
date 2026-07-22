@@ -21,6 +21,7 @@ const (
 	bloodcrowMapTypeID     = 34
 	fixedInvasionRadius    = 50
 	defaultInvasionRefresh = 300
+	eventMedalsCurrency    = "MEDALS"
 )
 
 type AutoInvasionPolicy struct{}
@@ -35,6 +36,7 @@ type autoInvasionSettings struct {
 	MinimumRemainingSec      int64          `json:"minimumRemainingSec"`
 	CheckIntervalSec         int            `json:"checkIntervalSec"`
 	MapRefreshIntervalSec    int            `json:"mapRefreshIntervalSec"`
+	DailyAttackLimit         int64          `json:"dailyAttackLimit"`
 	HorseTravelBoostID       int            `json:"horseTravelBoostId"`
 	FortifyCurrency          string         `json:"fortifyCurrency,omitempty"`
 }
@@ -46,14 +48,14 @@ func (*AutoInvasionPolicy) ID() string { return "autoInvasion" }
 func (*AutoInvasionPolicy) EnabledKey() string { return "auto_invasion" }
 
 func (*AutoInvasionPolicy) WakeDomains() []string {
-	return []string{"map", "movements", "commanders", "units", "events", "event-scores", "invasion", "achievements"}
+	return []string{"attacks", "map", "movements", "commanders", "units", "events", "event-scores", "invasion", "achievements", "player-protection"}
 }
 
 func (*AutoInvasionPolicy) WakeSections() []string {
 	return []string{"automation.autoInvasion", AttackPresets.ConfigurationSection, commanderFeatureSection}
 }
 
-func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision Decision, err error) {
 	settings := autoInvasionSettings{
 		MinimumRemainingSec: 1800,
 		CheckIntervalSec:    30, MapRefreshIntervalSec: defaultInvasionRefresh, HorseTravelBoostID: -1,
@@ -73,6 +75,20 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
 		return invasionWaiting(snapshot.Now, "Choose a supported horse travel boost"), nil
 	}
+	if refresh, required := playerProtectionRefreshDecision(snapshot); required {
+		return refresh, nil
+	}
+	defer func() {
+		if err == nil {
+			decision = capAtPlayerProtectionRefresh(snapshot, decision)
+		}
+	}()
+	if snapshot.State.Player.ProtectionMode.PreparingOrActive(snapshot.Now) {
+		return Decision{
+			Status: "protected", Detail: "Protection Mode is preparing or active; Auto Invasion attacks are paused",
+			NextCheckAt: snapshot.State.Player.ProtectionMode.Until().Add(time.Second),
+		}, nil
+	}
 
 	score, found := snapshot.State.ActiveScalableEventScore()
 	if !found {
@@ -81,6 +97,17 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 	targetTypeID, supported := invasionTargetType(score.EventID)
 	if !supported {
 		return invasionWaiting(snapshot.Now, "Auto Invasion supports Foreign Lords and Bloodcrow"), nil
+	}
+	fortifyCurrency, fortifyCurrencyValid := invasionFortifyCurrencyForEvent(settings.FortifyCurrency, score.EventID)
+	if !fortifyCurrencyValid {
+		return invasionWaiting(snapshot.Now, "The selected fortification currency is not valid for the active invasion event"), nil
+	}
+	if fortifyCurrency != "" && fortifyCurrency != "C2" && len(snapshot.State.Invasion.FortifyCurrencies) > 0 &&
+		!snapshot.State.Invasion.SupportsFortifyCurrency(fortifyCurrency) {
+		return invasionWaiting(snapshot.Now, fmt.Sprintf(
+			"The active invasion event does not offer %s for fortification; available currencies: %s",
+			fortifyCurrency, strings.Join(snapshot.State.Invasion.FortifyCurrencies, ", "),
+		)), nil
 	}
 	difficultyID := configuredInvasionDifficulty(settings, score.EventID)
 	if snapshot.GameData == nil {
@@ -136,6 +163,11 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 		"score": float64(score.PlayerScore), "scoreTarget": float64(settings.ScoreTarget),
 		"activeAttacks": float64(activeCount),
 	}
+	if _, blocked := dailyAttackLimitAllowance(
+		snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, 30), metrics,
+	); blocked != nil {
+		return *blocked, nil
+	}
 	commanderIDs, commandersRestricted := commanderFeatureCandidates(
 		snapshot.State,
 		snapshot.Configuration,
@@ -147,7 +179,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
 	}
-	commanderID, commanderAvailable := nextAvailableFeatureCommander(snapshot.State, commanderIDs, commandersRestricted)
+	commanderID, commanderAvailable := nextAvailableFeatureCommander(snapshot.State, commanderIDs, commandersRestricted, snapshot.Now)
 	if !commanderAvailable {
 		detail := "No commander is currently available"
 		if commandersRestricted {
@@ -207,8 +239,9 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 		"minimumRemainingSec": settings.MinimumRemainingSec, "targetTypeId": targetTypeID,
 		"kingdomId": target.KingdomID, "targetX": target.X, "targetY": target.Y,
 		"targetObjectId": target.ObjectID, "preset": preset,
-		"fortifyCurrency":    settings.FortifyCurrency,
+		"fortifyCurrency":    fortifyCurrency,
 		"horseTravelBoostId": settings.HorseTravelBoostID,
+		"dailyAttackLimit":   settings.DailyAttackLimit,
 	}
 	if commandersRestricted {
 		attackArguments["commanderIds"] = commanderIDs
@@ -217,16 +250,37 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 	return Decision{
 		Status: "ready", Detail: fmt.Sprintf("Attack invasion castle %d:%d with %s", target.X, target.Y, preset.Name),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
-		Request: &Intent.Request{Name: "invasion.attack", Arguments: arguments}, ReevaluateOnSuccess: true,
+		Request:             &Intent.Request{Name: "invasion.attack", Arguments: arguments},
+		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}, nil
 }
 
 func validAutoInvasionFortifyCurrency(currency string) bool {
 	switch currency {
-	case "", "GTO", "STO", "KM", "C2":
+	case "", "GTO", "STO", "KM", "ST", eventMedalsCurrency, "C2":
 		return true
 	default:
 		return false
+	}
+}
+
+func invasionFortifyCurrencyForEvent(currency string, eventID int64) (string, bool) {
+	switch currency {
+	case "":
+		return "", true
+	case "GTO", "STO", "C2":
+		return currency, true
+	case "KM", "ST", eventMedalsCurrency:
+		switch eventID {
+		case foreignLordsEventID:
+			return "KM", true
+		case bloodcrowEventID:
+			return "ST", true
+		default:
+			return "", false
+		}
+	default:
+		return "", false
 	}
 }
 
@@ -329,7 +383,8 @@ func invasionCapacityShortage(
 		return 0, 0, 0, false, err
 	}
 	requested := map[State.UnitID]int64{}
-	for _, wave := range preset.Waves {
+	waveCount := min(len(preset.Waves), max(0, capacity.MaximumWaves))
+	for _, wave := range preset.Waves[:waveCount] {
 		addCapacityLimitedPresetLane(requested, wave.Left, capacity.Capacity.Left)
 		addCapacityLimitedPresetLane(requested, wave.Middle, capacity.Capacity.Front)
 		addCapacityLimitedPresetLane(requested, wave.Right, capacity.Capacity.Right)

@@ -12,6 +12,7 @@ export interface AutoTowerClientStateV2 {
   version: 2;
   checkIntervalSec: number;
   mapRefreshIntervalSec: number;
+  dailyAttackLimit: number;
   horseTravelBoostId: HorseTravelBoostID;
   castles: Record<string, AutoTowerCastleSettings>;
 }
@@ -27,6 +28,7 @@ export const defaultAutoTowerClientState = (): AutoTowerClientStateV2 => ({
 	version: 2,
 	checkIntervalSec: 30,
 	mapRefreshIntervalSec: 1800,
+  dailyAttackLimit: 0,
   horseTravelBoostId: -1,
   castles: {},
 });
@@ -52,6 +54,7 @@ export function parseAutoTowerClientState(raw: unknown): AutoTowerClientStateV2 
     version: 2,
     checkIntervalSec: clampInterval(document.checkIntervalSec, fallback.checkIntervalSec),
 		mapRefreshIntervalSec: clampMapRefreshInterval(document.mapRefreshIntervalSec),
+    dailyAttackLimit: positiveInteger(document.dailyAttackLimit),
     horseTravelBoostId: parseHorseTravelBoostID(document.horseTravelBoostId),
     castles,
   };

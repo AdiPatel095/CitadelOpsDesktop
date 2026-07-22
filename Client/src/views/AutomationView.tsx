@@ -5,6 +5,7 @@ import {
   Crosshair,
   Hammer,
   HeartPulse,
+  MousePointerClick,
   Settings,
   Trash2,
   Users,
@@ -26,6 +27,7 @@ import {
 } from '../components/ui';
 import {
   AUTO_EQUIPMENT_CLEANUP_FEATURE_ID,
+  AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY,
   type AutoEquipmentCleanupController,
 } from '../settings/AutoEquipmentCleanup';
 import { scheduleSummary } from '../settings/SchedulerTypes';
@@ -40,14 +42,17 @@ interface AutomationViewProps {
   onOpenAutoTowerSettings: () => void;
   onOpenAutoInvasionSettings: () => void;
   onOpenAutoNomadSettings: () => void;
+  onOpenAutoAdvisorSettings: () => void;
   onOpenAutoKhanSettings: () => void;
   onOpenAutoStormSettings: () => void;
   autoEquipmentCleanup: AutoEquipmentCleanupController;
   onOpenFeatureSchedule: (id: string, label: string) => void;
+  onOpenAutomationDuration: (featureKey: string, featureLabel: string) => void;
 }
 
 interface AutomationFeature {
   id: string;
+  enabledKey: string;
   group: AutomationGroupID;
   name: string;
   description: string;
@@ -84,6 +89,16 @@ function formatNextWake(timestamp: number, now: number): string {
   if (days > 0) return `Next check in ${days}d${hours > 0 ? ` ${hours}h` : ''}`;
   if (hours > 0) return `Next check in ${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
   return `Next check in ${Math.max(1, minutes)}m`;
+}
+
+function formatTimedRemaining(expiresAt: number, now: number): string {
+  const totalMinutes = Math.max(1, Math.ceil((expiresAt - now) / 60_000));
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days > 0) return `${days}d${hours > 0 ? ` ${hours}h` : ''} left`;
+  if (hours > 0) return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''} left`;
+  return `${minutes}m left`;
 }
 
 function modeLabel(mode: 'global' | 'perCastle'): string {
@@ -126,10 +141,12 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenAutoTowerSettings,
   onOpenAutoInvasionSettings,
   onOpenAutoNomadSettings,
+  onOpenAutoAdvisorSettings,
   onOpenAutoKhanSettings,
   onOpenAutoStormSettings,
   autoEquipmentCleanup,
   onOpenFeatureSchedule,
+  onOpenAutomationDuration,
 }) => {
   const {
     gameLoggedIn,
@@ -145,6 +162,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoTowerEnabled,
     autoInvasionEnabled,
 		autoNomadEnabled,
+		autoAdvisorEnabled,
     autoKhanEnabled,
     autoStormEnabled,
     toggleRecruitTroops,
@@ -156,9 +174,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		toggleAutoTower,
 		toggleAutoInvasion,
 		toggleAutoNomad,
+		toggleAutoAdvisor,
 		toggleAutoKhan,
 		toggleAutoStorm,
 		automationStates,
+		automationTimedUntilByKey,
   } = useAuth();
   const [now, setNow] = useState(() => Date.now());
   const [isEquipmentCleanupSettingsOpen, setIsEquipmentCleanupSettingsOpen] = useState(false);
@@ -175,6 +195,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const features = useMemo<AutomationFeature[]>(() => [
     {
       id: 'autoRecruit',
+      enabledKey: 'recruit_troops',
       group: 'production',
       name: 'Auto Recruit',
       description: 'Keeps troop recruitment queues stocked from the configured plans.',
@@ -189,6 +210,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     },
     {
       id: 'autoTool',
+      enabledKey: 'auto_tool',
       group: 'production',
       name: 'Auto Tool',
       description: 'Maintains tool production queues across configured castles.',
@@ -203,6 +225,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     },
     {
       id: 'autoHospital',
+      enabledKey: 'auto_hospital',
       group: 'support',
       name: 'Auto Hospital',
       description: 'Processes hospital queues using the configured healing priorities.',
@@ -217,6 +240,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     },
     {
       id: 'autoTCI',
+      enabledKey: 'auto_tci',
       group: 'upkeep',
       name: 'Auto TCI',
       description: 'Equips and renews temporary construction items automatically.',
@@ -231,6 +255,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     },
     {
       id: 'autoSceatRes',
+      enabledKey: 'auto_sceat_resources',
       group: 'production',
       name: 'Auto Sceat Resources',
       description: 'Balances kingdom resources and maintains Refinery, Toolsmith, Dragon Hoard, and Dragon Forge queues.',
@@ -245,6 +270,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     },
     {
       id: 'autoFoodBalance',
+      enabledKey: 'auto_food_balance',
       group: 'upkeep',
       name: 'Auto Food Balance',
       description: 'Protects Food, Honey, Mead, and Beef reserves across owned castles.',
@@ -259,6 +285,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     },
     {
 		id: 'autoTowers',
+		enabledKey: 'auto_towers',
 		group: 'offense',
 		name: 'Auto Towers',
 		description: 'Attacks ready robber-baron towers with configured two-flank troop waves.',
@@ -273,6 +300,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 	},
 	{
       id: AUTO_EQUIPMENT_CLEANUP_FEATURE_ID,
+      enabledKey: AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY,
       group: 'upkeep',
       name: 'Auto Equipment Cleanup',
       description: 'Sells eligible old non-relic equipment and gems from storage automatically.',
@@ -286,6 +314,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     },
     {
       id: 'autoInvasion',
+      enabledKey: 'auto_invasion',
       group: 'offense',
       name: 'Auto Invasion',
       description: 'Uses a CitadelOps attack preset against Foreign Lords and Bloodcrow castles until the score target is reached.',
@@ -300,6 +329,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     },
 	{
 		id: 'autoNomad',
+		enabledKey: 'auto_nomad',
 		group: 'offense',
 		name: 'Auto Nomad / Samurai',
 		description: 'Maxes four regular camps, locks the weakest, and chains available commanders into that one camp.',
@@ -313,7 +343,23 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		onOpenSettings: onOpenAutoNomadSettings,
 	},
 	{
+		id: 'autoAdvisor',
+		enabledKey: 'auto_advisor',
+		group: 'offense',
+		name: 'Auto Advisor',
+		description: 'Starts one server-managed Nomad or Samurai advisor chain, sized to event time and current resources.',
+		enabled: autoAdvisorEnabled,
+		detail: autoAdvisorEnabled
+			? automationStates.autoAdvisor?.detail ?? 'Waiting for an active advisor-enabled event'
+			: 'Advisor attacks are paused',
+		status: automationStates.autoAdvisor?.status ?? (autoAdvisorEnabled ? 'waiting' : 'disabled'),
+		icon: Bot,
+		onToggle: toggleAutoAdvisor,
+		onOpenSettings: onOpenAutoAdvisorSettings,
+	},
+	{
 		id: 'autoKhan',
+		enabledKey: 'auto_khan',
 		group: 'offense',
 		name: 'Auto Khan',
 		description: 'Chains Khan camp hits and retaliations while keeping the Great Empire main castle on its defense preset.',
@@ -328,6 +374,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 	},
     {
       id: 'autoStorm',
+      enabledKey: 'auto_storm',
       group: 'offense',
       name: 'Auto Storm',
       description: 'Builds a captured Storm castle target, attacks selected forts and islands, and spends Aquamarine by priority.',
@@ -351,6 +398,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoTowerEnabled,
     autoInvasionEnabled,
 		autoNomadEnabled,
+		autoAdvisorEnabled,
     autoKhanEnabled,
     autoStormEnabled,
     autoToolEnabled,
@@ -367,6 +415,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     onOpenAutoTowerSettings,
     onOpenAutoInvasionSettings,
 		onOpenAutoNomadSettings,
+		onOpenAutoAdvisorSettings,
     onOpenAutoKhanSettings,
     onOpenAutoStormSettings,
     onOpenRecruitTroopsSettings,
@@ -377,12 +426,12 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     toggleAutoTower,
     toggleAutoInvasion,
 		toggleAutoNomad,
+		toggleAutoAdvisor,
     toggleAutoKhan,
     toggleAutoStorm,
     toggleAutoTool,
     toggleRecruitTroops,
   ]);
-  const activeCount = features.filter((feature) => feature.enabled).length;
   const groupedFeatures = automationGroups
     .map((group) => ({ ...group, features: features.filter((feature) => feature.group === group.id) }))
     .filter((group) => group.features.length > 0);
@@ -394,9 +443,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
         description="Configure automation and see what each feature is doing now."
         icon={<Bot className="h-5 w-5" />}
         actions={(
-          <div className="flex flex-wrap justify-end gap-2">
-            <Badge variant={activeCount > 0 ? 'success' : 'secondary'}>{activeCount} of {features.length} enabled</Badge>
-            <Badge variant={gameLoggedIn ? 'outline' : 'warning'}>{gameLoggedIn ? 'Live game state' : 'Last known game state'}</Badge>
+          <div className="automation-right-click-banner">
+            <MousePointerClick aria-hidden="true" />
+            <span><strong className="text-text-main">Right-click</strong> a toggle for temporary activation</span>
           </div>
         )}
       />
@@ -416,22 +465,33 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
               <div className="automation-function-grid">
                 {group.features.map((feature) => {
                   const FeatureIcon = feature.icon;
+                  const timedUntil = automationTimedUntilByKey[feature.enabledKey];
                   return (
                     <div
                       key={feature.id}
                       className={`automation-function-row ${feature.enabled ? 'automation-function-row-active' : ''}`}
                     >
-                      <Switch
-                        checked={feature.enabled}
-                        onChange={feature.onToggle}
-                        size="sm"
-                        ariaLabel={`Toggle ${feature.name}`}
-                        disabled={feature.disabled}
-                      />
+                      <span
+                        className="shrink-0"
+                        onContextMenu={(event) => {
+                          event.preventDefault();
+                          onOpenAutomationDuration(feature.enabledKey, feature.name);
+                        }}
+                        title={`Right-click to run ${feature.name} for a duration`}
+                      >
+                        <Switch
+                          checked={feature.enabled}
+                          onChange={feature.onToggle}
+                          size="sm"
+                          ariaLabel={`Toggle ${feature.name}`}
+                          disabled={feature.disabled}
+                        />
+                      </span>
                       <div className="automation-function-copy">
                         <div className="flex min-w-0 items-center gap-2">
                           <FeatureIcon className="h-3.5 w-3.5 shrink-0 text-text-muted" />
                           <h3>{feature.name}</h3>
+                          {timedUntil ? <Badge variant="outline">{formatTimedRemaining(timedUntil, now)}</Badge> : null}
                         </div>
                         <p>{feature.description}</p>
                         <StatusIndicator

@@ -8,7 +8,24 @@ export interface AutoFoodBalanceSettings {
   minimumSourceReserve: number;
   minimumCoinReserve: number;
   autoKingdomTransport: boolean;
+  useKingdomTimeSkips: boolean;
+  allowedTimeSkips: string[];
+  timeSkipReserve: Record<string, number>;
 }
+
+export const AUTO_FOOD_BALANCE_TIME_SKIPS = [
+  { id: 'MS1', label: '1m' },
+  { id: 'MS2', label: '5m' },
+  { id: 'MS3', label: '10m' },
+  { id: 'MS4', label: '30m' },
+  { id: 'MS5', label: '1h' },
+  { id: 'MS6', label: '5h' },
+  { id: 'MS7', label: '24h' },
+] as const;
+
+const AUTO_FOOD_BALANCE_TIME_SKIP_IDS = new Set<string>(
+  AUTO_FOOD_BALANCE_TIME_SKIPS.map((skip) => skip.id),
+);
 
 export const DEFAULT_AUTO_FOOD_BALANCE_SETTINGS: AutoFoodBalanceSettings = {
   checkIntervalSec: 60,
@@ -20,10 +37,26 @@ export const DEFAULT_AUTO_FOOD_BALANCE_SETTINGS: AutoFoodBalanceSettings = {
   minimumSourceReserve: 1_000,
   minimumCoinReserve: 0,
   autoKingdomTransport: true,
+  useKingdomTimeSkips: false,
+  allowedTimeSkips: [],
+  timeSkipReserve: {},
 };
 
 export function parseAutoFoodBalanceSettings(payload: unknown): AutoFoodBalanceSettings {
   const value = isRecord(payload) ? payload : {};
+  const allowedTimeSkips = Array.isArray(value.allowedTimeSkips)
+    ? [...new Set(value.allowedTimeSkips
+        .map((entry) => String(entry).trim().toUpperCase())
+        .filter((entry) => AUTO_FOOD_BALANCE_TIME_SKIP_IDS.has(entry)))]
+    : DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.allowedTimeSkips;
+  const timeSkipReserve: Record<string, number> = {};
+  if (isRecord(value.timeSkipReserve)) {
+    Object.entries(value.timeSkipReserve).forEach(([rawID, reserve]) => {
+      const id = rawID.trim().toUpperCase();
+      if (!AUTO_FOOD_BALANCE_TIME_SKIP_IDS.has(id)) return;
+      timeSkipReserve[id] = integer(reserve, 0, 0, Number.MAX_SAFE_INTEGER);
+    });
+  }
   return {
     checkIntervalSec: integer(value.checkIntervalSec, DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.checkIntervalSec, 30, 3600),
     stateRefreshIntervalSec: integer(value.stateRefreshIntervalSec, DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.stateRefreshIntervalSec, 60, 86400),
@@ -34,6 +67,9 @@ export function parseAutoFoodBalanceSettings(payload: unknown): AutoFoodBalanceS
     minimumSourceReserve: number(value.minimumSourceReserve, DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.minimumSourceReserve, 0, Number.MAX_SAFE_INTEGER),
     minimumCoinReserve: number(value.minimumCoinReserve, DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.minimumCoinReserve, 0, Number.MAX_SAFE_INTEGER),
     autoKingdomTransport: value.autoKingdomTransport !== false,
+    useKingdomTimeSkips: value.useKingdomTimeSkips === true,
+    allowedTimeSkips,
+    timeSkipReserve,
   };
 }
 

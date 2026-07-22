@@ -427,6 +427,27 @@ func TestDefaultPriorityUsesActorPolicy(t *testing.T) {
 	}
 }
 
+func TestReportManagerDoesNotYieldToAutomationLock(t *testing.T) {
+	if YieldsToAutomationLock("report-manager") {
+		t.Fatal("passive report ingestion was paused by the automation lock")
+	}
+	if !YieldsToAutomationLock("automation:autoInvasion") {
+		t.Fatal("Auto Invasion did not yield to the automation lock")
+	}
+}
+
+func TestAutomationSafetyPriorityOrder(t *testing.T) {
+	if PriorityAutoStation <= PriorityAutoBird {
+		t.Fatalf("Auto Station priority %d must remain above Auto Bird %d", PriorityAutoStation, PriorityAutoBird)
+	}
+	if PriorityAutoBird <= PriorityAutoTCI {
+		t.Fatalf("Auto Bird priority %d must remain above Auto TCI %d", PriorityAutoBird, PriorityAutoTCI)
+	}
+	if PriorityAutoBird <= PriorityHospital || PriorityAutoBird <= PriorityBackground {
+		t.Fatalf("Auto Bird priority %d must remain above routine automation", PriorityAutoBird)
+	}
+}
+
 func outboundTestPayload(t *testing.T, opcode string, label string) []byte {
 	t.Helper()
 	payload, err := json.Marshal(map[string]string{"label": label})

@@ -13,13 +13,18 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-const kingdomTowerMapTypeID = 2
+const (
+	kingdomTowerMapTypeID                 = 2
+	autoTowerTargetVerificationAge        = 30 * time.Second
+	autoTowerCapacityObservationFreshness = time.Hour
+)
 
 type AutoTowerPolicy struct{}
 
 type autoTowerSettings struct {
 	CheckIntervalSec      int                        `json:"checkIntervalSec"`
 	MapRefreshIntervalSec int                        `json:"mapRefreshIntervalSec"`
+	DailyAttackLimit      int64                      `json:"dailyAttackLimit"`
 	HorseTravelBoostID    int                        `json:"horseTravelBoostId"`
 	Castles               map[string]autoTowerCastle `json:"castles"`
 }
@@ -44,7 +49,7 @@ func (*AutoTowerPolicy) ID() string { return "autoTowers" }
 func (*AutoTowerPolicy) EnabledKey() string { return "auto_towers" }
 
 func (*AutoTowerPolicy) WakeDomains() []string {
-	return []string{"commanders", "map", "movements", "tower-cooldowns", "tower-queue", "units"}
+	return []string{"attacks", "commanders", "map", "movements", "tower-cooldowns", "tower-queue", "units"}
 }
 
 func (*AutoTowerPolicy) WakeSections() []string {
@@ -105,75 +110,115 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 
 	candidates, activeCount, configured := queuedTowerCandidates(snapshot, settings)
-	if candidate, found := nextTowerQueueCandidate(candidates); found {
+	metrics := map[string]float64{
+		"activeTowers": float64(activeCount), "queuedTowers": float64(len(candidates)),
+	}
+	var selected towerQueueCandidate
+	var selectedCommanderID State.CommanderID
+	var firstCapacityError error
+	firstTroopShortage := ""
+	commanderEligibleCandidates := 0
+	for _, candidate := range candidates {
 		commanderID, commanderAvailable := nextAutoTowerCommander(
-			snapshot.State, commanderIDs, commandersRestricted, candidate.Plan.MaidenOnly,
+			snapshot.State, commanderIDs, commandersRestricted, candidate.Plan.MaidenOnly, snapshot.Now,
 		)
 		if !commanderAvailable {
-			detail := "No commander is currently available"
-			if commandersRestricted {
-				detail = "No assigned Auto Towers commander is currently available"
+			continue
+		}
+		commanderEligibleCandidates++
+		if snapshot.GameData != nil {
+			required, err := autoTowerCapacityRequirement(snapshot, candidate, commanderID)
+			if err != nil {
+				if firstCapacityError == nil {
+					firstCapacityError = err
+				}
+				continue
 			}
-			if candidate.Plan.MaidenOnly {
+			required += autoTowerCapacityCorrection(snapshot.State, candidate.Castle.ID, snapshot.Now)
+			available := max(int64(0), candidate.Castle.Units.Stationed[candidate.Plan.UnitID])
+			if available < required {
+				if firstTroopShortage == "" {
+					firstTroopShortage = fmt.Sprintf(
+						"%s has %d of unit %d; its next full attack requires %d",
+						castleName(candidate.Castle), available, candidate.Plan.UnitID, required,
+					)
+				}
+				continue
+			}
+		}
+		selected = candidate
+		selectedCommanderID = commanderID
+		break
+	}
+	if selected.Castle.ID > 0 {
+		target := snapshot.State.Map[selected.Entry.KingdomID][fmt.Sprintf("%d:%d", selected.Entry.TargetX, selected.Entry.TargetY)]
+		if target.ObservedAt.IsZero() || snapshot.Now.Sub(target.ObservedAt) >= autoTowerTargetVerificationAge {
+			arguments, _ := json.Marshal(map[string]any{
+				"sourceCastleId":   selected.Castle.ID,
+				"kingdomId":        selected.Entry.KingdomID,
+				"targetX":          selected.Entry.TargetX,
+				"targetY":          selected.Entry.TargetY,
+				"refreshStartedAt": snapshot.Now,
+			})
+			return Decision{
+				Status:              "ready",
+				Detail:              fmt.Sprintf("Refresh queued tower target %d:%d; rotate it back if unchanged", selected.Entry.TargetX, selected.Entry.TargetY),
+				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+				Metrics:             metrics,
+				Request:             &Intent.Request{Name: "tower.queue.target.refresh", Arguments: arguments},
+				ScheduleKey:         towerCastleScheduleKey(selected.Castle.ID),
+				ReevaluateOnSuccess: true,
+			}, nil
+		}
+		if _, blocked := dailyAttackLimitAllowance(
+			snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, 30), metrics,
+		); blocked != nil {
+			return *blocked, nil
+		}
+		attackArguments := map[string]any{
+			"sourceCastleId": selected.Castle.ID, "kingdomId": selected.Entry.KingdomID,
+			"targetX": selected.Entry.TargetX, "targetY": selected.Entry.TargetY,
+			"unitId": selected.Plan.UnitID, "maidenOnly": selected.Plan.MaidenOnly,
+			"horseTravelBoostId": settings.HorseTravelBoostID, "dailyAttackLimit": settings.DailyAttackLimit,
+			"commanderIds": []State.CommanderID{selectedCommanderID},
+		}
+		arguments, _ := json.Marshal(attackArguments)
+		return Decision{
+			Status:              "ready",
+			Detail:              fmt.Sprintf("Launch queued tower target %d:%d from %s", selected.Entry.TargetX, selected.Entry.TargetY, castleName(selected.Castle)),
+			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+			Metrics:             metrics,
+			Request:             &Intent.Request{Name: "tower.attack", Arguments: arguments},
+			ScheduleKey:         towerCastleScheduleKey(selected.Castle.ID),
+			ReevaluateOnSuccess: true,
+			ReevaluateOnStale:   true,
+		}, nil
+	}
+	if len(candidates) > 0 {
+		detail := "No commander is currently available"
+		if commandersRestricted {
+			detail = "No assigned Auto Towers commander is currently available"
+		}
+		if commanderEligibleCandidates > 0 && firstTroopShortage != "" {
+			detail = "Waiting for tower troops: " + firstTroopShortage
+		} else if commanderEligibleCandidates > 0 && firstCapacityError != nil {
+			detail = "Cannot calculate tower troop requirements: " + firstCapacityError.Error()
+		} else if commanderEligibleCandidates == 0 {
+			for _, candidate := range candidates {
+				if !candidate.Plan.MaidenOnly {
+					continue
+				}
 				detail = "No available commander supports the required maiden relic"
 				if commandersRestricted {
 					detail = "No available assigned Auto Towers commander supports the required maiden relic"
 				}
-			}
-			return Decision{
-				Status: "waiting", Detail: detail,
-				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
-				Metrics: map[string]float64{
-					"activeTowers": float64(activeCount), "queuedTowers": float64(len(candidates)),
-				},
-			}, nil
-		}
-		if snapshot.GameData != nil {
-			required, err := autoTowerCapacityRequirement(snapshot, candidate, commanderID)
-			if err != nil {
-				return Decision{
-					Status: "waiting", Detail: "Cannot calculate tower troop requirements: " + err.Error(),
-					NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
-					Metrics: map[string]float64{
-						"activeTowers": float64(activeCount), "queuedTowers": float64(len(candidates)),
-					},
-				}, nil
-			}
-			available := max(int64(0), candidate.Castle.Units.Stationed[candidate.Plan.UnitID])
-			if available < required {
-				return Decision{
-					Status: "waiting",
-					Detail: fmt.Sprintf(
-						"Waiting for tower troops: %s has %d of unit %d; the next full attack requires %d",
-						castleName(candidate.Castle), available, candidate.Plan.UnitID, required,
-					),
-					NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
-					Metrics: map[string]float64{
-						"activeTowers": float64(activeCount), "queuedTowers": float64(len(candidates)),
-					},
-				}, nil
+				break
 			}
 		}
-		attackArguments := map[string]any{
-			"sourceCastleId": candidate.Castle.ID, "kingdomId": candidate.Entry.KingdomID,
-			"targetX": candidate.Entry.TargetX, "targetY": candidate.Entry.TargetY,
-			"unitId": candidate.Plan.UnitID, "maidenOnly": candidate.Plan.MaidenOnly,
-			"horseTravelBoostId": settings.HorseTravelBoostID,
-		}
-		if commandersRestricted {
-			attackArguments["commanderIds"] = commanderIDs
-		}
-		arguments, _ := json.Marshal(attackArguments)
 		return Decision{
-			Status:      "ready",
-			Detail:      fmt.Sprintf("Launch queued tower target %d:%d from %s", candidate.Entry.TargetX, candidate.Entry.TargetY, castleName(candidate.Castle)),
-			NextCheckAt: snapshot.Now.Add(2 * time.Second),
-			Metrics: map[string]float64{
-				"activeTowers": float64(activeCount), "queuedTowers": float64(len(candidates)),
-			},
-			Request:             &Intent.Request{Name: "tower.attack", Arguments: arguments},
-			ScheduleKey:         towerCastleScheduleKey(candidate.Castle.ID),
-			ReevaluateOnSuccess: true,
+			Status: "waiting", Detail: detail,
+			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
+			Metrics:     metrics,
 		}, nil
 	}
 
@@ -189,7 +234,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	return Decision{
 		Status: "idle", Detail: detail, NextCheckAt: nextCheck,
-		Metrics: map[string]float64{"activeTowers": float64(activeCount), "queuedTowers": float64(len(candidates))},
+		Metrics: metrics,
 	}, nil
 }
 
@@ -234,8 +279,17 @@ func queuedTowerCandidates(snapshot Snapshot, settings autoTowerSettings) ([]tow
 		active := activeTowerMovements(snapshot.State, castle.ID, snapshot.Now)
 		activeCount += active
 		for _, entry := range snapshot.State.TowerQueue.EntriesByCastle[castle.ID] {
+			if entry.DeferredUntil != nil && entry.DeferredUntil.After(snapshot.Now) {
+				continue
+			}
 			key := towerTargetKey(entry.KingdomID, entry.TargetX, entry.TargetY)
 			if _, locked := reserved[key]; locked || towerCooldownRefreshPending(snapshot.State, key) {
+				continue
+			}
+			if State.AttackFeatureTargetPendingAt(
+				snapshot.State, State.AttackFeatureAutoTowers, entry.KingdomID, kingdomTowerMapTypeID,
+				entry.TargetX, entry.TargetY, snapshot.Now,
+			) {
 				continue
 			}
 			target, exists := snapshot.State.Map[entry.KingdomID][fmt.Sprintf("%d:%d", entry.TargetX, entry.TargetY)]
@@ -269,6 +323,33 @@ func queuedTowerCandidates(snapshot Snapshot, settings autoTowerSettings) ([]tow
 		reserved[key] = struct{}{}
 		available = append(available, candidate)
 	}
+	sort.SliceStable(available, func(left, right int) bool {
+		leftAttemptedAt := snapshot.State.TowerQueue.LastAttemptedAt[available[left].Castle.ID]
+		rightAttemptedAt := snapshot.State.TowerQueue.LastAttemptedAt[available[right].Castle.ID]
+		if leftAttemptedAt.IsZero() != rightAttemptedAt.IsZero() {
+			return leftAttemptedAt.IsZero()
+		}
+		if !leftAttemptedAt.Equal(rightAttemptedAt) {
+			return leftAttemptedAt.Before(rightAttemptedAt)
+		}
+		leftQueuedAt := available[left].Entry.QueuedAt
+		rightQueuedAt := available[right].Entry.QueuedAt
+		if !leftQueuedAt.Equal(rightQueuedAt) {
+			return leftQueuedAt.Before(rightQueuedAt)
+		}
+		leftDistance := towerQueueEntryDistanceSquared(available[left].Castle, available[left].Entry)
+		rightDistance := towerQueueEntryDistanceSquared(available[right].Castle, available[right].Entry)
+		if leftDistance != rightDistance {
+			return leftDistance < rightDistance
+		}
+		if available[left].Castle.ID != available[right].Castle.ID {
+			return available[left].Castle.ID < available[right].Castle.ID
+		}
+		if available[left].Entry.TargetY != available[right].Entry.TargetY {
+			return available[left].Entry.TargetY < available[right].Entry.TargetY
+		}
+		return available[left].Entry.TargetX < available[right].Entry.TargetX
+	})
 	return available, activeCount, configured
 }
 
@@ -284,6 +365,7 @@ func nextAutoTowerCommander(
 	candidates []State.CommanderID,
 	restricted bool,
 	maidenOnly bool,
+	now time.Time,
 ) (State.CommanderID, bool) {
 	if !restricted {
 		candidates = make([]State.CommanderID, 0, len(gameState.Commanders))
@@ -296,7 +378,8 @@ func nextAutoTowerCommander(
 	}
 	for _, commanderID := range candidates {
 		commander, exists := gameState.Commanders[commanderID]
-		if !exists || !commander.Available || maidenOnly && !autoTowerCommanderSupportsMaiden(gameState, commanderID) {
+		if !exists || !commander.Available || State.CommanderHasActiveMovementAt(gameState, commanderID, now) ||
+			maidenOnly && !autoTowerCommanderSupportsMaiden(gameState, commanderID) {
 			continue
 		}
 		return commanderID, true
@@ -350,6 +433,15 @@ func autoTowerCapacityRequirement(
 		return 0, err
 	}
 	return capacity.Capacity.Left + capacity.Capacity.Right, nil
+}
+
+func autoTowerCapacityCorrection(gameState State.GameState, castleID State.CastleID, now time.Time) int64 {
+	observation, exists := gameState.TowerQueue.CapacityByCastle[castleID]
+	if !exists || observation.AdditionalUnits <= 0 || observation.ObservedAt.IsZero() ||
+		now.Before(observation.ObservedAt) || now.Sub(observation.ObservedAt) > autoTowerCapacityObservationFreshness {
+		return 0
+	}
+	return observation.AdditionalUnits
 }
 
 func nextTowerQueueScan(snapshot Snapshot, settings autoTowerSettings, refreshInterval time.Duration) (State.CastleState, autoTowerCastle, bool) {

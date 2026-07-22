@@ -3,6 +3,7 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +12,64 @@ import (
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
+
+func TestStormAttackReplansWhenCommanderAvailabilityChanges(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"isles":[{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"countVictories":"0#1#5"}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true}
+	state.Commanders[43] = State.CommanderState{ID: 43, Available: false}
+	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{
+		"101:102": {
+			KingdomID: stormIntentKingdomID, X: 101, Y: 102, TypeID: stormIntentFortMapTypeID,
+			StormIsleID: 7, StormVictoryCount: 5, ObservedAt: now,
+		},
+	}
+	arguments := json.RawMessage(`{
+		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
+		"stormIsleId":7,"minimumVictoryCount":4,"commanderIds":[43],
+		"preset":{"id":"fort","name":"Fort","waves":[]}
+	}`)
+
+	noOp, err := planStormAttack(t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(noOp.Steps) != 0 || !strings.Contains(noOp.Summary, "Skip Storm attack") {
+		t.Fatalf("busy-commander Storm plan = %#v", noOp)
+	}
+
+	commander := state.Commanders[43]
+	commander.Available = true
+	state.Commanders[43] = commander
+	plan, err := planStormAttack(t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var resolverArguments json.RawMessage
+	for _, step := range plan.Steps {
+		if step.Resolver == "storm.attack.build" {
+			resolverArguments = step.ResolverArguments
+			break
+		}
+	}
+	if len(resolverArguments) == 0 {
+		t.Fatalf("Storm attack has no deferred launch step: %#v", plan.Steps)
+	}
+	commander.Available = false
+	state.Commanders[43] = commander
+	if _, err := (&Application{}).resolveStormAttackStep(
+		t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, resolverArguments,
+	); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("busy commander should make the Storm plan stale: %v", err)
+	}
+}
 
 func TestStormMapScanWindowsCoverSixHundredBySixHundredInThirtySixRequests(t *testing.T) {
 	windows := stormMapScanWindows(State.StormMapBounds{X1: 0, Y1: 0, X2: 605, Y2: 605})
@@ -81,8 +140,16 @@ func TestCaptureStormScanBuildsAuthoritativeMapState(t *testing.T) {
 	if err := application.beginStormScan(context.Background(), request); err != nil {
 		t.Fatal(err)
 	}
-	if err := application.captureStormScan(context.Background(), request); err != nil {
+	if _, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		castle := gameState.Castles[40]
+		castle.Focused = false
+		gameState.Castles[40] = castle
+		return []string{"castles"}, true, nil
+	}); err != nil {
 		t.Fatal(err)
+	}
+	if err := application.captureStormScan(context.Background(), request); err != nil {
+		t.Fatalf("capture after focus changed: %v", err)
 	}
 
 	snapshot := application.State.Snapshot()
@@ -98,6 +165,44 @@ func TestCaptureStormScanBuildsAuthoritativeMapState(t *testing.T) {
 	}
 	if !snapshot.Storm.Map.LastAttemptAt.Equal(startedAt) || snapshot.Storm.Map.LastCompletedAt.IsZero() {
 		t.Fatalf("Storm scan timing = %#v", snapshot.Storm.Map)
+	}
+}
+
+func TestCaptureTargetedStormScanRefreshesTrackedCooldown(t *testing.T) {
+	startedAt := time.Date(2026, time.July, 21, 19, 18, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, Focused: true}
+	state.Storm.Map = State.StormMapState{
+		SourceCastleID: 40,
+		Targets: map[string]State.MapObservation{
+			"612:667": {
+				KingdomID: 4, X: 612, Y: 667, TypeID: stormIntentFortMapTypeID,
+				StormIsleID: 9, ObservedAt: startedAt.Add(-time.Hour),
+			},
+		},
+	}
+	readyAt := startedAt.Add(10 * time.Hour)
+	state.Map[4] = map[string]State.MapObservation{
+		"612:667": {
+			KingdomID: 4, X: 612, Y: 667, TypeID: stormIntentFortMapTypeID, StormIsleID: 7,
+			StormCooldownRemaining: 36_000, StormReadyAt: readyAt, ObservedAt: startedAt.Add(time.Second),
+		},
+	}
+	application := &Application{State: State.NewStore(state)}
+	request, err := json.Marshal(stormMapScanRequest{
+		SourceCastleID: 40, Targeted: true,
+		Bounds: State.StormMapBounds{X1: 612, Y1: 667, X2: 612, Y2: 667}, ScanStartedAt: startedAt,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := application.captureStormScan(context.Background(), request); err != nil {
+		t.Fatal(err)
+	}
+	tracked := application.State.Snapshot().Storm.Map.Targets["612:667"]
+	if tracked.StormIsleID != 7 || tracked.StormCooldownRemaining != 36_000 || !tracked.StormReadyAt.Equal(readyAt) {
+		t.Fatalf("targeted cooldown refresh = %#v", tracked)
 	}
 }
 
@@ -245,9 +350,9 @@ func TestPlanStormIslandReturnUsesIslandAsSourceAndStormCastleAsDestination(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 5 || plan.Steps[0].Opcode != "jaa" || plan.Steps[1].Opcode != "sdi" ||
-		plan.Steps[2].Action != "storm.island.return.guard" || plan.Steps[3].Opcode != "cds" ||
-		plan.Steps[4].Action != "storm.island.return.complete" {
+	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "sdi" ||
+		plan.Steps[1].Action != "storm.island.return.guard" || plan.Steps[2].Opcode != "cds" ||
+		plan.Steps[3].Action != "storm.island.return.complete" {
 		t.Fatalf("island return steps = %#v", plan.Steps)
 	}
 	var route struct {
@@ -256,7 +361,7 @@ func TestPlanStormIslandReturnUsesIslandAsSourceAndStormCastleAsDestination(t *t
 		SourceX int `json:"SX"`
 		SourceY int `json:"SY"`
 	}
-	if err := json.Unmarshal(plan.Steps[1].Command.Payload, &route); err != nil {
+	if err := json.Unmarshal(plan.Steps[0].Command.Payload, &route); err != nil {
 		t.Fatal(err)
 	}
 	if route.TargetX != 200 || route.TargetY != 300 || route.SourceX != 101 || route.SourceY != 102 {
@@ -269,11 +374,71 @@ func TestPlanStormIslandReturnUsesIslandAsSourceAndStormCastleAsDestination(t *t
 		Wait     int        `json:"WT"`
 		Units    [][2]int64 `json:"A"`
 	}
-	if err := json.Unmarshal(plan.Steps[3].Command.Payload, &dispatch); err != nil {
+	if err := json.Unmarshal(plan.Steps[2].Command.Payload, &dispatch); err != nil {
 		t.Fatal(err)
 	}
 	if dispatch.SourceID != 777 || dispatch.TargetX != 200 || dispatch.TargetY != 300 || dispatch.Wait != 0 ||
 		len(dispatch.Units) != 2 || dispatch.Units[0] != [2]int64{10, 4} || dispatch.Units[1] != [2]int64{12, 4} {
 		t.Fatalf("island return dispatch = %#v", dispatch)
+	}
+}
+
+func TestPlanStormShopPurchaseUsesLunaStorefrontWireShape(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"packages":[
+			{"packageID":245,"comment1":"War horn","comment2":"Luna's trade boat","packageType":"tool","packagePriceAquamarine":2960},
+			{"packageID":3119,"comment1":"Silver Coins","comment2":"Luna's trade boat","packageType":"currency","packagePriceAquamarine":10000,"stock":3}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{
+		ID: 40, KingdomID: 4,
+		Resources: map[State.ResourceID]State.ResourceBalance{GameData.StormAquamarineID: {Amount: 100_000}},
+	}
+	state.Inventory.ConstructionOffersCastleID = 40
+	state.Inventory.ConstructionOffersKingdomID = 4
+	state.Inventory.ConstructionOffersObservedAt = now
+	plan, err := planStormShopPurchase(context.Background(), Intent.PlanningContext{State: state, GameData: gameData}, json.RawMessage(`{
+		"castleId":40,"productId":245,"amount":2,"aquamarineReserve":50000
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "jaa" || plan.Steps[1].Opcode != "gbc" ||
+		plan.Steps[2].Action != "storm.shop.guard" || plan.Steps[3].Opcode != "sbp" {
+		t.Fatalf("Storm shop steps = %#v", plan.Steps)
+	}
+	if got := string(plan.Steps[1].Command.Payload); got != `{"CID":40,"KID":4}` {
+		t.Fatalf("Storm shop history payload = %s", got)
+	}
+	if got := string(plan.Steps[3].Command.Payload); got != `{"PID":245,"BT":3,"TID":-1,"AMT":2,"KID":4,"AID":-1,"PC2":-1,"BA":0,"PWR":0,"_PO":-1}` {
+		t.Fatalf("Storm shop payload = %s", got)
+	}
+	if plan.Summary != "Buy 2 x War horn from Luna for 5920 Aquamarine at castle 40" {
+		t.Fatalf("Storm shop summary = %q", plan.Summary)
+	}
+
+	batch, err := planStormShopPurchase(context.Background(), Intent.PlanningContext{State: state, GameData: gameData}, json.RawMessage(`{
+		"castleId":40,"purchases":[{"productId":245,"amount":2},{"productId":3119,"amount":3}],"aquamarineReserve":50000
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(batch.Steps) != 5 || batch.Steps[3].Opcode != "sbp" || batch.Steps[4].Opcode != "sbp" {
+		t.Fatalf("batched Storm shop steps = %#v", batch.Steps)
+	}
+	if got := string(batch.Steps[3].Command.Payload); !strings.Contains(got, `"PID":245`) || !strings.Contains(got, `"AMT":2`) {
+		t.Fatalf("first batched Storm shop payload = %s", got)
+	}
+	if got := string(batch.Steps[4].Command.Payload); !strings.Contains(got, `"PID":3119`) || !strings.Contains(got, `"AMT":3`) {
+		t.Fatalf("second batched Storm shop payload = %s", got)
+	}
+	if batch.Summary != "Buy 2 x War horn and 3 x Silver Coins from Luna for 35920 Aquamarine at castle 40" {
+		t.Fatalf("batched Storm shop summary = %q", batch.Summary)
 	}
 }

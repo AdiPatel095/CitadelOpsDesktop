@@ -30,12 +30,14 @@ func reduceInitialState(
 	}
 	changed := false
 	accountChanged := false
+	protectionLifecycleChanged := false
 	if raw := root["gpi"]; len(raw) > 0 {
 		player, err := decodePlayerInfo(raw)
 		if err != nil {
 			return nil, false, err
 		}
 		incomingPlayerID := State.PlayerID(player.ID)
+		incomingUID := int64(player.UID)
 		incomingWorldID := strings.TrimSpace(gameState.Session.ServerURL)
 		boundWorldID, boundPlayerID := State.BoundAccount(*gameState)
 		if incomingPlayerID > 0 && ((boundPlayerID > 0 && incomingPlayerID != boundPlayerID) ||
@@ -51,11 +53,17 @@ func reduceInitialState(
 		updated := applyDecodedPlayerInfo(player, gameState)
 		changed = changed || updated
 		bindingChanged := incomingPlayerID > 0 && gameState.Account.PlayerID != incomingPlayerID
+		if incomingPlayerID > 0 && incomingUID > 0 && gameState.Account.UID != incomingUID {
+			bindingChanged = true
+		}
 		if incomingPlayerID > 0 && incomingWorldID != "" &&
 			!strings.EqualFold(strings.TrimSpace(gameState.Account.WorldID), incomingWorldID) {
 			bindingChanged = true
 		}
 		if bindingChanged {
+			if incomingUID > 0 {
+				gameState.Account.UID = incomingUID
+			}
 			gameState.Account.PlayerID = incomingPlayerID
 			if incomingWorldID != "" {
 				gameState.Account.WorldID = incomingWorldID
@@ -64,6 +72,12 @@ func reduceInitialState(
 			changed = true
 		}
 	}
+	updated, lifecycleChanged, err := applyPlayerProtectionSnapshot(root, frame.ReceivedAt, gameState)
+	if err != nil {
+		return nil, false, err
+	}
+	changed = changed || updated
+	protectionLifecycleChanged = protectionLifecycleChanged || lifecycleChanged
 	if raw := root["gcl"]; len(raw) > 0 {
 		updated, err := applyCastleList(raw, gameState)
 		if err != nil {
@@ -101,6 +115,13 @@ func reduceInitialState(
 	}
 	if raw := root["sce"]; len(raw) > 0 {
 		updated, err := applyPlayerCurrencies(raw, gameState, gameData)
+		if err != nil {
+			return nil, false, err
+		}
+		changed = changed || updated
+	}
+	if raw := root["gai"]; len(raw) > 0 {
+		updated, err := applyDailyAttackCount(raw, frame.ReceivedAt, gameState)
 		if err != nil {
 			return nil, false, err
 		}
@@ -184,17 +205,10 @@ func reduceInitialState(
 		}
 		changed = changed || updated
 	}
-	baselineChanged := false
-	if gameState.Session.LoggedIn && gameState.Session.SocketReady &&
-		gameState.Session.Generation > 0 && !frame.ReceivedAt.Before(gameState.Session.ChangedAt) &&
-		gameState.Session.BaselineGeneration != gameState.Session.Generation {
-		gameState.Session.BaselineGeneration = gameState.Session.Generation
-		changed = true
-		baselineChanged = true
-	}
 	domains := []string{
 		"player", "castles", "resources", "currencies", "alliance", "commanders", "castellans",
 		"equipment", "generals", "general-skills", "reports", "subscriptions", "market", "kingdom-transport", "production", "events", "event-scores", "achievements", "legend-skills",
+		"attacks",
 	}
 	if accountChanged {
 		domains = []string{
@@ -204,11 +218,11 @@ func reduceInitialState(
 			"kingdom-transport", "production", "crafting", "buildings", "building-layout", "building-queue",
 			"building-construction", "construction-items", "construction-offers", "units", "defense", "map",
 			"events", "event-scores", "tower-cooldowns", "tower-queue", "invasion", "storm", "nomad-camps",
-			"khan", "rift", "attack-dialog", "achievements", "legend-skills", "command-context",
+			"khan", "rift", "attacks", "attack-dialog", "achievements", "legend-skills", "command-context",
 		}
 	}
-	if baselineChanged {
-		domains = append(domains, "session")
+	if protectionLifecycleChanged {
+		domains = append(domains, "player-protection")
 	}
 	return domains, changed, nil
 }
@@ -229,6 +243,194 @@ func resetInitialAccountState(gameState *State.GameState) {
 	next.CatalogVersion = catalogVersion
 	next.LanguageVersion = languageVersion
 	*gameState = next
+}
+
+func reducePlayerProtectionMode(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+		return nil, false, fmt.Errorf("decode player protection mode envelope: %w", err)
+	}
+	changed, lifecycleChanged, err := applyPlayerProtectionSnapshot(root, frame.ReceivedAt, gameState)
+	if err != nil || !changed {
+		return nil, changed, err
+	}
+	domains := []string{"player"}
+	if lifecycleChanged {
+		domains = append(domains, "player-protection")
+	}
+	return domains, true, nil
+}
+
+func applyPlayerProtectionSnapshot(
+	root map[string]json.RawMessage,
+	observedAt time.Time,
+	gameState *State.GameState,
+) (bool, bool, error) {
+	observedAt = observedAt.UTC()
+	currentActive := gameState.Player.ProtectionMode.PreparingOrActive(observedAt)
+	next := gameState.Player.ProtectionMode
+	found := false
+
+	modePayload := root
+	if raw := root["uap"]; len(raw) > 0 {
+		if err := json.Unmarshal(raw, &modePayload); err != nil {
+			return false, false, fmt.Errorf("decode player protection mode: %w", err)
+		}
+	}
+	modeRaw, hasModeState := modePayload["PMS"]
+	modeTimerRaw, hasModeTimer := modePayload["PMT"]
+	if hasModeState || hasModeTimer {
+		if !hasModeState || !hasModeTimer {
+			return false, false, fmt.Errorf("decode player protection mode: PMS and PMT must both be present")
+		}
+		modeState, modeOK := rawInt64(modeRaw)
+		modeTimerSec, timerOK := rawInt64(modeTimerRaw)
+		if !modeOK || !timerOK {
+			return false, false, fmt.Errorf("decode player protection mode: PMS and PMT must be integers")
+		}
+		next.ModeState = int(modeState)
+		next.ModeTimerSec = max(modeTimerSec, 0)
+		next.ModeObservedAt = observedAt
+		found = true
+	}
+
+	remainingSec, hasProtectionTime, err := ownPlayerProtectionRemaining(root, gameState.Player.ID)
+	if err != nil {
+		return false, false, err
+	}
+	if hasProtectionTime {
+		next.RemainingSec = max(remainingSec, 0)
+		next.ObservedAt = observedAt
+		found = true
+	}
+	if !found {
+		return false, false, nil
+	}
+	lifecycleChanged := currentActive != next.PreparingOrActive(observedAt)
+	changed := !reflect.DeepEqual(gameState.Player.ProtectionMode, next)
+	gameState.Player.ProtectionMode = next
+	return changed, lifecycleChanged, nil
+}
+
+func ownPlayerProtectionRemaining(
+	root map[string]json.RawMessage,
+	playerID State.PlayerID,
+) (int64, bool, error) {
+	if playerID <= 0 {
+		return 0, false, nil
+	}
+	if remainingSec, found, err := protectionRemainingFromOwner(root, playerID); found || err != nil {
+		return remainingSec, found, err
+	}
+	if raw := root["O"]; len(raw) > 0 {
+		if remainingSec, found, err := protectionRemainingFromRawOwner(raw, playerID); found || err != nil {
+			return remainingSec, found, err
+		}
+	}
+	if raw := root["gca"]; len(raw) > 0 {
+		var castle map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &castle); err != nil {
+			return 0, false, fmt.Errorf("decode player protection castle owner: %w", err)
+		}
+		if remainingSec, found, err := protectionRemainingFromRawOwner(castle["O"], playerID); found || err != nil {
+			return remainingSec, found, err
+		}
+	}
+	if raw := root["OI"]; len(raw) > 0 {
+		if remainingSec, found, err := protectionRemainingFromOwnerList(raw, playerID); found || err != nil {
+			return remainingSec, found, err
+		}
+	}
+	if raw := root["A"]; len(raw) > 0 {
+		if remainingSec, found, err := protectionRemainingFromAlliance(raw, playerID); found || err != nil {
+			return remainingSec, found, err
+		}
+	}
+	if raw := root["ain"]; len(raw) > 0 {
+		var allianceEnvelope map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &allianceEnvelope); err != nil {
+			return 0, false, fmt.Errorf("decode player protection alliance envelope: %w", err)
+		}
+		if remainingSec, found, err := protectionRemainingFromAlliance(allianceEnvelope["A"], playerID); found || err != nil {
+			return remainingSec, found, err
+		}
+	}
+	return 0, false, nil
+}
+
+func protectionRemainingFromOwner(
+	owner map[string]json.RawMessage,
+	playerID State.PlayerID,
+) (int64, bool, error) {
+	id, hasID := rawInt64(owner["OID"])
+	if !hasID || State.PlayerID(id) != playerID {
+		return 0, false, nil
+	}
+	raw, hasRemaining := owner["RPT"]
+	if !hasRemaining {
+		return 0, false, nil
+	}
+	remainingSec, ok := rawInt64(raw)
+	if !ok {
+		return 0, false, fmt.Errorf("decode player protection time: RPT must be an integer")
+	}
+	return remainingSec, true, nil
+}
+
+func protectionRemainingFromRawOwner(
+	raw json.RawMessage,
+	playerID State.PlayerID,
+) (int64, bool, error) {
+	if len(raw) == 0 {
+		return 0, false, nil
+	}
+	var owner map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &owner); err != nil {
+		return 0, false, fmt.Errorf("decode player protection owner: %w", err)
+	}
+	return protectionRemainingFromOwner(owner, playerID)
+}
+
+func protectionRemainingFromOwnerList(
+	raw json.RawMessage,
+	playerID State.PlayerID,
+) (int64, bool, error) {
+	var owners []json.RawMessage
+	if err := json.Unmarshal(raw, &owners); err != nil {
+		return 0, false, fmt.Errorf("decode player protection owner list: %w", err)
+	}
+	for _, owner := range owners {
+		if remainingSec, found, err := protectionRemainingFromRawOwner(owner, playerID); found || err != nil {
+			return remainingSec, found, err
+		}
+	}
+	return 0, false, nil
+}
+
+func protectionRemainingFromAlliance(
+	raw json.RawMessage,
+	playerID State.PlayerID,
+) (int64, bool, error) {
+	if len(raw) == 0 {
+		return 0, false, nil
+	}
+	var alliance map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &alliance); err != nil {
+		return 0, false, fmt.Errorf("decode player protection alliance: %w", err)
+	}
+	members := alliance["M"]
+	if len(members) == 0 {
+		return 0, false, nil
+	}
+	return protectionRemainingFromOwnerList(members, playerID)
 }
 
 func reduceLegendSkills(
@@ -631,6 +833,7 @@ func reduceAllianceInfo(
 }
 
 type wirePlayerInfo struct {
+	UID  wireInt64 `json:"UID"`
 	ID   wireInt64 `json:"PID"`
 	Name string    `json:"PN"`
 }

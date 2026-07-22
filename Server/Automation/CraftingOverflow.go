@@ -79,7 +79,7 @@ func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interv
 		Detail:              fmt.Sprintf("Move %.0f overflow resource %d from %s to %s", best.amount, best.resource, castleName(best.source), castleName(best.target)),
 		NextCheckAt:         snapshot.Now.Add(interval),
 		Metrics:             map[string]float64{"shipmentAmount": best.amount, "coinCost": coinCost},
-		Request:             &Intent.Request{Name: "resource.market.ship", Arguments: arguments},
+		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
 		ReevaluateOnSuccess: true,
 	}, true
 }
@@ -103,6 +103,9 @@ func stormOverflowDecision(settings craftingSettings, snapshot Snapshot, interva
 		if pending.KingdomID == storm.KingdomID && pending.RemainingSec > 0 {
 			return Decision{}, false
 		}
+	}
+	if _, settling := kingdomResourceTransportWorkflow(snapshot.State, storm.KingdomID); settling {
+		return Decision{}, false
 	}
 	unlock, observed := snapshot.State.KingdomTransport.Unlocks[storm.KingdomID]
 	if !observed || !unlock.Unlocked {
@@ -138,15 +141,15 @@ func stormOverflowDecision(settings craftingSettings, snapshot Snapshot, interva
 		return Decision{}, false
 	}
 	arguments, _ := json.Marshal(map[string]any{
-		"sourceCastleId": best.source.ID, "targetKingdomId": storm.KingdomID,
-		"resourceId": best.resource, "amount": int64(best.amount),
+		"sourceCastleId": best.source.ID, "targetCastleId": storm.ID,
+		"resourceId": best.resource, "amount": int64(best.amount), "workflowOwner": autoSceatTransportOwner,
 	})
 	return Decision{
 		Status:      "ready",
 		Detail:      fmt.Sprintf("Move %.0f overflow resource %d from kingdom %d to Storm", best.amount, best.resource, best.source.KingdomID),
 		NextCheckAt: snapshot.Now.Add(interval),
 		Metrics:     map[string]float64{"shipmentAmount": best.amount},
-		Request:     &Intent.Request{Name: "resource.kingdom.ship", Arguments: arguments},
+		Request:     &Intent.Request{Name: "resource.ship", Arguments: arguments},
 	}, true
 }
 

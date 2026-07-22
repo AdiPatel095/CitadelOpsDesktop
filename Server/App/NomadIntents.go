@@ -3,6 +3,7 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -58,6 +59,7 @@ type nomadCampAttackRequest struct {
 	Preset              AttackPresets.Preset `json:"preset"`
 	CommanderIDs        []State.CommanderID  `json:"commanderIds"`
 	HorseTravelBoostID  int                  `json:"horseTravelBoostId"`
+	DailyAttackLimit    int64                `json:"dailyAttackLimit"`
 }
 
 type resolvedNomadCampAttackRequest struct {
@@ -192,11 +194,23 @@ func planNomadTargetLock(_ context.Context, input Intent.PlanningContext, argume
 func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	request, source, target, _, _, err := nomadCampAttackContext(input, arguments)
 	if err != nil {
+		if errors.Is(err, Intent.ErrPlanStale) {
+			return Intent.Plan{Summary: "Nomad/Samurai camp progression changed; reevaluate the current camp state"}, nil
+		}
 		return Intent.Plan{}, err
 	}
-	selection := &craCommanderSelectionRequest{Candidates: request.CommanderIDs, Count: len(request.CommanderIDs), Strategy: "lowest_id"}
+	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
+		return Intent.Plan{}, err
+	} else if blocked {
+		return blockedPlan, nil
+	}
+	commanderCount := len(request.CommanderIDs)
+	if request.Mode == "level" {
+		commanderCount = 1
+	}
+	selection := &craCommanderSelectionRequest{Candidates: request.CommanderIDs, Count: commanderCount, Strategy: "lowest_id"}
 	resolution, err := resolveCRACommanders(input.State, selection, craCommanderSelectionOptions{
-		DefaultCount: len(request.CommanderIDs), RequireAvailable: true,
+		DefaultCount: commanderCount, RequireAvailable: true,
 	})
 	if err != nil {
 		return Intent.Plan{}, err
@@ -221,13 +235,21 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 		steps = append(steps, generalSkillsContextSteps(input.State, commanderID, time.Now().UTC())...)
 	}
 	steps = append(steps, attackCastleContextStep(source))
-	steps = append(steps, Intent.Step{Name: "Verify chained preset inventory", Action: "nomad.attack.inventory.guard", ActionArguments: arguments})
+	steps = append(steps, Intent.RebuildOnResume(Intent.Step{
+		Name: "Verify chained preset inventory", Action: "nomad.attack.inventory.guard",
+		ActionArguments: mustMarshalNomadAttackRequest(request),
+	}))
 	for index, commanderID := range resolution.Selected {
 		resolvedArguments, _ := json.Marshal(resolvedNomadCampAttackRequest{nomadCampAttackRequest: request, CommanderID: commanderID})
+		steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 		steps = append(steps, deferredCRACommandStep(
 			fmt.Sprintf("Build and launch camp attack with commander %d", commanderID),
 			"nomad.attack.build", resolvedArguments, contextPayload,
 		))
+		steps = append(steps, Intent.Step{
+			Name: "Capture confirmed Nomad/Samurai camp movement", Action: "nomad.attack.capture",
+			ActionArguments: resolvedArguments,
+		})
 		if request.Mode == "chain" && index > 0 {
 			arrivalGuard, _ := json.Marshal(nomadChainArrivalGuard{
 				SourceCastleID: source.ID, KingdomID: target.KingdomID, TargetX: target.X, TargetY: target.Y,
@@ -333,7 +355,9 @@ func nomadCampAttackContext(
 		}
 	}
 	if !found || selected.Observation.EventCampVictoryCount != request.VictoryCount {
-		return nomadCampAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, 0, fmt.Errorf("camp %d:%d changed progression state", request.TargetX, request.TargetY)
+		return nomadCampAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, 0, fmt.Errorf(
+			"%w: camp %d:%d changed progression state", Intent.ErrPlanStale, request.TargetX, request.TargetY,
+		)
 	}
 	key := fmt.Sprintf("%d:%d:%d", selected.Observation.KingdomID, selected.Observation.X, selected.Observation.Y)
 	if cooldown, found := input.State.NomadCamps.Cooldowns[key]; found && cooldown.PendingCooldownRefresh {
@@ -347,9 +371,6 @@ func nomadCampAttackContext(
 	if request.Mode == "level" {
 		if selected.Observation.EventCampVictoryCount >= maximumVictoryCount {
 			return nomadCampAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, 0, fmt.Errorf("level mode cannot attack an already maxed camp")
-		}
-		if len(request.CommanderIDs) != 1 {
-			return nomadCampAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, 0, fmt.Errorf("level mode launches exactly one commander")
 		}
 	} else {
 		for _, camp := range camps {
@@ -462,7 +483,7 @@ func (application *Application) resolveNomadCampAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve Nomad/Samurai camp attack capacity: %w", err)
 	}
-	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity)
+	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity, capacity.MaximumWaves)
 	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build camp preset %q: %w", request.Preset.Name, err)
@@ -472,6 +493,41 @@ func (application *Application) resolveNomadCampAttackStep(
 		return Intent.Step{}, fmt.Errorf("build camp CRA payload: %w", err)
 	}
 	return commandStep(fmt.Sprintf("Attack locked camp at %d:%d", target.X, target.Y), "cra", body, "cra"), nil
+}
+
+func (application *Application) captureNomadCampLaunch(_ context.Context, arguments json.RawMessage) error {
+	var request resolvedNomadCampAttackRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		var selected State.MovementState
+		for _, movement := range gameState.Movements {
+			if movement.Direction != 0 || movement.SourceCastleID != request.SourceCastleID ||
+				movement.KingdomID != request.KingdomID || movement.TargetX != request.TargetX || movement.TargetY != request.TargetY ||
+				movement.CommanderID == nil || *movement.CommanderID != request.CommanderID || movement.ArrivesAt == nil {
+				continue
+			}
+			if selected.ID == 0 || movement.ObservedAt.After(selected.ObservedAt) ||
+				movement.ObservedAt.Equal(selected.ObservedAt) && movement.ID > selected.ID {
+				selected = movement
+			}
+		}
+		if selected.ID == 0 {
+			return nil, false, fmt.Errorf("CRA response did not return commander %d's Nomad/Samurai movement", request.CommanderID)
+		}
+		launchedAt := selected.ObservedAt
+		if launchedAt.IsZero() {
+			launchedAt = time.Now().UTC()
+		}
+		changed := State.RecordEventAttackLaunch(gameState, request.EventID, State.EventAttackRecord{
+			MovementID: selected.ID, Kind: State.EventActivityCamp, KingdomID: request.KingdomID,
+			TargetTypeID: request.TargetTypeID, TargetX: request.TargetX, TargetY: request.TargetY,
+			LaunchedAt: launchedAt.UTC(), ArrivesAt: selected.ArrivesAt.UTC(),
+		})
+		return []string{"event-scores", "movements"}, changed, nil
+	})
+	return err
 }
 
 func (application *Application) captureNomadScan(_ context.Context, arguments json.RawMessage) error {

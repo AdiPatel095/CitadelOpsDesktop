@@ -3,7 +3,10 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"strings"
 	"testing"
+	"time"
 
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
@@ -22,7 +25,7 @@ func TestPlanAllianceHelpRequestUsesCapturedAHRPayload(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			state := State.NewGameState()
 			state.Castles[77] = State.CastleState{
-				ID: 77, X: 12, Y: 34, KingdomID: 1,
+				ID: 77, X: 12, Y: 34, KingdomID: 1, Focused: true,
 				Production: map[int]State.ProductionQueue{
 					test.lineID: {LineID: test.lineID, Active: &State.QueueItem{ProductionID: 2033307472}},
 				},
@@ -32,21 +35,27 @@ func TestPlanAllianceHelpRequestUsesCapturedAHRPayload(t *testing.T) {
 				t.Fatal(err)
 			}
 			if len(plan.Steps) != 3 || plan.Steps[0].Command.Opcode != "jaa" ||
-				plan.Steps[1].Command.Opcode != "ahr" || plan.Steps[2].Action != "alliance.help.mark_requested" {
+				plan.Steps[1].Resolver != "alliance.help.build" || plan.Steps[2].Action != "alliance.help.mark_requested" {
 				t.Fatalf("unexpected plan: %#v", plan)
+			}
+			resolved, err := (&Application{}).resolveAllianceHelpRequestStep(
+				t.Context(), Intent.PlanningContext{State: state}, plan.Steps[1].ResolverArguments,
+			)
+			if err != nil {
+				t.Fatal(err)
 			}
 			var payload struct {
 				RequestID int64 `json:"ID"`
 				Type      int   `json:"T"`
 			}
-			if err := json.Unmarshal(plan.Steps[1].Command.Payload, &payload); err != nil {
+			if err := json.Unmarshal(resolved.Command.Payload, &payload); err != nil {
 				t.Fatalf("decode AHR payload: %v", err)
 			}
 			if payload.RequestID != test.requestID || payload.Type != test.requestType {
 				t.Fatalf("AHR payload = %#v", payload)
 			}
-			if !allianceHelpContainsString(plan.Steps[1].AwaitOpcodes, "ahh") || !allianceHelpContainsString(plan.Steps[1].AwaitOpcodes, "ahr") {
-				t.Fatalf("AHR response opcodes = %#v", plan.Steps[1].AwaitOpcodes)
+			if !allianceHelpContainsString(resolved.AwaitOpcodes, "ahh") || !allianceHelpContainsString(resolved.AwaitOpcodes, "ahr") {
+				t.Fatalf("AHR response opcodes = %#v", resolved.AwaitOpcodes)
 			}
 			var recorded allianceHelpRequest
 			if err := json.Unmarshal(plan.Steps[2].ActionArguments, &recorded); err != nil {
@@ -56,6 +65,57 @@ func TestPlanAllianceHelpRequestUsesCapturedAHRPayload(t *testing.T) {
 				t.Fatalf("recorded request = %#v", recorded)
 			}
 		})
+	}
+}
+
+func TestPlanHospitalAllianceHelpStopsAtObservedThreeRequestLimit(t *testing.T) {
+	state := State.NewGameState()
+	state.Castles[77] = State.CastleState{
+		ID: 77,
+		Production: map[int]State.ProductionQueue{
+			hospitalProductionLineID: {
+				LineID: hospitalProductionLineID,
+				Queued: []State.QueueItem{
+					{ProductionID: 201, AllianceHelpRequested: true},
+					{ProductionID: 202, AllianceHelpRequested: true},
+					{ProductionID: 203, AllianceHelpRequested: true},
+					{ProductionID: 204},
+				},
+			},
+		},
+	}
+	plan, err := planAllianceHelpRequest(
+		t.Context(), Intent.PlanningContext{State: state}, json.RawMessage(`{"productionId":204}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 0 || !strings.Contains(plan.Summary, "3 outstanding requests") {
+		t.Fatalf("alliance-help capacity plan = %#v", plan)
+	}
+}
+
+func TestAllianceHelpGuardReplansAtAuthoritativeHospitalLimit(t *testing.T) {
+	state := State.NewGameState()
+	state.Castles[77] = State.CastleState{
+		ID: 77,
+		Production: map[int]State.ProductionQueue{
+			hospitalProductionLineID: {
+				LineID: hospitalProductionLineID,
+				Queued: []State.QueueItem{{ProductionID: 204}},
+			},
+		},
+	}
+	state.AllianceHelpRequests = State.AllianceHelpRequestState{
+		HospitalProductionIDs: []int64{201, 202, 203},
+		ObservedAt:            time.Now().UTC(),
+	}
+	_, err := (&Application{}).resolveAllianceHelpRequestStep(
+		t.Context(), Intent.PlanningContext{State: state},
+		json.RawMessage(`{"productionId":204,"castleId":77,"lineId":2}`),
+	)
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("hospital help limit should make the plan stale: %v", err)
 	}
 }
 

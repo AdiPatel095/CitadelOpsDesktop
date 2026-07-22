@@ -1,4 +1,4 @@
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -17,26 +17,30 @@ import { SpyReportDetail, type SpyReport } from '../../spyReports/components/Spy
 import { useCitadelAPI } from '../../api/ApiContext';
 import type {
   AllianceTargetCastleV2,
-  AllianceTargetOptionV2,
+  AllianceTargetQueryV2,
   AllianceTargetV2,
   AllianceTargetViewV2,
-  GameStateV2,
-  MapObservationV2,
 } from '../../api/Contracts';
 
-type AllianceOption = AllianceTargetOptionV2;
 type TargetCastle = AllianceTargetCastleV2;
 type AllianceTarget = AllianceTargetV2;
-
-type SpyAvailability = AllianceTargetViewV2['spies'];
-
 type AllianceTargetViewData = AllianceTargetViewV2;
 
 type SortKey = 'player' | 'might' | 'rpt' | 'target' | 'closestCastle' | 'distance';
 type SortDirection = 'asc' | 'desc';
 type StatusFilter = 'all' | 'under-bird' | 'attackable';
+interface TargetQueryState {
+  search: string;
+  status: StatusFilter;
+  sort: SortKey;
+  direction: SortDirection;
+  page: number;
+}
 
-const pageSize = 20;
+const defaultPageSize = 20;
+const initialTargetQuery: TargetQueryState = {
+  search: '', status: 'all', sort: 'distance', direction: 'asc', page: 1,
+};
 const compactNumber = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 const statusFilterOptions = [
   { value: 'all', label: 'All targets' },
@@ -46,6 +50,27 @@ const statusFilterOptions = [
 
 const AllianceTargetsView = () => {
   const { state, submitIntent, getAllianceTargets } = useCitadelAPI();
+
+  return (
+    <AllianceTargetsContent
+      getAllianceTargets={getAllianceTargets}
+      serverUrl={state?.session.serverUrl ?? ''}
+      submitIntent={submitIntent}
+    />
+  );
+};
+
+interface AllianceTargetsContentProps {
+  getAllianceTargets: ReturnType<typeof useCitadelAPI>['getAllianceTargets'];
+  serverUrl: string;
+  submitIntent: ReturnType<typeof useCitadelAPI>['submitIntent'];
+}
+
+const AllianceTargetsContent = memo(({
+  getAllianceTargets,
+  serverUrl,
+  submitIntent,
+}: AllianceTargetsContentProps) => {
   const [data, setData] = useState<AllianceTargetViewData | null>(null);
   const [selectedAlliance, setSelectedAlliance] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -59,99 +84,145 @@ const AllianceTargetsView = () => {
   const [loadingIntelTarget, setLoadingIntelTarget] = useState('');
   const [selectedSpyReport, setSelectedSpyReport] = useState<SpyReport | null>(null);
   const [viewError, setViewError] = useState('');
+  const selectedServerRef = useRef('');
+  const selectedAllianceRef = useRef('');
+  const queryRef = useRef<TargetQueryState>({ ...initialTargetQuery });
+  const latestRequestRef = useRef(0);
 
-  const loadTargets = useCallback(async (allianceId = '', refresh = false, inspect = false) => {
+  const loadTargets = useCallback(async (
+    allianceId: string,
+    refresh: boolean,
+    inspect: boolean,
+    query: TargetQueryState,
+    includeAlliances = false,
+  ) => {
+    const requestID = ++latestRequestRef.current;
     setLoading(true);
     setViewError('');
     try {
-      let next = await getAllianceTargets(allianceId, data?.server ?? '', refresh);
-      setData(next);
-      setSelectedAlliance(next.selectedAlliance?.externalId ?? '');
-      setPage(1);
+      const request: AllianceTargetQueryV2 = {
+        allianceId,
+        server: selectedServerRef.current,
+        refresh,
+        search: query.search,
+        status: query.status,
+        sort: query.sort,
+        direction: query.direction,
+        page: query.page,
+        includeAlliances,
+      };
+      let next = await getAllianceTargets(request);
+      if (requestID !== latestRequestRef.current) return;
+      let inspectError = '';
       const selected = next.selectedAlliance;
-      if (inspect && selected && state?.session.loggedIn && state.session.socketReady) {
+      if (inspect && selected && next.canInspect) {
         try {
           await submitIntent('alliance.inspect', { allianceId: selected.allianceId });
-          next = await getAllianceTargets(selected.externalId, next.server, true);
-          setData(next);
+          if (requestID !== latestRequestRef.current) return;
+          const inspected = await getAllianceTargets({
+            ...request,
+            allianceId: selected.externalId,
+            server: next.server,
+            refresh: true,
+            includeAlliances: false,
+          });
+          next = { ...inspected, alliances: next.alliances };
         } catch (error) {
-          setViewError(error instanceof Error ? error.message : 'Live alliance inspection failed; showing tracker data.');
+          inspectError = error instanceof Error ? error.message : 'Live alliance inspection failed; showing tracker data.';
         }
       }
+      if (requestID !== latestRequestRef.current) return;
+      selectedServerRef.current = next.server;
+      selectedAllianceRef.current = next.selectedAlliance?.externalId ?? '';
+      queryRef.current = { ...query, page: next.page };
+      setData((current) => ({
+        ...next,
+        alliances: includeAlliances ? next.alliances : (current?.alliances ?? next.alliances),
+      }));
+      setSelectedAlliance(selectedAllianceRef.current);
+      setPage(next.page);
+      if (inspectError) setViewError(inspectError);
     } catch (error) {
-      const fallback = allianceTargetsFromState(state);
-      setData(fallback);
-      setSelectedAlliance(fallback.selectedAlliance?.externalId ?? '');
+      if (requestID !== latestRequestRef.current) return;
       setViewError(error instanceof Error ? error.message : 'Could not load alliance targets.');
     } finally {
-      setLoading(false);
+      if (requestID === latestRequestRef.current) setLoading(false);
     }
-  }, [data?.server, getAllianceTargets, state, submitIntent]);
+  }, [getAllianceTargets, submitIntent]);
 
   useEffect(() => {
-    void loadTargets('', false, true);
-  }, [state?.session.serverUrl]);
+    selectedServerRef.current = '';
+    selectedAllianceRef.current = '';
+    const query = { ...queryRef.current, page: 1 };
+    queryRef.current = query;
+    setPage(1);
+    void loadTargets('', false, true, query, true);
+  }, [loadTargets, serverUrl]);
 
   const allianceOptions = useMemo(() => (data?.alliances ?? []).map((alliance) => ({
     value: alliance.externalId,
     label: `#${alliance.rank} ${alliance.name} · ${alliance.playerCount} players`,
   })), [data?.alliances]);
 
-  const sortedTargets = useMemo(() => {
-    const query = deferredSearch.trim().toLowerCase();
-    const rows = (data?.targets ?? []).filter((target) => {
-      const statusMatches = statusFilter === 'all' ||
-        (statusFilter === 'under-bird' ? target.underBird : !target.underBird);
-      if (!statusMatches) return false;
-      if (!query) return true;
-      return target.name.toLowerCase().includes(query) ||
-        target.targetCastle.name.toLowerCase().includes(query) ||
-        `${target.targetCastle.x}:${target.targetCastle.y}`.includes(query);
-    });
-
-    rows.sort((left, right) => {
-      const comparison = compareTargets(left, right, sortKey);
-      const directed = sortDirection === 'asc' ? comparison : -comparison;
-      return directed || left.distance - right.distance || left.name.localeCompare(right.name);
-    });
-    return rows;
-  }, [data?.targets, deferredSearch, sortDirection, sortKey, statusFilter]);
-
-  const pageCount = Math.max(1, Math.ceil(sortedTargets.length / pageSize));
-  const safePage = Math.min(page, pageCount);
-  const pageTargets = useMemo(() => {
-    const start = (safePage - 1) * pageSize;
-    return sortedTargets.slice(start, start + pageSize);
-  }, [safePage, sortedTargets]);
-
   useEffect(() => {
-    setPage(1);
-  }, [deferredSearch, selectedAlliance, sortDirection, sortKey, statusFilter]);
+    const normalizedSearch = deferredSearch.trim();
+    if (normalizedSearch === queryRef.current.search) return;
+    const timeout = window.setTimeout(() => {
+      const query = { ...queryRef.current, search: normalizedSearch, page: 1 };
+      queryRef.current = query;
+      setPage(1);
+      void loadTargets(selectedAllianceRef.current, false, false, query);
+    }, 200);
+    return () => window.clearTimeout(timeout);
+  }, [deferredSearch, loadTargets]);
 
   const selectAlliance = useCallback((allianceId: string) => {
+    selectedAllianceRef.current = allianceId;
     setSelectedAlliance(allianceId);
-    void loadTargets(allianceId, false, true);
+    const query = { ...queryRef.current, page: 1 };
+    queryRef.current = query;
+    setPage(1);
+    void loadTargets(allianceId, false, true, query);
   }, [loadTargets]);
 
   const refresh = useCallback(() => {
-    void loadTargets(selectedAlliance, true, true);
-  }, [loadTargets, selectedAlliance]);
+    void loadTargets(selectedAllianceRef.current, true, true, queryRef.current, true);
+  }, [loadTargets]);
+
+  const changeStatus = useCallback((value: string) => {
+    const status = value as StatusFilter;
+    const query = { ...queryRef.current, status, page: 1 };
+    queryRef.current = query;
+    setStatusFilter(status);
+    setPage(1);
+    void loadTargets(selectedAllianceRef.current, false, false, query);
+  }, [loadTargets]);
 
   const changeSort = useCallback((key: SortKey) => {
-    if (sortKey === key) {
-      setSortDirection((current) => current === 'asc' ? 'desc' : 'asc');
-      return;
-    }
+    const direction = queryRef.current.sort === key
+      ? (queryRef.current.direction === 'asc' ? 'desc' : 'asc')
+      : (key === 'might' || key === 'rpt' ? 'desc' : 'asc');
+    const query = { ...queryRef.current, sort: key, direction, page: 1 };
+    queryRef.current = query;
     setSortKey(key);
-    setSortDirection(key === 'might' || key === 'rpt' ? 'desc' : 'asc');
-  }, [sortKey]);
+    setSortDirection(direction);
+    setPage(1);
+    void loadTargets(selectedAllianceRef.current, false, false, query);
+  }, [loadTargets]);
+
+  const changePage = useCallback((nextPage: number) => {
+    const query = { ...queryRef.current, page: nextPage };
+    queryRef.current = query;
+    setPage(nextPage);
+    void loadTargets(selectedAllianceRef.current, false, false, query);
+  }, [loadTargets]);
 
   const sendSpy = useCallback((target: AllianceTarget) => {
     const targetKey = castleKey(target.targetCastle);
     setSendingTarget(targetKey);
     setViewError('');
     void submitIntent('spy.launch', {
-      sourceCastleId: data?.spies.sourceCastle.castleId,
+      sourceCastleId: data?.spies.sourceCastleId,
       targetX: target.targetCastle.x,
       targetY: target.targetCastle.y,
       kingdomId: 0,
@@ -159,7 +230,7 @@ const AllianceTargetsView = () => {
     })
       .catch((error) => setViewError(error instanceof Error ? error.message : 'Could not launch spy mission'))
       .finally(() => setSendingTarget(''));
-  }, [data?.spies.available, data?.spies.sourceCastle.castleId, submitIntent]);
+  }, [data?.spies.available, data?.spies.sourceCastleId, submitIntent]);
 
   const openCastleIntel = useCallback(async (target: AllianceTarget) => {
     const targetKey = castleKey(target.targetCastle);
@@ -192,12 +263,17 @@ const AllianceTargetsView = () => {
   }
 
   const spies = data?.spies;
-  const canSpy = Boolean(state?.session.loggedIn && state.session.socketReady && spies?.buildingRowsLoaded && spies.available > 0 && spies.sourceCastle.castleId);
-  const firstResult = sortedTargets.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
-  const lastResult = Math.min(safePage * pageSize, sortedTargets.length);
+  const canSpy = spies?.canLaunch === true;
+  const totalTargets = data?.totalTargets ?? 0;
+  const safePage = data?.page ?? page;
+  const pageSize = data?.pageSize ?? defaultPageSize;
+  const pageCount = data?.pageCount ?? 1;
+  const pageTargets = data?.targets ?? [];
+  const firstResult = totalTargets === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const lastResult = Math.min(safePage * pageSize, totalTargets);
 
   return (
-    <div className="space-y-4">
+    <div className="data-view-render-stable space-y-4">
       {viewError && <p className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">{viewError}</p>}
       <PageHeader
         title="Alliance Targets"
@@ -220,7 +296,7 @@ const AllianceTargetsView = () => {
             <Select
               value={statusFilter}
               options={statusFilterOptions}
-              onChange={(value) => setStatusFilter(value as StatusFilter)}
+              onChange={changeStatus}
               icon={<Crosshair className="h-4 w-4" />}
               menuGrowToViewport
             />
@@ -239,7 +315,7 @@ const AllianceTargetsView = () => {
 
       <SectionCard
         title={data?.selectedAlliance?.name || 'Player targets'}
-        description={loading ? 'Loading targets…' : `${sortedTargets.length} matching castles`}
+        description={loading ? 'Loading targets…' : `${totalTargets} matching castles`}
         descriptionClassName=""
         headerClassName="flex-wrap gap-3"
         actions={<div className="w-full max-w-sm">
@@ -271,7 +347,7 @@ const AllianceTargetsView = () => {
                 const key = castleKey(target.targetCastle);
                 return (
                   <TargetRow
-                    key={`${target.playerId}-${key}`}
+                    key={key}
                     target={target}
                     canSpy={canSpy}
                     sending={sendingTarget === key}
@@ -287,21 +363,21 @@ const AllianceTargetsView = () => {
           </table>
         </div>
 
-        {!loading && sortedTargets.length === 0 && (
+        {!loading && totalTargets === 0 && (
           <div className="px-5 py-12 text-center text-sm text-text-muted">No castles match the current filters.</div>
         )}
 
-        {sortedTargets.length > 0 && (
+        {totalTargets > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-base bg-bg-card/35 px-4 py-3">
             <span className="text-xs text-text-muted">
-              Showing {firstResult}–{lastResult} of {sortedTargets.length}
+              Showing {firstResult}–{lastResult} of {totalTargets}
             </span>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
                 variant="secondary"
-                disabled={safePage <= 1}
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={loading || safePage <= 1}
+                onClick={() => changePage(Math.max(1, safePage - 1))}
                 aria-label="Previous page"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -312,8 +388,8 @@ const AllianceTargetsView = () => {
               <Button
                 size="sm"
                 variant="secondary"
-                disabled={safePage >= pageCount}
-                onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
+                disabled={loading || safePage >= pageCount}
+                onClick={() => changePage(Math.min(pageCount, safePage + 1))}
                 aria-label="Next page"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -324,7 +400,9 @@ const AllianceTargetsView = () => {
       </SectionCard>
     </div>
   );
-};
+});
+
+AllianceTargetsContent.displayName = 'AllianceTargetsContent';
 
 interface TargetRowProps {
   target: AllianceTarget;
@@ -437,127 +515,6 @@ function formatDuration(seconds: number): string {
   if (days > 0) return `${days}d ${hours}h remaining`;
   if (hours > 0) return `${hours}h ${minutes}m remaining`;
   return `${minutes}m remaining`;
-}
-
-function compareTargets(left: AllianceTarget, right: AllianceTarget, key: SortKey): number {
-  switch (key) {
-    case 'player':
-      return left.name.localeCompare(right.name);
-    case 'might':
-      return left.might - right.might;
-    case 'rpt':
-      return left.rptSeconds - right.rptSeconds;
-    case 'target':
-      return (left.targetCastle.name || left.targetCastle.typeName || '').localeCompare(
-        right.targetCastle.name || right.targetCastle.typeName || ''
-      ) || left.targetCastle.x - right.targetCastle.x || left.targetCastle.y - right.targetCastle.y;
-    case 'closestCastle':
-      return left.closestOwnCastle.name.localeCompare(right.closestOwnCastle.name) ||
-        left.closestOwnCastle.x - right.closestOwnCastle.x || left.closestOwnCastle.y - right.closestOwnCastle.y;
-    case 'distance':
-      return left.distance - right.distance;
-  }
-}
-
-function allianceTargetsFromState(state: GameStateV2 | null): AllianceTargetViewData {
-  if (!state) {
-    return { server: '', alliances: [], targets: [], spies: emptySpyAvailability(), fetchedAt: new Date().toISOString() };
-  }
-  const alliance = state.alliance;
-  const option: AllianceOption | undefined = alliance.id > 0 ? {
-    externalId: String(alliance.id),
-    allianceId: alliance.id,
-    name: alliance.name || `Alliance ${alliance.id}`,
-    rank: 0,
-    might: alliance.members.reduce((total, member) => total + (member.might ?? 0), 0),
-    playerCount: alliance.members.length,
-  } : undefined;
-  const members = new Map(alliance.members.map((member) => [member.playerId, member]));
-	const elapsedProtectionSeconds = alliance.observedAt
-		? Math.max(0, Math.floor((Date.now() - new Date(alliance.observedAt).getTime()) / 1000))
-		: 0;
-  const ownCastles = Object.values(state.castles);
-  const observations = Object.values(state.map).flatMap((kingdom) => Object.values(kingdom));
-  const targets: AllianceTarget[] = [];
-  for (const observation of observations) {
-    if (!observation.ownerId || observation.ownerId === state.player.id) continue;
-    const member = members.get(observation.ownerId);
-    if (!member) continue;
-    const closest = closestCastle(observation, ownCastles);
-    if (!closest) continue;
-		const rptSeconds = Math.max(0, (member.returnProtectionSec ?? 0) - elapsedProtectionSeconds);
-    targets.push({
-      playerId: member.playerId,
-      name: member.name || `Player ${member.playerId}`,
-      might: member.might ?? 0,
-      underBird: rptSeconds > 0,
-      rptSeconds,
-		birdUntil: rptSeconds > 0 ? new Date(Date.now() + rptSeconds * 1000).toISOString() : undefined,
-      targetCastle: {
-        castleId: observation.objectId,
-        name: observation.name || `Castle ${observation.x}:${observation.y}`,
-        typeName: `Map type ${observation.typeId}`,
-        x: observation.x,
-        y: observation.y,
-        type: observation.typeId,
-      },
-      closestOwnCastle: {
-        castleId: closest.id,
-        name: closest.name || `Castle ${closest.id}`,
-        typeName: `Kingdom ${closest.kingdomId}`,
-        x: closest.x,
-        y: closest.y,
-      },
-      distance: Math.hypot(observation.x - closest.x, observation.y - closest.y),
-    });
-  }
-  const source = ownCastles.find((castle) => castle.focused) ?? ownCastles[0];
-  return {
-    server: state.session.serverUrl ?? '',
-    alliances: option ? [option] : [],
-    selectedAlliance: option,
-    targets,
-    spies: source ? {
-      capacity: 0,
-      active: 0,
-      available: 0,
-      buildingRowsLoaded: Object.keys(source.buildings).length > 0,
-      sourceCastle: {
-        castleId: source.id,
-        name: source.name || `Castle ${source.id}`,
-        typeName: `Kingdom ${source.kingdomId}`,
-        x: source.x,
-        y: source.y,
-      },
-      taverns: [],
-    } : emptySpyAvailability(),
-    fetchedAt: new Date().toISOString(),
-  };
-}
-
-function closestCastle(
-  target: MapObservationV2,
-  castles: Array<GameStateV2['castles'][string]>,
-): GameStateV2['castles'][string] | undefined {
-  const candidates = castles.filter((castle) => castle.kingdomId === target.kingdomId);
-  const pool = candidates.length > 0 ? candidates : castles;
-  return pool.reduce<GameStateV2['castles'][string] | undefined>((best, castle) => {
-    if (!best) return castle;
-    const bestDistance = Math.hypot(target.x - best.x, target.y - best.y);
-    const distance = Math.hypot(target.x - castle.x, target.y - castle.y);
-    return distance < bestDistance ? castle : best;
-  }, undefined);
-}
-
-function emptySpyAvailability(): SpyAvailability {
-  return {
-    capacity: 0,
-    active: 0,
-    available: 0,
-    buildingRowsLoaded: false,
-    sourceCastle: { name: '', x: 0, y: 0 },
-    taverns: [],
-  };
 }
 
 export default AllianceTargetsView;

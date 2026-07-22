@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Lock, Settings, Shield, Unlock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import AutoBirdHoverPopover from './AutoBirdHoverPopover';
 import CastleFocusSwitcher from './CastleFocusSwitcher';
 import { Button, Badge } from './ui';
 
@@ -37,9 +38,14 @@ function formatStationImpact(msLeft: number): string {
 interface HeaderProps {
   onOpenAutoBirdSettings: () => void;
   onOpenAutoStationSettings: () => void;
+  onOpenAutomationDuration: (featureKey: string, featureLabel: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStationSettings }) => {
+const Header: React.FC<HeaderProps> = ({
+  onOpenAutoBirdSettings,
+  onOpenAutoStationSettings,
+  onOpenAutomationDuration,
+}) => {
   const {
     gameLoggedIn,
     gameLoginCooldown,
@@ -57,6 +63,8 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
 		browserMem,
     autoBirdEnabled,
     autoBirdNextWakeUp,
+		autoBirdNextCastleName,
+		autoBirdCastleCycles,
     toggleAutoBird,
     autoStationEnabled,
     autoStationState,
@@ -66,15 +74,19 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
 		toggleAutoStation,
 		botLocked,
 		toggleBotLock,
+		automationStates,
+		automationTimedUntilByKey,
   } = useAuth();
   const { theme } = useTheme();
+	const autoBirdStatus = automationStates.autoBird?.status ?? '';
+	const hasAutoBirdCycles = autoBirdCastleCycles.some((cycle) => cycle.nextCycleAtMs > 0);
 
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
-    if (!autoBirdEnabled) return;
+    if (!autoBirdEnabled && !hasAutoBirdCycles) return;
     const id = window.setInterval(() => setNowTick(Date.now()), 30000);
     return () => window.clearInterval(id);
-  }, [autoBirdEnabled]);
+  }, [autoBirdEnabled, hasAutoBirdCycles]);
 
   useEffect(() => {
     if (!autoStationEnabled || !autoStationNextImpact) return;
@@ -87,11 +99,30 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
       return { on: false as const, text: 'Auto Bird off' };
     }
     if (!autoBirdNextWakeUp) {
-      return { on: true as const, text: 'Next Bird: scheduling…' };
+			switch (autoBirdStatus) {
+				case 'running':
+					return { on: true as const, text: 'Auto Bird sending…' };
+				case 'idle':
+					return { on: true as const, text: 'Auto Bird monitoring' };
+				case 'protected':
+					return { on: true as const, text: 'Auto Bird paused' };
+				case 'blocked':
+				case 'error':
+					return { on: true as const, text: 'Auto Bird needs attention' };
+				default:
+					return { on: true as const, text: 'Auto Bird checking…' };
+			}
     }
     const left = autoBirdNextWakeUp - nowTick;
-    return { on: true as const, text: `Next Bird in: ${formatNextBirdIn(left)}` };
-  }, [autoBirdEnabled, autoBirdNextWakeUp, nowTick]);
+		const castle = autoBirdNextCastleName || 'Unknown castle';
+		return { on: true as const, text: `Next Bird: ${castle} · ${formatNextBirdIn(left)}` };
+	}, [autoBirdEnabled, autoBirdNextCastleName, autoBirdNextWakeUp, autoBirdStatus, nowTick]);
+
+	const autoBirdInteractionHint = automationTimedUntilByKey.auto_bird
+		? `Timed until ${new Date(automationTimedUntilByKey.auto_bird).toLocaleString()}. Click toggles Auto Bird; right-click changes the duration.`
+		: gameLoggedIn
+			? 'Click toggles Auto Bird; right-click runs it for a duration.'
+			: 'Showing the last known cycles while disconnected. Right-click runs Auto Bird for a duration.';
 
   const autoStationPill = useMemo(() => {
     if (!autoStationEnabled) return { tone: 'off' as const, text: 'Auto Station off' };
@@ -292,24 +323,31 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
           </div>
 
           <div className="liquid-auto-bird-actions">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toggleAutoBird()}
-              className={`liquid-auto-bird-button border-2 ${
-                autoBirdPill.on
-                  ? '!border-success/40 !text-success hover:!bg-success/10 !shadow-[0_0_15px_rgba(16,185,129,0.1)]'
-                  : '!border-error/40 !text-error hover:!bg-error/10 !shadow-[0_0_15px_rgba(239,68,68,0.1)]'
-              }`}
-              title={
-                gameLoggedIn
-                  ? 'Click to turn Auto Bird on or off'
-                  : 'Last known Auto Bird status while bot is disconnected; reconnect to refresh'
-              }
-            >
-              <div className={`w-2 h-2 rounded-full ${autoBirdPill.on ? 'bg-success animate-pulse' : 'bg-error'}`} />
-              <span className="liquid-auto-bird-text">{autoBirdPill.text}</span>
-            </Button>
+            <AutoBirdHoverPopover
+				cycles={autoBirdCastleCycles}
+				enabled={autoBirdEnabled}
+				now={nowTick}
+				hint={autoBirdInteractionHint}
+			>
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => toggleAutoBird()}
+					onContextMenu={(event) => {
+						event.preventDefault();
+						onOpenAutomationDuration('auto_bird', 'Auto Bird');
+					}}
+					className={`liquid-auto-bird-button border-2 ${
+						autoBirdPill.on
+							? '!border-success/40 !text-success hover:!bg-success/10 !shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+							: '!border-error/40 !text-error hover:!bg-error/10 !shadow-[0_0_15px_rgba(239,68,68,0.1)]'
+					}`}
+					aria-label={`${autoBirdPill.text}. Hover for every castle cycle.`}
+				>
+					<div className={`w-2 h-2 rounded-full ${autoBirdPill.on ? 'bg-success animate-pulse' : 'bg-error'}`} />
+					<span className="liquid-auto-bird-text">{autoBirdPill.text}</span>
+				</Button>
+			</AutoBirdHoverPopover>
             <Button
               variant="ghost"
               size="icon"
@@ -326,6 +364,10 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
               variant="outline"
               size="sm"
               onClick={toggleAutoStation}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                onOpenAutomationDuration('auto_station', 'Auto Station');
+              }}
               className={`liquid-auto-bird-button border-2 ${
                 autoStationPill.tone === 'on'
                   ? '!border-success/40 !text-success hover:!bg-success/10'
@@ -333,7 +375,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenAutoBirdSettings, onOpenAutoStati
                     ? '!border-warning/50 !text-warning hover:!bg-warning/10'
                     : '!border-error/40 !text-error hover:!bg-error/10'
               }`}
-              title={autoStationDetail || 'Click to turn Auto Station on or off'}
+              title={automationTimedUntilByKey.auto_station
+                ? `Timed until ${new Date(automationTimedUntilByKey.auto_station).toLocaleString()}. Right-click to change the duration.`
+                : `${autoStationDetail || 'Click to turn Auto Station on or off'}. Right-click to run it for a duration.`}
             >
               <Shield className="h-4 w-4" />
               <span className="liquid-auto-bird-text">{autoStationPill.text}</span>

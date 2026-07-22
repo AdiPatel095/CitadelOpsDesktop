@@ -12,6 +12,7 @@ import { CitadelAPI } from './CitadelClient';
 import type {
   APIConnectionStatus,
 	AllianceTargetViewV2,
+	AllianceTargetQueryV2,
 	ApplicationUpdateV2,
 	BuildingTargetCaptureRequest,
 	BuildingTargetCaptureResponse,
@@ -28,6 +29,7 @@ import type {
 import { Notifications } from '../components/Notifications';
 
 const runtimeDiagnosticsEnabled = import.meta.env.DEV === true || import.meta.env.VITE_SHOW_HEADER_MEMORY === 'true';
+const stateRefreshIntervalMs = 1_000;
 
 interface APIContextValue {
   connectionStatus: APIConnectionStatus;
@@ -45,7 +47,7 @@ interface APIContextValue {
 	refreshDiagnostics: () => Promise<void>;
   getCatalog: <T extends Record<string, unknown>>(name: string) => Promise<CatalogResponse<T>>;
   localize: (keys: string[]) => Promise<Record<string, string>>;
-	getAllianceTargets: (allianceId?: string, server?: string, refresh?: boolean) => Promise<AllianceTargetViewV2>;
+	getAllianceTargets: (input?: AllianceTargetQueryV2) => Promise<AllianceTargetViewV2>;
 	optimizeEquipment: (input: EquipmentOptimizeRequest) => Promise<EquipmentOptimizeResponse>;
 	captureBuildingTarget: (input: BuildingTargetCaptureRequest) => Promise<BuildingTargetCaptureResponse>;
   submitIntent: (
@@ -69,13 +71,40 @@ export function APIProvider({ children }: { children: ReactNode }) {
   const [operations, setOperations] = useState<Record<string, IntentReceipt>>({});
   const [error, setError] = useState<string | null>(null);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stateRefreshInFlight = useRef<Promise<void> | null>(null);
+  const stateRefreshPending = useRef(false);
 
-  const refreshState = useCallback(async () => {
+  const refreshState = useCallback(async function refreshStateRequest() {
+    if (stateRefreshInFlight.current != null) {
+      stateRefreshPending.current = true;
+      await stateRefreshInFlight.current;
+      return;
+    }
+    const request = (async () => {
+      do {
+        stateRefreshPending.current = false;
+        const startedAt = Date.now();
+        try {
+          setState(await CitadelAPI.getState());
+          setError(null);
+        } catch (requestError) {
+          setError(errorMessage(requestError));
+        }
+        if (stateRefreshPending.current) {
+          const remaining = stateRefreshIntervalMs - (Date.now() - startedAt);
+          if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
+        }
+      } while (stateRefreshPending.current);
+    })();
+    stateRefreshInFlight.current = request;
     try {
-      setState(await CitadelAPI.getState());
-      setError(null);
-    } catch (requestError) {
-      setError(errorMessage(requestError));
+      await request;
+    } finally {
+      if (stateRefreshInFlight.current === request) stateRefreshInFlight.current = null;
+    }
+    if (stateRefreshPending.current) {
+      await new Promise((resolve) => setTimeout(resolve, stateRefreshIntervalMs));
+      await refreshStateRequest();
     }
   }, []);
 
@@ -133,8 +162,16 @@ export function APIProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (message.type === 'state.changed') {
-        if (refreshTimer.current != null) clearTimeout(refreshTimer.current);
-        refreshTimer.current = setTimeout(() => void refreshState(), 25);
+        if (message.gap) {
+          if (refreshTimer.current != null) clearTimeout(refreshTimer.current);
+          refreshTimer.current = null;
+          void refreshState();
+        } else if (refreshTimer.current == null) {
+          refreshTimer.current = setTimeout(() => {
+            refreshTimer.current = null;
+            void refreshState();
+          }, stateRefreshIntervalMs);
+        }
         return;
       }
       if (message.type === 'catalog.changed' && isCatalogManifest(message.payload)) {
@@ -206,8 +243,8 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	}
   }, []);
 
-  const getAllianceTargets = useCallback((allianceId = '', server = '', refresh = false) => (
-	CitadelAPI.getAllianceTargets(allianceId, server, refresh)
+  const getAllianceTargets = useCallback((input: AllianceTargetQueryV2 = {}) => (
+	CitadelAPI.getAllianceTargets(input)
   ), []);
 
   const cancelOperation = useCallback(async (id: string) => {

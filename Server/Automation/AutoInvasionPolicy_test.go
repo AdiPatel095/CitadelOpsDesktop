@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
@@ -72,5 +73,180 @@ func TestAutoInvasionPolicyWaitsForEnoughCapacityAdjustedInventory(t *testing.T)
 	decision, err = NewAutoInvasionPolicy().Evaluate(t.Context(), snapshot)
 	if err != nil || decision.Request == nil || decision.Request.Name != "invasion.attack" {
 		t.Fatalf("invasion ready decision: %#v err=%v", decision, err)
+	}
+	if !decision.ReevaluateOnStale {
+		t.Fatal("Auto Invasion does not immediately rotate after a stale launch plan")
+	}
+
+	commanderID := State.CommanderID(0)
+	arrivesAt := now.Add(10 * time.Minute)
+	snapshot.State.Player.ID = 1
+	snapshot.State.Movements[50] = State.MovementState{
+		ID: 50, Direction: 0, OwnerPlayerID: 1, SourceCastleID: 1,
+		CommanderID: &commanderID, ArrivesAt: &arrivesAt,
+	}
+	decision, err = NewAutoInvasionPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" ||
+		!strings.Contains(decision.Detail, "No commander") {
+		t.Fatalf("busy invasion commander decision: %#v err=%v", decision, err)
+	}
+	delete(snapshot.State.Movements, 50)
+
+	snapshot.State.EventScores.ActiveEventID = bloodcrowEventID
+	snapshot.State.EventScores.ByEvent[bloodcrowEventID] = State.ScalableEventScore{
+		EventID: bloodcrowEventID, DifficultyID: 108, RemainingSec: 7_200, ObservedAt: now,
+	}
+	snapshot.State.Invasion.FortifyCurrencies = []string{"GTO", "STO", "ST"}
+	snapshot.State.Map[0] = map[string]State.MapObservation{
+		"101:100": {
+			KingdomID: 0, TypeID: bloodcrowMapTypeID, X: 101, Y: 100,
+			ObjectID: 70, Level: 70, ObservedAt: now,
+		},
+	}
+	snapshot.Configuration.Sections["automation.autoInvasion"] = json.RawMessage(`{
+		"version":1,"sourceCastleId":1,"presetId":"trial",
+		"foreignLordsDifficultyId":8,"bloodcrowDifficultyId":108,
+		"scoreTarget":5000000,"minimumRemainingSec":1800,
+		"checkIntervalSec":30,"mapRefreshIntervalSec":300,"fortifyCurrency":"KM"
+	}`)
+	decision, err = NewAutoInvasionPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("Bloodcrow invasion decision: %#v err=%v", decision, err)
+	}
+	var arguments struct {
+		FortifyCurrency string `json:"fortifyCurrency"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil || arguments.FortifyCurrency != "ST" {
+		t.Fatalf("Bloodcrow fortification arguments = %+v err=%v", arguments, err)
+	}
+}
+
+func TestInvasionCapacityShortageCountsOnlyTargetAvailableWaves(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"units":[{"wodID":216}],"buildings":[],"effects":[],"legendskills":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	source := State.CastleState{
+		ID: 1, KingdomID: 0,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{216: 4}},
+	}
+	gameState.Castles[1] = source
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true}
+	gameState.Player.LegendSkills.ObservedAt = now
+	unitID := int64(216)
+	wave := AttackPresets.Wave{
+		Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 1}}},
+	}
+	preset := AttackPresets.Preset{Waves: []AttackPresets.Wave{wave, wave, wave, wave, wave}}
+	target := State.MapObservation{KingdomID: 0, TypeID: foreignLordsMapTypeID, X: 101, Y: 100, ObjectID: 70, Level: 70}
+	snapshot := Snapshot{State: gameState, GameData: gameData, Now: now}
+
+	_, required, available, shortage, err := invasionCapacityShortage(snapshot, source, target, preset, 7)
+	if err != nil || shortage {
+		t.Fatalf("four target-available waves reported shortage: required=%d available=%d shortage=%t err=%v", required, available, shortage, err)
+	}
+
+	source.Units.Stationed[216] = 3
+	_, required, available, shortage, err = invasionCapacityShortage(snapshot, source, target, preset, 7)
+	if err != nil || !shortage || required != 4 || available != 3 {
+		t.Fatalf("target wave shortage: required=%d available=%d shortage=%t err=%v", required, available, shortage, err)
+	}
+}
+
+func TestInvasionFortifyCurrencyUsesVariantSpecificEventMedals(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		setting  string
+		eventID  int64
+		expected string
+	}{
+		{name: "legacy Khan selection in Foreign Lords", setting: "KM", eventID: foreignLordsEventID, expected: "KM"},
+		{name: "legacy Khan selection in Bloodcrow", setting: "KM", eventID: bloodcrowEventID, expected: "ST"},
+		{name: "event medals in Foreign Lords", setting: eventMedalsCurrency, eventID: foreignLordsEventID, expected: "KM"},
+		{name: "event medals in Bloodcrow", setting: eventMedalsCurrency, eventID: bloodcrowEventID, expected: "ST"},
+		{name: "gold shared by both variants", setting: "GTO", eventID: bloodcrowEventID, expected: "GTO"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			currency, valid := invasionFortifyCurrencyForEvent(test.setting, test.eventID)
+			if !valid || currency != test.expected {
+				t.Fatalf("fortification currency = %q valid=%t, want %q", currency, valid, test.expected)
+			}
+		})
+	}
+}
+
+func TestAutoInvasionPolicyPausesThroughoutPurchasedProtectionMode(t *testing.T) {
+	now := time.Date(2026, 7, 22, 13, 0, 0, 0, time.UTC)
+	for _, modeState := range []int{0, 1} {
+		gameState := State.NewGameState()
+		gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
+			ModeState: modeState, RemainingSec: 3_600, ObservedAt: now,
+		}
+		decision, err := NewAutoInvasionPolicy().Evaluate(t.Context(), Snapshot{
+			State: gameState, Now: now,
+			Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+				"automation.autoInvasion": json.RawMessage(`{
+					"version":1,"sourceCastleId":1,"presetId":"trial",
+					"foreignLordsDifficultyId":8,"bloodcrowDifficultyId":108,
+					"scoreTarget":5000000
+				}`),
+			}},
+		})
+		if err != nil || decision.Request != nil || decision.Status != "protected" ||
+			decision.Detail != "Protection Mode is preparing or active; Auto Invasion attacks are paused" ||
+			!decision.NextCheckAt.Equal(now.Add(playerProtectionRefreshInterval)) {
+			t.Fatalf("mode state %d protection decision: %#v err=%v", modeState, decision, err)
+		}
+	}
+
+	wakesForProtection := false
+	for _, domain := range NewAutoInvasionPolicy().WakeDomains() {
+		if domain == "player-protection" {
+			wakesForProtection = true
+			break
+		}
+	}
+	if !wakesForProtection {
+		t.Fatal("Auto Invasion does not wake when purchased Protection Mode changes")
+	}
+}
+
+func TestAutoInvasionRefreshesProtectionAfterToggleOrStaleObservation(t *testing.T) {
+	now := time.Date(2026, 7, 22, 13, 30, 0, 0, time.UTC)
+	for _, test := range []struct {
+		name                 string
+		observedAt           time.Time
+		configurationChanged bool
+	}{
+		{name: "toggle", observedAt: now, configurationChanged: true},
+		{name: "stale", observedAt: now.Add(-playerProtectionRefreshInterval)},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
+				ModeState: -1, ObservedAt: test.observedAt,
+			}
+			gameState.Castles[1] = State.CastleState{
+				ID: 1, KingdomID: 0, X: 123, Y: 456, Focused: true,
+			}
+			decision, err := NewAutoInvasionPolicy().Evaluate(t.Context(), Snapshot{
+				State: gameState, Now: now, PolicyConfigurationChanged: test.configurationChanged,
+				Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+					"automation.autoInvasion": json.RawMessage(`{
+						"version":1,"sourceCastleId":1,"presetId":"trial",
+						"foreignLordsDifficultyId":8,"bloodcrowDifficultyId":108,
+						"scoreTarget":5000000
+					}`),
+				}},
+			})
+			if err != nil || decision.Request == nil || decision.Request.Name != "map.query" ||
+				decision.Status != "refreshing" || !decision.ReevaluateOnSuccess {
+				t.Fatalf("protection refresh decision = %#v err=%v", decision, err)
+			}
+		})
 	}
 }

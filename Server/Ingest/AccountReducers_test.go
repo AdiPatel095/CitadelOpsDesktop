@@ -86,7 +86,7 @@ func TestAllianceReducerClearsStaleOwnAllianceWhenAINRosterExcludesCurrentPlayer
 	}
 }
 
-func TestInitialStateReducerHydratesOnlyCurrentReadySession(t *testing.T) {
+func TestInitialStateReducerWaitsForCastleSnapshotBeforeCompletingSessionBaseline(t *testing.T) {
 	now := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
 	gameState.Session.LoggedIn = true
@@ -98,20 +98,158 @@ func TestInitialStateReducerHydratesOnlyCurrentReadySession(t *testing.T) {
 		Opcode: "gbd", Direction: Protocol.DirectionInbound, ResponseCode: &code,
 		ReceivedAt: now, Payload: json.RawMessage(`{}`),
 	}
-	domains, changed, err := reduceInitialState(t.Context(), frame, &gameState, nil)
-	if err != nil || !changed || gameState.Session.BaselineGeneration != 7 {
-		t.Fatalf("current baseline reduction: changed=%t domains=%v session=%+v err=%v", changed, domains, gameState.Session, err)
-	}
-	if !slices.Contains(domains, "session") {
-		t.Fatalf("baseline reduction domains = %v", domains)
+	domains, _, err := reduceInitialState(t.Context(), frame, &gameState, nil)
+	if err != nil || gameState.Session.BaselineGeneration != 0 {
+		t.Fatalf("account snapshot completed command baseline: domains=%v session=%+v err=%v", domains, gameState.Session, err)
 	}
 
-	gameState.Session.BaselineGeneration = 0
 	gameState.Session.ChangedAt = now.Add(time.Second)
 	frame.ReceivedAt = now
+	_, _, err = reduceInitialState(t.Context(), frame, &gameState, nil)
+	if err != nil || gameState.Session.BaselineGeneration != 0 {
+		t.Fatalf("stale account snapshot completed command baseline: session=%+v err=%v", gameState.Session, err)
+	}
+}
+
+func TestInitialStateReducerRefreshesSessionUIDWithoutReset(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Session.ServerURL = "wss://world.example"
+	gameState.Account = State.AccountBindingState{UID: 111, WorldID: gameState.Session.ServerURL, PlayerID: 42}
+	gameState.Player.ID = 42
+	gameState.Castles[9] = newCastleState(9)
+	gameState.EventScores.ActivityByEvent[103] = State.EventActivityState{
+		EventID: 103,
+		PendingAttacks: []State.EventAttackRecord{{
+			MovementID: 88,
+			Kind:       State.EventActivityInvasion,
+			TargetX:    206,
+			TargetY:    937,
+		}},
+	}
+	code := 0
+	frame := Protocol.Frame{
+		Opcode: "gbd", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: time.Now().UTC(),
+		Payload:    json.RawMessage(`{"gpi":{"UID":222,"PID":42,"PN":"Same account"}}`),
+	}
+
+	_, changed, err := reduceInitialState(t.Context(), frame, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("reduce UID refresh: changed=%t err=%v", changed, err)
+	}
+	if gameState.Account.UID != 222 || gameState.Account.PlayerID != 42 {
+		t.Fatalf("account binding = %+v", gameState.Account)
+	}
+	if _, found := gameState.Castles[9]; !found {
+		t.Fatalf("same-account castle was cleared on UID refresh: %+v", gameState.Castles)
+	}
+	activity := gameState.EventScores.ActivityByEvent[103]
+	if len(activity.PendingAttacks) != 1 || activity.PendingAttacks[0].MovementID != 88 {
+		t.Fatalf("same-account pending event attack was cleared on UID refresh: %+v", activity)
+	}
+}
+
+func TestPlayerProtectionModeUsesRPTInsteadOfPMTCooldown(t *testing.T) {
+	now := time.Date(2026, 7, 22, 8, 8, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	code := 0
+	frame := Protocol.Frame{
+		Opcode: "gbd", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"gpi":{"PID":42},"uap":{"KID":0,"NS":-1,"PMS":1,"PMT":320207},"ain":{"A":{"M":[{"OID":42,"RPT":320207}]}}}`),
+	}
+	domains, changed, err := reduceInitialState(t.Context(), frame, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("reduce purchased Protection Mode: changed=%t domains=%v err=%v", changed, domains, err)
+	}
+	protection := gameState.Player.ProtectionMode
+	if protection.ModeState != 1 || protection.ModeTimerSec != 320207 || protection.RemainingSec != 320207 ||
+		!protection.ModeObservedAt.Equal(now) || !protection.ObservedAt.Equal(now) ||
+		!protection.PreparingOrActive(now) || !slices.Contains(domains, "player-protection") {
+		t.Fatalf("purchased Protection Mode = %+v domains=%v", protection, domains)
+	}
+
+	frame = Protocol.Frame{
+		Opcode: "jaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(time.Minute),
+		Payload: json.RawMessage(`{"uap":{"KID":0,"NS":-1,"PMS":2,"PMT":171741},"gca":{"O":{"OID":42,"RPT":0}}}`),
+	}
+	domains, changed, err = reducePlayerProtectionMode(t.Context(), frame, &gameState, nil)
+	if err != nil || !changed || gameState.Player.ProtectionMode.PreparingOrActive(frame.ReceivedAt) ||
+		!slices.Contains(domains, "player-protection") {
+		t.Fatalf("cancel Protection Mode: changed=%t state=%+v domains=%v err=%v", changed, gameState.Player.ProtectionMode, domains, err)
+	}
+	protection = gameState.Player.ProtectionMode
+	if protection.ModeState != 2 || protection.ModeTimerSec != 171741 || protection.RemainingSec != 0 ||
+		!protection.ObservedAt.Equal(frame.ReceivedAt) {
+		t.Fatalf("post-cancel cooldown state = %+v", protection)
+	}
+}
+
+func TestPlayerProtectionModeRefreshUsesOnlyCurrentPlayersRPT(t *testing.T) {
+	now := time.Date(2026, 7, 22, 9, 46, 21, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 42
+	gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
+		ModeState: 1, ModeTimerSec: 200000, ModeObservedAt: now.Add(-time.Hour),
+		RemainingSec: 200000, ObservedAt: now.Add(-time.Hour),
+	}
+	code := 0
+	frame := Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"uap":{"PMS":2,"PMT":171741},"OI":[{"OID":99,"RPT":999999},{"OID":42,"RPT":0}]}`),
+	}
+	domains, changed, err := reducePlayerProtectionMode(t.Context(), frame, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("refresh Protection Mode: changed=%t domains=%v err=%v", changed, domains, err)
+	}
+	protection := gameState.Player.ProtectionMode
+	if protection.RemainingSec != 0 || !protection.ObservedAt.Equal(now) || protection.PreparingOrActive(now) ||
+		!slices.Contains(domains, "player-protection") {
+		t.Fatalf("refreshed Protection Mode = %+v domains=%v", protection, domains)
+	}
+}
+
+func TestPlayerProtectionModeDoesNotRefreshRPTFromUAPAlone(t *testing.T) {
+	now := time.Date(2026, 7, 22, 9, 46, 21, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 42
+	code := 0
+	frame := Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"uap":{"PMS":2,"PMT":171741},"OI":[{"OID":99,"RPT":999999}]}`),
+	}
+	_, changed, err := reducePlayerProtectionMode(t.Context(), frame, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("reduce mode cooldown: changed=%t err=%v", changed, err)
+	}
+	protection := gameState.Player.ProtectionMode
+	if protection.ModeTimerSec != 171741 || protection.RemainingSec != 0 || !protection.ObservedAt.IsZero() ||
+		protection.PreparingOrActive(now) {
+		t.Fatalf("mode cooldown was treated as protection = %+v", protection)
+	}
+}
+
+func TestInitialStateReducerHydratesGameReportedOpenGateDuration(t *testing.T) {
+	now := time.Date(2026, 7, 22, 9, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	code := 0
+	frame := Protocol.Frame{
+		Opcode: "gbd", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"dcl":{"C":[{"KID":0,"AI":[{"AID":100,"OGT":90}]}]}}`),
+	}
+	_, changed, err := reduceInitialState(t.Context(), frame, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("hydrate game-reported Open Gate: changed=%t err=%v", changed, err)
+	}
+	openUntil := gameState.Castles[100].Defense.OpenGateUntil
+	if openUntil == nil || !openUntil.Equal(now.Add(90*time.Second)) {
+		t.Fatalf("game-reported Open Gate until = %v", openUntil)
+	}
+
+	frame.ReceivedAt = now.Add(10 * time.Second)
+	frame.Payload = json.RawMessage(`{"dcl":{"C":[{"KID":0,"AI":[{"AID":100,"OGT":0}]}]}}`)
 	_, changed, err = reduceInitialState(t.Context(), frame, &gameState, nil)
-	if err != nil || changed || gameState.Session.BaselineGeneration != 0 {
-		t.Fatalf("stale baseline hydrated newer session: changed=%t session=%+v err=%v", changed, gameState.Session, err)
+	if err != nil || !changed || gameState.Castles[100].Defense.OpenGateUntil != nil {
+		t.Fatalf("clear game-reported Open Gate: changed=%t until=%v err=%v", changed, gameState.Castles[100].Defense.OpenGateUntil, err)
 	}
 }
 

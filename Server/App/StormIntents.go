@@ -3,10 +3,12 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/AttackCapacity"
@@ -31,6 +33,7 @@ const (
 type stormMapScanRequest struct {
 	SourceCastleID State.CastleID       `json:"sourceCastleId"`
 	FullMap        bool                 `json:"fullMap,omitempty"`
+	Targeted       bool                 `json:"targeted,omitempty"`
 	Bounds         State.StormMapBounds `json:"bounds"`
 	Radius         int                  `json:"radius,omitempty"`
 	ScanStartedAt  time.Time            `json:"scanStartedAt"`
@@ -53,6 +56,7 @@ type stormAttackRequest struct {
 	Preset              AttackPresets.Preset `json:"preset"`
 	CommanderIDs        []State.CommanderID  `json:"commanderIds,omitempty"`
 	HorseTravelBoostID  int                  `json:"horseTravelBoostId"`
+	DailyAttackLimit    int64                `json:"dailyAttackLimit"`
 	DefenseUnits        []stormDefenseUnit   `json:"defenseUnits,omitempty"`
 }
 
@@ -86,12 +90,22 @@ type stormIslandReturnRequest struct {
 	Units          []stormIslandReturnUnit `json:"units"`
 }
 
+type stormShopPurchaseLineRequest struct {
+	ProductID State.PackageID `json:"productId"`
+	Amount    int64           `json:"amount"`
+}
+
 type stormShopPurchaseRequest struct {
-	CastleID          State.CastleID  `json:"castleId"`
-	ProductID         State.PackageID `json:"productId"`
-	TableID           int64           `json:"tableId"`
-	Amount            int64           `json:"amount"`
-	AquamarineReserve int64           `json:"aquamarineReserve"`
+	CastleID          State.CastleID                 `json:"castleId"`
+	ProductID         State.PackageID                `json:"productId,omitempty"`
+	Amount            int64                          `json:"amount,omitempty"`
+	Purchases         []stormShopPurchaseLineRequest `json:"purchases,omitempty"`
+	AquamarineReserve int64                          `json:"aquamarineReserve"`
+}
+
+type stormShopPurchaseLine struct {
+	request stormShopPurchaseLineRequest
+	item    GameData.StormShopPackage
 }
 
 func (application *Application) registerStormIntents() error {
@@ -128,8 +142,8 @@ func (application *Application) registerStormIntents() error {
 			Planner:          planStormIslandReturn,
 		},
 		{
-			Name: "storm.shop.purchase", Description: "Buy an official Luna trade-boat package while preserving an Aquamarine reserve", Effect: Intent.EffectWrite,
-			ArgumentsExample: json.RawMessage(`{"castleId":5358,"productId":244,"tableId":1,"amount":1,"aquamarineReserve":50000}`), Planner: planStormShopPurchase,
+			Name: "storm.shop.purchase", Description: "Buy one or more official Luna trade-boat packages while preserving an Aquamarine reserve", Effect: Intent.EffectWrite,
+			ArgumentsExample: json.RawMessage(`{"castleId":5358,"purchases":[{"productId":244,"amount":2}],"aquamarineReserve":50000}`), Planner: planStormShopPurchase,
 		},
 	}
 	for _, definition := range definitions {
@@ -157,7 +171,7 @@ func planStormMapScan(_ context.Context, input Intent.PlanningContext, arguments
 	request.ScanStartedAt = time.Now().UTC()
 	normalizedArguments, _ := json.Marshal(request)
 	windows := towerMapScanWindows(source, request.Radius)
-	if request.FullMap {
+	if request.FullMap || request.Targeted {
 		windows = stormMapScanWindows(request.Bounds)
 	}
 	steps := make([]Intent.Step, 0, len(windows)+3)
@@ -192,6 +206,8 @@ func planStormMapScan(_ context.Context, input Intent.PlanningContext, arguments
 	summary := fmt.Sprintf("Refresh Storm forts and resource islands around %s", castleLabel(source))
 	if request.FullMap {
 		summary = fmt.Sprintf("Refresh the complete Storm map in %d windows", len(windows))
+	} else if request.Targeted {
+		summary = fmt.Sprintf("Refresh Storm target at %d:%d", request.Bounds.X1, request.Bounds.Y1)
 	}
 	return Intent.Plan{
 		Claims:  []string{"castle-focus", "castle:" + castleID, "map:" + strconv.FormatInt(int64(source.KingdomID), 10)},
@@ -229,6 +245,11 @@ func planStormAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
+		return Intent.Plan{}, err
+	} else if blocked {
+		return blockedPlan, nil
+	}
 	var selection *craCommanderSelectionRequest
 	if request.CommanderIDs != nil {
 		if len(request.CommanderIDs) == 0 {
@@ -238,6 +259,13 @@ func planStormAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	}
 	resolution, err := resolveCRACommanders(input.State, selection, craCommanderSelectionOptions{DefaultCount: 1, RequireAvailable: true})
 	if err != nil {
+		if errors.Is(err, errCRACommanderUnavailable) {
+			detail := "no commander is currently available"
+			if request.CommanderIDs != nil {
+				detail = "no assigned Auto Storm commander is currently available"
+			}
+			return Intent.Plan{Summary: "Skip Storm attack: " + detail}, nil
+		}
 		return Intent.Plan{}, err
 	}
 	commanderID := resolution.Selected[0]
@@ -265,8 +293,13 @@ func planStormAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	steps := make([]Intent.Step, 0, 6)
 	steps = append(steps, generalSkillsContextSteps(input.State, commanderID, time.Now().UTC())...)
 	steps = append(steps, attackCastleContextStep(source))
+	steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 	steps = append(steps,
 		deferredCRACommandStep("Build and launch capacity-adjusted Storm attack", "storm.attack.build", resolvedArguments, contextPayload),
+		attackFeatureCaptureStep(attackFeatureCaptureRequest{
+			FeatureID: State.AttackFeatureAutoStorm, SourceCastleID: source.ID, CommanderID: commanderID,
+			KingdomID: target.KingdomID, TargetTypeID: target.TypeID, TargetX: target.X, TargetY: target.Y,
+		}),
 		Intent.Step{Name: "Consume Storm target", Action: "storm.target.consume", ActionArguments: consumeArguments},
 	)
 	castleID := strconv.FormatInt(int64(source.ID), 10)
@@ -341,24 +374,67 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 	}, nil
 }
 
-func planStormShopPurchase(ctx context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
-	request, _, _, err := stormShopPurchaseContext(input, arguments)
+func planStormShopPurchase(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	request, castle, purchases, err := stormShopPurchaseContext(input, arguments)
 	if err != nil {
 		return Intent.Plan{}, err
 	}
-	normalized, _ := json.Marshal(map[string]any{
-		"productId": request.ProductID, "tableId": request.TableID, "amount": request.Amount,
-		"kingdomId": stormIntentKingdomID, "castleId": request.CastleID,
-		"buildType": 0, "premiumCost": -1, "buyAll": 0, "power": 0, "position": -1,
-	})
-	plan, err := planShopPackagePurchase(ctx, input, normalized)
-	if err != nil {
-		return Intent.Plan{}, err
+	historyPayload, _ := json.Marshal(struct {
+		CastleID  State.CastleID  `json:"CID"`
+		KingdomID State.KingdomID `json:"KID"`
+	}{castle.ID, castle.KingdomID})
+	steps := []Intent.Step{
+		castleFocusStep(castle),
+		shopCommandStep("Refresh Luna package purchase counters", "gbc", historyPayload, 0),
+		{Name: "Verify Storm Aquamarine reserve", Action: "storm.shop.guard", ActionArguments: arguments},
 	}
-	plan.Steps = append([]Intent.Step{{Name: "Verify Storm Aquamarine reserve", Action: "storm.shop.guard", ActionArguments: arguments}}, plan.Steps...)
-	plan.Claims = append(plan.Claims, "castle:"+strconv.FormatInt(int64(request.CastleID), 10))
-	plan.Summary = fmt.Sprintf("Purchase Luna trade-boat package %d with Storm Aquamarine", request.ProductID)
-	return plan, nil
+	purchaseLabels := make([]string, 0, len(purchases))
+	totalCost := int64(0)
+	for _, purchase := range purchases {
+		payload, _ := json.Marshal(struct {
+			ProductID State.PackageID `json:"PID"`
+			BuildType int64           `json:"BT"`
+			TableID   int64           `json:"TID"`
+			Amount    int64           `json:"AMT"`
+			KingdomID State.KingdomID `json:"KID"`
+			CastleID  int64           `json:"AID"`
+			Premium   int64           `json:"PC2"`
+			BuyAll    int64           `json:"BA"`
+			Power     int64           `json:"PWR"`
+			Position  int64           `json:"_PO"`
+		}{
+			purchase.request.ProductID, GameData.StormLunaShopBuildType, GameData.StormLunaShopTableID,
+			purchase.request.Amount, stormIntentKingdomID, GameData.StormLunaShopCastleID, -1, 0, 0, -1,
+		})
+		itemName := userFacingGameName(purchase.item.Name)
+		if itemName == "" {
+			itemName = fmt.Sprintf("Luna package %d", purchase.request.ProductID)
+		}
+		purchaseLabels = append(purchaseLabels, fmt.Sprintf("%d x %s", purchase.request.Amount, itemName))
+		totalCost += purchase.request.Amount * purchase.item.AquamarinePrice
+		steps = append(steps, shopCommandStep("Purchase "+itemName+" from Luna", "sbp", payload, 0))
+	}
+	return Intent.Plan{
+		Claims: []string{
+			"shop", "shop:table:" + strconv.FormatInt(GameData.StormLunaShopTableID, 10), "account-resources", "castle-focus",
+			"castle:" + strconv.FormatInt(int64(request.CastleID), 10),
+		},
+		Summary: fmt.Sprintf(
+			"Buy %s from Luna for %d Aquamarine at %s",
+			stormShopFriendlyList(purchaseLabels), totalCost, castleLabel(castle),
+		),
+		Steps: steps,
+	}, nil
+}
+
+func stormShopFriendlyList(values []string) string {
+	if len(values) == 0 {
+		return "Luna packages"
+	}
+	if len(values) == 1 {
+		return values[0]
+	}
+	return strings.Join(values[:len(values)-1], ", ") + " and " + values[len(values)-1]
 }
 
 func stormMapScanContext(input Intent.PlanningContext, arguments json.RawMessage) (stormMapScanRequest, State.CastleState, error) {
@@ -381,6 +457,11 @@ func stormMapScanContext(input Intent.PlanningContext, arguments json.RawMessage
 				"full Storm map scan requires origin-based bounds containing the source castle and no more than %d windows",
 				stormMapMaximumWindowCount,
 			)
+		}
+	} else if request.Targeted {
+		windows := stormMapScanWindows(request.Bounds)
+		if !request.Bounds.IsValid() || len(windows) != 1 || request.Bounds.X1 != request.Bounds.X2 || request.Bounds.Y1 != request.Bounds.Y2 {
+			return stormMapScanRequest{}, State.CastleState{}, fmt.Errorf("targeted Storm map refresh requires one exact map coordinate")
 		}
 	} else if request.Radius < 1 || request.Radius > 50 {
 		return stormMapScanRequest{}, State.CastleState{}, fmt.Errorf("Storm map scan radius must be between 1 and 50")
@@ -419,9 +500,12 @@ func stormAttackContext(
 	}
 	if !input.State.Storm.Map.LastCompletedAt.IsZero() && mapStateCurrent {
 		scannedTarget, scanned := input.State.Storm.Map.Targets[key]
-		if !scanned || scannedTarget.TypeID != request.TargetTypeID || scannedTarget.StormIsleID != request.StormIsleID ||
-			!exists || target.TypeID != scannedTarget.TypeID || target.StormIsleID != scannedTarget.StormIsleID {
+		if !scanned {
 			return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("Storm target %d:%d is no longer in the authoritative map state", request.TargetX, request.TargetY)
+		}
+		if !exists || target.ObservedAt.Before(scannedTarget.ObservedAt) {
+			target = scannedTarget
+			exists = true
 		}
 	}
 	if !exists || target.TypeID != request.TargetTypeID || target.StormIsleID != request.StormIsleID {
@@ -537,45 +621,78 @@ func stormIslandReturnContext(
 func stormShopPurchaseContext(
 	input Intent.PlanningContext,
 	arguments json.RawMessage,
-) (stormShopPurchaseRequest, State.CastleState, GameData.StormShopPackage, error) {
+) (stormShopPurchaseRequest, State.CastleState, []stormShopPurchaseLine, error) {
 	var request stormShopPurchaseRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
-		return stormShopPurchaseRequest{}, State.CastleState{}, GameData.StormShopPackage{}, err
+		return stormShopPurchaseRequest{}, State.CastleState{}, nil, err
 	}
-	if request.CastleID <= 0 || request.ProductID <= 0 || request.TableID <= 0 || request.Amount <= 0 || request.AquamarineReserve < 0 {
-		return stormShopPurchaseRequest{}, State.CastleState{}, GameData.StormShopPackage{}, fmt.Errorf("Storm shop purchase requires castle, product, table, positive amount, and a non-negative reserve")
+	if request.CastleID <= 0 || request.AquamarineReserve < 0 {
+		return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("Storm shop purchase requires a castle and a non-negative reserve")
+	}
+	requested := append([]stormShopPurchaseLineRequest(nil), request.Purchases...)
+	if len(requested) == 0 && request.ProductID > 0 && request.Amount > 0 {
+		requested = append(requested, stormShopPurchaseLineRequest{ProductID: request.ProductID, Amount: request.Amount})
+	}
+	normalized := make([]stormShopPurchaseLineRequest, 0, len(requested))
+	lineByProduct := map[State.PackageID]int{}
+	for _, line := range requested {
+		if line.ProductID <= 0 || line.Amount <= 0 {
+			return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("each Storm shop purchase requires a product and positive amount")
+		}
+		if index, exists := lineByProduct[line.ProductID]; exists {
+			if normalized[index].Amount > math.MaxInt64-line.Amount {
+				return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("Storm shop amount is too large")
+			}
+			normalized[index].Amount += line.Amount
+			continue
+		}
+		lineByProduct[line.ProductID] = len(normalized)
+		normalized = append(normalized, line)
+	}
+	if len(normalized) == 0 {
+		return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("Storm shop purchase requires at least one package")
 	}
 	if input.GameData == nil {
-		return stormShopPurchaseRequest{}, State.CastleState{}, GameData.StormShopPackage{}, fmt.Errorf("official game data is unavailable")
+		return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("official game data is unavailable")
 	}
 	castle, exists := input.State.Castles[request.CastleID]
 	if !exists || castle.KingdomID != stormIntentKingdomID {
-		return stormShopPurchaseRequest{}, State.CastleState{}, GameData.StormShopPackage{}, fmt.Errorf("castle %d is not the current Storm castle", request.CastleID)
-	}
-	item, found := input.GameData.StormShopPackage(int64(request.ProductID))
-	if !found {
-		return stormShopPurchaseRequest{}, State.CastleState{}, GameData.StormShopPackage{}, fmt.Errorf("package %d is not sold by Luna's trade boat", request.ProductID)
+		return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("castle %d is not the current Storm castle", request.CastleID)
 	}
 	if input.State.Inventory.ConstructionOffersCastleID != castle.ID ||
 		input.State.Inventory.ConstructionOffersKingdomID != castle.KingdomID ||
 		input.State.Inventory.ConstructionOffersObservedAt.IsZero() {
-		return stormShopPurchaseRequest{}, State.CastleState{}, GameData.StormShopPackage{}, fmt.Errorf("Luna package purchase counters are not current for Storm castle %d", castle.ID)
+		return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("Luna package purchase counters are not current for Storm castle %d", castle.ID)
 	}
-	if request.Amount > math.MaxInt64/item.AquamarinePrice {
-		return stormShopPurchaseRequest{}, State.CastleState{}, GameData.StormShopPackage{}, fmt.Errorf("Storm shop amount is too large")
+	purchases := make([]stormShopPurchaseLine, 0, len(normalized))
+	totalCost := int64(0)
+	for _, line := range normalized {
+		item, found := input.GameData.StormShopPackage(int64(line.ProductID))
+		if !found {
+			return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("package %d is not sold by Luna's trade boat", line.ProductID)
+		}
+		if line.Amount > (math.MaxInt64-totalCost)/item.AquamarinePrice {
+			return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("Storm shop amount is too large")
+		}
+		totalCost += line.Amount * item.AquamarinePrice
+		if item.Stock > 0 {
+			purchased := input.State.Inventory.ConstructionOffers[line.ProductID]
+			if line.Amount > max(int64(0), item.Stock-purchased) {
+				return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("package %d has only %d purchases remaining", line.ProductID, max(int64(0), item.Stock-purchased))
+			}
+		}
+		purchases = append(purchases, stormShopPurchaseLine{request: line, item: item})
 	}
-	required := request.Amount*item.AquamarinePrice + request.AquamarineReserve
+	if totalCost > math.MaxInt64-request.AquamarineReserve {
+		return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("Storm shop amount is too large")
+	}
+	required := totalCost + request.AquamarineReserve
 	available := int64(math.Floor(castle.Resources[State.ResourceID(GameData.StormAquamarineID)].Amount))
 	if available < required {
-		return stormShopPurchaseRequest{}, State.CastleState{}, GameData.StormShopPackage{}, fmt.Errorf("Storm castle has %d Aquamarine; purchase and reserve require %d", available, required)
+		return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("Storm castle has %d Aquamarine; purchases and reserve require %d", available, required)
 	}
-	if item.Stock > 0 {
-		purchased := input.State.Inventory.ConstructionOffers[request.ProductID]
-		if purchased+request.Amount > item.Stock {
-			return stormShopPurchaseRequest{}, State.CastleState{}, GameData.StormShopPackage{}, fmt.Errorf("package %d has only %d purchases remaining", request.ProductID, max(int64(0), item.Stock-purchased))
-		}
-	}
-	return request, castle, item, nil
+	request.Purchases = normalized
+	return request, castle, purchases, nil
 }
 
 func validateStormDefenseUnits(units []stormDefenseUnit) error {
@@ -636,9 +753,8 @@ func (application *Application) captureStormScan(_ context.Context, arguments js
 		return err
 	}
 	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		source, exists := gameState.Castles[request.SourceCastleID]
-		if !exists || !source.Focused {
-			return nil, false, fmt.Errorf("Storm source castle %d is no longer focused", request.SourceCastleID)
+		if _, exists := gameState.Castles[request.SourceCastleID]; !exists {
+			return nil, false, fmt.Errorf("Storm source castle %d is no longer available", request.SourceCastleID)
 		}
 		if gameState.Storm.LastScannedAt == nil {
 			gameState.Storm.LastScannedAt = map[State.CastleID]time.Time{}
@@ -646,11 +762,31 @@ func (application *Application) captureStormScan(_ context.Context, arguments js
 		startedAt := stormScanStartedAt(request)
 		completedAt := time.Now().UTC()
 		if !request.FullMap {
-			if gameState.Storm.LastScannedAt[request.SourceCastleID].Equal(completedAt) {
-				return nil, false, nil
-			}
+			changed := !gameState.Storm.LastScannedAt[request.SourceCastleID].Equal(completedAt)
 			gameState.Storm.LastScannedAt[request.SourceCastleID] = completedAt
-			return []string{"storm", "map"}, true, nil
+			if request.Targeted {
+				if !stormMapStateMatches(*gameState, gameState.Storm.Map, request.SourceCastleID) {
+					return nil, false, fmt.Errorf("Storm map identity changed before targeted refresh capture")
+				}
+				observations := gameState.Map[stormIntentKingdomID]
+				for key, tracked := range gameState.Storm.Map.Targets {
+					if !request.Bounds.Contains(tracked.X, tracked.Y) {
+						continue
+					}
+					observation, exists := observations[key]
+					if !exists || observation.ObservedAt.Before(startedAt) ||
+						(observation.TypeID != stormIntentIslandMapTypeID && observation.TypeID != stormIntentFortMapTypeID) {
+						delete(gameState.Storm.Map.Targets, key)
+						changed = true
+						continue
+					}
+					if observation != tracked {
+						gameState.Storm.Map.Targets[key] = observation
+						changed = true
+					}
+				}
+			}
+			return []string{"storm", "map"}, changed, nil
 		}
 		if !stormMapStateMatches(*gameState, gameState.Storm.Map, request.SourceCastleID) ||
 			!gameState.Storm.Map.LastAttemptAt.Equal(startedAt) {
@@ -754,7 +890,7 @@ func (application *Application) guardStormAttack(_ context.Context, arguments js
 	}
 	commander, exists := state.Commanders[request.CommanderID]
 	if !exists || !commander.Available {
-		return fmt.Errorf("commander %d is no longer available", request.CommanderID)
+		return fmt.Errorf("%w: commander %d is no longer available", Intent.ErrPlanStale, request.CommanderID)
 	}
 	dialog := state.AttackDialog
 	if dialog.SourceCastleID != source.ID || dialog.KingdomID != target.KingdomID ||
@@ -780,7 +916,7 @@ func (application *Application) resolveStormAttackStep(
 	}
 	commander, exists := input.State.Commanders[request.CommanderID]
 	if !exists || !commander.Available {
-		return Intent.Step{}, fmt.Errorf("commander %d is no longer available", request.CommanderID)
+		return Intent.Step{}, fmt.Errorf("%w: commander %d is no longer available", Intent.ErrPlanStale, request.CommanderID)
 	}
 	capacity, err := (AttackCapacity.Resolver{}).Resolve(input.State, input.GameData, AttackCapacity.Request{
 		SourceCastleID: source.ID, CommanderID: request.CommanderID, UseAttackDialogEffects: true,
@@ -796,7 +932,7 @@ func (application *Application) resolveStormAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve Storm attack capacity: %w", err)
 	}
-	setup := limitAttackSetupToCapacity(invasionAttackSetup(attackRequest.Preset), capacity.Capacity)
+	setup := limitAttackSetupToCapacity(invasionAttackSetup(attackRequest.Preset), capacity.Capacity, capacity.MaximumWaves)
 	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Storm preset %q: %w", attackRequest.Preset.Name, err)

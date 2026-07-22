@@ -55,10 +55,8 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 	if input.State.KingdomTransport.ObservedAt.IsZero() || !observed || !unlock.Unlocked {
 		return Intent.Plan{}, fmt.Errorf("kingdom troop transport to %d is not observed as unlocked", target.KingdomID)
 	}
-	for _, pending := range input.State.KingdomTransport.PendingUnits {
-		if pending.KingdomID == target.KingdomID && pending.RemainingSec > 0 {
-			return Intent.Plan{}, fmt.Errorf("kingdom %d already has a pending troop transport", target.KingdomID)
-		}
+	if kingdomTroopTransportPending(input.State, target.KingdomID) {
+		return Intent.Plan{}, fmt.Errorf("kingdom %d already has a pending or settling troop transport", target.KingdomID)
 	}
 	units, err := normalizeKingdomTroopShipment(input.GameData, source, request.Units)
 	if err != nil {
@@ -83,12 +81,19 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 		Units          [][2]int64      `json:"A"`
 	}{source.ID, source.KingdomID, target.KingdomID, -1, wireUnits})
 	consumeArguments, _ := json.Marshal(request)
+	guardArguments, _ := json.Marshal(kingdomTransportAvailabilityGuard{
+		TargetKingdomID: target.KingdomID, TransportKind: "troop",
+	})
 	steps := make([]Intent.Step, 0, 4)
 	if !source.Focused {
 		steps = append(steps, castleFocusStep(source))
 	}
 	steps = append(steps,
 		kingdomTransportContextStep(),
+		Intent.RebuildOnResume(Intent.Step{
+			Name: "Verify kingdom troop transport availability", Action: "kingdom.transport.verify_available",
+			ActionArguments: guardArguments,
+		}),
 		commandStep("Start kingdom troop transfer", "kut", payload, "kut"),
 		Intent.Step{Name: "Consume confirmed donor troops", Action: "troops.kingdom.consume_source", ActionArguments: consumeArguments},
 	)
@@ -211,11 +216,12 @@ func planKingdomTroopSkip(_ context.Context, input Intent.PlanningContext, argum
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	timeSkipLabel := officialTimeSkipLabel(input.GameData, int64(currencyID), request.TimeSkipID)
 	if request.MinimumRemaining < 0 {
 		return Intent.Plan{}, fmt.Errorf("minimumRemaining cannot be negative")
 	}
 	if input.State.Player.Currencies[currencyID]-1 < float64(request.MinimumRemaining) {
-		return Intent.Plan{}, fmt.Errorf("no %s time skips are available", request.TimeSkipID)
+		return Intent.Plan{}, fmt.Errorf("no %s is available", timeSkipLabel)
 	}
 	payload, _ := json.Marshal(map[string]string{
 		"MST": request.TimeSkipID,
@@ -224,7 +230,7 @@ func planKingdomTroopSkip(_ context.Context, input Intent.PlanningContext, argum
 	})
 	return Intent.Plan{
 		Claims:  []string{"troop-transport", "kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10)},
-		Summary: fmt.Sprintf("Apply %s to kingdom %d troop transport", request.TimeSkipID, request.TargetKingdomID),
+		Summary: fmt.Sprintf("Apply a %s to kingdom %d troop transport", timeSkipLabel, request.TargetKingdomID),
 		Steps:   []Intent.Step{commandStep("Skip kingdom troop transport time", "msk", payload, "msk")},
 	}, nil
 }

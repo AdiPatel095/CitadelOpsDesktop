@@ -3,6 +3,11 @@ import { useCitadelAPI } from '../api/ApiContext';
 import type { RecruitTroopsMode } from '../settings/RecruitTroopsClientState';
 import type { AutoToolMode } from '../settings/AutoToolClientState';
 import type { AutomationStateV2 } from '../api/Contracts';
+import {
+	nextAutomationExpirationMs,
+	parseAutomationEnabledControls,
+	timedAutomationEnabledValue,
+} from '../settings/AutomationEnabled';
 
 export type GameConnectionState =
   | 'stopped'
@@ -16,6 +21,13 @@ export type GameConnectionState =
   | 'error';
 
 export type DashboardConnectionStatus = 'Disconnected' | 'Connecting' | 'Connected';
+
+export interface AutoBirdCastleCycle {
+	castleId: number;
+	castleName: string;
+	kingdomId: number;
+	nextCycleAtMs: number;
+}
 
 interface AuthContextType {
   gameLoggedIn: boolean;
@@ -41,10 +53,13 @@ interface AuthContextType {
 	autoTowerEnabled: boolean;
 	autoInvasionEnabled: boolean;
 	autoNomadEnabled: boolean;
+	autoAdvisorEnabled: boolean;
 	autoKhanEnabled: boolean;
 	autoStormEnabled: boolean;
 	autoBirdEnabled: boolean;
   autoBirdNextWakeUp: number;
+	autoBirdNextCastleName: string;
+	autoBirdCastleCycles: AutoBirdCastleCycle[];
   autoStationEnabled: boolean;
   autoStationState: string;
   autoStationThreatCount: number;
@@ -54,6 +69,8 @@ interface AuthContextType {
   browserMem: number;
 	botLocked: boolean;
 	automationStates: Record<string, AutomationStateV2>;
+	automationEnabledByKey: Record<string, boolean>;
+	automationTimedUntilByKey: Record<string, number>;
   startGame: () => void;
   stopGame: () => void;
   toggleRecruitTroops: () => void;
@@ -65,11 +82,14 @@ interface AuthContextType {
 	toggleAutoTower: () => void;
 	toggleAutoInvasion: () => void;
 	toggleAutoNomad: () => void;
+	toggleAutoAdvisor: () => void;
 	toggleAutoKhan: () => void;
 	toggleAutoStorm: () => void;
 	toggleAutoBird: () => void;
-  toggleAutoStation: () => void;
+	toggleAutoStation: () => void;
 	toggleBotLock: () => void;
+	setAutomationEnabled: (feature: string, enabled: boolean) => Promise<void>;
+	enableAutomationFor: (feature: string, durationMinutes: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,31 +103,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const schedulerConfiguration = isRecord(configuration?.sections.scheduler)
 		? configuration.sections.scheduler as Record<string, unknown>
 		: {};
+	const [now, setNow] = useState(() => Date.now());
+	const automationControls = parseAutomationEnabledControls(automationEnabled, now);
+	const automationEnabledByKey = Object.fromEntries(
+		Object.entries(automationControls).map(([feature, control]) => [feature, control.enabled]),
+	);
+	const automationTimedUntilByKey = Object.fromEntries(
+		Object.entries(automationControls).flatMap(([feature, control]) => (
+			control.enabled && control.expiresAtMs ? [[feature, control.expiresAtMs]] : []
+		)),
+	);
+	const nextAutomationExpiry = nextAutomationExpirationMs(automationControls, now);
 	const botLocked = schedulerConfiguration.botLocked === true;
-	const recruitTroopsEnabled = automationEnabled.recruit_troops === true;
-	const autoToolEnabled = automationEnabled.auto_tool === true;
-	const autoSceatResEnabled = automationEnabled.auto_sceat_resources === true;
-	const autoFoodBalanceEnabled = automationEnabled.auto_food_balance === true;
-	const autoHospitalEnabled = automationEnabled.auto_hospital === true;
-	const autoTCIEnabled = automationEnabled.auto_tci === true;
-	const autoTowerEnabled = automationEnabled.auto_towers === true;
-	const autoInvasionEnabled = automationEnabled.auto_invasion === true;
-	const autoNomadEnabled = automationEnabled.auto_nomad === true;
-	const autoKhanEnabled = automationEnabled.auto_khan === true;
-	const autoStormEnabled = automationEnabled.auto_storm === true;
-	const autoBirdEnabled = automationEnabled.auto_bird === true;
-	const autoStationEnabled = automationEnabled.auto_station === true;
+	const recruitTroopsEnabled = automationEnabledByKey.recruit_troops === true;
+	const autoToolEnabled = automationEnabledByKey.auto_tool === true;
+	const autoSceatResEnabled = automationEnabledByKey.auto_sceat_resources === true;
+	const autoFoodBalanceEnabled = automationEnabledByKey.auto_food_balance === true;
+	const autoHospitalEnabled = automationEnabledByKey.auto_hospital === true;
+	const autoTCIEnabled = automationEnabledByKey.auto_tci === true;
+	const autoTowerEnabled = automationEnabledByKey.auto_towers === true;
+	const autoInvasionEnabled = automationEnabledByKey.auto_invasion === true;
+	const autoNomadEnabled = automationEnabledByKey.auto_nomad === true;
+	const autoAdvisorEnabled = automationEnabledByKey.auto_advisor === true;
+	const autoKhanEnabled = automationEnabledByKey.auto_khan === true;
+	const autoStormEnabled = automationEnabledByKey.auto_storm === true;
+	const autoBirdEnabled = automationEnabledByKey.auto_bird === true;
+	const autoStationEnabled = automationEnabledByKey.auto_station === true;
 	const automationStates = state?.automations ?? {};
 	const autoBirdState = automationStates.autoBird;
+	const autoBirdNextCastleID = Math.trunc(automationMetricMillis(autoBirdState, 'nextBirdCastleId'));
+	const autoBirdNextCastleName = autoBirdNextCastleID > 0
+		? state?.castles[String(autoBirdNextCastleID)]?.name?.trim() || `Castle ${autoBirdNextCastleID}`
+		: '';
+	const autoBirdCastleCycles = useMemo<AutoBirdCastleCycle[]>(() => {
+		return Object.values(state?.castles ?? {})
+			.map((castle) => ({
+				castleId: castle.id,
+				castleName: castle.name?.trim() || `Castle ${castle.id}`,
+				kingdomId: castle.kingdomId,
+				nextCycleAtMs: automationMetricMillis(autoBirdState, `birdReturnUnixMs.${castle.id}`),
+			}))
+			.sort((left, right) => {
+				const leftActive = left.nextCycleAtMs > 0;
+				const rightActive = right.nextCycleAtMs > 0;
+				if (leftActive !== rightActive) return leftActive ? -1 : 1;
+				if (leftActive && left.nextCycleAtMs !== right.nextCycleAtMs) {
+					return left.nextCycleAtMs - right.nextCycleAtMs;
+				}
+				return left.castleName.localeCompare(right.castleName);
+			});
+	}, [autoBirdState, state?.castles]);
 	const autoStationState = automationStates.autoStation;
   const gameLoggedIn = connectionStatus === 'Connected' && session?.loggedIn === true && session.socketReady === true;
   const gameConnectionState = normalizeConnectionState(session?.status, gameLoggedIn);
-	const [now, setNow] = useState(() => Date.now());
 	useEffect(() => {
 		if (gameConnectionState !== 'cooldown') return;
 		const interval = window.setInterval(() => setNow(Date.now()), 1000);
 		return () => window.clearInterval(interval);
 	}, [gameConnectionState]);
+	useEffect(() => {
+		if (nextAutomationExpiry <= 0) return;
+		const timeout = window.setTimeout(
+			() => setNow(Date.now()),
+			Math.max(1, nextAutomationExpiry - Date.now() + 25),
+		);
+		return () => window.clearTimeout(timeout);
+	}, [nextAutomationExpiry]);
 	const cooldownSeconds = secondsUntil(session?.cooldownUntil, now);
 	const retrySeconds = cooldownSeconds > 0 ? 0 : secondsUntil(session?.retryAt, now);
 
@@ -117,8 +178,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const setAutomationEnabled = async (feature: string, enabled: boolean) => {
+	await updateConfiguration('automation.enabled', { ...automationEnabled, [feature]: enabled });
+  };
+
+  const enableAutomationFor = async (feature: string, durationMinutes: number) => {
+	await updateConfiguration('automation.enabled', {
+		...automationEnabled,
+		[feature]: timedAutomationEnabledValue(durationMinutes),
+	});
+  };
+
   const toggle = (feature: string, enabled: boolean) => {
-	void updateConfiguration('automation.enabled', { ...automationEnabled, [feature]: !enabled });
+	void setAutomationEnabled(feature, !enabled);
   };
 
   const value = useMemo<AuthContextType>(() => ({
@@ -145,10 +217,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		autoTowerEnabled,
 		autoInvasionEnabled,
 		autoNomadEnabled,
+		autoAdvisorEnabled,
 		autoKhanEnabled,
 		autoStormEnabled,
 		autoBirdEnabled,
-    autoBirdNextWakeUp: automationWakeMillis(autoBirdState),
+		autoBirdNextWakeUp: automationMetricMillis(autoBirdState, 'nextBirdUnixMs'),
+		autoBirdNextCastleName,
+		autoBirdCastleCycles,
     autoStationEnabled,
     autoStationState: autoStationEnabled ? (autoStationState?.status ?? 'waiting') : 'off',
     autoStationThreatCount: Math.max(0, Math.trunc(autoStationState?.metrics?.threatCount ?? 0)),
@@ -158,6 +233,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	browserMem: Math.max(0, Math.trunc(diagnostics?.browserMemoryMb ?? 0)),
 	botLocked,
 	automationStates,
+	automationEnabledByKey,
+	automationTimedUntilByKey,
     startGame: () => submit('session.start'),
     stopGame: () => submit('session.stop'),
 	toggleRecruitTroops: () => toggle('recruit_troops', recruitTroopsEnabled),
@@ -169,6 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		toggleAutoTower: () => toggle('auto_towers', autoTowerEnabled),
 		toggleAutoInvasion: () => toggle('auto_invasion', autoInvasionEnabled),
 		toggleAutoNomad: () => toggle('auto_nomad', autoNomadEnabled),
+		toggleAutoAdvisor: () => toggle('auto_advisor', autoAdvisorEnabled),
 		toggleAutoKhan: () => toggle('auto_khan', autoKhanEnabled),
 		toggleAutoStorm: () => toggle('auto_storm', autoStormEnabled),
 		toggleAutoBird: () => toggle('auto_bird', autoBirdEnabled),
@@ -176,9 +254,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	toggleBotLock: () => {
 		void updateConfiguration('scheduler', { ...schedulerConfiguration, botLocked: !botLocked });
 	},
+	setAutomationEnabled,
+	enableAutomationFor,
   }), [
     autoBirdEnabled,
 	autoBirdState,
+	autoBirdNextCastleName,
+	autoBirdCastleCycles,
 	botLocked,
     autoHospitalEnabled,
     autoSceatResEnabled,
@@ -189,10 +271,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		autoTowerEnabled,
 		autoInvasionEnabled,
 		autoNomadEnabled,
+		autoAdvisorEnabled,
 		autoKhanEnabled,
 		autoStormEnabled,
     autoToolEnabled,
 	automationStates,
+	automationEnabledByKey,
+	automationTimedUntilByKey,
     catalogs,
 	configuration,
     connectionStatus,
@@ -214,6 +299,11 @@ function automationWakeMillis(state: AutomationStateV2 | undefined): number {
 	if (!state?.nextCheckAt) return 0;
 	const value = Date.parse(state.nextCheckAt);
 	return Number.isFinite(value) ? value : 0;
+}
+
+function automationMetricMillis(state: AutomationStateV2 | undefined, key: string): number {
+	const value = state?.metrics?.[key];
+	return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
 }
 
 export function useAuth(): AuthContextType {

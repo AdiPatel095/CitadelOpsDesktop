@@ -88,3 +88,37 @@ func TestExecutionGateFailsWritesClosedWhenPersistenceIsUnavailable(t *testing.T
 		t.Fatalf("read was blocked by persistence health: %v", err)
 	}
 }
+
+func TestExecutionGateRequiresExplicitCommanderAssignmentsForAttackModules(t *testing.T) {
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		commanderFeatureSection: json.RawMessage(`{"version":1,"assignments":{"autoStorm":[16,17]}}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	application := &Application{Configuration: configuration}
+	plan := Intent.Plan{
+		Effect:    Intent.EffectLaunch,
+		Claims:    []string{"commander:16", "leader:commander:16"},
+		Admission: &Intent.Admission{Class: Intent.AdmissionAttackLaunch, Module: "autoStorm"},
+	}
+	if err := application.executionGate(
+		context.Background(), Intent.Request{Actor: "automation:autoStorm"}, plan, Intent.ExecutionBeforeClaims,
+	); err != nil {
+		t.Fatalf("assigned commander was blocked: %v", err)
+	}
+
+	plan.Claims = []string{"commander:0", "leader:commander:0"}
+	if err := application.executionGate(
+		context.Background(), Intent.Request{Actor: "automation:autoStorm"}, plan, Intent.ExecutionBeforeClaims,
+	); err == nil || !strings.Contains(err.Error(), "commander 0 is not assigned to autoStorm") {
+		t.Fatalf("unassigned commander gate error = %v", err)
+	}
+
+	plan.Admission.Module = "autoTowers"
+	if err := application.executionGate(
+		context.Background(), Intent.Request{Actor: "automation:autoTowers"}, plan, Intent.ExecutionBeforeClaims,
+	); err == nil || !strings.Contains(err.Error(), "assign at least one commander to autoTowers") {
+		t.Fatalf("missing feature assignment gate error = %v", err)
+	}
+}

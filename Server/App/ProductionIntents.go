@@ -16,6 +16,13 @@ const (
 	productionBaseQueueCapacity = 2
 )
 
+type productionQueueCapacityGuard struct {
+	CastleID          State.CastleID `json:"castleId"`
+	LineID            int            `json:"lineId"`
+	ExpectedFreeSlots int            `json:"expectedFreeSlots"`
+	FillAvailable     bool           `json:"fillAvailable"`
+}
+
 func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct {
 		CastleID      State.CastleID `json:"castleId"`
@@ -38,18 +45,22 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	if !ok || queue.ObservedAt.IsZero() {
 		return Intent.Plan{}, fmt.Errorf("production line %d has not been observed for castle %d", request.LineID, request.CastleID)
 	}
-	// Queue capacity represents the QS slots, not the active production stack.
-	occupied := len(queue.Queued)
-	queueCapacity := productionQueueCapacity(input.State, request.LineID, queue, input.GameData)
-	if queueCapacity <= 0 || occupied >= queueCapacity {
-		return Intent.Plan{}, fmt.Errorf("production line %d is full", request.LineID)
-	}
 	collection := "units"
 	if request.LineID == 1 {
 		collection = "tools"
 	}
 	if err := requireOfficialDefinition(input.GameData, collection, request.DefinitionID); err != nil {
 		return Intent.Plan{}, err
+	}
+	definitionLabel := productionDefinitionLabel(input.GameData, input.Language, collection, request.DefinitionID)
+	// Queue capacity represents the QS slots, not the active production stack.
+	occupied := len(queue.Queued)
+	queueCapacity := productionQueueCapacity(input.State, request.LineID, queue, input.GameData)
+	if queueCapacity <= 0 || occupied >= queueCapacity {
+		if request.FillAvailable {
+			return Intent.Plan{Summary: fmt.Sprintf("Production line %d is already full at %s", request.LineID, castleLabel(castle))}, nil
+		}
+		return Intent.Plan{}, fmt.Errorf("production line %d is full", request.LineID)
 	}
 	if request.Amount <= 0 {
 		request.Amount = observedProductionStack(queue)
@@ -62,26 +73,33 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		sessionKey = defaultProductionSessionKey
 	}
 	payload, _ := json.Marshal(struct {
-		LineID       int            `json:"LID"`
-		DefinitionID int64          `json:"WID"`
-		Amount       int64          `json:"AMT"`
-		PublicOrder  int            `json:"PO"`
-		Power        int            `json:"PWR"`
-		SessionKey   int            `json:"SK"`
-		SlotID       int            `json:"SID"`
-		CastleID     State.CastleID `json:"AID"`
-	}{request.LineID, request.DefinitionID, request.Amount, -1, 0, sessionKey, 0, request.CastleID})
+		LineID       int             `json:"LID"`
+		DefinitionID int64           `json:"WID"`
+		Amount       int64           `json:"AMT"`
+		PublicOrder  int             `json:"PO"`
+		Power        int             `json:"PWR"`
+		SessionKey   int             `json:"SK"`
+		KingdomID    State.KingdomID `json:"SID"`
+		CastleID     State.CastleID  `json:"AID"`
+	}{request.LineID, request.DefinitionID, request.Amount, -1, 0, sessionKey, castle.KingdomID, request.CastleID})
 	stackCount := 1
 	if request.FillAvailable {
 		stackCount = queueCapacity - occupied
 	}
 	steps := castleContextSteps(castle)
+	guardArguments, _ := json.Marshal(productionQueueCapacityGuard{
+		CastleID: request.CastleID, LineID: request.LineID,
+		ExpectedFreeSlots: stackCount, FillAvailable: request.FillAvailable,
+	})
+	steps = append(steps, Intent.RebuildOnResume(Intent.Step{
+		Name: "Revalidate production queue capacity", Action: "production.enqueue.verify_capacity", ActionArguments: guardArguments,
+	}))
 	for stack := 0; stack < stackCount; stack++ {
 		steps = append(steps, commandStep("Enqueue production stack", "bup", payload, "bup"))
 	}
-	summary := fmt.Sprintf("Queue %d of %s definition %d at %s", request.Amount, collection, request.DefinitionID, castleLabel(castle))
+	summary := fmt.Sprintf("Queue %d %s at %s", request.Amount, definitionLabel, castleLabel(castle))
 	if stackCount > 1 {
-		summary = fmt.Sprintf("Queue %d stacks of %d %s definition %d at %s", stackCount, request.Amount, collection, request.DefinitionID, castleLabel(castle))
+		summary = fmt.Sprintf("Queue %d stacks of %d %s at %s", stackCount, request.Amount, definitionLabel, castleLabel(castle))
 	}
 	return Intent.Plan{
 		Claims: []string{
@@ -91,6 +109,37 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		Summary: summary,
 		Steps:   steps,
 	}, nil
+}
+
+func (application *Application) verifyProductionQueueCapacity(_ context.Context, arguments json.RawMessage) error {
+	var request productionQueueCapacityGuard
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	if application == nil || application.State == nil {
+		return fmt.Errorf("production state is unavailable")
+	}
+	gameState := application.State.Snapshot()
+	castle, exists := gameState.Castles[request.CastleID]
+	if !exists || !castle.Focused {
+		return fmt.Errorf("%w: castle %d is no longer focused", Intent.ErrPlanStale, request.CastleID)
+	}
+	queue, exists := castle.Production[request.LineID]
+	if !exists || queue.ObservedAt.IsZero() {
+		return fmt.Errorf("%w: production line %d is no longer observed", Intent.ErrPlanStale, request.LineID)
+	}
+	var gameData *GameData.Store
+	if application.GameData != nil {
+		gameData, _ = application.GameData.Current()
+	}
+	available := productionQueueCapacity(gameState, request.LineID, queue, gameData) - len(queue.Queued)
+	if available < request.ExpectedFreeSlots || request.FillAvailable && available != request.ExpectedFreeSlots {
+		return fmt.Errorf(
+			"%w: production line %d free slots changed from %d to %d",
+			Intent.ErrPlanStale, request.LineID, request.ExpectedFreeSlots, max(0, available),
+		)
+	}
+	return nil
 }
 
 func productionQueueCapacity(state State.GameState, lineID int, queue State.ProductionQueue, gameData *GameData.Store) int {
@@ -152,9 +201,10 @@ func planHospitalOperation(input Intent.PlanningContext, arguments json.RawMessa
 	if !ok || request.CastleID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
 	}
+	unitLabel := productionDefinitionLabel(input.GameData, input.Language, "units", int64(request.UnitID))
 	wounded := castle.Units.Hospital[request.UnitID]
 	if request.UnitID <= 0 || wounded <= 0 {
-		return Intent.Plan{}, fmt.Errorf("unit %d is not wounded at castle %d", request.UnitID, request.CastleID)
+		return Intent.Plan{}, fmt.Errorf("%s is not wounded at %s", unitLabel, castleLabel(castle))
 	}
 	if request.Amount <= 0 || request.Amount > wounded {
 		return Intent.Plan{}, fmt.Errorf("amount must be between 1 and the wounded count %d", wounded)
@@ -165,7 +215,7 @@ func planHospitalOperation(input Intent.PlanningContext, arguments json.RawMessa
 	if !discard {
 		rubyCost, known := officialNumber(input.GameData, "units", int64(request.UnitID), "healingCostC2")
 		if known && rubyCost > 0 {
-			return Intent.Plan{}, fmt.Errorf("unit %d requires rubies to heal; use hospital.discard or heal it manually", request.UnitID)
+			return Intent.Plan{}, fmt.Errorf("%s requires rubies to heal; use hospital.discard or heal it manually", unitLabel)
 		}
 	}
 	payload, _ := json.Marshal(map[string]any{"U": request.UnitID, "A": request.Amount})
@@ -175,15 +225,21 @@ func planHospitalOperation(input Intent.PlanningContext, arguments json.RawMessa
 		opcode = "hdu"
 		label = "Discard wounded units"
 	}
-	steps := castleContextSteps(castle)
+	// Healing is focus-sensitive. Always refresh the castle after claims are
+	// acquired because another operation may have displaced a previously
+	// focused castle while this plan waited for admission.
+	steps := []Intent.Step{castleFocusStep(castle)}
 	steps = append(steps, commandStep(label, opcode, payload, opcode))
 	return Intent.Plan{
 		Claims: []string{
 			"castle-focus", "castle:" + strconv.FormatInt(int64(castle.ID), 10),
 			"hospital", "account-resources",
 		},
-		Summary: fmt.Sprintf("%s: %d of unit %d at %s", label, request.Amount, request.UnitID, castleLabel(castle)),
-		Steps:   steps,
+		Summary: fmt.Sprintf(
+			"%s: %d %s at %s",
+			label, request.Amount, unitLabel, castleLabel(castle),
+		),
+		Steps: steps,
 	}, nil
 }
 

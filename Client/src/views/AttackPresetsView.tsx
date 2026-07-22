@@ -161,7 +161,7 @@ const AttackPresetsView: React.FC = () => {
           title={query.trim() ? 'No matching presets' : 'Create your first attack preset'}
           description={query.trim()
             ? 'Try a different preset name.'
-            : 'Presets are independent from the game’s saved slots and can contain up to ten complete attack waves.'}
+            : 'Presets are independent from the game’s saved slots and can contain up to 30 complete attack waves.'}
           action={!query.trim() ? (
             <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ presetID: null })}>
               Create preset

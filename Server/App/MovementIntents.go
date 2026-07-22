@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -35,6 +36,23 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 	var request stationRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
+	}
+	request.Purpose = strings.TrimSpace(request.Purpose)
+	request.TrackingID = strings.TrimSpace(request.TrackingID)
+	if request.Purpose != "" && request.TrackingID == "" {
+		request.TrackingID = request.Purpose + ":" + strconv.FormatInt(int64(request.SourceCastleID), 10)
+	}
+	now := time.Now().UTC()
+	if (request.Purpose == "autoBird" || request.Purpose == "autoStation") &&
+		input.State.Player.ProtectionMode.PreparingOrActive(now) {
+		return Intent.Plan{}, fmt.Errorf("%s stationing is disabled while Protection Mode is preparing or active", request.Purpose)
+	}
+	if operation, exists := input.State.Stationing[request.TrackingID]; exists &&
+		(request.Purpose == "autoBird" || request.Purpose == "autoStation") &&
+		operation.ActiveAt(input.State.Movements, now) {
+		return Intent.Plan{
+			Summary: fmt.Sprintf("Skip %s stationing from castle %d; its tracked movement is already active", request.Purpose, request.SourceCastleID),
+		}, nil
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists || source.ID <= 0 {
@@ -71,8 +89,16 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 		if _, duplicate := amounts[item.UnitID]; duplicate {
 			return Intent.Plan{}, fmt.Errorf("unit %d appears more than once", item.UnitID)
 		}
-		if _, found := unitsCatalog.Find(strconv.FormatInt(int64(item.UnitID), 10)); !found {
+		raw, found := unitsCatalog.Find(strconv.FormatInt(int64(item.UnitID), 10))
+		if !found {
 			return Intent.Plan{}, fmt.Errorf("unit %d is not in the official unit catalog", item.UnitID)
+		}
+		record, decodeErr := GameData.DecodeRecord(raw)
+		if decodeErr != nil {
+			return Intent.Plan{}, fmt.Errorf("decode unit %d: %w", item.UnitID, decodeErr)
+		}
+		if GameData.IsToolRecord(record) {
+			return Intent.Plan{}, fmt.Errorf("definition %d is a tool, not a stationable troop", item.UnitID)
 		}
 		if available := source.Units.Stationed[item.UnitID]; item.Amount > available {
 			return Intent.Plan{}, fmt.Errorf("castle %d has %d stationed unit %d; %d requested", source.ID, available, item.UnitID, item.Amount)
@@ -103,12 +129,7 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 	steps := castleContextSteps(source)
 	steps = append(steps, stationRouteContextSteps(source, target)...)
 	steps = append(steps, commandStep("Station troops", "cds", dispatch, "cds"))
-	request.Purpose = strings.TrimSpace(request.Purpose)
-	request.TrackingID = strings.TrimSpace(request.TrackingID)
 	if request.Purpose != "" {
-		if request.TrackingID == "" {
-			request.TrackingID = request.Purpose + ":" + strconv.FormatInt(int64(source.ID), 10)
-		}
 		canonical, _ := json.Marshal(request)
 		steps = append(steps, Intent.Step{
 			Name: "Track station movement", Action: "movement.track_station", ActionArguments: canonical,

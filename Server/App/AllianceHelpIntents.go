@@ -15,6 +15,7 @@ const (
 	allianceHelpRecruitmentType = 6
 	recruitmentProductionLineID = 0
 	hospitalProductionLineID    = 2
+	hospitalAllianceHelpLimit   = 3
 )
 
 type allianceHelpRequest struct {
@@ -28,29 +29,31 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
 	}
+	if request.ProductionID <= 0 {
+		return Intent.Plan{}, fmt.Errorf("alliance help requires a positive production job id")
+	}
 	job, eligible := findAllianceHelpJob(input.State, request.ProductionID)
-	if request.ProductionID <= 0 || !eligible {
-		return Intent.Plan{}, fmt.Errorf("production job %d is not eligible for an alliance help request", request.ProductionID)
+	if !eligible {
+		if job.CastleID > 0 && !allianceHelpLineSupported(job.LineID) {
+			return Intent.Plan{}, fmt.Errorf("production line %d does not support alliance help requests", job.LineID)
+		}
+		return Intent.Plan{Summary: fmt.Sprintf(
+			"Skip alliance help: production job %d is no longer eligible", request.ProductionID,
+		)}, nil
 	}
 	if job.LineID != recruitmentProductionLineID && job.LineID != hospitalProductionLineID {
 		return Intent.Plan{}, fmt.Errorf("production line %d does not support alliance help requests", job.LineID)
+	}
+	if job.LineID == hospitalProductionLineID &&
+		State.OutstandingHospitalAllianceHelpRequests(input.State) >= hospitalAllianceHelpLimit {
+		return Intent.Plan{Summary: fmt.Sprintf(
+			"Skip alliance help: hospital already has %d outstanding requests", hospitalAllianceHelpLimit,
+		)}, nil
 	}
 	castle, exists := input.State.Castles[job.CastleID]
 	if !exists {
 		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", job.CastleID)
 	}
-	requestID := request.ProductionID
-	requestType := allianceHelpHospitalType
-	if job.LineID == recruitmentProductionLineID {
-		requestID = 0
-		requestType = allianceHelpRecruitmentType
-	}
-	payload, _ := json.Marshal(struct {
-		RequestID int64 `json:"ID"`
-		Type      int   `json:"T"`
-	}{RequestID: requestID, Type: requestType})
-	requestStep := commandStep("Request alliance help", "ahr", payload, "")
-	requestStep.AwaitOpcodes = []string{"ahh", "ahr"}
 	recordRequest := allianceHelpRequest{
 		ProductionID: request.ProductionID,
 		CastleID:     job.CastleID,
@@ -67,7 +70,11 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 	} else {
 		claims = append(claims, "production-line:"+strconv.Itoa(job.LineID))
 	}
-	steps := castleContextSteps(castle)
+	requestStep := Intent.Step{
+		Name: "Request alliance help", Resolver: "alliance.help.build", ResolverArguments: recordArguments,
+		AwaitOpcodes: []string{"ahh", "ahr"}, TimeoutMillis: 10_000, SuccessCodes: []int{0},
+	}
+	steps := []Intent.Step{castleFocusStep(castle)}
 	steps = append(steps,
 		requestStep,
 		Intent.Step{Name: "Record alliance help request", Action: "alliance.help.mark_requested", ActionArguments: recordArguments},
@@ -77,6 +84,46 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 		Summary: fmt.Sprintf("Request alliance help for production job %d", request.ProductionID),
 		Steps:   steps,
 	}, nil
+}
+
+func (application *Application) resolveAllianceHelpRequestStep(
+	_ context.Context,
+	input Intent.PlanningContext,
+	arguments json.RawMessage,
+) (Intent.Step, error) {
+	var request allianceHelpRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Step{}, err
+	}
+	if request.ProductionID <= 0 {
+		return Intent.Step{}, fmt.Errorf("alliance help requires a positive production job id")
+	}
+	job, eligible := findAllianceHelpJob(input.State, request.ProductionID)
+	if !eligible || job.CastleID != request.CastleID || job.LineID != request.LineID {
+		return Intent.Step{}, fmt.Errorf(
+			"%w: production job %d is no longer eligible for alliance help", Intent.ErrPlanStale, request.ProductionID,
+		)
+	}
+	if job.LineID == hospitalProductionLineID &&
+		State.OutstandingHospitalAllianceHelpRequests(input.State) >= hospitalAllianceHelpLimit {
+		return Intent.Step{}, fmt.Errorf(
+			"%w: hospital alliance help already has %d outstanding requests",
+			Intent.ErrPlanStale, hospitalAllianceHelpLimit,
+		)
+	}
+	requestID := request.ProductionID
+	requestType := allianceHelpHospitalType
+	if job.LineID == recruitmentProductionLineID {
+		requestID = 0
+		requestType = allianceHelpRecruitmentType
+	}
+	payload, _ := json.Marshal(struct {
+		RequestID int64 `json:"ID"`
+		Type      int   `json:"T"`
+	}{RequestID: requestID, Type: requestType})
+	step := commandStep("Request alliance help", "ahr", payload, "")
+	step.AwaitOpcodes = []string{"ahh", "ahr"}
+	return step, nil
 }
 
 func (application *Application) markAllianceHelpRequested(_ context.Context, arguments json.RawMessage) error {
@@ -142,7 +189,7 @@ func findAllianceHelpJob(state State.GameState, productionID int64) (allianceHel
 		for lineID, queue := range castle.Production {
 			if queue.Active != nil && queue.Active.ProductionID == productionID {
 				job := allianceHelpJob{CastleID: castleID, LineID: lineID}
-				if allianceHelpLineSupported(lineID) && !queue.Active.AllianceHelpRequested {
+				if allianceHelpJobEligible(state, lineID, *queue.Active) {
 					return job, true
 				}
 				foundJob = job
@@ -150,7 +197,7 @@ func findAllianceHelpJob(state State.GameState, productionID int64) (allianceHel
 			for _, item := range queue.Queued {
 				if item.ProductionID == productionID {
 					job := allianceHelpJob{CastleID: castleID, LineID: lineID}
-					if allianceHelpLineSupported(lineID) && !item.AllianceHelpRequested {
+					if allianceHelpJobEligible(state, lineID, item) {
 						return job, true
 					}
 					foundJob = job
@@ -159,6 +206,14 @@ func findAllianceHelpJob(state State.GameState, productionID int64) (allianceHel
 		}
 	}
 	return foundJob, false
+}
+
+func allianceHelpJobEligible(state State.GameState, lineID int, item State.QueueItem) bool {
+	if !allianceHelpLineSupported(lineID) || item.AllianceHelpRequested {
+		return false
+	}
+	return lineID != hospitalProductionLineID ||
+		!State.HasOutstandingHospitalAllianceHelpRequest(state, item.ProductionID)
 }
 
 func allianceHelpLineSupported(lineID int) bool {

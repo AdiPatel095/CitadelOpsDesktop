@@ -3,6 +3,7 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -39,18 +40,25 @@ type invasionAttackRequest struct {
 	Preset              AttackPresets.Preset `json:"preset"`
 	CommanderIDs        []State.CommanderID  `json:"commanderIds"`
 	HorseTravelBoostID  int                  `json:"horseTravelBoostId"`
+	DailyAttackLimit    int64                `json:"dailyAttackLimit"`
 }
 
 var invasionFortifyOptions = map[string]string{
 	"GTO": "Gold tokens",
 	"STO": "Silver tokens",
 	"KM":  "Khan medals",
+	"ST":  "Samurai tokens",
 	"C2":  "Rubies",
 }
 
 type resolvedInvasionAttackRequest struct {
 	invasionAttackRequest
 	CommanderID State.CommanderID `json:"commanderId"`
+}
+
+type invasionTargetVerificationRequest struct {
+	Request          resolvedInvasionAttackRequest `json:"request"`
+	RefreshStartedAt time.Time                     `json:"refreshStartedAt"`
 }
 
 func planInvasionMapScan(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -127,6 +135,11 @@ func planInvasionAttack(_ context.Context, input Intent.PlanningContext, argumen
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
+		return Intent.Plan{}, err
+	} else if blocked {
+		return blockedPlan, nil
+	}
 	if input.GameData == nil {
 		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
 	}
@@ -147,6 +160,9 @@ func planInvasionAttack(_ context.Context, input Intent.PlanningContext, argumen
 		craCommanderSelectionOptions{DefaultCount: 1, RequireAvailable: true},
 	)
 	if err != nil {
+		if errors.Is(err, errCRACommanderUnavailable) {
+			return Intent.Plan{}, fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+		}
 		return Intent.Plan{}, err
 	}
 	commanderID := resolution.Selected[0]
@@ -170,6 +186,25 @@ func planInvasionAttack(_ context.Context, input Intent.PlanningContext, argumen
 	}
 	steps = append(steps, generalSkillsContextSteps(input.State, commanderID, time.Now().UTC())...)
 	steps = append(steps, attackCastleContextStep(source))
+	steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
+	refreshStartedAt := time.Now().UTC()
+	refreshPayload, _ := json.Marshal(struct {
+		KingdomID State.KingdomID `json:"KID"`
+		X1        int             `json:"AX1"`
+		Y1        int             `json:"AY1"`
+		X2        int             `json:"AX2"`
+		Y2        int             `json:"AY2"`
+	}{target.KingdomID, target.X, target.Y, target.X, target.Y})
+	refreshStep := contextCommandStep("Refresh selected invasion target", "gaa", refreshPayload, "gaa")
+	refreshStep.ResponseBarrier = Intent.ResponseBarrierCommitted
+	verificationArguments, _ := json.Marshal(invasionTargetVerificationRequest{
+		Request:          resolvedInvasionAttackRequest{invasionAttackRequest: request, CommanderID: commanderID},
+		RefreshStartedAt: refreshStartedAt,
+	})
+	steps = append(steps,
+		refreshStep,
+		Intent.Step{Name: "Verify refreshed invasion target", Action: "invasion.target.guard", ActionArguments: verificationArguments},
+	)
 	if request.FortifyCurrency != "" && !invasionTargetFortified(input.State, target) {
 		fortifyArguments, _ := json.Marshal(request)
 		fortifyPayload, _ := json.Marshal(struct {
@@ -184,11 +219,13 @@ func planInvasionAttack(_ context.Context, input Intent.PlanningContext, argumen
 	}
 	steps = append(steps,
 		deferredCRACommandStep("Build and launch capacity-adjusted invasion attack", "invasion.attack.build", resolvedArguments, contextPayload),
+		Intent.Step{Name: "Record invasion launch", Action: "invasion.attack.capture", ActionArguments: resolvedArguments},
 		Intent.Step{Name: "Consume invasion target", Action: "invasion.target.consume", ActionArguments: consumeArguments},
 	)
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	claims := []string{
 		"castle-focus", "attack-context", "castle:" + castleID, "attack-inventory:" + castleID,
+		"map:" + strconv.FormatInt(int64(target.KingdomID), 10),
 		fmt.Sprintf("invasion-target:%d:%d:%d", target.KingdomID, target.X, target.Y),
 	}
 	if request.FortifyCurrency != "" {
@@ -228,6 +265,10 @@ func invasionAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, err
 	}
+	if input.State.Player.ProtectionMode.PreparingOrActive(time.Now().UTC()) {
+		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{},
+			fmt.Errorf("invasion attacks are disabled while Protection Mode is preparing or active")
+	}
 	if err := validateHorseTravelBoostID(request.HorseTravelBoostID); err != nil {
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, err
 	}
@@ -243,6 +284,12 @@ func invasionAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 	expectedTypeID, supported := invasionMapTypeForEvent(request.EventID)
 	if !supported || expectedTypeID != request.TargetTypeID {
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("event %d does not use invasion target type %d", request.EventID, request.TargetTypeID)
+	}
+	if request.FortifyCurrency != "" && request.FortifyCurrency != "C2" && len(input.State.Invasion.FortifyCurrencies) > 0 &&
+		!input.State.Invasion.SupportsFortifyCurrency(request.FortifyCurrency) {
+		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+			"fortification currency %s is unavailable for event %d", request.FortifyCurrency, request.EventID,
+		)
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists {
@@ -318,7 +365,7 @@ func (application *Application) resolveInvasionAttackStep(
 	if err != nil {
 		return Intent.Step{}, err
 	}
-	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity)
+	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity, capacity.MaximumWaves)
 	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build invasion preset %q: %w", request.Preset.Name, err)
@@ -340,8 +387,10 @@ func resolveInvasionAttackCapacity(
 		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, err
 	}
 	commander, exists := input.State.Commanders[commanderID]
-	if !exists || !commander.Available {
-		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("commander %d is no longer available", commanderID)
+	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(input.State, commanderID, time.Now().UTC()) {
+		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+			"%w: commander %d is no longer available", Intent.ErrPlanStale, commanderID,
+		)
 	}
 	level := target.Level
 	if level <= 0 {
@@ -364,10 +413,15 @@ func resolveInvasionAttackCapacity(
 	return capacity, source, target, nil
 }
 
-func limitAttackSetupToCapacity(setup attackSetupRequest, capacity AttackCapacity.LaneCapacity) attackSetupRequest {
+func limitAttackSetupToCapacity(
+	setup attackSetupRequest,
+	capacity AttackCapacity.LaneCapacity,
+	maximumWaves int,
+) attackSetupRequest {
 	result := setup
-	result.Waves = make([]attackSetupWaveRequest, len(setup.Waves))
-	for index, wave := range setup.Waves {
+	waveCount := min(len(setup.Waves), max(0, maximumWaves))
+	result.Waves = make([]attackSetupWaveRequest, waveCount)
+	for index, wave := range setup.Waves[:waveCount] {
 		result.Waves[index] = attackSetupWaveRequest{
 			Left:   limitAttackSetupLane(wave.Left, capacity.Left),
 			Middle: limitAttackSetupLane(wave.Middle, capacity.Front),
@@ -420,6 +474,41 @@ func (application *Application) captureInvasionScan(_ context.Context, arguments
 	return err
 }
 
+func (application *Application) captureInvasionLaunch(_ context.Context, arguments json.RawMessage) error {
+	var request resolvedInvasionAttackRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		var selected State.MovementState
+		for _, movement := range gameState.Movements {
+			if movement.Direction != 0 || movement.SourceCastleID != request.SourceCastleID ||
+				movement.KingdomID != request.KingdomID || movement.TargetX != request.TargetX || movement.TargetY != request.TargetY ||
+				movement.CommanderID == nil || *movement.CommanderID != request.CommanderID || movement.ArrivesAt == nil {
+				continue
+			}
+			if selected.ID == 0 || movement.ObservedAt.After(selected.ObservedAt) ||
+				movement.ObservedAt.Equal(selected.ObservedAt) && movement.ID > selected.ID {
+				selected = movement
+			}
+		}
+		if selected.ID == 0 {
+			return nil, false, fmt.Errorf("CRA response did not return commander %d's invasion movement", request.CommanderID)
+		}
+		launchedAt := selected.ObservedAt
+		if launchedAt.IsZero() {
+			launchedAt = time.Now().UTC()
+		}
+		changed := State.RecordEventAttackLaunch(gameState, request.EventID, State.EventAttackRecord{
+			MovementID: selected.ID, Kind: State.EventActivityInvasion, KingdomID: request.KingdomID,
+			TargetTypeID: request.TargetTypeID, TargetX: request.TargetX, TargetY: request.TargetY,
+			LaunchedAt: launchedAt.UTC(), ArrivesAt: selected.ArrivesAt.UTC(),
+		})
+		return []string{"event-scores", "movements"}, changed, nil
+	})
+	return err
+}
+
 func (application *Application) guardInvasionAttack(_ context.Context, arguments json.RawMessage) error {
 	var request resolvedInvasionAttackRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -441,13 +530,50 @@ func (application *Application) guardInvasionAttack(_ context.Context, arguments
 		return fmt.Errorf("invasion event has only %d seconds remaining", remaining)
 	}
 	commander, exists := state.Commanders[request.CommanderID]
-	if !exists || !commander.Available {
-		return fmt.Errorf("commander %d is no longer available", request.CommanderID)
+	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(state, request.CommanderID, time.Now().UTC()) {
+		return fmt.Errorf("%w: commander %d is no longer available", Intent.ErrPlanStale, request.CommanderID)
 	}
 	dialog := state.AttackDialog
 	if dialog.SourceCastleID != source.ID || dialog.KingdomID != target.KingdomID ||
 		dialog.Target.TypeID != target.TypeID || dialog.Target.X != target.X || dialog.Target.Y != target.Y {
 		return fmt.Errorf("current attack dialog does not match invasion target %d:%d", target.X, target.Y)
+	}
+	return nil
+}
+
+func (application *Application) guardInvasionTarget(_ context.Context, arguments json.RawMessage) error {
+	var verification invasionTargetVerificationRequest
+	if err := decodeIntentArguments(arguments, &verification); err != nil {
+		return err
+	}
+	request := verification.Request
+	state := application.State.Snapshot()
+	_, _, target, err := invasionAttackContext(
+		Intent.PlanningContext{State: state},
+		mustMarshalInvasionAttackRequest(request.invasionAttackRequest),
+	)
+	if err != nil {
+		return err
+	}
+	if verification.RefreshStartedAt.IsZero() || target.ObservedAt.IsZero() || target.ObservedAt.Before(verification.RefreshStartedAt) {
+		return fmt.Errorf(
+			"%w: invasion target %d:%d was not returned by the launch-time map refresh",
+			Intent.ErrPlanStale, target.X, target.Y,
+		)
+	}
+	score, found := state.ActiveScalableEventScore()
+	if !found || score.EventID != request.EventID {
+		return fmt.Errorf("invasion event %d is no longer active", request.EventID)
+	}
+	if score.PlayerScore >= request.ScoreTarget {
+		return fmt.Errorf("invasion score target reached: %d / %d", score.PlayerScore, request.ScoreTarget)
+	}
+	if remaining := invasionRemainingSeconds(score, time.Now().UTC()); remaining >= 0 && remaining <= max(0, request.MinimumRemainingSec) {
+		return fmt.Errorf("invasion event has only %d seconds remaining", remaining)
+	}
+	commander, exists := state.Commanders[request.CommanderID]
+	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(state, request.CommanderID, time.Now().UTC()) {
+		return fmt.Errorf("%w: commander %d is no longer available", Intent.ErrPlanStale, request.CommanderID)
 	}
 	return nil
 }

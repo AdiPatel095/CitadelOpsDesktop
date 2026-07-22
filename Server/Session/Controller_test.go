@@ -22,6 +22,17 @@ type pacingTransport struct {
 	status                   Status
 	sendDelay                time.Duration
 	reportsOutboundCausation bool
+	starts                   int
+}
+
+type frontendInteractionTransport struct {
+	*pacingTransport
+	closed bool
+}
+
+func (transport *frontendInteractionTransport) CloseGameUI(context.Context) error {
+	transport.closed = true
+	return nil
 }
 
 func newPacingTransport() *pacingTransport {
@@ -34,8 +45,13 @@ func newPacingTransport() *pacingTransport {
 	}
 }
 
-func (*pacingTransport) Start(context.Context) error { return nil }
-func (*pacingTransport) Stop(context.Context) error  { return nil }
+func (transport *pacingTransport) Start(context.Context) error {
+	transport.mu.Lock()
+	transport.starts++
+	transport.mu.Unlock()
+	return nil
+}
+func (*pacingTransport) Stop(context.Context) error { return nil }
 
 func (transport *pacingTransport) Send(_ context.Context, _ []byte) error {
 	transport.mu.Lock()
@@ -64,6 +80,51 @@ func (transport *pacingTransport) setConnectionGeneration(generation uint64) {
 	transport.status.ConnectionGeneration = generation
 	transport.status.ChangedAt = time.Now().UTC()
 	transport.mu.Unlock()
+}
+
+func TestControllerRetriesDisconnectedActiveTransport(t *testing.T) {
+	transport := newPacingTransport()
+	controller := NewController(context.Background(), transport, nil, nil)
+	defer controller.outbound.Close()
+	defer controller.Stop(context.Background())
+	if err := controller.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	transport.mu.Lock()
+	transport.status.State = "disconnected"
+	transport.status.LoggedIn = false
+	transport.status.SocketReady = false
+	transport.mu.Unlock()
+
+	if err := controller.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	transport.mu.Lock()
+	starts := transport.starts
+	transport.mu.Unlock()
+	if starts != 2 {
+		t.Fatalf("transport starts = %d, want 2", starts)
+	}
+}
+
+func TestControllerClosesGameUIThroughFrontendInteractionTransport(t *testing.T) {
+	transport := &frontendInteractionTransport{pacingTransport: newPacingTransport()}
+	controller := NewController(context.Background(), transport, nil, nil)
+	defer controller.outbound.Close()
+	if err := controller.CloseGameUI(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if !transport.closed {
+		t.Fatal("frontend interaction transport did not receive the close request")
+	}
+}
+
+func TestControllerRejectsGameUICloseWithoutFrontendInteractionTransport(t *testing.T) {
+	controller := NewController(context.Background(), newPacingTransport(), nil, nil)
+	defer controller.outbound.Close()
+	if err := controller.CloseGameUI(t.Context()); !errors.Is(err, ErrFrontendInteractionUnavailable) {
+		t.Fatalf("close game UI error = %v", err)
+	}
 }
 
 func TestControllerPacesConsecutiveAttackLaunches(t *testing.T) {

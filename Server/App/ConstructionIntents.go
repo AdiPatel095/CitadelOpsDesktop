@@ -58,11 +58,18 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 		return Intent.Plan{}, fmt.Errorf("construction-item shop offers have not been observed")
 	}
 	liveAmount, offered := input.State.Inventory.ConstructionOffers[request.ProductID]
-	if !offered || liveAmount <= 0 {
-		return Intent.Plan{}, fmt.Errorf("package %d is not in the current live construction-item offers", request.ProductID)
+	availableAmount := liveAmount
+	if !offered || availableAmount <= 0 {
+		if !GameData.ConstructionItemPackageIsTrivial(record) {
+			return Intent.Plan{}, fmt.Errorf("package %d is not in the current live construction-item offers", request.ProductID)
+		}
+		availableAmount, _ = record.Int64("constructionItemAmount")
+		if availableAmount <= 0 {
+			availableAmount = 1
+		}
 	}
-	if request.Amount <= 0 || request.Amount > liveAmount {
-		return Intent.Plan{}, fmt.Errorf("amount must be between 1 and the live offer amount %d", liveAmount)
+	if request.Amount <= 0 || request.Amount > availableAmount {
+		return Intent.Plan{}, fmt.Errorf("amount must be between 1 and the available package amount %d", availableAmount)
 	}
 	payload, _ := json.Marshal(struct {
 		ProductID State.PackageID `json:"PID"`
@@ -79,12 +86,27 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 	steps := castleContextSteps(castle)
 	steps = append(steps, constructionShopContextSteps(castle)...)
 	steps = append(steps, commandStep("Buy construction item", "sbp", payload, "sbp"))
+	itemLabel := fmt.Sprintf("construction item %d", constructionItemID)
+	if itemCatalog, catalogErr := input.GameData.Catalog("constructionItems"); catalogErr == nil {
+		if itemRaw, found := itemCatalog.Find(strconv.FormatInt(constructionItemID, 10)); found {
+			if item, decodeErr := GameData.DecodeRecord(itemRaw); decodeErr == nil {
+				if name, hasName := item.String("name"); hasName {
+					if displayName := userFacingGameName(name); displayName != "" {
+						itemLabel = displayName
+					}
+				}
+				if level, hasLevel := item.Int64("level"); hasLevel && level > 0 {
+					itemLabel += fmt.Sprintf(" (level %d)", level)
+				}
+			}
+		}
+	}
 	return Intent.Plan{
 		Claims: []string{
 			"castle-focus", "castle:" + strconv.FormatInt(int64(castle.ID), 10),
 			"construction-inventory", "construction-shop", "account-resources",
 		},
-		Summary: fmt.Sprintf("Buy construction-item package %d from %s", request.ProductID, castleLabel(castle)),
+		Summary: fmt.Sprintf("Buy %d x %s from %s", request.Amount, itemLabel, castleLabel(castle)),
 		Steps:   steps,
 	}, nil
 }

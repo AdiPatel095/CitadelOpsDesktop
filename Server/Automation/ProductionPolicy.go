@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ type ProductionPolicy struct {
 	section       string
 	lineID        int
 	definitionKey string
+	lastCastleID  State.CastleID
 }
 
 type productionSettings struct {
@@ -79,7 +81,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	full := 0
 	unknownStackCapacity := 0
 	var nextCastleSchedule time.Time
-	for _, castleKey := range sortedNumericKeys(settings.Castles) {
+	for _, castleKey := range policy.orderedCastleKeys(settings.Castles, snapshot.State.Castles) {
 		castlePlan := settings.Castles[castleKey]
 		if !castlePlan.Enabled {
 			continue
@@ -122,6 +124,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 			if policy.lineID == 0 && occupied >= queueCapacity {
 				if productionID := eligibleAllianceHelpProductionID(queue); productionID > 0 {
 					arguments, _ := json.Marshal(map[string]any{"productionId": productionID})
+					policy.lastCastleID = castleID
 					return Decision{
 						Status: "ready", Detail: fmt.Sprintf("Request alliance help for recruitment queue at %s", castleName(castle)),
 						NextCheckAt:         snapshot.Now.Add(coordinatorTick),
@@ -143,6 +146,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 			"castleId": castleID, "lineId": policy.lineID,
 			"definitionId": target.ID, "amount": amount, "fillAvailable": true,
 		})
+		policy.lastCastleID = castleID
 		return Decision{
 			Status:              "ready",
 			Detail:              fmt.Sprintf("Queue the configured %s at %s", policy.definitionKey, castleName(castle)),
@@ -165,6 +169,50 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		nextCheck = nextCastleSchedule
 	}
 	return Decision{Status: "idle", Detail: detail, NextCheckAt: nextCheck}, nil
+}
+
+func (policy *ProductionPolicy) orderedCastleKeys(
+	plans map[string]productionCastle,
+	castles map[State.CastleID]State.CastleState,
+) []string {
+	keys := make([]string, 0, len(plans))
+	for key, plan := range plans {
+		castleIDValue, err := strconv.ParseInt(key, 10, 64)
+		castleID := State.CastleID(castleIDValue)
+		if err != nil || castleID <= 0 || !plan.Enabled {
+			continue
+		}
+		if _, exists := castles[castleID]; exists {
+			keys = append(keys, key)
+		}
+	}
+	sort.Slice(keys, func(left, right int) bool {
+		leftIDValue, _ := strconv.ParseInt(keys[left], 10, 64)
+		rightIDValue, _ := strconv.ParseInt(keys[right], 10, 64)
+		leftCastle := castles[State.CastleID(leftIDValue)]
+		rightCastle := castles[State.CastleID(rightIDValue)]
+		if leftCastle.KingdomID != rightCastle.KingdomID {
+			return leftCastle.KingdomID < rightCastle.KingdomID
+		}
+		leftName := strings.ToLower(strings.TrimSpace(leftCastle.Name))
+		rightName := strings.ToLower(strings.TrimSpace(rightCastle.Name))
+		if leftName != rightName {
+			return leftName < rightName
+		}
+		return leftCastle.ID < rightCastle.ID
+	})
+	if policy.lastCastleID <= 0 || len(keys) < 2 {
+		return keys
+	}
+	for index, key := range keys {
+		castleIDValue, _ := strconv.ParseInt(key, 10, 64)
+		if State.CastleID(castleIDValue) != policy.lastCastleID {
+			continue
+		}
+		next := (index + 1) % len(keys)
+		return append(append(make([]string, 0, len(keys)), keys[next:]...), keys[:next]...)
+	}
+	return keys
 }
 
 func (policy *ProductionPolicy) queueCapacity(state State.GameState, queue State.ProductionQueue, gameData *GameData.Store) int {
@@ -201,7 +249,12 @@ func productionVIPQueueCapacity(state State.GameState, lineID int, gameData *Gam
 	return productionBaseQueueCapacity + int(bonus), true
 }
 
-func (policy *ProductionPolicy) targetAmount(state State.GameState, castle State.CastleState, target productionTarget, gameData *GameData.Store) int64 {
+func (policy *ProductionPolicy) targetAmount(
+	state State.GameState,
+	castle State.CastleState,
+	target productionTarget,
+	gameData *GameData.Store,
+) int64 {
 	if target.Amount > 0 {
 		return target.Amount
 	}

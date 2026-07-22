@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/GameData"
@@ -42,7 +44,10 @@ func reduceCraftingSnapshot(
 	gameState *State.GameState,
 	_ *GameData.Store,
 ) ([]string, bool, error) {
-	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+	if len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	if !frameSucceeded(frame) {
 		return nil, false, nil
 	}
 	groups, flat, err := decodeCraftingPayload(frame.Payload)
@@ -91,10 +96,14 @@ func reduceCraftingBuilding(
 	_ context.Context,
 	frame Protocol.Frame,
 	gameState *State.GameState,
-	_ *GameData.Store,
+	gameData *GameData.Store,
 ) ([]string, bool, error) {
-	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+	if len(frame.Payload) == 0 {
 		return nil, false, nil
+	}
+	if !frameSucceeded(frame) {
+		changed := reconcileRejectedCraftingResources(gameState, gameData, frame.Payload)
+		return []string{"castles", "resources", "currencies", "player"}, changed, nil
 	}
 	_, flat, err := decodeCraftingPayload(frame.Payload)
 	if err != nil {
@@ -103,7 +112,170 @@ func reduceCraftingBuilding(
 	if flat == nil {
 		return nil, false, nil
 	}
-	return []string{"castles", "crafting"}, mergeCraftingBuilding(gameState, *flat, frame.ReceivedAt), nil
+	castleID := State.CastleID(flat.CastleID)
+	castle, castleExists := gameState.Castles[castleID]
+	before, buildingExists := castle.Crafting.Buildings[State.BuildingInstanceID(flat.InstanceID)]
+	changed := mergeCraftingBuilding(gameState, *flat, frame.ReceivedAt)
+	resourceChanged := false
+	if changed && castleExists && buildingExists && strings.EqualFold(frame.Opcode, "crst") {
+		after := craftingBuildingFromWire(*flat, frame.ReceivedAt)
+		if recipeID, added := addedCraftingRecipe(before, after); added {
+			resourceChanged = deductCraftingRecipeCosts(gameState, gameData, castleID, recipeID)
+		}
+	}
+	domains := []string{"castles", "crafting"}
+	if resourceChanged {
+		domains = append(domains, "resources", "currencies", "player")
+	}
+	return domains, changed || resourceChanged, nil
+}
+
+func reconcileRejectedCraftingResources(
+	gameState *State.GameState,
+	gameData *GameData.Store,
+	payload json.RawMessage,
+) bool {
+	if gameState == nil || gameData == nil {
+		return false
+	}
+	var root map[string]json.RawMessage
+	if json.Unmarshal(payload, &root) != nil {
+		return false
+	}
+	recipeID := rawInteger(root["CRID"])
+	buildingID := State.BuildingInstanceID(rawInteger(root["OID"]))
+	if recipeID <= 0 || buildingID <= 0 {
+		return false
+	}
+	costs, err := GameData.CraftingRecipeCosts(gameData, recipeID)
+	if err != nil {
+		return false
+	}
+	castleID := State.CastleID(0)
+	for id, castle := range gameState.Castles {
+		if _, exists := castle.Crafting.Buildings[buildingID]; exists {
+			castleID = id
+			break
+		}
+	}
+	castle, exists := gameState.Castles[castleID]
+	if !exists {
+		return false
+	}
+	ensureCastleMaps(&castle)
+	changed := false
+	for _, cost := range costs {
+		stock, valid := rawFloat64(root[cost.JSONKey+"S"])
+		if !valid {
+			continue
+		}
+		switch {
+		case cost.ResourceID > 0 && (strings.EqualFold(cost.JSONKey, "C1") || strings.EqualFold(cost.JSONKey, "C2")):
+			resourceID := State.ResourceID(cost.ResourceID)
+			if gameState.Player.Resources[resourceID] != stock {
+				gameState.Player.Resources[resourceID] = stock
+				changed = true
+			}
+		case cost.ResourceID > 0:
+			resourceID := State.ResourceID(cost.ResourceID)
+			balance := castle.Resources[resourceID]
+			if balance.Amount != stock {
+				balance.Amount = stock
+				castle.Resources[resourceID] = balance
+				changed = true
+			}
+		case cost.CurrencyID > 0:
+			currencyID := State.CurrencyID(cost.CurrencyID)
+			if gameState.Player.Currencies[currencyID] != stock {
+				gameState.Player.Currencies[currencyID] = stock
+				changed = true
+			}
+		}
+	}
+	if changed {
+		gameState.Castles[castleID] = castle
+	}
+	return changed
+}
+
+func addedCraftingRecipe(before State.CraftingBuilding, after State.CraftingBuilding) (int64, bool) {
+	counts := map[int64]int{}
+	for _, item := range before.Active {
+		counts[item.RecipeID]--
+	}
+	for _, item := range before.Queued {
+		counts[item.RecipeID]--
+	}
+	for _, item := range after.Active {
+		counts[item.RecipeID]++
+	}
+	for _, item := range after.Queued {
+		counts[item.RecipeID]++
+	}
+	addedID := int64(0)
+	addedCount := 0
+	for recipeID, count := range counts {
+		for count > 0 {
+			addedID = recipeID
+			addedCount++
+			count--
+		}
+	}
+	return addedID, addedCount == 1 && addedID > 0
+}
+
+func deductCraftingRecipeCosts(
+	gameState *State.GameState,
+	gameData *GameData.Store,
+	castleID State.CastleID,
+	recipeID int64,
+) bool {
+	if gameState == nil || gameData == nil {
+		return false
+	}
+	costs, err := GameData.CraftingRecipeCosts(gameData, recipeID)
+	if err != nil {
+		return false
+	}
+	castle, exists := gameState.Castles[castleID]
+	if !exists {
+		return false
+	}
+	ensureCastleMaps(&castle)
+	changed := false
+	for _, cost := range costs {
+		switch {
+		case cost.ResourceID > 0 && (strings.EqualFold(cost.JSONKey, "C1") || strings.EqualFold(cost.JSONKey, "C2")):
+			resourceID := State.ResourceID(cost.ResourceID)
+			current := gameState.Player.Resources[resourceID]
+			next := math.Max(0, current-cost.Amount)
+			if next != current {
+				gameState.Player.Resources[resourceID] = next
+				changed = true
+			}
+		case cost.ResourceID > 0:
+			resourceID := State.ResourceID(cost.ResourceID)
+			balance := castle.Resources[resourceID]
+			next := math.Max(0, balance.Amount-cost.Amount)
+			if next != balance.Amount {
+				balance.Amount = next
+				castle.Resources[resourceID] = balance
+				changed = true
+			}
+		case cost.CurrencyID > 0:
+			currencyID := State.CurrencyID(cost.CurrencyID)
+			current := gameState.Player.Currencies[currencyID]
+			next := math.Max(0, current-cost.Amount)
+			if next != current {
+				gameState.Player.Currencies[currencyID] = next
+				changed = true
+			}
+		}
+	}
+	if changed {
+		gameState.Castles[castleID] = castle
+	}
+	return changed
 }
 
 func decodeCraftingPayload(raw json.RawMessage) ([]craftingWireGroup, *craftingWireBuilding, error) {

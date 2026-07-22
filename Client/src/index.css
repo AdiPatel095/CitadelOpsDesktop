@@ -1002,14 +1002,6 @@
         padding: 0 0.72rem;
     }
 
-    .liquid-log-view-selector {
-        min-height: 2.45rem;
-    }
-
-    .liquid-log-view-selector .liquid-toggle-btn {
-        min-height: 2rem;
-    }
-
     .liquid-log-search-input {
         padding-top: 0;
         padding-bottom: 0;
@@ -2669,42 +2661,6 @@
         gap: 0.75rem;
     }
 
-    .tci-browser-filters {
-        display: inline-flex;
-        min-width: 0;
-        align-items: center;
-        gap: 0.25rem;
-        border: 1px solid color-mix(in srgb, var(--primary) 12%, var(--border-base));
-        border-radius: var(--radius-pill);
-        background: color-mix(in srgb, var(--bg-app) 42%, transparent);
-        padding: 0.25rem;
-    }
-
-    .tci-browser-filter {
-        border: 0;
-        border-radius: var(--radius-pill);
-        background: transparent;
-        color: var(--text-muted);
-        cursor: pointer;
-        font-size: 0.66rem;
-        font-weight: 850;
-        line-height: 1;
-        padding: 0.52rem 0.68rem;
-        white-space: nowrap;
-        transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
-    }
-
-    .tci-browser-filter:hover {
-        color: var(--text-main);
-        background: color-mix(in srgb, var(--primary) 7%, transparent);
-    }
-
-    .tci-browser-filter-active {
-        background: color-mix(in srgb, var(--primary) 16%, var(--glass-panel-strong));
-        box-shadow: inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 76%, transparent);
-        color: var(--primary);
-    }
-
     .tci-browser-layout {
         display: grid;
         min-width: 0;
@@ -3332,10 +3288,6 @@
             grid-template-columns: minmax(12rem, 1fr);
         }
 
-        .tci-browser-filters {
-            width: fit-content;
-        }
-
         .tci-detail-hero {
             grid-template-columns: 5.75rem minmax(0, 1fr);
         }
@@ -3367,10 +3319,6 @@
         .tci-browser-filters {
             width: 100%;
             overflow-x: auto;
-        }
-
-        .tci-browser-filter {
-            flex: 1 0 auto;
         }
 
         .tci-browser-layout {
@@ -3490,16 +3438,6 @@
         padding: var(--liquid-header-overlap) 0 0 !important;
     }
 
-    .decoration-card-content {
-        border: 0;
-        box-shadow: none;
-    }
-
-    .decoration-card-content::before,
-    .decoration-card-content::after {
-        display: none;
-    }
-
     .recruit-modal-shell {
         gap: clamp(0.85rem, 1vw, 1.15rem);
     }
@@ -3510,7 +3448,17 @@
     }
 
     .battle-stats-flat-control {
+        --tw-backdrop-blur: none !important;
         box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    .data-view-render-stable .liquid-card-header-prominent,
+    .data-view-render-stable .liquid-prominent-header-card,
+    .data-view-render-stable .backdrop-blur-xl,
+    .data-view-render-stable .backdrop-blur-2xl {
+        --tw-backdrop-blur: none !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
     }
@@ -3880,6 +3828,38 @@
         gap: 1.8rem;
     }
 
+    .automation-right-click-banner {
+        display: flex;
+        min-height: 3rem;
+        align-items: center;
+        gap: 0.8rem;
+        border: 1px solid color-mix(in srgb, var(--primary) 54%, var(--border-light));
+        border-radius: var(--radius-global);
+        background:
+            radial-gradient(circle at 16% 12%, color-mix(in srgb, var(--glass-highlight) 58%, transparent), transparent 42%),
+            linear-gradient(135deg, color-mix(in srgb, var(--primary) 19%, var(--glass-panel-strong)), color-mix(in srgb, var(--primary) 8%, var(--glass-control)));
+        box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 20%, transparent), inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 78%, transparent);
+        padding: 0.7rem 1rem;
+        color: var(--text-muted);
+        font-size: 1rem;
+        font-weight: 750;
+        line-height: 1.25;
+    }
+
+    .automation-right-click-banner svg {
+        width: 2rem;
+        height: 2rem;
+        flex: 0 0 auto;
+        color: var(--primary);
+        stroke-width: 2.25;
+    }
+
+    .automation-right-click-banner strong {
+        margin-right: 0.22rem;
+        font-size: 1.1rem;
+        font-weight: 900;
+    }
+
     .automation-function-group {
         min-width: 0;
     }
@@ -4151,6 +4131,8 @@
     .liquid-toggle-group {
         position: relative;
         display: inline-flex;
+        height: var(--liquid-pill-selector-height);
+        min-height: var(--liquid-pill-selector-height);
         align-items: center;
         gap: 0;
         max-width: 100%;
@@ -4160,6 +4142,9 @@
         border-radius: var(--radius-pill);
         background: var(--frost-control-background);
         box-shadow: var(--frost-control-shadow);
+        font-size: var(--liquid-pill-selector-font-size);
+        isolation: isolate;
+        line-height: var(--liquid-pill-selector-line-height);
         backdrop-filter: var(--frost-control-backdrop);
         -webkit-backdrop-filter: var(--frost-control-backdrop);
     }
@@ -4169,25 +4154,61 @@
         width: 100%;
     }
 
-    .liquid-toggle-group-sm {
-        font-size: 0.75rem;
-        line-height: 1rem;
+    .liquid-toggle-group-body {
+        --liquid-pill-selector-height: 2rem;
+        --liquid-pill-selector-active-height: 2.25rem;
+        --liquid-pill-selector-font-size: 0.75rem;
+        --liquid-pill-selector-line-height: 1rem;
+        --liquid-pill-selector-padding-inline: 0.75rem;
+        --liquid-pill-selector-active-inline-overflow: 0.25rem;
     }
 
-    .liquid-toggle-group-md {
-        font-size: 0.875rem;
-        line-height: 1.25rem;
+    .liquid-toggle-group-header {
+        --liquid-pill-selector-height: 2.5rem;
+        --liquid-pill-selector-active-height: 2.75rem;
+        --liquid-pill-selector-font-size: 0.875rem;
+        --liquid-pill-selector-line-height: 1.25rem;
+        --liquid-pill-selector-padding-inline: 1.25rem;
+        --liquid-pill-selector-active-inline-overflow: 0.25rem;
     }
 
-    .liquid-toggle-group-lg {
-        font-size: 1rem;
-        line-height: 1.5rem;
+    .liquid-toggle-indicator {
+        position: absolute;
+        z-index: 1;
+        top: 50%;
+        left: 0;
+        width: calc(var(--liquid-toggle-indicator-width) + var(--liquid-pill-selector-active-inline-overflow) + var(--liquid-pill-selector-active-inline-overflow));
+        height: var(--liquid-pill-selector-active-height);
+        border-radius: var(--radius-pill);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(calc(var(--liquid-toggle-indicator-x) - var(--liquid-pill-selector-active-inline-overflow)), -50%, 0);
+        transition: none;
+        will-change: transform, width;
+    }
+
+    .liquid-toggle-indicator-ready {
+        opacity: 1;
+        transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), width 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 120ms ease;
+    }
+
+    .liquid-toggle-indicator-primary {
+        background: var(--frost-active-background);
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 16%, transparent), inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 82%, transparent);
+        outline: 1px solid color-mix(in srgb, var(--primary) 44%, var(--border-light));
+    }
+
+    .liquid-toggle-indicator-neutral {
+        background: linear-gradient(145deg, color-mix(in srgb, var(--glass-highlight) 36%, var(--bg-card)), color-mix(in srgb, var(--glass-lowlight) 12%, var(--bg-card)));
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--glass-lowlight) 16%, transparent), inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 82%, transparent);
+        outline: 1px solid var(--border-light);
     }
 
     .liquid-toggle-btn {
         position: relative;
-        z-index: 1;
+        z-index: 2;
         display: inline-flex;
+        height: 100%;
         min-width: 0;
         align-items: center;
         justify-content: center;
@@ -4197,21 +4218,10 @@
         outline: none;
         font-weight: 600;
         line-height: inherit;
+        padding: 0 var(--liquid-pill-selector-padding-inline);
         white-space: nowrap;
         cursor: pointer;
         transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-    }
-
-    .liquid-toggle-btn-sm {
-        padding: 0.25rem 0.625rem;
-    }
-
-    .liquid-toggle-btn-md {
-        padding: 0.375rem 1.25rem;
-    }
-
-    .liquid-toggle-btn-lg {
-        padding: 0.5rem 1.75rem;
     }
 
     .liquid-toggle-btn-full {
@@ -4243,45 +4253,17 @@
     }
 
     .liquid-toggle-btn-active {
-        z-index: 2;
-        box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 18%, transparent), inset 0 1px 0 var(--glass-highlight);
-    }
-
-    .liquid-toggle-btn-active.liquid-toggle-btn-sm {
-        margin: -0.125rem;
-        padding: 0.375rem 0.75rem;
-    }
-
-    .liquid-toggle-btn-active.liquid-toggle-btn-md {
-        margin: -0.25rem;
-        padding: 0.625rem 1.5rem;
-    }
-
-    .liquid-toggle-btn-active.liquid-toggle-btn-lg {
-        margin: -0.25rem;
-        padding: 0.75rem 2rem;
-    }
-
-    .liquid-toggle-btn-active:first-child {
-        margin-left: 0;
-    }
-
-    .liquid-toggle-btn-active:last-child {
-        margin-right: 0;
+        z-index: 3;
     }
 
     .liquid-toggle-btn-active-primary {
         color: color-mix(in srgb, var(--primary) 78%, var(--text-main));
-        background: var(--frost-active-background);
-        box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 16%, transparent), inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 82%, transparent);
-        outline: 1px solid color-mix(in srgb, var(--primary) 44%, var(--border-light));
+        background: transparent;
     }
 
     .liquid-toggle-btn-active-neutral {
         color: var(--text-main);
-        background: linear-gradient(145deg, color-mix(in srgb, var(--glass-highlight) 36%, var(--bg-card)), color-mix(in srgb, var(--glass-lowlight) 12%, var(--bg-card)));
-        box-shadow: 0 8px 20px color-mix(in srgb, var(--glass-lowlight) 16%, transparent), inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 82%, transparent);
-        outline: 1px solid var(--border-light);
+        background: transparent;
     }
 
     .rounded-global {

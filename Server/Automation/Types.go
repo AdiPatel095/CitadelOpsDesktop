@@ -11,10 +11,11 @@ import (
 )
 
 type Snapshot struct {
-	State         State.GameState
-	Configuration Configuration.Snapshot
-	GameData      *GameData.Store
-	Now           time.Time
+	State                      State.GameState
+	Configuration              Configuration.Snapshot
+	GameData                   *GameData.Store
+	Now                        time.Time
+	PolicyConfigurationChanged bool
 }
 
 type Decision struct {
@@ -30,6 +31,9 @@ type Decision struct {
 	// ReevaluateOnSuccess continues a response-gated workflow immediately
 	// after both the request and its optional follow-up have succeeded.
 	ReevaluateOnSuccess bool
+	// ReevaluateOnStale immediately asks the policy for a different action when
+	// an operation safely stops before dispatch because its plan became stale.
+	ReevaluateOnStale bool
 }
 
 type Policy interface {

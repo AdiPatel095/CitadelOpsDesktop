@@ -2,6 +2,7 @@ package Automation
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -29,16 +30,17 @@ func commanderFeatureCandidates(
 	featureID string,
 ) ([]State.CommanderID, bool) {
 	settings := commanderFeatureConfiguration{}
-	if !decodeSection(configuration, commanderFeatureSection, &settings) {
+	raw, configured := configuration.Sections[commanderFeatureSection]
+	if !configured {
 		return nil, false
 	}
-	configured, restricted := settings.Assignments[featureID]
-	if !restricted {
-		return nil, false
+	if len(raw) == 0 || json.Unmarshal(raw, &settings) != nil {
+		return nil, true
 	}
+	assigned := settings.Assignments[featureID]
 	seen := map[State.CommanderID]struct{}{}
-	candidates := make([]State.CommanderID, 0, len(configured))
-	for _, commanderID := range configured {
+	candidates := make([]State.CommanderID, 0, len(assigned))
+	for _, commanderID := range assigned {
 		if commanderID < 0 {
 			continue
 		}
@@ -59,8 +61,9 @@ func hasAvailableFeatureCommander(
 	gameState State.GameState,
 	candidates []State.CommanderID,
 	restricted bool,
+	now time.Time,
 ) bool {
-	_, found := nextAvailableFeatureCommander(gameState, candidates, restricted)
+	_, found := nextAvailableFeatureCommander(gameState, candidates, restricted, now)
 	return found
 }
 
@@ -68,6 +71,7 @@ func nextAvailableFeatureCommander(
 	gameState State.GameState,
 	candidates []State.CommanderID,
 	restricted bool,
+	now time.Time,
 ) (State.CommanderID, bool) {
 	if !restricted {
 		candidates = make([]State.CommanderID, 0, len(gameState.Commanders))
@@ -79,7 +83,8 @@ func nextAvailableFeatureCommander(
 		sort.Slice(candidates, func(left, right int) bool { return candidates[left] < candidates[right] })
 	}
 	for _, commanderID := range candidates {
-		if commander, exists := gameState.Commanders[commanderID]; exists && commander.Available {
+		if commander, exists := gameState.Commanders[commanderID]; exists && commander.Available &&
+			!State.CommanderHasActiveMovementAt(gameState, commanderID, now) {
 			return commanderID, true
 		}
 	}
@@ -100,6 +105,130 @@ func policyInterval(seconds int, fallback int) time.Duration {
 		seconds = fallback
 	}
 	return time.Duration(seconds) * time.Second
+}
+
+func pendingKingdomResourceTransport(
+	gameState State.GameState,
+	kingdomID State.KingdomID,
+) (State.KingdomResourceTransport, bool) {
+	for _, pending := range gameState.KingdomTransport.Pending {
+		if pending.KingdomID == kingdomID {
+			return pending, true
+		}
+	}
+	return State.KingdomResourceTransport{}, false
+}
+
+func kingdomResourceTransportWorkflow(
+	gameState State.GameState,
+	kingdomID State.KingdomID,
+) (State.KingdomResourceTransportWorkflow, bool) {
+	workflow, exists := gameState.KingdomTransport.ResourceWorkflows[kingdomID]
+	return workflow, exists
+}
+
+// dailyAttackLimitAllowance returns -1 when the feature's cap is disabled.
+// A non-nil decision means no normal CRA may be queued until authoritative
+// server state changes. Advisor attacks intentionally do not call this helper.
+func dailyAttackLimitAllowance(
+	snapshot Snapshot,
+	limit int64,
+	interval time.Duration,
+	metrics map[string]float64,
+) (int64, *Decision) {
+	if limit == 0 {
+		return -1, nil
+	}
+	if interval <= 0 {
+		interval = 30 * time.Second
+	}
+	if metrics != nil {
+		metrics["dailyAttackLimit"] = float64(limit)
+	}
+	if limit < 0 {
+		return 0, &Decision{
+			Status: "waiting", Detail: "Daily attack limit cannot be negative",
+			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
+		}
+	}
+	attacks := snapshot.State.DailyAttacks
+	if attacks.ObservedAt.IsZero() {
+		return 0, &Decision{
+			Status: "waiting", Detail: "Waiting for the server daily attack count before queuing another attack",
+			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
+		}
+	}
+	if metrics != nil {
+		metrics["dailyAttackCount"] = float64(attacks.Count)
+		metrics["serverDailyAttackThreshold"] = float64(attacks.ServerThreshold)
+	}
+	remaining := max(int64(0), limit-attacks.Count)
+	if remaining == 0 {
+		return 0, &Decision{
+			Status: "waiting",
+			Detail: fmt.Sprintf(
+				"Daily attack limit reached: %d / %d; normal attacks resume when the server count resets",
+				attacks.Count, limit,
+			),
+			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
+		}
+	}
+	if metrics != nil {
+		metrics["dailyAttacksRemaining"] = float64(remaining)
+	}
+	return remaining, nil
+}
+
+func capDailyAttackBatch(requested int, allowance int64) int {
+	if requested <= 0 || allowance < 0 {
+		return max(0, requested)
+	}
+	if allowance >= int64(requested) {
+		return requested
+	}
+	return int(allowance)
+}
+
+func marketLogisticsRequired(snapshot Snapshot) (bool, error) {
+	kingdomCastleCounts := map[State.KingdomID]int{}
+	for _, castle := range snapshot.State.Castles {
+		kingdomCastleCounts[castle.KingdomID]++
+	}
+	hasSameKingdomPair := false
+	for _, count := range kingdomCastleCounts {
+		if count > 1 {
+			hasSameKingdomPair = true
+			break
+		}
+	}
+	if !hasSameKingdomPair || snapshot.GameData == nil {
+		return false, nil
+	}
+	for _, castleID := range sortedCastleIDs(snapshot.State.Castles) {
+		castle := snapshot.State.Castles[castleID]
+		if kingdomCastleCounts[castle.KingdomID] < 2 {
+			continue
+		}
+		hasMarketplace, err := snapshot.GameData.CastleHasMarketplace(castle)
+		if err != nil {
+			return false, fmt.Errorf("check marketplace at %s: %w", castleName(castle), err)
+		}
+		if hasMarketplace {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func kingdomLogisticsRequired(gameState State.GameState) bool {
+	kingdoms := map[State.KingdomID]struct{}{}
+	for _, castle := range gameState.Castles {
+		kingdoms[castle.KingdomID] = struct{}{}
+		if len(kingdoms) > 1 {
+			return true
+		}
+	}
+	return false
 }
 
 func sortedNumericKeys[Value any](values map[string]Value) []string {

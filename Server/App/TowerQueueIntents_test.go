@@ -37,6 +37,55 @@ func TestTowerQueueScanAcceptsRadiusFifty(t *testing.T) {
 	}
 }
 
+func TestTowerQueueTargetRefreshQueriesAndRotatesOnlyWhenStillStale(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 100, Y: 100}
+	gameState.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now.Add(-time.Minute)},
+		"102:100": {KingdomID: 0, X: 102, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now.Add(-time.Minute)},
+	}
+	gameState.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{
+		{KingdomID: 0, TargetX: 101, TargetY: 100, QueuedAt: now.Add(-time.Minute)},
+		{KingdomID: 0, TargetX: 102, TargetY: 100, QueuedAt: now.Add(-time.Minute)},
+	}
+	request := towerQueueTargetRefreshRequest{
+		towerQueueEntryRequest: towerQueueEntryRequest{SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100},
+		RefreshStartedAt:       now,
+	}
+	arguments, _ := json.Marshal(request)
+	plan, err := planTowerQueueTargetRefresh(context.Background(), Intent.PlanningContext{State: gameState}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 2 || plan.Steps[0].Opcode != "gaa" || plan.Steps[1].Action != "tower.queue.rotate_stale" {
+		t.Fatalf("target refresh plan = %#v", plan.Steps)
+	}
+
+	application := &Application{State: State.NewStore(gameState)}
+	if err := application.rotateStaleTowerQueueEntry(context.Background(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	entries := application.State.Snapshot().TowerQueue.EntriesByCastle[1]
+	if len(entries) != 2 || entries[0].TargetX != 102 || entries[1].TargetX != 101 ||
+		entries[1].DeferredUntil == nil || !entries[1].DeferredUntil.After(now) {
+		t.Fatalf("stale target was not rotated = %#v", entries)
+	}
+
+	freshState := gameState
+	freshState.Map[0]["101:100"] = State.MapObservation{
+		KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now.Add(time.Second),
+	}
+	freshApplication := &Application{State: State.NewStore(freshState)}
+	if err := freshApplication.rotateStaleTowerQueueEntry(context.Background(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	freshEntries := freshApplication.State.Snapshot().TowerQueue.EntriesByCastle[1]
+	if freshEntries[0].TargetX != 101 || freshEntries[0].DeferredUntil != nil {
+		t.Fatalf("fresh target should keep its queue position = %#v", freshEntries)
+	}
+}
+
 func TestTowerMapScanWindowsCoverConfiguredSquareWithoutGaps(t *testing.T) {
 	source := State.CastleState{X: 500, Y: 600}
 	for _, test := range []struct {
@@ -90,5 +139,22 @@ func TestTowerQueueCaptureStoresEveryFreshTowerAndConsumeRemovesOne(t *testing.T
 	entries = application.State.Snapshot().TowerQueue.EntriesByCastle[1]
 	if len(entries) != 3 || entries[0].TargetX != 99 || entries[1].TargetY != 101 {
 		t.Fatalf("tower queue after consume = %#v", entries)
+	}
+}
+
+func TestTowerQueueDeferAdvancesCastleRoundRobin(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 101, TargetY: 100, QueuedAt: time.Now().UTC().Add(-time.Hour),
+	}}
+	application := &Application{State: State.NewStore(gameState)}
+	arguments, _ := json.Marshal(towerQueueEntryRequest{SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100})
+	before := time.Now().UTC()
+	if err := application.deferTowerQueueEntry(t.Context(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	after := application.State.Snapshot().TowerQueue
+	if after.LastAttemptedAt[1].Before(before) || after.EntriesByCastle[1][0].DeferredUntil == nil {
+		t.Fatalf("tower defer did not advance castle rotation: %#v", after)
 	}
 }

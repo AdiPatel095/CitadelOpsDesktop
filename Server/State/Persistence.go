@@ -322,17 +322,56 @@ func normalizeStateMaps(state *GameState) {
 			state.KingdomTransport.PendingUnits[index].Units = []KingdomTransportUnit{}
 		}
 	}
+	if state.KingdomTransport.ResourceWorkflows == nil {
+		state.KingdomTransport.ResourceWorkflows = defaults.KingdomTransport.ResourceWorkflows
+	}
+	for kingdomID, workflow := range state.KingdomTransport.ResourceWorkflows {
+		if workflow.Goods == nil {
+			workflow.Goods = []KingdomTransportGood{}
+		}
+		state.KingdomTransport.ResourceWorkflows[kingdomID] = workflow
+	}
 	if state.Beri.TroopsByUnit == nil {
 		state.Beri.TroopsByUnit = defaults.Beri.TroopsByUnit
 	}
 	if state.AttackPresets == nil {
 		state.AttackPresets = defaults.AttackPresets
 	}
+	if state.AttackAnalytics.LaunchIDs == nil {
+		state.AttackAnalytics.LaunchIDs = defaults.AttackAnalytics.LaunchIDs
+	}
+	if state.AttackAnalytics.PendingAttacks == nil {
+		state.AttackAnalytics.PendingAttacks = defaults.AttackAnalytics.PendingAttacks
+	}
 	if state.EventScores.ByEvent == nil {
 		state.EventScores.ByEvent = defaults.EventScores.ByEvent
 	}
 	if state.EventScores.ShopByPackage == nil {
 		state.EventScores.ShopByPackage = defaults.EventScores.ShopByPackage
+	}
+	if state.EventScores.ActivityByEvent == nil {
+		state.EventScores.ActivityByEvent = defaults.EventScores.ActivityByEvent
+	}
+	for eventID, activity := range state.EventScores.ActivityByEvent {
+		if activity.LaunchIDs == nil {
+			activity.LaunchIDs = []MovementID{}
+		}
+		if activity.PendingAttacks == nil {
+			activity.PendingAttacks = []EventAttackRecord{}
+		}
+		if activity.ProcessedReportIDs == nil {
+			activity.ProcessedReportIDs = []int64{}
+		}
+		state.EventScores.ActivityByEvent[eventID] = activity
+	}
+	if state.EventScores.RankingByEvent == nil {
+		state.EventScores.RankingByEvent = defaults.EventScores.RankingByEvent
+	}
+	for eventID, ranking := range state.EventScores.RankingByEvent {
+		if ranking.Entries == nil {
+			ranking.Entries = []EventRankingEntry{}
+			state.EventScores.RankingByEvent[eventID] = ranking
+		}
 	}
 	if state.Invasion.LastScannedAt == nil {
 		state.Invasion.LastScannedAt = defaults.Invasion.LastScannedAt
@@ -358,11 +397,20 @@ func normalizeStateMaps(state *GameState) {
 	if state.NomadCamps.Cooldowns == nil {
 		state.NomadCamps.Cooldowns = defaults.NomadCamps.Cooldowns
 	}
+	if state.Advisor.Summary.Gains == nil {
+		state.Advisor.Summary.Gains = defaults.Advisor.Summary.Gains
+	}
+	if state.Advisor.Summary.Costs == nil {
+		state.Advisor.Summary.Costs = defaults.Advisor.Summary.Costs
+	}
 	if state.Alliance.Members == nil {
 		state.Alliance.Members = defaults.Alliance.Members
 	}
 	if state.Alliance.Holdings == nil {
 		state.Alliance.Holdings = defaults.Alliance.Holdings
+	}
+	if state.AllianceHelpRequests.HospitalProductionIDs == nil {
+		state.AllianceHelpRequests.HospitalProductionIDs = defaults.AllianceHelpRequests.HospitalProductionIDs
 	}
 	if state.Alliances == nil {
 		state.Alliances = defaults.Alliances
@@ -391,6 +439,7 @@ func normalizeStateMaps(state *GameState) {
 	if state.Map == nil {
 		state.Map = defaults.Map
 	}
+	reconcileStormMapTargets(state)
 	if state.TowerCooldowns == nil {
 		state.TowerCooldowns = defaults.TowerCooldowns
 	}
@@ -399,6 +448,12 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.TowerQueue.LastScannedAt == nil {
 		state.TowerQueue.LastScannedAt = defaults.TowerQueue.LastScannedAt
+	}
+	if state.TowerQueue.LastAttemptedAt == nil {
+		state.TowerQueue.LastAttemptedAt = defaults.TowerQueue.LastAttemptedAt
+	}
+	if state.TowerQueue.CapacityByCastle == nil {
+		state.TowerQueue.CapacityByCastle = defaults.TowerQueue.CapacityByCastle
 	}
 	if state.Khan.Launches == nil {
 		state.Khan.Launches = defaults.Khan.Launches
@@ -409,7 +464,14 @@ func normalizeStateMaps(state *GameState) {
 	for castleID, entries := range state.TowerQueue.EntriesByCastle {
 		if entries == nil {
 			state.TowerQueue.EntriesByCastle[castleID] = []TowerQueueEntry{}
+			continue
 		}
+		for index := range entries {
+			if entries[index].DeferredUntil != nil && entries[index].DeferredUntil.IsZero() {
+				entries[index].DeferredUntil = nil
+			}
+		}
+		state.TowerQueue.EntriesByCastle[castleID] = entries
 	}
 	if state.Automations == nil {
 		state.Automations = defaults.Automations
@@ -431,6 +493,23 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.Observations == nil {
 		state.Observations = defaults.Observations
+	}
+}
+
+func reconcileStormMapTargets(state *GameState) {
+	if state == nil || state.Storm.Map.Targets == nil {
+		return
+	}
+	for key, tracked := range state.Storm.Map.Targets {
+		current, found := state.Map[tracked.KingdomID][key]
+		if !found || !current.ObservedAt.After(tracked.ObservedAt) {
+			continue
+		}
+		if current.TypeID != stormIslandMapObservationTypeID && current.TypeID != stormFortMapObservationTypeID {
+			delete(state.Storm.Map.Targets, key)
+			continue
+		}
+		state.Storm.Map.Targets[key] = current
 	}
 }
 

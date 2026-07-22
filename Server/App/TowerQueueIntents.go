@@ -12,6 +12,8 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+const towerQueueDeferralDuration = 30 * time.Second
+
 type towerQueueScanRequest struct {
 	SourceCastleID State.CastleID `json:"sourceCastleId"`
 	Radius         int            `json:"radius"`
@@ -23,6 +25,11 @@ type towerQueueEntryRequest struct {
 	KingdomID      State.KingdomID `json:"kingdomId"`
 	TargetX        int             `json:"targetX"`
 	TargetY        int             `json:"targetY"`
+}
+
+type towerQueueTargetRefreshRequest struct {
+	towerQueueEntryRequest
+	RefreshStartedAt time.Time `json:"refreshStartedAt"`
 }
 
 type towerMapWindow struct {
@@ -64,6 +71,51 @@ func planTowerQueueScan(_ context.Context, input Intent.PlanningContext, argumen
 		},
 		Summary: fmt.Sprintf("Refresh complete tower map around %s", castleLabel(source)),
 		Steps:   steps,
+	}, nil
+}
+
+func planTowerQueueTargetRefresh(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request towerQueueTargetRefreshRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	if request.SourceCastleID <= 0 || request.RefreshStartedAt.IsZero() {
+		return Intent.Plan{}, fmt.Errorf("tower queue target refresh requires a source castle and start time")
+	}
+	source, exists := input.State.Castles[request.SourceCastleID]
+	if !exists {
+		return Intent.Plan{}, fmt.Errorf("tower queue source castle %d is not in the current player state", request.SourceCastleID)
+	}
+	if request.KingdomID != source.KingdomID {
+		return Intent.Plan{}, fmt.Errorf("tower queue target must be in source castle kingdom %d", source.KingdomID)
+	}
+	queued := false
+	for _, entry := range input.State.TowerQueue.EntriesByCastle[request.SourceCastleID] {
+		if entry.KingdomID == request.KingdomID && entry.TargetX == request.TargetX && entry.TargetY == request.TargetY {
+			queued = true
+			break
+		}
+	}
+	if !queued {
+		return Intent.Plan{}, fmt.Errorf("tower target %d:%d is no longer queued", request.TargetX, request.TargetY)
+	}
+	payload, _ := json.Marshal(struct {
+		KingdomID State.KingdomID `json:"KID"`
+		X1        int             `json:"AX1"`
+		Y1        int             `json:"AY1"`
+		X2        int             `json:"AX2"`
+		Y2        int             `json:"AY2"`
+	}{request.KingdomID, request.TargetX, request.TargetY, request.TargetX, request.TargetY})
+	normalizedArguments, _ := json.Marshal(request)
+	return Intent.Plan{
+		Claims: []string{
+			"castle-focus", "map:" + strconv.FormatInt(int64(request.KingdomID), 10),
+		},
+		Summary: fmt.Sprintf("Refresh queued tower %d:%d and rotate it if still stale", request.TargetX, request.TargetY),
+		Steps: []Intent.Step{
+			commandStep("Refresh queued tower", "gaa", payload, "gaa"),
+			{Name: "Rotate unchanged tower behind ready targets", Action: "tower.queue.rotate_stale", ActionArguments: normalizedArguments},
+		},
 	}, nil
 }
 
@@ -178,6 +230,62 @@ func (application *Application) consumeTowerQueueEntry(_ context.Context, argume
 		return nil, false, nil
 	})
 	return err
+}
+
+func (application *Application) deferTowerQueueEntry(_ context.Context, arguments json.RawMessage) error {
+	var request towerQueueEntryRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		now := time.Now().UTC()
+		if !rotateTowerQueueEntry(gameState, request, now) {
+			return nil, false, nil
+		}
+		if gameState.TowerQueue.LastAttemptedAt == nil {
+			gameState.TowerQueue.LastAttemptedAt = map[State.CastleID]time.Time{}
+		}
+		gameState.TowerQueue.LastAttemptedAt[request.SourceCastleID] = now
+		return []string{"tower-queue"}, true, nil
+	})
+	return err
+}
+
+func (application *Application) rotateStaleTowerQueueEntry(_ context.Context, arguments json.RawMessage) error {
+	var request towerQueueTargetRefreshRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		target, found := gameState.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+		if found && !target.ObservedAt.IsZero() && !target.ObservedAt.Before(request.RefreshStartedAt) {
+			return nil, false, nil
+		}
+		if !rotateTowerQueueEntry(gameState, request.towerQueueEntryRequest, time.Now().UTC()) {
+			return nil, false, nil
+		}
+		return []string{"tower-queue"}, true, nil
+	})
+	return err
+}
+
+func rotateTowerQueueEntry(gameState *State.GameState, request towerQueueEntryRequest, now time.Time) bool {
+	entries := gameState.TowerQueue.EntriesByCastle[request.SourceCastleID]
+	for index, entry := range entries {
+		if entry.KingdomID != request.KingdomID || entry.TargetX != request.TargetX || entry.TargetY != request.TargetY {
+			continue
+		}
+		entry.QueuedAt = now
+		deferredUntil := now.Add(towerQueueDeferralDuration)
+		entry.DeferredUntil = &deferredUntil
+		rotated := make([]State.TowerQueueEntry, 0, len(entries))
+		rotated = append(rotated, entries[:index]...)
+		rotated = append(rotated, entries[index+1:]...)
+		rotated = append(rotated, entry)
+		gameState.TowerQueue.EntriesByCastle[request.SourceCastleID] = rotated
+		return true
+	}
+	return false
 }
 
 func towerQueueDistanceSquared(castle State.CastleState, target State.MapObservation) int {

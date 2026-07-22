@@ -22,6 +22,10 @@ func contextCommandStep(name string, opcode string, payload json.RawMessage, awa
 	return Intent.RebuildOnResume(commandStep(name, opcode, payload, awaitOpcode))
 }
 
+func closeGameUIStep() Intent.Step {
+	return Intent.RebuildOnResume(Intent.Step{Name: "Close game UI", Action: "game.ui.close"})
+}
+
 func generalSkillsContextSteps(gameState State.GameState, commanderID State.CommanderID, evaluatedAt time.Time) []Intent.Step {
 	commander, exists := gameState.Commanders[commanderID]
 	if !exists || commander.GeneralID <= 0 {
@@ -37,6 +41,9 @@ func generalSkillsContextSteps(gameState State.GameState, commanderID State.Comm
 }
 
 func castleContextSteps(castle State.CastleState) []Intent.Step {
+	if castle.Focused {
+		return nil
+	}
 	return []Intent.Step{castleFocusStep(castle)}
 }
 
@@ -46,7 +53,9 @@ func castleFocusStep(castle State.CastleState) Intent.Step {
 		Y         int             `json:"PY"`
 		KingdomID State.KingdomID `json:"KID"`
 	}{castle.X, castle.Y, castle.KingdomID})
-	return contextCommandStep("Focus castle", "jaa", payload, "jaa")
+	step := contextCommandStep("Focus castle", "jaa", payload, "jaa")
+	step.ResponseBarrier = Intent.ResponseBarrierCommitted
+	return step
 }
 
 // JAA switches to a different castle. JCA re-enters the already-focused
@@ -59,7 +68,9 @@ func attackCastleContextStep(castle State.CastleState) Intent.Step {
 		CastleID  State.CastleID  `json:"CID"`
 		KingdomID State.KingdomID `json:"KID"`
 	}{castle.ID, castle.KingdomID})
-	return contextCommandStep("Refocus attack source castle", "jca", payload, "jaa")
+	step := contextCommandStep("Refocus attack source castle", "jca", payload, "jaa")
+	step.ResponseBarrier = Intent.ResponseBarrierCommitted
+	return step
 }
 
 func constructionMenuStep() Intent.Step {
@@ -117,6 +128,7 @@ func craSetupContextSteps(craPayload json.RawMessage) ([]Intent.Step, error) {
 	}
 	attackDialogPayload, _ := json.Marshal(attackDialog)
 	return []Intent.Step{
+		closeGameUIStep(),
 		contextCommandStep("Refresh world-map context", "gbl", json.RawMessage(`{}`), "gbl"),
 		contextCommandStep("Refresh attack-dialog context", "adi", attackDialogPayload, "adi"),
 		contextCommandStep("Refresh saved attack presets", "gas", json.RawMessage(`{}`), "gas"),
@@ -132,40 +144,80 @@ func deferredCRACommandStep(name, resolver string, arguments, routePayload json.
 }
 
 type craSendGuardRequest struct {
-	SourceX          int             `json:"sourceX"`
-	SourceY          int             `json:"sourceY"`
-	TargetX          int             `json:"targetX"`
-	TargetY          int             `json:"targetY"`
-	KingdomID        State.KingdomID `json:"kingdomId"`
-	DialogObservedAt time.Time       `json:"dialogObservedAt"`
+	SourceX                int                `json:"sourceX"`
+	SourceY                int                `json:"sourceY"`
+	TargetX                int                `json:"targetX"`
+	TargetY                int                `json:"targetY"`
+	KingdomID              State.KingdomID    `json:"kingdomId"`
+	CommanderID            *State.CommanderID `json:"commanderId,omitempty"`
+	DialogObservedAt       time.Time          `json:"dialogObservedAt"`
+	MovementsObservedAfter time.Time          `json:"movementsObservedAfter,omitempty"`
 }
 
 func (application *Application) resolveCRACommandDependencies(
 	_ context.Context,
-	_ Intent.PlanningContext,
+	input Intent.PlanningContext,
 	step Intent.Step,
 ) (Intent.CommandDependencyPlan, error) {
 	payload := step.Command.Payload
 	if len(payload) == 0 {
 		payload = step.Payload
 	}
-	setup, err := craSetupContextSteps(payload)
-	if err != nil {
-		return Intent.CommandDependencyPlan{}, err
-	}
 	var fields struct {
-		SourceX   int             `json:"SX"`
-		SourceY   int             `json:"SY"`
-		TargetX   int             `json:"TX"`
-		TargetY   int             `json:"TY"`
-		KingdomID State.KingdomID `json:"KID"`
+		SourceX              int                `json:"SX"`
+		SourceY              int                `json:"SY"`
+		TargetX              int                `json:"TX"`
+		TargetY              int                `json:"TY"`
+		KingdomID            State.KingdomID    `json:"KID"`
+		CommanderID          *State.CommanderID `json:"LID"`
+		TowerCapacityCapture json.RawMessage    `json:"towerCapacityCapture"`
 	}
 	if err := json.Unmarshal(payload, &fields); err != nil {
 		return Intent.CommandDependencyPlan{}, fmt.Errorf("decode CRA send guard: %w", err)
 	}
+	if fields.CommanderID == nil && len(step.ResolverArguments) > 0 {
+		var resolved struct {
+			CommanderID *State.CommanderID `json:"commanderId"`
+		}
+		if json.Unmarshal(step.ResolverArguments, &resolved) == nil {
+			fields.CommanderID = resolved.CommanderID
+		}
+	}
+	if State.AttackFeatureTargetPendingAt(
+		input.State, State.AttackFeatureAutoTowers, fields.KingdomID, kingdomTowerMapTypeID,
+		fields.TargetX, fields.TargetY, time.Now().UTC(),
+	) {
+		return Intent.CommandDependencyPlan{}, fmt.Errorf(
+			"%w: tower target %d:%d has a prior Auto Towers attack awaiting settlement",
+			Intent.ErrPlanStale, fields.TargetX, fields.TargetY,
+		)
+	}
+	setup, err := craSetupContextSteps(payload)
+	if err != nil {
+		return Intent.CommandDependencyPlan{}, err
+	}
+	guardedAt := time.Now().UTC()
+	target, towerTarget := input.State.Map[fields.KingdomID][fmt.Sprintf("%d:%d", fields.TargetX, fields.TargetY)]
+	towerTarget = towerTarget && target.TypeID == kingdomTowerMapTypeID
+	var movementsObservedAfter time.Time
+	if fields.CommanderID != nil {
+		movementsObservedAfter = guardedAt
+		movementStep := contextCommandStep("Refresh commander movements before CRA launch", "gam", json.RawMessage(`{}`), "gam")
+		movementStep.ResponseBarrier = Intent.ResponseBarrierCommitted
+		setup = append([]Intent.Step{movementStep}, setup...)
+	}
+	if towerTarget {
+		if len(fields.TowerCapacityCapture) > 0 {
+			setup = append(setup, Intent.Step{
+				Name: "Capture fresh tower capacity", Action: "tower.capacity.capture",
+				ActionArguments: append(json.RawMessage(nil), fields.TowerCapacityCapture...),
+			})
+		}
+	}
 	guardArguments, _ := json.Marshal(craSendGuardRequest{
 		SourceX: fields.SourceX, SourceY: fields.SourceY, TargetX: fields.TargetX, TargetY: fields.TargetY,
-		KingdomID: fields.KingdomID, DialogObservedAt: time.Now().UTC(),
+		KingdomID: fields.KingdomID, CommanderID: fields.CommanderID,
+		DialogObservedAt: guardedAt, MovementsObservedAfter: movementsObservedAfter,
 	})
 	return Intent.CommandDependencyPlan{
 		Key: fmt.Sprintf("%d:%d:%d:%d:%d", fields.KingdomID, fields.SourceX, fields.SourceY, fields.TargetX, fields.TargetY),
@@ -196,9 +248,23 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 		stormAttackDialogUnavailable(dialog.Target) {
 		return fmt.Errorf("CRA target %d:%d is on cooldown", request.TargetX, request.TargetY)
 	}
+	if request.CommanderID != nil {
+		if request.MovementsObservedAfter.IsZero() || state.MovementSnapshot.ObservedAt.IsZero() ||
+			state.MovementSnapshot.ObservedAt.Before(request.MovementsObservedAfter) {
+			return fmt.Errorf("CRA launch does not have a fresh movement snapshot")
+		}
+		commander, found := state.Commanders[*request.CommanderID]
+		if !found || !commander.Available ||
+			State.CommanderHasActiveMovementAt(state, *request.CommanderID, time.Now().UTC()) {
+			return fmt.Errorf("%w: CRA commander %d is no longer available", Intent.ErrPlanStale, *request.CommanderID)
+		}
+	}
 	key := fmt.Sprintf("%d:%d:%d", request.KingdomID, request.TargetX, request.TargetY)
 	switch dialog.Target.TypeID {
 	case kingdomTowerMapTypeID:
+		if request.CommanderID == nil {
+			return fmt.Errorf("CRA tower launch does not identify a commander")
+		}
 		if cooldown, found := state.TowerCooldowns[key]; found && cooldown.PendingCooldownRefresh {
 			return fmt.Errorf("CRA target %d:%d is awaiting a post-victory cooldown refresh", request.TargetX, request.TargetY)
 		}

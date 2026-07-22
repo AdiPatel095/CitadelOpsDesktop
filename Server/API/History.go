@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/History"
+	"CitadelDesktop/Server/Reports"
 )
 
 func (server *Server) handlePlayerTrackerHistory(writer http.ResponseWriter, request *http.Request) {
@@ -21,12 +22,13 @@ func (server *Server) handlePlayerTrackerHistory(writer http.ResponseWriter, req
 		}
 	}
 	since := time.Now().UTC().Add(-time.Duration(rangeSeconds) * time.Second)
-	samples, err := server.config.History.PlayerSamples(since, 100_000)
+	current := History.NewPlayerSample(server.config.State.Snapshot(), server.config.GameData)
+	samples, err := server.config.History.PlayerSamplesForAccount(since, 100_000, current.UID, current.PlayerID)
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "history_read_failed", err.Error())
 		return
 	}
-	current := History.NewPlayerSample(server.config.State.Snapshot(), server.config.GameData)
+	samples = History.NormalizePlayerSamplesTroops(samples, server.config.GameData)
 	if current.PlayerID == 0 {
 		writeJSON(writer, http.StatusOK, map[string]any{
 			"current": nil, "samples": samples, "series": map[string]any{}, "intervalSeconds": 60,
@@ -50,17 +52,35 @@ func (server *Server) handleBattleReportHistory(writer http.ResponseWriter, requ
 	server.handleRawHistory(writer, request, History.CollectionBattleReports, true)
 }
 
+func (server *Server) handleBattleReportAnalytics(writer http.ResponseWriter, request *http.Request) {
+	if server.config.ReportAnalytics == nil || server.config.State == nil {
+		writeError(writer, http.StatusServiceUnavailable, "report_analytics_unavailable", "Battle report analytics are unavailable")
+		return
+	}
+	limit := historyLimit(request, 2000)
+	eventID, _ := strconv.ParseInt(request.URL.Query().Get("eventId"), 10, 64)
+	snapshot := server.config.State.ReadOnlyView()
+	reports, err := server.config.ReportAnalytics.Recent(request.Context(), Reports.BattleReportQuery{
+		AccountUID: snapshot.Account.UID,
+		WorldID:    snapshot.Account.WorldID,
+		PlayerID:   int64(snapshot.Player.ID),
+		FeatureID:  request.URL.Query().Get("feature"),
+		EventID:    eventID,
+		Limit:      limit,
+	})
+	if err != nil {
+		writeError(writer, http.StatusInternalServerError, "report_analytics_read_failed", err.Error())
+		return
+	}
+	writeJSON(writer, http.StatusOK, map[string]any{"reports": reports})
+}
+
 func (server *Server) handleRawHistory(writer http.ResponseWriter, request *http.Request, collection string, wrapped bool) {
 	if server.config.History == nil {
 		writeError(writer, http.StatusServiceUnavailable, "history_unavailable", "Report history is unavailable")
 		return
 	}
-	limit := 2000
-	if raw := request.URL.Query().Get("limit"); raw != "" {
-		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
-			limit = min(parsed, 10_000)
-		}
-	}
+	limit := historyLimit(request, 2000)
 	rows, err := server.config.History.Read(collection, time.Time{}, limit)
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "history_read_failed", err.Error())
@@ -71,9 +91,56 @@ func (server *Server) handleRawHistory(writer http.ResponseWriter, request *http
 	for left, right := 0, len(items)-1; left < right; left, right = left+1, right-1 {
 		items[left], items[right] = items[right], items[left]
 	}
+	if collection == History.CollectionBattleReports {
+		items = server.overlayBattleReportAnalytics(request, items, limit)
+	}
 	if wrapped {
 		writeJSON(writer, http.StatusOK, map[string]any{"reports": items})
 		return
 	}
 	writeJSON(writer, http.StatusOK, items)
+}
+
+func (server *Server) overlayBattleReportAnalytics(request *http.Request, items []json.RawMessage, limit int) []json.RawMessage {
+	if server.config.ReportAnalytics == nil || server.config.State == nil {
+		return items
+	}
+	snapshot := server.config.State.ReadOnlyView()
+	reports, err := server.config.ReportAnalytics.Recent(request.Context(), Reports.BattleReportQuery{
+		AccountUID: snapshot.Account.UID,
+		WorldID:    snapshot.Account.WorldID,
+		PlayerID:   int64(snapshot.Player.ID),
+		Limit:      limit,
+	})
+	if err != nil || len(reports) == 0 {
+		return items
+	}
+	overrides := make(map[string]json.RawMessage, len(reports))
+	for _, report := range reports {
+		payload, marshalErr := json.Marshal(report)
+		if marshalErr == nil {
+			overrides[report.ID] = payload
+		}
+	}
+	for index, item := range items {
+		var identity struct {
+			ID string `json:"id"`
+		}
+		if json.Unmarshal(item, &identity) == nil {
+			if replacement, found := overrides[identity.ID]; found {
+				items[index] = replacement
+			}
+		}
+	}
+	return items
+}
+
+func historyLimit(request *http.Request, fallback int) int {
+	limit := fallback
+	if raw := request.URL.Query().Get("limit"); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+			limit = min(parsed, 10_000)
+		}
+	}
+	return limit
 }

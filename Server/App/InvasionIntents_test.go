@@ -66,12 +66,31 @@ func TestInvasionAttackResolvesFreshLaneCapacityAndAcceptsCommanderZero(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 3 || plan.Steps[1].Resolver != "invasion.attack.build" ||
-		plan.Steps[1].CommandDependencies == nil || plan.Steps[1].CommandDependencies.Opcode != "cra" {
+	var deferred *Intent.Step
+	foundRefresh, foundTargetGuard, foundCapture := false, false, false
+	for index := range plan.Steps {
+		step := &plan.Steps[index]
+		if step.Opcode == "gaa" {
+			foundRefresh = true
+		}
+		if step.Action == "invasion.target.guard" {
+			foundTargetGuard = true
+		}
+		if step.Action == "invasion.attack.capture" {
+			foundCapture = true
+		}
+		if step.Resolver == "invasion.attack.build" {
+			deferred = step
+		}
+	}
+	if deferred == nil || deferred.CommandDependencies == nil || deferred.CommandDependencies.Opcode != "cra" {
 		t.Fatalf("invasion attack did not defer formation building behind CRA send dependencies: %#v", plan.Steps)
 	}
+	if !foundRefresh || !foundTargetGuard || !foundCapture {
+		t.Fatalf("invasion attack does not refresh, verify, and capture its target: %#v", plan.Steps)
+	}
 	resolved, err := (&Application{}).resolveInvasionAttackStep(
-		context.Background(), Intent.PlanningContext{State: gameState, GameData: gameData}, plan.Steps[1].ResolverArguments,
+		context.Background(), Intent.PlanningContext{State: gameState, GameData: gameData}, deferred.ResolverArguments,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -88,19 +107,130 @@ func TestInvasionAttackResolvesFreshLaneCapacityAndAcceptsCommanderZero(t *testi
 	}
 }
 
-func TestLimitAttackSetupToCapacityPreservesSlotPriorityPerWave(t *testing.T) {
-	first, second := int64(216), int64(217)
-	setup := attackSetupRequest{Waves: []attackSetupWaveRequest{{
-		Left: attackSetupLaneRequest{Troops: []attackSetupSlotRequest{
-			{ItemID: &first, Quantity: 50}, {ItemID: &second, Quantity: 50},
-		}},
-	}}}
+func TestInvasionAttackDoesNotPlanDuringPurchasedProtectionMode(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
+		ModeState: 1, RemainingSec: 3_600, ObservedAt: now,
+	}
+	_, err := planInvasionAttack(t.Context(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{}`))
+	if err == nil || err.Error() != "invasion attacks are disabled while Protection Mode is preparing or active" {
+		t.Fatalf("protected invasion plan error = %v", err)
+	}
+}
 
-	limited := limitAttackSetupToCapacity(setup, AttackCapacity.LaneCapacity{Left: 64, Front: 192, Right: 64})
+func TestInvasionAttackUsesLiveEventFortificationCurrencies(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Invasion.FortifyCurrencies = []string{"GTO", "STO", "ST"}
+	gameState.Castles[1] = State.CastleState{ID: 1, KingdomID: 0}
+	gameState.Map[0] = map[string]State.MapObservation{
+		"206:937": {KingdomID: 0, TypeID: 34, X: 206, Y: 937},
+	}
+	request := invasionAttackRequest{
+		SourceCastleID: 1, EventID: 103, ScoreTarget: 1, TargetTypeID: 34,
+		KingdomID: 0, TargetX: 206, TargetY: 937, FortifyCurrency: "KM", HorseTravelBoostID: -1,
+	}
+	arguments, _ := json.Marshal(request)
+	_, _, _, err := invasionAttackContext(Intent.PlanningContext{State: gameState}, arguments)
+	if err == nil || err.Error() != "fortification currency KM is unavailable for event 103" {
+		t.Fatalf("unsupported Bloodcrow fortification error = %v", err)
+	}
+
+	request.FortifyCurrency = "ST"
+	arguments, _ = json.Marshal(request)
+	resolved, _, _, err := invasionAttackContext(Intent.PlanningContext{State: gameState}, arguments)
+	if err != nil || resolved.FortifyCurrency != "ST" {
+		t.Fatalf("Samurai-token Bloodcrow fortification = %+v err=%v", resolved, err)
+	}
+}
+
+func TestLimitAttackSetupToCapacityKeepsPresetPrefixAndSlotPriority(t *testing.T) {
+	first, second, laterWave := int64(216), int64(217), int64(218)
+	setup := attackSetupRequest{Waves: []attackSetupWaveRequest{
+		{Left: attackSetupLaneRequest{Troops: []attackSetupSlotRequest{
+			{ItemID: &first, Quantity: 50}, {ItemID: &second, Quantity: 50},
+		}}},
+		{Middle: attackSetupLaneRequest{Troops: []attackSetupSlotRequest{{ItemID: &laterWave, Quantity: 10}}}},
+	}}
+
+	limited := limitAttackSetupToCapacity(setup, AttackCapacity.LaneCapacity{Left: 64, Front: 192, Right: 64}, 1)
+	if len(limited.Waves) != 1 {
+		t.Fatalf("wave limit = %d, want 1", len(limited.Waves))
+	}
 	if limited.Waves[0].Left.Troops[0].Quantity != 50 || limited.Waves[0].Left.Troops[1].Quantity != 14 {
 		t.Fatalf("unexpected limited left flank: %#v", limited.Waves[0].Left.Troops)
 	}
+	if len(limited.Waves[0].Middle.Troops) != 0 {
+		t.Fatalf("wave limit selected the end of the preset instead of wave 1: %#v", limited.Waves[0])
+	}
 	if setup.Waves[0].Left.Troops[1].Quantity != 50 {
 		t.Fatal("capacity limiting mutated the saved preset")
+	}
+}
+
+func TestGuardInvasionTargetRequiresLaunchTimeMapObservation(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 100, Y: 100}
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true}
+	gameState.EventScores.ActiveEventID = 71
+	gameState.EventScores.ByEvent[71] = State.ScalableEventScore{
+		EventID: 71, PlayerScore: 0, RemainingSec: 3_600, ObservedAt: now,
+	}
+	gameState.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, TypeID: 21, X: 101, Y: 100, ObjectID: 70, ObservedAt: now},
+	}
+	request := resolvedInvasionAttackRequest{
+		invasionAttackRequest: invasionAttackRequest{
+			SourceCastleID: 1, EventID: 71, ScoreTarget: 1_000, MinimumRemainingSec: 60,
+			TargetTypeID: 21, KingdomID: 0, TargetX: 101, TargetY: 100, TargetObjectID: 70,
+		},
+		CommanderID: 7,
+	}
+	arguments, _ := json.Marshal(invasionTargetVerificationRequest{Request: request, RefreshStartedAt: now.Add(time.Second)})
+	application := &Application{State: State.NewStore(gameState)}
+	if err := application.guardInvasionTarget(t.Context(), arguments); err == nil {
+		t.Fatal("stale invasion target passed launch-time refresh guard")
+	}
+
+	target := gameState.Map[0]["101:100"]
+	target.ObservedAt = now.Add(2 * time.Second)
+	gameState.Map[0]["101:100"] = target
+	application.State = State.NewStore(gameState)
+	if err := application.guardInvasionTarget(t.Context(), arguments); err != nil {
+		t.Fatalf("fresh invasion target failed launch-time refresh guard: %v", err)
+	}
+}
+
+func TestCaptureInvasionLaunchTracksActiveEvent(t *testing.T) {
+	now := time.Date(2026, 7, 21, 13, 45, 0, 0, time.UTC)
+	arrivesAt := now.Add(90 * time.Second)
+	commanderID := State.CommanderID(4)
+	gameState := State.NewGameState()
+	gameState.EventScores.ActiveEventID = 103
+	gameState.EventScores.ByEvent[103] = State.ScalableEventScore{
+		EventID: 103, RemainingSec: 7_200, ObservedAt: now,
+	}
+	gameState.Movements[88] = State.MovementState{
+		ID: 88, Direction: 0, SourceCastleID: 1, CommanderID: &commanderID, KingdomID: 0,
+		TargetTypeID: 34, TargetX: 120, TargetY: 121, ArrivesAt: &arrivesAt, ObservedAt: now,
+	}
+	application := &Application{State: State.NewStore(gameState)}
+	arguments, _ := json.Marshal(resolvedInvasionAttackRequest{
+		invasionAttackRequest: invasionAttackRequest{
+			SourceCastleID: 1, EventID: 103, TargetTypeID: 34, KingdomID: 0, TargetX: 120, TargetY: 121,
+		},
+		CommanderID: commanderID,
+	})
+	if err := application.captureInvasionLaunch(t.Context(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	if err := application.captureInvasionLaunch(t.Context(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	activity := application.State.Snapshot().EventScores.ActivityByEvent[103]
+	if activity.Invasion.Launches != 1 || len(activity.PendingAttacks) != 1 ||
+		activity.PendingAttacks[0].Kind != State.EventActivityInvasion {
+		t.Fatalf("unexpected Bloodcrow activity: %#v", activity)
 	}
 }

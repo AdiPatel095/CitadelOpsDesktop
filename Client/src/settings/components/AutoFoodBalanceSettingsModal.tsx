@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Truck, Wheat } from 'lucide-react';
-import { Button, Input, SettingsModal, SettingsToggleRow } from '../../components/ui';
+import { CalendarDays, FastForward, Truck, Wheat } from 'lucide-react';
+import { Button, ChoiceChipGroup, Input, SettingsModal, SettingsToggleRow } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { configurationSection } from '../Configuration';
 import { normalizeFeatureSchedules, scheduleSummary } from '../SchedulerTypes';
 import {
+  AUTO_FOOD_BALANCE_TIME_SKIPS,
   DEFAULT_AUTO_FOOD_BALANCE_SETTINGS,
   parseAutoFoodBalanceSettings,
   type AutoFoodBalanceSettings,
@@ -51,7 +52,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
     <SettingsModal
       isOpen={isOpen}
       onClose={onClose}
-      maxWidth="md"
+      maxWidth="lg"
       title="Auto Food Balance"
       icon={<Wheat className="h-5 w-5" />}
       description="Maintains Food, Honey, Mead, and Beef reserves across every owned castle."
@@ -76,6 +77,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
 
         <div className="grid gap-4 sm:grid-cols-2">
           <NumberField label="Polling interval" value={settings.checkIntervalSec} min={30} max={3600} suffix="seconds" onChange={(value) => setNumber('checkIntervalSec', value)} />
+          <NumberField label="Minimum kingdom shipment" value={settings.minimumShipmentSize} min={1} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumShipmentSize', value)} />
           <NumberField label="Donor reserve" value={settings.minimumSourceReserve} min={0} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumSourceReserve', value)} />
           <NumberField label="Coin reserve" value={settings.minimumCoinReserve} min={0} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumCoinReserve', value)} />
         </div>
@@ -87,6 +89,65 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
           checked={settings.autoKingdomTransport}
           onChange={(checked) => setSettings((current) => ({ ...current, autoKingdomTransport: checked }))}
         />
+
+        <SettingsToggleRow
+          title="Use transport time skips"
+          description="Speed up pending cross-kingdom food shipments with the selected inventory time skips."
+          icon={<FastForward className="h-4 w-4" />}
+          checked={settings.useKingdomTimeSkips}
+          disabled={!settings.autoKingdomTransport}
+          onChange={(checked) => setSettings((current) => ({ ...current, useKingdomTimeSkips: checked }))}
+        />
+
+        {settings.useKingdomTimeSkips && settings.autoKingdomTransport && (
+          <div className="space-y-3 rounded-global border border-border-base bg-bg-input/35 p-4">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-text-muted">Allowed transport skips</div>
+              <ChoiceChipGroup
+                className="mt-2"
+                size="sm"
+                ariaLabel="Allowed Auto Food transport time skips"
+                options={AUTO_FOOD_BALANCE_TIME_SKIPS.map((skip) => ({ value: skip.id, label: skip.label }))}
+                selected={settings.allowedTimeSkips}
+                onToggle={(skipID) => setSettings((current) => parseAutoFoodBalanceSettings({
+                  ...current,
+                  allowedTimeSkips: current.allowedTimeSkips.includes(skipID)
+                    ? current.allowedTimeSkips.filter((id) => id !== skipID)
+                    : [...current.allowedTimeSkips, skipID],
+                }))}
+              />
+            </div>
+
+            {settings.allowedTimeSkips.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-7">
+                {AUTO_FOOD_BALANCE_TIME_SKIPS
+                  .filter((skip) => settings.allowedTimeSkips.includes(skip.id))
+                  .map((skip) => (
+                    <label key={skip.id} className="grid gap-1 text-[10px] font-bold text-text-muted">
+                      Keep {skip.label}
+                      <Input
+                        type="number"
+                        min={0}
+                        value={settings.timeSkipReserve[skip.id] ?? 0}
+                        onChange={(event) => setSettings((current) => parseAutoFoodBalanceSettings({
+                          ...current,
+                          timeSkipReserve: {
+                            ...current.timeSkipReserve,
+                            [skip.id]: Number(event.target.value),
+                          },
+                        }))}
+                        className="px-2 text-center font-mono"
+                      />
+                    </label>
+                  ))}
+              </div>
+            )}
+
+            <p className="text-[11px] leading-relaxed text-text-muted">
+              CitadelOps prefers the smallest selected skip that completes a shipment, then the largest selected partial skip. The amounts above are always kept in reserve.
+            </p>
+          </div>
+        )}
 
         {saveError && <p className="text-xs text-error">{saveError}</p>}
       </div>

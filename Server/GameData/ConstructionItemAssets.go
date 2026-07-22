@@ -12,13 +12,17 @@ import (
 	"time"
 )
 
-var constructionItemIconPattern = regexp.MustCompile(`this\.assets\.(ConstructionItem_[A-Za-z0-9_]+)="itemassets/(ConstructionItems/[A-Za-z0-9_/-]+)"`)
+var (
+	constructionItemIconPattern = regexp.MustCompile(`this\.assets\.(ConstructionItem_[A-Za-z0-9_]+)="itemassets/(ConstructionItems/[A-Za-z0-9_/-]+)"`)
+	buildingIconPattern         = regexp.MustCompile(`this\.assets\.([A-Za-z0-9_]+)="itemassets/(Building/[A-Za-z0-9_/-]+)"`)
+)
 
 type ConstructionItemAssetManifest struct {
-	Version   string            `json:"version"`
-	SourceURL string            `json:"sourceUrl"`
-	FetchedAt time.Time         `json:"fetchedAt"`
-	Icons     map[string]string `json:"icons"`
+	Version       string            `json:"version"`
+	SourceURL     string            `json:"sourceUrl"`
+	FetchedAt     time.Time         `json:"fetchedAt"`
+	Icons         map[string]string `json:"icons"`
+	BuildingIcons map[string]string `json:"buildingIcons"`
 }
 
 func (manager *Manager) ConstructionItemAssets(ctx context.Context) (ConstructionItemAssetManifest, error) {
@@ -61,7 +65,7 @@ func (manager *Manager) refreshConstructionItemAssets(ctx context.Context) (Cons
 		return ConstructionItemAssetManifest{}, err
 	}
 	cachePath := filepath.Join(manager.config.CacheDir, "ConstructionItemAssets-"+version+".json")
-	if cached, cacheErr := loadConstructionItemAssetFile(cachePath); cacheErr == nil {
+	if cached, cacheErr := loadConstructionItemAssetFile(cachePath); cacheErr == nil && len(cached.BuildingIcons) > 0 {
 		return cached, nil
 	}
 
@@ -73,8 +77,12 @@ func (manager *Manager) refreshConstructionItemAssets(ctx context.Context) (Cons
 	if len(icons) == 0 {
 		return ConstructionItemAssetManifest{}, fmt.Errorf("official game DLL contains no construction item icons")
 	}
+	buildingIcons := parseBuildingIconURLs(dllRaw, manager.config.AssetRootURL)
+	if len(buildingIcons) == 0 {
+		return ConstructionItemAssetManifest{}, fmt.Errorf("official game DLL contains no building icons")
+	}
 	manifest := ConstructionItemAssetManifest{
-		Version: version, SourceURL: dllURL, FetchedAt: time.Now().UTC(), Icons: icons,
+		Version: version, SourceURL: dllURL, FetchedAt: time.Now().UTC(), Icons: icons, BuildingIcons: buildingIcons,
 	}
 	if err := writeConstructionItemAssetFile(cachePath, manifest); err != nil {
 		return ConstructionItemAssetManifest{}, fmt.Errorf("cache official construction item icons: %w", err)
@@ -110,6 +118,23 @@ func parseConstructionItemIconURLs(raw []byte, assetRoot string) map[string]stri
 	root := strings.TrimRight(assetRoot, "/") + "/"
 	icons := map[string]string{}
 	for _, match := range constructionItemIconPattern.FindAllSubmatch(raw, -1) {
+		if len(match) != 3 {
+			continue
+		}
+		assetName := string(match[1])
+		path := string(match[2])
+		if assetName == "" || path == "" {
+			continue
+		}
+		icons[assetName] = root + path + ".webp"
+	}
+	return icons
+}
+
+func parseBuildingIconURLs(raw []byte, assetRoot string) map[string]string {
+	root := strings.TrimRight(assetRoot, "/") + "/"
+	icons := map[string]string{}
+	for _, match := range buildingIconPattern.FindAllSubmatch(raw, -1) {
 		if len(match) != 3 {
 			continue
 		}
@@ -174,6 +199,10 @@ func cloneConstructionItemAssetManifest(source ConstructionItemAssetManifest) Co
 	clone.Icons = make(map[string]string, len(source.Icons))
 	for name, iconURL := range source.Icons {
 		clone.Icons[name] = iconURL
+	}
+	clone.BuildingIcons = make(map[string]string, len(source.BuildingIcons))
+	for name, iconURL := range source.BuildingIcons {
+		clone.BuildingIcons[name] = iconURL
 	}
 	return clone
 }

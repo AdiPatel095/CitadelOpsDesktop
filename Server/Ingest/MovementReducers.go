@@ -42,8 +42,21 @@ func newMovementReducer(authoritative bool) Reducer {
 			reset := lastSnapshotFrame.IsZero() || frame.ReceivedAt.Sub(lastSnapshotFrame) > 250*time.Millisecond
 			lastSnapshotFrame = frame.ReceivedAt
 			snapshotMu.Unlock()
-			if reset || len(items) == 0 {
+			// A single gam request can return a populated movement frame followed
+			// by an empty frame. Only the first frame starts a new authoritative
+			// snapshot; later frames in the same response window extend it.
+			if reset {
 				next = make(map[State.MovementID]State.MovementState, len(items))
+				// Live gam replies are scoped and can omit owned movements that
+				// appeared in another reply. Retain active commander movements
+				// until an explicit removal, a newer observation, or their
+				// conservative return time releases them.
+				for id, movement := range before {
+					if movement.CommanderID != nil && movementBelongsToCurrentPlayer(gameState, movement) &&
+						State.CommanderMovementActiveAt(movement, frame.ReceivedAt) {
+						next[id] = movement
+					}
+				}
 			}
 		}
 		for _, raw := range items {
@@ -66,7 +79,7 @@ func newMovementReducer(authoritative bool) Reducer {
 		syncCommanderAvailability(gameState)
 		domains := []string{"movements", "commanders", "movement-snapshot"}
 		if khanChanged {
-			domains = append(domains, "khan")
+			domains = append(domains, "khan", "event-scores")
 		}
 		return domains, true, nil
 	}
@@ -96,15 +109,14 @@ func reduceMovementRemoval(
 	syncCommanderAvailability(gameState)
 	domains := []string{"movements", "commanders"}
 	if khanChanged {
-		domains = append(domains, "khan")
+		domains = append(domains, "khan", "event-scores")
 	}
 	return domains, true, nil
 }
 
-// ReconcileExpiredMovements removes movements whose locally projected arrival
-// or return time has passed and refreshes commander availability. The game does
-// not consistently emit mrm when an army returns, so consumers cannot rely on
-// a later wire frame to release the commander.
+// ReconcileExpiredMovements removes ordinary movements whose observed arrival
+// or return time has passed and refreshes commander availability. Station waits
+// remain authoritative until a later game snapshot changes or removes them.
 func ReconcileExpiredMovements(gameState *State.GameState, now time.Time) bool {
 	if gameState == nil {
 		return false
@@ -114,7 +126,8 @@ func ReconcileExpiredMovements(gameState *State.GameState, now time.Time) bool {
 	}
 	changed := false
 	for id, movement := range gameState.Movements {
-		if movementActiveAt(movement, now) {
+		if movementActiveAt(movement, now) || movement.CommanderID != nil &&
+			movementBelongsToCurrentPlayer(gameState, movement) && State.CommanderMovementActiveAt(movement, now) {
 			continue
 		}
 		delete(gameState.Movements, id)
@@ -137,10 +150,12 @@ func resolveKhanTaunt(gameState *State.GameState, movementID State.MovementID, r
 	if gameState == nil || gameState.Khan.Taunts == nil {
 		return false
 	}
-	if _, found := gameState.Khan.Taunts[movementID]; !found {
+	taunt, found := gameState.Khan.Taunts[movementID]
+	if !found {
 		return false
 	}
 	delete(gameState.Khan.Taunts, movementID)
+	recordResolvedKhanTaunt(gameState, taunt)
 	gameState.Khan.TauntsResolved++
 	if resolvedAt.After(gameState.Khan.LastTauntResolvedAt) {
 		gameState.Khan.LastTauntResolvedAt = resolvedAt.UTC()
@@ -149,12 +164,10 @@ func resolveKhanTaunt(gameState *State.GameState, movementID State.MovementID, r
 }
 
 func movementActiveAt(movement State.MovementState, now time.Time) bool {
-	var completesAt *time.Time
-	if movement.Direction == 0 {
-		completesAt = movement.ArrivesAt
-	} else if movement.Direction == 1 {
-		completesAt = movement.ReturnsAt
+	if movement.Direction == 0 && movement.WaitSeconds > 0 {
+		return true
 	}
+	completesAt := movement.ProjectedCompletionAt()
 	return completesAt == nil || completesAt.IsZero() || completesAt.After(now)
 }
 
@@ -162,14 +175,7 @@ func movementActiveAt(movement State.MovementState, now time.Time) bool {
 // for target intelligence and defensive automation without allowing a foreign
 // leader id to mark one of the current player's commanders unavailable.
 func movementBelongsToCurrentPlayer(gameState *State.GameState, movement State.MovementState) bool {
-	if movement.OwnerPlayerID > 0 {
-		return gameState.Player.ID > 0 && movement.OwnerPlayerID == gameState.Player.ID
-	}
-	if movement.SourceCastleID <= 0 {
-		return false
-	}
-	_, ownedSource := gameState.Castles[movement.SourceCastleID]
-	return ownedSource
+	return gameState != nil && State.MovementOwnedByCurrentPlayer(*gameState, movement)
 }
 
 func movementItems(raw json.RawMessage) ([]json.RawMessage, bool, error) {
@@ -252,13 +258,17 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 		}
 	}
 	var unitMovement struct {
-		Leader struct {
+		WaitSeconds int `json:"TWD"`
+		Leader      struct {
 			ID *wireInt64 `json:"ID"`
 		} `json:"L"`
 	}
-	if json.Unmarshal(item["UM"], &unitMovement) == nil && unitMovement.Leader.ID != nil && *unitMovement.Leader.ID >= 0 {
-		commanderID := State.CommanderID(*unitMovement.Leader.ID)
-		movement.CommanderID = &commanderID
+	if json.Unmarshal(item["UM"], &unitMovement) == nil {
+		movement.WaitSeconds = max(0, unitMovement.WaitSeconds)
+		if unitMovement.Leader.ID != nil && *unitMovement.Leader.ID >= 0 {
+			commanderID := State.CommanderID(*unitMovement.Leader.ID)
+			movement.CommanderID = &commanderID
+		}
 	}
 	for id, amount := range decodeUnitCounts(item["A"]) {
 		movement.Units[State.UnitID(id)] = amount
@@ -284,11 +294,7 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 			})
 		}
 	}
-	remaining := details.Travel - details.Progress
-	if remaining < 0 {
-		remaining = 0
-	}
-	completion := observedAt.Add(time.Duration(remaining) * time.Second)
+	completion := movement.StartedAt.Add(time.Duration(max(0, details.Travel)) * time.Second)
 	if details.Direction == 0 {
 		movement.ArrivesAt = &completion
 	} else {
@@ -324,6 +330,15 @@ func reconcileKhanTaunts(
 		}
 		if !exists {
 			gameState.Khan.TauntsObserved++
+			launchedAt := movement.ObservedAt
+			if launchedAt.IsZero() {
+				launchedAt = observedAt
+			}
+			State.RecordEventAttackLaunch(gameState, 72, State.EventAttackRecord{
+				MovementID: movement.ID, Kind: State.EventActivityKhanDefense, KingdomID: movement.KingdomID,
+				TargetTypeID: movement.TargetTypeID, TargetX: movement.TargetX, TargetY: movement.TargetY,
+				LaunchedAt: launchedAt.UTC(), ArrivesAt: movement.ReturnsAt.UTC(),
+			})
 		}
 	}
 	if !authoritative {
@@ -334,6 +349,7 @@ func reconcileKhanTaunts(
 			continue
 		}
 		delete(gameState.Khan.Taunts, movementID)
+		recordResolvedKhanTaunt(gameState, taunt)
 		gameState.Khan.TauntsResolved++
 		if observedAt.After(gameState.Khan.LastTauntResolvedAt) {
 			gameState.Khan.LastTauntResolvedAt = observedAt.UTC()
@@ -341,6 +357,23 @@ func reconcileKhanTaunts(
 		changed = true
 	}
 	return changed
+}
+
+func recordResolvedKhanTaunt(gameState *State.GameState, taunt State.KhanTauntState) {
+	if gameState == nil || taunt.MovementID <= 0 {
+		return
+	}
+	for _, current := range gameState.Khan.ResolvedTaunts {
+		if current.MovementID == taunt.MovementID {
+			return
+		}
+	}
+	gameState.Khan.ResolvedTaunts = append(gameState.Khan.ResolvedTaunts, taunt)
+	if len(gameState.Khan.ResolvedTaunts) > 256 {
+		gameState.Khan.ResolvedTaunts = append(
+			[]State.KhanTauntState(nil), gameState.Khan.ResolvedTaunts[len(gameState.Khan.ResolvedTaunts)-256:]...,
+		)
+	}
 }
 
 func isKhanTauntMovement(gameState *State.GameState, movement State.MovementState) bool {

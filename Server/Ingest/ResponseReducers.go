@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
@@ -39,8 +40,12 @@ func reduceResponseResources(
 		}
 		changed = changed || updated
 	}
-	if raw := root["grc"]; len(raw) > 0 {
-		updated, err := applyCastleResourceUpdate(raw, gameState, gameData)
+	castleResources := root["grc"]
+	if len(castleResources) == 0 && strings.EqualFold(frame.Opcode, "grc") {
+		castleResources = frame.Payload
+	}
+	if len(castleResources) > 0 {
+		updated, err := applyCastleResourceUpdate(castleResources, gameState, gameData)
 		if err != nil {
 			return nil, false, err
 		}

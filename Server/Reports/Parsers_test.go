@@ -32,11 +32,12 @@ func TestParseSpyCaptureBuildsCanonicalReport(t *testing.T) {
 func TestParseBattleCaptureBuildsCombatantsAndMetrics(t *testing.T) {
 	capture := State.BattleReportCapture{
 		MessageID: 101, ReportID: 202, BattleKey: "battle#key",
-		CapturedAt: time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC),
+		AutomationFeature: State.AttackFeatureAutoTowers,
+		CapturedAt:        time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC),
 		Summary: json.RawMessage(`{
 			"MID":101,"LID":202,"MT":6,"AHP":1,"DHP":0,
 			"PI":[{"OID":1,"N":"Attacker","AN":"Us"},{"OID":2,"N":"Defender","AN":"Them"}],
-			"PBI":[[1,0,1000,-100],[2,1,900,-900]],
+			"PBI":[[1,0,1000,-100,[["W",253460],["C1",12738],["C2",15]]],[2,1,900,-900]],
 			"AI":{"N":"Defender Castle","DP":2,"K":0,"X":10,"Y":20}
 		}`),
 		Details: json.RawMessage(`{"LID":202,"Y":[[1,[216,1000,-100]],[2,[227,900,-900]]]}`),
@@ -50,5 +51,8 @@ func TestParseBattleCaptureBuildsCombatantsAndMetrics(t *testing.T) {
 	}
 	if report.Metrics.AttackerSent != 1000 || report.Metrics.DefenderLost != 900 || len(report.TopUnits) != 2 {
 		t.Fatalf("unexpected metrics: %#v units=%#v", report.Metrics, report.TopUnits)
+	}
+	if report.AutomationFeature != "autoTowers" || report.Loot["W"] != 253460 || report.Loot["C1"] != 12738 || report.Loot["C2"] != 15 {
+		t.Fatalf("unexpected attack analytics: feature=%q loot=%#v", report.AutomationFeature, report.Loot)
 	}
 }

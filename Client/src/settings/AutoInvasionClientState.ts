@@ -12,11 +12,12 @@ export interface AutoInvasionClientStateV1 {
   minimumRemainingSec: number;
   checkIntervalSec: number;
   mapRefreshIntervalSec: number;
+	dailyAttackLimit: number;
 	fortifyCurrency: AutoInvasionFortifyCurrency;
   horseTravelBoostId: HorseTravelBoostID;
 }
 
-export type AutoInvasionFortifyCurrency = '' | 'GTO' | 'STO' | 'KM' | 'C2';
+export type AutoInvasionFortifyCurrency = '' | 'GTO' | 'STO' | 'MEDALS' | 'C2';
 
 export function defaultAutoInvasionClientState(): AutoInvasionClientStateV1 {
   return {
@@ -29,6 +30,7 @@ export function defaultAutoInvasionClientState(): AutoInvasionClientStateV1 {
     minimumRemainingSec: 1800,
     checkIntervalSec: 30,
     mapRefreshIntervalSec: 300,
+		dailyAttackLimit: 0,
 		fortifyCurrency: '',
     horseTravelBoostId: -1,
   };
@@ -48,13 +50,15 @@ export function parseAutoInvasionClientState(value: unknown): AutoInvasionClient
     minimumRemainingSec: clampInteger(raw.minimumRemainingSec, 0, 86400, fallback.minimumRemainingSec),
     checkIntervalSec: clampInteger(raw.checkIntervalSec, 30, 3600, fallback.checkIntervalSec),
     mapRefreshIntervalSec: clampInteger(raw.mapRefreshIntervalSec, 60, 3600, fallback.mapRefreshIntervalSec),
+		dailyAttackLimit: clampInteger(raw.dailyAttackLimit, 0, Number.MAX_SAFE_INTEGER, 0),
 		fortifyCurrency: validFortifyCurrency(raw.fortifyCurrency),
     horseTravelBoostId: parseHorseTravelBoostID(raw.horseTravelBoostId),
   };
 }
 
 function validFortifyCurrency(value: unknown): AutoInvasionFortifyCurrency {
-	return value === 'GTO' || value === 'STO' || value === 'KM' || value === 'C2' ? value : '';
+	if (value === 'KM' || value === 'ST' || value === 'MEDALS') return 'MEDALS';
+	return value === 'GTO' || value === 'STO' || value === 'C2' ? value : '';
 }
 
 export const AUTO_INVASION_DIFFICULTY_NAMES = [

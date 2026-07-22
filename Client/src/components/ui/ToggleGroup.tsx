@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 
 export interface ToggleGroupOption {
   value: string;
@@ -14,7 +14,7 @@ export interface ToggleGroupProps {
   onChange: (value: string) => void;
   ariaLabel: string;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size: 'header' | 'body';
   fullWidth?: boolean;
   variant?: 'primary' | 'neutral';
 }
@@ -25,10 +25,12 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
   onChange,
   ariaLabel,
   className = '',
-  size = 'md',
+  size,
   fullWidth = false,
   variant = 'primary',
 }) => {
+  const groupRef = useRef<HTMLDivElement | null>(null);
+  const indicatorRef = useRef<HTMLSpanElement | null>(null);
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const selectByKeyboard = (event: React.KeyboardEvent<HTMLButtonElement>, currentIndex: number) => {
@@ -61,13 +63,47 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
   };
 
   const activeIndex = options.findIndex((option) => option.value === value);
+  const optionSignature = useMemo(
+    () => options.map((option) => option.value).join('\u0000'),
+    [options],
+  );
+  const syncIndicator = useCallback(() => {
+    const indicator = indicatorRef.current;
+    const activeButton = buttonRefs.current[activeIndex];
+    if (!indicator || !activeButton) {
+      indicator?.classList.remove('liquid-toggle-indicator-ready');
+      return;
+    }
+
+    indicator.style.setProperty('--liquid-toggle-indicator-x', `${activeButton.offsetLeft}px`);
+    indicator.style.setProperty('--liquid-toggle-indicator-width', `${activeButton.offsetWidth}px`);
+    indicator.classList.add('liquid-toggle-indicator-ready');
+  }, [activeIndex]);
+
+  useLayoutEffect(() => {
+    syncIndicator();
+
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(syncIndicator);
+    if (groupRef.current) observer.observe(groupRef.current);
+    buttonRefs.current.forEach((button) => {
+      if (button) observer.observe(button);
+    });
+    return () => observer.disconnect();
+  }, [optionSignature, syncIndicator]);
 
   return (
     <div
+      ref={groupRef}
       className={`liquid-toggle-group liquid-toggle-group-${size} ${fullWidth ? 'liquid-toggle-group-full' : ''} ${className}`}
       role="radiogroup"
       aria-label={ariaLabel}
     >
+      <span
+        ref={indicatorRef}
+        className={`liquid-toggle-indicator liquid-toggle-indicator-${variant}`}
+        aria-hidden="true"
+      />
       {options.map((option, index) => {
         const isActive = value === option.value;
         const tip =

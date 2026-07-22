@@ -3,6 +3,7 @@ import type {
   APIConnectionStatus,
   APIEnvelope,
 	AllianceTargetViewV2,
+	AllianceTargetQueryV2,
 	ApplicationUpdateV2,
 	BuildingCatalogQuery,
 	BuildingCatalogResponse,
@@ -142,11 +143,17 @@ class CitadelClient {
     return this.request<T>(`/api/v2/projections/${encodeURIComponent(name)}`);
   }
 
-	getAllianceTargets(allianceId = '', server = '', refresh = false): Promise<AllianceTargetViewV2> {
+	getAllianceTargets(input: AllianceTargetQueryV2 = {}): Promise<AllianceTargetViewV2> {
 		const query = new URLSearchParams();
-		if (allianceId) query.set('allianceId', allianceId);
-		if (server) query.set('server', server);
-		if (refresh) query.set('refresh', '1');
+		if (input.allianceId) query.set('allianceId', input.allianceId);
+		if (input.server) query.set('server', input.server);
+		if (input.refresh) query.set('refresh', '1');
+		if (input.search?.trim()) query.set('search', input.search.trim());
+		if (input.status) query.set('status', input.status);
+		if (input.sort) query.set('sort', input.sort);
+		if (input.direction) query.set('direction', input.direction);
+		if (input.page != null) query.set('page', String(input.page));
+		if (input.includeAlliances !== undefined) query.set('includeAlliances', input.includeAlliances ? '1' : '0');
 		const suffix = query.size > 0 ? `?${query.toString()}` : '';
 		return this.request<AllianceTargetViewV2>(`/api/v2/alliance-targets${suffix}`);
 	}

@@ -4,6 +4,7 @@ export type CommanderFeatureID =
   | 'autoTowers'
   | 'autoInvasion'
   | 'autoNomad'
+  | 'autoAdvisor'
   | 'autoKhan'
   | 'autoStorm'
   | 'riftMaiden'
@@ -43,7 +44,7 @@ export function isCommanderAssigned(
   commanderID: number,
 ): boolean {
   const assignments = document.assignments[featureID];
-  return assignments == null || assignments.includes(commanderID);
+  return assignments?.includes(commanderID) === true;
 }
 
 export function setCommanderAssignment(
@@ -51,9 +52,8 @@ export function setCommanderAssignment(
   featureID: CommanderFeatureID,
   commanderID: number,
   assigned: boolean,
-  knownCommanderIDs: number[],
 ): CommanderFeatureAssignmentsV1 {
-  const current = document.assignments[featureID] ?? knownCommanderIDs;
+  const current = document.assignments[featureID] ?? [];
   const next = new Set(current);
   if (assigned) {
     next.add(commanderID);

@@ -1,14 +1,18 @@
 package App
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"CitadelDesktop/Server/State"
 )
 
 const maximumCRACommanderCount = 50
+
+var errCRACommanderUnavailable = errors.New("CRA commander availability changed")
 
 type craCommanderSelectionRequest struct {
 	Candidates []State.CommanderID `json:"candidates,omitempty"`
@@ -87,7 +91,8 @@ func resolveCRACommanders(
 				continue
 			}
 		}
-		if options.RequireAvailable && !gameState.Commanders[id].Available {
+		if options.RequireAvailable && (!gameState.Commanders[id].Available ||
+			State.CommanderHasActiveMovementAt(gameState, id, time.Now().UTC())) {
 			continue
 		}
 		selected = append(selected, id)
@@ -100,10 +105,14 @@ func resolveCRACommanders(
 		if options.RequireAvailable {
 			availability = " available"
 		}
-		return craCommanderResolution{}, fmt.Errorf(
+		err := fmt.Errorf(
 			"CRA commander selection requested %d but only %d%s candidate(s) matched",
 			count, len(selected), availability,
 		)
+		if options.RequireAvailable {
+			return craCommanderResolution{}, fmt.Errorf("%w: %v", errCRACommanderUnavailable, err)
+		}
+		return craCommanderResolution{}, err
 	}
 	return craCommanderResolution{Selected: selected, Candidates: candidates, Strategy: strategy}, nil
 }

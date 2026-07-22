@@ -18,6 +18,7 @@ import (
 	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
 	"CitadelDesktop/Server/Telemetry"
@@ -32,6 +33,7 @@ type Config struct {
 	History         *History.Store
 	Telemetry       *Telemetry.Store
 	Intents         *Intent.Engine
+	ReportAnalytics *Reports.SQLiteStore
 	AllianceTargets *AllianceTargets.Service
 	Updates         *AppUpdate.Manager
 	Diagnostics     *Diagnostics.Monitor
@@ -69,6 +71,7 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/game-data", server.handleGameDataManifest)
 	mux.HandleFunc("GET /api/v2/game-data/currency-icons", server.handleCurrencyIcons)
 	mux.HandleFunc("GET /api/v2/game-data/construction-item-icons", server.handleConstructionItemIcons)
+	mux.HandleFunc("GET /api/v2/game-data/construction-item-building-icons", server.handleConstructionItemBuildingIcons)
 	mux.HandleFunc("GET /api/v2/game-data/{collection}", server.handleGameDataCollection)
 	mux.HandleFunc("POST /api/v2/game-data/localize", server.handleLocalization)
 	mux.HandleFunc("GET /api/v2/projections/crafting", server.handleCraftingProjection)
@@ -82,6 +85,7 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/history/player-tracker", server.handlePlayerTrackerHistory)
 	mux.HandleFunc("GET /api/v2/history/spy-reports", server.handleSpyReportHistory)
 	mux.HandleFunc("GET /api/v2/history/battle-reports", server.handleBattleReportHistory)
+	mux.HandleFunc("GET /api/v2/analytics/battle-reports", server.handleBattleReportAnalytics)
 	mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
 	mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
 	mux.HandleFunc("GET /api/v2/intents", server.handleIntentDefinitions)
@@ -188,7 +192,7 @@ func (server *Server) handleState(writer http.ResponseWriter, _ *http.Request) {
 		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "State store is unavailable")
 		return
 	}
-	writeJSON(writer, http.StatusOK, server.config.State.Snapshot())
+	writeJSON(writer, http.StatusOK, server.config.State.ReadOnlyView())
 }
 
 func (server *Server) handleGameDataManifest(writer http.ResponseWriter, _ *http.Request) {
@@ -375,7 +379,8 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 	responses := make(chan Envelope, 8)
 	go readEnvelopes(ctx, connection, incoming, readErrors)
 
-	initialState, initialRevision := server.config.State.SnapshotWithRevision()
+	initialState := server.config.State.ReadOnlyView()
+	initialRevision := initialState.Revision
 	if err := connection.WriteJSON(streamEnvelope("", "state.snapshot", initialRevision, initialRevision, false, initialState)); err != nil {
 		return
 	}
@@ -434,7 +439,8 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 		case message := <-incoming:
 			switch message.Type {
 			case "query.state":
-				state, revision := server.config.State.SnapshotWithRevision()
+				state := server.config.State.ReadOnlyView()
+				revision := state.Revision
 				if err := connection.WriteJSON(newEnvelope(message.ID, "state.snapshot", revision, state)); err != nil {
 					return
 				}

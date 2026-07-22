@@ -141,7 +141,11 @@ func (controller *Controller) Start(_ context.Context) error {
 	defer controller.lifecycleMu.Unlock()
 	controller.mu.Lock()
 	if controller.cancel != nil {
+		transport := controller.transport
 		controller.mu.Unlock()
+		if transport != nil && transport.Status().State == "disconnected" {
+			return transport.Start(controller.root)
+		}
 		return nil
 	}
 	if controller.transport == nil {
@@ -356,6 +360,26 @@ func (controller *Controller) Send(ctx context.Context, payload []byte) error {
 	return controller.outbound.Send(ctx, payload)
 }
 
+func (controller *Controller) CloseGameUI(ctx context.Context) error {
+	if controller == nil || controller.transport == nil {
+		return ErrTransportUnavailable
+	}
+	interaction, ok := controller.transport.(FrontendInteractionTransport)
+	if !ok {
+		return fmt.Errorf("%w: configured transport does not expose browser interactions", ErrFrontendInteractionUnavailable)
+	}
+	if !controller.Ready() {
+		return fmt.Errorf("game websocket is not ready")
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := controller.outboundDispatchGate(ctx, Outbound.MetadataFromContext(ctx)); err != nil {
+		return err
+	}
+	return interaction.CloseGameUI(ctx)
+}
+
 func (controller *Controller) NextAllowed(lane Outbound.Lane) time.Time {
 	if controller == nil || controller.outbound == nil {
 		return time.Time{}
@@ -544,7 +568,7 @@ func (controller *Controller) applyStatus(status Status) {
 	if controller.state == nil {
 		return
 	}
-	_, _ = controller.state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, _ = controller.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 		if status.ConnectionGeneration == 0 {
 			status.ConnectionGeneration = gameState.Session.ConnectionGeneration
 		}
@@ -567,9 +591,8 @@ func (controller *Controller) applyStatus(status Status) {
 			if generation != ^uint64(0) {
 				generation++
 			}
-			if observation := gameState.Observations["gbd"]; observation.LastDirection == "inbound" &&
-				observation.LastCode != nil && *observation.LastCode == 0 && observation.LastError == "" &&
-				!observation.LastSeenAt.Before(status.ChangedAt) {
+			if observedAt := gameState.Observations["gbd"].SuccessfulInboundAt(); !observedAt.IsZero() &&
+				!observedAt.Before(status.ChangedAt) {
 				baselineGeneration = generation
 			}
 		}

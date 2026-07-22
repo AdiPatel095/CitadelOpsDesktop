@@ -76,6 +76,47 @@ func TestResolveConstructionEquipRejectsNonTemporaryEquippedItem(t *testing.T) {
 	}
 }
 
+func TestResolveConstructionEquipAllowsOccupiedDifferentSlot(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"constructionItems":[
+			{"constructionItemID":101,"duration":3600,"slotTypeID":0},
+			{"constructionItemID":103,"slotTypeID":1}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := constructionIntentState()
+	castle := gameState.Castles[10]
+	castle.ConstructionSlots[100] = []State.ConstructionSlot{{DefinitionID: 103, Slot: 0}}
+	gameState.Castles[10] = castle
+
+	step, err := resolveConstructionEquipStep(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{"castleId":10,"buildingInstanceId":100,"constructionItemId":101,"slot":0}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := string(step.Command.Payload); got != `{"OID":100,"CID":101,"SID":0,"M":0,"KID":0,"AID":10}` {
+		t.Fatalf("equip payload = %s", got)
+	}
+}
+
+func TestResolveConstructionEquipAllowsExpiredTargetSlot(t *testing.T) {
+	gameState := constructionIntentState()
+	remaining := 0
+	castle := gameState.Castles[10]
+	castle.ConstructionSlots[100] = []State.ConstructionSlot{{DefinitionID: 101, Slot: 0, RemainingSec: &remaining}}
+	gameState.Castles[10] = castle
+
+	if _, err := resolveConstructionEquipStep(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: constructionIntentGameData(t),
+	}, json.RawMessage(`{"castleId":10,"buildingInstanceId":100,"constructionItemId":102,"slot":0}`)); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestPlanConstructionUpgradeDoesNotCrossReusedGroupVariant(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[],
@@ -150,9 +191,9 @@ func constructionIntentGameData(t *testing.T) *GameData.Store {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[],
 		"constructionItems":[
-			{"constructionItemID":101,"duration":3600},
-			{"constructionItemID":102,"duration":3600},
-			{"constructionItemID":103,"duration":0,"decoPoints":100}
+			{"constructionItemID":101,"duration":3600,"slotTypeID":0},
+			{"constructionItemID":102,"duration":3600,"slotTypeID":0},
+			{"constructionItemID":103,"duration":0,"decoPoints":100,"slotTypeID":0}
 		]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {

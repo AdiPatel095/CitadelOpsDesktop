@@ -89,6 +89,26 @@ func TestWireObservationPrecedesCommittedStateBarrier(t *testing.T) {
 	}
 }
 
+func TestProtocolObservationRetainsSuccessfulInboundAcrossOutbound(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	inboundAt := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
+	recordObservation(&gameState, Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "ggm", ResponseCode: &code, ReceivedAt: inboundAt,
+	}, "")
+	recordObservation(&gameState, Protocol.Frame{
+		Direction: Protocol.DirectionOutbound, Opcode: "ggm", ReceivedAt: inboundAt.Add(time.Second),
+	}, "")
+
+	observation := gameState.Observations["ggm"]
+	if observation.LastDirection != string(Protocol.DirectionOutbound) {
+		t.Fatalf("last direction = %q, want outbound", observation.LastDirection)
+	}
+	if got := observation.SuccessfulInboundAt(); !got.Equal(inboundAt) {
+		t.Fatalf("successful inbound = %s, want %s", got, inboundAt)
+	}
+}
+
 func TestCommitFrameRejectsStaleConnectionInsideStateMutation(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Session.ConnectionGeneration = 2

@@ -11,12 +11,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Outbound"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
 const sessionChangePollInterval = 25 * time.Millisecond
+const sessionReadyWaitTimeout = 10 * time.Second
 const wireCommitCleanupTimeout = 10 * time.Second
 
 var ErrPlanStale = errors.New("intent plan became stale before dispatch")
@@ -28,6 +30,8 @@ type commandDependencyReceiptContextKey struct{}
 type effectPhaseCallbackContextKey struct{}
 
 type effectPhaseCallback func(EffectPhase) error
+
+type intentEffectContextKey struct{}
 
 type dispatchPermitContextKey struct{}
 
@@ -453,7 +457,8 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		yielded := false
 		replan := false
 		wireCommits := &wireCommitCollector{}
-		attemptContext := context.WithValue(executionContext, wireCommitCollectorContextKey{}, wireCommits)
+		attemptContext := context.WithValue(executionContext, intentEffectContextKey{}, plan.Effect)
+		attemptContext = context.WithValue(attemptContext, wireCommitCollectorContextKey{}, wireCommits)
 		attemptContext = context.WithValue(attemptContext, effectPhaseCallbackContextKey{}, effectPhaseCallback(func(phase EffectPhase) error {
 			receipt.Phase = phase
 			if phase == EffectPhaseDispatching {
@@ -933,8 +938,14 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		}
 		return nil, action(ctx, step.ActionArguments)
 	}
-	if engine.sender == nil || !engine.sender.Ready() {
-		return nil, fmt.Errorf("game websocket is not ready")
+	if engine.sender == nil {
+		return nil, fmt.Errorf("game websocket sender is unavailable")
+	}
+	if !engine.sender.Ready() {
+		if err := engine.waitForGameSocket(ctx); err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("%w: game websocket became ready", ErrPlanStale)
 	}
 	command := step.Command
 	if command.Opcode == "" {
@@ -956,7 +967,10 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		return nil, err
 	}
 	if !engine.sender.Ready() {
-		return nil, fmt.Errorf("game websocket is not ready")
+		if err := engine.waitForGameSocket(ctx); err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("%w: game websocket became ready", ErrPlanStale)
 	}
 	payload, err := Protocol.Encode(command)
 	if err != nil {
@@ -968,7 +982,8 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		responseTimeoutMillis = 10_000
 	}
 	responseToken := ""
-	if provider, ok := engine.sender.(ResponseCorrelationProvider); ok && provider.CorrelatesResponses() && len(awaitOpcodes) > 0 {
+	if provider, ok := engine.sender.(ResponseCorrelationProvider); ok && provider.CorrelatesResponses() &&
+		len(awaitOpcodes) > 0 && strictResponseCorrelation(ctx) {
 		operationID := strings.TrimSpace(Outbound.MetadataFromContext(ctx).OperationID)
 		if operationID == "" {
 			operationID = "response"
@@ -1017,7 +1032,10 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		return nil, Outbound.ErrConnectionChanged
 	}
 	if sessionAtSend.Generation > 0 && !sessionHasAuthoritativeBaseline(sessionAtSend) {
-		return nil, fmt.Errorf("game session baseline is not ready")
+		if err := engine.waitForAuthoritativeBaseline(ctx, sessionAtSend); err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("%w: game session baseline became ready", ErrPlanStale)
 	}
 	metadata := Outbound.MetadataFromContext(ctx)
 	if expectedConnection > 0 || responseToken != "" {
@@ -1101,8 +1119,11 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				return exchange, Outbound.MarkIndeterminate(fmt.Errorf("game session changed while waiting for %s", strings.Join(awaitOpcodes, " or ")))
 			}
 			if len(step.SuccessCodes) > 0 {
-				if frame.Frame.ResponseCode == nil || !containsInt(step.SuccessCodes, *frame.Frame.ResponseCode) {
-					return exchange, fmt.Errorf("response code %v was not successful", frame.Frame.ResponseCode)
+				if frame.Frame.ResponseCode == nil {
+					return exchange, fmt.Errorf("response did not include a result code")
+				}
+				if !containsInt(step.SuccessCodes, *frame.Frame.ResponseCode) {
+					return exchange, engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
 				}
 			}
 			if step.ResponseBarrier == ResponseBarrierWireThenCommitted {
@@ -1134,6 +1155,57 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 			return exchange, nil
 		}
 	}
+}
+
+func (engine *Engine) waitForAuthoritativeBaseline(ctx context.Context, expected State.SessionState) error {
+	ticker := time.NewTicker(sessionChangePollInterval)
+	defer ticker.Stop()
+	timer := time.NewTimer(sessionReadyWaitTimeout)
+	defer timer.Stop()
+	for {
+		current := engine.state.Session()
+		if current.Generation != expected.Generation ||
+			expected.ConnectionGeneration > 0 && current.ConnectionGeneration != expected.ConnectionGeneration {
+			return Outbound.ErrConnectionChanged
+		}
+		if !current.LoggedIn || !current.SocketReady {
+			return fmt.Errorf("game websocket became unavailable while waiting for the session baseline")
+		}
+		if sessionHasAuthoritativeBaseline(current) {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-timer.C:
+			return fmt.Errorf("game session baseline was not ready within %s", sessionReadyWaitTimeout)
+		case <-ticker.C:
+		}
+	}
+}
+
+func (engine *Engine) waitForGameSocket(ctx context.Context) error {
+	ticker := time.NewTicker(sessionChangePollInterval)
+	defer ticker.Stop()
+	timer := time.NewTimer(sessionReadyWaitTimeout)
+	defer timer.Stop()
+	for {
+		if engine.sender.Ready() {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-timer.C:
+			return fmt.Errorf("game websocket was not ready within %s", sessionReadyWaitTimeout)
+		case <-ticker.C:
+		}
+	}
+}
+
+func strictResponseCorrelation(ctx context.Context) bool {
+	effect, known := ctx.Value(intentEffectContextKey{}).(Effect)
+	return !known || effect != EffectRead
 }
 
 func advanceEffectPhase(ctx context.Context, phase EffectPhase) error {
@@ -1399,6 +1471,11 @@ func (engine *Engine) planningContext() PlanningContext {
 	}
 	if engine.gameData != nil {
 		input.GameData, _ = engine.gameData.Current()
+		if provider, ok := engine.gameData.(interface {
+			Language() (*GameData.LanguageStore, bool)
+		}); ok {
+			input.Language, _ = provider.Language()
+		}
 	}
 	return input
 }

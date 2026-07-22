@@ -53,6 +53,36 @@ func TestRuntimeInventoryAndQueueableReducers(t *testing.T) {
 	}
 }
 
+func TestKingdomTransportReducerPreservesAutomationWorkflowThroughSettlement(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	gameState := State.NewGameState()
+	now := time.Date(2026, 7, 22, 12, 0, 0, 0, time.UTC)
+	gameState.KingdomTransport.ResourceWorkflows[4] = State.KingdomResourceTransportWorkflow{
+		Owner: "autoFoodBalance", KingdomID: 4, SourceCastleID: 10, TargetCastleID: 20, LaunchedAt: now,
+	}
+	code := 0
+	_, _, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"UL":[{"KID":4,"U":1}],"RT":[{"KID":4,"G":[["F",900]],"RS":60}]}`),
+	}, &gameState, gameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if workflow, exists := gameState.KingdomTransport.ResourceWorkflows[4]; !exists || workflow.Owner != "autoFoodBalance" {
+		t.Fatalf("pending transport lost workflow: %#v exists=%t", workflow, exists)
+	}
+	_, _, err = reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(time.Minute),
+		Payload: json.RawMessage(`{"UL":[{"KID":4,"U":1}]}`),
+	}, &gameState, gameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if workflow, exists := gameState.KingdomTransport.ResourceWorkflows[4]; !exists || workflow.Owner != "autoFoodBalance" {
+		t.Fatalf("settled transport lost workflow before destination refresh: %#v exists=%t", workflow, exists)
+	}
+}
+
 func TestRuntimeNestedResponseReducers(t *testing.T) {
 	gameData := runtimeTestGameData(t)
 	gameState := State.NewGameState()
@@ -138,6 +168,14 @@ func TestRuntimeTransportAndSubscriptionReducers(t *testing.T) {
 	}, &gameState, gameData)
 	if err != nil || !changed || gameState.Subscriptions[1].GracePeriodSec != 100 {
 		t.Fatalf("subscriptions: changed=%t state=%#v err=%v", changed, gameState.Subscriptions, err)
+	}
+
+	_, changed, err = reduceSubscriptions(t.Context(), Protocol.Frame{
+		Opcode: "upc", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"R":[["C2",1520000]]}`),
+	}, &gameState, gameData)
+	if err != nil || changed || gameState.Subscriptions[1].GracePeriodSec != 100 {
+		t.Fatalf("unrelated upc changed subscriptions: changed=%t state=%#v err=%v", changed, gameState.Subscriptions, err)
 	}
 }
 

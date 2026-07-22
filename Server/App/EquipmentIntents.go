@@ -778,8 +778,8 @@ func leaderBaseEquipment(leader resolvedLeader) []State.EquipmentInstanceID {
 
 func requireRecentEquipmentSnapshot(gameState State.GameState, opcode string) error {
 	observation, ok := gameState.Observations[opcode]
-	if !ok || observation.LastDirection != string(Protocol.DirectionInbound) || observation.LastCode == nil || *observation.LastCode != 0 ||
-		observation.LastSeenAt.IsZero() || time.Since(observation.LastSeenAt) > equipmentRefreshFreshness {
+	observedAt := observation.SuccessfulInboundAt()
+	if !ok || observedAt.IsZero() || time.Since(observedAt) > equipmentRefreshFreshness {
 		return fmt.Errorf("%s storage is stale; run equipment.refresh before selling", opcode)
 	}
 	return nil

@@ -15,6 +15,7 @@ import {
   type AutoTowerCastleSettings,
 } from '../AutoTowerClientState';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+import { DailyAttackLimitField } from './DailyAttackLimitField';
 import type { HorseTravelBoostID } from '../HorseTravelBoost';
 
 interface AutoTowerSettingsModalProps {
@@ -28,6 +29,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, AutoTowerCastleSettings>>({});
   const [mapRefreshIntervalSec, setMapRefreshIntervalSec] = useState(1800);
+  const [dailyAttackLimit, setDailyAttackLimit] = useState(0);
   const [horseTravelBoostId, setHorseTravelBoostId] = useState<HorseTravelBoostID>(-1);
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
     );
     setSettings(current.castles);
     setMapRefreshIntervalSec(current.mapRefreshIntervalSec);
+    setDailyAttackLimit(current.dailyAttackLimit);
     setHorseTravelBoostId(current.horseTravelBoostId);
   }, [configuration?.sections, isOpen]);
 
@@ -63,7 +66,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
 
   const save = () => {
     const current = parseAutoTowerClientState(configuration?.sections['automation.autoTowers']);
-    persistAutoTowerClientState({ ...current, version: 2, mapRefreshIntervalSec, horseTravelBoostId, castles: settings });
+    persistAutoTowerClientState({ ...current, version: 2, mapRefreshIntervalSec, dailyAttackLimit, horseTravelBoostId, castles: settings });
     onClose();
   };
 
@@ -108,6 +111,10 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
           </div>
           <span className="text-xs font-semibold text-text-muted">sec</span>
         </label>
+      </div>
+
+      <div className="mb-4">
+        <DailyAttackLimitField value={dailyAttackLimit} onChange={setDailyAttackLimit} serverState={state?.dailyAttacks} />
       </div>
 
       <div className="mb-4 rounded-global border border-border-base bg-bg-card/40 p-4">

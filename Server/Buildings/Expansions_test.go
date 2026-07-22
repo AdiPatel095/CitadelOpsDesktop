@@ -53,7 +53,7 @@ func TestExpansionPreviewBuildsMultiGoodKingdomTransportAction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.RecommendedAction == nil || result.RecommendedAction.Intent != "resource.kingdom.ship" {
+	if result.RecommendedAction == nil || result.RecommendedAction.Intent != "resource.ship" {
 		t.Fatalf("recommended action = %#v", result.RecommendedAction)
 	}
 	if result.RecommendedAction.Arguments["sourceCastleId"] != State.CastleID(21) {
@@ -84,7 +84,7 @@ func TestExpansionPreviewFundsStorageUpgradeBeforeCapacityBoundExpansion(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.RecommendedAction == nil || result.RecommendedAction.Intent != "resource.kingdom.ship" {
+	if result.RecommendedAction == nil || result.RecommendedAction.Intent != "resource.ship" {
 		t.Fatalf("recommended action = %#v", result.RecommendedAction)
 	}
 	goods, ok := result.RecommendedAction.Arguments["goods"].([]map[string]any)

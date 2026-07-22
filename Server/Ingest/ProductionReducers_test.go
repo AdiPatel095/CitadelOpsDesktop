@@ -145,9 +145,11 @@ func TestAllianceHelpListMarksOnlyOwnHospitalJob(t *testing.T) {
 	responseCode := 0
 	frame := Protocol.Frame{
 		Direction: Protocol.DirectionInbound, Opcode: "ahl", ResponseCode: &responseCode,
+		ReceivedAt: time.Date(2026, 7, 21, 20, 2, 56, 0, time.UTC),
 		Payload: json.RawMessage(`{"AHL":[
 			{"PID":999,"TID":2,"OP":{"AID":77,"RID":22}},
-			{"PID":501,"TID":2,"OP":{"AID":77,"RID":21}}
+			{"PID":501,"TID":2,"OP":{"AID":77,"RID":21}},
+			{"PID":501,"TID":2,"OP":{"AID":77,"RID":23}}
 		]}`),
 	}
 	if _, changed, err := reduceAllianceHelpRequest(context.Background(), frame, &gameState, nil); err != nil || !changed {
@@ -156,6 +158,56 @@ func TestAllianceHelpListMarksOnlyOwnHospitalJob(t *testing.T) {
 	queued := gameState.Castles[77].Production[2].Queued
 	if !queued[0].AllianceHelpRequested || queued[1].AllianceHelpRequested {
 		t.Fatalf("unexpected hospital alliance-help state: %#v", queued)
+	}
+	if got := State.OutstandingHospitalAllianceHelpRequests(gameState); got != 2 {
+		t.Fatalf("authoritative hospital alliance-help count = %d, want 2", got)
+	}
+	if !State.HasOutstandingHospitalAllianceHelpRequest(gameState, 23) {
+		t.Fatal("completed server-side hospital help request was not retained")
+	}
+}
+
+func TestHospitalCompactSnapshotTreatsAppliedHelpReductionAsRequested(t *testing.T) {
+	gameState := State.NewGameState()
+	castle := newCastleState(77)
+	castle.Focused = true
+	gameState.Castles[castle.ID] = castle
+	responseCode := 0
+	frame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "hru", ResponseCode: &responseCode,
+		ReceivedAt: time.Date(2026, 7, 22, 0, 21, 47, 0, time.UTC),
+		Payload: json.RawMessage(`{"spl":{"LID":2,"PIDL":[
+			[216,2,98,1237,33,1708231396,0,-1],
+			[216,4,331,1237,0,454401568,0,-1]
+		]}}`),
+	}
+	if _, changed, err := reduceProductionSnapshot(t.Context(), frame, &gameState, nil); err != nil || !changed {
+		t.Fatalf("reduce compact hospital snapshot changed=%t err=%v", changed, err)
+	}
+	queued := gameState.Castles[77].Production[2].Queued
+	if len(queued) != 2 || !queued[0].AllianceHelpRequested || queued[1].AllianceHelpRequested {
+		t.Fatalf("compact hospital help state = %#v", queued)
+	}
+}
+
+func TestOutboundAllianceHelpMarksHospitalJobBeforeResponse(t *testing.T) {
+	gameState := State.NewGameState()
+	castle := newCastleState(77)
+	castle.Focused = true
+	castle.Production[2] = State.ProductionQueue{
+		LineID: 2, Queued: []State.QueueItem{{ProductionID: 201}, {ProductionID: 202}},
+	}
+	gameState.Castles[castle.ID] = castle
+	frame := Protocol.Frame{
+		Direction: Protocol.DirectionOutbound, Opcode: "ahr",
+		Payload: json.RawMessage(`{"ID":201,"T":2}`),
+	}
+	if _, changed, err := reduceAllianceHelpCommand(t.Context(), frame, &gameState, nil); err != nil || !changed {
+		t.Fatalf("reduce outbound alliance help changed=%t err=%v", changed, err)
+	}
+	queued := gameState.Castles[77].Production[2].Queued
+	if !queued[0].AllianceHelpRequested || queued[1].AllianceHelpRequested {
+		t.Fatalf("outbound hospital help state = %#v", queued)
 	}
 }
 

@@ -33,6 +33,12 @@ func TestSpyAvailabilityUsesOfficialBuildingCapacity(t *testing.T) {
 	if len(spies.Taverns) != 1 || spies.Taverns[0].Level != 1 || spies.Taverns[0].Capacity != 2 {
 		t.Fatalf("taverns = %+v", spies.Taverns)
 	}
+	gameState.Session.LoggedIn = true
+	gameState.Session.SocketReady = true
+	action := spyAction(gameState, spies)
+	if !action.CanLaunch || action.Available != 1 || action.SourceCastleID != 100 {
+		t.Fatalf("spy action = %+v", action)
+	}
 }
 
 func TestBuildLiveTargetsUsesDirectoryBirdAndHoldingState(t *testing.T) {
@@ -53,5 +59,32 @@ func TestBuildLiveTargetsUsesDirectoryBirdAndHoldingState(t *testing.T) {
 	}
 	if rows[0].Distance != 5 || rows[0].TargetCastle.CastleID != 77 || rows[0].ClosestOwnCastle.CastleID != 100 {
 		t.Fatalf("target projection = %+v", rows[0])
+	}
+}
+
+func TestQueryTargetsFiltersSortsAndPaginates(t *testing.T) {
+	rows := make([]Target, 0, 45)
+	for index := 1; index <= 45; index++ {
+		rows = append(rows, Target{
+			PlayerID: int64(index), Name: "Player", Might: int64(index), UnderBird: index%2 == 0,
+			RPTSeconds:       index * 10,
+			TargetCastle:     Castle{Name: "Castle", TypeName: "Outpost", X: 100 + index, Y: 200 + index},
+			ClosestOwnCastle: Castle{Name: "Main", X: 10, Y: 20}, Distance: float64(index),
+		})
+	}
+
+	pageRows, total, page, pageCount := queryTargets(rows, Query{
+		Status: "attackable", Sort: "might", Direction: "desc", Page: 2,
+	})
+	if total != 23 || page != 2 || pageCount != 2 || len(pageRows) != 3 {
+		t.Fatalf("page = total %d page %d count %d rows %d", total, page, pageCount, len(pageRows))
+	}
+	if pageRows[0].Might != 5 || pageRows[2].Might != 1 {
+		t.Fatalf("sorted rows = %+v", pageRows)
+	}
+
+	searchRows, total, page, pageCount := queryTargets(rows, Query{Search: "101:201", Page: 8})
+	if total != 1 || page != 1 || pageCount != 1 || len(searchRows) != 1 || searchRows[0].Might != 1 {
+		t.Fatalf("search page = total %d page %d count %d rows %+v", total, page, pageCount, searchRows)
 	}
 }

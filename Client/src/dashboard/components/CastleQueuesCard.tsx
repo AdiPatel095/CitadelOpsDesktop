@@ -31,6 +31,14 @@ const QUEUE_DEFINITIONS: CastleQueueStripDef[] = [
   { id: 'dragon-breath-forge', label: 'Dragon Breath Forge', activeSlots: 1, queueSlots: 1 },
 ];
 
+function craftingOutputAmount(baseAmount: number | undefined, outputBoostPercent: number | undefined): number {
+  if (typeof baseAmount !== 'number' || !Number.isFinite(baseAmount) || baseAmount <= 0) return 0;
+  const boost = typeof outputBoostPercent === 'number' && Number.isFinite(outputBoostPercent)
+    ? Math.max(0, outputBoostPercent)
+    : 0;
+  return baseAmount * (1 + boost / 100);
+}
+
 const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' }) => {
   const { castle } = useCastleFocus();
   const { buildings, getCraftingRecipe } = useMetadata();
@@ -60,18 +68,26 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
             {queues.map((queue) => {
               const crafting = craftingBuildingForStrip(castle, queue.id, buildings);
               const craftingRows: CraftingQueueRow[] = crafting ? [
-                ...(crafting.active ?? []).map((item) => ({
-                  recipeId: item.recipeId,
-                  label: getCraftingRecipe(item.recipeId)?.name || `Recipe ${item.recipeId}`,
-                  amount: item.batchValue ?? 0,
-                  active: true,
-                })),
-                ...(crafting.queued ?? []).map((item) => ({
-                  recipeId: item.recipeId,
-                  label: getCraftingRecipe(item.recipeId)?.name || `Recipe ${item.recipeId}`,
-                  amount: item.batchValue ?? 0,
-                  active: false,
-                })),
+                ...(crafting.active ?? []).map((item) => {
+                  const recipe = getCraftingRecipe(item.recipeId);
+                  return {
+                    recipeId: item.recipeId,
+                    label: recipe?.name || `Recipe ${item.recipeId}`,
+                    imageUrl: recipe?.image,
+                    amount: craftingOutputAmount(recipe?.outputAmount, item.batchValue),
+                    active: true,
+                  };
+                }),
+                ...(crafting.queued ?? []).map((item) => {
+                  const recipe = getCraftingRecipe(item.recipeId);
+                  return {
+                    recipeId: item.recipeId,
+                    label: recipe?.name || `Recipe ${item.recipeId}`,
+                    imageUrl: recipe?.image,
+                    amount: craftingOutputAmount(recipe?.outputAmount, item.batchValue),
+                    active: false,
+                  };
+                }),
               ] : [];
 								const production = queue.productionLineId == null
 									? undefined

@@ -166,7 +166,12 @@ func reduceKingdomTransport(
 	next := State.KingdomTransportState{
 		Unlocks: map[State.KingdomID]State.KingdomTransportUnlock{},
 		Pending: []State.KingdomResourceTransport{}, PendingUnits: []State.KingdomUnitTransport{},
-		ObservedAt: frame.ReceivedAt,
+		ResourceWorkflows: map[State.KingdomID]State.KingdomResourceTransportWorkflow{},
+		ObservedAt:        frame.ReceivedAt,
+	}
+	for kingdomID, workflow := range gameState.KingdomTransport.ResourceWorkflows {
+		workflow.Goods = append([]State.KingdomTransportGood(nil), workflow.Goods...)
+		next.ResourceWorkflows[kingdomID] = workflow
 	}
 	var unlocks []map[string]json.RawMessage
 	_ = json.Unmarshal(root["UL"], &unlocks)
@@ -236,18 +241,24 @@ func reduceSubscriptions(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var payload struct {
-		Subscriptions []struct {
-			TypeID         int `json:"STID"`
-			RemainingSec   int `json:"RS"`
-			GracePeriodSec int `json:"RSGP"`
-		} `json:"SP"`
-	}
+	var payload map[string]json.RawMessage
 	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
 		return nil, false, fmt.Errorf("decode subscriptions: %w", err)
 	}
-	next := make(map[int]State.SubscriptionState, len(payload.Subscriptions))
-	for _, subscription := range payload.Subscriptions {
+	rawSubscriptions, exists := payload["SP"]
+	if !exists {
+		return nil, false, nil
+	}
+	var subscriptions []struct {
+		TypeID         int `json:"STID"`
+		RemainingSec   int `json:"RS"`
+		GracePeriodSec int `json:"RSGP"`
+	}
+	if err := json.Unmarshal(rawSubscriptions, &subscriptions); err != nil {
+		return nil, false, fmt.Errorf("decode subscriptions: %w", err)
+	}
+	next := make(map[int]State.SubscriptionState, len(subscriptions))
+	for _, subscription := range subscriptions {
 		if subscription.TypeID <= 0 {
 			continue
 		}

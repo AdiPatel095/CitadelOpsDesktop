@@ -26,7 +26,7 @@ func (application *Application) runMovementClock(ctx context.Context) {
 			}
 			timerChannel = nil
 		}
-		next := nextMovementCompletion(application.State.Snapshot())
+		next := nextMovementCompletion(application.State.ReadOnlyView())
 		if next.IsZero() {
 			return
 		}
@@ -43,7 +43,7 @@ func (application *Application) runMovementClock(ctx context.Context) {
 	}
 	reconcile := func() {
 		now := time.Now().UTC()
-		_, _ = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		_, _ = application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 			if !Ingest.ReconcileExpiredMovements(gameState, now) {
 				return nil, false, nil
 			}
@@ -74,8 +74,13 @@ func (application *Application) runMovementClock(ctx context.Context) {
 func nextMovementCompletion(gameState State.GameState) time.Time {
 	var next time.Time
 	for _, movement := range gameState.Movements {
+		if movement.Direction == 0 && movement.WaitSeconds > 0 {
+			continue
+		}
 		var completion *time.Time
-		if movement.Direction == 0 {
+		if movement.CommanderID != nil && State.MovementOwnedByCurrentPlayer(gameState, movement) {
+			completion = State.CommanderMovementReleaseAt(movement)
+		} else if movement.Direction == 0 {
 			completion = movement.ArrivesAt
 		} else if movement.Direction == 1 {
 			completion = movement.ReturnsAt

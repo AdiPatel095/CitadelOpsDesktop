@@ -176,6 +176,99 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	}
 }
 
+func TestNomadLevelSelectsOneAvailableCommanderFromCandidatePool(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],
+		"buildings":[],
+		"units":[{"wodID":77}],
+		"eventAutoScalingCamps":[
+			{"eventAutoScalingCampID":5000,"eventID":80,"difficultyID":201,"areaType":29,
+			 "camplevel":80,"countVictory":8,"coolDown":0,"skipCosts":0,"maxTroopCapacityDefense":500},
+			{"eventAutoScalingCampID":5001,"eventID":80,"difficultyID":201,"areaType":29,
+			 "camplevel":90,"countVictory":9,"coolDown":3600,"skipCosts":9950,"maxTroopCapacityDefense":620}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Castles[1] = State.CastleState{
+		ID: 1, KingdomID: 0, X: 100, Y: 100, Focused: true,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 1_000}},
+	}
+	gameState.Commanders[1] = State.CommanderState{ID: 1, Available: false}
+	gameState.Commanders[2] = State.CommanderState{ID: 2, Available: true}
+	gameState.Commanders[3] = State.CommanderState{ID: 3, Available: true}
+	gameState.Player.LegendSkills.ObservedAt = now
+	gameState.EventScores.ByEvent[80] = State.ScalableEventScore{
+		EventID: 80, DifficultyID: 201, PlayerScore: 100, RemainingSec: 7_200, ObservedAt: now,
+	}
+	gameState.NomadCamps.LastScannedAt[1] = now
+	gameState.Map[0] = map[string]State.MapObservation{}
+	for _, coordinate := range [][2]int{{99, 100}, {100, 99}, {100, 101}, {101, 100}} {
+		observation := State.MapObservation{
+			KingdomID: 0, X: coordinate[0], Y: coordinate[1], TypeID: 29,
+			ObjectID: 5000, EventCampID: 5000, EventCampVictoryCount: 8, ObservedAt: now,
+		}
+		gameState.Map[0][fmt.Sprintf("%d:%d", coordinate[0], coordinate[1])] = observation
+	}
+	unitID := int64(77)
+	request := nomadCampAttackRequest{
+		nomadTargetRequest: nomadTargetRequest{
+			SourceCastleID: 1, EventID: 80, DifficultyID: 201, KingdomID: 0,
+			TargetTypeID: 29, TargetX: 99, TargetY: 100, EventCampID: 5000,
+		},
+		Mode: "level", ScoreTarget: 100_000, MinimumRemainingSec: 1_800, VictoryCount: 8,
+		CommanderIDs: []State.CommanderID{1, 2, 3},
+		Preset: AttackPresets.Preset{ID: "camp", Name: "Camp", Waves: []AttackPresets.Wave{{
+			Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 100}}},
+		}}},
+	}
+	arguments, _ := json.Marshal(request)
+	plan, err := planNomadCampAttack(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	launchCount := 0
+	for _, step := range plan.Steps {
+		if step.Action == "nomad.attack.inventory.guard" {
+			var guarded nomadCampAttackRequest
+			if err := json.Unmarshal(step.ActionArguments, &guarded); err != nil {
+				t.Fatal(err)
+			}
+			if len(guarded.CommanderIDs) != 1 || guarded.CommanderIDs[0] != 2 {
+				t.Fatalf("guarded commanders = %v, want [2]", guarded.CommanderIDs)
+			}
+		}
+		if step.Resolver == "nomad.attack.build" {
+			launchCount++
+			var resolved resolvedNomadCampAttackRequest
+			if err := json.Unmarshal(step.ResolverArguments, &resolved); err != nil {
+				t.Fatal(err)
+			}
+			if resolved.CommanderID != 2 {
+				t.Fatalf("resolved commander = %d, want 2", resolved.CommanderID)
+			}
+		}
+	}
+	if launchCount != 1 {
+		t.Fatalf("level plan launch count = %d, want 1", launchCount)
+	}
+	advanced := gameState.Map[0]["99:100"]
+	advanced.ObjectID = 5001
+	advanced.EventCampID = 5001
+	advanced.EventCampVictoryCount = 9
+	gameState.Map[0]["99:100"] = advanced
+	stalePlan, err := planNomadCampAttack(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments)
+	if err != nil {
+		t.Fatalf("stale level decision returned an error: %v", err)
+	}
+	if len(stalePlan.Steps) != 0 || stalePlan.Summary != "Nomad/Samurai camp progression changed; reevaluate the current camp state" {
+		t.Fatalf("stale level decision plan = %#v", stalePlan)
+	}
+}
+
 func TestNomadChainArrivalGuardRejectsOvertaking(t *testing.T) {
 	previousCommander, currentCommander := State.CommanderID(1), State.CommanderID(2)
 	previousArrival := time.Date(2026, 7, 14, 15, 0, 0, 0, time.UTC)

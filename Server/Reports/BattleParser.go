@@ -90,18 +90,30 @@ func ParseBattleCapture(capture State.BattleReportCapture, ownPlayerID State.Pla
 	} else if int64(ownPlayerID) == defenderID {
 		role = "defender"
 	}
-	capturedAt := capture.CapturedAt
+	capturedAt := capture.OccurredAt
+	if capturedAt.IsZero() {
+		capturedAt = capture.CapturedAt
+	}
 	if capturedAt.IsZero() {
 		capturedAt = time.Now().UTC()
 	}
 	id := fmt.Sprintf("%d-%d", summary.MID, summary.LID)
+	eventOccurrenceEndsAt := ""
+	if !capture.EventOccurrenceEndsAt.IsZero() {
+		eventOccurrenceEndsAt = capture.EventOccurrenceEndsAt.UTC().Format(time.RFC3339Nano)
+	}
 	report := BattleReport{
-		ID: id, ReportID: id, BattleKey: capture.BattleKey, MID: summary.MID, LID: summary.LID,
+		ID: id, ReportID: id, BattleKey: capture.BattleKey, AutomationFeature: string(capture.AutomationFeature), MID: summary.MID, LID: summary.LID,
+		MovementID: int64(capture.MovementID), EventID: capture.EventID, EventActivity: string(capture.EventActivity),
+		EventOccurrenceEndsAt: eventOccurrenceEndsAt, ToolsUsed: capture.ToolsUsed,
 		KingdomID: summary.Target.KingdomID, TargetX: summary.Target.X, TargetY: summary.Target.Y,
 		TargetName: summary.Target.Name, CastleName: summary.Target.Name,
 		BattleType: fmt.Sprintf("Type %d", summary.TypeID), OccurredAt: capturedAt.Format(time.RFC3339),
 		DateMs: capturedAt.UnixMilli(), Result: result, Role: role,
 		Attacker: &attacker, Defender: &defender, Metrics: metrics,
+	}
+	if role == "attacker" {
+		report.Loot = parseBattleLoot(summary.Participants, int64(ownPlayerID))
 	}
 	report.TopUnits = parseBattleUnits(capture.Details, attackerID, defenderID)
 	return report, nil
@@ -109,6 +121,7 @@ func ParseBattleCapture(capture State.BattleReportCapture, ownPlayerID State.Pla
 
 type battlePlayerWire struct {
 	ID       int64  `json:"OID"`
+	Dummy    bool   `json:"DUM"`
 	Name     string `json:"N"`
 	Alliance string `json:"AN"`
 }
@@ -124,7 +137,7 @@ func combatant(id int64, role string, players map[int64]battlePlayerWire, target
 		}
 	}
 	return BattleCombatant{
-		PlayerID: id, Name: name, Alliance: player.Alliance, CastleName: targetName, Role: role,
+		PlayerID: id, Dummy: player.Dummy, Name: name, Alliance: player.Alliance, CastleName: targetName, Role: role,
 	}
 }
 
@@ -181,6 +194,39 @@ func parseBattleUnits(raw json.RawMessage, attackerID int64, defenderID int64) [
 		items = items[:40]
 	}
 	return items
+}
+
+func parseBattleLoot(participants [][]json.RawMessage, ownPlayerID int64) map[string]int64 {
+	loot := map[string]int64{}
+	for _, participant := range participants {
+		if len(participant) < 5 {
+			continue
+		}
+		playerID, playerOK := rawInteger(participant[0])
+		side, sideOK := rawInteger(participant[1])
+		if !playerOK || !sideOK || playerID != ownPlayerID || side != 0 {
+			continue
+		}
+		var resources [][]json.RawMessage
+		if json.Unmarshal(participant[4], &resources) != nil {
+			continue
+		}
+		for _, resource := range resources {
+			if len(resource) < 2 {
+				continue
+			}
+			var key string
+			amount, ok := rawInteger(resource[1])
+			if json.Unmarshal(resource[0], &key) != nil || key == "" || !ok || amount <= 0 {
+				continue
+			}
+			loot[key] += amount
+		}
+	}
+	if len(loot) == 0 {
+		return nil
+	}
+	return loot
 }
 
 func absolute(value int64) int64 {

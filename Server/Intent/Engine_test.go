@@ -37,6 +37,18 @@ type connectionGenerationSender struct {
 	sent       chan struct{}
 }
 
+type readinessSender struct {
+	ready atomic.Bool
+	sent  chan struct{}
+}
+
+func (sender *readinessSender) Ready() bool { return sender.ready.Load() }
+func (*readinessSender) Namespace() string  { return "EmpireEx_21" }
+func (sender *readinessSender) Send(context.Context, []byte) error {
+	sender.sent <- struct{}{}
+	return nil
+}
+
 func (*connectionGenerationSender) Ready() bool       { return true }
 func (*connectionGenerationSender) Namespace() string { return "EmpireEx_21" }
 func (sender *connectionGenerationSender) ConnectionGeneration() uint64 {
@@ -82,6 +94,11 @@ type pipelineResponseSender struct {
 	pipeline *Ingest.Pipeline
 }
 
+type correlatingPipelineResponseSender struct {
+	*pipelineResponseSender
+	metadata chan Outbound.Metadata
+}
+
 type countingStateReader struct {
 	store     *State.Store
 	snapshots atomic.Int32
@@ -98,11 +115,40 @@ type rotatingGameDataProvider struct {
 	calls  atomic.Int32
 }
 
+type localizedGameDataProvider struct {
+	store    *GameData.Store
+	language *GameData.LanguageStore
+}
+
+func (provider localizedGameDataProvider) Current() (*GameData.Store, bool) {
+	return provider.store, provider.store != nil
+}
+
+func (provider localizedGameDataProvider) Language() (*GameData.LanguageStore, bool) {
+	return provider.language, provider.language != nil
+}
+
 func (provider *rotatingGameDataProvider) Current() (*GameData.Store, bool) {
 	if provider.calls.Add(1) == 1 {
 		return provider.first, provider.first != nil
 	}
 	return provider.second, provider.second != nil
+}
+
+func TestPlanningContextIncludesOfficialLanguage(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[]}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	language, err := GameData.DecodeLanguage([]byte(`{"unit_name":"Official Unit"}`), GameData.LanguageMetadata{Language: "en"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(nil, nil, localizedGameDataProvider{store: gameData, language: language}, nil, nil)
+	input := engine.planningContext()
+	if input.GameData != gameData || input.Language != language {
+		t.Fatalf("planning context game data = %p language = %p", input.GameData, input.Language)
+	}
 }
 
 func (reader *dispatchMutationStateReader) Snapshot() State.GameState { return reader.store.Snapshot() }
@@ -147,6 +193,12 @@ func (sender *pipelineResponseSender) Send(_ context.Context, payload []byte) er
 	})
 	go func() { _, _ = sender.pipeline.CommitFrame(context.Background(), observed) }()
 	return nil
+}
+
+func (*correlatingPipelineResponseSender) CorrelatesResponses() bool { return true }
+func (sender *correlatingPipelineResponseSender) Send(ctx context.Context, payload []byte) error {
+	sender.metadata <- Outbound.MetadataFromContext(ctx)
+	return sender.pipelineResponseSender.Send(ctx, payload)
 }
 
 func newRapidChainTransport() *rapidChainTransport {
@@ -763,7 +815,9 @@ func TestEngineRejectsCommandBeforeReplacementSessionBaselineIsCurrent(t *testin
 			sender := &connectionGenerationSender{sent: make(chan struct{}, 1)}
 			sender.generation.Store(test.provider)
 			engine := NewEngine(nil, State.NewStore(gameState), nil, sender, nil)
-			_, err := engine.executeStep(t.Context(), gameState.Revision, Step{
+			ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+			defer cancel()
+			_, err := engine.executeStep(ctx, gameState.Revision, Step{
 				Name: "Unsafe command", Opcode: "ain",
 				Command: Protocol.Command{Opcode: "ain", Payload: json.RawMessage(`{}`)},
 			})
@@ -776,6 +830,76 @@ func TestEngineRejectsCommandBeforeReplacementSessionBaselineIsCurrent(t *testin
 			default:
 			}
 		})
+	}
+}
+
+func TestEngineWaitsForCurrentSessionBaselineBeforeReplanning(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{
+		Generation: 2, BaselineGeneration: 0, ConnectionGeneration: 2,
+		Status: "connected", LoggedIn: true, SocketReady: true,
+	}
+	state := State.NewStore(gameState)
+	sender := &connectionGenerationSender{sent: make(chan struct{}, 1)}
+	sender.generation.Store(2)
+	engine := NewEngine(nil, state, nil, sender, nil)
+	result := make(chan error, 1)
+	go func() {
+		_, err := engine.executeStep(t.Context(), gameState.Revision, Step{
+			Name: "Wait for baseline", Opcode: "ain",
+			Command: Protocol.Command{Opcode: "ain", Payload: json.RawMessage(`{}`)},
+		})
+		result <- err
+	}()
+	time.Sleep(30 * time.Millisecond)
+	_, err := state.ApplyWithoutMapMutation(func(current *State.GameState) ([]string, bool, error) {
+		current.Session.BaselineGeneration = current.Session.Generation
+		return []string{"session"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case err := <-result:
+		if !errors.Is(err, ErrPlanStale) {
+			t.Fatalf("baseline readiness error = %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("command did not resume after the current baseline arrived")
+	}
+	select {
+	case <-sender.sent:
+		t.Fatal("stale pre-baseline command reached the physical sender")
+	default:
+	}
+}
+
+func TestEngineWaitsForGameSocketBeforeReplanning(t *testing.T) {
+	gameState := State.NewGameState()
+	sender := &readinessSender{sent: make(chan struct{}, 1)}
+	engine := NewEngine(nil, State.NewStore(gameState), nil, sender, nil)
+	result := make(chan error, 1)
+	go func() {
+		_, err := engine.executeStep(t.Context(), gameState.Revision, Step{
+			Name: "Wait for websocket", Opcode: "ain",
+			Command: Protocol.Command{Opcode: "ain", Payload: json.RawMessage(`{}`)},
+		})
+		result <- err
+	}()
+	time.Sleep(30 * time.Millisecond)
+	sender.ready.Store(true)
+	select {
+	case err := <-result:
+		if !errors.Is(err, ErrPlanStale) {
+			t.Fatalf("websocket readiness error = %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("command did not resume after the websocket became ready")
+	}
+	select {
+	case <-sender.sent:
+		t.Fatal("pre-socket command reached the physical sender")
+	default:
 	}
 }
 
@@ -867,6 +991,48 @@ func TestEngineDispatchesStaticResponseChainBeforeSlowStateCommits(t *testing.T)
 	}
 	if time.Since(started) < 300*time.Millisecond {
 		t.Fatalf("operation returned before the slow final state barrier committed")
+	}
+}
+
+func TestEngineAcceptsEquivalentUntaggedRepliesOnlyForReadIntents(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		effect     Effect
+		wantStatus Status
+		wantToken  bool
+	}{
+		{name: "read", effect: EffectRead, wantStatus: StatusSucceeded},
+		{name: "write", effect: EffectWrite, wantStatus: StatusIndeterminate, wantToken: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			store := State.NewStore(State.NewGameState())
+			pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+			sender := &correlatingPipelineResponseSender{
+				pipelineResponseSender: &pipelineResponseSender{pipeline: pipeline},
+				metadata:               make(chan Outbound.Metadata, 1),
+			}
+			registry := NewRegistry()
+			if err := registry.Register(Definition{
+				Name: "test.untagged-" + test.name, Effect: test.effect,
+				Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+					return Plan{Steps: []Step{{
+						Name: "Refresh", Opcode: "gam", AwaitOpcode: "gam", TimeoutMillis: 100,
+						SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "gam", Payload: json.RawMessage(`{}`)},
+					}}}, nil
+				},
+			}); err != nil {
+				t.Fatal(err)
+			}
+			engine := NewEngine(registry, store, nil, sender, pipeline)
+			receipt := engine.Submit(t.Context(), Request{Name: "test.untagged-" + test.name})
+			if receipt.Status != test.wantStatus {
+				t.Fatalf("untagged %s receipt = %#v", test.name, receipt)
+			}
+			metadata := <-sender.metadata
+			if got := metadata.ResponseToken != ""; got != test.wantToken {
+				t.Fatalf("untagged %s response token present = %t, want %t", test.name, got, test.wantToken)
+			}
+		})
 	}
 }
 

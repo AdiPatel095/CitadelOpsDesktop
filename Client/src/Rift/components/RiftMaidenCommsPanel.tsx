@@ -44,7 +44,7 @@ const RiftMaidenCommsPanel: React.FC = () => {
   const [sendStatus, setSendStatus] = useState<{ message: string; error: boolean } | null>(null);
   const dashboardConnected = connectionStatus === 'Connected';
   const assignedMaidenCommanders = useMemo(
-    () => parseCommanderFeatureAssignments(configuration?.sections[COMMANDER_FEATURE_SECTION]).assignments.riftMaiden,
+    () => parseCommanderFeatureAssignments(configuration?.sections[COMMANDER_FEATURE_SECTION]).assignments.riftMaiden ?? [],
     [configuration?.sections],
   );
 
@@ -100,7 +100,9 @@ const RiftMaidenCommsPanel: React.FC = () => {
       ? 'Dashboard disconnected — wait for it to reconnect.'
       : !gameLoggedIn
         ? 'Game disconnected — start the bot before launching.'
-        : !riftMapCoords?.found
+        : assignedMaidenCommanders.length === 0
+          ? 'Assign at least one commander to Rift Maiden Waves in Movement / Features.'
+          : !riftMapCoords?.found
           ? 'Rift location unknown — discover it on the world map first.'
           : !mainCastle || availableUnitIds.length === 0
             ? 'Main castle troop data is not ready yet.'
@@ -152,7 +154,7 @@ const RiftMaidenCommsPanel: React.FC = () => {
     void submitIntent('rift.maiden_wave.launch', {
       unitWodID,
       horseTravelBoostId,
-      ...(assignedMaidenCommanders == null ? {} : { commanderIds: assignedMaidenCommanders }),
+      commanderIds: assignedMaidenCommanders,
       ...(useFocusCoords ? { sourceX: castle!.x, sourceY: castle!.y } : {}),
     })
       .then(() => setSendStatus({ message: 'Maiden comms wave submitted.', error: false }))

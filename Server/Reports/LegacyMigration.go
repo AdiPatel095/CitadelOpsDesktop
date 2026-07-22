@@ -93,9 +93,9 @@ func decodeLegacyBattleReports(ownPlayerID State.PlayerID) History.LegacySourceD
 			if json.Unmarshal(raw, &legacy) != nil {
 				return nil
 			}
-			summary := firstRaw(legacy.BLD, legacy.Wire.BLD)
+			summary := firstRaw(legacy.BLS, legacy.Wire.BLS)
 			waves := firstRaw(legacy.BLM, legacy.Wire.BLM)
-			details := firstRaw(legacy.BLS, legacy.Wire.BLS)
+			details := firstRaw(legacy.BLD, legacy.Wire.BLD)
 			if len(summary) == 0 || len(details) == 0 {
 				return nil
 			}

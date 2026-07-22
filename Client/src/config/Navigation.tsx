@@ -26,10 +26,10 @@ export interface NavigationItem {
 
 export const NAVIGATION_ITEMS: NavigationItem[] = [
     { id: 'castle', label: 'Castle', icon: <Icons.Castle />, section: 'main' },
-    { id: 'events', label: 'Events', icon: <Icons.Trophy />, section: 'main' },
+    { id: 'automation', label: 'Automation', icon: <Icons.Automation />, section: 'main' },
+    { id: 'events', label: 'Feature Stats', icon: <Icons.Trophy />, section: 'main' },
     { id: 'attack-presets', label: 'Attack Presets', icon: <Icons.Crosshair />, section: 'main' },
     { id: 'defense-presets', label: 'Defense Presets', icon: <Icons.Shield />, section: 'main' },
-    { id: 'automation', label: 'Automation', icon: <Icons.Automation />, section: 'main' },
     { id: 'equipment', label: 'Equipment', icon: <Icons.Shield />, section: 'main' },
     { id: 'movement', label: 'Movement', icon: <Icons.Activity />, section: 'main' },
     { id: 'battle-stats', label: 'Battle Stats', icon: <Icons.Activity />, section: 'main' },

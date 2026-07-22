@@ -3,6 +3,7 @@ package Automation
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -96,6 +97,31 @@ func TestHospitalPolicyRequestsAllianceHelpWhenNoWoundedUnitsRemain(t *testing.T
 	}
 	if productionID := allianceHelpProductionID(t, decision); productionID != 101 {
 		t.Fatalf("production id = %d, want 101", productionID)
+	}
+}
+
+func TestHospitalPolicyWaitsAtAllianceHelpRequestLimit(t *testing.T) {
+	now := time.Date(2026, 7, 12, 17, 0, 0, 0, time.UTC)
+	snapshot := hospitalPolicySnapshot(t, now)
+	castle := snapshot.State.Castles[77]
+	queue := castle.Production[hospitalLineID]
+	queue.Active = &State.QueueItem{ProductionID: 101, AllianceHelpRequested: true}
+	queue.Queued = []State.QueueItem{
+		{ProductionID: 102, AllianceHelpRequested: true},
+		{ProductionID: 103, AllianceHelpRequested: true},
+		{ProductionID: 104},
+		{ProductionID: 105},
+	}
+	castle.Production[hospitalLineID] = queue
+	snapshot.State.Castles[77] = castle
+
+	decision, err := NewHospitalPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil || decision.Status != "waiting" ||
+		!strings.Contains(decision.Detail, "3 outstanding hospital alliance-help requests") {
+		t.Fatalf("alliance-help capacity decision = %#v", decision)
 	}
 }
 

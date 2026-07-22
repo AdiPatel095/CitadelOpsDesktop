@@ -51,7 +51,7 @@ const CastleView: React.FC = () => {
             title="Decorations"
             titleClassName="text-primary"
             className="flex min-h-0 flex-col"
-            contentClassName="decoration-card-content custom-scrollbar flex-1 overflow-auto"
+            contentClassName="custom-scrollbar flex-1 overflow-auto"
           >
               <DecorationPresetsPanel />
           </SectionCard>

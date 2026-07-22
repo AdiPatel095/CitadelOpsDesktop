@@ -41,6 +41,9 @@ func TestPersistentLoggingDoesNotBlockCommandRecording(t *testing.T) {
 func TestStoreSeparatesGameAndCitadelCommandLogs(t *testing.T) {
 	store := NewStore(100)
 	store.RecordAppOutbound(`%xt%EmpireEx_21%gam%1%{"source":"citadel"}%`, "automation:autoBird")
+	store.RecordFeatureActivity(
+		"automation:autoBird", "troops.station", "INFO", "TRANSPORT", "Stationed 500 troops from Main Castle",
+	)
 
 	inboundRaw := `%xt%EmpireEx_21%gam%1%{"source":"game"}%`
 	inbound, err := Protocol.Decode(inboundRaw, Protocol.DirectionInbound, time.Now())
@@ -76,8 +79,103 @@ func TestStoreSeparatesGameAndCitadelCommandLogs(t *testing.T) {
 	}
 
 	autoBirdLog := strings.Join(store.Tail(ChannelAutoBird, 10), "\n")
-	if !strings.Contains(autoBirdLog, "[SEND] [gam]") || !strings.Contains(autoBirdLog, "[MATCH] [gam]") {
-		t.Fatalf("Auto Bird log = %q, want dispatched command and matching response", autoBirdLog)
+	if !strings.Contains(autoBirdLog, "[INFO] [TRANSPORT] Stationed 500 troops from Main Castle") {
+		t.Fatalf("Auto Bird log = %q, want one user-facing activity", autoBirdLog)
+	}
+	if strings.Contains(autoBirdLog, "[SEND]") || strings.Contains(autoBirdLog, "[MATCH]") ||
+		strings.Contains(autoBirdLog, "intent=") || strings.Contains(autoBirdLog, "operation=") {
+		t.Fatalf("Auto Bird log contains diagnostic details: %q", autoBirdLog)
+	}
+}
+
+func TestWebSocketGameMarksNonzeroResponsesAsErrors(t *testing.T) {
+	store := NewStore(100)
+	for _, raw := range []string{
+		`%xt%gam%1%0%{}%`,
+		`%xt%cra%1%256%{}%`,
+		`%xt%rae%1%-1%{}%`,
+	} {
+		frame, err := Protocol.Decode(raw, Protocol.DirectionInbound, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		store.Record(Protocol.CommittedFrame{Frame: frame}, nil)
+	}
+	outbound, err := Protocol.Decode(`%xt%EmpireEx_21%gam%1%{}%`, Protocol.DirectionOutbound, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.Record(Protocol.CommittedFrame{Frame: outbound}, nil)
+
+	gameLog := strings.Join(store.Tail(ChannelWebSocketGame, 10), "\n")
+	if !strings.Contains(gameLog, "[RECV] [gam] %xt%gam%1%0%{}%") {
+		t.Fatalf("successful reply was not logged as received: %q", gameLog)
+	}
+	if !strings.Contains(gameLog, "[ERROR] [cra] %xt%cra%1%256%{}%") ||
+		!strings.Contains(gameLog, "[ERROR] [rae] %xt%rae%1%-1%{}%") {
+		t.Fatalf("nonzero replies were not logged as errors: %q", gameLog)
+	}
+	if !strings.Contains(gameLog, "[SEND] [gam] %xt%EmpireEx_21%gam%1%{}%") {
+		t.Fatalf("outbound sequence token was incorrectly treated as an error: %q", gameLog)
+	}
+}
+
+func TestFeatureTailHidesLegacyDiagnostics(t *testing.T) {
+	store := NewStore(100)
+	if err := store.SetDataDir(t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	now := time.Now()
+	store.append(ChannelAutoBird, formatLine(now, "INFO", "cycle", "start"))
+	store.append(ChannelAutoBird, formatLine(now, "SEND", "gam", `%xt%EmpireEx_21%gam%1%{}%`))
+	store.RecordFeatureActivity("automation:autoBird", "troops.station", "INFO", "TRANSPORT", "Stationed 500 troops")
+	store.RecordFeatureActivity("automation:autoBird", "troops.station", "ERROR", "TRANSPORT", "Could not station 500 troops: no commander was available")
+
+	log := strings.Join(store.Tail(ChannelAutoBird, 100), "\n")
+	if !strings.Contains(log, "Stationed 500 troops") || !strings.Contains(log, "no commander was available") {
+		t.Fatalf("feature log = %q, want success and failure activities", log)
+	}
+	if strings.Contains(log, "[cycle]") || strings.Contains(log, "[SEND]") || strings.Contains(log, "%xt%") {
+		t.Fatalf("feature log contains legacy diagnostics: %q", log)
+	}
+}
+
+func TestStoreMatchesMappedAndOutOfOrderAppResponses(t *testing.T) {
+	store := NewStore(100)
+	store.RecordAppOutbound(`%xt%EmpireEx_21%jca%1%{"CID":10}%`, "automation:autoHospital")
+	store.RecordAppOutbound(`%xt%EmpireEx_21%cra%1%{}%`, "automation:autoTowers")
+
+	for _, raw := range []string{
+		`%xt%cra%1%0%{}%`,
+		`%xt%jaa%1%0%{"KID":0}%`,
+	} {
+		frame, err := Protocol.Decode(raw, Protocol.DirectionInbound, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		store.Record(Protocol.CommittedFrame{Frame: frame}, nil)
+	}
+	appLog := strings.Join(store.Tail(ChannelAppSend, 10), "\n")
+	if !strings.Contains(appLog, "[MATCH] [cra]") || !strings.Contains(appLog, "[MATCH] [jaa]") {
+		t.Fatalf("mapped app responses were not matched: %q", appLog)
+	}
+	if len(store.pendingAppCommand) != 0 {
+		t.Fatalf("pending app commands = %#v", store.pendingAppCommand)
+	}
+}
+
+func TestStoreMatchesAllianceHelpAHHResponse(t *testing.T) {
+	store := NewStore(100)
+	store.RecordAppOutbound(`%xt%EmpireEx_21%ahr%1%{"ID":1,"T":2}%`, "automation:autoHospital")
+	frame, err := Protocol.Decode(`%xt%ahh%1%0%{"LID":7}%`, Protocol.DirectionInbound, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.Record(Protocol.CommittedFrame{Frame: frame}, nil)
+	appLog := strings.Join(store.Tail(ChannelAppSend, 10), "\n")
+	if !strings.Contains(appLog, "[MATCH] [ahh]") {
+		t.Fatalf("alliance-help response was not matched: %q", appLog)
 	}
 }
 
@@ -86,6 +184,7 @@ func TestFeatureChannelForActorIncludesCurrentAutomations(t *testing.T) {
 		"automation:autoTowers":     ChannelAutoTowers,
 		"automation:autoInvasion":   ChannelAutoInvasion,
 		"automation:autoNomad":      ChannelAutoNomad,
+		"automation:autoAdvisor":    ChannelAutoAdvisor,
 		"automation:autoKhan":       ChannelAutoKhan,
 		"automation:autoStorm":      ChannelAutoStorm,
 		"ui:auto-equipment-cleanup": ChannelAutoEquipment,

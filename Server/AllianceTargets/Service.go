@@ -61,7 +61,6 @@ type trackerAlliancePage struct {
 	Alliances []struct {
 		AllianceID  string     `json:"alliance_id"`
 		Name        string     `json:"alliance_name"`
-		Might       trackerInt `json:"might_current"`
 		PlayerCount trackerInt `json:"player_count"`
 	} `json:"alliances"`
 }
@@ -99,6 +98,7 @@ func (service *Service) View(
 	serverOverride string,
 	selectedExternalID string,
 	forceRefresh bool,
+	query Query,
 ) (View, error) {
 	server, err := service.resolveServer(ctx, gameState.Session.ServerURL, serverOverride)
 	if err != nil {
@@ -108,9 +108,16 @@ func (service *Service) View(
 	if err != nil {
 		return View{}, err
 	}
+	availability := spyAvailability(gameState, gameData)
+	responseAlliances := []AllianceOptionView{}
+	if query.IncludeAlliances {
+		responseAlliances = allianceOptionViews(alliances)
+	}
 	view := View{
-		Server: server, Alliances: alliances, Targets: []Target{},
-		Spies: spyAvailability(gameState, gameData), FetchedAt: time.Now().UTC(),
+		Server: server, Alliances: responseAlliances, Targets: []TargetView{},
+		Page: 1, PageSize: TargetPageSize, PageCount: 1,
+		CanInspect: gameState.Session.LoggedIn && gameState.Session.SocketReady,
+		Spies:      spyAction(gameState, availability),
 	}
 	if selectedExternalID == "" {
 		for _, alliance := range alliances {
@@ -141,13 +148,17 @@ func (service *Service) View(
 	if detail.Name != "" {
 		selected.Name = detail.Name
 	}
-	view.SelectedAlliance = &selected
-	if live, found := gameState.Alliances[State.AllianceID(selected.AllianceID)]; found && live.ID > 0 {
-		view.Targets = buildLiveTargets(gameState, live, detail)
-	} else {
-		view.Targets = buildTrackerTargets(gameState, detail, cartography)
+	view.SelectedAlliance = &SelectedAllianceView{
+		ExternalID: selected.ExternalID, AllianceID: selected.AllianceID, Name: selected.Name,
 	}
-	enrichTargetNames(gameState, view.Targets)
+	var targets []Target
+	if live, found := gameState.Alliances[State.AllianceID(selected.AllianceID)]; found && live.ID > 0 {
+		targets = buildLiveTargets(gameState, live, detail)
+	} else {
+		targets = buildTrackerTargets(gameState, detail, cartography)
+	}
+	enrichTargetNames(gameState, targets)
+	view.Targets, view.TotalTargets, view.Page, view.PageCount = queryTargets(targets, query)
 	return view, nil
 }
 
@@ -226,7 +237,7 @@ func (service *Service) loadTopAlliances(ctx context.Context, server string, for
 		for _, alliance := range page.Alliances {
 			rows = append(rows, AllianceOption{
 				ExternalID: alliance.AllianceID, AllianceID: trackerGameID(alliance.AllianceID),
-				Name: alliance.Name, Rank: len(rows) + 1, Might: int64(alliance.Might), PlayerCount: int(alliance.PlayerCount),
+				Name: alliance.Name, Rank: len(rows) + 1, PlayerCount: int(alliance.PlayerCount),
 			})
 			if len(rows) == 50 {
 				break

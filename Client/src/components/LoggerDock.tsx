@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Check, Copy, Pause, Play, RefreshCw, Search, X } from 'lucide-react';
 import { Icons } from './Icons';
@@ -10,7 +10,22 @@ type LogTone = 'send' | 'recv' | 'info' | 'warn' | 'error' | 'debug' | 'plain';
 type LogViewMode = 'readable' | 'raw';
 type LogFilter = 'all' | 'events' | 'outbound' | 'inbound' | 'issues';
 
+type LogLineEntry = {
+  id: string;
+  raw: string;
+};
+
+type LogTailState = {
+  entries: LogLineEntry[];
+  nextID: number;
+};
+
+type LogTailAction =
+  | { type: 'replace'; lines: string[] }
+  | { type: 'clear' };
+
 type ParsedLogLine = {
+  id: string;
   index: number;
   raw: string;
   timestamp: string;
@@ -41,25 +56,64 @@ const channelLinePattern = /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})(?:\.(\d{1
 const goLogLinePattern = /^(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})(?:\.\d+)?\s*(.*)$/;
 const scopedMessagePattern = /^\[([^\]]+)]\s*(.*)$/;
 
+const logTailReducer = (state: LogTailState, action: LogTailAction): LogTailState => {
+  if (action.type === 'clear') {
+    return state.entries.length === 0 ? state : { ...state, entries: [] };
+  }
+
+  if (
+    state.entries.length === action.lines.length
+    && state.entries.every((entry, index) => entry.raw === action.lines[index])
+  ) {
+    return state;
+  }
+
+  const availableIDs = new Map<string, { ids: string[]; index: number }>();
+  state.entries.forEach((entry) => {
+    const available = availableIDs.get(entry.raw);
+    if (available) {
+      available.ids.push(entry.id);
+    } else {
+      availableIDs.set(entry.raw, { ids: [entry.id], index: 0 });
+    }
+  });
+
+  let nextID = state.nextID;
+  const entries = action.lines.map((raw) => {
+    const available = availableIDs.get(raw);
+    if (available && available.index < available.ids.length) {
+      const id = available.ids[available.index];
+      available.index += 1;
+      return { id, raw };
+    }
+
+    nextID += 1;
+    return { id: `log-line-${nextID}`, raw };
+  });
+
+  return { entries, nextID };
+};
+
 const fallbackChannelDescriptions: Record<string, string> = {
   websocket_game: 'Every game WebSocket frame, including actions performed directly in the game.',
   app_send: 'Commands sent by Citadel and the matching replies received from the game.',
-  autobird: 'Auto Bird decisions, actions, and game commands.',
-  autostation: 'Auto Station decisions, actions, and game commands.',
-  autorecruit: 'Auto Recruit decisions, actions, and game commands.',
-  autotool: 'Auto Tool decisions, actions, and game commands.',
-  autosceatres: 'Auto Sceat Resources decisions, actions, and game commands.',
-  autohospital: 'Auto Hospital decisions, actions, and game commands.',
-  autotci: 'Auto TCI decisions, actions, and game commands.',
-  autoberiworld: 'Auto Berimond World decisions, actions, and game commands.',
-  autofoodbalance: 'Auto Food Balance decisions, actions, and game commands.',
-  autoequipmentcleanup: 'Automatic equipment and gem cleanup commands and results.',
-  autotowers: 'Auto Towers decisions, attacks, and game replies.',
-  autoinvasion: 'Foreign Lords and Bloodcrow decisions, attacks, and game replies.',
-  autonomad: 'Nomad and Samurai camp decisions, attacks, and game replies.',
-  autokhan: 'Khan attack-chain, defense, and protection activity.',
-  autostorm: 'Storm construction, logistics, combat, and shop activity.',
-  rift: 'Rift decisions, actions, and game commands.',
+  autobird: 'Completed Auto Bird troop movements and problems requiring attention.',
+  autostation: 'Completed station and recall movements and problems requiring attention.',
+  autorecruit: 'Completed troop queues and problems requiring attention.',
+  autotool: 'Completed tool queues and problems requiring attention.',
+  autosceatres: 'Completed crafting and resource actions and problems requiring attention.',
+  autohospital: 'Completed hospital actions and problems requiring attention.',
+  autotci: 'Completed construction-item equips, upgrades, and purchases and problems requiring attention.',
+  autoberiworld: 'Completed Berimond troop transfers and problems requiring attention.',
+  autofoodbalance: 'Completed food and mead shipments and problems requiring attention.',
+  autoequipmentcleanup: 'Completed equipment cleanup actions and problems requiring attention.',
+  autotowers: 'Launched tower attacks and problems requiring attention.',
+  autoinvasion: 'Launched Foreign Lords and Bloodcrow attacks and problems requiring attention.',
+  autonomad: 'Launched Nomad and Samurai attacks and other completed event actions.',
+  autoadvisor: 'Launched advisor attacks and other completed advisor actions.',
+  autokhan: 'Completed Khan attacks, defense, and protection actions.',
+  autostorm: 'Completed Storm attacks, construction, logistics, and shop purchases.',
+  rift: 'Launched Rift attacks and other completed Rift actions.',
 };
 
 const formatLogTime = (time: string) => {
@@ -243,7 +297,8 @@ const humanizePayload = (payload: string, direction: string): PayloadInfo => {
   };
 };
 
-const parseLogLine = (rawLine: string, index: number): ParsedLogLine => {
+const parseLogLine = (entry: LogLineEntry, index: number): ParsedLogLine => {
+  const rawLine = entry.raw;
   const raw = rawLine.trimEnd();
   const channelMatch = raw.match(channelLinePattern);
 
@@ -255,6 +310,7 @@ const parseLogLine = (rawLine: string, index: number): ParsedLogLine => {
     const semanticTone = toneFromToken(`${opcode} ${payload}`);
     const tone = direction === 'INFO' && semanticTone !== 'plain' ? semanticTone : toneFromToken(direction);
     return {
+      id: entry.id,
       index,
       raw,
       timestamp: formatLogTime(time),
@@ -279,6 +335,7 @@ const parseLogLine = (rawLine: string, index: number): ParsedLogLine => {
     const message = scopedMatch?.[2] ?? rest;
     const tone = toneFromToken(`${primary} ${message}`);
     return {
+      id: entry.id,
       index,
       raw,
       timestamp: formatLogTime(time),
@@ -297,6 +354,7 @@ const parseLogLine = (rawLine: string, index: number): ParsedLogLine => {
 
   const tone = toneFromToken(raw);
   return {
+    id: entry.id,
     index,
     raw,
     timestamp: '',
@@ -328,11 +386,11 @@ const matchesFilter = (line: ParsedLogLine, filter: LogFilter) => {
   }
 };
 
-export const LoggerDock: React.FC = () => {
+export const LoggerDock = React.memo(function LoggerDock() {
   const [open, setOpen] = useState(false);
   const [channels, setChannels] = useState<ChannelMeta[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [lines, setLines] = useState<string[]>([]);
+  const [logTail, dispatchLogTail] = useReducer(logTailReducer, { entries: [], nextID: 0 });
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<LogViewMode>('readable');
@@ -345,6 +403,9 @@ export const LoggerDock: React.FC = () => {
   const logStreamRef = useRef<HTMLDivElement>(null);
   const copyFeedbackTimerRef = useRef<number | null>(null);
   const fetchSequenceRef = useRef(0);
+  const logEntriesRef = useRef(logTail.entries);
+  const isFollowingLiveRef = useRef(isFollowingLive);
+  const pendingScrollAnchorRef = useRef<{ lineID: string; offset: number } | null>(null);
 
   const currentChannel = useMemo(
     () => channels.find((channel) => channel.id === activeId) ?? null,
@@ -353,7 +414,7 @@ export const LoggerDock: React.FC = () => {
   const currentChannelDescription = currentChannel?.description
     || (activeId ? fallbackChannelDescriptions[activeId] : '')
     || 'Live application activity and command history.';
-  const parsedLines = useMemo(() => lines.map(parseLogLine), [lines]);
+  const parsedLines = useMemo(() => logTail.entries.map(parseLogLine), [logTail.entries]);
 
   const filteredLines = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -383,16 +444,38 @@ export const LoggerDock: React.FC = () => {
     estimateSize: () => viewMode === 'raw' ? 68 : 92,
     getItemKey: (index) => {
       const line = filteredLines[index];
-      return line ? `${line.index}-${line.raw}` : index;
+      return line?.id ?? index;
     },
     overscan: 8,
     measureElement: (element) => element?.getBoundingClientRect().height ?? (viewMode === 'raw' ? 68 : 92),
   });
+  const filteredLinesRef = useRef(filteredLines);
+  const rowVirtualizerRef = useRef(rowVirtualizer);
   const liveStatus = loadError
     ? 'Updates unavailable'
     : liveUpdatesPaused
       ? 'Live updates paused'
       : `Live · every ${pollIntervalMs / 1000} seconds`;
+
+  logEntriesRef.current = logTail.entries;
+  isFollowingLiveRef.current = isFollowingLive;
+  filteredLinesRef.current = filteredLines;
+  rowVirtualizerRef.current = rowVirtualizer;
+
+  const captureScrollAnchor = useCallback(() => {
+    const element = logStreamRef.current;
+    if (!element || isFollowingLiveRef.current) {
+      pendingScrollAnchorRef.current = null;
+      return;
+    }
+
+    const scrollTop = element.scrollTop;
+    const anchorRow = rowVirtualizerRef.current.getVirtualItems().find((row) => row.end > scrollTop);
+    const anchorLine = anchorRow ? filteredLinesRef.current[anchorRow.index] : null;
+    pendingScrollAnchorRef.current = anchorRow && anchorLine
+      ? { lineID: anchorLine.id, offset: anchorRow.start - scrollTop }
+      : null;
+  }, []);
 
   useEffect(() => {
     if (loadError) {
@@ -434,7 +517,14 @@ export const LoggerDock: React.FC = () => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { lines?: string[] };
       if (requestID !== fetchSequenceRef.current) return;
-      setLines(data.lines ?? []);
+      const nextLines = data.lines ?? [];
+      const currentEntries = logEntriesRef.current;
+      const changed = currentEntries.length !== nextLines.length
+        || currentEntries.some((entry, index) => entry.raw !== nextLines[index]);
+      if (changed) {
+        captureScrollAnchor();
+        dispatchLogTail({ type: 'replace', lines: nextLines });
+      }
       setLoadError(null);
     } catch (error) {
       if (requestID === fetchSequenceRef.current) {
@@ -443,11 +533,12 @@ export const LoggerDock: React.FC = () => {
     } finally {
       if (requestID === fetchSequenceRef.current) setIsRefreshing(false);
     }
-  }, [activeId]);
+  }, [activeId, captureScrollAnchor]);
 
   useEffect(() => {
     fetchSequenceRef.current += 1;
-    setLines([]);
+    pendingScrollAnchorRef.current = null;
+    dispatchLogTail({ type: 'clear' });
     setExpandedRows(new Set());
   }, [activeId]);
 
@@ -468,8 +559,22 @@ export const LoggerDock: React.FC = () => {
     element.scrollTop = element.scrollHeight;
   }, [filteredLines, open, isFollowingLive, viewMode]);
 
+  useLayoutEffect(() => {
+    const anchor = pendingScrollAnchorRef.current;
+    pendingScrollAnchorRef.current = null;
+    const element = logStreamRef.current;
+    if (!anchor || !element || isFollowingLiveRef.current) return;
+
+    const anchorIndex = filteredLines.findIndex((line) => line.id === anchor.lineID);
+    if (anchorIndex < 0) return;
+    const offset = rowVirtualizer.getOffsetForIndex(anchorIndex, 'start');
+    if (!offset) return;
+    element.scrollTop = Math.max(0, offset[0] - anchor.offset);
+  }, [filteredLines, rowVirtualizer]);
+
   useEffect(() => {
     if (!open) return;
+    isFollowingLiveRef.current = true;
     setIsFollowingLive(true);
   }, [open, activeId]);
 
@@ -487,7 +592,9 @@ export const LoggerDock: React.FC = () => {
 
     const handleScroll = () => {
       const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
-      setIsFollowingLive(distanceFromBottom <= 24);
+      const isFollowing = distanceFromBottom <= 24;
+      isFollowingLiveRef.current = isFollowing;
+      setIsFollowingLive(isFollowing);
     };
 
     element.addEventListener('scroll', handleScroll);
@@ -508,6 +615,7 @@ export const LoggerDock: React.FC = () => {
     const element = logStreamRef.current;
     if (!element) return;
     element.scrollTop = element.scrollHeight;
+    isFollowingLiveRef.current = true;
     setIsFollowingLive(true);
   }, []);
 
@@ -591,6 +699,7 @@ export const LoggerDock: React.FC = () => {
                   searchable
                   searchPlaceholder="Find a feature or channel"
                   menuGrowToViewport
+                  closeOnScroll={false}
                 />
               </div>
 
@@ -604,9 +713,8 @@ export const LoggerDock: React.FC = () => {
                     { value: 'readable', label: 'Readable' },
                     { value: 'raw', label: 'Raw frames' },
                   ]}
-                  size="sm"
+                  size="header"
                   fullWidth
-                  className="liquid-log-view-selector"
                 />
               </div>
 
@@ -618,13 +726,14 @@ export const LoggerDock: React.FC = () => {
                   options={filterOptions}
                   className="liquid-log-shared-select"
                   ariaLabel="Filter log activity"
+                  closeOnScroll={false}
                 />
               </div>
 
               <div className="liquid-log-control liquid-log-search-control">
                 <span className="liquid-log-control-label">
                   Search
-                  <span className="liquid-log-result-count">{filteredLines.length.toLocaleString()} of {lines.length.toLocaleString()}</span>
+                  <span className="liquid-log-result-count">{filteredLines.length.toLocaleString()} of {logTail.entries.length.toLocaleString()}</span>
                 </span>
                 <Input
                   type="search"
@@ -697,7 +806,7 @@ export const LoggerDock: React.FC = () => {
                 <span className="liquid-log-empty">
                   {loadError
                     ? 'Activity is temporarily unavailable. Use Refresh to try again.'
-                    : lines.length === 0
+                    : logTail.entries.length === 0
                       ? 'No activity yet for this channel.'
                       : 'No activity matches the current search and filter.'}
                 </span>
@@ -709,7 +818,7 @@ export const LoggerDock: React.FC = () => {
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                     const line = filteredLines[virtualRow.index];
                     if (!line) return null;
-                    const rowKey = `${line.index}-${line.raw}`;
+                    const rowKey = line.id;
                     const isExpanded = expandedRows.has(rowKey);
                     const frameCopyTarget = `${rowKey}-frame`;
                     const jsonCopyTarget = `${rowKey}-json`;
@@ -720,6 +829,7 @@ export const LoggerDock: React.FC = () => {
                         key={virtualRow.key}
                         ref={rowVirtualizer.measureElement}
                         data-index={virtualRow.index}
+                        data-log-line-id={line.id}
                         className="liquid-log-virtual-row"
                         style={{
                           position: 'absolute',
@@ -751,7 +861,7 @@ export const LoggerDock: React.FC = () => {
                               )}
                               {line.secondary && <span className="liquid-log-chip">{line.secondary}</span>}
                               {line.payloadParts.map((part, partIndex) => (
-                                <span key={`${line.index}-${partIndex}-${part}`} className="liquid-log-chip">{part}</span>
+                                <span key={`${line.id}-${partIndex}-${part}`} className="liquid-log-chip">{part}</span>
                               ))}
                             </div>
 
@@ -841,4 +951,4 @@ export const LoggerDock: React.FC = () => {
       )}
     </>
   );
-};
+});

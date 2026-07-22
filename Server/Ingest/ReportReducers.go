@@ -27,6 +27,56 @@ func reduceReportNotices(
 	return []string{"reports"}, changed, err
 }
 
+func reduceDeletedReportMessages(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var payload struct {
+		MessageIDs []wireInt64 `json:"MID"`
+	}
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode deleted report messages: %w", err)
+	}
+	ensureReportMaps(gameState)
+	changed := false
+	for _, wireMessageID := range payload.MessageIDs {
+		messageID := int64(wireMessageID)
+		if messageID <= 0 {
+			continue
+		}
+		notice, exists := gameState.Reports.Notices[messageID]
+		if !exists {
+			notice = State.ReportNotice{MessageID: messageID, ObservedAt: frame.ReceivedAt.UTC()}
+		}
+		if notice.Status != "archived" && notice.Status != "unavailable" {
+			notice.Status = "unavailable"
+			gameState.Reports.Notices[messageID] = notice
+			changed = true
+		} else if !exists {
+			notice.Status = "unavailable"
+			gameState.Reports.Notices[messageID] = notice
+			changed = true
+		}
+		if _, exists := gameState.Reports.SpyCaptures[messageID]; exists {
+			delete(gameState.Reports.SpyCaptures, messageID)
+			changed = true
+		}
+		if capture, exists := gameState.Reports.BattleCaptures[messageID]; exists {
+			delete(gameState.Reports.BattleCaptures, messageID)
+			if capture.ReportID > 0 && gameState.Reports.ActiveBattleReport == capture.ReportID {
+				gameState.Reports.ActiveBattleReport = 0
+			}
+			changed = true
+		}
+	}
+	return []string{"reports"}, changed, nil
+}
+
 func applyReportNotices(raw json.RawMessage, observedAt time.Time, gameState *State.GameState) (bool, error) {
 	var payload struct {
 		Messages [][]json.RawMessage `json:"MSG"`
@@ -160,6 +210,9 @@ func reduceBattleSummaryCapture(
 	}
 	capture.Summary = append(json.RawMessage(nil), frame.Payload...)
 	capture.CapturedAt = frame.ReceivedAt
+	if capture.OccurredAt.IsZero() {
+		capture.OccurredAt = battleCaptureOccurredAt(gameState, capture)
+	}
 	gameState.Reports.BattleCaptures[capture.MessageID] = capture
 	return []string{"reports"}, true, nil
 }
@@ -220,14 +273,32 @@ func reduceBattleDetailCapture(
 	}
 	capture.Details = append(json.RawMessage(nil), frame.Payload...)
 	capture.CapturedAt = frame.ReceivedAt
-	gameState.Reports.BattleCaptures[messageID] = capture
+	capture.ToolsUsed = ownBattleToolsUsed(capture.Details, gameState.Player.ID)
+	if capture.OccurredAt.IsZero() {
+		capture.OccurredAt = battleCaptureOccurredAt(gameState, capture)
+	}
+	analyticsChanged, err := reconcileAttackFeatureBattleReport(gameState, &capture)
+	if err != nil {
+		return nil, false, err
+	}
 	stormChanged, err := reconcileStormIslandBattleReport(gameState, capture)
 	if err != nil {
 		return nil, false, err
 	}
+	eventChanged, err := reconcileEventBattleActivity(gameState, &capture)
+	if err != nil {
+		return nil, false, err
+	}
+	gameState.Reports.BattleCaptures[messageID] = capture
 	domains := []string{"reports"}
 	if stormChanged {
 		domains = append(domains, "storm")
+	}
+	if eventChanged {
+		domains = append(domains, "event-scores")
+	}
+	if analyticsChanged {
+		domains = append(domains, "attack-analytics")
 	}
 	return domains, true, nil
 }

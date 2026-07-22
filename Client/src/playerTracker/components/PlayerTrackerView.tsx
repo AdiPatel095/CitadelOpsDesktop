@@ -25,6 +25,7 @@ import type { CastleStateV2, GameStateV2 } from '../../api/Contracts';
 
 interface PlayerTrackerSample {
   timestampUnix: number;
+  uid?: number;
   playerId: number;
   might: number;
   glory: number;
@@ -185,6 +186,8 @@ const PlayerTrackerView = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 	const selectedExtraMetric = extraMetricDefinitions.find((definition) => definition.key === selectedMetric);
+	const activeUID = Math.max(0, finite(state?.account.uid));
+	const scopedTracker = activeUID > 0 && tracker.current?.uid !== activeUID ? emptyResponse : tracker;
 
 	useEffect(() => {
 		if (metricDefinitions.some((definition) => definition.key === selectedMetric)) return;
@@ -204,17 +207,19 @@ const PlayerTrackerView = () => {
     let hospital = 0;
     const troopsByUnit: Record<string, number> = {};
     for (const playerCastle of Object.values(state.castles)) {
-      stationed += sumRecord(playerCastle.units.stationed);
-      traveling += sumRecord(playerCastle.units.traveling);
-      hospital += sumRecord(playerCastle.units.hospital) + sumRecord(playerCastle.units.specialHospital);
-      addTroopsByUnit(troopsByUnit, playerCastle.units.stationed);
-      addTroopsByUnit(troopsByUnit, playerCastle.units.traveling);
-      addTroopsByUnit(troopsByUnit, playerCastle.units.hospital);
-      addTroopsByUnit(troopsByUnit, playerCastle.units.specialHospital);
+      stationed += sumTroopRecord(playerCastle.units.stationed, troopMetadata);
+      traveling += sumTroopRecord(playerCastle.units.traveling, troopMetadata);
+      hospital += sumTroopRecord(playerCastle.units.hospital, troopMetadata)
+        + sumTroopRecord(playerCastle.units.specialHospital, troopMetadata);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.stationed, troopMetadata);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.traveling, troopMetadata);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.hospital, troopMetadata);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.specialHospital, troopMetadata);
     }
     const wallet = playerWallet(state.player.resources, state.player.currencies, resourceMetadata);
     return {
       timestampUnix: Math.floor(Date.now() / 1000),
+      uid: activeUID || undefined,
       playerId: state.player.id,
       might: finite(state.player.might),
       glory: finite(state.player.glory),
@@ -228,7 +233,12 @@ const PlayerTrackerView = () => {
       rubies: finite(wallet.rubies),
       currencies: wallet,
     };
-  }, [gameLoggedIn, resourceMetadata, state]);
+  }, [activeUID, gameLoggedIn, resourceMetadata, state, troopMetadata]);
+
+  useEffect(() => {
+	setTracker(emptyResponse);
+	setLoading(true);
+  }, [activeUID]);
 
   useEffect(() => {
     let active = true;
@@ -241,7 +251,8 @@ const PlayerTrackerView = () => {
         if (!response.ok) throw new Error(`Tracker returned HTTP ${response.status}`);
         const payload = await response.json() as PlayerTrackerResponse;
         if (!active) return;
-        setTracker(normalizeResponse(payload, metricDefinitions));
+        const normalized = normalizeResponse(payload, metricDefinitions, troopMetadata);
+		setTracker(activeUID > 0 && normalized.current?.uid !== activeUID ? emptyResponse : normalized);
         setLoadError(null);
       } catch (error) {
         if (!active) return;
@@ -256,12 +267,12 @@ const PlayerTrackerView = () => {
       active = false;
       window.clearInterval(timer);
     };
-  }, [metricDefinitions, selectedRange, troopRange]);
+  }, [activeUID, metricDefinitions, selectedRange, troopMetadata, troopRange]);
 
-  const current = liveSample ?? tracker.current;
+  const current = liveSample ?? scopedTracker.current;
   const series = useMemo(
-    () => mergeLiveSampleIntoSeries(tracker.series, liveSample, metricDefinitions),
-    [tracker.series, liveSample, metricDefinitions],
+    () => mergeLiveSampleIntoSeries(scopedTracker.series, liveSample, metricDefinitions),
+    [scopedTracker.series, liveSample, metricDefinitions],
   );
   const visibleSeries = useMemo(
     () => filterSeriesRange(series, selectedRange, metricDefinitions),
@@ -287,7 +298,7 @@ const PlayerTrackerView = () => {
   const troopPoints = useMemo(() => {
     const points = troopFiltersActive
       ? buildFilteredTroopPoints(
-          tracker.samples,
+          scopedTracker.samples,
           current,
           troopMetadata,
           troopTypeFilter,
@@ -299,7 +310,7 @@ const PlayerTrackerView = () => {
   }, [
     current,
     series.troopsTotal,
-    tracker.samples,
+    scopedTracker.samples,
     troopFoodFilter,
     troopMetadata,
     troopRange,
@@ -325,7 +336,7 @@ const PlayerTrackerView = () => {
   const sampledTroopRatePoints = useMemo(() => {
     if (troopFiltersActive) {
       return buildFilteredTroopPoints(
-        tracker.samples,
+        scopedTracker.samples,
         null,
         troopMetadata,
         troopTypeFilter,
@@ -333,13 +344,11 @@ const PlayerTrackerView = () => {
         troopFoodFilter,
       );
     }
-    return tracker.samples.map((sample) => ({
-      timestampUnix: sample.timestampUnix,
-      value: sample.troopsTotal,
-      source: 'local' as const,
-    }));
+    return scopedTracker.samples.flatMap((sample) => sample.troopsByUnit
+      ? [{ timestampUnix: sample.timestampUnix, value: sample.troopsTotal, source: 'local' as const }]
+      : []);
   }, [
-    tracker.samples,
+    scopedTracker.samples,
     troopFiltersActive,
     troopFoodFilter,
     troopMetadata,
@@ -357,7 +366,7 @@ const PlayerTrackerView = () => {
   );
   const troopTrendLines = useMemo(
     () => buildTroopTrendLines(
-      tracker.samples,
+      scopedTracker.samples,
       current,
       troopMetadata,
       troopTypeFilter,
@@ -367,7 +376,7 @@ const PlayerTrackerView = () => {
     ),
     [
       current,
-      tracker.samples,
+      scopedTracker.samples,
       troopFoodFilter,
       troopMetadata,
       troopRange,
@@ -389,20 +398,20 @@ const PlayerTrackerView = () => {
 
       <PageHeader
         title="My Stats"
-        description={tracker.fallback.playerName
-          ? `${tracker.fallback.playerName}${tracker.fallback.server ? ` · ${tracker.fallback.server}` : ''}`
+        description={scopedTracker.fallback.playerName
+          ? `${scopedTracker.fallback.playerName}${scopedTracker.fallback.server ? ` · ${scopedTracker.fallback.server}` : ''}`
           : current?.playerId ? `Your account · Player ${current.playerId}` : 'Your account analytics'}
         icon={<Activity className="h-6 w-6" />}
         meta={(
           <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="gap-1.5">
             <Clock3 className="h-3.5 w-3.5" />
-            {formatSampleInterval(tracker.intervalSeconds)} samples
+            {formatSampleInterval(scopedTracker.intervalSeconds)} samples
           </Badge>
           {loading && <Badge variant="outline">Loading history…</Badge>}
-          {(tracker.fallback.status === 'backfilled' || tracker.fallback.status === 'partial') && (
+          {(scopedTracker.fallback.status === 'backfilled' || scopedTracker.fallback.status === 'partial') && (
             <Badge variant="secondary">
-              GGE Tracker backfill · {tracker.fallback.pointsAdded ?? 0} points
+              GGE Tracker backfill · {scopedTracker.fallback.pointsAdded ?? 0} points
             </Badge>
           )}
           {loadError && <Badge variant="danger">Live values only</Badge>}
@@ -446,7 +455,7 @@ const PlayerTrackerView = () => {
                   value={selectedRange}
                   onChange={(value) => setSelectedRange(value as RangeKey)}
                   options={ranges.map((range) => ({ value: range.key, label: range.label }))}
-                  size="lg"
+                  size="header"
                 />
               </div>
             </CardHeader>
@@ -461,7 +470,7 @@ const PlayerTrackerView = () => {
                     label: definition.shortLabel,
                     icon: <MetricIcon definition={definition} className="h-4 w-4" />,
                   }))}
-                  size="sm"
+                  size="body"
                 />
 				{extraMetricDefinitions.length > 0 && (
 					<Select
@@ -556,7 +565,7 @@ const PlayerTrackerView = () => {
                   value={troopRange}
                   onChange={(value) => setTroopRange(value as RangeKey)}
                   options={ranges.map((range) => ({ value: range.key, label: range.label }))}
-                  size="lg"
+                  size="header"
                 />
               </div>
             </CardHeader>
@@ -591,7 +600,7 @@ const PlayerTrackerView = () => {
                       { value: 'melee', label: 'Melee' },
                       { value: 'range', label: 'Range' },
                     ]}
-                    size="sm"
+                    size="body"
                   />
                   <PillSelector
                     ariaLabel="Troop role filter"
@@ -602,7 +611,7 @@ const PlayerTrackerView = () => {
                       { value: 'attack', label: 'Attack' },
                       { value: 'defense', label: 'Defense' },
                     ]}
-                    size="sm"
+                    size="body"
                   />
                   <PillSelector
                     ariaLabel="Troop food filter"
@@ -614,7 +623,7 @@ const PlayerTrackerView = () => {
                       { value: 'beef', label: 'Beef' },
                       { value: 'food', label: 'Food' },
                     ]}
-                    size="sm"
+                    size="body"
                   />
                 </div>
               </div>
@@ -1310,7 +1319,7 @@ function metricValue(sample: PlayerTrackerSample, key: MetricKey): number | unde
     case 'gallantry':
       return finite(sample.gallantry);
     case 'troopsTotal':
-      return finite(sample.troopsTotal);
+      return sample.troopsByUnit ? finite(sample.troopsTotal) : undefined;
     case 'loot':
       return undefined;
     default:
@@ -1325,6 +1334,7 @@ function troopMatchesFilters(
   roleFilter: RoleFilter,
   foodFilter: FoodFilter,
 ): boolean {
+	if (!metadata[unitID]) return false;
   return classificationMatchesFilters(
     troopUnitClassification(unitID, metadata),
     typeFilter,
@@ -1368,9 +1378,14 @@ function troopFilterLabel(typeFilter: TypeFilter, roleFilter: RoleFilter, foodFi
   return labels.length > 0 ? labels.join(' · ') : 'All troops';
 }
 
-function addTroopsByUnit(target: Record<string, number>, values: Record<string, number> | undefined) {
+function addTroopsByUnit(
+  target: Record<string, number>,
+  values: Record<string, number> | undefined,
+  metadata: Record<number, MetadataItem>,
+) {
   if (!values) return;
   for (const [unitID, rawAmount] of Object.entries(values)) {
+    if (!metadata[Number(unitID)]) continue;
     const amount = Math.max(0, finite(rawAmount));
     if (amount > 0) target[unitID] = (target[unitID] ?? 0) + amount;
   }
@@ -1462,8 +1477,9 @@ function calculateTroopCombatComposition(
         const amount = Math.max(0, finite(rawAmount));
         if (!Number.isFinite(unitID) || amount <= 0) continue;
 
-        composition.total += amount;
         const item = metadata[unitID];
+		if (!item) continue;
+		composition.total += amount;
 		const weaponType = troopWeaponType(item);
         if (weaponType === 'melee') {
           composition.melee += amount;
@@ -1512,14 +1528,23 @@ function metadataNumber(value: unknown): number {
   return Number.isFinite(number) ? number : 0;
 }
 
-function normalizeResponse(value: PlayerTrackerResponse, definitions: MetricDefinition[]): PlayerTrackerResponse {
+function normalizeResponse(
+  value: PlayerTrackerResponse,
+  definitions: MetricDefinition[],
+  troopMetadata: Record<number, MetadataItem>,
+): PlayerTrackerResponse {
+	const hasTroopMetadata = Object.keys(troopMetadata).length > 0;
   const samples = Array.isArray(value?.samples)
-    ? value.samples.filter((sample) => Number.isFinite(sample?.timestampUnix)).sort((a, b) => a.timestampUnix - b.timestampUnix)
+    ? value.samples
+        .filter((sample) => Number.isFinite(sample?.timestampUnix))
+        .map((sample) => normalizeTroopSample(sample, troopMetadata, hasTroopMetadata))
+        .sort((a, b) => a.timestampUnix - b.timestampUnix)
     : [];
+	const current = value?.current ? normalizeTroopSample(value.current, troopMetadata, hasTroopMetadata) : null;
   return {
-    current: value?.current ?? null,
+    current,
     samples,
-    series: normalizeSeries(value?.series, samples, value?.current ?? null, definitions),
+    series: normalizeSeries(value?.series, samples, current, definitions),
     intervalSeconds: finite(value?.intervalSeconds) || 60,
     fallback: {
       provider: value?.fallback?.provider || 'gge-tracker',
@@ -1534,6 +1559,24 @@ function normalizeResponse(value: PlayerTrackerResponse, definitions: MetricDefi
       eventScores: value?.coverage?.eventScores === true,
     },
   };
+}
+
+function normalizeTroopSample(
+  sample: PlayerTrackerSample,
+  metadata: Record<number, MetadataItem>,
+	metadataReady = Object.keys(metadata).length > 0,
+): PlayerTrackerSample {
+	if (!sample.troopsByUnit || !metadataReady) return sample;
+	const troopsByUnit: Record<string, number> = {};
+	let troopsTotal = 0;
+	for (const [rawID, rawAmount] of Object.entries(sample.troopsByUnit)) {
+		if (!metadata[Number(rawID)]) continue;
+		const amount = Math.max(0, finite(rawAmount));
+		if (amount <= 0) continue;
+		troopsByUnit[rawID] = amount;
+		troopsTotal += amount;
+	}
+	return { ...sample, troopsTotal, troopsByUnit };
 }
 
 function normalizeSeries(
@@ -1651,9 +1694,15 @@ function hoverPointHint(range: RangeKey): string {
   }
 }
 
-function sumRecord(values: Record<string, number> | undefined): number {
+function sumTroopRecord(
+  values: Record<string, number> | undefined,
+  metadata: Record<number, MetadataItem>,
+): number {
   if (!values) return 0;
-  return Object.values(values).reduce((total, value) => total + Math.max(0, finite(value)), 0);
+  return Object.entries(values).reduce(
+    (total, [rawID, value]) => total + (metadata[Number(rawID)] ? Math.max(0, finite(value)) : 0),
+    0,
+  );
 }
 
 function finite(value: unknown): number {

@@ -50,6 +50,13 @@ type craftingRecipeStep struct {
 	Repeat   int   `json:"repeat"`
 }
 
+type craftingRecipeSelection struct {
+	Cursor             int
+	ConfiguredRecipeID int64
+	RecipeID           int64
+	Costs              craftingCostEvaluation
+}
+
 func NewCraftingPolicy() *CraftingPolicy { return &CraftingPolicy{} }
 
 func (*CraftingPolicy) ID() string { return "autoSceatRes" }
@@ -79,7 +86,11 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	}
 	interval := policyInterval(settings.CheckIntervalSec, 300)
 	if settings.AutoKingdomTransport {
-		if craftingLogisticsStale(snapshot, interval) {
+		logisticsStale, logisticsErr := craftingLogisticsStale(snapshot, interval)
+		if logisticsErr != nil {
+			return Decision{}, logisticsErr
+		}
+		if logisticsStale {
 			return Decision{
 				Status:              "ready",
 				Detail:              "Refresh market and kingdom-resource logistics",
@@ -88,9 +99,22 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 				ReevaluateOnSuccess: true,
 			}, nil
 		}
-		if decision, ready := pendingKingdomSkipDecision(settings, snapshot, interval); ready {
-			return decision, nil
-		}
+	}
+	if decision, ready := ownedKingdomTransportDecision(
+		autoSceatTransportOwner, "Auto Sceat Resources",
+		settings.AutoKingdomTransport && settings.UseKingdomTimeSkips,
+		settings.AllowedTimeSkips, settings.TimeSkipReserve, snapshot,
+	); ready {
+		return decision, nil
+	}
+	if craftingSnapshotStale(settings, snapshot, interval) {
+		return Decision{
+			Status:              "ready",
+			Detail:              "Refresh sovereign crafting queues",
+			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+			Request:             &Intent.Request{Name: "crafting.refresh", Arguments: json.RawMessage(`{}`)},
+			ReevaluateOnSuccess: true,
+		}, nil
 	}
 	plans := 0
 	observed := 0
@@ -100,7 +124,7 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		castleIDValue, _ := strconv.ParseInt(castleKey, 10, 64)
 		castleID := State.CastleID(castleIDValue)
 		castle, exists := snapshot.State.Castles[castleID]
-		if !exists {
+		if !exists || !castle.SupportsSovereignCrafting() {
 			continue
 		}
 		castlePlan := settings.Castles[castleKey]
@@ -121,12 +145,9 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			if cursor < 0 {
 				cursor = 0
 			}
-			configuredRecipeID := cycle[cursor]
-			recipeID := resolveCraftingRecipe(snapshot, configuredRecipeID, building, castle.Crafting)
-			if recipeID <= 0 {
-				continue
-			}
-			costs, costErr := craftingRecipeCostState(snapshot, castle, recipeID, settings)
+			selection, missingSelection, waiting, costErr := selectCraftingRecipe(
+				snapshot, settings, castle, building, cycle, cursor,
+			)
 			if costErr != nil {
 				return Decision{}, costErr
 			}
@@ -134,34 +155,34 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			capacity := 2 + len(building.ActiveSlotRentals) + len(building.QueueSlotRentals)
 			if occupied >= capacity {
 				full++
-				if costs.Blocked == "" && len(costs.Missing) == 0 {
+				if selection.RecipeID > 0 {
 					if decision, ready := craftingRentalDecision(settings, snapshot, castle, building, plan); ready {
 						return decision, nil
 					}
 				}
-				if costs.Blocked != "" || len(costs.Missing) > 0 {
+				if waiting {
 					waitingForResources++
 				}
 				continue
 			}
-			if costs.Blocked != "" {
-				waitingForResources++
-				continue
-			}
-			if len(costs.Missing) > 0 {
-				waitingForResources++
-				if settings.AutoKingdomTransport {
-					if decision, handled := craftingTransportDecision(settings, snapshot, castle, costs.Missing, interval); handled {
+			if selection.RecipeID <= 0 {
+				if waiting {
+					waitingForResources++
+				}
+				if settings.AutoKingdomTransport && missingSelection != nil {
+					if decision, handled := craftingTransportDecision(settings, snapshot, castle, missingSelection.Costs.Missing, interval); handled {
 						return decision, nil
 					}
 				}
 				continue
 			}
+			configuredRecipeID := selection.ConfiguredRecipeID
+			recipeID := selection.RecipeID
 			arguments, _ := json.Marshal(map[string]any{
 				"castleId": castleID, "buildingInstanceId": building.InstanceID,
 				"recipeId": recipeID, "power": 0,
 			})
-			nextCursor := (cursor + 1) % len(cycle)
+			nextCursor := (selection.Cursor + 1) % len(cycle)
 			updated, updateErr := advanceCraftingCursor(raw, castleKey, queueKey, nextCursor)
 			if updateErr != nil {
 				return Decision{}, updateErr
@@ -177,6 +198,16 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			})
 			detail := fmt.Sprintf("Queue crafting recipe %d at %s", recipeID, castleName(castle))
 			metrics := map[string]float64(nil)
+			if selection.Cursor != cursor {
+				detail = fmt.Sprintf(
+					"Queue available crafting recipe %d at %s while earlier cycle recipe %d waits",
+					recipeID, castleName(castle), cycle[cursor],
+				)
+				metrics = map[string]float64{
+					"waitingRecipeId":  float64(cycle[cursor]),
+					"selectedRecipeId": float64(recipeID),
+				}
+			}
 			if recipeID != configuredRecipeID {
 				detail = fmt.Sprintf(
 					"Queue highest unlocked recipe %d at %s and replace unavailable recipe %d",
@@ -199,6 +230,9 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		}
 	}
 	if settings.AutoKingdomTransport {
+		if decision, ready := craftingLootDrainDecision(settings, snapshot); ready {
+			return decision, nil
+		}
 		if decision, ready := marketOverflowDecision(settings, snapshot, interval); ready {
 			return decision, nil
 		}
@@ -220,6 +254,81 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		detail = "Configured recipes are not available for the observed crafting queues"
 	}
 	return Decision{Status: "idle", Detail: detail, NextCheckAt: snapshot.Now.Add(interval)}, nil
+}
+
+func selectCraftingRecipe(
+	snapshot Snapshot,
+	settings craftingSettings,
+	castle State.CastleState,
+	building State.CraftingBuilding,
+	cycle []int64,
+	cursor int,
+) (craftingRecipeSelection, *craftingRecipeSelection, bool, error) {
+	var firstMissing *craftingRecipeSelection
+	waiting := false
+	for offset := 0; offset < len(cycle); offset++ {
+		candidateCursor := (cursor + offset) % len(cycle)
+		configuredRecipeID := cycle[candidateCursor]
+		recipeID := resolveCraftingRecipe(snapshot, configuredRecipeID, building, castle.Crafting)
+		if recipeID <= 0 {
+			continue
+		}
+		costs, err := craftingRecipeCostState(snapshot, castle, recipeID, settings)
+		if err != nil {
+			return craftingRecipeSelection{}, nil, waiting, err
+		}
+		candidate := craftingRecipeSelection{
+			Cursor: candidateCursor, ConfiguredRecipeID: configuredRecipeID, RecipeID: recipeID, Costs: costs,
+		}
+		if costs.Blocked == "" && len(costs.Missing) == 0 {
+			return candidate, firstMissing, waiting, nil
+		}
+		waiting = true
+		if costs.Blocked == "" && len(costs.Missing) > 0 && firstMissing == nil {
+			copy := candidate
+			firstMissing = &copy
+		}
+	}
+	return craftingRecipeSelection{}, firstMissing, waiting, nil
+}
+
+func craftingSnapshotStale(settings craftingSettings, snapshot Snapshot, interval time.Duration) bool {
+	configured := false
+	oldest := time.Time{}
+	missing := false
+	for castleKey, castlePlan := range settings.Castles {
+		castleIDValue, _ := strconv.ParseInt(castleKey, 10, 64)
+		castle, castleExists := snapshot.State.Castles[State.CastleID(castleIDValue)]
+		if castleExists && !castle.SupportsSovereignCrafting() {
+			continue
+		}
+		for queueKey, plan := range castlePlan.Buildings {
+			if !plan.Enabled || len(craftingCycle(plan.Steps)) == 0 {
+				continue
+			}
+			configured = true
+			queueType, _ := strconv.Atoi(queueKey)
+			building, buildingExists := craftingBuildingForQueue(castle, queueType)
+			if !castleExists || !buildingExists || building.ObservedAt.IsZero() {
+				missing = true
+				continue
+			}
+			if oldest.IsZero() || building.ObservedAt.Before(oldest) {
+				oldest = building.ObservedAt
+			}
+		}
+	}
+	if !configured {
+		return false
+	}
+	if observation, found := snapshot.State.Observations["crin"]; found {
+		observedAt := observation.SuccessfulInboundAt()
+		if !observedAt.IsZero() {
+			return (!snapshot.State.Session.ChangedAt.IsZero() && observedAt.Before(snapshot.State.Session.ChangedAt)) ||
+				snapshot.Now.Sub(observedAt) >= interval
+		}
+	}
+	return missing || oldest.IsZero() || snapshot.Now.Sub(oldest) >= interval
 }
 
 func craftingCycle(steps []craftingRecipeStep) []int64 {

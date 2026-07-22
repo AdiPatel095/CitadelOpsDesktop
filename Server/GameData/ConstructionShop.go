@@ -3,12 +3,22 @@ package GameData
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 type ConstructionShopProduct struct {
 	PackageID          int64 `json:"packageId"`
 	ConstructionItemID int64 `json:"constructionItemId"`
 	Amount             int64 `json:"amount"`
+	Trivial            bool  `json:"trivial"`
+}
+
+const centralSilverShopMarker = "Central Silver Shop - keep like this"
+
+func ConstructionItemPackageIsTrivial(record Record) bool {
+	packageType, _ := record.String("packageType")
+	comment, _ := record.String("comment2")
+	return packageType == "constructionItem" && strings.Contains(comment, centralSilverShopMarker)
 }
 
 func (store *Store) ConstructionShopProducts(itemID int64) ([]ConstructionShopProduct, error) {
@@ -50,6 +60,7 @@ func buildConstructionShopProducts(store *Store) (map[int64][]ConstructionShopPr
 		}
 		products[itemID] = append(products[itemID], ConstructionShopProduct{
 			PackageID: packageID, ConstructionItemID: itemID, Amount: amount,
+			Trivial: ConstructionItemPackageIsTrivial(record),
 		})
 	}
 	for itemID := range products {

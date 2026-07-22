@@ -26,6 +26,7 @@ export interface ConstructionItemCatalogEntry {
   /** Resolved effect line (same as in-game / General’s Camp style overviews). */
   effects: string;
   imageUrl: string;
+  buildingName: string;
   durationSecondsMin: number;
   durationSecondsMax: number;
   premium: boolean;
@@ -169,15 +170,15 @@ export function fetchConstructionItemsCatalog(): Promise<ConstructionItemCatalog
 }
 
 async function loadOfficialConstructionItems(): Promise<ConstructionItemCatalogEntry[]> {
-  const [response, effectsResponse, assetRows] = await Promise.all([
+  const [response, effectsResponse, buildingAssetRows] = await Promise.all([
     CitadelAPI.getCatalog<Record<string, unknown>>('constructionItems'),
     CitadelAPI.getCatalog<Record<string, unknown>>('effects'),
-    CitadelAPI.getCatalog<Record<string, unknown>>('construction-item-icons')
+    CitadelAPI.getCatalog<Record<string, unknown>>('construction-item-building-icons')
       .then((assetResponse) => assetResponse.items)
       .catch(() => []),
   ]);
   const effectNames = effectNamesByID(effectsResponse.items);
-  const assetURLs = constructionItemAssetURLs(assetRows);
+  const buildingAssets = constructionItemBuildingAssets(buildingAssetRows);
   const localizationKeys = Array.from(new Set(response.items.flatMap((row) => {
     const internal = typeof row.name === 'string' ? row.name.trim() : '';
     return internal ? tciDisplayNameLocalizationKeys(internal) : [];
@@ -204,6 +205,8 @@ async function loadOfficialConstructionItems(): Promise<ConstructionItemCatalogE
     })).sort((left, right) => left.level - right.level || left.wireCid - right.wireCid);
     const internal = typeof row.name === 'string' ? row.name : `constructionItem${groupTiers[0]?.wireCid ?? ''}`;
     const label = tciDisplayName(row, internal, translations);
+    const constructionItemGroupID = positiveInteger(row.constructionItemGroupID);
+    const buildingAsset = buildingAssets.get(constructionItemBuildingAssetKey(constructionItemGroupID, internal));
     const minLevel = groupTiers[0]?.level ?? 1;
     const maxLevel = groupTiers[groupTiers.length - 1]?.level ?? minLevel;
     const durations = groupTiers.map((tier) => tier.durationSeconds).filter((duration) => duration > 0);
@@ -220,7 +223,8 @@ async function loadOfficialConstructionItems(): Promise<ConstructionItemCatalogE
       level: minLevel === maxLevel ? String(minLevel) : `${minLevel}-${maxLevel}`,
       category: typeof row.comment1 === 'string' ? row.comment1 : `Slot ${row.slotTypeID ?? ''}`.trim(),
       effects: groupTiers[0]?.effects ?? '',
-      imageUrl: constructionItemAssetURL(assetURLs, internal),
+      imageUrl: buildingAsset?.url ?? '',
+      buildingName: buildingAsset?.buildingName ?? '',
       durationSecondsMin,
       durationSecondsMax,
       premium: groupTiers.some((tier) => tier.premium),
@@ -236,19 +240,22 @@ function isSelectableConstructionItem(row: Record<string, unknown>): boolean {
   return comment1 !== 'appearance' && !comment1.includes('testing') && !comment2.includes('testing');
 }
 
-function constructionItemAssetURLs(rows: Record<string, unknown>[]): Map<string, string> {
-  const urls = new Map<string, string>();
+function constructionItemBuildingAssets(rows: Record<string, unknown>[]): Map<string, { buildingName: string; url: string }> {
+  const assets = new Map<string, { buildingName: string; url: string }>();
   for (const row of rows) {
-    const assetName = typeof row.assetName === 'string' ? row.assetName.trim() : '';
+    const constructionItemGroupID = positiveInteger(row.constructionItemGroupId);
+    const constructionItemName = typeof row.constructionItemName === 'string' ? row.constructionItemName.trim() : '';
+    const buildingName = typeof row.buildingName === 'string' ? row.buildingName.trim() : '';
     const url = typeof row.url === 'string' ? row.url.trim() : '';
-    if (assetName && url) urls.set(assetName, url);
+    if (constructionItemGroupID > 0 && constructionItemName && url) {
+      assets.set(constructionItemBuildingAssetKey(constructionItemGroupID, constructionItemName), { buildingName, url });
+    }
   }
-  return urls;
+  return assets;
 }
 
-function constructionItemAssetURL(assetURLs: Map<string, string>, internal: string): string {
-  const assetName = `ConstructionItem_${internal.charAt(0).toUpperCase()}${internal.slice(1)}`;
-  return assetURLs.get(assetName) ?? '';
+function constructionItemBuildingAssetKey(groupID: number, internal: string): string {
+  return `${groupID}|${internal.trim().toLowerCase()}`;
 }
 
 function constructionItemGroupKey(row: Record<string, unknown>): string {

@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 
 export interface QuantityAssetTileProps {
   visual: ReactNode;
-  quantity: number | string;
+  quantity: ReactNode;
   onRemove: () => void;
   removeLabel: string;
   size?: number;

@@ -250,6 +250,180 @@ func sortTargets(rows []Target) {
 	})
 }
 
+func queryTargets(rows []Target, query Query) ([]TargetView, int, int, int) {
+	query = normalizeTargetQuery(query)
+	filtered := make([]Target, 0, len(rows))
+	for _, target := range rows {
+		if query.Status == "under-bird" && !target.UnderBird {
+			continue
+		}
+		if query.Status == "attackable" && target.UnderBird {
+			continue
+		}
+		if query.Search != "" &&
+			!strings.Contains(strings.ToLower(target.Name), query.Search) &&
+			!strings.Contains(strings.ToLower(target.TargetCastle.Name), query.Search) &&
+			!strings.Contains(coordinateKey(target.TargetCastle.X, target.TargetCastle.Y), query.Search) {
+			continue
+		}
+		filtered = append(filtered, target)
+	}
+	sort.SliceStable(filtered, func(left, right int) bool {
+		comparison := compareTarget(filtered[left], filtered[right], query.Sort)
+		if query.Direction == "desc" {
+			comparison = -comparison
+		}
+		if comparison != 0 {
+			return comparison < 0
+		}
+		if filtered[left].Distance != filtered[right].Distance {
+			return filtered[left].Distance < filtered[right].Distance
+		}
+		return compareText(filtered[left].Name, filtered[right].Name) < 0
+	})
+
+	total := len(filtered)
+	pageCount := max(1, (total+TargetPageSize-1)/TargetPageSize)
+	page := min(query.Page, pageCount)
+	start := min((page-1)*TargetPageSize, total)
+	end := min(start+TargetPageSize, total)
+	result := make([]TargetView, 0, end-start)
+	for _, target := range filtered[start:end] {
+		result = append(result, targetView(target))
+	}
+	return result, total, page, pageCount
+}
+
+func normalizeTargetQuery(query Query) Query {
+	query.Search = strings.ToLower(strings.TrimSpace(query.Search))
+	if query.Status != "under-bird" && query.Status != "attackable" {
+		query.Status = "all"
+	}
+	switch query.Sort {
+	case "player", "might", "rpt", "target", "closestCastle", "distance":
+	default:
+		query.Sort = "distance"
+	}
+	if query.Direction != "desc" {
+		query.Direction = "asc"
+	}
+	if query.Page < 1 {
+		query.Page = 1
+	}
+	return query
+}
+
+func compareTarget(left Target, right Target, key string) int {
+	switch key {
+	case "player":
+		return compareText(left.Name, right.Name)
+	case "might":
+		return compareInt64(left.Might, right.Might)
+	case "rpt":
+		return compareInt(left.RPTSeconds, right.RPTSeconds)
+	case "target":
+		leftName := left.TargetCastle.Name
+		if leftName == "" {
+			leftName = left.TargetCastle.TypeName
+		}
+		rightName := right.TargetCastle.Name
+		if rightName == "" {
+			rightName = right.TargetCastle.TypeName
+		}
+		if comparison := compareText(leftName, rightName); comparison != 0 {
+			return comparison
+		}
+		if comparison := compareInt(left.TargetCastle.X, right.TargetCastle.X); comparison != 0 {
+			return comparison
+		}
+		return compareInt(left.TargetCastle.Y, right.TargetCastle.Y)
+	case "closestCastle":
+		if comparison := compareText(left.ClosestOwnCastle.Name, right.ClosestOwnCastle.Name); comparison != 0 {
+			return comparison
+		}
+		if comparison := compareInt(left.ClosestOwnCastle.X, right.ClosestOwnCastle.X); comparison != 0 {
+			return comparison
+		}
+		return compareInt(left.ClosestOwnCastle.Y, right.ClosestOwnCastle.Y)
+	default:
+		return compareFloat(left.Distance, right.Distance)
+	}
+}
+
+func targetView(target Target) TargetView {
+	return TargetView{
+		Name: target.Name, Might: target.Might,
+		UnderBird: target.UnderBird, RPTSeconds: target.RPTSeconds, Distance: target.Distance,
+		TargetCastle: TargetCastleView{
+			CastleID: target.TargetCastle.CastleID, Name: target.TargetCastle.Name,
+			TypeName: target.TargetCastle.TypeName, X: target.TargetCastle.X, Y: target.TargetCastle.Y,
+		},
+		ClosestOwnCastle: OwnCastleView{
+			Name: target.ClosestOwnCastle.Name, X: target.ClosestOwnCastle.X, Y: target.ClosestOwnCastle.Y,
+		},
+	}
+}
+
+func allianceOptionViews(options []AllianceOption) []AllianceOptionView {
+	result := make([]AllianceOptionView, 0, len(options))
+	for _, option := range options {
+		result = append(result, AllianceOptionView{
+			ExternalID: option.ExternalID, Name: option.Name, Rank: option.Rank, PlayerCount: option.PlayerCount,
+		})
+	}
+	return result
+}
+
+func spyAction(gameState State.GameState, availability SpyAvailability) SpyAction {
+	return SpyAction{
+		CanLaunch: gameState.Session.LoggedIn && gameState.Session.SocketReady && availability.BuildingRowsLoaded &&
+			availability.Available > 0 && availability.SourceCastle.CastleID > 0,
+		Available: availability.Available, SourceCastleID: availability.SourceCastle.CastleID,
+	}
+}
+
+func compareText(left string, right string) int {
+	left = strings.ToLower(left)
+	right = strings.ToLower(right)
+	if left < right {
+		return -1
+	}
+	if left > right {
+		return 1
+	}
+	return 0
+}
+
+func compareInt(left int, right int) int {
+	if left < right {
+		return -1
+	}
+	if left > right {
+		return 1
+	}
+	return 0
+}
+
+func compareInt64(left int64, right int64) int {
+	if left < right {
+		return -1
+	}
+	if left > right {
+		return 1
+	}
+	return 0
+}
+
+func compareFloat(left float64, right float64) int {
+	if left < right {
+		return -1
+	}
+	if left > right {
+		return 1
+	}
+	return 0
+}
+
 func coordinateKey(x int, y int) string {
 	return fmt.Sprintf("%d:%d", x, y)
 }

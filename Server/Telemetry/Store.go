@@ -30,6 +30,7 @@ const (
 	ChannelAutoTowers      = "autotowers"
 	ChannelAutoInvasion    = "autoinvasion"
 	ChannelAutoNomad       = "autonomad"
+	ChannelAutoAdvisor     = "autoadvisor"
 	ChannelAutoKhan        = "autokhan"
 	ChannelAutoStorm       = "autostorm"
 	ChannelRift            = "rift"
@@ -50,27 +51,33 @@ type Channel struct {
 var knownChannels = []Channel{
 	{ID: ChannelWebSocketGame, Label: "All Game Traffic", Description: "Every game WebSocket frame, including actions performed directly in the game."},
 	{ID: ChannelAppSend, Label: "Citadel Commands", Description: "Commands sent by Citadel and the matching replies received from the game."},
-	{ID: ChannelAutoBird, Label: "Auto Bird", Description: "Auto Bird decisions, actions, and game commands."},
-	{ID: ChannelAutoStation, Label: "Auto Station", Description: "Auto Station decisions, actions, and game commands."},
-	{ID: ChannelAutoRecruit, Label: "Auto Recruit", Description: "Auto Recruit decisions, actions, and game commands."},
-	{ID: ChannelAutoTool, Label: "Auto Tool", Description: "Auto Tool decisions, actions, and game commands."},
-	{ID: ChannelAutoSceatRes, Label: "Auto Sceat Resources", Description: "Auto Sceat Resources decisions, actions, and game commands."},
-	{ID: ChannelAutoHospital, Label: "Auto Hospital", Description: "Auto Hospital decisions, actions, and game commands."},
-	{ID: ChannelAutoTCI, Label: "Auto TCI", Description: "Auto TCI decisions, actions, and game commands."},
-	{ID: ChannelAutoBeriWorld, Label: "Auto Berimond World", Description: "Auto Berimond World decisions, actions, and game commands."},
-	{ID: ChannelAutoFoodBalance, Label: "Auto Food Balance", Description: "Auto Food Balance decisions, actions, and game commands."},
-	{ID: ChannelAutoEquipment, Label: "Auto Equipment Cleanup", Description: "Automatic equipment and gem cleanup commands and results."},
-	{ID: ChannelAutoTowers, Label: "Auto Towers", Description: "Auto Towers decisions, attacks, and game replies."},
-	{ID: ChannelAutoInvasion, Label: "Auto Invasion", Description: "Foreign Lords and Bloodcrow decisions, attacks, and game replies."},
-	{ID: ChannelAutoNomad, Label: "Auto Nomad / Samurai", Description: "Nomad and Samurai camp decisions, attacks, and game replies."},
-	{ID: ChannelAutoKhan, Label: "Auto Khan", Description: "Khan attack-chain, defense, and protection activity."},
-	{ID: ChannelAutoStorm, Label: "Auto Storm", Description: "Storm construction, logistics, combat, and shop activity."},
-	{ID: ChannelRift, Label: "Rift", Description: "Rift decisions, actions, and game commands."},
+	{ID: ChannelAutoBird, Label: "Auto Bird", Description: "Completed Auto Bird troop movements and problems requiring attention."},
+	{ID: ChannelAutoStation, Label: "Auto Station", Description: "Completed station and recall movements and problems requiring attention."},
+	{ID: ChannelAutoRecruit, Label: "Auto Recruit", Description: "Completed troop queues and problems requiring attention."},
+	{ID: ChannelAutoTool, Label: "Auto Tool", Description: "Completed tool queues and problems requiring attention."},
+	{ID: ChannelAutoSceatRes, Label: "Auto Sceat Resources", Description: "Completed crafting and resource actions and problems requiring attention."},
+	{ID: ChannelAutoHospital, Label: "Auto Hospital", Description: "Completed hospital actions and problems requiring attention."},
+	{ID: ChannelAutoTCI, Label: "Auto TCI", Description: "Completed construction-item equips, upgrades, and purchases and problems requiring attention."},
+	{ID: ChannelAutoBeriWorld, Label: "Auto Berimond World", Description: "Completed Berimond troop transfers and problems requiring attention."},
+	{ID: ChannelAutoFoodBalance, Label: "Auto Food Balance", Description: "Completed food and mead shipments and problems requiring attention."},
+	{ID: ChannelAutoEquipment, Label: "Auto Equipment Cleanup", Description: "Completed equipment cleanup actions and problems requiring attention."},
+	{ID: ChannelAutoTowers, Label: "Auto Towers", Description: "Launched tower attacks and problems requiring attention."},
+	{ID: ChannelAutoInvasion, Label: "Auto Invasion", Description: "Launched Foreign Lords and Bloodcrow attacks and problems requiring attention."},
+	{ID: ChannelAutoNomad, Label: "Auto Nomad / Samurai", Description: "Launched Nomad and Samurai attacks and other completed event actions."},
+	{ID: ChannelAutoAdvisor, Label: "Auto Advisor", Description: "Launched advisor attacks and other completed advisor actions."},
+	{ID: ChannelAutoKhan, Label: "Auto Khan", Description: "Completed Khan attacks, defense, and protection actions."},
+	{ID: ChannelAutoStorm, Label: "Auto Storm", Description: "Completed Storm attacks, construction, logistics, and shop purchases."},
+	{ID: ChannelRift, Label: "Rift", Description: "Launched Rift attacks and other completed Rift actions."},
+}
+
+var featureActivityEvents = map[string]struct{}{
+	"ACTION": {}, "ALLIANCE HELP": {}, "ATTACK": {}, "BUILDING": {}, "CONSTRUCTION": {},
+	"CRAFTING": {}, "DEFENSE": {}, "EQUIPMENT": {}, "ESPIONAGE": {}, "EVENT": {},
+	"HOSPITAL": {}, "PURCHASE": {}, "QUEUE": {}, "TIME SKIP": {}, "TRANSPORT": {},
 }
 
 type pendingAppCommand struct {
-	opcode  string
-	channel string
+	responseOpcodes []string
 }
 
 type webSocketGameSession struct {
@@ -159,6 +166,9 @@ func (store *Store) Record(frame Protocol.CommittedFrame, reduceErr error) {
 		return
 	}
 	direction := logDirection(frame.Frame.Direction)
+	if frame.Frame.Direction == Protocol.DirectionInbound && frame.Frame.ResponseCode != nil && *frame.Frame.ResponseCode != 0 {
+		direction = "ERROR"
+	}
 	payload := strings.TrimSpace(frame.Frame.Raw)
 	if payload == "" {
 		payload = strings.TrimSpace(string(frame.Frame.Payload))
@@ -192,7 +202,7 @@ func (store *Store) RecordRaw(raw string, direction Protocol.Direction, observed
 
 // RecordAppOutbound records a command dispatched through Citadel, keeping manual game traffic
 // out of the app-only channel. The next matching inbound opcode is added as a MATCH line.
-func (store *Store) RecordAppOutbound(payload string, actor string) {
+func (store *Store) RecordAppOutbound(payload string, _ string) {
 	if store == nil {
 		return
 	}
@@ -203,20 +213,19 @@ func (store *Store) RecordAppOutbound(payload string, actor string) {
 		opcode = frame.Opcode
 	}
 	line := formatLine(now, "SEND", opcode, strings.TrimSpace(payload))
-	featureChannel := featureChannelForActor(actor)
 	store.mu.Lock()
-	store.pendingAppCommand = append(store.pendingAppCommand, pendingAppCommand{opcode: opcode, channel: featureChannel})
+	store.pendingAppCommand = append(store.pendingAppCommand, pendingAppCommand{
+		responseOpcodes: appResponseOpcodes(opcode),
+	})
 	if len(store.pendingAppCommand) > maxPendingAppCommands {
 		store.pendingAppCommand = store.pendingAppCommand[len(store.pendingAppCommand)-maxPendingAppCommands:]
 	}
 	store.appendLocked(ChannelAppSend, line, now)
-	if featureChannel != "" {
-		store.appendLocked(featureChannel, line, now)
-	}
 	store.mu.Unlock()
 }
 
-// RecordFeature appends a concise lifecycle line to an automation or Rift channel.
+// RecordFeature preserves the legacy feature logger API. Non-activity legacy entries
+// remain on disk but are omitted from feature tails.
 func (store *Store) RecordFeature(channel string, event string, detail string) {
 	if store == nil || !isKnownChannel(channel) {
 		return
@@ -224,8 +233,8 @@ func (store *Store) RecordFeature(channel string, event string, detail string) {
 	store.append(channel, formatLine(time.Now(), "INFO", event, detail))
 }
 
-// RecordIntent adds operation lifecycle details to the matching automation or Rift channel.
-func (store *Store) RecordIntent(actor string, intent string, status string, operationID string, detail string) {
+// RecordFeatureActivity adds one user-facing completed action or issue to an automation or Rift channel.
+func (store *Store) RecordFeatureActivity(actor string, intent string, severity string, event string, detail string) {
 	channel := featureChannelForActor(actor)
 	if channel == "" && strings.HasPrefix(strings.ToLower(strings.TrimSpace(intent)), "rift.") {
 		channel = ChannelRift
@@ -233,14 +242,15 @@ func (store *Store) RecordIntent(actor string, intent string, status string, ope
 	if channel == "" {
 		return
 	}
-	detail = strings.TrimSpace(detail)
-	if operationID != "" {
-		detail = fmt.Sprintf("operation=%s %s", operationID, detail)
+	severity = strings.ToUpper(strings.TrimSpace(severity))
+	if severity != "WARN" && severity != "ERROR" {
+		severity = "INFO"
 	}
-	if intent != "" {
-		detail = fmt.Sprintf("intent=%s %s", intent, detail)
+	event = strings.ToUpper(strings.TrimSpace(event))
+	if _, exists := featureActivityEvents[event]; !exists {
+		event = "ACTION"
 	}
-	store.RecordFeature(channel, status, strings.TrimSpace(detail))
+	store.append(channel, formatLine(time.Now(), severity, event, strings.TrimSpace(detail)))
 }
 
 func (store *Store) Channels() []Channel {
@@ -260,6 +270,9 @@ func (store *Store) Tail(channel string, limit int) []string {
 
 	store.mu.RLock()
 	lines := tailLines(store.lines[channel], limit)
+	if isFeatureChannel(channel) {
+		lines = tailFeatureActivityLines(store.lines[channel], limit)
+	}
 	store.mu.RUnlock()
 	store.flushPersistence()
 	store.fileMu.Lock()
@@ -268,8 +281,15 @@ func (store *Store) Tail(channel string, limit int) []string {
 	if path == "" {
 		return lines
 	}
-	persisted, err := tailNonEmptyLines(path, limit)
+	readLimit := limit
+	if isFeatureChannel(channel) {
+		readLimit = min(limit*16, 100_000)
+	}
+	persisted, err := tailNonEmptyLines(path, readLimit)
 	if err == nil {
+		if isFeatureChannel(channel) {
+			return tailFeatureActivityLines(persisted, limit)
+		}
 		return persisted
 	}
 	return lines
@@ -294,16 +314,41 @@ func (store *Store) Close() {
 func (store *Store) recordMatchingAppResponse(frame Protocol.Frame, payload string) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
-	if len(store.pendingAppCommand) == 0 || store.pendingAppCommand[0].opcode != frame.Opcode {
+	match := -1
+	for index, pending := range store.pendingAppCommand {
+		if containsOpcode(pending.responseOpcodes, frame.Opcode) {
+			match = index
+			break
+		}
+	}
+	if match < 0 {
 		return
 	}
-	pending := store.pendingAppCommand[0]
-	store.pendingAppCommand = store.pendingAppCommand[1:]
+	copy(store.pendingAppCommand[match:], store.pendingAppCommand[match+1:])
+	store.pendingAppCommand = store.pendingAppCommand[:len(store.pendingAppCommand)-1]
 	line := formatLine(frame.ReceivedAt, "MATCH", frame.Opcode, payload)
 	store.appendLocked(ChannelAppSend, line, frame.ReceivedAt)
-	if pending.channel != "" {
-		store.appendLocked(pending.channel, line, frame.ReceivedAt)
+}
+
+func appResponseOpcodes(opcode string) []string {
+	switch strings.ToLower(strings.TrimSpace(opcode)) {
+	case "jca":
+		return []string{"jaa"}
+	case "ahr":
+		return []string{"ahh", "ahr"}
+	default:
+		return []string{strings.ToLower(strings.TrimSpace(opcode))}
 	}
+}
+
+func containsOpcode(values []string, opcode string) bool {
+	opcode = strings.ToLower(strings.TrimSpace(opcode))
+	for _, value := range values {
+		if value == opcode {
+			return true
+		}
+	}
+	return false
 }
 
 func (store *Store) append(channel string, line string) {
@@ -555,6 +600,43 @@ func tailLines(lines []string, limit int) []string {
 	return append([]string(nil), lines...)
 }
 
+func tailFeatureActivityLines(lines []string, limit int) []string {
+	filtered := make([]string, 0, min(len(lines), limit))
+	for _, line := range lines {
+		if isFeatureActivityLine(line) {
+			filtered = append(filtered, line)
+		}
+	}
+	return tailLines(filtered, limit)
+}
+
+func isFeatureActivityLine(line string) bool {
+	firstOpen := strings.IndexByte(line, '[')
+	if firstOpen < 0 {
+		return false
+	}
+	firstClose := strings.IndexByte(line[firstOpen+1:], ']')
+	if firstClose < 0 {
+		return false
+	}
+	firstClose += firstOpen + 1
+	severity := strings.TrimSpace(line[firstOpen+1 : firstClose])
+	if severity != "INFO" && severity != "WARN" && severity != "ERROR" {
+		return false
+	}
+	remainder := strings.TrimSpace(line[firstClose+1:])
+	if !strings.HasPrefix(remainder, "[") {
+		return false
+	}
+	secondClose := strings.IndexByte(remainder[1:], ']')
+	if secondClose < 0 {
+		return false
+	}
+	event := strings.TrimSpace(remainder[1 : secondClose+1])
+	_, exists := featureActivityEvents[event]
+	return exists
+}
+
 func logDirection(direction Protocol.Direction) string {
 	switch direction {
 	case Protocol.DirectionInbound:
@@ -608,6 +690,8 @@ func featureChannelForActor(actor string) string {
 		return ChannelAutoInvasion
 	case "autonomad":
 		return ChannelAutoNomad
+	case "autoadvisor":
+		return ChannelAutoAdvisor
 	case "autokhan":
 		return ChannelAutoKhan
 	case "autostorm":
@@ -626,4 +710,8 @@ func isKnownChannel(channel string) bool {
 		}
 	}
 	return false
+}
+
+func isFeatureChannel(channel string) bool {
+	return isKnownChannel(channel) && channel != ChannelWebSocketGame && channel != ChannelAppSend
 }

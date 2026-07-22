@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Anchor,
+  ArrowDown,
+  ArrowUp,
   Camera,
   Castle,
   Clock3,
   Crosshair,
   FastForward,
+  GripVertical,
   Hammer,
   Package,
   Search,
@@ -32,15 +35,17 @@ import { useMetadata } from '../../context/MetadataContext';
 import {
   AUTO_STORM_LUNA_PACKAGE_IDS,
   AUTO_STORM_SECTION,
+  AUTO_STORM_TARGET_PRIORITIES,
   clampAutoStormInteger,
   defaultAutoStormClientState,
   parseAutoStormClientState,
   type AutoStormClientStateV1,
-  type AutoStormCombatOrder,
   type AutoStormIslandSize,
   type AutoStormResource,
+  type AutoStormTargetPriority,
 } from '../AutoStormClientState';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+import { DailyAttackLimitField } from './DailyAttackLimitField';
 
 interface AutoStormSettingsModalProps {
   isOpen: boolean;
@@ -78,6 +83,15 @@ const SIZE_OPTIONS: Array<{ value: AutoStormIslandSize; label: string }> = [
   { value: 'large', label: 'Large' },
   { value: 'small', label: 'Small' },
 ];
+const TARGET_PRIORITY_OPTIONS: Record<AutoStormTargetPriority, { label: string; detail: string }> = {
+  'fort:80': { label: 'Level 80 fort', detail: 'Uses the selected fort attack preset.' },
+  'fort:70': { label: 'Level 70 fort', detail: 'Uses the selected fort attack preset.' },
+  'fort:60': { label: 'Level 60 fort', detail: 'Uses the selected fort attack preset.' },
+  'fort:50': { label: 'Level 50 fort', detail: 'Uses the selected fort attack preset.' },
+  'fort:40': { label: 'Level 40 fort', detail: 'Uses the selected fort attack preset.' },
+  'island:large': { label: 'Large resource island', detail: 'Any selected resource; uses the island attack preset.' },
+  'island:small': { label: 'Small resource island', detail: 'Any selected resource; uses the island attack preset.' },
+};
 const RESOURCE_RESERVES = [
   { key: '3', label: 'Wood' },
   { key: '4', label: 'Stone' },
@@ -104,6 +118,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const [lunaPackages, setLunaPackages] = useState<LunaPackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [lunaSearch, setLunaSearch] = useState('');
+  const [draggedTargetPriority, setDraggedTargetPriority] = useState<AutoStormTargetPriority | null>(null);
+  const [targetPriorityDropTarget, setTargetPriorityDropTarget] = useState<AutoStormTargetPriority | null>(null);
 
   const stormCastles = useMemo(() => Object.values(state?.castles ?? {})
     .filter((castle) => castle.kingdomId === 4)
@@ -125,7 +141,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   ))?.value ?? '';
   const selectedFortPreset = attackPresets.presets.find((preset) => preset.id === draft.forts.presetId);
   const selectedIslandPreset = attackPresets.presets.find((preset) => preset.id === draft.islands.presetId);
-  const detectedLunaTableId = state?.storm.lunaShopTableId ?? 0;
   const stormMapState = state?.storm.map;
   const stormMapCoverage = stormMapState && stormMapState.windowCount
     ? `${stormMapState.coveredBounds.x2 - stormMapState.coveredBounds.x1 + 1} × ${stormMapState.coveredBounds.y2 - stormMapState.coveredBounds.y1 + 1} · ${stormMapState.windowCount} windows`
@@ -150,7 +165,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     }
     return { ready, nextReadyAt };
   }, [stormMapState?.targets]);
-  const effectiveLunaTableId = draft.aquamarine.shopTableId || detectedLunaTableId;
   const configuredLunaPurchases = useMemo(
     () => new Map(draft.aquamarine.purchases.map((purchase) => [purchase.packageId, purchase])),
     [draft.aquamarine.purchases],
@@ -165,6 +179,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         .includes(query);
     });
   }, [getTool, getTroop, lunaPackages, lunaSearch]);
+  const activeTargetPriorities = useMemo(
+    () => draft.targetPriority.filter((priority) => autoStormTargetPriorityEnabled(draft, priority)),
+    [draft],
+  );
   const lunaCountersCurrent = Boolean(
     stormCastle
     && state?.inventory.constructionOffersCastleId === stormCastle.id
@@ -179,6 +197,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     const current = parseAutoStormClientState(savedConfiguration);
     setDraft(current);
     setCaptureCastleId(current.target?.castleId ?? 0);
+    setDraggedTargetPriority(null);
+    setTargetPriorityDropTarget(null);
   }, [isOpen, savedConfiguration]);
 
   useEffect(() => {
@@ -245,6 +265,38 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       ...current,
       islands: { ...current.islands, defenseUnits },
     }));
+  };
+
+  const moveTargetPriority = (source: AutoStormTargetPriority, targetPriority: AutoStormTargetPriority) => {
+    if (source === targetPriority) return;
+    setDraft((current) => {
+      const active = current.targetPriority.filter((priority) => autoStormTargetPriorityEnabled(current, priority));
+      const sourceIndex = active.indexOf(source);
+      const targetIndex = active.indexOf(targetPriority);
+      if (sourceIndex < 0 || targetIndex < 0) return current;
+      const reordered = [...active];
+      const [moved] = reordered.splice(sourceIndex, 1);
+      reordered.splice(targetIndex, 0, moved);
+      const activeSet = new Set<AutoStormTargetPriority>(reordered);
+      return {
+        ...current,
+        targetPriority: [
+          ...reordered,
+          ...current.targetPriority.filter((priority) => !activeSet.has(priority)),
+        ],
+      };
+    });
+  };
+
+  const moveTargetPriorityBy = (priority: AutoStormTargetPriority, offset: -1 | 1) => {
+    const index = activeTargetPriorities.indexOf(priority);
+    const target = activeTargetPriorities[index + offset];
+    if (target) moveTargetPriority(priority, target);
+  };
+
+  const finishTargetPriorityDrag = () => {
+    setDraggedTargetPriority(null);
+    setTargetPriorityDropTarget(null);
   };
 
   const fortValid = !draft.forts.enabled || (draft.forts.levels.length > 0 && Boolean(draft.forts.presetId));
@@ -587,6 +639,94 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </div>
 
             <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold text-text-main">
+                  <Crosshair className="h-4 w-4 text-primary" /> Attack target priority
+                </div>
+                <p className="mt-1 text-xs text-text-muted">
+                  Drag enabled targets into attack order, highest first. Distance only breaks ties between targets in the same row.
+                </p>
+              </div>
+
+              {activeTargetPriorities.length > 0 ? (
+                <div className="mt-3 space-y-2 border-t border-border-base pt-3" role="list" aria-label="Auto Storm target priority order">
+                  {activeTargetPriorities.map((priority, index) => {
+                    const option = TARGET_PRIORITY_OPTIONS[priority];
+                    return (
+                      <div
+                        key={priority}
+                        role="listitem"
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.effectAllowed = 'move';
+                          event.dataTransfer.setData('text/plain', priority);
+                          setDraggedTargetPriority(priority);
+                        }}
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = 'move';
+                          if (priority !== draggedTargetPriority) setTargetPriorityDropTarget(priority);
+                        }}
+                        onDragLeave={(event) => {
+                          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setTargetPriorityDropTarget(null);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const source = (draggedTargetPriority ?? event.dataTransfer.getData('text/plain')) as AutoStormTargetPriority;
+                          if (AUTO_STORM_TARGET_PRIORITIES.some((candidate) => candidate === source)) {
+                            moveTargetPriority(source, priority);
+                          }
+                          finishTargetPriorityDrag();
+                        }}
+                        onDragEnd={finishTargetPriorityDrag}
+                        className={`flex cursor-grab items-center gap-3 rounded-global border bg-bg-card/45 p-3 transition-colors active:cursor-grabbing ${
+                          draggedTargetPriority === priority
+                            ? 'border-primary/40 opacity-45'
+                            : targetPriorityDropTarget === priority
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border-base hover:border-primary/30'
+                        }`}
+                      >
+                        <GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-app text-xs font-bold tabular-nums text-primary ring-1 ring-border-base">
+                          {index + 1}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs font-bold text-text-main">{option.label}</span>
+                          <span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{option.detail}</span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            disabled={index === 0}
+                            onClick={() => moveTargetPriorityBy(priority, -1)}
+                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+                            aria-label={`Move ${option.label} up`}
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={index === activeTargetPriorities.length - 1}
+                            onClick={() => moveTargetPriorityBy(priority, 1)}
+                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+                            aria-label={`Move ${option.label} down`}
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </button>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">
+                  Enable forts or resource islands and select at least one target to set the attack order.
+                </p>
+              )}
+            </div>
+
+            <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-sm font-bold text-text-main">Resource islands</div>
@@ -705,19 +845,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               ) : null}
             </div>
 
-            <div className="mt-4 grid gap-3 border-t border-border-base pt-4 sm:grid-cols-2">
-              <label>
-                <FieldLabel>Combat order</FieldLabel>
-                <Select
-                  value={draft.combatOrder}
-                  onChange={(value) => setDraft((current) => ({ ...current, combatOrder: value as AutoStormCombatOrder }))}
-                  options={[
-                    { value: 'forts_first', label: 'Forts first' },
-                    { value: 'islands_first', label: 'Islands first' },
-                    { value: 'nearest', label: 'Nearest first' },
-                  ]}
-                />
-              </label>
+            <div className="mt-4 border-t border-border-base pt-4">
               <div>
                 <FieldLabel>Map coverage</FieldLabel>
                 <Input readOnly value={stormMapCoverage} />
@@ -739,9 +867,9 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           <SectionHeading
             icon={Package}
             title="Aquamarine spending"
-            description="Buy prioritized Luna packages only after the castle target is complete and the protected Aquamarine reserve remains intact."
+            description="Buy prioritized Luna packages while the protected Aquamarine reserve remains intact."
           />
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
             <label>
               <FieldLabel>Keep Aquamarine</FieldLabel>
               <Input
@@ -760,26 +888,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <p className="mt-1 text-[11px] text-text-muted">Current: {Math.trunc(aquamarineBalance).toLocaleString()}</p>
             </label>
             <label>
-              <FieldLabel>Luna table ID (advanced)</FieldLabel>
-              <Input
-                type="number"
-                min={1}
-                value={effectiveLunaTableId || ''}
-                onChange={(event) => setDraft((current) => ({
-                  ...current,
-                  aquamarine: {
-                    ...current.aquamarine,
-                    shopTableId: clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
-                  },
-                }))}
-                placeholder="Auto-detected TID"
-                className="font-mono"
-              />
-              <p className="mt-1 text-[11px] text-text-muted">
-                {detectedLunaTableId > 0 ? `Detected from live Luna shop${state?.storm.lunaShopObservedAt ? ` · ${formatDate(state.storm.lunaShopObservedAt)}` : ''}` : 'Learned automatically after a live Luna purchase; manual override is available.'}
-              </p>
-            </label>
-            <label>
               <FieldLabel>Find a Luna reward</FieldLabel>
               <Input
                 value={lunaSearch}
@@ -794,7 +902,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           </div>
 
           <p className="mt-3 rounded-global border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-text-muted">
-            These 17 rewards were captured from the current Luna storefront; reward amounts, Aquamarine prices, and shop caps come from official game data. The table ID is learned from live purchase traffic and is never guessed. Unlimited goals obey the protected reserve and stop at Luna's stock cap when one exists.
+            These 17 rewards were captured from the current Luna storefront; reward amounts, Aquamarine prices, and shop caps come from official game data. Unlimited goals obey the protected reserve and stop at Luna's stock cap when one exists.
           </p>
 
           {loadingPackages ? (
@@ -920,17 +1028,18 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </div>
           )}
           {!shopValid ? <p className="mt-2 text-xs text-error">Use one unique Luna product per goal and a positive target count for finite goals.</p> : null}
-          {draft.aquamarine.purchases.length > 0 && effectiveLunaTableId <= 0 ? (
-            <p className="mt-2 text-xs text-warning">
-              These goals can be saved now. Auto Storm will wait to purchase until the live Luna table ID has been captured.
-            </p>
-          ) : null}
           {draft.aquamarine.purchases.length > 0 ? (
             <p className="mt-1 text-[11px] text-text-muted">
               Lower priority numbers run first. An uncapped unlimited goal can consume all Aquamarine above the reserve before lower-priority rewards.
             </p>
           ) : null}
         </Card>
+
+        <DailyAttackLimitField
+          value={draft.dailyAttackLimit}
+          onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
+          serverState={state?.dailyAttacks}
+        />
 
         <Card variant="solid" className="p-4">
           <SectionHeading icon={Clock3} title="Cadence" description="Map refreshes are authoritative scans; policy checks react sooner to resource, build, troop, and movement changes." />
@@ -1028,6 +1137,17 @@ function PresetSummary({ preset }: { preset: ReturnType<typeof parseAttackPreset
       <Badge variant="outline">{summary.tools.toLocaleString()} tools</Badge>
     </div>
   );
+}
+
+function autoStormTargetPriorityEnabled(
+  state: AutoStormClientStateV1,
+  priority: AutoStormTargetPriority,
+): boolean {
+  if (priority.startsWith('fort:')) {
+    return state.forts.enabled && state.forts.levels.includes(Number(priority.slice('fort:'.length)));
+  }
+  return state.islands.enabled
+    && state.islands.sizes.includes(priority.slice('island:'.length) as AutoStormIslandSize);
 }
 
 function updateBuild(

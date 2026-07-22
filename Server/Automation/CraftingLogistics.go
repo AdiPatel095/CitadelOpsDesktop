@@ -14,16 +14,9 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-const kingdomResourceDeliveryRatio = 0.90
-
 const craftingActiveRentalCost = 5_000_000
 
 var craftingQueueRentalCosts = map[int]float64{1: 500_000, 2: 3_000_000, 3: 6_500_000}
-
-var kingdomTimeSkipSeconds = map[string]int{
-	"MS1": 60, "MS2": 300, "MS3": 600, "MS4": 1_800,
-	"MS5": 3_600, "MS6": 18_000, "MS7": 86_400,
-}
 
 type craftingCostDefinition struct {
 	ResourceID State.ResourceID
@@ -72,81 +65,31 @@ func craftingRentalDecision(
 	}, true
 }
 
-func craftingLogisticsStale(snapshot Snapshot, interval time.Duration) bool {
-	if snapshot.State.Market.ObservedAt.IsZero() || snapshot.State.KingdomTransport.ObservedAt.IsZero() || !snapshot.State.Market.CaravanLevelLoaded {
-		return true
+func craftingLogisticsStale(snapshot Snapshot, interval time.Duration) (bool, error) {
+	marketRequired, err := marketLogisticsRequired(snapshot)
+	if err != nil {
+		return false, err
 	}
-	oldest := snapshot.State.Market.ObservedAt
-	if snapshot.State.KingdomTransport.ObservedAt.Before(oldest) {
-		oldest = snapshot.State.KingdomTransport.ObservedAt
+	kingdomRequired := kingdomLogisticsRequired(snapshot.State)
+	if !marketRequired && !kingdomRequired {
+		return false, nil
 	}
-	return snapshot.Now.Sub(oldest) >= interval
-}
-
-func pendingKingdomSkipDecision(settings craftingSettings, snapshot Snapshot, interval time.Duration) (Decision, bool) {
-	if !settings.UseKingdomTimeSkips || len(settings.AllowedTimeSkips) == 0 {
-		return Decision{}, false
-	}
-	pending := append([]State.KingdomResourceTransport(nil), snapshot.State.KingdomTransport.Pending...)
-	sort.Slice(pending, func(left, right int) bool { return pending[left].RemainingSec < pending[right].RemainingSec })
-	for _, transport := range pending {
-		skipID := chooseKingdomTimeSkip(settings, snapshot, transport.RemainingSec)
-		if skipID == "" {
-			continue
+	oldest := time.Time{}
+	if marketRequired {
+		if snapshot.State.Market.ObservedAt.IsZero() || !snapshot.State.Market.CaravanLevelLoaded {
+			return true, nil
 		}
-		arguments, _ := json.Marshal(map[string]any{"targetKingdomId": transport.KingdomID, "timeSkipId": skipID})
-		return Decision{
-			Status:              "ready",
-			Detail:              fmt.Sprintf("Apply %s to the kingdom %d resource shipment", skipID, transport.KingdomID),
-			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
-			Request:             &Intent.Request{Name: "resource.kingdom.skip", Arguments: arguments},
-			ReevaluateOnSuccess: true,
-		}, true
+		oldest = snapshot.State.Market.ObservedAt
 	}
-	return Decision{NextCheckAt: snapshot.Now.Add(interval)}, false
-}
-
-func chooseKingdomTimeSkip(settings craftingSettings, snapshot Snapshot, remainingSec int) string {
-	if remainingSec <= 0 || snapshot.GameData == nil {
-		return ""
-	}
-	type candidate struct {
-		id      string
-		seconds int
-	}
-	covering := []candidate{}
-	partial := []candidate{}
-	seen := map[string]struct{}{}
-	for _, rawID := range settings.AllowedTimeSkips {
-		id := strings.ToUpper(strings.TrimSpace(rawID))
-		seconds := kingdomTimeSkipSeconds[id]
-		if seconds <= 0 {
-			continue
+	if kingdomRequired {
+		if snapshot.State.KingdomTransport.ObservedAt.IsZero() {
+			return true, nil
 		}
-		if _, duplicate := seen[id]; duplicate {
-			continue
-		}
-		seen[id] = struct{}{}
-		currencyID := currencyIDForJSONKey(snapshot.GameData, id)
-		if currencyID <= 0 || snapshot.State.Player.Currencies[currencyID] <= float64(settings.TimeSkipReserve[id]) {
-			continue
-		}
-		entry := candidate{id: id, seconds: seconds}
-		if seconds >= remainingSec {
-			covering = append(covering, entry)
-		} else {
-			partial = append(partial, entry)
+		if oldest.IsZero() || snapshot.State.KingdomTransport.ObservedAt.Before(oldest) {
+			oldest = snapshot.State.KingdomTransport.ObservedAt
 		}
 	}
-	if len(covering) > 0 {
-		sort.Slice(covering, func(left, right int) bool { return covering[left].seconds < covering[right].seconds })
-		return covering[0].id
-	}
-	if len(partial) > 0 {
-		sort.Slice(partial, func(left, right int) bool { return partial[left].seconds > partial[right].seconds })
-		return partial[0].id
-	}
-	return ""
+	return snapshot.Now.Sub(oldest) >= interval, nil
 }
 
 func craftingRecipeCostState(
@@ -282,6 +225,276 @@ func craftingTransportDecision(
 	return Decision{}, false
 }
 
+type craftingLootDrainCandidate struct {
+	source          State.CastleState
+	target          State.CastleState
+	resource        State.ResourceID
+	amount          float64
+	delivered       float64
+	targetDemand    float64
+	targetBalance   float64
+	targetCoverage  float64
+	coinCost        float64
+	preferredSource bool
+}
+
+// craftingLootDrainDecision keeps logistics independent from queue admission.
+// Queue starts still require a free slot, while sovereign resources that arrive
+// at donor castles can fund one complete future refill of every configured
+// crafting queue even when those queues are currently full.
+func craftingLootDrainDecision(settings craftingSettings, snapshot Snapshot) (Decision, bool) {
+	demands := craftingRefillDemands(settings, snapshot)
+	if len(demands) == 0 {
+		return Decision{}, false
+	}
+	best := craftingLootDrainCandidate{}
+	for _, resourceID := range sovereignResourceIDs(snapshot.GameData) {
+		// State.Castles is the player's owned-castle roster. Keep every slot type
+		// eligible: the four crafting castles are donors/storage too, alongside
+		// outposts, capitals, metropolises, and Storm.
+		for _, sourceID := range sortedCastleIDs(snapshot.State.Castles) {
+			source := snapshot.State.Castles[sourceID]
+			available := craftingLootDrainAvailable(settings, source, resourceID, demands[source.ID][resourceID])
+			if available <= 0 {
+				continue
+			}
+			for _, targetID := range sortedCastleIDs(snapshot.State.Castles) {
+				target := snapshot.State.Castles[targetID]
+				targetDemand := demands[target.ID][resourceID]
+				if target.ID == source.ID || targetDemand <= 0 {
+					continue
+				}
+				balance := target.Resources[resourceID]
+				if balance.Capacity == nil || *balance.Capacity <= 0 {
+					continue
+				}
+				incoming := incomingMarketResource(snapshot, target, resourceID)
+				targetGoal := math.Min(targetDemand, *balance.Capacity)
+				targetBalance := balance.Amount + incoming
+				shortfall := targetGoal - targetBalance
+				if shortfall <= 0 {
+					continue
+				}
+				candidate, ready := craftingLootDrainRoute(
+					settings, snapshot, source, target, resourceID, available, shortfall, targetDemand, targetBalance,
+				)
+				candidate.preferredSource = craftingLootDrainPreferredSource(snapshot.GameData, resourceID, source.KingdomID)
+				if ready && betterCraftingLootDrainCandidate(candidate, best) {
+					best = candidate
+				}
+			}
+		}
+	}
+	if best.amount <= 0 {
+		return Decision{}, false
+	}
+	shipmentArguments := map[string]any{
+		"sourceCastleId": best.source.ID, "targetCastleId": best.target.ID,
+		"resourceId": best.resource, "amount": int64(best.amount),
+	}
+	if best.source.KingdomID != best.target.KingdomID {
+		shipmentArguments["workflowOwner"] = autoSceatTransportOwner
+	}
+	arguments, _ := json.Marshal(shipmentArguments)
+	return Decision{
+		Status: "ready",
+		Detail: fmt.Sprintf(
+			"Drain %.0f resource %d from %s into %s's configured crafting buffer",
+			best.amount, best.resource, castleName(best.source), castleName(best.target),
+		),
+		NextCheckAt: snapshot.Now.Add(2 * time.Second),
+		Metrics: map[string]float64{
+			"shipmentAmount": best.amount, "projectedDelivery": best.delivered,
+			"targetBufferDemand": best.targetDemand, "targetBalance": best.targetBalance,
+			"coinCost": best.coinCost,
+		},
+		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
+		ReevaluateOnSuccess: true,
+	}, true
+}
+
+func craftingRefillDemands(settings craftingSettings, snapshot Snapshot) map[State.CastleID]map[State.ResourceID]float64 {
+	result := map[State.CastleID]map[State.ResourceID]float64{}
+	resourceIDs := sovereignResourceIDs(snapshot.GameData)
+	costsByRecipe := map[int64]map[State.ResourceID]float64{}
+	recipeCosts := func(recipeID int64) map[State.ResourceID]float64 {
+		if costs, cached := costsByRecipe[recipeID]; cached {
+			return costs
+		}
+		costs := map[State.ResourceID]float64{}
+		for _, resourceID := range resourceIDs {
+			if amount := craftingRecipeResourceCost(snapshot.GameData, recipeID, resourceID); amount > 0 {
+				costs[resourceID] = amount
+			}
+		}
+		costsByRecipe[recipeID] = costs
+		return costs
+	}
+	for _, castleKey := range sortedNumericKeys(settings.Castles) {
+		castleIDValue, _ := strconv.ParseInt(castleKey, 10, 64)
+		castle, exists := snapshot.State.Castles[State.CastleID(castleIDValue)]
+		if !exists || !castle.SupportsSovereignCrafting() {
+			continue
+		}
+		for _, queueKey := range sortedNumericKeys(settings.Castles[castleKey].Buildings) {
+			plan := settings.Castles[castleKey].Buildings[queueKey]
+			cycle := craftingCycle(plan.Steps)
+			if !plan.Enabled || len(cycle) == 0 {
+				continue
+			}
+			queueType, _ := strconv.Atoi(queueKey)
+			building, found := craftingBuildingForQueue(castle, queueType)
+			if !found {
+				continue
+			}
+			capacity := 2 + len(building.ActiveSlotRentals) + len(building.QueueSlotRentals)
+			cursor := plan.Cursor % len(cycle)
+			if cursor < 0 {
+				cursor = 0
+			}
+			for offset := 0; offset < capacity; offset++ {
+				configuredID := cycle[(cursor+offset)%len(cycle)]
+				recipeID := resolveCraftingRecipe(snapshot, configuredID, building, castle.Crafting)
+				if recipeID <= 0 {
+					continue
+				}
+				for resourceID, amount := range recipeCosts(recipeID) {
+					if result[castle.ID] == nil {
+						result[castle.ID] = map[State.ResourceID]float64{}
+					}
+					result[castle.ID][resourceID] += amount
+				}
+			}
+		}
+	}
+	return result
+}
+
+func craftingLootDrainAvailable(
+	settings craftingSettings,
+	source State.CastleState,
+	resourceID State.ResourceID,
+	localDemand float64,
+) float64 {
+	balance := source.Resources[resourceID]
+	if balance.Capacity == nil || *balance.Capacity <= 0 {
+		return 0
+	}
+	reserve := *balance.Capacity * float64(clampInt(settings.SourceReservePercent, 0, 95)) / 100
+	return math.Floor(math.Max(0, balance.Amount-math.Max(reserve, localDemand)))
+}
+
+func craftingLootDrainRoute(
+	settings craftingSettings,
+	snapshot Snapshot,
+	source State.CastleState,
+	target State.CastleState,
+	resourceID State.ResourceID,
+	available float64,
+	shortfall float64,
+	targetDemand float64,
+	targetBalance float64,
+) (craftingLootDrainCandidate, bool) {
+	minimum := math.Max(0, float64(settings.MinimumShipmentSize))
+	targetCapacity := *target.Resources[resourceID].Capacity
+	targetFree := math.Max(0, targetCapacity-targetBalance)
+	requested := shortfall
+	deliveredRatio := 1.0
+	capacityPerBarrow := 0
+	if source.KingdomID == target.KingdomID {
+		if !craftingHasMarketplace(snapshot.GameData, source) {
+			return craftingLootDrainCandidate{}, false
+		}
+		market, observed := snapshot.State.Market.Castles[source.ID]
+		if !observed || market.AvailableBarrows <= 0 {
+			return craftingLootDrainCandidate{}, false
+		}
+		capacityPerBarrow = marketCapacityPerBarrow(snapshot, market)
+		if capacityPerBarrow <= 0 {
+			return craftingLootDrainCandidate{}, false
+		}
+		if requested < minimum {
+			requested = minimum
+		}
+		shipmentCapacity := float64(market.AvailableBarrows * capacityPerBarrow)
+		requested = math.Min(requested, shipmentCapacity)
+	} else {
+		if source.KingdomID == 4 && !settings.UseStormBuffer {
+			return craftingLootDrainCandidate{}, false
+		}
+		if _, pending := pendingKingdomResourceTransport(snapshot.State, target.KingdomID); pending {
+			return craftingLootDrainCandidate{}, false
+		}
+		if _, settling := kingdomResourceTransportWorkflow(snapshot.State, target.KingdomID); settling {
+			return craftingLootDrainCandidate{}, false
+		}
+		unlock, observed := snapshot.State.KingdomTransport.Unlocks[target.KingdomID]
+		if !observed || !unlock.Unlocked {
+			return craftingLootDrainCandidate{}, false
+		}
+		deliveredRatio = kingdomResourceDeliveryRatio
+		requested = math.Ceil(shortfall / deliveredRatio)
+		if requested < minimum {
+			requested = minimum
+		}
+		targetFree /= deliveredRatio
+	}
+	amount := math.Floor(math.Min(requested, math.Min(available, targetFree)))
+	if !craftingShipmentMeetsMinimum(amount, settings.MinimumShipmentSize) {
+		return craftingLootDrainCandidate{}, false
+	}
+	coinCost := float64(0)
+	if capacityPerBarrow > 0 {
+		barrows := int(math.Ceil(amount / float64(capacityPerBarrow)))
+		coinCost = marketShipmentCoinCost(source, target, barrows)
+		if playerResourceAmount(snapshot, "C1")-settings.MinimumCoinReserve < coinCost {
+			return craftingLootDrainCandidate{}, false
+		}
+	}
+	coverage := targetBalance / targetDemand
+	return craftingLootDrainCandidate{
+		source: source, target: target, resource: resourceID,
+		amount: amount, delivered: amount * deliveredRatio,
+		targetDemand: targetDemand, targetBalance: targetBalance, targetCoverage: coverage,
+		coinCost: coinCost,
+	}, true
+}
+
+func betterCraftingLootDrainCandidate(candidate craftingLootDrainCandidate, current craftingLootDrainCandidate) bool {
+	if current.amount <= 0 {
+		return true
+	}
+	if candidate.preferredSource != current.preferredSource {
+		return candidate.preferredSource
+	}
+	if candidate.targetCoverage != current.targetCoverage {
+		return candidate.targetCoverage < current.targetCoverage
+	}
+	if candidate.delivered != current.delivered {
+		return candidate.delivered > current.delivered
+	}
+	if candidate.resource != current.resource {
+		return candidate.resource < current.resource
+	}
+	if candidate.source.ID != current.source.ID {
+		return candidate.source.ID < current.source.ID
+	}
+	return candidate.target.ID < current.target.ID
+}
+
+func craftingLootDrainPreferredSource(store *GameData.Store, resourceID State.ResourceID, kingdomID State.KingdomID) bool {
+	switch strings.ToUpper(resourceJSONKey(store, resourceID)) {
+	case "C":
+		return kingdomID == 2
+	case "O":
+		return kingdomID == 1
+	case "G":
+		return kingdomID == 3
+	default:
+		return false
+	}
+}
+
 func sameKingdomShipmentDecision(
 	settings craftingSettings,
 	snapshot Snapshot,
@@ -341,7 +554,7 @@ func sameKingdomShipmentDecision(
 		Detail:              fmt.Sprintf("Ship %.0f resource %d from %s to %s", amount, resourceID, castleName(best), castleName(target)),
 		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 		Metrics:             map[string]float64{"shipmentAmount": amount, "coinCost": coinCost},
-		Request:             &Intent.Request{Name: "resource.market.ship", Arguments: arguments},
+		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
 		ReevaluateOnSuccess: true,
 	}, true
 }
@@ -354,13 +567,21 @@ func crossKingdomShipmentDecision(
 	shortfall float64,
 	interval time.Duration,
 ) (Decision, bool) {
-	for _, pending := range snapshot.State.KingdomTransport.Pending {
-		if pending.KingdomID != target.KingdomID || pending.RemainingSec <= 0 {
-			continue
+	if pending, found := pendingKingdomResourceTransport(snapshot.State, target.KingdomID); found {
+		detail := fmt.Sprintf("Kingdom %d already has a resource shipment in flight", target.KingdomID)
+		nextCheck := snapshot.Now.Add(coordinatorTick)
+		if pending.RemainingSec > 0 {
+			nextCheck = snapshot.Now.Add(time.Duration(pending.RemainingSec) * time.Second)
+		} else {
+			detail = fmt.Sprintf("Waiting for the kingdom %d resource shipment to settle", target.KingdomID)
 		}
+		return Decision{Status: "waiting", Detail: detail, NextCheckAt: nextCheck}, true
+	}
+	if workflow, found := kingdomResourceTransportWorkflow(snapshot.State, target.KingdomID); found {
 		return Decision{
-			Status: "waiting", Detail: fmt.Sprintf("Kingdom %d already has a resource shipment in flight", target.KingdomID),
-			NextCheckAt: snapshot.Now.Add(time.Duration(pending.RemainingSec) * time.Second),
+			Status:      "waiting",
+			Detail:      fmt.Sprintf("Waiting for %s to refresh the kingdom %d resource destination", workflow.Owner, workflow.KingdomID),
+			NextCheckAt: snapshot.Now.Add(coordinatorTick),
 		}, true
 	}
 	unlock, observed := snapshot.State.KingdomTransport.Unlocks[target.KingdomID]
@@ -405,15 +626,15 @@ func crossKingdomShipmentDecision(
 		return Decision{}, false
 	}
 	arguments, _ := json.Marshal(map[string]any{
-		"sourceCastleId": best.ID, "targetKingdomId": target.KingdomID,
-		"resourceId": resourceID, "amount": int64(amount),
+		"sourceCastleId": best.ID, "targetCastleId": target.ID,
+		"resourceId": resourceID, "amount": int64(amount), "workflowOwner": autoSceatTransportOwner,
 	})
 	return Decision{
 		Status:              "ready",
 		Detail:              fmt.Sprintf("Ship %.0f resource %d from kingdom %d to %d", amount, resourceID, best.KingdomID, target.KingdomID),
 		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 		Metrics:             map[string]float64{"shipmentAmount": amount},
-		Request:             &Intent.Request{Name: "resource.kingdom.ship", Arguments: arguments},
+		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
 		ReevaluateOnSuccess: true,
 	}, true
 }

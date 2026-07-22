@@ -71,7 +71,7 @@ func (scheduler *Scheduler) Schedule(request Request) error {
 	var previousVersion uint64
 	var previousExists bool
 	var changed bool
-	_, err := scheduler.state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := scheduler.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 		now := time.Now().UTC()
 		current, exists := gameState.Scheduled[request.ID]
 		worldID, playerID := State.BoundAccount(*gameState)
@@ -112,7 +112,7 @@ func (scheduler *Scheduler) Cancel(id string) error {
 	}
 	cancelled := false
 	var version uint64
-	_, err := scheduler.state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := scheduler.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 		operation, exists := gameState.Scheduled[id]
 		if !exists || operation.Status != "scheduled" && operation.Status != "running" {
 			return nil, false, nil
@@ -152,7 +152,7 @@ func (scheduler *Scheduler) Run(ctx context.Context) {
 }
 
 func (scheduler *Scheduler) dispatchDue(ctx context.Context) {
-	snapshot := scheduler.state.Snapshot()
+	snapshot := scheduler.state.ReadOnlyView()
 	ids := make([]string, 0, len(snapshot.Scheduled))
 	for id := range snapshot.Scheduled {
 		ids = append(ids, id)
@@ -181,7 +181,7 @@ func (scheduler *Scheduler) dispatchDue(ctx context.Context) {
 		scheduler.mu.Unlock()
 		claimed := false
 		claimedOperation := operation
-		_, _ = scheduler.state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		_, _ = scheduler.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 			current, exists := gameState.Scheduled[id]
 			if !exists || current.Version != operation.Version ||
 				current.Status != "scheduled" && current.Status != "running" || current.ExecuteAt.After(now) ||
@@ -227,7 +227,7 @@ func (scheduler *Scheduler) execute(ctx context.Context, operation State.Schedul
 		ID: operation.LastOperationID, Name: operation.Intent, Actor: "scheduler:" + operation.Intent,
 		Arguments: append([]byte(nil), operation.Arguments...),
 	})
-	_, _ = scheduler.state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, _ = scheduler.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 		current, exists := gameState.Scheduled[operation.ID]
 		if !exists || current.Version != operation.Version {
 			return nil, false, nil

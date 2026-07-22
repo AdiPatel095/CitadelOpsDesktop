@@ -54,6 +54,7 @@ type Application struct {
 	ProfileLease   *RuntimeKernel.ProfileLease
 	Automation     *Automation.Coordinator
 	Reports        *Reports.Manager
+	ReportStore    *Reports.SQLiteStore
 	Scheduler      *Scheduling.Scheduler
 	API            *API.Server
 	Updates        *AppUpdate.Manager
@@ -149,10 +150,23 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err := intents.SetOperationStore(ctx, operationStore); err != nil {
 		return nil, fmt.Errorf("recover intent operations: %w", err)
 	}
+	reportStore, err := Reports.OpenSQLiteStore(config.DataDir)
+	if err != nil {
+		return nil, fmt.Errorf("open report analytics store: %w", err)
+	}
+	closeReportStore := true
+	defer func() {
+		if closeReportStore {
+			_ = reportStore.Close()
+		}
+	}()
+	if err := Reports.BackfillBattleHistory(ctx, history, reportStore, initial); err != nil {
+		return nil, fmt.Errorf("backfill report analytics: %w", err)
+	}
 	application := &Application{
 		DataDir: config.DataDir,
 		State:   state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
-		Ingest: ingest, Session: session, Intents: intents, OperationStore: operationStore,
+		Ingest: ingest, Session: session, Intents: intents, OperationStore: operationStore, ReportStore: reportStore,
 		ProfileLease: profileLease, StartupErr: startupErr,
 		Updates: AppUpdate.NewManager(AppUpdate.Config{
 			CurrentVersion: Version, Endpoint: config.UpdateEndpoint,
@@ -194,16 +208,18 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewAutoTowerPolicy(),
 		Automation.NewAutoInvasionPolicy(),
 		Automation.NewAutoNomadPolicy(),
+		Automation.NewAutoAdvisorPolicy(),
 		Automation.NewAutoKhanPolicy(),
 		Automation.NewAutoStormPolicy(),
 	)
-	application.Reports = Reports.NewManager(state, history, intents)
+	application.Reports = Reports.NewManager(state, history, intents, reportStore)
 	application.API = API.NewServer(API.Config{
 		Version: Version, State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
-		Intents: intents, Session: session, Updates: application.Updates, Diagnostics: application.Diagnostics,
+		Intents: intents, ReportAnalytics: reportStore, Session: session, Updates: application.Updates, Diagnostics: application.Diagnostics,
 		Persistence: application,
 	})
 	closeOperationStore = false
+	closeReportStore = false
 	closeProfileLease = false
 	return application, nil
 }
@@ -224,6 +240,9 @@ func (application *Application) start(ctx context.Context) {
 		application.Telemetry.Close()
 		if application.OperationStore != nil {
 			_ = application.OperationStore.Close()
+		}
+		if application.ReportStore != nil {
+			_ = application.ReportStore.Close()
 		}
 		if application.ProfileLease != nil {
 			_ = application.ProfileLease.Close()
@@ -272,17 +291,11 @@ func (application *Application) recordIntentLog(receipt Intent.Receipt) {
 	if application == nil || application.Telemetry == nil {
 		return
 	}
-	detail := ""
-	if receipt.Plan != nil {
-		detail = receipt.Plan.Summary
+	for _, activity := range featureActivities(receipt) {
+		application.Telemetry.RecordFeatureActivity(
+			receipt.Actor, receipt.Intent, activity.severity, activity.event, activity.detail,
+		)
 	}
-	if receipt.Error != "" {
-		if detail != "" {
-			detail += ": "
-		}
-		detail += receipt.Error
-	}
-	application.Telemetry.RecordIntent(receipt.Actor, receipt.Intent, string(receipt.Status), receipt.ID, detail)
 }
 
 func (application *Application) persistState(ctx context.Context) {
@@ -326,7 +339,7 @@ func (application *Application) saveStateSnapshot() error {
 	}
 	application.statePersistenceMu.Lock()
 	defer application.statePersistenceMu.Unlock()
-	err := State.SaveSnapshot(application.DataDir, application.State.Snapshot())
+	err := State.SaveSnapshot(application.DataDir, application.State.ReadOnlyView())
 	application.persistenceHealthMu.Lock()
 	application.statePersistenceErr = err
 	application.persistenceHealthMu.Unlock()
@@ -341,8 +354,12 @@ func (application *Application) PersistenceError() error {
 	stateErr := application.statePersistenceErr
 	application.persistenceHealthMu.RUnlock()
 	var operationErr error
+	var reportErr error
 	if application.Intents != nil {
 		operationErr = application.Intents.PersistenceError()
+	}
+	if application.ReportStore != nil {
+		reportErr = application.ReportStore.LastError()
 	}
 	if stateErr != nil {
 		stateErr = fmt.Errorf("state snapshot persistence: %w", stateErr)
@@ -350,7 +367,10 @@ func (application *Application) PersistenceError() error {
 	if operationErr != nil {
 		operationErr = fmt.Errorf("operation journal persistence: %w", operationErr)
 	}
-	return errors.Join(stateErr, operationErr)
+	if reportErr != nil {
+		reportErr = fmt.Errorf("report analytics persistence: %w", reportErr)
+	}
+	return errors.Join(stateErr, operationErr, reportErr)
 }
 
 func (application *Application) capturePlayerHistory(ctx context.Context) {
@@ -400,6 +420,7 @@ func (application *Application) registerCoreIntents() error {
 	for name, action := range map[string]Intent.Action{
 		"session.start": ignoreArguments(application.Session.Start),
 		"session.stop":  ignoreArguments(application.Session.Stop),
+		"game.ui.close": ignoreArguments(application.Session.CloseGameUI),
 		"session.select_browser": func(_ context.Context, arguments json.RawMessage) error {
 			preference, err := browserPreference(arguments)
 			if err != nil {
@@ -463,6 +484,10 @@ func (application *Application) registerCoreIntents() error {
 					}},
 				}, nil
 			},
+		},
+		{
+			Name: "game.ui.close", Description: "Close dismissible dialogs, panels, attack panels, and contextual menus in the live game", Effect: Intent.EffectExternal,
+			Planner: actionPlanner("game.ui.close", "game-ui", "Close the active game UI"),
 		},
 		{
 			Name: "config.update", Description: "Atomically update one versioned user-configuration section", Effect: Intent.EffectWrite,
@@ -600,16 +625,17 @@ func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, 
 
 func defaultConfiguration() map[string]json.RawMessage {
 	return map[string]json.RawMessage{
-		"scheduler":                    json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"botLocked":false,"attackPriorities":{"autoTowers":50,"autoStorm":50,"riftMaiden":50,"riftReplay":50},"featureSchedules":{}}`),
+		"scheduler":                    json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"botLocked":false,"attackPriorities":{"autoTowers":50,"autoAdvisor":50,"autoStorm":50,"riftMaiden":50,"riftReplay":50},"featureSchedules":{}}`),
 		"automation.enabled":           json.RawMessage(`{}`),
 		"automation.autoBeriWorld":     json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30}`),
 		"automation.commanderFeatures": json.RawMessage(`{"version":1,"assignments":{}}`),
-		"automation.autoFoodBalance":   json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true}`),
-		"automation.autoTowers":        json.RawMessage(`{"version":2,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"horseTravelBoostId":-1,"castles":{}}`),
-		"automation.autoInvasion":      json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"fortifyCurrency":"","horseTravelBoostId":-1}`),
-		"automation.autoNomad":         json.RawMessage(`{"version":4,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
-		"automation.autoKhan":          json.RawMessage(`{"version":1,"sourceCastleId":0,"attackPresetId":"","defensePresetId":"","minimumRemainingSec":300,"checkIntervalSec":30,"defenseRefreshIntervalSec":30,"mapRefreshIntervalSec":30,"skipCooldowns":true,"timeSkipReserve":{},"openGateProtection":true,"offensiveUnitThreshold":1000,"horseTravelBoostId":-1,"nomadPointThreshold":0,"replenishDefenseTools":false}`),
-		"automation.autoStorm":         json.RawMessage(`{"version":1,"decorationPresetCastleId":0,"decorationPresetId":"","build":{"allowPremium":false,"allowDemolition":false,"allowResourceTransport":true,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"harbor":{"enabled":false,"targetLevel":1},"forts":{"enabled":false,"levels":[40,50,60,70,80],"minimumWins":0,"presetId":""},"islands":{"enabled":false,"resources":["wood","stone","aquamarine"],"sizes":["large","small"],"presetId":"","defenseUnits":[]},"troopImport":{"enabled":false,"donorCastleIds":[]},"aquamarine":{"reserve":0,"shopTableId":0,"purchases":[]},"combatOrder":"forts_first","checkIntervalSec":30,"mapRefreshIntervalSec":21600,"horseTravelBoostId":-1}`),
+		"automation.autoFoodBalance":   json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{}}`),
+		"automation.autoTowers":        json.RawMessage(`{"version":2,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"castles":{}}`),
+		"automation.autoInvasion":      json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
+		"automation.autoNomad":         json.RawMessage(`{"version":4,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
+		"automation.autoAdvisor":       json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"maxAttackCount":9999,"minimumRemainingSec":1800,"coinCostPerAttack":500,"minimumCoinReserve":0,"rubyCostPerAttack":0,"minimumRubyReserve":0,"minimumFeatherReserve":0,"timeSkipReserve":{},"checkIntervalSec":30,"mapRefreshIntervalSec":300,"horseTravelBoostId":-1}`),
+		"automation.autoKhan":          json.RawMessage(`{"version":1,"sourceCastleId":0,"attackPresetId":"","defensePresetId":"","minimumRemainingSec":300,"checkIntervalSec":30,"defenseRefreshIntervalSec":30,"mapRefreshIntervalSec":30,"dailyAttackLimit":0,"skipCooldowns":true,"timeSkipReserve":{},"openGateProtection":true,"offensiveUnitThreshold":1000,"horseTravelBoostId":-1,"nomadPointThreshold":0,"replenishDefenseTools":false}`),
+		"automation.autoStorm":         json.RawMessage(`{"version":1,"decorationPresetCastleId":0,"decorationPresetId":"","build":{"allowPremium":false,"allowDemolition":false,"allowResourceTransport":true,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"harbor":{"enabled":false,"targetLevel":1},"forts":{"enabled":false,"levels":[40,50,60,70,80],"minimumWins":0,"presetId":""},"islands":{"enabled":false,"resources":["wood","stone","aquamarine"],"sizes":["large","small"],"presetId":"","defenseUnits":[]},"troopImport":{"enabled":false,"donorCastleIds":[]},"aquamarine":{"reserve":0,"shopTableId":0,"purchases":[]},"targetPriority":["fort:80","fort:70","fort:60","fort:50","fort:40","island:large","island:small"],"checkIntervalSec":30,"mapRefreshIntervalSec":21600,"dailyAttackLimit":0,"horseTravelBoostId":-1}`),
 		"rift.attackPreferences":       json.RawMessage(`{"version":1,"replayHorseTravelBoostId":-1,"maidenHorseTravelBoostId":-1}`),
 	}
 }

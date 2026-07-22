@@ -7,9 +7,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Outbound"
 	"CitadelDesktop/Server/State"
 )
 
@@ -25,17 +27,142 @@ type kingdomResourceShipmentRequest struct {
 	ResourceID      State.ResourceID              `json:"resourceId,omitempty"`
 	Amount          int64                         `json:"amount,omitempty"`
 	Goods           []kingdomResourceShipmentGood `json:"goods,omitempty"`
+	WorkflowOwner   string                        `json:"workflowOwner,omitempty"`
 }
 
-func planResourceLogisticsRefresh(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
-	return Intent.Plan{
-		Claims: []string{"resource-transport"}, Summary: "Refresh resource logistics state",
-		Steps: []Intent.Step{
-			commandStep("Refresh kingdom transports", "kpi", json.RawMessage(`{}`), "kpi"),
+type kingdomResourceSettlementRequest struct {
+	Owner           string          `json:"owner"`
+	TargetKingdomID State.KingdomID `json:"targetKingdomId"`
+}
+
+type kingdomTransportAvailabilityGuard struct {
+	TargetKingdomID State.KingdomID               `json:"targetKingdomId"`
+	TransportKind   string                        `json:"transportKind"`
+	SourceCastleID  State.CastleID                `json:"sourceCastleId,omitempty"`
+	Goods           []kingdomResourceShipmentGood `json:"goods,omitempty"`
+}
+
+func planResourceLogisticsRefresh(_ context.Context, input Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
+	claims := []string{"resource-transport"}
+	steps := []Intent.Step{
+		commandStep("Refresh kingdom transports", "kpi", json.RawMessage(`{}`), "kpi"),
+	}
+	summary := "Refresh kingdom-resource logistics state"
+
+	marketCastle, marketRequired, err := resourceLogisticsMarketCastle(input)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	if marketRequired {
+		claims = append(claims, "castle-focus")
+		originalCastle, hadOriginalFocus := resourceLogisticsFocusedCastle(input.State)
+		if !marketCastle.Focused {
+			steps = append(steps, castleFocusStep(marketCastle))
+		}
+		steps = append(steps,
 			commandStep("Refresh caravan boosters", "boi", json.RawMessage(`{}`), "boi"),
 			commandStep("Refresh market capacity", "cmi", json.RawMessage(`{"S":1,"KID":-1}`), "cmi"),
-		},
-	}, nil
+		)
+		if hadOriginalFocus && originalCastle.ID != marketCastle.ID {
+			steps = append(steps, castleFocusStep(originalCastle))
+		}
+		summary = "Refresh market and kingdom-resource logistics state"
+	}
+
+	return Intent.Plan{Claims: claims, Summary: summary, Steps: steps}, nil
+}
+
+func resourceLogisticsMarketCastle(input Intent.PlanningContext) (State.CastleState, bool, error) {
+	kingdomCastleCounts := map[State.KingdomID]int{}
+	for _, castle := range input.State.Castles {
+		kingdomCastleCounts[castle.KingdomID]++
+	}
+	hasSameKingdomPair := false
+	for _, count := range kingdomCastleCounts {
+		if count > 1 {
+			hasSameKingdomPair = true
+			break
+		}
+	}
+	if !hasSameKingdomPair {
+		return State.CastleState{}, false, nil
+	}
+	if input.GameData == nil {
+		return State.CastleState{}, false, fmt.Errorf("official game data is unavailable")
+	}
+
+	castleIDs := make([]State.CastleID, 0, len(input.State.Castles))
+	for castleID := range input.State.Castles {
+		castleIDs = append(castleIDs, castleID)
+	}
+	sort.Slice(castleIDs, func(left, right int) bool { return castleIDs[left] < castleIDs[right] })
+	selected := State.CastleState{}
+	for _, castleID := range castleIDs {
+		castle := input.State.Castles[castleID]
+		if kingdomCastleCounts[castle.KingdomID] < 2 {
+			continue
+		}
+		hasMarketplace, err := input.GameData.CastleHasMarketplace(castle)
+		if err != nil {
+			return State.CastleState{}, false, fmt.Errorf("check marketplace at %s: %w", castleLabel(castle), err)
+		}
+		if !hasMarketplace {
+			continue
+		}
+		if castle.Focused {
+			return castle, true, nil
+		}
+		if selected.ID <= 0 {
+			selected = castle
+		}
+	}
+	return selected, selected.ID > 0, nil
+}
+
+func resourceLogisticsFocusedCastle(gameState State.GameState) (State.CastleState, bool) {
+	for _, castle := range gameState.Castles {
+		if castle.Focused {
+			return castle, true
+		}
+	}
+	return State.CastleState{}, false
+}
+
+func planResourceShipment(ctx context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request kingdomResourceShipmentRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	source, sourceExists := input.State.Castles[request.SourceCastleID]
+	target, targetExists := input.State.Castles[request.TargetCastleID]
+	if !sourceExists || request.SourceCastleID <= 0 {
+		return Intent.Plan{}, fmt.Errorf("source castle %d is not in the current player state", request.SourceCastleID)
+	}
+	if !targetExists || request.TargetCastleID <= 0 {
+		return Intent.Plan{}, fmt.Errorf("target castle %d is not in the current player state", request.TargetCastleID)
+	}
+	if source.ID == target.ID {
+		return Intent.Plan{}, fmt.Errorf("resource shipments require distinct source and target castles")
+	}
+
+	if source.KingdomID == target.KingdomID {
+		goods, err := normalizeKingdomResourceGoods(request)
+		if err != nil {
+			return Intent.Plan{}, err
+		}
+		if len(goods) != 1 {
+			return Intent.Plan{}, fmt.Errorf("same-kingdom market shipments require exactly one resource")
+		}
+		marketArguments, _ := json.Marshal(map[string]any{
+			"sourceCastleId": source.ID, "targetCastleId": target.ID,
+			"resourceId": goods[0].ResourceID, "amount": goods[0].Amount,
+		})
+		return planMarketResourceShipment(ctx, input, marketArguments)
+	}
+
+	request.TargetKingdomID = target.KingdomID
+	kingdomArguments, _ := json.Marshal(request)
+	return planKingdomResourceShipment(ctx, input, kingdomArguments)
 }
 
 func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -70,11 +197,12 @@ func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext,
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	resourceName := officialResourceDisplayName(input.GameData, request.ResourceID, resourceKey)
 	if request.Amount <= 0 {
 		return Intent.Plan{}, fmt.Errorf("amount must be positive")
 	}
 	if source.Resources[request.ResourceID].Amount < float64(request.Amount) {
-		return Intent.Plan{}, fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceKey)
+		return Intent.Plan{}, fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceName)
 	}
 	market, observed := input.State.Market.Castles[source.ID]
 	if !observed || input.State.Market.ObservedAt.IsZero() || market.AvailableBarrows <= 0 {
@@ -98,7 +226,7 @@ func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext,
 			"resource-transport", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 			"castle:" + strconv.FormatInt(int64(target.ID), 10),
 		},
-		Summary: fmt.Sprintf("Ship %d %s from %s to %s", request.Amount, resourceKey, castleLabel(source), castleLabel(target)),
+		Summary: fmt.Sprintf("Ship %d %s from %s to %s", request.Amount, resourceName, castleLabel(source), castleLabel(target)),
 		Steps:   []Intent.Step{commandStep("Start market shipment", "crm", payload, "crm")},
 	}, nil
 }
@@ -141,10 +269,8 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 	if input.State.KingdomTransport.ObservedAt.IsZero() || !observed || !unlock.Unlocked {
 		return Intent.Plan{}, fmt.Errorf("kingdom transport to %d is not observed as unlocked", request.TargetKingdomID)
 	}
-	for _, pending := range input.State.KingdomTransport.Pending {
-		if pending.KingdomID == request.TargetKingdomID && pending.RemainingSec > 0 {
-			return Intent.Plan{}, fmt.Errorf("kingdom %d already has a pending resource transport", request.TargetKingdomID)
-		}
+	if kingdomResourceTransportBusy(input.State, request.TargetKingdomID) {
+		return Intent.Plan{}, fmt.Errorf("kingdom %d already has a pending or settling resource transport", request.TargetKingdomID)
 	}
 	wireGoods := make([][]any, 0, len(goods))
 	summaryGoods := make([]string, 0, len(goods))
@@ -153,11 +279,12 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 		if resourceErr != nil {
 			return Intent.Plan{}, resourceErr
 		}
+		resourceName := officialResourceDisplayName(input.GameData, good.ResourceID, resourceKey)
 		if source.Resources[good.ResourceID].Amount < float64(good.Amount) {
-			return Intent.Plan{}, fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceKey)
+			return Intent.Plan{}, fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceName)
 		}
 		wireGoods = append(wireGoods, []any{resourceKey, good.Amount})
-		summaryGoods = append(summaryGoods, fmt.Sprintf("%d %s", good.Amount, resourceKey))
+		summaryGoods = append(summaryGoods, fmt.Sprintf("%d %s", good.Amount, resourceName))
 	}
 	payload, _ := json.Marshal(struct {
 		SourceCastleID State.CastleID  `json:"SCID"`
@@ -165,10 +292,22 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 		TargetKingdom  State.KingdomID `json:"TKID"`
 		Goods          [][]any         `json:"G"`
 	}{source.ID, source.KingdomID, request.TargetKingdomID, wireGoods})
+	resourceRefreshPayload, _ := json.Marshal(struct {
+		CastleID  State.CastleID  `json:"AID"`
+		KingdomID State.KingdomID `json:"KID"`
+	}{source.ID, source.KingdomID})
 	summary := fmt.Sprintf("Ship %s from kingdom %d to %d", strings.Join(summaryGoods, " and "), source.KingdomID, request.TargetKingdomID)
 	if request.TargetCastleID > 0 {
 		summary = fmt.Sprintf("Ship %s from %s to %s by kingdom transport", strings.Join(summaryGoods, " and "), castleLabel(source), castleLabel(target))
 	}
+	guardArguments, _ := json.Marshal(kingdomTransportAvailabilityGuard{
+		TargetKingdomID: request.TargetKingdomID, TransportKind: "resource",
+		SourceCastleID: source.ID, Goods: goods,
+	})
+	consumeArguments, _ := json.Marshal(kingdomResourceShipmentRequest{
+		SourceCastleID: source.ID, TargetCastleID: target.ID, TargetKingdomID: request.TargetKingdomID,
+		Goods: goods, WorkflowOwner: strings.TrimSpace(request.WorkflowOwner),
+	})
 	return Intent.Plan{
 		Claims: []string{
 			"resource-transport", "castle:" + strconv.FormatInt(int64(source.ID), 10),
@@ -177,9 +316,205 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 		Summary: summary,
 		Steps: []Intent.Step{
 			kingdomTransportContextStep(),
+			contextCommandStep("Refresh kingdom resource donor", "grc", resourceRefreshPayload, "grc"),
+			Intent.RebuildOnResume(Intent.Step{
+				Name: "Verify kingdom resource transport and donor balance", Action: "kingdom.transport.verify_available",
+				ActionArguments: guardArguments,
+			}),
 			commandStep("Start kingdom resource shipment", "kgt", payload, "kgt"),
+			Intent.Step{Name: "Consume confirmed donor resources", Action: "resources.kingdom.consume_source", ActionArguments: consumeArguments},
 		},
 	}, nil
+}
+
+func kingdomResourceTransportPending(gameState State.GameState, kingdomID State.KingdomID) bool {
+	for _, pending := range gameState.KingdomTransport.Pending {
+		if pending.KingdomID == kingdomID {
+			return true
+		}
+	}
+	return false
+}
+
+func kingdomResourceTransportBusy(gameState State.GameState, kingdomID State.KingdomID) bool {
+	if kingdomResourceTransportPending(gameState, kingdomID) {
+		return true
+	}
+	_, settling := gameState.KingdomTransport.ResourceWorkflows[kingdomID]
+	return settling
+}
+
+func kingdomTroopTransportPending(gameState State.GameState, kingdomID State.KingdomID) bool {
+	for _, pending := range gameState.KingdomTransport.PendingUnits {
+		if pending.KingdomID == kingdomID {
+			return true
+		}
+	}
+	return false
+}
+
+func (application *Application) verifyKingdomTransportAvailable(_ context.Context, arguments json.RawMessage) error {
+	var guard kingdomTransportAvailabilityGuard
+	if err := decodeIntentArguments(arguments, &guard); err != nil {
+		return err
+	}
+	if application == nil || application.State == nil {
+		return fmt.Errorf("kingdom transport state is unavailable")
+	}
+	gameState := application.State.Snapshot()
+	switch guard.TransportKind {
+	case "resource":
+		if kingdomResourceTransportBusy(gameState, guard.TargetKingdomID) {
+			return fmt.Errorf(
+				"%w: kingdom %d has a pending or settling resource transport",
+				Intent.ErrPlanStale, guard.TargetKingdomID,
+			)
+		}
+		if guard.SourceCastleID > 0 || len(guard.Goods) > 0 {
+			source, found := gameState.Castles[guard.SourceCastleID]
+			if !found || guard.SourceCastleID <= 0 {
+				return fmt.Errorf("%w: kingdom resource donor %d is unavailable", Intent.ErrPlanStale, guard.SourceCastleID)
+			}
+			goods, err := normalizeKingdomResourceGoods(kingdomResourceShipmentRequest{Goods: guard.Goods})
+			if err != nil {
+				return err
+			}
+			for _, good := range goods {
+				if source.Resources[good.ResourceID].Amount < float64(good.Amount) {
+					return fmt.Errorf(
+						"%w: kingdom resource donor %d has insufficient resource %d after refresh",
+						Intent.ErrPlanStale, source.ID, good.ResourceID,
+					)
+				}
+			}
+		}
+	case "troop":
+		if kingdomTroopTransportPending(gameState, guard.TargetKingdomID) {
+			return fmt.Errorf(
+				"%w: kingdom %d has a pending or settling troop transport",
+				Intent.ErrPlanStale, guard.TargetKingdomID,
+			)
+		}
+	default:
+		return fmt.Errorf("unsupported kingdom transport kind %q", guard.TransportKind)
+	}
+	return nil
+}
+
+func (application *Application) consumeKingdomResourceSource(ctx context.Context, arguments json.RawMessage) error {
+	var request kingdomResourceShipmentRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	goods, err := normalizeKingdomResourceGoods(request)
+	if err != nil {
+		return err
+	}
+	if application == nil || application.State == nil {
+		return fmt.Errorf("kingdom resource state is unavailable")
+	}
+	metadata := Outbound.MetadataFromContext(ctx)
+	workflowOwner := strings.TrimSpace(request.WorkflowOwner)
+	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		source, found := gameState.Castles[request.SourceCastleID]
+		if !found {
+			return nil, false, fmt.Errorf("confirmed kingdom resource donor %d is unavailable", request.SourceCastleID)
+		}
+		for _, good := range goods {
+			if source.Resources[good.ResourceID].Amount < float64(good.Amount) {
+				return nil, false, fmt.Errorf(
+					"confirmed kingdom resource donor %d has insufficient resource %d in state",
+					source.ID, good.ResourceID,
+				)
+			}
+		}
+		for _, good := range goods {
+			balance := source.Resources[good.ResourceID]
+			balance.Amount -= float64(good.Amount)
+			source.Resources[good.ResourceID] = balance
+		}
+		gameState.Castles[source.ID] = source
+		if workflowOwner != "" && metadata.Actor == "automation:"+workflowOwner && request.TargetKingdomID >= 0 && request.TargetCastleID > 0 {
+			if gameState.KingdomTransport.ResourceWorkflows == nil {
+				gameState.KingdomTransport.ResourceWorkflows = map[State.KingdomID]State.KingdomResourceTransportWorkflow{}
+			}
+			launchedAt := metadata.SubmittedAt
+			if launchedAt.IsZero() {
+				launchedAt = time.Now().UTC()
+			}
+			workflowGoods := make([]State.KingdomTransportGood, 0, len(goods))
+			for _, good := range goods {
+				workflowGoods = append(workflowGoods, State.KingdomTransportGood{ResourceID: good.ResourceID, Amount: float64(good.Amount)})
+			}
+			gameState.KingdomTransport.ResourceWorkflows[request.TargetKingdomID] = State.KingdomResourceTransportWorkflow{
+				Owner: workflowOwner, KingdomID: request.TargetKingdomID,
+				SourceCastleID: source.ID, TargetCastleID: request.TargetCastleID,
+				Goods: workflowGoods, LaunchedAt: launchedAt.UTC(),
+			}
+		}
+		return []string{"castles", "resources", "kingdom-transport"}, true, nil
+	})
+	return err
+}
+
+func planKingdomResourceSettlement(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request kingdomResourceSettlementRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	request.Owner = strings.TrimSpace(request.Owner)
+	if request.Owner == "" || request.TargetKingdomID < 0 {
+		return Intent.Plan{}, fmt.Errorf("owner and targetKingdomId are required")
+	}
+	workflow, exists := input.State.KingdomTransport.ResourceWorkflows[request.TargetKingdomID]
+	if !exists || workflow.Owner != request.Owner {
+		return Intent.Plan{}, fmt.Errorf("kingdom %d has no %s resource workflow", request.TargetKingdomID, request.Owner)
+	}
+	if kingdomResourceTransportPending(input.State, request.TargetKingdomID) {
+		return Intent.Plan{}, fmt.Errorf("kingdom %d resource transport is still pending", request.TargetKingdomID)
+	}
+	target, exists := input.State.Castles[workflow.TargetCastleID]
+	if !exists || target.ID <= 0 || target.KingdomID != request.TargetKingdomID {
+		return Intent.Plan{}, fmt.Errorf("resource workflow target castle %d is unavailable", workflow.TargetCastleID)
+	}
+	refreshPayload, _ := json.Marshal(struct {
+		CastleID  State.CastleID  `json:"AID"`
+		KingdomID State.KingdomID `json:"KID"`
+	}{target.ID, target.KingdomID})
+	return Intent.Plan{
+		Claims: []string{
+			"resource-transport", "castle:" + strconv.FormatInt(int64(target.ID), 10),
+			"kingdom:" + strconv.FormatInt(int64(target.KingdomID), 10),
+		},
+		Summary: fmt.Sprintf("Refresh %s after its completed kingdom resource transport", castleLabel(target)),
+		Steps: []Intent.Step{
+			contextCommandStep("Refresh kingdom resource destination", "grc", refreshPayload, "grc"),
+			{Name: "Complete owned kingdom resource workflow", Action: "resources.kingdom.complete_workflow", ActionArguments: arguments},
+		},
+	}, nil
+}
+
+func (application *Application) completeKingdomResourceWorkflow(ctx context.Context, arguments json.RawMessage) error {
+	var request kingdomResourceSettlementRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	request.Owner = strings.TrimSpace(request.Owner)
+	if Outbound.MetadataFromContext(ctx).Actor != "automation:"+request.Owner {
+		return fmt.Errorf("only automation %s can complete its kingdom resource workflow", request.Owner)
+	}
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		workflow, exists := gameState.KingdomTransport.ResourceWorkflows[request.TargetKingdomID]
+		if !exists || workflow.Owner != request.Owner {
+			return nil, false, fmt.Errorf("%w: kingdom %d resource workflow ownership changed", Intent.ErrPlanStale, request.TargetKingdomID)
+		}
+		if kingdomResourceTransportPending(*gameState, request.TargetKingdomID) {
+			return nil, false, fmt.Errorf("%w: kingdom %d resource transport is still pending", Intent.ErrPlanStale, request.TargetKingdomID)
+		}
+		delete(gameState.KingdomTransport.ResourceWorkflows, request.TargetKingdomID)
+		return []string{"kingdom-transport", "resources"}, true, nil
+	})
+	return err
 }
 
 func normalizeKingdomResourceGoods(request kingdomResourceShipmentRequest) ([]kingdomResourceShipmentGood, error) {
@@ -238,11 +573,12 @@ func planKingdomResourceSkip(_ context.Context, input Intent.PlanningContext, ar
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	timeSkipLabel := officialTimeSkipLabel(input.GameData, int64(currencyID), request.TimeSkipID)
 	if request.MinimumRemaining < 0 {
 		return Intent.Plan{}, fmt.Errorf("minimumRemaining cannot be negative")
 	}
 	if input.State.Player.Currencies[currencyID]-1 < float64(request.MinimumRemaining) {
-		return Intent.Plan{}, fmt.Errorf("no %s time skips are available", request.TimeSkipID)
+		return Intent.Plan{}, fmt.Errorf("no %s is available", timeSkipLabel)
 	}
 	payload, _ := json.Marshal(map[string]string{
 		"MST": request.TimeSkipID,
@@ -251,7 +587,7 @@ func planKingdomResourceSkip(_ context.Context, input Intent.PlanningContext, ar
 	})
 	return Intent.Plan{
 		Claims:  []string{"resource-transport", "kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10)},
-		Summary: fmt.Sprintf("Apply %s to kingdom %d resource transport", request.TimeSkipID, request.TargetKingdomID),
+		Summary: fmt.Sprintf("Apply a %s to kingdom %d resource transport", timeSkipLabel, request.TargetKingdomID),
 		Steps:   []Intent.Step{commandStep("Skip kingdom resource transport time", "msk", payload, "msk")},
 	}, nil
 }
@@ -278,6 +614,32 @@ func officialResourceJSONKey(store *GameData.Store, id State.ResourceID) (string
 		return "", fmt.Errorf("resource %d has no official wire key", id)
 	}
 	return jsonKey, nil
+}
+
+func officialResourceDisplayName(store *GameData.Store, id State.ResourceID, fallback string) string {
+	if store == nil || id <= 0 {
+		return fallback
+	}
+	catalog, err := store.Catalog("resources")
+	if err != nil {
+		return fallback
+	}
+	raw, exists := catalog.Find(strconv.FormatInt(int64(id), 10))
+	if !exists {
+		return fallback
+	}
+	record, err := GameData.DecodeRecord(raw)
+	if err != nil {
+		return fallback
+	}
+	for _, field := range []string{"_display_name", "name", "JSONKey"} {
+		if value, found := record.String(field); found {
+			if name := userFacingGameName(value); name != "" {
+				return name
+			}
+		}
+	}
+	return fallback
 }
 
 func officialCurrencyID(store *GameData.Store, jsonKey string) (State.CurrencyID, error) {

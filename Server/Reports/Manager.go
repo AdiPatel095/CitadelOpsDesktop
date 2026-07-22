@@ -19,19 +19,28 @@ const (
 )
 
 type Manager struct {
-	state   *State.Store
-	history *History.Store
-	intents interface {
+	state     *State.Store
+	history   *History.Store
+	analytics *SQLiteStore
+	intents   interface {
 		Submit(context.Context, Intent.Request) Intent.Receipt
 	}
 	nextAttempt map[int64]time.Time
+	archived    map[int64]struct{}
 	started     atomic.Bool
 }
 
 func NewManager(state *State.Store, history *History.Store, intents interface {
 	Submit(context.Context, Intent.Request) Intent.Receipt
-}) *Manager {
-	return &Manager{state: state, history: history, intents: intents, nextAttempt: map[int64]time.Time{}}
+}, analytics ...*SQLiteStore) *Manager {
+	manager := &Manager{
+		state: state, history: history, intents: intents,
+		nextAttempt: map[int64]time.Time{}, archived: map[int64]struct{}{},
+	}
+	if len(analytics) > 0 {
+		manager.analytics = analytics[0]
+	}
+	return manager
 }
 
 func (manager *Manager) Run(ctx context.Context) {
@@ -41,6 +50,7 @@ func (manager *Manager) Run(ctx context.Context) {
 	if !manager.started.CompareAndSwap(false, true) {
 		return
 	}
+	manager.loadArchivedMessages()
 	ticker := time.NewTicker(reportPollInterval)
 	defer ticker.Stop()
 	manager.processNext(ctx)
@@ -55,16 +65,23 @@ func (manager *Manager) Run(ctx context.Context) {
 }
 
 func (manager *Manager) processNext(ctx context.Context) {
-	snapshot := manager.state.Snapshot()
+	snapshot := manager.state.ReadOnlyView()
 	notices := orderedNotices(snapshot.Reports.Notices)
 	for _, notice := range notices {
+		if _, archived := manager.archived[notice.MessageID]; archived {
+			if notice.Status != "archived" {
+				manager.completeNotice(notice.MessageID)
+				snapshot = manager.state.ReadOnlyView()
+			}
+			continue
+		}
 		if notice.Status == "archived" {
 			if _, hasSpy := snapshot.Reports.SpyCaptures[notice.MessageID]; hasSpy {
 				manager.completeNotice(notice.MessageID)
-				snapshot = manager.state.Snapshot()
+				snapshot = manager.state.ReadOnlyView()
 			} else if _, hasBattle := snapshot.Reports.BattleCaptures[notice.MessageID]; hasBattle {
 				manager.completeNotice(notice.MessageID)
-				snapshot = manager.state.Snapshot()
+				snapshot = manager.state.ReadOnlyView()
 			}
 			continue
 		}
@@ -78,7 +95,7 @@ func (manager *Manager) processNext(ctx context.Context) {
 		case 3:
 			if capture, exists := snapshot.Reports.SpyCaptures[notice.MessageID]; exists {
 				manager.archiveSpy(ctx, notice, capture)
-				snapshot = manager.state.Snapshot()
+				snapshot = manager.state.ReadOnlyView()
 				continue
 			}
 			if !snapshot.Session.LoggedIn || !snapshot.Session.SocketReady {
@@ -93,8 +110,8 @@ func (manager *Manager) processNext(ctx context.Context) {
 			}
 			capture := snapshot.Reports.BattleCaptures[notice.MessageID]
 			if len(capture.Summary) > 0 && len(capture.Waves) > 0 && len(capture.Details) > 0 {
-				manager.archiveBattle(snapshot.Player.ID, notice, capture)
-				snapshot = manager.state.Snapshot()
+				manager.archiveBattle(ctx, snapshot, notice, capture)
+				snapshot = manager.state.ReadOnlyView()
 				continue
 			}
 			if !snapshot.Session.LoggedIn || !snapshot.Session.SocketReady {
@@ -132,7 +149,9 @@ func (manager *Manager) fetch(ctx context.Context, notice State.ReportNotice, na
 		return
 	}
 	status := "error"
-	if strings.Contains(receipt.Error, "130") || strings.Contains(receipt.Error, "unavailable") {
+	lowerError := strings.ToLower(receipt.Error)
+	if strings.Contains(receipt.Error, "130") || strings.Contains(receipt.Error, "66") ||
+		strings.Contains(lowerError, "unavailable") || strings.Contains(lowerError, "deleted") {
 		status = "unavailable"
 	}
 	manager.setNoticeStatus(notice.MessageID, status)
@@ -151,6 +170,7 @@ func (manager *Manager) archiveSpy(ctx context.Context, notice State.ReportNotic
 		manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
 		return
 	}
+	manager.archived[notice.MessageID] = struct{}{}
 	if notice.OwnedByPlayer && report.Status != "failed" && report.Castle.ID > 0 && report.Target.ID > 0 && report.Target.Dummy != nil && !*report.Target.Dummy {
 		arguments, _ := json.Marshal(map[string]int64{"messageId": notice.MessageID})
 		manager.intents.Submit(ctx, Intent.Request{
@@ -160,25 +180,56 @@ func (manager *Manager) archiveSpy(ctx context.Context, notice State.ReportNotic
 	manager.completeNotice(notice.MessageID)
 }
 
-func (manager *Manager) archiveBattle(playerID State.PlayerID, notice State.ReportNotice, capture State.BattleReportCapture) {
-	report, err := ParseBattleCapture(capture, playerID)
+func (manager *Manager) archiveBattle(ctx context.Context, snapshot State.GameState, notice State.ReportNotice, capture State.BattleReportCapture) {
+	report, err := ParseBattleCapture(capture, snapshot.Player.ID)
 	if err != nil {
 		manager.setNoticeStatus(notice.MessageID, "error")
 		manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
 		return
+	}
+	report.AccountUID = snapshot.Account.UID
+	report.WorldID = snapshot.Account.WorldID
+	report.PlayerID = int64(snapshot.Player.ID)
+	if manager.analytics != nil {
+		if err := manager.analytics.Save(ctx, report); err != nil {
+			manager.setNoticeStatus(notice.MessageID, "error")
+			manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
+			return
+		}
 	}
 	if err := manager.history.Append(History.CollectionBattleReports, report); err != nil {
 		manager.setNoticeStatus(notice.MessageID, "error")
 		manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
 		return
 	}
+	manager.archived[notice.MessageID] = struct{}{}
 	manager.completeNotice(notice.MessageID)
 }
 
+func (manager *Manager) loadArchivedMessages() {
+	for _, collection := range []string{History.CollectionSpyReports, History.CollectionBattleReports} {
+		rows, err := manager.history.Read(collection, time.Time{}, 100_000)
+		if err != nil {
+			continue
+		}
+		for _, row := range rows {
+			var report struct {
+				MessageID int64 `json:"mid"`
+			}
+			if json.Unmarshal(row, &report) == nil && report.MessageID > 0 {
+				manager.archived[report.MessageID] = struct{}{}
+			}
+		}
+	}
+}
+
 func (manager *Manager) setNoticeStatus(messageID int64, status string) {
-	_, _ = manager.state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, _ = manager.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 		notice, exists := gameState.Reports.Notices[messageID]
 		if !exists || notice.Status == status {
+			return nil, false, nil
+		}
+		if reportNoticeTerminal(notice.Status) {
 			return nil, false, nil
 		}
 		notice.Status = status
@@ -187,8 +238,17 @@ func (manager *Manager) setNoticeStatus(messageID int64, status string) {
 	})
 }
 
+func reportNoticeTerminal(status string) bool {
+	switch status {
+	case "archived", "expired", "ignored", "unavailable":
+		return true
+	default:
+		return false
+	}
+}
+
 func (manager *Manager) completeNotice(messageID int64) {
-	_, _ = manager.state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, _ = manager.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 		notice, exists := gameState.Reports.Notices[messageID]
 		if !exists {
 			return nil, false, nil

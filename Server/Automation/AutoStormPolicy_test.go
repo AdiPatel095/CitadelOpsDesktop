@@ -2,6 +2,7 @@ package Automation
 
 import (
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -226,6 +227,78 @@ func TestAutoStormFortCandidatesEnforceMinimumWins(t *testing.T) {
 	}
 }
 
+func TestAutoStormCandidatesFollowConfiguredTargetPriority(t *testing.T) {
+	now := time.Date(2026, time.July, 21, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.X, storm.Y = 100, 100
+	state.Castles[storm.ID] = storm
+	state.Storm.Map.Targets = map[string]State.MapObservation{
+		"200:200": {KingdomID: 4, X: 200, Y: 200, TypeID: autoStormFortMapTypeID, StormIsleID: 10, ObservedAt: now},
+		"101:101": {KingdomID: 4, X: 101, Y: 101, TypeID: autoStormFortMapTypeID, StormIsleID: 9, ObservedAt: now},
+		"102:102": {KingdomID: 4, X: 102, Y: 102, TypeID: autoStormFortMapTypeID, StormIsleID: 8, ObservedAt: now},
+		"103:103": {KingdomID: 4, X: 103, Y: 103, TypeID: autoStormIslandMapTypeID, OwnerID: -403, StormIsleID: 1, ObservedAt: now},
+		"104:104": {KingdomID: 4, X: 104, Y: 104, TypeID: autoStormIslandMapTypeID, OwnerID: -403, StormIsleID: 4, ObservedAt: now},
+	}
+	settings := defaultAutoStormSettings()
+	settings.Forts.Enabled = true
+	settings.Forts.Levels = []int{60, 70, 80}
+	settings.Islands.Enabled = true
+	settings.Islands.Resources = []string{"wood"}
+	settings.Islands.Sizes = []string{"large", "small"}
+	snapshot := Snapshot{State: state, GameData: autoStormTestGameData(t), Now: now}
+
+	assertStormCandidateOrder(t, autoStormCombatCandidates(snapshot, settings, storm, now), []int64{10, 9, 8, 1, 4})
+
+	settings.TargetPriority = []string{
+		"island:small", "fort:60", "island:large", "fort:80", "fort:70", "fort:50", "fort:40",
+	}
+	assertStormCandidateOrder(t, autoStormCombatCandidates(snapshot, settings, storm, now), []int64{4, 8, 1, 10, 9})
+}
+
+func TestAutoStormCandidatesUseNewerLiveCooldown(t *testing.T) {
+	now := time.Date(2026, time.July, 21, 19, 18, 0, 0, time.UTC)
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	state.Castles[storm.ID] = storm
+	state.Storm.Map.Targets["612:667"] = State.MapObservation{
+		KingdomID: 4, X: 612, Y: 667, TypeID: autoStormFortMapTypeID, StormIsleID: 10,
+		ObservedAt: now.Add(-2 * time.Hour), StormReadyAt: now.Add(-time.Hour),
+	}
+	readyAt := now.Add(10 * time.Hour)
+	state.Map[4] = map[string]State.MapObservation{
+		"612:667": {
+			KingdomID: 4, X: 612, Y: 667, TypeID: autoStormFortMapTypeID, StormIsleID: 8,
+			StormCooldownRemaining: 36_000, StormReadyAt: readyAt, ObservedAt: now,
+		},
+	}
+	settings := defaultAutoStormSettings()
+	settings.Forts.Enabled = true
+	settings.Forts.Levels = []int{60, 80}
+	snapshot := Snapshot{State: state, GameData: autoStormTestGameData(t), Now: now}
+
+	if candidates := autoStormCombatCandidates(snapshot, settings, storm, now); len(candidates) != 0 {
+		t.Fatalf("newer live cooldown produced candidates: %#v", candidates)
+	}
+	if next := autoStormNextOpportunityAt(snapshot, settings, storm); !next.Equal(readyAt) {
+		t.Fatalf("next opportunity = %s, want newer live readyAt %s", next, readyAt)
+	}
+}
+
+func TestNormalizeAutoStormTargetPriorityMigratesLegacyOrder(t *testing.T) {
+	got := normalizeAutoStormTargetPriority(nil, "islands_first")
+	want := "island:large,island:small,fort:80,fort:70,fort:60,fort:50,fort:40"
+	if strings.Join(got, ",") != want {
+		t.Fatalf("legacy islands-first priority = %q, want %q", strings.Join(got, ","), want)
+	}
+
+	got = normalizeAutoStormTargetPriority([]string{"FORT:60", "fort:60", "unknown"}, "")
+	want = "fort:60,fort:80,fort:70,fort:50,fort:40,island:large,island:small"
+	if strings.Join(got, ",") != want {
+		t.Fatalf("normalized priority = %q, want %q", strings.Join(got, ","), want)
+	}
+}
+
 func TestAutoStormCandidatesUseReadyAtAndIslandExpiryLabels(t *testing.T) {
 	now := time.Date(2026, time.July, 15, 16, 20, 0, 0, time.UTC)
 	state := State.NewGameState()
@@ -313,7 +386,6 @@ func TestAutoStormShopUnlimitedKeepsBuying(t *testing.T) {
 	state.Inventory.ConstructionOffersObservedAt = now
 	state.Inventory.ConstructionOffers[245] = 12
 	settings := defaultAutoStormSettings()
-	settings.Aquamarine.ShopTableID = 7
 	settings.Aquamarine.Purchases = []autoStormShopPurchase{{
 		PackageID: 245, TargetPurchases: 1, Unlimited: true, Priority: 1,
 	}}
@@ -324,8 +396,124 @@ func TestAutoStormShopUnlimitedKeepsBuying(t *testing.T) {
 	if err != nil || complete || detail != "" || decision == nil || decision.Request == nil {
 		t.Fatalf("unlimited Luna decision = %#v complete=%t detail=%q err=%v", decision, complete, detail, err)
 	}
-	if decision.Request.Name != "storm.shop.purchase" || decision.Detail != "Buy War horn from Luna for 2960 Aquamarine (unlimited goal)" {
+	if decision.Request.Name != "storm.shop.purchase" || decision.Detail != "Buy 33 x War horn from Luna for 97680 Aquamarine (unlimited goal)" {
 		t.Fatalf("unlimited Luna request = %#v detail=%q", decision.Request, decision.Detail)
+	}
+	var request struct {
+		Purchases []autoStormShopPurchaseLine `json:"purchases"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if len(request.Purchases) != 1 || request.Purchases[0].Amount != 33 {
+		t.Fatalf("unlimited Luna purchases = %#v, want every affordable pack in one purchase", request.Purchases)
+	}
+}
+
+func TestAutoStormShopBatchesRemainingTargetPurchases(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Resources = map[State.ResourceID]State.ResourceBalance{
+		GameData.StormAquamarineID: {Amount: 100_000},
+	}
+	state.Castles[storm.ID] = storm
+	state.Inventory.ConstructionOffersCastleID = storm.ID
+	state.Inventory.ConstructionOffersKingdomID = storm.KingdomID
+	state.Inventory.ConstructionOffersObservedAt = now
+	state.Inventory.ConstructionOffers[245] = 2
+	settings := defaultAutoStormSettings()
+	settings.Aquamarine.Purchases = []autoStormShopPurchase{{
+		PackageID: 245, TargetPurchases: 5, Priority: 1,
+	}}
+
+	decision, complete, detail, err := evaluateAutoStormShop(Snapshot{
+		State: state, GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[string]float64{})
+	if err != nil || complete || detail != "" || decision == nil || decision.Request == nil {
+		t.Fatalf("batched Luna decision = %#v complete=%t detail=%q err=%v", decision, complete, detail, err)
+	}
+	var request struct {
+		Purchases []autoStormShopPurchaseLine `json:"purchases"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if len(request.Purchases) != 1 || request.Purchases[0].Amount != 3 || decision.Detail != "Buy 3 x War horn from Luna for 8880 Aquamarine" {
+		t.Fatalf("batched Luna request = %#v detail=%q", request, decision.Detail)
+	}
+}
+
+func TestAutoStormShopGroupsDifferentProductsIntoOnePass(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Resources = map[State.ResourceID]State.ResourceBalance{
+		GameData.StormAquamarineID: {Amount: 100_000},
+	}
+	state.Castles[storm.ID] = storm
+	state.Inventory.ConstructionOffersCastleID = storm.ID
+	state.Inventory.ConstructionOffersKingdomID = storm.KingdomID
+	state.Inventory.ConstructionOffersObservedAt = now
+	settings := defaultAutoStormSettings()
+	settings.Aquamarine.Purchases = []autoStormShopPurchase{
+		{PackageID: 245, TargetPurchases: 3, Priority: 1},
+		{PackageID: 3119, TargetPurchases: 2, Priority: 2},
+	}
+
+	decision, complete, detail, err := evaluateAutoStormShop(Snapshot{
+		State: state, GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[string]float64{})
+	if err != nil || complete || detail != "" || decision == nil || decision.Request == nil {
+		t.Fatalf("multi-product Luna decision = %#v complete=%t detail=%q err=%v", decision, complete, detail, err)
+	}
+	var request struct {
+		Purchases []autoStormShopPurchaseLine `json:"purchases"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	want := []autoStormShopPurchaseLine{{ProductID: 245, Amount: 3}, {ProductID: 3119, Amount: 2}}
+	if !reflect.DeepEqual(request.Purchases, want) {
+		t.Fatalf("multi-product Luna purchases = %#v, want %#v", request.Purchases, want)
+	}
+	if decision.Detail != "Buy 3 x War horn and 2 x Silver Coins from Luna for 28880 Aquamarine" {
+		t.Fatalf("multi-product Luna detail = %q", decision.Detail)
+	}
+}
+
+func TestAutoStormShopRunsBeforeCastleMaintenance(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Resources = map[State.ResourceID]State.ResourceBalance{
+		GameData.StormAquamarineID: {Amount: 100_000},
+	}
+	state.Castles[storm.ID] = storm
+	state.Inventory.ConstructionOffersCastleID = storm.ID
+	state.Inventory.ConstructionOffersKingdomID = storm.KingdomID
+	state.Inventory.ConstructionOffersObservedAt = now
+	settings := defaultAutoStormSettings()
+	settings.Harbor.Enabled = true
+	settings.Aquamarine.Purchases = []autoStormShopPurchase{{
+		PackageID: 245, TargetPurchases: 1, Priority: 1,
+	}}
+	rawSettings, err := json.Marshal(settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decision, err := NewAutoStormPolicy().Evaluate(t.Context(), Snapshot{
+		State: state,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+			autoStormSection: rawSettings,
+		}},
+		GameData: autoStormTestGameData(t), Now: now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request == nil || decision.Request.Name != "storm.shop.purchase" {
+		t.Fatalf("Auto Storm decision = %#v, want Luna purchase before building refresh", decision)
 	}
 }
 
@@ -342,7 +530,6 @@ func TestAutoStormShopUnlimitedStopsAtPackageStock(t *testing.T) {
 	state.Inventory.ConstructionOffersObservedAt = now
 	state.Inventory.ConstructionOffers[3119] = 3
 	settings := defaultAutoStormSettings()
-	settings.Aquamarine.ShopTableID = 7
 	settings.Aquamarine.Purchases = []autoStormShopPurchase{{
 		PackageID: 3119, TargetPurchases: 1, Unlimited: true, Priority: 1,
 	}}
@@ -360,8 +547,12 @@ func autoStormTestGameData(t *testing.T) *GameData.Store {
 	store, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[{"wodID":10},{"wodID":11,"slotTypes":"tool"},{"wodID":12}],
 		"isles":[
+			{"IsleID":1,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
 			{"IsleID":4,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
-			{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"countVictories":"0#1#5"}
+			{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"countVictories":"0#1#5"},
+			{"IsleID":8,"type":"DUNGEON","dungeonlevel":60,"countVictories":"0#1#5"},
+			{"IsleID":9,"type":"DUNGEON","dungeonlevel":70,"countVictories":"0#1#5"},
+			{"IsleID":10,"type":"DUNGEON","dungeonlevel":80,"countVictories":"0#1#5"}
 		],
 		"packages":[
 			{"packageID":245,"comment1":"War horn","comment2":"Luna's trade boat","packageType":"tool","packagePriceAquamarine":2960},
@@ -372,6 +563,18 @@ func autoStormTestGameData(t *testing.T) *GameData.Store {
 		t.Fatal(err)
 	}
 	return store
+}
+
+func assertStormCandidateOrder(t *testing.T, candidates []autoStormCombatCandidate, want []int64) {
+	t.Helper()
+	if len(candidates) != len(want) {
+		t.Fatalf("candidate count = %d, want %d: %#v", len(candidates), len(want), candidates)
+	}
+	for index, candidate := range candidates {
+		if candidate.Observation.StormIsleID != want[index] {
+			t.Fatalf("candidate %d = isle %d, want isle %d: %#v", index, candidate.Observation.StormIsleID, want[index], candidates)
+		}
+	}
 }
 
 func autoStormTestCastle(id State.CastleID, kingdom State.KingdomID, name string) State.CastleState {

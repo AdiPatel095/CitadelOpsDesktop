@@ -52,25 +52,49 @@ type SessionState struct {
 }
 
 type AccountBindingState struct {
+	UID      int64     `json:"uid,omitempty"`
 	WorldID  string    `json:"worldId,omitempty"`
 	PlayerID PlayerID  `json:"playerId,omitempty"`
 	BoundAt  time.Time `json:"boundAt,omitempty"`
 }
 
 type PlayerState struct {
-	ID           PlayerID               `json:"id"`
-	Name         string                 `json:"name,omitempty"`
-	AllianceID   AllianceID             `json:"allianceId,omitempty"`
-	Level        int                    `json:"level,omitempty"`
-	LegendLevel  int                    `json:"legendLevel,omitempty"`
-	Might        float64                `json:"might,omitempty"`
-	Glory        float64                `json:"glory,omitempty"`
-	Gallantry    float64                `json:"gallantry,omitempty"`
-	Resources    map[ResourceID]float64 `json:"resources"`
-	Currencies   map[CurrencyID]float64 `json:"currencies"`
-	VIP          VIPState               `json:"vip"`
-	Achievements AchievementState       `json:"achievements"`
-	LegendSkills LegendSkillState       `json:"legendSkills"`
+	ID             PlayerID                  `json:"id"`
+	Name           string                    `json:"name,omitempty"`
+	AllianceID     AllianceID                `json:"allianceId,omitempty"`
+	Level          int                       `json:"level,omitempty"`
+	LegendLevel    int                       `json:"legendLevel,omitempty"`
+	Might          float64                   `json:"might,omitempty"`
+	Glory          float64                   `json:"glory,omitempty"`
+	Gallantry      float64                   `json:"gallantry,omitempty"`
+	Resources      map[ResourceID]float64    `json:"resources"`
+	Currencies     map[CurrencyID]float64    `json:"currencies"`
+	VIP            VIPState                  `json:"vip"`
+	ProtectionMode PlayerProtectionModeState `json:"protectionMode"`
+	Achievements   AchievementState          `json:"achievements"`
+	LegendSkills   LegendSkillState          `json:"legendSkills"`
+}
+
+type PlayerProtectionModeState struct {
+	ModeState      int       `json:"modeState"`
+	ModeTimerSec   int64     `json:"modeTimerSec,omitempty"`
+	ModeObservedAt time.Time `json:"modeObservedAt,omitempty"`
+	RemainingSec   int64     `json:"remainingSec"`
+	ObservedAt     time.Time `json:"observedAt,omitempty"`
+}
+
+// PreparingOrActive is based on the player's game-reported RPT countdown.
+// PMT is state-dependent and can remain positive as a repurchase cooldown after
+// Protection Mode is canceled, so it must not be used as protection time.
+func (state PlayerProtectionModeState) PreparingOrActive(now time.Time) bool {
+	return !now.IsZero() && now.Before(state.Until())
+}
+
+func (state PlayerProtectionModeState) Until() time.Time {
+	if state.ObservedAt.IsZero() || state.RemainingSec <= 0 {
+		return time.Time{}
+	}
+	return state.ObservedAt.Add(time.Duration(state.RemainingSec) * time.Second)
 }
 
 type AchievementState struct {
@@ -124,6 +148,16 @@ type CastleState struct {
 	QueueableProduction         map[int][]DefinitionRef                   `json:"queueableProduction"`
 	QueueableObservedAt         time.Time                                 `json:"queueableObservedAt,omitempty"`
 	Crafting                    CraftingState                             `json:"crafting"`
+}
+
+// SupportsSovereignCrafting identifies the four player castles where the
+// sovereign-resource crafting buildings can exist. Other owned holdings are
+// logistics/storage nodes even when they hold sovereign resources.
+func (castle CastleState) SupportsSovereignCrafting() bool {
+	if castle.KingdomID == 0 {
+		return castle.SlotType == 1
+	}
+	return castle.KingdomID >= 1 && castle.KingdomID <= 3 && castle.SlotType == 12
 }
 
 type ResourceBalance struct {
@@ -294,6 +328,68 @@ type ProductionQueue struct {
 	ObservedAt time.Time   `json:"observedAt"`
 }
 
+type AllianceHelpRequestState struct {
+	HospitalProductionIDs []int64   `json:"hospitalProductionIds"`
+	ObservedAt            time.Time `json:"observedAt,omitempty"`
+}
+
+func OutstandingHospitalAllianceHelpRequests(state GameState) int {
+	if !state.AllianceHelpRequests.ObservedAt.IsZero() {
+		productionIDs := map[int64]struct{}{}
+		for _, productionID := range state.AllianceHelpRequests.HospitalProductionIDs {
+			if productionID > 0 {
+				productionIDs[productionID] = struct{}{}
+			}
+		}
+		return len(productionIDs)
+	}
+	productionIDs := map[int64]struct{}{}
+	for _, castle := range state.Castles {
+		queue, exists := castle.Production[2]
+		if !exists {
+			continue
+		}
+		if queue.Active != nil && queue.Active.ProductionID > 0 && queue.Active.AllianceHelpRequested {
+			productionIDs[queue.Active.ProductionID] = struct{}{}
+		}
+		for _, item := range queue.Queued {
+			if item.ProductionID > 0 && item.AllianceHelpRequested {
+				productionIDs[item.ProductionID] = struct{}{}
+			}
+		}
+	}
+	return len(productionIDs)
+}
+
+func HasOutstandingHospitalAllianceHelpRequest(state GameState, productionID int64) bool {
+	if productionID <= 0 {
+		return false
+	}
+	if !state.AllianceHelpRequests.ObservedAt.IsZero() {
+		for _, outstandingID := range state.AllianceHelpRequests.HospitalProductionIDs {
+			if outstandingID == productionID {
+				return true
+			}
+		}
+		return false
+	}
+	for _, castle := range state.Castles {
+		queue, exists := castle.Production[2]
+		if !exists {
+			continue
+		}
+		if queue.Active != nil && queue.Active.ProductionID == productionID && queue.Active.AllianceHelpRequested {
+			return true
+		}
+		for _, item := range queue.Queued {
+			if item.ProductionID == productionID && item.AllianceHelpRequested {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 type CraftingState struct {
 	Buildings              map[BuildingInstanceID]CraftingBuilding `json:"buildings"`
 	EnabledRecipeIDs       []int64                                 `json:"enabledRecipeIds"`
@@ -363,6 +459,7 @@ type MovementState struct {
 	TargetX         int                    `json:"targetX"`
 	TargetY         int                    `json:"targetY"`
 	TravelSeconds   int                    `json:"travelSeconds,omitempty"`
+	WaitSeconds     int                    `json:"waitSeconds,omitempty"`
 	ProgressSeconds int                    `json:"progressSeconds,omitempty"`
 	SpyCount        int                    `json:"spyCount,omitempty"`
 	ArrivesAt       *time.Time             `json:"arrivesAt,omitempty"`
@@ -372,6 +469,21 @@ type MovementState struct {
 	Units           map[UnitID]int64       `json:"units"`
 	MarketBarrows   int                    `json:"marketBarrows,omitempty"`
 	MarketGoods     []KingdomTransportGood `json:"marketGoods,omitempty"`
+}
+
+func (movement MovementState) ProjectedCompletionAt() *time.Time {
+	if movement.Direction == 1 {
+		if movement.ReturnsAt == nil {
+			return nil
+		}
+		completion := movement.ReturnsAt.UTC()
+		return &completion
+	}
+	if movement.Direction != 0 || movement.ArrivesAt == nil {
+		return nil
+	}
+	completion := movement.ArrivesAt.UTC()
+	return &completion
 }
 
 type EquipmentInstance struct {
@@ -495,6 +607,15 @@ type KingdomResourceTransport struct {
 	Goods        []KingdomTransportGood `json:"goods"`
 }
 
+type KingdomResourceTransportWorkflow struct {
+	Owner          string                 `json:"owner"`
+	KingdomID      KingdomID              `json:"kingdomId"`
+	SourceCastleID CastleID               `json:"sourceCastleId"`
+	TargetCastleID CastleID               `json:"targetCastleId"`
+	Goods          []KingdomTransportGood `json:"goods"`
+	LaunchedAt     time.Time              `json:"launchedAt"`
+}
+
 type KingdomTransportUnit struct {
 	UnitID UnitID `json:"unitId"`
 	Amount int64  `json:"amount"`
@@ -507,10 +628,11 @@ type KingdomUnitTransport struct {
 }
 
 type KingdomTransportState struct {
-	Unlocks      map[KingdomID]KingdomTransportUnlock `json:"unlocks"`
-	Pending      []KingdomResourceTransport           `json:"pending"`
-	PendingUnits []KingdomUnitTransport               `json:"pendingUnits"`
-	ObservedAt   time.Time                            `json:"observedAt,omitempty"`
+	Unlocks           map[KingdomID]KingdomTransportUnlock           `json:"unlocks"`
+	Pending           []KingdomResourceTransport                     `json:"pending"`
+	PendingUnits      []KingdomUnitTransport                         `json:"pendingUnits"`
+	ResourceWorkflows map[KingdomID]KingdomResourceTransportWorkflow `json:"resourceWorkflows,omitempty"`
+	ObservedAt        time.Time                                      `json:"observedAt,omitempty"`
 }
 
 type BeriState struct {
@@ -563,6 +685,27 @@ type StationingOperation struct {
 	SafeAfter      *time.Time       `json:"safeAfter,omitempty"`
 	CreatedAt      time.Time        `json:"createdAt"`
 	UpdatedAt      time.Time        `json:"updatedAt"`
+}
+
+func (operation StationingOperation) MatchesMovement(movement MovementState) bool {
+	if operation.MovementID > 0 && movement.ID == operation.MovementID {
+		return true
+	}
+	if movement.Direction == 1 {
+		return movement.SourceCastleID == operation.TargetCastleID &&
+			movement.TargetCastleID == operation.SourceCastleID
+	}
+	return movement.SourceCastleID == operation.SourceCastleID &&
+		movement.TargetCastleID == operation.TargetCastleID
+}
+
+func (operation StationingOperation) ActiveAt(movements map[MovementID]MovementState, now time.Time) bool {
+	for _, movement := range movements {
+		if operation.MatchesMovement(movement) {
+			return true
+		}
+	}
+	return !operation.UpdatedAt.IsZero() && now.Before(operation.UpdatedAt.Add(30*time.Second))
 }
 
 type ScheduledOperation struct {
@@ -696,23 +839,42 @@ type TowerCooldownState struct {
 // map scan. Entries are consumed only after their CRA succeeds, allowing the
 // current castle to remain focused while the batch drains.
 type TowerQueueEntry struct {
-	KingdomID     KingdomID `json:"kingdomId"`
-	TargetX       int       `json:"targetX"`
-	TargetY       int       `json:"targetY"`
-	MapObservedAt time.Time `json:"mapObservedAt"`
-	QueuedAt      time.Time `json:"queuedAt"`
+	KingdomID     KingdomID  `json:"kingdomId"`
+	TargetX       int        `json:"targetX"`
+	TargetY       int        `json:"targetY"`
+	MapObservedAt time.Time  `json:"mapObservedAt"`
+	QueuedAt      time.Time  `json:"queuedAt"`
+	DeferredUntil *time.Time `json:"deferredUntil,omitempty"`
+}
+
+type TowerCapacityObservation struct {
+	AdditionalUnits int64     `json:"additionalUnits"`
+	FullFlankUnits  int64     `json:"fullFlankUnits"`
+	ObservedAt      time.Time `json:"observedAt"`
 }
 
 type TowerQueueState struct {
-	EntriesByCastle map[CastleID][]TowerQueueEntry `json:"entriesByCastle"`
-	LastScannedAt   map[CastleID]time.Time         `json:"lastScannedAt"`
+	EntriesByCastle  map[CastleID][]TowerQueueEntry        `json:"entriesByCastle"`
+	LastScannedAt    map[CastleID]time.Time                `json:"lastScannedAt"`
+	LastAttemptedAt  map[CastleID]time.Time                `json:"lastAttemptedAt"`
+	CapacityByCastle map[CastleID]TowerCapacityObservation `json:"capacityByCastle"`
 }
 
 type InvasionState struct {
 	LastScannedAt        map[CastleID]time.Time `json:"lastScannedAt"`
 	FortifiedTargets     map[string]string      `json:"fortifiedTargets"`
+	FortifyCurrencies    []string               `json:"fortifyCurrencies"`
 	FortifyResourceCount int64                  `json:"fortifyResourceCount"`
 	FortifyRubyCount     int64                  `json:"fortifyRubyCount"`
+}
+
+func (state InvasionState) SupportsFortifyCurrency(currency string) bool {
+	for _, supported := range state.FortifyCurrencies {
+		if supported == currency {
+			return true
+		}
+	}
+	return false
 }
 
 type StormMapBounds struct {
@@ -809,12 +971,16 @@ func (state StormIslandReturnState) UnitsToReturn() map[UnitID]int64 {
 }
 
 type StormState struct {
-	LastScannedAt      map[CastleID]time.Time            `json:"lastScannedAt"`
-	Map                StormMapState                     `json:"map"`
-	IslandReturns      map[string]StormIslandReturnState `json:"islandReturns"`
-	LunaShopTableID    int64                             `json:"lunaShopTableId,omitempty"`
-	LunaShopProductID  PackageID                         `json:"lunaShopProductId,omitempty"`
-	LunaShopObservedAt time.Time                         `json:"lunaShopObservedAt,omitempty"`
+	LastScannedAt                 map[CastleID]time.Time            `json:"lastScannedAt"`
+	Map                           StormMapState                     `json:"map"`
+	IslandReturns                 map[string]StormIslandReturnState `json:"islandReturns"`
+	LunaShopTableID               int64                             `json:"lunaShopTableId,omitempty"`
+	LunaShopProductID             PackageID                         `json:"lunaShopProductId,omitempty"`
+	LunaShopObservedAt            time.Time                         `json:"lunaShopObservedAt,omitempty"`
+	LunaShopPending               bool                              `json:"lunaShopPending,omitempty"`
+	LunaShopPendingCastleID       CastleID                          `json:"lunaShopPendingCastleId,omitempty"`
+	LunaShopPendingAmount         int64                             `json:"lunaShopPendingAmount,omitempty"`
+	LunaShopPendingAquamarineCost int64                             `json:"lunaShopPendingAquamarineCost,omitempty"`
 }
 
 type NomadCampTargetState struct {
@@ -875,6 +1041,45 @@ type NomadCampState struct {
 	RBCTest       *NomadRBCTestState                `json:"rbcTest,omitempty"`
 }
 
+const AdvisorEstimatedCycleSeconds = 130
+
+type AdvisorRunState struct {
+	EventID          int64       `json:"eventId"`
+	EventEndsAt      time.Time   `json:"eventEndsAt,omitempty"`
+	SourceCastleID   CastleID    `json:"sourceCastleId,omitempty"`
+	KingdomID        KingdomID   `json:"kingdomId,omitempty"`
+	TargetTypeID     int         `json:"targetTypeId,omitempty"`
+	TargetX          int         `json:"targetX,omitempty"`
+	TargetY          int         `json:"targetY,omitempty"`
+	CommanderID      CommanderID `json:"commanderId,omitempty"`
+	MovementID       MovementID  `json:"movementId,omitempty"`
+	RequestedAttacks int         `json:"requestedAttacks"`
+	CurrentAttack    int         `json:"currentAttack"`
+	LaunchState      int         `json:"launchState,omitempty"`
+	Status           string      `json:"status"`
+	StartedAt        time.Time   `json:"startedAt"`
+	LastAttackAt     time.Time   `json:"lastAttackAt,omitempty"`
+	UpdatedAt        time.Time   `json:"updatedAt"`
+}
+
+type AdvisorSummaryState struct {
+	AdvisorType    int              `json:"advisorType,omitempty"`
+	Count          int              `json:"count,omitempty"`
+	Gains          map[string]int64 `json:"gains"`
+	Costs          map[string]int64 `json:"costs"`
+	UnitsLost      int64            `json:"unitsLost,omitempty"`
+	ToolsLost      int64            `json:"toolsLost,omitempty"`
+	Wins           int64            `json:"wins,omitempty"`
+	Defeats        int64            `json:"defeats,omitempty"`
+	PendingAttacks int64            `json:"pendingAttacks,omitempty"`
+	ObservedAt     time.Time        `json:"observedAt,omitempty"`
+}
+
+type AdvisorState struct {
+	Run     *AdvisorRunState    `json:"run,omitempty"`
+	Summary AdvisorSummaryState `json:"summary"`
+}
+
 type KhanLaunchState struct {
 	CommanderID CommanderID `json:"commanderId"`
 	MovementID  MovementID  `json:"movementId"`
@@ -910,6 +1115,7 @@ type KhanState struct {
 	CooldownsSkipped          int                           `json:"cooldownsSkipped"`
 	Launches                  []KhanLaunchState             `json:"launches"`
 	Taunts                    map[MovementID]KhanTauntState `json:"taunts"`
+	ResolvedTaunts            []KhanTauntState              `json:"resolvedTaunts,omitempty"`
 	TauntsObserved            int                           `json:"tauntsObserved"`
 	TauntsResolved            int                           `json:"tauntsResolved"`
 	LastTauntResolvedAt       time.Time                     `json:"lastTauntResolvedAt,omitempty"`
@@ -972,15 +1178,28 @@ type AttackPresetStack struct {
 }
 
 type ProtocolObservation struct {
-	Opcode        string    `json:"opcode"`
-	Count         uint64    `json:"count"`
-	InboundCount  uint64    `json:"inboundCount"`
-	OutboundCount uint64    `json:"outboundCount"`
-	LastDirection string    `json:"lastDirection"`
-	LastCode      *int      `json:"lastCode,omitempty"`
-	LastError     string    `json:"lastError,omitempty"`
-	LastSeenAt    time.Time `json:"lastSeenAt"`
-	LastRevision  uint64    `json:"lastRevision"`
+	Opcode                        string    `json:"opcode"`
+	Count                         uint64    `json:"count"`
+	InboundCount                  uint64    `json:"inboundCount"`
+	OutboundCount                 uint64    `json:"outboundCount"`
+	LastDirection                 string    `json:"lastDirection"`
+	LastCode                      *int      `json:"lastCode,omitempty"`
+	LastError                     string    `json:"lastError,omitempty"`
+	LastSeenAt                    time.Time `json:"lastSeenAt"`
+	LastRevision                  uint64    `json:"lastRevision"`
+	LastSuccessfulInboundAt       time.Time `json:"lastSuccessfulInboundAt,omitempty"`
+	LastSuccessfulInboundRevision uint64    `json:"lastSuccessfulInboundRevision,omitempty"`
+}
+
+func (observation ProtocolObservation) SuccessfulInboundAt() time.Time {
+	if !observation.LastSuccessfulInboundAt.IsZero() {
+		return observation.LastSuccessfulInboundAt
+	}
+	if observation.LastDirection == "inbound" && observation.LastCode != nil && *observation.LastCode == 0 &&
+		observation.LastError == "" {
+		return observation.LastSeenAt
+	}
+	return time.Time{}
 }
 
 type ReportNotice struct {
@@ -1001,13 +1220,20 @@ type SpyReportCapture struct {
 }
 
 type BattleReportCapture struct {
-	MessageID  int64           `json:"messageId"`
-	ReportID   int64           `json:"reportId,omitempty"`
-	BattleKey  string          `json:"battleKey,omitempty"`
-	Summary    json.RawMessage `json:"summary,omitempty"`
-	Waves      json.RawMessage `json:"waves,omitempty"`
-	Details    json.RawMessage `json:"details,omitempty"`
-	CapturedAt time.Time       `json:"capturedAt"`
+	MessageID             int64             `json:"messageId"`
+	ReportID              int64             `json:"reportId,omitempty"`
+	BattleKey             string            `json:"battleKey,omitempty"`
+	AutomationFeature     AttackFeatureID   `json:"automationFeature,omitempty"`
+	MovementID            MovementID        `json:"movementId,omitempty"`
+	EventID               int64             `json:"eventId,omitempty"`
+	EventActivity         EventActivityKind `json:"eventActivity,omitempty"`
+	EventOccurrenceEndsAt time.Time         `json:"eventOccurrenceEndsAt,omitempty"`
+	ToolsUsed             int64             `json:"toolsUsed,omitempty"`
+	Summary               json.RawMessage   `json:"summary,omitempty"`
+	Waves                 json.RawMessage   `json:"waves,omitempty"`
+	Details               json.RawMessage   `json:"details,omitempty"`
+	OccurredAt            time.Time         `json:"occurredAt,omitempty"`
+	CapturedAt            time.Time         `json:"capturedAt"`
 }
 
 type ReportState struct {
@@ -1020,6 +1246,13 @@ type ReportState struct {
 type CommandContextState struct {
 	ProductionSessionKey int        `json:"productionSessionKey,omitempty"`
 	ProductionObservedAt *time.Time `json:"productionObservedAt,omitempty"`
+}
+
+type DailyAttackState struct {
+	Count           int64     `json:"count"`
+	ServerThreshold int64     `json:"serverThreshold"`
+	GrowthRate      float64   `json:"growthRate"`
+	ObservedAt      time.Time `json:"observedAt,omitempty"`
 }
 
 type AutomationState struct {
@@ -1036,44 +1269,48 @@ type AutomationState struct {
 }
 
 type GameState struct {
-	SchemaVersion    int                                     `json:"schemaVersion"`
-	Revision         uint64                                  `json:"revision"`
-	UpdatedAt        time.Time                               `json:"updatedAt"`
-	CatalogVersion   string                                  `json:"catalogVersion,omitempty"`
-	LanguageVersion  string                                  `json:"languageVersion,omitempty"`
-	Session          SessionState                            `json:"session"`
-	Account          AccountBindingState                     `json:"account"`
-	Player           PlayerState                             `json:"player"`
-	Castles          map[CastleID]CastleState                `json:"castles"`
-	Commanders       map[CommanderID]CommanderState          `json:"commanders"`
-	Generals         map[int64]GeneralState                  `json:"generals"`
-	Castellans       map[CastellanID]CastellanState          `json:"castellans"`
-	Movements        map[MovementID]MovementState            `json:"movements"`
-	MovementSnapshot MovementSnapshot                        `json:"movementSnapshot"`
-	Stationing       map[string]StationingOperation          `json:"stationing"`
-	Scheduled        map[string]ScheduledOperation           `json:"scheduled"`
-	Rift             RiftState                               `json:"rift"`
-	Inventory        InventoryState                          `json:"inventory"`
-	Subscriptions    map[int]SubscriptionState               `json:"subscriptions"`
-	Market           MarketState                             `json:"market"`
-	KingdomTransport KingdomTransportState                   `json:"kingdomTransport"`
-	Beri             BeriState                               `json:"beri"`
-	Alliance         AllianceState                           `json:"alliance"`
-	Alliances        map[AllianceID]AllianceState            `json:"alliances"`
-	Map              map[KingdomID]map[string]MapObservation `json:"map"`
-	TowerCooldowns   map[string]TowerCooldownState           `json:"towerCooldowns"`
-	TowerQueue       TowerQueueState                         `json:"towerQueue"`
-	Invasion         InvasionState                           `json:"invasion"`
-	Storm            StormState                              `json:"storm"`
-	NomadCamps       NomadCampState                          `json:"nomadCamps"`
-	Khan             KhanState                               `json:"khan"`
-	AttackDialog     AttackDialogState                       `json:"attackDialog"`
-	AttackPresets    []AttackPreset                          `json:"attackPresets"`
-	EventScores      EventScoreState                         `json:"eventScores"`
-	CommandContext   CommandContextState                     `json:"commandContext"`
-	Automations      map[string]AutomationState              `json:"automations"`
-	Reports          ReportState                             `json:"reports"`
-	Observations     map[string]ProtocolObservation          `json:"observations"`
+	SchemaVersion        int                                     `json:"schemaVersion"`
+	Revision             uint64                                  `json:"revision"`
+	UpdatedAt            time.Time                               `json:"updatedAt"`
+	CatalogVersion       string                                  `json:"catalogVersion,omitempty"`
+	LanguageVersion      string                                  `json:"languageVersion,omitempty"`
+	Session              SessionState                            `json:"session"`
+	Account              AccountBindingState                     `json:"account"`
+	Player               PlayerState                             `json:"player"`
+	Castles              map[CastleID]CastleState                `json:"castles"`
+	Commanders           map[CommanderID]CommanderState          `json:"commanders"`
+	Generals             map[int64]GeneralState                  `json:"generals"`
+	Castellans           map[CastellanID]CastellanState          `json:"castellans"`
+	Movements            map[MovementID]MovementState            `json:"movements"`
+	MovementSnapshot     MovementSnapshot                        `json:"movementSnapshot"`
+	Stationing           map[string]StationingOperation          `json:"stationing"`
+	Scheduled            map[string]ScheduledOperation           `json:"scheduled"`
+	Rift                 RiftState                               `json:"rift"`
+	Inventory            InventoryState                          `json:"inventory"`
+	Subscriptions        map[int]SubscriptionState               `json:"subscriptions"`
+	Market               MarketState                             `json:"market"`
+	KingdomTransport     KingdomTransportState                   `json:"kingdomTransport"`
+	Beri                 BeriState                               `json:"beri"`
+	Alliance             AllianceState                           `json:"alliance"`
+	Alliances            map[AllianceID]AllianceState            `json:"alliances"`
+	AllianceHelpRequests AllianceHelpRequestState                `json:"allianceHelpRequests"`
+	Map                  map[KingdomID]map[string]MapObservation `json:"map"`
+	TowerCooldowns       map[string]TowerCooldownState           `json:"towerCooldowns"`
+	TowerQueue           TowerQueueState                         `json:"towerQueue"`
+	Invasion             InvasionState                           `json:"invasion"`
+	Storm                StormState                              `json:"storm"`
+	NomadCamps           NomadCampState                          `json:"nomadCamps"`
+	Advisor              AdvisorState                            `json:"advisor"`
+	Khan                 KhanState                               `json:"khan"`
+	DailyAttacks         DailyAttackState                        `json:"dailyAttacks"`
+	AttackDialog         AttackDialogState                       `json:"attackDialog"`
+	AttackPresets        []AttackPreset                          `json:"attackPresets"`
+	AttackAnalytics      AttackAnalyticsState                    `json:"attackAnalytics"`
+	EventScores          EventScoreState                         `json:"eventScores"`
+	CommandContext       CommandContextState                     `json:"commandContext"`
+	Automations          map[string]AutomationState              `json:"automations"`
+	Reports              ReportState                             `json:"reports"`
+	Observations         map[string]ProtocolObservation          `json:"observations"`
 }
 
 func NewGameState() GameState {
@@ -1107,18 +1344,21 @@ func NewGameState() GameState {
 		Market:        MarketState{Castles: map[CastleID]MarketCastleState{}},
 		KingdomTransport: KingdomTransportState{
 			Unlocks: map[KingdomID]KingdomTransportUnlock{}, Pending: []KingdomResourceTransport{},
-			PendingUnits: []KingdomUnitTransport{},
+			PendingUnits: []KingdomUnitTransport{}, ResourceWorkflows: map[KingdomID]KingdomResourceTransportWorkflow{},
 		},
-		Beri:           BeriState{TroopsByUnit: map[UnitID]int64{}},
-		Alliance:       AllianceState{Members: []AllianceMember{}, Holdings: []AllianceHolding{}},
-		Alliances:      map[AllianceID]AllianceState{},
-		Map:            map[KingdomID]map[string]MapObservation{},
-		TowerCooldowns: map[string]TowerCooldownState{},
+		Beri:                 BeriState{TroopsByUnit: map[UnitID]int64{}},
+		Alliance:             AllianceState{Members: []AllianceMember{}, Holdings: []AllianceHolding{}},
+		Alliances:            map[AllianceID]AllianceState{},
+		AllianceHelpRequests: AllianceHelpRequestState{HospitalProductionIDs: []int64{}},
+		Map:                  map[KingdomID]map[string]MapObservation{},
+		TowerCooldowns:       map[string]TowerCooldownState{},
 		TowerQueue: TowerQueueState{
 			EntriesByCastle: map[CastleID][]TowerQueueEntry{}, LastScannedAt: map[CastleID]time.Time{},
+			LastAttemptedAt:  map[CastleID]time.Time{},
+			CapacityByCastle: map[CastleID]TowerCapacityObservation{},
 		},
 		Invasion: InvasionState{
-			LastScannedAt: map[CastleID]time.Time{}, FortifiedTargets: map[string]string{},
+			LastScannedAt: map[CastleID]time.Time{}, FortifiedTargets: map[string]string{}, FortifyCurrencies: []string{},
 		},
 		Storm: StormState{
 			LastScannedAt: map[CastleID]time.Time{},
@@ -1128,10 +1368,15 @@ func NewGameState() GameState {
 		NomadCamps: NomadCampState{
 			LastScannedAt: map[CastleID]time.Time{}, Cooldowns: map[string]NomadCampCooldownState{},
 		},
+		Advisor:       AdvisorState{Summary: AdvisorSummaryState{Gains: map[string]int64{}, Costs: map[string]int64{}}},
 		Khan:          KhanState{Launches: []KhanLaunchState{}, Taunts: map[MovementID]KhanTauntState{}},
 		AttackPresets: []AttackPreset{},
+		AttackAnalytics: AttackAnalyticsState{
+			LaunchIDs: []MovementID{}, PendingAttacks: []AttackFeatureLaunch{},
+		},
 		EventScores: EventScoreState{
 			ByEvent: map[int64]ScalableEventScore{}, ShopByPackage: map[PackageID]EventShopRoute{},
+			ActivityByEvent: map[int64]EventActivityState{}, RankingByEvent: map[int64]EventRankingState{},
 		},
 		Automations: map[string]AutomationState{},
 		Reports: ReportState{

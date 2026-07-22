@@ -20,8 +20,13 @@ func planSpyReportFetch(_ context.Context, input Intent.PlanningContext, argumen
 	if request.MessageID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("messageId is required")
 	}
-	if notice, exists := input.State.Reports.Notices[request.MessageID]; exists && notice.TypeID != 3 {
-		return Intent.Plan{}, fmt.Errorf("message %d is not a spy-report notice", request.MessageID)
+	if notice, exists := input.State.Reports.Notices[request.MessageID]; exists {
+		if notice.TypeID != 3 {
+			return Intent.Plan{}, fmt.Errorf("message %d is not a spy-report notice", request.MessageID)
+		}
+		if reportNoticeCannotBeFetched(notice) {
+			return Intent.Plan{Summary: fmt.Sprintf("Skip unavailable spy report %d", request.MessageID)}, nil
+		}
 	}
 	payload, _ := json.Marshal(map[string]int64{"MID": request.MessageID})
 	return Intent.Plan{
@@ -80,8 +85,13 @@ func planBattleReportSummary(_ context.Context, input Intent.PlanningContext, ar
 	if request.MessageID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("messageId is required")
 	}
-	if notice, exists := input.State.Reports.Notices[request.MessageID]; exists && notice.TypeID != 6 {
-		return Intent.Plan{}, fmt.Errorf("message %d is not a battle-report notice", request.MessageID)
+	if notice, exists := input.State.Reports.Notices[request.MessageID]; exists {
+		if notice.TypeID != 6 {
+			return Intent.Plan{}, fmt.Errorf("message %d is not a battle-report notice", request.MessageID)
+		}
+		if reportNoticeCannotBeFetched(notice) {
+			return Intent.Plan{Summary: fmt.Sprintf("Skip unavailable battle report %d", request.MessageID)}, nil
+		}
 	}
 	payload, _ := json.Marshal(struct {
 		MessageID int64 `json:"MID"`
@@ -105,6 +115,9 @@ func planBattleReportDetails(_ context.Context, input Intent.PlanningContext, ar
 	if request.MessageID <= 0 || request.ReportID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("messageId and reportId are required")
 	}
+	if notice, exists := input.State.Reports.Notices[request.MessageID]; exists && reportNoticeCannotBeFetched(notice) {
+		return Intent.Plan{Summary: fmt.Sprintf("Skip unavailable battle report %d", request.MessageID)}, nil
+	}
 	capture, exists := input.State.Reports.BattleCaptures[request.MessageID]
 	if !exists || capture.ReportID != request.ReportID || len(capture.Summary) == 0 {
 		return Intent.Plan{}, fmt.Errorf("battle report %d summary context is unavailable", request.MessageID)
@@ -121,4 +134,13 @@ func planBattleReportDetails(_ context.Context, input Intent.PlanningContext, ar
 			commandStep("Fetch battle report units and tools", "bld", payload, "bld"),
 		},
 	}, nil
+}
+
+func reportNoticeCannotBeFetched(notice State.ReportNotice) bool {
+	switch notice.Status {
+	case "archived", "expired", "ignored", "unavailable":
+		return true
+	default:
+		return false
+	}
 }

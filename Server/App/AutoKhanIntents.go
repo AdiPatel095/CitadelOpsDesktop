@@ -37,6 +37,7 @@ type khanAttackRequest struct {
 	Preset                 AttackPresets.Preset     `json:"preset"`
 	CommanderID            State.CommanderID        `json:"commanderId"`
 	HorseTravelBoostID     int                      `json:"horseTravelBoostId"`
+	DailyAttackLimit       int64                    `json:"dailyAttackLimit"`
 	DefensePreset          KhanDomain.DefensePreset `json:"defensePreset"`
 	OpenGateProtection     bool                     `json:"openGateProtection"`
 	OffensiveUnitThreshold int64                    `json:"offensiveUnitThreshold"`
@@ -79,6 +80,11 @@ func planKhanAttack(_ context.Context, input Intent.PlanningContext, arguments j
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
+		return Intent.Plan{}, err
+	} else if blocked {
+		return blockedPlan, nil
+	}
 	contextPayload, _ := json.Marshal(struct {
 		SourceX   int             `json:"SX"`
 		SourceY   int             `json:"SY"`
@@ -88,6 +94,7 @@ func planKhanAttack(_ context.Context, input Intent.PlanningContext, arguments j
 	}{source.X, source.Y, target.X, target.Y, target.KingdomID})
 	steps := generalSkillsContextSteps(input.State, request.CommanderID, time.Now().UTC())
 	steps = append(steps, attackCastleContextStep(source))
+	steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 	steps = append(steps, deferredCRACommandStep(
 		fmt.Sprintf("Build and launch Khan camp attack with commander %d", request.CommanderID),
 		"khan.attack.build", arguments, contextPayload,
@@ -140,7 +147,7 @@ func (application *Application) resolveKhanAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve Khan camp attack capacity: %w", err)
 	}
-	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity)
+	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity, capacity.MaximumWaves)
 	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Khan attack preset %q: %w", request.Preset.Name, err)
@@ -284,11 +291,12 @@ func (application *Application) captureKhanLaunch(_ context.Context, arguments j
 		}
 		if gameState.Khan.RunID != request.RunID {
 			taunts := gameState.Khan.Taunts
+			resolvedTaunts := gameState.Khan.ResolvedTaunts
 			observed, resolved, lastResolved := gameState.Khan.TauntsObserved, gameState.Khan.TauntsResolved, gameState.Khan.LastTauntResolvedAt
 			gameState.Khan = State.KhanState{
 				RunID: request.RunID, EventEndsAt: request.EventEndsAt, SourceCastleID: request.SourceCastleID,
 				MainCastleID: request.MainCastleID, KingdomID: request.KingdomID, TargetX: request.TargetX,
-				TargetY: request.TargetY, Launches: []State.KhanLaunchState{}, Taunts: taunts,
+				TargetY: request.TargetY, Launches: []State.KhanLaunchState{}, Taunts: taunts, ResolvedTaunts: resolvedTaunts,
 				TauntsObserved: observed, TauntsResolved: resolved, LastTauntResolvedAt: lastResolved,
 			}
 		}
@@ -316,8 +324,17 @@ func (application *Application) captureKhanLaunch(_ context.Context, arguments j
 			gameState.Khan.Launches = append([]State.KhanLaunchState(nil), gameState.Khan.Launches[len(gameState.Khan.Launches)-256:]...)
 		}
 		gameState.Khan.AttacksLaunched++
-		gameState.Khan.LastAttackLaunchedAt = time.Now().UTC()
-		return []string{"khan", "movements"}, true, nil
+		launchedAt := selected.ObservedAt
+		if launchedAt.IsZero() {
+			launchedAt = time.Now().UTC()
+		}
+		gameState.Khan.LastAttackLaunchedAt = launchedAt.UTC()
+		State.RecordEventAttackLaunch(gameState, 72, State.EventAttackRecord{
+			MovementID: selected.ID, Kind: State.EventActivityKhan, KingdomID: request.KingdomID,
+			TargetTypeID: khanCampTypeID, TargetX: request.TargetX, TargetY: request.TargetY,
+			LaunchedAt: launchedAt.UTC(), ArrivesAt: selected.ArrivesAt.UTC(),
+		})
+		return []string{"khan", "movements", "event-scores"}, true, nil
 	})
 	if err != nil {
 		return err

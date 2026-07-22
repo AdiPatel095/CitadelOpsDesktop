@@ -21,6 +21,7 @@ const (
 	hospitalSubscriptionStackBonus int64 = 5
 	hospitalMaximumStackAmount     int64 = 15
 	hospitalSubscriptionEffectID         = 189
+	hospitalAllianceHelpLimit            = 3
 )
 
 type hospitalSettings struct {
@@ -55,6 +56,8 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	sort.Slice(castleIDs, func(left, right int) bool { return castleIDs[left] < castleIDs[right] })
 	woundedCastles := 0
 	observedQueues := 0
+	helpCapacityReached := false
+	outstandingHelp := State.OutstandingHospitalAllianceHelpRequests(snapshot.State)
 	for _, castleID := range castleIDs {
 		castle := snapshot.State.Castles[castleID]
 		wounded := orderedWounded(castle.Units.Hospital)
@@ -71,6 +74,10 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			}
 			if queueCapacity > 0 && occupied >= queueCapacity {
 				if productionID := eligibleAllianceHelpProductionID(queue); productionID > 0 {
+					if outstandingHelp >= hospitalAllianceHelpLimit {
+						helpCapacityReached = true
+						continue
+					}
 					arguments, _ := json.Marshal(map[string]any{"productionId": productionID})
 					return Decision{
 						Status: "ready", Detail: fmt.Sprintf("Request alliance help for hospital queue at %s", castleName(castle)),
@@ -123,13 +130,20 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			}, nil
 		}
 	}
+	status := "idle"
 	detail := "No wounded units need automatic healing"
 	if woundedCastles > 0 && observedQueues == 0 {
 		detail = "Waiting for hospital queues to be observed"
+	} else if helpCapacityReached {
+		status = "waiting"
+		detail = fmt.Sprintf(
+			"Waiting for one of %d outstanding hospital alliance-help requests to finish",
+			outstandingHelp,
+		)
 	} else if woundedCastles > 0 {
 		detail = "Hospital queues are full or their capacity is not yet known"
 	}
-	return Decision{Status: "idle", Detail: detail, NextCheckAt: snapshot.Now.Add(interval)}, nil
+	return Decision{Status: status, Detail: detail, NextCheckAt: snapshot.Now.Add(interval)}, nil
 }
 
 func orderedWounded(units map[State.UnitID]int64) []woundedStack {

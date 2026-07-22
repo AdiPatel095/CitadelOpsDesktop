@@ -22,3 +22,23 @@ func TestConstructionShopProductsComeFromOfficialPackages(t *testing.T) {
 		t.Fatalf("unexpected products: %+v", products)
 	}
 }
+
+func TestConstructionShopProductsIdentifyOfficialTrivialPackages(t *testing.T) {
+	store, err := DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[{"wodID":1}],"units":[{"wodID":1}],
+		"packages":[
+			{"packageID":10,"packageType":"constructionItem","constructionItemID":101,"constructionItemAmount":1},
+			{"packageID":11,"packageType":"constructionItem","comment2":"Central Silver Shop - keep like this ","constructionItemID":101,"constructionItemAmount":1}
+		]
+	}`), SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	products, err := store.ConstructionShopProducts(101)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(products) != 2 || products[0].Trivial || !products[1].Trivial {
+		t.Fatalf("unexpected trivial product classification: %+v", products)
+	}
+}

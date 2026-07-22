@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -15,6 +16,9 @@ import (
 const (
 	allianceRosterRefreshInterval = 5 * time.Minute
 	allianceRefreshAwaitInterval  = 10 * time.Second
+	autoBirdNextMetricKey         = "nextBirdUnixMs"
+	autoBirdNextCastleMetricKey   = "nextBirdCastleId"
+	autoBirdCastleReturnMetricKey = "birdReturnUnixMs."
 )
 
 type reserveSetting struct {
@@ -33,10 +37,11 @@ type autoBirdConfiguration struct {
 }
 
 type autoStationConfiguration struct {
-	LeadTimeSec     int                         `json:"leadTimeSec"`
-	RecallWhenClear bool                        `json:"recallWhenClear"`
-	MinRPTDays      int                         `json:"minRPTDays"`
-	Settings        map[string][]reserveSetting `json:"settings"`
+	LeadTimeSec      int                         `json:"leadTimeSec"`
+	RecallWhenClear  bool                        `json:"recallWhenClear"`
+	MinRPTDays       int                         `json:"minRPTDays"`
+	OpenGateFallback bool                        `json:"openGateFallback"`
+	Settings         map[string][]reserveSetting `json:"settings"`
 }
 
 type AutoBirdPolicy struct{}
@@ -48,12 +53,20 @@ func (*AutoBirdPolicy) ID() string { return "autoBird" }
 func (*AutoBirdPolicy) EnabledKey() string { return "auto_bird" }
 
 func (*AutoBirdPolicy) WakeDomains() []string {
-	return []string{"alliance", "movements", "units"}
+	return []string{"alliance", "movement-snapshot", "movements", "player-protection", "stationing", "units"}
 }
 
 func (*AutoBirdPolicy) WakeSections() []string { return []string{"automation.autoBird"} }
 
-func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision Decision, err error) {
+	if refresh, required := playerProtectionRefreshDecision(snapshot); required {
+		return withAutoBirdSchedule(snapshot, refresh, time.Time{}), nil
+	}
+	defer func() {
+		if err == nil {
+			decision = capAtPlayerProtectionRefresh(snapshot, decision)
+		}
+	}()
 	settings := autoBirdConfiguration{}
 	settings.IgnoreSettings.Settings = map[string][]reserveSetting{}
 	settings.IgnoreSettings.MinDelay = 6
@@ -62,18 +75,35 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	decodeSection(snapshot.Configuration, "automation.autoBird", &settings)
 	minimumDelay := clampInt(settings.IgnoreSettings.MinDelay, 1, 12)
 	maximumDelay := clampInt(settings.IgnoreSettings.MaxDelay, minimumDelay, 12)
+	if snapshot.State.Player.ProtectionMode.PreparingOrActive(snapshot.Now) {
+		delayHours := deterministicDelayHours(minimumDelay, maximumDelay, snapshot.State.Revision, 0)
+		nextCheck := snapshot.Now.Add(time.Duration(delayHours) * time.Hour)
+		protectionEndsAt := snapshot.State.Player.ProtectionMode.Until().Add(time.Second)
+		if protectionEndsAt.Before(nextCheck) {
+			nextCheck = protectionEndsAt
+		}
+		return withAutoBirdSchedule(snapshot, Decision{
+			Status: "protected", Detail: "Protection Mode is preparing or active; Auto Bird stationing is disabled",
+			NextCheckAt: nextCheck,
+		}, protectionEndsAt), nil
+	}
 	if decision, refresh := allianceRosterRefreshDecision(snapshot, "Refreshing alliance roster before checking bird targets"); refresh {
-		return decision, nil
+		return withAutoBirdSchedule(snapshot, decision, time.Time{}), nil
 	}
 	holdings := protectedHoldings(snapshot.State.Alliance, settings.IgnoreSettings.MinRPTDays)
 	if len(holdings) == 0 {
-		return allianceRefreshDecision(snapshot, "Waiting for protected alliance station targets"), nil
+		return withAutoBirdSchedule(snapshot, Decision{
+			Status: "idle", Detail: "No protected alliance station targets are currently available",
+			NextCheckAt: snapshot.Now.Add(allianceRosterRefreshInterval),
+		}, time.Time{}), nil
 	}
 	threats, _, _, _ := incomingThreats(snapshot.State, snapshot.Now)
 	castleIDs := sortedCastleIDs(snapshot.State.Castles)
 	for _, castleID := range castleIDs {
 		castle := snapshot.State.Castles[castleID]
-		if _, threatened := threats[castle.ID]; threatened || hasActiveAllianceStationMovement(snapshot.State, castle.ID, holdings) {
+		if _, threatened := threats[castle.ID]; threatened ||
+			hasActiveAllianceStationMovement(snapshot.State, castle.ID, holdings) ||
+			autoBirdStationActive(snapshot.State, castle.ID, snapshot.Now) {
 			continue
 		}
 		target, found := nearestHolding(holdings, castle)
@@ -90,19 +120,18 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			"delayHours": delayHours, "purpose": "autoBird", "trackingId": "autoBird:" + strconv.FormatInt(int64(castle.ID), 10),
 			"units": units,
 		})
-		return Decision{
+		return withAutoBirdSchedule(snapshot, Decision{
 			Status:              "ready",
 			Detail:              fmt.Sprintf("Station %d troops from %s", sumStationUnits(units), castleName(castle)),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "troops.station", Arguments: arguments},
 			ReevaluateOnSuccess: true,
-		}, nil
+		}, time.Time{}), nil
 	}
-	delayHours := deterministicDelayHours(minimumDelay, maximumDelay, snapshot.State.Revision, 0)
-	return Decision{
+	return withAutoBirdSchedule(snapshot, Decision{
 		Status: "idle", Detail: "All eligible castle troops are reserved or already stationed",
-		NextCheckAt: snapshot.Now.Add(time.Duration(delayHours) * time.Hour),
-	}, nil
+		NextCheckAt: snapshot.Now.Add(allianceRosterRefreshInterval),
+	}, time.Time{}), nil
 }
 
 type AutoStationPolicy struct{}
@@ -114,26 +143,38 @@ func (*AutoStationPolicy) ID() string { return "autoStation" }
 func (*AutoStationPolicy) EnabledKey() string { return "auto_station" }
 
 func (*AutoStationPolicy) WakeDomains() []string {
-	return []string{"alliance", "movement-snapshot", "movements", "stationing", "units"}
+	return []string{"alliance", "movement-snapshot", "movements", "player-protection", "stationing", "units"}
 }
 
 func (*AutoStationPolicy) WakeSections() []string { return []string{"automation.autoStation"} }
 
-func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision Decision, err error) {
+	if refresh, required := playerProtectionRefreshDecision(snapshot); required {
+		return refresh, nil
+	}
+	defer func() {
+		if err == nil {
+			decision = capAtPlayerProtectionRefresh(snapshot, decision)
+		}
+	}()
 	settings := autoStationConfiguration{
 		LeadTimeSec: 60, RecallWhenClear: true, MinRPTDays: 3, Settings: map[string][]reserveSetting{},
 	}
 	decodeSection(snapshot.Configuration, "automation.autoStation", &settings)
 	settings.LeadTimeSec = clampInt(settings.LeadTimeSec, 60, 3600)
-	protectedTargets := protectedHoldings(snapshot.State.Alliance, settings.MinRPTDays)
 	threats, threatCount, earliestImpact, latestImpact := incomingThreats(snapshot.State, snapshot.Now)
 	metrics := stationMetrics(threatCount, earliestImpact)
+	protectionMode := snapshot.State.Player.ProtectionMode.PreparingOrActive(snapshot.Now)
 	if threatCount > 0 {
+		if protectionMode {
+			return protectionModeOpenGateDecision(snapshot, settings, threats, threatCount, earliestImpact, metrics), nil
+		}
 		if decision, refresh := allianceRosterRefreshDecision(snapshot, "Incoming attack detected; refreshing alliance roster before evacuation"); refresh {
 			decision.Status = "threat"
 			decision.Metrics = metrics
 			return decision, nil
 		}
+		protectedTargets := protectedHoldings(snapshot.State.Alliance, settings.MinRPTDays)
 		if len(protectedTargets) == 0 {
 			decision := allianceRefreshDecision(snapshot, "Incoming attack detected; refreshing protected alliance targets")
 			decision.Status = "threat"
@@ -153,7 +194,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		}
 		for _, castleID := range sortedThreatCastleIDs(threats) {
 			castle := snapshot.State.Castles[castleID]
-			if activeTrackedStation(snapshot.State, castle.ID) {
+			if activeTrackedStation(snapshot.State, castle.ID, snapshot.Now) {
 				continue
 			}
 			target, found := nearestHolding(protectedTargets, castle)
@@ -219,10 +260,101 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			ReevaluateOnSuccess: true,
 		}, nil
 	}
+	if protectionMode {
+		detail := "Protection Mode is preparing or active; Auto Station will use Open Gates instead of stationing"
+		if !settings.OpenGateFallback {
+			detail = "Protection Mode is preparing or active; stationing is disabled and Open Gate Fallback is off"
+		}
+		return Decision{
+			Status: "protected", Detail: detail,
+			NextCheckAt: snapshot.Now.Add(10 * time.Second), Metrics: metrics,
+		}, nil
+	}
 	return Decision{
 		Status: "armed", Detail: "Monitoring canonical movement snapshots for incoming attacks",
 		NextCheckAt: snapshot.Now.Add(10 * time.Second), Metrics: metrics,
 	}, nil
+}
+
+func protectionModeOpenGateDecision(
+	snapshot Snapshot,
+	settings autoStationConfiguration,
+	threats map[State.CastleID]threatWindow,
+	threatCount int,
+	earliestImpact time.Time,
+	metrics map[string]float64,
+) Decision {
+	leadTime := time.Duration(settings.LeadTimeSec) * time.Second
+	remaining := earliestImpact.Sub(snapshot.Now)
+	if remaining > leadTime {
+		next := earliestImpact.Add(-leadTime)
+		if next.Before(snapshot.Now.Add(2 * time.Second)) {
+			next = snapshot.Now.Add(2 * time.Second)
+		}
+		return Decision{
+			Status: "threat", Detail: fmt.Sprintf("%d incoming attack(s); Open Gate safety window opens in %s", threatCount, roundedDuration(remaining-leadTime)),
+			NextCheckAt: next, Metrics: metrics,
+		}
+	}
+
+	uncovered := make([]State.CastleID, 0, len(threats))
+	for _, castleID := range sortedThreatCastleIDs(threats) {
+		castle := snapshot.State.Castles[castleID]
+		gateUntil := castle.Defense.OpenGateUntil
+		if gateUntil != nil && gateUntil.After(threats[castleID].Latest) {
+			continue
+		}
+		uncovered = append(uncovered, castleID)
+	}
+	if len(uncovered) == 0 {
+		return Decision{
+			Status: "protected", Detail: fmt.Sprintf("%d incoming attack(s); game-reported Open Gate duration covers the final attack", threatCount),
+			NextCheckAt: snapshot.Now.Add(10 * time.Second), Metrics: metrics,
+		}
+	}
+	if !settings.OpenGateFallback {
+		return Decision{
+			Status: "threat", Detail: "Protection Mode suppresses stationing; enable Open Gate Fallback for the threatened castle",
+			NextCheckAt: snapshot.Now.Add(10 * time.Second), Metrics: metrics,
+		}
+	}
+
+	var nextGateExpiry time.Time
+	unsupportedCastle := State.CastleID(0)
+	for _, castleID := range uncovered {
+		castle := snapshot.State.Castles[castleID]
+		if castle.KingdomID != 0 {
+			if unsupportedCastle == 0 {
+				unsupportedCastle = castleID
+			}
+			continue
+		}
+		if gateUntil := castle.Defense.OpenGateUntil; gateUntil != nil && gateUntil.After(snapshot.Now) {
+			nextGateExpiry = minTime(nextGateExpiry, gateUntil.Add(time.Second))
+			continue
+		}
+		arguments, _ := json.Marshal(map[string]any{
+			"castleId": castle.ID, "requireIncomingAttack": true, "requireProtectionMode": true,
+		})
+		return Decision{
+			Status:              "threat",
+			Detail:              fmt.Sprintf("Opening gates at %s; Protection Mode suppresses stationing", castleName(castle)),
+			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+			Metrics:             metrics,
+			Request:             &Intent.Request{Name: "defense.open_gate", Arguments: arguments},
+			ReevaluateOnSuccess: true,
+		}
+	}
+	if unsupportedCastle > 0 {
+		return Decision{
+			Status: "threat", Detail: fmt.Sprintf("Protection Mode suppresses stationing; Open Gates is not capture-confirmed for castle %d's kingdom", unsupportedCastle),
+			NextCheckAt: snapshot.Now.Add(30 * time.Second), Metrics: metrics,
+		}
+	}
+	return Decision{
+		Status: "threat", Detail: "The current Open Gate period ends before the final incoming attack; waiting to reopen it",
+		NextCheckAt: nextGateExpiry, Metrics: metrics,
+	}
 }
 
 type stationUnit struct {
@@ -334,12 +466,143 @@ func stationableUnits(snapshot Snapshot, castle State.CastleState, reserves []re
 		if available <= 0 {
 			continue
 		}
-		if _, exists := catalog.Find(strconv.FormatInt(int64(unitID), 10)); !exists {
+		raw, exists := catalog.Find(strconv.FormatInt(int64(unitID), 10))
+		if !exists {
+			continue
+		}
+		record, err := GameData.DecodeRecord(raw)
+		if err != nil || GameData.IsToolRecord(record) {
 			continue
 		}
 		result = append(result, stationUnit{UnitID: unitID, Amount: available})
 	}
 	return result
+}
+
+func withAutoBirdSchedule(snapshot Snapshot, decision Decision, notBefore time.Time) Decision {
+	expectedReturns := expectedAutoBirdReturns(snapshot.State, snapshot.Now)
+	expectedAt, castleID := earliestAutoBirdReturn(expectedReturns)
+	if expectedAt.After(snapshot.Now) {
+		if decision.Metrics == nil {
+			decision.Metrics = map[string]float64{}
+		}
+		decision.Metrics[autoBirdNextMetricKey] = float64(expectedAt.UnixMilli())
+		if castleID > 0 {
+			decision.Metrics[autoBirdNextCastleMetricKey] = float64(castleID)
+		}
+	}
+	if len(expectedReturns) > 0 {
+		if decision.Metrics == nil {
+			decision.Metrics = map[string]float64{}
+		}
+		for expectedCastleID, returnAt := range expectedReturns {
+			decision.Metrics[autoBirdCastleReturnMetricKey+strconv.FormatInt(int64(expectedCastleID), 10)] =
+				float64(returnAt.UnixMilli())
+		}
+	}
+	returnAt, _ := nextGameReportedAutoBirdReturn(snapshot.State, snapshot.Now)
+	wakeAt := returnAt
+	if !notBefore.IsZero() && (wakeAt.IsZero() || wakeAt.Before(notBefore)) {
+		wakeAt = notBefore
+	}
+	if wakeAt.After(snapshot.Now) {
+		if decision.NextCheckAt.IsZero() || wakeAt.Before(decision.NextCheckAt) {
+			decision.NextCheckAt = wakeAt
+		}
+	}
+	return decision
+}
+
+func expectedAutoBirdReturns(gameState State.GameState, now time.Time) map[State.CastleID]time.Time {
+	result := map[State.CastleID]time.Time{}
+	for _, movement := range gameState.Movements {
+		castleID, matches := autoBirdMovementCastle(gameState, movement)
+		if !matches {
+			continue
+		}
+		candidate := time.Time{}
+		switch {
+		case movement.Direction == 1 && movement.ReturnsAt != nil:
+			candidate = movement.ReturnsAt.UTC()
+		case movement.Direction == 0 && movement.ArrivesAt != nil && movement.WaitSeconds > 0:
+			candidate = movement.ArrivesAt.UTC().Add(
+				time.Duration(movement.WaitSeconds+max(0, movement.TravelSeconds)) * time.Second,
+			)
+		}
+		current := result[castleID]
+		if candidate.After(now) && (current.IsZero() || candidate.Before(current)) {
+			result[castleID] = candidate
+		}
+	}
+	return result
+
+}
+
+func earliestAutoBirdReturn(expectedReturns map[State.CastleID]time.Time) (time.Time, State.CastleID) {
+	var next time.Time
+	var nextCastleID State.CastleID
+	for castleID, candidate := range expectedReturns {
+		if next.IsZero() || candidate.Before(next) || candidate.Equal(next) && castleID < nextCastleID {
+			next = candidate
+			nextCastleID = castleID
+		}
+	}
+	return next, nextCastleID
+}
+
+func nextGameReportedAutoBirdReturn(gameState State.GameState, now time.Time) (time.Time, State.CastleID) {
+	var next time.Time
+	var nextCastleID State.CastleID
+	for _, movement := range gameState.Movements {
+		if movement.Direction != 1 || movement.ReturnsAt == nil {
+			continue
+		}
+		castleID, matches := autoBirdMovementCastle(gameState, movement)
+		if !matches {
+			continue
+		}
+		candidate := movement.ReturnsAt.UTC()
+		if candidate.After(now) && (next.IsZero() || candidate.Before(next) ||
+			candidate.Equal(next) && castleID < nextCastleID) {
+			next = candidate
+			nextCastleID = castleID
+		}
+	}
+	return next, nextCastleID
+}
+
+func autoBirdMovementCastle(gameState State.GameState, movement State.MovementState) (State.CastleID, bool) {
+	for _, operation := range gameState.Stationing {
+		if !operation.MatchesMovement(movement) {
+			continue
+		}
+		switch operation.Purpose {
+		case "autoBird":
+			return operation.SourceCastleID, operation.SourceCastleID > 0
+		case "autoStation":
+			return 0, false
+		}
+	}
+	sourceCastleID := movement.SourceCastleID
+	holdingCastleID := movement.TargetCastleID
+	if movement.Direction == 1 {
+		sourceCastleID = movement.TargetCastleID
+		holdingCastleID = movement.SourceCastleID
+	}
+	if _, owned := gameState.Castles[sourceCastleID]; !owned {
+		return 0, false
+	}
+	for _, holding := range gameState.Alliance.Holdings {
+		if holding.CastleID == holdingCastleID && allianceStationSlot(holding.SlotType) {
+			return sourceCastleID, true
+		}
+	}
+	return 0, false
+}
+
+func autoBirdStationActive(gameState State.GameState, castleID State.CastleID, now time.Time) bool {
+	operation := gameState.Stationing["autoBird:"+strconv.FormatInt(int64(castleID), 10)]
+	return operation.ActiveAt(gameState.Movements, now)
 }
 
 func hasActiveAllianceStationMovement(gameState State.GameState, castleID State.CastleID, holdings []State.AllianceHolding) bool {
@@ -348,20 +611,19 @@ func hasActiveAllianceStationMovement(gameState State.GameState, castleID State.
 		targets[holding.CastleID] = struct{}{}
 	}
 	for _, movement := range gameState.Movements {
-		if movement.SourceCastleID != castleID {
-			continue
-		}
-		if _, stationTarget := targets[movement.TargetCastleID]; stationTarget {
+		_, outgoingTarget := targets[movement.TargetCastleID]
+		_, returningSource := targets[movement.SourceCastleID]
+		if (movement.Direction == 0 && movement.SourceCastleID == castleID && outgoingTarget) ||
+			(movement.Direction == 1 && movement.TargetCastleID == castleID && returningSource) {
 			return true
 		}
 	}
 	return false
 }
 
-func activeTrackedStation(gameState State.GameState, castleID State.CastleID) bool {
+func activeTrackedStation(gameState State.GameState, castleID State.CastleID, now time.Time) bool {
 	operation := gameState.Stationing["autoStation:"+strconv.FormatInt(int64(castleID), 10)]
-	movement, exists := trackedStationMovement(gameState, operation)
-	return exists && movement.Direction == 0
+	return operation.ActiveAt(gameState.Movements, now)
 }
 
 func trackedStationMovement(gameState State.GameState, operation State.StationingOperation) (State.MovementState, bool) {
@@ -372,7 +634,7 @@ func trackedStationMovement(gameState State.GameState, operation State.Stationin
 	}
 	var matched State.MovementState
 	for _, movement := range gameState.Movements {
-		if movement.SourceCastleID != operation.SourceCastleID || movement.TargetCastleID != operation.TargetCastleID {
+		if !operation.MatchesMovement(movement) {
 			continue
 		}
 		if matched.ID == 0 || movement.ID > matched.ID {

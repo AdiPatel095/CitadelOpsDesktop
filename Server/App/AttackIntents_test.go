@@ -86,8 +86,9 @@ func TestRiftReplaySendsImmediateCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 3 || plan.Steps[0].Opcode != "jca" || plan.Steps[0].AwaitOpcode != "jaa" ||
-		plan.Steps[1].Action != "attack.inventory.guard" || plan.Steps[2].Opcode != "cra" || plan.Steps[2].Action != "" {
+	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "jca" || plan.Steps[0].AwaitOpcode != "jaa" ||
+		plan.Steps[1].Action != "attack.inventory.guard" || plan.Steps[2].Opcode != "cra" || plan.Steps[2].Action != "" ||
+		plan.Steps[3].Action != "attack.analytics.capture" {
 		t.Fatalf("unexpected immediate plan: %#v", plan)
 	}
 	if plan.Admission == nil || plan.Admission.Class != Intent.AdmissionAttackLaunch || plan.Admission.Module != "riftReplay" {
@@ -146,6 +147,34 @@ func TestRiftReplayAppliesValidatedAttackSetup(t *testing.T) {
 	}
 }
 
+func TestAttackSetupAllowsThirtyWaves(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[{"wodID":1}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	unitID := int64(1)
+	source := State.CastleState{
+		ID:    1,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{1: 31}},
+	}
+	wave := attackSetupWaveRequest{Middle: attackSetupLaneRequest{
+		Troops: []attackSetupSlotRequest{{ItemID: &unitID, Quantity: 1}},
+	}}
+	setup := attackSetupRequest{Waves: make([]attackSetupWaveRequest, 30)}
+	for index := range setup.Waves {
+		setup.Waves[index] = wave
+	}
+	if built, err := buildAttackSetupWaves(setup, source, gameData); err != nil || len(built) != 30 {
+		t.Fatalf("30-wave setup: len=%d err=%v", len(built), err)
+	}
+	setup.Waves = append(setup.Waves, wave)
+	if _, err := buildAttackSetupWaves(setup, source, gameData); err == nil || !strings.Contains(err.Error(), "between 1 and 30 waves") {
+		t.Fatalf("31-wave setup error = %v", err)
+	}
+}
+
 func TestRiftReplayBuildsOneCommandPerSelectedCommander(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: false}
@@ -169,8 +198,10 @@ func TestRiftReplayBuildsOneCommandPerSelectedCommander(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "jca" || plan.Steps[0].AwaitOpcode != "jaa" ||
-		plan.Steps[1].Action != "attack.inventory.guard" || plan.Steps[2].Opcode != "cra" || plan.Steps[3].Opcode != "cra" {
+	if len(plan.Steps) != 6 || plan.Steps[0].Opcode != "jca" || plan.Steps[0].AwaitOpcode != "jaa" ||
+		plan.Steps[1].Action != "attack.inventory.guard" || plan.Steps[2].Opcode != "cra" ||
+		plan.Steps[3].Action != "attack.analytics.capture" || plan.Steps[4].Opcode != "cra" ||
+		plan.Steps[5].Action != "attack.analytics.capture" {
 		t.Fatalf("unexpected CRA setup steps: %#v", plan.Steps)
 	}
 	if plan.Admission == nil || plan.Admission.Module != "riftReplay" {
@@ -180,7 +211,7 @@ func TestRiftReplayBuildsOneCommandPerSelectedCommander(t *testing.T) {
 		var body struct {
 			CommanderID State.CommanderID `json:"LID"`
 		}
-		if err := json.Unmarshal(plan.Steps[index+2].Command.Payload, &body); err != nil {
+		if err := json.Unmarshal(plan.Steps[index*2+2].Command.Payload, &body); err != nil {
 			t.Fatal(err)
 		}
 		if body.CommanderID != want {
@@ -302,8 +333,10 @@ func TestMaidenWaveUsesSelectedEligibleCommanders(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "jca" || plan.Steps[0].AwaitOpcode != "jaa" ||
-		plan.Steps[1].Action != "attack.inventory.guard" || plan.Steps[2].Opcode != "cra" || plan.Steps[3].Opcode != "cra" {
+	if len(plan.Steps) != 6 || plan.Steps[0].Opcode != "jca" || plan.Steps[0].AwaitOpcode != "jaa" ||
+		plan.Steps[1].Action != "attack.inventory.guard" || plan.Steps[2].Opcode != "cra" ||
+		plan.Steps[3].Action != "attack.analytics.capture" || plan.Steps[4].Opcode != "cra" ||
+		plan.Steps[5].Action != "attack.analytics.capture" {
 		t.Fatalf("unexpected CRA setup steps: %#v", plan.Steps)
 	}
 	if plan.Admission == nil || plan.Admission.Module != "riftMaiden" {
@@ -313,7 +346,7 @@ func TestMaidenWaveUsesSelectedEligibleCommanders(t *testing.T) {
 		var body struct {
 			CommanderID State.CommanderID `json:"LID"`
 		}
-		if err := json.Unmarshal(plan.Steps[index+2].Command.Payload, &body); err != nil {
+		if err := json.Unmarshal(plan.Steps[index*2+2].Command.Payload, &body); err != nil {
 			t.Fatal(err)
 		}
 		if body.CommanderID != want {

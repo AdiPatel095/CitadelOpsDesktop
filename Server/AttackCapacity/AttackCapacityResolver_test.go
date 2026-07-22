@@ -366,6 +366,77 @@ func TestResolverUsesTargetCastleTypeAsAuthoritativeEffectFilter(t *testing.T) {
 	}
 }
 
+func TestResolverCalculatesTargetApplicableAttackWaves(t *testing.T) {
+	gameData := resolverTestGameData(t, `{
+		"versionInfo":[],"units":[],"buildings":[],
+		"effects":[
+			{"effectID":29,"name":"additionalWaves","effectTypeID":156,"capID":99},
+			{"effectID":447,"name":"equipmentAREAdditionalWaves","effectTypeID":156,"areaTypeID":"43","capID":99},
+			{"effectID":484,"name":"newPVPAdditionalWaves","effectTypeID":156,"isPvPFight":1,"capID":99}
+		],
+		"generalSkills":[{"skillID":101001,"generalID":101,"effects":"29&1"}],
+		"legendskills":[{"skillID":101,"effectType":"additionalWave","totalEffectValue":1}]
+	}`)
+	state := State.NewGameState()
+	state.Castles[100] = State.CastleState{ID: 100}
+	state.Commanders[7] = State.CommanderState{
+		ID: 7, GeneralID: 101,
+		Equipment: map[string]State.EquipmentInstanceID{"1": 1001}, Gems: map[string]State.GemInstanceID{"1": 2001},
+	}
+	state.Inventory.Equipment[1001] = State.EquipmentInstance{
+		ID: 1001, Effects: State.EquipmentEffects{
+			{DefinitionID: 29, Values: []float64{4}},
+			{DefinitionID: 447, Values: []float64{5}},
+			{DefinitionID: 484, Values: []float64{3}},
+		},
+	}
+	state.Inventory.Gems[2001] = State.GemInstance{
+		ID: 2001, Effects: State.EquipmentEffects{{DefinitionID: 29, Values: []float64{1}}},
+	}
+	state.Generals[101] = State.GeneralState{
+		ID: 101, ActiveSkillIDs: []int64{101001}, ObservedAt: time.Now().UTC(),
+	}
+	state.Player.LegendSkills = State.LegendSkillState{ActiveIDs: []int64{101}, ObservedAt: time.Now().UTC()}
+
+	resolve := func(castleTypeID int, pvp bool) Result {
+		t.Helper()
+		state.AttackDialog = State.AttackDialogState{
+			SourceCastleID: 100,
+			Target:         State.AttackDialogTarget{TypeID: castleTypeID},
+			ActiveEffects: []State.AttackDialogEffect{
+				{EffectID: 29, Values: []float64{1}, Source: "CI"},
+				{EffectID: 447, Values: []float64{2}, Source: "DE"},
+			},
+			ObservedAt: time.Now().UTC(),
+		}
+		result, err := (Resolver{}).Resolve(state, gameData, Request{
+			SourceCastleID: 100, CommanderID: 7, UseAttackDialogEffects: true,
+			Target: TargetContext{
+				Map: &MapTarget{TypeID: castleTypeID}, CastleTypeID: castleTypeID,
+				PvP: pvp, LegendaryFight: true,
+				BaseCapacity: LaneCapacity{Left: 100, Front: 200, Right: 100},
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return result
+	}
+
+	invasion := resolve(21, true)
+	if invasion.BaseWaves != 4 || invasion.AdditionalWaves != 11 || invasion.MaximumWaves != 15 {
+		t.Fatalf("invasion waves = base %d additional %d maximum %d", invasion.BaseWaves, invasion.AdditionalWaves, invasion.MaximumWaves)
+	}
+	if len(invasion.WaveModifiers) != 6 {
+		t.Fatalf("invasion wave modifiers = %#v", invasion.WaveModifiers)
+	}
+
+	rift := resolve(43, false)
+	if rift.BaseWaves != 4 || rift.AdditionalWaves != 15 || rift.MaximumWaves != 19 {
+		t.Fatalf("Rift waves = base %d additional %d maximum %d", rift.BaseWaves, rift.AdditionalWaves, rift.MaximumWaves)
+	}
+}
+
 func TestResolverAddsObservedGeneralSkills(t *testing.T) {
 	gameData := resolverTestGameData(t, `{
 		"versionInfo":[],"units":[],"buildings":[],

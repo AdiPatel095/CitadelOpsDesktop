@@ -44,11 +44,23 @@ func TestAutoTowerPolicyScansStaleCastlesBeforeLaunchingQueue(t *testing.T) {
 	if err != nil || decision.Request == nil || decision.Request.Name != "tower.attack" || decision.FollowUp != nil {
 		t.Fatalf("tower preparation decision: %#v err=%v", decision, err)
 	}
+	if !decision.ReevaluateOnStale {
+		t.Fatal("tower attack did not opt into immediate stale re-evaluation")
+	}
 	if decision.ScheduleKey != "autoTowers:1" {
 		t.Fatalf("tower attack schedule key = %q", decision.ScheduleKey)
 	}
 	if !decision.NextCheckAt.Equal(now.Add(2 * time.Second)) {
 		t.Fatalf("tower queue next check = %s, want immediate queue cadence", decision.NextCheckAt)
+	}
+	var attackArguments struct {
+		CommanderIDs []State.CommanderID `json:"commanderIds"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &attackArguments); err != nil {
+		t.Fatal(err)
+	}
+	if len(attackArguments.CommanderIDs) != 1 || attackArguments.CommanderIDs[0] != 1 {
+		t.Fatalf("tower commander reservation = %#v", attackArguments.CommanderIDs)
 	}
 }
 
@@ -66,6 +78,120 @@ func TestAutoTowerPolicyRescansAtThirtyMinuteBoundary(t *testing.T) {
 	decision, err = NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
 	if err != nil || decision.Request == nil || decision.Request.Name != "tower.queue.scan" {
 		t.Fatalf("30-minute scan decision: %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoTowerPolicyRefreshesStaleQueuedTargetBeforeAttack(t *testing.T) {
+	now := time.Date(2026, 7, 12, 16, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	observedAt := now.Add(-autoTowerTargetVerificationAge)
+	fillTowerCoverage(&snapshot.State, 100, 100, observedAt)
+	snapshot.State.Map[0]["101:100"] = State.MapObservation{
+		KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID,
+		TowerVictoryCount: 845, Level: 81, ObservedAt: observedAt,
+	}
+	snapshot.State.TowerQueue.LastScannedAt[1] = now
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 101, TargetY: 100, MapObservedAt: observedAt, QueuedAt: observedAt,
+	}}
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.queue.target.refresh" {
+		t.Fatalf("stale target refresh decision: %#v err=%v", decision, err)
+	}
+	var refreshArguments struct {
+		SourceCastleID   State.CastleID `json:"sourceCastleId"`
+		TargetX          int            `json:"targetX"`
+		TargetY          int            `json:"targetY"`
+		RefreshStartedAt time.Time      `json:"refreshStartedAt"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &refreshArguments); err != nil ||
+		refreshArguments.SourceCastleID != 1 || refreshArguments.TargetX != 101 || refreshArguments.TargetY != 100 ||
+		!refreshArguments.RefreshStartedAt.Equal(now) {
+		t.Fatalf("stale target refresh arguments = %#v err=%v", refreshArguments, err)
+	}
+}
+
+func TestAutoTowerPolicySkipsDeferredTowerAndContinuesQueue(t *testing.T) {
+	now := time.Date(2026, 7, 12, 16, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	observedAt := now.Add(-autoTowerTargetVerificationAge)
+	fillTowerCoverage(&snapshot.State, 100, 100, observedAt)
+	for _, targetX := range []int{101, 102} {
+		snapshot.State.Map[0][fmt.Sprintf("%d:100", targetX)] = State.MapObservation{
+			KingdomID: 0, X: targetX, Y: 100, TypeID: kingdomTowerMapTypeID,
+			TowerVictoryCount: 845, Level: 81, ObservedAt: observedAt,
+		}
+	}
+	snapshot.State.TowerQueue.LastScannedAt[1] = now
+	deferredUntil := now.Add(time.Minute)
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{
+		{KingdomID: 0, TargetX: 101, TargetY: 100, MapObservedAt: observedAt, QueuedAt: observedAt, DeferredUntil: &deferredUntil},
+		{KingdomID: 0, TargetX: 102, TargetY: 100, MapObservedAt: observedAt, QueuedAt: observedAt},
+	}
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.queue.target.refresh" {
+		t.Fatalf("deferred target decision: %#v err=%v", decision, err)
+	}
+	var arguments struct {
+		TargetX int `json:"targetX"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil || arguments.TargetX != 102 {
+		t.Fatalf("deferred queue chose target %#v err=%v", arguments, err)
+	}
+}
+
+func TestTowerQueueKeepsRotatedTargetBehindOlderReadyTargets(t *testing.T) {
+	now := time.Date(2026, 7, 12, 16, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	fillTowerCoverage(&snapshot.State, 100, 100, now)
+	for _, targetX := range []int{101, 102} {
+		snapshot.State.Map[0][fmt.Sprintf("%d:100", targetX)] = State.MapObservation{
+			KingdomID: 0, X: targetX, Y: 100, TypeID: kingdomTowerMapTypeID,
+			TowerVictoryCount: 845, Level: 81, ObservedAt: now,
+		}
+	}
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{
+		{KingdomID: 0, TargetX: 101, TargetY: 100, MapObservedAt: now, QueuedAt: now},
+		{KingdomID: 0, TargetX: 102, TargetY: 100, MapObservedAt: now, QueuedAt: now.Add(-time.Minute)},
+	}
+	settings := autoTowerSettings{Castles: map[string]autoTowerCastle{
+		"1": {Enabled: true, Radius: 2, UnitID: 77},
+	}}
+
+	candidates, _, _ := queuedTowerCandidates(snapshot, settings)
+	if len(candidates) != 2 || candidates[0].Entry.TargetX != 102 || candidates[1].Entry.TargetX != 101 {
+		t.Fatalf("rotated queue order = %#v", candidates)
+	}
+}
+
+func TestTowerQueueRotatesAcrossCastlesBeforeDrainingOneBatch(t *testing.T) {
+	now := time.Date(2026, 7, 22, 18, 45, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.State.Castles[2] = State.CastleState{ID: 2, KingdomID: 0, X: 200, Y: 200}
+	snapshot.State.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now},
+		"102:100": {KingdomID: 0, X: 102, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now},
+		"201:200": {KingdomID: 0, X: 201, Y: 200, TypeID: kingdomTowerMapTypeID, ObservedAt: now},
+	}
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{
+		{KingdomID: 0, TargetX: 101, TargetY: 100, QueuedAt: now.Add(-2 * time.Hour)},
+		{KingdomID: 0, TargetX: 102, TargetY: 100, QueuedAt: now.Add(-2 * time.Hour)},
+	}
+	snapshot.State.TowerQueue.EntriesByCastle[2] = []State.TowerQueueEntry{
+		{KingdomID: 0, TargetX: 201, TargetY: 200, QueuedAt: now.Add(-time.Hour)},
+	}
+	snapshot.State.TowerQueue.LastAttemptedAt[1] = now
+	snapshot.State.TowerQueue.LastAttemptedAt[2] = now.Add(-time.Minute)
+	settings := autoTowerSettings{Castles: map[string]autoTowerCastle{
+		"1": {Enabled: true, Radius: 2, UnitID: 77},
+		"2": {Enabled: true, Radius: 2, UnitID: 77},
+	}}
+
+	candidates, _, _ := queuedTowerCandidates(snapshot, settings)
+	if len(candidates) != 3 || candidates[0].Castle.ID != 2 {
+		t.Fatalf("castle round-robin order = %#v", candidates)
 	}
 }
 
@@ -112,6 +238,75 @@ func TestAutoTowerPolicyLaunchesOpportunisticallyWhileOlderTowerMovementIsActive
 	}
 }
 
+func TestAutoTowerCommanderRejectsActiveMovementEvenWhenRosterSaysAvailable(t *testing.T) {
+	now := time.Date(2026, 7, 22, 18, 50, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = State.CastleState{ID: 100}
+	gameState.Commanders[1] = State.CommanderState{ID: 1, Available: true}
+	gameState.Commanders[2] = State.CommanderState{ID: 2, Available: true}
+	arrivesAt := now.Add(time.Minute)
+	commanderID := State.CommanderID(1)
+	gameState.Movements[10] = State.MovementState{
+		ID: 10, Direction: 0, OwnerPlayerID: 1, SourceCastleID: 100,
+		CommanderID: &commanderID, ArrivesAt: &arrivesAt,
+	}
+
+	selected, found := nextAutoTowerCommander(gameState, []State.CommanderID{1, 2}, true, false, now)
+	if !found || selected != 2 {
+		t.Fatalf("active movement commander was selected: commander=%d found=%t", selected, found)
+	}
+}
+
+func TestAutoTowerCommanderIgnoresForeignMovementWithSameLeaderID(t *testing.T) {
+	now := time.Date(2026, 7, 22, 18, 50, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Commanders[1] = State.CommanderState{ID: 1, Available: true}
+	arrivesAt := now.Add(time.Minute)
+	commanderID := State.CommanderID(1)
+	gameState.Movements[10] = State.MovementState{
+		ID: 10, Direction: 0, OwnerPlayerID: 2, CommanderID: &commanderID, ArrivesAt: &arrivesAt,
+	}
+
+	selected, found := nextAutoTowerCommander(gameState, []State.CommanderID{1}, true, false, now)
+	if !found || selected != 1 {
+		t.Fatalf("foreign movement blocked own commander: commander=%d found=%t", selected, found)
+	}
+}
+
+func TestTowerQueueKeepsSettlingAttackTargetReservedAfterMovementExpires(t *testing.T) {
+	now := time.Date(2026, 7, 21, 20, 43, 56, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	fillTowerCoverage(&snapshot.State, 100, 100, now)
+	snapshot.State.Map[0]["101:100"] = State.MapObservation{
+		KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID,
+		TowerVictoryCount: 845, Level: 81, ObservedAt: now,
+	}
+	snapshot.State.TowerQueue.LastScannedAt[1] = now
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 101, TargetY: 100, MapObservedAt: now, QueuedAt: now,
+	}}
+	snapshot.State.AttackAnalytics.PendingAttacks = []State.AttackFeatureLaunch{{
+		MovementID: 10, FeatureID: State.AttackFeatureAutoTowers, KingdomID: 0,
+		TargetTypeID: kingdomTowerMapTypeID, TargetX: 101, TargetY: 100,
+		LaunchedAt: now.Add(-5 * time.Minute), ArrivesAt: now.Add(-time.Second),
+	}}
+	settings := autoTowerSettings{Castles: map[string]autoTowerCastle{
+		"1": {Enabled: true, Radius: 1, UnitID: 77},
+	}}
+
+	candidates, _, _ := queuedTowerCandidates(snapshot, settings)
+	if len(candidates) != 0 {
+		t.Fatalf("settling attack target was reselected: %#v", candidates)
+	}
+	snapshot.Now = now.Add(State.AttackFeatureTargetSettlementGrace)
+	candidates, _, _ = queuedTowerCandidates(snapshot, settings)
+	if len(candidates) != 1 {
+		t.Fatalf("expired settlement reservation still blocked target: %#v", candidates)
+	}
+}
+
 func TestAutoTowerPolicyWaitsForEnoughTroopsBeforeSubmittingAttack(t *testing.T) {
 	now := time.Date(2026, 7, 15, 20, 0, 0, 0, time.UTC)
 	snapshot := autoTowerPolicySnapshot(now)
@@ -146,6 +341,75 @@ func TestAutoTowerPolicyWaitsForEnoughTroopsBeforeSubmittingAttack(t *testing.T)
 	decision, err = NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
 	if err != nil || decision.Request == nil || decision.Request.Name != "tower.attack" {
 		t.Fatalf("tower ready decision: %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoTowerPolicyBypassesCapacityCorrectedCastleForReadyQueue(t *testing.T) {
+	now := time.Date(2026, 7, 22, 18, 30, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"units":[],"buildings":[],"effects":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot.GameData = gameData
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(`{
+		"checkIntervalSec":30,"mapRefreshIntervalSec":1800,
+		"castles":{
+			"1":{"enabled":true,"radius":1,"unitId":77,"maidenOnly":false},
+			"2":{"enabled":true,"radius":1,"unitId":77,"maidenOnly":false}
+		}
+	}`)
+	fillTowerCoverage(&snapshot.State, 100, 100, now)
+	snapshot.State.Castles[2] = State.CastleState{
+		ID: 2, Name: "Ready Tower Castle", KingdomID: 0, X: 200, Y: 200,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 2_000}},
+	}
+	snapshot.State.Map[0]["101:100"] = State.MapObservation{
+		KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID,
+		TowerVictoryCount: 845, Level: 81, ObservedAt: now,
+	}
+	snapshot.State.Map[0]["201:200"] = State.MapObservation{
+		KingdomID: 0, X: 201, Y: 200, TypeID: kingdomTowerMapTypeID,
+		TowerVictoryCount: 845, Level: 81, ObservedAt: now,
+	}
+	shortCastle := snapshot.State.Castles[1]
+	firstEntry := State.TowerQueueEntry{
+		KingdomID: 0, TargetX: 101, TargetY: 100, MapObservedAt: now, QueuedAt: now.Add(-time.Minute),
+	}
+	baseline, err := autoTowerCapacityRequirement(snapshot, towerQueueCandidate{
+		Castle: shortCastle, Plan: autoTowerCastle{Enabled: true, Radius: 1, UnitID: 77}, Entry: firstEntry,
+	}, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	shortCastle.Units.Stationed = map[State.UnitID]int64{77: baseline}
+	snapshot.State.Castles[1] = shortCastle
+	snapshot.State.TowerQueue.CapacityByCastle[1] = State.TowerCapacityObservation{
+		AdditionalUnits: 1, FullFlankUnits: baseline + 1, ObservedAt: now,
+	}
+	snapshot.State.TowerQueue.LastScannedAt[1] = now
+	snapshot.State.TowerQueue.LastScannedAt[2] = now
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{firstEntry}
+	snapshot.State.TowerQueue.EntriesByCastle[2] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 201, TargetY: 200, MapObservedAt: now, QueuedAt: now,
+	}}
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.attack" {
+		t.Fatalf("multi-castle tower decision = %#v err=%v", decision, err)
+	}
+	var arguments struct {
+		SourceCastleID State.CastleID `json:"sourceCastleId"`
+		TargetX        int            `json:"targetX"`
+		TargetY        int            `json:"targetY"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+		t.Fatal(err)
+	}
+	if arguments.SourceCastleID != 2 || arguments.TargetX != 201 || arguments.TargetY != 200 {
+		t.Fatalf("tower attack did not bypass capacity-corrected castle: %#v", arguments)
 	}
 }
 

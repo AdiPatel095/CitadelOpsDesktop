@@ -36,6 +36,7 @@ type autoNomadSettings struct {
 	MinimumRemainingSec   int64                    `json:"minimumRemainingSec"`
 	CheckIntervalSec      int                      `json:"checkIntervalSec"`
 	MapRefreshIntervalSec int                      `json:"mapRefreshIntervalSec"`
+	DailyAttackLimit      int64                    `json:"dailyAttackLimit"`
 	HorseTravelBoostID    int                      `json:"horseTravelBoostId"`
 	SkipCooldowns         bool                     `json:"skipCooldowns"`
 	TimeSkipReserve       map[string]int64         `json:"timeSkipReserve"`
@@ -61,7 +62,7 @@ func (*AutoNomadPolicy) ID() string { return "autoNomad" }
 func (*AutoNomadPolicy) EnabledKey() string { return "auto_nomad" }
 
 func (*AutoNomadPolicy) WakeDomains() []string {
-	return []string{"map", "movements", "commanders", "units", "events", "event-scores", "nomad-camps", "tower-cooldowns", "currencies", "attack_dialog", "achievements"}
+	return []string{"attacks", "map", "movements", "commanders", "units", "events", "event-scores", "nomad-camps", "tower-cooldowns", "currencies", "attack_dialog", "achievements"}
 }
 
 func (*AutoNomadPolicy) WakeSections() []string {
@@ -159,6 +160,12 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	metrics := map[string]float64{
 		"score": float64(score.PlayerScore), "scoreTarget": float64(settings.ScoreTarget),
 		"maximumVictoryCount": float64(maximumVictoryCount),
+	}
+	dailyAllowance, blocked := dailyAttackLimitAllowance(
+		snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, 30), metrics,
+	)
+	if blocked != nil {
+		return *blocked, nil
 	}
 	if locked := snapshot.State.NomadCamps.LockedTarget; locked != nil &&
 		locked.SourceCastleID == source.ID && locked.EventID == score.EventID && locked.DifficultyID == score.DifficultyID &&
@@ -276,7 +283,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		if copies := availablePresetCopies(preset, source, 1); copies < 1 {
 			return nomadPresetWaiting(snapshot.Now, preset, source, metrics), nil
 		}
-		return nomadAttackDecision(snapshot.Now, score, settings, source, preset, target, []State.CommanderID{availableCommanders[0]}, "level", maximumVictoryCount, metrics), nil
+		return nomadAttackDecision(snapshot.Now, score, settings, source, preset, target, availableCommanders, "level", maximumVictoryCount, metrics), nil
 	}
 
 	weakest := weakestNomadCamp(camps)
@@ -344,6 +351,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			availableCommanders = availableCommanders[:int(usableSkips)]
 		}
 	}
+	availableCommanders = availableCommanders[:capDailyAttackBatch(len(availableCommanders), dailyAllowance)]
 	metrics["chainSize"] = float64(len(availableCommanders))
 	return nomadAttackDecision(snapshot.Now, score, settings, source, preset, target, availableCommanders, "chain", maximumVictoryCount, metrics), nil
 }
@@ -661,7 +669,7 @@ func nomadAttackDecision(
 		"eventCampId":  target.Observation.EventCampID,
 		"victoryCount": target.Observation.EventCampVictoryCount,
 		"preset":       preset, "commanderIds": commanderIDs,
-		"horseTravelBoostId": settings.HorseTravelBoostID,
+		"horseTravelBoostId": settings.HorseTravelBoostID, "dailyAttackLimit": settings.DailyAttackLimit,
 	})
 	detail := fmt.Sprintf("Level camp %d:%d from victory count %d/%d with %s", target.Observation.X, target.Observation.Y,
 		target.Observation.EventCampVictoryCount, maximumVictoryCount, preset.Name)
@@ -705,6 +713,12 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 		return nomadRBCTestMapRefresh(snapshot.Now, source.KingdomID, trial.TargetX, trial.TargetY, "Discover the configured RBC trial target", nil), nil
 	}
 	metrics := map[string]float64{"targetX": float64(target.X), "targetY": float64(target.Y)}
+	dailyAllowance, blocked := dailyAttackLimitAllowance(
+		snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, 30), metrics,
+	)
+	if blocked != nil {
+		return *blocked, nil
+	}
 	test := snapshot.State.NomadCamps.RBCTest
 	activeTest := test != nil && test.RunID == trial.RunID
 	if !activeTest && (target.ObservedAt.IsZero() || snapshot.Now.Sub(target.ObservedAt) >= 30*time.Second) {
@@ -750,6 +764,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 	if int64(chainSize) > usableSkips {
 		chainSize = int(usableSkips)
 	}
+	chainSize = capDailyAttackBatch(chainSize, dailyAllowance)
 	metrics["availableCommanders"] = float64(len(available))
 	metrics["availableCooldownSkips"] = float64(availableSkips)
 	metrics["committedCooldownSkips"] = float64(outstandingCooldownSkips)
@@ -772,7 +787,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 		"targetX": target.X, "targetY": target.Y, "victoryCount": target.TowerVictoryCount,
 		"expectedAttacks": chainSize,
 		"preset":          preset, "commanderIds": available,
-		"horseTravelBoostId": settings.HorseTravelBoostID,
+		"horseTravelBoostId": settings.HorseTravelBoostID, "dailyAttackLimit": settings.DailyAttackLimit,
 	})
 	return Decision{
 		Status: "ready", Detail: fmt.Sprintf("Launch resource-sized %d-hit Auto Camp trial at RBC %d:%d", chainSize, target.X, target.Y),

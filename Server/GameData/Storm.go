@@ -7,12 +7,15 @@ import (
 )
 
 const (
-	StormKingdomID       = 4
-	StormAquamarineID    = 9
-	StormIsleKindFort    = "fort"
-	StormIsleKindIsland  = "island"
-	StormIslandSizeLarge = "large"
-	StormIslandSizeSmall = "small"
+	StormKingdomID         = 4
+	StormAquamarineID      = 9
+	StormLunaShopBuildType = 3
+	StormLunaShopTableID   = -1
+	StormLunaShopCastleID  = -1
+	StormIsleKindFort      = "fort"
+	StormIsleKindIsland    = "island"
+	StormIslandSizeLarge   = "large"
+	StormIslandSizeSmall   = "small"
 )
 
 var stormShopProductIDs = [...]int64{

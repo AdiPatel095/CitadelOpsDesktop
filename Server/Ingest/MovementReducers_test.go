@@ -21,7 +21,7 @@ func TestMovementReducerRetainsForeignMovementsWithoutOccupyingOwnCommanders(t *
 		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
 		Payload: json.RawMessage(`{"M":[
 			{"M":{"MID":50,"PT":2,"TT":20,"D":0,"T":0,"KID":0,"OID":2,"TID":99,"SA":[0,10,11,200,2],"TA":[0,20,21,300,99]},"UM":{"L":{"ID":7}}},
-			{"M":{"MID":51,"PT":2,"TT":20,"D":0,"T":0,"KID":0,"OID":1,"TID":99,"SA":[0,10,11,100,1],"TA":[0,20,21,300,99]},"UM":{"L":{"ID":8}}}
+			{"M":{"MID":51,"PT":2,"TT":20,"D":0,"T":0,"KID":0,"OID":1,"TID":99,"SA":[0,10,11,100,1],"TA":[0,20,21,300,99]},"UM":{"TWD":21600,"L":{"ID":8}}}
 		]}`),
 	}, &gameState, nil)
 	if err != nil || !changed {
@@ -30,11 +30,131 @@ func TestMovementReducerRetainsForeignMovementsWithoutOccupyingOwnCommanders(t *
 	if len(gameState.Movements) != 2 || gameState.Movements[50].TargetPlayerID != 99 {
 		t.Fatalf("foreign target movement was not retained: %#v", gameState.Movements)
 	}
+	if gameState.Movements[51].WaitSeconds != 21600 {
+		t.Fatalf("station wait = %d, want 21600", gameState.Movements[51].WaitSeconds)
+	}
 	if !gameState.Commanders[7].Available {
 		t.Fatal("foreign movement marked the current player's commander unavailable")
 	}
 	if gameState.Commanders[8].Available {
 		t.Fatal("current player movement did not mark its commander unavailable")
+	}
+}
+
+func TestParseMovementKeepsGameReportedStationWaitActive(t *testing.T) {
+	observedAt := time.Date(2026, 7, 22, 16, 0, 0, 0, time.UTC)
+	movement, ok := parseMovement(json.RawMessage(`{
+		"M":{"MID":51,"PT":1163,"TT":896,"D":0,"T":1,"KID":0,"OID":1,"TID":99,"SA":[0,10,11,100,1],"TA":[0,20,21,300,99]},
+		"UM":{"PWD":267,"TWD":21600,"L":{"ID":8}}
+	}`), observedAt, nil)
+	if !ok {
+		t.Fatal("station movement did not parse")
+	}
+	wantArrival := observedAt.Add(-267 * time.Second)
+	if movement.ArrivesAt == nil || !movement.ArrivesAt.Equal(wantArrival) {
+		t.Fatalf("station arrival = %v, want %s", movement.ArrivesAt, wantArrival)
+	}
+	if movement.WaitSeconds != 21600 {
+		t.Fatalf("station wait = %d, want 21600", movement.WaitSeconds)
+	}
+	if !movementActiveAt(movement, observedAt) {
+		t.Fatal("station movement expired while the game-reported wait was active")
+	}
+}
+
+func TestReconcileExpiredMovementsKeepsGameReportedStationWait(t *testing.T) {
+	now := time.Now().UTC()
+	arrivedAt := now.Add(-2 * time.Hour)
+	gameState := State.NewGameState()
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, Direction: 0, TravelSeconds: 600, WaitSeconds: 3600, ArrivesAt: &arrivedAt,
+	}
+
+	ReconcileExpiredMovements(&gameState, now)
+	if _, exists := gameState.Movements[50]; !exists {
+		t.Fatal("live station wait was removed using a locally projected return")
+	}
+}
+
+func TestMovementReducerPreservesPopulatedSnapshotAcrossTrailingEmptyFrame(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = newCastleState(100)
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true}
+	code := 0
+	receivedAt := time.Now().UTC()
+	reducer := newMovementReducer(true)
+
+	_, _, err := reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: receivedAt,
+		Payload: json.RawMessage(`{"M":[
+			{"M":{"MID":50,"PT":2,"TT":20,"D":0,"T":0,"KID":0,"OID":1,"TID":99,"SA":[0,10,11,100,1],"TA":[0,20,21,300,99]},"UM":{"L":{"ID":7}}}
+		]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("populated movement frame: %v", err)
+	}
+
+	_, _, err = reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: receivedAt.Add(50 * time.Millisecond), Payload: json.RawMessage(`{"M":[],"O":[]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("trailing empty movement frame: %v", err)
+	}
+	if _, exists := gameState.Movements[50]; !exists {
+		t.Fatal("trailing empty gam frame erased the populated movement snapshot")
+	}
+	if gameState.Commanders[7].Available {
+		t.Fatal("trailing empty gam frame released an active commander")
+	}
+}
+
+func TestMovementReducerPreservesOwnedCommanderAcrossScopedSnapshotOmission(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = newCastleState(100)
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true}
+	code := 0
+	receivedAt := time.Now().UTC()
+	reducer := newMovementReducer(true)
+
+	_, _, err := reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: receivedAt,
+		Payload: json.RawMessage(`{"M":[
+			{"M":{"MID":50,"PT":2,"TT":20,"D":0,"T":0,"KID":0,"OID":1,"TID":99,"SA":[0,10,11,100,1],"TA":[0,20,21,300,99]},"UM":{"L":{"ID":7}}}
+		]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("populated movement frame: %v", err)
+	}
+
+	_, _, err = reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: receivedAt.Add(time.Second), Payload: json.RawMessage(`{"M":[],"O":[]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("standalone empty movement frame: %v", err)
+	}
+	if _, exists := gameState.Movements[50]; !exists {
+		t.Fatal("scoped gam frame erased an active owned commander movement")
+	}
+	if gameState.Commanders[7].Available {
+		t.Fatal("scoped gam frame released an active owned commander")
+	}
+
+	_, _, err = reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: receivedAt.Add(time.Minute), Payload: json.RawMessage(`{"M":[],"O":[]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("post-return empty movement frame: %v", err)
+	}
+	if len(gameState.Movements) != 0 {
+		t.Fatalf("post-return gam frame retained completed movement: %#v", gameState.Movements)
+	}
+	if !gameState.Commanders[7].Available {
+		t.Fatal("post-return gam frame did not release the commander")
 	}
 }
 
@@ -82,6 +202,27 @@ func TestReconcileExpiredMovementsFreesCommander(t *testing.T) {
 	}
 	if gameState.Commanders[8].Available {
 		t.Fatal("active commander was released early")
+	}
+}
+
+func TestReconcileExpiredMovementsKeepsOutboundCommanderForReturnTrip(t *testing.T) {
+	now := time.Now().UTC()
+	arrivedAt := now.Add(-5 * time.Second)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = newCastleState(100)
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: false}
+	commanderID := State.CommanderID(7)
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, Direction: 0, OwnerPlayerID: 1, SourceCastleID: 100,
+		CommanderID: &commanderID, TravelSeconds: 20, ArrivesAt: &arrivedAt,
+	}
+
+	if ReconcileExpiredMovements(&gameState, now) {
+		t.Fatal("outbound movement was reconciled before its estimated return")
+	}
+	if _, exists := gameState.Movements[50]; !exists || gameState.Commanders[7].Available {
+		t.Fatalf("outbound commander was released early: movement=%t commander=%+v", exists, gameState.Commanders[7])
 	}
 }
 

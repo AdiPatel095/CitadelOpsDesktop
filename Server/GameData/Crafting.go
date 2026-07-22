@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -39,10 +40,100 @@ type CraftingRecipe struct {
 	Output               CraftingRecipeOutput `json:"output"`
 }
 
+type CraftingRecipeCost struct {
+	Field      string  `json:"field"`
+	JSONKey    string  `json:"jsonKey"`
+	ResourceID int64   `json:"resourceId,omitempty"`
+	CurrencyID int64   `json:"currencyId,omitempty"`
+	Amount     float64 `json:"amount"`
+}
+
 type CraftingCatalog struct {
 	Recipes      []CraftingRecipe            `json:"recipes"`
 	Resources    map[string]CraftingResource `json:"resources"`
 	ResourceByID map[int64]string            `json:"-"`
+}
+
+// CraftingRecipeCosts resolves the official cost fields to the resource or
+// currency IDs used by live state. Recipe fields use names such as costGlass,
+// while resource snapshots use compact JSON keys such as G.
+func CraftingRecipeCosts(store *Store, recipeID int64) ([]CraftingRecipeCost, error) {
+	if store == nil || recipeID <= 0 {
+		return nil, fmt.Errorf("official game data is unavailable")
+	}
+	recipes, err := store.Catalog("craftingRecipes")
+	if err != nil {
+		return nil, err
+	}
+	raw, exists := recipes.Find(strconv.FormatInt(recipeID, 10))
+	if !exists {
+		return nil, fmt.Errorf("crafting recipe %d is not in the official catalog", recipeID)
+	}
+	recipe, err := DecodeRecord(raw)
+	if err != nil {
+		return nil, fmt.Errorf("decode crafting recipe %d: %w", recipeID, err)
+	}
+
+	type costDefinition struct {
+		jsonKey    string
+		resourceID int64
+		currencyID int64
+	}
+	definitions := map[string]costDefinition{}
+	for _, collection := range []string{"resources", "currencies"} {
+		catalog, catalogErr := store.Catalog(collection)
+		if catalogErr != nil {
+			continue
+		}
+		for _, rawDefinition := range catalog.Rows() {
+			record, decodeErr := DecodeRecord(rawDefinition)
+			if decodeErr != nil {
+				continue
+			}
+			jsonKey, _ := record.String("JSONKey")
+			nameField := "name"
+			definition := costDefinition{jsonKey: jsonKey}
+			if collection == "resources" {
+				definition.resourceID, _ = record.Int64("resourceID")
+			} else {
+				nameField = "Name"
+				definition.currencyID, _ = record.Int64("currencyID")
+			}
+			name, _ := record.String(nameField)
+			assetName, _ := record.String("assetName")
+			for _, alias := range []string{jsonKey, name, assetName} {
+				alias = strings.ToLower(strings.TrimSpace(alias))
+				if alias != "" {
+					definitions[alias] = definition
+				}
+			}
+		}
+	}
+
+	fields := make([]string, 0)
+	for field := range recipe {
+		if strings.HasPrefix(field, "cost") && field != "cost" {
+			fields = append(fields, field)
+		}
+	}
+	sort.Strings(fields)
+	costs := make([]CraftingRecipeCost, 0, len(fields))
+	for _, field := range fields {
+		amount, valid := recipe.Float64(field)
+		if !valid || amount <= 0 {
+			continue
+		}
+		alias := strings.ToLower(strings.TrimSpace(strings.TrimPrefix(field, "cost")))
+		definition, found := definitions[alias]
+		if !found || definition.resourceID <= 0 && definition.currencyID <= 0 {
+			return nil, fmt.Errorf("crafting recipe %d cost field %s has no official resource mapping", recipeID, field)
+		}
+		costs = append(costs, CraftingRecipeCost{
+			Field: field, JSONKey: definition.jsonKey, ResourceID: definition.resourceID,
+			CurrencyID: definition.currencyID, Amount: amount,
+		})
+	}
+	return costs, nil
 }
 
 func (manager *Manager) CraftingCatalog() (CraftingCatalog, error) {
@@ -143,7 +234,7 @@ func (manager *Manager) craftingResources(store *Store) (map[string]CraftingReso
 			}
 			assetName := stringValue(record, "assetName")
 			resource := CraftingResource{
-				Key: key, Name: manager.displayName(record, splitWords(internalName)),
+				Key: key, Name: manager.craftingResourceName(record, internalName, jsonKey),
 				JSONKey: jsonKey, AssetName: assetName, SourceID: id,
 			}
 			if assetName != "" {
@@ -158,6 +249,35 @@ func (manager *Manager) craftingResources(store *Store) (map[string]CraftingReso
 		}
 	}
 	return resources, aliases, resourceByID, nil
+}
+
+func (manager *Manager) craftingResourceName(record Record, internalName string, jsonKey string) string {
+	if language, ready := manager.Language(); ready {
+		keys := []string{
+			"currency_name_" + lowerCamel(internalName),
+			"currency_name_" + internalName,
+		}
+		if strings.EqualFold(jsonKey, "C2") {
+			keys = append(keys, "subscription_rubies")
+		}
+		if displayName, ok := language.Resolve(keys...); ok {
+			return displayName
+		}
+	}
+
+	switch strings.ToUpper(strings.TrimSpace(jsonKey)) {
+	case "C1":
+		return "Coins"
+	case "C2":
+		return "Rubies"
+	}
+
+	fallback := splitWords(internalName)
+	displayName := manager.displayName(record, fallback)
+	if displayName == "" || displayName == internalName || displayName == jsonKey {
+		return fallback
+	}
+	return displayName
 }
 
 func (manager *Manager) craftingRewards(store *Store, resources map[string]CraftingResource, aliases map[string]string) (map[int64]CraftingRecipeOutput, error) {

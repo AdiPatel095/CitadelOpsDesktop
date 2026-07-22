@@ -32,14 +32,21 @@ export function MovementProvider({ children }: { children: ReactNode }) {
 		if (refresh) requestMovementRefresh(false);
 	}, [requestMovementRefresh]);
 	useEffect(() => {
-		if (!state?.session.loggedIn || !state.session.socketReady) return;
+		if (!state?.session.loggedIn || !state.session.socketReady || state.session.generation <= 0 ||
+			state.session.baselineGeneration !== state.session.generation) return;
 		requestMovementRefresh(true);
 		const interval = window.setInterval(
 			() => requestMovementRefresh(true),
 			MOVEMENT_POLL_INTERVAL_MS,
 		);
 		return () => window.clearInterval(interval);
-	}, [requestMovementRefresh, state?.session.loggedIn, state?.session.socketReady]);
+	}, [
+		requestMovementRefresh,
+		state?.session.baselineGeneration,
+		state?.session.generation,
+		state?.session.loggedIn,
+		state?.session.socketReady,
+	]);
 	const value = useMemo<MovementContextValue>(
 		() => ({ movement, refreshMovement }),
 		[movement, refreshMovement],

@@ -19,6 +19,7 @@ export interface AutoNomadClientStateV4 {
   minimumRemainingSec: number;
   checkIntervalSec: number;
   mapRefreshIntervalSec: number;
+  dailyAttackLimit: number;
   skipCooldowns: boolean;
   timeSkipReserve: Record<string, number>;
   rbcTest: AutoNomadRBCTestState;
@@ -36,6 +37,7 @@ export function defaultAutoNomadClientState(): AutoNomadClientStateV4 {
     minimumRemainingSec: 1800,
     checkIntervalSec: 30,
     mapRefreshIntervalSec: 300,
+    dailyAttackLimit: 0,
     skipCooldowns: false,
     timeSkipReserve: {},
     rbcTest: { enabled: false, runId: '', targetX: 0, targetY: 0 },
@@ -63,6 +65,7 @@ export function parseAutoNomadClientState(value: unknown): AutoNomadClientStateV
     minimumRemainingSec: clampAutoNomadInteger(raw.minimumRemainingSec, 0, 86400, fallback.minimumRemainingSec),
     checkIntervalSec: clampAutoNomadInteger(raw.checkIntervalSec, 30, 3600, fallback.checkIntervalSec),
     mapRefreshIntervalSec: clampAutoNomadInteger(raw.mapRefreshIntervalSec, 60, 3600, fallback.mapRefreshIntervalSec),
+    dailyAttackLimit: clampAutoNomadInteger(raw.dailyAttackLimit, 0, Number.MAX_SAFE_INTEGER, 0),
     skipCooldowns: raw.skipCooldowns === true,
     timeSkipReserve: Object.fromEntries(
       ['MS1', 'MS2', 'MS3', 'MS4', 'MS5', 'MS6', 'MS7'].map((key) => [

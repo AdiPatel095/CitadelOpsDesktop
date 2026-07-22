@@ -171,7 +171,7 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 				continue
 			}
 			hostID, compatibleHost, hostAvailableAt := constructionHost(
-				castle, snapshot.GameData, metadata, representative.groupID, snapshot.Now,
+				castle, snapshot.GameData, metadata, representative.groupID, representative.slot, snapshot.Now,
 			)
 			if hostID <= 0 {
 				if compatibleHost {
@@ -199,7 +199,7 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 			}
 			arguments, _ := json.Marshal(map[string]any{
 				"castleId": castleID, "buildingInstanceId": hostID,
-				"constructionItemId": tier.id, "slot": 0, "mode": 0,
+				"constructionItemId": tier.id, "slot": representative.slot, "mode": 0,
 			})
 			return Decision{
 				Status:              "ready",
@@ -377,29 +377,46 @@ func constructionPurchaseDecision(
 		if err != nil {
 			continue
 		}
+		selected := GameData.ConstructionShopProduct{}
+		amount := int64(0)
 		for _, product := range products {
 			liveAmount := snapshot.State.Inventory.ConstructionOffers[State.PackageID(product.PackageID)]
 			if liveAmount <= 0 {
 				continue
 			}
-			amount := min(product.Amount, liveAmount)
-			if amount <= 0 {
-				amount = 1
-			}
-			arguments, _ := json.Marshal(map[string]any{
-				"castleId": mainCastle.ID, "productId": product.PackageID, "amount": amount,
-			})
-			return Decision{
-				Status:              "ready",
-				Detail:              fmt.Sprintf("Buy construction item %d for configured targets", tier.id),
-				NextCheckAt:         snapshot.Now.Add(10 * time.Second),
-				Request:             &Intent.Request{Name: "construction.purchase", Arguments: arguments},
-				FollowUp:            &Intent.Request{Name: "construction.inventory.refresh", Arguments: json.RawMessage(`{}`)},
-				ReevaluateOnSuccess: true,
-			}, "purchase"
+			selected = product
+			amount = min(product.Amount, liveAmount)
+			break
 		}
+		if selected.PackageID <= 0 {
+			for _, product := range products {
+				if !product.Trivial {
+					continue
+				}
+				selected = product
+				amount = product.Amount
+				break
+			}
+		}
+		if selected.PackageID <= 0 {
+			continue
+		}
+		if amount <= 0 {
+			amount = 1
+		}
+		arguments, _ := json.Marshal(map[string]any{
+			"castleId": mainCastle.ID, "productId": selected.PackageID, "amount": amount,
+		})
+		return Decision{
+			Status:              "ready",
+			Detail:              fmt.Sprintf("Buy construction item %d for configured targets", tier.id),
+			NextCheckAt:         snapshot.Now.Add(10 * time.Second),
+			Request:             &Intent.Request{Name: "construction.purchase", Arguments: arguments},
+			FollowUp:            &Intent.Request{Name: "construction.inventory.refresh", Arguments: json.RawMessage(`{}`)},
+			ReevaluateOnSuccess: true,
+		}, "purchase"
 	}
-	return Decision{Status: "blocked", Detail: "No matching live official construction-item shop offer", NextCheckAt: snapshot.Now.Add(constructionCheckInterval)}, "no-offer"
+	return Decision{Status: "blocked", Detail: "No matching live or official trivial construction-item shop offer", NextCheckAt: snapshot.Now.Add(constructionCheckInterval)}, "no-offer"
 }
 
 func constructionShopCastle(gameState State.GameState) (State.CastleState, bool) {
@@ -425,12 +442,16 @@ func bestConstructionInventoryTier(
 	floor int,
 	ceiling int,
 ) (constructionMetadata, bool) {
+	best := constructionMetadata{}
 	for _, tier := range tiers {
-		if tier.level >= floor && tier.level <= ceiling && inventory[tier.id] > 0 {
-			return tier, true
+		if tier.level < floor || tier.level > ceiling || inventory[tier.id] <= 0 {
+			continue
+		}
+		if best.id == 0 || tier.level < best.level || (tier.level == best.level && tier.id < best.id) {
+			best = tier
 		}
 	}
-	return constructionMetadata{}, false
+	return best, best.id > 0
 }
 
 func constructionHost(
@@ -438,6 +459,7 @@ func constructionHost(
 	store *GameData.Store,
 	metadata map[State.ConstructionItemID]constructionMetadata,
 	groupID int64,
+	targetSlot int,
 	now time.Time,
 ) (State.BuildingInstanceID, bool, time.Time) {
 	if store == nil {
@@ -472,6 +494,9 @@ func constructionHost(
 			if !known {
 				occupied = true
 				availabilityKnown = false
+				continue
+			}
+			if item.slot != targetSlot {
 				continue
 			}
 			active, remaining := occupiedConstructionSlot(slot, item, castle.ConstructionSlotsObservedAt, now)

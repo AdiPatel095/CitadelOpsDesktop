@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -157,6 +158,12 @@ func applyProductionSnapshot(
 			if len(row) > 5 {
 				product.ProductionID = wireInt64(rowInt(row, 5))
 			}
+			if len(row) > 4 {
+				// Hospital PIDL does not include RAH. Its fifth value is the
+				// server-applied alliance-help reduction; once positive, another
+				// AHR for that job is rejected.
+				product.HelpRequested = rowInt(row, 4) > 0
+			}
 			if item, exists := productionQueueItem(wire.LineID, product, observedAt, false); exists {
 				item.AllianceHelpRequested = item.AllianceHelpRequested || requestedHelp[item.ProductionID]
 				queue.Queued = append(queue.Queued, item)
@@ -169,6 +176,50 @@ func applyProductionSnapshot(
 	castle.Production[wire.LineID] = queue
 	_ = castleID
 	return true, nil
+}
+
+func reduceAllianceHelpCommand(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if frame.Direction != Protocol.DirectionOutbound || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var payload struct {
+		ProductionID wireInt64 `json:"ID"`
+		RequestType  int       `json:"T"`
+	}
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode alliance help command: %w", err)
+	}
+	castleID, castle, focused := focusedCastle(gameState)
+	if !focused {
+		return nil, false, nil
+	}
+	lineID := -1
+	productionID := int64(payload.ProductionID)
+	markAll := false
+	switch payload.RequestType {
+	case 2:
+		lineID = 2
+		if productionID <= 0 {
+			return nil, false, nil
+		}
+	case 6:
+		lineID = 0
+		markAll = true
+	default:
+		return nil, false, nil
+	}
+	queue, exists := castle.Production[lineID]
+	if !exists || !markAllianceHelpQueue(&queue, markAll, productionID) {
+		return nil, false, nil
+	}
+	castle.Production[lineID] = queue
+	gameState.Castles[castleID] = castle
+	return []string{"castles", "production", "alliance-help"}, true, nil
 }
 
 func reduceProductionCommandContext(
@@ -261,8 +312,26 @@ func reduceAllianceHelpRequest(
 		requests = append(requests, request)
 	}
 	changed := false
+	if frame.Opcode == "ahl" {
+		hospitalProductionIDs := ownHospitalAllianceHelpProductionIDs(requests, gameState.Player.ID)
+		if !reflect.DeepEqual(gameState.AllianceHelpRequests.HospitalProductionIDs, hospitalProductionIDs) ||
+			!gameState.AllianceHelpRequests.ObservedAt.Equal(frame.ReceivedAt) {
+			gameState.AllianceHelpRequests = State.AllianceHelpRequestState{
+				HospitalProductionIDs: hospitalProductionIDs,
+				ObservedAt:            frame.ReceivedAt,
+			}
+			changed = true
+		}
+	}
 	for _, request := range requests {
-		if request.PlayerID <= 0 || request.PlayerID != gameState.Player.ID || request.Optional.CastleID <= 0 {
+		if request.PlayerID <= 0 || request.PlayerID != gameState.Player.ID {
+			continue
+		}
+		if request.RequestType == 2 && request.Optional.RecruitmentID > 0 && frame.Opcode != "ahl" &&
+			addHospitalAllianceHelpProductionID(&gameState.AllianceHelpRequests, request.Optional.RecruitmentID) {
+			changed = true
+		}
+		if request.Optional.CastleID <= 0 {
 			continue
 		}
 		castle, exists := gameState.Castles[request.Optional.CastleID]
@@ -293,7 +362,38 @@ func reduceAllianceHelpRequest(
 	if !changed {
 		return nil, false, nil
 	}
-	return []string{"castles", "production"}, true, nil
+	return []string{"alliance-help", "castles", "production"}, true, nil
+}
+
+func ownHospitalAllianceHelpProductionIDs(requests []allianceHelpWireRequest, playerID State.PlayerID) []int64 {
+	unique := map[int64]struct{}{}
+	for _, request := range requests {
+		if request.PlayerID == playerID && request.RequestType == 2 && request.Optional.RecruitmentID > 0 {
+			unique[request.Optional.RecruitmentID] = struct{}{}
+		}
+	}
+	result := make([]int64, 0, len(unique))
+	for productionID := range unique {
+		result = append(result, productionID)
+	}
+	sort.Slice(result, func(left, right int) bool { return result[left] < result[right] })
+	return result
+}
+
+func addHospitalAllianceHelpProductionID(state *State.AllianceHelpRequestState, productionID int64) bool {
+	if state == nil || productionID <= 0 {
+		return false
+	}
+	for _, existingID := range state.HospitalProductionIDs {
+		if existingID == productionID {
+			return false
+		}
+	}
+	state.HospitalProductionIDs = append(state.HospitalProductionIDs, productionID)
+	sort.Slice(state.HospitalProductionIDs, func(left, right int) bool {
+		return state.HospitalProductionIDs[left] < state.HospitalProductionIDs[right]
+	})
+	return true
 }
 
 func markAllianceHelpQueue(queue *State.ProductionQueue, markAll bool, productionID int64) bool {

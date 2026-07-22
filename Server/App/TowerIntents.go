@@ -12,7 +12,10 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-const kingdomTowerMapTypeID = 2
+const (
+	kingdomTowerMapTypeID              = 2
+	towerAttackDialogPlanningFreshness = 30 * time.Second
+)
 
 type towerLaunchRequest struct {
 	SourceCastleID     State.CastleID      `json:"sourceCastleId"`
@@ -23,6 +26,7 @@ type towerLaunchRequest struct {
 	MaidenOnly         bool                `json:"maidenOnly"`
 	CommanderIDs       []State.CommanderID `json:"commanderIds"`
 	HorseTravelBoostID int                 `json:"horseTravelBoostId"`
+	DailyAttackLimit   int64               `json:"dailyAttackLimit"`
 }
 
 type towerResolvedAttackRequest struct {
@@ -66,33 +70,80 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	now := time.Now().UTC()
+	queueEntry, _ := json.Marshal(towerQueueEntryRequest{
+		SourceCastleID: source.ID, KingdomID: target.KingdomID, TargetX: target.X, TargetY: target.Y,
+	})
+	deferTargetStep := Intent.Step{
+		Name: "Rotate tower target behind ready targets", Action: "tower.queue.defer", ActionArguments: queueEntry,
+	}
+	deferredSkipPlan := func(summary string) Intent.Plan {
+		return Intent.Plan{
+			Claims: []string{
+				"castle:" + strconv.FormatInt(int64(source.ID), 10), towerTargetClaim(target),
+			},
+			Summary: summary,
+			Steps:   []Intent.Step{deferTargetStep},
+		}
+	}
+	if State.AttackFeatureTargetPendingAt(
+		input.State, State.AttackFeatureAutoTowers, target.KingdomID, kingdomTowerMapTypeID,
+		target.X, target.Y, now,
+	) {
+		return deferredSkipPlan(fmt.Sprintf(
+			"Skip tower attack: kingdom tower at %d:%d has a prior Auto Towers attack awaiting settlement",
+			target.X, target.Y,
+		)), nil
+	}
+	if towerCooldownRemaining(target, input.State.UpdatedAt, now) > 0 {
+		return deferredSkipPlan(fmt.Sprintf(
+			"Skip tower attack: kingdom tower at %d:%d is on cooldown", target.X, target.Y,
+		)), nil
+	}
+	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
+		return Intent.Plan{}, err
+	} else if blocked {
+		return blockedPlan, nil
+	}
 	if input.GameData == nil {
 		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
 	}
 	commander, err := towerCommander(input.State, request.MaidenOnly, request.CommanderIDs)
 	if err != nil {
+		return deferredSkipPlan("Skip tower attack: " + err.Error()), nil
+	}
+	useAttackDialogEffects := towerAttackDialogFreshForTarget(input.State.AttackDialog, source, target, now)
+	capacity, currentSource, _, err := resolveTowerAttackCapacity(input, request, commander, useAttackDialogEffects)
+	if err != nil {
 		return Intent.Plan{}, err
 	}
-	contextPayload, _ := json.Marshal(struct {
-		SourceX   int             `json:"SX"`
-		SourceY   int             `json:"SY"`
-		TargetX   int             `json:"TX"`
-		TargetY   int             `json:"TY"`
-		KingdomID State.KingdomID `json:"KID"`
-	}{source.X, source.Y, target.X, target.Y, request.KingdomID})
+	if err := requireTowerAttackUnits(
+		currentSource, request.UnitID, capacity.Capacity.Left+capacity.Capacity.Right,
+	); err != nil {
+		return deferredSkipPlan("Skip tower attack: " + err.Error()), nil
+	}
 	resolvedArguments, _ := json.Marshal(towerResolvedAttackRequest{towerLaunchRequest: request, CommanderID: commander})
-	steps := make([]Intent.Step, 0, 4)
-	steps = append(steps, generalSkillsContextSteps(input.State, commander, time.Now().UTC())...)
+	contextPayload, _ := json.Marshal(struct {
+		SourceX              int               `json:"SX"`
+		SourceY              int               `json:"SY"`
+		TargetX              int               `json:"TX"`
+		TargetY              int               `json:"TY"`
+		KingdomID            State.KingdomID   `json:"KID"`
+		CommanderID          State.CommanderID `json:"LID"`
+		TowerCapacityCapture json.RawMessage   `json:"towerCapacityCapture"`
+	}{source.X, source.Y, target.X, target.Y, request.KingdomID, commander, resolvedArguments})
+	steps := make([]Intent.Step, 0, 5)
+	steps = append(steps, deferTargetStep)
+	steps = append(steps, generalSkillsContextSteps(input.State, commander, now)...)
+	steps = append(steps, attackCastleContextStep(source))
+	steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 	steps = append(steps,
-		attackCastleContextStep(source),
-		Intent.Step{Name: "Verify fresh tower troops", Action: "tower.attack.guard", ActionArguments: resolvedArguments},
+		deferredCRACommandStep("Build and launch tower attack", "tower.attack.build", resolvedArguments, contextPayload),
+		attackFeatureCaptureStep(attackFeatureCaptureRequest{
+			FeatureID: State.AttackFeatureAutoTowers, SourceCastleID: source.ID, CommanderID: commander,
+			KingdomID: target.KingdomID, TargetTypeID: target.TypeID, TargetX: target.X, TargetY: target.Y,
+		}),
 	)
-	steps = append(steps, deferredCRACommandStep(
-		"Build and launch tower attack", "tower.attack.build", resolvedArguments, contextPayload,
-	))
-	queueEntry, _ := json.Marshal(towerQueueEntryRequest{
-		SourceCastleID: source.ID, KingdomID: target.KingdomID, TargetX: target.X, TargetY: target.Y,
-	})
 	steps = append(steps, Intent.Step{Name: "Consume tower queue target", Action: "tower.queue.consume", ActionArguments: queueEntry})
 	return Intent.Plan{
 		Claims: towerAttackClaims(source, target, commander, true),
@@ -131,7 +182,83 @@ func (application *Application) guardTowerAttackInventory(_ context.Context, arg
 	if err != nil {
 		return err
 	}
-	return requireTowerAttackUnits(source, request.UnitID, capacity.Capacity.Left+capacity.Capacity.Right)
+	return requireFreshTowerAttackUnits(source, request.UnitID, capacity.Capacity.Left+capacity.Capacity.Right)
+}
+
+func (application *Application) captureTowerCapacity(_ context.Context, arguments json.RawMessage) error {
+	var request towerResolvedAttackRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	gameData, ready := application.GameData.Current()
+	if !ready {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	now := time.Now().UTC()
+	input := Intent.PlanningContext{State: application.State.Snapshot(), GameData: gameData}
+	_, source, target, err := towerLaunchContext(input, mustMarshalTowerLaunchRequest(request.towerLaunchRequest))
+	if err != nil {
+		return err
+	}
+	if !towerAttackDialogFreshForTarget(input.State.AttackDialog, source, target, now) {
+		return fmt.Errorf(
+			"%w: current attack-dialog context does not match tower %d:%d",
+			Intent.ErrPlanStale, target.X, target.Y,
+		)
+	}
+	if towerCooldownRemaining(target, input.State.UpdatedAt, now) > 0 ||
+		input.State.AttackDialog.Target.TowerCooldownRemaining > 0 {
+		return fmt.Errorf(
+			"%w: kingdom tower at %d:%d is on cooldown",
+			Intent.ErrPlanStale, target.X, target.Y,
+		)
+	}
+	observation, err := towerCapacityObservation(input, request.towerLaunchRequest, request.CommanderID)
+	if err != nil {
+		return err
+	}
+	_, err = application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+		currentSource, sourceExists := gameState.Castles[source.ID]
+		currentTarget, targetExists := gameState.Map[target.KingdomID][fmt.Sprintf("%d:%d", target.X, target.Y)]
+		if !sourceExists || !targetExists ||
+			!towerAttackDialogFreshForTarget(gameState.AttackDialog, currentSource, currentTarget, now) {
+			return nil, false, fmt.Errorf(
+				"%w: current attack-dialog context does not match tower %d:%d",
+				Intent.ErrPlanStale, target.X, target.Y,
+			)
+		}
+		if gameState.TowerQueue.CapacityByCastle == nil {
+			gameState.TowerQueue.CapacityByCastle = map[State.CastleID]State.TowerCapacityObservation{}
+		}
+		if gameState.TowerQueue.CapacityByCastle[source.ID] == observation {
+			return nil, false, nil
+		}
+		gameState.TowerQueue.CapacityByCastle[source.ID] = observation
+		return []string{"tower-queue"}, true, nil
+	})
+	return err
+}
+
+func towerCapacityObservation(
+	input Intent.PlanningContext,
+	request towerLaunchRequest,
+	commander State.CommanderID,
+) (State.TowerCapacityObservation, error) {
+	baseline, _, _, err := resolveTowerAttackCapacity(input, request, commander, false)
+	if err != nil {
+		return State.TowerCapacityObservation{}, err
+	}
+	fresh, _, _, err := resolveTowerAttackCapacity(input, request, commander, true)
+	if err != nil {
+		return State.TowerCapacityObservation{}, err
+	}
+	baselineUnits := baseline.Capacity.Left + baseline.Capacity.Right
+	freshUnits := fresh.Capacity.Left + fresh.Capacity.Right
+	return State.TowerCapacityObservation{
+		AdditionalUnits: max(int64(0), freshUnits-baselineUnits),
+		FullFlankUnits:  freshUnits,
+		ObservedAt:      input.State.AttackDialog.ObservedAt,
+	}, nil
 }
 
 func buildTowerAttackStep(input Intent.PlanningContext, request towerLaunchRequest, commander State.CommanderID) (Intent.Step, error) {
@@ -140,19 +267,24 @@ func buildTowerAttackStep(input Intent.PlanningContext, request towerLaunchReque
 		return Intent.Step{}, err
 	}
 	if towerCooldownRemaining(target, input.State.UpdatedAt, time.Now().UTC()) > 0 {
-		return Intent.Step{}, fmt.Errorf("kingdom tower at %d:%d is on cooldown", target.X, target.Y)
+		return Intent.Step{}, fmt.Errorf(
+			"%w: kingdom tower at %d:%d is on cooldown", Intent.ErrPlanStale, target.X, target.Y,
+		)
 	}
 	dialog := input.State.AttackDialog
 	if dialog.SourceCastleID != source.ID || dialog.KingdomID != target.KingdomID ||
 		dialog.Target.TypeID != kingdomTowerMapTypeID || dialog.Target.X != target.X || dialog.Target.Y != target.Y {
-		return Intent.Step{}, fmt.Errorf("current attack-dialog context does not match tower %d:%d", target.X, target.Y)
+		return Intent.Step{}, fmt.Errorf(
+			"%w: current attack-dialog context does not match tower %d:%d",
+			Intent.ErrPlanStale, target.X, target.Y,
+		)
 	}
 	capacity, source, target, err := resolveTowerAttackCapacity(input, request, commander, true)
 	if err != nil {
 		return Intent.Step{}, err
 	}
 	required := capacity.Capacity.Left + capacity.Capacity.Right
-	if err := requireTowerAttackUnits(source, request.UnitID, required); err != nil {
+	if err := requireFreshTowerAttackUnits(source, request.UnitID, required); err != nil {
 		return Intent.Step{}, err
 	}
 	body, err := json.Marshal(towerAttackBody(
@@ -176,7 +308,9 @@ func resolveTowerAttackCapacity(
 	}
 	commanderState, exists := input.State.Commanders[commander]
 	if !exists || !commanderState.Available {
-		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("commander %d is no longer available", commander)
+		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+			"%w: commander %d is no longer available", Intent.ErrPlanStale, commander,
+		)
 	}
 	if input.GameData == nil {
 		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("official game data is unavailable")
@@ -197,6 +331,20 @@ func resolveTowerAttackCapacity(
 		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("resolve tower attack capacity: %w", err)
 	}
 	return capacity, source, target, nil
+}
+
+func towerAttackDialogFreshForTarget(
+	dialog State.AttackDialogState,
+	source State.CastleState,
+	target State.MapObservation,
+	now time.Time,
+) bool {
+	if dialog.ObservedAt.IsZero() || now.Before(dialog.ObservedAt) ||
+		now.Sub(dialog.ObservedAt) > towerAttackDialogPlanningFreshness {
+		return false
+	}
+	return dialog.SourceCastleID == source.ID && dialog.KingdomID == target.KingdomID &&
+		dialog.Target.TypeID == kingdomTowerMapTypeID && dialog.Target.X == target.X && dialog.Target.Y == target.Y
 }
 
 func mustMarshalTowerLaunchRequest(request towerLaunchRequest) json.RawMessage {
@@ -305,6 +453,13 @@ func requireTowerAttackUnits(source State.CastleState, unitID State.UnitID, requ
 		"%s has %d available of unit %d; full tower flanks require %d",
 		castleLabel(source), available, unitID, required,
 	)
+}
+
+func requireFreshTowerAttackUnits(source State.CastleState, unitID State.UnitID, required int64) error {
+	if err := requireTowerAttackUnits(source, unitID, required); err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	return nil
 }
 
 func towerCooldownRemaining(target State.MapObservation, stateUpdatedAt time.Time, now time.Time) int {

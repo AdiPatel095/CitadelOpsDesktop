@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Protocol"
@@ -155,9 +156,18 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	if err != nil {
 		return Intent.Plan{}, err
 	}
-	steps, err := buildCRACommandSteps(source, resolution.Selected, "Launch Rift probe", func(commanderID State.CommanderID) (json.RawMessage, error) {
-		return json.Marshal(maidenAttackBody(sourceX, sourceY, target, commanderID, request.UnitID, request.HorseTravelBoostID))
-	})
+	steps, err := buildCRACommandSteps(
+		source, resolution.Selected, "Launch Rift probe",
+		func(commanderID State.CommanderID) (json.RawMessage, error) {
+			return json.Marshal(maidenAttackBody(sourceX, sourceY, target, commanderID, request.UnitID, request.HorseTravelBoostID))
+		},
+		func(commanderID State.CommanderID) Intent.Step {
+			return attackFeatureCaptureStep(attackFeatureCaptureRequest{
+				FeatureID: State.AttackFeatureRiftMaiden, SourceCastleID: source.ID, CommanderID: commanderID,
+				KingdomID: target.KingdomID, TargetTypeID: target.TypeID, TargetX: target.X, TargetY: target.Y,
+			})
+		},
+	)
 	if err != nil {
 		return Intent.Plan{}, err
 	}
@@ -329,9 +339,19 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	}
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	claims = append(claims, "castle-focus", "castle:"+castleID, "attack-inventory:"+castleID)
-	steps, err := buildCRACommandSteps(source, resolution.Selected, "Replay Rift launch", func(commanderID State.CommanderID) (json.RawMessage, error) {
-		return craPayloadWithCommander(fields, commanderID)
-	})
+	steps, err := buildCRACommandSteps(
+		source, resolution.Selected, "Replay Rift launch",
+		func(commanderID State.CommanderID) (json.RawMessage, error) {
+			return craPayloadWithCommander(fields, commanderID)
+		},
+		func(commanderID State.CommanderID) Intent.Step {
+			return attackFeatureCaptureStep(attackFeatureCaptureRequest{
+				FeatureID: State.AttackFeatureRiftReplay, SourceCastleID: source.ID, CommanderID: commanderID,
+				KingdomID: State.KingdomID(rawMapInt(fields, "KID")), TargetTypeID: riftMapTypeID,
+				TargetX: int(rawMapInt(fields, "TX")), TargetY: int(rawMapInt(fields, "TY")),
+			})
+		},
+	)
 	if err != nil {
 		return Intent.Plan{}, err
 	}
@@ -375,8 +395,8 @@ func buildAttackSetupWavesForCommanders(setup attackSetupRequest, source State.C
 	if copies < 1 {
 		return nil, fmt.Errorf("attack setup requires at least one commander")
 	}
-	if len(setup.Waves) < 1 || len(setup.Waves) > 10 {
-		return nil, fmt.Errorf("attack setup must contain between 1 and 10 waves")
+	if len(setup.Waves) < 1 || len(setup.Waves) > AttackPresets.MaximumWaves {
+		return nil, fmt.Errorf("attack setup must contain between 1 and %d waves", AttackPresets.MaximumWaves)
 	}
 	requested := map[State.UnitID]int64{}
 	unitTotal := int64(0)

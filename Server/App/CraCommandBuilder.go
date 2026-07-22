@@ -12,6 +12,7 @@ import (
 )
 
 type craPayloadBuilder func(State.CommanderID) (json.RawMessage, error)
+type craPostCommandStepBuilder func(State.CommanderID) Intent.Step
 
 type craInventoryGuardRequest struct {
 	SourceCastleID State.CastleID    `json:"sourceCastleId"`
@@ -23,6 +24,7 @@ func buildCRACommandSteps(
 	commanders []State.CommanderID,
 	action string,
 	build craPayloadBuilder,
+	postCommand ...craPostCommandStepBuilder,
 ) ([]Intent.Step, error) {
 	if len(commanders) == 0 {
 		return nil, fmt.Errorf("at least one CRA commander is required")
@@ -41,6 +43,11 @@ func buildCRACommandSteps(
 		steps = append(steps, commandStep(
 			fmt.Sprintf("%s with commander %d", action, commanderID), "cra", payloads[index], "cra",
 		))
+		for _, buildStep := range postCommand {
+			if buildStep != nil {
+				steps = append(steps, buildStep(commanderID))
+			}
+		}
 	}
 	return steps, nil
 }

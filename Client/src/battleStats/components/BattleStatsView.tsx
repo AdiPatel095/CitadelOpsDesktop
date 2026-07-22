@@ -49,7 +49,7 @@ interface AllianceMemberOption extends FilterOption {
 type CombatantSide = 'attacker' | 'defender';
 
 const BattleStatsView: React.FC = () => {
-  const { state } = useCitadelAPI();
+  const { state, submitIntent } = useCitadelAPI();
   const [reports, setReports] = useState<ParsedReport[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sourceLabel, setSourceLabel] = useState<string>('Not loaded');
@@ -100,6 +100,25 @@ const BattleStatsView: React.FC = () => {
     void loadReports();
   }, []);
 
+  useEffect(() => {
+    if (
+      !state?.session.loggedIn ||
+      !state.session.socketReady ||
+      state.session.baselineGeneration !== state.session.generation ||
+      state.alliance.id <= 0
+    ) {
+      return;
+    }
+    void submitIntent('alliance.refresh', {}, { actor: 'ui:battle-stats' }).catch(() => undefined);
+  }, [
+    state?.alliance.id,
+    state?.session.baselineGeneration,
+    state?.session.generation,
+    state?.session.loggedIn,
+    state?.session.socketReady,
+    submitIntent,
+  ]);
+
   const allianceMembers = useMemo(
     () => allianceMemberOptionsFromState(state),
     [state]
@@ -118,7 +137,8 @@ const BattleStatsView: React.FC = () => {
     () => resolveHomeAllianceKey(reports, allianceMemberKeys),
     [reports, allianceMemberKeys]
   );
-  const homeAllianceKey = playerHasAllianceEntry ? rosterHomeAllianceKey : '';
+  const stateHomeAllianceKey = state?.alliance.name?.trim().toLowerCase() ?? '';
+  const homeAllianceKey = stateHomeAllianceKey || (playerHasAllianceEntry ? rosterHomeAllianceKey : '');
   const reportsWithBothPlayers = useMemo(
     () => reports.filter(hasBothPlayers),
     [reports]
@@ -275,7 +295,7 @@ const BattleStatsView: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="data-view-render-stable flex flex-col gap-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
         <aside className="xl:w-[21.5rem] shrink-0">
           <SectionCard
@@ -582,7 +602,7 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
               <th className="px-4 py-3 font-semibold text-right">A / D</th>
               <th className="px-4 py-3 font-semibold text-right">W / L</th>
               <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost in attacks by this player">Attack Ratio</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Defenders lost per attacker killed in defenses by this player">Defense Ratio</th>
+              <th className="px-4 py-3 font-semibold text-right" title="Attackers killed per defender lost in defenses by this player">Defense Ratio</th>
             </tr>
           </thead>
           <tbody>
@@ -603,7 +623,7 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
                   {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
                 </td>
                 <td className="px-4 py-3 text-right text-error font-semibold">
-                  {formatRatio(row.defenseDefendersLost, row.defenseAttackersKilled)}
+                  {formatRatio(row.defenseAttackersKilled, row.defenseDefendersLost)}
                 </td>
               </tr>
             ))}
@@ -626,7 +646,7 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
               <th className="px-4 py-3 font-semibold text-right">Reports</th>
               <th className="px-4 py-3 font-semibold text-right">W / L</th>
               <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost when attacking this alliance">Attack Ratio</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Defenders lost per attacker killed when defending against this alliance">Defense Ratio</th>
+              <th className="px-4 py-3 font-semibold text-right" title="Attackers killed per defender lost when defending against this alliance">Defense Ratio</th>
             </tr>
           </thead>
           <tbody>
@@ -643,7 +663,7 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
                   {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
                 </td>
                 <td className="px-4 py-3 text-right text-error font-semibold">
-                  {formatRatio(row.defenseDefendersLost, row.defenseAttackersKilled)}
+                  {formatRatio(row.defenseAttackersKilled, row.defenseDefendersLost)}
                 </td>
               </tr>
             ))}
@@ -667,7 +687,7 @@ const ReportDetailPage: React.FC<{
   perspectiveSide,
   onBack,
 }) => (
-  <div className="space-y-4">
+  <div className="data-view-render-stable space-y-4">
     <BattleDetailsHeader report={report} outcome={outcome} onBack={onBack} />
     <ReportDetails report={report} outcome={outcome} perspectiveSide={perspectiveSide} />
   </div>
@@ -1410,7 +1430,15 @@ function reportsFromUnknown(value: unknown): ParsedReport[] {
 }
 
 function hasBothPlayers(report: ParsedReport): boolean {
-  return Boolean(combatantKey(report.attacker) && combatantKey(report.defender));
+  return combatantHasRealPlayer(report.attacker) && combatantHasRealPlayer(report.defender);
+}
+
+function combatantHasRealPlayer(combatant?: BattleCombatant): boolean {
+  if (!combatant || combatant.dummy === true) {
+    return false;
+  }
+  const id = numericValue(combatant.playerID ?? combatant.playerId);
+  return id !== null && id > 0;
 }
 
 function summarizeReports(
@@ -2730,7 +2758,7 @@ function formatNumber(value: number): string {
 
 function formatRatio(numerator: number, denominator: number): string {
   if (denominator <= 0) {
-    return '--';
+    return numerator > 0 ? '∞' : '--';
   }
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(numerator / denominator);
 }

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, Clock3, Layers3, Minus, Plus, Sparkles } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Button, CatalogPickerModal, EmptyState } from './ui';
+import { Button, CatalogPickerModal, EmptyState, PillSelector } from './ui';
 import TCIImage from './TCIImage';
 import {
   durationRangeLabel,
@@ -322,24 +322,19 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
       toolbarClassName="tci-browser-toolbar"
       commandRowClassName="tci-browser-command-row"
       commandExtras={(
-        <div className="tci-browser-filters" aria-label="Catalog filters">
-          {([
-            ['all', 'All'],
-            ['selected', 'Selected'],
-            ['short', '≤ 7 days'],
-            ['long', '8+ days'],
-          ] as const).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={`tci-browser-filter ${catalogFilter === value ? 'tci-browser-filter-active' : ''}`}
-              aria-pressed={catalogFilter === value}
-              onClick={() => setCatalogFilter(value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <PillSelector
+          ariaLabel="Catalog filters"
+          value={catalogFilter}
+          onChange={(value) => setCatalogFilter(value as TCICatalogFilter)}
+          options={[
+            { value: 'all', label: 'All' },
+            { value: 'selected', label: 'Selected' },
+            { value: 'short', label: '≤ 7 days' },
+            { value: 'long', label: '8+ days' },
+          ]}
+          size="header"
+          className="tci-browser-filters"
+        />
       )}
     >
       <div className="tci-browser-layout">
@@ -493,7 +488,7 @@ const TCIBrowserCard: React.FC<TCIBrowserCardProps> = ({ item, isSelected, isAct
       </div>
       <div className="tci-browser-card-main">
         <div className="tci-browser-card-art">
-          <TCIImage src={item.imageUrl} alt={item.label} size={84} />
+          <TCIImage src={item.imageUrl} alt={item.buildingName || item.label} size={84} />
           {isSelected && (
             <span className="tci-browser-selected-mark" aria-label="Selected">
               <Check aria-hidden="true" />
@@ -558,7 +553,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
     <aside className="tci-detail-panel custom-scrollbar">
       <div className="tci-detail-hero">
         <div className="tci-detail-art-stage">
-          <TCIImage src={item.imageUrl} alt={item.label} size={116} />
+          <TCIImage src={item.imageUrl} alt={item.buildingName || item.label} size={116} />
         </div>
         <div className="tci-detail-heading">
           <span className="tci-detail-kicker">{item.category || 'Timed construction item'}</span>

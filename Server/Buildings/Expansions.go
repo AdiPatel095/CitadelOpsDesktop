@@ -985,10 +985,10 @@ func recommendExpansionTransportAction(
 			goods = append(goods, map[string]any{"resourceId": good.ResourceID, "amount": good.Amount})
 		}
 		return &ExpansionAction{
-			Kind: "transport_resources", Intent: "resource.kingdom.ship",
+			Kind: "transport_resources", Intent: "resource.ship",
 			Arguments: map[string]any{
 				"sourceCastleId": candidate.SourceCastleID, "targetCastleId": castle.ID,
-				"targetKingdomId": castle.KingdomID, "goods": goods,
+				"goods": goods,
 			},
 			Reason: "Transport the largest useful batch of missing expansion resources from an owned castle",
 		}

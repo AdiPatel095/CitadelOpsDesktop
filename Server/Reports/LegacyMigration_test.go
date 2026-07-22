@@ -31,14 +31,14 @@ func TestMigrateLegacyHistoryParsesCanonicalReports(t *testing.T) {
 	}`
 	battleLine := `{
 		"version":1,"mid":102,"lid":202,"battleKey":"battle#key","capturedAtUnixMillis":1783785600000,
-		"bld":{
+		"bls":{
 			"MID":102,"LID":202,"MT":6,"AHP":1,"DHP":0,
 			"PI":[{"OID":1,"N":"Attacker","AN":"Us"},{"OID":2,"N":"Defender","AN":"Them"}],
 			"PBI":[[1,0,1000,-100],[2,1,900,-900]],
 			"AI":{"N":"Defender Castle","DP":2,"K":0,"X":10,"Y":20}
 		},
 		"blm":{"LID":202},
-		"bls":{"LID":202,"Y":[[1,[216,1000,-100]],[2,[227,900,-900]]]}
+		"bld":{"LID":202,"Y":[[1,[216,1000,-100]],[2,[227,900,-900]]]}
 	}`
 	if err := os.WriteFile(filepath.Join(dataDir, "SpyReports.jsonl"), append(compactJSONLine(t, spyLine), '\n'), 0o600); err != nil {
 		t.Fatal(err)

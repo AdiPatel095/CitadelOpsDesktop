@@ -28,8 +28,8 @@ const (
 	PriorityRecruit     Priority = 40
 	PriorityAutoSceat   Priority = 45
 	PriorityHospital    Priority = 50
-	PriorityAutoBird    Priority = 60
 	PriorityAutoTCI     Priority = 70
+	PriorityAutoBird    Priority = 80
 	PriorityAutoStation Priority = 90
 	PriorityScheduled   Priority = 95
 	PriorityInteractive Priority = 100
@@ -122,7 +122,7 @@ func DefaultPriority(actor string) Priority {
 func YieldsToAutomationLock(actor string) bool {
 	actor = strings.ToLower(strings.TrimSpace(actor))
 	return strings.HasPrefix(actor, "automation:") || strings.HasPrefix(actor, "scheduler:") ||
-		actor == "report-manager" || strings.HasPrefix(actor, "background:")
+		strings.HasPrefix(actor, "background:")
 }
 
 func WithMetadata(ctx context.Context, metadata Metadata) context.Context {

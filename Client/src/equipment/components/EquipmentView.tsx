@@ -201,7 +201,7 @@ export default function EquipmentView() {
 			<StaleSessionBanner />
 			<Card className="liquid-prominent-header-card equipment-workspace-card h-full min-h-0 flex flex-col">
 				<CardHeader className="liquid-card-header-prominent flex flex-wrap items-center gap-4">
-					<PillSelector ariaLabel="Equipment owner type" value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} />
+					<PillSelector ariaLabel="Equipment owner type" value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} size="header" />
 					<div className="equipment-actions ml-auto">
 						<Button size="sm" variant="outline" disabled={controlsDisabled || leaders.length < 2} onClick={() => setShowSwap(true)}><RefreshCw className="mr-1.5 h-4 w-4" />Swap Gear</Button>
 						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Gems'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20">Sell Gems</Button>

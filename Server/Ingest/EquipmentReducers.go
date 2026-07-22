@@ -565,12 +565,7 @@ func commanderAvailable(gameState *State.GameState, commanderID State.CommanderI
 }
 
 func commanderAvailableAt(gameState *State.GameState, commanderID State.CommanderID, now time.Time) bool {
-	for _, movement := range gameState.Movements {
-		if movementActiveAt(movement, now) && movementBelongsToCurrentPlayer(gameState, movement) && movement.CommanderID != nil && *movement.CommanderID == commanderID {
-			return false
-		}
-	}
-	return true
+	return gameState == nil || !State.CommanderHasActiveMovementAt(*gameState, commanderID, now)
 }
 
 func syncCommanderAvailability(gameState *State.GameState) {

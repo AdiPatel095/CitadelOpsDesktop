@@ -634,6 +634,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
             { value: 'favorites', label: 'Favorites', icon: <Heart className="w-3.5 h-3.5" /> },
             { value: 'frequent', label: 'Frequent', icon: <Flame className="w-3.5 h-3.5" /> },
           ]}
+          size="header"
           className="picker-quick-pills"
         />
       )}
@@ -650,7 +651,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
                 { value: 'melee', label: 'Melee' },
                 { value: 'range', label: 'Range' },
               ]}
-              size="sm"
+              size="body"
             />
             <PillSelector
               ariaLabel="Unit role filter"
@@ -661,7 +662,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
                 { value: 'attack', label: 'Attack' },
                 { value: 'defense', label: 'Defense' },
               ]}
-              size="sm"
+              size="body"
             />
             <PillSelector
               ariaLabel="Unit food filter"
@@ -673,7 +674,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
                 { value: 'beef', label: 'Beef' },
                 { value: 'food', label: 'Food' },
               ]}
-              size="sm"
+              size="body"
             />
           </div>
         </div>

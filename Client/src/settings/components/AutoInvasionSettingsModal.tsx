@@ -19,6 +19,7 @@ import {
   type AutoInvasionClientStateV1,
 } from '../AutoInvasionClientState';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+import { DailyAttackLimitField } from './DailyAttackLimitField';
 
 interface AutoInvasionSettingsModalProps {
   isOpen: boolean;
@@ -51,7 +52,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 	const fortifyOptions = [
 		{ value: 'GTO', label: 'Gold tokens' },
 		{ value: 'STO', label: 'Silver tokens' },
-		{ value: 'KM', label: 'Khan medals' },
+		{ value: 'MEDALS', label: 'Event medals' },
 		{ value: 'C2', label: 'Rubies' },
 	];
 
@@ -229,10 +230,16 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 						options={fortifyOptions}
 						menuGrowToViewport
 					/>
-					<p className="mt-2 text-[11px] text-text-muted">The game determines the cumulative price for each <span className="font-mono">rae</span> command and resets it after a successful attack lands. Rubies are never selected by default.</p>
+					<p className="mt-2 text-[11px] text-text-muted">Event medals use Khan medals for Foreign Lords and Samurai tokens for Bloodcrows. The game determines each cumulative <span className="font-mono">rae</span> price. Rubies are never selected by default.</p>
 				</label>
 			) : null}
 		</Card>
+
+        <DailyAttackLimitField
+          value={draft.dailyAttackLimit}
+          onChange={(dailyAttackLimit) => setDraft((current) => ({ ...current, dailyAttackLimit }))}
+          serverState={state?.dailyAttacks}
+        />
 
         <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs text-text-muted">
 			Troop quantities adapt to the freshly resolved left, front, and right limits for each commander and target. Fortification is optional and never spends currency unless enabled above.
