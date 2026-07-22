@@ -610,7 +610,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     }))}
                   />
                   <label className="block">
-                    <FieldLabel>Minimum wins on fort</FieldLabel>
+                    <FieldLabel>Minimum attacks remaining</FieldLabel>
                     <Input
                       type="number"
                       min={0}
@@ -624,7 +624,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       }))}
                       className="font-mono"
                     />
-                    <p className="mt-1 text-[11px] text-text-muted">Only launch against forts whose live victory count is at least this value. Use 0 for no minimum.</p>
+                    <p className="mt-1 text-[11px] text-text-muted">Only launch against forts with at least this many attacks remaining. Use 0 for no minimum.</p>
                   </label>
                   <PresetSelect
                     value={draft.forts.presetId}

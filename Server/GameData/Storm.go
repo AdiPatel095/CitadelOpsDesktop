@@ -31,6 +31,7 @@ type StormIsleDefinition struct {
 	Resource              string  `json:"resource,omitempty"`
 	Size                  string  `json:"size,omitempty"`
 	Level                 int     `json:"level"`
+	MaximumVictoryCount   int64   `json:"maximumVictoryCount,omitempty"`
 	VictoryCounts         []int64 `json:"victoryCounts"`
 	FixedLoot             int64   `json:"fixedLoot,omitempty"`
 	AquamarineLoot        int64   `json:"aquamarineLoot,omitempty"`
@@ -87,6 +88,14 @@ func (store *Store) StormIsles() []StormIsleDefinition {
 	}
 	sort.Slice(result, func(left, right int) bool { return result[left].ID < result[right].ID })
 	return result
+}
+
+func StormFortAttacksRemaining(definition StormIsleDefinition, victoryCount int64) (int64, bool) {
+	if definition.Kind != StormIsleKindFort || definition.MaximumVictoryCount <= 0 ||
+		victoryCount < 0 || victoryCount > definition.MaximumVictoryCount {
+		return 0, false
+	}
+	return definition.MaximumVictoryCount - victoryCount, true
 }
 
 func (store *Store) StormShopPackage(productID int64) (StormShopPackage, bool) {
@@ -173,6 +182,7 @@ func decodeStormIsle(record Record) (StormIsleDefinition, bool) {
 	}
 	level, _ := record.Int64("dungeonlevel")
 	definition.Level = int(level)
+	definition.MaximumVictoryCount, _ = record.Int64("maxCountVictories")
 	definition.AquamarineLoot, _ = record.Int64("lootAquamarine")
 	definition.GlobalCooldownSec, _ = record.Int64("globalCooldown")
 	definition.LocalCooldownSec, _ = record.Int64("localCooldown")
@@ -184,6 +194,9 @@ func decodeStormIsle(record Record) (StormIsleDefinition, bool) {
 				definition.VictoryCounts = append(definition.VictoryCounts, value)
 			}
 		}
+	}
+	if definition.Kind == StormIsleKindFort && definition.MaximumVictoryCount <= 0 {
+		definition.MaximumVictoryCount = int64(len(definition.VictoryCounts))
 	}
 	return definition, definition.Kind == StormIsleKindFort || definition.Resource != ""
 }

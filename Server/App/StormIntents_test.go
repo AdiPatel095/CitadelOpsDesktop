@@ -16,7 +16,7 @@ import (
 func TestStormAttackReplansWhenCommanderAvailabilityChanges(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[],
-		"isles":[{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"countVictories":"0#1#5"}]
+		"isles":[{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"maxCountVictories":10,"countVictories":"0#1#2#3#4#5#6#7#8#9"}]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)
@@ -206,10 +206,10 @@ func TestCaptureTargetedStormScanRefreshesTrackedCooldown(t *testing.T) {
 	}
 }
 
-func TestStormAttackContextEnforcesMinimumFortWins(t *testing.T) {
+func TestStormAttackContextEnforcesMinimumFortAttacksRemaining(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[],
-		"isles":[{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"countVictories":"0#1#5"}]
+		"isles":[{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"maxCountVictories":10,"countVictories":"0#1#2#3#4#5#6#7#8#9"}]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)
@@ -219,26 +219,30 @@ func TestStormAttackContextEnforcesMinimumFortWins(t *testing.T) {
 	state.Map[4] = map[string]State.MapObservation{
 		"101:102": {
 			KingdomID: 4, X: 101, Y: 102, TypeID: stormIntentFortMapTypeID,
-			StormIsleID: 7, StormVictoryCount: 4, ObservedAt: time.Now().UTC(),
+			StormIsleID: 7, StormVictoryCount: 7, ObservedAt: time.Now().UTC(),
 		},
 	}
 	input := Intent.PlanningContext{State: state, GameData: gameData}
 	request := json.RawMessage(`{
 		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
-		"stormIsleId":7,"minimumVictoryCount":5,"preset":{"id":"fort","name":"Fort","waves":[]}
+		"stormIsleId":7,"minimumVictoryCount":4,"preset":{"id":"fort","name":"Fort","waves":[]}
 	}`)
-	if _, _, _, _, err := stormAttackContext(input, request); err == nil || !strings.Contains(err.Error(), "below the required minimum") {
-		t.Fatalf("minimum-win guard error = %v", err)
+	if _, _, _, _, err := stormAttackContext(input, request); err == nil || !strings.Contains(err.Error(), "attacks remaining") {
+		t.Fatalf("minimum-attacks-remaining guard error = %v", err)
 	}
+	target := state.Map[4]["101:102"]
+	target.StormVictoryCount = 6
+	state.Map[4]["101:102"] = target
+	input.State = state
 	request = json.RawMessage(`{
 		"sourceCastleId":40,"kingdomId":4,"targetTypeId":25,"targetX":101,"targetY":102,
 		"stormIsleId":7,"minimumVictoryCount":4,"preset":{"id":"fort","name":"Fort","waves":[]}
 	}`)
 	if _, _, _, _, err := stormAttackContext(input, request); err != nil {
-		t.Fatalf("fort at minimum wins rejected: %v", err)
+		t.Fatalf("fort at minimum attacks remaining rejected: %v", err)
 	}
 	readyAt := time.Now().UTC().Add(-time.Minute)
-	target := state.Map[4]["101:102"]
+	target = state.Map[4]["101:102"]
 	target.StormVictoryCount = 0
 	target.StormCooldownRemaining = 60
 	target.StormReadyAt = readyAt

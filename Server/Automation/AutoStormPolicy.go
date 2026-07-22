@@ -1373,7 +1373,7 @@ func evaluateAutoStormCombat(
 	}
 	candidates := autoStormCombatCandidates(snapshot, settings, castle, mapState.LastCompletedAt)
 	metrics["eligibleStormTargets"] = float64(len(candidates))
-	metrics["minimumFortWins"] = float64(settings.Forts.MinimumWins)
+	metrics["minimumFortAttacksRemaining"] = float64(settings.Forts.MinimumWins)
 	if len(candidates) == 0 {
 		if nextOpportunityAt := autoStormNextOpportunityAt(snapshot, settings, castle); !nextOpportunityAt.IsZero() {
 			return nil, fmt.Sprintf("Next learned Storm opportunity is ready at %s", nextOpportunityAt.Format(time.RFC3339)), nil
@@ -1555,8 +1555,11 @@ func autoStormCandidateForTarget(
 			!autoStormIntSelected(settings.Forts.Levels, definition.Level) {
 			return autoStormCombatCandidate{}, false
 		}
-		if target.StormVictoryCount < settings.Forts.MinimumWins && target.StormCooldownRemaining <= 0 {
-			return autoStormCombatCandidate{}, false
+		if settings.Forts.MinimumWins > 0 && target.StormCooldownRemaining <= 0 {
+			remaining, known := GameData.StormFortAttacksRemaining(definition, target.StormVictoryCount)
+			if !known || remaining < settings.Forts.MinimumWins {
+				return autoStormCombatCandidate{}, false
+			}
 		}
 		return autoStormCombatCandidate{Observation: target, Definition: definition, PresetID: settings.Forts.PresetID}, true
 	case autoStormIslandMapTypeID:

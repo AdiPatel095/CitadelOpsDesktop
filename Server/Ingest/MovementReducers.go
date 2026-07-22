@@ -16,6 +16,7 @@ import (
 func newMovementReducer(authoritative bool) Reducer {
 	var snapshotMu sync.Mutex
 	var lastSnapshotFrame time.Time
+	var lastSnapshotGeneration uint64
 	return func(
 		_ context.Context,
 		frame Protocol.Frame,
@@ -39,22 +40,28 @@ func newMovementReducer(authoritative bool) Reducer {
 		}
 		if authoritative {
 			snapshotMu.Lock()
-			reset := lastSnapshotFrame.IsZero() || frame.ReceivedAt.Sub(lastSnapshotFrame) > 250*time.Millisecond
+			connectionGeneration := gameState.Session.ConnectionGeneration
+			freshBaseline := lastSnapshotFrame.IsZero() ||
+				connectionGeneration > 0 && connectionGeneration != lastSnapshotGeneration
+			reset := freshBaseline || frame.ReceivedAt.Sub(lastSnapshotFrame) > 250*time.Millisecond
 			lastSnapshotFrame = frame.ReceivedAt
+			lastSnapshotGeneration = connectionGeneration
 			snapshotMu.Unlock()
 			// A single gam request can return a populated movement frame followed
 			// by an empty frame. Only the first frame starts a new authoritative
 			// snapshot; later frames in the same response window extend it.
 			if reset {
 				next = make(map[State.MovementID]State.MovementState, len(items))
-				// Live gam replies are scoped and can omit owned movements that
-				// appeared in another reply. Retain active commander movements
-				// until an explicit removal, a newer observation, or their
-				// conservative return time releases them.
-				for id, movement := range before {
-					if movement.CommanderID != nil && movementBelongsToCurrentPlayer(gameState, movement) &&
-						State.CommanderMovementActiveAt(movement, frame.ReceivedAt) {
-						next[id] = movement
+				if !freshBaseline {
+					// Live gam replies are scoped and can omit owned movements that
+					// appeared in another reply. Retain active commander movements
+					// within the same connection until an explicit removal, a newer
+					// observation, or their conservative return time releases them.
+					for id, movement := range before {
+						if movement.CommanderID != nil && movementBelongsToCurrentPlayer(gameState, movement) &&
+							State.CommanderMovementActiveAt(movement, frame.ReceivedAt) {
+							next[id] = movement
+						}
 					}
 				}
 			}
@@ -64,6 +71,7 @@ func newMovementReducer(authoritative bool) Reducer {
 			if !ok {
 				continue
 			}
+			discardSupersededCommanderMovements(gameState, next, movement)
 			next[movement.ID] = movement
 		}
 		khanChanged := reconcileKhanTaunts(gameState, next, frame.ReceivedAt, authoritative)
@@ -82,6 +90,23 @@ func newMovementReducer(authoritative bool) Reducer {
 			domains = append(domains, "khan", "event-scores")
 		}
 		return domains, true, nil
+	}
+}
+
+func discardSupersededCommanderMovements(
+	gameState *State.GameState,
+	movements map[State.MovementID]State.MovementState,
+	observed State.MovementState,
+) {
+	if observed.CommanderID == nil || !movementBelongsToCurrentPlayer(gameState, observed) {
+		return
+	}
+	for id, existing := range movements {
+		if id == observed.ID || existing.CommanderID == nil || *existing.CommanderID != *observed.CommanderID ||
+			!movementBelongsToCurrentPlayer(gameState, existing) || existing.ObservedAt.After(observed.ObservedAt) {
+			continue
+		}
+		delete(movements, id)
 	}
 }
 

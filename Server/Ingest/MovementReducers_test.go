@@ -110,6 +110,67 @@ func TestMovementReducerPreservesPopulatedSnapshotAcrossTrailingEmptyFrame(t *te
 	}
 }
 
+func TestMovementReducerFirstLiveSnapshotDropsRecoveredMovement(t *testing.T) {
+	now := time.Now().UTC()
+	arrivesAt := now.Add(-time.Second)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = newCastleState(100)
+	gameState.Session.ConnectionGeneration = 1
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: false}
+	commanderID := State.CommanderID(7)
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, Direction: 0, OwnerPlayerID: 1, SourceCastleID: 100,
+		CommanderID: &commanderID, TravelSeconds: 800, ArrivesAt: &arrivesAt,
+		ObservedAt: now.Add(-10 * time.Minute),
+	}
+	code := 0
+
+	_, _, err := newMovementReducer(true)(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: now, Payload: json.RawMessage(`{"M":[],"O":[]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("first live movement snapshot: %v", err)
+	}
+	if len(gameState.Movements) != 0 || !gameState.Commanders[7].Available {
+		t.Fatalf("recovered movement survived live baseline: movements=%+v commander=%+v", gameState.Movements, gameState.Commanders[7])
+	}
+}
+
+func TestMovementReducerNewConnectionDropsPriorMovement(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = newCastleState(100)
+	gameState.Session.ConnectionGeneration = 1
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true}
+	code := 0
+	now := time.Now().UTC()
+	reducer := newMovementReducer(true)
+
+	_, _, err := reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"M":[
+			{"M":{"MID":50,"PT":2,"TT":800,"D":0,"T":0,"KID":4,"OID":1,"TID":-1,"SA":[12,10,11,100,1],"TA":[25,20,21,4,-1]},"UM":{"L":{"ID":7}}}
+		]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("first connection movement snapshot: %v", err)
+	}
+
+	gameState.Session.ConnectionGeneration = 2
+	_, _, err = reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: now.Add(time.Second), Payload: json.RawMessage(`{"M":[],"O":[]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("new connection movement snapshot: %v", err)
+	}
+	if len(gameState.Movements) != 0 || !gameState.Commanders[7].Available {
+		t.Fatalf("prior connection movement survived new baseline: movements=%+v commander=%+v", gameState.Movements, gameState.Commanders[7])
+	}
+}
+
 func TestMovementReducerPreservesOwnedCommanderAcrossScopedSnapshotOmission(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Player.ID = 1
@@ -155,6 +216,55 @@ func TestMovementReducerPreservesOwnedCommanderAcrossScopedSnapshotOmission(t *t
 	}
 	if !gameState.Commanders[7].Available {
 		t.Fatal("post-return gam frame did not release the commander")
+	}
+}
+
+func TestMovementReducerReplacesRetainedOutboundWithObservedReturn(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = newCastleState(100)
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true}
+	code := 0
+	observedAt := time.Now().UTC()
+	reducer := newMovementReducer(true)
+
+	_, _, err := reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"M":[
+			{"M":{"MID":50,"PT":795,"TT":800,"D":0,"T":0,"KID":4,"OID":1,"TID":-1,"SA":[12,10,11,100,1],"TA":[25,20,21,4,-1]},"UM":{"L":{"ID":7}}}
+		]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("outbound movement frame: %v", err)
+	}
+	if _, exists := gameState.Movements[50]; !exists {
+		t.Fatal("outbound movement was not retained before its return was observed")
+	}
+
+	returnObservedAt := observedAt.Add(time.Second)
+	_, _, err = reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: returnObservedAt,
+		Payload: json.RawMessage(`{"M":[
+			{"M":{"MID":51,"PT":10,"TT":170,"D":1,"T":2,"KID":4,"OID":1,"TID":1,"SA":[25,20,21,4,-1],"TA":[12,10,11,100,1]},"UM":{"L":{"ID":7}}}
+		]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("return movement frame: %v", err)
+	}
+	if _, exists := gameState.Movements[50]; exists {
+		t.Fatal("observed return left the superseded outbound movement active")
+	}
+	returnMovement, exists := gameState.Movements[51]
+	if !exists || returnMovement.ReturnsAt == nil {
+		t.Fatalf("observed return movement = %+v, exists=%t", returnMovement, exists)
+	}
+	if gameState.Commanders[7].Available {
+		t.Fatal("commander was released before the observed return completed")
+	}
+
+	ReconcileExpiredMovements(&gameState, returnMovement.ReturnsAt.Add(time.Second))
+	if len(gameState.Movements) != 0 || !gameState.Commanders[7].Available {
+		t.Fatalf("completed return did not release commander: movements=%+v commander=%+v", gameState.Movements, gameState.Commanders[7])
 	}
 }
 

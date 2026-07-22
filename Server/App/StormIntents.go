@@ -530,18 +530,26 @@ func stormAttackContext(
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("Storm resource island %d:%d has no object id for the post-capture troop return", request.TargetX, request.TargetY)
 	}
 	if request.MinimumVictoryCount < 0 {
-		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("minimumVictoryCount cannot be negative")
+		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("minimum attacks remaining cannot be negative")
 	}
 	awaitingReadyVerification := request.TargetTypeID == stormIntentFortMapTypeID && target.StormCooldownRemaining > 0 &&
 		!stormTargetReadyAt(target).After(now)
-	if request.TargetTypeID == stormIntentFortMapTypeID && target.StormVictoryCount < request.MinimumVictoryCount && !awaitingReadyVerification {
-		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf(
-			"Storm fort %d:%d has %d wins, below the required minimum %d",
-			request.TargetX, request.TargetY, target.StormVictoryCount, request.MinimumVictoryCount,
-		)
+	if request.TargetTypeID == stormIntentFortMapTypeID && request.MinimumVictoryCount > 0 && !awaitingReadyVerification {
+		remaining, known := GameData.StormFortAttacksRemaining(definition, target.StormVictoryCount)
+		if !known {
+			return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf(
+				"Storm fort %d:%d has no authoritative attack limit", request.TargetX, request.TargetY,
+			)
+		}
+		if remaining < request.MinimumVictoryCount {
+			return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf(
+				"Storm fort %d:%d has %d attacks remaining, below the required minimum %d",
+				request.TargetX, request.TargetY, remaining, request.MinimumVictoryCount,
+			)
+		}
 	}
 	if request.TargetTypeID == stormIntentIslandMapTypeID && request.MinimumVictoryCount > 0 {
-		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("minimumVictoryCount only applies to Storm forts")
+		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("minimum attacks remaining only applies to Storm forts")
 	}
 	if request.TargetTypeID == stormIntentFortMapTypeID && len(request.DefenseUnits) > 0 {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("defense units can only accompany a resource-island occupation")

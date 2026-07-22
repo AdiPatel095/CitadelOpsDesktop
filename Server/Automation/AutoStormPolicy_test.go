@@ -195,7 +195,7 @@ func TestAutoStormIslandReturnUsesReportConfirmedSurvivors(t *testing.T) {
 	}
 }
 
-func TestAutoStormFortCandidatesEnforceMinimumWins(t *testing.T) {
+func TestAutoStormFortCandidatesEnforceMinimumAttacksRemaining(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
 	storm := autoStormTestCastle(40, 4, "Storm")
@@ -203,12 +203,12 @@ func TestAutoStormFortCandidatesEnforceMinimumWins(t *testing.T) {
 	state.Castles[storm.ID] = storm
 	target := State.MapObservation{
 		KingdomID: 4, X: 101, Y: 101, TypeID: autoStormFortMapTypeID,
-		StormIsleID: 7, StormVictoryCount: 4, ObservedAt: now,
+		StormIsleID: 7, StormVictoryCount: 7, ObservedAt: now,
 	}
 	state.Map[4] = map[string]State.MapObservation{"101:101": target}
 	settings := defaultAutoStormSettings()
 	settings.Forts.Enabled = true
-	settings.Forts.MinimumWins = 5
+	settings.Forts.MinimumWins = 4
 	state.Storm.Map = State.StormMapState{
 		SourceCastleID: storm.ID, LastAttemptAt: now, LastCompletedAt: now,
 		Targets: map[string]State.MapObservation{"101:101": target},
@@ -216,14 +216,14 @@ func TestAutoStormFortCandidatesEnforceMinimumWins(t *testing.T) {
 	snapshot := Snapshot{State: state, GameData: autoStormTestGameData(t), Now: now}
 
 	if candidates := autoStormCombatCandidates(snapshot, settings, storm, now); len(candidates) != 0 {
-		t.Fatalf("candidates below minimum wins = %#v", candidates)
+		t.Fatalf("candidates below minimum attacks remaining = %#v", candidates)
 	}
-	target.StormVictoryCount = 5
+	target.StormVictoryCount = 6
 	state.Map[4]["101:101"] = target
 	state.Storm.Map.Targets["101:101"] = target
 	snapshot.State = state
 	if candidates := autoStormCombatCandidates(snapshot, settings, storm, now); len(candidates) != 1 {
-		t.Fatalf("candidates at minimum wins = %#v", candidates)
+		t.Fatalf("candidates at minimum attacks remaining = %#v", candidates)
 	}
 }
 
@@ -549,10 +549,10 @@ func autoStormTestGameData(t *testing.T) *GameData.Store {
 		"isles":[
 			{"IsleID":1,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
 			{"IsleID":4,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
-			{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"countVictories":"0#1#5"},
-			{"IsleID":8,"type":"DUNGEON","dungeonlevel":60,"countVictories":"0#1#5"},
-			{"IsleID":9,"type":"DUNGEON","dungeonlevel":70,"countVictories":"0#1#5"},
-			{"IsleID":10,"type":"DUNGEON","dungeonlevel":80,"countVictories":"0#1#5"}
+			{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"maxCountVictories":10,"countVictories":"0#1#2#3#4#5#6#7#8#9"},
+			{"IsleID":8,"type":"DUNGEON","dungeonlevel":60,"maxCountVictories":10,"countVictories":"10#11#12#13#14#15#16#17#18#19"},
+			{"IsleID":9,"type":"DUNGEON","dungeonlevel":70,"maxCountVictories":10,"countVictories":"20#21#22#23#24#25#26#27#28#29"},
+			{"IsleID":10,"type":"DUNGEON","dungeonlevel":80,"maxCountVictories":10,"countVictories":"30#31#32#33#34#35#36#37#38#39"}
 		],
 		"packages":[
 			{"packageID":245,"comment1":"War horn","comment2":"Luna's trade boat","packageType":"tool","packagePriceAquamarine":2960},
