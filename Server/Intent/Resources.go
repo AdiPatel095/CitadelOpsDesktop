@@ -122,6 +122,11 @@ func legacyClaimResource(
 		return accountKey("combat", "advisor", value)
 	case "khan-protection":
 		return accountKey("combat", "khan-protection", "*")
+	case "khan-lane":
+		// Each Auto Khan lane claims its own identifier so the lanes run
+		// concurrently, while an unqualified "khan-lane" claim covers every lane
+		// and lets the protection intents exclude all of them at once.
+		return accountKey("combat", "khan-lane", value)
 	case "session":
 		return sessionKey("session", "lifecycle", "*")
 	case "castle-focus":
@@ -253,7 +258,7 @@ func legacyClaimResource(
 		return accountKey("scheduling", "operation", value)
 	case "rift-launch":
 		return accountKey("rift", "launch", value)
-	case "tower-target", "nomad-target", "storm-target", "invasion-target", "spy-target", "khan-target":
+	case "tower-target", "nomad-target", "storm-target", "invasion-target", "spy-target", "khan-target", "player-target":
 		if len(parts) >= 4 {
 			id, _ := strconv.ParseInt(parts[1], 10, 64)
 			return kingdomKey(State.KingdomID(id), "combat", "target", strings.Join(parts[2:], ":"))

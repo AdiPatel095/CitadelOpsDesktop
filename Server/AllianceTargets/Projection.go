@@ -35,7 +35,8 @@ func buildTrackerTargets(gameState State.GameState, detail trackerAllianceDetail
 				continue
 			}
 			rows = append(rows, Target{
-				PlayerID: trackerGameID(player.PlayerID), Name: player.Name, Might: int64(player.Might),
+				PlayerID: trackerGameID(player.PlayerID), Name: player.Name,
+				Level: int(player.Level), LegendLevel: int(player.LegendLevel), Might: int64(player.Might),
 				UnderBird: rpt > 0, RPTSeconds: rpt, BirdUntil: player.BirdUntil, UpdatedAt: player.UpdatedAt,
 				TargetCastle: targetCastle, ClosestOwnCastle: closest, Distance: roundDistance(distance),
 			})
@@ -47,14 +48,21 @@ func buildTrackerTargets(gameState State.GameState, detail trackerAllianceDetail
 
 func buildLiveTargets(gameState State.GameState, alliance State.AllianceState, detail trackerAllianceDetail) []Target {
 	metadata := make(map[int64]struct {
-		might     int64
-		updatedAt string
+		might       int64
+		level       int
+		legendLevel int
+		updatedAt   string
 	}, len(detail.Players))
 	for _, player := range detail.Players {
 		metadata[trackerGameID(player.PlayerID)] = struct {
-			might     int64
-			updatedAt string
-		}{might: int64(player.Might), updatedAt: player.UpdatedAt}
+			might       int64
+			level       int
+			legendLevel int
+			updatedAt   string
+		}{
+			might: int64(player.Might), level: int(player.Level), legendLevel: int(player.LegendLevel),
+			updatedAt: player.UpdatedAt,
+		}
 	}
 	holdings := make(map[State.PlayerID][]State.AllianceHolding, len(alliance.Members))
 	for _, holding := range alliance.Holdings {
@@ -73,6 +81,14 @@ func buildLiveTargets(gameState State.GameState, alliance State.AllianceState, d
 		if playerMetadata.might > 0 {
 			might = playerMetadata.might
 		}
+		level := member.Level
+		if playerMetadata.level > 0 {
+			level = playerMetadata.level
+		}
+		legendLevel := member.LegendLevel
+		if playerMetadata.legendLevel > 0 {
+			legendLevel = playerMetadata.legendLevel
+		}
 		rpt := max(0, member.ReturnProtectionSec-elapsed)
 		birdUntil := ""
 		if rpt > 0 {
@@ -88,7 +104,8 @@ func buildLiveTargets(gameState State.GameState, alliance State.AllianceState, d
 				continue
 			}
 			rows = append(rows, Target{
-				PlayerID: int64(member.PlayerID), Name: member.Name, Might: might,
+				PlayerID: int64(member.PlayerID), Name: member.Name,
+				Level: level, LegendLevel: legendLevel, Might: might,
 				UnderBird: rpt > 0, RPTSeconds: rpt, BirdUntil: birdUntil, UpdatedAt: playerMetadata.updatedAt,
 				TargetCastle: targetCastle, ClosestOwnCastle: closest, Distance: roundDistance(distance),
 			})
@@ -199,9 +216,33 @@ func closestOwnedCastle(gameState State.GameState, x int, y int) (Castle, float6
 	return best, bestDistance, bestDistance != math.MaxFloat64
 }
 
-func enrichTargetNames(gameState State.GameState, targets []Target) {
+func enrichTargetIntelligence(gameState State.GameState, archivedReports []Reports.SpyReport, targets []Target) {
 	byID := map[int64]string{}
 	byCoordinate := map[string]string{}
+	latestByID := map[int64]Reports.SpyReport{}
+	latestByCoordinate := map[string]Reports.SpyReport{}
+	latestLegacyByCoordinate := map[string]Reports.SpyReport{}
+	considerReport := func(report Reports.SpyReport) {
+		if gameState.Player.ID > 0 && report.Source.ID > 0 && report.Source.ID != int64(gameState.Player.ID) {
+			return
+		}
+		key := coordinateKey(report.Castle.X, report.Castle.Y)
+		if report.Castle.ID > 0 && reportIsNewer(report, latestByID[report.Castle.ID]) {
+			latestByID[report.Castle.ID] = report
+			if name := strings.TrimSpace(report.Castle.Name); name != "" {
+				byID[report.Castle.ID] = name
+			}
+		}
+		if reportIsNewer(report, latestByCoordinate[key]) {
+			latestByCoordinate[key] = report
+			if name := strings.TrimSpace(report.Castle.Name); name != "" {
+				byCoordinate[key] = name
+			}
+		}
+		if report.Castle.ID <= 0 && reportIsNewer(report, latestLegacyByCoordinate[key]) {
+			latestLegacyByCoordinate[key] = report
+		}
+	}
 	for _, kingdom := range gameState.Map {
 		for _, observation := range kingdom {
 			name := strings.TrimSpace(observation.Name)
@@ -214,15 +255,15 @@ func enrichTargetNames(gameState State.GameState, targets []Target) {
 			}
 		}
 	}
+	for _, report := range archivedReports {
+		considerReport(report)
+	}
 	for _, capture := range gameState.Reports.SpyCaptures {
 		report, err := Reports.ParseSpyCapture(capture)
-		if err != nil || strings.TrimSpace(report.Castle.Name) == "" {
+		if err != nil {
 			continue
 		}
-		byCoordinate[coordinateKey(report.Castle.X, report.Castle.Y)] = report.Castle.Name
-		if report.Castle.ID > 0 {
-			byID[report.Castle.ID] = report.Castle.Name
-		}
+		considerReport(report)
 	}
 	for index := range targets {
 		castle := &targets[index].TargetCastle
@@ -235,7 +276,30 @@ func enrichTargetNames(gameState State.GameState, targets []Target) {
 		if castle.Name == "" {
 			castle.Name = byCoordinate[coordinateKey(castle.X, castle.Y)]
 		}
+		var report Reports.SpyReport
+		if castle.CastleID > 0 {
+			report = latestByID[castle.CastleID]
+			if report.CapturedAtUnixMillis <= 0 {
+				report = latestLegacyByCoordinate[coordinateKey(castle.X, castle.Y)]
+			}
+		} else {
+			report = latestByCoordinate[coordinateKey(castle.X, castle.Y)]
+		}
+		if report.CapturedAtUnixMillis > 0 {
+			targets[index].SpyReport = &SpyReportSummary{
+				CapturedAtUnixMillis: report.CapturedAtUnixMillis,
+				Status:               report.Status,
+				TotalTroops:          report.TotalTroops,
+			}
+		}
 	}
+}
+
+func reportIsNewer(candidate Reports.SpyReport, current Reports.SpyReport) bool {
+	if candidate.CapturedAtUnixMillis != current.CapturedAtUnixMillis {
+		return candidate.CapturedAtUnixMillis > current.CapturedAtUnixMillis
+	}
+	return candidate.MID > current.MID
 }
 
 func sortTargets(rows []Target) {
@@ -352,11 +416,14 @@ func compareTarget(left Target, right Target, key string) int {
 
 func targetView(target Target) TargetView {
 	return TargetView{
-		Name: target.Name, Might: target.Might,
+		PlayerID: target.PlayerID, Name: target.Name,
+		Level: target.Level, LegendLevel: target.LegendLevel, Might: target.Might,
 		UnderBird: target.UnderBird, RPTSeconds: target.RPTSeconds, Distance: target.Distance,
+		SpyReport: target.SpyReport,
 		TargetCastle: TargetCastleView{
 			CastleID: target.TargetCastle.CastleID, Name: target.TargetCastle.Name,
-			TypeName: target.TargetCastle.TypeName, X: target.TargetCastle.X, Y: target.TargetCastle.Y,
+			TypeName: target.TargetCastle.TypeName, TypeID: target.TargetCastle.TypeID,
+			X: target.TargetCastle.X, Y: target.TargetCastle.Y,
 		},
 		ClosestOwnCastle: OwnCastleView{
 			Name: target.ClosestOwnCastle.Name, X: target.ClosestOwnCastle.X, Y: target.ClosestOwnCastle.Y,

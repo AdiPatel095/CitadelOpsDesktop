@@ -57,23 +57,50 @@ func reduceSuccessfulNomadCampBattle(
 }
 
 func refreshNomadCampCooldownFromMap(gameState *State.GameState, observation State.MapObservation) bool {
-	if !isRegularEventCampType(observation.TypeID) || gameState.NomadCamps.Cooldowns == nil {
+	if !isRegularEventCampType(observation.TypeID) && observation.TypeID != khanCampMapTypeID ||
+		gameState.NomadCamps.Cooldowns == nil {
 		return false
 	}
+	reportChanged := refreshKhanCooldownReportsFromMap(gameState, observation)
 	key := nomadCampCooldownKey(observation.KingdomID, observation.X, observation.Y)
 	current, exists := gameState.NomadCamps.Cooldowns[key]
 	if !exists || current.LastSuccessfulBattleAt.After(observation.ObservedAt) {
-		return false
+		return reportChanged
 	}
 	next := current
 	next.CooldownRemaining = observation.EventCampCooldownRemaining
 	next.CooldownObservedAt = observation.ObservedAt
 	next.PendingCooldownRefresh = false
 	if next == current {
-		return false
+		return reportChanged
 	}
 	gameState.NomadCamps.Cooldowns[key] = next
 	return true
+}
+
+func refreshKhanCooldownReportsFromMap(gameState *State.GameState, observation State.MapObservation) bool {
+	if gameState == nil || observation.TypeID != khanCampMapTypeID ||
+		len(gameState.Khan.CooldownReports) == 0 {
+		return false
+	}
+	changed := false
+	for reportID, current := range gameState.Khan.CooldownReports {
+		if !current.ResolvedAt.IsZero() || current.KingdomID != observation.KingdomID ||
+			current.X != observation.X || current.Y != observation.Y ||
+			current.LandedAt.After(observation.ObservedAt) {
+			continue
+		}
+		next := current
+		next.CooldownRemaining = observation.EventCampCooldownRemaining
+		next.CooldownObservedAt = observation.ObservedAt.UTC()
+		if next.CooldownRemaining == current.CooldownRemaining &&
+			next.CooldownObservedAt.Equal(current.CooldownObservedAt) {
+			continue
+		}
+		gameState.Khan.CooldownReports[reportID] = next
+		changed = true
+	}
+	return changed
 }
 
 func nomadCampCooldownKey(kingdomID State.KingdomID, x, y int) string {

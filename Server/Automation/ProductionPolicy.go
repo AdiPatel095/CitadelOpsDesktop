@@ -38,6 +38,7 @@ type productionTarget struct {
 type productionCastle struct {
 	Enabled bool               `json:"enabled"`
 	Items   []productionTarget `json:"items"`
+	Cursor  int                `json:"cursor,omitempty"`
 }
 
 const recruitmentStackCapacityEffectID = 189
@@ -96,7 +97,16 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		if settings.Mode != "perCastle" {
 			targets = settings.GlobalItems
 		}
-		if len(targets) == 0 || targets[0].ID <= 0 {
+		if len(targets) == 0 {
+			continue
+		}
+		rotating := policy.id == "autoRecruit" && settings.Mode == "perCastle" && len(targets) > 1
+		cursor := 0
+		if rotating {
+			cursor = productionRotationCursor(castlePlan.Cursor, len(targets))
+		}
+		target := targets[cursor]
+		if target.ID <= 0 {
 			continue
 		}
 		configured++
@@ -136,22 +146,41 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 			}
 			continue
 		}
-		target := targets[0]
 		amount := policy.targetAmount(snapshot.State, castle, target, snapshot.GameData)
 		if amount <= 0 {
 			unknownStackCapacity++
 			continue
 		}
+		fillAvailable := !rotating
 		arguments, _ := json.Marshal(map[string]any{
 			"castleId": castleID, "lineId": policy.lineID,
-			"definitionId": target.ID, "amount": amount, "fillAvailable": true,
+			"definitionId": target.ID, "amount": amount, "fillAvailable": fillAvailable,
 		})
+		var followUp *Intent.Request
+		detail := fmt.Sprintf("Queue the configured %s at %s", policy.definitionKey, castleName(castle))
+		if rotating {
+			nextCursor := (cursor + 1) % len(targets)
+			raw := snapshot.Configuration.Sections[policy.section]
+			updated, updateErr := advanceProductionCursor(raw, castleKey, nextCursor)
+			if updateErr != nil {
+				return Decision{}, updateErr
+			}
+			followUpArguments, _ := json.Marshal(map[string]any{
+				"section": policy.section, "value": updated, "expectedValue": json.RawMessage(raw),
+			})
+			followUp = &Intent.Request{Name: "config.update", Arguments: followUpArguments}
+			detail = fmt.Sprintf(
+				"Queue Auto Recruit rotation unit %d of %d at %s",
+				cursor+1, len(targets), castleName(castle),
+			)
+		}
 		policy.lastCastleID = castleID
 		return Decision{
 			Status:              "ready",
-			Detail:              fmt.Sprintf("Queue the configured %s at %s", policy.definitionKey, castleName(castle)),
+			Detail:              detail,
 			NextCheckAt:         snapshot.Now.Add(coordinatorTick),
 			Request:             &Intent.Request{Name: "production.enqueue", Arguments: arguments},
+			FollowUp:            followUp,
 			ScheduleKey:         scheduleKey,
 			ReevaluateOnSuccess: true,
 		}, nil
@@ -213,6 +242,30 @@ func (policy *ProductionPolicy) orderedCastleKeys(
 		return append(append(make([]string, 0, len(keys)), keys[next:]...), keys[:next]...)
 	}
 	return keys
+}
+
+func productionRotationCursor(cursor int, count int) int {
+	if cursor < 0 || count <= 0 {
+		return 0
+	}
+	return cursor % count
+}
+
+func advanceProductionCursor(raw json.RawMessage, castleKey string, cursor int) (map[string]any, error) {
+	var document map[string]any
+	if err := json.Unmarshal(raw, &document); err != nil {
+		return nil, fmt.Errorf("decode production configuration: %w", err)
+	}
+	castles, ok := document["castles"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("production configuration has no castles object")
+	}
+	castle, ok := castles[castleKey].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("production configuration has no castle %s", castleKey)
+	}
+	castle["cursor"] = cursor
+	return document, nil
 }
 
 func (policy *ProductionPolicy) queueCapacity(state State.GameState, queue State.ProductionQueue, gameData *GameData.Store) int {

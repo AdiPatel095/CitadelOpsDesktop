@@ -32,6 +32,63 @@ func TestReduceMapSnapshotParsesKingdomTowerVictoryLevelAndCooldown(t *testing.T
 	}
 }
 
+func TestReduceNestedMapSnapshotParsesCapturedKhanCamp(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],
+		"buildings":[],
+		"units":[],
+		"eventAutoScalingCamps":[{
+			"eventAutoScalingCampID":1145,"eventID":72,"difficultyID":310,"areaType":35,
+			"camplevel":105,"coolDown":300,"maxTroopCapacityDefense":4530
+		}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	code := 0
+	observedAt := time.Date(2026, 7, 25, 13, 37, 59, 0, time.UTC)
+	_, changed, err := reduceNestedMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "fnm", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{
+			"X":939,"Y":1123,
+			"gaa":{"KID":0,"AI":[[35,939,1123,-1,-1,0,0,0,1,1145,200,200,85]]}
+		}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("Khan map jump: changed=%t err=%v", changed, err)
+	}
+	observation := gameState.Map[0]["939:1123"]
+	if observation.TypeID != khanCampMapTypeID || observation.ObjectID != 1145 ||
+		observation.EventCampID != 1145 || observation.Level != 105 ||
+		observation.EventCampBaseWallBonus != 200 || observation.EventCampBaseGateBonus != 200 ||
+		observation.EventCampBaseMoatBonus != 85 || observation.OwnerID != 0 ||
+		!observation.ObservedAt.Equal(observedAt) {
+		t.Fatalf("unexpected Khan camp observation: %#v", observation)
+	}
+}
+
+func TestReduceMapSnapshotParsesCapturedKhanCooldown(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	observedAt := time.Date(2026, 7, 25, 14, 34, 0, 0, time.UTC)
+	_, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{
+			"KID":0,
+			"AI":[[35,939,1123,3352,-1,194,360,1825,17,1146,200,200,85]]
+		}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("Khan cooldown snapshot: changed=%t err=%v", changed, err)
+	}
+	observation := gameState.Map[0]["939:1123"]
+	if observation.TypeID != khanCampMapTypeID || observation.EventCampID != 1146 ||
+		observation.EventCampCooldownRemaining != 194 || !observation.ObservedAt.Equal(observedAt) {
+		t.Fatalf("unexpected Khan cooldown observation: %#v", observation)
+	}
+}
+
 func TestMapObservationMigratesLegacyTowerMapValueAsVictoryCount(t *testing.T) {
 	var observation State.MapObservation
 	if err := json.Unmarshal([]byte(`{"typeId":2,"towerBaseFlankCapacity":845}`), &observation); err != nil {

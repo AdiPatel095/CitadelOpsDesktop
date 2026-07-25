@@ -19,15 +19,16 @@ import (
 
 const (
 	autoKhanEventID              = 72
-	autoKhanCampTypeID           = 2
-	autoKhanCampVictoryCount     = 845
-	autoKhanTargetRadius         = 6
+	autoKhanCampTypeID           = 35
 	defaultKhanDefenseRefreshSec = 30
 	defaultKhanMapRefreshSec     = 30
 	defaultKhanCheckIntervalSec  = 30
 )
 
 type AutoKhanPolicy struct{}
+type AutoKhanCooldownPolicy struct{}
+type AutoKhanRagePolicy struct{}
+type AutoKhanDefensePolicy struct{}
 
 type autoKhanSettings struct {
 	Version                   int              `json:"version"`
@@ -48,21 +49,77 @@ type autoKhanSettings struct {
 	ReplenishDefenseTools     bool             `json:"replenishDefenseTools"`
 }
 
-func NewAutoKhanPolicy() *AutoKhanPolicy { return &AutoKhanPolicy{} }
+func NewAutoKhanPolicy() *AutoKhanPolicy                 { return &AutoKhanPolicy{} }
+func NewAutoKhanCooldownPolicy() *AutoKhanCooldownPolicy { return &AutoKhanCooldownPolicy{} }
+func NewAutoKhanRagePolicy() *AutoKhanRagePolicy         { return &AutoKhanRagePolicy{} }
+func NewAutoKhanDefensePolicy() *AutoKhanDefensePolicy   { return &AutoKhanDefensePolicy{} }
 
-func (*AutoKhanPolicy) ID() string { return "autoKhan" }
+func (*AutoKhanPolicy) ID() string         { return "autoKhan" }
+func (*AutoKhanCooldownPolicy) ID() string { return "autoKhan:cooldown" }
+func (*AutoKhanRagePolicy) ID() string     { return "autoKhan:rage" }
+func (*AutoKhanDefensePolicy) ID() string  { return "autoKhan:defense" }
 
-func (*AutoKhanPolicy) EnabledKey() string { return "auto_khan" }
+func (*AutoKhanPolicy) EnabledKey() string         { return "auto_khan" }
+func (*AutoKhanCooldownPolicy) EnabledKey() string { return "auto_khan" }
+func (*AutoKhanRagePolicy) EnabledKey() string     { return "auto_khan" }
+func (*AutoKhanDefensePolicy) EnabledKey() string  { return "auto_khan" }
+
+func (*AutoKhanCooldownPolicy) ScheduleKey() string { return "autoKhan" }
+func (*AutoKhanRagePolicy) ScheduleKey() string     { return "autoKhan" }
+func (*AutoKhanDefensePolicy) ScheduleKey() string  { return "autoKhan" }
+
+// Every lane is one feature on the wire. Without this the coordinator would
+// attribute "autoKhan:rage" and the other lanes to an unknown actor, and their
+// operations would fall back to background priority behind the attack chain.
+func (*AutoKhanCooldownPolicy) ActorID() string { return "autoKhan" }
+func (*AutoKhanRagePolicy) ActorID() string     { return "autoKhan" }
+func (*AutoKhanDefensePolicy) ActorID() string  { return "autoKhan" }
 
 func (*AutoKhanPolicy) WakeDomains() []string {
 	return []string{
 		"achievements", "attacks", "commanders", "currencies", "defense", "events", "event-scores", "inventory", "khan", "map",
-		"movement-snapshot", "movements", "resources", "stationing", "tower-cooldowns", "units",
+		"movement-snapshot", "movements", "nomad-camps", "resources", "stationing", "units",
 	}
+}
+
+func (*AutoKhanCooldownPolicy) WakeDomains() []string {
+	return []string{
+		"currencies", "defense", "events", "event-scores", "khan", "map", "movements", "nomad-camps", "stationing",
+	}
+}
+
+func (*AutoKhanRagePolicy) WakeDomains() []string {
+	return []string{
+		"defense", "events", "event-scores", "inventory", "khan", "map", "movement-snapshot", "movements", "stationing",
+	}
+}
+
+func (*AutoKhanDefensePolicy) WakeDomains() []string {
+	return []string{
+		"defense", "events", "event-scores", "inventory", "khan", "map", "movements", "stationing",
+	}
+}
+
+// The rage bar fills mid-chain and the taunt has to go out on the frame that
+// reports it full, so khan updates skip the shared state-change coalescing.
+func (*AutoKhanRagePolicy) UrgentWakeDomains() []string {
+	return []string{"khan"}
 }
 
 func (*AutoKhanPolicy) WakeSections() []string {
 	return []string{"automation.autoKhan", AttackPresets.ConfigurationSection, KhanDomain.DefensePresetsSection, commanderFeatureSection}
+}
+
+func (*AutoKhanCooldownPolicy) WakeSections() []string {
+	return []string{"automation.autoKhan", KhanDomain.DefensePresetsSection}
+}
+
+func (*AutoKhanRagePolicy) WakeSections() []string {
+	return []string{"automation.autoKhan", KhanDomain.DefensePresetsSection}
+}
+
+func (*AutoKhanDefensePolicy) WakeSections() []string {
+	return []string{"automation.autoKhan", KhanDomain.DefensePresetsSection}
 }
 
 func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
@@ -228,9 +285,15 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	}
 
 	refreshInterval := policyInterval(settings.DefenseRefreshIntervalSec, defaultKhanDefenseRefreshSec)
+	tauntDefenseBoundary := autoKhanDefenseBoundary(snapshot.State.Khan)
+	if !tauntDefenseBoundary.IsZero() && !main.Defense.ObservedAt.After(tauntDefenseBoundary) {
+		return Decision{
+			Status: "defending", Detail: "Waiting for the Auto Khan defense lane to reapply the main-castle defense preset",
+			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
+		}, nil
+	}
 	defenseStale := main.Defense.ObservedAt.IsZero() || main.Defense.InventoryObservedAt.IsZero() ||
-		snapshot.Now.Sub(main.Defense.ObservedAt) >= refreshInterval ||
-		!snapshot.State.Khan.LastTauntResolvedAt.IsZero() && !main.Defense.ObservedAt.After(snapshot.State.Khan.LastTauntResolvedAt)
+		snapshot.Now.Sub(main.Defense.ObservedAt) >= refreshInterval
 	if defenseStale {
 		return autoKhanDefenseRefresh(snapshot.Now, main, "Refresh main castle defense before continuing the Khan chain", metrics), nil
 	}
@@ -313,12 +376,14 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		}, nil
 	}
 
-	target, found := autoKhanTarget(snapshot.State, main)
+	target, found := autoKhanTarget(snapshot.State)
 	if !found {
-		return autoKhanMapRefresh(snapshot.Now, main, "Discover the Khan camp beside the main castle", metrics), nil
+		return autoKhanMapJump(snapshot.Now, "Jump directly to the active Khan camp", metrics), nil
 	}
 	metrics["targetX"] = float64(target.X)
 	metrics["targetY"] = float64(target.Y)
+	metrics["targetEventCampId"] = float64(target.EventCampID)
+	metrics["targetLevel"] = float64(target.Level)
 	activeRun := snapshot.State.Khan.RunID != "" && snapshot.State.Khan.SourceCastleID == source.ID &&
 		snapshot.State.Khan.MainCastleID == main.ID && snapshot.State.Khan.TargetX == target.X && snapshot.State.Khan.TargetY == target.Y
 	if activeRun && snapshot.State.Khan.SafetyError != "" {
@@ -327,15 +392,31 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, defaultKhanCheckIntervalSec)), Metrics: metrics,
 		}, nil
 	}
+	metrics["playerRage"] = float64(snapshot.State.Khan.PlayerRage)
+	metrics["playerRageCap"] = float64(snapshot.State.Khan.PlayerRageCap)
+	metrics["playerTotalRage"] = float64(snapshot.State.Khan.PlayerTotalRage)
+	metrics["tauntsTriggered"] = float64(snapshot.State.Khan.TauntsTriggered)
 	mapInterval := policyInterval(settings.MapRefreshIntervalSec, defaultKhanMapRefreshSec)
 	if target.ObservedAt.IsZero() || snapshot.Now.Sub(target.ObservedAt) >= mapInterval {
-		return autoKhanMapRefresh(snapshot.Now, main, "Refresh the Khan camp before continuing", metrics), nil
+		return autoKhanTileRefresh(snapshot.Now, target, "Refresh the located Khan camp", metrics), nil
 	}
 	key := towerTargetKey(target.KingdomID, target.X, target.Y)
-	if cooldown, exists := snapshot.State.TowerCooldowns[key]; exists && cooldown.PendingCooldownRefresh {
-		return autoKhanTileRefresh(snapshot.Now, target, "Refresh the Khan camp immediately after the confirmed hit", metrics), nil
+	pendingCooldownReports := pendingKhanCooldownReports(snapshot.State)
+	metrics["pendingCooldownReports"] = float64(len(pendingCooldownReports))
+	if cooldown, exists := snapshot.State.NomadCamps.Cooldowns[key]; exists && cooldown.PendingCooldownRefresh {
+		if len(pendingCooldownReports) == 0 {
+			return autoKhanTileRefresh(
+				snapshot.Now, target,
+				"Refresh the Khan cooldown before the CRA launch cursor selects a fallback skip",
+				metrics,
+			), nil
+		}
+		return Decision{
+			Status: "cooldown", Detail: "Report-linked cooldown lane is re-pinging the Khan camp; only the CRA launch cursor is held",
+			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
+		}, nil
 	}
-	remainingCooldown := towerCooldownRemaining(target, snapshot.Now)
+	remainingCooldown := nomadCampCooldownRemaining(snapshot.State, target, snapshot.Now)
 	metrics["cooldownRemaining"] = float64(remainingCooldown)
 	if _, blocked := dailyAttackLimitAllowance(
 		snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, defaultKhanCheckIntervalSec), metrics,
@@ -343,16 +424,44 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		return *blocked, nil
 	}
 	if remainingCooldown > 0 {
-		if oneCommandDungeonSkipCount(snapshot.State, settings.TimeSkipReserve, 3*60*60) < 1 {
-			return autoKhanWaiting(snapshot.Now, "No five-hour or one-day time skip is available above reserves", settings.CheckIntervalSec, metrics), nil
+		if len(pendingCooldownReports) == 0 {
+			if oneCommandDungeonSkipCount(snapshot.State, settings.TimeSkipReserve, 1) < 1 {
+				return Decision{
+					Status: "waiting", Detail: fmt.Sprintf(
+						"Khan CRA launch cursor paused: no cooldown skip is available for %d remaining seconds",
+						remainingCooldown,
+					),
+					NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, defaultKhanCheckIntervalSec)),
+					Metrics:     metrics,
+				}, nil
+			}
+			arguments, _ := json.Marshal(map[string]any{
+				"kingdomId": target.KingdomID, "targetTypeId": autoKhanCampTypeID,
+				"targetX": target.X, "targetY": target.Y, "eventCampId": target.EventCampID,
+				"minimumRemaining": settings.TimeSkipReserve,
+				"khanGuard": map[string]any{
+					"mainCastleId": main.ID, "defensePreset": defensePreset,
+					"openGateProtection":     settings.OpenGateProtection,
+					"offensiveUnitThreshold": settings.OffensiveUnitThreshold,
+					"nomadPointThreshold":    settings.NomadPointThreshold,
+				},
+			})
+			return Decision{
+				Status: "cooldown", Detail: fmt.Sprintf(
+					"Clear the unreported %d-second Khan cooldown immediately before the next CRA",
+					remainingCooldown,
+				),
+				NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
+				Request:             &Intent.Request{Name: "nomad.cooldown.minute_skip", Arguments: arguments},
+				ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+			}, nil
 		}
 		return Decision{
-			Status: "cooldown", Detail: fmt.Sprintf("Skip the Khan camp cooldown before the next chain hit (%d seconds)", remainingCooldown),
+			Status: "cooldown", Detail: fmt.Sprintf(
+				"Report-linked cooldown lane is clearing %d seconds; only the CRA launch cursor is held",
+				remainingCooldown,
+			),
 			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
-			Request: &Intent.Request{
-				Name: "nomad.cooldown.minute_skip", Arguments: nomadMinuteSkipArguments(target, settings.TimeSkipReserve),
-			},
-			ReevaluateOnSuccess: true,
 		}, nil
 	}
 
@@ -370,7 +479,8 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	}
 	outstandingSkips := int64(0)
 	if activeRun {
-		outstandingSkips = max(int64(0), int64(snapshot.State.Khan.AttacksLaunched-snapshot.State.Khan.CooldownsSkipped))
+		inFlight := max(0, snapshot.State.Khan.AttacksLaunched-snapshot.State.Khan.VictoriesConfirmed)
+		outstandingSkips = int64(inFlight + len(pendingKhanCooldownReports(snapshot.State)))
 	}
 	availableSkips := oneCommandDungeonSkipCount(snapshot.State, settings.TimeSkipReserve, 3*60*60)
 	usableSkips := max(int64(0), availableSkips-outstandingSkips)
@@ -380,30 +490,414 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	if usableSkips < 1 {
 		return autoKhanWaitingUntilTaunt(snapshot, "All available Khan cooldown skips are committed to launched hits", settings.CheckIntervalSec, metrics), nil
 	}
-	presetCopies := availablePresetCopies(attackPreset, source, len(available))
 	metrics["availableCommanders"] = float64(len(available))
-	metrics["presetCopies"] = float64(presetCopies)
-	if presetCopies < 1 {
-		return nomadPresetWaiting(snapshot.Now, attackPreset, source, metrics), nil
-	}
 	ordered := autoKhanOrderCommanders(snapshot, source, target, available)
 	commanderID := ordered[0]
+	limitedPreset, err := autoKhanCapacityLimitedPreset(snapshot, source, target, attackPreset, commanderID)
+	if err != nil {
+		return autoKhanWaiting(
+			snapshot.Now,
+			fmt.Sprintf("Cannot calculate %s inventory requirements: %v", attackPreset.Name, err),
+			settings.CheckIntervalSec,
+			metrics,
+		), nil
+	}
+	presetCopies := availablePresetCopies(limitedPreset, source, len(available))
+	metrics["presetCopies"] = float64(presetCopies)
+	if presetCopies < 1 {
+		return autoKhanPresetWaiting(snapshot.Now, limitedPreset, source, settings.CheckIntervalSec, metrics), nil
+	}
 	eventEndsAt := autoKhanEventEndsAt(score)
 	runID := autoKhanRunID(snapshot.State.Khan, source.ID, main.ID, target, eventEndsAt)
 	arguments, _ := json.Marshal(map[string]any{
 		"runId": runID, "eventEndsAt": eventEndsAt, "sourceCastleId": source.ID, "mainCastleId": main.ID,
 		"kingdomId": target.KingdomID, "targetX": target.X, "targetY": target.Y,
-		"victoryCount": target.TowerVictoryCount, "preset": attackPreset, "commanderId": commanderID,
+		"preset": attackPreset, "commanderId": commanderID,
 		"defensePreset": defensePreset, "openGateProtection": settings.OpenGateProtection,
 		"offensiveUnitThreshold": settings.OffensiveUnitThreshold,
 		"horseTravelBoostId":     settings.HorseTravelBoostID,
 		"dailyAttackLimit":       settings.DailyAttackLimit,
+		"nomadPointThreshold":    settings.NomadPointThreshold,
 	})
 	return Decision{
 		Status: "ready", Detail: fmt.Sprintf("Launch the next Khan chain attack with commander %d from %s", commanderID, castleName(source)),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
-		Request: &Intent.Request{Name: "khan.attack", Arguments: arguments}, ReevaluateOnSuccess: true,
+		Request:             &Intent.Request{Name: "khan.attack", Arguments: arguments},
+		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}, nil
+}
+
+func autoKhanPresetWaiting(
+	now time.Time,
+	preset AttackPresets.Preset,
+	source State.CastleState,
+	checkIntervalSec int,
+	metrics map[string]float64,
+) Decision {
+	metrics["attackLaunchPaused"] = 1
+	if itemID, required, available, found := invasionPresetShortage(preset, source); found {
+		metrics["attackPresetShortageItemId"] = float64(itemID)
+		metrics["attackPresetShortageRequired"] = float64(required)
+		metrics["attackPresetShortageAvailable"] = float64(available)
+		return Decision{
+			Status: "waiting", Detail: fmt.Sprintf(
+				"Khan CRA launch cursor paused: preset needs %d of item %d; source castle has %d",
+				required, itemID, available,
+			),
+			NextCheckAt: now.Add(policyInterval(checkIntervalSec, defaultKhanCheckIntervalSec)), Metrics: metrics,
+		}
+	}
+	return Decision{
+		Status: "waiting", Detail: "Khan CRA launch cursor paused: the selected preset has no launchable troops",
+		NextCheckAt: now.Add(policyInterval(checkIntervalSec, defaultKhanCheckIntervalSec)), Metrics: metrics,
+	}
+}
+
+type autoKhanLaneContext struct {
+	Settings      autoKhanSettings
+	Source        State.CastleState
+	Main          State.CastleState
+	Score         State.ScalableEventScore
+	DefensePreset KhanDomain.DefensePreset
+	Guard         map[string]any
+	Metrics       map[string]float64
+}
+
+func (*AutoKhanCooldownPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+	lane, blocked, err := autoKhanAsyncLaneContext(snapshot)
+	if err != nil || blocked != nil {
+		if blocked != nil {
+			return *blocked, nil
+		}
+		return Decision{}, err
+	}
+	if !lane.Settings.SkipCooldowns {
+		return autoKhanWaiting(snapshot.Now, "Khan cooldown time skips are disabled", lane.Settings.CheckIntervalSec, lane.Metrics), nil
+	}
+	reports := pendingKhanCooldownReports(snapshot.State)
+	lane.Metrics["pendingCooldownReports"] = float64(len(reports))
+	if len(reports) == 0 {
+		return Decision{
+			Status: "idle", Detail: "Waiting for a confirmed Khan battle report",
+			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: lane.Metrics,
+		}, nil
+	}
+	selected := reports[0]
+	if selected.CooldownObservedAt.IsZero() || selected.CooldownObservedAt.Before(selected.LandedAt) {
+		arguments, _ := json.Marshal(map[string]any{
+			"kingdomId": selected.KingdomID,
+			"x1":        selected.X, "y1": selected.Y, "x2": selected.X, "y2": selected.Y,
+		})
+		return Decision{
+			Status: "refreshing", Detail: fmt.Sprintf(
+				"Re-ping Khan camp %d:%d for report %d before choosing its MSD", selected.X, selected.Y, selected.ReportID,
+			),
+			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: lane.Metrics,
+			Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
+		}, nil
+	}
+	observation, found := snapshot.State.Map[selected.KingdomID][fmt.Sprintf("%d:%d", selected.X, selected.Y)]
+	if !found || observation.TypeID != autoKhanCampTypeID ||
+		observation.ObservedAt.Before(selected.CooldownObservedAt) {
+		selected.CooldownObservedAt = time.Time{}
+		arguments, _ := json.Marshal(map[string]any{
+			"kingdomId": selected.KingdomID,
+			"x1":        selected.X, "y1": selected.Y, "x2": selected.X, "y2": selected.Y,
+		})
+		return Decision{
+			Status: "refreshing", Detail: fmt.Sprintf(
+				"Re-ping Khan camp %d:%d for report %d", selected.X, selected.Y, selected.ReportID,
+			),
+			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: lane.Metrics,
+			Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
+		}, nil
+	}
+	reportIDs := khanCooldownReportGroup(reports, selected, observation.ObservedAt)
+	remaining := nomadCampCooldownRemaining(snapshot.State, observation, snapshot.Now)
+	lane.Metrics["cooldownRemaining"] = float64(remaining)
+	lane.Metrics["cooldownReportsInMSD"] = float64(len(reportIDs))
+	if remaining <= 0 {
+		arguments, _ := json.Marshal(map[string]any{
+			"kingdomId": selected.KingdomID, "targetX": selected.X, "targetY": selected.Y,
+			"reportIds": reportIDs, "cooldownObservedAt": observation.ObservedAt, "khanGuard": lane.Guard,
+		})
+		return Decision{
+			Status: "resolving", Detail: fmt.Sprintf(
+				"Resolve %d Khan report(s) already clear after the target re-ping", len(reportIDs),
+			),
+			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: lane.Metrics,
+			Request:             &Intent.Request{Name: "khan.cooldown.reports.resolve", Arguments: arguments},
+			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+		}, nil
+	}
+	if oneCommandDungeonSkipCount(snapshot.State, lane.Settings.TimeSkipReserve, 1) < 1 {
+		return autoKhanWaiting(
+			snapshot.Now,
+			"No Khan cooldown time skip is available above the configured reserves",
+			lane.Settings.CheckIntervalSec,
+			lane.Metrics,
+		), nil
+	}
+	request := map[string]any{
+		"kingdomId": selected.KingdomID, "targetTypeId": autoKhanCampTypeID,
+		"targetX": selected.X, "targetY": selected.Y, "eventCampId": observation.EventCampID,
+		"minimumRemaining": lane.Settings.TimeSkipReserve, "khanReportIds": reportIDs, "khanGuard": lane.Guard,
+	}
+	arguments, _ := json.Marshal(request)
+	return Decision{
+		Status: "cooldown", Detail: fmt.Sprintf(
+			"Apply one report-linked MSD to %d live cooldown seconds for %d report(s)",
+			remaining, len(reportIDs),
+		),
+		NextCheckAt: snapshot.Now.Add(time.Second), Metrics: lane.Metrics,
+		Request:             &Intent.Request{Name: "nomad.cooldown.minute_skip", Arguments: arguments},
+		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+	}, nil
+}
+
+func (*AutoKhanRagePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+	lane, blocked, err := autoKhanAsyncLaneContext(snapshot)
+	if err != nil || blocked != nil {
+		if blocked != nil {
+			return *blocked, nil
+		}
+		return Decision{}, err
+	}
+	target, found := autoKhanTarget(snapshot.State)
+	if !found {
+		return autoKhanWaiting(snapshot.Now, "Waiting for the attack lane to locate the type-35 Khan camp", 1, lane.Metrics), nil
+	}
+	lane.Metrics["playerRage"] = float64(snapshot.State.Khan.PlayerRage)
+	lane.Metrics["playerRageCap"] = float64(snapshot.State.Khan.PlayerRageCap)
+	lane.Metrics["playerTotalRage"] = float64(snapshot.State.Khan.PlayerTotalRage)
+	lane.Metrics["activeTaunts"] = float64(len(snapshot.State.Khan.Taunts))
+	if autoKhanTauntDue(snapshot.State.Khan) {
+		arguments, _ := json.Marshal(map[string]any{
+			"eventId": autoKhanEventID, "mainCastleId": lane.Main.ID,
+			"targetX": target.X, "targetY": target.Y,
+			"rageCampId":      snapshot.State.Khan.RageCampID,
+			"playerTotalRage": snapshot.State.Khan.PlayerTotalRage,
+			"rageObservedAt":  snapshot.State.Khan.RageObservedAt,
+			"khanGuard":       lane.Guard,
+		})
+		return Decision{
+			Status: "taunting", Detail: fmt.Sprintf(
+				"Dispatch Khan retaliation at full rage (%d / %d)",
+				snapshot.State.Khan.PlayerRage, snapshot.State.Khan.PlayerRageCap,
+			),
+			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: lane.Metrics,
+			Request:             &Intent.Request{Name: "khan.taunt", Arguments: arguments},
+			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+		}, nil
+	}
+	if len(snapshot.State.Khan.Taunts) > 0 {
+		next := snapshot.Now.Add(2 * time.Second)
+		for _, taunt := range snapshot.State.Khan.Taunts {
+			candidate := taunt.ImpactAt.Add(time.Second)
+			if candidate.After(snapshot.Now) && candidate.Before(next) {
+				next = candidate
+			}
+		}
+		return Decision{
+			Status: "resolving", Detail: fmt.Sprintf(
+				"Tracking %d active Khan retaliation(s) through resolution", len(snapshot.State.Khan.Taunts),
+			),
+			NextCheckAt: next, Metrics: lane.Metrics,
+		}, nil
+	}
+	return Decision{
+		Status: "idle", Detail: fmt.Sprintf(
+			"Watching Khan rage (%d / %d)", snapshot.State.Khan.PlayerRage, snapshot.State.Khan.PlayerRageCap,
+		),
+		NextCheckAt: snapshot.Now.Add(time.Second), Metrics: lane.Metrics,
+	}, nil
+}
+
+// The wall has to be restocked after every landed retaliation, but that work
+// must never stand between a full rage bar and its taunt. It therefore owns a
+// lane of its own and trails the taunt boundary the same way the cooldown lane
+// trails a confirmed report.
+func (*AutoKhanDefensePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+	lane, blocked, err := autoKhanAsyncLaneContext(snapshot)
+	if err != nil || blocked != nil {
+		if blocked != nil {
+			return *blocked, nil
+		}
+		return Decision{}, err
+	}
+	boundary := autoKhanDefenseBoundary(snapshot.State.Khan)
+	if boundary.IsZero() || lane.Main.Defense.ObservedAt.After(boundary) {
+		return Decision{
+			Status: "idle", Detail: "Main castle defense is current for the last Khan retaliation",
+			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: lane.Metrics,
+		}, nil
+	}
+	arguments, _ := json.Marshal(map[string]any{
+		"castleId": lane.Main.ID, "presetId": lane.DefensePreset.ID, "presetName": lane.DefensePreset.Name,
+		"wall": lane.DefensePreset.Wall, "moat": lane.DefensePreset.Moat, "keep": lane.DefensePreset.Keep,
+		"khanGuard": lane.Guard,
+	})
+	return Decision{
+		Status: "defending", Detail: fmt.Sprintf(
+			"Reapply defense preset %s after the dispatched Khan taunt", lane.DefensePreset.Name,
+		),
+		NextCheckAt: snapshot.Now.Add(time.Second), Metrics: lane.Metrics,
+		Request:             &Intent.Request{Name: "defense.preset.apply", Arguments: arguments},
+		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+	}, nil
+}
+
+// autoKhanDefenseBoundary is the moment the main-castle defense must be newer
+// than: the most recent taunt dispatch or resolution, whichever came last.
+func autoKhanDefenseBoundary(khan State.KhanState) time.Time {
+	boundary := khan.LastTauntTriggeredAt
+	if khan.LastTauntResolvedAt.After(boundary) {
+		boundary = khan.LastTauntResolvedAt
+	}
+	return boundary
+}
+
+func autoKhanAsyncLaneContext(
+	snapshot Snapshot,
+) (autoKhanLaneContext, *Decision, error) {
+	settings := autoKhanSettings{
+		MinimumRemainingSec: 300, CheckIntervalSec: defaultKhanCheckIntervalSec,
+		DefenseRefreshIntervalSec: defaultKhanDefenseRefreshSec, MapRefreshIntervalSec: defaultKhanMapRefreshSec,
+		SkipCooldowns: true, TimeSkipReserve: map[string]int64{}, OffensiveUnitThreshold: 1000,
+		HorseTravelBoostID: -1,
+	}
+	wait := func(detail string, metrics map[string]float64) (autoKhanLaneContext, *Decision, error) {
+		decision := autoKhanWaiting(snapshot.Now, detail, settings.CheckIntervalSec, metrics)
+		return autoKhanLaneContext{}, &decision, nil
+	}
+	if !decodeSection(snapshot.Configuration, "automation.autoKhan", &settings) {
+		return wait("Auto Khan is not configured", nil)
+	}
+	settings.AttackPresetID = strings.TrimSpace(settings.AttackPresetID)
+	settings.DefensePresetID = strings.TrimSpace(settings.DefensePresetID)
+	if settings.SourceCastleID <= 0 || settings.AttackPresetID == "" || settings.DefensePresetID == "" {
+		return wait("Choose a Great Empire attack castle plus attack and defense presets", nil)
+	}
+	if invalidTimeSkipReserve(settings.TimeSkipReserve) {
+		return wait("Khan time-skip reserves cannot be negative", nil)
+	}
+	if settings.OpenGateProtection && settings.OffensiveUnitThreshold <= 0 {
+		return wait("Open-gate protection requires a positive offensive-unit threshold", nil)
+	}
+	if snapshot.GameData == nil {
+		return wait("Official game data is unavailable", nil)
+	}
+	source, found := snapshot.State.Castles[settings.SourceCastleID]
+	if !found || source.KingdomID != 0 {
+		return wait("Auto Khan attack source must be an available Great Empire castle", nil)
+	}
+	main, found := autoKhanMainCastle(snapshot.State)
+	if !found {
+		return wait("The Great Empire main castle is unavailable", nil)
+	}
+	if settings.OpenGateProtection && source.ID != main.ID {
+		settings.OpenGateProtection = false
+	}
+	score, active := snapshot.State.EventScores.ByEvent[autoKhanEventID]
+	if !active || score.RemainingSec <= 0 || score.ObservedAt.IsZero() {
+		return wait("Waiting for the Nomad event and Khan camp", nil)
+	}
+	defensePreset, err := KhanDomain.DecodeDefensePreset(
+		snapshot.Configuration.Sections[KhanDomain.DefensePresetsSection], settings.DefensePresetID,
+	)
+	if err != nil {
+		return wait(err.Error(), nil)
+	}
+	metrics := autoKhanMetrics(snapshot.State, main)
+	metrics["eventRemainingSec"] = float64(max(int64(0), autoKhanRemaining(score, snapshot.Now)))
+	metrics["nomadPoints"] = float64(score.PlayerScore)
+	metrics["nomadPointThreshold"] = float64(settings.NomadPointThreshold)
+	guard := map[string]any{
+		"mainCastleId": main.ID, "defensePreset": defensePreset,
+		"openGateProtection":     settings.OpenGateProtection,
+		"offensiveUnitThreshold": settings.OffensiveUnitThreshold,
+		"nomadPointThreshold":    settings.NomadPointThreshold,
+	}
+	if settings.NomadPointThreshold > 0 && score.PlayerScore >= settings.NomadPointThreshold {
+		return wait("Nomad point threshold reached; the protection lane is stopping Auto Khan", metrics)
+	}
+	if _, threatCount, _, _ := incomingThreats(snapshot.State, snapshot.Now); threatCount > 0 {
+		decision := Decision{
+			Status: "yielding", Detail: "Incoming player attack detected; Auto Khan yielded to Auto Station",
+			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
+		}
+		return autoKhanLaneContext{}, &decision, nil
+	}
+	if autoKhanStationingActive(snapshot.State, snapshot.Now) {
+		decision := Decision{
+			Status: "yielding", Detail: "Auto Station is moving troops; Auto Khan lanes are paused",
+			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
+		}
+		return autoKhanLaneContext{}, &decision, nil
+	}
+	if snapshot.State.Khan.Protection.Active {
+		return wait("Auto Khan protection is active: "+snapshot.State.Khan.Protection.Reason, metrics)
+	}
+	if main.Defense.OpenGateUntil != nil && main.Defense.OpenGateUntil.After(snapshot.Now) {
+		decision := Decision{
+			Status: "protected", Detail: "Main castle gates are open; Auto Khan lanes are paused",
+			NextCheckAt: minTime(main.Defense.OpenGateUntil.Add(time.Second), snapshot.Now.Add(30*time.Second)), Metrics: metrics,
+		}
+		return autoKhanLaneContext{}, &decision, nil
+	}
+	if settings.OpenGateProtection {
+		risk, riskErr := KhanDomain.OffensiveWallUnits(main, snapshot.GameData, defensePreset)
+		if riskErr != nil {
+			return wait(riskErr.Error(), metrics)
+		}
+		metrics["offensiveWallUnits"] = float64(risk.OffensiveUnits)
+		metrics["offensiveUnitThreshold"] = float64(settings.OffensiveUnitThreshold)
+		if risk.OffensiveUnits >= settings.OffensiveUnitThreshold {
+			return wait(fmt.Sprintf(
+				"Offensive wall units reached %d / %d; waiting for shared gate protection",
+				risk.OffensiveUnits, settings.OffensiveUnitThreshold,
+			), metrics)
+		}
+	}
+	return autoKhanLaneContext{
+		Settings: settings, Source: source, Main: main, Score: score,
+		DefensePreset: defensePreset, Guard: guard, Metrics: metrics,
+	}, nil, nil
+}
+
+func pendingKhanCooldownReports(gameState State.GameState) []State.KhanCooldownReportState {
+	reports := make([]State.KhanCooldownReportState, 0, len(gameState.Khan.CooldownReports))
+	for _, report := range gameState.Khan.CooldownReports {
+		if !report.ResolvedAt.IsZero() {
+			continue
+		}
+		reports = append(reports, report)
+	}
+	sort.Slice(reports, func(left, right int) bool {
+		if !reports[left].LandedAt.Equal(reports[right].LandedAt) {
+			return reports[left].LandedAt.Before(reports[right].LandedAt)
+		}
+		return reports[left].ReportID < reports[right].ReportID
+	})
+	return reports
+}
+
+func khanCooldownReportGroup(
+	reports []State.KhanCooldownReportState,
+	selected State.KhanCooldownReportState,
+	observedAt time.Time,
+) []int64 {
+	result := make([]int64, 0, len(reports))
+	for _, report := range reports {
+		if report.KingdomID != selected.KingdomID || report.X != selected.X || report.Y != selected.Y ||
+			report.CooldownObservedAt.IsZero() || report.CooldownObservedAt.After(observedAt) ||
+			report.LandedAt.After(observedAt) {
+			continue
+		}
+		result = append(result, report.ReportID)
+	}
+	sort.Slice(result, func(left, right int) bool { return result[left] < result[right] })
+	return result
 }
 
 func autoKhanMainCastle(gameState State.GameState) (State.CastleState, bool) {
@@ -415,23 +909,21 @@ func autoKhanMainCastle(gameState State.GameState) (State.CastleState, bool) {
 	return State.CastleState{}, false
 }
 
-func autoKhanTarget(gameState State.GameState, main State.CastleState) (State.MapObservation, bool) {
-	if gameState.Khan.RunID != "" && gameState.Khan.MainCastleID == main.ID {
-		if target, found := gameState.Map[0][fmt.Sprintf("%d:%d", gameState.Khan.TargetX, gameState.Khan.TargetY)]; found && autoKhanTargetCandidate(main, target) {
+func autoKhanTarget(gameState State.GameState) (State.MapObservation, bool) {
+	if gameState.Khan.RunID != "" {
+		if target, found := gameState.Map[0][fmt.Sprintf("%d:%d", gameState.Khan.TargetX, gameState.Khan.TargetY)]; found && autoKhanTargetCandidate(target) {
 			return target, true
 		}
 	}
 	candidates := make([]State.MapObservation, 0)
 	for _, target := range gameState.Map[0] {
-		if autoKhanTargetCandidate(main, target) {
+		if autoKhanTargetCandidate(target) {
 			candidates = append(candidates, target)
 		}
 	}
 	sort.Slice(candidates, func(left, right int) bool {
-		leftDistance := autoKhanDistance(main, candidates[left])
-		rightDistance := autoKhanDistance(main, candidates[right])
-		if leftDistance != rightDistance {
-			return leftDistance < rightDistance
+		if !candidates[left].ObservedAt.Equal(candidates[right].ObservedAt) {
+			return candidates[left].ObservedAt.After(candidates[right].ObservedAt)
 		}
 		if candidates[left].Y != candidates[right].Y {
 			return candidates[left].Y < candidates[right].Y
@@ -444,14 +936,70 @@ func autoKhanTarget(gameState State.GameState, main State.CastleState) (State.Ma
 	return candidates[0], true
 }
 
-func autoKhanTargetCandidate(main State.CastleState, target State.MapObservation) bool {
-	return target.KingdomID == 0 && target.TypeID == autoKhanCampTypeID &&
-		target.TowerVictoryCount == autoKhanCampVictoryCount && (target.X != main.X || target.Y != main.Y) &&
-		absoluteInt(target.X-main.X) <= autoKhanTargetRadius && absoluteInt(target.Y-main.Y) <= autoKhanTargetRadius
+func autoKhanTargetCandidate(target State.MapObservation) bool {
+	return target.KingdomID == 0 && target.TypeID == autoKhanCampTypeID
 }
 
-func autoKhanDistance(main State.CastleState, target State.MapObservation) int {
-	return absoluteInt(target.X-main.X) + absoluteInt(target.Y-main.Y)
+func autoKhanCooldownSkipDue(gameState State.GameState, target State.MapObservation) bool {
+	key := towerTargetKey(target.KingdomID, target.X, target.Y)
+	cooldown, exists := gameState.NomadCamps.Cooldowns[key]
+	if !exists {
+		return false
+	}
+	if !cooldown.LastSuccessfulBattleAt.IsZero() &&
+		(gameState.Khan.LastCooldownSkippedAt.IsZero() ||
+			cooldown.LastSuccessfulBattleAt.After(gameState.Khan.LastCooldownSkippedAt)) {
+		return true
+	}
+	if cooldown.CooldownRemaining <= 0 || cooldown.CooldownObservedAt.IsZero() {
+		return false
+	}
+	for _, launch := range gameState.Khan.Launches {
+		if launch.ArrivesAt.IsZero() || launch.ArrivesAt.After(cooldown.CooldownObservedAt) ||
+			!gameState.Khan.LastCooldownSkippedAt.IsZero() &&
+				!launch.ArrivesAt.After(gameState.Khan.LastCooldownSkippedAt) {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+func autoKhanTauntDue(khan State.KhanState) bool {
+	if khan.PlayerRageCap <= 0 || khan.PlayerRage < khan.PlayerRageCap || khan.RageObservedAt.IsZero() {
+		return false
+	}
+	if khan.LastTauntTriggeredAt.IsZero() {
+		return true
+	}
+	return khan.PlayerTotalRage > khan.LastTauntTriggeredRage
+}
+
+func autoKhanCapacityLimitedPreset(
+	snapshot Snapshot,
+	source State.CastleState,
+	target State.MapObservation,
+	preset AttackPresets.Preset,
+	commanderID State.CommanderID,
+) (AttackPresets.Preset, error) {
+	dialog := snapshot.State.AttackDialog
+	useAttackDialog := dialog.SourceCastleID == source.ID && dialog.KingdomID == target.KingdomID &&
+		dialog.Target.TypeID == target.TypeID && dialog.Target.X == target.X && dialog.Target.Y == target.Y
+	capacity, err := (AttackCapacity.Resolver{}).Resolve(snapshot.State, snapshot.GameData, AttackCapacity.Request{
+		SourceCastleID: source.ID, CommanderID: commanderID, UseAttackDialogEffects: useAttackDialog,
+		Target: AttackCapacity.TargetContext{
+			ID: fmt.Sprintf("khan-camp:%d:%d:%d", target.KingdomID, target.X, target.Y),
+			Map: &AttackCapacity.MapTarget{
+				KingdomID: target.KingdomID, TypeID: target.TypeID, X: target.X, Y: target.Y,
+				Level: target.Level,
+			},
+			Level: target.Level, CastleTypeID: target.TypeID, PvP: false,
+		},
+	})
+	if err != nil {
+		return AttackPresets.Preset{}, err
+	}
+	return AttackPresets.LimitToCapacity(preset, capacity.Capacity, capacity.MaximumWaves), nil
 }
 
 func autoKhanOrderCommanders(
@@ -471,7 +1019,7 @@ func autoKhanOrderCommanders(
 			Target: AttackCapacity.TargetContext{
 				Map: &AttackCapacity.MapTarget{
 					KingdomID: target.KingdomID, TypeID: target.TypeID, X: target.X, Y: target.Y,
-					ObjectID: target.ObjectID, Level: target.Level, VictoryCount: target.TowerVictoryCount,
+					Level: target.Level,
 				},
 				Level: target.Level, CastleTypeID: target.TypeID, PvP: false,
 			},
@@ -495,14 +1043,10 @@ func autoKhanOrderCommanders(
 	return result
 }
 
-func autoKhanMapRefresh(now time.Time, main State.CastleState, detail string, metrics map[string]float64) Decision {
-	arguments, _ := json.Marshal(map[string]any{
-		"kingdomId": 0, "x1": main.X - autoKhanTargetRadius, "y1": main.Y - autoKhanTargetRadius,
-		"x2": main.X + autoKhanTargetRadius, "y2": main.Y + autoKhanTargetRadius,
-	})
+func autoKhanMapJump(now time.Time, detail string, metrics map[string]float64) Decision {
 	return Decision{
 		Status: "ready", Detail: detail, NextCheckAt: now.Add(time.Second), Metrics: metrics,
-		Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
+		Request: &Intent.Request{Name: "khan.map.jump", Arguments: json.RawMessage(`{}`)}, ReevaluateOnSuccess: true,
 	}
 }
 
@@ -686,6 +1230,7 @@ func autoKhanMetrics(gameState State.GameState, main State.CastleState) map[stri
 		"mainCastleId": float64(main.ID), "attacksLaunched": float64(gameState.Khan.AttacksLaunched),
 		"victoriesConfirmed": float64(gameState.Khan.VictoriesConfirmed),
 		"cooldownsSkipped":   float64(gameState.Khan.CooldownsSkipped),
+		"tauntsTriggered":    float64(gameState.Khan.TauntsTriggered),
 		"tauntsObserved":     float64(gameState.Khan.TauntsObserved), "tauntsResolved": float64(gameState.Khan.TauntsResolved),
 		"activeTaunts": float64(len(gameState.Khan.Taunts)),
 	}

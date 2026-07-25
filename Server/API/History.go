@@ -23,7 +23,7 @@ func (server *Server) handlePlayerTrackerHistory(writer http.ResponseWriter, req
 	}
 	since := time.Now().UTC().Add(-time.Duration(rangeSeconds) * time.Second)
 	current := History.NewPlayerSample(server.config.State.Snapshot(), server.config.GameData)
-	samples, err := server.config.History.PlayerSamplesForAccount(since, 100_000, current.UID, current.PlayerID)
+	samples, err := server.config.History.PlayerSamplesForPlayer(since, 100_000, current.PlayerID)
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "history_read_failed", err.Error())
 		return
@@ -50,6 +50,29 @@ func (server *Server) handleSpyReportHistory(writer http.ResponseWriter, request
 
 func (server *Server) handleBattleReportHistory(writer http.ResponseWriter, request *http.Request) {
 	server.handleRawHistory(writer, request, History.CollectionBattleReports, true)
+}
+
+func (server *Server) handleCloudBattleReportHistory(writer http.ResponseWriter, request *http.Request) {
+	if server.config.CloudReports == nil || server.config.State == nil {
+		writeError(writer, http.StatusServiceUnavailable, "cloud_reports_unavailable", "Cloud battle reports are unavailable")
+		return
+	}
+	snapshot := server.config.State.ReadOnlyView()
+	allianceID := int64(snapshot.Player.AllianceID)
+	if allianceID <= 0 {
+		allianceID = int64(snapshot.Alliance.ID)
+	}
+	query := Reports.CloudBattleReportQuery{
+		AllianceID: allianceID,
+		PlayerID:   int64(snapshot.Player.ID),
+		Limit:      historyLimit(request, 5000),
+	}
+	reports, err := server.config.CloudReports.FetchReports(request.Context(), query, snapshot.Player.ID)
+	if err != nil {
+		writeError(writer, http.StatusBadGateway, "cloud_reports_fetch_failed", err.Error())
+		return
+	}
+	writeJSON(writer, http.StatusOK, map[string]any{"reports": reports})
 }
 
 func (server *Server) handleBattleReportAnalytics(writer http.ResponseWriter, request *http.Request) {
@@ -91,48 +114,11 @@ func (server *Server) handleRawHistory(writer http.ResponseWriter, request *http
 	for left, right := 0, len(items)-1; left < right; left, right = left+1, right-1 {
 		items[left], items[right] = items[right], items[left]
 	}
-	if collection == History.CollectionBattleReports {
-		items = server.overlayBattleReportAnalytics(request, items, limit)
-	}
 	if wrapped {
 		writeJSON(writer, http.StatusOK, map[string]any{"reports": items})
 		return
 	}
 	writeJSON(writer, http.StatusOK, items)
-}
-
-func (server *Server) overlayBattleReportAnalytics(request *http.Request, items []json.RawMessage, limit int) []json.RawMessage {
-	if server.config.ReportAnalytics == nil || server.config.State == nil {
-		return items
-	}
-	snapshot := server.config.State.ReadOnlyView()
-	reports, err := server.config.ReportAnalytics.Recent(request.Context(), Reports.BattleReportQuery{
-		AccountUID: snapshot.Account.UID,
-		WorldID:    snapshot.Account.WorldID,
-		PlayerID:   int64(snapshot.Player.ID),
-		Limit:      limit,
-	})
-	if err != nil || len(reports) == 0 {
-		return items
-	}
-	overrides := make(map[string]json.RawMessage, len(reports))
-	for _, report := range reports {
-		payload, marshalErr := json.Marshal(report)
-		if marshalErr == nil {
-			overrides[report.ID] = payload
-		}
-	}
-	for index, item := range items {
-		var identity struct {
-			ID string `json:"id"`
-		}
-		if json.Unmarshal(item, &identity) == nil {
-			if replacement, found := overrides[identity.ID]; found {
-				items[index] = replacement
-			}
-		}
-	}
-	return items
 }
 
 func historyLimit(request *http.Request, fallback int) int {

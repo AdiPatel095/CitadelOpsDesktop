@@ -22,6 +22,7 @@ func ParseBattleCapture(capture State.BattleReportCapture, ownPlayerID State.Pla
 		Target         struct {
 			Name       string `json:"N"`
 			DefenderID int64  `json:"DP"`
+			TypeID     int    `json:"AT"`
 			KingdomID  int    `json:"K"`
 			X          int    `json:"X"`
 			Y          int    `json:"Y"`
@@ -102,13 +103,18 @@ func ParseBattleCapture(capture State.BattleReportCapture, ownPlayerID State.Pla
 	if !capture.EventOccurrenceEndsAt.IsZero() {
 		eventOccurrenceEndsAt = capture.EventOccurrenceEndsAt.UTC().Format(time.RFC3339Nano)
 	}
+	targetType := ""
+	if summary.Target.TypeID > 0 {
+		targetType = fmt.Sprintf("Type %d", summary.Target.TypeID)
+	}
 	report := BattleReport{
 		ID: id, ReportID: id, BattleKey: capture.BattleKey, AutomationFeature: string(capture.AutomationFeature), MID: summary.MID, LID: summary.LID,
 		MovementID: int64(capture.MovementID), EventID: capture.EventID, EventActivity: string(capture.EventActivity),
 		EventOccurrenceEndsAt: eventOccurrenceEndsAt, ToolsUsed: capture.ToolsUsed,
 		KingdomID: summary.Target.KingdomID, TargetX: summary.Target.X, TargetY: summary.Target.Y,
 		TargetName: summary.Target.Name, CastleName: summary.Target.Name,
-		BattleType: fmt.Sprintf("Type %d", summary.TypeID), OccurredAt: capturedAt.Format(time.RFC3339),
+		BattleTypeID: summary.TypeID, BattleType: fmt.Sprintf("Type %d", summary.TypeID),
+		TargetTypeID: summary.Target.TypeID, TargetType: targetType, OccurredAt: capturedAt.Format(time.RFC3339),
 		DateMs: capturedAt.UnixMilli(), Result: result, Role: role,
 		Attacker: &attacker, Defender: &defender, Metrics: metrics,
 	}
@@ -120,10 +126,11 @@ func ParseBattleCapture(capture State.BattleReportCapture, ownPlayerID State.Pla
 }
 
 type battlePlayerWire struct {
-	ID       int64  `json:"OID"`
-	Dummy    bool   `json:"DUM"`
-	Name     string `json:"N"`
-	Alliance string `json:"AN"`
+	ID         int64  `json:"OID"`
+	AllianceID int64  `json:"AID"`
+	Dummy      bool   `json:"DUM"`
+	Name       string `json:"N"`
+	Alliance   string `json:"AN"`
 }
 
 func combatant(id int64, role string, players map[int64]battlePlayerWire, targetName string) BattleCombatant {
@@ -137,7 +144,8 @@ func combatant(id int64, role string, players map[int64]battlePlayerWire, target
 		}
 	}
 	return BattleCombatant{
-		PlayerID: id, Dummy: player.Dummy, Name: name, Alliance: player.Alliance, CastleName: targetName, Role: role,
+		PlayerID: id, AllianceID: player.AllianceID, Dummy: player.Dummy,
+		Name: name, Alliance: player.Alliance, CastleName: targetName, Role: role,
 	}
 }
 

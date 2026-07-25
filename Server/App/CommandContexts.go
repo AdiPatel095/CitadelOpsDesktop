@@ -58,6 +58,19 @@ func castleFocusStep(castle State.CastleState) Intent.Step {
 	return step
 }
 
+func stationCastleContextStep(castle State.CastleState) Intent.Step {
+	if !castle.Focused {
+		return castleFocusStep(castle)
+	}
+	payload, _ := json.Marshal(struct {
+		CastleID  State.CastleID  `json:"CID"`
+		KingdomID State.KingdomID `json:"KID"`
+	}{castle.ID, castle.KingdomID})
+	step := contextCommandStep("Refresh station source castle", "jca", payload, "jaa")
+	step.ResponseBarrier = Intent.ResponseBarrierCommitted
+	return step
+}
+
 // JAA switches to a different castle. JCA re-enters the already-focused
 // castle from world-map context and also returns a fresh JAA snapshot.
 func attackCastleContextStep(castle State.CastleState) Intent.Step {
@@ -246,6 +259,9 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 	}
 	if dialog.Target.TowerCooldownRemaining > 0 || dialog.Target.EventCampCooldownRemaining > 0 ||
 		stormAttackDialogUnavailable(dialog.Target) {
+		if dialog.Target.TypeID == khanCampTypeID {
+			return fmt.Errorf("%w: CRA target %d:%d is on cooldown", Intent.ErrPlanStale, request.TargetX, request.TargetY)
+		}
 		return fmt.Errorf("CRA target %d:%d is on cooldown", request.TargetX, request.TargetY)
 	}
 	if request.CommanderID != nil {
@@ -272,6 +288,13 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 		if cooldown, found := state.NomadCamps.Cooldowns[key]; found && cooldown.PendingCooldownRefresh {
 			return fmt.Errorf("CRA target %d:%d is awaiting a post-victory cooldown refresh", request.TargetX, request.TargetY)
 		}
+	case khanCampTypeID:
+		if cooldown, found := state.NomadCamps.Cooldowns[key]; found && cooldown.PendingCooldownRefresh {
+			return fmt.Errorf(
+				"%w: CRA target %d:%d is awaiting a post-victory cooldown refresh",
+				Intent.ErrPlanStale, request.TargetX, request.TargetY,
+			)
+		}
 	}
 	if target, found := state.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]; found &&
 		target.TypeID == dialog.Target.TypeID {
@@ -284,6 +307,10 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 		case nomadIntentCampTypeID, samuraiIntentCampTypeID:
 			if nomadAppCooldownRemaining(state, target, now) > 0 {
 				return fmt.Errorf("CRA target %d:%d is on cooldown", request.TargetX, request.TargetY)
+			}
+		case khanCampTypeID:
+			if appDungeonCooldownRemaining(state, target, now) > 0 {
+				return fmt.Errorf("%w: CRA target %d:%d is on cooldown", Intent.ErrPlanStale, request.TargetX, request.TargetY)
 			}
 		case stormIntentIslandMapTypeID, stormIntentFortMapTypeID:
 			if stormTargetCooldownRemaining(target, now) > 0 {

@@ -13,14 +13,14 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-func TestAutoStormMapScanBoundsAdaptToServerState(t *testing.T) {
+func TestAutoStormMapScanBoundsStartAtSixFiftyCenter(t *testing.T) {
 	state := State.NewGameState()
 	storm := autoStormTestCastle(40, 4, "Storm")
 	storm.X, storm.Y = 679, 596
 	state.Castles[storm.ID] = storm
 
 	bounds := autoStormMapScanBounds(state, storm)
-	if bounds != (State.StormMapBounds{X1: 0, Y1: 0, X2: 807, Y2: 706}) {
+	if bounds != (State.StormMapBounds{X1: 600, Y1: 600, X2: 700, Y2: 700}) {
 		t.Fatalf("initial bounds = %#v", bounds)
 	}
 	state.Storm.Map = State.StormMapState{
@@ -28,21 +28,21 @@ func TestAutoStormMapScanBoundsAdaptToServerState(t *testing.T) {
 		NextBounds:     State.StormMapBounds{X1: 0, Y1: 0, X2: 908, Y2: 807},
 		Targets:        map[string]State.MapObservation{},
 	}
-	if learned := autoStormMapScanBounds(state, storm); learned != state.Storm.Map.NextBounds {
-		t.Fatalf("learned bounds = %#v, want %#v", learned, state.Storm.Map.NextBounds)
+	if next := autoStormMapScanBounds(state, storm); next != bounds {
+		t.Fatalf("next scan bounds = %#v, want center %#v", next, bounds)
 	}
 }
 
-func TestNormalizeAutoStormSettingsFixesMapRefreshAtSixHours(t *testing.T) {
+func TestNormalizeAutoStormSettingsFixesMapRefreshAtTwoHours(t *testing.T) {
 	settings := defaultAutoStormSettings()
 	settings.MapRefreshIntervalSec = 300
 	normalizeAutoStormSettings(&settings)
-	if settings.MapRefreshIntervalSec != 21_600 {
-		t.Fatalf("map refresh = %d, want 21600", settings.MapRefreshIntervalSec)
+	if settings.MapRefreshIntervalSec != 7_200 {
+		t.Fatalf("map refresh = %d, want 7200", settings.MapRefreshIntervalSec)
 	}
 }
 
-func TestAutoStormFullMapAttemptUsesSixHourSafetyInterval(t *testing.T) {
+func TestAutoStormFullMapAttemptUsesTwoHourSafetyInterval(t *testing.T) {
 	now := time.Date(2026, time.July, 15, 12, 0, 0, 0, time.UTC)
 	state := State.NewGameState()
 	storm := autoStormTestCastle(40, 4, "Storm")
@@ -55,7 +55,7 @@ func TestAutoStormFullMapAttemptUsesSixHourSafetyInterval(t *testing.T) {
 	if err != nil || detail != "" || decision == nil || decision.Request == nil || decision.Request.Name != "storm.map.scan" {
 		t.Fatalf("map scan decision = %#v detail=%q err=%v", decision, detail, err)
 	}
-	if want := now.Add(6 * time.Hour); !decision.NextCheckAt.Equal(want) {
+	if want := now.Add(2 * time.Hour); !decision.NextCheckAt.Equal(want) {
 		t.Fatalf("failed-scan retry = %s, want %s", decision.NextCheckAt, want)
 	}
 	var request struct {
@@ -65,7 +65,7 @@ func TestAutoStormFullMapAttemptUsesSixHourSafetyInterval(t *testing.T) {
 	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
 		t.Fatal(err)
 	}
-	if !request.FullMap || request.Bounds != (State.StormMapBounds{X1: 0, Y1: 0, X2: 807, Y2: 706}) {
+	if !request.FullMap || request.Bounds != (State.StormMapBounds{X1: 600, Y1: 600, X2: 700, Y2: 700}) {
 		t.Fatalf("map scan request = %#v", request)
 	}
 
@@ -75,7 +75,7 @@ func TestAutoStormFullMapAttemptUsesSixHourSafetyInterval(t *testing.T) {
 		Targets:        map[string]State.MapObservation{},
 	}
 	decision, detail, err = evaluateAutoStormCombat(Snapshot{State: state, Now: now}, settings, storm, map[string]float64{})
-	if err != nil || decision != nil || !strings.Contains(detail, "six-hour scan safety interval") {
+	if err != nil || decision != nil || !strings.Contains(detail, "two-hour scan safety interval") {
 		t.Fatalf("incomplete-scan decision = %#v detail=%q err=%v", decision, detail, err)
 	}
 }
@@ -84,6 +84,8 @@ func TestAutoStormTroopImportUsesSelectedDonorsInOrder(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
 	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Resources[12] = State.ResourceBalance{Amount: GameData.StormTroopSupportMead}
+	storm.FoodStateObservedAt = now
 	first := autoStormTestCastle(10, 0, "First donor")
 	second := autoStormTestCastle(20, 0, "Second donor")
 	first.Units.Stationed[10] = 3
@@ -114,6 +116,33 @@ func TestAutoStormTroopImportUsesSelectedDonorsInOrder(t *testing.T) {
 	}
 	if arguments.SourceCastleID != first.ID || len(arguments.Units) != 1 || arguments.Units[0].UnitID != 10 || arguments.Units[0].Amount != 3 {
 		t.Fatalf("troop import arguments = %#v", arguments)
+	}
+}
+
+func TestAutoStormTroopImportWaitsForFiftyThousandMead(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Resources[12] = State.ResourceBalance{Amount: GameData.StormTroopSupportMead - 1}
+	storm.FoodStateObservedAt = now
+	donor := autoStormTestCastle(10, 0, "Donor")
+	donor.Units.Stationed[10] = 20
+	state.Castles[storm.ID] = storm
+	state.Castles[donor.ID] = donor
+	state.KingdomTransport.ObservedAt = now
+	state.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	settings := defaultAutoStormSettings()
+	settings.TroopImport = autoStormTroopImportSettings{Enabled: true, DonorCastleIDs: []State.CastleID{donor.ID}}
+	metrics := map[string]float64{}
+
+	decision, detail := autoStormTroopImportDecision(Snapshot{
+		State: state, GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[State.UnitID]int64{10: 8}, metrics)
+	if decision != nil || !strings.Contains(detail, "waiting for Auto Food to reach 50000") {
+		t.Fatalf("troop import below Mead floor = %#v detail=%q", decision, detail)
+	}
+	if metrics["stormMead"] != GameData.StormTroopSupportMead-1 {
+		t.Fatalf("Storm Mead metric = %v", metrics["stormMead"])
 	}
 }
 
@@ -546,6 +575,7 @@ func autoStormTestGameData(t *testing.T) *GameData.Store {
 	t.Helper()
 	store, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[{"wodID":10},{"wodID":11,"slotTypes":"tool"},{"wodID":12}],
+		"resources":[{"resourceID":12,"JSONKey":"MEAD"}],
 		"isles":[
 			{"IsleID":1,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
 			{"IsleID":4,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
@@ -580,6 +610,7 @@ func assertStormCandidateOrder(t *testing.T, candidates []autoStormCombatCandida
 func autoStormTestCastle(id State.CastleID, kingdom State.KingdomID, name string) State.CastleState {
 	return State.CastleState{
 		ID: id, KingdomID: kingdom, Name: name,
+		Resources: map[State.ResourceID]State.ResourceBalance{},
 		Units: State.CastleUnits{
 			Stationed: map[State.UnitID]int64{}, Traveling: map[State.UnitID]int64{},
 			Hospital: map[State.UnitID]int64{}, SpecialHospital: map[State.UnitID]int64{}, Total: map[State.UnitID]int64{},

@@ -106,6 +106,85 @@ func TestAutoNomadPolicyLevelsFourThenLocksWeakestAndChainsCommanders(t *testing
 	}
 }
 
+func TestAutoNomadPolicyUsesPresetForActiveEvent(t *testing.T) {
+	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
+	for _, testCase := range []struct {
+		name             string
+		eventID          int64
+		difficultyID     int64
+		targetTypeID     int
+		firstCampID      int64
+		maxCampID        int64
+		expectedPresetID string
+	}{
+		{name: "Nomad", eventID: nomadEventID, difficultyID: 301, targetTypeID: nomadCampTypeID, firstCampID: 6000, maxCampID: 6001, expectedPresetID: "nomad-camp"},
+		{name: "Samurai", eventID: samuraiEventID, difficultyID: 201, targetTypeID: samuraiCampTypeID, firstCampID: 5000, maxCampID: 5001, expectedPresetID: "samurai-camp"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			snapshot := autoNomadPolicySnapshot(t, now)
+			score := snapshot.State.EventScores.ByEvent[samuraiEventID]
+			score.EventID = testCase.eventID
+			score.DifficultyID = testCase.difficultyID
+			snapshot.State.EventScores.ActiveEventID = testCase.eventID
+			snapshot.State.EventScores.ByEvent = map[int64]State.ScalableEventScore{testCase.eventID: score}
+			for key, observation := range snapshot.State.Map[0] {
+				observation.TypeID = testCase.targetTypeID
+				if observation.EventCampVictoryCount == 8 {
+					observation.EventCampID = testCase.firstCampID
+					observation.ObjectID = testCase.firstCampID
+				} else {
+					observation.EventCampID = testCase.maxCampID
+					observation.ObjectID = testCase.maxCampID
+				}
+				snapshot.State.Map[0][key] = observation
+			}
+
+			decision, err := NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+			if err != nil || decision.Request == nil || decision.Request.Name != "nomad.camp.attack" {
+				t.Fatalf("%s preset decision: %#v err=%v", testCase.name, decision, err)
+			}
+			var arguments struct {
+				Preset struct {
+					ID string `json:"id"`
+				} `json:"preset"`
+			}
+			if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+				t.Fatal(err)
+			}
+			if arguments.Preset.ID != testCase.expectedPresetID {
+				t.Fatalf("%s used preset %q, want %q", testCase.name, arguments.Preset.ID, testCase.expectedPresetID)
+			}
+		})
+	}
+}
+
+func TestAutoNomadPolicyMigratesLegacySharedPreset(t *testing.T) {
+	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
+	snapshot := autoNomadPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["automation.autoNomad"] = json.RawMessage(`{
+		"version":4,"sourceCastleId":1,"presetId":"camp",
+		"nomadDifficultyId":301,"samuraiDifficultyId":201,"scoreTarget":100000,
+		"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,
+		"skipCooldowns":true,"timeSkipReserve":{}
+	}`)
+
+	decision, err := NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "nomad.camp.attack" {
+		t.Fatalf("legacy preset decision: %#v err=%v", decision, err)
+	}
+	var arguments struct {
+		Preset struct {
+			ID string `json:"id"`
+		} `json:"preset"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+		t.Fatal(err)
+	}
+	if arguments.Preset.ID != "camp" {
+		t.Fatalf("legacy preset migrated to %q, want camp", arguments.Preset.ID)
+	}
+}
+
 func TestAutoNomadRBCTestSizesToPresetCopiesThenRefreshesAndSkipsEveryHit(t *testing.T) {
 	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
 	snapshot := autoNomadPolicySnapshot(t, now)
@@ -254,10 +333,15 @@ func autoNomadPolicySnapshot(t *testing.T, now time.Time) Snapshot {
 		"versionInfo":[],
 		"buildings":[],
 		"units":[],
-		"eventAutoScalingDifficulties":[{"difficultyID":201,"eventID":80,"difficultyTypeID":1,"isLocked":0}],
+		"eventAutoScalingDifficulties":[
+			{"difficultyID":201,"eventID":80,"difficultyTypeID":1,"isLocked":0},
+			{"difficultyID":301,"eventID":72,"difficultyTypeID":1,"isLocked":0}
+		],
 		"eventAutoScalingCamps":[
 			{"eventAutoScalingCampID":5000,"eventID":80,"difficultyID":201,"areaType":29,"camplevel":80,"countVictory":8,"coolDown":0,"skipCosts":0,"maxTroopCapacityDefense":500},
-			{"eventAutoScalingCampID":5001,"eventID":80,"difficultyID":201,"areaType":29,"camplevel":90,"countVictory":9,"coolDown":3600,"skipCosts":9950,"maxTroopCapacityDefense":600}
+			{"eventAutoScalingCampID":5001,"eventID":80,"difficultyID":201,"areaType":29,"camplevel":90,"countVictory":9,"coolDown":3600,"skipCosts":9950,"maxTroopCapacityDefense":600},
+			{"eventAutoScalingCampID":6000,"eventID":72,"difficultyID":301,"areaType":27,"camplevel":80,"countVictory":8,"coolDown":0,"skipCosts":0,"maxTroopCapacityDefense":500},
+			{"eventAutoScalingCampID":6001,"eventID":72,"difficultyID":301,"areaType":27,"camplevel":90,"countVictory":9,"coolDown":3600,"skipCosts":9950,"maxTroopCapacityDefense":600}
 		]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
@@ -285,8 +369,8 @@ func autoNomadPolicySnapshot(t *testing.T, now time.Time) Snapshot {
 	return Snapshot{
 		State: gameState, GameData: gameData, Now: now,
 		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
-			"automation.autoNomad": json.RawMessage(`{"version":4,"sourceCastleId":1,"presetId":"camp","nomadDifficultyId":301,"samuraiDifficultyId":201,"scoreTarget":100000,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"skipCooldowns":true,"timeSkipReserve":{}}`),
-			"attacks.presets":      json.RawMessage(`{"version":1,"presets":[{"id":"camp","name":"Camp","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":77,"quantity":100}],"tools":[]},"R":{"troops":[],"tools":[]}}]}]}`),
+			"automation.autoNomad": json.RawMessage(`{"version":5,"sourceCastleId":1,"nomadPresetId":"nomad-camp","samuraiPresetId":"samurai-camp","nomadDifficultyId":301,"samuraiDifficultyId":201,"scoreTarget":100000,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"skipCooldowns":true,"timeSkipReserve":{}}`),
+			"attacks.presets":      json.RawMessage(`{"version":1,"presets":[{"id":"nomad-camp","name":"Nomad Camp","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":77,"quantity":100}],"tools":[]},"R":{"troops":[],"tools":[]}}]},{"id":"samurai-camp","name":"Samurai Camp","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":77,"quantity":100}],"tools":[]},"R":{"troops":[],"tools":[]}}]},{"id":"camp","name":"Legacy Camp","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":77,"quantity":100}],"tools":[]},"R":{"troops":[],"tools":[]}}]}]}`),
 		}},
 	}
 }

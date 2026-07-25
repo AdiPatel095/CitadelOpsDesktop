@@ -25,7 +25,6 @@ import type { CastleStateV2, GameStateV2 } from '../../api/Contracts';
 
 interface PlayerTrackerSample {
   timestampUnix: number;
-  uid?: number;
   playerId: number;
   might: number;
   glory: number;
@@ -186,8 +185,8 @@ const PlayerTrackerView = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 	const selectedExtraMetric = extraMetricDefinitions.find((definition) => definition.key === selectedMetric);
-	const activeUID = Math.max(0, finite(state?.account.uid));
-	const scopedTracker = activeUID > 0 && tracker.current?.uid !== activeUID ? emptyResponse : tracker;
+	const activePlayerID = Math.max(0, finite(state?.player.id));
+	const scopedTracker = activePlayerID > 0 && tracker.current?.playerId !== activePlayerID ? emptyResponse : tracker;
 
 	useEffect(() => {
 		if (metricDefinitions.some((definition) => definition.key === selectedMetric)) return;
@@ -219,7 +218,6 @@ const PlayerTrackerView = () => {
     const wallet = playerWallet(state.player.resources, state.player.currencies, resourceMetadata);
     return {
       timestampUnix: Math.floor(Date.now() / 1000),
-      uid: activeUID || undefined,
       playerId: state.player.id,
       might: finite(state.player.might),
       glory: finite(state.player.glory),
@@ -233,12 +231,12 @@ const PlayerTrackerView = () => {
       rubies: finite(wallet.rubies),
       currencies: wallet,
     };
-  }, [activeUID, gameLoggedIn, resourceMetadata, state, troopMetadata]);
+  }, [gameLoggedIn, resourceMetadata, state, troopMetadata]);
 
   useEffect(() => {
 	setTracker(emptyResponse);
 	setLoading(true);
-  }, [activeUID]);
+  }, [activePlayerID]);
 
   useEffect(() => {
     let active = true;
@@ -252,7 +250,7 @@ const PlayerTrackerView = () => {
         const payload = await response.json() as PlayerTrackerResponse;
         if (!active) return;
         const normalized = normalizeResponse(payload, metricDefinitions, troopMetadata);
-		setTracker(activeUID > 0 && normalized.current?.uid !== activeUID ? emptyResponse : normalized);
+		setTracker(activePlayerID > 0 && normalized.current?.playerId !== activePlayerID ? emptyResponse : normalized);
         setLoadError(null);
       } catch (error) {
         if (!active) return;
@@ -267,7 +265,7 @@ const PlayerTrackerView = () => {
       active = false;
       window.clearInterval(timer);
     };
-  }, [activeUID, metricDefinitions, selectedRange, troopMetadata, troopRange]);
+  }, [activePlayerID, metricDefinitions, selectedRange, troopMetadata, troopRange]);
 
   const current = liveSample ?? scopedTracker.current;
   const series = useMemo(

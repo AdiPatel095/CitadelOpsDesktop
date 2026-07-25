@@ -66,7 +66,15 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 			TargetTypeID: request.TargetTypeID, TargetX: request.TargetX, TargetY: request.TargetY,
 			LaunchedAt: launchedAt.UTC(), ArrivesAt: selected.ArrivesAt.UTC(),
 		})
-		return []string{"attack-analytics", "movements"}, changed, nil
+		domains := []string{"attack-analytics", "movements"}
+		if changed && request.FeatureID == State.AttackFeatureAutoTowers {
+			if gameState.TowerQueue.ConfirmedLaunchesByCastle == nil {
+				gameState.TowerQueue.ConfirmedLaunchesByCastle = map[State.CastleID]int64{}
+			}
+			gameState.TowerQueue.ConfirmedLaunchesByCastle[request.SourceCastleID]++
+			domains = append(domains, "tower-queue")
+		}
+		return domains, changed, nil
 	})
 	return err
 }

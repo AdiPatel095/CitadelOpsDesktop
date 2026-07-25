@@ -3,6 +3,7 @@ package Automation
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +12,31 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
+
+func TestAutoTowerSettingsResetClearsOnlyDerivedQueueState(t *testing.T) {
+	now := time.Date(2026, 7, 22, 22, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{{TargetX: 101, TargetY: 100}}
+	gameState.TowerQueue.LastScannedAt[1] = now
+	gameState.TowerQueue.LastAttemptedAt[1] = now
+	gameState.TowerQueue.ConfirmedLaunchesByCastle[1] = 4
+	gameState.TowerQueue.CapacityByCastle[1] = State.TowerCapacityObservation{AdditionalUnits: 4, ObservedAt: now}
+
+	domains, changed := NewAutoTowerPolicy().ResetConfigurationDerivedState(&gameState)
+	if !changed || !reflect.DeepEqual(domains, []string{"tower-queue"}) {
+		t.Fatalf("queue reset = domains %#v changed %t", domains, changed)
+	}
+	if len(gameState.TowerQueue.EntriesByCastle) != 0 || len(gameState.TowerQueue.LastScannedAt) != 0 ||
+		len(gameState.TowerQueue.LastAttemptedAt) != 0 || len(gameState.TowerQueue.ConfirmedLaunchesByCastle) != 0 {
+		t.Fatalf("derived queue state was retained: %+v", gameState.TowerQueue)
+	}
+	if got := gameState.TowerQueue.CapacityByCastle[1].AdditionalUnits; got != 4 {
+		t.Fatalf("capacity observation was cleared: %d", got)
+	}
+	if _, changed = NewAutoTowerPolicy().ResetConfigurationDerivedState(&gameState); changed {
+		t.Fatal("empty queue state reported another reset")
+	}
+}
 
 func TestAutoTowerPolicyScansStaleCastlesBeforeLaunchingQueue(t *testing.T) {
 	now := time.Date(2026, 7, 12, 16, 0, 0, 0, time.UTC)
@@ -115,6 +141,7 @@ func TestAutoTowerPolicyRefreshesStaleQueuedTargetBeforeAttack(t *testing.T) {
 func TestAutoTowerPolicySkipsDeferredTowerAndContinuesQueue(t *testing.T) {
 	now := time.Date(2026, 7, 12, 16, 0, 0, 0, time.UTC)
 	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(`{"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"castles":{"1":{"enabled":true,"radius":2,"maxActiveTowers":1,"unitId":77,"maidenOnly":false}}}`)
 	observedAt := now.Add(-autoTowerTargetVerificationAge)
 	fillTowerCoverage(&snapshot.State, 100, 100, observedAt)
 	for _, targetX := range []int{101, 102} {
@@ -166,6 +193,27 @@ func TestTowerQueueKeepsRotatedTargetBehindOlderReadyTargets(t *testing.T) {
 	}
 }
 
+func TestTowerQueueExcludesEntriesOutsideCurrentRadius(t *testing.T) {
+	now := time.Date(2026, 7, 22, 22, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.State.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now},
+		"102:100": {KingdomID: 0, X: 102, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now},
+	}
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{
+		{KingdomID: 0, TargetX: 101, TargetY: 100, QueuedAt: now},
+		{KingdomID: 0, TargetX: 102, TargetY: 100, QueuedAt: now},
+	}
+	settings := autoTowerSettings{Castles: map[string]autoTowerCastle{
+		"1": {Enabled: true, Radius: 1, UnitID: 77},
+	}}
+
+	candidates, _, _ := queuedTowerCandidates(snapshot, settings)
+	if len(candidates) != 1 || candidates[0].Entry.TargetX != 101 {
+		t.Fatalf("radius-filtered queue = %#v", candidates)
+	}
+}
+
 func TestTowerQueueRotatesAcrossCastlesBeforeDrainingOneBatch(t *testing.T) {
 	now := time.Date(2026, 7, 22, 18, 45, 0, 0, time.UTC)
 	snapshot := autoTowerPolicySnapshot(now)
@@ -192,6 +240,89 @@ func TestTowerQueueRotatesAcrossCastlesBeforeDrainingOneBatch(t *testing.T) {
 	candidates, _, _ := queuedTowerCandidates(snapshot, settings)
 	if len(candidates) != 3 || candidates[0].Castle.ID != 2 {
 		t.Fatalf("castle round-robin order = %#v", candidates)
+	}
+}
+
+func TestTowerQueueCursorStartsAtLeastLaunchedCastleWithoutOwningOverlappingTarget(t *testing.T) {
+	now := time.Date(2026, 7, 23, 13, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.State.Castles[2] = State.CastleState{ID: 2, KingdomID: 0, X: 105, Y: 100}
+	snapshot.State.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now},
+	}
+	entry := State.TowerQueueEntry{KingdomID: 0, TargetX: 101, TargetY: 100, QueuedAt: now}
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{entry}
+	snapshot.State.TowerQueue.EntriesByCastle[2] = []State.TowerQueueEntry{entry}
+	snapshot.State.TowerQueue.ConfirmedLaunchesByCastle[1] = 8
+	snapshot.State.TowerQueue.ConfirmedLaunchesByCastle[2] = 3
+	settings := autoTowerSettings{Castles: map[string]autoTowerCastle{
+		"1": {Enabled: true, Radius: 10, UnitID: 77},
+		"2": {Enabled: true, Radius: 10, UnitID: 77},
+	}}
+
+	candidates, _, _ := queuedTowerCandidates(snapshot, settings)
+	if len(candidates) != 2 || candidates[0].Castle.ID != 2 || candidates[1].Castle.ID != 1 {
+		t.Fatalf("overlapping target was pre-assigned instead of following the castle cursor: %#v", candidates)
+	}
+}
+
+func TestTowerQueueOrdersUniqueTargetsByConfirmedLaunchCount(t *testing.T) {
+	now := time.Date(2026, 7, 23, 13, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.State.Castles[2] = State.CastleState{ID: 2, KingdomID: 0, X: 200, Y: 200}
+	snapshot.State.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now},
+		"201:200": {KingdomID: 0, X: 201, Y: 200, TypeID: kingdomTowerMapTypeID, ObservedAt: now},
+	}
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 101, TargetY: 100, QueuedAt: now,
+	}}
+	snapshot.State.TowerQueue.EntriesByCastle[2] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 201, TargetY: 200, QueuedAt: now,
+	}}
+	snapshot.State.TowerQueue.ConfirmedLaunchesByCastle[1] = 5
+	snapshot.State.TowerQueue.ConfirmedLaunchesByCastle[2] = 2
+	settings := autoTowerSettings{Castles: map[string]autoTowerCastle{
+		"1": {Enabled: true, Radius: 2, UnitID: 77},
+		"2": {Enabled: true, Radius: 2, UnitID: 77},
+	}}
+
+	candidates, _, _ := queuedTowerCandidates(snapshot, settings)
+	if len(candidates) != 2 || candidates[0].Castle.ID != 2 {
+		t.Fatalf("least-launched castle was not first: %#v", candidates)
+	}
+}
+
+func TestTowerQueueSkipsLowestCountCastleWithoutReadyTarget(t *testing.T) {
+	now := time.Date(2026, 7, 23, 13, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.State.Castles[2] = State.CastleState{ID: 2, KingdomID: 0, X: 200, Y: 200}
+	snapshot.State.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID, ObservedAt: now},
+	}
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 101, TargetY: 100, QueuedAt: now,
+	}}
+	snapshot.State.TowerQueue.ConfirmedLaunchesByCastle[1] = 1
+	settings := autoTowerSettings{Castles: map[string]autoTowerCastle{
+		"1": {Enabled: true, Radius: 2, UnitID: 77},
+		"2": {Enabled: true, Radius: 2, UnitID: 77},
+	}}
+
+	candidates, _, _ := queuedTowerCandidates(snapshot, settings)
+	if len(candidates) != 1 || candidates[0].Castle.ID != 1 {
+		t.Fatalf("ready castle was blocked by unavailable lower-count castle: %#v", candidates)
+	}
+
+	snapshot.State.Map[0]["201:200"] = State.MapObservation{
+		KingdomID: 0, X: 201, Y: 200, TypeID: kingdomTowerMapTypeID, ObservedAt: now,
+	}
+	snapshot.State.TowerQueue.EntriesByCastle[2] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 201, TargetY: 200, QueuedAt: now,
+	}}
+	candidates, _, _ = queuedTowerCandidates(snapshot, settings)
+	if len(candidates) != 2 || candidates[0].Castle.ID != 2 {
+		t.Fatalf("newly ready lower-count castle did not regain priority: %#v", candidates)
 	}
 }
 
@@ -235,6 +366,44 @@ func TestAutoTowerPolicyLaunchesOpportunisticallyWhileOlderTowerMovementIsActive
 	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
 	if err != nil || decision.Request == nil || decision.Request.Name != "tower.attack" {
 		t.Fatalf("opportunistic tower decision: %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoTowerPolicyPausesCursorWhenCurrentCastleHasNoEligibleCommander(t *testing.T) {
+	now := time.Date(2026, 7, 23, 13, 30, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(`{
+		"checkIntervalSec":30,"mapRefreshIntervalSec":1800,
+		"castles":{
+			"1":{"enabled":true,"radius":1,"unitId":77,"maidenOnly":true},
+			"2":{"enabled":true,"radius":1,"unitId":77,"maidenOnly":false}
+		}
+	}`)
+	snapshot.State.Castles[2] = State.CastleState{ID: 2, Name: "Later Castle", KingdomID: 0, X: 200, Y: 200}
+	snapshot.State.Map[0] = map[string]State.MapObservation{
+		"101:100": {
+			KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID,
+			TowerVictoryCount: 845, Level: 81, ObservedAt: now,
+		},
+		"201:200": {
+			KingdomID: 0, X: 201, Y: 200, TypeID: kingdomTowerMapTypeID,
+			TowerVictoryCount: 845, Level: 81, ObservedAt: now,
+		},
+	}
+	snapshot.State.TowerQueue.LastScannedAt[1] = now
+	snapshot.State.TowerQueue.LastScannedAt[2] = now
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 101, TargetY: 100, MapObservedAt: now, QueuedAt: now,
+	}}
+	snapshot.State.TowerQueue.EntriesByCastle[2] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 201, TargetY: 200, MapObservedAt: now, QueuedAt: now,
+	}}
+	snapshot.State.TowerQueue.ConfirmedLaunchesByCastle[2] = 1
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" ||
+		!strings.Contains(decision.Detail, "maiden relic") {
+		t.Fatalf("commander-unavailable cursor decision = %#v err=%v", decision, err)
 	}
 }
 
@@ -487,7 +656,7 @@ func TestTowerQueuePromotesCoolingTargetsWithoutAnotherScan(t *testing.T) {
 	}
 }
 
-func TestTowerQueueAssignsOverlappingTargetsToClosestCastle(t *testing.T) {
+func TestTowerQueueKeepsOverlappingTargetAvailableToEachCastle(t *testing.T) {
 	now := time.Date(2026, 7, 12, 16, 0, 0, 0, time.UTC)
 	snapshot := autoTowerPolicySnapshot(now)
 	snapshot.State.Castles[2] = State.CastleState{ID: 2, Name: "Closer Tower Castle", KingdomID: 0, X: 102, Y: 100}
@@ -504,8 +673,8 @@ func TestTowerQueueAssignsOverlappingTargetsToClosestCastle(t *testing.T) {
 	}}
 
 	candidates, _, _ := queuedTowerCandidates(snapshot, settings)
-	if len(candidates) != 1 || candidates[0].Castle.ID != 2 {
-		t.Fatalf("overlapping target should use closest castle: %#v", candidates)
+	if len(candidates) != 2 || candidates[0].Castle.ID != 1 || candidates[1].Castle.ID != 2 {
+		t.Fatalf("overlapping target should remain available to both castle cursor positions: %#v", candidates)
 	}
 }
 

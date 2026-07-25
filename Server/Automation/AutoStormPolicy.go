@@ -24,10 +24,10 @@ const (
 	autoStormFortMapTypeID         = 25
 	autoStormTransportDelivery     = 0.8
 	autoStormMaximumTroopStacks    = 20
-	autoStormMapRefreshInterval    = 6 * time.Hour
+	autoStormMapRefreshInterval    = 2 * time.Hour
 	autoStormMapRefreshSeconds     = int(autoStormMapRefreshInterval / time.Second)
-	autoStormMapWindowSize         = 101
-	autoStormMapMinimumWindows     = 6
+	autoStormMapCenterCoordinate   = 650
+	autoStormMapInitialHalfSpan    = 50
 	autoStormTargetVerificationAge = 30 * time.Second
 	autoStormPriorityFortPrefix    = "fort:"
 	autoStormPriorityIslandPrefix  = "island:"
@@ -341,28 +341,13 @@ func autoStormMapStateMatches(state State.GameState, castle State.CastleState) b
 		mapState.SourceCastleID == castle.ID
 }
 
-func autoStormMapScanBounds(state State.GameState, castle State.CastleState) State.StormMapBounds {
-	maximumX := max(0, castle.X)
-	maximumY := max(0, castle.Y)
-	bounds := State.StormMapBounds{
-		X1: 0,
-		Y1: 0,
-		X2: autoStormRoundedMapMaximum(maximumX),
-		Y2: autoStormRoundedMapMaximum(maximumY),
+func autoStormMapScanBounds(_ State.GameState, _ State.CastleState) State.StormMapBounds {
+	return State.StormMapBounds{
+		X1: autoStormMapCenterCoordinate - autoStormMapInitialHalfSpan,
+		Y1: autoStormMapCenterCoordinate - autoStormMapInitialHalfSpan,
+		X2: autoStormMapCenterCoordinate + autoStormMapInitialHalfSpan,
+		Y2: autoStormMapCenterCoordinate + autoStormMapInitialHalfSpan,
 	}
-	if autoStormMapStateMatches(state, castle) && state.Storm.Map.NextBounds.IsValid() &&
-		(state.Storm.Map.NextBounds.X2 > 0 || state.Storm.Map.NextBounds.Y2 > 0) {
-		bounds.X2 = max(bounds.X2, state.Storm.Map.NextBounds.X2)
-		bounds.Y2 = max(bounds.Y2, state.Storm.Map.NextBounds.Y2)
-	}
-	return bounds
-}
-
-func autoStormRoundedMapMaximum(observedMaximum int) int {
-	minimumMaximum := autoStormMapMinimumWindows*autoStormMapWindowSize - 1
-	requiredMaximum := max(minimumMaximum, observedMaximum+autoStormMapWindowSize)
-	windowCount := (requiredMaximum + 1 + autoStormMapWindowSize - 1) / autoStormMapWindowSize
-	return windowCount*autoStormMapWindowSize - 1
 }
 
 func autoStormFullMapScanDecision(snapshot Snapshot, castle State.CastleState, metrics map[string]float64) *Decision {
@@ -384,9 +369,7 @@ func autoStormFullMapScanDecision(snapshot Snapshot, castle State.CastleState, m
 		return nil
 	}
 	bounds := autoStormMapScanBounds(snapshot.State, castle)
-	windowColumns := (bounds.X2 - bounds.X1 + autoStormMapWindowSize) / autoStormMapWindowSize
-	windowRows := (bounds.Y2 - bounds.Y1 + autoStormMapWindowSize) / autoStormMapWindowSize
-	metrics["stormMapPlannedWindows"] = float64(windowColumns * windowRows)
+	metrics["stormMapPlannedWindows"] = 1
 	decision := autoStormIntentDecision(
 		snapshot.Now,
 		metrics,
@@ -1358,7 +1341,7 @@ func evaluateAutoStormCombat(
 		return decision, "", nil
 	}
 	if mapState.LastCompletedAt.IsZero() || mapState.LastCompletedAt.Before(mapState.LastAttemptAt) {
-		return nil, "The latest full Storm map sweep did not complete; the six-hour scan safety interval is still active", nil
+		return nil, "The latest full Storm map sweep did not complete; the two-hour scan safety interval is still active", nil
 	}
 	document, err := AttackPresets.Decode(snapshot.Configuration.Sections[AttackPresets.ConfigurationSection])
 	if err != nil {
@@ -1774,6 +1757,18 @@ func autoStormTroopImportDecision(
 	if len(settings.TroopImport.DonorCastleIDs) == 0 {
 		return nil, "Storm troop import is enabled, but no donor castles are selected"
 	}
+	mead, observed := autoStormMeadBalance(snapshot.GameData, castle)
+	metrics["stormMead"] = mead
+	metrics["stormTroopSupportMead"] = GameData.StormTroopSupportMead
+	if !observed || castle.FoodStateObservedAt.IsZero() {
+		return nil, "Waiting for a current Storm Mead balance before importing troops"
+	}
+	if mead < GameData.StormTroopSupportMead {
+		return nil, fmt.Sprintf(
+			"Storm has %.0f Mead; waiting for Auto Food to reach %.0f before importing troops",
+			mead, float64(GameData.StormTroopSupportMead),
+		)
+	}
 	unlock, observed := snapshot.State.KingdomTransport.Unlocks[castle.KingdomID]
 	if snapshot.State.KingdomTransport.ObservedAt.IsZero() || !observed {
 		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh kingdom troop-transfer availability", "troops.kingdom.refresh", map[string]any{}), ""
@@ -1828,6 +1823,15 @@ func autoStormTroopImportDecision(
 		return nil, fmt.Sprintf("Selected donor castles cannot supply the missing Storm troops; %d preset tool stack(s) are also missing", missingTools)
 	}
 	return nil, "Selected donor castles cannot currently supply the missing Storm troops"
+}
+
+func autoStormMeadBalance(gameData *GameData.Store, castle State.CastleState) (float64, bool) {
+	for resourceID, balance := range castle.Resources {
+		if strings.EqualFold(resourceJSONKey(gameData, resourceID), "MEAD") {
+			return balance.Amount, true
+		}
+	}
+	return 0, false
 }
 
 func autoStormUnitIsTool(gameData *GameData.Store, unitID State.UnitID) (bool, bool) {

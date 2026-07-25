@@ -83,7 +83,7 @@ const AttackEconomyView = ({
 
   const loadReports = useCallback(async () => {
     try {
-      const response = await fetch('/api/v2/history/battle-reports?limit=10000', { cache: 'no-store' });
+      const response = await fetch('/api/v2/analytics/battle-reports?limit=10000', { cache: 'no-store' });
       if (!response.ok) throw new Error(`Battle history returned HTTP ${response.status}`);
       const payload = await response.json() as { reports?: AttackEconomyReport[] } | AttackEconomyReport[];
       const rows = Array.isArray(payload) ? payload : payload.reports ?? [];

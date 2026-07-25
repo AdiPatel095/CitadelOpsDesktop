@@ -301,10 +301,11 @@ func TestAutoBirdResendsReturnedCastleWhileAnotherBirdIsActive(t *testing.T) {
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
 	}
 	returnedLaunch := now.Add(-time.Hour)
+	staleCooldown := now.Add(11 * time.Hour)
 	activeReturn := now.Add(10 * time.Minute)
 	gameState.Stationing["autoBird:10"] = State.StationingOperation{
 		ID: "autoBird:10", Purpose: "autoBird", SourceCastleID: 10, TargetCastleID: 20,
-		MovementID: 50, UpdatedAt: returnedLaunch,
+		MovementID: 50, SuccessCooldownUntil: &staleCooldown, UpdatedAt: returnedLaunch,
 	}
 	gameState.Stationing["autoBird:11"] = State.StationingOperation{
 		ID: "autoBird:11", Purpose: "autoBird", SourceCastleID: 11, TargetCastleID: 20,
@@ -332,6 +333,30 @@ func TestAutoBirdResendsReturnedCastleWhileAnotherBirdIsActive(t *testing.T) {
 	}
 	if got := State.CastleID(decision.Metrics[autoBirdNextCastleMetricKey]); got != 11 {
 		t.Fatalf("next bird castle metric = %d, want other active castle 11", got)
+	}
+}
+
+func TestAutoStationDoesNotRecallAutoBirdAfterItsTrackedEvacuationEnded(t *testing.T) {
+	now := time.Date(2026, 7, 25, 13, 30, 0, 0, time.UTC)
+	arrivesAt := now.Add(time.Minute)
+	gameState := State.NewGameState()
+	gameState.Player.ProtectionMode.ObservedAt = now
+	gameState.Stationing["autoStation:10"] = State.StationingOperation{
+		ID: "autoStation:10", Purpose: "autoStation", SourceCastleID: 10, TargetCastleID: 20,
+		MovementID: 50, UpdatedAt: now.Add(-time.Hour),
+	}
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", SourceCastleID: 10, TargetCastleID: 20,
+		MovementID: 51, UpdatedAt: now,
+	}
+	gameState.Movements[51] = State.MovementState{
+		ID: 51, Direction: 0, SourceCastleID: 10, TargetCastleID: 20,
+		TravelSeconds: 60, WaitSeconds: 6 * 3600, ArrivesAt: &arrivesAt,
+	}
+
+	decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
+	if err != nil || decision.Request != nil || decision.Status != "armed" {
+		t.Fatalf("Auto Station borrowed Auto Bird movement = %#v err=%v", decision, err)
 	}
 }
 

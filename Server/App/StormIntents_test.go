@@ -5,13 +5,124 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
+
+type stormMapBurstTestObserver struct {
+	mu        sync.Mutex
+	watchers  map[string]chan Protocol.CommittedFrame
+	committed map[uint64]Protocol.CommittedFrame
+	waited    []uint64
+}
+
+func newStormMapBurstTestObserver() *stormMapBurstTestObserver {
+	return &stormMapBurstTestObserver{
+		watchers:  map[string]chan Protocol.CommittedFrame{},
+		committed: map[uint64]Protocol.CommittedFrame{},
+	}
+}
+
+func (observer *stormMapBurstTestObserver) WatchWireResponse(
+	_ string,
+	responseToken string,
+) (<-chan Protocol.CommittedFrame, func()) {
+	channel := make(chan Protocol.CommittedFrame, 1)
+	observer.mu.Lock()
+	observer.watchers[responseToken] = channel
+	observer.mu.Unlock()
+	var once sync.Once
+	return channel, func() {
+		once.Do(func() {
+			observer.mu.Lock()
+			delete(observer.watchers, responseToken)
+			observer.mu.Unlock()
+		})
+	}
+}
+
+func (observer *stormMapBurstTestObserver) WaitCommitted(
+	_ context.Context,
+	ingressID uint64,
+) (Protocol.CommittedFrame, error) {
+	observer.mu.Lock()
+	defer observer.mu.Unlock()
+	frame, exists := observer.committed[ingressID]
+	if !exists {
+		return Protocol.CommittedFrame{}, errors.New("commit is unavailable")
+	}
+	delete(observer.committed, ingressID)
+	observer.waited = append(observer.waited, ingressID)
+	return frame, nil
+}
+
+func (observer *stormMapBurstTestObserver) ForgetCommitted(ingressID uint64) {
+	observer.mu.Lock()
+	delete(observer.committed, ingressID)
+	observer.mu.Unlock()
+}
+
+func (observer *stormMapBurstTestObserver) watcherCount() int {
+	observer.mu.Lock()
+	defer observer.mu.Unlock()
+	return len(observer.watchers)
+}
+
+func (observer *stormMapBurstTestObserver) deliver(responseToken string, ingressID uint64) {
+	code := 0
+	frame := Protocol.CommittedFrame{
+		Frame: Protocol.Frame{
+			Direction: Protocol.DirectionInbound, Opcode: "gaa", ResponseCode: &code,
+			ResponseToken: responseToken, ReceivedAt: time.Now().UTC(),
+		},
+		IngressID: ingressID,
+		Revision:  ingressID,
+	}
+	observer.mu.Lock()
+	channel := observer.watchers[responseToken]
+	observer.committed[ingressID] = frame
+	observer.mu.Unlock()
+	channel <- frame
+}
+
+type stormMapBurstTestSender struct {
+	observer            *stormMapBurstTestObserver
+	expectedSends       int
+	watchersAtFirstSend int
+	metadata            []Outbound.Metadata
+	frames              []Protocol.Frame
+}
+
+func (*stormMapBurstTestSender) CorrelatesResponses() bool { return true }
+func (*stormMapBurstTestSender) Namespace() string         { return "EmpireEx_21" }
+func (*stormMapBurstTestSender) WaitForAutomationUnlocked(context.Context) error {
+	return nil
+}
+
+func (sender *stormMapBurstTestSender) Send(ctx context.Context, payload []byte) error {
+	frame, err := Protocol.Decode(string(payload), Protocol.DirectionOutbound, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+	if len(sender.frames) == 0 {
+		sender.watchersAtFirstSend = sender.observer.watcherCount()
+	}
+	sender.frames = append(sender.frames, frame)
+	sender.metadata = append(sender.metadata, Outbound.MetadataFromContext(ctx))
+	if len(sender.frames) == sender.expectedSends {
+		for index := len(sender.metadata) - 1; index >= 0; index-- {
+			sender.observer.deliver(sender.metadata[index].ResponseToken, uint64(index+1))
+		}
+	}
+	return nil
+}
 
 func TestStormAttackReplansWhenCommanderAvailabilityChanges(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
@@ -89,7 +200,156 @@ func TestStormMapScanWindowsCoverSixHundredBySixHundredInThirtySixRequests(t *te
 	}
 }
 
-func TestPlanStormMapScanRejectsSecondAttemptInsideSixHours(t *testing.T) {
+func TestStormMapConcentricRingsExpandOutwardFromSixFifty(t *testing.T) {
+	ringZero := stormMapConcentricRingWindows(0)
+	if len(ringZero) != 1 || ringZero[0] != (towerMapWindow{X1: 600, Y1: 600, X2: 700, Y2: 700}) {
+		t.Fatalf("center ring = %#v", ringZero)
+	}
+	ringOne := stormMapConcentricRingWindows(1)
+	if len(ringOne) != 8 {
+		t.Fatalf("first outer ring has %d windows, want 8", len(ringOne))
+	}
+	ringTwo := stormMapConcentricRingWindows(2)
+	if len(ringTwo) != 16 {
+		t.Fatalf("second outer ring has %d windows, want 16", len(ringTwo))
+	}
+	if bounds := stormMapConcentricBounds(1); bounds != (State.StormMapBounds{X1: 500, Y1: 500, X2: 800, Y2: 800}) {
+		t.Fatalf("first expanded bounds = %#v", bounds)
+	}
+	if bounds := stormMapConcentricBounds(2); bounds != (State.StormMapBounds{X1: 400, Y1: 400, X2: 900, Y2: 900}) {
+		t.Fatalf("second expanded bounds = %#v", bounds)
+	}
+	windows := append(append(ringZero, ringOne...), ringTwo...)
+	totalArea := 0
+	for index, window := range windows {
+		totalArea += (window.X2 - window.X1 + 1) * (window.Y2 - window.Y1 + 1)
+		for priorIndex := 0; priorIndex < index; priorIndex++ {
+			prior := windows[priorIndex]
+			if window.X1 <= prior.X2 && window.X2 >= prior.X1 &&
+				window.Y1 <= prior.Y2 && window.Y2 >= prior.Y1 {
+				t.Fatalf("concentric windows overlap: %#v and %#v", prior, window)
+			}
+		}
+	}
+	if want := 501 * 501; totalArea != want {
+		t.Fatalf("concentric window area = %d, want %d", totalArea, want)
+	}
+}
+
+func TestStormMapSweepExpandsOnlyForTargetsInsideEdgeBuffer(t *testing.T) {
+	startedAt := time.Date(2026, time.July, 23, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{
+		"500:650": {
+			KingdomID: stormIntentKingdomID, X: 500, Y: 650, TypeID: 12,
+			ObservedAt: startedAt.Add(time.Second),
+		},
+	}
+	state.Storm.Map.Targets = map[string]State.MapObservation{
+		"526:650": {
+			KingdomID: stormIntentKingdomID, X: 526, Y: 650, TypeID: stormIntentFortMapTypeID,
+		},
+	}
+	bounds := State.StormMapBounds{X1: 500, Y1: 500, X2: 800, Y2: 800}
+	if stormMapSweepNeedsExpansion(state, bounds, startedAt) {
+		t.Fatal("target 26 coordinates inside the edge unexpectedly expanded the sweep")
+	}
+
+	target := state.Storm.Map.Targets["526:650"]
+	target.X = 525
+	state.Storm.Map.Targets = map[string]State.MapObservation{"525:650": target}
+	if !stormMapSweepNeedsExpansion(state, bounds, startedAt) {
+		t.Fatal("target on the 25-coordinate lower margin did not expand the sweep")
+	}
+	target.X = 775
+	state.Storm.Map.Targets = map[string]State.MapObservation{"775:650": target}
+	if !stormMapSweepNeedsExpansion(state, bounds, startedAt) {
+		t.Fatal("target on the 25-coordinate upper margin did not expand the sweep")
+	}
+
+	target.X = 520
+	state.Storm.Map.Targets = map[string]State.MapObservation{"520:650": target}
+	if stormMapSweepNeedsExpansion(
+		state, State.StormMapBounds{X1: 400, Y1: 400, X2: 900, Y2: 900}, startedAt,
+	) {
+		t.Fatal("target 120 coordinates inside the expanded edge unexpectedly enlarged the sweep")
+	}
+}
+
+func TestPlanFullStormMapScanUsesOneLeaseHeldBurstStep(t *testing.T) {
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{
+		ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 50, Focused: true,
+	}
+	request := json.RawMessage(`{
+		"sourceCastleId":40,"fullMap":true,
+		"bounds":{"x1":600,"y1":600,"x2":700,"y2":700}
+	}`)
+	plan, err := planStormMapScan(t.Context(), Intent.PlanningContext{State: state}, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 2 {
+		t.Fatalf("full Storm map steps = %#v", plan.Steps)
+	}
+	for index, action := range []string{"storm.scan.begin", "storm.scan.burst"} {
+		if plan.Steps[index].Action != action || plan.Steps[index].Opcode != "" {
+			t.Fatalf("full Storm map step %d = %#v, want action %q", index, plan.Steps[index], action)
+		}
+	}
+}
+
+func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
+	windows := []towerMapWindow{
+		{X1: 0, Y1: 0, X2: 100, Y2: 100},
+		{X1: 101, Y1: 0, X2: 201, Y2: 100},
+		{X1: 202, Y1: 0, X2: 302, Y2: 100},
+	}
+	observer := newStormMapBurstTestObserver()
+	sender := &stormMapBurstTestSender{
+		observer: observer, expectedSends: len(windows),
+	}
+	ctx := Outbound.WithMetadata(t.Context(), Outbound.Metadata{
+		OperationID: "storm-burst-test", Actor: "automation:autoStorm",
+	})
+	if err := runStormMapGAABurst(
+		ctx, sender, observer, stormIntentKingdomID, windows, stormMapBurstResponseTimeout,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if sender.watchersAtFirstSend != len(windows) {
+		t.Fatalf("watchers at first GAA send = %d, want %d", sender.watchersAtFirstSend, len(windows))
+	}
+	if observer.watcherCount() != 0 {
+		t.Fatalf("response watchers after burst = %d, want 0", observer.watcherCount())
+	}
+	if len(sender.frames) != len(windows) || len(sender.metadata) != len(windows) {
+		t.Fatalf("burst sends = %d frames and %d metadata entries", len(sender.frames), len(sender.metadata))
+	}
+	tokens := map[string]struct{}{}
+	for index := range sender.frames {
+		if sender.frames[index].Opcode != "gaa" {
+			t.Fatalf("burst opcode %d = %q", index, sender.frames[index].Opcode)
+		}
+		metadata := sender.metadata[index]
+		if metadata.ResponseTimeoutMillis != 15_000 || len(metadata.ResponseOpcodes) != 1 ||
+			metadata.ResponseOpcodes[0] != "gaa" || metadata.ResponseToken == "" {
+			t.Fatalf("burst response metadata %d = %#v", index, metadata)
+		}
+		if _, duplicate := tokens[metadata.ResponseToken]; duplicate {
+			t.Fatalf("duplicate GAA response token %q", metadata.ResponseToken)
+		}
+		tokens[metadata.ResponseToken] = struct{}{}
+	}
+	observer.mu.Lock()
+	waited := append([]uint64(nil), observer.waited...)
+	observer.mu.Unlock()
+	if len(waited) != 3 || waited[0] != 1 || waited[1] != 2 || waited[2] != 3 {
+		t.Fatalf("committed response slots = %v, want [1 2 3]", waited)
+	}
+}
+
+func TestPlanStormMapScanRejectsSecondAttemptInsideTwoHours(t *testing.T) {
 	state := State.NewGameState()
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 300, Y: 300, Focused: true}
 	state.Storm.Map = State.StormMapState{
@@ -99,10 +359,10 @@ func TestPlanStormMapScanRejectsSecondAttemptInsideSixHours(t *testing.T) {
 	}
 	request := json.RawMessage(`{
 		"sourceCastleId":40,"fullMap":true,
-		"bounds":{"x1":0,"y1":0,"x2":605,"y2":605}
+		"bounds":{"x1":600,"y1":600,"x2":700,"y2":700}
 	}`)
 	if _, err := planStormMapScan(context.Background(), Intent.PlanningContext{State: state}, request); err == nil ||
-		!strings.Contains(err.Error(), "one attempt every six hours") {
+		!strings.Contains(err.Error(), "one attempt every two hours") {
 		t.Fatalf("second full-map attempt error = %v", err)
 	}
 }
@@ -114,26 +374,27 @@ func TestCaptureStormScanBuildsAuthoritativeMapState(t *testing.T) {
 	state.Player.ID = 99
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, X: 300, Y: 300, Focused: true}
 	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{
-		"20:20": {
-			KingdomID: stormIntentKingdomID, X: 20, Y: 20, TypeID: stormIntentFortMapTypeID,
+		"420:420": {
+			KingdomID: stormIntentKingdomID, X: 420, Y: 420, TypeID: stormIntentFortMapTypeID,
 			StormIsleID: 7, ObservedAt: startedAt.Add(-time.Second),
 		},
-		"100:100": {
-			KingdomID: stormIntentKingdomID, X: 100, Y: 100, TypeID: stormIntentFortMapTypeID,
+		"650:650": {
+			KingdomID: stormIntentKingdomID, X: 650, Y: 650, TypeID: stormIntentFortMapTypeID,
 			StormIsleID: 8, ObservedAt: startedAt.Add(time.Second),
 		},
-		"600:600": {
-			KingdomID: stormIntentKingdomID, X: 600, Y: 600, TypeID: 12,
+		"899:899": {
+			KingdomID: stormIntentKingdomID, X: 899, Y: 899, TypeID: 12,
 			ObservedAt: startedAt.Add(2 * time.Second),
 		},
 	}
 	application := &Application{State: State.NewStore(state)}
-	request, err := json.Marshal(stormMapScanRequest{
+	scanRequest := stormMapScanRequest{
 		SourceCastleID: 40,
 		FullMap:        true,
-		Bounds:         State.StormMapBounds{X1: 0, Y1: 0, X2: 605, Y2: 605},
+		Bounds:         State.StormMapBounds{X1: 600, Y1: 600, X2: 700, Y2: 700},
 		ScanStartedAt:  startedAt,
-	})
+	}
+	request, err := json.Marshal(scanRequest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,19 +409,21 @@ func TestCaptureStormScanBuildsAuthoritativeMapState(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if err := application.captureStormScan(context.Background(), request); err != nil {
+	scanRequest.Bounds = State.StormMapBounds{X1: 400, Y1: 400, X2: 900, Y2: 900}
+	if err := application.captureStormScanRequest(scanRequest); err != nil {
 		t.Fatalf("capture after focus changed: %v", err)
 	}
 
 	snapshot := application.State.Snapshot()
-	if _, stale := snapshot.Map[stormIntentKingdomID]["20:20"]; stale {
+	if _, stale := snapshot.Map[stormIntentKingdomID]["420:420"]; stale {
 		t.Fatal("stale Storm fort survived authoritative sweep")
 	}
-	if len(snapshot.Storm.Map.Targets) != 1 || snapshot.Storm.Map.Targets["100:100"].StormIsleID != 8 {
+	if len(snapshot.Storm.Map.Targets) != 1 || snapshot.Storm.Map.Targets["650:650"].StormIsleID != 8 {
 		t.Fatalf("authoritative targets = %#v", snapshot.Storm.Map.Targets)
 	}
-	if snapshot.Storm.Map.WindowCount != 36 || snapshot.Storm.Map.CoveredBounds.X2 != 605 ||
-		snapshot.Storm.Map.NextBounds.X2 != 706 || snapshot.Storm.Map.NextBounds.Y2 != 706 {
+	if snapshot.Storm.Map.WindowCount != 25 ||
+		snapshot.Storm.Map.CoveredBounds != (State.StormMapBounds{X1: 400, Y1: 400, X2: 900, Y2: 900}) ||
+		snapshot.Storm.Map.NextBounds != snapshot.Storm.Map.CoveredBounds {
 		t.Fatalf("Storm map coverage = %#v", snapshot.Storm.Map)
 	}
 	if !snapshot.Storm.Map.LastAttemptAt.Equal(startedAt) || snapshot.Storm.Map.LastCompletedAt.IsZero() {

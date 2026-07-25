@@ -62,6 +62,12 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("attack.analytics.capture", application.captureAttackFeatureLaunch); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterStepResolver("alliance.target.attack.build", application.resolveAllianceTargetAttackStep); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterStepResolver("troops.station.build", resolveTroopsStationStep); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("movement.track_station", application.trackStationMovement); err != nil {
 		return err
 	}
@@ -198,6 +204,15 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	if err := application.Intents.RegisterAction("khan.attack.capture", application.captureKhanLaunch); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("khan.taunt.dispatched", application.recordKhanTauntDispatch); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("khan.cooldown.reports.resolve", application.resolveKhanCooldownReports); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("khan.lane.guard", application.guardKhanLane); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("khan.protection.guard", application.guardKhanProtection); err != nil {
@@ -416,6 +431,10 @@ func (application *Application) registerGameIntents() error {
 			Planner: planSpyLaunch,
 		},
 		{
+			Name: "alliance.target.attack", Description: "Launch a selected CitadelOps preset against an alliance target", Effect: Intent.EffectLaunch,
+			Planner: planAllianceTargetAttack,
+		},
+		{
 			Name: "tower.queue.scan", Description: "Focus one configured castle, refresh its tower map, and capture a fresh target batch", Effect: Intent.EffectRead,
 			Planner: planTowerQueueScan,
 		},
@@ -501,6 +520,18 @@ func (application *Application) registerGameIntents() error {
 			Name: "khan.attack", Description: "Launch one guarded attack against the active Nomad Khan camp", Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoKhan", Label: "Auto Khan", Description: "Guarded Khan camp attacks and retaliation chains", DefaultWeight: 50},
 			Planner:      planKhanAttack,
+		},
+		{
+			Name: "khan.taunt", Description: "Trigger the Khan retaliation when the player rage bar is full", Effect: Intent.EffectLaunch,
+			Planner: planKhanTaunt,
+		},
+		{
+			Name: "khan.cooldown.reports.resolve", Description: "Resolve report-linked Khan cooldown work after a fresh zero-second target re-ping", Effect: Intent.EffectWrite,
+			Planner: planKhanCooldownReportResolve,
+		},
+		{
+			Name: "khan.map.jump", Description: "Locate and jump the world map directly to the active Nomad Khan camp", Effect: Intent.EffectRead,
+			Planner: planKhanMapJump,
 		},
 		{
 			Name: "khan.open_gate", Description: "Open the main castle gates and activate the six-hour Auto Khan safety lock", Effect: Intent.EffectWrite,

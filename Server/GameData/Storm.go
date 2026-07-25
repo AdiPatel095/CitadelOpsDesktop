@@ -12,6 +12,7 @@ const (
 	StormLunaShopBuildType = 3
 	StormLunaShopTableID   = -1
 	StormLunaShopCastleID  = -1
+	StormTroopSupportMead  = 50_000
 	StormIsleKindFort      = "fort"
 	StormIsleKindIsland    = "island"
 	StormIslandSizeLarge   = "large"

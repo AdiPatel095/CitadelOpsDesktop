@@ -250,6 +250,67 @@ func TestCRASendGuardRejectsPendingOrPositiveCooldown(t *testing.T) {
 	}
 }
 
+func TestCRASendGuardTreatsKhanCooldownAsRetryableStaleState(t *testing.T) {
+	now := time.Now().UTC()
+	commanderID := State.CommanderID(17)
+	state := State.NewGameState()
+	state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 12, Y: 34}
+	state.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: true}
+	state.MovementSnapshot = State.MovementSnapshot{Version: 1, ObservedAt: now.Add(time.Second)}
+	state.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 1, KingdomID: 0, ObservedAt: now.Add(time.Second),
+		Target: State.AttackDialogTarget{
+			TypeID: khanCampTypeID, X: 56, Y: 78, EventCampID: 1146, EventCampCooldownRemaining: 194,
+		},
+	}
+	state.Map[0] = map[string]State.MapObservation{
+		"56:78": {
+			KingdomID: 0, TypeID: khanCampTypeID, X: 56, Y: 78,
+			EventCampID: 1146, EventCampCooldownRemaining: 194, ObservedAt: now.Add(time.Second),
+		},
+	}
+	application := &Application{State: State.NewStore(state)}
+	arguments, _ := json.Marshal(craSendGuardRequest{
+		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
+		DialogObservedAt: now, MovementsObservedAfter: now,
+	})
+	if err := application.guardCRASend(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("Khan cooldown guard error = %v, want retryable stale state", err)
+	}
+}
+
+func TestCRASendGuardTreatsPendingKhanLandingAsRetryableStaleState(t *testing.T) {
+	now := time.Now().UTC()
+	commanderID := State.CommanderID(17)
+	state := State.NewGameState()
+	state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 12, Y: 34}
+	state.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: true}
+	state.MovementSnapshot = State.MovementSnapshot{Version: 1, ObservedAt: now.Add(time.Second)}
+	state.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 1, KingdomID: 0, ObservedAt: now.Add(time.Second),
+		Target: State.AttackDialogTarget{
+			TypeID: khanCampTypeID, X: 56, Y: 78, EventCampID: 1146,
+		},
+	}
+	state.Map[0] = map[string]State.MapObservation{
+		"56:78": {
+			KingdomID: 0, TypeID: khanCampTypeID, X: 56, Y: 78,
+			EventCampID: 1146, ObservedAt: now.Add(time.Second),
+		},
+	}
+	state.NomadCamps.Cooldowns["0:56:78"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 56, Y: 78, LastSuccessfulBattleAt: now, PendingCooldownRefresh: true,
+	}
+	application := &Application{State: State.NewStore(state)}
+	arguments, _ := json.Marshal(craSendGuardRequest{
+		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
+		DialogObservedAt: now, MovementsObservedAfter: now,
+	})
+	if err := application.guardCRASend(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("pending Khan landing guard error = %v, want retryable stale state", err)
+	}
+}
+
 func TestCRASendGuardRejectsTowerCommanderLostAfterFreshMovementSnapshot(t *testing.T) {
 	now := time.Now().UTC()
 	commanderID := State.CommanderID(17)

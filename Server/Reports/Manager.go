@@ -22,6 +22,7 @@ type Manager struct {
 	state     *State.Store
 	history   *History.Store
 	analytics *SQLiteStore
+	cloud     *CloudUploader
 	intents   interface {
 		Submit(context.Context, Intent.Request) Intent.Receipt
 	}
@@ -40,7 +41,17 @@ func NewManager(state *State.Store, history *History.Store, intents interface {
 	if len(analytics) > 0 {
 		manager.analytics = analytics[0]
 	}
+	if manager.analytics != nil {
+		manager.cloud = NewCloudUploader(state, history, manager.analytics, NewCloudClient(CloudConfig{}))
+	}
 	return manager
+}
+
+func (manager *Manager) CloudClient() *CloudClient {
+	if manager == nil || manager.cloud == nil {
+		return nil
+	}
+	return manager.cloud.Client()
 }
 
 func (manager *Manager) Run(ctx context.Context) {
@@ -51,6 +62,9 @@ func (manager *Manager) Run(ctx context.Context) {
 		return
 	}
 	manager.loadArchivedMessages()
+	if manager.cloud != nil {
+		go manager.cloud.Run(ctx)
+	}
 	ticker := time.NewTicker(reportPollInterval)
 	defer ticker.Stop()
 	manager.processNext(ctx)
@@ -190,17 +204,25 @@ func (manager *Manager) archiveBattle(ctx context.Context, snapshot State.GameSt
 	report.AccountUID = snapshot.Account.UID
 	report.WorldID = snapshot.Account.WorldID
 	report.PlayerID = int64(snapshot.Player.ID)
-	if manager.analytics != nil {
+	report = enrichBattleReportAllianceIDs(report, snapshot)
+	if manager.analytics == nil {
+		if err := manager.history.Append(History.CollectionBattleReports, report); err != nil {
+			manager.setNoticeStatus(notice.MessageID, "error")
+			manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
+			return
+		}
+	} else if IsPvPBattleReport(report) {
+		if _, err := manager.cloud.Enqueue(ctx, report, capture); err != nil {
+			manager.setNoticeStatus(notice.MessageID, "error")
+			manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
+			return
+		}
+	} else {
 		if err := manager.analytics.Save(ctx, report); err != nil {
 			manager.setNoticeStatus(notice.MessageID, "error")
 			manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
 			return
 		}
-	}
-	if err := manager.history.Append(History.CollectionBattleReports, report); err != nil {
-		manager.setNoticeStatus(notice.MessageID, "error")
-		manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
-		return
 	}
 	manager.archived[notice.MessageID] = struct{}{}
 	manager.completeNotice(notice.MessageID)
@@ -218,6 +240,19 @@ func (manager *Manager) loadArchivedMessages() {
 			}
 			if json.Unmarshal(row, &report) == nil && report.MessageID > 0 {
 				manager.archived[report.MessageID] = struct{}{}
+			}
+		}
+	}
+	if manager.analytics != nil {
+		snapshot := manager.state.ReadOnlyView()
+		messageIDs, err := manager.analytics.ArchivedMessageIDs(context.Background(), BattleReportQuery{
+			AccountUID: snapshot.Account.UID,
+			WorldID:    snapshot.Account.WorldID,
+			PlayerID:   int64(snapshot.Player.ID),
+		})
+		if err == nil {
+			for _, messageID := range messageIDs {
+				manager.archived[messageID] = struct{}{}
 			}
 		}
 	}

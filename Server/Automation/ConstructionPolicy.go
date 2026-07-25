@@ -155,7 +155,7 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 						} else if !constructionInventoryAvailable(tiers, snapshot.State.Inventory.ConstructionItems, floor, ceiling) {
 							missingInventory++
 							if decision, status := constructionPurchaseDecision(snapshot, tiers, floor, ceiling); status != "" {
-								if decision.Request != nil {
+								if decision.Request != nil || status == "inventory-full" {
 									return decision, nil
 								}
 								blockedShop++
@@ -190,7 +190,7 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 			if !available {
 				missingInventory++
 				if decision, status := constructionPurchaseDecision(snapshot, tiers, floor, ceiling); status != "" {
-					if decision.Request != nil {
+					if decision.Request != nil || status == "inventory-full" {
 						return decision, nil
 					}
 					blockedShop++
@@ -352,6 +352,19 @@ func constructionPurchaseDecision(
 	floor int,
 	ceiling int,
 ) (Decision, string) {
+	inventoryCount := State.ConstructionItemInventoryCount(snapshot.State.Inventory.ConstructionItems)
+	remainingCapacity := State.ConstructionItemInventoryLimit - inventoryCount
+	if remainingCapacity <= 0 {
+		return Decision{
+			Status: "waiting",
+			Detail: fmt.Sprintf(
+				"Construction-item inventory is full (%d/%d)",
+				inventoryCount,
+				State.ConstructionItemInventoryLimit,
+			),
+			NextCheckAt: snapshot.Now.Add(constructionCheckInterval),
+		}, "inventory-full"
+	}
 	mainCastle, exists := constructionShopCastle(snapshot.State)
 	if !exists {
 		return Decision{}, "no-main-castle"
@@ -404,6 +417,7 @@ func constructionPurchaseDecision(
 		if amount <= 0 {
 			amount = 1
 		}
+		amount = min(amount, remainingCapacity)
 		arguments, _ := json.Marshal(map[string]any{
 			"castleId": mainCastle.ID, "productId": selected.PackageID, "amount": amount,
 		})

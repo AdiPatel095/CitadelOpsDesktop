@@ -59,9 +59,9 @@ func TestIsIncomingPlayerAttackRejectsKhanAndNPCMovements(t *testing.T) {
 	gameState.Castles[100] = CastleState{ID: 100, SlotType: 4}
 
 	khanTaunt := MovementState{
-		ID: 1, Direction: 1, TypeID: 2, OwnerPlayerID: 7, TargetPlayerID: 7,
-		SourceTypeID: 2, SourceCastleID: -1, TargetTypeID: 4, TargetCastleID: 100,
-		ReturnsAt: &arrives,
+		ID: 1, Direction: 0, TypeID: 20, OwnerPlayerID: -801, TargetPlayerID: 7,
+		SourceTypeID: 35, SourceCastleID: -1, TargetTypeID: 4, TargetCastleID: 100,
+		ArrivesAt: &arrives,
 	}
 	npcAttackShape := MovementState{
 		ID: 2, Direction: 0, TypeID: 0, TargetPlayerID: 7,

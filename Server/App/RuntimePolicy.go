@@ -17,6 +17,9 @@ import (
 const (
 	defaultAttackDelayMinSec = 4.0
 	defaultAttackDelayMaxSec = 6.0
+	defaultRelogDelaySec     = 5 * 60
+	minimumRelogDelaySec     = 60
+	maximumRelogDelaySec     = 24 * 60 * 60
 	commanderFeatureSection  = "automation.commanderFeatures"
 )
 
@@ -29,6 +32,10 @@ type runtimeSchedulerSettings struct {
 	MaxAttackDelay   float64        `json:"maxAttackDelay"`
 	BotLocked        bool           `json:"botLocked"`
 	AttackPriorities map[string]int `json:"attackPriorities"`
+}
+
+type runtimeSessionReconnectSettings struct {
+	RelogDelaySec int `json:"relogDelaySec"`
 }
 
 func (application *Application) attackLaunchDelay() time.Duration {
@@ -62,6 +69,23 @@ func (application *Application) runtimeSchedulerSettings() runtimeSchedulerSetti
 		_ = json.Unmarshal(raw, &settings)
 	}
 	return settings
+}
+
+func (application *Application) relogDelay() time.Duration {
+	settings := runtimeSessionReconnectSettings{RelogDelaySec: defaultRelogDelaySec}
+	if application != nil && application.Configuration != nil {
+		if raw, ok := application.Configuration.Section("session.reconnect"); ok {
+			_ = json.Unmarshal(raw, &settings)
+		}
+	}
+	seconds := settings.RelogDelaySec
+	if seconds < minimumRelogDelaySec {
+		seconds = minimumRelogDelaySec
+	}
+	if seconds > maximumRelogDelaySec {
+		seconds = maximumRelogDelaySec
+	}
+	return time.Duration(seconds) * time.Second
 }
 
 func (application *Application) automationLocked() bool {
@@ -130,6 +154,9 @@ func (application *Application) requireAssignedAttackCommanders(plan Intent.Plan
 	moduleID := strings.TrimSpace(plan.Admission.Module)
 	if moduleID == "" {
 		return fmt.Errorf("attack launch does not identify its commander feature")
+	}
+	if moduleID == manualAllianceAttackModuleID {
+		return nil
 	}
 	label := application.attackModuleLabel(moduleID)
 	if application.Configuration == nil {

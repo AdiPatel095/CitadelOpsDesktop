@@ -3,6 +3,7 @@ package API
 import (
 	"net/http"
 	"sort"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
@@ -164,7 +165,7 @@ func craftingMarketProjection(store *GameData.Store, snapshot State.GameState, c
 	}
 	marketCastle, loaded := snapshot.Market.Castles[castle.ID]
 	totalBarrows := marketCastle.TotalBarrows
-	availableBarrows := marketCastle.AvailableBarrows
+	availableBarrows := State.AvailableMarketBarrowsAt(snapshot, marketCastle, time.Now().UTC())
 	if totalBarrows <= 0 {
 		totalBarrows = baseBarrows + buildItemBarrows
 	}

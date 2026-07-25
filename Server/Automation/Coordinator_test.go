@@ -37,6 +37,21 @@ func (policy *coordinatorTestPolicy) WakeDomains() []string { return policy.doma
 
 func (policy *coordinatorTestPolicy) WakeSections() []string { return policy.sections }
 
+type coordinatorTestDerivedStatePolicy struct {
+	coordinatorTestPolicy
+	derivedSections []string
+	resetCalls      int
+}
+
+func (policy *coordinatorTestDerivedStatePolicy) ConfigurationDerivedStateSections() []string {
+	return policy.derivedSections
+}
+
+func (policy *coordinatorTestDerivedStatePolicy) ResetConfigurationDerivedState(gameState *State.GameState) ([]string, bool) {
+	policy.resetCalls++
+	return NewAutoTowerPolicy().ResetConfigurationDerivedState(gameState)
+}
+
 type coordinatorTestPassivePolicy struct {
 	id string
 }
@@ -47,6 +62,15 @@ func (policy *coordinatorTestPassivePolicy) EnabledKey() string { return policy.
 
 func (policy *coordinatorTestPassivePolicy) Evaluate(context.Context, Snapshot) (Decision, error) {
 	return Decision{}, nil
+}
+
+type coordinatorTestScheduleLanePolicy struct {
+	coordinatorTestPolicy
+	scheduleKey string
+}
+
+func (policy *coordinatorTestScheduleLanePolicy) ScheduleKey() string {
+	return policy.scheduleKey
 }
 
 type coordinatorTestSubmitter struct {
@@ -138,7 +162,7 @@ func TestCoordinatorIndexesAndRoutesDeclaredWakeDomains(t *testing.T) {
 		"zeta":    {nextCheck: next},
 		"passive": {nextCheck: next},
 	}
-	if !wakePoliciesForStateEvent(runtime, indexed, State.Event{Revision: 1, Domains: []string{" MOVEMENTS "}}) {
+	if woke, _ := wakePoliciesForStateEvent(runtime, indexed, nil, State.Event{Revision: 1, Domains: []string{" MOVEMENTS "}}); !woke {
 		t.Fatal("state event did not report waking idle policies")
 	}
 	if !runtime["alpha"].nextCheck.IsZero() || !runtime["zeta"].nextCheck.IsZero() {
@@ -207,6 +231,33 @@ func TestCoordinatorConfigurationFingerprintTracksOnlyRelevantSections(t *testin
 	}
 }
 
+func TestCoordinatorPolicyLaneUsesItsSharedScheduleKey(t *testing.T) {
+	lane := &coordinatorTestScheduleLanePolicy{
+		coordinatorTestPolicy: coordinatorTestPolicy{id: "autoKhan:cooldown"},
+		scheduleKey:           "autoKhan",
+	}
+	if key := policyScheduleKey(lane); key != "autoKhan" {
+		t.Fatalf("policy schedule key = %q", key)
+	}
+	before := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.enabled": json.RawMessage(`{"autoKhan:cooldown":true}`),
+		"scheduler": json.RawMessage(`{
+			"featureSchedules":{"autoKhan":{"enabled":true,"timeZone":"UTC","slots":[]}}
+		}`),
+	}}
+	after := before
+	after.Sections = map[string]json.RawMessage{}
+	for section, value := range before.Sections {
+		after.Sections[section] = value
+	}
+	after.Sections["scheduler"] = json.RawMessage(`{
+		"featureSchedules":{"autoKhan":{"enabled":false,"timeZone":"UTC","slots":[]}}
+	}`)
+	if policyConfigurationFingerprint(lane, before) == policyConfigurationFingerprint(lane, after) {
+		t.Fatal("shared Auto Khan schedule change did not change the cooldown lane fingerprint")
+	}
+}
+
 func TestCoordinatorMarksPolicyConfigurationChangesAfterInitialEvaluation(t *testing.T) {
 	state := State.NewStore(coordinatorReadyState())
 	configuration := openCoordinatorTestConfiguration(t, "configured")
@@ -229,6 +280,62 @@ func TestCoordinatorMarksPolicyConfigurationChangesAfterInitialEvaluation(t *tes
 	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
 	if snapshot := <-policy.snapshots; !snapshot.PolicyConfigurationChanged {
 		t.Fatal("policy configuration change was not exposed to the next evaluation")
+	}
+}
+
+func TestCoordinatorRebuildsConfigurationDerivedStateBeforeReevaluation(t *testing.T) {
+	gameState := coordinatorReadyState()
+	now := time.Now().UTC()
+	gameState.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{{TargetX: 101, TargetY: 100}}
+	gameState.TowerQueue.LastScannedAt[1] = now
+	gameState.TowerQueue.LastAttemptedAt[1] = now
+	gameState.TowerQueue.CapacityByCastle[1] = State.TowerCapacityObservation{AdditionalUnits: 7, ObservedAt: now}
+	state := State.NewStore(gameState)
+	configuration := openCoordinatorTestConfiguration(t, "derived")
+	before, err := configuration.Update("automation.derived", json.RawMessage(`{"radius":10}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy := &coordinatorTestDerivedStatePolicy{
+		coordinatorTestPolicy: coordinatorTestPolicy{
+			id: "derived", sections: []string{"automation.derived"}, snapshots: make(chan Snapshot, 2),
+			decision: Decision{Status: "idle", NextCheckAt: now.Add(time.Hour)},
+		},
+		derivedSections: []string{"automation.derived"},
+	}
+	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)
+	runtime := map[string]*policyRuntime{"derived": {}}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	if snapshot := <-policy.snapshots; len(snapshot.State.TowerQueue.EntriesByCastle[1]) != 1 {
+		t.Fatal("initial evaluation unexpectedly cleared derived state")
+	}
+
+	after, err := configuration.Update("automation.derived", json.RawMessage(`{"radius":25}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !coordinator.wakePoliciesForConfigurationEvent(runtime, Configuration.Event{
+		Revision: after.Revision, Section: "automation.derived",
+	}) {
+		t.Fatal("derived settings change did not wake the policy")
+	}
+	if !runtime["derived"].configurationRebuildPending {
+		t.Fatal("derived settings change did not request a rebuild")
+	}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	snapshot := <-policy.snapshots
+	if len(snapshot.State.TowerQueue.EntriesByCastle) != 0 || len(snapshot.State.TowerQueue.LastScannedAt) != 0 ||
+		len(snapshot.State.TowerQueue.LastAttemptedAt) != 0 {
+		t.Fatalf("policy evaluated against stale derived state: %+v", snapshot.State.TowerQueue)
+	}
+	if policy.resetCalls != 1 || runtime["derived"].configurationRebuildPending {
+		t.Fatalf("derived state reset calls=%d runtime=%+v", policy.resetCalls, runtime["derived"])
+	}
+	if got := state.Snapshot().TowerQueue.CapacityByCastle[1].AdditionalUnits; got != 7 {
+		t.Fatalf("authoritative capacity observation was cleared: %d", got)
+	}
+	if before.Revision >= after.Revision {
+		t.Fatalf("configuration revision did not advance: before=%d after=%d", before.Revision, after.Revision)
 	}
 }
 
@@ -710,7 +817,7 @@ func TestCoordinatorSessionEventWakesIdleAndLatchesRunningPolicies(t *testing.T)
 		"idle":    {nextCheck: next, evaluatedStateRevision: 3},
 		"running": {nextCheck: next, running: true, evaluatedStateRevision: 3},
 	}
-	if !wakePoliciesForStateEvent(runtime, nil, State.Event{Revision: 4, Domains: []string{"session"}}) {
+	if woke, _ := wakePoliciesForStateEvent(runtime, nil, nil, State.Event{Revision: 4, Domains: []string{"session"}}); !woke {
 		t.Fatal("session event did not report waking an idle policy")
 	}
 	if !runtime["idle"].nextCheck.IsZero() {
@@ -729,11 +836,12 @@ func TestCoordinatorDomainEventRecordsRunningStateProgress(t *testing.T) {
 	runtime := map[string]*policyRuntime{
 		"autoRecruit": {nextCheck: next, running: true},
 	}
-	if wakePoliciesForStateEvent(
+	if woke, _ := wakePoliciesForStateEvent(
 		runtime,
 		map[string][]string{"production": {"autoRecruit"}},
+		nil,
 		State.Event{Revision: 1, Domains: []string{"production"}},
-	) {
+	); woke {
 		t.Fatal("running-only state event incorrectly reported an idle wake")
 	}
 	current := runtime["autoRecruit"]
@@ -767,13 +875,13 @@ func TestCoordinatorIgnoresAlreadyEvaluatedWakeRevisions(t *testing.T) {
 		},
 	}
 	indexedDomains := map[string][]string{"production": {"policy"}}
-	if wakePoliciesForStateEvent(stateRuntime, indexedDomains, State.Event{Revision: 10, Domains: []string{"production"}}) {
+	if woke, _ := wakePoliciesForStateEvent(stateRuntime, indexedDomains, nil, State.Event{Revision: 10, Domains: []string{"production"}}); woke {
 		t.Fatal("already-evaluated state revision reported a wake")
 	}
 	if !stateRuntime["policy"].nextCheck.Equal(next) {
 		t.Fatal("already-evaluated state revision woke the policy")
 	}
-	if !wakePoliciesForStateEvent(stateRuntime, indexedDomains, State.Event{Revision: 11, Domains: []string{"production"}}) {
+	if woke, _ := wakePoliciesForStateEvent(stateRuntime, indexedDomains, nil, State.Event{Revision: 11, Domains: []string{"production"}}); !woke {
 		t.Fatal("new state revision did not report a wake")
 	}
 	if !stateRuntime["policy"].nextCheck.IsZero() {
@@ -1193,7 +1301,7 @@ func TestCoordinatorAutoInvasionFailureBackoffSurvivesStateWake(t *testing.T) {
 
 	runtime := map[string]*policyRuntime{"autoInvasion": current}
 	indexed := map[string][]string{"units": {"autoInvasion"}}
-	if !wakePoliciesForStateEvent(runtime, indexed, State.Event{Revision: 11, Domains: []string{"units"}}) {
+	if woke, _ := wakePoliciesForStateEvent(runtime, indexed, nil, State.Event{Revision: 11, Domains: []string{"units"}}); !woke {
 		t.Fatal("fresh unit state did not wake the idle policy")
 	}
 	if !current.nextCheck.IsZero() || !current.failureBlockedUntil.Equal(want) {

@@ -29,16 +29,25 @@ type Castle struct {
 }
 
 type Target struct {
-	PlayerID         int64   `json:"playerId"`
-	Name             string  `json:"name"`
-	Might            int64   `json:"might"`
-	UnderBird        bool    `json:"underBird"`
-	RPTSeconds       int     `json:"rptSeconds"`
-	BirdUntil        string  `json:"birdUntil,omitempty"`
-	UpdatedAt        string  `json:"updatedAt,omitempty"`
-	TargetCastle     Castle  `json:"targetCastle"`
-	ClosestOwnCastle Castle  `json:"closestOwnCastle"`
-	Distance         float64 `json:"distance"`
+	PlayerID         int64             `json:"playerId"`
+	Name             string            `json:"name"`
+	Level            int               `json:"level,omitempty"`
+	LegendLevel      int               `json:"legendLevel,omitempty"`
+	Might            int64             `json:"might"`
+	UnderBird        bool              `json:"underBird"`
+	RPTSeconds       int               `json:"rptSeconds"`
+	BirdUntil        string            `json:"birdUntil,omitempty"`
+	UpdatedAt        string            `json:"updatedAt,omitempty"`
+	TargetCastle     Castle            `json:"targetCastle"`
+	ClosestOwnCastle Castle            `json:"closestOwnCastle"`
+	Distance         float64           `json:"distance"`
+	SpyReport        *SpyReportSummary `json:"spyReport,omitempty"`
+}
+
+type SpyReportSummary struct {
+	CapturedAtUnixMillis int64  `json:"capturedAtUnixMillis"`
+	Status               string `json:"status"`
+	TotalTroops          int64  `json:"totalTroops"`
 }
 
 type Tavern struct {
@@ -72,6 +81,7 @@ type TargetCastleView struct {
 	CastleID int64  `json:"castleId,omitempty"`
 	Name     string `json:"name"`
 	TypeName string `json:"typeName,omitempty"`
+	TypeID   int    `json:"typeId,omitempty"`
 	X        int    `json:"x"`
 	Y        int    `json:"y"`
 }
@@ -83,13 +93,17 @@ type OwnCastleView struct {
 }
 
 type TargetView struct {
-	Name             string           `json:"name"`
-	Might            int64            `json:"might"`
-	UnderBird        bool             `json:"underBird"`
-	RPTSeconds       int              `json:"rptSeconds"`
-	TargetCastle     TargetCastleView `json:"targetCastle"`
-	ClosestOwnCastle OwnCastleView    `json:"closestOwnCastle"`
-	Distance         float64          `json:"distance"`
+	PlayerID         int64             `json:"playerId"`
+	Name             string            `json:"name"`
+	Level            int               `json:"level,omitempty"`
+	LegendLevel      int               `json:"legendLevel,omitempty"`
+	Might            int64             `json:"might"`
+	UnderBird        bool              `json:"underBird"`
+	RPTSeconds       int               `json:"rptSeconds"`
+	TargetCastle     TargetCastleView  `json:"targetCastle"`
+	ClosestOwnCastle OwnCastleView     `json:"closestOwnCastle"`
+	Distance         float64           `json:"distance"`
+	SpyReport        *SpyReportSummary `json:"spyReport,omitempty"`
 }
 
 type SpyAction struct {

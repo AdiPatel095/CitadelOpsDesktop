@@ -29,7 +29,9 @@ type AutoNomadPolicy struct{}
 type autoNomadSettings struct {
 	Version               int                      `json:"version"`
 	SourceCastleID        State.CastleID           `json:"sourceCastleId"`
-	PresetID              string                   `json:"presetId"`
+	LegacyPresetID        string                   `json:"presetId,omitempty"`
+	NomadPresetID         string                   `json:"nomadPresetId"`
+	SamuraiPresetID       string                   `json:"samuraiPresetId"`
 	NomadDifficultyID     int64                    `json:"nomadDifficultyId"`
 	SamuraiDifficultyID   int64                    `json:"samuraiDifficultyId"`
 	ScoreTarget           int64                    `json:"scoreTarget"`
@@ -77,7 +79,15 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if !decodeSection(snapshot.Configuration, "automation.autoNomad", &settings) {
 		return nomadWaiting(snapshot.Now, "Auto Nomad/Samurai is not configured"), nil
 	}
-	settings.PresetID = strings.TrimSpace(settings.PresetID)
+	settings.LegacyPresetID = strings.TrimSpace(settings.LegacyPresetID)
+	settings.NomadPresetID = strings.TrimSpace(settings.NomadPresetID)
+	settings.SamuraiPresetID = strings.TrimSpace(settings.SamuraiPresetID)
+	if settings.NomadPresetID == "" {
+		settings.NomadPresetID = settings.LegacyPresetID
+	}
+	if settings.SamuraiPresetID == "" {
+		settings.SamuraiPresetID = settings.LegacyPresetID
+	}
 	settings.RBCTest.RunID = strings.TrimSpace(settings.RBCTest.RunID)
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
 		return nomadWaiting(snapshot.Now, "Choose a supported horse travel boost"), nil
@@ -85,9 +95,9 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if settings.RBCTest.Enabled {
 		return evaluateAutoNomadRBCTest(snapshot, settings)
 	}
-	if settings.SourceCastleID <= 0 || settings.PresetID == "" || settings.ScoreTarget <= 0 ||
+	if settings.SourceCastleID <= 0 || settings.NomadPresetID == "" || settings.SamuraiPresetID == "" || settings.ScoreTarget <= 0 ||
 		settings.NomadDifficultyID <= 0 || settings.SamuraiDifficultyID <= 0 {
-		return nomadWaiting(snapshot.Now, "Choose a source castle, attack preset, both event difficulties, and score target"), nil
+		return nomadWaiting(snapshot.Now, "Choose a source castle, both event attack presets, both event difficulties, and score target"), nil
 	}
 	if invalidTimeSkipReserve(settings.TimeSkipReserve) {
 		return nomadWaiting(snapshot.Now, "Time-skip reserves cannot be negative"), nil
@@ -148,9 +158,9 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if err != nil {
 		return Decision{}, err
 	}
-	preset, exists := AttackPresets.Find(document, settings.PresetID)
+	preset, exists := AttackPresets.Find(document, configuredNomadPresetID(settings, score.EventID))
 	if !exists {
-		return nomadWaiting(snapshot.Now, "The selected CitadelOps attack preset no longer exists"), nil
+		return nomadWaiting(snapshot.Now, fmt.Sprintf("The selected %s attack preset no longer exists", nomadEventName(score.EventID))), nil
 	}
 	progression := snapshot.GameData.EventCampProgression(score.EventID, score.DifficultyID, targetTypeID)
 	if len(progression) == 0 {
@@ -388,6 +398,16 @@ func configuredNomadDifficulty(settings autoNomadSettings, eventID int64) int64 
 		return settings.SamuraiDifficultyID
 	}
 	return 0
+}
+
+func configuredNomadPresetID(settings autoNomadSettings, eventID int64) string {
+	if eventID == nomadEventID {
+		return settings.NomadPresetID
+	}
+	if eventID == samuraiEventID {
+		return settings.SamuraiPresetID
+	}
+	return ""
 }
 
 func nomadTargetType(eventID int64) (int, bool) {
@@ -684,8 +704,8 @@ func nomadAttackDecision(
 
 func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (Decision, error) {
 	trial := settings.RBCTest
-	if settings.SourceCastleID <= 0 || settings.PresetID == "" || trial.RunID == "" || trial.TargetX < 0 || trial.TargetY < 0 {
-		return nomadWaiting(snapshot.Now, "RBC trial requires a source, preset, target, and run id"), nil
+	if settings.SourceCastleID <= 0 || settings.NomadPresetID == "" || trial.RunID == "" || trial.TargetX < 0 || trial.TargetY < 0 {
+		return nomadWaiting(snapshot.Now, "RBC trial requires a source, Nomad preset, target, and run id"), nil
 	}
 	if !settings.SkipCooldowns {
 		return nomadWaiting(snapshot.Now, "Enable cooldown time skips before starting the RBC trial"), nil
@@ -704,9 +724,9 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 	if err != nil {
 		return Decision{}, err
 	}
-	preset, exists := AttackPresets.Find(document, settings.PresetID)
+	preset, exists := AttackPresets.Find(document, settings.NomadPresetID)
 	if !exists {
-		return nomadWaiting(snapshot.Now, "The selected RBC trial preset no longer exists"), nil
+		return nomadWaiting(snapshot.Now, "The selected Nomad preset for the RBC trial no longer exists"), nil
 	}
 	target, exists := snapshot.State.Map[source.KingdomID][fmt.Sprintf("%d:%d", trial.TargetX, trial.TargetY)]
 	if !exists || target.TypeID != kingdomTowerMapTypeID {

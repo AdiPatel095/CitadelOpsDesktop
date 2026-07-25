@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,6 +16,7 @@ import (
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
+	"github.com/chromedp/cdproto/target"
 	"github.com/chromedp/chromedp"
 	"github.com/chromedp/chromedp/kb"
 )
@@ -24,10 +25,15 @@ const defaultGameURL = "https://empire.goodgamestudios.com/"
 
 const (
 	browserEvaluationTimeout = 5 * time.Second
-	socketReconnectDelay     = 5 * time.Second
+	defaultRelogDelay        = 5 * time.Minute
+	websocketTrafficTimeout  = 30 * time.Second
+	websocketTrafficPoll     = 2 * time.Second
 	authenticationTimeout    = 2 * time.Minute
 	logoutReloadDelay        = 250 * time.Millisecond
 	credentialRestorePoll    = 500 * time.Millisecond
+	gameTargetPollInterval   = time.Second
+	socketResyncPoll         = 250 * time.Millisecond
+	socketResyncTimeout      = 5 * time.Second
 )
 
 type ChromiumConfig struct {
@@ -40,15 +46,19 @@ type ChromiumConfig struct {
 }
 
 type ChromiumTransport struct {
-	config     ChromiumConfig
-	browser    BrowserCandidate
-	resolveErr error
-	frames     chan RawFrame
-	statuses   chan Status
+	config          ChromiumConfig
+	browser         BrowserCandidate
+	selectedBrowser BrowserCandidate
+	resolveErr      error
+	frames          chan RawFrame
+	statuses        chan Status
 
 	mu                         sync.RWMutex
 	status                     Status
+	browserContext             context.Context
 	gameContext                context.Context
+	gameCancel                 context.CancelFunc
+	gameTargetID               target.ID
 	cancel                     context.CancelFunc
 	generation                 uint64
 	executionContextID         runtime.ExecutionContextID
@@ -60,6 +70,7 @@ type ChromiumTransport struct {
 	activeOrdinal              uint64
 	socketGeneration           uint64
 	nextSocketOrdinal          uint64
+	lastInboundAt              time.Time
 	loginCredential            persistedLoginCredential
 	restoreSuppressed          bool
 	restoreAttempted           bool
@@ -69,6 +80,7 @@ type ChromiumTransport struct {
 	) (bool, error)
 	credentialSubmitEvaluator func(context.Context) error
 	reloadEvaluator           func(context.Context) error
+	relogDelayProvider        func() time.Duration
 
 	sendGateOnce   sync.Once
 	sendGate       chan struct{}
@@ -108,6 +120,7 @@ type chromiumSocketNotice struct {
 	CloseCode            int                `json:"closeCode"`
 	CloseReason          string             `json:"closeReason"`
 	WasClean             bool               `json:"wasClean"`
+	Eligible             bool               `json:"eligible"`
 }
 
 type queuedSocketNotice struct {
@@ -142,7 +155,7 @@ func NewChromiumTransport(config ChromiumConfig) *ChromiumTransport {
 		detail = resolveErr.Error()
 	}
 	return &ChromiumTransport{
-		config: config, browser: browser, resolveErr: resolveErr,
+		config: config, browser: browser, selectedBrowser: browser, resolveErr: resolveErr,
 		frames: make(chan RawFrame, 8192), statuses: make(chan Status, 32),
 		status: Status{
 			State: state, Namespace: "EmpireEx_21", Detail: detail,
@@ -158,6 +171,9 @@ func NewChromiumTransport(config ChromiumConfig) *ChromiumTransport {
 }
 
 func (transport *ChromiumTransport) Start(ctx context.Context) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	transport.mu.Lock()
 	if transport.resolveErr != nil {
 		err := transport.resolveErr
@@ -199,42 +215,34 @@ func (transport *ChromiumTransport) Start(ctx context.Context) error {
 		transport.publishStatus(Status{State: "error", Detail: err.Error(), ChangedAt: time.Now().UTC()})
 		return fmt.Errorf("open %s: %w", browser.Name, err)
 	}
-	profileDir := filepath.Join(transport.config.DataDir, "Browser", browser.ID, "Profile")
+	profileDir := chromiumProfileDir(transport.config.DataDir, browser.ID)
 	if err := os.MkdirAll(profileDir, 0o700); err != nil {
 		transport.publishStatus(Status{State: "error", Detail: err.Error(), ChangedAt: time.Now().UTC()})
 		return fmt.Errorf("create %s profile: %w", browser.Name, err)
 	}
-	removeStaleChromiumLocks(profileDir)
-	opts := append([]chromedp.ExecAllocatorOption{}, chromedp.DefaultExecAllocatorOptions[:]...)
-	opts = append(opts,
-		chromedp.ExecPath(browser.ExecutablePath),
-		chromedp.Flag("headless", transport.config.Headless),
-		chromedp.Flag("disable-site-isolation-trials", true),
-		chromedp.Flag("disable-features", "IsolateOrigins,site-per-process"),
-		chromedp.UserDataDir(profileDir),
+	connection, err := connectChromiumProfile(
+		ctx, browser, profileDir, transport.config.DashboardURL, transport.config.Headless,
 	)
-	allocatorContext, allocatorCancel := chromedp.NewExecAllocator(ctx, opts...)
-	browserContext, browserCancel := chromedp.NewContext(allocatorContext)
-	cleanup := func() {
-		browserCancel()
-		allocatorCancel()
-	}
-	if transport.config.DashboardURL != "" {
-		if err := chromedp.Run(browserContext, chromedp.Navigate(transport.config.DashboardURL)); err != nil {
-			cleanup()
-			transport.publishStatus(Status{State: "error", Detail: err.Error(), ChangedAt: time.Now().UTC()})
-			return fmt.Errorf("open CitadelOps dashboard: %w", err)
-		}
-	} else if err := chromedp.Run(browserContext); err != nil {
-		cleanup()
+	if err != nil {
 		transport.publishStatus(Status{State: "error", Detail: err.Error(), ChangedAt: time.Now().UTC()})
-		return fmt.Errorf("start %s: %w", browser.Name, err)
+		return err
 	}
-
-	gameContext, gameCancel := chromedp.NewContext(browserContext)
+	dashboardContext, cancelDashboard := context.WithTimeout(
+		connection.context, chromiumEndpointStartupTimeout,
+	)
+	dashboardErr := ensureChromiumTarget(dashboardContext, transport.config.DashboardURL)
+	cancelDashboard()
+	if dashboardErr != nil {
+		connection.cancel()
+		transport.publishStatus(Status{State: "error", Detail: dashboardErr.Error(), ChangedAt: time.Now().UTC()})
+		return fmt.Errorf("open CitadelOps dashboard: %w", dashboardErr)
+	}
+	var cancelOnce sync.Once
 	cancelAll := func() {
-		gameCancel()
-		cleanup()
+		cancelOnce.Do(func() {
+			transport.detachGameContext(generation)
+			connection.cancel()
+		})
 	}
 	transport.mu.Lock()
 	if transport.generation != generation || transport.cancel != nil {
@@ -242,22 +250,239 @@ func (transport *ChromiumTransport) Start(ctx context.Context) error {
 		cancelAll()
 		return fmt.Errorf("Chromium session start was superseded")
 	}
-	transport.gameContext = gameContext
+	transport.browserContext = connection.context
 	transport.cancel = cancelAll
 	transport.resetSocketsLocked()
 	transport.mu.Unlock()
 	transport.resetSocketNoticeQueue()
-	go transport.runSocketNotices(gameContext, generation)
-
-	chromedp.ListenTarget(gameContext, func(event any) {
-		transport.handleEvent(generation, event)
+	go transport.runSocketNotices(connection.context, generation)
+	go transport.runSocketTrafficWatchdog(connection.context, generation)
+	detail := fmt.Sprintf("Started %s profile; attaching to the game tab", browser.Name)
+	if connection.reused {
+		detail = fmt.Sprintf("Reconnected to the existing %s profile; attaching to the game tab", browser.Name)
+	}
+	transport.publishStatus(Status{
+		State: "connecting", Namespace: "EmpireEx_21", Detail: detail, ChangedAt: time.Now().UTC(),
 	})
-	transport.publishStatus(Status{State: "connecting", Namespace: "EmpireEx_21", ChangedAt: time.Now().UTC()})
+	if err := transport.ensureGameTarget(connection.context, generation); err != nil {
+		cancelAll()
+		transport.clearRun(generation)
+		transport.publishStatus(Status{
+			State: "error", Namespace: "EmpireEx_21", Detail: err.Error(), ChangedAt: time.Now().UTC(),
+		})
+		return fmt.Errorf("open game: %w", err)
+	}
+	go transport.runGameTargetMonitor(connection.context, generation)
+	go transport.watchBrowserRun(ctx, connection.context, generation, cancelAll)
+	return nil
+}
+
+func (transport *ChromiumTransport) Stop(context.Context) error {
+	transport.mu.Lock()
+	cancel := transport.cancel
+	gameContext := transport.gameContext
+	gameCancel := transport.gameCancel
+	transport.cancel = nil
+	transport.browserContext = nil
+	transport.gameContext = nil
+	transport.gameCancel = nil
+	transport.gameTargetID = ""
+	transport.resetSocketsLocked()
+	transport.generation++
+	transport.mu.Unlock()
+	detachChromedpTarget(gameContext, gameCancel)
+	if cancel != nil {
+		cancel()
+	}
+	transport.resetSocketNoticeQueue()
+	transport.publishStatus(Status{State: "stopped", Namespace: "EmpireEx_21", ChangedAt: time.Now().UTC()})
+	return nil
+}
+
+func (transport *ChromiumTransport) watchBrowserRun(
+	callerContext context.Context,
+	browserContext context.Context,
+	generation uint64,
+	cancel context.CancelFunc,
+) {
+	select {
+	case <-callerContext.Done():
+	case <-browserContext.Done():
+	}
+	cancel()
+	if transport.clearRun(generation) {
+		transport.publishStatus(Status{
+			State: "disconnected", Namespace: "EmpireEx_21", ChangedAt: time.Now().UTC(),
+		})
+	}
+}
+
+func (transport *ChromiumTransport) runGameTargetMonitor(
+	browserContext context.Context,
+	generation uint64,
+) {
+	ticker := time.NewTicker(gameTargetPollInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-browserContext.Done():
+			return
+		case <-ticker.C:
+			if err := transport.ensureGameTarget(browserContext, generation); err != nil {
+				if !transport.isCurrent(generation) || browserContext.Err() != nil {
+					return
+				}
+				status := transport.Status()
+				status.State = "error"
+				status.LoggedIn = false
+				status.SocketReady = false
+				status.Detail = fmt.Sprintf("Recover game tab: %v", err)
+				status.ChangedAt = time.Now().UTC()
+				transport.publishStatus(status)
+			}
+		}
+	}
+}
+
+func (transport *ChromiumTransport) ensureGameTarget(
+	browserContext context.Context,
+	generation uint64,
+) error {
+	if !transport.isCurrent(generation) {
+		return context.Canceled
+	}
+	queryContext, cancelQuery := context.WithTimeout(browserContext, browserEvaluationTimeout)
+	targets, err := chromedp.Targets(queryContext)
+	cancelQuery()
+	if err != nil {
+		return err
+	}
+
+	transport.mu.RLock()
+	currentTargetID := transport.gameTargetID
+	currentGameContext := transport.gameContext
+	current := transport.generation == generation && transport.cancel != nil
+	transport.mu.RUnlock()
+	if !current {
+		return context.Canceled
+	}
+	var currentTarget *target.Info
+	for _, info := range targets {
+		if info == nil || info.TargetID != currentTargetID {
+			continue
+		}
+		currentTarget = info
+		break
+	}
+	if currentTarget != nil && currentGameContext != nil {
+		select {
+		case <-currentGameContext.Done():
+		default:
+			if isGamePageURL(currentTarget.URL) {
+				return nil
+			}
+			status := transport.Status()
+			status.State = "connecting"
+			status.LoggedIn = false
+			status.SocketReady = false
+			status.Detail = "Game tab navigated away; reopening the game in the same tab"
+			status.RetryAt = nil
+			status.ChangedAt = time.Now().UTC()
+			transport.publishStatus(status)
+			if err := transport.acquireSendGate(browserContext); err != nil {
+				return err
+			}
+			navigateErr := chromedp.Run(
+				currentGameContext, chromedp.Navigate(transport.config.GameURL),
+			)
+			transport.releaseSendGate()
+			if navigateErr != nil {
+				return navigateErr
+			}
+			connecting := transport.Status()
+			transport.scheduleConnectionTimeout(
+				generation, connecting.ConnectionGeneration, connecting.ChangedAt,
+			)
+			return nil
+		}
+	}
+
+	transport.detachGameContext(generation)
+	status := transport.Status()
+	status.State = "connecting"
+	status.LoggedIn = false
+	status.SocketReady = false
+	if currentTargetID != "" {
+		status.Detail = "Game tab closed; attaching to a replacement"
+	} else if status.Detail == "" {
+		status.Detail = "Attaching to the game tab"
+	}
+	status.RetryAt = nil
+	status.ChangedAt = time.Now().UTC()
+	transport.publishStatus(status)
+
+	var gameTargetID target.ID
+	for _, info := range targets {
+		if info != nil && info.Type == "page" && isGamePageURL(info.URL) {
+			gameTargetID = info.TargetID
+			break
+		}
+	}
+	navigate := false
+	if gameTargetID == "" {
+		gameTargetID, err = createChromiumTarget(browserContext, "about:blank")
+		if err != nil {
+			return err
+		}
+		navigate = true
+	}
+	if err := transport.attachGameTarget(
+		browserContext, generation, gameTargetID, navigate,
+	); err != nil {
+		return err
+	}
 	connecting := transport.Status()
 	transport.scheduleConnectionTimeout(
 		generation, connecting.ConnectionGeneration, connecting.ChangedAt,
 	)
-	setupErr := chromedp.Run(gameContext,
+	return nil
+}
+
+func (transport *ChromiumTransport) attachGameTarget(
+	browserContext context.Context,
+	generation uint64,
+	gameTargetID target.ID,
+	navigate bool,
+) error {
+	if err := transport.acquireSendGate(browserContext); err != nil {
+		return err
+	}
+	defer transport.releaseSendGate()
+
+	gameContext, gameCancel := chromedp.NewContext(
+		browserContext, chromedp.WithTargetID(gameTargetID),
+	)
+	transport.mu.Lock()
+	if transport.generation != generation || transport.cancel == nil ||
+		transport.browserContext != browserContext || transport.gameContext != nil {
+		transport.mu.Unlock()
+		detachChromedpTarget(gameContext, gameCancel)
+		return context.Canceled
+	}
+	transport.gameContext = gameContext
+	transport.gameCancel = gameCancel
+	transport.gameTargetID = gameTargetID
+	transport.restoreAttempted = false
+	transport.resetSocketsLocked()
+	transport.mu.Unlock()
+	transport.resetSocketNoticeQueue()
+
+	chromedp.ListenTarget(gameContext, func(event any) {
+		if transport.isCurrentGameContext(generation, gameContext) {
+			transport.handleEvent(generation, event)
+		}
+	})
+	actions := []chromedp.Action{
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			_, err := page.AddScriptToEvaluateOnNewDocument(chromiumTransportInjection).Do(ctx)
 			return err
@@ -265,38 +490,60 @@ func (transport *ChromiumTransport) Start(ctx context.Context) error {
 		runtime.AddBinding("citadelTransportNotify"),
 		network.Enable(),
 		runtime.Enable(),
-		chromedp.Navigate(transport.config.GameURL),
-	)
-	if setupErr != nil {
-		transport.clearRun(generation)
-		cancelAll()
-		transport.publishStatus(Status{
-			State: "error", Namespace: "EmpireEx_21", Detail: setupErr.Error(), ChangedAt: time.Now().UTC(),
-		})
-		return fmt.Errorf("open game: %w", setupErr)
 	}
-	go func() {
-		<-gameContext.Done()
-		if transport.clearRun(generation) {
-			transport.publishStatus(Status{State: "disconnected", Namespace: "EmpireEx_21", ChangedAt: time.Now().UTC()})
+	setupErr := chromedp.Run(gameContext, actions...)
+	if setupErr == nil {
+		if navigate {
+			setupErr = chromedp.Run(gameContext, chromedp.Navigate(transport.config.GameURL))
+		} else {
+			// A running tab cannot replay the login/bootstrap frames Citadel missed
+			// while detached. Reuse the tab and browser, but refresh the game once
+			// so reducers receive a complete current-session baseline.
+			setupErr = chromedp.Run(gameContext, chromedp.Reload())
 		}
-	}()
+	}
+	if setupErr != nil {
+		transport.mu.Lock()
+		if transport.generation == generation && transport.gameContext == gameContext {
+			transport.gameContext = nil
+			transport.gameCancel = nil
+			transport.gameTargetID = ""
+			transport.resetSocketsLocked()
+		}
+		transport.mu.Unlock()
+		transport.resetSocketNoticeQueue()
+		detachChromedpTarget(gameContext, gameCancel)
+		return setupErr
+	}
 	return nil
 }
 
-func (transport *ChromiumTransport) Stop(context.Context) error {
+func (transport *ChromiumTransport) isCurrentGameContext(
+	generation uint64,
+	gameContext context.Context,
+) bool {
+	transport.mu.RLock()
+	defer transport.mu.RUnlock()
+	return transport.generation == generation && transport.cancel != nil &&
+		transport.gameContext == gameContext
+}
+
+func (transport *ChromiumTransport) detachGameContext(generation uint64) {
 	transport.mu.Lock()
-	cancel := transport.cancel
-	transport.cancel = nil
-	transport.gameContext = nil
-	transport.resetSocketsLocked()
-	transport.generation++
-	transport.mu.Unlock()
-	if cancel != nil {
-		cancel()
+	if transport.generation != generation {
+		transport.mu.Unlock()
+		return
 	}
-	transport.publishStatus(Status{State: "stopped", Namespace: "EmpireEx_21", ChangedAt: time.Now().UTC()})
-	return nil
+	gameContext := transport.gameContext
+	gameCancel := transport.gameCancel
+	transport.gameContext = nil
+	transport.gameCancel = nil
+	transport.gameTargetID = ""
+	transport.restoreAttempted = false
+	transport.resetSocketsLocked()
+	transport.mu.Unlock()
+	transport.resetSocketNoticeQueue()
+	detachChromedpTarget(gameContext, gameCancel)
 }
 
 func (transport *ChromiumTransport) Send(ctx context.Context, payload []byte) error {
@@ -494,30 +741,46 @@ func (transport *ChromiumTransport) SelectBrowser(preference string) error {
 	if err != nil {
 		return err
 	}
-	transport.mu.Lock()
-	if transport.cancel != nil {
-		transport.mu.Unlock()
-		return fmt.Errorf("stop the active game session before changing browsers")
-	}
 	if err := saveBrowserPreference(transport.config.DataDir, candidate); err != nil {
-		transport.mu.Unlock()
 		return err
 	}
-	transport.browser = candidate
-	transport.resolveErr = nil
-	transport.config.Browser = candidate.ID
-	transport.config.ExecutablePath = candidate.ExecutablePath
-	status := transport.status
-	status.State = "stopped"
-	status.LoggedIn = false
-	status.SocketReady = false
-	status.BrowserID = candidate.ID
-	status.BrowserName = candidate.Name
-	status.Detail = ""
-	status.ChangedAt = time.Now().UTC()
+	transport.mu.Lock()
+	transport.selectedBrowser = candidate
 	transport.mu.Unlock()
-	transport.publishStatus(status)
 	return nil
+}
+
+func (transport *ChromiumTransport) BrowserInventory() BrowserInventory {
+	available := DiscoverChromiumBrowsers()
+	transport.mu.RLock()
+	current := transport.browser
+	selected := transport.selectedBrowser
+	transport.mu.RUnlock()
+	return browserInventory(current, selected, available)
+}
+
+func browserInventory(current BrowserCandidate, selected BrowserCandidate, available []BrowserCandidate) BrowserInventory {
+	inventory := BrowserInventory{
+		Available:       available,
+		RestartRequired: !sameBrowserCandidate(current, selected),
+		SelectionIntent: "session.select_browser",
+	}
+	if current.ID != "" {
+		currentCopy := current
+		inventory.Current = &currentCopy
+	}
+	if selected.ID != "" {
+		selectedCopy := selected
+		inventory.Selected = &selectedCopy
+	}
+	return inventory
+}
+
+func sameBrowserCandidate(left BrowserCandidate, right BrowserCandidate) bool {
+	if left.ID == "" || right.ID == "" {
+		return left.ID == right.ID
+	}
+	return left.ID == right.ID && samePath(left.ExecutablePath, right.ExecutablePath)
 }
 
 func (transport *ChromiumTransport) handleEvent(generation uint64, event any) {
@@ -535,9 +798,10 @@ func (transport *ChromiumTransport) handleEvent(generation uint64, event any) {
 		})
 	case *runtime.EventExecutionContextCreated:
 		if typed.Context == nil || typed.Context.Name != "" ||
-			!strings.Contains(strings.ToLower(typed.Context.Origin), "empire-html5.goodgamestudios.com") {
+			!isGameLoginOrigin(typed.Context.Origin) {
 			return
 		}
+		transport.scheduleSocketResync(generation, typed.Context.ID)
 		transport.scheduleCredentialRestore(generation, typed.Context.ID)
 	case *runtime.EventExecutionContextDestroyed:
 		transport.enqueueSocketNotice(queuedSocketNotice{
@@ -675,7 +939,8 @@ func (transport *ChromiumTransport) publishLoginFailure(
 		_ = json.Unmarshal(frame.Payload, &cooldown)
 		now := time.Now().UTC()
 		cooldownUntil := now.Add(time.Duration(max(0, cooldown.Seconds)) * time.Second)
-		retryAt := cooldownUntil.Add(5 * time.Second)
+		relogDelay := transport.relogDelay()
+		retryAt := cooldownUntil.Add(relogDelay)
 		status.State = "cooldown"
 		status.Detail = fmt.Sprintf("Login cooldown: %ds", cooldown.Seconds)
 		status.CooldownUntil = &cooldownUntil
@@ -684,7 +949,7 @@ func (transport *ChromiumTransport) publishLoginFailure(
 		if cooldown.Seconds > 0 {
 			go transport.reloadAfter(
 				generation, status.ConnectionGeneration,
-				time.Duration(cooldown.Seconds)*time.Second+5*time.Second,
+				time.Duration(cooldown.Seconds)*time.Second+relogDelay,
 			)
 		}
 	default:
@@ -852,6 +1117,9 @@ func (transport *ChromiumTransport) handleAuthenticationTimeout(
 }
 
 func (transport *ChromiumTransport) reloadGame(ctx context.Context) error {
+	transport.mu.Lock()
+	transport.restoreAttempted = false
+	transport.mu.Unlock()
 	if transport.reloadEvaluator != nil {
 		return transport.reloadEvaluator(ctx)
 	}
@@ -877,12 +1145,101 @@ func (transport *ChromiumTransport) scheduleSocketReconnect(
 	generation uint64,
 	connectionGeneration uint64,
 ) {
-	retryAt := time.Now().UTC().Add(socketReconnectDelay)
+	delay := transport.relogDelay()
+	retryAt := time.Now().UTC().Add(delay)
 	status := transport.Status()
 	status.RetryAt = &retryAt
 	status.ChangedAt = time.Now().UTC()
 	transport.publishStatus(status)
-	go transport.reloadAfter(generation, connectionGeneration, socketReconnectDelay)
+	go transport.reloadAfter(generation, connectionGeneration, delay)
+}
+
+func (transport *ChromiumTransport) SetRelogDelayProvider(provider func() time.Duration) {
+	transport.mu.Lock()
+	transport.relogDelayProvider = provider
+	transport.mu.Unlock()
+}
+
+func (transport *ChromiumTransport) relogDelay() time.Duration {
+	transport.mu.RLock()
+	provider := transport.relogDelayProvider
+	transport.mu.RUnlock()
+	if provider == nil {
+		return defaultRelogDelay
+	}
+	delay := provider()
+	if delay < 0 {
+		return defaultRelogDelay
+	}
+	return delay
+}
+
+func (transport *ChromiumTransport) runSocketTrafficWatchdog(
+	ctx context.Context,
+	generation uint64,
+) {
+	ticker := time.NewTicker(websocketTrafficPoll)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case now := <-ticker.C:
+			transport.mu.RLock()
+			lastInboundAt := transport.lastInboundAt
+			connectionGeneration := transport.status.ConnectionGeneration
+			timedOut := transport.generation == generation && transport.cancel != nil &&
+				transport.status.LoggedIn && transport.status.SocketReady &&
+				transport.activeToken != "" && !lastInboundAt.IsZero() &&
+				now.Sub(lastInboundAt) >= websocketTrafficTimeout
+			transport.mu.RUnlock()
+			if timedOut {
+				transport.handleSocketTrafficTimeout(
+					generation, connectionGeneration, lastInboundAt,
+				)
+			}
+		}
+	}
+}
+
+func (transport *ChromiumTransport) handleSocketTrafficTimeout(
+	generation uint64,
+	connectionGeneration uint64,
+	lastInboundAt time.Time,
+) {
+	runContext := transport.runContext(generation)
+	if runContext == nil || transport.acquireSendGate(runContext) != nil {
+		return
+	}
+	defer transport.releaseSendGate()
+
+	transport.mu.Lock()
+	if transport.generation != generation || transport.cancel == nil ||
+		transport.status.ConnectionGeneration != connectionGeneration ||
+		!transport.status.LoggedIn || !transport.status.SocketReady ||
+		transport.activeToken == "" || !transport.lastInboundAt.Equal(lastInboundAt) {
+		transport.mu.Unlock()
+		return
+	}
+	status := transport.status
+	status.State = "reconnecting"
+	status.LoggedIn = false
+	status.SocketReady = false
+	status.Detail = "Game websocket traffic stopped; reloading game and checking login"
+	status.RetryAt = nil
+	status.ChangedAt = time.Now().UTC()
+	transport.status = status
+	transport.restoreAttempted = false
+	transport.resetSocketsLocked()
+	gameContext := transport.gameContext
+	transport.mu.Unlock()
+	transport.enqueueStatus(status)
+
+	if err := transport.reloadGame(gameContext); err != nil {
+		transport.publishReloadFailure(status, "Reload game after websocket traffic stopped", err)
+		return
+	}
+	transport.scheduleConnectionTimeout(generation, connectionGeneration, status.ChangedAt)
 }
 
 func (transport *ChromiumTransport) publishStatus(status Status) {
@@ -955,7 +1312,7 @@ func (transport *ChromiumTransport) runContext(generation uint64) context.Contex
 	if transport.generation != generation || transport.cancel == nil {
 		return nil
 	}
-	return transport.gameContext
+	return transport.browserContext
 }
 
 func (transport *ChromiumTransport) acquireSendGate(ctx context.Context) error {
@@ -1120,20 +1477,23 @@ func (transport *ChromiumTransport) registerSocket(
 		return
 	}
 	transport.mu.Lock()
-	defer transport.mu.Unlock()
 	if transport.generation != generation || transport.cancel == nil {
+		transport.mu.Unlock()
 		return
 	}
 	if _, closed := transport.closedSockets[key]; closed {
+		transport.mu.Unlock()
 		return
 	}
 	if _, exists := transport.sockets[key]; exists {
+		transport.mu.Unlock()
 		return
 	}
 	transport.nextSocketOrdinal++
 	transport.sockets[key] = &chromiumSocket{
 		serverURL: notice.URL, ordinal: transport.nextSocketOrdinal, lastSequence: notice.Sequence,
 	}
+	transport.mu.Unlock()
 }
 
 func (transport *ChromiumTransport) processSocketFrame(
@@ -1186,8 +1546,26 @@ func (transport *ChromiumTransport) processSocketFrame(
 		}
 	}
 	if connectionGeneration, active := transport.activeSocketGeneration(generation, key); active {
+		if notice.Direction == Protocol.DirectionInbound {
+			transport.recordInboundTraffic(generation, key, observedAt)
+		}
 		transport.deliverSocketFrame(notice, observedAt, connectionGeneration)
 	}
+}
+
+func (transport *ChromiumTransport) recordInboundTraffic(
+	generation uint64,
+	key chromiumSocketKey,
+	observedAt time.Time,
+) {
+	transport.mu.Lock()
+	defer transport.mu.Unlock()
+	if transport.generation != generation || transport.cancel == nil ||
+		transport.activeSocket != key || !transport.status.LoggedIn ||
+		!transport.status.SocketReady || observedAt.Before(transport.lastInboundAt) {
+		return
+	}
+	transport.lastInboundAt = observedAt
 }
 
 func (transport *ChromiumTransport) recordSocketLoginFrame(
@@ -1230,7 +1608,6 @@ func (transport *ChromiumTransport) rememberSuccessfulLogin(
 	username := socket.loginUsername
 	password := socket.loginPassword
 	if username == "" || password == "" {
-		transport.restoreAttempted = false
 		transport.restoreSuppressed = false
 		transport.mu.Unlock()
 		return
@@ -1244,7 +1621,6 @@ func (transport *ChromiumTransport) rememberSuccessfulLogin(
 	}
 	transport.loginCredential = credential
 	transport.restoreSuppressed = false
-	transport.restoreAttempted = false
 	dataDir := transport.config.DataDir
 	transport.mu.Unlock()
 	_ = saveLoginCredential(dataDir, credential)
@@ -1334,6 +1710,7 @@ func (transport *ChromiumTransport) activateSocket(
 	transport.activeToken = key.token
 	transport.activeOrdinal = socket.ordinal
 	transport.executionContextID = key.executionContextID
+	transport.lastInboundAt = observedAt
 	socket.activatedSequence = sequence
 	transport.mu.Unlock()
 
@@ -1385,6 +1762,84 @@ func (transport *ChromiumTransport) evaluateSocketActivation(
 	return activated, err
 }
 
+func (transport *ChromiumTransport) scheduleSocketResync(
+	generation uint64,
+	executionContextID runtime.ExecutionContextID,
+) {
+	transport.mu.RLock()
+	gameContext := transport.gameContext
+	eligible := transport.generation == generation && transport.cancel != nil &&
+		gameContext != nil
+	transport.mu.RUnlock()
+	if !eligible {
+		return
+	}
+	go func() {
+		deadline := time.NewTimer(socketResyncTimeout)
+		defer deadline.Stop()
+		ticker := time.NewTicker(socketResyncPoll)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-gameContext.Done():
+				return
+			case <-deadline.C:
+				return
+			case <-ticker.C:
+			}
+			resynced, finished := transport.resyncExecutionContext(
+				generation, executionContextID,
+			)
+			if finished || resynced >= 0 {
+				return
+			}
+		}
+	}()
+}
+
+func (transport *ChromiumTransport) resyncExecutionContext(
+	generation uint64,
+	executionContextID runtime.ExecutionContextID,
+) (int, bool) {
+	transport.mu.RLock()
+	gameContext := transport.gameContext
+	current := transport.generation == generation && transport.cancel != nil &&
+		gameContext != nil
+	transport.mu.RUnlock()
+	if !current {
+		return -1, true
+	}
+	evaluationContext, cancelEvaluation := context.WithTimeout(
+		gameContext, browserEvaluationTimeout,
+	)
+	defer cancelEvaluation()
+	resynced := -1
+	err := chromedp.Run(evaluationContext, chromedp.ActionFunc(func(ctx context.Context) error {
+		result, exception, err := runtime.Evaluate(
+			`typeof globalThis.__citadelResync === "function"
+				? globalThis.__citadelResync()
+				: -1`,
+		).WithContextID(executionContextID).
+			WithReturnByValue(true).
+			WithAwaitPromise(true).
+			Do(ctx)
+		if err != nil {
+			return err
+		}
+		if exception != nil {
+			return fmt.Errorf("resync game execution context: %s", exception.Text)
+		}
+		if result != nil {
+			_ = json.Unmarshal(result.Value, &resynced)
+		}
+		return nil
+	}))
+	if err != nil {
+		return -1, false
+	}
+	return resynced, false
+}
+
 func (transport *ChromiumTransport) scheduleCredentialRestore(
 	generation uint64,
 	executionContextID runtime.ExecutionContextID,
@@ -1424,7 +1879,7 @@ func (transport *ChromiumTransport) restoreCredentialsInContext(
 ) bool {
 	transport.mu.RLock()
 	if transport.generation != generation || transport.cancel == nil ||
-		transport.status.LoggedIn || transport.restoreSuppressed ||
+		transport.status.LoggedIn || transport.restoreSuppressed || transport.restoreAttempted ||
 		!transport.loginCredential.AutoRestore || transport.loginCredential.Username == "" ||
 		transport.loginCredential.Password == "" || transport.gameContext == nil {
 		transport.mu.RUnlock()
@@ -1453,7 +1908,8 @@ func (transport *ChromiumTransport) restoreCredentialsInContext(
 		return false
 	}
 	transport.mu.Lock()
-	if transport.generation != generation || transport.cancel == nil || transport.restoreSuppressed {
+	if transport.generation != generation || transport.cancel == nil ||
+		transport.status.LoggedIn || transport.restoreSuppressed || transport.restoreAttempted {
 		transport.mu.Unlock()
 		return true
 	}
@@ -1834,6 +2290,7 @@ func (transport *ChromiumTransport) clearActiveSocketLocked() {
 	transport.activeToken = ""
 	transport.activeOrdinal = 0
 	transport.executionContextID = 0
+	transport.lastInboundAt = time.Time{}
 }
 
 func (transport *ChromiumTransport) resetSocketsLocked() {
@@ -1845,6 +2302,7 @@ func (transport *ChromiumTransport) resetSocketsLocked() {
 	transport.activeToken = ""
 	transport.activeOrdinal = 0
 	transport.nextSocketOrdinal = 0
+	transport.lastInboundAt = time.Time{}
 }
 
 func (transport *ChromiumTransport) publishSocketLoss(
@@ -1880,7 +2338,10 @@ func (transport *ChromiumTransport) clearRun(generation uint64) bool {
 		return false
 	}
 	transport.cancel = nil
+	transport.browserContext = nil
 	transport.gameContext = nil
+	transport.gameCancel = nil
+	transport.gameTargetID = ""
 	transport.resetSocketsLocked()
 	return true
 }
@@ -1889,10 +2350,23 @@ func isGameSocketURL(url string) bool {
 	return strings.Contains(strings.ToLower(url), "ep-live")
 }
 
-func removeStaleChromiumLocks(profileDir string) {
-	for _, name := range []string{"SingletonLock", "SingletonSocket", "SingletonCookie"} {
-		_ = os.Remove(filepath.Join(profileDir, name))
+func isGameLoginOrigin(origin string) bool {
+	parsed, err := url.Parse(strings.TrimSpace(origin))
+	if err != nil {
+		return false
 	}
+	host := strings.ToLower(parsed.Hostname())
+	return host == "empire.goodgamestudios.com" ||
+		host == "empire-html5.goodgamestudios.com"
+}
+
+func isGamePageURL(value string) bool {
+	parsed, err := url.Parse(strings.TrimSpace(value))
+	if err != nil {
+		return false
+	}
+	return (parsed.Scheme == "http" || parsed.Scheme == "https") &&
+		isGameLoginOrigin(parsed.Scheme+"://"+parsed.Host)
 }
 
 const httpSwitchingProtocols = 101
@@ -2043,6 +2517,27 @@ const chromiumTransportInjection = `
       return pending;
     };
     const responseMatchesRequest = (pending, opcode, payload) => {
+      if (pending && pending.requestOpcode === 'gaa' && opcode === 'gaa') {
+        const requestPayload = pending.requestPayload;
+        const responsePayload = payloadObjectOf(payload);
+        const responseParts = String(payload || '').split('%');
+        const responseCode = responseParts.length > 4 ? Number(responseParts[4]) : 0;
+        if (Number.isFinite(responseCode) && responseCode !== 0) return true;
+        if (!requestPayload || !responsePayload) return false;
+        const hasKingdom = Object.prototype.hasOwnProperty.call(responsePayload, 'KID');
+        if (hasKingdom && Number(responsePayload.KID) !== Number(requestPayload.KID)) return false;
+        const rows = Array.isArray(responsePayload.AI) ? responsePayload.AI : [];
+        const coordinates = rows.filter((row) =>
+          Array.isArray(row) && Number.isFinite(Number(row[1])) && Number.isFinite(Number(row[2])));
+        if (coordinates.length === 0) {
+          return hasKingdom && Number(responsePayload.KID) === Number(requestPayload.KID);
+        }
+        return coordinates.every((row) =>
+          Number(row[1]) >= Number(requestPayload.AX1) &&
+          Number(row[1]) <= Number(requestPayload.AX2) &&
+          Number(row[2]) >= Number(requestPayload.AY1) &&
+          Number(row[2]) <= Number(requestPayload.AY2));
+      }
       if (!pending || pending.requestOpcode !== 'ahr' || opcode !== 'ahh') return true;
       const requestPayload = pending.requestPayload;
       const responsePayload = payloadObjectOf(payload);
@@ -2055,8 +2550,28 @@ const chromiumTransportInjection = `
     const matchResponse = (record, opcode, payload) => {
       const now = Date.now();
       record.pendingResponses = record.pendingResponses.filter((pending) => pending.expiresAt > now);
-      const index = record.pendingResponses.findIndex((pending) =>
-        pending.opcodes.includes(opcode) && responseMatchesRequest(pending, opcode, payload));
+      let index = -1;
+      const responsePayload = opcode === 'gaa' ? payloadObjectOf(payload) : null;
+      const responseRows = responsePayload && Array.isArray(responsePayload.AI) ? responsePayload.AI : [];
+      if (opcode === 'gaa' && responseRows.length > 0) {
+        let smallestArea = Number.POSITIVE_INFINITY;
+        record.pendingResponses.forEach((pending, candidateIndex) => {
+          if (!pending.opcodes.includes(opcode) || !responseMatchesRequest(pending, opcode, payload)) return;
+          const requestPayload = pending.requestPayload;
+          if (!requestPayload) return;
+          const width = Number(requestPayload.AX2) - Number(requestPayload.AX1) + 1;
+          const height = Number(requestPayload.AY2) - Number(requestPayload.AY1) + 1;
+          const area = width > 0 && height > 0 ? width * height : Number.POSITIVE_INFINITY;
+          if (area < smallestArea) {
+            index = candidateIndex;
+            smallestArea = area;
+          }
+        });
+      }
+      if (index < 0) {
+        index = record.pendingResponses.findIndex((pending) =>
+          pending.opcodes.includes(opcode) && responseMatchesRequest(pending, opcode, payload));
+      }
       if (index < 0) return '';
       const [pending] = record.pendingResponses.splice(index, 1);
       return pending.token;
@@ -2153,6 +2668,18 @@ const chromiumTransportInjection = `
       record.epoch = String(epoch);
       return true;
     };
+    const resync = () => {
+      let count = 0;
+      for (const record of sockets.values()) {
+        if (!record || record.socket.readyState !== NativeWebSocket.OPEN) continue;
+        notify({
+          v: 1, type: 'created', token: record.token, seq: record.sequence, url: record.url,
+          eligible: record.eligible === true
+        });
+        count += 1;
+      }
+      return count;
+    };
     const send = (
       token, epoch, payload, responseToken, responseOpcodes, responseTimeoutMillis,
       causationOperationId
@@ -2207,9 +2734,10 @@ const chromiumTransportInjection = `
       }
     };
     const controller = {
-      activate, send, loginCredentials, restoreCredentials, closeGameUI, opcodeOf
+      activate, resync, send, loginCredentials, restoreCredentials, closeGameUI, opcodeOf
     };
     root.__citadelActivate = activate;
+    root.__citadelResync = resync;
     root.__citadelSend = send;
     root.__citadelRestoreCredentials = restoreCredentials;
     root.__citadelCloseGameUI = closeGameUI;
@@ -2304,13 +2832,19 @@ const chromiumTransportInjection = `
           if (!notice || notice.v !== 1 || typeof notice.token !== 'string') return;
           if (notice.type === 'created') {
             workerOwners.set(notice.token, {
-              bridge, sequence: notice.seq, url: typeof notice.url === 'string' ? notice.url : ''
+              bridge, sequence: notice.seq, url: typeof notice.url === 'string' ? notice.url : '',
+              eligible: notice.eligible === true
             });
           } else {
             const owner = workerOwners.get(notice.token);
             if (owner && owner.bridge === bridge) {
               owner.sequence = notice.seq;
               if (typeof notice.url === 'string' && notice.url) owner.url = notice.url;
+              if (notice.type === 'frame' && notice.direction === 'inbound' &&
+                  pageController && pageController.opcodeOf(notice.payload) === 'lli') {
+                const parts = String(notice.payload || '').split('%');
+                owner.eligible = parts.length > 4 && parts[4] === '0';
+              }
             }
           }
           forwardNotice(notice);
@@ -2417,6 +2951,20 @@ const chromiumTransportInjection = `
       Object.setPrototypeOf(WrappedWorker, NativeWorker);
     } catch (_) {}
     window.Worker = WrappedWorker;
+    const localResync = pageController && typeof pageController.resync === 'function'
+      ? pageController.resync : () => 0;
+    globalThis.__citadelResync = () => {
+      let count = localResync();
+      for (const [token, owner] of workerOwners) {
+        forwardNotice({
+          v: 1, type: 'created', token,
+          seq: Number.isSafeInteger(owner.sequence) ? owner.sequence : 1,
+          url: owner.url || '', eligible: owner.eligible === true
+        });
+        count += 1;
+      }
+      return count;
+    };
   }
 })();
 `

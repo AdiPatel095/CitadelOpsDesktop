@@ -110,7 +110,7 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	}
 	commander, err := towerCommander(input.State, request.MaidenOnly, request.CommanderIDs)
 	if err != nil {
-		return deferredSkipPlan("Skip tower attack: " + err.Error()), nil
+		return Intent.Plan{}, fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
 	useAttackDialogEffects := towerAttackDialogFreshForTarget(input.State.AttackDialog, source, target, now)
 	capacity, currentSource, _, err := resolveTowerAttackCapacity(input, request, commander, useAttackDialogEffects)

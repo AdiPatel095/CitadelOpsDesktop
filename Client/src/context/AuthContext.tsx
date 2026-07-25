@@ -157,10 +157,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const gameLoggedIn = connectionStatus === 'Connected' && session?.loggedIn === true && session.socketReady === true;
   const gameConnectionState = normalizeConnectionState(session?.status, gameLoggedIn);
 	useEffect(() => {
-		if (gameConnectionState !== 'cooldown') return;
+		if (session?.cooldownUntil == null && session?.retryAt == null) return;
 		const interval = window.setInterval(() => setNow(Date.now()), 1000);
 		return () => window.clearInterval(interval);
-	}, [gameConnectionState]);
+	}, [session?.cooldownUntil, session?.retryAt]);
 	useEffect(() => {
 		if (nextAutomationExpiry <= 0) return;
 		const timeout = window.setTimeout(

@@ -80,9 +80,15 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	if decision, refresh := foodBalanceStateRefreshDecision(snapshot, stateRefreshInterval); refresh {
 		return decision, nil
 	}
-	logisticsStale, logisticsErr := foodBalanceLogisticsStale(snapshot, logisticsRefreshInterval, settings.AutoKingdomTransport)
+	logisticsStale, marketLeaseUntil, logisticsErr := foodBalanceLogisticsStale(snapshot, logisticsRefreshInterval, settings.AutoKingdomTransport)
 	if logisticsErr != nil {
 		return Decision{}, logisticsErr
+	}
+	if !marketLeaseUntil.IsZero() {
+		return Decision{
+			Status: "waiting", Detail: "Waiting for leased market barrows to return before refreshing logistics",
+			NextCheckAt: marketLeaseUntil.Add(time.Second),
+		}, nil
 	}
 	if logisticsStale {
 		return Decision{
@@ -177,31 +183,41 @@ func foodBalanceStateRefreshDecision(snapshot Snapshot, interval time.Duration) 
 	return Decision{}, false
 }
 
-func foodBalanceLogisticsStale(snapshot Snapshot, interval time.Duration, includeKingdomTransport bool) (bool, error) {
+func foodBalanceLogisticsStale(snapshot Snapshot, interval time.Duration, includeKingdomTransport bool) (bool, time.Time, error) {
 	marketRequired, err := marketLogisticsRequired(snapshot)
 	if err != nil {
-		return false, err
+		return false, time.Time{}, err
 	}
 	kingdomRequired := includeKingdomTransport && kingdomLogisticsRequired(snapshot.State)
 	if !marketRequired && !kingdomRequired {
-		return false, nil
+		return false, time.Time{}, nil
 	}
-	oldest := time.Time{}
+	marketStale := false
 	if marketRequired {
 		if snapshot.State.Market.ObservedAt.IsZero() || !snapshot.State.Market.CaravanLevelLoaded {
-			return true, nil
+			marketStale = true
+		} else {
+			marketStale = snapshot.Now.Sub(snapshot.State.Market.ObservedAt) >= interval
 		}
-		oldest = snapshot.State.Market.ObservedAt
 	}
+	kingdomStale := false
 	if kingdomRequired {
 		if snapshot.State.KingdomTransport.ObservedAt.IsZero() {
-			return true, nil
-		}
-		if oldest.IsZero() || snapshot.State.KingdomTransport.ObservedAt.Before(oldest) {
-			oldest = snapshot.State.KingdomTransport.ObservedAt
+			kingdomStale = true
+		} else {
+			kingdomStale = snapshot.Now.Sub(snapshot.State.KingdomTransport.ObservedAt) >= interval
 		}
 	}
-	return snapshot.Now.Sub(oldest) >= interval, nil
+	if kingdomStale {
+		return true, time.Time{}, nil
+	}
+	if marketStale {
+		if releasesAt := State.NextMarketBarrowLeaseRelease(snapshot.State, snapshot.Now); !releasesAt.IsZero() {
+			return false, releasesAt, nil
+		}
+		return true, time.Time{}, nil
+	}
+	return false, time.Time{}, nil
 }
 
 func foodBalanceProjections(snapshot Snapshot) (map[State.CastleID]foodBalanceProjection, error) {
@@ -310,7 +326,8 @@ func foodBalanceMarketShipment(
 			continue
 		}
 		market, observed := snapshot.State.Market.Castles[candidate.castle.ID]
-		if !observed || market.AvailableBarrows <= 0 {
+		availableBarrows := State.AvailableMarketBarrowsAt(snapshot.State, market, snapshot.Now)
+		if !observed || availableBarrows <= 0 {
 			continue
 		}
 		capacityPerBarrow := marketCapacityPerBarrow(snapshot, market)
@@ -318,7 +335,7 @@ func foodBalanceMarketShipment(
 			continue
 		}
 		available := foodBalanceSourceAvailable(settings, candidate, risk.resourceID)
-		capacity := float64(market.AvailableBarrows * capacityPerBarrow)
+		capacity := float64(availableBarrows * capacityPerBarrow)
 		if shipment := math.Min(available, capacity); shipment > bestAvailable {
 			best, bestAvailable, bestCapacityPerBarrow = candidate, shipment, capacityPerBarrow
 		}

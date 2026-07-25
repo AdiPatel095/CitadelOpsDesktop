@@ -12,6 +12,7 @@ export interface QueueProductionItem {
 export interface QueueProductionCastleSettings {
   enabled: boolean;
   items: QueueProductionItem[];
+  cursor: number;
 }
 
 export interface QueueProductionClientSettingsV1 {
@@ -72,13 +73,28 @@ export function createQueueProductionClientState({
   };
 
   const normalizeItems = (raw: unknown): QueueProductionItem[] => {
+    let items: QueueProductionItem[];
     if (Array.isArray(raw)) {
-      return raw.map(normalizeItem).filter((item): item is QueueProductionItem => item != null);
+      items = raw.map(normalizeItem).filter((item): item is QueueProductionItem => item != null);
+    } else if (!raw || typeof raw !== 'object') {
+      items = [];
+    } else {
+      items = Object.entries(raw as Record<string, unknown>)
+        .map(([itemID, amount]) => normalizeItem({ id: itemID, amount }))
+        .filter((item): item is QueueProductionItem => item != null);
     }
-    if (!raw || typeof raw !== 'object') return [];
-    return Object.entries(raw as Record<string, unknown>)
-      .map(([itemID, amount]) => normalizeItem({ id: itemID, amount }))
-      .filter((item): item is QueueProductionItem => item != null);
+    const seen = new Set<number>();
+    return items.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  };
+
+  const normalizeCursor = (raw: unknown, itemCount: number) => {
+    const cursor = Number(raw);
+    if (!Number.isFinite(cursor) || cursor < 0 || itemCount <= 0) return 0;
+    return Math.floor(cursor) % itemCount;
   };
 
   const targetsMapToCastles = (
@@ -95,10 +111,11 @@ export function createQueueProductionClientState({
       castles[castleID] = {
         enabled: typeof enabledMap[castleID] === 'boolean' ? !!enabledMap[castleID] : items.length > 0,
         items,
+        cursor: 0,
       };
     });
     Object.entries(enabledMap).forEach(([castleID, enabled]) => {
-      if (!castles[castleID]) castles[castleID] = { enabled: !!enabled, items: [] };
+      if (!castles[castleID]) castles[castleID] = { enabled: !!enabled, items: [], cursor: 0 };
     });
     return castles;
   };
@@ -141,6 +158,7 @@ export function createQueueProductionClientState({
             return [castleID, {
               enabled: typeof castle.enabled === 'boolean' ? castle.enabled : items.length > 0,
               items,
+              cursor: normalizeCursor(castle.cursor, items.length),
             }];
           }),
         )

@@ -306,6 +306,81 @@ func TestRecruitPolicyPropagatesPerCastleScheduleKey(t *testing.T) {
 	}
 }
 
+func TestRecruitPolicyStrictlyRotatesPerCastleUnitsAfterSuccess(t *testing.T) {
+	now := time.Date(2026, 7, 23, 12, 0, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	raw := json.RawMessage(`{
+		"mode":"perCastle","checkIntervalSec":300,
+		"castles":{"77":{"enabled":true,"cursor":1,"items":[
+			{"id":489,"amount":25},{"id":490,"amount":30},{"id":491,"amount":35}
+		]}}
+	}`)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = raw
+
+	policy := NewRecruitPolicy()
+	wantUnits := []int64{490, 491, 489, 490}
+	wantExpectedCursors := []int{1, 2, 0, 1}
+	wantCursors := []int{2, 0, 1, 2}
+	for index, wantUnit := range wantUnits {
+		snapshot.Configuration.Sections["automation.recruitTroops"] = raw
+		decision, err := policy.Evaluate(context.Background(), snapshot)
+		if err != nil || decision.Request == nil || decision.Request.Name != "production.enqueue" {
+			t.Fatalf("rotation %d decision=%#v err=%v", index+1, decision, err)
+		}
+		arguments := productionIntentArguments(t, decision)
+		if arguments.DefinitionID != wantUnit || arguments.FillAvailable {
+			t.Fatalf("rotation %d arguments=%#v, want unit %d and one stack", index+1, arguments, wantUnit)
+		}
+		if decision.FollowUp == nil || decision.FollowUp.Name != "config.update" {
+			t.Fatalf("rotation %d did not defer cursor advancement until success: %#v", index+1, decision)
+		}
+		var update struct {
+			Value         json.RawMessage  `json:"value"`
+			ExpectedValue *json.RawMessage `json:"expectedValue"`
+		}
+		if err := json.Unmarshal(decision.FollowUp.Arguments, &update); err != nil {
+			t.Fatal(err)
+		}
+		if update.ExpectedValue == nil {
+			t.Fatalf("rotation %d cursor update was not conditional", index+1)
+		}
+		var expected productionSettings
+		if err := json.Unmarshal(*update.ExpectedValue, &expected); err != nil {
+			t.Fatal(err)
+		}
+		if cursor := expected.Castles["77"].Cursor; cursor != wantExpectedCursors[index] {
+			t.Fatalf("rotation %d expected cursor=%d, want %d", index+1, cursor, wantExpectedCursors[index])
+		}
+		var updated productionSettings
+		if err := json.Unmarshal(update.Value, &updated); err != nil {
+			t.Fatal(err)
+		}
+		if cursor := updated.Castles["77"].Cursor; cursor != wantCursors[index] {
+			t.Fatalf("rotation %d cursor=%d, want %d", index+1, cursor, wantCursors[index])
+		}
+		raw = update.Value
+	}
+}
+
+func TestRecruitPolicySinglePerCastleUnitStillFillsAvailableSlots(t *testing.T) {
+	now := time.Date(2026, 7, 23, 12, 0, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(`{
+		"mode":"perCastle","castles":{"77":{"enabled":true,"cursor":7,"items":[{"id":489,"amount":25}]}}
+	}`)
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("single-unit decision=%#v err=%v", decision, err)
+	}
+	if arguments := productionIntentArguments(t, decision); !arguments.FillAvailable || arguments.DefinitionID != 489 {
+		t.Fatalf("single-unit arguments=%#v", arguments)
+	}
+	if decision.FollowUp != nil {
+		t.Fatalf("single-unit configuration unexpectedly advanced a cursor: %#v", decision.FollowUp)
+	}
+}
+
 func TestRecruitPolicyWakesWhenPerCastleScheduleOpens(t *testing.T) {
 	now := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
 	snapshot := recruitPolicySnapshot(t, now)

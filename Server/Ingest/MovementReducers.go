@@ -13,6 +13,8 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+const khanTauntMovementTypeID = 20
+
 func newMovementReducer(authoritative bool) Reducer {
 	var snapshotMu sync.Mutex
 	var lastSnapshotFrame time.Time
@@ -54,12 +56,17 @@ func newMovementReducer(authoritative bool) Reducer {
 				next = make(map[State.MovementID]State.MovementState, len(items))
 				if !freshBaseline {
 					// Live gam replies are scoped and can omit owned movements that
-					// appeared in another reply. Retain active commander movements
-					// within the same connection until an explicit removal, a newer
-					// observation, or their conservative return time releases them.
+					// appeared in another reply. Retain active commander, market, and
+					// station movements within the same connection until an explicit
+					// removal, a newer observation, or their return time releases them.
 					for id, movement := range before {
-						if movement.CommanderID != nil && movementBelongsToCurrentPlayer(gameState, movement) &&
-							State.CommanderMovementActiveAt(movement, frame.ReceivedAt) {
+						owned := movementBelongsToCurrentPlayer(gameState, movement)
+						commanderActive := movement.CommanderID != nil && State.CommanderMovementActiveAt(movement, frame.ReceivedAt)
+						marketActive := movement.MarketBarrows > 0 && State.MarketBarrowMovementActiveAt(movement, frame.ReceivedAt)
+						stationActive := movement.Direction == 0 && movement.WaitSeconds > 0 &&
+							State.StationMovementActiveAt(movement, frame.ReceivedAt) ||
+							State.TrackedStationMovementActiveAt(*gameState, movement, frame.ReceivedAt)
+						if owned && (commanderActive || marketActive || stationActive) {
 							next[id] = movement
 						}
 					}
@@ -139,9 +146,8 @@ func reduceMovementRemoval(
 	return domains, true, nil
 }
 
-// ReconcileExpiredMovements removes ordinary movements whose observed arrival
-// or return time has passed and refreshes commander availability. Station waits
-// remain authoritative until a later game snapshot changes or removes them.
+// ReconcileExpiredMovements removes movements whose observed or projected
+// return time has passed and refreshes commander availability.
 func ReconcileExpiredMovements(gameState *State.GameState, now time.Time) bool {
 	if gameState == nil {
 		return false
@@ -151,8 +157,11 @@ func ReconcileExpiredMovements(gameState *State.GameState, now time.Time) bool {
 	}
 	changed := false
 	for id, movement := range gameState.Movements {
-		if movementActiveAt(movement, now) || movement.CommanderID != nil &&
-			movementBelongsToCurrentPlayer(gameState, movement) && State.CommanderMovementActiveAt(movement, now) {
+		owned := movementBelongsToCurrentPlayer(gameState, movement)
+		if movementActiveAt(movement, now) || owned && (movement.CommanderID != nil &&
+			State.CommanderMovementActiveAt(movement, now) || movement.MarketBarrows > 0 &&
+			State.MarketBarrowMovementActiveAt(movement, now) ||
+			State.TrackedStationMovementActiveAt(*gameState, movement, now)) {
 			continue
 		}
 		delete(gameState.Movements, id)
@@ -180,17 +189,18 @@ func resolveKhanTaunt(gameState *State.GameState, movementID State.MovementID, r
 		return false
 	}
 	delete(gameState.Khan.Taunts, movementID)
-	recordResolvedKhanTaunt(gameState, taunt)
-	gameState.Khan.TauntsResolved++
-	if resolvedAt.After(gameState.Khan.LastTauntResolvedAt) {
-		gameState.Khan.LastTauntResolvedAt = resolvedAt.UTC()
+	if recordResolvedKhanTaunt(gameState, taunt) {
+		gameState.Khan.TauntsResolved++
+		if resolvedAt.After(gameState.Khan.LastTauntResolvedAt) {
+			gameState.Khan.LastTauntResolvedAt = resolvedAt.UTC()
+		}
 	}
 	return true
 }
 
 func movementActiveAt(movement State.MovementState, now time.Time) bool {
 	if movement.Direction == 0 && movement.WaitSeconds > 0 {
-		return true
+		return State.StationMovementActiveAt(movement, now)
 	}
 	completesAt := movement.ProjectedCompletionAt()
 	return completesAt == nil || completesAt.IsZero() || completesAt.After(now)
@@ -339,13 +349,17 @@ func reconcileKhanTaunts(
 	}
 	changed := false
 	for _, movement := range movements {
-		if !isKhanTauntMovement(gameState, movement) || movement.ReturnsAt == nil || movement.ReturnsAt.IsZero() {
+		impactAt, taunt := khanTauntImpactAt(gameState, movement)
+		if !taunt {
 			continue
 		}
 		next := State.KhanTauntState{
-			MovementID: movement.ID, ObservedAt: observedAt.UTC(), ImpactAt: movement.ReturnsAt.UTC(),
+			MovementID: movement.ID, ObservedAt: observedAt.UTC(), ImpactAt: impactAt.UTC(),
 		}
 		current, exists := gameState.Khan.Taunts[movement.ID]
+		if !exists && resolvedKhanTauntExists(gameState, movement.ID) {
+			continue
+		}
 		if exists {
 			next.ObservedAt = current.ObservedAt
 		}
@@ -355,6 +369,12 @@ func reconcileKhanTaunts(
 		}
 		if !exists {
 			gameState.Khan.TauntsObserved++
+			if gameState.Khan.LastTauntTriggeredAt.IsZero() ||
+				gameState.Khan.LastTauntTriggeredRage < gameState.Khan.PlayerTotalRage {
+				gameState.Khan.TauntsTriggered++
+				gameState.Khan.LastTauntTriggeredAt = observedAt.UTC()
+				gameState.Khan.LastTauntTriggeredRage = gameState.Khan.PlayerTotalRage
+			}
 			launchedAt := movement.ObservedAt
 			if launchedAt.IsZero() {
 				launchedAt = observedAt
@@ -362,7 +382,7 @@ func reconcileKhanTaunts(
 			State.RecordEventAttackLaunch(gameState, 72, State.EventAttackRecord{
 				MovementID: movement.ID, Kind: State.EventActivityKhanDefense, KingdomID: movement.KingdomID,
 				TargetTypeID: movement.TargetTypeID, TargetX: movement.TargetX, TargetY: movement.TargetY,
-				LaunchedAt: launchedAt.UTC(), ArrivesAt: movement.ReturnsAt.UTC(),
+				LaunchedAt: launchedAt.UTC(), ArrivesAt: impactAt.UTC(),
 			})
 		}
 	}
@@ -374,24 +394,35 @@ func reconcileKhanTaunts(
 			continue
 		}
 		delete(gameState.Khan.Taunts, movementID)
-		recordResolvedKhanTaunt(gameState, taunt)
-		gameState.Khan.TauntsResolved++
-		if observedAt.After(gameState.Khan.LastTauntResolvedAt) {
-			gameState.Khan.LastTauntResolvedAt = observedAt.UTC()
+		if recordResolvedKhanTaunt(gameState, taunt) {
+			gameState.Khan.TauntsResolved++
+			if observedAt.After(gameState.Khan.LastTauntResolvedAt) {
+				gameState.Khan.LastTauntResolvedAt = observedAt.UTC()
+			}
 		}
 		changed = true
 	}
 	return changed
 }
 
-func recordResolvedKhanTaunt(gameState *State.GameState, taunt State.KhanTauntState) {
-	if gameState == nil || taunt.MovementID <= 0 {
-		return
+func resolvedKhanTauntExists(gameState *State.GameState, movementID State.MovementID) bool {
+	if gameState == nil || movementID <= 0 {
+		return false
 	}
 	for _, current := range gameState.Khan.ResolvedTaunts {
-		if current.MovementID == taunt.MovementID {
-			return
+		if current.MovementID == movementID {
+			return true
 		}
+	}
+	return false
+}
+
+func recordResolvedKhanTaunt(gameState *State.GameState, taunt State.KhanTauntState) bool {
+	if gameState == nil || taunt.MovementID <= 0 {
+		return false
+	}
+	if resolvedKhanTauntExists(gameState, taunt.MovementID) {
+		return false
 	}
 	gameState.Khan.ResolvedTaunts = append(gameState.Khan.ResolvedTaunts, taunt)
 	if len(gameState.Khan.ResolvedTaunts) > 256 {
@@ -399,12 +430,19 @@ func recordResolvedKhanTaunt(gameState *State.GameState, taunt State.KhanTauntSt
 			[]State.KhanTauntState(nil), gameState.Khan.ResolvedTaunts[len(gameState.Khan.ResolvedTaunts)-256:]...,
 		)
 	}
+	return true
 }
 
 func isKhanTauntMovement(gameState *State.GameState, movement State.MovementState) bool {
-	if movement.Direction != 1 || movement.TypeID != towerMapTypeID || movement.SourceTypeID != towerMapTypeID ||
-		movement.SourceCastleID >= 0 || movement.KingdomID != 0 {
+	if gameState == nil || movement.TypeID != khanTauntMovementTypeID || movement.SourceTypeID != khanCampMapTypeID ||
+		movement.KingdomID != 0 || movement.CommanderID != nil ||
+		movement.Direction != 0 && movement.Direction != 1 {
 		return false
+	}
+	for _, launch := range gameState.Khan.Launches {
+		if launch.MovementID == movement.ID {
+			return false
+		}
 	}
 	main, found := greatEmpireMainCastle(gameState)
 	if !found || movement.TargetX != main.X || movement.TargetY != main.Y {
@@ -418,6 +456,20 @@ func isKhanTauntMovement(gameState *State.GameState, movement State.MovementStat
 	}
 	_, active := gameState.EventScores.ByEvent[72]
 	return active
+}
+
+func khanTauntImpactAt(gameState *State.GameState, movement State.MovementState) (*time.Time, bool) {
+	if !isKhanTauntMovement(gameState, movement) {
+		return nil, false
+	}
+	impactAt := movement.ArrivesAt
+	if movement.Direction == 1 {
+		impactAt = movement.ReturnsAt
+	}
+	if impactAt == nil || impactAt.IsZero() {
+		return nil, false
+	}
+	return impactAt, true
 }
 
 func greatEmpireMainCastle(gameState *State.GameState) (State.CastleState, bool) {

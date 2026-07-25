@@ -64,14 +64,14 @@ func (*CraftingPolicy) ID() string { return "autoSceatRes" }
 func (*CraftingPolicy) EnabledKey() string { return "auto_sceat_resources" }
 
 func (*CraftingPolicy) WakeDomains() []string {
-	return []string{"crafting", "currencies", "kingdom-transport", "market", "movements", "resources"}
+	return []string{"crafting", "currencies", "resources"}
 }
 
 func (*CraftingPolicy) WakeSections() []string {
 	return []string{"automation.autoSceatResources"}
 }
 
-func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+func craftingSettingsFromSnapshot(snapshot Snapshot) (craftingSettings, json.RawMessage, bool) {
 	settings := craftingSettings{
 		CheckIntervalSec: 300, MinimumShipmentSize: 10_000, SourceReservePercent: 10,
 		OverflowThresholdPercent: 90, UseStormBuffer: true,
@@ -79,34 +79,20 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	}
 	raw := snapshot.Configuration.Sections["automation.autoSceatResources"]
 	if len(raw) == 0 || json.Unmarshal(raw, &settings) != nil {
+		return settings, raw, false
+	}
+	return settings, raw, true
+}
+
+func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+	settings, raw, configured := craftingSettingsFromSnapshot(snapshot)
+	if !configured {
 		return Decision{
 			Status: "waiting", Detail: "No sovereign crafting plan is configured",
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 300)),
 		}, nil
 	}
 	interval := policyInterval(settings.CheckIntervalSec, 300)
-	if settings.AutoKingdomTransport {
-		logisticsStale, logisticsErr := craftingLogisticsStale(snapshot, interval)
-		if logisticsErr != nil {
-			return Decision{}, logisticsErr
-		}
-		if logisticsStale {
-			return Decision{
-				Status:              "ready",
-				Detail:              "Refresh market and kingdom-resource logistics",
-				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
-				Request:             &Intent.Request{Name: "resource.logistics.refresh", Arguments: json.RawMessage(`{}`)},
-				ReevaluateOnSuccess: true,
-			}, nil
-		}
-	}
-	if decision, ready := ownedKingdomTransportDecision(
-		autoSceatTransportOwner, "Auto Sceat Resources",
-		settings.AutoKingdomTransport && settings.UseKingdomTimeSkips,
-		settings.AllowedTimeSkips, settings.TimeSkipReserve, snapshot,
-	); ready {
-		return decision, nil
-	}
 	if craftingSnapshotStale(settings, snapshot, interval) {
 		return Decision{
 			Status:              "ready",
@@ -120,6 +106,7 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	observed := 0
 	full := 0
 	waitingForResources := 0
+	var deferredRental *Decision
 	for _, castleKey := range sortedNumericKeys(settings.Castles) {
 		castleIDValue, _ := strconv.ParseInt(castleKey, 10, 64)
 		castleID := State.CastleID(castleIDValue)
@@ -145,7 +132,7 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			if cursor < 0 {
 				cursor = 0
 			}
-			selection, missingSelection, waiting, costErr := selectCraftingRecipe(
+			selection, _, waiting, costErr := selectCraftingRecipe(
 				snapshot, settings, castle, building, cycle, cursor,
 			)
 			if costErr != nil {
@@ -155,9 +142,9 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			capacity := 2 + len(building.ActiveSlotRentals) + len(building.QueueSlotRentals)
 			if occupied >= capacity {
 				full++
-				if selection.RecipeID > 0 {
+				if selection.RecipeID > 0 && deferredRental == nil {
 					if decision, ready := craftingRentalDecision(settings, snapshot, castle, building, plan); ready {
-						return decision, nil
+						deferredRental = &decision
 					}
 				}
 				if waiting {
@@ -168,11 +155,6 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			if selection.RecipeID <= 0 {
 				if waiting {
 					waitingForResources++
-				}
-				if settings.AutoKingdomTransport && missingSelection != nil {
-					if decision, handled := craftingTransportDecision(settings, snapshot, castle, missingSelection.Costs.Missing, interval); handled {
-						return decision, nil
-					}
 				}
 				continue
 			}
@@ -229,16 +211,8 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			}, nil
 		}
 	}
-	if settings.AutoKingdomTransport {
-		if decision, ready := craftingLootDrainDecision(settings, snapshot); ready {
-			return decision, nil
-		}
-		if decision, ready := marketOverflowDecision(settings, snapshot, interval); ready {
-			return decision, nil
-		}
-		if decision, ready := stormOverflowDecision(settings, snapshot, interval); ready {
-			return decision, nil
-		}
+	if deferredRental != nil {
+		return *deferredRental, nil
 	}
 	if decision, ready := rubyOverflowSkipDecision(settings, snapshot); ready {
 		return decision, nil

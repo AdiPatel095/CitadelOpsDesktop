@@ -235,7 +235,7 @@ func (application *Application) resolveNomadRBCTestAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve RBC trial attack capacity: %w", err)
 	}
-	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity, capacity.MaximumWaves)
+	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves))
 	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build RBC trial preset %q: %w", request.Preset.Name, err)

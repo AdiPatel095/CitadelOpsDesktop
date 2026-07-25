@@ -71,6 +71,25 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 	if request.Amount <= 0 || request.Amount > availableAmount {
 		return Intent.Plan{}, fmt.Errorf("amount must be between 1 and the available package amount %d", availableAmount)
 	}
+	if input.State.Inventory.ConstructionItemsObservedAt.IsZero() {
+		return Intent.Plan{}, fmt.Errorf("construction-item inventory has not been observed")
+	}
+	inventoryCount := State.ConstructionItemInventoryCount(input.State.Inventory.ConstructionItems)
+	remainingCapacity := State.ConstructionItemInventoryLimit - inventoryCount
+	if remainingCapacity <= 0 {
+		return Intent.Plan{}, fmt.Errorf(
+			"construction-item inventory is full (%d/%d)",
+			inventoryCount,
+			State.ConstructionItemInventoryLimit,
+		)
+	}
+	if request.Amount > remainingCapacity {
+		return Intent.Plan{}, fmt.Errorf(
+			"purchase amount %d exceeds the construction-item inventory capacity remaining %d",
+			request.Amount,
+			remainingCapacity,
+		)
+	}
 	payload, _ := json.Marshal(struct {
 		ProductID State.PackageID `json:"PID"`
 		BuildType int             `json:"BT"`

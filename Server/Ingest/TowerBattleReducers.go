@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
@@ -12,10 +13,9 @@ import (
 
 const towerMapTypeID = 2
 
-// reduceSuccessfulTowerBattle records only confirmed player victories from a
-// battle summary. The summary identifies the target, but not its cooldown;
-// Auto Towers therefore follows this with a one-tile map refresh and stores
-// the map's returned cooldown as the authoritative value.
+// reduceSuccessfulTowerBattle records confirmed player victories for kingdom
+// towers and Khan camps. The summary identifies the target, but not its
+// cooldown, so automation follows it with a one-tile map refresh.
 func reduceSuccessfulTowerBattle(
 	_ context.Context,
 	frame Protocol.Frame,
@@ -39,7 +39,8 @@ func reduceSuccessfulTowerBattle(
 	if err := json.Unmarshal(frame.Payload, &summary); err != nil {
 		return nil, false, fmt.Errorf("decode tower battle summary: %w", err)
 	}
-	if summary.Target.TypeID != towerMapTypeID || !battleSummaryHasOwnAttacker(summary.Participants, gameState.Player.ID) ||
+	if summary.Target.TypeID != towerMapTypeID && summary.Target.TypeID != khanCampMapTypeID ||
+		!battleSummaryHasOwnAttacker(summary.Participants, gameState.Player.ID) ||
 		!battleSummaryAttackerWon(summary.Participants) {
 		return nil, false, nil
 	}
@@ -47,7 +48,27 @@ func reduceSuccessfulTowerBattle(
 	if reportID <= 0 {
 		reportID = int64(summary.MessageID)
 	}
-	key := towerCooldownKey(State.KingdomID(summary.Target.KingdomID), summary.Target.X, summary.Target.Y)
+	kingdomID := State.KingdomID(summary.Target.KingdomID)
+	if summary.Target.TypeID == khanCampMapTypeID {
+		key := nomadCampCooldownKey(kingdomID, summary.Target.X, summary.Target.Y)
+		if _, exists := gameState.Khan.CooldownReports[reportID]; exists && reportID > 0 {
+			return nil, false, nil
+		}
+		if !recordKhanVictory(gameState, kingdomID, summary.Target.X, summary.Target.Y, reportID) {
+			return nil, false, nil
+		}
+		recordKhanCooldownReport(gameState, kingdomID, summary.Target.X, summary.Target.Y, reportID, frame.ReceivedAt)
+		if gameState.NomadCamps.Cooldowns == nil {
+			gameState.NomadCamps.Cooldowns = map[string]State.NomadCampCooldownState{}
+		}
+		gameState.NomadCamps.Cooldowns[key] = State.NomadCampCooldownState{
+			KingdomID: kingdomID, X: summary.Target.X, Y: summary.Target.Y,
+			ReportID: reportID, LastSuccessfulBattleAt: frame.ReceivedAt, PendingCooldownRefresh: true,
+		}
+		return []string{"khan", "nomad-camps"}, true, nil
+	}
+
+	key := towerCooldownKey(kingdomID, summary.Target.X, summary.Target.Y)
 	if gameState.TowerCooldowns == nil {
 		gameState.TowerCooldowns = map[string]State.TowerCooldownState{}
 	}
@@ -55,15 +76,12 @@ func reduceSuccessfulTowerBattle(
 		return nil, false, nil
 	}
 	gameState.TowerCooldowns[key] = State.TowerCooldownState{
-		KingdomID: State.KingdomID(summary.Target.KingdomID), X: summary.Target.X, Y: summary.Target.Y,
+		KingdomID: kingdomID, X: summary.Target.X, Y: summary.Target.Y,
 		ReportID: reportID, LastSuccessfulBattleAt: frame.ReceivedAt, PendingCooldownRefresh: true,
 	}
 	domains := []string{"tower-cooldowns"}
-	if recordRBCTestVictory(gameState, State.KingdomID(summary.Target.KingdomID), summary.Target.X, summary.Target.Y, reportID) {
+	if recordRBCTestVictory(gameState, kingdomID, summary.Target.X, summary.Target.Y, reportID) {
 		domains = append(domains, "nomad-camps")
-	}
-	if recordKhanVictory(gameState, State.KingdomID(summary.Target.KingdomID), summary.Target.X, summary.Target.Y, reportID) {
-		domains = append(domains, "khan")
 	}
 	return domains, true, nil
 }
@@ -89,6 +107,40 @@ func recordRBCTestVictory(gameState *State.GameState, kingdomID State.KingdomID,
 	test.VictoriesConfirmed++
 	test.LastReportID = reportID
 	return true
+}
+
+func recordKhanCooldownReport(
+	gameState *State.GameState,
+	kingdomID State.KingdomID,
+	x int,
+	y int,
+	reportID int64,
+	landedAt time.Time,
+) {
+	if gameState == nil || reportID <= 0 {
+		return
+	}
+	if gameState.Khan.CooldownReports == nil {
+		gameState.Khan.CooldownReports = map[int64]State.KhanCooldownReportState{}
+	}
+	gameState.Khan.CooldownReports[reportID] = State.KhanCooldownReportState{
+		ReportID: reportID, KingdomID: kingdomID, X: x, Y: y, LandedAt: landedAt.UTC(),
+	}
+	if len(gameState.Khan.CooldownReports) <= 512 {
+		return
+	}
+	var oldestID int64
+	var oldestAt time.Time
+	for candidateID, report := range gameState.Khan.CooldownReports {
+		if report.ResolvedAt.IsZero() ||
+			oldestID != 0 && !report.ResolvedAt.Before(oldestAt) {
+			continue
+		}
+		oldestID, oldestAt = candidateID, report.ResolvedAt
+	}
+	if oldestID > 0 {
+		delete(gameState.Khan.CooldownReports, oldestID)
+	}
 }
 
 func battleSummaryHasOwnAttacker(participants [][]json.RawMessage, playerID State.PlayerID) bool {

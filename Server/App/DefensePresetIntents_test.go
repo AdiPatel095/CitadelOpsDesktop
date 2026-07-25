@@ -38,6 +38,48 @@ func TestPlanDefensePresetApplyReadsBeforeCombinedWrites(t *testing.T) {
 	}
 }
 
+func TestKhanDefensePresetRechecksSafetyImmediatelyBeforeEachWrite(t *testing.T) {
+	gameState := defenseIntentState()
+	castle := gameState.Castles[10]
+	castle.SlotType = 1
+	gameState.Castles[10] = castle
+	request := defensePresetRequest(castle)
+	request.KhanGuard = &khanLaneGuardRequest{MainCastleID: castle.ID}
+	arguments, _ := json.Marshal(request)
+
+	plan, err := planDefensePresetApply(t.Context(), Intent.PlanningContext{State: gameState}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	guardCount := 0
+	for index, step := range plan.Steps {
+		if step.Action == "khan.lane.guard" {
+			guardCount++
+			var guard khanLaneGuardActionRequest
+			if err := decodeIntentArguments(step.ActionArguments, &guard); err != nil ||
+				guard.KhanGuard.MainCastleID != castle.ID {
+				t.Fatalf("Khan defense guard arguments = %#v, err=%v", guard, err)
+			}
+		}
+		if step.Resolver == "defense.preset.wall.build" || step.Resolver == "defense.moat.build" {
+			if index == 0 || plan.Steps[index-1].Action != "khan.lane.guard" {
+				t.Fatalf("Khan defense write lacked an immediate safety guard: %#v", plan.Steps)
+			}
+		}
+	}
+	if guardCount != 3 {
+		t.Fatalf("Khan defense guard count = %d, steps=%#v", guardCount, plan.Steps)
+	}
+
+	openUntil := time.Now().UTC().Add(time.Hour)
+	castle.Defense.OpenGateUntil = &openUntil
+	gameState.Castles[10] = castle
+	if _, err := planDefensePresetApply(t.Context(), Intent.PlanningContext{State: gameState}, arguments); err == nil ||
+		!strings.Contains(err.Error(), "gates are open") {
+		t.Fatalf("Khan open-gate safety error = %v", err)
+	}
+}
+
 func TestResolveDefensePresetWallValidatesMoatBeforeFirstWrite(t *testing.T) {
 	gameState := defenseIntentState()
 	now := time.Now().UTC()

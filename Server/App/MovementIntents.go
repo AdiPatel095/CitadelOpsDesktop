@@ -114,6 +114,89 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 	for _, unitID := range unitIDs {
 		wireUnits = append(wireUnits, [2]int64{unitID, amounts[State.UnitID(unitID)]})
 	}
+	resolverArguments, _ := json.Marshal(request)
+	steps := []Intent.Step{stationCastleContextStep(source)}
+	steps = append(steps, stationRouteContextSteps(source, target)...)
+	steps = append(steps, Intent.Step{
+		Name: "Station troops", Resolver: "troops.station.build", ResolverArguments: resolverArguments,
+		AwaitOpcode: "cds", TimeoutMillis: 10_000, SuccessCodes: []int{0},
+	})
+	if request.Purpose != "" {
+		steps = append(steps, Intent.Step{
+			Name: "Track station movement", Action: "movement.track_station", ActionArguments: resolverArguments,
+		})
+	}
+	return Intent.Plan{
+		Claims: []string{
+			"castle-focus", "castle:" + strconv.FormatInt(int64(source.ID), 10),
+			"alliance-holding:" + strconv.FormatInt(int64(target.CastleID), 10),
+		},
+		Summary: fmt.Sprintf("Station %d unit stack(s) from %s", len(wireUnits), castleLabel(source)),
+		Steps:   steps,
+	}, nil
+}
+
+func resolveTroopsStationStep(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Step, error) {
+	var request stationRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Step{}, err
+	}
+	automation := request.Purpose == "autoBird" || request.Purpose == "autoStation"
+	now := time.Now().UTC()
+	if automation && input.State.Player.ProtectionMode.PreparingOrActive(now) {
+		return Intent.Step{}, fmt.Errorf("%s stationing is disabled while Protection Mode is preparing or active", request.Purpose)
+	}
+	if operation, exists := input.State.Stationing[request.TrackingID]; exists && automation &&
+		operation.ActiveAt(input.State.Movements, now) {
+		return Intent.Step{}, fmt.Errorf("%s stationing is already active from castle %d", request.Purpose, request.SourceCastleID)
+	}
+	source, exists := input.State.Castles[request.SourceCastleID]
+	if !exists || source.ID <= 0 {
+		return Intent.Step{}, fmt.Errorf("source castle %d is not in the current player state", request.SourceCastleID)
+	}
+	target, exists := allianceHolding(input.State.Alliance, request.TargetCastleID)
+	if !exists || !stationHoldingType(target.SlotType) {
+		return Intent.Step{}, fmt.Errorf("target castle %d is not a supported alliance holding", request.TargetCastleID)
+	}
+	if target.KingdomID != source.KingdomID {
+		return Intent.Step{}, fmt.Errorf("station movements cannot cross kingdoms")
+	}
+
+	amounts := make(map[State.UnitID]int64, len(request.Units))
+	for _, item := range request.Units {
+		if item.UnitID <= 0 || item.Amount <= 0 {
+			return Intent.Step{}, fmt.Errorf("station unit ids and amounts must be positive")
+		}
+		if _, duplicate := amounts[item.UnitID]; duplicate {
+			return Intent.Step{}, fmt.Errorf("unit %d appears more than once", item.UnitID)
+		}
+		available := source.Units.Stationed[item.UnitID]
+		amount := item.Amount
+		if amount > available {
+			if !automation {
+				return Intent.Step{}, fmt.Errorf(
+					"castle %d now has %d stationed unit %d; %d requested",
+					source.ID, available, item.UnitID, amount,
+				)
+			}
+			amount = available
+		}
+		if amount > 0 {
+			amounts[item.UnitID] = amount
+		}
+	}
+	if len(amounts) == 0 {
+		return Intent.Step{}, fmt.Errorf("no requested troops remain stationed at castle %d", source.ID)
+	}
+	unitIDs := make([]int64, 0, len(amounts))
+	for unitID := range amounts {
+		unitIDs = append(unitIDs, int64(unitID))
+	}
+	sort.Slice(unitIDs, func(left, right int) bool { return unitIDs[left] < unitIDs[right] })
+	wireUnits := make([][2]int64, 0, len(unitIDs))
+	for _, unitID := range unitIDs {
+		wireUnits = append(wireUnits, [2]int64{unitID, amounts[State.UnitID(unitID)]})
+	}
 	dispatch, _ := json.Marshal(struct {
 		SourceID State.CastleID `json:"SID"`
 		TargetX  int            `json:"TX"`
@@ -126,23 +209,7 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 		Delay    int            `json:"SD"`
 		Units    [][2]int64     `json:"A"`
 	}{source.ID, target.X, target.Y, stationLeaderID, request.DelayHours, -1, 1, 1, 0, wireUnits})
-	steps := castleContextSteps(source)
-	steps = append(steps, stationRouteContextSteps(source, target)...)
-	steps = append(steps, commandStep("Station troops", "cds", dispatch, "cds"))
-	if request.Purpose != "" {
-		canonical, _ := json.Marshal(request)
-		steps = append(steps, Intent.Step{
-			Name: "Track station movement", Action: "movement.track_station", ActionArguments: canonical,
-		})
-	}
-	return Intent.Plan{
-		Claims: []string{
-			"castle-focus", "castle:" + strconv.FormatInt(int64(source.ID), 10),
-			"alliance-holding:" + strconv.FormatInt(int64(target.CastleID), 10),
-		},
-		Summary: fmt.Sprintf("Station %d unit stack(s) from %s", len(wireUnits), castleLabel(source)),
-		Steps:   steps,
-	}, nil
+	return commandStep("Station troops", "cds", dispatch, "cds"), nil
 }
 
 func planMovementRecall(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -187,9 +254,11 @@ func (application *Application) trackStationMovement(_ context.Context, argument
 	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
 		now := time.Now().UTC()
 		current := gameState.Stationing[request.TrackingID]
+		successCooldownUntil := now.Add(time.Duration(request.DelayHours) * time.Hour)
 		next := State.StationingOperation{
 			ID: request.TrackingID, Purpose: request.Purpose, SourceCastleID: request.SourceCastleID,
-			TargetCastleID: request.TargetCastleID, Units: units, CreatedAt: current.CreatedAt, UpdatedAt: now,
+			TargetCastleID: request.TargetCastleID, Units: units, SuccessCooldownUntil: &successCooldownUntil,
+			CreatedAt: current.CreatedAt, UpdatedAt: now,
 		}
 		if next.CreatedAt.IsZero() {
 			next.CreatedAt = now
@@ -201,11 +270,18 @@ func (application *Application) trackStationMovement(_ context.Context, argument
 		target, _ := allianceHolding(gameState.Alliance, request.TargetCastleID)
 		for id, movement := range gameState.Movements {
 			if movement.SourceCastleID != request.SourceCastleID || movement.Direction != 0 ||
-				movement.TargetX != target.X || movement.TargetY != target.Y || !reflect.DeepEqual(movement.Units, units) {
+				movement.TargetX != target.X || movement.TargetY != target.Y ||
+				!stationMovementUnitsWithinRequest(movement.Units, units) {
 				continue
 			}
 			if id > next.MovementID {
 				next.MovementID = id
+				next.Units = cloneStationUnits(movement.Units)
+			}
+			if releasesAt := State.StationMovementReleaseAt(movement); releasesAt != nil &&
+				releasesAt.After(*next.SuccessCooldownUntil) {
+				release := releasesAt.UTC()
+				next.SuccessCooldownUntil = &release
 			}
 		}
 		if reflect.DeepEqual(current, next) {
@@ -215,6 +291,26 @@ func (application *Application) trackStationMovement(_ context.Context, argument
 		return []string{"stationing"}, true, nil
 	})
 	return err
+}
+
+func stationMovementUnitsWithinRequest(actual, requested map[State.UnitID]int64) bool {
+	if len(actual) == 0 {
+		return false
+	}
+	for unitID, amount := range actual {
+		if amount <= 0 || amount > requested[unitID] {
+			return false
+		}
+	}
+	return true
+}
+
+func cloneStationUnits(units map[State.UnitID]int64) map[State.UnitID]int64 {
+	cloned := make(map[State.UnitID]int64, len(units))
+	for unitID, amount := range units {
+		cloned[unitID] = amount
+	}
+	return cloned
 }
 
 func allianceHolding(alliance State.AllianceState, castleID State.CastleID) (State.AllianceHolding, bool) {

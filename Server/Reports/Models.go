@@ -59,6 +59,7 @@ type SpyReport struct {
 
 type BattleCombatant struct {
 	PlayerID   int64  `json:"playerID,omitempty"`
+	AllianceID int64  `json:"allianceID,omitempty"`
 	Dummy      bool   `json:"dummy,omitempty"`
 	Name       string `json:"name,omitempty"`
 	Alliance   string `json:"alliance,omitempty"`
@@ -104,7 +105,10 @@ type BattleReport struct {
 	TargetY               int                `json:"targetY,omitempty"`
 	TargetName            string             `json:"targetName,omitempty"`
 	CastleName            string             `json:"castleName,omitempty"`
+	BattleTypeID          int                `json:"battleTypeID,omitempty"`
 	BattleType            string             `json:"battleType,omitempty"`
+	TargetTypeID          int                `json:"targetTypeID,omitempty"`
+	TargetType            string             `json:"targetType,omitempty"`
 	OccurredAt            string             `json:"occurredAt"`
 	DateMs                int64              `json:"dateMs"`
 	Result                string             `json:"result"`
@@ -115,4 +119,30 @@ type BattleReport struct {
 	ToolsUsed             int64              `json:"toolsUsed,omitempty"`
 	Loot                  map[string]int64   `json:"loot,omitempty"`
 	TopUnits              []BattleItemDetail `json:"topUnits,omitempty"`
+}
+
+type BattleAnalyticsReport struct {
+	ID                    string           `json:"id"`
+	MID                   int64            `json:"mid"`
+	LID                   int64            `json:"lid"`
+	MovementID            int64            `json:"movementId,omitempty"`
+	AutomationFeature     string           `json:"automationFeature,omitempty"`
+	EventID               int64            `json:"eventId,omitempty"`
+	EventActivity         string           `json:"eventActivity,omitempty"`
+	EventOccurrenceEndsAt string           `json:"eventOccurrenceEndsAt,omitempty"`
+	OccurredAt            string           `json:"occurredAt"`
+	DateMs                int64            `json:"dateMs"`
+	Result                string           `json:"result"`
+	Role                  string           `json:"role,omitempty"`
+	OwnTroopLosses        int64            `json:"ownTroopLosses,omitempty"`
+	ToolsUsed             int64            `json:"toolsUsed,omitempty"`
+	LootTotal             int64            `json:"lootTotal,omitempty"`
+	Loot                  map[string]int64 `json:"loot,omitempty"`
+	TargetPlayerID        int64            `json:"targetPlayerID,omitempty"`
+	TargetName            string           `json:"targetName,omitempty"`
+	TargetTypeID          int              `json:"targetTypeID,omitempty"`
+	TargetType            string           `json:"targetType,omitempty"`
+	KingdomID             int              `json:"kingdomID,omitempty"`
+	TargetX               int              `json:"targetX,omitempty"`
+	TargetY               int              `json:"targetY,omitempty"`
 }

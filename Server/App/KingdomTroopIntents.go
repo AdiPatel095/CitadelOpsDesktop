@@ -51,6 +51,9 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 	if source.ID == target.ID || source.KingdomID == target.KingdomID {
 		return Intent.Plan{}, fmt.Errorf("kingdom troop transfers require castles in different kingdoms")
 	}
+	if err := requireStormTroopSupportMead(input.GameData, target); err != nil {
+		return Intent.Plan{}, err
+	}
 	unlock, observed := input.State.KingdomTransport.Unlocks[target.KingdomID]
 	if input.State.KingdomTransport.ObservedAt.IsZero() || !observed || !unlock.Unlocked {
 		return Intent.Plan{}, fmt.Errorf("kingdom troop transport to %d is not observed as unlocked", target.KingdomID)
@@ -102,6 +105,27 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 		Summary: fmt.Sprintf("Transfer %s from %s to %s", strings.Join(summaryUnits, ", "), castleLabel(source), castleLabel(target)),
 		Steps:   steps,
 	}, nil
+}
+
+func requireStormTroopSupportMead(gameData *GameData.Store, target State.CastleState) error {
+	if target.KingdomID != State.KingdomID(GameData.StormKingdomID) {
+		return nil
+	}
+	meadID, err := officialResourceIDByJSONKey(gameData, "MEAD")
+	if err != nil {
+		return fmt.Errorf("verify Storm troop support: %w", err)
+	}
+	balance, observed := target.Resources[meadID]
+	if !observed || target.FoodStateObservedAt.IsZero() {
+		return fmt.Errorf("Storm Mead balance is not current; refresh Storm before transferring troops")
+	}
+	if balance.Amount < GameData.StormTroopSupportMead {
+		return fmt.Errorf(
+			"Storm has %.0f Mead; at least %.0f Mead is required before receiving troops",
+			balance.Amount, float64(GameData.StormTroopSupportMead),
+		)
+	}
+	return nil
 }
 
 func (application *Application) consumeKingdomTroopSource(_ context.Context, arguments json.RawMessage) error {

@@ -107,6 +107,70 @@ func TestStoreNoOpKeepsRevision(t *testing.T) {
 	}
 }
 
+func TestStoreUpdateManyPersistsOneRevisionAndPublishesFullSnapshot(t *testing.T) {
+	store, err := Open(t.TempDir(), map[string]json.RawMessage{
+		"automation.alpha": json.RawMessage(`{"enabled":false}`),
+		"scheduler":        json.RawMessage(`{"delay":4}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	events, cancel := store.Subscribe(1)
+	defer cancel()
+
+	snapshot, changed, err := store.UpdateMany(map[string]json.RawMessage{
+		"automation.alpha": json.RawMessage(`{"enabled":true}`),
+		"scheduler":        json.RawMessage(`{"delay":6}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Revision != 1 {
+		t.Fatalf("revision = %d, want 1", snapshot.Revision)
+	}
+	if len(changed) != 2 || changed[0] != "automation.alpha" || changed[1] != "scheduler" {
+		t.Fatalf("changed sections = %#v", changed)
+	}
+	select {
+	case event := <-events:
+		if event.Section != "*" || !event.Gap || event.Revision != 1 || event.Sequence != 1 {
+			t.Fatalf("unexpected batch event: %+v", event)
+		}
+		if got := string(event.Snapshot.Sections["scheduler"]); got != `{"delay":6}` {
+			t.Fatalf("event scheduler = %s", got)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for batch configuration event")
+	}
+
+	reloaded, err := Open(filepath.Dir(filepath.Dir(store.path)), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if value, ok := reloaded.Section("automation.alpha"); !ok || string(value) != `{"enabled":true}` {
+		t.Fatalf("reloaded automation section = %s, found = %t", value, ok)
+	}
+}
+
+func TestStoreUpdateManyRejectsWholeBatchBeforeWriting(t *testing.T) {
+	store, err := Open(t.TempDir(), map[string]json.RawMessage{
+		"feature": json.RawMessage(`{"value":1}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := store.UpdateMany(map[string]json.RawMessage{
+		"feature":     json.RawMessage(`{"value":2}`),
+		"bad section": json.RawMessage(`{}`),
+	}); err == nil {
+		t.Fatal("invalid batch unexpectedly succeeded")
+	}
+	snapshot := store.Snapshot()
+	if snapshot.Revision != 0 || string(snapshot.Sections["feature"]) != `{"value":1}` {
+		t.Fatalf("invalid batch changed snapshot: %+v", snapshot)
+	}
+}
+
 func TestStoreConditionalUpdateTracksItsSectionInsteadOfGlobalRevision(t *testing.T) {
 	store, err := Open(t.TempDir(), map[string]json.RawMessage{
 		"automation.crafting": json.RawMessage(`{"cursor":0}`),

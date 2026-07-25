@@ -9,10 +9,11 @@ export interface AutoNomadRBCTestState {
   targetY: number;
 }
 
-export interface AutoNomadClientStateV4 {
-  version: 4;
+export interface AutoNomadClientStateV5 {
+  version: 5;
   sourceCastleId: number;
-  presetId: string;
+  nomadPresetId: string;
+  samuraiPresetId: string;
   nomadDifficultyId: number;
   samuraiDifficultyId: number;
   scoreTarget: number;
@@ -26,11 +27,12 @@ export interface AutoNomadClientStateV4 {
   horseTravelBoostId: HorseTravelBoostID;
 }
 
-export function defaultAutoNomadClientState(): AutoNomadClientStateV4 {
+export function defaultAutoNomadClientState(): AutoNomadClientStateV5 {
   return {
-    version: 4,
+    version: 5,
     sourceCastleId: 0,
-    presetId: '',
+    nomadPresetId: '',
+    samuraiPresetId: '',
     nomadDifficultyId: 0,
     samuraiDifficultyId: 0,
     scoreTarget: 0,
@@ -45,10 +47,11 @@ export function defaultAutoNomadClientState(): AutoNomadClientStateV4 {
   };
 }
 
-export function parseAutoNomadClientState(value: unknown): AutoNomadClientStateV4 {
+export function parseAutoNomadClientState(value: unknown): AutoNomadClientStateV5 {
   const fallback = defaultAutoNomadClientState();
   if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback;
   const raw = value as Record<string, unknown>;
+  const legacyPresetId = trimmedString(raw.presetId);
   const rawReserve = raw.timeSkipReserve && typeof raw.timeSkipReserve === 'object' && !Array.isArray(raw.timeSkipReserve)
     ? raw.timeSkipReserve as Record<string, unknown>
     : {};
@@ -56,9 +59,10 @@ export function parseAutoNomadClientState(value: unknown): AutoNomadClientStateV
     ? raw.rbcTest as Record<string, unknown>
     : {};
   return {
-    version: 4,
+    version: 5,
     sourceCastleId: positiveInteger(raw.sourceCastleId),
-    presetId: typeof raw.presetId === 'string' ? raw.presetId.trim() : '',
+    nomadPresetId: trimmedString(raw.nomadPresetId) || legacyPresetId,
+    samuraiPresetId: trimmedString(raw.samuraiPresetId) || legacyPresetId,
     nomadDifficultyId: validDifficulty(raw.nomadDifficultyId, 301),
     samuraiDifficultyId: validDifficulty(raw.samuraiDifficultyId, 201),
     scoreTarget: positiveInteger(raw.scoreTarget),
@@ -122,6 +126,10 @@ export function clampAutoNomadInteger(value: unknown, minimum: number, maximum: 
 function positiveInteger(value: unknown): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 0;
+}
+
+function trimmedString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 function validDifficulty(value: unknown, firstDifficultyId: number): number {

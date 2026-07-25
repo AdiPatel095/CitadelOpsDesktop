@@ -74,16 +74,23 @@ func (application *Application) runMovementClock(ctx context.Context) {
 func nextMovementCompletion(gameState State.GameState) time.Time {
 	var next time.Time
 	for _, movement := range gameState.Movements {
-		if movement.Direction == 0 && movement.WaitSeconds > 0 {
-			continue
-		}
 		var completion *time.Time
-		if movement.CommanderID != nil && State.MovementOwnedByCurrentPlayer(gameState, movement) {
-			completion = State.CommanderMovementReleaseAt(movement)
-		} else if movement.Direction == 0 {
-			completion = movement.ArrivesAt
-		} else if movement.Direction == 1 {
-			completion = movement.ReturnsAt
+		owned := State.MovementOwnedByCurrentPlayer(gameState, movement)
+		if movement.Direction == 0 && movement.WaitSeconds > 0 {
+			completion = State.StationMovementReleaseAt(movement)
+		} else if owned {
+			completion = State.TrackedStationMovementReleaseAt(gameState, movement)
+		}
+		if completion == nil {
+			if movement.MarketBarrows > 0 && owned {
+				completion = State.MarketBarrowMovementReleaseAt(movement)
+			} else if movement.CommanderID != nil && owned {
+				completion = State.CommanderMovementReleaseAt(movement)
+			} else if movement.Direction == 0 {
+				completion = movement.ArrivesAt
+			} else if movement.Direction == 1 {
+				completion = movement.ReturnsAt
+			}
 		}
 		if completion == nil || completion.IsZero() {
 			continue

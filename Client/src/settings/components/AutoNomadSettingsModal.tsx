@@ -16,7 +16,7 @@ import {
   clampAutoNomadInteger,
   defaultAutoNomadClientState,
   parseAutoNomadClientState,
-  type AutoNomadClientStateV4,
+  type AutoNomadClientStateV5,
 } from '../AutoNomadClientState';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
@@ -28,7 +28,7 @@ interface AutoNomadSettingsModalProps {
 
 export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ isOpen, onClose }) => {
   const { state, configuration, updateConfiguration } = useCitadelAPI();
-  const [draft, setDraft] = useState<AutoNomadClientStateV4>(defaultAutoNomadClientState);
+  const [draft, setDraft] = useState<AutoNomadClientStateV5>(defaultAutoNomadClientState);
   const [saving, setSaving] = useState(false);
   const castles = useMemo(() => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0), [state]);
   const presetDocument = useMemo(
@@ -47,8 +47,10 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
   );
   const nomadSelectionAvailable = nomadDifficulties.some((option) => option.value === String(draft.nomadDifficultyId));
   const samuraiSelectionAvailable = samuraiDifficulties.some((option) => option.value === String(draft.samuraiDifficultyId));
-  const selectedPreset = presetDocument.presets.find((preset) => preset.id === draft.presetId);
-  const presetSummary = selectedPreset ? summarizeAttackPreset(selectedPreset) : null;
+  const selectedNomadPreset = presetDocument.presets.find((preset) => preset.id === draft.nomadPresetId);
+  const selectedSamuraiPreset = presetDocument.presets.find((preset) => preset.id === draft.samuraiPresetId);
+  const nomadPresetSummary = selectedNomadPreset ? summarizeAttackPreset(selectedNomadPreset) : null;
+  const samuraiPresetSummary = selectedSamuraiPreset ? summarizeAttackPreset(selectedSamuraiPreset) : null;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -57,12 +59,15 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
 
   const trialReady = draft.rbcTest.enabled
     && Boolean(draft.rbcTest.runId)
+    && Boolean(draft.nomadPresetId)
     && draft.skipCooldowns;
   const eventReady = !draft.rbcTest.enabled
+    && Boolean(draft.nomadPresetId)
+    && Boolean(draft.samuraiPresetId)
     && nomadSelectionAvailable
     && samuraiSelectionAvailable
     && draft.scoreTarget > 0;
-  const canSave = draft.sourceCastleId > 0 && Boolean(draft.presetId) && (trialReady || eventReady);
+  const canSave = draft.sourceCastleId > 0 && (trialReady || eventReady);
 
   const setTimeSkipReserve = (key: string, value: unknown) => {
     setDraft((current) => ({
@@ -103,7 +108,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       <div className="space-y-3">
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="block">
+            <label className="block md:col-span-2">
               <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> Source castle</span>
               <Select
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
@@ -115,10 +120,21 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             </label>
 
             <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> Camp attack preset</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> Nomad attack preset</span>
               <Select
-                value={draft.presetId}
-                onChange={(presetId) => setDraft((current) => ({ ...current, presetId }))}
+                value={draft.nomadPresetId}
+                onChange={(nomadPresetId) => setDraft((current) => ({ ...current, nomadPresetId }))}
+                options={presetDocument.presets.map((preset) => ({ value: preset.id, label: preset.name }))}
+                placeholder={presetDocument.presets.length > 0 ? 'Choose a CitadelOps preset' : 'Create an Attack Preset first'}
+                disabled={presetDocument.presets.length === 0}
+                menuGrowToViewport
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> Samurai attack preset</span>
+              <Select
+                value={draft.samuraiPresetId}
+                onChange={(samuraiPresetId) => setDraft((current) => ({ ...current, samuraiPresetId }))}
                 options={presetDocument.presets.map((preset) => ({ value: preset.id, label: preset.name }))}
                 placeholder={presetDocument.presets.length > 0 ? 'Choose a CitadelOps preset' : 'Create an Attack Preset first'}
                 disabled={presetDocument.presets.length === 0}
@@ -131,12 +147,24 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
               onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
             />
           </div>
-          {presetSummary ? (
-            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border-base pt-3">
-              <span className="mr-1 text-xs text-text-muted">Per commander</span>
-              <Badge variant="outline">{presetSummary.waves} waves</Badge>
-              <Badge variant="outline">{presetSummary.troops.toLocaleString()} troops</Badge>
-              <Badge variant="outline">{presetSummary.tools.toLocaleString()} tools</Badge>
+          {nomadPresetSummary || samuraiPresetSummary ? (
+            <div className="mt-3 grid gap-2 border-t border-border-base pt-3 md:grid-cols-2">
+              {nomadPresetSummary ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="mr-1 text-xs text-text-muted">Nomad</span>
+                  <Badge variant="outline">{nomadPresetSummary.waves} waves</Badge>
+                  <Badge variant="outline">{nomadPresetSummary.troops.toLocaleString()} troops</Badge>
+                  <Badge variant="outline">{nomadPresetSummary.tools.toLocaleString()} tools</Badge>
+                </div>
+              ) : null}
+              {samuraiPresetSummary ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="mr-1 text-xs text-text-muted">Samurai</span>
+                  <Badge variant="outline">{samuraiPresetSummary.waves} waves</Badge>
+                  <Badge variant="outline">{samuraiPresetSummary.troops.toLocaleString()} troops</Badge>
+                  <Badge variant="outline">{samuraiPresetSummary.tools.toLocaleString()} tools</Badge>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </Card>
@@ -262,7 +290,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><TestTube2 className="h-4 w-4 text-primary" /> Temporary RBC end-to-end trial</div>
-              <p className="mt-1 text-xs text-text-muted">Use the camp preset against one robber-baron castle, size the chain from live resources, then prove every victory is followed by an immediate time-skip reset.</p>
+              <p className="mt-1 text-xs text-text-muted">Use the Nomad preset against one robber-baron castle, size the chain from live resources, then prove every victory is followed by an immediate time-skip reset.</p>
             </div>
             <Switch
               checked={draft.rbcTest.enabled}
@@ -312,12 +340,12 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">1</Badge><div>Advance each of the four nearest regular camps to the terminal victory count defined for the active difficulty.</div></div>
             <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">2</Badge><div>Rank maxed camps by defense capacity plus wall, gate, and moat values, then lock the weakest.</div></div>
-            <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">3</Badge><div>Send the preset only to the lock, then clear the returned cooldown between every ordered arrival.</div></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">3</Badge><div>Send the active event’s preset only to the lock, then clear the returned cooldown between every ordered arrival.</div></div>
           </div>
         </Card>
 
         <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs text-text-muted">
-          ADI must confirm the same target and zero cooldown before launch. Faster commanders are sent first, and every later CRA is sent immediately after the previous response. Batch size comes from available selected commanders, complete preset copies, and usable cooldown skips. Server-returned arrivals are checked for ordering, then each landed victory is cleared through the target cooldown controller. In-flight attacks can carry the final score beyond the configured threshold.
+          ADI must confirm the same target and zero cooldown before launch. Faster commanders are sent first, and every later CRA is sent immediately after the previous response. Batch size comes from available selected commanders, complete copies of the active event’s preset, and usable cooldown skips. Server-returned arrivals are checked for ordering, then each landed victory is cleared through the target cooldown controller. In-flight attacks can carry the final score beyond the configured threshold.
         </p>
       </div>
     </SettingsModal>

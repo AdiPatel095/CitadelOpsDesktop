@@ -365,7 +365,7 @@ func (application *Application) resolveInvasionAttackStep(
 	if err != nil {
 		return Intent.Step{}, err
 	}
-	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity, capacity.MaximumWaves)
+	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves))
 	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build invasion preset %q: %w", request.Preset.Name, err)
@@ -411,41 +411,6 @@ func resolveInvasionAttackCapacity(
 		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("resolve invasion attack capacity: %w", err)
 	}
 	return capacity, source, target, nil
-}
-
-func limitAttackSetupToCapacity(
-	setup attackSetupRequest,
-	capacity AttackCapacity.LaneCapacity,
-	maximumWaves int,
-) attackSetupRequest {
-	result := setup
-	waveCount := min(len(setup.Waves), max(0, maximumWaves))
-	result.Waves = make([]attackSetupWaveRequest, waveCount)
-	for index, wave := range setup.Waves[:waveCount] {
-		result.Waves[index] = attackSetupWaveRequest{
-			Left:   limitAttackSetupLane(wave.Left, capacity.Left),
-			Middle: limitAttackSetupLane(wave.Middle, capacity.Front),
-			Right:  limitAttackSetupLane(wave.Right, capacity.Right),
-		}
-	}
-	return result
-}
-
-func limitAttackSetupLane(lane attackSetupLaneRequest, capacity int64) attackSetupLaneRequest {
-	result := attackSetupLaneRequest{
-		Troops: append([]attackSetupSlotRequest(nil), lane.Troops...),
-		Tools:  append([]attackSetupSlotRequest(nil), lane.Tools...),
-	}
-	remaining := max(int64(0), capacity)
-	for index := range result.Troops {
-		quantity := result.Troops[index].Quantity
-		if quantity <= 0 {
-			continue
-		}
-		result.Troops[index].Quantity = min(quantity, remaining)
-		remaining -= result.Troops[index].Quantity
-	}
-	return result
 }
 
 func (application *Application) captureInvasionScan(_ context.Context, arguments json.RawMessage) error {

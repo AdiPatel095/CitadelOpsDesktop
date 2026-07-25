@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -137,6 +138,60 @@ func (store *Store) UpdateExpected(section string, value json.RawMessage, expect
 	return store.UpdateConditional(section, value, expectedRevision, nil)
 }
 
+func (store *Store) UpdateMany(sections map[string]json.RawMessage) (Snapshot, []string, error) {
+	canonical := make(map[string]json.RawMessage, len(sections))
+	names := make([]string, 0, len(sections))
+	for section, value := range sections {
+		normalized, err := canonicalSection(section, value)
+		if err != nil {
+			return Snapshot{}, nil, err
+		}
+		canonical[section] = normalized
+		names = append(names, section)
+	}
+	sort.Strings(names)
+
+	store.mu.Lock()
+	changed := make([]string, 0, len(names))
+	next := cloneSnapshot(store.snapshot)
+	for _, section := range names {
+		value := canonical[section]
+		if current, exists := store.snapshot.Sections[section]; exists && bytes.Equal(current, value) {
+			continue
+		}
+		next.Sections[section] = value
+		changed = append(changed, section)
+	}
+	if len(changed) == 0 {
+		snapshot := cloneSnapshot(store.snapshot)
+		store.mu.Unlock()
+		return snapshot, nil, nil
+	}
+
+	next.Revision++
+	next.UpdatedAt = time.Now().UTC()
+	if err := writeSnapshot(store.path, next); err != nil {
+		store.mu.Unlock()
+		return Snapshot{}, nil, err
+	}
+	store.snapshot = next
+	event := Event{
+		Sequence: next.Revision, Revision: next.Revision, UpdatedAt: next.UpdatedAt,
+		Snapshot: cloneSnapshot(next),
+	}
+	if len(changed) == 1 {
+		event.Section = changed[0]
+		event.Value = cloneRaw(canonical[changed[0]])
+	} else {
+		event.Section = "*"
+		event.Gap = true
+	}
+	store.publishLocked(event)
+	snapshot := cloneSnapshot(next)
+	store.mu.Unlock()
+	return snapshot, changed, nil
+}
+
 func (store *Store) UpdateConditional(
 	section string,
 	value json.RawMessage,
@@ -183,6 +238,13 @@ func (store *Store) UpdateConditional(
 		Sequence: next.Revision, Revision: next.Revision, Section: section, Value: cloneRaw(canonical),
 		UpdatedAt: next.UpdatedAt, Snapshot: cloneSnapshot(next),
 	}
+	store.publishLocked(event)
+	snapshot := cloneSnapshot(next)
+	store.mu.Unlock()
+	return snapshot, nil
+}
+
+func (store *Store) publishLocked(event Event) {
 	for _, subscriber := range store.subscribers {
 		delivery := event
 		select {
@@ -197,9 +259,6 @@ func (store *Store) UpdateConditional(
 		}
 		subscriber <- delivery
 	}
-	snapshot := cloneSnapshot(next)
-	store.mu.Unlock()
-	return snapshot, nil
 }
 
 func Validate(section string, value json.RawMessage) error {

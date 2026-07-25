@@ -13,6 +13,8 @@ import type {
   APIConnectionStatus,
 	AllianceTargetViewV2,
 	AllianceTargetQueryV2,
+	AllianceTargetAttackPreviewRequest,
+	AllianceTargetAttackPreviewV2,
 	ApplicationUpdateV2,
 	BuildingTargetCaptureRequest,
 	BuildingTargetCaptureResponse,
@@ -48,6 +50,7 @@ interface APIContextValue {
   getCatalog: <T extends Record<string, unknown>>(name: string) => Promise<CatalogResponse<T>>;
   localize: (keys: string[]) => Promise<Record<string, string>>;
 	getAllianceTargets: (input?: AllianceTargetQueryV2) => Promise<AllianceTargetViewV2>;
+	previewAllianceTargetAttack: (input: AllianceTargetAttackPreviewRequest) => Promise<AllianceTargetAttackPreviewV2>;
 	optimizeEquipment: (input: EquipmentOptimizeRequest) => Promise<EquipmentOptimizeResponse>;
 	captureBuildingTarget: (input: BuildingTargetCaptureRequest) => Promise<BuildingTargetCaptureResponse>;
   submitIntent: (
@@ -247,6 +250,10 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	CitadelAPI.getAllianceTargets(input)
   ), []);
 
+	const previewAllianceTargetAttack = useCallback((input: AllianceTargetAttackPreviewRequest) => (
+		CitadelAPI.previewAllianceTargetAttack(input)
+	), []);
+
   const cancelOperation = useCallback(async (id: string) => {
 	await CitadelAPI.cancelOperation(id);
   }, []);
@@ -276,6 +283,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
     getCatalog: (name) => CitadelAPI.getCatalog(name),
     localize: (keys) => CitadelAPI.localize(keys),
 	getAllianceTargets,
+	previewAllianceTargetAttack,
 	optimizeEquipment: (input) => CitadelAPI.optimizeEquipment(input),
 	captureBuildingTarget: (input) => CitadelAPI.captureBuildingTarget(input),
     submitIntent,
@@ -297,6 +305,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
     state,
     submitIntent,
 	getAllianceTargets,
+	previewAllianceTargetAttack,
 	cancelOperation,
     updateConfiguration,
   ]);

@@ -3,6 +3,7 @@ package State
 import (
 	"os"
 	"testing"
+	"time"
 )
 
 func TestSnapshotRoundTripResetsSession(t *testing.T) {
@@ -18,6 +19,8 @@ func TestSnapshotRoundTripResetsSession(t *testing.T) {
 	state.Session.ConnectionGeneration = 3
 	state.Session.ServerURL = "wss://ep-live-us1-game.example.test/socket"
 	state.Castles[7] = CastleState{ID: 7, Name: "Test", Resources: map[ResourceID]ResourceBalance{}}
+	state.TowerQueue.CursorVersion = 0
+	state.TowerQueue.ConfirmedLaunchesByCastle[7] = 12
 	islandReturnKey := StormIslandReturnKey(4, 101, 102)
 	state.Storm.IslandReturns[islandReturnKey] = StormIslandReturnState{
 		KingdomID: 4, SourceCastleID: 7, TargetX: 101, TargetY: 102, IslandObjectID: 777,
@@ -52,6 +55,10 @@ func TestSnapshotRoundTripResetsSession(t *testing.T) {
 	if loaded.Account.WorldID != state.Session.ServerURL || loaded.Account.PlayerID != state.Player.ID {
 		t.Fatalf("snapshot account binding = %#v", loaded.Account)
 	}
+	if loaded.TowerQueue.CursorVersion != TowerQueueCursorVersion ||
+		len(loaded.TowerQueue.ConfirmedLaunchesByCastle) != 0 {
+		t.Fatalf("tower cursor state was not initialized cleanly: %#v", loaded.TowerQueue)
+	}
 	info, err := os.Stat(snapshotPath(directory))
 	if err != nil {
 		t.Fatal(err)
@@ -78,5 +85,36 @@ func TestSnapshotLoadMovesInspectedAllianceOutOfOwnSlot(t *testing.T) {
 	}
 	if loaded.Alliances[10].Name != "Inspected" {
 		t.Fatalf("alliance directory = %+v", loaded.Alliances)
+	}
+}
+
+func TestSnapshotLoadRemovesOwnKhanReturnsFromTauntHistory(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Now().UTC()
+	state := NewGameState()
+	state.Khan.Launches = []KhanLaunchState{{CommanderID: 24, MovementID: 100, ArrivesAt: now}}
+	state.Khan.Taunts[100] = KhanTauntState{MovementID: 100, ObservedAt: now, ImpactAt: now.Add(time.Minute)}
+	state.Khan.ResolvedTaunts = []KhanTauntState{
+		{MovementID: 100, ObservedAt: now, ImpactAt: now.Add(time.Minute)},
+		{MovementID: 200, ObservedAt: now, ImpactAt: now.Add(2 * time.Minute)},
+	}
+	state.Khan.TauntsObserved = 3
+	state.Khan.TauntsResolved = 2
+	state.Khan.TauntsTriggered = 3
+	state.Khan.TauntCounterVersion = 0
+	state.Khan.LastTauntResolvedAt = now.Add(3 * time.Minute)
+	if err := SaveSnapshot(directory, state); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(loaded.Khan.Taunts) != 0 || len(loaded.Khan.ResolvedTaunts) != 1 ||
+		loaded.Khan.ResolvedTaunts[0].MovementID != 200 ||
+		loaded.Khan.TauntsTriggered != 1 || loaded.Khan.TauntsObserved != 1 || loaded.Khan.TauntsResolved != 1 ||
+		loaded.Khan.TauntCounterVersion != KhanTauntCounterVersion ||
+		!loaded.Khan.LastTauntResolvedAt.Equal(now.Add(2*time.Minute)) {
+		t.Fatalf("reconciled Khan taunts = %#v", loaded.Khan)
 	}
 }

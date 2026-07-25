@@ -38,19 +38,44 @@ func (score *eventPointScore) UnmarshalJSON(raw []byte) error {
 	return nil
 }
 
+type khanRageSnapshot struct {
+	CampID          wireInt64 `json:"ACID"`
+	AllianceRage    wireInt64 `json:"AR"`
+	PlayerRage      wireInt64 `json:"PCRP"`
+	PlayerTotalRage wireInt64 `json:"PTRP"`
+	Valid           bool      `json:"-"`
+}
+
+func (snapshot *khanRageSnapshot) UnmarshalJSON(raw []byte) error {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || raw[0] != '{' {
+		*snapshot = khanRageSnapshot{}
+		return nil
+	}
+	type snapshotAlias khanRageSnapshot
+	var decoded snapshotAlias
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		return err
+	}
+	*snapshot = khanRageSnapshot(decoded)
+	snapshot.Valid = true
+	return nil
+}
+
 type scalableEventSnapshot struct {
-	EventID           wireInt64       `json:"EID"`
-	RemainingSec      wireInt64       `json:"RS"`
-	DifficultyID      wireInt64       `json:"EDID"`
-	AutoScaling       wireInt64       `json:"EASE"`
-	PlayerProgress    eventPointScore `json:"SP"`
-	AllianceProgress  eventPointScore `json:"A"`
-	PackageIDs        string          `json:"PIDS"`
-	Packages          json.RawMessage `json:"PID"`
-	AdvisorCurrency   wireInt64       `json:"ACI"`
-	AdvisorActive     wireInt64       `json:"AAA"`
-	AdvisorFree       wireInt64       `json:"AAF"`
-	FortifyCurrencies []string        `json:"RCKS"`
+	EventID           wireInt64         `json:"EID"`
+	RemainingSec      wireInt64         `json:"RS"`
+	DifficultyID      wireInt64         `json:"EDID"`
+	AutoScaling       wireInt64         `json:"EASE"`
+	PlayerProgress    eventPointScore   `json:"SP"`
+	AllianceProgress  eventPointScore   `json:"A"`
+	PackageIDs        string            `json:"PIDS"`
+	Packages          json.RawMessage   `json:"PID"`
+	AdvisorCurrency   wireInt64         `json:"ACI"`
+	AdvisorActive     wireInt64         `json:"AAA"`
+	AdvisorFree       wireInt64         `json:"AAF"`
+	FortifyCurrencies []string          `json:"RCKS"`
+	AllianceCamp      *khanRageSnapshot `json:"AC"`
 }
 
 func reduceScalableEventSnapshot(
@@ -63,7 +88,7 @@ func reduceScalableEventSnapshot(
 		return nil, false, nil
 	}
 	changed, err := applyScalableEventSnapshot(frame.Payload, frame.ReceivedAt, gameState, gameData)
-	return []string{"events", "event-scores"}, changed, err
+	return []string{"events", "event-scores", "khan"}, changed, err
 }
 
 func applyScalableEventSnapshot(
@@ -103,6 +128,11 @@ func applyScalableEventSnapshot(
 			continue
 		}
 		eventID := int64(event.EventID)
+		if eventID == 72 && event.AllianceCamp != nil && event.AllianceCamp.Valid {
+			if applyKhanRageSnapshot(gameState, gameData, *event.AllianceCamp, observedAt) {
+				changed = true
+			}
+		}
 		difficultyID := int64(event.DifficultyID)
 		definition, _ := gameData.ScalableEvent(eventID, difficultyID)
 		score := State.ScalableEventScore{
@@ -154,6 +184,79 @@ func applyScalableEventSnapshot(
 		changed = true
 	}
 	return changed, nil
+}
+
+func applyKhanRageSnapshot(
+	gameState *State.GameState,
+	gameData *GameData.Store,
+	snapshot khanRageSnapshot,
+	observedAt time.Time,
+) bool {
+	campID := int64(snapshot.CampID)
+	definition, found := gameData.EventCamp(campID)
+	rageCap := int64(0)
+	if found && definition.EventID == 72 && definition.AreaTypeID == 35 {
+		rageCap = definition.PlayerRageCap
+	}
+	playerRage := max(int64(0), int64(snapshot.PlayerRage))
+	totalRage := max(int64(0), int64(snapshot.PlayerTotalRage))
+	observedAt = observedAt.UTC()
+	if gameState.Khan.RageCampID == campID &&
+		gameState.Khan.PlayerRage == playerRage &&
+		gameState.Khan.PlayerRageCap == rageCap &&
+		gameState.Khan.PlayerTotalRage == totalRage &&
+		!gameState.Khan.RageObservedAt.IsZero() {
+		return false
+	}
+	gameState.Khan.RageCampID = campID
+	gameState.Khan.PlayerRage = playerRage
+	gameState.Khan.PlayerRageCap = rageCap
+	gameState.Khan.PlayerTotalRage = totalRage
+	gameState.Khan.RageObservedAt = observedAt
+	return true
+}
+
+func reduceKhanRagePoints(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var payload struct {
+		EventID         wireInt64 `json:"EID"`
+		PlayerRage      wireInt64 `json:"PCRP"`
+		PlayerTotalRage wireInt64 `json:"PTRP"`
+	}
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode Khan rage update: %w", err)
+	}
+	if int64(payload.EventID) != 72 {
+		return nil, false, nil
+	}
+	rageCap := gameState.Khan.PlayerRageCap
+	campID := gameState.Khan.RageCampID
+	if definition, found := gameData.EventCamp(campID); !found ||
+		definition.EventID != 72 || definition.AreaTypeID != 35 {
+		rageCap = 0
+	} else {
+		rageCap = definition.PlayerRageCap
+	}
+	playerRage := max(int64(0), int64(payload.PlayerRage))
+	totalRage := max(int64(0), int64(payload.PlayerTotalRage))
+	if gameState.Khan.PlayerRage == playerRage &&
+		gameState.Khan.PlayerRageCap == rageCap &&
+		gameState.Khan.PlayerTotalRage == totalRage &&
+		!gameState.Khan.RageObservedAt.IsZero() {
+		return nil, false, nil
+	}
+	gameState.Khan.PlayerRage = playerRage
+	gameState.Khan.PlayerRageCap = rageCap
+	gameState.Khan.PlayerTotalRage = totalRage
+	gameState.Khan.RageObservedAt = frame.ReceivedAt.UTC()
+	return []string{"khan"}, true, nil
 }
 
 func normalizedInvasionFortifyCurrencies(values []string) []string {

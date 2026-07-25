@@ -676,20 +676,21 @@ type MovementSnapshot struct {
 }
 
 type StationingOperation struct {
-	ID             string           `json:"id"`
-	Purpose        string           `json:"purpose"`
-	SourceCastleID CastleID         `json:"sourceCastleId"`
-	TargetCastleID CastleID         `json:"targetCastleId"`
-	MovementID     MovementID       `json:"movementId,omitempty"`
-	Units          map[UnitID]int64 `json:"units"`
-	SafeAfter      *time.Time       `json:"safeAfter,omitempty"`
-	CreatedAt      time.Time        `json:"createdAt"`
-	UpdatedAt      time.Time        `json:"updatedAt"`
+	ID                   string           `json:"id"`
+	Purpose              string           `json:"purpose"`
+	SourceCastleID       CastleID         `json:"sourceCastleId"`
+	TargetCastleID       CastleID         `json:"targetCastleId"`
+	MovementID           MovementID       `json:"movementId,omitempty"`
+	Units                map[UnitID]int64 `json:"units"`
+	SafeAfter            *time.Time       `json:"safeAfter,omitempty"`
+	SuccessCooldownUntil *time.Time       `json:"successCooldownUntil,omitempty"`
+	CreatedAt            time.Time        `json:"createdAt"`
+	UpdatedAt            time.Time        `json:"updatedAt"`
 }
 
 func (operation StationingOperation) MatchesMovement(movement MovementState) bool {
-	if operation.MovementID > 0 && movement.ID == operation.MovementID {
-		return true
+	if operation.MovementID > 0 {
+		return movement.ID == operation.MovementID
 	}
 	if movement.Direction == 1 {
 		return movement.SourceCastleID == operation.TargetCastleID &&
@@ -701,9 +702,15 @@ func (operation StationingOperation) MatchesMovement(movement MovementState) boo
 
 func (operation StationingOperation) ActiveAt(movements map[MovementID]MovementState, now time.Time) bool {
 	for _, movement := range movements {
-		if operation.MatchesMovement(movement) {
+		if operation.MatchesMovement(movement) && StationMovementActiveAt(movement, now) {
 			return true
 		}
+	}
+	if operation.MovementID > 0 {
+		return false
+	}
+	if operation.SuccessCooldownUntil != nil && operation.SuccessCooldownUntil.After(now) {
+		return true
 	}
 	return !operation.UpdatedAt.IsZero() && now.Before(operation.UpdatedAt.Add(30*time.Second))
 }
@@ -854,11 +861,15 @@ type TowerCapacityObservation struct {
 }
 
 type TowerQueueState struct {
-	EntriesByCastle  map[CastleID][]TowerQueueEntry        `json:"entriesByCastle"`
-	LastScannedAt    map[CastleID]time.Time                `json:"lastScannedAt"`
-	LastAttemptedAt  map[CastleID]time.Time                `json:"lastAttemptedAt"`
-	CapacityByCastle map[CastleID]TowerCapacityObservation `json:"capacityByCastle"`
+	EntriesByCastle           map[CastleID][]TowerQueueEntry        `json:"entriesByCastle"`
+	LastScannedAt             map[CastleID]time.Time                `json:"lastScannedAt"`
+	LastAttemptedAt           map[CastleID]time.Time                `json:"lastAttemptedAt"`
+	ConfirmedLaunchesByCastle map[CastleID]int64                    `json:"confirmedLaunchesByCastle"`
+	CursorVersion             int                                   `json:"cursorVersion"`
+	CapacityByCastle          map[CastleID]TowerCapacityObservation `json:"capacityByCastle"`
 }
+
+const TowerQueueCursorVersion = 1
 
 type InvasionState struct {
 	LastScannedAt        map[CastleID]time.Time `json:"lastScannedAt"`
@@ -892,9 +903,9 @@ func (bounds StormMapBounds) Contains(x int, y int) bool {
 	return bounds.IsValid() && x >= bounds.X1 && x <= bounds.X2 && y >= bounds.Y1 && y <= bounds.Y2
 }
 
-// StormMapState is the last authoritative, fully completed Storm sweep. The
-// next bounds may grow by one GAA window when observations reach a covered
-// edge, allowing each server/account map to be learned without a sync map.
+// StormMapState is the last authoritative, fully completed Storm sweep. Full
+// scans restart at the fixed center and expand in square rings until every
+// learned Storm target has a safe margin from the covered edge.
 type StormMapState struct {
 	ServerURL       string                    `json:"serverUrl,omitempty"`
 	PlayerID        PlayerID                  `json:"playerId,omitempty"`
@@ -1102,30 +1113,64 @@ type KhanProtectionState struct {
 	Reason                 string    `json:"reason,omitempty"`
 }
 
-type KhanState struct {
-	RunID                     string                        `json:"runId,omitempty"`
-	EventEndsAt               time.Time                     `json:"eventEndsAt,omitempty"`
-	SourceCastleID            CastleID                      `json:"sourceCastleId,omitempty"`
-	MainCastleID              CastleID                      `json:"mainCastleId,omitempty"`
-	KingdomID                 KingdomID                     `json:"kingdomId,omitempty"`
-	TargetX                   int                           `json:"targetX,omitempty"`
-	TargetY                   int                           `json:"targetY,omitempty"`
-	AttacksLaunched           int                           `json:"attacksLaunched"`
-	VictoriesConfirmed        int                           `json:"victoriesConfirmed"`
-	CooldownsSkipped          int                           `json:"cooldownsSkipped"`
-	Launches                  []KhanLaunchState             `json:"launches"`
-	Taunts                    map[MovementID]KhanTauntState `json:"taunts"`
-	ResolvedTaunts            []KhanTauntState              `json:"resolvedTaunts,omitempty"`
-	TauntsObserved            int                           `json:"tauntsObserved"`
-	TauntsResolved            int                           `json:"tauntsResolved"`
-	LastTauntResolvedAt       time.Time                     `json:"lastTauntResolvedAt,omitempty"`
-	LastReportID              int64                         `json:"lastReportId,omitempty"`
-	LastAttackLaunchedAt      time.Time                     `json:"lastAttackLaunchedAt,omitempty"`
-	LastCooldownSkippedAt     time.Time                     `json:"lastCooldownSkippedAt,omitempty"`
-	LastDefenseToolPurchaseAt time.Time                     `json:"lastDefenseToolPurchaseAt,omitempty"`
-	SafetyError               string                        `json:"safetyError,omitempty"`
-	Protection                KhanProtectionState           `json:"protection"`
+type KhanCooldownMSDState struct {
+	WireKey        string    `json:"wireKey"`
+	Minutes        int       `json:"minutes"`
+	CooldownBefore int       `json:"cooldownBefore"`
+	CooldownAfter  int       `json:"cooldownAfter"`
+	AppliedAt      time.Time `json:"appliedAt"`
 }
+
+type KhanCooldownReportState struct {
+	ReportID           int64                  `json:"reportId"`
+	KingdomID          KingdomID              `json:"kingdomId"`
+	X                  int                    `json:"x"`
+	Y                  int                    `json:"y"`
+	LandedAt           time.Time              `json:"landedAt"`
+	CooldownRemaining  int                    `json:"cooldownRemaining,omitempty"`
+	CooldownObservedAt time.Time              `json:"cooldownObservedAt,omitempty"`
+	MSDs               []KhanCooldownMSDState `json:"msds,omitempty"`
+	ResolvedAt         time.Time              `json:"resolvedAt,omitempty"`
+}
+
+type KhanState struct {
+	RunID                     string                            `json:"runId,omitempty"`
+	EventEndsAt               time.Time                         `json:"eventEndsAt,omitempty"`
+	SourceCastleID            CastleID                          `json:"sourceCastleId,omitempty"`
+	MainCastleID              CastleID                          `json:"mainCastleId,omitempty"`
+	KingdomID                 KingdomID                         `json:"kingdomId,omitempty"`
+	TargetX                   int                               `json:"targetX,omitempty"`
+	TargetY                   int                               `json:"targetY,omitempty"`
+	RageCampID                int64                             `json:"rageCampId,omitempty"`
+	PlayerRage                int64                             `json:"playerRage,omitempty"`
+	PlayerRageCap             int64                             `json:"playerRageCap,omitempty"`
+	PlayerTotalRage           int64                             `json:"playerTotalRage,omitempty"`
+	RageObservedAt            time.Time                         `json:"rageObservedAt,omitempty"`
+	AttacksLaunched           int                               `json:"attacksLaunched"`
+	VictoriesConfirmed        int                               `json:"victoriesConfirmed"`
+	CooldownsSkipped          int                               `json:"cooldownsSkipped"`
+	Launches                  []KhanLaunchState                 `json:"launches"`
+	Taunts                    map[MovementID]KhanTauntState     `json:"taunts"`
+	ResolvedTaunts            []KhanTauntState                  `json:"resolvedTaunts,omitempty"`
+	TauntsTriggered           int                               `json:"tauntsTriggered"`
+	TauntsObserved            int                               `json:"tauntsObserved"`
+	TauntsResolved            int                               `json:"tauntsResolved"`
+	TauntCounterVersion       int                               `json:"tauntCounterVersion"`
+	LastTauntTriggeredAt      time.Time                         `json:"lastTauntTriggeredAt,omitempty"`
+	LastTauntTriggeredRage    int64                             `json:"lastTauntTriggeredRage,omitempty"`
+	LastTauntResolvedAt       time.Time                         `json:"lastTauntResolvedAt,omitempty"`
+	LastReportID              int64                             `json:"lastReportId,omitempty"`
+	LastAttackLaunchedAt      time.Time                         `json:"lastAttackLaunchedAt,omitempty"`
+	LastCooldownSkippedAt     time.Time                         `json:"lastCooldownSkippedAt,omitempty"`
+	LastDefenseToolPurchaseAt time.Time                         `json:"lastDefenseToolPurchaseAt,omitempty"`
+	SafetyError               string                            `json:"safetyError,omitempty"`
+	Protection                KhanProtectionState               `json:"protection"`
+	CooldownReports           map[int64]KhanCooldownReportState `json:"cooldownReports"`
+	CooldownReportVersion     int                               `json:"cooldownReportVersion"`
+}
+
+const KhanTauntCounterVersion = 1
+const KhanCooldownReportVersion = 1
 
 // AttackDialogState is the current pre-attack context returned by ADI. Its
 // active effects are authoritative for the selected castle while the dialog
@@ -1354,8 +1399,10 @@ func NewGameState() GameState {
 		TowerCooldowns:       map[string]TowerCooldownState{},
 		TowerQueue: TowerQueueState{
 			EntriesByCastle: map[CastleID][]TowerQueueEntry{}, LastScannedAt: map[CastleID]time.Time{},
-			LastAttemptedAt:  map[CastleID]time.Time{},
-			CapacityByCastle: map[CastleID]TowerCapacityObservation{},
+			LastAttemptedAt:           map[CastleID]time.Time{},
+			ConfirmedLaunchesByCastle: map[CastleID]int64{},
+			CursorVersion:             TowerQueueCursorVersion,
+			CapacityByCastle:          map[CastleID]TowerCapacityObservation{},
 		},
 		Invasion: InvasionState{
 			LastScannedAt: map[CastleID]time.Time{}, FortifiedTargets: map[string]string{}, FortifyCurrencies: []string{},
@@ -1368,8 +1415,13 @@ func NewGameState() GameState {
 		NomadCamps: NomadCampState{
 			LastScannedAt: map[CastleID]time.Time{}, Cooldowns: map[string]NomadCampCooldownState{},
 		},
-		Advisor:       AdvisorState{Summary: AdvisorSummaryState{Gains: map[string]int64{}, Costs: map[string]int64{}}},
-		Khan:          KhanState{Launches: []KhanLaunchState{}, Taunts: map[MovementID]KhanTauntState{}},
+		Advisor: AdvisorState{Summary: AdvisorSummaryState{Gains: map[string]int64{}, Costs: map[string]int64{}}},
+		Khan: KhanState{
+			Launches: []KhanLaunchState{}, Taunts: map[MovementID]KhanTauntState{},
+			TauntCounterVersion:   KhanTauntCounterVersion,
+			CooldownReports:       map[int64]KhanCooldownReportState{},
+			CooldownReportVersion: KhanCooldownReportVersion,
+		},
 		AttackPresets: []AttackPreset{},
 		AttackAnalytics: AttackAnalyticsState{
 			LaunchIDs: []MovementID{}, PendingAttacks: []AttackFeatureLaunch{},

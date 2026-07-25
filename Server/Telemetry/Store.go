@@ -336,6 +336,8 @@ func appResponseOpcodes(opcode string) []string {
 		return []string{"jaa"}
 	case "ahr":
 		return []string{"ahh", "ahr"}
+	case "lta":
+		return []string{"gam"}
 	default:
 		return []string{strings.ToLower(strings.TrimSpace(opcode))}
 	}
@@ -662,6 +664,9 @@ func featureChannelForActor(actor string) string {
 	actor = strings.ToLower(strings.TrimSpace(actor))
 	if strings.HasPrefix(actor, "automation:") {
 		actor = strings.TrimPrefix(actor, "automation:")
+	}
+	if strings.HasPrefix(actor, "autokhan:") {
+		return ChannelAutoKhan
 	}
 	switch actor {
 	case "autobird":

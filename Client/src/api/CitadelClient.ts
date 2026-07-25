@@ -4,6 +4,8 @@ import type {
   APIEnvelope,
 	AllianceTargetViewV2,
 	AllianceTargetQueryV2,
+	AllianceTargetAttackPreviewRequest,
+	AllianceTargetAttackPreviewV2,
 	ApplicationUpdateV2,
 	BuildingCatalogQuery,
 	BuildingCatalogResponse,
@@ -23,6 +25,8 @@ import type {
   IntentReceipt,
 	IntentDefinition,
 	RuntimeDiagnosticsV2,
+	SettingsBundleV1,
+	SettingsImportResult,
   SubmitIntentOptions,
 } from './Contracts';
 
@@ -127,6 +131,17 @@ class CitadelClient {
     return this.request<ConfigurationSnapshot>('/api/v2/config');
   }
 
+	exportSettings(): Promise<SettingsBundleV1> {
+		return this.request<SettingsBundleV1>('/api/v2/config/export');
+	}
+
+	importSettings(bundle: SettingsBundleV1): Promise<SettingsImportResult> {
+		return this.request<SettingsImportResult>('/api/v2/config/import', {
+			method: 'POST',
+			body: JSON.stringify(bundle),
+		});
+	}
+
   selectBrowser(browser: string, options: SubmitIntentOptions = {}): Promise<IntentReceipt> {
     return this.submitIntent('session.select_browser', { browser }, options);
   }
@@ -156,6 +171,13 @@ class CitadelClient {
 		if (input.includeAlliances !== undefined) query.set('includeAlliances', input.includeAlliances ? '1' : '0');
 		const suffix = query.size > 0 ? `?${query.toString()}` : '';
 		return this.request<AllianceTargetViewV2>(`/api/v2/alliance-targets${suffix}`);
+	}
+
+	previewAllianceTargetAttack(input: AllianceTargetAttackPreviewRequest): Promise<AllianceTargetAttackPreviewV2> {
+		return this.request<AllianceTargetAttackPreviewV2>('/api/v2/alliance-targets/attack-preview', {
+			method: 'POST',
+			body: JSON.stringify(input),
+		});
 	}
 
 	optimizeEquipment(input: EquipmentOptimizeRequest): Promise<EquipmentOptimizeResponse> {

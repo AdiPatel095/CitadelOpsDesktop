@@ -21,18 +21,26 @@ type kingdomResourceShipmentGood struct {
 }
 
 type kingdomResourceShipmentRequest struct {
-	SourceCastleID  State.CastleID                `json:"sourceCastleId"`
-	TargetCastleID  State.CastleID                `json:"targetCastleId,omitempty"`
-	TargetKingdomID State.KingdomID               `json:"targetKingdomId"`
-	ResourceID      State.ResourceID              `json:"resourceId,omitempty"`
-	Amount          int64                         `json:"amount,omitempty"`
-	Goods           []kingdomResourceShipmentGood `json:"goods,omitempty"`
-	WorkflowOwner   string                        `json:"workflowOwner,omitempty"`
+	SourceCastleID   State.CastleID                `json:"sourceCastleId"`
+	TargetCastleID   State.CastleID                `json:"targetCastleId,omitempty"`
+	TargetKingdomID  State.KingdomID               `json:"targetKingdomId"`
+	ResourceID       State.ResourceID              `json:"resourceId,omitempty"`
+	Amount           int64                         `json:"amount,omitempty"`
+	Goods            []kingdomResourceShipmentGood `json:"goods,omitempty"`
+	WorkflowOwner    string                        `json:"workflowOwner,omitempty"`
+	TimeSkipID       string                        `json:"timeSkipId,omitempty"`
+	MinimumRemaining int64                         `json:"minimumRemaining,omitempty"`
 }
 
 type kingdomResourceSettlementRequest struct {
 	Owner           string          `json:"owner"`
 	TargetKingdomID State.KingdomID `json:"targetKingdomId"`
+}
+
+type kingdomResourceSkipRequest struct {
+	TargetKingdomID  State.KingdomID `json:"targetKingdomId"`
+	TimeSkipID       string          `json:"timeSkipId"`
+	MinimumRemaining int64           `json:"minimumRemaining,omitempty"`
 }
 
 type kingdomTransportAvailabilityGuard struct {
@@ -85,6 +93,9 @@ func resourceLogisticsMarketCastle(input Intent.PlanningContext) (State.CastleSt
 		}
 	}
 	if !hasSameKingdomPair {
+		return State.CastleState{}, false, nil
+	}
+	if !State.NextMarketBarrowLeaseRelease(input.State, time.Now().UTC()).IsZero() {
 		return State.CastleState{}, false, nil
 	}
 	if input.GameData == nil {
@@ -205,7 +216,8 @@ func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext,
 		return Intent.Plan{}, fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceName)
 	}
 	market, observed := input.State.Market.Castles[source.ID]
-	if !observed || input.State.Market.ObservedAt.IsZero() || market.AvailableBarrows <= 0 {
+	if !observed || input.State.Market.ObservedAt.IsZero() ||
+		State.AvailableMarketBarrowsAt(input.State, market, time.Now().UTC()) <= 0 {
 		return Intent.Plan{}, fmt.Errorf("source castle %d has no observed available market barrows", source.ID)
 	}
 	payload, _ := json.Marshal(struct {
@@ -308,23 +320,33 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 		SourceCastleID: source.ID, TargetCastleID: target.ID, TargetKingdomID: request.TargetKingdomID,
 		Goods: goods, WorkflowOwner: strings.TrimSpace(request.WorkflowOwner),
 	})
-	return Intent.Plan{
-		Claims: []string{
-			"resource-transport", "castle:" + strconv.FormatInt(int64(source.ID), 10),
-			"kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10),
-		},
-		Summary: summary,
-		Steps: []Intent.Step{
-			kingdomTransportContextStep(),
-			contextCommandStep("Refresh kingdom resource donor", "grc", resourceRefreshPayload, "grc"),
-			Intent.RebuildOnResume(Intent.Step{
-				Name: "Verify kingdom resource transport and donor balance", Action: "kingdom.transport.verify_available",
-				ActionArguments: guardArguments,
-			}),
-			commandStep("Start kingdom resource shipment", "kgt", payload, "kgt"),
-			Intent.Step{Name: "Consume confirmed donor resources", Action: "resources.kingdom.consume_source", ActionArguments: consumeArguments},
-		},
-	}, nil
+	claims := []string{
+		"resource-transport", "castle:" + strconv.FormatInt(int64(source.ID), 10),
+		"kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10),
+	}
+	steps := []Intent.Step{
+		kingdomTransportContextStep(),
+		contextCommandStep("Refresh kingdom resource donor", "grc", resourceRefreshPayload, "grc"),
+		Intent.RebuildOnResume(Intent.Step{
+			Name: "Verify kingdom resource transport and donor balance", Action: "kingdom.transport.verify_available",
+			ActionArguments: guardArguments,
+		}),
+		commandStep("Start kingdom resource shipment", "kgt", payload, "kgt"),
+		{Name: "Consume confirmed donor resources", Action: "resources.kingdom.consume_source", ActionArguments: consumeArguments},
+	}
+	if strings.TrimSpace(request.TimeSkipID) != "" {
+		skipStep, currencyID, _, skipErr := kingdomResourceSkipStep(input, kingdomResourceSkipRequest{
+			TargetKingdomID: request.TargetKingdomID, TimeSkipID: request.TimeSkipID,
+			MinimumRemaining: request.MinimumRemaining,
+		}, false)
+		if skipErr != nil {
+			return Intent.Plan{}, skipErr
+		}
+		skipStep.Name = "Immediately skip kingdom resource transport time"
+		steps = append(steps, skipStep)
+		claims = append(claims, "currency:"+strconv.FormatInt(int64(currencyID), 10))
+	}
+	return Intent.Plan{Claims: claims, Summary: summary, Steps: steps}, nil
 }
 
 func kingdomResourceTransportPending(gameState State.GameState, kingdomID State.KingdomID) bool {
@@ -547,49 +569,59 @@ func normalizeKingdomResourceGoods(request kingdomResourceShipmentRequest) ([]ki
 }
 
 func planKingdomResourceSkip(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
-	var request struct {
-		TargetKingdomID  State.KingdomID `json:"targetKingdomId"`
-		TimeSkipID       string          `json:"timeSkipId"`
-		MinimumRemaining int64           `json:"minimumRemaining,omitempty"`
-	}
+	var request kingdomResourceSkipRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
 	}
-	request.TimeSkipID = strings.ToUpper(strings.TrimSpace(request.TimeSkipID))
-	if request.TargetKingdomID < 0 || request.TimeSkipID == "" {
-		return Intent.Plan{}, fmt.Errorf("targetKingdomId and timeSkipId are required")
-	}
-	pending := false
-	for _, transport := range input.State.KingdomTransport.Pending {
-		if transport.KingdomID == request.TargetKingdomID && transport.RemainingSec > 0 {
-			pending = true
-			break
-		}
-	}
-	if !pending {
-		return Intent.Plan{}, fmt.Errorf("kingdom %d has no pending resource transport", request.TargetKingdomID)
-	}
-	currencyID, err := officialCurrencyID(input.GameData, request.TimeSkipID)
+	step, _, timeSkipLabel, err := kingdomResourceSkipStep(input, request, true)
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	return Intent.Plan{
+		Claims:  []string{"resource-transport", "kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10)},
+		Summary: fmt.Sprintf("Apply a %s to kingdom %d resource transport", timeSkipLabel, request.TargetKingdomID),
+		Steps:   []Intent.Step{step},
+	}, nil
+}
+
+func kingdomResourceSkipStep(
+	input Intent.PlanningContext,
+	request kingdomResourceSkipRequest,
+	requirePending bool,
+) (Intent.Step, State.CurrencyID, string, error) {
+	request.TimeSkipID = strings.ToUpper(strings.TrimSpace(request.TimeSkipID))
+	if request.TargetKingdomID < 0 || request.TimeSkipID == "" {
+		return Intent.Step{}, 0, "", fmt.Errorf("targetKingdomId and timeSkipId are required")
+	}
+	if requirePending {
+		pending := false
+		for _, transport := range input.State.KingdomTransport.Pending {
+			if transport.KingdomID == request.TargetKingdomID && transport.RemainingSec > 0 {
+				pending = true
+				break
+			}
+		}
+		if !pending {
+			return Intent.Step{}, 0, "", fmt.Errorf("kingdom %d has no pending resource transport", request.TargetKingdomID)
+		}
+	}
+	currencyID, err := officialCurrencyID(input.GameData, request.TimeSkipID)
+	if err != nil {
+		return Intent.Step{}, 0, "", err
+	}
 	timeSkipLabel := officialTimeSkipLabel(input.GameData, int64(currencyID), request.TimeSkipID)
 	if request.MinimumRemaining < 0 {
-		return Intent.Plan{}, fmt.Errorf("minimumRemaining cannot be negative")
+		return Intent.Step{}, 0, "", fmt.Errorf("minimumRemaining cannot be negative")
 	}
 	if input.State.Player.Currencies[currencyID]-1 < float64(request.MinimumRemaining) {
-		return Intent.Plan{}, fmt.Errorf("no %s is available", timeSkipLabel)
+		return Intent.Step{}, 0, "", fmt.Errorf("no %s is available", timeSkipLabel)
 	}
 	payload, _ := json.Marshal(map[string]string{
 		"MST": request.TimeSkipID,
 		"KID": strconv.FormatInt(int64(request.TargetKingdomID), 10),
 		"TT":  "2",
 	})
-	return Intent.Plan{
-		Claims:  []string{"resource-transport", "kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10)},
-		Summary: fmt.Sprintf("Apply a %s to kingdom %d resource transport", timeSkipLabel, request.TargetKingdomID),
-		Steps:   []Intent.Step{commandStep("Skip kingdom resource transport time", "msk", payload, "msk")},
-	}, nil
+	return commandStep("Skip kingdom resource transport time", "msk", payload, "msk"), currencyID, timeSkipLabel, nil
 }
 
 func officialResourceJSONKey(store *GameData.Store, id State.ResourceID) (string, error) {
@@ -614,6 +646,31 @@ func officialResourceJSONKey(store *GameData.Store, id State.ResourceID) (string
 		return "", fmt.Errorf("resource %d has no official wire key", id)
 	}
 	return jsonKey, nil
+}
+
+func officialResourceIDByJSONKey(store *GameData.Store, jsonKey string) (State.ResourceID, error) {
+	if store == nil || strings.TrimSpace(jsonKey) == "" {
+		return 0, fmt.Errorf("resource key must reference the loaded official catalog")
+	}
+	catalog, err := store.Catalog("resources")
+	if err != nil {
+		return 0, err
+	}
+	for _, raw := range catalog.Rows() {
+		record, decodeErr := GameData.DecodeRecord(raw)
+		if decodeErr != nil {
+			continue
+		}
+		candidate, _ := record.String("JSONKey")
+		if !strings.EqualFold(strings.TrimSpace(candidate), strings.TrimSpace(jsonKey)) {
+			continue
+		}
+		id, found := record.Int64("resourceID")
+		if found && id > 0 {
+			return State.ResourceID(id), nil
+		}
+	}
+	return 0, fmt.Errorf("official resource %s is unavailable", strings.TrimSpace(jsonKey))
 }
 
 func officialResourceDisplayName(store *GameData.Store, id State.ResourceID, fallback string) string {

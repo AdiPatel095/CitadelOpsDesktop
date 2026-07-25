@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,6 +26,7 @@ type defensePresetApplyRequest struct {
 	Wall       defensePresetWallRequest  `json:"wall"`
 	Moat       defensePresetMoatRequest  `json:"moat"`
 	Keep       *defensePresetKeepRequest `json:"keep,omitempty"`
+	KhanGuard  *khanLaneGuardRequest     `json:"khanGuard,omitempty"`
 }
 
 type defensePresetWallRequest struct {
@@ -57,6 +59,14 @@ func planDefensePresetApply(_ context.Context, input Intent.PlanningContext, arg
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if request.KhanGuard != nil {
+		if request.KhanGuard.MainCastleID != request.CastleID {
+			return Intent.Plan{}, fmt.Errorf("Khan defense guard does not match castle %d", request.CastleID)
+		}
+		if err := validateKhanLaneGuard(input.State, input.GameData, *request.KhanGuard, time.Now().UTC()); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	resolved := defensePresetResolvedRequest{
 		defensePresetApplyRequest:   request,
 		PreviousDefenseObservedAt:   castle.Defense.ObservedAt,
@@ -74,18 +84,39 @@ func planDefensePresetApply(_ context.Context, input Intent.PlanningContext, arg
 		PreviousInventoryObservedAt: castle.Defense.InventoryObservedAt,
 	})
 
-	steps := defenseRefreshSteps(castle)
+	steps := make([]Intent.Step, 0, 15)
+	var khanGuardStep Intent.Step
+	if request.KhanGuard != nil {
+		guardArguments, _ := json.Marshal(khanLaneGuardActionRequest{KhanGuard: *request.KhanGuard})
+		khanGuardStep = Intent.Step{
+			Name:   "Recheck Auto Khan safety gates",
+			Action: "khan.lane.guard", ActionArguments: guardArguments,
+		}
+	}
+	if request.KhanGuard != nil {
+		steps = append(steps, khanGuardStep)
+	}
+	steps = append(steps, defenseRefreshSteps(castle)...)
+	if request.KhanGuard != nil {
+		steps = append(steps, khanGuardStep)
+	}
 	steps = append(steps, Intent.Step{
 		Name: "Apply defense preset wall", Resolver: "defense.preset.wall.build", ResolverArguments: resolvedArguments,
 		AwaitOpcode: "dfw", TimeoutMillis: 10_000, SuccessCodes: []int{0},
 	})
 	steps = append(steps, defenseContextStep(castle))
+	if request.KhanGuard != nil {
+		steps = append(steps, khanGuardStep)
+	}
 	steps = append(steps, Intent.Step{
 		Name: "Apply defense preset moat", Resolver: "defense.moat.build", ResolverArguments: moatArguments,
 		AwaitOpcode: "dfm", TimeoutMillis: 10_000, SuccessCodes: []int{0},
 	})
 	steps = append(steps, defenseContextStep(castle))
 	if request.Keep != nil {
+		if request.KhanGuard != nil {
+			steps = append(steps, khanGuardStep)
+		}
 		steps = append(steps, Intent.Step{
 			Name: "Apply defense preset keep", Resolver: "defense.preset.keep.build", ResolverArguments: resolvedArguments,
 			AwaitOpcode: "dfk", TimeoutMillis: 10_000, SuccessCodes: []int{0},
@@ -96,8 +127,15 @@ func planDefensePresetApply(_ context.Context, input Intent.PlanningContext, arg
 		Name: "Verify defense preset", Action: "defense.preset.verify", ActionArguments: resolvedArguments,
 	})
 
+	claims := defenseClaims(castle.ID)
+	if request.KhanGuard != nil {
+		// The Khan loop restocks the wall while the chain keeps attacking from
+		// the same castle, so this claims the defense setup and the focus it
+		// moves rather than the whole castle.
+		claims = []string{"castle-focus", "defense:" + strconv.FormatInt(int64(castle.ID), 10), "khan-lane:defense"}
+	}
 	return Intent.Plan{
-		Claims:  defenseClaims(castle.ID),
+		Claims:  claims,
 		Summary: "Apply defense preset " + strings.TrimSpace(request.PresetName) + " to " + castleLabel(castle),
 		Steps:   steps,
 	}, nil

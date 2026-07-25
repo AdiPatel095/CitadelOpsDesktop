@@ -204,7 +204,11 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       if (scope.type === 'global') {
         return { ...prev, globalItems: items };
       }
-      const castleSettings = prev.castles[scope.castleId] ?? { enabled: true, items: [] };
+      const castleSettings = prev.castles[scope.castleId] ?? { enabled: true, items: [], cursor: 0 };
+      const sameRotation = castleSettings.items.length === items.length
+        && castleSettings.items.every((item, index) => (
+          item.id === items[index]?.id && (item.amount ?? 0) === (items[index]?.amount ?? 0)
+        ));
       return {
         ...prev,
         castles: {
@@ -212,6 +216,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
           [scope.castleId]: {
             ...castleSettings,
             items,
+            cursor: sameRotation ? castleSettings.cursor : 0,
           },
         },
       };
@@ -220,9 +225,26 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
 
   const handleAddItem = async (scope: ItemScope, title: string) => {
     const currentItems = currentItemsForScope(scope);
+    const allowedItemIDs = allowedItemIDsForScope(scope);
+    const isPerCastleRecruitRotation = kind === 'recruit' && settings.mode === 'perCastle' && scope.type === 'castle';
+    if (isPerCastleRecruitRotation) {
+      const result = await showTroopPicker({
+        mode: 'multi',
+        title,
+        preselected: currentItems.map((item) => item.id),
+        allowedUnitIds: allowedItemIDs,
+      });
+      if (!Array.isArray(result)) return;
+      const currentByID = new Map(currentItems.map((item) => [item.id, item]));
+      const selectedIDs = result.filter((item): item is number => typeof item === 'number');
+      updateItemsForScope(
+        scope,
+        selectedIDs.map((itemID) => currentByID.get(itemID) ?? { id: itemID, amount: 0 }),
+      );
+      return;
+    }
 
     const commonOptions = { mode: 'single' as const, title, preselected: currentItems[0]?.id ? [currentItems[0].id] : [] };
-    const allowedItemIDs = allowedItemIDsForScope(scope);
     const result = kind === 'recruit'
       ? await showTroopPicker({ ...commonOptions, allowedUnitIds: allowedItemIDs })
       : await showToolPicker({ ...commonOptions, allowedToolIds: allowedItemIDs });
@@ -256,7 +278,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
 
   const updateCastleEnabled = (castleId: string, enabled: boolean) => {
     setSettings(prev => {
-      const castleSettings = prev.castles[castleId] ?? { enabled: false, items: [] };
+      const castleSettings = prev.castles[castleId] ?? { enabled: false, items: [], cursor: 0 };
       return {
         ...prev,
         castles: {
@@ -357,16 +379,30 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       );
     }
 
+    const showsRecruitRotation = kind === 'recruit' && settings.mode === 'perCastle'
+      && scope.type === 'castle' && items.length > 1;
+    const nextRotationIndex = showsRecruitRotation
+      ? (settings.castles[scope.castleId]?.cursor ?? 0) % items.length
+      : -1;
+
     return (
-      <div className="flex flex-wrap gap-4 content-start">
-        {items.map((item) => (
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-4 content-start">
+        {items.map((item, index) => (
           <button
             key={`${scope.type}-${scope.type === 'castle' ? scope.castleId : 'global'}-${item.id}`}
             type="button"
-            className="group/item relative flex w-[5.75rem] flex-col items-center gap-2 rounded-global border border-border-base bg-bg-card/70 p-3 text-center shadow-sm transition-transform hover:-translate-y-1 hover:border-primary/45"
-            title={itemName(item.id)}
+            className={`group/item relative flex w-[5.75rem] flex-col items-center gap-2 rounded-global border bg-bg-card/70 p-3 text-center shadow-sm transition-transform hover:-translate-y-1 hover:border-primary/45 ${
+              index === nextRotationIndex ? 'border-primary/70 ring-1 ring-primary/25' : 'border-border-base'
+            }`}
+            title={showsRecruitRotation ? `Rotation ${index + 1}: ${itemName(item.id)}` : itemName(item.id)}
             onClick={() => openEditModal(scope, item)}
           >
+            {showsRecruitRotation && (
+              <span className="absolute left-1.5 top-1.5 z-10 rounded-full border border-primary/35 bg-bg-card/95 px-1.5 py-0.5 text-[10px] font-black text-primary shadow-sm">
+                {index === nextRotationIndex ? `Next · ${index + 1}` : index + 1}
+              </span>
+            )}
             {itemImage(item.id, 66, 'rounded-xl')}
             <span className="line-clamp-2 min-h-[2rem] text-xs font-bold leading-tight text-text-main">
               {itemName(item.id)}
@@ -385,6 +421,12 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
           <Plus className="h-5 w-5" />
           Select
         </button>
+        </div>
+        {showsRecruitRotation && (
+          <p className="text-[11px] font-semibold leading-relaxed text-text-muted">
+            Queues one stack at a time in numbered order, then repeats. The next unit advances only after a successful recruit.
+          </p>
+        )}
       </div>
     );
   };
@@ -629,7 +671,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     >
         {eligibleCastles.map((castle) => {
           const castleId = castle.id.toString();
-          const castleSettings = settings.castles[castleId] ?? { enabled: false, items: [] };
+          const castleSettings = settings.castles[castleId] ?? { enabled: false, items: [], cursor: 0 };
 
           return (
             <div
@@ -761,7 +803,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                   const castleSchedule = featureSchedules[castleScheduleID];
                   const scheduledItemSchedule = !isGlobalMode && castleSchedule?.enabled && castleSchedule.slotOptionsEnabled ? castleSchedule : null;
                   const castleUsesScheduledItems = !!scheduledItemSchedule;
-                  const castleSettings = settings.castles[castleId] ?? { enabled: false, items: [] };
+                  const castleSettings = settings.castles[castleId] ?? { enabled: false, items: [], cursor: 0 };
                   const displayedItems = isGlobalMode ? [] : castleSettings.items;
                   const hasItems = displayedItems.length > 0;
 
@@ -832,8 +874,8 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                           renderItems(
                             castleSettings.items,
                             { type: 'castle', castleId },
-                            `Select ${definition.itemLabel}`,
-                            `Select ${kind === 'recruit' ? 'recruit unit' : 'tool'} - ${castle.name}`,
+                            `Select ${kind === 'recruit' ? 'units' : definition.itemLabel}`,
+                            `Select ${kind === 'recruit' ? 'recruit rotation' : 'tool'} - ${castle.name}`,
                           )
                         )}
                       </CardContent>

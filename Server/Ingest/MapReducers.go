@@ -17,6 +17,7 @@ import (
 const (
 	nomadCampMapTypeID   = 27
 	samuraiCampMapTypeID = 29
+	khanCampMapTypeID    = 35
 	stormIslandMapTypeID = 24
 	stormFortMapTypeID   = 25
 )
@@ -130,11 +131,13 @@ func reduceMapSnapshot(
 		observation := State.MapObservation{
 			KingdomID: kingdomID, X: x, Y: y, TypeID: typeID, ObservedAt: frame.ReceivedAt,
 		}
-		if len(row) >= 9 && !isRegularEventCampType(typeID) {
+		if len(row) >= 9 && !isRegularEventCampType(typeID) && typeID != khanCampMapTypeID {
 			observation.OwnerID = State.PlayerID(rowInt(row, 4))
 		}
 		if isRegularEventCampType(typeID) {
 			populateEventCampObservation(&observation, row, gameData)
+		} else if typeID == khanCampMapTypeID {
+			populateKhanCampObservation(&observation, row, gameData)
 		} else if isStormMapType(typeID) {
 			populateStormObservation(&observation, row, gameData)
 			labelStormOpportunity(&observation, gameData)
@@ -296,6 +299,24 @@ func populateEventCampObservation(observation *State.MapObservation, row []json.
 	}
 }
 
+func populateKhanCampObservation(observation *State.MapObservation, row []json.RawMessage, gameData *GameData.Store) {
+	if observation == nil || observation.TypeID != khanCampMapTypeID || len(row) < 13 {
+		return
+	}
+	// Captured Khan rows are [35,X,Y,...,cooldownSec,...,eventCampID,wall,gate,moat].
+	observation.EventCampCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
+	observation.EventCampID = rowInt(row, 9)
+	observation.ObjectID = observation.EventCampID
+	observation.EventCampBaseWallBonus = rowInt(row, 10)
+	observation.EventCampBaseGateBonus = rowInt(row, 11)
+	observation.EventCampBaseMoatBonus = rowInt(row, 12)
+	if gameData != nil {
+		if definition, found := gameData.EventCamp(observation.EventCampID); found {
+			observation.Level = definition.CampLevel
+		}
+	}
+}
+
 func populateTowerObservation(observation *State.MapObservation, row []json.RawMessage) {
 	if observation == nil || observation.TypeID != towerMapTypeID || len(row) < 7 {
 		return
@@ -334,9 +355,10 @@ func reduceDungeonCooldownSkip(
 		return nil, false, fmt.Errorf("decode dungeon cooldown reset: %w", err)
 	}
 	typeID := int(rowInt(payload.Node, 0))
-	if typeID != towerMapTypeID && !isRegularEventCampType(typeID) ||
+	if typeID != towerMapTypeID && !isRegularEventCampType(typeID) && typeID != khanCampMapTypeID ||
 		typeID == towerMapTypeID && len(payload.Node) < 7 ||
-		isRegularEventCampType(typeID) && len(payload.Node) < 9 {
+		isRegularEventCampType(typeID) && len(payload.Node) < 9 ||
+		typeID == khanCampMapTypeID && len(payload.Node) < 13 {
 		return nil, false, fmt.Errorf("dungeon cooldown reset did not return a supported target row")
 	}
 	kingdomID := State.KingdomID(payload.KingdomID)
@@ -372,6 +394,8 @@ func reduceDungeonCooldownSkip(
 			observation.ObjectID = rowInt(payload.Node, 3)
 		}
 		populateTowerObservation(&observation, payload.Node)
+	} else if typeID == khanCampMapTypeID {
+		populateKhanCampObservation(&observation, payload.Node, gameData)
 	} else {
 		populateEventCampObservation(&observation, payload.Node, gameData)
 	}
@@ -387,30 +411,18 @@ func reduceDungeonCooldownSkip(
 	if typeID == towerMapTypeID {
 		cooldownChanged := refreshTowerCooldownFromMap(gameState, observation)
 		testChanged := recordRBCTestCooldownSkip(gameState, observation, frame.ReceivedAt)
-		khanChanged := recordKhanCooldownSkip(gameState, observation, frame.ReceivedAt)
 		domains := []string{"map", "tower-cooldowns"}
 		if testChanged {
 			domains = append(domains, "nomad-camps")
 		}
-		if khanChanged {
-			domains = append(domains, "khan")
-		}
-		return domains, mapChanged || cooldownChanged || testChanged || khanChanged, nil
+		return domains, mapChanged || cooldownChanged || testChanged, nil
+	}
+	if typeID == khanCampMapTypeID {
+		cooldownChanged := refreshNomadCampCooldownFromMap(gameState, observation)
+		return []string{"map", "khan", "nomad-camps"}, mapChanged || cooldownChanged, nil
 	}
 	cooldownChanged := refreshNomadCampCooldownFromMap(gameState, observation)
 	return []string{"map", "nomad-camps"}, mapChanged || cooldownChanged, nil
-}
-
-func recordKhanCooldownSkip(gameState *State.GameState, observation State.MapObservation, observedAt time.Time) bool {
-	khan := &gameState.Khan
-	if khan.RunID == "" || observation.TypeID != towerMapTypeID || observation.KingdomID != khan.KingdomID ||
-		observation.X != khan.TargetX || observation.Y != khan.TargetY || observation.TowerCooldownRemaining != 0 ||
-		khan.CooldownsSkipped >= khan.AttacksLaunched {
-		return false
-	}
-	khan.CooldownsSkipped++
-	khan.LastCooldownSkippedAt = observedAt.UTC()
-	return true
 }
 
 func recordRBCTestCooldownSkip(gameState *State.GameState, observation State.MapObservation, observedAt time.Time) bool {

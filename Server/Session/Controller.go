@@ -336,9 +336,6 @@ func (controller *Controller) SelectBrowser(preference string) error {
 	defer controller.lifecycleMu.Unlock()
 	controller.mu.Lock()
 	defer controller.mu.Unlock()
-	if controller.cancel != nil {
-		return fmt.Errorf("stop the active game session before changing browsers")
-	}
 	selector, ok := controller.transport.(BrowserSelector)
 	if !ok {
 		return fmt.Errorf("the configured game transport does not support browser selection")
@@ -348,6 +345,16 @@ func (controller *Controller) SelectBrowser(preference string) error {
 	}
 	controller.applyStatus(controller.transport.Status())
 	return nil
+}
+
+func (controller *Controller) BrowserInventory() BrowserInventory {
+	if provider, ok := controller.transport.(BrowserInventoryProvider); ok {
+		return provider.BrowserInventory()
+	}
+	available := DiscoverChromiumBrowsers()
+	status := controller.Status()
+	current := BrowserCandidate{ID: status.BrowserID, Name: status.BrowserName}
+	return browserInventory(current, current, available)
 }
 
 func (controller *Controller) Send(ctx context.Context, payload []byte) error {

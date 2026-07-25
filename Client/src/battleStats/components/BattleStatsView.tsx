@@ -31,7 +31,10 @@ import type {
   ParsedReport,
 } from '../types/BattleStats';
 
-const dataSources = ['/api/v2/history/battle-reports'];
+const dataSources = [
+  '/api/v2/history/battle-reports/cloud',
+  '/api/v2/history/battle-reports?limit=10000',
+];
 
 const REPORT_ROWS_PAGE_SIZE = 250;
 

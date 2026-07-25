@@ -78,31 +78,31 @@ func TestOpenImportsChangedLegacyPlayerTrackerWithoutDuplicates(t *testing.T) {
 	}
 }
 
-func TestPlayerSamplesForAccountScopesHistoryByUID(t *testing.T) {
+func TestPlayerSamplesForPlayerIgnoresChangingLegacyUID(t *testing.T) {
 	store, err := Open(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, sample := range []PlayerSample{
-		{TimestampUnix: 100, UID: 11, PlayerID: 7, Might: 100},
-		{TimestampUnix: 110, UID: 22, PlayerID: 8, Might: 200},
-		{TimestampUnix: 120, PlayerID: 7, Might: 110},
+	for _, sample := range []json.RawMessage{
+		json.RawMessage(`{"timestampUnix":100,"uid":11,"playerId":7,"might":100}`),
+		json.RawMessage(`{"timestampUnix":110,"uid":22,"playerId":8,"might":200}`),
+		json.RawMessage(`{"timestampUnix":120,"uid":33,"playerId":7,"might":110}`),
 	} {
 		if err := store.Append(CollectionPlayerSamples, sample); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	samples, err := store.PlayerSamplesForAccount(time.Time{}, 10, 11, 7)
+	samples, err := store.PlayerSamplesForPlayer(time.Time{}, 10, 7)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(samples) != 2 || samples[0].Might != 100 || samples[1].Might != 110 {
-		t.Fatalf("UID 11 history = %+v", samples)
+		t.Fatalf("player 7 history = %+v", samples)
 	}
 	for _, sample := range samples {
-		if sample.UID != 11 || sample.PlayerID != 7 {
-			t.Fatalf("history sample was not attached to UID 11: %+v", sample)
+		if sample.PlayerID != 7 {
+			t.Fatalf("history included another player: %+v", sample)
 		}
 	}
 }

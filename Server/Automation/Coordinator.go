@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"sync/atomic"
@@ -33,32 +34,35 @@ type Coordinator struct {
 	intents                    IntentSubmitter
 	policies                   []Policy
 	stateWakeByDomain          map[string][]string
+	urgentWakeByDomain         map[string][]string
 	configurationWakeBySection map[string][]string
 	started                    atomic.Bool
 }
 
 type policyRuntime struct {
-	nextCheck                  time.Time
-	running                    bool
-	runtimeWakePending         bool
-	stateProgressPending       bool
-	configurationWakePending   bool
-	immediateRuns              int
-	evaluatedStateRevision     uint64
-	evaluatedConfigRevision    uint64
-	evaluatedConfiguration     string
-	evaluatedSessionReady      bool
-	evaluatedSessionKnown      bool
-	evaluatedSessionGeneration uint64
-	lastDecisionFingerprint    string
-	rejectRepeatedDecision     bool
-	submissionBlockedUntil     time.Time
-	blockedDecisionFingerprint string
-	failureBlockedUntil        time.Time
-	runningScheduleKey         string
-	runningSessionGeneration   uint64
-	allowedConfigurationChange string
-	cancelRun                  context.CancelFunc
+	nextCheck                     time.Time
+	running                       bool
+	runtimeWakePending            bool
+	stateProgressPending          bool
+	configurationWakePending      bool
+	configurationRebuildPending   bool
+	immediateRuns                 int
+	evaluatedStateRevision        uint64
+	evaluatedConfigRevision       uint64
+	evaluatedConfiguration        string
+	evaluatedDerivedConfiguration string
+	evaluatedSessionReady         bool
+	evaluatedSessionKnown         bool
+	evaluatedSessionGeneration    uint64
+	lastDecisionFingerprint       string
+	rejectRepeatedDecision        bool
+	submissionBlockedUntil        time.Time
+	blockedDecisionFingerprint    string
+	failureBlockedUntil           time.Time
+	runningScheduleKey            string
+	runningSessionGeneration      uint64
+	allowedConfigurationChange    string
+	cancelRun                     context.CancelFunc
 }
 
 type operationResult struct {
@@ -88,6 +92,7 @@ func NewCoordinator(
 	return &Coordinator{
 		state: state, configuration: configuration, gameData: gameData, intents: intents, policies: filtered,
 		stateWakeByDomain:          indexPolicyWakeDomains(filtered),
+		urgentWakeByDomain:         indexPolicyUrgentWakeDomains(filtered),
 		configurationWakeBySection: indexPolicyWakeSections(filtered),
 	}
 }
@@ -151,14 +156,24 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 	evaluate := func() {
 		coordinator.evaluate(ctx, runtime, results)
 	}
-	handleStateEvent := func(event State.Event) bool {
+	handleStateEvent := func(event State.Event) (bool, bool) {
 		if !meaningfulStateEvent(event) {
-			return false
+			return false, false
 		}
 		if stateEventHasDomain(event, "session") {
 			coordinator.cancelRunsForUnavailableSession(runtime, coordinator.state.ReadOnlyView())
 		}
-		return wakePoliciesForStateEvent(runtime, coordinator.stateWakeByDomain, event)
+		return wakePoliciesForStateEvent(
+			runtime, coordinator.stateWakeByDomain, coordinator.urgentWakeByDomain, event,
+		)
+	}
+	stopDebounce := func() {
+		if debounce == nil {
+			return
+		}
+		debounce.Stop()
+		debounce = nil
+		debounceChannel = nil
 	}
 	handleConfigurationEvent := func(event Configuration.Event) bool {
 		coordinator.cancelDisallowedPolicyRuns(runtime, event, time.Now().UTC())
@@ -175,7 +190,16 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 			}
 			return
 		case event := <-stateEvents:
-			if !handleStateEvent(event) {
+			woke, urgent := handleStateEvent(event)
+			if !woke {
+				continue
+			}
+			if urgent {
+				// A declared urgent domain trades coalescing for reaction time:
+				// evaluate on the observing event so a short game-side window is
+				// not spent waiting out unrelated state churn.
+				stopDebounce()
+				evaluate()
 				continue
 			}
 			if debounce == nil {
@@ -210,7 +234,12 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 			if current == nil {
 				continue
 			}
-			stateWake := drainStateEvents(stateEvents, stateEventBuffer, handleStateEvent)
+			stateWake := drainStateEvents(stateEvents, stateEventBuffer, func(event State.Event) bool {
+				// Completion already reevaluates every woken policy, so a drained
+				// urgent domain needs no separate immediate pass.
+				woke, _ := handleStateEvent(event)
+				return woke
+			})
 			configurationWake := drainConfigurationEvents(
 				configurationEvents,
 				configurationEventBuffer,
@@ -247,11 +276,39 @@ func (coordinator *Coordinator) evaluate(
 		}
 		isEnabled := enabled[policy.EnabledKey()]
 		configurationFingerprint := policyConfigurationFingerprint(policy, configuration)
+		derivedConfigurationFingerprint := policyDerivedConfigurationFingerprint(policy, configuration)
 		previouslyEvaluated := current.evaluatedSessionKnown
+		if previouslyEvaluated && current.evaluatedDerivedConfiguration != derivedConfigurationFingerprint &&
+			policyHasConfigurationDerivedState(policy) {
+			current.configurationRebuildPending = true
+		}
+		if current.configurationRebuildPending {
+			derived, supportsDerivedState := policy.(ConfigurationDerivedStatePolicy)
+			if !supportsDerivedState {
+				current.configurationRebuildPending = false
+			} else {
+				_, err := coordinator.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+					domains, changed := derived.ResetConfigurationDerivedState(gameState)
+					return domains, changed, nil
+				})
+				if err != nil {
+					current.nextCheck = now.Add(defaultRetry)
+					coordinator.recordDecision(policy.ID(), true, Decision{
+						Status: "blocked", Detail: "Could not rebuild settings-derived work: " + err.Error(),
+						NextCheckAt: current.nextCheck,
+					})
+					continue
+				}
+				current.configurationRebuildPending = false
+				state = coordinator.state.ReadOnlyView()
+				sessionReady = automationSessionReady(state.Session)
+			}
+		}
 		if !isEnabled {
 			current.evaluatedStateRevision = state.Revision
 			current.evaluatedConfigRevision = configuration.Revision
 			current.evaluatedConfiguration = configurationFingerprint
+			current.evaluatedDerivedConfiguration = derivedConfigurationFingerprint
 			current.evaluatedSessionReady = sessionReady
 			current.evaluatedSessionKnown = true
 			current.evaluatedSessionGeneration = state.Session.Generation
@@ -274,6 +331,7 @@ func (coordinator *Coordinator) evaluate(
 		current.evaluatedStateRevision = state.Revision
 		current.evaluatedConfigRevision = configuration.Revision
 		current.evaluatedConfiguration = configurationFingerprint
+		current.evaluatedDerivedConfiguration = derivedConfigurationFingerprint
 		current.evaluatedSessionReady = sessionReady
 		current.evaluatedSessionKnown = true
 		current.evaluatedSessionGeneration = state.Session.Generation
@@ -289,7 +347,7 @@ func (coordinator *Coordinator) evaluate(
 			})
 			continue
 		}
-		if allowed, next := scheduleAllows(configuration, policy.ID(), now); !allowed {
+		if allowed, next := scheduleAllows(configuration, policyScheduleKey(policy), now); !allowed {
 			resetContinuation(current)
 			if next.IsZero() {
 				next = now.Add(defaultRetry)
@@ -359,11 +417,11 @@ func (coordinator *Coordinator) evaluate(
 		current.blockedDecisionFingerprint = ""
 		current.rejectRepeatedDecision = false
 		request := *decision.Request
-		request.Actor = "automation:" + policy.ID()
+		request.Actor = "automation:" + policyActorID(policy)
 		var followUp *Intent.Request
 		if decision.FollowUp != nil {
 			copy := *decision.FollowUp
-			copy.Actor = "automation:" + policy.ID()
+			copy.Actor = "automation:" + policyActorID(policy)
 			followUp = &copy
 		}
 		current.running = true
@@ -430,7 +488,8 @@ func (coordinator *Coordinator) cancelDisallowedPolicyRuns(
 	now time.Time,
 ) {
 	section := strings.TrimSpace(event.Section)
-	if coordinator.configuration == nil || section != "automation.enabled" && section != "scheduler" {
+	if coordinator.configuration == nil ||
+		!event.Gap && section != "automation.enabled" && section != "scheduler" {
 		return
 	}
 	configuration := coordinator.configuration.Snapshot()
@@ -446,7 +505,7 @@ func (coordinator *Coordinator) wakePoliciesForConfigurationEvent(
 	}
 	section := strings.TrimSpace(event.Section)
 	candidates := map[string]struct{}{}
-	if section == "automation.enabled" || section == "scheduler" {
+	if event.Gap || section == "automation.enabled" || section == "scheduler" {
 		for _, policy := range coordinator.policies {
 			candidates[policy.ID()] = struct{}{}
 		}
@@ -466,6 +525,13 @@ func (coordinator *Coordinator) wakePoliciesForConfigurationEvent(
 		if current == nil || event.Revision <= current.evaluatedConfigRevision ||
 			current.evaluatedConfiguration == latestFingerprint {
 			continue
+		}
+		if policyConfigurationChangeInvalidatesDerivedState(policy, section, event.Gap) &&
+			current.allowedConfigurationChange != latestFingerprint {
+			current.configurationRebuildPending = true
+		}
+		if current.allowedConfigurationChange == latestFingerprint {
+			current.evaluatedDerivedConfiguration = policyDerivedConfigurationFingerprint(policy, configuration)
 		}
 		if current.running {
 			current.configurationWakePending = true
@@ -495,13 +561,18 @@ func (coordinator *Coordinator) cancelRunsDisallowedByConfiguration(
 		latestFingerprint := policyConfigurationFingerprint(policy, configuration)
 		if current.evaluatedConfiguration != latestFingerprint {
 			current.configurationWakePending = true
+			if current.evaluatedDerivedConfiguration != policyDerivedConfigurationFingerprint(policy, configuration) &&
+				current.allowedConfigurationChange != latestFingerprint {
+				current.configurationRebuildPending = true
+			}
 			if current.allowedConfigurationChange != latestFingerprint {
 				current.cancelRun()
 				continue
 			}
 		}
-		allowedBySchedule, _ := scheduleAllows(configuration, policy.ID(), now)
-		if scheduleKey := strings.TrimSpace(current.runningScheduleKey); allowedBySchedule && scheduleKey != "" && scheduleKey != policy.ID() {
+		allowedBySchedule, _ := scheduleAllows(configuration, policyScheduleKey(policy), now)
+		if scheduleKey := strings.TrimSpace(current.runningScheduleKey); allowedBySchedule &&
+			scheduleKey != "" && scheduleKey != policyScheduleKey(policy) {
 			allowedBySchedule, _ = scheduleAllows(configuration, scheduleKey, now)
 		}
 		if !enabled[policy.EnabledKey()] || !allowedBySchedule {
@@ -713,6 +784,44 @@ func indexPolicyWakeDomains(policies []Policy) map[string][]string {
 	return indexed
 }
 
+// indexPolicyUrgentWakeDomains keeps only urgent domains the policy already
+// wakes on, so an urgent list that drifts away from WakeDomains cannot quietly
+// promote an event the policy never observes.
+func indexPolicyUrgentWakeDomains(policies []Policy) map[string][]string {
+	indexed := map[string][]string{}
+	for _, policy := range policies {
+		declared, ok := policy.(UrgentWakePolicy)
+		if !ok {
+			continue
+		}
+		woken := map[string]struct{}{}
+		if wake, supportsWakeDomains := policy.(StateWakePolicy); supportsWakeDomains {
+			for _, value := range wake.WakeDomains() {
+				woken[strings.ToLower(strings.TrimSpace(value))] = struct{}{}
+			}
+		}
+		seen := map[string]struct{}{}
+		for _, value := range declared.UrgentWakeDomains() {
+			domain := strings.ToLower(strings.TrimSpace(value))
+			if domain == "" || domain == "protocol" || domain == "automation" || domain == "session" {
+				continue
+			}
+			if _, wakes := woken[domain]; !wakes {
+				continue
+			}
+			if _, duplicate := seen[domain]; duplicate {
+				continue
+			}
+			seen[domain] = struct{}{}
+			indexed[domain] = append(indexed[domain], policy.ID())
+		}
+	}
+	for domain := range indexed {
+		sort.Strings(indexed[domain])
+	}
+	return indexed
+}
+
 func indexPolicyWakeSections(policies []Policy) map[string][]string {
 	indexed := map[string][]string{}
 	for _, policy := range policies {
@@ -739,9 +848,51 @@ func indexPolicyWakeSections(policies []Policy) map[string][]string {
 	return indexed
 }
 
+func policyConfigurationChangeInvalidatesDerivedState(policy Policy, section string, gap bool) bool {
+	declared, ok := policy.(ConfigurationDerivedStatePolicy)
+	if !ok {
+		return false
+	}
+	section = strings.TrimSpace(section)
+	for _, value := range declared.ConfigurationDerivedStateSections() {
+		derivedSection := strings.TrimSpace(value)
+		if derivedSection != "" && (gap || derivedSection == section) {
+			return true
+		}
+	}
+	return false
+}
+
+func policyHasConfigurationDerivedState(policy Policy) bool {
+	return policyConfigurationChangeInvalidatesDerivedState(policy, "", true)
+}
+
+func policyDerivedConfigurationFingerprint(policy Policy, configuration Configuration.Snapshot) string {
+	declared, ok := policy.(ConfigurationDerivedStatePolicy)
+	if !ok {
+		return ""
+	}
+	sections := map[string]struct{}{}
+	for _, value := range declared.ConfigurationDerivedStateSections() {
+		if section := strings.TrimSpace(value); section != "" {
+			sections[section] = struct{}{}
+		}
+	}
+	keys := make([]string, 0, len(sections))
+	for section := range sections {
+		keys = append(keys, section)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys)*2)
+	for _, section := range keys {
+		parts = append(parts, section, string(configuration.Sections[section]))
+	}
+	return strings.Join(parts, "\x00")
+}
+
 func policyConfigurationFingerprint(policy Policy, configuration Configuration.Snapshot) string {
 	enabled := configuredEnabledFeatures(configuration)[policy.EnabledKey()]
-	parts := []string{"enabled", "false", "schedule", policyScheduleConfiguration(policy.ID(), configuration.Sections["scheduler"])}
+	parts := []string{"enabled", "false", "schedule", policyScheduleConfiguration(policyScheduleKey(policy), configuration.Sections["scheduler"])}
 	if enabled {
 		parts[1] = "true"
 	}
@@ -762,6 +913,24 @@ func policyConfigurationFingerprint(policy Policy, configuration Configuration.S
 		parts = append(parts, section, string(configuration.Sections[section]))
 	}
 	return strings.Join(parts, "\x00")
+}
+
+func policyScheduleKey(policy Policy) string {
+	if declared, ok := policy.(ScheduleKeyPolicy); ok {
+		if key := strings.TrimSpace(declared.ScheduleKey()); key != "" {
+			return key
+		}
+	}
+	return policy.ID()
+}
+
+func policyActorID(policy Policy) string {
+	if declared, ok := policy.(ActorIDPolicy); ok {
+		if id := strings.TrimSpace(declared.ActorID()); id != "" {
+			return id
+		}
+	}
+	return policy.ID()
 }
 
 func configurationFollowUpFingerprint(
@@ -817,15 +986,19 @@ func policyScheduleConfiguration(policyID string, raw json.RawMessage) string {
 	return strings.Join(parts, "\x00")
 }
 
+// wakePoliciesForStateEvent reports whether the event woke an idle policy, and
+// whether any of those wakes came from a domain that policy declared urgent.
 func wakePoliciesForStateEvent(
 	runtime map[string]*policyRuntime,
 	indexed map[string][]string,
+	urgent map[string][]string,
 	event State.Event,
-) bool {
+) (bool, bool) {
 	wokeIdle := false
-	wake := func(current *policyRuntime, session bool) {
+	wokeUrgently := false
+	wake := func(current *policyRuntime, session bool) bool {
 		if current == nil || event.Revision <= current.evaluatedStateRevision {
-			return
+			return false
 		}
 		if current.running {
 			if session {
@@ -833,11 +1006,12 @@ func wakePoliciesForStateEvent(
 			} else {
 				current.stateProgressPending = true
 			}
-			return
+			return false
 		}
 		resetContinuation(current)
 		current.nextCheck = time.Time{}
 		wokeIdle = true
+		return true
 	}
 	for _, value := range event.Domains {
 		domain := strings.ToLower(strings.TrimSpace(value))
@@ -845,15 +1019,17 @@ func wakePoliciesForStateEvent(
 			for _, current := range runtime {
 				wake(current, true)
 			}
-			return wokeIdle
+			return wokeIdle, false
 		}
 		for _, policyID := range indexed[domain] {
 			// A running policy records relevant response progress but only an
 			// explicit completion continuation may override deliberate pacing.
-			wake(runtime[policyID], false)
+			if wake(runtime[policyID], false) && slices.Contains(urgent[domain], policyID) {
+				wokeUrgently = true
+			}
 		}
 	}
-	return wokeIdle
+	return wokeIdle, wokeUrgently
 }
 
 func wakePoliciesForConfigurationEvent(

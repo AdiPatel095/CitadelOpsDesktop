@@ -15,6 +15,8 @@ import (
 	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
@@ -24,10 +26,15 @@ const (
 	stormIntentFortMapTypeID                       = 25
 	stormIntentMaximumSupport                      = 8
 	stormMapWindowSize                             = 101
+	stormMapCenterCoordinate                       = 650
+	stormMapInitialHalfSpan                        = 50
+	stormMapRingStride                             = stormMapWindowSize - 1
+	stormMapEdgeBuffer                             = 25
 	stormMapMaximumWindowCount                     = 400
 	stormMapMaximumCoordinate                      = stormMapWindowSize*stormMapMaximumWindowCount - 1
 	stormMapWindowDelayMillis                      = 150
-	stormMapMinimumAttemptInterval                 = 6 * time.Hour
+	stormMapBurstResponseTimeout                   = 15 * time.Second
+	stormMapMinimumAttemptInterval                 = 2 * time.Hour
 )
 
 type stormMapScanRequest struct {
@@ -37,6 +44,32 @@ type stormMapScanRequest struct {
 	Bounds         State.StormMapBounds `json:"bounds"`
 	Radius         int                  `json:"radius,omitempty"`
 	ScanStartedAt  time.Time            `json:"scanStartedAt"`
+}
+
+type stormMapBurstSender interface {
+	CorrelatesResponses() bool
+	Namespace() string
+	Send(context.Context, []byte) error
+	WaitForAutomationUnlocked(context.Context) error
+}
+
+type stormMapBurstObserver interface {
+	ForgetCommitted(uint64)
+	WaitCommitted(context.Context, uint64) (Protocol.CommittedFrame, error)
+	WatchWireResponse(string, string) (<-chan Protocol.CommittedFrame, func())
+}
+
+type stormMapBurstSlot struct {
+	window towerMapWindow
+	token  string
+	wire   []byte
+	frames <-chan Protocol.CommittedFrame
+	cancel func()
+}
+
+type stormMapBurstResult struct {
+	index int
+	frame Protocol.CommittedFrame
 }
 
 type stormDefenseUnit struct {
@@ -111,6 +144,7 @@ type stormShopPurchaseLine struct {
 func (application *Application) registerStormIntents() error {
 	for name, action := range map[string]Intent.Action{
 		"storm.scan.begin":             application.beginStormScan,
+		"storm.scan.burst":             application.burstStormMapScan,
 		"storm.scan.capture":           application.captureStormScan,
 		"storm.attack.guard":           application.guardStormAttack,
 		"storm.target.consume":         application.consumeStormTarget,
@@ -127,8 +161,8 @@ func (application *Application) registerStormIntents() error {
 	}
 	definitions := []Intent.Definition{
 		{
-			Name: "storm.map.scan", Description: "Focus the Storm castle and refresh a complete tiled map snapshot", Effect: Intent.EffectRead,
-			ArgumentsExample: json.RawMessage(`{"sourceCastleId":5358,"fullMap":true,"bounds":{"x1":0,"y1":0,"x2":605,"y2":605}}`), Planner: planStormMapScan,
+			Name: "storm.map.scan", Description: "Focus the Storm castle and refresh an adaptive center-out map snapshot", Effect: Intent.EffectRead,
+			ArgumentsExample: json.RawMessage(`{"sourceCastleId":5358,"fullMap":true,"bounds":{"x1":600,"y1":600,"x2":700,"y2":700}}`), Planner: planStormMapScan,
 		},
 		{
 			Name: "storm.attack", Description: "Launch a guarded CitadelOps preset against an eligible Storm fort or resource island", Effect: Intent.EffectLaunch,
@@ -166,7 +200,7 @@ func planStormMapScan(_ context.Context, input Intent.PlanningContext, arguments
 		lastAttemptAt = input.State.Storm.LastScannedAt[source.ID]
 	}
 	if request.FullMap && !lastAttemptAt.IsZero() && time.Now().UTC().Before(lastAttemptAt.Add(stormMapMinimumAttemptInterval)) {
-		return Intent.Plan{}, fmt.Errorf("full Storm map sweeps are limited to one attempt every six hours")
+		return Intent.Plan{}, fmt.Errorf("full Storm map sweeps are limited to one attempt every two hours")
 	}
 	request.ScanStartedAt = time.Now().UTC()
 	normalizedArguments, _ := json.Marshal(request)
@@ -184,28 +218,34 @@ func planStormMapScan(_ context.Context, input Intent.PlanningContext, arguments
 		steps = append(steps, Intent.Step{
 			Name: "Record Storm map sweep attempt", Action: "storm.scan.begin", ActionArguments: normalizedArguments,
 		})
-	}
-	for index, window := range windows {
-		payload, _ := json.Marshal(struct {
-			KingdomID State.KingdomID `json:"KID"`
-			X1        int             `json:"AX1"`
-			Y1        int             `json:"AY1"`
-			X2        int             `json:"AX2"`
-			Y2        int             `json:"AY2"`
-		}{source.KingdomID, window.X1, window.Y1, window.X2, window.Y2})
-		step := commandStep(
-			fmt.Sprintf("Refresh Storm map window %d/%d", index+1, len(windows)), "gaa", payload, "gaa",
-		)
-		if index > 0 {
-			step.DelayMillis = stormMapWindowDelayMillis
+		steps = append(steps, Intent.Step{
+			Name: "Burst Storm map windows", Action: "storm.scan.burst", ActionArguments: normalizedArguments,
+		})
+	} else {
+		for index, window := range windows {
+			payload, _ := json.Marshal(struct {
+				KingdomID State.KingdomID `json:"KID"`
+				X1        int             `json:"AX1"`
+				Y1        int             `json:"AY1"`
+				X2        int             `json:"AX2"`
+				Y2        int             `json:"AY2"`
+			}{source.KingdomID, window.X1, window.Y1, window.X2, window.Y2})
+			step := commandStep(
+				fmt.Sprintf("Refresh Storm map window %d/%d", index+1, len(windows)), "gaa", payload, "gaa",
+			)
+			if index > 0 {
+				step.DelayMillis = stormMapWindowDelayMillis
+			}
+			steps = append(steps, step)
 		}
-		steps = append(steps, step)
 	}
-	steps = append(steps, Intent.Step{Name: "Build Storm map state", Action: "storm.scan.capture", ActionArguments: normalizedArguments})
+	if !request.FullMap {
+		steps = append(steps, Intent.Step{Name: "Build Storm map state", Action: "storm.scan.capture", ActionArguments: normalizedArguments})
+	}
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	summary := fmt.Sprintf("Refresh Storm forts and resource islands around %s", castleLabel(source))
 	if request.FullMap {
-		summary = fmt.Sprintf("Refresh the complete Storm map in %d windows", len(windows))
+		summary = fmt.Sprintf("Refresh the Storm map outward from %d:%d", stormMapCenterCoordinate, stormMapCenterCoordinate)
 	} else if request.Targeted {
 		summary = fmt.Sprintf("Refresh Storm target at %d:%d", request.Bounds.X1, request.Bounds.Y1)
 	}
@@ -238,6 +278,92 @@ func stormMapScanWindows(bounds State.StormMapBounds) []towerMapWindow {
 		}
 	}
 	return windows
+}
+
+func stormMapConcentricBounds(ring int) State.StormMapBounds {
+	offset := max(0, ring) * stormMapRingStride
+	return State.StormMapBounds{
+		X1: stormMapCenterCoordinate - stormMapInitialHalfSpan - offset,
+		Y1: stormMapCenterCoordinate - stormMapInitialHalfSpan - offset,
+		X2: stormMapCenterCoordinate + stormMapInitialHalfSpan + offset,
+		Y2: stormMapCenterCoordinate + stormMapInitialHalfSpan + offset,
+	}
+}
+
+func stormMapConcentricRingWindows(ring int) []towerMapWindow {
+	if ring < 0 {
+		return nil
+	}
+	bounds := stormMapConcentricBounds(ring)
+	allWindows := stormMapScanWindows(bounds)
+	if len(allWindows) == 0 || len(allWindows) > stormMapMaximumWindowCount {
+		return nil
+	}
+	windows := make([]towerMapWindow, 0, max(1, ring*8))
+	for yOffset := -ring; yOffset <= ring; yOffset++ {
+		for xOffset := -ring; xOffset <= ring; xOffset++ {
+			if max(absStormMapOffset(xOffset), absStormMapOffset(yOffset)) != ring {
+				continue
+			}
+			x1, x2 := stormMapRingAxisBounds(xOffset)
+			y1, y2 := stormMapRingAxisBounds(yOffset)
+			windows = append(windows, towerMapWindow{
+				X1: x1,
+				Y1: y1,
+				X2: x2,
+				Y2: y2,
+			})
+		}
+	}
+	return windows
+}
+
+func stormMapRingAxisBounds(offset int) (int, int) {
+	centerStart := stormMapCenterCoordinate - stormMapInitialHalfSpan
+	centerEnd := stormMapCenterCoordinate + stormMapInitialHalfSpan
+	if offset < 0 {
+		start := centerStart + offset*stormMapRingStride
+		return start, start + stormMapRingStride - 1
+	}
+	if offset > 0 {
+		start := centerEnd + 1 + (offset-1)*stormMapRingStride
+		return start, start + stormMapRingStride - 1
+	}
+	return centerStart, centerEnd
+}
+
+func absStormMapOffset(value int) int {
+	if value < 0 {
+		return -value
+	}
+	return value
+}
+
+func stormMapSweepNeedsExpansion(state State.GameState, bounds State.StormMapBounds, startedAt time.Time) bool {
+	for _, observation := range state.Storm.Map.Targets {
+		if stormMapTargetTouchesEdge(observation, bounds) {
+			return true
+		}
+	}
+	for _, observation := range state.Map[stormIntentKingdomID] {
+		if observation.ObservedAt.Before(startedAt) {
+			continue
+		}
+		if stormMapTargetTouchesEdge(observation, bounds) {
+			return true
+		}
+	}
+	return false
+}
+
+func stormMapTargetTouchesEdge(observation State.MapObservation, bounds State.StormMapBounds) bool {
+	if observation.TypeID != stormIntentIslandMapTypeID && observation.TypeID != stormIntentFortMapTypeID {
+		return false
+	}
+	return observation.X <= bounds.X1+stormMapEdgeBuffer ||
+		observation.X >= bounds.X2-stormMapEdgeBuffer ||
+		observation.Y <= bounds.Y1+stormMapEdgeBuffer ||
+		observation.Y >= bounds.Y2-stormMapEdgeBuffer
 }
 
 func planStormAttack(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -450,12 +576,12 @@ func stormMapScanContext(input Intent.PlanningContext, arguments json.RawMessage
 		return stormMapScanRequest{}, State.CastleState{}, fmt.Errorf("Storm source castle %d is unavailable in kingdom %d", request.SourceCastleID, stormIntentKingdomID)
 	}
 	if request.FullMap {
-		windows := stormMapScanWindows(request.Bounds)
-		if !request.Bounds.IsValid() || request.Bounds.X1 != 0 || request.Bounds.Y1 != 0 ||
-			!request.Bounds.Contains(source.X, source.Y) || len(windows) == 0 || len(windows) > stormMapMaximumWindowCount {
+		initialBounds := stormMapConcentricBounds(0)
+		if request.Bounds != initialBounds {
 			return stormMapScanRequest{}, State.CastleState{}, fmt.Errorf(
-				"full Storm map scan requires origin-based bounds containing the source castle and no more than %d windows",
-				stormMapMaximumWindowCount,
+				"full Storm map scan must start at %d:%d with bounds %d:%d through %d:%d",
+				stormMapCenterCoordinate, stormMapCenterCoordinate,
+				initialBounds.X1, initialBounds.Y1, initialBounds.X2, initialBounds.Y2,
 			)
 		}
 	} else if request.Targeted {
@@ -755,12 +881,218 @@ func (application *Application) beginStormScan(_ context.Context, arguments json
 	return err
 }
 
+func (application *Application) burstStormMapScan(ctx context.Context, arguments json.RawMessage) error {
+	if application == nil || application.State == nil || application.Session == nil || application.Ingest == nil {
+		return fmt.Errorf("Storm map burst dependencies are unavailable")
+	}
+	request, source, err := stormMapScanContext(Intent.PlanningContext{State: application.State.Snapshot()}, arguments)
+	if err != nil {
+		return err
+	}
+	if !request.FullMap {
+		return fmt.Errorf("Storm map burst requires a full-map scan")
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	burstContext, cancelBurst := context.WithTimeout(ctx, stormMapBurstResponseTimeout)
+	defer cancelBurst()
+
+	startedAt := stormScanStartedAt(request)
+	for ring := 0; ; ring++ {
+		windows := stormMapConcentricRingWindows(ring)
+		if len(windows) == 0 {
+			return fmt.Errorf(
+				"Storm map targets still touch the %d-coordinate safety margin at the maximum concentric scan bounds",
+				stormMapEdgeBuffer,
+			)
+		}
+		timeout := stormMapBurstRemaining(burstContext)
+		if timeout <= 0 {
+			return fmt.Errorf("Storm map concentric sweep exceeded the %s response deadline: %w", stormMapBurstResponseTimeout, burstContext.Err())
+		}
+		if err := runStormMapGAABurst(
+			burstContext, application.Session, application.Ingest, source.KingdomID, windows, timeout,
+		); err != nil {
+			return fmt.Errorf("scan Storm map ring %d: %w", ring, err)
+		}
+		request.Bounds = stormMapConcentricBounds(ring)
+		if !stormMapSweepNeedsExpansion(application.State.Snapshot(), request.Bounds, startedAt) {
+			return application.captureStormScanRequest(request)
+		}
+	}
+}
+
+func stormMapBurstRemaining(ctx context.Context) time.Duration {
+	if deadline, exists := ctx.Deadline(); exists {
+		return time.Until(deadline)
+	}
+	return stormMapBurstResponseTimeout
+}
+
+func runStormMapGAABurst(
+	ctx context.Context,
+	sender stormMapBurstSender,
+	observer stormMapBurstObserver,
+	kingdomID State.KingdomID,
+	windows []towerMapWindow,
+	timeout time.Duration,
+) error {
+	if sender == nil || observer == nil {
+		return fmt.Errorf("Storm map burst sender and response observer are required")
+	}
+	if !sender.CorrelatesResponses() {
+		return fmt.Errorf("Storm map burst requires correlated websocket responses")
+	}
+	if len(windows) == 0 {
+		return fmt.Errorf("Storm map burst has no windows")
+	}
+	if timeout <= 0 {
+		return fmt.Errorf("Storm map burst timeout must be positive")
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	burstContext, cancelBurst := context.WithTimeout(ctx, timeout)
+	defer cancelBurst()
+
+	operationID := strings.TrimSpace(Outbound.MetadataFromContext(ctx).OperationID)
+	if operationID == "" {
+		operationID = "storm-map"
+	}
+	tokenRoot := fmt.Sprintf("%s/storm-gaa/%d", operationID, time.Now().UTC().UnixNano())
+	slots := make([]stormMapBurstSlot, len(windows))
+	defer func() {
+		for _, slot := range slots {
+			if slot.cancel != nil {
+				slot.cancel()
+			}
+		}
+	}()
+	for index, window := range windows {
+		payload, err := json.Marshal(struct {
+			KingdomID State.KingdomID `json:"KID"`
+			X1        int             `json:"AX1"`
+			Y1        int             `json:"AY1"`
+			X2        int             `json:"AX2"`
+			Y2        int             `json:"AY2"`
+		}{kingdomID, window.X1, window.Y1, window.X2, window.Y2})
+		if err != nil {
+			return fmt.Errorf("encode Storm map window %d/%d: %w", index+1, len(windows), err)
+		}
+		wire, err := Protocol.Encode(Protocol.Command{
+			Namespace: sender.Namespace(), Opcode: "gaa", Payload: payload,
+		})
+		if err != nil {
+			return fmt.Errorf("build Storm map window %d/%d: %w", index+1, len(windows), err)
+		}
+		token := fmt.Sprintf("%s/%d", tokenRoot, index+1)
+		frames, cancel := observer.WatchWireResponse("gaa", token)
+		slots[index] = stormMapBurstSlot{
+			window: window, token: token, wire: wire, frames: frames, cancel: cancel,
+		}
+	}
+
+	results := make(chan stormMapBurstResult, len(slots))
+	for index := range slots {
+		slot := slots[index]
+		go func() {
+			select {
+			case frame := <-slot.frames:
+				results <- stormMapBurstResult{index: index, frame: frame}
+			case <-burstContext.Done():
+			}
+		}()
+	}
+
+	timeoutMillis := int(timeout / time.Millisecond)
+	baseMetadata := Outbound.MetadataFromContext(burstContext)
+	for index, slot := range slots {
+		metadata := baseMetadata
+		metadata.ResponseToken = slot.token
+		metadata.ResponseOpcodes = []string{"gaa"}
+		metadata.ResponseTimeoutMillis = timeoutMillis
+		sendContext := Outbound.WithMetadata(burstContext, metadata)
+		for {
+			err := sender.Send(sendContext, slot.wire)
+			if err == nil {
+				break
+			}
+			if !errors.Is(err, Outbound.ErrAutomationLocked) || Outbound.IsIndeterminate(err) {
+				return fmt.Errorf("send Storm map window %d/%d: %w", index+1, len(slots), err)
+			}
+			if err := sender.WaitForAutomationUnlocked(burstContext); err != nil {
+				return fmt.Errorf(
+					"Storm map GAA burst timed out while paused before window %d/%d: %w",
+					index+1, len(slots), err,
+				)
+			}
+		}
+	}
+
+	received := make([]Protocol.CommittedFrame, len(slots))
+	seen := make([]bool, len(slots))
+	pendingCommits := map[uint64]struct{}{}
+	defer func() {
+		for ingressID := range pendingCommits {
+			observer.ForgetCommitted(ingressID)
+		}
+	}()
+	for responseCount := 0; responseCount < len(slots); {
+		select {
+		case <-burstContext.Done():
+			return fmt.Errorf(
+				"Storm map GAA burst received %d/%d responses before the %s deadline: %w",
+				responseCount, len(slots), timeout, burstContext.Err(),
+			)
+		case result := <-results:
+			if result.index < 0 || result.index >= len(slots) || seen[result.index] {
+				return fmt.Errorf("Storm map GAA response aggregation received a duplicate or invalid slot")
+			}
+			if result.frame.Frame.ResponseToken != slots[result.index].token {
+				return fmt.Errorf("Storm map GAA response token changed for window %d/%d", result.index+1, len(slots))
+			}
+			seen[result.index] = true
+			received[result.index] = result.frame
+			pendingCommits[result.frame.IngressID] = struct{}{}
+			responseCount++
+		}
+	}
+	for index, response := range received {
+		committed, err := observer.WaitCommitted(burstContext, response.IngressID)
+		delete(pendingCommits, response.IngressID)
+		if err != nil {
+			return fmt.Errorf("commit Storm map window %d/%d: %w", index+1, len(slots), err)
+		}
+		if committed.Frame.ResponseCode == nil {
+			return fmt.Errorf("Storm map window %d/%d response did not include a result code", index+1, len(slots))
+		}
+		if *committed.Frame.ResponseCode != 0 {
+			return fmt.Errorf(
+				"Storm map window %d/%d response code %d was not successful",
+				index+1, len(slots), *committed.Frame.ResponseCode,
+			)
+		}
+		if committed.ReduceError != "" {
+			return fmt.Errorf(
+				"Storm map window %d/%d response state reduction failed: %s",
+				index+1, len(slots), committed.ReduceError,
+			)
+		}
+	}
+	return nil
+}
+
 func (application *Application) captureStormScan(_ context.Context, arguments json.RawMessage) error {
 	request, _, err := stormMapScanContext(Intent.PlanningContext{State: application.State.Snapshot()}, arguments)
 	if err != nil {
 		return err
 	}
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	return application.captureStormScanRequest(request)
+}
+
+func (application *Application) captureStormScanRequest(request stormMapScanRequest) error {
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
 		if _, exists := gameState.Castles[request.SourceCastleID]; !exists {
 			return nil, false, fmt.Errorf("Storm source castle %d is no longer available", request.SourceCastleID)
 		}
@@ -806,10 +1138,6 @@ func (application *Application) captureStormScan(_ context.Context, arguments js
 
 		targets := map[string]State.MapObservation{}
 		observations := gameState.Map[stormIntentKingdomID]
-		eastEdgeObserved := false
-		southEdgeObserved := false
-		eastEdgeStart := max(request.Bounds.X1, request.Bounds.X2-stormMapWindowSize+1)
-		southEdgeStart := max(request.Bounds.Y1, request.Bounds.Y2-stormMapWindowSize+1)
 		for key, observation := range observations {
 			if !request.Bounds.Contains(observation.X, observation.Y) {
 				continue
@@ -819,12 +1147,6 @@ func (application *Application) captureStormScan(_ context.Context, arguments js
 					delete(observations, key)
 				}
 				continue
-			}
-			if observation.X >= eastEdgeStart {
-				eastEdgeObserved = true
-			}
-			if observation.Y >= southEdgeStart {
-				southEdgeObserved = true
 			}
 			if observation.TypeID == stormIntentIslandMapTypeID || observation.TypeID == stormIntentFortMapTypeID {
 				targets[key] = observation
@@ -836,7 +1158,7 @@ func (application *Application) captureStormScan(_ context.Context, arguments js
 			PlayerID:        gameState.Player.ID,
 			SourceCastleID:  request.SourceCastleID,
 			CoveredBounds:   request.Bounds,
-			NextBounds:      stormNextMapBounds(request.Bounds, eastEdgeObserved, southEdgeObserved),
+			NextBounds:      request.Bounds,
 			LastAttemptAt:   startedAt,
 			LastCompletedAt: completedAt,
 			WindowCount:     len(stormMapScanWindows(request.Bounds)),
@@ -859,25 +1181,6 @@ func stormScanStartedAt(request stormMapScanRequest) time.Time {
 func stormMapStateMatches(gameState State.GameState, mapState State.StormMapState, sourceCastleID State.CastleID) bool {
 	return mapState.ServerURL == gameState.Session.ServerURL && mapState.PlayerID == gameState.Player.ID &&
 		mapState.SourceCastleID == sourceCastleID
-}
-
-func stormNextMapBounds(bounds State.StormMapBounds, eastEdgeObserved bool, southEdgeObserved bool) State.StormMapBounds {
-	next := bounds
-	if eastEdgeObserved {
-		candidate := next
-		candidate.X2 += stormMapWindowSize
-		if windows := stormMapScanWindows(candidate); len(windows) > 0 && len(windows) <= stormMapMaximumWindowCount {
-			next = candidate
-		}
-	}
-	if southEdgeObserved {
-		candidate := next
-		candidate.Y2 += stormMapWindowSize
-		if windows := stormMapScanWindows(candidate); len(windows) > 0 && len(windows) <= stormMapMaximumWindowCount {
-			next = candidate
-		}
-	}
-	return next
 }
 
 func (application *Application) guardStormAttack(_ context.Context, arguments json.RawMessage) error {
@@ -940,7 +1243,7 @@ func (application *Application) resolveStormAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve Storm attack capacity: %w", err)
 	}
-	setup := limitAttackSetupToCapacity(invasionAttackSetup(attackRequest.Preset), capacity.Capacity, capacity.MaximumWaves)
+	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(attackRequest.Preset, capacity.Capacity, capacity.MaximumWaves))
 	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Storm preset %q: %w", attackRequest.Preset.Name, err)

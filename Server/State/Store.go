@@ -527,6 +527,7 @@ func cloneGameStateWithMap(source GameState, cloneWorldMap bool) GameState {
 	}
 	clone.TowerQueue.LastScannedAt = cloneMap(source.TowerQueue.LastScannedAt)
 	clone.TowerQueue.LastAttemptedAt = cloneMap(source.TowerQueue.LastAttemptedAt)
+	clone.TowerQueue.ConfirmedLaunchesByCastle = cloneMap(source.TowerQueue.ConfirmedLaunchesByCastle)
 	clone.TowerQueue.CapacityByCastle = cloneMap(source.TowerQueue.CapacityByCastle)
 	clone.Invasion.LastScannedAt = cloneMap(source.Invasion.LastScannedAt)
 	clone.Invasion.FortifiedTargets = cloneMap(source.Invasion.FortifiedTargets)
@@ -557,6 +558,11 @@ func cloneGameStateWithMap(source GameState, cloneWorldMap bool) GameState {
 	clone.Khan.Launches = append([]KhanLaunchState(nil), source.Khan.Launches...)
 	clone.Khan.Taunts = cloneMap(source.Khan.Taunts)
 	clone.Khan.ResolvedTaunts = append([]KhanTauntState(nil), source.Khan.ResolvedTaunts...)
+	clone.Khan.CooldownReports = cloneMap(source.Khan.CooldownReports)
+	for reportID, report := range clone.Khan.CooldownReports {
+		report.MSDs = append([]KhanCooldownMSDState(nil), report.MSDs...)
+		clone.Khan.CooldownReports[reportID] = report
+	}
 	clone.AttackDialog.ActiveEffects = append([]AttackDialogEffect(nil), source.AttackDialog.ActiveEffects...)
 	for index := range clone.AttackDialog.ActiveEffects {
 		clone.AttackDialog.ActiveEffects[index].Values = append([]float64(nil), source.AttackDialog.ActiveEffects[index].Values...)

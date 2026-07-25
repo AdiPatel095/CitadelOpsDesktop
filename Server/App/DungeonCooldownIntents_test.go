@@ -31,7 +31,7 @@ func TestDungeonMinuteSkipUsesOneMS6ForThreeHourRBCCooldown(t *testing.T) {
 		plan.Steps[0].AwaitOpcode != "msd" || plan.Steps[1].Action != "nomad.cooldown.minute_skip.verify" {
 		t.Fatalf("unexpected minute-skip plan: %#v", plan.Steps)
 	}
-	step, err := resolveDungeonMinuteSkipStep(t.Context(), input, arguments)
+	step, err := resolveDungeonMinuteSkipStep(t.Context(), input, plan.Steps[0].ResolverArguments)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,6 +54,79 @@ func TestDungeonMinuteSkipUsesOneMS6ForThreeHourRBCCooldown(t *testing.T) {
 	gameState.Player.Currencies[1006] = 2
 	if _, err := planDungeonMinuteSkip(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments); err == nil {
 		t.Fatal("minute skip ignored the configured MS6 reserve")
+	}
+}
+
+func TestDungeonMinuteSkipAcceptsType35KhanTarget(t *testing.T) {
+	gameData := dungeonMinuteSkipGameData(t)
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Player.Currencies[1006] = 1
+	gameState.Map[0] = map[string]State.MapObservation{
+		"939:1123": {
+			KingdomID: 0, TypeID: khanCampTypeID, X: 939, Y: 1123,
+			EventCampID: 1146, EventCampCooldownRemaining: 194, ObservedAt: now,
+		},
+	}
+	arguments := json.RawMessage(`{
+		"kingdomId":0,"targetTypeId":35,"targetX":939,"targetY":1123,
+		"eventCampId":1146,"minimumRemaining":{}
+	}`)
+	plan, err := planDungeonMinuteSkip(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 2 || plan.Steps[0].Resolver != "nomad.cooldown.minute_skip.build" {
+		t.Fatalf("unexpected Khan cooldown plan: %#v", plan)
+	}
+}
+
+func TestKhanCooldownReportsAttachEveryMSDUntilCooldownClears(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Khan.CooldownReports[101] = State.KhanCooldownReportState{
+		ReportID: 101, KingdomID: 0, X: 939, Y: 1123,
+		LandedAt: now.Add(-time.Second), CooldownRemaining: 700, CooldownObservedAt: now,
+	}
+	application := &Application{State: State.NewStore(gameState)}
+	first := dungeonMinuteSkipVerification{
+		dungeonMinuteSkipRequest: dungeonMinuteSkipRequest{
+			KingdomID: 0, TargetTypeID: khanCampTypeID, TargetX: 939, TargetY: 1123,
+			KhanReportIDs: []int64{101},
+		},
+		StartedAt: now, InitialRemaining: 700, MSDWireKey: "MS3", MSDMinutes: 10,
+	}
+	if err := application.completeKhanCooldownReports(first, State.MapObservation{
+		KingdomID: 0, TypeID: khanCampTypeID, X: 939, Y: 1123, ObservedAt: now.Add(time.Second),
+	}, 100); err != nil {
+		t.Fatal(err)
+	}
+	state := application.State.Snapshot()
+	report := state.Khan.CooldownReports[101]
+	if !report.ResolvedAt.IsZero() || len(report.MSDs) != 1 ||
+		report.MSDs[0].WireKey != "MS3" || report.MSDs[0].CooldownBefore != 700 ||
+		report.MSDs[0].CooldownAfter != 100 || state.Khan.CooldownsSkipped != 1 {
+		t.Fatalf("partially skipped report = %#v, Khan=%#v", report, state.Khan)
+	}
+
+	second := first
+	second.StartedAt = now.Add(2 * time.Second)
+	second.InitialRemaining = 100
+	second.MSDWireKey = "MS2"
+	second.MSDMinutes = 5
+	if err := application.completeKhanCooldownReports(second, State.MapObservation{
+		KingdomID: 0, TypeID: khanCampTypeID, X: 939, Y: 1123, ObservedAt: now.Add(3 * time.Second),
+	}, 0); err != nil {
+		t.Fatal(err)
+	}
+	state = application.State.Snapshot()
+	report = state.Khan.CooldownReports[101]
+	if report.ResolvedAt.IsZero() || len(report.MSDs) != 2 ||
+		report.MSDs[1].WireKey != "MS2" || report.MSDs[1].CooldownAfter != 0 ||
+		state.Khan.CooldownsSkipped != 2 {
+		t.Fatalf("resolved report with attached MSDs = %#v, Khan=%#v", report, state.Khan)
 	}
 }
 

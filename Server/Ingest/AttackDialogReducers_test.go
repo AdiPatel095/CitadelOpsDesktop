@@ -2,6 +2,7 @@ package Ingest
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 	"time"
 
@@ -52,6 +53,52 @@ func TestReduceAttackDialogStoresAuthoritativeRBCTowerProgression(t *testing.T) 
 	if target.TypeID != towerMapTypeID || target.X != 101 || target.Y != 102 || target.ObjectID != -1 ||
 		target.TowerVictoryCount != 845 || target.TowerCooldownRemaining != 0 {
 		t.Fatalf("unexpected RBC dialog target: %#v", target)
+	}
+}
+
+func TestReduceAttackDialogStoresKhanCooldown(t *testing.T) {
+	gameState := State.NewGameState()
+	battleAt := time.Now().UTC().Add(-2 * time.Second)
+	gameState.Map[0] = map[string]State.MapObservation{
+		"939:1123": {
+			KingdomID: 0, TypeID: khanCampMapTypeID, X: 939, Y: 1123,
+			EventCampID: 1145, Level: 105, ObservedAt: time.Now().UTC().Add(-time.Minute),
+		},
+	}
+	gameState.NomadCamps.Cooldowns["0:939:1123"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 939, Y: 1123, LastSuccessfulBattleAt: battleAt, PendingCooldownRefresh: true,
+	}
+	code := 0
+	observedAt := time.Now().UTC()
+	domains, changed, err := reduceAttackDialog(t.Context(), Protocol.Frame{
+		Opcode: "adi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{
+			"KID":0,"SCID":100,
+			"gaa":{"AI":[35,939,1123,3352,-1,194,360,1825,17,1146,200,200,85]},
+			"AE":[]
+		}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("Khan attack dialog: changed=%t err=%v", changed, err)
+	}
+	target := gameState.AttackDialog.Target
+	if target.TypeID != khanCampMapTypeID || target.X != 939 || target.Y != 1123 ||
+		target.ObjectID != 1146 || target.EventCampID != 1146 || target.EventCampCooldownRemaining != 194 {
+		t.Fatalf("unexpected Khan dialog target: %#v", target)
+	}
+	observation := gameState.Map[0]["939:1123"]
+	if observation.TypeID != khanCampMapTypeID || observation.EventCampID != 1146 ||
+		observation.EventCampCooldownRemaining != 194 || observation.Level != 105 ||
+		!observation.ObservedAt.Equal(observedAt) {
+		t.Fatalf("unexpected tracked Khan cooldown: %#v", observation)
+	}
+	if !slices.Contains(domains, "map") || !slices.Contains(domains, "nomad-camps") {
+		t.Fatalf("Khan cooldown update domains = %v", domains)
+	}
+	cooldown := gameState.NomadCamps.Cooldowns["0:939:1123"]
+	if cooldown.PendingCooldownRefresh || cooldown.CooldownRemaining != 194 ||
+		!cooldown.CooldownObservedAt.Equal(observedAt) {
+		t.Fatalf("attack dialog did not refresh Khan cooldown tracker: %#v", cooldown)
 	}
 }
 

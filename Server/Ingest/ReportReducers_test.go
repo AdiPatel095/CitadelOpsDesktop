@@ -178,3 +178,63 @@ func TestSuccessfulTowerBattleRefreshesCooldownFromFollowUpMapSnapshot(t *testin
 		t.Fatalf("unexpected refreshed cooldown: %#v", cooldown)
 	}
 }
+
+func TestSuccessfulType35KhanBattleCreatesLandingCooldownBoundary(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Khan = State.KhanState{
+		RunID: "khan", KingdomID: 0, TargetX: 939, TargetY: 1123,
+		AttacksLaunched: 1, Taunts: map[State.MovementID]State.KhanTauntState{},
+	}
+	code := 0
+	battleAt := time.Date(2026, 7, 25, 15, 30, 41, 0, time.UTC)
+	summary := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "bls", ResponseCode: &code, ReceivedAt: battleAt,
+		Payload: json.RawMessage(`{
+			"MID":2194729220,"LID":711545217,
+			"PBI":[[1,0,4850,-331],[-801,1,15812,-15812]],
+			"AI":{"AT":35,"K":0,"X":939,"Y":1123,"DP":-801}
+		}`),
+	}
+	domains, changed, err := reduceSuccessfulTowerBattle(t.Context(), summary, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("Khan battle: domains=%v changed=%t err=%v", domains, changed, err)
+	}
+	if gameState.Khan.VictoriesConfirmed != 1 || gameState.Khan.LastReportID != 711545217 {
+		t.Fatalf("confirmed Khan landing = %#v", gameState.Khan)
+	}
+	report, exists := gameState.Khan.CooldownReports[711545217]
+	if !exists || report.ReportID != 711545217 || report.X != 939 || report.Y != 1123 ||
+		!report.LandedAt.Equal(battleAt) || !report.CooldownObservedAt.IsZero() {
+		t.Fatalf("report-linked Khan cooldown = %#v", report)
+	}
+	cooldown := gameState.NomadCamps.Cooldowns["0:939:1123"]
+	if !cooldown.PendingCooldownRefresh || cooldown.ReportID != 711545217 ||
+		!cooldown.LastSuccessfulBattleAt.Equal(battleAt) {
+		t.Fatalf("pending Khan cooldown = %#v", cooldown)
+	}
+	if _, exists := gameState.TowerCooldowns["0:939:1123"]; exists {
+		t.Fatal("type-35 Khan landing was stored as a kingdom-tower cooldown")
+	}
+
+	observedAt := battleAt.Add(2 * time.Second)
+	mapFrame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "gaa", ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{
+			"KID":0,
+			"AI":[[35,939,1123,6760,-1,2246,2250,5665,24,1146,200,200,85]]
+		}`),
+	}
+	if _, changed, err := reduceMapSnapshot(t.Context(), mapFrame, &gameState, nil); err != nil || !changed {
+		t.Fatalf("Khan cooldown map refresh: changed=%t err=%v", changed, err)
+	}
+	cooldown = gameState.NomadCamps.Cooldowns["0:939:1123"]
+	if cooldown.PendingCooldownRefresh || cooldown.CooldownRemaining != 2246 ||
+		!cooldown.CooldownObservedAt.Equal(observedAt) {
+		t.Fatalf("refreshed Khan cooldown = %#v", cooldown)
+	}
+	report = gameState.Khan.CooldownReports[711545217]
+	if report.CooldownRemaining != 2246 || !report.CooldownObservedAt.Equal(observedAt) {
+		t.Fatalf("report did not receive the target re-ping cooldown = %#v", report)
+	}
+}

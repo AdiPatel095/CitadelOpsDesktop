@@ -11,7 +11,10 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-const kingdomResourceDeliveryRatio = 0.90
+const (
+	kingdomResourceDeliveryRatio                = 0.90
+	kingdomResourceTransportInitialRemainingSec = 3_600
+)
 
 const (
 	autoFoodBalanceTransportOwner = "autoFoodBalance"

@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"CitadelDesktop/Server/AttackCapacity"
 	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -141,30 +140,6 @@ func TestInvasionAttackUsesLiveEventFortificationCurrencies(t *testing.T) {
 	resolved, _, _, err := invasionAttackContext(Intent.PlanningContext{State: gameState}, arguments)
 	if err != nil || resolved.FortifyCurrency != "ST" {
 		t.Fatalf("Samurai-token Bloodcrow fortification = %+v err=%v", resolved, err)
-	}
-}
-
-func TestLimitAttackSetupToCapacityKeepsPresetPrefixAndSlotPriority(t *testing.T) {
-	first, second, laterWave := int64(216), int64(217), int64(218)
-	setup := attackSetupRequest{Waves: []attackSetupWaveRequest{
-		{Left: attackSetupLaneRequest{Troops: []attackSetupSlotRequest{
-			{ItemID: &first, Quantity: 50}, {ItemID: &second, Quantity: 50},
-		}}},
-		{Middle: attackSetupLaneRequest{Troops: []attackSetupSlotRequest{{ItemID: &laterWave, Quantity: 10}}}},
-	}}
-
-	limited := limitAttackSetupToCapacity(setup, AttackCapacity.LaneCapacity{Left: 64, Front: 192, Right: 64}, 1)
-	if len(limited.Waves) != 1 {
-		t.Fatalf("wave limit = %d, want 1", len(limited.Waves))
-	}
-	if limited.Waves[0].Left.Troops[0].Quantity != 50 || limited.Waves[0].Left.Troops[1].Quantity != 14 {
-		t.Fatalf("unexpected limited left flank: %#v", limited.Waves[0].Left.Troops)
-	}
-	if len(limited.Waves[0].Middle.Troops) != 0 {
-		t.Fatalf("wave limit selected the end of the preset instead of wave 1: %#v", limited.Waves[0])
-	}
-	if setup.Waves[0].Left.Troops[1].Quantity != 50 {
-		t.Fatal("capacity limiting mutated the saved preset")
 	}
 }
 

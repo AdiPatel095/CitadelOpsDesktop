@@ -7,10 +7,90 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
+
+func TestAllianceTargetAttackPlansAndRevalidatesSelectedPreset(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],
+		"effects":[],"effectCaps":[],
+		"units":[{"wodID":1},{"wodID":2,"slotTypes":[1]}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	unitID, toolID := int64(1), int64(2)
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Player.ID = 9
+	gameState.Player.LegendSkills.ObservedAt = now
+	gameState.Castles[100] = State.CastleState{
+		ID: 100, KingdomID: 0, SlotType: 1, Name: "Source", X: 10, Y: 20, Focused: true,
+		UnitsObservedAt: now,
+		Units:           State.CastleUnits{Stationed: map[State.UnitID]int64{1: 192, 2: 5}},
+	}
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true}
+	request := allianceTargetAttackRequest{
+		SourceCastleID: 100, KingdomID: 0, TargetX: 30, TargetY: 40,
+		TargetPlayerID: 77, TargetCastleID: 500, TargetTypeID: 4, TargetLevel: 70,
+		Preset: AttackPresets.Preset{ID: "trial", Name: "Trial", Waves: []AttackPresets.Wave{{
+			Middle: AttackPresets.Lane{
+				Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 250}},
+				Tools:  []AttackPresets.Slot{{ItemID: &toolID, Quantity: 3}},
+			},
+		}}},
+	}
+	arguments, _ := json.Marshal(request)
+	plan, err := planAllianceTargetAttack(context.Background(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Admission == nil || plan.Admission.Module != manualAllianceAttackModuleID {
+		t.Fatalf("manual attack admission = %+v", plan.Admission)
+	}
+	var launch Intent.Step
+	for _, step := range plan.Steps {
+		if step.Resolver == "alliance.target.attack.build" {
+			launch = step
+			break
+		}
+	}
+	if launch.Resolver == "" || launch.CommandDependencies == nil || launch.CommandDependencies.Opcode != "cra" {
+		t.Fatalf("deferred attack step = %+v", launch)
+	}
+
+	gameState.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 100, KingdomID: 0, ObservedAt: now,
+		Target: State.AttackDialogTarget{TypeID: 4, X: 30, Y: 40, ObjectID: 500, OwnerID: 77},
+	}
+	resolved, err := (&Application{}).resolveAllianceTargetAttackStep(
+		context.Background(), Intent.PlanningContext{State: gameState, GameData: gameData}, launch.ResolverArguments,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body attackBody
+	if err := json.Unmarshal(resolved.Command.Payload, &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.SourceX != 10 || body.SourceY != 20 || body.TargetX != 30 || body.TargetY != 40 ||
+		body.Leader != 7 || len(body.Waves) != 1 || body.Waves[0].Middle.Units[0] != (attackPair{1, 192}) ||
+		body.Waves[0].Middle.Tools[0] != (attackPair{2, 3}) {
+		t.Fatalf("resolved CRA body = %+v", body)
+	}
+
+	source := gameState.Castles[100]
+	source.Units.Stationed[2] = 2
+	gameState.Castles[100] = source
+	if _, err := planAllianceTargetAttack(
+		context.Background(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments,
+	); err == nil || !strings.Contains(err.Error(), "item 2") {
+		t.Fatalf("expected tool shortage, got %v", err)
+	}
+}
 
 func TestRiftTemplateMutationsPersistImmediately(t *testing.T) {
 	dataDir := t.TempDir()

@@ -64,6 +64,34 @@ func TestFoodBalancePolicyPrioritizesHoneyNeededForMead(t *testing.T) {
 	}
 }
 
+func TestFoodBalancePolicyWaitsForMarketBarrowReturnBeforeLogisticsRefresh(t *testing.T) {
+	now := time.Date(2026, 7, 22, 23, 30, 0, 0, time.UTC)
+	returnsAt := now.Add(10 * time.Minute)
+	state := State.NewGameState()
+	state.Player.ID = 1
+	source := foodBalanceCastle(10, 0, 100, 100, now)
+	source.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137}
+	state.Castles[source.ID] = source
+	state.Castles[20] = foodBalanceCastle(20, 0, 120, 100, now)
+	state.Market.ObservedAt = now.Add(-10 * time.Minute)
+	state.Market.CaravanLevelLoaded = true
+	state.KingdomTransport.ObservedAt = now
+	state.Movements[50] = State.MovementState{
+		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: source.ID,
+		MarketBarrows: 100, ReturnsAt: &returnsAt,
+	}
+
+	decision, err := NewFoodBalancePolicy().Evaluate(
+		context.Background(), foodBalanceSnapshot(state, foodBalanceGameData(t), now),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Status != "waiting" || decision.Request != nil || !decision.NextCheckAt.Equal(returnsAt.Add(time.Second)) {
+		t.Fatalf("market lease decision = %+v", decision)
+	}
+}
+
 func TestFoodBalancePolicyRequiresMarketplaceBeforeUsingBarrows(t *testing.T) {
 	now := time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)
 	gameData := foodBalanceGameData(t)

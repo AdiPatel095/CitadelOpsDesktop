@@ -40,6 +40,38 @@ func TestNormalizeBrowserAliases(t *testing.T) {
 	}
 }
 
+func TestBrowserIDFromSystemIdentifier(t *testing.T) {
+	cases := map[string]string{
+		"com.brave.Browser":          "brave",
+		"chromium.desktop":           "chromium",
+		"com.google.Chrome":          "chrome",
+		"ChromeHTML":                 "chrome",
+		"MSEdgeHTM":                  "edge",
+		"vivaldi-stable.desktop":     "vivaldi",
+		"OperaStable":                "opera",
+		"company.thebrowser.Browser": "arc",
+		"org.mozilla.firefox":        "",
+	}
+	for input, expected := range cases {
+		if actual := browserIDFromSystemIdentifier(input); actual != expected {
+			t.Errorf("browserIDFromSystemIdentifier(%q) = %q, want %q", input, actual, expected)
+		}
+	}
+}
+
+func TestAutomaticBrowserCandidatePrefersSystemDefault(t *testing.T) {
+	candidates := []BrowserCandidate{
+		{ID: "brave", Name: "Brave"},
+		{ID: "chrome", Name: "Google Chrome", IsDefault: true},
+	}
+	if actual := automaticBrowserCandidate(candidates); actual.ID != "chrome" {
+		t.Fatalf("automaticBrowserCandidate() = %q, want chrome", actual.ID)
+	}
+	if actual := automaticBrowserCandidate(candidates[:1]); actual.ID != "brave" {
+		t.Fatalf("automaticBrowserCandidate(single) = %q, want brave", actual.ID)
+	}
+}
+
 func TestBrowserPreferenceRoundTrip(t *testing.T) {
 	dataDir := t.TempDir()
 	candidate := BrowserCandidate{ID: "brave", Name: "Brave", ExecutablePath: "/example/brave"}
@@ -75,5 +107,49 @@ func TestResolveCustomBrowser(t *testing.T) {
 	}
 	if candidate.ExecutablePath != executable {
 		t.Fatalf("custom browser path = %q, want %q", candidate.ExecutablePath, executable)
+	}
+}
+
+func TestSelectBrowserIsSavedForNextRestart(t *testing.T) {
+	dataDir := t.TempDir()
+	browserDir := t.TempDir()
+	firstExecutable := filepath.Join(browserDir, "first-browser")
+	secondExecutable := filepath.Join(browserDir, "second-browser")
+	if runtime.GOOS == "windows" {
+		firstExecutable += ".exe"
+		secondExecutable += ".exe"
+	}
+	for _, executable := range []string{firstExecutable, secondExecutable} {
+		if err := os.WriteFile(executable, []byte("test browser"), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	transport := NewChromiumTransport(ChromiumConfig{
+		DataDir: dataDir, ExecutablePath: firstExecutable,
+	})
+	if err := transport.SelectBrowser(secondExecutable); err != nil {
+		t.Fatal(err)
+	}
+	inventory := transport.BrowserInventory()
+	if inventory.Current == nil || inventory.Current.ExecutablePath != firstExecutable {
+		t.Fatalf("current browser = %#v, want %q", inventory.Current, firstExecutable)
+	}
+	if inventory.Selected == nil || inventory.Selected.ExecutablePath != secondExecutable {
+		t.Fatalf("selected browser = %#v, want %q", inventory.Selected, secondExecutable)
+	}
+	if !inventory.RestartRequired {
+		t.Fatal("browser change should require an app restart")
+	}
+
+	t.Setenv("CITADEL_BROWSER", "")
+	t.Setenv("CITADEL_BROWSER_PATH", "")
+	restarted := NewChromiumTransport(ChromiumConfig{DataDir: dataDir})
+	restartedInventory := restarted.BrowserInventory()
+	if restartedInventory.Current == nil || restartedInventory.Current.ExecutablePath != secondExecutable {
+		t.Fatalf("restarted browser = %#v, want %q", restartedInventory.Current, secondExecutable)
+	}
+	if restartedInventory.RestartRequired {
+		t.Fatal("saved browser should be current after restart")
 	}
 }

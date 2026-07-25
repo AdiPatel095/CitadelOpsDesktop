@@ -234,9 +234,13 @@ const Header: React.FC<HeaderProps> = ({
       default:
         return {
           tone: 'error' as const,
-          pulse: false,
-          label: 'Game disconnected',
-          title: gameConnectionDetail || 'No active game WebSocket is available.',
+          pulse: gameLoginRetrySeconds > 0,
+          label: gameLoginRetrySeconds > 0
+            ? `Retrying in ${formatConnectionSeconds(gameLoginRetrySeconds)}`
+            : 'Game disconnected',
+          title: gameConnectionDetail || (gameLoginRetrySeconds > 0
+            ? 'CitadelOps will reload the game and retry the saved login automatically.'
+            : 'No active game WebSocket is available.'),
         };
     }
   }, [

@@ -122,6 +122,28 @@ func TestConstructionPolicyPurchasesOfficialTrivialTierOutsideLiveOffers(t *test
 	}
 }
 
+func TestConstructionPolicyWaitsWhenInventoryIsFull(t *testing.T) {
+	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	gameState := constructionPolicyState(now)
+	gameState.Inventory.ConstructionItems[201] = State.ConstructionItemInventoryLimit
+	gameState.Inventory.ConstructionOffersObservedAt = now
+
+	decision, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Configuration: constructionPolicyConfiguration(),
+		GameData: constructionPolicyGameData(t), Now: now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil || decision.Status != "waiting" ||
+		!strings.Contains(decision.Detail, "inventory is full (1000/1000)") {
+		t.Fatalf("full inventory decision = %+v", decision)
+	}
+	if want := now.Add(constructionCheckInterval); !decision.NextCheckAt.Equal(want) {
+		t.Fatalf("next check = %v, want %v", decision.NextCheckAt, want)
+	}
+}
+
 func TestConstructionPolicyPreservesSelectedVariantWhenGroupIDIsReused(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := constructionPolicyState(now)

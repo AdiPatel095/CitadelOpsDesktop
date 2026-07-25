@@ -146,7 +146,8 @@ func featureActivityEvent(intent string) string {
 	intent = strings.ToLower(strings.TrimSpace(intent))
 	switch {
 	case strings.Contains(intent, "attack"), intent == "advisor.run.launch",
-		intent == "rift.maiden_wave.launch", intent == "rift.launch.replay", intent == "tower.launch":
+		intent == "rift.maiden_wave.launch", intent == "rift.launch.replay", intent == "tower.launch",
+		intent == "khan.taunt":
 		return "ATTACK"
 	case intent == "spy.launch":
 		return "ESPIONAGE"

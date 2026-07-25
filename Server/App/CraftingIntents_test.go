@@ -129,6 +129,7 @@ func TestPlanConstructionPurchaseUsesLiveOfficialOffer(t *testing.T) {
 	gameState := State.NewGameState()
 	castle := resourceIntentCastle(10, 0, 10, 20)
 	gameState.Castles[10] = castle
+	gameState.Inventory.ConstructionItemsObservedAt = time.Now().UTC()
 	gameState.Inventory.ConstructionOffersObservedAt = time.Now().UTC()
 	gameState.Inventory.ConstructionOffers[500] = 1
 	plan, err := planConstructionPurchase(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
@@ -155,6 +156,7 @@ func TestPlanConstructionPurchaseUsesLiveOfficialOffer(t *testing.T) {
 func TestPlanConstructionPurchaseAllowsOfficialTrivialProductOutsideLiveOffers(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Castles[10] = resourceIntentCastle(10, 0, 10, 20)
+	gameState.Inventory.ConstructionItemsObservedAt = time.Now().UTC()
 	gameState.Inventory.ConstructionOffersObservedAt = time.Now().UTC()
 	plan, err := planConstructionPurchase(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: constructionPolicyGameDataForApp(t),
@@ -165,6 +167,22 @@ func TestPlanConstructionPurchaseAllowsOfficialTrivialProductOutsideLiveOffers(t
 	purchase := plan.Steps[len(plan.Steps)-1]
 	if purchase.Opcode != "sbp" || string(purchase.Command.Payload) != `{"PID":501,"BT":0,"TID":116,"AMT":1,"KID":0,"AID":10,"PC2":-1,"BA":0,"PWR":0,"_PO":-1}` {
 		t.Fatalf("unexpected trivial construction purchase: %+v payload=%s", plan, purchase.Command.Payload)
+	}
+}
+
+func TestPlanConstructionPurchaseRejectsFullInventory(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Castles[10] = resourceIntentCastle(10, 0, 10, 20)
+	gameState.Inventory.ConstructionItemsObservedAt = time.Now().UTC()
+	gameState.Inventory.ConstructionItems[101] = State.ConstructionItemInventoryLimit
+	gameState.Inventory.ConstructionOffersObservedAt = time.Now().UTC()
+	gameState.Inventory.ConstructionOffers[500] = 1
+
+	_, err := planConstructionPurchase(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: constructionPolicyGameDataForApp(t),
+	}, json.RawMessage(`{"castleId":10,"productId":500,"amount":1}`))
+	if err == nil || !strings.Contains(err.Error(), "inventory is full (1000/1000)") {
+		t.Fatalf("full construction-item inventory error = %v", err)
 	}
 }
 

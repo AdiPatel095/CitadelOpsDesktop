@@ -14,13 +14,156 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+type craftingOverflowRedistributionCandidate struct {
+	source         State.CastleState
+	target         State.CastleState
+	goods          []craftingOverflowRedistributionGood
+	totalAmount    float64
+	sourcePressure float64
+	targetPressure float64
+}
+
+type craftingOverflowRedistributionGood struct {
+	ResourceID State.ResourceID `json:"resourceId"`
+	Amount     int64            `json:"amount"`
+}
+
+// craftingOverflowRedistributionDecision drains attack loot and other overflow
+// into configured crafting castles after their immediate refill buffers are
+// covered. An overflowed donor triggers one cross-kingdom transport containing
+// every useful sovereign resource that fits at the selected target.
+func craftingOverflowRedistributionDecision(settings craftingSettings, snapshot Snapshot) (Decision, bool) {
+	demands := craftingRefillDemands(settings, snapshot)
+	if len(demands) == 0 {
+		return Decision{}, false
+	}
+	best := craftingOverflowRedistributionCandidate{}
+	resourceIDs := sovereignResourceIDs(snapshot.GameData)
+	for _, sourceID := range sortedCastleIDs(snapshot.State.Castles) {
+		source := snapshot.State.Castles[sourceID]
+		// Configured foreign crafting castles are bulk-loot sinks. Allowing a
+		// filled sink to donate here would shuttle the same shipment back.
+		if source.KingdomID == 4 && !settings.UseStormBuffer ||
+			source.KingdomID != 0 && len(demands[source.ID]) > 0 {
+			continue
+		}
+		for _, targetID := range sortedCastleIDs(snapshot.State.Castles) {
+			target := snapshot.State.Castles[targetID]
+			if target.ID == source.ID || target.KingdomID == source.KingdomID || len(demands[target.ID]) == 0 {
+				continue
+			}
+			if _, pending := pendingKingdomResourceTransport(snapshot.State, target.KingdomID); pending {
+				continue
+			}
+			if _, settling := kingdomResourceTransportWorkflow(snapshot.State, target.KingdomID); settling {
+				continue
+			}
+			unlock, observed := snapshot.State.KingdomTransport.Unlocks[target.KingdomID]
+			if !observed || !unlock.Unlocked {
+				continue
+			}
+			next := craftingOverflowRedistributionCandidate{source: source, target: target}
+			targetAmount := float64(0)
+			targetCapacity := float64(0)
+			triggered := false
+			for _, resourceID := range resourceIDs {
+				if demands[target.ID][resourceID] <= 0 {
+					continue
+				}
+				sourceResource := source.Resources[resourceID]
+				targetResource := target.Resources[resourceID]
+				if sourceResource.Capacity == nil || *sourceResource.Capacity <= 0 ||
+					targetResource.Capacity == nil || *targetResource.Capacity <= 0 {
+					continue
+				}
+				targetBalance := targetResource.Amount + incomingMarketResource(snapshot, target, resourceID)
+				targetFree := math.Floor(math.Max(0, *targetResource.Capacity-targetBalance))
+				sourceAvailable := math.Floor(sourceAvailableResource(settings, snapshot, source, resourceID))
+				amount := math.Min(sourceAvailable, targetFree)
+				if !craftingShipmentMeetsMinimum(amount, settings.MinimumShipmentSize) {
+					continue
+				}
+				next.goods = append(next.goods, craftingOverflowRedistributionGood{
+					ResourceID: resourceID, Amount: int64(amount),
+				})
+				next.totalAmount += amount
+				sourcePressure := sourceResource.Amount / *sourceResource.Capacity
+				if sourcePressure > next.sourcePressure {
+					next.sourcePressure = sourcePressure
+				}
+				targetAmount += targetBalance
+				targetCapacity += *targetResource.Capacity
+				if craftingOverflowAmount(settings, snapshot, source, resourceID) > 0 {
+					triggered = true
+				}
+			}
+			if targetCapacity > 0 {
+				next.targetPressure = targetAmount / targetCapacity
+			}
+			if triggered && betterCraftingOverflowRedistributionCandidate(next, best) {
+				best = next
+			}
+		}
+	}
+	if len(best.goods) == 0 {
+		return Decision{}, false
+	}
+	shipmentArguments := map[string]any{
+		"sourceCastleId": best.source.ID, "targetCastleId": best.target.ID,
+		"goods": best.goods, "workflowOwner": autoSceatTransportOwner,
+	}
+	addCraftingImmediateKingdomTimeSkip(settings, snapshot, shipmentArguments)
+	arguments, _ := json.Marshal(shipmentArguments)
+	return Decision{
+		Status: "ready",
+		Detail: fmt.Sprintf(
+			"Redistribute %d kingdom resources from %s to %s up to target storage capacity",
+			len(best.goods), castleName(best.source), castleName(best.target),
+		),
+		NextCheckAt: snapshot.Now.Add(2 * time.Second),
+		Metrics: map[string]float64{
+			"shipmentAmount": best.totalAmount, "shipmentGoods": float64(len(best.goods)),
+			"sourceStoragePressure": best.sourcePressure, "targetStoragePressure": best.targetPressure,
+		},
+		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
+		ReevaluateOnSuccess: true,
+	}, true
+}
+
+func betterCraftingOverflowRedistributionCandidate(
+	candidate craftingOverflowRedistributionCandidate,
+	current craftingOverflowRedistributionCandidate,
+) bool {
+	if len(candidate.goods) == 0 {
+		return false
+	}
+	if len(current.goods) == 0 {
+		return true
+	}
+	if candidate.sourcePressure != current.sourcePressure {
+		return candidate.sourcePressure > current.sourcePressure
+	}
+	if candidate.targetPressure != current.targetPressure {
+		return candidate.targetPressure < current.targetPressure
+	}
+	if len(candidate.goods) != len(current.goods) {
+		return len(candidate.goods) > len(current.goods)
+	}
+	if candidate.totalAmount != current.totalAmount {
+		return candidate.totalAmount > current.totalAmount
+	}
+	if candidate.source.ID != current.source.ID {
+		return candidate.source.ID < current.source.ID
+	}
+	return candidate.target.ID < current.target.ID
+}
+
 func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interval time.Duration) (Decision, bool) {
 	type candidate struct {
 		source   State.CastleState
 		target   State.CastleState
 		resource State.ResourceID
 		amount   float64
-		barrows  int
 	}
 	best := candidate{}
 	for _, sourceID := range sortedCastleIDs(snapshot.State.Castles) {
@@ -29,14 +172,15 @@ func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interv
 			continue
 		}
 		market, observed := snapshot.State.Market.Castles[source.ID]
-		if !observed || market.AvailableBarrows <= 0 {
+		availableBarrows := State.AvailableMarketBarrowsAt(snapshot.State, market, snapshot.Now)
+		if !observed || availableBarrows <= 0 {
 			continue
 		}
 		capacityPerBarrow := marketCapacityPerBarrow(snapshot, market)
 		if capacityPerBarrow <= 0 {
 			continue
 		}
-		shipmentCapacity := float64(market.AvailableBarrows * capacityPerBarrow)
+		shipmentCapacity := float64(availableBarrows * capacityPerBarrow)
 		for _, resourceID := range sovereignResourceIDs(snapshot.GameData) {
 			overflow := math.Min(craftingOverflowAmount(settings, snapshot, source, resourceID), shipmentCapacity)
 			if overflow <= 0 {
@@ -53,21 +197,14 @@ func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interv
 				}
 				free := *balance.Capacity - balance.Amount - incomingMarketResource(snapshot, target, resourceID)
 				amount := math.Floor(math.Min(overflow, free))
-				if !craftingShipmentMeetsMinimum(amount, settings.MinimumShipmentSize) || amount <= best.amount {
+				if amount <= 0 || amount <= best.amount {
 					continue
 				}
-				best = candidate{
-					source: source, target: target, resource: resourceID, amount: amount,
-					barrows: int(math.Ceil(amount / float64(capacityPerBarrow))),
-				}
+				best = candidate{source: source, target: target, resource: resourceID, amount: amount}
 			}
 		}
 	}
 	if best.amount <= 0 {
-		return Decision{}, false
-	}
-	coinCost := marketShipmentCoinCost(best.source, best.target, best.barrows)
-	if playerResourceAmount(snapshot, "C1")-settings.MinimumCoinReserve < coinCost {
 		return Decision{}, false
 	}
 	arguments, _ := json.Marshal(map[string]any{
@@ -78,7 +215,7 @@ func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interv
 		Status:              "ready",
 		Detail:              fmt.Sprintf("Move %.0f overflow resource %d from %s to %s", best.amount, best.resource, castleName(best.source), castleName(best.target)),
 		NextCheckAt:         snapshot.Now.Add(interval),
-		Metrics:             map[string]float64{"shipmentAmount": best.amount, "coinCost": coinCost},
+		Metrics:             map[string]float64{"shipmentAmount": best.amount},
 		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
 		ReevaluateOnSuccess: true,
 	}, true
@@ -140,10 +277,12 @@ func stormOverflowDecision(settings craftingSettings, snapshot Snapshot, interva
 	if best.amount <= 0 {
 		return Decision{}, false
 	}
-	arguments, _ := json.Marshal(map[string]any{
+	shipmentArguments := map[string]any{
 		"sourceCastleId": best.source.ID, "targetCastleId": storm.ID,
 		"resourceId": best.resource, "amount": int64(best.amount), "workflowOwner": autoSceatTransportOwner,
-	})
+	}
+	addCraftingImmediateKingdomTimeSkip(settings, snapshot, shipmentArguments)
+	arguments, _ := json.Marshal(shipmentArguments)
 	return Decision{
 		Status:      "ready",
 		Detail:      fmt.Sprintf("Move %.0f overflow resource %d from kingdom %d to Storm", best.amount, best.resource, best.source.KingdomID),

@@ -2,7 +2,7 @@ import type { BuildingTargetCaptureResponse } from '../api/Contracts';
 import { parseHorseTravelBoostID, type HorseTravelBoostID } from './HorseTravelBoost';
 
 export const AUTO_STORM_SECTION = 'automation.autoStorm';
-export const AUTO_STORM_MAP_REFRESH_INTERVAL_SEC = 6 * 60 * 60;
+export const AUTO_STORM_MAP_REFRESH_INTERVAL_SEC = 2 * 60 * 60;
 export const AUTO_STORM_LUNA_PACKAGE_IDS: readonly number[] = [
   3116, 3117, 3118, 3119, 3120, 3122, 3123, 3124, 3125,
   245, 246, 247, 248,

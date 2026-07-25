@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/AttackCapacity"
 	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -19,11 +20,12 @@ import (
 )
 
 const (
-	riftMapTypeID            = 43
-	maidenSupportEffectID    = 121
-	maidenSupportMinimum     = 300
-	maidenSupportMaximum     = 1050
-	maidenProbeCountPerFlank = 11
+	riftMapTypeID                = 43
+	manualAllianceAttackModuleID = "manualAllianceTargets"
+	maidenSupportEffectID        = 121
+	maidenSupportMinimum         = 300
+	maidenSupportMaximum         = 1050
+	maidenProbeCountPerFlank     = 11
 )
 
 func planSpyLaunch(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -223,6 +225,246 @@ type attackSetupLaneRequest struct {
 type attackSetupSlotRequest struct {
 	ItemID   *int64 `json:"itemId"`
 	Quantity int64  `json:"quantity"`
+}
+
+type allianceTargetAttackRequest struct {
+	SourceCastleID     State.CastleID       `json:"sourceCastleId"`
+	KingdomID          State.KingdomID      `json:"kingdomId"`
+	TargetX            int                  `json:"targetX"`
+	TargetY            int                  `json:"targetY"`
+	TargetPlayerID     State.PlayerID       `json:"targetPlayerId,omitempty"`
+	TargetCastleID     int64                `json:"targetCastleId,omitempty"`
+	TargetTypeID       int                  `json:"targetTypeId,omitempty"`
+	TargetLevel        int                  `json:"targetLevel"`
+	TargetLegendLevel  int                  `json:"targetLegendLevel,omitempty"`
+	PreviewCommanderID *State.CommanderID   `json:"previewCommanderId,omitempty"`
+	Preset             AttackPresets.Preset `json:"preset"`
+}
+
+type resolvedAllianceTargetAttackRequest struct {
+	allianceTargetAttackRequest
+	CommanderID State.CommanderID `json:"commanderId"`
+}
+
+func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	request, source, err := allianceTargetAttackContext(input, arguments)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	if input.GameData == nil {
+		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
+	}
+	var commanderSelection *craCommanderSelectionRequest
+	if request.PreviewCommanderID != nil {
+		commanderSelection = &craCommanderSelectionRequest{
+			Candidates: []State.CommanderID{*request.PreviewCommanderID}, Count: 1,
+		}
+	}
+	resolution, err := resolveCRACommanders(input.State, commanderSelection, craCommanderSelectionOptions{
+		DefaultCount: 1, RequireAvailable: true,
+	})
+	if err != nil {
+		return Intent.Plan{}, fmt.Errorf("select a free commander: %w", err)
+	}
+	commanderID := resolution.Selected[0]
+	capacity, err := resolveAllianceTargetAttackCapacity(input, request, commanderID, false)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves)
+	if _, err := buildAttackSetupWaves(invasionAttackSetup(limitedPreset), source, input.GameData); err != nil {
+		return Intent.Plan{}, fmt.Errorf("validate CRA-capped attack preset %q: %w", request.Preset.Name, err)
+	}
+	resolved := resolvedAllianceTargetAttackRequest{
+		allianceTargetAttackRequest: request,
+		CommanderID:                 commanderID,
+	}
+	resolvedArguments, _ := json.Marshal(resolved)
+	contextPayload, _ := json.Marshal(struct {
+		SourceX     int               `json:"SX"`
+		SourceY     int               `json:"SY"`
+		TargetX     int               `json:"TX"`
+		TargetY     int               `json:"TY"`
+		KingdomID   State.KingdomID   `json:"KID"`
+		CommanderID State.CommanderID `json:"LID"`
+	}{source.X, source.Y, request.TargetX, request.TargetY, request.KingdomID, commanderID})
+
+	steps := make([]Intent.Step, 0, 4)
+	if input.State.Player.LegendLevel > 0 && request.TargetLegendLevel > 0 &&
+		(input.State.Player.LegendSkills.ObservedAt.IsZero() ||
+			time.Since(input.State.Player.LegendSkills.ObservedAt) >= 5*time.Minute) {
+		steps = append(steps, contextCommandStep(
+			"Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl",
+		))
+	}
+	steps = append(steps, generalSkillsContextSteps(input.State, commanderID, time.Now().UTC())...)
+	steps = append(steps, attackCastleContextStep(source))
+	steps = append(steps, deferredCRACommandStep(
+		"Build and launch alliance target attack", "alliance.target.attack.build", resolvedArguments, contextPayload,
+	))
+	castleID := strconv.FormatInt(int64(source.ID), 10)
+	claims := []string{
+		"castle-focus", "attack-context", "castle:" + castleID, "attack-inventory:" + castleID,
+		fmt.Sprintf("player-target:%d:%d:%d", request.KingdomID, request.TargetX, request.TargetY),
+	}
+	claims = append(claims, craCommanderClaims([]State.CommanderID{commanderID})...)
+	return Intent.Plan{
+		Claims: claims,
+		Admission: &Intent.Admission{
+			Class: Intent.AdmissionAttackLaunch, Module: manualAllianceAttackModuleID, Affinity: "castle:" + castleID,
+		},
+		Summary: fmt.Sprintf("Attack player castle at %d:%d with %s", request.TargetX, request.TargetY, request.Preset.Name),
+		Steps:   steps,
+	}, nil
+}
+
+func allianceTargetAttackContext(
+	input Intent.PlanningContext,
+	arguments json.RawMessage,
+) (allianceTargetAttackRequest, State.CastleState, error) {
+	var request allianceTargetAttackRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return allianceTargetAttackRequest{}, State.CastleState{}, err
+	}
+	if input.State.Player.ProtectionMode.PreparingOrActive(time.Now().UTC()) {
+		return allianceTargetAttackRequest{}, State.CastleState{},
+			fmt.Errorf("player attacks are disabled while Protection Mode is preparing or active")
+	}
+	if request.SourceCastleID <= 0 || request.KingdomID != 0 || request.TargetX < 0 || request.TargetY < 0 {
+		return allianceTargetAttackRequest{}, State.CastleState{},
+			fmt.Errorf("alliance target attack requires a Great Empire source and valid target coordinates")
+	}
+	source, exists := input.State.Castles[request.SourceCastleID]
+	if !exists || source.KingdomID != request.KingdomID {
+		return allianceTargetAttackRequest{}, State.CastleState{},
+			fmt.Errorf("source castle %d is not an owned Great Empire castle", request.SourceCastleID)
+	}
+	if source.X == request.TargetX && source.Y == request.TargetY {
+		return allianceTargetAttackRequest{}, State.CastleState{}, fmt.Errorf("source and target castle cannot be the same")
+	}
+	if source.UnitsObservedAt.IsZero() {
+		return allianceTargetAttackRequest{}, State.CastleState{},
+			fmt.Errorf("source castle %d troop and tool inventory has not been observed", source.ID)
+	}
+	if strings.TrimSpace(request.Preset.Name) == "" {
+		return allianceTargetAttackRequest{}, State.CastleState{}, fmt.Errorf("attack preset name is required")
+	}
+	if request.TargetTypeID <= 0 || request.TargetLevel <= 0 {
+		return allianceTargetAttackRequest{}, State.CastleState{}, fmt.Errorf("target castle type and player level are required")
+	}
+	if request.TargetPlayerID > 0 {
+		if request.TargetPlayerID == input.State.Player.ID {
+			return allianceTargetAttackRequest{}, State.CastleState{}, fmt.Errorf("the target belongs to the current player")
+		}
+		for _, member := range input.State.Alliance.Members {
+			if member.PlayerID == request.TargetPlayerID {
+				return allianceTargetAttackRequest{}, State.CastleState{}, fmt.Errorf("the target is a current alliance member")
+			}
+		}
+		if remaining := targetReturnProtectionSeconds(input.State, request.TargetPlayerID, time.Now().UTC()); remaining > 0 {
+			return allianceTargetAttackRequest{}, State.CastleState{},
+				fmt.Errorf("the target has %d seconds of return protection remaining", remaining)
+		}
+	}
+	return request, source, nil
+}
+
+func targetReturnProtectionSeconds(gameState State.GameState, playerID State.PlayerID, now time.Time) int {
+	remaining := 0
+	for _, alliance := range gameState.Alliances {
+		elapsed := 0
+		if !alliance.ObservedAt.IsZero() {
+			elapsed = max(0, int(now.Sub(alliance.ObservedAt).Seconds()))
+		}
+		for _, member := range alliance.Members {
+			if member.PlayerID == playerID {
+				remaining = max(remaining, member.ReturnProtectionSec-elapsed)
+			}
+		}
+	}
+	return max(0, remaining)
+}
+
+func (application *Application) resolveAllianceTargetAttackStep(
+	_ context.Context,
+	input Intent.PlanningContext,
+	arguments json.RawMessage,
+) (Intent.Step, error) {
+	var resolved resolvedAllianceTargetAttackRequest
+	if err := decodeIntentArguments(arguments, &resolved); err != nil {
+		return Intent.Step{}, err
+	}
+	request, source, err := allianceTargetAttackContext(input, mustMarshalAllianceTargetAttackRequest(resolved.allianceTargetAttackRequest))
+	if err != nil {
+		return Intent.Step{}, err
+	}
+	commander, exists := input.State.Commanders[resolved.CommanderID]
+	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(input.State, resolved.CommanderID, time.Now().UTC()) {
+		return Intent.Step{}, fmt.Errorf("%w: commander %d is no longer available", Intent.ErrPlanStale, resolved.CommanderID)
+	}
+	dialog := input.State.AttackDialog
+	if dialog.SourceCastleID != source.ID || dialog.KingdomID != request.KingdomID ||
+		dialog.Target.X != request.TargetX || dialog.Target.Y != request.TargetY || dialog.Target.TypeID <= 0 {
+		return Intent.Step{}, fmt.Errorf("current attack dialog does not match player target %d:%d", request.TargetX, request.TargetY)
+	}
+	if request.TargetTypeID > 0 && dialog.Target.TypeID != request.TargetTypeID {
+		return Intent.Step{}, fmt.Errorf("%w: target %d:%d changed castle type", Intent.ErrPlanStale, request.TargetX, request.TargetY)
+	}
+	if request.TargetCastleID > 0 && dialog.Target.ObjectID > 0 && dialog.Target.ObjectID != request.TargetCastleID {
+		return Intent.Step{}, fmt.Errorf("%w: target %d:%d changed castle identity", Intent.ErrPlanStale, request.TargetX, request.TargetY)
+	}
+	if request.TargetPlayerID > 0 && dialog.Target.OwnerID > 0 && dialog.Target.OwnerID != request.TargetPlayerID {
+		return Intent.Step{}, fmt.Errorf("%w: target %d:%d changed owner", Intent.ErrPlanStale, request.TargetX, request.TargetY)
+	}
+	capacity, err := resolveAllianceTargetAttackCapacity(input, request, resolved.CommanderID, true)
+	if err != nil {
+		return Intent.Step{}, err
+	}
+	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves)
+	waves, err := buildAttackSetupWaves(invasionAttackSetup(limitedPreset), source, input.GameData)
+	if err != nil {
+		return Intent.Step{}, fmt.Errorf("build attack preset %q: %w", request.Preset.Name, err)
+	}
+	target := State.MapObservation{
+		KingdomID: request.KingdomID, X: request.TargetX, Y: request.TargetY,
+		TypeID: dialog.Target.TypeID, ObjectID: dialog.Target.ObjectID, OwnerID: dialog.Target.OwnerID,
+	}
+	body, err := json.Marshal(invasionAttackBody(source, target, resolved.CommanderID, waves))
+	if err != nil {
+		return Intent.Step{}, fmt.Errorf("build player attack payload: %w", err)
+	}
+	return commandStep(fmt.Sprintf("Attack player castle at %d:%d", target.X, target.Y), "cra", body, "cra"), nil
+}
+
+func resolveAllianceTargetAttackCapacity(
+	input Intent.PlanningContext,
+	request allianceTargetAttackRequest,
+	commanderID State.CommanderID,
+	useAttackDialogEffects bool,
+) (AttackCapacity.Result, error) {
+	capacity, err := (AttackCapacity.Resolver{}).Resolve(input.State, input.GameData, AttackCapacity.Request{
+		SourceCastleID:         request.SourceCastleID,
+		CommanderID:            commanderID,
+		UseAttackDialogEffects: useAttackDialogEffects,
+		Target: AttackCapacity.TargetContext{
+			ID: fmt.Sprintf("alliance-target:%d:%d:%d", request.KingdomID, request.TargetX, request.TargetY),
+			Map: &AttackCapacity.MapTarget{
+				KingdomID: request.KingdomID, TypeID: request.TargetTypeID,
+				X: request.TargetX, Y: request.TargetY, ObjectID: request.TargetCastleID, Level: request.TargetLevel,
+			},
+			Level: request.TargetLevel, CastleTypeID: request.TargetTypeID, PvP: true,
+			LegendaryFight: input.State.Player.LegendLevel > 0 && request.TargetLegendLevel > 0,
+		},
+	})
+	if err != nil {
+		return AttackCapacity.Result{}, fmt.Errorf("resolve player attack capacity: %w", err)
+	}
+	return capacity, nil
+}
+
+func mustMarshalAllianceTargetAttackRequest(request allianceTargetAttackRequest) json.RawMessage {
+	payload, _ := json.Marshal(request)
+	return payload
 }
 
 func (application *Application) planRiftReplay(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ func newSocketTestTransport() *ChromiumTransport {
 		status: Status{
 			State: "connecting", Namespace: "EmpireEx_21", ChangedAt: time.Now().UTC(),
 		},
+		browserContext: context.Background(),
 		activationEvaluator: func(context.Context, runtime.ExecutionContextID, string, uint64) (bool, error) {
 			return true, nil
 		},
@@ -102,8 +104,64 @@ func TestLoginCooldownPublishesCountdownDeadlines(t *testing.T) {
 	if status.State != "cooldown" || status.CooldownUntil == nil || status.RetryAt == nil {
 		t.Fatalf("unexpected cooldown status: %+v", status)
 	}
-	if status.CooldownUntil.Before(before.Add(9*time.Second)) || status.RetryAt.Sub(*status.CooldownUntil) != 5*time.Second {
+	if status.CooldownUntil.Before(before.Add(9*time.Second)) || status.RetryAt.Sub(*status.CooldownUntil) != defaultRelogDelay {
 		t.Fatalf("unexpected cooldown deadlines: %+v", status)
+	}
+}
+
+func TestResyncedEligibleSocketWaitsForFreshLoginFrame(t *testing.T) {
+	transport := newSocketTestTransport()
+	processSocketTestNotice(t, transport, 7, chromiumSocketNotice{
+		Version: 1, Type: "created", Token: "resynced", Sequence: 9,
+		URL: "wss://example/ep-live", Eligible: true,
+	})
+
+	status := transport.Status()
+	if status.State == "connected" || status.LoggedIn || status.SocketReady ||
+		transport.activeToken != "" {
+		t.Fatalf("resynced socket activated without a fresh login: %+v", status)
+	}
+	processSocketTestNotice(t, transport, 7, socketFrameNotice(
+		"resynced", 10, "inbound", `%xt%lli%1%0%{}%`,
+	))
+	status = transport.Status()
+	if status.State != "connected" || !status.LoggedIn || !status.SocketReady {
+		t.Fatalf("fresh login did not activate resynced socket: %+v", status)
+	}
+	if transport.activeToken != "resynced" || transport.executionContextID != 7 {
+		t.Fatalf(
+			"unexpected resynced socket: token=%q context=%d",
+			transport.activeToken, transport.executionContextID,
+		)
+	}
+}
+
+func TestConfiguredRelogDelayControlsCooldownAndSocketReconnect(t *testing.T) {
+	const configuredDelay = 7 * time.Minute
+	transport := newSocketTestTransport()
+	transport.SetRelogDelayProvider(func() time.Duration { return configuredDelay })
+
+	transport.observeLoginFrame(transport.generation, "", `%xt%lli%1%453%{"CD":10}%`, time.Now().UTC())
+	cooldownStatus := transport.Status()
+	if cooldownStatus.CooldownUntil == nil || cooldownStatus.RetryAt == nil ||
+		cooldownStatus.RetryAt.Sub(*cooldownStatus.CooldownUntil) != configuredDelay {
+		t.Fatalf("configured cooldown retry = %+v", cooldownStatus)
+	}
+
+	transport.status.State = "connected"
+	transport.status.LoggedIn = true
+	transport.status.SocketReady = true
+	gameContext, cancel := context.WithCancel(context.Background())
+	cancel()
+	transport.gameContext = gameContext
+	requestID := network.RequestID("configured-delay-socket")
+	transport.trackedSockets[requestID] = "wss://example/ep-live"
+	before := time.Now().UTC()
+	transport.handleEvent(transport.generation, &network.EventWebSocketClosed{RequestID: requestID})
+	reconnectStatus := transport.Status()
+	if reconnectStatus.RetryAt == nil ||
+		reconnectStatus.RetryAt.Before(before.Add(configuredDelay-time.Second)) {
+		t.Fatalf("configured socket reconnect = %+v", reconnectStatus)
 	}
 }
 
@@ -179,6 +237,48 @@ func TestSavedCredentialsFillAndSubmitVisibleLogin(t *testing.T) {
 	}
 	if fills != 1 || submits != 1 {
 		t.Fatal("suppressed credential restore touched the login form")
+	}
+}
+
+func TestSavedCredentialsSubmitOnlyOnceAcrossConcurrentLoginContexts(t *testing.T) {
+	transport := newSocketTestTransport()
+	transport.loginCredential = persistedLoginCredential{
+		SchemaVersion: loginCredentialSchemaVersion,
+		AutoRestore:   true,
+		Username:      "saved-player",
+		Password:      "saved-password",
+	}
+	started := make(chan struct{}, 2)
+	release := make(chan struct{})
+	transport.credentialRestoreEvaluator = func(
+		context.Context,
+		runtime.ExecutionContextID,
+		string,
+		string,
+	) (bool, error) {
+		started <- struct{}{}
+		<-release
+		return true, nil
+	}
+	var submits atomic.Int32
+	transport.credentialSubmitEvaluator = func(context.Context) error {
+		submits.Add(1)
+		return nil
+	}
+	done := make(chan struct{}, 2)
+	for _, contextID := range []runtime.ExecutionContextID{8, 9} {
+		go func() {
+			transport.restoreCredentialsInContext(transport.generation, contextID)
+			done <- struct{}{}
+		}()
+	}
+	<-started
+	<-started
+	close(release)
+	<-done
+	<-done
+	if submits.Load() != 1 {
+		t.Fatalf("saved login submitted %d times across concurrent contexts, want 1", submits.Load())
 	}
 }
 
@@ -281,7 +381,7 @@ func TestNetworkSocketCloseSchedulesReconnect(t *testing.T) {
 	if status.State != "disconnected" || status.Detail != "Game websocket closed" {
 		t.Fatalf("unexpected socket-close status: %+v", status)
 	}
-	if status.RetryAt == nil || status.RetryAt.Before(before.Add(socketReconnectDelay-time.Second)) {
+	if status.RetryAt == nil || status.RetryAt.Before(before.Add(defaultRelogDelay-time.Second)) {
 		t.Fatalf("socket close did not schedule reconnect: %+v", status)
 	}
 }
@@ -304,7 +404,7 @@ func TestInjectedSocketCloseSchedulesReconnect(t *testing.T) {
 	if status.State != "disconnected" || status.Detail != "Game websocket closed" {
 		t.Fatalf("unexpected injected socket-close status: %+v", status)
 	}
-	if status.RetryAt == nil || status.RetryAt.Before(before.Add(socketReconnectDelay-time.Second)) {
+	if status.RetryAt == nil || status.RetryAt.Before(before.Add(defaultRelogDelay-time.Second)) {
 		t.Fatalf("injected socket close did not schedule reconnect: %+v", status)
 	}
 }
@@ -339,7 +439,7 @@ func TestAuthenticatingSocketCloseSchedulesReconnect(t *testing.T) {
 	if status.State != "disconnected" || status.Detail != "Game websocket closed" {
 		t.Fatalf("unexpected authenticating socket-close status: %+v", status)
 	}
-	if status.RetryAt == nil || status.RetryAt.Before(before.Add(socketReconnectDelay-time.Second)) {
+	if status.RetryAt == nil || status.RetryAt.Before(before.Add(defaultRelogDelay-time.Second)) {
 		t.Fatalf("authentication socket close did not schedule reconnect: %+v", status)
 	}
 }
@@ -422,6 +522,90 @@ func TestConnectionTimeoutReloadsOnlyThePendingAttempt(t *testing.T) {
 	)
 	if reloads != 1 {
 		t.Fatal("stale connection timeout reloaded a newer session state")
+	}
+}
+
+func TestSilentAuthenticatedSocketReloadsAndKeepsSavedLoginEligible(t *testing.T) {
+	transport := newSocketTestTransport()
+	gameContext, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	transport.gameContext = gameContext
+	transport.loginCredential = persistedLoginCredential{
+		SchemaVersion: loginCredentialSchemaVersion,
+		AutoRestore:   true,
+		Username:      "saved-player",
+		Password:      "saved-password",
+	}
+	transport.restoreAttempted = true
+	key := chromiumSocketKey{executionContextID: 8, token: "active"}
+	lastInboundAt := time.Now().UTC().Add(-websocketTrafficTimeout)
+	transport.sockets[key] = &chromiumSocket{
+		serverURL: "wss://example/ep-live", ordinal: 1, lastSequence: 2,
+	}
+	transport.activeSocket = key
+	transport.activeToken = key.token
+	transport.activeOrdinal = 1
+	transport.executionContextID = key.executionContextID
+	transport.lastInboundAt = lastInboundAt
+	transport.status.State = "connected"
+	transport.status.LoggedIn = true
+	transport.status.SocketReady = true
+	transport.status.ConnectionGeneration = 3
+	reloads := 0
+	transport.reloadEvaluator = func(context.Context) error {
+		reloads++
+		return nil
+	}
+
+	transport.handleSocketTrafficTimeout(
+		transport.generation, transport.status.ConnectionGeneration, lastInboundAt,
+	)
+
+	status := transport.Status()
+	if reloads != 1 || status.State != "reconnecting" || status.LoggedIn ||
+		status.SocketReady ||
+		status.Detail != "Game websocket traffic stopped; reloading game and checking login" {
+		t.Fatalf("silent socket did not reload into login recovery: reloads=%d status=%+v", reloads, status)
+	}
+	if transport.restoreSuppressed || !transport.loginCredential.AutoRestore ||
+		transport.restoreAttempted {
+		t.Fatalf(
+			"silent socket disabled saved login recovery: suppressed=%v autoRestore=%v attempted=%v",
+			transport.restoreSuppressed, transport.loginCredential.AutoRestore,
+			transport.restoreAttempted,
+		)
+	}
+	if transport.activeToken != "" || !transport.lastInboundAt.IsZero() {
+		t.Fatalf(
+			"silent socket remained active: token=%q lastInboundAt=%v",
+			transport.activeToken, transport.lastInboundAt,
+		)
+	}
+
+	transport.handleSocketTrafficTimeout(
+		transport.generation, transport.status.ConnectionGeneration, lastInboundAt,
+	)
+	if reloads != 1 {
+		t.Fatalf("stale traffic timeout triggered %d reloads", reloads)
+	}
+}
+
+func TestGameLoginOriginIncludesLauncherAndHTML5Frames(t *testing.T) {
+	for _, origin := range []string{
+		"https://empire.goodgamestudios.com",
+		"https://empire-html5.goodgamestudios.com",
+	} {
+		if !isGameLoginOrigin(origin) {
+			t.Fatalf("game login origin %q was not eligible for saved credentials", origin)
+		}
+	}
+	for _, origin := range []string{
+		"https://example.com",
+		"https://empire.goodgamestudios.com.example.com",
+	} {
+		if isGameLoginOrigin(origin) {
+			t.Fatalf("unrelated origin %q was eligible for saved credentials", origin)
+		}
 	}
 }
 
@@ -702,6 +886,13 @@ func TestChromiumTransportInjectionBridgesDedicatedWorkerSockets(t *testing.T) {
 		"? 'import('",
 		": 'importScripts('",
 		"record.pendingResponses.push(pending)",
+		"pending.requestOpcode === 'gaa' && opcode === 'gaa'",
+		"Object.prototype.hasOwnProperty.call(responsePayload, 'KID')",
+		"const rows = Array.isArray(responsePayload.AI) ? responsePayload.AI : []",
+		"Number(row[1]) >= Number(requestPayload.AX1)",
+		"Number(row[2]) <= Number(requestPayload.AY2)",
+		"let smallestArea = Number.POSITIVE_INFINITY",
+		"if (area < smallestArea)",
 		"pending.requestOpcode !== 'ahr' || opcode !== 'ahh'",
 		"Number(responsePayload.OP.RID) === Number(requestPayload.ID)",
 		"responseToken = matchResponse(record, opcode, payload)",
@@ -714,7 +905,10 @@ func TestChromiumTransportInjectionBridgesDedicatedWorkerSockets(t *testing.T) {
 		"const visibleLoginInput = (autocomplete) =>",
 		"loginUsername: credential.username, loginPassword: credential.password",
 		"const credential = pageController.loginCredentials()",
-		"activate, send, loginCredentials, restoreCredentials, closeGameUI, opcodeOf",
+		"activate, resync, send, loginCredentials, restoreCredentials, closeGameUI, opcodeOf",
+		"root.__citadelResync = resync",
+		"eligible: record.eligible === true",
+		"eligible: owner.eligible === true",
 		"root.__citadelRestoreCredentials = restoreCredentials",
 		"root.__citadelCloseGameUI = closeGameUI",
 		"closeCode: event && Number.isFinite(event.code)",

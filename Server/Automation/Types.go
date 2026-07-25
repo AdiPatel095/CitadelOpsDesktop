@@ -42,6 +42,19 @@ type Policy interface {
 	Evaluate(context.Context, Snapshot) (Decision, error)
 }
 
+// ActorIDPolicy lets an independent policy lane attribute its operations to a
+// parent feature. This keeps shared workflow ownership and activity routing
+// stable while the lane retains its own coordinator runtime and status.
+type ActorIDPolicy interface {
+	ActorID() string
+}
+
+// ScheduleKeyPolicy lets related policy lanes share one configured schedule
+// while retaining independent coordinator runtimes.
+type ScheduleKeyPolicy interface {
+	ScheduleKey() string
+}
+
 // StateWakePolicy declares authoritative state domains that can make an idle
 // policy actionable before its scheduled check. Successful operation chains
 // use Decision.ReevaluateOnSuccess instead, so response events cannot override
@@ -50,11 +63,29 @@ type StateWakePolicy interface {
 	WakeDomains() []string
 }
 
+// UrgentWakePolicy declares the subset of WakeDomains whose changes open a
+// short game-side opportunity. The coordinator evaluates those events on
+// arrival instead of holding them in the shared coalescing window, so a
+// time-critical trigger is not paid for by unrelated state churn. Every
+// declared domain must also appear in WakeDomains.
+type UrgentWakePolicy interface {
+	UrgentWakeDomains() []string
+}
+
 // ConfigurationWakePolicy declares the configuration sections that affect a
 // policy. The coordinator separately fingerprints each policy's own enable bit
 // and top-level or per-castle schedules.
 type ConfigurationWakePolicy interface {
 	WakeSections() []string
+}
+
+// ConfigurationDerivedStatePolicy declares configuration sections whose
+// values are materialized into cached state. The coordinator invalidates that
+// state after in-flight work has stopped and before the policy is reevaluated.
+// ResetConfigurationDerivedState must not modify GameState.Map.
+type ConfigurationDerivedStatePolicy interface {
+	ConfigurationDerivedStateSections() []string
+	ResetConfigurationDerivedState(*State.GameState) (domains []string, changed bool)
 }
 
 type GameDataProvider interface {

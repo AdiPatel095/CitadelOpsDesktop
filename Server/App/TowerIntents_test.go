@@ -179,6 +179,34 @@ func TestTowerAttackCommanderLossMakesPlanStale(t *testing.T) {
 	}
 }
 
+func TestTowerAttackCommanderLossPausesWithoutRotatingQueue(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"units":[],"buildings":[],"effects":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	gameState.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 100, Y: 100}
+	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: false}
+	gameState.Map[0] = map[string]State.MapObservation{
+		"101:100": {
+			KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID,
+			TowerVictoryCount: 845, Level: 81,
+		},
+	}
+
+	plan, err := planTowerAttack(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{"sourceCastleId":1,"kingdomId":0,"targetX":101,"targetY":100,"unitId":77,"commanderIds":[5]}`))
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("commander loss should pause with a stale plan: plan=%#v err=%v", plan, err)
+	}
+	if len(plan.Steps) != 0 {
+		t.Fatalf("commander loss should not rotate the tower queue: %#v", plan)
+	}
+}
+
 func TestTowerAttackBecomesNoOpWhenTroopsChangeBeforeAdmission(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"units":[],"buildings":[],"effects":[]

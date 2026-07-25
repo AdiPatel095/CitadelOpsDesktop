@@ -104,6 +104,83 @@ func TestDungeonMinuteSkipAcceptsAndClearsRBCTowerRow(t *testing.T) {
 	}
 }
 
+func TestDungeonMinuteSkipAcceptsAndClearsKhanRow(t *testing.T) {
+	gameState := State.NewGameState()
+	resetAt := time.Now().UTC()
+	gameState.Map[0] = map[string]State.MapObservation{
+		"939:1123": {
+			KingdomID: 0, X: 939, Y: 1123, TypeID: khanCampMapTypeID,
+			EventCampID: 1146, EventCampCooldownRemaining: 194,
+		},
+	}
+	gameState.Khan = State.KhanState{
+		RunID: "khan", KingdomID: 0, TargetX: 939, TargetY: 1123,
+		AttacksLaunched: 1, VictoriesConfirmed: 1, Taunts: map[State.MovementID]State.KhanTauntState{},
+	}
+	gameState.NomadCamps.Cooldowns["0:939:1123"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 939, Y: 1123, LastSuccessfulBattleAt: resetAt.Add(-2 * time.Second),
+		CooldownRemaining: 194, CooldownObservedAt: resetAt.Add(-time.Second),
+	}
+	code := 0
+	_, changed, err := reduceDungeonCooldownSkip(t.Context(), Protocol.Frame{
+		Opcode: "msd", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: resetAt,
+		Payload: json.RawMessage(`{"KID":0,"AI":[35,939,1123,3352,-1,0,360,1825,17,1146,200,200,85]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("Khan cooldown reset: changed=%t err=%v", changed, err)
+	}
+	updated := gameState.Map[0]["939:1123"]
+	if updated.TypeID != khanCampMapTypeID || updated.EventCampID != 1146 ||
+		updated.EventCampCooldownRemaining != 0 || !updated.ObservedAt.Equal(resetAt) {
+		t.Fatalf("unexpected reset Khan row: %#v", updated)
+	}
+	if gameState.Khan.CooldownsSkipped != 0 || !gameState.Khan.LastCooldownSkippedAt.IsZero() {
+		t.Fatalf("unlinked inbound MSD changed Khan report counters: %#v", gameState.Khan)
+	}
+	cooldown := gameState.NomadCamps.Cooldowns["0:939:1123"]
+	if cooldown.PendingCooldownRefresh || cooldown.CooldownRemaining != 0 ||
+		!cooldown.CooldownObservedAt.Equal(resetAt) {
+		t.Fatalf("Khan cooldown tracker was not cleared: %#v", cooldown)
+	}
+}
+
+func TestDungeonMinuteSkipRecordsRecoveredKhanLandingBoundary(t *testing.T) {
+	gameState := State.NewGameState()
+	resetAt := time.Now().UTC()
+	lastSkipAt := resetAt.Add(-2 * time.Minute)
+	gameState.Map[0] = map[string]State.MapObservation{
+		"939:1123": {
+			KingdomID: 0, X: 939, Y: 1123, TypeID: khanCampMapTypeID,
+			EventCampID: 1148, EventCampCooldownRemaining: 86_100,
+		},
+	}
+	gameState.Khan = State.KhanState{
+		RunID: "khan", KingdomID: 0, TargetX: 939, TargetY: 1123,
+		AttacksLaunched: 2, CooldownsSkipped: 1, LastCooldownSkippedAt: lastSkipAt,
+		Launches: []State.KhanLaunchState{{
+			CommanderID: 26, MovementID: 100, ArrivesAt: resetAt.Add(-time.Minute),
+		}},
+		Taunts: map[State.MovementID]State.KhanTauntState{},
+	}
+	gameState.NomadCamps.Cooldowns["0:939:1123"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 939, Y: 1123,
+		LastSuccessfulBattleAt: lastSkipAt.Add(-time.Second),
+		CooldownRemaining:      86_100,
+		CooldownObservedAt:     resetAt.Add(-time.Second),
+	}
+	code := 0
+	_, changed, err := reduceDungeonCooldownSkip(t.Context(), Protocol.Frame{
+		Opcode: "msd", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: resetAt,
+		Payload: json.RawMessage(`{"KID":0,"AI":[35,939,1123,3352,-1,0,360,1825,17,1148,200,200,85]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("recovered Khan cooldown reset: changed=%t err=%v", changed, err)
+	}
+	if gameState.Khan.CooldownsSkipped != 1 || !gameState.Khan.LastCooldownSkippedAt.Equal(lastSkipAt) {
+		t.Fatalf("launch-arrival fallback changed Khan cooldown counters: %#v", gameState.Khan)
+	}
+}
+
 func nomadReducerGameData(t *testing.T) *GameData.Store {
 	t.Helper()
 	store, err := GameData.DecodeStore([]byte(`{

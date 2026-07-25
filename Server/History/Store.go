@@ -38,7 +38,6 @@ type entry struct {
 
 type PlayerSample struct {
 	TimestampUnix   int64              `json:"timestampUnix"`
-	UID             int64              `json:"uid,omitempty"`
 	PlayerID        State.PlayerID     `json:"playerId"`
 	Might           float64            `json:"might"`
 	Glory           float64            `json:"glory"`
@@ -99,6 +98,144 @@ func (store *Store) Append(collection string, value any) error {
 		return fmt.Errorf("append %s history: %w", collection, err)
 	}
 	return file.Sync()
+}
+
+func (store *Store) Replace(collection string, values []json.RawMessage) error {
+	if store == nil {
+		return fmt.Errorf("history store is unavailable")
+	}
+	path, err := store.collectionPath(collection)
+	if err != nil {
+		return err
+	}
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	return store.replaceLocked(path, collection, values)
+}
+
+func (store *Store) RemoveWhere(collection string, remove func(json.RawMessage) bool) (int, error) {
+	if store == nil {
+		return 0, fmt.Errorf("history store is unavailable")
+	}
+	if remove == nil {
+		return 0, nil
+	}
+	path, err := store.collectionPath(collection)
+	if err != nil {
+		return 0, err
+	}
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	file, err := os.Open(path)
+	if os.IsNotExist(err) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, fmt.Errorf("open %s history: %w", collection, err)
+	}
+	defer file.Close()
+
+	values := make([]json.RawMessage, 0, 1024)
+	removed := 0
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 64*1024), 16*1024*1024)
+	for scanner.Scan() {
+		var item entry
+		decoder := json.NewDecoder(bytes.NewReader(scanner.Bytes()))
+		if decoder.Decode(&item) != nil || item.SchemaVersion < 1 || item.SchemaVersion > SchemaVersion || len(item.Payload) == 0 {
+			return 0, fmt.Errorf("decode %s history while removing entries", collection)
+		}
+		if remove(item.Payload) {
+			removed++
+			continue
+		}
+		values = append(values, append(json.RawMessage(nil), item.Payload...))
+		if len(values) > 100_000 {
+			return 0, fmt.Errorf("%s history reached the 100000-row safe rewrite limit", collection)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return 0, fmt.Errorf("read %s history while removing entries: %w", collection, err)
+	}
+	if removed == 0 {
+		return 0, nil
+	}
+	if err := store.replaceLocked(path, collection, values); err != nil {
+		return 0, err
+	}
+	return removed, nil
+}
+
+func (store *Store) replaceLocked(path, collection string, values []json.RawMessage) error {
+	temporary, err := os.CreateTemp(filepath.Dir(path), "."+collection+"-*")
+	if err != nil {
+		return fmt.Errorf("create compacted %s history: %w", collection, err)
+	}
+	temporaryPath := temporary.Name()
+	defer os.Remove(temporaryPath)
+	if err := temporary.Chmod(0o600); err != nil {
+		temporary.Close()
+		return err
+	}
+	writer := bufio.NewWriter(temporary)
+	capturedAt := time.Now().UTC()
+	for _, payload := range values {
+		if len(payload) == 0 {
+			continue
+		}
+		line, marshalErr := json.Marshal(entry{
+			SchemaVersion: SchemaVersion,
+			CapturedAt:    capturedAt,
+			Payload:       payload,
+		})
+		if marshalErr != nil {
+			temporary.Close()
+			return fmt.Errorf("encode compacted %s history: %w", collection, marshalErr)
+		}
+		if _, writeErr := writer.Write(append(line, '\n')); writeErr != nil {
+			temporary.Close()
+			return fmt.Errorf("write compacted %s history: %w", collection, writeErr)
+		}
+	}
+	if err := writer.Flush(); err != nil {
+		temporary.Close()
+		return fmt.Errorf("flush compacted %s history: %w", collection, err)
+	}
+	if err := temporary.Sync(); err != nil {
+		temporary.Close()
+		return fmt.Errorf("sync compacted %s history: %w", collection, err)
+	}
+	if err := temporary.Close(); err != nil {
+		return fmt.Errorf("close compacted %s history: %w", collection, err)
+	}
+	if err := os.Rename(temporaryPath, path); err != nil {
+		backup, backupErr := os.CreateTemp(filepath.Dir(path), "."+collection+"-backup-*")
+		if backupErr != nil {
+			return fmt.Errorf("prepare existing %s history backup: %w", collection, backupErr)
+		}
+		backupPath := backup.Name()
+		if closeErr := backup.Close(); closeErr != nil {
+			return fmt.Errorf("close existing %s history backup: %w", collection, closeErr)
+		}
+		if removeErr := os.Remove(backupPath); removeErr != nil {
+			return fmt.Errorf("prepare existing %s history backup path: %w", collection, removeErr)
+		}
+		if backupErr := os.Rename(path, backupPath); backupErr != nil {
+			return fmt.Errorf("back up existing %s history: %w", collection, backupErr)
+		}
+		if retryErr := os.Rename(temporaryPath, path); retryErr != nil {
+			if restoreErr := os.Rename(backupPath, path); restoreErr != nil {
+				return fmt.Errorf(
+					"replace compacted %s history: %v; restore original: %w",
+					collection, retryErr, restoreErr,
+				)
+			}
+			return fmt.Errorf("replace compacted %s history: %w", collection, retryErr)
+		}
+		_ = os.Remove(backupPath)
+	}
+	return nil
 }
 
 func (store *Store) Read(collection string, since time.Time, limit int) ([]json.RawMessage, error) {
@@ -165,13 +302,12 @@ func (store *Store) PlayerSamples(since time.Time, limit int) ([]PlayerSample, e
 	return samples, nil
 }
 
-func (store *Store) PlayerSamplesForAccount(
+func (store *Store) PlayerSamplesForPlayer(
 	since time.Time,
 	limit int,
-	uid int64,
 	playerID State.PlayerID,
 ) ([]PlayerSample, error) {
-	if uid <= 0 && playerID <= 0 {
+	if playerID <= 0 {
 		return []PlayerSample{}, nil
 	}
 	samples, err := store.PlayerSamples(since, 100_000)
@@ -180,17 +316,6 @@ func (store *Store) PlayerSamplesForAccount(
 	}
 	filtered := make([]PlayerSample, 0, min(len(samples), max(1, limit)))
 	for _, sample := range samples {
-		if uid > 0 {
-			if sample.UID == uid {
-				filtered = append(filtered, sample)
-				continue
-			}
-			if sample.UID == 0 && playerID > 0 && sample.PlayerID == playerID {
-				sample.UID = uid
-				filtered = append(filtered, sample)
-			}
-			continue
-		}
 		if sample.PlayerID == playerID {
 			filtered = append(filtered, sample)
 		}
@@ -209,7 +334,7 @@ func (store *Store) PlayerSamplesForAccount(
 
 func NewPlayerSample(snapshot State.GameState, gameData *GameData.Manager) PlayerSample {
 	sample := PlayerSample{
-		TimestampUnix: time.Now().Unix(), UID: snapshot.Account.UID, PlayerID: snapshot.Player.ID,
+		TimestampUnix: time.Now().Unix(), PlayerID: snapshot.Player.ID,
 		Might: snapshot.Player.Might, Glory: snapshot.Player.Glory, Gallantry: snapshot.Player.Gallantry,
 		TroopsByUnit: map[string]int64{}, Currencies: map[string]float64{},
 	}

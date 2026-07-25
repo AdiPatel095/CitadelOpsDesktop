@@ -56,6 +56,23 @@ func (*AutoTowerPolicy) WakeSections() []string {
 	return []string{"automation.autoTowers", commanderFeatureSection}
 }
 
+func (*AutoTowerPolicy) ConfigurationDerivedStateSections() []string {
+	return []string{"automation.autoTowers"}
+}
+
+func (*AutoTowerPolicy) ResetConfigurationDerivedState(gameState *State.GameState) ([]string, bool) {
+	if gameState == nil || len(gameState.TowerQueue.EntriesByCastle) == 0 &&
+		len(gameState.TowerQueue.LastScannedAt) == 0 && len(gameState.TowerQueue.LastAttemptedAt) == 0 &&
+		len(gameState.TowerQueue.ConfirmedLaunchesByCastle) == 0 {
+		return nil, false
+	}
+	gameState.TowerQueue.EntriesByCastle = map[State.CastleID][]State.TowerQueueEntry{}
+	gameState.TowerQueue.LastScannedAt = map[State.CastleID]time.Time{}
+	gameState.TowerQueue.LastAttemptedAt = map[State.CastleID]time.Time{}
+	gameState.TowerQueue.ConfirmedLaunchesByCastle = map[State.CastleID]int64{}
+	return []string{"tower-queue"}, true
+}
+
 func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	settings := autoTowerSettings{CheckIntervalSec: 30, MapRefreshIntervalSec: 1800, HorseTravelBoostID: -1, Castles: map[string]autoTowerCastle{}}
 	if !decodeSection(snapshot.Configuration, "automation.autoTowers", &settings) || len(settings.Castles) == 0 {
@@ -117,15 +134,27 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	var selectedCommanderID State.CommanderID
 	var firstCapacityError error
 	firstTroopShortage := ""
-	commanderEligibleCandidates := 0
 	for _, candidate := range candidates {
 		commanderID, commanderAvailable := nextAutoTowerCommander(
 			snapshot.State, commanderIDs, commandersRestricted, candidate.Plan.MaidenOnly, snapshot.Now,
 		)
 		if !commanderAvailable {
-			continue
+			detail := "No commander is currently available"
+			if commandersRestricted {
+				detail = "No assigned Auto Towers commander is currently available"
+			}
+			if candidate.Plan.MaidenOnly {
+				detail = "No available commander supports the required maiden relic"
+				if commandersRestricted {
+					detail = "No available assigned Auto Towers commander supports the required maiden relic"
+				}
+			}
+			return Decision{
+				Status: "waiting", Detail: detail,
+				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
+				Metrics:     metrics,
+			}, nil
 		}
-		commanderEligibleCandidates++
 		if snapshot.GameData != nil {
 			required, err := autoTowerCapacityRequirement(snapshot, candidate, commanderID)
 			if err != nil {
@@ -195,25 +224,11 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}, nil
 	}
 	if len(candidates) > 0 {
-		detail := "No commander is currently available"
-		if commandersRestricted {
-			detail = "No assigned Auto Towers commander is currently available"
-		}
-		if commanderEligibleCandidates > 0 && firstTroopShortage != "" {
+		detail := "No queued tower candidate is ready"
+		if firstTroopShortage != "" {
 			detail = "Waiting for tower troops: " + firstTroopShortage
-		} else if commanderEligibleCandidates > 0 && firstCapacityError != nil {
+		} else if firstCapacityError != nil {
 			detail = "Cannot calculate tower troop requirements: " + firstCapacityError.Error()
-		} else if commanderEligibleCandidates == 0 {
-			for _, candidate := range candidates {
-				if !candidate.Plan.MaidenOnly {
-					continue
-				}
-				detail = "No available commander supports the required maiden relic"
-				if commandersRestricted {
-					detail = "No available assigned Auto Towers commander supports the required maiden relic"
-				}
-				break
-			}
 		}
 		return Decision{
 			Status: "waiting", Detail: detail,
@@ -278,7 +293,12 @@ func queuedTowerCandidates(snapshot Snapshot, settings autoTowerSettings) ([]tow
 		}
 		active := activeTowerMovements(snapshot.State, castle.ID, snapshot.Now)
 		activeCount += active
+		radius := clampTowerRadius(plan.Radius)
+		maximumDistanceSquared := radius * radius
 		for _, entry := range snapshot.State.TowerQueue.EntriesByCastle[castle.ID] {
+			if towerQueueEntryDistanceSquared(castle, entry) > maximumDistanceSquared {
+				continue
+			}
 			if entry.DeferredUntil != nil && entry.DeferredUntil.After(snapshot.Now) {
 				continue
 			}
@@ -301,56 +321,40 @@ func queuedTowerCandidates(snapshot Snapshot, settings autoTowerSettings) ([]tow
 		}
 	}
 	sort.Slice(candidates, func(left, right int) bool {
-		leftDistance := towerQueueEntryDistanceSquared(candidates[left].Castle, candidates[left].Entry)
-		rightDistance := towerQueueEntryDistanceSquared(candidates[right].Castle, candidates[right].Entry)
-		if leftDistance != rightDistance {
-			return leftDistance < rightDistance
-		}
-		if candidates[left].Castle.ID != candidates[right].Castle.ID {
-			return candidates[left].Castle.ID < candidates[right].Castle.ID
-		}
-		if candidates[left].Entry.TargetY != candidates[right].Entry.TargetY {
-			return candidates[left].Entry.TargetY < candidates[right].Entry.TargetY
-		}
-		return candidates[left].Entry.TargetX < candidates[right].Entry.TargetX
+		return towerQueueCandidateLess(snapshot.State.TowerQueue, candidates[left], candidates[right])
 	})
-	available := make([]towerQueueCandidate, 0, len(candidates))
-	for _, candidate := range candidates {
-		key := towerTargetKey(candidate.Entry.KingdomID, candidate.Entry.TargetX, candidate.Entry.TargetY)
-		if _, locked := reserved[key]; locked {
-			continue
-		}
-		reserved[key] = struct{}{}
-		available = append(available, candidate)
+	return candidates, activeCount, configured
+}
+
+func towerQueueCandidateLess(queue State.TowerQueueState, left, right towerQueueCandidate) bool {
+	leftLaunches := queue.ConfirmedLaunchesByCastle[left.Castle.ID]
+	rightLaunches := queue.ConfirmedLaunchesByCastle[right.Castle.ID]
+	if leftLaunches != rightLaunches {
+		return leftLaunches < rightLaunches
 	}
-	sort.SliceStable(available, func(left, right int) bool {
-		leftAttemptedAt := snapshot.State.TowerQueue.LastAttemptedAt[available[left].Castle.ID]
-		rightAttemptedAt := snapshot.State.TowerQueue.LastAttemptedAt[available[right].Castle.ID]
-		if leftAttemptedAt.IsZero() != rightAttemptedAt.IsZero() {
-			return leftAttemptedAt.IsZero()
-		}
-		if !leftAttemptedAt.Equal(rightAttemptedAt) {
-			return leftAttemptedAt.Before(rightAttemptedAt)
-		}
-		leftQueuedAt := available[left].Entry.QueuedAt
-		rightQueuedAt := available[right].Entry.QueuedAt
-		if !leftQueuedAt.Equal(rightQueuedAt) {
-			return leftQueuedAt.Before(rightQueuedAt)
-		}
-		leftDistance := towerQueueEntryDistanceSquared(available[left].Castle, available[left].Entry)
-		rightDistance := towerQueueEntryDistanceSquared(available[right].Castle, available[right].Entry)
-		if leftDistance != rightDistance {
-			return leftDistance < rightDistance
-		}
-		if available[left].Castle.ID != available[right].Castle.ID {
-			return available[left].Castle.ID < available[right].Castle.ID
-		}
-		if available[left].Entry.TargetY != available[right].Entry.TargetY {
-			return available[left].Entry.TargetY < available[right].Entry.TargetY
-		}
-		return available[left].Entry.TargetX < available[right].Entry.TargetX
-	})
-	return available, activeCount, configured
+	leftAttemptedAt := queue.LastAttemptedAt[left.Castle.ID]
+	rightAttemptedAt := queue.LastAttemptedAt[right.Castle.ID]
+	if leftAttemptedAt.IsZero() != rightAttemptedAt.IsZero() {
+		return leftAttemptedAt.IsZero()
+	}
+	if !leftAttemptedAt.Equal(rightAttemptedAt) {
+		return leftAttemptedAt.Before(rightAttemptedAt)
+	}
+	if left.Castle.ID != right.Castle.ID {
+		return left.Castle.ID < right.Castle.ID
+	}
+	if !left.Entry.QueuedAt.Equal(right.Entry.QueuedAt) {
+		return left.Entry.QueuedAt.Before(right.Entry.QueuedAt)
+	}
+	leftDistance := towerQueueEntryDistanceSquared(left.Castle, left.Entry)
+	rightDistance := towerQueueEntryDistanceSquared(right.Castle, right.Entry)
+	if leftDistance != rightDistance {
+		return leftDistance < rightDistance
+	}
+	if left.Entry.TargetY != right.Entry.TargetY {
+		return left.Entry.TargetY < right.Entry.TargetY
+	}
+	return left.Entry.TargetX < right.Entry.TargetX
 }
 
 func nextTowerQueueCandidate(candidates []towerQueueCandidate) (towerQueueCandidate, bool) {

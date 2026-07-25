@@ -35,6 +35,7 @@ func reduceAttackDialog(
 		ActiveEffects:  parseAttackDialogEffects(root["AE"]),
 		ObservedAt:     frame.ReceivedAt,
 	}
+	var khanObservation *State.MapObservation
 	var stormObservation *State.MapObservation
 	if rawTarget, exists := root["gaa"]; exists {
 		var nested struct {
@@ -59,6 +60,17 @@ func reduceAttackDialog(
 				dialog.Target.EventCampID = observation.EventCampID
 				dialog.Target.EventCampVictoryCount = observation.EventCampVictoryCount
 				dialog.Target.EventCampCooldownRemaining = observation.EventCampCooldownRemaining
+			}
+			if dialog.Target.TypeID == khanCampMapTypeID {
+				observation := State.MapObservation{
+					KingdomID: dialog.KingdomID, X: dialog.Target.X, Y: dialog.Target.Y, TypeID: dialog.Target.TypeID,
+					ObservedAt: frame.ReceivedAt,
+				}
+				populateKhanCampObservation(&observation, row, gameData)
+				dialog.Target.ObjectID = observation.EventCampID
+				dialog.Target.EventCampID = observation.EventCampID
+				dialog.Target.EventCampCooldownRemaining = observation.EventCampCooldownRemaining
+				khanObservation = &observation
 			}
 			if isStormMapType(dialog.Target.TypeID) {
 				observation := State.MapObservation{
@@ -86,6 +98,34 @@ func reduceAttackDialog(
 	if !reflect.DeepEqual(gameState.AttackDialog, dialog) {
 		gameState.AttackDialog = dialog
 		changed = true
+	}
+	if khanObservation != nil {
+		if gameState.Map == nil {
+			gameState.Map = map[State.KingdomID]map[string]State.MapObservation{}
+		}
+		observations := gameState.Map[khanObservation.KingdomID]
+		if observations == nil {
+			observations = map[string]State.MapObservation{}
+			gameState.Map[khanObservation.KingdomID] = observations
+		}
+		key := fmt.Sprintf("%d:%d", khanObservation.X, khanObservation.Y)
+		if current, exists := observations[key]; exists {
+			if khanObservation.Name == "" {
+				khanObservation.Name = current.Name
+			}
+			if khanObservation.Level == 0 {
+				khanObservation.Level = current.Level
+			}
+		}
+		if current, exists := observations[key]; !exists || !reflect.DeepEqual(current, *khanObservation) {
+			observations[key] = *khanObservation
+			changed = true
+			domains = append(domains, "map")
+		}
+		if refreshNomadCampCooldownFromMap(gameState, *khanObservation) {
+			changed = true
+			domains = append(domains, "nomad-camps")
+		}
 	}
 	if stormObservation != nil {
 		if gameState.Map == nil {

@@ -452,6 +452,13 @@ func normalizeStateMaps(state *GameState) {
 	if state.TowerQueue.LastAttemptedAt == nil {
 		state.TowerQueue.LastAttemptedAt = defaults.TowerQueue.LastAttemptedAt
 	}
+	if state.TowerQueue.ConfirmedLaunchesByCastle == nil {
+		state.TowerQueue.ConfirmedLaunchesByCastle = defaults.TowerQueue.ConfirmedLaunchesByCastle
+	}
+	if state.TowerQueue.CursorVersion < TowerQueueCursorVersion {
+		state.TowerQueue.ConfirmedLaunchesByCastle = map[CastleID]int64{}
+		state.TowerQueue.CursorVersion = TowerQueueCursorVersion
+	}
 	if state.TowerQueue.CapacityByCastle == nil {
 		state.TowerQueue.CapacityByCastle = defaults.TowerQueue.CapacityByCastle
 	}
@@ -460,6 +467,20 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.Khan.Taunts == nil {
 		state.Khan.Taunts = defaults.Khan.Taunts
+	}
+	if state.Khan.CooldownReports == nil {
+		state.Khan.CooldownReports = defaults.Khan.CooldownReports
+	}
+	if state.Khan.CooldownReportVersion < KhanCooldownReportVersion {
+		seedKhanCooldownReport(state)
+		state.Khan.CooldownReportVersion = KhanCooldownReportVersion
+	}
+	reconcileKhanLaunchTaunts(state)
+	if state.Khan.TauntCounterVersion < KhanTauntCounterVersion {
+		state.Khan.TauntsObserved = len(state.Khan.Taunts) + len(state.Khan.ResolvedTaunts)
+		state.Khan.TauntsResolved = len(state.Khan.ResolvedTaunts)
+		state.Khan.TauntsTriggered = state.Khan.TauntsObserved
+		state.Khan.TauntCounterVersion = KhanTauntCounterVersion
 	}
 	for castleID, entries := range state.TowerQueue.EntriesByCastle {
 		if entries == nil {
@@ -493,6 +514,68 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.Observations == nil {
 		state.Observations = defaults.Observations
+	}
+}
+
+func seedKhanCooldownReport(state *GameState) {
+	if state == nil || state.Khan.RunID == "" || state.Khan.LastReportID <= 0 {
+		return
+	}
+	key := fmt.Sprintf("%d:%d:%d", state.Khan.KingdomID, state.Khan.TargetX, state.Khan.TargetY)
+	cooldown, found := state.NomadCamps.Cooldowns[key]
+	if !found || cooldown.ReportID <= 0 || cooldown.ReportID != state.Khan.LastReportID ||
+		cooldown.LastSuccessfulBattleAt.IsZero() ||
+		!state.Khan.LastCooldownSkippedAt.IsZero() &&
+			!state.Khan.LastCooldownSkippedAt.Before(cooldown.LastSuccessfulBattleAt) {
+		return
+	}
+	state.Khan.CooldownReports[cooldown.ReportID] = KhanCooldownReportState{
+		ReportID: cooldown.ReportID, KingdomID: cooldown.KingdomID, X: cooldown.X, Y: cooldown.Y,
+		LandedAt: cooldown.LastSuccessfulBattleAt, CooldownRemaining: cooldown.CooldownRemaining,
+		CooldownObservedAt: cooldown.CooldownObservedAt,
+	}
+}
+
+func reconcileKhanLaunchTaunts(state *GameState) {
+	if state == nil || len(state.Khan.Launches) == 0 {
+		return
+	}
+	launchIDs := make(map[MovementID]struct{}, len(state.Khan.Launches))
+	for _, launch := range state.Khan.Launches {
+		if launch.MovementID > 0 {
+			launchIDs[launch.MovementID] = struct{}{}
+		}
+	}
+	removedObserved := 0
+	for movementID := range state.Khan.Taunts {
+		if _, ownLaunch := launchIDs[movementID]; !ownLaunch {
+			continue
+		}
+		delete(state.Khan.Taunts, movementID)
+		removedObserved++
+	}
+	resolved := state.Khan.ResolvedTaunts[:0]
+	removedResolved := 0
+	lastResolvedAt := time.Time{}
+	for _, taunt := range state.Khan.ResolvedTaunts {
+		if _, ownLaunch := launchIDs[taunt.MovementID]; ownLaunch {
+			removedObserved++
+			removedResolved++
+			continue
+		}
+		resolved = append(resolved, taunt)
+		if taunt.ImpactAt.After(lastResolvedAt) {
+			lastResolvedAt = taunt.ImpactAt.UTC()
+		}
+	}
+	state.Khan.ResolvedTaunts = resolved
+	if removedObserved == 0 {
+		return
+	}
+	state.Khan.TauntsObserved = max(0, state.Khan.TauntsObserved-removedObserved)
+	state.Khan.TauntsResolved = max(0, state.Khan.TauntsResolved-removedResolved)
+	if removedResolved > 0 {
+		state.Khan.LastTauntResolvedAt = lastResolvedAt
 	}
 }
 

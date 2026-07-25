@@ -76,11 +76,34 @@ func TestKingdomTroopShipmentRejectsToolsAndSkipUsesTroopTransportType(t *testin
 	}
 }
 
+func TestKingdomTroopShipmentRejectsStormBelowMeadFloor(t *testing.T) {
+	gameData := kingdomTroopIntentGameData(t)
+	gameState := State.NewGameState()
+	donor := kingdomTroopIntentCastle(10, 0, "Donor")
+	donor.Units.Stationed[10] = 20
+	target := kingdomTroopIntentCastle(40, 4, "Storm")
+	target.Resources[12] = State.ResourceBalance{Amount: GameData.StormTroopSupportMead - 1}
+	gameState.Castles[donor.ID] = donor
+	gameState.Castles[target.ID] = target
+	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
+	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+
+	_, err := planKingdomTroopShipment(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":40,"targetKingdomId":4,"units":[{"unitId":10,"amount":1}]
+	}`))
+	if err == nil || !strings.Contains(err.Error(), "at least 50000 Mead") {
+		t.Fatalf("low Storm Mead error = %v", err)
+	}
+}
+
 func kingdomTroopIntentGameData(t *testing.T) *GameData.Store {
 	t.Helper()
 	store, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],
 		"units":[{"wodID":10},{"wodID":20},{"wodID":30,"slotTypes":"1,2"}],
+		"resources":[{"resourceID":12,"JSONKey":"MEAD"}],
 		"currencies":[{"currencyID":1005,"JSONKey":"MS5"}],
 		"currencyMinutesSkipValues":[{"currencyID":"1005","MinutesSkipValue":"60"}]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
@@ -93,6 +116,8 @@ func kingdomTroopIntentGameData(t *testing.T) *GameData.Store {
 func kingdomTroopIntentCastle(id State.CastleID, kingdom State.KingdomID, name string) State.CastleState {
 	return State.CastleState{
 		ID: id, KingdomID: kingdom, Name: name,
+		Resources:           map[State.ResourceID]State.ResourceBalance{12: {Amount: GameData.StormTroopSupportMead}},
+		FoodStateObservedAt: time.Now().UTC(),
 		Units: State.CastleUnits{
 			Stationed: map[State.UnitID]int64{}, Traveling: map[State.UnitID]int64{},
 			Hospital: map[State.UnitID]int64{}, SpecialHospital: map[State.UnitID]int64{}, Total: map[State.UnitID]int64{},

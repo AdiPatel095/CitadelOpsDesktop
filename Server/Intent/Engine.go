@@ -21,6 +21,12 @@ const sessionChangePollInterval = 25 * time.Millisecond
 const sessionReadyWaitTimeout = 10 * time.Second
 const wireCommitCleanupTimeout = 10 * time.Second
 
+// maximumStaleReplans bounds in-place retries of a plan that keeps going stale
+// before any step completes. Each retry re-runs the plan's command
+// dependencies, so an unbounded loop is visible to the game as repeated
+// dialog and context traffic.
+const maximumStaleReplans = 3
+
 var ErrPlanStale = errors.New("intent plan became stale before dispatch")
 
 type wireCommitCollectorContextKey struct{}
@@ -301,6 +307,7 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 	defer releaseAdmission()
 	expectedRevisionAccepted := false
 	firstPlan := true
+	staleReplans := 0
 	operationConnectionGeneration := uint64(0)
 	for {
 		if err := executionContext.Err(); err != nil {
@@ -456,6 +463,7 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		completedThisAttempt := map[string]int{}
 		yielded := false
 		replan := false
+		var replanCause error
 		wireCommits := &wireCommitCollector{}
 		attemptContext := context.WithValue(executionContext, intentEffectContextKey{}, plan.Effect)
 		attemptContext = context.WithValue(attemptContext, wireCommitCollectorContextKey{}, wireCommits)
@@ -562,6 +570,7 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 				}
 				if errors.Is(err, ErrPlanStale) && !completedAnyStep(completedSteps) {
 					replan = true
+					replanCause = err
 					break
 				}
 				release()
@@ -585,6 +594,18 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		}
 		release()
 		if replan {
+			// A planner that cannot observe what made the step stale re-approves
+			// the same work every pass, so an unbounded retry would re-run the
+			// plan's command dependencies forever. Genuine races clear within a
+			// pass or two; past that, fail with the stale cause so the caller
+			// can reevaluate against fresh state instead of spinning on the wire.
+			staleReplans++
+			if staleReplans > maximumStaleReplans {
+				releaseAdmission()
+				return engine.fail(receipt, fmt.Errorf(
+					"%w after %d replans", replanCause, staleReplans-1,
+				))
+			}
 			releaseAdmission()
 			checkpointPlan = nil
 			receipt.Status = StatusPlanning

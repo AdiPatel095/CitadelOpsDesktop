@@ -19,6 +19,15 @@ type BrowserCandidate struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
 	ExecutablePath string `json:"executablePath"`
+	IsDefault      bool   `json:"isDefault,omitempty"`
+}
+
+type BrowserInventory struct {
+	Selected        *BrowserCandidate  `json:"selected"`
+	Current         *BrowserCandidate  `json:"current"`
+	Available       []BrowserCandidate `json:"available"`
+	RestartRequired bool               `json:"restartRequired"`
+	SelectionIntent string             `json:"selectionIntent"`
 }
 
 type browserDefinition struct {
@@ -51,6 +60,10 @@ func DiscoverChromiumBrowsers() []BrowserCandidate {
 			candidates = append(candidates, candidate)
 		}
 	}
+	defaultBrowserID := systemDefaultBrowserID()
+	for index := range candidates {
+		candidates[index].IsDefault = candidates[index].ID == defaultBrowserID
+	}
 	return candidates
 }
 
@@ -71,7 +84,7 @@ func ResolveChromiumBrowser(preference string, executablePath string) (BrowserCa
 		if len(candidates) == 0 {
 			return BrowserCandidate{}, fmt.Errorf("no CDP-capable Chromium browser was detected; choose an executable with -browser or CITADEL_BROWSER_PATH")
 		}
-		return candidates[0], nil
+		return automaticBrowserCandidate(candidates), nil
 	}
 	if filepath.IsAbs(preference) || strings.ContainsAny(preference, `/\\`) {
 		return resolveCustomBrowser(preference)
@@ -94,6 +107,110 @@ func ResolveChromiumBrowser(preference string, executablePath string) (BrowserCa
 		return BrowserCandidate{}, fmt.Errorf("browser %q was not found and no supported Chromium browser was detected", preference)
 	}
 	return BrowserCandidate{}, fmt.Errorf("browser %q was not found; detected: %s", preference, strings.Join(available, ", "))
+}
+
+func automaticBrowserCandidate(candidates []BrowserCandidate) BrowserCandidate {
+	if len(candidates) == 1 {
+		return candidates[0]
+	}
+	for _, candidate := range candidates {
+		if candidate.IsDefault {
+			return candidate
+		}
+	}
+	if len(candidates) == 0 {
+		return BrowserCandidate{}
+	}
+	return candidates[0]
+}
+
+func systemDefaultBrowserID() string {
+	switch runtime.GOOS {
+	case "darwin":
+		return macOSDefaultBrowserID()
+	case "windows":
+		output, err := exec.Command(
+			"reg", "query",
+			`HKCU\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice`,
+			"/v", "ProgId",
+		).Output()
+		if err == nil {
+			return browserIDFromSystemIdentifier(string(output))
+		}
+	case "linux":
+		for _, command := range [][]string{
+			{"xdg-settings", "get", "default-web-browser"},
+			{"xdg-mime", "query", "default", "x-scheme-handler/https"},
+		} {
+			output, err := exec.Command(command[0], command[1:]...).Output()
+			if err == nil {
+				if browserID := browserIDFromSystemIdentifier(string(output)); browserID != "" {
+					return browserID
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func macOSDefaultBrowserID() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	preferencesPath := filepath.Join(
+		home, "Library", "Preferences", "com.apple.LaunchServices", "com.apple.launchservices.secure.plist",
+	)
+	output, err := exec.Command(
+		"/usr/bin/plutil", "-extract", "LSHandlers", "json", "-o", "-", preferencesPath,
+	).Output()
+	if err != nil {
+		return ""
+	}
+	var handlers []struct {
+		ContentType string `json:"LSHandlerContentType"`
+		RoleAll     string `json:"LSHandlerRoleAll"`
+		URLScheme   string `json:"LSHandlerURLScheme"`
+	}
+	if json.Unmarshal(output, &handlers) != nil {
+		return ""
+	}
+	for index := len(handlers) - 1; index >= 0; index-- {
+		if strings.EqualFold(handlers[index].URLScheme, "https") {
+			return browserIDFromSystemIdentifier(handlers[index].RoleAll)
+		}
+	}
+	for index := len(handlers) - 1; index >= 0; index-- {
+		if handlers[index].ContentType == "com.apple.default-app.web-browser" {
+			return browserIDFromSystemIdentifier(handlers[index].RoleAll)
+		}
+	}
+	return ""
+}
+
+func browserIDFromSystemIdentifier(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	switch {
+	case strings.Contains(value, "brave"):
+		return "brave"
+	case strings.Contains(value, "chromium"):
+		return "chromium"
+	case strings.Contains(value, "google.chrome"), strings.Contains(value, "google-chrome"),
+		strings.Contains(value, "chromehtml"):
+		return "chrome"
+	case strings.Contains(value, "microsoft.edge"), strings.Contains(value, "microsoft-edge"),
+		strings.Contains(value, "msedge"), strings.Contains(value, "edgehtm"):
+		return "edge"
+	case strings.Contains(value, "vivaldi"):
+		return "vivaldi"
+	case strings.Contains(value, "opera"):
+		return "opera"
+	case strings.Contains(value, "thebrowser"), strings.Contains(value, "browsercompany"),
+		strings.HasPrefix(value, "arc"), strings.Contains(value, ".arc"):
+		return "arc"
+	default:
+		return ""
+	}
 }
 
 func loadBrowserPreference(dataDir string) string {

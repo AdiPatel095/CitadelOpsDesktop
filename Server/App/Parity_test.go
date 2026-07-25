@@ -45,7 +45,8 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		policyIDs[id] = true
 	}
 	for _, id := range []string{
-		"autoRecruit", "autoTool", "autoHospital", "autoTCI", "autoSceatRes", "autoBird", "autoStation", "autoBeriWorld", "autoFoodBalance", "autoTowers",
+		"autoRecruit", "autoTool", "autoHospital", "autoTCI", "autoSceatRes", "autoSceatResLogistics",
+		"autoBird", "autoStation", "autoBeriWorld", "autoFoodBalance", "autoTowers",
 	} {
 		if !policyIDs[id] {
 			t.Errorf("1.3.8 automation %q has no 2.0 policy", id)

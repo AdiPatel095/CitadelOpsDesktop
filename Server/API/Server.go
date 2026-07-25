@@ -34,6 +34,7 @@ type Config struct {
 	Telemetry       *Telemetry.Store
 	Intents         *Intent.Engine
 	ReportAnalytics *Reports.SQLiteStore
+	CloudReports    *Reports.CloudClient
 	AllianceTargets *AllianceTargets.Service
 	Updates         *AppUpdate.Manager
 	Diagnostics     *Diagnostics.Monitor
@@ -48,7 +49,7 @@ type Server struct {
 
 func NewServer(config Config) *Server {
 	if config.AllianceTargets == nil {
-		config.AllianceTargets = AllianceTargets.NewService(nil)
+		config.AllianceTargets = AllianceTargets.NewService(nil, config.History)
 	}
 	server := &Server{config: config}
 	server.upgrader = websocket.Upgrader{
@@ -67,6 +68,8 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/state", server.handleState)
 	mux.HandleFunc("GET /api/v2/browsers", server.handleBrowsers)
 	mux.HandleFunc("GET /api/v2/config", server.handleConfiguration)
+	mux.HandleFunc("GET /api/v2/config/export", server.handleConfigurationExport)
+	mux.HandleFunc("POST /api/v2/config/import", server.handleConfigurationImport)
 	mux.HandleFunc("GET /api/v2/config/{section}", server.handleConfigurationSection)
 	mux.HandleFunc("GET /api/v2/game-data", server.handleGameDataManifest)
 	mux.HandleFunc("GET /api/v2/game-data/currency-icons", server.handleCurrencyIcons)
@@ -82,8 +85,10 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v2/buildings/target/diff", server.handleBuildingTargetDiff)
 	mux.HandleFunc("POST /api/v2/buildings/expansion/preview", server.handleExpansionPreview)
 	mux.HandleFunc("GET /api/v2/alliance-targets", server.handleAllianceTargets)
+	mux.HandleFunc("POST /api/v2/alliance-targets/attack-preview", server.handleAllianceTargetAttackPreview)
 	mux.HandleFunc("GET /api/v2/history/player-tracker", server.handlePlayerTrackerHistory)
 	mux.HandleFunc("GET /api/v2/history/spy-reports", server.handleSpyReportHistory)
+	mux.HandleFunc("GET /api/v2/history/battle-reports/cloud", server.handleCloudBattleReportHistory)
 	mux.HandleFunc("GET /api/v2/history/battle-reports", server.handleBattleReportHistory)
 	mux.HandleFunc("GET /api/v2/analytics/battle-reports", server.handleBattleReportAnalytics)
 	mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
@@ -98,18 +103,31 @@ func (server *Server) Handler() http.Handler {
 }
 
 func (server *Server) handleBrowsers(writer http.ResponseWriter, _ *http.Request) {
-	var selected any
+	if provider, ok := server.config.Session.(interface {
+		BrowserInventory() Session.BrowserInventory
+	}); ok {
+		writeJSON(writer, http.StatusOK, provider.BrowserInventory())
+		return
+	}
+	available := Session.DiscoverChromiumBrowsers()
+	var current Session.BrowserCandidate
 	if server.config.Session != nil {
 		status := server.config.Session.Status()
-		if status.BrowserID != "" {
-			selected = map[string]string{"id": status.BrowserID, "name": status.BrowserName}
-		}
+		current = Session.BrowserCandidate{ID: status.BrowserID, Name: status.BrowserName}
 	}
-	writeJSON(writer, http.StatusOK, map[string]any{
-		"selected":        selected,
-		"available":       Session.DiscoverChromiumBrowsers(),
-		"selectionIntent": "session.select_browser",
+	writeJSON(writer, http.StatusOK, Session.BrowserInventory{
+		Selected:        browserCandidatePointer(current),
+		Current:         browserCandidatePointer(current),
+		Available:       available,
+		SelectionIntent: "session.select_browser",
 	})
+}
+
+func browserCandidatePointer(candidate Session.BrowserCandidate) *Session.BrowserCandidate {
+	if candidate.ID == "" {
+		return nil
+	}
+	return &candidate
 }
 
 func (server *Server) handleConfiguration(writer http.ResponseWriter, _ *http.Request) {

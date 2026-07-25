@@ -62,7 +62,7 @@ func TestParseMovementKeepsGameReportedStationWaitActive(t *testing.T) {
 	}
 }
 
-func TestReconcileExpiredMovementsKeepsGameReportedStationWait(t *testing.T) {
+func TestReconcileExpiredMovementsReleasesCompletedStationWait(t *testing.T) {
 	now := time.Now().UTC()
 	arrivedAt := now.Add(-2 * time.Hour)
 	gameState := State.NewGameState()
@@ -70,9 +70,11 @@ func TestReconcileExpiredMovementsKeepsGameReportedStationWait(t *testing.T) {
 		ID: 50, Direction: 0, TravelSeconds: 600, WaitSeconds: 3600, ArrivesAt: &arrivedAt,
 	}
 
-	ReconcileExpiredMovements(&gameState, now)
-	if _, exists := gameState.Movements[50]; !exists {
-		t.Fatal("live station wait was removed using a locally projected return")
+	if !ReconcileExpiredMovements(&gameState, now) {
+		t.Fatal("completed station wait was not reconciled")
+	}
+	if _, exists := gameState.Movements[50]; exists {
+		t.Fatal("completed station wait remained active past its projected return")
 	}
 }
 
@@ -216,6 +218,91 @@ func TestMovementReducerPreservesOwnedCommanderAcrossScopedSnapshotOmission(t *t
 	}
 	if !gameState.Commanders[7].Available {
 		t.Fatal("post-return gam frame did not release the commander")
+	}
+}
+
+func TestMovementReducerPreservesMarketBarrowLeaseAcrossScopedSnapshotOmission(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = newCastleState(100)
+	code := 0
+	receivedAt := time.Now().UTC()
+	reducer := newMovementReducer(true)
+
+	_, _, err := reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: receivedAt,
+		Payload: json.RawMessage(`{"M":[
+			{"M":{"MID":50,"PT":2,"TT":20,"D":0,"T":0,"KID":0,"OID":1,"TID":1,"SA":[0,10,11,100,1],"TA":[0,20,21,200,1]},"MM":{"C":10,"G":[]}}
+		]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("market movement frame: %v", err)
+	}
+
+	_, _, err = reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: receivedAt.Add(time.Second), Payload: json.RawMessage(`{"M":[],"O":[]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("scoped empty movement frame: %v", err)
+	}
+	if _, exists := gameState.Movements[50]; !exists {
+		t.Fatal("scoped gam frame released active market barrows")
+	}
+
+	_, _, err = reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: receivedAt.Add(time.Minute), Payload: json.RawMessage(`{"M":[],"O":[]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("post-return empty movement frame: %v", err)
+	}
+	if _, exists := gameState.Movements[50]; exists {
+		t.Fatal("completed market barrow lease survived its return time")
+	}
+}
+
+func TestMovementReducerPreservesStationLeaseAcrossScopedSnapshotOmission(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = newCastleState(100)
+	gameState.Stationing["autoBird:100"] = State.StationingOperation{
+		ID: "autoBird:100", Purpose: "autoBird", SourceCastleID: 100, TargetCastleID: 200,
+	}
+	code := 0
+	receivedAt := time.Now().UTC()
+	reducer := newMovementReducer(true)
+
+	_, _, err := reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: receivedAt,
+		Payload: json.RawMessage(`{"M":[
+			{"M":{"MID":50,"PT":2,"TT":600,"D":0,"T":1,"KID":0,"OID":1,"TID":99,"SA":[0,10,11,100,1],"TA":[0,20,21,200,99]},"UM":{"TWD":21600,"L":{"ID":-14}}}
+		]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("station movement frame: %v", err)
+	}
+
+	_, _, err = reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: receivedAt.Add(time.Minute), Payload: json.RawMessage(`{"M":[],"O":[]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("scoped empty movement frame: %v", err)
+	}
+	if _, exists := gameState.Movements[50]; !exists {
+		t.Fatal("scoped gam frame released active AutoBird stationing")
+	}
+
+	_, _, err = reducer(context.Background(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: receivedAt.Add(6*time.Hour + 20*time.Minute), Payload: json.RawMessage(`{"M":[],"O":[]}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatalf("post-return empty movement frame: %v", err)
+	}
+	if _, exists := gameState.Movements[50]; exists {
+		t.Fatal("completed AutoBird station lease survived its projected return")
 	}
 }
 

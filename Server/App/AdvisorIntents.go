@@ -169,7 +169,7 @@ func (application *Application) resolveAdvisorAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve advisor attack capacity: %w", err)
 	}
-	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity, capacity.MaximumWaves)
+	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves))
 	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build advisor preset %q: %w", request.Preset.Name, err)

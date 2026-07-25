@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/History"
+	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/State"
 )
 
@@ -22,12 +24,15 @@ const defaultTrackerAPI = "https://api.gge-tracker.com/api/v1"
 type Service struct {
 	client  *http.Client
 	baseURL string
+	history *History.Store
 
 	mu               sync.Mutex
 	servers          []string
 	serversFetchedAt time.Time
 	alliancePages    map[string]cachedAlliances
 	targetDetails    map[string]cachedTargets
+	spyReports       []Reports.SpyReport
+	spyReportsAt     time.Time
 }
 
 type cachedAlliances struct {
@@ -68,11 +73,13 @@ type trackerAlliancePage struct {
 type trackerAllianceDetail struct {
 	Name    string `json:"alliance_name"`
 	Players []struct {
-		PlayerID  string     `json:"player_id"`
-		Name      string     `json:"player_name"`
-		Might     trackerInt `json:"might_current"`
-		BirdUntil string     `json:"peace_disabled_at"`
-		UpdatedAt string     `json:"updated_at"`
+		PlayerID    string     `json:"player_id"`
+		Name        string     `json:"player_name"`
+		Level       trackerInt `json:"level"`
+		LegendLevel trackerInt `json:"legendary_level"`
+		Might       trackerInt `json:"might_current"`
+		BirdUntil   string     `json:"peace_disabled_at"`
+		UpdatedAt   string     `json:"updated_at"`
 	} `json:"players"`
 }
 
@@ -81,12 +88,16 @@ type trackerCartographyPlayer struct {
 	Castles [][]int `json:"castles"`
 }
 
-func NewService(client *http.Client) *Service {
+func NewService(client *http.Client, histories ...*History.Store) *Service {
 	if client == nil {
 		client = &http.Client{Timeout: 10 * time.Second}
 	}
+	var history *History.Store
+	if len(histories) > 0 {
+		history = histories[0]
+	}
 	return &Service{
-		client: client, baseURL: defaultTrackerAPI,
+		client: client, baseURL: defaultTrackerAPI, history: history,
 		alliancePages: map[string]cachedAlliances{}, targetDetails: map[string]cachedTargets{},
 	}
 }
@@ -157,9 +168,42 @@ func (service *Service) View(
 	} else {
 		targets = buildTrackerTargets(gameState, detail, cartography)
 	}
-	enrichTargetNames(gameState, targets)
+	reports, _ := service.recentSpyReports()
+	enrichTargetIntelligence(gameState, reports, targets)
 	view.Targets, view.TotalTargets, view.Page, view.PageCount = queryTargets(targets, query)
 	return view, nil
+}
+
+func (service *Service) recentSpyReports() ([]Reports.SpyReport, error) {
+	service.mu.Lock()
+	if service.history == nil {
+		service.mu.Unlock()
+		return []Reports.SpyReport{}, nil
+	}
+	if time.Since(service.spyReportsAt) < 2*time.Second {
+		reports := append([]Reports.SpyReport(nil), service.spyReports...)
+		service.mu.Unlock()
+		return reports, nil
+	}
+	history := service.history
+	service.mu.Unlock()
+
+	rows, err := history.Read(History.CollectionSpyReports, time.Time{}, 10_000)
+	if err != nil {
+		return nil, err
+	}
+	reports := make([]Reports.SpyReport, 0, len(rows))
+	for _, row := range rows {
+		var report Reports.SpyReport
+		if json.Unmarshal(row, &report) == nil && report.CapturedAtUnixMillis > 0 {
+			reports = append(reports, report)
+		}
+	}
+	service.mu.Lock()
+	service.spyReports = append([]Reports.SpyReport(nil), reports...)
+	service.spyReportsAt = time.Now()
+	service.mu.Unlock()
+	return reports, nil
 }
 
 func (service *Service) resolveServer(ctx context.Context, socketURL string, override string) (string, error) {

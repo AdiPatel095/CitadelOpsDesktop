@@ -35,15 +35,33 @@ func TestMovementClockReleasesReturnedCommander(t *testing.T) {
 	t.Fatal("movement clock did not release the returned commander")
 }
 
-func TestMovementClockWaitsForGameReportedStationReturn(t *testing.T) {
+func TestMovementClockUsesProjectedStationReturn(t *testing.T) {
 	now := time.Now().UTC()
 	arrivedAt := now.Add(-time.Hour)
 	gameState := State.NewGameState()
 	gameState.Movements[50] = State.MovementState{
-		ID: 50, Direction: 0, WaitSeconds: 6 * 3600, ArrivesAt: &arrivedAt,
+		ID: 50, Direction: 0, TravelSeconds: 600, WaitSeconds: 6 * 3600, ArrivesAt: &arrivedAt,
 	}
 
-	if next := nextMovementCompletion(gameState); !next.IsZero() {
-		t.Fatalf("station wait scheduled a locally predicted completion at %s", next)
+	want := arrivedAt.Add(6*time.Hour + 10*time.Minute)
+	if next := nextMovementCompletion(gameState); !next.Equal(want) {
+		t.Fatalf("station movement completion = %s, want return %s", next, want)
+	}
+}
+
+func TestMovementClockUsesMarketBarrowReturnLease(t *testing.T) {
+	now := time.Now().UTC()
+	arrivesAt := now.Add(time.Minute)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	gameState.Castles[100] = State.CastleState{ID: 100}
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, Direction: 0, OwnerPlayerID: 1, SourceCastleID: 100,
+		MarketBarrows: 10, TravelSeconds: 60, ArrivesAt: &arrivesAt,
+	}
+
+	want := arrivesAt.Add(time.Minute)
+	if next := nextMovementCompletion(gameState); !next.Equal(want) {
+		t.Fatalf("market movement completion = %s, want return %s", next, want)
 	}
 }

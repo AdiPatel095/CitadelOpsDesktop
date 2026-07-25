@@ -15,6 +15,8 @@ type EventCampDefinition struct {
 	CooldownSec              int64
 	SkipCost                 int64
 	MaximumDefenseTroopCount int64
+	PlayerRageCap            int64
+	RageNeededForLevelUp     int64
 }
 
 func (store *Store) EventCamp(id int64) (EventCampDefinition, bool) {
@@ -75,9 +77,12 @@ func decodeEventCamp(record Record) EventCampDefinition {
 	cooldownSec, _ := record.Int64("coolDown")
 	skipCost, _ := record.Int64("skipCosts")
 	maximumDefenseTroopCount, _ := record.Int64("maxTroopCapacityDefense")
+	playerRageCap, _ := record.Int64("playerRageCap")
+	rageNeededForLevelUp, _ := record.Int64("rageNeededForLevelUp")
 	return EventCampDefinition{
 		ID: id, EventID: eventID, DifficultyID: difficultyID, AreaTypeID: int(areaTypeID),
 		CampLevel: int(campLevel), VictoryCount: victoryCount, CooldownSec: cooldownSec,
 		SkipCost: skipCost, MaximumDefenseTroopCount: maximumDefenseTroopCount,
+		PlayerRageCap: playerRageCap, RageNeededForLevelUp: rageNeededForLevelUp,
 	}
 }

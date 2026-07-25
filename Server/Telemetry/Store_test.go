@@ -179,15 +179,31 @@ func TestStoreMatchesAllianceHelpAHHResponse(t *testing.T) {
 	}
 }
 
+func TestStoreMatchesKhanLTAWithMovementResponse(t *testing.T) {
+	store := NewStore(100)
+	store.RecordAppOutbound(`%xt%EmpireEx_21%lta%1%{"AV":0,"EID":72}%`, "automation:autoKhan")
+	frame, err := Protocol.Decode(`%xt%gam%1%0%{"M":[]}%`, Protocol.DirectionInbound, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.Record(Protocol.CommittedFrame{Frame: frame}, nil)
+	appLog := strings.Join(store.Tail(ChannelAppSend, 10), "\n")
+	if !strings.Contains(appLog, "[MATCH] [gam]") {
+		t.Fatalf("Khan LTA movement response was not matched: %q", appLog)
+	}
+}
+
 func TestFeatureChannelForActorIncludesCurrentAutomations(t *testing.T) {
 	tests := map[string]string{
-		"automation:autoTowers":     ChannelAutoTowers,
-		"automation:autoInvasion":   ChannelAutoInvasion,
-		"automation:autoNomad":      ChannelAutoNomad,
-		"automation:autoAdvisor":    ChannelAutoAdvisor,
-		"automation:autoKhan":       ChannelAutoKhan,
-		"automation:autoStorm":      ChannelAutoStorm,
-		"ui:auto-equipment-cleanup": ChannelAutoEquipment,
+		"automation:autoTowers":        ChannelAutoTowers,
+		"automation:autoInvasion":      ChannelAutoInvasion,
+		"automation:autoNomad":         ChannelAutoNomad,
+		"automation:autoAdvisor":       ChannelAutoAdvisor,
+		"automation:autoKhan":          ChannelAutoKhan,
+		"automation:autoKhan:cooldown": ChannelAutoKhan,
+		"automation:autoKhan:rage":     ChannelAutoKhan,
+		"automation:autoStorm":         ChannelAutoStorm,
+		"ui:auto-equipment-cleanup":    ChannelAutoEquipment,
 	}
 	for actor, expected := range tests {
 		if actual := featureChannelForActor(actor); actual != expected {

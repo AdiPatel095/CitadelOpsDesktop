@@ -208,6 +208,59 @@ func TestCraftingPolicyQueuesAffordableFallbackWithoutBreakingCycle(t *testing.T
 	}
 }
 
+func TestCraftingPolicyPrefersLaterCraftableCastleOverEarlierResourceWait(t *testing.T) {
+	now := time.Date(2026, 7, 25, 13, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	waiting := craftingLogisticsCastle(10, 1, 10, 10)
+	ready := craftingLogisticsCastle(20, 2, 20, 20)
+	capacity := float64(100_000)
+	waiting.Resources[6] = State.ResourceBalance{Amount: 0, Capacity: &capacity}
+	ready.Resources[6] = State.ResourceBalance{Amount: 20_000, Capacity: &capacity}
+	waiting.Crafting.Buildings[100] = State.CraftingBuilding{
+		CastleID: waiting.ID, InstanceID: 100, QueueTypeID: 1, ObservedAt: now,
+	}
+	ready.Crafting.Buildings[200] = State.CraftingBuilding{
+		CastleID: ready.ID, InstanceID: 200, QueueTypeID: 1, ObservedAt: now,
+	}
+	gameState.Castles[waiting.ID] = waiting
+	gameState.Castles[ready.ID] = ready
+	gameState.KingdomTransport.ObservedAt = now
+	gameState.KingdomTransport.Pending = []State.KingdomResourceTransport{{
+		KingdomID: waiting.KingdomID, RemainingSec: 3_600,
+	}}
+	gameState.KingdomTransport.Unlocks[waiting.KingdomID] = State.KingdomTransportUnlock{
+		KingdomID: waiting.KingdomID, Unlocked: true,
+	}
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.autoSceatResources": json.RawMessage(`{
+			"checkIntervalSec":300,"autoKingdomTransport":true,
+			"castles":{
+				"10":{"buildings":{"1":{"enabled":true,"steps":[{"recipeID":100,"repeat":1}]}}},
+				"20":{"buildings":{"1":{"enabled":true,"steps":[{"recipeID":100,"repeat":1}]}}}
+			}
+		}`),
+	}}
+
+	decision, err := NewCraftingPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Configuration: configuration, GameData: craftingLogisticsGameData(t), Now: now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request == nil || decision.Request.Name != "crafting.start" {
+		t.Fatalf("earlier resource wait blocked a later craftable castle: %+v", decision)
+	}
+	var arguments struct {
+		CastleID State.CastleID `json:"castleId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+		t.Fatal(err)
+	}
+	if arguments.CastleID != ready.ID {
+		t.Fatalf("crafting start castle = %d, want %d", arguments.CastleID, ready.ID)
+	}
+}
+
 func TestCraftingPolicyRefreshesStaleSnapshotBeforeUsingQueues(t *testing.T) {
 	now := time.Date(2026, 7, 19, 12, 0, 0, 0, time.UTC)
 	staleAt := now.Add(-6 * time.Minute)

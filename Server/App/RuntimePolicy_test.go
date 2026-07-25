@@ -16,7 +16,8 @@ import (
 
 func TestRuntimeSchedulerSettingsDriveHarnessPolicies(t *testing.T) {
 	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
-		"scheduler": json.RawMessage(`{"minAttackDelay":4.5,"maxAttackDelay":4.5,"botLocked":true,"attackPriorities":{"autoTowers":82}}`),
+		"scheduler":         json.RawMessage(`{"minAttackDelay":4.5,"maxAttackDelay":4.5,"botLocked":true,"attackPriorities":{"autoTowers":82}}`),
+		"session.reconnect": json.RawMessage(`{"relogDelaySec":420}`),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -28,11 +29,29 @@ func TestRuntimeSchedulerSettingsDriveHarnessPolicies(t *testing.T) {
 	if !application.automationLocked() {
 		t.Fatal("bot lock setting was not applied")
 	}
+	if delay := application.relogDelay(); delay != 7*time.Minute {
+		t.Fatalf("relog delay = %s", delay)
+	}
 	if weight := application.attackAdmissionWeight(Intent.Request{}, Intent.Admission{Module: "autoTowers"}); weight != 82 {
 		t.Fatalf("Auto Towers admission weight = %d", weight)
 	}
 	if weight := application.attackAdmissionWeight(Intent.Request{}, Intent.Admission{Module: "futureModule"}); weight != 50 {
 		t.Fatalf("default admission weight = %d", weight)
+	}
+}
+
+func TestRuntimeRelogDelayDefaultsAndClamps(t *testing.T) {
+	if delay := (&Application{}).relogDelay(); delay != 5*time.Minute {
+		t.Fatalf("default relog delay = %s", delay)
+	}
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		"session.reconnect": json.RawMessage(`{"relogDelaySec":1}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if delay := (&Application{Configuration: configuration}).relogDelay(); delay != time.Minute {
+		t.Fatalf("minimum relog delay = %s", delay)
 	}
 }
 

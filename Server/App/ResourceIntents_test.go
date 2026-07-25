@@ -3,6 +3,7 @@ package App
 import (
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -98,6 +99,31 @@ func TestResourceLogisticsRefreshSkipsMarketForSingleCastleKingdoms(t *testing.T
 		if claim == "castle-focus" {
 			t.Fatalf("single-castle kingdom refresh claimed castle focus: %#v", plan.Claims)
 		}
+	}
+}
+
+func TestResourceLogisticsRefreshSkipsMarketWhileBarrowsAreLeased(t *testing.T) {
+	gameData := resourceIntentGameData(t)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	marketCastle := resourceIntentCastle(10, 0, 100, 200)
+	marketCastle.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137}
+	gameState.Castles[marketCastle.ID] = marketCastle
+	gameState.Castles[20] = resourceIntentCastle(20, 0, 110, 215)
+	returnsAt := time.Now().UTC().Add(time.Hour)
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: marketCastle.ID,
+		MarketBarrows: 10, ReturnsAt: &returnsAt,
+	}
+
+	plan, err := planResourceLogisticsRefresh(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 1 || plan.Steps[0].Opcode != "kpi" {
+		t.Fatalf("leased-barrow refresh steps = %#v", plan.Steps)
 	}
 }
 
@@ -219,6 +245,34 @@ func TestMarketShipmentPlannerRejectsBarrowsWithoutMarketplace(t *testing.T) {
 	}`))
 	if err == nil || !strings.Contains(err.Error(), "no Marketplace building") {
 		t.Fatalf("market shipment error = %v", err)
+	}
+}
+
+func TestMarketShipmentPlannerRejectsStaleAvailabilityReservedByMovement(t *testing.T) {
+	gameData := resourceIntentGameData(t)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	source := resourceIntentCastle(10, 0, 100, 200)
+	target := resourceIntentCastle(20, 0, 110, 215)
+	source.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137}
+	source.Resources[3] = State.ResourceBalance{Amount: 50_000}
+	gameState.Castles[source.ID] = source
+	gameState.Castles[target.ID] = target
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{
+		CastleID: source.ID, TotalBarrows: 10, AvailableBarrows: 10,
+	}
+	gameState.Market.ObservedAt = time.Now().UTC()
+	returnsAt := time.Now().UTC().Add(time.Hour)
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: source.ID,
+		MarketBarrows: 10, ReturnsAt: &returnsAt,
+	}
+
+	_, err := planMarketResourceShipment(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{"sourceCastleId":10,"targetCastleId":20,"resourceId":3,"amount":12000}`))
+	if err == nil || !strings.Contains(err.Error(), "no observed available market barrows") {
+		t.Fatalf("leased-barrow shipment error = %v", err)
 	}
 }
 
@@ -388,18 +442,27 @@ func TestKingdomShipmentCombinesMultipleResourceGoods(t *testing.T) {
 	target := resourceIntentCastle(20, 4, 110, 215)
 	gameState.Castles[donor.ID] = donor
 	gameState.Castles[target.ID] = target
+	gameState.Player.Currencies[50] = 2
 	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
 	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
 
 	plan, err := planKingdomResourceShipment(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"targetKingdomId":4,
-		"goods":[{"resourceId":4,"amount":5124},{"resourceId":3,"amount":5124}]
+		"goods":[{"resourceId":4,"amount":5124},{"resourceId":3,"amount":5124}],
+		"timeSkipId":"MS5","minimumRemaining":1
 	}`))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got := string(plan.Steps[3].Command.Payload); got != `{"SCID":10,"SKID":0,"TKID":4,"G":[["W",5124],["S",5124]]}` {
 		t.Fatalf("multi-good kingdom payload = %s", got)
+	}
+	if len(plan.Steps) != 6 || plan.Steps[5].Opcode != "msk" ||
+		string(plan.Steps[5].Command.Payload) != `{"KID":"4","MST":"MS5","TT":"2"}` {
+		t.Fatalf("immediate kingdom skip steps = %#v", plan.Steps)
+	}
+	if !slices.Contains(plan.Claims, "currency:50") {
+		t.Fatalf("immediate kingdom skip did not claim its currency: %#v", plan.Claims)
 	}
 }
 

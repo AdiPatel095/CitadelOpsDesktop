@@ -15,14 +15,14 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	KhanDomain "CitadelDesktop/Server/Khan"
+	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
 const (
-	khanEventID          = 72
-	khanCampTypeID       = 2
-	khanCampVictoryCount = 845
-	khanTargetRadius     = 6
+	khanEventID    = 72
+	khanCampTypeID = 35
+	khanMapNPCID   = -801
 )
 
 type khanAttackRequest struct {
@@ -33,14 +33,37 @@ type khanAttackRequest struct {
 	KingdomID              State.KingdomID          `json:"kingdomId"`
 	TargetX                int                      `json:"targetX"`
 	TargetY                int                      `json:"targetY"`
-	VictoryCount           int64                    `json:"victoryCount"`
 	Preset                 AttackPresets.Preset     `json:"preset"`
 	CommanderID            State.CommanderID        `json:"commanderId"`
 	HorseTravelBoostID     int                      `json:"horseTravelBoostId"`
 	DailyAttackLimit       int64                    `json:"dailyAttackLimit"`
+	NomadPointThreshold    int64                    `json:"nomadPointThreshold"`
 	DefensePreset          KhanDomain.DefensePreset `json:"defensePreset"`
 	OpenGateProtection     bool                     `json:"openGateProtection"`
 	OffensiveUnitThreshold int64                    `json:"offensiveUnitThreshold"`
+}
+
+type khanLaneGuardRequest struct {
+	MainCastleID           State.CastleID           `json:"mainCastleId"`
+	DefensePreset          KhanDomain.DefensePreset `json:"defensePreset"`
+	OpenGateProtection     bool                     `json:"openGateProtection"`
+	OffensiveUnitThreshold int64                    `json:"offensiveUnitThreshold"`
+	NomadPointThreshold    int64                    `json:"nomadPointThreshold"`
+}
+
+type khanLaneGuardActionRequest struct {
+	KhanGuard khanLaneGuardRequest `json:"khanGuard"`
+}
+
+type khanTauntRequest struct {
+	EventID         int64                `json:"eventId"`
+	MainCastleID    State.CastleID       `json:"mainCastleId"`
+	TargetX         int                  `json:"targetX"`
+	TargetY         int                  `json:"targetY"`
+	RageCampID      int64                `json:"rageCampId"`
+	PlayerTotalRage int64                `json:"playerTotalRage"`
+	RageObservedAt  time.Time            `json:"rageObservedAt"`
+	KhanGuard       khanLaneGuardRequest `json:"khanGuard"`
 }
 
 type khanLaunchCapture struct {
@@ -73,6 +96,108 @@ type khanDefenseToolPurchaseRequest struct {
 	Amount        int64                    `json:"amount"`
 	ShopTableID   int64                    `json:"shopTableId"`
 	DefensePreset KhanDomain.DefensePreset `json:"defensePreset"`
+}
+
+func planKhanMapJump(_ context.Context, input Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
+	score, active := input.State.EventScores.ByEvent[khanEventID]
+	if !active || score.RemainingSec <= 0 || score.ObservedAt.IsZero() {
+		return Intent.Plan{}, fmt.Errorf("the Nomad event and Khan camp are not active")
+	}
+	payload, _ := json.Marshal(struct {
+		TargetTypeID int             `json:"T"`
+		KingdomID    State.KingdomID `json:"KID"`
+		MinimumLevel int             `json:"LMIN"`
+		MaximumLevel int             `json:"LMAX"`
+		NPCID        int             `json:"NID"`
+	}{
+		TargetTypeID: khanCampTypeID, KingdomID: 0,
+		MinimumLevel: -1, MaximumLevel: -1, NPCID: khanMapNPCID,
+	})
+	return Intent.Plan{
+		Claims:  []string{"castle-focus", "map:0"},
+		Summary: "Jump world map to the active Khan camp",
+		Steps:   []Intent.Step{commandStep("Jump to Khan camp", "fnm", payload, "fnm")},
+	}, nil
+}
+
+func planKhanTaunt(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request khanTauntRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	if request.EventID != khanEventID || request.MainCastleID <= 0 ||
+		request.RageCampID <= 0 || request.RageObservedAt.IsZero() {
+		return Intent.Plan{}, fmt.Errorf("Khan taunt requires the active event, main castle, camp, and rage observation")
+	}
+	now := time.Now().UTC()
+	score, active := input.State.EventScores.ByEvent[khanEventID]
+	if !active || score.RemainingSec <= 0 || score.ObservedAt.IsZero() || invasionRemainingSeconds(score, now) == 0 {
+		return Intent.Plan{}, fmt.Errorf("the Nomad event is no longer active")
+	}
+	main, exists := input.State.Castles[request.MainCastleID]
+	if !exists || main.KingdomID != 0 || main.SlotType != 1 {
+		return Intent.Plan{}, fmt.Errorf("Khan taunt target must be the Great Empire main castle")
+	}
+	target, exists := input.State.Map[0][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	if !exists || target.TypeID != khanCampTypeID {
+		return Intent.Plan{}, fmt.Errorf("%w: the active type-35 Khan camp changed or is unavailable", Intent.ErrPlanStale)
+	}
+	if input.GameData == nil {
+		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
+	}
+	camp, found := input.GameData.EventCamp(request.RageCampID)
+	if !found || camp.EventID != khanEventID || camp.AreaTypeID != khanCampTypeID ||
+		camp.PlayerRageCap <= 0 || camp.PlayerRageCap != input.State.Khan.PlayerRageCap {
+		return Intent.Plan{}, fmt.Errorf("%w: the authoritative Khan rage cap is unavailable or changed", Intent.ErrPlanStale)
+	}
+	khan := input.State.Khan
+	if khan.RageCampID != request.RageCampID ||
+		khan.PlayerTotalRage != request.PlayerTotalRage ||
+		!khan.RageObservedAt.Equal(request.RageObservedAt) ||
+		khan.PlayerRage < khan.PlayerRageCap ||
+		!khanTauntDue(khan) {
+		return Intent.Plan{}, fmt.Errorf("%w: the Khan rage bar is no longer ready for this taunt", Intent.ErrPlanStale)
+	}
+	if request.KhanGuard.MainCastleID != request.MainCastleID {
+		return Intent.Plan{}, fmt.Errorf("Khan taunt safety guard does not match the main castle")
+	}
+	if err := validateKhanLaneGuard(input.State, input.GameData, request.KhanGuard, now); err != nil {
+		return Intent.Plan{}, err
+	}
+	payload, _ := json.Marshal(struct {
+		AllianceVisible int   `json:"AV"`
+		EventID         int64 `json:"EID"`
+	}{AllianceVisible: 0, EventID: khanEventID})
+	dispatch := Intent.Step{
+		Name: "Dispatch Khan retaliation", Opcode: "lta", Payload: payload,
+		Command: Protocol.Command{Opcode: "lta", Payload: payload},
+	}
+	guardArguments, _ := json.Marshal(khanLaneGuardActionRequest{KhanGuard: request.KhanGuard})
+	return Intent.Plan{
+		// The taunt only asks the event for a retaliation, so it claims its own
+		// lane instead of the whole main castle. A castle-wide claim would queue
+		// the full-rage window behind every chain attack launched from it.
+		Claims:  []string{"khan-lane:taunt"},
+		Summary: "Trigger the full-rage Khan retaliation",
+		Steps: []Intent.Step{
+			{
+				Name:   "Recheck Auto Khan safety gates",
+				Action: "khan.lane.guard", ActionArguments: guardArguments,
+			},
+			dispatch,
+			{Name: "Record dispatched Khan retaliation", Action: "khan.taunt.dispatched", ActionArguments: arguments},
+		},
+	}, nil
+}
+
+func khanTauntDue(khan State.KhanState) bool {
+	if khan.PlayerRageCap <= 0 || khan.PlayerRage < khan.PlayerRageCap || khan.RageObservedAt.IsZero() {
+		return false
+	}
+	if khan.LastTauntTriggeredAt.IsZero() {
+		return true
+	}
+	return khan.PlayerTotalRage > khan.LastTauntTriggeredRage
 }
 
 func planKhanAttack(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -109,9 +234,15 @@ func planKhanAttack(_ context.Context, input Intent.PlanningContext, arguments j
 	})
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	claims := []string{
-		"castle-focus", "attack-context", "castle:" + castleID, "attack-inventory:" + castleID,
-		"khan-protection",
+		"attack-context", "attack-inventory:" + castleID,
+		"khan-lane:attack",
 		fmt.Sprintf("khan-target:%d:%d:%d", target.KingdomID, target.X, target.Y),
+	}
+	if source.ID != request.MainCastleID {
+		// Chaining from the main castle leaves focus where the rest of the loop
+		// already needs it. Only a separate attack castle moves focus away, and
+		// that is the one case worth holding the session-wide focus lock for.
+		claims = append(claims, "castle-focus")
 	}
 	claims = append(claims, craCommanderClaims([]State.CommanderID{request.CommanderID})...)
 	return Intent.Plan{
@@ -139,7 +270,7 @@ func (application *Application) resolveKhanAttackStep(
 			ID: fmt.Sprintf("khan-camp:%d:%d:%d", target.KingdomID, target.X, target.Y),
 			Map: &AttackCapacity.MapTarget{
 				KingdomID: target.KingdomID, TypeID: target.TypeID, X: target.X, Y: target.Y,
-				ObjectID: target.ObjectID, Level: target.Level, VictoryCount: target.TowerVictoryCount,
+				Level: target.Level,
 			},
 			Level: target.Level, CastleTypeID: target.TypeID, PvP: false,
 		},
@@ -147,7 +278,11 @@ func (application *Application) resolveKhanAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve Khan camp attack capacity: %w", err)
 	}
-	setup := limitAttackSetupToCapacity(invasionAttackSetup(request.Preset), capacity.Capacity, capacity.MaximumWaves)
+	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves)
+	if err := khanAttackPresetAvailability(limitedPreset, source); err != nil {
+		return Intent.Step{}, err
+	}
+	setup := invasionAttackSetup(limitedPreset)
 	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Khan attack preset %q: %w", request.Preset.Name, err)
@@ -157,6 +292,37 @@ func (application *Application) resolveKhanAttackStep(
 		return Intent.Step{}, fmt.Errorf("build Khan camp CRA payload: %w", err)
 	}
 	return commandStep(fmt.Sprintf("Attack Khan camp at %d:%d", target.X, target.Y), "cra", body, "cra"), nil
+}
+
+func khanAttackPresetAvailability(preset AttackPresets.Preset, source State.CastleState) error {
+	requested := map[State.UnitID]int64{}
+	for _, wave := range preset.Waves {
+		for _, lane := range []AttackPresets.Lane{wave.Left, wave.Middle, wave.Right} {
+			for _, slots := range [][]AttackPresets.Slot{lane.Troops, lane.Tools} {
+				for _, slot := range slots {
+					if slot.ItemID != nil && *slot.ItemID > 0 && slot.Quantity > 0 {
+						requested[State.UnitID(*slot.ItemID)] += slot.Quantity
+					}
+				}
+			}
+		}
+	}
+	ids := make([]State.UnitID, 0, len(requested))
+	for itemID := range requested {
+		ids = append(ids, itemID)
+	}
+	sort.Slice(ids, func(left, right int) bool { return ids[left] < ids[right] })
+	for _, itemID := range ids {
+		required := requested[itemID]
+		available := source.Units.Stationed[itemID]
+		if required > available {
+			return fmt.Errorf(
+				"%w: Khan CRA launch cursor paused because preset needs %d of item %d and castle %d has %d",
+				Intent.ErrPlanStale, required, itemID, source.ID, available,
+			)
+		}
+	}
+	return nil
 }
 
 func khanAttackContext(
@@ -192,16 +358,16 @@ func khanAttackContext(
 		return khanAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("Khan defense target must be the Great Empire main castle")
 	}
 	target, exists := input.State.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
-	if !exists || target.TypeID != khanCampTypeID || target.TowerVictoryCount != khanCampVictoryCount ||
-		target.TowerVictoryCount != request.VictoryCount ||
-		khanAbsoluteInt(target.X-main.X) > khanTargetRadius || khanAbsoluteInt(target.Y-main.Y) > khanTargetRadius {
+	if !exists || target.TypeID != khanCampTypeID {
 		return khanAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("Khan camp %d:%d changed or is unavailable", request.TargetX, request.TargetY)
 	}
-	if cooldown, found := input.State.TowerCooldowns[fmt.Sprintf("%d:%d:%d", target.KingdomID, target.X, target.Y)]; found && cooldown.PendingCooldownRefresh {
-		return khanAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("Khan camp is awaiting its post-battle cooldown refresh")
+	if cooldown, found := input.State.NomadCamps.Cooldowns[fmt.Sprintf("%d:%d:%d", target.KingdomID, target.X, target.Y)]; found && cooldown.PendingCooldownRefresh {
+		return khanAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+			"%w: Khan camp is awaiting its post-battle cooldown refresh", Intent.ErrPlanStale,
+		)
 	}
 	if appDungeonCooldownRemaining(input.State, target, now) > 0 {
-		return khanAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("Khan camp is on cooldown")
+		return khanAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("%w: Khan camp is on cooldown", Intent.ErrPlanStale)
 	}
 	if err := khanLaunchSafety(input.State, input.GameData, request, main, now); err != nil {
 		return khanAttackRequest{}, State.CastleState{}, State.MapObservation{}, err
@@ -213,9 +379,13 @@ func khanAttackContext(
 	if requireDialog {
 		dialog := input.State.AttackDialog
 		if dialog.SourceCastleID != source.ID || dialog.KingdomID != target.KingdomID ||
-			dialog.Target.TypeID != khanCampTypeID || dialog.Target.X != target.X || dialog.Target.Y != target.Y ||
-			dialog.Target.TowerCooldownRemaining > 0 {
+			dialog.Target.TypeID != khanCampTypeID || dialog.Target.X != target.X || dialog.Target.Y != target.Y {
 			return khanAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("authoritative attack dialog no longer matches the ready Khan camp")
+		}
+		if dialog.Target.EventCampCooldownRemaining > 0 {
+			return khanAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+				"%w: authoritative Khan camp attack dialog is on cooldown", Intent.ErrPlanStale,
+			)
 		}
 	}
 	return request, source, target, nil
@@ -228,17 +398,12 @@ func khanLaunchSafety(
 	main State.CastleState,
 	now time.Time,
 ) error {
-	if State.HasIncomingPlayerAttack(gameState, now) {
-		return fmt.Errorf("Auto Khan yielded to an incoming player attack for Auto Station")
-	}
-	if khanAutoStationActive(gameState, now) {
-		return fmt.Errorf("Auto Khan yielded while Auto Station is moving troops")
-	}
-	if main.Defense.OpenGateUntil != nil && main.Defense.OpenGateUntil.After(now) {
-		return fmt.Errorf("main castle gates are open until %s", main.Defense.OpenGateUntil.UTC().Format(time.RFC3339))
-	}
-	if gameState.Khan.Protection.Active {
-		return fmt.Errorf("Auto Khan protection is locked: %s", gameState.Khan.Protection.Reason)
+	if err := validateKhanLaneGuard(gameState, gameDataStore, khanLaneGuardRequest{
+		MainCastleID: main.ID, DefensePreset: request.DefensePreset,
+		OpenGateProtection: request.OpenGateProtection, OffensiveUnitThreshold: request.OffensiveUnitThreshold,
+		NomadPointThreshold: request.NomadPointThreshold,
+	}, now); err != nil {
+		return err
 	}
 	if main.Defense.ObservedAt.IsZero() || main.Defense.InventoryObservedAt.IsZero() {
 		return fmt.Errorf("main castle defense must be refreshed before a Khan attack")
@@ -267,6 +432,91 @@ func khanLaunchSafety(
 	return nil
 }
 
+func validateKhanLaneGuard(
+	gameState State.GameState,
+	gameDataStore *GameData.Store,
+	request khanLaneGuardRequest,
+	now time.Time,
+) error {
+	main, exists := gameState.Castles[request.MainCastleID]
+	if !exists || main.KingdomID != 0 || main.SlotType != 1 {
+		return fmt.Errorf("Auto Khan requires the Great Empire main castle")
+	}
+	if State.HasIncomingPlayerAttack(gameState, now) {
+		return fmt.Errorf("Auto Khan yielded to an incoming player attack for Auto Station")
+	}
+	if khanAutoStationActive(gameState, now) {
+		return fmt.Errorf("Auto Khan yielded while Auto Station is moving troops")
+	}
+	if main.Defense.OpenGateUntil != nil && main.Defense.OpenGateUntil.After(now) {
+		return fmt.Errorf("main castle gates are open until %s", main.Defense.OpenGateUntil.UTC().Format(time.RFC3339))
+	}
+	if gameState.Khan.Protection.Active {
+		return fmt.Errorf("Auto Khan protection is locked: %s", gameState.Khan.Protection.Reason)
+	}
+	if request.NomadPointThreshold > 0 {
+		score := gameState.EventScores.ByEvent[khanEventID]
+		if score.PlayerScore >= request.NomadPointThreshold {
+			return fmt.Errorf("Nomad point threshold reached: %d / %d", score.PlayerScore, request.NomadPointThreshold)
+		}
+	}
+	if !request.OpenGateProtection {
+		return nil
+	}
+	if request.OffensiveUnitThreshold <= 0 {
+		return fmt.Errorf("open-gate protection requires a positive offensive-unit threshold")
+	}
+	if gameDataStore == nil {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	risk, err := KhanDomain.OffensiveWallUnits(main, gameDataStore, request.DefensePreset)
+	if err != nil {
+		return err
+	}
+	if risk.OffensiveUnits >= request.OffensiveUnitThreshold {
+		return fmt.Errorf(
+			"defense would place %d offensive units on the wall (threshold %d)",
+			risk.OffensiveUnits, request.OffensiveUnitThreshold,
+		)
+	}
+	return nil
+}
+
+func (application *Application) recordKhanTauntDispatch(_ context.Context, arguments json.RawMessage) error {
+	var request khanTauntRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	dispatchedAt := time.Now().UTC()
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		if gameState.Khan.LastTauntTriggeredRage >= request.PlayerTotalRage {
+			return nil, false, nil
+		}
+		gameState.Khan.TauntsTriggered++
+		gameState.Khan.LastTauntTriggeredAt = dispatchedAt
+		gameState.Khan.LastTauntTriggeredRage = request.PlayerTotalRage
+		return []string{"khan"}, true, nil
+	})
+	return err
+}
+
+func (application *Application) guardKhanLane(_ context.Context, arguments json.RawMessage) error {
+	var request khanLaneGuardActionRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	if request.KhanGuard.MainCastleID <= 0 {
+		return fmt.Errorf("Auto Khan safety guard is required")
+	}
+	gameData, ready := application.GameData.Current()
+	if !ready {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	return validateKhanLaneGuard(
+		application.State.Snapshot(), gameData, request.KhanGuard, time.Now().UTC(),
+	)
+}
+
 func (application *Application) captureKhanLaunch(_ context.Context, arguments json.RawMessage) error {
 	var request khanLaunchCapture
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -293,11 +543,23 @@ func (application *Application) captureKhanLaunch(_ context.Context, arguments j
 			taunts := gameState.Khan.Taunts
 			resolvedTaunts := gameState.Khan.ResolvedTaunts
 			observed, resolved, lastResolved := gameState.Khan.TauntsObserved, gameState.Khan.TauntsResolved, gameState.Khan.LastTauntResolvedAt
+			cooldownReports := gameState.Khan.CooldownReports
+			rageCampID := gameState.Khan.RageCampID
+			playerRage, playerRageCap := gameState.Khan.PlayerRage, gameState.Khan.PlayerRageCap
+			playerTotalRage, rageObservedAt := gameState.Khan.PlayerTotalRage, gameState.Khan.RageObservedAt
+			triggered, lastTriggered := gameState.Khan.TauntsTriggered, gameState.Khan.LastTauntTriggeredAt
+			lastTriggeredRage := gameState.Khan.LastTauntTriggeredRage
 			gameState.Khan = State.KhanState{
 				RunID: request.RunID, EventEndsAt: request.EventEndsAt, SourceCastleID: request.SourceCastleID,
 				MainCastleID: request.MainCastleID, KingdomID: request.KingdomID, TargetX: request.TargetX,
 				TargetY: request.TargetY, Launches: []State.KhanLaunchState{}, Taunts: taunts, ResolvedTaunts: resolvedTaunts,
 				TauntsObserved: observed, TauntsResolved: resolved, LastTauntResolvedAt: lastResolved,
+				RageCampID: rageCampID, PlayerRage: playerRage, PlayerRageCap: playerRageCap,
+				PlayerTotalRage: playerTotalRage, RageObservedAt: rageObservedAt,
+				TauntsTriggered: triggered, LastTauntTriggeredAt: lastTriggered,
+				LastTauntTriggeredRage: lastTriggeredRage,
+				TauntCounterVersion:    State.KhanTauntCounterVersion,
+				CooldownReports:        cooldownReports, CooldownReportVersion: State.KhanCooldownReportVersion,
 			}
 		}
 		for _, launch := range gameState.Khan.Launches {
@@ -365,7 +627,7 @@ func planKhanOpenGate(_ context.Context, input Intent.PlanningContext, arguments
 		commandStep("Open main castle gates for six hours", "mos", payload, "mos"),
 		Intent.Step{Name: "Activate Auto Khan soft lock", Action: "khan.protection.activate", ActionArguments: arguments},
 	)
-	claims := append(defenseClaims(castle.ID), "khan-protection")
+	claims := append(defenseClaims(castle.ID), "khan-protection", "khan-lane")
 	return Intent.Plan{
 		Claims:  claims,
 		Summary: fmt.Sprintf("Open gates and lock Auto Khan after %d offensive wall units", request.OffensiveUnitThreshold),
@@ -393,7 +655,7 @@ func planKhanPointLimitProtection(
 	now := time.Now().UTC()
 	movementIDs := khanPointLimitMovementIDs(input.State, now)
 	steps := make([]Intent.Step, 0, len(movementIDs)+1)
-	claims := []string{"khan-protection", "castle:" + strconv.FormatInt(int64(castle.ID), 10)}
+	claims := []string{"khan-protection", "khan-lane", "castle:" + strconv.FormatInt(int64(castle.ID), 10)}
 	for _, movementID := range movementIDs {
 		payload, _ := json.Marshal(struct {
 			MovementID State.MovementID `json:"MID"`
@@ -667,7 +929,7 @@ func planKhanProtectionClear(_ context.Context, input Intent.PlanningContext, ar
 		return Intent.Plan{}, fmt.Errorf("Auto Khan protection is not active")
 	}
 	return Intent.Plan{
-		Claims: []string{"khan-protection"}, Summary: "Clear recovered Auto Khan protection lock",
+		Claims: []string{"khan-protection", "khan-lane"}, Summary: "Clear recovered Auto Khan protection lock",
 		Steps: []Intent.Step{{Name: "Verify defense recovery", Action: "khan.protection.clear", ActionArguments: arguments}},
 	}, nil
 }
@@ -749,11 +1011,4 @@ func khanMovementActive(movement State.MovementState, now time.Time) bool {
 		return movement.ArrivesAt == nil || movement.ArrivesAt.After(now)
 	}
 	return movement.ReturnsAt == nil || movement.ReturnsAt.After(now)
-}
-
-func khanAbsoluteInt(value int) int {
-	if value < 0 {
-		return -value
-	}
-	return value
 }

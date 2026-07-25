@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"CitadelDesktop/Server/AttackCapacity"
 )
 
 const (
@@ -67,6 +69,44 @@ func Find(document Document, id string) (Preset, bool) {
 		}
 	}
 	return Preset{}, false
+}
+
+func Validate(preset Preset) error {
+	return validatePreset(preset)
+}
+
+// LimitToCapacity applies the same wave and lane caps used immediately before
+// building a CRA payload. Tool allocations stay intact for every retained
+// wave; troop slots are consumed in their saved priority order.
+func LimitToCapacity(preset Preset, capacity AttackCapacity.LaneCapacity, maximumWaves int) Preset {
+	result := preset
+	waveCount := min(len(preset.Waves), max(0, maximumWaves))
+	result.Waves = make([]Wave, waveCount)
+	for index, wave := range preset.Waves[:waveCount] {
+		result.Waves[index] = Wave{
+			Left:   limitLaneToCapacity(wave.Left, capacity.Left),
+			Middle: limitLaneToCapacity(wave.Middle, capacity.Front),
+			Right:  limitLaneToCapacity(wave.Right, capacity.Right),
+		}
+	}
+	return result
+}
+
+func limitLaneToCapacity(lane Lane, capacity int64) Lane {
+	result := Lane{
+		Troops: append([]Slot(nil), lane.Troops...),
+		Tools:  append([]Slot(nil), lane.Tools...),
+	}
+	remaining := max(int64(0), capacity)
+	for index := range result.Troops {
+		quantity := result.Troops[index].Quantity
+		if quantity <= 0 {
+			continue
+		}
+		result.Troops[index].Quantity = min(quantity, remaining)
+		remaining -= result.Troops[index].Quantity
+	}
+	return result
 }
 
 func validatePreset(preset Preset) error {

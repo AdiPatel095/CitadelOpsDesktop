@@ -59,11 +59,14 @@ export interface BrowserCandidate {
   id: string;
   name: string;
   executablePath: string;
+  isDefault?: boolean;
 }
 
 export interface BrowserInventory {
-  selected: Pick<BrowserCandidate, 'id' | 'name'> | null;
+  selected: BrowserCandidate | null;
+  current: BrowserCandidate | null;
   available: BrowserCandidate[];
+  restartRequired: boolean;
   selectionIntent: 'session.select_browser';
 }
 
@@ -72,6 +75,26 @@ export interface ConfigurationSnapshot {
 	revision: number;
 	updatedAt: string;
 	sections: Record<string, unknown>;
+}
+
+export interface SettingsBundleV1 {
+	format: 'citadelops-settings';
+	formatVersion: 1;
+	exportedAt: string;
+	appVersion?: string;
+	configuration: {
+		schemaVersion: number;
+		sections: Record<string, unknown>;
+	};
+	clientPreferences?: Record<string, string>;
+}
+
+export interface SettingsImportResult {
+	importedSections: number;
+	changedSections: number;
+	includedClientPreferences: number;
+	revision: number;
+	updatedAt: string;
 }
 
 export interface SceatSkillActivationV2 {
@@ -796,6 +819,7 @@ export interface AllianceTargetCastleV2 {
 	castleId?: number;
 	name: string;
 	typeName?: string;
+	typeId?: number;
 	x: number;
 	y: number;
 }
@@ -807,13 +831,74 @@ export interface AllianceTargetOwnCastleV2 {
 }
 
 export interface AllianceTargetV2 {
+	playerId: number;
 	name: string;
+	level?: number;
+	legendLevel?: number;
 	might: number;
 	underBird: boolean;
 	rptSeconds: number;
 	targetCastle: AllianceTargetCastleV2;
 	closestOwnCastle: AllianceTargetOwnCastleV2;
 	distance: number;
+	spyReport?: {
+		capturedAtUnixMillis: number;
+		status: string;
+		totalTroops: number;
+	};
+}
+
+export interface AllianceTargetAttackPresetSlotV2 {
+	itemId: number | null;
+	quantity: number;
+}
+
+export interface AllianceTargetAttackPresetLaneV2 {
+	troops: AllianceTargetAttackPresetSlotV2[];
+	tools: AllianceTargetAttackPresetSlotV2[];
+}
+
+export interface AllianceTargetAttackPresetWaveV2 {
+	L: AllianceTargetAttackPresetLaneV2;
+	M: AllianceTargetAttackPresetLaneV2;
+	R: AllianceTargetAttackPresetLaneV2;
+}
+
+export interface AllianceTargetAttackPreviewRequest {
+	sourceCastleId: number;
+	kingdomId: number;
+	targetX: number;
+	targetY: number;
+	targetCastleId?: number;
+	targetTypeId: number;
+	targetLevel: number;
+	targetLegendLevel?: number;
+	preset: {
+		id: string;
+		name: string;
+		waves: AllianceTargetAttackPresetWaveV2[];
+	};
+}
+
+export interface AllianceTargetAttackPreviewV2 {
+	commanderId: number;
+	capacity: {
+		left: number;
+		front: number;
+		right: number;
+	};
+	maximumWaves: number;
+	presetWaves: number;
+	appliedWaves: number;
+	totalTroops: number;
+	totalTools: number;
+	requirements: Array<{
+		kind: 'troop' | 'tool';
+		itemId: number;
+		required: number;
+		available: number;
+	}>;
+	ready: boolean;
 }
 
 export interface AllianceTargetQueryV2 {

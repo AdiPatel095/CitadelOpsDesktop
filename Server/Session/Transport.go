@@ -50,6 +50,14 @@ type BrowserSelector interface {
 	SelectBrowser(preference string) error
 }
 
+type BrowserInventoryProvider interface {
+	BrowserInventory() BrowserInventory
+}
+
+type RelogDelayTransport interface {
+	SetRelogDelayProvider(func() time.Duration)
+}
+
 type FrontendInteractionTransport interface {
 	CloseGameUI(ctx context.Context) error
 }
