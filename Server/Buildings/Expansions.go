@@ -15,19 +15,20 @@ const (
 	ExpansionPaymentResources = "resources"
 	ExpansionPaymentPremium   = "premium"
 
-	kingdomTransportDeliveryFactor = 0.8
+	kingdomTransportDeliveryFactor = 0.90
 )
 
 type ExpansionPreviewRequest struct {
-	ExpectedRevision *uint64            `json:"expectedRevision,omitempty"`
-	CastleID         State.CastleID     `json:"castleId"`
-	Payment          string             `json:"payment,omitempty"`
-	ResourceReserves map[string]float64 `json:"resourceReserves,omitempty"`
-	AllowPremium     bool               `json:"allowPremium,omitempty"`
-	AllowTimeSkips   bool               `json:"allowTimeSkips,omitempty"`
-	X                *int               `json:"x,omitempty"`
-	Y                *int               `json:"y,omitempty"`
-	Direction        *int               `json:"direction,omitempty"`
+	ExpectedRevision       *uint64            `json:"expectedRevision,omitempty"`
+	CastleID               State.CastleID     `json:"castleId"`
+	Payment                string             `json:"payment,omitempty"`
+	ResourceReserves       map[string]float64 `json:"resourceReserves,omitempty"`
+	SourceResourceReserves map[string]float64 `json:"sourceResourceReserves,omitempty"`
+	AllowPremium           bool               `json:"allowPremium,omitempty"`
+	AllowTimeSkips         bool               `json:"allowTimeSkips,omitempty"`
+	X                      *int               `json:"x,omitempty"`
+	Y                      *int               `json:"y,omitempty"`
+	Direction              *int               `json:"direction,omitempty"`
 }
 
 type ExpansionCostStatus struct {
@@ -233,7 +234,7 @@ func PreviewExpansion(state State.GameState, gameData *GameData.Store, request E
 		} else if result.RecommendedAction == nil {
 			fundingNeeds := expansionStorageFundingNeeds(result.StorageBuildingCandidates, capacityNeeds)
 			if len(fundingNeeds) > 0 {
-				result.TransportCandidates = expansionTransportCandidates(state, castle, fundingNeeds, request.ResourceReserves)
+				result.TransportCandidates = expansionTransportCandidates(state, castle, fundingNeeds, request.SourceResourceReserves)
 				result.PendingTransport = expansionPendingTransport(state, castle.KingdomID)
 				result.TimeSkipOptions = expansionTimeSkipOptions(state, gameData, result.PendingTransport)
 				result.RecommendedAction = recommendExpansionTransportAction(state, castle, request, result)
@@ -243,7 +244,7 @@ func PreviewExpansion(state State.GameState, gameData *GameData.Store, request E
 
 	resourceNeeds := expansionResourceNeeds(result.Costs)
 	if !capacityBlocked && len(resourceNeeds) > 0 {
-		result.TransportCandidates = expansionTransportCandidates(state, castle, resourceNeeds, request.ResourceReserves)
+		result.TransportCandidates = expansionTransportCandidates(state, castle, resourceNeeds, request.SourceResourceReserves)
 		result.PendingTransport = expansionPendingTransport(state, castle.KingdomID)
 		result.TimeSkipOptions = expansionTimeSkipOptions(state, gameData, result.PendingTransport)
 		result.RecommendedAction = recommendExpansionTransportAction(state, castle, request, result)
@@ -793,6 +794,13 @@ func expansionTransportCandidates(
 			})
 			available := int64(math.Floor(math.Max(0, source.Resources[need.ResourceID].Amount-reserve)))
 			requiredShipment := expansionShipmentAmount(need.Amount)
+			if capacity := target.Resources[need.ResourceID].Capacity; capacity != nil {
+				freeCapacity := math.Max(0, *capacity-target.Resources[need.ResourceID].Amount)
+				requiredShipment = min(
+					requiredShipment,
+					int64(math.Floor(freeCapacity/kingdomTransportDeliveryFactor)),
+				)
+			}
 			amount := min(available, requiredShipment)
 			delivered := int64(math.Round(float64(amount) * kingdomTransportDeliveryFactor))
 			candidate.RemainingSurplus += float64(max(available-amount, 0))

@@ -18,6 +18,7 @@ func TestFoodBalancePolicyPrioritizesHoneyNeededForMead(t *testing.T) {
 	state := State.NewGameState()
 	target := foodBalanceCastle(10, 0, 100, 100, now)
 	target.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 201}
+	target.BuildingProduction[1] = State.BuildingProduction{PercentByResource: map[string]float64{"MEAD": 100}}
 	meadProduction := 100.0
 	foodProduction := 1_000.0
 	honeyProduction := 0.0
@@ -412,10 +413,11 @@ func foodBalanceSnapshot(state State.GameState, gameData *GameData.Store, now ti
 func foodBalanceCastle(id State.CastleID, kingdom State.KingdomID, x int, y int, observedAt time.Time) State.CastleState {
 	return State.CastleState{
 		ID: id, KingdomID: kingdom, X: x, Y: y, FoodStateObservedAt: observedAt,
-		Resources:         map[State.ResourceID]State.ResourceBalance{},
-		Units:             State.CastleUnits{Stationed: map[State.UnitID]int64{}},
-		Buildings:         map[State.BuildingInstanceID]State.Building{},
-		ConstructionSlots: map[State.BuildingInstanceID][]State.ConstructionSlot{},
+		Resources:          map[State.ResourceID]State.ResourceBalance{},
+		Units:              State.CastleUnits{Stationed: map[State.UnitID]int64{}},
+		Buildings:          map[State.BuildingInstanceID]State.Building{},
+		BuildingProduction: map[State.BuildingInstanceID]State.BuildingProduction{},
+		ConstructionSlots:  map[State.BuildingInstanceID][]State.ConstructionSlot{},
 	}
 }
 
@@ -437,7 +439,7 @@ func foodBalanceGameData(t *testing.T) *GameData.Store {
 		"units":[{"wodID":101,"foodSupply":10}],
 		"buildings":[
 			{"wodID":137,"name":"Market","marketCarriages":5},
-			{"wodID":201,"meadProduction":100,"honeyRatio":1,"foodRatio":3}
+			{"wodID":201,"meadProduction":100000,"honeyRatio":1,"foodRatio":3}
 		],
 		"constructionItems":[],"levelBoosters":[],"effects":[]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})

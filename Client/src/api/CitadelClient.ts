@@ -9,6 +9,8 @@ import type {
 	ApplicationUpdateV2,
 	BuildingCatalogQuery,
 	BuildingCatalogResponse,
+	BuildingBlueprintDiffRequest,
+	BuildingBlueprintDiffResponse,
 	BuildingPreviewRequest,
 	BuildingPreviewResponse,
 	BuildingTargetCaptureRequest,
@@ -219,6 +221,13 @@ class CitadelClient {
 
 	captureBuildingTarget(input: BuildingTargetCaptureRequest): Promise<BuildingTargetCaptureResponse> {
 		return this.request<BuildingTargetCaptureResponse>('/api/v2/buildings/target/capture', {
+			method: 'POST',
+			body: JSON.stringify(input),
+		});
+	}
+
+	previewBuildingBlueprint(input: BuildingBlueprintDiffRequest): Promise<BuildingBlueprintDiffResponse> {
+		return this.request<BuildingBlueprintDiffResponse>('/api/v2/buildings/blueprint/diff', {
 			method: 'POST',
 			body: JSON.stringify(input),
 		});

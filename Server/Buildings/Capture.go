@@ -11,6 +11,10 @@ import (
 )
 
 const (
+	TargetCaptureModeFunctional = "functional"
+	TargetCaptureModeLayout     = "layout"
+	TargetCaptureModeExact      = "exact"
+
 	TargetCaptureModeBuildings = "buildings"
 	TargetCaptureModeFull      = "full"
 )
@@ -36,17 +40,24 @@ type TargetCaptureSummary struct {
 }
 
 type TargetCaptureResult struct {
-	Version        int                  `json:"version"`
-	Revision       uint64               `json:"revision"`
-	CatalogVersion string               `json:"catalogVersion,omitempty"`
-	CapturedAt     time.Time            `json:"capturedAt"`
-	CastleID       State.CastleID       `json:"castleId"`
-	KingdomID      State.KingdomID      `json:"kingdomId"`
-	Mode           string               `json:"mode"`
-	Exact          bool                 `json:"exact"`
-	Ground         []TargetGround       `json:"ground"`
-	Buildings      []TargetBuilding     `json:"buildings"`
-	Summary        TargetCaptureSummary `json:"summary"`
+	Version        int                   `json:"version"`
+	Revision       uint64                `json:"revision"`
+	CatalogVersion string                `json:"catalogVersion,omitempty"`
+	CapturedAt     time.Time             `json:"capturedAt"`
+	CastleID       State.CastleID        `json:"castleId"`
+	KingdomID      State.KingdomID       `json:"kingdomId"`
+	Mode           string                `json:"mode"`
+	Exact          bool                  `json:"exact"`
+	Ground         []TargetGround        `json:"ground"`
+	Buildings      []TargetBuilding      `json:"buildings"`
+	Fixed          []TargetFixedBuilding `json:"fixed"`
+	Summary        TargetCaptureSummary  `json:"summary"`
+}
+
+type TargetFixedBuilding struct {
+	TargetID     string           `json:"targetId,omitempty"`
+	DefinitionID State.BuildingID `json:"definitionId"`
+	Slot         *TargetPlacement `json:"slot,omitempty"`
 }
 
 func CaptureTarget(state State.GameState, gameData *GameData.Store, request TargetCaptureRequest) (TargetCaptureResult, error) {
@@ -58,10 +69,19 @@ func CaptureTarget(state State.GameState, gameData *GameData.Store, request Targ
 	}
 	mode := strings.ToLower(strings.TrimSpace(request.Mode))
 	if mode == "" {
-		mode = TargetCaptureModeFull
+		mode = TargetCaptureModeExact
 	}
-	if mode != TargetCaptureModeBuildings && mode != TargetCaptureModeFull {
-		return TargetCaptureResult{}, fmt.Errorf("mode must be %q or %q", TargetCaptureModeBuildings, TargetCaptureModeFull)
+	switch mode {
+	case TargetCaptureModeBuildings:
+		mode = TargetCaptureModeLayout
+	case TargetCaptureModeFull:
+		mode = TargetCaptureModeExact
+	}
+	if mode != TargetCaptureModeFunctional && mode != TargetCaptureModeLayout && mode != TargetCaptureModeExact {
+		return TargetCaptureResult{}, fmt.Errorf(
+			"mode must be %q, %q, or %q",
+			TargetCaptureModeFunctional, TargetCaptureModeLayout, TargetCaptureModeExact,
+		)
 	}
 	castle, found := state.Castles[request.CastleID]
 	if !found || request.CastleID <= 0 {
@@ -78,7 +98,8 @@ func CaptureTarget(state State.GameState, gameData *GameData.Store, request Targ
 	result := TargetCaptureResult{
 		Version: 1, Revision: state.Revision, CatalogVersion: gameData.Metadata().ItemVersion,
 		CapturedAt: time.Now().UTC(), CastleID: castle.ID, KingdomID: castle.KingdomID,
-		Mode: mode, Exact: true, Ground: []TargetGround{}, Buildings: []TargetBuilding{},
+		Mode: mode, Exact: mode == TargetCaptureModeExact,
+		Ground: []TargetGround{}, Buildings: []TargetBuilding{}, Fixed: []TargetFixedBuilding{},
 	}
 
 	for _, id := range sortedBuildingIDs(castle.Layout.Ground) {
@@ -115,15 +136,23 @@ func CaptureTarget(state State.GameState, gameData *GameData.Store, request Targ
 			continue
 		}
 		decoration := strings.EqualFold(definition.GroundType, "DECO") || strings.EqualFold(definition.InternalName, "Deco")
-		if mode == TargetCaptureModeBuildings && decoration {
+		if mode != TargetCaptureModeExact && decoration {
 			continue
 		}
 		placement := &TargetPlacement{
 			GridX: object.building.GridX, GridY: object.building.GridY, Rotation: object.building.Rotation,
 		}
 		if object.fixed {
-			placement = nil
+			result.Fixed = append(result.Fixed, TargetFixedBuilding{
+				TargetID:     fmt.Sprintf("fixed-%03d-%d", len(result.Fixed)+1, definition.ID),
+				DefinitionID: object.building.DefinitionID,
+				Slot:         placement,
+			})
 			result.Summary.FixedCount++
+			continue
+		}
+		if mode == TargetCaptureModeFunctional {
+			placement = nil
 		}
 		result.Buildings = append(result.Buildings, TargetBuilding{
 			TargetID:     fmt.Sprintf("target-%03d-%d", len(result.Buildings)+1, definition.ID),

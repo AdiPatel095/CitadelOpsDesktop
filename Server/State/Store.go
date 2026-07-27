@@ -383,6 +383,11 @@ func cloneGameStateWithMap(source GameState, cloneWorldMap bool) GameState {
 		castle.Defense.Moat.MiddleToolSlots = append([]DefenseToolSlot{}, castle.Defense.Moat.MiddleToolSlots...)
 		castle.Defense.Moat.RightToolSlots = append([]DefenseToolSlot{}, castle.Defense.Moat.RightToolSlots...)
 		castle.Buildings = cloneMap(castle.Buildings)
+		castle.BuildingProduction = make(map[BuildingInstanceID]BuildingProduction, len(source.Castles[id].BuildingProduction))
+		for buildingID, production := range source.Castles[id].BuildingProduction {
+			production.PercentByResource = cloneMap(production.PercentByResource)
+			castle.BuildingProduction[buildingID] = production
+		}
 		castle.Layout.Ground = cloneMap(castle.Layout.Ground)
 		castle.Layout.Objects = cloneMap(castle.Layout.Objects)
 		castle.Layout.Fixed = cloneMap(castle.Layout.Fixed)

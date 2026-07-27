@@ -2,6 +2,7 @@ import type { BuildingTargetCaptureResponse } from '../api/Contracts';
 import { parseHorseTravelBoostID, type HorseTravelBoostID } from './HorseTravelBoost';
 
 export const AUTO_STORM_SECTION = 'automation.autoStorm';
+export const AUTO_STORM_BLUEPRINTS_SECTION = 'automation.autoStormBlueprints';
 export const AUTO_STORM_MAP_REFRESH_INTERVAL_SEC = 2 * 60 * 60;
 export const AUTO_STORM_LUNA_PACKAGE_IDS: readonly number[] = [
   3116, 3117, 3118, 3119, 3120, 3122, 3123, 3124, 3125,
@@ -45,6 +46,7 @@ export interface AutoStormClientStateV1 {
     allowResourceTransport: boolean;
     allowTimeSkips: boolean;
     resourceReserves: Record<string, number>;
+    sourceResourceReserves: Record<string, number>;
     timeSkipReserve: Record<string, number>;
   };
   harbor: {
@@ -96,6 +98,7 @@ export function defaultAutoStormClientState(): AutoStormClientStateV1 {
       allowResourceTransport: true,
       allowTimeSkips: false,
       resourceReserves: {},
+      sourceResourceReserves: {},
       timeSkipReserve: {},
     },
     harbor: { enabled: false, targetLevel: 1 },
@@ -140,6 +143,7 @@ export function parseAutoStormClientState(value: unknown): AutoStormClientStateV
       allowResourceTransport: build.allowResourceTransport !== false,
       allowTimeSkips: build.allowTimeSkips === true,
       resourceReserves: parseNumberMap(build.resourceReserves),
+      sourceResourceReserves: parseNumberMap(build.sourceResourceReserves),
       timeSkipReserve: parseNumberMap(build.timeSkipReserve),
     },
     harbor: {
@@ -187,13 +191,58 @@ function parseTarget(value: unknown): BuildingTargetCaptureResponse | undefined 
     || value.version !== 1
     || !positiveInteger(value.castleId)
     || !Number.isFinite(Number(value.kingdomId))
-    || (value.mode !== 'buildings' && value.mode !== 'full')
+    || !['functional', 'layout', 'exact', 'buildings', 'full'].includes(String(value.mode))
     || !Array.isArray(value.ground)
     || !Array.isArray(value.buildings)
     || !isRecord(value.summary)) {
     return undefined;
   }
   return value as unknown as BuildingTargetCaptureResponse;
+}
+
+export interface AutoStormBlueprint {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  target: BuildingTargetCaptureResponse;
+}
+
+export interface AutoStormBlueprintDocument {
+  version: 1;
+  activeId: string;
+  blueprints: Record<string, AutoStormBlueprint>;
+}
+
+export function parseAutoStormBlueprintDocument(value: unknown): AutoStormBlueprintDocument {
+  const fallback: AutoStormBlueprintDocument = { version: 1, activeId: '', blueprints: {} };
+  if (!isRecord(value) || !isRecord(value.blueprints)) return fallback;
+  const blueprints: Record<string, AutoStormBlueprint> = {};
+  for (const [key, raw] of Object.entries(value.blueprints)) {
+    if (!isRecord(raw)) continue;
+    const target = parseTarget(raw.target);
+    const id = stringValue(raw.id) || key.trim();
+    if (!target || !id) continue;
+    blueprints[id] = {
+      id,
+      name: stringValue(raw.name) || blueprintModeLabel(target.mode),
+      createdAt: stringValue(raw.createdAt),
+      updatedAt: stringValue(raw.updatedAt),
+      target,
+    };
+  }
+  const activeId = stringValue(value.activeId);
+  return {
+    version: 1,
+    activeId: blueprints[activeId] ? activeId : '',
+    blueprints,
+  };
+}
+
+function blueprintModeLabel(mode: BuildingTargetCaptureResponse['mode']): string {
+  if (mode === 'functional') return 'Functional target';
+  if (mode === 'layout' || mode === 'buildings') return 'Layout target';
+  return 'Exact clone';
 }
 
 function parseDefenseUnits(value: unknown): AutoStormDefenseUnit[] {

@@ -128,6 +128,35 @@ func (server *Server) handleBuildingTargetCapture(writer http.ResponseWriter, re
 	writeJSON(writer, http.StatusOK, result)
 }
 
+func (server *Server) handleBuildingBlueprintDiff(writer http.ResponseWriter, request *http.Request) {
+	if server.config.State == nil {
+		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable")
+		return
+	}
+	gameData, ok := server.currentGameData(writer)
+	if !ok {
+		return
+	}
+	var input Buildings.BlueprintDiffRequest
+	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&input); err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		return
+	}
+	result, err := Buildings.CompileBlueprintDiff(server.config.State.Snapshot(), gameData, input)
+	if err != nil {
+		var mismatch Buildings.RevisionMismatchError
+		if errors.As(err, &mismatch) {
+			writeError(writer, http.StatusConflict, "state_revision_mismatch", err.Error())
+			return
+		}
+		writeError(writer, http.StatusUnprocessableEntity, "building_blueprint_diff_failed", err.Error())
+		return
+	}
+	writeJSON(writer, http.StatusOK, result)
+}
+
 func (server *Server) handleBuildingCatalog(writer http.ResponseWriter, request *http.Request) {
 	gameData, ok := server.currentGameData(writer)
 	if !ok {

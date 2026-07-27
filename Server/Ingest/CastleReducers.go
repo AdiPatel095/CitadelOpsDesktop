@@ -198,6 +198,10 @@ func reduceCastleSnapshot(
 		}, gameData)
 		castle.Layout.ObservedAt = frame.ReceivedAt.UTC()
 	}
+	buildingProductionRaw, hasBuildingProduction := root["abpi"]
+	if hasBuildingProduction {
+		castle.BuildingProduction = parseBuildingProduction(buildingProductionRaw, frame.ReceivedAt)
+	}
 	buildingQueueRaw, hasBuildingQueue := gca["scl"]
 	if hasBuildingQueue {
 		castle.BuildingQueue = parseBuildingConstructionQueue(buildingQueueRaw)
@@ -234,6 +238,9 @@ func reduceCastleSnapshot(
 	}
 	if hasLayout {
 		domains = append(domains, "building-layout")
+	}
+	if hasBuildingProduction {
+		domains = append(domains, "building-production")
 	}
 	if hasBuildingQueue {
 		domains = append(domains, "building-construction")
@@ -650,6 +657,9 @@ func ensureCastleMaps(castle *State.CastleState) {
 	ensureDefenseSlices(&castle.Defense)
 	if castle.Buildings == nil {
 		castle.Buildings = map[State.BuildingInstanceID]State.Building{}
+	}
+	if castle.BuildingProduction == nil {
+		castle.BuildingProduction = map[State.BuildingInstanceID]State.BuildingProduction{}
 	}
 	if castle.Layout.Ground == nil {
 		castle.Layout.Ground = map[State.BuildingInstanceID]State.Building{}

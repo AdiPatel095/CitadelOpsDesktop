@@ -643,7 +643,8 @@ export interface BuildingPreviewResponse {
 	warnings: string[];
 }
 
-export type BuildingTargetCaptureMode = 'buildings' | 'full';
+export type BuildingTargetCaptureMode = 'functional' | 'layout' | 'exact';
+export type BuildingTargetStoredMode = BuildingTargetCaptureMode | 'buildings' | 'full';
 
 export interface BuildingTargetCaptureRequest {
 	expectedRevision?: number;
@@ -658,7 +659,7 @@ export interface BuildingTargetCaptureResponse {
 	capturedAt: string;
 	castleId: number;
 	kingdomId: number;
-	mode: BuildingTargetCaptureMode;
+	mode: BuildingTargetStoredMode;
 	exact: boolean;
 	ground: Array<{
 		definitionId: number;
@@ -671,11 +672,46 @@ export interface BuildingTargetCaptureResponse {
 		definitionId: number;
 		placement?: { gridX: number; gridY: number; rotation: number };
 	}>;
+	fixed?: Array<{
+		targetId: string;
+		definitionId: number;
+		slot?: { gridX: number; gridY: number; rotation: number };
+	}>;
 	summary: {
 		groundCount: number;
 		buildingCount: number;
 		decorationCount: number;
 		fixedCount: number;
+	};
+}
+
+export interface BuildingBlueprintDiffRequest {
+	expectedRevision?: number;
+	target: BuildingTargetCaptureResponse;
+	policy: {
+		allowPremium: boolean;
+		resourceReserves?: Record<string, number>;
+	};
+}
+
+export interface BuildingBlueprintDiffResponse {
+	revision: number;
+	catalogVersion?: string;
+	target: BuildingTargetCaptureResponse;
+	missingGround: BuildingTargetCaptureResponse['ground'];
+	compilable: boolean;
+	satisfied: boolean;
+	targetCount: number;
+	satisfiedCount: number;
+	plannedCount: number;
+	waitingCount: number;
+	blockedCount: number;
+	actionCount: number;
+	normal: {
+		issues: Array<{ severity: string; code: string; message: string; targetId?: string }>;
+	};
+	fixed: {
+		issues: Array<{ severity: string; code: string; message: string; targetId?: string }>;
 	};
 }
 

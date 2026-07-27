@@ -142,6 +142,9 @@ type stormShopPurchaseLine struct {
 }
 
 func (application *Application) registerStormIntents() error {
+	if err := application.registerStormBlueprintIntents(); err != nil {
+		return err
+	}
 	for name, action := range map[string]Intent.Action{
 		"storm.scan.begin":             application.beginStormScan,
 		"storm.scan.burst":             application.burstStormMapScan,

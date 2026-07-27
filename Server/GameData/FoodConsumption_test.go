@@ -123,7 +123,7 @@ func TestEstimateFoodConsumptionClampsCatalogReduction(t *testing.T) {
 	}
 }
 
-func TestEstimateFoodConsumptionTreatsHoneyAsAMeadProductionInput(t *testing.T) {
+func TestEstimateFoodConsumptionUsesConfiguredBreweryRateForInputs(t *testing.T) {
 	store, err := DecodeStore([]byte(`{
 		"versionInfo":[],
 		"resources":[
@@ -133,7 +133,7 @@ func TestEstimateFoodConsumptionTreatsHoneyAsAMeadProductionInput(t *testing.T) 
 			{"resourceID":13,"JSONKey":"BEEF"}
 		],
 		"units":[],
-		"buildings":[{"wodID":201,"meadProduction":100,"honeyRatio":1,"foodRatio":3}]
+		"buildings":[{"wodID":201,"meadProduction":10000,"honeyRatio":1,"foodRatio":3}]
 	}`), SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)
@@ -149,30 +149,79 @@ func TestEstimateFoodConsumptionTreatsHoneyAsAMeadProductionInput(t *testing.T) 
 			13: {},
 		},
 		Units:     State.CastleUnits{Stationed: map[State.UnitID]int64{}},
-		Buildings: map[State.BuildingInstanceID]State.Building{1: {DefinitionID: 201}},
+		Buildings: map[State.BuildingInstanceID]State.Building{1: {InstanceID: 1, DefinitionID: 201}},
+		BuildingProduction: map[State.BuildingInstanceID]State.BuildingProduction{
+			1: {PercentByResource: map[string]float64{"MEAD": 40}},
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	food := estimate.ByResource[5]
-	if food.ProductionInputPerHour != 600 || food.TotalConsumptionPerHour != 600 || food.NetPerHour == nil || *food.NetPerHour != -480 {
+	if food.ProductionInputPerHour != 120 || food.TotalConsumptionPerHour != 120 || food.NetPerHour == nil || *food.NetPerHour != 0 {
 		t.Fatalf("unexpected food production input: %#v", food)
 	}
 	honey := estimate.ByResource[11]
-	if honey.ProductionInputPerHour != 200 || honey.TotalConsumptionPerHour != 200 || honey.NetPerHour == nil || *honey.NetPerHour != -150 {
+	if honey.ProductionInputPerHour != 40 || honey.TotalConsumptionPerHour != 40 || honey.NetPerHour == nil || *honey.NetPerHour != 10 {
 		t.Fatalf("unexpected honey production input: %#v", honey)
 	}
 	dependency := estimate.MeadProduction
-	if dependency.ProductionPerHour != 200 || dependency.HoneyInputPerHour != 200 || dependency.FoodInputPerHour != 600 {
+	if dependency.ProductionPerHour != 200 || dependency.HoneyInputPerHour != 40 || dependency.FoodInputPerHour != 120 {
 		t.Fatalf("unexpected mead dependency: %#v", dependency)
 	}
-	if dependency.SustainableProductionPerHour == nil || *dependency.SustainableProductionPerHour != 40 {
-		t.Fatalf("sustainable mead production = %#v, want 40", dependency.SustainableProductionPerHour)
+	if dependency.SustainableProductionPerHour == nil || *dependency.SustainableProductionPerHour != 200 {
+		t.Fatalf("sustainable mead production = %#v, want 200", dependency.SustainableProductionPerHour)
 	}
-	if dependency.HoneyHoursUntilDepleted == nil || *dependency.HoneyHoursUntilDepleted != 2.0/3.0 {
-		t.Fatalf("honey depletion = %#v, want 2/3", dependency.HoneyHoursUntilDepleted)
+	if dependency.HoneyHoursUntilDepleted != nil {
+		t.Fatalf("honey depletion = %#v, want nil", dependency.HoneyHoursUntilDepleted)
 	}
-	if dependency.FoodHoursUntilDepleted == nil || *dependency.FoodHoursUntilDepleted != 0.3125 {
-		t.Fatalf("food depletion = %#v, want 0.3125", dependency.FoodHoursUntilDepleted)
+	if dependency.FoodHoursUntilDepleted != nil {
+		t.Fatalf("food depletion = %#v, want nil", dependency.FoodHoursUntilDepleted)
+	}
+
+	meadProduction = 20_000
+	estimate, err = store.EstimateFoodConsumption(State.CastleState{
+		Resources: map[State.ResourceID]State.ResourceBalance{
+			5:  {ProductionPerHour: &foodProduction},
+			11: {ProductionPerHour: &honeyProduction},
+			12: {ProductionPerHour: &meadProduction},
+			13: {},
+		},
+		Units:     State.CastleUnits{Stationed: map[State.UnitID]int64{}},
+		Buildings: map[State.BuildingInstanceID]State.Building{1: {InstanceID: 1, DefinitionID: 201}},
+		BuildingProduction: map[State.BuildingInstanceID]State.BuildingProduction{
+			1: {PercentByResource: map[string]float64{"MEAD": 40}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if estimate.MeadProduction.ProductionPerHour != 20_000 || estimate.MeadProduction.HoneyInputPerHour != 40 {
+		t.Fatalf("live mead output changed brewery honey use: %#v", estimate.MeadProduction)
+	}
+}
+
+func TestEstimateFoodConsumptionRequiresObservedBreweryPercentage(t *testing.T) {
+	store, err := DecodeStore([]byte(`{
+		"versionInfo":[],
+		"resources":[
+			{"resourceID":5,"JSONKey":"F"},
+			{"resourceID":11,"JSONKey":"HONEY"},
+			{"resourceID":12,"JSONKey":"MEAD"},
+			{"resourceID":13,"JSONKey":"BEEF"}
+		],
+		"units":[],
+		"buildings":[{"wodID":201,"meadProduction":10000,"honeyRatio":1,"foodRatio":3}]
+	}`), SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = store.EstimateFoodConsumption(State.CastleState{
+		Resources: map[State.ResourceID]State.ResourceBalance{5: {}, 11: {}, 12: {}, 13: {}},
+		Units:     State.CastleUnits{Stationed: map[State.UnitID]int64{}},
+		Buildings: map[State.BuildingInstanceID]State.Building{1: {InstanceID: 1, DefinitionID: 201}},
+	})
+	if err == nil || !strings.Contains(err.Error(), "brewery production percentage is unavailable") {
+		t.Fatalf("missing brewery percentage error = %v", err)
 	}
 }

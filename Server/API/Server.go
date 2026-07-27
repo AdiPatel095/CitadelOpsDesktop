@@ -83,6 +83,7 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v2/buildings/preview", server.handleBuildingPreview)
 	mux.HandleFunc("POST /api/v2/buildings/target/capture", server.handleBuildingTargetCapture)
 	mux.HandleFunc("POST /api/v2/buildings/target/diff", server.handleBuildingTargetDiff)
+	mux.HandleFunc("POST /api/v2/buildings/blueprint/diff", server.handleBuildingBlueprintDiff)
 	mux.HandleFunc("POST /api/v2/buildings/expansion/preview", server.handleExpansionPreview)
 	mux.HandleFunc("GET /api/v2/alliance-targets", server.handleAllianceTargets)
 	mux.HandleFunc("POST /api/v2/alliance-targets/attack-preview", server.handleAllianceTargetAttackPreview)

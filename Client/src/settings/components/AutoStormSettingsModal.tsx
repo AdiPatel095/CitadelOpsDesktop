@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Anchor,
   ArrowDown,
@@ -19,7 +19,7 @@ import {
   Truck,
   Waves,
 } from 'lucide-react';
-import type { BuildingTargetCaptureMode } from '../../api/Contracts';
+import type { BuildingBlueprintDiffResponse, BuildingTargetCaptureMode } from '../../api/Contracts';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { CitadelAPI } from '../../api/CitadelClient';
 import {
@@ -34,11 +34,13 @@ import { Badge, Button, Card, ChoiceChipGroup, Input, Select, SettingsModal, Set
 import { useMetadata } from '../../context/MetadataContext';
 import {
   AUTO_STORM_LUNA_PACKAGE_IDS,
+  AUTO_STORM_BLUEPRINTS_SECTION,
   AUTO_STORM_SECTION,
   AUTO_STORM_TARGET_PRIORITIES,
   clampAutoStormInteger,
   defaultAutoStormClientState,
   parseAutoStormClientState,
+  parseAutoStormBlueprintDocument,
   type AutoStormClientStateV1,
   type AutoStormIslandSize,
   type AutoStormResource,
@@ -109,17 +111,19 @@ const TIME_SKIP_RESERVES = [
 const LUNA_PACKAGE_ID_SET = new Set(AUTO_STORM_LUNA_PACKAGE_IDS);
 
 export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ isOpen, onClose }) => {
-  const { state, configuration, captureBuildingTarget, updateConfiguration } = useCitadelAPI();
+  const { state, configuration, captureBuildingTarget, submitIntent } = useCitadelAPI();
   const { getTool, getTroop } = useMetadata();
   const [draft, setDraft] = useState<AutoStormClientStateV1>(defaultAutoStormClientState);
   const [captureCastleId, setCaptureCastleId] = useState(0);
   const [capturing, setCapturing] = useState<BuildingTargetCaptureMode | null>(null);
+  const [blueprintPreview, setBlueprintPreview] = useState<BuildingBlueprintDiffResponse | null>(null);
   const [saving, setSaving] = useState(false);
   const [lunaPackages, setLunaPackages] = useState<LunaPackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [lunaSearch, setLunaSearch] = useState('');
   const [draggedTargetPriority, setDraggedTargetPriority] = useState<AutoStormTargetPriority | null>(null);
   const [targetPriorityDropTarget, setTargetPriorityDropTarget] = useState<AutoStormTargetPriority | null>(null);
+  const initializedOpen = useRef(false);
 
   const stormCastles = useMemo(() => Object.values(state?.castles ?? {})
     .filter((castle) => castle.kingdomId === 4)
@@ -191,15 +195,29 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   );
 
   const savedConfiguration = configuration?.sections[AUTO_STORM_SECTION];
+  const blueprintDocument = useMemo(
+    () => parseAutoStormBlueprintDocument(configuration?.sections[AUTO_STORM_BLUEPRINTS_SECTION]),
+    [configuration?.sections],
+  );
+  const activeBlueprint = blueprintDocument.blueprints[blueprintDocument.activeId];
+  const savedBlueprints = Object.values(blueprintDocument.blueprints)
+    .sort((left, right) => left.id.localeCompare(right.id));
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      initializedOpen.current = false;
+      return;
+    }
+    if (initializedOpen.current || !configuration) return;
     const current = parseAutoStormClientState(savedConfiguration);
-    setDraft(current);
-    setCaptureCastleId(current.target?.castleId ?? 0);
+    const target = activeBlueprint?.target ?? current.target;
+    setDraft({ ...current, ...(target ? { target } : {}) });
+    setCaptureCastleId(target?.castleId ?? 0);
+    setBlueprintPreview(null);
     setDraggedTargetPriority(null);
     setTargetPriorityDropTarget(null);
-  }, [isOpen, savedConfiguration]);
+    initializedOpen.current = true;
+  }, [activeBlueprint?.target, configuration, isOpen, savedConfiguration]);
 
   useEffect(() => {
     if (!isOpen || captureCastleId > 0 || stormCastles.length === 0) return;
@@ -233,16 +251,66 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         mode,
         expectedRevision: state?.revision,
       });
+      const preview = await CitadelAPI.previewBuildingBlueprint({
+        target,
+        policy: {
+          allowPremium: draft.build.allowPremium,
+          resourceReserves: draft.build.resourceReserves,
+        },
+      });
+      if (!preview.compilable) {
+        const issue = [...preview.normal.issues, ...preview.fixed.issues]
+          .find((candidate) => candidate.severity === 'error');
+        throw new Error(issue?.message ?? 'The captured Storm blueprint cannot be compiled safely.');
+      }
+      await submitIntent('storm.blueprint.save', {
+        target,
+        policy: {
+          allowPremium: draft.build.allowPremium,
+          resourceReserves: draft.build.resourceReserves,
+        },
+      });
+      setBlueprintPreview(preview);
       setDraft((current) => ({
         ...current,
         target,
-        ...(mode === 'full' ? { decorationPresetCastleId: 0, decorationPresetId: '' } : {}),
+        ...(mode === 'exact' ? { decorationPresetCastleId: 0, decorationPresetId: '' } : {}),
       }));
-      Notifications.success(mode === 'full' ? 'Full Storm target captured.' : 'Storm building target captured.');
+      Notifications.success(`${captureModeLabel(mode)} preflight passed and was queued for durable storage.`);
     } catch (error) {
       Notifications.error(error instanceof Error ? error.message : 'Could not capture the Storm layout.');
     } finally {
       setCapturing(null);
+    }
+  };
+
+  const activateBlueprint = async (id: string) => {
+    if (capturing || saving) return;
+    const blueprint = blueprintDocument.blueprints[id];
+    if (!blueprint) return;
+    try {
+      await submitIntent('storm.blueprint.activate', { id });
+      setDraft((current) => ({ ...current, target: blueprint.target }));
+      setCaptureCastleId(blueprint.target.castleId);
+      setBlueprintPreview(null);
+      Notifications.success(`${blueprint.name} activation queued.`);
+    } catch {
+      // submitIntent reports the operation error.
+    }
+  };
+
+  const deactivateBlueprint = async () => {
+    if (capturing || saving) return;
+    try {
+      await submitIntent('storm.blueprint.activate', { id: '' });
+      setDraft((current) => {
+        const { target: _target, ...rest } = current;
+        return rest;
+      });
+      setBlueprintPreview(null);
+      Notifications.success('Storm blueprint reconciliation pause queued. Saved blueprints were retained.');
+    } catch {
+      // submitIntent reports the operation error.
     }
   };
 
@@ -324,7 +392,17 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     if (!canSave || saving) return;
     setSaving(true);
     try {
-      await updateConfiguration(AUTO_STORM_SECTION, parseAutoStormClientState(draft));
+      const parsed = parseAutoStormClientState(draft);
+      let settings: Omit<AutoStormClientStateV1, 'target'> | AutoStormClientStateV1 = parsed;
+      if (blueprintDocument.activeId) {
+        const { target: _legacyTarget, ...withoutLegacyTarget } = parsed;
+        settings = withoutLegacyTarget;
+      }
+      await submitIntent('config.update', {
+        section: AUTO_STORM_SECTION,
+        value: settings,
+        expectedValue: savedConfiguration,
+      });
       Notifications.success('Auto Storm settings saved.');
       onClose();
     } catch (error) {
@@ -355,10 +433,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <SectionHeading
             icon={Camera}
-            title="Target castle state"
-            description="Capture the end state from the live Storm castle. Expansions, fixed buildings, upgrades, and placements become a dependency-aware target."
+            title="Durable castle blueprints"
+            description="Capture a reusable end state. Each mode is retained separately, preflighted against official data, and activated without changing the other saved modes."
           />
-          <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
             <label className="block">
               <FieldLabel>Storm castle</FieldLabel>
               <Select
@@ -376,29 +454,55 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <Button
               variant="outline"
               disabled={!stormCastle || capturing != null}
-              isLoading={capturing === 'buildings'}
-              onClick={() => void capture('buildings')}
+              isLoading={capturing === 'functional'}
+              onClick={() => void capture('functional')}
               leftIcon={<Hammer className="h-4 w-4" />}
             >
-              Capture buildings
+              Functional
             </Button>
             <Button
               variant="outline"
               disabled={!stormCastle || capturing != null}
-              isLoading={capturing === 'full'}
-              onClick={() => void capture('full')}
+              isLoading={capturing === 'layout'}
+              onClick={() => void capture('layout')}
               leftIcon={<Castle className="h-4 w-4" />}
             >
-              Capture full state
+              Layout
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!stormCastle || capturing != null}
+              isLoading={capturing === 'exact'}
+              onClick={() => void capture('exact')}
+              leftIcon={<Camera className="h-4 w-4" />}
+            >
+              Exact clone
             </Button>
           </div>
+
+          {savedBlueprints.length > 0 ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold text-text-muted">Saved:</span>
+              {savedBlueprints.map((blueprint) => (
+                <Button
+                  key={blueprint.id}
+                  size="sm"
+                  variant={blueprint.id === blueprintDocument.activeId ? 'primary' : 'ghost'}
+                  disabled={capturing != null || saving}
+                  onClick={() => void activateBlueprint(blueprint.id)}
+                >
+                  {blueprint.name}
+                </Button>
+              ))}
+            </div>
+          ) : null}
 
           {target ? (
             <div className="mt-4 rounded-global border border-primary/20 bg-primary/5 p-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="success">{target.mode === 'full' ? 'Full state' : 'Buildings only'}</Badge>
+                    <Badge variant="success">{captureModeLabel(target.mode)}</Badge>
                     <span className="text-sm font-bold text-text-main">
                       {targetCastle?.name?.trim() || `Castle ${target.castleId}`}
                     </span>
@@ -408,13 +512,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => setDraft((current) => {
-                    const { target: _target, ...rest } = current;
-                    return rest;
-                  })}
+                  onClick={() => void deactivateBlueprint()}
                   leftIcon={<Trash2 className="h-3.5 w-3.5" />}
                 >
-                  Clear target
+                  Pause target
                 </Button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -422,6 +523,11 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 <Badge variant="outline">{target.summary.buildingCount} buildings</Badge>
                 <Badge variant="outline">{target.summary.fixedCount} fixed</Badge>
                 <Badge variant="outline">{target.summary.decorationCount} decorations</Badge>
+                {blueprintPreview ? (
+                  <Badge variant="outline">
+                    Preflight: {blueprintPreview.satisfiedCount}/{blueprintPreview.targetCount} satisfied · {blueprintPreview.actionCount} actions
+                  </Badge>
+                ) : null}
               </div>
             </div>
           ) : (
@@ -430,7 +536,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </p>
           )}
 
-          {target?.mode === 'buildings' ? (
+          {target && target.mode !== 'exact' && target.mode !== 'full' ? (
             <label className="mt-4 block border-t border-border-base pt-4">
               <FieldLabel icon={Sparkles}>Decoration preset applied after construction</FieldLabel>
               <Select
@@ -495,7 +601,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </div>
 
             <div className="mt-4 border-t border-border-base pt-4">
-              <FieldLabel>Protected building resource reserves</FieldLabel>
+              <FieldLabel>Storm castle spending reserves</FieldLabel>
               <div className="grid grid-cols-3 gap-2">
                 {RESOURCE_RESERVES.map((resource) => (
                   <label key={resource.key} className="block">
@@ -516,6 +622,34 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 ))}
               </div>
             </div>
+
+            {draft.build.allowResourceTransport ? (
+              <div className="mt-4 border-t border-border-base pt-4">
+                <FieldLabel>Protected donor reserves</FieldLabel>
+                <div className="grid grid-cols-3 gap-2">
+                  {RESOURCE_RESERVES.map((resource) => (
+                    <label key={resource.key} className="block">
+                      <span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={draft.build.sourceResourceReserves[resource.key] ?? 0}
+                        onChange={(event) => updateNumberMap(
+                          setDraft,
+                          'sourceResourceReserves',
+                          resource.key,
+                          clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                        )}
+                        className="font-mono"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <p className="mt-2 text-[11px] text-text-muted">
+                  Multi-resource shipments may use every amount above these donor floors, limited only by the Storm castle’s free storage.
+                </p>
+              </div>
+            ) : null}
 
             {draft.build.allowTimeSkips ? (
               <div className="mt-4 border-t border-border-base pt-4">
@@ -1150,6 +1284,12 @@ function autoStormTargetPriorityEnabled(
     && state.islands.sizes.includes(priority.slice('island:'.length) as AutoStormIslandSize);
 }
 
+function captureModeLabel(mode: string): string {
+  if (mode === 'functional') return 'Functional';
+  if (mode === 'layout' || mode === 'buildings') return 'Layout';
+  return 'Exact clone';
+}
+
 function updateBuild(
   setDraft: React.Dispatch<React.SetStateAction<AutoStormClientStateV1>>,
   update: Partial<AutoStormClientStateV1['build']>,
@@ -1159,7 +1299,7 @@ function updateBuild(
 
 function updateNumberMap(
   setDraft: React.Dispatch<React.SetStateAction<AutoStormClientStateV1>>,
-  field: 'resourceReserves' | 'timeSkipReserve',
+  field: 'resourceReserves' | 'sourceResourceReserves' | 'timeSkipReserve',
   key: string,
   value: number,
 ) {

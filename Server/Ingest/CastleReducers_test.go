@@ -53,6 +53,7 @@ func TestCastleSnapshotKeepsConstructionSlots(t *testing.T) {
 			"scl":{"OIDL":[4000,-1,-2],"SSC":2},
 			"CI":[{"OID":4000,"CIL":[{"CID":379,"S":0},{"CID":725,"S":1,"RS":60}]}]
 		},
+		"abpi":[{"OID":4000,"PA":{"MEAD":45}}],
 		"gui":{"I":[[215,10]],"TU":[],"HI":[],"SHI":[]}
 	}`)
 	code := 0
@@ -67,13 +68,16 @@ func TestCastleSnapshotKeepsConstructionSlots(t *testing.T) {
 	if !changed {
 		t.Fatal("castle snapshot did not report a change")
 	}
-	wantDomains := []string{"castles", "player", "alliance", "building-layout", "building-construction", "construction-items", "units"}
+	wantDomains := []string{"castles", "player", "alliance", "building-layout", "building-production", "building-construction", "construction-items", "units"}
 	if !reflect.DeepEqual(domains, wantDomains) {
 		t.Fatalf("castle snapshot domains = %v, want %v", domains, wantDomains)
 	}
 	castle := gameState.Castles[100]
 	if castle.FoodStateObservedAt.IsZero() {
 		t.Fatal("food state observation timestamp was not recorded")
+	}
+	if production := castle.BuildingProduction[4000]; production.PercentByResource["MEAD"] != 45 || !production.ObservedAt.Equal(observedAt) {
+		t.Fatalf("building production was not retained: %#v", production)
 	}
 	if !castle.ConstructionSlotsObservedAt.Equal(observedAt) {
 		t.Fatalf("construction slot observation = %v, want %v", castle.ConstructionSlotsObservedAt, observedAt)

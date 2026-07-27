@@ -11,6 +11,7 @@ jsonExamples/loginBytes.json
 /CitadelDesktop
 /CitadelOpsDesktop
 /CitadelOpsDesktopNext
+/CitadelOpsDesktop.before-*
 /Build
 /Data/
 
@@ -72,3 +73,5 @@ Server/refactor_state/
 !/cmd/CitadelOpsCLI/Main.go
 !/cmd/StormValidation/
 !/cmd/StormValidation/Main.go
+!/cmd/StormBuildSimulation/
+!/cmd/StormBuildSimulation/Main.go

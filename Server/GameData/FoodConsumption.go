@@ -54,10 +54,11 @@ var foodConsumptionDefinitions = []foodConsumptionDefinition{
 var foodResourceJSONKeys = []string{"F", "HONEY", "MEAD", "BEEF"}
 
 // EstimateFoodConsumption calculates troop provisions and the food and honey
-// inputs required to produce mead. The game-supplied consumption multiplier and
-// observed rate are preferred when available because they include temporary
-// bonuses. If those values have not been observed yet, reductions from current
-// buildings and construction items are used as the fallback.
+// inputs required by the configured brewery rate. The game-supplied consumption
+// multiplier and observed troop rate are preferred when available because they
+// include temporary bonuses. If those values have not been observed yet,
+// reductions from current buildings and construction items are used as the
+// fallback.
 func (store *Store) EstimateFoodConsumption(castle State.CastleState) (CastleFoodConsumption, error) {
 	if store == nil {
 		return CastleFoodConsumption{}, fmt.Errorf("official game data is unavailable")
@@ -164,17 +165,16 @@ func applyMeadProductionInputs(
 	if err != nil {
 		return MeadProductionDependency{}, err
 	}
-	if inputs.baseProductionPerHour <= 0 {
+	if inputs.configuredProductionPerHour <= 0 {
 		return MeadProductionDependency{}, nil
 	}
 	meadRate := result.ByResource[resourceIDs["MEAD"]]
-	productionPerHour := inputs.baseProductionPerHour
+	productionPerHour := inputs.configuredProductionPerHour
 	if meadRate.ProductionPerHour != nil {
 		productionPerHour = *meadRate.ProductionPerHour
 	}
-	scale := productionPerHour / inputs.baseProductionPerHour
-	honeyInput := inputs.baseHoneyInputPerHour * scale
-	foodInput := inputs.baseFoodInputPerHour * scale
+	honeyInput := inputs.honeyInputPerHour
+	foodInput := inputs.foodInputPerHour
 
 	foodID := resourceIDs["F"]
 	foodRate := result.ByResource[foodID]
@@ -204,9 +204,9 @@ func applyMeadProductionInputs(
 }
 
 type meadInputs struct {
-	baseProductionPerHour float64
-	baseHoneyInputPerHour float64
-	baseFoodInputPerHour  float64
+	configuredProductionPerHour float64
+	honeyInputPerHour           float64
+	foodInputPerHour            float64
 }
 
 func meadProductionInputs(store *Store, castle State.CastleState) (meadInputs, error) {
@@ -224,11 +224,22 @@ func meadProductionInputs(store *Store, castle State.CastleState) (meadInputs, e
 		if !exists || production <= 0 {
 			continue
 		}
+		buildingProduction := castle.BuildingProduction[building.InstanceID]
+		percent, observed := buildingProduction.PercentByResource["MEAD"]
+		if !observed {
+			return meadInputs{}, fmt.Errorf("brewery production percentage is unavailable for building %d", building.InstanceID)
+		}
+		if percent < 0 || percent > 100 {
+			return meadInputs{}, fmt.Errorf("brewery production percentage %.2f is invalid for building %d", percent, building.InstanceID)
+		}
 		honeyRatio, _ := record.Float64("honeyRatio")
 		foodRatio, _ := record.Float64("foodRatio")
-		result.baseProductionPerHour += production
-		result.baseHoneyInputPerHour += production * honeyRatio
-		result.baseFoodInputPerHour += production * foodRatio
+		// The catalog rate is stored in hundredths; PA.MEAD is the configured
+		// operating percentage. Live DMEAD output does not determine inputs.
+		configuredRate := production / 100 * percent / 100
+		result.configuredProductionPerHour += configuredRate
+		result.honeyInputPerHour += configuredRate * honeyRatio
+		result.foodInputPerHour += configuredRate * foodRatio
 	}
 	return result, nil
 }

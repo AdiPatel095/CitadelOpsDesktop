@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
@@ -70,6 +71,72 @@ func reduceBuildingMutation(
 	}
 	gameState.Castles[castleID] = castle
 	return []string{"castles", "building-layout", "building-construction"}, true, nil
+}
+
+func reduceBuildingProduction(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	castleID, castle, focused := focusedCastle(gameState)
+	if !focused {
+		return nil, false, nil
+	}
+	updates := parseBuildingProduction(frame.Payload, frame.ReceivedAt)
+	if len(updates) == 0 {
+		return []string{"castles", "building-production"}, false, nil
+	}
+	ensureCastleMaps(&castle)
+	before := castle.BuildingProduction
+	castle.BuildingProduction = cloneBuildingProduction(before)
+	for buildingID, update := range updates {
+		castle.BuildingProduction[buildingID] = update
+	}
+	if reflect.DeepEqual(before, castle.BuildingProduction) {
+		return []string{"castles", "building-production"}, false, nil
+	}
+	gameState.Castles[castleID] = castle
+	return []string{"castles", "building-production"}, true, nil
+}
+
+func parseBuildingProduction(raw json.RawMessage, observedAt time.Time) map[State.BuildingInstanceID]State.BuildingProduction {
+	type wireProduction struct {
+		ObjectID wireInt64                  `json:"OID"`
+		Percent  map[string]json.RawMessage `json:"PA"`
+	}
+	var rows []wireProduction
+	if json.Unmarshal(raw, &rows) != nil {
+		var row wireProduction
+		if json.Unmarshal(raw, &row) != nil {
+			return map[State.BuildingInstanceID]State.BuildingProduction{}
+		}
+		rows = []wireProduction{row}
+	}
+	result := make(map[State.BuildingInstanceID]State.BuildingProduction, len(rows))
+	for _, row := range rows {
+		buildingID := State.BuildingInstanceID(row.ObjectID)
+		if buildingID <= 0 {
+			continue
+		}
+		percentByResource := make(map[string]float64, len(row.Percent))
+		for resource, rawPercent := range row.Percent {
+			if percent, ok := rawFloat64(rawPercent); ok {
+				percentByResource[resource] = percent
+			}
+		}
+		if len(percentByResource) == 0 {
+			continue
+		}
+		result[buildingID] = State.BuildingProduction{
+			PercentByResource: percentByResource,
+			ObservedAt:        observedAt.UTC(),
+		}
+	}
+	return result
 }
 
 func mutationBuildingRows(
@@ -241,6 +308,19 @@ func cloneBuildingMap(source map[State.BuildingInstanceID]State.Building) map[St
 	result := make(map[State.BuildingInstanceID]State.Building, len(source))
 	for id, building := range source {
 		result[id] = building
+	}
+	return result
+}
+
+func cloneBuildingProduction(source map[State.BuildingInstanceID]State.BuildingProduction) map[State.BuildingInstanceID]State.BuildingProduction {
+	result := make(map[State.BuildingInstanceID]State.BuildingProduction, len(source))
+	for id, production := range source {
+		percentByResource := make(map[string]float64, len(production.PercentByResource))
+		for resource, percent := range production.PercentByResource {
+			percentByResource[resource] = percent
+		}
+		production.PercentByResource = percentByResource
+		result[id] = production
 	}
 	return result
 }

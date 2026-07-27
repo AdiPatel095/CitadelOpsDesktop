@@ -105,6 +105,19 @@ function modeLabel(mode: 'global' | 'perCastle'): string {
   return mode === 'perCastle' ? 'Per-castle plan' : 'Global plan';
 }
 
+function combinedAutomationStatus(primary: string | undefined, secondary: string | undefined, enabled: boolean): string {
+  if (!enabled) return 'disabled';
+  const statuses = [primary, secondary].filter((status): status is string => Boolean(status));
+  for (const status of ['error', 'blocked', 'failed']) {
+    if (statuses.includes(status)) return status;
+  }
+  for (const status of ['running', 'ready']) {
+    if (statuses.includes(status)) return status;
+  }
+  if (statuses.length > 0 && statuses.every((status) => status === 'complete')) return 'complete';
+  return statuses[0] ?? 'waiting';
+}
+
 function automationStatusTone(status: string): StatusTone {
   switch (status.toLowerCase()) {
     case 'completed':
@@ -191,6 +204,17 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const equipmentCleanupScheduleLabel = autoEquipmentCleanup.schedule?.enabled
     ? scheduleSummary(autoEquipmentCleanup.schedule)
     : 'Runs any time';
+  const autoStormRuntime = automationStates.autoStorm;
+  const autoStormBuildRuntime = automationStates.autoStormBuild;
+  const autoStormDetail = [
+    autoStormRuntime?.detail ? `Combat/shop: ${autoStormRuntime.detail}` : '',
+    autoStormBuildRuntime?.detail ? `Build: ${autoStormBuildRuntime.detail}` : '',
+  ].filter(Boolean).join(' · ');
+  const autoStormStatus = combinedAutomationStatus(
+    autoStormRuntime?.status,
+    autoStormBuildRuntime?.status,
+    autoStormEnabled,
+  );
 
   const features = useMemo<AutomationFeature[]>(() => [
     {
@@ -380,9 +404,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       description: 'Builds a captured Storm castle target, attacks selected forts and islands, and spends Aquamarine by priority.',
       enabled: autoStormEnabled,
       detail: autoStormEnabled
-        ? automationStates.autoStorm?.detail ?? 'Waiting for an unlocked Storm castle or configured goal'
+        ? autoStormDetail || 'Waiting for an unlocked Storm castle or configured goal'
         : 'Storm construction and attacks are paused',
-      status: automationStates.autoStorm?.status ?? (autoStormEnabled ? 'waiting' : 'disabled'),
+      status: autoStormStatus,
       icon: Crosshair,
       onToggle: toggleAutoStorm,
       onOpenSettings: onOpenAutoStormSettings,
@@ -401,6 +425,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		autoAdvisorEnabled,
     autoKhanEnabled,
     autoStormEnabled,
+    autoStormDetail,
+    autoStormStatus,
     autoToolEnabled,
     autoToolMode,
 		automationStates,

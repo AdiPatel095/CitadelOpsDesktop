@@ -140,6 +140,7 @@ type CastleState struct {
 	UnitsObservedAt             time.Time                                 `json:"unitsObservedAt,omitempty"`
 	Defense                     CastleDefenseState                        `json:"defense"`
 	Buildings                   map[BuildingInstanceID]Building           `json:"buildings"`
+	BuildingProduction          map[BuildingInstanceID]BuildingProduction `json:"buildingProduction"`
 	Layout                      CastleLayout                              `json:"layout"`
 	BuildingQueue               BuildingConstructionQueue                 `json:"buildingQueue"`
 	ConstructionSlots           map[BuildingInstanceID][]ConstructionSlot `json:"constructionSlots"`
@@ -248,6 +249,11 @@ type Building struct {
 	Level             int                `json:"level,omitempty"`
 	Layer             BuildingLayer      `json:"layer,omitempty"`
 	Placed            bool               `json:"placed"`
+}
+
+type BuildingProduction struct {
+	PercentByResource map[string]float64 `json:"percentByResource"`
+	ObservedAt        time.Time          `json:"observedAt,omitempty"`
 }
 
 const (

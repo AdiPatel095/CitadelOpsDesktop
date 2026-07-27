@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AutoBirdHoverPopover from './AutoBirdHoverPopover';
 import CastleFocusSwitcher from './CastleFocusSwitcher';
+import DailyAttackTracker from './DailyAttackTracker';
 import { Button, Badge } from './ui';
 
 const showHeaderMemoryBadges =
@@ -301,6 +302,7 @@ const Header: React.FC<HeaderProps> = ({
           <div className="flex min-w-0 items-center gap-2">
             <CastleFocusSwitcher />
           </div>
+          <DailyAttackTracker />
           
           {showHeaderMemoryBadges && (
             <>

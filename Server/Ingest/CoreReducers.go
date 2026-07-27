@@ -55,6 +55,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"gei", reduceEquipmentStorage},
 		{"ggm", reduceGemStorage},
 		{"gii", reduceConstructionInventory},
+		{"abpi", reduceBuildingProduction},
 		{"jaa", combineReducers(reduceCastleSnapshot, reduceEmbeddedProductionSnapshots, reduceEmbeddedStorageInventory, reduceResponseResources, reducePlayerProtectionMode)},
 		{"jca", combineReducers(reduceCastleSnapshot, reducePlayerProtectionMode)},
 		{"gui", reduceFocusedUnits},

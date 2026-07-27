@@ -63,7 +63,7 @@ func TestExpansionPreviewBuildsMultiGoodKingdomTransportAction(t *testing.T) {
 	if !ok || len(goods) != 2 || goods[0]["resourceId"] != State.ResourceID(3) || goods[1]["resourceId"] != State.ResourceID(4) {
 		t.Fatalf("transport goods = %#v", result.RecommendedAction.Arguments["goods"])
 	}
-	if goods[0]["amount"] != int64(6143) || goods[1]["amount"] != int64(6143) {
+	if goods[0]["amount"] != int64(5460) || goods[1]["amount"] != int64(5460) {
 		t.Fatalf("transport goods do not include the kingdom delivery loss = %#v", goods)
 	}
 }
@@ -88,7 +88,7 @@ func TestExpansionPreviewFundsStorageUpgradeBeforeCapacityBoundExpansion(t *test
 		t.Fatalf("recommended action = %#v", result.RecommendedAction)
 	}
 	goods, ok := result.RecommendedAction.Arguments["goods"].([]map[string]any)
-	if !ok || len(goods) != 2 || goods[0]["amount"] != int64(1745) || goods[1]["amount"] != int64(1745) {
+	if !ok || len(goods) != 2 || goods[0]["amount"] != int64(1552) || goods[1]["amount"] != int64(1552) {
 		t.Fatalf("storage funding goods = %#v", result.RecommendedAction.Arguments["goods"])
 	}
 }

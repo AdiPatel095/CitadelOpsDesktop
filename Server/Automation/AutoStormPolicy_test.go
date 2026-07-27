@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/AttackPresets"
+	"CitadelDesktop/Server/Buildings"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
@@ -39,6 +40,65 @@ func TestNormalizeAutoStormSettingsFixesMapRefreshAtTwoHours(t *testing.T) {
 	normalizeAutoStormSettings(&settings)
 	if settings.MapRefreshIntervalSec != 7_200 {
 		t.Fatalf("map refresh = %d, want 7200", settings.MapRefreshIntervalSec)
+	}
+}
+
+func TestAutoStormExpansionUsesCapturedCoordinatesInsteadOfKingdomSpaceIDs(t *testing.T) {
+	missing := []Buildings.TargetGround{{DefinitionID: 201, GridX: 220, GridY: 190, Direction: 3}}
+	selected, found := autoStormGroundForExpansion(missing, []int64{4})
+	if !found || selected != missing[0] {
+		t.Fatalf("selected expansion = %#v, found=%t", selected, found)
+	}
+}
+
+func TestAutoStormTargetTransportBundlesGoodsCapacityAndImmediateSkip(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	woodCapacity := float64(200)
+	stoneCapacity := float64(500)
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Resources[3] = State.ResourceBalance{Amount: 100, Capacity: &woodCapacity}
+	storm.Resources[4] = State.ResourceBalance{Amount: 50, Capacity: &stoneCapacity}
+	donor := autoStormTestCastle(10, 0, "Donor")
+	donor.Resources[3] = State.ResourceBalance{Amount: 1_000_000}
+	donor.Resources[4] = State.ResourceBalance{Amount: 1_000_000}
+	state.Castles[storm.ID] = storm
+	state.Castles[donor.ID] = donor
+	state.KingdomTransport.ObservedAt = now
+	state.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	state.Player.Currencies[1005] = 1
+	settings := defaultAutoStormSettings()
+	settings.Build.AllowResourceTransport = true
+	settings.Build.AllowTimeSkips = true
+	settings.Build.SourceResourceReserves = map[string]float64{"3": 100_000, "4": 200_000}
+	action := Buildings.TargetAction{Costs: []Buildings.CostStatus{
+		{Scope: GameData.BuildingCostCastleResource, DefinitionID: 3, Shortfall: 1_000},
+		{Scope: GameData.BuildingCostCastleResource, DefinitionID: 4, Shortfall: 1_000},
+	}}
+
+	decision, detail := autoStormTargetTransportDecision(
+		Snapshot{State: state, Now: now}, settings, storm, action, map[string]float64{},
+	)
+	if decision == nil || decision.Request == nil || decision.Request.Name != "resource.ship" || detail != "" {
+		t.Fatalf("transport decision = %#v detail=%q", decision, detail)
+	}
+	var arguments struct {
+		Goods []struct {
+			ResourceID State.ResourceID `json:"resourceId"`
+			Amount     int64            `json:"amount"`
+		} `json:"goods"`
+		WorkflowOwner    string `json:"workflowOwner"`
+		TimeSkipID       string `json:"timeSkipId"`
+		MinimumRemaining int64  `json:"minimumRemaining"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+		t.Fatal(err)
+	}
+	if len(arguments.Goods) != 2 || arguments.Goods[0].Amount != 111 || arguments.Goods[1].Amount != 500 {
+		t.Fatalf("capacity-bounded multi-resource goods = %#v", arguments.Goods)
+	}
+	if arguments.WorkflowOwner != autoStormTransportOwner || arguments.TimeSkipID != "MS5" || arguments.MinimumRemaining != 0 {
+		t.Fatalf("shipment workflow and immediate skip = %#v", arguments)
 	}
 }
 

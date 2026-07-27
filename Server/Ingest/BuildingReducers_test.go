@@ -10,6 +10,27 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+func TestBuildingProductionReducerKeepsBreweryPercentage(t *testing.T) {
+	gameState := State.NewGameState()
+	castle := newCastleState(100)
+	castle.Focused = true
+	gameState.Castles[castle.ID] = castle
+	code := 0
+	observedAt := time.Date(2026, 7, 27, 20, 0, 0, 0, time.UTC)
+
+	_, changed, err := reduceBuildingProduction(context.Background(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "abpi", ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"OID":4126,"PA":{"MEAD":45},"MS":{"F":0,"HONEY":0}}`),
+	}, &gameState, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	production := gameState.Castles[100].BuildingProduction[4126]
+	if !changed || production.PercentByResource["MEAD"] != 45 || !production.ObservedAt.Equal(observedAt) {
+		t.Fatalf("brewery production percentage was not retained: changed=%t production=%#v", changed, production)
+	}
+}
+
 func TestBuildingMutationReducersReconcileLayoutQueueAndRemoval(t *testing.T) {
 	gameState := State.NewGameState()
 	castle := newCastleState(100)
