@@ -33,40 +33,37 @@ func TestProtectedHoldingsUseMemberProtectionAndKingdomDistance(t *testing.T) {
 	}
 }
 
-func TestAutoBirdRefreshesStaleAllianceRosterBeforeChoosingTargets(t *testing.T) {
+func TestAutoBirdStartsEachCastleWithAINAndFreshJAAPreparation(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
 	gameState.Alliance.ID = 9
+	gameState.Player.ProtectionMode.ObservedAt = now
+	gameState.Castles[10] = State.CastleState{ID: 10, KingdomID: 0, X: 10, Y: 10}
 	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
-	if err != nil || decision.Request == nil || decision.Request.Name != "alliance.refresh" {
-		t.Fatalf("stale alliance refresh = %#v, err=%v", decision, err)
+	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
+		t.Fatalf("castle preparation = %#v, err=%v", decision, err)
 	}
 	if !decision.ReevaluateOnSuccess {
-		t.Fatal("alliance refresh should continue the current bird cycle after success")
+		t.Fatal("castle preparation should continue the current bird cycle after success")
 	}
 	if want := now.Add(30 * time.Second); !decision.NextCheckAt.Equal(want) {
-		t.Fatalf("alliance refresh next check = %s, want %s", decision.NextCheckAt, want)
+		t.Fatalf("castle preparation next check = %s, want %s", decision.NextCheckAt, want)
 	}
 }
 
-func TestAutoBirdDoesNotRefreshAnEmptyFreshAllianceRoster(t *testing.T) {
+func TestAutoBirdStillRunsCastlePreparationWhenCachedAllianceRosterIsEmpty(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
 	gameState.Alliance.ID = 9
 	gameState.Alliance.ObservedAt = now
 	gameState.Player.ProtectionMode.ObservedAt = now
+	gameState.Castles[10] = State.CastleState{ID: 10, KingdomID: 0, X: 10, Y: 10}
 	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decision.Request != nil {
-		t.Fatalf("fresh empty alliance roster requested another refresh: %#v", decision)
-	}
-	if decision.Status != "idle" {
-		t.Fatalf("fresh empty alliance roster status = %q, want idle", decision.Status)
-	}
-	if want := now.Add(playerProtectionRefreshInterval); !decision.NextCheckAt.Equal(want) {
-		t.Fatalf("fresh empty roster next check = %s, want %s", decision.NextCheckAt, want)
+	if decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
+		t.Fatalf("empty cached roster did not run the castle's fresh AIN cycle: %#v", decision)
 	}
 }
 
@@ -162,6 +159,160 @@ func TestStationableUnitsExcludesToolsFromBirdAndStationMovements(t *testing.T) 
 	}
 }
 
+func TestAutoBirdPreparationCarriesConfiguredReservesAndLimits(t *testing.T) {
+	now := time.Date(2026, 7, 29, 14, 0, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.autoBird": json.RawMessage(`{
+			"ignoreSettings":{
+				"settings":{"10":[{"id":489,"amount":25}]},
+				"minSend":50
+			}
+		}`),
+	}}
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Configuration: configuration, Now: now,
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
+		t.Fatalf("Auto Bird decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		MinimumRPTDays    int           `json:"minimumRPTDays"`
+		MinimumDelayHours int           `json:"minimumDelayHours"`
+		MaximumDelayHours int           `json:"maximumDelayHours"`
+		MinimumSend       int64         `json:"minimumSend"`
+		Reserves          []stationUnit `json:"reserves"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.MinimumRPTDays != 3 || request.MinimumDelayHours != 6 ||
+		request.MaximumDelayHours != 12 || request.MinimumSend != 50 {
+		t.Fatalf("castle-cycle settings = %+v", request)
+	}
+	if len(request.Reserves) != 1 || request.Reserves[0] != (stationUnit{UnitID: 489, Amount: 25}) {
+		t.Fatalf("castle-cycle reserves = %#v", request.Reserves)
+	}
+}
+
+func TestAutoBirdDispatchesOnlyAfterCastlePreparationIsFresh(t *testing.T) {
+	now := time.Date(2026, 7, 29, 14, 0, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	gameState.Castles[10] = State.CastleState{
+		ID: 10, KingdomID: 0, X: 10, Y: 10, Focused: true, UnitsObservedAt: now,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
+	}
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseDispatchReady,
+		SourceCastleID: 10, TargetCastleID: 20, Units: map[State.UnitID]int64{489: 100},
+		DelayHours: 8, AllianceObservedAt: now, UnitsObservedAt: now, UpdatedAt: now,
+	}
+
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.dispatch" {
+		t.Fatalf("prepared Auto Bird decision = %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoBirdRunsJAAAfterAINSelectsTarget(t *testing.T) {
+	now := time.Date(2026, 7, 29, 14, 0, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseTargetReady,
+		SourceCastleID: 10, TargetCastleID: 20, DelayHours: 8, WaitSeconds: 8 * 3600,
+		AllianceObservedAt: now, UpdatedAt: now,
+	}
+
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.prepare" {
+		t.Fatalf("target-ready Auto Bird decision = %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoBirdWaitingCastleDoesNotBlockAnotherCastleCycle(t *testing.T) {
+	now := time.Date(2026, 7, 29, 14, 0, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	gameState.Castles[11] = State.CastleState{
+		ID: 11, KingdomID: 0, X: 11, Y: 11,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
+	}
+	retryAt := now.Add(5 * time.Minute)
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseWaiting,
+		SourceCastleID: 10, AllianceObservedAt: now.Add(-time.Minute), UnitsObservedAt: now,
+		NextAttemptAt: &retryAt, StatusDetail: "No protected alliance bird target is available for this castle",
+		UpdatedAt: now,
+	}
+
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
+		t.Fatalf("independent castle decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		SourceCastleID State.CastleID `json:"sourceCastleId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.SourceCastleID != 11 {
+		t.Fatalf("prepared castle = %d, want independent castle 11", request.SourceCastleID)
+	}
+}
+
+func TestAutoBirdTargetlessCastleHonorsItsOwnRetryDespiteOldUnitState(t *testing.T) {
+	now := time.Date(2026, 7, 29, 14, 0, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	gameState.Alliance.Holdings = nil
+	gameState.Castles[10] = State.CastleState{
+		ID: 10, KingdomID: 0, X: 10, Y: 10, UnitsObservedAt: now,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
+	}
+	retryAt := now.Add(5 * time.Minute)
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseWaiting,
+		SourceCastleID: 10, AllianceObservedAt: now,
+		NextAttemptAt: &retryAt, UpdatedAt: now,
+	}
+
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+	})
+	if err != nil || decision.Request != nil ||
+		!decision.NextCheckAt.After(now) || decision.NextCheckAt.After(retryAt) {
+		t.Fatalf("target-less castle retry decision = %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoBirdPublishesPersistedReturnWhenMovementSnapshotOmitsBird(t *testing.T) {
+	now := time.Date(2026, 7, 29, 14, 0, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	expectedReturn := now.Add(8 * time.Hour)
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseAway,
+		SourceCastleID: 10, TargetCastleID: 20, MovementID: 50,
+		ExpectedReturnAt: &expectedReturn, NextAttemptAt: &expectedReturn, UpdatedAt: now,
+	}
+
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+	})
+	if err != nil || decision.Request != nil {
+		t.Fatalf("persisted return decision = %#v err=%v", decision, err)
+	}
+	if got := int64(decision.Metrics[autoBirdNextMetricKey]); got != expectedReturn.UnixMilli() {
+		t.Fatalf("persisted bird return = %d, want %d", got, expectedReturn.UnixMilli())
+	}
+	if got := int64(decision.Metrics[autoBirdCastleReturnMetricKey+"10"]); got != expectedReturn.UnixMilli() {
+		t.Fatalf("persisted castle return = %d, want %d", got, expectedReturn.UnixMilli())
+	}
+}
+
 func TestAutoBirdRecentTrackedLaunchBlocksDuplicateUntilMovementAppears(t *testing.T) {
 	now := time.Date(2026, 7, 22, 15, 0, 0, 0, time.UTC)
 	gameState, gameData := autoBirdEligibleTestState(t, now)
@@ -178,7 +329,7 @@ func TestAutoBirdRecentTrackedLaunchBlocksDuplicateUntilMovementAppears(t *testi
 	}
 }
 
-func TestAutoBirdPublishesExpectedReturnWithoutSchedulingFromOutboundMovement(t *testing.T) {
+func TestAutoBirdRecordsTheCastleOutboundExpectedReturn(t *testing.T) {
 	now := time.Date(2026, 7, 22, 15, 0, 0, 0, time.UTC)
 	gameState, gameData := autoBirdEligibleTestState(t, now)
 	arrivesAt := now.Add(10 * time.Minute)
@@ -201,7 +352,7 @@ func TestAutoBirdPublishesExpectedReturnWithoutSchedulingFromOutboundMovement(t 
 		t.Fatalf("expected bird castle = %d, want 10", got)
 	}
 	if decision.NextCheckAt.IsZero() || !decision.NextCheckAt.Before(expectedReturn) {
-		t.Fatalf("outbound projection replaced the live policy wake with %s", decision.NextCheckAt)
+		t.Fatalf("outbound return did not retain the earlier safety wake: %s", decision.NextCheckAt)
 	}
 }
 
@@ -316,7 +467,7 @@ func TestAutoBirdResendsReturnedCastleWhileAnotherBirdIsActive(t *testing.T) {
 	}
 
 	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: gameState, GameData: gameData, Now: now})
-	if err != nil || decision.Request == nil || decision.Request.Name != "troops.station" {
+	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
 		t.Fatalf("returned castle bird decision = %#v err=%v", decision, err)
 	}
 	var request struct {
@@ -360,6 +511,32 @@ func TestAutoStationDoesNotRecallAutoBirdAfterItsTrackedEvacuationEnded(t *testi
 	}
 }
 
+func TestAutoStationDoesNotRecallSameRouteBirdWithoutTrackedMovementID(t *testing.T) {
+	now := time.Date(2026, 7, 29, 15, 0, 0, 0, time.UTC)
+	arrivesAt := now.Add(time.Minute)
+	safeAfter := now.Add(-time.Minute)
+	gameState := State.NewGameState()
+	gameState.Player.ProtectionMode.ObservedAt = now
+	gameState.MovementSnapshot.ObservedAt = now
+	gameState.Stationing["autoStation:10"] = State.StationingOperation{
+		ID: "autoStation:10", Purpose: "autoStation", SourceCastleID: 10, TargetCastleID: 20,
+		SafeAfter: &safeAfter, UpdatedAt: now.Add(-time.Hour),
+	}
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", SourceCastleID: 10, TargetCastleID: 20,
+		MovementID: 51, UpdatedAt: now,
+	}
+	gameState.Movements[51] = State.MovementState{
+		ID: 51, Direction: 0, SourceCastleID: 10, TargetCastleID: 20,
+		TravelSeconds: 60, WaitSeconds: 6 * 3600, ArrivesAt: &arrivesAt,
+	}
+
+	decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
+	if err != nil || decision.Request != nil || decision.Status != "armed" {
+		t.Fatalf("untracked Auto Station record borrowed Auto Bird movement = %#v err=%v", decision, err)
+	}
+}
+
 func autoBirdEligibleTestState(t *testing.T, now time.Time) (State.GameState, *GameData.Store) {
 	t.Helper()
 	gameData, err := GameData.DecodeStore([]byte(`{
@@ -398,6 +575,66 @@ func TestAutoStationRefreshesStaleAllianceRosterBeforeEvacuating(t *testing.T) {
 	decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
 	if err != nil || decision.Status != "threat" || decision.Request == nil || decision.Request.Name != "alliance.refresh" {
 		t.Fatalf("stale alliance refresh = %#v, err=%v", decision, err)
+	}
+}
+
+func TestAutoStationUsesOptInOpenGateFallbackAfterStationFailure(t *testing.T) {
+	now := time.Date(2026, 7, 29, 17, 0, 0, 0, time.UTC)
+	arrives := now.Add(30 * time.Second)
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[{"wodID":489}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	gameState.Player.ID = 7
+	gameState.Player.ProtectionMode = State.PlayerProtectionModeState{ModeState: -1, ObservedAt: now}
+	gameState.Alliance = State.AllianceState{
+		ID: 9, ObservedAt: now,
+		Members: []State.AllianceMember{{PlayerID: 1, ReturnProtectionSec: 4 * 86_400}},
+		Holdings: []State.AllianceHolding{{
+			CastleID: 20, PlayerID: 1, KingdomID: 0, X: 20, Y: 20, SlotType: 1,
+		}},
+	}
+	gameState.Castles[100] = State.CastleState{
+		ID: 100, KingdomID: 0, SlotType: 4, X: 10, Y: 10, Name: "Outpost",
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
+	}
+	gameState.Movements[1] = State.MovementState{
+		ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7,
+		SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 100, ArrivesAt: &arrives,
+	}
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`),
+	}}
+
+	decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Configuration: configuration, Now: now,
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "troops.station" {
+		t.Fatalf("Auto Station evacuation decision = %#v err=%v", decision, err)
+	}
+	if decision.FailureFallback == nil || decision.FailureFallback.Name != "defense.open_gate" {
+		t.Fatalf("Auto Station failure fallback = %#v", decision.FailureFallback)
+	}
+	var fallback struct {
+		CastleID              State.CastleID `json:"castleId"`
+		RequireIncomingAttack bool           `json:"requireIncomingAttack"`
+		RequireProtectionMode bool           `json:"requireProtectionMode"`
+	}
+	if err := json.Unmarshal(decision.FailureFallback.Arguments, &fallback); err != nil {
+		t.Fatal(err)
+	}
+	if fallback.CastleID != 100 || !fallback.RequireIncomingAttack || fallback.RequireProtectionMode {
+		t.Fatalf("Open Gate failure fallback = %+v", fallback)
+	}
+
+	decision, err = NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+	})
+	if err != nil || decision.Request == nil || decision.FailureFallback != nil {
+		t.Fatalf("non-opt-in Auto Station failure fallback = %#v err=%v", decision, err)
 	}
 }
 

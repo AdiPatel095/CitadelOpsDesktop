@@ -22,10 +22,17 @@ type kingdomTroopShipmentUnit struct {
 }
 
 type kingdomTroopShipmentRequest struct {
-	SourceCastleID  State.CastleID             `json:"sourceCastleId"`
-	TargetCastleID  State.CastleID             `json:"targetCastleId"`
-	TargetKingdomID State.KingdomID            `json:"targetKingdomId"`
-	Units           []kingdomTroopShipmentUnit `json:"units"`
+	SourceCastleID      State.CastleID             `json:"sourceCastleId"`
+	TargetCastleID      State.CastleID             `json:"targetCastleId"`
+	TargetKingdomID     State.KingdomID            `json:"targetKingdomId"`
+	MaximumTargetTroops int64                      `json:"maximumTargetTroops,omitempty"`
+	Units               []kingdomTroopShipmentUnit `json:"units"`
+}
+
+type kingdomTroopSkipRequest struct {
+	TargetKingdomID  State.KingdomID `json:"targetKingdomId"`
+	TimeSkipID       string          `json:"timeSkipId"`
+	MinimumRemaining int64           `json:"minimumRemaining,omitempty"`
 }
 
 func planKingdomTroopRefresh(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
@@ -65,6 +72,16 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if request.MaximumTargetTroops < 0 {
+		return Intent.Plan{}, fmt.Errorf("maximumTargetTroops cannot be negative")
+	}
+	if request.MaximumTargetTroops > 0 {
+		if err := verifyKingdomTroopTargetCap(
+			input.GameData, input.State, target, units, request.MaximumTargetTroops,
+		); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	wireUnits := make([][2]int64, 0, len(units))
 	summaryUnits := make([]string, 0, len(units))
 	claims := []string{
@@ -97,6 +114,14 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 			Name: "Verify kingdom troop transport availability", Action: "kingdom.transport.verify_available",
 			ActionArguments: guardArguments,
 		}),
+	)
+	if request.MaximumTargetTroops > 0 {
+		steps = append(steps, Intent.Step{
+			Name: "Verify target troop inventory cap", Action: "troops.kingdom.guard_target_cap",
+			ActionArguments: consumeArguments,
+		})
+	}
+	steps = append(steps,
 		commandStep("Start kingdom troop transfer", "kut", payload, "kut"),
 		Intent.Step{Name: "Consume confirmed donor troops", Action: "troops.kingdom.consume_source", ActionArguments: consumeArguments},
 	)
@@ -105,6 +130,150 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 		Summary: fmt.Sprintf("Transfer %s from %s to %s", strings.Join(summaryUnits, ", "), castleLabel(source), castleLabel(target)),
 		Steps:   steps,
 	}, nil
+}
+
+func (application *Application) guardKingdomTroopTargetCap(_ context.Context, arguments json.RawMessage) error {
+	var request kingdomTroopShipmentRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	if request.MaximumTargetTroops <= 0 {
+		return nil
+	}
+	gameData, ready := application.GameData.Current()
+	if !ready {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	gameState := application.State.Snapshot()
+	source, sourceExists := gameState.Castles[request.SourceCastleID]
+	target, targetExists := gameState.Castles[request.TargetCastleID]
+	if !sourceExists || !targetExists || target.KingdomID != request.TargetKingdomID {
+		return fmt.Errorf("kingdom troop transfer castles changed before dispatch")
+	}
+	units, err := normalizeKingdomTroopShipment(gameData, source, request.Units)
+	if err != nil {
+		return err
+	}
+	return verifyKingdomTroopTargetCap(gameData, gameState, target, units, request.MaximumTargetTroops)
+}
+
+func verifyKingdomTroopTargetCap(
+	gameData *GameData.Store,
+	gameState State.GameState,
+	target State.CastleState,
+	units []kingdomTroopShipmentUnit,
+	maximum int64,
+) error {
+	if maximum <= 0 {
+		return nil
+	}
+	current, err := kingdomTroopTargetInventory(gameData, gameState, target)
+	if err != nil {
+		return err
+	}
+	incoming := int64(0)
+	for _, unit := range units {
+		incoming = saturatingTroopAdd(incoming, max(int64(0), unit.Amount))
+	}
+	if current > maximum-incoming {
+		return fmt.Errorf(
+			"troop transfer would put %s above its %d-troop import cap (%d committed, %d incoming)",
+			castleLabel(target), maximum, current, incoming,
+		)
+	}
+	return nil
+}
+
+func kingdomTroopTargetInventory(
+	gameData *GameData.Store,
+	gameState State.GameState,
+	target State.CastleState,
+) (int64, error) {
+	if gameData == nil {
+		return 0, fmt.Errorf("official game data is unavailable")
+	}
+	catalog, err := gameData.Catalog("units")
+	if err != nil {
+		return 0, err
+	}
+	countMap := func(units map[State.UnitID]int64) (int64, error) {
+		total := int64(0)
+		for unitID, amount := range units {
+			if unitID <= 0 || amount <= 0 {
+				continue
+			}
+			raw, found := catalog.Find(strconv.FormatInt(int64(unitID), 10))
+			if found {
+				record, decodeErr := GameData.DecodeRecord(raw)
+				if decodeErr != nil {
+					return 0, decodeErr
+				}
+				if GameData.IsToolRecord(record) {
+					continue
+				}
+			}
+			total = saturatingTroopAdd(total, amount)
+		}
+		return total, nil
+	}
+	total, err := countMap(target.Units.Stationed)
+	if err != nil {
+		return 0, err
+	}
+	traveling, err := countMap(target.Units.Traveling)
+	if err != nil {
+		return 0, err
+	}
+	movementTroops := int64(0)
+	for _, movement := range gameState.Movements {
+		if movement.SourceCastleID != target.ID {
+			continue
+		}
+		amount, countErr := countMap(movement.Units)
+		if countErr != nil {
+			return 0, countErr
+		}
+		movementTroops = saturatingTroopAdd(movementTroops, amount)
+	}
+	total = saturatingTroopAdd(total, max(traveling, movementTroops))
+	for _, pending := range gameState.KingdomTransport.PendingUnits {
+		if pending.KingdomID != target.KingdomID {
+			continue
+		}
+		units := make(map[State.UnitID]int64, len(pending.Units))
+		for _, unit := range pending.Units {
+			units[unit.UnitID] = saturatingTroopAdd(units[unit.UnitID], unit.Amount)
+		}
+		amount, countErr := countMap(units)
+		if countErr != nil {
+			return 0, countErr
+		}
+		total = saturatingTroopAdd(total, amount)
+	}
+	for _, operation := range gameState.Storm.IslandReturns {
+		if operation.SourceCastleID != target.ID || operation.Status != State.StormIslandReturnReady {
+			continue
+		}
+		amount, countErr := countMap(operation.UnitsToReturn())
+		if countErr != nil {
+			return 0, countErr
+		}
+		total = saturatingTroopAdd(total, amount)
+	}
+	return total, nil
+}
+
+func saturatingTroopAdd(left int64, right int64) int64 {
+	if left <= 0 {
+		return max(int64(0), right)
+	}
+	if right <= 0 {
+		return left
+	}
+	if left > int64(^uint64(0)>>1)-right {
+		return int64(^uint64(0) >> 1)
+	}
+	return left + right
 }
 
 func requireStormTroopSupportMead(gameData *GameData.Store, target State.CastleState) error {
@@ -214,47 +383,60 @@ func normalizeKingdomTroopShipment(
 }
 
 func planKingdomTroopSkip(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
-	var request struct {
-		TargetKingdomID  State.KingdomID `json:"targetKingdomId"`
-		TimeSkipID       string          `json:"timeSkipId"`
-		MinimumRemaining int64           `json:"minimumRemaining,omitempty"`
-	}
+	var request kingdomTroopSkipRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
 	}
-	request.TimeSkipID = strings.ToUpper(strings.TrimSpace(request.TimeSkipID))
-	if request.TargetKingdomID < 0 || request.TimeSkipID == "" {
-		return Intent.Plan{}, fmt.Errorf("targetKingdomId and timeSkipId are required")
-	}
-	pending := false
-	for _, transport := range input.State.KingdomTransport.PendingUnits {
-		if transport.KingdomID == request.TargetKingdomID && transport.RemainingSec > 0 {
-			pending = true
-			break
-		}
-	}
-	if !pending {
-		return Intent.Plan{}, fmt.Errorf("kingdom %d has no pending troop transport", request.TargetKingdomID)
-	}
-	currencyID, err := officialCurrencyID(input.GameData, request.TimeSkipID)
+	step, currencyID, timeSkipLabel, err := kingdomTroopSkipStep(input, request, true)
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	return Intent.Plan{
+		Claims: []string{
+			"troop-transport", "kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10),
+			"currency:" + strconv.FormatInt(int64(currencyID), 10),
+		},
+		Summary: fmt.Sprintf("Apply a %s to kingdom %d troop transport", timeSkipLabel, request.TargetKingdomID),
+		Steps:   []Intent.Step{step},
+	}, nil
+}
+
+func kingdomTroopSkipStep(
+	input Intent.PlanningContext,
+	request kingdomTroopSkipRequest,
+	requirePending bool,
+) (Intent.Step, State.CurrencyID, string, error) {
+	request.TimeSkipID = strings.ToUpper(strings.TrimSpace(request.TimeSkipID))
+	if request.TargetKingdomID < 0 || request.TimeSkipID == "" {
+		return Intent.Step{}, 0, "", fmt.Errorf("targetKingdomId and timeSkipId are required")
+	}
+	if requirePending {
+		pending := false
+		for _, transport := range input.State.KingdomTransport.PendingUnits {
+			if transport.KingdomID == request.TargetKingdomID && transport.RemainingSec > 0 {
+				pending = true
+				break
+			}
+		}
+		if !pending {
+			return Intent.Step{}, 0, "", fmt.Errorf("kingdom %d has no pending troop transport", request.TargetKingdomID)
+		}
+	}
+	currencyID, err := officialCurrencyID(input.GameData, request.TimeSkipID)
+	if err != nil {
+		return Intent.Step{}, 0, "", err
+	}
 	timeSkipLabel := officialTimeSkipLabel(input.GameData, int64(currencyID), request.TimeSkipID)
 	if request.MinimumRemaining < 0 {
-		return Intent.Plan{}, fmt.Errorf("minimumRemaining cannot be negative")
+		return Intent.Step{}, 0, "", fmt.Errorf("minimumRemaining cannot be negative")
 	}
 	if input.State.Player.Currencies[currencyID]-1 < float64(request.MinimumRemaining) {
-		return Intent.Plan{}, fmt.Errorf("no %s is available", timeSkipLabel)
+		return Intent.Step{}, 0, "", fmt.Errorf("no %s is available", timeSkipLabel)
 	}
 	payload, _ := json.Marshal(map[string]string{
 		"MST": request.TimeSkipID,
 		"KID": strconv.FormatInt(int64(request.TargetKingdomID), 10),
 		"TT":  "1",
 	})
-	return Intent.Plan{
-		Claims:  []string{"troop-transport", "kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10)},
-		Summary: fmt.Sprintf("Apply a %s to kingdom %d troop transport", timeSkipLabel, request.TargetKingdomID),
-		Steps:   []Intent.Step{commandStep("Skip kingdom troop transport time", "msk", payload, "msk")},
-	}, nil
+	return commandStep("Skip kingdom troop transport time", "msk", payload, "msk"), currencyID, timeSkipLabel, nil
 }

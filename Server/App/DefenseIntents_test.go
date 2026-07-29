@@ -65,8 +65,12 @@ func TestResolveDefenseKeepBuildsValidatedDFKPayload(t *testing.T) {
 	request := defenseKeepResolvedRequest{
 		defenseKeepUpdateRequest: defenseKeepUpdateRequest{
 			CastleID: 10, MAUCT: 973, UnitTypePercent: 50,
-			PrimaryToolSlots:   emptyDefenseToolSlots(),
-			SecondaryToolSlots: emptyDefenseToolSlots(),
+			PrimaryToolSlots: []State.DefenseToolSlot{
+				{DefinitionID: 505, Amount: 2}, {DefinitionID: -1}, {DefinitionID: -1},
+			},
+			SecondaryToolSlots: []State.DefenseToolSlot{
+				{DefinitionID: 506, Amount: 3}, {DefinitionID: -1}, {DefinitionID: -1},
+			},
 		},
 		PreviousDefenseObservedAt: now.Add(-time.Minute), PreviousInventoryObservedAt: now.Add(-time.Minute),
 	}
@@ -80,7 +84,7 @@ func TestResolveDefenseKeepBuildsValidatedDFKPayload(t *testing.T) {
 	if step.Command.Opcode != "dfk" || step.AwaitOpcode != "dfk" {
 		t.Fatalf("DFK step = %#v", step)
 	}
-	if got := string(step.Command.Payload); got != `{"CX":1164,"CY":1167,"AID":10,"MAUCT":973,"UC":50,"S":[[-1,0],[-1,0],[-1,0]],"STS":[[-1,0],[-1,0],[-1,0]]}` {
+	if got := string(step.Command.Payload); got != `{"CX":1164,"CY":1167,"AID":10,"MAUCT":973,"UC":50,"S":[[505,2],[-1,0],[-1,0]],"STS":[[506,3],[-1,0],[-1,0]]}` {
 		t.Fatalf("DFK payload = %s", got)
 	}
 }
@@ -109,18 +113,85 @@ func TestResolveDefenseKeepRejectsStaleSnapshot(t *testing.T) {
 	}
 }
 
-func TestDefenseKeepGuardsUnconfirmedSlotChanges(t *testing.T) {
+func TestDefenseKeepAcceptsCatalogBackedKeepAndSceatRows(t *testing.T) {
 	request := defenseKeepUpdateRequest{
 		CastleID: 10, MAUCT: 250, UnitTypePercent: 50,
-		PrimaryToolSlots:   []State.DefenseToolSlot{{DefinitionID: 501, Amount: 1}, {DefinitionID: -1}, {DefinitionID: -1}},
-		SecondaryToolSlots: emptyDefenseToolSlots(),
+		PrimaryToolSlots:   []State.DefenseToolSlot{{DefinitionID: 505, Amount: 1}, {DefinitionID: -1}, {DefinitionID: -1}},
+		SecondaryToolSlots: []State.DefenseToolSlot{{DefinitionID: 506, Amount: 1}, {DefinitionID: -1}, {DefinitionID: -1}},
 	}
 	arguments, _ := json.Marshal(request)
-	_, err := planDefenseKeepUpdate(context.Background(), Intent.PlanningContext{
+	plan, err := planDefenseKeepUpdate(context.Background(), Intent.PlanningContext{
 		State: defenseIntentState(), GameData: defenseIntentGameData(t),
 	}, arguments)
-	if err == nil || !strings.Contains(err.Error(), "DFK S/STS changes are not capture-confirmed") {
-		t.Fatalf("DFK slot guard error = %v", err)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 5 || plan.Steps[2].Resolver != "defense.keep.build" {
+		t.Fatalf("DFK plan = %#v", plan.Steps)
+	}
+}
+
+func TestDefenseKeepRejectsWrongCatalogSlotTypes(t *testing.T) {
+	tests := []struct {
+		name      string
+		primary   []State.DefenseToolSlot
+		secondary []State.DefenseToolSlot
+		want      string
+	}{
+		{
+			name:      "wall tool in keep row",
+			primary:   []State.DefenseToolSlot{{DefinitionID: 501, Amount: 1}, {DefinitionID: -1}, {DefinitionID: -1}},
+			secondary: emptyDefenseToolSlots(),
+			want:      "keep tool slots",
+		},
+		{
+			name:      "keep tool in Sceat row",
+			primary:   emptyDefenseToolSlots(),
+			secondary: []State.DefenseToolSlot{{DefinitionID: 505, Amount: 1}, {DefinitionID: -1}, {DefinitionID: -1}},
+			want:      "Sceat support tool slots",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			request := defenseKeepUpdateRequest{
+				CastleID: 10, MAUCT: 250, UnitTypePercent: 50,
+				PrimaryToolSlots: test.primary, SecondaryToolSlots: test.secondary,
+			}
+			arguments, _ := json.Marshal(request)
+			_, err := planDefenseKeepUpdate(context.Background(), Intent.PlanningContext{
+				State: defenseIntentState(), GameData: defenseIntentGameData(t),
+			}, arguments)
+			if err == nil || !strings.Contains(err.Error(), test.want) ||
+				!strings.Contains(err.Error(), "is not valid for this defense section") {
+				t.Fatalf("DFK slot type error = %v", err)
+			}
+		})
+	}
+}
+
+func TestResolveDefenseKeepRejectsUnavailableCourtyardTool(t *testing.T) {
+	gameState := defenseIntentState()
+	now := time.Now().UTC()
+	castle := gameState.Castles[10]
+	castle.Defense.ObservedAt = now
+	castle.Defense.InventoryObservedAt = now
+	castle.Defense.Inventory[505] = 0
+	gameState.Castles[10] = castle
+	request := defenseKeepResolvedRequest{
+		defenseKeepUpdateRequest: defenseKeepUpdateRequest{
+			CastleID: 10, MAUCT: 973, UnitTypePercent: 50,
+			PrimaryToolSlots:   []State.DefenseToolSlot{{DefinitionID: 505, Amount: 1}, {DefinitionID: -1}, {DefinitionID: -1}},
+			SecondaryToolSlots: emptyDefenseToolSlots(),
+		},
+		PreviousDefenseObservedAt:   now.Add(-time.Minute),
+		PreviousInventoryObservedAt: now.Add(-time.Minute),
+	}
+	arguments, _ := json.Marshal(request)
+	_, err := resolveDefenseKeepStep(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: defenseIntentGameData(t),
+	}, arguments)
+	if err == nil || !strings.Contains(err.Error(), "requires 1") || !strings.Contains(err.Error(), "has 0 available") {
+		t.Fatalf("DFK availability error = %v", err)
 	}
 }
 
@@ -262,6 +333,52 @@ func TestDefenseSectionsRejectWrongToolDefinitionOrSlotType(t *testing.T) {
 	}
 }
 
+func TestDefenseWallEnforcesFixedWallAndGatePositions(t *testing.T) {
+	gameState := defenseIntentState()
+	wall := defenseWallUpdateRequest{
+		CastleID: 10,
+		Left:     gameState.Castles[10].Defense.Wall.Left,
+		Middle:   gameState.Castles[10].Defense.Wall.Middle,
+		Right:    gameState.Castles[10].Defense.Wall.Right,
+	}
+	wall.Left.ToolSlots = append(append([]State.DefenseToolSlot{}, wall.Left.ToolSlots...), State.DefenseToolSlot{DefinitionID: -1})
+	arguments, _ := json.Marshal(wall)
+	_, err := planDefenseWallUpdate(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: defenseIntentGameData(t),
+	}, arguments)
+	if err == nil || !strings.Contains(err.Error(), "exactly 4 wall slots") {
+		t.Fatalf("wall slot limit error = %v", err)
+	}
+
+	wall = defenseWallUpdateRequest{
+		CastleID: 10,
+		Left:     gameState.Castles[10].Defense.Wall.Left,
+		Middle:   gameState.Castles[10].Defense.Wall.Middle,
+		Right:    gameState.Castles[10].Defense.Wall.Right,
+	}
+	wall.Middle.ToolSlots = append([]State.DefenseToolSlot{}, wall.Middle.ToolSlots...)
+	wall.Middle.ToolSlots[1] = State.DefenseToolSlot{DefinitionID: 501, Amount: 1}
+	arguments, _ = json.Marshal(wall)
+	_, err = planDefenseWallUpdate(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: defenseIntentGameData(t),
+	}, arguments)
+	if err == nil || !strings.Contains(err.Error(), "middle gate tool slots") ||
+		!strings.Contains(err.Error(), "is not valid for this defense section") {
+		t.Fatalf("wall tool in gate position error = %v", err)
+	}
+
+	wall.Middle.ToolSlots[1] = State.DefenseToolSlot{DefinitionID: 503, Amount: 1}
+	wall.Middle.ToolSlots[0] = State.DefenseToolSlot{DefinitionID: 503, Amount: 1}
+	arguments, _ = json.Marshal(wall)
+	_, err = planDefenseWallUpdate(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: defenseIntentGameData(t),
+	}, arguments)
+	if err == nil || !strings.Contains(err.Error(), "wall tool slots") ||
+		!strings.Contains(err.Error(), "is not valid for this defense section") {
+		t.Fatalf("gate tool in wall position error = %v", err)
+	}
+}
+
 func defenseIntentState() State.GameState {
 	gameState := State.NewGameState()
 	observedAt := time.Unix(1_000, 0).UTC()
@@ -270,7 +387,7 @@ func defenseIntentState() State.GameState {
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{}, Traveling: map[State.UnitID]int64{}, Hospital: map[State.UnitID]int64{}, SpecialHospital: map[State.UnitID]int64{}, Total: map[State.UnitID]int64{}},
 		Defense: State.CastleDefenseState{
 			ObservedAt: observedAt, InventoryObservedAt: observedAt,
-			Inventory: map[State.UnitID]int64{501: 10, 502: 10, 503: 10},
+			Inventory: map[State.UnitID]int64{501: 10, 502: 10, 503: 10, 505: 10, 506: 10},
 			Wall: State.DefenseWallState{
 				Left: State.DefenseWallSection{
 					ToolSlots:   []State.DefenseToolSlot{{DefinitionID: -1}, {DefinitionID: -1}, {DefinitionID: -1}, {DefinitionID: 501, Amount: 2}},
@@ -307,6 +424,9 @@ func defenseIntentGameData(t *testing.T) *GameData.Store {
 			{"wodID":502,"name":"MoatTool","typ":"Defence","slotTypes":"4,9"},
 			{"wodID":503,"name":"GateTool","typ":"Defence","slotTypes":[2,9]},
 			{"wodID":504,"name":"AttackTool","typ":"Attack","slotTypes":[1,2,9]},
+			{"wodID":505,"name":"KeepTool","typ":"Defence","slotTypes":"5,9"},
+			{"wodID":506,"name":"SceatDefenseSupport","type":"SceatSuppDefKillAttackers","typ":"Defence","slotTypes":[6,9]},
+			{"wodID":507,"name":"WallAndKeepTool","typ":"Defence","slotTypes":"1,5,9"},
 			{"wodID":601,"name":"Defender","typ":"Defence","slotTypes":[]}
 		]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})

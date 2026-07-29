@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowUpCircle, Gem, RefreshCw, Shield, Trash2, TriangleAlert } from 'lucide-react';
+import { ArrowUpCircle, Gem, RefreshCw, Shield, Sparkles, Trash2, TriangleAlert } from 'lucide-react';
 import { Badge, Button, Input, Modal, PillSelector, Switch } from '../../components/ui';
+import type { EquipmentEventAvailability, EquipmentEventKey } from '../EquipmentEventLoadouts';
 import type { EquipmentLeader, EquipmentSlotRow } from './EquipmentTypes';
 
 export type SaleCategory =
@@ -188,6 +189,112 @@ export function EquipmentSwapModal({
 						);
 					})}
 				</div>
+			</div>
+		</Modal>
+	);
+}
+
+export function EquipmentEventModal({
+	isOpen,
+	leader,
+	availability,
+	onClose,
+	onConfirm,
+	busy,
+}: {
+	isOpen: boolean;
+	leader: EquipmentLeader | null;
+	availability: EquipmentEventAvailability[];
+	onClose: () => void;
+	onConfirm: (event: EquipmentEventKey) => void;
+	busy: boolean;
+}) {
+	const [selectedEvent, setSelectedEvent] = useState<EquipmentEventKey | null>(null);
+	useEffect(() => {
+		if (isOpen) setSelectedEvent(null);
+	}, [isOpen, leader?.id]);
+	const selected = availability.find((entry) => entry.option.value === selectedEvent);
+	const canApply = selected != null && selected.equipmentCount > 0 && leader?.available === true;
+
+	return (
+		<Modal
+			isOpen={isOpen}
+			onClose={onClose}
+			title="Equip Event Set"
+			maxWidth="2xl"
+			footer={(
+				<>
+					<Button variant="ghost" onClick={onClose}>Cancel</Button>
+					<Button
+						disabled={!canApply}
+						onClick={() => selectedEvent && onConfirm(selectedEvent)}
+						isLoading={busy}
+					>
+						Apply Event Set
+					</Button>
+				</>
+			)}
+		>
+			<div className="space-y-4">
+				<div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+					<Sparkles className="h-7 w-7" />
+				</div>
+				<div className="text-center">
+					<p className="text-sm text-text-muted">
+						Choose the event loadout for <span className="font-semibold text-text-main">{leader?.name}</span>.
+					</p>
+					<p className="mt-1 text-xs text-text-muted">
+						Only storage and pieces already on this commander are eligible. Equipment on other commanders is never moved.
+					</p>
+				</div>
+
+				<div className="flex items-start gap-2 rounded-global border border-warning/30 bg-warning/10 p-3 text-xs text-text-muted">
+					<TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+					<span>
+						Applying removes all five base equipment slots first. Only matching event pieces are re-equipped, so missing pieces leave their slots empty. The server refuses to clear the commander when no matching equipment is available.
+					</span>
+				</div>
+
+				<div className="space-y-2">
+					{availability.map((entry) => {
+						const isSelected = selectedEvent === entry.option.value;
+						return (
+							<button
+								type="button"
+								key={entry.option.value}
+								onClick={() => setSelectedEvent(entry.option.value)}
+								className={`w-full rounded-global border p-3 text-left transition-colors ${isSelected ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
+							>
+								<span className="flex items-start gap-3">
+									<span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${isSelected ? 'border-primary bg-primary shadow-[inset_0_0_0_3px_var(--bg-app)]' : 'border-border-base'}`} />
+									<span className="min-w-0 flex-1">
+										<span className="flex flex-wrap items-center gap-2">
+											<span className="text-sm font-semibold text-text-main">{entry.option.label}</span>
+											{entry.tier && <Badge variant="secondary">{entry.tier}</Badge>}
+											{entry.complete && <Badge variant="success">Complete</Badge>}
+										</span>
+										<span className="mt-1 block text-xs text-text-muted">{entry.option.description}</span>
+										<span className="mt-2 flex flex-wrap gap-2">
+											<Badge variant={entry.equipmentCount === 5 ? 'success' : entry.equipmentCount > 0 ? 'warning' : 'outline'}>
+												{entry.equipmentCount}/5 equipment
+											</Badge>
+											<Badge variant={entry.gemCount === 4 ? 'success' : entry.gemCount > 0 ? 'warning' : 'outline'}>
+												{entry.gemCount}/4 gems
+											</Badge>
+										</span>
+									</span>
+								</span>
+							</button>
+						);
+					})}
+				</div>
+
+				{selected && selected.equipmentCount === 0 && (
+					<p className="text-center text-xs text-warning">No eligible {selected.option.label} equipment is currently available.</p>
+				)}
+				{leader && !leader.available && (
+					<p className="text-center text-xs text-warning">This commander is busy and cannot be reconfigured.</p>
+				)}
 			</div>
 		</Modal>
 	);

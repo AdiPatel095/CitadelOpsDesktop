@@ -7,6 +7,9 @@ import type {
 	AllianceTargetAttackPreviewRequest,
 	AllianceTargetAttackPreviewV2,
 	ApplicationUpdateV2,
+	AttackLaunchRatesV2,
+	AutoStormTroopCapPreviewRequest,
+	AutoStormTroopCapPreviewV2,
 	BuildingCatalogQuery,
 	BuildingCatalogResponse,
 	BuildingBlueprintDiffRequest,
@@ -125,6 +128,10 @@ class CitadelClient {
 		return this.request<RuntimeDiagnosticsV2>('/api/v2/diagnostics');
 	}
 
+	getAttackLaunchRates(): Promise<AttackLaunchRatesV2> {
+		return this.request<AttackLaunchRatesV2>('/api/v2/telemetry/attack-rates');
+	}
+
   getBrowsers(): Promise<BrowserInventory> {
     return this.request<BrowserInventory>('/api/v2/browsers');
   }
@@ -177,6 +184,13 @@ class CitadelClient {
 
 	previewAllianceTargetAttack(input: AllianceTargetAttackPreviewRequest): Promise<AllianceTargetAttackPreviewV2> {
 		return this.request<AllianceTargetAttackPreviewV2>('/api/v2/alliance-targets/attack-preview', {
+			method: 'POST',
+			body: JSON.stringify(input),
+		});
+	}
+
+	previewAutoStormTroopCap(input: AutoStormTroopCapPreviewRequest): Promise<AutoStormTroopCapPreviewV2> {
+		return this.request<AutoStormTroopCapPreviewV2>('/api/v2/automations/auto-storm/troop-cap-preview', {
 			method: 'POST',
 			body: JSON.stringify(input),
 		});

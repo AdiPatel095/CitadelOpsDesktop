@@ -106,7 +106,7 @@ func planAdvisorAttack(_ context.Context, input Intent.PlanningContext, argument
 	if !exists || !commander.Available {
 		return Intent.Plan{}, fmt.Errorf("commander %d is not available", request.CommanderID)
 	}
-	if _, err := buildAttackSetupWaves(invasionAttackSetup(request.Preset), source, input.GameData); err != nil {
+	if _, err := buildAttackSetup(invasionAttackSetup(request.Preset), source, input.GameData); err != nil {
 		return Intent.Plan{}, fmt.Errorf("validate advisor preset %q: %w", request.Preset.Name, err)
 	}
 	contextPayload, _ := json.Marshal(struct {
@@ -169,13 +169,13 @@ func (application *Application) resolveAdvisorAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve advisor attack capacity: %w", err)
 	}
-	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves))
-	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
+	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity))
+	built, err := buildAttackSetup(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build advisor preset %q: %w", request.Preset.Name, err)
 	}
 	body := advisorAttackBody{
-		attackBody:  invasionAttackBody(source, target, request.CommanderID, waves, request.HorseTravelBoostID),
+		attackBody:  invasionAttackBody(source, target, request.CommanderID, built, request.HorseTravelBoostID),
 		AttackCount: request.AttackCount, Mode: 0, AdvisorType: 1,
 	}
 	payload, err := json.Marshal(body)

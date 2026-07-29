@@ -11,6 +11,8 @@ import (
 const (
 	ConfigurationSection = "attacks.presets"
 	MaximumWaves         = 30
+	CourtyardTroopSlots  = 8
+	CourtyardToolSlots   = 3
 )
 
 type Document struct {
@@ -19,11 +21,12 @@ type Document struct {
 }
 
 type Preset struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Waves     []Wave `json:"waves"`
-	CreatedAt string `json:"createdAt,omitempty"`
-	UpdatedAt string `json:"updatedAt,omitempty"`
+	ID               string           `json:"id"`
+	Name             string           `json:"name"`
+	Waves            []Wave           `json:"waves"`
+	CourtyardSupport CourtyardSupport `json:"courtyardSupport"`
+	CreatedAt        string           `json:"createdAt,omitempty"`
+	UpdatedAt        string           `json:"updatedAt,omitempty"`
 }
 
 type Wave struct {
@@ -33,6 +36,11 @@ type Wave struct {
 }
 
 type Lane struct {
+	Troops []Slot `json:"troops"`
+	Tools  []Slot `json:"tools"`
+}
+
+type CourtyardSupport struct {
 	Troops []Slot `json:"troops"`
 	Tools  []Slot `json:"tools"`
 }
@@ -75,36 +83,44 @@ func Validate(preset Preset) error {
 	return validatePreset(preset)
 }
 
-// LimitToCapacity applies the same wave and lane caps used immediately before
-// building a CRA payload. Tool allocations stay intact for every retained
-// wave; troop slots are consumed in their saved priority order.
-func LimitToCapacity(preset Preset, capacity AttackCapacity.LaneCapacity, maximumWaves int) Preset {
+// LimitToCapacity applies the same wave, lane, and courtyard-support caps used
+// immediately before building a CRA payload. Tool allocations stay intact for
+// every retained wave; troop slots are consumed in their saved priority order.
+func LimitToCapacity(preset Preset, capacity AttackCapacity.Result) Preset {
 	result := preset
-	waveCount := min(len(preset.Waves), max(0, maximumWaves))
+	result.CourtyardSupport = CourtyardSupport{
+		Troops: limitTroopSlotsToCapacity(preset.CourtyardSupport.Troops, capacity.SupportCapacity),
+		Tools:  append([]Slot(nil), preset.CourtyardSupport.Tools...),
+	}
+	waveCount := min(len(preset.Waves), max(0, capacity.MaximumWaves))
 	result.Waves = make([]Wave, waveCount)
 	for index, wave := range preset.Waves[:waveCount] {
 		result.Waves[index] = Wave{
-			Left:   limitLaneToCapacity(wave.Left, capacity.Left),
-			Middle: limitLaneToCapacity(wave.Middle, capacity.Front),
-			Right:  limitLaneToCapacity(wave.Right, capacity.Right),
+			Left:   limitLaneToCapacity(wave.Left, capacity.Capacity.Left),
+			Middle: limitLaneToCapacity(wave.Middle, capacity.Capacity.Front),
+			Right:  limitLaneToCapacity(wave.Right, capacity.Capacity.Right),
 		}
 	}
 	return result
 }
 
 func limitLaneToCapacity(lane Lane, capacity int64) Lane {
-	result := Lane{
-		Troops: append([]Slot(nil), lane.Troops...),
+	return Lane{
+		Troops: limitTroopSlotsToCapacity(lane.Troops, capacity),
 		Tools:  append([]Slot(nil), lane.Tools...),
 	}
+}
+
+func limitTroopSlotsToCapacity(slots []Slot, capacity int64) []Slot {
+	result := append([]Slot(nil), slots...)
 	remaining := max(int64(0), capacity)
-	for index := range result.Troops {
-		quantity := result.Troops[index].Quantity
+	for index := range result {
+		quantity := result[index].Quantity
 		if quantity <= 0 {
 			continue
 		}
-		result.Troops[index].Quantity = min(quantity, remaining)
-		remaining -= result.Troops[index].Quantity
+		result[index].Quantity = min(quantity, remaining)
+		remaining -= result[index].Quantity
 	}
 	return result
 }
@@ -135,6 +151,28 @@ func validatePreset(preset Preset) error {
 					}
 				}
 			}
+		}
+	}
+	if len(preset.CourtyardSupport.Troops) > CourtyardTroopSlots {
+		return fmt.Errorf("courtyard support exceeds %d troop slots", CourtyardTroopSlots)
+	}
+	if len(preset.CourtyardSupport.Tools) > CourtyardToolSlots {
+		return fmt.Errorf("courtyard support exceeds %d Sceat tool slots", CourtyardToolSlots)
+	}
+	for _, slot := range preset.CourtyardSupport.Troops {
+		if slot.Quantity < 0 || (slot.ItemID != nil && *slot.ItemID <= 0) || (slot.ItemID == nil && slot.Quantity > 0) {
+			return fmt.Errorf("courtyard support contains an invalid troop allocation")
+		}
+	}
+	for _, slot := range preset.CourtyardSupport.Tools {
+		if slot.ItemID == nil {
+			if slot.Quantity != 0 {
+				return fmt.Errorf("courtyard support contains a Sceat tool quantity without an item")
+			}
+			continue
+		}
+		if *slot.ItemID <= 0 || slot.Quantity != 1 {
+			return fmt.Errorf("each courtyard Sceat tool slot must contain exactly one valid item")
 		}
 	}
 	return nil

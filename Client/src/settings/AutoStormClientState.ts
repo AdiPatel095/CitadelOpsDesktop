@@ -69,6 +69,8 @@ export interface AutoStormClientStateV1 {
   troopImport: {
     enabled: boolean;
     donorCastleIds: number[];
+    minimumTroops: number;
+    historyHours: number;
   };
   aquamarine: {
     reserve: number;
@@ -110,7 +112,7 @@ export function defaultAutoStormClientState(): AutoStormClientStateV1 {
       presetId: '',
       defenseUnits: [],
     },
-    troopImport: { enabled: false, donorCastleIds: [] },
+    troopImport: { enabled: false, donorCastleIds: [], minimumTroops: 0, historyHours: 72 },
     aquamarine: { reserve: 0, shopTableId: 0, purchases: [] },
     targetPriority: [...AUTO_STORM_TARGET_PRIORITIES],
     checkIntervalSec: 30,
@@ -166,6 +168,8 @@ export function parseAutoStormClientState(value: unknown): AutoStormClientStateV
     troopImport: {
       enabled: troopImport.enabled === true,
       donorCastleIds: parsePositiveIntegerArray(troopImport.donorCastleIds),
+      minimumTroops: clampAutoStormInteger(troopImport.minimumTroops, 0, Number.MAX_SAFE_INTEGER, 0),
+      historyHours: parseAutoStormHistoryHours(troopImport.historyHours, fallback.troopImport.historyHours),
     },
     aquamarine: {
       reserve: clampAutoStormInteger(aquamarine.reserve, 0, Number.MAX_SAFE_INTEGER, 0),
@@ -295,6 +299,11 @@ function parsePositiveIntegerArray(value: unknown): number[] {
     result.push(parsed);
   }
   return result;
+}
+
+function parseAutoStormHistoryHours(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+  return parsed === 24 || parsed === 48 || parsed === 72 ? parsed : fallback;
 }
 
 function parseTargetPriority(value: unknown, legacyCombatOrder: unknown): AutoStormTargetPriority[] {

@@ -30,6 +30,7 @@ type foodBalanceSettings struct {
 	UseKingdomTimeSkips      bool             `json:"useKingdomTimeSkips"`
 	AllowedTimeSkips         []string         `json:"allowedTimeSkips"`
 	TimeSkipReserve          map[string]int64 `json:"timeSkipReserve"`
+	HorseTravelBoostID       int              `json:"horseTravelBoostId"`
 }
 
 type foodBalanceProjection struct {
@@ -43,6 +44,12 @@ type foodBalanceRisk struct {
 	rate         GameData.FoodConsumptionRate
 	shortfall    float64
 	urgencyHours float64
+}
+
+type foodBalanceDonor struct {
+	projection foodBalanceProjection
+	available  float64
+	netPerHour float64
 }
 
 func NewFoodBalancePolicy() *FoodBalancePolicy { return &FoodBalancePolicy{} }
@@ -64,10 +71,17 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		CheckIntervalSec: 60, StateRefreshIntervalSec: 900, LogisticsRefreshInterval: 300,
 		SafetyHours: 8, SourceSafetyHours: 24, MinimumShipmentSize: 1_000,
 		MinimumSourceReserve: 1_000, AutoKingdomTransport: true, TimeSkipReserve: map[string]int64{},
+		HorseTravelBoostID: -1,
 	}
 	if !decodeSection(snapshot.Configuration, "automation.autoFoodBalance", &settings) {
 		return Decision{
 			Status: "waiting", Detail: "No automatic food-balancing settings are configured",
+			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 60)),
+		}, nil
+	}
+	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
+		return Decision{
+			Status: "waiting", Detail: "Choose a supported market-barrow horse travel boost",
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 60)),
 		}, nil
 	}
@@ -77,6 +91,18 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	if snapshot.GameData == nil {
 		return Decision{Status: "waiting", Detail: "Waiting for official game data", NextCheckAt: snapshot.Now.Add(interval)}, nil
 	}
+	waitingDecision := Decision{}
+	waitingDecisionFound := false
+	rememberWaiting := func(decision Decision) {
+		if decision.Status == "" {
+			return
+		}
+		if !waitingDecisionFound || waitingDecision.NextCheckAt.IsZero() ||
+			(!decision.NextCheckAt.IsZero() && decision.NextCheckAt.Before(waitingDecision.NextCheckAt)) {
+			waitingDecision = decision
+			waitingDecisionFound = true
+		}
+	}
 	if decision, refresh := foodBalanceStateRefreshDecision(snapshot, stateRefreshInterval); refresh {
 		return decision, nil
 	}
@@ -85,10 +111,10 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		return Decision{}, logisticsErr
 	}
 	if !marketLeaseUntil.IsZero() {
-		return Decision{
+		rememberWaiting(Decision{
 			Status: "waiting", Detail: "Waiting for leased market barrows to return before refreshing logistics",
 			NextCheckAt: marketLeaseUntil.Add(time.Second),
-		}, nil
+		})
 	}
 	if logisticsStale {
 		return Decision{
@@ -118,7 +144,7 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		arguments, _ := json.Marshal(map[string]any{"castleId": projection.castle.ID})
 		return Decision{
 			Status:              "waiting",
-			Detail:              fmt.Sprintf("Waiting for current food production at %s", castleName(projection.castle)),
+			Detail:              fmt.Sprintf("Waiting for current food production and storage at %s", castleName(projection.castle)),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
 			ReevaluateOnSuccess: true,
@@ -126,6 +152,9 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	}
 	risks := foodBalanceRisks(projections, settings)
 	if len(risks) == 0 {
+		if waitingDecisionFound {
+			return waitingDecision, nil
+		}
 		return Decision{
 			Status: "idle", Detail: "All observed castles have their configured food reserve",
 			NextCheckAt: snapshot.Now.Add(interval), Metrics: map[string]float64{"castles": float64(len(projections))},
@@ -134,25 +163,40 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	for _, risk := range risks {
 		incoming := incomingMarketResource(snapshot, risk.target.castle, risk.resourceID)
 		if incoming >= risk.shortfall {
-			return Decision{
+			rememberWaiting(Decision{
 				Status:      "waiting",
 				Detail:      fmt.Sprintf("An in-flight %s shipment protects %s", risk.rate.ResourceJSONKey, castleName(risk.target.castle)),
 				NextCheckAt: nextMarketArrival(snapshot, risk.target.castle, risk.resourceID, interval),
+			})
+			continue
+		}
+		targetNeed, storageKnown := foodBalanceTargetFreeCapacity(risk.target.castle, risk.resourceID)
+		if !storageKnown {
+			arguments, _ := json.Marshal(map[string]any{"castleId": risk.target.castle.ID})
+			return Decision{
+				Status:              "waiting",
+				Detail:              fmt.Sprintf("Waiting for current %s storage at %s", risk.rate.ResourceJSONKey, castleName(risk.target.castle)),
+				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
+				ReevaluateOnSuccess: true,
 			}, nil
 		}
-		shortfall := risk.shortfall - incoming
-		decision, ready, marketErr := foodBalanceMarketShipment(settings, snapshot, projections, risk, shortfall)
-		if marketErr != nil {
-			return Decision{}, marketErr
+		targetNeed = math.Max(0, targetNeed-incoming)
+		if targetNeed <= 0 {
+			continue
 		}
-		if ready {
+		if decision, ready, shipmentErr := foodBalanceShipment(
+			settings, snapshot, projections, risk, targetNeed, interval,
+		); shipmentErr != nil {
+			return Decision{}, shipmentErr
+		} else if ready {
 			return decision, nil
+		} else {
+			rememberWaiting(decision)
 		}
-		if settings.AutoKingdomTransport {
-			if decision, handled := foodBalanceKingdomShipment(settings, snapshot, projections, risk, shortfall, interval); handled {
-				return decision, nil
-			}
-		}
+	}
+	if waitingDecisionFound {
+		return waitingDecision, nil
 	}
 	mostUrgent := risks[0]
 	return Decision{
@@ -234,8 +278,12 @@ func foodBalanceProjections(snapshot Snapshot) (map[State.CastleID]foodBalancePr
 }
 
 func foodBalanceEconomyComplete(projection foodBalanceProjection) bool {
-	for _, rate := range projection.consumed.ByResource {
-		if rate.TotalConsumptionPerHour > 0 && rate.NetPerHour == nil {
+	for resourceID, rate := range projection.consumed.ByResource {
+		if rate.TotalConsumptionPerHour <= 0 {
+			continue
+		}
+		balance, exists := projection.castle.Resources[resourceID]
+		if !exists || balance.Capacity == nil || rate.NetPerHour == nil {
 			return false
 		}
 	}
@@ -303,67 +351,122 @@ func foodBalanceRisks(projections map[State.CastleID]foodBalanceProjection, sett
 	return result
 }
 
+func foodBalanceShipment(
+	settings foodBalanceSettings,
+	snapshot Snapshot,
+	projections map[State.CastleID]foodBalanceProjection,
+	risk foodBalanceRisk,
+	targetNeed float64,
+	interval time.Duration,
+) (Decision, bool, error) {
+	marketAmount := math.Floor(targetNeed)
+	kingdomAmount, kingdomAmountReady := foodBalanceKingdomDispatchAmount(settings, targetNeed)
+	blocked := Decision{}
+	blockedFound := false
+	for _, donor := range foodBalanceDonors(settings, projections, risk) {
+		if donor.projection.castle.KingdomID == risk.target.castle.KingdomID {
+			if marketAmount <= 0 || donor.available < marketAmount {
+				continue
+			}
+			decision, ready, err := foodBalanceMarketShipmentFromDonor(
+				settings, snapshot, risk, targetNeed, donor,
+			)
+			if err != nil {
+				return Decision{}, false, err
+			}
+			if ready {
+				return decision, true, nil
+			}
+			continue
+		}
+		if !settings.AutoKingdomTransport || !kingdomAmountReady || donor.available < kingdomAmount {
+			continue
+		}
+		decision, handled := foodBalanceKingdomShipmentFromDonor(
+			settings, snapshot, risk, kingdomAmount, interval, donor,
+		)
+		if !handled {
+			continue
+		}
+		if decision.Request != nil {
+			return decision, true, nil
+		}
+		if !blockedFound {
+			blocked = decision
+			blockedFound = true
+		}
+	}
+	return blocked, false, nil
+}
+
 func foodBalanceMarketShipment(
 	settings foodBalanceSettings,
 	snapshot Snapshot,
 	projections map[State.CastleID]foodBalanceProjection,
 	risk foodBalanceRisk,
-	shortfall float64,
+	targetNeed float64,
 ) (Decision, bool, error) {
-	best := foodBalanceProjection{}
-	bestAvailable := float64(0)
-	bestCapacityPerBarrow := 0
-	for _, castleID := range sortedCastleIDsFromFoodProjections(projections) {
-		candidate := projections[castleID]
-		if candidate.castle.ID == risk.target.castle.ID || candidate.castle.KingdomID != risk.target.castle.KingdomID {
-			continue
-		}
-		hasMarketplace, err := snapshot.GameData.CastleHasMarketplace(candidate.castle)
-		if err != nil {
-			return Decision{}, false, fmt.Errorf("check marketplace at %s: %w", castleName(candidate.castle), err)
-		}
-		if !hasMarketplace {
-			continue
-		}
-		market, observed := snapshot.State.Market.Castles[candidate.castle.ID]
-		availableBarrows := State.AvailableMarketBarrowsAt(snapshot.State, market, snapshot.Now)
-		if !observed || availableBarrows <= 0 {
-			continue
-		}
-		capacityPerBarrow := marketCapacityPerBarrow(snapshot, market)
-		if capacityPerBarrow <= 0 {
-			continue
-		}
-		available := foodBalanceSourceAvailable(settings, candidate, risk.resourceID)
-		capacity := float64(availableBarrows * capacityPerBarrow)
-		if shipment := math.Min(available, capacity); shipment > bestAvailable {
-			best, bestAvailable, bestCapacityPerBarrow = candidate, shipment, capacityPerBarrow
-		}
-	}
-	if best.castle.ID <= 0 || bestAvailable <= 0 {
+	neededAmount := math.Floor(targetNeed)
+	if neededAmount <= 0 {
 		return Decision{}, false, nil
 	}
-	amount := shortfall
-	amount = math.Min(amount, bestAvailable)
-	amount = math.Min(amount, foodBalanceTargetFreeCapacity(risk.target.castle, risk.resourceID))
-	amount = math.Floor(amount)
+	for _, donor := range foodBalanceDonors(settings, projections, risk) {
+		if donor.projection.castle.KingdomID != risk.target.castle.KingdomID ||
+			donor.available < neededAmount {
+			continue
+		}
+		decision, ready, err := foodBalanceMarketShipmentFromDonor(settings, snapshot, risk, targetNeed, donor)
+		if err != nil || ready {
+			return decision, ready, err
+		}
+	}
+	return Decision{}, false, nil
+}
+
+func foodBalanceMarketShipmentFromDonor(
+	settings foodBalanceSettings,
+	snapshot Snapshot,
+	risk foodBalanceRisk,
+	targetNeed float64,
+	donor foodBalanceDonor,
+) (Decision, bool, error) {
+	hasMarketplace, err := snapshot.GameData.CastleHasMarketplace(donor.projection.castle)
+	if err != nil {
+		return Decision{}, false, fmt.Errorf("check marketplace at %s: %w", castleName(donor.projection.castle), err)
+	}
+	if !hasMarketplace {
+		return Decision{}, false, nil
+	}
+	market, observed := snapshot.State.Market.Castles[donor.projection.castle.ID]
+	availableBarrows := State.AvailableMarketBarrowsAt(snapshot.State, market, snapshot.Now)
+	if !observed || availableBarrows <= 0 {
+		return Decision{}, false, nil
+	}
+	capacityPerBarrow := marketCapacityPerBarrow(snapshot, market)
+	if capacityPerBarrow <= 0 {
+		return Decision{}, false, nil
+	}
+	capacity := float64(availableBarrows * capacityPerBarrow)
+	amount := math.Floor(math.Min(targetNeed, capacity))
 	if amount <= 0 {
 		return Decision{}, false, nil
 	}
-	barrows := int(math.Ceil(amount / float64(bestCapacityPerBarrow)))
-	coinCost := marketShipmentCoinCost(best.castle, risk.target.castle, barrows)
+	barrows := int(math.Ceil(amount / float64(capacityPerBarrow)))
+	coinCost := marketShipmentCoinCost(donor.projection.castle, risk.target.castle, barrows)
 	if playerResourceAmount(snapshot, "C1")-settings.MinimumCoinReserve < coinCost {
 		return Decision{}, false, nil
 	}
 	arguments, _ := json.Marshal(map[string]any{
-		"sourceCastleId": best.castle.ID, "targetCastleId": risk.target.castle.ID,
+		"sourceCastleId": donor.projection.castle.ID, "targetCastleId": risk.target.castle.ID,
 		"resourceId": risk.resourceID, "amount": int64(amount),
+		"workflowOwner": autoFoodBalanceTransportOwner, "enforceTargetCapacity": true,
+		"horseTravelBoostId": settings.HorseTravelBoostID,
 	})
 	return Decision{
 		Status:              "ready",
-		Detail:              fmt.Sprintf("Send %.0f %s from %s to %s", amount, risk.rate.ResourceJSONKey, castleName(best.castle), castleName(risk.target.castle)),
+		Detail:              fmt.Sprintf("Send %.0f %s from %s to %s", amount, risk.rate.ResourceJSONKey, castleName(donor.projection.castle), castleName(risk.target.castle)),
 		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
-		Metrics:             map[string]float64{"shipmentAmount": amount, "coinCost": coinCost, "hoursUntilDepleted": risk.urgencyHours},
+		Metrics:             map[string]float64{"shipmentAmount": amount, "targetNeed": targetNeed, "coinCost": coinCost, "hoursUntilDepleted": risk.urgencyHours},
 		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
 		ReevaluateOnSuccess: true,
 	}, true, nil
@@ -374,8 +477,41 @@ func foodBalanceKingdomShipment(
 	snapshot Snapshot,
 	projections map[State.CastleID]foodBalanceProjection,
 	risk foodBalanceRisk,
-	shortfall float64,
+	targetNeed float64,
 	interval time.Duration,
+) (Decision, bool) {
+	amount, ready := foodBalanceKingdomDispatchAmount(settings, targetNeed)
+	if !ready {
+		return Decision{}, false
+	}
+	for _, donor := range foodBalanceDonors(settings, projections, risk) {
+		if donor.projection.castle.KingdomID == risk.target.castle.KingdomID ||
+			donor.available < amount {
+			continue
+		}
+		if decision, handled := foodBalanceKingdomShipmentFromDonor(
+			settings, snapshot, risk, amount, interval, donor,
+		); handled {
+			return decision, true
+		}
+	}
+	return Decision{}, false
+}
+
+func foodBalanceKingdomDispatchAmount(settings foodBalanceSettings, targetNeed float64) (float64, bool) {
+	minimumDelivery := float64(maxFoodBalanceShipment(settings.MinimumShipmentSize))
+	minimumDispatch := math.Ceil(minimumDelivery / foodBalanceKingdomDeliveryRatio)
+	amount := math.Floor(targetNeed / foodBalanceKingdomDeliveryRatio)
+	return amount, amount >= minimumDispatch
+}
+
+func foodBalanceKingdomShipmentFromDonor(
+	settings foodBalanceSettings,
+	snapshot Snapshot,
+	risk foodBalanceRisk,
+	amount float64,
+	interval time.Duration,
+	donor foodBalanceDonor,
 ) (Decision, bool) {
 	if pending, found := pendingKingdomResourceTransport(snapshot.State, risk.target.castle.KingdomID); found {
 		detail := fmt.Sprintf("Kingdom %d already has a resource shipment in flight", pending.KingdomID)
@@ -398,41 +534,44 @@ func foodBalanceKingdomShipment(
 	if !observed || !unlock.Unlocked {
 		return Decision{}, false
 	}
-	best := foodBalanceProjection{}
-	bestAvailable := float64(0)
-	for _, castleID := range sortedCastleIDsFromFoodProjections(projections) {
-		candidate := projections[castleID]
-		if candidate.castle.ID == risk.target.castle.ID || candidate.castle.KingdomID == risk.target.castle.KingdomID {
-			continue
-		}
-		if available := foodBalanceSourceAvailable(settings, candidate, risk.resourceID); available > bestAvailable {
-			best, bestAvailable = candidate, available
-		}
+	shipmentArguments := map[string]any{
+		"sourceCastleId": donor.projection.castle.ID, "targetCastleId": risk.target.castle.ID,
+		"resourceId": risk.resourceID, "amount": int64(amount),
+		"workflowOwner": autoFoodBalanceTransportOwner, "enforceTargetCapacity": true,
 	}
-	if best.castle.ID <= 0 || bestAvailable <= 0 {
-		return Decision{}, false
+	if skipID, reserve, found := foodBalanceImmediateKingdomTimeSkip(settings, snapshot); found {
+		shipmentArguments["timeSkipId"] = skipID
+		shipmentArguments["minimumRemaining"] = reserve
+		shipmentArguments["settleAfterTimeSkip"] = true
 	}
-	minimumDelivery := float64(maxFoodBalanceShipment(settings.MinimumShipmentSize))
-	minimumDispatch := math.Ceil(minimumDelivery / foodBalanceKingdomDeliveryRatio)
-	amount := math.Max(shortfall/foodBalanceKingdomDeliveryRatio, minimumDispatch)
-	amount = math.Min(amount, bestAvailable)
-	free := foodBalanceTargetFreeCapacity(risk.target.castle, risk.resourceID)
-	amount = math.Min(amount, free/foodBalanceKingdomDeliveryRatio)
-	amount = math.Floor(amount)
-	if amount < minimumDispatch {
-		return Decision{}, false
-	}
-	arguments, _ := json.Marshal(map[string]any{
-		"sourceCastleId": best.castle.ID, "targetCastleId": risk.target.castle.ID,
-		"resourceId": risk.resourceID, "amount": int64(amount), "workflowOwner": autoFoodBalanceTransportOwner,
-	})
+	arguments, _ := json.Marshal(shipmentArguments)
 	return Decision{
-		Status:      "ready",
-		Detail:      fmt.Sprintf("Send %.0f %s from %s to %s by kingdom transport", amount, risk.rate.ResourceJSONKey, castleName(best.castle), castleName(risk.target.castle)),
-		NextCheckAt: snapshot.Now.Add(interval),
-		Metrics:     map[string]float64{"shipmentAmount": amount, "hoursUntilDepleted": risk.urgencyHours},
-		Request:     &Intent.Request{Name: "resource.ship", Arguments: arguments},
+		Status:              "ready",
+		Detail:              fmt.Sprintf("Send %.0f %s from %s to %s by kingdom transport", amount, risk.rate.ResourceJSONKey, castleName(donor.projection.castle), castleName(risk.target.castle)),
+		NextCheckAt:         snapshot.Now.Add(interval),
+		Metrics:             map[string]float64{"shipmentAmount": amount, "hoursUntilDepleted": risk.urgencyHours},
+		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
+		ReevaluateOnSuccess: true,
 	}, true
+}
+
+func foodBalanceImmediateKingdomTimeSkip(
+	settings foodBalanceSettings,
+	snapshot Snapshot,
+) (string, int64, bool) {
+	if !settings.UseKingdomTimeSkips {
+		return "", 0, false
+	}
+	skipID := chooseKingdomTimeSkip(
+		settings.AllowedTimeSkips,
+		settings.TimeSkipReserve,
+		snapshot,
+		kingdomResourceTransportInitialRemainingSec,
+	)
+	if kingdomTimeSkipSeconds[skipID] < kingdomResourceTransportInitialRemainingSec {
+		return "", 0, false
+	}
+	return skipID, max(int64(0), automationTimeSkipReserve(settings.TimeSkipReserve, skipID)), true
 }
 
 func foodBalanceSourceAvailable(settings foodBalanceSettings, projection foodBalanceProjection, resourceID State.ResourceID) float64 {
@@ -448,12 +587,46 @@ func foodBalanceSourceAvailable(settings foodBalanceSettings, projection foodBal
 	return math.Max(0, projection.castle.Resources[resourceID].Amount-floor)
 }
 
-func foodBalanceTargetFreeCapacity(castle State.CastleState, resourceID State.ResourceID) float64 {
-	balance := castle.Resources[resourceID]
-	if balance.Capacity == nil {
-		return math.Inf(1)
+func foodBalanceDonors(
+	settings foodBalanceSettings,
+	projections map[State.CastleID]foodBalanceProjection,
+	risk foodBalanceRisk,
+) []foodBalanceDonor {
+	result := make([]foodBalanceDonor, 0, len(projections))
+	for _, castleID := range sortedCastleIDsFromFoodProjections(projections) {
+		candidate := projections[castleID]
+		if candidate.castle.ID == risk.target.castle.ID {
+			continue
+		}
+		rate, rateKnown := candidate.consumed.ByResource[risk.resourceID]
+		if !rateKnown || rate.NetPerHour == nil {
+			continue
+		}
+		available := foodBalanceSourceAvailable(settings, candidate, risk.resourceID)
+		if available > 0 {
+			result = append(result, foodBalanceDonor{
+				projection: candidate, available: available, netPerHour: *rate.NetPerHour,
+			})
+		}
 	}
-	return math.Max(0, *balance.Capacity-balance.Amount)
+	sort.Slice(result, func(left, right int) bool {
+		if result[left].netPerHour != result[right].netPerHour {
+			return result[left].netPerHour > result[right].netPerHour
+		}
+		if result[left].available != result[right].available {
+			return result[left].available > result[right].available
+		}
+		return result[left].projection.castle.ID < result[right].projection.castle.ID
+	})
+	return result
+}
+
+func foodBalanceTargetFreeCapacity(castle State.CastleState, resourceID State.ResourceID) (float64, bool) {
+	balance, exists := castle.Resources[resourceID]
+	if !exists || balance.Capacity == nil {
+		return 0, false
+	}
+	return math.Max(0, *balance.Capacity-balance.Amount), true
 }
 
 func maxFoodBalanceShipment(value int64) int64 {

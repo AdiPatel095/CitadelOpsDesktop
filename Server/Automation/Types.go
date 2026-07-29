@@ -25,6 +25,10 @@ type Decision struct {
 	Metrics     map[string]float64
 	Request     *Intent.Request
 	FollowUp    *Intent.Request
+	// FailureFallback runs only when Request reaches a terminal failed,
+	// partially-succeeded, or indeterminate status. Cancellation never triggers it.
+	FailureFallback *Intent.Request
+	FailureDetail   string
 	// ScheduleKey identifies an additional decision-specific schedule, such as
 	// a per-castle production window, that must remain open while the request waits.
 	ScheduleKey string

@@ -315,7 +315,21 @@ func invasionAttackSetup(preset AttackPresets.Preset) attackSetupRequest {
 			Left: invasionAttackLane(wave.Left), Middle: invasionAttackLane(wave.Middle), Right: invasionAttackLane(wave.Right),
 		})
 	}
-	return attackSetupRequest{Name: preset.Name, Waves: waves}
+	convert := func(slots []AttackPresets.Slot) []attackSetupSlotRequest {
+		result := make([]attackSetupSlotRequest, len(slots))
+		for index, slot := range slots {
+			result[index] = attackSetupSlotRequest{ItemID: slot.ItemID, Quantity: slot.Quantity}
+		}
+		return result
+	}
+	return attackSetupRequest{
+		Name:  preset.Name,
+		Waves: waves,
+		CourtyardSupport: attackSetupCourtyardSupport{
+			Troops: convert(preset.CourtyardSupport.Troops),
+			Tools:  convert(preset.CourtyardSupport.Tools),
+		},
+	}
 }
 
 func invasionAttackLane(lane AttackPresets.Lane) attackSetupLaneRequest {
@@ -333,16 +347,15 @@ func invasionAttackBody(
 	source State.CastleState,
 	target State.MapObservation,
 	commanderID State.CommanderID,
-	waves []attackWave,
+	setup builtAttackSetup,
 	horseTravelBoostIDs ...int,
 ) attackBody {
-	empty := attackPair{-1, 0}
 	body := attackBody{
 		SourceX: source.X, SourceY: source.Y, TargetX: target.X, TargetY: target.Y,
 		Kingdom: target.KingdomID, Leader: commanderID, Booster: -1, Valid: 1,
-		PremiumTravel: 1, Cooldown: 99, Waves: waves, Books: []any{},
-		AttackSupportTools: []int64{-1, -1, -1},
-		SupportTroops:      []attackPair{empty, empty, empty, empty, empty, empty, empty, empty},
+		PremiumTravel: 1, Cooldown: 99, Waves: setup.Waves, Books: []any{},
+		AttackSupportTools: setup.SupportTools,
+		SupportTroops:      setup.SupportTroops,
 	}
 	horseTravelBoostID := defaultHorseTravelBoostID
 	if len(horseTravelBoostIDs) > 0 {
@@ -365,12 +378,12 @@ func (application *Application) resolveInvasionAttackStep(
 	if err != nil {
 		return Intent.Step{}, err
 	}
-	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves))
-	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
+	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity))
+	built, err := buildAttackSetup(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build invasion preset %q: %w", request.Preset.Name, err)
 	}
-	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, waves, request.HorseTravelBoostID))
+	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, built, request.HorseTravelBoostID))
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build invasion CRA payload: %w", err)
 	}

@@ -355,6 +355,22 @@ func TestControllerPausesAutomationForDirectBrowserTraffic(t *testing.T) {
 	if !controller.AutomationLocked() {
 		t.Fatal("direct browser traffic did not pause automation")
 	}
+	if controller.AutomationLockedFor("automation:autoStation") {
+		t.Fatal("direct browser traffic paused emergency Auto Station")
+	}
+	if !controller.AutomationLockedFor("automation:autoBird") {
+		t.Fatal("direct browser traffic did not pause routine Auto Bird work")
+	}
+	if err := controller.outboundDispatchGate(
+		context.Background(), Outbound.Metadata{Actor: "automation:autoStation"},
+	); err != nil {
+		t.Fatalf("direct traffic blocked emergency Auto Station dispatch: %v", err)
+	}
+	if err := controller.outboundDispatchGate(
+		context.Background(), Outbound.Metadata{Actor: "automation:autoBird"},
+	); !errors.Is(err, Outbound.ErrAutomationLocked) {
+		t.Fatalf("routine automation dispatch error = %v", err)
+	}
 	controller.automationMu.Lock()
 	if controller.directTrafficTimer != nil {
 		controller.directTrafficTimer.Stop()
@@ -370,6 +386,26 @@ func TestControllerPausesAutomationForDirectBrowserTraffic(t *testing.T) {
 	time.Sleep(5 * time.Millisecond)
 	if controller.AutomationLocked() {
 		t.Fatal("CitadelOps-caused outbound traffic was treated as direct browser traffic")
+	}
+}
+
+func TestControllerDoesNotPauseAutomationForPassiveCastleDetailsRefresh(t *testing.T) {
+	transport := newPacingTransport()
+	transport.reportsOutboundCausation = true
+	root, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	controller := NewController(root, transport, nil, nil)
+	defer controller.outbound.Close()
+	if err := controller.Start(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	transport.frames <- RawFrame{
+		Payload: `%xt%EmpireEx_21%dcl%1%{}%`, Direction: Protocol.DirectionOutbound,
+		ObservedAt: time.Now().UTC(), ConnectionGeneration: 1,
+	}
+	time.Sleep(5 * time.Millisecond)
+	if controller.AutomationLocked() {
+		t.Fatal("automatic castle-details refresh was treated as direct player traffic")
 	}
 }
 
@@ -390,6 +426,10 @@ func TestControllerLockBlocksAutomatedDispatchButKeepsInteractiveWorkAvailable(t
 	background := Outbound.WithMetadata(context.Background(), Outbound.Metadata{Actor: "automation:autoBird"})
 	if err := controller.Send(background, payload); !errors.Is(err, Outbound.ErrAutomationLocked) {
 		t.Fatalf("background dispatch error = %v", err)
+	}
+	autoStation := Outbound.WithMetadata(context.Background(), Outbound.Metadata{Actor: "automation:autoStation"})
+	if err := controller.Send(autoStation, payload); !errors.Is(err, Outbound.ErrAutomationLocked) {
+		t.Fatalf("explicit lock Auto Station dispatch error = %v", err)
 	}
 	interactive := Outbound.WithMetadata(context.Background(), Outbound.Metadata{Actor: "ui"})
 	if err := controller.Send(interactive, payload); err != nil {

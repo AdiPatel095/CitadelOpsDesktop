@@ -31,6 +31,10 @@ const (
 	autoStormBuildingRefreshAge    = 5 * time.Minute
 	autoStormPriorityFortPrefix    = "fort:"
 	autoStormPriorityIslandPrefix  = "island:"
+	autoStormMinimumHistoryHours   = 24
+	autoStormMaximumHistoryHours   = 72
+	autoStormDefaultHistoryHours   = 72
+	autoStormTroopDemandMultiplier = 2
 )
 
 type AutoStormPolicy struct{}
@@ -92,6 +96,8 @@ type autoStormIslandSettings struct {
 type autoStormTroopImportSettings struct {
 	Enabled        bool             `json:"enabled"`
 	DonorCastleIDs []State.CastleID `json:"donorCastleIds"`
+	MinimumTroops  int64            `json:"minimumTroops"`
+	HistoryHours   int              `json:"historyHours"`
 }
 
 type autoStormShopPurchase struct {
@@ -259,7 +265,9 @@ func defaultAutoStormSettings() autoStormSettings {
 			Resources: []string{"wood", "stone", "aquamarine"}, Sizes: []string{"large", "small"},
 			DefenseUnits: []autoStormDefenseUnit{},
 		},
-		TroopImport:    autoStormTroopImportSettings{DonorCastleIDs: []State.CastleID{}},
+		TroopImport: autoStormTroopImportSettings{
+			DonorCastleIDs: []State.CastleID{}, HistoryHours: autoStormDefaultHistoryHours,
+		},
 		Aquamarine:     autoStormAquamarineSettings{Purchases: []autoStormShopPurchase{}},
 		TargetPriority: nil, CheckIntervalSec: 30, MapRefreshIntervalSec: autoStormMapRefreshSeconds,
 		HorseTravelBoostID: -1,
@@ -304,6 +312,8 @@ func normalizeAutoStormSettings(settings *autoStormSettings) {
 		donors = append(donors, castleID)
 	}
 	settings.TroopImport.DonorCastleIDs = donors
+	settings.TroopImport.MinimumTroops = max(int64(0), settings.TroopImport.MinimumTroops)
+	settings.TroopImport.HistoryHours = normalizedAutoStormHistoryHours(settings.TroopImport.HistoryHours)
 	settings.Forts.MinimumWins = max(int64(0), settings.Forts.MinimumWins)
 	if settings.Aquamarine.Purchases == nil {
 		settings.Aquamarine.Purchases = []autoStormShopPurchase{}
@@ -1463,7 +1473,11 @@ func evaluateAutoStormCombat(
 			continue
 		}
 		defense := candidate.Defense
-		required, valid := autoStormPresetRequirements(preset, defense)
+		required, valid := autoStormPresetRequirements(
+			preset,
+			defense,
+			candidate.Definition.Kind != GameData.StormIsleKindIsland,
+		)
 		if !valid {
 			continue
 		}
@@ -1485,14 +1499,14 @@ func evaluateAutoStormCombat(
 			), "", nil
 		}
 		shortages := autoStormUnitShortages(required, castle)
-		if len(shortages) > 0 {
-			decision, detail := autoStormTroopImportDecision(snapshot, settings, castle, shortages, metrics)
-			if decision != nil {
-				return decision, "", nil
-			}
-			if detail != "" {
-				waitingDetail = detail
-			}
+		decision, importDetail := autoStormTroopImportDecision(
+			snapshot, settings, castle, required, shortages, metrics,
+		)
+		if decision != nil {
+			return decision, "", nil
+		}
+		if importDetail != "" {
+			waitingDetail = importDetail
 			continue
 		}
 		arguments := map[string]any{
@@ -1739,7 +1753,11 @@ func autoStormTargetNeedsVerification(target State.MapObservation, now time.Time
 	return target.ObservedAt.IsZero() || now.After(target.ObservedAt.Add(autoStormTargetVerificationAge))
 }
 
-func autoStormPresetRequirements(preset AttackPresets.Preset, defense []autoStormDefenseUnit) (map[State.UnitID]int64, bool) {
+func autoStormPresetRequirements(
+	preset AttackPresets.Preset,
+	defense []autoStormDefenseUnit,
+	includePresetSupportTroops bool,
+) (map[State.UnitID]int64, bool) {
 	requested := map[State.UnitID]int64{}
 	for _, wave := range preset.Waves {
 		for _, lane := range []AttackPresets.Lane{wave.Left, wave.Middle, wave.Right} {
@@ -1752,6 +1770,7 @@ func autoStormPresetRequirements(preset AttackPresets.Preset, defense []autoStor
 			}
 		}
 	}
+	addPresetCourtyardRequirements(requested, preset, includePresetSupportTroops)
 	for _, unit := range defense {
 		if unit.UnitID <= 0 || unit.Amount <= 0 {
 			return nil, false
@@ -1830,6 +1849,7 @@ func autoStormTroopImportDecision(
 	snapshot Snapshot,
 	settings autoStormSettings,
 	castle State.CastleState,
+	required map[State.UnitID]int64,
 	shortages map[State.UnitID]int64,
 	metrics map[string]float64,
 ) (*Decision, string) {
@@ -1840,10 +1860,96 @@ func autoStormTroopImportDecision(
 	metrics["presetUnitsMissing"] = float64(missingTotal)
 	metrics["presetUnitStacksMissing"] = float64(len(shortages))
 	if !settings.TroopImport.Enabled {
+		if len(shortages) == 0 {
+			return nil, ""
+		}
 		return nil, fmt.Sprintf("Storm is missing %d preset or defense units and troop import is disabled", missingTotal)
+	}
+	requiredTroops := map[State.UnitID]int64{}
+	immediateTroops := map[State.UnitID]int64{}
+	missingTools := 0
+	perAttackTroops := int64(0)
+	for _, unitID := range sortedAutoStormUnitIDs(required) {
+		isTool, found := autoStormUnitIsTool(snapshot.GameData, unitID)
+		if !found {
+			return nil, fmt.Sprintf("Official unit definition %d is unavailable", unitID)
+		}
+		if isTool {
+			if shortages[unitID] > 0 {
+				missingTools++
+			}
+			continue
+		}
+		amount := required[unitID]
+		requiredTroops[unitID] = amount
+		perAttackTroops = autoStormSaturatingAdd(perAttackTroops, amount)
+		if shortages[unitID] > 0 {
+			immediateTroops[unitID] = shortages[unitID]
+		}
+	}
+	metrics["presetToolStacksMissing"] = float64(missingTools)
+	metrics["stormCandidateTroopsPerAttack"] = float64(perAttackTroops)
+	if perAttackTroops <= 0 {
+		if missingTools > 0 {
+			return nil, "Storm is missing preset tools, which kingdom troop transport cannot import"
+		}
+		return nil, "The selected Storm preset has no transferable attack troops"
+	}
+	stationedTroops, committedTroops := autoStormTroopInventory(snapshot, castle)
+	capPreview, err := autoStormTroopCapPreview(snapshot, settings)
+	if err != nil {
+		return nil, fmt.Sprintf("Cannot calculate the Storm troop cap: %v", err)
+	}
+	if !capPreview.Available {
+		detail := capPreview.Detail
+		if detail == "" {
+			detail = "No enabled attack preset has transferable troops"
+		}
+		return nil, fmt.Sprintf("Cannot calculate the Storm troop cap: %s", detail)
+	}
+	minimumTroops := capPreview.MinimumTroops
+	maximumTroops := capPreview.MaximumTroops
+	historyHours := capPreview.HistoryHours
+	metrics["stormTroopsStationed"] = float64(stationedTroops)
+	metrics["stormTroopsCommitted"] = float64(committedTroops)
+	metrics["stormTroopsPerAttack"] = float64(capPreview.TroopsPerAttack)
+	metrics["stormTroopMinimum"] = float64(minimumTroops)
+	metrics["stormTroopMaximum"] = float64(maximumTroops)
+	metrics["stormAttackHistoryHours"] = float64(historyHours)
+	metrics["stormAttacksInHistory"] = float64(capPreview.AttacksInHistory)
+	metrics["stormAverageDailyAttacks"] = capPreview.AverageDailyAttacks
+	metrics["stormBufferedAttackCount"] = float64(capPreview.BufferedAttackCount)
+
+	requested := map[State.UnitID]int64{}
+	reserve := map[State.UnitID]int64{}
+	reserveRequirements := autoStormReserveRequirements(requiredTroops, minimumTroops, perAttackTroops)
+	for _, unitID := range sortedAutoStormUnitIDs(requiredTroops) {
+		desired := autoStormSaturatingAdd(requiredTroops[unitID], reserveRequirements[unitID])
+		needed := max(int64(0), desired-castle.Units.Stationed[unitID])
+		if needed <= 0 {
+			continue
+		}
+		requested[unitID] = needed
+		reserve[unitID] = max(int64(0), needed-immediateTroops[unitID])
+	}
+	requestedTotal := autoStormUnitTotal(requested)
+	metrics["stormTroopsRequestedForImport"] = float64(requestedTotal)
+	if requestedTotal == 0 {
+		if missingTools > 0 {
+			return nil, "Storm has the required troops but is missing preset tools, which kingdom troop transport cannot import"
+		}
+		return nil, ""
 	}
 	if len(settings.TroopImport.DonorCastleIDs) == 0 {
 		return nil, "Storm troop import is enabled, but no donor castles are selected"
+	}
+	headroom := maximumTroops - committedTroops
+	metrics["stormTroopImportHeadroom"] = float64(max(int64(0), headroom))
+	if headroom < requestedTotal {
+		return nil, fmt.Sprintf(
+			"Storm troop import is capped at %d troops from the %d-hour attack average; %d are committed and %d more are needed before launch",
+			maximumTroops, historyHours, committedTroops, requestedTotal,
+		)
 	}
 	mead, observed := autoStormMeadBalance(snapshot.GameData, castle)
 	metrics["stormMead"] = mead
@@ -1864,53 +1970,196 @@ func autoStormTroopImportDecision(
 	if !unlock.Unlocked {
 		return nil, "Kingdom troop transfer to Storm is not unlocked"
 	}
-	transferable := map[State.UnitID]int64{}
-	missingTools := 0
-	for _, unitID := range sortedAutoStormUnitIDs(shortages) {
-		isTool, found := autoStormUnitIsTool(snapshot.GameData, unitID)
-		if !found {
-			return nil, fmt.Sprintf("Official unit definition %d is unavailable", unitID)
-		}
-		if isTool {
-			missingTools++
-			continue
-		}
-		transferable[unitID] = shortages[unitID]
-	}
-	metrics["presetToolStacksMissing"] = float64(missingTools)
-	if len(transferable) == 0 {
-		return nil, "Storm has the required troops but is missing preset tools, which kingdom troop transport cannot import"
-	}
 	for _, donorID := range settings.TroopImport.DonorCastleIDs {
 		donor, found := snapshot.State.Castles[donorID]
 		if !found || donor.ID == castle.ID || donor.KingdomID == castle.KingdomID {
 			continue
 		}
-		units := make([]map[string]any, 0, len(transferable))
+		selected := map[State.UnitID]int64{}
 		transferTotal := int64(0)
-		for _, unitID := range sortedAutoStormUnitIDs(transferable) {
-			if len(units) >= autoStormMaximumTroopStacks {
-				break
+		for _, demand := range []map[State.UnitID]int64{immediateTroops, reserve} {
+			for _, unitID := range sortedAutoStormUnitIDs(demand) {
+				if len(selected) >= autoStormMaximumTroopStacks {
+					break
+				}
+				available := donor.Units.Stationed[unitID] - selected[unitID]
+				remaining := requested[unitID] - selected[unitID]
+				amount := min(demand[unitID], available, remaining)
+				if amount <= 0 {
+					continue
+				}
+				selected[unitID] += amount
+				transferTotal += amount
 			}
-			amount := min(transferable[unitID], donor.Units.Stationed[unitID])
-			if amount <= 0 {
-				continue
-			}
-			units = append(units, map[string]any{"unitId": unitID, "amount": amount})
-			transferTotal += amount
 		}
-		if len(units) == 0 {
+		if len(selected) == 0 {
 			continue
 		}
+		units := make([]map[string]any, 0, len(selected))
+		for _, unitID := range sortedAutoStormUnitIDs(selected) {
+			units = append(units, map[string]any{"unitId": unitID, "amount": selected[unitID]})
+		}
 		metrics["troopsSelectedForImport"] = float64(transferTotal)
-		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Import %d required troops from %s", transferTotal, autoStormCastleName(donor)), "troops.kingdom.ship", map[string]any{
-			"sourceCastleId": donor.ID, "targetCastleId": castle.ID, "targetKingdomId": castle.KingdomID, "units": units,
+		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Import %d guarded troops from %s", transferTotal, autoStormCastleName(donor)), "troops.kingdom.ship", map[string]any{
+			"sourceCastleId": donor.ID, "targetCastleId": castle.ID, "targetKingdomId": castle.KingdomID,
+			"maximumTargetTroops": maximumTroops, "units": units,
 		}), ""
 	}
 	if missingTools > 0 {
 		return nil, fmt.Sprintf("Selected donor castles cannot supply the missing Storm troops; %d preset tool stack(s) are also missing", missingTools)
 	}
 	return nil, "Selected donor castles cannot currently supply the missing Storm troops"
+}
+
+func autoStormTroopInventory(snapshot Snapshot, castle State.CastleState) (int64, int64) {
+	stationed := autoStormTroopMapTotal(snapshot.GameData, castle.Units.Stationed)
+	traveling := autoStormTroopMapTotal(snapshot.GameData, castle.Units.Traveling)
+	movementTroops := int64(0)
+	for _, movement := range snapshot.State.Movements {
+		if movement.SourceCastleID == castle.ID {
+			movementTroops = autoStormSaturatingAdd(
+				movementTroops,
+				autoStormTroopMapTotal(snapshot.GameData, movement.Units),
+			)
+		}
+	}
+	committed := autoStormSaturatingAdd(stationed, max(traveling, movementTroops))
+	for _, pending := range snapshot.State.KingdomTransport.PendingUnits {
+		if pending.KingdomID != castle.KingdomID {
+			continue
+		}
+		for _, unit := range pending.Units {
+			if isTool, found := autoStormUnitIsTool(snapshot.GameData, unit.UnitID); !found || !isTool {
+				committed = autoStormSaturatingAdd(committed, max(int64(0), unit.Amount))
+			}
+		}
+	}
+	for _, operation := range snapshot.State.Storm.IslandReturns {
+		if operation.SourceCastleID != castle.ID || operation.Status != State.StormIslandReturnReady {
+			continue
+		}
+		committed = autoStormSaturatingAdd(
+			committed,
+			autoStormTroopMapTotal(snapshot.GameData, operation.UnitsToReturn()),
+		)
+	}
+	return stationed, committed
+}
+
+func autoStormAttackDemand(
+	state State.GameState,
+	now time.Time,
+	historyHours int,
+) (int64, float64, int64) {
+	historyHours = normalizedAutoStormHistoryHours(historyHours)
+	if now.IsZero() {
+		now = time.Now().UTC()
+	}
+	cutoff := now.Add(-time.Duration(historyHours) * time.Hour)
+	seen := map[State.MovementID]struct{}{}
+	count := int64(0)
+	for _, records := range [][]State.AttackFeatureLaunch{
+		state.AttackAnalytics.RecentAutoStormLaunches,
+		state.AttackAnalytics.PendingAttacks,
+	} {
+		for _, record := range records {
+			if record.MovementID <= 0 || record.FeatureID != State.AttackFeatureAutoStorm ||
+				record.KingdomID != autoStormKingdomID || record.LaunchedAt.Before(cutoff) ||
+				record.LaunchedAt.After(now) {
+				continue
+			}
+			if _, duplicate := seen[record.MovementID]; duplicate {
+				continue
+			}
+			seen[record.MovementID] = struct{}{}
+			count++
+		}
+	}
+	averageDaily := float64(count) * 24 / float64(historyHours)
+	buffered := int64(math.Ceil(averageDaily * autoStormTroopDemandMultiplier))
+	return count, averageDaily, max(int64(1), buffered)
+}
+
+func normalizedAutoStormHistoryHours(historyHours int) int {
+	switch historyHours {
+	case autoStormMinimumHistoryHours, 48, autoStormMaximumHistoryHours:
+		return historyHours
+	default:
+		return autoStormDefaultHistoryHours
+	}
+}
+
+func autoStormTroopMapTotal(gameData *GameData.Store, units map[State.UnitID]int64) int64 {
+	total := int64(0)
+	for unitID, amount := range units {
+		if amount <= 0 {
+			continue
+		}
+		if isTool, found := autoStormUnitIsTool(gameData, unitID); found && isTool {
+			continue
+		}
+		total = autoStormSaturatingAdd(total, amount)
+	}
+	return total
+}
+
+func autoStormUnitTotal(units map[State.UnitID]int64) int64 {
+	total := int64(0)
+	for _, amount := range units {
+		total = autoStormSaturatingAdd(total, max(int64(0), amount))
+	}
+	return total
+}
+
+func autoStormReserveRequirements(
+	required map[State.UnitID]int64,
+	minimum int64,
+	totalRequired int64,
+) map[State.UnitID]int64 {
+	result := make(map[State.UnitID]int64, len(required))
+	remainingReserve := max(int64(0), minimum)
+	remainingWeight := max(int64(0), totalRequired)
+	unitIDs := sortedAutoStormUnitIDs(required)
+	for index, unitID := range unitIDs {
+		weight := max(int64(0), required[unitID])
+		if remainingReserve <= 0 || remainingWeight <= 0 || weight <= 0 {
+			continue
+		}
+		share := remainingReserve
+		if index < len(unitIDs)-1 {
+			share = min(
+				remainingReserve,
+				autoStormSaturatingMultiply(remainingReserve, weight)/remainingWeight,
+			)
+		}
+		result[unitID] = share
+		remainingReserve -= share
+		remainingWeight -= weight
+	}
+	return result
+}
+
+func autoStormSaturatingAdd(left int64, right int64) int64 {
+	if left <= 0 {
+		return max(int64(0), right)
+	}
+	if right <= 0 {
+		return left
+	}
+	if left > math.MaxInt64-right {
+		return math.MaxInt64
+	}
+	return left + right
+}
+
+func autoStormSaturatingMultiply(left int64, right int64) int64 {
+	if left <= 0 || right <= 0 {
+		return 0
+	}
+	if left > math.MaxInt64/right {
+		return math.MaxInt64
+	}
+	return left * right
 }
 
 func autoStormMeadBalance(gameData *GameData.Store, castle State.CastleState) (float64, bool) {

@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import {
-  Boxes,
+  ChevronDown,
+  ChevronRight,
   Copy,
   Eraser,
   Minus,
   Plus,
+  Shield,
   Swords,
 } from 'lucide-react';
 import { useMetadata, type MetadataItem } from '../context/MetadataContext';
@@ -32,9 +34,15 @@ export interface AttackSetupWave {
   R: AttackSetupLane;
 }
 
+export interface AttackSetupCourtyardSupport {
+  troops: AttackSetupSlot[];
+  tools: AttackSetupSlot[];
+}
+
 export interface AttackSetupDraft {
   name: string;
   waves: AttackSetupWave[];
+  courtyardSupport: AttackSetupCourtyardSupport;
 }
 
 /** Optional inventory scope for callers that need something other than the default all-castles aggregate. */
@@ -72,6 +80,8 @@ interface InventoryIssue {
 
 const laneKeys: LaneKey[] = ['L', 'M', 'R'];
 const MAX_WAVES = 30;
+const COURTYARD_TROOP_SLOTS = 8;
+const COURTYARD_TOOL_SLOTS = 3;
 
 const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
   isOpen,
@@ -84,8 +94,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
   const { state } = useCitadelAPI();
   const { troops, tools, isLoading: isMetadataLoading } = useMetadata();
   const [draft, setDraft] = useState<AttackSetupDraft>(() => normalizeDraft(initialDraft));
-  const [activeWaveIndex, setActiveWaveIndex] = useState(0);
-  const [activeFormationKind, setActiveFormationKind] = useState<InventoryKind>('troop');
+  const [activeSupportKind, setActiveSupportKind] = useState<InventoryKind>('troop');
 
   const allCastlesInventory = useMemo(
     () => isMetadataLoading
@@ -106,18 +115,26 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
     () => inventoryItems(inventory.troops, troops, inventoryPolicy === 'advisory'),
     [inventory.troops, inventoryPolicy, troops]
   );
-  const toolItems = useMemo(
+  const allToolItems = useMemo(
     () => inventoryItems(inventory.tools, tools, inventoryPolicy === 'advisory'),
     [inventory.tools, inventoryPolicy, tools]
   );
+  const toolItems = useMemo(
+    () => allToolItems.filter((item) => !isSceatAttackSupportTool(item.metadata)),
+    [allToolItems]
+  );
+  const supportToolItems = useMemo(
+    () => allToolItems.filter((item) => isSceatAttackSupportTool(item.metadata)),
+    [allToolItems]
+  );
   const troopIDs = useMemo(() => troopItems.map((item) => item.id), [troopItems]);
   const toolIDs = useMemo(() => toolItems.map((item) => item.id), [toolItems]);
+  const supportToolIDs = useMemo(() => supportToolItems.map((item) => item.id), [supportToolItems]);
 
   useEffect(() => {
     if (!isOpen) return;
     setDraft(normalizeDraft(initialDraft));
-    setActiveWaveIndex(0);
-    setActiveFormationKind('troop');
+    setActiveSupportKind('troop');
   }, [initialDraft, isOpen]);
 
   const totals = useMemo(() => summarizeDraft(draft), [draft]);
@@ -127,9 +144,8 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
     [allocations, inventory]
   );
   const canSave = draft.name.trim().length > 0
-    && totals.troops > 0
+    && totals.formationTroops > 0
     && (inventoryPolicy === 'advisory' || inventoryIssues.length === 0);
-  const activeWave = draft.waves[activeWaveIndex] ?? draft.waves[0];
 
   const setWaveCount = (count: number) => {
     const nextCount = Math.max(1, Math.min(MAX_WAVES, Math.trunc(count) || 1));
@@ -146,11 +162,6 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
         ],
       };
     });
-    setActiveWaveIndex((current) => Math.min(current, nextCount - 1));
-  };
-
-  const updateActiveWave = (updater: (wave: AttackSetupWave) => AttackSetupWave) => {
-    updateWaveAt(activeWaveIndex, updater);
   };
 
   const updateWaveAt = (waveIndex: number, updater: (wave: AttackSetupWave) => AttackSetupWave) => {
@@ -160,30 +171,20 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
     }));
   };
 
-  const selectWave = (waveIndex: number) => {
-    setActiveWaveIndex(waveIndex);
-  };
-
-  const duplicateWave = () => {
-    if (draft.waves.length >= MAX_WAVES || !activeWave) return;
-    const insertAt = activeWaveIndex + 1;
-    setDraft((current) => ({
-      ...current,
-      waves: [
-        ...current.waves.slice(0, insertAt),
-        cloneWave(current.waves[activeWaveIndex]),
-        ...current.waves.slice(insertAt),
-      ],
-    }));
-    setActiveWaveIndex(insertAt);
-  };
-
-  const fillAllWaves = () => {
-    if (!activeWave) return;
-    setDraft((current) => ({
-      ...current,
-      waves: current.waves.map(() => cloneWave(activeWave)),
-    }));
+  const duplicateWave = (waveIndex: number) => {
+    setDraft((current) => {
+      const wave = current.waves[waveIndex];
+      if (!wave || current.waves.length >= MAX_WAVES) return current;
+      const insertAt = waveIndex + 1;
+      return {
+        ...current,
+        waves: [
+          ...current.waves.slice(0, insertAt),
+          cloneWave(wave),
+          ...current.waves.slice(insertAt),
+        ],
+      };
+    });
   };
 
   const handleSave = () => {
@@ -223,7 +224,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
                 {inventoryIssues.length} stock conflict{inventoryIssues.length === 1 ? '' : 's'}
                 {inventoryPolicy === 'advisory' ? ' will be checked at launch' : ' must be resolved'}
               </span>
-            ) : totals.troops === 0 ? (
+            ) : totals.formationTroops === 0 ? (
               'Add at least one troop to save this preset.'
             ) : (
               `${totals.troops.toLocaleString()} troops and ${totals.tools.toLocaleString()} tools allocated`
@@ -289,97 +290,115 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
           </div>
         </section>
 
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-border-base bg-bg-card/55 p-3 shadow-[var(--glass-shadow-compact)] backdrop-blur-2xl">
-          <div className="min-w-0 flex-1 overflow-x-auto custom-scrollbar">
-            <div className="w-max p-1">
-              <PillSelector
-                ariaLabel="Attack wave"
-                value={String(activeWaveIndex)}
-                onChange={(value) => selectWave(Number(value))}
-                options={draft.waves.map((wave, index) => {
-                  const waveTotals = summarizeWave(wave);
-                  return {
-                    value: String(index),
-                    label: `Wave ${index + 1}`,
-                    title: `${waveTotals.troops.toLocaleString()} troops · ${waveTotals.tools.toLocaleString()} tools`,
-                  };
-                })}
-                size="header"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={duplicateWave} disabled={draft.waves.length >= MAX_WAVES} leftIcon={<Copy className="h-3.5 w-3.5" />}>
-              Duplicate selected
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={fillAllWaves}
-              disabled={draft.waves.length <= 1}
-              leftIcon={<Boxes className="h-3.5 w-3.5" />}
-              title={`Replace every wave with Wave ${activeWaveIndex + 1}`}
-            >
-              Copy selected to all
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => updateActiveWave(() => emptyWave())} leftIcon={<Eraser className="h-3.5 w-3.5" />}>
-              Clear selected
-            </Button>
-          </div>
+        <section className="flex flex-col gap-4" aria-label="Attack waves">
+          {draft.waves.map((wave, waveIndex) => (
+            <WaveEditorCard
+              key={waveIndex}
+              waveIndex={waveIndex}
+              waveCount={draft.waves.length}
+              wave={wave}
+              troopItems={troopItems}
+              toolItems={toolItems}
+              troopStock={inventory.troops}
+              toolStock={inventory.tools}
+              troopAllocations={allocations.troops}
+              toolAllocations={allocations.tools}
+              onDuplicate={() => duplicateWave(waveIndex)}
+              onClear={() => updateWaveAt(waveIndex, () => emptyWave())}
+              onChangeLane={(laneKey, lane) => {
+                updateWaveAt(waveIndex, (currentWave) => ({ ...currentWave, [laneKey]: lane }));
+              }}
+              onPickTroop={async (laneKey, slot, slotIndex) => {
+                const result = await showTroopPicker({
+                  mode: 'single',
+                  title: `Choose a troop for Wave ${waveIndex + 1} · ${laneLabel(laneKey)}`,
+                  preselected: slot.itemId == null ? [] : [slot.itemId],
+                  allowedUnitIds: troopIDs,
+                  stockQuantities: inventory.troops,
+                });
+                if (typeof result !== 'number') return;
+                updateWaveAt(waveIndex, (currentWave) => ({
+                  ...currentWave,
+                  [laneKey]: {
+                    ...currentWave[laneKey],
+                    troops: updateSlot(currentWave[laneKey].troops, slotIndex, {
+                      itemId: result,
+                      quantity: slot.quantity > 0 ? slot.quantity : 1,
+                    }),
+                  },
+                }));
+              }}
+              onPickTool={async (laneKey, slot, slotIndex) => {
+                const result = await showToolPicker({
+                  mode: 'single',
+                  title: `Choose a tool for Wave ${waveIndex + 1} · ${laneLabel(laneKey)}`,
+                  preselected: slot.itemId == null ? [] : [slot.itemId],
+                  allowedToolIds: toolIDs,
+                  stockQuantities: inventory.tools,
+                });
+                if (typeof result !== 'number') return;
+                updateWaveAt(waveIndex, (currentWave) => ({
+                  ...currentWave,
+                  [laneKey]: {
+                    ...currentWave[laneKey],
+                    tools: updateSlot(currentWave[laneKey].tools, slotIndex, {
+                      itemId: result,
+                      quantity: slot.quantity > 0 ? slot.quantity : 1,
+                    }),
+                  },
+                }));
+              }}
+            />
+          ))}
         </section>
 
-        <WaveEditorCard
-          key={activeWaveIndex}
-          waveIndex={activeWaveIndex}
-          wave={activeWave}
-          activeFormationKind={activeFormationKind}
+        <CourtyardSupportCard
+          support={draft.courtyardSupport}
+          activeKind={activeSupportKind}
           troopItems={troopItems}
-          toolItems={toolItems}
+          toolItems={supportToolItems}
           troopStock={inventory.troops}
           toolStock={inventory.tools}
           troopAllocations={allocations.troops}
           toolAllocations={allocations.tools}
-          onChangeFormationKind={setActiveFormationKind}
-          onChangeLane={(laneKey, lane) => {
-            updateWaveAt(activeWaveIndex, (currentWave) => ({ ...currentWave, [laneKey]: lane }));
-          }}
-          onPickTroop={async (laneKey, slot, slotIndex) => {
+          onChangeKind={setActiveSupportKind}
+          onChange={(courtyardSupport) => setDraft((current) => ({ ...current, courtyardSupport }))}
+          onPickTroop={async (slot, slotIndex) => {
             const result = await showTroopPicker({
               mode: 'single',
-              title: `Choose a troop for Wave ${activeWaveIndex + 1} · ${laneLabel(laneKey)}`,
+              title: `Choose courtyard support troop ${slotIndex + 1}`,
               preselected: slot.itemId == null ? [] : [slot.itemId],
               allowedUnitIds: troopIDs,
               stockQuantities: inventory.troops,
             });
             if (typeof result !== 'number') return;
-            updateWaveAt(activeWaveIndex, (currentWave) => ({
-              ...currentWave,
-              [laneKey]: {
-                ...currentWave[laneKey],
-                troops: updateSlot(currentWave[laneKey].troops, slotIndex, {
+            setDraft((current) => ({
+              ...current,
+              courtyardSupport: {
+                ...current.courtyardSupport,
+                troops: updateSlot(current.courtyardSupport.troops, slotIndex, {
                   itemId: result,
                   quantity: slot.quantity > 0 ? slot.quantity : 1,
                 }),
               },
             }));
           }}
-          onPickTool={async (laneKey, slot, slotIndex) => {
+          onPickTool={async (slot, slotIndex) => {
             const result = await showToolPicker({
               mode: 'single',
-              title: `Choose a tool for Wave ${activeWaveIndex + 1} · ${laneLabel(laneKey)}`,
+              title: `Choose Sceat support tool ${slotIndex + 1}`,
               preselected: slot.itemId == null ? [] : [slot.itemId],
-              allowedToolIds: toolIDs,
+              allowedToolIds: supportToolIDs,
               stockQuantities: inventory.tools,
             });
             if (typeof result !== 'number') return;
-            updateWaveAt(activeWaveIndex, (currentWave) => ({
-              ...currentWave,
-              [laneKey]: {
-                ...currentWave[laneKey],
-                tools: updateSlot(currentWave[laneKey].tools, slotIndex, {
+            setDraft((current) => ({
+              ...current,
+              courtyardSupport: {
+                ...current.courtyardSupport,
+                tools: updateSlot(current.courtyardSupport.tools, slotIndex, {
                   itemId: result,
-                  quantity: slot.quantity > 0 ? slot.quantity : 1,
+                  quantity: 1,
                 }),
               },
             }));
@@ -413,15 +432,16 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
 
 interface WaveEditorCardProps {
   waveIndex: number;
+  waveCount: number;
   wave: AttackSetupWave;
-  activeFormationKind: InventoryKind;
   troopItems: InventoryItem[];
   toolItems: InventoryItem[];
   troopStock: Record<number, number>;
   toolStock: Record<number, number>;
   troopAllocations: Record<number, number>;
   toolAllocations: Record<number, number>;
-  onChangeFormationKind: (kind: InventoryKind) => void;
+  onDuplicate: () => void;
+  onClear: () => void;
   onChangeLane: (laneKey: LaneKey, lane: AttackSetupLane) => void;
   onPickTroop: (laneKey: LaneKey, slot: AttackSetupSlot, slotIndex: number) => void;
   onPickTool: (laneKey: LaneKey, slot: AttackSetupSlot, slotIndex: number) => void;
@@ -429,79 +449,221 @@ interface WaveEditorCardProps {
 
 const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
   waveIndex,
+  waveCount,
   wave,
-  activeFormationKind,
   troopItems,
   toolItems,
   troopStock,
   toolStock,
   troopAllocations,
   toolAllocations,
-  onChangeFormationKind,
+  onDuplicate,
+  onClear,
   onChangeLane,
   onPickTroop,
   onPickTool,
 }) => {
   const waveTotals = summarizeWave(wave);
+  const [isOpen, setIsOpen] = useState(true);
+  const contentId = useId();
+
   return (
     <Card
       variant="solid"
-      className="liquid-prominent-header-card ring-1 ring-primary/30"
+      className="liquid-prominent-header-card"
     >
+      <CardHeader className="liquid-card-header-prominent !m-0 !min-h-0 !rounded-full !p-0">
+        <div className="flex h-11 w-full items-center gap-1 overflow-hidden rounded-full px-1.5">
+          <button
+            type="button"
+            className="flex h-full min-w-0 flex-1 items-center justify-between gap-3 rounded-full px-2 text-left transition-colors hover:text-primary"
+            aria-expanded={isOpen}
+            aria-controls={contentId}
+            onClick={() => setIsOpen((current) => !current)}
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/12 text-primary shadow-glow">
+                <Swords className="h-4 w-4" />
+              </span>
+              <h3 className="m-0 whitespace-nowrap text-sm font-black text-text-main">Wave {waveIndex + 1}</h3>
+              <Badge variant="primary" className="shrink-0 normal-case tracking-normal">{waveIndex + 1} of {waveCount}</Badge>
+            </div>
+
+            <div className="flex shrink-0 items-center justify-end gap-1.5">
+              <span className="rounded-full border border-border-base bg-bg-input/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+                Troops <strong className="ml-1 font-mono text-xs text-text-main">{waveTotals.troops.toLocaleString()}</strong>
+              </span>
+              <span className="rounded-full border border-border-base bg-bg-input/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+                Tools <strong className="ml-1 font-mono text-xs text-text-main">{waveTotals.tools.toLocaleString()}</strong>
+              </span>
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
+              ) : (
+                <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
+              )}
+            </div>
+          </button>
+          <span className="h-5 w-px shrink-0 bg-border-base/80" aria-hidden="true" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full !p-0"
+            onClick={onDuplicate}
+            disabled={waveCount >= MAX_WAVES}
+            title="Duplicate wave"
+            aria-label={`Duplicate Wave ${waveIndex + 1}`}
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full !p-0 hover:!text-error"
+            onClick={onClear}
+            title="Clear wave"
+            aria-label={`Clear Wave ${waveIndex + 1}`}
+          >
+            <Eraser className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </CardHeader>
+
+      {isOpen ? (
+        <CardContent id={contentId} className="liquid-prominent-header-content !px-1 !pb-2 !pt-3">
+          <div className="grid gap-1">
+            <FormationRow
+              kind="tool"
+              label="Tools"
+              wave={wave}
+              items={toolItems}
+              stock={toolStock}
+              allocations={toolAllocations}
+              onChangeLane={onChangeLane}
+              onPick={onPickTool}
+            />
+            <FormationRow
+              kind="troop"
+              label="Troops"
+              divided
+              wave={wave}
+              items={troopItems}
+              stock={troopStock}
+              allocations={troopAllocations}
+              onChangeLane={onChangeLane}
+              onPick={onPickTroop}
+            />
+          </div>
+        </CardContent>
+      ) : null}
+    </Card>
+  );
+};
+
+interface CourtyardSupportCardProps {
+  support: AttackSetupCourtyardSupport;
+  activeKind: InventoryKind;
+  troopItems: InventoryItem[];
+  toolItems: InventoryItem[];
+  troopStock: Record<number, number>;
+  toolStock: Record<number, number>;
+  troopAllocations: Record<number, number>;
+  toolAllocations: Record<number, number>;
+  onChangeKind: (kind: InventoryKind) => void;
+  onChange: (support: AttackSetupCourtyardSupport) => void;
+  onPickTroop: (slot: AttackSetupSlot, slotIndex: number) => void;
+  onPickTool: (slot: AttackSetupSlot, slotIndex: number) => void;
+}
+
+const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
+  support,
+  activeKind,
+  troopItems,
+  toolItems,
+  troopStock,
+  toolStock,
+  troopAllocations,
+  toolAllocations,
+  onChangeKind,
+  onChange,
+  onPickTroop,
+  onPickTool,
+}) => {
+  const kindIsTroop = activeKind === 'troop';
+  const slots = kindIsTroop ? support.troops : support.tools;
+  const items = kindIsTroop ? troopItems : toolItems;
+  const stock = kindIsTroop ? troopStock : toolStock;
+  const allocations = kindIsTroop ? troopAllocations : toolAllocations;
+  const troopTotal = support.troops.reduce((total, slot) => total + slot.quantity, 0);
+  const toolTotal = support.tools.filter((slot) => slot.itemId != null).length;
+
+  return (
+    <Card variant="solid" className="liquid-prominent-header-card ring-1 ring-warning/25">
       <CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-global border border-primary/40 bg-primary/12 text-primary shadow-glow">
-            <Swords className="h-5 w-5" />
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-global border border-warning/40 bg-warning/12 text-warning">
+            <Shield className="h-5 w-5" />
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="m-0 text-base font-black text-text-main">Wave {waveIndex + 1}</h3>
-              <Badge variant="primary" className="normal-case tracking-normal">Editing</Badge>
+              <h3 className="m-0 text-base font-black text-text-main">Courtyard support wave</h3>
+              <Badge variant="warning" className="normal-case tracking-normal">Optional</Badge>
             </div>
-            <p className="mt-1 text-xs text-text-muted">Three fronts · 10 unit slots · 7 tool slots</p>
+            <p className="mt-1 text-xs text-text-muted">
+              Add up to {COURTYARD_TROOP_SLOTS} extra troops and {COURTYARD_TOOL_SLOTS} one-use Sceat support tools.
+            </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
           <PillSelector
-            ariaLabel="Formation item type"
-            value={activeFormationKind}
-            onChange={(value) => onChangeFormationKind(value as InventoryKind)}
+            ariaLabel="Courtyard support item type"
+            value={activeKind}
+            onChange={(value) => onChangeKind(value as InventoryKind)}
             options={[
-              { value: 'troop', label: 'Units · 10' },
-              { value: 'tool', label: 'Tools · 7' },
+              { value: 'troop', label: `Units · ${COURTYARD_TROOP_SLOTS}` },
+              { value: 'tool', label: `Sceat tools · ${COURTYARD_TOOL_SLOTS}` },
             ]}
             size="header"
           />
-          <MetricTile size="sm" className="min-w-[4.75rem]" label="Troops" value={waveTotals.troops.toLocaleString()} />
-          <MetricTile size="sm" className="min-w-[4.75rem]" label="Tools" value={waveTotals.tools.toLocaleString()} />
+          <MetricTile size="sm" className="min-w-[4.75rem]" label="Troops" value={troopTotal.toLocaleString()} />
+          <MetricTile size="sm" className="min-w-[4.75rem]" label="Tools" value={toolTotal.toLocaleString()} />
         </div>
       </CardHeader>
 
       <CardContent className="liquid-prominent-header-content p-3">
-        {activeFormationKind === 'troop' ? (
-          <FormationRow
-            kind="troop"
-            label="Units"
-            wave={wave}
-            items={troopItems}
-            stock={troopStock}
-            allocations={troopAllocations}
-            onChangeLane={onChangeLane}
-            onPick={onPickTroop}
-          />
-        ) : (
-          <FormationRow
-            kind="tool"
-            label="Tools"
-            wave={wave}
-            items={toolItems}
-            stock={toolStock}
-            allocations={toolAllocations}
-            onChangeLane={onChangeLane}
-            onPick={onPickTool}
-          />
-        )}
+        <section className="overflow-hidden rounded-global border border-border-base bg-bg-app/42" aria-label="Courtyard support formation">
+          <div className="overflow-x-auto p-3 custom-scrollbar">
+            <div className={`mx-auto flex w-max items-start justify-center gap-2 ${kindIsTroop ? 'min-w-[46rem]' : 'min-w-[18rem]'}`}>
+              {slots.map((slot, slotIndex) => (
+                <InventorySlotCard
+                  key={slotIndex}
+                  kind={activeKind}
+                  index={slotIndex}
+                  slot={slot}
+                  items={items}
+                  stock={stock}
+                  allocated={slot.itemId == null ? 0 : allocations[slot.itemId] ?? 0}
+                  slotCodePrefix={kindIsTroop ? 'RW' : 'AST'}
+                  slotContext={kindIsTroop ? 'courtyard troop' : 'Sceat support tool'}
+                  fixedQuantity={kindIsTroop ? undefined : 1}
+                  onChange={(patch) => {
+                    const slotKey = kindIsTroop ? 'troops' : 'tools';
+                    onChange({
+                      ...support,
+                      [slotKey]: updateSlot(slots, slotIndex, patch),
+                    });
+                  }}
+                  onPick={() => kindIsTroop ? onPickTroop(slot, slotIndex) : onPickTool(slot, slotIndex)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+        {!kindIsTroop && toolItems.length === 0 ? (
+          <p className="mt-3 text-xs font-medium text-text-muted">
+            No Sceat attack support tools are available in this inventory.
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -510,6 +672,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
 interface FormationRowProps {
   kind: InventoryKind;
   label: string;
+  divided?: boolean;
   wave: AttackSetupWave;
   items: InventoryItem[];
   stock: Record<number, number>;
@@ -518,13 +681,17 @@ interface FormationRowProps {
   onPick: (laneKey: LaneKey, slot: AttackSetupSlot, slotIndex: number) => void;
 }
 
-const FormationRow: React.FC<FormationRowProps> = ({ kind, label, wave, items, stock, allocations, onChangeLane, onPick }) => {
+const FormationRow: React.FC<FormationRowProps> = ({ kind, label, divided = false, wave, items, stock, allocations, onChangeLane, onPick }) => {
   const slotKey = kind === 'troop' ? 'troops' : 'tools';
   const laneTemplate = laneKeys.map((laneKey) => `${wave[laneKey][slotKey].length}fr`).join(' ');
 
   return (
-    <section className="overflow-hidden rounded-global border border-border-base bg-bg-app/42" aria-label={`${label} formation`}>
-      <div className="overflow-x-auto p-3 custom-scrollbar">
+    <div
+      className={`overflow-x-auto custom-scrollbar ${divided ? 'relative pt-2 before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-border-base/70' : ''}`}
+      role="group"
+      aria-label={`${label} formation`}
+    >
+      <div>
         <div
           className={`mx-auto grid items-stretch gap-3 ${kind === 'troop' ? 'min-w-[64rem]' : 'min-w-[48rem]'}`}
           style={{ gridTemplateColumns: laneTemplate }}
@@ -534,8 +701,8 @@ const FormationRow: React.FC<FormationRowProps> = ({ kind, label, wave, items, s
             const slots = lane[slotKey];
             const filledSlots = slots.filter((slot) => slot.itemId != null).length;
             return (
-              <div key={laneKey} className={`min-w-0 rounded-global border px-3 pb-3 pt-2.5 ${laneKey === 'M' ? 'border-primary/25 bg-primary/5' : 'border-border-base bg-bg-card/35'}`}>
-                <div className="mb-2.5 flex items-center justify-between gap-2">
+              <div key={laneKey} className="min-w-0 px-2 py-1">
+                <div className="mb-1 flex items-center justify-between gap-2">
                   <span className={`text-[10px] font-black uppercase tracking-wider ${laneKey === 'M' ? 'text-primary' : 'text-text-muted'}`}>
                     {laneLabel(laneKey)}
                   </span>
@@ -570,18 +737,21 @@ const FormationRow: React.FC<FormationRowProps> = ({ kind, label, wave, items, s
           })}
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
 interface InventorySlotCardProps {
   kind: InventoryKind;
-  laneKey: LaneKey;
+  laneKey?: LaneKey;
   index: number;
   slot: AttackSetupSlot;
   items: InventoryItem[];
   stock: Record<number, number>;
   allocated: number;
+  slotCodePrefix?: string;
+  slotContext?: string;
+  fixedQuantity?: number;
   onChange: (patch: Partial<AttackSetupSlot>) => void;
   onPick: () => void;
 }
@@ -594,6 +764,9 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
   items,
   stock,
   allocated,
+  slotCodePrefix,
+  slotContext,
+  fixedQuantity,
   onChange,
   onPick,
 }) => {
@@ -604,8 +777,8 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
   const available = slot.itemId == null ? 0 : stock[slot.itemId] ?? 0;
   const remainingAfterPreset = available - allocated;
   const overAllocated = hasItem && allocated > available;
-  const slotLabel = `${laneLabel(laneKey)} ${itemKindLabel} slot ${index + 1}`;
-  const slotCode = `${kind === 'troop' ? 'U' : 'T'}${index + 1}`;
+  const slotLabel = `${slotContext ?? `${laneKey ? laneLabel(laneKey) : 'formation'} ${itemKindLabel}`} slot ${index + 1}`;
+  const slotCode = `${slotCodePrefix ?? (kind === 'troop' ? 'U' : 'T')}${index + 1}`;
   const pickerDisabled = items.length === 0;
 
   return (
@@ -635,7 +808,7 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
                 )}
               </button>
             )}
-            quantity={(
+            quantity={fixedQuantity == null ? (
               <input
                 type="number"
                 min={0}
@@ -648,6 +821,14 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
                 aria-label={`${slotLabel} amount`}
                 title={`${slotLabel} amount`}
               />
+            ) : (
+              <span
+                className="font-mono text-[10px] font-black tabular-nums text-slate-900"
+                aria-label={`${slotLabel} amount ${fixedQuantity}`}
+                title={`${slotLabel} uses one tool`}
+              >
+                ×{fixedQuantity}
+              </span>
             )}
             onRemove={() => onChange({ itemId: null, quantity: 0 })}
             removeLabel={`Clear ${slotLabel}`}
@@ -743,6 +924,16 @@ function allocatedInventory(draft: AttackSetupDraft): { troops: Record<number, n
       }
     }
   }
+  for (const slot of draft.courtyardSupport.troops) {
+    if (slot.itemId != null && slot.quantity > 0) {
+      allocations.troops[slot.itemId] = (allocations.troops[slot.itemId] ?? 0) + slot.quantity;
+    }
+  }
+  for (const slot of draft.courtyardSupport.tools) {
+    if (slot.itemId != null) {
+      allocations.tools[slot.itemId] = (allocations.tools[slot.itemId] ?? 0) + 1;
+    }
+  }
   return allocations;
 }
 
@@ -771,11 +962,26 @@ function positiveInteger(value: string | number): number {
   return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : 0;
 }
 
-function summarizeDraft(draft: AttackSetupDraft): { troops: number; tools: number } {
-  return draft.waves.reduce((total, wave) => {
+function summarizeDraft(draft: AttackSetupDraft): {
+  troops: number;
+  tools: number;
+  formationTroops: number;
+  courtyardTroops: number;
+  courtyardTools: number;
+} {
+  const formation = draft.waves.reduce((total, wave) => {
     const waveTotal = summarizeWave(wave);
     return { troops: total.troops + waveTotal.troops, tools: total.tools + waveTotal.tools };
   }, { troops: 0, tools: 0 });
+  const courtyardTroops = draft.courtyardSupport.troops.reduce((total, slot) => total + slot.quantity, 0);
+  const courtyardTools = draft.courtyardSupport.tools.filter((slot) => slot.itemId != null).length;
+  return {
+    troops: formation.troops + courtyardTroops,
+    tools: formation.tools + courtyardTools,
+    formationTroops: formation.troops,
+    courtyardTroops,
+    courtyardTools,
+  };
 }
 
 function summarizeWave(wave: AttackSetupWave): { troops: number; tools: number } {
@@ -797,7 +1003,11 @@ function normalizeDraft(draft?: AttackSetupDraft): AttackSetupDraft {
   const waves = (draft.waves.length > 0 ? draft.waves : [emptyWave()])
     .slice(0, MAX_WAVES)
     .map(normalizeWave);
-  return { name: draft.name || 'New attack preset', waves };
+  return {
+    name: draft.name || 'New attack preset',
+    waves,
+    courtyardSupport: normalizeCourtyardSupport(draft.courtyardSupport),
+  };
 }
 
 function normalizeWave(wave: AttackSetupWave): AttackSetupWave {
@@ -824,8 +1034,22 @@ function normalizeSlots(slots: AttackSetupSlot[] | undefined, count: number): At
   });
 }
 
+function normalizeCourtyardSupport(support?: AttackSetupCourtyardSupport): AttackSetupCourtyardSupport {
+  return {
+    troops: normalizeSlots(support?.troops, COURTYARD_TROOP_SLOTS),
+    tools: Array.from({ length: COURTYARD_TOOL_SLOTS }, (_, index) => {
+      const slot = support?.tools[index];
+      return slot?.itemId == null ? emptySlot() : { itemId: slot.itemId, quantity: 1 };
+    }),
+  };
+}
+
 function defaultDraft(): AttackSetupDraft {
-  return { name: 'New attack preset', waves: [emptyWave()] };
+  return {
+    name: 'New attack preset',
+    waves: [emptyWave()],
+    courtyardSupport: normalizeCourtyardSupport(),
+  };
 }
 
 function emptyWave(): AttackSetupWave {
@@ -852,6 +1076,10 @@ function laneLabel(laneKey: LaneKey): string {
   if (laneKey === 'L') return 'Left flank';
   if (laneKey === 'M') return 'Center front';
   return 'Right flank';
+}
+
+function isSceatAttackSupportTool(metadata: MetadataItem): boolean {
+  return typeof metadata.type === 'string' && metadata.type.startsWith('SceatSuppAtt');
 }
 
 export default AttackSetupModal;

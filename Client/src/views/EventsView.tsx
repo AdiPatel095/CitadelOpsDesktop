@@ -57,6 +57,7 @@ const EventsView: React.FC = () => {
           { value: 'events', label: 'Active Event' },
           { value: 'autoTowers', label: 'Auto Towers' },
           { value: 'autoStorm', label: 'Auto Storm' },
+          { value: 'autoBeriWorld', label: 'Auto Beri' },
         ]}
         size="header"
         className="w-full"

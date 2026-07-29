@@ -169,10 +169,21 @@ func applyScalableEventSnapshot(
 			gameState.EventScores.ByEvent[eventID] = score
 			changed = true
 		}
-		State.EnsureEventActivity(gameState, eventID, observedAt)
+		activity, activityAvailable := State.EnsureEventActivity(gameState, eventID, observedAt)
 		if activeEventID == 0 {
 			activeEventID = eventID
-			fortifyCurrencies = normalizedInvasionFortifyCurrencies(event.FortifyCurrencies)
+			offered := normalizedInvasionFortifyCurrencies(event.FortifyCurrencies)
+			if activityAvailable {
+				if len(activity.FortifyCurrencies) == 0 && len(offered) > 0 {
+					activity.FortifyCurrencies = append([]string(nil), offered...)
+					activity.FortifyCurrenciesObservedAt = observedAt.UTC()
+					gameState.EventScores.ActivityByEvent[eventID] = activity
+					changed = true
+				}
+				fortifyCurrencies = append([]string(nil), activity.FortifyCurrencies...)
+			} else {
+				fortifyCurrencies = offered
+			}
 		}
 	}
 	if gameState.EventScores.ActiveEventID != activeEventID {
@@ -180,7 +191,7 @@ func applyScalableEventSnapshot(
 		changed = true
 	}
 	if !slices.Equal(gameState.Invasion.FortifyCurrencies, fortifyCurrencies) {
-		gameState.Invasion.FortifyCurrencies = fortifyCurrencies
+		gameState.Invasion.FortifyCurrencies = append([]string(nil), fortifyCurrencies...)
 		changed = true
 	}
 	return changed, nil

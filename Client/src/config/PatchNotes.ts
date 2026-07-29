@@ -43,7 +43,7 @@ export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
       { kind: 'added', text: 'Auto Station threat response with explicit castle reserves, temporary troop evacuation, automatic recall, and optional open-gate fallback' },
       { kind: 'added', text: 'Auto Sceat Resources with research-aware per-castle crafting plans, overflow handling, independent logistics, and kingdom storage buffers' },
       { kind: 'added', text: 'Auto Food Balance for Food, Honey, Mead, and Beef reserves using market barrows first and optional cross-kingdom transport with time skips' },
-      { kind: 'added', text: 'Dedicated Attack Presets with safe CRA-string import and sharing, Defense Presets, and Feature Stats workspaces for reusable plans and live event progress' },
+      { kind: 'added', text: 'Dedicated Attack Presets with courtyard support troops, Sceat support tools, safe CRA-string import and sharing, plus Defense Presets and Feature Stats workspaces' },
       { kind: 'added', text: 'Header tracker for the authoritative account-wide daily normal-attack count plus optional user-defined limits on supported attack automations' },
       { kind: 'added', text: 'Settings import and export, browser selection, runtime diagnostics, and version-aware desktop update handling' },
       { kind: 'changed', text: 'Rebuilt CitadelOps around versioned state, configuration, history, telemetry, API, intent, catalog, and Chromium session contracts' },

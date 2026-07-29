@@ -16,9 +16,12 @@ import (
 func TestKhanPresetShortageCancelsTheCRAAsStale(t *testing.T) {
 	itemID := int64(215)
 	preset := AttackPresets.Preset{
+		CourtyardSupport: AttackPresets.CourtyardSupport{
+			Troops: []AttackPresets.Slot{{ItemID: &itemID, Quantity: 60}},
+		},
 		Waves: []AttackPresets.Wave{{
 			Middle: AttackPresets.Lane{
-				Troops: []AttackPresets.Slot{{ItemID: &itemID, Quantity: 100}},
+				Troops: []AttackPresets.Slot{{ItemID: &itemID, Quantity: 40}},
 			},
 		}},
 	}

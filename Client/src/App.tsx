@@ -23,6 +23,7 @@ type SettingsModalId =
   | 'nomad'
   | 'advisor'
   | 'khan'
+  | 'beri'
   | 'storm';
 
 interface SettingsModalProps {
@@ -85,6 +86,7 @@ const settingsModals: Record<SettingsModalId, React.LazyExoticComponent<Componen
   nomad: lazySettingsModal(() => import('./settings/components/AutoNomadSettingsModal'), 'AutoNomadSettingsModal'),
   advisor: lazySettingsModal(() => import('./settings/components/AutoAdvisorSettingsModal'), 'AutoAdvisorSettingsModal'),
   khan: lazySettingsModal(() => import('./settings/components/AutoKhanSettingsModal'), 'AutoKhanSettingsModal'),
+  beri: lazySettingsModal(() => import('./settings/components/AutoBeriWorldSettingsModal'), 'AutoBeriWorldSettingsModal'),
   storm: lazySettingsModal(() => import('./settings/components/AutoStormSettingsModal'), 'AutoStormSettingsModal'),
 };
 
@@ -119,6 +121,7 @@ const AppContent: React.FC = () => {
       onOpenAutoNomadSettings={openSettings('nomad')}
       onOpenAutoAdvisorSettings={openSettings('advisor')}
       onOpenAutoKhanSettings={openSettings('khan')}
+      onOpenAutoBeriWorldSettings={openSettings('beri')}
       onOpenAutoStormSettings={openSettings('storm')}
       autoEquipmentCleanup={autoEquipmentCleanup}
       onOpenFeatureSchedule={openSchedule}

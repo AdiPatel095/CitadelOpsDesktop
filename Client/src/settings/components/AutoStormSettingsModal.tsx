@@ -19,7 +19,11 @@ import {
   Truck,
   Waves,
 } from 'lucide-react';
-import type { BuildingBlueprintDiffResponse, BuildingTargetCaptureMode } from '../../api/Contracts';
+import type {
+  AutoStormTroopCapPreviewV2,
+  BuildingBlueprintDiffResponse,
+  BuildingTargetCaptureMode,
+} from '../../api/Contracts';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { CitadelAPI } from '../../api/CitadelClient';
 import {
@@ -121,6 +125,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const [lunaPackages, setLunaPackages] = useState<LunaPackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [lunaSearch, setLunaSearch] = useState('');
+  const [troopCapPreview, setTroopCapPreview] = useState<AutoStormTroopCapPreviewV2 | null>(null);
+  const [troopCapPreviewError, setTroopCapPreviewError] = useState('');
+  const [loadingTroopCapPreview, setLoadingTroopCapPreview] = useState(false);
+  const [troopCapRefreshTick, setTroopCapRefreshTick] = useState(0);
   const [draggedTargetPriority, setDraggedTargetPriority] = useState<AutoStormTargetPriority | null>(null);
   const [targetPriorityDropTarget, setTargetPriorityDropTarget] = useState<AutoStormTargetPriority | null>(null);
   const initializedOpen = useRef(false);
@@ -145,6 +153,32 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   ))?.value ?? '';
   const selectedFortPreset = attackPresets.presets.find((preset) => preset.id === draft.forts.presetId);
   const selectedIslandPreset = attackPresets.presets.find((preset) => preset.id === draft.islands.presetId);
+  const troopCapPreviewSettings = useMemo(() => ({
+    version: 1,
+    troopImport: {
+      enabled: draft.troopImport.enabled,
+      minimumTroops: draft.troopImport.minimumTroops,
+      historyHours: draft.troopImport.historyHours,
+    },
+    forts: {
+      enabled: draft.forts.enabled,
+      presetId: draft.forts.presetId,
+    },
+    islands: {
+      enabled: draft.islands.enabled,
+      presetId: draft.islands.presetId,
+      defenseUnits: draft.islands.defenseUnits,
+    },
+  }), [
+    draft.forts.enabled,
+    draft.forts.presetId,
+    draft.islands.defenseUnits,
+    draft.islands.enabled,
+    draft.islands.presetId,
+    draft.troopImport.enabled,
+    draft.troopImport.historyHours,
+    draft.troopImport.minimumTroops,
+  ]);
   const stormMapState = state?.storm.map;
   const stormMapCoverage = stormMapState && stormMapState.windowCount
     ? `${stormMapState.coveredBounds.x2 - stormMapState.coveredBounds.x1 + 1} × ${stormMapState.coveredBounds.y2 - stormMapState.coveredBounds.y1 + 1} · ${stormMapState.windowCount} windows`
@@ -223,6 +257,50 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     if (!isOpen || captureCastleId > 0 || stormCastles.length === 0) return;
     setCaptureCastleId(stormCastles[0].id);
   }, [captureCastleId, isOpen, stormCastles]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const timer = window.setInterval(() => setTroopCapRefreshTick((current) => current + 1), 60_000);
+    return () => window.clearInterval(timer);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !configuration || !draft.troopImport.enabled) {
+      setTroopCapPreview(null);
+      setTroopCapPreviewError('');
+      setLoadingTroopCapPreview(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setTroopCapPreview(null);
+    setTroopCapPreviewError('');
+    setLoadingTroopCapPreview(true);
+    const timer = window.setTimeout(() => {
+      void CitadelAPI.previewAutoStormTroopCap({ settings: troopCapPreviewSettings })
+        .then((preview) => {
+          if (!cancelled) setTroopCapPreview(preview);
+        })
+        .catch((error) => {
+          if (!cancelled) {
+            setTroopCapPreviewError(error instanceof Error ? error.message : 'Could not calculate the Storm troop cap.');
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setLoadingTroopCapPreview(false);
+        });
+    }, 150);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [
+    configuration?.revision,
+    draft.troopImport.enabled,
+    isOpen,
+    state?.automations?.autoStorm?.updatedAt,
+    troopCapPreviewSettings,
+    troopCapRefreshTick,
+  ]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -973,6 +1051,64 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       }))}
                     />
                   ) : <p className="text-xs text-text-muted">No non-Storm donor castles are currently observed.</p>}
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                    <label>
+                      <FieldLabel>Minimum troops kept after launch</FieldLabel>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={draft.troopImport.minimumTroops}
+                        onChange={(event) => setDraft((current) => ({
+                          ...current,
+                          troopImport: {
+                            ...current.troopImport,
+                            minimumTroops: clampAutoStormInteger(event.target.value, 0, Number.MAX_SAFE_INTEGER, 0),
+                          },
+                        }))}
+                      />
+                      <p className="mt-1 text-[11px] text-text-muted">Imports the current preset mix so this many attack troops remain stationed in Storm after the next launch.</p>
+                    </label>
+                    <label>
+                      <FieldLabel>Attack history window</FieldLabel>
+                      <Select
+                        value={String(draft.troopImport.historyHours)}
+                        onChange={(value) => setDraft((current) => ({
+                          ...current,
+                          troopImport: {
+                            ...current.troopImport,
+                            historyHours: clampAutoStormInteger(value, 24, 72, 72),
+                          },
+                        }))}
+                        options={[24, 48, 72].map((hours) => ({
+                          value: String(hours),
+                          label: `Past ${hours} hours`,
+                        }))}
+                      />
+                      <p className="mt-1 text-[11px] text-text-muted">Sets the daily Auto Storm attack average used by the transfer cap.</p>
+                    </label>
+                    <label>
+                      <FieldLabel>Current maximum in Storm</FieldLabel>
+                      <Input
+                        readOnly
+                        value={loadingTroopCapPreview
+                          ? 'Calculating…'
+                          : troopCapPreview?.available
+                            ? Math.max(0, Math.trunc(troopCapPreview.maximumTroops)).toLocaleString()
+                            : 'Unavailable'}
+                        className="font-mono"
+                      />
+                      <p className="mt-1 text-[11px] text-text-muted">
+                        {loadingTroopCapPreview
+                          ? 'Calculating directly from the settings shown here.'
+                          : troopCapPreviewError
+                            ? troopCapPreviewError
+                            : troopCapPreview?.available
+                              ? `${troopCapPreview.troopsPerAttack.toLocaleString()} troops in the largest enabled attack · ${troopCapPreview.averageDailyAttacks.toFixed(1)} attacks/day over ${troopCapPreview.historyHours} hours · ${troopCapPreview.bufferedAttackCount.toLocaleString()} buffered attacks.`
+                              : troopCapPreview?.detail ?? 'Enable a target type and choose its attack preset to calculate the cap.'}
+                      </p>
+                    </label>
+                  </div>
+                  <p className="mt-3 text-[11px] text-text-muted">The hard cap uses the largest enabled attack troop requirement and is the larger of the minimum reserve plus one attack or twice the average daily attack demand. It counts troops stationed in Storm, away on active movements, waiting in transport, and ready to return from islands.</p>
                   <p className="mt-2 text-[11px] text-text-muted">Donors are checked in the displayed order, and partial shortages can be filled across several transfers. Time skips use the construction-and-logistics reserve above. Attack tools must already be stationed in Storm.</p>
                   {!troopImportValid ? <p className="mt-2 text-xs text-error">Select at least one currently observed donor castle.</p> : null}
                 </div>

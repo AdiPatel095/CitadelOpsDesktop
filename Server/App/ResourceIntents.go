@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -20,16 +21,24 @@ type kingdomResourceShipmentGood struct {
 	Amount     int64            `json:"amount"`
 }
 
+const (
+	kingdomResourceDeliveryRatio           = 0.90
+	kingdomResourceTransportInitialSeconds = 3_600
+)
+
 type kingdomResourceShipmentRequest struct {
-	SourceCastleID   State.CastleID                `json:"sourceCastleId"`
-	TargetCastleID   State.CastleID                `json:"targetCastleId,omitempty"`
-	TargetKingdomID  State.KingdomID               `json:"targetKingdomId"`
-	ResourceID       State.ResourceID              `json:"resourceId,omitempty"`
-	Amount           int64                         `json:"amount,omitempty"`
-	Goods            []kingdomResourceShipmentGood `json:"goods,omitempty"`
-	WorkflowOwner    string                        `json:"workflowOwner,omitempty"`
-	TimeSkipID       string                        `json:"timeSkipId,omitempty"`
-	MinimumRemaining int64                         `json:"minimumRemaining,omitempty"`
+	SourceCastleID     State.CastleID                `json:"sourceCastleId"`
+	TargetCastleID     State.CastleID                `json:"targetCastleId,omitempty"`
+	TargetKingdomID    State.KingdomID               `json:"targetKingdomId"`
+	ResourceID         State.ResourceID              `json:"resourceId,omitempty"`
+	Amount             int64                         `json:"amount,omitempty"`
+	Goods              []kingdomResourceShipmentGood `json:"goods,omitempty"`
+	WorkflowOwner      string                        `json:"workflowOwner,omitempty"`
+	EnforceTargetCap   bool                          `json:"enforceTargetCapacity,omitempty"`
+	SettleAfterSkip    bool                          `json:"settleAfterTimeSkip,omitempty"`
+	TimeSkipID         string                        `json:"timeSkipId,omitempty"`
+	MinimumRemaining   int64                         `json:"minimumRemaining,omitempty"`
+	HorseTravelBoostID int                           `json:"horseTravelBoostId,omitempty"`
 }
 
 type kingdomResourceSettlementRequest struct {
@@ -44,10 +53,19 @@ type kingdomResourceSkipRequest struct {
 }
 
 type kingdomTransportAvailabilityGuard struct {
-	TargetKingdomID State.KingdomID               `json:"targetKingdomId"`
-	TransportKind   string                        `json:"transportKind"`
-	SourceCastleID  State.CastleID                `json:"sourceCastleId,omitempty"`
-	Goods           []kingdomResourceShipmentGood `json:"goods,omitempty"`
+	TargetKingdomID  State.KingdomID               `json:"targetKingdomId"`
+	TransportKind    string                        `json:"transportKind"`
+	SourceCastleID   State.CastleID                `json:"sourceCastleId,omitempty"`
+	Goods            []kingdomResourceShipmentGood `json:"goods,omitempty"`
+	TargetCastleID   State.CastleID                `json:"targetCastleId,omitempty"`
+	DeliveryRatio    float64                       `json:"deliveryRatio,omitempty"`
+	EnforceTargetCap bool                          `json:"enforceTargetCapacity,omitempty"`
+}
+
+type resourceTargetCapacityGuard struct {
+	TargetCastleID State.CastleID                `json:"targetCastleId"`
+	Goods          []kingdomResourceShipmentGood `json:"goods"`
+	DeliveryRatio  float64                       `json:"deliveryRatio"`
 }
 
 func planResourceLogisticsRefresh(_ context.Context, input Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
@@ -167,6 +185,8 @@ func planResourceShipment(ctx context.Context, input Intent.PlanningContext, arg
 		marketArguments, _ := json.Marshal(map[string]any{
 			"sourceCastleId": source.ID, "targetCastleId": target.ID,
 			"resourceId": goods[0].ResourceID, "amount": goods[0].Amount,
+			"workflowOwner": request.WorkflowOwner, "enforceTargetCapacity": request.EnforceTargetCap,
+			"horseTravelBoostId": request.HorseTravelBoostID,
 		})
 		return planMarketResourceShipment(ctx, input, marketArguments)
 	}
@@ -178,10 +198,13 @@ func planResourceShipment(ctx context.Context, input Intent.PlanningContext, arg
 
 func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct {
-		SourceCastleID State.CastleID   `json:"sourceCastleId"`
-		TargetCastleID State.CastleID   `json:"targetCastleId"`
-		ResourceID     State.ResourceID `json:"resourceId"`
-		Amount         int64            `json:"amount"`
+		SourceCastleID     State.CastleID   `json:"sourceCastleId"`
+		TargetCastleID     State.CastleID   `json:"targetCastleId"`
+		ResourceID         State.ResourceID `json:"resourceId"`
+		Amount             int64            `json:"amount"`
+		WorkflowOwner      string           `json:"workflowOwner,omitempty"`
+		EnforceTargetCap   bool             `json:"enforceTargetCapacity,omitempty"`
+		HorseTravelBoostID int              `json:"horseTravelBoostId,omitempty"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -212,8 +235,21 @@ func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext,
 	if request.Amount <= 0 {
 		return Intent.Plan{}, fmt.Errorf("amount must be positive")
 	}
+	if err := validateHorseTravelBoostID(request.HorseTravelBoostID); err != nil {
+		return Intent.Plan{}, err
+	}
+	horseTravelBoostID := request.HorseTravelBoostID
+	if horseTravelBoostID == 0 {
+		horseTravelBoostID = defaultHorseTravelBoostID
+	}
 	if source.Resources[request.ResourceID].Amount < float64(request.Amount) {
 		return Intent.Plan{}, fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceName)
+	}
+	goods := []kingdomResourceShipmentGood{{ResourceID: request.ResourceID, Amount: request.Amount}}
+	if request.EnforceTargetCap {
+		if err := validateResourceTargetCapacity(input.State, target.ID, goods, 1, time.Now().UTC()); err != nil {
+			return Intent.Plan{}, err
+		}
 	}
 	market, observed := input.State.Market.Castles[source.ID]
 	if !observed || input.State.Market.ObservedAt.IsZero() ||
@@ -231,15 +267,25 @@ func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext,
 		DelaySec  int             `json:"SD"`
 	}{
 		KingdomID: source.KingdomID, SourceID: source.ID, TargetX: target.X, TargetY: target.Y,
-		HorseWID: -1, Goods: [][]any{{resourceKey, request.Amount}},
+		HorseWID: horseTravelBoostID, Goods: [][]any{{resourceKey, request.Amount}},
 	})
+	steps := []Intent.Step{commandStep("Start market shipment", "crm", payload, "crm")}
+	if request.EnforceTargetCap {
+		guardArguments, _ := json.Marshal(resourceTargetCapacityGuard{
+			TargetCastleID: target.ID, Goods: goods, DeliveryRatio: 1,
+		})
+		steps = append([]Intent.Step{Intent.RebuildOnResume(Intent.Step{
+			Name: "Verify destination resource storage", Action: "resources.verify_target_capacity",
+			ActionArguments: guardArguments,
+		})}, steps...)
+	}
 	return Intent.Plan{
 		Claims: []string{
 			"resource-transport", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 			"castle:" + strconv.FormatInt(int64(target.ID), 10),
 		},
 		Summary: fmt.Sprintf("Ship %d %s from %s to %s", request.Amount, resourceName, castleLabel(source), castleLabel(target)),
-		Steps:   []Intent.Step{commandStep("Start market shipment", "crm", payload, "crm")},
+		Steps:   steps,
 	}, nil
 }
 
@@ -298,6 +344,16 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 		wireGoods = append(wireGoods, []any{resourceKey, good.Amount})
 		summaryGoods = append(summaryGoods, fmt.Sprintf("%d %s", good.Amount, resourceName))
 	}
+	if request.EnforceTargetCap {
+		if target.ID <= 0 {
+			return Intent.Plan{}, fmt.Errorf("targetCastleId is required when destination storage enforcement is enabled")
+		}
+		if err := validateResourceTargetCapacity(
+			input.State, target.ID, goods, kingdomResourceDeliveryRatio, time.Now().UTC(),
+		); err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	payload, _ := json.Marshal(struct {
 		SourceCastleID State.CastleID  `json:"SCID"`
 		SourceKingdom  State.KingdomID `json:"SKID"`
@@ -314,7 +370,8 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 	}
 	guardArguments, _ := json.Marshal(kingdomTransportAvailabilityGuard{
 		TargetKingdomID: request.TargetKingdomID, TransportKind: "resource",
-		SourceCastleID: source.ID, Goods: goods,
+		SourceCastleID: source.ID, Goods: goods, TargetCastleID: target.ID,
+		DeliveryRatio: kingdomResourceDeliveryRatio, EnforceTargetCap: request.EnforceTargetCap,
 	})
 	consumeArguments, _ := json.Marshal(kingdomResourceShipmentRequest{
 		SourceCastleID: source.ID, TargetCastleID: target.ID, TargetKingdomID: request.TargetKingdomID,
@@ -323,6 +380,9 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 	claims := []string{
 		"resource-transport", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 		"kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10),
+	}
+	if request.EnforceTargetCap {
+		claims = append(claims, "castle:"+strconv.FormatInt(int64(target.ID), 10))
 	}
 	steps := []Intent.Step{
 		kingdomTransportContextStep(),
@@ -345,6 +405,38 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 		skipStep.Name = "Immediately skip kingdom resource transport time"
 		steps = append(steps, skipStep)
 		claims = append(claims, "currency:"+strconv.FormatInt(int64(currencyID), 10))
+		if request.SettleAfterSkip &&
+			officialTimeSkipMinutes(input.GameData, int64(currencyID), request.TimeSkipID)*60 <
+				kingdomResourceTransportInitialSeconds {
+			return Intent.Plan{}, fmt.Errorf("settleAfterTimeSkip requires a time skip covering the full kingdom transport")
+		}
+	}
+	if request.SettleAfterSkip {
+		workflowOwner := strings.TrimSpace(request.WorkflowOwner)
+		if strings.TrimSpace(request.TimeSkipID) == "" {
+			return Intent.Plan{}, fmt.Errorf("settleAfterTimeSkip requires timeSkipId")
+		}
+		if workflowOwner == "" || target.ID <= 0 {
+			return Intent.Plan{}, fmt.Errorf("settleAfterTimeSkip requires workflowOwner and targetCastleId")
+		}
+		targetRefreshPayload, _ := json.Marshal(struct {
+			CastleID  State.CastleID  `json:"AID"`
+			KingdomID State.KingdomID `json:"KID"`
+		}{target.ID, target.KingdomID})
+		settlementArguments, _ := json.Marshal(kingdomResourceSettlementRequest{
+			Owner: workflowOwner, TargetKingdomID: request.TargetKingdomID,
+		})
+		steps = append(steps,
+			kingdomTransportContextStep(),
+			contextCommandStep("Refresh skipped kingdom resource destination", "grc", targetRefreshPayload, "grc"),
+			Intent.Step{
+				Name:   "Complete immediately skipped kingdom resource workflow",
+				Action: "resources.kingdom.complete_workflow", ActionArguments: settlementArguments,
+			},
+		)
+		if !request.EnforceTargetCap {
+			claims = append(claims, "castle:"+strconv.FormatInt(int64(target.ID), 10))
+		}
 	}
 	return Intent.Plan{Claims: claims, Summary: summary, Steps: steps}, nil
 }
@@ -410,6 +502,13 @@ func (application *Application) verifyKingdomTransportAvailable(_ context.Contex
 				}
 			}
 		}
+		if guard.EnforceTargetCap {
+			if err := validateResourceTargetCapacity(
+				gameState, guard.TargetCastleID, guard.Goods, guard.DeliveryRatio, time.Now().UTC(),
+			); err != nil {
+				return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+			}
+		}
 	case "troop":
 		if kingdomTroopTransportPending(gameState, guard.TargetKingdomID) {
 			return fmt.Errorf(
@@ -421,6 +520,78 @@ func (application *Application) verifyKingdomTransportAvailable(_ context.Contex
 		return fmt.Errorf("unsupported kingdom transport kind %q", guard.TransportKind)
 	}
 	return nil
+}
+
+func (application *Application) verifyResourceTargetCapacity(_ context.Context, arguments json.RawMessage) error {
+	var guard resourceTargetCapacityGuard
+	if err := decodeIntentArguments(arguments, &guard); err != nil {
+		return err
+	}
+	if application == nil || application.State == nil {
+		return fmt.Errorf("resource target state is unavailable")
+	}
+	if err := validateResourceTargetCapacity(
+		application.State.Snapshot(), guard.TargetCastleID, guard.Goods, guard.DeliveryRatio, time.Now().UTC(),
+	); err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	return nil
+}
+
+func validateResourceTargetCapacity(
+	gameState State.GameState,
+	targetCastleID State.CastleID,
+	goods []kingdomResourceShipmentGood,
+	deliveryRatio float64,
+	now time.Time,
+) error {
+	target, exists := gameState.Castles[targetCastleID]
+	if !exists || targetCastleID <= 0 {
+		return fmt.Errorf("resource target castle %d is unavailable", targetCastleID)
+	}
+	if deliveryRatio <= 0 || deliveryRatio > 1 {
+		return fmt.Errorf("resource delivery ratio %.4f is invalid", deliveryRatio)
+	}
+	for _, good := range goods {
+		balance, observed := target.Resources[good.ResourceID]
+		if !observed || balance.Capacity == nil {
+			return fmt.Errorf("resource %d storage capacity is unavailable at target castle %d", good.ResourceID, target.ID)
+		}
+		incoming := incomingMarketResourceAt(gameState, target, good.ResourceID, now)
+		free := math.Max(0, *balance.Capacity-balance.Amount-incoming)
+		delivery := float64(good.Amount) * deliveryRatio
+		if delivery > free+0.000001 {
+			return fmt.Errorf(
+				"resource %d delivery %.0f exceeds %.0f free storage at target castle %d",
+				good.ResourceID, delivery, free, target.ID,
+			)
+		}
+	}
+	return nil
+}
+
+func incomingMarketResourceAt(
+	gameState State.GameState,
+	target State.CastleState,
+	resourceID State.ResourceID,
+	now time.Time,
+) float64 {
+	amount := float64(0)
+	for _, movement := range gameState.Movements {
+		if movement.Direction != 0 || movement.KingdomID != target.KingdomID ||
+			movement.TargetX != target.X || movement.TargetY != target.Y {
+			continue
+		}
+		if movement.ArrivesAt != nil && !movement.ArrivesAt.After(now) {
+			continue
+		}
+		for _, good := range movement.MarketGoods {
+			if good.ResourceID == resourceID {
+				amount += good.Amount
+			}
+		}
+	}
+	return amount
 }
 
 func (application *Application) consumeKingdomResourceSource(ctx context.Context, arguments json.RawMessage) error {

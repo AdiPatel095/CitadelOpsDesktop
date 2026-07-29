@@ -121,6 +121,7 @@ func reduceMapSnapshot(
 	cooldownChanged := false
 	eventCampChanged := false
 	stormChanged := false
+	beriChanged := false
 	for _, row := range payload.Nodes {
 		if len(row) < 3 {
 			continue
@@ -168,11 +169,14 @@ func reduceMapSnapshot(
 		if refreshTrackedStormOpportunityFromMap(gameState, observation) {
 			stormChanged = true
 		}
+		if invalidateUnavailableBeriTargetFromMap(gameState, observation, row) {
+			beriChanged = true
+		}
 	}
 	if changed {
 		gameState.Map[kingdomID] = observations
 	}
-	if cooldownChanged || eventCampChanged || stormChanged {
+	if cooldownChanged || eventCampChanged || stormChanged || beriChanged {
 		changed = true
 	}
 	domains := []string{"map"}
@@ -184,6 +188,9 @@ func reduceMapSnapshot(
 	}
 	if stormChanged {
 		domains = append(domains, "storm")
+	}
+	if beriChanged {
+		domains = append(domains, "beri")
 	}
 	return domains, changed, nil
 }
@@ -318,13 +325,45 @@ func populateKhanCampObservation(observation *State.MapObservation, row []json.R
 }
 
 func populateTowerObservation(observation *State.MapObservation, row []json.RawMessage) {
-	if observation == nil || observation.TypeID != towerMapTypeID || len(row) < 7 {
+	if observation == nil {
 		return
 	}
-	// Kingdom-tower rows are [2, X, Y, ..., victoryCount, cooldownSec, KID].
-	observation.TowerVictoryCount = rowInt(row, 4)
-	observation.Level = AttackCapacity.DungeonTargetLevel(observation.TowerVictoryCount, observation.KingdomID)
-	observation.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
+	switch {
+	case observation.TypeID == towerMapTypeID && len(row) >= 7:
+		// Kingdom-tower rows are [2, X, Y, ..., victoryCount, cooldownSec, KID].
+		observation.TowerVictoryCount = rowInt(row, 4)
+		observation.Level = AttackCapacity.DungeonTargetLevel(observation.TowerVictoryCount, observation.KingdomID)
+		observation.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
+	case observation.KingdomID == State.KingdomID(GameData.BerimondKingdomID) &&
+		observation.TypeID == AttackCapacity.BerimondTowerMapTypeID && len(row) >= 8:
+		// Captured Berimond watchtower rows expose their target level at index 7.
+		observation.Level = int(rowInt(row, 7))
+	}
+}
+
+func invalidateUnavailableBeriTargetFromMap(
+	gameState *State.GameState,
+	observation State.MapObservation,
+	row []json.RawMessage,
+) bool {
+	if gameState == nil ||
+		observation.KingdomID != State.KingdomID(GameData.BerimondKingdomID) ||
+		observation.TypeID != AttackCapacity.BerimondTowerMapTypeID ||
+		len(row) < 5 || rowInt(row, 4) != 1 {
+		return false
+	}
+	beri := &gameState.Beri
+	if beri.TargetObservedAt.IsZero() ||
+		!beri.TargetInvalidatedAt.Before(beri.TargetObservedAt) ||
+		observation.ObservedAt.Before(beri.TargetObservedAt) ||
+		beri.TargetX != observation.X || beri.TargetY != observation.Y ||
+		beri.TargetTypeID != observation.TypeID {
+		return false
+	}
+	// Captured Berimond rows switch index 4 from 0 to 1 when the selected
+	// watchtower is no longer attackable.
+	beri.TargetInvalidatedAt = observation.ObservedAt
+	return true
 }
 
 func boundedWireSeconds(value int64) int {
@@ -455,5 +494,48 @@ func reduceNestedMapSnapshot(
 		return nil, false, nil
 	}
 	frame.Payload = nested
-	return combineReducers(reduceMapSnapshot, reducePlayerProtectionMode)(ctx, frame, gameState, gameData)
+	domains, changed, err := combineReducers(reduceMapSnapshot, reducePlayerProtectionMode)(ctx, frame, gameState, gameData)
+	if err != nil || frame.Opcode != "fnt" {
+		return domains, changed, err
+	}
+	var mapPayload struct {
+		KingdomID wireInt64           `json:"KID"`
+		Nodes     [][]json.RawMessage `json:"AI"`
+	}
+	if json.Unmarshal(nested, &mapPayload) != nil || State.KingdomID(mapPayload.KingdomID) != State.KingdomID(GameData.BerimondKingdomID) ||
+		len(mapPayload.Nodes) == 0 {
+		return domains, changed, nil
+	}
+	targetX, hasX := rawInt64(root["X"])
+	targetY, hasY := rawInt64(root["Y"])
+	selected := mapPayload.Nodes[0]
+	if hasX && hasY {
+		for _, row := range mapPayload.Nodes {
+			if rowInt(row, 1) == targetX && rowInt(row, 2) == targetY {
+				selected = row
+				break
+			}
+		}
+	}
+	if len(selected) < 3 {
+		return domains, changed, nil
+	}
+	targetX = rowInt(selected, 1)
+	targetY = rowInt(selected, 2)
+	targetTypeID := int(rowInt(selected, 0))
+	observation, exists := gameState.Map[State.KingdomID(GameData.BerimondKingdomID)][fmt.Sprintf("%d:%d", targetX, targetY)]
+	if !exists || targetTypeID != AttackCapacity.BerimondTowerMapTypeID ||
+		observation.TypeID != targetTypeID || observation.Level <= 0 {
+		return domains, changed, nil
+	}
+	targetChanged := gameState.Beri.TargetX != int(targetX) || gameState.Beri.TargetY != int(targetY) ||
+		gameState.Beri.TargetTypeID != targetTypeID || !gameState.Beri.TargetObservedAt.Equal(frame.ReceivedAt)
+	gameState.Beri.TargetX = int(targetX)
+	gameState.Beri.TargetY = int(targetY)
+	gameState.Beri.TargetTypeID = targetTypeID
+	gameState.Beri.TargetObservedAt = frame.ReceivedAt
+	if targetChanged {
+		domains = append(domains, "beri")
+	}
+	return domains, changed || targetChanged, nil
 }

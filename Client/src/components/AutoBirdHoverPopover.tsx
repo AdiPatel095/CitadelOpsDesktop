@@ -36,6 +36,16 @@ function kingdomName(kingdomId: number): string {
 	}
 }
 
+function cyclePhaseLabel(cycle: AutoBirdCastleCycle): string {
+	switch (cycle.phase) {
+		case 'target-ready': return 'Target ready';
+		case 'dispatch-ready': return 'Troops ready';
+		case 'away': return cycle.nextCycleAtMs > 0 ? 'Returning' : 'Tracking movement';
+		case 'waiting': return 'Waiting';
+		default: return 'Not started';
+	}
+}
+
 const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 	cycles,
 	enabled,
@@ -153,15 +163,25 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 										<div className="min-w-0">
 											<div className="truncate font-semibold text-text-main">{cycle.castleName}</div>
 											<div className="truncate text-[10px] text-text-muted">{kingdomName(cycle.kingdomId)}</div>
+											{cycle.statusDetail && (
+												<div className="mt-0.5 max-w-[205px] truncate text-[10px] text-text-muted" title={cycle.statusDetail}>
+													{cycle.statusDetail}
+												</div>
+											)}
 										</div>
 									</div>
 									<div className="shrink-0 text-right">
 										<div className={active ? 'font-mono font-semibold text-success' : 'text-text-muted'}>
-											{active ? formatBirdCycle(cycle.nextCycleAtMs - now) : 'No active cycle'}
+											{active ? formatBirdCycle(cycle.nextCycleAtMs - now) : cyclePhaseLabel(cycle)}
 										</div>
 										{active && (
 											<div className="mt-0.5 text-[10px] text-text-muted">
 												{new Date(cycle.nextCycleAtMs).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+											</div>
+										)}
+										{cycle.travelSeconds != null && cycle.travelSeconds > 0 && (
+											<div className="mt-0.5 text-[10px] text-text-muted">
+												{formatBirdCycle(cycle.travelSeconds * 1000)} travel
 											</div>
 										)}
 									</div>

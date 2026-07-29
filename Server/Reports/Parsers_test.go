@@ -63,3 +63,30 @@ func TestParseBattleCaptureBuildsCombatantsAndMetrics(t *testing.T) {
 		t.Fatalf("unexpected target identity: %#v", report)
 	}
 }
+
+func TestParseBattleCaptureReadsBerimondGallantry(t *testing.T) {
+	capture := State.BattleReportCapture{
+		MessageID: 301, ReportID: 302, BattleKey: "beri#tower",
+		AutomationFeature: State.AttackFeatureAutoBeriWorld,
+		CapturedAt:        time.Date(2026, 7, 29, 11, 36, 0, 0, time.UTC),
+		Summary: json.RawMessage(`{
+			"MID":301,"LID":302,"MT":6,"AHP":1,"DHP":0,
+			"PI":[{"OID":1,"N":"Attacker"},{"OID":-410,"DUM":true}],
+			"PBI":[
+				[1,0,1076,-45,[["W",868],["S",815],["F",1262],["C1",46808],["C2",11]],0,0,0,1743,0,0,87,0],
+				[-410,1,890,-890,[["W",-868],["S",-815],["F",-1262],["C1",-46808],["C2",-11]],0,0,0,-1,0,0,-100,0]
+			],
+			"AI":{"DP":-410,"AT":17,"K":10,"X":1438,"Y":82}
+		}`),
+		Details: json.RawMessage(`{"LID":302,"Y":[]}`),
+	}
+	report, err := ParseBattleCapture(capture, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.AutomationFeature != string(State.AttackFeatureAutoBeriWorld) ||
+		report.GallantryPoints != 1743 || report.Loot["C1"] != 46808 {
+		t.Fatalf("unexpected Berimond analytics: feature=%q gallantry=%d loot=%#v",
+			report.AutomationFeature, report.GallantryPoints, report.Loot)
+	}
+}

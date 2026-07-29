@@ -366,6 +366,58 @@ func TestResolverUsesTargetCastleTypeAsAuthoritativeEffectFilter(t *testing.T) {
 	}
 }
 
+func TestResolverUsesBerimondTowerTargetTypeAndLevel(t *testing.T) {
+	gameData := resolverTestGameData(t, `{
+		"versionInfo":[],"units":[],"buildings":[],
+		"effects":[
+			{"effectID":2705,"name":"relicAttackUnitAmountFlankBerimond","effectTypeID":28,"areaTypeID":"15,16,17,18,30","capID":1605}
+		],
+		"effectCaps":[{"capID":1605,"maxTotalBonus":50}]
+	}`)
+	state := State.NewGameState()
+	state.Castles[100] = State.CastleState{ID: 100}
+	state.Commanders[7] = State.CommanderState{
+		ID: 7, Equipment: map[string]State.EquipmentInstanceID{"1": 1001}, Gems: map[string]State.GemInstanceID{},
+	}
+	state.Inventory.Equipment[1001] = State.EquipmentInstance{
+		ID: 1001, Effects: State.EquipmentEffects{{DefinitionID: 2705, Values: []float64{20}}},
+	}
+
+	result, err := (Resolver{}).Resolve(state, gameData, Request{
+		SourceCastleID: 100, CommanderID: 7,
+		Target: TargetContext{
+			TargetType: TargetTypeBerimondTower,
+			Map: &MapTarget{
+				KingdomID: State.KingdomID(GameData.BerimondKingdomID),
+				TypeID:    BerimondTowerMapTypeID, X: 1472, Y: 29, ObjectID: -410, Level: 55,
+			},
+			Level: 55, CastleTypeID: BerimondTowerMapTypeID, PvP: false,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Target.TargetType != TargetTypeBerimondTower ||
+		result.Target.CastleTypeID != BerimondTowerMapTypeID ||
+		result.BaseCapacity != (LaneCapacity{Left: 52, Front: 156, Right: 52}) {
+		t.Fatalf("unexpected Berimond target context: %#v", result)
+	}
+	if result.Capacity != (LaneCapacity{Left: 63, Front: 156, Right: 63}) ||
+		len(result.Modifiers) != 1 || result.Modifiers[0].EffectID != 2705 {
+		t.Fatalf("unexpected Berimond tower capacity: %#v", result)
+	}
+
+	_, err = (Resolver{}).ResolveContext(Context{
+		Target: TargetContext{
+			TargetType: TargetTypeBerimondTower,
+			Map:        &MapTarget{KingdomID: 0, TypeID: BerimondTowerMapTypeID, Level: 55},
+		},
+	})
+	if err == nil {
+		t.Fatal("Berimond tower target accepted a non-Berimond kingdom")
+	}
+}
+
 func TestResolverCalculatesTargetApplicableAttackWaves(t *testing.T) {
 	gameData := resolverTestGameData(t, `{
 		"versionInfo":[],"units":[],"buildings":[],
@@ -465,6 +517,86 @@ func TestResolverAddsObservedGeneralSkills(t *testing.T) {
 	}
 	if len(result.Modifiers) != 2 || result.Modifiers[0].SourceKind != SourceGeneralSkill || result.Modifiers[1].SourceKind != SourceGeneralSkill {
 		t.Fatalf("general modifiers = %#v", result.Modifiers)
+	}
+}
+
+func TestResolverCalculatesCappedCourtyardSupportCapacity(t *testing.T) {
+	gameData := resolverTestGameData(t, `{
+		"versionInfo":[],"units":[],
+		"buildings":[{"wodID":10,"effects":"700&1000"}],
+		"constructionItems":[{"constructionItemID":20,"effects":"701&10"}],
+		"generalSkills":[{"skillID":101024,"generalID":101,"effects":"700&2400"}],
+		"effects":[
+			{"effectID":700,"name":"attackUnitAmountReinforcementBonus","effectTypeID":179,"capID":99},
+			{"effectID":701,"name":"attackUnitAmountReinforcementBoost","effectTypeID":180,"capID":33},
+			{"effectID":2115,"name":"attackUnitAmountReinforcementBonus","effectTypeID":179,"capID":11413}
+		],
+		"effectCaps":[
+			{"capID":33,"maxTotalBonus":30},
+			{"capID":99},
+			{"capID":11413,"maxTotalBonus":3000}
+		]
+	}`)
+	state := State.NewGameState()
+	state.Castles[100] = State.CastleState{
+		ID: 100,
+		Buildings: map[State.BuildingInstanceID]State.Building{
+			1: {InstanceID: 1, DefinitionID: 10},
+		},
+		ConstructionSlots: map[State.BuildingInstanceID][]State.ConstructionSlot{
+			1: {{DefinitionID: 20, Slot: 1}},
+		},
+	}
+	state.Commanders[7] = State.CommanderState{
+		ID: 7, GeneralID: 101,
+		Equipment: map[string]State.EquipmentInstanceID{"1": 1001},
+		Gems:      map[string]State.GemInstanceID{"1": 2001},
+	}
+	state.Inventory.Equipment[1001] = State.EquipmentInstance{
+		ID: 1001, Effects: State.EquipmentEffects{{DefinitionID: 2115, Values: []float64{2000}}},
+	}
+	state.Inventory.Gems[2001] = State.GemInstance{
+		ID: 2001, Effects: State.EquipmentEffects{{DefinitionID: 2115, Values: []float64{1500}}},
+	}
+	state.Generals[101] = State.GeneralState{
+		ID: 101, ActiveSkillIDs: []int64{101024}, ObservedAt: time.Now().UTC(),
+	}
+
+	result, err := (Resolver{}).Resolve(state, gameData, Request{
+		SourceCastleID: 100, CommanderID: 7,
+		Target: TargetContext{BaseCapacity: LaneCapacity{Left: 100, Front: 200, Right: 100}},
+		AdditionalSources: []EffectSource{{
+			Kind: SourceAdditional, Effects: State.EquipmentEffects{{DefinitionID: 701, Values: []float64{25}}},
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.SupportUnitAmount != 6400 || result.SupportBoostPercent != 30 || result.SupportCapacity != 8320 {
+		t.Fatalf(
+			"support capacity = units %.0f boost %.0f capacity %d",
+			result.SupportUnitAmount,
+			result.SupportBoostPercent,
+			result.SupportCapacity,
+		)
+	}
+	if len(result.SupportModifiers) != 6 || len(result.SupportCapGroups) != 3 {
+		t.Fatalf("support effect details = modifiers %#v groups %#v", result.SupportModifiers, result.SupportCapGroups)
+	}
+	var relicUnits, supportBoost SupportCapGroup
+	for _, group := range result.SupportCapGroups {
+		switch {
+		case group.Kind == SupportModifierUnits && group.CapID == 11413:
+			relicUnits = group
+		case group.Kind == SupportModifierBoost && group.CapID == 33:
+			supportBoost = group
+		}
+	}
+	if relicUnits.RawAmount != 3500 || relicUnits.AppliedAmount != 3000 || !relicUnits.Capped {
+		t.Fatalf("relic support cap group = %#v", relicUnits)
+	}
+	if supportBoost.RawAmount != 35 || supportBoost.AppliedAmount != 30 || !supportBoost.Capped {
+		t.Fatalf("support boost cap group = %#v", supportBoost)
 	}
 }
 

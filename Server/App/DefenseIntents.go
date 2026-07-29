@@ -15,6 +15,13 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+const (
+	defenseWallFlankToolSlotCount  = 4
+	defenseWallMiddleToolSlotCount = 6
+	defenseMoatToolSlotCount       = 1
+	defenseKeepToolSlotCount       = 3
+)
+
 type defenseRefreshRequest struct {
 	CastleID State.CastleID `json:"castleId"`
 }
@@ -455,25 +462,55 @@ func validateDefenseKeepRequest(
 	if request.UnitTypePercent < 0 || request.UnitTypePercent > 100 {
 		return State.CastleState{}, nil, fmt.Errorf("unitTypePercent must be between 0 and 100")
 	}
-	if len(request.PrimaryToolSlots) != 3 || len(request.SecondaryToolSlots) != 3 {
-		return State.CastleState{}, nil, fmt.Errorf("primaryToolSlots and secondaryToolSlots must each contain exactly three slots")
+	if castle.Defense.ObservedAt.IsZero() {
+		return State.CastleState{}, nil, fmt.Errorf("castle %d defense setup has not been observed; run defense.refresh first", castle.ID)
 	}
-	if err := validateDefenseSlotRows(request.PrimaryToolSlots, request.SecondaryToolSlots); err != nil {
+	if err := validateDefenseKeepSlotCounts(request.PrimaryToolSlots, request.SecondaryToolSlots); err != nil {
 		return State.CastleState{}, nil, err
 	}
-	if !reflect.DeepEqual(request.PrimaryToolSlots, castle.Defense.Keep.PrimaryToolSlots) ||
-		!reflect.DeepEqual(request.SecondaryToolSlots, castle.Defense.Keep.SecondaryToolSlots) {
-		return State.CastleState{}, nil, fmt.Errorf(
-			"DFK S/STS changes are not capture-confirmed; primaryToolSlots and secondaryToolSlots must preserve the current values",
-		)
+	primaryRequired, err := validateDefenseToolSlotsForTypes(
+		input.GameData, map[int]bool{5: true}, request.PrimaryToolSlots,
+	)
+	if err != nil {
+		return State.CastleState{}, nil, fmt.Errorf("keep tool slots: %w", err)
+	}
+	secondaryRequired, err := validateDefenseToolSlotsForTypes(
+		input.GameData, map[int]bool{6: true}, request.SecondaryToolSlots,
+	)
+	if err != nil {
+		return State.CastleState{}, nil, fmt.Errorf("Sceat support tool slots: %w", err)
+	}
+	required, err := combineDefenseToolRequirements(primaryRequired, secondaryRequired)
+	if err != nil {
+		return State.CastleState{}, nil, err
 	}
 	if !requireFresh {
-		return castle, nil, nil
+		return castle, required, nil
 	}
 	if err := verifyDefenseObservation(castle, previousDefense, previousInventory); err != nil {
 		return State.CastleState{}, nil, err
 	}
-	return castle, nil, nil
+	if err := validateDefenseToolAvailability(
+		castle, required,
+		castle.Defense.Keep.PrimaryToolSlots,
+		castle.Defense.Keep.SecondaryToolSlots,
+	); err != nil {
+		return State.CastleState{}, nil, err
+	}
+	return castle, required, nil
+}
+
+func validateDefenseKeepSlotCounts(
+	primary []State.DefenseToolSlot,
+	secondary []State.DefenseToolSlot,
+) error {
+	if len(primary) != defenseKeepToolSlotCount {
+		return fmt.Errorf("primaryToolSlots must contain exactly %d keep tool slots", defenseKeepToolSlotCount)
+	}
+	if len(secondary) != defenseKeepToolSlotCount {
+		return fmt.Errorf("secondaryToolSlots must contain exactly %d Sceat support tool slots", defenseKeepToolSlotCount)
+	}
+	return nil
 }
 
 func validateDefenseWallRequest(
@@ -489,6 +526,9 @@ func validateDefenseWallRequest(
 	}
 	if castle.Defense.ObservedAt.IsZero() {
 		return State.CastleState{}, nil, fmt.Errorf("castle %d defense setup has not been observed; run defense.refresh first", castle.ID)
+	}
+	if err := validateDefenseWallSlotCounts(request.Left.ToolSlots, request.Middle.ToolSlots, request.Right.ToolSlots); err != nil {
+		return State.CastleState{}, nil, err
 	}
 	sections := []struct {
 		name     string
@@ -516,10 +556,7 @@ func validateDefenseWallRequest(
 	if request.Left.UnitPercent+request.Middle.UnitPercent+request.Right.UnitPercent != 100 {
 		return State.CastleState{}, nil, fmt.Errorf("left, middle, and right unitPercent values must total 100")
 	}
-	required, err := validateDefenseToolSlotsForTypes(
-		input.GameData, map[int]bool{1: true, 2: true},
-		request.Left.ToolSlots, request.Middle.ToolSlots, request.Right.ToolSlots,
-	)
+	required, err := validateDefenseWallToolSlots(input.GameData, request.Left, request.Middle, request.Right)
 	if err != nil {
 		return State.CastleState{}, nil, err
 	}
@@ -540,6 +577,77 @@ func validateDefenseWallRequest(
 	return castle, required, nil
 }
 
+func validateDefenseWallSlotCounts(
+	left []State.DefenseToolSlot,
+	middle []State.DefenseToolSlot,
+	right []State.DefenseToolSlot,
+) error {
+	if len(left) != defenseWallFlankToolSlotCount {
+		return fmt.Errorf("left.toolSlots must contain exactly %d wall slots", defenseWallFlankToolSlotCount)
+	}
+	if len(middle) != defenseWallMiddleToolSlotCount {
+		return fmt.Errorf("middle.toolSlots must contain exactly %d ordered slots: four wall and two gate", defenseWallMiddleToolSlotCount)
+	}
+	if len(right) != defenseWallFlankToolSlotCount {
+		return fmt.Errorf("right.toolSlots must contain exactly %d wall slots", defenseWallFlankToolSlotCount)
+	}
+	return nil
+}
+
+func validateDefenseMoatSlotCounts(
+	left []State.DefenseToolSlot,
+	middle []State.DefenseToolSlot,
+	right []State.DefenseToolSlot,
+) error {
+	if len(left) != defenseMoatToolSlotCount {
+		return fmt.Errorf("leftToolSlots must contain exactly one moat slot")
+	}
+	if len(middle) != defenseMoatToolSlotCount {
+		return fmt.Errorf("middleToolSlots must contain exactly one moat slot")
+	}
+	if len(right) != defenseMoatToolSlotCount {
+		return fmt.Errorf("rightToolSlots must contain exactly one moat slot")
+	}
+	return nil
+}
+
+func validateDefenseWallToolSlots(
+	gameData *GameData.Store,
+	left State.DefenseWallSection,
+	middle State.DefenseWallSection,
+	right State.DefenseWallSection,
+) (map[State.UnitID]int64, error) {
+	middleWallSlots := make([]State.DefenseToolSlot, 0, 4)
+	middleGateSlots := make([]State.DefenseToolSlot, 0, 2)
+	for index, slot := range middle.ToolSlots {
+		if isDefenseWallMiddleGateSlot(index) {
+			middleGateSlots = append(middleGateSlots, slot)
+		} else {
+			middleWallSlots = append(middleWallSlots, slot)
+		}
+	}
+	wallRequired, err := validateDefenseToolSlotsForTypes(
+		gameData, map[int]bool{1: true},
+		left.ToolSlots, middleWallSlots, right.ToolSlots,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("wall tool slots: %w", err)
+	}
+	gateRequired, err := validateDefenseToolSlotsForTypes(
+		gameData, map[int]bool{2: true},
+		middleGateSlots,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("middle gate tool slots: %w", err)
+	}
+	return combineDefenseToolRequirements(wallRequired, gateRequired)
+}
+
+// DFW M.S is positional: zero-based indexes 1 and 4 are the two gate slots.
+func isDefenseWallMiddleGateSlot(index int) bool {
+	return index == 1 || index == 4
+}
+
 func validateDefenseMoatRequest(
 	input Intent.PlanningContext,
 	request defenseMoatUpdateRequest,
@@ -553,6 +661,13 @@ func validateDefenseMoatRequest(
 	}
 	if castle.Defense.ObservedAt.IsZero() {
 		return State.CastleState{}, nil, fmt.Errorf("castle %d defense setup has not been observed; run defense.refresh first", castle.ID)
+	}
+	if err := validateDefenseMoatSlotCounts(
+		request.LeftToolSlots,
+		request.MiddleToolSlots,
+		request.RightToolSlots,
+	); err != nil {
+		return State.CastleState{}, nil, err
 	}
 	groups := []struct {
 		name     string

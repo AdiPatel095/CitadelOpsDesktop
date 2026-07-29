@@ -80,7 +80,8 @@ const AttackPresetsView: React.FC = () => {
     const preset: AppAttackPreset = {
       id: existing?.id ?? createID(),
       name: draft.name.trim(),
-      waves: draft.waves,
+      waves: cloneWaves(draft.waves),
+      courtyardSupport: cloneCourtyardSupport(draft.courtyardSupport),
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
@@ -106,6 +107,7 @@ const AttackPresetsView: React.FC = () => {
       id: createID(),
       name: uniqueCopyName(preset.name, document.presets),
       waves: cloneWaves(preset.waves),
+      courtyardSupport: cloneCourtyardSupport(preset.courtyardSupport),
       createdAt: now,
       updatedAt: now,
     };
@@ -144,7 +146,7 @@ const AttackPresetsView: React.FC = () => {
       const draft = parseCRAAttackPresetString(importValue);
       setImportOpen(false);
       setEditor({ presetID: null, draft });
-      Notifications.success('CRA formation loaded. Review it and save the new preset.');
+      Notifications.success('CRA formation and courtyard support loaded. Review them and save the new preset.');
     } catch (error) {
       setImportError(errorMessage(error, 'Could not read the CRA command.'));
     }
@@ -153,7 +155,7 @@ const AttackPresetsView: React.FC = () => {
   const handleCopyShareString = async (preset: AppAttackPreset) => {
     try {
       await writeClipboardText(formatCRAAttackPresetString(preset));
-      Notifications.success(`Copied “${preset.name}” as a formation-only CRA share string.`);
+      Notifications.success(`Copied “${preset.name}” as a CRA formation and courtyard-support share string.`);
     } catch (error) {
       Notifications.error(errorMessage(error, 'Could not copy the CRA share string.'));
     }
@@ -260,8 +262,10 @@ const AttackPresetsView: React.FC = () => {
       >
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-text-muted">
-            Only the CRA <span className="font-mono text-text-main">A</span> wave formation is imported.
-            Commander, source, target, travel, support, and account-specific fields are intentionally ignored.
+            The CRA <span className="font-mono text-text-main">A</span> formation,
+            <span className="font-mono text-text-main"> RW</span> courtyard troops, and
+            <span className="font-mono text-text-main"> AST</span> Sceat tools are imported.
+            Commander, source, target, travel, and other account-specific fields are ignored.
           </p>
           <label className="grid gap-2 text-xs font-bold text-text-muted">
             CRA command or JSON payload
@@ -320,6 +324,11 @@ const PresetCard: React.FC<{
           <MetricTile label="Troops" value={summary.troops.toLocaleString()} />
           <MetricTile label="Tools" value={summary.tools.toLocaleString()} />
         </div>
+        {summary.courtyardTroops > 0 || summary.courtyardTools > 0 ? (
+          <Badge variant="warning" className="w-fit normal-case tracking-normal">
+            Courtyard support · {summary.courtyardTroops.toLocaleString()} troops · {summary.courtyardTools.toLocaleString()} Sceat tools
+          </Badge>
+        ) : null}
         <div className="grid gap-3 sm:grid-cols-2">
           <FormationPreview label="Unit types" ids={summary.troopTypes} emptyIcon={<Shield className="h-4 w-4" />} render={(id) => <UnitImage unitId={id} size={34} />} />
           <FormationPreview label="Tool types" ids={summary.toolTypes} emptyIcon={<Shield className="h-4 w-4" />} render={(id) => <ToolImage toolId={id} size={34} showLevel={false} />} />
@@ -367,6 +376,15 @@ function cloneWaves(waves: AttackSetupDraft['waves']): AttackSetupDraft['waves']
     M: { troops: wave.M.troops.map((slot) => ({ ...slot })), tools: wave.M.tools.map((slot) => ({ ...slot })) },
     R: { troops: wave.R.troops.map((slot) => ({ ...slot })), tools: wave.R.tools.map((slot) => ({ ...slot })) },
   }));
+}
+
+function cloneCourtyardSupport(
+  support: AttackSetupDraft['courtyardSupport'],
+): AttackSetupDraft['courtyardSupport'] {
+  return {
+    troops: support.troops.map((slot) => ({ ...slot })),
+    tools: support.tools.map((slot) => ({ ...slot })),
+  };
 }
 
 function formatUpdatedAt(value: string): string {

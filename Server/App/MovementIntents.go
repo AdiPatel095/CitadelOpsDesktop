@@ -23,13 +23,17 @@ type stationUnitRequest struct {
 }
 
 type stationRequest struct {
-	SourceCastleID State.CastleID       `json:"sourceCastleId"`
-	TargetCastleID State.CastleID       `json:"targetCastleId"`
-	DelayHours     int                  `json:"delayHours"`
-	Purpose        string               `json:"purpose,omitempty"`
-	TrackingID     string               `json:"trackingId,omitempty"`
-	SafeAfterUnix  int64                `json:"safeAfterUnix,omitempty"`
-	Units          []stationUnitRequest `json:"units"`
+	SourceCastleID          State.CastleID       `json:"sourceCastleId"`
+	TargetCastleID          State.CastleID       `json:"targetCastleId"`
+	DelayHours              int                  `json:"delayHours"`
+	Purpose                 string               `json:"purpose,omitempty"`
+	TrackingID              string               `json:"trackingId,omitempty"`
+	SafeAfterUnix           int64                `json:"safeAfterUnix,omitempty"`
+	FreshManifest           bool                 `json:"freshManifest,omitempty"`
+	FreshUnitsObservedAfter time.Time            `json:"freshUnitsObservedAfter,omitempty"`
+	MinimumSend             int64                `json:"minimumSend,omitempty"`
+	Reserves                []stationUnitRequest `json:"reserves,omitempty"`
+	Units                   []stationUnitRequest `json:"units"`
 }
 
 func planTroopsStation(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -74,6 +78,9 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 	if len(request.Units) == 0 {
 		return Intent.Plan{}, fmt.Errorf("at least one unit stack is required")
 	}
+	if request.FreshManifest && request.Purpose != "autoBird" {
+		return Intent.Plan{}, fmt.Errorf("fresh station manifests are only supported for Auto Bird")
+	}
 	if input.GameData == nil {
 		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
 	}
@@ -100,7 +107,7 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 		if GameData.IsToolRecord(record) {
 			return Intent.Plan{}, fmt.Errorf("definition %d is a tool, not a stationable troop", item.UnitID)
 		}
-		if available := source.Units.Stationed[item.UnitID]; item.Amount > available {
+		if available := source.Units.Stationed[item.UnitID]; !request.FreshManifest && item.Amount > available {
 			return Intent.Plan{}, fmt.Errorf("castle %d has %d stationed unit %d; %d requested", source.ID, available, item.UnitID, item.Amount)
 		}
 		amounts[item.UnitID] = item.Amount
@@ -114,6 +121,9 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 	for _, unitID := range unitIDs {
 		wireUnits = append(wireUnits, [2]int64{unitID, amounts[State.UnitID(unitID)]})
 	}
+	if request.FreshManifest {
+		request.FreshUnitsObservedAfter = now
+	}
 	resolverArguments, _ := json.Marshal(request)
 	steps := []Intent.Step{stationCastleContextStep(source)}
 	steps = append(steps, stationRouteContextSteps(source, target)...)
@@ -126,12 +136,16 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 			Name: "Track station movement", Action: "movement.track_station", ActionArguments: resolverArguments,
 		})
 	}
+	summary := fmt.Sprintf("Station %d unit stack(s) from %s", len(wireUnits), castleLabel(source))
+	if request.FreshManifest {
+		summary = fmt.Sprintf("Station all eligible troops from %s using fresh castle inventory", castleLabel(source))
+	}
 	return Intent.Plan{
 		Claims: []string{
 			"castle-focus", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 			"alliance-holding:" + strconv.FormatInt(int64(target.CastleID), 10),
 		},
-		Summary: fmt.Sprintf("Station %d unit stack(s) from %s", len(wireUnits), castleLabel(source)),
+		Summary: summary,
 		Steps:   steps,
 	}, nil
 }
@@ -162,27 +176,45 @@ func resolveTroopsStationStep(_ context.Context, input Intent.PlanningContext, a
 		return Intent.Step{}, fmt.Errorf("station movements cannot cross kingdoms")
 	}
 
-	amounts := make(map[State.UnitID]int64, len(request.Units))
-	for _, item := range request.Units {
-		if item.UnitID <= 0 || item.Amount <= 0 {
-			return Intent.Step{}, fmt.Errorf("station unit ids and amounts must be positive")
+	var amounts map[State.UnitID]int64
+	if request.FreshManifest {
+		if request.Purpose != "autoBird" {
+			return Intent.Step{}, fmt.Errorf("fresh station manifests are only supported for Auto Bird")
 		}
-		if _, duplicate := amounts[item.UnitID]; duplicate {
-			return Intent.Step{}, fmt.Errorf("unit %d appears more than once", item.UnitID)
+		if source.UnitsObservedAt.IsZero() || source.UnitsObservedAt.Before(request.FreshUnitsObservedAfter) {
+			return Intent.Step{}, fmt.Errorf(
+				"castle %d troop inventory was not refreshed after the Auto Bird launch was planned",
+				source.ID,
+			)
 		}
-		available := source.Units.Stationed[item.UnitID]
-		amount := item.Amount
-		if amount > available {
-			if !automation {
-				return Intent.Step{}, fmt.Errorf(
-					"castle %d now has %d stationed unit %d; %d requested",
-					source.ID, available, item.UnitID, amount,
-				)
+		var err error
+		amounts, err = freshAutoBirdStationAmounts(input.GameData, source, request.Reserves, request.MinimumSend)
+		if err != nil {
+			return Intent.Step{}, err
+		}
+	} else {
+		amounts = make(map[State.UnitID]int64, len(request.Units))
+		for _, item := range request.Units {
+			if item.UnitID <= 0 || item.Amount <= 0 {
+				return Intent.Step{}, fmt.Errorf("station unit ids and amounts must be positive")
 			}
-			amount = available
-		}
-		if amount > 0 {
-			amounts[item.UnitID] = amount
+			if _, duplicate := amounts[item.UnitID]; duplicate {
+				return Intent.Step{}, fmt.Errorf("unit %d appears more than once", item.UnitID)
+			}
+			available := source.Units.Stationed[item.UnitID]
+			amount := item.Amount
+			if amount > available {
+				if !automation {
+					return Intent.Step{}, fmt.Errorf(
+						"castle %d now has %d stationed unit %d; %d requested",
+						source.ID, available, item.UnitID, amount,
+					)
+				}
+				amount = available
+			}
+			if amount > 0 {
+				amounts[item.UnitID] = amount
+			}
 		}
 	}
 	if len(amounts) == 0 {
@@ -210,6 +242,28 @@ func resolveTroopsStationStep(_ context.Context, input Intent.PlanningContext, a
 		Units    [][2]int64     `json:"A"`
 	}{source.ID, target.X, target.Y, stationLeaderID, request.DelayHours, -1, 1, 1, 0, wireUnits})
 	return commandStep("Station troops", "cds", dispatch, "cds"), nil
+}
+
+func freshAutoBirdStationAmounts(
+	gameData *GameData.Store,
+	source State.CastleState,
+	reserves []stationUnitRequest,
+	minimumSend int64,
+) (map[State.UnitID]int64, error) {
+	amounts, total, err := autoBirdStationManifest(gameData, source, reserves)
+	if err != nil {
+		return nil, err
+	}
+	if len(amounts) == 0 {
+		return nil, fmt.Errorf("fresh castle inventory has no eligible troops to station from castle %d", source.ID)
+	}
+	if minimumSend > 0 && total < minimumSend {
+		return nil, fmt.Errorf(
+			"fresh castle inventory has %d eligible troops at castle %d; minimum send is %d",
+			total, source.ID, minimumSend,
+		)
+	}
+	return amounts, nil
 }
 
 func planMovementRecall(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -271,7 +325,7 @@ func (application *Application) trackStationMovement(_ context.Context, argument
 		for id, movement := range gameState.Movements {
 			if movement.SourceCastleID != request.SourceCastleID || movement.Direction != 0 ||
 				movement.TargetX != target.X || movement.TargetY != target.Y ||
-				!stationMovementUnitsWithinRequest(movement.Units, units) {
+				(!request.FreshManifest && !stationMovementUnitsWithinRequest(movement.Units, units)) {
 				continue
 			}
 			if id > next.MovementID {

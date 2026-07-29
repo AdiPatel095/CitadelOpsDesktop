@@ -343,6 +343,9 @@ func normalizeStateMaps(state *GameState) {
 	if state.AttackAnalytics.PendingAttacks == nil {
 		state.AttackAnalytics.PendingAttacks = defaults.AttackAnalytics.PendingAttacks
 	}
+	if state.AttackAnalytics.RecentAutoStormLaunches == nil {
+		state.AttackAnalytics.RecentAutoStormLaunches = defaults.AttackAnalytics.RecentAutoStormLaunches
+	}
 	if state.EventScores.ByEvent == nil {
 		state.EventScores.ByEvent = defaults.EventScores.ByEvent
 	}
@@ -411,6 +414,9 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.AllianceHelpRequests.HospitalProductionIDs == nil {
 		state.AllianceHelpRequests.HospitalProductionIDs = defaults.AllianceHelpRequests.HospitalProductionIDs
+	}
+	if state.AllianceHelpRequests.RecruitmentCastleIDs == nil {
+		state.AllianceHelpRequests.RecruitmentCastleIDs = defaults.AllianceHelpRequests.RecruitmentCastleIDs
 	}
 	if state.Alliances == nil {
 		state.Alliances = defaults.Alliances

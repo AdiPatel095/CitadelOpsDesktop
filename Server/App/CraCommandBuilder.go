@@ -1,6 +1,7 @@
 package App
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -34,6 +35,10 @@ func buildCRACommandSteps(
 		payload, err := build(commanderID)
 		if err != nil {
 			return nil, fmt.Errorf("build CRA payload for commander %d: %w", commanderID, err)
+		}
+		payload, err = ensureCRASupportPayload(payload)
+		if err != nil {
+			return nil, fmt.Errorf("assemble CRA support wave for commander %d: %w", commanderID, err)
 		}
 		payloads[index] = payload
 	}
@@ -88,6 +93,31 @@ func craPayloadWithCommander(fields map[string]json.RawMessage, commanderID Stat
 	}
 	copy["LID"], _ = json.Marshal(commanderID)
 	return json.Marshal(copy)
+}
+
+func ensureCRASupportPayload(payload json.RawMessage) (json.RawMessage, error) {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(payload, &fields); err != nil {
+		return nil, fmt.Errorf("CRA payload is invalid: %w", err)
+	}
+	if fields == nil {
+		return nil, fmt.Errorf("CRA payload must be an object")
+	}
+	if missingCRAField(fields, "AST") {
+		fields["AST"], _ = json.Marshal(emptyAttackSupportTools())
+	}
+	if missingCRAField(fields, "RW") {
+		fields["RW"], _ = json.Marshal(emptyAttackSupportTroops())
+	}
+	if missingCRAField(fields, "ASCT") {
+		fields["ASCT"] = json.RawMessage(`0`)
+	}
+	return json.Marshal(fields)
+}
+
+func missingCRAField(fields map[string]json.RawMessage, key string) bool {
+	raw, exists := fields[key]
+	return !exists || len(bytes.TrimSpace(raw)) == 0 || bytes.Equal(bytes.TrimSpace(raw), []byte("null"))
 }
 
 func riftReplaySourceCastle(

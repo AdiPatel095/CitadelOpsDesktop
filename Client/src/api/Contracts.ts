@@ -423,6 +423,12 @@ export interface BeriStateV2 {
 	parsedSourceId?: number;
 	observedAt?: string;
 	consumedAt?: string;
+	campOpenRequestedAt?: string;
+	targetX?: number;
+	targetY?: number;
+	targetTypeId?: number;
+	targetObservedAt?: string;
+	targetConsumedAt?: string;
 }
 
 export interface EquipmentPriorityV2 {
@@ -900,6 +906,11 @@ export interface AllianceTargetAttackPresetWaveV2 {
 	R: AllianceTargetAttackPresetLaneV2;
 }
 
+export interface AllianceTargetAttackPresetCourtyardSupportV2 {
+	troops: AllianceTargetAttackPresetSlotV2[];
+	tools: AllianceTargetAttackPresetSlotV2[];
+}
+
 export interface AllianceTargetAttackPreviewRequest {
 	sourceCastleId: number;
 	kingdomId: number;
@@ -913,6 +924,7 @@ export interface AllianceTargetAttackPreviewRequest {
 		id: string;
 		name: string;
 		waves: AllianceTargetAttackPresetWaveV2[];
+		courtyardSupport: AllianceTargetAttackPresetCourtyardSupportV2;
 	};
 }
 
@@ -923,6 +935,7 @@ export interface AllianceTargetAttackPreviewV2 {
 		front: number;
 		right: number;
 	};
+	supportCapacity: number;
 	maximumWaves: number;
 	presetWaves: number;
 	appliedWaves: number;
@@ -1122,6 +1135,28 @@ export interface AutomationStateV2 {
 	updatedAt: string;
 }
 
+export interface AutoStormTroopCapPreviewRequest {
+	settings: unknown;
+}
+
+export interface AutoStormTroopCapPreviewV2 {
+	available: boolean;
+	maximumTroops: number;
+	troopsPerAttack: number;
+	minimumTroops: number;
+	historyHours: number;
+	attacksInHistory: number;
+	averageDailyAttacks: number;
+	bufferedAttackCount: number;
+	detail?: string;
+}
+
+export interface AttackLaunchRatesV2 {
+	observedAt: string;
+	windowMinutes: number;
+	launchesByFeature: Record<string, number>;
+}
+
 export interface MovementSnapshotV2 {
 	version: number;
 	observedAt?: string;
@@ -1130,12 +1165,21 @@ export interface MovementSnapshotV2 {
 export interface StationingOperationV2 {
 	id: string;
 	purpose: string;
+	phase?: 'target-ready' | 'dispatch-ready' | 'away' | 'waiting';
 	sourceCastleId: number;
 	targetCastleId: number;
 	movementId?: number;
 	units: Record<string, number>;
+	delayHours?: number;
+	waitSeconds?: number;
+	travelSeconds?: number;
+	allianceObservedAt?: string;
+	unitsObservedAt?: string;
+	dispatchedAt?: string;
 	safeAfter?: string;
 	expectedReturnAt?: string;
+	nextAttemptAt?: string;
+	statusDetail?: string;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -1258,6 +1302,8 @@ export interface EventActivityStateV2 {
 	khan: EventCombatTotalsV2;
 	khanDefense: EventCombatTotalsV2;
 	advisorObservedAt?: string;
+	fortifyCurrencies?: string[];
+	fortifyCurrenciesObservedAt?: string;
 }
 
 export interface EventRankingEntryV2 {

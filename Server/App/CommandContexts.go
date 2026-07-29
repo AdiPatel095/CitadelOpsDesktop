@@ -77,11 +77,15 @@ func attackCastleContextStep(castle State.CastleState) Intent.Step {
 	if !castle.Focused {
 		return castleFocusStep(castle)
 	}
+	return attackCastleRefreshStep("Refocus attack source castle", castle)
+}
+
+func attackCastleRefreshStep(name string, castle State.CastleState) Intent.Step {
 	payload, _ := json.Marshal(struct {
 		CastleID  State.CastleID  `json:"CID"`
 		KingdomID State.KingdomID `json:"KID"`
 	}{castle.ID, castle.KingdomID})
-	step := contextCommandStep("Refocus attack source castle", "jca", payload, "jaa")
+	step := contextCommandStep(name, "jca", payload, "jaa")
 	step.ResponseBarrier = Intent.ResponseBarrierCommitted
 	return step
 }
@@ -184,9 +188,21 @@ func (application *Application) resolveCRACommandDependencies(
 		KingdomID            State.KingdomID    `json:"KID"`
 		CommanderID          *State.CommanderID `json:"LID"`
 		TowerCapacityCapture json.RawMessage    `json:"towerCapacityCapture"`
+		ContextMode          string             `json:"_citadelContextMode"`
 	}
 	if err := json.Unmarshal(payload, &fields); err != nil {
 		return Intent.CommandDependencyPlan{}, fmt.Errorf("decode CRA send guard: %w", err)
+	}
+	routeKey := fmt.Sprintf(
+		"%d:%d:%d:%d:%d", fields.KingdomID, fields.SourceX, fields.SourceY, fields.TargetX, fields.TargetY,
+	)
+	if fields.ContextMode != "" {
+		if fields.ContextMode != beriCRAContextMode || fields.KingdomID != beriKingdomID {
+			return Intent.CommandDependencyPlan{}, fmt.Errorf(
+				"unsupported CRA context mode %q for kingdom %d", fields.ContextMode, fields.KingdomID,
+			)
+		}
+		return Intent.CommandDependencyPlan{Key: routeKey}, nil
 	}
 	if fields.CommanderID == nil && len(step.ResolverArguments) > 0 {
 		var resolved struct {
@@ -233,7 +249,7 @@ func (application *Application) resolveCRACommandDependencies(
 		DialogObservedAt: guardedAt, MovementsObservedAfter: movementsObservedAfter,
 	})
 	return Intent.CommandDependencyPlan{
-		Key: fmt.Sprintf("%d:%d:%d:%d:%d", fields.KingdomID, fields.SourceX, fields.SourceY, fields.TargetX, fields.TargetY),
+		Key: routeKey,
 		Steps: append(setup, Intent.Step{
 			Name: "Verify authoritative CRA target", Action: "attack.cra.send.guard", ActionArguments: guardArguments,
 		}),

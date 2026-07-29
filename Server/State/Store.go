@@ -452,7 +452,11 @@ func cloneGameStateWithMap(source GameState, cloneWorldMap bool) GameState {
 	clone.Stationing = make(map[string]StationingOperation, len(source.Stationing))
 	for id, operation := range source.Stationing {
 		operation.Units = cloneMap(operation.Units)
+		operation.DispatchedAt = cloneTimePointer(operation.DispatchedAt)
+		operation.ExpectedReturnAt = cloneTimePointer(operation.ExpectedReturnAt)
+		operation.NextAttemptAt = cloneTimePointer(operation.NextAttemptAt)
 		operation.SafeAfter = cloneTimePointer(operation.SafeAfter)
+		operation.SuccessCooldownUntil = cloneTimePointer(operation.SuccessCooldownUntil)
 		clone.Stationing[id] = operation
 	}
 	clone.Scheduled = make(map[string]ScheduledOperation, len(source.Scheduled))
@@ -513,6 +517,9 @@ func cloneGameStateWithMap(source GameState, cloneWorldMap bool) GameState {
 	clone.AllianceHelpRequests.HospitalProductionIDs = append(
 		[]int64(nil), source.AllianceHelpRequests.HospitalProductionIDs...,
 	)
+	clone.AllianceHelpRequests.RecruitmentCastleIDs = append(
+		[]CastleID(nil), source.AllianceHelpRequests.RecruitmentCastleIDs...,
+	)
 	clone.Alliances = make(map[AllianceID]AllianceState, len(source.Alliances))
 	for id, alliance := range source.Alliances {
 		alliance.Members = append([]AllianceMember{}, alliance.Members...)
@@ -536,6 +543,7 @@ func cloneGameStateWithMap(source GameState, cloneWorldMap bool) GameState {
 	clone.TowerQueue.CapacityByCastle = cloneMap(source.TowerQueue.CapacityByCastle)
 	clone.Invasion.LastScannedAt = cloneMap(source.Invasion.LastScannedAt)
 	clone.Invasion.FortifiedTargets = cloneMap(source.Invasion.FortifiedTargets)
+	clone.Invasion.FortifyCurrencies = append([]string(nil), source.Invasion.FortifyCurrencies...)
 	clone.Storm.LastScannedAt = cloneMap(source.Storm.LastScannedAt)
 	clone.Storm.Map.Targets = cloneMap(source.Storm.Map.Targets)
 	clone.Storm.IslandReturns = make(map[string]StormIslandReturnState, len(source.Storm.IslandReturns))
@@ -581,10 +589,14 @@ func cloneGameStateWithMap(source GameState, cloneWorldMap bool) GameState {
 	}
 	clone.AttackAnalytics.LaunchIDs = append([]MovementID(nil), source.AttackAnalytics.LaunchIDs...)
 	clone.AttackAnalytics.PendingAttacks = append([]AttackFeatureLaunch(nil), source.AttackAnalytics.PendingAttacks...)
+	clone.AttackAnalytics.RecentAutoStormLaunches = append(
+		[]AttackFeatureLaunch(nil), source.AttackAnalytics.RecentAutoStormLaunches...,
+	)
 	clone.EventScores.ByEvent = cloneMap(source.EventScores.ByEvent)
 	clone.EventScores.ShopByPackage = cloneMap(source.EventScores.ShopByPackage)
 	clone.EventScores.ActivityByEvent = make(map[int64]EventActivityState, len(source.EventScores.ActivityByEvent))
 	for eventID, activity := range source.EventScores.ActivityByEvent {
+		activity.FortifyCurrencies = append([]string(nil), activity.FortifyCurrencies...)
 		activity.LaunchIDs = append([]MovementID(nil), activity.LaunchIDs...)
 		activity.PendingAttacks = append([]EventAttackRecord(nil), activity.PendingAttacks...)
 		activity.ProcessedReportIDs = append([]int64(nil), activity.ProcessedReportIDs...)

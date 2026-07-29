@@ -14,6 +14,9 @@ import (
 )
 
 func (application *Application) registerGameIntents() error {
+	if err := application.registerAutoBirdIntents(); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterCommandDependencies("cra", application.resolveCRACommandDependencies); err != nil {
 		return err
 	}
@@ -74,10 +77,16 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("troops.kingdom.consume_source", application.consumeKingdomTroopSource); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("troops.kingdom.guard_target_cap", application.guardKingdomTroopTargetCap); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("resources.kingdom.consume_source", application.consumeKingdomResourceSource); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("resources.kingdom.complete_workflow", application.completeKingdomResourceWorkflow); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("resources.verify_target_capacity", application.verifyResourceTargetCapacity); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("equipment.verify_coin_reserve", application.verifyEquipmentCoinReserve); err != nil {
@@ -98,7 +107,31 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("kingdom.transport.verify_available", application.verifyKingdomTransportAvailable); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("beri.capacity.verify", application.verifyBeriCapacity); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("beri.transfer.verify", application.verifyBeriTransfer); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("beri.consume_capacity", application.consumeBeriCapacity); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("beri.camp.open.verify", application.verifyBeriCampOpen); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("beri.camp.opened", application.markBeriCampOpened); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("beri.target.verify", application.verifyBeriTargetFound); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("beri.tower.attack.guard", application.guardBeriTowerAttack); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("beri.tools.purchase.guard", application.guardBeriToolPurchase); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterStepResolver("beri.tower.attack.build", application.resolveBeriTowerAttackStep); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("rift.template.rename", application.renameRiftTemplate); err != nil {
@@ -298,6 +331,10 @@ func (application *Application) registerGameIntents() error {
 			Planner: planEquipmentReconfigure,
 		},
 		{
+			Name: "equipment.event.apply", Description: "Replace a commander's base equipment with one coherent owned event set", Effect: Intent.EffectWrite,
+			Planner: planEquipmentEventApply,
+		},
+		{
 			Name: "equipment.upgrade", Description: "Upgrade equipment or a relic gem to a validated target level", Effect: Intent.EffectWrite,
 			Planner: application.planEquipmentUpgrade,
 		},
@@ -318,7 +355,7 @@ func (application *Application) registerGameIntents() error {
 			Planner: planDefenseOpenGate,
 		},
 		{
-			Name: "defense.keep.update", Description: "Apply and read back captured DFK scalar settings while preserving unconfirmed S/STS rows", Effect: Intent.EffectWrite,
+			Name: "defense.keep.update", Description: "Apply and read back validated DFK allocation, keep-tool, and Sceat-support rows", Effect: Intent.EffectWrite,
 			Planner: planDefenseKeepUpdate,
 		},
 		{
@@ -556,6 +593,27 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "beri.transfer", Description: "Transfer a validated troop batch to Berimond and apply its fixed speed-up", Effect: Intent.EffectLaunch,
 			Planner: planBeriTransfer,
+		},
+		{
+			Name: "beri.tools.refresh", Description: "Refresh the owned Berimond camp tool inventory", Effect: Intent.EffectRead,
+			Planner: planBeriToolInventoryRefresh,
+		},
+		{
+			Name: "beri.tools.purchase", Description: "Buy one game-capped batch of a supported coin attack tool from the Berimond armorer", Effect: Intent.EffectWrite,
+			Planner: planBeriToolPurchase,
+		},
+		{
+			Name: "beri.camp.open", Description: "Open the cheapest unlocked non-premium Berimond camp", Effect: Intent.EffectWrite,
+			Planner: planBeriCampOpen,
+		},
+		{
+			Name: "beri.target.find", Description: "Use Berimond's find-next command to select the next available tower", Effect: Intent.EffectRead,
+			Planner: planBeriTargetFind,
+		},
+		{
+			Name: "beri.tower.attack", Description: "Launch one guarded CitadelOps preset against the selected Berimond tower", Effect: Intent.EffectLaunch,
+			AttackModule: &Intent.AttackModuleDefinition{ID: "autoBeriWorld", Label: "Auto Beri World", Description: "Berimond troop transfers and guarded tower attacks", DefaultWeight: 50},
+			Planner:      planBeriTowerAttack,
 		},
 		{
 			Name: "rift.maiden_wave.launch", Description: "Launch deterministic Rift probe waves from an optional eligible commander pool", Effect: Intent.EffectLaunch,

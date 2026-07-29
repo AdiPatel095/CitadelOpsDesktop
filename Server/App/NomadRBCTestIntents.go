@@ -70,7 +70,7 @@ func planNomadRBCTestAttack(
 		return Intent.Plan{}, fmt.Errorf("RBC trial requires exactly %d available commanders", request.ExpectedAttacks)
 	}
 	request.CommanderIDs = orderNomadChainCommanders(input, source, target, resolution.Selected)
-	if _, err := buildAttackSetupWavesForCommanders(invasionAttackSetup(request.Preset), source, input.GameData, len(request.CommanderIDs)); err != nil {
+	if _, err := buildAttackSetupForCommanders(invasionAttackSetup(request.Preset), source, input.GameData, len(request.CommanderIDs)); err != nil {
 		return Intent.Plan{}, fmt.Errorf("validate RBC trial preset inventory: %w", err)
 	}
 
@@ -235,12 +235,12 @@ func (application *Application) resolveNomadRBCTestAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve RBC trial attack capacity: %w", err)
 	}
-	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves))
-	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
+	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity))
+	built, err := buildAttackSetup(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build RBC trial preset %q: %w", request.Preset.Name, err)
 	}
-	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, waves, request.HorseTravelBoostID))
+	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, built, request.HorseTravelBoostID))
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build RBC trial CRA payload: %w", err)
 	}
@@ -280,7 +280,7 @@ func (application *Application) guardNomadRBCTestInventory(_ context.Context, ar
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
 	}
-	_, err := buildAttackSetupWavesForCommanders(invasionAttackSetup(request.Preset), source, gameData, request.ExpectedAttacks)
+	_, err := buildAttackSetupForCommanders(invasionAttackSetup(request.Preset), source, gameData, request.ExpectedAttacks)
 	return err
 }
 

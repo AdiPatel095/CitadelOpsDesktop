@@ -999,7 +999,7 @@ func autoKhanCapacityLimitedPreset(
 	if err != nil {
 		return AttackPresets.Preset{}, err
 	}
-	return AttackPresets.LimitToCapacity(preset, capacity.Capacity, capacity.MaximumWaves), nil
+	return AttackPresets.LimitToCapacity(preset, capacity), nil
 }
 
 func autoKhanOrderCommanders(

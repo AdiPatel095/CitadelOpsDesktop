@@ -31,7 +31,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     { id: 'attack-presets', label: 'Attack Presets', icon: <Icons.Crosshair />, section: 'main' },
     { id: 'defense-presets', label: 'Defense Presets', icon: <Icons.Shield />, section: 'main' },
     { id: 'equipment', label: 'Equipment', icon: <Icons.Shield />, section: 'main' },
-    { id: 'movement', label: 'Movement', icon: <Icons.Activity />, section: 'main' },
+    { id: 'movement', label: 'Commanders', icon: <Icons.Activity />, section: 'main' },
     { id: 'battle-stats', label: 'Battle Stats', icon: <Icons.Activity />, section: 'main' },
     { id: 'player-tracker', label: 'My Stats', icon: <Icons.Users />, section: 'main' },
     { id: 'alliance-targets', label: 'Alliance Targets', icon: <Icons.Crosshair />, section: 'main' },

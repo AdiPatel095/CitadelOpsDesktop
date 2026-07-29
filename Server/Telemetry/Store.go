@@ -58,7 +58,7 @@ var knownChannels = []Channel{
 	{ID: ChannelAutoSceatRes, Label: "Auto Sceat Resources", Description: "Completed crafting and resource actions and problems requiring attention."},
 	{ID: ChannelAutoHospital, Label: "Auto Hospital", Description: "Completed hospital actions and problems requiring attention."},
 	{ID: ChannelAutoTCI, Label: "Auto TCI", Description: "Completed construction-item equips, upgrades, and purchases and problems requiring attention."},
-	{ID: ChannelAutoBeriWorld, Label: "Auto Berimond World", Description: "Completed Berimond troop transfers and problems requiring attention."},
+	{ID: ChannelAutoBeriWorld, Label: "Auto Berimond World", Description: "Completed Berimond troop transfers, tower attacks, and problems requiring attention."},
 	{ID: ChannelAutoFoodBalance, Label: "Auto Food Balance", Description: "Completed food and mead shipments and problems requiring attention."},
 	{ID: ChannelAutoEquipment, Label: "Auto Equipment Cleanup", Description: "Completed equipment cleanup actions and problems requiring attention."},
 	{ID: ChannelAutoTowers, Label: "Auto Towers", Description: "Launched tower attacks and problems requiring attention."},
@@ -74,6 +74,16 @@ var featureActivityEvents = map[string]struct{}{
 	"ACTION": {}, "ALLIANCE HELP": {}, "ATTACK": {}, "BUILDING": {}, "CONSTRUCTION": {},
 	"CRAFTING": {}, "DEFENSE": {}, "EQUIPMENT": {}, "ESPIONAGE": {}, "EVENT": {},
 	"HOSPITAL": {}, "PURCHASE": {}, "QUEUE": {}, "TIME SKIP": {}, "TRANSPORT": {},
+}
+
+var attackFeatureChannels = []string{
+	ChannelAutoTowers,
+	ChannelAutoInvasion,
+	ChannelAutoNomad,
+	ChannelAutoAdvisor,
+	ChannelAutoKhan,
+	ChannelAutoBeriWorld,
+	ChannelAutoStorm,
 }
 
 type pendingAppCommand struct {
@@ -113,6 +123,9 @@ type Store struct {
 	persistWake   chan struct{}
 	persistDone   chan struct{}
 	persistClosed bool
+
+	attackMu       sync.Mutex
+	attackLaunches map[string][]time.Time
 }
 
 func NewStore(capacity int) *Store {
@@ -120,12 +133,13 @@ func NewStore(capacity int) *Store {
 		capacity = 100
 	}
 	store := &Store{
-		capacity:    capacity,
-		lines:       map[string][]string{},
-		files:       map[string]*os.File{},
-		filePaths:   map[string]string{},
-		persistWake: make(chan struct{}, 1),
-		persistDone: make(chan struct{}),
+		capacity:       capacity,
+		lines:          map[string][]string{},
+		files:          map[string]*os.File{},
+		filePaths:      map[string]string{},
+		persistWake:    make(chan struct{}, 1),
+		persistDone:    make(chan struct{}),
+		attackLaunches: map[string][]time.Time{},
 	}
 	go store.runPersistence()
 	return store
@@ -140,11 +154,23 @@ func (store *Store) SetDataDir(dataDir string) error {
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		return err
 	}
+	loadedAt := time.Now()
+	loadedAttackLaunches := loadAttackLaunches(directory, loadedAt.Add(-time.Hour))
 	store.flushPersistence()
 	store.fileMu.Lock()
 	store.closeFilesLocked()
 	store.channelsDir = directory
 	store.fileMu.Unlock()
+	store.attackMu.Lock()
+	for channel, launches := range store.attackLaunches {
+		for _, launchedAt := range launches {
+			if !launchedAt.Before(loadedAt) {
+				loadedAttackLaunches[channel] = append(loadedAttackLaunches[channel], launchedAt)
+			}
+		}
+	}
+	store.attackLaunches = loadedAttackLaunches
+	store.attackMu.Unlock()
 	return nil
 }
 
@@ -250,11 +276,42 @@ func (store *Store) RecordFeatureActivity(actor string, intent string, severity 
 	if _, exists := featureActivityEvents[event]; !exists {
 		event = "ACTION"
 	}
-	store.append(channel, formatLine(time.Now(), severity, event, strings.TrimSpace(detail)))
+	observedAt := time.Now()
+	store.append(channel, formatLine(observedAt, severity, event, strings.TrimSpace(detail)))
+	if severity == "INFO" && event == "ATTACK" {
+		store.recordAttackLaunch(channel, observedAt)
+	}
 }
 
 func (store *Store) Channels() []Channel {
 	return append([]Channel(nil), knownChannels...)
+}
+
+// AttackLaunchCounts returns the confirmed launches recorded during the rolling hour ending at now.
+func (store *Store) AttackLaunchCounts(now time.Time) map[string]int {
+	counts := make(map[string]int, len(attackFeatureChannels))
+	if store == nil {
+		return counts
+	}
+	if now.IsZero() {
+		now = time.Now()
+	}
+	since := now.Add(-time.Hour)
+	store.attackMu.Lock()
+	defer store.attackMu.Unlock()
+	for _, channel := range attackFeatureChannels {
+		launches := store.attackLaunches[channel]
+		firstIncluded := 0
+		for firstIncluded < len(launches) && launches[firstIncluded].Before(since) {
+			firstIncluded++
+		}
+		if firstIncluded > 0 {
+			launches = append([]time.Time(nil), launches[firstIncluded:]...)
+			store.attackLaunches[channel] = launches
+		}
+		counts[channel] = len(launches)
+	}
+	return counts
 }
 
 func (store *Store) Tail(channel string, limit int) []string {
@@ -293,6 +350,21 @@ func (store *Store) Tail(channel string, limit int) []string {
 		return persisted
 	}
 	return lines
+}
+
+func (store *Store) recordAttackLaunch(channel string, observedAt time.Time) {
+	store.attackMu.Lock()
+	launches := store.attackLaunches[channel]
+	cutoff := observedAt.Add(-time.Hour)
+	firstIncluded := 0
+	for firstIncluded < len(launches) && launches[firstIncluded].Before(cutoff) {
+		firstIncluded++
+	}
+	if firstIncluded > 0 {
+		launches = append([]time.Time(nil), launches[firstIncluded:]...)
+	}
+	store.attackLaunches[channel] = append(launches, observedAt)
+	store.attackMu.Unlock()
 }
 
 func (store *Store) Close() {
@@ -602,6 +674,24 @@ func tailLines(lines []string, limit int) []string {
 	return append([]string(nil), lines...)
 }
 
+func loadAttackLaunches(directory string, since time.Time) map[string][]time.Time {
+	launches := make(map[string][]time.Time, len(attackFeatureChannels))
+	for _, channel := range attackFeatureChannels {
+		launches[channel] = []time.Time{}
+		lines, err := tailNonEmptyLines(filepath.Join(directory, channel+".log"), 100_000)
+		if err != nil {
+			continue
+		}
+		for _, line := range lines {
+			observedAt, severity, event, ok := parseFeatureActivityLine(line)
+			if ok && severity == "INFO" && event == "ATTACK" && !observedAt.Before(since) {
+				launches[channel] = append(launches[channel], observedAt)
+			}
+		}
+	}
+	return launches
+}
+
 func tailFeatureActivityLines(lines []string, limit int) []string {
 	filtered := make([]string, 0, min(len(lines), limit))
 	for _, line := range lines {
@@ -613,30 +703,52 @@ func tailFeatureActivityLines(lines []string, limit int) []string {
 }
 
 func isFeatureActivityLine(line string) bool {
+	_, _, ok := featureActivityLineTokens(line)
+	return ok
+}
+
+func parseFeatureActivityLine(line string) (time.Time, string, string, bool) {
 	firstOpen := strings.IndexByte(line, '[')
 	if firstOpen < 0 {
-		return false
+		return time.Time{}, "", "", false
+	}
+	observedAt, err := time.ParseInLocation(
+		"2006-01-02 15:04:05.000000",
+		strings.TrimSpace(line[:firstOpen]),
+		time.Local,
+	)
+	if err != nil {
+		return time.Time{}, "", "", false
+	}
+	severity, event, ok := featureActivityLineTokens(line)
+	return observedAt, severity, event, ok
+}
+
+func featureActivityLineTokens(line string) (string, string, bool) {
+	firstOpen := strings.IndexByte(line, '[')
+	if firstOpen < 0 {
+		return "", "", false
 	}
 	firstClose := strings.IndexByte(line[firstOpen+1:], ']')
 	if firstClose < 0 {
-		return false
+		return "", "", false
 	}
 	firstClose += firstOpen + 1
 	severity := strings.TrimSpace(line[firstOpen+1 : firstClose])
 	if severity != "INFO" && severity != "WARN" && severity != "ERROR" {
-		return false
+		return "", "", false
 	}
 	remainder := strings.TrimSpace(line[firstClose+1:])
 	if !strings.HasPrefix(remainder, "[") {
-		return false
+		return "", "", false
 	}
 	secondClose := strings.IndexByte(remainder[1:], ']')
 	if secondClose < 0 {
-		return false
+		return "", "", false
 	}
 	event := strings.TrimSpace(remainder[1 : secondClose+1])
 	_, exists := featureActivityEvents[event]
-	return exists
+	return severity, event, exists
 }
 
 func logDirection(direction Protocol.Direction) string {

@@ -21,7 +21,7 @@ const (
 	coordinatorTick          = 2 * time.Second
 	stateChangeDebounce      = 250 * time.Millisecond
 	defaultRetry             = 30 * time.Second
-	autoTowerIntentTTL       = 2 * time.Minute
+	boundedAttackIntentTTL   = 2 * time.Minute
 	maxImmediatePolicyRuns   = 32
 	stateEventBuffer         = 256
 	configurationEventBuffer = 64
@@ -69,8 +69,10 @@ type operationResult struct {
 	policyID            string
 	receipt             Intent.Receipt
 	followUp            *Intent.Receipt
+	failureFallback     *Intent.Receipt
 	nextCheck           time.Time
 	detail              string
+	failureDetail       string
 	reevaluateOnSuccess bool
 	reevaluateOnStale   bool
 }
@@ -424,18 +426,18 @@ func (coordinator *Coordinator) evaluate(
 			copy.Actor = "automation:" + policyActorID(policy)
 			followUp = &copy
 		}
+		var failureFallback *Intent.Request
+		if decision.FailureFallback != nil {
+			copy := *decision.FailureFallback
+			copy.Actor = "automation:" + policyActorID(policy)
+			failureFallback = &copy
+		}
 		current.running = true
 		current.lastDecisionFingerprint = fingerprint
 		current.runningScheduleKey = strings.TrimSpace(decision.ScheduleKey)
 		current.runningSessionGeneration = state.Session.Generation
 		current.allowedConfigurationChange = configurationFollowUpFingerprint(policy, decision, configuration)
-		var operationContext context.Context
-		var cancelOperation context.CancelFunc
-		if policy.ID() == "autoTowers" {
-			operationContext, cancelOperation = context.WithTimeout(ctx, autoTowerIntentTTL)
-		} else {
-			operationContext, cancelOperation = context.WithCancel(ctx)
-		}
+		operationContext, cancelOperation := policyOperationContext(ctx, policy.ID())
 		current.cancelRun = cancelOperation
 		coordinator.recordDecision(policy.ID(), true, Decision{
 			Status: "running", Detail: decision.Detail, NextCheckAt: decision.NextCheckAt, Metrics: decision.Metrics,
@@ -446,31 +448,48 @@ func (coordinator *Coordinator) evaluate(
 			cancelOperation context.CancelFunc,
 			request Intent.Request,
 			followUp *Intent.Request,
+			failureFallback *Intent.Request,
 			nextCheck time.Time,
 			detail string,
+			failureDetail string,
 			reevaluateOnSuccess bool,
 			reevaluateOnStale bool,
 		) {
 			defer cancelOperation()
 			receipt := coordinator.intents.Submit(operationContext, request)
 			var followUpReceipt *Intent.Receipt
+			var failureFallbackReceipt *Intent.Receipt
 			if receipt.Status == Intent.StatusSucceeded && followUp != nil {
 				result := coordinator.intents.Submit(operationContext, *followUp)
 				followUpReceipt = &result
+			} else if failureFallback != nil && statusRunsFailureFallback(receipt.Status) {
+				result := coordinator.intents.Submit(operationContext, *failureFallback)
+				failureFallbackReceipt = &result
 			}
 			select {
 			case <-ctx.Done():
 			case results <- operationResult{
 				policyID: policyID, receipt: receipt, followUp: followUpReceipt,
-				nextCheck: nextCheck, detail: detail, reevaluateOnSuccess: reevaluateOnSuccess,
-				reevaluateOnStale: reevaluateOnStale,
+				failureFallback: failureFallbackReceipt,
+				nextCheck:       nextCheck, detail: detail, failureDetail: failureDetail,
+				reevaluateOnSuccess: reevaluateOnSuccess,
+				reevaluateOnStale:   reevaluateOnStale,
 			}:
 			}
 		}(
-			policy.ID(), operationContext, cancelOperation, request, followUp,
-			decision.NextCheckAt, decision.Detail, decision.ReevaluateOnSuccess,
+			policy.ID(), operationContext, cancelOperation, request, followUp, failureFallback,
+			decision.NextCheckAt, decision.Detail, decision.FailureDetail, decision.ReevaluateOnSuccess,
 			decision.ReevaluateOnStale,
 		)
+	}
+}
+
+func policyOperationContext(ctx context.Context, policyID string) (context.Context, context.CancelFunc) {
+	switch strings.TrimSpace(policyID) {
+	case "autoTowers", "autoBeriWorldAttack":
+		return context.WithTimeout(ctx, boundedAttackIntentTTL)
+	default:
+		return context.WithCancel(ctx)
 	}
 }
 
@@ -621,12 +640,18 @@ func (coordinator *Coordinator) recordReceipt(result operationResult) {
 		current.ID = result.policyID
 		current.Enabled = true
 		current.LastOperationID = result.receipt.ID
+		if result.failureFallback != nil {
+			current.LastOperationID = result.failureFallback.ID
+		}
 		current.NextCheckAt = timePointer(result.nextCheck)
 		now := time.Now().UTC()
 		current.LastRunAt = &now
 		if operationResultSucceeded(result) {
 			current.Status = "idle"
 			current.Detail = result.detail
+			if result.failureFallback != nil && strings.TrimSpace(result.failureDetail) != "" {
+				current.Detail = result.failureDetail
+			}
 			current.LastError = ""
 		} else {
 			current.Status = "error"
@@ -635,14 +660,33 @@ func (coordinator *Coordinator) recordReceipt(result operationResult) {
 			if result.followUp != nil && result.followUp.Status != Intent.StatusSucceeded {
 				current.LastError = result.followUp.Error
 			}
+			if result.failureFallback != nil && result.failureFallback.Status != Intent.StatusSucceeded {
+				if current.LastError != "" && result.failureFallback.Error != "" {
+					current.LastError += "; failure fallback: " + result.failureFallback.Error
+				} else {
+					current.LastError = result.failureFallback.Error
+				}
+			}
 		}
 		return current
 	})
 }
 
 func operationResultSucceeded(result operationResult) bool {
+	if result.failureFallback != nil {
+		return result.failureFallback.Status == Intent.StatusSucceeded
+	}
 	return result.receipt.Status == Intent.StatusSucceeded &&
 		(result.followUp == nil || result.followUp.Status == Intent.StatusSucceeded)
+}
+
+func statusRunsFailureFallback(status Intent.Status) bool {
+	switch status {
+	case Intent.StatusFailed, Intent.StatusPartiallySucceeded, Intent.StatusIndeterminate:
+		return true
+	default:
+		return false
+	}
 }
 
 func operationResultRetryableStale(result operationResult) bool {
@@ -1107,6 +1151,11 @@ func decisionRequestFingerprint(decision Decision) string {
 	if decision.FollowUp != nil {
 		parts[3] = "follow-up"
 		parts = append(parts, decision.FollowUp.Name, string(decision.FollowUp.Arguments))
+	}
+	parts = append(parts, "no-failure-fallback")
+	if decision.FailureFallback != nil {
+		parts[len(parts)-1] = "failure-fallback"
+		parts = append(parts, decision.FailureFallback.Name, string(decision.FailureFallback.Arguments))
 	}
 	return strings.Join(parts, "\x00")
 }

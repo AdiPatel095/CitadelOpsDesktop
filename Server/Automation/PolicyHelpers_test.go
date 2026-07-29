@@ -9,7 +9,7 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-func TestCommanderFeatureCandidatesFailClosedWhenFeatureIsUnassigned(t *testing.T) {
+func TestCommanderFeatureCandidatesDefaultToAllUntilExplicitlyConfigured(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Commanders[0] = State.CommanderState{ID: 0, Available: true}
 	gameState.Commanders[16] = State.CommanderState{ID: 16, Available: true}
@@ -18,8 +18,14 @@ func TestCommanderFeatureCandidatesFailClosedWhenFeatureIsUnassigned(t *testing.
 		commanderFeatureSection: json.RawMessage(`{"version":1,"assignments":{}}`),
 	}}
 	candidates, restricted := commanderFeatureCandidates(gameState, configuration, "autoStorm")
+	if restricted || len(candidates) != 0 {
+		t.Fatalf("default feature candidates = %#v, restricted = %t", candidates, restricted)
+	}
+
+	configuration.Sections[commanderFeatureSection] = json.RawMessage(`{"version":1,"assignments":{"autoStorm":[]}}`)
+	candidates, restricted = commanderFeatureCandidates(gameState, configuration, "autoStorm")
 	if !restricted || len(candidates) != 0 {
-		t.Fatalf("unassigned feature candidates = %#v, restricted = %t", candidates, restricted)
+		t.Fatalf("disabled feature candidates = %#v, restricted = %t", candidates, restricted)
 	}
 
 	configuration.Sections[commanderFeatureSection] = json.RawMessage(`{"version":1,"assignments":{"autoStorm":[16,0,16,99]}}`)

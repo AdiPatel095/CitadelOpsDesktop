@@ -1246,12 +1246,15 @@ func (application *Application) resolveStormAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve Storm attack capacity: %w", err)
 	}
-	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(attackRequest.Preset, capacity.Capacity, capacity.MaximumWaves))
-	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
+	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(attackRequest.Preset, capacity))
+	if definition.Kind == GameData.StormIsleKindIsland {
+		setup.CourtyardSupport.Troops = nil
+	}
+	built, err := buildAttackSetup(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Storm preset %q: %w", attackRequest.Preset.Name, err)
 	}
-	body := invasionAttackBody(source, target, request.CommanderID, waves, attackRequest.HorseTravelBoostID)
+	body := invasionAttackBody(source, target, request.CommanderID, built, attackRequest.HorseTravelBoostID)
 	if definition.Kind == GameData.StormIsleKindIsland {
 		body.SupportTroops = stormSupportTroops(attackRequest.DefenseUnits)
 	}

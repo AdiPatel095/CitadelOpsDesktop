@@ -179,7 +179,11 @@ func TestRiftReplaySendsImmediateCommand(t *testing.T) {
 func TestRiftReplayAppliesValidatedAttackSetup(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],
-		"units":[{"wodID":1},{"wodID":2,"slotTypes":[1]}]
+		"units":[
+			{"wodID":1},
+			{"wodID":2,"slotTypes":[1]},
+			{"wodID":3,"slotTypes":"9,10","type":"SceatSuppAttPowerYard"}
+		]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)
@@ -188,7 +192,7 @@ func TestRiftReplayAppliesValidatedAttackSetup(t *testing.T) {
 	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: true}
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, X: 7, Y: 8, Focused: true,
-		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{1: 20, 2: 10}},
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{1: 20, 2: 10, 3: 1}},
 	}
 	gameState.Rift.Launches["launch"] = State.RiftLaunch{
 		ID: "launch", CommanderID: 5,
@@ -199,7 +203,10 @@ func TestRiftReplayAppliesValidatedAttackSetup(t *testing.T) {
 		"attackSetup":{"name":"test","waves":[{
 			"L":{"troops":[{"itemId":1,"quantity":11}],"tools":[{"itemId":2,"quantity":3}]},
 			"M":{"troops":[],"tools":[]},"R":{"troops":[],"tools":[]}
-		}]}
+		}],"courtyardSupport":{
+			"troops":[{"itemId":1,"quantity":4}],
+			"tools":[{"itemId":3,"quantity":1}]
+		}}
 	}`)
 	plan, err := (&Application{}).planRiftReplay(
 		context.Background(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments,
@@ -212,6 +219,7 @@ func TestRiftReplayAppliesValidatedAttackSetup(t *testing.T) {
 		SourceY int          `json:"SY"`
 		Waves   []attackWave `json:"A"`
 		Tools   []int64      `json:"AST"`
+		Support []attackPair `json:"RW"`
 	}
 	if err := json.Unmarshal(plan.Steps[2].Command.Payload, &body); err != nil {
 		t.Fatal(err)
@@ -222,8 +230,11 @@ func TestRiftReplayAppliesValidatedAttackSetup(t *testing.T) {
 	if body.Waves[0].Left.Units[0] != (attackPair{1, 11}) || body.Waves[0].Left.Tools[0] != (attackPair{2, 3}) {
 		t.Fatalf("custom formation was not applied: %+v", body.Waves[0])
 	}
-	if len(body.Tools) != 3 || body.Tools[0] != -1 {
-		t.Fatalf("captured support tools were not cleared: %+v", body.Tools)
+	if len(body.Tools) != 3 || body.Tools[0] != 3 {
+		t.Fatalf("custom Sceat support tools were not applied: %+v", body.Tools)
+	}
+	if len(body.Support) != 8 || body.Support[0] != (attackPair{1, 4}) {
+		t.Fatalf("custom courtyard support troops were not applied: %+v", body.Support)
 	}
 }
 
@@ -246,11 +257,12 @@ func TestAttackSetupAllowsThirtyWaves(t *testing.T) {
 	for index := range setup.Waves {
 		setup.Waves[index] = wave
 	}
-	if built, err := buildAttackSetupWaves(setup, source, gameData); err != nil || len(built) != 30 {
-		t.Fatalf("30-wave setup: len=%d err=%v", len(built), err)
+	if built, err := buildAttackSetup(setup, source, gameData); err != nil ||
+		len(built.Waves) != 30 || len(built.SupportTroops) != 8 || len(built.SupportTools) != 3 {
+		t.Fatalf("30-wave setup: len=%d err=%v", len(built.Waves), err)
 	}
 	setup.Waves = append(setup.Waves, wave)
-	if _, err := buildAttackSetupWaves(setup, source, gameData); err == nil || !strings.Contains(err.Error(), "between 1 and 30 waves") {
+	if _, err := buildAttackSetup(setup, source, gameData); err == nil || !strings.Contains(err.Error(), "between 1 and 30 waves") {
 		t.Fatalf("31-wave setup error = %v", err)
 	}
 }

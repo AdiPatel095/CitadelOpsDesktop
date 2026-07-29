@@ -2,6 +2,7 @@ package App
 
 import (
 	"encoding/json"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -74,6 +75,9 @@ func TestKingdomTroopShipmentRejectsToolsAndSkipUsesTroopTransportType(t *testin
 	if plan.Summary != "Apply a 1-hour time skip to kingdom 4 troop transport" {
 		t.Fatalf("troop time-skip summary = %q", plan.Summary)
 	}
+	if !slices.Contains(plan.Claims, "currency:1005") {
+		t.Fatalf("troop time-skip plan is missing its currency claim: %#v", plan.Claims)
+	}
 }
 
 func TestKingdomTroopShipmentRejectsStormBelowMeadFloor(t *testing.T) {
@@ -95,6 +99,63 @@ func TestKingdomTroopShipmentRejectsStormBelowMeadFloor(t *testing.T) {
 	}`))
 	if err == nil || !strings.Contains(err.Error(), "at least 50000 Mead") {
 		t.Fatalf("low Storm Mead error = %v", err)
+	}
+}
+
+func TestKingdomTroopShipmentCapCountsAwayTargetTroops(t *testing.T) {
+	gameData := kingdomTroopIntentGameData(t)
+	gameState := State.NewGameState()
+	donor := kingdomTroopIntentCastle(10, 0, "Donor")
+	donor.Units.Stationed[10] = 20
+	target := kingdomTroopIntentCastle(40, 4, "Storm")
+	target.Units.Stationed[10] = 2
+	target.Units.Traveling[10] = 6
+	gameState.Castles[donor.ID] = donor
+	gameState.Castles[target.ID] = target
+	gameState.Movements[99] = State.MovementState{
+		ID: 99, SourceCastleID: target.ID, KingdomID: target.KingdomID,
+		Units: map[State.UnitID]int64{10: 6},
+	}
+	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
+	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+
+	_, err := planKingdomTroopShipment(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":40,"targetKingdomId":4,
+		"maximumTargetTroops":10,"units":[{"unitId":10,"amount":3}]
+	}`))
+	if err == nil || !strings.Contains(err.Error(), "above its 10-troop import cap") ||
+		!strings.Contains(err.Error(), "8 committed, 3 incoming") {
+		t.Fatalf("away-target troop cap error = %v", err)
+	}
+}
+
+func TestKingdomTroopShipmentAddsExecutionTimeCapGuard(t *testing.T) {
+	gameData := kingdomTroopIntentGameData(t)
+	gameState := State.NewGameState()
+	donor := kingdomTroopIntentCastle(10, 0, "Donor")
+	donor.Focused = true
+	donor.Units.Stationed[10] = 20
+	target := kingdomTroopIntentCastle(40, 4, "Storm")
+	target.Units.Stationed[10] = 2
+	gameState.Castles[donor.ID] = donor
+	gameState.Castles[target.ID] = target
+	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
+	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+
+	plan, err := planKingdomTroopShipment(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":40,"targetKingdomId":4,
+		"maximumTargetTroops":10,"units":[{"unitId":10,"amount":3}]
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 5 || plan.Steps[2].Action != "troops.kingdom.guard_target_cap" ||
+		plan.Steps[3].Opcode != "kut" {
+		t.Fatalf("capped troop transfer steps = %#v", plan.Steps)
 	}
 }
 

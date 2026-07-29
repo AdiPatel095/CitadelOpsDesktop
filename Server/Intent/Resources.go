@@ -258,6 +258,15 @@ func legacyClaimResource(
 		return accountKey("scheduling", "operation", value)
 	case "rift-launch":
 		return accountKey("rift", "launch", value)
+	case "beri-target":
+		if len(parts) >= 2 {
+			id, _ := strconv.ParseInt(parts[1], 10, 64)
+			targetID := "*"
+			if len(parts) >= 4 {
+				targetID = strings.Join(parts[2:], ":")
+			}
+			return kingdomKey(State.KingdomID(id), "combat", "target", targetID)
+		}
 	case "tower-target", "nomad-target", "storm-target", "invasion-target", "spy-target", "khan-target", "player-target":
 		if len(parts) >= 4 {
 			id, _ := strconv.ParseInt(parts[1], 10, 64)

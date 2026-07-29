@@ -12,6 +12,7 @@ import (
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
 	"CitadelDesktop/Server/Session"
+	"CitadelDesktop/Server/State"
 )
 
 func TestRuntimeSchedulerSettingsDriveHarnessPolicies(t *testing.T) {
@@ -108,7 +109,7 @@ func TestExecutionGateFailsWritesClosedWhenPersistenceIsUnavailable(t *testing.T
 	}
 }
 
-func TestExecutionGateRequiresExplicitCommanderAssignmentsForAttackModules(t *testing.T) {
+func TestExecutionGateHonorsExplicitCommanderAssignmentsForAttackModules(t *testing.T) {
 	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 		commanderFeatureSection: json.RawMessage(`{"version":1,"assignments":{"autoStorm":[16,17]}}`),
 	})
@@ -137,7 +138,45 @@ func TestExecutionGateRequiresExplicitCommanderAssignmentsForAttackModules(t *te
 	plan.Admission.Module = "autoTowers"
 	if err := application.executionGate(
 		context.Background(), Intent.Request{Actor: "automation:autoTowers"}, plan, Intent.ExecutionBeforeClaims,
-	); err == nil || !strings.Contains(err.Error(), "assign at least one commander to autoTowers") {
-		t.Fatalf("missing feature assignment gate error = %v", err)
+	); err != nil {
+		t.Fatalf("default all-commander assignment was blocked: %v", err)
+	}
+}
+
+func TestExecutionGateEnforcesCommanderEquipmentRequirements(t *testing.T) {
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		commanderFeatureSection: json.RawMessage(`{
+			"version":2,
+			"assignments":{},
+			"requirements":{"autoStorm":[{
+				"kind":"equipmentEffect",
+				"effectDefinitionId":22012,
+				"unitId":195,
+				"minimumValue":18
+			}]}
+		}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	gameState.Commanders[16] = State.CommanderState{
+		ID: 16, Equipment: map[string]State.EquipmentInstanceID{"1": 1001},
+	}
+	gameState.Inventory.Equipment[1001] = State.EquipmentInstance{
+		ID: 1001, Effects: State.EquipmentEffects{{
+			DefinitionID: 22012, Values: []float64{195, 16},
+		}},
+	}
+	application := &Application{Configuration: configuration, State: State.NewStore(gameState)}
+	plan := Intent.Plan{
+		Effect:    Intent.EffectLaunch,
+		Claims:    []string{"commander:16", "leader:commander:16"},
+		Admission: &Intent.Admission{Class: Intent.AdmissionAttackLaunch, Module: "autoStorm"},
+	}
+	if err := application.executionGate(
+		context.Background(), Intent.Request{Actor: "automation:autoStorm"}, plan, Intent.ExecutionBeforeClaims,
+	); err == nil || !strings.Contains(err.Error(), "does not meet the autoStorm equipment requirement") {
+		t.Fatalf("equipment requirement gate error = %v", err)
 	}
 }

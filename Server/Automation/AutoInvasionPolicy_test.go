@@ -123,7 +123,9 @@ func TestAutoInvasionPolicyWaitsForEnoughCapacityAdjustedInventory(t *testing.T)
 
 func TestInvasionCapacityShortageCountsOnlyTargetAvailableWaves(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
-		"versionInfo":[],"units":[{"wodID":216}],"buildings":[],"effects":[],"legendskills":[]
+		"versionInfo":[],"units":[{"wodID":216},{"wodID":217}],"buildings":[],
+		"effects":[{"effectID":700,"name":"attackUnitAmountReinforcementBonus","effectTypeID":179,"capID":99}],
+		"effectCaps":[{"capID":99}],"legendskills":[]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)
@@ -132,16 +134,26 @@ func TestInvasionCapacityShortageCountsOnlyTargetAvailableWaves(t *testing.T) {
 	gameState := State.NewGameState()
 	source := State.CastleState{
 		ID: 1, KingdomID: 0,
-		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{216: 4}},
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{216: 4, 217: 2}},
 	}
 	gameState.Castles[1] = source
-	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true}
+	gameState.Commanders[7] = State.CommanderState{
+		ID: 7, Available: true, Equipment: map[string]State.EquipmentInstanceID{"1": 1001},
+	}
+	gameState.Inventory.Equipment[1001] = State.EquipmentInstance{
+		ID: 1001, Effects: State.EquipmentEffects{{DefinitionID: 700, Values: []float64{2}}},
+	}
 	gameState.Player.LegendSkills.ObservedAt = now
-	unitID := int64(216)
+	unitID, supportUnitID := int64(216), int64(217)
 	wave := AttackPresets.Wave{
 		Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 1}}},
 	}
-	preset := AttackPresets.Preset{Waves: []AttackPresets.Wave{wave, wave, wave, wave, wave}}
+	preset := AttackPresets.Preset{
+		Waves: []AttackPresets.Wave{wave, wave, wave, wave, wave},
+		CourtyardSupport: AttackPresets.CourtyardSupport{
+			Troops: []AttackPresets.Slot{{ItemID: &supportUnitID, Quantity: 10}},
+		},
+	}
 	target := State.MapObservation{KingdomID: 0, TypeID: foreignLordsMapTypeID, X: 101, Y: 100, ObjectID: 70, Level: 70}
 	snapshot := Snapshot{State: gameState, GameData: gameData, Now: now}
 
@@ -155,6 +167,13 @@ func TestInvasionCapacityShortageCountsOnlyTargetAvailableWaves(t *testing.T) {
 	if err != nil || !shortage || required != 4 || available != 3 {
 		t.Fatalf("target wave shortage: required=%d available=%d shortage=%t err=%v", required, available, shortage, err)
 	}
+
+	source.Units.Stationed[216] = 4
+	source.Units.Stationed[217] = 1
+	itemID, required, available, shortage, err := invasionCapacityShortage(snapshot, source, target, preset, 7)
+	if err != nil || !shortage || itemID != 217 || required != 2 || available != 1 {
+		t.Fatalf("target support shortage: item=%d required=%d available=%d shortage=%t err=%v", itemID, required, available, shortage, err)
+	}
 }
 
 func TestInvasionFortifyCurrencyUsesVariantSpecificEventMedals(t *testing.T) {
@@ -162,18 +181,23 @@ func TestInvasionFortifyCurrencyUsesVariantSpecificEventMedals(t *testing.T) {
 		name     string
 		setting  string
 		eventID  int64
+		offered  []string
 		expected string
+		valid    bool
 	}{
-		{name: "legacy Khan selection in Foreign Lords", setting: "KM", eventID: foreignLordsEventID, expected: "KM"},
-		{name: "legacy Khan selection in Bloodcrow", setting: "KM", eventID: bloodcrowEventID, expected: "ST"},
-		{name: "event medals in Foreign Lords", setting: eventMedalsCurrency, eventID: foreignLordsEventID, expected: "KM"},
-		{name: "event medals in Bloodcrow", setting: eventMedalsCurrency, eventID: bloodcrowEventID, expected: "ST"},
-		{name: "gold shared by both variants", setting: "GTO", eventID: bloodcrowEventID, expected: "GTO"},
+		{name: "legacy Khan selection in Foreign Lords", setting: "KM", eventID: foreignLordsEventID, expected: "KM", valid: true},
+		{name: "legacy Khan selection in Bloodcrow", setting: "KM", eventID: bloodcrowEventID, expected: "ST", valid: true},
+		{name: "event medals in Foreign Lords", setting: eventMedalsCurrency, eventID: foreignLordsEventID, expected: "KM", valid: true},
+		{name: "event medals in Bloodcrow", setting: eventMedalsCurrency, eventID: bloodcrowEventID, expected: "ST", valid: true},
+		{name: "live currencies override Foreign Lords fallback", setting: eventMedalsCurrency, eventID: foreignLordsEventID, offered: []string{"GTO", "STO", "ST"}, expected: "ST", valid: true},
+		{name: "live currencies override Bloodcrow fallback", setting: eventMedalsCurrency, eventID: bloodcrowEventID, offered: []string{"GTO", "STO", "KM"}, expected: "KM", valid: true},
+		{name: "live currencies without event medals fail closed", setting: eventMedalsCurrency, eventID: foreignLordsEventID, offered: []string{"GTO", "STO"}, valid: false},
+		{name: "gold shared by both variants", setting: "GTO", eventID: bloodcrowEventID, expected: "GTO", valid: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			currency, valid := invasionFortifyCurrencyForEvent(test.setting, test.eventID)
-			if !valid || currency != test.expected {
-				t.Fatalf("fortification currency = %q valid=%t, want %q", currency, valid, test.expected)
+			currency, valid := invasionFortifyCurrencyForEvent(test.setting, test.eventID, test.offered)
+			if valid != test.valid || currency != test.expected {
+				t.Fatalf("fortification currency = %q valid=%t, want %q valid=%t", currency, valid, test.expected, test.valid)
 			}
 		})
 	}

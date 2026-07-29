@@ -98,7 +98,11 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 	if !supported {
 		return invasionWaiting(snapshot.Now, "Auto Invasion supports Foreign Lords and Bloodcrow"), nil
 	}
-	fortifyCurrency, fortifyCurrencyValid := invasionFortifyCurrencyForEvent(settings.FortifyCurrency, score.EventID)
+	fortifyCurrency, fortifyCurrencyValid := invasionFortifyCurrencyForEvent(
+		settings.FortifyCurrency,
+		score.EventID,
+		snapshot.State.Invasion.FortifyCurrencies,
+	)
 	if !fortifyCurrencyValid {
 		return invasionWaiting(snapshot.Now, "The selected fortification currency is not valid for the active invasion event"), nil
 	}
@@ -264,13 +268,24 @@ func validAutoInvasionFortifyCurrency(currency string) bool {
 	}
 }
 
-func invasionFortifyCurrencyForEvent(currency string, eventID int64) (string, bool) {
+func invasionFortifyCurrencyForEvent(currency string, eventID int64, offered []string) (string, bool) {
 	switch currency {
 	case "":
 		return "", true
 	case "GTO", "STO", "C2":
 		return currency, true
 	case "KM", "ST", eventMedalsCurrency:
+		if len(offered) > 0 {
+			for _, candidate := range offered {
+				switch strings.ToUpper(strings.TrimSpace(candidate)) {
+				case "KM":
+					return "KM", true
+				case "ST":
+					return "ST", true
+				}
+			}
+			return "", false
+		}
 		switch eventID {
 		case foreignLordsEventID:
 			return "KM", true
@@ -341,6 +356,7 @@ func invasionPresetShortage(preset AttackPresets.Preset, source State.CastleStat
 			}
 		}
 	}
+	addPresetCourtyardRequirements(requested, preset, true)
 	ids := make([]State.UnitID, 0, len(requested))
 	for id := range requested {
 		ids = append(ids, id)
@@ -382,41 +398,28 @@ func invasionCapacityShortage(
 	if err != nil {
 		return 0, 0, 0, false, err
 	}
-	requested := map[State.UnitID]int64{}
-	waveCount := min(len(preset.Waves), max(0, capacity.MaximumWaves))
-	for _, wave := range preset.Waves[:waveCount] {
-		addCapacityLimitedPresetLane(requested, wave.Left, capacity.Capacity.Left)
-		addCapacityLimitedPresetLane(requested, wave.Middle, capacity.Capacity.Front)
-		addCapacityLimitedPresetLane(requested, wave.Right, capacity.Capacity.Right)
-	}
-	ids := make([]State.UnitID, 0, len(requested))
-	for id := range requested {
-		ids = append(ids, id)
-	}
-	sort.Slice(ids, func(left, right int) bool { return ids[left] < ids[right] })
-	for _, id := range ids {
-		required := requested[id]
-		available := source.Units.Stationed[id]
-		if required > available {
-			return id, required, available, true, nil
-		}
-	}
-	return 0, 0, 0, false, nil
+	itemID, required, available, shortage := invasionPresetShortage(
+		AttackPresets.LimitToCapacity(preset, capacity),
+		source,
+	)
+	return itemID, required, available, shortage, nil
 }
 
-func addCapacityLimitedPresetLane(requested map[State.UnitID]int64, lane AttackPresets.Lane, capacity int64) {
-	remaining := max(int64(0), capacity)
-	for _, slot := range lane.Troops {
-		if slot.ItemID == nil || *slot.ItemID <= 0 || slot.Quantity <= 0 || remaining <= 0 {
-			continue
+func addPresetCourtyardRequirements(
+	requested map[State.UnitID]int64,
+	preset AttackPresets.Preset,
+	includeTroops bool,
+) {
+	if includeTroops {
+		for _, slot := range preset.CourtyardSupport.Troops {
+			if slot.ItemID != nil && *slot.ItemID > 0 && slot.Quantity > 0 {
+				requested[State.UnitID(*slot.ItemID)] += slot.Quantity
+			}
 		}
-		quantity := min(slot.Quantity, remaining)
-		requested[State.UnitID(*slot.ItemID)] += quantity
-		remaining -= quantity
 	}
-	for _, slot := range lane.Tools {
-		if slot.ItemID != nil && *slot.ItemID > 0 && slot.Quantity > 0 {
-			requested[State.UnitID(*slot.ItemID)] += slot.Quantity
+	for _, slot := range preset.CourtyardSupport.Tools {
+		if slot.ItemID != nil && *slot.ItemID > 0 {
+			requested[State.UnitID(*slot.ItemID)]++
 		}
 	}
 }

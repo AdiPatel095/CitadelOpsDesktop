@@ -189,7 +189,7 @@ func findAllianceHelpJob(state State.GameState, productionID int64) (allianceHel
 		for lineID, queue := range castle.Production {
 			if queue.Active != nil && queue.Active.ProductionID == productionID {
 				job := allianceHelpJob{CastleID: castleID, LineID: lineID}
-				if allianceHelpJobEligible(state, lineID, *queue.Active) {
+				if allianceHelpJobEligible(state, castleID, lineID, *queue.Active) {
 					return job, true
 				}
 				foundJob = job
@@ -197,7 +197,7 @@ func findAllianceHelpJob(state State.GameState, productionID int64) (allianceHel
 			for _, item := range queue.Queued {
 				if item.ProductionID == productionID {
 					job := allianceHelpJob{CastleID: castleID, LineID: lineID}
-					if allianceHelpJobEligible(state, lineID, item) {
+					if allianceHelpJobEligible(state, castleID, lineID, item) {
 						return job, true
 					}
 					foundJob = job
@@ -208,9 +208,17 @@ func findAllianceHelpJob(state State.GameState, productionID int64) (allianceHel
 	return foundJob, false
 }
 
-func allianceHelpJobEligible(state State.GameState, lineID int, item State.QueueItem) bool {
+func allianceHelpJobEligible(
+	state State.GameState,
+	castleID State.CastleID,
+	lineID int,
+	item State.QueueItem,
+) bool {
 	if !allianceHelpLineSupported(lineID) || item.AllianceHelpRequested {
 		return false
+	}
+	if lineID == recruitmentProductionLineID {
+		return !State.HasOutstandingRecruitmentAllianceHelpRequest(state, castleID)
 	}
 	return lineID != hospitalProductionLineID ||
 		!State.HasOutstandingHospitalAllianceHelpRequest(state, item.ProductionID)

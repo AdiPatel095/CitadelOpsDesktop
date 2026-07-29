@@ -1,5 +1,6 @@
 import type {
   AttackSetupDraft,
+  AttackSetupCourtyardSupport,
   AttackSetupLane,
   AttackSetupSlot,
   AttackSetupWave,
@@ -22,6 +23,8 @@ export interface AttackPresetSummary {
   waves: number;
   troops: number;
   tools: number;
+  courtyardTroops: number;
+  courtyardTools: number;
   troopTypes: number[];
   toolTypes: number[];
 }
@@ -57,10 +60,26 @@ export function summarizeAttackPreset(preset: AttackSetupDraft): AttackPresetSum
       }
     }
   }
+  let courtyardTroops = 0;
+  let courtyardTools = 0;
+  for (const slot of preset.courtyardSupport?.troops ?? []) {
+    if (slot.itemId == null || slot.quantity <= 0) continue;
+    courtyardTroops += slot.quantity;
+    troops += slot.quantity;
+    troopTypes.add(slot.itemId);
+  }
+  for (const slot of preset.courtyardSupport?.tools ?? []) {
+    if (slot.itemId == null) continue;
+    courtyardTools += 1;
+    tools += 1;
+    toolTypes.add(slot.itemId);
+  }
   return {
     waves: preset.waves.length,
     troops,
     tools,
+    courtyardTroops,
+    courtyardTools,
     troopTypes: Array.from(troopTypes),
     toolTypes: Array.from(toolTypes),
   };
@@ -77,8 +96,35 @@ function parseAttackPreset(value: unknown): AppAttackPreset | null {
     id: value.id,
     name: value.name,
     waves,
+    courtyardSupport: parseCourtyardSupport(value.courtyardSupport),
     createdAt,
     updatedAt: validDate(value.updatedAt) ?? createdAt,
+  };
+}
+
+function parseCourtyardSupport(value: unknown): AttackSetupCourtyardSupport {
+  if (!isRecord(value)) return emptyCourtyardSupport();
+  return {
+    troops: parseFixedSlots(value.troops, 8, false),
+    tools: parseFixedSlots(value.tools, 3, true),
+  };
+}
+
+function parseFixedSlots(value: unknown, count: number, fixedQuantity: boolean): AttackSetupSlot[] {
+  const slots = Array.isArray(value)
+    ? value.map(parseSlot).filter((slot): slot is AttackSetupSlot => slot != null)
+    : [];
+  return Array.from({ length: count }, (_, index) => {
+    const slot = slots[index];
+    if (!slot || slot.itemId == null) return { itemId: null, quantity: 0 };
+    return { itemId: slot.itemId, quantity: fixedQuantity ? 1 : slot.quantity };
+  });
+}
+
+function emptyCourtyardSupport(): AttackSetupCourtyardSupport {
+  return {
+    troops: Array.from({ length: 8 }, () => ({ itemId: null, quantity: 0 })),
+    tools: Array.from({ length: 3 }, () => ({ itemId: null, quantity: 0 })),
   };
 }
 

@@ -19,6 +19,7 @@ import { useMetadata } from '../../context/MetadataContext';
 import { useRiftMap } from '../context/RiftMapContext';
 import {
   COMMANDER_FEATURE_SECTION,
+  commanderIDsEligibleForFeature,
   parseCommanderFeatureAssignments,
 } from '../../Movement/types/CommanderFeatureAssignments';
 import HorseTravelBoostSelect from '../../settings/components/HorseTravelBoostSelect';
@@ -44,8 +45,13 @@ const RiftMaidenCommsPanel: React.FC = () => {
   const [sendStatus, setSendStatus] = useState<{ message: string; error: boolean } | null>(null);
   const dashboardConnected = connectionStatus === 'Connected';
   const assignedMaidenCommanders = useMemo(
-    () => parseCommanderFeatureAssignments(configuration?.sections[COMMANDER_FEATURE_SECTION]).assignments.riftMaiden ?? [],
-    [configuration?.sections],
+    () => commanderIDsEligibleForFeature(
+      parseCommanderFeatureAssignments(configuration?.sections[COMMANDER_FEATURE_SECTION]),
+      'riftMaiden',
+      Object.values(state?.commanders ?? {}).map((commander) => commander.id),
+      state,
+    ),
+    [configuration?.sections, state],
   );
 
   const mainCastle = useMemo(
@@ -101,7 +107,7 @@ const RiftMaidenCommsPanel: React.FC = () => {
       : !gameLoggedIn
         ? 'Game disconnected — start the bot before launching.'
         : assignedMaidenCommanders.length === 0
-          ? 'Assign at least one commander to Rift Maiden Waves in Movement / Features.'
+          ? 'Enable Rift Maiden Waves for at least one commander in Commanders / Functions.'
           : !riftMapCoords?.found
           ? 'Rift location unknown — discover it on the world map first.'
           : !mainCastle || availableUnitIds.length === 0

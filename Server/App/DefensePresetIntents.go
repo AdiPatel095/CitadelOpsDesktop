@@ -15,8 +15,10 @@ import (
 )
 
 type defensePresetKeepRequest struct {
-	MAUCT           int64 `json:"mauct"`
-	UnitTypePercent int   `json:"unitTypePercent"`
+	MAUCT              int64                    `json:"mauct"`
+	UnitTypePercent    int                      `json:"unitTypePercent"`
+	PrimaryToolSlots   *[]State.DefenseToolSlot `json:"primaryToolSlots,omitempty"`
+	SecondaryToolSlots *[]State.DefenseToolSlot `json:"secondaryToolSlots,omitempty"`
 }
 
 type defensePresetApplyRequest struct {
@@ -163,34 +165,40 @@ func resolveDefensePresetWallStep(ctx context.Context, input Intent.PlanningCont
 	if err := verifyDefenseObservation(castle, request.PreviousDefenseObservedAt, request.PreviousInventoryObservedAt); err != nil {
 		return Intent.Step{}, err
 	}
-	if err := validateDefenseToolAvailability(
-		castle, wallRequired,
-		castle.Defense.Wall.Left.ToolSlots,
-		castle.Defense.Wall.Middle.ToolSlots,
-		castle.Defense.Wall.Right.ToolSlots,
-	); err != nil {
-		return Intent.Step{}, err
+	requiredGroups := []map[State.UnitID]int64{wallRequired, moatRequired}
+	if request.Keep != nil {
+		_, keepRequired, keepErr := validateDefenseKeepRequest(
+			input, request.keepUpdateRequest(castle), false,
+			request.PreviousDefenseObservedAt, request.PreviousInventoryObservedAt,
+		)
+		if keepErr != nil {
+			return Intent.Step{}, keepErr
+		}
+		requiredGroups = append(requiredGroups, keepRequired)
 	}
-	combinedRequired, err := combineDefenseToolRequirements(wallRequired, moatRequired)
+	combinedRequired, err := combineDefenseToolRequirements(requiredGroups...)
 	if err != nil {
 		return Intent.Step{}, err
 	}
-	if err := validateDefenseToolAvailability(
-		castle, combinedRequired,
+	releasedGroups := [][]State.DefenseToolSlot{
 		castle.Defense.Wall.Left.ToolSlots,
 		castle.Defense.Wall.Middle.ToolSlots,
 		castle.Defense.Wall.Right.ToolSlots,
 		castle.Defense.Moat.LeftToolSlots,
 		castle.Defense.Moat.MiddleToolSlots,
 		castle.Defense.Moat.RightToolSlots,
-	); err != nil {
-		return Intent.Step{}, err
 	}
 	if request.Keep != nil {
-		if _, _, err := validateDefenseKeepRequest(input, request.keepUpdateRequest(castle), true,
-			request.PreviousDefenseObservedAt, request.PreviousInventoryObservedAt); err != nil {
-			return Intent.Step{}, err
-		}
+		releasedGroups = append(
+			releasedGroups,
+			castle.Defense.Keep.PrimaryToolSlots,
+			castle.Defense.Keep.SecondaryToolSlots,
+		)
+	}
+	if err := validateDefenseToolAvailability(
+		castle, combinedRequired, releasedGroups...,
+	); err != nil {
+		return Intent.Step{}, err
 	}
 
 	wallArguments, _ := json.Marshal(defenseWallResolvedRequest{
@@ -245,9 +253,16 @@ func (application *Application) verifyDefensePreset(_ context.Context, arguments
 		!reflect.DeepEqual(moat.RightToolSlots, request.Moat.RightToolSlots) {
 		return fmt.Errorf("castle %d defense moat setup did not match preset %q", request.CastleID, request.PresetName)
 	}
-	if request.Keep != nil && (castle.Defense.Keep.MAUCT != request.Keep.MAUCT ||
-		castle.Defense.Keep.UnitTypePercent != request.Keep.UnitTypePercent) {
-		return fmt.Errorf("castle %d defense keep setup did not match preset %q", request.CastleID, request.PresetName)
+	if request.Keep != nil {
+		if castle.Defense.Keep.MAUCT != request.Keep.MAUCT ||
+			castle.Defense.Keep.UnitTypePercent != request.Keep.UnitTypePercent {
+			return fmt.Errorf("castle %d defense keep setup did not match preset %q", request.CastleID, request.PresetName)
+		}
+		if request.Keep.PrimaryToolSlots != nil && request.Keep.SecondaryToolSlots != nil &&
+			(!reflect.DeepEqual(castle.Defense.Keep.PrimaryToolSlots, *request.Keep.PrimaryToolSlots) ||
+				!reflect.DeepEqual(castle.Defense.Keep.SecondaryToolSlots, *request.Keep.SecondaryToolSlots)) {
+			return fmt.Errorf("castle %d defense courtyard tools did not match preset %q", request.CastleID, request.PresetName)
+		}
 	}
 	return nil
 }
@@ -282,6 +297,20 @@ func validateDefensePresetShape(request defensePresetApplyRequest) error {
 	if request.Wall.Left.UnitPercent+request.Wall.Middle.UnitPercent+request.Wall.Right.UnitPercent != 100 {
 		return fmt.Errorf("wall left, middle, and right unitPercent values must total 100")
 	}
+	if err := validateDefenseWallSlotCounts(
+		request.Wall.Left.ToolSlots,
+		request.Wall.Middle.ToolSlots,
+		request.Wall.Right.ToolSlots,
+	); err != nil {
+		return err
+	}
+	if err := validateDefenseMoatSlotCounts(
+		request.Moat.LeftToolSlots,
+		request.Moat.MiddleToolSlots,
+		request.Moat.RightToolSlots,
+	); err != nil {
+		return err
+	}
 	if err := validateDefenseSlotRows(
 		request.Wall.Left.ToolSlots,
 		request.Wall.Middle.ToolSlots,
@@ -298,6 +327,25 @@ func validateDefensePresetShape(request defensePresetApplyRequest) error {
 		}
 		if request.Keep.UnitTypePercent < 0 || request.Keep.UnitTypePercent > 100 {
 			return fmt.Errorf("keep.unitTypePercent must be between 0 and 100")
+		}
+		hasPrimaryToolSlots := request.Keep.PrimaryToolSlots != nil
+		hasSecondaryToolSlots := request.Keep.SecondaryToolSlots != nil
+		if hasPrimaryToolSlots != hasSecondaryToolSlots {
+			return fmt.Errorf("keep must include both primaryToolSlots and secondaryToolSlots or omit both")
+		}
+		if hasPrimaryToolSlots {
+			if err := validateDefenseKeepSlotCounts(
+				*request.Keep.PrimaryToolSlots,
+				*request.Keep.SecondaryToolSlots,
+			); err != nil {
+				return fmt.Errorf("keep: %w", err)
+			}
+			if err := validateDefenseSlotRows(
+				*request.Keep.PrimaryToolSlots,
+				*request.Keep.SecondaryToolSlots,
+			); err != nil {
+				return fmt.Errorf("keep: %w", err)
+			}
 		}
 	}
 	return nil
@@ -322,12 +370,18 @@ func (request defensePresetResolvedRequest) moatUpdateRequest() defenseMoatUpdat
 }
 
 func (request defensePresetResolvedRequest) keepUpdateRequest(castle State.CastleState) defenseKeepUpdateRequest {
+	primaryToolSlots := castle.Defense.Keep.PrimaryToolSlots
+	secondaryToolSlots := castle.Defense.Keep.SecondaryToolSlots
+	if request.Keep.PrimaryToolSlots != nil && request.Keep.SecondaryToolSlots != nil {
+		primaryToolSlots = *request.Keep.PrimaryToolSlots
+		secondaryToolSlots = *request.Keep.SecondaryToolSlots
+	}
 	return defenseKeepUpdateRequest{
 		CastleID:           request.CastleID,
 		MAUCT:              request.Keep.MAUCT,
 		UnitTypePercent:    request.Keep.UnitTypePercent,
-		PrimaryToolSlots:   castle.Defense.Keep.PrimaryToolSlots,
-		SecondaryToolSlots: castle.Defense.Keep.SecondaryToolSlots,
+		PrimaryToolSlots:   primaryToolSlots,
+		SecondaryToolSlots: secondaryToolSlots,
 	}
 }
 

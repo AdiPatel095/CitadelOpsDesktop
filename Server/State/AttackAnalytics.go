@@ -1,18 +1,23 @@
 package State
 
-import "time"
+import (
+	"reflect"
+	"sort"
+	"time"
+)
 
 type AttackFeatureID string
 
 const (
-	AttackFeatureAutoTowers   AttackFeatureID = "autoTowers"
-	AttackFeatureAutoStorm    AttackFeatureID = "autoStorm"
-	AttackFeatureAutoInvasion AttackFeatureID = "autoInvasion"
-	AttackFeatureAutoNomad    AttackFeatureID = "autoNomad"
-	AttackFeatureAutoAdvisor  AttackFeatureID = "autoAdvisor"
-	AttackFeatureAutoKhan     AttackFeatureID = "autoKhan"
-	AttackFeatureRiftMaiden   AttackFeatureID = "riftMaiden"
-	AttackFeatureRiftReplay   AttackFeatureID = "riftReplay"
+	AttackFeatureAutoTowers    AttackFeatureID = "autoTowers"
+	AttackFeatureAutoStorm     AttackFeatureID = "autoStorm"
+	AttackFeatureAutoInvasion  AttackFeatureID = "autoInvasion"
+	AttackFeatureAutoNomad     AttackFeatureID = "autoNomad"
+	AttackFeatureAutoAdvisor   AttackFeatureID = "autoAdvisor"
+	AttackFeatureAutoKhan      AttackFeatureID = "autoKhan"
+	AttackFeatureAutoBeriWorld AttackFeatureID = "autoBeriWorld"
+	AttackFeatureRiftMaiden    AttackFeatureID = "riftMaiden"
+	AttackFeatureRiftReplay    AttackFeatureID = "riftReplay"
 
 	AttackFeatureTargetSettlementGrace = 30 * time.Second
 )
@@ -29,8 +34,9 @@ type AttackFeatureLaunch struct {
 }
 
 type AttackAnalyticsState struct {
-	LaunchIDs      []MovementID          `json:"launchIds,omitempty"`
-	PendingAttacks []AttackFeatureLaunch `json:"pendingAttacks,omitempty"`
+	LaunchIDs               []MovementID          `json:"launchIds,omitempty"`
+	PendingAttacks          []AttackFeatureLaunch `json:"pendingAttacks,omitempty"`
+	RecentAutoStormLaunches []AttackFeatureLaunch `json:"recentAutoStormLaunches,omitempty"`
 }
 
 func IsAttackAnalyticsFeature(featureID AttackFeatureID) bool {
@@ -46,7 +52,7 @@ func IsReportAnalyticsFeature(featureID AttackFeatureID) bool {
 	switch featureID {
 	case AttackFeatureAutoTowers, AttackFeatureAutoStorm,
 		AttackFeatureAutoInvasion, AttackFeatureAutoNomad, AttackFeatureAutoAdvisor, AttackFeatureAutoKhan,
-		AttackFeatureRiftMaiden, AttackFeatureRiftReplay:
+		AttackFeatureAutoBeriWorld, AttackFeatureRiftMaiden, AttackFeatureRiftReplay:
 		return true
 	default:
 		return false
@@ -118,5 +124,48 @@ func RecordAttackFeatureLaunch(gameState *GameState, record AttackFeatureLaunch)
 			[]AttackFeatureLaunch(nil), gameState.AttackAnalytics.PendingAttacks[len(gameState.AttackAnalytics.PendingAttacks)-512:]...,
 		)
 	}
+	if record.FeatureID == AttackFeatureAutoStorm {
+		MergeAutoStormLaunchHistory(gameState, []AttackFeatureLaunch{record}, record.LaunchedAt)
+	}
+	return true
+}
+
+func MergeAutoStormLaunchHistory(gameState *GameState, records []AttackFeatureLaunch, now time.Time) bool {
+	if gameState == nil || len(records) == 0 {
+		return false
+	}
+	if now.IsZero() {
+		now = time.Now().UTC()
+	}
+	cutoff := now.UTC().Add(-72 * time.Hour)
+	merged := make(map[MovementID]AttackFeatureLaunch, len(gameState.AttackAnalytics.RecentAutoStormLaunches)+len(records))
+	for _, record := range append(append([]AttackFeatureLaunch(nil), gameState.AttackAnalytics.RecentAutoStormLaunches...), records...) {
+		if record.MovementID <= 0 || record.LaunchedAt.IsZero() || record.LaunchedAt.Before(cutoff) ||
+			record.FeatureID != AttackFeatureAutoStorm {
+			continue
+		}
+		current, exists := merged[record.MovementID]
+		if !exists || record.LaunchedAt.After(current.LaunchedAt) {
+			record.LaunchedAt = record.LaunchedAt.UTC()
+			merged[record.MovementID] = record
+		}
+	}
+	next := make([]AttackFeatureLaunch, 0, len(merged))
+	for _, record := range merged {
+		next = append(next, record)
+	}
+	sort.Slice(next, func(left, right int) bool {
+		if next[left].LaunchedAt.Equal(next[right].LaunchedAt) {
+			return next[left].MovementID < next[right].MovementID
+		}
+		return next[left].LaunchedAt.Before(next[right].LaunchedAt)
+	})
+	if len(next) > 12_000 {
+		next = append([]AttackFeatureLaunch(nil), next[len(next)-12_000:]...)
+	}
+	if reflect.DeepEqual(gameState.AttackAnalytics.RecentAutoStormLaunches, next) {
+		return false
+	}
+	gameState.AttackAnalytics.RecentAutoStormLaunches = next
 	return true
 }

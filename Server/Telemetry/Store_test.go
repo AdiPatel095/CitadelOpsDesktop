@@ -141,6 +141,34 @@ func TestFeatureTailHidesLegacyDiagnostics(t *testing.T) {
 	}
 }
 
+func TestAttackLaunchCountsTrackSuccessfulFeatureAttacksAcrossRestart(t *testing.T) {
+	dataDir := t.TempDir()
+	store := NewStore(100)
+	if err := store.SetDataDir(dataDir); err != nil {
+		t.Fatal(err)
+	}
+	store.RecordFeatureActivity("automation:autoTowers", "tower.attack", "INFO", "ATTACK", "Launched tower attack")
+	store.RecordFeatureActivity("automation:autoStorm", "storm.attack", "INFO", "ATTACK", "Launched Storm attack")
+	store.RecordFeatureActivity("automation:autoStorm", "storm.attack", "ERROR", "ATTACK", "Could not launch Storm attack")
+	store.RecordFeatureActivity("automation:autoStorm", "storm.shop.purchase", "INFO", "PURCHASE", "Purchased tools")
+
+	counts := store.AttackLaunchCounts(time.Now())
+	if counts[ChannelAutoTowers] != 1 || counts[ChannelAutoStorm] != 1 {
+		t.Fatalf("attack launch counts = %#v", counts)
+	}
+	store.Close()
+
+	reloaded := NewStore(100)
+	if err := reloaded.SetDataDir(dataDir); err != nil {
+		t.Fatal(err)
+	}
+	defer reloaded.Close()
+	counts = reloaded.AttackLaunchCounts(time.Now())
+	if counts[ChannelAutoTowers] != 1 || counts[ChannelAutoStorm] != 1 {
+		t.Fatalf("reloaded attack launch counts = %#v", counts)
+	}
+}
+
 func TestStoreMatchesMappedAndOutOfOrderAppResponses(t *testing.T) {
 	store := NewStore(100)
 	store.RecordAppOutbound(`%xt%EmpireEx_21%jca%1%{"CID":10}%`, "automation:autoHospital")

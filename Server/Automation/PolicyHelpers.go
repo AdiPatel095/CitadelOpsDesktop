@@ -8,16 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/CommanderFeatures"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
 
-const commanderFeatureSection = "automation.commanderFeatures"
-
-type commanderFeatureConfiguration struct {
-	Assignments map[string][]State.CommanderID `json:"assignments"`
-}
+const commanderFeatureSection = CommanderFeatures.Section
 
 func decodeSection(snapshot Configuration.Snapshot, section string, destination any) bool {
 	raw := snapshot.Sections[section]
@@ -29,32 +26,18 @@ func commanderFeatureCandidates(
 	configuration Configuration.Snapshot,
 	featureID string,
 ) ([]State.CommanderID, bool) {
-	settings := commanderFeatureConfiguration{}
 	raw, configured := configuration.Sections[commanderFeatureSection]
 	if !configured {
 		return nil, false
 	}
-	if len(raw) == 0 || json.Unmarshal(raw, &settings) != nil {
+	if len(raw) == 0 {
 		return nil, true
 	}
-	assigned := settings.Assignments[featureID]
-	seen := map[State.CommanderID]struct{}{}
-	candidates := make([]State.CommanderID, 0, len(assigned))
-	for _, commanderID := range assigned {
-		if commanderID < 0 {
-			continue
-		}
-		if _, exists := gameState.Commanders[commanderID]; !exists {
-			continue
-		}
-		if _, duplicate := seen[commanderID]; duplicate {
-			continue
-		}
-		seen[commanderID] = struct{}{}
-		candidates = append(candidates, commanderID)
+	settings, err := CommanderFeatures.Decode(raw)
+	if err != nil {
+		return nil, true
 	}
-	sort.Slice(candidates, func(left, right int) bool { return candidates[left] < candidates[right] })
-	return candidates, true
+	return CommanderFeatures.Candidates(gameState, settings, featureID)
 }
 
 func hasAvailableFeatureCommander(

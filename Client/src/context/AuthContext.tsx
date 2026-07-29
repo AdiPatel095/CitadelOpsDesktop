@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { useCitadelAPI } from '../api/ApiContext';
 import type { RecruitTroopsMode } from '../settings/RecruitTroopsClientState';
 import type { AutoToolMode } from '../settings/AutoToolClientState';
-import type { AutomationStateV2 } from '../api/Contracts';
+import type { AutomationStateV2, StationingOperationV2 } from '../api/Contracts';
 import {
 	nextAutomationExpirationMs,
 	parseAutomationEnabledControls,
@@ -27,6 +27,11 @@ export interface AutoBirdCastleCycle {
 	castleName: string;
 	kingdomId: number;
 	nextCycleAtMs: number;
+	phase?: StationingOperationV2['phase'];
+	statusDetail?: string;
+	delayHours?: number;
+	waitSeconds?: number;
+	travelSeconds?: number;
 }
 
 interface AuthContextType {
@@ -55,6 +60,7 @@ interface AuthContextType {
 	autoNomadEnabled: boolean;
 	autoAdvisorEnabled: boolean;
 	autoKhanEnabled: boolean;
+	autoBeriWorldEnabled: boolean;
 	autoStormEnabled: boolean;
 	autoBirdEnabled: boolean;
   autoBirdNextWakeUp: number;
@@ -84,6 +90,7 @@ interface AuthContextType {
 	toggleAutoNomad: () => void;
 	toggleAutoAdvisor: () => void;
 	toggleAutoKhan: () => void;
+	toggleAutoBeriWorld: () => void;
 	toggleAutoStorm: () => void;
 	toggleAutoBird: () => void;
 	toggleAutoStation: () => void;
@@ -126,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const autoNomadEnabled = automationEnabledByKey.auto_nomad === true;
 	const autoAdvisorEnabled = automationEnabledByKey.auto_advisor === true;
 	const autoKhanEnabled = automationEnabledByKey.auto_khan === true;
+	const autoBeriWorldEnabled = automationEnabledByKey.auto_beri_world === true;
 	const autoStormEnabled = automationEnabledByKey.auto_storm === true;
 	const autoBirdEnabled = automationEnabledByKey.auto_bird === true;
 	const autoStationEnabled = automationEnabledByKey.auto_station === true;
@@ -137,12 +145,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		: '';
 	const autoBirdCastleCycles = useMemo<AutoBirdCastleCycle[]>(() => {
 		return Object.values(state?.castles ?? {})
-			.map((castle) => ({
-				castleId: castle.id,
-				castleName: castle.name?.trim() || `Castle ${castle.id}`,
-				kingdomId: castle.kingdomId,
-				nextCycleAtMs: automationMetricMillis(autoBirdState, `birdReturnUnixMs.${castle.id}`),
-			}))
+			.map((castle) => {
+				const operation = state?.stationing?.[`autoBird:${castle.id}`];
+				const metricReturn = automationMetricMillis(autoBirdState, `birdReturnUnixMs.${castle.id}`);
+				const recordedReturn = Date.parse(operation?.expectedReturnAt ?? '');
+				return {
+					castleId: castle.id,
+					castleName: castle.name?.trim() || `Castle ${castle.id}`,
+					kingdomId: castle.kingdomId,
+					nextCycleAtMs: metricReturn > 0
+						? metricReturn
+						: Number.isFinite(recordedReturn) ? recordedReturn : 0,
+					phase: operation?.phase,
+					statusDetail: operation?.statusDetail,
+					delayHours: operation?.delayHours,
+					waitSeconds: operation?.waitSeconds,
+					travelSeconds: operation?.travelSeconds,
+				};
+			})
 			.sort((left, right) => {
 				const leftActive = left.nextCycleAtMs > 0;
 				const rightActive = right.nextCycleAtMs > 0;
@@ -152,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				}
 				return left.castleName.localeCompare(right.castleName);
 			});
-	}, [autoBirdState, state?.castles]);
+	}, [autoBirdState, state?.castles, state?.stationing]);
 	const autoStationState = automationStates.autoStation;
   const gameLoggedIn = connectionStatus === 'Connected' && session?.loggedIn === true && session.socketReady === true;
   const gameConnectionState = normalizeConnectionState(session?.status, gameLoggedIn);
@@ -219,6 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		autoNomadEnabled,
 		autoAdvisorEnabled,
 		autoKhanEnabled,
+		autoBeriWorldEnabled,
 		autoStormEnabled,
 		autoBirdEnabled,
 		autoBirdNextWakeUp: automationMetricMillis(autoBirdState, 'nextBirdUnixMs'),
@@ -248,6 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		toggleAutoNomad: () => toggle('auto_nomad', autoNomadEnabled),
 		toggleAutoAdvisor: () => toggle('auto_advisor', autoAdvisorEnabled),
 		toggleAutoKhan: () => toggle('auto_khan', autoKhanEnabled),
+		toggleAutoBeriWorld: () => toggle('auto_beri_world', autoBeriWorldEnabled),
 		toggleAutoStorm: () => toggle('auto_storm', autoStormEnabled),
 		toggleAutoBird: () => toggle('auto_bird', autoBirdEnabled),
 	toggleAutoStation: () => toggle('auto_station', autoStationEnabled),
@@ -273,6 +295,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		autoNomadEnabled,
 		autoAdvisorEnabled,
 		autoKhanEnabled,
+		autoBeriWorldEnabled,
 		autoStormEnabled,
     autoToolEnabled,
 	automationStates,

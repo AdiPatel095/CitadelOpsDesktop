@@ -10,6 +10,7 @@ import {
   parseAutoFoodBalanceSettings,
   type AutoFoodBalanceSettings,
 } from '../AutoFoodBalanceClientState';
+import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 
 interface AutoFoodBalanceSettingsModalProps {
   isOpen: boolean;
@@ -72,7 +73,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
     >
       <div className="space-y-5">
         <p className="text-sm text-text-muted">
-          Before sending resources, CitadelOps refreshes each castle’s food state so troop consumption, brewery inputs, and equipped bonuses are current. It prefers market barrows inside a kingdom and uses kingdom transport only when needed.
+          Before sending resources, CitadelOps refreshes each castle’s food state so troop consumption, brewery inputs, and equipped bonuses are current. It ranks donors by net surplus, requires enough protected storage to fill the destination, then uses market barrows or allowed kingdom transport.
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -82,9 +83,18 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
           <NumberField label="Coin reserve" value={settings.minimumCoinReserve} min={0} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumCoinReserve', value)} />
         </div>
 
+        <div className="rounded-global border border-border-base bg-bg-card/40 p-4">
+          <HorseTravelBoostSelect
+            value={settings.horseTravelBoostId}
+            onChange={(horseTravelBoostId) => setSettings((current) => ({ ...current, horseTravelBoostId }))}
+            negativeOneLabel="No horse boost · HBW -1"
+            description="Applied to every Auto Food market-barrow shipment. Coin and ruby horses are used only when explicitly selected."
+          />
+        </div>
+
         <SettingsToggleRow
           title="Allow kingdom transport"
-          description="Use kingdom transport when no same-kingdom market donor can safely cover the reserve."
+          description="Allow the highest eligible donor to use kingdom transport when it is in another kingdom."
           icon={<Truck className="h-4 w-4" />}
           checked={settings.autoKingdomTransport}
           onChange={(checked) => setSettings((current) => ({ ...current, autoKingdomTransport: checked }))}
@@ -92,7 +102,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
 
         <SettingsToggleRow
           title="Use transport time skips"
-          description="Speed up pending cross-kingdom food shipments with the selected inventory time skips."
+          description="Apply a covering selected skip during launch; only shipments without one remain marked in transit."
           icon={<FastForward className="h-4 w-4" />}
           checked={settings.useKingdomTimeSkips}
           disabled={!settings.autoKingdomTransport}

@@ -104,7 +104,7 @@ const fallbackChannelDescriptions: Record<string, string> = {
   autosceatres: 'Completed crafting and resource actions and problems requiring attention.',
   autohospital: 'Completed hospital actions and problems requiring attention.',
   autotci: 'Completed construction-item equips, upgrades, and purchases and problems requiring attention.',
-  autoberiworld: 'Completed Berimond troop transfers and problems requiring attention.',
+  autoberiworld: 'Completed Berimond troop transfers, tower attacks, and problems requiring attention.',
   autofoodbalance: 'Completed food and mead shipments and problems requiring attention.',
   autoequipmentcleanup: 'Completed equipment cleanup actions and problems requiring attention.',
   autotowers: 'Launched tower attacks and problems requiring attention.',

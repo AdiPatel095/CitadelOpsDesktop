@@ -117,6 +117,7 @@ type BattleReport struct {
 	Defender              *BattleCombatant   `json:"defender,omitempty"`
 	Metrics               BattleMetrics      `json:"metrics"`
 	ToolsUsed             int64              `json:"toolsUsed,omitempty"`
+	GallantryPoints       int64              `json:"gallantryPoints,omitempty"`
 	Loot                  map[string]int64   `json:"loot,omitempty"`
 	TopUnits              []BattleItemDetail `json:"topUnits,omitempty"`
 }
@@ -136,6 +137,7 @@ type BattleAnalyticsReport struct {
 	Role                  string           `json:"role,omitempty"`
 	OwnTroopLosses        int64            `json:"ownTroopLosses,omitempty"`
 	ToolsUsed             int64            `json:"toolsUsed,omitempty"`
+	GallantryPoints       int64            `json:"gallantryPoints,omitempty"`
 	LootTotal             int64            `json:"lootTotal,omitempty"`
 	Loot                  map[string]int64 `json:"loot,omitempty"`
 	TargetPlayerID        int64            `json:"targetPlayerID,omitempty"`

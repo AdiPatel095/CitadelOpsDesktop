@@ -125,6 +125,11 @@ func YieldsToAutomationLock(actor string) bool {
 		strings.HasPrefix(actor, "background:")
 }
 
+func YieldsToDirectTraffic(actor string) bool {
+	actor = strings.ToLower(strings.TrimSpace(actor))
+	return YieldsToAutomationLock(actor) && actor != "automation:autostation"
+}
+
 func WithMetadata(ctx context.Context, metadata Metadata) context.Context {
 	if ctx == nil {
 		ctx = context.Background()

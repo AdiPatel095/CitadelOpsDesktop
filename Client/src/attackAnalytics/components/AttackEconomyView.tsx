@@ -16,10 +16,12 @@ const featureDefinitions = [
   { id: 'autoInvasion', label: 'Auto Invasion', description: 'Foreign Lord and Bloodcrow castles', color: '#f97316' },
   { id: 'autoTowers', label: 'Auto Towers', description: 'Robber-baron and kingdom towers', color: '#f59e0b' },
   { id: 'autoStorm', label: 'Auto Storm', description: 'Storm forts and resource islands', color: '#38bdf8' },
+  { id: 'autoBeriWorld', label: 'Auto Beri', description: 'Berimond towers', color: '#a855f7' },
 ] as const;
 
 export type AttackEconomyFeatureID = typeof featureDefinitions[number]['id'];
 type RangeKey = '24h' | '7d' | '30d' | 'all';
+const gallantryMetricKey = '__gallantry__';
 
 interface AttackEconomyViewProps {
   selectedFeature?: AttackEconomyFeatureID;
@@ -40,10 +42,12 @@ interface AttackEconomyReport {
   dateMs?: number;
   occurredAt?: string;
   role?: string;
+  gallantryPoints?: number;
   loot?: Record<string, number>;
 }
 
 interface EconomySummary {
+  gallantryPoints: number;
   loot: Record<string, number>;
 }
 
@@ -58,6 +62,7 @@ interface ChartTimeWindow {
 }
 
 const emptySummary = (): EconomySummary => ({
+  gallantryPoints: 0,
   loot: {},
 });
 
@@ -72,7 +77,7 @@ const AttackEconomyView = ({
   const [selectedRange, setSelectedRange] = useState<RangeKey>('7d');
   const [customWindow, setCustomWindow] = useState<ChartTimeWindow | null>(null);
   const [localFeature, setLocalFeature] = useState<AttackEconomyFeatureID>('autoTowers');
-  const [requestedResourceKey, setRequestedResourceKey] = useState('C1');
+  const [requestedMetrics, setRequestedMetrics] = useState<Partial<Record<AttackEconomyFeatureID, string>>>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const selectedFeature = controlledFeature ?? localFeature;
@@ -140,33 +145,48 @@ const AttackEconomyView = ({
       .sort((left, right) => right[1] - left[1]),
     [selectedFeature, summary.loot],
   );
-  const selectedResourceKey = resourceRows.some(([key]) => key === requestedResourceKey)
-    ? requestedResourceKey
-    : resourceRows[0]?.[0] ?? '';
-  const selectedResource = resourcePresentation(selectedResourceKey, resourceDefinitions[selectedResourceKey]);
-  const chartPoints = useMemo(
-    () => selectedResourceKey
-      ? buildCumulativePoints(displayedReports, selectedResourceKey, selectedRange, nowUnix, customWindow)
-      : [],
-    [customWindow, displayedReports, nowUnix, selectedRange, selectedResourceKey],
+  const metricRows = useMemo(
+    () => selectedFeature === 'autoBeriWorld'
+      ? [[gallantryMetricKey, summary.gallantryPoints] as [string, number], ...resourceRows]
+      : resourceRows,
+    [resourceRows, selectedFeature, summary.gallantryPoints],
   );
-  const metricTotal = summary.loot[selectedResourceKey] ?? 0;
-  const rate = lootRate(metricTotal, displayedReports, selectedRange, nowUnix, customWindow);
+  const requestedMetricKey = requestedMetrics[selectedFeature]
+    ?? (selectedFeature === 'autoBeriWorld' ? gallantryMetricKey : 'C1');
+  const selectedMetricKey = metricRows.some(([key]) => key === requestedMetricKey)
+    ? requestedMetricKey
+    : metricRows[0]?.[0] ?? '';
+  const selectedMetric = metricPresentation(selectedMetricKey, resourceDefinitions[selectedMetricKey]);
+  const chartPoints = useMemo(
+    () => selectedMetricKey
+      ? buildCumulativePoints(displayedReports, selectedMetricKey, selectedRange, nowUnix, customWindow)
+      : [],
+    [customWindow, displayedReports, nowUnix, selectedMetricKey, selectedRange],
+  );
+  const metricTotal = selectedMetricKey === gallantryMetricKey
+    ? summary.gallantryPoints
+    : summary.loot[selectedMetricKey] ?? 0;
+  const rate = metricRate(metricTotal, displayedReports, selectedRange, nowUnix, customWindow);
   const selectedFeatureLabel = featureDefinitions.find((feature) => feature.id === selectedFeature)?.label ?? selectedFeature;
+  const selectMetric = (metricKey: string) => {
+    setRequestedMetrics((current) => ({ ...current, [selectedFeature]: metricKey }));
+  };
 
   useEffect(() => {
     setCustomWindow(null);
-  }, [requestedResourceKey, selectedFeature, selectedRange]);
+  }, [requestedMetricKey, selectedFeature, selectedRange]);
 
   return (
     <div className={`flex flex-col gap-6 ${embedded ? '' : 'pb-8'}`}>
       {!embedded && <StaleSessionBanner />}
 
       {!embedded && <PageHeader
-        title="Attack Economy"
-        description={selectedFeature === 'autoInvasion'
-          ? 'Confirmed resources looted by Auto Invasion battle reports'
-          : 'Confirmed loot produced by non-event attack automations'}
+        title={selectedFeature === 'autoBeriWorld' ? 'Auto Beri Stats' : 'Attack Economy'}
+        description={selectedFeature === 'autoBeriWorld'
+          ? 'Confirmed Gallantry points and loot earned from Auto Beri battle reports'
+          : selectedFeature === 'autoInvasion'
+            ? 'Confirmed resources looted by Auto Invasion battle reports'
+            : 'Confirmed loot produced by non-event attack automations'}
         icon={<TrendingUp className="h-6 w-6" />}
         actions={(
           <Button
@@ -182,7 +202,9 @@ const AttackEconomyView = ({
         meta={(
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">Battle-report verified</Badge>
-            {selectedFeature !== 'autoInvasion' && <Badge variant="secondary">Events excluded</Badge>}
+            {(selectedFeature === 'autoTowers' || selectedFeature === 'autoStorm') && (
+              <Badge variant="secondary">Events excluded</Badge>
+            )}
             {loadError && <Badge variant="danger">History unavailable</Badge>}
           </div>
         )}
@@ -196,13 +218,13 @@ const AttackEconomyView = ({
           options={ranges.map((range) => ({ value: range.key, label: range.label }))}
           size="header"
         />
-        {resourceRows.length > 0 && (
+        {metricRows.length > 0 && (
           <PillSelector
-            ariaLabel="Resource earned"
-            value={selectedResourceKey}
-            onChange={setRequestedResourceKey}
-            options={resourceRows.map(([key]) => {
-              const presentation = resourcePresentation(key, resourceDefinitions[key]);
+            ariaLabel="Reward earned"
+            value={selectedMetricKey}
+            onChange={selectMetric}
+            options={metricRows.map(([key]) => {
+              const presentation = metricPresentation(key, resourceDefinitions[key]);
               return {
                 value: key,
                 label: presentation.label,
@@ -236,7 +258,7 @@ const AttackEconomyView = ({
           <div>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              {selectedFeatureLabel} · {selectedResource.label}
+              {selectedFeatureLabel} · {selectedMetric.label}
             </CardTitle>
             <div className="mt-2 flex flex-wrap items-baseline gap-3">
               <span className="font-mono text-3xl font-bold text-text-main">+{formatNumber(metricTotal)}</span>
@@ -263,8 +285,9 @@ const AttackEconomyView = ({
           </div>
           <EconomyChart
             points={chartPoints}
-            color={resourceColor(selectedResourceKey)}
+            color={metricColor(selectedMetricKey)}
             empty={metricTotal <= 0}
+            metricLabel={selectedMetric.label}
             selectedWindow={customWindow}
             onWindowSelect={setCustomWindow}
           />
@@ -275,7 +298,11 @@ const AttackEconomyView = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <PackageOpen className="h-4.5 w-4.5 text-success" />
-            {selectedFeature === 'autoInvasion' ? 'Resources looted' : 'Resources earned'}
+            {selectedFeature === 'autoInvasion'
+              ? 'Resources looted'
+              : selectedFeature === 'autoBeriWorld'
+                ? 'Loot earned'
+                : 'Resources earned'}
           </CardTitle>
           <Badge variant="outline">{resourceRows.length} types</Badge>
         </CardHeader>
@@ -292,7 +319,7 @@ const AttackEconomyView = ({
 };
 
 function ResourceRow({ resourceKey, amount, definition }: { resourceKey: string; amount: number; definition?: MetadataItem }) {
-  const presentation = resourcePresentation(resourceKey, definition);
+  const presentation = metricPresentation(resourceKey, definition);
   return (
     <div className="flex items-center gap-3 rounded-global border border-border-base bg-bg-input/30 px-3 py-2.5">
       {presentation.image ? (
@@ -308,11 +335,11 @@ function ResourceRow({ resourceKey, amount, definition }: { resourceKey: string;
   );
 }
 
-function EmptyAnalyticsState({ compact = false }: { compact?: boolean }) {
+function EmptyAnalyticsState({ compact = false, metricLabel = 'loot' }: { compact?: boolean; metricLabel?: string }) {
   return (
     <div className={`flex flex-col items-center justify-center text-center text-text-muted ${compact ? 'min-h-32 py-4' : 'min-h-40 py-6'}`}>
       <Trophy className="mb-3 h-8 w-8 opacity-50" />
-      <div className="text-sm font-semibold text-text-main">No attributed loot yet</div>
+      <div className="text-sm font-semibold text-text-main">No attributed {metricLabel.toLocaleLowerCase()} yet</div>
       <p className="mt-1 max-w-sm text-xs">New confirmed reports for this automation will begin populating this view.</p>
     </div>
   );
@@ -322,12 +349,14 @@ function EconomyChart({
   points,
   color,
   empty,
+  metricLabel,
   selectedWindow,
   onWindowSelect,
 }: {
   points: ChartPoint[];
   color: string;
   empty: boolean;
+  metricLabel: string;
   selectedWindow: ChartTimeWindow | null;
   onWindowSelect: (window: ChartTimeWindow) => void;
 }) {
@@ -356,7 +385,7 @@ function EconomyChart({
   useEffect(() => setDrag(null), [selectedWindow]);
 
   if (!renderable) {
-    return <EmptyAnalyticsState />;
+    return <EmptyAnalyticsState metricLabel={metricLabel} />;
   }
 
   const { width, height } = chartSize;
@@ -421,7 +450,7 @@ function EconomyChart({
         viewBox={`0 0 ${width} ${height}`}
         className="h-full w-full cursor-crosshair touch-none select-none"
         role="img"
-        aria-label="Cumulative attack loot over time. Drag horizontally to select a custom time period."
+        aria-label={`Cumulative ${metricLabel.toLocaleLowerCase()} over time. Drag horizontally to select a custom time period.`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={finishPointerSelection}
@@ -461,6 +490,7 @@ function EconomyChart({
 function summarizeReports(reports: AttackEconomyReport[]): EconomySummary {
   const result = emptySummary();
   for (const report of reports) {
+    result.gallantryPoints += finitePositive(report.gallantryPoints);
     for (const [key, rawAmount] of Object.entries(report.loot ?? {})) {
       const amount = finitePositive(rawAmount);
       if (amount <= 0) continue;
@@ -472,7 +502,7 @@ function summarizeReports(reports: AttackEconomyReport[]): EconomySummary {
 
 function buildCumulativePoints(
   reports: AttackEconomyReport[],
-  resourceKey: string,
+  metricKey: string,
   range: RangeKey,
   nowUnix: number,
   window: ChartTimeWindow | null,
@@ -488,7 +518,7 @@ function buildCumulativePoints(
     const timestampUnix = reportTimestamp(report);
     if (timestampUnix < startUnix || timestampUnix > endUnix) continue;
     const bucket = Math.min(71, Math.max(0, Math.floor((timestampUnix - startUnix) / bucketSeconds)));
-    increments.set(bucket, (increments.get(bucket) ?? 0) + finitePositive(report.loot?.[resourceKey]));
+    increments.set(bucket, (increments.get(bucket) ?? 0) + reportMetricValue(report, metricKey));
   }
   const points: ChartPoint[] = [{ timestampUnix: startUnix, value: 0 }];
   let cumulative = 0;
@@ -501,7 +531,7 @@ function buildCumulativePoints(
   return points;
 }
 
-function lootRate(total: number, reports: AttackEconomyReport[], range: RangeKey, nowUnix: number, window: ChartTimeWindow | null): number {
+function metricRate(total: number, reports: AttackEconomyReport[], range: RangeKey, nowUnix: number, window: ChartTimeWindow | null): number {
   if (total <= 0 || reports.length === 0) return 0;
   const configuredSeconds = ranges.find((candidate) => candidate.key === range)?.seconds ?? null;
   const elapsedSeconds = window
@@ -520,8 +550,9 @@ function metadataByJSONKey(resources: Record<number, MetadataItem>, currencies: 
   return result;
 }
 
-function resourcePresentation(key: string, definition?: MetadataItem) {
+function metricPresentation(key: string, definition?: MetadataItem) {
   const fallback: Record<string, { label: string; image?: string }> = {
+    [gallantryMetricKey]: { label: 'Gallantry points', image: '/game-data/resources/images/Gallantry.webp' },
     C1: { label: 'Coins', image: '/game-data/resources/images/Coins.webp' },
     C2: { label: 'Rubies', image: '/game-data/resources/images/Ruby.webp' },
     W: { label: 'Wood' },
@@ -566,6 +597,12 @@ function finitePositive(value: unknown): number {
   return Number.isFinite(number) && number > 0 ? number : 0;
 }
 
+function reportMetricValue(report: AttackEconomyReport, metricKey: string): number {
+  return metricKey === gallantryMetricKey
+    ? finitePositive(report.gallantryPoints)
+    : finitePositive(report.loot?.[metricKey]);
+}
+
 function formatNumber(value: number): string {
   return Math.round(value).toLocaleString();
 }
@@ -586,8 +623,9 @@ function formatDate(timestampUnix: number): string {
   });
 }
 
-function resourceColor(resourceKey: string): string {
+function metricColor(metricKey: string): string {
   const colors: Record<string, string> = {
+    [gallantryMetricKey]: '#f59e0b',
     C1: '#facc15',
     C2: '#fb7185',
     W: '#d97706',
@@ -602,7 +640,7 @@ function resourceColor(resourceKey: string): string {
     MEAD: '#eab308',
     BEEF: '#ef4444',
   };
-  return colors[resourceKey] ?? '#2dd4bf';
+  return colors[metricKey] ?? '#2dd4bf';
 }
 
 export default AttackEconomyView;

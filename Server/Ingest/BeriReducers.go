@@ -28,11 +28,11 @@ func reduceBeriCapacity(
 	if !found {
 		return nil, false, nil
 	}
-	next := State.BeriState{
-		AvailableTroops: available, TroopsByUnit: byUnit,
-		ParsedSourceID: State.CastleID(sourceID), ObservedAt: frame.ReceivedAt,
-		ConsumedAt: gameState.Beri.ConsumedAt,
-	}
+	next := gameState.Beri
+	next.AvailableTroops = available
+	next.TroopsByUnit = byUnit
+	next.ParsedSourceID = State.CastleID(sourceID)
+	next.ObservedAt = frame.ReceivedAt
 	if reflect.DeepEqual(gameState.Beri, next) {
 		return nil, false, nil
 	}

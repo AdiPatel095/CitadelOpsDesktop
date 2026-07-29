@@ -51,7 +51,10 @@ func reduceProductionSnapshot(
 	if !ok {
 		return nil, false, nil
 	}
-	changed, err := applyProductionSnapshot(frame.Payload, castleID, &castle, frame.ReceivedAt)
+	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
+	changed, err := applyProductionSnapshot(
+		frame.Payload, castleID, &castle, frame.ReceivedAt, recruitmentHelpOutstanding,
+	)
 	if err != nil || !changed {
 		return nil, false, err
 	}
@@ -77,11 +80,14 @@ func reduceEmbeddedProductionSnapshots(
 		return nil, false, fmt.Errorf("decode embedded production snapshots: %w", err)
 	}
 	changed := false
+	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
 	for key, raw := range root {
 		if !strings.HasPrefix(key, "spl") || key == "spl" || len(raw) == 0 {
 			continue
 		}
-		updated, err := applyProductionSnapshot(raw, castleID, &castle, frame.ReceivedAt)
+		updated, err := applyProductionSnapshot(
+			raw, castleID, &castle, frame.ReceivedAt, recruitmentHelpOutstanding,
+		)
 		if err != nil {
 			return nil, false, err
 		}
@@ -101,6 +107,7 @@ func applyProductionSnapshot(
 	castleID State.CastleID,
 	castle *State.CastleState,
 	observedAt time.Time,
+	recruitmentHelpOutstanding bool,
 ) (bool, error) {
 	var root map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &root); err != nil {
@@ -169,6 +176,9 @@ func applyProductionSnapshot(
 				queue.Queued = append(queue.Queued, item)
 			}
 		}
+	}
+	if wire.LineID == 0 && recruitmentHelpOutstanding {
+		markAllianceHelpQueue(&queue, true, 0)
 	}
 	if reflect.DeepEqual(castle.Production[wire.LineID], queue) {
 		return false, nil
@@ -314,10 +324,13 @@ func reduceAllianceHelpRequest(
 	changed := false
 	if frame.Opcode == "ahl" {
 		hospitalProductionIDs := ownHospitalAllianceHelpProductionIDs(requests, gameState.Player.ID)
+		recruitmentCastleIDs := ownRecruitmentAllianceHelpCastleIDs(requests, gameState.Player.ID)
 		if !reflect.DeepEqual(gameState.AllianceHelpRequests.HospitalProductionIDs, hospitalProductionIDs) ||
+			!reflect.DeepEqual(gameState.AllianceHelpRequests.RecruitmentCastleIDs, recruitmentCastleIDs) ||
 			!gameState.AllianceHelpRequests.ObservedAt.Equal(frame.ReceivedAt) {
 			gameState.AllianceHelpRequests = State.AllianceHelpRequestState{
 				HospitalProductionIDs: hospitalProductionIDs,
+				RecruitmentCastleIDs:  recruitmentCastleIDs,
 				ObservedAt:            frame.ReceivedAt,
 			}
 			changed = true
@@ -329,6 +342,10 @@ func reduceAllianceHelpRequest(
 		}
 		if request.RequestType == 2 && request.Optional.RecruitmentID > 0 && frame.Opcode != "ahl" &&
 			addHospitalAllianceHelpProductionID(&gameState.AllianceHelpRequests, request.Optional.RecruitmentID) {
+			changed = true
+		}
+		if request.RequestType == 6 && request.Optional.CastleID > 0 && frame.Opcode != "ahl" &&
+			addRecruitmentAllianceHelpCastleID(&gameState.AllianceHelpRequests, request.Optional.CastleID) {
 			changed = true
 		}
 		if request.Optional.CastleID <= 0 {
@@ -380,6 +397,24 @@ func ownHospitalAllianceHelpProductionIDs(requests []allianceHelpWireRequest, pl
 	return result
 }
 
+func ownRecruitmentAllianceHelpCastleIDs(
+	requests []allianceHelpWireRequest,
+	playerID State.PlayerID,
+) []State.CastleID {
+	unique := map[State.CastleID]struct{}{}
+	for _, request := range requests {
+		if request.PlayerID == playerID && request.RequestType == 6 && request.Optional.CastleID > 0 {
+			unique[request.Optional.CastleID] = struct{}{}
+		}
+	}
+	result := make([]State.CastleID, 0, len(unique))
+	for castleID := range unique {
+		result = append(result, castleID)
+	}
+	sort.Slice(result, func(left, right int) bool { return result[left] < result[right] })
+	return result
+}
+
 func addHospitalAllianceHelpProductionID(state *State.AllianceHelpRequestState, productionID int64) bool {
 	if state == nil || productionID <= 0 {
 		return false
@@ -392,6 +427,22 @@ func addHospitalAllianceHelpProductionID(state *State.AllianceHelpRequestState, 
 	state.HospitalProductionIDs = append(state.HospitalProductionIDs, productionID)
 	sort.Slice(state.HospitalProductionIDs, func(left, right int) bool {
 		return state.HospitalProductionIDs[left] < state.HospitalProductionIDs[right]
+	})
+	return true
+}
+
+func addRecruitmentAllianceHelpCastleID(state *State.AllianceHelpRequestState, castleID State.CastleID) bool {
+	if state == nil || castleID <= 0 {
+		return false
+	}
+	for _, existingID := range state.RecruitmentCastleIDs {
+		if existingID == castleID {
+			return false
+		}
+	}
+	state.RecruitmentCastleIDs = append(state.RecruitmentCastleIDs, castleID)
+	sort.Slice(state.RecruitmentCastleIDs, func(left, right int) bool {
+		return state.RecruitmentCastleIDs[left] < state.RecruitmentCastleIDs[right]
 	})
 	return true
 }

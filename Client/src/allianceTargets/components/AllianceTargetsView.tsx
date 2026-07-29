@@ -626,7 +626,12 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 			targetTypeId: target.targetCastle.typeId,
 			targetLevel: target.level,
 			targetLegendLevel: target.legendLevel,
-			preset: { id: preset.id, name: preset.name, waves: preset.waves },
+			preset: {
+				id: preset.id,
+				name: preset.name,
+				waves: preset.waves,
+				courtyardSupport: preset.courtyardSupport,
+			},
 		})
 			.then((nextPreview) => {
 				if (requestID !== latestPreviewRequestRef.current) return;
@@ -715,7 +720,12 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 				targetLevel: target.level,
 				targetLegendLevel: target.legendLevel,
 				previewCommanderId: preview.commanderId,
-				preset: { id: preset.id, name: preset.name, waves: preset.waves },
+				preset: {
+					id: preset.id,
+					name: preset.name,
+					waves: preset.waves,
+					courtyardSupport: preset.courtyardSupport,
+				},
 			});
 			Notifications.success(`Attack launched toward ${target.targetCastle.name || `${target.targetCastle.x}:${target.targetCastle.y}`}.`);
 			onClose();
@@ -848,7 +858,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 							</p>
 							{preview ? (
 								<p className="mt-1.5 font-mono text-[11px] text-text-muted">
-									Per wave: L {preview.capacity.left.toLocaleString()} · C {preview.capacity.front.toLocaleString()} · R {preview.capacity.right.toLocaleString()} · max {preview.maximumWaves} waves
+									Per wave: L {preview.capacity.left.toLocaleString()} · C {preview.capacity.front.toLocaleString()} · R {preview.capacity.right.toLocaleString()} · support {preview.supportCapacity.toLocaleString()} · max {preview.maximumWaves} waves
 								</p>
 							) : null}
 						</div>

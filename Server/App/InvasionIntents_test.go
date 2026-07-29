@@ -15,11 +15,12 @@ import (
 func TestInvasionAttackResolvesFreshLaneCapacityAndAcceptsCommanderZero(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],
-		"units":[{"wodID":216}],
+		"units":[{"wodID":216},{"wodID":217}],
 		"buildings":[],
 		"effects":[
 			{"effectID":2110,"name":"relicAttackUnitAmountFront","effectTypeID":34,"capID":1010},
-			{"effectID":2807,"name":"relicAttackUnitAmountFrontPVP","effectTypeID":34,"capID":1707,"areaTypeID":"1,3,4,10,12,15,21"}
+			{"effectID":2807,"name":"relicAttackUnitAmountFrontPVP","effectTypeID":34,"capID":1707,"areaTypeID":"1,3,4,10,12,15,21"},
+			{"effectID":700,"name":"attackUnitAmountReinforcementBonus","effectTypeID":179,"capID":99}
 		],
 		"legendskills":[{"skillID":106,"effectType":"additionalUnitAmountOnFront","totalEffectValue":25}],
 		"effectCaps":[{"capID":99}]
@@ -27,21 +28,24 @@ func TestInvasionAttackResolvesFreshLaneCapacityAndAcceptsCommanderZero(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	unitID := int64(216)
+	unitID, supportUnitID := int64(216), int64(217)
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 1164, Y: 1167,
-		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{216: 1_000}},
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{216: 1_000, 217: 240}},
 	}
 	gameState.Commanders[0] = State.CommanderState{
-		ID: 0, Available: true, Equipment: map[string]State.EquipmentInstanceID{"1": 1001, "6": 1002},
+		ID: 0, Available: true, Equipment: map[string]State.EquipmentInstanceID{"1": 1001, "2": 1003, "6": 1002},
 	}
 	gameState.Inventory.Equipment[1001] = State.EquipmentInstance{
 		ID: 1001, Effects: State.EquipmentEffects{{DefinitionID: 2110, Values: []float64{45}}},
 	}
 	gameState.Inventory.Equipment[1002] = State.EquipmentInstance{
 		ID: 1002, Effects: State.EquipmentEffects{{DefinitionID: 2807, Values: []float64{25.1}}},
+	}
+	gameState.Inventory.Equipment[1003] = State.EquipmentInstance{
+		ID: 1003, Effects: State.EquipmentEffects{{DefinitionID: 700, Values: []float64{240}}},
 	}
 	gameState.Player.LegendSkills = State.LegendSkillState{ActiveIDs: []int64{106}, ObservedAt: now}
 	gameState.Map[0] = map[string]State.MapObservation{
@@ -56,9 +60,15 @@ func TestInvasionAttackResolvesFreshLaneCapacityAndAcceptsCommanderZero(t *testi
 	request := invasionAttackRequest{
 		SourceCastleID: 1, EventID: 71, ScoreTarget: 5_000_000, MinimumRemainingSec: 1_800,
 		TargetTypeID: 21, KingdomID: 0, TargetX: 1165, TargetY: 1166, TargetObjectID: 70,
-		Preset: AttackPresets.Preset{Name: "Trial", Waves: []AttackPresets.Wave{{
-			Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 1_000}}},
-		}}},
+		Preset: AttackPresets.Preset{
+			Name: "Trial",
+			Waves: []AttackPresets.Wave{{
+				Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 1_000}}},
+			}},
+			CourtyardSupport: AttackPresets.CourtyardSupport{
+				Troops: []AttackPresets.Slot{{ItemID: &supportUnitID, Quantity: 1_000}},
+			},
+		},
 	}
 	arguments, _ := json.Marshal(request)
 	plan, err := planInvasionAttack(context.Background(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments)
@@ -103,6 +113,9 @@ func TestInvasionAttackResolvesFreshLaneCapacityAndAcceptsCommanderZero(t *testi
 	}
 	if body.Waves[0].Middle.Units[0] != (attackPair{216, 375}) {
 		t.Fatalf("front was not capped to the freshly resolved capacity: %#v", body.Waves[0].Middle.Units)
+	}
+	if len(body.SupportTroops) != 8 || body.SupportTroops[0] != (attackPair{217, 240}) {
+		t.Fatalf("courtyard support was not capped to the freshly resolved capacity: %#v", body.SupportTroops)
 	}
 }
 

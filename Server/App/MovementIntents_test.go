@@ -121,6 +121,45 @@ func TestPlanTroopsStationRefreshesFocusedSourceAndDefersManifest(t *testing.T) 
 	}
 }
 
+func TestPlanAutoBirdRequiresManifestObservedAfterItsCastleRefreshStarts(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Castles[10] = State.CastleState{
+		ID: 10, KingdomID: 0, X: 20, Y: 30, Focused: true,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 10}},
+	}
+	gameState.Alliance.Holdings = []State.AllianceHolding{{
+		CastleID: 20, KingdomID: 0, X: 40, Y: 50, SlotType: 1,
+	}}
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[{"wodID":489}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforePlan := time.Now().UTC()
+	plan, err := planTroopsStation(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
+		"purpose":"autoBird","freshManifest":true,
+		"units":[{"unitId":489,"amount":100}]
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var resolved stationRequest
+	if err := json.Unmarshal(plan.Steps[2].ResolverArguments, &resolved); err != nil {
+		t.Fatal(err)
+	}
+	if resolved.FreshUnitsObservedAfter.Before(beforePlan) || resolved.FreshUnitsObservedAfter.After(time.Now().UTC()) {
+		t.Fatalf("fresh unit cutoff = %s", resolved.FreshUnitsObservedAfter)
+	}
+	if plan.Steps[0].Opcode != "jca" ||
+		plan.Steps[0].ResponseBarrier != Intent.ResponseBarrierCommitted {
+		t.Fatalf("Auto Bird refresh step = %#v", plan.Steps[0])
+	}
+}
+
 func TestResolveTroopsStationClampsAutomationToRefreshedUnits(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Castles[10] = State.CastleState{
@@ -151,6 +190,83 @@ func TestResolveTroopsStationClampsAutomationToRefreshedUnits(t *testing.T) {
 		if payload.Units[index] != want[index] {
 			t.Fatalf("resolved units = %#v, want %#v", payload.Units, want)
 		}
+	}
+}
+
+func TestResolveAutoBirdRebuildsManifestFromFreshJAA(t *testing.T) {
+	observedAt := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Castles[10] = State.CastleState{
+		ID: 10, KingdomID: 0, UnitsObservedAt: observedAt,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{
+			215: 100,
+			216: 50,
+			489: 20,
+			735: 999,
+		}},
+	}
+	gameState.Alliance.Holdings = []State.AllianceHolding{{
+		CastleID: 20, KingdomID: 0, X: 342, Y: 604, SlotType: 1,
+	}}
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[
+			{"wodID":215},{"wodID":216},{"wodID":489},
+			{"wodID":735,"toolCategory":"Premium","slotTypes":"1,2,9"}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	step, err := resolveTroopsStationStep(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
+		"purpose":"autoBird","freshManifest":true,
+		"freshUnitsObservedAfter":"2026-07-29T00:00:00Z","minimumSend":100,
+		"reserves":[
+			{"unitId":215,"amount":10},
+			{"unitId":216,"amount":5},
+			{"unitId":489,"amount":20}
+		],
+		"units":[{"unitId":215,"amount":90}]
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload struct {
+		Units [][2]int64 `json:"A"`
+	}
+	if err := json.Unmarshal(step.Command.Payload, &payload); err != nil {
+		t.Fatal(err)
+	}
+	want := [][2]int64{{215, 90}, {216, 45}}
+	if len(payload.Units) != len(want) {
+		t.Fatalf("fresh JAA manifest = %#v, want %#v", payload.Units, want)
+	}
+	for index := range want {
+		if payload.Units[index] != want[index] {
+			t.Fatalf("fresh JAA manifest = %#v, want %#v", payload.Units, want)
+		}
+	}
+}
+
+func TestResolveAutoBirdRejectsInventoryNotRefreshedAfterPlan(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Castles[10] = State.CastleState{
+		ID: 10, KingdomID: 0, UnitsObservedAt: time.Date(2026, 7, 29, 13, 59, 59, 0, time.UTC),
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
+	}
+	gameState.Alliance.Holdings = []State.AllianceHolding{{
+		CastleID: 20, KingdomID: 0, X: 40, Y: 50, SlotType: 1,
+	}}
+	_, err := resolveTroopsStationStep(t.Context(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
+		"purpose":"autoBird","freshManifest":true,
+		"freshUnitsObservedAfter":"2026-07-29T14:00:00Z",
+		"units":[{"unitId":489,"amount":100}]
+	}`))
+	if err == nil || !strings.Contains(err.Error(), "troop inventory was not refreshed") {
+		t.Fatalf("stale Auto Bird inventory error = %v", err)
 	}
 }
 
@@ -193,5 +309,36 @@ func TestTrackStationMovementUsesResolvedManifest(t *testing.T) {
 	operation := application.State.Snapshot().Stationing["autoStation:10"]
 	if operation.MovementID != 30 || operation.Units[215] != 67_644 {
 		t.Fatalf("tracked station operation = %#v", operation)
+	}
+}
+
+func TestTrackAutoBirdMovementUsesFreshResolvedManifest(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Castles[10] = State.CastleState{
+		ID: 10, KingdomID: 0, UnitsObservedAt: now,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{215: 100, 216: 50}},
+	}
+	gameState.Alliance.Holdings = []State.AllianceHolding{{
+		CastleID: 20, KingdomID: 0, X: 40, Y: 50, SlotType: 1,
+	}}
+	gameState.Movements[30] = State.MovementState{
+		ID: 30, Direction: 0, SourceCastleID: 10, TargetCastleID: 20, TargetX: 40, TargetY: 50,
+		Units:      map[State.UnitID]int64{215: 90, 216: 45},
+		ObservedAt: now,
+	}
+	application := &Application{State: State.NewStore(gameState)}
+	err := application.trackStationMovement(t.Context(), json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
+		"purpose":"autoBird","trackingId":"autoBird:10","freshManifest":true,
+		"reserves":[{"unitId":215,"amount":10},{"unitId":216,"amount":5}],
+		"units":[{"unitId":215,"amount":90}]
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	operation := application.State.Snapshot().Stationing["autoBird:10"]
+	if operation.MovementID != 30 || operation.Units[215] != 90 || operation.Units[216] != 45 {
+		t.Fatalf("fresh Auto Bird tracked movement = %#v", operation)
 	}
 }

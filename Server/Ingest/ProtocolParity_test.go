@@ -19,3 +19,13 @@ func TestLegacy138ProtocolReducerParity(t *testing.T) {
 		}
 	}
 }
+
+func TestBerimondFNTProtocolReducerRegistered(t *testing.T) {
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	if !registry.HasInbound("fnt") {
+		t.Fatal("FNT has no committed inbound reducer for the intent engine")
+	}
+}

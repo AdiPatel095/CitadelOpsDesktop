@@ -13,10 +13,12 @@ import (
 )
 
 const (
-	flankEffectTypeID = 28
-	frontEffectTypeID = 34
-	waveEffectTypeID  = 156
-	baseAttackWaves   = 4
+	flankEffectTypeID        = 28
+	frontEffectTypeID        = 34
+	waveEffectTypeID         = 156
+	supportUnitsEffectTypeID = 179
+	supportBoostEffectTypeID = 180
+	baseAttackWaves          = 4
 )
 
 type Lane string
@@ -24,6 +26,13 @@ type Lane string
 const (
 	LaneFlank Lane = "flank"
 	LaneFront Lane = "front"
+)
+
+type TargetType string
+
+const (
+	TargetTypeBerimondTower TargetType = "berimond_tower"
+	BerimondTowerMapTypeID             = 17
 )
 
 // LaneCapacity is the maximum troop count for one wave in each attack lane.
@@ -58,6 +67,7 @@ type MapTarget struct {
 type TargetContext struct {
 	ID           string     `json:"id,omitempty"`
 	Map          *MapTarget `json:"map,omitempty"`
+	TargetType   TargetType `json:"targetType,omitempty"`
 	Level        int        `json:"level,omitempty"`
 	CastleTypeID int        `json:"castleTypeId,omitempty"`
 	// AreaTypeID is retained as a compatibility alias for older callers.
@@ -138,6 +148,26 @@ type WaveModifier struct {
 	Waves       int        `json:"waves"`
 }
 
+type SupportModifierKind string
+
+const (
+	SupportModifierUnits SupportModifierKind = "units"
+	SupportModifierBoost SupportModifierKind = "boost"
+)
+
+// SupportModifier is one target-applicable effect that supplies courtyard
+// reinforcement units or boosts the assembled reinforcement capacity.
+type SupportModifier struct {
+	SourceKind  SourceKind          `json:"sourceKind"`
+	SourceID    string              `json:"sourceId,omitempty"`
+	SourceLabel string              `json:"sourceLabel,omitempty"`
+	EffectID    int64               `json:"effectId"`
+	EffectName  string              `json:"effectName"`
+	Kind        SupportModifierKind `json:"kind"`
+	CapID       int64               `json:"capId"`
+	Amount      float64             `json:"amount"`
+}
+
 type SkippedEffect struct {
 	SourceKind SourceKind `json:"sourceKind"`
 	SourceID   string     `json:"sourceId,omitempty"`
@@ -157,41 +187,58 @@ type CapGroup struct {
 	Capped         bool    `json:"capped"`
 }
 
+// SupportCapGroup exposes the official cap calculation separately for absolute
+// support units and percentage support boosts.
+type SupportCapGroup struct {
+	Kind          SupportModifierKind `json:"kind"`
+	CapID         int64               `json:"capId"`
+	RawAmount     float64             `json:"rawAmount"`
+	AppliedAmount float64             `json:"appliedAmount"`
+	MaximumAmount float64             `json:"maximumAmount,omitempty"`
+	Capped        bool                `json:"capped"`
+}
+
 // Context is deliberately transport-free. Future refresh intents and target
 // parsers can build the input state separately, then use this as the stable,
 // testable calculation boundary.
 type Context struct {
-	SourceCastleID State.CastleID    `json:"sourceCastleId"`
-	CommanderID    State.CommanderID `json:"commanderId"`
-	Target         TargetContext     `json:"target"`
-	BaseWaves      int               `json:"baseWaves"`
-	WaveModifiers  []WaveModifier    `json:"waveModifiers,omitempty"`
-	Modifiers      []Modifier        `json:"modifiers"`
-	Skipped        []SkippedEffect   `json:"skipped,omitempty"`
-	CapLimits      map[int64]float64 `json:"-"`
+	SourceCastleID   State.CastleID    `json:"sourceCastleId"`
+	CommanderID      State.CommanderID `json:"commanderId"`
+	Target           TargetContext     `json:"target"`
+	BaseWaves        int               `json:"baseWaves"`
+	WaveModifiers    []WaveModifier    `json:"waveModifiers,omitempty"`
+	SupportModifiers []SupportModifier `json:"supportModifiers,omitempty"`
+	Modifiers        []Modifier        `json:"modifiers"`
+	Skipped          []SkippedEffect   `json:"skipped,omitempty"`
+	CapLimits        map[int64]float64 `json:"-"`
 }
 
 type Result struct {
-	SourceCastleID  State.CastleID    `json:"sourceCastleId"`
-	CommanderID     State.CommanderID `json:"commanderId"`
-	Target          TargetContext     `json:"target"`
-	BaseWaves       int               `json:"baseWaves"`
-	AdditionalWaves int               `json:"additionalWaves"`
-	MaximumWaves    int               `json:"maximumWaves"`
-	WaveModifiers   []WaveModifier    `json:"waveModifiers,omitempty"`
-	BaseCapacity    LaneCapacity      `json:"baseCapacity"`
-	BonusPercent    LaneBonus         `json:"bonusPercent"`
-	Capacity        LaneCapacity      `json:"capacity"`
-	Modifiers       []Modifier        `json:"modifiers"`
-	CapGroups       []CapGroup        `json:"capGroups"`
-	Skipped         []SkippedEffect   `json:"skipped,omitempty"`
+	SourceCastleID      State.CastleID    `json:"sourceCastleId"`
+	CommanderID         State.CommanderID `json:"commanderId"`
+	Target              TargetContext     `json:"target"`
+	BaseWaves           int               `json:"baseWaves"`
+	AdditionalWaves     int               `json:"additionalWaves"`
+	MaximumWaves        int               `json:"maximumWaves"`
+	WaveModifiers       []WaveModifier    `json:"waveModifiers,omitempty"`
+	BaseCapacity        LaneCapacity      `json:"baseCapacity"`
+	BonusPercent        LaneBonus         `json:"bonusPercent"`
+	Capacity            LaneCapacity      `json:"capacity"`
+	SupportUnitAmount   float64           `json:"supportUnitAmount"`
+	SupportBoostPercent float64           `json:"supportBoostPercent"`
+	SupportCapacity     int64             `json:"supportCapacity"`
+	SupportModifiers    []SupportModifier `json:"supportModifiers,omitempty"`
+	SupportCapGroups    []SupportCapGroup `json:"supportCapGroups,omitempty"`
+	Modifiers           []Modifier        `json:"modifiers"`
+	CapGroups           []CapGroup        `json:"capGroups"`
+	Skipped             []SkippedEffect   `json:"skipped,omitempty"`
 }
 
 type Resolver struct{}
 
 // Resolve collects known castle, construction-item, commander-equipment, gem,
-// and equipment-set effects from the supplied state before applying them to the
-// explicit or target-level-derived base capacity.
+// equipment-set, and skill effects before resolving attack waves, lane limits,
+// and courtyard-support capacity.
 func (Resolver) Resolve(gameState State.GameState, gameData *GameData.Store, request Request) (Result, error) {
 	context, err := (Resolver{}).BuildContext(gameState, gameData, request)
 	if err != nil {
@@ -200,9 +247,8 @@ func (Resolver) Resolve(gameState State.GameState, gameData *GameData.Store, req
 	return (Resolver{}).ResolveContext(context)
 }
 
-// BuildContext collects only effects whose official metadata identifies them
-// as attack-unit-capacity bonuses and whose PvP/PvE and area restrictions match
-// the requested target.
+// BuildContext collects only attack-limit effects whose official metadata and
+// PvP/PvE or area restrictions match the requested target.
 func (Resolver) BuildContext(gameState State.GameState, gameData *GameData.Store, request Request) (Context, error) {
 	if gameData == nil {
 		return Context{}, fmt.Errorf("official game data is unavailable")
@@ -227,6 +273,7 @@ func (Resolver) BuildContext(gameState State.GameState, gameData *GameData.Store
 		}
 		target = targetWithAttackDialog(target, gameState.AttackDialog)
 	}
+	target = targetWithSemanticType(target)
 	target = targetWithCastleType(target)
 	target = targetWithInferredBaseCapacity(target)
 	if err := validateTarget(target); err != nil {
@@ -292,6 +339,9 @@ func (Resolver) BuildContext(gameState State.GameState, gameData *GameData.Store
 	})
 	sort.Slice(context.WaveModifiers, func(left, right int) bool {
 		return waveModifierKey(context.WaveModifiers[left]) < waveModifierKey(context.WaveModifiers[right])
+	})
+	sort.Slice(context.SupportModifiers, func(left, right int) bool {
+		return supportModifierKey(context.SupportModifiers[left]) < supportModifierKey(context.SupportModifiers[right])
 	})
 	sort.Slice(context.Skipped, func(left, right int) bool {
 		return skippedEffectKey(context.Skipped[left]) < skippedEffectKey(context.Skipped[right])
@@ -403,9 +453,10 @@ func (builder contextBuilder) addGeneralSkills(gameState State.GameState, comman
 	return nil
 }
 
-// ResolveContext applies the official cap groups and rounds each final lane up
-// the same way the game client does before a CRA command.
+// ResolveContext applies the official cap groups and rounds final lane and
+// support capacities up the same way the game client does before a CRA command.
 func (Resolver) ResolveContext(context Context) (Result, error) {
+	context.Target = targetWithSemanticType(context.Target)
 	context.Target = targetWithCastleType(context.Target)
 	context.Target = targetWithInferredBaseCapacity(context.Target)
 	if err := validateTarget(context.Target); err != nil {
@@ -487,11 +538,67 @@ func (Resolver) ResolveContext(context Context) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
+	supportGroups := map[supportCapGroupKey]*supportCapGroupAccumulator{}
+	for _, modifier := range context.SupportModifiers {
+		if modifier.Kind != SupportModifierUnits && modifier.Kind != SupportModifierBoost {
+			return Result{}, fmt.Errorf("effect %d has an unsupported support modifier kind %q", modifier.EffectID, modifier.Kind)
+		}
+		if !isFinite(modifier.Amount) {
+			return Result{}, fmt.Errorf("effect %d has an invalid support capacity amount", modifier.EffectID)
+		}
+		key := supportCapGroupKey{kind: modifier.Kind, capID: modifier.CapID}
+		group := supportGroups[key]
+		if group == nil {
+			group = &supportCapGroupAccumulator{key: key}
+			if maximum, exists := context.CapLimits[modifier.CapID]; exists && maximum > 0 {
+				group.maximum = maximum
+				group.hasMaximum = true
+			}
+			supportGroups[key] = group
+		}
+		group.raw += modifier.Amount
+	}
+	supportKeys := make([]supportCapGroupKey, 0, len(supportGroups))
+	for key := range supportGroups {
+		supportKeys = append(supportKeys, key)
+	}
+	sort.Slice(supportKeys, func(left, right int) bool {
+		if supportKeys[left].kind != supportKeys[right].kind {
+			return supportKeys[left].kind < supportKeys[right].kind
+		}
+		return supportKeys[left].capID < supportKeys[right].capID
+	})
+	supportUnitAmount := float64(0)
+	supportBoostPercent := float64(0)
+	supportCapGroups := make([]SupportCapGroup, 0, len(supportKeys))
+	for _, key := range supportKeys {
+		group := supportGroups[key]
+		applied := group.raw
+		if group.hasMaximum && applied > group.maximum {
+			applied = group.maximum
+		}
+		supportCapGroups = append(supportCapGroups, SupportCapGroup{
+			Kind: key.kind, CapID: key.capID, RawAmount: group.raw, AppliedAmount: applied,
+			MaximumAmount: group.maximum, Capped: applied != group.raw,
+		})
+		switch key.kind {
+		case SupportModifierUnits:
+			supportUnitAmount += applied
+		case SupportModifierBoost:
+			supportBoostPercent += applied
+		}
+	}
+	supportCapacity, err := applySupportCapacity(supportUnitAmount, supportBoostPercent)
+	if err != nil {
+		return Result{}, err
+	}
 	return Result{
 		SourceCastleID: context.SourceCastleID, CommanderID: context.CommanderID, Target: context.Target,
 		BaseWaves: baseWaves, AdditionalWaves: additionalWaves, MaximumWaves: baseWaves + additionalWaves,
 		WaveModifiers: append([]WaveModifier(nil), context.WaveModifiers...),
 		BaseCapacity:  context.Target.BaseCapacity, BonusPercent: bonus, Capacity: capacity,
+		SupportUnitAmount: supportUnitAmount, SupportBoostPercent: supportBoostPercent, SupportCapacity: supportCapacity,
+		SupportModifiers: append([]SupportModifier(nil), context.SupportModifiers...), SupportCapGroups: supportCapGroups,
 		Modifiers: append([]Modifier(nil), context.Modifiers...), CapGroups: capGroups,
 		Skipped: append([]SkippedEffect(nil), context.Skipped...),
 	}, nil
@@ -721,6 +828,24 @@ func (builder contextBuilder) addSource(source EffectSource) {
 			})
 			continue
 		}
+		if kind, supportEffect := supportModifierKind(record); supportEffect {
+			if reason := targetMismatch(record, name, builder.target); reason != "" {
+				builder.context.Skipped = append(builder.context.Skipped, SkippedEffect{
+					SourceKind: source.Kind, SourceID: source.ID, EffectID: effectID, EffectName: name, Reason: reason,
+				})
+				continue
+			}
+			amount := effectMagnitude(effect.Values)
+			if amount == 0 || !isFinite(amount) {
+				continue
+			}
+			capID, _ := record.Int64("capID")
+			builder.context.SupportModifiers = append(builder.context.SupportModifiers, SupportModifier{
+				SourceKind: source.Kind, SourceID: source.ID, SourceLabel: source.Label,
+				EffectID: effectID, EffectName: name, Kind: kind, CapID: capID, Amount: amount,
+			})
+			continue
+		}
 		lane, capacityEffect := capacityLane(record, name)
 		if !capacityEffect {
 			continue
@@ -917,6 +1042,21 @@ func capacityLane(record GameData.Record, _ string) (Lane, bool) {
 	}
 }
 
+func supportModifierKind(record GameData.Record) (SupportModifierKind, bool) {
+	effectTypeID, exists := record.Int64("effectTypeID")
+	if !exists {
+		return "", false
+	}
+	switch effectTypeID {
+	case supportUnitsEffectTypeID:
+		return SupportModifierUnits, true
+	case supportBoostEffectTypeID:
+		return SupportModifierBoost, true
+	default:
+		return "", false
+	}
+}
+
 func targetMismatch(record GameData.Record, name string, target TargetContext) string {
 	hasOfficialTargetRestriction := false
 	if areaTypes, exists := record.String("areaTypeID"); exists && strings.TrimSpace(areaTypes) != "" {
@@ -1063,6 +1203,18 @@ type capGroupAccumulator struct {
 	hasMaximum bool
 }
 
+type supportCapGroupKey struct {
+	kind  SupportModifierKind
+	capID int64
+}
+
+type supportCapGroupAccumulator struct {
+	key        supportCapGroupKey
+	raw        float64
+	maximum    float64
+	hasMaximum bool
+}
+
 func applyBonuses(base LaneCapacity, bonus LaneBonus) (LaneCapacity, error) {
 	left, err := applyPercent(base.Left, bonus.Left)
 	if err != nil {
@@ -1118,7 +1270,42 @@ func applyRawPercent(base float64, percent float64) (int64, error) {
 	return int64(capacity), nil
 }
 
+func applySupportCapacity(units float64, percent float64) (int64, error) {
+	if !isFinite(units) || units < 0 {
+		return 0, fmt.Errorf("support unit capacity is invalid")
+	}
+	if !isFinite(percent) {
+		return 0, fmt.Errorf("support capacity bonus is invalid")
+	}
+	capacity := math.Ceil(units * math.Max(0, 100+percent) / 100)
+	if capacity > float64(math.MaxInt64) {
+		return 0, fmt.Errorf("support capacity is too large")
+	}
+	return int64(capacity), nil
+}
+
 func validateTarget(target TargetContext) error {
+	switch target.TargetType {
+	case "":
+	case TargetTypeBerimondTower:
+		if target.Map == nil {
+			return fmt.Errorf("Berimond tower target requires map identity")
+		}
+		if target.Map.KingdomID != State.KingdomID(GameData.BerimondKingdomID) {
+			return fmt.Errorf("Berimond tower target requires kingdom %d", GameData.BerimondKingdomID)
+		}
+		if target.Map.TypeID != BerimondTowerMapTypeID {
+			return fmt.Errorf("Berimond tower target requires map type %d", BerimondTowerMapTypeID)
+		}
+		if target.CastleTypeID != BerimondTowerMapTypeID {
+			return fmt.Errorf("Berimond tower target requires castle type %d", BerimondTowerMapTypeID)
+		}
+		if target.PvP {
+			return fmt.Errorf("Berimond tower target must be a PvE fight")
+		}
+	default:
+		return fmt.Errorf("unsupported attack target type %q", target.TargetType)
+	}
 	if target.CastleTypeID > 0 && target.Map != nil && target.Map.TypeID > 0 && target.Map.TypeID != target.CastleTypeID {
 		return fmt.Errorf("target castle type %d does not match map type %d", target.CastleTypeID, target.Map.TypeID)
 	}
@@ -1132,6 +1319,15 @@ func validateTarget(target TargetContext) error {
 		return fmt.Errorf("target base capacity is required")
 	}
 	return nil
+}
+
+func targetWithSemanticType(target TargetContext) TargetContext {
+	if target.TargetType == "" && target.Map != nil &&
+		target.Map.KingdomID == State.KingdomID(GameData.BerimondKingdomID) &&
+		target.Map.TypeID == BerimondTowerMapTypeID {
+		target.TargetType = TargetTypeBerimondTower
+	}
+	return target
 }
 
 func targetWithCastleType(target TargetContext) TargetContext {
@@ -1210,6 +1406,13 @@ func modifierKey(modifier Modifier) string {
 func waveModifierKey(modifier WaveModifier) string {
 	return strings.Join([]string{
 		string(modifier.SourceKind), modifier.SourceID, strconv.FormatInt(modifier.EffectID, 10), strconv.Itoa(modifier.Waves),
+	}, "\x00")
+}
+
+func supportModifierKey(modifier SupportModifier) string {
+	return strings.Join([]string{
+		string(modifier.Kind), strconv.FormatInt(modifier.CapID, 10), string(modifier.SourceKind),
+		modifier.SourceID, strconv.FormatInt(modifier.EffectID, 10), strconv.FormatFloat(modifier.Amount, 'f', -1, 64),
 	}, "\x00")
 }
 

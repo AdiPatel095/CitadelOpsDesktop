@@ -30,6 +30,9 @@ type Store struct {
 	defenseToolShopOnce      sync.Once
 	defenseToolShopProducts  map[int64][]DefenseToolShopPackage
 	defenseToolShopErr       error
+	berimondArmorerOnce      sync.Once
+	berimondArmorerProducts  map[int64]BerimondArmorerToolPackage
+	berimondArmorerErr       error
 }
 
 func DecodeStore(raw []byte, metadata SourceMetadata) (*Store, error) {

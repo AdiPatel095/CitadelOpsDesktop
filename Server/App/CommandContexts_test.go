@@ -92,6 +92,16 @@ func TestAttackCastleContextUsesJAAForSelectionAndJCAForRefocus(t *testing.T) {
 	if selected.ResponseBarrier != Intent.ResponseBarrierCommitted {
 		t.Fatalf("selected attack context barrier = %q, want committed", selected.ResponseBarrier)
 	}
+
+	refreshed := attackCastleRefreshStep(
+		"Refresh attack inventory", State.CastleState{ID: 10, KingdomID: 2, X: 12, Y: 34},
+	)
+	if refreshed.Name != "Refresh attack inventory" || refreshed.Opcode != "jca" ||
+		refreshed.AwaitOpcode != "jaa" || string(refreshed.Command.Payload) != `{"CID":10,"KID":2}` ||
+		refreshed.ResponseBarrier != Intent.ResponseBarrierCommitted ||
+		refreshed.ResumePolicy != Intent.ResumeRebuild {
+		t.Fatalf("post-attack castle refresh = %#v", refreshed)
+	}
 }
 
 func TestCRASetupContextRefreshesWorldMapAttackDialogThenPresets(t *testing.T) {

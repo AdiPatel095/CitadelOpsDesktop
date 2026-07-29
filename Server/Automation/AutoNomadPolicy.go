@@ -640,6 +640,7 @@ func availablePresetCopies(preset AttackPresets.Preset, source State.CastleState
 			}
 		}
 	}
+	addPresetCourtyardRequirements(requested, preset, true)
 	if len(requested) == 0 {
 		return 0
 	}

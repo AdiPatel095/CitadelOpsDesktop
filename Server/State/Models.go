@@ -211,9 +211,9 @@ type DefenseWallSection struct {
 }
 
 // MAUCT, UYL, and AUYL retain the game's field names until captures establish
-// their exact semantics. S and STS retain their observed two-value slot shape;
-// writes to those rows stay guarded until a nonempty game-generated capture
-// establishes their definition namespace and constraints.
+// their exact semantics. S and STS retain their observed two-value slot shape.
+// Official unit catalog slot types identify S as keep tools (5) and STS as
+// Sceat defense-support tools (6).
 type DefenseKeepState struct {
 	PrimaryToolSlots   []DefenseToolSlot `json:"primaryToolSlots"`
 	SecondaryToolSlots []DefenseToolSlot `json:"secondaryToolSlots"`
@@ -335,8 +335,9 @@ type ProductionQueue struct {
 }
 
 type AllianceHelpRequestState struct {
-	HospitalProductionIDs []int64   `json:"hospitalProductionIds"`
-	ObservedAt            time.Time `json:"observedAt,omitempty"`
+	HospitalProductionIDs []int64    `json:"hospitalProductionIds"`
+	RecruitmentCastleIDs  []CastleID `json:"recruitmentCastleIds"`
+	ObservedAt            time.Time  `json:"observedAt,omitempty"`
 }
 
 func OutstandingHospitalAllianceHelpRequests(state GameState) int {
@@ -391,6 +392,37 @@ func HasOutstandingHospitalAllianceHelpRequest(state GameState, productionID int
 			if item.ProductionID == productionID && item.AllianceHelpRequested {
 				return true
 			}
+		}
+	}
+	return false
+}
+
+func HasOutstandingRecruitmentAllianceHelpRequest(state GameState, castleID CastleID) bool {
+	if castleID <= 0 {
+		return false
+	}
+	for _, outstandingID := range state.AllianceHelpRequests.RecruitmentCastleIDs {
+		if outstandingID == castleID {
+			return true
+		}
+	}
+	if !state.AllianceHelpRequests.ObservedAt.IsZero() {
+		return false
+	}
+	castle, exists := state.Castles[castleID]
+	if !exists {
+		return false
+	}
+	queue, exists := castle.Production[0]
+	if !exists {
+		return false
+	}
+	if queue.Active != nil && queue.Active.AllianceHelpRequested {
+		return true
+	}
+	for _, item := range queue.Queued {
+		if item.AllianceHelpRequested {
+			return true
 		}
 	}
 	return false
@@ -642,11 +674,18 @@ type KingdomTransportState struct {
 }
 
 type BeriState struct {
-	AvailableTroops int64            `json:"availableTroops"`
-	TroopsByUnit    map[UnitID]int64 `json:"troopsByUnit"`
-	ParsedSourceID  CastleID         `json:"parsedSourceId,omitempty"`
-	ObservedAt      time.Time        `json:"observedAt,omitempty"`
-	ConsumedAt      time.Time        `json:"consumedAt,omitempty"`
+	AvailableTroops     int64            `json:"availableTroops"`
+	TroopsByUnit        map[UnitID]int64 `json:"troopsByUnit"`
+	ParsedSourceID      CastleID         `json:"parsedSourceId,omitempty"`
+	ObservedAt          time.Time        `json:"observedAt,omitempty"`
+	ConsumedAt          time.Time        `json:"consumedAt,omitempty"`
+	CampOpenRequestedAt time.Time        `json:"campOpenRequestedAt,omitempty"`
+	TargetX             int              `json:"targetX,omitempty"`
+	TargetY             int              `json:"targetY,omitempty"`
+	TargetTypeID        int              `json:"targetTypeId,omitempty"`
+	TargetObservedAt    time.Time        `json:"targetObservedAt,omitempty"`
+	TargetConsumedAt    time.Time        `json:"targetConsumedAt,omitempty"`
+	TargetInvalidatedAt time.Time        `json:"targetInvalidatedAt,omitempty"`
 }
 
 type AllianceMember struct {
@@ -681,13 +720,32 @@ type MovementSnapshot struct {
 	ObservedAt time.Time `json:"observedAt,omitempty"`
 }
 
+type StationingPhase string
+
+const (
+	StationingPhaseTargetReady   StationingPhase = "target-ready"
+	StationingPhaseDispatchReady StationingPhase = "dispatch-ready"
+	StationingPhaseAway          StationingPhase = "away"
+	StationingPhaseWaiting       StationingPhase = "waiting"
+)
+
 type StationingOperation struct {
 	ID                   string           `json:"id"`
 	Purpose              string           `json:"purpose"`
+	Phase                StationingPhase  `json:"phase,omitempty"`
 	SourceCastleID       CastleID         `json:"sourceCastleId"`
 	TargetCastleID       CastleID         `json:"targetCastleId"`
 	MovementID           MovementID       `json:"movementId,omitempty"`
 	Units                map[UnitID]int64 `json:"units"`
+	DelayHours           int              `json:"delayHours,omitempty"`
+	WaitSeconds          int              `json:"waitSeconds,omitempty"`
+	TravelSeconds        int              `json:"travelSeconds,omitempty"`
+	AllianceObservedAt   time.Time        `json:"allianceObservedAt,omitempty"`
+	UnitsObservedAt      time.Time        `json:"unitsObservedAt,omitempty"`
+	DispatchedAt         *time.Time       `json:"dispatchedAt,omitempty"`
+	ExpectedReturnAt     *time.Time       `json:"expectedReturnAt,omitempty"`
+	NextAttemptAt        *time.Time       `json:"nextAttemptAt,omitempty"`
+	StatusDetail         string           `json:"statusDetail,omitempty"`
 	SafeAfter            *time.Time       `json:"safeAfter,omitempty"`
 	SuccessCooldownUntil *time.Time       `json:"successCooldownUntil,omitempty"`
 	CreatedAt            time.Time        `json:"createdAt"`
@@ -1400,7 +1458,7 @@ func NewGameState() GameState {
 		Beri:                 BeriState{TroopsByUnit: map[UnitID]int64{}},
 		Alliance:             AllianceState{Members: []AllianceMember{}, Holdings: []AllianceHolding{}},
 		Alliances:            map[AllianceID]AllianceState{},
-		AllianceHelpRequests: AllianceHelpRequestState{HospitalProductionIDs: []int64{}},
+		AllianceHelpRequests: AllianceHelpRequestState{HospitalProductionIDs: []int64{}, RecruitmentCastleIDs: []CastleID{}},
 		Map:                  map[KingdomID]map[string]MapObservation{},
 		TowerCooldowns:       map[string]TowerCooldownState{},
 		TowerQueue: TowerQueueState{
@@ -1430,7 +1488,7 @@ func NewGameState() GameState {
 		},
 		AttackPresets: []AttackPreset{},
 		AttackAnalytics: AttackAnalyticsState{
-			LaunchIDs: []MovementID{}, PendingAttacks: []AttackFeatureLaunch{},
+			LaunchIDs: []MovementID{}, PendingAttacks: []AttackFeatureLaunch{}, RecentAutoStormLaunches: []AttackFeatureLaunch{},
 		},
 		EventScores: EventScoreState{
 			ByEvent: map[int64]ScalableEventScore{}, ShopByPackage: map[PackageID]EventShopRoute{},

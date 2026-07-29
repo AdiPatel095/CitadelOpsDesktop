@@ -1,3 +1,5 @@
+import { parseHorseTravelBoostID, type HorseTravelBoostID } from './HorseTravelBoost';
+
 export interface AutoFoodBalanceSettings {
   checkIntervalSec: number;
   stateRefreshIntervalSec: number;
@@ -11,6 +13,7 @@ export interface AutoFoodBalanceSettings {
   useKingdomTimeSkips: boolean;
   allowedTimeSkips: string[];
   timeSkipReserve: Record<string, number>;
+  horseTravelBoostId: HorseTravelBoostID;
 }
 
 export const AUTO_FOOD_BALANCE_TIME_SKIPS = [
@@ -40,6 +43,7 @@ export const DEFAULT_AUTO_FOOD_BALANCE_SETTINGS: AutoFoodBalanceSettings = {
   useKingdomTimeSkips: false,
   allowedTimeSkips: [],
   timeSkipReserve: {},
+  horseTravelBoostId: -1,
 };
 
 export function parseAutoFoodBalanceSettings(payload: unknown): AutoFoodBalanceSettings {
@@ -70,6 +74,7 @@ export function parseAutoFoodBalanceSettings(payload: unknown): AutoFoodBalanceS
     useKingdomTimeSkips: value.useKingdomTimeSkips === true,
     allowedTimeSkips,
     timeSkipReserve,
+    horseTravelBoostId: parseHorseTravelBoostID(value.horseTravelBoostId),
   };
 }
 

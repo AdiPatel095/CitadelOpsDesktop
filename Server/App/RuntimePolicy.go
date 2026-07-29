@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/CommanderFeatures"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
 	"CitadelDesktop/Server/State"
@@ -20,12 +21,8 @@ const (
 	defaultRelogDelaySec     = 5 * 60
 	minimumRelogDelaySec     = 60
 	maximumRelogDelaySec     = 24 * 60 * 60
-	commanderFeatureSection  = "automation.commanderFeatures"
+	commanderFeatureSection  = CommanderFeatures.Section
 )
-
-type runtimeCommanderFeatureSettings struct {
-	Assignments map[string][]State.CommanderID `json:"assignments"`
-}
 
 type runtimeSchedulerSettings struct {
 	MinAttackDelay   float64        `json:"minAttackDelay"`
@@ -138,9 +135,9 @@ func (application *Application) executionGate(
 	}
 	switch point {
 	case Intent.ExecutionBeforeClaims:
-		return application.Session.WaitForAutomationUnlocked(ctx)
+		return application.Session.WaitForActorAutomationUnlocked(ctx, request.Actor)
 	case Intent.ExecutionBeforeStep:
-		if application.Session.AutomationLocked() {
+		if application.Session.AutomationLockedFor(request.Actor) {
 			return Outbound.ErrAutomationLocked
 		}
 	}
@@ -164,29 +161,29 @@ func (application *Application) requireAssignedAttackCommanders(plan Intent.Plan
 	}
 	raw, exists := application.Configuration.Section(commanderFeatureSection)
 	if !exists {
-		return fmt.Errorf("assign at least one commander to %s before launching", label)
+		return nil
 	}
-	settings := runtimeCommanderFeatureSettings{}
-	if len(raw) == 0 || json.Unmarshal(raw, &settings) != nil {
+	if len(raw) == 0 {
 		return fmt.Errorf("%s commander assignments are invalid", label)
 	}
-	assigned := settings.Assignments[moduleID]
-	allowed := make(map[State.CommanderID]struct{}, len(assigned))
-	for _, commanderID := range assigned {
-		if commanderID >= 0 {
-			allowed[commanderID] = struct{}{}
-		}
-	}
-	if len(allowed) == 0 {
-		return fmt.Errorf("assign at least one commander to %s before launching", label)
+	settings, err := CommanderFeatures.Decode(raw)
+	if err != nil {
+		return fmt.Errorf("%s commander assignments are invalid", label)
 	}
 	commanders, err := attackPlanCommanderIDs(plan)
 	if err != nil {
 		return fmt.Errorf("validate %s commander assignment: %w", label, err)
 	}
+	gameState := State.NewGameState()
+	if application.State != nil {
+		gameState = application.State.Snapshot()
+	}
 	for _, commanderID := range commanders {
-		if _, permitted := allowed[commanderID]; !permitted {
+		if !CommanderFeatures.AssignmentAllows(settings, moduleID, commanderID) {
 			return fmt.Errorf("commander %d is not assigned to %s", commanderID, label)
+		}
+		if !CommanderFeatures.MeetsFeatureRequirements(gameState, settings, moduleID, commanderID) {
+			return fmt.Errorf("commander %d does not meet the %s equipment requirement", commanderID, label)
 		}
 	}
 	return nil

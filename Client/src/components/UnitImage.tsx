@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Shield } from 'lucide-react';
 import { useMetadata } from '../context/MetadataContext';
 import LevelBadge from './LevelBadge';
+import { unitAtlasDefinition, type UnitAtlasDefinition } from './UnitAtlasFrames';
 
 interface UnitImageProps {
   unitId: number;
@@ -13,9 +14,11 @@ interface UnitImageProps {
 const UnitImage: React.FC<UnitImageProps> = ({ unitId, size = 40, showLevel = false, className = '' }) => {
   const { getTroop } = useMetadata();
   const [sourceIndex, setSourceIndex] = useState(0);
+  const [loadedSource, setLoadedSource] = useState<{ src: string; width: number; height: number } | null>(null);
   const metadata = getTroop(unitId);
   const levelValue = Number(metadata?.level);
   const level = Number.isFinite(levelValue) && levelValue > 0 ? levelValue : undefined;
+  const atlas = unitAtlasDefinition(metadata?.type);
   const sources = useMemo(() => {
     const metadataSrc = typeof metadata?.image === 'string' ? metadata.image.trim() : '';
     const directMetadataSrc = metadataSrc.toLowerCase().endsWith('.png') ? '' : metadataSrc;
@@ -33,6 +36,11 @@ const UnitImage: React.FC<UnitImageProps> = ({ unitId, size = 40, showLevel = fa
     setSourceIndex(0);
   }, [sources]);
 
+  const atlasMatchesSource = atlas
+    && loadedSource?.src === src
+    && loadedSource.width === atlas.width
+    && loadedSource.height === atlas.height;
+
   return (
     <span
       className={`relative inline-flex shrink-0 items-center justify-center rounded-global bg-bg-app ${className}`}
@@ -41,21 +49,83 @@ const UnitImage: React.FC<UnitImageProps> = ({ unitId, size = 40, showLevel = fa
       aria-label={title}
     >
       {!failed ? (
-        <img
-          src={src}
-          alt={title}
-          width={size}
-          height={size}
-          loading="lazy"
-          decoding="async"
-          className="h-full w-full object-contain"
-          draggable={false}
-          onError={() => setSourceIndex((current) => current + 1)}
-        />
+        <>
+          {atlas && loadedSource?.src !== src && <Shield className="h-1/2 w-1/2 text-text-muted" />}
+          {atlasMatchesSource ? (
+            <UnitAtlasImage definition={atlas} src={src} size={size} />
+          ) : loadedSource?.src === src || !atlas ? (
+            <img
+              src={src}
+              alt={title}
+              width={size}
+              height={size}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-contain"
+              draggable={false}
+              onLoad={(event) => setLoadedSource({
+                src,
+                width: event.currentTarget.naturalWidth,
+                height: event.currentTarget.naturalHeight,
+              })}
+              onError={() => setSourceIndex((current) => current + 1)}
+            />
+          ) : null}
+          {atlas && (
+            <img
+              src={src}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+              className="pointer-events-none absolute h-px w-px opacity-0"
+              draggable={false}
+              onLoad={(event) => setLoadedSource({
+                src,
+                width: event.currentTarget.naturalWidth,
+                height: event.currentTarget.naturalHeight,
+              })}
+              onError={() => setSourceIndex((current) => current + 1)}
+            />
+          )}
+        </>
       ) : (
         <Shield className="h-1/2 w-1/2 text-text-muted" />
       )}
       {showLevel && level && <LevelBadge level={level} imageSize={size} />}
+    </span>
+  );
+};
+
+const UnitAtlasImage: React.FC<{ definition: UnitAtlasDefinition; src: string; size: number }> = ({
+  definition,
+  src,
+  size,
+}) => {
+  const contentWidth = Math.max(...definition.frames.map((frame) => frame[2]));
+  const contentHeight = Math.max(...definition.frames.map((frame) => frame[3]));
+  const scale = Math.min(size / contentWidth, size / contentHeight);
+  const canvasLeft = (size - contentWidth * scale) / 2;
+  const canvasTop = (size - contentHeight * scale) / 2;
+
+  return (
+    <span className="pointer-events-none absolute inset-0" aria-hidden="true">
+      {definition.frames.map(([x, y, width, height], index) => (
+        <span
+          key={`${x}-${y}-${index}`}
+          className="absolute overflow-hidden"
+          style={{
+            left: canvasLeft + (contentWidth - width) * scale / 2,
+            top: canvasTop + (contentHeight - height) * scale,
+            width: width * scale,
+            height: height * scale,
+            backgroundImage: `url("${src}")`,
+            backgroundPosition: `${-x * scale}px ${-y * scale}px`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: `${definition.width * scale}px ${definition.height * scale}px`,
+          }}
+        />
+      ))}
     </span>
   );
 };

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"CitadelDesktop/Server/AttackCapacity"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
 
@@ -120,6 +122,10 @@ func ParseBattleCapture(capture State.BattleReportCapture, ownPlayerID State.Pla
 	}
 	if role == "attacker" {
 		report.Loot = parseBattleLoot(summary.Participants, int64(ownPlayerID))
+		if summary.Target.KingdomID == GameData.BerimondKingdomID &&
+			summary.Target.TypeID == AttackCapacity.BerimondTowerMapTypeID {
+			report.GallantryPoints = parseBattleGallantry(summary.Participants, int64(ownPlayerID))
+		}
 	}
 	report.TopUnits = parseBattleUnits(capture.Details, attackerID, defenderID)
 	return report, nil
@@ -235,6 +241,22 @@ func parseBattleLoot(participants [][]json.RawMessage, ownPlayerID int64) map[st
 		return nil
 	}
 	return loot
+}
+
+func parseBattleGallantry(participants [][]json.RawMessage, ownPlayerID int64) int64 {
+	for _, participant := range participants {
+		if len(participant) <= 8 {
+			continue
+		}
+		playerID, playerOK := rawInteger(participant[0])
+		side, sideOK := rawInteger(participant[1])
+		points, pointsOK := rawInteger(participant[8])
+		if playerOK && sideOK && pointsOK && playerID == ownPlayerID && side == 0 && points > 0 {
+			// Captured Berimond tower summaries place the awarded gallantry at PBI index 8.
+			return points
+		}
+	}
+	return 0
 }
 
 func absolute(value int64) int64 {

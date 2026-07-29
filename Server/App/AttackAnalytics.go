@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/State"
 )
 
@@ -25,6 +27,52 @@ func attackFeatureCaptureStep(request attackFeatureCaptureRequest) Intent.Step {
 	return Intent.Step{
 		Name: "Attribute confirmed attack movement", Action: "attack.analytics.capture", ActionArguments: arguments,
 	}
+}
+
+func restoreRecentAutoStormLaunchHistory(
+	ctx context.Context,
+	state *State.Store,
+	reportStore *Reports.SQLiteStore,
+) error {
+	if state == nil || reportStore == nil {
+		return nil
+	}
+	now := time.Now().UTC()
+	snapshot := state.ReadOnlyView()
+	reports, err := reportStore.Recent(ctx, Reports.BattleReportQuery{
+		AccountUID: snapshot.Account.UID,
+		WorldID:    snapshot.Account.WorldID,
+		PlayerID:   int64(snapshot.Player.ID),
+		FeatureID:  string(State.AttackFeatureAutoStorm),
+		Since:      now.Add(-72 * time.Hour),
+		Limit:      100_000,
+	})
+	if err != nil {
+		return err
+	}
+	records := make([]State.AttackFeatureLaunch, 0, len(reports))
+	for _, report := range reports {
+		if report.MovementID <= 0 || report.DateMs <= 0 {
+			continue
+		}
+		records = append(records, State.AttackFeatureLaunch{
+			MovementID:   State.MovementID(report.MovementID),
+			FeatureID:    State.AttackFeatureAutoStorm,
+			KingdomID:    State.KingdomID(GameData.StormKingdomID),
+			TargetTypeID: report.TargetTypeID,
+			TargetX:      report.TargetX,
+			TargetY:      report.TargetY,
+			LaunchedAt:   time.UnixMilli(report.DateMs).UTC(),
+		})
+	}
+	if len(records) == 0 {
+		return nil
+	}
+	_, err = state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+		changed := State.MergeAutoStormLaunchHistory(gameState, records, now)
+		return []string{"attack-analytics"}, changed, nil
+	})
+	return err
 }
 
 func (application *Application) captureAttackFeatureLaunch(_ context.Context, arguments json.RawMessage) error {

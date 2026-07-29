@@ -27,7 +27,7 @@ func TestSQLiteStorePersistsScopedFeatureAndEventReport(t *testing.T) {
 		OccurredAt:            time.Date(2026, 7, 22, 17, 0, 0, 0, time.UTC).Format(time.RFC3339),
 		DateMs:                time.Date(2026, 7, 22, 17, 0, 0, 0, time.UTC).UnixMilli(),
 		Result:                "Victory", Role: "attacker", Metrics: BattleMetrics{AttackerLost: 12}, ToolsUsed: 9,
-		Loot:      map[string]int64{"W": 100, "S": 200, "C1": 30},
+		GallantryPoints: 1743, Loot: map[string]int64{"W": 100, "S": 200, "C1": 30},
 		KingdomID: 4, TargetX: 100, TargetY: 200, TargetName: "Event target",
 		BattleTypeID: 6, BattleType: "Type 6", TargetTypeID: 24, TargetType: "Type 24",
 		Defender: &BattleCombatant{PlayerID: -50, Dummy: true, Name: "Event target"},
@@ -41,7 +41,8 @@ func TestSQLiteStorePersistsScopedFeatureAndEventReport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(reports) != 1 || reports[0].MovementID != 30 || reports[0].ToolsUsed != 9 || reports[0].Loot["S"] != 200 ||
+	if len(reports) != 1 || reports[0].MovementID != 30 || reports[0].ToolsUsed != 9 ||
+		reports[0].GallantryPoints != 1743 || reports[0].Loot["S"] != 200 ||
 		reports[0].TargetPlayerID != -50 || reports[0].TargetName != "Event target" ||
 		reports[0].TargetTypeID != 24 || reports[0].TargetType != "Type 24" ||
 		reports[0].KingdomID != 4 || reports[0].TargetX != 100 || reports[0].TargetY != 200 {
@@ -142,8 +143,50 @@ func TestSQLiteStoreExcludesPvPAndHasNoCanonicalReportColumn(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if columns["report_json"] || !columns["target_name"] || !columns["target_type_id"] {
+	if columns["report_json"] || !columns["gallantry_points"] || !columns["target_name"] || !columns["target_type_id"] {
 		t.Fatalf("compact analytics columns = %#v", columns)
+	}
+}
+
+func TestSQLiteStoreAddsGallantryColumnToExistingCompactSchema(t *testing.T) {
+	dataDir := t.TempDir()
+	store, err := OpenSQLiteStore(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := BattleReport{
+		ID: "10-20", ReportID: "10-20", AccountUID: 44, PlayerID: 1,
+		MID: 10, LID: 20, DateMs: time.Now().UnixMilli(), OccurredAt: time.Now().UTC().Format(time.RFC3339),
+		Attacker: &BattleCombatant{PlayerID: 1},
+		Defender: &BattleCombatant{PlayerID: -2, Dummy: true},
+		Loot:     map[string]int64{"W": 100},
+	}
+	if err := store.Save(context.Background(), report); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.db.Exec(`ALTER TABLE battle_report_analytics DROP COLUMN gallantry_points`); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err = OpenSQLiteStore(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	columns, err := battleAnalyticsColumns(context.Background(), store.db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reports, err := store.Recent(context.Background(), BattleReportQuery{AccountUID: 44, Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !columns["gallantry_points"] || len(reports) != 1 ||
+		reports[0].GallantryPoints != 0 || reports[0].Loot["W"] != 100 {
+		t.Fatalf("migrated compact analytics: columns=%#v reports=%#v", columns, reports)
 	}
 }
 
@@ -247,7 +290,7 @@ func TestSQLiteStoreMigratesCanonicalRowsToPvEAndCloudOutbox(t *testing.T) {
 		Result: "Victory", Role: "attacker", AutomationFeature: string(State.AttackFeatureAutoTowers),
 		KingdomID: 4, TargetX: 10, TargetY: 20, TargetName: "Tower",
 		BattleType: "Type 6", Defender: &BattleCombatant{PlayerID: -2, Dummy: true, Name: "Tower"},
-		Loot: map[string]int64{"W": 100},
+		GallantryPoints: 1743, Loot: map[string]int64{"W": 100},
 	}
 	pvp := BattleReport{
 		ID: "11-21", ReportID: "11-21", AccountUID: 44, PlayerID: 1,
@@ -297,7 +340,8 @@ func TestSQLiteStoreMigratesCanonicalRowsToPvEAndCloudOutbox(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(reports) != 1 || reports[0].LID != 20 || reports[0].TargetName != "Tower" ||
+	if len(reports) != 1 || reports[0].LID != 20 || reports[0].GallantryPoints != 1743 ||
+		reports[0].TargetName != "Tower" ||
 		reports[0].TargetTypeID != 0 || reports[0].KingdomID != 4 ||
 		reports[0].TargetX != 10 || reports[0].TargetY != 20 {
 		t.Fatalf("migrated PvE analytics = %#v", reports)
@@ -313,7 +357,7 @@ func TestSQLiteStoreMigratesCanonicalRowsToPvEAndCloudOutbox(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if columns["report_json"] {
-		t.Fatal("canonical report_json column survived compact migration")
+	if columns["report_json"] || !columns["gallantry_points"] {
+		t.Fatalf("unexpected compact migration columns: %#v", columns)
 	}
 }

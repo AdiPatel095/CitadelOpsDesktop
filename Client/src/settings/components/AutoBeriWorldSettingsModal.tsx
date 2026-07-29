@@ -1,14 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Swords, Users } from 'lucide-react';
+import { CalendarDays, Crosshair, Hammer, Swords, Users } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
-import { Button, Input, Select, SettingsModal } from '../../components/ui';
+import { ATTACK_PRESETS_SECTION, parseAttackPresetDocument, summarizeAttackPreset } from '../../attackPresets/AttackPresetTypes';
+import { Badge, Button, Input, Select, SettingsModal } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { configurationSection } from '../Configuration';
 import {
+	AUTO_BERI_COIN_ATTACK_TOOLS,
 	DEFAULT_AUTO_BERI_WORLD_SETTINGS,
 	parseAutoBeriWorldSettings,
 	type AutoBeriWorldSettings,
 } from '../AutoBeriWorldClientState';
+import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 
 interface AutoBeriWorldSettingsModalProps {
 	isOpen: boolean;
@@ -28,6 +31,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	);
 	const [settings, setSettings] = useState<AutoBeriWorldSettings>(DEFAULT_AUTO_BERI_WORLD_SETTINGS);
 	const [saveError, setSaveError] = useState('');
+	const presetDocument = useMemo(
+		() => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
+		[configuration?.sections],
+	);
+	const selectedPreset = presetDocument.presets.find((preset) => preset.id === settings.presetId);
+	const presetSummary = selectedPreset ? summarizeAttackPreset(selectedPreset) : null;
 
 	useEffect(() => {
 		if (isOpen) setSettings(saved);
@@ -42,8 +51,20 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	}));
 	const effectiveSourceID = settings.sourceCastleId || castles.find((castle) => castle.slotType === 1)?.id || 0;
 
-	const updateNumber = (field: keyof AutoBeriWorldSettings, value: string) => {
+	const updateNumber = (
+		field: 'minTroopsToTransfer' | 'beriCastleId' | 'transferTroopId' | 'sourceCastleId' |
+			'wireCastleId' | 'troopSpaceCheckIntervalSec' | 'attackCheckIntervalSec',
+		value: string,
+	) => {
 		setSettings((current) => ({ ...current, [field]: Number.parseInt(value, 10) || 0 }));
+	};
+
+	const updateToolMinimum = (toolID: number, value: string) => {
+		const minimum = Math.max(0, Number.parseInt(value, 10) || 0);
+		setSettings((current) => ({
+			...current,
+			toolMinimums: { ...current.toolMinimums, [String(toolID)]: minimum },
+		}));
 	};
 
 	const pickTroop = async () => {
@@ -71,7 +92,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			onClose={onClose}
 			title="Auto Beri World"
 			icon={<Swords className="h-5 w-5" />}
-			description="Configure deterministic Berimond capacity checks and troop transfers."
+			description="Transfer troops, replenish selected coin tools, open a free-resource camp when needed, and attack the next available Berimond tower."
 			titleTrailing={(
 					<Button
 						variant="outline"
@@ -83,11 +104,89 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						Calendar
 					</Button>
 			)}
-			maxWidth="md"
+			maxWidth="2xl"
 			onSave={save}
 			saveLabel="Save"
 		>
 			<div className="space-y-5">
+				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
+					<div>
+						<div className="flex items-center gap-2 text-sm font-black text-text-main">
+							<Crosshair className="h-4 w-4 text-primary" /> Tower attack
+						</div>
+						<p className="mt-1 text-xs text-text-muted">
+							Uses Berimond&apos;s find-next-tower command and the commanders assigned under Movement → Features.
+						</p>
+					</div>
+					<div className="grid gap-4 md:grid-cols-2">
+						<label className="block">
+							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">Attack preset</span>
+							<Select
+								value={settings.presetId}
+								onChange={(presetId) => setSettings((current) => ({ ...current, presetId }))}
+								options={presetDocument.presets.map((preset) => ({ value: preset.id, label: preset.name }))}
+								placeholder={presetDocument.presets.length > 0 ? 'Choose a CitadelOps preset' : 'Create an Attack Preset first'}
+								disabled={presetDocument.presets.length === 0}
+								menuGrowToViewport
+							/>
+						</label>
+						<label className="block">
+							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">Attack check interval</span>
+							<Input
+								type="number"
+								min={30}
+								max={3600}
+								value={settings.attackCheckIntervalSec}
+								onChange={(event) => updateNumber('attackCheckIntervalSec', event.target.value)}
+								rightIcon={<span className="text-xs">s</span>}
+							/>
+						</label>
+						<HorseTravelBoostSelect
+							className="block md:col-span-2"
+							value={settings.horseTravelBoostId}
+							onChange={(horseTravelBoostId) => setSettings((current) => ({ ...current, horseTravelBoostId }))}
+						/>
+					</div>
+					{presetSummary ? (
+						<div className="flex flex-wrap items-center gap-2 border-t border-border-base pt-3">
+							<span className="mr-1 text-xs text-text-muted">Preset loadout</span>
+							<Badge variant="outline">{presetSummary.waves} waves</Badge>
+							<Badge variant="outline">{presetSummary.troops.toLocaleString()} troops</Badge>
+							<Badge variant="outline">{presetSummary.tools.toLocaleString()} tools</Badge>
+						</div>
+					) : null}
+				</div>
+
+				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
+					<div>
+						<div className="flex items-center gap-2 text-sm font-black text-text-main">
+							<Hammer className="h-4 w-4 text-primary" /> Armorer tool minimums
+						</div>
+						<p className="mt-1 text-xs text-text-muted">
+							An independent Auto Beri lane buys the shortage with coins in game-capped batches of up to 1,000. Set a tool to 0 to leave it unmanaged.
+						</p>
+					</div>
+					<div className="grid gap-4 sm:grid-cols-3">
+						{AUTO_BERI_COIN_ATTACK_TOOLS.map((tool) => (
+							<label key={tool.id} className="block">
+								<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">
+									{tool.name}
+								</span>
+								<Input
+									type="number"
+									min={0}
+									value={settings.toolMinimums[String(tool.id)] ?? 0}
+									onChange={(event) => updateToolMinimum(tool.id, event.target.value)}
+									rightIcon={<span className="text-[10px] font-mono">#{tool.id}</span>}
+								/>
+							</label>
+						))}
+					</div>
+					<p className="text-xs text-text-muted">
+						Only scaling ladders, battering rams, and mantlets from the coin armorer are eligible.
+					</p>
+				</div>
+
 				<p className="text-sm text-text-muted">
 					CitadelOps refreshes transfer capacity with <span className="font-mono">fuc</span>, sends the exact returned amount with <span className="font-mono">kut</span>, then applies the fixed <span className="font-mono">msk</span> speed-up.
 				</p>
@@ -96,11 +195,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Berimond castle ID</label>
 					<Input
 						type="number"
-						min={1}
+						min={0}
 						value={settings.beriCastleId || ''}
 						onChange={(event) => updateNumber('beriCastleId', event.target.value)}
-						placeholder="Active Berimond castle CID"
+						placeholder="Auto-detect owned kingdom 10 camp"
 					/>
+					<p className="text-xs text-text-muted">Leave blank to use the owned Berimond camp automatically.</p>
 				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2">

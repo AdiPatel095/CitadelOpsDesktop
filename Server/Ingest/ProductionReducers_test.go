@@ -131,6 +131,58 @@ func TestRecruitmentAllianceHelpEventMarksWholeCastleQueue(t *testing.T) {
 			t.Fatalf("queued recruitment item %d was not marked: %#v", index, item)
 		}
 	}
+	if !State.HasOutstandingRecruitmentAllianceHelpRequest(gameState, 77) {
+		t.Fatal("successful recruitment help was not retained for the castle")
+	}
+}
+
+func TestAllianceHelpListKeepsNewRecruitQueueGuardedByCastle(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 501
+	castle := newCastleState(77)
+	castle.Focused = true
+	castle.Production[0] = State.ProductionQueue{
+		LineID: 0,
+		Active: &State.QueueItem{ProductionID: 11},
+	}
+	gameState.Castles[castle.ID] = castle
+	responseCode := 0
+	listFrame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "ahl", ResponseCode: &responseCode,
+		ReceivedAt: time.Date(2026, 7, 28, 20, 5, 41, 0, time.UTC),
+		Payload: json.RawMessage(`{"AHL":[
+			{"PID":999,"TID":6,"OP":{"AID":88,"RLID":0}},
+			{"PID":501,"TID":6,"OP":{"AID":77,"RLID":0}},
+			{"PID":501,"TID":6,"OP":{"AID":77,"RLID":0}}
+		]}`),
+	}
+	if _, changed, err := reduceAllianceHelpRequest(t.Context(), listFrame, &gameState, nil); err != nil || !changed {
+		t.Fatalf("reduce alliance help list changed=%t err=%v", changed, err)
+	}
+	if got := gameState.AllianceHelpRequests.RecruitmentCastleIDs; len(got) != 1 || got[0] != 77 {
+		t.Fatalf("authoritative recruitment-help castles = %#v", got)
+	}
+	snapshotFrame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "spl", ResponseCode: &responseCode,
+		ReceivedAt: listFrame.ReceivedAt.Add(time.Minute),
+		Payload: json.RawMessage(`{
+			"PS":{"WID":489,"TUA":6,"PID":21,"SPID":22},
+			"QS":[{"P":{"WID":489,"TUA":444,"PID":22}},{"P":{"WID":489,"TUA":444,"PID":23}}],
+			"LID":0
+		}`),
+	}
+	if _, changed, err := reduceProductionSnapshot(t.Context(), snapshotFrame, &gameState, nil); err != nil || !changed {
+		t.Fatalf("reduce replacement production snapshot changed=%t err=%v", changed, err)
+	}
+	queue := gameState.Castles[77].Production[0]
+	if queue.Active == nil || !queue.Active.AllianceHelpRequested {
+		t.Fatalf("replacement active recruitment item was not guarded: %#v", queue.Active)
+	}
+	for index, item := range queue.Queued {
+		if !item.AllianceHelpRequested {
+			t.Fatalf("replacement queued recruitment item %d was not guarded: %#v", index, item)
+		}
+	}
 }
 
 func TestAllianceHelpListMarksOnlyOwnHospitalJob(t *testing.T) {

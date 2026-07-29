@@ -8,6 +8,7 @@ import {
   RefreshCw,
   RotateCcw,
   Save,
+  SlidersHorizontal,
   XCircle,
 } from 'lucide-react';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
@@ -16,13 +17,21 @@ import { useAuth } from '../../context/AuthContext';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector } from '../../components/ui';
 import { useMovement } from '../context/MovementContext';
+import CommanderRequirementModal from './CommanderRequirementModal';
 import {
   COMMANDER_FEATURE_SECTION,
+  commanderIDsAssignedToFeature,
+  commanderIDsEligibleForFeature,
+  commanderMeetsFeatureRequirements,
   defaultCommanderFeatureAssignments,
+  equipmentRequirementForFeature,
   isCommanderAssigned,
   parseCommanderFeatureAssignments,
   setCommanderAssignment,
-  type CommanderFeatureAssignmentsV1,
+  setCommanderEquipmentRequirement,
+  setCommanderFeatureForAll,
+  type CommanderEquipmentEffectRequirement,
+  type CommanderFeatureConfigurationV2,
   type CommanderFeatureID,
 } from '../types/CommanderFeatureAssignments';
 import {
@@ -34,7 +43,7 @@ import {
 } from '../types/MovementState';
 import type { MovementStateV2 } from '../../api/Contracts';
 
-type MovementMode = 'Movement' | 'Features';
+type MovementMode = 'Functions' | 'Live Movements';
 
 const COMMANDER_FEATURES: Array<{ id: CommanderFeatureID; label: string }> = [
   { id: 'autoTowers', label: 'Auto Towers' },
@@ -42,6 +51,7 @@ const COMMANDER_FEATURES: Array<{ id: CommanderFeatureID; label: string }> = [
   { id: 'autoNomad', label: 'Auto Nomad / Samurai' },
   { id: 'autoAdvisor', label: 'Auto Advisor' },
   { id: 'autoKhan', label: 'Auto Khan' },
+  { id: 'autoBeriWorld', label: 'Auto Beri World' },
   { id: 'autoStorm', label: 'Auto Storm' },
   { id: 'riftMaiden', label: 'Rift Maiden Waves' },
   { id: 'riftReplay', label: 'Rift Replay' },
@@ -139,19 +149,20 @@ function StatusBadge({ status }: { status: CommanderActivity }) {
 
 const MovementView: React.FC = () => {
   const { gameLoggedIn } = useAuth();
-  const { configuration, updateConfiguration } = useCitadelAPI();
+  const { state, configuration, updateConfiguration } = useCitadelAPI();
   const { movement, refreshMovement } = useMovement();
-  const [mode, setMode] = useState<MovementMode>('Movement');
+  const [mode, setMode] = useState<MovementMode>('Functions');
   const [nowUnix, setNowUnix] = useState(() => Math.floor(Date.now() / 1000));
   const configuredAssignments = useMemo(
     () => parseCommanderFeatureAssignments(configuration?.sections[COMMANDER_FEATURE_SECTION]),
     [configuration?.sections[COMMANDER_FEATURE_SECTION]],
   );
-  const [featureAssignments, setFeatureAssignments] = useState<CommanderFeatureAssignmentsV1>(
+  const [featureAssignments, setFeatureAssignments] = useState<CommanderFeatureConfigurationV2>(
     defaultCommanderFeatureAssignments,
   );
   const [assignmentsDirty, setAssignmentsDirty] = useState(false);
   const [savingAssignments, setSavingAssignments] = useState(false);
+  const [requirementFeatureID, setRequirementFeatureID] = useState<CommanderFeatureID | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowUnix(Math.floor(Date.now() / 1000)), 1000);
@@ -166,6 +177,10 @@ const MovementView: React.FC = () => {
   const rows = useMemo(
     () => sortCommanders(movement?.commanderStatuses ?? []),
     [movement?.commanderStatuses]
+  );
+  const commanderIDs = useMemo(
+    () => rows.map((row) => row.commanderId),
+    [rows],
   );
   const snapshotReady = movement?.snapshotReady === true;
   const freshnessWindow = movement?.freshnessWindowSec ?? 45;
@@ -188,6 +203,7 @@ const MovementView: React.FC = () => {
       featureID,
       commanderID,
       assigned,
+      commanderIDs,
     ));
     setAssignmentsDirty(true);
   };
@@ -199,10 +215,36 @@ const MovementView: React.FC = () => {
         feature.id,
         commanderID,
         assigned,
+        commanderIDs,
       ),
       current,
     ));
     setAssignmentsDirty(true);
+  };
+
+  const setFeatureForAllCommanders = (
+    featureID: CommanderFeatureID,
+    assigned: boolean,
+  ) => {
+    setFeatureAssignments((current) => setCommanderFeatureForAll(
+      current,
+      featureID,
+      assigned,
+    ));
+    setAssignmentsDirty(true);
+  };
+
+  const setFeatureEquipmentRequirement = (
+    featureID: CommanderFeatureID,
+    requirement: CommanderEquipmentEffectRequirement | null,
+  ) => {
+    setFeatureAssignments((current) => setCommanderEquipmentRequirement(
+      current,
+      featureID,
+      requirement,
+    ));
+    setAssignmentsDirty(true);
+    setRequirementFeatureID(null);
   };
 
   const saveCommanderFeatures = async () => {
@@ -234,25 +276,25 @@ const MovementView: React.FC = () => {
       <Card className="liquid-prominent-header-card">
         <CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
           <PillSelector
-            ariaLabel="Movement workspace mode"
+            ariaLabel="Commander workspace mode"
             value={mode}
-            options={['Movement', 'Features']}
+            options={['Functions', 'Live Movements']}
             onChange={(value) => setMode(value as MovementMode)}
             size="header"
           />
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 max-[720px]:w-full max-[720px]:flex-none">
             <CardTitle className="text-lg text-primary">
-              {mode === 'Movement' ? 'Commanders' : 'Feature assignments'}
+              {mode === 'Live Movements' ? 'Commanders' : 'Function assignments'}
               <span className="ml-2 text-sm font-normal text-text-muted">({rows.length})</span>
             </CardTitle>
-            {mode === 'Movement' ? <Badge variant={snapshotBadge.variant}>{snapshotBadge.label}</Badge> : null}
+            {mode === 'Live Movements' ? <Badge variant={snapshotBadge.variant}>{snapshotBadge.label}</Badge> : null}
             {assignmentsDirty ? <Badge variant="warning">Unsaved</Badge> : null}
-            {mode === 'Movement' && rows.length > 0 ? (
+            {mode === 'Live Movements' && rows.length > 0 ? (
               <span className="text-xs text-text-muted">{availableCount} available</span>
             ) : null}
-            {mode === 'Movement' ? <span className="text-xs text-text-muted">Auto-refreshes every 5s</span> : null}
+            {mode === 'Live Movements' ? <span className="text-xs text-text-muted">Auto-refreshes every 5s</span> : null}
           </div>
-          {mode === 'Features' ? (
+          {mode === 'Functions' ? (
             <Button
               variant="primary"
               size="sm"
@@ -277,12 +319,14 @@ const MovementView: React.FC = () => {
           </Button>
         </CardHeader>
         <CardContent className="liquid-prominent-header-content">
-          {mode === 'Features' ? (
+          {mode === 'Functions' ? (
             <div className="flex flex-col gap-4">
               <div className="rounded-global border border-border-light bg-bg-card/45 px-4 py-3 shadow-[var(--glass-shadow-compact)] backdrop-blur-xl">
                 <p className="text-sm font-semibold text-text-main">Choose the commanders each automation may launch.</p>
                 <p className="mt-1 text-xs text-text-muted">
-                  Only explicitly assigned commanders can launch for a feature. Live availability and feature-specific requirements are still checked before each launch.
+                  Every function defaults to all commanders. Use a function in the table header to toggle it for the full roster, or adjust individual commanders below.
+                  Right-click a header function to require a minimum or maximum equipped bonus-troop stat.
+                  Live availability and feature-specific requirements are still checked before each launch.
                 </p>
               </div>
               {rows.length === 0 ? (
@@ -297,7 +341,67 @@ const MovementView: React.FC = () => {
                     <thead>
                       <tr className="border-b border-border-light bg-bg-card/65 text-left text-[10px] uppercase tracking-wider text-text-muted">
                         <th className="w-64 px-4 py-2.5 font-semibold">Commander</th>
-                        <th className="px-4 py-2.5 font-semibold">Allowed features</th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          <div className="flex flex-col gap-2">
+                            <span>Functions · toggle for all commanders</span>
+                            <div className="flex flex-wrap gap-1.5 normal-case tracking-normal">
+                              {COMMANDER_FEATURES.map((feature) => {
+                                const assignedCount = commanderIDsAssignedToFeature(
+                                  featureAssignments,
+                                  feature.id,
+                                  commanderIDs,
+                                ).length;
+                                const allAssigned = commanderIDs.length > 0
+                                  && assignedCount === commanderIDs.length;
+                                const noneAssigned = assignedCount === 0;
+                                const hasRequirements = (featureAssignments.requirements[feature.id]?.length ?? 0) > 0;
+                                const eligibleCount = commanderIDsEligibleForFeature(
+                                  featureAssignments,
+                                  feature.id,
+                                  commanderIDs,
+                                  state,
+                                ).length;
+                                return (
+                                  <button
+                                    key={feature.id}
+                                    type="button"
+                                    className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
+                                    aria-pressed={allAssigned}
+                                    aria-label={`${allAssigned ? 'Disable' : 'Enable'} ${feature.label} for all commanders`}
+                                    aria-description="Right-click to configure an equipped bonus-troop requirement."
+                                    disabled={savingAssignments || commanderIDs.length === 0}
+                                    onClick={() => setFeatureForAllCommanders(feature.id, !allAssigned)}
+                                    onContextMenu={(event) => {
+                                      event.preventDefault();
+                                      if (!savingAssignments) setRequirementFeatureID(feature.id);
+                                    }}
+                                    title={hasRequirements
+                                      ? `Equipment requirement active · ${eligibleCount}/${commanderIDs.length} commanders eligible · right-click to edit`
+                                      : 'Right-click to require an equipped bonus-troop stat'}
+                                  >
+                                    <Badge
+                                      variant={allAssigned ? 'success' : noneAssigned ? 'danger' : 'warning'}
+                                      className="gap-1.5 cursor-pointer normal-case tracking-normal shadow-sm"
+                                    >
+                                      {allAssigned
+                                        ? <CheckCircle2 className="h-3 w-3" />
+                                        : noneAssigned
+                                          ? <XCircle className="h-3 w-3" />
+                                          : <HelpCircle className="h-3 w-3" />}
+                                      {feature.label}
+                                      {hasRequirements ? (
+                                        <>
+                                          <SlidersHorizontal className="ml-0.5 h-3 w-3" />
+                                          <span>{eligibleCount}/{commanderIDs.length}</span>
+                                        </>
+                                      ) : null}
+                                    </Badge>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -364,6 +468,12 @@ const MovementView: React.FC = () => {
                                       feature.id,
                                       row.commanderId,
                                     );
+                                    const meetsRequirement = commanderMeetsFeatureRequirements(
+                                      featureAssignments,
+                                      feature.id,
+                                      row.commanderId,
+                                      state,
+                                    );
                                     return (
                                       <button
                                         key={feature.id}
@@ -377,14 +487,19 @@ const MovementView: React.FC = () => {
                                           !assigned,
                                         )}
                                         aria-label={`${assigned ? 'Disallow' : 'Allow'} ${feature.label} for ${row.name || `commander ${row.commanderId}`}`}
+                                        title={assigned && !meetsRequirement
+                                          ? 'Assigned, but the equipped bonus-troop requirement is not met.'
+                                          : undefined}
                                       >
                                         <Badge
-                                          variant={assigned ? 'success' : 'danger'}
+                                          variant={assigned ? meetsRequirement ? 'success' : 'warning' : 'danger'}
                                           className="gap-1.5 cursor-pointer normal-case tracking-normal shadow-sm"
                                         >
-                                          {assigned
+                                          {assigned && meetsRequirement
                                             ? <CheckCircle2 className="h-3 w-3" />
-                                            : <XCircle className="h-3 w-3" />}
+                                            : assigned
+                                              ? <SlidersHorizontal className="h-3 w-3" />
+                                              : <XCircle className="h-3 w-3" />}
                                           {feature.label}
                                         </Badge>
                                       </button>
@@ -481,6 +596,23 @@ const MovementView: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      <CommanderRequirementModal
+        isOpen={requirementFeatureID != null}
+        featureID={requirementFeatureID}
+        featureLabel={COMMANDER_FEATURES.find((feature) => feature.id === requirementFeatureID)?.label ?? 'Function'}
+        commanderIDs={commanderIDs}
+        requirement={requirementFeatureID
+          ? equipmentRequirementForFeature(featureAssignments, requirementFeatureID)
+          : null}
+        onClose={() => setRequirementFeatureID(null)}
+        onApply={(requirement) => {
+          if (requirementFeatureID) setFeatureEquipmentRequirement(requirementFeatureID, requirement);
+        }}
+        onClear={() => {
+          if (requirementFeatureID) setFeatureEquipmentRequirement(requirementFeatureID, null);
+        }}
+      />
     </div>
   );
 };

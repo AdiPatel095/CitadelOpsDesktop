@@ -82,6 +82,32 @@ func (submitter *coordinatorTestSubmitter) Submit(_ context.Context, request Int
 	return Intent.Receipt{Status: Intent.StatusSucceeded}
 }
 
+type coordinatorTestFailureFallbackSubmitter struct {
+	calls chan Intent.Request
+}
+
+func (submitter *coordinatorTestFailureFallbackSubmitter) Submit(_ context.Context, request Intent.Request) Intent.Receipt {
+	submitter.calls <- request
+	if request.Name == "test.primary" {
+		return Intent.Receipt{
+			ID: "primary-operation", Intent: request.Name,
+			Status: Intent.StatusFailed, Error: "primary failed",
+		}
+	}
+	return Intent.Receipt{ID: "fallback-operation", Intent: request.Name, Status: Intent.StatusSucceeded}
+}
+
+func waitForCoordinatorRequest(t *testing.T, calls <-chan Intent.Request) Intent.Request {
+	t.Helper()
+	select {
+	case request := <-calls:
+		return request
+	case <-time.After(time.Second):
+		t.Fatal("coordinator request timed out")
+		return Intent.Request{}
+	}
+}
+
 type coordinatorTestChainPolicy struct {
 	quiesced chan struct{}
 	once     sync.Once
@@ -139,6 +165,26 @@ func (submitter *coordinatorTestBlockingSubmitter) Submit(ctx context.Context, _
 	<-ctx.Done()
 	submitter.canceledOnce.Do(func() { close(submitter.canceled) })
 	return Intent.Receipt{Status: Intent.StatusCancelled, Error: ctx.Err().Error()}
+}
+
+func TestPolicyOperationContextBoundsAutoBeriAttackQueueWait(t *testing.T) {
+	for _, policyID := range []string{"autoTowers", "autoBeriWorldAttack"} {
+		operationContext, cancel := policyOperationContext(t.Context(), policyID)
+		deadline, bounded := operationContext.Deadline()
+		cancel()
+		if !bounded {
+			t.Fatalf("%s operation context has no deadline", policyID)
+		}
+		remaining := time.Until(deadline)
+		if remaining < boundedAttackIntentTTL-time.Second || remaining > boundedAttackIntentTTL {
+			t.Fatalf("%s operation deadline = %s, want about %s", policyID, remaining, boundedAttackIntentTTL)
+		}
+	}
+	operationContext, cancel := policyOperationContext(t.Context(), "autoRecruit")
+	defer cancel()
+	if _, bounded := operationContext.Deadline(); bounded {
+		t.Fatal("non-attack policy unexpectedly received an operation deadline")
+	}
 }
 
 func TestCoordinatorIndexesAndRoutesDeclaredWakeDomains(t *testing.T) {
@@ -935,6 +981,88 @@ func TestCoordinatorOptInSuccessReevaluatesImmediately(t *testing.T) {
 	}
 	if current.running || current.immediateRuns != 1 || !current.rejectRepeatedDecision {
 		t.Fatalf("completed runtime was not prepared for guarded immediate reevaluation: %+v", current)
+	}
+}
+
+func TestCoordinatorSuccessfulFailureFallbackReevaluatesImmediately(t *testing.T) {
+	next := time.Now().UTC().Add(time.Hour)
+	current := &policyRuntime{nextCheck: next, running: true, lastDecisionFingerprint: "request"}
+	result, wakeImmediately := completePolicyRun(current, operationResult{
+		policyID: "autoStation",
+		receipt: Intent.Receipt{
+			Status: Intent.StatusFailed, Error: "station failed",
+		},
+		failureFallback:     &Intent.Receipt{Status: Intent.StatusSucceeded},
+		nextCheck:           next,
+		reevaluateOnSuccess: true,
+	}, time.Now().UTC())
+	if !wakeImmediately || !result.nextCheck.IsZero() || !current.nextCheck.IsZero() {
+		t.Fatalf("successful failure fallback was deferred: result=%+v runtime=%+v", result, current)
+	}
+}
+
+func TestCoordinatorRunsFailureFallbackWithThePolicyActor(t *testing.T) {
+	state := State.NewStore(coordinatorReadyState())
+	configuration := openCoordinatorTestConfiguration(t, "fallback")
+	submitter := &coordinatorTestFailureFallbackSubmitter{calls: make(chan Intent.Request, 2)}
+	policy := &coordinatorTestPolicy{id: "fallback", decision: Decision{
+		Status:  "running",
+		Detail:  "Run primary operation",
+		Request: &Intent.Request{Name: "test.primary"},
+		FailureFallback: &Intent.Request{
+			Name: "test.failure_fallback",
+		},
+		FailureDetail: "Failure fallback completed",
+		NextCheckAt:   time.Now().UTC().Add(time.Hour),
+	}}
+	coordinator := NewCoordinator(state, configuration, nil, submitter, policy)
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		coordinator.Run(ctx)
+	}()
+
+	first := waitForCoordinatorRequest(t, submitter.calls)
+	second := waitForCoordinatorRequest(t, submitter.calls)
+	if first.Name != "test.primary" || second.Name != "test.failure_fallback" {
+		t.Fatalf("failure fallback requests = %q then %q", first.Name, second.Name)
+	}
+	if first.Actor != "automation:fallback" || second.Actor != "automation:fallback" {
+		t.Fatalf("failure fallback actors = %q then %q", first.Actor, second.Actor)
+	}
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		automation := state.Snapshot().Automations["fallback"]
+		if automation.Status == "idle" && automation.LastOperationID == "fallback-operation" {
+			if automation.Detail != "Failure fallback completed" || automation.LastError != "" {
+				t.Fatalf("completed failure fallback state = %+v", automation)
+			}
+			cancel()
+			<-done
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	cancel()
+	<-done
+	t.Fatalf("failure fallback state = %+v", state.Snapshot().Automations["fallback"])
+}
+
+func TestFailureFallbackRunsOnlyForTerminalFailures(t *testing.T) {
+	for _, test := range []struct {
+		status Intent.Status
+		want   bool
+	}{
+		{status: Intent.StatusFailed, want: true},
+		{status: Intent.StatusPartiallySucceeded, want: true},
+		{status: Intent.StatusIndeterminate, want: true},
+		{status: Intent.StatusCancelled, want: false},
+		{status: Intent.StatusSucceeded, want: false},
+	} {
+		if got := statusRunsFailureFallback(test.status); got != test.want {
+			t.Fatalf("status %q runs failure fallback = %t, want %t", test.status, got, test.want)
+		}
 	}
 }
 

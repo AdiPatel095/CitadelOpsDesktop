@@ -6,10 +6,23 @@ import type {
 } from '../api/Contracts';
 
 export const DEFENSE_PRESETS_SECTION = 'defense.presets';
+export const DEFENSE_WALL_FLANK_TOOL_SLOT_COUNT = 4;
+export const DEFENSE_WALL_MIDDLE_TOOL_SLOT_COUNT = 6;
+export const DEFENSE_MOAT_TOOL_SLOT_COUNT = 1;
+export const DEFENSE_KEEP_TOOL_SLOT_COUNT = 3;
+
+// DFW M.S is positional: zero-based indexes 1 and 4 are the two gate slots.
+export function isDefenseWallMiddleGateSlot(index: number): boolean {
+  return index === 1 || index === 4;
+}
 
 export interface DefensePresetKeep {
   mauct: number;
   unitTypePercent: number;
+  // Older presets omit both rows and preserve the target castle's current
+  // courtyard tools. New and captured presets store both fixed DFK rows.
+  primaryToolSlots?: DefenseToolSlotV2[];
+  secondaryToolSlots?: DefenseToolSlotV2[];
 }
 
 export interface DefensePresetDraft {
@@ -41,6 +54,7 @@ export interface DefensePresetSummary {
   toolTypes: number[];
   wallSlots: number;
   moatSlots: number;
+  courtyardSlots: number;
 }
 
 export function emptyDefensePresetDocument(): DefensePresetDocument {
@@ -51,14 +65,14 @@ export function emptyDefensePresetDraft(): DefensePresetDraft {
   return {
     name: '',
     wall: {
-      left: emptyWallSection(4, 33),
-      middle: emptyWallSection(6, 34),
-      right: emptyWallSection(4, 33),
+      left: emptyWallSection(DEFENSE_WALL_FLANK_TOOL_SLOT_COUNT, 33),
+      middle: emptyWallSection(DEFENSE_WALL_MIDDLE_TOOL_SLOT_COUNT, 34),
+      right: emptyWallSection(DEFENSE_WALL_FLANK_TOOL_SLOT_COUNT, 33),
     },
     moat: {
-      leftToolSlots: emptyToolSlots(1),
-      middleToolSlots: emptyToolSlots(1),
-      rightToolSlots: emptyToolSlots(1),
+      leftToolSlots: emptyToolSlots(DEFENSE_MOAT_TOOL_SLOT_COUNT),
+      middleToolSlots: emptyToolSlots(DEFENSE_MOAT_TOOL_SLOT_COUNT),
+      rightToolSlots: emptyToolSlots(DEFENSE_MOAT_TOOL_SLOT_COUNT),
     },
   };
 }
@@ -79,6 +93,8 @@ export function defensePresetDraftFromCastle(castle: CastleStateV2): DefensePres
     keep: {
       mauct: Math.max(0, Math.trunc(castle.defense.keep.mauct ?? 0)),
       unitTypePercent: clampPercent(castle.defense.keep.unitTypePercent),
+      primaryToolSlots: cloneToolSlots(castle.defense.keep.primaryToolSlots),
+      secondaryToolSlots: cloneToolSlots(castle.defense.keep.secondaryToolSlots),
     },
     sourceCastleId: castle.id,
     sourceCastleName: castle.name?.trim() || undefined,
@@ -98,10 +114,31 @@ export function cloneDefensePresetDraft(preset: DefensePresetDraft): DefensePres
       middleToolSlots: cloneToolSlots(preset.moat.middleToolSlots),
       rightToolSlots: cloneToolSlots(preset.moat.rightToolSlots),
     },
-    ...(preset.keep ? { keep: { ...preset.keep } } : {}),
+    ...(preset.keep ? {
+      keep: {
+        ...preset.keep,
+        ...(preset.keep.primaryToolSlots ? { primaryToolSlots: cloneToolSlots(preset.keep.primaryToolSlots) } : {}),
+        ...(preset.keep.secondaryToolSlots ? { secondaryToolSlots: cloneToolSlots(preset.keep.secondaryToolSlots) } : {}),
+      },
+    } : {}),
     ...(preset.sourceCastleId != null ? { sourceCastleId: preset.sourceCastleId } : {}),
     ...(preset.sourceCastleName ? { sourceCastleName: preset.sourceCastleName } : {}),
   };
+}
+
+export function normalizeDefensePresetSlots(preset: DefensePresetDraft): DefensePresetDraft {
+  const draft = cloneDefensePresetDraft(preset);
+  draft.wall.left.toolSlots = fixedToolSlots(draft.wall.left.toolSlots, DEFENSE_WALL_FLANK_TOOL_SLOT_COUNT);
+  draft.wall.middle.toolSlots = fixedToolSlots(draft.wall.middle.toolSlots, DEFENSE_WALL_MIDDLE_TOOL_SLOT_COUNT);
+  draft.wall.right.toolSlots = fixedToolSlots(draft.wall.right.toolSlots, DEFENSE_WALL_FLANK_TOOL_SLOT_COUNT);
+  draft.moat.leftToolSlots = fixedToolSlots(draft.moat.leftToolSlots, DEFENSE_MOAT_TOOL_SLOT_COUNT);
+  draft.moat.middleToolSlots = fixedToolSlots(draft.moat.middleToolSlots, DEFENSE_MOAT_TOOL_SLOT_COUNT);
+  draft.moat.rightToolSlots = fixedToolSlots(draft.moat.rightToolSlots, DEFENSE_MOAT_TOOL_SLOT_COUNT);
+  if (draft.keep?.primaryToolSlots && draft.keep.secondaryToolSlots) {
+    draft.keep.primaryToolSlots = fixedToolSlots(draft.keep.primaryToolSlots, DEFENSE_KEEP_TOOL_SLOT_COUNT);
+    draft.keep.secondaryToolSlots = fixedToolSlots(draft.keep.secondaryToolSlots, DEFENSE_KEEP_TOOL_SLOT_COUNT);
+  }
+  return draft;
 }
 
 export function parseDefensePresetDocument(value: unknown): DefensePresetDocument {
@@ -120,6 +157,8 @@ export function summarizeDefensePreset(preset: DefensePresetDraft): DefensePrese
     ...preset.moat.leftToolSlots,
     ...preset.moat.middleToolSlots,
     ...preset.moat.rightToolSlots,
+    ...(preset.keep?.primaryToolSlots ?? []),
+    ...(preset.keep?.secondaryToolSlots ?? []),
   ];
   const toolTypes = new Set<number>();
   let toolAmount = 0;
@@ -133,6 +172,9 @@ export function summarizeDefensePreset(preset: DefensePresetDraft): DefensePrese
     toolTypes: Array.from(toolTypes),
     wallSlots: preset.wall.left.toolSlots.length + preset.wall.middle.toolSlots.length + preset.wall.right.toolSlots.length,
     moatSlots: preset.moat.leftToolSlots.length + preset.moat.middleToolSlots.length + preset.moat.rightToolSlots.length,
+    courtyardSlots: preset.keep?.primaryToolSlots && preset.keep.secondaryToolSlots
+      ? preset.keep.primaryToolSlots.length + preset.keep.secondaryToolSlots.length
+      : 0,
   };
 }
 
@@ -140,9 +182,10 @@ function parseDefensePreset(value: unknown): AppDefensePreset | null {
   if (!isRecord(value) || typeof value.id !== 'string' || typeof value.name !== 'string') return null;
   const draft = parseDefensePresetDraft(value);
   if (!draft) return null;
+  const normalized = normalizeDefensePresetSlots(draft);
   const createdAt = validDate(value.createdAt) ?? new Date(0).toISOString();
   return {
-    ...draft,
+    ...normalized,
     id: value.id,
     createdAt,
     updatedAt: validDate(value.updatedAt) ?? createdAt,
@@ -209,7 +252,14 @@ function parseKeep(value: unknown): DefensePresetKeep | null {
   const mauct = Number(value.mauct);
   const unitTypePercent = integerInRange(value.unitTypePercent, 0, 100);
   if (!Number.isSafeInteger(mauct) || mauct < 0 || unitTypePercent == null) return null;
-  return { mauct, unitTypePercent };
+  const hasPrimaryToolSlots = value.primaryToolSlots != null;
+  const hasSecondaryToolSlots = value.secondaryToolSlots != null;
+  if (hasPrimaryToolSlots !== hasSecondaryToolSlots) return null;
+  if (!hasPrimaryToolSlots) return { mauct, unitTypePercent };
+  const primaryToolSlots = parseToolSlots(value.primaryToolSlots);
+  const secondaryToolSlots = parseToolSlots(value.secondaryToolSlots);
+  if (!primaryToolSlots || !secondaryToolSlots) return null;
+  return { mauct, unitTypePercent, primaryToolSlots, secondaryToolSlots };
 }
 
 function cloneWallSection(section: DefenseWallSectionV2): DefenseWallSectionV2 {
@@ -222,6 +272,15 @@ function cloneWallSection(section: DefenseWallSectionV2): DefenseWallSectionV2 {
 
 function cloneToolSlots(slots: DefenseToolSlotV2[]): DefenseToolSlotV2[] {
   return slots.map((slot) => ({ definitionId: Math.trunc(slot.definitionId), amount: Math.trunc(slot.amount) }));
+}
+
+function fixedToolSlots(slots: DefenseToolSlotV2[], count: number): DefenseToolSlotV2[] {
+  return Array.from({ length: count }, (_, index) => {
+    const slot = slots[index];
+    return slot
+      ? { definitionId: Math.trunc(slot.definitionId), amount: Math.trunc(slot.amount) }
+      : { definitionId: -1, amount: 0 };
+  });
 }
 
 function emptyWallSection(slotCount: number, unitPercent: number): DefenseWallSectionV2 {

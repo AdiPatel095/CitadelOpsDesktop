@@ -217,6 +217,9 @@ const DefensePresetsView: React.FC = () => {
   };
 
   const stockQuantities = selectedCastle ? numericRecord(selectedCastle.defense.inventory) : undefined;
+  const editorContextCastle = editor
+    ? castles.find((castle) => castle.id === editor.draft.sourceCastleId) ?? selectedCastle
+    : null;
 
   return (
     <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-5 pb-10">
@@ -328,6 +331,11 @@ const DefensePresetsView: React.FC = () => {
           initialDraft={editor.draft}
           saving={saving}
           stockQuantities={stockQuantities}
+          preservedKeepToolSlots={editorContextCastle ? {
+            castleName: castleLabel(editorContextCastle),
+            primary: editorContextCastle.defense.keep.primaryToolSlots,
+            secondary: editorContextCastle.defense.keep.secondaryToolSlots,
+          } : undefined}
           onClose={() => { if (!saving) setEditor(null); }}
           onSave={(draft) => void handleSave(draft)}
         />
@@ -385,9 +393,17 @@ const PresetCard: React.FC<{
             </div>
           </div>
           <div className="flex flex-wrap content-start items-start gap-1.5 sm:max-w-48">
-            <Badge variant="outline">{summary.wallSlots} wall slots</Badge>
+            <Badge variant="outline">Left · 4 wall</Badge>
+            <Badge variant="warning">Front · 4 wall + 2 gate</Badge>
+            <Badge variant="outline">Right · 4 wall</Badge>
             <Badge variant="outline">{summary.moatSlots} moat slots</Badge>
-            <Badge variant={preset.keep ? 'primary' : 'secondary'}>{preset.keep ? 'Keep included' : 'Keep unchanged'}</Badge>
+            <Badge variant={preset.keep ? 'primary' : 'secondary'}>
+              {summary.courtyardSlots > 0
+                ? `${summary.courtyardSlots} courtyard slots`
+                : preset.keep
+                  ? 'Courtyard tools preserved'
+                  : 'Keep unchanged'}
+            </Badge>
             <Badge variant="secondary">{rangedLabel(preset)}</Badge>
           </div>
         </div>
@@ -427,40 +443,35 @@ function presetCompatibility(
     return { variant: 'danger', label: 'Layout mismatch', detail: countMismatch };
   }
 
-  const wallRequired = toolAmounts(
+  const required = toolAmounts(
     preset.wall.left.toolSlots,
     preset.wall.middle.toolSlots,
     preset.wall.right.toolSlots,
-  );
-  const moatRequired = toolAmounts(
     preset.moat.leftToolSlots,
     preset.moat.middleToolSlots,
     preset.moat.rightToolSlots,
+    ...(preset.keep?.primaryToolSlots && preset.keep.secondaryToolSlots
+      ? [preset.keep.primaryToolSlots, preset.keep.secondaryToolSlots]
+      : []),
   );
-  const wallReleased = toolAmounts(
+  const released = toolAmounts(
     castle.defense.wall.left.toolSlots,
     castle.defense.wall.middle.toolSlots,
     castle.defense.wall.right.toolSlots,
-  );
-  const moatReleased = toolAmounts(
     castle.defense.moat.leftToolSlots,
     castle.defense.moat.middleToolSlots,
     castle.defense.moat.rightToolSlots,
+    castle.defense.keep.primaryToolSlots,
+    castle.defense.keep.secondaryToolSlots,
   );
-  for (const [definitionID, amount] of wallRequired) {
-    const available = inventoryAmount(castle, definitionID) + (wallReleased.get(definitionID) ?? 0);
-    if (available < amount) return shortageCompatibility(definitionID, amount, available, tools);
-  }
-  const combinedRequired = mergeAmounts(wallRequired, moatRequired);
-  const combinedReleased = mergeAmounts(wallReleased, moatReleased);
-  for (const [definitionID, amount] of combinedRequired) {
-    const available = inventoryAmount(castle, definitionID) + (combinedReleased.get(definitionID) ?? 0);
+  for (const [definitionID, amount] of required) {
+    const available = inventoryAmount(castle, definitionID) + (released.get(definitionID) ?? 0);
     if (available < amount) return shortageCompatibility(definitionID, amount, available, tools);
   }
   return {
     variant: 'success',
     label: 'Compatible with observed defense',
-    detail: 'Slot counts and available-plus-assigned tools fit. The server will repeat this check against a fresh read before writing.',
+    detail: 'Wall, gate, moat, and included courtyard slots fit the available-plus-assigned tools. The server will repeat this check against a fresh read before writing.',
   };
 }
 
@@ -472,6 +483,12 @@ function firstSlotCountMismatch(preset: AppDefensePreset, castle: CastleStateV2)
     ['left moat', preset.moat.leftToolSlots.length, castle.defense.moat.leftToolSlots.length],
     ['front moat', preset.moat.middleToolSlots.length, castle.defense.moat.middleToolSlots.length],
     ['right moat', preset.moat.rightToolSlots.length, castle.defense.moat.rightToolSlots.length],
+    ...(preset.keep?.primaryToolSlots && preset.keep.secondaryToolSlots
+      ? [
+        ['keep tools', preset.keep.primaryToolSlots.length, castle.defense.keep.primaryToolSlots.length],
+        ['Sceat support tools', preset.keep.secondaryToolSlots.length, castle.defense.keep.secondaryToolSlots.length],
+      ] as Array<[string, number, number]>
+      : []),
   ];
   const mismatch = groups.find(([, presetCount, castleCount]) => presetCount !== castleCount);
   return mismatch ? `${capitalize(mismatch[0])} has ${mismatch[1]} preset slots but the castle has ${mismatch[2]}.` : '';
@@ -499,14 +516,6 @@ function toolAmounts(...groups: DefenseToolSlotV2[][]): Map<number, number> {
     }
   }
   return amounts;
-}
-
-function mergeAmounts(...groups: Map<number, number>[]): Map<number, number> {
-  const merged = new Map<number, number>();
-  for (const group of groups) {
-    for (const [definitionID, amount] of group) merged.set(definitionID, (merged.get(definitionID) ?? 0) + amount);
-  }
-  return merged;
 }
 
 function inventoryAmount(castle: CastleStateV2, definitionID: number): number {

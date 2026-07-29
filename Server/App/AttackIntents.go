@@ -207,8 +207,9 @@ type riftReplayRequest struct {
 }
 
 type attackSetupRequest struct {
-	Name  string                   `json:"name,omitempty"`
-	Waves []attackSetupWaveRequest `json:"waves"`
+	Name             string                      `json:"name,omitempty"`
+	Waves            []attackSetupWaveRequest    `json:"waves"`
+	CourtyardSupport attackSetupCourtyardSupport `json:"courtyardSupport"`
 }
 
 type attackSetupWaveRequest struct {
@@ -218,6 +219,11 @@ type attackSetupWaveRequest struct {
 }
 
 type attackSetupLaneRequest struct {
+	Troops []attackSetupSlotRequest `json:"troops"`
+	Tools  []attackSetupSlotRequest `json:"tools"`
+}
+
+type attackSetupCourtyardSupport struct {
 	Troops []attackSetupSlotRequest `json:"troops"`
 	Tools  []attackSetupSlotRequest `json:"tools"`
 }
@@ -271,8 +277,8 @@ func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, a
 	if err != nil {
 		return Intent.Plan{}, err
 	}
-	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves)
-	if _, err := buildAttackSetupWaves(invasionAttackSetup(limitedPreset), source, input.GameData); err != nil {
+	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity)
+	if _, err := buildAttackSetup(invasionAttackSetup(limitedPreset), source, input.GameData); err != nil {
 		return Intent.Plan{}, fmt.Errorf("validate CRA-capped attack preset %q: %w", request.Preset.Name, err)
 	}
 	resolved := resolvedAllianceTargetAttackRequest{
@@ -420,8 +426,8 @@ func (application *Application) resolveAllianceTargetAttackStep(
 	if err != nil {
 		return Intent.Step{}, err
 	}
-	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves)
-	waves, err := buildAttackSetupWaves(invasionAttackSetup(limitedPreset), source, input.GameData)
+	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity)
+	built, err := buildAttackSetup(invasionAttackSetup(limitedPreset), source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build attack preset %q: %w", request.Preset.Name, err)
 	}
@@ -429,7 +435,7 @@ func (application *Application) resolveAllianceTargetAttackStep(
 		KingdomID: request.KingdomID, X: request.TargetX, Y: request.TargetY,
 		TypeID: dialog.Target.TypeID, ObjectID: dialog.Target.ObjectID, OwnerID: dialog.Target.OwnerID,
 	}
-	body, err := json.Marshal(invasionAttackBody(source, target, resolved.CommanderID, waves))
+	body, err := json.Marshal(invasionAttackBody(source, target, resolved.CommanderID, built))
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build player attack payload: %w", err)
 	}
@@ -533,14 +539,13 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		if err != nil {
 			return Intent.Plan{}, err
 		}
-		waves, err := buildAttackSetupWavesForCommanders(*request.AttackSetup, source, input.GameData, len(resolution.Selected))
+		built, err := buildAttackSetupForCommanders(*request.AttackSetup, source, input.GameData, len(resolution.Selected))
 		if err != nil {
 			return Intent.Plan{}, err
 		}
-		fields["A"], _ = json.Marshal(waves)
-		fields["AST"], _ = json.Marshal([]int64{-1, -1, -1})
-		empty := attackPair{-1, 0}
-		fields["RW"], _ = json.Marshal([]attackPair{empty, empty, empty, empty, empty, empty, empty, empty})
+		fields["A"], _ = json.Marshal(built.Waves)
+		fields["AST"], _ = json.Marshal(built.SupportTools)
+		fields["RW"], _ = json.Marshal(built.SupportTroops)
 		fields["ASCT"] = json.RawMessage(`0`)
 		fields["SX"], _ = json.Marshal(source.X)
 		fields["SY"], _ = json.Marshal(source.Y)
@@ -629,52 +634,77 @@ func riftReplayTiming(launch State.RiftLaunch, arriveAt int64, now time.Time) (i
 	return normalizedArrival - int64(launch.OneWayTTSeconds), normalizedArrival, true, nil
 }
 
-func buildAttackSetupWaves(setup attackSetupRequest, source State.CastleState, gameData *GameData.Store) ([]attackWave, error) {
-	return buildAttackSetupWavesForCommanders(setup, source, gameData, 1)
+type builtAttackSetup struct {
+	Waves         []attackWave
+	SupportTroops []attackPair
+	SupportTools  []int64
 }
 
-func buildAttackSetupWavesForCommanders(setup attackSetupRequest, source State.CastleState, gameData *GameData.Store, copies int) ([]attackWave, error) {
+func buildAttackSetup(setup attackSetupRequest, source State.CastleState, gameData *GameData.Store) (builtAttackSetup, error) {
+	return buildAttackSetupForCommanders(setup, source, gameData, 1)
+}
+
+func buildAttackSetupForCommanders(
+	setup attackSetupRequest,
+	source State.CastleState,
+	gameData *GameData.Store,
+	copies int,
+) (builtAttackSetup, error) {
 	if copies < 1 {
-		return nil, fmt.Errorf("attack setup requires at least one commander")
+		return builtAttackSetup{}, fmt.Errorf("attack setup requires at least one commander")
 	}
 	if len(setup.Waves) < 1 || len(setup.Waves) > AttackPresets.MaximumWaves {
-		return nil, fmt.Errorf("attack setup must contain between 1 and %d waves", AttackPresets.MaximumWaves)
+		return builtAttackSetup{}, fmt.Errorf("attack setup must contain between 1 and %d waves", AttackPresets.MaximumWaves)
 	}
 	requested := map[State.UnitID]int64{}
 	unitTotal := int64(0)
-	result := make([]attackWave, 0, len(setup.Waves))
+	waves := make([]attackWave, 0, len(setup.Waves))
 	for waveIndex, wave := range setup.Waves {
 		left, units, err := buildAttackSetupLane(wave.Left, 2, 2, gameData, requested)
 		if err != nil {
-			return nil, fmt.Errorf("wave %d left flank: %w", waveIndex+1, err)
+			return builtAttackSetup{}, fmt.Errorf("wave %d left flank: %w", waveIndex+1, err)
 		}
 		unitTotal += units
 		middle, units, err := buildAttackSetupLane(wave.Middle, 6, 3, gameData, requested)
 		if err != nil {
-			return nil, fmt.Errorf("wave %d middle flank: %w", waveIndex+1, err)
+			return builtAttackSetup{}, fmt.Errorf("wave %d middle flank: %w", waveIndex+1, err)
 		}
 		unitTotal += units
 		right, units, err := buildAttackSetupLane(wave.Right, 2, 2, gameData, requested)
 		if err != nil {
-			return nil, fmt.Errorf("wave %d right flank: %w", waveIndex+1, err)
+			return builtAttackSetup{}, fmt.Errorf("wave %d right flank: %w", waveIndex+1, err)
 		}
 		unitTotal += units
-		result = append(result, attackWave{Left: left, Middle: middle, Right: right})
+		waves = append(waves, attackWave{Left: left, Middle: middle, Right: right})
 	}
 	if unitTotal <= 0 {
-		return nil, fmt.Errorf("attack setup must allocate at least one troop")
+		return builtAttackSetup{}, fmt.Errorf("attack setup must allocate at least one troop")
+	}
+	supportTroops, _, err := buildAttackSetupPairs(
+		setup.CourtyardSupport.Troops,
+		AttackPresets.CourtyardTroopSlots,
+		"units",
+		gameData,
+		requested,
+	)
+	if err != nil {
+		return builtAttackSetup{}, fmt.Errorf("courtyard support troops: %w", err)
+	}
+	supportTools, err := buildAttackSupportTools(setup.CourtyardSupport.Tools, gameData, requested)
+	if err != nil {
+		return builtAttackSetup{}, fmt.Errorf("courtyard support tools: %w", err)
 	}
 	for id, amount := range requested {
 		if amount > math.MaxInt64/int64(copies) {
-			return nil, fmt.Errorf("attack setup quantity for item %d is too large", id)
+			return builtAttackSetup{}, fmt.Errorf("attack setup quantity for item %d is too large", id)
 		}
 		required := amount * int64(copies)
 		available := source.Units.Stationed[id]
 		if required > available {
-			return nil, fmt.Errorf("castle %d has %d of item %d; %d commander(s) require %d", source.ID, available, id, copies, required)
+			return builtAttackSetup{}, fmt.Errorf("castle %d has %d of item %d; %d commander(s) require %d", source.ID, available, id, copies, required)
 		}
 	}
-	return result, nil
+	return builtAttackSetup{Waves: waves, SupportTroops: supportTroops, SupportTools: supportTools}, nil
 }
 
 func buildAttackSetupLane(
@@ -730,12 +760,84 @@ func buildAttackSetupPairs(
 		if err := requireOfficialDefinition(gameData, collection, *slot.ItemID); err != nil {
 			return nil, 0, err
 		}
+		if collection == "tools" {
+			supportTool, err := isSceatAttackSupportTool(gameData, *slot.ItemID)
+			if err != nil {
+				return nil, 0, err
+			}
+			if supportTool {
+				return nil, 0, fmt.Errorf("tool definition %d belongs in a courtyard Sceat support slot", *slot.ItemID)
+			}
+		}
 		id := State.UnitID(*slot.ItemID)
 		requested[id] += slot.Quantity
 		total += slot.Quantity
 		result[index] = attackPair{*slot.ItemID, slot.Quantity}
 	}
 	return result, total, nil
+}
+
+func buildAttackSupportTools(
+	slots []attackSetupSlotRequest,
+	gameData *GameData.Store,
+	requested map[State.UnitID]int64,
+) ([]int64, error) {
+	if len(slots) > AttackPresets.CourtyardToolSlots {
+		return nil, fmt.Errorf("tools has %d slots; at most %d are supported", len(slots), AttackPresets.CourtyardToolSlots)
+	}
+	result := make([]int64, AttackPresets.CourtyardToolSlots)
+	for index := range result {
+		result[index] = -1
+	}
+	for index, slot := range slots {
+		if slot.ItemID == nil {
+			if slot.Quantity != 0 {
+				return nil, fmt.Errorf("tool slot %d has a quantity without an item", index+1)
+			}
+			continue
+		}
+		if *slot.ItemID <= 0 || slot.Quantity != 1 {
+			return nil, fmt.Errorf("tool slot %d must contain exactly one valid item", index+1)
+		}
+		if err := requireSceatAttackSupportTool(gameData, *slot.ItemID); err != nil {
+			return nil, err
+		}
+		id := State.UnitID(*slot.ItemID)
+		requested[id]++
+		result[index] = *slot.ItemID
+	}
+	return result, nil
+}
+
+func requireSceatAttackSupportTool(gameData *GameData.Store, id int64) error {
+	if err := requireOfficialDefinition(gameData, "tools", id); err != nil {
+		return err
+	}
+	supportTool, err := isSceatAttackSupportTool(gameData, id)
+	if err != nil {
+		return err
+	}
+	if !supportTool {
+		return fmt.Errorf("tool definition %d is not an official Sceat attack support tool", id)
+	}
+	return nil
+}
+
+func isSceatAttackSupportTool(gameData *GameData.Store, id int64) (bool, error) {
+	catalog, err := gameData.Catalog("units")
+	if err != nil {
+		return false, err
+	}
+	raw, exists := catalog.Find(strconv.FormatInt(id, 10))
+	if !exists {
+		return false, fmt.Errorf("tool definition %d is not in the current official catalog", id)
+	}
+	record, err := GameData.DecodeRecord(raw)
+	if err != nil {
+		return false, fmt.Errorf("decode tool definition %d: %w", id, err)
+	}
+	itemType, _ := record.String("type")
+	return strings.HasPrefix(itemType, "SceatSuppAtt"), nil
 }
 
 func planRiftTemplateRename(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -1058,6 +1160,23 @@ type attackBody struct {
 	AttackSupportCount int               `json:"ASCT"`
 }
 
+func emptyAttackSupportTools() []int64 {
+	result := make([]int64, AttackPresets.CourtyardToolSlots)
+	for index := range result {
+		result[index] = -1
+	}
+	return result
+}
+
+func emptyAttackSupportTroops() []attackPair {
+	empty := attackPair{-1, 0}
+	result := make([]attackPair, AttackPresets.CourtyardTroopSlots)
+	for index := range result {
+		result[index] = empty
+	}
+	return result
+}
+
 func maidenAttackBody(
 	sourceX, sourceY int,
 	target State.MapObservation,
@@ -1079,8 +1198,8 @@ func maidenAttackBody(
 		SourceX: sourceX, SourceY: sourceY, TargetX: target.X, TargetY: target.Y,
 		Kingdom: target.KingdomID, Leader: commanderID, Booster: -1, Valid: 1,
 		PremiumTravel: 1, Cooldown: 99, Waves: []attackWave{wave}, Books: []any{},
-		AttackSupportTools: []int64{-1, -1, -1},
-		SupportTroops:      []attackPair{empty, empty, empty, empty, empty, empty, empty, empty},
+		AttackSupportTools: emptyAttackSupportTools(),
+		SupportTroops:      emptyAttackSupportTroops(),
 	}
 	horseTravelBoostID := defaultHorseTravelBoostID
 	if len(horseTravelBoostIDs) > 0 {

@@ -38,6 +38,11 @@ func TestScalableEventScoresTrackSnapshotsAndPointUpdates(t *testing.T) {
 	if got := gameState.Invasion.FortifyCurrencies; len(got) != 3 || got[0] != "GTO" || got[1] != "STO" || got[2] != "ST" {
 		t.Fatalf("invasion fortification currencies = %#v", got)
 	}
+	activity := gameState.EventScores.ActivityByEvent[72]
+	if got := activity.FortifyCurrencies; len(got) != 3 || got[0] != "GTO" || got[1] != "STO" || got[2] != "ST" ||
+		!activity.FortifyCurrenciesObservedAt.Equal(observedAt) {
+		t.Fatalf("event fortification currency snapshot = %#v at %s", got, activity.FortifyCurrenciesObservedAt)
+	}
 	if gameState.Khan.RageCampID != 1147 || gameState.Khan.PlayerRage != 1740 ||
 		gameState.Khan.PlayerRageCap != 1740 || gameState.Khan.PlayerTotalRage != 52140 ||
 		!gameState.Khan.RageObservedAt.Equal(observedAt) {
@@ -71,6 +76,49 @@ func TestScalableEventScoresTrackSnapshotsAndPointUpdates(t *testing.T) {
 		t.Fatalf("Khan rage update: changed=%t state=%#v err=%v", changed, gameState.Khan, err)
 	}
 
+}
+
+func TestScalableEventSnapshotCachesFirstCurrenciesForEachOccurrence(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	gameState := State.NewGameState()
+	startedAt := time.Date(2026, 7, 28, 14, 0, 0, 0, time.UTC)
+	code := 0
+	apply := func(observedAt time.Time, payload string) {
+		t.Helper()
+		_, changed, err := reduceScalableEventSnapshot(t.Context(), Protocol.Frame{
+			Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+			Payload: json.RawMessage(payload),
+		}, &gameState, gameData)
+		if err != nil || !changed {
+			t.Fatalf("event snapshot at %s: changed=%t err=%v", observedAt, changed, err)
+		}
+	}
+
+	apply(startedAt, `{"E":[{"EID":71,"RS":7200,"EASE":1}]}`)
+	if got := gameState.Invasion.FortifyCurrencies; len(got) != 0 {
+		t.Fatalf("currencies before an authoritative list = %#v", got)
+	}
+
+	capturedAt := startedAt.Add(time.Minute)
+	apply(capturedAt, `{"E":[{"EID":71,"RS":7140,"EASE":1,"RCKS":["GTO","ST"]}]}`)
+	apply(startedAt.Add(2*time.Minute), `{"E":[{"EID":71,"RS":7080,"EASE":1,"RCKS":["GTO","KM"]}]}`)
+	activity := gameState.EventScores.ActivityByEvent[71]
+	if got := activity.FortifyCurrencies; len(got) != 2 || got[0] != "GTO" || got[1] != "ST" ||
+		!activity.FortifyCurrenciesObservedAt.Equal(capturedAt) {
+		t.Fatalf("cached first event currencies = %#v at %s", got, activity.FortifyCurrenciesObservedAt)
+	}
+	if got := gameState.Invasion.FortifyCurrencies; len(got) != 2 || got[0] != "GTO" || got[1] != "ST" {
+		t.Fatalf("active event currencies changed during the occurrence = %#v", got)
+	}
+
+	nextOccurrenceAt := startedAt.Add(24 * time.Hour)
+	apply(nextOccurrenceAt, `{"E":[{"EID":71,"RS":7200,"EASE":1,"RCKS":["GTO","KM"]}]}`)
+	activity = gameState.EventScores.ActivityByEvent[71]
+	if got := activity.FortifyCurrencies; len(got) != 2 || got[0] != "GTO" || got[1] != "KM" ||
+		!activity.FortifyCurrenciesObservedAt.Equal(nextOccurrenceAt) ||
+		!activity.ObservedFrom.Equal(nextOccurrenceAt) {
+		t.Fatalf("new occurrence currencies = %#v, activity = %#v", got, activity)
+	}
 }
 
 func scalableEventTestGameData(t *testing.T) *GameData.Store {

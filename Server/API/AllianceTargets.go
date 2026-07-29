@@ -35,15 +35,16 @@ type allianceTargetAttackRequirement struct {
 }
 
 type allianceTargetAttackPreview struct {
-	CommanderID  State.CommanderID                 `json:"commanderId"`
-	Capacity     AttackCapacity.LaneCapacity       `json:"capacity"`
-	MaximumWaves int                               `json:"maximumWaves"`
-	PresetWaves  int                               `json:"presetWaves"`
-	AppliedWaves int                               `json:"appliedWaves"`
-	TotalTroops  int64                             `json:"totalTroops"`
-	TotalTools   int64                             `json:"totalTools"`
-	Requirements []allianceTargetAttackRequirement `json:"requirements"`
-	Ready        bool                              `json:"ready"`
+	CommanderID     State.CommanderID                 `json:"commanderId"`
+	Capacity        AttackCapacity.LaneCapacity       `json:"capacity"`
+	SupportCapacity int64                             `json:"supportCapacity"`
+	MaximumWaves    int                               `json:"maximumWaves"`
+	PresetWaves     int                               `json:"presetWaves"`
+	AppliedWaves    int                               `json:"appliedWaves"`
+	TotalTroops     int64                             `json:"totalTroops"`
+	TotalTools      int64                             `json:"totalTools"`
+	Requirements    []allianceTargetAttackRequirement `json:"requirements"`
+	Ready           bool                              `json:"ready"`
 }
 
 func (server *Server) handleAllianceTargets(writer http.ResponseWriter, request *http.Request) {
@@ -142,9 +143,9 @@ func (server *Server) handleAllianceTargetAttackPreview(writer http.ResponseWrit
 		writeError(writer, http.StatusUnprocessableEntity, "attack_capacity_failed", err.Error())
 		return
 	}
-	limited := AttackPresets.LimitToCapacity(input.Preset, capacity.Capacity, capacity.MaximumWaves)
-	requirements, totalTroops, totalTools := allianceTargetRequirements(limited, source)
-	formationReady := totalTroops > 0
+	limited := AttackPresets.LimitToCapacity(input.Preset, capacity)
+	requirements, totalTroops, totalTools, formationTroops := allianceTargetRequirements(limited, source)
+	formationReady := formationTroops > 0
 	for _, requirement := range requirements {
 		if requirement.Required > requirement.Available {
 			formationReady = false
@@ -152,8 +153,9 @@ func (server *Server) handleAllianceTargetAttackPreview(writer http.ResponseWrit
 		}
 	}
 	writeJSON(writer, http.StatusOK, allianceTargetAttackPreview{
-		CommanderID: commanderID, Capacity: capacity.Capacity, MaximumWaves: capacity.MaximumWaves,
-		PresetWaves: len(input.Preset.Waves), AppliedWaves: len(limited.Waves),
+		CommanderID: commanderID, Capacity: capacity.Capacity, SupportCapacity: capacity.SupportCapacity,
+		MaximumWaves: capacity.MaximumWaves,
+		PresetWaves:  len(input.Preset.Waves), AppliedWaves: len(limited.Waves),
 		TotalTroops: totalTroops, TotalTools: totalTools, Requirements: requirements, Ready: formationReady,
 	})
 }
@@ -175,13 +177,13 @@ func firstAvailableCommander(gameState State.GameState, now time.Time) (State.Co
 func allianceTargetRequirements(
 	preset AttackPresets.Preset,
 	source State.CastleState,
-) ([]allianceTargetAttackRequirement, int64, int64) {
+) ([]allianceTargetAttackRequirement, int64, int64, int64) {
 	type requirementKey struct {
 		kind   string
 		itemID int64
 	}
 	required := map[requirementKey]int64{}
-	var totalTroops, totalTools int64
+	var totalTroops, totalTools, formationTroops int64
 	add := func(kind string, slots []AttackPresets.Slot) {
 		for _, slot := range slots {
 			if slot.ItemID == nil || *slot.ItemID <= 0 || slot.Quantity <= 0 {
@@ -197,10 +199,17 @@ func allianceTargetRequirements(
 	}
 	for _, wave := range preset.Waves {
 		for _, lane := range []AttackPresets.Lane{wave.Left, wave.Middle, wave.Right} {
+			for _, slot := range lane.Troops {
+				if slot.ItemID != nil && *slot.ItemID > 0 && slot.Quantity > 0 {
+					formationTroops += slot.Quantity
+				}
+			}
 			add("troop", lane.Troops)
 			add("tool", lane.Tools)
 		}
 	}
+	add("troop", preset.CourtyardSupport.Troops)
+	add("tool", preset.CourtyardSupport.Tools)
 	keys := make([]requirementKey, 0, len(required))
 	for key := range required {
 		keys = append(keys, key)
@@ -218,5 +227,5 @@ func allianceTargetRequirements(
 			Available: source.Units.Stationed[State.UnitID(key.itemID)],
 		})
 	}
-	return result, totalTroops, totalTools
+	return result, totalTroops, totalTools, formationTroops
 }

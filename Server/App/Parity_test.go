@@ -30,7 +30,7 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		"rift":         {"rift.maiden_wave.launch", "rift.launch.replay", "rift.template.rename", "rift.template.delete"},
 		"towers":       {"tower.queue.scan", "tower.context.refresh", "tower.attack", "tower.launch"},
 		"reports":      {"report.spy.fetch", "report.spy.share", "report.battle.summary", "report.battle.details"},
-		"beri":         {"beri.capacity.refresh", "beri.transfer"},
+		"beri":         {"beri.capacity.refresh", "beri.transfer", "beri.camp.open", "beri.target.find", "beri.tower.attack"},
 	}
 	for capability, names := range capabilities {
 		for _, name := range names {

@@ -43,6 +43,51 @@ func TestNormalizeAutoStormSettingsFixesMapRefreshAtTwoHours(t *testing.T) {
 	}
 }
 
+func TestAutoStormTroopCapPreviewUsesSettingsWithoutRuntimeTarget(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	for index := int64(1); index <= 6; index++ {
+		state.AttackAnalytics.RecentAutoStormLaunches = append(
+			state.AttackAnalytics.RecentAutoStormLaunches,
+			State.AttackFeatureLaunch{
+				MovementID: State.MovementID(index), FeatureID: State.AttackFeatureAutoStorm,
+				KingdomID: autoStormKingdomID, LaunchedAt: now.Add(-time.Duration(index) * time.Hour),
+			},
+		)
+	}
+	presets := json.RawMessage(`{
+		"version":1,
+		"presets":[
+			{"id":"fort","name":"Fort","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":10,"quantity":10}],"tools":[]},"R":{"troops":[],"tools":[]}}]},
+			{"id":"island","name":"Island","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":10,"quantity":8}],"tools":[]},"R":{"troops":[],"tools":[]}}]}
+		]
+	}`)
+	settings := json.RawMessage(`{
+		"version":1,
+		"forts":{"enabled":true,"presetId":"fort"},
+		"islands":{"enabled":true,"presetId":"island","defenseUnits":[{"unitId":12,"amount":5}]},
+		"troopImport":{"minimumTroops":7,"historyHours":48}
+	}`)
+
+	preview, err := PreviewAutoStormTroopCap(
+		state,
+		Configuration.Snapshot{Sections: map[string]json.RawMessage{
+			AttackPresets.ConfigurationSection: presets,
+		}},
+		autoStormTestGameData(t),
+		settings,
+		now,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !preview.Available || preview.TroopsPerAttack != 13 || preview.MaximumTroops != 78 ||
+		preview.AttacksInHistory != 6 || preview.AverageDailyAttacks != 3 ||
+		preview.BufferedAttackCount != 6 || preview.HistoryHours != 48 {
+		t.Fatalf("settings troop-cap preview = %#v", preview)
+	}
+}
+
 func TestAutoStormExpansionUsesCapturedCoordinatesInsteadOfKingdomSpaceIDs(t *testing.T) {
 	missing := []Buildings.TargetGround{{DefinitionID: 201, GridX: 220, GridY: 190, Direction: 3}}
 	selected, found := autoStormGroundForExpansion(missing, []int64{4})
@@ -157,10 +202,12 @@ func TestAutoStormTroopImportUsesSelectedDonorsInOrder(t *testing.T) {
 	state.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
 	settings := defaultAutoStormSettings()
 	settings.TroopImport = autoStormTroopImportSettings{Enabled: true, DonorCastleIDs: []State.CastleID{first.ID, second.ID}}
+	settings.Forts.Enabled = true
+	settings.Forts.PresetID = "fort"
 
 	decision, detail := autoStormTroopImportDecision(Snapshot{
-		State: state, GameData: autoStormTestGameData(t), Now: now,
-	}, settings, storm, map[State.UnitID]int64{10: 8}, map[string]float64{})
+		State: state, Configuration: autoStormTestTroopCapConfiguration(), GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[State.UnitID]int64{10: 8}, map[State.UnitID]int64{10: 8}, map[string]float64{})
 	if decision == nil || decision.Request == nil || decision.Request.Name != "troops.kingdom.ship" || detail != "" {
 		t.Fatalf("troop import decision = %#v detail=%q", decision, detail)
 	}
@@ -193,16 +240,110 @@ func TestAutoStormTroopImportWaitsForFiftyThousandMead(t *testing.T) {
 	state.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
 	settings := defaultAutoStormSettings()
 	settings.TroopImport = autoStormTroopImportSettings{Enabled: true, DonorCastleIDs: []State.CastleID{donor.ID}}
+	settings.Forts.Enabled = true
+	settings.Forts.PresetID = "fort"
 	metrics := map[string]float64{}
 
 	decision, detail := autoStormTroopImportDecision(Snapshot{
-		State: state, GameData: autoStormTestGameData(t), Now: now,
-	}, settings, storm, map[State.UnitID]int64{10: 8}, metrics)
+		State: state, Configuration: autoStormTestTroopCapConfiguration(), GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[State.UnitID]int64{10: 8}, map[State.UnitID]int64{10: 8}, metrics)
 	if decision != nil || !strings.Contains(detail, "waiting for Auto Food to reach 50000") {
 		t.Fatalf("troop import below Mead floor = %#v detail=%q", decision, detail)
 	}
 	if metrics["stormMead"] != GameData.StormTroopSupportMead-1 {
 		t.Fatalf("Storm Mead metric = %v", metrics["stormMead"])
+	}
+}
+
+func TestAutoStormTroopImportCapCountsTroopsAwayFromStorm(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Units.Traveling[10] = 8
+	donor := autoStormTestCastle(10, 0, "Donor")
+	donor.Units.Stationed[10] = 20
+	state.Castles[storm.ID] = storm
+	state.Castles[donor.ID] = donor
+	state.Movements[99] = State.MovementState{
+		ID: 99, SourceCastleID: storm.ID, KingdomID: storm.KingdomID,
+		Units: map[State.UnitID]int64{10: 8},
+	}
+	settings := defaultAutoStormSettings()
+	settings.TroopImport.Enabled = true
+	settings.TroopImport.DonorCastleIDs = []State.CastleID{donor.ID}
+	settings.Forts.Enabled = true
+	settings.Forts.PresetID = "fort"
+	metrics := map[string]float64{}
+
+	decision, detail := autoStormTroopImportDecision(Snapshot{
+		State: state, Configuration: autoStormTestTroopCapConfiguration(), GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[State.UnitID]int64{10: 8}, map[State.UnitID]int64{10: 8}, metrics)
+	if decision != nil || !strings.Contains(detail, "capped at 8 troops") ||
+		!strings.Contains(detail, "8 are committed") {
+		t.Fatalf("away-troop cap decision = %#v detail=%q", decision, detail)
+	}
+	if metrics["stormTroopsStationed"] != 0 || metrics["stormTroopsCommitted"] != 8 ||
+		metrics["stormTroopImportHeadroom"] != 0 {
+		t.Fatalf("away-troop cap metrics = %#v", metrics)
+	}
+}
+
+func TestAutoStormTroopImportMaintainsMinimumWithinHistoricalDemandCap(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Resources[12] = State.ResourceBalance{Amount: GameData.StormTroopSupportMead}
+	storm.FoodStateObservedAt = now
+	storm.Units.Stationed[10] = 10
+	donor := autoStormTestCastle(10, 0, "Donor")
+	donor.Units.Stationed[10] = 20
+	state.Castles[storm.ID] = storm
+	state.Castles[donor.ID] = donor
+	state.KingdomTransport.ObservedAt = now
+	state.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	for index := int64(1); index <= 6; index++ {
+		state.AttackAnalytics.RecentAutoStormLaunches = append(state.AttackAnalytics.RecentAutoStormLaunches, State.AttackFeatureLaunch{
+			MovementID: State.MovementID(index), FeatureID: State.AttackFeatureAutoStorm,
+			KingdomID: 4, LaunchedAt: now.Add(-time.Duration(index) * time.Hour),
+		})
+	}
+	settings := defaultAutoStormSettings()
+	settings.TroopImport.Enabled = true
+	settings.TroopImport.DonorCastleIDs = []State.CastleID{donor.ID}
+	settings.TroopImport.MinimumTroops = 10
+	settings.TroopImport.HistoryHours = 48
+	settings.Forts.Enabled = true
+	settings.Forts.PresetID = "fort"
+	presets := json.RawMessage(`{"version":1,"presets":[{"id":"fort","name":"Fort","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":10,"quantity":10}],"tools":[]},"R":{"troops":[],"tools":[]}}]}]}`)
+	metrics := map[string]float64{}
+
+	decision, detail := autoStormTroopImportDecision(Snapshot{
+		State: state,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+			AttackPresets.ConfigurationSection: presets,
+		}},
+		GameData: autoStormTestGameData(t), Now: now,
+	}, settings, storm, map[State.UnitID]int64{10: 10}, map[State.UnitID]int64{}, metrics)
+	if decision == nil || decision.Request == nil || decision.Request.Name != "troops.kingdom.ship" || detail != "" {
+		t.Fatalf("minimum-reserve decision = %#v detail=%q", decision, detail)
+	}
+	var arguments struct {
+		MaximumTargetTroops int64 `json:"maximumTargetTroops"`
+		Units               []struct {
+			UnitID State.UnitID `json:"unitId"`
+			Amount int64        `json:"amount"`
+		} `json:"units"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+		t.Fatal(err)
+	}
+	if arguments.MaximumTargetTroops != 60 || len(arguments.Units) != 1 ||
+		arguments.Units[0].UnitID != 10 || arguments.Units[0].Amount != 10 {
+		t.Fatalf("minimum-reserve transfer = %#v", arguments)
+	}
+	if metrics["stormAttacksInHistory"] != 6 || metrics["stormAverageDailyAttacks"] != 3 ||
+		metrics["stormBufferedAttackCount"] != 6 || metrics["stormTroopMaximum"] != 60 {
+		t.Fatalf("historical demand metrics = %#v", metrics)
 	}
 }
 
@@ -653,6 +794,17 @@ func autoStormTestGameData(t *testing.T) *GameData.Store {
 		t.Fatal(err)
 	}
 	return store
+}
+
+func autoStormTestTroopCapConfiguration() Configuration.Snapshot {
+	return Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		AttackPresets.ConfigurationSection: json.RawMessage(`{
+			"version":1,
+			"presets":[
+				{"id":"fort","name":"Fort","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":10,"quantity":8}],"tools":[]},"R":{"troops":[],"tools":[]}}]}
+			]
+		}`),
+	}}
 }
 
 func assertStormCandidateOrder(t *testing.T, candidates []autoStormCombatCandidate, want []int64) {

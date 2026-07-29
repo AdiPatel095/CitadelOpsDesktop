@@ -3,6 +3,7 @@ package Session
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -265,6 +266,16 @@ func (controller *Controller) observeDirectTraffic(observedAt time.Time) {
 	controller.outbound.Notify()
 }
 
+func pausesAutomationForDirectTraffic(payload string, observedAt time.Time) bool {
+	frame, err := Protocol.Decode(payload, Protocol.DirectionOutbound, observedAt)
+	if err != nil {
+		return true
+	}
+	// Entering a castle through JAA/JCA makes the game client request DCL
+	// asynchronously. It is passive castle-detail traffic, not a player action.
+	return strings.ToLower(strings.TrimSpace(frame.Opcode)) != "dcl"
+}
+
 func (controller *Controller) expireDirectTrafficPause(expected time.Time) {
 	controller.automationMu.Lock()
 	if !controller.directTrafficUntil.Equal(expected) || time.Now().Before(controller.directTrafficUntil) {
@@ -289,8 +300,19 @@ func (controller *Controller) AutomationLocked() bool {
 	return locked
 }
 
+func (controller *Controller) AutomationLockedFor(actor string) bool {
+	if controller == nil {
+		return false
+	}
+	controller.automationMu.Lock()
+	locked := controller.automationLocked ||
+		Outbound.YieldsToDirectTraffic(actor) && time.Now().Before(controller.directTrafficUntil)
+	controller.automationMu.Unlock()
+	return locked
+}
+
 func (controller *Controller) outboundDispatchGate(_ context.Context, metadata Outbound.Metadata) error {
-	if Outbound.YieldsToAutomationLock(metadata.Actor) && controller.AutomationLocked() {
+	if Outbound.YieldsToAutomationLock(metadata.Actor) && controller.AutomationLockedFor(metadata.Actor) {
 		return Outbound.ErrAutomationLocked
 	}
 	if metadata.ConnectionGeneration > 0 &&
@@ -301,18 +323,23 @@ func (controller *Controller) outboundDispatchGate(_ context.Context, metadata O
 }
 
 func (controller *Controller) WaitForAutomationUnlocked(ctx context.Context) error {
+	return controller.WaitForActorAutomationUnlocked(ctx, "automation:background")
+}
+
+func (controller *Controller) WaitForActorAutomationUnlocked(ctx context.Context, actor string) error {
 	for {
 		controller.automationMu.Lock()
 		locked := controller.automationLocked
 		directTrafficUntil := controller.directTrafficUntil
 		changed := controller.automationLockChanged
 		controller.automationMu.Unlock()
-		if !locked && !time.Now().Before(directTrafficUntil) {
+		yieldToDirectTraffic := Outbound.YieldsToDirectTraffic(actor)
+		if !locked && (!yieldToDirectTraffic || !time.Now().Before(directTrafficUntil)) {
 			return nil
 		}
 		var timer <-chan time.Time
 		var expiry *time.Timer
-		if !locked && !directTrafficUntil.IsZero() {
+		if !locked && yieldToDirectTraffic && !directTrafficUntil.IsZero() {
 			expiry = time.NewTimer(time.Until(directTrafficUntil))
 			timer = expiry.C
 		}
@@ -498,7 +525,9 @@ func (controller *Controller) run(ctx context.Context, runID uint64) {
 			}
 			if frame.Direction == Protocol.DirectionOutbound && frame.CausationOperationID == "" {
 				if reporter, ok := controller.transport.(OutboundCausationTransport); ok && reporter.ReportsOutboundCausation() {
-					controller.observeDirectTraffic(frame.ObservedAt)
+					if pausesAutomationForDirectTraffic(frame.Payload, frame.ObservedAt) {
+						controller.observeDirectTraffic(frame.ObservedAt)
+					}
 				}
 			}
 			if controller.ingest == nil {

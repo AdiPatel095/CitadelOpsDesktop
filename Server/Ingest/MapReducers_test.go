@@ -3,9 +3,11 @@ package Ingest
 import (
 	"bytes"
 	"encoding/json"
+	"slices"
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/AttackCapacity"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
@@ -65,6 +67,70 @@ func TestReduceNestedMapSnapshotParsesCapturedKhanCamp(t *testing.T) {
 		observation.EventCampBaseMoatBonus != 85 || observation.OwnerID != 0 ||
 		!observation.ObservedAt.Equal(observedAt) {
 		t.Fatalf("unexpected Khan camp observation: %#v", observation)
+	}
+}
+
+func TestReduceNestedMapSnapshotCapturesBerimondFindNextTower(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	observedAt := time.Date(2026, 7, 28, 15, 0, 0, 0, time.UTC)
+	domains, changed, err := reduceNestedMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "fnt", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{
+			"X":1472,"Y":29,
+			"gaa":{"KID":10,"AI":[[17,1472,29,-410,0,[],-1,55,12070,60]]}
+		}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("Berimond target: changed=%t err=%v", changed, err)
+	}
+	if gameState.Beri.TargetX != 1472 || gameState.Beri.TargetY != 29 ||
+		gameState.Beri.TargetTypeID != 17 || !gameState.Beri.TargetObservedAt.Equal(observedAt) {
+		t.Fatalf("unexpected Berimond target: %#v", gameState.Beri)
+	}
+	target := gameState.Map[10]["1472:29"]
+	if target.TypeID != AttackCapacity.BerimondTowerMapTypeID || target.ObjectID != -410 ||
+		target.Level != 55 || !target.ObservedAt.Equal(observedAt) {
+		t.Fatalf("unexpected Berimond tower observation: %#v", target)
+	}
+	if !slices.Contains(domains, "beri") {
+		t.Fatalf("domains = %#v", domains)
+	}
+}
+
+func TestReduceMapSnapshotInvalidatesUnavailableBerimondTarget(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	selectedAt := time.Date(2026, 7, 29, 13, 40, 0, 0, time.UTC)
+	observedAt := selectedAt.Add(time.Minute)
+	gameState.Beri.TargetX = 1489
+	gameState.Beri.TargetY = 28
+	gameState.Beri.TargetTypeID = AttackCapacity.BerimondTowerMapTypeID
+	gameState.Beri.TargetObservedAt = selectedAt
+
+	_, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: selectedAt.Add(30 * time.Second),
+		Payload: json.RawMessage(`{"KID":10,"AI":[[17,1489,28,-410,0,[],-1,60,23556,61]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("available Berimond target: changed=%t err=%v", changed, err)
+	}
+	if !gameState.Beri.TargetInvalidatedAt.IsZero() {
+		t.Fatalf("available Berimond target was invalidated: %#v", gameState.Beri)
+	}
+
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"KID":10,"AI":[[17,1489,28,-410,1,[],-1,60,1,61]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("unavailable Berimond target: changed=%t err=%v", changed, err)
+	}
+	if !gameState.Beri.TargetInvalidatedAt.Equal(observedAt) {
+		t.Fatalf("Berimond target was not invalidated: %#v", gameState.Beri)
+	}
+	if !slices.Contains(domains, "beri") {
+		t.Fatalf("domains = %#v", domains)
 	}
 }
 

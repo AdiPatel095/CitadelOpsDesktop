@@ -67,18 +67,20 @@ type EventAttackRecord struct {
 }
 
 type EventActivityState struct {
-	EventID            int64               `json:"eventId"`
-	OccurrenceEndsAt   time.Time           `json:"occurrenceEndsAt,omitempty"`
-	ObservedFrom       time.Time           `json:"observedFrom"`
-	Invasion           EventCombatTotals   `json:"invasion"`
-	Camp               EventCombatTotals   `json:"camp"`
-	Advisor            EventCombatTotals   `json:"advisor"`
-	Khan               EventCombatTotals   `json:"khan"`
-	KhanDefense        EventCombatTotals   `json:"khanDefense"`
-	AdvisorObservedAt  time.Time           `json:"advisorObservedAt,omitempty"`
-	LaunchIDs          []MovementID        `json:"launchIds,omitempty"`
-	PendingAttacks     []EventAttackRecord `json:"pendingAttacks,omitempty"`
-	ProcessedReportIDs []int64             `json:"processedReportIds,omitempty"`
+	EventID                     int64               `json:"eventId"`
+	OccurrenceEndsAt            time.Time           `json:"occurrenceEndsAt,omitempty"`
+	ObservedFrom                time.Time           `json:"observedFrom"`
+	Invasion                    EventCombatTotals   `json:"invasion"`
+	Camp                        EventCombatTotals   `json:"camp"`
+	Advisor                     EventCombatTotals   `json:"advisor"`
+	Khan                        EventCombatTotals   `json:"khan"`
+	KhanDefense                 EventCombatTotals   `json:"khanDefense"`
+	AdvisorObservedAt           time.Time           `json:"advisorObservedAt,omitempty"`
+	FortifyCurrencies           []string            `json:"fortifyCurrencies,omitempty"`
+	FortifyCurrenciesObservedAt time.Time           `json:"fortifyCurrenciesObservedAt,omitempty"`
+	LaunchIDs                   []MovementID        `json:"launchIds,omitempty"`
+	PendingAttacks              []EventAttackRecord `json:"pendingAttacks,omitempty"`
+	ProcessedReportIDs          []int64             `json:"processedReportIds,omitempty"`
 }
 
 type EventRankingEntry struct {

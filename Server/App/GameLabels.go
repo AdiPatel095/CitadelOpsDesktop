@@ -71,6 +71,17 @@ func officialLocalizedRecordName(record GameData.Record, language *GameData.Lang
 }
 
 func officialTimeSkipLabel(store *GameData.Store, currencyID int64, wireKey string) string {
+	minutes := officialTimeSkipMinutes(store, currencyID, wireKey)
+	if minutes <= 0 {
+		return "time skip"
+	}
+	if minutes%60 == 0 {
+		return fmt.Sprintf("%d-hour time skip", minutes/60)
+	}
+	return fmt.Sprintf("%d-minute time skip", minutes)
+}
+
+func officialTimeSkipMinutes(store *GameData.Store, currencyID int64, wireKey string) int64 {
 	minutes := int64(0)
 	if store != nil && currencyID > 0 {
 		if catalog, err := store.Catalog("currencyMinutesSkipValues"); err == nil {
@@ -87,11 +98,5 @@ func officialTimeSkipLabel(store *GameData.Store, currencyID int64, wireKey stri
 			"MS5": 60, "MS6": 300, "MS7": 1440,
 		}[strings.ToUpper(strings.TrimSpace(wireKey))]
 	}
-	if minutes <= 0 {
-		return "time skip"
-	}
-	if minutes%60 == 0 {
-		return fmt.Sprintf("%d-hour time skip", minutes/60)
-	}
-	return fmt.Sprintf("%d-minute time skip", minutes)
+	return minutes
 }

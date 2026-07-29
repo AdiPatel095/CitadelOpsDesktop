@@ -31,6 +31,7 @@ import {
   type AutoEquipmentCleanupController,
 } from '../settings/AutoEquipmentCleanup';
 import { scheduleSummary } from '../settings/SchedulerTypes';
+import { CitadelAPI } from '../api/CitadelClient';
 
 interface AutomationViewProps {
   onOpenAutoTCISettings: () => void;
@@ -44,6 +45,7 @@ interface AutomationViewProps {
   onOpenAutoNomadSettings: () => void;
   onOpenAutoAdvisorSettings: () => void;
   onOpenAutoKhanSettings: () => void;
+  onOpenAutoBeriWorldSettings: () => void;
   onOpenAutoStormSettings: () => void;
   autoEquipmentCleanup: AutoEquipmentCleanupController;
   onOpenFeatureSchedule: (id: string, label: string) => void;
@@ -72,10 +74,10 @@ const automationGroups: Array<{
   name: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = [
+  { id: 'offense', name: 'Offense', icon: Crosshair },
   { id: 'production', name: 'Production & Building', icon: Wrench },
   { id: 'upkeep', name: 'Resources & Upkeep', icon: Coins },
   { id: 'support', name: 'Recovery & Support', icon: HeartPulse },
-  { id: 'offense', name: 'Offense', icon: Crosshair },
 ];
 
 function formatNextWake(timestamp: number, now: number): string {
@@ -105,9 +107,14 @@ function modeLabel(mode: 'global' | 'perCastle'): string {
   return mode === 'perCastle' ? 'Per-castle plan' : 'Global plan';
 }
 
-function combinedAutomationStatus(primary: string | undefined, secondary: string | undefined, enabled: boolean): string {
+function combinedAutomationStatus(
+  primary: string | undefined,
+  secondary: string | undefined,
+  enabled: boolean,
+  tertiary?: string,
+): string {
   if (!enabled) return 'disabled';
-  const statuses = [primary, secondary].filter((status): status is string => Boolean(status));
+  const statuses = [primary, secondary, tertiary].filter((status): status is string => Boolean(status));
   for (const status of ['error', 'blocked', 'failed']) {
     if (statuses.includes(status)) return status;
   }
@@ -144,6 +151,27 @@ function automationStatusLabel(status: string): string {
   return status.charAt(0).toUpperCase() + status.slice(1).replaceAll('_', ' ');
 }
 
+function attackRateLabel(count: number | null | undefined): string {
+  if (count === undefined) return 'Loading rate';
+  if (count === null) return 'Rate unavailable';
+  return `${count.toLocaleString()} ${count === 1 ? 'attack' : 'attacks'} / hr`;
+}
+
+function attackRateCount(
+  launchesByFeature: Record<string, number> | null | undefined,
+  featureID: string,
+): number | null | undefined {
+  if (launchesByFeature === undefined) return undefined;
+  if (launchesByFeature === null) return null;
+  return launchesByFeature[featureID] ?? 0;
+}
+
+function attackRateTitle(featureName: string, count: number | null | undefined): string {
+  if (count === undefined) return `Loading the current ${featureName} attack rate.`;
+  if (count === null) return `The current ${featureName} attack rate is unavailable.`;
+  return `${count.toLocaleString()} ${count === 1 ? 'attack was' : 'attacks were'} launched by ${featureName} in the past 60 minutes.`;
+}
+
 export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenAutoTCISettings,
   onOpenAutoSceatResSettings,
@@ -156,6 +184,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenAutoNomadSettings,
   onOpenAutoAdvisorSettings,
   onOpenAutoKhanSettings,
+  onOpenAutoBeriWorldSettings,
   onOpenAutoStormSettings,
   autoEquipmentCleanup,
   onOpenFeatureSchedule,
@@ -175,8 +204,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoTowerEnabled,
     autoInvasionEnabled,
 		autoNomadEnabled,
-		autoAdvisorEnabled,
+    autoAdvisorEnabled,
     autoKhanEnabled,
+    autoBeriWorldEnabled,
     autoStormEnabled,
     toggleRecruitTroops,
     toggleAutoTool,
@@ -189,16 +219,36 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		toggleAutoNomad,
 		toggleAutoAdvisor,
 		toggleAutoKhan,
+		toggleAutoBeriWorld,
 		toggleAutoStorm,
 		automationStates,
 		automationTimedUntilByKey,
   } = useAuth();
   const [now, setNow] = useState(() => Date.now());
   const [isEquipmentCleanupSettingsOpen, setIsEquipmentCleanupSettingsOpen] = useState(false);
+  const [attackLaunchesByFeature, setAttackLaunchesByFeature] = useState<Record<string, number> | null | undefined>(undefined);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 30000);
     return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const refreshAttackRates = async () => {
+      try {
+        const rates = await CitadelAPI.getAttackLaunchRates();
+        if (!cancelled) setAttackLaunchesByFeature(rates.launchesByFeature);
+      } catch {
+        if (!cancelled) setAttackLaunchesByFeature(null);
+      }
+    };
+    void refreshAttackRates();
+    const interval = window.setInterval(() => void refreshAttackRates(), 30000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, []);
 
   const equipmentCleanupScheduleLabel = autoEquipmentCleanup.schedule?.enabled
@@ -206,6 +256,20 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     : 'Runs any time';
   const autoStormRuntime = automationStates.autoStorm;
   const autoStormBuildRuntime = automationStates.autoStormBuild;
+  const autoBeriTransferRuntime = automationStates.autoBeriWorld;
+  const autoBeriAttackRuntime = automationStates.autoBeriWorldAttack;
+  const autoBeriToolRuntime = automationStates.autoBeriWorldTools;
+  const autoBeriWorldDetail = [
+    autoBeriTransferRuntime?.detail ? `Transfer: ${autoBeriTransferRuntime.detail}` : '',
+    autoBeriAttackRuntime?.detail ? `Attack: ${autoBeriAttackRuntime.detail}` : '',
+    autoBeriToolRuntime?.detail ? `Tools: ${autoBeriToolRuntime.detail}` : '',
+  ].filter(Boolean).join(' · ');
+  const autoBeriWorldStatus = combinedAutomationStatus(
+    autoBeriTransferRuntime?.status,
+    autoBeriAttackRuntime?.status,
+    autoBeriWorldEnabled,
+    autoBeriToolRuntime?.status,
+  );
   const autoStormDetail = [
     autoStormRuntime?.detail ? `Combat/shop: ${autoStormRuntime.detail}` : '',
     autoStormBuildRuntime?.detail ? `Build: ${autoStormBuildRuntime.detail}` : '',
@@ -396,6 +460,21 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		onToggle: toggleAutoKhan,
 		onOpenSettings: onOpenAutoKhanSettings,
 	},
+	{
+		id: 'autoBeriWorld',
+		enabledKey: 'auto_beri_world',
+		group: 'offense',
+		name: 'Auto Beri World',
+		description: 'Transfers troops into Berimond, maintains configured coin-tool minimums, opens the cheapest resource camp, and attacks each next available tower with a preset.',
+		enabled: autoBeriWorldEnabled,
+		detail: autoBeriWorldEnabled
+			? autoBeriWorldDetail || 'Waiting for Berimond availability and configuration'
+			: 'Berimond transfers, tool purchases, and tower attacks are paused',
+		status: autoBeriWorldStatus,
+		icon: Crosshair,
+		onToggle: toggleAutoBeriWorld,
+		onOpenSettings: onOpenAutoBeriWorldSettings,
+	},
     {
       id: 'autoStorm',
       enabledKey: 'auto_storm',
@@ -424,6 +503,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		autoNomadEnabled,
 		autoAdvisorEnabled,
     autoKhanEnabled,
+    autoBeriWorldEnabled,
+    autoBeriWorldDetail,
+    autoBeriWorldStatus,
     autoStormEnabled,
     autoStormDetail,
     autoStormStatus,
@@ -443,6 +525,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		onOpenAutoNomadSettings,
 		onOpenAutoAdvisorSettings,
     onOpenAutoKhanSettings,
+    onOpenAutoBeriWorldSettings,
     onOpenAutoStormSettings,
     onOpenRecruitTroopsSettings,
     toggleAutoHospital,
@@ -454,6 +537,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		toggleAutoNomad,
 		toggleAutoAdvisor,
     toggleAutoKhan,
+    toggleAutoBeriWorld,
     toggleAutoStorm,
     toggleAutoTool,
     toggleRecruitTroops,
@@ -492,6 +576,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 {group.features.map((feature) => {
                   const FeatureIcon = feature.icon;
                   const timedUntil = automationTimedUntilByKey[feature.enabledKey];
+                  const attackLaunchCount = feature.group === 'offense'
+                    ? attackRateCount(attackLaunchesByFeature, feature.id)
+                    : undefined;
                   return (
                     <div
                       key={feature.id}
@@ -517,6 +604,15 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                         <div className="flex min-w-0 items-center gap-2">
                           <FeatureIcon className="h-3.5 w-3.5 shrink-0 text-text-muted" />
                           <h3>{feature.name}</h3>
+                          {feature.group === 'offense' ? (
+                            <Badge
+                              variant="outline"
+                              className="shrink-0 whitespace-nowrap"
+                              title={attackRateTitle(feature.name, attackLaunchCount)}
+                            >
+                              {attackRateLabel(attackLaunchCount)}
+                            </Badge>
+                          ) : null}
                           {timedUntil ? <Badge variant="outline">{formatTimedRemaining(timedUntil, now)}</Badge> : null}
                         </div>
                         <p>{feature.description}</p>

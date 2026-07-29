@@ -434,6 +434,12 @@ func TestReportManagerDoesNotYieldToAutomationLock(t *testing.T) {
 	if !YieldsToAutomationLock("automation:autoInvasion") {
 		t.Fatal("Auto Invasion did not yield to the automation lock")
 	}
+	if YieldsToDirectTraffic("automation:autoStation") {
+		t.Fatal("emergency Auto Station yielded to direct browser traffic")
+	}
+	if !YieldsToDirectTraffic("automation:autoBird") {
+		t.Fatal("routine Auto Bird work did not yield to direct browser traffic")
+	}
 }
 
 func TestAutomationSafetyPriorityOrder(t *testing.T) {

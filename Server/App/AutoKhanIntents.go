@@ -278,16 +278,16 @@ func (application *Application) resolveKhanAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve Khan camp attack capacity: %w", err)
 	}
-	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves)
+	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity)
 	if err := khanAttackPresetAvailability(limitedPreset, source); err != nil {
 		return Intent.Step{}, err
 	}
 	setup := invasionAttackSetup(limitedPreset)
-	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
+	built, err := buildAttackSetup(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Khan attack preset %q: %w", request.Preset.Name, err)
 	}
-	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, waves, request.HorseTravelBoostID))
+	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, built, request.HorseTravelBoostID))
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Khan camp CRA payload: %w", err)
 	}
@@ -305,6 +305,16 @@ func khanAttackPresetAvailability(preset AttackPresets.Preset, source State.Cast
 					}
 				}
 			}
+		}
+	}
+	for _, slot := range preset.CourtyardSupport.Troops {
+		if slot.ItemID != nil && *slot.ItemID > 0 && slot.Quantity > 0 {
+			requested[State.UnitID(*slot.ItemID)] += slot.Quantity
+		}
+	}
+	for _, slot := range preset.CourtyardSupport.Tools {
+		if slot.ItemID != nil && *slot.ItemID > 0 {
+			requested[State.UnitID(*slot.ItemID)]++
 		}
 	}
 	ids := make([]State.UnitID, 0, len(requested))

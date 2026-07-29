@@ -1,4 +1,5 @@
 import type {
+  AttackSetupCourtyardSupport,
   AttackSetupDraft,
   AttackSetupLane,
   AttackSetupSlot,
@@ -7,6 +8,8 @@ import type {
 
 const MAX_INPUT_LENGTH = 250_000;
 const MAX_WAVES = 30;
+const COURTYARD_TROOP_SLOTS = 8;
+const COURTYARD_TOOL_SLOTS = 3;
 
 const laneCapacities = {
   L: { troops: 2, tools: 2 },
@@ -33,7 +36,11 @@ export function parseCRAAttackPresetString(value: string): AttackSetupDraft {
   ), 0);
   if (troopCount <= 0) throw new Error('The CRA formation does not allocate any troops.');
 
-  return { name: 'Imported CRA preset', waves };
+  return {
+    name: 'Imported CRA preset',
+    waves,
+    courtyardSupport: parseCourtyardSupport(payload),
+  };
 }
 
 export function formatCRAAttackPresetString(preset: AttackSetupDraft): string {
@@ -42,6 +49,9 @@ export function formatCRAAttackPresetString(preset: AttackSetupDraft): string {
   }
   const payload = {
     A: preset.waves.map((wave, index) => formatWave(wave, index)),
+    AST: formatSupportTools(preset.courtyardSupport?.tools),
+    RW: formatSupportTroops(preset.courtyardSupport?.troops),
+    ASCT: 0,
   };
   return `%xt%EmpireEx_21%cra%1%${JSON.stringify(payload)}%`;
 }
@@ -171,6 +181,52 @@ function parseSlots(
   });
 }
 
+function parseCourtyardSupport(payload: Record<string, unknown>): AttackSetupCourtyardSupport {
+  return {
+    troops: parseSupportTroops(payload.RW),
+    tools: parseSupportTools(payload.AST),
+  };
+}
+
+function parseSupportTroops(value: unknown): AttackSetupSlot[] {
+  if (value == null) return emptySlots(COURTYARD_TROOP_SLOTS);
+  if (!Array.isArray(value)) throw new Error('CRA courtyard support troops (RW) must be an array.');
+  if (value.length > COURTYARD_TROOP_SLOTS) {
+    throw new Error(`CRA courtyard support has more than ${COURTYARD_TROOP_SLOTS} troop slots.`);
+  }
+  return Array.from({ length: COURTYARD_TROOP_SLOTS }, (_, index) => {
+    const pair = value[index];
+    if (pair == null) return emptySlot();
+    if (!Array.isArray(pair) || pair.length !== 2) {
+      throw new Error(`CRA courtyard troop slot ${index + 1} is invalid.`);
+    }
+    const [itemID, quantity] = pair;
+    if (!Number.isSafeInteger(itemID) || !Number.isSafeInteger(quantity)) {
+      throw new Error(`CRA courtyard troop slot ${index + 1} must use whole numbers.`);
+    }
+    if (itemID <= 0) {
+      if (quantity === 0) return emptySlot();
+      throw new Error(`CRA courtyard troop slot ${index + 1} has an invalid item.`);
+    }
+    if (quantity < 0) throw new Error(`CRA courtyard troop slot ${index + 1} has a negative quantity.`);
+    return { itemId: itemID, quantity };
+  });
+}
+
+function parseSupportTools(value: unknown): AttackSetupSlot[] {
+  if (value == null) return emptySlots(COURTYARD_TOOL_SLOTS);
+  if (!Array.isArray(value)) throw new Error('CRA Sceat support tools (AST) must be an array.');
+  if (value.length > COURTYARD_TOOL_SLOTS) {
+    throw new Error(`CRA courtyard support has more than ${COURTYARD_TOOL_SLOTS} Sceat tool slots.`);
+  }
+  return Array.from({ length: COURTYARD_TOOL_SLOTS }, (_, index) => {
+    const itemID = value[index];
+    if (itemID == null) return emptySlot();
+    if (!Number.isSafeInteger(itemID)) throw new Error(`CRA Sceat support tool slot ${index + 1} must use a whole number.`);
+    return itemID > 0 ? { itemId: itemID, quantity: 1 } : emptySlot();
+  });
+}
+
 function formatWave(wave: AttackSetupWave, waveIndex: number): Record<LaneKey, { U: [number, number][]; T: [number, number][] }> {
   return {
     L: formatLane(wave.L, 'L', waveIndex),
@@ -211,6 +267,41 @@ function formatSlots(
       throw new Error(`Wave ${waveIndex + 1} ${laneLabel(laneKey)} ${kind} slot ${index + 1} is invalid.`);
     }
     return [slot.itemId, slot.quantity];
+  });
+}
+
+function formatSupportTroops(slots: AttackSetupSlot[] | undefined): [number, number][] {
+  if ((slots?.length ?? 0) > COURTYARD_TROOP_SLOTS) {
+    throw new Error(`Courtyard support has more than ${COURTYARD_TROOP_SLOTS} troop slots.`);
+  }
+  return Array.from({ length: COURTYARD_TROOP_SLOTS }, (_, index) => {
+    const slot = slots?.[index];
+    if (!slot || slot.itemId == null) {
+      if (slot && slot.quantity > 0) throw new Error(`Courtyard troop slot ${index + 1} has a quantity without an item.`);
+      return [-1, 0];
+    }
+    if (!Number.isSafeInteger(slot.itemId) || slot.itemId <= 0 ||
+        !Number.isSafeInteger(slot.quantity) || slot.quantity < 0) {
+      throw new Error(`Courtyard troop slot ${index + 1} is invalid.`);
+    }
+    return [slot.itemId, slot.quantity];
+  });
+}
+
+function formatSupportTools(slots: AttackSetupSlot[] | undefined): number[] {
+  if ((slots?.length ?? 0) > COURTYARD_TOOL_SLOTS) {
+    throw new Error(`Courtyard support has more than ${COURTYARD_TOOL_SLOTS} Sceat tool slots.`);
+  }
+  return Array.from({ length: COURTYARD_TOOL_SLOTS }, (_, index) => {
+    const slot = slots?.[index];
+    if (!slot || slot.itemId == null) {
+      if (slot && slot.quantity > 0) throw new Error(`Sceat support tool slot ${index + 1} has a quantity without an item.`);
+      return -1;
+    }
+    if (!Number.isSafeInteger(slot.itemId) || slot.itemId <= 0 || slot.quantity !== 1) {
+      throw new Error(`Sceat support tool slot ${index + 1} must contain exactly one valid item.`);
+    }
+    return slot.itemId;
   });
 }
 

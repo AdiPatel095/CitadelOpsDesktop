@@ -501,8 +501,8 @@ func towerAttackBody(
 		SourceX: source.X, SourceY: source.Y, TargetX: target.X, TargetY: target.Y,
 		Kingdom: target.KingdomID, Leader: commander, Booster: -1, Valid: 1,
 		PremiumTravel: 1, Cooldown: 99, Waves: []attackWave{wave}, Books: []any{},
-		AttackSupportTools: []int64{-1, -1, -1},
-		SupportTroops:      []attackPair{empty, empty, empty, empty, empty, empty, empty, empty},
+		AttackSupportTools: emptyAttackSupportTools(),
+		SupportTroops:      emptyAttackSupportTroops(),
 	}
 	horseTravelBoostID := defaultHorseTravelBoostID
 	if len(horseTravelBoostIDs) > 0 {

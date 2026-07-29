@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, RefreshCw, SlidersHorizontal } from 'lucide-react';
+import { Activity, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
 import { useMetadata } from '../../context/MetadataContext';
 import { coinsUnderUpgradeReserve } from '../../utils/UpgradeCoinReserve';
+import {
+	equipmentEventOptions,
+	resolveEquipmentEventAvailability,
+	type EquipmentEventKey,
+} from '../EquipmentEventLoadouts';
 import EquipmentOptimizer from './EquipmentOptimizer';
 import {
 	buildEquipmentEffectProfile,
@@ -18,6 +23,7 @@ import {
 	type MappedEquipmentEffect,
 } from './EquipmentEffects';
 import {
+	EquipmentEventModal,
 	EquipmentSellModal,
 	EquipmentSwapModal,
 	UnequipModal,
@@ -37,7 +43,7 @@ import {
 
 export default function EquipmentView() {
 	const { state, configuration, submitIntent } = useCitadelAPI();
-	const { effects, troops } = useMetadata();
+	const { effects, equipments, gems, troops } = useMetadata();
 	const [mode, setMode] = useState<EquipmentMode>('Commander');
 	const [targetID, setTargetID] = useState('castle-1');
 	const targetOptions = useMemo(() => equipmentTargets(), []);
@@ -48,6 +54,7 @@ export default function EquipmentView() {
 	const [showSell, setShowSell] = useState(false);
 	const [sellType, setSellType] = useState<'Equipment' | 'Gems'>('Equipment');
 	const [showSwap, setShowSwap] = useState(false);
+	const [showEventLoadout, setShowEventLoadout] = useState(false);
 	const [showOptimizer, setShowOptimizer] = useState(false);
 	const [unequipKind, setUnequipKind] = useState<'equipment' | 'gems' | null>(null);
 	const [upgradeKind, setUpgradeKind] = useState<'equipment' | 'gem' | null>(null);
@@ -91,6 +98,10 @@ export default function EquipmentView() {
 	}, [leaders, selectedID]);
 
 	const selected = leaders.find((leader) => leader.id === selectedID) ?? null;
+	const eventAvailability = useMemo(() => {
+		if (!state || !selected || selected.kind !== 'commander') return [];
+		return resolveEquipmentEventAvailability(state, selected, equipments, gems);
+	}, [equipments, gems, selected, state]);
 	const rows = useMemo<EquipmentSlotRow[]>(() => equipmentSlots.map(({ slot, label }) => {
 		const equipmentID = selected?.equipment[String(slot)];
 		const gemID = selected?.gems[String(slot)];
@@ -158,6 +169,18 @@ export default function EquipmentView() {
 			firstLeaderId: selected.id,
 			secondLeaderId: otherLeaderID,
 		}), 'Equipment loadouts swapped').then((success) => success && setShowSwap(false));
+	};
+
+	const applyEventLoadout = (event: EquipmentEventKey) => {
+		if (!selected || selected.kind !== 'commander') return;
+		const eventLabel = equipmentEventOptions.find((option) => option.value === event)?.label ?? 'Event';
+		void run(async () => {
+			await submitIntent('equipment.refresh');
+			await submitIntent('equipment.event.apply', {
+				commanderId: selected.id,
+				event,
+			});
+		}, `${eventLabel} loadout applied`).then((success) => success && setShowEventLoadout(false));
 	};
 
 	const unequip = (slots: number[]) => {
@@ -249,6 +272,7 @@ export default function EquipmentView() {
 							onUnequip={setUnequipKind}
 							onUpgrade={setUpgradeKind}
 							onReconfigure={() => setShowOptimizer(true)}
+							onEventLoadout={() => setShowEventLoadout(true)}
 						/>
 					</div>
 				</CardContent>
@@ -256,6 +280,14 @@ export default function EquipmentView() {
 
 			<EquipmentSellModal isOpen={showSell} itemType={sellType} onClose={() => setShowSell(false)} onConfirm={sell} busy={busy} />
 			<EquipmentSwapModal isOpen={showSwap} leader={selected} leaders={leaders} onClose={() => setShowSwap(false)} onConfirm={swap} busy={busy} />
+			<EquipmentEventModal
+				isOpen={showEventLoadout}
+				leader={selected}
+				availability={eventAvailability}
+				onClose={() => setShowEventLoadout(false)}
+				onConfirm={applyEventLoadout}
+				busy={busy}
+			/>
 			<UnequipModal isOpen={unequipKind != null} kind={unequipKind ?? 'equipment'} leader={selected} rows={rows} onClose={() => setUnequipKind(null)} onConfirm={unequip} busy={busy} />
 			<UpgradeModal isOpen={upgradeKind != null} kind={upgradeKind ?? 'equipment'} leader={selected} rows={rows} coinBlocked={coinBlocked} onClose={() => setUpgradeKind(null)} onConfirm={upgrade} busy={busy} />
 			{showOptimizer && (
@@ -346,6 +378,7 @@ function EquipmentStatsPane({
 	onUnequip,
 	onUpgrade,
 	onReconfigure,
+	onEventLoadout,
 }: {
 	leader: EquipmentLeader | null;
 	rows: EquipmentSlotRow[];
@@ -355,6 +388,7 @@ function EquipmentStatsPane({
 	onUnequip: (kind: 'equipment' | 'gems') => void;
 	onUpgrade: (kind: 'equipment' | 'gem') => void;
 	onReconfigure: () => void;
+	onEventLoadout: () => void;
 }) {
 	if (!leader) return <p className="py-12 text-center text-sm text-text-muted">Select a loadout.</p>;
 	const equipmentCount = rows.filter((row) => row.item).length;
@@ -371,6 +405,9 @@ function EquipmentStatsPane({
 					<div className="ml-auto flex flex-wrap justify-end gap-2">
 						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUpgrade('equipment')}>Upgrade Equipment</Button>
 						<Button size="sm" disabled={disabled || upgradeableGemCount === 0} onClick={() => onUpgrade('gem')} className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:border-emerald-500/50 hover:bg-emerald-500/20">Upgrade Gem</Button>
+						{leader.kind === 'commander' && (
+							<Button size="sm" variant="secondary" disabled={disabled} onClick={onEventLoadout} leftIcon={<Sparkles className="h-4 w-4" />}>Event Set</Button>
+						)}
 						<Button size="sm" variant="secondary" disabled={disabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}>Reconfigure</Button>
 						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUnequip('equipment')}>Unequip Equipment</Button>
 						<Button size="sm" disabled={disabled || gemCount === 0} onClick={() => onUnequip('gems')} className="border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:border-purple-500/50 hover:bg-purple-500/20">Unequip Gem</Button>

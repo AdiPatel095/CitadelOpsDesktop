@@ -230,7 +230,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 						options={fortifyOptions}
 						menuGrowToViewport
 					/>
-					<p className="mt-2 text-[11px] text-text-muted">Event medals use Khan medals for Foreign Lords and Samurai tokens for Bloodcrows. The game determines each cumulative <span className="font-mono">rae</span> price. Rubies are never selected by default.</p>
+					<p className="mt-2 text-[11px] text-text-muted">Event medals use the first currency list reported for each active event occurrence, with an event-ID fallback when the game does not report its options. The game determines each cumulative <span className="font-mono">rae</span> price. Rubies are never selected by default.</p>
 				</label>
 			) : null}
 		</Card>

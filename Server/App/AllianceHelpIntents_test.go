@@ -119,6 +119,57 @@ func TestAllianceHelpGuardReplansAtAuthoritativeHospitalLimit(t *testing.T) {
 	}
 }
 
+func TestAllianceHelpGuardSkipsAuthoritativeRecruitmentRequestForCastle(t *testing.T) {
+	state := State.NewGameState()
+	state.Castles[77] = State.CastleState{
+		ID: 77,
+		Production: map[int]State.ProductionQueue{
+			recruitmentProductionLineID: {
+				LineID: recruitmentProductionLineID,
+				Active: &State.QueueItem{ProductionID: 205},
+			},
+		},
+	}
+	state.AllianceHelpRequests = State.AllianceHelpRequestState{
+		RecruitmentCastleIDs: []State.CastleID{77},
+		ObservedAt:           time.Now().UTC(),
+	}
+	plan, err := planAllianceHelpRequest(
+		t.Context(), Intent.PlanningContext{State: state},
+		json.RawMessage(`{"productionId":205}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 0 || !strings.Contains(plan.Summary, "no longer eligible") {
+		t.Fatalf("recruitment help duplicate guard plan = %#v", plan)
+	}
+}
+
+func TestAllianceHelpResolverRejectsNewRecruitQueueWhileCastleRequestIsOutstanding(t *testing.T) {
+	state := State.NewGameState()
+	state.Castles[77] = State.CastleState{
+		ID: 77,
+		Production: map[int]State.ProductionQueue{
+			recruitmentProductionLineID: {
+				LineID: recruitmentProductionLineID,
+				Active: &State.QueueItem{ProductionID: 205},
+			},
+		},
+	}
+	state.AllianceHelpRequests = State.AllianceHelpRequestState{
+		RecruitmentCastleIDs: []State.CastleID{77},
+		ObservedAt:           time.Now().UTC(),
+	}
+	_, err := (&Application{}).resolveAllianceHelpRequestStep(
+		t.Context(), Intent.PlanningContext{State: state},
+		json.RawMessage(`{"productionId":205,"castleId":77}`),
+	)
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("recruitment help duplicate should make the plan stale: %v", err)
+	}
+}
+
 func allianceHelpContainsString(values []string, expected string) bool {
 	for _, value := range values {
 		if value == expected {

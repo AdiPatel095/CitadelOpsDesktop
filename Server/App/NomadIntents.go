@@ -217,7 +217,7 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 	}
 	resolution.Selected = orderNomadChainCommanders(input, source, target, resolution.Selected)
 	request.CommanderIDs = append([]State.CommanderID(nil), resolution.Selected...)
-	if _, err := buildAttackSetupWavesForCommanders(invasionAttackSetup(request.Preset), source, input.GameData, len(resolution.Selected)); err != nil {
+	if _, err := buildAttackSetupForCommanders(invasionAttackSetup(request.Preset), source, input.GameData, len(resolution.Selected)); err != nil {
 		return Intent.Plan{}, fmt.Errorf("validate chained preset inventory: %w", err)
 	}
 	contextPayload, _ := json.Marshal(struct {
@@ -483,12 +483,12 @@ func (application *Application) resolveNomadCampAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve Nomad/Samurai camp attack capacity: %w", err)
 	}
-	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity.Capacity, capacity.MaximumWaves))
-	waves, err := buildAttackSetupWaves(setup, source, input.GameData)
+	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity))
+	built, err := buildAttackSetup(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build camp preset %q: %w", request.Preset.Name, err)
 	}
-	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, waves, request.HorseTravelBoostID))
+	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, built, request.HorseTravelBoostID))
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build camp CRA payload: %w", err)
 	}
@@ -645,7 +645,7 @@ func (application *Application) guardNomadAttackInventory(_ context.Context, arg
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
 	}
-	_, err := buildAttackSetupWavesForCommanders(invasionAttackSetup(request.Preset), source, currentData, len(request.CommanderIDs))
+	_, err := buildAttackSetupForCommanders(invasionAttackSetup(request.Preset), source, currentData, len(request.CommanderIDs))
 	return err
 }
 

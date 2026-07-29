@@ -31,6 +31,8 @@ func TestLegacyClaimsUseHierarchicalResources(t *testing.T) {
 		{name: "global crafting and castle crafting", left: []string{"game:crafting"}, right: []string{"castle:1", "crafting-building:7"}, overlaps: true},
 		{name: "target aliases at same coordinate", left: []string{"tower-target:9:12:13"}, right: []string{"spy-target:9:12:13"}, overlaps: true},
 		{name: "player and spy target aliases", left: []string{"player-target:9:12:13"}, right: []string{"spy-target:9:12:13"}, overlaps: true},
+		{name: "Berimond target cursor and selected target", left: []string{"beri-target:10"}, right: []string{"beri-target:10:12:13"}, overlaps: true},
+		{name: "Berimond and generic target aliases", left: []string{"beri-target:10:12:13"}, right: []string{"spy-target:10:12:13"}, overlaps: true},
 		{name: "same unit in different castles remains independent", left: []string{"castle:1", "unit:5"}, right: []string{"castle:2", "unit:5"}, overlaps: false},
 	}
 	for _, test := range tests {

@@ -20,6 +20,7 @@ import { useMetadata } from '../../context/MetadataContext';
 import { useCitadelAPI } from '../../api/ApiContext';
 import {
   COMMANDER_FEATURE_SECTION,
+  commanderIDsEligibleForFeature,
   parseCommanderFeatureAssignments,
 } from '../../Movement/types/CommanderFeatureAssignments';
 import HorseTravelBoostSelect from '../../settings/components/HorseTravelBoostSelect';
@@ -109,6 +110,12 @@ function summarizeAttackSetup(draft: AttackSetupDraft | undefined) {
       }
     }
   }
+  for (const slot of draft.courtyardSupport?.troops ?? []) {
+    if (slot.itemId != null && slot.quantity > 0) troops += slot.quantity;
+  }
+  for (const slot of draft.courtyardSupport?.tools ?? []) {
+    if (slot.itemId != null) tools += 1;
+  }
   return `${draft.waves.length} wave${draft.waves.length === 1 ? '' : 's'} | ${troops.toLocaleString()} troops | ${tools.toLocaleString()} tools`;
 }
 
@@ -125,7 +132,7 @@ function formatCoords(x: number | undefined, y: number | undefined): string {
 }
 
 const RiftAttackTemplate: React.FC = () => {
-  const { configuration, updateConfiguration } = useCitadelAPI();
+  const { state, configuration, updateConfiguration } = useCitadelAPI();
   const { gameLoggedIn } = useAuth();
   const { castle } = useCastleFocus();
   const { troops, tools } = useMetadata();
@@ -158,7 +165,15 @@ const RiftAttackTemplate: React.FC = () => {
     () => parseCommanderFeatureAssignments(configuration?.sections[COMMANDER_FEATURE_SECTION]),
     [configuration?.sections],
   );
-  const assignedReplayCommanders = commanderAssignments.assignments.riftReplay ?? [];
+  const assignedReplayCommanders = useMemo(
+    () => commanderIDsEligibleForFeature(
+      commanderAssignments,
+      'riftReplay',
+      (movement?.commanderStatuses ?? []).map((row) => row.commanderId),
+      state,
+    ),
+    [commanderAssignments, movement?.commanderStatuses, state],
+  );
   const attackSetupInventory = useMemo<AttackSetupInventory | undefined>(() => {
     if (!castle) return undefined;
     const troopStock: Record<number, number> = {};
