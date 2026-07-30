@@ -68,10 +68,13 @@ Server/refactor_state/
 /Server/.../
 /.claude/
 /.cursor/
-/cmd/*
-!/cmd/CitadelOpsCLI/
-!/cmd/CitadelOpsCLI/Main.go
-!/cmd/StormValidation/
-!/cmd/StormValidation/Main.go
-!/cmd/StormBuildSimulation/
-!/cmd/StormBuildSimulation/Main.go
+
+# Local-only research, diagnostics, and developer tools
+/ArchitectureResearch/
+/cmd/
+/Logs/
+/Tools/
+/AGENTS.md
+/CitadelOps-Patch-Notes-v2.0.0.html
+/CitadelOpsUiRedesignResearch.md
+/IntentEngineCommandGuards.md
