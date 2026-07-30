@@ -1,92 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
-
-const WoodIcon = '/game-data/resources/images/Wood.webp';
-const StoneIcon = '/game-data/resources/images/Stone.webp';
-const FoodIcon = '/game-data/resources/images/Food.webp';
-const CharcoalIcon = '/game-data/resources/images/Charcoal.webp';
-const OliveOilIcon = '/game-data/resources/images/OliveOil.webp';
-const GlassIcon = '/game-data/resources/images/Glass.webp';
-const IronOreIcon = '/game-data/resources/images/Iron_Ore.webp';
-const HoneyIcon = '/game-data/resources/images/Honey.webp';
-const MeadIcon = '/game-data/resources/images/Mead.webp';
-const BeefIcon = '/game-data/resources/images/Beef.webp';
-
-import {
-  type CastleResourcesAmount,
-  type CastleStorageMax,
-  type CastleProductionTotal
-} from '../models/PlayerCastleInfo';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { ResourceBalanceV2 } from '../../api/Contracts';
+import { SectionCard } from '../../components/ui';
+import { useMetadata } from '../../context/MetadataContext';
 
 interface CastleResourceCardProps {
   title: string;
-  resources: CastleResourcesAmount;
-  storage: CastleStorageMax;
-  production: CastleProductionTotal;
+  resources: Record<string, ResourceBalanceV2>;
 }
-
-const resourceIconMap: { [key: string]: string } = {
-  wood: WoodIcon,
-  stone: StoneIcon,
-  food: FoodIcon,
-  coal: CharcoalIcon,
-  oil: OliveOilIcon,
-  glass: GlassIcon,
-  iron: IronOreIcon,
-  honey: HoneyIcon,
-  mead: MeadIcon,
-  beef: BeefIcon,
-};
-
-/** Display order: beef → mead → food → honey → charcoal (coal) → oil → glass → iron → wood → stone */
-const resourceKeys: (keyof CastleResourcesAmount)[] = [
-  'beef_amount',
-  'mead_amount',
-  'food_amount',
-  'honey_amount',
-  'coal_amount',
-  'oil_amount',
-  'glass_amount',
-  'iron_amount',
-  'wood_amount',
-  'stone_amount',
-];
 
 const MS_PER_HOUR = 3600 * 1000;
 const EXTREME_HOURS = 24 * 365 * 10;
-
 const SEC_PER_HOUR = 3600;
 const SEC_PER_DAY = 86400;
 
-/** Live countdown: d/h/m when at least 1 hour left; m/s when under 1 hour. */
 function formatRemainingMs(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
-
   if (totalSec >= SEC_PER_HOUR) {
     const days = Math.floor(totalSec / SEC_PER_DAY);
     const rem = totalSec % SEC_PER_DAY;
-    const hrs = Math.floor(rem / SEC_PER_HOUR);
-    const mins = Math.floor((rem % SEC_PER_HOUR) / 60);
-    if (days > 0) {
-      const parts: string[] = [`${days}d`];
-      if (hrs > 0) parts.push(`${hrs}h`);
-      if (mins > 0) parts.push(`${mins}m`);
-      return parts.join(' ');
-    }
-    if (mins > 0) return `${hrs}h ${mins}m`;
-    return `${hrs}h`;
+    const hours = Math.floor(rem / SEC_PER_HOUR);
+    const minutes = Math.floor((rem % SEC_PER_HOUR) / 60);
+    if (days > 0) return [`${days}d`, hours > 0 ? `${hours}h` : '', minutes > 0 ? `${minutes}m` : ''].filter(Boolean).join(' ');
+    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
   }
-
-  const mins = Math.floor(totalSec / 60);
-  const secs = totalSec % 60;
-  if (mins > 0) return `${mins}m ${secs}s`;
-  return `${secs}s`;
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 }
 
-/** Shown above the resource bar when net/hr is negative; time counts down until the next amount/prod update. */
 function ResourceDepletionTimer({ amount, netPerHour }: { amount: number; netPerHour: number }) {
   const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
   const [extremeLong, setExtremeLong] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     setExtremeLong(false);
@@ -94,7 +39,7 @@ function ResourceDepletionTimer({ amount, netPerHour }: { amount: number; netPer
       setDeadlineMs(null);
       return;
     }
-    const hours = amount / (-netPerHour);
+    const hours = amount / -netPerHour;
     if (!Number.isFinite(hours) || hours <= 0) {
       setDeadlineMs(null);
       return;
@@ -107,73 +52,59 @@ function ResourceDepletionTimer({ amount, netPerHour }: { amount: number; netPer
     setDeadlineMs(Date.now() + hours * MS_PER_HOUR);
   }, [amount, netPerHour]);
 
-  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (deadlineMs == null) return;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [deadlineMs]);
 
-  if (extremeLong) {
-    return (
-      <p className="text-[10px] text-text-muted leading-tight tabular-nums text-right w-full">&gt;10y</p>
-    );
-  }
-  if (deadlineMs == null) return null;
-  const rem = deadlineMs - now;
-  if (rem <= 0) return null;
-
-  return (
-    <p className="text-[10px] text-text-muted leading-tight tabular-nums text-right w-full">
-      {formatRemainingMs(rem)}
-    </p>
-  );
+  if (extremeLong) return <p className="w-full text-right text-[10px] leading-tight text-text-muted tabular-nums">&gt;10y</p>;
+  if (deadlineMs == null || deadlineMs <= now) return null;
+  return <p className="w-full text-right text-[10px] leading-tight text-text-muted tabular-nums">{formatRemainingMs(deadlineMs - now)}</p>;
 }
 
-const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resources, storage, production }) => {
+const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resources }) => {
+  const { resources: definitions } = useMetadata();
+  const rows = useMemo(() => Object.entries(resources)
+    .map(([rawID, balance]) => ({ id: Number(rawID), balance, definition: definitions[Number(rawID)] }))
+    .filter((row) => Number.isFinite(row.id) && row.id > 0)
+    .sort((left, right) => right.id - left.id), [definitions, resources]);
+
   return (
-    <Card className="liquid-prominent-header-card flex flex-col min-h-0">
-      <CardHeader className="liquid-card-header-prominent">
-        <CardTitle className="text-primary">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="liquid-prominent-header-content flex flex-col gap-2 overflow-y-auto custom-scrollbar">
-        {resourceKeys.map(key => {
-          const resourceBaseName = key.replace('_amount', '');
-          const amount = resources[key] as number;
-          const max = storage[`${resourceBaseName}_max` as keyof CastleStorageMax] as number;
-          let prod = production[`${resourceBaseName}_prod` as keyof CastleProductionTotal] ?? 0;
-
-          // Deduct consumption for food/mead/beef
-          if (resourceBaseName === 'food') {
-            prod -= (production.food_consumption ?? 0);
-          } else if (resourceBaseName === 'mead') {
-            prod -= (production.mead_consumption ?? 0);
-          } else if (resourceBaseName === 'beef') {
-            prod -= (production.beef_consumption ?? 0);
-          }
-
-          const percentage = max > 0 ? (amount / max) * 100 : 0;
-          const prodClass = prod < 0 ? "text-error font-semibold" : "text-success font-semibold";
-          const prodPrefix = prod > 0 ? "+" : "";
-
+    <SectionCard
+      variant="glass"
+      title={title}
+      titleClassName="text-primary"
+      className="flex min-h-0 flex-col"
+      contentClassName="custom-scrollbar flex flex-col gap-2 overflow-y-auto"
+    >
+        {rows.map(({ id, balance, definition }) => {
+          const amount = balance.amount ?? 0;
+          const capacity = balance.capacity ?? 0;
+          const production = balance.productionPerHour ?? 0;
+          const percentage = capacity > 0 ? amount / capacity * 100 : 0;
+          const internalName = typeof definition?.internalName === 'string' ? definition.internalName : '';
+          const name = definition?.name || internalName || `Resource ${id}`;
+						const icon = definition?.image;
           return (
-            <div key={key} className="flex items-center gap-3 p-2.5 rounded-global bg-bg-card/45 border border-border-light shadow-sm backdrop-blur-xl transition-colors hover:border-primary/30 hover:bg-bg-card-hover/70">
-              <img src={resourceIconMap[resourceBaseName]} alt={resourceBaseName} className="w-8 h-8 object-contain drop-shadow-sm shrink-0" />
-              <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-                <div className="flex justify-between items-center text-xs font-medium text-text-main">
-                  <span className="truncate mr-2">{amount.toLocaleString()} / {max.toLocaleString()}</span>
-                  <span className={`${prodClass} shrink-0`}>({prodPrefix}{prod.toLocaleString()}/hr)</span>
+            <div key={id} className="flex items-center gap-3 rounded-global border border-border-light bg-bg-card/45 p-2.5 shadow-sm backdrop-blur-xl transition-colors hover:border-primary/30 hover:bg-bg-card-hover/70">
+              {icon ? <img src={icon} alt={name} className="h-8 w-8 shrink-0 object-contain drop-shadow-sm" /> : null}
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <div className="flex items-center justify-between text-xs font-medium text-text-main">
+                  <span className="mr-2 truncate" title={name}>{amount.toLocaleString()} / {capacity.toLocaleString()}</span>
+                  <span className={`shrink-0 font-semibold ${production < 0 ? 'text-error' : 'text-success'}`}>
+                    ({production > 0 ? '+' : ''}{production.toLocaleString()}/hr)
+                  </span>
                 </div>
-                <ResourceDepletionTimer amount={amount} netPerHour={prod} />
-                <div className="w-full h-1.5 bg-bg-app/55 rounded-full overflow-hidden border border-border-base/50 shadow-inner">
-                  <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}></div>
+                <ResourceDepletionTimer amount={amount} netPerHour={production} />
+                <div className="h-1.5 w-full overflow-hidden rounded-full border border-border-base/50 bg-bg-app/55 shadow-inner">
+                  <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }} />
                 </div>
               </div>
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 };
 

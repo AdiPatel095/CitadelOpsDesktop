@@ -1,4 +1,4 @@
-import type { CommanderState } from '../../Movement/types/MovementState';
+import type { CommanderActivity } from '../../Movement/types/MovementState';
 
 export interface RiftCRALaunchEntry {
   id: string;
@@ -13,7 +13,7 @@ export interface RiftCRALaunchEntry {
   attackValid?: number;
   waveCount?: number;
   useTravelFeather?: boolean;
-  commanderStatus?: CommanderState;
+  commanderStatus?: CommanderActivity;
   commanderBusy?: boolean;
   canResend?: boolean;
   /** Feather one-way TT (seconds) from last successful inbound cra ack. */
@@ -66,7 +66,7 @@ function parseEntry(raw: unknown): RiftCRALaunchEntry | null {
   };
 }
 
-const COMMANDER_STATES = new Set<CommanderState>([
+const COMMANDER_STATES = new Set<CommanderActivity>([
   'syncing',
   'unknown',
   'free',
@@ -76,9 +76,9 @@ const COMMANDER_STATES = new Set<CommanderState>([
   'returning',
 ]);
 
-function parseCommanderState(raw: unknown): CommanderState | undefined {
-  if (typeof raw !== 'string' || !COMMANDER_STATES.has(raw as CommanderState)) return undefined;
-  return raw as CommanderState;
+function parseCommanderState(raw: unknown): CommanderActivity | undefined {
+  if (typeof raw !== 'string' || !COMMANDER_STATES.has(raw as CommanderActivity)) return undefined;
+  return raw as CommanderActivity;
 }
 
 export function parseRiftCRALaunchPayload(raw: unknown): RiftCRALaunchState {

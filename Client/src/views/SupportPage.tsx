@@ -9,8 +9,8 @@
 
 import React from 'react';
 import { Icons } from '../components/Icons';
-import CustomMessageSender from '../components/CustomMessageSender';
-import { Card, CardContent } from '../components/ui';
+import IntentConsole from '../components/IntentConsole';
+import { Card, CardContent, PageHeader } from '../components/ui';
 
 // Discord invite link
 const DISCORD_LINK = "https://discord.gg/zANyxDqfP3";
@@ -25,12 +25,13 @@ const DISCORD_LINK = "https://discord.gg/zANyxDqfP3";
 const SupportPage: React.FC = () => {
     return (
         <div className="max-w-4xl mx-auto py-8">
-            <h1 className="text-3xl font-bold tracking-tight text-text-main mb-2">Support & Community</h1>
-            <p className="text-text-muted mb-8 text-lg">
-                Get help, report issues, or send raw diagnostic commands.
-            </p>
+            <PageHeader
+                className="mb-8"
+                title="Support & Community"
+                description="Get help, report issues, or inspect deterministic 2.0 operations."
+            />
 
-            <CustomMessageSender />
+			<IntentConsole />
 
             <div className="mt-8">
                 <Card variant="interactive" className="hover:border-primary/30 transition-all duration-300">

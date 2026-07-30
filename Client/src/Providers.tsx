@@ -1,10 +1,6 @@
 import React from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { CastleFocusProvider } from './context/CastleFocusContext';
-import { LastKnownSnapshotProvider } from './context/LastKnownSnapshotContext';
-import { CastleResourceProvider } from './dashboard/context/CastleResourceContext';
-import { EquipmentProvider } from './equipment/context/EquipmentContext';
-import { ResourceProvider } from './currency/context/ResourceContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TroopPickerProvider } from './components/TroopPickerModal';
 import { ToolPickerProvider } from './components/ToolPickerModal';
@@ -13,36 +9,31 @@ import { RiftMapProvider } from './Rift/context/RiftMapContext';
 import { MovementProvider } from './Movement/context/MovementContext';
 import { MetadataProvider } from './context/MetadataContext';
 import SharedSvgDefs from './components/SharedSvgDefs';
+import { APIProvider } from './api/ApiContext';
 
 export const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
-        <AuthProvider>
-            <LastKnownSnapshotProvider>
-                <CastleFocusProvider>
-                    <ThemeProvider>
-                        <CastleResourceProvider>
-                            <ResourceProvider>
-                                <MetadataProvider>
+        <APIProvider>
+			<MetadataProvider>
+				<AuthProvider>
+					<CastleFocusProvider>
+							<ThemeProvider>
                                     <RiftMapProvider>
                                         <MovementProvider>
-                                            <EquipmentProvider>
-                                                <TroopPickerProvider>
+                                            <TroopPickerProvider>
                                                     <ToolPickerProvider>
                                                         <TCIPickerProvider>
                                                             <SharedSvgDefs />
                                                             {children}
                                                         </TCIPickerProvider>
                                                     </ToolPickerProvider>
-                                                </TroopPickerProvider>
-                                            </EquipmentProvider>
+                                            </TroopPickerProvider>
                                         </MovementProvider>
                                     </RiftMapProvider>
-                                </MetadataProvider>
-                            </ResourceProvider>
-                        </CastleResourceProvider>
-                    </ThemeProvider>
-                </CastleFocusProvider>
-            </LastKnownSnapshotProvider>
-        </AuthProvider>
+							</ThemeProvider>
+					</CastleFocusProvider>
+				</AuthProvider>
+			</MetadataProvider>
+        </APIProvider>
     );
 };

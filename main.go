@@ -1,153 +1,129 @@
 package main
 
 import (
-	"CitadelDesktop/Server/FrontendWebsocket"
-	"CitadelDesktop/Server/GameData"
-	"CitadelDesktop/Server/GameParser"
-	"CitadelDesktop/Server/Logging"
-	"CitadelDesktop/Server/Models"
-	battlereport "CitadelDesktop/Server/Models/BattleReport"
-	spyreport "CitadelDesktop/Server/Models/SpyReport"
-	"CitadelDesktop/Server/Paths"
-	"CitadelDesktop/Server/PlayerTracker"
-	"CitadelDesktop/Server/ResponseRegistry"
-	"CitadelDesktop/Server/Version"
-	"embed"
-	"fmt"
-	"io/fs"
+	"context"
+	"flag"
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"CitadelDesktop/Server/App"
+	"CitadelDesktop/Server/AppUpdate"
+	"CitadelDesktop/Server/Paths"
+	"CitadelDesktop/Server/Session"
 )
 
-//go:embed all:Client/dist
-var frontendAssets embed.FS
-
-var currentPort int
-
 func main() {
-	// Initialize custom file logger (pipes to both stdout and file)
-	if err := Logging.InitLogger(); err != nil {
-		log.Printf("Warning: Failed to initialize file logger: %v", err)
-	}
-	if err := Logging.InitChannelLogs(); err != nil {
-		log.Printf("Warning: Failed to initialize channel logs: %v", err)
-	}
-	defer Logging.CloseLogger()
-	defer Logging.CloseChannelLogs()
+	address := flag.String("addr", "127.0.0.1:8080", "HTTP listen address")
+	offline := flag.Bool("offline", false, "start without refreshing official game data")
+	browser := flag.String("browser", os.Getenv("CITADEL_BROWSER"), "Chromium browser id, executable, or auto")
+	browserPath := flag.String("browser-path", os.Getenv("CITADEL_BROWSER_PATH"), "explicit Chromium browser executable path")
+	browserHeadless := flag.Bool("browser-headless", false, "run the game browser without visible windows")
+	noAutoStart := flag.Bool("no-auto-start", false, "serve the dashboard without starting the game browser")
+	replayLog := flag.String("replay-log", "", "stream a captured websocket log instead of launching a browser")
+	replaySpeed := flag.Float64("replay-speed", 0, "capture replay speed multiplier; zero replays immediately")
+	flag.Parse()
 
-	log.Printf("Instance data directory: %s", Paths.DataDir())
-
-	// Clean up old binary from previous update (if exists)
-	Version.CleanupOldBinary()
-
-	// Initialize the port for the frontend service
-	port, err := findAvailablePort(8080)
-	if err != nil {
-		log.Printf("Warning: Failed to initialize port: %v", err)
-	}
-	currentPort = port
-	log.Printf("Frontend port initialized: %d", currentPort)
-
-	// Create WebSocket hub
-	FrontendWebsocket.InitHub()
-
-	ResponseRegistry.BroadcastStaleSnapshot = FrontendWebsocket.BroadcastLastKnownGameStateSnapshot
-
-	Models.StartPeriodicGameStateSnapshots()
-	playertracker.Start()
-	GameParser.OnGAMParsed = func() {
-		gs := Models.GetGameState()
-		movements, _, _, _ := gs.Movement.Snapshot()
-		memberIDs := make([]int, 0, len(gs.Alliance.Members))
-		for _, member := range gs.Alliance.Members {
-			if member.PlayerID > 0 {
-				memberIDs = append(memberIDs, member.PlayerID)
-			}
+	rootContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if desktopBuild {
+		if err := AppUpdate.CleanupOldExecutable(); err != nil {
+			log.Printf("Could not remove the previous application binary: %v", err)
 		}
-		spyreport.UploadMatchingMovements(movements, gs.PlayerID, gs.Alliance.AID, memberIDs)
 	}
-
-	if err := gamedata.LoadConsumptionReductionBuildings(); err != nil {
-		log.Printf("Warning: failed to load consumption reduction building index: %v", err)
+	listener, err := listenDashboard(*address)
+	if err != nil {
+		log.Fatal(err)
 	}
-	if n, err := GameParser.ConstructionItemGroupBuildingsReady(); err != nil {
-		log.Printf("Warning: construction item group→building map unavailable: %v", err)
+	dashboardURL := localDashboardURL(listener.Addr().String())
+	dataDir, err := Paths.DataDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	var transport Session.Transport
+	if *replayLog != "" {
+		transport = Session.NewReplayTransport(Session.ReplayConfig{Path: *replayLog, Speed: *replaySpeed})
 	} else {
-		log.Printf("[gamedata] construction item group→building wodIDs: %d groups loaded", n)
+		transport = Session.NewChromiumTransport(Session.ChromiumConfig{
+			DataDir: dataDir, DashboardURL: dashboardURL,
+			Browser: *browser, ExecutablePath: *browserPath, Headless: *browserHeadless,
+		})
 	}
-
-	// Set up callbacks for ResponseRegistry to notify frontend
-	ResponseRegistry.SetGameLoginStatusCallback(FrontendWebsocket.SendGameLoginStatusMessage)
-	ResponseRegistry.SetAutoBirdStatusCallback(FrontendWebsocket.SendAutoBirdStatus)
-	ResponseRegistry.SetMemoryStatsCallback(FrontendWebsocket.SendMemoryStatsMessage)
-
-	// Set up callbacks for Version package
-	Version.SetVersionUpdateCallback(FrontendWebsocket.SendVersionUpdateMessage)
-	Version.SetUpdateProgressCallback(FrontendWebsocket.SendUpdateProgressMessage)
-	Version.SetUpdateCompleteCallback(FrontendWebsocket.SendUpdateCompleteMessage)
-	Version.SetUpdateErrorCallback(FrontendWebsocket.SendUpdateErrorMessage)
-
-	// Startup frontend server
-	go StartFrontendService()
-
-	// Start version check service (runs in background)
-	Version.StartVersionCheck()
-
-	// Block forever
-	select {}
-}
-
-func findAvailablePort(preferredPort int) (int, error) {
-	// Try a preferred port first, if available
-	if preferredPort > 0 {
-		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", preferredPort))
-		if err == nil {
-			_ = ln.Close()
-			return preferredPort, nil
-		}
-	}
-
-	// Otherwise, let the OS choose
-	listener, err := net.Listen("tcp", ":0")
+	startupContext, cancelStartup := context.WithTimeout(rootContext, 90*time.Second)
+	application, err := App.New(startupContext, App.Config{
+		DataDir: dataDir, Offline: *offline, Transport: transport, RuntimeContext: rootContext,
+		UpdateEndpoint: os.Getenv("CITADEL_UPDATE_URL"), UpdateInstallSupported: desktopBuild,
+	})
+	cancelStartup()
 	if err != nil {
-		return 0, err
+		log.Fatal(err)
 	}
-	defer listener.Close()
-	return listener.Addr().(*net.TCPAddr).Port, nil
-}
-
-func StartFrontendService() {
-	// Create a sub-filesystem that starts from the 'Client/dist' directory
-	subFS, err := fs.Sub(frontendAssets, "Client/dist")
-	if err != nil {
-		log.Fatal("Failed to create sub-filesystem for frontend assets:", err)
+	if application.StartupErr != nil {
+		log.Printf("Startup completed with degraded services: %v", application.StartupErr)
 	}
+	application.Start(rootContext)
 
 	mux := http.NewServeMux()
+	mux.Handle("/api/", application.API.Handler())
+	mux.Handle("/", frontendHandler("Client/dist"))
+	server := &http.Server{
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       90 * time.Second,
+	}
+	serveErrors := make(chan error, 1)
+	go func() { serveErrors <- server.Serve(listener) }()
+	log.Printf("CitadelOps %s listening at %s", App.Version, dashboardURL)
+	if !*noAutoStart {
+		go func() {
+			if err := application.Session.Start(rootContext); err != nil {
+				log.Printf("Game session did not auto-start: %v", err)
+			}
+		}()
+	}
+	select {
+	case <-rootContext.Done():
+	case serveErr := <-serveErrors:
+		if serveErr != nil && serveErr != http.ErrServerClosed {
+			log.Printf("Dashboard server stopped: %v", serveErr)
+		}
+		stop()
+	}
+	shutdownContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_ = server.Shutdown(shutdownContext)
+}
 
-	mux.Handle("/", http.FileServer(http.FS(subFS)))
-	Logging.RegisterLogHandlers(mux)
-	battlereport.RegisterStatsHandlers(mux)
-	spyreport.RegisterHandlers(mux)
-	playertracker.RegisterHandlers(mux)
-	mux.HandleFunc("/ws", FrontendWebsocket.ServeWs)
+func listenDashboard(address string) (net.Listener, error) {
+	listener, err := net.Listen("tcp", address)
+	if err == nil {
+		return listener, nil
+	}
+	host, port, splitErr := net.SplitHostPort(address)
+	if splitErr != nil || port != "8080" {
+		return nil, err
+	}
+	fallback, fallbackErr := net.Listen("tcp", net.JoinHostPort(host, "0"))
+	if fallbackErr != nil {
+		return nil, err
+	}
+	return fallback, nil
+}
 
-	port := currentPort
-	addr := fmt.Sprintf(":%d", port)
-	dashboardURL := fmt.Sprintf("http://localhost:%d", port)
-	ResponseRegistry.SetDashboardURL(dashboardURL)
-
-	ln, err := net.Listen("tcp", addr)
+func localDashboardURL(address string) string {
+	host, port, err := net.SplitHostPort(address)
 	if err != nil {
-		log.Fatal(err)
+		return "http://" + address
 	}
-	log.Printf("Dashboard available at: %s", dashboardURL)
-
-	// Listen before opening Chrome so the first websocket connect succeeds.
-	go ResponseRegistry.StartGameBrowser(dashboardURL)
-
-	if err := http.Serve(ln, mux); err != nil {
-		log.Fatal(err)
+	switch host {
+	case "", "0.0.0.0":
+		host = "127.0.0.1"
+	case "::":
+		host = "::1"
 	}
+	return "http://" + net.JoinHostPort(host, port)
 }

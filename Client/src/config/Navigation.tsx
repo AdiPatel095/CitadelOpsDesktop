@@ -5,6 +5,10 @@ export type ViewId =
   | 'equipment'
   | 'support'
   | 'castle'
+  | 'events'
+  | 'attack-presets'
+  | 'defense-presets'
+  | 'automation'
   | 'movement'
   | 'battle-stats'
   | 'player-tracker'
@@ -22,8 +26,12 @@ export interface NavigationItem {
 
 export const NAVIGATION_ITEMS: NavigationItem[] = [
     { id: 'castle', label: 'Castle', icon: <Icons.Castle />, section: 'main' },
+    { id: 'automation', label: 'Automation', icon: <Icons.Automation />, section: 'main' },
+    { id: 'events', label: 'Feature Stats', icon: <Icons.Trophy />, section: 'main' },
+    { id: 'attack-presets', label: 'Attack Presets', icon: <Icons.Crosshair />, section: 'main' },
+    { id: 'defense-presets', label: 'Defense Presets', icon: <Icons.Shield />, section: 'main' },
     { id: 'equipment', label: 'Equipment', icon: <Icons.Shield />, section: 'main' },
-    { id: 'movement', label: 'Movement', icon: <Icons.Activity />, section: 'main' },
+    { id: 'movement', label: 'Commanders', icon: <Icons.Activity />, section: 'main' },
     { id: 'battle-stats', label: 'Battle Stats', icon: <Icons.Activity />, section: 'main' },
     { id: 'player-tracker', label: 'My Stats', icon: <Icons.Users />, section: 'main' },
     { id: 'alliance-targets', label: 'Alliance Targets', icon: <Icons.Crosshair />, section: 'main' },

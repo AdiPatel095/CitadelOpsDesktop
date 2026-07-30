@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icons } from '../components/Icons';
-import { Badge, Card, CardContent, CardHeader, CardTitle } from '../components/ui';
+import { Badge, PageHeader, SectionCard } from '../components/ui';
 import {
   APP_VERSION_CURRENT,
   PATCH_NOTE_KIND_LABEL,
@@ -21,32 +21,23 @@ const PATCH_NOTE_BADGE_VARIANT: Record<PatchNoteKind, NonNullable<BadgeProps['va
 
 function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLatest: boolean }) {
   return (
-    <Card
+    <SectionCard
+      variant="glass"
+      title={(
+        <>
+          <span className="font-mono text-primary">v{release.version}</span>
+          {isLatest && <Badge variant="primary">Current</Badge>}
+        </>
+      )}
+      description={release.subtitle}
+      actions={release.date ? <span className="font-mono text-xs text-text-muted">{release.date}</span> : undefined}
+      titleClassName="text-xl"
       className={
         isLatest
-          ? 'liquid-prominent-header-card border-primary/25 shadow-[0_0_24px_-8px_rgba(52,211,153,0.35)]'
+          ? 'liquid-prominent-header-card border-primary/25 shadow-[0_0_24px_-8px_var(--primary-glow)]'
           : 'liquid-prominent-header-card border-border-base opacity-95'
       }
     >
-      <CardHeader className="liquid-card-header-prominent">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <span className="font-mono text-primary">v{release.version}</span>
-            {isLatest && (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
-                Current
-              </span>
-            )}
-          </CardTitle>
-          {release.date && (
-            <span className="text-xs text-text-muted font-mono">{release.date}</span>
-          )}
-        </div>
-        {release.subtitle && (
-          <p className="text-sm text-text-muted mt-1 leading-relaxed">{release.subtitle}</p>
-        )}
-      </CardHeader>
-      <CardContent className="liquid-prominent-header-content">
         {release.items.length > 0 && (
           <ul className="space-y-3 text-sm text-text-main leading-relaxed">
             {release.items.map((item, idx) => (
@@ -59,26 +50,19 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
             ))}
           </ul>
         )}
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 }
 
 const PatchNotesView: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto py-6 pb-16">
-      <div className="flex items-start gap-4 mb-8">
-        <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-          <Icons.PatchNotes className="w-7 h-7 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-text-main">Patch Notes</h1>
-          <p className="text-text-muted mt-1 text-base leading-relaxed">
-            Summaries of recent updates. You’re on version{' '}
-            <span className="font-mono text-text-main">v{APP_VERSION_CURRENT}</span>.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        className="mb-8"
+        title="Patch Notes"
+        icon={<Icons.PatchNotes className="h-7 w-7" />}
+        description={<>Summaries of recent updates. You’re on version <span className="font-mono text-text-main">v{APP_VERSION_CURRENT}</span>.</>}
+      />
 
       <div className="space-y-8">
         {PATCH_NOTES_RELEASES.map((release, i) => (

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Binoculars, RefreshCw, Shield, Swords } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
 import DetailBackButton from '../../components/DetailBackButton';
-import { FrontendWebsocket } from '../../Websocket';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
+import { Notifications } from '../../components/Notifications';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader } from '../../components/ui';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 
 interface SpyPlayer { id?: number; name?: string; alliance?: string }
@@ -50,12 +50,12 @@ const SpyReportsView = () => {
   const load = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/spy-reports', { cache: 'no-cache' });
+	  const response = await fetch('/api/v2/history/spy-reports', { cache: 'no-cache' });
       if (!response.ok) throw new Error(`Spy reports request failed (${response.status})`);
       const payload = await response.json();
       setReports(Array.isArray(payload) ? payload : []);
     } catch (reason) {
-      FrontendWebsocket.showAlert('red', reason instanceof Error ? reason.message : 'Could not load spy reports.');
+      Notifications.error(reason instanceof Error ? reason.message : 'Could not load spy reports.', 'spy-reports-load');
     } finally {
       setLoading(false);
     }
@@ -69,16 +69,12 @@ const SpyReportsView = () => {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl border border-primary/25 bg-primary/10 p-2.5 text-primary"><Binoculars className="h-6 w-6" /></div>
-          <div>
-            <h1 className="text-2xl font-bold text-text-main">Spy Reports</h1>
-            <p className="mt-1 text-sm text-text-muted">Review successful, partial, and failed espionage attempts.</p>
-          </div>
-        </div>
-        <Button variant="secondary" onClick={() => void load()} isLoading={loading} leftIcon={<RefreshCw className="h-4 w-4" />}>Refresh</Button>
-      </div>
+      <PageHeader
+        title="Spy Reports"
+        description="Review successful, partial, and failed espionage attempts."
+        icon={<Binoculars className="h-6 w-6" />}
+        actions={<Button variant="secondary" onClick={() => void load()} isLoading={loading} leftIcon={<RefreshCw className="h-4 w-4" />}>Refresh</Button>}
+      />
 
       <Card>
         <CardHeader><CardTitle>Intelligence archive</CardTitle></CardHeader>

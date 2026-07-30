@@ -1,66 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { CalendarDays, X, Save, Plus, Trash2 } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
+import { Bird, CalendarDays, Plus } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import {
   applyPresetToStoredShape,
-  loadPresetsFile,
+  emptyPresetsFile,
   parsePresetsPayload,
   snapshotFromForm,
   type AutoBirdPreset,
 } from '../AutoBirdPresets';
 import {
   buildAutoBirdClientState,
-  loadAutoBirdSettingsFromStorage,
+  defaultAutoBirdSettings,
   parseAutoBirdClientState,
   persistAutoBirdClientState,
   type AutoBirdStoredSettings,
 } from '../AutoBirdClientState';
-import { Modal, Button, Input, Select, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
-
-export { loadAutoBirdSettingsFromStorage } from '../AutoBirdClientState';
-
-interface Castle {
-  id: number;
-  name: string;
-  type: string;
-}
+import {
+  AddSlot,
+  Button,
+  Card,
+  Input,
+  NamedPresetControls,
+  QuantityAssetTile,
+  SettingsModal,
+} from '../../components/ui';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { castleOptionsFromState } from '../../api/Selectors';
 
 interface AutoBirdSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
-}
-
-function AutoBirdTroopTile({
-  unitId,
-  amount,
-  onRemove,
-}: {
-  unitId: number;
-  amount: number;
-  onRemove: () => void;
-}) {
-  return (
-    <div className="group relative flex w-[84px] flex-col items-center">
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute -right-1 -top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-error text-[10px] font-bold text-white opacity-0 shadow-md transition-opacity hover:brightness-110 group-hover:opacity-100"
-        aria-label="Remove unit"
-      >
-        <X className="h-3 w-3" />
-      </button>
-      <div className="relative h-[76px] w-[76px] shrink-0">
-        <UnitImage unitId={unitId} size={76} showLevel={true} className="rounded-xl" />
-        <span className="absolute bottom-0 right-0 z-10 max-w-[calc(100%+8px)] translate-x-1/4 translate-y-1/4 truncate rounded-full bg-white px-2.5 py-0.5 text-center text-[10px] font-bold tabular-nums text-slate-900 shadow-md ring-1 ring-black/10">
-          {amount.toLocaleString()}
-        </span>
-      </div>
-    </div>
-  );
 }
 
 function clampDelayHours(value: number): number {
@@ -74,13 +46,14 @@ function clampMinRPTDays(value: number): number {
 }
 
 export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
-  const [castles, setCastles] = useState<Castle[]>([]);
+  const { state, configuration } = useCitadelAPI();
+  const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
   const [minDelay, setMinDelay] = useState(6);
   const [maxDelay, setMaxDelay] = useState(12);
   const [minSend, setMinSend] = useState(0);
   const [minRPTDays, setMinRPTDays] = useState(3);
-  const [presetsState, setPresetsState] = useState(() => loadPresetsFile());
+  const [presetsState, setPresetsState] = useState(() => emptyPresetsFile());
   const [presetDropdownId, setPresetDropdownId] = useState('');
   const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null);
   const [presetName, setPresetName] = useState('');
@@ -99,14 +72,14 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
   }, [settings, minDelay, maxDelay, minSend, minRPTDays]);
 
-  const hydrateFromStorage = useCallback(() => {
-    const s = loadAutoBirdSettingsFromStorage();
+  const hydrateFromConfiguration = useCallback(() => {
+    const s = parseAutoBirdClientState(configuration?.sections['automation.autoBird']).ignoreSettings;
     setSettings(s.settings);
     setMinDelay(clampDelayHours(s.minDelay));
     setMaxDelay(clampDelayHours(s.maxDelay));
     setMinSend(s.minSend);
     setMinRPTDays(clampMinRPTDays(s.minRPTDays));
-  }, []);
+  }, [configuration?.sections]);
 
   const applyFullClientState = useCallback((state: ReturnType<typeof parseAutoBirdClientState>) => {
     const ig = state.ignoreSettings;
@@ -122,43 +95,16 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
 
   useEffect(() => {
     if (!isOpen) return;
-    FrontendWebsocket.sendMessage({ type: 'getCastleList' });
-    hydrateFromStorage();
-
-    const onClientStateMessage = (msg: { type?: string; payload?: unknown }) => {
-      if (msg.type !== 'autoBirdClientState' || msg.payload == null) return;
-      applyFullClientState(parseAutoBirdClientState(msg.payload));
-    };
-
-    FrontendWebsocket.addMessageListener(onClientStateMessage);
-
-    if (FrontendWebsocket.getStatus() === 'Connected') {
-      FrontendWebsocket.sendMessage({ type: 'getAutoBirdClientState' });
-    } else {
-      applyFullClientState(
-        buildAutoBirdClientState(loadAutoBirdSettingsFromStorage(), loadPresetsFile())
-      );
-    }
+    applyFullClientState(parseAutoBirdClientState(
+      configuration?.sections['automation.autoBird']
+        ?? buildAutoBirdClientState(defaultAutoBirdSettings(), emptyPresetsFile()),
+    ));
 
     setAppliedPresetId(null);
     setPresetName('');
     setPresetError('');
 
-    return () => FrontendWebsocket.removeMessageListener(onClientStateMessage);
-  }, [isOpen, hydrateFromStorage, applyFullClientState]);
-
-  useEffect(() => {
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'castleList') {
-        const list = msg.payload as Castle[];
-        if (list && list.length > 0) {
-          setCastles(list);
-        }
-      }
-    };
-    FrontendWebsocket.addMessageListener(handleMessage);
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, []);
+  }, [configuration?.sections, isOpen, applyFullClientState]);
 
   const handleAddItem = async (castleId: string) => {
     const currentItems = settings[castleId] || [];
@@ -194,7 +140,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const handleApplyPreset = () => {
     setPresetError('');
     if (!presetDropdownId) {
-      hydrateFromStorage();
+      hydrateFromConfiguration();
       setAppliedPresetId(null);
       setPresetName('');
       return;
@@ -247,7 +193,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     setPresetDropdownId('');
     if (appliedPresetId === id) {
       setAppliedPresetId(null);
-      hydrateFromStorage();
+      hydrateFromConfiguration();
       setPresetName('');
     }
   };
@@ -277,45 +223,36 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   };
 
   const presetOptions = [
-    { value: '', label: '— Saved on disk (default) —' },
+    { value: '', label: '— Saved configuration —' },
     ...presetsState.presets.map((p) => ({ value: p.id, label: p.name })),
   ];
 
   return (
-    <Modal
+    <SettingsModal
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="full"
-      title={
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <span className="text-primary">Auto Bird Settings</span>
-            <p className="mt-1 text-sm text-text-muted font-normal">
+      title="Auto Bird Settings"
+      icon={<Bird className="h-5 w-5" />}
+      description={(
+            <>
               Configure troops to keep (ignore) for each castle when auto-birding. These units will{' '}
               <span className="font-bold text-text-main">not</span> be sent.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0"
-            onClick={() => onOpenFeatureSchedule('autoBird', 'Auto Bird')}
-            leftIcon={<CalendarDays className="h-4 w-4" />}
-          >
-            Calendar
-          </Button>
-        </div>
-      }
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose} className="px-6">
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSave} className="px-8" leftIcon={<Save className="w-4 h-4" />}>
-            Save changes
-          </Button>
-        </>
-      }
+            </>
+      )}
+      titleTrailing={(
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => onOpenFeatureSchedule('autoBird', 'Auto Bird')}
+              leftIcon={<CalendarDays className="h-4 w-4" />}
+            >
+              Calendar
+            </Button>
+      )}
+      onSave={handleSave}
+      saveLabel="Save changes"
     >
       <div className="auto-bird-settings-workspace flex w-full flex-col gap-6 mx-auto">
         {/* Global settings bar */}
@@ -384,62 +321,27 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         </Card>
 
         {/* Presets */}
-        <Card variant="solid" className="shrink-0 bg-bg-app border-border-base p-4">
-          <div className="mb-3 text-xs font-bold uppercase tracking-wider text-primary">Presets</div>
-          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
-            <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Preset name</span>
-              <Input
-                type="text"
-                placeholder="Name for new preset or rename on save"
-                value={presetName}
-                onChange={(e) => {
-                  setPresetName(e.target.value);
-                  setPresetError('');
-                }}
-                error={presetError}
-              />
-            </div>
-            <div className="flex min-w-[280px] flex-1 flex-col gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Load preset</span>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Select
-                    value={presetDropdownId}
-                    onChange={(v) => setPresetDropdownId(v)}
-                    options={presetOptions}
-                  />
-                </div>
-                <Button variant="outline" onClick={handleApplyPreset} className="shrink-0 bg-bg-card">
-                  Apply
-                </Button>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleSaveAsNewPreset}
-                className="border-info/40 text-info hover:bg-info/10"
-                leftIcon={<Plus className="w-4 h-4" />}
-              >
-                Save as new
-              </Button>
-              <Button
-                variant="danger"
-                disabled={!presetDropdownId}
-                onClick={handleDeletePreset}
-                leftIcon={<Trash2 className="w-4 h-4" />}
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-text-muted">
+        <NamedPresetControls
+          name={presetName}
+          onNameChange={(value) => {
+            setPresetName(value);
+            setPresetError('');
+          }}
+          nameError={presetError}
+          selectedID={presetDropdownId}
+          onSelectedIDChange={setPresetDropdownId}
+          options={presetOptions}
+          onApply={handleApplyPreset}
+          onSaveAsNew={handleSaveAsNewPreset}
+          onDelete={handleDeletePreset}
+          help={(
+            <>
             Choose a preset and click <span className="font-semibold text-text-main">Apply</span> to load it into the grid.{' '}
             <span className="font-semibold text-text-main">Save changes</span> writes Auto Bird settings and updates the applied preset
             (including name). Data is stored next to decoration presets (see AutoBird.json).
-          </p>
-        </Card>
+            </>
+          )}
+        />
 
         {/* Castle grid */}
         <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
@@ -471,21 +373,21 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                   ) : (
                     <div className="flex flex-wrap justify-center gap-4">
                       {items.map((item) => (
-                        <AutoBirdTroopTile
+                        <QuantityAssetTile
                           key={item.id}
-                          unitId={item.id}
-                          amount={item.amount}
+                          visual={<UnitImage unitId={item.id} size={76} showLevel className="rounded-xl" />}
+                          quantity={item.amount}
                           onRemove={() => handleRemoveItem(cid, item.id)}
+                          removeLabel="Remove unit"
                         />
                       ))}
-                      <button
-                        type="button"
+                      <AddSlot
+                        label="Add unit"
+                        layout="icon"
                         onClick={() => handleAddItem(cid)}
-                        className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-global border-2 border-dashed border-border-base text-text-muted transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
-                        aria-label="Add unit"
-                      >
-                        <Plus className="h-8 w-8" strokeWidth={1.5} />
-                      </button>
+                        className="h-[76px] w-[76px] shrink-0"
+                        icon={<Plus className="h-8 w-8" strokeWidth={1.5} />}
+                      />
                     </div>
                   )}
                 </Card>
@@ -494,6 +396,6 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
           </div>
         </div>
       </div>
-    </Modal>
+    </SettingsModal>
   );
 };

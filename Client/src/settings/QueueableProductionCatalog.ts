@@ -1,3 +1,6 @@
+import type { GameStateV2 } from '../api/Contracts';
+import type { MetadataItem } from '../context/MetadataContext';
+
 export interface QueueableProductionCatalogEntry {
   buildingRowsLoaded: boolean;
   recruitUnitIds: number[];
@@ -8,11 +11,46 @@ export type QueueableProductionCatalog = Record<string, QueueableProductionCatal
 export type QueueableProductionField = 'recruitUnitIds' | 'toolIds';
 export type QueueableProductionMergeMode = 'union' | 'intersection';
 
-interface QueueableProductionWireEntry {
-  castleID?: unknown;
-  buildingRowsLoaded?: unknown;
-  recruitUnitIds?: unknown;
-  toolIds?: unknown;
+export function buildQueueableProductionCatalog(
+  state: GameStateV2 | null,
+  buildings: Record<number, MetadataItem>,
+  troops: Record<number, MetadataItem>,
+  tools: Record<number, MetadataItem>,
+): QueueableProductionCatalog {
+  if (!state) return {};
+  const catalog: QueueableProductionCatalog = {};
+  for (const castle of Object.values(state.castles)) {
+    const recruitUnitIds = new Set<number>();
+    const toolIds = new Set<number>();
+		if (castle.queueableObservedAt) {
+			for (const definition of castle.queueableProduction['0'] ?? []) {
+				if (definition.collection === 'units' && troops[definition.id]) recruitUnitIds.add(definition.id);
+			}
+			for (const definition of castle.queueableProduction['1'] ?? []) {
+				if (definition.collection === 'tools' && tools[definition.id]) toolIds.add(definition.id);
+			}
+			catalog[String(castle.id)] = {
+				buildingRowsLoaded: true,
+				recruitUnitIds: Array.from(recruitUnitIds).sort((left, right) => left - right),
+				toolIds: Array.from(toolIds).sort((left, right) => left - right),
+			};
+			continue;
+		}
+    const buildingRows = Object.values(castle.buildings);
+    for (const building of buildingRows) {
+      const definition = buildings[building.definitionId];
+      for (const id of officialIDList(definition?.unlockIDs)) {
+        if (troops[id]) recruitUnitIds.add(id);
+        if (tools[id]) toolIds.add(id);
+      }
+    }
+    catalog[String(castle.id)] = {
+      buildingRowsLoaded: buildingRows.length > 0,
+      recruitUnitIds: Array.from(recruitUnitIds).sort((left, right) => left - right),
+      toolIds: Array.from(toolIds).sort((left, right) => left - right),
+    };
+  }
+  return catalog;
 }
 
 function normalizeIDList(raw: unknown): number[] {
@@ -24,23 +62,13 @@ function normalizeIDList(raw: unknown): number[] {
   return Array.from(new Set(ids)).sort((a, b) => a - b);
 }
 
-export function normalizeQueueableProductionCatalog(raw: unknown): QueueableProductionCatalog {
-  if (!Array.isArray(raw)) return {};
-
-  const catalog: QueueableProductionCatalog = {};
-  raw.forEach((entryRaw) => {
-    if (!entryRaw || typeof entryRaw !== 'object') return;
-    const entry = entryRaw as QueueableProductionWireEntry;
-    const castleID = Number(entry.castleID);
-    if (!Number.isFinite(castleID) || castleID <= 0) return;
-    catalog[String(Math.floor(castleID))] = {
-      buildingRowsLoaded: entry.buildingRowsLoaded === true,
-      recruitUnitIds: normalizeIDList(entry.recruitUnitIds),
-      toolIds: normalizeIDList(entry.toolIds),
-    };
-  });
-
-  return catalog;
+function officialIDList(raw: unknown): number[] {
+  if (Array.isArray(raw)) return normalizeIDList(raw);
+  if (typeof raw === 'string') {
+    return normalizeIDList(raw.split(/[;,\s]+/).filter(Boolean));
+  }
+  if (raw == null) return [];
+  return normalizeIDList([raw]);
 }
 
 export function queueableIDsForCastle(

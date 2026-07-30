@@ -1,15 +1,16 @@
 {
-  "name": "my-app",
+  "name": "citadel-ops",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "client:dev": "cd Client && npm run dev",
     "client:build": "cd Client && npm run build",
-    "server:dev": "cd Server && go run main.go",
-    "updateData": "go run ./Server/OfficialData -fetch-assets -prune-png",
+    "client:perf": "go run ./Tools/UIPerformance",
+    "server:dev": "go run .",
+    "cli": "go run ./cmd/CitadelOpsCLI",
     "serve": "npm run client:dev && npm run server:dev",
-    "build": "npm run client:build && go build -o \"%USERPROFILE%\\Downloads\\CitadelOpsDesktop.exe\" .",
-    "build:dev": "npm run client:build && go build -o CitadelDesktop.exe main.go && CitadelDesktop.exe"
+    "build": "npm run client:build && go build -tags desktop -o CitadelOpsDesktop .",
+    "build:server": "go build -o CitadelOpsDesktop ."
   }
 }

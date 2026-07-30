@@ -1,56 +1,218 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { ArrowDown, ArrowUp, Download, FileJson, Upload } from 'lucide-react';
 import { Icons } from '../components/Icons';
-import PriorityModal from '../components/PriorityModal';
-import { FrontendWebsocket } from '../Websocket';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '../components/ui';
+import { CitadelAPI } from '../api/CitadelClient';
+import { useCitadelAPI } from '../api/ApiContext';
+import type { BrowserInventory, SettingsBundleV1 } from '../api/Contracts';
+import { Button, Input, PageHeader, SectionCard, Select } from '../components/ui';
+import { asRecord, configurationSection, numericSetting } from '../settings/Configuration';
+import {
+	applyPortableClientPreferences,
+	parseSettingsBundle,
+	withPortableClientPreferences,
+} from '../settings/SettingsTransfer';
+
+interface AttackPriorityFeature {
+	id: string;
+	label: string;
+	detail: string;
+	defaultWeight: number;
+}
+
+const defaultAttackPriorityFeatures: AttackPriorityFeature[] = [
+	{ id: 'autoTowers', label: 'Auto Towers', detail: 'Robber-baron and kingdom tower attacks', defaultWeight: 50 },
+	{ id: 'riftMaiden', label: 'Rift Maiden Waves', detail: 'Shield-maiden probe and wave launches', defaultWeight: 50 },
+	{ id: 'riftReplay', label: 'Rift Replays', detail: 'Captured Rift attack templates', defaultWeight: 50 },
+];
+
+function normalizedAttackPriority(value: unknown, fallback = 50): number {
+	const numeric = Number(value);
+	if (!Number.isFinite(numeric)) return fallback;
+	return Math.min(100, Math.max(1, Math.round(numeric)));
+}
+
+function orderedAttackPriorityIDs(features: AttackPriorityFeature[], storedPriorities: Record<string, unknown>): string[] {
+	return features
+		.map((feature, index) => ({
+			id: feature.id,
+			index,
+			weight: normalizedAttackPriority(storedPriorities[feature.id], feature.defaultWeight),
+		}))
+		.sort((left, right) => right.weight - left.weight || left.index - right.index)
+		.map((feature) => feature.id);
+}
+
+function rankedAttackPriorities(featureIDs: string[]): Record<string, number> {
+	return Object.fromEntries(featureIDs.map((featureID, index) => [featureID, Math.max(1, 100 - index)]));
+}
 
 const SettingsView: React.FC = () => {
+	const { state, configuration, refreshConfiguration, submitIntent, updateConfiguration } = useCitadelAPI();
   const [minTimer, setMinTimer] = useState<string>('4.0');
   const [maxTimer, setMaxTimer] = useState<string>('6.0');
   const [upgradeEreDelayMs, setUpgradeEreDelayMs] = useState<string>('50');
   const [upgradeCoinThreshold, setUpgradeCoinThreshold] = useState<string>('0');
-  const [manualFocusIdleSec, setManualFocusIdleSec] = useState<string>('30');
-  const [isPriorityModalOpen, setIsPriorityModalOpen] = useState(false);
+	const [attackPriorityOrder, setAttackPriorityOrder] = useState<string[]>([]);
+	const [attackPriorityFeatures, setAttackPriorityFeatures] = useState<AttackPriorityFeature[]>(defaultAttackPriorityFeatures);
+	const [draggedAttackPriorityID, setDraggedAttackPriorityID] = useState<string | null>(null);
+	const [attackPriorityDropTargetID, setAttackPriorityDropTargetID] = useState<string | null>(null);
+	const [browserInventory, setBrowserInventory] = useState<BrowserInventory | null>(null);
+	const [browserSelectionPending, setBrowserSelectionPending] = useState(false);
+	const [browserSelectionError, setBrowserSelectionError] = useState('');
+	const [customBrowserPath, setCustomBrowserPath] = useState('');
+	const [relogDelayMinutes, setRelogDelayMinutes] = useState('5');
+	const [relogDelayError, setRelogDelayError] = useState('');
+	const [settingsSaveError, setSettingsSaveError] = useState('');
+	const settingsFileInputRef = useRef<HTMLInputElement>(null);
+	const [settingsTransferPending, setSettingsTransferPending] = useState<'export' | 'import' | null>(null);
+	const [settingsTransferError, setSettingsTransferError] = useState('');
+	const [settingsTransferStatus, setSettingsTransferStatus] = useState('');
+	const schedulerConfiguration = useMemo(
+		() => configurationSection(configuration, 'scheduler'),
+		[configuration?.sections.scheduler],
+	);
+	const reconnectConfiguration = useMemo(
+		() => configurationSection(configuration, 'session.reconnect'),
+		[configuration?.sections['session.reconnect']],
+	);
+
+	useEffect(() => {
+		let active = true;
+		void CitadelAPI.getBrowsers()
+			.then((inventory) => {
+				if (active) setBrowserInventory(inventory);
+			})
+			.catch((error) => {
+				if (active) setBrowserSelectionError(error instanceof Error ? error.message : 'Could not discover browsers');
+			});
+		return () => {
+			active = false;
+		};
+	}, []);
 
   useEffect(() => {
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'schedulerSettings' && msg.payload) {
-        setMinTimer(msg.payload.minAttackDelay?.toFixed(1) || '4.0');
-        setMaxTimer(msg.payload.maxAttackDelay?.toFixed(1) || '6.0');
-        setUpgradeEreDelayMs(String(msg.payload.upgradeEreDelayMs ?? 50));
-        setUpgradeCoinThreshold(String(msg.payload.upgradeCoinThreshold ?? 0));
-        setManualFocusIdleSec(String(msg.payload.manualFocusIdleSec ?? 30));
-      }
-    };
+		setMinTimer(numericSetting(schedulerConfiguration.minAttackDelay, 4).toFixed(1));
+		setMaxTimer(numericSetting(schedulerConfiguration.maxAttackDelay, 6).toFixed(1));
+		setUpgradeEreDelayMs(String(numericSetting(schedulerConfiguration.upgradeEreDelayMs, 50)));
+		setUpgradeCoinThreshold(String(numericSetting(schedulerConfiguration.upgradeCoinThreshold, 0)));
+		const storedPriorities = asRecord(schedulerConfiguration.attackPriorities);
+		setAttackPriorityOrder(orderedAttackPriorityIDs(attackPriorityFeatures, storedPriorities));
+	}, [attackPriorityFeatures, schedulerConfiguration]);
 
-    FrontendWebsocket.addMessageListener(handleMessage);
-    FrontendWebsocket.sendGetSchedulerSettings();
+	useEffect(() => {
+		const seconds = numericSetting(reconnectConfiguration.relogDelaySec, 300);
+		setRelogDelayMinutes(String(Math.min(1_440, Math.max(1, Math.round(seconds / 60)))));
+	}, [reconnectConfiguration]);
 
-    return () => {
-      FrontendWebsocket.removeMessageListener(handleMessage);
-    };
-  }, []);
+	const orderedAttackPriorityFeatures = useMemo(() => {
+		const features = new Map(attackPriorityFeatures.map((feature) => [feature.id, feature]));
+		return attackPriorityOrder.map((featureID) => features.get(featureID)).filter((feature): feature is AttackPriorityFeature => feature != null);
+	}, [attackPriorityFeatures, attackPriorityOrder]);
+
+	useEffect(() => {
+		let active = true;
+		void CitadelAPI.getIntentDefinitions()
+			.then((definitions) => {
+				if (!active) return;
+				const modules = new Map<string, AttackPriorityFeature>();
+				definitions.forEach((definition) => {
+					const module = definition.attackModule;
+					if (!module?.id || modules.has(module.id)) return;
+					modules.set(module.id, {
+						id: module.id,
+						label: module.label || module.id,
+						detail: module.description || definition.description,
+						defaultWeight: normalizedAttackPriority(module.defaultWeight),
+					});
+				});
+				if (modules.size > 0) {
+					setAttackPriorityFeatures([...modules.values()].sort((left, right) => left.label.localeCompare(right.label)));
+				}
+			})
+			.catch(() => undefined);
+		return () => {
+			active = false;
+		};
+	}, []);
 
   const saveSettings = (
     min: string,
     max: string,
     ereDelayMs?: string,
     coinThreshold?: string,
-    focusIdleSec?: string,
   ) => {
-    FrontendWebsocket.sendSaveSchedulerSettings({
+		setSettingsSaveError('');
+		void updateConfiguration('scheduler', {
+			...schedulerConfiguration,
       minAttackDelay: parseFloat(min),
       maxAttackDelay: parseFloat(max),
       upgradeEreDelayMs: parseInt(ereDelayMs ?? upgradeEreDelayMs, 10),
       upgradeCoinThreshold: parseFloat(coinThreshold ?? upgradeCoinThreshold),
-      manualFocusIdleSec: parseInt(focusIdleSec ?? manualFocusIdleSec, 10),
-    });
+		}).catch((error) => {
+			setSettingsSaveError(error instanceof Error ? error.message : 'Could not save settings');
+		});
   };
 
   const parsedCoinThreshold = useMemo(() => {
     const num = parseFloat(upgradeCoinThreshold);
     return Number.isFinite(num) && num >= 0 ? num : 0;
   }, [upgradeCoinThreshold]);
+
+	const selectedBrowserID = browserInventory?.selected?.id ?? state?.session.browserId ?? '';
+	const selectedBrowser = browserInventory?.available.find((browser) => browser.id === selectedBrowserID)
+		?? browserInventory?.selected;
+	const currentBrowserName = browserInventory?.current?.name ?? state?.session.browserName ?? 'the current browser';
+	const browserOptions = useMemo(() => {
+		const options = (browserInventory?.available ?? []).map((browser) => ({
+			value: browser.id,
+			label: browser.isDefault ? `${browser.name} (System default)` : browser.name,
+		}));
+		if (selectedBrowserID && !options.some((option) => option.value === selectedBrowserID)) {
+			options.unshift({
+				value: selectedBrowserID,
+				label: browserInventory?.selected?.name ?? selectedBrowserID,
+			});
+		}
+		return options;
+	}, [browserInventory, selectedBrowserID]);
+	const browserPlaceholder = browserInventory == null
+		? 'Discovering browsers…'
+		: browserOptions.length > 0
+			? 'Select a browser'
+			: 'No compatible browser detected';
+
+	const selectBrowser = (browser: string) => {
+		if (!browser || browser === selectedBrowserID) return;
+		setBrowserSelectionPending(true);
+		setBrowserSelectionError('');
+		void submitIntent('session.select_browser', { browser })
+			.then(async () => {
+				setBrowserInventory(await CitadelAPI.getBrowsers());
+			})
+			.catch((error) => {
+				setBrowserSelectionError(error instanceof Error ? error.message : 'Could not select browser');
+			})
+			.finally(() => setBrowserSelectionPending(false));
+	};
+
+	const selectCustomBrowser = () => {
+		const executable = customBrowserPath.trim();
+		if (!executable) return;
+		selectBrowser(executable);
+	};
+
+	const saveRelogDelay = () => {
+		const parsed = Number(relogDelayMinutes);
+		const minutes = Math.min(1_440, Math.max(1, Number.isFinite(parsed) ? Math.round(parsed) : 5));
+		setRelogDelayMinutes(String(minutes));
+		setRelogDelayError('');
+		void updateConfiguration('session.reconnect', {
+			...reconnectConfiguration,
+			relogDelaySec: minutes * 60,
+		}).catch((error) => {
+			setRelogDelayError(error instanceof Error ? error.message : 'Could not save the relog delay');
+		});
+	};
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
@@ -115,46 +277,253 @@ const SettingsView: React.FC = () => {
     saveSettings(minTimer, maxTimer, upgradeEreDelayMs, newVal);
   };
 
-  const handleManualFocusIdleBlur = () => {
-    let num = parseInt(manualFocusIdleSec, 10);
-    let newVal = '30';
-    if (isNaN(num) || num <= 0) {
-      newVal = '30';
-    } else if (num < 5) {
-      newVal = '5';
-    } else if (num > 300) {
-      newVal = '300';
-    } else {
-      newVal = String(num);
-    }
-    setManualFocusIdleSec(newVal);
-    saveSettings(minTimer, maxTimer, upgradeEreDelayMs, upgradeCoinThreshold, newVal);
-  };
+	const saveAttackPriorityOrder = (featureIDs: string[]) => {
+		setSettingsSaveError('');
+		setAttackPriorityOrder(featureIDs);
+		void updateConfiguration('scheduler', {
+			...schedulerConfiguration,
+			attackPriorities: {
+				...asRecord(schedulerConfiguration.attackPriorities),
+				...rankedAttackPriorities(featureIDs),
+			},
+		}).catch((error) => {
+			setSettingsSaveError(error instanceof Error ? error.message : 'Could not save attack priorities');
+		});
+	};
+
+	const moveAttackPriority = (featureID: string, targetFeatureID: string) => {
+		const sourceIndex = attackPriorityOrder.indexOf(featureID);
+		const targetIndex = attackPriorityOrder.indexOf(targetFeatureID);
+		if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
+		const next = [...attackPriorityOrder];
+		const [moved] = next.splice(sourceIndex, 1);
+		next.splice(targetIndex, 0, moved);
+		saveAttackPriorityOrder(next);
+	};
+
+	const moveAttackPriorityBy = (featureID: string, direction: -1 | 1) => {
+		const sourceIndex = attackPriorityOrder.indexOf(featureID);
+		const targetFeatureID = attackPriorityOrder[sourceIndex + direction];
+		if (sourceIndex < 0 || targetFeatureID == null) return;
+		moveAttackPriority(featureID, targetFeatureID);
+	};
+
+	const finishAttackPriorityDrag = () => {
+		setDraggedAttackPriorityID(null);
+		setAttackPriorityDropTargetID(null);
+	};
+
+	const exportSettings = async () => {
+		setSettingsTransferPending('export');
+		setSettingsTransferError('');
+		setSettingsTransferStatus('');
+		try {
+			const bundle = withPortableClientPreferences(await CitadelAPI.exportSettings());
+			downloadSettingsBundle(bundle);
+			const sectionCount = Object.keys(bundle.configuration.sections).length;
+			const preferenceCount = Object.keys(bundle.clientPreferences ?? {}).length;
+			setSettingsTransferStatus(`Exported ${sectionCount} settings sections and ${preferenceCount} local preferences.`);
+		} catch (error) {
+			setSettingsTransferError(error instanceof Error ? error.message : 'Could not export settings.');
+		} finally {
+			setSettingsTransferPending(null);
+		}
+	};
+
+	const importSettings = async (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.currentTarget.files?.[0];
+		event.currentTarget.value = '';
+		if (!file) return;
+		setSettingsTransferError('');
+		setSettingsTransferStatus('');
+		try {
+			if (file.size > 32 * 1024 * 1024) {
+				throw new Error('The selected settings file is larger than 32 MB.');
+			}
+			const bundle = parseSettingsBundle(await file.text());
+			const sectionCount = Object.keys(bundle.configuration.sections).length;
+			const preferenceCount = Object.keys(bundle.clientPreferences ?? {}).length;
+			if (!window.confirm(
+				`Import “${file.name}” with ${sectionCount} settings sections and ${preferenceCount} local preferences? `
+				+ 'Existing values will be overwritten, and enabled automations will re-evaluate immediately.',
+			)) return;
+
+			setSettingsTransferPending('import');
+			const result = await CitadelAPI.importSettings(bundle);
+			const appliedPreferences = applyPortableClientPreferences(bundle.clientPreferences);
+			await refreshConfiguration();
+			setSettingsTransferStatus(
+				`Imported ${result.importedSections} settings sections and ${appliedPreferences} local preferences. Reloading…`,
+			);
+			window.setTimeout(() => window.location.reload(), 800);
+		} catch (error) {
+			setSettingsTransferError(error instanceof Error ? error.message : 'Could not import settings.');
+			setSettingsTransferPending(null);
+		}
+	};
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      {/* Header */}
-      <div className="responsive-page-heading mb-6">
-        <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-text-main to-text-main/70 bg-clip-text text-transparent">
-            System Settings
-          </h1>
-          <p className="text-text-muted mt-1 text-sm">Configure system behaviors and attack scheduling</p>
-        </div>
-      </div>
+      <PageHeader
+        className="mb-6"
+        title="System Settings"
+        description="Configure system behaviors, attack scheduling, and portable app preferences."
+      />
 
       <div className="grid grid-cols-1 gap-6">
-        <Card className="liquid-prominent-header-card">
-          <CardHeader className="liquid-card-header-prominent">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                <Icons.Activity className="w-4 h-4 text-indigo-400" />
-              </div>
-              <CardTitle className="text-lg">Attack Scheduler</CardTitle>
-            </div>
-          </CardHeader>
+		<SectionCard
+			variant="glass"
+			title="Settings Import & Export"
+			description="Move your CitadelOps setup between installations with one JSON file."
+			icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10"><FileJson className="h-4 w-4 text-violet-400" /></span>}
+			contentClassName="p-6 space-y-5"
+		>
+			<div className="grid gap-4 sm:grid-cols-2">
+				<div className="rounded-global border border-border-base bg-bg-app/35 p-4">
+					<h3 className="text-sm font-semibold text-text-main">Export this setup</h3>
+					<p className="mt-1 text-xs leading-relaxed text-text-muted">
+						Downloads automation settings, enabled states, schedules, priorities, presets, and portable interface preferences.
+					</p>
+					<Button
+						type="button"
+						variant="secondary"
+						className="mt-4 w-full"
+						leftIcon={<Download className="h-4 w-4" />}
+						isLoading={settingsTransferPending === 'export'}
+						disabled={settingsTransferPending != null}
+						onClick={() => void exportSettings()}
+					>
+						Export settings
+					</Button>
+				</div>
+				<div className="rounded-global border border-border-base bg-bg-app/35 p-4">
+					<h3 className="text-sm font-semibold text-text-main">Import another setup</h3>
+					<p className="mt-1 text-xs leading-relaxed text-text-muted">
+						Validates the complete file before replacing matching settings on this installation.
+					</p>
+					<input
+						ref={settingsFileInputRef}
+						type="file"
+						accept=".json,application/json"
+						className="hidden"
+						onChange={(event) => void importSettings(event)}
+					/>
+					<Button
+						type="button"
+						variant="outline"
+						className="mt-4 w-full"
+						leftIcon={<Upload className="h-4 w-4" />}
+						isLoading={settingsTransferPending === 'import'}
+						disabled={settingsTransferPending != null}
+						onClick={() => settingsFileInputRef.current?.click()}
+					>
+						Import settings
+					</Button>
+				</div>
+			</div>
+			<div className="rounded-global border border-warning/25 bg-warning/5 px-4 py-3 text-xs leading-relaxed text-text-muted">
+				Imported enabled automations and schedules take effect immediately. Login credentials, browser selection,
+				logs, reports, and live game state stay on this computer and are never included.
+			</div>
+			{settingsTransferError && <p role="alert" className="text-xs font-medium text-error">{settingsTransferError}</p>}
+			{settingsTransferStatus && <p role="status" className="text-xs font-medium text-success">{settingsTransferStatus}</p>}
+		</SectionCard>
 
-          <CardContent className="liquid-prominent-header-content p-6 space-y-8">
+		<SectionCard variant="glass" title="Game Browser" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-4">
+				<div>
+					<h3 className="text-sm font-semibold text-text-main mb-1">Chromium Browser</h3>
+						<p className="text-xs text-text-muted mb-4">
+							CitadelOps starts with your system-default compatible Chromium browser, or the only compatible
+							browser when one is installed. A saved choice is used after the next app restart, with a
+							dedicated CitadelOps profile that leaves your normal browser profile untouched.
+						</p>
+					</div>
+
+				<div className="w-full sm:max-w-[520px]">
+					<label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+						Browser
+					</label>
+						<Select
+							value={selectedBrowserID}
+							options={browserOptions}
+							onChange={selectBrowser}
+							placeholder={browserPlaceholder}
+							icon={<Icons.Monitor className="w-4 h-4" />}
+							disabled={browserSelectionPending || browserInventory == null}
+						/>
+						{selectedBrowser?.executablePath && (
+							<p className="mt-2 text-[11px] text-text-muted font-mono break-all">{selectedBrowser.executablePath}</p>
+					)}
+					{browserInventory != null && browserInventory.available.length > 0 && !selectedBrowser && (
+						<p className="mt-2 text-xs text-text-muted">
+							Detected: {browserInventory.available.map((browser) => browser.name).join(', ')}
+						</p>
+					)}
+						{browserInventory?.restartRequired && (
+							<p role="status" className="mt-2 text-xs text-warning">
+								Currently using {currentBrowserName}. Restart CitadelOps to switch to {browserInventory.selected?.name}.
+							</p>
+						)}
+						{browserSelectionError && (
+						<p className="mt-2 text-xs text-error">{browserSelectionError}</p>
+					)}
+						<div className="mt-4 border-t border-border-base pt-4">
+						<label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+							Custom Chromium executable
+						</label>
+						<div className="flex flex-col gap-2 sm:flex-row">
+							<Input
+								aria-label="Custom Chromium executable"
+								value={customBrowserPath}
+								onChange={(event) => setCustomBrowserPath(event.target.value)}
+								placeholder="Absolute path or executable command"
+								className="font-mono"
+								disabled={browserSelectionPending}
+							/>
+							<Button
+								variant="secondary"
+								onClick={selectCustomBrowser}
+								disabled={browserSelectionPending || !customBrowserPath.trim()}
+								className="shrink-0"
+							>
+								Use executable
+							</Button>
+						</div>
+							<p className="mt-2 text-xs text-text-muted">
+								Use this for Chromium-based builds that are not detected automatically.
+							</p>
+						</div>
+						<div className="mt-4 border-t border-border-base pt-4">
+							<h3 className="text-sm font-semibold text-text-main">Relog Attempt Delay</h3>
+							<p className="mt-1 text-xs leading-relaxed text-text-muted">
+								Wait this long after an automatic socket loss, or after a game login cooldown ends,
+								before reloading the game and attempting the saved login again.
+							</p>
+							<div className="mt-3 w-full sm:max-w-[200px]">
+								<label htmlFor="relog-attempt-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+									Delay (Minutes)
+								</label>
+								<Input
+									id="relog-attempt-delay"
+									type="number"
+									min="1"
+									max="1440"
+									step="1"
+									value={relogDelayMinutes}
+									onChange={(event) => setRelogDelayMinutes(event.target.value)}
+									onBlur={saveRelogDelay}
+									className="font-mono"
+									rightIcon={<span className="text-xs">min</span>}
+								/>
+							</div>
+							<p className="mt-2 text-xs text-text-muted">Default: 5 minutes. Allowed range: 1 minute to 24 hours.</p>
+							{relogDelayError && <p role="alert" className="mt-2 text-xs font-medium text-error">{relogDelayError}</p>}
+						</div>
+					</div>
+		</SectionCard>
+
+        <SectionCard variant="glass" title="Attack Scheduler" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName="p-6 space-y-8">
+			{settingsSaveError && <p className="text-xs text-error">{settingsSaveError}</p>}
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-text-main mb-1">Random Attack Timer Range</h3>
@@ -166,10 +535,11 @@ const SettingsView: React.FC = () => {
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="relative flex-1 w-full sm:max-w-[200px]">
-                  <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+                  <label htmlFor="min-attack-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                     Min Delay (Sec)
                   </label>
                   <Input
+					id="min-attack-delay"
                     type="number"
                     step="0.1"
                     min="4.0"
@@ -184,10 +554,11 @@ const SettingsView: React.FC = () => {
                 <div className="hidden sm:block mt-6 text-text-muted font-bold">-</div>
 
                 <div className="relative flex-1 w-full sm:max-w-[200px]">
-                  <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+                  <label htmlFor="max-attack-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                     Max Delay (Sec)
                   </label>
                   <Input
+					id="max-attack-delay"
                     type="number"
                     step="0.1"
                     min={minTimer}
@@ -203,65 +574,84 @@ const SettingsView: React.FC = () => {
 
             <div className="h-px bg-border-base w-full"></div>
 
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-text-main mb-1">Manual Focus Hold</h3>
-                <p className="text-xs text-text-muted mb-4">
-                  Pause automation focus leases after game-tab input (5-300 seconds).
-                </p>
-              </div>
+			<div className="space-y-4">
+				<div>
+					<h3 className="text-sm font-semibold text-text-main mb-1">Automated Attack Priority</h3>
+					<p className="text-xs text-text-muted mb-4">
+						Drag modules into priority order, highest first. Waiting time gradually raises older work; manual and scheduled attacks retain protected priority.
+					</p>
+				</div>
 
-              <div className="relative flex-1 w-full sm:max-w-[200px]">
-                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-                  Idle Timeout
-                </label>
-                <Input
-                  type="number"
-                  step="1"
-                  min="5"
-                  max="300"
-                  value={manualFocusIdleSec}
-                  onChange={(e) => setManualFocusIdleSec(e.target.value)}
-                  onBlur={handleManualFocusIdleBlur}
-                  className="font-mono"
-                  rightIcon={<span className="text-xs">s</span>}
-                />
-              </div>
-            </div>
+				<div className="space-y-2" role="list" aria-label="Automated attack priority order">
+					{orderedAttackPriorityFeatures.map((feature, index) => (
+						<div
+							key={feature.id}
+							role="listitem"
+							draggable
+							onDragStart={(event) => {
+								event.dataTransfer.effectAllowed = 'move';
+								event.dataTransfer.setData('text/plain', feature.id);
+								setDraggedAttackPriorityID(feature.id);
+							}}
+							onDragOver={(event) => {
+								event.preventDefault();
+								event.dataTransfer.dropEffect = 'move';
+								if (feature.id !== draggedAttackPriorityID) setAttackPriorityDropTargetID(feature.id);
+							}}
+							onDragLeave={(event) => {
+								if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setAttackPriorityDropTargetID(null);
+							}}
+							onDrop={(event) => {
+								event.preventDefault();
+								const sourceID = draggedAttackPriorityID ?? event.dataTransfer.getData('text/plain');
+								if (sourceID) moveAttackPriority(sourceID, feature.id);
+								finishAttackPriorityDrag();
+							}}
+							onDragEnd={finishAttackPriorityDrag}
+							className={`flex cursor-grab items-center gap-3 rounded-global border bg-bg-app/45 p-3 transition-colors active:cursor-grabbing ${
+								draggedAttackPriorityID === feature.id
+									? 'border-primary/40 opacity-45'
+									: attackPriorityDropTargetID === feature.id
+										? 'border-primary bg-primary/10'
+										: 'border-border-base hover:border-primary/30'
+							}`}
+						>
+							<Icons.GripVertical className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
+							<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-card text-xs font-bold tabular-nums text-primary ring-1 ring-border-base">
+								{index + 1}
+							</span>
+							<span className="min-w-0 flex-1">
+								<span className="block text-xs font-bold text-text-main">{feature.label}</span>
+								<span className="mt-0.5 block text-[11px] leading-4 text-text-muted">{feature.detail}</span>
+							</span>
+							<span className="flex shrink-0 items-center gap-1">
+								<button
+									type="button"
+									disabled={index === 0}
+									onClick={() => moveAttackPriorityBy(feature.id, -1)}
+									className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+									aria-label={`Move ${feature.label} up`}
+								>
+									<ArrowUp className="h-3.5 w-3.5" />
+								</button>
+								<button
+									type="button"
+									disabled={index === orderedAttackPriorityFeatures.length - 1}
+									onClick={() => moveAttackPriorityBy(feature.id, 1)}
+									className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-25"
+									aria-label={`Move ${feature.label} down`}
+								>
+									<ArrowDown className="h-3.5 w-3.5" />
+								</button>
+							</span>
+						</div>
+					))}
+				</div>
+			</div>
 
-            <div className="h-px bg-border-base w-full"></div>
+        </SectionCard>
 
-            <div className="space-y-4">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-text-main mb-1">Priority Categorization</h3>
-                  <p className="text-xs text-text-muted">
-                    Manage which tabs fall into which priority buckets (P1, P2, P3, Ignored).
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setIsPriorityModalOpen(true)}
-                  leftIcon={<Icons.List className="w-4 h-4" />}
-                  className="w-full sm:w-auto"
-                >
-                  Manage Priorities
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="liquid-prominent-header-card">
-          <CardHeader className="liquid-card-header-prominent">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <Icons.Shield className="w-4 h-4 text-emerald-400" />
-              </div>
-              <CardTitle className="text-lg">Equipment Upgrades</CardTitle>
-            </div>
-          </CardHeader>
-
-          <CardContent className="liquid-prominent-header-content p-6 space-y-4">
+        <SectionCard variant="glass" title="Equipment Upgrades" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName="p-6 space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-text-main mb-1">Upgrade Step Delay</h3>
               <p className="text-xs text-text-muted mb-4">
@@ -270,10 +660,11 @@ const SettingsView: React.FC = () => {
             </div>
 
             <div className="relative flex-1 w-full sm:max-w-[200px]">
-              <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+              <label htmlFor="upgrade-step-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                 Delay (ms)
               </label>
               <Input
+				id="upgrade-step-delay"
                 type="number"
                 step="1"
                 min="10"
@@ -294,10 +685,11 @@ const SettingsView: React.FC = () => {
             </div>
 
             <div className="relative flex-1 w-full sm:max-w-[200px]">
-              <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
+              <label htmlFor="upgrade-coin-reserve" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
                 Minimum Coins
               </label>
               <Input
+				id="upgrade-coin-reserve"
                 type="number"
                 step="1"
                 min="0"
@@ -310,16 +702,22 @@ const SettingsView: React.FC = () => {
                 Reserve: <span className="font-mono font-semibold text-text-main">{parsedCoinThreshold.toLocaleString()}</span> coins
               </p>
             </div>
-          </CardContent>
-        </Card>
+        </SectionCard>
       </div>
-
-      <PriorityModal
-        isOpen={isPriorityModalOpen}
-        onClose={() => setIsPriorityModalOpen(false)}
-      />
     </div>
   );
 };
 
 export default SettingsView;
+
+function downloadSettingsBundle(bundle: SettingsBundleV1): void {
+	const blob = new Blob([`${JSON.stringify(bundle, null, 2)}\n`], { type: 'application/json' });
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = url;
+	link.download = `CitadelOps-Settings-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+	document.body.appendChild(link);
+	link.click();
+	link.remove();
+	URL.revokeObjectURL(url);
+}

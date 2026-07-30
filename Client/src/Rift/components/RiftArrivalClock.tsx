@@ -63,23 +63,23 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
         >
           <Minus className="h-3.5 w-3.5" />
         </Button>
-        <div
-          className="flex min-w-[5.5rem] items-center justify-center gap-1 rounded-md border border-border-base bg-bg-card/60 px-2 py-1 text-sm text-text-main"
+        <button
+          type="button"
+          disabled={atEarliest}
+          onClick={() => onOffsetChange(0)}
+          aria-label={atEarliest ? 'Earliest Rift arrival selected' : 'Reset to earliest Rift arrival'}
+          className="flex min-w-[5.5rem] items-center justify-center gap-1 rounded-md border border-border-base bg-bg-card/60 px-2 py-1 text-sm text-text-main transition-colors enabled:hover:border-primary/50 enabled:hover:bg-primary/10 disabled:cursor-default"
           title={
             atEarliest
               ? `Earliest feather arrival (${formatLocalArrivalFromUnix(minUnix)}) · TT ${formatTravelDuration(entry.oneWayTTSeconds)}`
-              : `Arrive ${formatLocalArrivalFromUnix(arriveAtUnix)} (+${offsetMinutes}m) · TT ${formatTravelDuration(entry.oneWayTTSeconds)}${
+              : `Reset to earliest arrival · currently ${formatLocalArrivalFromUnix(arriveAtUnix)} (+${offsetMinutes}m) · TT ${formatTravelDuration(entry.oneWayTTSeconds)}${
                   fireUnix != null ? ` · launch ${formatLocalArrivalFromUnix(fireUnix)}` : ''
                 }`
           }
         >
           <Clock className="h-3.5 w-3.5 text-text-muted shrink-0" />
-          {atEarliest ? (
-            <span className="font-medium">Earliest</span>
-          ) : (
-            <span className="font-mono">{formatLocalArrivalFromUnix(arriveAtUnix)}</span>
-          )}
-        </div>
+          <span className="font-mono">{formatLocalArrivalFromUnix(arriveAtUnix)}</span>
+        </button>
         <Button
           variant="outline"
           size="sm"
@@ -92,7 +92,7 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
         </Button>
       </div>
       <span className="text-[10px] text-text-muted">
-        {atEarliest ? 'feather minimum' : `+${offsetMinutes}m after earliest`}
+        {atEarliest ? 'earliest feather arrival' : `+${offsetMinutes}m · click time to reset`}
       </span>
     </div>
   );

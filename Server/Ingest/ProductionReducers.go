@@ -1,0 +1,479 @@
+package Ingest
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"reflect"
+	"sort"
+	"strings"
+	"time"
+
+	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Protocol"
+	"CitadelDesktop/Server/State"
+)
+
+type productionWireProduct struct {
+	DefinitionID      wireInt64 `json:"WID"`
+	Amount            wireInt64 `json:"TUA"`
+	RuntimeSec        int       `json:"RCT"`
+	ProductionID      wireInt64 `json:"PID"`
+	StackProductionID wireInt64 `json:"SPID"`
+	HelpRequested     bool      `json:"RAH"`
+}
+
+type productionWireSlot struct {
+	Product productionWireProduct `json:"P"`
+	Slot    struct {
+		RentalUntil int `json:"RUT"`
+		VIP         int `json:"VIP"`
+	} `json:"SI"`
+}
+
+type productionWireSnapshot struct {
+	Active  productionWireProduct `json:"PS"`
+	Queued  []productionWireSlot  `json:"QS"`
+	Compact [][]json.RawMessage   `json:"PIDL"`
+	LineID  int                   `json:"LID"`
+}
+
+func reduceProductionSnapshot(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	castleID, castle, ok := focusedCastle(gameState)
+	if !ok {
+		return nil, false, nil
+	}
+	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
+	changed, err := applyProductionSnapshot(
+		frame.Payload, castleID, &castle, frame.ReceivedAt, recruitmentHelpOutstanding,
+	)
+	if err != nil || !changed {
+		return nil, false, err
+	}
+	gameState.Castles[castleID] = castle
+	return []string{"castles", "production"}, true, nil
+}
+
+func reduceEmbeddedProductionSnapshots(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	castleID, castle, ok := focusedCastle(gameState)
+	if !ok {
+		return nil, false, nil
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+		return nil, false, fmt.Errorf("decode embedded production snapshots: %w", err)
+	}
+	changed := false
+	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
+	for key, raw := range root {
+		if !strings.HasPrefix(key, "spl") || key == "spl" || len(raw) == 0 {
+			continue
+		}
+		updated, err := applyProductionSnapshot(
+			raw, castleID, &castle, frame.ReceivedAt, recruitmentHelpOutstanding,
+		)
+		if err != nil {
+			return nil, false, err
+		}
+		if updated {
+			changed = true
+		}
+	}
+	if !changed {
+		return nil, false, nil
+	}
+	gameState.Castles[castleID] = castle
+	return []string{"castles", "production"}, true, nil
+}
+
+func applyProductionSnapshot(
+	raw json.RawMessage,
+	castleID State.CastleID,
+	castle *State.CastleState,
+	observedAt time.Time,
+	recruitmentHelpOutstanding bool,
+) (bool, error) {
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &root); err != nil {
+		return false, fmt.Errorf("decode production snapshot: %w", err)
+	}
+	if nested := root["spl"]; len(nested) > 0 {
+		raw = nested
+	}
+	var wire productionWireSnapshot
+	if err := json.Unmarshal(raw, &wire); err != nil {
+		return false, fmt.Errorf("decode production snapshot fields: %w", err)
+	}
+	if wire.LineID < 0 || len(root["PS"]) == 0 && len(root["QS"]) == 0 && len(root["PIDL"]) == 0 && len(root["spl"]) == 0 {
+		return false, nil
+	}
+	if nested := root["spl"]; len(nested) > 0 {
+		var nestedRoot map[string]json.RawMessage
+		_ = json.Unmarshal(nested, &nestedRoot)
+		root = nestedRoot
+	}
+	ensureCastleMaps(castle)
+	requestedHelp := requestedProductionHelp(castle.Production[wire.LineID])
+	queue := State.ProductionQueue{
+		LineID: wire.LineID, ObservedAt: observedAt, Queued: []State.QueueItem{},
+	}
+	if item, exists := productionQueueItem(wire.LineID, wire.Active, observedAt, true); exists {
+		item.AllianceHelpRequested = item.AllianceHelpRequested || requestedHelp[item.ProductionID]
+		queue.Active = &item
+	}
+	if len(root["QS"]) > 0 {
+		for _, slot := range wire.Queued {
+			if slot.Product.DefinitionID > 0 || slot.Slot.RentalUntil != 0 {
+				queue.Capacity++
+			}
+			if item, exists := productionQueueItem(wire.LineID, slot.Product, observedAt, false); exists {
+				item.AllianceHelpRequested = item.AllianceHelpRequested || requestedHelp[item.ProductionID]
+				queue.Queued = append(queue.Queued, item)
+			}
+		}
+	}
+	if len(root["PIDL"]) > 0 {
+		queue.Capacity = 0
+		queue.Queued = []State.QueueItem{}
+		for _, row := range wire.Compact {
+			if len(row) == 0 {
+				continue
+			}
+			queue.Capacity++
+			product := productionWireProduct{
+				DefinitionID: wireInt64(rowInt(row, 0)), Amount: wireInt64(rowInt(row, 1)),
+			}
+			if len(row) > 2 {
+				product.RuntimeSec = int(rowInt(row, 2))
+			}
+			if len(row) > 5 {
+				product.ProductionID = wireInt64(rowInt(row, 5))
+			}
+			if len(row) > 4 {
+				// Hospital PIDL does not include RAH. Its fifth value is the
+				// server-applied alliance-help reduction; once positive, another
+				// AHR for that job is rejected.
+				product.HelpRequested = rowInt(row, 4) > 0
+			}
+			if item, exists := productionQueueItem(wire.LineID, product, observedAt, false); exists {
+				item.AllianceHelpRequested = item.AllianceHelpRequested || requestedHelp[item.ProductionID]
+				queue.Queued = append(queue.Queued, item)
+			}
+		}
+	}
+	if wire.LineID == 0 && recruitmentHelpOutstanding {
+		markAllianceHelpQueue(&queue, true, 0)
+	}
+	if reflect.DeepEqual(castle.Production[wire.LineID], queue) {
+		return false, nil
+	}
+	castle.Production[wire.LineID] = queue
+	_ = castleID
+	return true, nil
+}
+
+func reduceAllianceHelpCommand(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if frame.Direction != Protocol.DirectionOutbound || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var payload struct {
+		ProductionID wireInt64 `json:"ID"`
+		RequestType  int       `json:"T"`
+	}
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode alliance help command: %w", err)
+	}
+	castleID, castle, focused := focusedCastle(gameState)
+	if !focused {
+		return nil, false, nil
+	}
+	lineID := -1
+	productionID := int64(payload.ProductionID)
+	markAll := false
+	switch payload.RequestType {
+	case 2:
+		lineID = 2
+		if productionID <= 0 {
+			return nil, false, nil
+		}
+	case 6:
+		lineID = 0
+		markAll = true
+	default:
+		return nil, false, nil
+	}
+	queue, exists := castle.Production[lineID]
+	if !exists || !markAllianceHelpQueue(&queue, markAll, productionID) {
+		return nil, false, nil
+	}
+	castle.Production[lineID] = queue
+	gameState.Castles[castleID] = castle
+	return []string{"castles", "production", "alliance-help"}, true, nil
+}
+
+func reduceProductionCommandContext(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var command struct {
+		SessionKey int `json:"SK"`
+	}
+	if err := json.Unmarshal(frame.Payload, &command); err != nil {
+		return nil, false, fmt.Errorf("decode production command context: %w", err)
+	}
+	if command.SessionKey <= 0 || gameState.CommandContext.ProductionSessionKey == command.SessionKey {
+		return nil, false, nil
+	}
+	gameState.CommandContext.ProductionSessionKey = command.SessionKey
+	observedAt := frame.ReceivedAt
+	gameState.CommandContext.ProductionObservedAt = &observedAt
+	return []string{"command-context"}, true, nil
+}
+
+func productionQueueItem(lineID int, product productionWireProduct, observedAt time.Time, active bool) (State.QueueItem, bool) {
+	if product.DefinitionID <= 0 || product.Amount <= 0 {
+		return State.QueueItem{}, false
+	}
+	collection := "units"
+	if lineID == 1 {
+		collection = "tools"
+	}
+	productionID := product.ProductionID
+	if active && product.StackProductionID > 0 {
+		productionID = product.StackProductionID
+	}
+	item := State.QueueItem{
+		Definition:            State.DefinitionRef{Collection: collection, ID: int64(product.DefinitionID)},
+		Amount:                int64(product.Amount),
+		ProductionID:          int64(productionID),
+		AllianceHelpAvailable: (lineID == 0 || lineID == 2) && productionID > 0,
+		AllianceHelpRequested: product.HelpRequested,
+	}
+	if active {
+		startedAt := observedAt
+		item.StartedAt = &startedAt
+		if product.RuntimeSec > 0 {
+			completesAt := observedAt.Add(time.Duration(product.RuntimeSec) * time.Second)
+			item.CompletesAt = &completesAt
+		}
+	}
+	return item, true
+}
+
+type allianceHelpWireRequest struct {
+	PlayerID    State.PlayerID `json:"PID"`
+	RequestType int            `json:"TID"`
+	Optional    struct {
+		CastleID      State.CastleID `json:"AID"`
+		RecruitmentID int64          `json:"RID"`
+		LineID        int            `json:"RLID"`
+	} `json:"OP"`
+}
+
+func reduceAllianceHelpRequest(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	requests := []allianceHelpWireRequest{}
+	if frame.Opcode == "ahl" {
+		var list struct {
+			Requests []allianceHelpWireRequest `json:"AHL"`
+		}
+		if err := json.Unmarshal(frame.Payload, &list); err != nil {
+			return nil, false, fmt.Errorf("decode alliance help list: %w", err)
+		}
+		requests = list.Requests
+	} else {
+		var request allianceHelpWireRequest
+		if err := json.Unmarshal(frame.Payload, &request); err != nil {
+			return nil, false, fmt.Errorf("decode alliance help request: %w", err)
+		}
+		requests = append(requests, request)
+	}
+	changed := false
+	if frame.Opcode == "ahl" {
+		hospitalProductionIDs := ownHospitalAllianceHelpProductionIDs(requests, gameState.Player.ID)
+		recruitmentCastleIDs := ownRecruitmentAllianceHelpCastleIDs(requests, gameState.Player.ID)
+		if !reflect.DeepEqual(gameState.AllianceHelpRequests.HospitalProductionIDs, hospitalProductionIDs) ||
+			!reflect.DeepEqual(gameState.AllianceHelpRequests.RecruitmentCastleIDs, recruitmentCastleIDs) ||
+			!gameState.AllianceHelpRequests.ObservedAt.Equal(frame.ReceivedAt) {
+			gameState.AllianceHelpRequests = State.AllianceHelpRequestState{
+				HospitalProductionIDs: hospitalProductionIDs,
+				RecruitmentCastleIDs:  recruitmentCastleIDs,
+				ObservedAt:            frame.ReceivedAt,
+			}
+			changed = true
+		}
+	}
+	for _, request := range requests {
+		if request.PlayerID <= 0 || request.PlayerID != gameState.Player.ID {
+			continue
+		}
+		if request.RequestType == 2 && request.Optional.RecruitmentID > 0 && frame.Opcode != "ahl" &&
+			addHospitalAllianceHelpProductionID(&gameState.AllianceHelpRequests, request.Optional.RecruitmentID) {
+			changed = true
+		}
+		if request.RequestType == 6 && request.Optional.CastleID > 0 && frame.Opcode != "ahl" &&
+			addRecruitmentAllianceHelpCastleID(&gameState.AllianceHelpRequests, request.Optional.CastleID) {
+			changed = true
+		}
+		if request.Optional.CastleID <= 0 {
+			continue
+		}
+		castle, exists := gameState.Castles[request.Optional.CastleID]
+		if !exists {
+			continue
+		}
+		lineID := request.Optional.LineID
+		productionID := request.Optional.RecruitmentID
+		switch request.RequestType {
+		case 2:
+			lineID = 2
+		case 6:
+			lineID = 0
+			productionID = 0
+		default:
+			continue
+		}
+		queue, exists := castle.Production[lineID]
+		if !exists {
+			continue
+		}
+		if markAllianceHelpQueue(&queue, lineID == 0, productionID) {
+			castle.Production[lineID] = queue
+			gameState.Castles[request.Optional.CastleID] = castle
+			changed = true
+		}
+	}
+	if !changed {
+		return nil, false, nil
+	}
+	return []string{"alliance-help", "castles", "production"}, true, nil
+}
+
+func ownHospitalAllianceHelpProductionIDs(requests []allianceHelpWireRequest, playerID State.PlayerID) []int64 {
+	unique := map[int64]struct{}{}
+	for _, request := range requests {
+		if request.PlayerID == playerID && request.RequestType == 2 && request.Optional.RecruitmentID > 0 {
+			unique[request.Optional.RecruitmentID] = struct{}{}
+		}
+	}
+	result := make([]int64, 0, len(unique))
+	for productionID := range unique {
+		result = append(result, productionID)
+	}
+	sort.Slice(result, func(left, right int) bool { return result[left] < result[right] })
+	return result
+}
+
+func ownRecruitmentAllianceHelpCastleIDs(
+	requests []allianceHelpWireRequest,
+	playerID State.PlayerID,
+) []State.CastleID {
+	unique := map[State.CastleID]struct{}{}
+	for _, request := range requests {
+		if request.PlayerID == playerID && request.RequestType == 6 && request.Optional.CastleID > 0 {
+			unique[request.Optional.CastleID] = struct{}{}
+		}
+	}
+	result := make([]State.CastleID, 0, len(unique))
+	for castleID := range unique {
+		result = append(result, castleID)
+	}
+	sort.Slice(result, func(left, right int) bool { return result[left] < result[right] })
+	return result
+}
+
+func addHospitalAllianceHelpProductionID(state *State.AllianceHelpRequestState, productionID int64) bool {
+	if state == nil || productionID <= 0 {
+		return false
+	}
+	for _, existingID := range state.HospitalProductionIDs {
+		if existingID == productionID {
+			return false
+		}
+	}
+	state.HospitalProductionIDs = append(state.HospitalProductionIDs, productionID)
+	sort.Slice(state.HospitalProductionIDs, func(left, right int) bool {
+		return state.HospitalProductionIDs[left] < state.HospitalProductionIDs[right]
+	})
+	return true
+}
+
+func addRecruitmentAllianceHelpCastleID(state *State.AllianceHelpRequestState, castleID State.CastleID) bool {
+	if state == nil || castleID <= 0 {
+		return false
+	}
+	for _, existingID := range state.RecruitmentCastleIDs {
+		if existingID == castleID {
+			return false
+		}
+	}
+	state.RecruitmentCastleIDs = append(state.RecruitmentCastleIDs, castleID)
+	sort.Slice(state.RecruitmentCastleIDs, func(left, right int) bool {
+		return state.RecruitmentCastleIDs[left] < state.RecruitmentCastleIDs[right]
+	})
+	return true
+}
+
+func markAllianceHelpQueue(queue *State.ProductionQueue, markAll bool, productionID int64) bool {
+	if queue == nil {
+		return false
+	}
+	changed := false
+	if queue.Active != nil && (markAll || queue.Active.ProductionID == productionID) && !queue.Active.AllianceHelpRequested {
+		queue.Active.AllianceHelpRequested = true
+		changed = true
+	}
+	for index := range queue.Queued {
+		if (markAll || queue.Queued[index].ProductionID == productionID) && !queue.Queued[index].AllianceHelpRequested {
+			queue.Queued[index].AllianceHelpRequested = true
+			changed = true
+		}
+	}
+	return changed
+}
+
+func requestedProductionHelp(queue State.ProductionQueue) map[int64]bool {
+	requested := map[int64]bool{}
+	if queue.Active != nil && queue.Active.ProductionID > 0 && queue.Active.AllianceHelpRequested {
+		requested[queue.Active.ProductionID] = true
+	}
+	for _, item := range queue.Queued {
+		if item.ProductionID > 0 && item.AllianceHelpRequested {
+			requested[item.ProductionID] = true
+		}
+	}
+	return requested
+}

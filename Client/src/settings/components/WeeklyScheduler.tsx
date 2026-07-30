@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, Clock, Plus, Search, Trash2, Wand2 } from 'lucide-react';
-import { Badge, Button, Input, Modal, Select, Switch } from '../../components/ui';
+import { Badge, Button, Input, Select, SettingsModal, Switch } from '../../components/ui';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import { showToolPicker } from '../../components/ToolPickerModal';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
-import { getUnitBaseAndLevel, TROOP_DEFINITIONS } from '../../config/Constants';
 import { useMetadata } from '../../context/MetadataContext';
 import {
   DAY_MINUTES,
@@ -262,7 +261,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
   slotOptionsConfig,
   className = '',
 }) => {
-  const { getTool } = useMetadata();
+  const { getTool, getTroop } = useMetadata();
   const schedule = useMemo(() => normalizeWeeklySchedule(value), [value]);
   const slotOptionsEnabled = !!slotOptionsConfig && !!schedule.slotOptionsEnabled;
   const [editingSlot, setEditingSlot] = useState<SlotFormState | null>(null);
@@ -734,8 +733,10 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
     if (!slotOptionsEnabled || !slotOptionsConfig) return null;
     const troopID = troopIDFromSlot(slot, slotOptionsConfig);
     if (troopID != null) {
-      const unitName = TROOP_DEFINITIONS[troopID] || `Unit ${troopID}`;
-      const level = getUnitBaseAndLevel(troopID)?.level;
+	  const troop = getTroop(troopID);
+	  const unitName = troop?.name || `Unit ${troopID}`;
+	  const rawLevel = Number(troop?.level);
+	  const level = Number.isFinite(rawLevel) && rawLevel > 0 ? rawLevel : undefined;
       const label = level ? `${unitName} L${level}` : unitName;
       const slotUsableWidth = Math.max(0, slotLaneWidth - SLOT_OPTION_HORIZONTAL_INSET);
       const shouldShowIcon = visualHeight / Math.max(1, slotUsableWidth) > SLOT_OPTION_ICON_MIN_HEIGHT_RATIO;
@@ -1066,39 +1067,19 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
         </div>
       </div>
 
-      <Modal
+      <SettingsModal
         isOpen={editingSlot != null}
         onClose={() => setEditingSlot(null)}
         maxWidth="md"
-        title={
-          <div className="scheduler-modal-title scheduler-slot-modal-title">
-            <span className="scheduler-modal-title-mark" aria-hidden="true">
-              <Clock className="h-4 w-4" />
-            </span>
-            <span className="scheduler-modal-title-text">
-              {editingSlot?.id ? 'Edit Schedule Slot' : 'Add Schedule Slot'}
-            </span>
-          </div>
-        }
-        footer={
-          <>
-            {editingSlot?.id && (
-              <Button
-                variant="danger"
-                onClick={deleteEditingSlot}
-                leftIcon={<Trash2 className="h-4 w-4" />}
-              >
-                Delete
-              </Button>
-            )}
-            <Button variant="ghost" onClick={() => setEditingSlot(null)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={saveSlotForm}>
-              Save Slot
-            </Button>
-          </>
-        }
+        title={editingSlot?.id ? 'Edit Schedule Slot' : 'Add Schedule Slot'}
+        icon={<Clock className="h-4 w-4" />}
+        onSave={saveSlotForm}
+        saveLabel="Save Slot"
+        footerLeading={editingSlot?.id ? (
+          <Button variant="danger" onClick={deleteEditingSlot} leftIcon={<Trash2 className="h-4 w-4" />}>
+            Delete
+          </Button>
+        ) : undefined}
       >
         {editingSlot && (
           <div className="schedule-slot-form">
@@ -1140,7 +1121,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
 
             {slotOptionsEnabled && slotOptionsConfig && (
               <div className="schedule-option-panel">
-                <div className="schedule-option-panel-title">
+                <div className="ui-kicker schedule-option-panel-title">
                   {slotOptionsConfig.formTitle}
                 </div>
                 <div className="schedule-option-fields">
@@ -1169,7 +1150,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                           <div className="schedule-troop-picker-copy">
                             <div className="schedule-troop-picker-name">
                               {Number(editingSlot.options[field.id]) > 0
-                                ? TROOP_DEFINITIONS[Number(editingSlot.options[field.id])] || `Unit ${editingSlot.options[field.id]}`
+								? getTroop(Number(editingSlot.options[field.id]))?.name || `Unit ${editingSlot.options[field.id]}`
                                 : 'No unit selected'}
                             </div>
                             <div className="schedule-troop-picker-id">
@@ -1251,7 +1232,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
             )}
           </div>
         )}
-      </Modal>
+      </SettingsModal>
     </div>
   );
 };

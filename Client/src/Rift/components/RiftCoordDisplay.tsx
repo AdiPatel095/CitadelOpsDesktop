@@ -2,39 +2,43 @@ import React from 'react';
 import { MapPin, RefreshCw } from 'lucide-react';
 import { useCastleFocus } from '../../context/CastleFocusContext';
 import { useAuth } from '../../context/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle, Button } from '../../components/ui';
+import { Button, SectionCard } from '../../components/ui';
 import { useRiftMap } from '../context/RiftMapContext';
 import { formatRiftDelta } from '../types/RiftMapCoords';
 
 const RiftCoordDisplay: React.FC = () => {
   const { gameLoggedIn } = useAuth();
-  const { castleFocus } = useCastleFocus();
+  const { castle } = useCastleFocus();
   const { riftMapCoords, refreshRiftMapCoords } = useRiftMap();
 
-  const centerX = riftMapCoords?.centerX ?? castleFocus?.mapPX ?? 0;
-  const centerY = riftMapCoords?.centerY ?? castleFocus?.mapPY ?? 0;
-  const kingdomID = riftMapCoords?.kingdomID ?? castleFocus?.kingdomID ?? 0;
-  const castleName = castleFocus?.castleName?.trim() || 'Castle';
+  const centerX = riftMapCoords?.centerX ?? castle?.x ?? 0;
+  const centerY = riftMapCoords?.centerY ?? castle?.y ?? 0;
+  const kingdomID = riftMapCoords?.kingdomID ?? castle?.kingdomId ?? 0;
+  const castleName = castle?.name?.trim() || 'Castle';
   const rift = riftMapCoords?.rift ?? null;
   const found = riftMapCoords?.found ?? false;
   const riftKid = riftMapCoords?.riftKingdomID ?? 0;
   const hasCastleCoords = centerX !== 0 || centerY !== 0;
 
   return (
-    <Card className="liquid-prominent-header-card">
-      <CardHeader className="liquid-card-header-prominent flex flex-row items-center justify-between gap-4">
-        <div>
-          <CardTitle className="text-lg text-primary">Rift location</CardTitle>
-          <p className="text-xs text-text-muted mt-1">
-            Single world Rift on K{riftKid || 0}
-            {hasCastleCoords ? (
-              <>
-                {' '}
-                · {castleName} at ({centerX}, {centerY}) · K{kingdomID}
-              </>
-            ) : null}
-          </p>
-        </div>
+    <SectionCard
+      variant="glass"
+      title="Rift location"
+      titleClassName="text-lg text-primary"
+      description={(
+        <>
+          Single world Rift on K{riftKid || 0}
+          {hasCastleCoords ? (
+            <>
+              {' '}
+              · {castleName} at ({centerX}, {centerY}) · K{kingdomID}
+            </>
+          ) : null}
+        </>
+      )}
+      descriptionClassName=""
+      headerClassName="flex-row gap-4"
+      actions={(
         <Button
           variant="outline"
           size="sm"
@@ -46,9 +50,9 @@ const RiftCoordDisplay: React.FC = () => {
         >
           Refresh
         </Button>
-      </CardHeader>
-      <CardContent className="liquid-prominent-header-content">
-        {!found || !rift ? (
+      )}
+    >
+      {!found || !rift ? (
           <p className="text-sm text-text-muted">
             {gameLoggedIn
               ? 'Rift not in map cache yet. Open the world map near the Rift or press Refresh to request GAA.'
@@ -66,7 +70,7 @@ const RiftCoordDisplay: React.FC = () => {
                   {rift.x}, {rift.y}
                 </p>
                 <p className="text-sm text-text-muted mt-1">
-                  {rift.typeLabel ?? 'Rift'}
+                  Rift
                   {rift.name?.trim() ? ` · ${rift.name.trim()}` : ''}
                 </p>
               </div>
@@ -91,8 +95,7 @@ const RiftCoordDisplay: React.FC = () => {
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 };
 

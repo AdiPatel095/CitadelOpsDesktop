@@ -178,3 +178,36 @@ export function scheduleSummary(schedule: WeeklySchedule): string {
   if (slotCount === 0) return 'No active slots';
   return `${slotCount} slot${slotCount === 1 ? '' : 's'} - ${formatDuration(totalMinutes)} weekly`;
 }
+
+export function scheduleAllowsAt(schedule: WeeklySchedule, now = new Date()): boolean {
+  if (!schedule.enabled) return true;
+  if (schedule.slots.length === 0) return false;
+
+  const timeZone = schedule.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const local = scheduleLocalTime(now, timeZone);
+  return schedule.slots.some((slot) => (
+    slot.day === local.day && local.minute >= slot.startMinute && local.minute < slot.endMinute
+  ));
+}
+
+function scheduleLocalTime(now: Date, timeZone: string): { day: number; minute: number } {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(now);
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    const day = WEEK_DAYS.findIndex((item) => item.short === values.weekday);
+    const hour = Number(values.hour);
+    const minute = Number(values.minute);
+    if (day >= 0 && Number.isFinite(hour) && Number.isFinite(minute)) {
+      return { day, minute: hour * 60 + minute };
+    }
+  } catch {
+    // Fall back to the browser's local time when an invalid time zone is stored.
+  }
+  return { day: now.getDay(), minute: now.getHours() * 60 + now.getMinutes() };
+}

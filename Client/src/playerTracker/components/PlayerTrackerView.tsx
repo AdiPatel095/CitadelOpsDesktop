@@ -16,15 +16,12 @@ import {
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import type { FoodFilter, RoleFilter, TypeFilter } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector } from '../../components/ui';
-import { getUnitBaseAndLevel, TROOP_METADATA } from '../../config/Constants';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector, Select } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
-import { useResources } from '../../currency/context/ResourceContext';
-import { useCastleResources } from '../../dashboard/context/CastleResourceContext';
-import type { PlayerCastleInfo } from '../../dashboard/models/PlayerCastleInfo';
-import type { PlayerGlobalResources } from '../../types/PlayerGlobalResources';
-import { FrontendWebsocket } from '../../Websocket';
+import { Notifications } from '../../components/Notifications';
+import { useCitadelAPI } from '../../api/ApiContext';
+import type { CastleStateV2, GameStateV2 } from '../../api/Contracts';
 
 interface PlayerTrackerSample {
   timestampUnix: number;
@@ -39,7 +36,7 @@ interface PlayerTrackerSample {
   troopsByUnit?: Record<string, number>;
   coins: number;
   rubies: number;
-  currencies?: PlayerGlobalResources;
+  currencies?: Record<string, number>;
 }
 
 interface TrackerMetricPoint {
@@ -99,68 +96,32 @@ interface PlayerTrackerResponse {
   };
 }
 
-type CurrencyKey =
-  | 'coins'
-  | 'rubies'
-  | 'relic_shard'
-  | 'sceat'
-  | 'ducat'
-  | 'const_token'
-  | 'upgr_token'
-  | 'plaster'
-  | 'affl_tix'
-  | 'drg_scale'
-  | 'drg_spl'
-  | 'might_pt'
-  | 'glory_pt'
-  | 'gallan_pt'
-  | 'min1'
-  | 'min5'
-  | 'min10'
-  | 'min30'
-  | 'hr1'
-  | 'hr5'
-  | 'hr24';
-type MetricKey = 'might' | 'glory' | 'loot' | 'gallantry' | 'troopsTotal' | CurrencyKey;
+type CurrencyKey = string;
+type MetricKey = string;
 type RangeKey = '24h' | '7d' | '30d' | 'all';
-type MetricCategory = 'Player stats' | 'Wallet' | 'Building' | 'Combat' | 'Speedups';
+type MetricCategory = 'Player stats' | 'Wallet';
 
-const metricDefinitions: Array<{
+interface MetricDefinition {
   key: MetricKey;
   label: string;
   shortLabel: string;
   color: string;
   icon: typeof Activity;
+  imageUrl?: string;
   category: MetricCategory | 'Troops';
-}> = [
-  { key: 'might', label: 'Might points', shortLabel: 'Might', color: '#34d399', icon: ShieldCheck, category: 'Player stats' },
-  { key: 'glory', label: 'Glory points', shortLabel: 'Glory', color: '#60a5fa', icon: Trophy, category: 'Player stats' },
-  { key: 'loot', label: 'Loot', shortLabel: 'Loot', color: '#2dd4bf', icon: CircleDollarSign, category: 'Player stats' },
-  { key: 'gallantry', label: 'Gallantry points', shortLabel: 'Gallantry', color: '#f59e0b', icon: Sparkles, category: 'Player stats' },
-  { key: 'coins', label: 'Coins', shortLabel: 'Coins', color: '#facc15', icon: Coins, category: 'Wallet' },
-  { key: 'rubies', label: 'Rubies', shortLabel: 'Rubies', color: '#fb7185', icon: CircleDollarSign, category: 'Wallet' },
-  { key: 'relic_shard', label: 'Relic Shards', shortLabel: 'Relic Shards', color: '#a78bfa', icon: Sparkles, category: 'Building' },
-  { key: 'sceat', label: 'Sceats', shortLabel: 'Sceats', color: '#60a5fa', icon: Coins, category: 'Building' },
-  { key: 'ducat', label: 'Imperial Ducats', shortLabel: 'Ducats', color: '#f59e0b', icon: Coins, category: 'Building' },
-  { key: 'const_token', label: 'Construction Tokens', shortLabel: 'Construction', color: '#2dd4bf', icon: ShieldCheck, category: 'Building' },
-  { key: 'upgr_token', label: 'Upgrade Tokens', shortLabel: 'Upgrade', color: '#34d399', icon: ShieldCheck, category: 'Building' },
-  { key: 'plaster', label: 'Plaster', shortLabel: 'Plaster', color: '#94a3b8', icon: ShieldCheck, category: 'Building' },
-  { key: 'affl_tix', label: 'Affluence Tickets', shortLabel: 'Affluence', color: '#f97316', icon: Sparkles, category: 'Combat' },
-  { key: 'drg_scale', label: 'Dragon Scale Tiles', shortLabel: 'Scale Tiles', color: '#ef4444', icon: Swords, category: 'Combat' },
-  { key: 'drg_spl', label: 'Dragon Scale Splinters', shortLabel: 'Splinters', color: '#ec4899', icon: Swords, category: 'Combat' },
-  { key: 'min1', label: '1 Minute Speedups', shortLabel: '1 Min', color: '#22d3ee', icon: Clock3, category: 'Speedups' },
-  { key: 'min5', label: '5 Minute Speedups', shortLabel: '5 Min', color: '#22d3ee', icon: Clock3, category: 'Speedups' },
-  { key: 'min10', label: '10 Minute Speedups', shortLabel: '10 Min', color: '#22d3ee', icon: Clock3, category: 'Speedups' },
-  { key: 'min30', label: '30 Minute Speedups', shortLabel: '30 Min', color: '#22d3ee', icon: Clock3, category: 'Speedups' },
-  { key: 'hr1', label: '1 Hour Speedups', shortLabel: '1 Hour', color: '#06b6d4', icon: Clock3, category: 'Speedups' },
-  { key: 'hr5', label: '5 Hour Speedups', shortLabel: '5 Hours', color: '#0891b2', icon: Clock3, category: 'Speedups' },
-  { key: 'hr24', label: '24 Hour Speedups', shortLabel: '24 Hours', color: '#0e7490', icon: Clock3, category: 'Speedups' },
+}
+
+const CORE_METRIC_DEFINITIONS: MetricDefinition[] = [
+  { key: 'might', label: 'Might points', shortLabel: 'Might', color: '#34d399', icon: ShieldCheck, imageUrl: '/game-data/resources/images/MightPoints.webp', category: 'Player stats' },
+  { key: 'glory', label: 'Glory points', shortLabel: 'Glory', color: '#60a5fa', icon: Trophy, imageUrl: '/game-data/resources/images/Glory.webp', category: 'Player stats' },
+  { key: 'loot', label: 'Loot', shortLabel: 'Loot', color: '#2dd4bf', icon: CircleDollarSign, imageUrl: '/game-data/resources/images/Loot.webp', category: 'Player stats' },
+  { key: 'gallantry', label: 'Gallantry points', shortLabel: 'Gallantry', color: '#f59e0b', icon: Sparkles, imageUrl: '/game-data/resources/images/Gallantry.webp', category: 'Player stats' },
+  { key: 'coins', label: 'Coins', shortLabel: 'Coins', color: '#facc15', icon: Coins, imageUrl: '/game-data/resources/images/Coins.webp', category: 'Wallet' },
+  { key: 'rubies', label: 'Rubies', shortLabel: 'Rubies', color: '#fb7185', icon: CircleDollarSign, imageUrl: '/game-data/resources/images/Ruby.webp', category: 'Wallet' },
   { key: 'troopsTotal', label: 'Total troops', shortLabel: 'Troops', color: '#a78bfa', icon: Swords, category: 'Troops' },
 ];
 
-const primaryMetricDefinitions = metricDefinitions.filter((definition) => definition.key !== 'troopsTotal');
-const troopMetricDefinition = metricDefinitions.find((definition) => definition.key === 'troopsTotal')!;
-const metricCategories: MetricCategory[] = ['Player stats', 'Wallet', 'Building', 'Combat', 'Speedups'];
+const HIGHLIGHT_METRIC_KEYS = new Set<MetricKey>(['might', 'glory', 'coins', 'rubies']);
 
 const ranges: Array<{ key: RangeKey; label: string; seconds: number | null }> = [
   { key: '24h', label: '24H', seconds: 24 * 60 * 60 },
@@ -178,11 +139,40 @@ const emptyResponse: PlayerTrackerResponse = {
   coverage: { loot: false, eventScores: false },
 };
 
+const MetricIcon = ({ definition, className }: { definition: MetricDefinition; className: string }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+  const FallbackIcon = definition.icon;
+
+  useEffect(() => setImageFailed(false), [definition.imageUrl]);
+
+  if (definition.imageUrl && !imageFailed) {
+    return <img src={definition.imageUrl} alt="" loading="lazy" decoding="async" className={`${className} shrink-0 object-contain`} onError={() => setImageFailed(true)} />;
+  }
+
+  return <FallbackIcon className={`${className} shrink-0`} style={{ color: definition.color }} />;
+};
+
 const PlayerTrackerView = () => {
-  const { resources } = useResources();
-  const { castleResources } = useCastleResources();
+  const { state } = useCitadelAPI();
   const { gameLoggedIn } = useAuth();
-  const { troops: troopMetadata } = useMetadata();
+  const { troops: troopMetadata, resources: resourceMetadata, currencies: currencyMetadata } = useMetadata();
+  const metricDefinitions = useMemo(
+    () => buildMetricDefinitions(state, resourceMetadata, currencyMetadata),
+    [currencyMetadata, resourceMetadata, state],
+  );
+  const primaryMetricDefinitions = useMemo(
+    () => metricDefinitions.filter((definition) => definition.key !== 'troopsTotal'),
+    [metricDefinitions],
+  );
+	const highlightMetricDefinitions = useMemo(
+		() => primaryMetricDefinitions.filter((definition) => HIGHLIGHT_METRIC_KEYS.has(definition.key)),
+		[primaryMetricDefinitions],
+	);
+	const extraMetricDefinitions = useMemo(
+		() => primaryMetricDefinitions.filter((definition) => !HIGHLIGHT_METRIC_KEYS.has(definition.key)),
+		[primaryMetricDefinitions],
+	);
+  const troopMetricDefinition = metricDefinitions.find((definition) => definition.key === 'troopsTotal')!;
   const [tracker, setTracker] = useState<PlayerTrackerResponse>(emptyResponse);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('might');
   const [selectedRange, setSelectedRange] = useState<RangeKey>('7d');
@@ -194,44 +184,59 @@ const PlayerTrackerView = () => {
   const [troopFoodFilter, setTroopFoodFilter] = useState<FoodFilter>('all');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+	const selectedExtraMetric = extraMetricDefinitions.find((definition) => definition.key === selectedMetric);
+	const activePlayerID = Math.max(0, finite(state?.player.id));
+	const scopedTracker = activePlayerID > 0 && tracker.current?.playerId !== activePlayerID ? emptyResponse : tracker;
+
+	useEffect(() => {
+		if (metricDefinitions.some((definition) => definition.key === selectedMetric)) return;
+		setSelectedMetric('might');
+	}, [metricDefinitions, selectedMetric]);
 
   useEffect(() => {
     if (loadError) {
-      FrontendWebsocket.showAlert('red', loadError);
+      Notifications.error(loadError, 'player-tracker-load');
     }
   }, [loadError]);
 
   const liveSample = useMemo<PlayerTrackerSample | null>(() => {
-    if (!resources || !gameLoggedIn) return null;
+    if (!state || !gameLoggedIn) return null;
     let stationed = 0;
     let traveling = 0;
     let hospital = 0;
     const troopsByUnit: Record<string, number> = {};
-    for (const playerCastle of castleResources.values()) {
-      stationed += sumRecord(playerCastle.troops?.troopsI);
-      traveling += sumRecord(playerCastle.troops?.troopsTU);
-      hospital += sumRecord(playerCastle.troops?.troopsHI) + sumRecord(playerCastle.troops?.troopsSHI);
-      addTroopsByUnit(troopsByUnit, playerCastle.troops?.troopsI);
-      addTroopsByUnit(troopsByUnit, playerCastle.troops?.troopsTU);
-      addTroopsByUnit(troopsByUnit, playerCastle.troops?.troopsHI);
-      addTroopsByUnit(troopsByUnit, playerCastle.troops?.troopsSHI);
+    for (const playerCastle of Object.values(state.castles)) {
+      stationed += sumTroopRecord(playerCastle.units.stationed, troopMetadata);
+      traveling += sumTroopRecord(playerCastle.units.traveling, troopMetadata);
+      hospital += sumTroopRecord(playerCastle.units.hospital, troopMetadata)
+        + sumTroopRecord(playerCastle.units.specialHospital, troopMetadata);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.stationed, troopMetadata);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.traveling, troopMetadata);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.hospital, troopMetadata);
+      addTroopsByUnit(troopsByUnit, playerCastle.units.specialHospital, troopMetadata);
     }
+    const wallet = playerWallet(state.player.resources, state.player.currencies, resourceMetadata);
     return {
       timestampUnix: Math.floor(Date.now() / 1000),
-      playerId: tracker.current?.playerId ?? 0,
-      might: finite(resources.might_pt),
-      glory: finite(resources.glory_pt),
-      gallantry: finite(resources.gallan_pt),
+      playerId: state.player.id,
+      might: finite(state.player.might),
+      glory: finite(state.player.glory),
+      gallantry: finite(state.player.gallantry),
       troopsTotal: stationed + traveling + hospital,
       troopsStationed: stationed,
       troopsTraveling: traveling,
       troopsHospital: hospital,
       troopsByUnit,
-      coins: finite(resources.coins),
-      rubies: finite(resources.rubies),
-      currencies: resources,
+      coins: finite(wallet.coins),
+      rubies: finite(wallet.rubies),
+      currencies: wallet,
     };
-  }, [resources, castleResources, tracker.current, gameLoggedIn]);
+  }, [gameLoggedIn, resourceMetadata, state, troopMetadata]);
+
+  useEffect(() => {
+	setTracker(emptyResponse);
+	setLoading(true);
+  }, [activePlayerID]);
 
   useEffect(() => {
     let active = true;
@@ -240,11 +245,12 @@ const PlayerTrackerView = () => {
         const primarySeconds = ranges.find((range) => range.key === selectedRange)?.seconds ?? 365 * 24 * 60 * 60;
         const troopSeconds = ranges.find((range) => range.key === troopRange)?.seconds ?? 365 * 24 * 60 * 60;
         const rangeSeconds = Math.max(primarySeconds, troopSeconds);
-        const response = await fetch(`/api/player-tracker?rangeSeconds=${rangeSeconds}`, { cache: 'no-store' });
+		const response = await fetch(`/api/v2/history/player-tracker?rangeSeconds=${rangeSeconds}`, { cache: 'no-store' });
         if (!response.ok) throw new Error(`Tracker returned HTTP ${response.status}`);
         const payload = await response.json() as PlayerTrackerResponse;
         if (!active) return;
-        setTracker(normalizeResponse(payload));
+        const normalized = normalizeResponse(payload, metricDefinitions, troopMetadata);
+		setTracker(activePlayerID > 0 && normalized.current?.playerId !== activePlayerID ? emptyResponse : normalized);
         setLoadError(null);
       } catch (error) {
         if (!active) return;
@@ -259,20 +265,19 @@ const PlayerTrackerView = () => {
       active = false;
       window.clearInterval(timer);
     };
-  }, [selectedRange, troopRange]);
+  }, [activePlayerID, metricDefinitions, selectedRange, troopMetadata, troopRange]);
 
-  const current = liveSample ?? tracker.current;
+  const current = liveSample ?? scopedTracker.current;
   const series = useMemo(
-    () => mergeLiveSampleIntoSeries(tracker.series, liveSample),
-    [tracker.series, liveSample],
+    () => mergeLiveSampleIntoSeries(scopedTracker.series, liveSample, metricDefinitions),
+    [scopedTracker.series, liveSample, metricDefinitions],
   );
   const visibleSeries = useMemo(
-    () => filterSeriesRange(series, selectedRange),
-    [series, selectedRange],
+    () => filterSeriesRange(series, selectedRange, metricDefinitions),
+    [series, selectedRange, metricDefinitions],
   );
-  const selectedDefinition = metricDefinitions.find((definition) => definition.key === selectedMetric)!;
-  const SelectedMetricIcon = selectedDefinition.icon;
-  const selectedPoints = visibleSeries[selectedMetric] ?? [];
+  const selectedDefinition = metricDefinitions.find((definition) => definition.key === selectedMetric) ?? CORE_METRIC_DEFINITIONS[0];
+  const selectedPoints = visibleSeries[selectedDefinition.key] ?? [];
   const chartPoints = useMemo(
     () => bucketMetricPoints(selectedPoints, selectedRange),
     [selectedPoints, selectedRange],
@@ -291,7 +296,7 @@ const PlayerTrackerView = () => {
   const troopPoints = useMemo(() => {
     const points = troopFiltersActive
       ? buildFilteredTroopPoints(
-          tracker.samples,
+          scopedTracker.samples,
           current,
           troopMetadata,
           troopTypeFilter,
@@ -303,7 +308,7 @@ const PlayerTrackerView = () => {
   }, [
     current,
     series.troopsTotal,
-    tracker.samples,
+    scopedTracker.samples,
     troopFoodFilter,
     troopMetadata,
     troopRange,
@@ -329,7 +334,7 @@ const PlayerTrackerView = () => {
   const sampledTroopRatePoints = useMemo(() => {
     if (troopFiltersActive) {
       return buildFilteredTroopPoints(
-        tracker.samples,
+        scopedTracker.samples,
         null,
         troopMetadata,
         troopTypeFilter,
@@ -337,13 +342,11 @@ const PlayerTrackerView = () => {
         troopFoodFilter,
       );
     }
-    return tracker.samples.map((sample) => ({
-      timestampUnix: sample.timestampUnix,
-      value: sample.troopsTotal,
-      source: 'local' as const,
-    }));
+    return scopedTracker.samples.flatMap((sample) => sample.troopsByUnit
+      ? [{ timestampUnix: sample.timestampUnix, value: sample.troopsTotal, source: 'local' as const }]
+      : []);
   }, [
-    tracker.samples,
+    scopedTracker.samples,
     troopFiltersActive,
     troopFoodFilter,
     troopMetadata,
@@ -356,12 +359,12 @@ const PlayerTrackerView = () => {
     ? latestTroopRatePoint.value - previousTroopRatePoint.value
     : undefined;
   const troopComposition = useMemo(
-    () => calculateTroopCombatComposition(castleResources, troopMetadata),
-    [castleResources, troopMetadata],
+    () => calculateTroopCombatComposition(Object.values(state?.castles ?? {}), troopMetadata),
+    [state?.castles, troopMetadata],
   );
   const troopTrendLines = useMemo(
     () => buildTroopTrendLines(
-      tracker.samples,
+      scopedTracker.samples,
       current,
       troopMetadata,
       troopTypeFilter,
@@ -371,7 +374,7 @@ const PlayerTrackerView = () => {
     ),
     [
       current,
-      tracker.samples,
+      scopedTracker.samples,
       troopFoodFilter,
       troopMetadata,
       troopRange,
@@ -391,36 +394,28 @@ const PlayerTrackerView = () => {
     <div className="flex flex-col gap-6 pb-8">
       <StaleSessionBanner />
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
-              <Activity className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-text-main">My Stats</h1>
-              <p className="text-sm text-text-muted">
-                {tracker.fallback.playerName
-                  ? `${tracker.fallback.playerName}${tracker.fallback.server ? ` · ${tracker.fallback.server}` : ''}`
-                  : current?.playerId ? `Your account · Player ${current.playerId}` : 'Your account analytics'}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <PageHeader
+        title="My Stats"
+        description={scopedTracker.fallback.playerName
+          ? `${scopedTracker.fallback.playerName}${scopedTracker.fallback.server ? ` · ${scopedTracker.fallback.server}` : ''}`
+          : current?.playerId ? `Your account · Player ${current.playerId}` : 'Your account analytics'}
+        icon={<Activity className="h-6 w-6" />}
+        meta={(
+          <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="gap-1.5">
             <Clock3 className="h-3.5 w-3.5" />
-            {formatSampleInterval(tracker.intervalSeconds)} samples
+            {formatSampleInterval(scopedTracker.intervalSeconds)} samples
           </Badge>
           {loading && <Badge variant="outline">Loading history…</Badge>}
-          {(tracker.fallback.status === 'backfilled' || tracker.fallback.status === 'partial') && (
+          {(scopedTracker.fallback.status === 'backfilled' || scopedTracker.fallback.status === 'partial') && (
             <Badge variant="secondary">
-              GGE Tracker backfill · {tracker.fallback.pointsAdded ?? 0} points
+              GGE Tracker backfill · {scopedTracker.fallback.pointsAdded ?? 0} points
             </Badge>
           )}
           {loadError && <Badge variant="danger">Live values only</Badge>}
-        </div>
-      </div>
+          </div>
+        )}
+      />
 
       {!current ? (
         <Card>
@@ -435,7 +430,7 @@ const PlayerTrackerView = () => {
               <div className="flex w-full flex-wrap items-center justify-between gap-4">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <SelectedMetricIcon className="h-5 w-5" style={{ color: selectedDefinition.color }} />
+                    <MetricIcon definition={selectedDefinition} className="h-5 w-5" />
                     {selectedDefinition.label} trend
                   </CardTitle>
                   <div className="mt-2 flex items-baseline gap-3">
@@ -454,29 +449,49 @@ const PlayerTrackerView = () => {
                   </div>
                 </div>
                 <PillSelector
+                  ariaLabel="Player history range"
                   value={selectedRange}
                   onChange={(value) => setSelectedRange(value as RangeKey)}
                   options={ranges.map((range) => ({ value: range.key, label: range.label }))}
-                  size="lg"
+                  size="header"
                 />
               </div>
             </CardHeader>
             <CardContent className="liquid-prominent-header-content p-5 sm:p-6">
               <div className="mb-4 flex flex-wrap gap-2">
-                {primaryMetricDefinitions.map((definition) => (
-                  <button
-                    key={definition.key}
-                    type="button"
-                    onClick={() => setSelectedMetric(definition.key)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      selectedMetric === definition.key
-                        ? 'border-primary/40 bg-primary/10 text-primary'
-                        : 'border-border-base text-text-muted hover:bg-bg-card-hover hover:text-text-main'
-                    }`}
-                  >
-                    {definition.shortLabel}
-                  </button>
-                ))}
+                <PillSelector
+                  ariaLabel="Highlighted player metric"
+                  value={selectedMetric}
+                  onChange={(value) => setSelectedMetric(value as MetricKey)}
+                  options={highlightMetricDefinitions.map((definition) => ({
+                    value: definition.key,
+                    label: definition.shortLabel,
+                    icon: <MetricIcon definition={definition} className="h-4 w-4" />,
+                  }))}
+                  size="body"
+                />
+				{extraMetricDefinitions.length > 0 && (
+					<Select
+						value={selectedExtraMetric?.key ?? ''}
+						onChange={setSelectedMetric}
+						placeholder="More metrics"
+						className="w-full sm:w-72"
+						menuGrowToViewport
+						searchable
+						searchPlaceholder="Filter metrics"
+						options={extraMetricDefinitions.map((definition) => ({
+							value: definition.key,
+							searchText: `${definition.label} ${definition.shortLabel} ${definition.category} ${definition.key}`,
+							label: (
+								<span className="flex min-w-0 items-center gap-2">
+									<MetricIcon definition={definition} className="h-4 w-4" />
+									<span className="min-w-0 flex-1 truncate">{definition.label}</span>
+									<span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-text-muted">{definition.category}</span>
+								</span>
+							),
+						}))}
+					/>
+				)}
               </div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
                 <span>{hoverPointHint(selectedRange)} Drag horizontally to inspect a custom time period.</span>
@@ -493,7 +508,7 @@ const PlayerTrackerView = () => {
               </div>
               <TrendChart
                 points={chartPoints}
-                metric={selectedMetric}
+                metric={selectedDefinition.key}
                 color={selectedDefinition.color}
                 range={selectedRange}
                 selectedWindow={customWindow}
@@ -544,10 +559,11 @@ const PlayerTrackerView = () => {
                   </div>
                 </div>
                 <PillSelector
+                  ariaLabel="Troop history range"
                   value={troopRange}
                   onChange={(value) => setTroopRange(value as RangeKey)}
                   options={ranges.map((range) => ({ value: range.key, label: range.label }))}
-                  size="lg"
+                  size="header"
                 />
               </div>
             </CardHeader>
@@ -574,6 +590,7 @@ const PlayerTrackerView = () => {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <PillSelector
+                    ariaLabel="Troop type filter"
                     value={troopTypeFilter}
                     onChange={(value) => setTroopTypeFilter(value as TypeFilter)}
                     options={[
@@ -581,9 +598,10 @@ const PlayerTrackerView = () => {
                       { value: 'melee', label: 'Melee' },
                       { value: 'range', label: 'Range' },
                     ]}
-                    size="sm"
+                    size="body"
                   />
                   <PillSelector
+                    ariaLabel="Troop role filter"
                     value={troopRoleFilter}
                     onChange={(value) => setTroopRoleFilter(value as RoleFilter)}
                     options={[
@@ -591,9 +609,10 @@ const PlayerTrackerView = () => {
                       { value: 'attack', label: 'Attack' },
                       { value: 'defense', label: 'Defense' },
                     ]}
-                    size="sm"
+                    size="body"
                   />
                   <PillSelector
+                    ariaLabel="Troop food filter"
                     value={troopFoodFilter}
                     onChange={(value) => setTroopFoodFilter(value as FoodFilter)}
                     options={[
@@ -602,7 +621,7 @@ const PlayerTrackerView = () => {
                       { value: 'beef', label: 'Beef' },
                       { value: 'food', label: 'Food' },
                     ]}
-                    size="sm"
+                    size="body"
                   />
                 </div>
               </div>
@@ -792,7 +811,7 @@ function TrendChart({
     ? lines
     : [{
         key: metric,
-        label: metricDefinitions.find((definition) => definition.key === metric)?.shortLabel ?? metric,
+        label: metric,
         color,
         points: metricPoints,
       }];
@@ -1205,8 +1224,10 @@ function buildTroopTrendLines(
   const rawLines: TrendLineSeries[] = [];
 
   rankedUnits.forEach((unit, index) => {
-    const name = TROOP_METADATA[unit.unitID]?.name || metadata[unit.unitID]?.name || `Unit #${unit.unitID}`;
-    const level = getUnitBaseAndLevel(unit.unitID)?.level;
+	const item = metadata[unit.unitID];
+	const name = item?.name || `Unit #${unit.unitID}`;
+	const rawLevel = Number(item?.level);
+	const level = Number.isFinite(rawLevel) && rawLevel > 0 ? rawLevel : undefined;
     rawLines.push({
       key: `unit-${unit.unitID}`,
       label: level ? `${name} · Lv ${level}` : name,
@@ -1296,7 +1317,7 @@ function metricValue(sample: PlayerTrackerSample, key: MetricKey): number | unde
     case 'gallantry':
       return finite(sample.gallantry);
     case 'troopsTotal':
-      return finite(sample.troopsTotal);
+      return sample.troopsByUnit ? finite(sample.troopsTotal) : undefined;
     case 'loot':
       return undefined;
     default:
@@ -1311,6 +1332,7 @@ function troopMatchesFilters(
   roleFilter: RoleFilter,
   foodFilter: FoodFilter,
 ): boolean {
+	if (!metadata[unitID]) return false;
   return classificationMatchesFilters(
     troopUnitClassification(unitID, metadata),
     typeFilter,
@@ -1321,11 +1343,12 @@ function troopMatchesFilters(
 
 function troopUnitClassification(unitID: number, metadata: Record<number, MetadataItem>): TroopUnitClassification {
   const item = metadata[unitID];
-  const fallback = TROOP_METADATA[unitID];
-  const inferredType = troopWeaponType(item, undefined);
-  const weaponType = fallback?.type ?? (inferredType === 'ranged' ? 'range' : inferredType);
-  const combatRole = fallback?.role ?? troopCombatRole(item, undefined);
-  const rawFood = String(fallback?.food ?? item?.food ?? item?.consumptionType ?? 'food').toLowerCase();
+	const inferredType = troopWeaponType(item);
+	const weaponType = inferredType === 'ranged' ? 'range' : inferredType;
+	const combatRole = troopCombatRole(item);
+	const rawFood = metadataNumber(item?.meadSupply) > 0
+	  ? 'mead'
+	  : metadataNumber(item?.beefSupply) > 0 ? 'beef' : 'food';
   const foodType = rawFood === 'mead' || rawFood === 'beef' ? rawFood : 'food';
   return { weaponType, combatRole, foodType };
 }
@@ -1353,16 +1376,79 @@ function troopFilterLabel(typeFilter: TypeFilter, roleFilter: RoleFilter, foodFi
   return labels.length > 0 ? labels.join(' · ') : 'All troops';
 }
 
-function addTroopsByUnit(target: Record<string, number>, values: Record<string, number> | undefined) {
+function addTroopsByUnit(
+  target: Record<string, number>,
+  values: Record<string, number> | undefined,
+  metadata: Record<number, MetadataItem>,
+) {
   if (!values) return;
   for (const [unitID, rawAmount] of Object.entries(values)) {
+    if (!metadata[Number(unitID)]) continue;
     const amount = Math.max(0, finite(rawAmount));
     if (amount > 0) target[unitID] = (target[unitID] ?? 0) + amount;
   }
 }
 
+function playerWallet(
+  resources: Record<string, number>,
+  currencies: Record<string, number>,
+  resourceDefinitions: Record<number, MetadataItem>,
+): Record<string, number> {
+  const wallet: Record<string, number> = {};
+  for (const [rawID, amount] of Object.entries(resources)) {
+    const definition = resourceDefinitions[Number(rawID)];
+    const internalName = typeof definition?.internalName === 'string' ? definition.internalName : '';
+    const jsonKey = typeof definition?.JSONKey === 'string' ? definition.JSONKey : '';
+    wallet[`resource:${rawID}`] = amount;
+    if (jsonKey === 'C1' || internalName === 'currency1') wallet.coins = amount;
+    if (jsonKey === 'C2' || internalName === 'currency2') wallet.rubies = amount;
+  }
+  for (const [rawID, amount] of Object.entries(currencies)) {
+    wallet[`currency:${rawID}`] = amount;
+  }
+  return wallet;
+}
+
+function buildMetricDefinitions(
+  state: GameStateV2 | null,
+  resourceDefinitions: Record<number, MetadataItem>,
+  currencyDefinitions: Record<number, MetadataItem>,
+): MetricDefinition[] {
+  const definitions = CORE_METRIC_DEFINITIONS.map((definition) => ({ ...definition }));
+  if (!state) return definitions;
+  const palette = ['#22d3ee', '#a78bfa', '#f59e0b', '#34d399', '#fb7185', '#60a5fa', '#2dd4bf', '#f97316'];
+  const append = (kind: 'resource' | 'currency', rawID: string, metadata: MetadataItem | undefined) => {
+    const id = Number(rawID);
+    if (!Number.isFinite(id) || id <= 0) return;
+    const jsonKey = typeof metadata?.JSONKey === 'string' ? metadata.JSONKey : '';
+    const internalName = typeof metadata?.internalName === 'string' ? metadata.internalName : '';
+    if (kind === 'resource' && (jsonKey === 'C1' || jsonKey === 'C2' || internalName === 'currency1' || internalName === 'currency2')) return;
+    const name = metadata?.name?.trim() || `${kind === 'resource' ? 'Resource' : 'Currency'} ${id}`;
+    definitions.push({
+      key: `${kind}:${id}`,
+      label: name,
+      shortLabel: name.length > 24 ? `${name.slice(0, 22)}…` : name,
+      color: palette[Math.abs(id) % palette.length],
+      icon: Coins,
+      imageUrl: metadata?.image,
+      category: 'Wallet',
+    });
+  };
+  Object.entries(state.player.resources)
+    .filter(([, amount]) => amount !== 0)
+    .forEach(([id]) => append('resource', id, resourceDefinitions[Number(id)]));
+  Object.entries(state.player.currencies)
+    .filter(([, amount]) => amount !== 0)
+    .forEach(([id]) => append('currency', id, currencyDefinitions[Number(id)]));
+  const troop = definitions.find((definition) => definition.key === 'troopsTotal');
+  return [
+    ...definitions.filter((definition) => definition.key !== 'troopsTotal'),
+    ...(troop ? [troop] : []),
+  ];
+}
+
 function calculateTroopCombatComposition(
-  castles: Map<number, PlayerCastleInfo>,
+  castles: CastleStateV2[],
   metadata: Record<number, MetadataItem>,
 ): TroopCombatComposition {
   const composition: TroopCombatComposition = {
@@ -1375,12 +1461,12 @@ function calculateTroopCombatComposition(
     roleClassified: 0,
   };
 
-  for (const castle of castles.values()) {
+  for (const castle of castles) {
     const troopPools = [
-      castle.troops?.troopsI,
-      castle.troops?.troopsTU,
-      castle.troops?.troopsHI,
-      castle.troops?.troopsSHI,
+      castle.units.stationed,
+      castle.units.traveling,
+      castle.units.hospital,
+      castle.units.specialHospital,
     ];
     for (const pool of troopPools) {
       if (!pool) continue;
@@ -1389,10 +1475,10 @@ function calculateTroopCombatComposition(
         const amount = Math.max(0, finite(rawAmount));
         if (!Number.isFinite(unitID) || amount <= 0) continue;
 
-        composition.total += amount;
         const item = metadata[unitID];
-        const fallback = TROOP_METADATA[unitID];
-        const weaponType = troopWeaponType(item, fallback?.type);
+		if (!item) continue;
+		composition.total += amount;
+		const weaponType = troopWeaponType(item);
         if (weaponType === 'melee') {
           composition.melee += amount;
           composition.typeClassified += amount;
@@ -1401,7 +1487,7 @@ function calculateTroopCombatComposition(
           composition.typeClassified += amount;
         }
 
-        const combatRole = troopCombatRole(item, fallback?.role);
+		const combatRole = troopCombatRole(item);
         if (combatRole === 'attack') {
           composition.attack += amount;
           composition.roleClassified += amount;
@@ -1417,11 +1503,8 @@ function calculateTroopCombatComposition(
 }
 
 function troopWeaponType(
-  item: MetadataItem | undefined,
-  fallback: 'melee' | 'range' | undefined,
+	item: MetadataItem | undefined,
 ): 'melee' | 'ranged' | null {
-  if (fallback === 'melee') return 'melee';
-  if (fallback === 'range') return 'ranged';
   const value = String(item?.role ?? '').toLowerCase();
   if (value.includes('melee')) return 'melee';
   if (value.includes('range')) return 'ranged';
@@ -1429,10 +1512,8 @@ function troopWeaponType(
 }
 
 function troopCombatRole(
-  item: MetadataItem | undefined,
-  fallback: 'attack' | 'defense' | undefined,
+	item: MetadataItem | undefined,
 ): 'attack' | 'defense' | null {
-  if (fallback) return fallback;
   const attack = Math.max(metadataNumber(item?.meleeAttack), metadataNumber(item?.rangeAttack));
   const defense = Math.max(metadataNumber(item?.meleeDefence), metadataNumber(item?.rangeDefence));
   if (attack > defense) return 'attack';
@@ -1445,14 +1526,23 @@ function metadataNumber(value: unknown): number {
   return Number.isFinite(number) ? number : 0;
 }
 
-function normalizeResponse(value: PlayerTrackerResponse): PlayerTrackerResponse {
+function normalizeResponse(
+  value: PlayerTrackerResponse,
+  definitions: MetricDefinition[],
+  troopMetadata: Record<number, MetadataItem>,
+): PlayerTrackerResponse {
+	const hasTroopMetadata = Object.keys(troopMetadata).length > 0;
   const samples = Array.isArray(value?.samples)
-    ? value.samples.filter((sample) => Number.isFinite(sample?.timestampUnix)).sort((a, b) => a.timestampUnix - b.timestampUnix)
+    ? value.samples
+        .filter((sample) => Number.isFinite(sample?.timestampUnix))
+        .map((sample) => normalizeTroopSample(sample, troopMetadata, hasTroopMetadata))
+        .sort((a, b) => a.timestampUnix - b.timestampUnix)
     : [];
+	const current = value?.current ? normalizeTroopSample(value.current, troopMetadata, hasTroopMetadata) : null;
   return {
-    current: value?.current ?? null,
+    current,
     samples,
-    series: normalizeSeries(value?.series, samples, value?.current ?? null),
+    series: normalizeSeries(value?.series, samples, current, definitions),
     intervalSeconds: finite(value?.intervalSeconds) || 60,
     fallback: {
       provider: value?.fallback?.provider || 'gge-tracker',
@@ -1469,13 +1559,32 @@ function normalizeResponse(value: PlayerTrackerResponse): PlayerTrackerResponse 
   };
 }
 
+function normalizeTroopSample(
+  sample: PlayerTrackerSample,
+  metadata: Record<number, MetadataItem>,
+	metadataReady = Object.keys(metadata).length > 0,
+): PlayerTrackerSample {
+	if (!sample.troopsByUnit || !metadataReady) return sample;
+	const troopsByUnit: Record<string, number> = {};
+	let troopsTotal = 0;
+	for (const [rawID, rawAmount] of Object.entries(sample.troopsByUnit)) {
+		if (!metadata[Number(rawID)]) continue;
+		const amount = Math.max(0, finite(rawAmount));
+		if (amount <= 0) continue;
+		troopsByUnit[rawID] = amount;
+		troopsTotal += amount;
+	}
+	return { ...sample, troopsTotal, troopsByUnit };
+}
+
 function normalizeSeries(
   raw: Partial<Record<MetricKey, TrackerMetricPoint[]>> | undefined,
   samples: PlayerTrackerSample[],
   current: PlayerTrackerSample | null,
+  definitions: MetricDefinition[],
 ): Partial<Record<MetricKey, TrackerMetricPoint[]>> {
   const normalized: Partial<Record<MetricKey, TrackerMetricPoint[]>> = {};
-  for (const definition of metricDefinitions) {
+  for (const definition of definitions) {
     const points = raw?.[definition.key];
     if (Array.isArray(points)) {
       normalized[definition.key] = points
@@ -1489,7 +1598,7 @@ function normalizeSeries(
     }
   }
   const localSamples = current ? [...samples, current] : samples;
-  for (const definition of metricDefinitions) {
+  for (const definition of definitions) {
     if (normalized[definition.key] != null) continue;
     normalized[definition.key] = localSamples.flatMap((sample) => {
       const value = metricValue(sample, definition.key);
@@ -1504,21 +1613,23 @@ function normalizeSeries(
 function mergeLiveSampleIntoSeries(
   series: Partial<Record<MetricKey, TrackerMetricPoint[]>>,
   liveSample: PlayerTrackerSample | null,
+  definitions: MetricDefinition[],
 ): Partial<Record<MetricKey, TrackerMetricPoint[]>> {
   const merged: Partial<Record<MetricKey, TrackerMetricPoint[]>> = {};
-  for (const definition of metricDefinitions) {
+  for (const definition of definitions) {
     merged[definition.key] = [...(series[definition.key] ?? [])];
   }
-  if (liveSample) addSampleToSeries(merged, liveSample, true);
+  if (liveSample) addSampleToSeries(merged, liveSample, definitions, true);
   return merged;
 }
 
 function addSampleToSeries(
   series: Partial<Record<MetricKey, TrackerMetricPoint[]>>,
   sample: PlayerTrackerSample,
+  definitions: MetricDefinition[],
   replaceNearby = false,
 ) {
-  for (const definition of metricDefinitions) {
+  for (const definition of definitions) {
     const value = metricValue(sample, definition.key);
     if (value == null) continue;
     let points = series[definition.key] ?? [];
@@ -1534,12 +1645,13 @@ function addSampleToSeries(
 function filterSeriesRange(
   series: Partial<Record<MetricKey, TrackerMetricPoint[]>>,
   range: RangeKey,
+  definitions: MetricDefinition[],
 ): Partial<Record<MetricKey, TrackerMetricPoint[]>> {
   const definition = ranges.find((candidate) => candidate.key === range);
   if (!definition?.seconds) return series;
   const cutoff = Math.floor(Date.now() / 1000) - definition.seconds;
   const filtered: Partial<Record<MetricKey, TrackerMetricPoint[]>> = {};
-  for (const metric of metricDefinitions) {
+  for (const metric of definitions) {
     filtered[metric.key] = (series[metric.key] ?? []).filter((point) => point.timestampUnix >= cutoff);
   }
   return filtered;
@@ -1580,9 +1692,15 @@ function hoverPointHint(range: RangeKey): string {
   }
 }
 
-function sumRecord(values: Record<string, number> | undefined): number {
+function sumTroopRecord(
+  values: Record<string, number> | undefined,
+  metadata: Record<number, MetadataItem>,
+): number {
   if (!values) return 0;
-  return Object.values(values).reduce((total, value) => total + Math.max(0, finite(value)), 0);
+  return Object.entries(values).reduce(
+    (total, [rawID, value]) => total + (metadata[Number(rawID)] ? Math.max(0, finite(value)) : 0),
+    0,
+  );
 }
 
 function finite(value: unknown): number {

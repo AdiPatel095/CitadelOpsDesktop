@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { CalendarDays, Trash2, Save, Plus, Minus } from 'lucide-react';
-import { FrontendWebsocket } from '../../Websocket';
+import { CalendarDays, Hammer, Trash2, Plus, Minus } from 'lucide-react';
 import {
   showTCIPicker,
   type TCIWithLevelCeiling,
   normalizeLevelRange,
   TCI_LEVEL_MIN,
-  TCI_LEVEL_MAX,
 } from '../../components/TCIPickerModal';
 import {
   fetchConstructionItemsCatalog,
@@ -17,28 +15,32 @@ import {
 } from '../../components/TCICatalogCache';
 import {
   applyPresetToStoredShape,
-  loadPresetsFile,
+  emptyPresetsFile,
   snapshotFromForm,
   type AutoTCIPreset,
 } from '../AutoTCIPresets';
 import {
   buildAutoTCIClientState,
-  loadAutoTCISettingsFromStorage,
   parseAutoTCIClientState,
   persistAutoTCIClientState,
 } from '../AutoTCIClientState';
-import { Modal, Button, Card, CardHeader, CardTitle, CardContent, Badge, Input, Select } from '../../components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  NamedPresetControls,
+  SettingsModal,
+} from '../../components/ui';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { castleOptionsFromState } from '../../api/Selectors';
 
 interface AutoTCISettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
-}
-
-interface Castle {
-  id: number;
-  name: string;
-  type: string;
 }
 
 /** `amount` is the level ceiling; optional `minLevel` is the floor (default 1). */
@@ -49,10 +51,11 @@ interface AutoTCIItem {
 }
 
 export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
-  const [castles, setCastles] = useState<Castle[]>([]);
+  const { state, configuration } = useCitadelAPI();
+  const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, AutoTCIItem[]>>({});
   const [catalog, setCatalog] = useState<ConstructionItemCatalogEntry[]>([]);
-  const [presetsState, setPresetsState] = useState(() => loadPresetsFile());
+  const [presetsState, setPresetsState] = useState(() => emptyPresetsFile());
   const [presetDropdownId, setPresetDropdownId] = useState('');
   const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null);
   const [presetName, setPresetName] = useState('');
@@ -69,9 +72,9 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     return m;
   }, [catalog]);
 
-  const hydrateFromStorage = useCallback(() => {
-    setSettings(loadAutoTCISettingsFromStorage());
-  }, []);
+  const hydrateFromConfiguration = useCallback(() => {
+    setSettings(parseAutoTCIClientState(configuration?.sections['automation.constructionItems']).targets);
+  }, [configuration?.sections]);
 
   const applyFullClientState = useCallback((state: ReturnType<typeof parseAutoTCIClientState>) => {
     setSettings(state.targets);
@@ -82,45 +85,17 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
 
   useEffect(() => {
     if (!isOpen) return;
-    FrontendWebsocket.sendMessage({ type: 'getCastleList' });
     fetchConstructionItemsCatalog().then(setCatalog).catch(() => setCatalog([]));
-    hydrateFromStorage();
-
-    const onClientStateMessage = (msg: { type?: string; payload?: unknown }) => {
-      if (msg.type !== 'autoTCIClientState' || msg.payload == null) return;
-      applyFullClientState(parseAutoTCIClientState(msg.payload));
-    };
-
-    FrontendWebsocket.addMessageListener(onClientStateMessage);
-
-    if (FrontendWebsocket.getStatus() === 'Connected') {
-      FrontendWebsocket.sendMessage({ type: 'getAutoTCIClientState' });
-    } else {
-      applyFullClientState(
-        buildAutoTCIClientState(loadAutoTCISettingsFromStorage(), loadPresetsFile()),
-      );
-    }
+    applyFullClientState(parseAutoTCIClientState(
+      configuration?.sections['automation.constructionItems']
+        ?? buildAutoTCIClientState({}, emptyPresetsFile()),
+    ));
 
     setAppliedPresetId(null);
     setPresetName('');
     setPresetError('');
 
-    return () => FrontendWebsocket.removeMessageListener(onClientStateMessage);
-  }, [isOpen, hydrateFromStorage, applyFullClientState]);
-
-  useEffect(() => {
-    const handleMessage = (msg: any) => {
-      if (msg.type === 'castleList') {
-        const list = msg.payload as Castle[];
-        if (list && list.length > 0) {
-          setCastles(list);
-        }
-      }
-    };
-
-    FrontendWebsocket.addMessageListener(handleMessage);
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
-  }, []);
+  }, [configuration?.sections, isOpen, applyFullClientState]);
 
   const handleAddItem = async (castleId: string) => {
     const currentItems = settings[castleId] || [];
@@ -128,7 +103,13 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     const preselectedLevelFloors: Record<number, number> = {};
     currentItems.forEach((item) => {
       if (item.id) {
-        const range = normalizeLevelRange(item.minLevel ?? TCI_LEVEL_MIN, item.amount);
+        const meta = catalogByWireId.get(item.id);
+        const range = normalizeLevelRange(
+          item.minLevel ?? meta?.minLevel ?? TCI_LEVEL_MIN,
+          item.amount,
+          meta?.minLevel ?? TCI_LEVEL_MIN,
+          meta?.maxLevel ?? Number.MAX_SAFE_INTEGER,
+        );
         preselectedLevelCeilings[item.id] = range.ceiling;
         preselectedLevelFloors[item.id] = range.floor;
       }
@@ -166,7 +147,13 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       const list = prev[castleId] || [];
       const next = list.map((it) => {
         if (it.id !== itemId) return it;
-        const range = normalizeLevelRange(it.minLevel ?? TCI_LEVEL_MIN, it.amount + delta);
+        const meta = catalogByWireId.get(itemId);
+        const range = normalizeLevelRange(
+          it.minLevel ?? meta?.minLevel ?? TCI_LEVEL_MIN,
+          it.amount + delta,
+          meta?.minLevel ?? TCI_LEVEL_MIN,
+          meta?.maxLevel ?? Number.MAX_SAFE_INTEGER,
+        );
         const row: AutoTCIItem = { ...it, amount: range.ceiling };
         if (range.floor > 1) row.minLevel = range.floor;
         else delete row.minLevel;
@@ -181,7 +168,13 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       const list = prev[castleId] || [];
       const next = list.map((it) => {
         if (it.id !== itemId) return it;
-        const range = normalizeLevelRange((it.minLevel ?? TCI_LEVEL_MIN) + delta, it.amount);
+        const meta = catalogByWireId.get(itemId);
+        const range = normalizeLevelRange(
+          (it.minLevel ?? meta?.minLevel ?? TCI_LEVEL_MIN) + delta,
+          it.amount,
+          meta?.minLevel ?? TCI_LEVEL_MIN,
+          meta?.maxLevel ?? Number.MAX_SAFE_INTEGER,
+        );
         const row: AutoTCIItem = { ...it, amount: range.ceiling };
         if (range.floor > 1) row.minLevel = range.floor;
         else delete row.minLevel;
@@ -201,7 +194,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   const handleApplyPreset = () => {
     setPresetError('');
     if (!presetDropdownId) {
-      hydrateFromStorage();
+      hydrateFromConfiguration();
       setAppliedPresetId(null);
       setPresetName('');
       return;
@@ -250,7 +243,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
     setPresetDropdownId('');
     if (appliedPresetId === id) {
       setAppliedPresetId(null);
-      hydrateFromStorage();
+      hydrateFromConfiguration();
       setPresetName('');
     }
   };
@@ -277,7 +270,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   };
 
   const presetOptions = [
-    { value: '', label: '— Saved on disk (default) —' },
+    { value: '', label: '— Saved configuration —' },
     ...presetsState.presets.map((p) => ({ value: p.id, label: p.name })),
   ];
 
@@ -328,115 +321,54 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   );
 
   return (
-    <Modal
+    <SettingsModal
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="full"
-      title={
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <span className="flex items-center gap-2 text-amber-500">
-              <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
-              Auto TCI Settings
-            </span>
-            <p className="mt-1 text-sm font-normal text-text-muted">
+      title={<span className="text-amber-500">Auto TCI Settings</span>}
+      icon={<Hammer className="h-5 w-5 text-amber-500" />}
+      description={(
+            <>
               Per castle, pick construction item variants and set a <span className="font-medium text-text-main">level floor and ceiling</span>{' '}
-              (1–{TCI_LEVEL_MAX}) with +/-. Use the floor when you only keep higher tiers in stash. Names and effects match the{' '}
-              <a
-                href="https://generalscamp.github.io/forum/overviews/building_items/index.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                GeneralsCamp building items
-              </a>{' '}
-              overview.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0"
-            onClick={() => onOpenFeatureSchedule('autoTCI', 'Auto TCI')}
-            leftIcon={<CalendarDays className="h-4 w-4" />}
-          >
-            Calendar
-          </Button>
-        </div>
-      }
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose} className="px-6">
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            className="px-8"
-            leftIcon={<Save className="h-4 w-4" />}
-          >
-            Save changes
-          </Button>
-        </>
-      }
+              using the level range supplied by the current official construction-item catalog.
+            </>
+      )}
+      titleTrailing={(
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => onOpenFeatureSchedule('autoTCI', 'Auto TCI')}
+              leftIcon={<CalendarDays className="h-4 w-4" />}
+            >
+              Calendar
+            </Button>
+      )}
+      onSave={handleSave}
+      saveLabel="Save changes"
     >
       <div className="auto-tci-settings-workspace custom-scrollbar mx-auto flex w-full flex-col gap-5 overflow-y-auto pb-4">
-        <Card variant="solid" className="shrink-0 border-border-base bg-bg-app p-5">
-          <div className="mb-3 text-xs font-bold uppercase tracking-wider text-primary">Presets</div>
-          <div className="flex flex-col gap-4 xl:flex-row xl:flex-wrap xl:items-end">
-            <div className="flex min-w-[220px] flex-1 flex-col gap-1.5 xl:max-w-sm">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Preset name</span>
-              <Input
-                type="text"
-                placeholder="Name for new preset or rename on save"
-                value={presetName}
-                onChange={(e) => {
-                  setPresetName(e.target.value);
-                  setPresetError('');
-                }}
-                error={presetError}
-              />
-            </div>
-            <div className="flex min-w-[320px] flex-[2] flex-col gap-1.5 xl:min-w-[360px]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Load preset</span>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Select
-                    value={presetDropdownId}
-                    onChange={(v) => setPresetDropdownId(v)}
-                    options={presetOptions}
-                  />
-                </div>
-                <Button variant="outline" onClick={handleApplyPreset} className="shrink-0 bg-bg-card">
-                  Apply
-                </Button>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleSaveAsNewPreset}
-                className="border-info/40 text-info hover:bg-info/10"
-                leftIcon={<Plus className="h-4 w-4" />}
-              >
-                Save as new
-              </Button>
-              <Button
-                variant="danger"
-                disabled={!presetDropdownId}
-                onClick={handleDeletePreset}
-                leftIcon={<Trash2 className="h-4 w-4" />}
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-text-muted">
+        <NamedPresetControls
+          name={presetName}
+          onNameChange={(value) => {
+            setPresetName(value);
+            setPresetError('');
+          }}
+          nameError={presetError}
+          selectedID={presetDropdownId}
+          onSelectedIDChange={setPresetDropdownId}
+          options={presetOptions}
+          onApply={handleApplyPreset}
+          onSaveAsNew={handleSaveAsNewPreset}
+          onDelete={handleDeletePreset}
+          help={(
+            <>
             Choose a preset and click <span className="font-semibold text-text-main">Apply</span> to load it into the grid.{' '}
             <span className="font-semibold text-text-main">Save changes</span> writes Auto TCI settings and updates the applied preset
             (including name). Data is stored next to Auto Bird settings (see AutoTCI.json).
-          </p>
-        </Card>
+            </>
+          )}
+        />
 
         <div className="grid w-full auto-rows-max grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
         {castles.map((castle) => {
@@ -462,10 +394,15 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                   <div className="w-full">
                     <div className="flex flex-col gap-3">
                       {castleItems.map((item, index) => {
-                        const range = normalizeLevelRange(item.minLevel ?? TCI_LEVEL_MIN, item.amount);
+                        const meta = catalogByWireId.get(item.id);
+                        const range = normalizeLevelRange(
+                          item.minLevel ?? meta?.minLevel ?? TCI_LEVEL_MIN,
+                          item.amount,
+                          meta?.minLevel ?? TCI_LEVEL_MIN,
+                          meta?.maxLevel ?? Number.MAX_SAFE_INTEGER,
+                        );
                         const floor = range.floor;
                         const ceil = range.ceiling;
-                        const meta = catalogByWireId.get(item.id);
                         const effectLine = meta ? formatEffectUpgradeLine(meta) : '';
                         return (
                           <div
@@ -499,7 +436,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                                 floor,
                                 () => bumpFloor(castleId, item.id, -1),
                                 () => bumpFloor(castleId, item.id, 1),
-                                floor <= TCI_LEVEL_MIN,
+                                floor <= (meta?.minLevel ?? TCI_LEVEL_MIN),
                                 floor >= ceil,
                                 'Decrease level floor',
                                 'Increase level floor',
@@ -510,7 +447,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                                 () => bumpCeiling(castleId, item.id, -1),
                                 () => bumpCeiling(castleId, item.id, 1),
                                 ceil <= floor,
-                                ceil >= TCI_LEVEL_MAX,
+                                ceil >= (meta?.maxLevel ?? ceil),
                                 'Decrease level ceiling',
                                 'Increase level ceiling',
                               )}
@@ -552,6 +489,6 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
         })}
         </div>
       </div>
-    </Modal>
+    </SettingsModal>
   );
 };

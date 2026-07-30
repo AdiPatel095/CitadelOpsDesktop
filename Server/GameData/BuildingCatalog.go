@@ -1,727 +1,474 @@
-package gamedata
+package GameData
 
-// BuildingInfo stores human-readable information about a building type id (BD/BG buildingID).
-type BuildingInfo struct {
-	Name  string
-	Level int
+import (
+	"encoding/json"
+	"fmt"
+	"sort"
+	"strconv"
+	"strings"
+	"unicode"
+)
+
+const (
+	BuildingCostCastleResource = "castle_resource"
+	BuildingCostPlayerResource = "player_resource"
+	BuildingCostCurrency       = "currency"
+	BuildingCostUnknown        = "unknown"
+)
+
+type BuildingCatalog struct {
+	definitions []BuildingDefinition
+	byID        map[int64]BuildingDefinition
 }
 
-// BuildingIDMap translates the unique BuildingTypeID (Index 0 in BD/BG arrays)
-// into common names and levels. This mapping is specific to the user's current castle configuration.
-var BuildingIDMap = map[int]BuildingInfo{
-
-	161:  {Name: "Barracks", Level: 2},
-	162:  {Name: "Barracks", Level: 3},
-	163:  {Name: "Barracks", Level: 4},
-	164:  {Name: "Barracks", Level: 5},
-	1741: {Name: "Barracks", Level: 6},
-	1742: {Name: "Barracks", Level: 7},
-	1743: {Name: "Barracks", Level: 8},
-	1744: {Name: "Barracks", Level: 9},
-	1748: {Name: "Barracks", Level: 10},
-	1749: {Name: "Barracks", Level: 11},
-	1750: {Name: "Barracks", Level: 12},
-	1751: {Name: "Barracks", Level: 13},
-	1938: {Name: "Barracks", Level: 14},
-	1939: {Name: "Barracks", Level: 15},
-
-	//Main Buildings
-
-	// Other Confirmed
-	201:  {Name: "Tower", Level: 6},
-	1944: {Name: "Apiary", Level: 1},
-	1945: {Name: "Apiary", Level: 2},
-	1946: {Name: "Apiary", Level: 3},
-	1947: {Name: "Apiary", Level: 4},
-	1948: {Name: "Apiary", Level: 5},
-	1949: {Name: "Apiary", Level: 6},
-	1950: {Name: "Apiary", Level: 7},
-	1951: {Name: "Apiary", Level: 8},
-	1952: {Name: "Apiary", Level: 9},
-	1953: {Name: "Apiary", Level: 10},
-	1954: {Name: "Apiary", Level: 11},
-	1955: {Name: "Apiary", Level: 12},
-	1956: {Name: "Apiary", Level: 13},
-	1957: {Name: "Apiary", Level: 14},
-	1958: {Name: "Apiary", Level: 15},
-	1769: {Name: "Relic Woodcutter", Level: 1},
-	1770: {Name: "Relic Woodcutter", Level: 2},
-	1771: {Name: "Relic Woodcutter", Level: 3},
-	1772: {Name: "Relic Woodcutter", Level: 4},
-	1773: {Name: "Relic Woodcutter", Level: 5},
-	1774: {Name: "Relic Woodcutter", Level: 6},
-	1775: {Name: "Relic Woodcutter", Level: 7},
-	1776: {Name: "Relic Woodcutter", Level: 8},
-	1777: {Name: "Relic Woodcutter", Level: 9},
-	1778: {Name: "Relic Woodcutter", Level: 10},
-	1779: {Name: "Relic Woodcutter", Level: 11},
-	1780: {Name: "Relic Woodcutter", Level: 12},
-	1781: {Name: "Relic Woodcutter", Level: 13},
-	1782: {Name: "Relic Woodcutter", Level: 14},
-	1783: {Name: "Relic Woodcutter", Level: 15},
-	1784: {Name: "Relic Woodcutter", Level: 16},
-	1785: {Name: "Relic Woodcutter", Level: 17},
-	1786: {Name: "Relic Woodcutter", Level: 18},
-	1787: {Name: "Relic Woodcutter", Level: 19},
-	1788: {Name: "Relic Woodcutter", Level: 20},
-	1800: {Name: "Relic Quarry", Level: 1},
-	1801: {Name: "Relic Quarry", Level: 2},
-	1802: {Name: "Relic Quarry", Level: 3},
-	1803: {Name: "Relic Quarry", Level: 4},
-	1804: {Name: "Relic Quarry", Level: 5},
-	1805: {Name: "Relic Quarry", Level: 6},
-	1806: {Name: "Relic Quarry", Level: 7},
-	1807: {Name: "Relic Quarry", Level: 8},
-	1808: {Name: "Relic Quarry", Level: 9},
-	1809: {Name: "Relic Quarry", Level: 10},
-	1810: {Name: "Relic Quarry", Level: 11},
-	1811: {Name: "Relic Quarry", Level: 12},
-	1812: {Name: "Relic Quarry", Level: 13},
-	1813: {Name: "Relic Quarry", Level: 14},
-	1814: {Name: "Relic Quarry", Level: 15},
-	1815: {Name: "Relic Quarry", Level: 16},
-	1816: {Name: "Relic Quarry", Level: 17},
-	1817: {Name: "Relic Quarry", Level: 18},
-	1818: {Name: "Relic Quarry", Level: 19},
-	1819: {Name: "Relic Quarry", Level: 20},
-
-	// Hall of Legends
-	873:  {Name: "Hall Of Legends", Level: 1},
-	874:  {Name: "Hall Of Legends", Level: 2},
-	875:  {Name: "Hall Of Legends", Level: 3},
-	876:  {Name: "Hall Of Legends", Level: 4},
-	877:  {Name: "Hall Of Legends", Level: 5},
-	878:  {Name: "Hall Of Legends", Level: 6},
-	879:  {Name: "Hall Of Legends", Level: 7},
-	880:  {Name: "Hall Of Legends", Level: 8},
-	881:  {Name: "Hall Of Legends", Level: 9},
-	882:  {Name: "Hall Of Legends", Level: 10},
-	883:  {Name: "Hall Of Legends", Level: 11},
-	884:  {Name: "Hall Of Legends", Level: 12},
-	885:  {Name: "Hall Of Legends", Level: 13},
-	886:  {Name: "Hall Of Legends", Level: 14},
-	887:  {Name: "Hall Of Legends", Level: 15},
-	888:  {Name: "Hall Of Legends", Level: 16},
-	889:  {Name: "Hall Of Legends", Level: 17},
-	890:  {Name: "Hall Of Legends", Level: 18},
-	891:  {Name: "Hall Of Legends", Level: 19},
-	892:  {Name: "Hall Of Legends", Level: 20},
-	893:  {Name: "Hall Of Legends", Level: 21},
-	894:  {Name: "Hall Of Legends", Level: 22},
-	895:  {Name: "Hall Of Legends", Level: 23},
-	896:  {Name: "Hall Of Legends", Level: 24},
-	897:  {Name: "Hall Of Legends", Level: 25},
-	898:  {Name: "Hall Of Legends", Level: 26},
-	899:  {Name: "Hall Of Legends", Level: 27},
-	900:  {Name: "Hall Of Legends", Level: 28},
-	901:  {Name: "Hall Of Legends", Level: 29},
-	902:  {Name: "Hall Of Legends", Level: 30},
-	903:  {Name: "Hall Of Legends", Level: 31},
-	904:  {Name: "Hall Of Legends", Level: 32},
-	905:  {Name: "Hall Of Legends", Level: 33},
-	906:  {Name: "Hall Of Legends", Level: 34},
-	907:  {Name: "Hall Of Legends", Level: 35},
-	908:  {Name: "Hall Of Legends", Level: 36},
-	909:  {Name: "Hall Of Legends", Level: 37},
-	910:  {Name: "Hall Of Legends", Level: 38},
-	911:  {Name: "Hall Of Legends", Level: 39},
-	912:  {Name: "Hall Of Legends", Level: 40},
-	913:  {Name: "Hall Of Legends", Level: 41},
-	914:  {Name: "Hall Of Legends", Level: 42},
-	915:  {Name: "Hall Of Legends", Level: 43},
-	916:  {Name: "Hall Of Legends", Level: 44},
-	917:  {Name: "Hall Of Legends", Level: 45},
-	918:  {Name: "Hall Of Legends", Level: 46},
-	919:  {Name: "Hall Of Legends", Level: 47},
-	920:  {Name: "Hall Of Legends", Level: 48},
-	921:  {Name: "Hall Of Legends", Level: 49},
-	922:  {Name: "Hall Of Legends", Level: 50},
-	923:  {Name: "Hall Of Legends", Level: 51},
-	924:  {Name: "Hall Of Legends", Level: 52},
-	925:  {Name: "Hall Of Legends", Level: 53},
-	926:  {Name: "Hall Of Legends", Level: 54},
-	927:  {Name: "Hall Of Legends", Level: 55},
-	928:  {Name: "Hall Of Legends", Level: 56},
-	929:  {Name: "Hall Of Legends", Level: 57},
-	930:  {Name: "Hall Of Legends", Level: 58},
-	931:  {Name: "Hall Of Legends", Level: 59},
-	932:  {Name: "Hall Of Legends", Level: 60},
-	933:  {Name: "Hall Of Legends", Level: 61},
-	934:  {Name: "Hall Of Legends", Level: 62},
-	935:  {Name: "Hall Of Legends", Level: 63},
-	936:  {Name: "Hall Of Legends", Level: 64},
-	937:  {Name: "Hall Of Legends", Level: 65},
-	938:  {Name: "Hall Of Legends", Level: 66},
-	939:  {Name: "Hall Of Legends", Level: 67},
-	940:  {Name: "Hall Of Legends", Level: 68},
-	941:  {Name: "Hall Of Legends", Level: 69},
-	942:  {Name: "Hall Of Legends", Level: 70},
-	943:  {Name: "Hall Of Legends", Level: 71},
-	944:  {Name: "Hall Of Legends", Level: 72},
-	945:  {Name: "Hall Of Legends", Level: 73},
-	946:  {Name: "Hall Of Legends", Level: 74},
-	947:  {Name: "Hall Of Legends", Level: 75},
-	948:  {Name: "Hall Of Legends", Level: 76},
-	949:  {Name: "Hall Of Legends", Level: 77},
-	950:  {Name: "Hall Of Legends", Level: 78},
-	951:  {Name: "Hall Of Legends", Level: 79},
-	952:  {Name: "Hall Of Legends", Level: 80},
-	953:  {Name: "Hall Of Legends", Level: 81},
-	954:  {Name: "Hall Of Legends", Level: 82},
-	955:  {Name: "Hall Of Legends", Level: 83},
-	956:  {Name: "Hall Of Legends", Level: 84},
-	957:  {Name: "Hall Of Legends", Level: 85},
-	958:  {Name: "Hall Of Legends", Level: 86},
-	959:  {Name: "Hall Of Legends", Level: 87},
-	960:  {Name: "Hall Of Legends", Level: 88},
-	961:  {Name: "Hall Of Legends", Level: 89},
-	962:  {Name: "Hall Of Legends", Level: 90},
-	963:  {Name: "Hall Of Legends", Level: 91},
-	964:  {Name: "Hall Of Legends", Level: 92},
-	965:  {Name: "Hall Of Legends", Level: 93},
-	966:  {Name: "Hall Of Legends", Level: 94},
-	967:  {Name: "Hall Of Legends", Level: 95},
-	968:  {Name: "Hall Of Legends", Level: 96},
-	969:  {Name: "Hall Of Legends", Level: 97},
-	970:  {Name: "Hall Of Legends", Level: 98},
-	971:  {Name: "Hall Of Legends", Level: 99},
-	972:  {Name: "Hall Of Legends", Level: 100},
-	973:  {Name: "Hall Of Legends", Level: 101},
-	974:  {Name: "Hall Of Legends", Level: 102},
-	975:  {Name: "Hall Of Legends", Level: 103},
-	976:  {Name: "Hall Of Legends", Level: 104},
-	977:  {Name: "Hall Of Legends", Level: 105},
-	978:  {Name: "Hall Of Legends", Level: 106},
-	979:  {Name: "Hall Of Legends", Level: 107},
-	980:  {Name: "Hall Of Legends", Level: 108},
-	981:  {Name: "Hall Of Legends", Level: 109},
-	982:  {Name: "Hall Of Legends", Level: 110},
-	983:  {Name: "Hall Of Legends", Level: 111},
-	984:  {Name: "Hall Of Legends", Level: 112},
-	985:  {Name: "Hall Of Legends", Level: 113},
-	986:  {Name: "Hall Of Legends", Level: 114},
-	987:  {Name: "Hall Of Legends", Level: 115},
-	988:  {Name: "Hall Of Legends", Level: 116},
-	989:  {Name: "Hall Of Legends", Level: 117},
-	990:  {Name: "Hall Of Legends", Level: 118},
-	991:  {Name: "Hall Of Legends", Level: 119},
-	992:  {Name: "Hall Of Legends", Level: 120},
-	993:  {Name: "Hall Of Legends", Level: 121},
-	994:  {Name: "Hall Of Legends", Level: 122},
-	995:  {Name: "Hall Of Legends", Level: 123},
-	996:  {Name: "Hall Of Legends", Level: 124},
-	997:  {Name: "Hall Of Legends", Level: 125},
-	998:  {Name: "Hall Of Legends", Level: 126},
-	999:  {Name: "Hall Of Legends", Level: 127},
-	1000: {Name: "Hall Of Legends", Level: 128},
-	1001: {Name: "Hall Of Legends", Level: 129},
-	1002: {Name: "Hall Of Legends", Level: 130},
-	1003: {Name: "Hall Of Legends", Level: 131},
-	1004: {Name: "Hall Of Legends", Level: 132},
-	1005: {Name: "Hall Of Legends", Level: 133},
-	1006: {Name: "Hall Of Legends", Level: 134},
-	1007: {Name: "Hall Of Legends", Level: 135},
-	1008: {Name: "Hall Of Legends", Level: 136},
-	1009: {Name: "Hall Of Legends", Level: 137},
-	1010: {Name: "Hall Of Legends", Level: 138},
-	1011: {Name: "Hall Of Legends", Level: 139},
-	1012: {Name: "Hall Of Legends", Level: 140},
-	1013: {Name: "Hall Of Legends", Level: 141},
-	1014: {Name: "Hall Of Legends", Level: 142},
-	1015: {Name: "Hall Of Legends", Level: 143},
-	1016: {Name: "Hall Of Legends", Level: 144},
-	1017: {Name: "Hall Of Legends", Level: 145},
-	1018: {Name: "Hall Of Legends", Level: 146},
-	1019: {Name: "Hall Of Legends", Level: 147},
-	1020: {Name: "Hall Of Legends", Level: 148},
-	1021: {Name: "Hall Of Legends", Level: 149},
-	1022: {Name: "Hall Of Legends", Level: 150},
-	1023: {Name: "Hall Of Legends", Level: 151},
-	1024: {Name: "Hall Of Legends", Level: 152},
-	1025: {Name: "Hall Of Legends", Level: 153},
-	1026: {Name: "Hall Of Legends", Level: 154},
-	1027: {Name: "Hall Of Legends", Level: 155},
-	1028: {Name: "Hall Of Legends", Level: 156},
-	1029: {Name: "Hall Of Legends", Level: 157},
-	1030: {Name: "Hall Of Legends", Level: 158},
-	1031: {Name: "Hall Of Legends", Level: 159},
-	1032: {Name: "Hall Of Legends", Level: 160},
-	1033: {Name: "Hall Of Legends", Level: 161},
-	1034: {Name: "Hall Of Legends", Level: 162},
-	1035: {Name: "Hall Of Legends", Level: 163},
-	1036: {Name: "Hall Of Legends", Level: 164},
-	1037: {Name: "Hall Of Legends", Level: 165},
-	1038: {Name: "Hall Of Legends", Level: 166},
-	1039: {Name: "Hall Of Legends", Level: 167},
-	1040: {Name: "Hall Of Legends", Level: 168},
-	1041: {Name: "Hall Of Legends", Level: 169},
-	1042: {Name: "Hall Of Legends", Level: 170},
-	1043: {Name: "Hall Of Legends", Level: 171},
-	1044: {Name: "Hall Of Legends", Level: 172},
-	1045: {Name: "Hall Of Legends", Level: 173},
-	1046: {Name: "Hall Of Legends", Level: 174},
-	1047: {Name: "Hall Of Legends", Level: 175},
-	1048: {Name: "Hall Of Legends", Level: 176},
-	1049: {Name: "Hall Of Legends", Level: 177},
-	1050: {Name: "Hall Of Legends", Level: 178},
-	1051: {Name: "Hall Of Legends", Level: 179},
-	1052: {Name: "Hall Of Legends", Level: 180},
-	1053: {Name: "Hall Of Legends", Level: 181},
-	1054: {Name: "Hall Of Legends", Level: 182},
-	1055: {Name: "Hall Of Legends", Level: 183},
-	1056: {Name: "Hall Of Legends", Level: 184},
-	1057: {Name: "Hall Of Legends", Level: 185},
-	1058: {Name: "Hall Of Legends", Level: 186},
-	1059: {Name: "Hall Of Legends", Level: 187},
-	1060: {Name: "Hall Of Legends", Level: 188},
-	1061: {Name: "Hall Of Legends", Level: 189},
-	1062: {Name: "Hall Of Legends", Level: 190},
-	1063: {Name: "Hall Of Legends", Level: 191},
-	1064: {Name: "Hall Of Legends", Level: 192},
-	1065: {Name: "Hall Of Legends", Level: 193},
-	1066: {Name: "Hall Of Legends", Level: 194},
-	1067: {Name: "Hall Of Legends", Level: 195},
-	1068: {Name: "Hall Of Legends", Level: 196},
-	1069: {Name: "Hall Of Legends", Level: 197},
-	1070: {Name: "Hall Of Legends", Level: 198},
-	1071: {Name: "Hall Of Legends", Level: 199},
-	1072: {Name: "Hall Of Legends", Level: 200},
-	1073: {Name: "Hall Of Legends", Level: 201},
-	1074: {Name: "Hall Of Legends", Level: 202},
-	1075: {Name: "Hall Of Legends", Level: 203},
-	1076: {Name: "Hall Of Legends", Level: 204},
-	1077: {Name: "Hall Of Legends", Level: 205},
-	1078: {Name: "Hall Of Legends", Level: 206},
-	1079: {Name: "Hall Of Legends", Level: 207},
-	1080: {Name: "Hall Of Legends", Level: 208},
-	1081: {Name: "Hall Of Legends", Level: 209},
-	1082: {Name: "Hall Of Legends", Level: 210},
-	1083: {Name: "Hall Of Legends", Level: 211},
-	1084: {Name: "Hall Of Legends", Level: 212},
-	1085: {Name: "Hall Of Legends", Level: 213},
-	1086: {Name: "Hall Of Legends", Level: 214},
-	1087: {Name: "Hall Of Legends", Level: 215},
-	1088: {Name: "Hall Of Legends", Level: 216},
-	1089: {Name: "Hall Of Legends", Level: 217},
-	1090: {Name: "Hall Of Legends", Level: 218},
-	1091: {Name: "Hall Of Legends", Level: 219},
-	1092: {Name: "Hall Of Legends", Level: 220},
-	1093: {Name: "Hall Of Legends", Level: 221},
-	1094: {Name: "Hall Of Legends", Level: 222},
-	1095: {Name: "Hall Of Legends", Level: 223},
-	1096: {Name: "Hall Of Legends", Level: 224},
-	1097: {Name: "Hall Of Legends", Level: 225},
-	1098: {Name: "Hall Of Legends", Level: 226},
-	1099: {Name: "Hall Of Legends", Level: 227},
-	1100: {Name: "Hall Of Legends", Level: 228},
-	1101: {Name: "Hall Of Legends", Level: 229},
-	1102: {Name: "Hall Of Legends", Level: 230},
-	1103: {Name: "Hall Of Legends", Level: 231},
-	1104: {Name: "Hall Of Legends", Level: 232},
-	1105: {Name: "Hall Of Legends", Level: 233},
-	1106: {Name: "Hall Of Legends", Level: 234},
-	1107: {Name: "Hall Of Legends", Level: 235},
-	1108: {Name: "Hall Of Legends", Level: 236},
-	1109: {Name: "Hall Of Legends", Level: 237},
-	1110: {Name: "Hall Of Legends", Level: 238},
-	1111: {Name: "Hall Of Legends", Level: 239},
-	1112: {Name: "Hall Of Legends", Level: 240},
-	1113: {Name: "Hall Of Legends", Level: 241},
-	1114: {Name: "Hall Of Legends", Level: 242},
-	1115: {Name: "Hall Of Legends", Level: 243},
-	1116: {Name: "Hall Of Legends", Level: 244},
-	1117: {Name: "Hall Of Legends", Level: 245},
-	1118: {Name: "Hall Of Legends", Level: 246},
-	1119: {Name: "Hall Of Legends", Level: 247},
-	1120: {Name: "Hall Of Legends", Level: 248},
-	1121: {Name: "Hall Of Legends", Level: 249},
-	1122: {Name: "Hall Of Legends", Level: 250},
-	1123: {Name: "Hall Of Legends", Level: 251},
-	1124: {Name: "Hall Of Legends", Level: 252},
-	1125: {Name: "Hall Of Legends", Level: 253},
-	1126: {Name: "Hall Of Legends", Level: 254},
-	1127: {Name: "Hall Of Legends", Level: 255},
-	1128: {Name: "Hall Of Legends", Level: 256},
-	1129: {Name: "Hall Of Legends", Level: 257},
-	1130: {Name: "Hall Of Legends", Level: 258},
-	1131: {Name: "Hall Of Legends", Level: 259},
-	1132: {Name: "Hall Of Legends", Level: 260},
-	1133: {Name: "Hall Of Legends", Level: 261},
-	1134: {Name: "Hall Of Legends", Level: 262},
-	1135: {Name: "Hall Of Legends", Level: 263},
-	1136: {Name: "Hall Of Legends", Level: 264},
-	1137: {Name: "Hall Of Legends", Level: 265},
-	1138: {Name: "Hall Of Legends", Level: 266},
-	1139: {Name: "Hall Of Legends", Level: 267},
-	1140: {Name: "Hall Of Legends", Level: 268},
-	1141: {Name: "Hall Of Legends", Level: 269},
-	1142: {Name: "Hall Of Legends", Level: 270},
-	1143: {Name: "Hall Of Legends", Level: 271},
-	1144: {Name: "Hall Of Legends", Level: 272},
-	1145: {Name: "Hall Of Legends", Level: 273},
-	1146: {Name: "Hall Of Legends", Level: 274},
-	1147: {Name: "Hall Of Legends", Level: 275},
-	1148: {Name: "Hall Of Legends", Level: 276},
-	1149: {Name: "Hall Of Legends", Level: 277},
-	1150: {Name: "Hall Of Legends", Level: 278},
-	1151: {Name: "Hall Of Legends", Level: 279},
-	1152: {Name: "Hall Of Legends", Level: 280},
-	1153: {Name: "Hall Of Legends", Level: 281},
-	1154: {Name: "Hall Of Legends", Level: 282},
-	1155: {Name: "Hall Of Legends", Level: 283},
-	1156: {Name: "Hall Of Legends", Level: 284},
-	1157: {Name: "Hall Of Legends", Level: 285},
-	1158: {Name: "Hall Of Legends", Level: 286},
-	1159: {Name: "Hall Of Legends", Level: 287},
-	1160: {Name: "Hall Of Legends", Level: 288},
-	1161: {Name: "Hall Of Legends", Level: 289},
-	1162: {Name: "Hall Of Legends", Level: 290},
-	1163: {Name: "Hall Of Legends", Level: 291},
-	1164: {Name: "Hall Of Legends", Level: 292},
-	1165: {Name: "Hall Of Legends", Level: 293},
-	1166: {Name: "Hall Of Legends", Level: 294},
-	1167: {Name: "Hall Of Legends", Level: 295},
-	1168: {Name: "Hall Of Legends", Level: 296},
-	1169: {Name: "Hall Of Legends", Level: 297},
-	1170: {Name: "Hall Of Legends", Level: 298},
-	1171: {Name: "Hall Of Legends", Level: 299},
-	1172: {Name: "Hall Of Legends", Level: 300},
-	1173: {Name: "Hall Of Legends", Level: 301},
-	1174: {Name: "Hall Of Legends", Level: 302},
-	1175: {Name: "Hall Of Legends", Level: 303},
-	1176: {Name: "Hall Of Legends", Level: 304},
-	1177: {Name: "Hall Of Legends", Level: 305},
-	1178: {Name: "Hall Of Legends", Level: 306},
-	1179: {Name: "Hall Of Legends", Level: 307},
-	1180: {Name: "Hall Of Legends", Level: 308},
-	1181: {Name: "Hall Of Legends", Level: 309},
-	1182: {Name: "Hall Of Legends", Level: 310},
-	1183: {Name: "Hall Of Legends", Level: 311},
-	1184: {Name: "Hall Of Legends", Level: 312},
-	1185: {Name: "Hall Of Legends", Level: 313},
-	1186: {Name: "Hall Of Legends", Level: 314},
-	1187: {Name: "Hall Of Legends", Level: 315},
-	1188: {Name: "Hall Of Legends", Level: 316},
-	1189: {Name: "Hall Of Legends", Level: 317},
-	1190: {Name: "Hall Of Legends", Level: 318},
-	1191: {Name: "Hall Of Legends", Level: 319},
-	1192: {Name: "Hall Of Legends", Level: 320},
-	1193: {Name: "Hall Of Legends", Level: 321},
-	1194: {Name: "Hall Of Legends", Level: 322},
-	1195: {Name: "Hall Of Legends", Level: 323},
-	1196: {Name: "Hall Of Legends", Level: 324},
-	1197: {Name: "Hall Of Legends", Level: 325},
-	1198: {Name: "Hall Of Legends", Level: 326},
-	1199: {Name: "Hall Of Legends", Level: 327},
-	1200: {Name: "Hall Of Legends", Level: 328},
-	1201: {Name: "Hall Of Legends", Level: 329},
-	1202: {Name: "Hall Of Legends", Level: 330},
-	1203: {Name: "Hall Of Legends", Level: 331},
-	1204: {Name: "Hall Of Legends", Level: 332},
-	1205: {Name: "Hall Of Legends", Level: 333},
-	1206: {Name: "Hall Of Legends", Level: 334},
-	1207: {Name: "Hall Of Legends", Level: 335},
-	1208: {Name: "Hall Of Legends", Level: 336},
-	1209: {Name: "Hall Of Legends", Level: 337},
-	1210: {Name: "Hall Of Legends", Level: 338},
-	1211: {Name: "Hall Of Legends", Level: 339},
-	1212: {Name: "Hall Of Legends", Level: 340},
-	1213: {Name: "Hall Of Legends", Level: 341},
-	1214: {Name: "Hall Of Legends", Level: 342},
-	1215: {Name: "Hall Of Legends", Level: 343},
-	1216: {Name: "Hall Of Legends", Level: 344},
-	1217: {Name: "Hall Of Legends", Level: 345},
-	1218: {Name: "Hall Of Legends", Level: 346},
-	1219: {Name: "Hall Of Legends", Level: 347},
-	1220: {Name: "Hall Of Legends", Level: 348},
-	1221: {Name: "Hall Of Legends", Level: 349},
-	1222: {Name: "Hall Of Legends", Level: 350},
-	1223: {Name: "Hall Of Legends", Level: 351},
-	1224: {Name: "Hall Of Legends", Level: 352},
-	1225: {Name: "Hall Of Legends", Level: 353},
-	1226: {Name: "Hall Of Legends", Level: 354},
-	1227: {Name: "Hall Of Legends", Level: 355},
-	1228: {Name: "Hall Of Legends", Level: 356},
-	1229: {Name: "Hall Of Legends", Level: 357},
-	1230: {Name: "Hall Of Legends", Level: 358},
-	1231: {Name: "Hall Of Legends", Level: 359},
-	1232: {Name: "Hall Of Legends", Level: 360},
-	1233: {Name: "Hall Of Legends", Level: 361},
-	1234: {Name: "Hall Of Legends", Level: 362},
-	1235: {Name: "Hall Of Legends", Level: 363},
-	1236: {Name: "Hall Of Legends", Level: 364},
-	1237: {Name: "Hall Of Legends", Level: 365},
-	1238: {Name: "Hall Of Legends", Level: 366},
-	1239: {Name: "Hall Of Legends", Level: 367},
-	1240: {Name: "Hall Of Legends", Level: 368},
-	1241: {Name: "Hall Of Legends", Level: 369},
-	1242: {Name: "Hall Of Legends", Level: 370},
-	1243: {Name: "Hall Of Legends", Level: 371},
-	1244: {Name: "Hall Of Legends", Level: 372},
-	1245: {Name: "Hall Of Legends", Level: 373},
-	1246: {Name: "Hall Of Legends", Level: 374},
-	1247: {Name: "Hall Of Legends", Level: 375},
-	1248: {Name: "Hall Of Legends", Level: 376},
-	1249: {Name: "Hall Of Legends", Level: 377},
-	1250: {Name: "Hall Of Legends", Level: 378},
-	1251: {Name: "Hall Of Legends", Level: 379},
-	1252: {Name: "Hall Of Legends", Level: 380},
-	1253: {Name: "Hall Of Legends", Level: 381},
-	1254: {Name: "Hall Of Legends", Level: 382},
-	1255: {Name: "Hall Of Legends", Level: 383},
-	1256: {Name: "Hall Of Legends", Level: 384},
-	1257: {Name: "Hall Of Legends", Level: 385},
-	1258: {Name: "Hall Of Legends", Level: 386},
-	1259: {Name: "Hall Of Legends", Level: 387},
-	1260: {Name: "Hall Of Legends", Level: 388},
-	1261: {Name: "Hall Of Legends", Level: 389},
-	1262: {Name: "Hall Of Legends", Level: 390},
-	1263: {Name: "Hall Of Legends", Level: 391},
-	1264: {Name: "Hall Of Legends", Level: 392},
-	1265: {Name: "Hall Of Legends", Level: 393},
-	1266: {Name: "Hall Of Legends", Level: 394},
-	1267: {Name: "Hall Of Legends", Level: 395},
-	1268: {Name: "Hall Of Legends", Level: 396},
-	1269: {Name: "Hall Of Legends", Level: 397},
-	1270: {Name: "Hall Of Legends", Level: 398},
-	1271: {Name: "Hall Of Legends", Level: 399},
-	1272: {Name: "Hall Of Legends", Level: 400},
-	1273: {Name: "Hall Of Legends", Level: 401},
-	1274: {Name: "Hall Of Legends", Level: 402},
-	1275: {Name: "Hall Of Legends", Level: 403},
-	1276: {Name: "Hall Of Legends", Level: 404},
-	1277: {Name: "Hall Of Legends", Level: 405},
-	1278: {Name: "Hall Of Legends", Level: 406},
-	1279: {Name: "Hall Of Legends", Level: 407},
-	1280: {Name: "Hall Of Legends", Level: 408},
-	1281: {Name: "Hall Of Legends", Level: 409},
-	1282: {Name: "Hall Of Legends", Level: 410},
-	1283: {Name: "Hall Of Legends", Level: 411},
-	1284: {Name: "Hall Of Legends", Level: 412},
-	1285: {Name: "Hall Of Legends", Level: 413},
-	1286: {Name: "Hall Of Legends", Level: 414},
-	1287: {Name: "Hall Of Legends", Level: 415},
-	1288: {Name: "Hall Of Legends", Level: 416},
-	1289: {Name: "Hall Of Legends", Level: 417},
-	1290: {Name: "Hall Of Legends", Level: 418},
-	1291: {Name: "Hall Of Legends", Level: 419},
-	1292: {Name: "Hall Of Legends", Level: 420},
-	1293: {Name: "Hall Of Legends", Level: 421},
-	1294: {Name: "Hall Of Legends", Level: 422},
-	1295: {Name: "Hall Of Legends", Level: 423},
-	1296: {Name: "Hall Of Legends", Level: 424},
-	1297: {Name: "Hall Of Legends", Level: 425},
-	1298: {Name: "Hall Of Legends", Level: 426},
-	1299: {Name: "Hall Of Legends", Level: 427},
-	1300: {Name: "Hall Of Legends", Level: 428},
-	1301: {Name: "Hall Of Legends", Level: 429},
-	1302: {Name: "Hall Of Legends", Level: 430},
-	1303: {Name: "Hall Of Legends", Level: 431},
-	1304: {Name: "Hall Of Legends", Level: 432},
-	1305: {Name: "Hall Of Legends", Level: 433},
-	1306: {Name: "Hall Of Legends", Level: 434},
-	1307: {Name: "Hall Of Legends", Level: 435},
-	1308: {Name: "Hall Of Legends", Level: 436},
-	1309: {Name: "Hall Of Legends", Level: 437},
-	1310: {Name: "Hall Of Legends", Level: 438},
-	1311: {Name: "Hall Of Legends", Level: 439},
-	1312: {Name: "Hall Of Legends", Level: 440},
-	1313: {Name: "Hall Of Legends", Level: 441},
-	1314: {Name: "Hall Of Legends", Level: 442},
-	1315: {Name: "Hall Of Legends", Level: 443},
-	1316: {Name: "Hall Of Legends", Level: 444},
-	1317: {Name: "Hall Of Legends", Level: 445},
-	1318: {Name: "Hall Of Legends", Level: 446},
-	1319: {Name: "Hall Of Legends", Level: 447},
-	1320: {Name: "Hall Of Legends", Level: 448},
-	1321: {Name: "Hall Of Legends", Level: 449},
-	1322: {Name: "Hall Of Legends", Level: 450},
-	1323: {Name: "Hall Of Legends", Level: 451},
-	1324: {Name: "Hall Of Legends", Level: 452},
-	1325: {Name: "Hall Of Legends", Level: 453},
-	1326: {Name: "Hall Of Legends", Level: 454},
-	1327: {Name: "Hall Of Legends", Level: 455},
-	1328: {Name: "Hall Of Legends", Level: 456},
-	1329: {Name: "Hall Of Legends", Level: 457},
-	1330: {Name: "Hall Of Legends", Level: 458},
-	1331: {Name: "Hall Of Legends", Level: 459},
-	1332: {Name: "Hall Of Legends", Level: 460},
-	1333: {Name: "Hall Of Legends", Level: 461},
-	1334: {Name: "Hall Of Legends", Level: 462},
-	1335: {Name: "Hall Of Legends", Level: 463},
-	1336: {Name: "Hall Of Legends", Level: 464},
-	1337: {Name: "Hall Of Legends", Level: 465},
-	1338: {Name: "Hall Of Legends", Level: 466},
-	1339: {Name: "Hall Of Legends", Level: 467},
-	1340: {Name: "Hall Of Legends", Level: 468},
-	1341: {Name: "Hall Of Legends", Level: 469},
-	1342: {Name: "Hall Of Legends", Level: 470},
-	1343: {Name: "Hall Of Legends", Level: 471},
-	1344: {Name: "Hall Of Legends", Level: 472},
-	1345: {Name: "Hall Of Legends", Level: 473},
-	1346: {Name: "Hall Of Legends", Level: 474},
-	1347: {Name: "Hall Of Legends", Level: 475},
-	1348: {Name: "Hall Of Legends", Level: 476},
-	1349: {Name: "Hall Of Legends", Level: 477},
-	1350: {Name: "Hall Of Legends", Level: 478},
-	1351: {Name: "Hall Of Legends", Level: 479},
-	1352: {Name: "Hall Of Legends", Level: 480},
-	1353: {Name: "Hall Of Legends", Level: 481},
-	1354: {Name: "Hall Of Legends", Level: 482},
-	1355: {Name: "Hall Of Legends", Level: 483},
-	1356: {Name: "Hall Of Legends", Level: 484},
-	1357: {Name: "Hall Of Legends", Level: 485},
-	1358: {Name: "Hall Of Legends", Level: 486},
-	1359: {Name: "Hall Of Legends", Level: 487},
-	1360: {Name: "Hall Of Legends", Level: 488},
-	1361: {Name: "Hall Of Legends", Level: 489},
-	1362: {Name: "Hall Of Legends", Level: 490},
-	1363: {Name: "Hall Of Legends", Level: 491},
-	1364: {Name: "Hall Of Legends", Level: 492},
-	1365: {Name: "Hall Of Legends", Level: 493},
-	1366: {Name: "Hall Of Legends", Level: 494},
-	1367: {Name: "Hall Of Legends", Level: 495},
-	1368: {Name: "Hall Of Legends", Level: 496},
-	1369: {Name: "Hall Of Legends", Level: 497},
-	1370: {Name: "Hall Of Legends", Level: 498},
-	1371: {Name: "Hall Of Legends", Level: 499},
-	1372: {Name: "Hall Of Legends", Level: 500},
-	1373: {Name: "Hall Of Legends", Level: 501},
-	1374: {Name: "Hall Of Legends", Level: 502},
-	1375: {Name: "Hall Of Legends", Level: 503},
-	1376: {Name: "Hall Of Legends", Level: 504},
-	1377: {Name: "Hall Of Legends", Level: 505},
-	1378: {Name: "Hall Of Legends", Level: 506},
-	1379: {Name: "Hall Of Legends", Level: 507},
-	1380: {Name: "Hall Of Legends", Level: 508},
-	1381: {Name: "Hall Of Legends", Level: 509},
-	1382: {Name: "Hall Of Legends", Level: 510},
-	1383: {Name: "Hall Of Legends", Level: 511},
-	1384: {Name: "Hall Of Legends", Level: 512},
-	1385: {Name: "Hall Of Legends", Level: 513},
-	1386: {Name: "Hall Of Legends", Level: 514},
-	1387: {Name: "Hall Of Legends", Level: 515},
-	1388: {Name: "Hall Of Legends", Level: 516},
-	1389: {Name: "Hall Of Legends", Level: 517},
-	1390: {Name: "Hall Of Legends", Level: 518},
-	1391: {Name: "Hall Of Legends", Level: 519},
-	1392: {Name: "Hall Of Legends", Level: 520},
-	1393: {Name: "Hall Of Legends", Level: 521},
-	1394: {Name: "Hall Of Legends", Level: 522},
-	1395: {Name: "Hall Of Legends", Level: 523},
-	1396: {Name: "Hall Of Legends", Level: 524},
-	1397: {Name: "Hall Of Legends", Level: 525},
-	1398: {Name: "Hall Of Legends", Level: 526},
-	1399: {Name: "Hall Of Legends", Level: 527},
-	1400: {Name: "Hall Of Legends", Level: 528},
-	1401: {Name: "Hall Of Legends", Level: 529},
-	1402: {Name: "Hall Of Legends", Level: 530},
-	1403: {Name: "Hall Of Legends", Level: 531},
-	1404: {Name: "Hall Of Legends", Level: 532},
-	1405: {Name: "Hall Of Legends", Level: 533},
-	1406: {Name: "Hall Of Legends", Level: 534},
-	1407: {Name: "Hall Of Legends", Level: 535},
-	1408: {Name: "Hall Of Legends", Level: 536},
-	1409: {Name: "Hall Of Legends", Level: 537},
-	1410: {Name: "Hall Of Legends", Level: 538},
-	1411: {Name: "Hall Of Legends", Level: 539},
-	1412: {Name: "Hall Of Legends", Level: 540},
-	1413: {Name: "Hall Of Legends", Level: 541},
-	1414: {Name: "Hall Of Legends", Level: 542},
-	1415: {Name: "Hall Of Legends", Level: 543},
-	1416: {Name: "Hall Of Legends", Level: 544},
-	1417: {Name: "Hall Of Legends", Level: 545},
-	1418: {Name: "Hall Of Legends", Level: 546},
-	1419: {Name: "Hall Of Legends", Level: 547},
-	1420: {Name: "Hall Of Legends", Level: 548},
-	1421: {Name: "Hall Of Legends", Level: 549},
-	1422: {Name: "Hall Of Legends", Level: 550},
-
-	2027: {Name: "Mead Distillery", Level: 8},
-	2028: {Name: "Barrel Workshop", Level: 3},
-	2029: {Name: "Barrel Workshop", Level: 4},
-	2030: {Name: "Barrel Workshop", Level: 5},
-	2031: {Name: "Barrel Workshop", Level: 6},
-	2032: {Name: "Barrel Workshop", Level: 7},
-	2033: {Name: "Barrel Workshop", Level: 8},
-
-	756: {Name: "Construction Yard", Level: 1},
-	100: {Name: "Woodcutter", Level: 1},
-	101: {Name: "Woodcutter", Level: 2},
-	102: {Name: "Woodcutter", Level: 3},
-	103: {Name: "Woodcutter", Level: 4},
-	104: {Name: "Woodcutter", Level: 5},
-	179: {Name: "Woodcutter", Level: 6},
-	180: {Name: "Woodcutter", Level: 7},
-	181: {Name: "Woodcutter", Level: 8},
-	182: {Name: "Woodcutter", Level: 9},
-	227: {Name: "Woodcutter", Level: 10},
-	509: {Name: "Woodcutter", Level: 11},
-
-	105: {Name: "Stone Quarry", Level: 1},
-	106: {Name: "Stone Quarry", Level: 2},
-	107: {Name: "Stone Quarry", Level: 3},
-	108: {Name: "Stone Quarry", Level: 4},
-	109: {Name: "Stone Quarry", Level: 5},
-	183: {Name: "Stone Quarry", Level: 6},
-	184: {Name: "Stone Quarry", Level: 7},
-	185: {Name: "Stone Quarry", Level: 8},
-	186: {Name: "Stone Quarry", Level: 9},
-	228: {Name: "Stone Quarry", Level: 10},
-	510: {Name: "Stone Quarry", Level: 11},
-
-	110: {Name: "Farmhouse", Level: 1},
-	111: {Name: "Farmhouse", Level: 2},
-	112: {Name: "Farmhouse", Level: 3},
-	113: {Name: "Farmhouse", Level: 4},
-	114: {Name: "Farmhouse", Level: 5},
-	187: {Name: "Farmhouse", Level: 6},
-	188: {Name: "Farmhouse", Level: 7},
-	189: {Name: "Farmhouse", Level: 8},
-	190: {Name: "Farmhouse", Level: 9},
-	195: {Name: "Farmhouse", Level: 10},
-
-	127: {Name: "Dwelling", Level: 1},
-	128: {Name: "Dwelling", Level: 2},
-	129: {Name: "Dwelling", Level: 3},
-	130: {Name: "Dwelling", Level: 4},
-	131: {Name: "Dwelling", Level: 5},
-	191: {Name: "Dwelling", Level: 6},
-	192: {Name: "Dwelling", Level: 7},
-	193: {Name: "Dwelling", Level: 8},
-	194: {Name: "Dwelling", Level: 9},
-	198: {Name: "Dwelling", Level: 10},
-	229: {Name: "Dwelling", Level: 11},
-	530: {Name: "Dwelling", Level: 12},
-
-	//Beri World Buildings
-	233: {Name: "Main Tent", Level: 1 /*oID:35*/},
-	246: {Name: "Supply Storehouse", Level: 0},
-	249: {Name: "Marketplace", Level: 0 /*oID:15*/},
-	242: {Name: "Small Tents", Level: 1 /*oID:35*/},
-	11:  {Name: "Small Tents", Level: 2 /*oID:35*/},
-	243: {Name: "Small Tents", Level: 3 /*oID:35*/},
-	12:  {Name: "Small Tents", Level: 4 /*oID:35*/},
-	244: {Name: "Large Tents", Level: 1 /*oID:35*/},
-	13:  {Name: "Large Tents", Level: 2 /*oID:35*/},
-	245: {Name: "Large Tents", Level: 3 /*oID:35*/},
-	14:  {Name: "Large Tents", Level: 4 /*oID:35*/},
-	247: {Name: "Stables", Level: 1 /*oID:35*/},
-	15:  {Name: "Stables", Level: 2 /*oID:35*/},
-	293: {Name: "Stables", Level: 3 /*oID:35*/},
-	16:  {Name: "Stables", Level: 4 /*oID:35*/},
-	294: {Name: "Stables", Level: 5 /*oID:35*/},
-	468: {Name: "Hospital", Level: 1 /*oID:35*/},
-	627: {Name: "Training Grounds", Level: 1 /*oID:35*/},
-	622: {Name: "Auxiliaries Headquarters", Level: 1 /*oID:35*/},
-	339: {Name: "Drill Ground", Level: 1 /*oID:35*/},
-	337: {Name: "Field Kitchen", Level: 1 /*oID:35*/},
+func (store *Store) BuildingCatalog() (*BuildingCatalog, error) {
+	store.buildingCatalogOnce.Do(func() {
+		store.buildingCatalog, store.buildingCatalogErr = buildBuildingCatalog(store)
+	})
+	return store.buildingCatalog, store.buildingCatalogErr
 }
 
-// GetBuildingInfo retrieves building information by ID, returning "Unknown" if not found.
-func GetBuildingInfo(id int) BuildingInfo {
-	if info, exists := BuildingIDMap[id]; exists {
-		return info
+func (catalog *BuildingCatalog) Definitions() []BuildingDefinition {
+	if catalog == nil {
+		return nil
 	}
-	return BuildingInfo{Name: "Unknown", Level: 0}
+	result := make([]BuildingDefinition, len(catalog.definitions))
+	for index, definition := range catalog.definitions {
+		result[index] = cloneBuildingDefinition(definition)
+	}
+	return result
+}
+
+func (catalog *BuildingCatalog) Definition(id int64) (BuildingDefinition, bool) {
+	if catalog == nil {
+		return BuildingDefinition{}, false
+	}
+	definition, found := catalog.byID[id]
+	if !found {
+		return BuildingDefinition{}, false
+	}
+	return cloneBuildingDefinition(definition), true
+}
+
+// UpgradePath returns the inclusive official forward-upgrade path from source
+// to target. It rejects missing links and cycles instead of inferring a family
+// from names or level numbers.
+func (catalog *BuildingCatalog) UpgradePath(sourceID int64, targetID int64) ([]BuildingDefinition, bool) {
+	if catalog == nil || sourceID <= 0 || targetID <= 0 {
+		return nil, false
+	}
+	current, found := catalog.byID[sourceID]
+	if !found {
+		return nil, false
+	}
+	path := make([]BuildingDefinition, 0, 4)
+	visited := map[int64]struct{}{}
+	for {
+		if _, duplicate := visited[current.ID]; duplicate {
+			return nil, false
+		}
+		visited[current.ID] = struct{}{}
+		path = append(path, cloneBuildingDefinition(current))
+		if current.ID == targetID {
+			return path, true
+		}
+		if current.UpgradeDefinitionID <= 0 {
+			return nil, false
+		}
+		next, nextFound := catalog.byID[current.UpgradeDefinitionID]
+		if !nextFound {
+			return nil, false
+		}
+		current = next
+	}
+}
+
+// ConstructionPath returns the inclusive official chain from the construction
+// root to target. Both backward and forward links must agree so an executor can
+// safely construct the root and then apply each returned upgrade in order.
+func (catalog *BuildingCatalog) ConstructionPath(targetID int64) ([]BuildingDefinition, bool) {
+	if catalog == nil || targetID <= 0 {
+		return nil, false
+	}
+	current, found := catalog.byID[targetID]
+	if !found {
+		return nil, false
+	}
+	reversed := make([]BuildingDefinition, 0, 4)
+	visited := map[int64]struct{}{}
+	for {
+		if _, duplicate := visited[current.ID]; duplicate {
+			return nil, false
+		}
+		visited[current.ID] = struct{}{}
+		reversed = append(reversed, cloneBuildingDefinition(current))
+		if current.DowngradeDefinitionID <= 0 {
+			break
+		}
+		previous, previousFound := catalog.byID[current.DowngradeDefinitionID]
+		if !previousFound || previous.UpgradeDefinitionID != current.ID {
+			return nil, false
+		}
+		current = previous
+	}
+	path := make([]BuildingDefinition, len(reversed))
+	for index := range reversed {
+		path[len(reversed)-1-index] = reversed[index]
+	}
+	return path, true
+}
+
+type buildingCostReference struct {
+	id    int64
+	key   string
+	scope string
+}
+
+func buildBuildingCatalog(store *Store) (*BuildingCatalog, error) {
+	buildings, err := store.Catalog("buildings")
+	if err != nil {
+		return nil, err
+	}
+	costReferences := buildingCostReferences(store)
+	definitions := make([]BuildingDefinition, 0, buildings.Summary().Count)
+	byID := make(map[int64]BuildingDefinition, buildings.Summary().Count)
+	for _, raw := range buildings.Rows() {
+		record, decodeErr := DecodeRecord(raw)
+		if decodeErr != nil {
+			return nil, fmt.Errorf("decode building definition: %w", decodeErr)
+		}
+		id, ok := record.Int64("wodID")
+		if !ok || id <= 0 {
+			continue
+		}
+		definition := decodeBuildingDefinition(record, id, costReferences)
+		definitions = append(definitions, definition)
+		byID[id] = definition
+	}
+	objectivesByDefinition := buildingQuestObjectives(store)
+	for index := range definitions {
+		definitions[index].QuestObjectives = append(
+			[]BuildingQuestObjective(nil), objectivesByDefinition[definitions[index].ID]...,
+		)
+		byID[definitions[index].ID] = definitions[index]
+	}
+	sort.Slice(definitions, func(left, right int) bool { return definitions[left].ID < definitions[right].ID })
+	return &BuildingCatalog{definitions: definitions, byID: byID}, nil
+}
+
+func decodeBuildingDefinition(record Record, id int64, references map[string]buildingCostReference) BuildingDefinition {
+	internalName := stringValue(record, "name")
+	displayName := stringValue(record, "_display_name")
+	if displayName == "" {
+		displayName = internalName
+	}
+	if displayName == "" {
+		displayName = fmt.Sprintf("Building %d", id)
+	}
+	return BuildingDefinition{
+		ID:                       id,
+		InternalName:             internalName,
+		Type:                     stringValue(record, "type"),
+		Group:                    stringValue(record, "group"),
+		ShopCategory:             stringValue(record, "shopCategory"),
+		GroundType:               stringValue(record, "buildingGroundType"),
+		Level:                    intValue(record, "level"),
+		Width:                    int(intValue(record, "width")),
+		Height:                   int(intValue(record, "height")),
+		RotateType:               int(intValue(record, "rotateType")),
+		UpgradeDefinitionID:      intValue(record, "upgradeWodID"),
+		DowngradeDefinitionID:    intValue(record, "downgradeWodID"),
+		RequiredLevel:            optionalBuildingInt(record, "requiredLevel"),
+		RequiredLegendLevel:      optionalBuildingInt(record, "requiredLegendLevel"),
+		EarlyUnlockRequiredLevel: optionalBuildingInt(record, "earlyUnlockRequiredLevel"),
+		MaximumCount:             optionalBuildingInt(record, "maximumCount"),
+		KingdomIDs:               intList(record, "kIDs"),
+		EventIDs:                 intList(record, "eventIDs"),
+		AreaTypeIDs:              intList(record, "onlyInAreaTypes"),
+		MapIDs:                   intList(record, "mapIDs"),
+		DurationSec:              intValue(record, "buildDuration"),
+		LowLevelDurationSec:      intValue(record, "lowLevelBuildDuration"),
+		ForcedPosition:           buildingScalarString(record["forcedPosition"]),
+		Storeable:                optionalBuildingBool(record, "storeable"),
+		Movable:                  optionalBuildingBool(record, "movable"),
+		Destructable:             optionalBuildingBool(record, "destructable"),
+		BattleGround:             optionalBuildingBool(record, "isBattleGround"),
+		District:                 optionalBuildingBool(record, "isDistrict"),
+		ConstructionItemGroupIDs: intList(record, "constructionItemGroupIDs"),
+		UnlockIDs:                intList(record, "unlockIDs"),
+		Costs:                    decodeBuildingCosts(record, references),
+		Values:                   decodeBuildingValues(record),
+		LocalizationKeys:         buildingLocalizationKeys(record),
+		DisplayName:              displayName,
+	}
+}
+
+func buildingCostReferences(store *Store) map[string]buildingCostReference {
+	result := map[string]buildingCostReference{}
+	if resources, err := store.Catalog("resources"); err == nil {
+		for _, raw := range resources.Rows() {
+			record, decodeErr := DecodeRecord(raw)
+			if decodeErr != nil {
+				continue
+			}
+			id, idOK := record.Int64("resourceID")
+			key, keyOK := record.String("JSONKey")
+			if !idOK || !keyOK || key == "" {
+				continue
+			}
+			scope := BuildingCostCastleResource
+			if strings.EqualFold(key, "C1") || strings.EqualFold(key, "C2") {
+				scope = BuildingCostPlayerResource
+			}
+			reference := buildingCostReference{id: id, key: key, scope: scope}
+			for _, name := range []string{key, stringValue(record, "name")} {
+				if normalized := normalizeBuildingName(name); normalized != "" {
+					result[normalized] = reference
+				}
+			}
+		}
+	}
+	if currencies, err := store.Catalog("currencies"); err == nil {
+		for _, raw := range currencies.Rows() {
+			record, decodeErr := DecodeRecord(raw)
+			if decodeErr != nil {
+				continue
+			}
+			id, idOK := record.Int64("currencyID")
+			key, keyOK := record.String("JSONKey")
+			if !idOK || !keyOK || key == "" {
+				continue
+			}
+			reference := buildingCostReference{id: id, key: key, scope: BuildingCostCurrency}
+			for _, name := range []string{key, stringValue(record, "Name"), stringValue(record, "name")} {
+				if normalized := normalizeBuildingName(name); normalized != "" {
+					if _, exists := result[normalized]; !exists {
+						result[normalized] = reference
+					}
+				}
+			}
+		}
+	}
+	return result
+}
+
+func decodeBuildingCosts(record Record, references map[string]buildingCostReference) []BuildingCost {
+	fields := make([]string, 0)
+	for field := range record {
+		if strings.HasPrefix(field, "cost") {
+			fields = append(fields, field)
+		}
+	}
+	sort.Strings(fields)
+	costs := make([]BuildingCost, 0, len(fields))
+	for _, field := range fields {
+		amount, ok := record.Float64(field)
+		if !ok || amount <= 0 {
+			continue
+		}
+		suffix := strings.TrimPrefix(field, "cost")
+		reference, found := references[normalizeBuildingName(suffix)]
+		cost := BuildingCost{Field: field, Key: suffix, Scope: BuildingCostUnknown, Amount: amount}
+		if found {
+			cost.Key = reference.key
+			cost.Scope = reference.scope
+			cost.DefinitionID = reference.id
+		}
+		cost.Premium = strings.EqualFold(cost.Key, "C2") || strings.EqualFold(field, "costC2")
+		costs = append(costs, cost)
+	}
+	return costs
+}
+
+var buildingStructuralFields = map[string]struct{}{
+	"wodID": {}, "name": {}, "_display_name": {}, "type": {}, "group": {}, "shopCategory": {}, "buildingGroundType": {},
+	"level": {}, "width": {}, "height": {}, "rotateType": {}, "upgradeWodID": {}, "downgradeWodID": {},
+	"requiredLevel": {}, "requiredLegendLevel": {}, "earlyUnlockRequiredLevel": {}, "maximumCount": {},
+	"kIDs": {}, "eventIDs": {}, "onlyInAreaTypes": {}, "mapIDs": {}, "buildDuration": {},
+	"lowLevelBuildDuration": {}, "forcedPosition": {}, "constructionItemGroupIDs": {}, "unlockIDs": {}, "sortOrder": {},
+	"storeable": {}, "movable": {}, "destructable": {}, "isBattleGround": {}, "isDistrict": {},
+	"burnable": {}, "smashable": {}, "tempServerBurnable": {}, "tempServerDestructable": {},
+}
+
+func decodeBuildingValues(record Record) map[string]float64 {
+	values := map[string]float64{}
+	for field := range record {
+		if strings.HasPrefix(field, "cost") {
+			continue
+		}
+		if _, structural := buildingStructuralFields[field]; structural {
+			continue
+		}
+		value, ok := record.Float64(field)
+		if ok && value != 0 {
+			values[field] = value
+		}
+	}
+	return values
+}
+
+func buildingLocalizationKeys(record Record) []string {
+	result := []string{}
+	seen := map[string]struct{}{}
+	for _, value := range []string{stringValue(record, "type"), stringValue(record, "name")} {
+		for _, key := range []string{value + "_name", value} {
+			if value == "" {
+				continue
+			}
+			if _, duplicate := seen[key]; duplicate {
+				continue
+			}
+			seen[key] = struct{}{}
+			result = append(result, key)
+		}
+	}
+	return result
+}
+
+func buildingQuestObjectives(store *Store) map[int64][]BuildingQuestObjective {
+	result := map[int64][]BuildingQuestObjective{}
+	quests, err := store.Catalog("quests")
+	if err != nil {
+		return result
+	}
+	for _, raw := range quests.Rows() {
+		record, decodeErr := DecodeRecord(raw)
+		if decodeErr != nil {
+			continue
+		}
+		questID, ok := record.Int64("questID")
+		if !ok || questID <= 0 {
+			continue
+		}
+		conditions := strings.Split(stringValue(record, "conditions"), "#")
+		for _, condition := range conditions {
+			parts := strings.Split(strings.TrimSpace(condition), "+")
+			if len(parts) < 3 || !strings.EqualFold(strings.TrimSpace(parts[0]), "buildings") {
+				continue
+			}
+			requiredCount, countErr := strconv.ParseInt(strings.TrimSpace(parts[1]), 10, 64)
+			definitionID, definitionErr := strconv.ParseInt(strings.TrimSpace(parts[2]), 10, 64)
+			if countErr != nil || definitionErr != nil || requiredCount <= 0 || definitionID <= 0 {
+				continue
+			}
+			objective := BuildingQuestObjective{
+				QuestID: questID, RequiredCount: requiredCount,
+				RequiredLevel:       optionalBuildingInt(record, "requiredLevel"),
+				RequiredLegendLevel: optionalBuildingInt(record, "requiredLegendLevel"),
+				RequiredQuestID:     intValue(record, "requiredQuestID"),
+				OrRequiredQuestID:   intValue(record, "orRequiredQuestID"),
+				EventID:             intValue(record, "eventID"),
+				ShownKingdomID:      intValue(record, "shownKingdomID"),
+				TriggerKingdomID:    intValue(record, "triggerKingdomID"),
+				XP:                  floatValue(record, "xp"),
+				Hidden:              buildingBoolValue(record, "hidden"),
+				SortPriority:        intValue(record, "sortPriority"),
+			}
+			result[definitionID] = append(result[definitionID], objective)
+		}
+	}
+	for definitionID := range result {
+		sort.Slice(result[definitionID], func(left, right int) bool {
+			return result[definitionID][left].QuestID < result[definitionID][right].QuestID
+		})
+	}
+	return result
+}
+
+func optionalBuildingInt(record Record, field string) *int64 {
+	value, ok := record.Int64(field)
+	if !ok {
+		return nil
+	}
+	copy := value
+	return &copy
+}
+
+func optionalBuildingBool(record Record, field string) *bool {
+	if _, found := record[field]; !found {
+		return nil
+	}
+	if value, ok := record.Int64(field); ok {
+		result := value != 0
+		return &result
+	}
+	value, ok := record.String(field)
+	if !ok {
+		return nil
+	}
+	value = strings.TrimSpace(strings.ToLower(value))
+	result := value == "true" || value == "yes"
+	return &result
+}
+
+func buildingBoolValue(record Record, field string) bool {
+	value := optionalBuildingBool(record, field)
+	return value != nil && *value
+}
+
+func buildingScalarString(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	if value, ok := scalarKey(raw); ok {
+		return value
+	}
+	return strings.TrimSpace(string(raw))
+}
+
+func normalizeBuildingName(value string) string {
+	return strings.Map(func(character rune) rune {
+		if unicode.IsLetter(character) || unicode.IsDigit(character) {
+			return unicode.ToLower(character)
+		}
+		return -1
+	}, value)
+}
+
+func cloneBuildingDefinition(source BuildingDefinition) BuildingDefinition {
+	clone := source
+	clone.RequiredLevel = cloneBuildingInt64Pointer(source.RequiredLevel)
+	clone.RequiredLegendLevel = cloneBuildingInt64Pointer(source.RequiredLegendLevel)
+	clone.EarlyUnlockRequiredLevel = cloneBuildingInt64Pointer(source.EarlyUnlockRequiredLevel)
+	clone.MaximumCount = cloneBuildingInt64Pointer(source.MaximumCount)
+	clone.Storeable = cloneBuildingBoolPointer(source.Storeable)
+	clone.Movable = cloneBuildingBoolPointer(source.Movable)
+	clone.Destructable = cloneBuildingBoolPointer(source.Destructable)
+	clone.BattleGround = cloneBuildingBoolPointer(source.BattleGround)
+	clone.District = cloneBuildingBoolPointer(source.District)
+	clone.KingdomIDs = append([]int64(nil), source.KingdomIDs...)
+	clone.EventIDs = append([]int64(nil), source.EventIDs...)
+	clone.AreaTypeIDs = append([]int64(nil), source.AreaTypeIDs...)
+	clone.MapIDs = append([]int64(nil), source.MapIDs...)
+	clone.ConstructionItemGroupIDs = append([]int64(nil), source.ConstructionItemGroupIDs...)
+	clone.UnlockIDs = append([]int64(nil), source.UnlockIDs...)
+	clone.QuestObjectives = make([]BuildingQuestObjective, len(source.QuestObjectives))
+	for index, objective := range source.QuestObjectives {
+		objective.RequiredLevel = cloneBuildingInt64Pointer(objective.RequiredLevel)
+		objective.RequiredLegendLevel = cloneBuildingInt64Pointer(objective.RequiredLegendLevel)
+		clone.QuestObjectives[index] = objective
+	}
+	clone.Costs = append([]BuildingCost(nil), source.Costs...)
+	clone.Values = make(map[string]float64, len(source.Values))
+	for key, value := range source.Values {
+		clone.Values[key] = value
+	}
+	clone.LocalizationKeys = append([]string(nil), source.LocalizationKeys...)
+	return clone
+}
+
+func cloneBuildingInt64Pointer(value *int64) *int64 {
+	if value == nil {
+		return nil
+	}
+	copy := *value
+	return &copy
+}
+
+func cloneBuildingBoolPointer(value *bool) *bool {
+	if value == nil {
+		return nil
+	}
+	copy := *value
+	return &copy
 }
