@@ -1,13 +1,10 @@
-import { FrontendWebsocket } from '../Websocket';
+import { queueConfigurationUpdate } from './Configuration';
 import { clampLevelCeiling, normalizeLevelRange } from '../components/TCIPickerModal';
 import {
-  loadPresetsFile,
+  emptyPresetsFile,
   parsePresetsPayload,
-  savePresetsFile,
   type PresetsFileV1,
 } from './AutoTCIPresets';
-
-export const AUTO_TCI_SETTINGS_STORAGE_KEY = 'autoTCISettings';
 
 export type AutoTCIStoredItem = { id: number; amount: number; minLevel?: number };
 export type AutoTCIStoredSettings = Record<string, AutoTCIStoredItem[]>;
@@ -56,46 +53,18 @@ function normalizeTargets(raw: unknown): AutoTCIStoredSettings {
   return out;
 }
 
-export function loadAutoTCISettingsFromStorage(): AutoTCIStoredSettings {
-  try {
-    const raw = localStorage.getItem(AUTO_TCI_SETTINGS_STORAGE_KEY);
-    if (!raw) return {};
-    return normalizeTargets(JSON.parse(raw));
-  } catch {
-    return {};
-  }
-}
-
-/** Normalizes server payload into a full v1 client document. */
 export function parseAutoTCIClientState(raw: unknown): AutoTCIClientStateV1 {
   if (raw == null || typeof raw !== 'object') {
     return {
       version: 1,
-      targets: loadAutoTCISettingsFromStorage(),
-      presets: loadPresetsFile(),
+      targets: {},
+      presets: emptyPresetsFile(),
     };
   }
   const o = raw as Record<string, unknown>;
   const targets = normalizeTargets(o.targets);
   const presets = parsePresetsPayload(o.presets);
   return { version: 1, targets, presets };
-}
-
-/** Mirrors server state into localStorage (for offline toggle). */
-export function applyAutoTCIClientStateToLocalStorage(state: AutoTCIClientStateV1): void {
-  localStorage.setItem(AUTO_TCI_SETTINGS_STORAGE_KEY, JSON.stringify(state.targets));
-  savePresetsFile(state.presets);
-}
-
-/** @deprecated Use applyAutoTCIClientStateToLocalStorage after parsing wire payload. */
-export function applyAutoTCISettingsToLocalStorage(
-  payload: Record<string, Record<string, number>>,
-): void {
-  applyAutoTCIClientStateToLocalStorage({
-    version: 1,
-    targets: normalizeTargets(payload),
-    presets: loadPresetsFile(),
-  });
 }
 
 export function buildAutoTCIClientState(
@@ -105,10 +74,6 @@ export function buildAutoTCIClientState(
   return { version: 1, targets, presets };
 }
 
-/** Persists to localStorage and the Go data dir (same folder as AutoBird.json). */
 export function persistAutoTCIClientState(state: AutoTCIClientStateV1): void {
-  applyAutoTCIClientStateToLocalStorage(state);
-  if (FrontendWebsocket.getStatus() === 'Connected') {
-    FrontendWebsocket.sendMessage({ type: 'saveAutoTCIClientState', payload: state });
-  }
+  queueConfigurationUpdate('automation.constructionItems', state);
 }

@@ -1,21 +1,22 @@
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import {
-  Boxes,
   ChevronDown,
-  ChevronUp,
+  ChevronRight,
   Copy,
   Eraser,
   Minus,
-  MousePointerClick,
   Plus,
   Shield,
   Swords,
 } from 'lucide-react';
 import { useMetadata, type MetadataItem } from '../context/MetadataContext';
-import { useCastleResources } from '../dashboard/context/CastleResourceContext';
+import { useCitadelAPI } from '../api/ApiContext';
+import type { CastleStateV2 } from '../api/Contracts';
+import ToolImage from './ToolImage';
 import { showToolPicker } from './ToolPickerModal';
+import UnitImage from './UnitImage';
 import { showTroopPicker } from './TroopPickerModal';
-import { Badge, Button, Card, CardContent, CardHeader, Input, Modal, PillSelector } from './ui';
+import { AddSlot, Badge, Button, Card, CardContent, CardHeader, Input, MetricTile, Modal, ModalTitle, PillSelector, QuantityAssetTile } from './ui';
 
 export interface AttackSetupSlot {
   itemId: number | null;
@@ -33,9 +34,15 @@ export interface AttackSetupWave {
   R: AttackSetupLane;
 }
 
+export interface AttackSetupCourtyardSupport {
+  troops: AttackSetupSlot[];
+  tools: AttackSetupSlot[];
+}
+
 export interface AttackSetupDraft {
   name: string;
   waves: AttackSetupWave[];
+  courtyardSupport: AttackSetupCourtyardSupport;
 }
 
 /** Optional inventory scope for callers that need something other than the default all-castles aggregate. */
@@ -49,6 +56,7 @@ export interface AttackSetupModalProps {
   isOpen: boolean;
   initialDraft?: AttackSetupDraft;
   inventory?: AttackSetupInventory;
+  inventoryPolicy?: 'enforced' | 'advisory';
   onClose: () => void;
   onSave: (draft: AttackSetupDraft) => void;
 }
@@ -71,20 +79,28 @@ interface InventoryIssue {
 }
 
 const laneKeys: LaneKey[] = ['L', 'M', 'R'];
-const MAX_WAVES = 10;
+const MAX_WAVES = 30;
+const COURTYARD_TROOP_SLOTS = 8;
+const COURTYARD_TOOL_SLOTS = 3;
 
-const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraft, inventory: inventoryOverride, onClose, onSave }) => {
-  const { castleResources } = useCastleResources();
+const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
+  isOpen,
+  initialDraft,
+  inventory: inventoryOverride,
+  inventoryPolicy = 'enforced',
+  onClose,
+  onSave,
+}) => {
+  const { state } = useCitadelAPI();
   const { troops, tools, isLoading: isMetadataLoading } = useMetadata();
   const [draft, setDraft] = useState<AttackSetupDraft>(() => normalizeDraft(initialDraft));
-  const [activeWaveIndex, setActiveWaveIndex] = useState(0);
-  const [collapsedWaveIndexes, setCollapsedWaveIndexes] = useState<Set<number>>(() => new Set());
+  const [activeSupportKind, setActiveSupportKind] = useState<InventoryKind>('troop');
 
   const allCastlesInventory = useMemo(
     () => isMetadataLoading
-      ? { troops: {}, tools: {}, castleCount: castleResources.size }
-      : aggregateCastleInventory(castleResources, troops, tools),
-    [castleResources, isMetadataLoading, tools, troops]
+      ? { troops: {}, tools: {}, castleCount: Object.keys(state?.castles ?? {}).length }
+      : aggregateCastleInventory(Object.values(state?.castles ?? {}), troops, tools),
+    [isMetadataLoading, state?.castles, tools, troops]
   );
   const inventory = useMemo(
     () => inventoryOverride
@@ -95,16 +111,30 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraf
   const inventoryLabel = inventoryOverride?.label?.trim()
     || `Account inventory · ${allCastlesInventory.castleCount.toLocaleString()} castle${allCastlesInventory.castleCount === 1 ? '' : 's'}`;
   const hasInventory = !isMetadataLoading && (Object.keys(inventory.troops).length > 0 || Object.keys(inventory.tools).length > 0);
-  const troopItems = useMemo(() => inventoryItems(inventory.troops, troops), [inventory.troops, troops]);
-  const toolItems = useMemo(() => inventoryItems(inventory.tools, tools), [inventory.tools, tools]);
+  const troopItems = useMemo(
+    () => inventoryItems(inventory.troops, troops, inventoryPolicy === 'advisory'),
+    [inventory.troops, inventoryPolicy, troops]
+  );
+  const allToolItems = useMemo(
+    () => inventoryItems(inventory.tools, tools, inventoryPolicy === 'advisory'),
+    [inventory.tools, inventoryPolicy, tools]
+  );
+  const toolItems = useMemo(
+    () => allToolItems.filter((item) => !isSceatAttackSupportTool(item.metadata)),
+    [allToolItems]
+  );
+  const supportToolItems = useMemo(
+    () => allToolItems.filter((item) => isSceatAttackSupportTool(item.metadata)),
+    [allToolItems]
+  );
   const troopIDs = useMemo(() => troopItems.map((item) => item.id), [troopItems]);
   const toolIDs = useMemo(() => toolItems.map((item) => item.id), [toolItems]);
+  const supportToolIDs = useMemo(() => supportToolItems.map((item) => item.id), [supportToolItems]);
 
   useEffect(() => {
     if (!isOpen) return;
     setDraft(normalizeDraft(initialDraft));
-    setActiveWaveIndex(0);
-    setCollapsedWaveIndexes(new Set());
+    setActiveSupportKind('troop');
   }, [initialDraft, isOpen]);
 
   const totals = useMemo(() => summarizeDraft(draft), [draft]);
@@ -113,8 +143,9 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraf
     () => findInventoryIssues(allocations, inventory),
     [allocations, inventory]
   );
-  const canSave = draft.name.trim().length > 0 && totals.troops > 0 && inventoryIssues.length === 0;
-  const activeWave = draft.waves[activeWaveIndex] ?? draft.waves[0];
+  const canSave = draft.name.trim().length > 0
+    && totals.formationTroops > 0
+    && (inventoryPolicy === 'advisory' || inventoryIssues.length === 0);
 
   const setWaveCount = (count: number) => {
     const nextCount = Math.max(1, Math.min(MAX_WAVES, Math.trunc(count) || 1));
@@ -131,12 +162,6 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraf
         ],
       };
     });
-    setActiveWaveIndex((current) => Math.min(current, nextCount - 1));
-    setCollapsedWaveIndexes((current) => new Set(Array.from(current).filter((index) => index < nextCount)));
-  };
-
-  const updateActiveWave = (updater: (wave: AttackSetupWave) => AttackSetupWave) => {
-    updateWaveAt(activeWaveIndex, updater);
   };
 
   const updateWaveAt = (waveIndex: number, updater: (wave: AttackSetupWave) => AttackSetupWave) => {
@@ -146,54 +171,20 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraf
     }));
   };
 
-  const selectWave = (waveIndex: number, scrollIntoView = false) => {
-    setActiveWaveIndex(waveIndex);
-    setCollapsedWaveIndexes((current) => {
-      if (!current.has(waveIndex)) return current;
-      const next = new Set(current);
-      next.delete(waveIndex);
-      return next;
+  const duplicateWave = (waveIndex: number) => {
+    setDraft((current) => {
+      const wave = current.waves[waveIndex];
+      if (!wave || current.waves.length >= MAX_WAVES) return current;
+      const insertAt = waveIndex + 1;
+      return {
+        ...current,
+        waves: [
+          ...current.waves.slice(0, insertAt),
+          cloneWave(wave),
+          ...current.waves.slice(insertAt),
+        ],
+      };
     });
-    if (!scrollIntoView) return;
-    window.requestAnimationFrame(() => {
-      document.getElementById(`attack-wave-${waveIndex}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  };
-
-  const duplicateWave = () => {
-    if (draft.waves.length >= MAX_WAVES || !activeWave) return;
-    const insertAt = activeWaveIndex + 1;
-    setDraft((current) => ({
-      ...current,
-      waves: [
-        ...current.waves.slice(0, insertAt),
-        cloneWave(current.waves[activeWaveIndex]),
-        ...current.waves.slice(insertAt),
-      ],
-    }));
-    setCollapsedWaveIndexes((current) => new Set(Array.from(current, (index) => index >= insertAt ? index + 1 : index)));
-    setActiveWaveIndex(insertAt);
-  };
-
-  const toggleWaveCollapsed = (waveIndex: number) => {
-    setActiveWaveIndex(waveIndex);
-    setCollapsedWaveIndexes((current) => {
-      const next = new Set(current);
-      if (next.has(waveIndex)) {
-        next.delete(waveIndex);
-      } else {
-        next.add(waveIndex);
-      }
-      return next;
-    });
-  };
-
-  const fillAllWaves = () => {
-    if (!activeWave) return;
-    setDraft((current) => ({
-      ...current,
-      waves: current.waves.map(() => cloneWave(activeWave)),
-    }));
   };
 
   const handleSave = () => {
@@ -207,29 +198,33 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraf
       onClose={onClose}
       maxWidth="full"
       title={
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-global border border-primary/30 bg-primary/10 text-primary shadow-glow">
-            <Swords className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <div className="truncate text-lg font-black">Attack preset</div>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-medium text-text-muted">
+        <ModalTitle
+          icon={<Swords className="h-5 w-5" />}
+          description={(
+            <span className="flex flex-wrap items-center gap-2">
               <span>{inventoryLabel}</span>
-              <Badge variant={isMetadataLoading ? 'secondary' : hasInventory ? 'success' : 'warning'} className="normal-case tracking-normal">
-                {isMetadataLoading ? 'Loading inventory' : hasInventory ? 'All-castles inventory' : 'Inventory unavailable'}
+              <Badge variant={isMetadataLoading ? 'secondary' : inventoryPolicy === 'advisory' ? 'outline' : hasInventory ? 'success' : 'warning'} className="normal-case tracking-normal">
+                {isMetadataLoading
+                  ? 'Loading inventory'
+                  : inventoryPolicy === 'advisory'
+                    ? 'Full catalog · stock advisory'
+                    : hasInventory ? 'All-castles inventory' : 'Inventory unavailable'}
               </Badge>
-            </div>
-          </div>
-        </div>
+            </span>
+          )}
+        >
+          Attack preset
+        </ModalTitle>
       }
       footer={
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
           <div className="text-xs text-text-muted">
             {inventoryIssues.length > 0 ? (
-              <span className="font-semibold text-error">
-                {inventoryIssues.length} stock conflict{inventoryIssues.length === 1 ? '' : 's'} must be resolved
+              <span className={`font-semibold ${inventoryPolicy === 'advisory' ? 'text-warning' : 'text-error'}`}>
+                {inventoryIssues.length} stock conflict{inventoryIssues.length === 1 ? '' : 's'}
+                {inventoryPolicy === 'advisory' ? ' will be checked at launch' : ' must be resolved'}
               </span>
-            ) : totals.troops === 0 ? (
+            ) : totals.formationTroops === 0 ? (
               'Add at least one troop to save this preset.'
             ) : (
               `${totals.troops.toLocaleString()} troops and ${totals.tools.toLocaleString()} tools allocated`
@@ -289,59 +284,27 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraf
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <Metric label="Waves" value={draft.waves.length.toLocaleString()} />
-            <Metric label="Troops" value={totals.troops.toLocaleString()} />
-            <Metric label="Tools" value={totals.tools.toLocaleString()} />
+            <MetricTile size="sm" className="min-w-[4.75rem]" label="Waves" value={draft.waves.length.toLocaleString()} />
+            <MetricTile size="sm" className="min-w-[4.75rem]" label="Troops" value={totals.troops.toLocaleString()} />
+            <MetricTile size="sm" className="min-w-[4.75rem]" label="Tools" value={totals.tools.toLocaleString()} />
           </div>
         </section>
 
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-border-base bg-bg-card/55 p-3 shadow-[var(--glass-shadow-compact)] backdrop-blur-2xl">
-          <div className="min-w-0 flex-1 overflow-x-auto custom-scrollbar">
-            <PillSelector
-              value={String(activeWaveIndex)}
-              onChange={(value) => selectWave(Number(value), true)}
-              options={draft.waves.map((wave, index) => {
-                const waveTotals = summarizeWave(wave);
-                return {
-                  value: String(index),
-                  label: `Wave ${index + 1}`,
-                  title: `${waveTotals.troops.toLocaleString()} troops · ${waveTotals.tools.toLocaleString()} tools`,
-                };
-              })}
-              size="sm"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={duplicateWave} disabled={draft.waves.length >= MAX_WAVES} leftIcon={<Copy className="h-3.5 w-3.5" />}>
-              Duplicate selected
-            </Button>
-            <Button variant="ghost" size="sm" onClick={fillAllWaves} disabled={draft.waves.length <= 1} leftIcon={<Boxes className="h-3.5 w-3.5" />}>
-              Fill all
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => updateActiveWave(() => emptyWave())} leftIcon={<Eraser className="h-3.5 w-3.5" />}>
-              Clear selected
-            </Button>
-          </div>
-        </section>
-
-        <div className="space-y-5">
+        <section className="flex flex-col gap-4" aria-label="Attack waves">
           {draft.waves.map((wave, waveIndex) => (
             <WaveEditorCard
               key={waveIndex}
-              id={`attack-wave-${waveIndex}`}
               waveIndex={waveIndex}
+              waveCount={draft.waves.length}
               wave={wave}
-              isActive={waveIndex === activeWaveIndex}
-              isCollapsed={collapsedWaveIndexes.has(waveIndex)}
               troopItems={troopItems}
               toolItems={toolItems}
               troopStock={inventory.troops}
               toolStock={inventory.tools}
               troopAllocations={allocations.troops}
               toolAllocations={allocations.tools}
-              onActivate={() => selectWave(waveIndex)}
-              onToggleCollapsed={() => toggleWaveCollapsed(waveIndex)}
+              onDuplicate={() => duplicateWave(waveIndex)}
+              onClear={() => updateWaveAt(waveIndex, () => emptyWave())}
               onChangeLane={(laneKey, lane) => {
                 updateWaveAt(waveIndex, (currentWave) => ({ ...currentWave, [laneKey]: lane }));
               }}
@@ -387,16 +350,74 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraf
               }}
             />
           ))}
-        </div>
+        </section>
+
+        <CourtyardSupportCard
+          support={draft.courtyardSupport}
+          activeKind={activeSupportKind}
+          troopItems={troopItems}
+          toolItems={supportToolItems}
+          troopStock={inventory.troops}
+          toolStock={inventory.tools}
+          troopAllocations={allocations.troops}
+          toolAllocations={allocations.tools}
+          onChangeKind={setActiveSupportKind}
+          onChange={(courtyardSupport) => setDraft((current) => ({ ...current, courtyardSupport }))}
+          onPickTroop={async (slot, slotIndex) => {
+            const result = await showTroopPicker({
+              mode: 'single',
+              title: `Choose courtyard support troop ${slotIndex + 1}`,
+              preselected: slot.itemId == null ? [] : [slot.itemId],
+              allowedUnitIds: troopIDs,
+              stockQuantities: inventory.troops,
+            });
+            if (typeof result !== 'number') return;
+            setDraft((current) => ({
+              ...current,
+              courtyardSupport: {
+                ...current.courtyardSupport,
+                troops: updateSlot(current.courtyardSupport.troops, slotIndex, {
+                  itemId: result,
+                  quantity: slot.quantity > 0 ? slot.quantity : 1,
+                }),
+              },
+            }));
+          }}
+          onPickTool={async (slot, slotIndex) => {
+            const result = await showToolPicker({
+              mode: 'single',
+              title: `Choose Sceat support tool ${slotIndex + 1}`,
+              preselected: slot.itemId == null ? [] : [slot.itemId],
+              allowedToolIds: supportToolIDs,
+              stockQuantities: inventory.tools,
+            });
+            if (typeof result !== 'number') return;
+            setDraft((current) => ({
+              ...current,
+              courtyardSupport: {
+                ...current.courtyardSupport,
+                tools: updateSlot(current.courtyardSupport.tools, slotIndex, {
+                  itemId: result,
+                  quantity: 1,
+                }),
+              },
+            }));
+          }}
+        />
 
         {inventoryIssues.length > 0 ? (
-          <section className="rounded-global border border-error/30 bg-error/8 p-3 text-sm text-error">
-            <div className="mb-2 font-black">Preset exceeds available inventory</div>
+          <section className={`rounded-global border p-3 text-sm ${inventoryPolicy === 'advisory' ? 'border-warning/30 bg-warning/8 text-warning' : 'border-error/30 bg-error/8 text-error'}`}>
+            <div className="mb-2 font-black">
+              {inventoryPolicy === 'advisory' ? 'Current account inventory is lower than this preset' : 'Preset exceeds available inventory'}
+            </div>
+            {inventoryPolicy === 'advisory' ? (
+              <p className="mb-2 text-xs font-medium text-text-muted">The preset can still be saved. Live inventory will be validated before an attack launches.</p>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               {inventoryIssues.map((issue) => {
                 const meta = issue.kind === 'troop' ? troops[issue.itemId] : tools[issue.itemId];
                 return (
-                  <span key={`${issue.kind}-${issue.itemId}`} className="rounded-full border border-error/25 bg-bg-card/45 px-3 py-1.5 text-xs font-semibold">
+                  <span key={`${issue.kind}-${issue.itemId}`} className="rounded-full border border-current/25 bg-bg-card/45 px-3 py-1.5 text-xs font-semibold">
                     {meta?.name || `#${issue.itemId}`}: {issue.requested.toLocaleString()} / {issue.stock.toLocaleString()}
                   </span>
                 );
@@ -409,114 +430,241 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({ isOpen, initialDraf
   );
 };
 
-const Metric: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="min-w-[4.75rem] rounded-global border border-border-base bg-bg-input/45 px-3 py-2">
-    <div className="text-[9px] font-black uppercase tracking-wider text-text-muted">{label}</div>
-    <div className="mt-1 font-mono text-sm font-black text-text-main">{value}</div>
-  </div>
-);
-
 interface WaveEditorCardProps {
-  id: string;
   waveIndex: number;
+  waveCount: number;
   wave: AttackSetupWave;
-  isActive: boolean;
-  isCollapsed: boolean;
   troopItems: InventoryItem[];
   toolItems: InventoryItem[];
   troopStock: Record<number, number>;
   toolStock: Record<number, number>;
   troopAllocations: Record<number, number>;
   toolAllocations: Record<number, number>;
-  onActivate: () => void;
-  onToggleCollapsed: () => void;
+  onDuplicate: () => void;
+  onClear: () => void;
   onChangeLane: (laneKey: LaneKey, lane: AttackSetupLane) => void;
   onPickTroop: (laneKey: LaneKey, slot: AttackSetupSlot, slotIndex: number) => void;
   onPickTool: (laneKey: LaneKey, slot: AttackSetupSlot, slotIndex: number) => void;
 }
 
 const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
-  id,
   waveIndex,
+  waveCount,
   wave,
-  isActive,
-  isCollapsed,
   troopItems,
   toolItems,
   troopStock,
   toolStock,
   troopAllocations,
   toolAllocations,
-  onActivate,
-  onToggleCollapsed,
+  onDuplicate,
+  onClear,
   onChangeLane,
   onPickTroop,
   onPickTool,
 }) => {
   const waveTotals = summarizeWave(wave);
+  const [isOpen, setIsOpen] = useState(true);
+  const contentId = useId();
+
   return (
     <Card
-      id={id}
       variant="solid"
-      className={`liquid-prominent-header-card scroll-mt-3 ${isActive ? 'ring-1 ring-primary/30' : ''}`}
-      onMouseDown={onActivate}
+      className="liquid-prominent-header-card"
     >
-      <CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-global border ${isActive ? 'border-primary/40 bg-primary/12 text-primary shadow-glow' : 'border-border-base bg-bg-input/70 text-text-muted'}`}>
-            <Swords className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="m-0 text-base font-black text-text-main">Wave {waveIndex + 1}</h3>
-              {isActive ? <Badge variant="primary" className="normal-case tracking-normal">Selected</Badge> : null}
+      <CardHeader className="liquid-card-header-prominent !m-0 !min-h-0 !rounded-full !p-0">
+        <div className="flex h-11 w-full items-center gap-1 overflow-hidden rounded-full px-1.5">
+          <button
+            type="button"
+            className="flex h-full min-w-0 flex-1 items-center justify-between gap-3 rounded-full px-2 text-left transition-colors hover:text-primary"
+            aria-expanded={isOpen}
+            aria-controls={contentId}
+            onClick={() => setIsOpen((current) => !current)}
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/12 text-primary shadow-glow">
+                <Swords className="h-4 w-4" />
+              </span>
+              <h3 className="m-0 whitespace-nowrap text-sm font-black text-text-main">Wave {waveIndex + 1}</h3>
+              <Badge variant="primary" className="shrink-0 normal-case tracking-normal">{waveIndex + 1} of {waveCount}</Badge>
             </div>
-            <p className="mt-1 text-xs text-text-muted">Three fronts · 10 unit slots · 7 tool slots</p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <Metric label="Troops" value={waveTotals.troops.toLocaleString()} />
-          <Metric label="Tools" value={waveTotals.tools.toLocaleString()} />
+            <div className="flex shrink-0 items-center justify-end gap-1.5">
+              <span className="rounded-full border border-border-base bg-bg-input/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+                Troops <strong className="ml-1 font-mono text-xs text-text-main">{waveTotals.troops.toLocaleString()}</strong>
+              </span>
+              <span className="rounded-full border border-border-base bg-bg-input/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+                Tools <strong className="ml-1 font-mono text-xs text-text-main">{waveTotals.tools.toLocaleString()}</strong>
+              </span>
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
+              ) : (
+                <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
+              )}
+            </div>
+          </button>
+          <span className="h-5 w-px shrink-0 bg-border-base/80" aria-hidden="true" />
           <Button
             variant="ghost"
             size="icon"
-            onClick={onToggleCollapsed}
-            onMouseDown={(event) => event.stopPropagation()}
-            aria-expanded={!isCollapsed}
-            aria-controls={`${id}-content`}
-            title={isCollapsed ? `Expand Wave ${waveIndex + 1}` : `Collapse Wave ${waveIndex + 1}`}
-            className="ml-1"
+            className="h-8 w-8 rounded-full !p-0"
+            onClick={onDuplicate}
+            disabled={waveCount >= MAX_WAVES}
+            title="Duplicate wave"
+            aria-label={`Duplicate Wave ${waveIndex + 1}`}
           >
-            {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            <Copy className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full !p-0 hover:!text-error"
+            onClick={onClear}
+            title="Clear wave"
+            aria-label={`Clear Wave ${waveIndex + 1}`}
+          >
+            <Eraser className="h-3.5 w-3.5" />
           </Button>
         </div>
       </CardHeader>
 
-      {!isCollapsed ? (
-        <CardContent id={`${id}-content`} className="liquid-prominent-header-content space-y-4 p-4">
-          <FormationRow
-            kind="troop"
-            label="Units"
-            wave={wave}
-            items={troopItems}
-            stock={troopStock}
-            allocations={troopAllocations}
-            onChangeLane={onChangeLane}
-            onPick={onPickTroop}
-          />
-          <FormationRow
-            kind="tool"
-            label="Tools"
-            wave={wave}
-            items={toolItems}
-            stock={toolStock}
-            allocations={toolAllocations}
-            onChangeLane={onChangeLane}
-            onPick={onPickTool}
-          />
+      {isOpen ? (
+        <CardContent id={contentId} className="liquid-prominent-header-content !px-1 !pb-2 !pt-3">
+          <div className="grid gap-1">
+            <FormationRow
+              kind="tool"
+              label="Tools"
+              wave={wave}
+              items={toolItems}
+              stock={toolStock}
+              allocations={toolAllocations}
+              onChangeLane={onChangeLane}
+              onPick={onPickTool}
+            />
+            <FormationRow
+              kind="troop"
+              label="Troops"
+              divided
+              wave={wave}
+              items={troopItems}
+              stock={troopStock}
+              allocations={troopAllocations}
+              onChangeLane={onChangeLane}
+              onPick={onPickTroop}
+            />
+          </div>
         </CardContent>
       ) : null}
+    </Card>
+  );
+};
+
+interface CourtyardSupportCardProps {
+  support: AttackSetupCourtyardSupport;
+  activeKind: InventoryKind;
+  troopItems: InventoryItem[];
+  toolItems: InventoryItem[];
+  troopStock: Record<number, number>;
+  toolStock: Record<number, number>;
+  troopAllocations: Record<number, number>;
+  toolAllocations: Record<number, number>;
+  onChangeKind: (kind: InventoryKind) => void;
+  onChange: (support: AttackSetupCourtyardSupport) => void;
+  onPickTroop: (slot: AttackSetupSlot, slotIndex: number) => void;
+  onPickTool: (slot: AttackSetupSlot, slotIndex: number) => void;
+}
+
+const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
+  support,
+  activeKind,
+  troopItems,
+  toolItems,
+  troopStock,
+  toolStock,
+  troopAllocations,
+  toolAllocations,
+  onChangeKind,
+  onChange,
+  onPickTroop,
+  onPickTool,
+}) => {
+  const kindIsTroop = activeKind === 'troop';
+  const slots = kindIsTroop ? support.troops : support.tools;
+  const items = kindIsTroop ? troopItems : toolItems;
+  const stock = kindIsTroop ? troopStock : toolStock;
+  const allocations = kindIsTroop ? troopAllocations : toolAllocations;
+  const troopTotal = support.troops.reduce((total, slot) => total + slot.quantity, 0);
+  const toolTotal = support.tools.filter((slot) => slot.itemId != null).length;
+
+  return (
+    <Card variant="solid" className="liquid-prominent-header-card ring-1 ring-warning/25">
+      <CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-global border border-warning/40 bg-warning/12 text-warning">
+            <Shield className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="m-0 text-base font-black text-text-main">Courtyard support wave</h3>
+              <Badge variant="warning" className="normal-case tracking-normal">Optional</Badge>
+            </div>
+            <p className="mt-1 text-xs text-text-muted">
+              Add up to {COURTYARD_TROOP_SLOTS} extra troops and {COURTYARD_TOOL_SLOTS} one-use Sceat support tools.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <PillSelector
+            ariaLabel="Courtyard support item type"
+            value={activeKind}
+            onChange={(value) => onChangeKind(value as InventoryKind)}
+            options={[
+              { value: 'troop', label: `Units · ${COURTYARD_TROOP_SLOTS}` },
+              { value: 'tool', label: `Sceat tools · ${COURTYARD_TOOL_SLOTS}` },
+            ]}
+            size="header"
+          />
+          <MetricTile size="sm" className="min-w-[4.75rem]" label="Troops" value={troopTotal.toLocaleString()} />
+          <MetricTile size="sm" className="min-w-[4.75rem]" label="Tools" value={toolTotal.toLocaleString()} />
+        </div>
+      </CardHeader>
+
+      <CardContent className="liquid-prominent-header-content p-3">
+        <section className="overflow-hidden rounded-global border border-border-base bg-bg-app/42" aria-label="Courtyard support formation">
+          <div className="overflow-x-auto p-3 custom-scrollbar">
+            <div className={`mx-auto flex w-max items-start justify-center gap-2 ${kindIsTroop ? 'min-w-[46rem]' : 'min-w-[18rem]'}`}>
+              {slots.map((slot, slotIndex) => (
+                <InventorySlotCard
+                  key={slotIndex}
+                  kind={activeKind}
+                  index={slotIndex}
+                  slot={slot}
+                  items={items}
+                  stock={stock}
+                  allocated={slot.itemId == null ? 0 : allocations[slot.itemId] ?? 0}
+                  slotCodePrefix={kindIsTroop ? 'RW' : 'AST'}
+                  slotContext={kindIsTroop ? 'courtyard troop' : 'Sceat support tool'}
+                  fixedQuantity={kindIsTroop ? undefined : 1}
+                  onChange={(patch) => {
+                    const slotKey = kindIsTroop ? 'troops' : 'tools';
+                    onChange({
+                      ...support,
+                      [slotKey]: updateSlot(slots, slotIndex, patch),
+                    });
+                  }}
+                  onPick={() => kindIsTroop ? onPickTroop(slot, slotIndex) : onPickTool(slot, slotIndex)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+        {!kindIsTroop && toolItems.length === 0 ? (
+          <p className="mt-3 text-xs font-medium text-text-muted">
+            No Sceat attack support tools are available in this inventory.
+          </p>
+        ) : null}
+      </CardContent>
     </Card>
   );
 };
@@ -524,6 +672,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
 interface FormationRowProps {
   kind: InventoryKind;
   label: string;
+  divided?: boolean;
   wave: AttackSetupWave;
   items: InventoryItem[];
   stock: Record<number, number>;
@@ -532,200 +681,205 @@ interface FormationRowProps {
   onPick: (laneKey: LaneKey, slot: AttackSetupSlot, slotIndex: number) => void;
 }
 
-const FormationRow: React.FC<FormationRowProps> = ({ kind, label, wave, items, stock, allocations, onChangeLane, onPick }) => (
-  <section className="overflow-hidden rounded-global border border-border-base bg-bg-app/42">
-    <div className="flex items-center justify-between gap-3 border-b border-border-base bg-bg-card/50 px-3 py-2.5">
-      <div className="flex items-center gap-2">
-        <span className={`flex h-7 w-7 items-center justify-center rounded-full ${kind === 'troop' ? 'bg-primary/12 text-primary' : 'bg-info/12 text-info'}`}>
-          {kind === 'troop' ? <Swords className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
-        </span>
-        <div>
-          <div className="text-xs font-black uppercase tracking-wider text-text-main">{label}</div>
-          <div className="text-[9px] text-text-muted">Left · center · right formation</div>
+const FormationRow: React.FC<FormationRowProps> = ({ kind, label, divided = false, wave, items, stock, allocations, onChangeLane, onPick }) => {
+  const slotKey = kind === 'troop' ? 'troops' : 'tools';
+  const laneTemplate = laneKeys.map((laneKey) => `${wave[laneKey][slotKey].length}fr`).join(' ');
+
+  return (
+    <div
+      className={`overflow-x-auto custom-scrollbar ${divided ? 'relative pt-2 before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-border-base/70' : ''}`}
+      role="group"
+      aria-label={`${label} formation`}
+    >
+      <div>
+        <div
+          className={`mx-auto grid items-stretch gap-3 ${kind === 'troop' ? 'min-w-[64rem]' : 'min-w-[48rem]'}`}
+          style={{ gridTemplateColumns: laneTemplate }}
+        >
+          {laneKeys.map((laneKey) => {
+            const lane = wave[laneKey];
+            const slots = lane[slotKey];
+            const filledSlots = slots.filter((slot) => slot.itemId != null).length;
+            return (
+              <div key={laneKey} className="min-w-0 px-2 py-1">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${laneKey === 'M' ? 'text-primary' : 'text-text-muted'}`}>
+                    {laneLabel(laneKey)}
+                  </span>
+                  <span className="font-mono text-[9px] font-bold text-text-muted">
+                    {filledSlots}/{slots.length} filled
+                  </span>
+                </div>
+                <div className="flex items-start justify-center gap-2">
+                  {slots.map((slot, slotIndex) => (
+                    <InventorySlotCard
+                      key={slotIndex}
+                      kind={kind}
+                      laneKey={laneKey}
+                      index={slotIndex}
+                      slot={slot}
+                      items={items}
+                      stock={stock}
+                      allocated={slot.itemId == null ? 0 : allocations[slot.itemId] ?? 0}
+                      onChange={(patch) => {
+                        const updatedSlots = updateSlot(slots, slotIndex, patch);
+                        onChangeLane(laneKey, {
+                          ...lane,
+                          [slotKey]: updatedSlots,
+                        });
+                      }}
+                      onPick={() => onPick(laneKey, slot, slotIndex)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
-      <Badge variant="outline" className="font-mono normal-case tracking-normal">
-        {laneKeys.reduce((total, laneKey) => total + wave[laneKey][kind === 'troop' ? 'troops' : 'tools'].length, 0)} slots
-      </Badge>
     </div>
-
-    <div className="overflow-x-auto p-3 custom-scrollbar">
-      <div className="mx-auto flex min-w-max items-start justify-center gap-3">
-        {laneKeys.map((laneKey) => {
-          const lane = wave[laneKey];
-          const slots = kind === 'troop' ? lane.troops : lane.tools;
-          return (
-            <div key={laneKey} className={`rounded-global border px-2.5 pb-2.5 pt-2 ${laneKey === 'M' ? 'border-primary/25 bg-primary/5' : 'border-border-base bg-bg-card/35'}`}>
-              <div className="mb-2 text-center text-[9px] font-black uppercase tracking-wider text-text-muted">
-                {laneLabel(laneKey)}
-              </div>
-              <div className="flex items-start justify-center gap-1.5">
-                {slots.map((slot, slotIndex) => (
-                  <InventorySlotCard
-                    key={slotIndex}
-                    kind={kind}
-                    index={slotIndex}
-                    slot={slot}
-                    items={items}
-                    stock={stock}
-                    allocated={slot.itemId == null ? 0 : allocations[slot.itemId] ?? 0}
-                    onChange={(patch) => {
-                      const updatedSlots = updateSlot(slots, slotIndex, patch);
-                      onChangeLane(laneKey, {
-                        ...lane,
-                        [kind === 'troop' ? 'troops' : 'tools']: updatedSlots,
-                      });
-                    }}
-                    onPick={() => onPick(laneKey, slot, slotIndex)}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  </section>
-);
+  );
+};
 
 interface InventorySlotCardProps {
   kind: InventoryKind;
+  laneKey?: LaneKey;
   index: number;
   slot: AttackSetupSlot;
   items: InventoryItem[];
   stock: Record<number, number>;
   allocated: number;
+  slotCodePrefix?: string;
+  slotContext?: string;
+  fixedQuantity?: number;
   onChange: (patch: Partial<AttackSetupSlot>) => void;
   onPick: () => void;
 }
 
 const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
   kind,
+  laneKey,
   index,
   slot,
   items,
   stock,
   allocated,
+  slotCodePrefix,
+  slotContext,
+  fixedQuantity,
   onChange,
   onPick,
 }) => {
-  const listID = useId();
   const selected = slot.itemId == null ? undefined : items.find((item) => item.id === slot.itemId);
-  const [query, setQuery] = useState(() => selected ? itemInputLabel(selected) : '');
-  const [inputError, setInputError] = useState('');
-
-  useEffect(() => {
-    setQuery(selected ? itemInputLabel(selected) : '');
-    setInputError('');
-  }, [selected]);
-
-  const commitTypedItem = () => {
-    const value = query.trim();
-    if (!value) {
-      onChange({ itemId: null, quantity: 0 });
-      setInputError('');
-      return;
-    }
-    const match = matchInventoryItem(value, items);
-    if (!match) {
-      setInputError('Not available in this inventory');
-      return;
-    }
-    onChange({ itemId: match.id, quantity: slot.quantity > 0 ? slot.quantity : 1 });
-    setQuery(itemInputLabel(match));
-    setInputError('');
-  };
-
+  const hasItem = slot.itemId != null;
+  const itemKindLabel = kind === 'troop' ? 'unit' : 'tool';
+  const itemName = selected?.name || (hasItem ? `${itemKindLabel} #${slot.itemId}` : '');
   const available = slot.itemId == null ? 0 : stock[slot.itemId] ?? 0;
   const remainingAfterPreset = available - allocated;
-  const overAllocated = slot.itemId != null && allocated > available;
+  const overAllocated = hasItem && allocated > available;
+  const slotLabel = `${slotContext ?? `${laneKey ? laneLabel(laneKey) : 'formation'} ${itemKindLabel}`} slot ${index + 1}`;
+  const slotCode = `${slotCodePrefix ?? (kind === 'troop' ? 'U' : 'T')}${index + 1}`;
+  const pickerDisabled = items.length === 0;
 
   return (
-    <div
-      className={`group relative flex aspect-[3/4] w-[clamp(4rem,5.2vw,4.8rem)] shrink-0 flex-col overflow-hidden rounded-[0.95rem] border p-1.5 transition-all hover:-translate-y-0.5 hover:shadow-[var(--glass-shadow-compact)] ${
-        overAllocated || inputError
-          ? 'border-error/45 bg-error/7'
-          : selected
-            ? 'border-primary/45 bg-primary/8 shadow-[0_0_16px_color-mix(in_srgb,var(--primary)_14%,transparent)]'
-            : 'border-border-base bg-bg-card/60 hover:border-primary/30'
-      }`}
-    >
-      <div className="flex h-3 items-center justify-between gap-1 text-[8px] font-black uppercase text-text-muted">
-        <span className={selected ? 'text-primary' : ''}>{kind === 'troop' ? 'U' : 'T'}{index + 1}</span>
-        <span className="max-w-[2.2rem] truncate font-mono">{selected ? `#${selected.id}` : '—'}</span>
+    <div className="flex w-[5.25rem] shrink-0 flex-col items-center">
+      <div className="mb-1 flex w-full items-center justify-between gap-1 px-0.5 text-[9px] font-black uppercase text-text-muted">
+        <span className={hasItem ? 'text-primary' : ''}>{slotCode}</span>
+        <span className="max-w-[3.25rem] truncate font-mono">{hasItem ? `#${slot.itemId}` : 'Empty'}</span>
       </div>
 
-      <input
-        list={listID}
-        value={query}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          setInputError('');
-        }}
-        onBlur={commitTypedItem}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            commitTypedItem();
-            event.currentTarget.blur();
-          }
-        }}
-        placeholder={kind === 'troop' ? 'Unit' : 'Tool'}
-        title={inputError || selected?.name || `Type an available ${kind} name or ID`}
-        className={`mt-1 min-h-0 w-full flex-1 rounded-lg border bg-bg-input/55 px-1 text-center text-[9px] font-bold leading-tight text-text-main outline-none transition focus:border-primary focus:ring-1 focus:ring-primary ${inputError ? 'border-error text-error' : 'border-border-base'}`}
-        aria-label={`${kind} slot ${index + 1}`}
-      />
-      <datalist id={listID}>
-        {items.map((item) => <option key={item.id} value={itemInputLabel(item)} />)}
-      </datalist>
-
-      <div className="mt-1 grid grid-cols-[minmax(0,1fr)_1.3rem] gap-1">
-        <input
-          type="number"
-          min={0}
-          max={available || undefined}
-          value={slot.quantity || ''}
-          onChange={(event) => onChange({ quantity: positiveInteger(event.target.value) })}
-          placeholder="Qty"
-          disabled={slot.itemId == null}
-          className="h-5 min-w-0 rounded-md border border-border-base bg-bg-input/65 px-0.5 text-center font-mono text-[9px] font-black text-text-main outline-none transition focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-45"
-          aria-label={`${kind} slot ${index + 1} quantity`}
-        />
-        <button
-          type="button"
-          onClick={onPick}
-          disabled={items.length === 0}
-          className="flex h-5 w-5 items-center justify-center rounded-md border border-primary/30 bg-primary/8 text-primary transition hover:bg-primary/18 disabled:cursor-not-allowed disabled:opacity-35"
-          title={items.length === 0 ? `No available ${kind}s in this inventory` : `Open available ${kind} picker`}
-        >
-          <MousePointerClick className="h-2.5 w-2.5" />
-        </button>
-      </div>
-
-      <div className={`mt-1 truncate text-center font-mono text-[8px] leading-none ${inputError || overAllocated ? 'text-error' : 'text-text-muted'}`}>
-        {inputError
-          ? 'Unavailable'
-          : selected
-            ? overAllocated
+      {hasItem ? (
+        <>
+          <QuantityAssetTile
+            size={76}
+            visual={(
+              <button
+                type="button"
+                onClick={onPick}
+                disabled={pickerDisabled}
+                className={`flex h-full w-full items-center justify-center rounded-xl border bg-bg-input/55 transition focus:outline-none focus:ring-2 focus:ring-primary/45 disabled:cursor-not-allowed disabled:opacity-40 ${overAllocated ? 'border-error/55' : 'border-primary/35 hover:border-primary/70 hover:bg-primary/8'}`}
+                title={pickerDisabled ? `No available ${itemKindLabel}s in this inventory` : `Change ${itemKindLabel}`}
+                aria-label={`Change ${slotLabel}`}
+              >
+                {kind === 'troop' ? (
+                  <UnitImage unitId={slot.itemId} size={68} showLevel className="rounded-xl" />
+                ) : (
+                  <ToolImage toolId={slot.itemId} size={68} className="rounded-xl" />
+                )}
+              </button>
+            )}
+            quantity={fixedQuantity == null ? (
+              <input
+                type="number"
+                min={0}
+                max={available || undefined}
+                value={slot.quantity || ''}
+                onChange={(event) => onChange({ quantity: positiveInteger(event.target.value) })}
+                onClick={(event) => event.stopPropagation()}
+                placeholder="0"
+                className="w-12 bg-transparent p-0 text-center font-mono text-[10px] font-black tabular-nums text-slate-900 outline-none"
+                aria-label={`${slotLabel} amount`}
+                title={`${slotLabel} amount`}
+              />
+            ) : (
+              <span
+                className="font-mono text-[10px] font-black tabular-nums text-slate-900"
+                aria-label={`${slotLabel} amount ${fixedQuantity}`}
+                title={`${slotLabel} uses one tool`}
+              >
+                ×{fixedQuantity}
+              </span>
+            )}
+            onRemove={() => onChange({ itemId: null, quantity: 0 })}
+            removeLabel={`Clear ${slotLabel}`}
+          />
+          <button
+            type="button"
+            onClick={onPick}
+            disabled={pickerDisabled}
+            className="mt-1.5 line-clamp-2 h-7 w-full text-center text-[10px] font-bold leading-[1.05] text-text-main transition hover:text-primary disabled:cursor-not-allowed"
+            title={itemName}
+          >
+            {itemName}
+          </button>
+          <div className={`mt-1 truncate text-center font-mono text-[9px] leading-none ${overAllocated ? 'text-error' : 'text-text-muted'}`}>
+            {overAllocated
               ? `${allocated.toLocaleString()}/${available.toLocaleString()} used`
-              : `${Math.max(0, remainingAfterPreset).toLocaleString()} left`
-            : 'Empty'}
-      </div>
+              : `${Math.max(0, remainingAfterPreset).toLocaleString()} left`}
+          </div>
+        </>
+      ) : (
+        <>
+          <AddSlot
+            label={`Choose ${itemKindLabel}`}
+            layout="stacked"
+            onClick={onPick}
+            disabled={pickerDisabled}
+            className="h-[76px] w-[76px] shrink-0 px-1 text-[9px] disabled:cursor-not-allowed disabled:opacity-40"
+            title={pickerDisabled ? `No available ${itemKindLabel}s in this inventory` : `Choose ${itemKindLabel}`}
+            aria-label={`Choose ${slotLabel}`}
+          />
+          <span className="mt-1.5 flex h-7 items-center text-center text-[10px] font-bold leading-[1.05] text-text-muted">
+            Empty {itemKindLabel} slot
+          </span>
+          <span className="mt-1 font-mono text-[9px] leading-none text-text-muted">Available</span>
+        </>
+      )}
     </div>
   );
 };
 
 function aggregateCastleInventory(
-  castles: Map<number, { troops?: { troopsI?: Record<string, number> } }>,
+  castles: CastleStateV2[],
   troopMetadata: Record<number, MetadataItem>,
   toolMetadata: Record<number, MetadataItem>
 ): { troops: Record<number, number>; tools: Record<number, number>; castleCount: number } {
   const troopStock: Record<number, number> = {};
   const toolStock: Record<number, number> = {};
   let castleCount = 0;
-  for (const castle of castles.values()) {
+  for (const castle of castles) {
     castleCount += 1;
-    for (const [rawID, rawCount] of Object.entries(castle.troops?.troopsI ?? {})) {
+    for (const [rawID, rawCount] of Object.entries(castle.units.stationed)) {
       const id = Number(rawID);
       const count = positiveInteger(rawCount);
       if (!Number.isFinite(id) || id <= 0 || count <= 0) continue;
@@ -739,8 +893,11 @@ function aggregateCastleInventory(
   return { troops: troopStock, tools: toolStock, castleCount };
 }
 
-function inventoryItems(stock: Record<number, number>, metadata: Record<number, MetadataItem>): InventoryItem[] {
-  return Object.entries(stock)
+function inventoryItems(stock: Record<number, number>, metadata: Record<number, MetadataItem>, includeUnowned: boolean): InventoryItem[] {
+  const entries = includeUnowned
+    ? Object.keys(metadata).map((rawID) => [rawID, stock[Number(rawID)] ?? 0] as const)
+    : Object.entries(stock);
+  return entries
     .map(([rawID, count]) => {
       const id = Number(rawID);
       const itemMetadata = metadata[id];
@@ -749,23 +906,6 @@ function inventoryItems(stock: Record<number, number>, metadata: Record<number, 
     })
     .filter((item): item is InventoryItem => item != null)
     .sort((a, b) => a.name.localeCompare(b.name) || a.id - b.id);
-}
-
-function matchInventoryItem(value: string, items: InventoryItem[]): InventoryItem | undefined {
-  const normalized = value.trim().toLowerCase();
-  const idMatch = normalized.match(/(?:#|\()?(\d+)\)?$/);
-  if (idMatch) {
-    const item = items.find((candidate) => candidate.id === Number(idMatch[1]));
-    if (item) return item;
-  }
-  const exact = items.find((item) => item.name.toLowerCase() === normalized);
-  if (exact) return exact;
-  const partial = items.filter((item) => item.name.toLowerCase().includes(normalized));
-  return partial.length === 1 ? partial[0] : undefined;
-}
-
-function itemInputLabel(item: Pick<InventoryItem, 'id' | 'name'>): string {
-  return `${item.name} (#${item.id})`;
 }
 
 function allocatedInventory(draft: AttackSetupDraft): { troops: Record<number, number>; tools: Record<number, number> } {
@@ -782,6 +922,16 @@ function allocatedInventory(draft: AttackSetupDraft): { troops: Record<number, n
           allocations.tools[slot.itemId] = (allocations.tools[slot.itemId] ?? 0) + slot.quantity;
         }
       }
+    }
+  }
+  for (const slot of draft.courtyardSupport.troops) {
+    if (slot.itemId != null && slot.quantity > 0) {
+      allocations.troops[slot.itemId] = (allocations.troops[slot.itemId] ?? 0) + slot.quantity;
+    }
+  }
+  for (const slot of draft.courtyardSupport.tools) {
+    if (slot.itemId != null) {
+      allocations.tools[slot.itemId] = (allocations.tools[slot.itemId] ?? 0) + 1;
     }
   }
   return allocations;
@@ -812,11 +962,26 @@ function positiveInteger(value: string | number): number {
   return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : 0;
 }
 
-function summarizeDraft(draft: AttackSetupDraft): { troops: number; tools: number } {
-  return draft.waves.reduce((total, wave) => {
+function summarizeDraft(draft: AttackSetupDraft): {
+  troops: number;
+  tools: number;
+  formationTroops: number;
+  courtyardTroops: number;
+  courtyardTools: number;
+} {
+  const formation = draft.waves.reduce((total, wave) => {
     const waveTotal = summarizeWave(wave);
     return { troops: total.troops + waveTotal.troops, tools: total.tools + waveTotal.tools };
   }, { troops: 0, tools: 0 });
+  const courtyardTroops = draft.courtyardSupport.troops.reduce((total, slot) => total + slot.quantity, 0);
+  const courtyardTools = draft.courtyardSupport.tools.filter((slot) => slot.itemId != null).length;
+  return {
+    troops: formation.troops + courtyardTroops,
+    tools: formation.tools + courtyardTools,
+    formationTroops: formation.troops,
+    courtyardTroops,
+    courtyardTools,
+  };
 }
 
 function summarizeWave(wave: AttackSetupWave): { troops: number; tools: number } {
@@ -838,7 +1003,11 @@ function normalizeDraft(draft?: AttackSetupDraft): AttackSetupDraft {
   const waves = (draft.waves.length > 0 ? draft.waves : [emptyWave()])
     .slice(0, MAX_WAVES)
     .map(normalizeWave);
-  return { name: draft.name || 'New attack preset', waves };
+  return {
+    name: draft.name || 'New attack preset',
+    waves,
+    courtyardSupport: normalizeCourtyardSupport(draft.courtyardSupport),
+  };
 }
 
 function normalizeWave(wave: AttackSetupWave): AttackSetupWave {
@@ -865,8 +1034,22 @@ function normalizeSlots(slots: AttackSetupSlot[] | undefined, count: number): At
   });
 }
 
+function normalizeCourtyardSupport(support?: AttackSetupCourtyardSupport): AttackSetupCourtyardSupport {
+  return {
+    troops: normalizeSlots(support?.troops, COURTYARD_TROOP_SLOTS),
+    tools: Array.from({ length: COURTYARD_TOOL_SLOTS }, (_, index) => {
+      const slot = support?.tools[index];
+      return slot?.itemId == null ? emptySlot() : { itemId: slot.itemId, quantity: 1 };
+    }),
+  };
+}
+
 function defaultDraft(): AttackSetupDraft {
-  return { name: 'New attack preset', waves: [emptyWave()] };
+  return {
+    name: 'New attack preset',
+    waves: [emptyWave()],
+    courtyardSupport: normalizeCourtyardSupport(),
+  };
 }
 
 function emptyWave(): AttackSetupWave {
@@ -893,6 +1076,10 @@ function laneLabel(laneKey: LaneKey): string {
   if (laneKey === 'L') return 'Left flank';
   if (laneKey === 'M') return 'Center front';
   return 'Right flank';
+}
+
+function isSceatAttackSupportTool(metadata: MetadataItem): boolean {
+  return typeof metadata.type === 'string' && metadata.type.startsWith('SceatSuppAtt');
 }
 
 export default AttackSetupModal;

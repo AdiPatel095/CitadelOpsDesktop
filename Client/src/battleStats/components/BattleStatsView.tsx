@@ -13,14 +13,13 @@ import {
   Swords,
   Users,
 } from 'lucide-react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Select } from '../../components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, MetricTile, SectionCard, Select } from '../../components/ui';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
 import DetailBackButton from '../../components/DetailBackButton';
-import { useMetadata } from '../../context/MetadataContext';
-import { useLastKnownSnapshot } from '../../context/LastKnownSnapshotContext';
-import { FrontendWebsocket } from '../../Websocket';
-import { TROOP_METADATA } from '../../config/Constants';
+import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
+import { useCitadelAPI } from '../../api/ApiContext';
+import type { GameStateV2 } from '../../api/Contracts';
 import type {
   BattleCombatant,
   BattleEffect,
@@ -33,24 +32,11 @@ import type {
 } from '../types/BattleStats';
 
 const dataSources = [
-  '/api/battle-reports/cloud',
-  '/api/battleReports/cloud',
-  '/api/reports/battle',
-  '/api/battle-reports',
-  '/api/battleReports',
-  '/Data/BattleReports.jsonl',
-  '/BattleReports.jsonl',
+  '/api/v2/history/battle-reports/cloud',
+  '/api/v2/history/battle-reports?limit=10000',
 ];
 
 const REPORT_ROWS_PAGE_SIZE = 250;
-
-const kingdomNames: Record<number, string> = {
-  0: 'The Great Empire (Green)',
-  1: 'The Burning Sands (Sand)',
-  2: 'The Everwinter Glacier (Ice)',
-  3: 'The Fire Peaks (Fire)',
-  4: 'The Storm Islands (Storm)',
-};
 
 const allOption = 'all';
 
@@ -66,9 +52,8 @@ interface AllianceMemberOption extends FilterOption {
 type CombatantSide = 'attacker' | 'defender';
 
 const BattleStatsView: React.FC = () => {
-  const { snapshot } = useLastKnownSnapshot();
+  const { state, submitIntent } = useCitadelAPI();
   const [reports, setReports] = useState<ParsedReport[]>([]);
-  const [allianceInfo, setAllianceInfo] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sourceLabel, setSourceLabel] = useState<string>('Not loaded');
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,12 +91,8 @@ const BattleStatsView: React.FC = () => {
       setSourceLabel(emptySource ? `${emptySource} is empty` : 'No local archive found');
       setSelectedReportID(null);
     } catch (error) {
-      FrontendWebsocket.showAlert(
-        'red',
-        error instanceof Error ? error.message : 'Could not load battle reports'
-      );
       setReports([]);
-      setSourceLabel('Load failed');
+      setSourceLabel(error instanceof Error ? `Load failed: ${error.message}` : 'Load failed');
       setSelectedReportID(null);
     } finally {
       setIsLoading(false);
@@ -119,25 +100,34 @@ const BattleStatsView: React.FC = () => {
   };
 
   useEffect(() => {
-    const handleMessage = (message: { type?: string; payload?: unknown }) => {
-      if (message.type === 'allianceInfo' && isRecord(message.payload)) {
-        setAllianceInfo(message.payload);
-      }
-    };
-
-    FrontendWebsocket.addMessageListener(handleMessage);
-    FrontendWebsocket.sendFetchAllianceInfo();
     void loadReports();
-
-    return () => FrontendWebsocket.removeMessageListener(handleMessage);
   }, []);
 
+  useEffect(() => {
+    if (
+      !state?.session.loggedIn ||
+      !state.session.socketReady ||
+      state.session.baselineGeneration !== state.session.generation ||
+      state.alliance.id <= 0
+    ) {
+      return;
+    }
+    void submitIntent('alliance.refresh', {}, { actor: 'ui:battle-stats' }).catch(() => undefined);
+  }, [
+    state?.alliance.id,
+    state?.session.baselineGeneration,
+    state?.session.generation,
+    state?.session.loggedIn,
+    state?.session.socketReady,
+    submitIntent,
+  ]);
+
   const allianceMembers = useMemo(
-    () => allianceMemberOptionsFromSources(snapshot, allianceInfo),
-    [snapshot, allianceInfo]
+    () => allianceMemberOptionsFromState(state),
+    [state]
   );
   const allianceMemberKeys = useMemo(() => allianceMemberKeysFromOptions(allianceMembers), [allianceMembers]);
-  const ownPlayerKeys = useMemo(() => ownPlayerKeysFromSnapshot(snapshot), [snapshot]);
+  const ownPlayerKeys = useMemo(() => ownPlayerKeysFromState(state), [state]);
   const playerHasAllianceEntry = useMemo(
     () => allianceMemberKeys.size > 0 && (ownPlayerKeys.size === 0 || setsOverlap(allianceMemberKeys, ownPlayerKeys)),
     [allianceMemberKeys, ownPlayerKeys]
@@ -150,7 +140,8 @@ const BattleStatsView: React.FC = () => {
     () => resolveHomeAllianceKey(reports, allianceMemberKeys),
     [reports, allianceMemberKeys]
   );
-  const homeAllianceKey = playerHasAllianceEntry ? rosterHomeAllianceKey : '';
+  const stateHomeAllianceKey = state?.alliance.name?.trim().toLowerCase() ?? '';
+  const homeAllianceKey = stateHomeAllianceKey || (playerHasAllianceEntry ? rosterHomeAllianceKey : '');
   const reportsWithBothPlayers = useMemo(
     () => reports.filter(hasBothPlayers),
     [reports]
@@ -307,89 +298,86 @@ const BattleStatsView: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="data-view-render-stable flex flex-col gap-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
         <aside className="xl:w-[21.5rem] shrink-0">
-          <Card variant="solid" className="liquid-prominent-header-card">
-            <CardHeader className="liquid-card-header-prominent">
-              <div>
-                <CardTitle>Battle Stats</CardTitle>
-                <p className="mt-1.5 text-xs font-semibold text-text-muted">{sourceLabel}</p>
+          <SectionCard
+            title="Battle Stats"
+            description={sourceLabel}
+            descriptionClassName="mt-1.5 font-semibold"
+            actions={<Button
+              variant="ghost"
+              size="icon"
+              onClick={() => void loadReports()}
+              isLoading={isLoading}
+              title="Refresh battle reports"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>}
+            contentClassName="battle-filters-grid"
+          >
+            <Input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Find player, alliance, castle"
+              leftIcon={<Search className="w-4 h-4" />}
+            />
+
+            <FilterField label="Date range" icon={<CalendarDays className="w-4 h-4" />}>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+                <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => void loadReports()}
-                isLoading={isLoading}
-                title="Refresh battle reports"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="liquid-prominent-header-content battle-filters-grid">
-              <Input
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Find player, alliance, castle"
-                leftIcon={<Search className="w-4 h-4" />}
+            </FilterField>
+
+            <FilterField label="Alliance player" icon={<Users className="w-4 h-4" />}>
+              <Select value={selectedPlayer} options={playerOptions} onChange={setSelectedPlayer} menuGrowToViewport />
+            </FilterField>
+
+            <FilterField label="Opponent player" icon={<Swords className="w-4 h-4" />}>
+              <Select
+                value={selectedOpponentPlayer}
+                options={opponentPlayerOptions}
+                onChange={setSelectedOpponentPlayer}
+                menuGrowToViewport
               />
+            </FilterField>
 
-              <FilterField label="Date range" icon={<CalendarDays className="w-4 h-4" />}>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
-                  <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
-                </div>
-              </FilterField>
+            <FilterField label="Opponent alliance" icon={<Shield className="w-4 h-4" />}>
+              <Select value={selectedAlliance} options={allianceOptions} onChange={setSelectedAlliance} menuGrowToViewport />
+            </FilterField>
 
-              <FilterField label="Alliance player" icon={<Users className="w-4 h-4" />}>
-                <Select value={selectedPlayer} options={playerOptions} onChange={setSelectedPlayer} menuGrowToViewport />
-              </FilterField>
+            <FilterField label="Result" icon={<BarChart3 className="w-4 h-4" />}>
+              <Select
+                value={selectedResult}
+                onChange={setSelectedResult}
+                options={[
+                  { value: allOption, label: 'All results' },
+                  { value: 'Attack won', label: 'Attack won' },
+                  { value: 'Attack lost', label: 'Attack lost' },
+                  { value: 'Defense win', label: 'Defense win' },
+                  { value: 'Defense lost', label: 'Defense lost' },
+                ]}
+              />
+            </FilterField>
 
-              <FilterField label="Opponent player" icon={<Swords className="w-4 h-4" />}>
-                <Select
-                  value={selectedOpponentPlayer}
-                  options={opponentPlayerOptions}
-                  onChange={setSelectedOpponentPlayer}
-                  menuGrowToViewport
-                />
-              </FilterField>
+            <FilterField label="Role" icon={<Castle className="w-4 h-4" />}>
+              <Select
+                value={selectedRole}
+                onChange={setSelectedRole}
+                options={[
+                  { value: allOption, label: 'All roles' },
+                  { value: 'Attacker', label: 'Attacker' },
+                  { value: 'Defender', label: 'Defender' },
+                ]}
+              />
+            </FilterField>
 
-              <FilterField label="Opponent alliance" icon={<Shield className="w-4 h-4" />}>
-                <Select value={selectedAlliance} options={allianceOptions} onChange={setSelectedAlliance} menuGrowToViewport />
-              </FilterField>
+            <Button variant="outline" className="w-full" onClick={resetFilters}>
+              Reset filters
+            </Button>
 
-              <FilterField label="Result" icon={<BarChart3 className="w-4 h-4" />}>
-                <Select
-                  value={selectedResult}
-                  onChange={setSelectedResult}
-                  options={[
-                    { value: allOption, label: 'All results' },
-                    { value: 'Attack won', label: 'Attack won' },
-                    { value: 'Attack lost', label: 'Attack lost' },
-                    { value: 'Defense win', label: 'Defense win' },
-                    { value: 'Defense lost', label: 'Defense lost' },
-                  ]}
-                />
-              </FilterField>
-
-              <FilterField label="Role" icon={<Castle className="w-4 h-4" />}>
-                <Select
-                  value={selectedRole}
-                  onChange={setSelectedRole}
-                  options={[
-                    { value: allOption, label: 'All roles' },
-                    { value: 'Attacker', label: 'Attacker' },
-                    { value: 'Defender', label: 'Defender' },
-                  ]}
-                />
-              </FilterField>
-
-              <Button variant="outline" className="w-full" onClick={resetFilters}>
-                Reset filters
-              </Button>
-
-            </CardContent>
-          </Card>
+          </SectionCard>
         </aside>
 
         <section className="flex-1 min-w-0 space-y-4">
@@ -407,21 +395,22 @@ const BattleStatsView: React.FC = () => {
             <AllianceAggregateTable rows={allianceAggregates} />
           </div>
 
-          <Card variant="solid" className="liquid-prominent-header-card">
-            <CardHeader className="liquid-card-header-prominent">
-              <div>
-                <CardTitle>Reports</CardTitle>
-                <p className="text-xs text-text-muted mt-1">
-                  Showing {formatNumber(visibleReports.length)} of {formatNumber(filteredReports.length)} filtered reports
-                  <span className="text-text-muted/70"> · {formatNumber(scopedReports.length)} parsed</span>
-                </p>
-              </div>
-              <Badge variant="secondary">{isLoading ? 'Loading' : 'Ready'}</Badge>
-            </CardHeader>
-            <div className="liquid-prominent-header-content liquid-prominent-header-content-flush overflow-x-auto">
-              <table className="battle-table w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
+          <SectionCard
+            title="Reports"
+            description={(
+              <>
+                Showing {formatNumber(visibleReports.length)} of {formatNumber(filteredReports.length)} filtered reports
+                <span className="text-text-muted/70"> · {formatNumber(scopedReports.length)} parsed</span>
+              </>
+            )}
+            descriptionClassName=""
+            actions={<Badge variant="secondary">{isLoading ? 'Loading' : 'Ready'}</Badge>}
+            contentClassName="overflow-x-auto"
+            flush
+          >
+            <table className="battle-table w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
                     <th className="px-4 py-3 font-semibold">Time</th>
                     <th className="px-4 py-3 font-semibold">Attacker</th>
                     <th className="px-4 py-3 font-semibold">Defender</th>
@@ -430,9 +419,9 @@ const BattleStatsView: React.FC = () => {
                     <th className="px-4 py-3 font-semibold text-right">Attack lost</th>
                     <th className="px-4 py-3 font-semibold text-right">Def lost</th>
                     <th className="px-3 py-3 font-semibold text-right w-12" aria-label="Open details"></th>
-                  </tr>
-                </thead>
-                <tbody>
+                </tr>
+              </thead>
+              <tbody>
                   {visibleReports.map((report) => (
                     <tr
                       key={reportID(report)}
@@ -468,27 +457,26 @@ const BattleStatsView: React.FC = () => {
                         </Button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              {visibleReports.length < filteredReports.length && (
-                <div className="flex justify-center border-t border-border-base/70 px-4 py-4">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setVisibleReportLimit((current) => current + REPORT_ROWS_PAGE_SIZE)}
-                  >
-                    Show {formatNumber(Math.min(REPORT_ROWS_PAGE_SIZE, filteredReports.length - visibleReports.length))} more
-                  </Button>
-                </div>
-              )}
-            </div>
+                ))}
+              </tbody>
+            </table>
+            {visibleReports.length < filteredReports.length && (
+              <div className="flex justify-center border-t border-border-base/70 px-4 py-4">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setVisibleReportLimit((current) => current + REPORT_ROWS_PAGE_SIZE)}
+                >
+                  Show {formatNumber(Math.min(REPORT_ROWS_PAGE_SIZE, filteredReports.length - visibleReports.length))} more
+                </Button>
+              </div>
+            )}
             {filteredReports.length === 0 && (
               <div className="px-5 py-12 text-center text-text-muted">
                 No player battle reports match the current filters.
               </div>
             )}
-          </Card>
+          </SectionCard>
         </section>
       </div>
     </div>
@@ -607,16 +595,8 @@ interface AllianceAggregate {
 }
 
 const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) => (
-  <Card variant="solid" className="liquid-prominent-header-card">
-    <CardHeader className="liquid-card-header-prominent">
-      <div>
-        <CardTitle>Player Aggregate</CardTitle>
-        <p className="text-xs text-text-muted mt-1">Filtered battle totals by player</p>
-      </div>
-      <Badge variant="secondary">{rows.length} players</Badge>
-    </CardHeader>
-    <div className="liquid-prominent-header-content liquid-prominent-header-content-flush">
-      <div className="overflow-x-auto">
+  <SectionCard title="Player Aggregate" description="Filtered battle totals by player" descriptionClassName="" actions={<Badge variant="secondary">{rows.length} players</Badge>} flush>
+    <div className="overflow-x-auto">
         <table className="battle-aggregate-table w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
@@ -625,7 +605,7 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
               <th className="px-4 py-3 font-semibold text-right">A / D</th>
               <th className="px-4 py-3 font-semibold text-right">W / L</th>
               <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost in attacks by this player">Attack Ratio</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Defenders lost per attacker killed in defenses by this player">Defense Ratio</th>
+              <th className="px-4 py-3 font-semibold text-right" title="Attackers killed per defender lost in defenses by this player">Defense Ratio</th>
             </tr>
           </thead>
           <tbody>
@@ -646,31 +626,22 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
                   {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
                 </td>
                 <td className="px-4 py-3 text-right text-error font-semibold">
-                  {formatRatio(row.defenseDefendersLost, row.defenseAttackersKilled)}
+                  {formatRatio(row.defenseAttackersKilled, row.defenseDefendersLost)}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-      {rows.length === 0 && (
-        <div className="px-5 py-10 text-center text-text-muted">No player aggregate for the current filters.</div>
-      )}
     </div>
-  </Card>
+    {rows.length === 0 && (
+      <div className="px-5 py-10 text-center text-text-muted">No player aggregate for the current filters.</div>
+    )}
+  </SectionCard>
 );
 
 const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows }) => (
-  <Card variant="solid" className="liquid-prominent-header-card">
-    <CardHeader className="liquid-card-header-prominent">
-      <div>
-        <CardTitle>Alliance Aggregate</CardTitle>
-        <p className="text-xs text-text-muted mt-1">Filtered battle totals by alliance</p>
-      </div>
-      <Badge variant="secondary">{rows.length} alliances</Badge>
-    </CardHeader>
-    <div className="liquid-prominent-header-content liquid-prominent-header-content-flush">
-      <div className="overflow-x-auto">
+  <SectionCard title="Alliance Aggregate" description="Filtered battle totals by alliance" descriptionClassName="" actions={<Badge variant="secondary">{rows.length} alliances</Badge>} flush>
+    <div className="overflow-x-auto">
         <table className="battle-aggregate-table w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
@@ -678,7 +649,7 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
               <th className="px-4 py-3 font-semibold text-right">Reports</th>
               <th className="px-4 py-3 font-semibold text-right">W / L</th>
               <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost when attacking this alliance">Attack Ratio</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Defenders lost per attacker killed when defending against this alliance">Defense Ratio</th>
+              <th className="px-4 py-3 font-semibold text-right" title="Attackers killed per defender lost when defending against this alliance">Defense Ratio</th>
             </tr>
           </thead>
           <tbody>
@@ -695,18 +666,17 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
                   {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
                 </td>
                 <td className="px-4 py-3 text-right text-error font-semibold">
-                  {formatRatio(row.defenseDefendersLost, row.defenseAttackersKilled)}
+                  {formatRatio(row.defenseAttackersKilled, row.defenseDefendersLost)}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-      {rows.length === 0 && (
-        <div className="px-5 py-10 text-center text-text-muted">No alliance aggregate for the current filters.</div>
-      )}
     </div>
-  </Card>
+    {rows.length === 0 && (
+      <div className="px-5 py-10 text-center text-text-muted">No alliance aggregate for the current filters.</div>
+    )}
+  </SectionCard>
 );
 
 const ReportDetailPage: React.FC<{
@@ -720,7 +690,7 @@ const ReportDetailPage: React.FC<{
   perspectiveSide,
   onBack,
 }) => (
-  <div className="space-y-4">
+  <div className="data-view-render-stable space-y-4">
     <BattleDetailsHeader report={report} outcome={outcome} onBack={onBack} />
     <ReportDetails report={report} outcome={outcome} perspectiveSide={perspectiveSide} />
   </div>
@@ -759,17 +729,11 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
       />
 
       {report.waves && report.waves.length > 0 && (
-        <Card variant="solid" className="liquid-prominent-header-card">
-          <CardHeader className="liquid-card-header-prominent">
-            <CardTitle>Wall Waves</CardTitle>
-            <Badge variant="secondary">{report.waves.length} waves</Badge>
-          </CardHeader>
-          <CardContent className="liquid-prominent-header-content space-y-3">
+        <SectionCard title="Wall Waves" actions={<Badge variant="secondary">{report.waves.length} waves</Badge>} contentClassName="space-y-3">
             {report.waves.map((wave, index) => (
               <WaveRow key={`${wave.wave ?? wave.index ?? index}-${index}`} wave={wave} index={index} />
             ))}
-          </CardContent>
-        </Card>
+        </SectionCard>
       )}
     </div>
   );
@@ -780,6 +744,7 @@ const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onB
   outcome,
   onBack,
 }) => {
+	const { kingdoms } = useMetadata();
   return (
     <Card variant="solid" className="battle-report-dossier">
       <div className="battle-report-dossier-top">
@@ -813,7 +778,7 @@ const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onB
       <div className="battle-report-intel-strip">
         <BannerFact icon={<CalendarDays className="h-4 w-4" />} label="Date" value={formatDate(report)} />
         <BannerFact icon={<MapPin className="h-4 w-4" />} label="Coordinates" value={battleCoordinateLabel(report)} />
-        <BannerFact icon={<Shield className="h-4 w-4" />} label="Kingdom" value={kingdomLabel(report)} />
+		<BannerFact icon={<Shield className="h-4 w-4" />} label="Kingdom" value={kingdomLabel(report, kingdoms)} />
       </div>
     </Card>
   );
@@ -856,12 +821,13 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
   report,
   perspectiveSide,
 }) => {
+	const { getTroop } = useMetadata();
   const side = perspectiveSide || 'attacker';
   const attackerSent = metricValue(report.metrics, 'attackerSent', 'attackSent');
   const attackerLost = metricValue(report.metrics, 'attackerLost', 'attackLost');
   const defenderStationed = metricValue(report.metrics, 'defenderStationed');
   const defenderLost = metricValue(report.metrics, 'defenderLost', 'defenseLost');
-  const defenderLossesByRole = defenderLossRoleTotals(report);
+	const defenderLossesByRole = defenderLossRoleTotals(report, getTroop);
   const isDefenseView = side === 'defender';
   const ourForce = isDefenseView ? defenderStationed : attackerSent;
   const ourLost = isDefenseView ? defenderLost : attackerLost;
@@ -869,28 +835,23 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
   const opponentLost = isDefenseView ? attackerLost : defenderLost;
   const totalLosses = attackerLost + defenderLost;
   const tradeRatio = formatTradeRatio(opponentLost, ourLost);
-  const tradeTone = opponentLost > ourLost ? 'success' : opponentLost < ourLost ? 'danger' : 'neutral';
+  const tradeTone = opponentLost > ourLost ? 'success' : opponentLost < ourLost ? 'danger' : 'default';
 
   return (
-    <Card variant="solid" className="liquid-prominent-header-card">
-      <CardHeader className="liquid-card-header-prominent">
-        <div>
-          <CardTitle>All Unit Stats</CardTitle>
-          <p className="text-xs text-text-muted mt-1">
-            {isDefenseView ? 'Defense perspective' : 'Attack perspective'} based on the selected player or alliance.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={isDefenseView ? 'primary' : 'danger'}>{isDefenseView ? 'Defender view' : 'Attacker view'}</Badge>
-          <BarChart3 className="w-5 h-5 text-primary" />
-        </div>
-      </CardHeader>
-      <CardContent className="liquid-prominent-header-content">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+    <SectionCard
+      title="All Unit Stats"
+      description={`${isDefenseView ? 'Defense' : 'Attack'} perspective based on the selected player or alliance.`}
+      descriptionClassName=""
+      actions={<div className="flex items-center gap-2">
+        <Badge variant={isDefenseView ? 'primary' : 'danger'}>{isDefenseView ? 'Defender view' : 'Attacker view'}</Badge>
+        <BarChart3 className="w-5 h-5 text-primary" />
+      </div>}
+    >
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           <MetricTile
             label={isDefenseView ? 'Our stationed' : 'Our sent'}
             value={ourForce}
-            tone={isDefenseView ? 'info' : 'neutral'}
+            tone={isDefenseView ? 'info' : 'default'}
           />
           {isDefenseView ? (
             <SplitMetricTile
@@ -908,7 +869,7 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
           <MetricTile
             label={isDefenseView ? 'Opponent sent' : 'Opponent stationed'}
             value={opponentForce}
-            tone={isDefenseView ? 'neutral' : 'info'}
+            tone={isDefenseView ? 'default' : 'info'}
           />
           {isDefenseView ? (
             <MetricTile label="Opponent losses" value={opponentLost} tone="success" />
@@ -925,43 +886,8 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
           )}
           <MetricTile label="Trade ratio" value={tradeRatio} tone={tradeTone} caption="Opponent losses per our loss" />
           <MetricTile label="Total losses" value={totalLosses} tone="danger" caption="Both sides combined" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const MetricTile: React.FC<{
-  label: string;
-  value: number | string;
-  tone?: 'neutral' | 'success' | 'danger' | 'info';
-  caption?: string;
-}> = ({
-  label,
-  value,
-  tone = 'neutral',
-  caption,
-}) => {
-  const toneClass = {
-    neutral: 'text-text-main',
-    success: 'text-success',
-    danger: 'text-error',
-    info: 'text-info',
-  }[tone];
-  const borderClass = {
-    neutral: 'border-border-base',
-    success: 'border-success/20',
-    danger: 'border-error/20',
-    info: 'border-info/20',
-  }[tone];
-  const displayValue = typeof value === 'number' ? formatNumber(value) : value;
-
-  return (
-    <div className={`border rounded-global px-3 py-3 bg-bg-app ${borderClass}`}>
-      <div className="text-xs text-text-muted">{label}</div>
-      <div className={`text-lg font-bold mt-1 ${toneClass}`}>{displayValue}</div>
-      {caption && <div className="mt-1 text-[11px] text-text-muted">{caption}</div>}
-    </div>
+      </div>
+    </SectionCard>
   );
 };
 
@@ -1507,7 +1433,15 @@ function reportsFromUnknown(value: unknown): ParsedReport[] {
 }
 
 function hasBothPlayers(report: ParsedReport): boolean {
-  return Boolean(combatantKey(report.attacker) && combatantKey(report.defender));
+  return combatantHasRealPlayer(report.attacker) && combatantHasRealPlayer(report.defender);
+}
+
+function combatantHasRealPlayer(combatant?: BattleCombatant): boolean {
+  if (!combatant || combatant.dummy === true) {
+    return false;
+  }
+  const id = numericValue(combatant.playerID ?? combatant.playerId);
+  return id !== null && id > 0;
 }
 
 function summarizeReports(
@@ -1540,50 +1474,21 @@ function summarizeReports(
   );
 }
 
-function allianceMemberOptionsFromSources(
-  snapshot: Record<string, unknown> | null,
-  allianceInfo: Record<string, unknown> | null
-): AllianceMemberOption[] {
+function allianceMemberOptionsFromState(state: GameStateV2 | null): AllianceMemberOption[] {
   const rows = new Map<string, AllianceMemberOption>();
-  const gameState = isRecord(snapshot?.gameState) ? snapshot.gameState : null;
-  addAllianceMemberOptions(rows, isRecord(gameState?.alliance) ? gameState.alliance : null);
-  addAllianceMemberOptions(rows, allianceInfo);
-
-  return Array.from(rows.values()).sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function addAllianceMemberOptions(
-  rows: Map<string, AllianceMemberOption>,
-  alliance: Record<string, unknown> | null
-) {
-  const members = Array.isArray(alliance?.members) ? alliance.members : [];
-
-  members.forEach((member) => {
-    if (!isRecord(member)) {
-      return;
-    }
-
-    const id = stringValue(member.playerID ?? member.playerId ?? member.oid ?? member.OID ?? member.id ?? member.ID);
-    const name = stringValue(member.name ?? member.playerName ?? member.N ?? member.PN ?? member.Name);
+  for (const member of state?.alliance.members ?? []) {
+    const id = String(member.playerId || '');
+    const name = member.name?.trim() || '';
     const value = id || name.toLowerCase();
-    if (!value) {
-      return;
-    }
-
-    const keys = new Set<string>();
-    if (id) {
-      keys.add(id);
-    }
-    if (name) {
-      keys.add(name.toLowerCase());
-    }
-
+    if (!value) continue;
     rows.set(value, {
       value,
       label: name || `Player ${id}`,
-      keys: Array.from(keys),
+      keys: [id, name.toLowerCase()].filter(Boolean),
     });
-  });
+  }
+
+  return Array.from(rows.values()).sort((a, b) => a.label.localeCompare(b.label));
 }
 
 function allianceMemberKeysFromOptions(options: AllianceMemberOption[]): Set<string> {
@@ -1605,23 +1510,10 @@ function setsOverlap(left: Set<string>, right: Set<string>): boolean {
   return false;
 }
 
-function ownPlayerKeysFromSnapshot(snapshot: Record<string, unknown> | null): Set<string> {
+function ownPlayerKeysFromState(state: GameStateV2 | null): Set<string> {
   const keys = new Set<string>();
-  const gameState = isRecord(snapshot?.gameState) ? snapshot.gameState : null;
-  const player = isRecord(gameState?.player) ? gameState.player : null;
-  const id = stringValue(
-    gameState?.playerId ??
-    gameState?.playerID ??
-    gameState?.PlayerID ??
-    player?.id ??
-    player?.ID ??
-    player?.playerID ??
-    player?.playerId
-  );
-
-  if (id) {
-    keys.add(id);
-  }
+  if (state?.player.id) keys.add(String(state.player.id));
+  if (state?.player.name?.trim()) keys.add(state.player.name.trim().toLowerCase());
 
   return keys;
 }
@@ -2207,10 +2099,10 @@ function battlePhaseTotals(
   );
 }
 
-function kingdomLabel(report: ParsedReport): string {
+function kingdomLabel(report: ParsedReport, kingdoms: Record<number, MetadataItem> = {}): string {
   const id = numericValue(report.kingdomID ?? report.kingdomId);
   if (id !== null) {
-    return kingdomNames[id] ?? `Kingdom ${id}`;
+		return kingdoms[id]?.name ?? `Kingdom ${id}`;
   }
   return 'Kingdom unknown';
 }
@@ -2760,7 +2652,10 @@ function metricValue(metrics: BattleMetrics | undefined, ...keys: (keyof BattleM
   return 0;
 }
 
-function defenderLossRoleTotals(report: ParsedReport): { attack: number; defense: number; unknown: number } {
+function defenderLossRoleTotals(
+	report: ParsedReport,
+	getTroop: (id: number) => MetadataItem | undefined,
+): { attack: number; defense: number; unknown: number } {
   const totals = { attack: 0, defense: 0, unknown: 0 };
   const defenderLost = metricValue(report.metrics, 'defenderLost', 'defenseLost');
   const defenderUnitLosses = itemsForSide(report.topUnits, 'defender');
@@ -2771,7 +2666,10 @@ function defenderLossRoleTotals(report: ParsedReport): { attack: number; defense
       return;
     }
 
-    const role = TROOP_METADATA[itemID(item)]?.role;
+	const troop = getTroop(itemID(item));
+	const attack = Math.max(Number(troop?.meleeAttack) || 0, Number(troop?.rangeAttack) || 0);
+	const defense = Math.max(Number(troop?.meleeDefence) || 0, Number(troop?.rangeDefence) || 0);
+	const role = attack > defense ? 'attack' : defense > attack ? 'defense' : undefined;
     if (role === 'attack') {
       totals.attack += lost;
     } else if (role === 'defense') {
@@ -2863,7 +2761,7 @@ function formatNumber(value: number): string {
 
 function formatRatio(numerator: number, denominator: number): string {
   if (denominator <= 0) {
-    return '--';
+    return numerator > 0 ? '∞' : '--';
   }
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(numerator / denominator);
 }

@@ -1,5 +1,3 @@
-const PRESETS_FILE_KEY = 'autoTCIPresetsV1';
-
 export interface AutoTCIPreset {
   id: string;
   name: string;
@@ -12,38 +10,24 @@ export interface PresetsFileV1 {
   presets: AutoTCIPreset[];
 }
 
-function emptyFile(): PresetsFileV1 {
+export function emptyPresetsFile(): PresetsFileV1 {
   return { version: 1, lastSelectedPresetId: null, presets: [] };
 }
 
 /** Normalizes server or local JSON into PresetsFileV1. */
 export function parsePresetsPayload(raw: unknown): PresetsFileV1 {
   try {
-    if (raw == null || typeof raw !== 'object') return emptyFile();
+    if (raw == null || typeof raw !== 'object') return emptyPresetsFile();
     const p = raw as Partial<PresetsFileV1>;
-    if (p.version !== 1 || !Array.isArray(p.presets)) return emptyFile();
+    if (p.version !== 1 || !Array.isArray(p.presets)) return emptyPresetsFile();
     return {
       version: 1,
       lastSelectedPresetId: typeof p.lastSelectedPresetId === 'string' ? p.lastSelectedPresetId : null,
       presets: p.presets.filter((x) => x && typeof x.id === 'string' && typeof x.name === 'string'),
     };
   } catch {
-    return emptyFile();
+    return emptyPresetsFile();
   }
-}
-
-export function loadPresetsFile(): PresetsFileV1 {
-  try {
-    const raw = localStorage.getItem(PRESETS_FILE_KEY);
-    if (!raw) return emptyFile();
-    return parsePresetsPayload(JSON.parse(raw));
-  } catch {
-    return emptyFile();
-  }
-}
-
-export function savePresetsFile(file: PresetsFileV1): void {
-  localStorage.setItem(PRESETS_FILE_KEY, JSON.stringify(file));
 }
 
 export function snapshotFromForm(

@@ -1,90 +1,76 @@
-/** Simple global options for the Auto Beri World (Berimond troop transfer) loop. */
-export interface AutoBeriWorldSettings {
-  minTroopsToTransfer: number;
-  beriCastleCID: number;
-  beriMapX: number;
-  beriMapY: number;
-  /** Unit wodID sent in kut A:[[wid,amount]]. */
-  transferTroopWID: number;
-  /** Source castle instance id for kut SCID (main world). */
-  kutSourceCastleSCID: number;
-  /** kut wire CID field (often -1). */
-  kutCastleCID: number;
-  /** Seconds between full module checks (fuc, then kut/msk when eligible). */
-  troopSpaceCheckIntervalSec: number;
-}
+import { parseHorseTravelBoostID, type HorseTravelBoostID } from './HorseTravelBoost';
 
-const STORAGE_KEY = 'autoBeriWorldSettings';
+export const AUTO_BERI_COIN_ATTACK_TOOLS = [
+	{ id: 614, name: 'Scaling ladders' },
+	{ id: 611, name: 'Battering rams' },
+	{ id: 620, name: 'Mantlets' },
+] as const;
+
+export type AutoBeriToolMinimums = Record<string, number>;
+
+export interface AutoBeriWorldSettings {
+	minTroopsToTransfer: number;
+	beriCastleId: number;
+	transferTroopId: number;
+	sourceCastleId: number;
+	wireCastleId: number;
+	troopSpaceCheckIntervalSec: number;
+	presetId: string;
+	attackCheckIntervalSec: number;
+	horseTravelBoostId: HorseTravelBoostID;
+	toolMinimums: AutoBeriToolMinimums;
+}
 
 export const DEFAULT_AUTO_BERI_WORLD_SETTINGS: AutoBeriWorldSettings = {
-  minTroopsToTransfer: 1,
-  beriCastleCID: 0,
-  beriMapX: 0,
-  beriMapY: 0,
-  transferTroopWID: 0,
-  kutSourceCastleSCID: 0,
-  kutCastleCID: -1,
-  troopSpaceCheckIntervalSec: 30,
+	minTroopsToTransfer: 1,
+	beriCastleId: 0,
+	transferTroopId: 0,
+	sourceCastleId: 0,
+	wireCastleId: -1,
+	troopSpaceCheckIntervalSec: 30,
+	presetId: '',
+	attackCheckIntervalSec: 30,
+	horseTravelBoostId: -1,
+	toolMinimums: defaultToolMinimums(),
 };
 
-function clampMinTroops(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.round(value));
-}
-
-function clampNonNegInt(value: number, fallback = 0): number {
-  if (!Number.isFinite(value)) return fallback;
-  return Math.max(0, Math.round(value));
-}
-
-function clampKutCID(value: number): number {
-  if (!Number.isFinite(value)) return -1;
-  return Math.round(value);
-}
-
-function clampTroopSpaceCheckSec(value: number): number {
-  if (!Number.isFinite(value)) return DEFAULT_AUTO_BERI_WORLD_SETTINGS.troopSpaceCheckIntervalSec;
-  return Math.min(3600, Math.max(5, Math.round(value)));
-}
-
-/** Normalizes an arbitrary payload (server or storage) into a valid settings object. */
 export function parseAutoBeriWorldSettings(payload: unknown): AutoBeriWorldSettings {
-  const obj = (payload ?? {}) as Record<string, unknown>;
-  const kutCastleCID = obj.kutCastleCID;
-  return {
-    minTroopsToTransfer: clampMinTroops(Number(obj.minTroopsToTransfer)),
-    beriCastleCID: clampNonNegInt(Number(obj.beriCastleCID)),
-    beriMapX: clampNonNegInt(Number(obj.beriMapX)),
-    beriMapY: clampNonNegInt(Number(obj.beriMapY)),
-    transferTroopWID: clampNonNegInt(Number(obj.transferTroopWID)),
-    kutSourceCastleSCID: clampNonNegInt(Number(obj.kutSourceCastleSCID)),
-    kutCastleCID:
-      kutCastleCID === undefined || kutCastleCID === null
-        ? DEFAULT_AUTO_BERI_WORLD_SETTINGS.kutCastleCID
-        : clampKutCID(Number(kutCastleCID)),
-    troopSpaceCheckIntervalSec: clampTroopSpaceCheckSec(Number(obj.troopSpaceCheckIntervalSec)),
-  };
+	const value = isRecord(payload) ? payload : {};
+	const rawToolMinimums = isRecord(value.toolMinimums) ? value.toolMinimums : {};
+	return {
+		minTroopsToTransfer: nonNegativeInteger(value.minTroopsToTransfer, 1),
+		beriCastleId: nonNegativeInteger(value.beriCastleId ?? value.beriCastleCID, 0),
+		transferTroopId: nonNegativeInteger(value.transferTroopId ?? value.transferTroopWID, 0),
+		sourceCastleId: nonNegativeInteger(value.sourceCastleId ?? value.kutSourceCastleSCID, 0),
+		wireCastleId: integer(value.wireCastleId ?? value.kutCastleCID, -1),
+		troopSpaceCheckIntervalSec: clamp(integer(value.troopSpaceCheckIntervalSec, 30), 5, 3600),
+		presetId: typeof value.presetId === 'string' ? value.presetId.trim() : '',
+		attackCheckIntervalSec: clamp(integer(value.attackCheckIntervalSec, 30), 30, 3600),
+		horseTravelBoostId: parseHorseTravelBoostID(value.horseTravelBoostId),
+		toolMinimums: Object.fromEntries(AUTO_BERI_COIN_ATTACK_TOOLS.map((tool) => [
+			String(tool.id),
+			nonNegativeInteger(rawToolMinimums[String(tool.id)], 0),
+		])),
+	};
 }
 
-/** Mirrors server AutoBeriWorld.json into localStorage so the sidebar toggle can send it while disconnected. */
-export function applyAutoBeriWorldSettingsToLocalStorage(payload: unknown): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(parseAutoBeriWorldSettings(payload)));
+function defaultToolMinimums(): AutoBeriToolMinimums {
+	return Object.fromEntries(AUTO_BERI_COIN_ATTACK_TOOLS.map((tool) => [String(tool.id), 0]));
 }
 
-/** Loads the cached settings from localStorage (defaults if missing/invalid). */
-export function loadAutoBeriWorldSettingsFromStorage(): AutoBeriWorldSettings {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    return { ...DEFAULT_AUTO_BERI_WORLD_SETTINGS };
-  }
-  try {
-    return parseAutoBeriWorldSettings(JSON.parse(raw));
-  } catch {
-    return { ...DEFAULT_AUTO_BERI_WORLD_SETTINGS };
-  }
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** Writes settings to localStorage. */
-export function persistAutoBeriWorldSettingsToLocalStorage(settings: AutoBeriWorldSettings): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(parseAutoBeriWorldSettings(settings)));
+function integer(value: unknown, fallback: number): number {
+	const parsed = Number(value);
+	return Number.isFinite(parsed) ? Math.trunc(parsed) : fallback;
+}
+
+function nonNegativeInteger(value: unknown, fallback: number): number {
+	return Math.max(0, integer(value, fallback));
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+	return Math.min(maximum, Math.max(minimum, value));
 }

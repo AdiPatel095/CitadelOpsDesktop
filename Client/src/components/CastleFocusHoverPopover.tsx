@@ -1,14 +1,11 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMetadata } from '../context/MetadataContext';
-import {
-  castleFocusDecorationTooltipContent,
-  castleFocusDecorationsTooltip,
-  type CastleFocusState,
-} from '../types/CastleFocusState.ts';
+import type { CastleStateV2 } from '../api/Contracts';
+import { decorationTooltipRows } from '../api/Selectors';
 
 type Props = {
-  castleFocus: CastleFocusState | null;
+  castle: CastleStateV2 | null;
   children: React.ReactNode;
   /** Outer wrapper classes (e.g. max-width, flex). */
   className?: string;
@@ -29,15 +26,19 @@ const HIDE_MS = 220;
  * Visible hover panel — native `title` is often empty/broken in Electron/Chromium desktop shells.
  */
 const CastleFocusHoverPopover: React.FC<Props> = ({
-  castleFocus,
+  castle,
   children,
   className = '',
   align = 'center',
   expandToViewport = false,
 }) => {
   const { getDecoration } = useMetadata();
-  const { heading, lines } = castleFocusDecorationTooltipContent(castleFocus, getDecoration);
-  const ariaLabel = castleFocusDecorationsTooltip(castleFocus, getDecoration);
+  const rows = decorationTooltipRows(castle, getDecoration);
+  const heading = rows.length > 0 ? 'Decorations' : '';
+  const lines = rows.length > 0
+    ? rows.map((row) => `${row.count}x ${row.name}`)
+    : [castle ? 'No pickup-eligible decorations in the current castle state.' : 'Focus a castle to see decorations here.'];
+  const ariaLabel = heading ? `${heading}: ${lines.join(', ')}` : lines[0];
   const linesSig = lines.join('\u0001');
 
   const triggerRef = useRef<HTMLSpanElement>(null);

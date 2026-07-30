@@ -1,139 +1,118 @@
 import React, { useMemo } from 'react';
+import { SectionCard } from '../../components/ui';
 import { useCastleFocus } from '../../context/CastleFocusContext';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
+import { useMetadata } from '../../context/MetadataContext';
 import {
-  craftingSnapshotForStrip,
-  craftingStripRowsMerged,
-  mergedCastleFocusRows,
-  productionQueueRows,
-  SLOT_LID_DRAGON_BREATH_FORGE,
-  SLOT_LID_DRAGON_HOARD,
-  SLOT_LID_REFINERY,
-  SLOT_LID_RECRUITMENT,
-  SLOT_LID_TOOLSMITH,
-  SLOT_LID_TOOL_WORKSHOP,
-  slotProductionForLid,
-  type CraftingManualStripId,
-  type SlotStripLayout,
-} from '../../types/CastleFocusState.ts';
-import { visibleCastleQueueIds } from '../CastleQueueVisibility';
-import BarracksQueueSlot from './BarracksQueueSlot';
-import CraftingQueueSlot from './CraftingQueueSlot';
+  craftingBuildingForStrip,
+  visibleCastleQueueIds,
+  type CastleQueueStripId,
+} from '../CastleQueueVisibility';
+import BarracksQueueSlot, { type ProductionQueueRow } from './BarracksQueueSlot';
+import CraftingQueueSlot, { type CraftingQueueRow } from './CraftingQueueSlot';
 
 interface CastleQueuesCardProps {
   title?: string;
 }
 
-export type CastleQueueStripId =
-  | 'recruitment'
-  | 'tool'
-  | 'refinery'
-  | 'toolsmith'
-  | 'dragon-hoard'
-  | 'dragon-breath-forge';
-
-export interface CastleQueueStripDef {
+interface CastleQueueStripDef {
   id: CastleQueueStripId;
   label: string;
-  lid: number;
-  layout: SlotStripLayout;
+  activeSlots: number;
+  queueSlots: number;
+	productionLineId?: number;
 }
 
-function stripCells(d: CastleQueueStripDef): number {
-  return d.layout.activeSlots + d.layout.queueSlots;
-}
-
-export const CASTLE_QUEUE_DEFINITIONS: CastleQueueStripDef[] = [
-  { id: 'recruitment', label: 'Recruitment queue', lid: SLOT_LID_RECRUITMENT, layout: { activeSlots: 1, queueSlots: 5 } },
-  { id: 'tool', label: 'Tool queue', lid: SLOT_LID_TOOL_WORKSHOP, layout: { activeSlots: 1, queueSlots: 5 } },
-  { id: 'refinery', label: 'Refinery', lid: SLOT_LID_REFINERY, layout: { activeSlots: 2, queueSlots: 4 } },
-  { id: 'toolsmith', label: 'Toolsmith', lid: SLOT_LID_TOOLSMITH, layout: { activeSlots: 2, queueSlots: 4 } },
-  { id: 'dragon-hoard', label: 'DragonHoard', lid: SLOT_LID_DRAGON_HOARD, layout: { activeSlots: 2, queueSlots: 4 } },
-  {
-    id: 'dragon-breath-forge',
-    label: 'DragonBreathForge',
-    lid: SLOT_LID_DRAGON_BREATH_FORGE,
-    layout: { activeSlots: 2, queueSlots: 4 },
-  },
+const QUEUE_DEFINITIONS: CastleQueueStripDef[] = [
+  { id: 'recruitment', label: 'Recruitment queue', activeSlots: 1, queueSlots: 5, productionLineId: 0 },
+  { id: 'tool', label: 'Tool queue', activeSlots: 1, queueSlots: 5, productionLineId: 1 },
+  { id: 'refinery', label: 'Refinery', activeSlots: 2, queueSlots: 4 },
+  { id: 'toolsmith', label: 'Toolsmith', activeSlots: 2, queueSlots: 4 },
+  { id: 'dragon-hoard', label: 'Dragon Hoard', activeSlots: 2, queueSlots: 4 },
+  { id: 'dragon-breath-forge', label: 'Dragon Breath Forge', activeSlots: 1, queueSlots: 1 },
 ];
 
-const MANUAL_CRAFTING_STRIP_IDS = new Set<CastleQueueStripId>([
-  'refinery',
-  'toolsmith',
-  'dragon-hoard',
-  'dragon-breath-forge',
-]);
-
-function stripIdToCraftingManual(id: CastleQueueStripId): CraftingManualStripId | undefined {
-  if (!MANUAL_CRAFTING_STRIP_IDS.has(id)) return undefined;
-  return id as CraftingManualStripId;
+function craftingOutputAmount(baseAmount: number | undefined, outputBoostPercent: number | undefined): number {
+  if (typeof baseAmount !== 'number' || !Number.isFinite(baseAmount) || baseAmount <= 0) return 0;
+  const boost = typeof outputBoostPercent === 'number' && Number.isFinite(outputBoostPercent)
+    ? Math.max(0, outputBoostPercent)
+    : 0;
+  return baseAmount * (1 + boost / 100);
 }
 
 const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' }) => {
-  const { castleFocus } = useCastleFocus();
-  const rows = useMemo(() => mergedCastleFocusRows(castleFocus), [castleFocus]);
-  const visible = useMemo(() => visibleCastleQueueIds(rows), [rows]);
-  const queuesToRender = useMemo(
-    () => CASTLE_QUEUE_DEFINITIONS.filter((q) => visible.has(q.id)),
-    [visible]
+  const { castle } = useCastleFocus();
+  const { buildings, getCraftingRecipe } = useMetadata();
+  const visible = useMemo(
+    () => castle ? visibleCastleQueueIds(castle, buildings) : new Set<CastleQueueStripId>(),
+    [buildings, castle],
   );
+  const queues = useMemo(() => QUEUE_DEFINITIONS.filter((queue) => visible.has(queue.id)), [visible]);
 
   return (
-    <Card className="liquid-prominent-header-card flex flex-col min-h-0">
-      <CardHeader className="liquid-card-header-prominent">
-        <div className="flex flex-col">
-          <CardTitle className="text-primary">{title}</CardTitle>
-          <p className="text-xs text-text-muted mt-1 uppercase tracking-wider font-bold">Queuing Coming Soon</p>
-        </div>
-      </CardHeader>
-
-      <CardContent className="liquid-prominent-header-content flex-1 overflow-y-auto custom-scrollbar">
-        {queuesToRender.length === 0 ? (
+    <SectionCard
+      variant="glass"
+      title={title}
+      description="Canonical game queues"
+      titleClassName="text-primary"
+      descriptionClassName="font-bold uppercase tracking-wider"
+      className="flex min-h-0 flex-col"
+      contentClassName="custom-scrollbar flex-1 overflow-y-auto"
+    >
+        {!castle || queues.length === 0 ? (
           <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-8 text-center backdrop-blur-xl">
-            <p className="text-sm font-medium text-text-main">
-              No matching production buildings in this focus snapshot yet.
-            </p>
-            <p className="mt-2 text-xs text-text-muted max-w-sm mx-auto">
-              Open this castle in-game (JAA) so BG/BD rows refresh, or switch focus from the strip under the header.
-            </p>
+            <p className="text-sm font-medium text-text-main">No production queues observed for this castle.</p>
+            <p className="mx-auto mt-2 max-w-sm text-xs text-text-muted">Open the castle in-game to refresh its buildings and queues.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-2">
-            {queuesToRender.map((q) => {
-              const nCells = stripCells(q);
-              const manualKey = stripIdToCraftingManual(q.id);
-              const craftSnap = manualKey ? craftingSnapshotForStrip(castleFocus, manualKey) : undefined;
-              const useCrafting = Boolean(manualKey && craftSnap);
-              const craftRows = useCrafting ? craftingStripRowsMerged(craftSnap, q.layout) : null;
-              const bp = slotProductionForLid(castleFocus, q.lid);
-              const splRows = productionQueueRows(bp, q.layout);
+          <div className="grid grid-cols-1 gap-6 pb-2 xl:grid-cols-2">
+            {queues.map((queue) => {
+              const crafting = craftingBuildingForStrip(castle, queue.id, buildings);
+              const craftingRows: CraftingQueueRow[] = crafting ? [
+                ...(crafting.active ?? []).map((item) => {
+                  const recipe = getCraftingRecipe(item.recipeId);
+                  return {
+                    recipeId: item.recipeId,
+                    label: recipe?.name || `Recipe ${item.recipeId}`,
+                    imageUrl: recipe?.image,
+                    amount: craftingOutputAmount(recipe?.outputAmount, item.batchValue),
+                    active: true,
+                  };
+                }),
+                ...(crafting.queued ?? []).map((item) => {
+                  const recipe = getCraftingRecipe(item.recipeId);
+                  return {
+                    recipeId: item.recipeId,
+                    label: recipe?.name || `Recipe ${item.recipeId}`,
+                    imageUrl: recipe?.image,
+                    amount: craftingOutputAmount(recipe?.outputAmount, item.batchValue),
+                    active: false,
+                  };
+                }),
+              ] : [];
+								const production = queue.productionLineId == null
+									? undefined
+									: castle.production[String(queue.productionLineId)];
+								const productionItems = production
+									? [...(production.active ? [production.active] : []), ...(production.queued ?? [])]
+									: [];
+              const productionRows: ProductionQueueRow[] = productionItems.map((item, index) => ({
+                definitionId: item.definition.id,
+                amount: item.amount ?? 0,
+								active: index === 0 && production?.active != null,
+              }));
+              const totalSlots = crafting
+                ? Math.max(queue.activeSlots + queue.queueSlots, crafting.slotCount ?? 0)
+								: Math.max(queue.activeSlots + queue.queueSlots, 1 + (production?.capacity ?? 0));
               return (
-                <div key={q.id} className="flex flex-col gap-2.5">
-                  <h4 className="text-xs font-bold text-text-muted uppercase border-b border-border-base/50 pb-1">{q.label}</h4>
+                <div key={queue.id} className="flex flex-col gap-2.5">
+                  <h4 className="border-b border-border-base/50 pb-1 text-xs font-bold uppercase text-text-muted">{queue.label}</h4>
                   <div className="flex flex-wrap gap-2">
-                    {[...Array(nCells)].map((_, i) => {
-                      if (useCrafting && craftRows) {
-                        const row = craftRows[i] ?? null;
-                        if (row) {
-                          return (
-                            <CraftingQueueSlot key={`${q.id}-cr-${i}-${row.crid}-${row.qty}`} row={row} boxSize={48} />
-                          );
-                        }
-                        return <div key={i} className="w-12 h-12 rounded-global bg-bg-card/45 border border-border-light border-dashed backdrop-blur-xl" />;
-                      }
-                      const row = splRows[i] ?? null;
-                      if (row) {
-                        const isTool = q.id === 'tool';
-                        return (
-                          <BarracksQueueSlot
-                            key={`${q.id}-${i}-${row.pid ?? row.wid}-${row.tua}`}
-                            row={row}
-                            imageSize={36}
-                            isTool={isTool}
-                          />
-                        );
-                      }
-                      return <div key={i} className="w-12 h-12 rounded-global bg-bg-card/45 border border-border-light border-dashed backdrop-blur-xl" />;
+                    {Array.from({ length: totalSlots }, (_, index) => {
+                      const craftingRow = craftingRows[index];
+                      if (craftingRow) return <CraftingQueueSlot key={`${queue.id}-${index}-${craftingRow.recipeId}`} row={craftingRow} boxSize={48} />;
+                      const productionRow = productionRows[index];
+                      if (productionRow) return <BarracksQueueSlot key={`${queue.id}-${index}-${productionRow.definitionId}`} row={productionRow} imageSize={36} isTool={queue.id === 'tool'} />;
+                      return <div key={`${queue.id}-${index}`} className="h-12 w-12 rounded-global border border-dashed border-border-light bg-bg-card/45 backdrop-blur-xl" />;
                     })}
                   </div>
                 </div>
@@ -141,8 +120,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
             })}
           </div>
         )}
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 };
 

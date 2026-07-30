@@ -1,7 +1,7 @@
-import React from 'react';
-import { TROOP_DEFINITIONS } from '../../config/Constants';
+import React, { useMemo } from 'react';
 import UnitImage from '../../components/UnitImage';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
+import { SectionCard } from '../../components/ui';
+import { useMetadata } from '../../context/MetadataContext';
 
 interface CastleUnitCardProps {
   title: string;
@@ -15,26 +15,28 @@ function formatBadgeCount(value: number): string {
 }
 
 const CastleUnitCard: React.FC<CastleUnitCardProps> = ({ title, troopsMixed, troopsI, troopsTU }) => {
-  const sortedUnitIds = Object.keys(troopsMixed)
+  const { troops, isLoading } = useMetadata();
+  const sortedUnitIds = useMemo(() => Object.keys(troopsMixed)
     .map(Number)
-    .filter(id => !isNaN(id) && troopsMixed[id] > 0)
-    .sort((a, b) => (troopsMixed[b] || 0) - (troopsMixed[a] || 0));
+    .filter(id => Number.isFinite(id) && troopsMixed[id] > 0 && troops[id] != null)
+    .sort((a, b) => (troopsMixed[b] || 0) - (troopsMixed[a] || 0)), [troops, troopsMixed]);
 
   return (
-    <Card className="liquid-prominent-header-card flex flex-col min-h-0">
-      <CardHeader className="liquid-card-header-prominent">
-        <CardTitle className="text-primary">{title}</CardTitle>
-      </CardHeader>
-
-      <CardContent className="liquid-prominent-header-content flex-1 overflow-y-auto custom-scrollbar">
+    <SectionCard
+      variant="glass"
+      title={title}
+      titleClassName="text-primary"
+      className="flex min-h-0 flex-col"
+      contentClassName="custom-scrollbar flex-1 overflow-y-auto"
+    >
         {sortedUnitIds.length === 0 ? (
           <div className="text-center py-8 text-text-muted">
-            <p className="text-sm">No units found</p>
+            <p className="text-sm">{isLoading ? 'Loading units' : 'No units found'}</p>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-x-3 gap-y-5 pb-3 pt-2 sm:grid-cols-4 md:grid-cols-5">
             {sortedUnitIds.map(unitId => {
-              const name = TROOP_DEFINITIONS[unitId] || `Unit ${unitId}`;
+              const name = troops[unitId]?.name || `Unit ${unitId}`;
               const inCastle = troopsI[unitId] || 0;
               const travelling = troopsTU[unitId] || 0;
 
@@ -60,8 +62,7 @@ const CastleUnitCard: React.FC<CastleUnitCardProps> = ({ title, troopsMixed, tro
             })}
           </div>
         )}
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 };
 

@@ -9,7 +9,11 @@ jsonExamples/loginBytes.json
 
 # Build output - Go binary
 /CitadelDesktop
+/CitadelOpsDesktop
+/CitadelOpsDesktopNext
+/CitadelOpsDesktop.before-*
 /Build
+/Data/
 
 # OS-generated files
 .DS_Store
@@ -38,6 +42,7 @@ Thumbs.db
 *.temp
 *.log
 .codex-local-tests/
+/PerformanceArtifacts/
 
 
 # GGE HTML5 mirrored textures (go run ./Server/cmd/fetchggeassets)
@@ -63,4 +68,13 @@ Server/refactor_state/
 /Server/.../
 /.claude/
 /.cursor/
+
+# Local-only research, diagnostics, and developer tools
+/ArchitectureResearch/
 /cmd/
+/Logs/
+/Tools/
+/AGENTS.md
+/CitadelOps-Patch-Notes-v2.0.0.html
+/CitadelOpsUiRedesignResearch.md
+/IntentEngineCommandGuards.md

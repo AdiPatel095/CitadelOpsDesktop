@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Search } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check } from 'lucide-react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import ToolImage from './ToolImage';
 import { useMetadata, type MetadataItem } from '../context/MetadataContext';
-import { Badge, Button, Input, Modal } from './ui';
+import { CatalogPickerModal, EmptyState } from './ui';
 
 export type ToolPickerSelectionMode = 'single' | 'multi';
 
@@ -22,6 +23,139 @@ interface ToolPickerModalProps {
   options: ToolPickerOptions;
   onClose: (result: ToolPickerResult) => void;
 }
+
+interface VirtualizedToolGridProps {
+  tools: MetadataItem[];
+  selectedIds: Set<number>;
+  stockQuantities?: Record<number, number>;
+  onToolClick: (toolId: number) => void;
+}
+
+const TOOL_GRID_GAP_PX = 12;
+const TOOL_GRID_ROW_ESTIMATE = 208;
+
+const VirtualizedToolGrid: React.FC<VirtualizedToolGridProps> = ({
+  tools,
+  selectedIds,
+  stockQuantities,
+  onToolClick,
+}) => {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(7);
+  const [rowEstimate, setRowEstimate] = useState(TOOL_GRID_ROW_ESTIMATE);
+
+  useEffect(() => {
+    const updateGrid = () => {
+      if (!parentRef.current) return;
+      const styles = window.getComputedStyle(parentRef.current);
+      const horizontalPadding = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+      const width = Math.max(1, parentRef.current.clientWidth - horizontalPadding);
+      let nextColumns = 2;
+      if (width >= 1040) nextColumns = 7;
+      else if (width >= 880) nextColumns = 6;
+      else if (width >= 720) nextColumns = 5;
+      else if (width >= 560) nextColumns = 4;
+      else if (width >= 400) nextColumns = 3;
+      const cardWidth = (width - TOOL_GRID_GAP_PX * Math.max(0, nextColumns - 1)) / nextColumns;
+      setColumns(nextColumns);
+      setRowEstimate(Math.round(cardWidth * 4 / 3 + TOOL_GRID_GAP_PX));
+    };
+
+    updateGrid();
+    const observer = new ResizeObserver(updateGrid);
+    if (parentRef.current) observer.observe(parentRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const rows = useMemo(() => {
+    const result: MetadataItem[][] = [];
+    for (let index = 0; index < tools.length; index += columns) {
+      result.push(tools.slice(index, index + columns));
+    }
+    return result;
+  }, [columns, tools]);
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => rowEstimate,
+    overscan: 3,
+    measureElement: (element) => element?.getBoundingClientRect().height ?? rowEstimate,
+  });
+
+  return (
+    <div ref={parentRef} className="picker-results-scroll custom-scrollbar">
+      <div
+        style={{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualRow) => (
+          <div
+            key={virtualRow.index}
+            ref={rowVirtualizer.measureElement}
+            data-index={virtualRow.index}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${virtualRow.start}px)`,
+            }}
+          >
+            <div className="picker-grid-row grid gap-3" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+              {rows[virtualRow.index].map((tool) => {
+                const isSelected = selectedIds.has(tool.id);
+                return (
+                  <button
+                    key={tool.id}
+                    type="button"
+                    onClick={() => onToolClick(tool.id)}
+                    className={`picker-grid-card text-left ${isSelected ? 'picker-grid-card-selected' : ''}`}
+                  >
+                    <div className="picker-card-topline">
+                      <span className="picker-card-id">#{tool.id}</span>
+                      <span className="picker-stock-pill">
+                        {stockQuantities?.[tool.id] != null
+                          ? stockQuantities[tool.id].toLocaleString()
+                          : toolType(tool)}
+                      </span>
+                    </div>
+
+                    {isSelected && (
+                      <div className="picker-grid-actions">
+                        <div className="picker-selection-indicator">
+                          <Check className="w-4 h-4 text-primary stroke-[3]" />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="picker-image-stage">
+                      <ToolImage toolId={tool.id} size={92} showLevel={true} className="!bg-transparent drop-shadow-md" />
+                    </div>
+
+                    <div className="picker-card-body">
+                      <span className={`picker-unit-name line-clamp-2 ${isSelected ? 'picker-unit-name-selected' : ''}`}>
+                        {tool.name}
+                      </span>
+                      {stockQuantities?.[tool.id] != null ? (
+                        <span className="mt-1 block truncate text-[10px] font-semibold text-text-muted">
+                          {toolType(tool)} · available
+                        </span>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 let resolvePickerPromise: ((value: ToolPickerResult) => void) | null = null;
 let setPickerState: React.Dispatch<React.SetStateAction<{ isOpen: boolean; options: ToolPickerOptions | null }>> | null = null;
@@ -143,133 +277,37 @@ const ToolPickerModal: React.FC<ToolPickerModalProps> = ({ isOpen, options, onCl
   const visibleToolLabel = filteredTools.length === 1 ? 'tool' : 'tools';
 
   return (
-    <Modal
+    <CatalogPickerModal
       isOpen={isOpen}
       onClose={handleCancel}
-      maxWidth="6xl"
-      title={
-        <div className="picker-modal-title">
-          <span className="picker-modal-title-mark" aria-hidden="true" />
-          <span className="picker-modal-title-text">
-            {title || (mode === 'single' ? 'Select Tool' : 'Select Tools')}
-          </span>
-          {mode === 'multi' && selectedIds.size > 0 && (
-            <Badge variant="primary" className="ml-2">
-              {selectedIds.size} selected
-            </Badge>
-          )}
-        </div>
-      }
-      footer={
-        <>
-          <Button variant="ghost" onClick={handleCancel} className="px-8">
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleConfirm}
-            disabled={selectedIds.size === 0}
-            className="px-10"
-            leftIcon={<Check className="w-4 h-4" />}
-          >
-            Confirm Selection
-          </Button>
-        </>
-      }
+      onConfirm={handleConfirm}
+      title={title || (mode === 'single' ? 'Select Tool' : 'Select Tools')}
+      modeLabel={mode === 'single' ? 'Single pick' : 'Multi pick'}
+      selectedCount={selectedIds.size}
+      resultCount={filteredTools.length}
+      resultLabel={visibleToolLabel}
+      searchValue={searchQuery}
+      onSearchChange={setSearchQuery}
+      searchPlaceholder="Search by name, type, or ID..."
     >
-      <div className="picker-shell">
-        <div className="picker-toolbar">
-          <div className="picker-toolbar-overview">
-            <div className="picker-toolbar-copy">
-              <span className="picker-toolbar-kicker">
-                {mode === 'single' ? 'Single pick' : 'Multi pick'}
-              </span>
-              <span className="picker-toolbar-count">
-                {filteredTools.length.toLocaleString()} {visibleToolLabel}
-              </span>
-            </div>
-            <div className="picker-selection-summary">
-              <Check className="w-3.5 h-3.5" />
-              <span>{selectedIds.size.toLocaleString()}</span>
-              selected
-            </div>
-          </div>
-
-          <div className="picker-command-row">
-            <div className="picker-search-slot">
-              <Input
-                type="text"
-                placeholder="Search by name, type, or ID..."
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                leftIcon={<Search className="w-4 h-4" />}
-              />
-            </div>
-          </div>
+      {filteredTools.length === 0 ? (
+        <div className="flex-1 overflow-y-auto p-6">
+          <EmptyState
+            surface="plain"
+            title={isLoading ? 'Loading tools' : restrictToAllowed ? 'No queueable tools found' : 'No tools found'}
+            description={isLoading ? 'Tool metadata is still loading.' : 'Try adjusting your search.'}
+            className="picker-empty-state"
+          />
         </div>
-
-        {filteredTools.length === 0 ? (
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="picker-empty-state">
-              <p className="text-lg font-medium">
-                {isLoading ? 'Loading tools' : restrictToAllowed ? 'No queueable tools found' : 'No tools found'}
-              </p>
-              <p className="mt-2 text-sm">
-                {isLoading ? 'Tool metadata is still loading.' : 'Try adjusting your search.'}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="picker-results-scroll custom-scrollbar">
-            <div className="picker-grid-row grid gap-3 p-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(8.5rem, 1fr))' }}>
-              {filteredTools.map((tool) => {
-                const isSelected = selectedIds.has(tool.id);
-                return (
-                  <button
-                    key={tool.id}
-                    type="button"
-                    onClick={() => handleToolClick(tool.id)}
-                    className={`picker-grid-card text-left ${isSelected ? 'picker-grid-card-selected' : ''}`}
-                  >
-                    <div className="picker-card-topline">
-                      <span className="picker-card-id">#{tool.id}</span>
-                      <span className="picker-stock-pill">
-                        {stockQuantities?.[tool.id] != null
-                          ? stockQuantities[tool.id].toLocaleString()
-                          : toolType(tool)}
-                      </span>
-                    </div>
-
-                    {isSelected && (
-                      <div className="picker-grid-actions">
-                        <div className="picker-selection-indicator">
-                          <Check className="w-4 h-4 text-primary stroke-[3]" />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="picker-image-stage">
-                      <ToolImage toolId={tool.id} size={92} showLevel={true} className="!bg-transparent drop-shadow-md" />
-                    </div>
-
-                    <div className="picker-card-body">
-                      <span className={`picker-unit-name line-clamp-2 ${isSelected ? 'picker-unit-name-selected' : ''}`}>
-                        {tool.name}
-                      </span>
-                      {stockQuantities?.[tool.id] != null ? (
-                        <span className="mt-1 block truncate text-[10px] font-semibold text-text-muted">
-                          {toolType(tool)} · available
-                        </span>
-                      ) : null}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    </Modal>
+      ) : (
+        <VirtualizedToolGrid
+          tools={filteredTools}
+          selectedIds={selectedIds}
+          stockQuantities={stockQuantities}
+          onToolClick={handleToolClick}
+        />
+      )}
+    </CatalogPickerModal>
   );
 };
 

@@ -4,6 +4,6 @@ const getEnv = (key: string, defaultValue: string = ''): string => {
 };
 
 export const API_CONFIG = {
-    BASE_URL: getEnv('VITE_API_BASE_URL', 'http://localhost:8080'),
+    BASE_URL: getEnv('VITE_API_BASE_URL'),
     ENDPOINTS: {},
 };

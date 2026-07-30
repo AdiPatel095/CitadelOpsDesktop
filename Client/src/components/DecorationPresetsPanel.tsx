@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Castle, Layers, Play, Save, Sparkles, Trash2 } from 'lucide-react';
 import { useCastleFocus } from '../context/CastleFocusContext';
-import { FrontendWebsocket } from '../Websocket';
 import CastleFocusHoverPopover from './CastleFocusHoverPopover';
-import { castleFocusDisplayName } from '../types/CastleFocusState.ts';
+import { castleDisplayName } from '../api/Selectors';
 import { Input, Button, Select } from './ui';
+import { useCitadelAPI } from '../api/ApiContext';
+import { useMetadata } from '../context/MetadataContext';
+import { Notifications } from './Notifications';
 
 interface NamedPreset {
   id: string;
@@ -12,65 +14,136 @@ interface NamedPreset {
   items: { wid: number; x: number; y: number; r: number; layer: string }[];
 }
 
+interface DecorationPresetDocument {
+  version: 1;
+  castles: Record<string, NamedPreset[]>;
+}
+
+const EMPTY_PRESETS: NamedPreset[] = [];
+
 const DecorationPresetsPanel: React.FC = () => {
-  const { castleFocus } = useCastleFocus();
-  const [presets, setPresets] = useState<NamedPreset[]>([]);
+  const { castle } = useCastleFocus();
+  const { configuration, submitIntent, cancelOperation, updateConfiguration } = useCitadelAPI();
+  const { decorations } = useMetadata();
   const [newName, setNewName] = useState('');
   const [selectedPresetId, setSelectedPresetId] = useState('');
+  const [operationError, setOperationError] = useState('');
+  const [applyOperationId, setApplyOperationId] = useState('');
+  const [applyStatus, setApplyStatus] = useState('');
+  const [cancellingApply, setCancellingApply] = useState(false);
 
-  const castleId = castleFocus?.aid && castleFocus.aid > 0 ? castleFocus.aid : 0;
-  const focusLabel = castleFocusDisplayName(castleFocus);
-
-  /** Latest focused castle id for websocket handlers (avoid applying stale preset lists). */
-  const castleIdRef = useRef(castleId);
-  castleIdRef.current = castleId;
-
-  useEffect(() => {
-    setPresets([]);
-    setSelectedPresetId('');
-    if (castleId > 0) {
-      FrontendWebsocket.sendGetDecorationPresets(castleId);
-    }
-  }, [castleId]);
+  const castleId = castle?.id && castle.id > 0 ? castle.id : 0;
+  const focusLabel = castleDisplayName(castle);
+  const presetDocument = useMemo(
+    () => parsePresetDocument(configuration?.sections['decorations.presets']),
+    [configuration?.sections],
+  );
+  const presets = presetDocument.castles[String(castleId)] ?? EMPTY_PRESETS;
 
   useEffect(() => {
-    const onMsg = (msg: { type?: string; payload?: unknown; optionalData?: string }) => {
-      if (msg.type === 'decorationPresets' && Array.isArray(msg.payload)) {
-        const tag = msg.optionalData?.trim() ?? '';
-        const responseCastleId = tag === '' ? NaN : parseInt(tag, 10);
-        const current = castleIdRef.current;
-        if (!Number.isFinite(responseCastleId)) {
-          return;
-        }
-        if (responseCastleId !== current) {
-          return;
-        }
-        const nextPresets = msg.payload as NamedPreset[];
-        setPresets(nextPresets);
-        setSelectedPresetId((prev) =>
-          prev && nextPresets.some((preset) => preset.id === prev) ? prev : nextPresets[0]?.id ?? ''
-        );
-      }
-    };
-    FrontendWebsocket.addMessageListener(onMsg);
-    return () => FrontendWebsocket.removeMessageListener(onMsg);
-  }, []);
+    setSelectedPresetId((previous) => (
+      previous && presets.some((preset) => preset.id === previous) ? previous : presets[0]?.id ?? ''
+    ));
+    setOperationError('');
+  }, [castleId, presets]);
 
   const handleSave = () => {
-    if (!newName.trim()) return;
-    FrontendWebsocket.sendSaveDecorationPreset(newName.trim(), castleId > 0 ? castleId : undefined);
+    if (!newName.trim() || castleId <= 0) return;
+    const items = Object.values(castle?.buildings ?? {})
+      .filter((building) => decorations[building.definitionId] != null)
+      .map((building) => ({
+        wid: building.definitionId,
+        x: building.gridX ?? 0,
+        y: building.gridY ?? 0,
+        r: building.rotation ?? 0,
+        layer: 'BG',
+      }));
+    const preset: NamedPreset = {
+      id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      name: newName.trim(),
+      items,
+    };
+    setOperationError('');
+    void updateConfiguration('decorations.presets', {
+      ...presetDocument,
+      castles: { ...presetDocument.castles, [String(castleId)]: [...presets, preset] },
+    }).catch((error) => setOperationError(error instanceof Error ? error.message : 'Could not save preset'));
     setNewName('');
   };
 
   const handleApply = (presetId: string) => {
-    if (castleId <= 0) return;
-    FrontendWebsocket.sendApplyDecorationPreset(castleId, presetId, castleFocus?.kingdomID);
+    if (castleId <= 0 || applyOperationId) return;
+    const preset = presets.find((candidate) => candidate.id === presetId);
+    if (!preset) return;
+    const operationId = `decoration-${crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+    setOperationError('');
+    setApplyOperationId(operationId);
+    setApplyStatus('Applying decoration preset…');
+    Notifications.publish({
+      id: 'decoration-apply',
+      category: 'yellow',
+      message: 'Decoration preset apply is running.',
+      persistent: true,
+      action: { label: 'Cancel apply', onClick: () => requestCancelApply(operationId) },
+    });
+    void submitIntent('decoration.apply_preset', {
+      castleId,
+      kingdomId: castle?.kingdomId,
+      presetId,
+      items: preset.items,
+    }, { id: operationId, actor: 'ui:decoration' })
+      .then((receipt) => {
+        const cancelled = receipt.status === 'cancelled';
+        const message = cancelled ? 'Decoration apply cancelled.' : 'Decoration preset applied.';
+        setApplyStatus(message);
+        Notifications.publish({ id: 'decoration-apply', category: cancelled ? 'yellow' : 'green', message });
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : 'Could not apply preset';
+        setOperationError(message);
+        Notifications.publish({ id: 'decoration-apply', category: 'red', message });
+      })
+      .finally(() => {
+        setApplyOperationId('');
+        setCancellingApply(false);
+      });
+  };
+
+  const requestCancelApply = (operationId: string) => {
+    if (!operationId) return;
+    setCancellingApply(true);
+    setApplyStatus('Cancelling decoration apply…');
+    Notifications.publish({
+      id: 'decoration-apply',
+      category: 'yellow',
+      message: 'Decoration apply cancellation requested…',
+      persistent: true,
+    });
+    void cancelOperation(operationId)
+      .catch((error) => {
+        setCancellingApply(false);
+        const message = error instanceof Error ? error.message : 'Could not cancel decoration apply';
+        setOperationError(message);
+        Notifications.publish({ id: 'decoration-apply', category: 'red', message });
+      });
+  };
+
+  const handleCancelApply = () => {
+    if (cancellingApply) return;
+    requestCancelApply(applyOperationId);
   };
 
   const handleDelete = (presetId: string) => {
     if (castleId <= 0) return;
     if (!window.confirm('Delete this decoration preset?')) return;
-    FrontendWebsocket.sendDeleteDecorationPreset(castleId, presetId);
+    setOperationError('');
+    void updateConfiguration('decorations.presets', {
+      ...presetDocument,
+      castles: {
+        ...presetDocument.castles,
+        [String(castleId)]: presets.filter((preset) => preset.id !== presetId),
+      },
+    }).catch((error) => setOperationError(error instanceof Error ? error.message : 'Could not delete preset'));
   };
 
   const selectedPreset = presets.find((preset) => preset.id === selectedPresetId) ?? null;
@@ -95,7 +168,7 @@ const DecorationPresetsPanel: React.FC = () => {
           </div>
           <div className="mt-1.5 flex min-h-[1.75rem] items-center">
             <CastleFocusHoverPopover
-              castleFocus={castleFocus}
+              castle={castle}
               align="start"
               expandToViewport
               className="min-w-0 max-w-full"
@@ -171,25 +244,26 @@ const DecorationPresetsPanel: React.FC = () => {
               }))}
               onChange={setSelectedPresetId}
               placeholder={hasPresets ? 'Select a preset' : 'No presets saved'}
-              disabled={!canUseCastle || !hasPresets}
+              disabled={!canUseCastle || !hasPresets || Boolean(applyOperationId)}
               className="min-w-0 flex-1"
               menuGrowToViewport
             />
             <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
               <Button
+                variant={applyOperationId ? 'danger' : 'primary'}
                 size="sm"
-                disabled={!canUseCastle || !selectedPreset}
-                onClick={() => selectedPreset && handleApply(selectedPreset.id)}
-                title="Apply selected preset"
+                disabled={(!applyOperationId && (!canUseCastle || !selectedPreset)) || cancellingApply}
+                onClick={() => applyOperationId ? handleCancelApply() : selectedPreset && handleApply(selectedPreset.id)}
+                title={applyOperationId ? 'Cancel the running preset application' : 'Apply selected preset'}
                 leftIcon={<Play className="h-3.5 w-3.5" strokeWidth={2.5} />}
                 className="shadow-none hover:shadow-none"
               >
-                Apply
+                {applyOperationId ? (cancellingApply ? 'Cancelling…' : 'Cancel apply') : 'Apply'}
               </Button>
               <Button
                 variant="danger"
                 size="sm"
-                disabled={!selectedPreset}
+                disabled={!selectedPreset || Boolean(applyOperationId)}
                 onClick={() => selectedPreset && handleDelete(selectedPreset.id)}
                 leftIcon={<Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
                 className="shadow-none hover:shadow-none"
@@ -205,8 +279,32 @@ const DecorationPresetsPanel: React.FC = () => {
           )}
         </div>
       </div>
+      {applyStatus && <p className="text-xs text-warning">{applyStatus}</p>}
+      {operationError && <p className="text-xs text-error">{operationError}</p>}
     </div>
   );
 };
+
+function parsePresetDocument(value: unknown): DecorationPresetDocument {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { version: 1, castles: {} };
+  }
+  const raw = value as { castles?: unknown };
+  if (!raw.castles || typeof raw.castles !== 'object' || Array.isArray(raw.castles)) {
+    return { version: 1, castles: {} };
+  }
+  const castles: Record<string, NamedPreset[]> = {};
+  for (const [castleId, presets] of Object.entries(raw.castles as Record<string, unknown>)) {
+    if (!Array.isArray(presets)) continue;
+    castles[castleId] = presets.filter(isNamedPreset);
+  }
+  return { version: 1, castles };
+}
+
+function isNamedPreset(value: unknown): value is NamedPreset {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const preset = value as Partial<NamedPreset>;
+  return typeof preset.id === 'string' && typeof preset.name === 'string' && Array.isArray(preset.items);
+}
 
 export default DecorationPresetsPanel;

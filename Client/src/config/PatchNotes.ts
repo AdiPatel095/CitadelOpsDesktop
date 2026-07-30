@@ -28,9 +28,41 @@ export interface PatchNotesRelease {
   items: PatchNoteItem[];
 }
 
-export const APP_VERSION_CURRENT = '1.3.7';
-
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
+  {
+    version: '2.0.0',
+    subtitle: 'Canonical automation, event operations, resource logistics, Storm blueprints, and desktop reliability',
+    date: '2026-07-27',
+    items: [
+      { kind: 'added', text: 'Unified Automation workspace with authoritative live status, guarded operations, schedules, duration controls, and per-feature settings' },
+      { kind: 'added', text: 'Auto Towers with per-castle target maps, cooldown tracking, commander selection, travel boosts, and independent nearest-target attacks' },
+      { kind: 'added', text: 'Auto Invasion for Foreign Lords and Bloodcrows with difficulty selection, score goals, target strengthening, presets, and guarded spending' },
+      { kind: 'added', text: 'Auto Nomad and Samurai chains plus one-run Auto Advisor support with event-specific presets, camp locking, cooldown skips, and score targets' },
+      { kind: 'added', text: 'Auto Khan attack, cooldown, rage, taunt, defense, tool-restock, and protection lanes that can run concurrently without blocking one another' },
+      { kind: 'added', text: 'Auto Storm fort and resource-island operations, troop transfers, Aquamarine goals, durable castle blueprints, and construction or destruction time-skip controls' },
+      { kind: 'added', text: 'Auto Station threat response with explicit castle reserves, temporary troop evacuation, automatic recall, and optional open-gate fallback' },
+      { kind: 'added', text: 'Auto Sceat Resources with research-aware per-castle crafting plans, overflow handling, independent logistics, and kingdom storage buffers' },
+      { kind: 'added', text: 'Auto Food Balance for Food, Honey, Mead, and Beef reserves using market barrows first and optional cross-kingdom transport with time skips' },
+      { kind: 'added', text: 'Dedicated Attack Presets with courtyard support troops, Sceat support tools, safe CRA-string import and sharing, plus Defense Presets and Feature Stats workspaces' },
+      { kind: 'added', text: 'Header tracker for the authoritative account-wide daily normal-attack count plus optional user-defined limits on supported attack automations' },
+      { kind: 'added', text: 'Settings import and export, browser selection, runtime diagnostics, and version-aware desktop update handling' },
+      { kind: 'changed', text: 'Rebuilt CitadelOps around versioned state, configuration, history, telemetry, API, intent, catalog, and Chromium session contracts' },
+      { kind: 'changed', text: 'Auto Bird, Auto TCI, recruiting, tools, hospital, Berimond, Rift, and scheduling now use server-authoritative state with legacy settings migration' },
+      { kind: 'changed', text: 'Resource logistics now supports capacity-bounded multi-resource sends, full donor availability, market barrows, immediate transport skips, and post-loot redistribution' },
+      { kind: 'changed', text: 'Crafting logistics runs independently from crafting queues and can source ready resources from any eligible castle instead of waiting on one configured castle' },
+      { kind: 'changed', text: 'Honey demand now uses each Brewery base rate and configured operating percentage instead of scaling from live Mead production' },
+      { kind: 'changed', text: 'Attack automation now coordinates live commander availability, exact event presets, movement returns, cooldowns, protection mode, and castle focus through guarded intents' },
+      { kind: 'changed', text: 'Battle and spy reports now use canonical local analytics, safe cloud outboxes, PvP eligibility checks, report deduplication, and movement-aware training context' },
+      { kind: 'changed', text: 'Equipment effects, caps, compatibility, gems, set bonuses, construction items, buildings, units, and shops now resolve through current official game data' },
+      { kind: 'changed', text: 'Alliance Targets keeps inspected rosters separate from the player alliance and derives travel, spy capacity, reports, and attack previews from canonical state' },
+      { kind: 'changed', text: 'Connection recovery now validates a fresh login and castle bootstrap before state-dependent automation resumes, including reused Chromium profiles and Auto Restore' },
+      { kind: 'fixed', text: 'Bounded stale-plan retries prevent repeated command refresh loops, while concurrent Auto Khan lanes prioritize full-rage taunts without blocking attack chains' },
+      { kind: 'fixed', text: 'Corrected Storm fort attack limits, commander release on reported return legs, crafting resource waits, and kingdom shipment settlement' },
+      { kind: 'removed', text: 'Removed automatic enforcement of the game 3,500-attack cost threshold; it remains informational unless the user sets an explicit automation limit' },
+      { kind: 'removed', text: 'Removed automatic game-panel closing after successful attack dispatch while preserving guarded pre-launch cleanup' },
+      { kind: 'removed', text: 'Removed legacy raw WebSocket actions, client-only automation mirrors, UI-shaped compatibility adapters, and stale embedded catalog paths' },
+    ],
+  },
   {
     version: '1.3.7',
     subtitle: 'Player analytics, alliance intelligence, equipment data, attack planning, and connection recovery',
@@ -99,3 +131,5 @@ export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
     ],
   },
 ];
+
+export const APP_VERSION_CURRENT = PATCH_NOTES_RELEASES[0].version;
