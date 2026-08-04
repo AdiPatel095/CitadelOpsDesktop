@@ -44,8 +44,8 @@ export function parseAutoInvasionClientState(value: unknown): AutoInvasionClient
     version: 1,
     sourceCastleId: positiveInteger(raw.sourceCastleId),
     presetId: typeof raw.presetId === 'string' ? raw.presetId.trim() : '',
-    foreignLordsDifficultyId: validEventDifficulty(raw.foreignLordsDifficultyId, 1),
-    bloodcrowDifficultyId: validEventDifficulty(raw.bloodcrowDifficultyId, 101),
+    foreignLordsDifficultyId: positiveInteger(raw.foreignLordsDifficultyId),
+    bloodcrowDifficultyId: positiveInteger(raw.bloodcrowDifficultyId),
     scoreTarget: positiveInteger(raw.scoreTarget),
     minimumRemainingSec: clampInteger(raw.minimumRemainingSec, 0, 86400, fallback.minimumRemainingSec),
     checkIntervalSec: clampInteger(raw.checkIntervalSec, 30, 3600, fallback.checkIntervalSec),
@@ -61,36 +61,6 @@ function validFortifyCurrency(value: unknown): AutoInvasionFortifyCurrency {
 	return value === 'GTO' || value === 'STO' || value === 'C2' ? value : '';
 }
 
-export const AUTO_INVASION_DIFFICULTY_NAMES = [
-  'Easy',
-  'Easy+',
-  'Intermediate',
-  'Intermediate+',
-  'Hard',
-  'Hard+',
-  'Expert',
-  'Expert+',
-  'Master',
-  'Master+',
-  'Archmaster',
-] as const;
-
-export function autoInvasionDifficultyOptions(
-  firstDifficultyId: number,
-  completedAchievements: Record<string, boolean>,
-): Array<{ value: string; label: string }> {
-  const firstUnlockAchievementId = firstDifficultyId === 1 ? 1084 : 1090;
-  return AUTO_INVASION_DIFFICULTY_NAMES.flatMap((name, index) => {
-    if (index < 4) return [{ value: String(firstDifficultyId + index), label: name }];
-    if (index >= 10 || !completedAchievements[String(firstUnlockAchievementId + index - 4)]) return [];
-    return [{ value: String(firstDifficultyId + index), label: name }];
-  });
-}
-
-export function autoInvasionDifficultyName(difficultyId: number, firstDifficultyId: number): string {
-  return AUTO_INVASION_DIFFICULTY_NAMES[difficultyId - firstDifficultyId] ?? 'Unknown';
-}
-
 export function clampAutoInvasionInteger(value: unknown, minimum: number, maximum: number, fallback: number): number {
   return clampInteger(value, minimum, maximum, fallback);
 }
@@ -104,9 +74,4 @@ function clampInteger(value: unknown, minimum: number, maximum: number, fallback
 function positiveInteger(value: unknown): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 0;
-}
-
-function validEventDifficulty(value: unknown, firstDifficultyId: number): number {
-  const parsed = positiveInteger(value);
-  return parsed >= firstDifficultyId && parsed <= firstDifficultyId + 10 ? parsed : 0;
 }

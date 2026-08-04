@@ -48,7 +48,24 @@ var invasionFortifyOptions = map[string]string{
 	"STO": "Silver tokens",
 	"KM":  "Khan medals",
 	"ST":  "Samurai tokens",
+	"KT":  "Khan tablets",
 	"C2":  "Rubies",
+}
+
+func invasionFortifyCurrencyLabel(currency string) string {
+	if label := invasionFortifyOptions[currency]; label != "" {
+		return label
+	}
+	return currency
+}
+
+func invasionFortifyCurrencyAllowedWithoutSnapshot(currency string) bool {
+	switch currency {
+	case "GTO", "STO", "KM", "ST":
+		return true
+	default:
+		return false
+	}
 }
 
 type resolvedInvasionAttackRequest struct {
@@ -214,7 +231,7 @@ func planInvasionAttack(_ context.Context, input Intent.PlanningContext, argumen
 		}{target.X, target.Y, request.FortifyCurrency})
 		steps = append(steps,
 			Intent.Step{Name: "Verify invasion fortification currency", Action: "invasion.fortify.guard", ActionArguments: fortifyArguments},
-			commandStep("Fortify invasion castle with "+invasionFortifyOptions[request.FortifyCurrency], "rae", fortifyPayload, "rae"),
+			commandStep("Fortify invasion castle with "+invasionFortifyCurrencyLabel(request.FortifyCurrency), "rae", fortifyPayload, "rae"),
 		)
 	}
 	steps = append(steps,
@@ -276,20 +293,20 @@ func invasionAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("invasion attack requires source, event, score target, and target type")
 	}
 	request.FortifyCurrency = strings.ToUpper(strings.TrimSpace(request.FortifyCurrency))
-	if request.FortifyCurrency != "" {
-		if _, valid := invasionFortifyOptions[request.FortifyCurrency]; !valid {
+	if request.FortifyCurrency != "" && request.FortifyCurrency != "C2" {
+		if len(input.State.Invasion.FortifyCurrencies) > 0 {
+			if !input.State.Invasion.SupportsFortifyCurrency(request.FortifyCurrency) {
+				return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+					"fortification currency %s is unavailable for event %d", request.FortifyCurrency, request.EventID,
+				)
+			}
+		} else if !invasionFortifyCurrencyAllowedWithoutSnapshot(request.FortifyCurrency) {
 			return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("unsupported invasion fortification currency %q", request.FortifyCurrency)
 		}
 	}
 	expectedTypeID, supported := invasionMapTypeForEvent(request.EventID)
 	if !supported || expectedTypeID != request.TargetTypeID {
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("event %d does not use invasion target type %d", request.EventID, request.TargetTypeID)
-	}
-	if request.FortifyCurrency != "" && request.FortifyCurrency != "C2" && len(input.State.Invasion.FortifyCurrencies) > 0 &&
-		!input.State.Invasion.SupportsFortifyCurrency(request.FortifyCurrency) {
-		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
-			"fortification currency %s is unavailable for event %d", request.FortifyCurrency, request.EventID,
-		)
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists {

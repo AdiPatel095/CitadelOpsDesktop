@@ -11,13 +11,12 @@ import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../../components/ui';
 import {
   AUTO_NOMAD_SECTION,
-  autoNomadDifficultyName,
-  autoNomadDifficultyOptions,
   clampAutoNomadInteger,
   defaultAutoNomadClientState,
   parseAutoNomadClientState,
   type AutoNomadClientStateV5,
 } from '../AutoNomadClientState';
+import { eventDifficultyName, useEventDifficultyOptions } from '../EventDifficultyOptions';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 
@@ -37,14 +36,9 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
   );
   const completedAchievements = state?.player.achievements?.completed ?? {};
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
-  const nomadDifficulties = useMemo(
-    () => autoNomadDifficultyOptions(301, 1102, completedAchievements),
-    [completedAchievements],
-  );
-  const samuraiDifficulties = useMemo(
-    () => autoNomadDifficultyOptions(201, 1096, completedAchievements),
-    [completedAchievements],
-  );
+  const difficultyCatalog = useEventDifficultyOptions(isOpen, [72, 80], completedAchievements);
+  const nomadDifficulties = difficultyCatalog.optionsByEvent['72'] ?? [];
+  const samuraiDifficulties = difficultyCatalog.optionsByEvent['80'] ?? [];
   const nomadSelectionAvailable = nomadDifficulties.some((option) => option.value === String(draft.nomadDifficultyId));
   const samuraiSelectionAvailable = samuraiDifficulties.some((option) => option.value === String(draft.samuraiDifficultyId));
   const selectedNomadPreset = presetDocument.presets.find((preset) => preset.id === draft.nomadPresetId);
@@ -187,7 +181,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             <label className="block">
               <span className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
                 Nomad
-                <span className="normal-case tracking-normal text-primary">Through {autoNomadDifficultyName(Number(nomadDifficulties.at(-1)?.value), 301)}</span>
+                <span className="normal-case tracking-normal text-primary">Through {eventDifficultyName(nomadDifficulties, Number(nomadDifficulties.at(-1)?.value))}</span>
               </span>
               <Select
                 value={nomadSelectionAvailable ? String(draft.nomadDifficultyId) : ''}
@@ -200,7 +194,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             <label className="block">
               <span className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
                 Samurai
-                <span className="normal-case tracking-normal text-primary">Through {autoNomadDifficultyName(Number(samuraiDifficulties.at(-1)?.value), 201)}</span>
+                <span className="normal-case tracking-normal text-primary">Through {eventDifficultyName(samuraiDifficulties, Number(samuraiDifficulties.at(-1)?.value))}</span>
               </span>
               <Select
                 value={samuraiSelectionAvailable ? String(draft.samuraiDifficultyId) : ''}
@@ -211,6 +205,8 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
               />
             </label>
           </div>
+          {difficultyCatalog.loading ? <p className="mt-3 text-xs text-text-muted">Loading official event difficulties…</p> : null}
+          {difficultyCatalog.error ? <p className="mt-3 text-xs text-danger">{difficultyCatalog.error}</p> : null}
         </Card>
 
         <Card variant="solid" className="p-4">

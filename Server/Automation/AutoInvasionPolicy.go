@@ -277,11 +277,9 @@ func invasionFortifyCurrencyForEvent(currency string, eventID int64, offered []s
 	case "KM", "ST", eventMedalsCurrency:
 		if len(offered) > 0 {
 			for _, candidate := range offered {
-				switch strings.ToUpper(strings.TrimSpace(candidate)) {
-				case "KM":
-					return "KM", true
-				case "ST":
-					return "ST", true
+				candidate = strings.ToUpper(strings.TrimSpace(candidate))
+				if candidate != "" && candidate != "GTO" && candidate != "STO" && candidate != "C2" {
+					return candidate, true
 				}
 			}
 			return "", false
