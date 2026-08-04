@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import React from 'react';
 import { NAVIGATION_ITEMS, type ViewId } from '../config/Navigation';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -14,102 +13,60 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const mainItems = NAVIGATION_ITEMS.filter(item => item.section === 'main');
   const systemItems = NAVIGATION_ITEMS.filter(item => item.section === 'system');
-  const isSystemView = systemItems.some(item => item.id === currentView);
-  const [systemMenuOpen, setSystemMenuOpen] = useState(isSystemView);
-
-  const [expandedSections, setExpandedSections] = useState({
-    mainMenu: true
-  });
-
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  const systemMenuExpanded = isSystemView || systemMenuOpen;
 
   const openView = (viewId: ViewId) => {
     onViewChange(viewId);
-    if (systemItems.some(item => item.id === viewId)) setSystemMenuOpen(true);
   };
 
+  const renderItem = (item: (typeof NAVIGATION_ITEMS)[number]) => (
+    <button
+      type="button"
+      key={item.id}
+      className={`liquid-nav-item group ${currentView === item.id ? 'liquid-nav-item-active' : ''}`}
+      aria-current={currentView === item.id ? 'page' : undefined}
+      onClick={() => openView(item.id)}
+      title={item.label}
+    >
+      <span className="liquid-nav-icon">
+        {item.icon}
+      </span>
+      <span className="liquid-nav-label">{item.label}</span>
+      <span className="liquid-nav-active-indicator" aria-hidden="true" />
+    </button>
+  );
+
   return (
-    <aside className="liquid-sidebar transition-colors duration-300">
+    <aside className="liquid-sidebar transition-colors duration-300" aria-label="Application navigation">
       <div className="liquid-sidebar-main-island">
-        <div className="liquid-sidebar-scroll custom-scrollbar">
-          {/* Main Navigation */}
-          <div className="mb-4">
-            <button
-              type="button"
-              className="liquid-section-label mb-2"
-              aria-expanded={expandedSections.mainMenu}
-              onClick={() => toggleSection('mainMenu')}
-            >
-              <span className="liquid-sidebar-section-title">Main Menu</span>
-              {expandedSections.mainMenu ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-            </button>
-            {expandedSections.mainMenu && (
-              <div className="space-y-1">
-                {mainItems.map((item) => (
-                  <button
-                    type="button"
-                    key={item.id}
-                    className={`liquid-nav-item group ${currentView === item.id ? 'liquid-nav-item-active' : ''}`}
-                    aria-current={currentView === item.id ? 'page' : undefined}
-                    onClick={() => openView(item.id)}
-                    title={item.label}
-                  >
-                    <span className={`liquid-nav-icon transition-colors duration-200 ${currentView === item.id ? 'text-primary' : 'text-text-muted group-hover:text-text-main'}`}>
-                      {item.icon}
-                    </span>
-                    <span className="liquid-nav-label text-sm font-medium">{item.label}</span>
-                    {currentView === item.id && (
-                      <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary-glow)]" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
+        <div className="liquid-sidebar-toolbar">
+          <div className="liquid-sidebar-toolbar-copy">
+            <span>Command center</span>
+            <strong>Workspace</strong>
           </div>
+          <ThemeToggle className="liquid-sidebar-theme-toggle !p-0" />
+        </div>
+        <nav className="liquid-sidebar-scroll custom-scrollbar" aria-label="Primary">
+          <div className="liquid-section-label">
+            <span className="liquid-sidebar-section-title">Operations</span>
+          </div>
+          <div className="liquid-nav-list">
+            {mainItems.map(renderItem)}
+          </div>
+        </nav>
+
+        <div className="liquid-sidebar-system">
+          <div className="liquid-section-label">
+            <span className="liquid-sidebar-section-title">System</span>
+          </div>
+          <nav className="liquid-nav-list" aria-label="System">
+            {systemItems.map(renderItem)}
+          </nav>
+        </div>
+        <div className="liquid-sidebar-footer">
+          <span className="liquid-sidebar-footer-dot" aria-hidden="true" />
+          <span>Local desktop control</span>
         </div>
       </div>
-
-      <div className={`liquid-sidebar-system-island ${systemMenuExpanded ? 'liquid-sidebar-system-island-active' : ''}`}>
-        <button
-          type="button"
-          className="liquid-section-label liquid-system-section-label"
-          aria-expanded={systemMenuExpanded}
-          onClick={() => setSystemMenuOpen(open => !open)}
-        >
-          <span className="liquid-sidebar-section-title">System</span>
-          <ChevronDown className="liquid-system-chevron w-3 h-3" />
-        </button>
-
-        <div className="liquid-system-items">
-          {systemItems.map((item) => (
-            <button
-              type="button"
-              key={item.id}
-              className={`liquid-nav-item group ${currentView === item.id ? 'liquid-nav-item-active' : ''}`}
-              aria-current={currentView === item.id ? 'page' : undefined}
-              onClick={() => openView(item.id)}
-              title={item.label}
-            >
-              <span className={`liquid-nav-icon transition-colors duration-200 ${currentView === item.id ? 'text-primary' : 'text-text-muted group-hover:text-text-main'}`}>
-                {item.icon}
-              </span>
-              <span className="liquid-nav-label text-sm font-medium">{item.label}</span>
-              {currentView === item.id && (
-                <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary-glow)]" />
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <ThemeToggle className="liquid-sidebar-theme-toggle !p-0" />
     </aside>
   );
 };

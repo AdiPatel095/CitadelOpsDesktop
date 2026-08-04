@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/AttackCapacity"
 	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/Buildings"
 	"CitadelDesktop/Server/GameData"
@@ -29,11 +30,10 @@ const (
 	autoStormMapInitialHalfSpan    = 50
 	autoStormTargetVerificationAge = 30 * time.Second
 	autoStormBuildingRefreshAge    = 5 * time.Minute
+	autoStormKingdomRefreshAge     = 5 * time.Minute
 	autoStormPriorityFortPrefix    = "fort:"
 	autoStormPriorityIslandPrefix  = "island:"
-	autoStormMinimumHistoryHours   = 24
-	autoStormMaximumHistoryHours   = 72
-	autoStormDefaultHistoryHours   = 72
+	autoStormTroopHistoryHours     = 24
 	autoStormTroopDemandMultiplier = 2
 )
 
@@ -44,6 +44,7 @@ type autoStormSettings struct {
 	Target                   *Buildings.TargetCaptureResult `json:"target,omitempty"`
 	DecorationPresetCastleID State.CastleID                 `json:"decorationPresetCastleId,omitempty"`
 	DecorationPresetID       string                         `json:"decorationPresetId,omitempty"`
+	Unlock                   autoStormUnlockSettings        `json:"unlock"`
 	Build                    autoStormBuildSettings         `json:"build"`
 	Harbor                   autoStormHarborSettings        `json:"harbor"`
 	Forts                    autoStormFortSettings          `json:"forts"`
@@ -56,6 +57,11 @@ type autoStormSettings struct {
 	MapRefreshIntervalSec    int                            `json:"mapRefreshIntervalSec"`
 	DailyAttackLimit         int64                          `json:"dailyAttackLimit"`
 	HorseTravelBoostID       int                            `json:"horseTravelBoostId"`
+}
+
+type autoStormUnlockSettings struct {
+	Enabled          bool  `json:"enabled"`
+	PrebuiltCastleID int64 `json:"prebuiltCastleId"`
 }
 
 type autoStormBuildSettings struct {
@@ -184,7 +190,37 @@ func (*AutoStormPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	castle, found := autoStormCastle(snapshot.State, settings.Target)
 	if !found {
-		return autoStormWaiting(snapshot.Now, "No unlocked Storm castle is present; Auto Storm will resume when kingdom 4 becomes available"), nil
+		if snapshot.State.KingdomTransport.ObservedAt.IsZero() ||
+			snapshot.Now.Sub(snapshot.State.KingdomTransport.ObservedAt) >= autoStormKingdomRefreshAge {
+			decision := autoStormIntentDecision(
+				snapshot.Now, nil, "Refresh Storm kingdom availability", "troops.kingdom.refresh", nil,
+			)
+			return *decision, nil
+		}
+		unlock, observed := snapshot.State.KingdomTransport.Unlocks[autoStormKingdomID]
+		if observed && (unlock.Unlocked || unlock.Created) {
+			decision := autoStormIntentDecision(
+				snapshot.Now, nil, "Reconcile the unlocked Storm castle", "storm.castle.refresh", nil,
+			)
+			return *decision, nil
+		}
+		if !observed {
+			return autoStormWaiting(snapshot.Now, "Storm kingdom availability is missing from the latest game state"), nil
+		}
+		if !settings.Unlock.Enabled {
+			return autoStormWaiting(snapshot.Now, "No Storm castle is present; enable automatic Storm castle unlock and choose an official castle option"), nil
+		}
+		option, available := snapshot.GameData.StormCastleOption(
+			settings.Unlock.PrebuiltCastleID, snapshot.State.Player.Level,
+		)
+		if !available {
+			return autoStormWaiting(snapshot.Now, "Choose an official Storm castle option available at the current player level"), nil
+		}
+		decision := autoStormIntentDecision(
+			snapshot.Now, nil, fmt.Sprintf("Open official Storm castle %d", option.ID),
+			"storm.castle.unlock", map[string]any{"prebuiltCastleId": option.ID},
+		)
+		return *decision, nil
 	}
 	metrics := map[string]float64{
 		"castleId":   float64(castle.ID),
@@ -214,33 +250,18 @@ func (*AutoStormPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}
 	}
 
-	shopComplete := len(settings.Aquamarine.Purchases) == 0
-	shopDetail := ""
-	shopDecision, complete, detail, shopErr := evaluateAutoStormShop(snapshot, settings, castle, metrics)
-	if shopErr != nil {
-		return Decision{}, shopErr
-	}
-	shopComplete = complete
-	shopDetail = detail
-	if shopDecision != nil {
-		return *shopDecision, nil
-	}
-
-	details := make([]string, 0, 3)
+	details := make([]string, 0, 2)
 	if islandReturnDetail != "" {
 		details = append(details, islandReturnDetail)
-	}
-	if shopDetail != "" {
-		details = append(details, shopDetail)
 	}
 	if combatDetail != "" {
 		details = append(details, combatDetail)
 	}
 	if len(details) == 0 {
-		details = append(details, "No Storm combat or Aquamarine shop goal is configured")
+		details = append(details, "No Storm combat goal is configured")
 	}
 	status := "waiting"
-	if shopComplete && !settings.Forts.Enabled && !settings.Islands.Enabled && islandReturnDetail == "" {
+	if !settings.Forts.Enabled && !settings.Islands.Enabled && islandReturnDetail == "" {
 		status = "complete"
 	}
 	nextCheckAt := snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30))
@@ -256,6 +277,7 @@ func (*AutoStormPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 func defaultAutoStormSettings() autoStormSettings {
 	return autoStormSettings{
 		Version: 1,
+		Unlock:  autoStormUnlockSettings{},
 		Build: autoStormBuildSettings{
 			ResourceReserves: map[string]float64{}, SourceResourceReserves: map[string]float64{},
 			TimeSkipReserve: map[string]int64{},
@@ -266,7 +288,7 @@ func defaultAutoStormSettings() autoStormSettings {
 			DefenseUnits: []autoStormDefenseUnit{},
 		},
 		TroopImport: autoStormTroopImportSettings{
-			DonorCastleIDs: []State.CastleID{}, HistoryHours: autoStormDefaultHistoryHours,
+			DonorCastleIDs: []State.CastleID{}, HistoryHours: autoStormTroopHistoryHours,
 		},
 		Aquamarine:     autoStormAquamarineSettings{Purchases: []autoStormShopPurchase{}},
 		TargetPriority: nil, CheckIntervalSec: 30, MapRefreshIntervalSec: autoStormMapRefreshSeconds,
@@ -275,6 +297,7 @@ func defaultAutoStormSettings() autoStormSettings {
 }
 
 func normalizeAutoStormSettings(settings *autoStormSettings) {
+	settings.Unlock.PrebuiltCastleID = max(int64(0), settings.Unlock.PrebuiltCastleID)
 	if settings.Build.ResourceReserves == nil {
 		settings.Build.ResourceReserves = map[string]float64{}
 	}
@@ -313,7 +336,7 @@ func normalizeAutoStormSettings(settings *autoStormSettings) {
 	}
 	settings.TroopImport.DonorCastleIDs = donors
 	settings.TroopImport.MinimumTroops = max(int64(0), settings.TroopImport.MinimumTroops)
-	settings.TroopImport.HistoryHours = normalizedAutoStormHistoryHours(settings.TroopImport.HistoryHours)
+	settings.TroopImport.HistoryHours = autoStormTroopHistoryHours
 	settings.Forts.MinimumWins = max(int64(0), settings.Forts.MinimumWins)
 	if settings.Aquamarine.Purchases == nil {
 		settings.Aquamarine.Purchases = []autoStormShopPurchase{}
@@ -693,24 +716,11 @@ func autoStormBuildingRemaining(
 }
 
 func autoStormBuildingTimeSkip(state State.GameState, reserves map[string]int64, remainingSec int64) (int, int64, bool) {
-	options := []struct {
-		Minutes  int
-		Currency State.CurrencyID
-		Key      string
-	}{
-		{1440, 1007, "MS7"}, {300, 1006, "MS6"}, {60, 1005, "MS5"}, {30, 1004, "MS4"},
-		{10, 1003, "MS3"}, {5, 1002, "MS2"}, {1, 1001, "MS1"},
+	option, reserve, found := autoStormSelectTimeSkip(state, reserves, remainingSec)
+	if !found {
+		return 0, 0, false
 	}
-	for _, option := range options {
-		if option.Minutes*60 > int(remainingSec) && option.Minutes != 1 {
-			continue
-		}
-		reserve := autoStormTimeSkipReserve(reserves, option.Currency, option.Key)
-		if state.Player.Currencies[option.Currency]-1 >= float64(reserve) {
-			return option.Minutes, reserve, true
-		}
-	}
-	return 0, 0, false
+	return option.Minutes, reserve, true
 }
 
 func autoStormMissingGround(castle State.CastleState, target []Buildings.TargetGround) []Buildings.TargetGround {
@@ -916,16 +926,31 @@ func autoStormDiffRemediation(
 	diff Buildings.TargetDiffResult,
 	metrics map[string]float64,
 ) *Decision {
+	if diff.Exact {
+		for _, issue := range diff.Issues {
+			if issue.Code != "extra_building" {
+				continue
+			}
+			for _, buildingID := range issue.BuildingIDs {
+				if decision := autoStormBuildingRemovalDecision(snapshot.Now, settings, castle, catalog, buildingID, true, metrics); decision != nil {
+					return decision
+				}
+			}
+		}
+	}
 	for _, issue := range diff.Issues {
+		if diff.Exact && issue.Code == "extra_building" {
+			continue
+		}
 		for _, buildingID := range issue.BuildingIDs {
-			if decision := autoStormBuildingRemovalDecision(snapshot.Now, settings, castle, catalog, buildingID, metrics); decision != nil {
+			if decision := autoStormBuildingRemovalDecision(snapshot.Now, settings, castle, catalog, buildingID, false, metrics); decision != nil {
 				return decision
 			}
 		}
 	}
 	if diff.Exact && len(diff.Actions) == 0 {
 		for _, unmanaged := range diff.Unmanaged {
-			if decision := autoStormBuildingRemovalDecision(snapshot.Now, settings, castle, catalog, unmanaged.BuildingInstanceID, metrics); decision != nil {
+			if decision := autoStormBuildingRemovalDecision(snapshot.Now, settings, castle, catalog, unmanaged.BuildingInstanceID, true, metrics); decision != nil {
 				return decision
 			}
 		}
@@ -939,6 +964,7 @@ func autoStormBuildingRemovalDecision(
 	castle State.CastleState,
 	catalog *GameData.BuildingCatalog,
 	buildingID State.BuildingInstanceID,
+	exactExtra bool,
 	metrics map[string]float64,
 ) *Decision {
 	building, exists := castle.Layout.Objects[buildingID]
@@ -954,6 +980,11 @@ func autoStormBuildingRemovalDecision(
 			"castleId": castle.ID, "buildingInstanceId": buildingID,
 		})
 	}
+	if exactExtra && settings.Build.AllowDemolition && autoStormBuildingOfficiallyDestructible(definition) {
+		return autoStormIntentDecision(now, metrics, fmt.Sprintf("Demolish unmanaged %s", definition.DisplayName), "building.demolish", map[string]any{
+			"castleId": castle.ID, "buildingInstanceId": buildingID,
+		})
+	}
 	if definition.Movable == nil || *definition.Movable {
 		if placement, found := Buildings.FindPlacement(castle, definition, catalog, buildingID); found &&
 			(placement.GridX != building.GridX || placement.GridY != building.GridY || placement.Rotation != building.Rotation) {
@@ -963,12 +994,16 @@ func autoStormBuildingRemovalDecision(
 			})
 		}
 	}
-	if settings.Build.AllowDemolition && definition.Destructable != nil && *definition.Destructable {
+	if settings.Build.AllowDemolition && autoStormBuildingOfficiallyDestructible(definition) {
 		return autoStormIntentDecision(now, metrics, fmt.Sprintf("Demolish unmanaged %s", definition.DisplayName), "building.demolish", map[string]any{
 			"castleId": castle.ID, "buildingInstanceId": buildingID,
 		})
 	}
 	return nil
+}
+
+func autoStormBuildingOfficiallyDestructible(definition GameData.BuildingDefinition) bool {
+	return definition.Destructable == nil || *definition.Destructable
 }
 
 func autoStormTargetActionDecision(
@@ -1097,24 +1132,55 @@ func autoStormTransportTimeSkip(
 	reserves map[string]int64,
 	remainingSec int,
 ) (string, State.CurrencyID, int64, bool) {
-	options := []struct {
-		Key      string
-		Minutes  int
-		Currency State.CurrencyID
-	}{
+	option, reserve, found := autoStormSelectTimeSkip(state, reserves, int64(remainingSec))
+	if !found {
+		return "", 0, 0, false
+	}
+	return option.Key, option.Currency, reserve, true
+}
+
+type autoStormTimeSkipOption struct {
+	Key      string
+	Minutes  int
+	Currency State.CurrencyID
+}
+
+func autoStormSelectTimeSkip(
+	state State.GameState,
+	reserves map[string]int64,
+	remainingSec int64,
+) (autoStormTimeSkipOption, int64, bool) {
+	if remainingSec <= 0 {
+		return autoStormTimeSkipOption{}, 0, false
+	}
+	options := [...]autoStormTimeSkipOption{
 		{"MS7", 1440, 1007}, {"MS6", 300, 1006}, {"MS5", 60, 1005}, {"MS4", 30, 1004},
 		{"MS3", 10, 1003}, {"MS2", 5, 1002}, {"MS1", 1, 1001},
 	}
+	var bestFit, smallestCrossing autoStormTimeSkipOption
+	var bestFitReserve, smallestCrossingReserve int64
 	for _, option := range options {
-		if option.Minutes*60 > remainingSec && option.Minutes != 1 {
+		reserve := autoStormTimeSkipReserve(reserves, option.Currency, option.Key)
+		if state.Player.Currencies[option.Currency]-1 < float64(reserve) {
 			continue
 		}
-		reserve := autoStormTimeSkipReserve(reserves, option.Currency, option.Key)
-		if state.Player.Currencies[option.Currency]-1 >= float64(reserve) {
-			return option.Key, option.Currency, reserve, true
+		if int64(option.Minutes)*60 <= remainingSec {
+			if bestFit.Minutes == 0 || option.Minutes > bestFit.Minutes {
+				bestFit, bestFitReserve = option, reserve
+			}
+			continue
+		}
+		if smallestCrossing.Minutes == 0 || option.Minutes < smallestCrossing.Minutes {
+			smallestCrossing, smallestCrossingReserve = option, reserve
 		}
 	}
-	return "", 0, 0, false
+	if bestFit.Minutes > 0 {
+		return bestFit, bestFitReserve, true
+	}
+	if smallestCrossing.Minutes > 0 {
+		return smallestCrossing, smallestCrossingReserve, true
+	}
+	return autoStormTimeSkipOption{}, 0, false
 }
 
 func autoStormTimeSkipReserve(reserves map[string]int64, currencyID State.CurrencyID, key string) int64 {
@@ -1449,7 +1515,8 @@ func evaluateAutoStormCombat(
 	if restricted && len(commanderIDs) == 0 {
 		return nil, "No commanders are assigned to Auto Storm", nil
 	}
-	if !hasAvailableFeatureCommander(snapshot.State, commanderIDs, restricted, snapshot.Now) {
+	commanderID, available := nextAvailableFeatureCommander(snapshot.State, commanderIDs, restricted, snapshot.Now)
+	if !available {
 		return nil, "No assigned Auto Storm commander is currently available", nil
 	}
 	candidates := autoStormCombatCandidates(snapshot, settings, castle, mapState.LastCompletedAt)
@@ -1473,14 +1540,6 @@ func evaluateAutoStormCombat(
 			continue
 		}
 		defense := candidate.Defense
-		required, valid := autoStormPresetRequirements(
-			preset,
-			defense,
-			candidate.Definition.Kind != GameData.StormIsleKindIsland,
-		)
-		if !valid {
-			continue
-		}
 		if autoStormTargetNeedsVerification(candidate.Observation, snapshot.Now) {
 			metrics["stormTargetVerification"] = 1
 			return autoStormIntentDecision(
@@ -1497,6 +1556,21 @@ func evaluateAutoStormCombat(
 					},
 				},
 			), "", nil
+		}
+		limitedPreset, err := autoStormCapacityLimitedPreset(
+			snapshot, castle, candidate.Observation, candidate.Definition, preset, commanderID,
+		)
+		if err != nil {
+			waitingDetail = fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err)
+			continue
+		}
+		required, valid := autoStormPresetRequirements(
+			limitedPreset,
+			defense,
+			candidate.Definition.Kind != GameData.StormIsleKindIsland,
+		)
+		if !valid {
+			continue
 		}
 		shortages := autoStormUnitShortages(required, castle)
 		decision, importDetail := autoStormTroopImportDecision(
@@ -1783,6 +1857,35 @@ func autoStormPresetRequirements(
 	return requested, true
 }
 
+func autoStormCapacityLimitedPreset(
+	snapshot Snapshot,
+	source State.CastleState,
+	target State.MapObservation,
+	definition GameData.StormIsleDefinition,
+	preset AttackPresets.Preset,
+	commanderID State.CommanderID,
+) (AttackPresets.Preset, error) {
+	dialog := snapshot.State.AttackDialog
+	useAttackDialog := dialog.SourceCastleID == source.ID && dialog.KingdomID == target.KingdomID &&
+		dialog.Target.TypeID == target.TypeID && dialog.Target.X == target.X && dialog.Target.Y == target.Y
+	capacity, err := (AttackCapacity.Resolver{}).Resolve(snapshot.State, snapshot.GameData, AttackCapacity.Request{
+		SourceCastleID: source.ID, CommanderID: commanderID, UseAttackDialogEffects: useAttackDialog,
+		Target: AttackCapacity.TargetContext{
+			ID: fmt.Sprintf("storm:%d:%d:%d", target.KingdomID, target.X, target.Y),
+			Map: &AttackCapacity.MapTarget{
+				KingdomID: target.KingdomID, TypeID: target.TypeID, X: target.X, Y: target.Y,
+				ObjectID: target.ObjectID, Level: definition.Level, VictoryCount: target.StormVictoryCount,
+			},
+			Level: definition.Level, CastleTypeID: target.TypeID,
+			PvP: definition.Kind == GameData.StormIsleKindIsland,
+		},
+	})
+	if err != nil {
+		return AttackPresets.Preset{}, fmt.Errorf("resolve Storm attack capacity: %w", err)
+	}
+	return AttackPresets.LimitToCapacity(preset, capacity), nil
+}
+
 func autoStormUnitShortages(required map[State.UnitID]int64, castle State.CastleState) map[State.UnitID]int64 {
 	shortages := map[State.UnitID]int64{}
 	for unitID, amount := range required {
@@ -1908,17 +2011,22 @@ func autoStormTroopImportDecision(
 		return nil, fmt.Sprintf("Cannot calculate the Storm troop cap: %s", detail)
 	}
 	minimumTroops := capPreview.MinimumTroops
-	maximumTroops := capPreview.MaximumTroops
+	maximumTroops := max(
+		autoStormSaturatingAdd(perAttackTroops, minimumTroops),
+		capPreview.BufferedTroops,
+	)
 	historyHours := capPreview.HistoryHours
 	metrics["stormTroopsStationed"] = float64(stationedTroops)
 	metrics["stormTroopsCommitted"] = float64(committedTroops)
-	metrics["stormTroopsPerAttack"] = float64(capPreview.TroopsPerAttack)
+	metrics["stormTroopsPerAttack"] = float64(perAttackTroops)
 	metrics["stormTroopMinimum"] = float64(minimumTroops)
 	metrics["stormTroopMaximum"] = float64(maximumTroops)
 	metrics["stormAttackHistoryHours"] = float64(historyHours)
 	metrics["stormAttacksInHistory"] = float64(capPreview.AttacksInHistory)
-	metrics["stormAverageDailyAttacks"] = capPreview.AverageDailyAttacks
-	metrics["stormBufferedAttackCount"] = float64(capPreview.BufferedAttackCount)
+	metrics["stormMeasuredAttacksInHistory"] = float64(capPreview.MeasuredAttacksInHistory)
+	metrics["stormTroopsSentInHistory"] = float64(capPreview.TroopsSentInHistory)
+	metrics["stormAverageTroopsPerHour"] = capPreview.AverageTroopsPerHour
+	metrics["stormBufferedTroops"] = float64(capPreview.BufferedTroops)
 
 	requested := map[State.UnitID]int64{}
 	reserve := map[State.UnitID]int64{}
@@ -1947,7 +2055,7 @@ func autoStormTroopImportDecision(
 	metrics["stormTroopImportHeadroom"] = float64(max(int64(0), headroom))
 	if headroom < requestedTotal {
 		return nil, fmt.Sprintf(
-			"Storm troop import is capped at %d troops from the %d-hour attack average; %d are committed and %d more are needed before launch",
+			"Storm troop import is capped at %d troops from the rolling %d-hour troop-send rate; %d are committed and %d more are needed before launch",
 			maximumTroops, historyHours, committedTroops, requestedTotal,
 		)
 	}
@@ -2049,15 +2157,12 @@ func autoStormTroopInventory(snapshot Snapshot, castle State.CastleState) (int64
 func autoStormAttackDemand(
 	state State.GameState,
 	now time.Time,
-	historyHours int,
-) (int64, float64, int64) {
-	historyHours = normalizedAutoStormHistoryHours(historyHours)
+) (int64, int64, int64, float64, int64) {
 	if now.IsZero() {
 		now = time.Now().UTC()
 	}
-	cutoff := now.Add(-time.Duration(historyHours) * time.Hour)
-	seen := map[State.MovementID]struct{}{}
-	count := int64(0)
+	cutoff := now.Add(-autoStormTroopHistoryHours * time.Hour)
+	troopsByMovement := map[State.MovementID]int64{}
 	for _, records := range [][]State.AttackFeatureLaunch{
 		state.AttackAnalytics.RecentAutoStormLaunches,
 		state.AttackAnalytics.PendingAttacks,
@@ -2068,25 +2173,24 @@ func autoStormAttackDemand(
 				record.LaunchedAt.After(now) {
 				continue
 			}
-			if _, duplicate := seen[record.MovementID]; duplicate {
-				continue
-			}
-			seen[record.MovementID] = struct{}{}
-			count++
+			troopsByMovement[record.MovementID] = max(
+				troopsByMovement[record.MovementID],
+				max(int64(0), record.TroopCount),
+			)
 		}
 	}
-	averageDaily := float64(count) * 24 / float64(historyHours)
-	buffered := int64(math.Ceil(averageDaily * autoStormTroopDemandMultiplier))
-	return count, averageDaily, max(int64(1), buffered)
-}
-
-func normalizedAutoStormHistoryHours(historyHours int) int {
-	switch historyHours {
-	case autoStormMinimumHistoryHours, 48, autoStormMaximumHistoryHours:
-		return historyHours
-	default:
-		return autoStormDefaultHistoryHours
+	troopsSent := int64(0)
+	measuredAttacks := int64(0)
+	for _, troopCount := range troopsByMovement {
+		if troopCount <= 0 {
+			continue
+		}
+		measuredAttacks++
+		troopsSent = autoStormSaturatingAdd(troopsSent, troopCount)
 	}
+	averageHourly := float64(troopsSent) / autoStormTroopHistoryHours
+	bufferedTroops := int64(math.Ceil(averageHourly * autoStormTroopDemandMultiplier))
+	return int64(len(troopsByMovement)), measuredAttacks, troopsSent, averageHourly, bufferedTroops
 }
 
 func autoStormTroopMapTotal(gameData *GameData.Store, units map[State.UnitID]int64) int64 {

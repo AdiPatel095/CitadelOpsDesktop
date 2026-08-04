@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Lock, Settings, Shield, Unlock } from 'lucide-react';
+import { Lock, Settings, Shield, Trash2, Unlock } from 'lucide-react';
+import { useCitadelAPI } from '../api/ApiContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AutoBirdHoverPopover from './AutoBirdHoverPopover';
 import CastleFocusSwitcher from './CastleFocusSwitcher';
 import DailyAttackTracker from './DailyAttackTracker';
+import { Notifications } from './Notifications';
 import { Button, Badge } from './ui';
 
 const showHeaderMemoryBadges =
@@ -47,6 +49,7 @@ const Header: React.FC<HeaderProps> = ({
   onOpenAutoStationSettings,
   onOpenAutomationDuration,
 }) => {
+  const { submitIntent } = useCitadelAPI();
   const {
     gameLoggedIn,
     gameLoginCooldown,
@@ -59,7 +62,6 @@ const Header: React.FC<HeaderProps> = ({
     dashboardConnectionStatus,
     hasGameConnectionStatus,
     startGame,
-    stopGame,
     goMem,
 		browserMem,
     autoBirdEnabled,
@@ -81,6 +83,7 @@ const Header: React.FC<HeaderProps> = ({
   const { theme } = useTheme();
 	const autoBirdStatus = automationStates.autoBird?.status ?? '';
 	const hasAutoBirdCycles = autoBirdCastleCycles.some((cycle) => cycle.nextCycleAtMs > 0);
+  const [clearingAutoBirdTracking, setClearingAutoBirdTracking] = useState(false);
 
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
@@ -124,6 +127,22 @@ const Header: React.FC<HeaderProps> = ({
 		: gameLoggedIn
 			? 'Click toggles Auto Bird; right-click runs it for a duration.'
 			: 'Showing the last known cycles while disconnected. Right-click runs Auto Bird for a duration.';
+
+  const clearAutoBirdTracking = async () => {
+    if (clearingAutoBirdTracking) return;
+    if (!window.confirm(
+      'Clear all Auto Bird cycle tracking from CitadelOps memory? Settings, presets, Auto Station, and game movements will be kept. Auto Bird will rebuild tracking from current game state.',
+    )) return;
+    setClearingAutoBirdTracking(true);
+    try {
+      await submitIntent('auto_bird.clear_tracking', {}, { actor: 'ui:auto-bird' });
+      Notifications.success('Auto Bird tracking reset requested.');
+    } catch {
+      // The API context already presents the server error.
+    } finally {
+      setClearingAutoBirdTracking(false);
+    }
+  };
 
   const autoStationPill = useMemo(() => {
     if (!autoStationEnabled) return { tone: 'off' as const, text: 'Auto Station off' };
@@ -258,10 +277,10 @@ const Header: React.FC<HeaderProps> = ({
   ]);
 
   const connectionToneClass = connectionPill.tone === 'success'
-    ? 'text-success shadow-[0_0_15px_var(--color-success)]'
+    ? 'm3-status-chip-success text-success'
     : connectionPill.tone === 'warning'
-      ? 'text-warning shadow-[0_0_15px_var(--color-warning)]'
-      : 'text-error shadow-[0_0_15px_var(--color-error)]';
+      ? 'm3-status-chip-warning text-warning'
+      : 'm3-status-chip-danger text-error';
   const connectionDotClass = connectionPill.tone === 'success'
     ? 'bg-success shadow-success/50'
     : connectionPill.tone === 'warning'
@@ -293,7 +312,7 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="liquid-brand-copy">
             <div className="text-lg font-bold leading-tight text-text-main">Citadel Ops</div>
-            <div className="text-[11px] font-medium leading-tight text-text-muted">Desktop</div>
+            <div className="text-[11px] font-medium leading-tight text-text-muted">Command center</div>
           </div>
         </div>
 
@@ -319,10 +338,11 @@ const Header: React.FC<HeaderProps> = ({
 
           {/* Bot Status */}
           <div
-            className={`liquid-bot-status liquid-glass-edge flex shrink-0 items-center gap-3 rounded-full px-4 py-1.5 transition-all duration-300 ${connectionToneClass}`}
+            className={`m3-status-chip liquid-bot-status flex shrink-0 items-center gap-3 rounded-full px-4 py-1.5 transition-all duration-300 ${connectionToneClass}`}
             title={connectionPill.title}
+            aria-live="polite"
           >
-            <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_10px] ${connectionPill.pulse ? 'animate-pulse' : ''} ${connectionDotClass}`} />
+            <div className={`w-2.5 h-2.5 rounded-full ${connectionPill.pulse ? 'animate-pulse' : ''} ${connectionDotClass}`} />
             <span className="liquid-bot-status-text text-sm font-semibold">
               {connectionPill.label}
             </span>
@@ -343,22 +363,33 @@ const Header: React.FC<HeaderProps> = ({
 						event.preventDefault();
 						onOpenAutomationDuration('auto_bird', 'Auto Bird');
 					}}
-					className={`liquid-auto-bird-button border-2 ${
-						autoBirdPill.on
-							? '!border-success/40 !text-success hover:!bg-success/10 !shadow-[0_0_15px_rgba(16,185,129,0.1)]'
-							: '!border-error/40 !text-error hover:!bg-error/10 !shadow-[0_0_15px_rgba(239,68,68,0.1)]'
-					}`}
+						className={`liquid-auto-bird-button ${
+							autoBirdPill.on
+								? '!border-success/40 !bg-success/10 !text-success hover:!bg-success/16'
+								: '!border-border-base !bg-transparent !text-text-muted hover:!bg-bg-card-hover'
+						}`}
 					aria-label={`${autoBirdPill.text}. Hover for every castle cycle.`}
 				>
-					<div className={`w-2 h-2 rounded-full ${autoBirdPill.on ? 'bg-success animate-pulse' : 'bg-error'}`} />
+						<div className={`w-2 h-2 rounded-full ${autoBirdPill.on ? 'bg-success animate-pulse' : 'bg-text-muted'}`} />
 					<span className="liquid-auto-bird-text">{autoBirdPill.text}</span>
 				</Button>
 			</AutoBirdHoverPopover>
             <Button
               variant="ghost"
               size="icon"
+              disabled={clearingAutoBirdTracking}
+              onClick={() => void clearAutoBirdTracking()}
+              className="text-text-muted hover:bg-error/10 hover:text-error"
+              title="Clear Auto Bird cycle tracking from CitadelOps memory"
+              aria-label="Clear Auto Bird cycle tracking"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onOpenAutoBirdSettings}
-              className={autoBirdPill.on ? 'text-success hover:bg-success/10' : 'text-error hover:bg-error/10'}
+              className={autoBirdPill.on ? 'text-success hover:bg-success/10' : 'text-text-muted hover:bg-bg-card-hover'}
               title="Auto Bird Settings"
             >
               <Settings className="w-4 h-4" />
@@ -374,12 +405,12 @@ const Header: React.FC<HeaderProps> = ({
                 event.preventDefault();
                 onOpenAutomationDuration('auto_station', 'Auto Station');
               }}
-              className={`liquid-auto-bird-button border-2 ${
+              className={`liquid-auto-bird-button ${
                 autoStationPill.tone === 'on'
-                  ? '!border-success/40 !text-success hover:!bg-success/10'
+                  ? '!border-success/40 !bg-success/10 !text-success hover:!bg-success/16'
                   : autoStationPill.tone === 'warning'
-                    ? '!border-warning/50 !text-warning hover:!bg-warning/10'
-                    : '!border-error/40 !text-error hover:!bg-error/10'
+                    ? '!border-warning/50 !bg-warning/10 !text-warning hover:!bg-warning/16'
+                    : '!border-border-base !bg-transparent !text-text-muted hover:!bg-bg-card-hover'
               }`}
               title={automationTimedUntilByKey.auto_station
                 ? `Timed until ${new Date(automationTimedUntilByKey.auto_station).toLocaleString()}. Right-click to change the duration.`
@@ -392,7 +423,7 @@ const Header: React.FC<HeaderProps> = ({
               variant="ghost"
               size="icon"
               onClick={onOpenAutoStationSettings}
-              className={autoStationEnabled ? 'text-success hover:bg-success/10' : 'text-error hover:bg-error/10'}
+              className={autoStationEnabled ? 'text-success hover:bg-success/10' : 'text-text-muted hover:bg-bg-card-hover'}
               title="Auto Station Settings"
             >
               <Settings className="h-4 w-4" />
@@ -417,7 +448,7 @@ const Header: React.FC<HeaderProps> = ({
 			>
 				{botLocked ? 'Unlock Bot' : 'Lock Bot'}
 			</Button>
-          {!gameConnectionActive ? (
+          {!gameConnectionActive && (
             <Button
               variant="primary"
               size="sm"
@@ -428,17 +459,6 @@ const Header: React.FC<HeaderProps> = ({
               leftIcon={<div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />}
             >
               {gameConnectionState === 'starting' ? 'Starting…' : 'Start Bot'}
-            </Button>
-          ) : (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={stopGame}
-              disabled={!connectionControlsReady}
-              className="uppercase text-[11px]"
-              leftIcon={<div className="w-1.5 h-1.5 rounded-full bg-error shadow-[0_0_8px] shadow-error/80" />}
-            >
-              Stop Bot
             </Button>
           )}
         </div>

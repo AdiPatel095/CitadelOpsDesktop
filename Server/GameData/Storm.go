@@ -49,6 +49,61 @@ type StormShopPackage struct {
 	Stock           int64  `json:"stock,omitempty"`
 }
 
+type StormCastleOption struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name,omitempty"`
+	MinLevel    int    `json:"minLevel"`
+	CostWood    int64  `json:"costWood,omitempty"`
+	CostStone   int64  `json:"costStone,omitempty"`
+	CostFood    int64  `json:"costFood,omitempty"`
+	CostCoins   int64  `json:"costCoins,omitempty"`
+	CostPremium int64  `json:"costPremium,omitempty"`
+}
+
+func (store *Store) StormCastleOption(id int64, playerLevel int) (StormCastleOption, bool) {
+	if id <= 0 {
+		return StormCastleOption{}, false
+	}
+	for _, option := range store.StormCastleOptions(playerLevel) {
+		if option.ID == id {
+			return option, true
+		}
+	}
+	return StormCastleOption{}, false
+}
+
+func (store *Store) StormCastleOptions(playerLevel int) []StormCastleOption {
+	if store == nil {
+		return []StormCastleOption{}
+	}
+	catalog, err := store.Catalog("prebuiltcastles")
+	if err != nil {
+		return []StormCastleOption{}
+	}
+	options := make([]StormCastleOption, 0, len(catalog.Rows()))
+	for _, raw := range catalog.Rows() {
+		record, decodeErr := DecodeRecord(raw)
+		if decodeErr != nil || !recordIncludesInteger(record, "spaceIDs", StormKingdomID) {
+			continue
+		}
+		id, hasID := record.Int64("preBuiltCastleID")
+		minimumLevel, _ := record.Int64("minLevel")
+		if !hasID || id <= 0 || minimumLevel > int64(playerLevel) {
+			continue
+		}
+		name, _ := record.String("comment2")
+		option := StormCastleOption{ID: id, Name: strings.TrimSpace(name), MinLevel: int(minimumLevel)}
+		option.CostWood, _ = record.Int64("costWood")
+		option.CostStone, _ = record.Int64("costStone")
+		option.CostFood, _ = record.Int64("costFood")
+		option.CostCoins, _ = record.Int64("costC1")
+		option.CostPremium, _ = record.Int64("costC2")
+		options = append(options, option)
+	}
+	sort.Slice(options, func(left, right int) bool { return options[left].ID < options[right].ID })
+	return options
+}
+
 func (store *Store) StormIsle(id int64) (StormIsleDefinition, bool) {
 	if store == nil || id <= 0 {
 		return StormIsleDefinition{}, false

@@ -372,7 +372,7 @@ const SettingsView: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-6">
 		<SectionCard
-			variant="glass"
+			variant="solid"
 			title="Settings Import & Export"
 			description="Move your CitadelOps setup between installations with one JSON file."
 			icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10"><FileJson className="h-4 w-4 text-violet-400" /></span>}
@@ -429,7 +429,7 @@ const SettingsView: React.FC = () => {
 			{settingsTransferStatus && <p role="status" className="text-xs font-medium text-success">{settingsTransferStatus}</p>}
 		</SectionCard>
 
-		<SectionCard variant="glass" title="Game Browser" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-4">
+		<SectionCard variant="solid" title="Game Browser" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-4">
 				<div>
 					<h3 className="text-sm font-semibold text-text-main mb-1">Chromium Browser</h3>
 						<p className="text-xs text-text-muted mb-4">
@@ -522,7 +522,7 @@ const SettingsView: React.FC = () => {
 					</div>
 		</SectionCard>
 
-        <SectionCard variant="glass" title="Attack Scheduler" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName="p-6 space-y-8">
+        <SectionCard variant="solid" title="Attack Scheduler" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName="p-6 space-y-8">
 			{settingsSaveError && <p className="text-xs text-error">{settingsSaveError}</p>}
             <div className="space-y-4">
               <div>
@@ -651,7 +651,7 @@ const SettingsView: React.FC = () => {
 
         </SectionCard>
 
-        <SectionCard variant="glass" title="Equipment Upgrades" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName="p-6 space-y-4">
+        <SectionCard variant="solid" title="Equipment Upgrades" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName="p-6 space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-text-main mb-1">Upgrade Step Delay</h3>
               <p className="text-xs text-text-muted mb-4">

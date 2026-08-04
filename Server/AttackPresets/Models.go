@@ -13,6 +13,8 @@ const (
 	MaximumWaves         = 30
 	CourtyardTroopSlots  = 8
 	CourtyardToolSlots   = 3
+	TargetTypePvE        = "pve"
+	TargetTypePvP        = "pvp"
 )
 
 type Document struct {
@@ -23,6 +25,7 @@ type Document struct {
 type Preset struct {
 	ID               string           `json:"id"`
 	Name             string           `json:"name"`
+	TargetType       string           `json:"targetType,omitempty"`
 	Waves            []Wave           `json:"waves"`
 	CourtyardSupport CourtyardSupport `json:"courtyardSupport"`
 	CreatedAt        string           `json:"createdAt,omitempty"`
@@ -84,8 +87,8 @@ func Validate(preset Preset) error {
 }
 
 // LimitToCapacity applies the same wave, lane, and courtyard-support caps used
-// immediately before building a CRA payload. Tool allocations stay intact for
-// every retained wave; troop slots are consumed in their saved priority order.
+// immediately before building a CRA payload. Troop and tool slots are consumed
+// in their saved priority order for every retained wave.
 func LimitToCapacity(preset Preset, capacity AttackCapacity.Result) Preset {
 	result := preset
 	result.CourtyardSupport = CourtyardSupport{
@@ -96,22 +99,26 @@ func LimitToCapacity(preset Preset, capacity AttackCapacity.Result) Preset {
 	result.Waves = make([]Wave, waveCount)
 	for index, wave := range preset.Waves[:waveCount] {
 		result.Waves[index] = Wave{
-			Left:   limitLaneToCapacity(wave.Left, capacity.Capacity.Left),
-			Middle: limitLaneToCapacity(wave.Middle, capacity.Capacity.Front),
-			Right:  limitLaneToCapacity(wave.Right, capacity.Capacity.Right),
+			Left:   limitLaneToCapacity(wave.Left, capacity.Capacity.Left, capacity.ToolCapacity.Left),
+			Middle: limitLaneToCapacity(wave.Middle, capacity.Capacity.Front, capacity.ToolCapacity.Front),
+			Right:  limitLaneToCapacity(wave.Right, capacity.Capacity.Right, capacity.ToolCapacity.Right),
 		}
 	}
 	return result
 }
 
-func limitLaneToCapacity(lane Lane, capacity int64) Lane {
+func limitLaneToCapacity(lane Lane, troopCapacity int64, toolCapacity int64) Lane {
 	return Lane{
-		Troops: limitTroopSlotsToCapacity(lane.Troops, capacity),
-		Tools:  append([]Slot(nil), lane.Tools...),
+		Troops: limitSlotsToCapacity(lane.Troops, troopCapacity),
+		Tools:  limitSlotsToCapacity(lane.Tools, toolCapacity),
 	}
 }
 
 func limitTroopSlotsToCapacity(slots []Slot, capacity int64) []Slot {
+	return limitSlotsToCapacity(slots, capacity)
+}
+
+func limitSlotsToCapacity(slots []Slot, capacity int64) []Slot {
 	result := append([]Slot(nil), slots...)
 	remaining := max(int64(0), capacity)
 	for index := range result {
@@ -131,6 +138,9 @@ func validatePreset(preset Preset) error {
 	}
 	if strings.TrimSpace(preset.Name) == "" {
 		return fmt.Errorf("name is required")
+	}
+	if preset.TargetType != "" && preset.TargetType != TargetTypePvE && preset.TargetType != TargetTypePvP {
+		return fmt.Errorf("targetType must be %q or %q", TargetTypePvE, TargetTypePvP)
 	}
 	if len(preset.Waves) < 1 || len(preset.Waves) > MaximumWaves {
 		return fmt.Errorf("must contain between 1 and %d waves", MaximumWaves)

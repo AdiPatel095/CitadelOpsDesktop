@@ -183,6 +183,7 @@ func TestResourceShipmentPlannerSelectsTransportFromCastleKingdoms(t *testing.T)
 	gameState := State.NewGameState()
 	source := resourceIntentCastle(10, 0, 100, 200)
 	source.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137}
+	source.Buildings[2] = State.Building{InstanceID: 2, DefinitionID: 226, Placed: true}
 	source.Resources[3] = State.ResourceBalance{Amount: 50_000}
 	sameKingdomTarget := resourceIntentCastle(20, 0, 110, 215)
 	crossKingdomTarget := resourceIntentCastle(30, 3, 120, 225)
@@ -240,6 +241,77 @@ func TestResourceShipmentPlannerSelectsTransportFromCastleKingdoms(t *testing.T)
 	}
 }
 
+func TestAutoFoodBalanceResourcePlannersRejectBerimondRoutes(t *testing.T) {
+	gameData := resourceIntentGameData(t)
+	berimondKingdomID := State.KingdomID(GameData.BerimondKingdomID)
+
+	t.Run("kingdom target", func(t *testing.T) {
+		gameState := State.NewGameState()
+		source := resourceIntentCastle(10, 0, 100, 200)
+		source.Resources[3] = State.ResourceBalance{Amount: 50_000}
+		target := resourceIntentCastle(20, berimondKingdomID, 110, 215)
+		gameState.Castles[source.ID] = source
+		gameState.Castles[target.ID] = target
+		gameState.KingdomTransport.ObservedAt = time.Now().UTC()
+		gameState.KingdomTransport.Unlocks[target.KingdomID] = State.KingdomTransportUnlock{
+			KingdomID: target.KingdomID, Unlocked: true,
+		}
+
+		_, err := planKingdomResourceShipment(t.Context(), Intent.PlanningContext{
+			State: gameState, GameData: gameData,
+		}, json.RawMessage(`{
+			"sourceCastleId":10,"targetCastleId":20,"targetKingdomId":10,
+			"resourceId":3,"amount":15000,"workflowOwner":"autoFoodBalance"
+		}`))
+		if err == nil || !strings.Contains(err.Error(), "cannot send resources to or from Berimond") {
+			t.Fatalf("Auto Food Berimond target error = %v", err)
+		}
+	})
+
+	t.Run("kingdom donor", func(t *testing.T) {
+		gameState := State.NewGameState()
+		source := resourceIntentCastle(10, berimondKingdomID, 100, 200)
+		source.Resources[3] = State.ResourceBalance{Amount: 50_000}
+		target := resourceIntentCastle(20, 0, 110, 215)
+		gameState.Castles[source.ID] = source
+		gameState.Castles[target.ID] = target
+		gameState.KingdomTransport.ObservedAt = time.Now().UTC()
+		gameState.KingdomTransport.Unlocks[target.KingdomID] = State.KingdomTransportUnlock{
+			KingdomID: target.KingdomID, Unlocked: true,
+		}
+
+		_, err := planKingdomResourceShipment(t.Context(), Intent.PlanningContext{
+			State: gameState, GameData: gameData,
+		}, json.RawMessage(`{
+			"sourceCastleId":10,"targetCastleId":20,"targetKingdomId":0,
+			"resourceId":3,"amount":15000,"workflowOwner":"autoFoodBalance"
+		}`))
+		if err == nil || !strings.Contains(err.Error(), "cannot send resources to or from Berimond") {
+			t.Fatalf("Auto Food Berimond donor error = %v", err)
+		}
+	})
+
+	t.Run("actor guard", func(t *testing.T) {
+		gameState := State.NewGameState()
+		source := resourceIntentCastle(10, 0, 100, 200)
+		source.Resources[3] = State.ResourceBalance{Amount: 50_000}
+		target := resourceIntentCastle(20, berimondKingdomID, 110, 215)
+		gameState.Castles[source.ID] = source
+		gameState.Castles[target.ID] = target
+		ctx := Outbound.WithMetadata(t.Context(), Outbound.Metadata{Actor: "automation:autoFoodBalance"})
+
+		_, err := planKingdomResourceShipment(ctx, Intent.PlanningContext{
+			State: gameState, GameData: gameData,
+		}, json.RawMessage(`{
+			"sourceCastleId":10,"targetCastleId":20,"targetKingdomId":10,
+			"resourceId":3,"amount":15000
+		}`))
+		if err == nil || !strings.Contains(err.Error(), "cannot send resources to or from Berimond") {
+			t.Fatalf("Auto Food actor Berimond target error = %v", err)
+		}
+	})
+}
+
 func TestMarketShipmentPlannerRejectsUnsupportedHorseTravelBoost(t *testing.T) {
 	gameData := resourceIntentGameData(t)
 	gameState := State.NewGameState()
@@ -260,6 +332,30 @@ func TestMarketShipmentPlannerRejectsUnsupportedHorseTravelBoost(t *testing.T) {
 	}`))
 	if err == nil || !strings.Contains(err.Error(), "horseTravelBoostId must be") {
 		t.Fatalf("unsupported market horse travel boost error = %v", err)
+	}
+}
+
+func TestMarketShipmentPlannerRechecksMissingHorseBuilding(t *testing.T) {
+	gameData := resourceIntentGameData(t)
+	gameState := State.NewGameState()
+	source := resourceIntentCastle(10, 0, 100, 200)
+	source.Layout.ObservedAt = time.Now().UTC()
+	source.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137, Placed: true}
+	source.Resources[3] = State.ResourceBalance{Amount: 50_000}
+	target := resourceIntentCastle(20, 0, 110, 215)
+	gameState.Castles[source.ID] = source
+	gameState.Castles[target.ID] = target
+	gameState.Market.Castles[source.ID] = State.MarketCastleState{CastleID: source.ID, AvailableBarrows: 10}
+	gameState.Market.ObservedAt = time.Now().UTC()
+
+	_, err := planMarketResourceShipment(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":20,"resourceId":3,"amount":12000,
+		"horseTravelBoostId":1009
+	}`))
+	if !errors.Is(err, GameData.ErrHorseTravelBoostUnavailable) {
+		t.Fatalf("missing travel building error = %v", err)
 	}
 }
 
@@ -324,6 +420,10 @@ func TestKingdomSkipPlannerRequiresObservedInventory(t *testing.T) {
 	if plan.Steps[0].Opcode != "msk" || string(plan.Steps[0].Command.Payload) != `{"KID":"1","MST":"MS5","TT":"2"}` {
 		t.Fatalf("unexpected skip plan: %+v payload=%s", plan, plan.Steps[0].Command.Payload)
 	}
+	if len(plan.Steps) != 2 || plan.Steps[1].Action != timeSkipConsumeAction ||
+		!slices.Contains(plan.Claims, "currency:50") {
+		t.Fatalf("resource skip inventory guard = steps=%#v claims=%#v", plan.Steps, plan.Claims)
+	}
 	if plan.Summary != "Apply a 1-hour time skip to kingdom 1 resource transport" {
 		t.Fatalf("resource time-skip summary = %q", plan.Summary)
 	}
@@ -376,6 +476,15 @@ func TestKingdomShipmentRejectsSettlingTransportBeforeAndAfterRefresh(t *testing
 		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments,
 	); err == nil || !strings.Contains(err.Error(), "settling") {
 		t.Fatalf("settling shipment planning error = %v", err)
+	}
+	automationArguments := json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":20,"targetKingdomId":4,"resourceId":3,"amount":15000,
+		"workflowOwner":"autoStorm"
+	}`)
+	if _, err := planKingdomResourceShipment(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, automationArguments,
+	); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("automated settling shipment error = %v, want stale replan", err)
 	}
 
 	application := &Application{State: State.NewStore(gameState)}
@@ -601,19 +710,20 @@ func TestAutoFoodBalanceCoveringTimeSkipRefreshesAndClearsDestinationWorkflow(t 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 9 ||
+	if len(plan.Steps) != 10 ||
 		plan.Steps[3].Opcode != "kgt" ||
 		plan.Steps[4].Action != "resources.kingdom.consume_source" ||
 		plan.Steps[5].Opcode != "msk" ||
-		plan.Steps[6].Opcode != "kpi" ||
-		plan.Steps[7].Opcode != "grc" ||
-		plan.Steps[8].Action != "resources.kingdom.complete_workflow" {
+		plan.Steps[6].Action != timeSkipConsumeAction ||
+		plan.Steps[7].Opcode != "kpi" ||
+		plan.Steps[8].Opcode != "grc" ||
+		plan.Steps[9].Action != "resources.kingdom.complete_workflow" {
 		t.Fatalf("immediately settled kingdom steps = %#v", plan.Steps)
 	}
-	if got := string(plan.Steps[7].Command.Payload); got != `{"AID":20,"KID":4}` {
+	if got := string(plan.Steps[8].Command.Payload); got != `{"AID":20,"KID":4}` {
 		t.Fatalf("immediate destination refresh payload = %s", got)
 	}
-	if got := string(plan.Steps[8].ActionArguments); got != `{"owner":"autoFoodBalance","targetKingdomId":4}` {
+	if got := string(plan.Steps[9].ActionArguments); got != `{"owner":"autoFoodBalance","targetKingdomId":4}` {
 		t.Fatalf("immediate workflow completion arguments = %s", got)
 	}
 	if !slices.Contains(plan.Claims, "castle:20") || !slices.Contains(plan.Claims, "currency:50") {
@@ -674,7 +784,8 @@ func TestKingdomShipmentCombinesMultipleResourceGoods(t *testing.T) {
 	if got := string(plan.Steps[3].Command.Payload); got != `{"SCID":10,"SKID":0,"TKID":4,"G":[["W",5124],["S",5124]]}` {
 		t.Fatalf("multi-good kingdom payload = %s", got)
 	}
-	if len(plan.Steps) != 6 || plan.Steps[5].Opcode != "msk" ||
+	if len(plan.Steps) != 7 || plan.Steps[5].Opcode != "msk" ||
+		plan.Steps[6].Action != timeSkipConsumeAction ||
 		string(plan.Steps[5].Command.Payload) != `{"KID":"4","MST":"MS5","TT":"2"}` {
 		t.Fatalf("immediate kingdom skip steps = %#v", plan.Steps)
 	}
@@ -725,7 +836,17 @@ func TestAutoFoodBalanceReceiptLogsActualDonorAndTargetCastles(t *testing.T) {
 func resourceIntentGameData(t *testing.T) *GameData.Store {
 	t.Helper()
 	store, err := GameData.DecodeStore([]byte(`{
-		"versionInfo":[],"buildings":[{"wodID":137,"name":"Market","marketCarriages":5}],"units":[{"wodID":1}],
+		"versionInfo":[],
+		"buildings":[
+			{"wodID":137,"name":"Market","marketCarriages":5},
+			{"wodID":226,"name":"Stable","level":"3","unlockHorses":"1007,1008,1009"}
+		],
+		"horses":[
+			{"wodID":1007,"group":"Travelbooster"},
+			{"wodID":1008,"group":"Travelbooster"},
+			{"wodID":1009,"group":"Travelbooster"}
+		],
+		"units":[{"wodID":1}],
 		"constructionItems":[],"levelBoosters":[],"effects":[],
 		"resources":[{"resourceID":1,"JSONKey":"C1"},{"resourceID":3,"JSONKey":"W"},{"resourceID":4,"JSONKey":"S"}],
 		"currencies":[{"currencyID":30,"JSONKey":"MS3"},{"currencyID":50,"JSONKey":"MS5"}],

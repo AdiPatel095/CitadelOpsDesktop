@@ -223,6 +223,7 @@ var collectionPrimaryKeys = map[string]string{
 	"achievements":                 "achievementID",
 	"buildings":                    "wodID",
 	"units":                        "wodID",
+	"horses":                       "wodID",
 	"constructionItems":            "constructionItemID",
 	"packages":                     "packageID",
 	"resources":                    "resourceID",

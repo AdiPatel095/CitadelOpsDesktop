@@ -25,13 +25,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     lg: 'min-h-64 px-6 py-10',
   }[size];
   const surfaceClass = surface === 'outlined'
-    ? 'rounded-global border border-dashed border-border-base bg-bg-card/45'
+    ? 'm3-empty-state rounded-global border border-dashed border-border-base'
     : '';
 
   return (
     <div className={`flex flex-col items-center justify-center text-center ${sizeClass} ${surfaceClass} ${className}`} {...props}>
       {icon && (
-        <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-border-base bg-bg-input/60 text-text-muted" aria-hidden="true">
+        <span className="m3-empty-state-icon mb-4 flex h-14 w-14 items-center justify-center rounded-full text-primary" aria-hidden="true">
           {icon}
         </span>
       )}

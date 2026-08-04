@@ -425,7 +425,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	}
 	if remainingCooldown > 0 {
 		if len(pendingCooldownReports) == 0 {
-			if oneCommandDungeonSkipCount(snapshot.State, settings.TimeSkipReserve, 1) < 1 {
+			if responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, int64(remainingCooldown)) < 1 {
 				return Decision{
 					Status: "waiting", Detail: fmt.Sprintf(
 						"Khan CRA launch cursor paused: no cooldown skip is available for %d remaining seconds",
@@ -482,7 +482,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		inFlight := max(0, snapshot.State.Khan.AttacksLaunched-snapshot.State.Khan.VictoriesConfirmed)
 		outstandingSkips = int64(inFlight + len(pendingKhanCooldownReports(snapshot.State)))
 	}
-	availableSkips := oneCommandDungeonSkipCount(snapshot.State, settings.TimeSkipReserve, 3*60*60)
+	availableSkips := responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, 3*60*60)
 	usableSkips := max(int64(0), availableSkips-outstandingSkips)
 	metrics["availableCooldownSkips"] = float64(availableSkips)
 	metrics["committedCooldownSkips"] = float64(outstandingSkips)
@@ -630,7 +630,7 @@ func (*AutoKhanCooldownPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 		}, nil
 	}
-	if oneCommandDungeonSkipCount(snapshot.State, lane.Settings.TimeSkipReserve, 1) < 1 {
+	if responseGatedDungeonCooldownCount(snapshot.State, lane.Settings.TimeSkipReserve, int64(remaining)) < 1 {
 		return autoKhanWaiting(
 			snapshot.Now,
 			"No Khan cooldown time skip is available above the configured reserves",

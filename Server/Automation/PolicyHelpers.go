@@ -75,12 +75,38 @@ func nextAvailableFeatureCommander(
 }
 
 func validHorseTravelBoostID(value int) bool {
-	switch value {
-	case 0, -1, 1007, 1008, 1009:
+	if value == 0 || value == -1 {
 		return true
-	default:
-		return false
 	}
+	_, valid := GameData.HorseTravelBoostTierForSelection(value)
+	return valid
+}
+
+func resolvePolicyHorseTravelBoost(
+	gameData *GameData.Store,
+	castle State.CastleState,
+	value int,
+) error {
+	if value == 0 || value == -1 {
+		return nil
+	}
+	tier, selected := GameData.HorseTravelBoostTierForSelection(value)
+	if !selected {
+		return fmt.Errorf("horseTravelBoostId must be -1, 1007, 1008, or 1009")
+	}
+	if gameData == nil {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	_, err := gameData.ResolveHorseTravelBoost(castle, tier)
+	return err
+}
+
+func horseTravelBoostLayoutNeedsRefresh(castle State.CastleState, now time.Time, maximumAge time.Duration) bool {
+	observedAt := castle.Layout.ObservedAt
+	if observedAt.IsZero() || observedAt.After(now) {
+		return true
+	}
+	return maximumAge > 0 && now.Sub(observedAt) >= maximumAge
 }
 
 func policyInterval(seconds int, fallback int) time.Duration {

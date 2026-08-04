@@ -66,7 +66,7 @@ const EventActivityCard: React.FC<EventActivityCardProps> = ({ event }) => {
 	return (
 		<>
 			{currencyIDs.length > 0 && <SectionCard
-				variant="glass"
+				variant="solid"
 				title="Event balances"
 				description="Current currencies used by this event"
 				icon={<Coins className="h-5 w-5" />}
@@ -76,7 +76,7 @@ const EventActivityCard: React.FC<EventActivityCardProps> = ({ event }) => {
 							const metadata = currencies[currencyID];
 							const amount = state?.player.currencies[String(currencyID)] ?? 0;
 							return (
-								<div key={currencyID} className="flex items-center gap-3 rounded-global border border-border-light bg-bg-card/40 p-3 backdrop-blur-xl">
+								<div key={currencyID} className="flex items-center gap-3 rounded-global border border-border-light bg-bg-card/40 p-3">
 									<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-global border border-border-base bg-bg-input/55">
 										{metadata?.image ? (
 											<img src={metadata.image} alt="" loading="lazy" decoding="async" className="h-10 w-10 object-contain drop-shadow-md" />
@@ -95,7 +95,7 @@ const EventActivityCard: React.FC<EventActivityCardProps> = ({ event }) => {
 			</SectionCard>}
 
 			{groups.length > 0 && <SectionCard
-				variant="glass"
+				variant="solid"
 				title="Automation results"
 				description={activity?.observedFrom ? `Observed since ${formatDateTime(activity.observedFrom)}` : 'Current event occurrence'}
 				icon={<Sparkles className="h-5 w-5" />}
@@ -122,7 +122,7 @@ const EventActivityCard: React.FC<EventActivityCardProps> = ({ event }) => {
 function ActivityGroupCard({ group }: { group: ActivityGroup }) {
 	const totals = group.totals;
 	return (
-		<div className="rounded-global border border-border-light bg-bg-card/40 p-4 backdrop-blur-xl">
+		<div className="rounded-global border border-border-light bg-bg-card/40 p-4">
 			<div className="flex items-start gap-3">
 				<span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-global border border-primary/20 bg-primary/10 text-primary" aria-hidden="true">
 					{group.icon}

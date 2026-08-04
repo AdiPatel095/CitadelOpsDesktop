@@ -90,6 +90,89 @@ func TestAutoTowerPolicyScansStaleCastlesBeforeLaunchingQueue(t *testing.T) {
 	}
 }
 
+func TestAutoTowerPolicySkipsHorseIncompatibleCastleBeforeQueueScan(t *testing.T) {
+	now := time.Date(2026, 8, 3, 16, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.GameData = autoTowerHorseTravelGameData(t)
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(`{
+		"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"horseTravelBoostId":1009,
+		"castles":{
+			"1":{"enabled":true,"radius":1,"unitId":77},
+			"2":{"enabled":true,"radius":1,"unitId":77}
+		}
+	}`)
+	unsupported := snapshot.State.Castles[1]
+	unsupported.Layout.ObservedAt = now
+	unsupported.Buildings = map[State.BuildingInstanceID]State.Building{}
+	snapshot.State.Castles[1] = unsupported
+	snapshot.State.Castles[2] = State.CastleState{
+		ID: 2, Name: "Supported Tower Castle", KingdomID: 0, X: 200, Y: 200,
+		Layout: State.CastleLayout{ObservedAt: now},
+		Buildings: map[State.BuildingInstanceID]State.Building{
+			1: {InstanceID: 1, DefinitionID: 226, Placed: true},
+		},
+	}
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.queue.scan" {
+		t.Fatalf("horse-compatible scan decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		SourceCastleID State.CastleID `json:"sourceCastleId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.SourceCastleID != 2 {
+		t.Fatalf("queue scan source = %d, want compatible castle 2", request.SourceCastleID)
+	}
+}
+
+func TestAutoTowerPolicyWaitsWhenEveryCastleLacksSelectedHorseBuilding(t *testing.T) {
+	now := time.Date(2026, 8, 3, 16, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.GameData = autoTowerHorseTravelGameData(t)
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(`{
+		"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"horseTravelBoostId":1009,
+		"castles":{"1":{"enabled":true,"radius":1,"unitId":77}}
+	}`)
+	castle := snapshot.State.Castles[1]
+	castle.Layout.ObservedAt = now
+	castle.Buildings = map[State.BuildingInstanceID]State.Building{}
+	snapshot.State.Castles[1] = castle
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" ||
+		!strings.Contains(decision.Detail, "No configured Auto Towers castle supports") {
+		t.Fatalf("all-incompatible tower decision = %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoTowerPolicyRefreshesUnobservedHorseBuildingLayout(t *testing.T) {
+	now := time.Date(2026, 8, 3, 16, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.GameData = autoTowerHorseTravelGameData(t)
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(`{
+		"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"horseTravelBoostId":1009,
+		"castles":{"1":{"enabled":true,"radius":1,"unitId":77}}
+	}`)
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "game.focus_castle" {
+		t.Fatalf("unobserved horse layout decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		CastleID State.CastleID `json:"castleId"`
+		Refresh  bool           `json:"refresh"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.CastleID != 1 || !request.Refresh {
+		t.Fatalf("horse layout refresh request = %#v", request)
+	}
+}
+
 func TestAutoTowerPolicyRescansAtThirtyMinuteBoundary(t *testing.T) {
 	now := time.Date(2026, 7, 12, 16, 0, 0, 0, time.UTC)
 	snapshot := autoTowerPolicySnapshot(now)
@@ -704,6 +787,24 @@ func autoTowerPolicySnapshot(now time.Time) Snapshot {
 		}},
 		Now: now,
 	}
+}
+
+func autoTowerHorseTravelGameData(t *testing.T) *GameData.Store {
+	t.Helper()
+	store, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],
+		"buildings":[{"wodID":226,"name":"Stable","level":"3","unlockHorses":"1007,1008,1009"}],
+		"horses":[
+			{"wodID":1007,"group":"Travelbooster"},
+			{"wodID":1008,"group":"Travelbooster"},
+			{"wodID":1009,"group":"Travelbooster"}
+		],
+		"units":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return store
 }
 
 func fillTowerCoverage(gameState *State.GameState, centerX int, centerY int, observedAt time.Time) {

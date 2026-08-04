@@ -11,6 +11,7 @@ import (
 	"CitadelDesktop/Server/Buildings"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
 
@@ -51,7 +52,8 @@ func TestAutoStormTroopCapPreviewUsesSettingsWithoutRuntimeTarget(t *testing.T) 
 			state.AttackAnalytics.RecentAutoStormLaunches,
 			State.AttackFeatureLaunch{
 				MovementID: State.MovementID(index), FeatureID: State.AttackFeatureAutoStorm,
-				KingdomID: autoStormKingdomID, LaunchedAt: now.Add(-time.Duration(index) * time.Hour),
+				KingdomID: autoStormKingdomID, TroopCount: 100,
+				LaunchedAt: now.Add(-time.Duration(index) * time.Hour),
 			},
 		)
 	}
@@ -81,10 +83,146 @@ func TestAutoStormTroopCapPreviewUsesSettingsWithoutRuntimeTarget(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !preview.Available || preview.TroopsPerAttack != 13 || preview.MaximumTroops != 78 ||
-		preview.AttacksInHistory != 6 || preview.AverageDailyAttacks != 3 ||
-		preview.BufferedAttackCount != 6 || preview.HistoryHours != 48 {
+	if !preview.Available || preview.TroopsPerAttack != 13 || preview.MaximumTroops != 50 ||
+		preview.AttacksInHistory != 6 || preview.MeasuredAttacksInHistory != 6 ||
+		preview.TroopsSentInHistory != 600 || preview.AverageTroopsPerHour != 25 ||
+		preview.BufferedTroops != 50 || preview.HistoryHours != 24 {
 		t.Fatalf("settings troop-cap preview = %#v", preview)
+	}
+}
+
+func TestAutoStormAttackDemandUsesRollingTwentyFourHourTroopRate(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.AttackAnalytics.RecentAutoStormLaunches = []State.AttackFeatureLaunch{
+		{
+			MovementID: 1, FeatureID: State.AttackFeatureAutoStorm, KingdomID: autoStormKingdomID,
+			TroopCount: 240, LaunchedAt: now.Add(-time.Hour),
+		},
+		{
+			MovementID: 2, FeatureID: State.AttackFeatureAutoStorm, KingdomID: autoStormKingdomID,
+			TroopCount: 120, LaunchedAt: now.Add(-23*time.Hour - 59*time.Minute),
+		},
+		{
+			MovementID: 3, FeatureID: State.AttackFeatureAutoStorm, KingdomID: autoStormKingdomID,
+			TroopCount: 1_000, LaunchedAt: now.Add(-25 * time.Hour),
+		},
+		{
+			MovementID: 4, FeatureID: State.AttackFeatureAutoStorm, KingdomID: autoStormKingdomID,
+			TroopCount: 1_000, LaunchedAt: now.Add(time.Minute),
+		},
+		{
+			MovementID: 5, FeatureID: State.AttackFeatureAutoStorm, KingdomID: autoStormKingdomID,
+			LaunchedAt: now.Add(-2 * time.Hour),
+		},
+	}
+	state.AttackAnalytics.PendingAttacks = []State.AttackFeatureLaunch{
+		{
+			MovementID: 1, FeatureID: State.AttackFeatureAutoStorm, KingdomID: autoStormKingdomID,
+			TroopCount: 360, LaunchedAt: now.Add(-time.Hour),
+		},
+	}
+
+	attacks, measured, troopsSent, averageHourly, bufferedTroops := autoStormAttackDemand(state, now)
+	if attacks != 3 || measured != 2 || troopsSent != 480 ||
+		averageHourly != 20 || bufferedTroops != 40 {
+		t.Fatalf(
+			"rolling troop demand = attacks %d measured %d troops %d hourly %.1f buffered %d",
+			attacks, measured, troopsSent, averageHourly, bufferedTroops,
+		)
+	}
+}
+
+func TestAutoStormLimitsPresetToAttackCapacityBeforeCheckingInventory(t *testing.T) {
+	state := State.NewGameState()
+	castle := autoStormTestCastle(40, autoStormKingdomID, "Storm")
+	castle.Units.Stationed[10] = 1_280
+	state.Castles[castle.ID] = castle
+	state.Commanders[1] = State.CommanderState{ID: 1, Available: true}
+	unitID := int64(10)
+	wave := AttackPresets.Wave{
+		Left:   AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 1_000}}},
+		Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 1_000}}},
+		Right:  AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 1_000}}},
+	}
+	preset := AttackPresets.Preset{
+		ID: "storm", Name: "Storm", Waves: []AttackPresets.Wave{wave, wave, wave, wave},
+	}
+	target := State.MapObservation{
+		KingdomID: autoStormKingdomID, TypeID: autoStormFortMapTypeID,
+		X: 600, Y: 600, ObjectID: 4, Level: 80, StormVictoryCount: 4,
+	}
+	limited, err := autoStormCapacityLimitedPreset(
+		Snapshot{State: state, GameData: autoStormTestGameData(t), Now: time.Now().UTC()},
+		castle, target, GameData.StormIsleDefinition{Kind: GameData.StormIsleKindFort, Level: 80}, preset, 1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	required, valid := autoStormPresetRequirements(limited, nil, true)
+	if !valid || required[10] != 1_280 {
+		t.Fatalf("capacity-limited Storm requirements = %#v, valid = %t", required, valid)
+	}
+	if shortages := autoStormUnitShortages(required, castle); len(shortages) != 0 {
+		t.Fatalf("capacity-limited Storm preset reported false shortages: %#v", shortages)
+	}
+	rawRequired, valid := autoStormPresetRequirements(preset, nil, true)
+	if !valid || rawRequired[10] != 12_000 || len(autoStormUnitShortages(rawRequired, castle)) == 0 {
+		t.Fatalf("raw preset did not reproduce the pre-fix shortage: %#v", rawRequired)
+	}
+}
+
+func TestAutoStormUnlocksConfiguredOfficialCastle(t *testing.T) {
+	now := time.Date(2026, time.August, 3, 15, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.Player.ID = 42
+	state.Player.Level = 70
+	state.KingdomTransport.ObservedAt = now
+	state.KingdomTransport.Unlocks[autoStormKingdomID] = State.KingdomTransportUnlock{KingdomID: autoStormKingdomID}
+	settings := defaultAutoStormSettings()
+	settings.Unlock.Enabled = true
+	settings.Unlock.PrebuiltCastleID = 16
+	rawSettings, err := json.Marshal(settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decision, err := NewAutoStormPolicy().Evaluate(t.Context(), Snapshot{
+		State:         state,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoStormSection: rawSettings}},
+		GameData:      autoStormTestGameData(t), Now: now,
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "storm.castle.unlock" {
+		t.Fatalf("Storm unlock decision = %#v err=%v", decision, err)
+	}
+	var arguments struct {
+		PrebuiltCastleID int64 `json:"prebuiltCastleId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil || arguments.PrebuiltCastleID != 16 {
+		t.Fatalf("Storm unlock arguments = %#v err=%v", arguments, err)
+	}
+}
+
+func TestAutoStormReconcilesManuallyUnlockedCastleBeforeBuying(t *testing.T) {
+	now := time.Date(2026, time.August, 3, 15, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.Player.ID = 42
+	state.Player.Level = 70
+	state.KingdomTransport.ObservedAt = now
+	state.KingdomTransport.Unlocks[autoStormKingdomID] = State.KingdomTransportUnlock{
+		KingdomID: autoStormKingdomID, Unlocked: true,
+	}
+	settings := defaultAutoStormSettings()
+	rawSettings, err := json.Marshal(settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decision, err := NewAutoStormPolicy().Evaluate(t.Context(), Snapshot{
+		State:         state,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoStormSection: rawSettings}},
+		GameData:      autoStormTestGameData(t), Now: now,
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "storm.castle.refresh" {
+		t.Fatalf("manual Storm unlock recovery = %#v err=%v", decision, err)
 	}
 }
 
@@ -93,6 +231,103 @@ func TestAutoStormExpansionUsesCapturedCoordinatesInsteadOfKingdomSpaceIDs(t *te
 	selected, found := autoStormGroundForExpansion(missing, []int64{4})
 	if !found || selected != missing[0] {
 		t.Fatalf("selected expansion = %#v, found=%t", selected, found)
+	}
+}
+
+func TestAutoStormBuildContinuationImmediatelyReevaluatesProgressAndStaleState(t *testing.T) {
+	decision := autoStormBuildContinuation(Decision{
+		Request: &Intent.Request{Name: "building.upgrade", Arguments: json.RawMessage(`{"castleId":40}`)},
+	})
+	if !decision.ReevaluateOnSuccess || !decision.ReevaluateOnStale {
+		t.Fatalf(
+			"Builder continuation flags = success %t stale %t",
+			decision.ReevaluateOnSuccess, decision.ReevaluateOnStale,
+		)
+	}
+	if decision.FailureFallback == nil || decision.FailureFallback.Name != "building.refresh" ||
+		!decision.FailureFallbackIndeterminateOnly {
+		t.Fatalf("Builder indeterminate reconciliation fallback = %#v", decision)
+	}
+}
+
+func TestAutoStormTimeSkipUsesLargestAvailableNonCrossingOption(t *testing.T) {
+	state := State.NewGameState()
+	for currencyID := State.CurrencyID(1001); currencyID <= 1007; currencyID++ {
+		state.Player.Currencies[currencyID] = 1
+	}
+
+	minutes, reserve, found := autoStormBuildingTimeSkip(state, nil, int64(23*time.Hour/time.Second))
+	if !found || minutes != 300 || reserve != 0 {
+		t.Fatalf("23-hour building skip = minutes %d reserve %d found %t", minutes, reserve, found)
+	}
+	key, currencyID, reserve, found := autoStormTransportTimeSkip(state, nil, 65*60)
+	if !found || key != "MS5" || currencyID != 1005 || reserve != 0 {
+		t.Fatalf(
+			"65-minute transport skip = key %q currency %d reserve %d found %t",
+			key, currencyID, reserve, found,
+		)
+	}
+}
+
+func TestAutoStormTimeSkipCrossesOnlyAfterNoAvailableOptionFits(t *testing.T) {
+	state := State.NewGameState()
+	state.Player.Currencies[1002] = 1
+	state.Player.Currencies[1003] = 1
+
+	minutes, reserve, found := autoStormBuildingTimeSkip(state, nil, 30)
+	if !found || minutes != 5 || reserve != 0 {
+		t.Fatalf("30-second crossing skip = minutes %d reserve %d found %t", minutes, reserve, found)
+	}
+}
+
+func TestAutoStormExactExtraUsesOfficialDemolitionBeforeStaging(t *testing.T) {
+	now := time.Date(2026, time.August, 3, 21, 0, 0, 0, time.UTC)
+	gameData := autoStormRemovalTestGameData(t)
+	catalog, err := gameData.BuildingCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	castle := autoStormTestCastle(40, autoStormKingdomID, "Storm")
+	castle.Layout.Objects = map[State.BuildingInstanceID]State.Building{
+		17: {InstanceID: 17, DefinitionID: 102, Placed: true, GridX: 180, GridY: 180},
+	}
+	settings := defaultAutoStormSettings()
+	settings.Build.AllowDemolition = true
+	decision := autoStormDiffRemediation(
+		Snapshot{Now: now}, settings, castle, catalog,
+		Buildings.TargetDiffResult{
+			Exact: true,
+			Unmanaged: []Buildings.TargetUnmanagedBuilding{
+				{BuildingInstanceID: 17},
+			},
+			Issues: []Buildings.TargetIssue{
+				{Code: "extra_building", BuildingIDs: []State.BuildingInstanceID{17}},
+			},
+		},
+		map[string]float64{},
+	)
+	if decision == nil || decision.Request == nil || decision.Request.Name != "building.demolish" {
+		t.Fatalf("exact unmanaged building decision = %#v", decision)
+	}
+}
+
+func TestAutoStormNeverDemolishesOfficiallyProtectedExtra(t *testing.T) {
+	gameData := autoStormRemovalTestGameData(t)
+	catalog, err := gameData.BuildingCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	castle := autoStormTestCastle(40, autoStormKingdomID, "Storm")
+	castle.Layout.Objects = map[State.BuildingInstanceID]State.Building{
+		46: {InstanceID: 46, DefinitionID: 520, Placed: true, GridX: 180, GridY: 180},
+	}
+	settings := defaultAutoStormSettings()
+	settings.Build.AllowDemolition = true
+	decision := autoStormBuildingRemovalDecision(
+		time.Now().UTC(), settings, castle, catalog, 46, true, map[string]float64{},
+	)
+	if decision != nil {
+		t.Fatalf("officially protected building decision = %#v", decision)
 	}
 }
 
@@ -304,7 +539,7 @@ func TestAutoStormTroopImportMaintainsMinimumWithinHistoricalDemandCap(t *testin
 	for index := int64(1); index <= 6; index++ {
 		state.AttackAnalytics.RecentAutoStormLaunches = append(state.AttackAnalytics.RecentAutoStormLaunches, State.AttackFeatureLaunch{
 			MovementID: State.MovementID(index), FeatureID: State.AttackFeatureAutoStorm,
-			KingdomID: 4, LaunchedAt: now.Add(-time.Duration(index) * time.Hour),
+			KingdomID: 4, TroopCount: 120, LaunchedAt: now.Add(-time.Duration(index) * time.Hour),
 		})
 	}
 	settings := defaultAutoStormSettings()
@@ -341,8 +576,10 @@ func TestAutoStormTroopImportMaintainsMinimumWithinHistoricalDemandCap(t *testin
 		arguments.Units[0].UnitID != 10 || arguments.Units[0].Amount != 10 {
 		t.Fatalf("minimum-reserve transfer = %#v", arguments)
 	}
-	if metrics["stormAttacksInHistory"] != 6 || metrics["stormAverageDailyAttacks"] != 3 ||
-		metrics["stormBufferedAttackCount"] != 6 || metrics["stormTroopMaximum"] != 60 {
+	if metrics["stormAttacksInHistory"] != 6 || metrics["stormMeasuredAttacksInHistory"] != 6 ||
+		metrics["stormTroopsSentInHistory"] != 720 || metrics["stormAverageTroopsPerHour"] != 30 ||
+		metrics["stormBufferedTroops"] != 60 || metrics["stormTroopMaximum"] != 60 ||
+		metrics["stormAttackHistoryHours"] != 24 {
 		t.Fatalf("historical demand metrics = %#v", metrics)
 	}
 }
@@ -712,7 +949,7 @@ func TestAutoStormShopGroupsDifferentProductsIntoOnePass(t *testing.T) {
 	}
 }
 
-func TestAutoStormShopRunsBeforeCastleMaintenance(t *testing.T) {
+func TestAutoStormShopRunsInIndependentPolicyLane(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
 	storm := autoStormTestCastle(40, 4, "Storm")
@@ -732,18 +969,30 @@ func TestAutoStormShopRunsBeforeCastleMaintenance(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	decision, err := NewAutoStormPolicy().Evaluate(t.Context(), Snapshot{
+	snapshot := Snapshot{
 		State: state,
 		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
 			autoStormSection: rawSettings,
 		}},
 		GameData: autoStormTestGameData(t), Now: now,
-	})
+	}
+	combatDecision, err := NewAutoStormPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if combatDecision.Request != nil || combatDecision.Status != "complete" || combatDecision.Detail != "No Storm combat goal is configured" {
+		t.Fatalf("Auto Storm combat lane mixed in shop work: %#v", combatDecision)
+	}
+	policy := NewAutoStormShopPolicy()
+	if policy.ID() != "autoStormShop" || policy.ActorID() != "autoStorm" || policy.ScheduleKey() != "autoStorm" {
+		t.Fatalf("Auto Storm shop lane identity is not scoped to Auto Storm")
+	}
+	decision, err := policy.Evaluate(t.Context(), snapshot)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if decision.Request == nil || decision.Request.Name != "storm.shop.purchase" {
-		t.Fatalf("Auto Storm decision = %#v, want Luna purchase before building refresh", decision)
+		t.Fatalf("Auto Storm shop decision = %#v, want Luna purchase", decision)
 	}
 }
 
@@ -775,8 +1024,12 @@ func TestAutoStormShopUnlimitedStopsAtPackageStock(t *testing.T) {
 func autoStormTestGameData(t *testing.T) *GameData.Store {
 	t.Helper()
 	store, err := GameData.DecodeStore([]byte(`{
-		"versionInfo":[],"buildings":[],"units":[{"wodID":10},{"wodID":11,"slotTypes":"tool"},{"wodID":12}],
+		"versionInfo":[],"buildings":[],"effects":[],"effectCaps":[],"units":[{"wodID":10},{"wodID":11,"slotTypes":"tool"},{"wodID":12}],
 		"resources":[{"resourceID":12,"JSONKey":"MEAD"}],
+		"prebuiltcastles":[
+			{"preBuiltCastleID":"16","comment2":"CheapCamp","spaceIDs":"4","minLevel":35,"costWood":10000,"costStone":10000,"costFood":2500,"costC1":5000},
+			{"preBuiltCastleID":"18","comment2":"C2Camp","spaceIDs":"4","minLevel":35,"costC2":59000}
+		],
 		"isles":[
 			{"IsleID":1,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
 			{"IsleID":4,"type":"VILLAGEWOOD","dungeonlevel":70,"globalCooldown":115200,"occupationTime":14400},
@@ -789,6 +1042,22 @@ func autoStormTestGameData(t *testing.T) *GameData.Store {
 			{"packageID":245,"comment1":"War horn","comment2":"Luna's trade boat","packageType":"tool","packagePriceAquamarine":2960},
 			{"packageID":3119,"comment1":"Silver Coins","comment2":"Luna's trade boat","packageType":"currency","packagePriceAquamarine":10000,"stock":3}
 		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return store
+}
+
+func autoStormRemovalTestGameData(t *testing.T) *GameData.Store {
+	t.Helper()
+	store, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],
+		"buildings":[
+			{"wodID":102,"name":"Woodcutter","group":"Building","level":"3","width":"5","height":"5"},
+			{"wodID":520,"name":"TreasureChest","group":"Building","level":"1","width":"4","height":"4","movable":"0","destructable":"0"}
+		],
+		"units":[]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)

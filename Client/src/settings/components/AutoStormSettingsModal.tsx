@@ -41,6 +41,7 @@ import {
   AUTO_STORM_BLUEPRINTS_SECTION,
   AUTO_STORM_SECTION,
   AUTO_STORM_TARGET_PRIORITIES,
+  AUTO_STORM_TROOP_HISTORY_HOURS,
   clampAutoStormInteger,
   defaultAutoStormClientState,
   parseAutoStormClientState,
@@ -77,6 +78,17 @@ interface LunaPackage {
   buildingId: number;
   buildingAmount: number;
   rewardDetail: string;
+}
+
+interface StormCastleOption {
+  id: number;
+  name: string;
+  minLevel: number;
+  costWood: number;
+  costStone: number;
+  costFood: number;
+  costCoins: number;
+  costPremium: number;
 }
 
 const FORT_LEVELS = [40, 50, 60, 70, 80];
@@ -122,6 +134,9 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const [capturing, setCapturing] = useState<BuildingTargetCaptureMode | null>(null);
   const [blueprintPreview, setBlueprintPreview] = useState<BuildingBlueprintDiffResponse | null>(null);
   const [saving, setSaving] = useState(false);
+  const [stormCastleOptions, setStormCastleOptions] = useState<StormCastleOption[]>([]);
+  const [loadingStormCastleOptions, setLoadingStormCastleOptions] = useState(false);
+  const [stormCastleOptionsError, setStormCastleOptionsError] = useState('');
   const [lunaPackages, setLunaPackages] = useState<LunaPackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [lunaSearch, setLunaSearch] = useState('');
@@ -140,6 +155,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     .filter((castle) => castle.kingdomId !== 4)
     .sort((left, right) => left.kingdomId - right.kingdomId || left.id - right.id), [state?.castles]);
   const stormCastle = stormCastles.find((castle) => castle.id === captureCastleId) ?? stormCastles[0];
+  const selectedUnlockOption = stormCastleOptions.find((option) => option.id === draft.unlock.prebuiltCastleId);
+  const stormUnlockState = state?.kingdomTransport.unlocks['4'];
   const attackPresets = useMemo(
     () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
     [configuration?.sections],
@@ -158,7 +175,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     troopImport: {
       enabled: draft.troopImport.enabled,
       minimumTroops: draft.troopImport.minimumTroops,
-      historyHours: draft.troopImport.historyHours,
+      historyHours: AUTO_STORM_TROOP_HISTORY_HOURS,
     },
     forts: {
       enabled: draft.forts.enabled,
@@ -176,7 +193,6 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     draft.islands.enabled,
     draft.islands.presetId,
     draft.troopImport.enabled,
-    draft.troopImport.historyHours,
     draft.troopImport.minimumTroops,
   ]);
   const stormMapState = state?.storm.map;
@@ -257,6 +273,27 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     if (!isOpen || captureCastleId > 0 || stormCastles.length === 0) return;
     setCaptureCastleId(stormCastles[0].id);
   }, [captureCastleId, isOpen, stormCastles]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setStormCastleOptionsError('');
+    setLoadingStormCastleOptions(true);
+    void CitadelAPI.getCatalog<Record<string, unknown>>('prebuiltcastles')
+      .then((response) => {
+        if (!cancelled) {
+          setStormCastleOptions(parseStormCastleOptions(response.items, state?.player.level));
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setStormCastleOptions([]);
+          setStormCastleOptionsError(error instanceof Error ? error.message : 'Could not load the official Storm castle catalog.');
+        }
+      })
+      .finally(() => { if (!cancelled) setLoadingStormCastleOptions(false); });
+    return () => { cancelled = true; };
+  }, [isOpen, state?.player.level]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -464,7 +501,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     draft.troopImport.donorCastleIds.length > 0
     && draft.troopImport.donorCastleIds.every((castleId) => validDonorIDs.has(castleId))
   );
-  const canSave = fortValid && islandsValid && shopValid && targetValid && troopImportValid;
+  const unlockValid = !draft.unlock.enabled || Boolean(selectedUnlockOption);
+  const canSave = fortValid && islandsValid && shopValid && targetValid && troopImportValid && unlockValid;
 
   const save = async () => {
     if (!canSave || saving) return;
@@ -508,6 +546,67 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       cancelDisabled={capturing != null}
     >
       <div className="space-y-4">
+        <Card variant="solid" className="p-4">
+          <SectionHeading
+            icon={Castle}
+            title="Storm castle access"
+            description="Choose the exact official starter castle Auto Storm may open when a new Storm season is locked. Existing and manually opened castles are reconciled without buying again."
+          />
+          <div className="mt-4 flex items-start justify-between gap-4 rounded-global border border-border-base bg-bg-app/30 p-3">
+            <div>
+              <div className="text-sm font-bold text-text-main">Automatically open the Storm castle</div>
+              <p className="mt-1 text-xs text-text-muted">Runs only when the game reports Storm locked and no owned Storm castle exists.</p>
+            </div>
+            <Switch
+              checked={draft.unlock.enabled}
+              disabled={loadingStormCastleOptions || stormCastleOptions.length === 0}
+              onChange={(enabled) => setDraft((current) => ({
+                ...current,
+                unlock: {
+                  enabled,
+                  prebuiltCastleId: enabled
+                    ? current.unlock.prebuiltCastleId || preferredStormCastleOption(stormCastleOptions)?.id || 0
+                    : current.unlock.prebuiltCastleId,
+                },
+              }))}
+              ariaLabel="Automatically open the Storm castle"
+            />
+          </div>
+
+          <label className="mt-3 block">
+            <FieldLabel>Castle to open</FieldLabel>
+            <Select
+              value={draft.unlock.prebuiltCastleId > 0 ? String(draft.unlock.prebuiltCastleId) : ''}
+              onChange={(value) => setDraft((current) => ({
+                ...current,
+                unlock: { ...current.unlock, prebuiltCastleId: Number(value) || 0 },
+              }))}
+              options={stormCastleOptions.map((option) => ({
+                value: String(option.id),
+                label: stormCastleOptionLabel(option),
+              }))}
+              placeholder={loadingStormCastleOptions ? 'Loading official choices…' : 'Choose an official Storm castle'}
+              disabled={!draft.unlock.enabled || loadingStormCastleOptions || stormCastleOptions.length === 0}
+              menuGrowToViewport
+            />
+          </label>
+
+          <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
+            {stormCastle
+              ? `Current Storm castle: ${stormCastle.name?.trim() || `Castle ${stormCastle.id}`} at ${stormCastle.x}:${stormCastle.y}. Auto Storm will use it; this choice applies to the next locked season.`
+              : stormUnlockState?.unlocked || stormUnlockState?.created
+                ? 'The game reports Storm already unlocked. Auto Storm will refresh your castle directory and continue without sending another unlock purchase.'
+                : 'The game currently reports Storm locked. Auto Storm will wait unless automatic opening is enabled with a valid choice.'}
+          </p>
+          {selectedUnlockOption?.costPremium ? (
+            <p className="mt-2 text-xs text-warning">
+              This choice authorizes {selectedUnlockOption.costPremium.toLocaleString()} premium currency for the seasonal Storm castle unlock.
+            </p>
+          ) : null}
+          {stormCastleOptionsError ? <p className="mt-2 text-xs text-error">{stormCastleOptionsError}</p> : null}
+          {!unlockValid ? <p className="mt-2 text-xs text-error">Choose a currently available official Storm castle.</p> : null}
+        </Card>
+
         <Card variant="solid" className="p-4">
           <SectionHeading
             icon={Camera}
@@ -656,7 +755,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <SettingsToggleRow
                 icon={<FastForward className="h-3.5 w-3.5" />}
                 title="Use time skips"
-                description="Advance construction, resource transport, or troop transport while preserving the reserves below."
+                description="Advance construction, resource transport, or troop transport one skip command at a time, waiting for each confirmed response and preserving the reserves below."
                 checked={draft.build.allowTimeSkips}
                 onChange={(allowTimeSkips) => updateBuild(setDraft, { allowTimeSkips })}
               />
@@ -1069,22 +1168,9 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       <p className="mt-1 text-[11px] text-text-muted">Imports the current preset mix so this many attack troops remain stationed in Storm after the next launch.</p>
                     </label>
                     <label>
-                      <FieldLabel>Attack history window</FieldLabel>
-                      <Select
-                        value={String(draft.troopImport.historyHours)}
-                        onChange={(value) => setDraft((current) => ({
-                          ...current,
-                          troopImport: {
-                            ...current.troopImport,
-                            historyHours: clampAutoStormInteger(value, 24, 72, 72),
-                          },
-                        }))}
-                        options={[24, 48, 72].map((hours) => ({
-                          value: String(hours),
-                          label: `Past ${hours} hours`,
-                        }))}
-                      />
-                      <p className="mt-1 text-[11px] text-text-muted">Sets the daily Auto Storm attack average used by the transfer cap.</p>
+                      <FieldLabel>Troop-use history</FieldLabel>
+                      <Input readOnly value={`Past ${AUTO_STORM_TROOP_HISTORY_HOURS} hours`} />
+                      <p className="mt-1 text-[11px] text-text-muted">Fixed rolling window used to calculate the average number of troops sent per hour.</p>
                     </label>
                     <label>
                       <FieldLabel>Current maximum in Storm</FieldLabel>
@@ -1103,12 +1189,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                           : troopCapPreviewError
                             ? troopCapPreviewError
                             : troopCapPreview?.available
-                              ? `${troopCapPreview.troopsPerAttack.toLocaleString()} troops in the largest enabled attack · ${troopCapPreview.averageDailyAttacks.toFixed(1)} attacks/day over ${troopCapPreview.historyHours} hours · ${troopCapPreview.bufferedAttackCount.toLocaleString()} buffered attacks.`
+                              ? `${troopCapPreview.troopsPerAttack.toLocaleString()} troops in the largest enabled attack · ${troopCapPreview.troopsSentInHistory.toLocaleString()} troops sent over ${troopCapPreview.historyHours} hours · ${troopCapPreview.averageTroopsPerHour.toFixed(1)} troops/hour · ${troopCapPreview.bufferedTroops.toLocaleString()} at 2× hourly demand.${troopCapPreview.measuredAttacksInHistory < troopCapPreview.attacksInHistory ? ` ${troopCapPreview.measuredAttacksInHistory.toLocaleString()} of ${troopCapPreview.attacksInHistory.toLocaleString()} launches include measured troop totals.` : ''}`
                               : troopCapPreview?.detail ?? 'Enable a target type and choose its attack preset to calculate the cap.'}
                       </p>
                     </label>
                   </div>
-                  <p className="mt-3 text-[11px] text-text-muted">The hard cap uses the largest enabled attack troop requirement and is the larger of the minimum reserve plus one attack or twice the average daily attack demand. It counts troops stationed in Storm, away on active movements, waiting in transport, and ready to return from islands.</p>
+                  <p className="mt-3 text-[11px] text-text-muted">The hard cap is the larger of the minimum reserve plus one largest enabled attack or twice the average troops sent per hour during the rolling past 24 hours. It counts troops stationed in Storm, away on active movements, waiting in transport, and ready to return from islands.</p>
                   <p className="mt-2 text-[11px] text-text-muted">Donors are checked in the displayed order, and partial shortages can be filled across several transfers. Time skips use the construction-and-logistics reserve above. Attack tools must already be stationed in Storm.</p>
                   {!troopImportValid ? <p className="mt-2 text-xs text-error">Select at least one currently observed donor castle.</p> : null}
                 </div>
@@ -1183,7 +1269,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div className="mt-3 overflow-hidden rounded-global border border-border-base bg-bg-app/30">
               <div className="max-h-[min(34rem,52dvh)] overflow-auto custom-scrollbar">
                 <table className="w-full min-w-[72rem] table-fixed text-left text-xs">
-                  <thead className="sticky top-0 z-10 border-b border-border-base bg-bg-card/95 text-[10px] uppercase tracking-wider text-text-muted backdrop-blur-xl">
+                  <thead className="sticky top-0 z-10 border-b border-border-base bg-bg-card/95 text-[10px] uppercase tracking-wider text-text-muted">
                     <tr>
                       <th className="w-[5rem] px-3 py-2.5 text-center font-black">Use</th>
                       <th className="w-[28%] px-3 py-2.5 font-black">Reward</th>
@@ -1509,6 +1595,59 @@ function parseDecorationPresetOptions(
     }
   }
   return result.sort((left, right) => left.label.localeCompare(right.label));
+}
+
+function parseStormCastleOptions(rows: Record<string, unknown>[], playerLevel?: number): StormCastleOption[] {
+  const availableLevel = playerLevel && playerLevel > 0 ? playerLevel : Number.MAX_SAFE_INTEGER;
+  const options: StormCastleOption[] = [];
+  for (const row of rows) {
+    const spaces = String(row.spaceIDs ?? '')
+      .split(',')
+      .map((value) => Number(value.trim()))
+      .filter(Number.isFinite);
+    const id = positiveInteger(row.preBuiltCastleID);
+    const minLevel = positiveInteger(row.minLevel);
+    if (!spaces.includes(4) || id <= 0 || minLevel > availableLevel) continue;
+    options.push({
+      id,
+      name: stringValue(row.comment2),
+      minLevel,
+      costWood: positiveInteger(row.costWood),
+      costStone: positiveInteger(row.costStone),
+      costFood: positiveInteger(row.costFood),
+      costCoins: positiveInteger(row.costC1),
+      costPremium: positiveInteger(row.costC2),
+    });
+  }
+  return options.sort((left, right) => left.id - right.id);
+}
+
+function preferredStormCastleOption(options: StormCastleOption[]): StormCastleOption | undefined {
+  return options.find((option) => option.costPremium === 0) ?? options[0];
+}
+
+function stormCastleOptionLabel(option: StormCastleOption): string {
+  const costs = [
+    [option.costWood, 'wood'],
+    [option.costStone, 'stone'],
+    [option.costFood, 'food'],
+    [option.costCoins, 'coins'],
+    [option.costPremium, 'premium'],
+  ] as const;
+  const price = costs
+    .filter(([amount]) => amount > 0)
+    .map(([amount, currency]) => `${amount.toLocaleString()} ${currency}`)
+    .join(' · ');
+  return `${stormCastleOptionName(option)}${price ? ` · ${price}` : ''} · ID ${option.id}`;
+}
+
+function stormCastleOptionName(option: StormCastleOption): string {
+  switch (option.name.toLowerCase()) {
+    case 'cheapcamp': return 'Starter castle';
+    case 'resourcecamp': return 'Resource castle';
+    case 'c2camp': return 'Premium castle';
+    default: return humanizeLunaName(option.name) || `Storm castle ${option.id}`;
+  }
 }
 
 function parseLunaPackages(rows: Record<string, unknown>[]): LunaPackage[] {

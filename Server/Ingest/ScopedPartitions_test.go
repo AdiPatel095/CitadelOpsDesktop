@@ -56,6 +56,23 @@ func TestScopedPartitionsUseMapPayloadKingdom(t *testing.T) {
 	}
 }
 
+func TestSuccessfulGAAIncludesSessionContextPartition(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Session.ServerURL = "https://example.invalid"
+	gameState.Player.ID = 7
+	gameState.Castles[11] = State.CastleState{ID: 11, KingdomID: 1, Focused: true}
+	code := 0
+	keys := scopedPartitionsForFrame(Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "gaa", ResponseCode: &code,
+		Payload: json.RawMessage(`{"KID":1,"AI":[]}`),
+	}, gameState, []string{"map"})
+	actual := canonicalPartitionSet(keys)
+	contextKey := State.SessionPartition(gameState, State.CapabilitySessionContext).Canonical()
+	if _, found := actual[contextKey]; !found {
+		t.Fatalf("successful GAA omitted session-context partition %s", contextKey)
+	}
+}
+
 func canonicalPartitionSet(keys []State.PartitionKey) map[string]State.PartitionKey {
 	set := make(map[string]State.PartitionKey, len(keys))
 	for _, key := range keys {

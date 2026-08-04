@@ -348,21 +348,14 @@ func invasionAttackBody(
 	target State.MapObservation,
 	commanderID State.CommanderID,
 	setup builtAttackSetup,
-	horseTravelBoostIDs ...int,
 ) attackBody {
-	body := attackBody{
+	return attackBody{
 		SourceX: source.X, SourceY: source.Y, TargetX: target.X, TargetY: target.Y,
 		Kingdom: target.KingdomID, Leader: commanderID, Booster: -1, Valid: 1,
 		PremiumTravel: 1, Cooldown: 99, Waves: setup.Waves, Books: []any{},
 		AttackSupportTools: setup.SupportTools,
 		SupportTroops:      setup.SupportTroops,
 	}
-	horseTravelBoostID := defaultHorseTravelBoostID
-	if len(horseTravelBoostIDs) > 0 {
-		horseTravelBoostID = horseTravelBoostIDs[0]
-	}
-	applyHorseTravelBoost(&body, horseTravelBoostID)
-	return body
 }
 
 func (application *Application) resolveInvasionAttackStep(
@@ -383,7 +376,11 @@ func (application *Application) resolveInvasionAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build invasion preset %q: %w", request.Preset.Name, err)
 	}
-	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, built, request.HorseTravelBoostID))
+	attack := invasionAttackBody(source, target, request.CommanderID, built)
+	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+		return Intent.Step{}, fmt.Errorf("resolve invasion horse travel boost: %w", err)
+	}
+	body, err := json.Marshal(attack)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build invasion CRA payload: %w", err)
 	}

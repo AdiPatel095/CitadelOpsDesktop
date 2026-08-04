@@ -427,7 +427,10 @@ func TestResolverCalculatesTargetApplicableAttackWaves(t *testing.T) {
 			{"effectID":484,"name":"newPVPAdditionalWaves","effectTypeID":156,"isPvPFight":1,"capID":99}
 		],
 		"generalSkills":[{"skillID":101001,"generalID":101,"effects":"29&1"}],
-		"legendskills":[{"skillID":101,"effectType":"additionalWave","totalEffectValue":1}]
+		"legendskills":[
+			{"skillID":101,"effectType":"additionalWave","totalEffectValue":1},
+			{"skillID":102,"effectType":"additionalAttackToolAmountFlank","totalEffectValue":12}
+		]
 	}`)
 	state := State.NewGameState()
 	state.Castles[100] = State.CastleState{ID: 100}
@@ -448,7 +451,7 @@ func TestResolverCalculatesTargetApplicableAttackWaves(t *testing.T) {
 	state.Generals[101] = State.GeneralState{
 		ID: 101, ActiveSkillIDs: []int64{101001}, ObservedAt: time.Now().UTC(),
 	}
-	state.Player.LegendSkills = State.LegendSkillState{ActiveIDs: []int64{101}, ObservedAt: time.Now().UTC()}
+	state.Player.LegendSkills = State.LegendSkillState{ActiveIDs: []int64{101, 102}, ObservedAt: time.Now().UTC()}
 
 	resolve := func(castleTypeID int, pvp bool) Result {
 		t.Helper()
@@ -482,10 +485,18 @@ func TestResolverCalculatesTargetApplicableAttackWaves(t *testing.T) {
 	if len(invasion.WaveModifiers) != 6 {
 		t.Fatalf("invasion wave modifiers = %#v", invasion.WaveModifiers)
 	}
+	if invasion.BaseToolCapacity != (LaneCapacity{Left: 30, Front: 40, Right: 30}) ||
+		invasion.LegendToolBonus != 10 ||
+		invasion.ToolCapacity != (LaneCapacity{Left: 40, Front: 50, Right: 40}) {
+		t.Fatalf("legendary PvP tool capacity = %#v", invasion)
+	}
 
 	rift := resolve(43, false)
 	if rift.BaseWaves != 4 || rift.AdditionalWaves != 15 || rift.MaximumWaves != 19 {
 		t.Fatalf("Rift waves = base %d additional %d maximum %d", rift.BaseWaves, rift.AdditionalWaves, rift.MaximumWaves)
+	}
+	if rift.LegendToolBonus != 0 || rift.ToolCapacity != (LaneCapacity{Left: 30, Front: 40, Right: 30}) {
+		t.Fatalf("PvE tool capacity = %#v", rift)
 	}
 }
 

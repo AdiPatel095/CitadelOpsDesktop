@@ -135,6 +135,7 @@ type BattleAnalyticsReport struct {
 	DateMs                int64            `json:"dateMs"`
 	Result                string           `json:"result"`
 	Role                  string           `json:"role,omitempty"`
+	TroopsSent            int64            `json:"troopsSent,omitempty"`
 	OwnTroopLosses        int64            `json:"ownTroopLosses,omitempty"`
 	ToolsUsed             int64            `json:"toolsUsed,omitempty"`
 	GallantryPoints       int64            `json:"gallantryPoints,omitempty"`

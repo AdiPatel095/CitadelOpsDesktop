@@ -37,6 +37,15 @@ const (
 	stormMapMinimumAttemptInterval                 = 2 * time.Hour
 )
 
+type stormCastleUnlockRequest struct {
+	PrebuiltCastleID int64 `json:"prebuiltCastleId"`
+}
+
+type stormCastleUnlockGuardRequest struct {
+	PrebuiltCastleID int64     `json:"prebuiltCastleId"`
+	RefreshStartedAt time.Time `json:"refreshStartedAt"`
+}
+
 type stormMapScanRequest struct {
 	SourceCastleID State.CastleID       `json:"sourceCastleId"`
 	FullMap        bool                 `json:"fullMap,omitempty"`
@@ -146,6 +155,7 @@ func (application *Application) registerStormIntents() error {
 		return err
 	}
 	for name, action := range map[string]Intent.Action{
+		"storm.castle.unlock.verify":   application.verifyStormCastleUnlock,
 		"storm.scan.begin":             application.beginStormScan,
 		"storm.scan.burst":             application.burstStormMapScan,
 		"storm.scan.capture":           application.captureStormScan,
@@ -163,6 +173,14 @@ func (application *Application) registerStormIntents() error {
 		return err
 	}
 	definitions := []Intent.Definition{
+		{
+			Name: "storm.castle.refresh", Description: "Refresh the authoritative owned-castle directory after a Storm unlock", Effect: Intent.EffectRead,
+			Planner: planStormCastleRefresh,
+		},
+		{
+			Name: "storm.castle.unlock", Description: "Open one explicitly selected official prebuilt Storm castle", Effect: Intent.EffectWrite,
+			ArgumentsExample: json.RawMessage(`{"prebuiltCastleId":16}`), Planner: planStormCastleUnlock,
+		},
 		{
 			Name: "storm.map.scan", Description: "Focus the Storm castle and refresh an adaptive center-out map snapshot", Effect: Intent.EffectRead,
 			ArgumentsExample: json.RawMessage(`{"sourceCastleId":5358,"fullMap":true,"bounds":{"x1":600,"y1":600,"x2":700,"y2":700}}`), Planner: planStormMapScan,
@@ -189,6 +207,153 @@ func (application *Application) registerStormIntents() error {
 		}
 	}
 	return nil
+}
+
+func planStormCastleRefresh(_ context.Context, input Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
+	if input.State.Player.ID <= 0 {
+		return Intent.Plan{}, fmt.Errorf("the current player identity is unavailable")
+	}
+	payload, _ := json.Marshal(struct {
+		PlayerID State.PlayerID `json:"PID"`
+	}{input.State.Player.ID})
+	step := commandStep("Refresh the owned-castle directory", "gcl", payload, "gcl")
+	step.ResponseBarrier = Intent.ResponseBarrierCommitted
+	return Intent.Plan{
+		Claims:  []string{"castle-directory", "kingdom:" + strconv.FormatInt(int64(stormIntentKingdomID), 10)},
+		Summary: "Refresh the owned-castle directory for Storm",
+		Steps:   []Intent.Step{step},
+	}, nil
+}
+
+func planStormCastleUnlock(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request stormCastleUnlockRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	option, err := stormCastleUnlockOption(input, request.PrebuiltCastleID, time.Time{})
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	refreshStartedAt := time.Now().UTC()
+	guardArguments, _ := json.Marshal(stormCastleUnlockGuardRequest{
+		PrebuiltCastleID: request.PrebuiltCastleID, RefreshStartedAt: refreshStartedAt,
+	})
+	payload, _ := json.Marshal(struct {
+		ID        int64           `json:"ID"`
+		Direction int             `json:"D"`
+		Premium   int             `json:"PWR"`
+		Secondary int             `json:"OC2"`
+		KingdomID State.KingdomID `json:"SID"`
+	}{
+		ID: option.ID, Direction: 0, Premium: 0,
+		Secondary: boolInt(option.CostPremium > 0), KingdomID: stormIntentKingdomID,
+	})
+	castleListPayload, _ := json.Marshal(struct {
+		PlayerID State.PlayerID `json:"PID"`
+	}{input.State.Player.ID})
+	unlockStep := commandStep("Open the selected Storm castle", "ksc", payload, "ksc")
+	unlockStep.ResponseBarrier = Intent.ResponseBarrierCommitted
+	castleListStep := commandStep("Refresh the new Storm castle", "gcl", castleListPayload, "gcl")
+	castleListStep.ResponseBarrier = Intent.ResponseBarrierCommitted
+	kingdomStep := kingdomTransportContextStep()
+	kingdomStep.ResponseBarrier = Intent.ResponseBarrierCommitted
+	return Intent.Plan{
+		Claims: []string{
+			"account-resources", "castle-directory",
+			"kingdom:" + strconv.FormatInt(int64(stormIntentKingdomID), 10),
+		},
+		Summary: fmt.Sprintf("Open official Storm castle %d (%s)", option.ID, stormCastleOptionCost(option)),
+		Steps: []Intent.Step{
+			kingdomStep,
+			Intent.RebuildOnResume(Intent.Step{
+				Name: "Verify refreshed Storm castle availability", Action: "storm.castle.unlock.verify",
+				ActionArguments: guardArguments,
+			}),
+			unlockStep,
+			castleListStep,
+			contextCommandStep("Refresh Storm kingdom state", "kpi", json.RawMessage(`{}`), "kpi"),
+		},
+	}, nil
+}
+
+func stormCastleUnlockOption(
+	input Intent.PlanningContext,
+	prebuiltCastleID int64,
+	refreshedAfter time.Time,
+) (GameData.StormCastleOption, error) {
+	if input.GameData == nil {
+		return GameData.StormCastleOption{}, fmt.Errorf("official game data is unavailable")
+	}
+	if input.State.Player.ID <= 0 {
+		return GameData.StormCastleOption{}, fmt.Errorf("the current player identity is unavailable")
+	}
+	if _, exists := ownedCastleInKingdom(input.State, stormIntentKingdomID); exists {
+		return GameData.StormCastleOption{}, fmt.Errorf("%w: an owned Storm castle already exists", Intent.ErrPlanStale)
+	}
+	unlock, observed := input.State.KingdomTransport.Unlocks[stormIntentKingdomID]
+	if input.State.KingdomTransport.ObservedAt.IsZero() || !observed {
+		return GameData.StormCastleOption{}, fmt.Errorf("%w: Storm kingdom availability has not been observed", Intent.ErrPlanStale)
+	}
+	if !refreshedAfter.IsZero() && input.State.KingdomTransport.ObservedAt.Before(refreshedAfter) {
+		return GameData.StormCastleOption{}, fmt.Errorf("the Storm kingdom list was not refreshed before opening the castle")
+	}
+	if unlock.Unlocked || unlock.Created {
+		return GameData.StormCastleOption{}, fmt.Errorf("%w: the Storm kingdom is already unlocked; refresh the castle directory instead", Intent.ErrPlanStale)
+	}
+	option, found := input.GameData.StormCastleOption(prebuiltCastleID, input.State.Player.Level)
+	if !found {
+		return GameData.StormCastleOption{}, fmt.Errorf("prebuiltCastleId must identify an unlocked official Storm castle option")
+	}
+	return option, nil
+}
+
+func (application *Application) verifyStormCastleUnlock(_ context.Context, arguments json.RawMessage) error {
+	var request stormCastleUnlockGuardRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	if request.PrebuiltCastleID <= 0 || request.RefreshStartedAt.IsZero() {
+		return fmt.Errorf("Storm castle unlock verification requires an option and refresh time")
+	}
+	if application == nil || application.State == nil || application.GameData == nil {
+		return fmt.Errorf("Storm castle unlock state is unavailable")
+	}
+	gameData, ready := application.GameData.Current()
+	if !ready {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	if _, err := stormCastleUnlockOption(Intent.PlanningContext{
+		State: application.State.Snapshot(), GameData: gameData,
+	}, request.PrebuiltCastleID, request.RefreshStartedAt); err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	return nil
+}
+
+func stormCastleOptionCost(option GameData.StormCastleOption) string {
+	parts := make([]string, 0, 5)
+	for _, cost := range []struct {
+		amount int64
+		name   string
+	}{
+		{option.CostWood, "wood"}, {option.CostStone, "stone"}, {option.CostFood, "food"},
+		{option.CostCoins, "coins"}, {option.CostPremium, "rubies"},
+	} {
+		if cost.amount > 0 {
+			parts = append(parts, fmt.Sprintf("%d %s", cost.amount, cost.name))
+		}
+	}
+	if len(parts) == 0 {
+		return "no catalog cost"
+	}
+	return strings.Join(parts, ", ")
+}
+
+func boolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func planStormMapScan(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -482,7 +647,7 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 		Delay    int        `json:"SD"`
 		Units    [][2]int64 `json:"A"`
 	}{request.IslandObjectID, castle.X, castle.Y, stationLeaderID, 0, -1, 1, 1, 0, wireUnits})
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps,
 		contextCommandStep("Preview island return route", "sdi", route, "sdi"),
 		Intent.Step{Name: "Verify report-confirmed island survivors", Action: "storm.island.return.guard", ActionArguments: arguments},
@@ -1254,7 +1419,10 @@ func (application *Application) resolveStormAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Storm preset %q: %w", attackRequest.Preset.Name, err)
 	}
-	body := invasionAttackBody(source, target, request.CommanderID, built, attackRequest.HorseTravelBoostID)
+	body := invasionAttackBody(source, target, request.CommanderID, built)
+	if err := applyCastleHorseTravelBoost(&body, input.GameData, source, attackRequest.HorseTravelBoostID); err != nil {
+		return Intent.Step{}, fmt.Errorf("resolve Storm horse travel boost: %w", err)
+	}
 	if definition.Kind == GameData.StormIsleKindIsland {
 		body.SupportTroops = stormSupportTroops(attackRequest.DefenseUnits)
 	}

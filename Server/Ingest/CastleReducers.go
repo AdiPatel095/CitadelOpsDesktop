@@ -61,6 +61,37 @@ func applyCastleList(raw json.RawMessage, gameState *State.GameState) (bool, err
 	return true, nil
 }
 
+func reduceCastleList(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	raw := frame.Payload
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+		return nil, false, fmt.Errorf("decode castle-list response: %w", err)
+	}
+	if nested := root["gcl"]; len(nested) > 0 {
+		raw = nested
+	}
+	var identity struct {
+		PlayerID wireInt64 `json:"PID"`
+	}
+	if err := json.Unmarshal(raw, &identity); err != nil {
+		return nil, false, fmt.Errorf("decode castle-list identity: %w", err)
+	}
+	playerID := State.PlayerID(identity.PlayerID)
+	if playerID > 0 && gameState.Player.ID > 0 && playerID != gameState.Player.ID {
+		return nil, false, nil
+	}
+	changed, err := applyCastleList(raw, gameState)
+	return []string{"castles"}, changed, err
+}
+
 func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameData *GameData.Store, observedAt time.Time) (bool, error) {
 	var payload struct {
 		Kingdoms []struct {
@@ -185,7 +216,7 @@ func reduceCastleSnapshot(
 	}
 	ensureCastleMaps(&castle)
 	hasLayout := false
-	for _, key := range []string{"BG", "BD", "T", "G", "D"} {
+	for _, key := range []string{"BG", "BD", "T", "G", "D", "FP"} {
 		if _, found := gca[key]; found {
 			hasLayout = true
 			break
@@ -195,6 +226,7 @@ func reduceCastleSnapshot(
 		castle.Buildings, castle.Layout = parseCastleLayoutLayers([]castleWireLayer{
 			{State.BuildingLayerBG, gca["BG"]}, {State.BuildingLayerBD, gca["BD"]},
 			{State.BuildingLayerT, gca["T"]}, {State.BuildingLayerG, gca["G"]}, {State.BuildingLayerD, gca["D"]},
+			{State.BuildingLayerFP, gca["FP"]},
 		}, gameData)
 		castle.Layout.ObservedAt = frame.ReceivedAt.UTC()
 	}
@@ -390,7 +422,8 @@ func parseCastleLayoutLayers(
 			}
 			if officialBuildingGroup(gameData, definitionID) == "Ground" {
 				layout.Ground[building.InstanceID] = building
-			} else if layer.name == State.BuildingLayerT || layer.name == State.BuildingLayerG || layer.name == State.BuildingLayerD {
+			} else if layer.name == State.BuildingLayerT || layer.name == State.BuildingLayerG ||
+				layer.name == State.BuildingLayerD || layer.name == State.BuildingLayerFP {
 				layout.Fixed[building.InstanceID] = building
 			} else {
 				layout.Objects[building.InstanceID] = building

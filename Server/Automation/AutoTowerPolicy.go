@@ -3,12 +3,14 @@ package Automation
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
 	"time"
 
 	"CitadelDesktop/Server/AttackCapacity"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -49,7 +51,7 @@ func (*AutoTowerPolicy) ID() string { return "autoTowers" }
 func (*AutoTowerPolicy) EnabledKey() string { return "auto_towers" }
 
 func (*AutoTowerPolicy) WakeDomains() []string {
-	return []string{"attacks", "commanders", "map", "movements", "tower-cooldowns", "tower-queue", "units"}
+	return []string{"attacks", "building-layout", "commanders", "map", "movements", "tower-cooldowns", "tower-queue", "units"}
 }
 
 func (*AutoTowerPolicy) WakeSections() []string {
@@ -95,7 +97,6 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 		}, nil
 	}
-	nextCastleSchedule := nextAutoTowerScheduleOpening(snapshot, settings)
 	if cooldownTarget, found := pendingTowerCooldownRefresh(snapshot.State); found {
 		arguments, _ := json.Marshal(map[string]any{
 			"kingdomId": cooldownTarget.KingdomID,
@@ -110,6 +111,15 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			ReevaluateOnSuccess: true,
 		}, nil
 	}
+	filteredSettings, unsupportedHorseCastles, horseDecision, err := filterAutoTowerHorseTravelBoostCastles(snapshot, settings)
+	if err != nil {
+		return Decision{}, err
+	}
+	if horseDecision != nil {
+		return *horseDecision, nil
+	}
+	settings = filteredSettings
+	nextCastleSchedule := nextAutoTowerScheduleOpening(snapshot, settings)
 
 	if castle, plan, found := nextTowerQueueScan(snapshot, settings, towerMapRefreshInterval(settings.MapRefreshIntervalSec)); found {
 		arguments, _ := json.Marshal(map[string]any{
@@ -129,6 +139,9 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	candidates, activeCount, configured := queuedTowerCandidates(snapshot, settings)
 	metrics := map[string]float64{
 		"activeTowers": float64(activeCount), "queuedTowers": float64(len(candidates)),
+	}
+	if unsupportedHorseCastles > 0 {
+		metrics["unsupportedHorseCastles"] = float64(unsupportedHorseCastles)
 	}
 	var selected towerQueueCandidate
 	var selectedCommanderID State.CommanderID
@@ -243,6 +256,9 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	} else if activeCount > 0 {
 		detail = "No additional tower target is ready; active tower movements continue independently"
 	}
+	if unsupportedHorseCastles > 0 {
+		detail += fmt.Sprintf("; %d configured castle(s) do not support the selected horse travel boost", unsupportedHorseCastles)
+	}
 	nextCheck := snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30))
 	if !nextCastleSchedule.IsZero() && nextCastleSchedule.Before(nextCheck) {
 		nextCheck = nextCastleSchedule
@@ -251,6 +267,87 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		Status: "idle", Detail: detail, NextCheckAt: nextCheck,
 		Metrics: metrics,
 	}, nil
+}
+
+func filterAutoTowerHorseTravelBoostCastles(
+	snapshot Snapshot,
+	settings autoTowerSettings,
+) (autoTowerSettings, int, *Decision, error) {
+	if settings.HorseTravelBoostID == 0 || settings.HorseTravelBoostID == -1 {
+		return settings, 0, nil, nil
+	}
+	if snapshot.GameData == nil {
+		return settings, 0, &Decision{
+			Status: "waiting", Detail: "Waiting for official game data to resolve the selected horse travel boost",
+			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
+		}, nil
+	}
+	filtered := make(map[string]autoTowerCastle, len(settings.Castles))
+	configured := 0
+	unsupported := 0
+	for _, castleKey := range sortedNumericKeys(settings.Castles) {
+		plan := settings.Castles[castleKey]
+		if !plan.Enabled || plan.UnitID <= 0 {
+			continue
+		}
+		castleID, _ := strconv.ParseInt(castleKey, 10, 64)
+		castle, exists := snapshot.State.Castles[State.CastleID(castleID)]
+		if !exists {
+			continue
+		}
+		configured++
+		if horseTravelBoostLayoutNeedsRefresh(
+			castle, snapshot.Now, towerMapRefreshInterval(settings.MapRefreshIntervalSec),
+		) {
+			if allowed, _ := scheduleAllows(snapshot.Configuration, "autoTowers:"+castleKey, snapshot.Now); !allowed {
+				filtered[castleKey] = plan
+				continue
+			}
+			arguments, _ := json.Marshal(map[string]any{"castleId": castle.ID, "refresh": true})
+			return settings, unsupported, &Decision{
+				Status:              "ready",
+				Detail:              fmt.Sprintf("Refresh travel-building state at %s", castleName(castle)),
+				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
+				ScheduleKey:         towerCastleScheduleKey(castle.ID),
+				ReevaluateOnSuccess: true,
+			}, nil
+		}
+		err := resolvePolicyHorseTravelBoost(snapshot.GameData, castle, settings.HorseTravelBoostID)
+		switch {
+		case err == nil:
+			filtered[castleKey] = plan
+		case errors.Is(err, GameData.ErrHorseTravelBoostLayoutUnobserved):
+			arguments, _ := json.Marshal(map[string]any{"castleId": castle.ID, "refresh": true})
+			return settings, unsupported, &Decision{
+				Status:              "ready",
+				Detail:              fmt.Sprintf("Refresh travel-building state at %s", castleName(castle)),
+				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
+				ScheduleKey:         towerCastleScheduleKey(castle.ID),
+				ReevaluateOnSuccess: true,
+			}, nil
+		case errors.Is(err, GameData.ErrHorseTravelBoostUnavailable):
+			unsupported++
+		default:
+			return settings, unsupported, nil, fmt.Errorf(
+				"resolve selected horse travel boost at %s: %w", castleName(castle), err,
+			)
+		}
+	}
+	settings.Castles = filtered
+	if configured > 0 && len(filtered) == 0 {
+		return settings, unsupported, &Decision{
+			Status: "waiting",
+			Detail: fmt.Sprintf(
+				"No configured Auto Towers castle supports the selected horse travel boost; %d castle(s) were skipped",
+				unsupported,
+			),
+			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
+			Metrics:     map[string]float64{"unsupportedHorseCastles": float64(unsupported)},
+		}, nil
+	}
+	return settings, unsupported, nil, nil
 }
 
 func nextAutoTowerScheduleOpening(snapshot Snapshot, settings autoTowerSettings) time.Time {

@@ -51,12 +51,22 @@ func TestStationRouteContextIsFullyRestartable(t *testing.T) {
 
 func TestCastleContextSkipsJAAWhenTargetIsAlreadyFocused(t *testing.T) {
 	castle := State.CastleState{ID: 10, KingdomID: 2, X: 12, Y: 34, Focused: true}
-	if steps := castleContextSteps(castle); len(steps) != 0 {
+	input := Intent.PlanningContext{ProtocolContext: State.ProtocolContextState{
+		FocusedCastleID: 10, FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 1,
+	}}
+	if steps := castleContextSteps(input, castle); len(steps) != 0 {
 		t.Fatalf("focused castle context = %#v, want no JAA", steps)
 	}
 
+	input.ProtocolContext.FocusSubcontext = State.FocusSubcontextMap
+	steps := castleContextSteps(input, castle)
+	if len(steps) != 1 || steps[0].Opcode != "jca" || steps[0].AwaitOpcode != "jaa" ||
+		string(steps[0].Command.Payload) != `{"CID":10,"KID":2}` {
+		t.Fatalf("map castle context = %#v, want one JCA", steps)
+	}
+
 	castle.Focused = false
-	steps := castleContextSteps(castle)
+	steps = castleContextSteps(input, castle)
 	if len(steps) != 1 || steps[0].Opcode != "jaa" {
 		t.Fatalf("unfocused castle context = %#v, want one JAA", steps)
 	}
@@ -73,6 +83,16 @@ func TestPlanCastleFocusTreatsCurrentTargetAsSatisfied(t *testing.T) {
 	}
 	if len(plan.Steps) != 0 {
 		t.Fatalf("focused castle plan = %#v, want no JAA", plan.Steps)
+	}
+
+	plan, err = planCastleFocus(
+		context.Background(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{"castleId":10,"refresh":true}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 1 || plan.Steps[0].Opcode != "jca" || plan.Steps[0].AwaitOpcode != "jaa" {
+		t.Fatalf("explicit focused castle refresh = %#v, want one JCA/JAA refresh", plan.Steps)
 	}
 }
 

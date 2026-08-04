@@ -15,7 +15,7 @@ const CastleFocusBadge: React.FC = () => {
   const label = castleDisplayName(castle);
 
   return (
-    <div className="liquid-glass-edge flex w-full min-w-0 items-center gap-2 rounded-full px-3 py-1.5 text-primary">
+    <div className="liquid-surface-edge flex w-full min-w-0 items-center gap-2 rounded-full px-3 py-1.5 text-primary">
       <span className="shrink-0 text-[9px] font-bold uppercase text-primary/80">Focus</span>
       <span className="min-w-0 truncate text-xs font-semibold text-text-main">{label}</span>
     </div>

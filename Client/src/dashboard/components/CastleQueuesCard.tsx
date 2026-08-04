@@ -50,7 +50,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
 
   return (
     <SectionCard
-      variant="glass"
+      variant="solid"
       title={title}
       description="Canonical game queues"
       titleClassName="text-primary"
@@ -59,7 +59,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
       contentClassName="custom-scrollbar flex-1 overflow-y-auto"
     >
         {!castle || queues.length === 0 ? (
-          <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-8 text-center backdrop-blur-xl">
+          <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-8 text-center">
             <p className="text-sm font-medium text-text-main">No production queues observed for this castle.</p>
             <p className="mx-auto mt-2 max-w-sm text-xs text-text-muted">Open the castle in-game to refresh its buildings and queues.</p>
           </div>
@@ -112,7 +112,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
                       if (craftingRow) return <CraftingQueueSlot key={`${queue.id}-${index}-${craftingRow.recipeId}`} row={craftingRow} boxSize={48} />;
                       const productionRow = productionRows[index];
                       if (productionRow) return <BarracksQueueSlot key={`${queue.id}-${index}-${productionRow.definitionId}`} row={productionRow} imageSize={36} isTool={queue.id === 'tool'} />;
-                      return <div key={`${queue.id}-${index}`} className="h-12 w-12 rounded-global border border-dashed border-border-light bg-bg-card/45 backdrop-blur-xl" />;
+                      return <div key={`${queue.id}-${index}`} className="h-12 w-12 rounded-global border border-dashed border-border-light bg-bg-card/45" />;
                     })}
                   </div>
                 </div>

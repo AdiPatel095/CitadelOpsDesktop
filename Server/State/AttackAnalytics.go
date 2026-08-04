@@ -26,6 +26,7 @@ type AttackFeatureLaunch struct {
 	MovementID   MovementID      `json:"movementId"`
 	FeatureID    AttackFeatureID `json:"featureId"`
 	KingdomID    KingdomID       `json:"kingdomId"`
+	TroopCount   int64           `json:"troopCount,omitempty"`
 	TargetTypeID int             `json:"targetTypeId,omitempty"`
 	TargetX      int             `json:"targetX"`
 	TargetY      int             `json:"targetY"`
@@ -145,10 +146,19 @@ func MergeAutoStormLaunchHistory(gameState *GameState, records []AttackFeatureLa
 			continue
 		}
 		current, exists := merged[record.MovementID]
-		if !exists || record.LaunchedAt.After(current.LaunchedAt) {
-			record.LaunchedAt = record.LaunchedAt.UTC()
-			merged[record.MovementID] = record
+		if exists {
+			current.TroopCount = max(record.TroopCount, current.TroopCount)
+			if record.LaunchedAt.Before(current.LaunchedAt) {
+				current.LaunchedAt = record.LaunchedAt.UTC()
+			}
+			if current.ArrivesAt.IsZero() && !record.ArrivesAt.IsZero() {
+				current.ArrivesAt = record.ArrivesAt.UTC()
+			}
+			merged[record.MovementID] = current
+			continue
 		}
+		record.LaunchedAt = record.LaunchedAt.UTC()
+		merged[record.MovementID] = record
 	}
 	next := make([]AttackFeatureLaunch, 0, len(merged))
 	for _, record := range merged {

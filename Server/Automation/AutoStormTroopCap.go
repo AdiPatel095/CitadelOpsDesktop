@@ -13,15 +13,17 @@ import (
 )
 
 type AutoStormTroopCapPreview struct {
-	Available           bool    `json:"available"`
-	MaximumTroops       int64   `json:"maximumTroops"`
-	TroopsPerAttack     int64   `json:"troopsPerAttack"`
-	MinimumTroops       int64   `json:"minimumTroops"`
-	HistoryHours        int     `json:"historyHours"`
-	AttacksInHistory    int64   `json:"attacksInHistory"`
-	AverageDailyAttacks float64 `json:"averageDailyAttacks"`
-	BufferedAttackCount int64   `json:"bufferedAttackCount"`
-	Detail              string  `json:"detail,omitempty"`
+	Available                bool    `json:"available"`
+	MaximumTroops            int64   `json:"maximumTroops"`
+	TroopsPerAttack          int64   `json:"troopsPerAttack"`
+	MinimumTroops            int64   `json:"minimumTroops"`
+	HistoryHours             int     `json:"historyHours"`
+	AttacksInHistory         int64   `json:"attacksInHistory"`
+	MeasuredAttacksInHistory int64   `json:"measuredAttacksInHistory"`
+	TroopsSentInHistory      int64   `json:"troopsSentInHistory"`
+	AverageTroopsPerHour     float64 `json:"averageTroopsPerHour"`
+	BufferedTroops           int64   `json:"bufferedTroops"`
+	Detail                   string  `json:"detail,omitempty"`
 }
 
 func PreviewAutoStormTroopCap(
@@ -51,30 +53,30 @@ func PreviewAutoStormTroopCap(
 }
 
 func autoStormTroopCapPreview(snapshot Snapshot, settings autoStormSettings) (AutoStormTroopCapPreview, error) {
-	historyHours := normalizedAutoStormHistoryHours(settings.TroopImport.HistoryHours)
-	historyCount, averageDailyAttacks, bufferedAttacks := autoStormAttackDemand(
-		snapshot.State, snapshot.Now, historyHours,
-	)
+	historyCount, measuredAttacks, troopsSent, averageHourlyTroops, bufferedTroops :=
+		autoStormAttackDemand(snapshot.State, snapshot.Now)
 	perAttackTroops, detail, err := autoStormMaximumConfiguredTroops(snapshot, settings)
 	if err != nil {
 		return AutoStormTroopCapPreview{}, err
 	}
 	result := AutoStormTroopCapPreview{
-		Available:           perAttackTroops > 0,
-		TroopsPerAttack:     perAttackTroops,
-		MinimumTroops:       settings.TroopImport.MinimumTroops,
-		HistoryHours:        historyHours,
-		AttacksInHistory:    historyCount,
-		AverageDailyAttacks: averageDailyAttacks,
-		BufferedAttackCount: bufferedAttacks,
-		Detail:              detail,
+		Available:                perAttackTroops > 0,
+		TroopsPerAttack:          perAttackTroops,
+		MinimumTroops:            settings.TroopImport.MinimumTroops,
+		HistoryHours:             autoStormTroopHistoryHours,
+		AttacksInHistory:         historyCount,
+		MeasuredAttacksInHistory: measuredAttacks,
+		TroopsSentInHistory:      troopsSent,
+		AverageTroopsPerHour:     averageHourlyTroops,
+		BufferedTroops:           bufferedTroops,
+		Detail:                   detail,
 	}
 	if perAttackTroops <= 0 {
 		return result, nil
 	}
 	result.MaximumTroops = max(
 		autoStormSaturatingAdd(perAttackTroops, settings.TroopImport.MinimumTroops),
-		autoStormSaturatingMultiply(perAttackTroops, bufferedAttacks),
+		bufferedTroops,
 	)
 	return result, nil
 }

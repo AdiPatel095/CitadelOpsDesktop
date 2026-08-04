@@ -69,6 +69,9 @@ func TestKingdomTroopShipmentRejectsToolsAndSkipUsesTroopTransportType(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
+	if len(plan.Steps) != 2 || plan.Steps[1].Action != timeSkipConsumeAction {
+		t.Fatalf("troop time-skip steps = %#v", plan.Steps)
+	}
 	if got := string(plan.Steps[0].Command.Payload); got != `{"KID":"4","MST":"MS5","TT":"1"}` {
 		t.Fatalf("troop time-skip payload = %s", got)
 	}
@@ -77,6 +80,20 @@ func TestKingdomTroopShipmentRejectsToolsAndSkipUsesTroopTransportType(t *testin
 	}
 	if !slices.Contains(plan.Claims, "currency:1005") {
 		t.Fatalf("troop time-skip plan is missing its currency claim: %#v", plan.Claims)
+	}
+
+	application := &Application{State: State.NewStore(gameState)}
+	if err := application.consumeTimeSkip(t.Context(), plan.Steps[1].ActionArguments); err != nil {
+		t.Fatal(err)
+	}
+	if got := application.State.Snapshot().Player.Currencies[1005]; got != 1 {
+		t.Fatalf("reconciled troop time-skip inventory = %v, want 1", got)
+	}
+	if err := application.consumeTimeSkip(t.Context(), plan.Steps[1].ActionArguments); err != nil {
+		t.Fatal(err)
+	}
+	if got := application.State.Snapshot().Player.Currencies[1005]; got != 1 {
+		t.Fatalf("replayed reconciliation consumed another skip: %v", got)
 	}
 }
 

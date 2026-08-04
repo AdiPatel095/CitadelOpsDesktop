@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Crosshair, Hammer, Swords, Users } from 'lucide-react';
+import { CalendarDays, Crosshair, FastForward, Hammer, Swords, Users } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import { ATTACK_PRESETS_SECTION, parseAttackPresetDocument, summarizeAttackPreset } from '../../attackPresets/AttackPresetTypes';
-import { Badge, Button, Input, Select, SettingsModal } from '../../components/ui';
+import { Badge, Button, Input, Select, SettingsModal, SettingsToggleRow } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
+import { useMetadata } from '../../context/MetadataContext';
 import { configurationSection } from '../Configuration';
 import {
 	AUTO_BERI_COIN_ATTACK_TOOLS,
+	AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS,
 	DEFAULT_AUTO_BERI_WORLD_SETTINGS,
 	parseAutoBeriWorldSettings,
 	type AutoBeriWorldSettings,
@@ -25,6 +27,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	onOpenFeatureSchedule,
 }) => {
 	const { state, configuration, updateConfiguration } = useCitadelAPI();
+	const { troops } = useMetadata();
 	const saved = useMemo(
 		() => parseAutoBeriWorldSettings(configurationSection(configuration, 'automation.autoBeriWorld')),
 		[configuration?.sections['automation.autoBeriWorld']],
@@ -37,6 +40,15 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	);
 	const selectedPreset = presetDocument.presets.find((preset) => preset.id === settings.presetId);
 	const presetSummary = selectedPreset ? summarizeAttackPreset(selectedPreset) : null;
+	const foodTroopIDs = useMemo(() => Object.entries(troops).flatMap(([rawID, unit]) => {
+		const unitID = Number(rawID);
+		const foodSupply = metadataNumber(unit.foodSupply);
+		const meadSupply = metadataNumber(unit.meadSupply);
+		const beefSupply = metadataNumber(unit.beefSupply);
+		return Number.isInteger(unitID) && unitID > 0 && foodSupply > 0 && meadSupply <= 0 && beefSupply <= 0
+			? [unitID]
+			: [];
+	}), [troops]);
 
 	useEffect(() => {
 		if (isOpen) setSettings(saved);
@@ -71,7 +83,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		const result = await showTroopPicker({
 			mode: 'single',
 			title: 'Troop type to transfer to Berimond',
-			preselected: settings.transferTroopId > 0 ? [settings.transferTroopId] : [],
+			preselected: foodTroopIDs.includes(settings.transferTroopId) ? [settings.transferTroopId] : [],
+			allowedUnitIds: foodTroopIDs,
 		});
 		if (typeof result === 'number' && result > 0) {
 			setSettings((current) => ({ ...current, transferTroopId: result }));
@@ -145,6 +158,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							className="block md:col-span-2"
 							value={settings.horseTravelBoostId}
 							onChange={(horseTravelBoostId) => setSettings((current) => ({ ...current, horseTravelBoostId }))}
+							description="The exact Berimond HBW ID and speed are resolved from the current Faction Stable level. Travel feather remains HBW -1."
 						/>
 					</div>
 					{presetSummary ? (
@@ -187,9 +201,37 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					</p>
 				</div>
 
-				<p className="text-sm text-text-muted">
-					CitadelOps refreshes transfer capacity with <span className="font-mono">fuc</span>, sends the exact returned amount with <span className="font-mono">kut</span>, then applies the fixed <span className="font-mono">msk</span> speed-up.
-				</p>
+				<div className="space-y-3">
+					<SettingsToggleRow
+						title="Use troop transport time skips"
+						description="Apply the selected skip after a Berimond transfer, one command per confirmed response, until the troops arrive."
+						icon={<FastForward className="h-4 w-4" />}
+						checked={settings.useTroopTransportTimeSkips}
+						onChange={(checked) => setSettings((current) => ({ ...current, useTroopTransportTimeSkips: checked }))}
+					/>
+					<label className="block">
+						<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">
+							Troop transport skip
+						</span>
+						<Select
+							value={settings.troopTransportTimeSkipId}
+							onChange={(troopTransportTimeSkipId) => setSettings((current) => parseAutoBeriWorldSettings({
+								...current,
+								troopTransportTimeSkipId,
+							}))}
+							options={AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS.map((skip) => ({
+								value: skip.id,
+								label: `${skip.label} · ${skip.id}`,
+							}))}
+							menuGrowToViewport
+						/>
+					</label>
+					<p className="text-xs text-text-muted">
+						CitadelOps sends the exact <span className="font-mono">fuc</span> capacity with <span className="font-mono">kut</span>.
+						When skipping is enabled, it applies the selected <span className="font-mono">msk</span> immediately, then checks a still-travelling transfer once per minute.
+						The selection stays saved while skipping is off.
+					</p>
+				</div>
 
 				<div className="space-y-1.5">
 					<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Berimond castle ID</label>
@@ -232,6 +274,9 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						<Input readOnly value={settings.transferTroopId || ''} placeholder="Official unit ID" />
 						<Button variant="outline" leftIcon={<Users className="h-4 w-4" />} onClick={pickTroop}>Pick unit</Button>
 					</div>
+					<p className="text-xs text-text-muted">
+						Only troops whose official upkeep is Food are eligible. Mead- and Beef-consuming troops are excluded.
+					</p>
 				</div>
 
 				<div className="space-y-1.5">
@@ -262,5 +307,10 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		</SettingsModal>
 	);
 };
+
+function metadataNumber(value: unknown): number {
+	const parsed = Number(value);
+	return Number.isFinite(parsed) ? parsed : 0;
+}
 
 export default AutoBeriWorldSettingsModal;

@@ -6,6 +6,17 @@ export const AUTO_BERI_COIN_ATTACK_TOOLS = [
 	{ id: 620, name: 'Mantlets' },
 ] as const;
 
+export const AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS = [
+	{ id: 'MS1', label: '1 minute' },
+	{ id: 'MS2', label: '5 minutes' },
+	{ id: 'MS3', label: '10 minutes' },
+	{ id: 'MS4', label: '30 minutes' },
+	{ id: 'MS5', label: '1 hour' },
+	{ id: 'MS6', label: '5 hours' },
+	{ id: 'MS7', label: '24 hours' },
+] as const;
+
+export type AutoBeriTroopTransportTimeSkipID = typeof AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS[number]['id'];
 export type AutoBeriToolMinimums = Record<string, number>;
 
 export interface AutoBeriWorldSettings {
@@ -19,6 +30,8 @@ export interface AutoBeriWorldSettings {
 	attackCheckIntervalSec: number;
 	horseTravelBoostId: HorseTravelBoostID;
 	toolMinimums: AutoBeriToolMinimums;
+	useTroopTransportTimeSkips: boolean;
+	troopTransportTimeSkipId: AutoBeriTroopTransportTimeSkipID;
 }
 
 export const DEFAULT_AUTO_BERI_WORLD_SETTINGS: AutoBeriWorldSettings = {
@@ -32,6 +45,8 @@ export const DEFAULT_AUTO_BERI_WORLD_SETTINGS: AutoBeriWorldSettings = {
 	attackCheckIntervalSec: 30,
 	horseTravelBoostId: -1,
 	toolMinimums: defaultToolMinimums(),
+	useTroopTransportTimeSkips: false,
+	troopTransportTimeSkipId: 'MS5',
 };
 
 export function parseAutoBeriWorldSettings(payload: unknown): AutoBeriWorldSettings {
@@ -51,11 +66,19 @@ export function parseAutoBeriWorldSettings(payload: unknown): AutoBeriWorldSetti
 			String(tool.id),
 			nonNegativeInteger(rawToolMinimums[String(tool.id)], 0),
 		])),
+		useTroopTransportTimeSkips: value.useTroopTransportTimeSkips === true,
+		troopTransportTimeSkipId: parseTroopTransportTimeSkipID(value.troopTransportTimeSkipId),
 	};
 }
 
 function defaultToolMinimums(): AutoBeriToolMinimums {
 	return Object.fromEntries(AUTO_BERI_COIN_ATTACK_TOOLS.map((tool) => [String(tool.id), 0]));
+}
+
+function parseTroopTransportTimeSkipID(value: unknown): AutoBeriTroopTransportTimeSkipID {
+	const id = typeof value === 'string' ? value.trim().toUpperCase() : '';
+	const match = AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS.find((skip) => skip.id === id);
+	return match?.id ?? DEFAULT_AUTO_BERI_WORLD_SETTINGS.troopTransportTimeSkipId;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

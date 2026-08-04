@@ -27,7 +27,9 @@ func TestFoodBalancePolicyPrioritizesHoneyNeededForMead(t *testing.T) {
 	target.Resources[12] = State.ResourceBalance{Amount: 0, ProductionPerHour: &meadProduction, ConsumptionPerHour: float64Pointer(0), ConsumptionMultiplier: float64Pointer(1)}
 	target.Resources[13] = State.ResourceBalance{Amount: 0, ProductionPerHour: float64Pointer(0), ConsumptionPerHour: float64Pointer(0), ConsumptionMultiplier: float64Pointer(1)}
 	source := foodBalanceCastle(20, 0, 120, 100, now)
-	source.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137}
+	source.Layout.ObservedAt = now
+	source.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137, Placed: true}
+	source.Buildings[2] = State.Building{InstanceID: 2, DefinitionID: 226, Placed: true}
 	source.Resources[5] = State.ResourceBalance{Amount: 10_000, ProductionPerHour: float64Pointer(0), ConsumptionPerHour: float64Pointer(0), ConsumptionMultiplier: float64Pointer(1)}
 	source.Resources[11] = State.ResourceBalance{Amount: 10_000, ProductionPerHour: float64Pointer(0)}
 	source.Resources[12] = State.ResourceBalance{Amount: 0, ProductionPerHour: float64Pointer(0), ConsumptionPerHour: float64Pointer(0), ConsumptionMultiplier: float64Pointer(1)}
@@ -89,6 +91,91 @@ func TestFoodBalancePolicyRejectsUnsupportedMarketHorseTravelBoost(t *testing.T)
 		!strings.Contains(decision.Detail, "supported market-barrow horse travel boost") {
 		t.Fatalf("unsupported barrow horse decision = %#v", decision)
 	}
+}
+
+func TestFoodBalancePolicyIgnoresBerimondCastles(t *testing.T) {
+	now := time.Date(2026, 7, 30, 12, 0, 0, 0, time.UTC)
+	gameData := foodBalanceGameData(t)
+	berimondKingdomID := State.KingdomID(GameData.BerimondKingdomID)
+
+	t.Run("target", func(t *testing.T) {
+		state := State.NewGameState()
+		donor := foodBalanceCompleteCastle(10, 0, 100, 200, now)
+		donor.Resources[5] = foodBalanceStorage(State.ResourceBalance{
+			Amount: 500_000, ProductionPerHour: float64Pointer(1_000),
+			ConsumptionPerHour: float64Pointer(0), ConsumptionMultiplier: float64Pointer(1),
+		}, 1_000_000)
+		target := foodBalanceCompleteCastle(20, berimondKingdomID, 110, 215, now)
+		target.Units.Stationed[101] = 10
+		state.Castles[donor.ID] = donor
+		state.Castles[target.ID] = target
+		state.KingdomTransport.ObservedAt = now
+		state.KingdomTransport.Unlocks[berimondKingdomID] = State.KingdomTransportUnlock{
+			KingdomID: berimondKingdomID, Unlocked: true,
+		}
+
+		decision, err := NewFoodBalancePolicy().Evaluate(
+			context.Background(), foodBalanceSnapshot(state, gameData, now),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if decision.Request != nil || decision.Status != "idle" || decision.Metrics["castles"] != 1 {
+			t.Fatalf("Berimond target affected Auto Food decision = %#v", decision)
+		}
+	})
+
+	t.Run("donor", func(t *testing.T) {
+		state := State.NewGameState()
+		target := foodBalanceCompleteCastle(10, 0, 100, 200, now)
+		target.Resources[5] = foodBalanceStorage(State.ResourceBalance{
+			Amount: 0, ProductionPerHour: float64Pointer(0),
+			ConsumptionPerHour: float64Pointer(100), ConsumptionMultiplier: float64Pointer(1),
+		}, 1_000_000)
+		donor := foodBalanceCompleteCastle(20, berimondKingdomID, 110, 215, now)
+		donor.Resources[5] = foodBalanceStorage(State.ResourceBalance{
+			Amount: 500_000, ProductionPerHour: float64Pointer(1_000),
+			ConsumptionPerHour: float64Pointer(0), ConsumptionMultiplier: float64Pointer(1),
+		}, 1_000_000)
+		state.Castles[target.ID] = target
+		state.Castles[donor.ID] = donor
+		state.KingdomTransport.ObservedAt = now
+		state.KingdomTransport.Unlocks[target.KingdomID] = State.KingdomTransportUnlock{
+			KingdomID: target.KingdomID, Unlocked: true,
+		}
+
+		decision, err := NewFoodBalancePolicy().Evaluate(
+			context.Background(), foodBalanceSnapshot(state, gameData, now),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if decision.Request != nil || !strings.Contains(decision.Detail, "No safe") {
+			t.Fatalf("Berimond donor affected Auto Food decision = %#v", decision)
+		}
+	})
+
+	t.Run("refresh and workflow", func(t *testing.T) {
+		state := State.NewGameState()
+		eligible := foodBalanceCompleteCastle(10, 0, 100, 200, now)
+		berimond := foodBalanceCompleteCastle(20, berimondKingdomID, 110, 215, time.Time{})
+		state.Castles[eligible.ID] = eligible
+		state.Castles[berimond.ID] = berimond
+		state.KingdomTransport.ResourceWorkflows[berimondKingdomID] = State.KingdomResourceTransportWorkflow{
+			Owner: autoFoodBalanceTransportOwner, KingdomID: berimondKingdomID,
+			TargetCastleID: berimond.ID, LaunchedAt: now.Add(-time.Hour),
+		}
+
+		decision, err := NewFoodBalancePolicy().Evaluate(
+			context.Background(), foodBalanceSnapshot(state, gameData, now),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if decision.Request != nil || decision.Status != "idle" || decision.Metrics["castles"] != 1 {
+			t.Fatalf("Berimond refresh or workflow affected Auto Food decision = %#v", decision)
+		}
+	})
 }
 
 func TestFoodBalancePolicyWaitsForMarketBarrowReturnBeforeLogisticsRefresh(t *testing.T) {
@@ -614,6 +701,135 @@ func TestFoodBalanceShipmentRanksDonorsBeforeChoosingTransport(t *testing.T) {
 	}
 }
 
+func TestFoodBalanceMarketShipmentSkipsHorseIncompatibleDonor(t *testing.T) {
+	now := time.Date(2026, 8, 3, 16, 0, 0, 0, time.UTC)
+	gameData := foodBalanceGameData(t)
+	settings := foodBalanceSettings{
+		CheckIntervalSec: 60, MinimumShipmentSize: 1, MinimumSourceReserve: 1, SourceSafetyHours: 1,
+		HorseTravelBoostID: 1009,
+	}
+	target := foodBalanceCastle(10, 0, 100, 100, now)
+	unsupported := foodBalanceCastle(20, 0, 110, 100, now)
+	unsupported.Layout.ObservedAt = now
+	unsupported.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137, Placed: true}
+	unsupported.Resources[5] = State.ResourceBalance{Amount: 100_000}
+	supported := foodBalanceCastle(30, 0, 120, 100, now)
+	supported.Layout.ObservedAt = now
+	supported.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137, Placed: true}
+	supported.Buildings[2] = State.Building{InstanceID: 2, DefinitionID: 226, Placed: true}
+	supported.Resources[5] = State.ResourceBalance{Amount: 100_000}
+	projections := map[State.CastleID]foodBalanceProjection{
+		target.ID: {castle: target},
+		unsupported.ID: {
+			castle: unsupported,
+			consumed: GameData.CastleFoodConsumption{ByResource: map[State.ResourceID]GameData.FoodConsumptionRate{
+				5: {ResourceID: 5, ResourceJSONKey: "F", NetPerHour: float64Pointer(100_000)},
+			}},
+		},
+		supported.ID: {
+			castle: supported,
+			consumed: GameData.CastleFoodConsumption{ByResource: map[State.ResourceID]GameData.FoodConsumptionRate{
+				5: {ResourceID: 5, ResourceJSONKey: "F", NetPerHour: float64Pointer(50_000)},
+			}},
+		},
+	}
+	risk := foodBalanceRisk{
+		target: projections[target.ID], resourceID: 5,
+		rate: GameData.FoodConsumptionRate{ResourceID: 5, ResourceJSONKey: "F"},
+	}
+	state := State.NewGameState()
+	state.Market = State.MarketState{
+		ObservedAt: now, CaravanLevelLoaded: true,
+		Castles: map[State.CastleID]State.MarketCastleState{
+			unsupported.ID: {CastleID: unsupported.ID, AvailableBarrows: 100},
+			supported.ID:   {CastleID: supported.ID, AvailableBarrows: 100},
+		},
+	}
+	state.Player.Resources[1] = 1_000_000
+
+	decision, ready, err := foodBalanceShipment(
+		settings, Snapshot{State: state, GameData: gameData, Now: now}, projections, risk, 1_000, time.Minute,
+	)
+	if err != nil || !ready || decision.Request == nil || decision.Request.Name != "resource.ship" {
+		t.Fatalf("compatible donor fallback = %#v ready=%t err=%v", decision, ready, err)
+	}
+	var request struct {
+		SourceCastleID State.CastleID `json:"sourceCastleId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.SourceCastleID != supported.ID {
+		t.Fatalf("market donor = %d, want compatible donor %d", request.SourceCastleID, supported.ID)
+	}
+}
+
+func TestFoodBalanceMarketShipmentWaitsWithoutHorseCompatibleDonor(t *testing.T) {
+	now := time.Date(2026, 8, 3, 16, 0, 0, 0, time.UTC)
+	gameData := foodBalanceGameData(t)
+	settings := foodBalanceSettings{
+		CheckIntervalSec: 60, MinimumShipmentSize: 1, MinimumSourceReserve: 1, SourceSafetyHours: 1,
+		HorseTravelBoostID: 1009,
+	}
+	target := foodBalanceCastle(10, 0, 100, 100, now)
+	donor := foodBalanceCastle(20, 0, 110, 100, now)
+	donor.Layout.ObservedAt = now
+	donor.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137, Placed: true}
+	donor.Resources[5] = State.ResourceBalance{Amount: 100_000}
+	projections := map[State.CastleID]foodBalanceProjection{
+		target.ID: {castle: target},
+		donor.ID: {
+			castle: donor,
+			consumed: GameData.CastleFoodConsumption{ByResource: map[State.ResourceID]GameData.FoodConsumptionRate{
+				5: {ResourceID: 5, ResourceJSONKey: "F", NetPerHour: float64Pointer(100_000)},
+			}},
+		},
+	}
+	risk := foodBalanceRisk{
+		target: projections[target.ID], resourceID: 5,
+		rate: GameData.FoodConsumptionRate{ResourceID: 5, ResourceJSONKey: "F"},
+	}
+	state := State.NewGameState()
+	state.Market = State.MarketState{
+		ObservedAt: now, CaravanLevelLoaded: true,
+		Castles: map[State.CastleID]State.MarketCastleState{
+			donor.ID: {CastleID: donor.ID, AvailableBarrows: 100},
+		},
+	}
+	state.Player.Resources[1] = 1_000_000
+
+	decision, ready, err := foodBalanceShipment(
+		settings, Snapshot{State: state, GameData: gameData, Now: now}, projections, risk, 1_000, time.Minute,
+	)
+	if err != nil || ready || decision.Request != nil || decision.Status != "waiting" ||
+		!strings.Contains(decision.Detail, "cannot use the selected horse travel boost") {
+		t.Fatalf("incompatible donor wait = %#v ready=%t err=%v", decision, ready, err)
+	}
+}
+
+func TestFoodBalanceMarketShipmentRefreshesUnobservedHorseLayout(t *testing.T) {
+	now := time.Date(2026, 8, 3, 16, 0, 0, 0, time.UTC)
+	gameData := foodBalanceGameData(t)
+	donor := foodBalanceCastle(20, 0, 110, 100, now)
+	donor.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137, Placed: true}
+	decision, ready, err := foodBalanceMarketShipmentFromDonor(
+		foodBalanceSettings{HorseTravelBoostID: 1009},
+		Snapshot{GameData: gameData, Now: now},
+		foodBalanceRisk{target: foodBalanceProjection{castle: foodBalanceCastle(10, 0, 100, 100, now)}},
+		1_000,
+		foodBalanceDonor{projection: foodBalanceProjection{castle: donor}},
+	)
+	if err != nil || !ready || decision.Request == nil || decision.Request.Name != "game.focus_castle" {
+		t.Fatalf("unobserved donor refresh = %#v ready=%t err=%v", decision, ready, err)
+	}
+	var request struct {
+		Refresh bool `json:"refresh"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil || !request.Refresh {
+		t.Fatalf("donor layout refresh request = %#v err=%v", request, err)
+	}
+}
+
 func TestFoodBalanceShipmentSkipsHigherNetDonorWithoutEnoughStoredSurplus(t *testing.T) {
 	now := time.Date(2026, 7, 29, 12, 0, 0, 0, time.UTC)
 	settings := foodBalanceSettings{
@@ -1025,7 +1241,13 @@ func foodBalanceGameData(t *testing.T) *GameData.Store {
 		"units":[{"wodID":101,"foodSupply":10}],
 		"buildings":[
 			{"wodID":137,"name":"Market","marketCarriages":5},
-			{"wodID":201,"meadProduction":100000,"honeyRatio":1,"foodRatio":3}
+			{"wodID":201,"meadProduction":100000,"honeyRatio":1,"foodRatio":3},
+			{"wodID":226,"name":"Stable","level":"3","unlockHorses":"1007,1008,1009"}
+		],
+		"horses":[
+			{"wodID":1007,"group":"Travelbooster"},
+			{"wodID":1008,"group":"Travelbooster"},
+			{"wodID":1009,"group":"Travelbooster"}
 		],
 		"constructionItems":[],"levelBoosters":[],"effects":[]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})

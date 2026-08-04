@@ -13,7 +13,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
         <button
             onClick={toggleTheme}
             className={`
-        liquid-glass-edge flex items-center justify-center rounded-full p-2
+        m3-icon-button liquid-surface-edge flex items-center justify-center rounded-full p-2
         text-text-muted hover:text-primary hover:border-primary/30
         transition-all duration-200 ease-in-out
         ${className}

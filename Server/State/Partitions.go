@@ -215,12 +215,21 @@ func (versions PartitionVersions) List() []PartitionVersion {
 	return out
 }
 
+type FocusSubcontext string
+
+const (
+	FocusSubcontextUnknown FocusSubcontext = ""
+	FocusSubcontextCastle  FocusSubcontext = "castle"
+	FocusSubcontextMap     FocusSubcontext = "map"
+)
+
 type ProtocolContextState struct {
-	SessionGeneration    uint64    `json:"sessionGeneration"`
-	ConnectionGeneration uint64    `json:"connectionGeneration"`
-	FocusedCastleID      CastleID  `json:"focusedCastleId,omitempty"`
-	FocusEpoch           uint64    `json:"focusEpoch"`
-	ObservedAt           time.Time `json:"observedAt,omitempty"`
+	SessionGeneration    uint64          `json:"sessionGeneration"`
+	ConnectionGeneration uint64          `json:"connectionGeneration"`
+	FocusedCastleID      CastleID        `json:"focusedCastleId,omitempty"`
+	FocusSubcontext      FocusSubcontext `json:"focusSubcontext,omitempty"`
+	FocusEpoch           uint64          `json:"focusEpoch"`
+	ObservedAt           time.Time       `json:"observedAt,omitempty"`
 }
 
 type PlanningView struct {
@@ -370,6 +379,7 @@ func initialProtocolContext(state GameState) ProtocolContextState {
 	for castleID, castle := range state.Castles {
 		if castle.Focused {
 			context.FocusedCastleID = castleID
+			context.FocusSubcontext = FocusSubcontextCastle
 			context.FocusEpoch = 1
 			context.ObservedAt = state.UpdatedAt
 			break
@@ -383,6 +393,7 @@ func nextProtocolContext(
 	state GameState,
 	domains []string,
 	partitions []PartitionKey,
+	focusSubcontext FocusSubcontext,
 	observedAt time.Time,
 ) ProtocolContextState {
 	next := current
@@ -391,10 +402,12 @@ func nextProtocolContext(
 		next.SessionGeneration = state.Session.Generation
 		next.ConnectionGeneration = state.Session.ConnectionGeneration
 		next.FocusedCastleID = 0
+		next.FocusSubcontext = FocusSubcontextUnknown
 		next.FocusEpoch++
 		next.ObservedAt = observedAt
 	}
-	if !containsDomain(domains, "session-context") &&
+	if focusSubcontext == FocusSubcontextUnknown &&
+		!containsDomain(domains, "session-context") &&
 		!containsPartitionCapability(partitions, CapabilitySessionContext) {
 		return next
 	}
@@ -405,8 +418,18 @@ func nextProtocolContext(
 			break
 		}
 	}
-	if next.FocusedCastleID != focusedCastleID {
+	nextSubcontext := next.FocusSubcontext
+	if focusedCastleID == 0 {
+		nextSubcontext = FocusSubcontextUnknown
+	} else if focusSubcontext != FocusSubcontextUnknown {
+		nextSubcontext = focusSubcontext
+	} else if next.FocusedCastleID != focusedCastleID {
+		// A newly selected castle comes from a castle snapshot such as JAA.
+		nextSubcontext = FocusSubcontextCastle
+	}
+	if next.FocusedCastleID != focusedCastleID || next.FocusSubcontext != nextSubcontext {
 		next.FocusedCastleID = focusedCastleID
+		next.FocusSubcontext = nextSubcontext
 		next.FocusEpoch++
 	}
 	next.SessionGeneration = state.Session.Generation

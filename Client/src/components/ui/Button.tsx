@@ -1,7 +1,7 @@
 import React, { ButtonHTMLAttributes } from 'react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'glass';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
@@ -23,22 +23,21 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-global font-semibold transition-all duration-200 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap';
+    const baseStyles = 'm3-button inline-flex items-center justify-center font-semibold focus:outline-none disabled:cursor-not-allowed whitespace-nowrap';
     
     const variants = {
-      primary: 'bg-primary text-text-inverted border border-white/20 shadow-glow hover:bg-primary-hover hover:shadow-glow-active',
-      secondary: 'bg-bg-card/55 text-text-main border border-border-light shadow-[var(--glass-shadow-compact)] backdrop-blur-2xl hover:bg-bg-card-hover/80 hover:border-primary/25',
-      ghost: 'bg-transparent text-text-muted hover:text-text-main hover:bg-bg-card-hover/70',
-      danger: 'bg-error/10 text-error border border-error/25 hover:bg-error/18 hover:border-error/45 shadow-[0_0_18px_color-mix(in_srgb,var(--color-error)_24%,transparent)]',
-      outline: 'bg-bg-card/30 border border-primary/35 text-primary shadow-[0_0_18px_color-mix(in_srgb,var(--color-primary)_15%,transparent)] backdrop-blur-xl hover:bg-primary/10 hover:border-primary/55',
-      glass: 'bg-bg-card/45 backdrop-blur-2xl border border-border-light shadow-[var(--glass-shadow-compact)] hover:bg-bg-card-hover/75 text-text-main',
+      primary: 'm3-button-filled',
+      secondary: 'm3-button-tonal',
+      ghost: 'm3-button-text',
+      danger: 'm3-button-danger',
+      outline: 'm3-button-outlined',
     };
 
     const sizes = {
-      sm: 'px-3 py-1.5 text-xs gap-1.5',
-      md: 'px-4 py-2 text-sm gap-2',
-      lg: 'px-6 py-3 text-base gap-3',
-      icon: 'p-2 flex-shrink-0',
+      sm: 'm3-button-sm px-3 py-1.5 text-xs gap-1.5',
+      md: 'm3-button-md px-4 py-2 text-sm gap-2',
+      lg: 'm3-button-lg px-6 py-3 text-base gap-3',
+      icon: 'm3-button-icon p-2 flex-shrink-0',
     };
 
     return (

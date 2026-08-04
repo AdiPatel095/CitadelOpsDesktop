@@ -51,7 +51,7 @@ export default function CurrencyView() {
 		<div className="flex flex-col gap-8 pb-8">
 			<StaleSessionBanner />
 			{groups.map((group) => (
-				<SectionCard key={group.name} variant="glass" title={group.name} titleClassName="text-xl text-primary" className="flex flex-col" contentClassName="p-6">
+				<SectionCard key={group.name} variant="solid" title={group.name} titleClassName="text-xl text-primary" className="flex flex-col" contentClassName="p-6">
 					<div className="currency-responsive-grid">
 						{group.items.map((item) => <AmountCard key={`${group.name}-${item.id}`} item={item} />)}
 					</div>

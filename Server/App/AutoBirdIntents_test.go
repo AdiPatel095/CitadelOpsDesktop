@@ -69,6 +69,76 @@ func TestPlanAutoBirdRunsAINBeforeJAAForOneCastle(t *testing.T) {
 	}
 }
 
+func TestClearAutoBirdTrackingKeepsAutoStationAndGameMovements(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", SourceCastleID: 10,
+	}
+	gameState.Stationing["autoBird:stale"] = State.StationingOperation{
+		ID: "autoBird:stale", SourceCastleID: 11,
+	}
+	gameState.Stationing["autoStation:10"] = State.StationingOperation{
+		ID: "autoStation:10", Purpose: "autoStation", SourceCastleID: 10,
+	}
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, SourceCastleID: 10, TargetCastleID: 20,
+	}
+	state := State.NewStore(gameState)
+	application := &Application{State: state}
+	registry := Intent.NewRegistry()
+	registry.EnforceResourceDeclarations()
+	if err := registry.Register(Intent.Definition{
+		Name: "auto_bird.clear_tracking", Effect: Intent.EffectWrite,
+		Planner: planAutoBirdClearTracking,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := Intent.NewEngine(registry, state, nil, nil, nil)
+	if err := engine.RegisterAction("auto_bird.tracking.clear", application.clearAutoBirdTracking); err != nil {
+		t.Fatal(err)
+	}
+	receipt := engine.Submit(t.Context(), Intent.Request{
+		Name: "auto_bird.clear_tracking", Arguments: json.RawMessage(`{}`),
+	})
+	if receipt.Status != Intent.StatusSucceeded || receipt.Plan == nil {
+		t.Fatalf("clear Auto Bird resource admission failed: %#v", receipt)
+	}
+	if len(receipt.Plan.Steps) != 1 ||
+		receipt.Plan.Steps[0].Action != "auto_bird.tracking.clear" ||
+		len(receipt.Plan.Claims) != 1 ||
+		receipt.Plan.Claims[0] != "auto-bird-cycle" {
+		t.Fatalf("clear Auto Bird plan = %#v", receipt.Plan)
+	}
+	hasAutoBirdCycle := false
+	for _, resource := range receipt.Plan.Resources {
+		if resource.Capability == "legacy" {
+			t.Fatalf("clear Auto Bird retained a legacy resource: %#v", receipt.Plan.Resources)
+		}
+		if resource.Scope == Intent.ResourceScopeAccount &&
+			resource.Capability == "stationing" &&
+			resource.ResourceKind == "auto-bird-cycle" &&
+			resource.ResourceID == "*" {
+			hasAutoBirdCycle = true
+		}
+	}
+	if !hasAutoBirdCycle {
+		t.Fatalf("clear Auto Bird is missing its typed cycle resource: %#v", receipt.Plan.Resources)
+	}
+	snapshot := state.Snapshot()
+	if _, exists := snapshot.Stationing["autoBird:10"]; exists {
+		t.Fatal("ordinary Auto Bird tracking was not cleared")
+	}
+	if _, exists := snapshot.Stationing["autoBird:stale"]; exists {
+		t.Fatal("malformed stale Auto Bird tracking was not cleared")
+	}
+	if _, exists := snapshot.Stationing["autoStation:10"]; !exists {
+		t.Fatal("Auto Station tracking was removed")
+	}
+	if _, exists := snapshot.Movements[50]; !exists {
+		t.Fatal("game movement was removed")
+	}
+}
+
 func TestAutoBirdTargetThenManifestRecordRandomWaitAndFreshTroops(t *testing.T) {
 	now := time.Date(2026, 7, 29, 14, 0, 0, 0, time.UTC)
 	gameState, gameData := autoBirdIntentTestState(t, now)

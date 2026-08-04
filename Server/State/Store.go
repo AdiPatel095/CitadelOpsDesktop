@@ -20,9 +20,10 @@ type Event struct {
 type Mutation func(state *GameState) (domains []string, changed bool, err error)
 
 type ScopedChange struct {
-	Domains    []string
-	Partitions []PartitionKey
-	Changed    bool
+	Domains         []string
+	Partitions      []PartitionKey
+	FocusSubcontext FocusSubcontext
+	Changed         bool
 }
 
 type ScopedMutation func(state *GameState) (ScopedChange, error)
@@ -200,7 +201,9 @@ func (store *Store) applyScoped(mutation ScopedMutation, cloneWorldMap bool) (Ev
 	partitionSnapshot, changedPartitions := advancePartitionVersions(
 		current.versions, partitions, candidate.Revision, candidate.UpdatedAt,
 	)
-	protocol := nextProtocolContext(current.protocol, candidate, domains, change.Partitions, candidate.UpdatedAt)
+	protocol := nextProtocolContext(
+		current.protocol, candidate, domains, change.Partitions, change.FocusSubcontext, candidate.UpdatedAt,
+	)
 	store.generation.Store(&storeGeneration{state: candidate, versions: partitionSnapshot, protocol: protocol})
 	event := Event{
 		Sequence: candidate.Revision, Revision: candidate.Revision, Domains: domains,
@@ -688,7 +691,8 @@ func cloneCommanderIDPointer(source *CommanderID) *CommanderID {
 }
 
 func cloneEquipmentEffects(source EquipmentEffects) EquipmentEffects {
-	clone := append(EquipmentEffects(nil), source...)
+	clone := make(EquipmentEffects, len(source))
+	copy(clone, source)
 	for index := range clone {
 		clone[index].RollPercent = cloneFloatPointer(source[index].RollPercent)
 		clone[index].Values = append([]float64(nil), source[index].Values...)
