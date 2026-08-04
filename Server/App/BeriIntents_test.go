@@ -3,6 +3,7 @@ package App
 import (
 	"encoding/json"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -13,11 +14,11 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-func TestPlanBeriTransferUsesRefreshedAmountAndCanonicalWireShape(t *testing.T) {
+func TestPlanBeriTransferUsesRefreshedAmountSelectedTimeSkipAndCanonicalWireShape(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
-		"versionInfo":[],"buildings":[{"wodID":1}],"units":[{"wodID":10}],
-		"currencies":[{"currencyID":1005,"JSONKey":"MS5"}],
-		"currencyMinutesSkipValues":[{"currencyID":"1005","MinutesSkipValue":"60"}]
+		"versionInfo":[],"buildings":[{"wodID":1}],"units":[{"wodID":10,"foodSupply":1}],
+		"currencies":[{"currencyID":1003,"JSONKey":"MS3"}],
+		"currencyMinutesSkipValues":[{"currencyID":"1003","MinutesSkipValue":"10"}]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)
@@ -28,26 +29,27 @@ func TestPlanBeriTransferUsesRefreshedAmountAndCanonicalWireShape(t *testing.T) 
 	castle.Units.Stationed = map[State.UnitID]int64{10: 50}
 	gameState.Castles[100] = castle
 	gameState.Castles[900] = State.CastleState{ID: 900, KingdomID: beriKingdomID}
-	gameState.Player.Currencies[1005] = 1
+	gameState.Player.Currencies[1003] = 1
 	gameState.Beri = State.BeriState{
 		AvailableTroops: 25, TroopsByUnit: map[State.UnitID]int64{10: 25},
 		ParsedSourceID: 100, ObservedAt: observedAt,
 	}
 	plan, err := planBeriTransfer(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
-		"sourceCastleId":100,"wireCastleId":-1,"unitId":10
+		"sourceCastleId":100,"wireCastleId":-1,"unitId":10,"useTimeSkip":true,"timeSkipId":"MS3"
 	}`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 6 || plan.Steps[0].Opcode != "kpi" ||
+	if len(plan.Steps) != 7 || plan.Steps[0].Opcode != "kpi" ||
 		plan.Steps[1].Action != "beri.transfer.verify" || plan.Steps[1].ResumePolicy != Intent.ResumeRebuild ||
 		plan.Steps[2].Opcode != "kut" || plan.Steps[3].Action != "troops.kingdom.consume_source" ||
-		plan.Steps[4].Action != "beri.consume_capacity" || plan.Steps[5].Opcode != "msk" {
+		plan.Steps[4].Action != "beri.consume_capacity" || plan.Steps[5].Opcode != "msk" ||
+		plan.Steps[6].Action != timeSkipConsumeAction {
 		t.Fatalf("unexpected Beri plan: %#v", plan.Steps)
 	}
 	for _, claim := range []string{
 		"troop-transport", "castle:100", "castle:900", "kingdom:10",
-		"beri-capacity:900", "unit:10", "currency:1005",
+		"beri-capacity:900", "unit:10", "currency:1003",
 	} {
 		if !slices.Contains(plan.Claims, claim) {
 			t.Fatalf("Beri transfer is missing canonical claim %q: %#v", claim, plan.Claims)
@@ -73,6 +75,13 @@ func TestPlanBeriTransferUsesRefreshedAmountAndCanonicalWireShape(t *testing.T) 
 		len(payload.Troops) != 1 || payload.Troops[0][0] != 10 || payload.Troops[0][1] != 25 {
 		t.Fatalf("unexpected kut payload: %#v", payload)
 	}
+	var skipPayload map[string]string
+	if err := json.Unmarshal(plan.Steps[5].Command.Payload, &skipPayload); err != nil {
+		t.Fatal(err)
+	}
+	if skipPayload["MST"] != "MS3" || skipPayload["KID"] != "10" || skipPayload["TT"] != "1" {
+		t.Fatalf("unexpected selected msk payload: %#v", skipPayload)
+	}
 	var guard beriTransferGuardRequest
 	if err := json.Unmarshal(plan.Steps[1].ActionArguments, &guard); err != nil {
 		t.Fatal(err)
@@ -93,9 +102,60 @@ func TestPlanBeriTransferUsesRefreshedAmountAndCanonicalWireShape(t *testing.T) 
 	}
 }
 
+func TestBeriTransferPlannerAndGuardRejectMeadAndBeefTroops(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[{"wodID":1}],
+		"units":[
+			{"wodID":10,"foodSupply":1},
+			{"wodID":11,"meadSupply":1},
+			{"wodID":12,"beefSupply":1}
+		],
+		"currencies":[{"currencyID":1005,"JSONKey":"MS5"}],
+		"currencyMinutesSkipValues":[{"currencyID":"1005","MinutesSkipValue":"60"}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	observedAt := time.Date(2026, 7, 30, 12, 0, 0, 0, time.UTC)
+	for _, test := range []struct {
+		name   string
+		unitID State.UnitID
+	}{{name: "mead", unitID: 11}, {name: "beef", unitID: 12}} {
+		t.Run(test.name, func(t *testing.T) {
+			unitID := test.unitID
+			gameState := State.NewGameState()
+			source := State.CastleState{ID: 100, KingdomID: 0, SlotType: 1}
+			source.Units.Stationed = map[State.UnitID]int64{unitID: 50}
+			gameState.Castles[source.ID] = source
+			gameState.Castles[900] = State.CastleState{ID: 900, KingdomID: beriKingdomID}
+			gameState.Player.Currencies[1005] = 1
+			gameState.Beri = State.BeriState{
+				AvailableTroops: 25, TroopsByUnit: map[State.UnitID]int64{unitID: 25},
+				ObservedAt: observedAt,
+			}
+			input := Intent.PlanningContext{State: gameState, GameData: gameData}
+			arguments, _ := json.Marshal(beriTransferRequest{
+				SourceCastleID: source.ID, TargetCastleID: 900, WireCastleID: -1,
+				UnitID: unitID, Amount: 25,
+			})
+
+			if _, err := planBeriTransfer(t.Context(), input, arguments); err == nil ||
+				!strings.Contains(err.Error(), "require a Food-consuming unit") {
+				t.Fatalf("unit %d planning error = %v", unitID, err)
+			}
+			if err := validateBeriTransferState(input, beriTransferGuardRequest{
+				SourceCastleID: source.ID, TargetCastleID: 900, UnitID: unitID, Amount: 25,
+				CapacityObserved: observedAt, TimeSkipCurrency: 1005,
+			}); err == nil || !strings.Contains(err.Error(), "require a Food-consuming unit") {
+				t.Fatalf("unit %d guard error = %v", unitID, err)
+			}
+		})
+	}
+}
+
 func TestBeriTransferPassesProductionResourceAdmission(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
-		"versionInfo":[],"buildings":[{"wodID":1}],"units":[{"wodID":10}],
+		"versionInfo":[],"buildings":[{"wodID":1}],"units":[{"wodID":10,"foodSupply":1}],
 		"currencies":[{"currencyID":1005,"JSONKey":"MS5"}],
 		"currencyMinutesSkipValues":[{"currencyID":"1005","MinutesSkipValue":"60"}]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
@@ -141,6 +201,16 @@ func TestBeriTransferPassesProductionResourceAdmission(t *testing.T) {
 	}
 	if !hasTroopTransport {
 		t.Fatalf("Beri transfer is missing its typed troop-transport resource: %#v", receipt.Plan.Resources)
+	}
+	for _, step := range receipt.Plan.Steps {
+		if step.Opcode == "msk" {
+			t.Fatalf("Beri transfer spent a time skip while the toggle was disabled: %#v", receipt.Plan.Steps)
+		}
+	}
+	for _, claim := range receipt.Plan.Claims {
+		if strings.HasPrefix(claim, "currency:") {
+			t.Fatalf("Beri transfer claimed a time skip while the toggle was disabled: %#v", receipt.Plan.Claims)
+		}
 	}
 }
 
@@ -315,7 +385,19 @@ func TestPlanBeriCampOpenUsesOfficialNonPremiumWireShape(t *testing.T) {
 
 func TestPlanBeriTowerAttackUsesFNTAndOmitsADIAndGAS(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
-		"versionInfo":[],"buildings":[],"units":[{"wodID":10,"unitType":"melee"}],
+		"versionInfo":[],
+		"buildings":[
+			{"wodID":294,"name":"FactionStable","level":"5","unlockHorses":"1027,1028,1029"}
+		],
+		"horses":[
+			{"wodID":1027,"group":"Travelbooster","comment1":"FactionStable5","comment2":"Horse"},
+			{"wodID":1028,"group":"Travelbooster","comment1":"FactionStable5","comment2":"Warhorse"},
+			{"wodID":1029,"group":"Travelbooster","comment1":"FactionStable5","comment2":"Courser"}
+		],
+		"units":[
+			{"wodID":10,"unitType":"melee"},
+			{"wodID":11,"slotTypes":[1]}
+		],
 		"effects":[
 			{"effectID":700,"name":"attackUnitAmountReinforcementBonus","effectTypeID":179,"capID":99}
 		],
@@ -328,7 +410,10 @@ func TestPlanBeriTowerAttackUsesFNTAndOmitsADIAndGAS(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Castles[900] = State.CastleState{
 		ID: 900, KingdomID: 10, X: 300, Y: 600,
-		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{10: 300}},
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{10: 300, 11: 60}},
+		Buildings: map[State.BuildingInstanceID]State.Building{
+			27: {InstanceID: 27, DefinitionID: 294, Placed: true},
+		},
 	}
 	gameState.Commanders[0] = State.CommanderState{
 		ID: 0, Available: true,
@@ -401,11 +486,14 @@ func TestPlanBeriTowerAttackUsesFNTAndOmitsADIAndGAS(t *testing.T) {
 		focusedFindPlan.Steps[4].Action != "beri.target.verify" {
 		t.Fatalf("focused find-next plan does not re-enter the locked Berimond camp: %#v", focusedFindPlan.Steps)
 	}
-	itemID := int64(10)
+	itemID, toolID := int64(10), int64(11)
 	preset := AttackPresets.Preset{
 		ID: "beri", Name: "Berimond",
 		Waves: []AttackPresets.Wave{{
-			Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &itemID, Quantity: 300}}},
+			Middle: AttackPresets.Lane{
+				Troops: []AttackPresets.Slot{{ItemID: &itemID, Quantity: 300}},
+				Tools:  []AttackPresets.Slot{{ItemID: &toolID, Quantity: 60}},
+			},
 		}},
 		CourtyardSupport: AttackPresets.CourtyardSupport{
 			Troops: []AttackPresets.Slot{{ItemID: &itemID, Quantity: 100}},
@@ -413,7 +501,7 @@ func TestPlanBeriTowerAttackUsesFNTAndOmitsADIAndGAS(t *testing.T) {
 	}
 	arguments, _ := json.Marshal(beriTowerAttackRequest{
 		SourceCastleID: 900, TargetX: 321, TargetY: 654, TargetTypeID: 17,
-		TargetObservedAt: now, CommanderID: 0, Preset: preset, HorseTravelBoostID: -1,
+		TargetObservedAt: now, CommanderID: 0, Preset: preset, HorseTravelBoostID: 1009,
 	})
 	plan, err := planBeriTowerAttack(
 		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments,
@@ -555,7 +643,14 @@ func TestPlanBeriTowerAttackUsesFNTAndOmitsADIAndGAS(t *testing.T) {
 		body.Waves[0].Middle.Units[0] != (attackPair{10, 156}) {
 		t.Fatalf("Berimond middle lane was not limited to level-55 capacity: %#v", body.Waves)
 	}
+	if len(body.Waves[0].Middle.Tools) == 0 ||
+		body.Waves[0].Middle.Tools[0] != (attackPair{11, 40}) {
+		t.Fatalf("Berimond middle tools were not limited to the PvE section cap: %#v", body.Waves)
+	}
 	if len(body.SupportTroops) == 0 || body.SupportTroops[0] != (attackPair{10, 50}) {
 		t.Fatalf("Berimond support wave was not limited by commander effects: %#v", body.SupportTroops)
+	}
+	if body.Booster != 1029 || body.PremiumTravel != 0 {
+		t.Fatalf("Berimond faction horse fields = HBW %d PTT %d, want HBW 1029 PTT 0", body.Booster, body.PremiumTravel)
 	}
 }

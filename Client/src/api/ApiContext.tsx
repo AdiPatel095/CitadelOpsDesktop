@@ -33,6 +33,13 @@ import { Notifications } from '../components/Notifications';
 const runtimeDiagnosticsEnabled = import.meta.env.DEV === true || import.meta.env.VITE_SHOW_HEADER_MEMORY === 'true';
 const stateRefreshIntervalMs = 1_000;
 
+function isAvailabilityGateFailure(value: string): boolean {
+	const lower = value.trim().toLowerCase();
+	if (lower.includes('not enough troops') || lower.includes('insufficient troops')) return true;
+	return lower.includes(' of item ')
+		&& (lower.includes(' commander(s) require ') || lower.includes(' attack formation requires '));
+}
+
 interface APIContextValue {
   connectionStatus: APIConnectionStatus;
   state: GameStateV2 | null;
@@ -199,7 +206,11 @@ export function APIProvider({ children }: { children: ReactNode }) {
 		setOperations((current) => ({ ...current, [receipt.id]: receipt }));
 		if (message.gap) void refreshOperations();
 		if (receipt.status === 'failed' && receipt.error) {
-			Notifications.error(receipt.error, `operation-${receipt.id}`);
+			if (isAvailabilityGateFailure(receipt.error)) {
+				Notifications.warning(receipt.error, `operation-${receipt.id}`);
+			} else {
+				Notifications.error(receipt.error, `operation-${receipt.id}`);
+			}
 		}
 		return;
 	  }

@@ -61,6 +61,23 @@ func TestAdvisorClaimsDeclareTypedResources(t *testing.T) {
 	}
 }
 
+func TestAutoBirdCycleClaimsIsolateCastlesButYieldToClear(t *testing.T) {
+	gameState := State.NewGameState()
+	clear := legacyClaimsToResources(gameState, []string{"auto-bird-cycle"})
+	first := legacyClaimsToResources(gameState, []string{"auto-bird-cycle:10"})
+	second := legacyClaimsToResources(gameState, []string{"auto-bird-cycle:11"})
+
+	if hasLegacyResource(clear) || hasLegacyResource(first) || hasLegacyResource(second) {
+		t.Fatalf("Auto Bird cycle claims retained a legacy resource: clear=%#v first=%#v second=%#v", clear, first, second)
+	}
+	if !resourcesOverlap(clear, first) || !resourcesOverlap(clear, second) {
+		t.Fatal("Auto Bird clear does not exclude every castle cycle")
+	}
+	if resourcesOverlap(first, second) {
+		t.Fatal("independent Auto Bird castle cycles would serialize")
+	}
+}
+
 type acquiredClaim struct {
 	name    string
 	release func()

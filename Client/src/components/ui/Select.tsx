@@ -146,7 +146,7 @@ export const Select: React.FC<SelectProps> = ({
           }
         }}
         disabled={disabled}
-        className={`w-full bg-bg-input/70 border px-4 py-2.5 text-sm font-medium text-text-main transition-colors duration-200 rounded-global flex items-center justify-between group focus:outline-none focus:ring-1 focus:ring-primary shadow-inner backdrop-blur-xl ${
+        className={`m3-select-trigger w-full border px-4 py-2.5 text-sm font-medium text-text-main transition-colors duration-200 flex items-center justify-between group focus:outline-none ${
           disabled
             ? 'opacity-50 cursor-not-allowed border-border-base'
             : 'border-border-base hover:border-primary focus:border-primary cursor-pointer'
@@ -174,7 +174,7 @@ export const Select: React.FC<SelectProps> = ({
           <div
             id={menuID}
             role="listbox"
-            className="select-portal-content fixed z-[140] mt-1 bg-bg-card/85 border border-border-light rounded-global shadow-[var(--shadow-glass-modal)] overflow-hidden animate-fade-in custom-scrollbar overflow-y-auto backdrop-blur-2xl"
+            className="m3-select-menu select-portal-content fixed z-[140] mt-1 overflow-hidden animate-fade-in custom-scrollbar overflow-y-auto"
             style={{
               top: dropdownPos.top,
               left: dropdownPos.left,
@@ -183,7 +183,7 @@ export const Select: React.FC<SelectProps> = ({
             }}
           >
             {searchable && (
-              <div className="sticky top-0 z-10 border-b border-border-base bg-bg-card/95 p-2 backdrop-blur-2xl">
+              <div className="sticky top-0 z-10 border-b border-border-base bg-bg-card p-2">
                 <div className="relative flex items-center">
                   <Search className="pointer-events-none absolute left-3 h-4 w-4 text-text-muted" />
                   <input
@@ -200,7 +200,7 @@ export const Select: React.FC<SelectProps> = ({
                     }}
                     placeholder={searchPlaceholder}
                     aria-label={searchPlaceholder}
-                    className="w-full rounded-global border border-border-base bg-bg-input/70 py-2 pl-9 pr-3 text-sm text-text-main shadow-inner outline-none placeholder:text-text-muted focus:border-primary focus:ring-1 focus:ring-primary"
+                    className="m3-input w-full border py-2 pl-9 pr-3 text-sm text-text-main outline-none placeholder:text-text-muted"
                   />
                 </div>
               </div>
@@ -224,7 +224,7 @@ export const Select: React.FC<SelectProps> = ({
                       setIsOpen(false);
                       setSearchQuery('');
                     }}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between group ${
+                    className={`m3-select-option w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between group ${
                       value === opt.value
                         ? 'bg-primary/10 text-primary font-bold'
                         : 'text-text-main hover:bg-bg-card-hover hover:text-primary'

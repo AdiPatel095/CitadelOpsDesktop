@@ -102,7 +102,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
 
         <SettingsToggleRow
           title="Use transport time skips"
-          description="Apply a covering selected skip during launch; only shipments without one remain marked in transit."
+          description="Apply selected skips one command at a time, waiting for each confirmed response until the shipment arrives."
           icon={<FastForward className="h-4 w-4" />}
           checked={settings.useKingdomTimeSkips}
           disabled={!settings.autoKingdomTransport}

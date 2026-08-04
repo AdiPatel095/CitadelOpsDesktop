@@ -1109,7 +1109,7 @@ function TrendChart({
         </svg>
         {hoveredPoint && !drag && (
           <div
-            className="pointer-events-none absolute z-10 min-w-52 rounded-xl border border-border-base bg-bg-card/95 px-3 py-2 text-xs shadow-xl backdrop-blur"
+            className="pointer-events-none absolute z-10 min-w-52 rounded-xl border border-border-base bg-bg-card/95 px-3 py-2 text-xs shadow-xl"
             style={{
               left: `${(hoveredPoint.coord.x / width) * 100}%`,
               top: `${(hoveredPoint.coord.y / height) * 100}%`,

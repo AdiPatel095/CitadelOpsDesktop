@@ -74,7 +74,7 @@ export const CatalogPickerModal: React.FC<CatalogPickerModalProps> = ({
       </>
     )}
   >
-    <div className={`ui-frosted-workspace picker-shell ${shellClassName}`}>
+    <div className={`ui-workspace-surface picker-shell ${shellClassName}`}>
       <div className={`picker-toolbar ${toolbarClassName}`}>
         <div className="picker-toolbar-overview">
           <div className="picker-toolbar-copy">

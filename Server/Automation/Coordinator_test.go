@@ -1066,6 +1066,23 @@ func TestFailureFallbackRunsOnlyForTerminalFailures(t *testing.T) {
 	}
 }
 
+func TestIndeterminateOnlyFailureFallbackDoesNotRunForDeterministicFailures(t *testing.T) {
+	for _, test := range []struct {
+		status Intent.Status
+		want   bool
+	}{
+		{status: Intent.StatusFailed, want: false},
+		{status: Intent.StatusPartiallySucceeded, want: false},
+		{status: Intent.StatusIndeterminate, want: true},
+		{status: Intent.StatusCancelled, want: false},
+		{status: Intent.StatusSucceeded, want: false},
+	} {
+		if got := shouldRunFailureFallback(test.status, true); got != test.want {
+			t.Fatalf("status %q runs indeterminate-only fallback = %t, want %t", test.status, got, test.want)
+		}
+	}
+}
+
 func TestCoordinatorNonOptInSuccessPreservesSchedule(t *testing.T) {
 	next := time.Now().UTC().Add(time.Hour)
 	current := &policyRuntime{
@@ -1217,6 +1234,108 @@ func TestCoordinatorNonStaleTowerFailureKeepsSafetyPause(t *testing.T) {
 	}, now)
 	if wakeImmediately || result.nextCheck.Before(now.Add(defaultRetry)) || !current.failureBlockedUntil.Equal(result.nextCheck) {
 		t.Fatalf("non-stale tower failure bypassed the safety pause: result=%+v runtime=%+v", result, current)
+	}
+}
+
+func TestCoordinatorTroopShortageIsAvailabilityGateWithoutSafetyPause(t *testing.T) {
+	now := time.Date(2026, time.August, 3, 14, 0, 0, 0, time.UTC)
+	detail := "Build and launch capacity-adjusted Storm attack: build Storm preset \"Trial\": castle 3849 has 0 of item 215; 1 commander(s) require 416"
+	current := &policyRuntime{running: true, stateProgressPending: true, evaluatedStateRevision: 10}
+	result, wakeImmediately := completePolicyRun(current, operationResult{
+		policyID: "autoStorm",
+		receipt: Intent.Receipt{
+			ID:     "storm-operation",
+			Status: Intent.StatusFailed,
+			Error:  detail,
+		},
+		nextCheck: now.Add(2 * time.Second),
+	}, now)
+	if wakeImmediately || !result.nextCheck.IsZero() || !current.nextCheck.IsZero() {
+		t.Fatalf("troop shortage retained a timed retry: result=%+v runtime=%+v", result, current)
+	}
+	if !current.failureBlockedUntil.IsZero() || current.running || current.troopAvailabilityGate == nil {
+		t.Fatalf("troop shortage entered failed-operation safety state: %+v", current)
+	}
+	if current.troopAvailabilityGate.castleID != 3849 || current.troopAvailabilityGate.unitID != 215 ||
+		current.troopAvailabilityGate.available != 0 {
+		t.Fatalf("troop shortage gate did not capture authoritative inventory: %+v", current.troopAvailabilityGate)
+	}
+
+	gameState := coordinatorReadyState()
+	gameState.Castles[3849] = State.CastleState{
+		ID: 3849,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{
+			215: 0,
+		}},
+	}
+	state := State.NewStore(gameState)
+	NewCoordinator(state, nil, nil, nil).recordReceipt(result)
+	automation := state.Snapshot().Automations["autoStorm"]
+	if automation.Status != "gated" || automation.Detail != detail || automation.LastError != "" || automation.NextCheckAt != nil {
+		t.Fatalf("troop shortage automation state = %+v", automation)
+	}
+
+	runtime := map[string]*policyRuntime{"autoStorm": current}
+	clearTroopAvailabilityGates(runtime, State.Event{Revision: 11, Domains: []string{"units"}}, gameState)
+	if current.troopAvailabilityGate == nil {
+		t.Fatal("unchanged authoritative troop inventory released the gate")
+	}
+	gameState.Castles[3849] = State.CastleState{
+		ID: 3849,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{
+			215: 416,
+		}},
+	}
+	clearTroopAvailabilityGates(runtime, State.Event{Revision: 12, Domains: []string{"units"}}, gameState)
+	if current.troopAvailabilityGate != nil {
+		t.Fatalf("changed authoritative troop inventory retained the gate: %+v", current.troopAvailabilityGate)
+	}
+}
+
+func TestCoordinatorTroopAvailabilityGateSkipsTimedRetry(t *testing.T) {
+	gameState := coordinatorReadyState()
+	gameState.Castles[3849] = State.CastleState{
+		ID: 3849,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{
+			215: 310,
+		}},
+	}
+	state := State.NewStore(gameState)
+	configuration := openCoordinatorTestConfiguration(t, "autoStorm")
+	policy := &coordinatorTestPolicy{
+		id:      "autoStorm",
+		domains: []string{"units"},
+		decision: Decision{
+			Status:  "ready",
+			Detail:  "Retry the same Storm attack",
+			Request: &Intent.Request{Name: "storm.attack"},
+		},
+	}
+	submitter := &coordinatorTestSubmitter{calls: make(chan Intent.Request, 1)}
+	coordinator := NewCoordinator(state, configuration, nil, submitter, policy)
+	configurationSnapshot := configuration.Snapshot()
+	runtime := map[string]*policyRuntime{"autoStorm": {
+		troopAvailabilityGate: &troopAvailabilityGate{
+			detail:   "castle 3849 has 310 of item 215; 1 commander(s) require 412",
+			castleID: 3849, unitID: 215, available: 310,
+		},
+		evaluatedStateRevision:     state.Snapshot().Revision,
+		evaluatedConfigRevision:    configurationSnapshot.Revision,
+		evaluatedConfiguration:     policyConfigurationFingerprint(policy, configurationSnapshot),
+		evaluatedSessionKnown:      true,
+		evaluatedSessionReady:      true,
+		evaluatedSessionGeneration: 1,
+	}}
+
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	select {
+	case request := <-submitter.calls:
+		t.Fatalf("unchanged troop gate retried intent: %+v", request)
+	case <-time.After(20 * time.Millisecond):
+	}
+	automation := state.Snapshot().Automations["autoStorm"]
+	if automation.Status != "gated" || automation.NextCheckAt != nil {
+		t.Fatalf("timed gate evaluation state = %+v", automation)
 	}
 }
 

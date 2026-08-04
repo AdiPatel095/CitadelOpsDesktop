@@ -48,7 +48,7 @@ const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: ()
 
   return (
     <div
-      className={`pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-xl border p-4 backdrop-blur-md ${style.bg} ${style.border} ${style.shadow} transition-all duration-300 ease-out ${isExiting ? 'animate-fade-out-right' : 'animate-fade-in-right opacity-0'}`}
+      className={`pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-xl border p-4 ${style.bg} ${style.border} ${style.shadow} transition-all duration-300 ease-out ${isExiting ? 'animate-fade-out-right' : 'animate-fade-in-right opacity-0'}`}
       role="alert"
     >
       <div className="mt-0.5 shrink-0">{style.icon}</div>

@@ -288,18 +288,19 @@ func TestAutoNomadPolicyClearsCooldownWhileLeveling(t *testing.T) {
 	}
 }
 
-func TestAutoNomadRBCTestSizesChainToOneCommandSkips(t *testing.T) {
+func TestAutoNomadRBCTestSizesChainToResponseGatedSkipSequences(t *testing.T) {
 	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
 	snapshot := autoNomadPolicySnapshot(t, now)
 	snapshot.State.Commanders[3] = State.CommanderState{ID: 3, Available: true}
-	snapshot.State.Player.Currencies[1006] = 3
+	snapshot.State.Player.Currencies[1005] = 6
+	snapshot.State.Player.Currencies[1006] = 0
 	snapshot.State.Map[0]["101:102"] = State.MapObservation{
 		KingdomID: 0, TypeID: kingdomTowerMapTypeID, X: 101, Y: 102,
 		TowerVictoryCount: 845, ObservedAt: now,
 	}
 	snapshot.Configuration.Sections["automation.autoNomad"] = json.RawMessage(`{
 		"version":4,"sourceCastleId":1,"presetId":"camp","skipCooldowns":true,
-		"timeSkipReserve":{"MS6":1},
+		"timeSkipReserve":{},
 		"rbcTest":{"enabled":true,"runId":"trial-budget","targetX":101,"targetY":102,"attackCount":10}
 	}`)
 
@@ -315,7 +316,7 @@ func TestAutoNomadRBCTestSizesChainToOneCommandSkips(t *testing.T) {
 		t.Fatal(err)
 	}
 	if launch.ExpectedAttacks != 2 || len(launch.CommanderIDs) != 2 {
-		t.Fatalf("RBC trial did not size itself to two usable skips: %#v", launch)
+		t.Fatalf("RBC trial did not size itself to two three-command cooldown sequences: %#v", launch)
 	}
 	snapshot.State.NomadCamps.RBCTest = &State.NomadRBCTestState{
 		RunID: "trial-budget", SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 102,
@@ -324,6 +325,20 @@ func TestAutoNomadRBCTestSizesChainToOneCommandSkips(t *testing.T) {
 	decision, err = NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
 	if err != nil || decision.Request != nil || decision.Status != "waiting" || decision.Metrics["committedCooldownSkips"] != 2 {
 		t.Fatalf("RBC trial overcommitted skips already reserved for launched hits: %#v err=%v", decision, err)
+	}
+}
+
+func TestResponseGatedDungeonCooldownCountCombinesSmallerSkipsAndHonorsReserves(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.Currencies[1002] = 13
+	if got := oneCommandDungeonSkipCount(gameState, map[string]int64{}, 3600); got != 0 {
+		t.Fatalf("five-minute skips unexpectedly counted as single-command one-hour clears: %d", got)
+	}
+	if got := responseGatedDungeonCooldownCount(gameState, map[string]int64{"MS2": 1}, 3600); got != 1 {
+		t.Fatalf("response-gated one-hour cooldown capacity = %d, want 1", got)
+	}
+	if got := responseGatedDungeonCooldownCount(gameState, map[string]int64{"ms2": 2}, 3600); got != 0 {
+		t.Fatalf("response-gated capacity crossed the case-insensitive reserve: %d", got)
 	}
 }
 

@@ -393,7 +393,7 @@ func (transport *ChromiumTransport) ensureGameTarget(
 				return err
 			}
 			navigateErr := chromedp.Run(
-				currentGameContext, chromedp.Navigate(transport.config.GameURL),
+				currentGameContext, bringGameTabToFront(), chromedp.Navigate(transport.config.GameURL),
 			)
 			transport.releaseSendGate()
 			if navigateErr != nil {
@@ -494,12 +494,14 @@ func (transport *ChromiumTransport) attachGameTarget(
 	setupErr := chromedp.Run(gameContext, actions...)
 	if setupErr == nil {
 		if navigate {
-			setupErr = chromedp.Run(gameContext, chromedp.Navigate(transport.config.GameURL))
+			setupErr = chromedp.Run(
+				gameContext, bringGameTabToFront(), chromedp.Navigate(transport.config.GameURL),
+			)
 		} else {
 			// A running tab cannot replay the login/bootstrap frames Citadel missed
 			// while detached. Reuse the tab and browser, but refresh the game once
 			// so reducers receive a complete current-session baseline.
-			setupErr = chromedp.Run(gameContext, chromedp.Reload())
+			setupErr = transport.reloadGame(gameContext)
 		}
 	}
 	if setupErr != nil {
@@ -1123,7 +1125,13 @@ func (transport *ChromiumTransport) reloadGame(ctx context.Context) error {
 	if transport.reloadEvaluator != nil {
 		return transport.reloadEvaluator(ctx)
 	}
-	return chromedp.Run(ctx, chromedp.Reload())
+	return chromedp.Run(ctx, bringGameTabToFront(), chromedp.Reload())
+}
+
+func bringGameTabToFront() chromedp.Action {
+	return chromedp.ActionFunc(func(ctx context.Context) error {
+		return page.BringToFront().Do(ctx)
+	})
 }
 
 func (transport *ChromiumTransport) publishReloadFailure(

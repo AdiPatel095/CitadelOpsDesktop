@@ -3,6 +3,7 @@ package Automation
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
@@ -59,7 +60,7 @@ func (*FoodBalancePolicy) ID() string { return "autoFoodBalance" }
 func (*FoodBalancePolicy) EnabledKey() string { return "auto_food_balance" }
 
 func (*FoodBalancePolicy) WakeDomains() []string {
-	return []string{"currencies", "kingdom-transport", "market", "movements", "resources", "units"}
+	return []string{"building-layout", "currencies", "kingdom-transport", "market", "movements", "resources", "units"}
 }
 
 func (*FoodBalancePolicy) WakeSections() []string {
@@ -91,6 +92,7 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	if snapshot.GameData == nil {
 		return Decision{Status: "waiting", Detail: "Waiting for official game data", NextCheckAt: snapshot.Now.Add(interval)}, nil
 	}
+	snapshot = foodBalanceSnapshotWithoutBerimond(snapshot)
 	waitingDecision := Decision{}
 	waitingDecisionFound := false
 	rememberWaiting := func(decision Decision) {
@@ -207,6 +209,31 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			"shortfall": mostUrgent.shortfall, "hoursUntilDepleted": mostUrgent.urgencyHours,
 		},
 	}, nil
+}
+
+func foodBalanceSnapshotWithoutBerimond(snapshot Snapshot) Snapshot {
+	berimondKingdomID := State.KingdomID(GameData.BerimondKingdomID)
+	castles := make(map[State.CastleID]State.CastleState, len(snapshot.State.Castles))
+	for castleID, castle := range snapshot.State.Castles {
+		if castle.KingdomID == berimondKingdomID {
+			continue
+		}
+		castles[castleID] = castle
+	}
+	snapshot.State.Castles = castles
+
+	workflows := snapshot.State.KingdomTransport.ResourceWorkflows
+	if workflow, exists := workflows[berimondKingdomID]; exists &&
+		workflow.Owner == autoFoodBalanceTransportOwner {
+		filtered := make(map[State.KingdomID]State.KingdomResourceTransportWorkflow, len(workflows)-1)
+		for kingdomID, candidate := range workflows {
+			if kingdomID != berimondKingdomID {
+				filtered[kingdomID] = candidate
+			}
+		}
+		snapshot.State.KingdomTransport.ResourceWorkflows = filtered
+	}
+	return snapshot
 }
 
 func foodBalanceStateRefreshDecision(snapshot Snapshot, interval time.Duration) (Decision, bool) {
@@ -377,6 +404,10 @@ func foodBalanceShipment(
 			if ready {
 				return decision, true, nil
 			}
+			if decision.Status != "" && !blockedFound {
+				blocked = decision
+				blockedFound = true
+			}
 			continue
 		}
 		if !settings.AutoKingdomTransport || !kingdomAmountReady || donor.available < kingdomAmount {
@@ -410,17 +441,24 @@ func foodBalanceMarketShipment(
 	if neededAmount <= 0 {
 		return Decision{}, false, nil
 	}
+	blocked := Decision{}
 	for _, donor := range foodBalanceDonors(settings, projections, risk) {
 		if donor.projection.castle.KingdomID != risk.target.castle.KingdomID ||
 			donor.available < neededAmount {
 			continue
 		}
 		decision, ready, err := foodBalanceMarketShipmentFromDonor(settings, snapshot, risk, targetNeed, donor)
-		if err != nil || ready {
-			return decision, ready, err
+		if err != nil {
+			return Decision{}, false, err
+		}
+		if ready {
+			return decision, true, nil
+		}
+		if decision.Status != "" && blocked.Status == "" {
+			blocked = decision
 		}
 	}
-	return Decision{}, false, nil
+	return blocked, false, nil
 }
 
 func foodBalanceMarketShipmentFromDonor(
@@ -430,6 +468,49 @@ func foodBalanceMarketShipmentFromDonor(
 	targetNeed float64,
 	donor foodBalanceDonor,
 ) (Decision, bool, error) {
+	if settings.HorseTravelBoostID != 0 && settings.HorseTravelBoostID != -1 &&
+		horseTravelBoostLayoutNeedsRefresh(
+			donor.projection.castle,
+			snapshot.Now,
+			policyInterval(settings.StateRefreshIntervalSec, 900),
+		) {
+		arguments, _ := json.Marshal(map[string]any{"castleId": donor.projection.castle.ID, "refresh": true})
+		return Decision{
+			Status:              "ready",
+			Detail:              fmt.Sprintf("Refresh travel-building state at %s", castleName(donor.projection.castle)),
+			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+			Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
+			ReevaluateOnSuccess: true,
+		}, true, nil
+	}
+	if err := resolvePolicyHorseTravelBoost(
+		snapshot.GameData, donor.projection.castle, settings.HorseTravelBoostID,
+	); err != nil {
+		switch {
+		case errors.Is(err, GameData.ErrHorseTravelBoostLayoutUnobserved):
+			arguments, _ := json.Marshal(map[string]any{"castleId": donor.projection.castle.ID, "refresh": true})
+			return Decision{
+				Status:              "ready",
+				Detail:              fmt.Sprintf("Refresh travel-building state at %s", castleName(donor.projection.castle)),
+				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
+				ReevaluateOnSuccess: true,
+			}, true, nil
+		case errors.Is(err, GameData.ErrHorseTravelBoostUnavailable):
+			return Decision{
+				Status: "waiting",
+				Detail: fmt.Sprintf(
+					"%s cannot use the selected horse travel boost; trying other safe resource donors",
+					castleName(donor.projection.castle),
+				),
+				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 60)),
+			}, false, nil
+		default:
+			return Decision{}, false, fmt.Errorf(
+				"resolve selected market horse travel boost at %s: %w", castleName(donor.projection.castle), err,
+			)
+		}
+	}
 	hasMarketplace, err := snapshot.GameData.CastleHasMarketplace(donor.projection.castle)
 	if err != nil {
 		return Decision{}, false, fmt.Errorf("check marketplace at %s: %w", castleName(donor.projection.castle), err)

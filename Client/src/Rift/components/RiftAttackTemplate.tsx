@@ -331,7 +331,7 @@ const RiftAttackTemplate: React.FC = () => {
   return (
     <>
       <SectionCard
-        variant="glass"
+        variant="solid"
         title="Captured Rift attacks"
         titleClassName="text-lg text-primary"
         description={(

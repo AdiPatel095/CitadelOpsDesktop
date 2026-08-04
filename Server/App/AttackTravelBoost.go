@@ -1,6 +1,11 @@
 package App
 
-import "fmt"
+import (
+	"fmt"
+
+	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/State"
+)
 
 const defaultHorseTravelBoostID = -1
 
@@ -22,9 +27,54 @@ func horseTravelBoostFields(value int) (int, int) {
 	}
 }
 
-func applyHorseTravelBoost(body *attackBody, value int) {
-	if body == nil {
-		return
+func resolveCastleHorseTravelBoostID(
+	gameData *GameData.Store,
+	castle State.CastleState,
+	value int,
+) (int, error) {
+	if err := validateHorseTravelBoostID(value); err != nil {
+		return 0, err
 	}
-	body.Booster, body.PremiumTravel = horseTravelBoostFields(value)
+	tier, selected := GameData.HorseTravelBoostTierForSelection(value)
+	if !selected {
+		return defaultHorseTravelBoostID, nil
+	}
+	definition, err := gameData.ResolveHorseTravelBoost(castle, tier)
+	if err != nil {
+		return 0, err
+	}
+	return int(definition.ID), nil
+}
+
+func resolveCastleHorseTravelBoostFields(
+	gameData *GameData.Store,
+	castle State.CastleState,
+	value int,
+) (int, int, error) {
+	booster, err := resolveCastleHorseTravelBoostID(gameData, castle, value)
+	if err != nil {
+		return 0, 0, err
+	}
+	if booster == defaultHorseTravelBoostID {
+		return booster, 1, nil
+	}
+	return booster, 0, nil
+}
+
+func applyCastleHorseTravelBoost(
+	body *attackBody,
+	gameData *GameData.Store,
+	castle State.CastleState,
+	value int,
+) error {
+	if body == nil {
+		return fmt.Errorf("attack body is unavailable")
+	}
+	booster, premiumTravel, err := resolveCastleHorseTravelBoostFields(gameData, castle, value)
+	if err != nil {
+		return err
+	}
+	body.Booster = booster
+	body.PremiumTravel = premiumTravel
+	return nil
 }

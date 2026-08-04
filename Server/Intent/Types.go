@@ -75,23 +75,25 @@ type Admission struct {
 }
 
 type Step struct {
-	Name                string                    `json:"name,omitempty"`
-	Action              string                    `json:"action,omitempty"`
-	ActionArguments     json.RawMessage           `json:"arguments,omitempty"`
-	Resolver            string                    `json:"resolver,omitempty"`
-	ResolverArguments   json.RawMessage           `json:"resolverArguments,omitempty"`
-	Opcode              string                    `json:"opcode,omitempty"`
-	Payload             json.RawMessage           `json:"payload,omitempty"`
-	AwaitOpcode         string                    `json:"awaitOpcode,omitempty"`
-	AwaitOpcodes        []string                  `json:"awaitOpcodes,omitempty"`
-	TimeoutMillis       int                       `json:"timeoutMillis,omitempty"`
-	DelayMillis         int                       `json:"delayMillis,omitempty"`
-	SuccessCodes        []int                     `json:"successCodes,omitempty"`
-	CaptureResponse     bool                      `json:"captureResponse,omitempty"`
-	ResponseBarrier     ResponseBarrier           `json:"responseBarrier,omitempty"`
-	ResumePolicy        ResumePolicy              `json:"resumePolicy,omitempty"`
-	CommandDependencies *CommandDependencyRequest `json:"commandDependencies,omitempty"`
-	Command             Protocol.Command          `json:"-"`
+	Name                    string                    `json:"name,omitempty"`
+	Action                  string                    `json:"action,omitempty"`
+	ActionArguments         json.RawMessage           `json:"arguments,omitempty"`
+	Resolver                string                    `json:"resolver,omitempty"`
+	ResolverArguments       json.RawMessage           `json:"resolverArguments,omitempty"`
+	Opcode                  string                    `json:"opcode,omitempty"`
+	Payload                 json.RawMessage           `json:"payload,omitempty"`
+	AwaitOpcode             string                    `json:"awaitOpcode,omitempty"`
+	AwaitOpcodes            []string                  `json:"awaitOpcodes,omitempty"`
+	TimeoutMillis           int                       `json:"timeoutMillis,omitempty"`
+	DelayMillis             int                       `json:"delayMillis,omitempty"`
+	SuccessCodes            []int                     `json:"successCodes,omitempty"`
+	StaleCodes              []int                     `json:"staleCodes,omitempty"`
+	CaptureResponse         bool                      `json:"captureResponse,omitempty"`
+	ExpectedResponsePayload json.RawMessage           `json:"expectedResponsePayload,omitempty"`
+	ResponseBarrier         ResponseBarrier           `json:"responseBarrier,omitempty"`
+	ResumePolicy            ResumePolicy              `json:"resumePolicy,omitempty"`
+	CommandDependencies     *CommandDependencyRequest `json:"commandDependencies,omitempty"`
+	Command                 Protocol.Command          `json:"-"`
 }
 
 // CommandDependencyRequest declares the concrete opcode and route payload for

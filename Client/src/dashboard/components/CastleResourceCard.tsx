@@ -72,7 +72,7 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resource
 
   return (
     <SectionCard
-      variant="glass"
+      variant="solid"
       title={title}
       titleClassName="text-primary"
       className="flex min-h-0 flex-col"
@@ -87,7 +87,7 @@ const CastleResourceCard: React.FC<CastleResourceCardProps> = ({ title, resource
           const name = definition?.name || internalName || `Resource ${id}`;
 						const icon = definition?.image;
           return (
-            <div key={id} className="flex items-center gap-3 rounded-global border border-border-light bg-bg-card/45 p-2.5 shadow-sm backdrop-blur-xl transition-colors hover:border-primary/30 hover:bg-bg-card-hover/70">
+            <div key={id} className="flex items-center gap-3 rounded-global border border-border-light bg-bg-card/45 p-2.5 shadow-sm transition-colors hover:border-primary/30 hover:bg-bg-card-hover/70">
               {icon ? <img src={icon} alt={name} className="h-8 w-8 shrink-0 object-contain drop-shadow-sm" /> : null}
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <div className="flex items-center justify-between text-xs font-medium text-text-main">

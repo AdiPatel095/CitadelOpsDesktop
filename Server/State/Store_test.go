@@ -40,6 +40,26 @@ func TestStoreHotPathMetadataDoesNotWaitForLongMutation(t *testing.T) {
 	<-finished
 }
 
+func TestStoreSnapshotKeepsEquipmentEffectsAsArrays(t *testing.T) {
+	initial := NewGameState()
+	initial.Inventory.Equipment[1] = EquipmentInstance{ID: 1, Effects: EquipmentEffects{}}
+	initial.Inventory.Equipment[2] = EquipmentInstance{ID: 2}
+	initial.Inventory.Gems[1] = GemInstance{ID: 1, Effects: EquipmentEffects{}}
+	initial.Inventory.Gems[2] = GemInstance{ID: 2}
+
+	snapshot := NewStore(initial).Snapshot()
+	for id, item := range snapshot.Inventory.Equipment {
+		if item.Effects == nil {
+			t.Fatalf("equipment %d effects serialized as null", id)
+		}
+	}
+	for id, gem := range snapshot.Inventory.Gems {
+		if gem.Effects == nil {
+			t.Fatalf("gem %d effects serialized as null", id)
+		}
+	}
+}
+
 func TestStoreCoalescesFullSubscriberBuffer(t *testing.T) {
 	store := NewStore(NewGameState())
 	events, unsubscribe := store.Subscribe(1)
@@ -206,7 +226,8 @@ func TestProtocolContextUsesExplicitFocusEpoch(t *testing.T) {
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
 	initial.Castles[12] = CastleState{ID: 12, KingdomID: 1}
 	store := NewStore(initial)
-	if context := store.ProtocolContext(); context.FocusedCastleID != 11 || context.FocusEpoch != 1 {
+	if context := store.ProtocolContext(); context.FocusedCastleID != 11 ||
+		context.FocusSubcontext != FocusSubcontextCastle || context.FocusEpoch != 1 {
 		t.Fatalf("initial protocol context = %#v", context)
 	}
 
@@ -225,8 +246,40 @@ func TestProtocolContextUsesExplicitFocusEpoch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if context := store.ProtocolContext(); context.FocusedCastleID != 12 || context.FocusEpoch != 2 {
+	if context := store.ProtocolContext(); context.FocusedCastleID != 12 ||
+		context.FocusSubcontext != FocusSubcontextCastle || context.FocusEpoch != 2 {
 		t.Fatalf("updated protocol context = %#v", context)
+	}
+}
+
+func TestProtocolContextTracksMapSubcontextForFocusedCastle(t *testing.T) {
+	initial := NewGameState()
+	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
+	store := NewStore(initial)
+	setSubcontext := func(subcontext FocusSubcontext) {
+		if _, err := store.ApplyScoped(func(state *GameState) (ScopedChange, error) {
+			return ScopedChange{
+				Partitions:      []PartitionKey{SessionPartition(*state, CapabilitySessionContext)},
+				FocusSubcontext: subcontext, Changed: true,
+			}, nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	setSubcontext(FocusSubcontextMap)
+	if context := store.ProtocolContext(); context.FocusedCastleID != 11 ||
+		context.FocusSubcontext != FocusSubcontextMap || context.FocusEpoch != 2 {
+		t.Fatalf("map protocol context = %#v", context)
+	}
+	setSubcontext(FocusSubcontextMap)
+	if context := store.ProtocolContext(); context.FocusEpoch != 2 {
+		t.Fatalf("repeated map context advanced focus epoch: %#v", context)
+	}
+	setSubcontext(FocusSubcontextCastle)
+	if context := store.ProtocolContext(); context.FocusedCastleID != 11 ||
+		context.FocusSubcontext != FocusSubcontextCastle || context.FocusEpoch != 3 {
+		t.Fatalf("restored castle protocol context = %#v", context)
 	}
 }
 

@@ -6,9 +6,9 @@ import (
 	"CitadelDesktop/Server/AttackCapacity"
 )
 
-func TestLimitToCapacityKeepsPresetPriorityAndRetainedWaveTools(t *testing.T) {
+func TestLimitToCapacityKeepsPresetPriorityAndCapsRetainedWaveTools(t *testing.T) {
 	first, second, later := int64(216), int64(217), int64(218)
-	tool := int64(104)
+	tool, secondTool := int64(104), int64(105)
 	supportTroop, secondSupportTroop, supportTool := int64(219), int64(220), int64(390)
 	preset := Preset{
 		ID: "trial", Name: "Trial",
@@ -23,7 +23,7 @@ func TestLimitToCapacityKeepsPresetPriorityAndRetainedWaveTools(t *testing.T) {
 			{
 				Left: Lane{
 					Troops: []Slot{{ItemID: &first, Quantity: 50}, {ItemID: &second, Quantity: 50}},
-					Tools:  []Slot{{ItemID: &tool, Quantity: 25}},
+					Tools:  []Slot{{ItemID: &tool, Quantity: 25}, {ItemID: &secondTool, Quantity: 25}},
 				},
 			},
 			{Middle: Lane{Troops: []Slot{{ItemID: &later, Quantity: 10}}}},
@@ -32,6 +32,7 @@ func TestLimitToCapacityKeepsPresetPriorityAndRetainedWaveTools(t *testing.T) {
 
 	limited := LimitToCapacity(preset, AttackCapacity.Result{
 		Capacity:     AttackCapacity.LaneCapacity{Left: 64, Front: 192, Right: 64},
+		ToolCapacity: AttackCapacity.LaneCapacity{Left: 30, Front: 40, Right: 30},
 		MaximumWaves: 1, SupportCapacity: 250,
 	})
 	if len(limited.Waves) != 1 {
@@ -41,8 +42,8 @@ func TestLimitToCapacityKeepsPresetPriorityAndRetainedWaveTools(t *testing.T) {
 	if left.Troops[0].Quantity != 50 || left.Troops[1].Quantity != 14 {
 		t.Fatalf("unexpected limited left flank: %#v", left.Troops)
 	}
-	if len(left.Tools) != 1 || left.Tools[0].Quantity != 25 {
-		t.Fatalf("retained wave tools changed: %#v", left.Tools)
+	if len(left.Tools) != 2 || left.Tools[0].Quantity != 25 || left.Tools[1].Quantity != 5 {
+		t.Fatalf("retained wave tools were not capped in preset order: %#v", left.Tools)
 	}
 	if len(limited.CourtyardSupport.Troops) != 2 ||
 		limited.CourtyardSupport.Troops[0].Quantity != 200 ||
@@ -50,11 +51,31 @@ func TestLimitToCapacityKeepsPresetPriorityAndRetainedWaveTools(t *testing.T) {
 		len(limited.CourtyardSupport.Tools) != 1 || limited.CourtyardSupport.Tools[0].Quantity != 1 {
 		t.Fatalf("courtyard support changed: %#v", limited.CourtyardSupport)
 	}
-	if preset.Waves[0].Left.Troops[1].Quantity != 50 || len(preset.Waves) != 2 {
+	if preset.Waves[0].Left.Troops[1].Quantity != 50 ||
+		preset.Waves[0].Left.Tools[1].Quantity != 25 || len(preset.Waves) != 2 {
 		t.Fatal("capacity limiting mutated the saved preset")
 	}
 	if preset.CourtyardSupport.Troops[0].Quantity != 200 || preset.CourtyardSupport.Troops[1].Quantity != 200 {
 		t.Fatal("support capacity limiting mutated the saved preset")
+	}
+}
+
+func TestValidatePresetTargetType(t *testing.T) {
+	troop := int64(216)
+	preset := Preset{
+		ID: "trial", Name: "Trial", TargetType: TargetTypePvP,
+		Waves: []Wave{{Middle: Lane{Troops: []Slot{{ItemID: &troop, Quantity: 1}}}}},
+	}
+	if err := Validate(preset); err != nil {
+		t.Fatalf("valid PvP target type: %v", err)
+	}
+	preset.TargetType = "unknown"
+	if err := Validate(preset); err == nil {
+		t.Fatal("unknown preset target type was accepted")
+	}
+	preset.TargetType = ""
+	if err := Validate(preset); err != nil {
+		t.Fatalf("legacy preset without target type: %v", err)
 	}
 }
 

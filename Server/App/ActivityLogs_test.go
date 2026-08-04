@@ -91,6 +91,24 @@ func TestFeatureActivitiesRecordsOneUserFacingFailure(t *testing.T) {
 	}
 }
 
+func TestFeatureActivitiesMarksAttackInventoryGateAsWarning(t *testing.T) {
+	receipt := Intent.Receipt{
+		Intent: "storm.attack", Status: Intent.StatusFailed,
+		Error: "Build and launch capacity-adjusted Storm attack: build Storm preset \"Trial\": castle 3849 has 277 of item 215; 1 commander(s) require 400",
+		Plan: &Intent.Plan{
+			Effect: Intent.EffectLaunch, Summary: "Attack Storm fort at 600:555 with Trial",
+			Steps: []Intent.Step{{CommandDependencies: &Intent.CommandDependencyRequest{Opcode: "cra"}}},
+		},
+	}
+	activities := featureActivities(receipt)
+	if len(activities) != 1 || activities[0].severity != "WARN" || activities[0].event != "ATTACK" {
+		t.Fatalf("inventory gate activities = %#v", activities)
+	}
+	if activities[0].detail != "Could not launch an attack against Storm fort at 600:555 with Trial: Build and launch capacity-adjusted Storm attack: build Storm preset \"Trial\": castle 3849 has 277 of item 215; 1 commander(s) require 400" {
+		t.Fatalf("inventory gate detail = %q", activities[0].detail)
+	}
+}
+
 func TestFeatureActivitiesHidesResponseDiagnosticsFromFailure(t *testing.T) {
 	receipt := Intent.Receipt{
 		Intent: "storm.shop.purchase", Status: Intent.StatusFailed,

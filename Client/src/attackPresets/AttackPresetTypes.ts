@@ -8,8 +8,17 @@ import type {
 
 export const ATTACK_PRESETS_SECTION = 'attacks.presets';
 
+export type AttackPresetTargetType = 'pve' | 'pvp';
+
+export interface AttackPresetToolLimits {
+  L: number;
+  M: number;
+  R: number;
+}
+
 export interface AppAttackPreset extends AttackSetupDraft {
   id: string;
+  targetType: AttackPresetTargetType;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +48,16 @@ export function parseAttackPresetDocument(value: unknown): AttackPresetDocument 
 
 export function emptyAttackPresetDocument(): AttackPresetDocument {
   return { version: 1, presets: [] };
+}
+
+export function attackPresetToolLimits(
+  targetType: AttackPresetTargetType,
+  hallToolBonus: number,
+): AttackPresetToolLimits {
+  const bonus = targetType === 'pvp'
+    ? Math.max(0, Math.min(10, Math.trunc(Number.isFinite(hallToolBonus) ? hallToolBonus : 0)))
+    : 0;
+  return { L: 30 + bonus, M: 40 + bonus, R: 30 + bonus };
 }
 
 export function summarizeAttackPreset(preset: AttackSetupDraft): AttackPresetSummary {
@@ -95,6 +114,7 @@ function parseAttackPreset(value: unknown): AppAttackPreset | null {
   return {
     id: value.id,
     name: value.name,
+    targetType: value.targetType === 'pvp' ? 'pvp' : 'pve',
     waves,
     courtyardSupport: parseCourtyardSupport(value.courtyardSupport),
     createdAt,

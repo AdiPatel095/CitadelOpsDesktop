@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ClipboardCopy,
   ClipboardPaste,
@@ -33,7 +33,10 @@ import {
 } from '../attackPresets/AttackPresetCraCodec';
 import {
   ATTACK_PRESETS_SECTION,
+  attackPresetToolLimits,
   type AppAttackPreset,
+  type AttackPresetTargetType,
+  type AttackPresetToolLimits,
   parseAttackPresetDocument,
   summarizeAttackPreset,
 } from '../attackPresets/AttackPresetTypes';
@@ -42,18 +45,73 @@ const AttackSetupModal = React.lazy(() => import('../components/AttackSetupModal
 
 interface EditorState {
   presetID: string | null;
+  targetType: AttackPresetTargetType;
   draft?: AttackSetupDraft;
 }
 
+interface PendingPresetCreation {
+  draft?: AttackSetupDraft;
+}
+
+interface LegendSkillCatalogItem extends Record<string, unknown> {
+  skillID?: number | string;
+  effectType?: string;
+  totalEffectValue?: number | string;
+}
+
+interface HallToolBonus {
+  value: number;
+  resolved: boolean;
+}
+
 const AttackPresetsView: React.FC = () => {
-  const { configuration, updateConfiguration } = useCitadelAPI();
+  const { configuration, getCatalog, state, updateConfiguration } = useCitadelAPI();
   const [query, setQuery] = useState('');
   const [editor, setEditor] = useState<EditorState | null>(null);
+  const [pendingCreation, setPendingCreation] = useState<PendingPresetCreation | null>(null);
   const [saving, setSaving] = useState(false);
   const [pendingID, setPendingID] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importValue, setImportValue] = useState('');
   const [importError, setImportError] = useState('');
+  const [hallToolBonus, setHallToolBonus] = useState<HallToolBonus>({ value: 0, resolved: false });
+  const getCatalogRef = useRef(getCatalog);
+  getCatalogRef.current = getCatalog;
+
+  const activeLegendSkillIDs = state?.player.legendSkills.activeIds ?? [];
+  const activeLegendSkillKey = activeLegendSkillIDs.join(',');
+  const legendSkillsObservedAt = state?.player.legendSkills.observedAt ?? '';
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!legendSkillsObservedAt) {
+      setHallToolBonus({ value: 0, resolved: false });
+      return () => { cancelled = true; };
+    }
+    const activeIDs = new Set(
+      activeLegendSkillKey.split(',').map(Number).filter((id) => Number.isFinite(id) && id > 0),
+    );
+    void getCatalogRef.current<LegendSkillCatalogItem>('legendskills')
+      .then((response) => {
+        if (cancelled) return;
+        let value = 0;
+        for (const item of response.items) {
+          const skillID = Number(item.skillID);
+          const rawBonus = Number(item.totalEffectValue);
+          if (!activeIDs.has(skillID) ||
+              item.effectType !== 'additionalAttackToolAmountFlank' ||
+              !Number.isFinite(rawBonus)) {
+            continue;
+          }
+          value = Math.max(value, Math.min(10, Math.max(0, Math.trunc(rawBonus))));
+        }
+        setHallToolBonus({ value, resolved: true });
+      })
+      .catch(() => {
+        if (!cancelled) setHallToolBonus({ value: 0, resolved: false });
+      });
+    return () => { cancelled = true; };
+  }, [activeLegendSkillKey, legendSkillsObservedAt]);
 
   const document = useMemo(
     () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
@@ -80,6 +138,7 @@ const AttackPresetsView: React.FC = () => {
     const preset: AppAttackPreset = {
       id: existing?.id ?? createID(),
       name: draft.name.trim(),
+      targetType: editor?.targetType ?? existing?.targetType ?? 'pve',
       waves: cloneWaves(draft.waves),
       courtyardSupport: cloneCourtyardSupport(draft.courtyardSupport),
       createdAt: existing?.createdAt ?? now,
@@ -145,12 +204,26 @@ const AttackPresetsView: React.FC = () => {
     try {
       const draft = parseCRAAttackPresetString(importValue);
       setImportOpen(false);
-      setEditor({ presetID: null, draft });
-      Notifications.success('CRA formation and courtyard support loaded. Review them and save the new preset.');
+      setPendingCreation({ draft });
+      Notifications.success('CRA formation loaded. Choose its target type before reviewing the preset.');
     } catch (error) {
       setImportError(errorMessage(error, 'Could not read the CRA command.'));
     }
   };
+
+  const openPresetCreation = (draft?: AttackSetupDraft) => {
+    setPendingCreation(draft ? { draft } : {});
+  };
+
+  const choosePresetTargetType = (targetType: AttackPresetTargetType) => {
+    const pending = pendingCreation;
+    if (!pending) return;
+    setPendingCreation(null);
+    setEditor({ presetID: null, targetType, draft: pending.draft });
+  };
+
+  const pveToolLimits = attackPresetToolLimits('pve', hallToolBonus.value);
+  const pvpToolLimits = attackPresetToolLimits('pvp', hallToolBonus.value);
 
   const handleCopyShareString = async (preset: AppAttackPreset) => {
     try {
@@ -172,7 +245,7 @@ const AttackPresetsView: React.FC = () => {
             <Button variant="secondary" leftIcon={<ClipboardPaste className="h-4 w-4" />} onClick={openImport}>
               Import CRA
             </Button>
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ presetID: null })}>
+            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
               New preset
             </Button>
           </div>
@@ -199,8 +272,9 @@ const AttackPresetsView: React.FC = () => {
             <PresetCard
               key={preset.id}
               preset={preset}
+              hallToolBonus={hallToolBonus.value}
               busy={pendingID === preset.id}
-              onEdit={() => setEditor({ presetID: preset.id, draft: preset })}
+              onEdit={() => setEditor({ presetID: preset.id, targetType: preset.targetType, draft: preset })}
               onCopyShare={() => void handleCopyShareString(preset)}
               onDuplicate={() => void handleDuplicate(preset)}
               onDelete={() => void handleDelete(preset)}
@@ -216,7 +290,7 @@ const AttackPresetsView: React.FC = () => {
             ? 'Try a different preset name.'
             : 'Presets are independent from the game’s saved slots and can contain up to 30 complete attack waves.'}
           action={!query.trim() ? (
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ presetID: null })}>
+            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
               Create preset
             </Button>
           ) : undefined}
@@ -229,11 +303,60 @@ const AttackPresetsView: React.FC = () => {
             isOpen
             initialDraft={editor.draft}
             inventoryPolicy="advisory"
+            targetType={editor.targetType}
+            toolLimits={attackPresetToolLimits(editor.targetType, hallToolBonus.value)}
             onClose={() => { if (!saving) setEditor(null); }}
             onSave={(draft) => void handleSave(draft)}
           />
         </Suspense>
       ) : null}
+
+      <Modal
+        isOpen={pendingCreation != null}
+        onClose={() => setPendingCreation(null)}
+        maxWidth="3xl"
+        title={(
+          <ModalTitle
+            icon={<Swords className="h-5 w-5" />}
+            description="This determines the maximum tools allowed in each section of every wave."
+          >
+            Choose preset target type
+          </ModalTitle>
+        )}
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-text-muted">
+            Select the targets this preset is designed for. CitadelOps will show these limits in the builder
+            and will check the real target again immediately before sending CRA.
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            <PresetTargetTypeChoice
+              type="pve"
+              title="PvE preset"
+              description="For Berimond towers, event camps, NPC towers, and other non-player targets."
+              limits={pveToolLimits}
+              bonusLabel="Fixed game limits"
+              onSelect={() => choosePresetTargetType('pve')}
+            />
+            <PresetTargetTypeChoice
+              type="pvp"
+              title="PvP preset"
+              description="For player targets. Uses the currently active Hall of Legends tool bonus."
+              limits={pvpToolLimits}
+              bonusLabel={hallToolBonus.resolved
+                ? hallToolBonus.value > 0
+                  ? `Hall of Legends +${hallToolBonus.value} active`
+                  : 'No Hall tool bonus active'
+                : 'Hall data unavailable · safe base limits'}
+              onSelect={() => choosePresetTargetType('pvp')}
+            />
+          </div>
+          <div className="rounded-global border border-border-base bg-bg-app/35 px-4 py-3 text-xs leading-relaxed text-text-muted">
+            The Hall bonus is read from the player’s active official skill data and is capped at +10 per section.
+            If that data is unavailable, PvP uses the safe 30 / 40 / 30 base limits.
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         isOpen={importOpen}
@@ -294,13 +417,15 @@ const AttackPresetsView: React.FC = () => {
 
 const PresetCard: React.FC<{
   preset: AppAttackPreset;
+  hallToolBonus: number;
   busy: boolean;
   onEdit: () => void;
   onCopyShare: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
-}> = ({ preset, busy, onEdit, onCopyShare, onDuplicate, onDelete }) => {
+}> = ({ preset, hallToolBonus, busy, onEdit, onCopyShare, onDuplicate, onDelete }) => {
   const summary = summarizeAttackPreset(preset);
+  const toolLimits = attackPresetToolLimits(preset.targetType, hallToolBonus);
   return (
     <Card variant="solid" className="liquid-prominent-header-card overflow-hidden">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-base bg-bg-card/45 px-5 py-4">
@@ -309,7 +434,18 @@ const PresetCard: React.FC<{
             <Swords className="h-4 w-4 shrink-0 text-primary" />
             <h2 className="truncate text-base font-black text-text-main">{preset.name}</h2>
           </div>
-          <p className="mt-1 text-xs text-text-muted">Updated {formatUpdatedAt(preset.updatedAt)}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <Badge
+              variant={preset.targetType === 'pvp' ? 'primary' : 'success'}
+              className="normal-case tracking-normal"
+            >
+              {preset.targetType === 'pvp' ? 'PvP' : 'PvE'}
+            </Badge>
+            <span className="text-xs text-text-muted">
+              Tool max · L {toolLimits.L} · C {toolLimits.M} · R {toolLimits.R}
+            </span>
+            <span className="text-xs text-text-muted">Updated {formatUpdatedAt(preset.updatedAt)}</span>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title="Edit preset"><Edit3 className="h-4 w-4" /></Button>
@@ -340,6 +476,45 @@ const PresetCard: React.FC<{
     </Card>
   );
 };
+
+const PresetTargetTypeChoice: React.FC<{
+  type: AttackPresetTargetType;
+  title: string;
+  description: string;
+  limits: AttackPresetToolLimits;
+  bonusLabel: string;
+  onSelect: () => void;
+}> = ({ type, title, description, limits, bonusLabel, onSelect }) => (
+  <button
+    type="button"
+    onClick={onSelect}
+    className="group rounded-global border border-border-base bg-bg-card/65 p-5 text-left shadow-[var(--shadow-raised)] transition hover:-translate-y-0.5 hover:border-primary/55 hover:bg-primary/8 focus:outline-none focus:ring-2 focus:ring-primary/45"
+  >
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-global border ${type === 'pvp' ? 'border-primary/40 bg-primary/12 text-primary' : 'border-success/40 bg-success/12 text-success'}`}>
+          {type === 'pvp' ? <Swords className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
+        </span>
+        <div>
+          <div className="text-base font-black text-text-main group-hover:text-primary">{title}</div>
+          <Badge
+            variant={type === 'pvp' ? 'primary' : 'success'}
+            className="mt-1 normal-case tracking-normal"
+          >
+            {bonusLabel}
+          </Badge>
+        </div>
+      </div>
+    </div>
+    <p className="mt-4 min-h-10 text-sm leading-relaxed text-text-muted">{description}</p>
+    <div className="mt-4 grid grid-cols-3 gap-2">
+      <MetricTile size="sm" label="Left" value={limits.L.toLocaleString()} />
+      <MetricTile size="sm" label="Center" value={limits.M.toLocaleString()} />
+      <MetricTile size="sm" label="Right" value={limits.R.toLocaleString()} />
+    </div>
+    <div className="mt-4 text-xs font-black uppercase tracking-wide text-primary">Select {type.toUpperCase()}</div>
+  </button>
+);
 
 const FormationPreview: React.FC<{
   label: string;

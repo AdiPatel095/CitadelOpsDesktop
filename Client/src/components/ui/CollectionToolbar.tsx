@@ -19,7 +19,7 @@ export const CollectionToolbar: React.FC<CollectionToolbarProps> = ({
   searchLabel = searchPlaceholder,
   className = '',
 }) => (
-  <section className={`flex flex-wrap items-center justify-between gap-3 rounded-global border border-border-base bg-bg-card/55 p-3 shadow-[var(--glass-shadow-compact)] backdrop-blur-2xl ${className}`}>
+  <section className={`flex flex-wrap items-center justify-between gap-3 rounded-global border border-border-base bg-bg-card p-3 shadow-[var(--shadow-raised)] ${className}`}>
     <div className="flex flex-wrap items-center gap-2">{summary}</div>
     <div className="w-full sm:w-80">
       <Input

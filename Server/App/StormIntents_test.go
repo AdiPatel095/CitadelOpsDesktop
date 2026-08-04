@@ -124,6 +124,63 @@ func (sender *stormMapBurstTestSender) Send(ctx context.Context, payload []byte)
 	return nil
 }
 
+func TestPlanStormCastleUnlockUsesCapturedOfficialWireShape(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"prebuiltcastles":[
+			{"preBuiltCastleID":"16","comment2":"CheapCamp","spaceIDs":"4","minLevel":35,"costWood":10000,"costStone":10000,"costFood":2500,"costC1":5000},
+			{"preBuiltCastleID":"18","comment2":"C2Camp","spaceIDs":"4","minLevel":35,"costC2":59000}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := State.NewGameState()
+	state.Player.ID = 42
+	state.Player.Level = 70
+	state.KingdomTransport.ObservedAt = time.Now().UTC()
+	state.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4}
+	input := Intent.PlanningContext{State: state, GameData: gameData}
+
+	plan, err := planStormCastleUnlock(t.Context(), input, json.RawMessage(`{"prebuiltCastleId":16}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 5 || plan.Steps[0].Opcode != "kpi" ||
+		plan.Steps[1].Action != "storm.castle.unlock.verify" || plan.Steps[2].Opcode != "ksc" ||
+		plan.Steps[3].Opcode != "gcl" || plan.Steps[4].Opcode != "kpi" {
+		t.Fatalf("Storm castle unlock steps = %#v", plan.Steps)
+	}
+	if got := string(plan.Steps[2].Command.Payload); got != `{"ID":16,"D":0,"PWR":0,"OC2":0,"SID":4}` {
+		t.Fatalf("non-premium Storm unlock payload = %s", got)
+	}
+	if got := string(plan.Steps[3].Command.Payload); got != `{"PID":42}` {
+		t.Fatalf("Storm castle refresh payload = %s", got)
+	}
+
+	premiumPlan, err := planStormCastleUnlock(t.Context(), input, json.RawMessage(`{"prebuiltCastleId":18}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := string(premiumPlan.Steps[2].Command.Payload); got != `{"ID":18,"D":0,"PWR":0,"OC2":1,"SID":4}` {
+		t.Fatalf("premium Storm unlock payload = %s", got)
+	}
+}
+
+func TestPlanStormCastleRefreshRequestsCurrentPlayerDirectory(t *testing.T) {
+	state := State.NewGameState()
+	state.Player.ID = 42
+	plan, err := planStormCastleRefresh(t.Context(), Intent.PlanningContext{State: state}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 1 || plan.Steps[0].Opcode != "gcl" ||
+		string(plan.Steps[0].Command.Payload) != `{"PID":42}` ||
+		plan.Steps[0].ResponseBarrier != Intent.ResponseBarrierCommitted {
+		t.Fatalf("Storm castle refresh plan = %#v", plan)
+	}
+}
+
 func TestStormAttackReplansWhenCommanderAvailabilityChanges(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[],

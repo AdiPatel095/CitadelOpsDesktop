@@ -24,6 +24,7 @@ type kingdomResourceShipmentGood struct {
 const (
 	kingdomResourceDeliveryRatio           = 0.90
 	kingdomResourceTransportInitialSeconds = 3_600
+	autoFoodBalanceResourceWorkflowOwner   = "autoFoodBalance"
 )
 
 type kingdomResourceShipmentRequest struct {
@@ -196,7 +197,7 @@ func planResourceShipment(ctx context.Context, input Intent.PlanningContext, arg
 	return planKingdomResourceShipment(ctx, input, kingdomArguments)
 }
 
-func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct {
 		SourceCastleID     State.CastleID   `json:"sourceCastleId"`
 		TargetCastleID     State.CastleID   `json:"targetCastleId"`
@@ -220,6 +221,11 @@ func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext,
 	if source.ID == target.ID || source.KingdomID != target.KingdomID {
 		return Intent.Plan{}, fmt.Errorf("market shipments require distinct castles in the same kingdom")
 	}
+	if err := validateAutoFoodBalanceResourceRoute(
+		ctx, request.WorkflowOwner, source.KingdomID, target.KingdomID,
+	); err != nil {
+		return Intent.Plan{}, err
+	}
 	hasMarketplace, err := input.GameData.CastleHasMarketplace(source)
 	if err != nil {
 		return Intent.Plan{}, fmt.Errorf("check marketplace at %s: %w", castleLabel(source), err)
@@ -238,9 +244,11 @@ func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext,
 	if err := validateHorseTravelBoostID(request.HorseTravelBoostID); err != nil {
 		return Intent.Plan{}, err
 	}
-	horseTravelBoostID := request.HorseTravelBoostID
-	if horseTravelBoostID == 0 {
-		horseTravelBoostID = defaultHorseTravelBoostID
+	horseTravelBoostID, err := resolveCastleHorseTravelBoostID(
+		input.GameData, source, request.HorseTravelBoostID,
+	)
+	if err != nil {
+		return Intent.Plan{}, fmt.Errorf("resolve market horse travel boost: %w", err)
 	}
 	if source.Resources[request.ResourceID].Amount < float64(request.Amount) {
 		return Intent.Plan{}, fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceName)
@@ -289,7 +297,7 @@ func planMarketResourceShipment(_ context.Context, input Intent.PlanningContext,
 	}, nil
 }
 
-func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+func planKingdomResourceShipment(ctx context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request kingdomResourceShipmentRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -304,6 +312,11 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 	}
 	if request.TargetKingdomID < 0 || request.TargetKingdomID == source.KingdomID {
 		return Intent.Plan{}, fmt.Errorf("targetKingdomId must identify a different owned kingdom")
+	}
+	if err := validateAutoFoodBalanceResourceRoute(
+		ctx, request.WorkflowOwner, source.KingdomID, request.TargetKingdomID,
+	); err != nil {
+		return Intent.Plan{}, err
 	}
 	targetOwned := false
 	for _, castle := range input.State.Castles {
@@ -328,6 +341,12 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 		return Intent.Plan{}, fmt.Errorf("kingdom transport to %d is not observed as unlocked", request.TargetKingdomID)
 	}
 	if kingdomResourceTransportBusy(input.State, request.TargetKingdomID) {
+		if strings.TrimSpace(request.WorkflowOwner) != "" {
+			return Intent.Plan{}, fmt.Errorf(
+				"%w: kingdom %d already has a pending or settling resource transport",
+				Intent.ErrPlanStale, request.TargetKingdomID,
+			)
+		}
 		return Intent.Plan{}, fmt.Errorf("kingdom %d already has a pending or settling resource transport", request.TargetKingdomID)
 	}
 	wireGoods := make([][]any, 0, len(goods))
@@ -403,7 +422,7 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 			return Intent.Plan{}, skipErr
 		}
 		skipStep.Name = "Immediately skip kingdom resource transport time"
-		steps = append(steps, skipStep)
+		steps = append(steps, skipStep, timeSkipConsumeStep(input, currencyID))
 		claims = append(claims, "currency:"+strconv.FormatInt(int64(currencyID), 10))
 		if request.SettleAfterSkip &&
 			officialTimeSkipMinutes(input.GameData, int64(currencyID), request.TimeSkipID)*60 <
@@ -439,6 +458,24 @@ func planKingdomResourceShipment(_ context.Context, input Intent.PlanningContext
 		}
 	}
 	return Intent.Plan{Claims: claims, Summary: summary, Steps: steps}, nil
+}
+
+func validateAutoFoodBalanceResourceRoute(
+	ctx context.Context,
+	workflowOwner string,
+	sourceKingdomID State.KingdomID,
+	targetKingdomID State.KingdomID,
+) error {
+	metadata := Outbound.MetadataFromContext(ctx)
+	if strings.TrimSpace(workflowOwner) != autoFoodBalanceResourceWorkflowOwner &&
+		strings.TrimSpace(metadata.Actor) != "automation:"+autoFoodBalanceResourceWorkflowOwner {
+		return nil
+	}
+	berimondKingdomID := State.KingdomID(GameData.BerimondKingdomID)
+	if sourceKingdomID == berimondKingdomID || targetKingdomID == berimondKingdomID {
+		return fmt.Errorf("Auto Food cannot send resources to or from Berimond castles")
+	}
+	return nil
 }
 
 func kingdomResourceTransportPending(gameState State.GameState, kingdomID State.KingdomID) bool {
@@ -744,14 +781,17 @@ func planKingdomResourceSkip(_ context.Context, input Intent.PlanningContext, ar
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
 	}
-	step, _, timeSkipLabel, err := kingdomResourceSkipStep(input, request, true)
+	step, currencyID, timeSkipLabel, err := kingdomResourceSkipStep(input, request, true)
 	if err != nil {
 		return Intent.Plan{}, err
 	}
 	return Intent.Plan{
-		Claims:  []string{"resource-transport", "kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10)},
+		Claims: []string{
+			"resource-transport", "kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10),
+			"currency:" + strconv.FormatInt(int64(currencyID), 10),
+		},
 		Summary: fmt.Sprintf("Apply a %s to kingdom %d resource transport", timeSkipLabel, request.TargetKingdomID),
-		Steps:   []Intent.Step{step},
+		Steps:   []Intent.Step{step, timeSkipConsumeStep(input, currencyID)},
 	}, nil
 }
 

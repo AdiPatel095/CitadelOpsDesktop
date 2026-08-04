@@ -73,6 +73,35 @@ func TestEstimateFoodConsumptionUsesStationedTroopsAndObservedRates(t *testing.T
 	}
 }
 
+func TestUnitUsesFoodSupplyRejectsMeadBeefAndUnknownProvisionTypes(t *testing.T) {
+	store, err := DecodeStore([]byte(`{
+		"versionInfo":[],
+		"units":[
+			{"wodID":101,"foodSupply":3},
+			{"wodID":102,"meadSupply":2},
+			{"wodID":103,"beefSupply":4},
+			{"wodID":104}
+		],
+		"buildings":[]
+	}`), SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if usesFood, err := store.UnitUsesFoodSupply(101); err != nil || !usesFood {
+		t.Fatalf("Food unit eligibility = %t, %v", usesFood, err)
+	}
+	for _, unitID := range []State.UnitID{102, 103} {
+		if usesFood, err := store.UnitUsesFoodSupply(unitID); err != nil || usesFood {
+			t.Fatalf("unit %d eligibility = %t, %v", unitID, usesFood, err)
+		}
+	}
+	if usesFood, err := store.UnitUsesFoodSupply(104); err == nil || usesFood ||
+		!strings.Contains(err.Error(), "provision type is unavailable") {
+		t.Fatalf("unknown provision eligibility = %t, %v", usesFood, err)
+	}
+}
+
 func TestEstimateFoodConsumptionRejectsUnknownStationedUnits(t *testing.T) {
 	store, err := DecodeStore([]byte(`{
 		"versionInfo":[],

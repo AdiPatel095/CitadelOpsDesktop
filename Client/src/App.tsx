@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, type ComponentType } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react';
 import { Providers } from './Providers';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -102,11 +102,16 @@ const AppContent: React.FC = () => {
   const [activeSettingsModal, setActiveSettingsModal] = useState<SettingsModalId | null>(null);
   const [scheduleTarget, setScheduleTarget] = useState<{ id: string; label: string } | null>(null);
   const [durationTarget, setDurationTarget] = useState<{ key: string; label: string } | null>(null);
+  const mainRef = useRef<HTMLElement>(null);
   const autoEquipmentCleanup = useAutoEquipmentCleanup();
   const openSettings = (id: SettingsModalId) => () => setActiveSettingsModal(id);
   const openSchedule = (id: string, label: string) => setScheduleTarget({ id, label });
   const openDuration = (key: string, label: string) => setDurationTarget({ key, label });
   const SettingsModal = activeSettingsModal ? settingsModals[activeSettingsModal] : null;
+
+  useEffect(() => {
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+  }, [activeView]);
 
   const workspace = activeView === 'automation' ? (
     <AutomationView
@@ -131,6 +136,11 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="liquid-app flex flex-col text-text-main font-sans transition-colors duration-300">
+      <div className="m3-expressive-backdrop" aria-hidden="true">
+        <span className="m3-expressive-shape m3-expressive-shape-one" />
+        <span className="m3-expressive-shape m3-expressive-shape-two" />
+        <span className="m3-expressive-shape m3-expressive-shape-three" />
+      </div>
       <Header
         onOpenAutoBirdSettings={openSettings('bird')}
         onOpenAutoStationSettings={openSettings('station')}
@@ -138,7 +148,7 @@ const AppContent: React.FC = () => {
       />
       <Sidebar currentView={activeView} onViewChange={setActiveView} />
 
-      <main className="liquid-main custom-scrollbar">
+      <main ref={mainRef} className="liquid-main custom-scrollbar">
         <div className="liquid-content animate-fade-in">
           <Suspense fallback={<WorkspaceFallback />}>{workspace}</Suspense>
         </div>

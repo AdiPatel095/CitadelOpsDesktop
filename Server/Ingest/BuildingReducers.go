@@ -239,7 +239,8 @@ func applyBuildingMutationRow(
 	if officialBuildingGroup(gameData, definitionID) == "Ground" {
 		castle.Layout.Ground[instanceID] = building
 	} else if wasFixed ||
-		layer == State.BuildingLayerT || layer == State.BuildingLayerG || layer == State.BuildingLayerD {
+		layer == State.BuildingLayerT || layer == State.BuildingLayerG ||
+		layer == State.BuildingLayerD || layer == State.BuildingLayerFP {
 		castle.Layout.Fixed[instanceID] = building
 	} else {
 		castle.Layout.Objects[instanceID] = building
@@ -263,7 +264,7 @@ func existingInFixedLayout(castle State.CastleState, existing State.Building, bu
 		return true
 	}
 	switch existing.Layer {
-	case State.BuildingLayerT, State.BuildingLayerG, State.BuildingLayerD:
+	case State.BuildingLayerT, State.BuildingLayerG, State.BuildingLayerD, State.BuildingLayerFP:
 		return true
 	default:
 		return false

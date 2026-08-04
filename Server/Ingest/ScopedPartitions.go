@@ -22,7 +22,8 @@ func scopedPartitionsForFrame(
 ) []State.PartitionKey {
 	opcode := strings.ToLower(strings.TrimSpace(frame.Opcode))
 	keys := make([]State.PartitionKey, 0, len(domains)+8)
-	if containsIngestDomain(domains, "session-context") || opcode == "jaa" || opcode == "jca" {
+	if containsIngestDomain(domains, "session-context") || opcode == "jaa" || opcode == "jca" ||
+		protocolFocusSubcontextForFrame(frame) != State.FocusSubcontextUnknown {
 		keys = append(keys, State.SessionPartition(gameState, State.CapabilitySessionContext))
 	}
 	if opcode == "gii" {
@@ -54,6 +55,21 @@ func scopedPartitionsForFrame(
 		}
 	}
 	return keys
+}
+
+func protocolFocusSubcontextForFrame(frame Protocol.Frame) State.FocusSubcontext {
+	if frame.Direction != Protocol.DirectionInbound ||
+		(frame.ResponseCode != nil && *frame.ResponseCode != 0) {
+		return State.FocusSubcontextUnknown
+	}
+	switch strings.ToLower(strings.TrimSpace(frame.Opcode)) {
+	case "gaa":
+		return State.FocusSubcontextMap
+	case "jaa", "jca":
+		return State.FocusSubcontextCastle
+	default:
+		return State.FocusSubcontextUnknown
+	}
 }
 
 func scopedCastleDomainPartitions(

@@ -265,6 +265,10 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             <div className="mt-3 border-t border-border-base pt-3">
               <div className="grid grid-cols-3 gap-2">
                 {([
+                  ['MS1', '1m'],
+                  ['MS2', '5m'],
+                  ['MS3', '10m'],
+                  ['MS4', '30m'],
                   ['MS5', '60m'],
                   ['MS6', '5h'],
                   ['MS7', '24h'],
@@ -281,7 +285,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
                   </label>
                 ))}
               </div>
-              <p className="mt-3 text-[11px] text-warning">A regular one-hour camp needs one MS5. The three-hour RBC trial requires one MS6 or MS7 above reserve so each cooldown clears in a single server response.</p>
+              <p className="mt-3 text-[11px] text-warning">Each server command uses exactly one skip. When no single skip covers the cooldown, smaller available skips are repeated one at a time after each confirmed response.</p>
             </div>
           ) : null}
         </Card>
@@ -330,7 +334,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
                   className="font-mono"
                 />
               </label>
-              <p className="sm:col-span-2 text-[11px] text-warning">The chain uses every currently available selected commander supported by stationed preset copies and uncommitted one-command RBC cooldown skips. Any commander or troops returning from any attack can be launched on the next reevaluation without waiting for older chain marches. This mode bypasses event start and four-camp selection only for the explicit run ID created by this switch. Disable it after the trial before enabling the real Nomad/Samurai flow.</p>
+              <p className="sm:col-span-2 text-[11px] text-warning">The chain uses every currently available selected commander supported by stationed preset copies and uncommitted response-gated RBC cooldown sequences. Any commander or troops returning from any attack can be launched on the next reevaluation without waiting for older chain marches. This mode bypasses event start and four-camp selection only for the explicit run ID created by this switch. Disable it after the trial before enabling the real Nomad/Samurai flow.</p>
             </div>
           ) : null}
         </Card>

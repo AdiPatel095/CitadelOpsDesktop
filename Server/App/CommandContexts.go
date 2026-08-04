@@ -40,11 +40,22 @@ func generalSkillsContextSteps(gameState State.GameState, commanderID State.Comm
 	)}
 }
 
-func castleContextSteps(castle State.CastleState) []Intent.Step {
-	if castle.Focused {
+func castleContextSteps(input Intent.PlanningContext, castle State.CastleState) []Intent.Step {
+	if !castle.Focused ||
+		(input.ProtocolContext.FocusedCastleID > 0 && input.ProtocolContext.FocusedCastleID != castle.ID) {
+		return []Intent.Step{castleFocusStep(castle)}
+	}
+	if input.ProtocolContext.FocusedCastleID == castle.ID &&
+		input.ProtocolContext.FocusSubcontext == State.FocusSubcontextCastle {
 		return nil
 	}
-	return []Intent.Step{castleFocusStep(castle)}
+	// Direct planner callers that do not provide a protocol view retain the
+	// legacy state-only behavior. Live engine planning always supplies it.
+	if input.ProtocolContext.FocusEpoch == 0 && input.ProtocolContext.FocusedCastleID == 0 &&
+		input.ProtocolContext.FocusSubcontext == State.FocusSubcontextUnknown {
+		return nil
+	}
+	return []Intent.Step{castleRefreshStep("Re-enter focused castle from map context", castle)}
 }
 
 func castleFocusStep(castle State.CastleState) Intent.Step {
@@ -62,11 +73,15 @@ func stationCastleContextStep(castle State.CastleState) Intent.Step {
 	if !castle.Focused {
 		return castleFocusStep(castle)
 	}
+	return castleRefreshStep("Refresh station source castle", castle)
+}
+
+func castleRefreshStep(name string, castle State.CastleState) Intent.Step {
 	payload, _ := json.Marshal(struct {
 		CastleID  State.CastleID  `json:"CID"`
 		KingdomID State.KingdomID `json:"KID"`
 	}{castle.ID, castle.KingdomID})
-	step := contextCommandStep("Refresh station source castle", "jca", payload, "jaa")
+	step := contextCommandStep(name, "jca", payload, "jaa")
 	step.ResponseBarrier = Intent.ResponseBarrierCommitted
 	return step
 }
@@ -81,13 +96,7 @@ func attackCastleContextStep(castle State.CastleState) Intent.Step {
 }
 
 func attackCastleRefreshStep(name string, castle State.CastleState) Intent.Step {
-	payload, _ := json.Marshal(struct {
-		CastleID  State.CastleID  `json:"CID"`
-		KingdomID State.KingdomID `json:"KID"`
-	}{castle.ID, castle.KingdomID})
-	step := contextCommandStep(name, "jca", payload, "jaa")
-	step.ResponseBarrier = Intent.ResponseBarrierCommitted
-	return step
+	return castleRefreshStep(name, castle)
 }
 
 func constructionMenuStep() Intent.Step {

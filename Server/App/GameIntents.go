@@ -77,6 +77,11 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("troops.kingdom.consume_source", application.consumeKingdomTroopSource); err != nil {
 		return err
 	}
+	for _, name := range []string{timeSkipConsumeAction, "troops.kingdom.consume_time_skip"} {
+		if err := application.Intents.RegisterAction(name, application.consumeTimeSkip); err != nil {
+			return err
+		}
+	}
 	if err := application.Intents.RegisterAction("troops.kingdom.guard_target_cap", application.guardKingdomTroopTargetCap); err != nil {
 		return err
 	}
@@ -739,6 +744,7 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 func planCastleFocus(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct {
 		CastleID State.CastleID `json:"castleId"`
+		Refresh  bool           `json:"refresh"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -747,9 +753,13 @@ func planCastleFocus(_ context.Context, input Intent.PlanningContext, arguments 
 	if !ok || request.CastleID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
 	}
+	steps := castleContextSteps(input, castle)
+	if request.Refresh && len(steps) == 0 {
+		steps = []Intent.Step{castleRefreshStep("Refresh focused castle", castle)}
+	}
 	return Intent.Plan{
 		Claims: []string{"castle-focus"}, Summary: fmt.Sprintf("Focus %s", castleLabel(castle)),
-		Steps: castleContextSteps(castle),
+		Steps: steps,
 	}, nil
 }
 
@@ -852,7 +862,7 @@ func planConstructionEquip(_ context.Context, input Intent.PlanningContext, argu
 		return Intent.Plan{}, err
 	}
 	resolverArguments, _ := json.Marshal(request)
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, Intent.Step{
 		Name: "Equip construction item", Resolver: "construction.equip.build", ResolverArguments: resolverArguments,
 		AwaitOpcode: "rpc", TimeoutMillis: 10_000, SuccessCodes: []int{0},
@@ -966,7 +976,7 @@ func planConstructionUpgrade(_ context.Context, input Intent.PlanningContext, ar
 		return Intent.Plan{}, err
 	}
 	resolverArguments, _ := json.Marshal(request)
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, Intent.Step{
 		Name: "Upgrade construction item", Resolver: "construction.upgrade.build", ResolverArguments: resolverArguments,
 		AwaitOpcode: "ubc", TimeoutMillis: 10_000, SuccessCodes: []int{0},
@@ -1070,7 +1080,7 @@ func planConstructionShop(_ context.Context, input Intent.PlanningContext, argum
 	if !ok || request.CastleID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
 	}
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, constructionShopContextSteps(castle)...)
 	return Intent.Plan{
 		Claims:  []string{"castle-focus", "castle:" + strconv.FormatInt(int64(castle.ID), 10), "construction-shop"},

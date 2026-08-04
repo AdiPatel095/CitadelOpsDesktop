@@ -110,6 +110,12 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	if _, exists := units.Find(strconv.FormatInt(int64(request.UnitID), 10)); !exists {
 		return Intent.Plan{}, fmt.Errorf("unit %d is not in the official catalog", request.UnitID)
 	}
+	booster, premiumTravel, err := resolveCastleHorseTravelBoostFields(
+		input.GameData, source, request.HorseTravelBoostID,
+	)
+	if err != nil {
+		return Intent.Plan{}, fmt.Errorf("resolve Rift probe horse travel boost: %w", err)
+	}
 	availableUnits := source.Units.Stationed[request.UnitID]
 	if availableUnits < maidenProbeCountPerFlank*3 {
 		return Intent.Plan{}, fmt.Errorf("main castle has %d of unit %d; at least %d are required", availableUnits, request.UnitID, maidenProbeCountPerFlank*3)
@@ -161,7 +167,10 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	steps, err := buildCRACommandSteps(
 		source, resolution.Selected, "Launch Rift probe",
 		func(commanderID State.CommanderID) (json.RawMessage, error) {
-			return json.Marshal(maidenAttackBody(sourceX, sourceY, target, commanderID, request.UnitID, request.HorseTravelBoostID))
+			body := maidenAttackBody(sourceX, sourceY, target, commanderID, request.UnitID)
+			body.Booster = booster
+			body.PremiumTravel = premiumTravel
+			return json.Marshal(body)
 		},
 		func(commanderID State.CommanderID) Intent.Step {
 			return attackFeatureCaptureStep(attackFeatureCaptureRequest{
@@ -515,11 +524,6 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	if request.SourceY != nil {
 		fields["SY"], _ = json.Marshal(*request.SourceY)
 	}
-	if request.HorseTravelBoostID != nil {
-		booster, premiumTravel := horseTravelBoostFields(*request.HorseTravelBoostID)
-		fields["HBW"], _ = json.Marshal(booster)
-		fields["PTT"], _ = json.Marshal(premiumTravel)
-	}
 	now := time.Now().UTC()
 	fireAt, normalizedArrival, scheduled, err := riftReplayTiming(launch, request.ArriveAt, now)
 	if err != nil {
@@ -583,6 +587,16 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	source, err := riftReplaySourceCastle(input.State, request.SourceCastle, fields)
 	if err != nil {
 		return Intent.Plan{}, err
+	}
+	if request.HorseTravelBoostID != nil {
+		booster, premiumTravel, err := resolveCastleHorseTravelBoostFields(
+			input.GameData, source, *request.HorseTravelBoostID,
+		)
+		if err != nil {
+			return Intent.Plan{}, fmt.Errorf("resolve Rift replay horse travel boost: %w", err)
+		}
+		fields["HBW"], _ = json.Marshal(booster)
+		fields["PTT"], _ = json.Marshal(premiumTravel)
 	}
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	claims = append(claims, "castle-focus", "castle:"+castleID, "attack-inventory:"+castleID)
@@ -1015,7 +1029,7 @@ func planDecorationPreset(_ context.Context, input Intent.PlanningContext, argum
 		}
 	}
 	sort.Slice(remove, func(left, right int) bool { return remove[left] < remove[right] })
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	if len(remove) > 0 || unmatchedCount(matched) > 0 {
 		steps = append(steps, Intent.RebuildOnResume(Intent.Step{
 			Name: "Refresh decoration storage", Opcode: "sin", AwaitOpcode: "sin", TimeoutMillis: 10_000,
@@ -1182,7 +1196,6 @@ func maidenAttackBody(
 	target State.MapObservation,
 	commanderID State.CommanderID,
 	unitID State.UnitID,
-	horseTravelBoostIDs ...int,
 ) attackBody {
 	empty := attackPair{-1, 0}
 	pair := attackPair{int64(unitID), maidenProbeCountPerFlank}
@@ -1194,19 +1207,13 @@ func maidenAttackBody(
 			Units: []attackPair{pair, empty, empty, empty, empty, empty},
 		},
 	}
-	body := attackBody{
+	return attackBody{
 		SourceX: sourceX, SourceY: sourceY, TargetX: target.X, TargetY: target.Y,
 		Kingdom: target.KingdomID, Leader: commanderID, Booster: -1, Valid: 1,
 		PremiumTravel: 1, Cooldown: 99, Waves: []attackWave{wave}, Books: []any{},
 		AttackSupportTools: emptyAttackSupportTools(),
 		SupportTroops:      emptyAttackSupportTroops(),
 	}
-	horseTravelBoostID := defaultHorseTravelBoostID
-	if len(horseTravelBoostIDs) > 0 {
-		horseTravelBoostID = horseTravelBoostIDs[0]
-	}
-	applyHorseTravelBoost(&body, horseTravelBoostID)
-	return body
 }
 
 func slicesMatchingCommanders(

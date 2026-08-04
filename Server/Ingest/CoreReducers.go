@@ -13,6 +13,8 @@ func RegisterCoreReducers(registry *Registry) error {
 	}{
 		{"gbd", reduceInitialState},
 		{"gpi", reducePlayerInfo},
+		{"gcl", reduceCastleList},
+		{"ksc", reduceCastleList},
 		{"gcu", reduceGlobalResources},
 		{"gmu", newPlayerMetricReducer("MP", "gmu")},
 		{"ufa", newPlayerMetricReducer("CF", "ufa")},

@@ -287,9 +287,13 @@ func buildTowerAttackStep(input Intent.PlanningContext, request towerLaunchReque
 	if err := requireFreshTowerAttackUnits(source, request.UnitID, required); err != nil {
 		return Intent.Step{}, err
 	}
-	body, err := json.Marshal(towerAttackBody(
-		source, target, commander, request.UnitID, capacity.Capacity.Left, capacity.Capacity.Right, request.HorseTravelBoostID,
-	))
+	attack := towerAttackBody(
+		source, target, commander, request.UnitID, capacity.Capacity.Left, capacity.Capacity.Right,
+	)
+	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+		return Intent.Step{}, fmt.Errorf("resolve tower horse travel boost: %w", err)
+	}
+	body, err := json.Marshal(attack)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build tower CRA payload: %w", err)
 	}
@@ -486,7 +490,6 @@ func towerAttackBody(
 	commander State.CommanderID,
 	unitID State.UnitID,
 	left, right int64,
-	horseTravelBoostIDs ...int,
 ) attackBody {
 	empty := attackPair{-1, 0}
 	wave := attackWave{
@@ -497,19 +500,13 @@ func towerAttackBody(
 			Units: []attackPair{empty, empty, empty, empty, empty, empty},
 		},
 	}
-	body := attackBody{
+	return attackBody{
 		SourceX: source.X, SourceY: source.Y, TargetX: target.X, TargetY: target.Y,
 		Kingdom: target.KingdomID, Leader: commander, Booster: -1, Valid: 1,
 		PremiumTravel: 1, Cooldown: 99, Waves: []attackWave{wave}, Books: []any{},
 		AttackSupportTools: emptyAttackSupportTools(),
 		SupportTroops:      emptyAttackSupportTroops(),
 	}
-	horseTravelBoostID := defaultHorseTravelBoostID
-	if len(horseTravelBoostIDs) > 0 {
-		horseTravelBoostID = horseTravelBoostIDs[0]
-	}
-	applyHorseTravelBoost(&body, horseTravelBoostID)
-	return body
 }
 
 func towerTargetClaim(target State.MapObservation) string {

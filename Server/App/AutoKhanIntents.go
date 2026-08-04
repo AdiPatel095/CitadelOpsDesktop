@@ -287,7 +287,11 @@ func (application *Application) resolveKhanAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Khan attack preset %q: %w", request.Preset.Name, err)
 	}
-	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, built, request.HorseTravelBoostID))
+	attack := invasionAttackBody(source, target, request.CommanderID, built)
+	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+		return Intent.Step{}, fmt.Errorf("resolve Khan horse travel boost: %w", err)
+	}
+	body, err := json.Marshal(attack)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Khan camp CRA payload: %w", err)
 	}

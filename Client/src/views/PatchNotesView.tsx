@@ -22,7 +22,7 @@ const PATCH_NOTE_BADGE_VARIANT: Record<PatchNoteKind, NonNullable<BadgeProps['va
 function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLatest: boolean }) {
   return (
     <SectionCard
-      variant="glass"
+      variant="solid"
       title={(
         <>
           <span className="font-mono text-primary">v{release.version}</span>

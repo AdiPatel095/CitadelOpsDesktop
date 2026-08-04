@@ -42,7 +42,7 @@ export const MetricTile: React.FC<MetricTileProps> = ({
   }[size];
 
   return (
-    <div className={`rounded-global border bg-bg-input/45 ${borderClass} ${sizeClass} ${className}`} {...props}>
+    <div className={`m3-metric-tile rounded-global border ${borderClass} ${sizeClass} ${className}`} {...props}>
       <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{label}</div>
       <div className={`ui-metric-value mt-1 font-bold tabular-nums ${monospace ? 'font-mono' : ''} ${toneClass}`}>
         {typeof value === 'number' ? value.toLocaleString() : value}

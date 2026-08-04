@@ -935,7 +935,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="liquid-glass-edge group flex h-32 w-10 shrink-0 flex-col items-center justify-center gap-2 rounded-l-[16px] border-r-0 text-text-muted transition-all duration-300 hover:border-primary/50 hover:text-primary"
+              className="liquid-surface-edge group flex h-32 w-10 shrink-0 flex-col items-center justify-center gap-2 rounded-l-[16px] border-r-0 text-text-muted transition-all duration-300 hover:border-primary/50 hover:text-primary"
               title="Show activity and game commands"
             >
               <Icons.Terminal className="h-5 w-5 group-hover:animate-pulse" />

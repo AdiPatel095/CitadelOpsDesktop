@@ -3,6 +3,7 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -42,12 +43,98 @@ func TestResolveBuildingPlacementAndStoreUseCapturedWireShapes(t *testing.T) {
 		t.Fatalf("store command = %s %s", store.Command.Opcode, store.Command.Payload)
 	}
 
-	upgrade, err := resolveBuildingUpgradeStep(context.Background(), input, json.RawMessage(`{"castleId":10,"buildingInstanceId":42}`))
+	upgradeArguments, err := json.Marshal(buildingUpgradeResolverArguments{
+		Request: buildingUpgradeIntentRequest{CastleID: 10, BuildingInstanceID: 42},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	upgrade, err := resolveBuildingUpgradeStep(context.Background(), input, upgradeArguments)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if upgrade.Command.Opcode != "eup" || string(upgrade.Command.Payload) != `{"OID":42,"PWR":0,"PO":-1}` {
 		t.Fatalf("upgrade command = %s %s", upgrade.Command.Opcode, upgrade.Command.Payload)
+	}
+
+	demolish, err := resolveBuildingDemolishStep(
+		context.Background(), input, json.RawMessage(`{"castleId":10,"buildingInstanceId":42}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if demolish.Command.Opcode != "edo" || string(demolish.Command.Payload) != `{"OID":42}` ||
+		len(demolish.StaleCodes) != 1 || demolish.StaleCodes[0] != 147 {
+		t.Fatalf("demolition command = %#v", demolish)
+	}
+}
+
+func TestResolveBuildingDemolitionTreatsQueuedRaceAsStale(t *testing.T) {
+	gameState := buildingIntentState()
+	castle := gameState.Castles[10]
+	building := castle.Layout.Objects[42]
+	building.ConstructionState = State.BuildingStateDisassembleInProgress
+	castle.Layout.Objects[42] = building
+	castle.Buildings[42] = building
+	castle.BuildingQueue.Slots[0] = State.BuildingConstructionQueueSlot{
+		Index: 0, WireValue: 42, Status: State.BuildingQueueSlotOccupied, BuildingID: 42,
+	}
+	gameState.Castles[10] = castle
+
+	_, err := resolveBuildingDemolishStep(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: buildingIntentGameData(t),
+	}, json.RawMessage(`{"castleId":10,"buildingInstanceId":42}`))
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("queued demolition resolver error = %v", err)
+	}
+}
+
+func TestBuildingUpgradeConfirmsExactPremiumQuoteForFixedHarbor(t *testing.T) {
+	gameState := buildingIntentState()
+	castle := gameState.Castles[10]
+	harbor := State.Building{
+		InstanceID: 32, DefinitionID: 45, GridX: -1, GridY: -1,
+		ConstructionState: State.BuildingStateBuildCompleted, Level: 1, Layer: State.BuildingLayerFP,
+	}
+	castle.Layout.Fixed[32] = harbor
+	gameState.Castles[10] = castle
+	gameState.Player.Level = 70
+	gameState.Player.Resources[2] = 50_000
+	input := Intent.PlanningContext{
+		State: gameState, GameData: buildingIntentGameData(t),
+		ProtocolContext: State.ProtocolContextState{
+			FocusedCastleID: 10, FocusSubcontext: State.FocusSubcontextMap, FocusEpoch: 2,
+		},
+	}
+
+	plan, err := planBuildingUpgrade(context.Background(), input, json.RawMessage(
+		`{"castleId":10,"buildingInstanceId":32,"allowPremium":true}`,
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 5 || plan.Steps[0].Opcode != "jca" || plan.Steps[1].Resolver != "building.upgrade.build" ||
+		plan.Steps[2].Resolver != "building.upgrade.build" || plan.Steps[3].Opcode != "jaa" || plan.Steps[4].Action != "building.verify" {
+		t.Fatalf("premium Harbor plan = %#v", plan.Steps)
+	}
+	if len(plan.Steps[1].SuccessCodes) != 1 || plan.Steps[1].SuccessCodes[0] != 440 ||
+		string(plan.Steps[1].ExpectedResponsePayload) != `{"OID":32,"PWR":0,"PO":-1,"CC2T":12300}` {
+		t.Fatalf("premium quote step = %#v", plan.Steps[1])
+	}
+
+	quote, err := resolveBuildingUpgradeStep(context.Background(), input, plan.Steps[1].ResolverArguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(quote.Command.Payload) != `{"OID":32,"PWR":0,"PO":-1}` || len(quote.SuccessCodes) != 1 || quote.SuccessCodes[0] != 440 {
+		t.Fatalf("premium quote command = %#v", quote)
+	}
+	confirm, err := resolveBuildingUpgradeStep(context.Background(), input, plan.Steps[2].ResolverArguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(confirm.Command.Payload) != `{"OID":32,"PWR":1,"PO":-1}` {
+		t.Fatalf("premium confirmation command = %#v", confirm)
 	}
 }
 
@@ -171,6 +258,34 @@ func TestResolveBuildingTimeSkipUsesOfficialCurrencyWireKey(t *testing.T) {
 	if step.Command.Opcode != "msb" || string(step.Command.Payload) != `{"OID":42,"MST":"MS3"}` {
 		t.Fatalf("time skip command = %s %s", step.Command.Opcode, step.Command.Payload)
 	}
+
+	plan, err := planBuildingTimeSkip(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: buildingIntentGameData(t),
+	}, json.RawMessage(`{"castleId":10,"buildingInstanceId":42,"minutes":10,"minimumRemaining":5}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 4 || plan.Steps[0].Resolver != "building.skip_time.build" ||
+		len(plan.Steps[0].StaleCodes) != 1 || plan.Steps[0].StaleCodes[0] != 147 ||
+		plan.Steps[1].Action != timeSkipConsumeAction || plan.Steps[2].Opcode != "jaa" ||
+		plan.Steps[3].Action != "building.verify" {
+		t.Fatalf("building time-skip plan = %#v", plan.Steps)
+	}
+	if len(step.StaleCodes) != 1 || step.StaleCodes[0] != 147 {
+		t.Fatalf("building time-skip stale response codes = %#v", step.StaleCodes)
+	}
+
+	castle = gameState.Castles[10]
+	castle.BuildingQueue.Slots[0] = State.BuildingConstructionQueueSlot{
+		Index: 0, WireValue: -1, Status: State.BuildingQueueSlotAvailable,
+	}
+	gameState.Castles[10] = castle
+	_, err = resolveBuildingTimeSkipStep(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: buildingIntentGameData(t),
+	}, json.RawMessage(`{"castleId":10,"buildingInstanceId":42,"minutes":10,"minimumRemaining":5}`))
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("completed building time-skip resolution error = %v", err)
+	}
 }
 
 func TestVerifyBuildingFinishFreeWaitsForAsyncCompletion(t *testing.T) {
@@ -235,6 +350,8 @@ func buildingIntentGameData(t *testing.T) *GameData.Store {
 		"expansions":[{"expansionID":"1","spaceIDs":"0","expansionLevel":"1","costWood":"1","costStone":"1","costC2":"200"}],
 		"buildings":[
 			{"wodID":"200","name":"Ground","group":"Ground","width":"10","height":"10"},
+			{"wodID":"45","name":"Harbor","group":"FixedPositionBuilding","level":"1","width":"14","height":"7","forcedPosition":"1","upgradeWodID":"46"},
+			{"wodID":"46","name":"Harbor","group":"FixedPositionBuilding","level":"2","width":"14","height":"7","forcedPosition":"1","downgradeWodID":"45","costC2":"12300"},
 			{"wodID":"520","name":"TreasureChest","group":"Building","level":"1","width":"4","height":"4","movable":"0","destructable":"0"},
 			{"wodID":"301","name":"StoredBuilding","group":"Building","level":"1","width":"2","height":"2","rotateType":"1","upgradeWodID":"302","storeable":"1","movable":"1","destructable":"1"},
 			{"wodID":"302","name":"StoredBuilding","group":"Building","level":"2","width":"2","height":"2","rotateType":"1","downgradeWodID":"301","storeable":"1","movable":"1","destructable":"1"}

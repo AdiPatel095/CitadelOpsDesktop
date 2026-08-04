@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -75,6 +76,17 @@ type buildingUpgradeIntentRequest struct {
 	ResourceReserves   map[string]float64       `json:"resourceReserves,omitempty"`
 	AllowPremium       bool                     `json:"allowPremium,omitempty"`
 }
+
+type buildingUpgradeResolverArguments struct {
+	Request             buildingUpgradeIntentRequest `json:"request"`
+	PremiumMode         string                       `json:"premiumMode,omitempty"`
+	ExpectedPremiumCost int64                        `json:"expectedPremiumCost,omitempty"`
+}
+
+const (
+	buildingPremiumModeQuote   = "quote"
+	buildingPremiumModeConfirm = "confirm"
+)
 
 type buildingTimeSkipIntentRequest struct {
 	CastleID           State.CastleID           `json:"castleId"`
@@ -155,7 +167,7 @@ func (application *Application) registerBuildingIntents() error {
 			Planner:          planBuildingMove, ReadSet: buildingReadSet,
 		},
 		{
-			Name: "building.upgrade", Description: "Start the next official upgrade for one normal castle object when its queue and costs are valid", Effect: Intent.EffectWrite,
+			Name: "building.upgrade", Description: "Start the next official upgrade for one observed castle building when its queue and costs are valid", Effect: Intent.EffectWrite,
 			ArgumentsExample: json.RawMessage(`{"castleId":16326717,"buildingInstanceId":430}`),
 			Planner:          planBuildingUpgrade, ReadSet: buildingReadSet,
 		},
@@ -204,7 +216,7 @@ func planBuildingExpansion(_ context.Context, input Intent.PlanningContext, argu
 		Kind: buildingMutationExpand, CastleID: castle.ID, InitialGroundCount: initialGroundCount,
 		X: request.X, Y: request.Y, Rotation: request.Direction,
 	})
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, buildingResolverStep("Buy castle expansion", "building.expand.build", resolverArguments, "ebe"))
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify castle expansion", Action: "building.verify", ActionArguments: verificationArguments})
@@ -251,7 +263,7 @@ func planBuildingCollectExpansionGift(_ context.Context, input Intent.PlanningCo
 	verificationArguments, _ := json.Marshal(buildingVerification{
 		Kind: buildingMutationCollectGift, CastleID: castle.ID, BuildingInstanceID: request.BuildingInstanceID,
 	})
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, buildingResolverStep("Collect expansion gift", "building.collect_expansion_gift.build", resolverArguments, "etc"))
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify expansion gift collection", Action: "building.verify", ActionArguments: verificationArguments})
@@ -289,7 +301,7 @@ func planBuildingRefresh(_ context.Context, input Intent.PlanningContext, argume
 	}
 	return Intent.Plan{
 		Claims: buildingCastleClaims(castle.ID), Summary: fmt.Sprintf("Refresh building state for %s", castleLabel(castle)),
-		Steps: castleContextSteps(castle),
+		Steps: castleContextSteps(input, castle),
 	}, nil
 }
 
@@ -321,7 +333,7 @@ func planBuildingPlacement(input Intent.PlanningContext, arguments json.RawMessa
 		name = "Place stored building"
 		summary = fmt.Sprintf("Place stored %s at %d,%d in %s", definition.DisplayName, request.X, request.Y, castleLabel(castle))
 	}
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, buildingResolverStep(name, "building.placement.build", resolverArguments, "ebu"))
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify building placement", Action: "building.verify", ActionArguments: verificationArguments})
@@ -371,7 +383,7 @@ func planBuildingMove(_ context.Context, input Intent.PlanningContext, arguments
 		Kind: buildingMutationMove, CastleID: castle.ID, BuildingInstanceID: request.BuildingInstanceID,
 		X: request.X, Y: request.Y, Rotation: request.Rotation,
 	})
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, buildingResolverStep("Move building", "building.move.build", resolverArguments, "emo"))
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify building position", Action: "building.verify", ActionArguments: verificationArguments})
@@ -408,13 +420,28 @@ func planBuildingUpgrade(_ context.Context, input Intent.PlanningContext, argume
 	if err != nil {
 		return Intent.Plan{}, err
 	}
-	resolverArguments, _ := json.Marshal(request)
 	verificationArguments, _ := json.Marshal(buildingVerification{
 		Kind: buildingMutationUpgrade, CastleID: castle.ID, BuildingInstanceID: request.BuildingInstanceID,
 		TargetDefinitionID: State.BuildingID(target.ID),
 	})
-	steps := castleContextSteps(castle)
-	steps = append(steps, buildingResolverStep("Upgrade building", "building.upgrade.build", resolverArguments, "eup"))
+	steps := castleContextSteps(input, castle)
+	if premiumCost, premiumOnly := exactBuildingPremiumCost(target); premiumOnly {
+		quoteArguments, _ := json.Marshal(buildingUpgradeResolverArguments{
+			Request: request, PremiumMode: buildingPremiumModeQuote, ExpectedPremiumCost: premiumCost,
+		})
+		quote := buildingResolverStep("Quote premium building upgrade", "building.upgrade.build", quoteArguments, "eup")
+		quote.SuccessCodes = []int{440}
+		quote.ExpectedResponsePayload = expectedBuildingPremiumQuote(request.BuildingInstanceID, premiumCost)
+		steps = append(steps, quote)
+
+		confirmArguments, _ := json.Marshal(buildingUpgradeResolverArguments{
+			Request: request, PremiumMode: buildingPremiumModeConfirm, ExpectedPremiumCost: premiumCost,
+		})
+		steps = append(steps, buildingResolverStep("Confirm premium building upgrade", "building.upgrade.build", confirmArguments, "eup"))
+	} else {
+		resolverArguments, _ := json.Marshal(buildingUpgradeResolverArguments{Request: request})
+		steps = append(steps, buildingResolverStep("Upgrade building", "building.upgrade.build", resolverArguments, "eup"))
+	}
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify building upgrade", Action: "building.verify", ActionArguments: verificationArguments})
 	return Intent.Plan{
@@ -425,19 +452,62 @@ func planBuildingUpgrade(_ context.Context, input Intent.PlanningContext, argume
 }
 
 func resolveBuildingUpgradeStep(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Step, error) {
-	var request buildingUpgradeIntentRequest
-	if err := decodeIntentArguments(arguments, &request); err != nil {
+	var resolverArguments buildingUpgradeResolverArguments
+	if err := decodeIntentArguments(arguments, &resolverArguments); err != nil {
 		return Intent.Step{}, err
 	}
-	if _, _, _, err := validatedBuildingUpgrade(input, request, true); err != nil {
+	request := resolverArguments.Request
+	_, _, target, err := validatedBuildingUpgrade(input, request, true)
+	if err != nil {
 		return Intent.Step{}, err
+	}
+	premiumCost, premiumOnly := exactBuildingPremiumCost(target)
+	if resolverArguments.PremiumMode != "" {
+		if !request.AllowPremium {
+			return Intent.Step{}, fmt.Errorf("premium building upgrade requires allowPremium=true")
+		}
+		if !premiumOnly || premiumCost != resolverArguments.ExpectedPremiumCost {
+			return Intent.Step{}, fmt.Errorf("official premium building cost changed before confirmation")
+		}
+	}
+	power := 0
+	if resolverArguments.PremiumMode == buildingPremiumModeConfirm {
+		power = 1
+	} else if resolverArguments.PremiumMode != "" && resolverArguments.PremiumMode != buildingPremiumModeQuote {
+		return Intent.Step{}, fmt.Errorf("unsupported building premium mode %q", resolverArguments.PremiumMode)
 	}
 	payload, _ := json.Marshal(struct {
 		BuildingID State.BuildingInstanceID `json:"OID"`
 		Power      int                      `json:"PWR"`
 		Offer      int                      `json:"PO"`
-	}{request.BuildingInstanceID, 0, -1})
-	return buildingMutationStep("Upgrade building", "eup", payload), nil
+	}{request.BuildingInstanceID, power, -1})
+	step := buildingMutationStep("Upgrade building", "eup", payload)
+	if resolverArguments.PremiumMode == buildingPremiumModeQuote {
+		step.SuccessCodes = []int{440}
+		step.ExpectedResponsePayload = expectedBuildingPremiumQuote(request.BuildingInstanceID, premiumCost)
+	}
+	return step, nil
+}
+
+func exactBuildingPremiumCost(definition GameData.BuildingDefinition) (int64, bool) {
+	if len(definition.Costs) != 1 || !definition.Costs[0].Premium {
+		return 0, false
+	}
+	amount := definition.Costs[0].Amount
+	if amount <= 0 || amount != math.Trunc(amount) || amount > math.MaxInt64 {
+		return 0, false
+	}
+	return int64(amount), true
+}
+
+func expectedBuildingPremiumQuote(buildingID State.BuildingInstanceID, premiumCost int64) json.RawMessage {
+	payload, _ := json.Marshal(struct {
+		BuildingID State.BuildingInstanceID `json:"OID"`
+		Power      int                      `json:"PWR"`
+		Offer      int                      `json:"PO"`
+		Premium    int64                    `json:"CC2T"`
+	}{buildingID, 0, -1, premiumCost})
+	return payload
 }
 
 func planBuildingFinishFree(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -454,7 +524,7 @@ func planBuildingFinishFree(_ context.Context, input Intent.PlanningContext, arg
 		Kind: buildingMutationFinishFree, CastleID: castle.ID, BuildingInstanceID: request.BuildingInstanceID,
 		InitialConstructionState: building.ConstructionState,
 	})
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, buildingResolverStep("Finish building operation for free", "building.finish_free.build", resolverArguments, "fco"))
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify free building completion", Action: "building.verify", ActionArguments: verificationArguments})
@@ -495,8 +565,11 @@ func planBuildingTimeSkip(_ context.Context, input Intent.PlanningContext, argum
 		InitialConstructionState: building.ConstructionState, SkipCurrencyID: option.CurrencyID,
 		InitialSkipBalance: balance, InitialProgressSec: building.ProgressSec,
 	})
-	steps := castleContextSteps(castle)
-	steps = append(steps, buildingResolverStep("Apply building time skip", "building.skip_time.build", resolverArguments, "msb"))
+	steps := castleContextSteps(input, castle)
+	skipStep := buildingResolverStep("Apply building time skip", "building.skip_time.build", resolverArguments, "msb")
+	skipStep.StaleCodes = []int{147}
+	steps = append(steps, skipStep)
+	steps = append(steps, timeSkipConsumeStep(input, option.CurrencyID))
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify building time skip", Action: "building.verify", ActionArguments: verificationArguments})
 	claims := append(buildingInstanceClaims(castle.ID, request.BuildingInstanceID),
@@ -521,7 +594,9 @@ func resolveBuildingTimeSkipStep(_ context.Context, input Intent.PlanningContext
 		BuildingID State.BuildingInstanceID `json:"OID"`
 		MinuteSkip string                   `json:"MST"`
 	}{request.BuildingInstanceID, option.WireKey})
-	return buildingMutationStep("Apply building time skip", "msb", payload), nil
+	step := buildingMutationStep("Apply building time skip", "msb", payload)
+	step.StaleCodes = []int{147}
+	return step, nil
 }
 
 func planBuildingStore(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -538,7 +613,7 @@ func planBuildingStore(_ context.Context, input Intent.PlanningContext, argument
 		Kind: buildingMutationStore, CastleID: castle.ID, BuildingInstanceID: request.BuildingInstanceID,
 		DefinitionID: building.DefinitionID,
 	})
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, buildingResolverStep("Store building", "building.store.build", resolverArguments, "sob"))
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify stored building", Action: "building.verify", ActionArguments: verificationArguments})
@@ -575,8 +650,10 @@ func planBuildingDemolish(_ context.Context, input Intent.PlanningContext, argum
 	verificationArguments, _ := json.Marshal(buildingVerification{
 		Kind: buildingMutationDemolish, CastleID: castle.ID, BuildingInstanceID: request.BuildingInstanceID,
 	})
-	steps := castleContextSteps(castle)
-	steps = append(steps, buildingResolverStep("Demolish building", "building.demolish.build", resolverArguments, "edo"))
+	steps := castleContextSteps(input, castle)
+	demolishStep := buildingResolverStep("Demolish building", "building.demolish.build", resolverArguments, "edo")
+	demolishStep.StaleCodes = []int{147}
+	steps = append(steps, demolishStep)
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify building demolition", Action: "building.verify", ActionArguments: verificationArguments})
 	return Intent.Plan{
@@ -591,12 +668,14 @@ func resolveBuildingDemolishStep(_ context.Context, input Intent.PlanningContext
 		return Intent.Step{}, err
 	}
 	if _, _, _, err := validatedBuildingDemolish(input, request, true); err != nil {
-		return Intent.Step{}, err
+		return Intent.Step{}, fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
 	payload, _ := json.Marshal(struct {
 		BuildingID State.BuildingInstanceID `json:"OID"`
 	}{request.BuildingInstanceID})
-	return buildingMutationStep("Demolish building", "edo", payload), nil
+	step := buildingMutationStep("Demolish building", "edo", payload)
+	step.StaleCodes = []int{147}
+	return step, nil
 }
 
 func validatedBuildingExpansion(
@@ -884,6 +963,9 @@ func validatedBuildingTimeSkip(
 ) (State.CastleState, State.Building, buildingTimeSkipOption, float64, error) {
 	castle, building, _, err := observedUpgradeableBuilding(input, request.CastleID, request.BuildingInstanceID, requireFresh)
 	if err != nil {
+		if requireFresh {
+			return State.CastleState{}, State.Building{}, buildingTimeSkipOption{}, 0, fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+		}
 		return State.CastleState{}, State.Building{}, buildingTimeSkipOption{}, 0, err
 	}
 	option, err := officialBuildingTimeSkipOption(input.GameData, request.Minutes)
@@ -903,12 +985,13 @@ func validatedBuildingTimeSkip(
 	if requireFresh {
 		if !buildingQueued(castle.BuildingQueue, request.BuildingInstanceID) {
 			return State.CastleState{}, State.Building{}, buildingTimeSkipOption{}, balance, fmt.Errorf(
-				"building %d is not in the construction queue", request.BuildingInstanceID,
+				"%w: building %d is not in the construction queue", Intent.ErrPlanStale, request.BuildingInstanceID,
 			)
 		}
 		if !buildingOperationInProgress(building.ConstructionState) {
 			return State.CastleState{}, State.Building{}, buildingTimeSkipOption{}, balance, fmt.Errorf(
-				"building %d is not in a skippable construction state (%d)", request.BuildingInstanceID, building.ConstructionState,
+				"%w: building %d is not in a skippable construction state (%d)",
+				Intent.ErrPlanStale, request.BuildingInstanceID, building.ConstructionState,
 			)
 		}
 	}

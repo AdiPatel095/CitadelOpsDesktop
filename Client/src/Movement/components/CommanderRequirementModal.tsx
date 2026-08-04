@@ -264,7 +264,7 @@ function observedBonusTroopStats(
       for (const equipmentID of Object.values(commander.equipment)) {
         const equipment = state.inventory.equipment[String(equipmentID)];
         if (!equipment) continue;
-        for (const effect of equipment.effects) {
+        for (const effect of Array.isArray(equipment.effects) ? equipment.effects : []) {
           const metadata = effects[effect.definitionId];
           if (!isBonusTroopEffect(metadata)) continue;
           const troopValues = pairedTroopValues(effect.values, troops);

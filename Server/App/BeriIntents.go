@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	beriKingdomID        State.KingdomID = 10
-	beriTransferTimeSkip                 = "MS5"
-	beriCRAContextMode                   = "beri-tower"
+	beriKingdomID      State.KingdomID = 10
+	beriCRAContextMode                 = "beri-tower"
 )
 
 type beriCapacityRefreshRequest struct {
@@ -31,6 +30,8 @@ type beriTransferRequest struct {
 	WireCastleID   int64          `json:"wireCastleId,omitempty"`
 	UnitID         State.UnitID   `json:"unitId"`
 	Amount         int64          `json:"amount,omitempty"`
+	UseTimeSkip    bool           `json:"useTimeSkip,omitempty"`
+	TimeSkipID     string         `json:"timeSkipId,omitempty"`
 }
 
 type beriTransferGuardRequest struct {
@@ -156,6 +157,9 @@ func planBeriTransfer(_ context.Context, input Intent.PlanningContext, arguments
 	if request.UnitID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("unitId must identify the official troop transferred to Berimond")
 	}
+	if err := validateBeriTransferFoodUnit(input.GameData, request.UnitID); err != nil {
+		return Intent.Plan{}, err
+	}
 	if input.State.Beri.ObservedAt.IsZero() || !input.State.Beri.ConsumedAt.Before(input.State.Beri.ObservedAt) {
 		return Intent.Plan{}, fmt.Errorf(
 			"%w: Berimond troop capacity has not been refreshed since the last transfer", Intent.ErrPlanStale,
@@ -173,13 +177,19 @@ func planBeriTransfer(_ context.Context, input Intent.PlanningContext, arguments
 			"%w: amount must be between 1 and the refreshed Berimond capacity %d", Intent.ErrPlanStale, available,
 		)
 	}
-	skipStep, currencyID, _, err := kingdomTroopSkipStep(input, kingdomTroopSkipRequest{
-		TargetKingdomID: beriKingdomID, TimeSkipID: beriTransferTimeSkip,
-	}, false)
-	if err != nil {
-		return Intent.Plan{}, err
+	var skipSteps []Intent.Step
+	var currencyID State.CurrencyID
+	if request.UseTimeSkip {
+		step, selectedCurrencyID, _, err := kingdomTroopSkipStep(input, kingdomTroopSkipRequest{
+			TargetKingdomID: beriKingdomID, TimeSkipID: request.TimeSkipID,
+		}, false)
+		if err != nil {
+			return Intent.Plan{}, err
+		}
+		step.Name = "Immediately apply the selected Berimond troop transport skip"
+		currencyID = selectedCurrencyID
+		skipSteps = []Intent.Step{step, timeSkipConsumeStep(input, currencyID)}
 	}
-	skipStep.Name = "Immediately skip Berimond troop transport time"
 	guard := beriTransferGuardRequest{
 		SourceCastleID: source.ID, TargetCastleID: target.ID, UnitID: request.UnitID, Amount: request.Amount,
 		CapacityObserved: input.State.Beri.ObservedAt, TimeSkipCurrency: currencyID,
@@ -220,21 +230,37 @@ func planBeriTransfer(_ context.Context, input Intent.PlanningContext, arguments
 			ActionArguments: sourceConsumeArguments,
 		},
 		Intent.Step{Name: "Consume refreshed Berimond capacity", Action: "beri.consume_capacity", ActionArguments: capacityConsumeArguments},
-		skipStep,
 	)
+	if len(skipSteps) > 0 {
+		steps = append(steps, skipSteps...)
+	}
 	sourceCastleID := strconv.FormatInt(int64(source.ID), 10)
 	targetCastleID := strconv.FormatInt(int64(target.ID), 10)
+	claims := []string{
+		"troop-transport", "castle:" + sourceCastleID, "castle:" + targetCastleID,
+		"kingdom:" + strconv.FormatInt(int64(beriKingdomID), 10),
+		"beri-capacity:" + targetCastleID,
+		"unit:" + strconv.FormatInt(int64(request.UnitID), 10),
+	}
+	if currencyID > 0 {
+		claims = append(claims, "currency:"+strconv.FormatInt(int64(currencyID), 10))
+	}
 	return Intent.Plan{
-		Claims: []string{
-			"troop-transport", "castle:" + sourceCastleID, "castle:" + targetCastleID,
-			"kingdom:" + strconv.FormatInt(int64(beriKingdomID), 10),
-			"beri-capacity:" + targetCastleID,
-			"unit:" + strconv.FormatInt(int64(request.UnitID), 10),
-			"currency:" + strconv.FormatInt(int64(currencyID), 10),
-		},
+		Claims:  claims,
 		Summary: fmt.Sprintf("Transfer %d of unit %d from %s to Berimond", request.Amount, request.UnitID, castleLabel(source)),
 		Steps:   steps,
 	}, nil
+}
+
+func validateBeriTransferFoodUnit(gameData *GameData.Store, unitID State.UnitID) error {
+	usesFood, err := gameData.UnitUsesFoodSupply(unitID)
+	if err != nil {
+		return fmt.Errorf("validate Berimond transfer unit %d: %w", unitID, err)
+	}
+	if !usesFood {
+		return fmt.Errorf("Berimond troop transfers require a Food-consuming unit; unit %d consumes Mead or Beef", unitID)
+	}
+	return nil
 }
 
 func validateBeriTransferState(input Intent.PlanningContext, request beriTransferGuardRequest) error {
@@ -264,6 +290,9 @@ func validateBeriTransferState(input Intent.PlanningContext, request beriTransfe
 	if request.UnitID <= 0 || request.Amount <= 0 || request.Amount > available {
 		return fmt.Errorf("Berimond capacity for unit %d is %d; %d requested", request.UnitID, available, request.Amount)
 	}
+	if err := validateBeriTransferFoodUnit(input.GameData, request.UnitID); err != nil {
+		return err
+	}
 	if _, err := normalizeKingdomTroopShipment(input.GameData, source, []kingdomTroopShipmentUnit{{
 		UnitID: request.UnitID, Amount: request.Amount,
 	}}); err != nil {
@@ -272,8 +301,8 @@ func validateBeriTransferState(input Intent.PlanningContext, request beriTransfe
 	if kingdomTroopTransportPending(input.State, beriKingdomID) {
 		return fmt.Errorf("Berimond already has a pending or settling troop transport")
 	}
-	if request.TimeSkipCurrency <= 0 || input.State.Player.Currencies[request.TimeSkipCurrency] < 1 {
-		return fmt.Errorf("the fixed Berimond transfer time skip is no longer available")
+	if request.TimeSkipCurrency > 0 && input.State.Player.Currencies[request.TimeSkipCurrency] < 1 {
+		return fmt.Errorf("the selected Berimond transfer time skip is no longer available")
 	}
 	return nil
 }
@@ -606,7 +635,11 @@ func (application *Application) resolveBeriTowerAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Berimond preset %q: %w", request.Preset.Name, err)
 	}
-	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, built, request.HorseTravelBoostID))
+	attack := invasionAttackBody(source, target, request.CommanderID, built)
+	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+		return Intent.Step{}, fmt.Errorf("resolve Berimond horse travel boost: %w", err)
+	}
+	body, err := json.Marshal(attack)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build Berimond CRA payload: %w", err)
 	}

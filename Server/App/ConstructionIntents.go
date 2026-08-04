@@ -102,7 +102,7 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 		Power     int             `json:"PWR"`
 		Position  int             `json:"_PO"`
 	}{request.ProductID, 0, 116, request.Amount, castle.KingdomID, castle.ID, -1, 0, 0, -1})
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	steps = append(steps, constructionShopContextSteps(castle)...)
 	steps = append(steps, commandStep("Buy construction item", "sbp", payload, "sbp"))
 	itemLabel := fmt.Sprintf("construction item %d", constructionItemID)

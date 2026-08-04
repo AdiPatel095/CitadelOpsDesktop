@@ -14,7 +14,7 @@ const StaleSessionBanner: React.FC = () => {
   return (
     <div
       role="status"
-      className="rounded-global border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-text-main"
+      className="m3-status-banner m3-status-banner-warning rounded-global px-4 py-3 text-sm text-text-main"
     >
       <p className="font-medium text-warning">Disconnected — last known data</p>
       <p className="mt-1 text-xs text-text-muted">

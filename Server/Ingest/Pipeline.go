@@ -215,6 +215,7 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 		return Protocol.CommittedFrame{}, err
 	}
 	frame := observed.Frame
+	focusSubcontext := protocolFocusSubcontextForFrame(frame)
 	authoritativePlayerID, accountAuthoritative := observationAuthoritativePlayerID(frame)
 	validateCommit := func(gameState *State.GameState, afterReducer bool) error {
 		if err := ctx.Err(); err != nil {
@@ -283,7 +284,8 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			return State.ScopedChange{}, validateErr
 		}
 		return State.ScopedChange{
-			Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains), Changed: true,
+			Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains),
+			FocusSubcontext: focusSubcontext, Changed: true,
 		}, nil
 	})
 	if err != nil {
@@ -295,12 +297,16 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			return Protocol.CommittedFrame{}, err
 		}
 		reduceErr := err
-		event, err = pipeline.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+		event, err = pipeline.state.ApplyScopedWithoutMapMutation(func(gameState *State.GameState) (State.ScopedChange, error) {
 			if validateErr := validateCommit(gameState, false); validateErr != nil {
-				return nil, false, validateErr
+				return State.ScopedChange{}, validateErr
 			}
 			recordObservation(gameState, frame, reduceErr.Error())
-			return []string{"protocol"}, true, nil
+			domains := []string{"protocol"}
+			return State.ScopedChange{
+				Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains),
+				FocusSubcontext: focusSubcontext, Changed: true,
+			}, nil
 		})
 		if err != nil {
 			err = fmt.Errorf("record failed %s frame: %w", frame.Opcode, err)

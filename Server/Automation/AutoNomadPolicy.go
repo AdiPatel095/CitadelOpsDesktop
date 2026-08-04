@@ -271,9 +271,9 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		target := lowestNomadCamp(camps, maximumVictoryCount)
 		if remaining := nomadCampCooldownRemaining(snapshot.State, target.Observation, snapshot.Now); remaining > 0 {
 			if settings.SkipCooldowns {
-				if oneCommandDungeonSkipCount(snapshot.State, settings.TimeSkipReserve, int64(remaining)) < 1 {
+				if responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, int64(remaining)) < 1 {
 					return Decision{
-						Status: "waiting", Detail: fmt.Sprintf("No single time skip can clear camp %d:%d while leveling", target.Observation.X, target.Observation.Y),
+						Status: "waiting", Detail: fmt.Sprintf("Available time skips cannot clear camp %d:%d while preserving reserves", target.Observation.X, target.Observation.Y),
 						NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 					}, nil
 				}
@@ -345,7 +345,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if !settings.SkipCooldowns {
 		availableCommanders = availableCommanders[:1]
 	} else {
-		availableSkips := oneCommandDungeonSkipCount(snapshot.State, settings.TimeSkipReserve, target.Definition.CooldownSec)
+		availableSkips := responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, target.Definition.CooldownSec)
 		committedSkips := int64(metrics["activeAttacks"])
 		usableSkips := max(0, availableSkips-committedSkips)
 		metrics["availableCooldownSkips"] = float64(availableSkips)
@@ -353,7 +353,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		metrics["usableCooldownSkips"] = float64(usableSkips)
 		if usableSkips < 1 {
 			return Decision{
-				Status: "waiting", Detail: "No uncommitted one-command cooldown skip is available above reserve for another locked-camp attack",
+				Status: "waiting", Detail: "No uncommitted response-gated cooldown sequence is available above reserve for another locked-camp attack",
 				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 			}, nil
 		}
@@ -778,7 +778,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 	}
 	commanderIDs, restricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoNomad")
 	available := availableNomadCommanders(snapshot.State, commanderIDs, restricted)
-	availableSkips := oneCommandDungeonSkipCount(snapshot.State, settings.TimeSkipReserve, 3*60*60)
+	availableSkips := responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, 3*60*60)
 	usableSkips := max(0, availableSkips-outstandingCooldownSkips)
 	presetCopies := availablePresetCopies(preset, source, len(available))
 	chainSize := min(len(available), presetCopies)
@@ -858,6 +858,58 @@ func oneCommandDungeonSkipCount(gameState State.GameState, reserves map[string]i
 		if available > 0 {
 			count += available
 		}
+	}
+	return count
+}
+
+func responseGatedDungeonCooldownCount(gameState State.GameState, reserves map[string]int64, cooldownSec int64) int64 {
+	if cooldownSec <= 0 {
+		return 0
+	}
+	options := []struct {
+		wireKey  string
+		currency State.CurrencyID
+		seconds  int64
+	}{
+		{"MS1", 1001, 60}, {"MS2", 1002, 300}, {"MS3", 1003, 600}, {"MS4", 1004, 1800},
+		{"MS5", 1005, 3600}, {"MS6", 1006, 18000}, {"MS7", 1007, 86400},
+	}
+	available := make([]int64, len(options))
+	totalSeconds := float64(0)
+	for index, option := range options {
+		available[index] = max(
+			int64(0),
+			int64(gameState.Player.Currencies[option.currency])-automationTimeSkipReserve(reserves, option.wireKey),
+		)
+		totalSeconds += float64(available[index]) * float64(option.seconds)
+	}
+	maximumCooldowns := min(int64(totalSeconds/float64(cooldownSec)), int64(10_000))
+	var count int64
+	for count < maximumCooldowns {
+		remaining := cooldownSec
+		for remaining > 0 {
+			selected := -1
+			for index, option := range options {
+				if available[index] > 0 && option.seconds >= remaining {
+					selected = index
+					break
+				}
+			}
+			if selected < 0 {
+				for index := len(options) - 1; index >= 0; index-- {
+					if available[index] > 0 {
+						selected = index
+						break
+					}
+				}
+			}
+			if selected < 0 {
+				return count
+			}
+			available[selected]--
+			remaining -= options[selected].seconds
+		}
+		count++
 	}
 	return count
 }

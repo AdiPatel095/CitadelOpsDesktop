@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
 
@@ -64,6 +65,23 @@ func TestCaptureAutoBeriAttackFeatureLaunch(t *testing.T) {
 	if len(pending) != 1 || pending[0].MovementID != 456 ||
 		pending[0].FeatureID != State.AttackFeatureAutoBeriWorld {
 		t.Fatalf("captured Auto Beri attacks = %#v", pending)
+	}
+}
+
+func TestAttackMovementTroopCountExcludesTools(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],
+		"buildings":[],
+		"units":[
+			{"wodID":10},
+			{"wodID":11,"slotTypes":"tool"}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := attackMovementTroopCount(gameData, map[State.UnitID]int64{10: 125, 11: 40}); got != 125 {
+		t.Fatalf("movement troop count = %d, want 125", got)
 	}
 }
 

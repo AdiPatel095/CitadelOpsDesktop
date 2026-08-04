@@ -27,8 +27,9 @@ func TestDungeonMinuteSkipUsesOneMS6ForThreeHourRBCCooldown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 2 || plan.Steps[0].Resolver != "nomad.cooldown.minute_skip.build" ||
-		plan.Steps[0].AwaitOpcode != "msd" || plan.Steps[1].Action != "nomad.cooldown.minute_skip.verify" {
+	if len(plan.Steps) != 3 || plan.Steps[0].Resolver != "nomad.cooldown.minute_skip.build" ||
+		plan.Steps[0].AwaitOpcode != "msd" || plan.Steps[1].Action != timeSkipConsumeAction ||
+		plan.Steps[2].Action != "nomad.cooldown.minute_skip.verify" {
 		t.Fatalf("unexpected minute-skip plan: %#v", plan.Steps)
 	}
 	step, err := resolveDungeonMinuteSkipStep(t.Context(), input, plan.Steps[0].ResolverArguments)
@@ -57,6 +58,48 @@ func TestDungeonMinuteSkipUsesOneMS6ForThreeHourRBCCooldown(t *testing.T) {
 	}
 }
 
+func TestDungeonMinuteSkipUsesOnePartialMS2PerPlan(t *testing.T) {
+	gameData := dungeonMinuteSkipGameData(t)
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Player.Currencies[1002] = 12
+	gameState.Map[0] = map[string]State.MapObservation{
+		"99:100": {
+			KingdomID: 0, TypeID: nomadIntentCampTypeID, X: 99, Y: 100,
+			EventCampID: 5001, EventCampCooldownRemaining: 3600, ObservedAt: now,
+		},
+	}
+	input := Intent.PlanningContext{State: gameState, GameData: gameData}
+	plan, err := planDungeonMinuteSkip(t.Context(), input, json.RawMessage(`{
+		"kingdomId":0,"targetTypeId":27,"targetX":99,"targetY":100,
+		"eventCampId":5001,"minimumRemaining":{}
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 3 || plan.Steps[0].Resolver != "nomad.cooldown.minute_skip.build" ||
+		plan.Steps[1].Action != timeSkipConsumeAction ||
+		plan.Steps[2].Action != "nomad.cooldown.minute_skip.verify" {
+		t.Fatalf("partial minute-skip plan = %#v", plan.Steps)
+	}
+	step, err := resolveDungeonMinuteSkipStep(t.Context(), input, plan.Steps[0].ResolverArguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if step.Opcode != "msd" {
+		t.Fatalf("partial minute-skip opcode = %q", step.Opcode)
+	}
+	var payload struct {
+		MinuteSkip string `json:"MST"`
+	}
+	if err := json.Unmarshal(step.Command.Payload, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.MinuteSkip != "MS2" {
+		t.Fatalf("partial minute-skip payload = %s", step.Command.Payload)
+	}
+}
+
 func TestDungeonMinuteSkipAcceptsType35KhanTarget(t *testing.T) {
 	gameData := dungeonMinuteSkipGameData(t)
 	now := time.Now().UTC()
@@ -78,7 +121,8 @@ func TestDungeonMinuteSkipAcceptsType35KhanTarget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 2 || plan.Steps[0].Resolver != "nomad.cooldown.minute_skip.build" {
+	if len(plan.Steps) != 3 || plan.Steps[0].Resolver != "nomad.cooldown.minute_skip.build" ||
+		plan.Steps[1].Action != timeSkipConsumeAction {
 		t.Fatalf("unexpected Khan cooldown plan: %#v", plan)
 	}
 }

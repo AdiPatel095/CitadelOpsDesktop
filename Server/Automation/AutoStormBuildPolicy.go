@@ -2,10 +2,13 @@ package Automation
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/Buildings"
+	"CitadelDesktop/Server/Intent"
 )
 
 const autoStormTransportOwner = "autoStorm"
@@ -64,14 +67,14 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 		snapshot,
 	); actionable {
 		decision.Metrics = metrics
-		return decision, nil
+		return autoStormBuildContinuation(decision), nil
 	}
 	decision, complete, detail, err := evaluateAutoStormBuild(snapshot, settings, castle, metrics)
 	if err != nil {
 		return Decision{}, err
 	}
 	if decision != nil {
-		return *decision, nil
+		return autoStormBuildContinuation(*decision), nil
 	}
 	status := "waiting"
 	if complete {
@@ -84,6 +87,28 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 		Status: status, Detail: detail, Metrics: metrics,
 		NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 	}, nil
+}
+
+func autoStormBuildContinuation(decision Decision) Decision {
+	if decision.Request != nil {
+		decision.ReevaluateOnSuccess = true
+		decision.ReevaluateOnStale = true
+		requestName := strings.TrimSpace(decision.Request.Name)
+		if decision.FailureFallback == nil && requestName != "building.refresh" && strings.HasPrefix(requestName, "building.") {
+			var arguments struct {
+				CastleID int64 `json:"castleId"`
+			}
+			if json.Unmarshal(decision.Request.Arguments, &arguments) == nil && arguments.CastleID > 0 {
+				fallbackArguments, _ := json.Marshal(map[string]any{"castleId": arguments.CastleID})
+				decision.FailureFallback = &Intent.Request{
+					Name: "building.refresh", Arguments: fallbackArguments,
+				}
+				decision.FailureFallbackIndeterminateOnly = true
+				decision.FailureDetail = "Reconciled Storm building state after an uncertain command outcome"
+			}
+		}
+	}
+	return decision
 }
 
 func autoStormApplyActiveBlueprint(snapshot Snapshot, settings *autoStormSettings) error {

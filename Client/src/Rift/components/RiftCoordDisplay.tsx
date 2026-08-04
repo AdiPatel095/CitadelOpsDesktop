@@ -22,7 +22,7 @@ const RiftCoordDisplay: React.FC = () => {
 
   return (
     <SectionCard
-      variant="glass"
+      variant="solid"
       title="Rift location"
       titleClassName="text-lg text-primary"
       description={(
