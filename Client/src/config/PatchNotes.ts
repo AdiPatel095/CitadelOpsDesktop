@@ -30,6 +30,30 @@ export interface PatchNotesRelease {
 
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
   {
+    version: '2.0.1',
+    subtitle: 'Material 3 Expressive interface, safer automation recovery, refined logistics, and bounded telemetry',
+    date: '2026-08-03',
+    items: [
+      { kind: 'added', text: 'Material 3 Expressive visual system across the complete dashboard, with new light and dark color themes, tonal surfaces, expressive shapes, adaptive navigation, typography, and motion' },
+      { kind: 'added', text: 'PvE and PvP attack-preset types with visible lane tool limits, Hall of Legends tool-bonus support, builder clamping, and authoritative send-time enforcement' },
+      { kind: 'added', text: 'App-native rolling 48-hour telemetry retention with three-hour channel-log rotation, safe legacy-log compaction, and rotated-history support for tails and launch counters' },
+      { kind: 'added', text: 'Auto Beri armorer restocking for configured wooden tools plus optional MS1 through MS7 troop-transfer skips, with each purchase and skip confirmed before continuing' },
+      { kind: 'added', text: 'Auto Storm can explicitly unlock a selected official prebuilt Storm castle and runs Aquamarine shop goals in an independent lane from combat and castle maintenance' },
+      { kind: 'changed', text: 'Auto Food Balance uses one-way, storage-aware routing, excludes Berimond from ordinary food logistics, tries alternate safe donors, and resolves selected market travel boosts from each castle’s placed Stable, Faction Stable, or Harbor' },
+      { kind: 'changed', text: 'Auto Storm now separates combat, shop, and build decisions; revalidates targets, resources, troop imports, construction state, and time-skip inventory before each committed action' },
+      { kind: 'changed', text: 'Auto Bird uses fresh per-castle troop inventory, cycle-scoped claims, and explicit stale-tracking cleanup so one castle’s recovery does not block unrelated automation' },
+      { kind: 'changed', text: 'Auto Nomad keeps separate Nomad and Samurai attack presets while preserving legacy preset settings during migration' },
+      { kind: 'changed', text: 'Automation retry, cooldown, focus, transport, and stale-plan handling is scoped to the affected lane or castle instead of globally delaying unrelated work' },
+      { kind: 'changed', text: 'Expected troop and equipment shortages are shown as warnings rather than fatal application errors while genuine command failures remain errors' },
+      { kind: 'fixed', text: 'Prevented the Commander view from crashing when older or partially hydrated equipment records contain null effects' },
+      { kind: 'fixed', text: 'Auto Beri now refreshes unavailable targets, holds attack context through launch verification, keeps troop transfers focus-neutral, and recovers from stalled attack admission with bounded retries' },
+      { kind: 'fixed', text: 'Berimond troop transfers reject Mead and Beef units, reconcile arrivals and consumed skips, and stop a skip chain when the game does not confirm a timer reduction' },
+      { kind: 'fixed', text: 'Auto Storm settings remain compatible with older runtime previews, and the frontend no longer crashes when newer troop-history fields are absent' },
+      { kind: 'fixed', text: 'Castle, movement, transport, attack analytics, and automation state updates now invalidate only their true dependencies, reducing stale decisions and unrelated policy wakeups' },
+      { kind: 'removed', text: 'Removed the remaining glass-morphism styling, translucent blur surfaces, and glow-based status treatment from the dashboard' },
+    ],
+  },
+  {
     version: '2.0.0',
     subtitle: 'Canonical automation, event operations, resource logistics, Storm blueprints, and desktop reliability',
     date: '2026-07-27',

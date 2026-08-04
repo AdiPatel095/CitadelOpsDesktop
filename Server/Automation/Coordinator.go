@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"slices"
 	"sort"
@@ -59,10 +60,18 @@ type policyRuntime struct {
 	submissionBlockedUntil        time.Time
 	blockedDecisionFingerprint    string
 	failureBlockedUntil           time.Time
+	troopAvailabilityGate         *troopAvailabilityGate
 	runningScheduleKey            string
 	runningSessionGeneration      uint64
 	allowedConfigurationChange    string
 	cancelRun                     context.CancelFunc
+}
+
+type troopAvailabilityGate struct {
+	detail    string
+	castleID  State.CastleID
+	unitID    State.UnitID
+	available int64
 }
 
 type operationResult struct {
@@ -162,8 +171,10 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 		if !meaningfulStateEvent(event) {
 			return false, false
 		}
+		state := coordinator.state.ReadOnlyView()
+		clearTroopAvailabilityGates(runtime, event, state)
 		if stateEventHasDomain(event, "session") {
-			coordinator.cancelRunsForUnavailableSession(runtime, coordinator.state.ReadOnlyView())
+			coordinator.cancelRunsForUnavailableSession(runtime, state)
 		}
 		return wakePoliciesForStateEvent(
 			runtime, coordinator.stateWakeByDomain, coordinator.urgentWakeByDomain, event,
@@ -316,6 +327,7 @@ func (coordinator *Coordinator) evaluate(
 			current.evaluatedSessionGeneration = state.Session.Generation
 			resetContinuation(current)
 			current.failureBlockedUntil = time.Time{}
+			current.troopAvailabilityGate = nil
 			current.nextCheck = time.Time{}
 			coordinator.recordDecision(policy.ID(), false, Decision{Status: "disabled", Detail: "Automation is disabled"})
 			continue
@@ -329,6 +341,10 @@ func (coordinator *Coordinator) evaluate(
 		if configurationChanged || sessionChanged {
 			resetContinuation(current)
 			current.failureBlockedUntil = time.Time{}
+			current.troopAvailabilityGate = nil
+		}
+		if troopAvailabilityGateInventoryChanged(current.troopAvailabilityGate, state) {
+			current.troopAvailabilityGate = nil
 		}
 		current.evaluatedStateRevision = state.Revision
 		current.evaluatedConfigRevision = configuration.Revision
@@ -358,6 +374,11 @@ func (coordinator *Coordinator) evaluate(
 			coordinator.recordDecision(policy.ID(), true, Decision{
 				Status: "scheduled", Detail: "Outside the configured weekly schedule", NextCheckAt: next,
 			})
+			continue
+		}
+		if current.troopAvailabilityGate != nil {
+			current.nextCheck = time.Time{}
+			coordinator.recordTroopAvailabilityGate(policy.ID(), *current.troopAvailabilityGate)
 			continue
 		}
 		if current.failureBlockedUntil.After(now) {
@@ -449,6 +470,7 @@ func (coordinator *Coordinator) evaluate(
 			request Intent.Request,
 			followUp *Intent.Request,
 			failureFallback *Intent.Request,
+			failureFallbackIndeterminateOnly bool,
 			nextCheck time.Time,
 			detail string,
 			failureDetail string,
@@ -462,7 +484,7 @@ func (coordinator *Coordinator) evaluate(
 			if receipt.Status == Intent.StatusSucceeded && followUp != nil {
 				result := coordinator.intents.Submit(operationContext, *followUp)
 				followUpReceipt = &result
-			} else if failureFallback != nil && statusRunsFailureFallback(receipt.Status) {
+			} else if failureFallback != nil && shouldRunFailureFallback(receipt.Status, failureFallbackIndeterminateOnly) {
 				result := coordinator.intents.Submit(operationContext, *failureFallback)
 				failureFallbackReceipt = &result
 			}
@@ -478,6 +500,7 @@ func (coordinator *Coordinator) evaluate(
 			}
 		}(
 			policy.ID(), operationContext, cancelOperation, request, followUp, failureFallback,
+			decision.FailureFallbackIndeterminateOnly,
 			decision.NextCheckAt, decision.Detail, decision.FailureDetail, decision.ReevaluateOnSuccess,
 			decision.ReevaluateOnStale,
 		)
@@ -560,6 +583,7 @@ func (coordinator *Coordinator) wakePoliciesForConfigurationEvent(
 			continue
 		}
 		resetContinuation(current)
+		current.troopAvailabilityGate = nil
 		current.nextCheck = time.Time{}
 		wokeIdle = true
 	}
@@ -653,6 +677,10 @@ func (coordinator *Coordinator) recordReceipt(result operationResult) {
 				current.Detail = result.failureDetail
 			}
 			current.LastError = ""
+		} else if gate, gated := operationResultTroopAvailabilityGate(result); gated {
+			current.Status = "gated"
+			current.Detail = gate.detail
+			current.LastError = ""
 		} else {
 			current.Status = "error"
 			current.Detail = "Automation operation failed"
@@ -668,6 +696,18 @@ func (coordinator *Coordinator) recordReceipt(result operationResult) {
 				}
 			}
 		}
+		return current
+	})
+}
+
+func (coordinator *Coordinator) recordTroopAvailabilityGate(id string, gate troopAvailabilityGate) {
+	coordinator.updateAutomation(id, func(current State.AutomationState) State.AutomationState {
+		current.ID = id
+		current.Enabled = true
+		current.Status = "gated"
+		current.Detail = gate.detail
+		current.NextCheckAt = nil
+		current.LastError = ""
 		return current
 	})
 }
@@ -689,12 +729,92 @@ func statusRunsFailureFallback(status Intent.Status) bool {
 	}
 }
 
+func shouldRunFailureFallback(status Intent.Status, indeterminateOnly bool) bool {
+	if indeterminateOnly {
+		return status == Intent.StatusIndeterminate
+	}
+	return statusRunsFailureFallback(status)
+}
+
 func operationResultRetryableStale(result operationResult) bool {
 	if !result.reevaluateOnStale ||
 		result.receipt.Status != Intent.StatusFailed && result.receipt.Status != Intent.StatusPartiallySucceeded {
 		return false
 	}
 	return strings.Contains(result.receipt.Error, Intent.ErrPlanStale.Error())
+}
+
+func operationResultTroopAvailabilityGate(result operationResult) (troopAvailabilityGate, bool) {
+	receipt := result.receipt
+	if result.followUp != nil && result.followUp.Status != Intent.StatusSucceeded {
+		receipt = *result.followUp
+	}
+	if result.failureFallback != nil && result.failureFallback.Status != Intent.StatusSucceeded {
+		receipt = *result.failureFallback
+	}
+	if receipt.Status != Intent.StatusFailed && receipt.Status != Intent.StatusPartiallySucceeded {
+		return troopAvailabilityGate{}, false
+	}
+	detail := strings.TrimSpace(receipt.Error)
+	lower := strings.ToLower(detail)
+	gated := strings.Contains(lower, "not enough troops") || strings.Contains(lower, "insufficient troops") ||
+		strings.Contains(lower, " of item ") &&
+			(strings.Contains(lower, " commander(s) require ") ||
+				strings.Contains(lower, " attack formation requires "))
+	if !gated {
+		return troopAvailabilityGate{}, false
+	}
+	gate := troopAvailabilityGate{detail: detail}
+	marker := strings.LastIndex(lower, "castle ")
+	if marker < 0 {
+		return gate, true
+	}
+	var castleID, available, unitID int64
+	tail := lower[marker:]
+	if _, err := fmt.Sscanf(tail, "castle %d has %d of item %d;", &castleID, &available, &unitID); err != nil {
+		if _, err = fmt.Sscanf(tail, "castle %d has %d available of item %d;", &castleID, &available, &unitID); err != nil {
+			return gate, true
+		}
+	}
+	if castleID > 0 && available >= 0 && unitID > 0 {
+		gate.castleID = State.CastleID(castleID)
+		gate.unitID = State.UnitID(unitID)
+		gate.available = available
+	}
+	return gate, true
+}
+
+func troopAvailabilityGateInventoryChanged(gate *troopAvailabilityGate, state State.GameState) bool {
+	if gate == nil || gate.castleID <= 0 || gate.unitID <= 0 {
+		return false
+	}
+	castle, found := state.Castles[gate.castleID]
+	return !found || castle.Units.Stationed[gate.unitID] != gate.available
+}
+
+func clearTroopAvailabilityGates(
+	runtime map[string]*policyRuntime,
+	event State.Event,
+	state State.GameState,
+) {
+	sessionChanged := stateEventHasDomain(event, "session")
+	unitsChanged := stateEventHasDomain(event, "units")
+	if !sessionChanged && !unitsChanged {
+		return
+	}
+	for _, current := range runtime {
+		if current == nil || current.troopAvailabilityGate == nil || event.Revision <= current.evaluatedStateRevision {
+			continue
+		}
+		gate := current.troopAvailabilityGate
+		if !sessionChanged && gate.castleID > 0 && gate.unitID > 0 &&
+			!troopAvailabilityGateInventoryChanged(gate, state) {
+			continue
+		}
+		current.troopAvailabilityGate = nil
+		resetContinuation(current)
+		current.nextCheck = time.Time{}
+	}
 }
 
 func completePolicyRun(current *policyRuntime, result operationResult, now time.Time) (operationResult, bool) {
@@ -714,7 +834,9 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 	current.configurationWakePending = false
 	succeeded := operationResultSucceeded(result)
 	retryableStale := operationResultRetryableStale(result)
-	if succeeded || retryableStale {
+	troopGate, troopAvailabilityGated := operationResultTroopAvailabilityGate(result)
+	current.troopAvailabilityGate = nil
+	if succeeded || retryableStale || troopAvailabilityGated {
 		current.failureBlockedUntil = time.Time{}
 	} else {
 		retryAt := result.nextCheck
@@ -725,11 +847,19 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 		current.failureBlockedUntil = retryAt
 		result.nextCheck = retryAt
 	}
+	if troopAvailabilityGated && !runtimeWakePending && !configurationWakePending {
+		current.troopAvailabilityGate = &troopGate
+		resetContinuation(current)
+		current.nextCheck = time.Time{}
+		result.nextCheck = time.Time{}
+		return result, false
+	}
 	authoritativeProgress := runtimeWakePending || stateProgressPending || configurationWakePending
 	if succeeded && result.reevaluateOnSuccess && !authoritativeProgress {
 		current.rejectRepeatedDecision = true
 	}
-	immediate := runtimeWakePending || configurationWakePending || succeeded && result.reevaluateOnSuccess || retryableStale
+	immediate := configurationWakePending || runtimeWakePending ||
+		succeeded && result.reevaluateOnSuccess || retryableStale
 	if !immediate {
 		resetContinuation(current)
 		current.nextCheck = result.nextCheck
@@ -1101,6 +1231,7 @@ func wakePolicyIDsForConfigurationEvent(
 			continue
 		}
 		resetContinuation(current)
+		current.troopAvailabilityGate = nil
 		current.nextCheck = time.Time{}
 		wokeIdle = true
 	}
@@ -1155,7 +1286,12 @@ func decisionRequestFingerprint(decision Decision) string {
 	parts = append(parts, "no-failure-fallback")
 	if decision.FailureFallback != nil {
 		parts[len(parts)-1] = "failure-fallback"
-		parts = append(parts, decision.FailureFallback.Name, string(decision.FailureFallback.Arguments))
+		parts = append(
+			parts,
+			decision.FailureFallback.Name,
+			string(decision.FailureFallback.Arguments),
+			fmt.Sprintf("indeterminate-only:%t", decision.FailureFallbackIndeterminateOnly),
+		)
 	}
 	return strings.Join(parts, "\x00")
 }

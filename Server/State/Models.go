@@ -280,6 +280,7 @@ const (
 	BuildingLayerT  BuildingLayer = "T"
 	BuildingLayerG  BuildingLayer = "G"
 	BuildingLayerD  BuildingLayer = "D"
+	BuildingLayerFP BuildingLayer = "FP"
 )
 
 type CastleLayout struct {

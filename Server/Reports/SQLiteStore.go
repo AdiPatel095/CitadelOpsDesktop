@@ -110,17 +110,27 @@ func (store *SQLiteStore) initialize(ctx context.Context) error {
 			return err
 		}
 	}
-	if !columns["gallantry_points"] {
+	for _, migration := range []struct {
+		column      string
+		definition  string
+		description string
+	}{
+		{column: "gallantry_points", definition: "INTEGER NOT NULL DEFAULT 0", description: "gallantry"},
+		{column: "troops_sent", definition: "INTEGER NOT NULL DEFAULT 0", description: "troops sent"},
+	} {
+		if columns[migration.column] {
+			continue
+		}
 		if _, err := store.db.ExecContext(ctx, `
 			ALTER TABLE battle_report_analytics
-			ADD COLUMN gallantry_points INTEGER NOT NULL DEFAULT 0
+			ADD COLUMN `+migration.column+` `+migration.definition+`
 		`); err != nil {
-			return fmt.Errorf("add battle report gallantry analytics: %w", err)
+			return fmt.Errorf("add battle report %s analytics: %w", migration.description, err)
 		}
-		columns["gallantry_points"] = true
+		columns[migration.column] = true
 	}
 	for _, required := range []string{
-		"gallantry_points",
+		"gallantry_points", "troops_sent",
 		"target_player_id", "target_name", "target_type_id", "target_type",
 		"kingdom_id", "target_x", "target_y",
 	} {
@@ -174,6 +184,7 @@ func createCompactBattleAnalyticsTable(
 			occurred_at TEXT NOT NULL,
 			result TEXT NOT NULL DEFAULT '',
 			role TEXT NOT NULL DEFAULT '',
+			troops_sent INTEGER NOT NULL DEFAULT 0,
 			own_troop_losses INTEGER NOT NULL DEFAULT 0,
 			tools_used INTEGER NOT NULL DEFAULT 0,
 			gallantry_points INTEGER NOT NULL DEFAULT 0,
@@ -381,6 +392,9 @@ func (store *SQLiteStore) readCanonicalBattleAnalytics(
 		target := analyticsTarget(report)
 		analytics.DateMs = report.DateMs
 		analytics.GallantryPoints = report.GallantryPoints
+		if report.Role == "attacker" {
+			analytics.TroopsSent = max(int64(0), report.Metrics.AttackerSent)
+		}
 		analytics.TargetPlayerID = target.playerID
 		analytics.TargetName = target.name
 		analytics.TargetTypeID = target.typeID
@@ -644,13 +658,13 @@ func (store *SQLiteStore) Recent(ctx context.Context, query BattleReportQuery) (
 	rows, err := store.db.QueryContext(ctx, `
 		SELECT report_key, message_id, battle_report_id, movement_id, automation_feature,
 			event_id, event_activity, event_occurrence_ends_at, occurred_at,
-			result, role, own_troop_losses, tools_used, gallantry_points, loot_total, loot_json,
+			result, role, troops_sent, own_troop_losses, tools_used, gallantry_points, loot_total, loot_json,
 			target_player_id, target_name, target_type_id, target_type,
 			kingdom_id, target_x, target_y
 		FROM (
 			SELECT report_key, message_id, battle_report_id, movement_id, automation_feature,
 				event_id, event_activity, event_occurrence_ends_at, occurred_at,
-				result, role, own_troop_losses, tools_used, gallantry_points, loot_total, loot_json,
+				result, role, troops_sent, own_troop_losses, tools_used, gallantry_points, loot_total, loot_json,
 				target_player_id, target_name, target_type_id, target_type,
 				kingdom_id, target_x, target_y,
 				ROW_NUMBER() OVER (
@@ -676,7 +690,7 @@ func (store *SQLiteStore) Recent(ctx context.Context, query BattleReportQuery) (
 		if err := rows.Scan(
 			&report.ID, &report.MID, &report.LID, &report.MovementID, &report.AutomationFeature,
 			&report.EventID, &report.EventActivity, &report.EventOccurrenceEndsAt, &report.OccurredAt,
-			&report.Result, &report.Role, &report.OwnTroopLosses, &report.ToolsUsed, &report.GallantryPoints,
+			&report.Result, &report.Role, &report.TroopsSent, &report.OwnTroopLosses, &report.ToolsUsed, &report.GallantryPoints,
 			&report.LootTotal, &lootPayload,
 			&report.TargetPlayerID, &report.TargetName, &report.TargetTypeID, &report.TargetType,
 			&report.KingdomID, &report.TargetX, &report.TargetY,
@@ -810,10 +824,10 @@ func compactBattleAnalyticsInsertSQL(tableName string) string {
 			account_key, report_key, account_uid, world_id, player_id,
 			message_id, battle_report_id, movement_id, automation_feature,
 			event_id, event_activity, event_occurrence_ends_at, occurred_at,
-			result, role, own_troop_losses, tools_used, gallantry_points, loot_total, loot_json,
+			result, role, troops_sent, own_troop_losses, tools_used, gallantry_points, loot_total, loot_json,
 			target_player_id, target_name, target_type_id, target_type,
 			kingdom_id, target_x, target_y, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(account_key, report_key) DO UPDATE SET
 			account_uid = excluded.account_uid,
 			world_id = excluded.world_id,
@@ -828,6 +842,7 @@ func compactBattleAnalyticsInsertSQL(tableName string) string {
 			occurred_at = excluded.occurred_at,
 			result = excluded.result,
 			role = excluded.role,
+			troops_sent = excluded.troops_sent,
 			own_troop_losses = excluded.own_troop_losses,
 			tools_used = excluded.tools_used,
 			gallantry_points = excluded.gallantry_points,
@@ -854,7 +869,7 @@ func compactBattleAnalyticsArguments(record compactBattleAnalyticsRecord) []any 
 		record.AccountKey, analytics.ID, record.AccountUID, record.WorldID, record.PlayerID,
 		analytics.MID, analytics.LID, analytics.MovementID, strings.TrimSpace(analytics.AutomationFeature),
 		analytics.EventID, strings.TrimSpace(analytics.EventActivity), strings.TrimSpace(analytics.EventOccurrenceEndsAt),
-		analytics.OccurredAt, analytics.Result, analytics.Role, analytics.OwnTroopLosses, analytics.ToolsUsed,
+		analytics.OccurredAt, analytics.Result, analytics.Role, analytics.TroopsSent, analytics.OwnTroopLosses, analytics.ToolsUsed,
 		analytics.GallantryPoints, analytics.LootTotal, lootPayload, analytics.TargetPlayerID, analytics.TargetName,
 		analytics.TargetTypeID, analytics.TargetType, analytics.KingdomID, analytics.TargetX, analytics.TargetY,
 		record.UpdatedAt,
@@ -899,12 +914,19 @@ func analyticsReportFromBattle(report BattleReport) BattleAnalyticsReport {
 		EventID: report.EventID, EventActivity: strings.TrimSpace(report.EventActivity),
 		EventOccurrenceEndsAt: strings.TrimSpace(report.EventOccurrenceEndsAt),
 		OccurredAt:            report.OccurredAt, DateMs: report.DateMs, Result: report.Result, Role: report.Role,
-		OwnTroopLosses: ownTroopLosses(report), ToolsUsed: report.ToolsUsed,
+		TroopsSent: ownTroopsSent(report), OwnTroopLosses: ownTroopLosses(report), ToolsUsed: report.ToolsUsed,
 		GallantryPoints: report.GallantryPoints, LootTotal: reportLootTotal(report), Loot: report.Loot,
 		TargetPlayerID: target.playerID, TargetName: target.name,
 		TargetTypeID: target.typeID, TargetType: target.typeName,
 		KingdomID: report.KingdomID, TargetX: report.TargetX, TargetY: report.TargetY,
 	}
+}
+
+func ownTroopsSent(report BattleReport) int64 {
+	if report.Role != "attacker" {
+		return 0
+	}
+	return max(int64(0), report.Metrics.AttackerSent)
 }
 
 func normalizeStoredBattleReport(report BattleReport) BattleReport {

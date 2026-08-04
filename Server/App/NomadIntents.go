@@ -488,7 +488,11 @@ func (application *Application) resolveNomadCampAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build camp preset %q: %w", request.Preset.Name, err)
 	}
-	body, err := json.Marshal(invasionAttackBody(source, target, request.CommanderID, built, request.HorseTravelBoostID))
+	attack := invasionAttackBody(source, target, request.CommanderID, built)
+	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
+		return Intent.Step{}, fmt.Errorf("resolve camp horse travel boost: %w", err)
+	}
+	body, err := json.Marshal(attack)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build camp CRA payload: %w", err)
 	}

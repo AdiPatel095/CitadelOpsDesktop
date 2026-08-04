@@ -86,7 +86,7 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	if request.FillAvailable {
 		stackCount = queueCapacity - occupied
 	}
-	steps := castleContextSteps(castle)
+	steps := castleContextSteps(input, castle)
 	guardArguments, _ := json.Marshal(productionQueueCapacityGuard{
 		CastleID: request.CastleID, LineID: request.LineID,
 		ExpectedFreeSlots: stackCount, FillAvailable: request.FillAvailable,

@@ -270,7 +270,7 @@ const MovementView: React.FC = () => {
         : { label: 'Stale', variant: 'danger' as const };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="data-view-render-stable flex flex-col gap-6">
       <StaleSessionBanner />
 
       <Card className="liquid-prominent-header-card">
@@ -321,7 +321,7 @@ const MovementView: React.FC = () => {
         <CardContent className="liquid-prominent-header-content">
           {mode === 'Functions' ? (
             <div className="flex flex-col gap-4">
-              <div className="rounded-global border border-border-light bg-bg-card/45 px-4 py-3 shadow-[var(--glass-shadow-compact)] backdrop-blur-xl">
+              <div className="rounded-global border border-border-light bg-bg-card/45 px-4 py-3 shadow-[var(--shadow-raised)]">
                 <p className="text-sm font-semibold text-text-main">Choose the commanders each automation may launch.</p>
                 <p className="mt-1 text-xs text-text-muted">
                   Every function defaults to all commanders. Use a function in the table header to toggle it for the full roster, or adjust individual commanders below.
@@ -336,7 +336,7 @@ const MovementView: React.FC = () => {
                     : 'No commander roster was saved for the last session.'}
                 </p>
               ) : (
-                <div className="overflow-x-auto rounded-global border border-border-light bg-bg-card/30 shadow-[var(--glass-shadow-compact)] backdrop-blur-xl custom-scrollbar">
+                <div className="overflow-x-auto rounded-global border border-border-light bg-bg-card/30 shadow-[var(--shadow-raised)] custom-scrollbar">
                   <table className="min-w-[44rem] w-full text-sm">
                     <thead>
                       <tr className="border-b border-border-light bg-bg-card/65 text-left text-[10px] uppercase tracking-wider text-text-muted">

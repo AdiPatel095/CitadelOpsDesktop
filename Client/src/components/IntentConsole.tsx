@@ -68,7 +68,7 @@ const IntentConsole = () => {
   };
 
   return (
-    <SectionCard variant="glass" className="mb-6 w-full" title="Intent Console"
+    <SectionCard variant="solid" className="mb-6 w-full" title="Intent Console"
       icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400"><Braces className="h-4 w-4" /></span>}
       description="Inspect or submit the same deterministic operations used by the UI and CLI." contentClassName="space-y-4 p-6">
         <Select

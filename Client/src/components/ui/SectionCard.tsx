@@ -28,7 +28,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   children,
   ...props
 }) => (
-  <Card variant={variant} className={`liquid-prominent-header-card ${className}`} {...props}>
+  <Card variant={variant} className={`m3-section-card liquid-prominent-header-card ${className}`} {...props}>
     <CardHeader className={`liquid-card-header-prominent ${headerClassName}`}>
       <div className="min-w-0">
         <CardTitle className={`flex items-center gap-2 ${titleClassName}`}>

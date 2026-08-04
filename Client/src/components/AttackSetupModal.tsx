@@ -52,11 +52,19 @@ export interface AttackSetupInventory {
   toolStock: Record<number, number>;
 }
 
+export interface AttackSetupToolLimits {
+  L: number;
+  M: number;
+  R: number;
+}
+
 export interface AttackSetupModalProps {
   isOpen: boolean;
   initialDraft?: AttackSetupDraft;
   inventory?: AttackSetupInventory;
   inventoryPolicy?: 'enforced' | 'advisory';
+  targetType?: 'pve' | 'pvp';
+  toolLimits?: AttackSetupToolLimits;
   onClose: () => void;
   onSave: (draft: AttackSetupDraft) => void;
 }
@@ -78,6 +86,13 @@ interface InventoryIssue {
   stock: number;
 }
 
+interface ToolLimitIssue {
+  waveIndex: number;
+  laneKey: LaneKey;
+  requested: number;
+  limit: number;
+}
+
 const laneKeys: LaneKey[] = ['L', 'M', 'R'];
 const MAX_WAVES = 30;
 const COURTYARD_TROOP_SLOTS = 8;
@@ -88,6 +103,8 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
   initialDraft,
   inventory: inventoryOverride,
   inventoryPolicy = 'enforced',
+  targetType,
+  toolLimits,
   onClose,
   onSave,
 }) => {
@@ -143,8 +160,13 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
     () => findInventoryIssues(allocations, inventory),
     [allocations, inventory]
   );
+  const toolLimitIssues = useMemo(
+    () => findToolLimitIssues(draft, toolLimits),
+    [draft, toolLimits]
+  );
   const canSave = draft.name.trim().length > 0
     && totals.formationTroops > 0
+    && toolLimitIssues.length === 0
     && (inventoryPolicy === 'advisory' || inventoryIssues.length === 0);
 
   const setWaveCount = (count: number) => {
@@ -210,6 +232,11 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
                     ? 'Full catalog · stock advisory'
                     : hasInventory ? 'All-castles inventory' : 'Inventory unavailable'}
               </Badge>
+              {targetType ? (
+                <Badge variant={targetType === 'pvp' ? 'primary' : 'success'} className="normal-case tracking-normal">
+                  {targetType === 'pvp' ? 'PvP preset' : 'PvE preset'}
+                </Badge>
+              ) : null}
             </span>
           )}
         >
@@ -219,7 +246,11 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
       footer={
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
           <div className="text-xs text-text-muted">
-            {inventoryIssues.length > 0 ? (
+            {toolLimitIssues.length > 0 ? (
+              <span className="font-semibold text-error">
+                {toolLimitIssues.length} tool section limit{toolLimitIssues.length === 1 ? '' : 's'} must be resolved
+              </span>
+            ) : inventoryIssues.length > 0 ? (
               <span className={`font-semibold ${inventoryPolicy === 'advisory' ? 'text-warning' : 'text-error'}`}>
                 {inventoryIssues.length} stock conflict{inventoryIssues.length === 1 ? '' : 's'}
                 {inventoryPolicy === 'advisory' ? ' will be checked at launch' : ' must be resolved'}
@@ -238,7 +269,25 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
       }
     >
       <div className="mx-auto flex w-full max-w-[1760px] flex-col gap-4">
-        <section className="grid gap-3 rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--glass-shadow-compact)] backdrop-blur-2xl lg:grid-cols-[minmax(15rem,1.4fr)_auto_auto] lg:items-end">
+        {toolLimits ? (
+          <section className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-primary/25 bg-primary/8 px-4 py-3">
+            <div>
+              <div className="text-sm font-black text-text-main">
+                {targetType === 'pvp' ? 'PvP tool limits' : 'PvE tool limits'}
+              </div>
+              <p className="mt-0.5 text-xs text-text-muted">
+                Each wave is checked independently. The server checks the actual target again before CRA is sent.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="normal-case tracking-normal">Left {toolLimits.L}</Badge>
+              <Badge variant="outline" className="normal-case tracking-normal">Center {toolLimits.M}</Badge>
+              <Badge variant="outline" className="normal-case tracking-normal">Right {toolLimits.R}</Badge>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="grid gap-3 rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)] lg:grid-cols-[minmax(15rem,1.4fr)_auto_auto] lg:items-end">
           <label className="block min-w-0">
             <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted">Preset name</span>
             <Input
@@ -303,6 +352,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
               toolStock={inventory.tools}
               troopAllocations={allocations.troops}
               toolAllocations={allocations.tools}
+              toolLimits={toolLimits}
               onDuplicate={() => duplicateWave(waveIndex)}
               onClear={() => updateWaveAt(waveIndex, () => emptyWave())}
               onChangeLane={(laneKey, lane) => {
@@ -337,16 +387,28 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
                   stockQuantities: inventory.tools,
                 });
                 if (typeof result !== 'number') return;
-                updateWaveAt(waveIndex, (currentWave) => ({
-                  ...currentWave,
-                  [laneKey]: {
-                    ...currentWave[laneKey],
-                    tools: updateSlot(currentWave[laneKey].tools, slotIndex, {
-                      itemId: result,
-                      quantity: slot.quantity > 0 ? slot.quantity : 1,
-                    }),
-                  },
-                }));
+                updateWaveAt(waveIndex, (currentWave) => {
+                  const laneTools = currentWave[laneKey].tools;
+                  const otherTools = laneTools.reduce(
+                    (total, currentSlot, currentIndex) => currentIndex === slotIndex
+                      ? total
+                      : total + currentSlot.quantity,
+                    0,
+                  );
+                  const maximum = toolLimits == null
+                    ? Number.MAX_SAFE_INTEGER
+                    : Math.max(0, toolLimits[laneKey] - otherTools);
+                  return {
+                    ...currentWave,
+                    [laneKey]: {
+                      ...currentWave[laneKey],
+                      tools: updateSlot(laneTools, slotIndex, {
+                        itemId: result,
+                        quantity: Math.min(slot.quantity > 0 ? slot.quantity : 1, maximum),
+                      }),
+                    },
+                  };
+                });
               }}
             />
           ))}
@@ -425,6 +487,30 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
             </div>
           </section>
         ) : null}
+
+        {toolLimitIssues.length > 0 ? (
+          <section className="rounded-global border border-error/30 bg-error/8 p-3 text-sm text-error">
+            <div className="mb-2 font-black">Preset exceeds the selected target type’s tool limits</div>
+            <p className="mb-2 text-xs font-medium text-text-muted">
+              Reduce tools in each listed section before saving. Limits apply separately to every wave.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {toolLimitIssues.slice(0, 12).map((issue) => (
+                <span
+                  key={`${issue.waveIndex}-${issue.laneKey}`}
+                  className="rounded-full border border-current/25 bg-bg-card/45 px-3 py-1.5 text-xs font-semibold"
+                >
+                  Wave {issue.waveIndex + 1} · {laneLabel(issue.laneKey)}: {issue.requested} / {issue.limit}
+                </span>
+              ))}
+              {toolLimitIssues.length > 12 ? (
+                <span className="rounded-full border border-current/25 bg-bg-card/45 px-3 py-1.5 text-xs font-semibold">
+                  +{toolLimitIssues.length - 12} more sections
+                </span>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
       </div>
     </Modal>
   );
@@ -440,6 +526,7 @@ interface WaveEditorCardProps {
   toolStock: Record<number, number>;
   troopAllocations: Record<number, number>;
   toolAllocations: Record<number, number>;
+  toolLimits?: AttackSetupToolLimits;
   onDuplicate: () => void;
   onClear: () => void;
   onChangeLane: (laneKey: LaneKey, lane: AttackSetupLane) => void;
@@ -457,6 +544,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
   toolStock,
   troopAllocations,
   toolAllocations,
+  toolLimits,
   onDuplicate,
   onClear,
   onChangeLane,
@@ -538,6 +626,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
               items={toolItems}
               stock={toolStock}
               allocations={toolAllocations}
+              laneLimits={toolLimits}
               onChangeLane={onChangeLane}
               onPick={onPickTool}
             />
@@ -677,11 +766,23 @@ interface FormationRowProps {
   items: InventoryItem[];
   stock: Record<number, number>;
   allocations: Record<number, number>;
+  laneLimits?: AttackSetupToolLimits;
   onChangeLane: (laneKey: LaneKey, lane: AttackSetupLane) => void;
   onPick: (laneKey: LaneKey, slot: AttackSetupSlot, slotIndex: number) => void;
 }
 
-const FormationRow: React.FC<FormationRowProps> = ({ kind, label, divided = false, wave, items, stock, allocations, onChangeLane, onPick }) => {
+const FormationRow: React.FC<FormationRowProps> = ({
+  kind,
+  label,
+  divided = false,
+  wave,
+  items,
+  stock,
+  allocations,
+  laneLimits,
+  onChangeLane,
+  onPick,
+}) => {
   const slotKey = kind === 'troop' ? 'troops' : 'tools';
   const laneTemplate = laneKeys.map((laneKey) => `${wave[laneKey][slotKey].length}fr`).join(' ');
 
@@ -700,14 +801,18 @@ const FormationRow: React.FC<FormationRowProps> = ({ kind, label, divided = fals
             const lane = wave[laneKey];
             const slots = lane[slotKey];
             const filledSlots = slots.filter((slot) => slot.itemId != null).length;
+            const laneTotal = slots.reduce((total, slot) => total + slot.quantity, 0);
+            const laneLimit = kind === 'tool' ? laneLimits?.[laneKey] : undefined;
+            const laneOverLimit = laneLimit != null && laneTotal > laneLimit;
             return (
               <div key={laneKey} className="min-w-0 px-2 py-1">
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <span className={`text-[10px] font-black uppercase tracking-wider ${laneKey === 'M' ? 'text-primary' : 'text-text-muted'}`}>
                     {laneLabel(laneKey)}
                   </span>
-                  <span className="font-mono text-[9px] font-bold text-text-muted">
+                  <span className={`font-mono text-[9px] font-bold ${laneOverLimit ? 'text-error' : 'text-text-muted'}`}>
                     {filledSlots}/{slots.length} filled
+                    {laneLimit == null ? '' : ` · ${laneTotal}/${laneLimit}`}
                   </span>
                 </div>
                 <div className="flex items-start justify-center gap-2">
@@ -721,6 +826,9 @@ const FormationRow: React.FC<FormationRowProps> = ({ kind, label, divided = fals
                       items={items}
                       stock={stock}
                       allocated={slot.itemId == null ? 0 : allocations[slot.itemId] ?? 0}
+                      maxQuantity={laneLimit == null
+                        ? undefined
+                        : Math.max(0, laneLimit - (laneTotal - slot.quantity))}
                       onChange={(patch) => {
                         const updatedSlots = updateSlot(slots, slotIndex, patch);
                         onChangeLane(laneKey, {
@@ -752,6 +860,7 @@ interface InventorySlotCardProps {
   slotCodePrefix?: string;
   slotContext?: string;
   fixedQuantity?: number;
+  maxQuantity?: number;
   onChange: (patch: Partial<AttackSetupSlot>) => void;
   onPick: () => void;
 }
@@ -767,6 +876,7 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
   slotCodePrefix,
   slotContext,
   fixedQuantity,
+  maxQuantity,
   onChange,
   onPick,
 }) => {
@@ -779,7 +889,8 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
   const overAllocated = hasItem && allocated > available;
   const slotLabel = `${slotContext ?? `${laneKey ? laneLabel(laneKey) : 'formation'} ${itemKindLabel}`} slot ${index + 1}`;
   const slotCode = `${slotCodePrefix ?? (kind === 'troop' ? 'U' : 'T')}${index + 1}`;
-  const pickerDisabled = items.length === 0;
+  const sectionLimitReached = !hasItem && maxQuantity === 0;
+  const pickerDisabled = items.length === 0 || sectionLimitReached;
 
   return (
     <div className="flex w-[5.25rem] shrink-0 flex-col items-center">
@@ -812,9 +923,11 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
               <input
                 type="number"
                 min={0}
-                max={available || undefined}
+                max={maxQuantity ?? (available || undefined)}
                 value={slot.quantity || ''}
-                onChange={(event) => onChange({ quantity: positiveInteger(event.target.value) })}
+                onChange={(event) => onChange({
+                  quantity: Math.min(positiveInteger(event.target.value), maxQuantity ?? Number.MAX_SAFE_INTEGER),
+                })}
                 onClick={(event) => event.stopPropagation()}
                 placeholder="0"
                 className="w-12 bg-transparent p-0 text-center font-mono text-[10px] font-black tabular-nums text-slate-900 outline-none"
@@ -856,7 +969,9 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
             onClick={onPick}
             disabled={pickerDisabled}
             className="h-[76px] w-[76px] shrink-0 px-1 text-[9px] disabled:cursor-not-allowed disabled:opacity-40"
-            title={pickerDisabled ? `No available ${itemKindLabel}s in this inventory` : `Choose ${itemKindLabel}`}
+            title={sectionLimitReached
+              ? 'This section has reached its tool limit'
+              : pickerDisabled ? `No available ${itemKindLabel}s in this inventory` : `Choose ${itemKindLabel}`}
             aria-label={`Choose ${slotLabel}`}
           />
           <span className="mt-1.5 flex h-7 items-center text-center text-[10px] font-bold leading-[1.05] text-text-muted">
@@ -950,6 +1065,22 @@ function findInventoryIssues(
       if (requested > stock) issues.push({ kind, itemId, requested, stock });
     }
   }
+  return issues;
+}
+
+function findToolLimitIssues(
+  draft: AttackSetupDraft,
+  limits?: AttackSetupToolLimits,
+): ToolLimitIssue[] {
+  if (!limits) return [];
+  const issues: ToolLimitIssue[] = [];
+  draft.waves.forEach((wave, waveIndex) => {
+    laneKeys.forEach((laneKey) => {
+      const requested = wave[laneKey].tools.reduce((total, slot) => total + slot.quantity, 0);
+      const limit = limits[laneKey];
+      if (requested > limit) issues.push({ waveIndex, laneKey, requested, limit });
+    });
+  });
   return issues;
 }
 

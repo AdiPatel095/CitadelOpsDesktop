@@ -28,7 +28,9 @@ type Decision struct {
 	// FailureFallback runs only when Request reaches a terminal failed,
 	// partially-succeeded, or indeterminate status. Cancellation never triggers it.
 	FailureFallback *Intent.Request
-	FailureDetail   string
+	// FailureFallbackIndeterminateOnly limits the fallback to an uncertain write outcome.
+	FailureFallbackIndeterminateOnly bool
+	FailureDetail                    string
 	// ScheduleKey identifies an additional decision-specific schedule, such as
 	// a per-castle production window, that must remain open while the request waits.
 	ScheduleKey string

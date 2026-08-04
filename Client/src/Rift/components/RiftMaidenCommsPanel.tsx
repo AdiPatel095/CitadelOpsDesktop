@@ -180,7 +180,7 @@ const RiftMaidenCommsPanel: React.FC = () => {
   ]);
 
   return (
-    <SectionCard variant="glass" title="Maiden comms wave" titleClassName="text-lg text-primary"
+    <SectionCard variant="solid" title="Maiden comms wave" titleClassName="text-lg text-primary"
       description="Sends a dummy 1-wave Rift attack (11 per flank) for each commander that is not busy and wears a relic with shield-maiden support (300–1050). Probe unit comes from main castle stock (last troop read)."
       descriptionClassName="" contentClassName="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 min-w-0">

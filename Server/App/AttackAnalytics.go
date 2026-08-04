@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"CitadelDesktop/Server/GameData"
@@ -59,6 +60,7 @@ func restoreRecentAutoStormLaunchHistory(
 			MovementID:   State.MovementID(report.MovementID),
 			FeatureID:    State.AttackFeatureAutoStorm,
 			KingdomID:    State.KingdomID(GameData.StormKingdomID),
+			TroopCount:   report.TroopsSent,
 			TargetTypeID: report.TargetTypeID,
 			TargetX:      report.TargetX,
 			TargetY:      report.TargetY,
@@ -86,6 +88,10 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 	if request.SourceCastleID <= 0 || request.CommanderID < 0 {
 		return fmt.Errorf("attack analytics capture requires a source castle and commander")
 	}
+	var gameData *GameData.Store
+	if application.GameData != nil {
+		gameData, _ = application.GameData.Current()
+	}
 	_, err := application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 		var selected State.MovementState
 		for _, movement := range gameState.Movements {
@@ -111,6 +117,7 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 		}
 		changed := State.RecordAttackFeatureLaunch(gameState, State.AttackFeatureLaunch{
 			MovementID: selected.ID, FeatureID: request.FeatureID, KingdomID: request.KingdomID,
+			TroopCount:   attackMovementTroopCount(gameData, selected.Units),
 			TargetTypeID: request.TargetTypeID, TargetX: request.TargetX, TargetY: request.TargetY,
 			LaunchedAt: launchedAt.UTC(), ArrivesAt: selected.ArrivesAt.UTC(),
 		})
@@ -125,4 +132,33 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 		return domains, changed, nil
 	})
 	return err
+}
+
+func attackMovementTroopCount(gameData *GameData.Store, units map[State.UnitID]int64) int64 {
+	if gameData == nil || len(units) == 0 {
+		return 0
+	}
+	catalog, err := gameData.Catalog("units")
+	if err != nil {
+		return 0
+	}
+	total := int64(0)
+	for unitID, amount := range units {
+		if unitID <= 0 || amount <= 0 {
+			continue
+		}
+		raw, found := catalog.Find(strconv.FormatInt(int64(unitID), 10))
+		if !found {
+			return 0
+		}
+		record, err := GameData.DecodeRecord(raw)
+		if err != nil {
+			return 0
+		}
+		if GameData.IsToolRecord(record) {
+			continue
+		}
+		total = saturatingTroopAdd(total, amount)
+	}
+	return total
 }

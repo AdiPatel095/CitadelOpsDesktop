@@ -258,7 +258,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> Skip every Khan camp cooldown</div>
-              <p className="mt-1 text-xs text-text-muted">Each launched hit reserves one time skip. The camp is refreshed after impact and its cooldown is cleared before the following hit lands.</p>
+              <p className="mt-1 text-xs text-text-muted">Each launched hit reserves enough combined skip time. Every skip command uses one item, then waits for confirmation before applying another.</p>
             </div>
             <Switch
               checked={draft.skipCooldowns}
@@ -266,8 +266,16 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               ariaLabel="Skip every Khan camp cooldown"
             />
           </div>
-          <div className="mt-3 grid gap-3 border-t border-border-base pt-3 sm:grid-cols-3">
-            {([['MS6', 'Keep 5h skips'], ['MS7', 'Keep 24h skips']] as const).map(([key, label]) => (
+          <div className="mt-3 grid gap-3 border-t border-border-base pt-3 sm:grid-cols-4">
+            {([
+              ['MS1', 'Keep 1m'],
+              ['MS2', 'Keep 5m'],
+              ['MS3', 'Keep 10m'],
+              ['MS4', 'Keep 30m'],
+              ['MS5', 'Keep 1h'],
+              ['MS6', 'Keep 5h'],
+              ['MS7', 'Keep 24h'],
+            ] as const).map(([key, label]) => (
               <label key={key} className="block">
                 <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">{label}</span>
                 <Input

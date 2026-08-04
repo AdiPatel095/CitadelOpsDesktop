@@ -4,6 +4,7 @@ import { parseHorseTravelBoostID, type HorseTravelBoostID } from './HorseTravelB
 export const AUTO_STORM_SECTION = 'automation.autoStorm';
 export const AUTO_STORM_BLUEPRINTS_SECTION = 'automation.autoStormBlueprints';
 export const AUTO_STORM_MAP_REFRESH_INTERVAL_SEC = 2 * 60 * 60;
+export const AUTO_STORM_TROOP_HISTORY_HOURS = 24;
 export const AUTO_STORM_LUNA_PACKAGE_IDS: readonly number[] = [
   3116, 3117, 3118, 3119, 3120, 3122, 3123, 3124, 3125,
   245, 246, 247, 248,
@@ -37,6 +38,10 @@ export interface AutoStormShopPurchase {
 
 export interface AutoStormClientStateV1 {
   version: 1;
+  unlock: {
+    enabled: boolean;
+    prebuiltCastleId: number;
+  };
   target?: BuildingTargetCaptureResponse;
   decorationPresetCastleId: number;
   decorationPresetId: string;
@@ -92,6 +97,7 @@ const AUTO_STORM_LUNA_PACKAGE_ID_SET = new Set(AUTO_STORM_LUNA_PACKAGE_IDS);
 export function defaultAutoStormClientState(): AutoStormClientStateV1 {
   return {
     version: 1,
+    unlock: { enabled: false, prebuiltCastleId: 0 },
     decorationPresetCastleId: 0,
     decorationPresetId: '',
     build: {
@@ -112,7 +118,12 @@ export function defaultAutoStormClientState(): AutoStormClientStateV1 {
       presetId: '',
       defenseUnits: [],
     },
-    troopImport: { enabled: false, donorCastleIds: [], minimumTroops: 0, historyHours: 72 },
+    troopImport: {
+      enabled: false,
+      donorCastleIds: [],
+      minimumTroops: 0,
+      historyHours: AUTO_STORM_TROOP_HISTORY_HOURS,
+    },
     aquamarine: { reserve: 0, shopTableId: 0, purchases: [] },
     targetPriority: [...AUTO_STORM_TARGET_PRIORITIES],
     checkIntervalSec: 30,
@@ -127,6 +138,7 @@ export function parseAutoStormClientState(value: unknown): AutoStormClientStateV
   if (!isRecord(value)) return fallback;
 
   const build = isRecord(value.build) ? value.build : {};
+  const unlock = isRecord(value.unlock) ? value.unlock : {};
   const harbor = isRecord(value.harbor) ? value.harbor : {};
   const forts = isRecord(value.forts) ? value.forts : {};
   const islands = isRecord(value.islands) ? value.islands : {};
@@ -136,6 +148,10 @@ export function parseAutoStormClientState(value: unknown): AutoStormClientStateV
 
   return {
     version: 1,
+    unlock: {
+      enabled: unlock.enabled === true,
+      prebuiltCastleId: positiveInteger(unlock.prebuiltCastleId),
+    },
     ...(target ? { target } : {}),
     decorationPresetCastleId: positiveInteger(value.decorationPresetCastleId),
     decorationPresetId: stringValue(value.decorationPresetId),
@@ -169,7 +185,7 @@ export function parseAutoStormClientState(value: unknown): AutoStormClientStateV
       enabled: troopImport.enabled === true,
       donorCastleIds: parsePositiveIntegerArray(troopImport.donorCastleIds),
       minimumTroops: clampAutoStormInteger(troopImport.minimumTroops, 0, Number.MAX_SAFE_INTEGER, 0),
-      historyHours: parseAutoStormHistoryHours(troopImport.historyHours, fallback.troopImport.historyHours),
+      historyHours: AUTO_STORM_TROOP_HISTORY_HOURS,
     },
     aquamarine: {
       reserve: clampAutoStormInteger(aquamarine.reserve, 0, Number.MAX_SAFE_INTEGER, 0),
@@ -299,11 +315,6 @@ function parsePositiveIntegerArray(value: unknown): number[] {
     result.push(parsed);
   }
   return result;
-}
-
-function parseAutoStormHistoryHours(value: unknown, fallback: number): number {
-  const parsed = Number(value);
-  return parsed === 24 || parsed === 48 || parsed === 72 ? parsed : fallback;
 }
 
 function parseTargetPriority(value: unknown, legacyCombatOrder: unknown): AutoStormTargetPriority[] {

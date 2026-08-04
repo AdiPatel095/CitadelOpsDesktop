@@ -9,7 +9,7 @@ interface DetailBackButtonProps {
 
 const DetailBackButton = ({ label, onClick, className = '' }: DetailBackButtonProps) => (
   <Button
-    variant="glass"
+    variant="secondary"
     onClick={onClick}
     className={`detail-back-button group ${className}`}
     aria-label={label}

@@ -211,7 +211,7 @@ export interface CastleBuildingV2 {
 	gridY?: number;
 	rotation?: number;
 	level?: number;
-	layer?: 'BG' | 'BD' | 'T' | 'G' | 'D';
+	layer?: 'BG' | 'BD' | 'T' | 'G' | 'D' | 'FP';
 	placed: boolean;
 }
 
@@ -1146,8 +1146,10 @@ export interface AutoStormTroopCapPreviewV2 {
 	minimumTroops: number;
 	historyHours: number;
 	attacksInHistory: number;
-	averageDailyAttacks: number;
-	bufferedAttackCount: number;
+	measuredAttacksInHistory: number;
+	troopsSentInHistory: number;
+	averageTroopsPerHour: number;
+	bufferedTroops: number;
 	detail?: string;
 }
 

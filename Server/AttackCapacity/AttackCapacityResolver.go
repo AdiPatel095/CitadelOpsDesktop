@@ -13,12 +13,15 @@ import (
 )
 
 const (
-	flankEffectTypeID        = 28
-	frontEffectTypeID        = 34
-	waveEffectTypeID         = 156
-	supportUnitsEffectTypeID = 179
-	supportBoostEffectTypeID = 180
-	baseAttackWaves          = 4
+	flankEffectTypeID              = 28
+	frontEffectTypeID              = 34
+	waveEffectTypeID               = 156
+	supportUnitsEffectTypeID       = 179
+	supportBoostEffectTypeID       = 180
+	baseAttackWaves                = 4
+	baseFlankToolCapacity    int64 = 30
+	baseFrontToolCapacity    int64 = 40
+	maximumLegendToolBonus   int64 = 10
 )
 
 type Lane string
@@ -206,6 +209,7 @@ type Context struct {
 	CommanderID      State.CommanderID `json:"commanderId"`
 	Target           TargetContext     `json:"target"`
 	BaseWaves        int               `json:"baseWaves"`
+	LegendToolBonus  int64             `json:"legendToolBonus,omitempty"`
 	WaveModifiers    []WaveModifier    `json:"waveModifiers,omitempty"`
 	SupportModifiers []SupportModifier `json:"supportModifiers,omitempty"`
 	Modifiers        []Modifier        `json:"modifiers"`
@@ -224,6 +228,9 @@ type Result struct {
 	BaseCapacity        LaneCapacity      `json:"baseCapacity"`
 	BonusPercent        LaneBonus         `json:"bonusPercent"`
 	Capacity            LaneCapacity      `json:"capacity"`
+	BaseToolCapacity    LaneCapacity      `json:"baseToolCapacity"`
+	LegendToolBonus     int64             `json:"legendToolBonus"`
+	ToolCapacity        LaneCapacity      `json:"toolCapacity"`
 	SupportUnitAmount   float64           `json:"supportUnitAmount"`
 	SupportBoostPercent float64           `json:"supportBoostPercent"`
 	SupportCapacity     int64             `json:"supportCapacity"`
@@ -385,6 +392,17 @@ func (builder contextBuilder) addLegendSkills(skills State.LegendSkillState) err
 			})
 			continue
 		}
+		if effectType == "additionalAttackToolAmountFlank" {
+			bonus, exists := record.Float64("totalEffectValue")
+			if !exists || bonus <= 0 || !isFinite(bonus) {
+				continue
+			}
+			builder.context.LegendToolBonus = max(
+				builder.context.LegendToolBonus,
+				min(int64(math.Floor(bonus)), maximumLegendToolBonus),
+			)
+			continue
+		}
 		var lane Lane
 		switch effectType {
 		case "additionalUnitAmountOnFlank":
@@ -538,6 +556,18 @@ func (Resolver) ResolveContext(context Context) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
+	baseToolCapacity := LaneCapacity{
+		Left: baseFlankToolCapacity, Front: baseFrontToolCapacity, Right: baseFlankToolCapacity,
+	}
+	legendToolBonus := int64(0)
+	if context.Target.PvP && context.Target.LegendaryFight {
+		legendToolBonus = min(max(int64(0), context.LegendToolBonus), maximumLegendToolBonus)
+	}
+	toolCapacity := LaneCapacity{
+		Left:  baseToolCapacity.Left + legendToolBonus,
+		Front: baseToolCapacity.Front + legendToolBonus,
+		Right: baseToolCapacity.Right + legendToolBonus,
+	}
 	supportGroups := map[supportCapGroupKey]*supportCapGroupAccumulator{}
 	for _, modifier := range context.SupportModifiers {
 		if modifier.Kind != SupportModifierUnits && modifier.Kind != SupportModifierBoost {
@@ -597,6 +627,7 @@ func (Resolver) ResolveContext(context Context) (Result, error) {
 		BaseWaves: baseWaves, AdditionalWaves: additionalWaves, MaximumWaves: baseWaves + additionalWaves,
 		WaveModifiers: append([]WaveModifier(nil), context.WaveModifiers...),
 		BaseCapacity:  context.Target.BaseCapacity, BonusPercent: bonus, Capacity: capacity,
+		BaseToolCapacity: baseToolCapacity, LegendToolBonus: legendToolBonus, ToolCapacity: toolCapacity,
 		SupportUnitAmount: supportUnitAmount, SupportBoostPercent: supportBoostPercent, SupportCapacity: supportCapacity,
 		SupportModifiers: append([]SupportModifier(nil), context.SupportModifiers...), SupportCapGroups: supportCapGroups,
 		Modifiers: append([]Modifier(nil), context.Modifiers...), CapGroups: capGroups,

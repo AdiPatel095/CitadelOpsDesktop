@@ -50,6 +50,7 @@ func TestCastleSnapshotKeepsConstructionSlots(t *testing.T) {
 			"BG":[[196,4000,1,2,0,0,0,0,0,0,0,0,0,0,8]],
 			"BD":[[301,4001,3,4,0,4,8,100,-1,-1,0,0,0,0,1,-1]],
 			"T":[[401,5000,0,0,0,0,0,0,0,0,0,0,0,0,1]],
+			"FP":[[45,5001,-1,-1,0,0,4,100,-1,-1,0,0,0,0,1,-1]],
 			"scl":{"OIDL":[4000,-1,-2],"SSC":2},
 			"CI":[{"OID":4000,"CIL":[{"CID":379,"S":0},{"CID":725,"S":1,"RS":60}]}]
 		},
@@ -97,6 +98,9 @@ func TestCastleSnapshotKeepsConstructionSlots(t *testing.T) {
 	if castle.Layout.Fixed[5000].Layer != State.BuildingLayerT {
 		t.Fatalf("fixed structures were not retained: %#v", castle.Layout.Fixed)
 	}
+	if harbor := castle.Layout.Fixed[5001]; harbor.Layer != State.BuildingLayerFP || harbor.DefinitionID != 45 || harbor.Placed {
+		t.Fatalf("fixed-position Harbor was not retained: %#v", harbor)
+	}
 	if _, merged := castle.Buildings[5000]; merged {
 		t.Fatalf("legacy BG+BD building map unexpectedly contains a fixed structure: %#v", castle.Buildings)
 	}
@@ -107,6 +111,44 @@ func TestCastleSnapshotKeepsConstructionSlots(t *testing.T) {
 	}
 	if remaining := castle.ConstructionSlots[4000][1].RemainingSec; remaining == nil || *remaining != 60 {
 		t.Fatalf("remaining seconds were not parsed: %#v", remaining)
+	}
+}
+
+func TestCastleListReducerReconcilesDirectAndStormUnlockResponses(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 42
+	gameState.Castles[100] = newCastleState(100)
+	code := 0
+	castleList := `{"PID":42,"C":[{"KID":0,"AI":[{"AI":[1,10,20,100,42,0,0,0,0,0,"Main"]}]},{"KID":4,"AI":[{"AI":[12,615,552,3849,42,1,2,2,2,0,"Storm"]}]}]}`
+
+	_, changed, err := reduceCastleList(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "gcl", ResponseCode: &code,
+		Payload: json.RawMessage(castleList), ReceivedAt: time.Now().UTC(),
+	}, &gameState, nil)
+	if err != nil || !changed || gameState.Castles[3849].KingdomID != 4 || gameState.Castles[3849].X != 615 {
+		t.Fatalf("direct castle list: changed=%t castles=%#v err=%v", changed, gameState.Castles, err)
+	}
+
+	delete(gameState.Castles, 3849)
+	unlockPayload, err := json.Marshal(map[string]json.RawMessage{"KID": json.RawMessage(`4`), "gcl": json.RawMessage(castleList)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, changed, err = reduceCastleList(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "ksc", ResponseCode: &code,
+		Payload: unlockPayload, ReceivedAt: time.Now().UTC(),
+	}, &gameState, nil)
+	if err != nil || !changed || gameState.Castles[3849].Name != "Storm" {
+		t.Fatalf("nested unlock castle list: changed=%t castles=%#v err=%v", changed, gameState.Castles, err)
+	}
+
+	foreignList := `{"PID":99,"C":[{"KID":0,"AI":[{"AI":[1,30,40,900,99,0,0,0,0,0,"Foreign"]}]}]}`
+	_, changed, err = reduceCastleList(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "gcl", ResponseCode: &code,
+		Payload: json.RawMessage(foreignList), ReceivedAt: time.Now().UTC(),
+	}, &gameState, nil)
+	if err != nil || changed || len(gameState.Castles) != 2 || gameState.Castles[100].Name != "Main" {
+		t.Fatalf("foreign castle list changed own state: changed=%t castles=%#v err=%v", changed, gameState.Castles, err)
 	}
 }
 

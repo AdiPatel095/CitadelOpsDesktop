@@ -55,7 +55,10 @@ func planDungeonMinuteSkip(
 		dungeonMinuteSkipRequest: request, StartedAt: time.Now().UTC(), InitialRemaining: remaining,
 		MSDWireKey: option.WireKey, MSDMinutes: option.Minutes,
 	})
-	claims := []string{dungeonMinuteSkipClaim(observation), "account-resources"}
+	claims := []string{
+		dungeonMinuteSkipClaim(observation), "account-resources",
+		"currency:" + strconv.FormatInt(int64(option.CurrencyID), 10),
+	}
 	if request.KhanGuard != nil {
 		claims = append(claims, "khan-lane:cooldown")
 	}
@@ -70,6 +73,7 @@ func planDungeonMinuteSkip(
 				Name: "Build authoritative dungeon time skip", Resolver: "nomad.cooldown.minute_skip.build",
 				ResolverArguments: verification, AwaitOpcode: "msd", TimeoutMillis: 10_000, SuccessCodes: []int{0},
 			},
+			timeSkipConsumeStep(input, option.CurrencyID),
 			{Name: "Verify dungeon cooldown advanced", Action: "nomad.cooldown.minute_skip.verify", ActionArguments: verification},
 		},
 	}, nil

@@ -29,10 +29,24 @@ func featureActivities(receipt Intent.Receipt) []featureActivity {
 		detail := "Could not " + attemptedActivityDetail(summary)
 		reason := userFacingFailureReason(receipt.Error)
 		detail += ": " + reason
-		return []featureActivity{{severity: "ERROR", event: featureActivityEvent(receipt.Intent), detail: detail}}
+		severity := "ERROR"
+		if availabilityGateFailure(receipt.Error) {
+			severity = "WARN"
+		}
+		return []featureActivity{{severity: severity, event: featureActivityEvent(receipt.Intent), detail: detail}}
 	default:
 		return nil
 	}
+}
+
+func availabilityGateFailure(value string) bool {
+	lower := strings.ToLower(strings.TrimSpace(value))
+	if strings.Contains(lower, "not enough troops") || strings.Contains(lower, "insufficient troops") {
+		return true
+	}
+	return strings.Contains(lower, " of item ") &&
+		(strings.Contains(lower, " commander(s) require ") ||
+			strings.Contains(lower, " attack formation requires "))
 }
 
 func userFacingFailureReason(value string) string {

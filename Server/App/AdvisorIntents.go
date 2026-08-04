@@ -175,8 +175,11 @@ func (application *Application) resolveAdvisorAttackStep(
 		return Intent.Step{}, fmt.Errorf("build advisor preset %q: %w", request.Preset.Name, err)
 	}
 	body := advisorAttackBody{
-		attackBody:  invasionAttackBody(source, target, request.CommanderID, built, request.HorseTravelBoostID),
+		attackBody:  invasionAttackBody(source, target, request.CommanderID, built),
 		AttackCount: request.AttackCount, Mode: 0, AdvisorType: 1,
+	}
+	if err := applyCastleHorseTravelBoost(&body.attackBody, input.GameData, source, request.HorseTravelBoostID); err != nil {
+		return Intent.Step{}, fmt.Errorf("resolve advisor horse travel boost: %w", err)
 	}
 	payload, err := json.Marshal(body)
 	if err != nil {

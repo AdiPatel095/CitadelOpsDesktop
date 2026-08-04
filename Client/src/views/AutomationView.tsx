@@ -21,10 +21,10 @@ import {
   ModalTitle,
   PageHeader,
   ScheduleSummaryRow,
-  StatusIndicator,
   Switch,
   type StatusTone,
 } from '../components/ui';
+import type { AutomationStateV2 } from '../api/Contracts';
 import {
   AUTO_EQUIPMENT_CLEANUP_FEATURE_ID,
   AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY,
@@ -59,12 +59,20 @@ interface AutomationFeature {
   name: string;
   description: string;
   enabled: boolean;
-  detail: string;
+  detail?: string;
   status: string;
+  statusLanes?: AutomationStatusLane[];
   icon: React.ComponentType<{ className?: string }>;
   onToggle: () => void;
   onOpenSettings: () => void;
   disabled?: boolean;
+}
+
+interface AutomationStatusLane {
+  id: string;
+  label: string;
+  status: string;
+  detail?: string;
 }
 
 type AutomationGroupID = 'production' | 'upkeep' | 'support' | 'offense';
@@ -108,25 +116,40 @@ function modeLabel(mode: 'global' | 'perCastle'): string {
 }
 
 function combinedAutomationStatus(
-  primary: string | undefined,
-  secondary: string | undefined,
+  statuses: Array<string | undefined>,
   enabled: boolean,
-  tertiary?: string,
 ): string {
   if (!enabled) return 'disabled';
-  const statuses = [primary, secondary, tertiary].filter((status): status is string => Boolean(status));
+  const availableStatuses = statuses.filter((status): status is string => Boolean(status));
   for (const status of ['error', 'blocked', 'failed']) {
-    if (statuses.includes(status)) return status;
+    if (availableStatuses.includes(status)) return status;
   }
+  if (availableStatuses.includes('gated')) return 'gated';
   for (const status of ['running', 'ready']) {
-    if (statuses.includes(status)) return status;
+    if (availableStatuses.includes(status)) return status;
   }
-  if (statuses.length > 0 && statuses.every((status) => status === 'complete')) return 'complete';
-  return statuses[0] ?? 'waiting';
+  if (availableStatuses.length > 0 && availableStatuses.every((status) => status === 'complete')) return 'complete';
+  return availableStatuses[0] ?? 'waiting';
+}
+
+function automationStatusLane(
+  id: string,
+  label: string,
+  runtime: AutomationStateV2 | undefined,
+  enabled: boolean,
+  fallbackDetail: string,
+): AutomationStatusLane {
+  return {
+    id,
+    label,
+    status: enabled ? runtime?.status ?? 'waiting' : 'disabled',
+    detail: enabled ? runtime?.detail ?? fallbackDetail : undefined,
+  };
 }
 
 function automationStatusTone(status: string): StatusTone {
   switch (status.toLowerCase()) {
+    case 'complete':
     case 'completed':
     case 'success':
       return 'success';
@@ -134,6 +157,7 @@ function automationStatusTone(status: string): StatusTone {
     case 'error':
       return 'danger';
     case 'blocked':
+    case 'gated':
     case 'retrying':
       return 'warning';
     case 'running':
@@ -144,6 +168,42 @@ function automationStatusTone(status: string): StatusTone {
     default:
       return 'neutral';
   }
+}
+
+function AutomationStatusLines({
+  featureName,
+  status,
+  detail,
+  lanes,
+}: {
+  featureName: string;
+  status: string;
+  detail?: string;
+  lanes?: AutomationStatusLane[];
+}) {
+  const hasLanes = Boolean(lanes?.length);
+  const lines: AutomationStatusLane[] = hasLanes
+    ? [{ id: 'overall', label: 'Overall', status }, ...(lanes ?? [])]
+    : [{ id: 'overall', label: '', status, detail }];
+
+  return (
+    <div
+      className={`automation-function-status-list ${hasLanes ? 'automation-function-status-list-multi' : ''}`}
+      aria-label={`${featureName} status`}
+    >
+      {lines.map((line) => (
+        <div
+          key={line.id}
+          className={`ui-status ui-status-${automationStatusTone(line.status)} automation-function-status-line ${line.label ? 'automation-function-status-line-lane' : ''}`}
+        >
+          <span className="ui-status-symbol" aria-hidden="true" />
+          {line.label ? <span className="automation-function-status-lane">{line.label}</span> : null}
+          <span className="ui-status-label">{automationStatusLabel(line.status)}</span>
+          {line.detail ? <span className="ui-status-detail">{line.detail}</span> : null}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function automationStatusLabel(status: string): string {
@@ -255,29 +315,37 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     ? scheduleSummary(autoEquipmentCleanup.schedule)
     : 'Runs any time';
   const autoStormRuntime = automationStates.autoStorm;
+  const autoStormShopRuntime = automationStates.autoStormShop;
   const autoStormBuildRuntime = automationStates.autoStormBuild;
   const autoBeriTransferRuntime = automationStates.autoBeriWorld;
   const autoBeriAttackRuntime = automationStates.autoBeriWorldAttack;
   const autoBeriToolRuntime = automationStates.autoBeriWorldTools;
-  const autoBeriWorldDetail = [
-    autoBeriTransferRuntime?.detail ? `Transfer: ${autoBeriTransferRuntime.detail}` : '',
-    autoBeriAttackRuntime?.detail ? `Attack: ${autoBeriAttackRuntime.detail}` : '',
-    autoBeriToolRuntime?.detail ? `Tools: ${autoBeriToolRuntime.detail}` : '',
-  ].filter(Boolean).join(' · ');
+  const autoKhanAttackRuntime = automationStates.autoKhan;
+  const autoKhanCooldownRuntime = automationStates['autoKhan:cooldown'];
+  const autoKhanRageRuntime = automationStates['autoKhan:rage'];
+  const autoKhanDefenseRuntime = automationStates['autoKhan:defense'];
+  const autoSceatRuntime = automationStates.autoSceatRes;
+  const autoSceatLogisticsRuntime = automationStates.autoSceatResLogistics;
   const autoBeriWorldStatus = combinedAutomationStatus(
-    autoBeriTransferRuntime?.status,
-    autoBeriAttackRuntime?.status,
+    [autoBeriTransferRuntime?.status, autoBeriAttackRuntime?.status, autoBeriToolRuntime?.status],
     autoBeriWorldEnabled,
-    autoBeriToolRuntime?.status,
   );
-  const autoStormDetail = [
-    autoStormRuntime?.detail ? `Combat/shop: ${autoStormRuntime.detail}` : '',
-    autoStormBuildRuntime?.detail ? `Build: ${autoStormBuildRuntime.detail}` : '',
-  ].filter(Boolean).join(' · ');
   const autoStormStatus = combinedAutomationStatus(
-    autoStormRuntime?.status,
-    autoStormBuildRuntime?.status,
+    [autoStormRuntime?.status, autoStormShopRuntime?.status, autoStormBuildRuntime?.status],
     autoStormEnabled,
+  );
+  const autoKhanStatus = combinedAutomationStatus(
+    [
+      autoKhanAttackRuntime?.status,
+      autoKhanCooldownRuntime?.status,
+      autoKhanRageRuntime?.status,
+      autoKhanDefenseRuntime?.status,
+    ],
+    autoKhanEnabled,
+  );
+  const autoSceatStatus = combinedAutomationStatus(
+    [autoSceatRuntime?.status, autoSceatLogisticsRuntime?.status],
+    autoSceatResEnabled,
   );
 
   const features = useMemo<AutomationFeature[]>(() => [
@@ -349,9 +417,13 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       description: 'Balances kingdom resources and maintains Refinery, Toolsmith, Dragon Hoard, and Dragon Forge queues.',
       enabled: autoSceatResEnabled,
       detail: autoSceatResEnabled
-			? automationStates.autoSceatRes?.detail ?? 'Waiting for crafting policy status'
+			? autoSceatRuntime?.detail ?? 'Waiting for crafting policy status'
 			: 'Crafting and logistics are paused',
-      status: automationStates.autoSceatRes?.status ?? (autoSceatResEnabled ? 'waiting' : 'disabled'),
+      status: autoSceatStatus,
+      statusLanes: [
+        automationStatusLane('crafting', 'Crafting', autoSceatRuntime, autoSceatResEnabled, 'Waiting for crafting policy status'),
+        automationStatusLane('logistics', 'Logistics', autoSceatLogisticsRuntime, autoSceatResEnabled, 'Waiting for logistics policy status'),
+      ],
       icon: Coins,
       onToggle: toggleAutoSceatRes,
       onOpenSettings: onOpenAutoSceatResSettings,
@@ -453,9 +525,15 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		description: 'Chains Khan camp hits and retaliations while keeping the Great Empire main castle on its defense preset.',
 		enabled: autoKhanEnabled,
 		detail: autoKhanEnabled
-			? automationStates.autoKhan?.detail ?? 'Waiting for the Nomad event and Khan camp'
+			? autoKhanAttackRuntime?.detail ?? 'Waiting for the Nomad event and Khan camp'
 			: 'Khan camp attacks and taunts are paused',
-		status: automationStates.autoKhan?.status ?? (autoKhanEnabled ? 'waiting' : 'disabled'),
+		status: autoKhanStatus,
+		statusLanes: [
+			automationStatusLane('attacks', 'Attacks', autoKhanAttackRuntime, autoKhanEnabled, 'Waiting for the Khan attack policy'),
+			automationStatusLane('cooldowns', 'Cooldowns', autoKhanCooldownRuntime, autoKhanEnabled, 'Waiting for the Khan cooldown policy'),
+			automationStatusLane('rage', 'Rage', autoKhanRageRuntime, autoKhanEnabled, 'Waiting for the Khan rage policy'),
+			automationStatusLane('defense', 'Defense', autoKhanDefenseRuntime, autoKhanEnabled, 'Waiting for the Khan defense policy'),
+		],
 		icon: Crosshair,
 		onToggle: toggleAutoKhan,
 		onOpenSettings: onOpenAutoKhanSettings,
@@ -468,9 +546,14 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		description: 'Transfers troops into Berimond, maintains configured coin-tool minimums, opens the cheapest resource camp, and attacks each next available tower with a preset.',
 		enabled: autoBeriWorldEnabled,
 		detail: autoBeriWorldEnabled
-			? autoBeriWorldDetail || 'Waiting for Berimond availability and configuration'
+			? autoBeriTransferRuntime?.detail ?? 'Waiting for Berimond availability and configuration'
 			: 'Berimond transfers, tool purchases, and tower attacks are paused',
 		status: autoBeriWorldStatus,
+		statusLanes: [
+			automationStatusLane('transfers', 'Transfers', autoBeriTransferRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond transfer policy'),
+			automationStatusLane('attacks', 'Attacks', autoBeriAttackRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond attack policy'),
+			automationStatusLane('tools', 'Tools', autoBeriToolRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond tool policy'),
+		],
 		icon: Crosshair,
 		onToggle: toggleAutoBeriWorld,
 		onOpenSettings: onOpenAutoBeriWorldSettings,
@@ -483,9 +566,14 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       description: 'Builds a captured Storm castle target, attacks selected forts and islands, and spends Aquamarine by priority.',
       enabled: autoStormEnabled,
       detail: autoStormEnabled
-        ? autoStormDetail || 'Waiting for an unlocked Storm castle or configured goal'
+        ? autoStormRuntime?.detail ?? 'Waiting for an unlocked Storm castle or configured goal'
         : 'Storm construction and attacks are paused',
       status: autoStormStatus,
+      statusLanes: [
+        automationStatusLane('combat', 'Combat', autoStormRuntime, autoStormEnabled, 'Waiting for the Storm combat policy'),
+        automationStatusLane('aquamarine-shop', 'Aquamarine shop', autoStormShopRuntime, autoStormEnabled, 'Waiting for the Aquamarine shop policy'),
+        automationStatusLane('builder', 'Builder', autoStormBuildRuntime, autoStormEnabled, 'Waiting for the Storm builder policy'),
+      ],
       icon: Crosshair,
       onToggle: toggleAutoStorm,
       onOpenSettings: onOpenAutoStormSettings,
@@ -504,11 +592,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		autoAdvisorEnabled,
     autoKhanEnabled,
     autoBeriWorldEnabled,
-    autoBeriWorldDetail,
     autoBeriWorldStatus,
     autoStormEnabled,
-    autoStormDetail,
     autoStormStatus,
+    autoKhanStatus,
+    autoSceatStatus,
     autoToolEnabled,
     autoToolMode,
 		automationStates,
@@ -616,10 +704,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                           {timedUntil ? <Badge variant="outline">{formatTimedRemaining(timedUntil, now)}</Badge> : null}
                         </div>
                         <p>{feature.description}</p>
-                        <StatusIndicator
-                          tone={automationStatusTone(feature.status)}
-                          label={automationStatusLabel(feature.status)}
+                        <AutomationStatusLines
+                          featureName={feature.name}
+                          status={feature.status}
                           detail={feature.detail}
+                          lanes={feature.statusLanes}
                         />
                       </div>
                       <Button

@@ -275,6 +275,44 @@ func TestFocusedObservationRejectsFocusAwayAndBackBeforeCommit(t *testing.T) {
 	}
 }
 
+func TestCommittedGAAAndJAATrackFocusedCastleSubcontext(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Session.Generation = 1
+	gameState.Session.ConnectionGeneration = 1
+	gameState.Castles[11] = State.CastleState{ID: 11, KingdomID: 1, Focused: true}
+	store := State.NewStore(gameState)
+	pipeline := NewPipeline(store, nil, NewRegistry())
+	zero := 0
+	invalidFocus := 53
+
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "gaa", ResponseCode: &zero,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if context := store.ProtocolContext(); context.FocusedCastleID != 11 ||
+		context.FocusSubcontext != State.FocusSubcontextMap || context.FocusEpoch != 2 {
+		t.Fatalf("GAA protocol context = %#v", context)
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "gaa", ResponseCode: &invalidFocus,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if context := store.ProtocolContext(); context.FocusSubcontext != State.FocusSubcontextMap || context.FocusEpoch != 2 {
+		t.Fatalf("failed GAA changed protocol context = %#v", context)
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "jaa", ResponseCode: &zero,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if context := store.ProtocolContext(); context.FocusedCastleID != 11 ||
+		context.FocusSubcontext != State.FocusSubcontextCastle || context.FocusEpoch != 3 {
+		t.Fatalf("JAA protocol context = %#v", context)
+	}
+}
+
 func TestFocusAuthoritativeSnapshotCanEstablishNewFocus(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Session.Generation = 1

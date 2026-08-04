@@ -37,7 +37,7 @@ const HorseTravelBoostSelect: React.FC<HorseTravelBoostSelectProps> = ({
       menuGrowToViewport
     />
     <span className="mt-1.5 block text-[11px] text-text-muted">
-      {description ?? 'Applied to HBW for every attack launched by this feature. Ruby horses are used only when explicitly selected.'}
+      {description ?? 'The exact HBW ID and speed are resolved from the source castle’s current Stable, Faction Stable, or Harbor level. Ruby tiers are used only when explicitly selected.'}
     </span>
   </label>
 );

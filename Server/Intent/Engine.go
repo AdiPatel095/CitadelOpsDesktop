@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -740,6 +741,7 @@ func stepResumeKey(step Step) string {
 		fmt.Sprint(step.DelayMillis),
 		fmt.Sprint(step.SuccessCodes),
 		fmt.Sprint(step.CaptureResponse),
+		string(step.ExpectedResponsePayload),
 		func() string {
 			if step.CommandDependencies == nil {
 				return ""
@@ -1144,8 +1146,15 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					return exchange, fmt.Errorf("response did not include a result code")
 				}
 				if !containsInt(step.SuccessCodes, *frame.Frame.ResponseCode) {
-					return exchange, engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
+					responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
+					if containsInt(step.StaleCodes, *frame.Frame.ResponseCode) {
+						return exchange, fmt.Errorf("%w: %v", ErrPlanStale, responseErr)
+					}
+					return exchange, responseErr
 				}
+			}
+			if err := validateExpectedResponsePayload(step.ExpectedResponsePayload, frame.Frame.Payload); err != nil {
+				return exchange, err
 			}
 			if step.ResponseBarrier == ResponseBarrierWireThenCommitted {
 				remaining := time.Until(deadline)
@@ -1176,6 +1185,24 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 			return exchange, nil
 		}
 	}
+}
+
+func validateExpectedResponsePayload(expected json.RawMessage, actual json.RawMessage) error {
+	if len(expected) == 0 {
+		return nil
+	}
+	var expectedValue any
+	if err := json.Unmarshal(expected, &expectedValue); err != nil {
+		return fmt.Errorf("decode expected response payload: %w", err)
+	}
+	var actualValue any
+	if err := json.Unmarshal(actual, &actualValue); err != nil {
+		return fmt.Errorf("decode response payload for exact confirmation: %w", err)
+	}
+	if !reflect.DeepEqual(expectedValue, actualValue) {
+		return fmt.Errorf("response payload did not match the exact expected confirmation")
+	}
+	return nil
 }
 
 func (engine *Engine) waitForAuthoritativeBaseline(ctx context.Context, expected State.SessionState) error {
@@ -1448,6 +1475,7 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 		plan.Steps[index].AwaitOpcode = strings.ToLower(plan.Steps[index].AwaitOpcode)
 		plan.Steps[index].AwaitOpcodes = normalizeAwaitOpcodes(plan.Steps[index].AwaitOpcodes)
 		plan.Steps[index].ResponseBarrier = ResponseBarrier(strings.ToLower(strings.TrimSpace(string(plan.Steps[index].ResponseBarrier))))
+		plan.Steps[index].ExpectedResponsePayload = append(json.RawMessage(nil), plan.Steps[index].ExpectedResponsePayload...)
 		if dependency := plan.Steps[index].CommandDependencies; dependency != nil {
 			copy := *dependency
 			copy.Opcode = strings.ToLower(strings.TrimSpace(copy.Opcode))

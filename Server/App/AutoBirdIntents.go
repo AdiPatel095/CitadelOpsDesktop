@@ -41,6 +41,9 @@ type autoBirdCycleRequest struct {
 }
 
 func (application *Application) registerAutoBirdIntents() error {
+	if err := application.Intents.RegisterAction("auto_bird.tracking.clear", application.clearAutoBirdTracking); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("auto_bird.target.capture", application.captureAutoBirdTarget); err != nil {
 		return err
 	}
@@ -57,6 +60,10 @@ func (application *Application) registerAutoBirdIntents() error {
 		return err
 	}
 	for _, definition := range []Intent.Definition{
+		{
+			Name: "auto_bird.clear_tracking", Description: "Clear persisted Auto Bird cycle tracking without changing movements, settings, or Auto Station", Effect: Intent.EffectWrite,
+			Planner: planAutoBirdClearTracking,
+		},
 		{
 			Name: "auto_bird.discover", Description: "Refresh and select one castle's protected alliance bird target", Effect: Intent.EffectRead,
 			Planner: planAutoBirdDiscover,
@@ -79,6 +86,60 @@ func (application *Application) registerAutoBirdIntents() error {
 		}
 	}
 	return nil
+}
+
+func planAutoBirdClearTracking(
+	_ context.Context,
+	input Intent.PlanningContext,
+	arguments json.RawMessage,
+) (Intent.Plan, error) {
+	var request struct{}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	tracked := 0
+	for trackingID, operation := range input.State.Stationing {
+		if operation.Purpose != "autoBird" && !strings.HasPrefix(trackingID, "autoBird:") {
+			continue
+		}
+		tracked++
+	}
+	summary := "Clear Auto Bird tracking; no tracked cycles are currently stored"
+	if tracked == 1 {
+		summary = "Clear 1 persisted Auto Bird cycle"
+	} else if tracked > 1 {
+		summary = fmt.Sprintf("Clear %d persisted Auto Bird cycles", tracked)
+	}
+	return Intent.Plan{
+		Claims:  []string{autoBirdCycleClaim(0)},
+		Summary: summary,
+		Steps: []Intent.Step{{
+			Name: "Clear persisted Auto Bird cycle tracking", Action: "auto_bird.tracking.clear",
+			ActionArguments: json.RawMessage(`{}`),
+		}},
+	}, nil
+}
+
+func (application *Application) clearAutoBirdTracking(
+	_ context.Context,
+	arguments json.RawMessage,
+) error {
+	var request struct{}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		changed := false
+		for trackingID, operation := range gameState.Stationing {
+			if operation.Purpose != "autoBird" && !strings.HasPrefix(trackingID, "autoBird:") {
+				continue
+			}
+			delete(gameState.Stationing, trackingID)
+			changed = true
+		}
+		return []string{"stationing"}, changed, nil
+	})
+	return err
 }
 
 func planAutoBirdDiscover(
@@ -112,6 +173,7 @@ func planAutoBirdDiscover(
 		Claims: []string{
 			"alliance-directory",
 			"castle:" + strconv.FormatInt(int64(source.ID), 10),
+			autoBirdCycleClaim(source.ID),
 		},
 		Summary: fmt.Sprintf("Discover a fresh Auto Bird target for %s", castleLabel(source)),
 		Steps: []Intent.Step{
@@ -166,6 +228,7 @@ func planAutoBirdPrepare(
 			"castle-focus",
 			"castle:" + strconv.FormatInt(int64(source.ID), 10),
 			"alliance-holding:" + strconv.FormatInt(int64(target.CastleID), 10),
+			autoBirdCycleClaim(source.ID),
 		},
 		Summary: fmt.Sprintf("Refresh every stationable troop at %s for Auto Bird", castleLabel(source)),
 		Steps: []Intent.Step{
@@ -239,6 +302,7 @@ func planAutoBirdDispatch(
 			"castle-focus",
 			"castle:" + strconv.FormatInt(int64(source.ID), 10),
 			"alliance-holding:" + strconv.FormatInt(int64(target.CastleID), 10),
+			autoBirdCycleClaim(source.ID),
 			"game:movements",
 		},
 		Summary: fmt.Sprintf("Dispatch every eligible troop from %s and record its return", castleLabel(source)),
@@ -267,6 +331,7 @@ func planAutoBirdReconcile(
 	return Intent.Plan{
 		Claims: []string{
 			"castle:" + strconv.FormatInt(int64(request.SourceCastleID), 10),
+			autoBirdCycleClaim(request.SourceCastleID),
 			"game:movements",
 		},
 		Summary: fmt.Sprintf("Reconcile Auto Bird movement from castle %d", request.SourceCastleID),
@@ -278,6 +343,13 @@ func planAutoBirdReconcile(
 			},
 		},
 	}, nil
+}
+
+func autoBirdCycleClaim(castleID State.CastleID) string {
+	if castleID <= 0 {
+		return "auto-bird-cycle"
+	}
+	return "auto-bird-cycle:" + strconv.FormatInt(int64(castleID), 10)
 }
 
 func decodeAutoBirdCycleRequest(arguments json.RawMessage) (autoBirdCycleRequest, error) {

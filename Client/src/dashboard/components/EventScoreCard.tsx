@@ -50,7 +50,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
 
   return (
     <SectionCard
-      variant="glass"
+      variant="solid"
       title={eventName}
       description="Live event score and reward progress"
       titleClassName="truncate text-primary"
@@ -61,7 +61,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
           {event && onOpenRanking && canOpenRanking && (
             <Button
               type="button"
-              variant="glass"
+              variant="solid"
               size="sm"
               leftIcon={<Trophy className="h-3.5 w-3.5" />}
               isLoading={rankingLoading}
@@ -79,23 +79,23 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
       )}
     >
         {!event ? (
-          <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-7 text-center backdrop-blur-xl">
+          <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-7 text-center">
             <p className="text-sm font-medium text-text-main">No supported event is active.</p>
             <p className="mx-auto mt-2 max-w-xl text-xs text-text-muted">The page will switch automatically when a supported event begins.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-              <MetricTile label="Your score" value={event.playerScore} tone="brand" className="border-border-light bg-bg-card/40 px-4 py-3 backdrop-blur-xl [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
-              <MetricTile label="Your rank" value={formatRank(event.playerRank)} className="border-border-light bg-bg-card/40 px-4 py-3 backdrop-blur-xl [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
-              <MetricTile label="Alliance score" value={event.allianceScore} className="border-border-light bg-bg-card/40 px-4 py-3 backdrop-blur-xl [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
-              <MetricTile label="Alliance rank" value={formatRank(event.allianceRank)} className="border-border-light bg-bg-card/40 px-4 py-3 backdrop-blur-xl [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label="Your score" value={event.playerScore} tone="brand" className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label="Your rank" value={formatRank(event.playerRank)} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label="Alliance score" value={event.allianceScore} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label="Alliance rank" value={formatRank(event.allianceRank)} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
               <MetricTile
                 label="Reward pages"
                 value={formatRewardPages(event.rewardPagesReached, event.rewardPagesTotal)}
                 tone="success"
                 caption={rewardPagesCaption(event)}
-                className="col-span-2 border-border-light bg-bg-card/40 px-4 py-3 backdrop-blur-xl [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl md:col-span-1"
+                className="col-span-2 border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl md:col-span-1"
               />
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border-base/60 pt-3 text-xs text-text-muted">

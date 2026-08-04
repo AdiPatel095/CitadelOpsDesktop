@@ -397,7 +397,7 @@ func planKingdomTroopSkip(_ context.Context, input Intent.PlanningContext, argum
 			"currency:" + strconv.FormatInt(int64(currencyID), 10),
 		},
 		Summary: fmt.Sprintf("Apply a %s to kingdom %d troop transport", timeSkipLabel, request.TargetKingdomID),
-		Steps:   []Intent.Step{step},
+		Steps:   []Intent.Step{step, timeSkipConsumeStep(input, currencyID)},
 	}, nil
 }
 

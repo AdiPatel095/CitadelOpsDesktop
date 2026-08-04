@@ -121,7 +121,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
       }
     >
       <div className="mx-auto flex w-full max-w-[2300px] flex-col gap-4">
-        <section className="rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--glass-shadow-compact)] backdrop-blur-2xl">
+        <section className="rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)]">
           <label className="mb-2 block text-xs font-black uppercase tracking-wider text-text-muted">Preset name</label>
           <Input
             autoFocus

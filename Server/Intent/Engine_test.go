@@ -24,6 +24,17 @@ type metadataSender struct {
 	generation uint64
 }
 
+func TestValidateExpectedResponsePayloadRequiresExactSemanticMatch(t *testing.T) {
+	expected := json.RawMessage(`{"OID":32,"PWR":0,"PO":-1,"CC2T":12300}`)
+	actual := json.RawMessage(`{"CC2T":12300,"PO":-1,"PWR":0,"OID":32}`)
+	if err := validateExpectedResponsePayload(expected, actual); err != nil {
+		t.Fatalf("semantically equal response rejected: %v", err)
+	}
+	if err := validateExpectedResponsePayload(expected, json.RawMessage(`{"OID":32,"PWR":0,"PO":-1,"CC2T":12400}`)); err == nil {
+		t.Fatal("changed premium quote was accepted")
+	}
+}
+
 func (*metadataSender) Ready() bool                         { return true }
 func (*metadataSender) Namespace() string                   { return "EmpireEx_21" }
 func (sender *metadataSender) ConnectionGeneration() uint64 { return sender.generation }
@@ -91,7 +102,8 @@ type rapidChainTransport struct {
 }
 
 type pipelineResponseSender struct {
-	pipeline *Ingest.Pipeline
+	pipeline     *Ingest.Pipeline
+	responseCode int
 }
 
 type correlatingPipelineResponseSender struct {
@@ -186,13 +198,33 @@ func (sender *pipelineResponseSender) Send(_ context.Context, payload []byte) er
 	if err != nil {
 		return err
 	}
-	code := 0
+	code := sender.responseCode
 	observed := sender.pipeline.ObserveFrame(Protocol.Frame{
 		Direction: Protocol.DirectionInbound, Namespace: request.Namespace,
 		Opcode: request.Opcode, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
 	})
 	go func() { _, _ = sender.pipeline.CommitFrame(context.Background(), observed) }()
 	return nil
+}
+
+func TestExecuteStepClassifiesDeclaredResponseCodeAsStale(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{
+		Generation: 1, BaselineGeneration: 1, ConnectionGeneration: 1,
+		Status: "connected", LoggedIn: true, SocketReady: true, Namespace: "EmpireEx_21",
+	}
+	store := State.NewStore(gameState)
+	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	engine := NewEngine(nil, store, nil, &pipelineResponseSender{pipeline: pipeline, responseCode: 147}, pipeline)
+
+	_, err := engine.executeStep(t.Context(), store.Revision(), Step{
+		Opcode: "msb", AwaitOpcode: "msb", TimeoutMillis: 1_000,
+		SuccessCodes: []int{0}, StaleCodes: []int{147},
+		Command: Protocol.Command{Opcode: "msb", Payload: json.RawMessage(`{"OID":17,"MST":"MS3"}`)},
+	})
+	if !errors.Is(err, ErrPlanStale) || !strings.Contains(err.Error(), "response code 147") {
+		t.Fatalf("declared stale response error = %v", err)
+	}
 }
 
 func (*correlatingPipelineResponseSender) CorrelatesResponses() bool { return true }

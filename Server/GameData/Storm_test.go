@@ -44,3 +44,26 @@ func TestStormShopPackagesOnlyIncludeCurrentLiveInventory(t *testing.T) {
 		t.Fatal("historical Luna package 244 was accepted")
 	}
 }
+
+func TestStormCastleOptionsUseOfficialKingdomAndLevel(t *testing.T) {
+	store, err := DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"prebuiltcastles":[
+			{"preBuiltCastleID":"16","comment2":"CheapCamp","spaceIDs":"4","minLevel":35,"costWood":10000,"costStone":10000,"costFood":2500,"costC1":5000},
+			{"preBuiltCastleID":"18","comment2":"C2Camp","spaceIDs":"4","minLevel":35,"costC2":59000},
+			{"preBuiltCastleID":"99","comment2":"Other","spaceIDs":"10","minLevel":1,"costWood":1},
+			{"preBuiltCastleID":"100","comment2":"HighLevel","spaceIDs":"4","minLevel":70,"costWood":1}
+		]
+	}`), SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	options := store.StormCastleOptions(69)
+	if len(options) != 2 || options[0].ID != 16 || options[0].CostCoins != 5000 ||
+		options[1].ID != 18 || options[1].CostPremium != 59000 {
+		t.Fatalf("Storm castle options = %#v", options)
+	}
+	if _, found := store.StormCastleOption(100, 69); found {
+		t.Fatal("level-locked Storm castle was accepted")
+	}
+}

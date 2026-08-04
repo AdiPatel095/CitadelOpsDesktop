@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -36,7 +37,7 @@ const (
 	ChannelRift            = "rift"
 
 	maxPendingAppCommands       = 1024
-	webSocketGameRotation       = 3 * time.Hour
+	channelLogRotation          = 3 * time.Hour
 	tailReadBlockSize     int64 = 64 * 1024
 	tailMaxReadBytes      int64 = 16 * 1024 * 1024
 )
@@ -90,7 +91,7 @@ type pendingAppCommand struct {
 	responseOpcodes []string
 }
 
-type webSocketGameSession struct {
+type channelLogSession struct {
 	path string
 	slot int64
 }
@@ -111,11 +112,11 @@ type Store struct {
 
 	pendingAppCommand []pendingAppCommand
 
-	fileMu           sync.Mutex
-	channelsDir      string
-	files            map[string]*os.File
-	filePaths        map[string]string
-	webSocketSession *webSocketGameSession
+	fileMu          sync.Mutex
+	channelsDir     string
+	files           map[string]*os.File
+	filePaths       map[string]string
+	channelSessions map[string]*channelLogSession
 
 	persistMu     sync.Mutex
 	persistQueue  []persistenceEntry
@@ -126,6 +127,14 @@ type Store struct {
 
 	attackMu       sync.Mutex
 	attackLaunches map[string][]time.Time
+
+	retentionLifecycleMu sync.Mutex
+	retentionWake        chan struct{}
+	retentionStop        chan struct{}
+	retentionDone        chan struct{}
+	retentionStarted     bool
+	retentionStopped     bool
+	retentionFileMu      sync.RWMutex
 }
 
 func NewStore(capacity int) *Store {
@@ -133,13 +142,17 @@ func NewStore(capacity int) *Store {
 		capacity = 100
 	}
 	store := &Store{
-		capacity:       capacity,
-		lines:          map[string][]string{},
-		files:          map[string]*os.File{},
-		filePaths:      map[string]string{},
-		persistWake:    make(chan struct{}, 1),
-		persistDone:    make(chan struct{}),
-		attackLaunches: map[string][]time.Time{},
+		capacity:        capacity,
+		lines:           map[string][]string{},
+		files:           map[string]*os.File{},
+		filePaths:       map[string]string{},
+		channelSessions: map[string]*channelLogSession{},
+		persistWake:     make(chan struct{}, 1),
+		persistDone:     make(chan struct{}),
+		attackLaunches:  map[string][]time.Time{},
+		retentionWake:   make(chan struct{}, 1),
+		retentionStop:   make(chan struct{}),
+		retentionDone:   make(chan struct{}),
 	}
 	go store.runPersistence()
 	return store
@@ -156,11 +169,13 @@ func (store *Store) SetDataDir(dataDir string) error {
 	}
 	loadedAt := time.Now()
 	loadedAttackLaunches := loadAttackLaunches(directory, loadedAt.Add(-time.Hour))
+	store.retentionFileMu.Lock()
 	store.flushPersistence()
 	store.fileMu.Lock()
 	store.closeFilesLocked()
 	store.channelsDir = directory
 	store.fileMu.Unlock()
+	store.retentionFileMu.Unlock()
 	store.attackMu.Lock()
 	for channel, launches := range store.attackLaunches {
 		for _, launchedAt := range launches {
@@ -171,6 +186,8 @@ func (store *Store) SetDataDir(dataDir string) error {
 	}
 	store.attackLaunches = loadedAttackLaunches
 	store.attackMu.Unlock()
+	store.startRetention()
+	store.wakeRetention()
 	return nil
 }
 
@@ -182,7 +199,7 @@ func (store *Store) BeginWebSocketGameSession() {
 	store.flushPersistence()
 	store.fileMu.Lock()
 	defer store.fileMu.Unlock()
-	_, _ = store.ensureWebSocketGameSessionLocked(time.Now(), true)
+	_, _ = store.ensureChannelSessionLocked(ChannelWebSocketGame, time.Now(), true)
 }
 
 // Record receives every decoded game frame from the ingest pipeline. The websocket channel
@@ -332,17 +349,19 @@ func (store *Store) Tail(channel string, limit int) []string {
 	}
 	store.mu.RUnlock()
 	store.flushPersistence()
+	store.retentionFileMu.RLock()
+	defer store.retentionFileMu.RUnlock()
 	store.fileMu.Lock()
-	path := store.activeChannelPathLocked(channel)
+	paths := channelLogPathsNewest(store.channelsDir, channel)
 	store.fileMu.Unlock()
-	if path == "" {
+	if len(paths) == 0 {
 		return lines
 	}
 	readLimit := limit
 	if isFeatureChannel(channel) {
 		readLimit = min(limit*16, 100_000)
 	}
-	persisted, err := tailNonEmptyLines(path, readLimit)
+	persisted, err := tailNonEmptyLinesFromPaths(paths, readLimit)
 	if err == nil {
 		if isFeatureChannel(channel) {
 			return tailFeatureActivityLines(persisted, limit)
@@ -371,6 +390,7 @@ func (store *Store) Close() {
 	if store == nil {
 		return
 	}
+	store.stopRetention()
 	store.persistMu.Lock()
 	if !store.persistClosed {
 		store.persistClosed = true
@@ -536,42 +556,26 @@ func (store *Store) channelFileLocked(channel string, now time.Time) (*os.File, 
 }
 
 func (store *Store) writableChannelPathLocked(channel string, now time.Time) (string, error) {
-	if channel != ChannelWebSocketGame {
-		return filepath.Join(store.channelsDir, channel+".log"), nil
-	}
-	return store.ensureWebSocketGameSessionLocked(now, false)
+	return store.ensureChannelSessionLocked(channel, now, false)
 }
 
-func (store *Store) activeChannelPathLocked(channel string) string {
-	if store.channelsDir == "" {
-		return ""
+func (store *Store) ensureChannelSessionLocked(channel string, now time.Time, forceNew bool) (string, error) {
+	slot := now.Unix() / int64(channelLogRotation/time.Second)
+	if !forceNew && store.channelSessions[channel] != nil && store.channelSessions[channel].slot == slot {
+		return store.channelSessions[channel].path, nil
 	}
-	if channel != ChannelWebSocketGame {
-		return filepath.Join(store.channelsDir, channel+".log")
-	}
-	if store.webSocketSession != nil {
-		return store.webSocketSession.path
-	}
-	return latestWebSocketGamePath(filepath.Join(store.channelsDir, ChannelWebSocketGame))
-}
-
-func (store *Store) ensureWebSocketGameSessionLocked(now time.Time, forceNew bool) (string, error) {
-	slot := now.Unix() / int64(webSocketGameRotation/time.Second)
-	if !forceNew && store.webSocketSession != nil && store.webSocketSession.slot == slot {
-		return store.webSocketSession.path, nil
-	}
-	directory := filepath.Join(store.channelsDir, ChannelWebSocketGame)
+	directory := filepath.Join(store.channelsDir, channel)
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		return "", err
 	}
-	path, err := nextWebSocketGamePath(directory, now)
+	path, err := nextChannelLogPath(directory, now)
 	if err != nil {
 		return "", err
 	}
-	if store.webSocketSession == nil || store.webSocketSession.path != path {
-		store.closeFileLocked(ChannelWebSocketGame)
+	if store.channelSessions[channel] == nil || store.channelSessions[channel].path != path {
+		store.closeFileLocked(channel)
 	}
-	store.webSocketSession = &webSocketGameSession{path: path, slot: slot}
+	store.channelSessions[channel] = &channelLogSession{path: path, slot: slot}
 	return path, nil
 }
 
@@ -587,10 +591,10 @@ func (store *Store) closeFilesLocked() {
 	for channel := range store.files {
 		store.closeFileLocked(channel)
 	}
-	store.webSocketSession = nil
+	store.channelSessions = map[string]*channelLogSession{}
 }
 
-func nextWebSocketGamePath(directory string, now time.Time) (string, error) {
+func nextChannelLogPath(directory string, now time.Time) (string, error) {
 	entries, err := os.ReadDir(directory)
 	if err != nil {
 		return "", err
@@ -607,29 +611,6 @@ func nextWebSocketGamePath(directory string, now time.Time) (string, error) {
 		}
 	}
 	return filepath.Join(directory, fmt.Sprintf("%s%d.log", prefix, maxSuffix+1)), nil
-}
-
-func latestWebSocketGamePath(directory string) string {
-	entries, err := os.ReadDir(directory)
-	if err != nil {
-		return ""
-	}
-	var latest string
-	var modifiedAt time.Time
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".log") {
-			continue
-		}
-		info, err := entry.Info()
-		if err != nil {
-			continue
-		}
-		if latest == "" || info.ModTime().After(modifiedAt) {
-			latest = filepath.Join(directory, entry.Name())
-			modifiedAt = info.ModTime()
-		}
-	}
-	return latest
 }
 
 func tailNonEmptyLines(path string, limit int) ([]string, error) {
@@ -678,16 +659,21 @@ func loadAttackLaunches(directory string, since time.Time) map[string][]time.Tim
 	launches := make(map[string][]time.Time, len(attackFeatureChannels))
 	for _, channel := range attackFeatureChannels {
 		launches[channel] = []time.Time{}
-		lines, err := tailNonEmptyLines(filepath.Join(directory, channel+".log"), 100_000)
-		if err != nil {
-			continue
-		}
-		for _, line := range lines {
-			observedAt, severity, event, ok := parseFeatureActivityLine(line)
-			if ok && severity == "INFO" && event == "ATTACK" && !observedAt.Before(since) {
-				launches[channel] = append(launches[channel], observedAt)
+		for _, path := range channelLogPathsNewest(directory, channel) {
+			lines, err := tailNonEmptyLines(path, 100_000)
+			if err != nil {
+				continue
+			}
+			for _, line := range lines {
+				observedAt, severity, event, ok := parseFeatureActivityLine(line)
+				if ok && severity == "INFO" && event == "ATTACK" && !observedAt.Before(since) {
+					launches[channel] = append(launches[channel], observedAt)
+				}
 			}
 		}
+		sort.Slice(launches[channel], func(left int, right int) bool {
+			return launches[channel][left].Before(launches[channel][right])
+		})
 	}
 	return launches
 }

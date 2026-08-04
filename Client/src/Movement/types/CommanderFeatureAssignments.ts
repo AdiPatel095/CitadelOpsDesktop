@@ -216,7 +216,7 @@ function commanderEquipmentEffectValue(
   for (const equipmentID of Object.values(commander.equipment)) {
     const equipment = state.inventory.equipment[String(equipmentID)];
     if (!equipment) continue;
-    for (const effect of equipment.effects) {
+    for (const effect of Array.isArray(equipment.effects) ? equipment.effects : []) {
       if (effect.definitionId !== requirement.effectDefinitionId) continue;
       if ((requirement.unitId ?? 0) > 0) {
         for (let index = 0; index + 1 < effect.values.length; index += 2) {

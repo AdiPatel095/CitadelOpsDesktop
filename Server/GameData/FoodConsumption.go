@@ -53,6 +53,33 @@ var foodConsumptionDefinitions = []foodConsumptionDefinition{
 
 var foodResourceJSONKeys = []string{"F", "HONEY", "MEAD", "BEEF"}
 
+func (store *Store) UnitUsesFoodSupply(unitID State.UnitID) (bool, error) {
+	if store == nil {
+		return false, fmt.Errorf("official game data is unavailable")
+	}
+	if unitID <= 0 {
+		return false, fmt.Errorf("unit ID must be positive")
+	}
+	units, err := store.Catalog("units")
+	if err != nil {
+		return false, err
+	}
+	record, err := catalogRecord(units, int64(unitID), "unit")
+	if err != nil {
+		return false, err
+	}
+	foodSupply, _ := record.Float64("foodSupply")
+	meadSupply, _ := record.Float64("meadSupply")
+	beefSupply, _ := record.Float64("beefSupply")
+	if meadSupply > 0 || beefSupply > 0 {
+		return false, nil
+	}
+	if foodSupply <= 0 {
+		return false, fmt.Errorf("official provision type is unavailable for unit %d", unitID)
+	}
+	return true, nil
+}
+
 // EstimateFoodConsumption calculates troop provisions and the food and honey
 // inputs required by the configured brewery rate. The game-supplied consumption
 // multiplier and observed troop rate are preferred when available because they

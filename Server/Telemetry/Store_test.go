@@ -2,7 +2,6 @@ package Telemetry
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -29,7 +28,11 @@ func TestPersistentLoggingDoesNotBlockCommandRecording(t *testing.T) {
 	}
 	store.fileMu.Unlock()
 	store.Close()
-	contents, err := os.ReadFile(filepath.Join(store.channelsDir, ChannelAppSend+".log"))
+	paths := channelLogPathsNewest(store.channelsDir, ChannelAppSend)
+	if len(paths) != 1 {
+		t.Fatalf("persistent app log paths = %v, want one rotated file", paths)
+	}
+	contents, err := os.ReadFile(paths[0])
 	if err != nil {
 		t.Fatal(err)
 	}

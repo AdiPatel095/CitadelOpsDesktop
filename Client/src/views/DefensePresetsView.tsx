@@ -245,7 +245,7 @@ const DefensePresetsView: React.FC = () => {
         )}
       />
 
-      <section className="grid gap-3 rounded-global border border-border-base bg-bg-card/55 p-4 shadow-[var(--glass-shadow-compact)] backdrop-blur-2xl lg:grid-cols-[minmax(18rem,1fr)_auto]">
+      <section className="grid gap-3 rounded-global border border-border-base bg-bg-card/55 p-4 shadow-[var(--shadow-raised)] lg:grid-cols-[minmax(18rem,1fr)_auto]">
         <div>
           <label className="mb-2 block text-[10px] font-black uppercase tracking-wider text-text-muted">Apply target</label>
           <Select

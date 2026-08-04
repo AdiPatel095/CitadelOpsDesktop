@@ -6,15 +6,15 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className = '', variant = 'primary', children, ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase transition-colors backdrop-blur-xl';
+    const baseStyles = 'm3-chip inline-flex items-center px-2.5 py-0.5 text-xs font-semibold transition-colors';
     
     const variants = {
-      primary: 'bg-primary/12 text-primary border border-primary/25 shadow-[0_0_18px_color-mix(in_srgb,var(--color-primary)_12%,transparent)]',
-      secondary: 'bg-bg-card/55 text-text-muted border border-border-light',
-      success: 'bg-success/12 text-success border border-success/25',
-      warning: 'bg-warning/12 text-warning border border-warning/25',
-      danger: 'bg-error/12 text-error border border-error/25',
-      outline: 'bg-bg-card/30 text-text-main border border-border-base',
+      primary: 'm3-chip-primary',
+      secondary: 'm3-chip-secondary',
+      success: 'm3-chip-success',
+      warning: 'm3-chip-warning',
+      danger: 'm3-chip-danger',
+      outline: 'm3-chip-outline',
     };
 
     return (
