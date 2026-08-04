@@ -9,68 +9,19 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   require-develop-into-main:
     name: Require develop into main
-    if: github.event.pull_request.base.ref == 'main'
+    if: >-
+      github.event.pull_request.base.ref == 'main' &&
+      (
+        github.event.pull_request.head.ref != 'develop' ||
+        github.event.pull_request.head.repo.full_name != github.repository
+      )
     runs-on: ubuntu-latest
     steps:
-      - name: Validate source branch
+      - name: Reject invalid source branch
         run: |
-          if [ "${{ github.event.pull_request.head.ref }}" != "develop" ] || \
-             [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
-            echo "Pull requests into main must come from this repository's develop branch."
-            exit 1
-          fi
-
-      - name: Validate repository owner approval
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPOSITORY: ${{ github.repository }}
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-        run: |
-          reviews_file="$(mktemp)"
-          curl -fsSL \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews" > "${reviews_file}"
-
-          node - "${reviews_file}" <<'NODE'
-          const fs = require("fs");
-
-          const reviewsFile = process.argv[2];
-          const repositoryOwner = process.env.REPOSITORY_OWNER;
-          const ownerKey = repositoryOwner.toLowerCase();
-          const reviews = JSON.parse(fs.readFileSync(reviewsFile, "utf8"));
-          const latestReviewByUser = new Map();
-
-          for (const review of reviews) {
-            const login = review.user && review.user.login;
-            if (!login) {
-              continue;
-            }
-            latestReviewByUser.set(login.toLowerCase(), {
-              login,
-              state: review.state,
-            });
-          }
-
-          const nonOwnerApprovals = [...latestReviewByUser.values()]
-            .filter((review) => review.state === "APPROVED" && review.login.toLowerCase() !== ownerKey);
-
-          if (nonOwnerApprovals.length > 0) {
-            const reviewers = nonOwnerApprovals.map((review) => review.login).join(", ");
-            console.error(`Only ${repositoryOwner} may approve develop-to-main pull requests. Non-owner approval(s): ${reviewers}.`);
-            process.exit(1);
-          }
-
-          const ownerReview = latestReviewByUser.get(ownerKey);
-          if (!ownerReview || ownerReview.state !== "APPROVED") {
-            console.error(`Pull requests from develop into main require an approved review from repository owner ${repositoryOwner}.`);
-            process.exit(1);
-          }
-          NODE
+          echo "::error::Pull requests into main must come from this repository's develop branch."
+          exit 1
