@@ -45,17 +45,18 @@ func main() {
 		log.Fatal(err)
 	}
 	var transport Session.Transport
+	var chromium *Session.ChromiumConfig
 	if *replayLog != "" {
 		transport = Session.NewReplayTransport(Session.ReplayConfig{Path: *replayLog, Speed: *replaySpeed})
 	} else {
-		transport = Session.NewChromiumTransport(Session.ChromiumConfig{
+		chromium = &Session.ChromiumConfig{
 			DataDir: dataDir, DashboardURL: dashboardURL,
 			Browser: *browser, ExecutablePath: *browserPath, Headless: *browserHeadless,
-		})
+		}
 	}
 	startupContext, cancelStartup := context.WithTimeout(rootContext, 90*time.Second)
 	application, err := App.New(startupContext, App.Config{
-		DataDir: dataDir, Offline: *offline, Transport: transport, RuntimeContext: rootContext,
+		DataDir: dataDir, Offline: *offline, Transport: transport, Chromium: chromium, RuntimeContext: rootContext,
 		UpdateEndpoint: os.Getenv("CITADEL_UPDATE_URL"), UpdateInstallSupported: desktopBuild,
 	})
 	cancelStartup()

@@ -194,6 +194,59 @@ func TestSuccessfulManualLoginIsSavedPrivately(t *testing.T) {
 	}
 }
 
+func TestSuccessfulFullModeLoginSavesProtectedBackgroundConnectionProfile(t *testing.T) {
+	transport := newSocketTestTransport()
+	transport.config.DataDir = t.TempDir()
+	created := createdSocketNotice("background-profile", 1)
+	created.URL = "wss://ep-live-us1-game.goodgamestudios.com:443"
+	processSocketTestNotice(t, transport, 4, created)
+	processSocketTestNotice(t, transport, 4, socketFrameNotice(
+		"background-profile", 2, "outbound",
+		`%xt%EmpireEx_21%vck%1%1165009%web-html5%<RoundHouseKick>%session-id%`,
+	))
+	login := socketFrameNotice(
+		"background-profile", 3, "outbound",
+		`%xt%EmpireEx_21%lli%1%{"NOM":"player","PW":"password","LT":"login-token","RCT":"captcha-token","LANG":"en","DID":0,"AID":"account","PL":1}%`,
+	)
+	login.LoginUsername = "test-player"
+	login.LoginPassword = "test-password"
+	processSocketTestNotice(t, transport, 4, login)
+	processSocketTestNotice(t, transport, 4, socketFrameNotice(
+		"background-profile", 4, "inbound", `%xt%lli%1%0%{}%`,
+	))
+	<-transport.frames
+
+	profile, err := loadGameConnectionProfile(transport.config.DataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if profile.ServerURL != created.URL || profile.Namespace != "EmpireEx_21" ||
+		profile.ClientBuild != "1165009" || profile.Platform != "web-html5" {
+		t.Fatalf("unexpected background connection profile: %+v", profile)
+	}
+	for _, key := range []string{"NOM", "PW", "LT", "RCT"} {
+		if _, exists := profile.LoginContext[key]; exists {
+			t.Fatalf("sensitive login field %s was saved", key)
+		}
+	}
+	contents, err := os.ReadFile(gameConnectionProfilePath(transport.config.DataDir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, secret := range []string{"test-password", "login-token", "captcha-token", "session-id"} {
+		if strings.Contains(string(contents), secret) {
+			t.Fatalf("background profile contains secret %q", secret)
+		}
+	}
+	info, err := os.Stat(gameConnectionProfilePath(transport.config.DataDir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o600 {
+		t.Fatalf("saved background connection permissions = %o, want 600", info.Mode().Perm())
+	}
+}
+
 func TestSavedCredentialsFillAndSubmitVisibleLogin(t *testing.T) {
 	transport := newSocketTestTransport()
 	transport.loginCredential = persistedLoginCredential{

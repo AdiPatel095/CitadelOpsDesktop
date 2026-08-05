@@ -30,6 +30,29 @@ export interface PatchNotesRelease {
 
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
   {
+    version: '2.0.2',
+    subtitle: 'Background operation, typed automation, bounded Rift runs, readable diagnostics, and safer event workflows',
+    date: '2026-08-05',
+    items: [
+      { kind: 'added', text: 'Game Connection settings now offer both Full application and Background-only modes. Full mode keeps the complete playable game tab, while Background mode connects directly with substantially lower processor and memory use after one successful Full-mode sign-in' },
+      { kind: 'added', text: 'Background-only operation persists the selected startup mode, validates saved non-secret connection metadata, reconnects directly to the game server, and preserves the game\'s application heartbeat without opening Chromium' },
+      { kind: 'added', text: 'Rift Maiden probes accept an exact goal from 1 through 9,999, continue across commander-return rounds until that many launches are confirmed, show live progress, and can be cancelled without retracting attacks already sent' },
+      { kind: 'added', text: 'Auto Beri can capture durable functional, layout, or exact camp blueprints and build from confirmed returned loot without importing resources from another kingdom' },
+      { kind: 'added', text: 'Auto Beri has an optional authoritative Gallantry-booster gate covering transfers, armorer purchases, camp setup, attacks, tools, and construction while preserving the separate booster setting' },
+      { kind: 'changed', text: 'Alliance Help is now a core live-session behavior instead of a feature toggle: CitadelOps answers actionable Help All requests even when every automation feature is off while preserving session readiness, deduplication, retry, and Bot Lock safeguards' },
+      { kind: 'changed', text: 'Rift Maiden launch, Berimond attack/build/tool lanes, Alliance Help, Storm construction, and other migrated workflows now declare typed resources and scoped read dependencies in the current intent engine' },
+      { kind: 'changed', text: 'Auto Food treats the Storm castle as a storage invariant: it keeps Food and Mead at observed capacity, never waits on troop consumption there, prioritizes Mead when both are low, and permits safe residual top-offs' },
+      { kind: 'changed', text: 'Auto Invasion, Auto Nomad, and Auto Advisor use the server-advertised event currencies and difficulties, preserving Bot Lock and failing closed when a requested live option is unavailable' },
+      { kind: 'changed', text: 'Operation receipts, scoped resource claims, read sets, state persistence, movement timing, and production reconciliation now retain the context required for safe retries and multi-step automation' },
+      { kind: 'changed', text: 'Castle, equipment, item, building, troop, tool, currency, effect, and other game identifiers are translated to user-facing names in intent failures, automation status, and activity messages whenever official labels are available' },
+      { kind: 'changed', text: 'Existing battle-report history is imported into the current SQLite report store with durable deduplication and compatibility handling' },
+      { kind: 'fixed', text: 'Rift Maiden launches use the main castle and current Rift destination consistently, and exact-count runs no longer stop after only the commanders available in the first round' },
+      { kind: 'fixed', text: 'Berimond attack admission, target refresh, tool preparation, booster gating, returned-loot construction, and lane isolation no longer block unrelated work or dispatch against stale context' },
+      { kind: 'fixed', text: 'Storm food balancing no longer counts or waits for Storm troop consumption and no longer leaves small safe Food or Mead deficits below the ordinary minimum-shipment threshold' },
+      { kind: 'fixed', text: 'Session banners, headers, runtime state, and settings now distinguish the configured connection mode from the active mode and clearly show when a restart is required' },
+    ],
+  },
+  {
     version: '2.0.1',
     subtitle: 'Material 3 Expressive interface, safer automation recovery, refined logistics, and bounded telemetry',
     date: '2026-08-03',

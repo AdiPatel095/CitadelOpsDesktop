@@ -2,7 +2,9 @@
 
 Keeps every castle above a configured food reserve by shipping food from castles
 that have a surplus, using market barrows within a kingdom and kingdom transport
-across kingdoms.
+across kingdoms. The Storm castle is handled as a storage invariant instead:
+Food and Mead are kept at observed storage capacity without consulting or
+waiting for its troop-consumption rate.
 
 Source: `Server/Automation/FoodBalancePolicy.go`.
 
@@ -61,6 +63,10 @@ Domains: `currencies`, `kingdom-transport`, `market`, `movements`, `resources`,
   to return before refreshing, so it never plans against barrows it has already
   committed.
 - **Minimum shipment size.** Avoids a stream of tiny transfers.
+- **Storm storage invariant.** Storm Food and Mead refill whenever either
+  resource is below capacity. Mead is selected first when both are low, Storm
+  never donates either resource, and the minimum-shipment floor is bypassed for
+  residual top-offs. Target-cap and source-reserve guards still apply.
 - **Coin reserve.** Shipments cost coin; the floor is respected.
 - **Time-skip allowlist.** Only skips in `allowedTimeSkips` may be used, and
   never below `timeSkipReserve`.

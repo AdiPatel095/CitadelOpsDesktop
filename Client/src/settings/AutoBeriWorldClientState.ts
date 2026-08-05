@@ -1,4 +1,7 @@
+import type { BuildingTargetCaptureResponse } from '../api/Contracts';
 import { parseHorseTravelBoostID, type HorseTravelBoostID } from './HorseTravelBoost';
+
+export const AUTO_BERI_WORLD_BLUEPRINTS_SECTION = 'automation.autoBeriWorldBlueprints';
 
 export const AUTO_BERI_COIN_ATTACK_TOOLS = [
 	{ id: 614, name: 'Scaling ladders' },
@@ -19,6 +22,15 @@ export const AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS = [
 export type AutoBeriTroopTransportTimeSkipID = typeof AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS[number]['id'];
 export type AutoBeriToolMinimums = Record<string, number>;
 
+export interface AutoBeriBuildSettings {
+	enabled: boolean;
+	allowPremium: boolean;
+	allowDemolition: boolean;
+	allowTimeSkips: boolean;
+	resourceReserves: Record<string, number>;
+	timeSkipReserve: Record<string, number>;
+}
+
 export interface AutoBeriWorldSettings {
 	minTroopsToTransfer: number;
 	beriCastleId: number;
@@ -30,6 +42,8 @@ export interface AutoBeriWorldSettings {
 	attackCheckIntervalSec: number;
 	horseTravelBoostId: HorseTravelBoostID;
 	toolMinimums: AutoBeriToolMinimums;
+	build: AutoBeriBuildSettings;
+	requireActiveGallantryBooster: boolean;
 	useTroopTransportTimeSkips: boolean;
 	troopTransportTimeSkipId: AutoBeriTroopTransportTimeSkipID;
 }
@@ -45,6 +59,8 @@ export const DEFAULT_AUTO_BERI_WORLD_SETTINGS: AutoBeriWorldSettings = {
 	attackCheckIntervalSec: 30,
 	horseTravelBoostId: -1,
 	toolMinimums: defaultToolMinimums(),
+	build: defaultBuildSettings(),
+	requireActiveGallantryBooster: false,
 	useTroopTransportTimeSkips: false,
 	troopTransportTimeSkipId: 'MS5',
 };
@@ -52,6 +68,7 @@ export const DEFAULT_AUTO_BERI_WORLD_SETTINGS: AutoBeriWorldSettings = {
 export function parseAutoBeriWorldSettings(payload: unknown): AutoBeriWorldSettings {
 	const value = isRecord(payload) ? payload : {};
 	const rawToolMinimums = isRecord(value.toolMinimums) ? value.toolMinimums : {};
+	const rawBuild = isRecord(value.build) ? value.build : {};
 	return {
 		minTroopsToTransfer: nonNegativeInteger(value.minTroopsToTransfer, 1),
 		beriCastleId: nonNegativeInteger(value.beriCastleId ?? value.beriCastleCID, 0),
@@ -66,13 +83,102 @@ export function parseAutoBeriWorldSettings(payload: unknown): AutoBeriWorldSetti
 			String(tool.id),
 			nonNegativeInteger(rawToolMinimums[String(tool.id)], 0),
 		])),
+		build: {
+			enabled: rawBuild.enabled === true,
+			allowPremium: rawBuild.allowPremium === true,
+			allowDemolition: rawBuild.allowDemolition === true,
+			allowTimeSkips: rawBuild.allowTimeSkips === true,
+			resourceReserves: parseNumberMap(rawBuild.resourceReserves),
+			timeSkipReserve: parseNumberMap(rawBuild.timeSkipReserve),
+		},
+		requireActiveGallantryBooster: value.requireActiveGallantryBooster === true,
 		useTroopTransportTimeSkips: value.useTroopTransportTimeSkips === true,
 		troopTransportTimeSkipId: parseTroopTransportTimeSkipID(value.troopTransportTimeSkipId),
 	};
 }
 
+export interface AutoBeriBlueprint {
+	id: string;
+	name: string;
+	createdAt: string;
+	updatedAt: string;
+	target: BuildingTargetCaptureResponse;
+}
+
+export interface AutoBeriBlueprintDocument {
+	version: 1;
+	activeId: string;
+	blueprints: Record<string, AutoBeriBlueprint>;
+}
+
+export function parseAutoBeriBlueprintDocument(value: unknown): AutoBeriBlueprintDocument {
+	const fallback: AutoBeriBlueprintDocument = { version: 1, activeId: '', blueprints: {} };
+	if (!isRecord(value) || !isRecord(value.blueprints)) return fallback;
+	const blueprints: Record<string, AutoBeriBlueprint> = {};
+	for (const [key, raw] of Object.entries(value.blueprints)) {
+		if (!isRecord(raw)) continue;
+		const target = parseTarget(raw.target);
+		const id = stringValue(raw.id) || key.trim();
+		if (!target || !id) continue;
+		blueprints[id] = {
+			id,
+			name: stringValue(raw.name) || blueprintModeLabel(target.mode),
+			createdAt: stringValue(raw.createdAt),
+			updatedAt: stringValue(raw.updatedAt),
+			target,
+		};
+	}
+	const activeId = stringValue(value.activeId);
+	return { version: 1, activeId: blueprints[activeId] ? activeId : '', blueprints };
+}
+
 function defaultToolMinimums(): AutoBeriToolMinimums {
 	return Object.fromEntries(AUTO_BERI_COIN_ATTACK_TOOLS.map((tool) => [String(tool.id), 0]));
+}
+
+function defaultBuildSettings(): AutoBeriBuildSettings {
+	return {
+		enabled: false,
+		allowPremium: false,
+		allowDemolition: false,
+		allowTimeSkips: false,
+		resourceReserves: {},
+		timeSkipReserve: {},
+	};
+}
+
+function parseTarget(value: unknown): BuildingTargetCaptureResponse | undefined {
+	if (!isRecord(value)
+		|| value.version !== 1
+		|| nonNegativeInteger(value.castleId, 0) <= 0
+		|| !Number.isFinite(Number(value.kingdomId))
+		|| !['functional', 'layout', 'exact', 'buildings', 'full'].includes(String(value.mode))
+		|| !Array.isArray(value.ground)
+		|| !Array.isArray(value.buildings)
+		|| !isRecord(value.summary)) {
+		return undefined;
+	}
+	return value as unknown as BuildingTargetCaptureResponse;
+}
+
+function blueprintModeLabel(mode: BuildingTargetCaptureResponse['mode']): string {
+	if (mode === 'functional') return 'Functional target';
+	if (mode === 'layout' || mode === 'buildings') return 'Layout target';
+	return 'Exact clone';
+}
+
+function parseNumberMap(value: unknown): Record<string, number> {
+	if (!isRecord(value)) return {};
+	const result: Record<string, number> = {};
+	for (const [key, raw] of Object.entries(value)) {
+		const amount = nonNegativeInteger(raw, 0);
+		if (amount > 0) result[key.trim()] = amount;
+	}
+	return result;
+}
+
+function stringValue(value: unknown): string {
+	return typeof value === 'string' ? value.trim() : '';
 }
 
 function parseTroopTransportTimeSkipID(value: unknown): AutoBeriTroopTransportTimeSkipID {

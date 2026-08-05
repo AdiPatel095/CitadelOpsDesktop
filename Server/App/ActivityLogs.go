@@ -183,7 +183,7 @@ func featureActivityEvent(intent string) string {
 		return "EQUIPMENT"
 	case strings.HasPrefix(intent, "crafting."):
 		return "CRAFTING"
-	case intent == "alliance.help.request":
+	case intent == "alliance.help.request", intent == "alliance.help.answer_all":
 		return "ALLIANCE HELP"
 	case strings.Contains(intent, "cooldown"), strings.HasSuffix(intent, ".skip"):
 		return "TIME SKIP"

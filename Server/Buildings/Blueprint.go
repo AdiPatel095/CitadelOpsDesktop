@@ -11,7 +11,10 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-const StormBlueprintConfigurationSection = "automation.autoStormBlueprints"
+const (
+	StormBlueprintConfigurationSection    = "automation.autoStormBlueprints"
+	BerimondBlueprintConfigurationSection = "automation.autoBeriWorldBlueprints"
+)
 
 type StormBlueprint struct {
 	ID        string              `json:"id"`
@@ -26,6 +29,12 @@ type StormBlueprintDocument struct {
 	ActiveID   string                    `json:"activeId,omitempty"`
 	Blueprints map[string]StormBlueprint `json:"blueprints"`
 }
+
+// Berimond blueprints use the same durable target document as Storm. The
+// aliases keep the persisted shape identical while giving each feature an
+// independent configuration section and active selection.
+type BerimondBlueprint = StormBlueprint
+type BerimondBlueprintDocument = StormBlueprintDocument
 
 type BlueprintDiffRequest struct {
 	ExpectedRevision *uint64             `json:"expectedRevision,omitempty"`
@@ -55,18 +64,30 @@ func EmptyStormBlueprintDocument() StormBlueprintDocument {
 }
 
 func DecodeStormBlueprintDocument(raw json.RawMessage, gameData *GameData.Store) (StormBlueprintDocument, error) {
+	return decodeEventBlueprintDocument(raw, gameData, "Storm")
+}
+
+func DecodeBerimondBlueprintDocument(raw json.RawMessage, gameData *GameData.Store) (BerimondBlueprintDocument, error) {
+	return decodeEventBlueprintDocument(raw, gameData, "Berimond")
+}
+
+func decodeEventBlueprintDocument(
+	raw json.RawMessage,
+	gameData *GameData.Store,
+	featureLabel string,
+) (StormBlueprintDocument, error) {
 	document := EmptyStormBlueprintDocument()
 	if len(raw) == 0 {
 		return document, nil
 	}
 	if err := json.Unmarshal(raw, &document); err != nil {
-		return StormBlueprintDocument{}, fmt.Errorf("decode Storm blueprint document: %w", err)
+		return StormBlueprintDocument{}, fmt.Errorf("decode %s blueprint document: %w", featureLabel, err)
 	}
 	if document.Version == 0 {
 		document.Version = 1
 	}
 	if document.Version != 1 {
-		return StormBlueprintDocument{}, fmt.Errorf("unsupported Storm blueprint document version %d", document.Version)
+		return StormBlueprintDocument{}, fmt.Errorf("unsupported %s blueprint document version %d", featureLabel, document.Version)
 	}
 	if document.Blueprints == nil {
 		document.Blueprints = map[string]StormBlueprint{}
@@ -95,7 +116,7 @@ func DecodeStormBlueprintDocument(raw json.RawMessage, gameData *GameData.Store)
 			blueprint.Target.Mode != TargetCaptureModeLayout &&
 			blueprint.Target.Mode != TargetCaptureModeExact {
 			return StormBlueprintDocument{}, fmt.Errorf(
-				"Storm blueprint %q has unsupported mode %q", id, blueprint.Target.Mode,
+				"%s blueprint %q has unsupported mode %q", featureLabel, id, blueprint.Target.Mode,
 			)
 		}
 		normalized[id] = blueprint
@@ -138,6 +159,21 @@ func StormBlueprintName(mode string) string {
 	default:
 		return "Exact clone"
 	}
+}
+
+func BerimondBlueprintID(mode string) string {
+	switch normalizeTargetCaptureMode(mode) {
+	case TargetCaptureModeFunctional:
+		return "beri-functional"
+	case TargetCaptureModeLayout:
+		return "beri-layout"
+	default:
+		return "beri-exact"
+	}
+}
+
+func BerimondBlueprintName(mode string) string {
+	return StormBlueprintName(mode)
 }
 
 func NormalizeTargetCapture(target TargetCaptureResult, catalog *GameData.BuildingCatalog) TargetCaptureResult {
@@ -206,16 +242,20 @@ func CompileBlueprintDiff(
 	}
 	target := NormalizeTargetCapture(request.Target, catalog)
 	if target.Mode != TargetCaptureModeFunctional && target.Mode != TargetCaptureModeLayout && target.Mode != TargetCaptureModeExact {
-		return BlueprintDiffResult{}, fmt.Errorf("unsupported Storm blueprint mode %q", target.Mode)
+		return BlueprintDiffResult{}, fmt.Errorf("unsupported blueprint mode %q", target.Mode)
 	}
 	if target.CastleID <= 0 {
-		return BlueprintDiffResult{}, fmt.Errorf("Storm blueprint castleId is required")
+		return BlueprintDiffResult{}, fmt.Errorf("blueprint castleId is required")
 	}
-	if target.KingdomID != State.KingdomID(GameData.StormKingdomID) {
-		return BlueprintDiffResult{}, fmt.Errorf("Storm blueprint must target kingdom %d", GameData.StormKingdomID)
-	}
-	if _, exists := state.Castles[target.CastleID]; !exists {
+	castle, exists := state.Castles[target.CastleID]
+	if !exists {
 		return BlueprintDiffResult{}, fmt.Errorf("castle %d was not found", target.CastleID)
+	}
+	if target.KingdomID != castle.KingdomID {
+		return BlueprintDiffResult{}, fmt.Errorf(
+			"blueprint kingdom %d does not match castle %d kingdom %d",
+			target.KingdomID, target.CastleID, castle.KingdomID,
+		)
 	}
 	projected := projectBlueprintGround(state, target)
 	ignoreDecorations := target.Mode != TargetCaptureModeExact

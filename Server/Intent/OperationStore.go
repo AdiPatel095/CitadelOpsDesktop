@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -48,7 +49,12 @@ func OpenOperationStore(dataDir string) (*SQLiteOperationStore, error) {
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, fmt.Errorf("create operation directory: %w", err)
 	}
-	db, err := sql.Open("sqlite", filepath.Join(directory, "Operations.sqlite"))
+	databaseURL := url.URL{Scheme: "file", Path: filepath.Join(directory, "Operations.sqlite")}
+	parameters := databaseURL.Query()
+	parameters.Add("_pragma", "busy_timeout(5000)")
+	parameters.Add("_pragma", "foreign_keys(1)")
+	databaseURL.RawQuery = parameters.Encode()
+	db, err := sql.Open("sqlite", databaseURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("open operation database: %w", err)
 	}
@@ -91,6 +97,26 @@ func (store *SQLiteOperationStore) initialize(ctx context.Context) error {
 			ON intent_operations(status, updated_at);
 	`); err != nil {
 		return fmt.Errorf("initialize operation database: %w", err)
+	}
+	return store.pruneTerminalHistory(ctx)
+}
+
+func (store *SQLiteOperationStore) pruneTerminalHistory(ctx context.Context) error {
+	result, err := store.db.ExecContext(ctx, `
+		DELETE FROM intent_operations
+		WHERE operation_id IN (
+			SELECT operation_id
+			FROM intent_operations
+			WHERE status NOT IN (?, ?, ?, ?, ?)
+			ORDER BY updated_at DESC
+			LIMIT -1 OFFSET ?
+		)
+	`, StatusPlanning, StatusQueued, StatusRunning, StatusPaused, StatusReconciling, operationHistoryLimit)
+	if err != nil {
+		return fmt.Errorf("prune terminal operation history: %w", err)
+	}
+	if _, err := result.RowsAffected(); err != nil {
+		return fmt.Errorf("inspect pruned operation history: %w", err)
 	}
 	return nil
 }

@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ArrowDown, ArrowUp, Download, FileJson, Upload } from 'lucide-react';
+import {
+	ArrowDown,
+	ArrowUp,
+	CheckCircle2,
+	Download,
+	FileJson,
+	MonitorPlay,
+	Server,
+	TriangleAlert,
+	Upload,
+} from 'lucide-react';
 import { Icons } from '../components/Icons';
 import { CitadelAPI } from '../api/CitadelClient';
 import { useCitadelAPI } from '../api/ApiContext';
@@ -18,6 +28,8 @@ interface AttackPriorityFeature {
 	detail: string;
 	defaultWeight: number;
 }
+
+type GameConnectionMode = 'full' | 'background';
 
 const defaultAttackPriorityFeatures: AttackPriorityFeature[] = [
 	{ id: 'autoTowers', label: 'Auto Towers', detail: 'Robber-baron and kingdom tower attacks', defaultWeight: 50 },
@@ -59,6 +71,8 @@ const SettingsView: React.FC = () => {
 	const [browserInventory, setBrowserInventory] = useState<BrowserInventory | null>(null);
 	const [browserSelectionPending, setBrowserSelectionPending] = useState(false);
 	const [browserSelectionError, setBrowserSelectionError] = useState('');
+	const [connectionModePending, setConnectionModePending] = useState(false);
+	const [connectionModeError, setConnectionModeError] = useState('');
 	const [customBrowserPath, setCustomBrowserPath] = useState('');
 	const [relogDelayMinutes, setRelogDelayMinutes] = useState('5');
 	const [relogDelayError, setRelogDelayError] = useState('');
@@ -74,6 +88,10 @@ const SettingsView: React.FC = () => {
 	const reconnectConfiguration = useMemo(
 		() => configurationSection(configuration, 'session.reconnect'),
 		[configuration?.sections['session.reconnect']],
+	);
+	const connectionConfiguration = useMemo(
+		() => configurationSection(configuration, 'session.connection'),
+		[configuration],
 	);
 
 	useEffect(() => {
@@ -180,6 +198,27 @@ const SettingsView: React.FC = () => {
 		: browserOptions.length > 0
 			? 'Select a browser'
 			: 'No compatible browser detected';
+	const configuredConnectionMode: GameConnectionMode = connectionConfiguration.mode === 'background'
+		? 'background'
+		: 'full';
+	const activeConnectionMode: GameConnectionMode = state?.session.mode === 'background'
+		? 'background'
+		: 'full';
+	const connectionModeRestartRequired = configuredConnectionMode !== activeConnectionMode;
+
+	const selectConnectionMode = (mode: GameConnectionMode) => {
+		if (mode === configuredConnectionMode || connectionModePending) return;
+		setConnectionModePending(true);
+		setConnectionModeError('');
+		void updateConfiguration('session.connection', {
+			...connectionConfiguration,
+			mode,
+		})
+			.catch((error) => {
+				setConnectionModeError(error instanceof Error ? error.message : 'Could not save the game connection mode');
+			})
+			.finally(() => setConnectionModePending(false));
+	};
 
 	const selectBrowser = (browser: string) => {
 		if (!browser || browser === selectedBrowserID) return;
@@ -429,11 +468,93 @@ const SettingsView: React.FC = () => {
 			{settingsTransferStatus && <p role="status" className="text-xs font-medium text-success">{settingsTransferStatus}</p>}
 		</SectionCard>
 
-		<SectionCard variant="solid" title="Game Browser" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-4">
+		<SectionCard variant="solid" title="Game Connection" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-6">
+			<div>
+				<h3 className="text-sm font-semibold text-text-main">How CitadelOps connects</h3>
+				<p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-muted">
+					Choose whether CitadelOps opens the complete game or connects quietly in the background.
+					The saved choice is used the next time CitadelOps starts.
+				</p>
+				<div role="radiogroup" aria-label="Game connection mode" className="mt-4 grid gap-3 lg:grid-cols-2">
+					<button
+						type="button"
+						role="radio"
+						aria-checked={configuredConnectionMode === 'full'}
+						disabled={connectionModePending}
+						onClick={() => selectConnectionMode('full')}
+						className={`group rounded-global border p-4 text-left transition-colors disabled:cursor-wait disabled:opacity-70 ${
+							configuredConnectionMode === 'full'
+								? 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
+								: 'border-border-base bg-surface-muted/30 hover:border-primary/35 hover:bg-surface-muted/60'
+						}`}
+					>
+						<div className="flex items-start gap-3">
+							<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400">
+								<MonitorPlay className="h-5 w-5" />
+							</span>
+							<span className="min-w-0 flex-1">
+								<span className="flex items-center justify-between gap-2">
+									<span className="text-sm font-semibold text-text-main">Full application</span>
+									{configuredConnectionMode === 'full' && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
+								</span>
+								<span className="mt-1 block text-xs leading-relaxed text-text-muted">
+									Opens the game tab so you can play along, watch actions happen, and use the complete game interface.
+								</span>
+								<span className="mt-3 flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-[11px] leading-relaxed text-warning">
+									<TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+									Uses considerably more processor and memory resources and may make your computer feel slower.
+								</span>
+							</span>
+						</div>
+					</button>
+
+					<button
+						type="button"
+						role="radio"
+						aria-checked={configuredConnectionMode === 'background'}
+						disabled={connectionModePending}
+						onClick={() => selectConnectionMode('background')}
+						className={`group rounded-global border p-4 text-left transition-colors disabled:cursor-wait disabled:opacity-70 ${
+							configuredConnectionMode === 'background'
+								? 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
+								: 'border-border-base bg-surface-muted/30 hover:border-primary/35 hover:bg-surface-muted/60'
+						}`}
+					>
+						<div className="flex items-start gap-3">
+							<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+								<Server className="h-5 w-5" />
+							</span>
+							<span className="min-w-0 flex-1">
+								<span className="flex items-center justify-between gap-2">
+									<span className="text-sm font-semibold text-text-main">Background only</span>
+									{configuredConnectionMode === 'background' && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
+								</span>
+								<span className="mt-1 block text-xs leading-relaxed text-text-muted">
+									Connects directly to the game server without opening Chromium or a game tab. Automations and live state continue with much lower resource use.
+								</span>
+								<span className="mt-3 block text-[11px] leading-relaxed text-text-muted">
+									Requires one successful sign-in in Full application mode to securely save the login and connection details on this computer.
+								</span>
+							</span>
+						</div>
+					</button>
+				</div>
+				{connectionModeRestartRequired ? (
+					<p role="status" className="mt-3 text-xs font-medium text-warning">
+						Currently running {activeConnectionMode === 'full' ? 'Full application' : 'Background only'} mode.
+						Restart CitadelOps to use {configuredConnectionMode === 'full' ? 'Full application' : 'Background only'} mode.
+					</p>
+				) : (
+					<p className="mt-3 text-xs text-text-muted">Connection mode changes are applied after restarting CitadelOps.</p>
+				)}
+				{connectionModeError && <p role="alert" className="mt-2 text-xs font-medium text-error">{connectionModeError}</p>}
+			</div>
+
+			<div className="border-t border-border-base pt-5">
 				<div>
-					<h3 className="text-sm font-semibold text-text-main mb-1">Chromium Browser</h3>
+					<h3 className="text-sm font-semibold text-text-main mb-1">Full application browser</h3>
 						<p className="text-xs text-text-muted mb-4">
-							CitadelOps starts with your system-default compatible Chromium browser, or the only compatible
+							Full application mode starts with your system-default compatible Chromium browser, or the only compatible
 							browser when one is installed. A saved choice is used after the next app restart, with a
 							dedicated CitadelOps profile that leaves your normal browser profile untouched.
 						</p>
@@ -497,7 +618,7 @@ const SettingsView: React.FC = () => {
 							<h3 className="text-sm font-semibold text-text-main">Relog Attempt Delay</h3>
 							<p className="mt-1 text-xs leading-relaxed text-text-muted">
 								Wait this long after an automatic socket loss, or after a game login cooldown ends,
-								before reloading the game and attempting the saved login again.
+								before reconnecting and attempting the saved login again.
 							</p>
 							<div className="mt-3 w-full sm:max-w-[200px]">
 								<label htmlFor="relog-attempt-delay" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
@@ -520,6 +641,7 @@ const SettingsView: React.FC = () => {
 							{relogDelayError && <p role="alert" className="mt-2 text-xs font-medium text-error">{relogDelayError}</p>}
 						</div>
 					</div>
+				</div>
 		</SectionCard>
 
         <SectionCard variant="solid" title="Attack Scheduler" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName="p-6 space-y-8">

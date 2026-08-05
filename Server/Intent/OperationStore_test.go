@@ -18,6 +18,29 @@ type operationStoreSender struct {
 	sends atomic.Int32
 }
 
+type countingOperationStore struct {
+	OperationStore
+	reserves    atomic.Int32
+	saves       atomic.Int32
+	lastReserve atomic.Pointer[Receipt]
+}
+
+func (store *countingOperationStore) Reserve(
+	ctx context.Context,
+	requestHash string,
+	receipt Receipt,
+) (Receipt, bool, error) {
+	store.reserves.Add(1)
+	copy := receipt
+	store.lastReserve.Store(&copy)
+	return store.OperationStore.Reserve(ctx, requestHash, receipt)
+}
+
+func (store *countingOperationStore) Save(ctx context.Context, receipt Receipt) error {
+	store.saves.Add(1)
+	return store.OperationStore.Save(ctx, receipt)
+}
+
 func (*operationStoreSender) Ready() bool       { return true }
 func (*operationStoreSender) Namespace() string { return "EmpireEx_21" }
 func (sender *operationStoreSender) Send(context.Context, []byte) error {
@@ -130,6 +153,132 @@ func TestEngineUsesDurableOperationIDAsIdempotencyKey(t *testing.T) {
 	}
 	if sender.sends.Load() != 1 {
 		t.Fatalf("physical sends after conflict = %d", sender.sends.Load())
+	}
+}
+
+func TestEngineKeepsReadsInMemoryAndCheckpointsWrites(t *testing.T) {
+	sqliteStore, err := OpenOperationStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sqliteStore.Close() })
+	store := &countingOperationStore{OperationStore: sqliteStore}
+	registry := NewRegistry()
+	for _, definition := range []Definition{
+		{
+			Name: "test.read", Effect: EffectRead,
+			Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+				return Plan{}, nil
+			},
+		},
+		{
+			Name: "test.write", Effect: EffectWrite,
+			Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+				return Plan{Steps: []Step{{
+					Opcode: "ain", Command: Protocol.Command{Opcode: "ain", Payload: json.RawMessage(`{}`)},
+				}}}, nil
+			},
+		},
+		{
+			Name: "test.action", Effect: EffectWrite,
+			Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+				return Plan{Steps: []Step{{Action: "test.action"}}}, nil
+			},
+		},
+	} {
+		if err := registry.Register(definition); err != nil {
+			t.Fatal(err)
+		}
+	}
+	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, &operationStoreSender{}, nil)
+	if err := engine.RegisterAction("test.action", func(context.Context, json.RawMessage) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if err := engine.SetOperationStore(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	read := engine.Submit(t.Context(), Request{ID: "read-operation", Name: "test.read"})
+	if read.Status != StatusSucceeded {
+		t.Fatalf("read receipt = %#v", read)
+	}
+	if _, found, err := sqliteStore.Get(t.Context(), read.ID); err != nil || found {
+		t.Fatalf("read durable lookup: found=%t err=%v", found, err)
+	}
+	if store.reserves.Load() != 0 || store.saves.Load() != 0 {
+		t.Fatalf("read persistence calls: reserves=%d saves=%d", store.reserves.Load(), store.saves.Load())
+	}
+	recent, err := engine.RecentOperations(t.Context(), 1)
+	if err != nil || len(recent) != 1 || recent[0].ID != read.ID {
+		t.Fatalf("in-memory recent read operation = %#v, err=%v", recent, err)
+	}
+
+	write := engine.Submit(t.Context(), Request{ID: "write-operation", Name: "test.write"})
+	if write.Status != StatusSucceeded {
+		t.Fatalf("write receipt = %#v", write)
+	}
+	if store.reserves.Load() != 1 || store.saves.Load() != 1 {
+		t.Fatalf("write persistence calls: reserves=%d saves=%d", store.reserves.Load(), store.saves.Load())
+	}
+	checkpoint := store.lastReserve.Load()
+	if checkpoint == nil || checkpoint.Plan == nil || checkpoint.Phase != EffectPhaseDispatching {
+		t.Fatalf("pre-dispatch checkpoint = %#v", checkpoint)
+	}
+	stored, found, err := sqliteStore.Get(t.Context(), write.ID)
+	if err != nil || !found || stored.Receipt.Plan == nil || stored.Receipt.Status != StatusSucceeded {
+		t.Fatalf("stored write: found=%t operation=%#v err=%v", found, stored, err)
+	}
+	action := engine.Submit(t.Context(), Request{ID: "action-operation", Name: "test.action"})
+	if action.Status != StatusSucceeded || store.reserves.Load() != 2 || store.saves.Load() != 2 {
+		t.Fatalf(
+			"action persistence: receipt=%#v reserves=%d saves=%d",
+			action, store.reserves.Load(), store.saves.Load(),
+		)
+	}
+}
+
+func TestOperationStorePrunesTerminalRowsButKeepsActiveRows(t *testing.T) {
+	store, err := OpenOperationStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	if _, err := store.db.Exec(`
+		WITH RECURSIVE sequence(value) AS (
+			SELECT 1
+			UNION ALL
+			SELECT value + 1 FROM sequence WHERE value < ?
+		)
+		INSERT INTO intent_operations (
+			operation_id, request_hash, receipt_json, status, phase, submitted_at, updated_at
+		)
+		SELECT printf('terminal-%d', value), printf('hash-%d', value), '{}', ?, ?,
+			printf('2026-01-01T00:00:%06dZ', value), printf('2026-01-01T00:00:%06dZ', value)
+		FROM sequence
+	`, operationHistoryLimit+5, StatusSucceeded, EffectPhaseCompleted); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{"active-running", "active-paused"} {
+		if _, err := store.db.Exec(`
+			INSERT INTO intent_operations (
+				operation_id, request_hash, receipt_json, status, phase, submitted_at, updated_at
+			) VALUES (?, ?, '{}', ?, ?, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')
+		`, id, id, StatusRunning, EffectPhaseDispatching); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := store.pruneTerminalHistory(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	var terminalCount int
+	if err := store.db.QueryRow(`SELECT COUNT(*) FROM intent_operations WHERE status = ?`, StatusSucceeded).Scan(&terminalCount); err != nil {
+		t.Fatal(err)
+	}
+	var activeCount int
+	if err := store.db.QueryRow(`SELECT COUNT(*) FROM intent_operations WHERE status IN (?, ?)`, StatusRunning, StatusPaused).Scan(&activeCount); err != nil {
+		t.Fatal(err)
+	}
+	if terminalCount != operationHistoryLimit || activeCount != 2 {
+		t.Fatalf("pruned counts: terminal=%d active=%d", terminalCount, activeCount)
 	}
 }
 

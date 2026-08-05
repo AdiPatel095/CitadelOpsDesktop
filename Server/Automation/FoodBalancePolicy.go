@@ -35,16 +35,18 @@ type foodBalanceSettings struct {
 }
 
 type foodBalanceProjection struct {
-	castle   State.CastleState
-	consumed GameData.CastleFoodConsumption
+	castle         State.CastleState
+	consumed       GameData.CastleFoodConsumption
+	fillToCapacity map[State.ResourceID]GameData.FoodConsumptionRate
 }
 
 type foodBalanceRisk struct {
-	target       foodBalanceProjection
-	resourceID   State.ResourceID
-	rate         GameData.FoodConsumptionRate
-	shortfall    float64
-	urgencyHours float64
+	target         foodBalanceProjection
+	resourceID     State.ResourceID
+	rate           GameData.FoodConsumptionRate
+	shortfall      float64
+	urgencyHours   float64
+	fillToCapacity bool
 }
 
 type foodBalanceDonor struct {
@@ -293,8 +295,27 @@ func foodBalanceLogisticsStale(snapshot Snapshot, interval time.Duration, includ
 
 func foodBalanceProjections(snapshot Snapshot) (map[State.CastleID]foodBalanceProjection, error) {
 	result := make(map[State.CastleID]foodBalanceProjection, len(snapshot.State.Castles))
+	var stormResourceIDs map[string]State.ResourceID
 	for _, castleID := range sortedCastleIDs(snapshot.State.Castles) {
 		castle := snapshot.State.Castles[castleID]
+		if castle.KingdomID == State.KingdomID(GameData.StormKingdomID) {
+			if stormResourceIDs == nil {
+				var err error
+				stormResourceIDs, err = snapshot.GameData.FoodResourceIDs()
+				if err != nil {
+					return nil, fmt.Errorf("resolve Storm food resources: %w", err)
+				}
+			}
+			fillToCapacity := make(map[State.ResourceID]GameData.FoodConsumptionRate, 2)
+			for _, jsonKey := range []string{"F", "MEAD"} {
+				resourceID := stormResourceIDs[jsonKey]
+				fillToCapacity[resourceID] = GameData.FoodConsumptionRate{
+					ResourceID: resourceID, ResourceJSONKey: jsonKey,
+				}
+			}
+			result[castleID] = foodBalanceProjection{castle: castle, fillToCapacity: fillToCapacity}
+			continue
+		}
 		consumed, err := snapshot.GameData.EstimateFoodConsumption(castle)
 		if err != nil {
 			return nil, fmt.Errorf("estimate food at %s: %w", castleName(castle), err)
@@ -305,6 +326,12 @@ func foodBalanceProjections(snapshot Snapshot) (map[State.CastleID]foodBalancePr
 }
 
 func foodBalanceEconomyComplete(projection foodBalanceProjection) bool {
+	for resourceID := range projection.fillToCapacity {
+		balance, exists := projection.castle.Resources[resourceID]
+		if !exists || balance.Capacity == nil {
+			return false
+		}
+	}
 	for resourceID, rate := range projection.consumed.ByResource {
 		if rate.TotalConsumptionPerHour <= 0 {
 			continue
@@ -325,6 +352,17 @@ func foodBalanceRisks(projections map[State.CastleID]foodBalanceProjection, sett
 	result := make([]foodBalanceRisk, 0)
 	for _, castleID := range sortedCastleIDsFromFoodProjections(projections) {
 		projection := projections[castleID]
+		for resourceID, rate := range projection.fillToCapacity {
+			balance := projection.castle.Resources[resourceID]
+			shortfall := math.Max(0, *balance.Capacity-balance.Amount)
+			if shortfall <= 0 {
+				continue
+			}
+			result = append(result, foodBalanceRisk{
+				target: projection, resourceID: resourceID, rate: rate,
+				shortfall: shortfall, urgencyHours: 0, fillToCapacity: true,
+			})
+		}
 		resourceIDs := make([]State.ResourceID, 0, len(projection.consumed.ByResource))
 		for resourceID := range projection.consumed.ByResource {
 			resourceIDs = append(resourceIDs, resourceID)
@@ -364,6 +402,14 @@ func foodBalanceRisks(projections map[State.CastleID]foodBalanceProjection, sett
 		}
 	}
 	sort.Slice(result, func(left, right int) bool {
+		if result[left].fillToCapacity != result[right].fillToCapacity {
+			return result[left].fillToCapacity
+		}
+		if result[left].fillToCapacity && result[left].rate.ResourceJSONKey != result[right].rate.ResourceJSONKey {
+			// Mead is the attack provision and must not wait behind a Food
+			// refill while Storm's single kingdom-transport lane is available.
+			return result[left].rate.ResourceJSONKey == "MEAD"
+		}
 		if result[left].urgencyHours != result[right].urgencyHours {
 			return result[left].urgencyHours < result[right].urgencyHours
 		}
@@ -387,7 +433,7 @@ func foodBalanceShipment(
 	interval time.Duration,
 ) (Decision, bool, error) {
 	marketAmount := math.Floor(targetNeed)
-	kingdomAmount, kingdomAmountReady := foodBalanceKingdomDispatchAmount(settings, targetNeed)
+	kingdomAmount, kingdomAmountReady := foodBalanceKingdomDispatchAmountForRisk(settings, risk, targetNeed)
 	blocked := Decision{}
 	blockedFound := false
 	for _, donor := range foodBalanceDonors(settings, projections, risk) {
@@ -561,7 +607,7 @@ func foodBalanceKingdomShipment(
 	targetNeed float64,
 	interval time.Duration,
 ) (Decision, bool) {
-	amount, ready := foodBalanceKingdomDispatchAmount(settings, targetNeed)
+	amount, ready := foodBalanceKingdomDispatchAmountForRisk(settings, risk, targetNeed)
 	if !ready {
 		return Decision{}, false
 	}
@@ -584,6 +630,18 @@ func foodBalanceKingdomDispatchAmount(settings foodBalanceSettings, targetNeed f
 	minimumDispatch := math.Ceil(minimumDelivery / foodBalanceKingdomDeliveryRatio)
 	amount := math.Floor(targetNeed / foodBalanceKingdomDeliveryRatio)
 	return amount, amount >= minimumDispatch
+}
+
+func foodBalanceKingdomDispatchAmountForRisk(
+	settings foodBalanceSettings,
+	risk foodBalanceRisk,
+	targetNeed float64,
+) (float64, bool) {
+	amount := math.Floor(targetNeed / foodBalanceKingdomDeliveryRatio)
+	if risk.fillToCapacity {
+		return amount, amount > 0
+	}
+	return foodBalanceKingdomDispatchAmount(settings, targetNeed)
 }
 
 func foodBalanceKingdomShipmentFromDonor(
@@ -656,6 +714,9 @@ func foodBalanceImmediateKingdomTimeSkip(
 }
 
 func foodBalanceSourceAvailable(settings foodBalanceSettings, projection foodBalanceProjection, resourceID State.ResourceID) float64 {
+	if _, protected := projection.fillToCapacity[resourceID]; protected {
+		return 0
+	}
 	rate, exists := projection.consumed.ByResource[resourceID]
 	if !exists {
 		return 0

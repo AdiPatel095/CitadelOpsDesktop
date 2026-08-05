@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
@@ -12,6 +14,8 @@ import (
 )
 
 const caravanOverloaderBoosterID = 11
+
+const permanentBoosterRemainingSec = math.MaxInt32
 
 func reduceMarketInfo(
 	_ context.Context,
@@ -121,25 +125,45 @@ func reduceMarketBooster(
 		}
 	}
 	var rows []struct {
-		ID    wireInt64 `json:"ID"`
-		Level int       `json:"L"`
+		ID           wireInt64 `json:"ID"`
+		Level        int       `json:"L"`
+		Bonus        wireInt64 `json:"B"`
+		RemainingSec wireInt64 `json:"RT"`
 	}
 	if err := json.Unmarshal(root["BO"], &rows); err != nil {
 		return nil, false, fmt.Errorf("decode market booster rows: %w", err)
 	}
 	level := 0
+	boosters := make(map[int]State.MarketBoosterState, len(rows))
 	for _, row := range rows {
+		id := int(row.ID)
+		if id < 0 {
+			continue
+		}
+		remainingSec := int(row.RemainingSec)
+		booster := State.MarketBoosterState{
+			ID: id, Level: row.Level, BonusPercent: int(row.Bonus), RemainingSec: remainingSec,
+		}
+		if remainingSec == permanentBoosterRemainingSec {
+			booster.Permanent = true
+		} else if remainingSec > 0 {
+			booster.ExpiresAt = frame.ReceivedAt.Add(time.Duration(remainingSec) * time.Second)
+		}
+		boosters[id] = booster
 		if row.ID == caravanOverloaderBoosterID {
 			level = row.Level
-			break
 		}
 	}
-	if gameState.Market.CaravanLevelLoaded && gameState.Market.CaravanLevel == level {
+	if gameState.Market.CaravanLevelLoaded && gameState.Market.CaravanLevel == level &&
+		reflect.DeepEqual(gameState.Market.Boosters, boosters) &&
+		gameState.Market.BoostersObservedAt.Equal(frame.ReceivedAt) {
 		return nil, false, nil
 	}
 	gameState.Market.CaravanLevel = level
 	gameState.Market.CaravanLevelLoaded = true
-	return []string{"market"}, true, nil
+	gameState.Market.Boosters = boosters
+	gameState.Market.BoostersObservedAt = frame.ReceivedAt
+	return []string{"boosters", "market"}, true, nil
 }
 
 func reduceKingdomTransport(

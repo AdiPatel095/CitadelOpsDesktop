@@ -191,6 +191,7 @@ func TestInvasionFortifyCurrencyUsesVariantSpecificEventMedals(t *testing.T) {
 		{name: "event medals in Bloodcrow", setting: eventMedalsCurrency, eventID: bloodcrowEventID, expected: "ST", valid: true},
 		{name: "live currencies override Foreign Lords fallback", setting: eventMedalsCurrency, eventID: foreignLordsEventID, offered: []string{"GTO", "STO", "ST"}, expected: "ST", valid: true},
 		{name: "live currencies override Bloodcrow fallback", setting: eventMedalsCurrency, eventID: bloodcrowEventID, offered: []string{"GTO", "STO", "KM"}, expected: "KM", valid: true},
+		{name: "server supplied event currency overrides legacy codes", setting: eventMedalsCurrency, eventID: bloodcrowEventID, offered: []string{"GTO", "STO", "KT"}, expected: "KT", valid: true},
 		{name: "live currencies without event medals fail closed", setting: eventMedalsCurrency, eventID: foreignLordsEventID, offered: []string{"GTO", "STO"}, valid: false},
 		{name: "gold shared by both variants", setting: "GTO", eventID: bloodcrowEventID, expected: "GTO", valid: true},
 	} {

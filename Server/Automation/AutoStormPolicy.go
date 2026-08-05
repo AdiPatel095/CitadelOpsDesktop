@@ -74,6 +74,33 @@ type autoStormBuildSettings struct {
 	TimeSkipReserve        map[string]int64   `json:"timeSkipReserve"`
 }
 
+type autoEventBuildProfile struct {
+	KingdomID      State.KingdomID
+	FeatureLabel   string
+	AttackLootOnly bool
+}
+
+func autoStormBuildProfile() autoEventBuildProfile {
+	return autoEventBuildProfile{KingdomID: autoStormKingdomID, FeatureLabel: "Storm"}
+}
+
+func (profile autoEventBuildProfile) resourceWaitDetail(action Buildings.TargetAction) string {
+	if profile.AttackLootOnly {
+		return fmt.Sprintf(
+			"Waiting for returned %s attack loot to %s %s",
+			profile.FeatureLabel, action.Kind, action.Definition.DisplayName,
+		)
+	}
+	return fmt.Sprintf("Waiting for resources to %s %s", action.Kind, action.Definition.DisplayName)
+}
+
+func (profile autoEventBuildProfile) expansionResourceWaitDetail() string {
+	if profile.AttackLootOnly {
+		return fmt.Sprintf("Waiting for returned %s attack loot to fund the next expansion", profile.FeatureLabel)
+	}
+	return fmt.Sprintf("The next captured %s expansion is not currently actionable", profile.FeatureLabel)
+}
+
 type autoStormHarborSettings struct {
 	Enabled     bool  `json:"enabled"`
 	TargetLevel int64 `json:"targetLevel"`
@@ -427,16 +454,26 @@ func evaluateAutoStormBuild(
 	castle State.CastleState,
 	metrics map[string]float64,
 ) (*Decision, bool, string, error) {
+	return evaluateAutoEventBuild(snapshot, settings, castle, metrics, autoStormBuildProfile())
+}
+
+func evaluateAutoEventBuild(
+	snapshot Snapshot,
+	settings autoStormSettings,
+	castle State.CastleState,
+	metrics map[string]float64,
+	profile autoEventBuildProfile,
+) (*Decision, bool, string, error) {
 	if settings.Target == nil && !settings.Harbor.Enabled {
 		return nil, true, "", nil
 	}
-	if settings.Target != nil && settings.Target.KingdomID != autoStormKingdomID {
-		return nil, false, "Captured target is not a Storm castle state", nil
+	if settings.Target != nil && settings.Target.KingdomID != profile.KingdomID {
+		return nil, false, fmt.Sprintf("Captured target is not a %s castle state", profile.FeatureLabel), nil
 	}
 	layoutStale := castle.Layout.ObservedAt.IsZero() || snapshot.Now.Sub(castle.Layout.ObservedAt) > autoStormBuildingRefreshAge
 	queueStale := castle.BuildingQueue.ObservedAt.IsZero() || snapshot.Now.Sub(castle.BuildingQueue.ObservedAt) > autoStormBuildingRefreshAge
 	if layoutStale || queueStale {
-		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh the Storm castle building state", "building.refresh", map[string]any{
+		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Refresh the %s castle building state", profile.FeatureLabel), "building.refresh", map[string]any{
 			"castleId": castle.ID,
 		}), false, "", nil
 	}
@@ -451,20 +488,20 @@ func evaluateAutoStormBuild(
 		}), false, "", nil
 	}
 
-	queueDecision, queueBlocked := autoStormQueueDecision(snapshot, settings, castle, catalog, metrics)
+	queueDecision, queueBlocked := autoStormQueueDecision(snapshot, settings, castle, catalog, metrics, profile)
 	if queueDecision != nil {
 		return queueDecision, false, "", nil
 	}
 	buildWaiting := ""
 	if queueBlocked {
-		buildWaiting = "The Storm construction queue is occupied"
+		buildWaiting = fmt.Sprintf("The %s construction queue is occupied", profile.FeatureLabel)
 	}
 
 	if settings.Target != nil {
 		missingGround := autoStormMissingGround(castle, settings.Target.Ground)
 		metrics["targetGroundRemaining"] = float64(len(missingGround))
 		if len(missingGround) > 0 && !queueBlocked {
-			decision, detail, expansionErr := autoStormExpansionDecision(snapshot, settings, castle, missingGround, metrics)
+			decision, detail, expansionErr := autoStormExpansionDecision(snapshot, settings, castle, missingGround, metrics, profile)
 			if expansionErr != nil {
 				return nil, false, "", expansionErr
 			}
@@ -487,7 +524,7 @@ func evaluateAutoStormBuild(
 		if settings.Target != nil && len(autoStormMissingGround(castle, settings.Target.Ground)) > 0 {
 			return nil, false, buildWaiting, nil
 		}
-		return autoStormDecorationDecision(snapshot, settings, castle, catalog, metrics)
+		return autoStormDecorationDecision(snapshot, settings, castle, catalog, metrics, profile)
 	}
 	normalDiff, err := Buildings.CompileTargetDiff(snapshot.State, snapshot.GameData, Buildings.TargetDiffRequest{
 		CastleID: castle.ID, Exact: exact,
@@ -552,11 +589,15 @@ func evaluateAutoStormBuild(
 					metrics["targetStorageDependencies"] = float64(len(storage.CapacityNeeds))
 					if storage.RecommendedAction != nil {
 						dependencyAction := *storage.RecommendedAction
-						if autoStormExpansionActionAllowed(dependencyAction, settings) {
+						if autoEventBuildActionAllowed(dependencyAction, settings, profile) {
 							autoStormApplyTimeSkipReserve(dependencyAction.Arguments, dependencyAction.Intent, settings.Build.TimeSkipReserve)
 							return autoStormIntentDecision(snapshot.Now, metrics, dependencyAction.Reason, dependencyAction.Intent, dependencyAction.Arguments), false, "", nil
 						}
-						buildWaiting = dependencyAction.Reason
+						if profile.AttackLootOnly && strings.HasPrefix(dependencyAction.Intent, "resource.") {
+							buildWaiting = profile.resourceWaitDetail(action)
+						} else {
+							buildWaiting = dependencyAction.Reason
+						}
 					} else if len(storage.Blockers) > 0 {
 						buildWaiting = storage.Blockers[0].Message
 					} else {
@@ -565,7 +606,7 @@ func evaluateAutoStormBuild(
 					continue
 				}
 				if action.AffordableNow {
-					if decision := autoStormTargetActionDecision(snapshot.Now, settings, castle, action, metrics); decision != nil {
+					if decision := autoStormTargetActionDecision(snapshot.Now, settings, castle, action, metrics, profile); decision != nil {
 						return decision, false, "", nil
 					}
 				}
@@ -579,7 +620,7 @@ func evaluateAutoStormBuild(
 					}
 				}
 				if buildWaiting == "" {
-					buildWaiting = fmt.Sprintf("Waiting for resources to %s %s", action.Kind, action.Definition.DisplayName)
+					buildWaiting = profile.resourceWaitDetail(action)
 				}
 			}
 		}
@@ -594,14 +635,14 @@ func evaluateAutoStormBuild(
 			}
 		}
 		if buildWaiting == "" {
-			buildWaiting = "The captured Storm building state is not yet satisfied"
+			buildWaiting = fmt.Sprintf("The captured %s building state is not yet satisfied", profile.FeatureLabel)
 		}
 		return nil, false, buildWaiting, nil
 	}
 	if settings.Target != nil && len(autoStormMissingGround(castle, settings.Target.Ground)) > 0 {
 		return nil, false, buildWaiting, nil
 	}
-	return autoStormDecorationDecision(snapshot, settings, castle, catalog, metrics)
+	return autoStormDecorationDecision(snapshot, settings, castle, catalog, metrics, profile)
 }
 
 func autoStormTargetActionIssue(diff Buildings.TargetDiffResult, action Buildings.TargetAction) (Buildings.TargetIssue, bool) {
@@ -637,6 +678,7 @@ func autoStormQueueDecision(
 	castle State.CastleState,
 	catalog *GameData.BuildingCatalog,
 	metrics map[string]float64,
+	profile autoEventBuildProfile,
 ) (*Decision, bool) {
 	occupied := make([]State.BuildingInstanceID, 0)
 	available := false
@@ -660,13 +702,13 @@ func autoStormQueueDecision(
 			continue
 		}
 		if remaining <= 60 {
-			return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Finish Storm building %d through the free path", buildingID), "building.finish_free", map[string]any{
+			return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Finish %s building %d through the free path", profile.FeatureLabel, buildingID), "building.finish_free", map[string]any{
 				"castleId": castle.ID, "buildingInstanceId": buildingID,
 			}), false
 		}
 		if settings.Build.AllowTimeSkips {
 			if minutes, reserve, found := autoStormBuildingTimeSkip(snapshot.State, settings.Build.TimeSkipReserve, remaining); found {
-				return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Apply a %d-minute skip to Storm building %d", minutes, buildingID), "building.skip_time", map[string]any{
+				return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Apply a %d-minute skip to %s building %d", minutes, profile.FeatureLabel, buildingID), "building.skip_time", map[string]any{
 					"castleId": castle.ID, "buildingInstanceId": buildingID, "minutes": minutes, "minimumRemaining": reserve,
 				}), false
 			}
@@ -756,6 +798,7 @@ func autoStormExpansionDecision(
 	castle State.CastleState,
 	missing []Buildings.TargetGround,
 	metrics map[string]float64,
+	profile autoEventBuildProfile,
 ) (*Decision, string, error) {
 	baseRequest := Buildings.ExpansionPreviewRequest{
 		CastleID: castle.ID, Payment: Buildings.ExpansionPaymentResources,
@@ -789,7 +832,10 @@ func autoStormExpansionDecision(
 	}
 	if preview.RecommendedAction != nil {
 		action := *preview.RecommendedAction
-		if !autoStormExpansionActionAllowed(action, settings) {
+		if !autoEventBuildActionAllowed(action, settings, profile) {
+			if profile.AttackLootOnly && strings.HasPrefix(action.Intent, "resource.") {
+				return nil, profile.expansionResourceWaitDetail(), nil
+			}
 			return nil, action.Reason, nil
 		}
 		autoStormApplyTimeSkipReserve(action.Arguments, action.Intent, settings.Build.TimeSkipReserve)
@@ -809,7 +855,7 @@ func autoStormExpansionDecision(
 	if len(preview.Blockers) > 0 {
 		return nil, preview.Blockers[0].Message, nil
 	}
-	return nil, "The next captured Storm expansion is not currently actionable", nil
+	return nil, profile.expansionResourceWaitDetail(), nil
 }
 
 func autoStormGroundForExpansion(missing []Buildings.TargetGround, _ []int64) (Buildings.TargetGround, bool) {
@@ -839,6 +885,17 @@ func autoStormExpansionActionAllowed(action Buildings.ExpansionAction, settings 
 	default:
 		return true
 	}
+}
+
+func autoEventBuildActionAllowed(
+	action Buildings.ExpansionAction,
+	settings autoStormSettings,
+	profile autoEventBuildProfile,
+) bool {
+	if profile.AttackLootOnly && strings.HasPrefix(action.Intent, "resource.") {
+		return false
+	}
+	return autoStormExpansionActionAllowed(action, settings)
 }
 
 func autoStormTargetBuildings(
@@ -1012,6 +1069,7 @@ func autoStormTargetActionDecision(
 	castle State.CastleState,
 	action Buildings.TargetAction,
 	metrics map[string]float64,
+	profile autoEventBuildProfile,
 ) *Decision {
 	arguments := map[string]any{"castleId": castle.ID}
 	switch action.Intent {
@@ -1041,7 +1099,13 @@ func autoStormTargetActionDecision(
 	if actionLabel != "" {
 		actionLabel = strings.ToUpper(actionLabel[:1]) + actionLabel[1:]
 	}
-	return autoStormIntentDecision(now, metrics, fmt.Sprintf("%s %s toward the captured Storm target", actionLabel, action.Definition.DisplayName), action.Intent, arguments)
+	return autoStormIntentDecision(
+		now,
+		metrics,
+		fmt.Sprintf("%s %s toward the captured %s target", actionLabel, action.Definition.DisplayName, profile.FeatureLabel),
+		action.Intent,
+		arguments,
+	)
 }
 
 func autoStormTargetTransportDecision(
@@ -1210,22 +1274,23 @@ func autoStormDecorationDecision(
 	castle State.CastleState,
 	catalog *GameData.BuildingCatalog,
 	metrics map[string]float64,
+	profile autoEventBuildProfile,
 ) (*Decision, bool, string, error) {
 	if settings.Target == nil || settings.Target.Exact || settings.DecorationPresetID == "" {
-		return nil, true, "Captured Storm target state satisfied", nil
+		return nil, true, fmt.Sprintf("Captured %s target state satisfied", profile.FeatureLabel), nil
 	}
 	preset, found := autoStormDecorationPresetFromConfiguration(snapshot.Configuration.Sections["decorations.presets"], settings.DecorationPresetCastleID, settings.DecorationPresetID)
 	if !found {
 		return nil, false, "The selected decoration preset no longer exists", nil
 	}
 	if autoStormDecorationPresetSatisfied(castle, catalog, preset) {
-		return nil, true, "Captured Storm building state and decoration preset satisfied", nil
+		return nil, true, fmt.Sprintf("Captured %s building state and decoration preset satisfied", profile.FeatureLabel), nil
 	}
 	items := make([]map[string]any, 0, len(preset.Items))
 	for _, item := range preset.Items {
 		items = append(items, map[string]any{"wid": item.WID, "x": item.X, "y": item.Y, "r": item.R, "layer": item.Layer})
 	}
-	return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Apply decoration preset %s to the completed Storm layout", preset.Name), "decoration.apply_preset", map[string]any{
+	return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Apply decoration preset %s to the completed %s layout", preset.Name, profile.FeatureLabel), "decoration.apply_preset", map[string]any{
 		"castleId": castle.ID, "kingdomId": castle.KingdomID, "presetId": preset.ID, "items": items,
 	}), false, "", nil
 }

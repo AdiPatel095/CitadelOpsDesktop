@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
 )
@@ -106,6 +108,74 @@ func TestExecutionGateFailsWritesClosedWhenPersistenceIsUnavailable(t *testing.T
 		Intent.ExecutionBeforeClaims,
 	); err != nil {
 		t.Fatalf("read was blocked by persistence health: %v", err)
+	}
+}
+
+func TestExecutionGateDoesNotBlockWritesForReportPersistenceFailure(t *testing.T) {
+	store, err := Reports.OpenSQLiteStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	err = store.Save(t.Context(), Reports.BattleReport{
+		ID: "10-20", ReportID: "10-20", AccountUID: 44, PlayerID: 1,
+		MID: 10, LID: 20, OccurredAt: time.Now().UTC().Format(time.RFC3339Nano),
+		Attacker: &Reports.BattleCombatant{PlayerID: 1},
+		Defender: &Reports.BattleCombatant{PlayerID: -2, Dummy: true},
+	})
+	if err == nil {
+		t.Fatal("closed report store did not record a persistence failure")
+	}
+	application := &Application{ReportStore: store}
+	if err := application.PersistenceError(); err == nil || !strings.Contains(err.Error(), "report analytics persistence") {
+		t.Fatalf("combined persistence health = %v", err)
+	}
+	if err := application.executionGate(
+		context.Background(), Intent.Request{Actor: "ui"}, Intent.Plan{Effect: Intent.EffectWrite},
+		Intent.ExecutionBeforeClaims,
+	); err != nil {
+		t.Fatalf("report analytics failure blocked a game write: %v", err)
+	}
+}
+
+func TestExecutionGateRechecksAutoBeriGallantryBooster(t *testing.T) {
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		"automation.autoBeriWorld": json.RawMessage(`{"requireActiveGallantryBooster":true}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	gameState.Market.BoostersObservedAt = time.Now().UTC()
+	application := &Application{Configuration: configuration, State: State.NewStore(gameState)}
+	request := Intent.Request{Actor: "automation:autoBeriWorld"}
+	plan := Intent.Plan{Effect: Intent.EffectRead}
+
+	err = application.executionGate(t.Context(), request, plan, Intent.ExecutionBeforeStep)
+	if !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "boi ID 24") {
+		t.Fatalf("inactive Auto Beri gate error = %v", err)
+	}
+	if err := application.executionGate(
+		t.Context(), Intent.Request{Actor: "ui"}, plan, Intent.ExecutionBeforeStep,
+	); err != nil {
+		t.Fatalf("manual work was blocked by Auto Beri booster gate: %v", err)
+	}
+
+	_, err = application.State.Apply(func(state *State.GameState) ([]string, bool, error) {
+		state.Market.Boosters[GameData.GallantryPointsBoosterID] = State.MarketBoosterState{
+			ID:           GameData.GallantryPointsBoosterID,
+			BonusPercent: 400,
+			ExpiresAt:    time.Now().UTC().Add(3 * time.Hour),
+		}
+		return []string{"boosters"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := application.executionGate(t.Context(), request, plan, Intent.ExecutionBeforeStep); err != nil {
+		t.Fatalf("active Gallantry booster was blocked: %v", err)
 	}
 }
 

@@ -76,8 +76,11 @@ func planSpyLaunch(_ context.Context, input Intent.PlanningContext, arguments js
 
 func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct {
+		// SourceX and SourceY are retained for compatibility with older clients,
+		// but Maiden waves always launch from the authoritative main castle.
 		SourceX            *int                          `json:"sourceX,omitempty"`
 		SourceY            *int                          `json:"sourceY,omitempty"`
+		RunID              string                        `json:"runId,omitempty"`
 		UnitID             State.UnitID                  `json:"unitWodID"`
 		CommanderIDs       []State.CommanderID           `json:"commanderIds,omitempty"`
 		HorseTravelBoostID int                           `json:"horseTravelBoostId"`
@@ -93,9 +96,35 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	if err != nil {
 		return Intent.Plan{}, err
 	}
-	sourceX, sourceY := source.X, source.Y
-	if request.SourceX != nil && request.SourceY != nil {
-		sourceX, sourceY = *request.SourceX, *request.SourceY
+	var maidenRun *State.RiftMaidenRunState
+	request.RunID = strings.TrimSpace(request.RunID)
+	if request.RunID != "" {
+		current := input.State.Rift.MaidenRun
+		if current == nil || current.Status != "running" || current.ID != request.RunID {
+			return Intent.Plan{}, fmt.Errorf("Rift Maiden run %s is no longer active", request.RunID)
+		}
+		maidenRun = current
+		source, err = sourceCastle(input.State, current.SourceCastleID)
+		if err != nil {
+			return Intent.Plan{}, err
+		}
+		if source.X != current.SourceX || source.Y != current.SourceY || source.KingdomID != current.KingdomID {
+			return Intent.Plan{}, fmt.Errorf("%w: the Rift Maiden run's source castle changed", Intent.ErrPlanStale)
+		}
+		if request.UnitID != current.UnitID || request.HorseTravelBoostID != current.HorseTravelBoostID {
+			return Intent.Plan{}, fmt.Errorf("%w: the Rift Maiden run's probe settings changed", Intent.ErrPlanStale)
+		}
+		allowed := make(map[State.CommanderID]struct{}, len(current.CommanderIDs))
+		for _, commanderID := range current.CommanderIDs {
+			allowed[commanderID] = struct{}{}
+		}
+		if request.CommanderSelection != nil {
+			for _, commanderID := range request.CommanderSelection.Candidates {
+				if _, ok := allowed[commanderID]; !ok {
+					return Intent.Plan{}, fmt.Errorf("commander %d is not assigned to Rift Maiden run %s", commanderID, current.ID)
+				}
+			}
+		}
 	}
 	if request.UnitID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("unitWodID must identify a probe unit in the main castle")
@@ -120,7 +149,11 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	if availableUnits < maidenProbeCountPerFlank*3 {
 		return Intent.Plan{}, fmt.Errorf("main castle has %d of unit %d; at least %d are required", availableUnits, request.UnitID, maidenProbeCountPerFlank*3)
 	}
-	target, ok := riftTarget(input.State)
+	target, ok := riftTargetForKingdom(input.State, source.KingdomID)
+	if maidenRun != nil {
+		target, ok = input.State.Map[maidenRun.KingdomID][fmt.Sprintf("%d:%d", maidenRun.TargetX, maidenRun.TargetY)]
+		ok = ok && target.TypeID == riftMapTypeID
+	}
 	if !ok {
 		return Intent.Plan{}, fmt.Errorf("the Rift map tile is unknown; refresh the surrounding map first")
 	}
@@ -153,6 +186,12 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 		if requestedCount > maximumByStock {
 			return Intent.Plan{}, fmt.Errorf("main castle probe stock supports %d commander(s), not %d", maximumByStock, requestedCount)
 		}
+		if maidenRun != nil && requestedCount > maidenRun.RequestedAttacks-maidenRun.AttacksLaunched {
+			return Intent.Plan{}, fmt.Errorf(
+				"Rift Maiden run %s has only %d probe(s) remaining",
+				maidenRun.ID, max(0, maidenRun.RequestedAttacks-maidenRun.AttacksLaunched),
+			)
+		}
 		defaultCount = 1
 	}
 	resolution, err := resolveCRACommanders(input.State, request.CommanderSelection, craCommanderSelectionOptions{
@@ -167,7 +206,7 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	steps, err := buildCRACommandSteps(
 		source, resolution.Selected, "Launch Rift probe",
 		func(commanderID State.CommanderID) (json.RawMessage, error) {
-			body := maidenAttackBody(sourceX, sourceY, target, commanderID, request.UnitID)
+			body := maidenAttackBody(source.X, source.Y, target, commanderID, request.UnitID)
 			body.Booster = booster
 			body.PremiumTravel = premiumTravel
 			return json.Marshal(body)
@@ -176,6 +215,7 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 			return attackFeatureCaptureStep(attackFeatureCaptureRequest{
 				FeatureID: State.AttackFeatureRiftMaiden, SourceCastleID: source.ID, CommanderID: commanderID,
 				KingdomID: target.KingdomID, TargetTypeID: target.TypeID, TargetX: target.X, TargetY: target.Y,
+				RunID: request.RunID,
 			})
 		},
 	)
@@ -185,7 +225,7 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	claims := []string{
 		"castle-focus", "attack-context", "attack-inventory:" + castleID,
-		"rift-maiden-wave", "castle:" + castleID,
+		"rift-launch:maiden-wave", "castle:" + castleID,
 	}
 	claimCommanders := resolution.Selected
 	if request.CommanderSelection != nil {
@@ -1081,12 +1121,10 @@ func sourceCastle(state State.GameState, requested State.CastleID) (State.Castle
 	return State.CastleState{}, fmt.Errorf("the main castle is not known")
 }
 
-func riftTarget(state State.GameState) (State.MapObservation, bool) {
-	for _, kingdom := range state.Map {
-		for _, observation := range kingdom {
-			if observation.TypeID == riftMapTypeID {
-				return observation, true
-			}
+func riftTargetForKingdom(state State.GameState, kingdomID State.KingdomID) (State.MapObservation, bool) {
+	for _, observation := range state.Map[kingdomID] {
+		if observation.TypeID == riftMapTypeID {
+			return observation, true
 		}
 	}
 	return State.MapObservation{}, false

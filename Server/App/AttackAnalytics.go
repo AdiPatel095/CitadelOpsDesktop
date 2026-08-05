@@ -21,6 +21,7 @@ type attackFeatureCaptureRequest struct {
 	TargetTypeID   int                   `json:"targetTypeId,omitempty"`
 	TargetX        int                   `json:"targetX"`
 	TargetY        int                   `json:"targetY"`
+	RunID          string                `json:"runId,omitempty"`
 }
 
 func attackFeatureCaptureStep(request attackFeatureCaptureRequest) Intent.Step {
@@ -122,6 +123,20 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 			LaunchedAt: launchedAt.UTC(), ArrivesAt: selected.ArrivesAt.UTC(),
 		})
 		domains := []string{"attack-analytics", "movements"}
+		if request.RunID != "" && request.FeatureID == State.AttackFeatureRiftMaiden {
+			run := gameState.Rift.MaidenRun
+			if run != nil && run.ID == request.RunID && run.Status == "running" && !movementIDPresent(run.LaunchIDs, selected.ID) {
+				run.LaunchIDs = append(run.LaunchIDs, selected.ID)
+				run.AttacksLaunched = len(run.LaunchIDs)
+				if run.AttacksLaunched >= run.RequestedAttacks {
+					run.AttacksLaunched = run.RequestedAttacks
+					run.Status = "completed"
+				}
+				run.UpdatedAt = time.Now().UTC()
+				changed = true
+				domains = append(domains, "rift")
+			}
+		}
 		if changed && request.FeatureID == State.AttackFeatureAutoTowers {
 			if gameState.TowerQueue.ConfirmedLaunchesByCastle == nil {
 				gameState.TowerQueue.ConfirmedLaunchesByCastle = map[State.CastleID]int64{}
@@ -132,6 +147,15 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 		return domains, changed, nil
 	})
 	return err
+}
+
+func movementIDPresent(values []State.MovementID, wanted State.MovementID) bool {
+	for _, value := range values {
+		if value == wanted {
+			return true
+		}
+	}
+	return false
 }
 
 func attackMovementTroopCount(gameData *GameData.Store, units map[State.UnitID]int64) int64 {

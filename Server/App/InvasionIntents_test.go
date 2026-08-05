@@ -154,6 +154,20 @@ func TestInvasionAttackUsesLiveEventFortificationCurrencies(t *testing.T) {
 	if err != nil || resolved.FortifyCurrency != "ST" {
 		t.Fatalf("Samurai-token Bloodcrow fortification = %+v err=%v", resolved, err)
 	}
+
+	gameState.Invasion.FortifyCurrencies = []string{"GTO", "STO", "KT"}
+	request.FortifyCurrency = "KT"
+	arguments, _ = json.Marshal(request)
+	resolved, _, _, err = invasionAttackContext(Intent.PlanningContext{State: gameState}, arguments)
+	if err != nil || resolved.FortifyCurrency != "KT" {
+		t.Fatalf("server-supplied Bloodcrow fortification = %+v err=%v", resolved, err)
+	}
+
+	gameState.Invasion.FortifyCurrencies = nil
+	_, _, _, err = invasionAttackContext(Intent.PlanningContext{State: gameState}, arguments)
+	if err == nil || err.Error() != `unsupported invasion fortification currency "KT"` {
+		t.Fatalf("unobserved dynamic fortification error = %v", err)
+	}
 }
 
 func TestGuardInvasionTargetRequiresLaunchTimeMapObservation(t *testing.T) {

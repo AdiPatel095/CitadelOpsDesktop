@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Shield, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useCastleFocus } from '../../context/CastleFocusContext';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import { Button, SectionCard } from '../../components/ui';
@@ -35,12 +34,13 @@ const RiftMaidenCommsPanel: React.FC = () => {
   const { state, configuration, connectionStatus, submitIntent, updateConfiguration } = useCitadelAPI();
   const { getTroop } = useMetadata();
   const { gameLoggedIn } = useAuth();
-  const { castle } = useCastleFocus();
   const { riftMapCoords } = useRiftMap();
   const [unitWodID, setUnitWodID] = useState(DEFAULT_MAIDEN_PROBE_UNIT_ID);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [savingUnit, setSavingUnit] = useState(false);
   const [sending, setSending] = useState(false);
+	const [cancelling, setCancelling] = useState(false);
+	const [probeGoal, setProbeGoal] = useState(1);
   const [horseTravelBoostId, setHorseTravelBoostId] = useState<HorseTravelBoostID>(-1);
   const [sendStatus, setSendStatus] = useState<{ message: string; error: boolean } | null>(null);
   const dashboardConnected = connectionStatus === 'Connected';
@@ -97,12 +97,17 @@ const RiftMaidenCommsPanel: React.FC = () => {
   }, [configuration?.sections, updateConfiguration]);
 
   const selectedQuantity = stockQuantities[unitWodID] ?? 0;
+	const maidenRun = state?.rift?.maidenRun;
+	const runActive = maidenRun?.status === 'running';
+	const runRemaining = maidenRun ? Math.max(0, maidenRun.requestedAttacks - maidenRun.attacksLaunched) : 0;
   const selectedInStock = unitWodID > 0 && selectedQuantity >= PROBE_UNITS_PER_COMMANDER;
   const stockCommanderCapacity = Math.floor(selectedQuantity / PROBE_UNITS_PER_COMMANDER);
   const unitLabel = getTroop(unitWodID)?.name ?? `Unit ${unitWodID}`;
   const sendBlockedReason = !settingsLoaded
     ? 'Loading the saved probe unit.'
-    : !dashboardConnected
+    : runActive
+		? `A Rift Maiden run is already active (${maidenRun.attacksLaunched}/${maidenRun.requestedAttacks}).`
+		: !dashboardConnected
       ? 'Dashboard disconnected — wait for it to reconnect.'
       : !gameLoggedIn
         ? 'Game disconnected — start the bot before launching.'
@@ -154,44 +159,63 @@ const RiftMaidenCommsPanel: React.FC = () => {
       setSendStatus({ message: sendBlockedReason, error: true });
       return;
     }
-    const useFocusCoords = castle != null && (castle.x !== 0 || castle.y !== 0);
     setSending(true);
-    setSendStatus({ message: 'Submitting maiden comms wave…', error: false });
-    void submitIntent('rift.maiden_wave.launch', {
+		setSendStatus({ message: `Starting a ${probeGoal}-probe Rift Maiden run…`, error: false });
+		void submitIntent('rift.maiden_run.start', {
+			attackCount: probeGoal,
       unitWodID,
       horseTravelBoostId,
       commanderIds: assignedMaidenCommanders,
-      ...(useFocusCoords ? { sourceX: castle!.x, sourceY: castle!.y } : {}),
     })
-      .then(() => setSendStatus({ message: 'Maiden comms wave submitted.', error: false }))
+			.then(() => setSendStatus({ message: `${probeGoal}-probe Rift Maiden run started.`, error: false }))
       .catch((error) => setSendStatus({
         message: error instanceof Error ? error.message : 'Could not send maiden comms.',
         error: true,
       }))
       .finally(() => setSending(false));
   }, [
-    castle,
     assignedMaidenCommanders,
     horseTravelBoostId,
+		probeGoal,
     sendBlockedReason,
     sending,
     submitIntent,
     unitWodID,
   ]);
 
+	const handleCancel = useCallback(() => {
+		if (!maidenRun || maidenRun.status !== 'running' || cancelling) return;
+		setCancelling(true);
+		setSendStatus({ message: 'Cancelling the Rift Maiden run…', error: false });
+		void submitIntent('rift.maiden_run.cancel', { runId: maidenRun.id })
+			.then(() => setSendStatus({ message: 'Rift Maiden run cancelled.', error: false }))
+			.catch((error) => setSendStatus({
+				message: error instanceof Error ? error.message : 'Could not cancel the Rift Maiden run.',
+				error: true,
+			}))
+			.finally(() => setCancelling(false));
+	}, [cancelling, maidenRun, submitIntent]);
+
   return (
     <SectionCard variant="solid" title="Maiden comms wave" titleClassName="text-lg text-primary"
-      description="Sends a dummy 1-wave Rift attack (11 per flank) for each commander that is not busy and wears a relic with shield-maiden support (300–1050). Probe unit comes from main castle stock (last troop read)."
+      description="Starts an exact-count run of dummy 1-wave Rift attacks (11 per flank). Eligible commanders launch in rounds and automatically continue after they return until the requested number is confirmed."
       descriptionClassName="" contentClassName="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 min-w-0">
           <p className="text-sm text-text-muted">
-            Launch point: {castle ? `focused castle (${castle.name?.trim() || castle.id})` : 'main castle'}.
+			Launch point: {mainCastle?.name || 'main castle'}.
             {' '}Attacks are staggered (4–5s apart, or Settings attack delay range).
           </p>
+					{maidenRun ? (
+						<p className={`text-xs font-semibold ${runActive ? 'text-primary' : maidenRun.status === 'completed' ? 'text-success' : 'text-text-muted'}`}>
+							{runActive
+								? `Run active · ${maidenRun.attacksLaunched}/${maidenRun.requestedAttacks} confirmed · ${runRemaining} remaining`
+								: `Last run ${maidenRun.status} · ${maidenRun.attacksLaunched}/${maidenRun.requestedAttacks} confirmed`}
+						</p>
+					) : null}
           {mainCastle ? (
             <div className="flex flex-col gap-1">
               <p className="text-xs text-text-muted font-mono">
-                Main castle AID {mainCastle.aid} · {probeReadyUnitIds.length} probe-ready unit type
+				{mainCastle.name || 'Main castle'} · {probeReadyUnitIds.length} probe-ready unit type
                 {probeReadyUnitIds.length === 1 ? '' : 's'}
               </p>
               <p className={`text-xs ${sendBlockedReason ? 'text-warning' : 'text-success'}`}>
@@ -253,16 +277,47 @@ const RiftMaidenCommsPanel: React.FC = () => {
             </div>
           </div>
 
+					<label className="flex items-center gap-2 rounded-lg border border-border-base bg-bg-card/50 px-2.5 py-1.5">
+						<span className="text-xs font-semibold text-text-muted">Probe goal</span>
+						<input
+							type="number"
+							min={1}
+							max={9999}
+							step={1}
+							value={probeGoal}
+							disabled={runActive}
+							onChange={(event) => {
+								const value = Math.trunc(Number(event.target.value));
+								setProbeGoal(Number.isFinite(value) ? Math.min(9999, Math.max(1, value)) : 1);
+							}}
+							className="w-20 bg-transparent text-right text-sm font-mono text-text-main outline-none disabled:opacity-60"
+							aria-label="Total Rift Maiden probes to launch"
+						/>
+					</label>
+
+					{runActive ? (
+						<Button
+							variant="secondary"
+							size="sm"
+							disabled={cancelling}
+							isLoading={cancelling}
+							onClick={handleCancel}
+							title="Stop after already-dispatched probes"
+						>
+							{cancelling ? 'Cancelling…' : 'Cancel run'}
+						</Button>
+					) : null}
+
           <Button
             variant="primary"
             size="sm"
             disabled={sending || sendBlockedReason != null}
             isLoading={sending}
             onClick={handleSend}
-            title={sendBlockedReason ?? 'Send maiden comms wave to the Rift'}
+				title={sendBlockedReason ?? `Start a run of exactly ${probeGoal} Rift probes`}
             leftIcon={<Shield className="w-3.5 h-3.5" />}
           >
-            {sending ? 'Sending…' : 'Send maiden comms'}
+				{sending ? 'Starting…' : `Send ${probeGoal} probe${probeGoal === 1 ? '' : 's'}`}
           </Button>
         </div>
     </SectionCard>

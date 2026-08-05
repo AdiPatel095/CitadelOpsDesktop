@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"sort"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -14,9 +15,22 @@ import (
 )
 
 const (
-	reportPollInterval = time.Second
-	reportRetryDelay   = time.Minute
+	reportPollInterval      = time.Second
+	reportRetryDelay        = time.Minute
+	reportArchiveQueueLimit = 256
 )
+
+type battleArchiveTask struct {
+	messageID int64
+	report    BattleReport
+	capture   State.BattleReportCapture
+	pvp       bool
+}
+
+type battleArchiveResult struct {
+	messageID int64
+	err       error
+}
 
 type Manager struct {
 	state     *State.Store
@@ -26,9 +40,15 @@ type Manager struct {
 	intents   interface {
 		Submit(context.Context, Intent.Request) Intent.Receipt
 	}
-	nextAttempt map[int64]time.Time
-	archived    map[int64]struct{}
-	started     atomic.Bool
+	nextAttempt    map[int64]time.Time
+	archived       map[int64]struct{}
+	pending        map[int64]struct{}
+	archiveQueue   chan battleArchiveTask
+	archiveResults chan battleArchiveResult
+	persistArchive func(context.Context, battleArchiveTask) error
+	workers        sync.WaitGroup
+	done           chan struct{}
+	started        atomic.Bool
 }
 
 func NewManager(state *State.Store, history *History.Store, intents interface {
@@ -36,7 +56,10 @@ func NewManager(state *State.Store, history *History.Store, intents interface {
 }, analytics ...*SQLiteStore) *Manager {
 	manager := &Manager{
 		state: state, history: history, intents: intents,
-		nextAttempt: map[int64]time.Time{}, archived: map[int64]struct{}{},
+		nextAttempt: map[int64]time.Time{}, archived: map[int64]struct{}{}, pending: map[int64]struct{}{},
+		archiveQueue:   make(chan battleArchiveTask, reportArchiveQueueLimit),
+		archiveResults: make(chan battleArchiveResult, reportArchiveQueueLimit),
+		done:           make(chan struct{}),
 	}
 	if len(analytics) > 0 {
 		manager.analytics = analytics[0]
@@ -61,10 +84,23 @@ func (manager *Manager) Run(ctx context.Context) {
 	if !manager.started.CompareAndSwap(false, true) {
 		return
 	}
+	defer close(manager.done)
 	manager.loadArchivedMessages()
-	if manager.cloud != nil {
-		go manager.cloud.Run(ctx)
+	if manager.analytics != nil {
+		manager.workers.Add(1)
+		go func() {
+			defer manager.workers.Done()
+			manager.runArchiveWriter(ctx)
+		}()
 	}
+	if manager.cloud != nil {
+		manager.workers.Add(1)
+		go func() {
+			defer manager.workers.Done()
+			manager.cloud.Run(ctx)
+		}()
+	}
+	defer manager.workers.Wait()
 	ticker := time.NewTicker(reportPollInterval)
 	defer ticker.Stop()
 	manager.processNext(ctx)
@@ -72,6 +108,8 @@ func (manager *Manager) Run(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
+		case result := <-manager.archiveResults:
+			manager.handleArchiveResult(result)
 		case <-ticker.C:
 			manager.processNext(ctx)
 		}
@@ -82,6 +120,9 @@ func (manager *Manager) processNext(ctx context.Context) {
 	snapshot := manager.state.ReadOnlyView()
 	notices := orderedNotices(snapshot.Reports.Notices)
 	for _, notice := range notices {
+		if _, pending := manager.pending[notice.MessageID]; pending {
+			continue
+		}
 		if _, archived := manager.archived[notice.MessageID]; archived {
 			if notice.Status != "archived" {
 				manager.completeNotice(notice.MessageID)
@@ -211,21 +252,77 @@ func (manager *Manager) archiveBattle(ctx context.Context, snapshot State.GameSt
 			manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
 			return
 		}
-	} else if IsPvPBattleReport(report) {
-		if _, err := manager.cloud.Enqueue(ctx, report, capture); err != nil {
-			manager.setNoticeStatus(notice.MessageID, "error")
-			manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
-			return
-		}
 	} else {
-		if err := manager.analytics.Save(ctx, report); err != nil {
-			manager.setNoticeStatus(notice.MessageID, "error")
-			manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
-			return
-		}
+		manager.enqueueBattleArchive(battleArchiveTask{
+			messageID: notice.MessageID,
+			report:    report,
+			capture:   capture,
+			pvp:       IsPvPBattleReport(report),
+		})
+		return
 	}
 	manager.archived[notice.MessageID] = struct{}{}
 	manager.completeNotice(notice.MessageID)
+}
+
+func (manager *Manager) enqueueBattleArchive(task battleArchiveTask) {
+	if _, pending := manager.pending[task.messageID]; pending {
+		return
+	}
+	manager.pending[task.messageID] = struct{}{}
+	manager.setNoticeStatus(task.messageID, "archiving")
+	select {
+	case manager.archiveQueue <- task:
+	default:
+		delete(manager.pending, task.messageID)
+		manager.setNoticeStatus(task.messageID, "error")
+		manager.nextAttempt[task.messageID] = time.Now().Add(reportRetryDelay)
+	}
+}
+
+func (manager *Manager) runArchiveWriter(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case task := <-manager.archiveQueue:
+			var err error
+			if manager.persistArchive != nil {
+				err = manager.persistArchive(ctx, task)
+			} else if task.pvp {
+				if manager.cloud == nil {
+					err = context.Canceled
+				} else {
+					_, err = manager.cloud.Enqueue(ctx, task.report, task.capture)
+				}
+			} else {
+				err = manager.analytics.Save(ctx, task.report)
+			}
+			select {
+			case manager.archiveResults <- battleArchiveResult{messageID: task.messageID, err: err}:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}
+}
+
+func (manager *Manager) handleArchiveResult(result battleArchiveResult) {
+	delete(manager.pending, result.messageID)
+	if result.err != nil {
+		manager.setNoticeStatus(result.messageID, "error")
+		manager.nextAttempt[result.messageID] = time.Now().Add(reportRetryDelay)
+		return
+	}
+	manager.archived[result.messageID] = struct{}{}
+	manager.completeNotice(result.messageID)
+}
+
+func (manager *Manager) Wait() {
+	if manager == nil || manager.done == nil {
+		return
+	}
+	<-manager.done
 }
 
 func (manager *Manager) loadArchivedMessages() {

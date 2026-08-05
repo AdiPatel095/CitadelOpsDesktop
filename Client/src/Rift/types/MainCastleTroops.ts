@@ -2,6 +2,7 @@ import type { GameStateV2 } from '../../api/Contracts';
 
 export interface MainCastleTroopSnapshot {
   aid: number;
+	name?: string;
   troopsI: Record<string, number>;
 }
 
@@ -13,7 +14,7 @@ export function resolveMainCastleTroops(state: GameStateV2 | null): MainCastleTr
     ?? castles.find((castle) => castle.kingdomId === 0)
     ?? null;
   if (!main) return null;
-  return { aid: main.id, troopsI: main.units.stationed };
+	return { aid: main.id, name: main.name?.trim() || undefined, troopsI: main.units.stationed };
 }
 
 export function mainCastleAvailableUnitIds(troopsI: Record<string, number>): number[] {

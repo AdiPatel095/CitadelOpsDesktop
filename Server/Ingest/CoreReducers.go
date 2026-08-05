@@ -80,6 +80,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"bup", combineReducers(reduceProductionSnapshot, reduceResponseResources)},
 		{"ahh", reduceAllianceHelpRequest},
 		{"ahl", reduceAllianceHelpRequest},
+		{"ahd", reduceAllianceHelpDelete},
 		{"crin", reduceCraftingSnapshot},
 		{"crst", combineReducers(reduceCraftingBuilding, reduceResponseResources)},
 		{"crun", combineReducers(reduceCraftingBuilding, reduceResponseResources)},

@@ -163,6 +163,44 @@ func TestPlanningContextIncludesOfficialLanguage(t *testing.T) {
 	}
 }
 
+func TestReceiptIdentifiersAreHumanizedWithoutLosingDiagnosticError(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],
+		"units":[{"wodID":489,"name":"elitecrossbowman"}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	language, err := GameData.DecodeLanguage([]byte(`{"elitecrossbowman_name":"Veteran Crossbowman"}`), GameData.LanguageMetadata{Language: "en"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	gameState.Castles[10] = State.CastleState{ID: 10, Name: "Main Keep"}
+	engine := NewEngine(nil, State.NewStore(gameState), localizedGameDataProvider{store: gameData, language: language}, nil, nil)
+	engine.planningContext()
+	raw := "castle 10 has no unit 489"
+	receipt := engine.humanizeReceiptIdentifiers(Receipt{
+		Error: raw,
+		Plan:  &Plan{Summary: "Move unit 489 from castle 10", Steps: []Step{{Name: "Refresh castle 10"}}},
+	})
+	if receipt.Error != "Main Keep (castle ID 10) has no Veteran Crossbowman (unit ID 489)" {
+		t.Fatalf("visible error = %q", receipt.Error)
+	}
+	if receipt.DiagnosticError() != raw {
+		t.Fatalf("diagnostic error = %q, want %q", receipt.DiagnosticError(), raw)
+	}
+	if receipt.Plan == nil || !strings.Contains(receipt.Plan.Summary, "Veteran Crossbowman (unit ID 489)") ||
+		!strings.Contains(receipt.Plan.Summary, "Main Keep (castle ID 10)") ||
+		receipt.Plan.Steps[0].Name != "Refresh Main Keep (castle ID 10)" {
+		t.Fatalf("humanized plan = %#v", receipt.Plan)
+	}
+	again := engine.humanizeReceiptIdentifiers(receipt)
+	if again.Error != receipt.Error || again.DiagnosticError() != raw {
+		t.Fatalf("repeated humanization changed receipt: %#v", again)
+	}
+}
+
 func (reader *dispatchMutationStateReader) Snapshot() State.GameState { return reader.store.Snapshot() }
 func (reader *dispatchMutationStateReader) Revision() uint64          { return reader.store.Revision() }
 func (reader *dispatchMutationStateReader) Session() State.SessionState {

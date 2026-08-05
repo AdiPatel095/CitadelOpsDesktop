@@ -19,7 +19,7 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		"session":     {"session.start", "session.stop", "session.select_browser"},
 		"castle":      {"game.focus_castle", "decoration.apply_preset"},
 		"movement":    {"game.refresh_movements", "movement.recall", "troops.station", "spy.launch"},
-		"alliance":    {"alliance.refresh", "alliance.inspect", "alliance.help.request"},
+		"alliance":    {"alliance.refresh", "alliance.inspect", "alliance.help.request", "alliance.help.answer_all"},
 		"equipment": {
 			"equipment.refresh", "equipment.equip", "equipment.unequip", "equipment.gem.equip",
 			"equipment.gem.unequip", "equipment.swap", "equipment.reconfigure", "equipment.upgrade", "equipment.sell",
@@ -27,15 +27,20 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		"production":   {"production.enqueue", "hospital.heal", "hospital.discard"},
 		"construction": {"construction.equip", "construction.upgrade", "construction.shop", "construction.inventory.refresh", "construction.purchase"},
 		"crafting":     {"crafting.refresh", "crafting.start", "crafting.rent_slot", "crafting.skip", "resource.logistics.refresh", "resource.ship", "resource.market.ship", "resource.kingdom.ship", "resource.kingdom.skip", "resource.kingdom.settle"},
-		"rift":         {"rift.maiden_wave.launch", "rift.launch.replay", "rift.template.rename", "rift.template.delete"},
+		"rift":         {"rift.maiden_run.start", "rift.maiden_run.cancel", "rift.maiden_wave.launch", "rift.launch.replay", "rift.template.rename", "rift.template.delete"},
 		"towers":       {"tower.queue.scan", "tower.context.refresh", "tower.attack", "tower.launch"},
 		"reports":      {"report.spy.fetch", "report.spy.share", "report.battle.summary", "report.battle.details"},
 		"beri":         {"beri.capacity.refresh", "beri.transfer", "beri.camp.open", "beri.target.find", "beri.tower.attack"},
 	}
 	for capability, names := range capabilities {
 		for _, name := range names {
-			if _, found := application.Intents.Registry().Definition(name); !found {
+			definition, found := application.Intents.Registry().Definition(name)
+			if !found {
 				t.Errorf("1.3.8 %s capability has no 2.0 intent %q", capability, name)
+				continue
+			}
+			if capability == "rift" && definition.ReadSet == nil {
+				t.Errorf("Rift intent %q is missing a partition-scoped read set", name)
 			}
 		}
 	}
@@ -45,7 +50,7 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		policyIDs[id] = true
 	}
 	for _, id := range []string{
-		"autoRecruit", "autoTool", "autoHospital", "autoTCI", "autoSceatRes", "autoSceatResLogistics",
+		"autoRecruit", "autoTool", "autoHospital", "autoAllianceHelp", "autoTCI", "autoSceatRes", "autoSceatResLogistics",
 		"autoBird", "autoStation", "autoBeriWorld", "autoFoodBalance", "autoTowers",
 	} {
 		if !policyIDs[id] {
