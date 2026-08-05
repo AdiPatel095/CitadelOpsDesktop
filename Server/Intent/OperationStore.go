@@ -9,11 +9,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	RuntimeKernel "CitadelDesktop/Server/Runtime"
 
 	_ "modernc.org/sqlite"
 )
@@ -49,12 +50,15 @@ func OpenOperationStore(dataDir string) (*SQLiteOperationStore, error) {
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, fmt.Errorf("create operation directory: %w", err)
 	}
-	databaseURL := url.URL{Scheme: "file", Path: filepath.Join(directory, "Operations.sqlite")}
-	parameters := databaseURL.Query()
-	parameters.Add("_pragma", "busy_timeout(5000)")
-	parameters.Add("_pragma", "foreign_keys(1)")
-	databaseURL.RawQuery = parameters.Encode()
-	db, err := sql.Open("sqlite", databaseURL.String())
+	databaseURL, err := RuntimeKernel.SQLiteFileDSN(
+		filepath.Join(directory, "Operations.sqlite"),
+		"busy_timeout(5000)",
+		"foreign_keys(1)",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("configure operation database path: %w", err)
+	}
+	db, err := sql.Open("sqlite", databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("open operation database: %w", err)
 	}
