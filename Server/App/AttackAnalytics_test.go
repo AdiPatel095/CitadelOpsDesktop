@@ -68,6 +68,38 @@ func TestCaptureAutoBeriAttackFeatureLaunch(t *testing.T) {
 	}
 }
 
+func TestCaptureRiftMaidenRunLaunchCountsConfirmedMovementOnce(t *testing.T) {
+	now := time.Date(2026, time.August, 5, 14, 0, 0, 0, time.UTC)
+	arrivesAt := now.Add(5 * time.Minute)
+	commanderID := State.CommanderID(5)
+	state := State.NewGameState()
+	state.Rift.MaidenRun = &State.RiftMaidenRunState{
+		ID: "run", Status: "running", RequestedAttacks: 1, CommanderIDs: []State.CommanderID{5},
+	}
+	state.Movements[456] = State.MovementState{
+		ID: 456, Direction: 0, SourceCastleID: 1, CommanderID: &commanderID,
+		KingdomID: 0, TargetX: 10, TargetY: 20, ArrivesAt: &arrivesAt, ObservedAt: now,
+	}
+	application := &Application{State: State.NewStore(state)}
+	arguments, err := json.Marshal(attackFeatureCaptureRequest{
+		FeatureID: State.AttackFeatureRiftMaiden, SourceCastleID: 1, CommanderID: commanderID,
+		KingdomID: 0, TargetTypeID: 43, TargetX: 10, TargetY: 20, RunID: "run",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := application.captureAttackFeatureLaunch(context.Background(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	if err := application.captureAttackFeatureLaunch(context.Background(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	run := application.State.Snapshot().Rift.MaidenRun
+	if run.AttacksLaunched != 1 || run.Status != "completed" || len(run.LaunchIDs) != 1 || run.LaunchIDs[0] != 456 {
+		t.Fatalf("completed run = %#v", run)
+	}
+}
+
 func TestAttackMovementTroopCountExcludesTools(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],

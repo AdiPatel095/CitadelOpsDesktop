@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CalendarDays, Castle, Clock3, Copy, Trash2, Plus, Settings } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import { showToolPicker } from '../../components/ToolPickerModal';
@@ -155,12 +155,21 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   const [isSaving, setIsSaving] = useState(false);
 
   const [editingItem, setEditingItem] = useState<{ scope: ItemScope, item: QueueProductionItem } | null>(null);
+  const loadedSettingsSignature = useRef<string | null>(null);
   useEffect(() => {
-    if (isOpen) {
-      setSettings(definition.normalizeSettings(
-        configuration?.sections[definition.configurationSection] ?? definition.defaultSettings(),
-      ));
+    if (!isOpen) {
+      loadedSettingsSignature.current = null;
+      return;
     }
+
+    const rawSettings = configuration?.sections[definition.configurationSection] ?? definition.defaultSettings();
+    const settingsSignature = `${definition.configurationSection}:${JSON.stringify(rawSettings)}`;
+    // Saving a nested calendar replaces the full configuration snapshot. Preserve this
+    // modal's unsaved mode and item edits unless its own persisted section changed.
+    if (loadedSettingsSignature.current === settingsSignature) return;
+
+    loadedSettingsSignature.current = settingsSignature;
+    setSettings(definition.normalizeSettings(rawSettings));
   }, [configuration?.sections, definition, isOpen]);
 
   const itemName = (itemID: number) => (

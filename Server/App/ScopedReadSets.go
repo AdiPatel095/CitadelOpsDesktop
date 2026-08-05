@@ -62,6 +62,60 @@ func constructionReadSet(
 	return keys, nil
 }
 
+func riftMaidenReadSet(
+	input Intent.PlanningContext,
+	_ json.RawMessage,
+	_ Intent.Plan,
+) ([]State.PartitionKey, error) {
+	return []State.PartitionKey{
+		State.SessionPartition(input.State, State.CapabilitySessionContext),
+		State.AccountPartition(input.State, State.CapabilityCastleDirectory),
+		State.AccountPartition(input.State, State.CapabilityBuildings),
+		State.AccountPartition(input.State, State.CapabilityGarrison),
+		State.AccountPartition(input.State, State.CapabilityLeaders),
+		State.AccountPartition(input.State, State.CapabilityEquipment),
+		State.AccountPartition(input.State, State.CapabilityWorldMap),
+		State.AccountPartition(input.State, State.CapabilityEvents),
+	}, nil
+}
+
+func riftReplayReadSet(
+	input Intent.PlanningContext,
+	_ json.RawMessage,
+	_ Intent.Plan,
+) ([]State.PartitionKey, error) {
+	return []State.PartitionKey{
+		State.SessionPartition(input.State, State.CapabilitySessionContext),
+		State.AccountPartition(input.State, State.CapabilityCastleDirectory),
+		State.AccountPartition(input.State, State.CapabilityBuildings),
+		State.AccountPartition(input.State, State.CapabilityGarrison),
+		State.AccountPartition(input.State, State.CapabilityLeaders),
+		State.AccountPartition(input.State, State.CapabilityEvents),
+		State.AccountPartition(input.State, State.CapabilityAutomation),
+	}, nil
+}
+
+func riftTemplateReadSet(
+	input Intent.PlanningContext,
+	_ json.RawMessage,
+	_ Intent.Plan,
+) ([]State.PartitionKey, error) {
+	return []State.PartitionKey{
+		State.AccountPartition(input.State, State.CapabilityEvents),
+	}, nil
+}
+
+func riftTemplateDeleteReadSet(
+	input Intent.PlanningContext,
+	_ json.RawMessage,
+	_ Intent.Plan,
+) ([]State.PartitionKey, error) {
+	return []State.PartitionKey{
+		State.AccountPartition(input.State, State.CapabilityEvents),
+		State.AccountPartition(input.State, State.CapabilityAutomation),
+	}, nil
+}
+
 func readSetCastleID(arguments json.RawMessage) (State.CastleID, error) {
 	var request struct {
 		CastleID State.CastleID `json:"castleId"`

@@ -2,6 +2,7 @@ package Automation
 
 import (
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -17,6 +18,9 @@ func TestBeriAttackPolicyUsesSharedFeatureControls(t *testing.T) {
 	if policy.ActorID() != "autoBeriWorld" || policy.ScheduleKey() != "autoBeriWorld" ||
 		policy.EnabledKey() != "auto_beri_world" {
 		t.Fatalf("unexpected feature controls: actor=%q schedule=%q enabled=%q", policy.ActorID(), policy.ScheduleKey(), policy.EnabledKey())
+	}
+	if got := policy.UrgentWakeDomains(); !reflect.DeepEqual(got, []string{"commanders", "movements", "units"}) {
+		t.Fatalf("urgent wake domains = %v", got)
 	}
 }
 
@@ -92,6 +96,54 @@ func TestBeriAttackPolicyFindsThenAttacksTower(t *testing.T) {
 	decision, err = policy.Evaluate(t.Context(), snapshot)
 	if err != nil || decision.Request == nil || decision.Request.Name != "beri.target.find" {
 		t.Fatalf("invalidated target decision: %#v err=%v", decision, err)
+	}
+}
+
+func TestBeriAttackPolicyRefillsReturnedCommanderWhileLaterMovementIsActive(t *testing.T) {
+	now := time.Date(2026, 8, 4, 22, 15, 0, 0, time.UTC)
+	snapshot := beriAttackTestSnapshot(t, now)
+	snapshot.State.Castles[900] = State.CastleState{
+		ID: 900, KingdomID: 10, X: 300, Y: 600,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{10: 400}},
+	}
+	snapshot.State.KingdomTransport.Unlocks[10] = State.KingdomTransportUnlock{
+		KingdomID: 10, Unlocked: true, Created: true,
+	}
+	snapshot.State.Beri.TargetX = 321
+	snapshot.State.Beri.TargetY = 654
+	snapshot.State.Beri.TargetTypeID = 17
+	snapshot.State.Beri.TargetObservedAt = now.Add(-time.Minute)
+	snapshot.State.Map[10] = map[string]State.MapObservation{
+		"321:654": {
+			KingdomID: 10, X: 321, Y: 654, TypeID: 17, Level: 55,
+			ObservedAt: snapshot.State.Beri.TargetObservedAt,
+		},
+	}
+	returnedCommander := State.CommanderID(0)
+	laterCommander := State.CommanderID(1)
+	returnedAt := now.Add(-time.Second)
+	laterReturn := now.Add(time.Minute)
+	snapshot.State.Movements[10] = State.MovementState{
+		ID: 10, Direction: 1, SourceCastleID: 900, KingdomID: 10,
+		CommanderID: &returnedCommander, ReturnsAt: &returnedAt,
+	}
+	snapshot.State.Movements[11] = State.MovementState{
+		ID: 11, Direction: 1, SourceCastleID: 900, KingdomID: 10,
+		CommanderID: &laterCommander, ReturnsAt: &laterReturn,
+	}
+
+	decision, err := NewBeriAttackPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "beri.tower.attack" {
+		t.Fatalf("rolling refill decision: %#v err=%v", decision, err)
+	}
+	var arguments struct {
+		CommanderID State.CommanderID `json:"commanderId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+		t.Fatal(err)
+	}
+	if arguments.CommanderID != returnedCommander {
+		t.Fatalf("rolling refill commander = %d, want returned commander %d", arguments.CommanderID, returnedCommander)
 	}
 }
 

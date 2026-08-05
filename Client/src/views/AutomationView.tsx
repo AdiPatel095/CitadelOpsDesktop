@@ -320,6 +320,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const autoBeriTransferRuntime = automationStates.autoBeriWorld;
   const autoBeriAttackRuntime = automationStates.autoBeriWorldAttack;
   const autoBeriToolRuntime = automationStates.autoBeriWorldTools;
+  const autoBeriBuildRuntime = automationStates.autoBeriWorldBuild;
   const autoKhanAttackRuntime = automationStates.autoKhan;
   const autoKhanCooldownRuntime = automationStates['autoKhan:cooldown'];
   const autoKhanRageRuntime = automationStates['autoKhan:rage'];
@@ -327,7 +328,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const autoSceatRuntime = automationStates.autoSceatRes;
   const autoSceatLogisticsRuntime = automationStates.autoSceatResLogistics;
   const autoBeriWorldStatus = combinedAutomationStatus(
-    [autoBeriTransferRuntime?.status, autoBeriAttackRuntime?.status, autoBeriToolRuntime?.status],
+    [autoBeriTransferRuntime?.status, autoBeriAttackRuntime?.status, autoBeriToolRuntime?.status, autoBeriBuildRuntime?.status],
     autoBeriWorldEnabled,
   );
   const autoStormStatus = combinedAutomationStatus(
@@ -543,16 +544,17 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		enabledKey: 'auto_beri_world',
 		group: 'offense',
 		name: 'Auto Beri World',
-		description: 'Transfers troops into Berimond, maintains configured coin-tool minimums, opens the cheapest resource camp, and attacks each next available tower with a preset.',
+		description: 'Transfers troops, attacks each next tower, brings the loot home, and spends confirmed Berimond resources on a captured camp build and upgrade target.',
 		enabled: autoBeriWorldEnabled,
 		detail: autoBeriWorldEnabled
 			? autoBeriTransferRuntime?.detail ?? 'Waiting for Berimond availability and configuration'
-			: 'Berimond transfers, tool purchases, and tower attacks are paused',
+			: 'Berimond transfers, tool purchases, tower attacks, and construction are paused',
 		status: autoBeriWorldStatus,
 		statusLanes: [
 			automationStatusLane('transfers', 'Transfers', autoBeriTransferRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond transfer policy'),
 			automationStatusLane('attacks', 'Attacks', autoBeriAttackRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond attack policy'),
 			automationStatusLane('tools', 'Tools', autoBeriToolRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond tool policy'),
+			automationStatusLane('builder', 'Builder', autoBeriBuildRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond builder policy'),
 		],
 		icon: Crosshair,
 		onToggle: toggleAutoBeriWorld,
@@ -615,6 +617,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     onOpenAutoKhanSettings,
     onOpenAutoBeriWorldSettings,
     onOpenAutoStormSettings,
+		onOpenFeatureSchedule,
     onOpenRecruitTroopsSettings,
     toggleAutoHospital,
     toggleAutoSceatRes,

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -48,7 +49,12 @@ func OpenSQLiteStore(dataDir string) (*SQLiteStore, error) {
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, fmt.Errorf("create report analytics directory: %w", err)
 	}
-	db, err := sql.Open("sqlite", filepath.Join(directory, "Operations.sqlite"))
+	databaseURL := url.URL{Scheme: "file", Path: filepath.Join(directory, "Reports.sqlite")}
+	parameters := databaseURL.Query()
+	parameters.Add("_pragma", "busy_timeout(5000)")
+	parameters.Add("_pragma", "foreign_keys(1)")
+	databaseURL.RawQuery = parameters.Encode()
+	db, err := sql.Open("sqlite", databaseURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("open report analytics database: %w", err)
 	}
@@ -56,6 +62,10 @@ func OpenSQLiteStore(dataDir string) (*SQLiteStore, error) {
 	db.SetMaxIdleConns(1)
 	store := &SQLiteStore{db: db}
 	if err := store.initialize(context.Background()); err != nil {
+		_ = db.Close()
+		return nil, err
+	}
+	if err := store.importLegacyOperations(context.Background(), filepath.Join(directory, "Operations.sqlite")); err != nil {
 		_ = db.Close()
 		return nil, err
 	}

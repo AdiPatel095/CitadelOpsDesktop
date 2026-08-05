@@ -250,9 +250,9 @@ func TestInvasionFortificationTracksReceiptUntilServerCountersReset(t *testing.T
 	code := 0
 	_, changed, err := reduceInvasionFortification(t.Context(), Protocol.Frame{
 		Opcode: "rae", Direction: Protocol.DirectionInbound, ResponseCode: &code,
-		Payload: json.RawMessage(`{"XPOS":1165.0,"YPOS":1166.0,"RCK":"ST"}`),
+		Payload: json.RawMessage(`{"XPOS":1165.0,"YPOS":1166.0,"RCK":"KT"}`),
 	}, &gameState, nil)
-	if err != nil || !changed || gameState.Invasion.FortifiedTargets["0:1165:1166"] != "ST" {
+	if err != nil || !changed || gameState.Invasion.FortifiedTargets["0:1165:1166"] != "KT" {
 		t.Fatalf("fortification receipt: state=%#v changed=%t err=%v", gameState.Invasion, changed, err)
 	}
 	_, changed, err = reduceInvasionFortificationCounters(t.Context(), Protocol.Frame{

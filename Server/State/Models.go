@@ -35,6 +35,7 @@ type DefinitionRef struct {
 }
 
 type SessionState struct {
+	Mode                 string     `json:"mode"`
 	Generation           uint64     `json:"generation"`
 	BaselineGeneration   uint64     `json:"baselineGeneration"`
 	ConnectionGeneration uint64     `json:"connectionGeneration"`
@@ -336,9 +337,28 @@ type ProductionQueue struct {
 }
 
 type AllianceHelpRequestState struct {
-	HospitalProductionIDs []int64    `json:"hospitalProductionIds"`
-	RecruitmentCastleIDs  []CastleID `json:"recruitmentCastleIds"`
-	ObservedAt            time.Time  `json:"observedAt,omitempty"`
+	HospitalProductionIDs    []int64    `json:"hospitalProductionIds"`
+	RecruitmentCastleIDs     []CastleID `json:"recruitmentCastleIds"`
+	PendingOtherListIDs      []int64    `json:"pendingOtherListIds"`
+	ObservedAt               time.Time  `json:"observedAt,omitempty"`
+	OthersObservedAt         time.Time  `json:"othersObservedAt,omitempty"`
+	OthersObservedGeneration uint64     `json:"othersObservedGeneration,omitempty"`
+	LastHelpAllAt            time.Time  `json:"lastHelpAllAt,omitempty"`
+	LastHelpAllGeneration    uint64     `json:"lastHelpAllGeneration,omitempty"`
+}
+
+func PendingOtherAllianceHelpListIDs(state GameState) []int64 {
+	requests := state.AllianceHelpRequests
+	if state.Session.Generation == 0 || requests.OthersObservedGeneration != state.Session.Generation {
+		return nil
+	}
+	result := make([]int64, 0, len(requests.PendingOtherListIDs))
+	for _, listID := range requests.PendingOtherListIDs {
+		if listID > 0 {
+			result = append(result, listID)
+		}
+	}
+	return result
 }
 
 func OutstandingHospitalAllianceHelpRequests(state GameState) int {
@@ -621,11 +641,29 @@ type MarketCastleState struct {
 	AreaEffects      []MarketAreaEffect     `json:"areaEffects"`
 }
 
+type MarketBoosterState struct {
+	ID           int       `json:"id"`
+	Level        int       `json:"level,omitempty"`
+	BonusPercent int       `json:"bonusPercent,omitempty"`
+	RemainingSec int       `json:"remainingSec,omitempty"`
+	ExpiresAt    time.Time `json:"expiresAt,omitempty"`
+	Permanent    bool      `json:"permanent,omitempty"`
+}
+
+func (booster MarketBoosterState) ActiveAt(now time.Time) bool {
+	if booster.Permanent {
+		return booster.Level > 0 || booster.BonusPercent > 0
+	}
+	return !booster.ExpiresAt.IsZero() && booster.ExpiresAt.After(now)
+}
+
 type MarketState struct {
 	Castles            map[CastleID]MarketCastleState `json:"castles"`
+	Boosters           map[int]MarketBoosterState     `json:"boosters"`
 	CaravanLevel       int                            `json:"caravanLevel,omitempty"`
 	CaravanLevelLoaded bool                           `json:"caravanLevelLoaded"`
 	ObservedAt         time.Time                      `json:"observedAt,omitempty"`
+	BoostersObservedAt time.Time                      `json:"boostersObservedAt,omitempty"`
 }
 
 type KingdomTransportUnlock struct {
@@ -814,10 +852,30 @@ type RiftLaunch struct {
 	LastSuccessAtUnix int64           `json:"lastSuccessAtUnix,omitempty"`
 }
 
+type RiftMaidenRunState struct {
+	ID                 string        `json:"id"`
+	Status             string        `json:"status"`
+	RequestedAttacks   int           `json:"requestedAttacks"`
+	AttacksLaunched    int           `json:"attacksLaunched"`
+	UnitID             UnitID        `json:"unitId"`
+	HorseTravelBoostID int           `json:"horseTravelBoostId"`
+	CommanderIDs       []CommanderID `json:"commanderIds"`
+	LaunchIDs          []MovementID  `json:"launchIds,omitempty"`
+	SourceCastleID     CastleID      `json:"sourceCastleId"`
+	SourceX            int           `json:"sourceX"`
+	SourceY            int           `json:"sourceY"`
+	KingdomID          KingdomID     `json:"kingdomId"`
+	TargetX            int           `json:"targetX"`
+	TargetY            int           `json:"targetY"`
+	StartedAt          time.Time     `json:"startedAt"`
+	UpdatedAt          time.Time     `json:"updatedAt"`
+}
+
 type RiftState struct {
 	Launches         map[string]RiftLaunch `json:"launches"`
 	DeletedLaunchIDs map[string]int64      `json:"deletedLaunchIds,omitempty"`
 	PendingLaunchID  string                `json:"pendingLaunchId,omitempty"`
+	MaidenRun        *RiftMaidenRunState   `json:"maidenRun,omitempty"`
 }
 
 type MapObservation struct {
@@ -1451,17 +1509,21 @@ func NewGameState() GameState {
 			Items:              map[string]map[int64]int64{},
 		},
 		Subscriptions: map[int]SubscriptionState{},
-		Market:        MarketState{Castles: map[CastleID]MarketCastleState{}},
+		Market: MarketState{
+			Castles: map[CastleID]MarketCastleState{}, Boosters: map[int]MarketBoosterState{},
+		},
 		KingdomTransport: KingdomTransportState{
 			Unlocks: map[KingdomID]KingdomTransportUnlock{}, Pending: []KingdomResourceTransport{},
 			PendingUnits: []KingdomUnitTransport{}, ResourceWorkflows: map[KingdomID]KingdomResourceTransportWorkflow{},
 		},
-		Beri:                 BeriState{TroopsByUnit: map[UnitID]int64{}},
-		Alliance:             AllianceState{Members: []AllianceMember{}, Holdings: []AllianceHolding{}},
-		Alliances:            map[AllianceID]AllianceState{},
-		AllianceHelpRequests: AllianceHelpRequestState{HospitalProductionIDs: []int64{}, RecruitmentCastleIDs: []CastleID{}},
-		Map:                  map[KingdomID]map[string]MapObservation{},
-		TowerCooldowns:       map[string]TowerCooldownState{},
+		Beri:      BeriState{TroopsByUnit: map[UnitID]int64{}},
+		Alliance:  AllianceState{Members: []AllianceMember{}, Holdings: []AllianceHolding{}},
+		Alliances: map[AllianceID]AllianceState{},
+		AllianceHelpRequests: AllianceHelpRequestState{
+			HospitalProductionIDs: []int64{}, RecruitmentCastleIDs: []CastleID{}, PendingOtherListIDs: []int64{},
+		},
+		Map:            map[KingdomID]map[string]MapObservation{},
+		TowerCooldowns: map[string]TowerCooldownState{},
 		TowerQueue: TowerQueueState{
 			EntriesByCastle: map[CastleID][]TowerQueueEntry{}, LastScannedAt: map[CastleID]time.Time{},
 			LastAttemptedAt:           map[CastleID]time.Time{},

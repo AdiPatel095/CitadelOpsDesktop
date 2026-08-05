@@ -10,8 +10,45 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/History"
+	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
+
+func TestReportWritesAreIsolatedFromOperationJournal(t *testing.T) {
+	dataDir := t.TempDir()
+	operationStore, err := Intent.OpenOperationStore(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = operationStore.Close() })
+	reportStore, err := OpenSQLiteStore(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = reportStore.Close() })
+	for _, name := range []string{"Operations.sqlite", "Reports.sqlite"} {
+		if _, err := os.Stat(filepath.Join(dataDir, "Runtime", name)); err != nil {
+			t.Fatalf("missing %s: %v", name, err)
+		}
+	}
+	reportTx, err := reportStore.db.BeginTx(t.Context(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reportTx.Rollback()
+	if _, err := reportTx.ExecContext(t.Context(), `
+		INSERT INTO battle_report_storage_metadata (key, value) VALUES ('test_lock', 'held')
+	`); err != nil {
+		t.Fatal(err)
+	}
+	receipt := Intent.Receipt{
+		ID: "isolated-operation", Intent: "test.write", Actor: "test",
+		Status: Intent.StatusPlanning, Phase: Intent.EffectPhaseAccepted, SubmittedAt: time.Now().UTC(),
+	}
+	if _, created, err := operationStore.Reserve(t.Context(), "request-hash", receipt); err != nil || !created {
+		t.Fatalf("operation reservation while report writer held lock: created=%t err=%v", created, err)
+	}
+}
 
 func TestSQLiteStorePersistsScopedFeatureAndEventReport(t *testing.T) {
 	store, err := OpenSQLiteStore(t.TempDir())

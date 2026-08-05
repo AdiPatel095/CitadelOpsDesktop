@@ -55,12 +55,15 @@ func reduceInvasionFortification(
 }
 
 func validInvasionFortifyCurrency(currency string) bool {
-	switch currency {
-	case "GTO", "STO", "KM", "ST", "C2":
-		return true
-	default:
+	if currency == "" || len(currency) > 32 {
 		return false
 	}
+	for _, character := range currency {
+		if (character < 'A' || character > 'Z') && (character < '0' || character > '9') && character != '_' {
+			return false
+		}
+	}
+	return true
 }
 
 func reduceInvasionFortificationCounters(

@@ -30,7 +30,7 @@ func (*BeriToolPolicy) ScheduleKey() string {
 }
 
 func (*BeriToolPolicy) WakeDomains() []string {
-	return []string{"castles", "kingdom-transport", "resources", "units"}
+	return []string{"boosters", "castles", "kingdom-transport", "resources", "units"}
 }
 
 func (*BeriToolPolicy) WakeSections() []string {
@@ -40,6 +40,9 @@ func (*BeriToolPolicy) WakeSections() []string {
 func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	var settings beriSettings
 	decodeSection(snapshot.Configuration, autoBeriWorldSection, &settings)
+	if decision := beriGallantryBoosterGate(snapshot, settings); decision != nil {
+		return *decision, nil
+	}
 	minimums := beriConfiguredToolMinimums(settings.ToolMinimums)
 	if len(minimums) == 0 {
 		return Decision{

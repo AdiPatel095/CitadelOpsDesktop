@@ -31,7 +31,14 @@ func (*BeriAttackPolicy) ScheduleKey() string {
 }
 
 func (*BeriAttackPolicy) WakeDomains() []string {
-	return []string{"beri", "castles", "commanders", "kingdom-transport", "map", "movements", "units"}
+	return []string{"beri", "boosters", "castles", "commanders", "kingdom-transport", "map", "movements", "units"}
+}
+
+// A returned commander and its troops reopen one launch slot independently of
+// every other Berimond movement. Skip shared state-event coalescing so that
+// slot is refilled as a rolling window rather than appearing batch-paced.
+func (*BeriAttackPolicy) UrgentWakeDomains() []string {
+	return []string{"commanders", "movements", "units"}
 }
 
 func (*BeriAttackPolicy) WakeSections() []string {
@@ -44,6 +51,9 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 		return beriAttackWaiting(snapshot.Now, "Auto Beri World settings have not been saved", 30), nil
 	}
 	interval := policyInterval(settings.AttackCheckIntervalSec, 30)
+	if decision := beriGallantryBoosterGate(snapshot, settings); decision != nil {
+		return *decision, nil
+	}
 	if settings.PresetID == "" {
 		return beriAttackWaiting(snapshot.Now, "Choose a Berimond attack preset", settings.AttackCheckIntervalSec), nil
 	}

@@ -402,6 +402,63 @@ func TestReconcileExpiredMovementsFreesCommander(t *testing.T) {
 	}
 }
 
+func TestReconcileExpiredMovementsReturnsObservedSurvivorsToCastle(t *testing.T) {
+	now := time.Now().UTC()
+	returnsAt := now.Add(-time.Second)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	castle := newCastleState(100)
+	castle.UnitsObservedAt = returnsAt.Add(-time.Minute)
+	castle.Units.Stationed[10] = 20
+	castle.Units.Traveling[10] = 98
+	castle.Units.Total[10] = 118
+	gameState.Castles[100] = castle
+	commanderID := State.CommanderID(7)
+	gameState.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: false}
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, Direction: 1, OwnerPlayerID: 1, TargetCastleID: 100,
+		CommanderID: &commanderID, ReturnsAt: &returnsAt, Units: map[State.UnitID]int64{10: 48},
+	}
+
+	if !ReconcileExpiredMovements(&gameState, now) {
+		t.Fatal("expired return movement was not reconciled")
+	}
+	castle = gameState.Castles[100]
+	if castle.Units.Stationed[10] != 68 || castle.Units.Traveling[10] != 50 || castle.Units.Total[10] != 118 {
+		t.Fatalf("returned inventory = %+v, want 68 stationed, 50 traveling, total unchanged", castle.Units)
+	}
+	if _, exists := gameState.Movements[50]; exists || !gameState.Commanders[commanderID].Available {
+		t.Fatalf("completed return was not released: movement=%t commander=%+v", exists, gameState.Commanders[commanderID])
+	}
+}
+
+func TestReconcileExpiredMovementsDoesNotOverrideNewerUnitSnapshot(t *testing.T) {
+	now := time.Now().UTC()
+	returnsAt := now.Add(-time.Second)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	castle := newCastleState(100)
+	castle.UnitsObservedAt = now
+	castle.Units.Stationed[10] = 68
+	castle.Units.Traveling[10] = 50
+	castle.Units.Total[10] = 118
+	gameState.Castles[100] = castle
+	commanderID := State.CommanderID(7)
+	gameState.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: false}
+	gameState.Movements[50] = State.MovementState{
+		ID: 50, Direction: 1, OwnerPlayerID: 1, TargetCastleID: 100,
+		CommanderID: &commanderID, ReturnsAt: &returnsAt, Units: map[State.UnitID]int64{10: 48},
+	}
+
+	if !ReconcileExpiredMovements(&gameState, now) {
+		t.Fatal("expired return movement was not reconciled")
+	}
+	castle = gameState.Castles[100]
+	if castle.Units.Stationed[10] != 68 || castle.Units.Traveling[10] != 50 {
+		t.Fatalf("newer authoritative inventory was projected again: %+v", castle.Units)
+	}
+}
+
 func TestReconcileExpiredMovementsKeepsOutboundCommanderForReturnTrip(t *testing.T) {
 	now := time.Now().UTC()
 	arrivedAt := now.Add(-5 * time.Second)

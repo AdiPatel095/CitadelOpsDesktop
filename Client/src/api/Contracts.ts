@@ -32,6 +32,7 @@ export interface APIEnvelope<T = unknown> {
 }
 
 export interface SessionStateV2 {
+  mode?: 'full' | 'background';
   generation: number;
   baselineGeneration: number;
   connectionGeneration: number;
@@ -392,9 +393,18 @@ export interface MarketStateV2 {
 		resources: Record<string, number>;
 		areaEffects: Array<{ effectId: number; values: number[]; source?: string }>;
 	}>;
+	boosters?: Record<string, {
+		id: number;
+		level?: number;
+		bonusPercent?: number;
+		remainingSec?: number;
+		expiresAt?: string;
+		permanent?: boolean;
+	}>;
 	caravanLevel?: number;
 	caravanLevelLoaded: boolean;
 	observedAt?: string;
+	boostersObservedAt?: string;
 }
 
 export interface KingdomTransportStateV2 {
@@ -1122,6 +1132,17 @@ export interface CommandContextStateV2 {
 	productionObservedAt?: string;
 }
 
+export interface AllianceHelpRequestStateV2 {
+	hospitalProductionIds: number[];
+	recruitmentCastleIds: number[];
+	pendingOtherListIds: number[];
+	observedAt?: string;
+	othersObservedAt?: string;
+	othersObservedGeneration?: number;
+	lastHelpAllAt?: string;
+	lastHelpAllGeneration?: number;
+}
+
 export interface AutomationStateV2 {
 	id: string;
 	enabled: boolean;
@@ -1232,6 +1253,26 @@ export interface RiftStateV2 {
 	launches: Record<string, RiftLaunchV2>;
 	deletedLaunchIds?: Record<string, number>;
 	pendingLaunchId?: string;
+	maidenRun?: RiftMaidenRunStateV2;
+}
+
+export interface RiftMaidenRunStateV2 {
+	id: string;
+	status: 'running' | 'completed' | 'cancelled' | string;
+	requestedAttacks: number;
+	attacksLaunched: number;
+	unitId: number;
+	horseTravelBoostId: number;
+	commanderIds: number[];
+	launchIds?: number[];
+	sourceCastleId: number;
+	sourceX: number;
+	sourceY: number;
+	kingdomId: number;
+	targetX: number;
+	targetY: number;
+	startedAt: string;
+	updatedAt: string;
 }
 
 export interface ReportNoticeV2 {
@@ -1492,6 +1533,7 @@ export interface GameStateV2 {
 	beri: BeriStateV2;
   alliance: AllianceStateV2;
   alliances: Record<string, AllianceStateV2>;
+	allianceHelpRequests: AllianceHelpRequestStateV2;
   map: Record<string, Record<string, MapObservationV2>>;
 	towerCooldowns: Record<string, TowerCooldownStateV2>;
 	towerQueue: TowerQueueStateV2;

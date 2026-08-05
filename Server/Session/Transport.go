@@ -3,6 +3,7 @@ package Session
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/Protocol"
@@ -13,19 +14,34 @@ var (
 	ErrFrontendInteractionUnavailable = errors.New("game frontend interaction is unavailable")
 )
 
+type ConnectionMode string
+
+const (
+	ConnectionModeFull       ConnectionMode = "full"
+	ConnectionModeBackground ConnectionMode = "background"
+)
+
+func ParseConnectionMode(value string) ConnectionMode {
+	if ConnectionMode(strings.ToLower(strings.TrimSpace(value))) == ConnectionModeBackground {
+		return ConnectionModeBackground
+	}
+	return ConnectionModeFull
+}
+
 type Status struct {
-	State                string     `json:"state"`
-	LoggedIn             bool       `json:"loggedIn"`
-	SocketReady          bool       `json:"socketReady"`
-	ConnectionGeneration uint64     `json:"connectionGeneration,omitempty"`
-	BrowserID            string     `json:"browserId,omitempty"`
-	BrowserName          string     `json:"browserName,omitempty"`
-	ServerURL            string     `json:"serverUrl,omitempty"`
-	Namespace            string     `json:"namespace,omitempty"`
-	Detail               string     `json:"detail,omitempty"`
-	CooldownUntil        *time.Time `json:"cooldownUntil,omitempty"`
-	RetryAt              *time.Time `json:"retryAt,omitempty"`
-	ChangedAt            time.Time  `json:"changedAt"`
+	Mode                 ConnectionMode `json:"mode"`
+	State                string         `json:"state"`
+	LoggedIn             bool           `json:"loggedIn"`
+	SocketReady          bool           `json:"socketReady"`
+	ConnectionGeneration uint64         `json:"connectionGeneration,omitempty"`
+	BrowserID            string         `json:"browserId,omitempty"`
+	BrowserName          string         `json:"browserName,omitempty"`
+	ServerURL            string         `json:"serverUrl,omitempty"`
+	Namespace            string         `json:"namespace,omitempty"`
+	Detail               string         `json:"detail,omitempty"`
+	CooldownUntil        *time.Time     `json:"cooldownUntil,omitempty"`
+	RetryAt              *time.Time     `json:"retryAt,omitempty"`
+	ChangedAt            time.Time      `json:"changedAt"`
 }
 
 type RawFrame struct {
@@ -84,7 +100,7 @@ func NewUnavailableTransport() *UnavailableTransport {
 		frames:   make(chan RawFrame),
 		statuses: make(chan Status),
 		status: Status{
-			State: "unavailable", Namespace: "EmpireEx_21",
+			Mode: ConnectionModeFull, State: "unavailable", Namespace: "EmpireEx_21",
 			Detail: "No game transport adapter is configured", ChangedAt: time.Now().UTC(),
 		},
 	}

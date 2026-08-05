@@ -103,6 +103,9 @@ type chromiumSocket struct {
 	pendingLoginFrame string
 	loginUsername     string
 	loginPassword     string
+	clientBuild       string
+	platform          string
+	loginContext      map[string]json.RawMessage
 }
 
 type chromiumSocketNotice struct {
@@ -158,7 +161,7 @@ func NewChromiumTransport(config ChromiumConfig) *ChromiumTransport {
 		config: config, browser: browser, selectedBrowser: browser, resolveErr: resolveErr,
 		frames: make(chan RawFrame, 8192), statuses: make(chan Status, 32),
 		status: Status{
-			State: state, Namespace: "EmpireEx_21", Detail: detail,
+			Mode: ConnectionModeFull, State: state, Namespace: "EmpireEx_21", Detail: detail,
 			BrowserID: browser.ID, BrowserName: browser.Name, ChangedAt: time.Now().UTC(),
 		},
 		trackedSockets:    map[network.RequestID]string{},
@@ -1255,6 +1258,9 @@ func (transport *ChromiumTransport) publishStatus(status Status) {
 		status.ChangedAt = time.Now().UTC()
 	}
 	transport.mu.Lock()
+	if status.Mode == "" {
+		status.Mode = ConnectionModeFull
+	}
 	if status.ConnectionGeneration == 0 {
 		status.ConnectionGeneration = transport.status.ConnectionGeneration
 	}
@@ -1524,10 +1530,15 @@ func (transport *ChromiumTransport) processSocketFrame(
 	transport.mu.Unlock()
 
 	frame, frameErr := Protocol.Decode(notice.Payload, notice.Direction, observedAt)
-	if notice.Direction == Protocol.DirectionOutbound && frameErr == nil && frame.Opcode == "lli" {
-		transport.recordSocketLoginFrame(
-			generation, key, notice.Payload, notice.LoginUsername, notice.LoginPassword,
-		)
+	if notice.Direction == Protocol.DirectionOutbound && frameErr == nil {
+		switch frame.Opcode {
+		case "vck":
+			transport.recordSocketVersionFrame(generation, key, notice.Payload)
+		case "lli":
+			transport.recordSocketLoginFrame(
+				generation, key, notice.Payload, notice.LoginUsername, notice.LoginPassword,
+			)
+		}
 	}
 	if notice.Direction == Protocol.DirectionInbound {
 		if frameErr == nil && frame.Opcode == "lli" && frame.ResponseCode != nil {
@@ -1558,6 +1569,28 @@ func (transport *ChromiumTransport) processSocketFrame(
 			transport.recordInboundTraffic(generation, key, observedAt)
 		}
 		transport.deliverSocketFrame(notice, observedAt, connectionGeneration)
+	}
+}
+
+func (transport *ChromiumTransport) recordSocketVersionFrame(
+	generation uint64,
+	key chromiumSocketKey,
+	frame string,
+) {
+	namespace, build, platform, ok := captureGameVersionFrame(frame)
+	if !ok {
+		return
+	}
+	transport.mu.Lock()
+	defer transport.mu.Unlock()
+	socket := transport.sockets[key]
+	if transport.generation != generation || transport.cancel == nil || socket == nil {
+		return
+	}
+	socket.clientBuild = build
+	socket.platform = platform
+	if transport.status.Namespace == "" {
+		transport.status.Namespace = namespace
 	}
 }
 
@@ -1594,6 +1627,7 @@ func (transport *ChromiumTransport) recordSocketLoginFrame(
 		return
 	}
 	socket.pendingLoginFrame = frame
+	socket.loginContext = sanitizedGameLoginContext(decoded.Payload)
 	credential := persistedLoginCredential{Username: username, Password: password}
 	if validateLoginCredential(credential) == nil {
 		socket.loginUsername = username
@@ -1613,25 +1647,36 @@ func (transport *ChromiumTransport) rememberSuccessfulLogin(
 		transport.mu.Unlock()
 		return
 	}
-	username := socket.loginUsername
-	password := socket.loginPassword
-	if username == "" || password == "" {
-		transport.restoreSuppressed = false
-		transport.mu.Unlock()
-		return
+	credential := transport.loginCredential
+	newCredential := persistedLoginCredential{
+		SchemaVersion: loginCredentialSchemaVersion, CapturedAt: observedAt, AutoRestore: true,
+		Username: socket.loginUsername, Password: socket.loginPassword,
 	}
-	credential := persistedLoginCredential{
-		SchemaVersion: loginCredentialSchemaVersion,
+	saveCredential := validateLoginCredential(newCredential) == nil
+	if saveCredential {
+		credential = newCredential
+		transport.loginCredential = credential
+	}
+	profile := gameConnectionProfile{
+		SchemaVersion: gameConnectionProfileSchemaVersion,
 		CapturedAt:    observedAt,
-		AutoRestore:   true,
-		Username:      username,
-		Password:      password,
+		ServerURL:     socket.serverURL,
+		Namespace:     transport.status.Namespace,
+		ClientBuild:   socket.clientBuild,
+		Platform:      socket.platform,
+		LoginContext:  socket.loginContext,
 	}
-	transport.loginCredential = credential
+	saveProfile := validateGameConnectionProfile(profile) == nil &&
+		validateLoginCredential(credential) == nil && credential.AutoRestore
 	transport.restoreSuppressed = false
 	dataDir := transport.config.DataDir
 	transport.mu.Unlock()
-	_ = saveLoginCredential(dataDir, credential)
+	if saveCredential {
+		_ = saveLoginCredential(dataDir, credential)
+	}
+	if saveProfile {
+		_ = saveGameConnectionProfile(dataDir, profile)
+	}
 }
 
 func (transport *ChromiumTransport) rejectRestoredLogin(

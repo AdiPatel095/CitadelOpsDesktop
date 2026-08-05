@@ -94,32 +94,36 @@ func (collector *wireCommitCollector) flush(ctx context.Context, observer Observ
 }
 
 type Engine struct {
-	registry  *Registry
-	state     StateReader
-	gameData  GameDataProvider
-	sender    Sender
-	observer  Observer
-	claims    *claimManager
-	admission *admissionManager
+	registry    *Registry
+	state       StateReader
+	gameData    GameDataProvider
+	sender      Sender
+	observer    Observer
+	claims      *claimManager
+	admission   *admissionManager
+	labelsMu    sync.RWMutex
+	labels      GameData.IdentifierLabels
+	labelsReady bool
 
-	mu              sync.RWMutex
-	actions         map[string]Action
-	resolvers       map[string]StepResolver
-	dependencies    map[string]CommandDependencyResolver
-	executionGate   ExecutionGate
-	admissionWeight AdmissionWeightProvider
-	operationStore  OperationStore
-	active          map[string]context.CancelFunc
-	operations      map[string]Receipt
-	requestHashes   map[string]string
-	operationOrder  []string
-	operationIndex  map[string]struct{}
-	subscribers     map[uint64]chan Receipt
-	eventSequence   uint64
-	persistenceErr  error
-	nextID          atomic.Uint64
-	nextSubID       atomic.Uint64
-	nextResponseID  atomic.Uint64
+	mu                sync.RWMutex
+	actions           map[string]Action
+	resolvers         map[string]StepResolver
+	dependencies      map[string]CommandDependencyResolver
+	executionGate     ExecutionGate
+	admissionWeight   AdmissionWeightProvider
+	operationStore    OperationStore
+	active            map[string]context.CancelFunc
+	operations        map[string]Receipt
+	requestHashes     map[string]string
+	durableOperations map[string]struct{}
+	operationOrder    []string
+	operationIndex    map[string]struct{}
+	subscribers       map[uint64]chan Receipt
+	eventSequence     uint64
+	persistenceErr    error
+	nextID            atomic.Uint64
+	nextSubID         atomic.Uint64
+	nextResponseID    atomic.Uint64
 }
 
 func NewEngine(registry *Registry, state StateReader, gameData GameDataProvider, sender Sender, observer Observer) *Engine {
@@ -140,7 +144,7 @@ func NewEngine(registry *Registry, state StateReader, gameData GameDataProvider,
 		registry: registry, state: state, gameData: gameData, sender: sender, observer: observer,
 		claims: newClaimManager(), admission: newAdmissionManager(availability), actions: map[string]Action{}, resolvers: map[string]StepResolver{},
 		dependencies: map[string]CommandDependencyResolver{}, active: map[string]context.CancelFunc{},
-		operations: map[string]Receipt{}, requestHashes: map[string]string{}, operationIndex: map[string]struct{}{},
+		operations: map[string]Receipt{}, requestHashes: map[string]string{}, durableOperations: map[string]struct{}{}, operationIndex: map[string]struct{}{},
 		subscribers: map[uint64]chan Receipt{},
 	}
 }
@@ -227,9 +231,11 @@ func (engine *Engine) SetOperationStore(ctx context.Context, store OperationStor
 	for index := len(recent) - 1; index >= 0; index-- {
 		operation := recent[index]
 		engine.cacheOperationLocked(operation.Receipt, operation.RequestHash)
+		engine.durableOperations[operation.Receipt.ID] = struct{}{}
 	}
 	for _, operation := range recovered {
 		engine.cacheOperationLocked(operation.Receipt, operation.RequestHash)
+		engine.durableOperations[operation.Receipt.ID] = struct{}{}
 	}
 	engine.mu.Unlock()
 	return nil
@@ -256,7 +262,10 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		Status: StatusPlanning, Phase: EffectPhaseAccepted, SubmittedAt: time.Now().UTC(),
 	}
 	request.Priority = priority
-	reserved, created, reserveErr := engine.reserveOperation(ctx, requestFingerprint(request), receipt)
+	definition, definitionExists := engine.registry.Definition(request.Name)
+	durable := definitionExists && definition.Effect != EffectRead && !request.DryRun
+	requestHash := requestFingerprint(request)
+	reserved, created, reserveErr := engine.reserveOperation(requestHash, receipt)
 	if reserveErr != nil {
 		now := time.Now().UTC()
 		receipt.Status = StatusFailed
@@ -266,7 +275,7 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		return receipt
 	}
 	if !created {
-		return reserved
+		return engine.humanizeReceiptIdentifiers(reserved)
 	}
 	executionContext, cancel := context.WithCancel(ctx)
 	if !engine.registerActive(request.ID, cancel) {
@@ -287,8 +296,7 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		return engine.fail(receipt, priorityErr)
 	}
 
-	definition, exists := engine.registry.Definition(request.Name)
-	if !exists {
+	if !definitionExists {
 		return engine.fail(receipt, fmt.Errorf("unknown intent %q", request.Name))
 	}
 	if engine.state == nil {
@@ -343,6 +351,7 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 			if err != nil {
 				return engine.fail(receipt, err)
 			}
+			plan = humanizePlanIdentifiers(planningInput, plan)
 		}
 		receipt.Plan = &plan
 		if firstPlan && request.DryRun {
@@ -435,6 +444,7 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 				release()
 				return engine.fail(receipt, err)
 			}
+			revalidated = humanizePlanIdentifiers(currentInput, revalidated)
 			if !sameStrings(plan.Claims, revalidated.Claims) ||
 				!sameResourceKeys(plan.Resources, revalidated.Resources) ||
 				!sameAdmission(plan.Admission, revalidated.Admission) {
@@ -455,6 +465,19 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		receipt.Status = StatusRunning
 		receipt.Phase = EffectPhasePlanned
 		receipt.Error = ""
+		if durable {
+			checkpoint := receipt
+			checkpoint.Phase = EffectPhaseDispatching
+			stored, created, err := engine.reserveDurableOperation(requestHash, checkpoint)
+			if err != nil {
+				release()
+				return engine.persistenceFailure(receipt, fmt.Errorf("persist operation before execution: %w", err))
+			}
+			if !created {
+				release()
+				return engine.humanizeReceiptIdentifiers(stored)
+			}
+		}
 		if err := engine.update(receipt); err != nil {
 			release()
 			return engine.persistenceFailure(receipt, fmt.Errorf("persist operation before execution: %w", err))
@@ -718,7 +741,8 @@ func (engine *Engine) pause(receipt Receipt) Receipt {
 func (engine *Engine) persistenceFailure(receipt Receipt, err error) Receipt {
 	receipt.Status = StatusFailed
 	receipt.Phase = EffectPhaseCompleted
-	receipt.Error = err.Error()
+	receipt.RawError = err.Error()
+	receipt.Error = engine.humanizeText(err.Error())
 	now := time.Now().UTC()
 	receipt.CompletedAt = &now
 	engine.publish(receipt)
@@ -764,7 +788,7 @@ func (engine *Engine) Operation(id string) (Receipt, bool) {
 	store := engine.operationStore
 	engine.mu.RUnlock()
 	if ok || store == nil {
-		return receipt, ok
+		return engine.humanizeReceiptIdentifiers(receipt), ok
 	}
 	operation, ok, err := store.Get(context.Background(), id)
 	engine.recordPersistenceFailure(err)
@@ -774,7 +798,7 @@ func (engine *Engine) Operation(id string) (Receipt, bool) {
 	engine.mu.Lock()
 	engine.cacheOperationLocked(operation.Receipt, operation.RequestHash)
 	engine.mu.Unlock()
-	return operation.Receipt, true
+	return engine.humanizeReceiptIdentifiers(operation.Receipt), true
 }
 
 func (engine *Engine) RecentOperations(ctx context.Context, limit int) ([]Receipt, error) {
@@ -784,35 +808,24 @@ func (engine *Engine) RecentOperations(ctx context.Context, limit int) ([]Receip
 	if limit <= 0 || limit > operationHistoryLimit {
 		limit = operationHistoryLimit
 	}
-	engine.mu.RLock()
-	store := engine.operationStore
-	if store == nil {
-		ids := append([]string(nil), engine.operationOrder...)
-		receipts := make(map[string]Receipt, len(engine.operations))
-		for id, receipt := range engine.operations {
-			receipts[id] = receipt
-		}
-		engine.mu.RUnlock()
-		if len(ids) > limit {
-			ids = ids[len(ids)-limit:]
-		}
-		out := make([]Receipt, 0, len(ids))
-		for index := len(ids) - 1; index >= 0; index-- {
-			if receipt, ok := receipts[ids[index]]; ok {
-				out = append(out, receipt)
-			}
-		}
-		return out, nil
-	}
-	engine.mu.RUnlock()
-	operations, err := store.Recent(ctx, limit)
-	engine.recordPersistenceFailure(err)
-	if err != nil {
+	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	out := make([]Receipt, 0, len(operations))
-	for _, operation := range operations {
-		out = append(out, operation.Receipt)
+	engine.mu.RLock()
+	ids := append([]string(nil), engine.operationOrder...)
+	receipts := make(map[string]Receipt, len(engine.operations))
+	for id, receipt := range engine.operations {
+		receipts[id] = receipt
+	}
+	engine.mu.RUnlock()
+	if len(ids) > limit {
+		ids = ids[len(ids)-limit:]
+	}
+	out := make([]Receipt, 0, len(ids))
+	for index := len(ids) - 1; index >= 0; index-- {
+		if receipt, ok := receipts[ids[index]]; ok {
+			out = append(out, engine.humanizeReceiptIdentifiers(receipt))
+		}
 	}
 	return out, nil
 }
@@ -845,27 +858,9 @@ func (engine *Engine) recordPersistenceFailure(err error) {
 }
 
 func (engine *Engine) reserveOperation(
-	ctx context.Context,
 	requestHash string,
 	receipt Receipt,
 ) (Receipt, bool, error) {
-	engine.mu.RLock()
-	store := engine.operationStore
-	engine.mu.RUnlock()
-	if store != nil {
-		reserved, created, err := store.Reserve(ctx, requestHash, receipt)
-		engine.recordPersistenceResult(err)
-		if err != nil {
-			return Receipt{}, false, err
-		}
-		engine.mu.Lock()
-		engine.cacheOperationLocked(reserved, requestHash)
-		if created {
-			engine.publishLocked(reserved)
-		}
-		engine.mu.Unlock()
-		return reserved, created, nil
-	}
 	engine.mu.Lock()
 	if existing, exists := engine.operations[receipt.ID]; exists {
 		existingHash := engine.requestHashes[receipt.ID]
@@ -879,6 +874,35 @@ func (engine *Engine) reserveOperation(
 	engine.publishLocked(receipt)
 	engine.mu.Unlock()
 	return receipt, true, nil
+}
+
+// reserveDurableOperation is the sole normal pre-effect database write. The
+// complete, revalidated plan is already attached to the receipt, and the
+// dispatching phase makes recovery conservatively treat a crash as possibly
+// sent. Later wire phases remain in memory until one terminal update.
+func (engine *Engine) reserveDurableOperation(
+	requestHash string,
+	receipt Receipt,
+) (Receipt, bool, error) {
+	engine.mu.RLock()
+	store := engine.operationStore
+	_, durable := engine.durableOperations[receipt.ID]
+	engine.mu.RUnlock()
+	if durable || store == nil {
+		return receipt, true, nil
+	}
+	reserved, created, err := store.Reserve(context.Background(), requestHash, receipt)
+	engine.recordPersistenceResult(err)
+	if err != nil {
+		return Receipt{}, false, err
+	}
+	engine.mu.Lock()
+	engine.durableOperations[reserved.ID] = struct{}{}
+	if !created {
+		engine.cacheOperationLocked(reserved, requestHash)
+	}
+	engine.mu.Unlock()
+	return reserved, created, nil
 }
 
 func (engine *Engine) Subscribe(buffer int) (<-chan Receipt, func()) {
@@ -1334,7 +1358,8 @@ func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 	} else if errors.Is(err, context.Canceled) {
 		receipt.Status = StatusCancelled
 	}
-	receipt.Error = err.Error()
+	receipt.RawError = err.Error()
+	receipt.Error = engine.humanizeText(receipt.RawError)
 	now := time.Now().UTC()
 	receipt.CompletedAt = &now
 	engine.update(receipt)
@@ -1349,7 +1374,8 @@ func (engine *Engine) failAfterProgress(receipt Receipt, err error, completedSte
 		if count > 0 {
 			receipt.Status = StatusPartiallySucceeded
 			receipt.Phase = EffectPhaseReconciliationRequired
-			receipt.Error = err.Error()
+			receipt.RawError = err.Error()
+			receipt.Error = engine.humanizeText(receipt.RawError)
 			now := time.Now().UTC()
 			receipt.CompletedAt = &now
 			engine.update(receipt)
@@ -1360,11 +1386,13 @@ func (engine *Engine) failAfterProgress(receipt Receipt, err error, completedSte
 }
 
 func (engine *Engine) update(receipt Receipt) error {
+	receipt = engine.humanizeReceiptIdentifiers(receipt)
 	engine.mu.RLock()
 	store := engine.operationStore
+	_, durable := engine.durableOperations[receipt.ID]
 	engine.mu.RUnlock()
 	var persistErr error
-	if store != nil {
+	if store != nil && durable && durableReceiptCheckpoint(receipt) {
 		persistErr = store.Save(context.Background(), receipt)
 		engine.recordPersistenceResult(persistErr)
 	}
@@ -1372,6 +1400,16 @@ func (engine *Engine) update(receipt Receipt) error {
 	engine.publishLocked(receipt)
 	engine.mu.Unlock()
 	return persistErr
+}
+
+func durableReceiptCheckpoint(receipt Receipt) bool {
+	switch receipt.Status {
+	case StatusSucceeded, StatusCancelled, StatusFailed, StatusPartiallySucceeded, StatusIndeterminate:
+		return true
+	case StatusPaused, StatusReconciling:
+		return true
+	}
+	return false
 }
 
 func (engine *Engine) publishLocked(receipt Receipt) {
@@ -1426,6 +1464,7 @@ func (engine *Engine) evictOperationHistoryLocked() {
 		}
 		delete(engine.operations, id)
 		delete(engine.requestHashes, id)
+		delete(engine.durableOperations, id)
 		delete(engine.operationIndex, id)
 		remainingAttempts = len(engine.operationOrder)
 	}
@@ -1526,6 +1565,10 @@ func (engine *Engine) planningContext() PlanningContext {
 			input.Language, _ = provider.Language()
 		}
 	}
+	engine.labelsMu.Lock()
+	engine.labels = GameData.NewIdentifierLabels(input.State, input.GameData, input.Language)
+	engine.labelsReady = true
+	engine.labelsMu.Unlock()
 	return input
 }
 

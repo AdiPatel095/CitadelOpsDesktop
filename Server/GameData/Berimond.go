@@ -6,7 +6,13 @@ import (
 	"strings"
 )
 
-const BerimondKingdomID = 10
+const (
+	BerimondKingdomID = 10
+
+	// GallantryPointsBoosterID is the official BoosterConst ID used by the
+	// game's boi response for every strength of the timed Gallantry booster.
+	GallantryPointsBoosterID = 24
+)
 
 type BerimondCampOption struct {
 	ID        int64 `json:"id"`

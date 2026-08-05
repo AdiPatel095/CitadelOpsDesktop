@@ -190,9 +190,19 @@ type Receipt struct {
 	Plan           *Plan             `json:"plan,omitempty"`
 	Exchanges      []CommandExchange `json:"exchanges,omitempty"`
 	Error          string            `json:"error,omitempty"`
-	SubmittedAt    time.Time         `json:"submittedAt"`
-	StartedAt      *time.Time        `json:"startedAt,omitempty"`
-	CompletedAt    *time.Time        `json:"completedAt,omitempty"`
+	// RawError preserves the machine-oriented wording for in-process recovery
+	// and gating logic. It is never serialized or shown to users.
+	RawError    string     `json:"-"`
+	SubmittedAt time.Time  `json:"submittedAt"`
+	StartedAt   *time.Time `json:"startedAt,omitempty"`
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
+}
+
+func (receipt Receipt) DiagnosticError() string {
+	if receipt.RawError != "" {
+		return receipt.RawError
+	}
+	return receipt.Error
 }
 
 // CommandExchange is the exact encoded command input and matching decoded

@@ -473,6 +473,12 @@ func cloneGameStateWithMap(source GameState, cloneWorldMap bool) GameState {
 		clone.Rift.Launches[id] = launch
 	}
 	clone.Rift.DeletedLaunchIDs = cloneMap(source.Rift.DeletedLaunchIDs)
+	if source.Rift.MaidenRun != nil {
+		run := *source.Rift.MaidenRun
+		run.CommanderIDs = append([]CommanderID(nil), source.Rift.MaidenRun.CommanderIDs...)
+		run.LaunchIDs = append([]MovementID(nil), source.Rift.MaidenRun.LaunchIDs...)
+		clone.Rift.MaidenRun = &run
+	}
 	clone.Inventory.ConstructionItems = cloneMap(source.Inventory.ConstructionItems)
 	clone.Inventory.ConstructionOffers = cloneMap(source.Inventory.ConstructionOffers)
 	clone.Inventory.Equipment = make(map[EquipmentInstanceID]EquipmentInstance, len(source.Inventory.Equipment))
@@ -500,6 +506,7 @@ func cloneGameStateWithMap(source GameState, cloneWorldMap bool) GameState {
 		}
 		clone.Market.Castles[id] = castle
 	}
+	clone.Market.Boosters = cloneMap(source.Market.Boosters)
 	clone.KingdomTransport.Unlocks = cloneMap(source.KingdomTransport.Unlocks)
 	clone.KingdomTransport.Pending = append([]KingdomResourceTransport(nil), source.KingdomTransport.Pending...)
 	for index := range clone.KingdomTransport.Pending {
@@ -522,6 +529,9 @@ func cloneGameStateWithMap(source GameState, cloneWorldMap bool) GameState {
 	)
 	clone.AllianceHelpRequests.RecruitmentCastleIDs = append(
 		[]CastleID(nil), source.AllianceHelpRequests.RecruitmentCastleIDs...,
+	)
+	clone.AllianceHelpRequests.PendingOtherListIDs = append(
+		[]int64{}, source.AllianceHelpRequests.PendingOtherListIDs...,
 	)
 	clone.Alliances = make(map[AllianceID]AllianceState, len(source.Alliances))
 	for id, alliance := range source.Alliances {

@@ -18,7 +18,7 @@ import {
   parseAutoAdvisorClientState,
   type AutoAdvisorClientStateV1,
 } from '../AutoAdvisorClientState';
-import { autoNomadDifficultyName, autoNomadDifficultyOptions } from '../AutoNomadClientState';
+import { eventDifficultyName, useEventDifficultyOptions } from '../EventDifficultyOptions';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 
 interface AutoAdvisorSettingsModalProps {
@@ -44,14 +44,9 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
   const presetSummary = selectedPreset ? summarizeAttackPreset(selectedPreset) : null;
   const completedAchievements = state?.player.achievements?.completed ?? {};
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
-  const nomadDifficulties = useMemo(
-    () => autoNomadDifficultyOptions(301, 1102, completedAchievements),
-    [completedAchievements],
-  );
-  const samuraiDifficulties = useMemo(
-    () => autoNomadDifficultyOptions(201, 1096, completedAchievements),
-    [completedAchievements],
-  );
+  const difficultyCatalog = useEventDifficultyOptions(isOpen, [72, 80], completedAchievements);
+  const nomadDifficulties = difficultyCatalog.optionsByEvent['72'] ?? [];
+  const samuraiDifficulties = difficultyCatalog.optionsByEvent['80'] ?? [];
   const nomadSelectionAvailable = nomadDifficulties.some((option) => option.value === String(draft.nomadDifficultyId));
   const samuraiSelectionAvailable = samuraiDifficulties.some((option) => option.value === String(draft.samuraiDifficultyId));
   const activeEvent = useMemo(() => activeAdvisorEvent(state), [state]);
@@ -279,17 +274,19 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 label="Nomad"
                 value={nomadSelectionAvailable ? draft.nomadDifficultyId : 0}
                 options={nomadDifficulties}
-                through={autoNomadDifficultyName(Number(nomadDifficulties.at(-1)?.value), 301)}
+                through={eventDifficultyName(nomadDifficulties, Number(nomadDifficulties.at(-1)?.value))}
                 onChange={(nomadDifficultyId) => setDraft((current) => ({ ...current, nomadDifficultyId }))}
               />
               <DifficultySelect
                 label="Samurai"
                 value={samuraiSelectionAvailable ? draft.samuraiDifficultyId : 0}
                 options={samuraiDifficulties}
-                through={autoNomadDifficultyName(Number(samuraiDifficulties.at(-1)?.value), 201)}
+                through={eventDifficultyName(samuraiDifficulties, Number(samuraiDifficulties.at(-1)?.value))}
                 onChange={(samuraiDifficultyId) => setDraft((current) => ({ ...current, samuraiDifficultyId }))}
               />
             </div>
+            {difficultyCatalog.loading ? <p className="mt-3 text-xs text-text-muted">Loading official event difficulties…</p> : null}
+            {difficultyCatalog.error ? <p className="mt-3 text-xs text-danger">{difficultyCatalog.error}</p> : null}
           </Card>
 
           <Card variant="solid" className="p-4">

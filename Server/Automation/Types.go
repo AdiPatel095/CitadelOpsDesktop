@@ -48,6 +48,20 @@ type Policy interface {
 	Evaluate(context.Context, Snapshot) (Decision, error)
 }
 
+// CorePolicy participates in the coordinator's session-readiness, intent,
+// retry, and Bot Lock safeguards without being controlled by a feature toggle
+// or weekly feature schedule.
+type CorePolicy interface {
+	CorePolicy()
+}
+
+// OnDemandPolicy is enabled by persisted runtime state instead of an
+// automation.enabled switch. It is intended for explicit, bounded user runs
+// that must survive restarts and wait for authoritative game state changes.
+type OnDemandPolicy interface {
+	Active(State.GameState) bool
+}
+
 // ActorIDPolicy lets an independent policy lane attribute its operations to a
 // parent feature. This keeps shared workflow ownership and activity routing
 // stable while the lane retains its own coordinator runtime and status.

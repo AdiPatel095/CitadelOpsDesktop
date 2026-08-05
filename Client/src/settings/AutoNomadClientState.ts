@@ -63,8 +63,8 @@ export function parseAutoNomadClientState(value: unknown): AutoNomadClientStateV
     sourceCastleId: positiveInteger(raw.sourceCastleId),
     nomadPresetId: trimmedString(raw.nomadPresetId) || legacyPresetId,
     samuraiPresetId: trimmedString(raw.samuraiPresetId) || legacyPresetId,
-    nomadDifficultyId: validDifficulty(raw.nomadDifficultyId, 301),
-    samuraiDifficultyId: validDifficulty(raw.samuraiDifficultyId, 201),
+    nomadDifficultyId: positiveInteger(raw.nomadDifficultyId),
+    samuraiDifficultyId: positiveInteger(raw.samuraiDifficultyId),
     scoreTarget: positiveInteger(raw.scoreTarget),
     minimumRemainingSec: clampAutoNomadInteger(raw.minimumRemainingSec, 0, 86400, fallback.minimumRemainingSec),
     checkIntervalSec: clampAutoNomadInteger(raw.checkIntervalSec, 30, 3600, fallback.checkIntervalSec),
@@ -87,36 +87,6 @@ export function parseAutoNomadClientState(value: unknown): AutoNomadClientStateV
   };
 }
 
-export const AUTO_NOMAD_DIFFICULTY_NAMES = [
-  'Easy',
-  'Easy+',
-  'Intermediate',
-  'Intermediate+',
-  'Hard',
-  'Hard+',
-  'Expert',
-  'Expert+',
-  'Master',
-  'Master+',
-  'Archmaster',
-] as const;
-
-export function autoNomadDifficultyOptions(
-  firstDifficultyId: number,
-  firstUnlockAchievementId: number,
-  completedAchievements: Record<string, boolean>,
-): Array<{ value: string; label: string }> {
-  return AUTO_NOMAD_DIFFICULTY_NAMES.flatMap((name, index) => {
-    if (index < 4) return [{ value: String(firstDifficultyId + index), label: name }];
-    if (index >= 10 || !completedAchievements[String(firstUnlockAchievementId + index - 4)]) return [];
-    return [{ value: String(firstDifficultyId + index), label: name }];
-  });
-}
-
-export function autoNomadDifficultyName(difficultyId: number, firstDifficultyId: number): string {
-  return AUTO_NOMAD_DIFFICULTY_NAMES[difficultyId - firstDifficultyId] ?? 'Unknown';
-}
-
 export function clampAutoNomadInteger(value: unknown, minimum: number, maximum: number, fallback: number): number {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -130,9 +100,4 @@ function positiveInteger(value: unknown): number {
 
 function trimmedString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
-}
-
-function validDifficulty(value: unknown, firstDifficultyId: number): number {
-  const parsed = positiveInteger(value);
-  return parsed >= firstDifficultyId && parsed <= firstDifficultyId + 10 ? parsed : 0;
 }

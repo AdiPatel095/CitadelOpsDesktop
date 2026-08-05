@@ -258,6 +258,14 @@ func normalizeStateMaps(state *GameState) {
 	if state.Rift.DeletedLaunchIDs == nil {
 		state.Rift.DeletedLaunchIDs = defaults.Rift.DeletedLaunchIDs
 	}
+	if state.Rift.MaidenRun != nil {
+		if state.Rift.MaidenRun.CommanderIDs == nil {
+			state.Rift.MaidenRun.CommanderIDs = []CommanderID{}
+		}
+		if state.Rift.MaidenRun.LaunchIDs == nil {
+			state.Rift.MaidenRun.LaunchIDs = []MovementID{}
+		}
+	}
 	if state.Inventory.ConstructionItems == nil {
 		state.Inventory.ConstructionItems = defaults.Inventory.ConstructionItems
 	}
@@ -293,6 +301,9 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.Market.Castles == nil {
 		state.Market.Castles = defaults.Market.Castles
+	}
+	if state.Market.Boosters == nil {
+		state.Market.Boosters = defaults.Market.Boosters
 	}
 	for id, castle := range state.Market.Castles {
 		if castle.Resources == nil {
@@ -417,6 +428,9 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.AllianceHelpRequests.RecruitmentCastleIDs == nil {
 		state.AllianceHelpRequests.RecruitmentCastleIDs = defaults.AllianceHelpRequests.RecruitmentCastleIDs
+	}
+	if state.AllianceHelpRequests.PendingOtherListIDs == nil {
+		state.AllianceHelpRequests.PendingOtherListIDs = defaults.AllianceHelpRequests.PendingOtherListIDs
 	}
 	if state.Alliances == nil {
 		state.Alliances = defaults.Alliances

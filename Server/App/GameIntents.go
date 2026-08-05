@@ -17,6 +17,9 @@ func (application *Application) registerGameIntents() error {
 	if err := application.registerAutoBirdIntents(); err != nil {
 		return err
 	}
+	if err := application.registerBeriBlueprintIntents(); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterCommandDependencies("cra", application.resolveCRACommandDependencies); err != nil {
 		return err
 	}
@@ -106,6 +109,12 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterStepResolver("alliance.help.build", application.resolveAllianceHelpRequestStep); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("alliance.help.mark_answered", application.markAllianceHelpAnswered); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterStepResolver("alliance.help.answer_all.build", resolveAllianceHelpAnswerAllStep); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("production.enqueue.verify_capacity", application.verifyProductionQueueCapacity); err != nil {
 		return err
 	}
@@ -143,6 +152,12 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	if err := application.Intents.RegisterAction("rift.template.delete", application.deleteRiftTemplate); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("rift.maiden_run.start", application.startRiftMaidenRun); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("rift.maiden_run.cancel", application.cancelRiftMaidenRun); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("tower.queue.capture", application.captureTowerQueue); err != nil {
@@ -388,6 +403,10 @@ func (application *Application) registerGameIntents() error {
 			Planner: planAllianceHelpRequest,
 		},
 		{
+			Name: "alliance.help.answer_all", Description: "Immediately help every actionable request from other alliance members", Effect: Intent.EffectWrite,
+			Planner: planAllianceHelpAnswerAll,
+		},
+		{
 			Name: "map.query", Description: "Query an inclusive rectangular world-map viewport", Effect: Intent.EffectRead,
 			Planner: planMapQuery,
 		},
@@ -621,22 +640,30 @@ func (application *Application) registerGameIntents() error {
 			Planner:      planBeriTowerAttack,
 		},
 		{
+			Name: "rift.maiden_run.start", Description: "Start a durable bounded Rift Maiden probe run", Effect: Intent.EffectWrite,
+			Planner: planRiftMaidenRunStart, ReadSet: riftMaidenReadSet,
+		},
+		{
+			Name: "rift.maiden_run.cancel", Description: "Cancel the active Rift Maiden probe run", Effect: Intent.EffectWrite,
+			Planner: planRiftMaidenRunCancel, ReadSet: riftMaidenReadSet,
+		},
+		{
 			Name: "rift.maiden_wave.launch", Description: "Launch deterministic Rift probe waves from an optional eligible commander pool", Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "riftMaiden", Label: "Rift Maiden Waves", Description: "Shield-maiden probe and wave launches", DefaultWeight: 50},
-			Planner:      planMaidenCommsWave,
+			Planner:      planMaidenCommsWave, ReadSet: riftMaidenReadSet,
 		},
 		{
 			Name: "rift.launch.replay", Description: "Replay a captured Rift attack template with one or more selected commanders", Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "riftReplay", Label: "Rift Replays", Description: "Captured Rift attack templates", DefaultWeight: 50},
-			Planner:      application.planRiftReplay,
+			Planner:      application.planRiftReplay, ReadSet: riftReplayReadSet,
 		},
 		{
 			Name: "rift.template.rename", Description: "Rename a captured Rift attack template", Effect: Intent.EffectWrite,
-			Planner: planRiftTemplateRename,
+			Planner: planRiftTemplateRename, ReadSet: riftTemplateReadSet,
 		},
 		{
 			Name: "rift.template.delete", Description: "Delete a captured Rift attack template and cancel its schedule", Effect: Intent.EffectWrite,
-			Planner: planRiftTemplateDelete,
+			Planner: planRiftTemplateDelete, ReadSet: riftTemplateDeleteReadSet,
 		},
 		{
 			Name: "decoration.apply_preset", Description: "Reconcile one castle's decoration layout with an official-definition preset", Effect: Intent.EffectWrite,

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCitadelAPI } from '../api/ApiContext';
 import { useAuth } from '../context/AuthContext';
 
 /**
@@ -6,6 +7,8 @@ import { useAuth } from '../context/AuthContext';
  */
 const StaleSessionBanner: React.FC = () => {
   const { gameLoggedIn, startGame } = useAuth();
+  const { state } = useCitadelAPI();
+	const backgroundConnection = state?.session.mode === 'background';
 
   if (gameLoggedIn) {
     return null;
@@ -26,7 +29,9 @@ const StaleSessionBanner: React.FC = () => {
         >
           Start Bot
         </button>{' '}
-        to reload the game tab and refresh live data.
+		{backgroundConnection
+			? 'to reconnect directly and refresh live data.'
+			: 'to reload the game tab and refresh live data.'}
       </p>
     </div>
   );

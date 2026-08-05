@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/CommanderFeatures"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
 	"CitadelDesktop/Server/State"
@@ -33,6 +34,10 @@ type runtimeSchedulerSettings struct {
 
 type runtimeSessionReconnectSettings struct {
 	RelogDelaySec int `json:"relogDelaySec"`
+}
+
+type runtimeAutoBeriWorldSettings struct {
+	RequireActiveGallantryBooster bool `json:"requireActiveGallantryBooster"`
 }
 
 func (application *Application) attackLaunchDelay() time.Duration {
@@ -121,9 +126,12 @@ func (application *Application) executionGate(
 		return nil
 	}
 	if plan.Effect != Intent.EffectRead {
-		if err := application.PersistenceError(); err != nil {
+		if err := application.actionPersistenceError(); err != nil {
 			return fmt.Errorf("durable storage is unavailable: %w", err)
 		}
+	}
+	if err := application.requireAutoBeriGallantryBooster(request, time.Now().UTC()); err != nil {
+		return err
 	}
 	if point == Intent.ExecutionBeforeClaims {
 		if err := application.requireAssignedAttackCommanders(plan); err != nil {
@@ -142,6 +150,28 @@ func (application *Application) executionGate(
 		}
 	}
 	return nil
+}
+
+func (application *Application) requireAutoBeriGallantryBooster(request Intent.Request, now time.Time) error {
+	if application == nil || strings.TrimSpace(request.Actor) != "automation:autoBeriWorld" ||
+		application.Configuration == nil {
+		return nil
+	}
+	var settings runtimeAutoBeriWorldSettings
+	raw, exists := application.Configuration.Section("automation.autoBeriWorld")
+	if !exists || json.Unmarshal(raw, &settings) != nil || !settings.RequireActiveGallantryBooster {
+		return nil
+	}
+	if application.State != nil {
+		state := application.State.ReadOnlyView()
+		if booster, found := state.Market.Boosters[GameData.GallantryPointsBoosterID]; found && booster.ActiveAt(now) {
+			return nil
+		}
+	}
+	return fmt.Errorf(
+		"%w: Auto Beri requires an active Gallantry points booster (boi ID %d)",
+		Intent.ErrPlanStale, GameData.GallantryPointsBoosterID,
+	)
 }
 
 func (application *Application) requireAssignedAttackCommanders(plan Intent.Plan) error {

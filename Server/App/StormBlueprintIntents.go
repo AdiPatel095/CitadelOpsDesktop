@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Buildings"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/State"
 )
 
 type stormBlueprintSaveRequest struct {
@@ -59,6 +61,9 @@ func planStormBlueprintSave(
 	var request stormBlueprintSaveRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
+	}
+	if request.Target.KingdomID != State.KingdomID(GameData.StormKingdomID) {
+		return Intent.Plan{}, fmt.Errorf("Storm blueprint must target kingdom %d", GameData.StormKingdomID)
 	}
 	diff, err := Buildings.CompileBlueprintDiff(input.State, input.GameData, Buildings.BlueprintDiffRequest{
 		Target: request.Target, Policy: request.Policy,

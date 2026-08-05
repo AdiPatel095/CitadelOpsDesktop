@@ -11,13 +11,12 @@ import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../..
 import { Notifications } from '../../components/Notifications';
 import {
   AUTO_INVASION_SECTION,
-  autoInvasionDifficultyName,
-  autoInvasionDifficultyOptions,
   clampAutoInvasionInteger,
   defaultAutoInvasionClientState,
   parseAutoInvasionClientState,
   type AutoInvasionClientStateV1,
 } from '../AutoInvasionClientState';
+import { eventDifficultyName, useEventDifficultyOptions } from '../EventDifficultyOptions';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 
@@ -37,24 +36,43 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
   );
   const completedAchievements = state?.player.achievements?.completed ?? {};
   const achievementsObserved = Boolean(state?.player.achievements?.observedAt);
-  const foreignLordsDifficulties = useMemo(
-    () => autoInvasionDifficultyOptions(1, completedAchievements),
-    [completedAchievements],
-  );
-  const bloodcrowDifficulties = useMemo(
-    () => autoInvasionDifficultyOptions(101, completedAchievements),
-    [completedAchievements],
-  );
+  const difficultyCatalog = useEventDifficultyOptions(isOpen, [71, 103], completedAchievements);
+  const foreignLordsDifficulties = difficultyCatalog.optionsByEvent['71'] ?? [];
+  const bloodcrowDifficulties = difficultyCatalog.optionsByEvent['103'] ?? [];
   const selectedPreset = presetDocument.presets.find((preset) => preset.id === draft.presetId);
   const presetSummary = selectedPreset ? summarizeAttackPreset(selectedPreset) : null;
   const foreignLordsSelectionAvailable = foreignLordsDifficulties.some((option) => option.value === String(draft.foreignLordsDifficultyId));
-  const bloodcrowSelectionAvailable = bloodcrowDifficulties.some((option) => option.value === String(draft.bloodcrowDifficultyId));
-	const fortifyOptions = [
-		{ value: 'GTO', label: 'Gold tokens' },
-		{ value: 'STO', label: 'Silver tokens' },
-		{ value: 'MEDALS', label: 'Event medals' },
-		{ value: 'C2', label: 'Rubies' },
-	];
+	const bloodcrowSelectionAvailable = bloodcrowDifficulties.some((option) => option.value === String(draft.bloodcrowDifficultyId));
+	const liveFortifyCurrencies = useMemo(() => Array.from(new Set(
+		(state?.invasion.fortifyCurrencies ?? []).map((currency) => currency.trim().toUpperCase()).filter(Boolean),
+	)), [state?.invasion.fortifyCurrencies]);
+	const eventFortifyCurrency = liveFortifyCurrencies.find((currency) => currency !== 'GTO' && currency !== 'STO' && currency !== 'C2') ?? '';
+	const fortifyOptions = useMemo(() => {
+		if (liveFortifyCurrencies.length === 0) {
+			return [
+				{ value: 'GTO', label: 'Gold tokens' },
+				{ value: 'STO', label: 'Silver tokens' },
+				{ value: 'MEDALS', label: 'Event currency · detected automatically' },
+				{ value: 'C2', label: 'Rubies' },
+			];
+		}
+		const labels: Record<string, string> = {
+			GTO: 'Gold tokens', STO: 'Silver tokens', KM: 'Khan medals', ST: 'Samurai tokens', KT: 'Khan tablets', C2: 'Rubies',
+		};
+		const options: Array<{ value: AutoInvasionClientStateV1['fortifyCurrency']; label: string }> = [];
+		for (const currency of liveFortifyCurrencies) {
+			const value = currency === 'GTO' || currency === 'STO' || currency === 'C2' ? currency : 'MEDALS';
+			if (options.some((option) => option.value === value)) continue;
+			options.push({
+				value,
+				label: value === 'MEDALS'
+					? `Event currency · ${labels[currency] ?? currency} (${currency})`
+					: `${labels[currency] ?? currency} (${currency})`,
+			});
+		}
+		if (!options.some((option) => option.value === 'C2')) options.push({ value: 'C2', label: 'Rubies (C2)' });
+		return options;
+	}, [liveFortifyCurrencies]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -146,7 +164,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
             <label className="block">
               <span className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
                 Foreign Lords
-                <span className="normal-case tracking-normal text-primary">Through {autoInvasionDifficultyName(Number(foreignLordsDifficulties.at(-1)?.value), 1)}</span>
+                <span className="normal-case tracking-normal text-primary">Through {eventDifficultyName(foreignLordsDifficulties, Number(foreignLordsDifficulties.at(-1)?.value))}</span>
               </span>
               <Select
                 value={foreignLordsSelectionAvailable ? String(draft.foreignLordsDifficultyId) : ''}
@@ -159,7 +177,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
             <label className="block">
               <span className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
                 Bloodcrow
-                <span className="normal-case tracking-normal text-primary">Through {autoInvasionDifficultyName(Number(bloodcrowDifficulties.at(-1)?.value), 101)}</span>
+                <span className="normal-case tracking-normal text-primary">Through {eventDifficultyName(bloodcrowDifficulties, Number(bloodcrowDifficulties.at(-1)?.value))}</span>
               </span>
               <Select
                 value={bloodcrowSelectionAvailable ? String(draft.bloodcrowDifficultyId) : ''}
@@ -170,6 +188,8 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
               />
             </label>
           </div>
+          {difficultyCatalog.loading ? <p className="mt-3 text-xs text-text-muted">Loading official event difficulties…</p> : null}
+          {difficultyCatalog.error ? <p className="mt-3 text-xs text-danger">{difficultyCatalog.error}</p> : null}
           {!achievementsObserved ? <p className="mt-3 text-xs text-warning">Achievement data is still syncing; base difficulties are available now.</p> : null}
         </Card>
 
@@ -217,7 +237,10 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 				</div>
 				<Switch
 					checked={draft.fortifyCurrency !== ''}
-					onChange={(checked) => setDraft((current) => ({ ...current, fortifyCurrency: checked ? (current.fortifyCurrency || 'GTO') : '' }))}
+					onChange={(checked) => setDraft((current) => ({
+						...current,
+						fortifyCurrency: checked ? (current.fortifyCurrency || (eventFortifyCurrency ? 'MEDALS' : 'GTO')) : '',
+					}))}
 					ariaLabel="Fortify each Auto Invasion target"
 				/>
 			</div>
@@ -230,7 +253,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 						options={fortifyOptions}
 						menuGrowToViewport
 					/>
-					<p className="mt-2 text-[11px] text-text-muted">Event medals use the first currency list reported for each active event occurrence, with an event-ID fallback when the game does not report its options. The game determines each cumulative <span className="font-mono">rae</span> price. Rubies are never selected by default.</p>
+					<p className="mt-2 text-[11px] text-text-muted">Available choices come from the active event’s server response. The event-currency choice follows the server-supplied code automatically{eventFortifyCurrency ? ` (currently ${eventFortifyCurrency})` : ''}. The game determines each cumulative <span className="font-mono">rae</span> price. Rubies are never selected by default.</p>
 				</label>
 			) : null}
 		</Card>
