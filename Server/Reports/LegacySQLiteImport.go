@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
+
+	RuntimeKernel "CitadelDesktop/Server/Runtime"
 )
 
 const legacyOperationsImportVersion = "operations.sqlite.v1"
@@ -32,11 +33,11 @@ func (store *SQLiteStore) importLegacyOperations(ctx context.Context, legacyPath
 		return fmt.Errorf("read legacy report import version: %w", err)
 	}
 
-	databaseURL := url.URL{Scheme: "file", Path: legacyPath}
-	parameters := databaseURL.Query()
-	parameters.Add("_pragma", "busy_timeout(5000)")
-	databaseURL.RawQuery = parameters.Encode()
-	legacyDB, err := sql.Open("sqlite", databaseURL.String())
+	databaseURL, err := RuntimeKernel.SQLiteFileDSN(legacyPath, "busy_timeout(5000)")
+	if err != nil {
+		return fmt.Errorf("configure legacy report analytics path: %w", err)
+	}
+	legacyDB, err := sql.Open("sqlite", databaseURL)
 	if err != nil {
 		return fmt.Errorf("open legacy report analytics: %w", err)
 	}
