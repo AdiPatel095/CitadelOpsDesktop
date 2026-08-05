@@ -107,6 +107,9 @@ func (store *SQLiteStore) initialize(ctx context.Context) error {
 	`); err != nil {
 		return fmt.Errorf("initialize cloud battle report outbox: %w", err)
 	}
+	if err := store.initializeBattleResearch(ctx); err != nil {
+		return err
+	}
 	if err := createCompactBattleAnalyticsTable(ctx, store.db, "battle_report_analytics"); err != nil {
 		return err
 	}

@@ -5,6 +5,7 @@ import {
 	CheckCircle2,
 	Download,
 	FileJson,
+	Microscope,
 	MonitorPlay,
 	Server,
 	TriangleAlert,
@@ -14,7 +15,7 @@ import { Icons } from '../components/Icons';
 import { CitadelAPI } from '../api/CitadelClient';
 import { useCitadelAPI } from '../api/ApiContext';
 import type { BrowserInventory, SettingsBundleV1 } from '../api/Contracts';
-import { Button, Input, PageHeader, SectionCard, Select } from '../components/ui';
+import { Badge, Button, Input, PageHeader, SectionCard, Select, SettingsToggleRow } from '../components/ui';
 import { asRecord, configurationSection, numericSetting } from '../settings/Configuration';
 import {
 	applyPortableClientPreferences,
@@ -77,6 +78,8 @@ const SettingsView: React.FC = () => {
 	const [relogDelayMinutes, setRelogDelayMinutes] = useState('5');
 	const [relogDelayError, setRelogDelayError] = useState('');
 	const [settingsSaveError, setSettingsSaveError] = useState('');
+	const [battleResearchPending, setBattleResearchPending] = useState(false);
+	const [battleResearchError, setBattleResearchError] = useState('');
 	const settingsFileInputRef = useRef<HTMLInputElement>(null);
 	const [settingsTransferPending, setSettingsTransferPending] = useState<'export' | 'import' | null>(null);
 	const [settingsTransferError, setSettingsTransferError] = useState('');
@@ -93,6 +96,12 @@ const SettingsView: React.FC = () => {
 		() => configurationSection(configuration, 'session.connection'),
 		[configuration],
 	);
+	const battleResearchConfiguration = useMemo(
+		() => configurationSection(configuration, 'research.battlePredictionBeta'),
+		[configuration?.sections['research.battlePredictionBeta']],
+	);
+	const battleResearchEnabled = battleResearchConfiguration.enabled === true
+		&& Number(battleResearchConfiguration.consentVersion) === 1;
 
 	useEffect(() => {
 		let active = true;
@@ -218,6 +227,29 @@ const SettingsView: React.FC = () => {
 				setConnectionModeError(error instanceof Error ? error.message : 'Could not save the game connection mode');
 			})
 			.finally(() => setConnectionModePending(false));
+	};
+
+	const setBattleResearchEnabled = (enabled: boolean) => {
+		if (battleResearchPending || enabled === battleResearchEnabled) return;
+		if (enabled && !window.confirm(
+			'Enable Experimental Battle Research (Beta)?\n\n'
+			+ 'For outgoing PvP attacks you launch, CitadelOps will poll movements, record your account/world/player identifiers plus the exact formation and combat context, '
+			+ 'automatically send one military spy before and after battle, save an experimental pre-impact prediction and the final report, '
+			+ 'then upload the completed bundle to CitadelOps training data. Spy missions use game resources and may be detected. '
+			+ 'The calculator is incomplete and may be wrong. This feature respects Bot Lock and never launches an attack.',
+		)) return;
+		setBattleResearchPending(true);
+		setBattleResearchError('');
+		void updateConfiguration('research.battlePredictionBeta', {
+			...battleResearchConfiguration,
+			enabled,
+			consentVersion: enabled ? 1 : Number(battleResearchConfiguration.consentVersion ?? 0),
+			spyCount: 1,
+		})
+			.catch((error) => {
+				setBattleResearchError(error instanceof Error ? error.message : 'Could not update battle research consent');
+			})
+			.finally(() => setBattleResearchPending(false));
 	};
 
 	const selectBrowser = (browser: string) => {
@@ -466,6 +498,45 @@ const SettingsView: React.FC = () => {
 			</div>
 			{settingsTransferError && <p role="alert" className="text-xs font-medium text-error">{settingsTransferError}</p>}
 			{settingsTransferStatus && <p role="status" className="text-xs font-medium text-success">{settingsTransferStatus}</p>}
+		</SectionCard>
+
+		<SectionCard
+			variant="solid"
+			title="Experimental Battle Research"
+			description="Opt in to forward-tested battle predictions and privacy-bounded training capture."
+			icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-fuchsia-500/10"><Microscope className="h-4 w-4 text-fuchsia-400" /></span>}
+			actions={<Badge variant="warning">Beta</Badge>}
+			contentClassName="p-6 space-y-4"
+		>
+			<SettingsToggleRow
+				title="Contribute outgoing PvP battle trials"
+				description="Observe attacks you already launch, save an untouched prediction before impact, and upload the completed pre-spy, formation, report, and post-spy bundle."
+				icon={<Microscope className="h-4 w-4" />}
+				checked={battleResearchEnabled}
+				onChange={setBattleResearchEnabled}
+				disabled={battleResearchPending}
+				disabledReason="Saving consent…"
+				tone="warning"
+				ariaLabel="Contribute outgoing PvP battle trials"
+			/>
+			<div className="grid gap-3 md:grid-cols-3">
+				<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
+					<p className="text-xs font-bold text-text-main">What is recorded</p>
+					<p className="mt-1 text-[11px] leading-relaxed text-text-muted">Your account, world, and player identifiers; exact waves, troops, tools, commander context, target identity, two spy snapshots, the pre-impact estimate, and the final report.</p>
+				</div>
+				<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
+					<p className="text-xs font-bold text-text-main">What it does in-game</p>
+					<p className="mt-1 text-[11px] leading-relaxed text-text-muted">Polls movements every five seconds and automatically sends one-agent military espionage before and after an eligible battle. It respects Bot Lock and never launches attacks.</p>
+				</div>
+				<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
+					<p className="text-xs font-bold text-text-main">Calculator maturity</p>
+					<p className="mt-1 text-[11px] leading-relaxed text-text-muted">The visible baseline is intentionally labeled low confidence. It records unsupported effects for later models but does not claim exact accuracy today.</p>
+				</div>
+			</div>
+			<p className="text-[11px] leading-relaxed text-text-muted">
+				Disabling stops new capture, automatic spies, and pending uploads. Consent stays on this installation and is never included in settings export or import. Existing local trial records remain available for audit; completed uploads are retained as training data.
+			</p>
+			{battleResearchError && <p role="alert" className="text-xs font-medium text-error">{battleResearchError}</p>}
 		</SectionCard>
 
 		<SectionCard variant="solid" title="Game Connection" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-6">

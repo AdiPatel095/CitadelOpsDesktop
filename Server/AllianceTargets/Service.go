@@ -4,10 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,22 +13,23 @@ import (
 	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/State"
+	"CitadelDesktop/Server/WorldIntel"
 )
 
-const defaultTrackerAPI = "https://api.gge-tracker.com/api/v1"
+type IntelligenceProvider interface {
+	Rankings(context.Context, string, string, string, int) (WorldIntel.RankingResponse, error)
+	Alliance(context.Context, string, int64, int) (WorldIntel.AllianceProfile, error)
+}
 
 type Service struct {
-	client  *http.Client
-	baseURL string
-	history *History.Store
+	provider IntelligenceProvider
+	history  *History.Store
 
-	mu               sync.Mutex
-	servers          []string
-	serversFetchedAt time.Time
-	alliancePages    map[string]cachedAlliances
-	targetDetails    map[string]cachedTargets
-	spyReports       []Reports.SpyReport
-	spyReportsAt     time.Time
+	mu            sync.Mutex
+	alliancePages map[string]cachedAlliances
+	targetDetails map[string]cachedProfile
+	spyReports    []Reports.SpyReport
+	spyReportsAt  time.Time
 }
 
 type cachedAlliances struct {
@@ -40,65 +37,19 @@ type cachedAlliances struct {
 	rows      []AllianceOption
 }
 
-type cachedTargets struct {
-	fetchedAt   time.Time
-	detail      trackerAllianceDetail
-	cartography []trackerCartographyPlayer
+type cachedProfile struct {
+	fetchedAt time.Time
+	profile   WorldIntel.AllianceProfile
 }
 
-type trackerInt int64
-
-func (value *trackerInt) UnmarshalJSON(raw []byte) error {
-	text := strings.Trim(string(raw), `"`)
-	if text == "" || text == "null" {
-		*value = 0
-		return nil
-	}
-	parsed, err := strconv.ParseInt(text, 10, 64)
-	if err != nil {
-		return err
-	}
-	*value = trackerInt(parsed)
-	return nil
-}
-
-type trackerAlliancePage struct {
-	Alliances []struct {
-		AllianceID  string     `json:"alliance_id"`
-		Name        string     `json:"alliance_name"`
-		PlayerCount trackerInt `json:"player_count"`
-	} `json:"alliances"`
-}
-
-type trackerAllianceDetail struct {
-	Name    string `json:"alliance_name"`
-	Players []struct {
-		PlayerID    string     `json:"player_id"`
-		Name        string     `json:"player_name"`
-		Level       trackerInt `json:"level"`
-		LegendLevel trackerInt `json:"legendary_level"`
-		Might       trackerInt `json:"might_current"`
-		BirdUntil   string     `json:"peace_disabled_at"`
-		UpdatedAt   string     `json:"updated_at"`
-	} `json:"players"`
-}
-
-type trackerCartographyPlayer struct {
-	Name    string  `json:"name"`
-	Castles [][]int `json:"castles"`
-}
-
-func NewService(client *http.Client, histories ...*History.Store) *Service {
-	if client == nil {
-		client = &http.Client{Timeout: 10 * time.Second}
-	}
+func NewService(provider IntelligenceProvider, histories ...*History.Store) *Service {
 	var history *History.Store
 	if len(histories) > 0 {
 		history = histories[0]
 	}
 	return &Service{
-		client: client, baseURL: defaultTrackerAPI, history: history,
-		alliancePages: map[string]cachedAlliances{}, targetDetails: map[string]cachedTargets{},
+		provider: provider, history: history,
+		alliancePages: map[string]cachedAlliances{}, targetDetails: map[string]cachedProfile{},
 	}
 }
 
@@ -111,9 +62,9 @@ func (service *Service) View(
 	forceRefresh bool,
 	query Query,
 ) (View, error) {
-	server, err := service.resolveServer(ctx, gameState.Session.ServerURL, serverOverride)
-	if err != nil {
-		return View{}, err
+	server := resolveWorldID(gameState, serverOverride)
+	if server == "" {
+		return View{}, fmt.Errorf("could not identify the active GGE world")
 	}
 	alliances, err := service.loadTopAlliances(ctx, server, forceRefresh)
 	if err != nil {
@@ -149,24 +100,24 @@ func (service *Service) View(
 		}
 	}
 	if selectedIndex < 0 {
-		return View{}, fmt.Errorf("selected alliance is not in the current top 50")
+		return View{}, fmt.Errorf("selected alliance is not in the current World Intelligence ranking")
 	}
 	selected := alliances[selectedIndex]
-	detail, cartography, err := service.loadTargets(ctx, server, selected.ExternalID, forceRefresh)
+	profile, err := service.loadProfile(ctx, server, selected.AllianceID, forceRefresh)
 	if err != nil {
 		return View{}, err
 	}
-	if detail.Name != "" {
-		selected.Name = detail.Name
+	if profile.Current.Name != "" {
+		selected.Name = profile.Current.Name
 	}
 	view.SelectedAlliance = &SelectedAllianceView{
 		ExternalID: selected.ExternalID, AllianceID: selected.AllianceID, Name: selected.Name,
 	}
 	var targets []Target
 	if live, found := gameState.Alliances[State.AllianceID(selected.AllianceID)]; found && live.ID > 0 {
-		targets = buildLiveTargets(gameState, live, detail)
+		targets = buildLiveTargets(gameState, live, profile.Members)
 	} else {
-		targets = buildTrackerTargets(gameState, detail, cartography)
+		targets = buildCloudTargets(gameState, profile)
 	}
 	reports, _ := service.recentSpyReports()
 	enrichTargetIntelligence(gameState, reports, targets)
@@ -206,190 +157,66 @@ func (service *Service) recentSpyReports() ([]Reports.SpyReport, error) {
 	return reports, nil
 }
 
-func (service *Service) resolveServer(ctx context.Context, socketURL string, override string) (string, error) {
-	servers, err := service.supportedServers(ctx)
-	if err != nil {
-		return "", err
-	}
-	if override = strings.TrimSpace(override); override != "" {
-		for _, server := range servers {
-			if strings.EqualFold(server, override) {
-				return server, nil
-			}
-		}
-		return "", fmt.Errorf("GGE Tracker does not support server %q", override)
-	}
-	candidates := serverCandidates(socketURL, servers)
-	if len(candidates) == 0 {
-		return "", fmt.Errorf("could not identify the active GGE server")
-	}
-	return candidates[0], nil
-}
-
-func (service *Service) supportedServers(ctx context.Context) ([]string, error) {
-	service.mu.Lock()
-	if len(service.servers) > 0 && time.Since(service.serversFetchedAt) < 6*time.Hour {
-		servers := append([]string(nil), service.servers...)
-		service.mu.Unlock()
-		return servers, nil
-	}
-	service.mu.Unlock()
-	var servers []string
-	if err := service.getJSON(ctx, "", "/servers", &servers); err != nil {
-		return nil, err
+func (service *Service) loadTopAlliances(ctx context.Context, worldID string, forceRefresh bool) ([]AllianceOption, error) {
+	if service == nil || service.provider == nil {
+		return nil, fmt.Errorf("World Intelligence is unavailable")
 	}
 	service.mu.Lock()
-	service.servers = append([]string(nil), servers...)
-	service.serversFetchedAt = time.Now()
-	service.mu.Unlock()
-	return servers, nil
-}
-
-func (service *Service) loadTopAlliances(ctx context.Context, server string, forceRefresh bool) ([]AllianceOption, error) {
-	service.mu.Lock()
-	if cached := service.alliancePages[server]; !forceRefresh && len(cached.rows) == 50 && time.Since(cached.fetchedAt) < 5*time.Minute {
+	if cached := service.alliancePages[worldID]; !forceRefresh && len(cached.rows) > 0 && time.Since(cached.fetchedAt) < 5*time.Minute {
 		rows := append([]AllianceOption(nil), cached.rows...)
 		service.mu.Unlock()
 		return rows, nil
 	}
 	service.mu.Unlock()
-
-	type pageResult struct {
-		page int
-		data trackerAlliancePage
-		err  error
+	ranking, err := service.provider.Rankings(ctx, worldID, "alliances", "might", 50)
+	if err != nil {
+		return nil, fmt.Errorf("load World Intelligence alliance rankings: %w", err)
 	}
-	results := make(chan pageResult, 4)
-	for page := 1; page <= 4; page++ {
-		go func(page int) {
-			var data trackerAlliancePage
-			path := fmt.Sprintf("/alliances?page=%d&orderBy=might_current&orderType=DESC", page)
-			err := service.getJSON(ctx, server, path, &data)
-			results <- pageResult{page: page, data: data, err: err}
-		}(page)
-	}
-	pages := make([]trackerAlliancePage, 4)
-	for range 4 {
-		result := <-results
-		if result.err != nil {
-			return nil, result.err
+	rows := make([]AllianceOption, 0, len(ranking.Entries))
+	for _, entry := range ranking.Entries {
+		if entry.ID <= 0 || strings.TrimSpace(entry.Name) == "" {
+			continue
 		}
-		pages[result.page-1] = result.data
-	}
-	rows := make([]AllianceOption, 0, 50)
-	for _, page := range pages {
-		for _, alliance := range page.Alliances {
-			rows = append(rows, AllianceOption{
-				ExternalID: alliance.AllianceID, AllianceID: trackerGameID(alliance.AllianceID),
-				Name: alliance.Name, Rank: len(rows) + 1, PlayerCount: int(alliance.PlayerCount),
-			})
-			if len(rows) == 50 {
-				break
-			}
-		}
-		if len(rows) == 50 {
-			break
-		}
+		rows = append(rows, AllianceOption{
+			ExternalID: strconv.FormatInt(entry.ID, 10), AllianceID: entry.ID,
+			Name: entry.Name, Rank: entry.Rank, PlayerCount: entry.MemberCount,
+		})
 	}
 	service.mu.Lock()
-	service.alliancePages[server] = cachedAlliances{fetchedAt: time.Now(), rows: append([]AllianceOption(nil), rows...)}
+	service.alliancePages[worldID] = cachedAlliances{fetchedAt: time.Now(), rows: append([]AllianceOption(nil), rows...)}
 	service.mu.Unlock()
 	return rows, nil
 }
 
-func (service *Service) loadTargets(ctx context.Context, server string, externalID string, forceRefresh bool) (trackerAllianceDetail, []trackerCartographyPlayer, error) {
-	cacheKey := server + ":" + externalID
+func (service *Service) loadProfile(
+	ctx context.Context,
+	worldID string,
+	allianceID int64,
+	forceRefresh bool,
+) (WorldIntel.AllianceProfile, error) {
+	cacheKey := worldID + ":" + strconv.FormatInt(allianceID, 10)
 	service.mu.Lock()
-	if cached, found := service.targetDetails[cacheKey]; !forceRefresh && found && time.Since(cached.fetchedAt) < 2*time.Minute {
+	if cached, found := service.targetDetails[cacheKey]; found && !forceRefresh && time.Since(cached.fetchedAt) < 2*time.Minute {
 		service.mu.Unlock()
-		return cached.detail, append([]trackerCartographyPlayer(nil), cached.cartography...), nil
+		return cached.profile, nil
 	}
 	service.mu.Unlock()
-	var detail trackerAllianceDetail
-	var cartography []trackerCartographyPlayer
-	var detailErr, cartographyErr error
-	var wait sync.WaitGroup
-	wait.Add(2)
-	go func() {
-		defer wait.Done()
-		detailErr = service.getJSON(ctx, server, "/alliances/id/"+url.PathEscape(externalID), &detail)
-	}()
-	go func() {
-		defer wait.Done()
-		cartographyErr = service.getJSON(ctx, server, "/cartography/id/"+url.PathEscape(externalID), &cartography)
-	}()
-	wait.Wait()
-	if detailErr != nil {
-		return detail, nil, detailErr
-	}
-	if cartographyErr != nil {
-		return detail, nil, cartographyErr
+	profile, err := service.provider.Alliance(ctx, worldID, allianceID, 365)
+	if err != nil {
+		return WorldIntel.AllianceProfile{}, fmt.Errorf("load World Intelligence alliance profile: %w", err)
 	}
 	service.mu.Lock()
-	service.targetDetails[cacheKey] = cachedTargets{
-		fetchedAt: time.Now(), detail: detail, cartography: append([]trackerCartographyPlayer(nil), cartography...),
-	}
+	service.targetDetails[cacheKey] = cachedProfile{fetchedAt: time.Now(), profile: profile}
 	service.mu.Unlock()
-	return detail, cartography, nil
+	return profile, nil
 }
 
-func (service *Service) getJSON(ctx context.Context, server string, path string, target any) error {
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, service.baseURL+path, nil)
-	if err != nil {
-		return err
+func resolveWorldID(gameState State.GameState, override string) string {
+	if worldID := WorldIntel.NormalizeWorldID(override); worldID != "" {
+		return worldID
 	}
-	request.Header.Set("Accept", "application/json")
-	request.Header.Set("User-Agent", "CitadelOpsDesktop/2.0")
-	if server != "" {
-		request.Header.Set("gge-server", server)
+	if worldID := WorldIntel.NormalizeWorldID(gameState.Account.WorldID); worldID != "" {
+		return worldID
 	}
-	response, err := service.client.Do(request)
-	if err != nil {
-		return fmt.Errorf("GGE Tracker request failed: %w", err)
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("GGE Tracker returned %s", response.Status)
-	}
-	decoder := json.NewDecoder(io.LimitReader(response.Body, 16<<20))
-	if err := decoder.Decode(target); err != nil {
-		return fmt.Errorf("GGE Tracker response decode failed: %w", err)
-	}
-	return nil
-}
-
-func serverCandidates(socketURL string, supported []string) []string {
-	parsed, err := url.Parse(socketURL)
-	if err != nil {
-		return nil
-	}
-	host := strings.ToLower(parsed.Hostname())
-	cluster := strings.TrimPrefix(strings.Split(host, ".")[0], "ep-live-")
-	cluster = strings.TrimSuffix(cluster, "-game")
-	cluster = strings.TrimPrefix(cluster, "mz-")
-	seen := map[string]struct{}{}
-	candidates := []string{}
-	for _, token := range strings.Split(cluster, "-") {
-		for _, server := range supported {
-			serverToken := strings.ToLower(server)
-			if token != serverToken && token != serverToken+"1" {
-				continue
-			}
-			if _, found := seen[server]; found {
-				continue
-			}
-			seen[server] = struct{}{}
-			candidates = append(candidates, server)
-		}
-	}
-	sort.Strings(candidates)
-	return candidates
-}
-
-func trackerGameID(externalID string) int64 {
-	value, err := strconv.ParseInt(externalID, 10, 64)
-	if err != nil || value <= 0 {
-		return 0
-	}
-	return value / 1000
+	return WorldIntel.NormalizeWorldID(gameState.Session.ServerURL)
 }

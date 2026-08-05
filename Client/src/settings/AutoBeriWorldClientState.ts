@@ -2,6 +2,9 @@ import type { BuildingTargetCaptureResponse } from '../api/Contracts';
 import { parseHorseTravelBoostID, type HorseTravelBoostID } from './HorseTravelBoost';
 
 export const AUTO_BERI_WORLD_BLUEPRINTS_SECTION = 'automation.autoBeriWorldBlueprints';
+export const AUTO_BERI_MINIMUM_STABLE_LEVEL = 1;
+export const AUTO_BERI_MAXIMUM_STABLE_LEVEL = 5;
+export const AUTO_BERI_DEFAULT_STABLE_LEVEL = AUTO_BERI_MAXIMUM_STABLE_LEVEL;
 
 export const AUTO_BERI_COIN_ATTACK_TOOLS = [
 	{ id: 614, name: 'Scaling ladders' },
@@ -24,6 +27,7 @@ export type AutoBeriToolMinimums = Record<string, number>;
 
 export interface AutoBeriBuildSettings {
 	enabled: boolean;
+	stableLevel: number;
 	allowPremium: boolean;
 	allowDemolition: boolean;
 	allowTimeSkips: boolean;
@@ -85,6 +89,11 @@ export function parseAutoBeriWorldSettings(payload: unknown): AutoBeriWorldSetti
 		])),
 		build: {
 			enabled: rawBuild.enabled === true,
+			stableLevel: clamp(
+				integer(rawBuild.stableLevel, AUTO_BERI_DEFAULT_STABLE_LEVEL),
+				AUTO_BERI_MINIMUM_STABLE_LEVEL,
+				AUTO_BERI_MAXIMUM_STABLE_LEVEL,
+			),
 			allowPremium: rawBuild.allowPremium === true,
 			allowDemolition: rawBuild.allowDemolition === true,
 			allowTimeSkips: rawBuild.allowTimeSkips === true,
@@ -139,6 +148,7 @@ function defaultToolMinimums(): AutoBeriToolMinimums {
 function defaultBuildSettings(): AutoBeriBuildSettings {
 	return {
 		enabled: false,
+		stableLevel: AUTO_BERI_DEFAULT_STABLE_LEVEL,
 		allowPremium: false,
 		allowDemolition: false,
 		allowTimeSkips: false,

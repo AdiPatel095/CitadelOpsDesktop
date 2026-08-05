@@ -22,6 +22,7 @@ import (
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
 	"CitadelDesktop/Server/Telemetry"
+	"CitadelDesktop/Server/WorldIntel"
 	"github.com/gorilla/websocket"
 )
 
@@ -35,11 +36,13 @@ type Config struct {
 	Intents         *Intent.Engine
 	ReportAnalytics *Reports.SQLiteStore
 	CloudReports    *Reports.CloudClient
+	BattleResearch  *Reports.BattleResearchManager
 	AllianceTargets *AllianceTargets.Service
 	Updates         *AppUpdate.Manager
 	Diagnostics     *Diagnostics.Monitor
 	Session         interface{ Status() Session.Status }
 	Persistence     interface{ PersistenceError() error }
+	WorldIntel      *WorldIntel.DesktopService
 }
 
 type Server struct {
@@ -49,7 +52,7 @@ type Server struct {
 
 func NewServer(config Config) *Server {
 	if config.AllianceTargets == nil {
-		config.AllianceTargets = AllianceTargets.NewService(nil, config.History)
+		config.AllianceTargets = AllianceTargets.NewService(config.WorldIntel, config.History)
 	}
 	server := &Server{config: config}
 	server.upgrader = websocket.Upgrader{
@@ -88,11 +91,18 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v2/automations/auto-storm/troop-cap-preview", server.handleAutoStormTroopCapPreview)
 	mux.HandleFunc("GET /api/v2/alliance-targets", server.handleAllianceTargets)
 	mux.HandleFunc("POST /api/v2/alliance-targets/attack-preview", server.handleAllianceTargetAttackPreview)
+	mux.HandleFunc("GET /api/v2/world-intelligence/status", server.handleWorldIntelligenceStatus)
+	mux.HandleFunc("GET /api/v2/world-intelligence/search", server.handleWorldIntelligenceSearch)
+	mux.HandleFunc("GET /api/v2/world-intelligence/players/{id}", server.handleWorldIntelligencePlayer)
+	mux.HandleFunc("GET /api/v2/world-intelligence/alliances/{id}", server.handleWorldIntelligenceAlliance)
+	mux.HandleFunc("GET /api/v2/world-intelligence/rankings/{type}", server.handleWorldIntelligenceRankings)
+	mux.HandleFunc("GET /api/v2/world-intelligence/coverage", server.handleWorldIntelligenceCoverage)
 	mux.HandleFunc("GET /api/v2/history/player-tracker", server.handlePlayerTrackerHistory)
 	mux.HandleFunc("GET /api/v2/history/spy-reports", server.handleSpyReportHistory)
 	mux.HandleFunc("GET /api/v2/history/battle-reports/cloud", server.handleCloudBattleReportHistory)
 	mux.HandleFunc("GET /api/v2/history/battle-reports", server.handleBattleReportHistory)
 	mux.HandleFunc("GET /api/v2/analytics/battle-reports", server.handleBattleReportAnalytics)
+	mux.HandleFunc("GET /api/v2/battle-research", server.handleBattleResearchStatus)
 	mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
 	mux.HandleFunc("GET /api/v2/telemetry/attack-rates", server.handleAttackLaunchRates)
 	mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
@@ -103,6 +113,14 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v2/operations/{id}/cancel", server.handleOperationCancel)
 	mux.HandleFunc("GET /api/v2/events", server.handleEvents)
 	return mux
+}
+
+func (server *Server) handleBattleResearchStatus(writer http.ResponseWriter, _ *http.Request) {
+	if server.config.BattleResearch == nil {
+		writeError(writer, http.StatusServiceUnavailable, "battle_research_unavailable", "Battle research beta is unavailable")
+		return
+	}
+	writeJSON(writer, http.StatusOK, server.config.BattleResearch.Status())
 }
 
 func (server *Server) handleBrowsers(writer http.ResponseWriter, _ *http.Request) {

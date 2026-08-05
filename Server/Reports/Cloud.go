@@ -25,10 +25,11 @@ const (
 )
 
 type CloudConfig struct {
-	Client    *http.Client
-	UploadURL string
-	FetchURL  string
-	UploadKey string
+	Client      *http.Client
+	UploadURL   string
+	FetchURL    string
+	TrainingURL string
+	UploadKey   string
 }
 
 type CloudBattleReportQuery struct {
@@ -38,10 +39,11 @@ type CloudBattleReportQuery struct {
 }
 
 type CloudClient struct {
-	client    *http.Client
-	uploadURL string
-	fetchURL  string
-	uploadKey string
+	client      *http.Client
+	uploadURL   string
+	fetchURL    string
+	trainingURL string
+	uploadKey   string
 }
 
 type cloudBattleReportEnvelope struct {
@@ -84,13 +86,75 @@ func NewCloudClient(config CloudConfig) *CloudClient {
 	if fetchURL == "" {
 		fetchURL = cloudReportFetchURL()
 	}
+	trainingURL := strings.TrimSpace(config.TrainingURL)
+	if trainingURL == "" {
+		trainingURL = cloudBattleTrainingUploadURL()
+	}
 	uploadKey := strings.TrimSpace(config.UploadKey)
 	if uploadKey == "" {
 		uploadKey = reportUploadKey()
 	}
 	return &CloudClient{
-		client: client, uploadURL: uploadURL, fetchURL: fetchURL, uploadKey: uploadKey,
+		client: client, uploadURL: uploadURL, fetchURL: fetchURL, trainingURL: trainingURL, uploadKey: uploadKey,
 	}
+}
+
+func (client *CloudClient) UploadBattleResearch(ctx context.Context, trial BattleResearchTrial) error {
+	if client == nil || client.client == nil {
+		return fmt.Errorf("cloud battle research client is unavailable")
+	}
+	if strings.TrimSpace(trial.ID) == "" || trial.Phase != "complete" || trial.PlayerID <= 0 ||
+		trial.Movement == nil || trial.Movement.ID <= 0 || trial.PreSpy == nil || trial.Prediction == nil ||
+		trial.Prediction.GeneratedAt.IsZero() || trial.Battle == nil || strings.TrimSpace(trial.Battle.Report.ID) == "" ||
+		trial.PostSpy == nil || trial.CompletedAt.IsZero() || trial.PreSpy.CapturedAt.IsZero() ||
+		trial.Battle.CapturedAt.IsZero() || trial.PostSpy.CapturedAt.IsZero() ||
+		trial.Prediction.GeneratedAt.Before(trial.PreSpy.CapturedAt) ||
+		trial.Movement.ArrivesAt == nil || !trial.Prediction.GeneratedAt.Before(*trial.Movement.ArrivesAt) ||
+		trial.Battle.Report.DateMs <= 0 || trial.Prediction.GeneratedAt.UnixMilli() >= trial.Battle.Report.DateMs ||
+		trial.Battle.CapturedAt.Before(trial.Prediction.GeneratedAt) ||
+		trial.PostSpy.CapturedAt.Before(trial.Battle.CapturedAt) ||
+		trial.PostSpy.CapturedAt.UnixMilli() != trial.CompletedAt.UnixMilli() {
+		return fmt.Errorf("battle research trial is incomplete")
+	}
+	payload, err := json.Marshal(trial)
+	if err != nil {
+		return fmt.Errorf("encode battle research trial: %w", err)
+	}
+	envelope := struct {
+		TrialID                 string          `json:"trialID"`
+		BattleReportID          string          `json:"battleReportID"`
+		MovementID              int64           `json:"movementID"`
+		PlayerID                int64           `json:"playerID"`
+		Status                  string          `json:"status"`
+		CapturedAtUnixMillis    int64           `json:"capturedAtUnixMillis"`
+		PredictionGeneratedAtMs int64           `json:"predictionGeneratedAtUnixMillis"`
+		Payload                 json.RawMessage `json:"payload"`
+	}{
+		TrialID: trial.ID, BattleReportID: trial.Battle.Report.ID,
+		MovementID: int64(trial.Movement.ID), PlayerID: int64(trial.PlayerID), Status: "complete",
+		CapturedAtUnixMillis:    trial.CompletedAt.UnixMilli(),
+		PredictionGeneratedAtMs: trial.Prediction.GeneratedAt.UnixMilli(), Payload: payload,
+	}
+	body, err := json.Marshal(envelope)
+	if err != nil {
+		return fmt.Errorf("encode battle research upload: %w", err)
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, client.trainingURL, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("create battle research upload request: %w", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	client.applyUploadKey(request)
+	response, err := client.client.Do(request)
+	if err != nil {
+		return fmt.Errorf("upload battle research trial: %w", err)
+	}
+	defer response.Body.Close()
+	responseBody, _ := io.ReadAll(io.LimitReader(response.Body, 4096))
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("upload battle research trial: %s: %s", response.Status, strings.TrimSpace(string(responseBody)))
+	}
+	return nil
 }
 
 func (client *CloudClient) Upload(ctx context.Context, reports []cloudBattleReportEnvelope) error {
@@ -406,6 +470,13 @@ func cloudReportFetchURL() string {
 		return endpoint
 	}
 	return strings.TrimRight(cloudBackendURL(), "/") + "/reports/battle"
+}
+
+func cloudBattleTrainingUploadURL() string {
+	if endpoint := strings.TrimSpace(os.Getenv("BATTLE_TRAINING_UPLOAD_URL")); endpoint != "" {
+		return endpoint
+	}
+	return strings.TrimRight(cloudBackendURL(), "/") + "/reports/battle-training"
 }
 
 func cloudBackendURL() string {

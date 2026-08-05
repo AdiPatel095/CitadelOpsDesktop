@@ -3,6 +3,7 @@ package Automation
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/Buildings"
@@ -12,6 +13,7 @@ import (
 
 type beriBuildSettings struct {
 	Enabled          bool               `json:"enabled"`
+	StableLevel      int64              `json:"stableLevel"`
 	AllowPremium     bool               `json:"allowPremium"`
 	AllowDemolition  bool               `json:"allowDemolition"`
 	AllowTimeSkips   bool               `json:"allowTimeSkips"`
@@ -61,24 +63,36 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if err != nil {
 		return beriBuildWaiting(snapshot.Now, err.Error(), nil), nil
 	}
-	blueprint, found := document.Active()
-	if !found {
-		return beriBuildWaiting(snapshot.Now, "Capture and activate a Berimond camp blueprint", nil), nil
-	}
-	target := Buildings.NormalizeTargetCapture(blueprint.Target, nil)
-	if target.KingdomID != State.KingdomID(GameData.BerimondKingdomID) {
-		return beriBuildWaiting(
-			snapshot.Now,
-			fmt.Sprintf("The active blueprint is not from Berimond kingdom %d", GameData.BerimondKingdomID),
-			nil,
-		), nil
-	}
-	castle, found := snapshot.State.Castles[target.CastleID]
-	if !found {
-		return beriBuildWaiting(snapshot.Now, "Waiting for the captured Berimond camp; recapture the target if the season changed", nil), nil
-	}
-	if castle.KingdomID != State.KingdomID(GameData.BerimondKingdomID) {
-		return beriBuildWaiting(snapshot.Now, "The captured target no longer resolves to an owned Berimond camp", nil), nil
+	blueprint, customTarget := document.Active()
+	var target Buildings.TargetCaptureResult
+	var castle State.CastleState
+	if customTarget {
+		target = Buildings.NormalizeTargetCapture(blueprint.Target, nil)
+		if target.KingdomID != State.KingdomID(GameData.BerimondKingdomID) {
+			return beriBuildWaiting(
+				snapshot.Now,
+				fmt.Sprintf("The active blueprint is not from Berimond kingdom %d", GameData.BerimondKingdomID),
+				nil,
+			), nil
+		}
+		var found bool
+		castle, found = snapshot.State.Castles[target.CastleID]
+		if !found {
+			return beriBuildWaiting(snapshot.Now, "Waiting for the captured Berimond camp; recapture the target if the season changed", nil), nil
+		}
+		if castle.KingdomID != State.KingdomID(GameData.BerimondKingdomID) {
+			return beriBuildWaiting(snapshot.Now, "The captured target no longer resolves to an owned Berimond camp", nil), nil
+		}
+	} else {
+		var found bool
+		castle, found = beriToolCastle(snapshot.State, settings.BeriCastleID)
+		if !found {
+			return beriBuildWaiting(snapshot.Now, "Waiting for an owned Berimond camp", nil), nil
+		}
+		target, err = Buildings.DefaultBerimondTarget(castle.ID, settings.Build.StableLevel, snapshot.GameData)
+		if err != nil {
+			return beriBuildWaiting(snapshot.Now, err.Error(), nil), nil
+		}
 	}
 	if unlock, observed := snapshot.State.KingdomTransport.Unlocks[State.KingdomID(GameData.BerimondKingdomID)]; observed &&
 		!unlock.Unlocked {
@@ -87,10 +101,19 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			NextCheckAt: snapshot.Now.Add(30 * time.Second),
 		}, nil
 	}
+	effectiveStableLevel := settings.Build.StableLevel
+	if !customTarget {
+		effectiveStableLevel = preserveHigherBeriStableTarget(&target, castle, snapshot.GameData, effectiveStableLevel)
+	}
 	metrics := map[string]float64{
-		"castleId": float64(castle.ID),
-		"wood":     castle.Resources[State.ResourceID(3)].Amount,
-		"stone":    castle.Resources[State.ResourceID(4)].Amount,
+		"castleId":                    float64(castle.ID),
+		"wood":                        castle.Resources[State.ResourceID(3)].Amount,
+		"stone":                       castle.Resources[State.ResourceID(4)].Amount,
+		"configuredStableTargetLevel": float64(settings.Build.StableLevel),
+		"stableTargetLevel":           float64(effectiveStableLevel),
+	}
+	if !customTarget {
+		metrics["builtInTarget"] = 1
 	}
 	shared := defaultAutoStormSettings()
 	shared.Target = &target
@@ -109,7 +132,8 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		castle,
 		metrics,
 		autoEventBuildProfile{
-			KingdomID: State.KingdomID(GameData.BerimondKingdomID), FeatureLabel: "Berimond", AttackLootOnly: true,
+			KingdomID: State.KingdomID(GameData.BerimondKingdomID), FeatureLabel: "Berimond",
+			AttackLootOnly: true, EventID: GameData.BerimondEventID,
 		},
 	)
 	if err != nil {
@@ -132,12 +156,51 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 }
 
 func normalizeBeriBuildSettings(settings *beriBuildSettings) {
+	if settings.StableLevel == 0 {
+		settings.StableLevel = Buildings.DefaultBerimondStableTargetLevel
+	}
 	if settings.ResourceReserves == nil {
 		settings.ResourceReserves = map[string]float64{}
 	}
 	if settings.TimeSkipReserve == nil {
 		settings.TimeSkipReserve = map[string]int64{}
 	}
+}
+
+func preserveHigherBeriStableTarget(
+	target *Buildings.TargetCaptureResult,
+	castle State.CastleState,
+	gameData *GameData.Store,
+	configuredLevel int64,
+) int64 {
+	if gameData == nil {
+		return configuredLevel
+	}
+	catalog, err := gameData.BuildingCatalog()
+	if err != nil {
+		return configuredLevel
+	}
+	current := GameData.BuildingDefinition{}
+	for _, building := range castle.Layout.Objects {
+		if !building.Placed {
+			continue
+		}
+		definition, found := catalog.Definition(int64(building.DefinitionID))
+		if found && strings.EqualFold(definition.InternalName, "FactionStable") && definition.Level > current.Level {
+			current = definition
+		}
+	}
+	if current.Level <= configuredLevel {
+		return configuredLevel
+	}
+	for index := range target.Buildings {
+		definition, found := catalog.Definition(int64(target.Buildings[index].DefinitionID))
+		if found && strings.EqualFold(definition.InternalName, "FactionStable") {
+			target.Buildings[index].DefinitionID = State.BuildingID(current.ID)
+			return current.Level
+		}
+	}
+	return configuredLevel
 }
 
 func beriBuildWaiting(now time.Time, detail string, metrics map[string]float64) Decision {
