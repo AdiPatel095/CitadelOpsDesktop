@@ -18,7 +18,9 @@ func NewAllianceHelpPolicy() *AllianceHelpPolicy { return &AllianceHelpPolicy{} 
 
 func (*AllianceHelpPolicy) ID() string { return "autoAllianceHelp" }
 
-func (*AllianceHelpPolicy) EnabledKey() string { return "auto_alliance_help" }
+func (*AllianceHelpPolicy) EnabledKey() string { return "" }
+
+func (*AllianceHelpPolicy) CorePolicy() {}
 
 func (*AllianceHelpPolicy) WakeDomains() []string { return []string{"alliance-help"} }
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -80,6 +81,14 @@ type coordinatorTestSubmitter struct {
 func (submitter *coordinatorTestSubmitter) Submit(_ context.Context, request Intent.Request) Intent.Receipt {
 	submitter.calls <- request
 	return Intent.Receipt{Status: Intent.StatusSucceeded}
+}
+
+type coordinatorTestGameDataProvider struct {
+	store *GameData.Store
+}
+
+func (provider coordinatorTestGameDataProvider) Current() (*GameData.Store, bool) {
+	return provider.store, provider.store != nil
 }
 
 type coordinatorTestFailureFallbackSubmitter struct {
@@ -1577,6 +1586,48 @@ func coordinatorReadyState() State.GameState {
 	gameState.Session.Generation = 1
 	gameState.Session.BaselineGeneration = 1
 	return gameState
+}
+
+func TestCoordinatorRunsCoreAllianceHelpWithEveryFeatureDisabled(t *testing.T) {
+	gameState := coordinatorReadyState()
+	gameState.Session.Generation = 7
+	gameState.Session.BaselineGeneration = 7
+	gameState.AllianceHelpRequests.OthersObservedGeneration = 7
+	gameState.AllianceHelpRequests.OthersObservedAt = time.Now().UTC()
+	gameState.AllianceHelpRequests.PendingOtherListIDs = []int64{101}
+	state := State.NewStore(gameState)
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		"automation.enabled": json.RawMessage(`{"auto_alliance_help":false}`),
+		"scheduler": json.RawMessage(`{
+			"featureSchedules":{"autoAllianceHelp":{"enabled":true,"timeZone":"UTC","slots":[]}}
+		}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy := NewAllianceHelpPolicy()
+	submitter := &coordinatorTestSubmitter{calls: make(chan Intent.Request, 1)}
+	coordinator := NewCoordinator(
+		state,
+		configuration,
+		coordinatorTestGameDataProvider{store: allianceHelpPolicyTestGameData(t)},
+		submitter,
+		policy,
+	)
+	runtime := map[string]*policyRuntime{policy.ID(): {}}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+
+	request := waitForCoordinatorRequest(t, submitter.calls)
+	if request.Name != "alliance.help.answer_all" {
+		t.Fatalf("intent = %q, want alliance.help.answer_all", request.Name)
+	}
+	if request.Actor != "automation:autoAllianceHelp" {
+		t.Fatalf("actor = %q, want automation:autoAllianceHelp", request.Actor)
+	}
+	automation := state.Snapshot().Automations[policy.ID()]
+	if !automation.Enabled || automation.Status != "running" {
+		t.Fatalf("core alliance help runtime = %+v, want enabled and running", automation)
+	}
 }
 
 func openCoordinatorTestConfiguration(t *testing.T, enabledPolicy string) *Configuration.Store {

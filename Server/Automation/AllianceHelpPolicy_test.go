@@ -11,8 +11,17 @@ import (
 
 func TestAllianceHelpPolicyUsesUrgentAllianceHelpWake(t *testing.T) {
 	policy := NewAllianceHelpPolicy()
-	if policy.ID() != "autoAllianceHelp" || policy.EnabledKey() != "auto_alliance_help" {
+	if policy.ID() != "autoAllianceHelp" || policy.EnabledKey() != "" {
 		t.Fatalf("unexpected policy identity: %s %s", policy.ID(), policy.EnabledKey())
+	}
+	if _, ok := any(policy).(CorePolicy); !ok {
+		t.Fatal("alliance help must be a core policy")
+	}
+	if !policyEnabled(policy, map[string]bool{}, State.GameState{}) {
+		t.Fatal("core alliance help was disabled without a feature toggle")
+	}
+	if got := policyScheduleKey(policy); got != "" {
+		t.Fatalf("core alliance help schedule key = %q, want none", got)
 	}
 	if got := policy.WakeDomains(); len(got) != 1 || got[0] != "alliance-help" {
 		t.Fatalf("wake domains = %#v", got)

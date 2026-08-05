@@ -282,9 +282,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		toggleAutoBeriWorld,
 		toggleAutoStorm,
 		automationStates,
-		automationEnabledByKey,
 		automationTimedUntilByKey,
-		setAutomationEnabled,
   } = useAuth();
   const [now, setNow] = useState(() => Date.now());
   const [isEquipmentCleanupSettingsOpen, setIsEquipmentCleanupSettingsOpen] = useState(false);
@@ -329,7 +327,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const autoKhanDefenseRuntime = automationStates['autoKhan:defense'];
   const autoSceatRuntime = automationStates.autoSceatRes;
   const autoSceatLogisticsRuntime = automationStates.autoSceatResLogistics;
-	const autoAllianceHelpEnabled = automationEnabledByKey.auto_alliance_help === true;
   const autoBeriWorldStatus = combinedAutomationStatus(
     [autoBeriTransferRuntime?.status, autoBeriAttackRuntime?.status, autoBeriToolRuntime?.status, autoBeriBuildRuntime?.status],
     autoBeriWorldEnabled,
@@ -398,21 +395,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       onToggle: toggleAutoHospital,
       onOpenSettings: onOpenAutoHospitalSettings,
     },
-	{
-		id: 'autoAllianceHelp',
-		enabledKey: 'auto_alliance_help',
-		group: 'support',
-		name: 'Auto Alliance Help',
-		description: 'Instantly answers every actionable alliance help request from other members.',
-		enabled: autoAllianceHelpEnabled,
-		detail: autoAllianceHelpEnabled
-			? automationStates.autoAllianceHelp?.detail ?? 'Listening for alliance help requests'
-			: 'Automatic replies to alliance help requests are paused',
-		status: automationStates.autoAllianceHelp?.status ?? (autoAllianceHelpEnabled ? 'waiting' : 'disabled'),
-		icon: Users,
-		onToggle: () => void setAutomationEnabled('auto_alliance_help', !autoAllianceHelpEnabled),
-		onOpenSettings: () => onOpenFeatureSchedule('autoAllianceHelp', 'Auto Alliance Help'),
-	},
     {
       id: 'autoTCI',
       enabledKey: 'auto_tci',
@@ -599,7 +581,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       onOpenSettings: onOpenAutoStormSettings,
     },
   ], [
-		autoAllianceHelpEnabled,
     autoHospitalEnabled,
     autoEquipmentCleanup,
     autoRecruitMode,
@@ -638,7 +619,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     onOpenAutoStormSettings,
 		onOpenFeatureSchedule,
     onOpenRecruitTroopsSettings,
-		setAutomationEnabled,
     toggleAutoHospital,
     toggleAutoSceatRes,
     toggleAutoFoodBalance,

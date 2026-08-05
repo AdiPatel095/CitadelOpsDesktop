@@ -630,6 +630,9 @@ func (coordinator *Coordinator) cancelRunsDisallowedByConfiguration(
 }
 
 func policyEnabled(policy Policy, configured map[string]bool, state State.GameState) bool {
+	if _, ok := policy.(CorePolicy); ok {
+		return true
+	}
 	if onDemand, ok := policy.(OnDemandPolicy); ok {
 		return onDemand.Active(state)
 	}
@@ -1086,7 +1089,8 @@ func policyDerivedConfigurationFingerprint(policy Policy, configuration Configur
 }
 
 func policyConfigurationFingerprint(policy Policy, configuration Configuration.Snapshot) string {
-	enabled := configuredEnabledFeatures(configuration)[policy.EnabledKey()]
+	_, core := policy.(CorePolicy)
+	enabled := core || configuredEnabledFeatures(configuration)[policy.EnabledKey()]
 	parts := []string{"enabled", "false", "schedule", policyScheduleConfiguration(policyScheduleKey(policy), configuration.Sections["scheduler"])}
 	if enabled {
 		parts[1] = "true"
@@ -1111,6 +1115,9 @@ func policyConfigurationFingerprint(policy Policy, configuration Configuration.S
 }
 
 func policyScheduleKey(policy Policy) string {
+	if _, ok := policy.(CorePolicy); ok {
+		return ""
+	}
 	if declared, ok := policy.(ScheduleKeyPolicy); ok {
 		if key := strings.TrimSpace(declared.ScheduleKey()); key != "" {
 			return key
