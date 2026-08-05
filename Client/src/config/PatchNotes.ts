@@ -50,6 +50,7 @@ export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
       { kind: 'fixed', text: 'Berimond attack admission, target refresh, tool preparation, booster gating, returned-loot construction, and lane isolation no longer block unrelated work or dispatch against stale context' },
       { kind: 'fixed', text: 'Storm food balancing no longer counts or waits for Storm troop consumption and no longer leaves small safe Food or Mead deficits below the ordinary minimum-shipment threshold' },
       { kind: 'fixed', text: 'Session banners, headers, runtime state, and settings now distinguish the configured connection mode from the active mode and clearly show when a restart is required' },
+      { kind: 'fixed', text: 'Windows desktop launches now open operation and report databases correctly when the data directory is on a drive-letter or OneDrive path instead of exiting with an invalid SQLite URI authority error' },
     ],
   },
   {

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/History"
+	RuntimeKernel "CitadelDesktop/Server/Runtime"
 	"CitadelDesktop/Server/State"
 
 	_ "modernc.org/sqlite"
@@ -49,12 +49,15 @@ func OpenSQLiteStore(dataDir string) (*SQLiteStore, error) {
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, fmt.Errorf("create report analytics directory: %w", err)
 	}
-	databaseURL := url.URL{Scheme: "file", Path: filepath.Join(directory, "Reports.sqlite")}
-	parameters := databaseURL.Query()
-	parameters.Add("_pragma", "busy_timeout(5000)")
-	parameters.Add("_pragma", "foreign_keys(1)")
-	databaseURL.RawQuery = parameters.Encode()
-	db, err := sql.Open("sqlite", databaseURL.String())
+	databaseURL, err := RuntimeKernel.SQLiteFileDSN(
+		filepath.Join(directory, "Reports.sqlite"),
+		"busy_timeout(5000)",
+		"foreign_keys(1)",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("configure report analytics database path: %w", err)
+	}
+	db, err := sql.Open("sqlite", databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("open report analytics database: %w", err)
 	}
