@@ -47,7 +47,7 @@ func (application *Application) runMovementClock(ctx context.Context) {
 			if !Ingest.ReconcileExpiredMovements(gameState, now) {
 				return nil, false, nil
 			}
-			return []string{"movements", "commanders", "khan"}, true, nil
+			return []string{"movements", "commanders", "units", "khan"}, true, nil
 		})
 	}
 	reconcile()

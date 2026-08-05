@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Crosshair, FastForward, Hammer, Swords, Users } from 'lucide-react';
+import { CalendarDays, Camera, Castle, Crosshair, FastForward, Hammer, Shield, Swords, Trash2, Users, Zap } from 'lucide-react';
+import type { BuildingBlueprintDiffResponse, BuildingTargetCaptureMode } from '../../api/Contracts';
+import { CitadelAPI } from '../../api/CitadelClient';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import { ATTACK_PRESETS_SECTION, parseAttackPresetDocument, summarizeAttackPreset } from '../../attackPresets/AttackPresetTypes';
+import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Input, Select, SettingsModal, SettingsToggleRow } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { useMetadata } from '../../context/MetadataContext';
@@ -9,7 +12,9 @@ import { configurationSection } from '../Configuration';
 import {
 	AUTO_BERI_COIN_ATTACK_TOOLS,
 	AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS,
+	AUTO_BERI_WORLD_BLUEPRINTS_SECTION,
 	DEFAULT_AUTO_BERI_WORLD_SETTINGS,
+	parseAutoBeriBlueprintDocument,
 	parseAutoBeriWorldSettings,
 	type AutoBeriWorldSettings,
 } from '../AutoBeriWorldClientState';
@@ -26,7 +31,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	onClose,
 	onOpenFeatureSchedule,
 }) => {
-	const { state, configuration, updateConfiguration } = useCitadelAPI();
+	const { state, configuration, updateConfiguration, captureBuildingTarget, submitIntent } = useCitadelAPI();
 	const { troops } = useMetadata();
 	const saved = useMemo(
 		() => parseAutoBeriWorldSettings(configurationSection(configuration, 'automation.autoBeriWorld')),
@@ -34,12 +39,27 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	);
 	const [settings, setSettings] = useState<AutoBeriWorldSettings>(DEFAULT_AUTO_BERI_WORLD_SETTINGS);
 	const [saveError, setSaveError] = useState('');
+	const [captureCastleId, setCaptureCastleId] = useState(0);
+	const [capturing, setCapturing] = useState<BuildingTargetCaptureMode | null>(null);
+	const [blueprintPreview, setBlueprintPreview] = useState<BuildingBlueprintDiffResponse | null>(null);
+	const [blueprintBusy, setBlueprintBusy] = useState(false);
 	const presetDocument = useMemo(
 		() => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
 		[configuration?.sections],
 	);
 	const selectedPreset = presetDocument.presets.find((preset) => preset.id === settings.presetId);
 	const presetSummary = selectedPreset ? summarizeAttackPreset(selectedPreset) : null;
+	const gallantryBooster = state?.market?.boosters?.['24'];
+	const gallantryBoosterExpiresAt = gallantryBooster?.expiresAt ? Date.parse(gallantryBooster.expiresAt) : 0;
+	const gallantryBoosterActive = gallantryBooster?.permanent === true ||
+		(Number.isFinite(gallantryBoosterExpiresAt) && gallantryBoosterExpiresAt > Date.now());
+	const gallantryBoosterStatus = gallantryBoosterActive
+		? `${gallantryBooster?.bonusPercent ? `+${gallantryBooster.bonusPercent}% · ` : ''}${gallantryBooster?.permanent
+			? 'active'
+			: `${formatBoosterRemaining(gallantryBoosterExpiresAt - Date.now())} left`}`
+		: state?.market?.boostersObservedAt
+			? 'No active boi ID 24 booster detected'
+			: 'Waiting for the first authoritative boi booster snapshot';
 	const foodTroopIDs = useMemo(() => Object.entries(troops).flatMap(([rawID, unit]) => {
 		const unitID = Number(rawID);
 		const foodSupply = metadataNumber(unit.foodSupply);
@@ -49,10 +69,33 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			? [unitID]
 			: [];
 	}), [troops]);
+	const beriCastles = useMemo(() => Object.values(state?.castles ?? {})
+		.filter((castle) => castle.kingdomId === 10)
+		.sort((left, right) => left.id - right.id), [state?.castles]);
+	const blueprintDocument = useMemo(
+		() => parseAutoBeriBlueprintDocument(configuration?.sections[AUTO_BERI_WORLD_BLUEPRINTS_SECTION]),
+		[configuration?.sections],
+	);
+	const activeBlueprint = blueprintDocument.blueprints[blueprintDocument.activeId];
+	const savedBlueprints = Object.values(blueprintDocument.blueprints)
+		.sort((left, right) => left.id.localeCompare(right.id));
+	const captureCastle = beriCastles.find((castle) => castle.id === captureCastleId) ?? beriCastles[0];
+	const target = activeBlueprint?.target;
+	const targetCastle = target
+		? beriCastles.find((castle) => castle.id === target.castleId)
+		: undefined;
 
 	useEffect(() => {
-		if (isOpen) setSettings(saved);
-	}, [isOpen, saved]);
+		if (!isOpen) return;
+		setSettings(saved);
+		setCaptureCastleId(activeBlueprint?.target.castleId ?? 0);
+		setBlueprintPreview(null);
+	}, [activeBlueprint?.target.castleId, isOpen, saved]);
+
+	useEffect(() => {
+		if (!isOpen || captureCastleId > 0 || beriCastles.length === 0) return;
+		setCaptureCastleId(beriCastles[0].id);
+	}, [beriCastles, captureCastleId, isOpen]);
 
 	const castles = useMemo(() => Object.values(state?.castles ?? {})
 		.filter((castle) => castle.kingdomId === 0)
@@ -77,6 +120,78 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			...current,
 			toolMinimums: { ...current.toolMinimums, [String(toolID)]: minimum },
 		}));
+	};
+
+	const updateBuildNumberMap = (
+		field: 'resourceReserves' | 'timeSkipReserve',
+		key: string,
+		value: string,
+	) => {
+		const amount = Math.max(0, Number.parseInt(value, 10) || 0);
+		setSettings((current) => {
+			const next = { ...current.build[field] };
+			if (amount > 0) next[key] = amount;
+			else delete next[key];
+			return { ...current, build: { ...current.build, [field]: next } };
+		});
+	};
+
+	const captureBlueprint = async (mode: BuildingTargetCaptureMode) => {
+		if (!captureCastle || capturing || blueprintBusy) return;
+		setCapturing(mode);
+		try {
+			const capturedTarget = await captureBuildingTarget({
+				castleId: captureCastle.id,
+				mode,
+				expectedRevision: state?.revision,
+			});
+			const policy = {
+				allowPremium: settings.build.allowPremium,
+				resourceReserves: settings.build.resourceReserves,
+			};
+			const preview = await CitadelAPI.previewBuildingBlueprint({ target: capturedTarget, policy });
+			if (!preview.compilable) {
+				const issue = [...preview.normal.issues, ...preview.fixed.issues]
+					.find((candidate) => candidate.severity === 'error');
+				throw new Error(issue?.message ?? 'The captured Berimond blueprint cannot be compiled safely.');
+			}
+			await submitIntent('beri.blueprint.save', { target: capturedTarget, policy });
+			setBlueprintPreview(preview);
+			Notifications.success(`${captureModeLabel(mode)} Berimond target passed preflight and was queued for durable storage.`);
+		} catch (error) {
+			Notifications.error(error instanceof Error ? error.message : 'Could not capture the Berimond camp target.');
+		} finally {
+			setCapturing(null);
+		}
+	};
+
+	const activateBlueprint = async (id: string) => {
+		if (capturing || blueprintBusy || !blueprintDocument.blueprints[id]) return;
+		setBlueprintBusy(true);
+		try {
+			await submitIntent('beri.blueprint.activate', { id });
+			setCaptureCastleId(blueprintDocument.blueprints[id].target.castleId);
+			setBlueprintPreview(null);
+			Notifications.success(`${blueprintDocument.blueprints[id].name} activation queued.`);
+		} catch {
+			// submitIntent reports the operation error.
+		} finally {
+			setBlueprintBusy(false);
+		}
+	};
+
+	const deactivateBlueprint = async () => {
+		if (capturing || blueprintBusy) return;
+		setBlueprintBusy(true);
+		try {
+			await submitIntent('beri.blueprint.activate', { id: '' });
+			setBlueprintPreview(null);
+			Notifications.success('Berimond blueprint reconciliation pause queued. Saved targets were retained.');
+		} catch {
+			// submitIntent reports the operation error.
+		} finally {
+			setBlueprintBusy(false);
+		}
 	};
 
 	const pickTroop = async () => {
@@ -105,7 +220,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			onClose={onClose}
 			title="Auto Beri World"
 			icon={<Swords className="h-5 w-5" />}
-			description="Transfer troops, replenish selected coin tools, open a free-resource camp when needed, and attack the next available Berimond tower."
+			description="Attack Berimond towers, bring the loot home, and spend only the camp's confirmed resources on a captured build and upgrade target."
 			titleTrailing={(
 					<Button
 						variant="outline"
@@ -117,11 +232,239 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						Calendar
 					</Button>
 			)}
-			maxWidth="2xl"
+			maxWidth="4xl"
 			onSave={save}
 			saveLabel="Save"
 		>
 			<div className="space-y-5">
+				<SettingsToggleRow
+					title="Only run with a Gallantry booster"
+					description={(
+						<>
+							Gates transfers, armorer purchases, camp setup, tower attacks, and construction unless boi booster ID 24 is active.
+							<span className={`mt-1 block font-bold ${gallantryBoosterActive ? 'text-success' : 'text-text-muted'}`}>
+								{gallantryBoosterStatus}
+							</span>
+						</>
+					)}
+					icon={<Zap className="h-4 w-4" />}
+					checked={settings.requireActiveGallantryBooster}
+					onChange={(checked) => setSettings((current) => ({
+						...current,
+						requireActiveGallantryBooster: checked,
+					}))}
+					tone={settings.requireActiveGallantryBooster && !gallantryBoosterActive ? 'warning' : 'default'}
+				/>
+
+				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
+					<div>
+						<div className="flex items-center gap-2 text-sm font-black text-text-main">
+							<Castle className="h-4 w-4 text-primary" /> Loot-funded camp construction
+						</div>
+						<p className="mt-1 text-xs text-text-muted">
+							Captures a durable camp target like Auto Storm, then builds and upgrades only after returned attacks increase the authoritative Berimond wood and stone balances. This lane never transports resources from another kingdom.
+						</p>
+					</div>
+
+					<SettingsToggleRow
+						title="Build and upgrade from returned loot"
+						description="Reconcile the active target one confirmed construction operation at a time. When loot is short, the builder waits while the attack lane continues."
+						icon={<Hammer className="h-4 w-4" />}
+						checked={settings.build.enabled}
+						onChange={(enabled) => setSettings((current) => ({
+							...current,
+							build: { ...current.build, enabled },
+						}))}
+					/>
+
+					<div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
+						<label className="block">
+							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">Berimond camp to capture</span>
+							<Select
+								value={captureCastle ? String(captureCastle.id) : ''}
+								onChange={(value) => setCaptureCastleId(Number(value) || 0)}
+								options={beriCastles.map((castle) => ({
+									value: String(castle.id),
+									label: `${castle.name?.trim() || `Camp ${castle.id}`} · ${castle.x}:${castle.y}`,
+								}))}
+								placeholder={beriCastles.length > 0 ? 'Choose Berimond camp' : 'Waiting for an owned Berimond camp'}
+								disabled={beriCastles.length === 0 || capturing != null || blueprintBusy}
+								menuGrowToViewport
+							/>
+						</label>
+						<Button
+							variant="outline"
+							disabled={!captureCastle || capturing != null || blueprintBusy}
+							isLoading={capturing === 'functional'}
+							onClick={() => void captureBlueprint('functional')}
+							leftIcon={<Hammer className="h-4 w-4" />}
+						>
+							Functional
+						</Button>
+						<Button
+							variant="outline"
+							disabled={!captureCastle || capturing != null || blueprintBusy}
+							isLoading={capturing === 'layout'}
+							onClick={() => void captureBlueprint('layout')}
+							leftIcon={<Castle className="h-4 w-4" />}
+						>
+							Layout
+						</Button>
+						<Button
+							variant="outline"
+							disabled={!captureCastle || capturing != null || blueprintBusy}
+							isLoading={capturing === 'exact'}
+							onClick={() => void captureBlueprint('exact')}
+							leftIcon={<Camera className="h-4 w-4" />}
+						>
+							Exact clone
+						</Button>
+					</div>
+
+					{savedBlueprints.length > 0 ? (
+						<div className="flex flex-wrap items-center gap-2">
+							<span className="text-[11px] font-semibold text-text-muted">Saved targets:</span>
+							{savedBlueprints.map((blueprint) => (
+								<Button
+									key={blueprint.id}
+									size="sm"
+									variant={blueprint.id === blueprintDocument.activeId ? 'primary' : 'ghost'}
+									disabled={capturing != null || blueprintBusy}
+									onClick={() => void activateBlueprint(blueprint.id)}
+								>
+									{blueprint.name}
+								</Button>
+							))}
+						</div>
+					) : null}
+
+					{target ? (
+						<div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+							<div className="flex flex-wrap items-center justify-between gap-3">
+								<div>
+									<div className="flex flex-wrap items-center gap-2">
+										<Badge variant="success">{captureModeLabel(target.mode)}</Badge>
+										<span className="text-sm font-bold text-text-main">
+											{targetCastle?.name?.trim() || `Camp ${target.castleId}`}
+										</span>
+									</div>
+									<p className="mt-1 text-xs text-text-muted">
+										Captured {formatDate(target.capturedAt)} from revision {target.revision.toLocaleString()}.
+									</p>
+								</div>
+								<Button
+									size="sm"
+									variant="ghost"
+									disabled={capturing != null || blueprintBusy}
+									onClick={() => void deactivateBlueprint()}
+									leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+								>
+									Pause target
+								</Button>
+							</div>
+							<div className="mt-3 flex flex-wrap gap-2">
+								<Badge variant="outline">{target.summary.groundCount} ground tiles</Badge>
+								<Badge variant="outline">{target.summary.buildingCount} buildings</Badge>
+								<Badge variant="outline">{target.summary.fixedCount} fixed</Badge>
+								<Badge variant="outline">{target.summary.decorationCount} decorations</Badge>
+								{blueprintPreview ? (
+									<Badge variant="outline">
+										Preflight: {blueprintPreview.satisfiedCount}/{blueprintPreview.targetCount} satisfied · {blueprintPreview.actionCount} actions
+									</Badge>
+								) : null}
+							</div>
+						</div>
+					) : (
+						<p className="rounded-xl border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
+							Capture or activate a target before enabling construction. Combat, transfers, and tool purchases remain independent.
+						</p>
+					)}
+
+					<div className="grid gap-3 lg:grid-cols-3">
+						<SettingsToggleRow
+							title="Use construction time skips"
+							description="Advance a confirmed build timer while preserving the selected skip reserves."
+							icon={<FastForward className="h-4 w-4" />}
+							checked={settings.build.allowTimeSkips}
+							onChange={(allowTimeSkips) => setSettings((current) => ({
+								...current,
+								build: { ...current.build, allowTimeSkips },
+							}))}
+						/>
+						<SettingsToggleRow
+							title="Allow premium costs"
+							description="Permit captured dependencies that spend premium currency."
+							icon={<Zap className="h-4 w-4" />}
+							checked={settings.build.allowPremium}
+							onChange={(allowPremium) => setSettings((current) => ({
+								...current,
+								build: { ...current.build, allowPremium },
+							}))}
+							tone="warning"
+						/>
+						<SettingsToggleRow
+							title="Allow demolition"
+							description="Permit exact reconciliation to remove unmanaged buildings when they cannot be moved or stored."
+							icon={<Trash2 className="h-4 w-4" />}
+							checked={settings.build.allowDemolition}
+							onChange={(allowDemolition) => setSettings((current) => ({
+								...current,
+								build: { ...current.build, allowDemolition },
+							}))}
+							tone="warning"
+						/>
+					</div>
+
+					<div className="grid gap-4 border-t border-border-base pt-4 lg:grid-cols-2">
+						<div>
+							<div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-muted">
+								<Shield className="h-3.5 w-3.5" /> Camp resources kept in reserve
+							</div>
+							<div className="mt-2 grid grid-cols-2 gap-3">
+								{[
+									{ key: '3', label: 'Wood' },
+									{ key: '4', label: 'Stone' },
+								].map((resource) => (
+									<label key={resource.key} className="block">
+										<span className="mb-1 block text-[10px] font-semibold text-text-muted">{resource.label}</span>
+										<Input
+											type="number"
+											min={0}
+											value={settings.build.resourceReserves[resource.key] ?? 0}
+											onChange={(event) => updateBuildNumberMap('resourceReserves', resource.key, event.target.value)}
+										/>
+									</label>
+								))}
+							</div>
+							<p className="mt-2 text-[11px] text-text-muted">The builder spends only the amount above these Berimond camp floors.</p>
+						</div>
+
+						{settings.build.allowTimeSkips ? (
+							<div>
+								<div className="text-xs font-bold uppercase tracking-wider text-text-muted">Construction skips kept in reserve</div>
+								<div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7">
+									{AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS.map((skip) => (
+										<label key={skip.id} className="block">
+											<span className="mb-1 block text-center text-[10px] font-semibold text-text-muted">{skip.label}</span>
+											<Input
+												type="number"
+												min={0}
+												value={settings.build.timeSkipReserve[skip.id] ?? 0}
+												onChange={(event) => updateBuildNumberMap('timeSkipReserve', skip.id, event.target.value)}
+												className="px-2 text-center font-mono"
+											/>
+										</label>
+									))}
+								</div>
+							</div>
+						) : (
+							<p className="self-center rounded-xl border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
+								Construction time skips are off. Active build timers are allowed to finish normally.
+							</p>
+						)}
+					</div>
+				</div>
+
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
 						<div className="flex items-center gap-2 text-sm font-black text-text-main">
@@ -311,6 +654,25 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 function metadataNumber(value: unknown): number {
 	const parsed = Number(value);
 	return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatBoosterRemaining(milliseconds: number): string {
+	const totalMinutes = Math.max(1, Math.ceil(milliseconds / 60_000));
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = totalMinutes % 60;
+	if (hours > 0) return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
+	return `${minutes}m`;
+}
+
+function captureModeLabel(mode: string): string {
+	if (mode === 'functional') return 'Functional';
+	if (mode === 'layout' || mode === 'buildings') return 'Layout';
+	return 'Exact clone';
+}
+
+function formatDate(value: string): string {
+	const timestamp = Date.parse(value);
+	return Number.isFinite(timestamp) ? new Date(timestamp).toLocaleString() : value;
 }
 
 export default AutoBeriWorldSettingsModal;

@@ -417,6 +417,7 @@ func TestMaidenWaveUsesSelectedEligibleCommanders(t *testing.T) {
 	}
 	arguments := json.RawMessage(`{
 		"unitWodID":1,
+		"sourceX":615,"sourceY":552,
 		"commanderSelection":{"candidates":[7,5,9],"count":2,"strategy":"first_available"}
 	}`)
 	plan, err := planMaidenCommsWave(
@@ -434,9 +435,17 @@ func TestMaidenWaveUsesSelectedEligibleCommanders(t *testing.T) {
 	if plan.Admission == nil || plan.Admission.Module != "riftMaiden" {
 		t.Fatalf("maiden admission = %#v", plan.Admission)
 	}
+	if !containsString(plan.Claims, "rift-launch:maiden-wave") || containsString(plan.Claims, "rift-maiden-wave") {
+		t.Fatalf("maiden claims are not mapped to the typed Rift launch resource: %#v", plan.Claims)
+	}
 	for index, want := range []State.CommanderID{5, 9} {
 		var body struct {
 			CommanderID State.CommanderID `json:"LID"`
+			SourceX     int               `json:"SX"`
+			SourceY     int               `json:"SY"`
+			TargetX     int               `json:"TX"`
+			TargetY     int               `json:"TY"`
+			KingdomID   State.KingdomID   `json:"KID"`
 		}
 		if err := json.Unmarshal(plan.Steps[index*2+2].Command.Payload, &body); err != nil {
 			t.Fatal(err)
@@ -444,6 +453,80 @@ func TestMaidenWaveUsesSelectedEligibleCommanders(t *testing.T) {
 		if body.CommanderID != want {
 			t.Fatalf("step %d commander = %d, want %d", index, body.CommanderID, want)
 		}
+		if body.SourceX != 7 || body.SourceY != 8 || body.TargetX != 10 || body.TargetY != 20 || body.KingdomID != 0 {
+			t.Fatalf("step %d route = %#v, want authoritative main castle 7:8 to Rift 10:20 in kingdom 0", index, body)
+		}
+	}
+}
+
+func TestRiftTargetForKingdomDoesNotUseAnotherKingdom(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Map[4] = map[string]State.MapObservation{
+		"rift": {KingdomID: 4, X: 615, Y: 552, TypeID: riftMapTypeID},
+	}
+	if target, found := riftTargetForKingdom(gameState, 0); found {
+		t.Fatalf("kingdom 0 selected foreign Rift target: %#v", target)
+	}
+	gameState.Map[0] = map[string]State.MapObservation{
+		"rift": {KingdomID: 0, X: 10, Y: 20, TypeID: riftMapTypeID},
+	}
+	target, found := riftTargetForKingdom(gameState, 0)
+	if !found || target.KingdomID != 0 || target.X != 10 || target.Y != 20 {
+		t.Fatalf("kingdom 0 Rift target = %#v, found %t", target, found)
+	}
+}
+
+func TestMaidenWavePassesTypedResourceAdmission(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[{"wodID":1}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	gameState.Castles[1] = State.CastleState{
+		ID: 1, SlotType: 1, KingdomID: 0, X: 7, Y: 8, Focused: true,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{1: 33}},
+	}
+	gameState.Map[0] = map[string]State.MapObservation{
+		"rift": {KingdomID: 0, X: 10, Y: 20, TypeID: riftMapTypeID},
+	}
+	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: true}
+	gameState.Inventory.Equipment[5] = State.EquipmentInstance{
+		ID: 5, RarityID: 5, WearerID: 5, WearerKind: "commander",
+		Effects: State.EquipmentEffects{{WireID: maidenSupportEffectID, Values: []float64{500}}},
+	}
+
+	registry := Intent.NewRegistry()
+	registry.EnforceResourceDeclarations()
+	if err := registry.Register(Intent.Definition{
+		Name: "rift.maiden_wave.launch", Effect: Intent.EffectLaunch,
+		Planner: planMaidenCommsWave, ReadSet: riftMaidenReadSet,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := Intent.NewEngine(
+		registry, State.NewStore(gameState), beriIntentGameDataProvider{store: gameData}, nil, nil,
+	)
+	receipt := engine.Submit(t.Context(), Intent.Request{
+		Name: "rift.maiden_wave.launch", DryRun: true,
+		Arguments: json.RawMessage(`{"unitWodID":1,"commanderIds":[5]}`),
+	})
+	if receipt.Status != Intent.StatusPlanned || receipt.Plan == nil {
+		t.Fatalf("Rift Maiden typed resource admission failed: %#v", receipt)
+	}
+	foundRiftLaunch := false
+	for _, resource := range receipt.Plan.Resources {
+		if resource.Capability == "legacy" {
+			t.Fatalf("Rift Maiden retained a legacy resource: %#v", receipt.Plan.Resources)
+		}
+		if resource.Scope == Intent.ResourceScopeAccount && resource.Capability == "rift" &&
+			resource.ResourceKind == "launch" && resource.ResourceID == "maiden-wave" {
+			foundRiftLaunch = true
+		}
+	}
+	if !foundRiftLaunch {
+		t.Fatalf("Rift Maiden is missing its typed launch resource: %#v", receipt.Plan.Resources)
 	}
 }
 

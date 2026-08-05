@@ -1292,6 +1292,20 @@ func TestCoordinatorTroopShortageIsAvailabilityGateWithoutSafetyPause(t *testing
 	}
 }
 
+func TestCoordinatorTroopGateParsesRawErrorAfterUserFacingLabeling(t *testing.T) {
+	raw := "castle 3849 has 0 of item 215; 1 commander(s) require 416"
+	visible := "Storm Keep (castle ID 3849) has 0 of Veteran Swordsman (item ID 215); 1 commander(s) require 416"
+	gate, found := operationResultTroopAvailabilityGate(operationResult{receipt: Intent.Receipt{
+		Status: Intent.StatusFailed, Error: visible, RawError: raw,
+	}})
+	if !found || gate.castleID != 3849 || gate.unitID != 215 || gate.available != 0 {
+		t.Fatalf("labeled troop gate = %+v, found=%t", gate, found)
+	}
+	if gate.detail != visible {
+		t.Fatalf("visible gate detail = %q, want %q", gate.detail, visible)
+	}
+}
+
 func TestCoordinatorTroopAvailabilityGateSkipsTimedRetry(t *testing.T) {
 	gameState := coordinatorReadyState()
 	gameState.Castles[3849] = State.CastleState{

@@ -90,6 +90,10 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 }
 
 func autoStormBuildContinuation(decision Decision) Decision {
+	return autoEventBuildContinuation(decision, "Storm")
+}
+
+func autoEventBuildContinuation(decision Decision, featureLabel string) Decision {
 	if decision.Request != nil {
 		decision.ReevaluateOnSuccess = true
 		decision.ReevaluateOnStale = true
@@ -104,7 +108,9 @@ func autoStormBuildContinuation(decision Decision) Decision {
 					Name: "building.refresh", Arguments: fallbackArguments,
 				}
 				decision.FailureFallbackIndeterminateOnly = true
-				decision.FailureDetail = "Reconciled Storm building state after an uncertain command outcome"
+				decision.FailureDetail = fmt.Sprintf(
+					"Reconciled %s building state after an uncertain command outcome", featureLabel,
+				)
 			}
 		}
 	}

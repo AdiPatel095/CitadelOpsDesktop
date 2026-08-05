@@ -287,7 +287,7 @@ func (coordinator *Coordinator) evaluate(
 		if current == nil || current.running {
 			continue
 		}
-		isEnabled := enabled[policy.EnabledKey()]
+		isEnabled := policyEnabled(policy, enabled, state)
 		configurationFingerprint := policyConfigurationFingerprint(policy, configuration)
 		derivedConfigurationFingerprint := policyDerivedConfigurationFingerprint(policy, configuration)
 		previouslyEvaluated := current.evaluatedSessionKnown
@@ -596,6 +596,10 @@ func (coordinator *Coordinator) cancelRunsDisallowedByConfiguration(
 	now time.Time,
 ) {
 	enabled := enabledFeatures(configuration, now)
+	state := State.GameState{}
+	if coordinator.state != nil {
+		state = coordinator.state.ReadOnlyView()
+	}
 	for _, policy := range coordinator.policies {
 		current := runtime[policy.ID()]
 		if current == nil || !current.running || current.cancelRun == nil {
@@ -618,11 +622,18 @@ func (coordinator *Coordinator) cancelRunsDisallowedByConfiguration(
 			scheduleKey != "" && scheduleKey != policyScheduleKey(policy) {
 			allowedBySchedule, _ = scheduleAllows(configuration, scheduleKey, now)
 		}
-		if !enabled[policy.EnabledKey()] || !allowedBySchedule {
+		if !policyEnabled(policy, enabled, state) || !allowedBySchedule {
 			current.configurationWakePending = true
 			current.cancelRun()
 		}
 	}
+}
+
+func policyEnabled(policy Policy, configured map[string]bool, state State.GameState) bool {
+	if onDemand, ok := policy.(OnDemandPolicy); ok {
+		return onDemand.Active(state)
+	}
+	return configured[policy.EnabledKey()]
 }
 
 func (coordinator *Coordinator) cancelRunsForUnavailableSession(
@@ -756,7 +767,7 @@ func operationResultTroopAvailabilityGate(result operationResult) (troopAvailabi
 		return troopAvailabilityGate{}, false
 	}
 	detail := strings.TrimSpace(receipt.Error)
-	lower := strings.ToLower(detail)
+	lower := strings.ToLower(strings.TrimSpace(receipt.DiagnosticError()))
 	gated := strings.Contains(lower, "not enough troops") || strings.Contains(lower, "insufficient troops") ||
 		strings.Contains(lower, " of item ") &&
 			(strings.Contains(lower, " commander(s) require ") ||
@@ -891,12 +902,22 @@ func resetContinuation(current *policyRuntime) {
 }
 
 func (coordinator *Coordinator) updateAutomation(id string, update func(State.AutomationState) State.AutomationState) {
+	gameData := coordinator.currentGameData()
+	var language *GameData.LanguageStore
+	if provider, ok := coordinator.gameData.(interface {
+		Language() (*GameData.LanguageStore, bool)
+	}); ok {
+		language, _ = provider.Language()
+	}
 	_, _ = coordinator.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
 		if gameState.Automations == nil {
 			gameState.Automations = map[string]State.AutomationState{}
 		}
 		current := gameState.Automations[id]
 		next := update(current)
+		labels := GameData.NewIdentifierLabels(*gameState, gameData, language)
+		next.Detail = labels.Humanize(next.Detail)
+		next.LastError = labels.Humanize(next.LastError)
 		next.UpdatedAt = current.UpdatedAt
 		if reflect.DeepEqual(current, next) {
 			return nil, false, nil

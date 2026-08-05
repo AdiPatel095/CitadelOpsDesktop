@@ -182,6 +182,21 @@ func foodResourceIDs(store *Store) (map[string]State.ResourceID, error) {
 	return result, nil
 }
 
+// FoodResourceIDs returns the official resource identifiers used by food and
+// mead logistics. Callers receive a fresh map so the catalog-derived mapping
+// cannot be mutated outside this package.
+func (store *Store) FoodResourceIDs() (map[string]State.ResourceID, error) {
+	resourceIDs, err := foodResourceIDs(store)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]State.ResourceID, len(resourceIDs))
+	for jsonKey, resourceID := range resourceIDs {
+		result[jsonKey] = resourceID
+	}
+	return result, nil
+}
+
 func applyMeadProductionInputs(
 	store *Store,
 	castle State.CastleState,

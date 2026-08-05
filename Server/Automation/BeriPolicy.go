@@ -34,18 +34,20 @@ type BeriPolicy struct {
 }
 
 type beriSettings struct {
-	MinTroopsToTransfer        int64                  `json:"minTroopsToTransfer"`
-	BeriCastleID               State.CastleID         `json:"beriCastleId"`
-	TransferTroopID            State.UnitID           `json:"transferTroopId"`
-	SourceCastleID             State.CastleID         `json:"sourceCastleId"`
-	WireCastleID               int64                  `json:"wireCastleId"`
-	TroopSpaceCheckIntervalSec int                    `json:"troopSpaceCheckIntervalSec"`
-	PresetID                   string                 `json:"presetId"`
-	AttackCheckIntervalSec     int                    `json:"attackCheckIntervalSec"`
-	HorseTravelBoostID         int                    `json:"horseTravelBoostId"`
-	ToolMinimums               map[State.UnitID]int64 `json:"toolMinimums"`
-	UseTroopTransportTimeSkips bool                   `json:"useTroopTransportTimeSkips"`
-	TroopTransportTimeSkipID   string                 `json:"troopTransportTimeSkipId"`
+	MinTroopsToTransfer           int64                  `json:"minTroopsToTransfer"`
+	BeriCastleID                  State.CastleID         `json:"beriCastleId"`
+	TransferTroopID               State.UnitID           `json:"transferTroopId"`
+	SourceCastleID                State.CastleID         `json:"sourceCastleId"`
+	WireCastleID                  int64                  `json:"wireCastleId"`
+	TroopSpaceCheckIntervalSec    int                    `json:"troopSpaceCheckIntervalSec"`
+	PresetID                      string                 `json:"presetId"`
+	AttackCheckIntervalSec        int                    `json:"attackCheckIntervalSec"`
+	HorseTravelBoostID            int                    `json:"horseTravelBoostId"`
+	ToolMinimums                  map[State.UnitID]int64 `json:"toolMinimums"`
+	Build                         beriBuildSettings      `json:"build"`
+	RequireActiveGallantryBooster bool                   `json:"requireActiveGallantryBooster"`
+	UseTroopTransportTimeSkips    bool                   `json:"useTroopTransportTimeSkips"`
+	TroopTransportTimeSkipID      string                 `json:"troopTransportTimeSkipId"`
 }
 
 func NewBeriPolicy() *BeriPolicy { return &BeriPolicy{} }
@@ -55,7 +57,7 @@ func (*BeriPolicy) ID() string { return "autoBeriWorld" }
 func (*BeriPolicy) EnabledKey() string { return "auto_beri_world" }
 
 func (*BeriPolicy) WakeDomains() []string {
-	return []string{"beri", "castles", "currencies", "kingdom-transport", "units"}
+	return []string{"beri", "boosters", "castles", "currencies", "kingdom-transport", "units"}
 }
 
 func (*BeriPolicy) WakeSections() []string { return []string{autoBeriWorldSection} }
@@ -66,6 +68,9 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		TroopTransportTimeSkipID: defaultBeriTroopTransportTimeSkipID,
 	}
 	decodeSection(snapshot.Configuration, autoBeriWorldSection, &settings)
+	if decision := beriGallantryBoosterGate(snapshot, settings); decision != nil {
+		return *decision, nil
+	}
 	checkSeconds := settings.TroopSpaceCheckIntervalSec
 	if checkSeconds < 5 {
 		checkSeconds = 30

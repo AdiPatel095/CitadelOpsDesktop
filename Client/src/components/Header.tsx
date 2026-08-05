@@ -49,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({
   onOpenAutoStationSettings,
   onOpenAutomationDuration,
 }) => {
-  const { submitIntent } = useCitadelAPI();
+  const { state, submitIntent } = useCitadelAPI();
   const {
     gameLoggedIn,
     gameLoginCooldown,
@@ -81,6 +81,7 @@ const Header: React.FC<HeaderProps> = ({
 		automationTimedUntilByKey,
   } = useAuth();
   const { theme } = useTheme();
+	const backgroundConnection = state?.session.mode === 'background';
 	const autoBirdStatus = automationStates.autoBird?.status ?? '';
 	const hasAutoBirdCycles = autoBirdCastleCycles.some((cycle) => cycle.nextCycleAtMs > 0);
   const [clearingAutoBirdTracking, setClearingAutoBirdTracking] = useState(false);
@@ -201,14 +202,18 @@ const Header: React.FC<HeaderProps> = ({
           tone: 'warning' as const,
           pulse: true,
           label: 'Starting game…',
-			title: `${gameBrowserName} is starting and loading the game client.`,
+			title: backgroundConnection
+				? 'The direct background game connection is starting.'
+				: `${gameBrowserName} is starting and loading the game client.`,
         };
       case 'reconnecting':
         return {
           tone: 'warning' as const,
           pulse: true,
-          label: 'Reloading game…',
-          title: 'The game tab is reloading to establish a fresh WebSocket.',
+          label: backgroundConnection ? 'Reconnecting game…' : 'Reloading game…',
+          title: backgroundConnection
+				? 'CitadelOps is reconnecting directly to the game server.'
+				: 'The game tab is reloading to establish a fresh WebSocket.',
         };
       case 'connecting':
         return {
@@ -247,7 +252,9 @@ const Header: React.FC<HeaderProps> = ({
           tone: 'error' as const,
           pulse: false,
           label: 'Game stopped',
-			title: gameBrowserRunning
+			title: backgroundConnection
+				? 'The direct background game connection is stopped.'
+				: gameBrowserRunning
 				? `The ${gameBrowserName} session is stopping.`
 				: 'The game browser and WebSocket are stopped.',
         };
@@ -259,11 +266,14 @@ const Header: React.FC<HeaderProps> = ({
             ? `Retrying in ${formatConnectionSeconds(gameLoginRetrySeconds)}`
             : 'Game disconnected',
           title: gameConnectionDetail || (gameLoginRetrySeconds > 0
-            ? 'CitadelOps will reload the game and retry the saved login automatically.'
+			? backgroundConnection
+				? 'CitadelOps will reconnect directly and retry the saved login automatically.'
+				: 'CitadelOps will reload the game and retry the saved login automatically.'
             : 'No active game WebSocket is available.'),
         };
     }
   }, [
+		backgroundConnection,
     dashboardConnectionStatus,
     gameBrowserRunning,
 		gameBrowserName,

@@ -287,9 +287,12 @@ func productionQueueItem(lineID int, product productionWireProduct, observedAt t
 }
 
 type allianceHelpWireRequest struct {
-	PlayerID    State.PlayerID `json:"PID"`
-	RequestType int            `json:"TID"`
-	Optional    struct {
+	ListID           wireInt64      `json:"LID"`
+	PlayerID         State.PlayerID `json:"PID"`
+	RequestType      int            `json:"TID"`
+	Progress         wireInt64      `json:"P"`
+	AlreadyConfirmed wireInt64      `json:"AC"`
+	Optional         struct {
 		CastleID      State.CastleID `json:"AID"`
 		RecruitmentID int64          `json:"RID"`
 		LineID        int            `json:"RLID"`
@@ -300,7 +303,7 @@ func reduceAllianceHelpRequest(
 	_ context.Context,
 	frame Protocol.Frame,
 	gameState *State.GameState,
-	_ *GameData.Store,
+	gameData *GameData.Store,
 ) ([]string, bool, error) {
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
@@ -325,19 +328,33 @@ func reduceAllianceHelpRequest(
 	if frame.Opcode == "ahl" {
 		hospitalProductionIDs := ownHospitalAllianceHelpProductionIDs(requests, gameState.Player.ID)
 		recruitmentCastleIDs := ownRecruitmentAllianceHelpCastleIDs(requests, gameState.Player.ID)
-		if !reflect.DeepEqual(gameState.AllianceHelpRequests.HospitalProductionIDs, hospitalProductionIDs) ||
-			!reflect.DeepEqual(gameState.AllianceHelpRequests.RecruitmentCastleIDs, recruitmentCastleIDs) ||
-			!gameState.AllianceHelpRequests.ObservedAt.Equal(frame.ReceivedAt) {
-			gameState.AllianceHelpRequests = State.AllianceHelpRequestState{
-				HospitalProductionIDs: hospitalProductionIDs,
-				RecruitmentCastleIDs:  recruitmentCastleIDs,
-				ObservedAt:            frame.ReceivedAt,
-			}
+		pendingOtherListIDs := pendingOtherAllianceHelpListIDs(requests, gameState.Player.ID, gameData)
+		next := State.AllianceHelpRequestState{
+			HospitalProductionIDs:    hospitalProductionIDs,
+			RecruitmentCastleIDs:     recruitmentCastleIDs,
+			PendingOtherListIDs:      pendingOtherListIDs,
+			ObservedAt:               frame.ReceivedAt,
+			OthersObservedAt:         frame.ReceivedAt,
+			OthersObservedGeneration: gameState.Session.Generation,
+			LastHelpAllAt:            gameState.AllianceHelpRequests.LastHelpAllAt,
+			LastHelpAllGeneration:    gameState.AllianceHelpRequests.LastHelpAllGeneration,
+		}
+		if !reflect.DeepEqual(gameState.AllianceHelpRequests, next) {
+			gameState.AllianceHelpRequests = next
 			changed = true
 		}
 	}
 	for _, request := range requests {
-		if request.PlayerID <= 0 || request.PlayerID != gameState.Player.ID {
+		if request.PlayerID <= 0 {
+			continue
+		}
+		if request.PlayerID != gameState.Player.ID {
+			if frame.Opcode != "ahl" && updatePendingOtherAllianceHelpRequest(
+				&gameState.AllianceHelpRequests, request, gameState.Player.ID,
+				gameState.Session.Generation, frame.ReceivedAt, gameData,
+			) {
+				changed = true
+			}
 			continue
 		}
 		if request.RequestType == 2 && request.Optional.RecruitmentID > 0 && frame.Opcode != "ahl" &&
@@ -380,6 +397,125 @@ func reduceAllianceHelpRequest(
 		return nil, false, nil
 	}
 	return []string{"alliance-help", "castles", "production"}, true, nil
+}
+
+func reduceAllianceHelpDelete(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var payload struct {
+		ListID wireInt64 `json:"LID"`
+	}
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode alliance help deletion: %w", err)
+	}
+	if payload.ListID <= 0 ||
+		gameState.AllianceHelpRequests.OthersObservedGeneration != gameState.Session.Generation ||
+		!removePendingOtherAllianceHelpListID(&gameState.AllianceHelpRequests, int64(payload.ListID)) {
+		return nil, false, nil
+	}
+	gameState.AllianceHelpRequests.OthersObservedAt = frame.ReceivedAt
+	return []string{"alliance-help"}, true, nil
+}
+
+func pendingOtherAllianceHelpListIDs(
+	requests []allianceHelpWireRequest,
+	playerID State.PlayerID,
+	gameData *GameData.Store,
+) []int64 {
+	unique := map[int64]struct{}{}
+	for _, request := range requests {
+		if !otherAllianceHelpRequestActionable(request, playerID, gameData) {
+			continue
+		}
+		unique[int64(request.ListID)] = struct{}{}
+	}
+	result := make([]int64, 0, len(unique))
+	for listID := range unique {
+		result = append(result, listID)
+	}
+	sort.Slice(result, func(left, right int) bool { return result[left] < result[right] })
+	return result
+}
+
+func otherAllianceHelpRequestActionable(
+	request allianceHelpWireRequest,
+	playerID State.PlayerID,
+	gameData *GameData.Store,
+) bool {
+	if playerID <= 0 || request.PlayerID <= 0 || request.PlayerID == playerID ||
+		request.ListID <= 0 || request.AlreadyConfirmed != 0 {
+		return false
+	}
+	maximum, found := gameData.AllianceHelpMaximumHelpers(request.RequestType)
+	return found && int(request.Progress) < maximum
+}
+
+func updatePendingOtherAllianceHelpRequest(
+	state *State.AllianceHelpRequestState,
+	request allianceHelpWireRequest,
+	playerID State.PlayerID,
+	generation uint64,
+	observedAt time.Time,
+	gameData *GameData.Store,
+) bool {
+	if state == nil || generation == 0 || playerID <= 0 || request.PlayerID == playerID || request.ListID <= 0 {
+		return false
+	}
+	changed := false
+	if state.OthersObservedGeneration != generation {
+		state.PendingOtherListIDs = []int64{}
+		state.OthersObservedGeneration = generation
+		changed = true
+	}
+	if otherAllianceHelpRequestActionable(request, playerID, gameData) {
+		if addPendingOtherAllianceHelpListID(state, int64(request.ListID)) {
+			changed = true
+		}
+	} else if removePendingOtherAllianceHelpListID(state, int64(request.ListID)) {
+		changed = true
+	}
+	if changed {
+		state.OthersObservedAt = observedAt
+	}
+	return changed
+}
+
+func addPendingOtherAllianceHelpListID(state *State.AllianceHelpRequestState, listID int64) bool {
+	if state == nil || listID <= 0 {
+		return false
+	}
+	for _, existingID := range state.PendingOtherListIDs {
+		if existingID == listID {
+			return false
+		}
+	}
+	state.PendingOtherListIDs = append(state.PendingOtherListIDs, listID)
+	sort.Slice(state.PendingOtherListIDs, func(left, right int) bool {
+		return state.PendingOtherListIDs[left] < state.PendingOtherListIDs[right]
+	})
+	return true
+}
+
+func removePendingOtherAllianceHelpListID(state *State.AllianceHelpRequestState, listID int64) bool {
+	if state == nil || listID <= 0 {
+		return false
+	}
+	for index, existingID := range state.PendingOtherListIDs {
+		if existingID != listID {
+			continue
+		}
+		state.PendingOtherListIDs = append(
+			state.PendingOtherListIDs[:index], state.PendingOtherListIDs[index+1:]...,
+		)
+		return true
+	}
+	return false
 }
 
 func ownHospitalAllianceHelpProductionIDs(requests []allianceHelpWireRequest, playerID State.PlayerID) []int64 {

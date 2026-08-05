@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
@@ -16,12 +17,152 @@ const (
 	recruitmentProductionLineID = 0
 	hospitalProductionLineID    = 2
 	hospitalAllianceHelpLimit   = 3
+	allianceHelpAllLimit        = 15
 )
 
 type allianceHelpRequest struct {
 	ProductionID int64          `json:"productionId"`
 	CastleID     State.CastleID `json:"castleId,omitempty"`
 	LineID       int            `json:"lineId,omitempty"`
+}
+
+type allianceHelpAnswerAllRequest struct {
+	ListIDs           []int64 `json:"listIds"`
+	SessionGeneration uint64  `json:"sessionGeneration"`
+	AllowUnobserved   bool    `json:"allowUnobserved,omitempty"`
+}
+
+func planAllianceHelpAnswerAll(
+	_ context.Context,
+	input Intent.PlanningContext,
+	arguments json.RawMessage,
+) (Intent.Plan, error) {
+	var options struct {
+		AllowUnobserved bool `json:"allowUnobserved,omitempty"`
+	}
+	if err := decodeIntentArguments(arguments, &options); err != nil {
+		return Intent.Plan{}, err
+	}
+	listIDs := State.PendingOtherAllianceHelpListIDs(input.State)
+	if len(listIDs) == 0 {
+		if !options.AllowUnobserved || input.State.Session.Generation == 0 ||
+			input.State.AllianceHelpRequests.LastHelpAllGeneration == input.State.Session.Generation {
+			return Intent.Plan{Summary: "Skip alliance help: no alliance member currently needs help"}, nil
+		}
+		listIDs = []int64{}
+	}
+	if len(listIDs) > allianceHelpAllLimit {
+		listIDs = listIDs[:allianceHelpAllLimit]
+	}
+	request := allianceHelpAnswerAllRequest{
+		ListIDs: listIDs, SessionGeneration: input.State.Session.Generation, AllowUnobserved: options.AllowUnobserved,
+	}
+	recordArguments, _ := json.Marshal(request)
+	summary := fmt.Sprintf("Help %d pending alliance request(s)", len(listIDs))
+	if len(listIDs) == 0 {
+		summary = "Check and help current alliance requests"
+	}
+	return Intent.Plan{
+		Claims:  []string{"alliance-help"},
+		Summary: summary,
+		Steps: []Intent.Step{
+			{
+				Name: "Help alliance members", Resolver: "alliance.help.answer_all.build",
+				ResolverArguments: recordArguments, AwaitOpcode: "aha", TimeoutMillis: 10_000,
+				SuccessCodes: []int{0},
+			},
+			{
+				Name: "Record answered alliance help", Action: "alliance.help.mark_answered",
+				ActionArguments: recordArguments,
+			},
+		},
+	}, nil
+}
+
+func resolveAllianceHelpAnswerAllStep(
+	_ context.Context,
+	input Intent.PlanningContext,
+	arguments json.RawMessage,
+) (Intent.Step, error) {
+	var request allianceHelpAnswerAllRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Step{}, err
+	}
+	if request.SessionGeneration == 0 || request.SessionGeneration != input.State.Session.Generation {
+		return Intent.Step{}, fmt.Errorf("%w: alliance-help session changed", Intent.ErrPlanStale)
+	}
+	pending := State.PendingOtherAllianceHelpListIDs(input.State)
+	currentObservation := input.State.AllianceHelpRequests.OthersObservedGeneration == input.State.Session.Generation &&
+		!input.State.AllianceHelpRequests.OthersObservedAt.IsZero()
+	bootstrapAllowed := request.AllowUnobserved &&
+		input.State.AllianceHelpRequests.LastHelpAllGeneration != input.State.Session.Generation &&
+		(!currentObservation || len(pending) > 0)
+	if !allianceHelpListsOverlap(request.ListIDs, pending) && !bootstrapAllowed {
+		return Intent.Step{}, fmt.Errorf("%w: the selected alliance-help requests are no longer pending", Intent.ErrPlanStale)
+	}
+	payload, _ := json.Marshal(struct {
+		Limit int `json:"KID"`
+	}{Limit: allianceHelpAllLimit})
+	return commandStep("Help alliance members", "aha", payload, "aha"), nil
+}
+
+func (application *Application) markAllianceHelpAnswered(_ context.Context, arguments json.RawMessage) error {
+	var request allianceHelpAnswerAllRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	if application == nil || application.State == nil || request.SessionGeneration == 0 {
+		return nil
+	}
+	answered := make(map[int64]struct{}, len(request.ListIDs))
+	for _, listID := range request.ListIDs {
+		if listID > 0 {
+			answered[listID] = struct{}{}
+		}
+	}
+	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		if gameState.Session.Generation != request.SessionGeneration {
+			return nil, false, nil
+		}
+		gameState.AllianceHelpRequests.LastHelpAllGeneration = request.SessionGeneration
+		gameState.AllianceHelpRequests.LastHelpAllAt = time.Now().UTC()
+		changed := true
+		current := gameState.AllianceHelpRequests.PendingOtherListIDs
+		remaining := make([]int64, 0, len(current))
+		for _, listID := range current {
+			if gameState.AllianceHelpRequests.OthersObservedGeneration != request.SessionGeneration {
+				remaining = append(remaining, listID)
+				continue
+			}
+			if _, found := answered[listID]; !found {
+				remaining = append(remaining, listID)
+			}
+		}
+		if len(remaining) != len(current) {
+			gameState.AllianceHelpRequests.PendingOtherListIDs = remaining
+			changed = true
+		}
+		return []string{"alliance-help"}, changed, nil
+	})
+	return err
+}
+
+func allianceHelpListsOverlap(left []int64, right []int64) bool {
+	if len(left) == 0 || len(right) == 0 {
+		return false
+	}
+	available := make(map[int64]struct{}, len(right))
+	for _, listID := range right {
+		if listID > 0 {
+			available[listID] = struct{}{}
+		}
+	}
+	for _, listID := range left {
+		if _, found := available[listID]; found {
+			return true
+		}
+	}
+	return false
 }
 
 func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {

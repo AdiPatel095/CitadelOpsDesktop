@@ -601,6 +601,9 @@ func (controller *Controller) applyStatus(status Status) {
 	if status.Namespace == "" {
 		status.Namespace = "EmpireEx_21"
 	}
+	if status.Mode == "" {
+		status.Mode = ConnectionModeFull
+	}
 	if controller.state == nil {
 		return
 	}
@@ -633,6 +636,7 @@ func (controller *Controller) applyStatus(status Status) {
 			}
 		}
 		next := State.SessionState{
+			Mode:       string(status.Mode),
 			Generation: generation, BaselineGeneration: baselineGeneration,
 			ConnectionGeneration: status.ConnectionGeneration,
 			Status:               status.State, LoggedIn: status.LoggedIn, SocketReady: status.SocketReady,

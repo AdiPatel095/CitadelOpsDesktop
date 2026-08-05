@@ -18,6 +18,11 @@ func frontendFileHandler(assets fs.FS) http.Handler {
 				files.ServeHTTP(writer, request)
 				return
 			}
+			if strings.HasPrefix(path, "assets/") {
+				writer.Header().Set("X-Content-Type-Options", "nosniff")
+				http.NotFound(writer, request)
+				return
+			}
 		}
 		index, err := fs.ReadFile(assets, "index.html")
 		if err != nil {
@@ -25,6 +30,7 @@ func frontendFileHandler(assets fs.FS) http.Handler {
 			return
 		}
 		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+		writer.Header().Set("Cache-Control", "no-store")
 		writer.Header().Set("X-Content-Type-Options", "nosniff")
 		_, _ = writer.Write(index)
 	})

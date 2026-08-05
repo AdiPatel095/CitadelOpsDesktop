@@ -147,7 +147,8 @@ func reduceMovementRemoval(
 }
 
 // ReconcileExpiredMovements removes movements whose observed or projected
-// return time has passed and refreshes commander availability.
+// return time has passed, applies authoritative return survivors to the
+// destination castle inventory, and refreshes commander availability.
 func ReconcileExpiredMovements(gameState *State.GameState, now time.Time) bool {
 	if gameState == nil {
 		return false
@@ -164,6 +165,7 @@ func ReconcileExpiredMovements(gameState *State.GameState, now time.Time) bool {
 			State.TrackedStationMovementActiveAt(*gameState, movement, now)) {
 			continue
 		}
+		reconcileReturnedMovementUnits(gameState, movement)
 		delete(gameState.Movements, id)
 		resolveKhanTaunt(gameState, id, now)
 		changed = true
@@ -178,6 +180,44 @@ func ReconcileExpiredMovements(gameState *State.GameState, now time.Time) bool {
 		changed = true
 	}
 	return changed
+}
+
+// reconcileReturnedMovementUnits projects an observed return frame into the
+// most recent castle-unit snapshot. Direction-one movement frames contain the
+// exact surviving troops, so waiting for a later JCA refresh needlessly leaves
+// those troops stranded in Traveling after their return clock expires.
+//
+// The projection is deliberately bounded: the destination must be owned, the
+// unit snapshot must predate the return, and every survivor must still be
+// represented in Traveling. A newer or incompatible snapshot wins unchanged.
+func reconcileReturnedMovementUnits(gameState *State.GameState, movement State.MovementState) bool {
+	if gameState == nil || movement.Direction != 1 || movement.ReturnsAt == nil ||
+		movement.ReturnsAt.IsZero() || len(movement.Units) == 0 ||
+		!movementBelongsToCurrentPlayer(gameState, movement) {
+		return false
+	}
+	castle, exists := gameState.Castles[movement.TargetCastleID]
+	if !exists || !castle.UnitsObservedAt.IsZero() &&
+		!castle.UnitsObservedAt.Before(movement.ReturnsAt.UTC()) {
+		return false
+	}
+	for unitID, amount := range movement.Units {
+		if amount <= 0 || castle.Units.Traveling[unitID] < amount {
+			return false
+		}
+	}
+	ensureCastleMaps(&castle)
+	for unitID, amount := range movement.Units {
+		castle.Units.Stationed[unitID] += amount
+		remaining := castle.Units.Traveling[unitID] - amount
+		if remaining == 0 {
+			delete(castle.Units.Traveling, unitID)
+		} else {
+			castle.Units.Traveling[unitID] = remaining
+		}
+	}
+	gameState.Castles[movement.TargetCastleID] = castle
+	return true
 }
 
 func resolveKhanTaunt(gameState *State.GameState, movementID State.MovementID, resolvedAt time.Time) bool {

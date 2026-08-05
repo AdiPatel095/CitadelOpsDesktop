@@ -35,6 +35,7 @@ type Config struct {
 	DataDir                string
 	Offline                bool
 	Transport              Session.Transport
+	Chromium               *Session.ChromiumConfig
 	RuntimeContext         context.Context
 	UpdateEndpoint         string
 	UpdateInstallSupported bool
@@ -126,6 +127,26 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	}
 	ingest.SetTelemetry(telemetry)
 	transport := config.Transport
+	if transport == nil && config.Chromium != nil {
+		chromium := *config.Chromium
+		chromium.DataDir = config.DataDir
+		mode := Session.ConnectionModeFull
+		if raw, ok := configuration.Section("session.connection"); ok {
+			var selected struct {
+				Mode string `json:"mode"`
+			}
+			if json.Unmarshal(raw, &selected) == nil {
+				mode = Session.ParseConnectionMode(selected.Mode)
+			}
+		}
+		if mode == Session.ConnectionModeBackground {
+			transport = Session.NewDirectWebSocketTransport(Session.DirectWebSocketConfig{
+				DataDir: config.DataDir,
+			})
+		} else {
+			transport = Session.NewChromiumTransport(chromium)
+		}
+	}
 	if transport == nil {
 		transport = Session.NewUnavailableTransport()
 	}
@@ -211,6 +232,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewRecruitPolicy(),
 		Automation.NewToolPolicy(),
 		Automation.NewHospitalPolicy(),
+		Automation.NewAllianceHelpPolicy(),
 		Automation.NewConstructionPolicy(),
 		Automation.NewCraftingPolicy(),
 		Automation.NewCraftingLogisticsPolicy(),
@@ -218,12 +240,14 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewAutoStationPolicy(),
 		Automation.NewBeriPolicy(),
 		Automation.NewBeriToolPolicy(),
+		Automation.NewBeriBuildPolicy(),
 		Automation.NewBeriAttackPolicy(),
 		Automation.NewFoodBalancePolicy(),
 		Automation.NewAutoTowerPolicy(),
 		Automation.NewAutoInvasionPolicy(),
 		Automation.NewAutoNomadPolicy(),
 		Automation.NewAutoAdvisorPolicy(),
+		Automation.NewRiftMaidenRunPolicy(),
 		Automation.NewAutoKhanPolicy(),
 		Automation.NewAutoKhanCooldownPolicy(),
 		Automation.NewAutoKhanRagePolicy(),
@@ -258,6 +282,9 @@ func (application *Application) start(ctx context.Context) {
 	go func() {
 		<-ctx.Done()
 		application.Telemetry.Close()
+		if application.Reports != nil {
+			application.Reports.Wait()
+		}
 		if application.OperationStore != nil {
 			_ = application.OperationStore.Close()
 		}
@@ -367,6 +394,21 @@ func (application *Application) saveStateSnapshot() error {
 }
 
 func (application *Application) PersistenceError() error {
+	actionErr := application.actionPersistenceError()
+	if application == nil {
+		return actionErr
+	}
+	var reportErr error
+	if application.ReportStore != nil {
+		reportErr = application.ReportStore.LastError()
+	}
+	if reportErr != nil {
+		reportErr = fmt.Errorf("report analytics persistence: %w", reportErr)
+	}
+	return errors.Join(actionErr, reportErr)
+}
+
+func (application *Application) actionPersistenceError() error {
 	if application == nil {
 		return nil
 	}
@@ -374,12 +416,8 @@ func (application *Application) PersistenceError() error {
 	stateErr := application.statePersistenceErr
 	application.persistenceHealthMu.RUnlock()
 	var operationErr error
-	var reportErr error
 	if application.Intents != nil {
 		operationErr = application.Intents.PersistenceError()
-	}
-	if application.ReportStore != nil {
-		reportErr = application.ReportStore.LastError()
 	}
 	if stateErr != nil {
 		stateErr = fmt.Errorf("state snapshot persistence: %w", stateErr)
@@ -387,10 +425,7 @@ func (application *Application) PersistenceError() error {
 	if operationErr != nil {
 		operationErr = fmt.Errorf("operation journal persistence: %w", operationErr)
 	}
-	if reportErr != nil {
-		reportErr = fmt.Errorf("report analytics persistence: %w", reportErr)
-	}
-	return errors.Join(stateErr, operationErr, reportErr)
+	return errors.Join(stateErr, operationErr)
 }
 
 func (application *Application) capturePlayerHistory(ctx context.Context) {
@@ -645,19 +680,21 @@ func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, 
 
 func defaultConfiguration() map[string]json.RawMessage {
 	return map[string]json.RawMessage{
-		"scheduler":                      json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"botLocked":false,"attackPriorities":{"autoTowers":50,"autoAdvisor":50,"autoBeriWorld":50,"autoStorm":50,"riftMaiden":50,"riftReplay":50},"featureSchedules":{}}`),
-		"session.reconnect":              json.RawMessage(`{"relogDelaySec":300}`),
-		"automation.enabled":             json.RawMessage(`{}`),
-		"automation.autoBeriWorld":       json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30,"presetId":"","attackCheckIntervalSec":30,"horseTravelBoostId":-1,"toolMinimums":{"611":0,"614":0,"620":0},"useTroopTransportTimeSkips":false,"troopTransportTimeSkipId":"MS5"}`),
-		"automation.commanderFeatures":   json.RawMessage(`{"version":2,"assignments":{},"requirements":{}}`),
-		"automation.autoFoodBalance":     json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{},"horseTravelBoostId":-1}`),
-		"automation.autoTowers":          json.RawMessage(`{"version":2,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"castles":{}}`),
-		"automation.autoInvasion":        json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
-		"automation.autoNomad":           json.RawMessage(`{"version":5,"sourceCastleId":0,"nomadPresetId":"","samuraiPresetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
-		"automation.autoAdvisor":         json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"maxAttackCount":9999,"minimumRemainingSec":1800,"coinCostPerAttack":500,"minimumCoinReserve":0,"rubyCostPerAttack":0,"minimumRubyReserve":0,"minimumFeatherReserve":0,"timeSkipReserve":{},"checkIntervalSec":30,"mapRefreshIntervalSec":300,"horseTravelBoostId":-1}`),
-		"automation.autoKhan":            json.RawMessage(`{"version":1,"sourceCastleId":0,"attackPresetId":"","defensePresetId":"","minimumRemainingSec":300,"checkIntervalSec":30,"defenseRefreshIntervalSec":30,"mapRefreshIntervalSec":30,"dailyAttackLimit":0,"skipCooldowns":true,"timeSkipReserve":{},"openGateProtection":true,"offensiveUnitThreshold":1000,"horseTravelBoostId":-1,"nomadPointThreshold":0,"replenishDefenseTools":false}`),
-		"automation.autoStorm":           json.RawMessage(`{"version":1,"unlock":{"enabled":false,"prebuiltCastleId":0},"decorationPresetCastleId":0,"decorationPresetId":"","build":{"allowPremium":false,"allowDemolition":false,"allowResourceTransport":true,"allowTimeSkips":false,"resourceReserves":{},"sourceResourceReserves":{},"timeSkipReserve":{}},"harbor":{"enabled":false,"targetLevel":1},"forts":{"enabled":false,"levels":[40,50,60,70,80],"minimumWins":0,"presetId":""},"islands":{"enabled":false,"resources":["wood","stone","aquamarine"],"sizes":["large","small"],"presetId":"","defenseUnits":[]},"troopImport":{"enabled":false,"donorCastleIds":[],"minimumTroops":0,"historyHours":24},"aquamarine":{"reserve":0,"shopTableId":0,"purchases":[]},"targetPriority":["fort:80","fort:70","fort:60","fort:50","fort:40","island:large","island:small"],"checkIntervalSec":30,"mapRefreshIntervalSec":7200,"dailyAttackLimit":0,"horseTravelBoostId":-1}`),
-		"automation.autoStormBlueprints": json.RawMessage(`{"version":1,"blueprints":{}}`),
-		"rift.attackPreferences":         json.RawMessage(`{"version":1,"replayHorseTravelBoostId":-1,"maidenHorseTravelBoostId":-1}`),
+		"scheduler":                          json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"botLocked":false,"attackPriorities":{"autoTowers":50,"autoAdvisor":50,"autoBeriWorld":50,"autoStorm":50,"riftMaiden":50,"riftReplay":50},"featureSchedules":{}}`),
+		"session.connection":                 json.RawMessage(`{"mode":"full"}`),
+		"session.reconnect":                  json.RawMessage(`{"relogDelaySec":300}`),
+		"automation.enabled":                 json.RawMessage(`{}`),
+		"automation.autoBeriWorld":           json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30,"presetId":"","attackCheckIntervalSec":30,"horseTravelBoostId":-1,"toolMinimums":{"611":0,"614":0,"620":0},"build":{"enabled":false,"allowPremium":false,"allowDemolition":false,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"requireActiveGallantryBooster":false,"useTroopTransportTimeSkips":false,"troopTransportTimeSkipId":"MS5"}`),
+		"automation.autoBeriWorldBlueprints": json.RawMessage(`{"version":1,"blueprints":{}}`),
+		"automation.commanderFeatures":       json.RawMessage(`{"version":2,"assignments":{},"requirements":{}}`),
+		"automation.autoFoodBalance":         json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{},"horseTravelBoostId":-1}`),
+		"automation.autoTowers":              json.RawMessage(`{"version":2,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"castles":{}}`),
+		"automation.autoInvasion":            json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
+		"automation.autoNomad":               json.RawMessage(`{"version":5,"sourceCastleId":0,"nomadPresetId":"","samuraiPresetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
+		"automation.autoAdvisor":             json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"maxAttackCount":9999,"minimumRemainingSec":1800,"coinCostPerAttack":500,"minimumCoinReserve":0,"rubyCostPerAttack":0,"minimumRubyReserve":0,"minimumFeatherReserve":0,"timeSkipReserve":{},"checkIntervalSec":30,"mapRefreshIntervalSec":300,"horseTravelBoostId":-1}`),
+		"automation.autoKhan":                json.RawMessage(`{"version":1,"sourceCastleId":0,"attackPresetId":"","defensePresetId":"","minimumRemainingSec":300,"checkIntervalSec":30,"defenseRefreshIntervalSec":30,"mapRefreshIntervalSec":30,"dailyAttackLimit":0,"skipCooldowns":true,"timeSkipReserve":{},"openGateProtection":true,"offensiveUnitThreshold":1000,"horseTravelBoostId":-1,"nomadPointThreshold":0,"replenishDefenseTools":false}`),
+		"automation.autoStorm":               json.RawMessage(`{"version":1,"unlock":{"enabled":false,"prebuiltCastleId":0},"decorationPresetCastleId":0,"decorationPresetId":"","build":{"allowPremium":false,"allowDemolition":false,"allowResourceTransport":true,"allowTimeSkips":false,"resourceReserves":{},"sourceResourceReserves":{},"timeSkipReserve":{}},"harbor":{"enabled":false,"targetLevel":1},"forts":{"enabled":false,"levels":[40,50,60,70,80],"minimumWins":0,"presetId":""},"islands":{"enabled":false,"resources":["wood","stone","aquamarine"],"sizes":["large","small"],"presetId":"","defenseUnits":[]},"troopImport":{"enabled":false,"donorCastleIds":[],"minimumTroops":0,"historyHours":24},"aquamarine":{"reserve":0,"shopTableId":0,"purchases":[]},"targetPriority":["fort:80","fort:70","fort:60","fort:50","fort:40","island:large","island:small"],"checkIntervalSec":30,"mapRefreshIntervalSec":7200,"dailyAttackLimit":0,"horseTravelBoostId":-1}`),
+		"automation.autoStormBlueprints":     json.RawMessage(`{"version":1,"blueprints":{}}`),
+		"rift.attackPreferences":             json.RawMessage(`{"version":1,"replayHorseTravelBoostId":-1,"maidenHorseTravelBoostId":-1}`),
 	}
 }

@@ -147,10 +147,21 @@ func TestRuntimeTransportAndSubscriptionReducers(t *testing.T) {
 
 	_, changed, err = reduceMarketBooster(t.Context(), Protocol.Frame{
 		Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
-		Payload: json.RawMessage(`{"BO":[{"ID":11,"L":21}]}`),
+		Payload: json.RawMessage(`{"BO":[{"ID":11,"L":21,"RT":2147483647},{"ID":24,"B":400,"RT":10702}]}`),
 	}, &gameState, gameData)
 	if err != nil || !changed || gameState.Market.CaravanLevel != 21 {
 		t.Fatalf("market booster: changed=%t market=%#v err=%v", changed, gameState.Market, err)
+	}
+	gallantry := gameState.Market.Boosters[24]
+	if gallantry.BonusPercent != 400 || gallantry.RemainingSec != 10702 ||
+		!gallantry.ExpiresAt.Equal(observedAt.Add(10702*time.Second)) || !gallantry.ActiveAt(observedAt) {
+		t.Fatalf("gallantry booster = %#v", gallantry)
+	}
+	if caravan := gameState.Market.Boosters[11]; !caravan.Permanent || !caravan.ActiveAt(observedAt) {
+		t.Fatalf("permanent caravan booster = %#v", caravan)
+	}
+	if !gameState.Market.BoostersObservedAt.Equal(observedAt) {
+		t.Fatalf("booster observation time = %s", gameState.Market.BoostersObservedAt)
 	}
 
 	_, changed, err = reduceKingdomTransport(t.Context(), Protocol.Frame{

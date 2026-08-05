@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
@@ -261,6 +262,103 @@ func TestOutboundAllianceHelpMarksHospitalJobBeforeResponse(t *testing.T) {
 	if !queued[0].AllianceHelpRequested || queued[1].AllianceHelpRequested {
 		t.Fatalf("outbound hospital help state = %#v", queued)
 	}
+}
+
+func TestAllianceHelpListTracksOnlyActionableRequestsFromOtherMembers(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 501
+	gameState.Session.Generation = 7
+	gameState.AllianceHelpRequests.LastHelpAllGeneration = 7
+	gameState.AllianceHelpRequests.LastHelpAllAt = time.Date(2026, 8, 5, 11, 59, 0, 0, time.UTC)
+	responseCode := 0
+	frame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "ahl", ResponseCode: &responseCode,
+		ReceivedAt: time.Date(2026, 8, 5, 12, 0, 0, 0, time.UTC),
+		Payload: json.RawMessage(`{"AHL":[
+			{"LID":10,"PID":999,"TID":2,"P":4,"AC":0},
+			{"LID":11,"PID":999,"TID":2,"P":4,"AC":1},
+			{"LID":12,"PID":999,"TID":2,"P":5,"AC":0},
+			{"LID":13,"PID":999,"TID":6,"P":2,"AC":0},
+			{"LID":14,"PID":999,"TID":999,"P":0,"AC":0},
+			{"LID":15,"PID":501,"TID":2,"P":0,"AC":0,"OP":{"RID":321}}
+		]}`),
+	}
+	if _, changed, err := reduceAllianceHelpRequest(
+		t.Context(), frame, &gameState, allianceHelpReducerTestGameData(t),
+	); err != nil || !changed {
+		t.Fatalf("reduce alliance help list changed=%t err=%v", changed, err)
+	}
+	pending := gameState.AllianceHelpRequests.PendingOtherListIDs
+	if len(pending) != 2 || pending[0] != 10 || pending[1] != 13 {
+		t.Fatalf("actionable other-member requests = %#v, want [10 13]", pending)
+	}
+	if gameState.AllianceHelpRequests.OthersObservedGeneration != 7 ||
+		!gameState.AllianceHelpRequests.OthersObservedAt.Equal(frame.ReceivedAt) {
+		t.Fatalf("unexpected external request observation: %#v", gameState.AllianceHelpRequests)
+	}
+	if gameState.AllianceHelpRequests.LastHelpAllGeneration != 7 ||
+		gameState.AllianceHelpRequests.LastHelpAllAt.IsZero() {
+		t.Fatalf("full list discarded the help-all bootstrap marker: %#v", gameState.AllianceHelpRequests)
+	}
+}
+
+func TestAllianceHelpDeltasAddConfirmAndDeleteOtherRequests(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 501
+	gameState.Session.Generation = 7
+	gameState.AllianceHelpRequests = State.AllianceHelpRequestState{
+		PendingOtherListIDs: []int64{90}, OthersObservedGeneration: 6,
+	}
+	responseCode := 0
+	gameData := allianceHelpReducerTestGameData(t)
+	addFrame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "ahh", ResponseCode: &responseCode,
+		ReceivedAt: time.Date(2026, 8, 5, 12, 0, 0, 0, time.UTC),
+		Payload:    json.RawMessage(`{"LID":101,"PID":999,"TID":2,"P":0,"AC":0}`),
+	}
+	if _, changed, err := reduceAllianceHelpRequest(t.Context(), addFrame, &gameState, gameData); err != nil || !changed {
+		t.Fatalf("add alliance help changed=%t err=%v", changed, err)
+	}
+	if pending := gameState.AllianceHelpRequests.PendingOtherListIDs; len(pending) != 1 || pending[0] != 101 {
+		t.Fatalf("new-session pending requests = %#v, want [101]", pending)
+	}
+
+	confirmedFrame := addFrame
+	confirmedFrame.ReceivedAt = addFrame.ReceivedAt.Add(time.Second)
+	confirmedFrame.Payload = json.RawMessage(`{"LID":101,"PID":999,"TID":2,"P":1,"AC":1}`)
+	if _, changed, err := reduceAllianceHelpRequest(t.Context(), confirmedFrame, &gameState, gameData); err != nil || !changed {
+		t.Fatalf("confirm alliance help changed=%t err=%v", changed, err)
+	}
+	if pending := gameState.AllianceHelpRequests.PendingOtherListIDs; len(pending) != 0 {
+		t.Fatalf("confirmed request remained pending: %#v", pending)
+	}
+
+	gameState.AllianceHelpRequests.PendingOtherListIDs = []int64{102, 103}
+	deleteFrame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "ahd", ResponseCode: &responseCode,
+		ReceivedAt: confirmedFrame.ReceivedAt.Add(time.Second), Payload: json.RawMessage(`{"LID":102}`),
+	}
+	if _, changed, err := reduceAllianceHelpDelete(t.Context(), deleteFrame, &gameState, gameData); err != nil || !changed {
+		t.Fatalf("delete alliance help changed=%t err=%v", changed, err)
+	}
+	if pending := gameState.AllianceHelpRequests.PendingOtherListIDs; len(pending) != 1 || pending[0] != 103 {
+		t.Fatalf("remaining pending requests = %#v, want [103]", pending)
+	}
+}
+
+func allianceHelpReducerTestGameData(t *testing.T) *GameData.Store {
+	t.Helper()
+	store, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"alliancehelprequests":[
+			{"allianceHelpRequestID":"2","maxHelpersCount":"5"},
+			{"allianceHelpRequestID":"6","maxHelpersCount":"3"}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return store
 }
 
 func TestProductionCommandLearnsSessionKeyFromOutboundFrame(t *testing.T) {

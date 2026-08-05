@@ -393,10 +393,10 @@ func TestFoodBalancePolicyContinuesPastIncomingFoodToShipMead(t *testing.T) {
 	}
 	storm := foodBalanceCastle(20, 4, 576, 669, now)
 	storm.Name = "Storm"
-	storm.Resources[5] = State.ResourceBalance{
-		ProductionPerHour: float64Pointer(0), ConsumptionPerHour: float64Pointer(0),
+	storm.Resources[5] = foodBalanceStorage(State.ResourceBalance{
+		Amount: 80_800, ProductionPerHour: float64Pointer(0), ConsumptionPerHour: float64Pointer(0),
 		ConsumptionMultiplier: float64Pointer(1),
-	}
+	}, 80_800)
 	storm.Resources[11] = State.ResourceBalance{ProductionPerHour: float64Pointer(0)}
 	storm.Resources[12] = foodBalanceStorage(State.ResourceBalance{
 		Amount: 0, ProductionPerHour: float64Pointer(0),
@@ -459,7 +459,7 @@ func TestFoodBalancePolicyContinuesPastIncomingFoodToShipMead(t *testing.T) {
 	}
 }
 
-func TestFoodBalancePolicyDoesNotShipFoodToZeroConsumptionCastle(t *testing.T) {
+func TestFoodBalancePolicyKeepsStormFoodAndMeadFullWithoutConsumption(t *testing.T) {
 	now := time.Date(2026, 7, 29, 12, 0, 0, 0, time.UTC)
 	gameData := foodBalanceGameData(t)
 	state := State.NewGameState()
@@ -478,6 +478,9 @@ func TestFoodBalancePolicyDoesNotShipFoodToZeroConsumptionCastle(t *testing.T) {
 		ProductionPerHour: float64Pointer(0), ConsumptionPerHour: float64Pointer(0),
 		ConsumptionMultiplier: float64Pointer(1),
 	}, 0)
+	// Storm refill planning must not attempt a normal troop-consumption
+	// estimate, even when the Storm garrison contains an unknown unit.
+	storm.Units.Stationed[999_999] = 1
 	donor := foodBalanceCastle(20, 0, 212, 941, now)
 	donor.Resources[5] = foodBalanceStorage(State.ResourceBalance{
 		Amount: 1_000_000, ProductionPerHour: float64Pointer(0),
@@ -485,7 +488,7 @@ func TestFoodBalancePolicyDoesNotShipFoodToZeroConsumptionCastle(t *testing.T) {
 	}, 1_000_000)
 	donor.Resources[11] = foodBalanceStorage(State.ResourceBalance{ProductionPerHour: float64Pointer(0)}, 1_000_000)
 	donor.Resources[12] = foodBalanceStorage(State.ResourceBalance{
-		ProductionPerHour: float64Pointer(0), ConsumptionPerHour: float64Pointer(0),
+		Amount: 1_000_000, ProductionPerHour: float64Pointer(0), ConsumptionPerHour: float64Pointer(0),
 		ConsumptionMultiplier: float64Pointer(1),
 	}, 1_000_000)
 	donor.Resources[13] = foodBalanceStorage(State.ResourceBalance{
@@ -501,13 +504,66 @@ func TestFoodBalancePolicyDoesNotShipFoodToZeroConsumptionCastle(t *testing.T) {
 			4: {KingdomID: 4, Unlocked: true},
 		},
 	}
+	projections, projectionErr := foodBalanceProjections(foodBalanceSnapshot(state, gameData, now))
+	if projectionErr != nil {
+		t.Fatal(projectionErr)
+	}
+	risks := foodBalanceRisks(projections, foodBalanceSettings{SafetyHours: 8})
+	if len(risks) < 2 || risks[0].rate.ResourceJSONKey != "MEAD" {
+		t.Fatalf("Storm refill order = %#v", risks)
+	}
+	donors := foodBalanceDonors(foodBalanceSettings{SourceSafetyHours: 24, MinimumSourceReserve: 1}, projections, risks[0])
+	if len(donors) != 1 || donors[0].projection.castle.ID != donor.ID {
+		t.Fatalf("Storm Mead donors = %#v; rate=%#v", donors, projections[donor.ID].consumed.ByResource[12])
+	}
 
 	decision, err := NewFoodBalancePolicy().Evaluate(context.Background(), foodBalanceSnapshot(state, gameData, now))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decision.Request != nil || decision.Status != "idle" {
+	if decision.Request == nil || decision.Request.Name != "resource.ship" {
 		t.Fatalf("zero-consumption Storm decision = %#v", decision)
+	}
+	var request struct {
+		TargetCastleID State.CastleID   `json:"targetCastleId"`
+		ResourceID     State.ResourceID `json:"resourceId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.TargetCastleID != storm.ID || request.ResourceID != 12 {
+		t.Fatalf("first Storm refill = %#v, want Mead", request)
+	}
+
+	storm.Resources[12] = foodBalanceStorage(State.ResourceBalance{
+		Amount: 186_500, ProductionPerHour: float64Pointer(0),
+		ConsumptionPerHour: float64Pointer(0), ConsumptionMultiplier: float64Pointer(1),
+	}, 186_500)
+	state.Castles[storm.ID] = storm
+	decision, err = NewFoodBalancePolicy().Evaluate(context.Background(), foodBalanceSnapshot(state, gameData, now))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request == nil || decision.Request.Name != "resource.ship" {
+		t.Fatalf("Storm Food refill decision = %#v", decision)
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.TargetCastleID != storm.ID || request.ResourceID != 5 {
+		t.Fatalf("second Storm refill = %#v, want Food", request)
+	}
+}
+
+func TestFoodBalanceStormFillDoesNotWaitForMinimumShipment(t *testing.T) {
+	settings := foodBalanceSettings{MinimumShipmentSize: 1_000}
+	risk := foodBalanceRisk{fillToCapacity: true}
+	amount, ready := foodBalanceKingdomDispatchAmountForRisk(settings, risk, 90)
+	if !ready || amount != 100 {
+		t.Fatalf("Storm residual refill = %.0f ready=%t, want 100 ready", amount, ready)
+	}
+	if amount, ready = foodBalanceKingdomDispatchAmount(settings, 90); ready || amount != 100 {
+		t.Fatalf("ordinary residual refill = %.0f ready=%t, want minimum-shipment wait", amount, ready)
 	}
 }
 
