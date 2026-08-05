@@ -27,6 +27,7 @@ import (
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
 	"CitadelDesktop/Server/Telemetry"
+	"CitadelDesktop/Server/WorldIntel"
 )
 
 const GameDataRefreshInterval = 6 * time.Hour
@@ -55,11 +56,13 @@ type Application struct {
 	ProfileLease   *RuntimeKernel.ProfileLease
 	Automation     *Automation.Coordinator
 	Reports        *Reports.Manager
+	BattleResearch *Reports.BattleResearchManager
 	ReportStore    *Reports.SQLiteStore
 	Scheduler      *Scheduling.Scheduler
 	API            *API.Server
 	Updates        *AppUpdate.Manager
 	Diagnostics    *Diagnostics.Monitor
+	WorldIntel     *WorldIntel.DesktopService
 	StartupErr     error
 
 	statePersistenceMu  sync.Mutex
@@ -193,6 +196,21 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err := restoreRecentAutoStormLaunchHistory(ctx, state, reportStore); err != nil {
 		return nil, fmt.Errorf("restore recent Auto Storm launch history: %w", err)
 	}
+	worldIntelligence, err := WorldIntel.NewDesktopService(
+		config.DataDir,
+		state,
+		configuration,
+		WorldIntel.NewCloudClient(WorldIntel.ClientConfig{ClientVersion: Version}),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("open world intelligence service: %w", err)
+	}
+	closeWorldIntelligence := true
+	defer func() {
+		if closeWorldIntelligence {
+			_ = worldIntelligence.Close()
+		}
+	}()
 	application := &Application{
 		DataDir: config.DataDir,
 		State:   state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
@@ -203,6 +221,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			InstallSupported: config.UpdateInstallSupported,
 		}),
 		Diagnostics: Diagnostics.NewMonitor(config.DataDir),
+		WorldIntel:  worldIntelligence,
 	}
 	session.SetAttackDelayProvider(application.attackLaunchDelay)
 	if relogTransport, ok := transport.(Session.RelogDelayTransport); ok {
@@ -257,14 +276,20 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewAutoStormBuildPolicy(),
 	)
 	application.Reports = Reports.NewManager(state, history, intents, reportStore)
+	application.BattleResearch = Reports.NewBattleResearchManager(
+		state, configuration, gameData, intents, ingest, reportStore, application.Reports.CloudClient(),
+	)
+	application.Reports.SetArchiveObserver(application.BattleResearch)
 	application.API = API.NewServer(API.Config{
 		Version: Version, State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
 		Intents: intents, ReportAnalytics: reportStore, Session: session, Updates: application.Updates, Diagnostics: application.Diagnostics,
-		CloudReports: application.Reports.CloudClient(), Persistence: application,
+		CloudReports: application.Reports.CloudClient(), BattleResearch: application.BattleResearch, Persistence: application,
+		WorldIntel: application.WorldIntel,
 	})
 	closeOperationStore = false
 	closeReportStore = false
 	closeProfileLease = false
+	closeWorldIntelligence = false
 	return application, nil
 }
 
@@ -284,6 +309,13 @@ func (application *Application) start(ctx context.Context) {
 		application.Telemetry.Close()
 		if application.Reports != nil {
 			application.Reports.Wait()
+		}
+		if application.BattleResearch != nil {
+			application.BattleResearch.Wait()
+		}
+		if application.WorldIntel != nil {
+			application.WorldIntel.Wait()
+			_ = application.WorldIntel.Close()
 		}
 		if application.OperationStore != nil {
 			_ = application.OperationStore.Close()
@@ -315,6 +347,8 @@ func (application *Application) start(ctx context.Context) {
 	go application.runMovementClock(ctx)
 	go application.Automation.Run(ctx)
 	go application.Reports.Run(ctx)
+	go application.BattleResearch.Run(ctx)
+	go application.WorldIntel.Run(ctx)
 	go application.Scheduler.Run(ctx)
 }
 
@@ -405,7 +439,14 @@ func (application *Application) PersistenceError() error {
 	if reportErr != nil {
 		reportErr = fmt.Errorf("report analytics persistence: %w", reportErr)
 	}
-	return errors.Join(actionErr, reportErr)
+	var worldIntelErr error
+	if application.WorldIntel != nil {
+		worldIntelErr = application.WorldIntel.PersistenceError()
+	}
+	if worldIntelErr != nil {
+		worldIntelErr = fmt.Errorf("world intelligence persistence: %w", worldIntelErr)
+	}
+	return errors.Join(actionErr, reportErr, worldIntelErr)
 }
 
 func (application *Application) actionPersistenceError() error {
@@ -680,21 +721,23 @@ func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, 
 
 func defaultConfiguration() map[string]json.RawMessage {
 	return map[string]json.RawMessage{
-		"scheduler":                          json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"botLocked":false,"attackPriorities":{"autoTowers":50,"autoAdvisor":50,"autoBeriWorld":50,"autoStorm":50,"riftMaiden":50,"riftReplay":50},"featureSchedules":{}}`),
-		"session.connection":                 json.RawMessage(`{"mode":"full"}`),
-		"session.reconnect":                  json.RawMessage(`{"relogDelaySec":300}`),
-		"automation.enabled":                 json.RawMessage(`{}`),
-		"automation.autoBeriWorld":           json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30,"presetId":"","attackCheckIntervalSec":30,"horseTravelBoostId":-1,"toolMinimums":{"611":0,"614":0,"620":0},"build":{"enabled":false,"allowPremium":false,"allowDemolition":false,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"requireActiveGallantryBooster":false,"useTroopTransportTimeSkips":false,"troopTransportTimeSkipId":"MS5"}`),
-		"automation.autoBeriWorldBlueprints": json.RawMessage(`{"version":1,"blueprints":{}}`),
-		"automation.commanderFeatures":       json.RawMessage(`{"version":2,"assignments":{},"requirements":{}}`),
-		"automation.autoFoodBalance":         json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{},"horseTravelBoostId":-1}`),
-		"automation.autoTowers":              json.RawMessage(`{"version":2,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"castles":{}}`),
-		"automation.autoInvasion":            json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
-		"automation.autoNomad":               json.RawMessage(`{"version":5,"sourceCastleId":0,"nomadPresetId":"","samuraiPresetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
-		"automation.autoAdvisor":             json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"maxAttackCount":9999,"minimumRemainingSec":1800,"coinCostPerAttack":500,"minimumCoinReserve":0,"rubyCostPerAttack":0,"minimumRubyReserve":0,"minimumFeatherReserve":0,"timeSkipReserve":{},"checkIntervalSec":30,"mapRefreshIntervalSec":300,"horseTravelBoostId":-1}`),
-		"automation.autoKhan":                json.RawMessage(`{"version":1,"sourceCastleId":0,"attackPresetId":"","defensePresetId":"","minimumRemainingSec":300,"checkIntervalSec":30,"defenseRefreshIntervalSec":30,"mapRefreshIntervalSec":30,"dailyAttackLimit":0,"skipCooldowns":true,"timeSkipReserve":{},"openGateProtection":true,"offensiveUnitThreshold":1000,"horseTravelBoostId":-1,"nomadPointThreshold":0,"replenishDefenseTools":false}`),
-		"automation.autoStorm":               json.RawMessage(`{"version":1,"unlock":{"enabled":false,"prebuiltCastleId":0},"decorationPresetCastleId":0,"decorationPresetId":"","build":{"allowPremium":false,"allowDemolition":false,"allowResourceTransport":true,"allowTimeSkips":false,"resourceReserves":{},"sourceResourceReserves":{},"timeSkipReserve":{}},"harbor":{"enabled":false,"targetLevel":1},"forts":{"enabled":false,"levels":[40,50,60,70,80],"minimumWins":0,"presetId":""},"islands":{"enabled":false,"resources":["wood","stone","aquamarine"],"sizes":["large","small"],"presetId":"","defenseUnits":[]},"troopImport":{"enabled":false,"donorCastleIds":[],"minimumTroops":0,"historyHours":24},"aquamarine":{"reserve":0,"shopTableId":0,"purchases":[]},"targetPriority":["fort:80","fort:70","fort:60","fort:50","fort:40","island:large","island:small"],"checkIntervalSec":30,"mapRefreshIntervalSec":7200,"dailyAttackLimit":0,"horseTravelBoostId":-1}`),
-		"automation.autoStormBlueprints":     json.RawMessage(`{"version":1,"blueprints":{}}`),
-		"rift.attackPreferences":             json.RawMessage(`{"version":1,"replayHorseTravelBoostId":-1,"maidenHorseTravelBoostId":-1}`),
+		"scheduler":          json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"botLocked":false,"attackPriorities":{"autoTowers":50,"autoAdvisor":50,"autoBeriWorld":50,"autoStorm":50,"riftMaiden":50,"riftReplay":50},"featureSchedules":{}}`),
+		"session.connection": json.RawMessage(`{"mode":"full"}`),
+		"session.reconnect":  json.RawMessage(`{"relogDelaySec":300}`),
+		Reports.BattleResearchConfigurationSection: json.RawMessage(`{"enabled":false,"consentVersion":0,"spyCount":1}`),
+		"world-intelligence":                       json.RawMessage(`{"enabled":false,"contributePublicObservations":false}`),
+		"automation.enabled":                       json.RawMessage(`{}`),
+		"automation.autoBeriWorld":                 json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30,"presetId":"","attackCheckIntervalSec":30,"horseTravelBoostId":-1,"toolMinimums":{"611":0,"614":0,"620":0},"build":{"enabled":false,"stableLevel":5,"allowPremium":false,"allowDemolition":false,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"requireActiveGallantryBooster":false,"useTroopTransportTimeSkips":false,"troopTransportTimeSkipId":"MS5"}`),
+		"automation.autoBeriWorldBlueprints":       json.RawMessage(`{"version":1,"blueprints":{}}`),
+		"automation.commanderFeatures":             json.RawMessage(`{"version":2,"assignments":{},"requirements":{}}`),
+		"automation.autoFoodBalance":               json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{},"horseTravelBoostId":-1}`),
+		"automation.autoTowers":                    json.RawMessage(`{"version":2,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"castles":{}}`),
+		"automation.autoInvasion":                  json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
+		"automation.autoNomad":                     json.RawMessage(`{"version":5,"sourceCastleId":0,"nomadPresetId":"","samuraiPresetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
+		"automation.autoAdvisor":                   json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"maxAttackCount":9999,"minimumRemainingSec":1800,"coinCostPerAttack":500,"minimumCoinReserve":0,"rubyCostPerAttack":0,"minimumRubyReserve":0,"minimumFeatherReserve":0,"timeSkipReserve":{},"checkIntervalSec":30,"mapRefreshIntervalSec":300,"horseTravelBoostId":-1}`),
+		"automation.autoKhan":                      json.RawMessage(`{"version":1,"sourceCastleId":0,"attackPresetId":"","defensePresetId":"","minimumRemainingSec":300,"checkIntervalSec":30,"defenseRefreshIntervalSec":30,"mapRefreshIntervalSec":30,"dailyAttackLimit":0,"skipCooldowns":true,"timeSkipReserve":{},"openGateProtection":true,"offensiveUnitThreshold":1000,"horseTravelBoostId":-1,"nomadPointThreshold":0,"replenishDefenseTools":false}`),
+		"automation.autoStorm":                     json.RawMessage(`{"version":1,"unlock":{"enabled":false,"prebuiltCastleId":0},"decorationPresetCastleId":0,"decorationPresetId":"","build":{"allowPremium":false,"allowDemolition":false,"allowResourceTransport":true,"allowTimeSkips":false,"resourceReserves":{},"sourceResourceReserves":{},"timeSkipReserve":{}},"harbor":{"enabled":false,"targetLevel":1},"forts":{"enabled":false,"levels":[40,50,60,70,80],"minimumWins":0,"presetId":""},"islands":{"enabled":false,"resources":["wood","stone","aquamarine"],"sizes":["large","small"],"presetId":"","defenseUnits":[]},"troopImport":{"enabled":false,"donorCastleIds":[],"minimumTroops":0,"historyHours":24},"aquamarine":{"reserve":0,"shopTableId":0,"purchases":[]},"targetPriority":["fort:80","fort:70","fort:60","fort:50","fort:40","island:large","island:small"],"checkIntervalSec":30,"mapRefreshIntervalSec":7200,"dailyAttackLimit":0,"horseTravelBoostId":-1}`),
+		"automation.autoStormBlueprints":           json.RawMessage(`{"version":1,"blueprints":{}}`),
+		"rift.attackPreferences":                   json.RawMessage(`{"version":1,"replayHorseTravelBoostId":-1,"maidenHorseTravelBoostId":-1}`),
 	}
 }

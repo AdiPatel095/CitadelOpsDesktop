@@ -11,6 +11,9 @@ import { useMetadata } from '../../context/MetadataContext';
 import { configurationSection } from '../Configuration';
 import {
 	AUTO_BERI_COIN_ATTACK_TOOLS,
+	AUTO_BERI_DEFAULT_STABLE_LEVEL,
+	AUTO_BERI_MAXIMUM_STABLE_LEVEL,
+	AUTO_BERI_MINIMUM_STABLE_LEVEL,
 	AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS,
 	AUTO_BERI_WORLD_BLUEPRINTS_SECTION,
 	DEFAULT_AUTO_BERI_WORLD_SETTINGS,
@@ -186,7 +189,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		try {
 			await submitIntent('beri.blueprint.activate', { id: '' });
 			setBlueprintPreview(null);
-			Notifications.success('Berimond blueprint reconciliation pause queued. Saved targets were retained.');
+			Notifications.success('The built-in Berimond target is being activated. Saved custom targets were retained.');
 		} catch {
 			// submitIntent reports the operation error.
 		} finally {
@@ -220,7 +223,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			onClose={onClose}
 			title="Auto Beri World"
 			icon={<Swords className="h-5 w-5" />}
-			description="Attack Berimond towers, bring the loot home, and spend only the camp's confirmed resources on a captured build and upgrade target."
+			description="Attack Berimond towers, bring the loot home, and spend only the camp's confirmed resources on the built-in or a captured build target."
 			titleTrailing={(
 					<Button
 						variant="outline"
@@ -262,13 +265,13 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							<Castle className="h-4 w-4 text-primary" /> Loot-funded camp construction
 						</div>
 						<p className="mt-1 text-xs text-text-muted">
-							Captures a durable camp target like Auto Storm, then builds and upgrades only after returned attacks increase the authoritative Berimond wood and stone balances. This lane never transports resources from another kingdom.
+							Uses the built-in exact camp layout by default, then builds and upgrades only after returned attacks increase the authoritative Berimond wood and stone balances. This lane never transports resources from another kingdom.
 						</p>
 					</div>
 
 					<SettingsToggleRow
 						title="Build and upgrade from returned loot"
-						description="Reconcile the active target one confirmed construction operation at a time. When loot is short, the builder waits while the attack lane continues."
+						description="Reconcile the built-in target or an active custom target one confirmed construction operation at a time. When loot is short, the builder waits while attacks continue."
 						icon={<Hammer className="h-4 w-4" />}
 						checked={settings.build.enabled}
 						onChange={(enabled) => setSettings((current) => ({
@@ -277,9 +280,50 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						}))}
 					/>
 
+					<div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+						<div className="flex flex-wrap items-start justify-between gap-3">
+							<div className="min-w-0 flex-1">
+								<div className="flex flex-wrap items-center gap-2">
+									<Badge variant={target ? 'outline' : 'success'}>{target ? 'Built-in available' : 'Active default'}</Badge>
+									<span className="text-sm font-bold text-text-main">Built-in exact camp target</span>
+								</div>
+								<p className="mt-1 text-xs text-text-muted">
+									17 ground tiles, 92 functional buildings, 64 decorations, and 22 fixed targets. All 84 small and large tents plus the Auxiliaries&apos; headquarters resolve to the terminal WoD in current official data.
+								</p>
+							</div>
+							<label className="block w-40 shrink-0">
+								<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">Stable target</span>
+								<Select
+									value={String(settings.build.stableLevel || AUTO_BERI_DEFAULT_STABLE_LEVEL)}
+									onChange={(value) => setSettings((current) => ({
+										...current,
+										build: {
+											...current.build,
+											stableLevel: Math.min(
+												AUTO_BERI_MAXIMUM_STABLE_LEVEL,
+												Math.max(AUTO_BERI_MINIMUM_STABLE_LEVEL, Number(value) || AUTO_BERI_DEFAULT_STABLE_LEVEL),
+											),
+										},
+									}))}
+									options={Array.from(
+										{ length: AUTO_BERI_MAXIMUM_STABLE_LEVEL - AUTO_BERI_MINIMUM_STABLE_LEVEL + 1 },
+										(_, index) => {
+											const level = AUTO_BERI_MINIMUM_STABLE_LEVEL + index;
+											return { value: String(level), label: `Level ${level}` };
+										},
+									)}
+									menuGrowToViewport
+								/>
+							</label>
+						</div>
+						<p className="mt-2 text-[11px] text-text-muted">
+							The Stable level is resolved to its official Berimond WoD when the built-in target is active. An already-higher Stable is retained rather than demolished or downgraded. Maximum Large-tent steps with official premium costs stay gated by “Allow premium costs.” Custom captured targets retain their own Stable definition.
+						</p>
+					</div>
+
 					<div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
 						<label className="block">
-							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">Berimond camp to capture</span>
+							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">Optional custom camp target</span>
 							<Select
 								value={captureCastle ? String(captureCastle.id) : ''}
 								onChange={(value) => setCaptureCastleId(Number(value) || 0)}
@@ -357,9 +401,9 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 									variant="ghost"
 									disabled={capturing != null || blueprintBusy}
 									onClick={() => void deactivateBlueprint()}
-									leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+									leftIcon={<Hammer className="h-3.5 w-3.5" />}
 								>
-									Pause target
+									Use built-in default
 								</Button>
 							</div>
 							<div className="mt-3 flex flex-wrap gap-2">
@@ -376,7 +420,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						</div>
 					) : (
 						<p className="rounded-xl border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
-							Capture or activate a target before enabling construction. Combat, transfers, and tool purchases remain independent.
+							The built-in exact target is active. Capture a custom target only when you want to replace it; combat, transfers, and tool purchases remain independent.
 						</p>
 					)}
 
@@ -393,7 +437,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						/>
 						<SettingsToggleRow
 							title="Allow premium costs"
-							description="Permit captured dependencies that spend premium currency."
+							description="Permit built-in or captured target steps that spend premium currency, including eligible Large-tent upgrades."
 							icon={<Zap className="h-4 w-4" />}
 							checked={settings.build.allowPremium}
 							onChange={(allowPremium) => setSettings((current) => ({

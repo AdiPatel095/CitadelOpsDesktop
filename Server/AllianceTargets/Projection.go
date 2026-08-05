@@ -11,57 +11,58 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/State"
+	"CitadelDesktop/Server/WorldIntel"
 )
 
-func buildTrackerTargets(gameState State.GameState, detail trackerAllianceDetail, cartography []trackerCartographyPlayer) []Target {
-	castlesByName := make(map[string][]Castle, len(cartography))
-	for _, player := range cartography {
-		if castles := attackableTargetCastles(player.Castles); len(castles) > 0 {
-			castlesByName[strings.ToLower(strings.TrimSpace(player.Name))] = castles
-		}
+func buildCloudTargets(gameState State.GameState, profile WorldIntel.AllianceProfile) []Target {
+	members := make(map[int64]WorldIntel.PlayerObservation, len(profile.Members))
+	for _, member := range profile.Members {
+		members[member.PlayerID] = member
 	}
-	now := time.Now().UTC()
-	rows := make([]Target, 0, len(detail.Players)*4)
-	for _, player := range detail.Players {
-		castles := castlesByName[strings.ToLower(strings.TrimSpace(player.Name))]
-		birdUntil, _ := time.Parse(time.RFC3339Nano, player.BirdUntil)
-		rpt := 0
-		if birdUntil.After(now) {
-			rpt = int(birdUntil.Sub(now).Seconds())
+	rows := make([]Target, 0, len(profile.Holdings))
+	for _, holding := range profile.Holdings {
+		if holding.KingdomID != 0 || !attackableCastleType(holding.SlotType) {
+			continue
 		}
-		for _, targetCastle := range castles {
-			closest, distance, found := closestOwnedCastle(gameState, targetCastle.X, targetCastle.Y)
-			if !found {
-				continue
-			}
-			rows = append(rows, Target{
-				PlayerID: trackerGameID(player.PlayerID), Name: player.Name,
-				Level: int(player.Level), LegendLevel: int(player.LegendLevel), Might: int64(player.Might),
-				UnderBird: rpt > 0, RPTSeconds: rpt, BirdUntil: player.BirdUntil, UpdatedAt: player.UpdatedAt,
-				TargetCastle: targetCastle, ClosestOwnCastle: closest, Distance: roundDistance(distance),
-			})
+		member, found := members[holding.PlayerID]
+		if !found {
+			continue
 		}
+		targetCastle := Castle{
+			CastleID: holding.CastleID, TypeName: castleTypeName(holding.SlotType),
+			X: holding.X, Y: holding.Y, TypeID: holding.SlotType,
+		}
+		closest, distance, found := closestOwnedCastle(gameState, holding.X, holding.Y)
+		if !found {
+			continue
+		}
+		rows = append(rows, Target{
+			PlayerID: member.PlayerID, Name: member.Name,
+			Level: member.Level, LegendLevel: member.LegendLevel, Might: int64(member.Might),
+			UpdatedAt: member.ObservedAt.Format(time.RFC3339), TargetCastle: targetCastle,
+			ClosestOwnCastle: closest, Distance: roundDistance(distance),
+		})
 	}
 	sortTargets(rows)
 	return rows
 }
 
-func buildLiveTargets(gameState State.GameState, alliance State.AllianceState, detail trackerAllianceDetail) []Target {
+func buildLiveTargets(gameState State.GameState, alliance State.AllianceState, cloudMembers []WorldIntel.PlayerObservation) []Target {
 	metadata := make(map[int64]struct {
 		might       int64
 		level       int
 		legendLevel int
 		updatedAt   string
-	}, len(detail.Players))
-	for _, player := range detail.Players {
-		metadata[trackerGameID(player.PlayerID)] = struct {
+	}, len(cloudMembers))
+	for _, player := range cloudMembers {
+		metadata[player.PlayerID] = struct {
 			might       int64
 			level       int
 			legendLevel int
 			updatedAt   string
 		}{
-			might: int64(player.Might), level: int(player.Level), legendLevel: int(player.LegendLevel),
-			updatedAt: player.UpdatedAt,
+			might: int64(player.Might), level: player.Level, legendLevel: player.LegendLevel,
+			updatedAt: player.ObservedAt.Format(time.RFC3339),
 		}
 	}
 	holdings := make(map[State.PlayerID][]State.AllianceHolding, len(alliance.Members))

@@ -8,6 +8,7 @@ import type {
 	AllianceTargetAttackPreviewV2,
 	ApplicationUpdateV2,
 	AttackLaunchRatesV2,
+	BattleResearchStatusV2,
 	AutoStormTroopCapPreviewRequest,
 	AutoStormTroopCapPreviewV2,
 	BuildingCatalogQuery,
@@ -32,6 +33,12 @@ import type {
 	RuntimeDiagnosticsV2,
 	SettingsBundleV1,
 	SettingsImportResult,
+	WorldIntelligenceAllianceProfileV1,
+	WorldIntelligenceCoverageResponseV1,
+	WorldIntelligencePlayerProfileV1,
+	WorldIntelligenceRankingResponseV1,
+	WorldIntelligenceSearchResponseV1,
+	WorldIntelligenceStatusV1,
   SubmitIntentOptions,
 } from './Contracts';
 
@@ -132,6 +139,10 @@ class CitadelClient {
 		return this.request<AttackLaunchRatesV2>('/api/v2/telemetry/attack-rates');
 	}
 
+	getBattleResearchStatus(): Promise<BattleResearchStatusV2> {
+		return this.request<BattleResearchStatusV2>('/api/v2/battle-research');
+	}
+
   getBrowsers(): Promise<BrowserInventory> {
     return this.request<BrowserInventory>('/api/v2/browsers');
   }
@@ -187,6 +198,62 @@ class CitadelClient {
 			method: 'POST',
 			body: JSON.stringify(input),
 		});
+	}
+
+	getWorldIntelligenceStatus(): Promise<WorldIntelligenceStatusV1> {
+		return this.request<WorldIntelligenceStatusV1>('/api/v2/world-intelligence/status');
+	}
+
+	searchWorldIntelligence(input: {
+		worldId?: string;
+		query?: string;
+		type?: 'player' | 'alliance';
+		limit?: number;
+	} = {}): Promise<WorldIntelligenceSearchResponseV1> {
+		const query = new URLSearchParams();
+		if (input.worldId?.trim()) query.set('worldId', input.worldId.trim());
+		if (input.query?.trim()) query.set('q', input.query.trim());
+		if (input.type) query.set('type', input.type);
+		if (input.limit != null) query.set('limit', String(input.limit));
+		const suffix = query.size > 0 ? `?${query.toString()}` : '';
+		return this.request<WorldIntelligenceSearchResponseV1>(`/api/v2/world-intelligence/search${suffix}`);
+	}
+
+	getWorldIntelligencePlayer(worldId: string, playerId: number, limit = 365): Promise<WorldIntelligencePlayerProfileV1> {
+		const query = new URLSearchParams({ worldId, limit: String(limit) });
+		return this.request<WorldIntelligencePlayerProfileV1>(
+			`/api/v2/world-intelligence/players/${encodeURIComponent(String(playerId))}?${query.toString()}`,
+		);
+	}
+
+	getWorldIntelligenceAlliance(worldId: string, allianceId: number, limit = 365): Promise<WorldIntelligenceAllianceProfileV1> {
+		const query = new URLSearchParams({ worldId, limit: String(limit) });
+		return this.request<WorldIntelligenceAllianceProfileV1>(
+			`/api/v2/world-intelligence/alliances/${encodeURIComponent(String(allianceId))}?${query.toString()}`,
+		);
+	}
+
+	getWorldIntelligenceRankings(input: {
+		worldId: string;
+		type: 'players' | 'alliances';
+		metric: string;
+		limit?: number;
+	}): Promise<WorldIntelligenceRankingResponseV1> {
+		const query = new URLSearchParams({
+			worldId: input.worldId,
+			metric: input.metric,
+			limit: String(input.limit ?? 100),
+		});
+		return this.request<WorldIntelligenceRankingResponseV1>(
+			`/api/v2/world-intelligence/rankings/${input.type}?${query.toString()}`,
+		);
+	}
+
+	getWorldIntelligenceCoverage(worldId = ''): Promise<WorldIntelligenceCoverageResponseV1> {
+		const query = new URLSearchParams();
+		if (worldId.trim()) query.set('worldId', worldId.trim());
+		const suffix = query.size > 0 ? `?${query.toString()}` : '';
+		return this.request<WorldIntelligenceCoverageResponseV1>(`/api/v2/world-intelligence/coverage${suffix}`);
 	}
 
 	previewAutoStormTroopCap(input: AutoStormTroopCapPreviewRequest): Promise<AutoStormTroopCapPreviewV2> {

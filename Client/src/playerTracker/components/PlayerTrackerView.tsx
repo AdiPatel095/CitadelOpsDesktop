@@ -42,7 +42,7 @@ interface PlayerTrackerSample {
 interface TrackerMetricPoint {
   timestampUnix: number;
   value: number;
-  source: 'local' | 'gge-tracker';
+  source: 'local';
 }
 
 interface TrackerFallbackInfo {
@@ -135,7 +135,7 @@ const emptyResponse: PlayerTrackerResponse = {
   samples: [],
   series: {},
   intervalSeconds: 60,
-  fallback: { provider: 'gge-tracker', status: 'not-needed' },
+  fallback: { provider: 'citadel-history', status: 'not-needed' },
   coverage: { loot: false, eventScores: false },
 };
 
@@ -407,11 +407,6 @@ const PlayerTrackerView = () => {
             {formatSampleInterval(scopedTracker.intervalSeconds)} samples
           </Badge>
           {loading && <Badge variant="outline">Loading history…</Badge>}
-          {(scopedTracker.fallback.status === 'backfilled' || scopedTracker.fallback.status === 'partial') && (
-            <Badge variant="secondary">
-              GGE Tracker backfill · {scopedTracker.fallback.pointsAdded ?? 0} points
-            </Badge>
-          )}
           {loadError && <Badge variant="danger">Live values only</Badge>}
           </div>
         )}
@@ -514,12 +509,6 @@ const PlayerTrackerView = () => {
                 selectedWindow={customWindow}
                 onWindowSelect={setCustomWindow}
               />
-              {displayedPoints.some((point) => point.source === 'gge-tracker') && (
-                <div className="mt-3 flex items-center gap-2 text-xs text-text-muted">
-                  <span className="h-2 w-2 rounded-full bg-info" />
-                  Missing intervals were filled by GGE Tracker; local observations take priority.
-                </div>
-              )}
               <div className="mt-3 flex justify-between text-xs text-text-muted">
                 <span>{displayedPoints.length > 0 ? formatDate(displayedPoints[0].timestampUnix) : 'Waiting for history'}</span>
                 <span>{displayedPoints.length} sample{displayedPoints.length === 1 ? '' : 's'}</span>
@@ -1545,7 +1534,7 @@ function normalizeResponse(
     series: normalizeSeries(value?.series, samples, current, definitions),
     intervalSeconds: finite(value?.intervalSeconds) || 60,
     fallback: {
-      provider: value?.fallback?.provider || 'gge-tracker',
+      provider: value?.fallback?.provider || 'citadel-history',
       status: value?.fallback?.status || 'not-needed',
       server: value?.fallback?.server,
       playerName: value?.fallback?.playerName,
@@ -1592,7 +1581,7 @@ function normalizeSeries(
         .map((point) => ({
           timestampUnix: point.timestampUnix,
           value: point.value,
-          source: point.source === 'gge-tracker' ? 'gge-tracker' : 'local',
+          source: 'local',
         }))
         .sort((a, b) => a.timestampUnix - b.timestampUnix);
     }

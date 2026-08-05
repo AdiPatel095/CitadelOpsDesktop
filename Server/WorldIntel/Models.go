@@ -1,0 +1,349 @@
+package WorldIntel
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"net/url"
+	"sort"
+	"strings"
+	"time"
+)
+
+const (
+	SchemaVersion        = 1
+	MaximumPlayers       = 500
+	MaximumAlliances     = 100
+	MaximumHoldings      = 2_000
+	MaximumEventRankings = 1_000
+)
+
+type PlayerObservation struct {
+	WorldID      string    `json:"worldId"`
+	PlayerID     int64     `json:"playerId"`
+	Name         string    `json:"name"`
+	AllianceID   int64     `json:"allianceId,omitempty"`
+	AllianceName string    `json:"allianceName,omitempty"`
+	Level        int       `json:"level,omitempty"`
+	LegendLevel  int       `json:"legendLevel,omitempty"`
+	Might        float64   `json:"might,omitempty"`
+	Glory        float64   `json:"glory,omitempty"`
+	Source       string    `json:"source"`
+	ObservedAt   time.Time `json:"observedAt"`
+}
+
+type AllianceObservation struct {
+	WorldID     string    `json:"worldId"`
+	AllianceID  int64     `json:"allianceId"`
+	Name        string    `json:"name"`
+	MemberCount int       `json:"memberCount,omitempty"`
+	TotalMight  float64   `json:"totalMight,omitempty"`
+	Source      string    `json:"source"`
+	ObservedAt  time.Time `json:"observedAt"`
+}
+
+type HoldingObservation struct {
+	WorldID    string    `json:"worldId"`
+	AllianceID int64     `json:"allianceId"`
+	PlayerID   int64     `json:"playerId"`
+	CastleID   int64     `json:"castleId"`
+	KingdomID  int64     `json:"kingdomId"`
+	X          int       `json:"x"`
+	Y          int       `json:"y"`
+	SlotType   int       `json:"slotType"`
+	ObservedAt time.Time `json:"observedAt"`
+}
+
+type EventRankingObservation struct {
+	WorldID      string    `json:"worldId"`
+	EventID      int64     `json:"eventId"`
+	AllianceID   int64     `json:"allianceId"`
+	AllianceName string    `json:"allianceName"`
+	Rank         int64     `json:"rank"`
+	Score        int64     `json:"score"`
+	MemberCount  int64     `json:"memberCount,omitempty"`
+	FamePoints   int64     `json:"famePoints,omitempty"`
+	ObservedAt   time.Time `json:"observedAt"`
+}
+
+type ObservationBatch struct {
+	SchemaVersion int                       `json:"schemaVersion"`
+	BatchID       string                    `json:"batchId"`
+	WorldID       string                    `json:"worldId"`
+	CapturedAt    time.Time                 `json:"capturedAt"`
+	Players       []PlayerObservation       `json:"players"`
+	Alliances     []AllianceObservation     `json:"alliances"`
+	Holdings      []HoldingObservation      `json:"holdings"`
+	EventRankings []EventRankingObservation `json:"eventRankings"`
+}
+
+type InstallationRegistration struct {
+	InstallationID string `json:"installationId"`
+	Secret         string `json:"secret"`
+	ClientVersion  string `json:"clientVersion,omitempty"`
+}
+
+type IngestResponse struct {
+	Accepted bool   `json:"accepted"`
+	BatchID  string `json:"batchId"`
+}
+
+type DesktopStatus struct {
+	Enabled          bool       `json:"enabled"`
+	Contributing     bool       `json:"contributing"`
+	WorldID          string     `json:"worldId,omitempty"`
+	Endpoint         string     `json:"endpoint"`
+	PendingBatches   int        `json:"pendingBatches"`
+	LastCapturedAt   *time.Time `json:"lastCapturedAt,omitempty"`
+	LastUploadAt     *time.Time `json:"lastUploadAt,omitempty"`
+	LastUploadError  string     `json:"lastUploadError,omitempty"`
+	PublicFieldsOnly bool       `json:"publicFieldsOnly"`
+}
+
+type SearchResult struct {
+	Type           string    `json:"type"`
+	WorldID        string    `json:"worldId"`
+	ID             int64     `json:"id"`
+	Name           string    `json:"name"`
+	AllianceID     int64     `json:"allianceId,omitempty"`
+	AllianceName   string    `json:"allianceName,omitempty"`
+	Level          int       `json:"level,omitempty"`
+	LegendLevel    int       `json:"legendLevel,omitempty"`
+	Might          float64   `json:"might,omitempty"`
+	Glory          float64   `json:"glory,omitempty"`
+	MemberCount    int       `json:"memberCount,omitempty"`
+	LastObservedAt time.Time `json:"lastObservedAt"`
+}
+
+type SearchResponse struct {
+	WorldID string         `json:"worldId"`
+	Query   string         `json:"query"`
+	Results []SearchResult `json:"results"`
+}
+
+type PlayerProfile struct {
+	Current PlayerObservation   `json:"current"`
+	History []PlayerObservation `json:"history"`
+}
+
+type AllianceProfile struct {
+	Current  AllianceObservation   `json:"current"`
+	History  []AllianceObservation `json:"history"`
+	Members  []PlayerObservation   `json:"members"`
+	Holdings []HoldingObservation  `json:"holdings"`
+}
+
+type RankingEntry struct {
+	Rank           int       `json:"rank"`
+	Type           string    `json:"type"`
+	WorldID        string    `json:"worldId"`
+	ID             int64     `json:"id"`
+	Name           string    `json:"name"`
+	AllianceID     int64     `json:"allianceId,omitempty"`
+	AllianceName   string    `json:"allianceName,omitempty"`
+	Level          int       `json:"level,omitempty"`
+	LegendLevel    int       `json:"legendLevel,omitempty"`
+	Might          float64   `json:"might,omitempty"`
+	Glory          float64   `json:"glory,omitempty"`
+	MemberCount    int       `json:"memberCount,omitempty"`
+	Value          float64   `json:"value"`
+	LastObservedAt time.Time `json:"lastObservedAt"`
+}
+
+type RankingResponse struct {
+	WorldID string         `json:"worldId"`
+	Type    string         `json:"type"`
+	Metric  string         `json:"metric"`
+	Entries []RankingEntry `json:"entries"`
+}
+
+type WorldCoverage struct {
+	WorldID          string     `json:"worldId"`
+	Players          int64      `json:"players"`
+	Alliances        int64      `json:"alliances"`
+	Holdings         int64      `json:"holdings"`
+	ObservationCount int64      `json:"observationCount"`
+	FirstObservedAt  *time.Time `json:"firstObservedAt,omitempty"`
+	LastObservedAt   *time.Time `json:"lastObservedAt,omitempty"`
+}
+
+type CoverageResponse struct {
+	Worlds []WorldCoverage `json:"worlds"`
+}
+
+func NormalizeWorldID(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	candidate := value
+	hasScheme := strings.Contains(value, "://")
+	if !hasScheme {
+		candidate = "//" + value
+	}
+	if parsed, err := url.Parse(candidate); err == nil && parsed.Hostname() != "" {
+		host := strings.ToLower(parsed.Hostname())
+		if port := parsed.Port(); port != "" {
+			scheme := strings.ToLower(parsed.Scheme)
+			standardPort := !hasScheme && (port == "80" || port == "443") ||
+				(scheme == "https" || scheme == "wss") && port == "443" ||
+				(scheme == "http" || scheme == "ws") && port == "80"
+			if !standardPort {
+				host += ":" + port
+			}
+		}
+		return host
+	}
+	return strings.ToLower(strings.TrimSuffix(value, "/"))
+}
+
+func FinalizeBatch(batch ObservationBatch) (ObservationBatch, error) {
+	batch.SchemaVersion = SchemaVersion
+	batch.WorldID = NormalizeWorldID(batch.WorldID)
+	batch.CapturedAt = batch.CapturedAt.UTC().Truncate(time.Second)
+	batch.BatchID = ""
+	normalizeBatch(&batch)
+	if err := ValidateBatch(batch); err != nil {
+		return ObservationBatch{}, err
+	}
+	payload, err := json.Marshal(batch)
+	if err != nil {
+		return ObservationBatch{}, fmt.Errorf("encode observation batch identity: %w", err)
+	}
+	digest := sha256.Sum256(payload)
+	batch.BatchID = hex.EncodeToString(digest[:])
+	return batch, nil
+}
+
+func ValidateFinalizedBatch(batch ObservationBatch) error {
+	provided := strings.ToLower(strings.TrimSpace(batch.BatchID))
+	if len(provided) != sha256.Size*2 {
+		return fmt.Errorf("batchId must be a SHA-256 digest")
+	}
+	rebuilt, err := FinalizeBatch(batch)
+	if err != nil {
+		return err
+	}
+	if rebuilt.BatchID != provided {
+		return fmt.Errorf("batchId does not match the observation payload")
+	}
+	return nil
+}
+
+func ValidateBatch(batch ObservationBatch) error {
+	if batch.SchemaVersion != SchemaVersion {
+		return fmt.Errorf("unsupported observation schema %d", batch.SchemaVersion)
+	}
+	if batch.WorldID == "" || len(batch.WorldID) > 255 {
+		return fmt.Errorf("worldId is required and must be at most 255 characters")
+	}
+	if batch.CapturedAt.IsZero() {
+		return fmt.Errorf("capturedAt is required")
+	}
+	if len(batch.Players) > MaximumPlayers || len(batch.Alliances) > MaximumAlliances ||
+		len(batch.Holdings) > MaximumHoldings || len(batch.EventRankings) > MaximumEventRankings {
+		return fmt.Errorf("observation batch exceeds the allowed entity limits")
+	}
+	if len(batch.Players)+len(batch.Alliances)+len(batch.Holdings)+len(batch.EventRankings) == 0 {
+		return fmt.Errorf("observation batch is empty")
+	}
+	for index, player := range batch.Players {
+		if player.WorldID != batch.WorldID || player.PlayerID <= 0 || player.Name == "" || len(player.Name) > 160 ||
+			player.ObservedAt.IsZero() || !validSource(player.Source) || player.Level < 0 || player.LegendLevel < 0 ||
+			player.Might < 0 || player.Glory < 0 || observationTooFarAhead(player.ObservedAt, batch.CapturedAt) {
+			return fmt.Errorf("players[%d] is invalid", index)
+		}
+	}
+	for index, alliance := range batch.Alliances {
+		if alliance.WorldID != batch.WorldID || alliance.AllianceID <= 0 || alliance.Name == "" || len(alliance.Name) > 160 ||
+			alliance.ObservedAt.IsZero() || !validSource(alliance.Source) || alliance.MemberCount < 0 || alliance.TotalMight < 0 ||
+			observationTooFarAhead(alliance.ObservedAt, batch.CapturedAt) {
+			return fmt.Errorf("alliances[%d] is invalid", index)
+		}
+	}
+	for index, holding := range batch.Holdings {
+		if holding.WorldID != batch.WorldID || holding.AllianceID <= 0 || holding.PlayerID <= 0 || holding.CastleID <= 0 ||
+			holding.KingdomID < 0 || holding.X < 0 || holding.Y < 0 || holding.SlotType < 0 || holding.ObservedAt.IsZero() ||
+			observationTooFarAhead(holding.ObservedAt, batch.CapturedAt) {
+			return fmt.Errorf("holdings[%d] is invalid", index)
+		}
+	}
+	for index, ranking := range batch.EventRankings {
+		if ranking.WorldID != batch.WorldID || ranking.EventID <= 0 || ranking.AllianceID <= 0 || ranking.AllianceName == "" ||
+			len(ranking.AllianceName) > 160 || ranking.Rank <= 0 || ranking.Score < 0 || ranking.ObservedAt.IsZero() ||
+			observationTooFarAhead(ranking.ObservedAt, batch.CapturedAt) {
+			return fmt.Errorf("eventRankings[%d] is invalid", index)
+		}
+	}
+	return nil
+}
+
+func observationTooFarAhead(observedAt time.Time, capturedAt time.Time) bool {
+	// CapturedAt is bucketed for deterministic desktop batches, so a valid row
+	// can be almost one capture bucket newer than the batch timestamp.
+	return observedAt.After(capturedAt.Add(captureBucket + 10*time.Minute))
+}
+
+func normalizeBatch(batch *ObservationBatch) {
+	for index := range batch.Players {
+		row := &batch.Players[index]
+		row.WorldID = batch.WorldID
+		row.Name = cleanText(row.Name, 160)
+		row.AllianceName = cleanText(row.AllianceName, 160)
+		row.Source = strings.TrimSpace(row.Source)
+		row.ObservedAt = row.ObservedAt.UTC().Truncate(time.Second)
+	}
+	for index := range batch.Alliances {
+		row := &batch.Alliances[index]
+		row.WorldID = batch.WorldID
+		row.Name = cleanText(row.Name, 160)
+		row.Source = strings.TrimSpace(row.Source)
+		row.ObservedAt = row.ObservedAt.UTC().Truncate(time.Second)
+	}
+	for index := range batch.Holdings {
+		row := &batch.Holdings[index]
+		row.WorldID = batch.WorldID
+		row.ObservedAt = row.ObservedAt.UTC().Truncate(time.Second)
+	}
+	for index := range batch.EventRankings {
+		row := &batch.EventRankings[index]
+		row.WorldID = batch.WorldID
+		row.AllianceName = cleanText(row.AllianceName, 160)
+		row.ObservedAt = row.ObservedAt.UTC().Truncate(time.Second)
+	}
+	sort.Slice(batch.Players, func(i, j int) bool { return batch.Players[i].PlayerID < batch.Players[j].PlayerID })
+	sort.Slice(batch.Alliances, func(i, j int) bool { return batch.Alliances[i].AllianceID < batch.Alliances[j].AllianceID })
+	sort.Slice(batch.Holdings, func(i, j int) bool {
+		if batch.Holdings[i].AllianceID != batch.Holdings[j].AllianceID {
+			return batch.Holdings[i].AllianceID < batch.Holdings[j].AllianceID
+		}
+		if batch.Holdings[i].PlayerID != batch.Holdings[j].PlayerID {
+			return batch.Holdings[i].PlayerID < batch.Holdings[j].PlayerID
+		}
+		return batch.Holdings[i].CastleID < batch.Holdings[j].CastleID
+	})
+	sort.Slice(batch.EventRankings, func(i, j int) bool {
+		if batch.EventRankings[i].EventID != batch.EventRankings[j].EventID {
+			return batch.EventRankings[i].EventID < batch.EventRankings[j].EventID
+		}
+		return batch.EventRankings[i].Rank < batch.EventRankings[j].Rank
+	})
+}
+
+func validSource(value string) bool {
+	switch value {
+	case "account", "alliance", "event-ranking":
+		return true
+	default:
+		return false
+	}
+}
+
+func cleanText(value string, maximum int) string {
+	value = strings.TrimSpace(strings.Join(strings.Fields(value), " "))
+	if len(value) > maximum {
+		value = value[:maximum]
+	}
+	return value
+}

@@ -78,6 +78,7 @@ type autoEventBuildProfile struct {
 	KingdomID      State.KingdomID
 	FeatureLabel   string
 	AttackLootOnly bool
+	EventID        int64
 }
 
 func autoStormBuildProfile() autoEventBuildProfile {
@@ -527,7 +528,7 @@ func evaluateAutoEventBuild(
 		return autoStormDecorationDecision(snapshot, settings, castle, catalog, metrics, profile)
 	}
 	normalDiff, err := Buildings.CompileTargetDiff(snapshot.State, snapshot.GameData, Buildings.TargetDiffRequest{
-		CastleID: castle.ID, Exact: exact,
+		CastleID: castle.ID, EventID: optionalAutoEventBuildID(profile.EventID), Exact: exact,
 		Policy: Buildings.TargetDiffPolicy{
 			AllowPremium: settings.Build.AllowPremium, IgnoreDecorations: ignoreDecorations,
 			ResourceReserves: settings.Build.ResourceReserves,
@@ -538,7 +539,7 @@ func evaluateAutoEventBuild(
 		return nil, false, "", err
 	}
 	fixedDiff, err := Buildings.CompileFixedTargetDiff(snapshot.State, snapshot.GameData, Buildings.FixedTargetDiffRequest{
-		CastleID: castle.ID,
+		CastleID: castle.ID, EventID: optionalAutoEventBuildID(profile.EventID),
 		Policy: Buildings.TargetDiffPolicy{
 			AllowPremium: settings.Build.AllowPremium, ResourceReserves: settings.Build.ResourceReserves,
 		},
@@ -643,6 +644,14 @@ func evaluateAutoEventBuild(
 		return nil, false, buildWaiting, nil
 	}
 	return autoStormDecorationDecision(snapshot, settings, castle, catalog, metrics, profile)
+}
+
+func optionalAutoEventBuildID(value int64) *int64 {
+	if value <= 0 {
+		return nil
+	}
+	copy := value
+	return &copy
 }
 
 func autoStormTargetActionIssue(diff Buildings.TargetDiffResult, action Buildings.TargetAction) (Buildings.TargetIssue, bool) {

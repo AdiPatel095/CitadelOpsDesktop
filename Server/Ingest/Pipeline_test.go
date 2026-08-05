@@ -13,6 +13,27 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+func TestFrameSubscriberObservesCommittedOutboundFrames(t *testing.T) {
+	pipeline := NewPipeline(State.NewStore(State.NewGameState()), nil, NewRegistry())
+	frames, unsubscribe := pipeline.SubscribeFrames(2)
+	defer unsubscribe()
+	committed, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionOutbound, Opcode: "cra", Payload: json.RawMessage(`{"LID":7,"A":[{}]}`),
+		ReceivedAt: time.Date(2026, 8, 5, 12, 0, 0, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case observed := <-frames:
+		if observed.IngressID != committed.IngressID || observed.Frame.Direction != Protocol.DirectionOutbound || observed.Frame.Opcode != "cra" {
+			t.Fatalf("observed = %#v, committed = %#v", observed, committed)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("subscriber did not receive the committed outbound frame")
+	}
+}
+
 func TestWireObservationPrecedesCommittedStateBarrier(t *testing.T) {
 	registry := NewRegistry()
 	reducerStarted := make(chan struct{})

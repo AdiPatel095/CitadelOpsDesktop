@@ -98,6 +98,208 @@ export interface SettingsImportResult {
 	updatedAt: string;
 }
 
+export interface WorldIntelligenceStatusV1 {
+	enabled: boolean;
+	contributing: boolean;
+	worldId?: string;
+	endpoint: string;
+	pendingBatches: number;
+	lastCapturedAt?: string;
+	lastUploadAt?: string;
+	lastUploadError?: string;
+	publicFieldsOnly: boolean;
+}
+
+export interface WorldIntelligencePlayerObservationV1 {
+	worldId: string;
+	playerId: number;
+	name: string;
+	allianceId?: number;
+	allianceName?: string;
+	level?: number;
+	legendLevel?: number;
+	might?: number;
+	glory?: number;
+	source: 'account' | 'alliance' | 'event-ranking';
+	observedAt: string;
+}
+
+export interface WorldIntelligenceAllianceObservationV1 {
+	worldId: string;
+	allianceId: number;
+	name: string;
+	memberCount?: number;
+	totalMight?: number;
+	source: 'alliance' | 'event-ranking';
+	observedAt: string;
+}
+
+export interface WorldIntelligenceHoldingObservationV1 {
+	worldId: string;
+	allianceId: number;
+	playerId: number;
+	castleId: number;
+	kingdomId: number;
+	x: number;
+	y: number;
+	slotType: number;
+	observedAt: string;
+}
+
+export interface WorldIntelligenceSearchResultV1 {
+	type: 'player' | 'alliance';
+	worldId: string;
+	id: number;
+	name: string;
+	allianceId?: number;
+	allianceName?: string;
+	level?: number;
+	legendLevel?: number;
+	might?: number;
+	glory?: number;
+	memberCount?: number;
+	lastObservedAt: string;
+}
+
+export interface WorldIntelligenceSearchResponseV1 {
+	worldId: string;
+	query: string;
+	results: WorldIntelligenceSearchResultV1[];
+}
+
+export interface WorldIntelligencePlayerProfileV1 {
+	current: WorldIntelligencePlayerObservationV1;
+	history: WorldIntelligencePlayerObservationV1[];
+}
+
+export interface WorldIntelligenceAllianceProfileV1 {
+	current: WorldIntelligenceAllianceObservationV1;
+	history: WorldIntelligenceAllianceObservationV1[];
+	members: WorldIntelligencePlayerObservationV1[];
+	holdings: WorldIntelligenceHoldingObservationV1[];
+}
+
+export interface WorldIntelligenceRankingEntryV1 {
+	rank: number;
+	type: 'player' | 'alliance';
+	worldId: string;
+	id: number;
+	name: string;
+	allianceId?: number;
+	allianceName?: string;
+	level?: number;
+	legendLevel?: number;
+	might?: number;
+	glory?: number;
+	memberCount?: number;
+	value: number;
+	lastObservedAt: string;
+}
+
+export interface WorldIntelligenceRankingResponseV1 {
+	worldId: string;
+	type: 'players' | 'alliances';
+	metric: string;
+	entries: WorldIntelligenceRankingEntryV1[];
+}
+
+export interface WorldIntelligenceWorldCoverageV1 {
+	worldId: string;
+	players: number;
+	alliances: number;
+	holdings: number;
+	observationCount: number;
+	firstObservedAt?: string;
+	lastObservedAt?: string;
+}
+
+export interface WorldIntelligenceCoverageResponseV1 {
+	worlds: WorldIntelligenceWorldCoverageV1[];
+}
+
+export interface BattleResearchPhasePredictionV2 {
+	winner: 'attacker' | 'defender';
+	attackerStarted: number;
+	defenderStarted: number;
+	attackerPower: number;
+	defenderPower: number;
+	attackerLost: number;
+	defenderLost: number;
+	attackerSurvivors: number;
+	defenderSurvivors: number;
+}
+
+export interface BattleResearchWavePredictionV2 {
+	wave: number;
+	left: BattleResearchPhasePredictionV2;
+	center: BattleResearchPhasePredictionV2;
+	right: BattleResearchPhasePredictionV2;
+}
+
+export interface BattleResearchPredictionV2 {
+	modelVersion: string;
+	generatedAt: string;
+	predictedResult: 'Victory' | 'Defeat';
+	attackWinProbability: number;
+	confidence: string;
+	attackerSent: number;
+	defenderObserved: number;
+	expectedAttackerLost: number;
+	expectedDefenderLost: number;
+	expectedAttackerSurvivors: number;
+	expectedDefenderSurvivors: number;
+	unitStatCoverage: number;
+	attackerMeleeBonusPercent?: number;
+	attackerRangeBonusPercent?: number;
+	wallReductionPercent?: number;
+	gateReductionPercent?: number;
+	moatReductionPercent?: number;
+	waves: BattleResearchWavePredictionV2[];
+	courtyard: BattleResearchPhasePredictionV2;
+	considered: string[];
+	recordedNotModeled: string[];
+	assumptions: string[];
+}
+
+export interface BattleResearchTrialSummaryV2 {
+	id: string;
+	phase: string;
+	movementID?: number;
+	targetX: number;
+	targetY: number;
+	kingdomID: number;
+	arrivesAt?: string;
+	createdAt: string;
+	updatedAt: string;
+	prediction?: BattleResearchPredictionV2;
+	actualResult?: string;
+	actualAttackerLost?: number;
+	actualDefenderLost?: number;
+	uploadState: string;
+	lastError?: string;
+}
+
+export interface BattleResearchStatusV2 {
+	beta: true;
+	enabled: boolean;
+	consentVersion: number;
+	requiredConsentVersion: number;
+	state: 'disabled' | 'consent-update-required' | 'waiting-for-session' | 'observing';
+	activeTrials: number;
+	completedTrials: number;
+	pendingUploads: number;
+	lastMovementPollAt?: string;
+	lastError?: string;
+	calculator: {
+		modelVersion: string;
+		maturity: string;
+		description: string;
+		considered: string[];
+		limitations: string[];
+	};
+	trials: BattleResearchTrialSummaryV2[];
+}
+
 export interface SceatSkillActivationV2 {
 	id: number;
 	remainingSec: number;

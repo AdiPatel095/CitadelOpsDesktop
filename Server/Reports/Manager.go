@@ -32,6 +32,13 @@ type battleArchiveResult struct {
 	err       error
 }
 
+// ArchiveObserver receives complete reports before their normal local/cloud
+// archival lifecycle removes the protocol capture from GameState.
+type ArchiveObserver interface {
+	ObserveSpyReport(SpyReport, State.SpyReportCapture)
+	ObserveBattleReport(BattleReport, State.BattleReportCapture)
+}
+
 type Manager struct {
 	state     *State.Store
 	history   *History.Store
@@ -46,9 +53,16 @@ type Manager struct {
 	archiveQueue   chan battleArchiveTask
 	archiveResults chan battleArchiveResult
 	persistArchive func(context.Context, battleArchiveTask) error
+	observer       ArchiveObserver
 	workers        sync.WaitGroup
 	done           chan struct{}
 	started        atomic.Bool
+}
+
+func (manager *Manager) SetArchiveObserver(observer ArchiveObserver) {
+	if manager != nil {
+		manager.observer = observer
+	}
 }
 
 func NewManager(state *State.Store, history *History.Store, intents interface {
@@ -225,6 +239,9 @@ func (manager *Manager) archiveSpy(ctx context.Context, notice State.ReportNotic
 		manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
 		return
 	}
+	if manager.observer != nil {
+		manager.observer.ObserveSpyReport(report, capture)
+	}
 	manager.archived[notice.MessageID] = struct{}{}
 	if notice.OwnedByPlayer && report.Status != "failed" && report.Castle.ID > 0 && report.Target.ID > 0 && report.Target.Dummy != nil && !*report.Target.Dummy {
 		arguments, _ := json.Marshal(map[string]int64{"messageId": notice.MessageID})
@@ -246,6 +263,9 @@ func (manager *Manager) archiveBattle(ctx context.Context, snapshot State.GameSt
 	report.WorldID = snapshot.Account.WorldID
 	report.PlayerID = int64(snapshot.Player.ID)
 	report = enrichBattleReportAllianceIDs(report, snapshot)
+	if manager.observer != nil {
+		manager.observer.ObserveBattleReport(report, capture)
+	}
 	if manager.analytics == nil {
 		if err := manager.history.Append(History.CollectionBattleReports, report); err != nil {
 			manager.setNoticeStatus(notice.MessageID, "error")

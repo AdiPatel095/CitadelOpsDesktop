@@ -11,6 +11,8 @@ import (
 
 type FixedTargetDiffRequest struct {
 	CastleID State.CastleID        `json:"castleId,omitempty"`
+	EventID  *int64                `json:"eventId,omitempty"`
+	MapID    *int64                `json:"mapId,omitempty"`
 	Policy   TargetDiffPolicy      `json:"policy"`
 	Fixed    []TargetFixedBuilding `json:"fixed"`
 }
@@ -46,6 +48,8 @@ func CompileFixedTargetDiff(
 	seenTargets := map[string]struct{}{}
 	genericRequest := TargetDiffRequest{
 		CastleID: castleID,
+		EventID:  request.EventID,
+		MapID:    request.MapID,
 		Policy:   request.Policy,
 	}
 

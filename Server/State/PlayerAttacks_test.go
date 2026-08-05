@@ -75,3 +75,34 @@ func TestIsIncomingPlayerAttackRejectsKhanAndNPCMovements(t *testing.T) {
 		t.Fatal("NPC-shaped movement was classified as a player attack")
 	}
 }
+
+func TestIsOutgoingPlayerAttackRequiresOwnedSourceAndRealPlayerTarget(t *testing.T) {
+	now := time.Date(2026, 8, 5, 15, 0, 0, 0, time.UTC)
+	arrives := now.Add(time.Minute)
+	gameState := NewGameState()
+	gameState.Player.ID = 7
+	gameState.Castles[100] = CastleState{ID: 100, SlotType: 4}
+	attack := MovementState{
+		ID: 1, Direction: 0, TypeID: 0, OwnerPlayerID: 7, TargetPlayerID: 8,
+		SourceTypeID: 4, SourceCastleID: 100, TargetTypeID: 4, TargetCastleID: 200,
+		ArrivesAt: &arrives,
+	}
+	if !IsOutgoingPlayerAttack(gameState, attack, now) {
+		t.Fatal("fully identified outgoing PvP attack was rejected")
+	}
+	for _, mutate := range []func(*MovementState){
+		func(movement *MovementState) { movement.OwnerPlayerID = 8 },
+		func(movement *MovementState) { movement.TargetPlayerID = -1 },
+		func(movement *MovementState) { movement.TargetPlayerID = 7 },
+		func(movement *MovementState) { movement.TypeID = 3 },
+		func(movement *MovementState) { movement.SourceCastleID = 101 },
+		func(movement *MovementState) { movement.TargetCastleID = 0 },
+		func(movement *MovementState) { movement.ArrivesAt = nil },
+	} {
+		candidate := attack
+		mutate(&candidate)
+		if IsOutgoingPlayerAttack(gameState, candidate, now) {
+			t.Fatalf("ambiguous outgoing movement was accepted: %#v", candidate)
+		}
+	}
+}

@@ -1,9 +1,10 @@
 # Auto Beri
 
-Transfers troops to the Berimond world castle in batches, applying the fixed
-speed-up to each transfer.
+Transfers troops to the Berimond world castle, attacks towers, maintains camp
+tools, and spends confirmed returned loot through an independent builder lane.
 
-Source: `Server/Automation/BeriPolicy.go`, `Server/App/BeriIntents.go`,
+Source: `Server/Automation/BeriPolicy.go`,
+`Server/Automation/BeriBuildPolicy.go`, `Server/App/BeriIntents.go`, and
 `Server/GameFeatures/FeatureView/AutoBeriWorld.go`.
 
 ## Identity
@@ -28,6 +29,28 @@ start reading if you want the shape of a policy without the complexity.
 | `transferTroopId` | Which troop type to transfer |
 | `minTroopsToTransfer` | Minimum batch size |
 | `troopSpaceCheckIntervalSec` | How often to re-check available capacity |
+| `build.enabled` | Enables loot-funded camp construction and upgrades |
+| `build.stableLevel` | Stable target level from 1 through 5; resolved to the current official Berimond WoD |
+| `build.allowPremium` | Allows target actions with official premium costs |
+| `build.allowDemolition` | Allows exact-target removal of unmanaged destructible buildings |
+| `build.allowTimeSkips` | Allows construction skips above configured reserves |
+
+## Default builder target
+
+With no custom blueprint active, the builder uses the built-in exact reference
+camp layout: 17 ground tiles, 92 ordinary buildings, 64 decorations, and 22
+fixed targets. It binds this template to the current owned Berimond camp each
+season.
+
+The snapshot's mixed Small tent WoDs, Large tent WoD, and Auxiliaries'
+headquarters WoD are not retained as level targets. Every camp and tent family
+is followed through the current official upgrade chain to its terminal WoD.
+The Stable is the exception: `build.stableLevel` selects its official level-1
+through level-5 WoD. Because the game has no safe Stable downgrade path, an
+already-higher Stable satisfies the built-in target and is retained. An
+explicitly active captured blueprint replaces the built-in target until the
+user switches back to the default. Terminal Large-tent steps that carry an
+official premium cost remain blocked unless `build.allowPremium` is enabled.
 
 ## Wake triggers
 

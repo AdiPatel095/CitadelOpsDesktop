@@ -49,6 +49,7 @@ const viewComponents: Record<StaticViewId, React.LazyExoticComponent<ComponentTy
   'battle-stats': lazy(() => import('./battleStats/components/BattleStatsView')),
   'player-tracker': lazy(() => import('./playerTracker/components/PlayerTrackerView')),
   'alliance-targets': lazy(() => import('./allianceTargets/components/AllianceTargetsView')),
+	'world-intelligence': lazy(() => import('./worldIntelligence/components/WorldIntelligenceView')),
   rift: lazy(() => import('./Rift/components/RiftView')),
   support: lazy(() => import('./views/SupportPage')),
   settings: lazy(() => import('./views/SettingsView')),
