@@ -36,6 +36,7 @@ type Pipeline struct {
 	watchMu      sync.RWMutex
 	watchers     map[uint64]frameWatcher
 	wireWatchers map[uint64]wireFrameWatcher
+	subscribers  map[uint64]chan Protocol.CommittedFrame
 	nextWatch    atomic.Uint64
 	nextIngress  atomic.Uint64
 
@@ -105,6 +106,7 @@ func NewPipeline(state *State.Store, gameData GameDataProvider, registry *Regist
 	return &Pipeline{
 		state: state, gameData: gameData, registry: registry,
 		watchers: map[uint64]frameWatcher{}, wireWatchers: map[uint64]wireFrameWatcher{},
+		subscribers: map[uint64]chan Protocol.CommittedFrame{},
 		wireCommits: map[uint64]*wireCommit{},
 	}
 }
@@ -455,6 +457,29 @@ func (pipeline *Pipeline) WatchWire(opcode string) (<-chan Protocol.CommittedFra
 	return pipeline.watchWire(opcode, "")
 }
 
+// SubscribeFrames observes every successfully committed inbound and outbound
+// frame. Delivery is best-effort and non-blocking so a diagnostic or research
+// consumer can never delay the ordered game-state reducer.
+func (pipeline *Pipeline) SubscribeFrames(buffer int) (<-chan Protocol.CommittedFrame, func()) {
+	if buffer < 1 {
+		buffer = 1
+	}
+	id := pipeline.nextWatch.Add(1)
+	channel := make(chan Protocol.CommittedFrame, buffer)
+	pipeline.watchMu.Lock()
+	pipeline.subscribers[id] = channel
+	pipeline.watchMu.Unlock()
+	var once sync.Once
+	cancel := func() {
+		once.Do(func() {
+			pipeline.watchMu.Lock()
+			delete(pipeline.subscribers, id)
+			pipeline.watchMu.Unlock()
+		})
+	}
+	return channel, cancel
+}
+
 func (pipeline *Pipeline) WatchWireResponse(
 	opcode string,
 	responseToken string,
@@ -514,6 +539,12 @@ func recordObservation(gameState *State.GameState, frame Protocol.Frame, lastErr
 func (pipeline *Pipeline) publish(frame Protocol.CommittedFrame) {
 	pipeline.watchMu.RLock()
 	defer pipeline.watchMu.RUnlock()
+	for _, subscriber := range pipeline.subscribers {
+		select {
+		case subscriber <- frame:
+		default:
+		}
+	}
 	for _, watcher := range pipeline.watchers {
 		if frame.Frame.Direction != Protocol.DirectionInbound {
 			continue

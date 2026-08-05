@@ -8,6 +8,7 @@ import (
 
 const (
 	BerimondKingdomID = 10
+	BerimondEventID   = 3
 
 	// GallantryPointsBoosterID is the official BoosterConst ID used by the
 	// game's boi response for every strength of the timed Gallantry booster.

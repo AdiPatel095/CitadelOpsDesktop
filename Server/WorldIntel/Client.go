@@ -1,0 +1,218 @@
+package WorldIntel
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+)
+
+const (
+	defaultCloudURL = "https://citadelops.app/api/world-intel/v1"
+	requestTimeout  = 20 * time.Second
+)
+
+type ClientConfig struct {
+	Client        *http.Client
+	BaseURL       string
+	ClientVersion string
+}
+
+type CloudClient struct {
+	client        *http.Client
+	baseURL       string
+	clientVersion string
+}
+
+func NewCloudClient(config ClientConfig) *CloudClient {
+	client := config.Client
+	if client == nil {
+		client = &http.Client{Timeout: requestTimeout}
+	}
+	baseURL := strings.TrimRight(strings.TrimSpace(config.BaseURL), "/")
+	if baseURL == "" {
+		baseURL = strings.TrimRight(strings.TrimSpace(os.Getenv("CITADEL_WORLD_INTEL_URL")), "/")
+	}
+	if baseURL == "" {
+		baseURL = defaultCloudURL
+	}
+	return &CloudClient{client: client, baseURL: baseURL, clientVersion: strings.TrimSpace(config.ClientVersion)}
+}
+
+func (client *CloudClient) Endpoint() string {
+	if client == nil {
+		return ""
+	}
+	return client.baseURL
+}
+
+func (client *CloudClient) Register(ctx context.Context, credentials InstallationCredentials) error {
+	request := InstallationRegistration{
+		InstallationID: credentials.InstallationID,
+		Secret:         credentials.Secret,
+		ClientVersion:  client.clientVersion,
+	}
+	return client.doJSON(ctx, http.MethodPost, "/installations", request, nil, InstallationCredentials{})
+}
+
+func (client *CloudClient) Upload(
+	ctx context.Context,
+	credentials InstallationCredentials,
+	batch ObservationBatch,
+) (IngestResponse, error) {
+	var response IngestResponse
+	err := client.doJSON(ctx, http.MethodPost, "/observations", batch, &response, credentials)
+	return response, err
+}
+
+func (client *CloudClient) Search(
+	ctx context.Context,
+	worldID string,
+	query string,
+	entityType string,
+	limit int,
+) (SearchResponse, error) {
+	values := url.Values{"worldId": {NormalizeWorldID(worldID)}, "q": {strings.TrimSpace(query)}}
+	if entityType != "" {
+		values.Set("type", entityType)
+	}
+	values.Set("limit", strconv.Itoa(boundedLimit(limit, 50)))
+	var result SearchResponse
+	err := client.getJSON(ctx, "/search?"+values.Encode(), &result)
+	return result, err
+}
+
+func (client *CloudClient) Player(
+	ctx context.Context,
+	worldID string,
+	playerID int64,
+	limit int,
+) (PlayerProfile, error) {
+	values := url.Values{"worldId": {NormalizeWorldID(worldID)}, "limit": {strconv.Itoa(boundedLimit(limit, 365))}}
+	var result PlayerProfile
+	err := client.getJSON(ctx, "/players/"+strconv.FormatInt(playerID, 10)+"?"+values.Encode(), &result)
+	return result, err
+}
+
+func (client *CloudClient) Alliance(
+	ctx context.Context,
+	worldID string,
+	allianceID int64,
+	limit int,
+) (AllianceProfile, error) {
+	values := url.Values{"worldId": {NormalizeWorldID(worldID)}, "limit": {strconv.Itoa(boundedLimit(limit, 365))}}
+	var result AllianceProfile
+	err := client.getJSON(ctx, "/alliances/"+strconv.FormatInt(allianceID, 10)+"?"+values.Encode(), &result)
+	return result, err
+}
+
+func (client *CloudClient) Rankings(
+	ctx context.Context,
+	worldID string,
+	entityType string,
+	metric string,
+	limit int,
+) (RankingResponse, error) {
+	values := url.Values{
+		"worldId": {NormalizeWorldID(worldID)}, "metric": {metric},
+		"limit": {strconv.Itoa(boundedLimit(limit, 100))},
+	}
+	var result RankingResponse
+	err := client.getJSON(ctx, "/rankings/"+url.PathEscape(entityType)+"?"+values.Encode(), &result)
+	return result, err
+}
+
+func (client *CloudClient) Coverage(ctx context.Context, worldID string) (CoverageResponse, error) {
+	values := url.Values{}
+	if normalized := NormalizeWorldID(worldID); normalized != "" {
+		values.Set("worldId", normalized)
+	}
+	path := "/coverage"
+	if len(values) > 0 {
+		path += "?" + values.Encode()
+	}
+	var result CoverageResponse
+	err := client.getJSON(ctx, path, &result)
+	return result, err
+}
+
+func (client *CloudClient) getJSON(ctx context.Context, path string, target any) error {
+	return client.doJSON(ctx, http.MethodGet, path, nil, target, InstallationCredentials{})
+}
+
+func (client *CloudClient) doJSON(
+	ctx context.Context,
+	method string,
+	path string,
+	payload any,
+	target any,
+	credentials InstallationCredentials,
+) error {
+	if client == nil || client.client == nil || client.baseURL == "" {
+		return fmt.Errorf("world intelligence cloud client is unavailable")
+	}
+	var body io.Reader
+	if payload != nil {
+		encoded, err := json.Marshal(payload)
+		if err != nil {
+			return fmt.Errorf("encode world intelligence request: %w", err)
+		}
+		body = bytes.NewReader(encoded)
+	}
+	request, err := http.NewRequestWithContext(ctx, method, client.baseURL+path, body)
+	if err != nil {
+		return fmt.Errorf("create world intelligence request: %w", err)
+	}
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("User-Agent", "CitadelOpsDesktop/"+client.clientVersion)
+	if payload != nil {
+		request.Header.Set("Content-Type", "application/json")
+	}
+	if credentials.InstallationID != "" && credentials.Secret != "" {
+		request.Header.Set("Authorization", "CitadelInstall "+credentials.InstallationID+"."+credentials.Secret)
+	}
+	response, err := client.client.Do(request)
+	if err != nil {
+		return fmt.Errorf("world intelligence request failed: %w", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		body, _ := io.ReadAll(io.LimitReader(response.Body, 8<<10))
+		var structured struct {
+			Error struct {
+				Message string `json:"message"`
+			} `json:"error"`
+		}
+		message := strings.TrimSpace(string(body))
+		if json.Unmarshal(body, &structured) == nil && structured.Error.Message != "" {
+			message = structured.Error.Message
+		}
+		if message == "" {
+			message = response.Status
+		}
+		return fmt.Errorf("world intelligence returned %s: %s", response.Status, message)
+	}
+	if target == nil || response.StatusCode == http.StatusNoContent {
+		_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 4<<10))
+		return nil
+	}
+	decoder := json.NewDecoder(io.LimitReader(response.Body, 32<<20))
+	if err := decoder.Decode(target); err != nil {
+		return fmt.Errorf("decode world intelligence response: %w", err)
+	}
+	return nil
+}
+
+func boundedLimit(value int, fallback int) int {
+	if value <= 0 {
+		return fallback
+	}
+	return min(value, 1_000)
+}

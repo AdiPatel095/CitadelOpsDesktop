@@ -30,6 +30,19 @@ export interface PatchNotesRelease {
 
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
   {
+    version: '2.1.0',
+    subtitle: 'Community-built world intelligence, cloud rankings, and public player and alliance history',
+    date: '2026-08-05',
+    items: [
+      { kind: 'added', text: 'World Intelligence adds cloud-backed player and alliance search, rankings, profiles, metric history, roster views, holdings, dataset coverage, and freshness indicators without relying on GGE-Tracker' },
+      { kind: 'added', text: 'Desktops can contribute bounded public observations through a durable private outbox; account credentials, resources, currencies, troops, inventory, movements, reports, raw game traffic, and protection details are never included' },
+      { kind: 'added', text: 'An explicitly opted-in Experimental Battle Prediction Calculator can save low-confidence pre-impact estimates and completed forward-test trials for outgoing PvP attacks you launch; it never launches attacks and clearly warns that its automatic spy missions use game resources' },
+      { kind: 'added', text: 'Auto Beri now starts from a built-in complete camp target, resolves every camp and tent family to the current official maximum WoD, and lets each user choose Stable level 1 through 5' },
+      { kind: 'changed', text: 'Alliance Targets now uses CitadelOps World Intelligence as its shared discovery source while retaining live in-game inspection for protection status' },
+      { kind: 'changed', text: 'World Intelligence cloud access and public-data contribution are visible, independently configurable, and disabled by default until the desktop user explicitly enables them' },
+    ],
+  },
+  {
     version: '2.0.2',
     subtitle: 'Background operation, typed automation, bounded Rift runs, readable diagnostics, and safer event workflows',
     date: '2026-08-05',

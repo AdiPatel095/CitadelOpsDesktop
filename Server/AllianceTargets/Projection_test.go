@@ -51,7 +51,7 @@ func TestBuildLiveTargetsUsesDirectoryBirdAndHoldingState(t *testing.T) {
 		Holdings: []State.AllianceHolding{{CastleID: 77, PlayerID: 7, KingdomID: 0, X: 13, Y: 14, SlotType: 1}},
 	}
 
-	rows := buildLiveTargets(gameState, alliance, trackerAllianceDetail{})
+	rows := buildLiveTargets(gameState, alliance, nil)
 	if len(rows) != 1 {
 		t.Fatalf("targets = %+v", rows)
 	}

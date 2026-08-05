@@ -9,12 +9,14 @@ import (
 	"testing"
 
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/Reports"
 )
 
 func TestConfigurationSettingsBundleRoundTrip(t *testing.T) {
 	store, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 		"automation.enabled": json.RawMessage(`{"autoStorm":false}`),
 		"scheduler":          json.RawMessage(`{"minAttackDelay":4}`),
+		Reports.BattleResearchConfigurationSection: json.RawMessage(`{"enabled":false,"consentVersion":0}`),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -44,8 +46,12 @@ func TestConfigurationSettingsBundleRoundTrip(t *testing.T) {
 		bundle.AppVersion != "2.0.0-alpha" {
 		t.Fatalf("unexpected export metadata: %+v", bundle)
 	}
+	if _, exists := bundle.Configuration.Sections[Reports.BattleResearchConfigurationSection]; exists {
+		t.Fatal("export included device-local battle research consent")
+	}
 	bundle.Configuration.Sections["automation.enabled"] = json.RawMessage(`{"autoStorm":true}`)
 	bundle.Configuration.Sections["scheduler"] = json.RawMessage(`{"minAttackDelay":6}`)
+	bundle.Configuration.Sections[Reports.BattleResearchConfigurationSection] = json.RawMessage(`{"enabled":true,"consentVersion":1}`)
 	bundle.ClientPreferences = map[string]string{"theme": "light"}
 	contents, err := json.Marshal(bundle)
 	if err != nil {
@@ -72,6 +78,11 @@ func TestConfigurationSettingsBundleRoundTrip(t *testing.T) {
 	}
 	if value, ok := store.Section("scheduler"); !ok || string(value) != `{"minAttackDelay":6}` {
 		t.Fatalf("imported scheduler section = %s, found = %t", value, ok)
+	}
+	value, ok := store.Section(Reports.BattleResearchConfigurationSection)
+	var consent Reports.BattleResearchConfiguration
+	if !ok || json.Unmarshal(value, &consent) != nil || consent.Enabled || consent.ConsentVersion != 0 {
+		t.Fatalf("import changed device-local battle research consent = %s, found = %t", value, ok)
 	}
 }
 

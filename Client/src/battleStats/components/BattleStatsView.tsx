@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronRight,
   MapPin,
+	Microscope,
   RefreshCw,
   Search,
   Shield,
@@ -19,7 +20,8 @@ import ToolImage from '../../components/ToolImage';
 import DetailBackButton from '../../components/DetailBackButton';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { useCitadelAPI } from '../../api/ApiContext';
-import type { GameStateV2 } from '../../api/Contracts';
+import { CitadelAPI } from '../../api/CitadelClient';
+import type { BattleResearchPhasePredictionV2, BattleResearchStatusV2, GameStateV2 } from '../../api/Contracts';
 import type {
   BattleCombatant,
   BattleEffect,
@@ -66,6 +68,8 @@ const BattleStatsView: React.FC = () => {
   const [endDate, setEndDate] = useState(() => inputDateFromDate(new Date()));
   const [selectedReportID, setSelectedReportID] = useState<string | null>(null);
   const [visibleReportLimit, setVisibleReportLimit] = useState(REPORT_ROWS_PAGE_SIZE);
+	const [battleResearch, setBattleResearch] = useState<BattleResearchStatusV2 | null>(null);
+	const [battleResearchError, setBattleResearchError] = useState('');
 
   const loadReports = async () => {
     setIsLoading(true);
@@ -102,6 +106,21 @@ const BattleStatsView: React.FC = () => {
   useEffect(() => {
     void loadReports();
   }, []);
+
+	const loadBattleResearch = async () => {
+		try {
+			setBattleResearch(await CitadelAPI.getBattleResearchStatus());
+			setBattleResearchError('');
+		} catch (error) {
+			setBattleResearchError(error instanceof Error ? error.message : 'Could not load battle research status');
+		}
+	};
+
+	useEffect(() => {
+		void loadBattleResearch();
+		const timer = window.setInterval(() => void loadBattleResearch(), 5_000);
+		return () => window.clearInterval(timer);
+	}, []);
 
   useEffect(() => {
     if (
@@ -299,6 +318,11 @@ const BattleStatsView: React.FC = () => {
 
   return (
     <div className="data-view-render-stable flex flex-col gap-4">
+		<BattleResearchBetaPanel
+			status={battleResearch}
+			error={battleResearchError}
+			onRefresh={() => void loadBattleResearch()}
+		/>
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
         <aside className="xl:w-[21.5rem] shrink-0">
           <SectionCard
@@ -482,6 +506,140 @@ const BattleStatsView: React.FC = () => {
     </div>
   );
 };
+
+const BattleResearchBetaPanel: React.FC<{
+	status: BattleResearchStatusV2 | null;
+	error: string;
+	onRefresh: () => void;
+}> = ({ status, error, onRefresh }) => {
+	const predictedTrial = status?.trials.find((trial) => trial.prediction != null);
+	const prediction = predictedTrial?.prediction;
+	const newestTrial = status?.trials[0];
+	const stateLabel = !status
+		? 'Loading'
+		: status.enabled
+			? status.state === 'observing' ? 'Observing outgoing attacks' : 'Waiting for a live session'
+			: 'Disabled in Settings';
+	return (
+		<SectionCard
+			title="Battle Prediction Calculator"
+			description={status?.calculator.description ?? 'Loading the experimental calculator…'}
+			icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-fuchsia-500/10"><Microscope className="h-4 w-4 text-fuchsia-400" /></span>}
+			actions={<div className="flex items-center gap-2">
+				<Badge variant="warning">Beta</Badge>
+				<Badge variant={status?.enabled ? 'success' : 'secondary'}>{stateLabel}</Badge>
+				<Button variant="ghost" size="icon" onClick={onRefresh} title="Refresh battle research">
+					<RefreshCw className="h-4 w-4" />
+				</Button>
+			</div>}
+			contentClassName="space-y-4"
+		>
+			{error && <p role="alert" className="text-xs font-medium text-error">{error}</p>}
+			<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+				<ResearchMetric label="Active trials" value={formatNumber(status?.activeTrials ?? 0)} />
+				<ResearchMetric label="Completed" value={formatNumber(status?.completedTrials ?? 0)} />
+				<ResearchMetric label="Pending upload" value={formatNumber(status?.pendingUploads ?? 0)} />
+				<ResearchMetric label="Model" value={status?.calculator.modelVersion ?? '—'} compact />
+			</div>
+
+			{prediction && predictedTrial ? (
+				<div className="space-y-4 rounded-global border border-fuchsia-500/20 bg-fuchsia-500/[0.04] p-4">
+					<div className="flex flex-wrap items-start justify-between gap-3">
+						<div>
+							<div className="flex flex-wrap items-center gap-2">
+								<h3 className="text-sm font-bold text-text-main">Latest saved pre-impact prediction</h3>
+								<Badge variant={prediction.predictedResult === 'Victory' ? 'success' : 'danger'}>
+									Predicted {prediction.predictedResult}
+								</Badge>
+								<Badge variant="outline">{prediction.confidence} confidence</Badge>
+							</div>
+							<p className="mt-1 text-xs text-text-muted">
+								Target {predictedTrial.kingdomID}:{predictedTrial.targetX}:{predictedTrial.targetY}
+								{' · '}movement {predictedTrial.movementID ?? 'pending'}
+								{' · '}saved {new Date(prediction.generatedAt).toLocaleString()}
+							</p>
+						</div>
+						{predictedTrial.actualResult && (
+							<Badge variant={predictedTrial.actualResult === prediction.predictedResult ? 'success' : 'danger'}>
+								Actual {predictedTrial.actualResult}
+							</Badge>
+						)}
+					</div>
+					<div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+						<ResearchMetric label="Attack win estimate" value={`${Math.round(prediction.attackWinProbability * 100)}%`} />
+						<ResearchMetric label="Attackers sent" value={formatNumber(prediction.attackerSent)} />
+						<ResearchMetric label="Defenders seen" value={formatNumber(prediction.defenderObserved)} />
+						<ResearchMetric label={predictedTrial.actualAttackerLost == null ? 'Expected attacker loss' : 'Attacker loss · est / actual'} value={formatResearchComparison(prediction.expectedAttackerLost, predictedTrial.actualAttackerLost)} tone="danger" />
+						<ResearchMetric label={predictedTrial.actualDefenderLost == null ? 'Expected defender loss' : 'Defender loss · est / actual'} value={formatResearchComparison(prediction.expectedDefenderLost, predictedTrial.actualDefenderLost)} tone="success" />
+						<ResearchMetric label="Unit-stat coverage" value={`${Math.round(prediction.unitStatCoverage * 100)}%`} />
+					</div>
+					<div className="overflow-x-auto rounded-global border border-border-base">
+						<table className="w-full min-w-[680px] text-xs">
+							<thead className="bg-bg-app/50 text-left uppercase tracking-wider text-text-muted">
+								<tr><th className="px-3 py-2">Wave</th><th className="px-3 py-2">Left</th><th className="px-3 py-2">Center</th><th className="px-3 py-2">Right</th></tr>
+							</thead>
+							<tbody>
+								{prediction.waves.map((wave) => (
+									<tr key={wave.wave} className="border-t border-border-base">
+										<td className="px-3 py-2 font-bold text-text-main">{wave.wave}</td>
+										<td className="px-3 py-2"><ResearchPhase phase={wave.left} /></td>
+										<td className="px-3 py-2"><ResearchPhase phase={wave.center} /></td>
+										<td className="px-3 py-2"><ResearchPhase phase={wave.right} /></td>
+									</tr>
+								))}
+								<tr className="border-t border-border-base bg-bg-app/30">
+									<td className="px-3 py-2 font-bold text-text-main">Courtyard</td>
+									<td className="px-3 py-2" colSpan={3}><ResearchPhase phase={prediction.courtyard} /></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<details className="rounded-global border border-border-base bg-bg-app/30 px-3 py-2 text-xs">
+						<summary className="cursor-pointer font-semibold text-text-main">What this version uses and still ignores</summary>
+						<div className="mt-3 grid gap-4 md:grid-cols-2">
+							<div><p className="font-semibold text-success">Considered</p><ul className="mt-1 list-disc space-y-1 pl-4 text-text-muted">{prediction.considered.map((item) => <li key={item}>{item}</li>)}</ul></div>
+							<div><p className="font-semibold text-warning">Recorded, not fully modeled</p><ul className="mt-1 list-disc space-y-1 pl-4 text-text-muted">{prediction.recordedNotModeled.map((item) => <li key={item}>{item}</li>)}</ul></div>
+						</div>
+					</details>
+				</div>
+			) : (
+				<div className="rounded-global border border-dashed border-border-base px-4 py-5 text-sm text-text-muted">
+					{status?.enabled
+						? newestTrial ? `Latest trial: ${readableResearchPhase(newestTrial.phase)}. A prediction appears here only after the pre-battle spy report is captured and saved before impact.` : 'Waiting for an outgoing PvP attack that you launch.'
+						: 'Enable Experimental Battle Research in Settings to collect forward-tested predictions.'}
+				</div>
+			)}
+			<div className="rounded-global border border-warning/25 bg-warning/5 px-3 py-2 text-[11px] leading-relaxed text-warning">
+				Experimental estimate only. This version can be materially wrong and should not be treated as a guaranteed outcome; later releases will be calibrated from the saved pre/post trials.
+			</div>
+			{status?.lastError && <p className="text-[11px] text-error">Latest research error: {status.lastError}</p>}
+		</SectionCard>
+	);
+};
+
+const ResearchMetric: React.FC<{ label: string; value: string; tone?: 'default' | 'success' | 'danger'; compact?: boolean }> = ({
+	label, value, tone = 'default', compact = false,
+}) => (
+	<div className="rounded-global border border-border-base bg-bg-app/35 px-3 py-2">
+		<p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">{label}</p>
+		<p className={`mt-1 font-bold ${compact ? 'break-all text-[11px]' : 'text-lg'} ${tone === 'success' ? 'text-success' : tone === 'danger' ? 'text-error' : 'text-text-main'}`}>{value}</p>
+	</div>
+);
+
+const ResearchPhase: React.FC<{ phase: BattleResearchPhasePredictionV2 }> = ({ phase }) => (
+	<span className={phase.winner === 'attacker' ? 'text-success' : 'text-error'}>
+		<span className="font-semibold">{phase.winner === 'attacker' ? 'Attack' : 'Defense'}</span>
+		<span className="ml-1 text-text-muted">A {formatNumber(phase.attackerStarted)}→{formatNumber(phase.attackerSurvivors)}, D {formatNumber(phase.defenderStarted)}→{formatNumber(phase.defenderSurvivors)}</span>
+	</span>
+);
+
+function readableResearchPhase(phase: string): string {
+	return phase.replaceAll('_', ' ').replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function formatResearchComparison(expected: number, actual?: number): string {
+	return actual == null ? formatNumber(expected) : `${formatNumber(expected)} / ${formatNumber(actual)}`;
+}
 
 interface FilterFieldProps {
   label: string;

@@ -141,7 +141,9 @@ func TestConfiguredRelogDelayControlsCooldownAndSocketReconnect(t *testing.T) {
 	transport := newSocketTestTransport()
 	transport.SetRelogDelayProvider(func() time.Duration { return configuredDelay })
 
-	transport.observeLoginFrame(transport.generation, "", `%xt%lli%1%453%{"CD":10}%`, time.Now().UTC())
+	// A zero server cooldown still exercises the configured relog offset without
+	// launching the delayed reload goroutine that this test does not own.
+	transport.observeLoginFrame(transport.generation, "", `%xt%lli%1%453%{"CD":0}%`, time.Now().UTC())
 	cooldownStatus := transport.Status()
 	if cooldownStatus.CooldownUntil == nil || cooldownStatus.RetryAt == nil ||
 		cooldownStatus.RetryAt.Sub(*cooldownStatus.CooldownUntil) != configuredDelay {

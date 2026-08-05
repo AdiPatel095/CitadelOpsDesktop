@@ -163,7 +163,7 @@ const AllianceTargetsContent = memo(({
           });
           next = { ...inspected, alliances: next.alliances };
         } catch (error) {
-          inspectError = error instanceof Error ? error.message : 'Live alliance inspection failed; showing tracker data.';
+          inspectError = error instanceof Error ? error.message : 'Live alliance inspection failed; showing cloud observations.';
         }
       }
       if (requestID !== latestRequestRef.current) return;

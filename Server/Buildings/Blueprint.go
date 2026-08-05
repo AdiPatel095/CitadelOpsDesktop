@@ -38,6 +38,8 @@ type BerimondBlueprintDocument = StormBlueprintDocument
 
 type BlueprintDiffRequest struct {
 	ExpectedRevision *uint64             `json:"expectedRevision,omitempty"`
+	EventID          *int64              `json:"eventId,omitempty"`
+	MapID            *int64              `json:"mapId,omitempty"`
 	Target           TargetCaptureResult `json:"target"`
 	Policy           TargetDiffPolicy    `json:"policy"`
 }
@@ -257,10 +259,16 @@ func CompileBlueprintDiff(
 			target.KingdomID, target.CastleID, castle.KingdomID,
 		)
 	}
+	if request.EventID == nil && target.KingdomID == State.KingdomID(GameData.BerimondKingdomID) {
+		// An owned kingdom-10 camp is authoritative event context for the
+		// Battle for Berimond building catalog.
+		eventID := int64(GameData.BerimondEventID)
+		request.EventID = &eventID
+	}
 	projected := projectBlueprintGround(state, target)
 	ignoreDecorations := target.Mode != TargetCaptureModeExact
 	normal, err := CompileTargetDiff(projected, gameData, TargetDiffRequest{
-		CastleID: target.CastleID, Exact: target.Exact,
+		CastleID: target.CastleID, EventID: request.EventID, MapID: request.MapID, Exact: target.Exact,
 		Policy: TargetDiffPolicy{
 			AllowPremium: request.Policy.AllowPremium, IgnoreDecorations: ignoreDecorations,
 			ResourceReserves: request.Policy.ResourceReserves,
@@ -271,7 +279,8 @@ func CompileBlueprintDiff(
 		return BlueprintDiffResult{}, err
 	}
 	fixed, err := CompileFixedTargetDiff(projected, gameData, FixedTargetDiffRequest{
-		CastleID: target.CastleID, Policy: request.Policy, Fixed: target.Fixed,
+		CastleID: target.CastleID, EventID: request.EventID, MapID: request.MapID,
+		Policy: request.Policy, Fixed: target.Fixed,
 	})
 	if err != nil {
 		return BlueprintDiffResult{}, err

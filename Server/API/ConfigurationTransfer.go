@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/Reports"
 )
 
 const (
@@ -45,6 +46,9 @@ func (server *Server) handleConfigurationExport(writer http.ResponseWriter, _ *h
 		return
 	}
 	snapshot := server.config.Configuration.Snapshot()
+	// Research consent is intentionally device-local. A portable settings file
+	// must never opt another installation into game actions or data upload.
+	delete(snapshot.Sections, Reports.BattleResearchConfigurationSection)
 	bundle := settingsBundle{
 		Format:        settingsBundleFormat,
 		FormatVersion: settingsBundleVersion,
@@ -100,6 +104,9 @@ func (server *Server) handleConfigurationImport(writer http.ResponseWriter, requ
 		)
 		return
 	}
+	// Ignore consent found in hand-edited or older bundles as well as omitting it
+	// from new exports. Each installation must obtain its own explicit opt-in.
+	delete(bundle.Configuration.Sections, Reports.BattleResearchConfigurationSection)
 	sectionCount := len(bundle.Configuration.Sections)
 	if sectionCount == 0 {
 		writeError(writer, http.StatusUnprocessableEntity, "empty_settings_bundle", "Settings bundle contains no configuration sections")

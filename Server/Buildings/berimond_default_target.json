@@ -1,0 +1,1723 @@
+{
+  "version": 1,
+  "castleId": 0,
+  "kingdomId": 10,
+  "mode": "exact",
+  "exact": true,
+  "ground": [
+    {
+      "definitionId": 200,
+      "gridX": 200,
+      "gridY": 200,
+      "direction": 0
+    },
+    {
+      "definitionId": 201,
+      "gridX": 220,
+      "gridY": 200,
+      "direction": 0
+    },
+    {
+      "definitionId": 201,
+      "gridX": 230,
+      "gridY": 200,
+      "direction": 0
+    },
+    {
+      "definitionId": 201,
+      "gridX": 200,
+      "gridY": 220,
+      "direction": 1
+    },
+    {
+      "definitionId": 201,
+      "gridX": 200,
+      "gridY": 230,
+      "direction": 1
+    },
+    {
+      "definitionId": 201,
+      "gridX": 220,
+      "gridY": 220,
+      "direction": 0
+    },
+    {
+      "definitionId": 201,
+      "gridX": 230,
+      "gridY": 220,
+      "direction": 0
+    },
+    {
+      "definitionId": 201,
+      "gridX": 220,
+      "gridY": 190,
+      "direction": 3
+    },
+    {
+      "definitionId": 201,
+      "gridX": 220,
+      "gridY": 180,
+      "direction": 3
+    },
+    {
+      "definitionId": 201,
+      "gridX": 210,
+      "gridY": 180,
+      "direction": 2
+    },
+    {
+      "definitionId": 201,
+      "gridX": 200,
+      "gridY": 180,
+      "direction": 2
+    },
+    {
+      "definitionId": 201,
+      "gridX": 190,
+      "gridY": 180,
+      "direction": 2
+    },
+    {
+      "definitionId": 201,
+      "gridX": 180,
+      "gridY": 180,
+      "direction": 2
+    },
+    {
+      "definitionId": 201,
+      "gridX": 180,
+      "gridY": 200,
+      "direction": 1
+    },
+    {
+      "definitionId": 201,
+      "gridX": 180,
+      "gridY": 210,
+      "direction": 1
+    },
+    {
+      "definitionId": 201,
+      "gridX": 180,
+      "gridY": 220,
+      "direction": 1
+    },
+    {
+      "definitionId": 201,
+      "gridX": 180,
+      "gridY": 230,
+      "direction": 1
+    }
+  ],
+  "buildings": [
+    {
+      "targetId": "target-001-233",
+      "definitionId": 233,
+      "placement": {
+        "gridX": 180,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-002-246",
+      "definitionId": 246,
+      "placement": {
+        "gridX": 186,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-003-246",
+      "definitionId": 246,
+      "placement": {
+        "gridX": 190,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-004-246",
+      "definitionId": 246,
+      "placement": {
+        "gridX": 194,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-005-627",
+      "definitionId": 627,
+      "placement": {
+        "gridX": 235,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-006-623",
+      "definitionId": 623,
+      "placement": {
+        "gridX": 230,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-007-468",
+      "definitionId": 468,
+      "placement": {
+        "gridX": 225,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-008-294",
+      "definitionId": 294,
+      "placement": {
+        "gridX": 225,
+        "gridY": 185,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-009-337",
+      "definitionId": 337,
+      "placement": {
+        "gridX": 198,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-010-337",
+      "definitionId": 337,
+      "placement": {
+        "gridX": 202,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-011-336",
+      "definitionId": 336,
+      "placement": {
+        "gridX": 222,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-012-336",
+      "definitionId": 336,
+      "placement": {
+        "gridX": 222,
+        "gridY": 184,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-013-336",
+      "definitionId": 336,
+      "placement": {
+        "gridX": 222,
+        "gridY": 187,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-014-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 180,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-015-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 180,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-016-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 180,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-017-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 180,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-018-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 180,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-019-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 185,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-020-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 185,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-021-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 185,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-022-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 185,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-023-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 185,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-024-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 185,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-025-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 185,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-026-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 190,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-027-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 190,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-028-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 190,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-029-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 190,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-030-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 190,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-031-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 190,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-032-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 190,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-033-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 195,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-034-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 195,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-035-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 195,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-036-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 195,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-037-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 195,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-038-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 195,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-039-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 195,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-040-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 200,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-041-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 200,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-042-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 200,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-043-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 200,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-044-244",
+      "definitionId": 244,
+      "placement": {
+        "gridX": 180,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-045-244",
+      "definitionId": 244,
+      "placement": {
+        "gridX": 180,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-046-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 200,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-047-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 200,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-048-337",
+      "definitionId": 337,
+      "placement": {
+        "gridX": 206,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-049-337",
+      "definitionId": 337,
+      "placement": {
+        "gridX": 210,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-050-337",
+      "definitionId": 337,
+      "placement": {
+        "gridX": 214,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-051-337",
+      "definitionId": 337,
+      "placement": {
+        "gridX": 218,
+        "gridY": 180,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-052-337",
+      "definitionId": 337,
+      "placement": {
+        "gridX": 180,
+        "gridY": 186,
+        "rotation": 1
+      }
+    },
+    {
+      "targetId": "target-053-337",
+      "definitionId": 337,
+      "placement": {
+        "gridX": 185,
+        "gridY": 186,
+        "rotation": 1
+      }
+    },
+    {
+      "targetId": "target-054-337",
+      "definitionId": 337,
+      "placement": {
+        "gridX": 190,
+        "gridY": 186,
+        "rotation": 1
+      }
+    },
+    {
+      "targetId": "target-055-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 198,
+        "gridY": 185,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-056-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 202,
+        "gridY": 185,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-057-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 206,
+        "gridY": 185,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-058-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 210,
+        "gridY": 185,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-059-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 214,
+        "gridY": 185,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-060-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 218,
+        "gridY": 185,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-061-336",
+      "definitionId": 336,
+      "placement": {
+        "gridX": 195,
+        "gridY": 187,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-062-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 180,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-063-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 180,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-064-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 180,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-065-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 184,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-066-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 188,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-067-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 192,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-068-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 196,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-069-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 200,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-070-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 204,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-071-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 208,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-072-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 212,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-073-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 216,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-074-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 220,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-075-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 224,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-076-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 228,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-077-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 232,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-078-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 236,
+        "gridY": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-079-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 184,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-080-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 188,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-081-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 192,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-082-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 196,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-083-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 200,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-084-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 204,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-085-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 208,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-086-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 212,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-087-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 216,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-088-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 220,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-089-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 224,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-090-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 228,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-091-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 232,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-092-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 236,
+        "gridY": 195,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-093-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 184,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-094-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 188,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-095-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 192,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-096-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 196,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-097-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 200,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-098-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 204,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-099-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 208,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-100-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 212,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-101-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 216,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-102-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 220,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-103-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 224,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-104-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 228,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-105-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 232,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-106-339",
+      "definitionId": 339,
+      "placement": {
+        "gridX": 236,
+        "gridY": 200,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-107-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 200,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-108-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 205,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-109-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 210,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-110-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 215,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-111-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 220,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-112-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 225,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-113-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 230,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-114-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 235,
+        "gridY": 205,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-115-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 205,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-116-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 210,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-117-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 215,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-118-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 220,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-119-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 225,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-120-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 230,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-121-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 235,
+        "gridY": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-122-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 205,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-123-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 210,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-124-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 215,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-125-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 220,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-126-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 225,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-127-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 230,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-128-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 235,
+        "gridY": 215,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-129-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 205,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-130-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 210,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-131-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 215,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-132-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 220,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-133-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 225,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-134-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 230,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-135-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 235,
+        "gridY": 220,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-136-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 205,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-137-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 210,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-138-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 215,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-139-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 220,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-140-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 225,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-141-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 230,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-142-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 235,
+        "gridY": 225,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-143-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 205,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-144-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 210,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-145-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 215,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-146-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 220,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-147-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 225,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-148-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 230,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-149-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 235,
+        "gridY": 230,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-150-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 205,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-151-11",
+      "definitionId": 11,
+      "placement": {
+        "gridX": 210,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-152-243",
+      "definitionId": 243,
+      "placement": {
+        "gridX": 215,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-153-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 220,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-154-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 225,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-155-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 230,
+        "gridY": 235,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-156-12",
+      "definitionId": 12,
+      "placement": {
+        "gridX": 235,
+        "gridY": 235,
+        "rotation": 0
+      }
+    }
+  ],
+  "fixed": [
+    {
+      "targetId": "fixed-001-237",
+      "definitionId": 237,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-002-237",
+      "definitionId": 237,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-003-237",
+      "definitionId": 237,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-004-237",
+      "definitionId": 237,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-005-237",
+      "definitionId": 237,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-006-237",
+      "definitionId": 237,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-007-237",
+      "definitionId": 237,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-008-237",
+      "definitionId": 237,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-009-237",
+      "definitionId": 237,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-010-237",
+      "definitionId": 237,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-011-239",
+      "definitionId": 239,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-012-235",
+      "definitionId": 235,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-013-272",
+      "definitionId": 272,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-014-272",
+      "definitionId": 272,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-015-272",
+      "definitionId": 272,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-016-272",
+      "definitionId": 272,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-017-272",
+      "definitionId": 272,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-018-272",
+      "definitionId": 272,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-019-272",
+      "definitionId": 272,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-020-272",
+      "definitionId": 272,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-021-272",
+      "definitionId": 272,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "fixed-022-272",
+      "definitionId": 272,
+      "slot": {
+        "gridX": 0,
+        "gridY": 0,
+        "rotation": 0
+      }
+    }
+  ],
+  "summary": {
+    "groundCount": 17,
+    "buildingCount": 92,
+    "decorationCount": 64,
+    "fixedCount": 22
+  }
+}
