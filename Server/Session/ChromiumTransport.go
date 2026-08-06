@@ -74,6 +74,7 @@ type ChromiumTransport struct {
 	loginCredential            persistedLoginCredential
 	restoreSuppressed          bool
 	restoreAttempted           bool
+	backgroundModePrepared     bool
 	activationEvaluator        func(context.Context, runtime.ExecutionContextID, string, uint64) (bool, error)
 	credentialRestoreEvaluator func(
 		context.Context, runtime.ExecutionContextID, string, string,
@@ -299,6 +300,19 @@ func (transport *ChromiumTransport) Stop(context.Context) error {
 	}
 	transport.resetSocketNoticeQueue()
 	transport.publishStatus(Status{State: "stopped", Namespace: "EmpireEx_21", ChangedAt: time.Now().UTC()})
+	return nil
+}
+
+func (transport *ChromiumTransport) PrepareBackgroundMode() error {
+	credential, _, err := prepareBackgroundLogin(transport.config.DataDir)
+	if err != nil {
+		return err
+	}
+	transport.mu.Lock()
+	transport.loginCredential = credential
+	transport.restoreSuppressed = false
+	transport.backgroundModePrepared = true
+	transport.mu.Unlock()
 	return nil
 }
 
@@ -2227,28 +2241,14 @@ func (transport *ChromiumTransport) removeExecutionContexts(
 	}
 	remaining := len(transport.sockets)
 	wasLoggedIn := wasActive && transport.status.LoggedIn
-	intentionalLogout := clearAll && wasLoggedIn
 	transport.mu.Unlock()
 	if wasActive {
-		if intentionalLogout {
-			transport.disableLoginRestore(observedAt)
+		transport.publishSocketLossAt(
+			"disconnected", "Game execution context closed", remaining, observedAt,
+		)
+		if wasLoggedIn && remaining == 0 {
 			status := transport.Status()
-			status.State = "reconnecting"
-			status.LoggedIn = false
-			status.SocketReady = false
-			status.Detail = "Game logout detected; waiting for account selection"
-			status.RetryAt = nil
-			status.ChangedAt = observedAt
-			transport.publishStatus(status)
-			transport.scheduleLogoutReload(generation)
-		} else {
-			transport.publishSocketLossAt(
-				"disconnected", "Game execution context closed", remaining, observedAt,
-			)
-			if wasLoggedIn && remaining == 0 {
-				status := transport.Status()
-				transport.scheduleSocketReconnect(generation, status.ConnectionGeneration)
-			}
+			transport.scheduleSocketReconnect(generation, status.ConnectionGeneration)
 		}
 	}
 }
@@ -2257,8 +2257,13 @@ func (transport *ChromiumTransport) disableLoginRestore(observedAt time.Time) {
 	transport.mu.Lock()
 	transport.restoreSuppressed = true
 	transport.restoreAttempted = false
+	backgroundModePrepared := transport.backgroundModePrepared
 	credential := transport.loginCredential
 	if credential.Username == "" || credential.Password == "" {
+		transport.mu.Unlock()
+		return
+	}
+	if backgroundModePrepared {
 		transport.mu.Unlock()
 		return
 	}

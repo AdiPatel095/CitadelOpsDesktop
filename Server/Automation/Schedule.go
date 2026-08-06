@@ -10,9 +10,10 @@ import (
 )
 
 type weeklySchedule struct {
-	Enabled  bool                 `json:"enabled"`
-	TimeZone string               `json:"timeZone"`
-	Slots    []weeklyScheduleSlot `json:"slots"`
+	Enabled            bool                 `json:"enabled"`
+	TimeZone           string               `json:"timeZone"`
+	SlotOptionsEnabled bool                 `json:"slotOptionsEnabled,omitempty"`
+	Slots              []weeklyScheduleSlot `json:"slots"`
 }
 
 type weeklyScheduleSlot struct {
@@ -22,20 +23,29 @@ type weeklyScheduleSlot struct {
 	Options     map[string]any `json:"options,omitempty"`
 }
 
-func scheduleAllows(configuration Configuration.Snapshot, featureID string, now time.Time) (bool, time.Time) {
+type weeklyScheduleResolution struct {
+	Allowed            bool
+	Next               time.Time
+	SlotOptionsEnabled bool
+	Options            map[string]any
+	ValidUntil         time.Time
+}
+
+func resolveWeeklySchedule(configuration Configuration.Snapshot, featureID string, now time.Time) weeklyScheduleResolution {
+	result := weeklyScheduleResolution{Allowed: true}
 	raw := configuration.Sections["scheduler"]
 	if len(raw) == 0 {
-		return true, time.Time{}
+		return result
 	}
 	var document struct {
 		FeatureSchedules map[string]weeklySchedule `json:"featureSchedules"`
 	}
 	if json.Unmarshal(raw, &document) != nil {
-		return true, time.Time{}
+		return result
 	}
 	schedule, exists := document.FeatureSchedules[featureID]
 	if !exists || !schedule.Enabled {
-		return true, time.Time{}
+		return result
 	}
 	location := time.Local
 	if zone := strings.TrimSpace(schedule.TimeZone); zone != "" {
@@ -48,10 +58,24 @@ func scheduleAllows(configuration Configuration.Snapshot, featureID string, now 
 	day := int(localNow.Weekday())
 	for _, slot := range schedule.Slots {
 		if validScheduleSlot(slot) && slot.Day == day && minute >= slot.StartMinute && minute < slot.EndMinute {
-			return true, time.Time{}
+			result.SlotOptionsEnabled = schedule.SlotOptionsEnabled
+			result.Options = slot.Options
+			result.ValidUntil = time.Date(
+				localNow.Year(), localNow.Month(), localNow.Day(),
+				0, slot.EndMinute, 0, 0, location,
+			).UTC()
+			return result
 		}
 	}
-	return false, nextScheduleStart(schedule.Slots, localNow)
+	result.Allowed = false
+	result.SlotOptionsEnabled = schedule.SlotOptionsEnabled
+	result.Next = nextScheduleStart(schedule.Slots, localNow)
+	return result
+}
+
+func scheduleAllows(configuration Configuration.Snapshot, featureID string, now time.Time) (bool, time.Time) {
+	resolved := resolveWeeklySchedule(configuration, featureID, now)
+	return resolved.Allowed, resolved.Next
 }
 
 func nextScheduleStart(slots []weeklyScheduleSlot, localNow time.Time) time.Time {

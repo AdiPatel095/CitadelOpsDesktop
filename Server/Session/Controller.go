@@ -374,6 +374,22 @@ func (controller *Controller) SelectBrowser(preference string) error {
 	return nil
 }
 
+func (controller *Controller) PrepareBackgroundMode(dataDir string) error {
+	controller.lifecycleMu.Lock()
+	defer controller.lifecycleMu.Unlock()
+	controller.mu.Lock()
+	transport := controller.transport
+	controller.mu.Unlock()
+	if preparer, ok := transport.(interface{ PrepareBackgroundMode() error }); ok {
+		if err := preparer.PrepareBackgroundMode(); err != nil {
+			return err
+		}
+		controller.applyStatus(transport.Status())
+		return nil
+	}
+	return PrepareBackgroundLogin(dataDir)
+}
+
 func (controller *Controller) BrowserInventory() BrowserInventory {
 	if provider, ok := controller.transport.(BrowserInventoryProvider); ok {
 		return provider.BrowserInventory()

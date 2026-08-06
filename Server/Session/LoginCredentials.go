@@ -100,6 +100,40 @@ func saveLoginCredential(dataDir string, credential persistedLoginCredential) er
 	return nil
 }
 
+// PrepareBackgroundLogin validates the protected Full-mode bootstrap and
+// explicitly authorizes it for the next Background-mode connection. The
+// credential and connection profile never leave the Session package.
+func PrepareBackgroundLogin(dataDir string) error {
+	_, _, err := prepareBackgroundLogin(dataDir)
+	return err
+}
+
+func prepareBackgroundLogin(dataDir string) (persistedLoginCredential, gameConnectionProfile, error) {
+	credential, err := loadLoginCredential(dataDir)
+	if err != nil {
+		return persistedLoginCredential{}, gameConnectionProfile{}, fmt.Errorf(
+			"Background mode needs a valid saved game login; use Full application mode and sign in manually once",
+		)
+	}
+	profile, err := loadGameConnectionProfile(dataDir)
+	if err != nil {
+		return persistedLoginCredential{}, gameConnectionProfile{}, fmt.Errorf(
+			"Background mode needs current connection details; use Full application mode and sign in manually once",
+		)
+	}
+	if credential.AutoRestore {
+		return credential, profile, nil
+	}
+	credential.AutoRestore = true
+	credential.CapturedAt = time.Now().UTC()
+	if err := saveLoginCredential(dataDir, credential); err != nil {
+		return persistedLoginCredential{}, gameConnectionProfile{}, fmt.Errorf(
+			"authorize the saved game login for Background mode: %w", err,
+		)
+	}
+	return credential, profile, nil
+}
+
 func validateLoginCredential(credential persistedLoginCredential) error {
 	if strings.TrimSpace(credential.Username) == "" || len(credential.Username) > maxLoginUsernameBytes {
 		return fmt.Errorf("saved game login has an invalid username")

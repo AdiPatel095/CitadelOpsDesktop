@@ -271,8 +271,11 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 		if validateErr := validateCommit(gameState, false); validateErr != nil {
 			return State.ScopedChange{}, validateErr
 		}
-		recordObservation(gameState, frame, "")
+		baselineChanged := recordObservation(gameState, frame, "")
 		domains := []string{"protocol"}
+		if baselineChanged {
+			domains = append(domains, "session")
+		}
 		if reducer != nil {
 			reducerDomains, reducerChanged, reduceErr := reducer(ctx, frame, gameState, currentData)
 			if reduceErr != nil {
@@ -303,8 +306,11 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			if validateErr := validateCommit(gameState, false); validateErr != nil {
 				return State.ScopedChange{}, validateErr
 			}
-			recordObservation(gameState, frame, reduceErr.Error())
+			baselineChanged := recordObservation(gameState, frame, reduceErr.Error())
 			domains := []string{"protocol"}
+			if baselineChanged {
+				domains = append(domains, "session")
+			}
 			return State.ScopedChange{
 				Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains),
 				FocusSubcontext: focusSubcontext, Changed: true,
@@ -515,7 +521,7 @@ func (pipeline *Pipeline) watchWire(
 	return channel, cancel
 }
 
-func recordObservation(gameState *State.GameState, frame Protocol.Frame, lastError string) {
+func recordObservation(gameState *State.GameState, frame Protocol.Frame, lastError string) bool {
 	observation := gameState.Observations[frame.Opcode]
 	observation.Opcode = frame.Opcode
 	observation.Count++
@@ -534,6 +540,21 @@ func recordObservation(gameState *State.GameState, frame Protocol.Frame, lastErr
 		observation.LastSuccessfulInboundRevision = gameState.Revision + 1
 	}
 	gameState.Observations[frame.Opcode] = observation
+	return reconcileSessionBaseline(gameState)
+}
+
+func reconcileSessionBaseline(gameState *State.GameState) bool {
+	session := &gameState.Session
+	if !session.LoggedIn || !session.SocketReady || session.Generation == 0 ||
+		session.BaselineGeneration == session.Generation {
+		return false
+	}
+	baselineAt := gameState.Observations["gbd"].SuccessfulInboundAt()
+	if baselineAt.IsZero() || baselineAt.Before(session.ChangedAt) {
+		return false
+	}
+	session.BaselineGeneration = session.Generation
+	return true
 }
 
 func (pipeline *Pipeline) publish(frame Protocol.CommittedFrame) {

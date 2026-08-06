@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -17,19 +18,23 @@ const (
 )
 
 type productionQueueCapacityGuard struct {
-	CastleID          State.CastleID `json:"castleId"`
-	LineID            int            `json:"lineId"`
-	ExpectedFreeSlots int            `json:"expectedFreeSlots"`
-	FillAvailable     bool           `json:"fillAvailable"`
+	CastleID              State.CastleID `json:"castleId"`
+	LineID                int            `json:"lineId"`
+	ExpectedFreeSlots     int            `json:"expectedFreeSlots"`
+	FillAvailable         bool           `json:"fillAvailable"`
+	ScheduledDefinitionID int64          `json:"scheduledDefinitionId,omitempty"`
+	ScheduleValidUntil    *time.Time     `json:"scheduleValidUntil,omitempty"`
 }
 
 func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct {
-		CastleID      State.CastleID `json:"castleId"`
-		LineID        int            `json:"lineId"`
-		DefinitionID  int64          `json:"definitionId"`
-		Amount        int64          `json:"amount,omitempty"`
-		FillAvailable bool           `json:"fillAvailable,omitempty"`
+		CastleID              State.CastleID `json:"castleId"`
+		LineID                int            `json:"lineId"`
+		DefinitionID          int64          `json:"definitionId"`
+		Amount                int64          `json:"amount,omitempty"`
+		FillAvailable         bool           `json:"fillAvailable,omitempty"`
+		ScheduledDefinitionID int64          `json:"scheduledDefinitionId,omitempty"`
+		ScheduleValidUntil    *time.Time     `json:"scheduleValidUntil,omitempty"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -40,6 +45,17 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	}
 	if request.LineID != 0 && request.LineID != 1 {
 		return Intent.Plan{}, fmt.Errorf("production line %d is not a recruitment or tool line", request.LineID)
+	}
+	if request.ScheduledDefinitionID != 0 || request.ScheduleValidUntil != nil {
+		if request.ScheduledDefinitionID <= 0 || request.ScheduledDefinitionID != request.DefinitionID {
+			return Intent.Plan{}, fmt.Errorf("scheduled production definition must match definitionId %d", request.DefinitionID)
+		}
+		if request.ScheduleValidUntil == nil || request.ScheduleValidUntil.IsZero() {
+			return Intent.Plan{}, fmt.Errorf("scheduled production requires scheduleValidUntil")
+		}
+		if request.FillAvailable {
+			return Intent.Plan{}, fmt.Errorf("scheduled production must enqueue one stack before reevaluating the schedule")
+		}
 	}
 	queue, ok := castle.Production[request.LineID]
 	if !ok || queue.ObservedAt.IsZero() {
@@ -90,6 +106,7 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	guardArguments, _ := json.Marshal(productionQueueCapacityGuard{
 		CastleID: request.CastleID, LineID: request.LineID,
 		ExpectedFreeSlots: stackCount, FillAvailable: request.FillAvailable,
+		ScheduledDefinitionID: request.ScheduledDefinitionID, ScheduleValidUntil: request.ScheduleValidUntil,
 	})
 	steps = append(steps, Intent.RebuildOnResume(Intent.Step{
 		Name: "Revalidate production queue capacity", Action: "production.enqueue.verify_capacity", ActionArguments: guardArguments,
@@ -112,9 +129,24 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 }
 
 func (application *Application) verifyProductionQueueCapacity(_ context.Context, arguments json.RawMessage) error {
+	return application.verifyProductionQueueCapacityAt(arguments, time.Now().UTC())
+}
+
+func (application *Application) verifyProductionQueueCapacityAt(arguments json.RawMessage, now time.Time) error {
 	var request productionQueueCapacityGuard
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
+	}
+	if request.ScheduledDefinitionID != 0 || request.ScheduleValidUntil != nil {
+		if request.ScheduledDefinitionID <= 0 || request.ScheduleValidUntil == nil || request.ScheduleValidUntil.IsZero() {
+			return fmt.Errorf("%w: scheduled production guard is incomplete", Intent.ErrPlanStale)
+		}
+		if !now.Before(request.ScheduleValidUntil.UTC()) {
+			return fmt.Errorf(
+				"%w: schedule for production definition %d ended at %s",
+				Intent.ErrPlanStale, request.ScheduledDefinitionID, request.ScheduleValidUntil.UTC().Format(time.RFC3339),
+			)
+		}
 	}
 	if application == nil || application.State == nil {
 		return fmt.Errorf("production state is unavailable")

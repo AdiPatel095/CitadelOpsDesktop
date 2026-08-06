@@ -107,7 +107,7 @@ func NewDirectWebSocketTransport(config DirectWebSocketConfig) *DirectWebSocketT
 	case credentialErr != nil:
 		resolveErr = fmt.Errorf("Background mode needs a saved game login; start Full application mode and sign in once")
 	case !credential.AutoRestore:
-		resolveErr = fmt.Errorf("Background mode cannot use a saved login that has been disabled")
+		resolveErr = fmt.Errorf("Background mode cannot use a saved login that has been disabled; open Settings > Game Connection to re-enable it")
 	case profileErr != nil:
 		resolveErr = fmt.Errorf("Background mode needs current connection details; start Full application mode and sign in once")
 	}
@@ -179,6 +179,31 @@ func (transport *DirectWebSocketTransport) Stop(context.Context) error {
 		Mode: ConnectionModeBackground, State: "stopped", Namespace: transport.profile.Namespace,
 		ServerURL: transport.profile.ServerURL, ChangedAt: time.Now().UTC(),
 	})
+	return nil
+}
+
+func (transport *DirectWebSocketTransport) PrepareBackgroundMode() error {
+	credential, profile, err := prepareBackgroundLogin(transport.config.DataDir)
+	if err != nil {
+		return err
+	}
+	transport.mu.Lock()
+	transport.credential = credential
+	transport.profile = profile
+	transport.resolveErr = nil
+	if transport.cancel == nil {
+		status := transport.status
+		status.State = "stopped"
+		status.LoggedIn = false
+		status.SocketReady = false
+		status.Detail = ""
+		status.RetryAt = nil
+		status.Namespace = profile.Namespace
+		status.ServerURL = profile.ServerURL
+		status.ChangedAt = time.Now().UTC()
+		transport.status = status
+	}
+	transport.mu.Unlock()
 	return nil
 }
 

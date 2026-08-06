@@ -130,6 +130,51 @@ func TestProtocolObservationRetainsSuccessfulInboundAcrossOutbound(t *testing.T)
 	}
 }
 
+func TestProtocolObservationReconcilesBaselineAfterLoginOrderingRace(t *testing.T) {
+	gameState := State.NewGameState()
+	connectedAt := time.Date(2026, 8, 6, 12, 0, 0, 0, time.UTC)
+	baselineAt := connectedAt.Add(20 * time.Millisecond)
+	gameState.Session = State.SessionState{
+		Generation: 8, BaselineGeneration: 0, ConnectionGeneration: 1,
+		Status: "connected", LoggedIn: true, SocketReady: true, ChangedAt: connectedAt,
+	}
+	code := 0
+	gameState.Observations["gbd"] = State.ProtocolObservation{
+		Opcode: "gbd", LastCode: &code,
+		LastSuccessfulInboundAt: baselineAt,
+	}
+
+	changed := recordObservation(&gameState, Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "gam", ResponseCode: &code,
+		ReceivedAt: baselineAt.Add(time.Millisecond),
+	}, "")
+	if !changed || gameState.Session.BaselineGeneration != gameState.Session.Generation {
+		t.Fatalf("baseline was not reconciled: changed=%v session=%+v", changed, gameState.Session)
+	}
+}
+
+func TestProtocolObservationDoesNotReuseStaleBaseline(t *testing.T) {
+	gameState := State.NewGameState()
+	connectedAt := time.Date(2026, 8, 6, 12, 0, 0, 0, time.UTC)
+	gameState.Session = State.SessionState{
+		Generation: 8, BaselineGeneration: 0, ConnectionGeneration: 1,
+		Status: "connected", LoggedIn: true, SocketReady: true, ChangedAt: connectedAt,
+	}
+	code := 0
+	gameState.Observations["gbd"] = State.ProtocolObservation{
+		Opcode: "gbd", LastCode: &code,
+		LastSuccessfulInboundAt: connectedAt.Add(-time.Millisecond),
+	}
+
+	changed := recordObservation(&gameState, Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "gam", ResponseCode: &code,
+		ReceivedAt: connectedAt.Add(time.Millisecond),
+	}, "")
+	if changed || gameState.Session.BaselineGeneration != 0 {
+		t.Fatalf("stale baseline was reused: changed=%v session=%+v", changed, gameState.Session)
+	}
+}
+
 func TestCommitFrameRejectsStaleConnectionInsideStateMutation(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Session.ConnectionGeneration = 2
