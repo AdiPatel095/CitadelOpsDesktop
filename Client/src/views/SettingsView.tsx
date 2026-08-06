@@ -214,17 +214,38 @@ const SettingsView: React.FC = () => {
 		? 'background'
 		: 'full';
 	const connectionModeRestartRequired = configuredConnectionMode !== activeConnectionMode;
+	const backgroundLoginNeedsReauthorization = configuredConnectionMode === 'background'
+		&& activeConnectionMode === 'background'
+		&& !state?.session.loggedIn
+		&& state?.session.detail?.toLowerCase().includes('saved login that has been disabled');
 
 	const selectConnectionMode = (mode: GameConnectionMode) => {
 		if (mode === configuredConnectionMode || connectionModePending) return;
 		setConnectionModePending(true);
 		setConnectionModeError('');
-		void updateConfiguration('session.connection', {
-			...connectionConfiguration,
-			mode,
-		})
+		void (async () => {
+			if (mode === 'background') {
+				await submitIntent('session.background.prepare');
+			}
+			await updateConfiguration('session.connection', {
+				...connectionConfiguration,
+				mode,
+			});
+		})()
 			.catch((error) => {
 				setConnectionModeError(error instanceof Error ? error.message : 'Could not save the game connection mode');
+			})
+			.finally(() => setConnectionModePending(false));
+	};
+
+	const reauthorizeBackgroundLogin = () => {
+		if (connectionModePending) return;
+		setConnectionModePending(true);
+		setConnectionModeError('');
+		void submitIntent('session.background.prepare')
+			.then(() => submitIntent('session.start'))
+			.catch((error) => {
+				setConnectionModeError(error instanceof Error ? error.message : 'Could not re-enable the saved game login');
 			})
 			.finally(() => setConnectionModePending(false));
 	};
@@ -617,6 +638,16 @@ const SettingsView: React.FC = () => {
 					</p>
 				) : (
 					<p className="mt-3 text-xs text-text-muted">Connection mode changes are applied after restarting CitadelOps.</p>
+				)}
+				{backgroundLoginNeedsReauthorization && (
+					<div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-warning/25 bg-warning/5 px-3 py-2.5">
+						<p className="min-w-0 flex-1 text-xs leading-relaxed text-warning">
+							The protected saved login is present but disabled. Re-enable it explicitly to retry Background mode without exposing or re-entering the saved password.
+						</p>
+						<Button type="button" variant="secondary" disabled={connectionModePending} onClick={reauthorizeBackgroundLogin}>
+							{connectionModePending ? 'Re-enabling…' : 'Re-enable saved login'}
+						</Button>
+					</div>
 				)}
 				{connectionModeError && <p role="alert" className="mt-2 text-xs font-medium text-error">{connectionModeError}</p>}
 			</div>

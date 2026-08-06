@@ -31,12 +31,13 @@ export interface PatchNotesRelease {
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
   {
     version: '2.1.1',
-    subtitle: 'Reliable Berimond construction, schedule-driven recruiting, and corrected PvP tool limits',
-    date: '2026-08-05',
+    subtitle: 'Reliable Berimond construction, schedule-driven recruiting, corrected tool limits, and Background login recovery',
+    date: '2026-08-06',
     items: [
       { kind: 'fixed', text: 'Auto Beri construction now preserves the live Berimond event context, so the built-in complete camp target can continue upgrading every camp and tent family to its official maximum WoD while respecting the selected Stable level' },
       { kind: 'fixed', text: 'Auto Recruit now resolves the active schedule option every time a queue slot opens, enqueues one scheduled stack, and reevaluates before filling another slot instead of falling back to the static configured unit' },
       { kind: 'fixed', text: 'Attack preset tool limits now keep PvE at 30 / 40 / 30, use 40 / 50 / 40 for legendary PvP, and apply the logged-in player\'s official Hall tool bonus only to the flanks, allowing 50 / 50 / 50 when unlocked' },
+      { kind: 'fixed', text: 'Background mode now validates and explicitly re-enables an existing protected saved login when selected, and offers an in-place recovery action when an earlier Full-mode page close incorrectly disabled it' },
     ],
   },
   {
