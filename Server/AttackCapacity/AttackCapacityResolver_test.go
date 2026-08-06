@@ -453,7 +453,7 @@ func TestResolverCalculatesTargetApplicableAttackWaves(t *testing.T) {
 	}
 	state.Player.LegendSkills = State.LegendSkillState{ActiveIDs: []int64{101, 102}, ObservedAt: time.Now().UTC()}
 
-	resolve := func(castleTypeID int, pvp bool) Result {
+	resolve := func(castleTypeID int, pvp bool, legendaryFight bool) Result {
 		t.Helper()
 		state.AttackDialog = State.AttackDialogState{
 			SourceCastleID: 100,
@@ -468,7 +468,7 @@ func TestResolverCalculatesTargetApplicableAttackWaves(t *testing.T) {
 			SourceCastleID: 100, CommanderID: 7, UseAttackDialogEffects: true,
 			Target: TargetContext{
 				Map: &MapTarget{TypeID: castleTypeID}, CastleTypeID: castleTypeID,
-				PvP: pvp, LegendaryFight: true,
+				PvP: pvp, LegendaryFight: legendaryFight,
 				BaseCapacity: LaneCapacity{Left: 100, Front: 200, Right: 100},
 			},
 		})
@@ -478,20 +478,27 @@ func TestResolverCalculatesTargetApplicableAttackWaves(t *testing.T) {
 		return result
 	}
 
-	invasion := resolve(21, true)
+	invasion := resolve(21, true, true)
 	if invasion.BaseWaves != 4 || invasion.AdditionalWaves != 11 || invasion.MaximumWaves != 15 {
 		t.Fatalf("invasion waves = base %d additional %d maximum %d", invasion.BaseWaves, invasion.AdditionalWaves, invasion.MaximumWaves)
 	}
 	if len(invasion.WaveModifiers) != 6 {
 		t.Fatalf("invasion wave modifiers = %#v", invasion.WaveModifiers)
 	}
-	if invasion.BaseToolCapacity != (LaneCapacity{Left: 30, Front: 40, Right: 30}) ||
+	if invasion.BaseToolCapacity != (LaneCapacity{Left: 40, Front: 50, Right: 40}) ||
 		invasion.LegendToolBonus != 10 ||
-		invasion.ToolCapacity != (LaneCapacity{Left: 40, Front: 50, Right: 40}) {
+		invasion.ToolCapacity != (LaneCapacity{Left: 50, Front: 50, Right: 50}) {
 		t.Fatalf("legendary PvP tool capacity = %#v", invasion)
 	}
 
-	rift := resolve(43, false)
+	regularPlayer := resolve(21, true, false)
+	if regularPlayer.BaseToolCapacity != (LaneCapacity{Left: 30, Front: 40, Right: 30}) ||
+		regularPlayer.LegendToolBonus != 0 ||
+		regularPlayer.ToolCapacity != (LaneCapacity{Left: 30, Front: 40, Right: 30}) {
+		t.Fatalf("non-legendary PvP tool capacity = %#v", regularPlayer)
+	}
+
+	rift := resolve(43, false, true)
 	if rift.BaseWaves != 4 || rift.AdditionalWaves != 15 || rift.MaximumWaves != 19 {
 		t.Fatalf("Rift waves = base %d additional %d maximum %d", rift.BaseWaves, rift.AdditionalWaves, rift.MaximumWaves)
 	}

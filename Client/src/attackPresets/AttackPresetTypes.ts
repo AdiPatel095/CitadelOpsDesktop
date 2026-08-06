@@ -16,6 +16,11 @@ export interface AttackPresetToolLimits {
   R: number;
 }
 
+export interface AttackPresetToolProfile {
+  legendary: boolean;
+  pvpFlankBonus: number;
+}
+
 export interface AppAttackPreset extends AttackSetupDraft {
   id: string;
   targetType: AttackPresetTargetType;
@@ -52,12 +57,16 @@ export function emptyAttackPresetDocument(): AttackPresetDocument {
 
 export function attackPresetToolLimits(
   targetType: AttackPresetTargetType,
-  hallToolBonus: number,
+  profile: AttackPresetToolProfile,
 ): AttackPresetToolLimits {
-  const bonus = targetType === 'pvp'
-    ? Math.max(0, Math.min(10, Math.trunc(Number.isFinite(hallToolBonus) ? hallToolBonus : 0)))
-    : 0;
-  return { L: 30 + bonus, M: 40 + bonus, R: 30 + bonus };
+  // Legendary PvP changes the per-lane base before the Hall skill adds its
+  // official flank-only bonus. PvE and non-legendary fights keep the base cap.
+  if (targetType !== 'pvp' || !profile.legendary) return { L: 30, M: 40, R: 30 };
+  const flankBonus = Math.max(
+    0,
+    Math.min(10, Math.trunc(Number.isFinite(profile.pvpFlankBonus) ? profile.pvpFlankBonus : 0)),
+  );
+  return { L: 40 + flankBonus, M: 50, R: 40 + flankBonus };
 }
 
 export function summarizeAttackPreset(preset: AttackSetupDraft): AttackPresetSummary {

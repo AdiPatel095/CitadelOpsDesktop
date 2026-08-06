@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -81,6 +82,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	observed := 0
 	full := 0
 	unknownStackCapacity := 0
+	missingScheduledDefinition := 0
 	var nextCastleSchedule time.Time
 	for _, castleKey := range policy.orderedCastleKeys(settings.Castles, snapshot.State.Castles) {
 		castlePlan := settings.Castles[castleKey]
@@ -93,33 +95,48 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		if !exists {
 			continue
 		}
+		effectiveScheduleKey := policy.id
+		scheduleKey := ""
+		if settings.Mode == "perCastle" {
+			effectiveScheduleKey = policy.id + ":" + castleKey
+			scheduleKey = effectiveScheduleKey
+		}
+		schedule := resolveWeeklySchedule(snapshot.Configuration, effectiveScheduleKey, snapshot.Now)
+		if !schedule.Allowed {
+			if !schedule.Next.IsZero() && (nextCastleSchedule.IsZero() || schedule.Next.Before(nextCastleSchedule)) {
+				nextCastleSchedule = schedule.Next
+			}
+			continue
+		}
+
 		targets := castlePlan.Items
 		if settings.Mode != "perCastle" {
 			targets = settings.GlobalItems
 		}
-		if len(targets) == 0 {
-			continue
-		}
-		rotating := policy.id == "autoRecruit" && settings.Mode == "perCastle" && len(targets) > 1
+		scheduled := schedule.SlotOptionsEnabled
+		rotating := !scheduled && policy.id == "autoRecruit" && settings.Mode == "perCastle" && len(targets) > 1
 		cursor := 0
-		if rotating {
-			cursor = productionRotationCursor(castlePlan.Cursor, len(targets))
-		}
-		target := targets[cursor]
-		if target.ID <= 0 {
-			continue
-		}
-		configured++
-		scheduleKey := ""
-		if settings.Mode == "perCastle" {
-			scheduleKey = policy.id + ":" + castleKey
-			if allowed, next := scheduleAllows(snapshot.Configuration, scheduleKey, snapshot.Now); !allowed {
-				if !next.IsZero() && (nextCastleSchedule.IsZero() || next.Before(nextCastleSchedule)) {
-					nextCastleSchedule = next
-				}
+		var target productionTarget
+		if scheduled {
+			definitionID, valid := productionScheduleDefinitionID(schedule.Options, policy.definitionKey+"ID")
+			if !valid {
+				missingScheduledDefinition++
+				continue
+			}
+			target = productionTarget{ID: definitionID}
+		} else {
+			if len(targets) == 0 {
+				continue
+			}
+			if rotating {
+				cursor = productionRotationCursor(castlePlan.Cursor, len(targets))
+			}
+			target = targets[cursor]
+			if target.ID <= 0 {
 				continue
 			}
 		}
+		configured++
 		queue, queueExists := castle.Production[policy.lineID]
 		if !queueExists || queue.ObservedAt.IsZero() {
 			continue
@@ -151,14 +168,21 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 			unknownStackCapacity++
 			continue
 		}
-		fillAvailable := !rotating
-		arguments, _ := json.Marshal(map[string]any{
+		fillAvailable := !rotating && !scheduled
+		intentArguments := map[string]any{
 			"castleId": castleID, "lineId": policy.lineID,
 			"definitionId": target.ID, "amount": amount, "fillAvailable": fillAvailable,
-		})
+		}
+		if scheduled {
+			intentArguments["scheduledDefinitionId"] = target.ID
+			intentArguments["scheduleValidUntil"] = schedule.ValidUntil.UTC()
+		}
+		arguments, _ := json.Marshal(intentArguments)
 		var followUp *Intent.Request
 		detail := fmt.Sprintf("Queue the configured %s at %s", policy.definitionKey, castleName(castle))
-		if rotating {
+		if scheduled {
+			detail = fmt.Sprintf("Queue scheduled %s %d at %s", policy.definitionKey, target.ID, castleName(castle))
+		} else if rotating {
 			nextCursor := (cursor + 1) % len(targets)
 			raw := snapshot.Configuration.Sections[policy.section]
 			updated, updateErr := advanceProductionCursor(raw, castleKey, nextCursor)
@@ -183,10 +207,13 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 			FollowUp:            followUp,
 			ScheduleKey:         scheduleKey,
 			ReevaluateOnSuccess: true,
+			ReevaluateOnStale:   true,
 		}, nil
 	}
 	detail := fmt.Sprintf("No enabled castle has a configured %s", policy.definitionKey)
-	if configured > 0 && observed == 0 {
+	if missingScheduledDefinition > 0 {
+		detail = fmt.Sprintf("The active schedule slot has no valid %s", policy.definitionKey)
+	} else if configured > 0 && observed == 0 {
 		detail = "Waiting for production queues to be observed in the game session"
 	} else if configured > 0 && observed == full {
 		detail = "All observed production queues are full"
@@ -198,6 +225,42 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		nextCheck = nextCastleSchedule
 	}
 	return Decision{Status: "idle", Detail: detail, NextCheckAt: nextCheck}, nil
+}
+
+func productionScheduleDefinitionID(options map[string]any, key string) (int64, bool) {
+	value, exists := options[key]
+	if !exists {
+		return 0, false
+	}
+	var id int64
+	switch typed := value.(type) {
+	case float64:
+		if typed <= 0 || typed != math.Trunc(typed) {
+			return 0, false
+		}
+		id = int64(typed)
+	case json.Number:
+		parsed, err := typed.Int64()
+		if err != nil {
+			return 0, false
+		}
+		id = parsed
+	case string:
+		parsed, err := strconv.ParseInt(strings.TrimSpace(typed), 10, 64)
+		if err != nil {
+			return 0, false
+		}
+		id = parsed
+	case int:
+		id = int64(typed)
+	case int64:
+		id = typed
+	case int32:
+		id = int64(typed)
+	default:
+		return 0, false
+	}
+	return id, id > 0
 }
 
 func (policy *ProductionPolicy) orderedCastleKeys(
