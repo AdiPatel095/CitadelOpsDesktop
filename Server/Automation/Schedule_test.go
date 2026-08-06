@@ -30,3 +30,27 @@ func TestWeeklyScheduleReturnsNextWindow(t *testing.T) {
 		t.Fatal("expected schedule to be active inside its window")
 	}
 }
+
+func TestWeeklyScheduleResolvesActiveSlotOptionsAndExpiry(t *testing.T) {
+	snapshot := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"scheduler": json.RawMessage(`{
+			"featureSchedules":{"autoRecruit:77":{
+				"enabled":true,"timeZone":"America/New_York","slotOptionsEnabled":true,"slots":[
+					{"day":3,"startMinute":1200,"endMinute":1260,"options":{"unitID":2069}}
+				]
+			}}
+		}`),
+	}}
+	now := time.Date(2026, 8, 6, 0, 30, 0, 0, time.UTC)
+	resolved := resolveWeeklySchedule(snapshot, "autoRecruit:77", now)
+	if !resolved.Allowed || !resolved.SlotOptionsEnabled {
+		t.Fatalf("schedule resolution = %#v, want active slot options", resolved)
+	}
+	if definitionID, valid := productionScheduleDefinitionID(resolved.Options, "unitID"); !valid || definitionID != 2069 {
+		t.Fatalf("scheduled unit = %d valid=%t, want 2069", definitionID, valid)
+	}
+	wantUntil := time.Date(2026, 8, 6, 1, 0, 0, 0, time.UTC)
+	if !resolved.ValidUntil.Equal(wantUntil) {
+		t.Fatalf("schedule validity = %s, want %s", resolved.ValidUntil, wantUntil)
+	}
+}

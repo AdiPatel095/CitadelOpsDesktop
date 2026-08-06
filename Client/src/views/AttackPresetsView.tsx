@@ -37,6 +37,7 @@ import {
   type AppAttackPreset,
   type AttackPresetTargetType,
   type AttackPresetToolLimits,
+  type AttackPresetToolProfile,
   parseAttackPresetDocument,
   summarizeAttackPreset,
 } from '../attackPresets/AttackPresetTypes';
@@ -59,7 +60,7 @@ interface LegendSkillCatalogItem extends Record<string, unknown> {
   totalEffectValue?: number | string;
 }
 
-interface HallToolBonus {
+interface HallFlankToolBonus {
   value: number;
   resolved: boolean;
 }
@@ -74,18 +75,24 @@ const AttackPresetsView: React.FC = () => {
   const [importOpen, setImportOpen] = useState(false);
   const [importValue, setImportValue] = useState('');
   const [importError, setImportError] = useState('');
-  const [hallToolBonus, setHallToolBonus] = useState<HallToolBonus>({ value: 0, resolved: false });
+  const [hallFlankToolBonus, setHallFlankToolBonus] = useState<HallFlankToolBonus>({ value: 0, resolved: false });
   const getCatalogRef = useRef(getCatalog);
   getCatalogRef.current = getCatalog;
 
+  const playerStateResolved = state != null;
+  const playerLegendary = (state?.player.legendLevel ?? 0) > 0;
   const activeLegendSkillIDs = state?.player.legendSkills.activeIds ?? [];
   const activeLegendSkillKey = activeLegendSkillIDs.join(',');
   const legendSkillsObservedAt = state?.player.legendSkills.observedAt ?? '';
 
   useEffect(() => {
     let cancelled = false;
+    if (!playerLegendary) {
+      setHallFlankToolBonus({ value: 0, resolved: playerStateResolved });
+      return () => { cancelled = true; };
+    }
     if (!legendSkillsObservedAt) {
-      setHallToolBonus({ value: 0, resolved: false });
+      setHallFlankToolBonus({ value: 0, resolved: false });
       return () => { cancelled = true; };
     }
     const activeIDs = new Set(
@@ -105,13 +112,13 @@ const AttackPresetsView: React.FC = () => {
           }
           value = Math.max(value, Math.min(10, Math.max(0, Math.trunc(rawBonus))));
         }
-        setHallToolBonus({ value, resolved: true });
+        setHallFlankToolBonus({ value, resolved: true });
       })
       .catch(() => {
-        if (!cancelled) setHallToolBonus({ value: 0, resolved: false });
+        if (!cancelled) setHallFlankToolBonus({ value: 0, resolved: false });
       });
     return () => { cancelled = true; };
-  }, [activeLegendSkillKey, legendSkillsObservedAt]);
+  }, [activeLegendSkillKey, legendSkillsObservedAt, playerLegendary, playerStateResolved]);
 
   const document = useMemo(
     () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
@@ -222,8 +229,12 @@ const AttackPresetsView: React.FC = () => {
     setEditor({ presetID: null, targetType, draft: pending.draft });
   };
 
-  const pveToolLimits = attackPresetToolLimits('pve', hallToolBonus.value);
-  const pvpToolLimits = attackPresetToolLimits('pvp', hallToolBonus.value);
+  const toolProfile: AttackPresetToolProfile = {
+    legendary: playerLegendary,
+    pvpFlankBonus: hallFlankToolBonus.value,
+  };
+  const pveToolLimits = attackPresetToolLimits('pve', toolProfile);
+  const pvpToolLimits = attackPresetToolLimits('pvp', toolProfile);
 
   const handleCopyShareString = async (preset: AppAttackPreset) => {
     try {
@@ -272,7 +283,7 @@ const AttackPresetsView: React.FC = () => {
             <PresetCard
               key={preset.id}
               preset={preset}
-              hallToolBonus={hallToolBonus.value}
+              toolProfile={toolProfile}
               busy={pendingID === preset.id}
               onEdit={() => setEditor({ presetID: preset.id, targetType: preset.targetType, draft: preset })}
               onCopyShare={() => void handleCopyShareString(preset)}
@@ -304,7 +315,7 @@ const AttackPresetsView: React.FC = () => {
             initialDraft={editor.draft}
             inventoryPolicy="advisory"
             targetType={editor.targetType}
-            toolLimits={attackPresetToolLimits(editor.targetType, hallToolBonus.value)}
+            toolLimits={attackPresetToolLimits(editor.targetType, toolProfile)}
             onClose={() => { if (!saving) setEditor(null); }}
             onSave={(draft) => void handleSave(draft)}
           />
@@ -333,7 +344,7 @@ const AttackPresetsView: React.FC = () => {
             <PresetTargetTypeChoice
               type="pve"
               title="PvE preset"
-              description="For Berimond towers, event camps, NPC towers, and other non-player targets."
+              description="For Berimond towers, event camps, NPC towers, and other non-player targets using the fixed PvE limits."
               limits={pveToolLimits}
               bonusLabel="Fixed game limits"
               onSelect={() => choosePresetTargetType('pve')}
@@ -341,19 +352,21 @@ const AttackPresetsView: React.FC = () => {
             <PresetTargetTypeChoice
               type="pvp"
               title="PvP preset"
-              description="For player targets. Uses the currently active Hall of Legends tool bonus."
+              description="For legendary player and Glory targets. Uses this account's active Hall of Legends flank-tool skill."
               limits={pvpToolLimits}
-              bonusLabel={hallToolBonus.resolved
-                ? hallToolBonus.value > 0
-                  ? `Hall of Legends +${hallToolBonus.value} active`
-                  : 'No Hall tool bonus active'
-                : 'Hall data unavailable · safe base limits'}
+              bonusLabel={!playerLegendary
+                ? 'Legendary PvP tools unavailable'
+                : hallFlankToolBonus.resolved
+                  ? hallFlankToolBonus.value > 0
+                    ? `Hall flanks +${hallFlankToolBonus.value} active`
+                    : 'No Hall flank bonus active'
+                  : 'Hall data unavailable · legendary base limits'}
               onSelect={() => choosePresetTargetType('pvp')}
             />
           </div>
           <div className="rounded-global border border-border-base bg-bg-app/35 px-4 py-3 text-xs leading-relaxed text-text-muted">
-            The Hall bonus is read from the player’s active official skill data and is capped at +10 per section.
-            If that data is unavailable, PvP uses the safe 30 / 40 / 30 base limits.
+            PvE uses 30 / 40 / 30. Legendary PvP uses 40 / 50 / 40, then the active official
+            Hall flank-tool skill adds up to +10 on the left and right. The real target is checked again before sending.
           </div>
         </div>
       </Modal>
@@ -417,15 +430,15 @@ const AttackPresetsView: React.FC = () => {
 
 const PresetCard: React.FC<{
   preset: AppAttackPreset;
-  hallToolBonus: number;
+  toolProfile: AttackPresetToolProfile;
   busy: boolean;
   onEdit: () => void;
   onCopyShare: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
-}> = ({ preset, hallToolBonus, busy, onEdit, onCopyShare, onDuplicate, onDelete }) => {
+}> = ({ preset, toolProfile, busy, onEdit, onCopyShare, onDuplicate, onDelete }) => {
   const summary = summarizeAttackPreset(preset);
-  const toolLimits = attackPresetToolLimits(preset.targetType, hallToolBonus);
+  const toolLimits = attackPresetToolLimits(preset.targetType, toolProfile);
   return (
     <Card variant="solid" className="liquid-prominent-header-card overflow-hidden">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-base bg-bg-card/45 px-5 py-4">

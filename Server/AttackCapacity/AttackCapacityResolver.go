@@ -13,15 +13,17 @@ import (
 )
 
 const (
-	flankEffectTypeID              = 28
-	frontEffectTypeID              = 34
-	waveEffectTypeID               = 156
-	supportUnitsEffectTypeID       = 179
-	supportBoostEffectTypeID       = 180
-	baseAttackWaves                = 4
-	baseFlankToolCapacity    int64 = 30
-	baseFrontToolCapacity    int64 = 40
-	maximumLegendToolBonus   int64 = 10
+	flankEffectTypeID                       = 28
+	frontEffectTypeID                       = 34
+	waveEffectTypeID                        = 156
+	supportUnitsEffectTypeID                = 179
+	supportBoostEffectTypeID                = 180
+	baseAttackWaves                         = 4
+	basePvEFlankToolCapacity          int64 = 30
+	basePvEFrontToolCapacity          int64 = 40
+	baseLegendaryPvPFlankToolCapacity int64 = 40
+	baseLegendaryPvPFrontToolCapacity int64 = 50
+	maximumLegendToolBonus            int64 = 10
 )
 
 type Lane string
@@ -557,7 +559,16 @@ func (Resolver) ResolveContext(context Context) (Result, error) {
 		return Result{}, err
 	}
 	baseToolCapacity := LaneCapacity{
-		Left: baseFlankToolCapacity, Front: baseFrontToolCapacity, Right: baseFlankToolCapacity,
+		Left: basePvEFlankToolCapacity, Front: basePvEFrontToolCapacity, Right: basePvEFlankToolCapacity,
+	}
+	// Legendary PvP raises the base in all three sections. The Hall catalog's
+	// additionalAttackToolAmountFlank value is applied separately below.
+	if context.Target.PvP && context.Target.LegendaryFight {
+		baseToolCapacity = LaneCapacity{
+			Left:  baseLegendaryPvPFlankToolCapacity,
+			Front: baseLegendaryPvPFrontToolCapacity,
+			Right: baseLegendaryPvPFlankToolCapacity,
+		}
 	}
 	legendToolBonus := int64(0)
 	if context.Target.PvP && context.Target.LegendaryFight {
@@ -565,7 +576,7 @@ func (Resolver) ResolveContext(context Context) (Result, error) {
 	}
 	toolCapacity := LaneCapacity{
 		Left:  baseToolCapacity.Left + legendToolBonus,
-		Front: baseToolCapacity.Front + legendToolBonus,
+		Front: baseToolCapacity.Front,
 		Right: baseToolCapacity.Right + legendToolBonus,
 	}
 	supportGroups := map[supportCapGroupKey]*supportCapGroupAccumulator{}

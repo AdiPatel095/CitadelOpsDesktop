@@ -1104,6 +1104,10 @@ func autoStormTargetActionDecision(
 	default:
 		return nil
 	}
+	if profile.EventID > 0 && (action.Intent == "building.construct" ||
+		action.Intent == "building.place" || action.Intent == "building.upgrade") {
+		arguments["eventId"] = profile.EventID
+	}
 	actionLabel := action.Kind
 	if actionLabel != "" {
 		actionLabel = strings.ToUpper(actionLabel[:1]) + actionLabel[1:]

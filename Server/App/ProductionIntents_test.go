@@ -226,6 +226,75 @@ func TestVerifyProductionQueueCapacityRejectsStaleFullQueue(t *testing.T) {
 	}
 }
 
+func TestPlanProductionEnqueueCarriesScheduledSelectionIntoCapacityGuard(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[{"wodID":2069}],"constructionItems":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC().Truncate(time.Second)
+	validUntil := now.Add(time.Hour)
+	gameState := State.NewGameState()
+	gameState.Castles[77] = State.CastleState{
+		ID: 77,
+		Production: map[int]State.ProductionQueue{
+			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+		},
+	}
+	arguments, _ := json.Marshal(map[string]any{
+		"castleId": 77, "lineId": 0, "definitionId": 2069, "amount": 110,
+		"fillAvailable": false, "scheduledDefinitionId": 2069, "scheduleValidUntil": validUntil,
+	})
+	plan, err := planProductionEnqueue(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 3 || plan.Steps[1].Action != "production.enqueue.verify_capacity" {
+		t.Fatalf("scheduled production steps=%#v", plan.Steps)
+	}
+	var guard productionQueueCapacityGuard
+	if err := json.Unmarshal(plan.Steps[1].ActionArguments, &guard); err != nil {
+		t.Fatal(err)
+	}
+	if guard.ScheduledDefinitionID != 2069 || guard.ScheduleValidUntil == nil ||
+		!guard.ScheduleValidUntil.Equal(validUntil) || guard.FillAvailable || guard.ExpectedFreeSlots != 1 {
+		t.Fatalf("scheduled production guard=%#v", guard)
+	}
+}
+
+func TestVerifyProductionQueueCapacityRejectsExpiredScheduledSelection(t *testing.T) {
+	now := time.Date(2026, 8, 6, 1, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Castles[77] = State.CastleState{
+		ID: 77, Focused: true,
+		Production: map[int]State.ProductionQueue{
+			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+		},
+	}
+	application := &Application{State: State.NewStore(gameState)}
+	expiredAt := now.Add(-time.Second)
+	arguments, _ := json.Marshal(productionQueueCapacityGuard{
+		CastleID: 77, LineID: 0, ExpectedFreeSlots: 1,
+		ScheduledDefinitionID: 2069, ScheduleValidUntil: &expiredAt,
+	})
+	err := application.verifyProductionQueueCapacityAt(arguments, now)
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("expired schedule guard error=%v, want stale plan", err)
+	}
+
+	validUntil := now.Add(time.Hour)
+	arguments, _ = json.Marshal(productionQueueCapacityGuard{
+		CastleID: 77, LineID: 0, ExpectedFreeSlots: 1,
+		ScheduledDefinitionID: 2069, ScheduleValidUntil: &validUntil,
+	})
+	if err := application.verifyProductionQueueCapacityAt(arguments, now); err != nil {
+		t.Fatalf("active schedule guard error=%v", err)
+	}
+}
+
 func TestPlanHospitalHealAlwaysRefreshesFocusedCastle(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[{"wodID":489,"type":"veteranSwordsman","level":6}],"constructionItems":[]

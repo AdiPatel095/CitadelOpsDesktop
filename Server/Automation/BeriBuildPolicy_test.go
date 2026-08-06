@@ -70,7 +70,7 @@ func TestBeriBuildTargetNeverDowngradesAnExistingStable(t *testing.T) {
 	}
 }
 
-func TestAutoEventBuildPassesBerimondEventContextToTargetCompiler(t *testing.T) {
+func TestAutoEventBuildPassesBerimondEventContextThroughUpgradeIntent(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],
 		"buildings":[
@@ -88,9 +88,10 @@ func TestAutoEventBuildPassesBerimondEventContextToTargetCompiler(t *testing.T) 
 		InstanceID: 1, DefinitionID: 100, Placed: true,
 		ConstructionState: State.BuildingStateBuildCompleted,
 	}
+	capacity := 100.0
 	castle := State.CastleState{
-		ID: 1, KingdomID: State.KingdomID(GameData.BerimondKingdomID),
-		Resources: map[State.ResourceID]State.ResourceBalance{3: {Amount: 100}},
+		ID: 1, KingdomID: State.KingdomID(GameData.BerimondKingdomID), Focused: true,
+		Resources: map[State.ResourceID]State.ResourceBalance{3: {Amount: 100, Capacity: &capacity}},
 		Buildings: map[State.BuildingInstanceID]State.Building{1: building},
 		Layout: State.CastleLayout{
 			Objects: map[State.BuildingInstanceID]State.Building{1: building},
@@ -125,5 +126,17 @@ func TestAutoEventBuildPassesBerimondEventContextToTargetCompiler(t *testing.T) 
 	}
 	if decision == nil || decision.Request == nil || decision.Metrics["targetActionsRemaining"] != 1 {
 		t.Fatalf("decision = %#v, want an actionable event-authorized upgrade path", decision)
+	}
+	var arguments struct {
+		CastleID           State.CastleID           `json:"castleId"`
+		BuildingInstanceID State.BuildingInstanceID `json:"buildingInstanceId"`
+		EventID            int64                    `json:"eventId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request.Name != "building.upgrade" || arguments.CastleID != castle.ID ||
+		arguments.BuildingInstanceID != building.InstanceID || arguments.EventID != GameData.BerimondEventID {
+		t.Fatalf("Berimond upgrade intent %s (%s) lost event context: %s", decision.Request.Name, decision.Detail, decision.Request.Arguments)
 	}
 }

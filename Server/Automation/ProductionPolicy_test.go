@@ -404,11 +404,117 @@ func TestRecruitPolicyWakesWhenPerCastleScheduleOpens(t *testing.T) {
 	}
 }
 
+func TestRecruitPolicyReevaluatesScheduledUnitForEveryOpenedSlot(t *testing.T) {
+	now := time.Date(2026, 8, 6, 0, 30, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(`{
+		"mode":"perCastle","checkIntervalSec":3600,
+		"castles":{"77":{"enabled":true,"items":[{"id":489,"amount":25}]}}
+	}`)
+	snapshot.Configuration.Sections["scheduler"] = json.RawMessage(`{
+		"featureSchedules":{"autoRecruit:77":{
+			"enabled":true,"timeZone":"America/New_York","slotOptionsEnabled":true,"slots":[
+				{"day":3,"startMinute":1200,"endMinute":1260,"options":{"unitID":2069}},
+				{"day":3,"startMinute":1260,"endMinute":1440,"options":{"unitID":524}}
+			]
+		}}
+	}`)
+
+	policy := NewRecruitPolicy()
+	decision, err := policy.Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("first scheduled decision=%#v err=%v", decision, err)
+	}
+	first := productionIntentArguments(t, decision)
+	wantFirstUntil := time.Date(2026, 8, 6, 1, 0, 0, 0, time.UTC)
+	if first.DefinitionID != 2069 || first.ScheduledDefinitionID != 2069 || first.FillAvailable ||
+		first.ScheduleValidUntil == nil || !first.ScheduleValidUntil.Equal(wantFirstUntil) {
+		t.Fatalf("first scheduled arguments=%#v, want one 2069 stack valid through %s", first, wantFirstUntil)
+	}
+	if !decision.ReevaluateOnSuccess || !decision.ReevaluateOnStale || decision.FollowUp != nil {
+		t.Fatalf("first scheduled continuation=%#v", decision)
+	}
+
+	castle := snapshot.State.Castles[77]
+	queue := castle.Production[0]
+	queue.Queued = append(queue.Queued, State.QueueItem{
+		Definition: State.DefinitionRef{Collection: "units", ID: 2069}, Amount: first.Amount,
+	})
+	castle.Production[0] = queue
+	snapshot.State.Castles[77] = castle
+	snapshot.Now = now.Add(5 * time.Minute)
+	decision, err = policy.Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("second scheduled decision=%#v err=%v", decision, err)
+	}
+	second := productionIntentArguments(t, decision)
+	if second.DefinitionID != 2069 || second.ScheduledDefinitionID != 2069 || second.FillAvailable {
+		t.Fatalf("second opened slot fell back from schedule: %#v", second)
+	}
+
+	snapshot.Now = wantFirstUntil.Add(5 * time.Minute)
+	decision, err = policy.Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("next-period scheduled decision=%#v err=%v", decision, err)
+	}
+	third := productionIntentArguments(t, decision)
+	if third.DefinitionID != 524 || third.ScheduledDefinitionID != 524 || third.FillAvailable {
+		t.Fatalf("next-period scheduled arguments=%#v, want freshly resolved unit 524", third)
+	}
+}
+
+func TestRecruitPolicyDoesNotFallBackWhenActiveScheduleSlotHasNoUnit(t *testing.T) {
+	now := time.Date(2026, 8, 6, 0, 30, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(`{
+		"mode":"perCastle","castles":{"77":{"enabled":true,"items":[{"id":489,"amount":25}]}}
+	}`)
+	snapshot.Configuration.Sections["scheduler"] = json.RawMessage(`{
+		"featureSchedules":{"autoRecruit:77":{
+			"enabled":true,"timeZone":"America/New_York","slotOptionsEnabled":true,
+			"slots":[{"day":3,"startMinute":1200,"endMinute":1260}]
+		}}
+	}`)
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil || decision.Detail != "The active schedule slot has no valid unit" {
+		t.Fatalf("missing scheduled unit decision=%#v, want fail-closed wait", decision)
+	}
+}
+
+func TestRecruitPolicyUsesGlobalScheduledUnitWithoutStaticFallback(t *testing.T) {
+	now := time.Date(2026, 8, 6, 0, 30, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(`{
+		"mode":"global","globalItems":[],"castles":{"77":{"enabled":true}}
+	}`)
+	snapshot.Configuration.Sections["scheduler"] = json.RawMessage(`{
+		"featureSchedules":{"autoRecruit":{
+			"enabled":true,"timeZone":"America/New_York","slotOptionsEnabled":true,
+			"slots":[{"day":3,"startMinute":1200,"endMinute":1260,"options":{"unitID":2069}}]
+		}}
+	}`)
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("global scheduled decision=%#v err=%v", decision, err)
+	}
+	arguments := productionIntentArguments(t, decision)
+	if arguments.DefinitionID != 2069 || arguments.ScheduledDefinitionID != 2069 || arguments.FillAvailable {
+		t.Fatalf("global scheduled arguments=%#v", arguments)
+	}
+}
+
 type productionArguments struct {
-	CastleID      State.CastleID `json:"castleId"`
-	DefinitionID  int64          `json:"definitionId"`
-	Amount        int64          `json:"amount"`
-	FillAvailable bool           `json:"fillAvailable"`
+	CastleID              State.CastleID `json:"castleId"`
+	DefinitionID          int64          `json:"definitionId"`
+	Amount                int64          `json:"amount"`
+	FillAvailable         bool           `json:"fillAvailable"`
+	ScheduledDefinitionID int64          `json:"scheduledDefinitionId"`
+	ScheduleValidUntil    *time.Time     `json:"scheduleValidUntil"`
 }
 
 func productionIntentArguments(t *testing.T, decision Decision) productionArguments {
