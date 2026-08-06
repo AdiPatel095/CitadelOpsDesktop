@@ -516,6 +516,9 @@ func (application *Application) registerCoreIntents() error {
 	for name, action := range map[string]Intent.Action{
 		"session.start": ignoreArguments(application.Session.Start),
 		"session.stop":  ignoreArguments(application.Session.Stop),
+		"session.background.prepare": ignoreArguments(func(context.Context) error {
+			return application.Session.PrepareBackgroundMode(application.DataDir)
+		}),
 		"game.ui.close": ignoreArguments(application.Session.CloseGameUI),
 		"session.select_browser": func(_ context.Context, arguments json.RawMessage) error {
 			preference, err := browserPreference(arguments)
@@ -556,6 +559,10 @@ func (application *Application) registerCoreIntents() error {
 		{
 			Name: "session.stop", Description: "Stop the active game session", Effect: Intent.EffectExternal,
 			Planner: actionPlanner("session.stop", "session", "Stop the game session"),
+		},
+		{
+			Name: "session.background.prepare", Description: "Validate and authorize the protected saved login for Background mode", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("session.background.prepare", "session", "Prepare the saved login for Background mode"),
 		},
 		{
 			Name: "session.select_browser", Description: "Select the CDP-capable Chromium browser used for game sessions", Effect: Intent.EffectExternal,

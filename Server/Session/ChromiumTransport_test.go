@@ -384,6 +384,69 @@ func TestCleanAuthenticatedCloseDisablesRestoreAndReloadsForAccountSelection(t *
 	}
 }
 
+func TestPreparedBackgroundModeSurvivesCleanFullModeClose(t *testing.T) {
+	transport := newSocketTestTransport()
+	transport.config.DataDir = t.TempDir()
+	if err := saveLoginCredential(transport.config.DataDir, persistedLoginCredential{
+		SchemaVersion: loginCredentialSchemaVersion,
+		CapturedAt:    time.Now().UTC(),
+		AutoRestore:   false,
+		Username:      "saved-player",
+		Password:      "saved-password",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := saveGameConnectionProfile(transport.config.DataDir, validBackgroundTestProfile()); err != nil {
+		t.Fatal(err)
+	}
+	if err := transport.PrepareBackgroundMode(); err != nil {
+		t.Fatal(err)
+	}
+
+	transport.disableLoginRestore(time.Now().UTC())
+	credential, err := loadLoginCredential(transport.config.DataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !credential.AutoRestore || !transport.restoreSuppressed || !transport.backgroundModePrepared {
+		t.Fatalf(
+			"prepared Background transition was lost: autoRestore=%v suppressed=%v prepared=%v",
+			credential.AutoRestore, transport.restoreSuppressed, transport.backgroundModePrepared,
+		)
+	}
+}
+
+func TestExecutionContextClearDoesNotDisableSavedLogin(t *testing.T) {
+	transport := newSocketTestTransport()
+	gameContext, cancel := context.WithCancel(context.Background())
+	cancel()
+	transport.gameContext = gameContext
+	transport.loginCredential = persistedLoginCredential{
+		SchemaVersion: loginCredentialSchemaVersion,
+		CapturedAt:    time.Now().UTC(),
+		AutoRestore:   true,
+		Username:      "saved-player",
+		Password:      "saved-password",
+	}
+	processSocketTestNotice(t, transport, 5, createdSocketNotice("active", 1))
+	processSocketTestNotice(t, transport, 5, socketFrameNotice(
+		"active", 2, "inbound", `%xt%lli%1%0%{}%`,
+	))
+	<-transport.frames
+
+	transport.processSocketNotice(queuedSocketNotice{
+		generation: 1, clearContexts: true, observedAt: time.Now().UTC(),
+	})
+	status := transport.Status()
+	if transport.restoreSuppressed || !transport.loginCredential.AutoRestore ||
+		status.Detail != "Game execution context closed" {
+		t.Fatalf(
+			"context clear disabled saved login: suppressed=%v autoRestore=%v status=%+v",
+			transport.restoreSuppressed, transport.loginCredential.AutoRestore, status,
+		)
+	}
+}
+
 func TestAccountSelectionSuppressesReconnectAndLoginTimeoutReloads(t *testing.T) {
 	transport := newSocketTestTransport()
 	transport.restoreSuppressed = true
