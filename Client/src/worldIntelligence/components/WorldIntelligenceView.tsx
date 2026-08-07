@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
 	Activity,
 	ArrowDown,
@@ -8,7 +8,6 @@ import {
 	CloudOff,
 	Database,
 	Globe2,
-	History,
 	RefreshCw,
 	Search,
 	UserRound,
@@ -39,6 +38,8 @@ import {
 	SectionCard,
 } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
+import DetailBackButton from '../../components/DetailBackButton';
+import WorldPlayerDetailView from './WorldPlayerDetailView';
 
 type RankingType = 'players' | 'alliances';
 type SelectedEntity = { type: 'player' | 'alliance'; id: number; worldId: string };
@@ -65,6 +66,7 @@ const WorldIntelligenceView = () => {
 	const [allianceProfile, setAllianceProfile] = useState<WorldIntelligenceAllianceProfileV1 | null>(null);
 	const [profileLoading, setProfileLoading] = useState(false);
 	const [error, setError] = useState('');
+	const directoryScrollRef = useRef(0);
 
 	const refreshStatus = useCallback(async () => {
 		try {
@@ -172,14 +174,16 @@ const WorldIntelligenceView = () => {
 	};
 
 	const openEntity = useCallback(async (entity: SelectedEntity) => {
+		if (!selected) directoryScrollRef.current = window.scrollY;
 		setSelected(entity);
 		setPlayerProfile(null);
 		setAllianceProfile(null);
 		setProfileLoading(true);
 		setError('');
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 		try {
 			if (entity.type === 'player') {
-				setPlayerProfile(await CitadelAPI.getWorldIntelligencePlayer(entity.worldId, entity.id));
+				setPlayerProfile(await CitadelAPI.getWorldIntelligencePlayer(entity.worldId, entity.id, 1_000));
 			} else {
 				setAllianceProfile(await CitadelAPI.getWorldIntelligenceAlliance(entity.worldId, entity.id));
 			}
@@ -188,7 +192,16 @@ const WorldIntelligenceView = () => {
 		} finally {
 			setProfileLoading(false);
 		}
-	}, []);
+	}, [selected]);
+
+	const closeProfile = () => {
+		const directoryScroll = directoryScrollRef.current;
+		setSelected(null);
+		setPlayerProfile(null);
+		setAllianceProfile(null);
+		setError('');
+		window.requestAnimationFrame(() => window.scrollTo({ top: directoryScroll }));
+	};
 
 	const currentCoverage = coverage.worlds[0];
 	const rankedEntries = ranking?.entries ?? [];
@@ -206,6 +219,60 @@ const WorldIntelligenceView = () => {
 	const pageCount = Math.max(1, Math.ceil(tableRows.length / tablePageSize));
 	const visibleRows = tableRows.slice(tablePage * tablePageSize, (tablePage + 1) * tablePageSize);
 	const featureReady = Boolean(worldId);
+
+	if (selected) {
+		return (
+			<div className="flex flex-col gap-6 pb-8">
+				{error && (
+					<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
+						<span>{error}</span>
+						<button type="button" aria-label="Dismiss error" onClick={() => setError('')}><X className="h-4 w-4" /></button>
+					</div>
+				)}
+				{profileLoading ? (
+					<>
+						<PageHeader
+							eyebrow="World Intelligence dossier"
+							title={selected.type === 'player' ? 'Loading player…' : 'Loading alliance…'}
+							description={`${displayWorld(selected.worldId)} · public ID ${selected.id}`}
+							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
+							actions={<DetailBackButton label="Back to World Intelligence" onClick={closeProfile} />}
+						/>
+						<Card><CardContent className="flex min-h-72 items-center justify-center text-sm text-text-muted">Loading public history…</CardContent></Card>
+					</>
+				) : playerProfile ? (
+					<WorldPlayerDetailView
+						profile={playerProfile}
+						onBack={closeProfile}
+						onOpenAlliance={(allianceId) => void openEntity({ type: 'alliance', id: allianceId, worldId: playerProfile.current.worldId })}
+					/>
+				) : allianceProfile ? (
+					<>
+						<PageHeader
+							eyebrow="World Intelligence alliance"
+							title={allianceProfile.current.name}
+							description={`${displayWorld(allianceProfile.current.worldId)} · Alliance ${allianceProfile.current.allianceId}`}
+							icon={<Users className="h-6 w-6" />}
+							actions={<DetailBackButton label="Back to World Intelligence" onClick={closeProfile} />}
+							meta={<Badge variant="outline">Observed {relativeTime(allianceProfile.current.observedAt)}</Badge>}
+						/>
+						<AllianceProfile profile={allianceProfile} onOpenPlayer={(player) => void openEntity({ type: 'player', id: player.playerId, worldId: player.worldId })} />
+					</>
+				) : (
+					<>
+						<PageHeader
+							eyebrow="World Intelligence dossier"
+							title="Profile unavailable"
+							description={`${displayWorld(selected.worldId)} · public ID ${selected.id}`}
+							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
+							actions={<DetailBackButton label="Back to World Intelligence" onClick={closeProfile} />}
+						/>
+						<EmptyState size="lg" title="Profile unavailable" description="No usable public observations were returned for this entity." />
+					</>
+				)}
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex flex-col gap-6 pb-8">
@@ -314,24 +381,6 @@ const WorldIntelligenceView = () => {
 						/>
 					</SectionCard>
 
-					{selected && (
-						<SectionCard
-							title={selected.type === 'player' ? 'Player intelligence' : 'Alliance intelligence'}
-							description={`${displayWorld(selected.worldId)} · stable ID ${selected.id}`}
-							icon={selected.type === 'player' ? <UserRound className="h-5 w-5" /> : <Users className="h-5 w-5" />}
-							actions={<Button variant="ghost" size="icon" aria-label="Close profile" onClick={() => setSelected(null)}><X className="h-4 w-4" /></Button>}
-						>
-							{profileLoading ? (
-								<div className="flex min-h-52 items-center justify-center text-sm text-text-muted">Loading cloud history…</div>
-							) : playerProfile ? (
-								<PlayerProfile profile={playerProfile} />
-							) : allianceProfile ? (
-								<AllianceProfile profile={allianceProfile} onOpenPlayer={(player) => void openEntity({ type: 'player', id: player.playerId, worldId: player.worldId })} />
-							) : (
-								<EmptyState size="sm" title="Profile unavailable" description="No usable observations were returned." />
-							)}
-						</SectionCard>
-					)}
 				</>
 			)}
 		</div>
@@ -465,53 +514,6 @@ const NumericCell = ({ value, emphasis = false }: { value?: number; emphasis?: b
 	</td>
 );
 
-const PlayerProfile = ({ profile }: { profile: WorldIntelligencePlayerProfileV1 }) => {
-	const [metric, setMetric] = useState<'might' | 'glory' | 'weeklyLoot' | 'honor'>('might');
-	const current = profile.current;
-	const changes = playerChanges(profile.history);
-	const points = profile.history.map((row) => ({ at: row.observedAt, value: row[metric] ?? 0 })).filter((point) => point.value > 0);
-	return (
-		<div className="space-y-5">
-			<div className="flex flex-wrap items-start justify-between gap-4">
-				<div>
-					<div className="text-2xl font-black text-text-main">{current.name}</div>
-					<div className="mt-1 text-sm text-text-muted">{current.allianceName || 'No observed alliance'} · level {current.level || '—'}{current.legendLevel ? ` · legend ${current.legendLevel}` : ''}</div>
-				</div>
-				<Badge variant="outline">Observed {relativeTime(current.observedAt)}</Badge>
-			</div>
-			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-				<MetricTile label="Might" value={formatNumber(current.might)} tone="brand" />
-				<MetricTile label="Glory" value={formatNumber(current.glory)} tone="info" />
-				<MetricTile label="Weekly loot" value={formatNumber(current.weeklyLoot)} tone="success" />
-				<MetricTile label="Honor" value={formatNumber(current.honor)} />
-				<MetricTile label="Level" value={current.level || '—'} />
-				<MetricTile label="Legend level" value={current.legendLevel || '—'} />
-			</div>
-			<div className="grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(16rem,0.7fr)]">
-				<Card>
-					<CardContent>
-						<div className="mb-4 flex items-center justify-between gap-3">
-							<div className="flex items-center gap-2 font-bold text-text-main"><Activity className="h-4 w-4 text-primary" /> Public history</div>
-							<PillSelector ariaLabel="Player history metric" value={metric} onChange={(value) => setMetric(value as 'might' | 'glory' | 'weeklyLoot' | 'honor')} options={[{ value: 'might', label: 'Might' }, { value: 'glory', label: 'Glory' }, { value: 'weeklyLoot', label: 'Loot' }, { value: 'honor', label: 'Honor' }]} size="body" />
-						</div>
-						<Sparkline points={points} />
-					</CardContent>
-				</Card>
-				<Card>
-					<CardContent>
-						<div className="mb-3 flex items-center gap-2 font-bold text-text-main"><History className="h-4 w-4 text-primary" /> Identity changes</div>
-						{changes.length === 0 ? <div className="text-sm text-text-muted">No name or alliance changes observed yet.</div> : (
-							<div className="max-h-52 space-y-3 overflow-auto custom-scrollbar">
-								{changes.slice().reverse().map((change, index) => <div key={`${change.at}:${index}`} className="border-l-2 border-primary/30 pl-3"><div className="text-sm font-semibold text-text-main">{change.label}</div><div className="text-[11px] text-text-muted">{formatDateTime(change.at)}</div></div>)}
-							</div>
-						)}
-					</CardContent>
-				</Card>
-			</div>
-		</div>
-	);
-};
-
 const AllianceProfile = ({ profile, onOpenPlayer }: {
 	profile: WorldIntelligenceAllianceProfileV1;
 	onOpenPlayer: (player: WorldIntelligencePlayerObservationV1) => void;
@@ -572,17 +574,6 @@ const Sparkline = ({ points }: { points: Array<{ at: string; value: number }> })
 		</div>
 	);
 };
-
-function playerChanges(history: WorldIntelligencePlayerObservationV1[]): Array<{ at: string; label: string }> {
-	const changes: Array<{ at: string; label: string }> = [];
-	for (let index = 1; index < history.length; index += 1) {
-		const previous = history[index - 1];
-		const current = history[index];
-		if (previous.name !== current.name) changes.push({ at: current.observedAt, label: `${previous.name} → ${current.name}` });
-		if ((previous.allianceId ?? 0) !== (current.allianceId ?? 0)) changes.push({ at: current.observedAt, label: `${previous.allianceName || 'No alliance'} → ${current.allianceName || 'No alliance'}` });
-	}
-	return changes;
-}
 
 function displayWorld(value: string): string {
 	const trimmed = value.trim();

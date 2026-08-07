@@ -107,6 +107,30 @@ func TestPlayerSamplesForPlayerIgnoresChangingLegacyUID(t *testing.T) {
 	}
 }
 
+func TestPlayerSamplesForPlayerFiltersBySampleTimestamp(t *testing.T) {
+	store, err := Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, sample := range []json.RawMessage{
+		json.RawMessage(`{"timestampUnix":100,"playerId":7,"might":100}`),
+		json.RawMessage(`{"timestampUnix":300,"playerId":7,"might":300}`),
+		json.RawMessage(`{"timestampUnix":400,"playerId":8,"might":400}`),
+	} {
+		if err := store.Append(CollectionPlayerSamples, sample); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	samples, err := store.PlayerSamplesForPlayer(time.Unix(200, 0), 10, 7)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(samples) != 1 || samples[0].TimestampUnix != 300 {
+		t.Fatalf("filtered player history = %+v", samples)
+	}
+}
+
 func TestNormalizePlayerSampleTroopsExcludesTools(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":{},
