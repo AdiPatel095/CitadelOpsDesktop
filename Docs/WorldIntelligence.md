@@ -1,27 +1,30 @@
 # World Intelligence
 
-World Intelligence is CitadelOps' own shared, world-scoped dataset. It does not call, scrape, or import GGE-Tracker. Desktop installations contribute bounded public observations to the unified CitadelOps backend, and desktop queries read the merged dataset back through the local CitadelOps API.
+World Intelligence is CitadelOps' own shared, world-scoped dataset. It does not call, scrape, or import GGE-Tracker. Designated owned CitadelOps accounts read the same public GGE `hgh` leaderboards used by GGE-Tracker, contribute bounded observations to the unified CitadelOps backend, and every desktop reads the merged dataset through the local CitadelOps API.
 
 ## Data flow
 
-1. The desktop collector observes already-decoded public game state.
-2. It normalizes the world host, removes private state, and creates a deterministic SHA-256 batch every 15-minute capture bucket or when public data changes.
-3. A local SQLite outbox at `Runtime/WorldIntelligence.sqlite` durably queues the batch. Each installation has a random local ID and secret; there is no player credential in the cloud authorization header.
-4. The uploader registers that installation, sends idempotent batches, and retries transient failures with bounded backoff.
-5. The Cloud Run service appends immutable observations in PostgreSQL and maintains merged current player and alliance rows for search, rankings, and profiles.
-6. The World Intel desktop view and Alliance Targets query the cloud through CitadelOps' local HTTP API.
+1. A designated collector uses the ordinary CitadelOps intent engine to read six public might brackets (`LT=6`, `LID=1..6`) and the public weekly-loot board (`LT=2`, `LID=1`). Pages are requested ten ranks at a time through the account's existing authenticated game socket.
+2. The scanner validates every response, stops at the server-reported row count, caps each category at 50,000 players, and discards the entire partial scan if a page fails. Player details embedded in the leaderboard rows supply public identity, alliance, metrics, and holdings without a world-map sweep.
+3. It normalizes the world host and creates deterministic SHA-256 batches for one 15-minute capture bucket. Players, alliances, and holdings are split at the cloud's existing per-batch limits.
+4. A local SQLite outbox at `Runtime/WorldIntelligence.sqlite` durably queues each batch. Each installation has a random local ID and secret; there is no player credential in the cloud authorization header.
+5. The uploader registers that installation, sends idempotent batches, and retries transient failures with bounded backoff.
+6. The Cloud Run service appends 15-minute player and alliance observations in PostgreSQL, records holding history only when a public holding changes, and maintains merged current snapshots for search, rankings, and profiles.
+7. The World Intel desktop view and Alliance Targets query the cloud through CitadelOps' local HTTP API.
+
+World Intelligence reads are always enabled and have no consent switch or feature gate. Collection is operationally isolated through hidden profile assignment fields: `collectorPlayerId`, `collectorSlot`, and `collectorSlots`. With two owned accounts, slots `0/2` and `1/2` alternate on global 15-minute boundaries, so each account scans every 30 minutes while the shared dataset receives one scan every 15 minutes. With one owned account, slot `0/1` scans every 15 minutes. Unassigned installations send no leaderboard traffic.
 
 ## Privacy boundary
 
 Uploaded fields are limited to public world identity and observations:
 
-- player ID, name, alliance membership, level, legend level, might, and glory;
+- player ID, name, alliance membership, level, legend level, might, glory, honor, and weekly loot;
 - alliance ID, name, member count, and total might;
 - publicly visible alliance holdings: owner, castle ID, kingdom, coordinates, and slot type;
 - public event-alliance ranking, score, member count, and fame values;
 - observation timestamps and a normalized world host.
 
-The collector does not serialize account UID, login/session credentials, resources, currencies, troops, inventory, commanders, equipment, movements, reports, raw frames, chat, protection state, or automation configuration. Collector tests marshal the final payload and guard this exclusion list. World Intelligence and public contribution have separate desktop toggles; both default off for 2.1.0, and contribution can be disabled later without deleting the local installation identity.
+The collector does not serialize account UID, login/session credentials, resources, currencies, troops, inventory, commanders, equipment, movements, reports, raw frames, chat, protection state, or automation configuration. It stores only decoded public leaderboard fields. Unassigned profiles are read-only by default, while collector assignment is bound to the expected logged-in player ID.
 
 ## Cloud API
 
@@ -40,7 +43,7 @@ Observation requests are capped at 4 MiB, reject unknown JSON fields, enforce pe
 
 ## Deployment
 
-World Intelligence ships in CitadelOpsBackend 1.3.10 and runs inside the existing `live-backend-cloud` Cloud Run service. It reuses that service's Cloud SQL connection and public `citadelops.app` domain; there is no second backend service, database, deployment file, or database secret.
+World Intelligence leaderboard ingestion ships in CitadelOpsBackend 1.3.11 and runs inside the existing `live-backend-cloud` Cloud Run service. It reuses that service's Cloud SQL connection and public `citadelops.app` domain; there is no second backend service, database, deployment file, or database secret.
 
 Backend startup creates the additive `world_intel_*` tables and indexes in a PostgreSQL transaction. If the schema cannot be initialized, the new Cloud Run revision fails closed and the previous healthy revision continues serving. The normal CitadelOpsBackend `main` promotion and Google Cloud Build trigger deploy the API together with the report and licensing routes.
 
@@ -52,4 +55,4 @@ Installation authentication prevents anonymous batch writes but does not prove t
 
 ## Coverage behavior
 
-The UI treats sparse data as expected: it shows entity counts, total observations, first/last observation time, and per-row freshness. Rankings use the freshest merged observation, profiles retain append-only history, and alliance rosters/holdings come from the latest complete alliance observation. Until enough desktops encounter a player or alliance, search and rankings can be incomplete without being considered an error.
+The UI shows entity counts, total observations, first/last observation time, collector-slot status, scan progress, queue depth, and per-row freshness. Rankings use the freshest merged observation, profiles retain append-only history, and holdings come from the most recent completed leaderboard scan. Sparse coverage is expected only until the first complete owned-account scan reaches the cloud.
