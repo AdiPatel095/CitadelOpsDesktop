@@ -12,13 +12,16 @@ import (
 )
 
 const (
-	captureDebounce = 2 * time.Second
-	uploadPoll      = 30 * time.Second
+	uploadPoll       = 30 * time.Second
+	scannerPoll      = 20 * time.Second
+	scannerRetryWait = 5 * time.Minute
+	scannerTimeout   = 12 * time.Minute
 )
 
 type Settings struct {
-	Enabled                      bool `json:"enabled"`
-	ContributePublicObservations bool `json:"contributePublicObservations"`
+	CollectorPlayerID int64 `json:"collectorPlayerId,omitempty"`
+	CollectorSlot     int   `json:"collectorSlot,omitempty"`
+	CollectorSlots    int   `json:"collectorSlots,omitempty"`
 }
 
 type DesktopService struct {
@@ -26,8 +29,14 @@ type DesktopService struct {
 	configuration *Configuration.Store
 	store         *DesktopStore
 	client        *CloudClient
+	intents       intentSubmitter
 	wake          chan struct{}
 	done          chan struct{}
+
+	scanMu          sync.RWMutex
+	scanInProgress  bool
+	scannedPlayers  int
+	nextScanRetryAt time.Time
 
 	runOnce   sync.Once
 	closeOnce sync.Once
@@ -38,6 +47,7 @@ func NewDesktopService(
 	state *State.Store,
 	configuration *Configuration.Store,
 	client *CloudClient,
+	intents intentSubmitter,
 ) (*DesktopService, error) {
 	store, err := OpenDesktopStore(dataDir)
 	if err != nil {
@@ -47,7 +57,7 @@ func NewDesktopService(
 		client = NewCloudClient(ClientConfig{})
 	}
 	return &DesktopService{
-		state: state, configuration: configuration, store: store, client: client,
+		state: state, configuration: configuration, store: store, client: client, intents: intents,
 		wake: make(chan struct{}, 1), done: make(chan struct{}),
 	}, nil
 }
@@ -63,10 +73,7 @@ func (service *DesktopService) Run(ctx context.Context) {
 		}
 		var wait sync.WaitGroup
 		wait.Add(2)
-		go func() {
-			defer wait.Done()
-			service.runCollector(ctx)
-		}()
+		go func() { defer wait.Done(); service.runScanner(ctx) }()
 		go func() {
 			defer wait.Done()
 			service.runUploader(ctx)
@@ -89,10 +96,10 @@ func (service *DesktopService) Status(ctx context.Context) DesktopStatus {
 		storeStatus = service.store.Status(ctx)
 	}
 	status := DesktopStatus{
-		Enabled: settings.Enabled, Contributing: settings.Enabled && settings.ContributePublicObservations,
+		Enabled:        true,
 		PendingBatches: storeStatus.Pending, LastCapturedAt: storeStatus.LastCapturedAt,
 		LastUploadAt: storeStatus.LastUploadAt, LastUploadError: storeStatus.LastError,
-		PublicFieldsOnly: true,
+		LastScanAt: storeStatus.LastScanAt, LastScanError: storeStatus.LastScanError, PublicFieldsOnly: true,
 	}
 	if service != nil && service.client != nil {
 		status.Endpoint = service.client.Endpoint()
@@ -103,7 +110,19 @@ func (service *DesktopService) Status(ctx context.Context) DesktopStatus {
 		if status.WorldID == "" {
 			status.WorldID = NormalizeWorldID(snapshot.Session.ServerURL)
 		}
+		status.Collector = settings.collectsFor(int64(snapshot.Player.ID))
+		status.Contributing = status.Collector
+		if status.Collector {
+			status.CollectorSlot = settings.CollectorSlot
+			status.CollectorSlots = settings.CollectorSlots
+			next := nextCollectorSlot(time.Now().UTC(), settings.CollectorSlot, settings.CollectorSlots)
+			status.NextScanAt = &next
+		}
 	}
+	service.scanMu.RLock()
+	status.ScanInProgress = service.scanInProgress
+	status.ScannedPlayers = service.scannedPlayers
+	service.scanMu.RUnlock()
 	return status
 }
 
@@ -198,52 +217,6 @@ func (service *DesktopService) Close() error {
 	return err
 }
 
-func (service *DesktopService) runCollector(ctx context.Context) {
-	events, unsubscribe := service.state.Subscribe(32)
-	defer unsubscribe()
-	refresh := time.NewTicker(captureBucket)
-	defer refresh.Stop()
-	var debounce *time.Timer
-	var debounceChannel <-chan time.Time
-	capture := func() {
-		settings := service.Settings()
-		if !settings.Enabled || !settings.ContributePublicObservations {
-			return
-		}
-		batch, available, err := BuildObservationBatch(service.state.Snapshot(), time.Now())
-		if err != nil || !available {
-			return
-		}
-		inserted, err := service.store.Enqueue(ctx, batch)
-		if err == nil && inserted {
-			service.signal()
-		}
-	}
-	capture()
-	for {
-		select {
-		case <-ctx.Done():
-			if debounce != nil {
-				debounce.Stop()
-			}
-			return
-		case <-events:
-			if debounce == nil {
-				debounce = time.NewTimer(captureDebounce)
-				debounceChannel = debounce.C
-			} else if debounce.Stop() {
-				debounce.Reset(captureDebounce)
-			}
-		case <-debounceChannel:
-			capture()
-			debounce = nil
-			debounceChannel = nil
-		case <-refresh.C:
-			capture()
-		}
-	}
-}
-
 func (service *DesktopService) runUploader(ctx context.Context) {
 	poll := time.NewTicker(uploadPoll)
 	defer poll.Stop()
@@ -254,10 +227,6 @@ func (service *DesktopService) runUploader(ctx context.Context) {
 			return
 		case <-poll.C:
 		case <-service.wake:
-		}
-		settings := service.Settings()
-		if !settings.Enabled || !settings.ContributePublicObservations {
-			continue
 		}
 		service.uploadAvailable(ctx)
 	}
@@ -313,10 +282,12 @@ func (service *DesktopService) queryReady() error {
 	if service == nil || service.client == nil {
 		return fmt.Errorf("world intelligence service is unavailable")
 	}
-	if !service.Settings().Enabled {
-		return fmt.Errorf("world intelligence is disabled")
-	}
 	return nil
+}
+
+func (settings Settings) collectsFor(playerID int64) bool {
+	return playerID > 0 && settings.CollectorPlayerID == playerID && settings.CollectorSlots >= 1 &&
+		settings.CollectorSlots <= 8 && settings.CollectorSlot >= 0 && settings.CollectorSlot < settings.CollectorSlots
 }
 
 func (service *DesktopService) signal() {

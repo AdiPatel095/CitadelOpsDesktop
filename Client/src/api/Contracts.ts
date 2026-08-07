@@ -107,6 +107,14 @@ export interface WorldIntelligenceStatusV1 {
 	lastCapturedAt?: string;
 	lastUploadAt?: string;
 	lastUploadError?: string;
+	collector: boolean;
+	collectorSlot?: number;
+	collectorSlots?: number;
+	lastScanAt?: string;
+	nextScanAt?: string;
+	lastScanError?: string;
+	scanInProgress: boolean;
+	scannedPlayers?: number;
 	publicFieldsOnly: boolean;
 }
 
@@ -120,7 +128,9 @@ export interface WorldIntelligencePlayerObservationV1 {
 	legendLevel?: number;
 	might?: number;
 	glory?: number;
-	source: 'account' | 'alliance' | 'event-ranking';
+	weeklyLoot?: number;
+	honor?: number;
+	source: 'account' | 'alliance' | 'event-ranking' | 'leaderboard';
 	observedAt: string;
 }
 
@@ -130,7 +140,7 @@ export interface WorldIntelligenceAllianceObservationV1 {
 	name: string;
 	memberCount?: number;
 	totalMight?: number;
-	source: 'alliance' | 'event-ranking';
+	source: 'alliance' | 'event-ranking' | 'leaderboard';
 	observedAt: string;
 }
 
@@ -157,6 +167,8 @@ export interface WorldIntelligenceSearchResultV1 {
 	legendLevel?: number;
 	might?: number;
 	glory?: number;
+	weeklyLoot?: number;
+	honor?: number;
 	memberCount?: number;
 	lastObservedAt: string;
 }
@@ -191,6 +203,8 @@ export interface WorldIntelligenceRankingEntryV1 {
 	legendLevel?: number;
 	might?: number;
 	glory?: number;
+	weeklyLoot?: number;
+	honor?: number;
 	memberCount?: number;
 	value: number;
 	lastObservedAt: string;

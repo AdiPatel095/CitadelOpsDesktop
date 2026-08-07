@@ -36,7 +36,9 @@ type StoreStatus struct {
 	Pending        int
 	LastCapturedAt *time.Time
 	LastUploadAt   *time.Time
+	LastScanAt     *time.Time
 	LastError      string
+	LastScanError  string
 }
 
 type DesktopStore struct {
@@ -270,6 +272,32 @@ func (store *DesktopStore) RecordUploadError(ctx context.Context, message string
 	store.setMetadata(ctx, "last_upload_error", message)
 }
 
+func (store *DesktopStore) RecordScanSuccess(ctx context.Context, bucket time.Time, completedAt time.Time) {
+	store.setMetadata(ctx, "last_scan_bucket", bucket.UTC().Format(time.RFC3339Nano))
+	store.setMetadata(ctx, "last_scan_at", completedAt.UTC().Format(time.RFC3339Nano))
+	store.setMetadata(ctx, "last_scan_error", "")
+}
+
+func (store *DesktopStore) RecordScanError(ctx context.Context, message string) {
+	message = strings.TrimSpace(message)
+	if len(message) > 1_000 {
+		message = message[:1_000]
+	}
+	store.setMetadata(ctx, "last_scan_error", message)
+}
+
+func (store *DesktopStore) LastScanBucket(ctx context.Context) (time.Time, bool) {
+	if store == nil || store.db == nil {
+		return time.Time{}, false
+	}
+	value, found, err := metadataValue(ctx, store.db, "last_scan_bucket")
+	if err != nil || !found {
+		return time.Time{}, false
+	}
+	parsed, err := time.Parse(time.RFC3339Nano, value)
+	return parsed.UTC(), err == nil
+}
+
 func (store *DesktopStore) Status(ctx context.Context) StoreStatus {
 	status := StoreStatus{}
 	if store == nil || store.db == nil {
@@ -282,6 +310,7 @@ func (store *DesktopStore) Status(ctx context.Context) StoreStatus {
 	for key, target := range map[string]**time.Time{
 		"last_captured_at": &status.LastCapturedAt,
 		"last_upload_at":   &status.LastUploadAt,
+		"last_scan_at":     &status.LastScanAt,
 	} {
 		if value, found, _ := metadataValue(ctx, store.db, key); found {
 			if parsed, err := time.Parse(time.RFC3339Nano, value); err == nil {
@@ -292,6 +321,9 @@ func (store *DesktopStore) Status(ctx context.Context) StoreStatus {
 	}
 	if value, found, _ := metadataValue(ctx, store.db, "last_upload_error"); found {
 		status.LastError = value
+	}
+	if value, found, _ := metadataValue(ctx, store.db, "last_scan_error"); found {
+		status.LastScanError = value
 	}
 	return status
 }

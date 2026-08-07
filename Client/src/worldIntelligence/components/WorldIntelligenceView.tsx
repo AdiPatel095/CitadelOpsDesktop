@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
 	Activity,
 	Cloud,
@@ -37,7 +37,6 @@ import {
 	PillSelector,
 	SectionCard,
 	Select,
-	Switch,
 } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 
@@ -48,6 +47,8 @@ type SelectedEntity = { type: 'player' | 'alliance'; id: number; worldId: string
 const playerMetricOptions = [
 	{ value: 'might', label: 'Might' },
 	{ value: 'glory', label: 'Glory' },
+	{ value: 'weeklyLoot', label: 'Weekly loot' },
+	{ value: 'honor', label: 'Honor' },
 	{ value: 'legendLevel', label: 'Legend level' },
 	{ value: 'level', label: 'Level' },
 ];
@@ -58,9 +59,8 @@ const allianceMetricOptions = [
 ];
 
 const WorldIntelligenceView = () => {
-	const { state, configuration, updateConfiguration } = useCitadelAPI();
+	const { state } = useCitadelAPI();
 	const worldId = state?.account.worldId || state?.session.serverUrl || '';
-	const settings = useMemo(() => worldIntelligenceSettings(configuration?.sections['world-intelligence']), [configuration]);
 	const [status, setStatus] = useState<WorldIntelligenceStatusV1 | null>(null);
 	const [coverage, setCoverage] = useState<WorldIntelligenceCoverageResponseV1>({ worlds: [] });
 	const [query, setQuery] = useState('');
@@ -75,7 +75,6 @@ const WorldIntelligenceView = () => {
 	const [playerProfile, setPlayerProfile] = useState<WorldIntelligencePlayerProfileV1 | null>(null);
 	const [allianceProfile, setAllianceProfile] = useState<WorldIntelligenceAllianceProfileV1 | null>(null);
 	const [profileLoading, setProfileLoading] = useState(false);
-	const [settingsSaving, setSettingsSaving] = useState(false);
 	const [error, setError] = useState('');
 
 	const refreshStatus = useCallback(async () => {
@@ -87,7 +86,7 @@ const WorldIntelligenceView = () => {
 	}, []);
 
 	const refreshCoverage = useCallback(async () => {
-		if (!worldId || !settings.enabled) {
+		if (!worldId) {
 			setCoverage({ worlds: [] });
 			return;
 		}
@@ -96,10 +95,10 @@ const WorldIntelligenceView = () => {
 		} catch (requestError) {
 			setError(errorMessage(requestError, 'Could not load cloud coverage.'));
 		}
-	}, [settings.enabled, worldId]);
+	}, [worldId]);
 
 	const refreshRanking = useCallback(async () => {
-		if (!worldId || !settings.enabled) {
+		if (!worldId) {
 			setRanking(null);
 			return;
 		}
@@ -118,7 +117,7 @@ const WorldIntelligenceView = () => {
 		} finally {
 			setRankingLoading(false);
 		}
-	}, [rankingMetric, rankingType, settings.enabled, worldId]);
+	}, [rankingMetric, rankingType, worldId]);
 
 	useEffect(() => {
 		void refreshStatus();
@@ -136,7 +135,7 @@ const WorldIntelligenceView = () => {
 
 	const submitSearch = async (event?: FormEvent) => {
 		event?.preventDefault();
-		if (!worldId || !settings.enabled) return;
+		if (!worldId) return;
 		setSearching(true);
 		setError('');
 		try {
@@ -174,38 +173,22 @@ const WorldIntelligenceView = () => {
 		}
 	}, []);
 
-	const saveSetting = async (key: 'enabled' | 'contributePublicObservations', value: boolean) => {
-		setSettingsSaving(true);
-		setError('');
-		try {
-			const receipt = await updateConfiguration('world-intelligence', { ...settings, [key]: value });
-			if (receipt.status === 'failed' || receipt.status === 'cancelled' || receipt.status === 'indeterminate') {
-				throw new Error(receipt.error || 'The setting could not be saved.');
-			}
-			window.setTimeout(() => void refreshStatus(), 300);
-		} catch (requestError) {
-			setError(errorMessage(requestError, 'Could not save World Intelligence settings.'));
-		} finally {
-			setSettingsSaving(false);
-		}
-	};
-
 	const currentCoverage = coverage.worlds[0];
 	const rankedEntries = ranking?.entries ?? [];
-	const featureReady = settings.enabled && Boolean(worldId);
+	const featureReady = Boolean(worldId);
 
 	return (
 		<div className="flex flex-col gap-6 pb-8">
 			<PageHeader
 				eyebrow="Shared public intelligence"
 				title="World Intelligence"
-				description="Search players and alliances, compare public rankings, and follow change history collected by CitadelOps desktops."
+				description="Search players and alliances, compare public rankings, and follow 15-minute history collected from designated CitadelOps accounts."
 				icon={<Globe2 className="h-6 w-6" />}
 				meta={(
 					<div className="flex flex-wrap justify-end gap-2">
-						<Badge variant={status == null ? 'secondary' : status.enabled ? 'success' : 'warning'}>
-							{status == null || status.enabled ? <Cloud className="mr-1 h-3.5 w-3.5" /> : <CloudOff className="mr-1 h-3.5 w-3.5" />}
-							{status == null ? 'Checking cloud' : status.enabled ? 'Cloud enabled' : 'Cloud disabled'}
+						<Badge variant={status == null ? 'secondary' : 'success'}>
+							<Cloud className="mr-1 h-3.5 w-3.5" />
+							{status == null ? 'Checking cloud' : 'Cloud enabled'}
 						</Badge>
 						{status?.worldId && <Badge variant="outline">{displayWorld(status.worldId)}</Badge>}
 					</div>
@@ -234,30 +217,34 @@ const WorldIntelligenceView = () => {
 			</div>
 
 			<SectionCard
-				title="Desktop participation"
-				description="Cloud reads and public-data contribution are controlled separately. Private account data is never included."
+				title="Collection status"
+				description="World Intelligence is always available. Only designated owned accounts scan GGE's public leaderboards; every other desktop is a reader."
 				icon={<ShieldCheck className="h-5 w-5" />}
 			>
 				<div className="grid gap-4 lg:grid-cols-2">
-					<SettingRow
-						title="Use World Intelligence"
-						description="Enable cloud search, rankings, histories, and the cloud-backed Alliance Targets provider."
-						checked={settings.enabled}
-						disabled={settingsSaving}
-						onChange={(value) => void saveSetting('enabled', value)}
-					/>
-					<SettingRow
-						title="Contribute public observations"
-						description="Share public IDs, names, levels, might, glory, alliance membership, rankings, and holdings."
-						checked={settings.contributePublicObservations}
-						disabled={settingsSaving || !settings.enabled}
-						onChange={(value) => void saveSetting('contributePublicObservations', value)}
-					/>
+					<div className="rounded-global border border-border-base bg-bg-input/45 p-4">
+						<div className="font-bold text-text-main">{status?.collector ? 'Owned collector account' : 'Shared-data reader'}</div>
+						<div className="mt-1 text-xs leading-relaxed text-text-muted">
+							{status?.collector
+								? `Alternating slot ${(status.collectorSlot ?? 0) + 1} of ${status.collectorSlots ?? 1}; this account scans every ${(status.collectorSlots ?? 1) * 15} minutes.`
+								: 'This profile reads the shared cloud dataset and does not send leaderboard traffic to GGE.'}
+						</div>
+					</div>
+					<div className="rounded-global border border-border-base bg-bg-input/45 p-4">
+						<div className="font-bold text-text-main">{status?.scanInProgress ? 'Leaderboard scan running' : 'Collector idle'}</div>
+						<div className="mt-1 text-xs leading-relaxed text-text-muted">
+							{status?.scanInProgress
+								? `${formatNumber(status.scannedPlayers)} public players captured so far.`
+								: status?.nextScanAt ? `Next assigned scan ${relativeTime(status.nextScanAt)}.` : 'No scan slot is assigned to this profile.'}
+						</div>
+					</div>
 				</div>
 				<div className="mt-4 flex flex-wrap gap-2 text-xs text-text-muted">
 					<Badge variant="outline">{status?.pendingBatches ?? 0} queued batches</Badge>
+					<Badge variant="outline">Last scan {status?.lastScanAt ? relativeTime(status.lastScanAt) : 'not yet'}</Badge>
 					<Badge variant="outline">Last upload {status?.lastUploadAt ? relativeTime(status.lastUploadAt) : 'not yet'}</Badge>
 					<Badge variant="outline">Public fields only</Badge>
+					{status?.lastScanError && <Badge variant="warning">Scan retry pending</Badge>}
 					{status?.lastUploadError && <Badge variant="warning">Cloud retry pending</Badge>}
 				</div>
 			</SectionCard>
@@ -266,10 +253,8 @@ const WorldIntelligenceView = () => {
 				<EmptyState
 					size="lg"
 					icon={<CloudOff className="h-7 w-7" />}
-					title={worldId ? 'World Intelligence is disabled' : 'Connect a game world first'}
-					description={worldId
-						? 'Enable cloud reads above to search shared public observations.'
-						: 'The active game world is required so players with the same ID on different servers never get mixed.'}
+					title="Connect a game world first"
+					description="The active game world is required so players with the same ID on different servers never get mixed."
 				/>
 			) : (
 				<>
@@ -303,7 +288,7 @@ const WorldIntelligenceView = () => {
 
 						<SectionCard
 							title="Public rankings"
-							description="Community-observed, not authoritative. Rankings use each entity’s freshest cloud observation and grow as desktops encounter more data."
+							description="Collector-observed, not authoritative. Rankings use each entity’s freshest cloud observation from the alternating 15-minute scans."
 							icon={<Trophy className="h-5 w-5" />}
 							actions={<Button variant="ghost" size="icon" aria-label="Refresh rankings" onClick={() => void refreshRanking()} isLoading={rankingLoading}><RefreshCw className="h-4 w-4" /></Button>}
 						>
@@ -354,22 +339,6 @@ const WorldIntelligenceView = () => {
 	);
 };
 
-const SettingRow = ({ title, description, checked, disabled, onChange }: {
-	title: string;
-	description: string;
-	checked: boolean;
-	disabled: boolean;
-	onChange: (checked: boolean) => void;
-}) => (
-	<div className="flex items-center justify-between gap-5 rounded-global border border-border-base bg-bg-input/45 p-4">
-		<div>
-			<div className="font-bold text-text-main">{title}</div>
-			<div className="mt-1 text-xs leading-relaxed text-text-muted">{description}</div>
-		</div>
-		<Switch checked={checked} disabled={disabled} onChange={onChange} ariaLabel={title} />
-	</div>
-);
-
 const EntityResult = ({ result, onOpen }: { result: WorldIntelligenceSearchResultV1; onOpen: () => void }) => (
 	<button type="button" onClick={onOpen} className="m3-card-interactive flex w-full items-center justify-between gap-3 rounded-global border border-border-base px-4 py-3 text-left">
 		<div className="flex min-w-0 items-center gap-3">
@@ -397,7 +366,7 @@ const RankingTable = ({ entries, metric, loading, onOpen }: {
 	onOpen: (entity: SelectedEntity) => void;
 }) => {
 	if (loading && entries.length === 0) return <div className="flex min-h-64 items-center justify-center text-sm text-text-muted">Loading rankings…</div>;
-	if (entries.length === 0) return <EmptyState size="md" icon={<Database className="h-6 w-6" />} title="No ranked observations yet" description="This world will populate as participating desktops encounter public data." />;
+	if (entries.length === 0) return <EmptyState size="md" icon={<Database className="h-6 w-6" />} title="No ranked observations yet" description="This world will populate when the first designated collector scan reaches the cloud." />;
 	return (
 		<div className="max-h-[34rem] overflow-auto rounded-global border border-border-base custom-scrollbar">
 			<table className="w-full border-collapse text-sm">
@@ -425,7 +394,7 @@ const RankingTable = ({ entries, metric, loading, onOpen }: {
 };
 
 const PlayerProfile = ({ profile }: { profile: WorldIntelligencePlayerProfileV1 }) => {
-	const [metric, setMetric] = useState<'might' | 'glory'>('might');
+	const [metric, setMetric] = useState<'might' | 'glory' | 'weeklyLoot' | 'honor'>('might');
 	const current = profile.current;
 	const changes = playerChanges(profile.history);
 	const points = profile.history.map((row) => ({ at: row.observedAt, value: row[metric] ?? 0 })).filter((point) => point.value > 0);
@@ -438,9 +407,11 @@ const PlayerProfile = ({ profile }: { profile: WorldIntelligencePlayerProfileV1 
 				</div>
 				<Badge variant="outline">Observed {relativeTime(current.observedAt)}</Badge>
 			</div>
-			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 				<MetricTile label="Might" value={formatNumber(current.might)} tone="brand" />
 				<MetricTile label="Glory" value={formatNumber(current.glory)} tone="info" />
+				<MetricTile label="Weekly loot" value={formatNumber(current.weeklyLoot)} tone="success" />
+				<MetricTile label="Honor" value={formatNumber(current.honor)} />
 				<MetricTile label="Level" value={current.level || '—'} />
 				<MetricTile label="Legend level" value={current.legendLevel || '—'} />
 			</div>
@@ -449,7 +420,7 @@ const PlayerProfile = ({ profile }: { profile: WorldIntelligencePlayerProfileV1 
 					<CardContent>
 						<div className="mb-4 flex items-center justify-between gap-3">
 							<div className="flex items-center gap-2 font-bold text-text-main"><Activity className="h-4 w-4 text-primary" /> Public history</div>
-							<PillSelector ariaLabel="Player history metric" value={metric} onChange={(value) => setMetric(value as 'might' | 'glory')} options={[{ value: 'might', label: 'Might' }, { value: 'glory', label: 'Glory' }]} size="body" />
+							<PillSelector ariaLabel="Player history metric" value={metric} onChange={(value) => setMetric(value as 'might' | 'glory' | 'weeklyLoot' | 'honor')} options={[{ value: 'might', label: 'Might' }, { value: 'glory', label: 'Glory' }, { value: 'weeklyLoot', label: 'Loot' }, { value: 'honor', label: 'Honor' }]} size="body" />
 						</div>
 						<Sparkline points={points} />
 					</CardContent>
@@ -530,15 +501,6 @@ const Sparkline = ({ points }: { points: Array<{ at: string; value: number }> })
 	);
 };
 
-function worldIntelligenceSettings(value: unknown): { enabled: boolean; contributePublicObservations: boolean } {
-	if (!value || typeof value !== 'object' || Array.isArray(value)) return { enabled: false, contributePublicObservations: false };
-	const record = value as Record<string, unknown>;
-	return {
-		enabled: record.enabled === true,
-		contributePublicObservations: record.contributePublicObservations === true,
-	};
-}
-
 function playerChanges(history: WorldIntelligencePlayerObservationV1[]): Array<{ at: string; label: string }> {
 	const changes: Array<{ at: string; label: string }> = [];
 	for (let index = 1; index < history.length; index += 1) {
@@ -568,14 +530,18 @@ function formatNumber(value?: number): string {
 }
 
 function metricLabel(metric: string): string {
-	return ({ might: 'Might', glory: 'Glory', level: 'Level', legendLevel: 'Legend', members: 'Members' } as Record<string, string>)[metric] || metric;
+	return ({ might: 'Might', glory: 'Glory', weeklyLoot: 'Weekly loot', honor: 'Honor', level: 'Level', legendLevel: 'Legend', members: 'Members' } as Record<string, string>)[metric] || metric;
 }
 
 function relativeTime(value: string): string {
 	const timestamp = Date.parse(value);
 	if (!Number.isFinite(timestamp)) return 'Unknown';
-	const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+	const delta = Math.round((Date.now() - timestamp) / 1000);
+	const seconds = Math.abs(delta);
 	if (seconds < 60) return 'just now';
+	if (delta < 0 && seconds < 3600) return `in ${Math.ceil(seconds / 60)}m`;
+	if (delta < 0 && seconds < 86_400) return `in ${Math.ceil(seconds / 3600)}h`;
+	if (delta < 0) return `in ${Math.ceil(seconds / 86_400)}d`;
 	if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
 	if (seconds < 86_400) return `${Math.floor(seconds / 3600)}h ago`;
 	return `${Math.floor(seconds / 86_400)}d ago`;
