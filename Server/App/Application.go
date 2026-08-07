@@ -201,6 +201,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		state,
 		configuration,
 		WorldIntel.NewCloudClient(WorldIntel.ClientConfig{ClientVersion: Version}),
+		intents,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("open world intelligence service: %w", err)
@@ -732,7 +733,7 @@ func defaultConfiguration() map[string]json.RawMessage {
 		"session.connection": json.RawMessage(`{"mode":"full"}`),
 		"session.reconnect":  json.RawMessage(`{"relogDelaySec":300}`),
 		Reports.BattleResearchConfigurationSection: json.RawMessage(`{"enabled":false,"consentVersion":0,"spyCount":1}`),
-		"world-intelligence":                       json.RawMessage(`{"enabled":false,"contributePublicObservations":false}`),
+		"world-intelligence":                       json.RawMessage(`{"collectorPlayerId":0,"collectorSlot":0,"collectorSlots":0}`),
 		"automation.enabled":                       json.RawMessage(`{}`),
 		"automation.autoBeriWorld":                 json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30,"presetId":"","attackCheckIntervalSec":30,"horseTravelBoostId":-1,"toolMinimums":{"611":0,"614":0,"620":0},"build":{"enabled":false,"stableLevel":5,"allowPremium":false,"allowDemolition":false,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"requireActiveGallantryBooster":false,"useTroopTransportTimeSkips":false,"troopTransportTimeSkipId":"MS5"}`),
 		"automation.autoBeriWorldBlueprints":       json.RawMessage(`{"version":1,"blueprints":{}}`),

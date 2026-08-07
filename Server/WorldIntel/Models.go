@@ -29,6 +29,8 @@ type PlayerObservation struct {
 	LegendLevel  int       `json:"legendLevel,omitempty"`
 	Might        float64   `json:"might,omitempty"`
 	Glory        float64   `json:"glory,omitempty"`
+	WeeklyLoot   float64   `json:"weeklyLoot,omitempty"`
+	Honor        float64   `json:"honor,omitempty"`
 	Source       string    `json:"source"`
 	ObservedAt   time.Time `json:"observedAt"`
 }
@@ -92,12 +94,20 @@ type IngestResponse struct {
 type DesktopStatus struct {
 	Enabled          bool       `json:"enabled"`
 	Contributing     bool       `json:"contributing"`
+	Collector        bool       `json:"collector"`
+	CollectorSlot    int        `json:"collectorSlot,omitempty"`
+	CollectorSlots   int        `json:"collectorSlots,omitempty"`
 	WorldID          string     `json:"worldId,omitempty"`
 	Endpoint         string     `json:"endpoint"`
 	PendingBatches   int        `json:"pendingBatches"`
 	LastCapturedAt   *time.Time `json:"lastCapturedAt,omitempty"`
 	LastUploadAt     *time.Time `json:"lastUploadAt,omitempty"`
 	LastUploadError  string     `json:"lastUploadError,omitempty"`
+	LastScanAt       *time.Time `json:"lastScanAt,omitempty"`
+	NextScanAt       *time.Time `json:"nextScanAt,omitempty"`
+	LastScanError    string     `json:"lastScanError,omitempty"`
+	ScanInProgress   bool       `json:"scanInProgress"`
+	ScannedPlayers   int        `json:"scannedPlayers,omitempty"`
 	PublicFieldsOnly bool       `json:"publicFieldsOnly"`
 }
 
@@ -112,6 +122,8 @@ type SearchResult struct {
 	LegendLevel    int       `json:"legendLevel,omitempty"`
 	Might          float64   `json:"might,omitempty"`
 	Glory          float64   `json:"glory,omitempty"`
+	WeeklyLoot     float64   `json:"weeklyLoot,omitempty"`
+	Honor          float64   `json:"honor,omitempty"`
 	MemberCount    int       `json:"memberCount,omitempty"`
 	LastObservedAt time.Time `json:"lastObservedAt"`
 }
@@ -146,6 +158,8 @@ type RankingEntry struct {
 	LegendLevel    int       `json:"legendLevel,omitempty"`
 	Might          float64   `json:"might,omitempty"`
 	Glory          float64   `json:"glory,omitempty"`
+	WeeklyLoot     float64   `json:"weeklyLoot,omitempty"`
+	Honor          float64   `json:"honor,omitempty"`
 	MemberCount    int       `json:"memberCount,omitempty"`
 	Value          float64   `json:"value"`
 	LastObservedAt time.Time `json:"lastObservedAt"`
@@ -251,7 +265,8 @@ func ValidateBatch(batch ObservationBatch) error {
 	for index, player := range batch.Players {
 		if player.WorldID != batch.WorldID || player.PlayerID <= 0 || player.Name == "" || len(player.Name) > 160 ||
 			player.ObservedAt.IsZero() || !validSource(player.Source) || player.Level < 0 || player.LegendLevel < 0 ||
-			player.Might < 0 || player.Glory < 0 || observationTooFarAhead(player.ObservedAt, batch.CapturedAt) {
+			player.Might < 0 || player.Glory < 0 || player.WeeklyLoot < 0 || player.Honor < 0 ||
+			observationTooFarAhead(player.ObservedAt, batch.CapturedAt) {
 			return fmt.Errorf("players[%d] is invalid", index)
 		}
 	}
@@ -333,7 +348,7 @@ func normalizeBatch(batch *ObservationBatch) {
 
 func validSource(value string) bool {
 	switch value {
-	case "account", "alliance", "event-ranking":
+	case "account", "alliance", "event-ranking", "leaderboard":
 		return true
 	default:
 		return false
