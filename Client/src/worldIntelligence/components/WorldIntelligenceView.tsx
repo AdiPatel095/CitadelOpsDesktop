@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
 	Activity,
+	ArrowDown,
+	ChevronLeft,
+	ChevronRight,
 	Cloud,
 	CloudOff,
 	Database,
@@ -8,8 +11,6 @@ import {
 	History,
 	RefreshCw,
 	Search,
-	ShieldCheck,
-	Trophy,
 	UserRound,
 	Users,
 	X,
@@ -36,27 +37,14 @@ import {
 	PageHeader,
 	PillSelector,
 	SectionCard,
-	Select,
 } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 
-type SearchType = 'all' | 'player' | 'alliance';
 type RankingType = 'players' | 'alliances';
 type SelectedEntity = { type: 'player' | 'alliance'; id: number; worldId: string };
+type IntelligenceTableRow = Omit<WorldIntelligenceRankingEntryV1, 'rank' | 'value'> & { rank?: number };
 
-const playerMetricOptions = [
-	{ value: 'might', label: 'Might' },
-	{ value: 'glory', label: 'Glory' },
-	{ value: 'weeklyLoot', label: 'Weekly loot' },
-	{ value: 'honor', label: 'Honor' },
-	{ value: 'legendLevel', label: 'Legend level' },
-	{ value: 'level', label: 'Level' },
-];
-
-const allianceMetricOptions = [
-	{ value: 'might', label: 'Combined might' },
-	{ value: 'members', label: 'Members' },
-];
+const tablePageSize = 25;
 
 const WorldIntelligenceView = () => {
 	const { state } = useCitadelAPI();
@@ -64,13 +52,14 @@ const WorldIntelligenceView = () => {
 	const [status, setStatus] = useState<WorldIntelligenceStatusV1 | null>(null);
 	const [coverage, setCoverage] = useState<WorldIntelligenceCoverageResponseV1>({ worlds: [] });
 	const [query, setQuery] = useState('');
-	const [searchType, setSearchType] = useState<SearchType>('all');
+	const [appliedQuery, setAppliedQuery] = useState('');
 	const [searchResults, setSearchResults] = useState<WorldIntelligenceSearchResultV1[]>([]);
 	const [searching, setSearching] = useState(false);
 	const [rankingType, setRankingType] = useState<RankingType>('players');
 	const [rankingMetric, setRankingMetric] = useState('might');
 	const [ranking, setRanking] = useState<WorldIntelligenceRankingResponseV1 | null>(null);
 	const [rankingLoading, setRankingLoading] = useState(false);
+	const [tablePage, setTablePage] = useState(0);
 	const [selected, setSelected] = useState<SelectedEntity | null>(null);
 	const [playerProfile, setPlayerProfile] = useState<WorldIntelligencePlayerProfileV1 | null>(null);
 	const [allianceProfile, setAllianceProfile] = useState<WorldIntelligenceAllianceProfileV1 | null>(null);
@@ -108,7 +97,7 @@ const WorldIntelligenceView = () => {
 				worldId,
 				type: rankingType,
 				metric: rankingMetric,
-				limit: 100,
+				limit: 250,
 			});
 			setRanking(result);
 		} catch (requestError) {
@@ -136,22 +125,50 @@ const WorldIntelligenceView = () => {
 	const submitSearch = async (event?: FormEvent) => {
 		event?.preventDefault();
 		if (!worldId) return;
+		const normalizedQuery = query.trim();
+		if (!normalizedQuery) {
+			setAppliedQuery('');
+			setSearchResults([]);
+			setTablePage(0);
+			return;
+		}
 		setSearching(true);
 		setError('');
 		try {
 			const response = await CitadelAPI.searchWorldIntelligence({
 				worldId,
-				query,
-				type: searchType === 'all' ? undefined : searchType,
-				limit: 50,
+				query: normalizedQuery,
+				type: rankingType === 'players' ? 'player' : 'alliance',
+				limit: 100,
 			});
+			setAppliedQuery(normalizedQuery);
 			setSearchResults(response.results ?? []);
+			setTablePage(0);
 		} catch (requestError) {
 			setSearchResults([]);
 			setError(errorMessage(requestError, 'Search failed.'));
 		} finally {
 			setSearching(false);
 		}
+	};
+
+	const clearSearch = () => {
+		setQuery('');
+		setAppliedQuery('');
+		setSearchResults([]);
+		setTablePage(0);
+	};
+
+	const selectRankingType = (value: string) => {
+		setRankingType(value as RankingType);
+		setRankingMetric('might');
+		clearSearch();
+		setSelected(null);
+	};
+
+	const selectRankingMetric = (metric: string) => {
+		setRankingMetric(metric);
+		setTablePage(0);
 	};
 
 	const openEntity = useCallback(async (entity: SelectedEntity) => {
@@ -175,6 +192,19 @@ const WorldIntelligenceView = () => {
 
 	const currentCoverage = coverage.worlds[0];
 	const rankedEntries = ranking?.entries ?? [];
+	const tableRows = useMemo<IntelligenceTableRow[]>(() => {
+		if (!appliedQuery) return rankedEntries;
+		const entityType = rankingType === 'players' ? 'player' : 'alliance';
+		return searchResults
+			.filter((result) => result.type === entityType)
+			.map((result) => ({ ...result }))
+			.sort((left, right) => {
+				const difference = tableMetricValue(right, rankingMetric) - tableMetricValue(left, rankingMetric);
+				return difference || left.name.localeCompare(right.name);
+			});
+	}, [appliedQuery, rankedEntries, rankingMetric, rankingType, searchResults]);
+	const pageCount = Math.max(1, Math.ceil(tableRows.length / tablePageSize));
+	const visibleRows = tableRows.slice(tablePage * tablePageSize, (tablePage + 1) * tablePageSize);
 	const featureReady = Boolean(worldId);
 
 	return (
@@ -182,7 +212,7 @@ const WorldIntelligenceView = () => {
 			<PageHeader
 				eyebrow="Shared public intelligence"
 				title="World Intelligence"
-				description="Search players and alliances, compare public rankings, and follow 15-minute history collected from designated CitadelOps accounts."
+				description="Browse the world in one sortable directory, then open any player or alliance for its 15-minute history."
 				icon={<Globe2 className="h-6 w-6" />}
 				meta={(
 					<div className="flex flex-wrap justify-end gap-2">
@@ -202,52 +232,15 @@ const WorldIntelligenceView = () => {
 				</div>
 			)}
 
-			<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-				<MetricTile label="Players observed" value={currentCoverage?.players ?? 0} tone="brand" size="lg" />
-				<MetricTile label="Alliances observed" value={currentCoverage?.alliances ?? 0} tone="info" size="lg" />
-				<MetricTile label="Public holdings" value={currentCoverage?.holdings ?? 0} tone="default" size="lg" />
-				<MetricTile label="Observations" value={currentCoverage?.observationCount ?? 0} tone="success" size="lg" />
-				<MetricTile
-					label="Cloud freshness"
-					value={currentCoverage?.lastObservedAt ? relativeTime(currentCoverage.lastObservedAt) : 'No data'}
-					monospace={false}
-					tone={freshnessTone(currentCoverage?.lastObservedAt)}
-					size="lg"
-				/>
+			<div className="flex flex-wrap items-center gap-2">
+				<Badge variant="outline">{formatCount(currentCoverage?.players)} players</Badge>
+				<Badge variant="outline">{formatCount(currentCoverage?.alliances)} alliances</Badge>
+				<Badge variant="outline">{formatCount(currentCoverage?.holdings)} holdings</Badge>
+				<Badge variant="outline">{formatCount(currentCoverage?.observationCount)} observations</Badge>
+				<Badge variant={freshnessTone(currentCoverage?.lastObservedAt)}>
+					Updated {currentCoverage?.lastObservedAt ? relativeTime(currentCoverage.lastObservedAt) : 'never'}
+				</Badge>
 			</div>
-
-			<SectionCard
-				title="Collection status"
-				description="World Intelligence is always available. Only designated owned accounts scan GGE's public leaderboards; every other desktop is a reader."
-				icon={<ShieldCheck className="h-5 w-5" />}
-			>
-				<div className="grid gap-4 lg:grid-cols-2">
-					<div className="rounded-global border border-border-base bg-bg-input/45 p-4">
-						<div className="font-bold text-text-main">{status?.collector ? 'Owned collector account' : 'Shared-data reader'}</div>
-						<div className="mt-1 text-xs leading-relaxed text-text-muted">
-							{status?.collector
-								? `Alternating slot ${(status.collectorSlot ?? 0) + 1} of ${status.collectorSlots ?? 1}; this account scans every ${(status.collectorSlots ?? 1) * 15} minutes.`
-								: 'This profile reads the shared cloud dataset and does not send leaderboard traffic to GGE.'}
-						</div>
-					</div>
-					<div className="rounded-global border border-border-base bg-bg-input/45 p-4">
-						<div className="font-bold text-text-main">{status?.scanInProgress ? 'Leaderboard scan running' : 'Collector idle'}</div>
-						<div className="mt-1 text-xs leading-relaxed text-text-muted">
-							{status?.scanInProgress
-								? `${formatNumber(status.scannedPlayers)} public players captured so far.`
-								: status?.nextScanAt ? `Next assigned scan ${relativeTime(status.nextScanAt)}.` : 'No scan slot is assigned to this profile.'}
-						</div>
-					</div>
-				</div>
-				<div className="mt-4 flex flex-wrap gap-2 text-xs text-text-muted">
-					<Badge variant="outline">{status?.pendingBatches ?? 0} queued batches</Badge>
-					<Badge variant="outline">Last scan {status?.lastScanAt ? relativeTime(status.lastScanAt) : 'not yet'}</Badge>
-					<Badge variant="outline">Last upload {status?.lastUploadAt ? relativeTime(status.lastUploadAt) : 'not yet'}</Badge>
-					<Badge variant="outline">Public fields only</Badge>
-					{status?.lastScanError && <Badge variant="warning">Scan retry pending</Badge>}
-					{status?.lastUploadError && <Badge variant="warning">Cloud retry pending</Badge>}
-				</div>
-			</SectionCard>
 
 			{!featureReady ? (
 				<EmptyState
@@ -258,62 +251,68 @@ const WorldIntelligenceView = () => {
 				/>
 			) : (
 				<>
-					<div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-						<SectionCard title="Find an entity" description={`Search ${displayWorld(worldId)} by public player or alliance name.`} icon={<Search className="h-5 w-5" />}>
-							<form className="flex flex-col gap-3" onSubmit={(event) => void submitSearch(event)}>
-								<div className="flex flex-col gap-3 sm:flex-row">
-									<Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Player or alliance name" leftIcon={<Search className="h-4 w-4" />} />
-									<Select
-										value={searchType}
-										onChange={(value) => setSearchType(value as SearchType)}
-										ariaLabel="Search entity type"
-										className="sm:w-44"
-										options={[
-											{ value: 'all', label: 'Players & alliances' },
-											{ value: 'player', label: 'Players' },
-											{ value: 'alliance', label: 'Alliances' },
-										]}
-									/>
-									<Button type="submit" isLoading={searching}>Search</Button>
-								</div>
+					<SectionCard
+						title={rankingType === 'players' ? 'Player directory' : 'Alliance directory'}
+						description={`One table for ${displayWorld(worldId)}. Select any metric header to rank the world by that field.`}
+						icon={<Database className="h-5 w-5" />}
+						actions={<Button variant="ghost" size="icon" aria-label="Refresh directory" onClick={() => void refreshRanking()} isLoading={rankingLoading}><RefreshCw className="h-4 w-4" /></Button>}
+					>
+						<div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+							<PillSelector
+								ariaLabel="Directory entity type"
+								value={rankingType}
+								onChange={selectRankingType}
+								options={[{ value: 'players', label: 'Players' }, { value: 'alliances', label: 'Alliances' }]}
+								size="body"
+							/>
+							<form className="flex w-full flex-col gap-2 sm:flex-row xl:max-w-2xl" onSubmit={(event) => void submitSearch(event)}>
+								<Input
+									value={query}
+									onChange={(event) => setQuery(event.target.value)}
+									placeholder={`Search ${rankingType === 'players' ? 'players' : 'alliances'}`}
+									leftIcon={<Search className="h-4 w-4" />}
+								/>
+								<Button type="submit" isLoading={searching}>Search</Button>
+								{appliedQuery && <Button type="button" variant="ghost" onClick={clearSearch}>Clear</Button>}
 							</form>
-							<div className="mt-4 space-y-2">
-								{searchResults.length === 0 ? (
-									<EmptyState size="sm" surface="plain" title="Search the shared dataset" description="Results always include their observed world and freshness." />
-								) : searchResults.map((result) => (
-									<EntityResult key={`${result.type}:${result.id}`} result={result} onOpen={() => void openEntity({ type: result.type, id: result.id, worldId: result.worldId })} />
-								))}
-							</div>
-						</SectionCard>
+						</div>
 
-						<SectionCard
-							title="Public rankings"
-							description="Collector-observed, not authoritative. Rankings use each entity’s freshest cloud observation from the alternating 15-minute scans."
-							icon={<Trophy className="h-5 w-5" />}
-							actions={<Button variant="ghost" size="icon" aria-label="Refresh rankings" onClick={() => void refreshRanking()} isLoading={rankingLoading}><RefreshCw className="h-4 w-4" /></Button>}
-						>
-							<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-								<PillSelector
-									ariaLabel="Ranking entity type"
-									value={rankingType}
-									onChange={(value) => {
-										setRankingType(value as RankingType);
-										setRankingMetric('might');
-									}}
-									options={[{ value: 'players', label: 'Players' }, { value: 'alliances', label: 'Alliances' }]}
-									size="body"
-								/>
-								<Select
-									value={rankingMetric}
-									onChange={setRankingMetric}
-									ariaLabel="Ranking metric"
-									className="sm:w-48"
-									options={rankingType === 'players' ? playerMetricOptions : allianceMetricOptions}
-								/>
+						<div className="mb-4 flex flex-col gap-3 rounded-global border border-border-base bg-bg-input/35 px-4 py-3 text-xs text-text-muted lg:flex-row lg:items-center lg:justify-between">
+							<div>
+								<span className="font-bold text-text-main">
+									{status?.collector
+										? `Collector slot ${(status.collectorSlot ?? 0) + 1}/${status.collectorSlots ?? 1}`
+										: 'Shared-data reader'}
+								</span>
+								<span className="ml-2">
+									{status?.scanInProgress
+										? `Scanning · ${formatCount(status.scannedPlayers)} players captured`
+										: status?.lastScanAt ? `Last scan ${relativeTime(status.lastScanAt)}` : 'Waiting for the first scan'}
+								</span>
 							</div>
-							<RankingTable entries={rankedEntries} metric={ranking?.metric ?? rankingMetric} loading={rankingLoading} onOpen={openEntity} />
-						</SectionCard>
-					</div>
+							<div className="flex flex-wrap gap-2">
+								<Badge variant="outline">{status?.pendingBatches ?? 0} queued</Badge>
+								<Badge variant="outline">Sorted by {metricLabel(rankingMetric)}</Badge>
+								{appliedQuery && <Badge variant="primary">Search: {appliedQuery}</Badge>}
+								{status?.lastScanError && <Badge variant="warning">Scan retry pending</Badge>}
+								{status?.lastUploadError && <Badge variant="warning">Cloud retry pending</Badge>}
+							</div>
+						</div>
+
+						<IntelligenceTable
+							rows={visibleRows}
+							entityType={rankingType}
+							metric={rankingMetric}
+							loading={rankingLoading || searching}
+							searchQuery={appliedQuery}
+							page={tablePage}
+							pageCount={pageCount}
+							totalRows={tableRows.length}
+							onSort={selectRankingMetric}
+							onPageChange={setTablePage}
+							onOpen={openEntity}
+						/>
+					</SectionCard>
 
 					{selected && (
 						<SectionCard
@@ -339,59 +338,136 @@ const WorldIntelligenceView = () => {
 	);
 };
 
-const EntityResult = ({ result, onOpen }: { result: WorldIntelligenceSearchResultV1; onOpen: () => void }) => (
-	<button type="button" onClick={onOpen} className="m3-card-interactive flex w-full items-center justify-between gap-3 rounded-global border border-border-base px-4 py-3 text-left">
-		<div className="flex min-w-0 items-center gap-3">
-			<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-				{result.type === 'player' ? <UserRound className="h-4 w-4" /> : <Users className="h-4 w-4" />}
-			</span>
-			<div className="min-w-0">
-				<div className="truncate font-bold text-text-main">{result.name}</div>
-				<div className="truncate text-xs text-text-muted">
-					{result.type === 'player' ? result.allianceName || 'No observed alliance' : `${formatNumber(result.memberCount)} members`}
+const IntelligenceTable = ({ rows, entityType, metric, loading, searchQuery, page, pageCount, totalRows, onSort, onPageChange, onOpen }: {
+	rows: IntelligenceTableRow[];
+	entityType: RankingType;
+	metric: string;
+	loading: boolean;
+	searchQuery: string;
+	page: number;
+	pageCount: number;
+	totalRows: number;
+	onSort: (metric: string) => void;
+	onPageChange: (page: number) => void;
+	onOpen: (entity: SelectedEntity) => void;
+}) => {
+	if (loading && rows.length === 0) return <div className="flex min-h-72 items-center justify-center text-sm text-text-muted">Loading world directory…</div>;
+	if (rows.length === 0) {
+		return (
+			<EmptyState
+				size="md"
+				icon={<Database className="h-6 w-6" />}
+				title={searchQuery ? `No ${entityType} match “${searchQuery}”` : 'No ranked observations yet'}
+				description={searchQuery ? 'Try another public name.' : 'This world will populate when the first designated collector scan reaches the cloud.'}
+			/>
+		);
+	}
+	const firstVisible = page * tablePageSize + 1;
+	const lastVisible = Math.min(totalRows, firstVisible + rows.length - 1);
+	return (
+		<div className={`overflow-hidden rounded-global border border-border-base transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
+			<div className="max-h-[42rem] overflow-auto custom-scrollbar">
+				<table className={`w-full border-collapse text-sm ${entityType === 'players' ? 'min-w-[76rem]' : 'min-w-[42rem]'}`}>
+					<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wider text-text-muted shadow-[0_1px_0_var(--border-base)]">
+						{entityType === 'players' ? (
+							<tr>
+								<th className="w-16 px-3 py-3 text-left">#</th>
+								<th className="min-w-48 px-3 py-3 text-left">Player</th>
+								<SortableHeader label="Level" metric="level" activeMetric={metric} onSort={onSort} />
+								<SortableHeader label="Legend" metric="legendLevel" activeMetric={metric} onSort={onSort} />
+								<SortableHeader label="Might" metric="might" activeMetric={metric} onSort={onSort} />
+								<SortableHeader label="Weekly loot" metric="weeklyLoot" activeMetric={metric} onSort={onSort} />
+								<SortableHeader label="Glory" metric="glory" activeMetric={metric} onSort={onSort} />
+								<SortableHeader label="Honor" metric="honor" activeMetric={metric} onSort={onSort} />
+								<th className="min-w-48 px-3 py-3 text-left">Alliance</th>
+								<th className="px-3 py-3 text-right">Updated</th>
+							</tr>
+						) : (
+							<tr>
+								<th className="w-16 px-3 py-3 text-left">#</th>
+								<th className="min-w-64 px-3 py-3 text-left">Alliance</th>
+								<SortableHeader label="Members" metric="members" activeMetric={metric} onSort={onSort} />
+								<SortableHeader label="Combined might" metric="might" activeMetric={metric} onSort={onSort} />
+								<th className="px-3 py-3 text-right">Updated</th>
+							</tr>
+						)}
+					</thead>
+					<tbody>
+						{rows.map((entry) => (
+							<tr key={`${entry.type}:${entry.id}`} className="border-t border-border-base hover:bg-bg-card-hover">
+								<td className="px-3 py-2.5 font-mono font-bold text-primary">{entry.rank ? `#${entry.rank}` : '—'}</td>
+								<td className="px-3 py-2.5">
+									<button type="button" className="block max-w-72 truncate text-left font-bold text-text-main hover:text-primary" onClick={() => onOpen({ type: entry.type, id: entry.id, worldId: entry.worldId })}>
+										{entry.name}
+									</button>
+								</td>
+								{entityType === 'players' ? (
+									<>
+										<NumericCell value={entry.level} emphasis={metric === 'level'} />
+										<NumericCell value={entry.legendLevel} emphasis={metric === 'legendLevel'} />
+										<NumericCell value={entry.might} emphasis={metric === 'might'} />
+										<NumericCell value={entry.weeklyLoot} emphasis={metric === 'weeklyLoot'} />
+										<NumericCell value={entry.glory} emphasis={metric === 'glory'} />
+										<NumericCell value={entry.honor} emphasis={metric === 'honor'} />
+										<td className="px-3 py-2.5">
+											{entry.allianceId ? (
+												<button type="button" className="block max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpen({ type: 'alliance', id: entry.allianceId!, worldId: entry.worldId })}>
+													{entry.allianceName || `Alliance ${entry.allianceId}`}
+												</button>
+											) : <span className="text-text-muted">No alliance</span>}
+										</td>
+									</>
+								) : (
+									<>
+										<NumericCell value={entry.memberCount} emphasis={metric === 'members'} />
+										<NumericCell value={entry.might} emphasis={metric === 'might'} />
+									</>
+								)}
+								<td className="whitespace-nowrap px-3 py-2.5 text-right text-xs text-text-muted">{relativeTime(entry.lastObservedAt)}</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+			<div className="flex flex-col gap-3 border-t border-border-base bg-bg-input/25 px-4 py-3 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
+				<span>{formatCount(firstVisible)}–{formatCount(lastVisible)} of {formatCount(totalRows)} {searchQuery ? 'matches' : `top ${entityType}`}</span>
+				<div className="flex items-center gap-2">
+					<Button type="button" variant="ghost" size="sm" disabled={page <= 0} onClick={() => onPageChange(page - 1)}><ChevronLeft className="mr-1 h-4 w-4" />Previous</Button>
+					<span className="min-w-20 text-center">Page {page + 1} of {pageCount}</span>
+					<Button type="button" variant="ghost" size="sm" disabled={page + 1 >= pageCount} onClick={() => onPageChange(page + 1)}>Next<ChevronRight className="ml-1 h-4 w-4" /></Button>
 				</div>
 			</div>
 		</div>
-		<div className="shrink-0 text-right">
-			<div className="font-mono text-sm font-bold text-text-main">{formatNumber(result.might)}</div>
-			<div className="text-[10px] uppercase tracking-wide text-text-muted">{relativeTime(result.lastObservedAt)}</div>
-		</div>
-	</button>
-);
-
-const RankingTable = ({ entries, metric, loading, onOpen }: {
-	entries: WorldIntelligenceRankingEntryV1[];
-	metric: string;
-	loading: boolean;
-	onOpen: (entity: SelectedEntity) => void;
-}) => {
-	if (loading && entries.length === 0) return <div className="flex min-h-64 items-center justify-center text-sm text-text-muted">Loading rankings…</div>;
-	if (entries.length === 0) return <EmptyState size="md" icon={<Database className="h-6 w-6" />} title="No ranked observations yet" description="This world will populate when the first designated collector scan reaches the cloud." />;
-	return (
-		<div className="max-h-[34rem] overflow-auto rounded-global border border-border-base custom-scrollbar">
-			<table className="w-full border-collapse text-sm">
-				<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wider text-text-muted">
-					<tr><th className="px-3 py-2 text-left">Rank</th><th className="px-3 py-2 text-left">Name</th><th className="px-3 py-2 text-right">{metricLabel(metric)}</th><th className="px-3 py-2 text-right">Freshness</th></tr>
-				</thead>
-				<tbody>
-					{entries.map((entry) => (
-						<tr key={`${entry.type}:${entry.id}`} className="border-t border-border-base hover:bg-bg-card-hover">
-							<td className="px-3 py-2 font-mono font-bold text-primary">#{entry.rank}</td>
-							<td className="px-3 py-2">
-								<button type="button" className="block max-w-72 text-left" onClick={() => onOpen({ type: entry.type, id: entry.id, worldId: entry.worldId })}>
-									<span className="block truncate font-bold text-text-main hover:text-primary">{entry.name}</span>
-									{entry.type === 'player' && <span className="block truncate text-[11px] text-text-muted">{entry.allianceName || 'No observed alliance'}</span>}
-								</button>
-							</td>
-							<td className="px-3 py-2 text-right font-mono font-bold text-text-main">{formatNumber(entry.value)}</td>
-							<td className="px-3 py-2 text-right text-xs text-text-muted">{relativeTime(entry.lastObservedAt)}</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
-		</div>
 	);
 };
+
+const SortableHeader = ({ label, metric, activeMetric, onSort }: {
+	label: string;
+	metric: string;
+	activeMetric: string;
+	onSort: (metric: string) => void;
+}) => {
+	const active = metric === activeMetric;
+	return (
+		<th className="px-3 py-3 text-right" aria-sort={active ? 'descending' : 'none'}>
+			<button
+				type="button"
+				className={`ml-auto inline-flex items-center gap-1 whitespace-nowrap font-bold transition-colors hover:text-primary ${active ? 'text-primary' : ''}`}
+				onClick={() => onSort(metric)}
+				aria-label={`Sort by ${label}`}
+			>
+				{label}
+				<ArrowDown className={`h-3.5 w-3.5 transition-opacity ${active ? 'opacity-100' : 'opacity-30'}`} />
+			</button>
+		</th>
+	);
+};
+
+const NumericCell = ({ value, emphasis = false }: { value?: number; emphasis?: boolean }) => (
+	<td className={`whitespace-nowrap px-3 py-2.5 text-right font-mono ${emphasis ? 'font-black text-primary' : 'font-semibold text-text-main'}`}>
+		{formatNumber(value)}
+	</td>
+);
 
 const PlayerProfile = ({ profile }: { profile: WorldIntelligencePlayerProfileV1 }) => {
 	const [metric, setMetric] = useState<'might' | 'glory' | 'weeklyLoot' | 'honor'>('might');
@@ -529,6 +605,27 @@ function formatNumber(value?: number): string {
 	return new Intl.NumberFormat(undefined, { notation: Math.abs(value) >= 100_000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(value);
 }
 
+function formatCount(value?: number): string {
+	return new Intl.NumberFormat().format(value ?? 0);
+}
+
+function tableMetricValue(row: IntelligenceTableRow, metric: string): number {
+	const value = metric === 'members'
+		? row.memberCount
+		: metric === 'legendLevel'
+			? row.legendLevel
+			: metric === 'weeklyLoot'
+				? row.weeklyLoot
+				: metric === 'glory'
+					? row.glory
+					: metric === 'honor'
+						? row.honor
+						: metric === 'level'
+							? row.level
+							: row.might;
+	return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
 function metricLabel(metric: string): string {
 	return ({ might: 'Might', glory: 'Glory', weeklyLoot: 'Weekly loot', honor: 'Honor', level: 'Level', legendLevel: 'Legend', members: 'Members' } as Record<string, string>)[metric] || metric;
 }
@@ -552,8 +649,8 @@ function formatDateTime(value: string): string {
 	return Number.isFinite(timestamp) ? new Date(timestamp).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Unknown';
 }
 
-function freshnessTone(value?: string): 'default' | 'success' | 'warning' {
-	if (!value) return 'default';
+function freshnessTone(value?: string): 'outline' | 'success' | 'warning' {
+	if (!value) return 'outline';
 	const age = Date.now() - Date.parse(value);
 	return age <= 60 * 60 * 1000 ? 'success' : 'warning';
 }
