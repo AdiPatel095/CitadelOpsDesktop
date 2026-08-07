@@ -367,14 +367,12 @@ const IntelligenceTable = ({ rows, entityType, metric, loading, searchQuery, pag
 	return (
 		<div className={`overflow-hidden rounded-global border border-border-base transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
 			<div className="max-h-[42rem] overflow-auto custom-scrollbar">
-				<table className={`w-full border-collapse text-sm ${entityType === 'players' ? 'min-w-[76rem]' : 'min-w-[42rem]'}`}>
+				<table className={`w-full border-collapse text-sm ${entityType === 'players' ? 'min-w-[58rem]' : 'min-w-[42rem]'}`}>
 					<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wider text-text-muted shadow-[0_1px_0_var(--border-base)]">
 						{entityType === 'players' ? (
 							<tr>
 								<th className="w-16 px-3 py-3 text-left">#</th>
 								<th className="min-w-48 px-3 py-3 text-left">Player</th>
-								<SortableHeader label="Level" metric="level" activeMetric={metric} onSort={onSort} />
-								<SortableHeader label="Legend" metric="legendLevel" activeMetric={metric} onSort={onSort} />
 								<SortableHeader label="Might" metric="might" activeMetric={metric} onSort={onSort} />
 								<SortableHeader label="Weekly loot" metric="weeklyLoot" activeMetric={metric} onSort={onSort} />
 								<SortableHeader label="Glory" metric="glory" activeMetric={metric} onSort={onSort} />
@@ -403,8 +401,6 @@ const IntelligenceTable = ({ rows, entityType, metric, loading, searchQuery, pag
 								</td>
 								{entityType === 'players' ? (
 									<>
-										<NumericCell value={entry.level} emphasis={metric === 'level'} />
-										<NumericCell value={entry.legendLevel} emphasis={metric === 'legendLevel'} />
 										<NumericCell value={entry.might} emphasis={metric === 'might'} />
 										<NumericCell value={entry.weeklyLoot} emphasis={metric === 'weeklyLoot'} />
 										<NumericCell value={entry.glory} emphasis={metric === 'glory'} />
@@ -612,22 +608,18 @@ function formatCount(value?: number): string {
 function tableMetricValue(row: IntelligenceTableRow, metric: string): number {
 	const value = metric === 'members'
 		? row.memberCount
-		: metric === 'legendLevel'
-			? row.legendLevel
-			: metric === 'weeklyLoot'
-				? row.weeklyLoot
-				: metric === 'glory'
-					? row.glory
-					: metric === 'honor'
-						? row.honor
-						: metric === 'level'
-							? row.level
-							: row.might;
+		: metric === 'weeklyLoot'
+			? row.weeklyLoot
+			: metric === 'glory'
+				? row.glory
+				: metric === 'honor'
+					? row.honor
+					: row.might;
 	return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
 function metricLabel(metric: string): string {
-	return ({ might: 'Might', glory: 'Glory', weeklyLoot: 'Weekly loot', honor: 'Honor', level: 'Level', legendLevel: 'Legend', members: 'Members' } as Record<string, string>)[metric] || metric;
+	return ({ might: 'Might', glory: 'Glory', weeklyLoot: 'Weekly loot', honor: 'Honor', members: 'Members' } as Record<string, string>)[metric] || metric;
 }
 
 function relativeTime(value: string): string {
