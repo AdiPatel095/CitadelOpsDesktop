@@ -1,58 +1,75 @@
 # World Intelligence
 
-World Intelligence is CitadelOps' own shared, world-scoped dataset. It does not call, scrape, or import GGE-Tracker. Designated owned CitadelOps accounts read the same public GGE `hgh` leaderboards used by GGE-Tracker, contribute bounded observations to the unified CitadelOps backend, and every desktop reads the merged dataset through the local CitadelOps API.
+World Intelligence preserves world-player history and now collects versioned ranking, event, and reward catalogs from the official Goodgame Studios CDN. The catalog source is the same `items_v{version}.json` document used by CitadelOps' official game-data subsystem:
 
-## Data flow
+`https://empire-html5.goodgamestudios.com/default/items/items_v{version}.json`
 
-1. A designated collector uses the ordinary CitadelOps intent engine to read six public might brackets (`LT=6`, `LID=1..6`) and the public weekly-loot board (`LT=2`, `LID=1`). Pages are requested ten ranks at a time through the account's existing authenticated game socket.
-2. The scanner validates every response, stops at the server-reported row count, caps each category at 50,000 players, and discards the entire partial scan if a page fails. Player details embedded in the leaderboard rows supply public identity, alliance, metrics, and holdings without a world-map sweep.
-3. It normalizes the world host and creates deterministic SHA-256 batches for one 15-minute capture bucket. Players, alliances, and holdings are split at the cloud's existing per-batch limits.
-4. A local SQLite outbox at `Runtime/WorldIntelligence.sqlite` durably queues each batch. Each installation has a random local ID and secret; there is no player credential in the cloud authorization header.
-5. The uploader registers that installation, sends idempotent batches, and retries transient failures with bounded backoff.
-6. The Cloud Run service appends 15-minute player and alliance observations in PostgreSQL, records holding history only when a public holding changes, and maintains merged current snapshots for search, rankings, and profiles.
-7. The World Intel desktop view and Alliance Targets query the cloud through CitadelOps' local HTTP API.
+The catalog is public, global, and independent of a logged-in game session. Existing player, alliance, holding, and ranking observations remain queryable as historical data, but the scheduled collector no longer issues game-socket leaderboard commands.
 
-World Intelligence reads are always enabled and have no consent switch or feature gate. Collection is operationally isolated through hidden profile assignment fields: `collectorPlayerId`, `collectorSlot`, and `collectorSlots`. With two owned accounts, slots `0/2` and `1/2` alternate on global 15-minute boundaries, so each account scans every 30 minutes while the shared dataset receives one scan every 15 minutes. With one owned account, slot `0/1` scans every 15 minutes. Unassigned installations send no leaderboard traffic.
+## Catalog collection
+
+1. CitadelOps downloads and verifies the current official item document through its existing game-data manager.
+2. A designated World Intelligence profile reads the verified in-memory collections. It does not read a game socket, require a synchronized baseline, or call a third-party tracker.
+3. Each supported collection is compacted and independently identified by SHA-256. Identity excludes collector and capture time, so identical CDN content deduplicates across profiles.
+4. A separate SQLite outbox at `Runtime/WorldIntelligence.sqlite` durably queues each dataset snapshot and retries uploads with bounded backoff.
+5. The backend stores immutable dataset versions in PostgreSQL and records which installations contributed each version.
+6. Every desktop can list all collected datasets and render the latest rows plus version history through its local API.
+
+The allowlist includes official collections for:
+
+- Storm alliance and player thresholds (`islandrewardranks`, `islandPlayerRewards`);
+- leagues, highscores, might and alliance-fame ranks, temporary-server ranks, alliance battleground ranks, and leaderboard reward brackets;
+- gacha events, pull limits, spin costs, lucky-wheel reward sets, and sale-day wheel reward sets;
+- event definitions, point-event scoring quests, collector-event scoring, and their reward sets;
+- season, promotion, donation, Daimyo, activity, and reward-bag definitions.
+
+CitadelOps also emits `rankingReferencedRewards`, a deterministic subset of the official `rewards` collection containing reward records referenced by the selected ranking and event datasets. This makes reward IDs usable without uploading unrelated reward definitions.
+
+## What the official document does and does not contain
+
+The document contains static public definitions: rank thresholds, event and league IDs, scoring requirements, gacha pull bounds and costs, reward brackets, and reward contents. It does not contain current player names, current Storm scores, current glory or gallantry, or a player's spins in an active gacha event. The UI labels these rows as official catalog data and does not present them as live player observations.
+
+## Collector assignments
+
+Reads are always available. Scheduled writes are controlled by the hidden `world-intelligence` settings:
+
+- James Holden: `collectorPlayerId=17756610`, slot `0/2`;
+- Adolphus Murtry: `collectorPlayerId=17334928`, slot `1/2`;
+- Amos Burton: unassigned with `collectorPlayerId=0` and `collectorSlots=0`.
+
+The assignment is profile-local and no longer depends on the currently logged-in player or socket state. Unassigned profiles do not enqueue or upload catalog snapshots.
 
 ## Privacy boundary
 
-Uploaded fields are limited to public world identity and observations:
+Catalog uploads contain only official CDN data and provenance:
 
-- player ID, name, alliance membership, level, legend level, might, glory, honor, and weekly loot;
-- alliance ID, name, member count, and total might;
-- publicly visible alliance holdings: owner, castle ID, kingdom, coordinates, and slot type;
-- public event-alliance ranking, score, member count, and fame values;
-- observation timestamps and a normalized world host.
+- official item version, URL, and document digest;
+- dataset key, label, category, fields, rows, row count, and dataset digest;
+- capture time and the configured collector player ID.
 
-The collector does not serialize account UID, login/session credentials, resources, currencies, troops, inventory, commanders, equipment, movements, reports, raw frames, chat, protection state, or automation configuration. It stores only decoded public leaderboard fields. Unassigned profiles are read-only by default, while collector assignment is bound to the expected logged-in player ID.
+They do not contain login credentials, session tokens, raw game frames, account UID, resources, troops, inventory, commanders, equipment, movements, reports, chat, or automation settings. Installation authentication uses a random local installation ID and secret.
 
 ## Cloud API
 
-The service exposes:
+Catalog endpoints:
 
-- `GET /api/world-intel/health`
-- `POST /api/world-intel/v1/installations`
-- `POST /api/world-intel/v1/observations` with `Authorization: CitadelInstall <installation-id>.<secret>`
-- `GET /api/world-intel/v1/search?worldId=&q=&type=&limit=`
-- `GET /api/world-intel/v1/players/{id}?worldId=&limit=`
-- `GET /api/world-intel/v1/alliances/{id}?worldId=&limit=`
-- `GET /api/world-intel/v1/rankings/{players|alliances}?worldId=&metric=&limit=`
-- `GET /api/world-intel/v1/coverage?worldId=`
+- `POST /api/world-intel/v1/catalog-snapshots` with `Authorization: CitadelInstall <installation-id>.<secret>`;
+- `GET /api/world-intel/v1/catalog-datasets`;
+- `GET /api/world-intel/v1/catalog-datasets/{key}?historyLimit=`.
 
-Observation requests are capped at 4 MiB, reject unknown JSON fields, enforce per-entity limits and a six-month time window, and verify the deterministic payload digest. Inserts are idempotent by batch ID. Current projections reject older observations from overwriting fresher metrics.
+The existing historical endpoints remain available:
+
+- `GET /api/world-intel/v1/search?worldId=&q=&type=&limit=`;
+- `GET /api/world-intel/v1/players/{id}?worldId=&limit=`;
+- `GET /api/world-intel/v1/alliances/{id}?worldId=&limit=`;
+- `GET /api/world-intel/v1/ranking-metrics/{players|alliances}?worldId=`;
+- `GET /api/world-intel/v1/rankings/{players|alliances}?worldId=&metric=&limit=`;
+- `GET /api/world-intel/v1/coverage?worldId=`.
+
+Catalog requests reject unknown JSON fields, accept only the official GGS item-CDN host, enforce bounded rows and bytes, verify source and dataset SHA-256 digests, and validate the deterministic snapshot ID. Backend inserts are additive and idempotent.
 
 ## Deployment
 
-World Intelligence leaderboard ingestion ships in CitadelOpsBackend 1.3.11 and runs inside the existing `live-backend-cloud` Cloud Run service. It reuses that service's Cloud SQL connection and public `citadelops.app` domain; there is no second backend service, database, deployment file, or database secret.
+The API runs inside the existing CitadelOps backend and uses its existing Cloud SQL connection. Schema startup creates the additive `world_intel_catalog_*` tables and indexes transactionally. Deployment uses the normal repository promotion flow: feature branch to `develop`, then approved `develop` to `main`; the Git-triggered Cloud Build deploys the backend. No direct GCP mutation is required.
 
-Backend startup creates the additive `world_intel_*` tables and indexes in a PostgreSQL transaction. If the schema cannot be initialized, the new Cloud Run revision fails closed and the previous healthy revision continues serving. The normal CitadelOpsBackend `main` promotion and Google Cloud Build trigger deploy the API together with the report and licensing routes.
-
-The desktop production default is `https://citadelops.app/api/world-intel/v1`. For development, set `CITADEL_WORLD_INTEL_URL` to another compatible base URL.
-
-Reads and installation registration are public but use the backend's per-IP rate limiter; only ingestion requires an installation secret. Keep the shared database private, rotate its credentials, enable backups and point-in-time recovery, and apply retention and abuse-review policy before broad enrollment.
-
-Installation authentication prevents anonymous batch writes but does not prove that a public observation is truthful. Treat the initial dataset as community-observed rather than authoritative; before broad public enrollment, add abuse review and contributor reputation or multi-install corroboration so one registered installation cannot poison rankings.
-
-## Coverage behavior
-
-The UI shows entity counts, total observations, first/last observation time, collector-slot status, scan progress, queue depth, and per-row freshness. Rankings use the freshest merged observation, profiles retain append-only history, and holdings come from the most recent completed leaderboard scan. Sparse coverage is expected only until the first complete owned-account scan reaches the cloud.
+The desktop production endpoint remains `https://citadelops.app/api/world-intel/v1`. Set `CITADEL_WORLD_INTEL_URL` only for a compatible development backend.

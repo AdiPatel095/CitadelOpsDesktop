@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
 
@@ -15,7 +16,6 @@ const (
 	uploadPoll       = 30 * time.Second
 	scannerPoll      = 20 * time.Second
 	scannerRetryWait = 5 * time.Minute
-	scannerTimeout   = 12 * time.Minute
 )
 
 type Settings struct {
@@ -25,18 +25,20 @@ type Settings struct {
 }
 
 type DesktopService struct {
-	state         *State.Store
-	configuration *Configuration.Store
-	store         *DesktopStore
-	client        *CloudClient
-	intents       intentSubmitter
-	wake          chan struct{}
-	done          chan struct{}
+	state          *State.Store
+	gameData       *GameData.Manager
+	refreshCatalog func(context.Context) error
+	configuration  *Configuration.Store
+	store          *DesktopStore
+	client         *CloudClient
+	wake           chan struct{}
+	done           chan struct{}
 
-	scanMu          sync.RWMutex
-	scanInProgress  bool
-	scannedPlayers  int
-	nextScanRetryAt time.Time
+	collectionMu          sync.RWMutex
+	collectionInProgress  bool
+	collectedDatasets     int
+	nextCollectionRetryAt time.Time
+	lastCatalogRefresh    time.Time
 
 	runOnce   sync.Once
 	closeOnce sync.Once
@@ -45,9 +47,10 @@ type DesktopService struct {
 func NewDesktopService(
 	dataDir string,
 	state *State.Store,
+	gameData *GameData.Manager,
+	refreshCatalog func(context.Context) error,
 	configuration *Configuration.Store,
 	client *CloudClient,
-	intents intentSubmitter,
 ) (*DesktopService, error) {
 	store, err := OpenDesktopStore(dataDir)
 	if err != nil {
@@ -57,8 +60,9 @@ func NewDesktopService(
 		client = NewCloudClient(ClientConfig{})
 	}
 	return &DesktopService{
-		state: state, configuration: configuration, store: store, client: client, intents: intents,
+		state: state, gameData: gameData, refreshCatalog: refreshCatalog, configuration: configuration, store: store, client: client,
 		wake: make(chan struct{}, 1), done: make(chan struct{}),
+		lastCatalogRefresh: time.Now().UTC(),
 	}, nil
 }
 
@@ -68,12 +72,12 @@ func (service *DesktopService) Run(ctx context.Context) {
 	}
 	service.runOnce.Do(func() {
 		defer close(service.done)
-		if service.store == nil || service.state == nil {
+		if service.store == nil {
 			return
 		}
 		var wait sync.WaitGroup
 		wait.Add(2)
-		go func() { defer wait.Done(); service.runScanner(ctx) }()
+		go func() { defer wait.Done(); service.runCatalogCollector(ctx) }()
 		go func() {
 			defer wait.Done()
 			service.runUploader(ctx)
@@ -96,10 +100,14 @@ func (service *DesktopService) Status(ctx context.Context) DesktopStatus {
 		storeStatus = service.store.Status(ctx)
 	}
 	status := DesktopStatus{
-		Enabled:        true,
+		Enabled: true, CollectionMode: "official-catalog",
 		PendingBatches: storeStatus.Pending, LastCapturedAt: storeStatus.LastCapturedAt,
-		LastUploadAt: storeStatus.LastUploadAt, LastUploadError: storeStatus.LastError,
-		LastScanAt: storeStatus.LastScanAt, LastScanError: storeStatus.LastScanError, PublicFieldsOnly: true,
+		PendingCatalogs: storeStatus.PendingCatalogs,
+		LastUploadAt:    storeStatus.LastUploadAt, LastUploadError: storeStatus.LastError,
+		CatalogVersion: storeStatus.LastCatalogVersion, CatalogDatasets: storeStatus.CatalogDatasets,
+		LastCatalogAt: storeStatus.LastCatalogAt, LastCatalogError: storeStatus.LastCatalogError,
+		LastScanAt: storeStatus.LastScanAt, LastScanError: storeStatus.LastScanError,
+		PublicFieldsOnly: true, OfficialSourceOnly: true,
 	}
 	if service != nil && service.client != nil {
 		status.Endpoint = service.client.Endpoint()
@@ -110,19 +118,27 @@ func (service *DesktopService) Status(ctx context.Context) DesktopStatus {
 		if status.WorldID == "" {
 			status.WorldID = NormalizeWorldID(snapshot.Session.ServerURL)
 		}
-		status.Collector = settings.collectsFor(int64(snapshot.Player.ID))
-		status.Contributing = status.Collector
-		if status.Collector {
-			status.CollectorSlot = settings.CollectorSlot
-			status.CollectorSlots = settings.CollectorSlots
-			next := nextCollectorSlot(time.Now().UTC(), settings.CollectorSlot, settings.CollectorSlots)
-			status.NextScanAt = &next
+	}
+	status.Collector = settings.collectsCatalog()
+	status.Contributing = status.Collector
+	if status.Collector {
+		status.CollectorPlayerID = settings.CollectorPlayerID
+		status.CollectorSlot = settings.CollectorSlot
+		status.CollectorSlots = settings.CollectorSlots
+		next := nextCollectorSlot(time.Now().UTC(), settings.CollectorSlot, settings.CollectorSlots)
+		status.NextCatalogAt = &next
+	}
+	if service != nil && service.gameData != nil {
+		if current, found := service.gameData.Current(); found && status.CatalogVersion == "" {
+			status.CatalogVersion = current.Metadata().ItemVersion
 		}
 	}
-	service.scanMu.RLock()
-	status.ScanInProgress = service.scanInProgress
-	status.ScannedPlayers = service.scannedPlayers
-	service.scanMu.RUnlock()
+	service.collectionMu.RLock()
+	status.CatalogCollectionInProgress = service.collectionInProgress
+	if service.collectedDatasets > 0 {
+		status.CatalogDatasets = service.collectedDatasets
+	}
+	service.collectionMu.RUnlock()
 	return status
 }
 
@@ -190,11 +206,36 @@ func (service *DesktopService) Rankings(
 	return service.client.Rankings(ctx, service.resolveWorld(worldID), entityType, metric, limit)
 }
 
+func (service *DesktopService) RankingMetrics(
+	ctx context.Context,
+	worldID string,
+	entityType string,
+) (RankingMetricCatalogResponse, error) {
+	if err := service.queryReady(); err != nil {
+		return RankingMetricCatalogResponse{}, err
+	}
+	return service.client.RankingMetrics(ctx, service.resolveWorld(worldID), entityType)
+}
+
 func (service *DesktopService) Coverage(ctx context.Context, worldID string) (CoverageResponse, error) {
 	if err := service.queryReady(); err != nil {
 		return CoverageResponse{}, err
 	}
 	return service.client.Coverage(ctx, service.resolveWorld(worldID))
+}
+
+func (service *DesktopService) CatalogDatasets(ctx context.Context) (CatalogDatasetCatalogResponse, error) {
+	if err := service.queryReady(); err != nil {
+		return CatalogDatasetCatalogResponse{}, err
+	}
+	return service.client.CatalogDatasets(ctx)
+}
+
+func (service *DesktopService) CatalogDataset(ctx context.Context, datasetKey string, historyLimit int) (CatalogDatasetResponse, error) {
+	if err := service.queryReady(); err != nil {
+		return CatalogDatasetResponse{}, err
+	}
+	return service.client.CatalogDataset(ctx, datasetKey, historyLimit)
 }
 
 func (service *DesktopService) PersistenceError() error {
@@ -233,8 +274,9 @@ func (service *DesktopService) runUploader(ctx context.Context) {
 }
 
 func (service *DesktopService) uploadAvailable(ctx context.Context) {
-	pending, err := service.store.Pending(ctx, time.Now(), desktopBatchLimit)
-	if err != nil || len(pending) == 0 {
+	pendingCatalogs, catalogErr := service.store.PendingCatalog(ctx, time.Now(), desktopBatchLimit)
+	pending, observationErr := service.store.Pending(ctx, time.Now(), desktopBatchLimit)
+	if catalogErr != nil || observationErr != nil || len(pendingCatalogs)+len(pending) == 0 {
 		return
 	}
 	credentials, err := service.store.Credentials(ctx)
@@ -244,6 +286,30 @@ func (service *DesktopService) uploadAvailable(ctx context.Context) {
 	if err := service.client.Register(ctx, credentials); err != nil {
 		service.store.RecordUploadError(ctx, err.Error())
 		return
+	}
+	for {
+		for _, queued := range pendingCatalogs {
+			uploadedAt := time.Now().UTC()
+			response, err := service.client.UploadCatalog(ctx, credentials, queued.Snapshot)
+			if err != nil {
+				_ = service.store.FailCatalog(ctx, queued.Snapshot.SnapshotID, queued.Attempts, err.Error(), uploadedAt)
+				return
+			}
+			if response.SnapshotID != "" && response.SnapshotID != queued.Snapshot.SnapshotID {
+				_ = service.store.FailCatalog(ctx, queued.Snapshot.SnapshotID, queued.Attempts, "Cloud acknowledged a different catalog snapshot.", uploadedAt)
+				return
+			}
+			if err := service.store.ConfirmCatalog(ctx, queued.Snapshot.SnapshotID, uploadedAt); err != nil {
+				return
+			}
+		}
+		if len(pendingCatalogs) < desktopBatchLimit {
+			break
+		}
+		pendingCatalogs, catalogErr = service.store.PendingCatalog(ctx, time.Now(), desktopBatchLimit)
+		if catalogErr != nil || len(pendingCatalogs) == 0 {
+			break
+		}
 	}
 	for {
 		for _, queued := range pending {
@@ -285,9 +351,9 @@ func (service *DesktopService) queryReady() error {
 	return nil
 }
 
-func (settings Settings) collectsFor(playerID int64) bool {
-	return playerID > 0 && settings.CollectorPlayerID == playerID && settings.CollectorSlots >= 1 &&
-		settings.CollectorSlots <= 8 && settings.CollectorSlot >= 0 && settings.CollectorSlot < settings.CollectorSlots
+func (settings Settings) collectsCatalog() bool {
+	return settings.CollectorPlayerID > 0 && settings.CollectorSlots >= 1 && settings.CollectorSlots <= 8 &&
+		settings.CollectorSlot >= 0 && settings.CollectorSlot < settings.CollectorSlots
 }
 
 func (service *DesktopService) signal() {

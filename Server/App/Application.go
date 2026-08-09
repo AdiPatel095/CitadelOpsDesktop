@@ -199,9 +199,15 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	worldIntelligence, err := WorldIntel.NewDesktopService(
 		config.DataDir,
 		state,
+		gameData,
+		func(ctx context.Context) error {
+			if config.Offline {
+				return nil
+			}
+			return refreshGameDataStore(ctx, state, gameData)
+		},
 		configuration,
 		WorldIntel.NewCloudClient(WorldIntel.ClientConfig{ClientVersion: Version}),
-		intents,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("open world intelligence service: %w", err)
@@ -650,16 +656,23 @@ func (application *Application) cancelOperation(_ context.Context, arguments jso
 }
 
 func (application *Application) refreshGameData(ctx context.Context) error {
-	if err := application.GameData.Refresh(ctx); err != nil {
+	return refreshGameDataStore(ctx, application.State, application.GameData)
+}
+
+func refreshGameDataStore(ctx context.Context, state *State.Store, gameData *GameData.Manager) error {
+	if state == nil || gameData == nil {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	if err := gameData.Refresh(ctx); err != nil {
 		return err
 	}
-	current, ok := application.GameData.Current()
+	current, ok := gameData.Current()
 	if !ok {
 		return fmt.Errorf("official game data did not produce a snapshot")
 	}
 	version := current.Metadata().ItemVersion
 	languageVersion := current.Metadata().LanguageVersion
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
 		changed := EquipmentDomain.HydrateState(gameState, current)
 		if gameState.CatalogVersion != version || gameState.LanguageVersion != languageVersion {
 			gameState.CatalogVersion = version
