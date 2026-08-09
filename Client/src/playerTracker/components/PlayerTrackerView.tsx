@@ -21,7 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { Notifications } from '../../components/Notifications';
 import { useCitadelAPI } from '../../api/ApiContext';
-import type { CastleStateV2, GameStateV2 } from '../../api/Contracts';
+import type { CastleStateV2 } from '../../api/Contracts';
 
 interface PlayerTrackerSample {
   timestampUnix: number;
@@ -39,7 +39,7 @@ interface PlayerTrackerSample {
   currencies?: Record<string, number>;
 }
 
-interface TrackerMetricPoint {
+export interface TrackerMetricPoint {
   timestampUnix: number;
   value: number;
   source: 'local';
@@ -54,7 +54,7 @@ interface TrackerFallbackInfo {
   pointsAdded?: number;
 }
 
-interface ChartTimeWindow {
+export interface ChartTimeWindow {
   startUnix: number;
   endUnix: number;
 }
@@ -98,7 +98,7 @@ interface PlayerTrackerResponse {
 
 type CurrencyKey = string;
 type MetricKey = string;
-type RangeKey = '24h' | '7d' | '30d' | 'all';
+export type RangeKey = '24h' | '7d' | '30d' | 'all';
 type MetricCategory = 'Player stats' | 'Wallet';
 
 interface MetricDefinition {
@@ -156,9 +156,18 @@ const PlayerTrackerView = () => {
   const { state } = useCitadelAPI();
   const { gameLoggedIn } = useAuth();
   const { troops: troopMetadata, resources: resourceMetadata, currencies: currencyMetadata } = useMetadata();
+  const resourceMetricIDs = Object.entries(state?.player.resources ?? {})
+    .filter(([, amount]) => amount !== 0)
+    .map(([id]) => id)
+    .sort();
+  const currencyMetricIDs = Object.entries(state?.player.currencies ?? {})
+    .filter(([, amount]) => amount !== 0)
+    .map(([id]) => id)
+    .sort();
+  const walletMetricSignature = `resources:${resourceMetricIDs.join(',')}|currencies:${currencyMetricIDs.join(',')}`;
   const metricDefinitions = useMemo(
-    () => buildMetricDefinitions(state, resourceMetadata, currencyMetadata),
-    [currencyMetadata, resourceMetadata, state],
+    () => buildMetricDefinitions(resourceMetricIDs, currencyMetricIDs, resourceMetadata, currencyMetadata),
+    [currencyMetadata, resourceMetadata, walletMetricSignature],
   );
   const primaryMetricDefinitions = useMemo(
     () => metricDefinitions.filter((definition) => definition.key !== 'troopsTotal'),
@@ -240,12 +249,13 @@ const PlayerTrackerView = () => {
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     const load = async () => {
       try {
         const primarySeconds = ranges.find((range) => range.key === selectedRange)?.seconds ?? 365 * 24 * 60 * 60;
         const troopSeconds = ranges.find((range) => range.key === troopRange)?.seconds ?? 365 * 24 * 60 * 60;
         const rangeSeconds = Math.max(primarySeconds, troopSeconds);
-		const response = await fetch(`/api/v2/history/player-tracker?rangeSeconds=${rangeSeconds}`, { cache: 'no-store' });
+		const response = await fetch(`/api/v2/history/player-tracker?rangeSeconds=${rangeSeconds}`, { cache: 'no-store', signal: controller.signal });
         if (!response.ok) throw new Error(`Tracker returned HTTP ${response.status}`);
         const payload = await response.json() as PlayerTrackerResponse;
         if (!active) return;
@@ -254,6 +264,7 @@ const PlayerTrackerView = () => {
         setLoadError(null);
       } catch (error) {
         if (!active) return;
+        if (error instanceof DOMException && error.name === 'AbortError') return;
         setLoadError(error instanceof Error ? error.message : 'Could not load player history');
       } finally {
         if (active) setLoading(false);
@@ -263,6 +274,7 @@ const PlayerTrackerView = () => {
     const timer = window.setInterval(() => void load(), 60_000);
     return () => {
       active = false;
+      controller.abort();
       window.clearInterval(timer);
     };
   }, [activePlayerID, metricDefinitions, selectedRange, troopMetadata, troopRange]);
@@ -772,7 +784,7 @@ function Delta({
   );
 }
 
-function TrendChart({
+export function TrendChart({
   points: metricPoints,
   metric,
   color,
@@ -1399,12 +1411,12 @@ function playerWallet(
 }
 
 function buildMetricDefinitions(
-  state: GameStateV2 | null,
+  resourceIDs: string[],
+  currencyIDs: string[],
   resourceDefinitions: Record<number, MetadataItem>,
   currencyDefinitions: Record<number, MetadataItem>,
 ): MetricDefinition[] {
   const definitions = CORE_METRIC_DEFINITIONS.map((definition) => ({ ...definition }));
-  if (!state) return definitions;
   const palette = ['#22d3ee', '#a78bfa', '#f59e0b', '#34d399', '#fb7185', '#60a5fa', '#2dd4bf', '#f97316'];
   const append = (kind: 'resource' | 'currency', rawID: string, metadata: MetadataItem | undefined) => {
     const id = Number(rawID);
@@ -1423,12 +1435,8 @@ function buildMetricDefinitions(
       category: 'Wallet',
     });
   };
-  Object.entries(state.player.resources)
-    .filter(([, amount]) => amount !== 0)
-    .forEach(([id]) => append('resource', id, resourceDefinitions[Number(id)]));
-  Object.entries(state.player.currencies)
-    .filter(([, amount]) => amount !== 0)
-    .forEach(([id]) => append('currency', id, currencyDefinitions[Number(id)]));
+  resourceIDs.forEach((id) => append('resource', id, resourceDefinitions[Number(id)]));
+  currencyIDs.forEach((id) => append('currency', id, currencyDefinitions[Number(id)]));
   const troop = definitions.find((definition) => definition.key === 'troopsTotal');
   return [
     ...definitions.filter((definition) => definition.key !== 'troopsTotal'),

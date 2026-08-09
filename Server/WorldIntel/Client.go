@@ -72,6 +72,33 @@ func (client *CloudClient) Upload(
 	return response, err
 }
 
+func (client *CloudClient) UploadCatalog(
+	ctx context.Context,
+	credentials InstallationCredentials,
+	snapshot CatalogDatasetSnapshot,
+) (CatalogIngestResponse, error) {
+	var response CatalogIngestResponse
+	err := client.doJSON(ctx, http.MethodPost, "/catalog-snapshots", snapshot, &response, credentials)
+	return response, err
+}
+
+func (client *CloudClient) CatalogDatasets(ctx context.Context) (CatalogDatasetCatalogResponse, error) {
+	var result CatalogDatasetCatalogResponse
+	err := client.getJSON(ctx, "/catalog-datasets", &result)
+	return result, err
+}
+
+func (client *CloudClient) CatalogDataset(
+	ctx context.Context,
+	datasetKey string,
+	historyLimit int,
+) (CatalogDatasetResponse, error) {
+	values := url.Values{"historyLimit": {strconv.Itoa(boundedLimit(historyLimit, 25))}}
+	var result CatalogDatasetResponse
+	err := client.getJSON(ctx, "/catalog-datasets/"+url.PathEscape(datasetKey)+"?"+values.Encode(), &result)
+	return result, err
+}
+
 func (client *CloudClient) Search(
 	ctx context.Context,
 	worldID string,
@@ -126,6 +153,17 @@ func (client *CloudClient) Rankings(
 	}
 	var result RankingResponse
 	err := client.getJSON(ctx, "/rankings/"+url.PathEscape(entityType)+"?"+values.Encode(), &result)
+	return result, err
+}
+
+func (client *CloudClient) RankingMetrics(
+	ctx context.Context,
+	worldID string,
+	entityType string,
+) (RankingMetricCatalogResponse, error) {
+	values := url.Values{"worldId": {NormalizeWorldID(worldID)}}
+	var result RankingMetricCatalogResponse
+	err := client.getJSON(ctx, "/ranking-metrics/"+url.PathEscape(entityType)+"?"+values.Encode(), &result)
 	return result, err
 }
 

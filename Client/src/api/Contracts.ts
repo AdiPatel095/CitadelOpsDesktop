@@ -108,14 +108,48 @@ export interface WorldIntelligenceStatusV1 {
 	lastUploadAt?: string;
 	lastUploadError?: string;
 	collector: boolean;
+	collectorPlayerId?: number;
 	collectorSlot?: number;
 	collectorSlots?: number;
+	collectionMode: 'official-catalog';
+	pendingCatalogs?: number;
+	catalogVersion?: string;
+	catalogDatasets?: number;
+	lastCatalogAt?: string;
+	nextCatalogAt?: string;
+	lastCatalogError?: string;
+	catalogCollectionInProgress: boolean;
 	lastScanAt?: string;
 	nextScanAt?: string;
 	lastScanError?: string;
 	scanInProgress: boolean;
 	scannedPlayers?: number;
 	publicFieldsOnly: boolean;
+	officialSourceOnly: boolean;
+}
+
+export interface WorldIntelligenceCatalogDatasetSummaryV1 {
+	datasetKey: string;
+	datasetLabel: string;
+	category: string;
+	source: 'ggs-official-items';
+	sourceVersion: string;
+	sourceUrl: string;
+	datasetDigest: string;
+	fields: string[];
+	rowCount: number;
+	capturedAt: string;
+	contributorCount: number;
+}
+
+export interface WorldIntelligenceCatalogDatasetCatalogV1 {
+	source: 'ggs-official-items';
+	datasets: WorldIntelligenceCatalogDatasetSummaryV1[];
+}
+
+export interface WorldIntelligenceCatalogDatasetV1 extends WorldIntelligenceCatalogDatasetSummaryV1 {
+	rows: Array<Record<string, unknown>>;
+	history: WorldIntelligenceCatalogDatasetSummaryV1[];
 }
 
 export interface WorldIntelligencePlayerObservationV1 {
@@ -130,6 +164,27 @@ export interface WorldIntelligencePlayerObservationV1 {
 	glory?: number;
 	weeklyLoot?: number;
 	honor?: number;
+	publicProfile?: {
+		achievementPoints?: number;
+		highestGlory?: number;
+		allianceRank?: number;
+		titlePrefixId?: number;
+		titleSuffixId?: number;
+		titleId?: number;
+		bestRank?: number;
+		ruined?: boolean;
+	};
+	publicMetrics?: Record<string, {
+		label: string;
+		value: number;
+		rank?: number;
+		unit?: string;
+		source?: 'gge-highscore';
+		listType?: number;
+		leagueId?: number;
+		observedAt: string;
+		validUntil?: string;
+	}>;
 	source: 'account' | 'alliance' | 'event-ranking' | 'leaderboard';
 	observedAt: string;
 }
@@ -169,6 +224,8 @@ export interface WorldIntelligenceSearchResultV1 {
 	glory?: number;
 	weeklyLoot?: number;
 	honor?: number;
+	publicProfile?: WorldIntelligencePlayerObservationV1['publicProfile'];
+	publicMetrics?: WorldIntelligencePlayerObservationV1['publicMetrics'];
 	memberCount?: number;
 	lastObservedAt: string;
 }
@@ -215,6 +272,21 @@ export interface WorldIntelligenceRankingResponseV1 {
 	type: 'players' | 'alliances';
 	metric: string;
 	entries: WorldIntelligenceRankingEntryV1[];
+}
+
+export interface WorldIntelligenceRankingMetricV1 {
+	metric: string;
+	label: string;
+	unit?: string;
+	source: 'public-ranking' | 'public-profile' | 'gge-highscore';
+	populatedRows: number;
+	latestObservedAt?: string;
+}
+
+export interface WorldIntelligenceRankingMetricCatalogV1 {
+	worldId: string;
+	type: 'players' | 'alliances';
+	metrics: WorldIntelligenceRankingMetricV1[];
 }
 
 export interface WorldIntelligenceWorldCoverageV1 {

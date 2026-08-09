@@ -17,22 +17,56 @@ const (
 	MaximumAlliances     = 100
 	MaximumHoldings      = 2_000
 	MaximumEventRankings = 1_000
+	MaximumPublicMetrics = 64
+	captureBucket        = 15 * time.Minute
 )
 
+// PlayerPublicProfile contains additional fields that GGE includes in public
+// leaderboard player cards. IDs are retained instead of trying to resolve
+// localized title text on the collector.
+type PlayerPublicProfile struct {
+	AchievementPoints float64 `json:"achievementPoints,omitempty"`
+	HighestGlory      float64 `json:"highestGlory,omitempty"`
+	AllianceRank      int     `json:"allianceRank,omitempty"`
+	TitlePrefixID     int64   `json:"titlePrefixId,omitempty"`
+	TitleSuffixID     int64   `json:"titleSuffixId,omitempty"`
+	TitleID           int64   `json:"titleId,omitempty"`
+	BestRank          int64   `json:"bestRank,omitempty"`
+	Ruined            *bool   `json:"ruined,omitempty"`
+}
+
+// PublicMetricObservation represents a public, player-scoped highscore. The
+// map key on PlayerObservation is stable across observations (for example,
+// "storm-points" or "decoration-gacha-spins"), while the wire list and league
+// IDs preserve enough provenance to audit the source.
+type PublicMetricObservation struct {
+	Label      string    `json:"label"`
+	Value      float64   `json:"value"`
+	Rank       int64     `json:"rank,omitempty"`
+	Unit       string    `json:"unit,omitempty"`
+	Source     string    `json:"source,omitempty"`
+	ListType   int64     `json:"listType,omitempty"`
+	LeagueID   int64     `json:"leagueId,omitempty"`
+	ObservedAt time.Time `json:"observedAt"`
+	ValidUntil time.Time `json:"validUntil,omitempty"`
+}
+
 type PlayerObservation struct {
-	WorldID      string    `json:"worldId"`
-	PlayerID     int64     `json:"playerId"`
-	Name         string    `json:"name"`
-	AllianceID   int64     `json:"allianceId,omitempty"`
-	AllianceName string    `json:"allianceName,omitempty"`
-	Level        int       `json:"level,omitempty"`
-	LegendLevel  int       `json:"legendLevel,omitempty"`
-	Might        float64   `json:"might,omitempty"`
-	Glory        float64   `json:"glory,omitempty"`
-	WeeklyLoot   float64   `json:"weeklyLoot,omitempty"`
-	Honor        float64   `json:"honor,omitempty"`
-	Source       string    `json:"source"`
-	ObservedAt   time.Time `json:"observedAt"`
+	WorldID       string                             `json:"worldId"`
+	PlayerID      int64                              `json:"playerId"`
+	Name          string                             `json:"name"`
+	AllianceID    int64                              `json:"allianceId,omitempty"`
+	AllianceName  string                             `json:"allianceName,omitempty"`
+	Level         int                                `json:"level,omitempty"`
+	LegendLevel   int                                `json:"legendLevel,omitempty"`
+	Might         float64                            `json:"might,omitempty"`
+	Glory         float64                            `json:"glory,omitempty"`
+	WeeklyLoot    float64                            `json:"weeklyLoot,omitempty"`
+	Honor         float64                            `json:"honor,omitempty"`
+	PublicProfile *PlayerPublicProfile               `json:"publicProfile,omitempty"`
+	PublicMetrics map[string]PublicMetricObservation `json:"publicMetrics,omitempty"`
+	Source        string                             `json:"source"`
+	ObservedAt    time.Time                          `json:"observedAt"`
 }
 
 type AllianceObservation struct {
@@ -92,40 +126,52 @@ type IngestResponse struct {
 }
 
 type DesktopStatus struct {
-	Enabled          bool       `json:"enabled"`
-	Contributing     bool       `json:"contributing"`
-	Collector        bool       `json:"collector"`
-	CollectorSlot    int        `json:"collectorSlot,omitempty"`
-	CollectorSlots   int        `json:"collectorSlots,omitempty"`
-	WorldID          string     `json:"worldId,omitempty"`
-	Endpoint         string     `json:"endpoint"`
-	PendingBatches   int        `json:"pendingBatches"`
-	LastCapturedAt   *time.Time `json:"lastCapturedAt,omitempty"`
-	LastUploadAt     *time.Time `json:"lastUploadAt,omitempty"`
-	LastUploadError  string     `json:"lastUploadError,omitempty"`
-	LastScanAt       *time.Time `json:"lastScanAt,omitempty"`
-	NextScanAt       *time.Time `json:"nextScanAt,omitempty"`
-	LastScanError    string     `json:"lastScanError,omitempty"`
-	ScanInProgress   bool       `json:"scanInProgress"`
-	ScannedPlayers   int        `json:"scannedPlayers,omitempty"`
-	PublicFieldsOnly bool       `json:"publicFieldsOnly"`
+	Enabled                     bool       `json:"enabled"`
+	Contributing                bool       `json:"contributing"`
+	Collector                   bool       `json:"collector"`
+	CollectorPlayerID           int64      `json:"collectorPlayerId,omitempty"`
+	CollectorSlot               int        `json:"collectorSlot,omitempty"`
+	CollectorSlots              int        `json:"collectorSlots,omitempty"`
+	CollectionMode              string     `json:"collectionMode"`
+	WorldID                     string     `json:"worldId,omitempty"`
+	Endpoint                    string     `json:"endpoint"`
+	PendingBatches              int        `json:"pendingBatches"`
+	PendingCatalogs             int        `json:"pendingCatalogs"`
+	LastCapturedAt              *time.Time `json:"lastCapturedAt,omitempty"`
+	LastUploadAt                *time.Time `json:"lastUploadAt,omitempty"`
+	LastUploadError             string     `json:"lastUploadError,omitempty"`
+	CatalogVersion              string     `json:"catalogVersion,omitempty"`
+	CatalogDatasets             int        `json:"catalogDatasets,omitempty"`
+	LastCatalogAt               *time.Time `json:"lastCatalogAt,omitempty"`
+	NextCatalogAt               *time.Time `json:"nextCatalogAt,omitempty"`
+	LastCatalogError            string     `json:"lastCatalogError,omitempty"`
+	CatalogCollectionInProgress bool       `json:"catalogCollectionInProgress"`
+	LastScanAt                  *time.Time `json:"lastScanAt,omitempty"`
+	NextScanAt                  *time.Time `json:"nextScanAt,omitempty"`
+	LastScanError               string     `json:"lastScanError,omitempty"`
+	ScanInProgress              bool       `json:"scanInProgress"`
+	ScannedPlayers              int        `json:"scannedPlayers,omitempty"`
+	PublicFieldsOnly            bool       `json:"publicFieldsOnly"`
+	OfficialSourceOnly          bool       `json:"officialSourceOnly"`
 }
 
 type SearchResult struct {
-	Type           string    `json:"type"`
-	WorldID        string    `json:"worldId"`
-	ID             int64     `json:"id"`
-	Name           string    `json:"name"`
-	AllianceID     int64     `json:"allianceId,omitempty"`
-	AllianceName   string    `json:"allianceName,omitempty"`
-	Level          int       `json:"level,omitempty"`
-	LegendLevel    int       `json:"legendLevel,omitempty"`
-	Might          float64   `json:"might,omitempty"`
-	Glory          float64   `json:"glory,omitempty"`
-	WeeklyLoot     float64   `json:"weeklyLoot,omitempty"`
-	Honor          float64   `json:"honor,omitempty"`
-	MemberCount    int       `json:"memberCount,omitempty"`
-	LastObservedAt time.Time `json:"lastObservedAt"`
+	Type           string                             `json:"type"`
+	WorldID        string                             `json:"worldId"`
+	ID             int64                              `json:"id"`
+	Name           string                             `json:"name"`
+	AllianceID     int64                              `json:"allianceId,omitempty"`
+	AllianceName   string                             `json:"allianceName,omitempty"`
+	Level          int                                `json:"level,omitempty"`
+	LegendLevel    int                                `json:"legendLevel,omitempty"`
+	Might          float64                            `json:"might,omitempty"`
+	Glory          float64                            `json:"glory,omitempty"`
+	WeeklyLoot     float64                            `json:"weeklyLoot,omitempty"`
+	Honor          float64                            `json:"honor,omitempty"`
+	PublicProfile  *PlayerPublicProfile               `json:"publicProfile,omitempty"`
+	PublicMetrics  map[string]PublicMetricObservation `json:"publicMetrics,omitempty"`
+	MemberCount    int                                `json:"memberCount,omitempty"`
+	LastObservedAt time.Time                          `json:"lastObservedAt"`
 }
 
 type SearchResponse struct {
@@ -170,6 +216,21 @@ type RankingResponse struct {
 	Type    string         `json:"type"`
 	Metric  string         `json:"metric"`
 	Entries []RankingEntry `json:"entries"`
+}
+
+type RankingMetricDefinition struct {
+	Metric           string     `json:"metric"`
+	Label            string     `json:"label"`
+	Unit             string     `json:"unit,omitempty"`
+	Source           string     `json:"source"`
+	PopulatedRows    int64      `json:"populatedRows"`
+	LatestObservedAt *time.Time `json:"latestObservedAt,omitempty"`
+}
+
+type RankingMetricCatalogResponse struct {
+	WorldID string                    `json:"worldId"`
+	Type    string                    `json:"type"`
+	Metrics []RankingMetricDefinition `json:"metrics"`
 }
 
 type WorldCoverage struct {
@@ -269,6 +330,22 @@ func ValidateBatch(batch ObservationBatch) error {
 			observationTooFarAhead(player.ObservedAt, batch.CapturedAt) {
 			return fmt.Errorf("players[%d] is invalid", index)
 		}
+		if player.PublicProfile != nil && (player.PublicProfile.AchievementPoints < 0 || player.PublicProfile.HighestGlory < 0 ||
+			player.PublicProfile.AllianceRank < 0 || player.PublicProfile.TitlePrefixID < 0 || player.PublicProfile.TitleSuffixID < 0 ||
+			player.PublicProfile.TitleID < 0 || player.PublicProfile.BestRank < 0) {
+			return fmt.Errorf("players[%d].publicProfile is invalid", index)
+		}
+		if len(player.PublicMetrics) > MaximumPublicMetrics {
+			return fmt.Errorf("players[%d].publicMetrics exceeds the allowed metric limit", index)
+		}
+		for key, metric := range player.PublicMetrics {
+			if key == "" || len(key) > 80 || metric.Label == "" || len(metric.Label) > 120 || metric.Value < 0 ||
+				metric.Rank < 0 || len(metric.Unit) > 32 || len(metric.Source) > 32 || metric.ListType < 0 || metric.LeagueID < -1 ||
+				metric.ObservedAt.IsZero() || observationTooFarAhead(metric.ObservedAt, batch.CapturedAt) ||
+				(!metric.ValidUntil.IsZero() && (metric.ValidUntil.Before(metric.ObservedAt) || metric.ValidUntil.After(batch.CapturedAt.AddDate(0, 2, 0)))) {
+				return fmt.Errorf("players[%d].publicMetrics[%q] is invalid", index, key)
+			}
+		}
 	}
 	for index, alliance := range batch.Alliances {
 		if alliance.WorldID != batch.WorldID || alliance.AllianceID <= 0 || alliance.Name == "" || len(alliance.Name) > 160 ||
@@ -308,6 +385,23 @@ func normalizeBatch(batch *ObservationBatch) {
 		row.AllianceName = cleanText(row.AllianceName, 160)
 		row.Source = strings.TrimSpace(row.Source)
 		row.ObservedAt = row.ObservedAt.UTC().Truncate(time.Second)
+		if len(row.PublicMetrics) > 0 {
+			normalized := make(map[string]PublicMetricObservation, len(row.PublicMetrics))
+			for key, metric := range row.PublicMetrics {
+				key = strings.ToLower(cleanText(key, 80))
+				metric.Label = cleanText(metric.Label, 120)
+				metric.Unit = strings.ToLower(cleanText(metric.Unit, 32))
+				metric.Source = strings.ToLower(cleanText(metric.Source, 32))
+				metric.ObservedAt = metric.ObservedAt.UTC().Truncate(time.Second)
+				if !metric.ValidUntil.IsZero() {
+					metric.ValidUntil = metric.ValidUntil.UTC().Truncate(time.Second)
+				}
+				if key != "" {
+					normalized[key] = metric
+				}
+			}
+			row.PublicMetrics = normalized
+		}
 	}
 	for index := range batch.Alliances {
 		row := &batch.Alliances[index]

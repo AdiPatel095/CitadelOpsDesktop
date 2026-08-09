@@ -307,18 +307,11 @@ func (store *Store) PlayerSamplesForPlayer(
 	limit int,
 	playerID State.PlayerID,
 ) ([]PlayerSample, error) {
+	if store == nil {
+		return nil, fmt.Errorf("history store is unavailable")
+	}
 	if playerID <= 0 {
 		return []PlayerSample{}, nil
-	}
-	samples, err := store.PlayerSamples(since, 100_000)
-	if err != nil {
-		return nil, err
-	}
-	filtered := make([]PlayerSample, 0, min(len(samples), max(1, limit)))
-	for _, sample := range samples {
-		if sample.PlayerID == playerID {
-			filtered = append(filtered, sample)
-		}
 	}
 	if limit < 1 {
 		limit = 1000
@@ -326,10 +319,49 @@ func (store *Store) PlayerSamplesForPlayer(
 	if limit > 100_000 {
 		limit = 100_000
 	}
-	if len(filtered) > limit {
-		filtered = filtered[len(filtered)-limit:]
+	path, err := store.collectionPath(CollectionPlayerSamples)
+	if err != nil {
+		return nil, err
 	}
-	return filtered, nil
+
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	file, err := os.Open(path)
+	if os.IsNotExist(err) {
+		return []PlayerSample{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("open %s history: %w", CollectionPlayerSamples, err)
+	}
+	defer file.Close()
+
+	samples := make([]PlayerSample, 0, min(limit, 1024))
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 64*1024), 16*1024*1024)
+	for scanner.Scan() {
+		var item entry
+		decoder := json.NewDecoder(bytes.NewReader(scanner.Bytes()))
+		if decoder.Decode(&item) != nil || item.SchemaVersion < 1 || item.SchemaVersion > SchemaVersion || len(item.Payload) == 0 {
+			continue
+		}
+		var sample PlayerSample
+		if json.Unmarshal(item.Payload, &sample) != nil || sample.TimestampUnix <= 0 || sample.PlayerID != playerID {
+			continue
+		}
+		if !since.IsZero() && time.Unix(sample.TimestampUnix, 0).Before(since) {
+			continue
+		}
+		samples = append(samples, sample)
+		if len(samples) > limit {
+			copy(samples, samples[len(samples)-limit:])
+			samples = samples[:limit]
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("read %s history: %w", CollectionPlayerSamples, err)
+	}
+	sort.Slice(samples, func(left, right int) bool { return samples[left].TimestampUnix < samples[right].TimestampUnix })
+	return samples, nil
 }
 
 func NewPlayerSample(snapshot State.GameState, gameData *GameData.Manager) PlayerSample {

@@ -34,8 +34,11 @@ import type {
 	SettingsBundleV1,
 	SettingsImportResult,
 	WorldIntelligenceAllianceProfileV1,
+	WorldIntelligenceCatalogDatasetCatalogV1,
+	WorldIntelligenceCatalogDatasetV1,
 	WorldIntelligenceCoverageResponseV1,
 	WorldIntelligencePlayerProfileV1,
+	WorldIntelligenceRankingMetricCatalogV1,
 	WorldIntelligenceRankingResponseV1,
 	WorldIntelligenceSearchResponseV1,
 	WorldIntelligenceStatusV1,
@@ -249,11 +252,29 @@ class CitadelClient {
 		);
 	}
 
+	getWorldIntelligenceRankingMetrics(worldId: string, type: 'players' | 'alliances'): Promise<WorldIntelligenceRankingMetricCatalogV1> {
+		const query = new URLSearchParams({ worldId });
+		return this.request<WorldIntelligenceRankingMetricCatalogV1>(
+			`/api/v2/world-intelligence/ranking-metrics/${type}?${query.toString()}`,
+		);
+	}
+
 	getWorldIntelligenceCoverage(worldId = ''): Promise<WorldIntelligenceCoverageResponseV1> {
 		const query = new URLSearchParams();
 		if (worldId.trim()) query.set('worldId', worldId.trim());
 		const suffix = query.size > 0 ? `?${query.toString()}` : '';
 		return this.request<WorldIntelligenceCoverageResponseV1>(`/api/v2/world-intelligence/coverage${suffix}`);
+	}
+
+	getWorldIntelligenceCatalogDatasets(): Promise<WorldIntelligenceCatalogDatasetCatalogV1> {
+		return this.request<WorldIntelligenceCatalogDatasetCatalogV1>('/api/v2/world-intelligence/catalog-datasets');
+	}
+
+	getWorldIntelligenceCatalogDataset(datasetKey: string, historyLimit = 25): Promise<WorldIntelligenceCatalogDatasetV1> {
+		const query = new URLSearchParams({ historyLimit: String(historyLimit) });
+		return this.request<WorldIntelligenceCatalogDatasetV1>(
+			`/api/v2/world-intelligence/catalog-datasets/${encodeURIComponent(datasetKey)}?${query.toString()}`,
+		);
 	}
 
 	previewAutoStormTroopCap(input: AutoStormTroopCapPreviewRequest): Promise<AutoStormTroopCapPreviewV2> {
