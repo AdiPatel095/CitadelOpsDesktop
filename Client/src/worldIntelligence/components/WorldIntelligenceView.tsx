@@ -17,10 +17,13 @@ import {
 import { CitadelAPI } from '../../api/CitadelClient';
 import type {
 	WorldIntelligenceAllianceProfileV1,
+	WorldIntelligenceCatalogDatasetCatalogV1,
+	WorldIntelligenceCatalogDatasetV1,
 	WorldIntelligenceCoverageResponseV1,
 	WorldIntelligencePlayerObservationV1,
 	WorldIntelligencePlayerProfileV1,
 	WorldIntelligenceRankingEntryV1,
+	WorldIntelligenceRankingMetricV1,
 	WorldIntelligenceRankingResponseV1,
 	WorldIntelligenceSearchResultV1,
 	WorldIntelligenceStatusV1,
@@ -35,6 +38,7 @@ import {
 	MetricTile,
 	PageHeader,
 	PillSelector,
+	Select,
 	SectionCard,
 } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
@@ -43,7 +47,12 @@ import WorldPlayerDetailView from './WorldPlayerDetailView';
 
 type RankingType = 'players' | 'alliances';
 type SelectedEntity = { type: 'player' | 'alliance'; id: number; worldId: string };
-type IntelligenceTableRow = Omit<WorldIntelligenceRankingEntryV1, 'rank' | 'value'> & { rank?: number };
+type IntelligenceTableRow = Omit<WorldIntelligenceRankingEntryV1, 'rank' | 'value'> & {
+	rank?: number;
+	value?: number;
+	publicProfile?: WorldIntelligencePlayerObservationV1['publicProfile'];
+	publicMetrics?: WorldIntelligencePlayerObservationV1['publicMetrics'];
+};
 
 const tablePageSize = 25;
 
@@ -51,6 +60,11 @@ const WorldIntelligenceView = () => {
 	const { state } = useCitadelAPI();
 	const worldId = state?.account.worldId || state?.session.serverUrl || '';
 	const [status, setStatus] = useState<WorldIntelligenceStatusV1 | null>(null);
+	const [catalog, setCatalog] = useState<WorldIntelligenceCatalogDatasetCatalogV1>({ source: 'ggs-official-items', datasets: [] });
+	const [catalogDatasetKey, setCatalogDatasetKey] = useState('islandrewardranks');
+	const [catalogDataset, setCatalogDataset] = useState<WorldIntelligenceCatalogDatasetV1 | null>(null);
+	const [catalogLoading, setCatalogLoading] = useState(false);
+	const [catalogPage, setCatalogPage] = useState(0);
 	const [coverage, setCoverage] = useState<WorldIntelligenceCoverageResponseV1>({ worlds: [] });
 	const [query, setQuery] = useState('');
 	const [appliedQuery, setAppliedQuery] = useState('');
@@ -58,6 +72,7 @@ const WorldIntelligenceView = () => {
 	const [searching, setSearching] = useState(false);
 	const [rankingType, setRankingType] = useState<RankingType>('players');
 	const [rankingMetric, setRankingMetric] = useState('might');
+	const [rankingMetricCatalog, setRankingMetricCatalog] = useState<Record<RankingType, WorldIntelligenceRankingMetricV1[]>>({ players: [], alliances: [] });
 	const [ranking, setRanking] = useState<WorldIntelligenceRankingResponseV1 | null>(null);
 	const [rankingLoading, setRankingLoading] = useState(false);
 	const [tablePage, setTablePage] = useState(0);
@@ -76,6 +91,38 @@ const WorldIntelligenceView = () => {
 		}
 	}, []);
 
+	const refreshCatalog = useCallback(async () => {
+		try {
+			const result = await CitadelAPI.getWorldIntelligenceCatalogDatasets();
+			setCatalog(result);
+			setCatalogDatasetKey((current) => {
+				if (result.datasets.some((dataset) => dataset.datasetKey === current)) return current;
+				return result.datasets.find((dataset) => dataset.datasetKey === 'islandrewardranks')?.datasetKey
+					?? result.datasets[0]?.datasetKey
+					?? '';
+			});
+		} catch (requestError) {
+			setError(errorMessage(requestError, 'Could not load the official ranking catalog.'));
+		}
+	}, []);
+
+	const refreshCatalogDataset = useCallback(async () => {
+		if (!catalogDatasetKey) {
+			setCatalogDataset(null);
+			return;
+		}
+		setCatalogLoading(true);
+		try {
+			setCatalogDataset(await CitadelAPI.getWorldIntelligenceCatalogDataset(catalogDatasetKey, 50));
+			setCatalogPage(0);
+		} catch (requestError) {
+			setCatalogDataset(null);
+			setError(errorMessage(requestError, 'Could not load this official catalog dataset.'));
+		} finally {
+			setCatalogLoading(false);
+		}
+	}, [catalogDatasetKey]);
+
 	const refreshCoverage = useCallback(async () => {
 		if (!worldId) {
 			setCoverage({ worlds: [] });
@@ -85,6 +132,22 @@ const WorldIntelligenceView = () => {
 			setCoverage(await CitadelAPI.getWorldIntelligenceCoverage(worldId));
 		} catch (requestError) {
 			setError(errorMessage(requestError, 'Could not load cloud coverage.'));
+		}
+	}, [worldId]);
+
+	const refreshRankingMetrics = useCallback(async () => {
+		if (!worldId) {
+			setRankingMetricCatalog({ players: [], alliances: [] });
+			return;
+		}
+		try {
+			const [players, alliances] = await Promise.all([
+				CitadelAPI.getWorldIntelligenceRankingMetrics(worldId, 'players'),
+				CitadelAPI.getWorldIntelligenceRankingMetrics(worldId, 'alliances'),
+			]);
+			setRankingMetricCatalog({ players: players.metrics ?? [], alliances: alliances.metrics ?? [] });
+		} catch (requestError) {
+			setError(errorMessage(requestError, 'Could not load the public ranking catalog.'));
 		}
 	}, [worldId]);
 
@@ -117,8 +180,20 @@ const WorldIntelligenceView = () => {
 	}, [refreshStatus]);
 
 	useEffect(() => {
+		void refreshCatalog();
+	}, [refreshCatalog]);
+
+	useEffect(() => {
+		void refreshCatalogDataset();
+	}, [refreshCatalogDataset]);
+
+	useEffect(() => {
 		void refreshCoverage();
 	}, [refreshCoverage]);
+
+	useEffect(() => {
+		void refreshRankingMetrics();
+	}, [refreshRankingMetrics]);
 
 	useEffect(() => {
 		void refreshRanking();
@@ -204,6 +279,26 @@ const WorldIntelligenceView = () => {
 	};
 
 	const currentCoverage = coverage.worlds[0];
+	const catalogOptions = useMemo(() => catalog.datasets.map((dataset) => ({
+		value: dataset.datasetKey,
+		label: `${humanizeCatalogKey(dataset.category)} · ${dataset.datasetLabel}`,
+	})), [catalog.datasets]);
+	const playerRankingOptions = useMemo(
+		() => rankingOptions(rankingMetricCatalog.players),
+		[rankingMetricCatalog.players],
+	);
+	const allianceRankingOptions = useMemo(
+		() => rankingOptions(rankingMetricCatalog.alliances),
+		[rankingMetricCatalog.alliances],
+	);
+	const currentRankingOptions = rankingType === 'players' ? playerRankingOptions : allianceRankingOptions;
+	const currentRankingLabel = currentRankingOptions.find((option) => option.value === rankingMetric)?.label ?? rankingMetric;
+	const currentRankingDefinition = rankingMetricCatalog[rankingType].find((metric) => metric.metric === rankingMetric);
+	useEffect(() => {
+		if (currentRankingOptions.some((option) => option.value === rankingMetric)) return;
+		setRankingMetric(currentRankingOptions[0]?.value ?? 'might');
+		setTablePage(0);
+	}, [currentRankingOptions, rankingMetric]);
 	const rankedEntries = ranking?.entries ?? [];
 	const tableRows = useMemo<IntelligenceTableRow[]>(() => {
 		if (!appliedQuery) return rankedEntries;
@@ -223,6 +318,9 @@ const WorldIntelligenceView = () => {
 	if (selected) {
 		return (
 			<div className="flex flex-col gap-6 pb-8">
+				<nav aria-label="World Intelligence detail navigation" className="sticky top-3 z-30 self-start">
+					<DetailBackButton label="Back to World Intelligence" onClick={closeProfile} className="shadow-lg backdrop-blur" />
+				</nav>
 				{error && (
 					<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
 						<span>{error}</span>
@@ -236,14 +334,12 @@ const WorldIntelligenceView = () => {
 							title={selected.type === 'player' ? 'Loading player…' : 'Loading alliance…'}
 							description={`${displayWorld(selected.worldId)} · public ID ${selected.id}`}
 							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
-							actions={<DetailBackButton label="Back to World Intelligence" onClick={closeProfile} />}
 						/>
 						<Card><CardContent className="flex min-h-72 items-center justify-center text-sm text-text-muted">Loading public history…</CardContent></Card>
 					</>
 				) : playerProfile ? (
 					<WorldPlayerDetailView
 						profile={playerProfile}
-						onBack={closeProfile}
 						onOpenAlliance={(allianceId) => void openEntity({ type: 'alliance', id: allianceId, worldId: playerProfile.current.worldId })}
 					/>
 				) : allianceProfile ? (
@@ -253,7 +349,6 @@ const WorldIntelligenceView = () => {
 							title={allianceProfile.current.name}
 							description={`${displayWorld(allianceProfile.current.worldId)} · Alliance ${allianceProfile.current.allianceId}`}
 							icon={<Users className="h-6 w-6" />}
-							actions={<DetailBackButton label="Back to World Intelligence" onClick={closeProfile} />}
 							meta={<Badge variant="outline">Observed {relativeTime(allianceProfile.current.observedAt)}</Badge>}
 						/>
 						<AllianceProfile profile={allianceProfile} onOpenPlayer={(player) => void openEntity({ type: 'player', id: player.playerId, worldId: player.worldId })} />
@@ -265,7 +360,6 @@ const WorldIntelligenceView = () => {
 							title="Profile unavailable"
 							description={`${displayWorld(selected.worldId)} · public ID ${selected.id}`}
 							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
-							actions={<DetailBackButton label="Back to World Intelligence" onClick={closeProfile} />}
 						/>
 						<EmptyState size="lg" title="Profile unavailable" description="No usable public observations were returned for this entity." />
 					</>
@@ -279,7 +373,7 @@ const WorldIntelligenceView = () => {
 			<PageHeader
 				eyebrow="Shared public intelligence"
 				title="World Intelligence"
-				description="Browse the world in one sortable directory, then open any player or alliance for its 15-minute history."
+				description="Inspect versioned ranking, Storm, gacha, event, and reward data from the official GGS CDN, with preserved player history available below."
 				icon={<Globe2 className="h-6 w-6" />}
 				meta={(
 					<div className="flex flex-wrap justify-end gap-2">
@@ -298,6 +392,52 @@ const WorldIntelligenceView = () => {
 					<button type="button" aria-label="Dismiss error" onClick={() => setError('')}><X className="h-4 w-4" /></button>
 				</div>
 			)}
+
+			<SectionCard
+				title="Official ranking and event catalogs"
+				description="Every option below is collected from the same versioned Goodgame Studios items endpoint used by CitadelOps game data. These are public definitions and thresholds, not values inferred from a logged-in game session."
+				icon={<Database className="h-5 w-5" />}
+				actions={<Button variant="ghost" size="icon" aria-label="Refresh official catalog" onClick={() => void refreshCatalog()} isLoading={catalogLoading}><RefreshCw className="h-4 w-4" /></Button>}
+			>
+				<div className="mb-4 grid gap-3 lg:grid-cols-[minmax(18rem,1fr)_auto] lg:items-end">
+					<div>
+						<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Public dataset</div>
+						<Select
+							value={catalogDatasetKey}
+							onChange={(value) => setCatalogDatasetKey(value)}
+							options={catalogOptions}
+							ariaLabel="Select an official ranking or event dataset"
+							searchable
+							searchPlaceholder="Find Storm, gacha, league, rank, or reward data"
+							placeholder="No official datasets collected yet"
+							disabled={catalogOptions.length === 0}
+							menuGrowToViewport
+						/>
+					</div>
+					<div className="flex flex-wrap gap-2 lg:justify-end">
+						<Badge variant="success">Official GGS CDN</Badge>
+						<Badge variant="outline">Items v{catalogDataset?.sourceVersion ?? status?.catalogVersion ?? '—'}</Badge>
+						<Badge variant="outline">{formatCount(catalogDataset?.rowCount)} rows</Badge>
+						<Badge variant="outline">{catalog.datasets.length} datasets</Badge>
+						{catalogDataset && <Badge variant="outline">{catalogDataset.contributorCount}/2 collectors</Badge>}
+					</div>
+				</div>
+				{catalogDataset && (
+					<div className="mb-4 flex flex-col gap-2 rounded-global border border-border-base bg-bg-input/35 px-4 py-3 text-xs text-text-muted lg:flex-row lg:items-center lg:justify-between">
+						<div>
+							<span className="font-bold text-text-main">{catalogDataset.datasetLabel}</span>
+							<span className="ml-2">Captured {relativeTime(catalogDataset.capturedAt)} · {catalogDataset.history.length} stored version{catalogDataset.history.length === 1 ? '' : 's'}</span>
+						</div>
+						<a className="font-bold text-primary hover:underline" href={catalogDataset.sourceUrl} target="_blank" rel="noreferrer">Open official source</a>
+					</div>
+				)}
+				<CatalogDatasetTable
+					dataset={catalogDataset}
+					loading={catalogLoading}
+					page={catalogPage}
+					onPageChange={setCatalogPage}
+				/>
+			</SectionCard>
 
 			<div className="flex flex-wrap items-center gap-2">
 				<Badge variant="outline">{formatCount(currentCoverage?.players)} players</Badge>
@@ -319,8 +459,8 @@ const WorldIntelligenceView = () => {
 			) : (
 				<>
 					<SectionCard
-						title={rankingType === 'players' ? 'Player directory' : 'Alliance directory'}
-						description={`One table for ${displayWorld(worldId)}. Select any metric header to rank the world by that field.`}
+						title={rankingType === 'players' ? 'Historical player directory' : 'Historical alliance directory'}
+						description={`Preserved observations for ${displayWorld(worldId)}. New scheduled collection now comes from the official CDN catalog above.`}
 						icon={<Database className="h-5 w-5" />}
 						actions={<Button variant="ghost" size="icon" aria-label="Refresh directory" onClick={() => void refreshRanking()} isLoading={rankingLoading}><RefreshCw className="h-4 w-4" /></Button>}
 					>
@@ -332,6 +472,20 @@ const WorldIntelligenceView = () => {
 								options={[{ value: 'players', label: 'Players' }, { value: 'alliances', label: 'Alliances' }]}
 								size="body"
 							/>
+							<div className="w-full sm:w-72">
+								<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Ranking category</div>
+								<Select
+									value={rankingMetric}
+									onChange={selectRankingMetric}
+									options={currentRankingOptions}
+									ariaLabel={`Rank ${rankingType} by category`}
+									searchable={rankingType === 'players'}
+									searchPlaceholder="Find a public category"
+									placeholder="No populated categories"
+									disabled={currentRankingOptions.length === 0}
+									menuGrowToViewport
+								/>
+							</div>
 							<form className="flex w-full flex-col gap-2 sm:flex-row xl:max-w-2xl" onSubmit={(event) => void submitSearch(event)}>
 								<Input
 									value={query}
@@ -352,16 +506,19 @@ const WorldIntelligenceView = () => {
 										: 'Shared-data reader'}
 								</span>
 								<span className="ml-2">
-									{status?.scanInProgress
-										? `Scanning · ${formatCount(status.scannedPlayers)} players captured`
-										: status?.lastScanAt ? `Last scan ${relativeTime(status.lastScanAt)}` : 'Waiting for the first scan'}
+									{status?.catalogCollectionInProgress
+										? `Snapshotting official catalog · ${formatCount(status.catalogDatasets)} datasets prepared`
+										: status?.lastCatalogAt ? `Official catalog checked ${relativeTime(status.lastCatalogAt)}` : 'Waiting for the first official catalog snapshot'}
 								</span>
 							</div>
 							<div className="flex flex-wrap gap-2">
 								<Badge variant="outline">{status?.pendingBatches ?? 0} queued</Badge>
-								<Badge variant="outline">Sorted by {metricLabel(rankingMetric)}</Badge>
+								<Badge variant="outline">Sorted by {currentRankingLabel}</Badge>
+								{currentRankingDefinition && <Badge variant="outline">{formatCount(currentRankingDefinition.populatedRows)} populated</Badge>}
+								{currentRankingDefinition && <Badge variant="outline">{rankingSourceLabel(currentRankingDefinition.source)}</Badge>}
+								{currentRankingDefinition?.latestObservedAt && <Badge variant={freshnessTone(currentRankingDefinition.latestObservedAt)}>Observed {relativeTime(currentRankingDefinition.latestObservedAt)}</Badge>}
 								{appliedQuery && <Badge variant="primary">Search: {appliedQuery}</Badge>}
-								{status?.lastScanError && <Badge variant="warning">Scan retry pending</Badge>}
+								{status?.lastCatalogError && <Badge variant="warning">Catalog retry pending</Badge>}
 								{status?.lastUploadError && <Badge variant="warning">Cloud retry pending</Badge>}
 							</div>
 						</div>
@@ -370,6 +527,8 @@ const WorldIntelligenceView = () => {
 							rows={visibleRows}
 							entityType={rankingType}
 							metric={rankingMetric}
+							metricLabel={currentRankingLabel}
+							availableMetrics={currentRankingOptions.map((option) => option.value)}
 							loading={rankingLoading || searching}
 							searchQuery={appliedQuery}
 							page={tablePage}
@@ -387,10 +546,64 @@ const WorldIntelligenceView = () => {
 	);
 };
 
-const IntelligenceTable = ({ rows, entityType, metric, loading, searchQuery, page, pageCount, totalRows, onSort, onPageChange, onOpen }: {
+const CatalogDatasetTable = ({ dataset, loading, page, onPageChange }: {
+	dataset: WorldIntelligenceCatalogDatasetV1 | null;
+	loading: boolean;
+	page: number;
+	onPageChange: (page: number) => void;
+}) => {
+	if (loading && !dataset) return <div className="flex min-h-72 items-center justify-center text-sm text-text-muted">Loading official catalog…</div>;
+	if (!dataset || dataset.rows.length === 0) {
+		return <EmptyState size="md" icon={<Database className="h-6 w-6" />} title="No official rows collected yet" description="Adolphus and James will upload the next versioned catalog snapshot when their assigned collection slots run." />;
+	}
+	const fields = visibleCatalogFields(dataset);
+	const pageCount = Math.max(1, Math.ceil(dataset.rows.length / tablePageSize));
+	const safePage = Math.min(page, pageCount - 1);
+	const rows = dataset.rows.slice(safePage * tablePageSize, (safePage + 1) * tablePageSize);
+	const firstVisible = safePage * tablePageSize + 1;
+	const lastVisible = Math.min(dataset.rows.length, firstVisible + rows.length - 1);
+	return (
+		<div className={`overflow-hidden rounded-global border border-border-base transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
+			<div className="max-h-[42rem] overflow-auto custom-scrollbar">
+				<table className="min-w-full text-sm">
+					<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted">
+						<tr>
+							<th className="px-3 py-2 text-right">#</th>
+							{fields.map((field) => <th key={field} className="whitespace-nowrap px-3 py-2 text-left">{humanizeCatalogKey(field)}</th>)}
+						</tr>
+					</thead>
+					<tbody>
+						{rows.map((row, rowIndex) => (
+							<tr key={`${dataset.datasetDigest}-${firstVisible + rowIndex}`} className="border-t border-border-base align-top hover:bg-bg-input/45">
+								<td className="px-3 py-2 text-right font-mono text-xs text-text-muted">{firstVisible + rowIndex}</td>
+								{fields.map((field) => (
+									<td key={field} className="max-w-80 px-3 py-2 text-text-main" title={catalogCellTitle(row[field])}>
+										<span className="line-clamp-3 break-words">{formatCatalogCell(row[field])}</span>
+									</td>
+								))}
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+			<div className="flex flex-col gap-2 border-t border-border-base bg-bg-card px-3 py-2 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
+				<span>Rows {formatCount(firstVisible)}–{formatCount(lastVisible)} of {formatCount(dataset.rows.length)}</span>
+				<div className="flex items-center gap-2">
+					<Button variant="ghost" size="sm" disabled={safePage <= 0} onClick={() => onPageChange(Math.max(0, safePage - 1))}><ChevronLeft className="mr-1 h-4 w-4" />Previous</Button>
+					<span>Page {safePage + 1} of {pageCount}</span>
+					<Button variant="ghost" size="sm" disabled={safePage >= pageCount - 1} onClick={() => onPageChange(Math.min(pageCount - 1, safePage + 1))}>Next<ChevronRight className="ml-1 h-4 w-4" /></Button>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+const IntelligenceTable = ({ rows, entityType, metric, metricLabel, availableMetrics, loading, searchQuery, page, pageCount, totalRows, onSort, onPageChange, onOpen }: {
 	rows: IntelligenceTableRow[];
 	entityType: RankingType;
 	metric: string;
+	metricLabel: string;
+	availableMetrics: string[];
 	loading: boolean;
 	searchQuery: string;
 	page: number;
@@ -407,7 +620,7 @@ const IntelligenceTable = ({ rows, entityType, metric, loading, searchQuery, pag
 				size="md"
 				icon={<Database className="h-6 w-6" />}
 				title={searchQuery ? `No ${entityType} match “${searchQuery}”` : 'No ranked observations yet'}
-				description={searchQuery ? 'Try another public name.' : 'This world will populate when the first designated collector scan reaches the cloud.'}
+				description={searchQuery ? 'Try another public name.' : isExtraPlayerMetric(metric) ? `No collected ${metricLabel} observations are available yet.` : 'This world will populate when the first designated collector scan reaches the cloud.'}
 			/>
 		);
 	}
@@ -416,16 +629,17 @@ const IntelligenceTable = ({ rows, entityType, metric, loading, searchQuery, pag
 	return (
 		<div className={`overflow-hidden rounded-global border border-border-base transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
 			<div className="max-h-[42rem] overflow-auto custom-scrollbar">
-				<table className={`w-full border-collapse text-sm ${entityType === 'players' ? 'min-w-[58rem]' : 'min-w-[42rem]'}`}>
+				<table className={`w-full border-collapse text-sm ${entityType === 'players' ? isExtraPlayerMetric(metric) ? 'min-w-[70rem]' : 'min-w-[58rem]' : 'min-w-[42rem]'}`}>
 					<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wider text-text-muted shadow-[0_1px_0_var(--border-base)]">
 						{entityType === 'players' ? (
 							<tr>
 								<th className="w-16 px-3 py-3 text-left">#</th>
 								<th className="min-w-48 px-3 py-3 text-left">Player</th>
-								<SortableHeader label="Might" metric="might" activeMetric={metric} onSort={onSort} />
-								<SortableHeader label="Weekly loot" metric="weeklyLoot" activeMetric={metric} onSort={onSort} />
-								<SortableHeader label="Glory" metric="glory" activeMetric={metric} onSort={onSort} />
-								<SortableHeader label="Honor" metric="honor" activeMetric={metric} onSort={onSort} />
+							<SortableHeader label="Might" metric="might" activeMetric={metric} availableMetrics={availableMetrics} onSort={onSort} />
+							<SortableHeader label="Weekly loot" metric="weeklyLoot" activeMetric={metric} availableMetrics={availableMetrics} onSort={onSort} />
+							<SortableHeader label="Glory" metric="glory" activeMetric={metric} availableMetrics={availableMetrics} onSort={onSort} />
+							<SortableHeader label="Honor" metric="honor" activeMetric={metric} availableMetrics={availableMetrics} onSort={onSort} />
+								{isExtraPlayerMetric(metric) && <th className="min-w-44 px-3 py-3 text-right text-primary">{metricLabel}</th>}
 								<th className="min-w-48 px-3 py-3 text-left">Alliance</th>
 								<th className="px-3 py-3 text-right">Updated</th>
 							</tr>
@@ -433,8 +647,8 @@ const IntelligenceTable = ({ rows, entityType, metric, loading, searchQuery, pag
 							<tr>
 								<th className="w-16 px-3 py-3 text-left">#</th>
 								<th className="min-w-64 px-3 py-3 text-left">Alliance</th>
-								<SortableHeader label="Members" metric="members" activeMetric={metric} onSort={onSort} />
-								<SortableHeader label="Combined might" metric="might" activeMetric={metric} onSort={onSort} />
+							<SortableHeader label="Members" metric="members" activeMetric={metric} availableMetrics={availableMetrics} onSort={onSort} />
+							<SortableHeader label="Combined might" metric="might" activeMetric={metric} availableMetrics={availableMetrics} onSort={onSort} />
 								<th className="px-3 py-3 text-right">Updated</th>
 							</tr>
 						)}
@@ -454,6 +668,7 @@ const IntelligenceTable = ({ rows, entityType, metric, loading, searchQuery, pag
 										<NumericCell value={entry.weeklyLoot} emphasis={metric === 'weeklyLoot'} />
 										<NumericCell value={entry.glory} emphasis={metric === 'glory'} />
 										<NumericCell value={entry.honor} emphasis={metric === 'honor'} />
+										{isExtraPlayerMetric(metric) && <NumericCell value={optionalTableMetricValue(entry, metric)} emphasis />}
 										<td className="px-3 py-2.5">
 											{entry.allianceId ? (
 												<button type="button" className="block max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpen({ type: 'alliance', id: entry.allianceId!, worldId: entry.worldId })}>
@@ -486,18 +701,21 @@ const IntelligenceTable = ({ rows, entityType, metric, loading, searchQuery, pag
 	);
 };
 
-const SortableHeader = ({ label, metric, activeMetric, onSort }: {
+const SortableHeader = ({ label, metric, activeMetric, availableMetrics, onSort }: {
 	label: string;
 	metric: string;
 	activeMetric: string;
+	availableMetrics: string[];
 	onSort: (metric: string) => void;
 }) => {
 	const active = metric === activeMetric;
+	const available = availableMetrics.includes(metric);
 	return (
 		<th className="px-3 py-3 text-right" aria-sort={active ? 'descending' : 'none'}>
 			<button
 				type="button"
-				className={`ml-auto inline-flex items-center gap-1 whitespace-nowrap font-bold transition-colors hover:text-primary ${active ? 'text-primary' : ''}`}
+				disabled={!available}
+				className={`ml-auto inline-flex items-center gap-1 whitespace-nowrap font-bold transition-colors ${available ? 'hover:text-primary' : 'cursor-default opacity-45'} ${active ? 'text-primary' : ''}`}
 				onClick={() => onSort(metric)}
 				aria-label={`Sort by ${label}`}
 			>
@@ -587,6 +805,64 @@ function displayWorld(value: string): string {
 	}
 }
 
+function visibleCatalogFields(dataset: WorldIntelligenceCatalogDatasetV1): string[] {
+	const populated = dataset.fields.filter((field) => dataset.rows.some((row) => {
+		const value = row[field];
+		return value != null && value !== '' && (!Array.isArray(value) || value.length > 0);
+	}));
+	const priorities = [
+		'comment1', 'comment2', 'eventID', 'eventTypeID', 'leaguetypeID', 'leagueID',
+		'rank', 'rankID', 'minRank', 'maxRank', 'lowestRank', 'highestRank', 'threshold',
+		'cargoPointRequirement', 'neededPointsForRewards', 'pointsPerTier', 'topXValue',
+		'minPulls', 'maxPulls', 'multiPullMax', 'tombolaSpinsAmount',
+		'rewardIDs', 'rewardID', 'rewardSetID',
+	];
+	const priorityIndex = new Map(priorities.map((field, index) => [field, index]));
+	return populated.sort((left, right) => {
+		const leftPriority = priorityIndex.get(left) ?? catalogFieldPriority(left);
+		const rightPriority = priorityIndex.get(right) ?? catalogFieldPriority(right);
+		return leftPriority - rightPriority || left.localeCompare(right);
+	}).slice(0, 10);
+}
+
+function catalogFieldPriority(field: string): number {
+	const normalized = field.toLowerCase();
+	if (/(rank|point|score|threshold|pull|spin|cost|reward)/.test(normalized)) return 100;
+	if (normalized.endsWith('id')) return 200;
+	return 300;
+}
+
+function humanizeCatalogKey(value: string): string {
+	return value
+		.replace(/[_-]+/g, ' ')
+		.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+		.replace(/\b(id|ids)\b/gi, (match) => match.toUpperCase())
+		.replace(/^./, (character) => character.toUpperCase());
+}
+
+function formatCatalogCell(value: unknown): string {
+	if (value == null || value === '') return '—';
+	if (typeof value === 'number') return formatNumber(value);
+	if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+	if (typeof value === 'string') return value;
+	try {
+		const encoded = JSON.stringify(value);
+		return encoded.length > 180 ? `${encoded.slice(0, 177)}…` : encoded;
+	} catch {
+		return String(value);
+	}
+}
+
+function catalogCellTitle(value: unknown): string | undefined {
+	if (value == null) return undefined;
+	if (typeof value === 'string') return value;
+	try {
+		return JSON.stringify(value);
+	} catch {
+		return String(value);
+	}
+}
+
 function formatNumber(value?: number): string {
 	if (value == null || !Number.isFinite(value)) return '—';
 	return new Intl.NumberFormat(undefined, { notation: Math.abs(value) >= 100_000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(value);
@@ -597,20 +873,51 @@ function formatCount(value?: number): string {
 }
 
 function tableMetricValue(row: IntelligenceTableRow, metric: string): number {
-	const value = metric === 'members'
-		? row.memberCount
-		: metric === 'weeklyLoot'
-			? row.weeklyLoot
-			: metric === 'glory'
-				? row.glory
-				: metric === 'honor'
-					? row.honor
-					: row.might;
-	return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+	return optionalTableMetricValue(row, metric) ?? 0;
 }
 
-function metricLabel(metric: string): string {
-	return ({ might: 'Might', glory: 'Glory', weeklyLoot: 'Weekly loot', honor: 'Honor', members: 'Members' } as Record<string, string>)[metric] || metric;
+function optionalTableMetricValue(row: IntelligenceTableRow, metric: string): number | undefined {
+	let value: number | undefined;
+	if (metric.startsWith('public:')) {
+		value = row.publicMetrics?.[metric.slice('public:'.length)]?.value ?? row.value;
+	} else if (metric === 'achievementPoints') {
+		value = row.publicProfile?.achievementPoints ?? row.value;
+	} else if (metric === 'highestGlory') {
+		value = row.publicProfile?.highestGlory ?? row.value;
+	} else if (metric === 'level') {
+		value = row.level ?? row.value;
+	} else if (metric === 'legendLevel') {
+		value = row.legendLevel ?? row.value;
+	} else {
+		value = metric === 'members'
+			? row.memberCount
+			: metric === 'weeklyLoot'
+				? row.weeklyLoot
+				: metric === 'glory'
+					? row.glory
+					: metric === 'honor'
+						? row.honor
+						: row.might;
+	}
+	return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function rankingOptions(catalog: WorldIntelligenceRankingMetricV1[]): Array<{ value: string; label: string }> {
+	return catalog
+		.filter((metric) => metric.populatedRows > 0)
+		.map((metric) => ({ value: metric.metric, label: metric.label }));
+}
+
+function rankingSourceLabel(source: WorldIntelligenceRankingMetricV1['source']): string {
+	return ({
+		'public-ranking': 'Public ranking feed',
+		'public-profile': 'Public player profiles',
+		'gge-highscore': 'Live GGE event board',
+	} as const)[source] ?? source;
+}
+
+function isExtraPlayerMetric(metric: string): boolean {
+	return !['might', 'weeklyLoot', 'glory', 'honor', 'members'].includes(metric);
 }
 
 function relativeTime(value: string): string {

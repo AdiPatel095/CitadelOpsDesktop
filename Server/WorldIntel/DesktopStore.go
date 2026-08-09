@@ -32,13 +32,23 @@ type QueuedBatch struct {
 	Attempts int
 }
 
+type QueuedCatalogSnapshot struct {
+	Snapshot CatalogDatasetSnapshot
+	Attempts int
+}
+
 type StoreStatus struct {
-	Pending        int
-	LastCapturedAt *time.Time
-	LastUploadAt   *time.Time
-	LastScanAt     *time.Time
-	LastError      string
-	LastScanError  string
+	Pending            int
+	PendingCatalogs    int
+	LastCapturedAt     *time.Time
+	LastUploadAt       *time.Time
+	LastScanAt         *time.Time
+	LastCatalogAt      *time.Time
+	LastCatalogVersion string
+	CatalogDatasets    int
+	LastError          string
+	LastScanError      string
+	LastCatalogError   string
 }
 
 type DesktopStore struct {
@@ -110,6 +120,16 @@ func (store *DesktopStore) initialize(ctx context.Context) error {
 			key TEXT PRIMARY KEY,
 			value TEXT NOT NULL
 		);
+		CREATE TABLE IF NOT EXISTS world_intel_catalog_outbox (
+			snapshot_id TEXT PRIMARY KEY,
+			payload_json BLOB NOT NULL,
+			created_at TEXT NOT NULL,
+			next_attempt_at TEXT NOT NULL,
+			attempt_count INTEGER NOT NULL DEFAULT 0,
+			last_error TEXT NOT NULL DEFAULT ''
+		);
+		CREATE INDEX IF NOT EXISTS world_intel_catalog_outbox_pending
+			ON world_intel_catalog_outbox(next_attempt_at, created_at);
 	`); err != nil {
 		return fmt.Errorf("initialize world intelligence database: %w", err)
 	}
@@ -307,10 +327,15 @@ func (store *DesktopStore) Status(ctx context.Context) StoreStatus {
 	if err := store.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM world_intel_outbox`).Scan(&status.Pending); err != nil {
 		status.LastError = err.Error()
 	}
+	if err := store.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM world_intel_catalog_outbox`).Scan(&status.PendingCatalogs); err != nil {
+		status.LastError = err.Error()
+	}
+	status.Pending += status.PendingCatalogs
 	for key, target := range map[string]**time.Time{
 		"last_captured_at": &status.LastCapturedAt,
 		"last_upload_at":   &status.LastUploadAt,
 		"last_scan_at":     &status.LastScanAt,
+		"last_catalog_at":  &status.LastCatalogAt,
 	} {
 		if value, found, _ := metadataValue(ctx, store.db, key); found {
 			if parsed, err := time.Parse(time.RFC3339Nano, value); err == nil {
@@ -324,6 +349,15 @@ func (store *DesktopStore) Status(ctx context.Context) StoreStatus {
 	}
 	if value, found, _ := metadataValue(ctx, store.db, "last_scan_error"); found {
 		status.LastScanError = value
+	}
+	if value, found, _ := metadataValue(ctx, store.db, "last_catalog_error"); found {
+		status.LastCatalogError = value
+	}
+	if value, found, _ := metadataValue(ctx, store.db, "last_catalog_version"); found {
+		status.LastCatalogVersion = value
+	}
+	if value, found, _ := metadataValue(ctx, store.db, "last_catalog_datasets"); found {
+		_, _ = fmt.Sscanf(value, "%d", &status.CatalogDatasets)
 	}
 	return status
 }

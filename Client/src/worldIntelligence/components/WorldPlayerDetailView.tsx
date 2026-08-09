@@ -6,6 +6,7 @@ import {
 	Clock3,
 	Database,
 	History,
+	Sparkles,
 	ShieldCheck,
 	Trophy,
 	UserRound,
@@ -15,7 +16,6 @@ import type {
 	WorldIntelligencePlayerObservationV1,
 	WorldIntelligencePlayerProfileV1,
 } from '../../api/Contracts';
-import DetailBackButton from '../../components/DetailBackButton';
 import {
 	TrendChart,
 	type ChartTimeWindow,
@@ -48,7 +48,6 @@ interface PlayerMetricDefinition {
 
 interface WorldPlayerDetailViewProps {
 	profile: WorldIntelligencePlayerProfileV1;
-	onBack: () => void;
 	onOpenAlliance: (allianceId: number) => void;
 }
 
@@ -97,7 +96,7 @@ const historyRanges: Array<{ value: RangeKey; label: string; seconds: number | n
 	{ value: 'all', label: 'All', seconds: null },
 ];
 
-const WorldPlayerDetailView = ({ profile, onBack, onOpenAlliance }: WorldPlayerDetailViewProps) => {
+const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailViewProps) => {
 	const [selectedMetric, setSelectedMetric] = useState<PlayerMetricKey>('might');
 	const [selectedRange, setSelectedRange] = useState<RangeKey>('24h');
 	const [selectedWindow, setSelectedWindow] = useState<ChartTimeWindow | null>(null);
@@ -123,6 +122,7 @@ const WorldPlayerDetailView = ({ profile, onBack, onOpenAlliance }: WorldPlayerD
 	const firstSelectedValue = displayedPoints[0]?.value;
 	const currentSelectedValue = displayedPoints[displayedPoints.length - 1]?.value;
 	const changes = playerChanges(history);
+	const publicMetrics = useMemo(() => latestPublicMetrics(profile), [profile]);
 
 	return (
 		<>
@@ -131,7 +131,6 @@ const WorldPlayerDetailView = ({ profile, onBack, onOpenAlliance }: WorldPlayerD
 				title={current.name}
 				description={`${current.allianceName || 'No observed alliance'} · Player ${current.playerId} · ${displayWorld(current.worldId)}`}
 				icon={<UserRound className="h-6 w-6" />}
-				actions={<DetailBackButton label="Back to World Intelligence" onClick={onBack} />}
 				meta={(
 					<div className="flex flex-wrap justify-end gap-2">
 						<Badge variant="outline" className="gap-1.5"><Clock3 className="h-3.5 w-3.5" />15-minute public scans</Badge>
@@ -220,6 +219,37 @@ const WorldPlayerDetailView = ({ profile, onBack, onOpenAlliance }: WorldPlayerD
 				})}
 			</div>
 
+			<Card className="liquid-prominent-header-card">
+				<CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
+					<div>
+						<CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Public scores & event activity</CardTitle>
+						<p className="mt-1 text-xs text-text-muted">Storm, gallantry, gacha spins, and other public highscore values appear here when their event or board is available.</p>
+					</div>
+					<Badge variant="outline">{publicMetrics.length} observed</Badge>
+				</CardHeader>
+				<CardContent className="liquid-prominent-header-content p-5 sm:p-6">
+					{publicMetrics.length === 0 ? (
+						<p className="text-sm text-text-muted">No additional public event score has been observed for this player yet. Optional boards are discovered independently so an inactive event cannot interrupt the core World Intel scan.</p>
+					) : (
+						<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+							{publicMetrics.map((metric) => (
+								<div key={metric.key} className="rounded-global border border-border-base bg-bg-input/35 px-3.5 py-3">
+									<div className="flex items-start justify-between gap-2">
+										<div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{metric.label}</div>
+										{metric.rank != null && metric.rank > 0 && <Badge variant="outline">#{formatNumber(metric.rank)}</Badge>}
+									</div>
+									<div className="mt-1 font-mono text-2xl font-bold text-text-main">{formatNumber(metric.value)}</div>
+									<div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-text-muted">
+										<span>{metric.unit || 'points'} · {publicMetricSourceLabel(metric.source)}</span>
+										<span title={formatDateTime(metric.observedAt)}>{relativeTime(metric.observedAt)}</span>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+				</CardContent>
+			</Card>
+
 			<div className="grid items-start gap-5 xl:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
 				<div className="space-y-5">
 					<Card>
@@ -229,6 +259,12 @@ const WorldPlayerDetailView = ({ profile, onBack, onOpenAlliance }: WorldPlayerD
 							<ProfileFact label="Player ID" value={String(current.playerId)} />
 							<ProfileFact label="World" value={displayWorld(current.worldId)} />
 							<ProfileFact label="Progression" value={progressionLabel(current)} />
+							{current.publicProfile?.achievementPoints != null && <ProfileFact label="Achievement points" value={formatNumber(current.publicProfile.achievementPoints)} />}
+							{current.publicProfile?.highestGlory != null && <ProfileFact label="Highest glory" value={formatNumber(current.publicProfile.highestGlory)} />}
+							{current.publicProfile?.allianceRank != null && <ProfileFact label="Alliance rank ID" value={String(current.publicProfile.allianceRank)} />}
+							{publicTitleLabel(current) && <ProfileFact label="Public title IDs" value={publicTitleLabel(current)!} />}
+							{current.publicProfile?.bestRank != null && current.publicProfile.bestRank > 0 && <ProfileFact label="Best public rank" value={`#${formatNumber(current.publicProfile.bestRank)}`} />}
+							{current.publicProfile?.ruined != null && <ProfileFact label="Ruined" value={current.publicProfile.ruined ? 'Yes' : 'No'} />}
 							<ProfileFact label="Latest source" value={sourceLabel(current.source)} />
 							<ProfileFact label="Last observed" value={formatDateTime(current.observedAt)} />
 						</CardContent>
@@ -263,9 +299,9 @@ const WorldPlayerDetailView = ({ profile, onBack, onOpenAlliance }: WorldPlayerD
 					</CardHeader>
 					<CardContent className="pt-0">
 						<div className="max-h-[34rem] overflow-auto rounded-global border border-border-base custom-scrollbar">
-							<table className="min-w-[48rem] w-full text-sm">
+							<table className="min-w-[64rem] w-full text-sm">
 								<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted">
-									<tr><th className="px-3 py-2 text-left">Observed</th><th className="px-3 py-2 text-right">Might</th><th className="px-3 py-2 text-right">Weekly loot</th><th className="px-3 py-2 text-right">Glory</th><th className="px-3 py-2 text-right">Honor</th><th className="px-3 py-2 text-left">Alliance</th></tr>
+									<tr><th className="px-3 py-2 text-left">Observed</th><th className="px-3 py-2 text-right">Might</th><th className="px-3 py-2 text-right">Weekly loot</th><th className="px-3 py-2 text-right">Glory</th><th className="px-3 py-2 text-right">Honor</th><th className="px-3 py-2 text-left">Other public scores</th><th className="px-3 py-2 text-left">Alliance</th></tr>
 								</thead>
 								<tbody>
 									{history.slice().reverse().map((observation) => (
@@ -275,6 +311,7 @@ const WorldPlayerDetailView = ({ profile, onBack, onOpenAlliance }: WorldPlayerD
 											<td className="px-3 py-2.5 text-right font-mono font-semibold text-text-main">{formatNumber(observation.weeklyLoot)}</td>
 											<td className="px-3 py-2.5 text-right font-mono font-semibold text-text-main">{formatNumber(observation.glory)}</td>
 											<td className="px-3 py-2.5 text-right font-mono font-semibold text-text-main">{formatNumber(observation.honor)}</td>
+											<td className="max-w-72 px-3 py-2.5 text-xs text-text-muted">{publicMetricSummary(observation)}</td>
 											<td className="max-w-48 truncate px-3 py-2.5 text-text-muted">{observation.allianceName || 'No alliance'}</td>
 										</tr>
 									))}
@@ -318,6 +355,60 @@ const ProfileFact = ({ label, value, action }: { label: string; value: string; a
 		) : <div className="mt-1 truncate text-sm font-semibold text-text-main" title={value}>{value}</div>}
 	</div>
 );
+
+type PublicMetricValue = NonNullable<WorldIntelligencePlayerObservationV1['publicMetrics']>[string] & { key: string };
+
+function latestPublicMetrics(profile: WorldIntelligencePlayerProfileV1): PublicMetricValue[] {
+	const latest = new Map<string, PublicMetricValue>();
+	for (const observation of [...profile.history, profile.current]) {
+		for (const [key, metric] of Object.entries(observation.publicMetrics ?? {})) {
+			if (!metric || !metric.source || !Number.isFinite(metric.value) || !Number.isFinite(Date.parse(metric.observedAt))) continue;
+			if (metric.validUntil && Date.parse(metric.validUntil) <= Date.now()) continue;
+			const current = latest.get(key);
+			if (!current || Date.parse(metric.observedAt) >= Date.parse(current.observedAt)) {
+				latest.set(key, { key, ...metric });
+			}
+		}
+	}
+	return [...latest.values()].sort((left, right) => {
+		const priorityDifference = publicMetricPriority(left.key) - publicMetricPriority(right.key);
+		return priorityDifference || left.label.localeCompare(right.label);
+	});
+}
+
+function publicMetricSourceLabel(source?: NonNullable<WorldIntelligencePlayerObservationV1['publicMetrics']>[string]['source']): string {
+	return ({
+		'gge-highscore': 'Live GGE board',
+	} as const)[source ?? 'gge-highscore'] ?? 'Public ranking';
+}
+
+function publicMetricPriority(key: string): number {
+	if (key === 'storm-points') return 0;
+	if (key.startsWith('gallantry')) return 1;
+	if (key.includes('gacha')) return 2;
+	if (key.includes('wheel')) return 3;
+	return 4;
+}
+
+function publicMetricSummary(observation: WorldIntelligencePlayerObservationV1): string {
+	const metrics = Object.values(observation.publicMetrics ?? {})
+		.filter((metric) => metric && Number.isFinite(metric.value))
+		.sort((left, right) => left.label.localeCompare(right.label));
+	if (metrics.length === 0) return '—';
+	const visible = metrics.slice(0, 3).map((metric) => `${metric.label}: ${formatNumber(metric.value)}`);
+	if (metrics.length > visible.length) visible.push(`+${metrics.length - visible.length} more`);
+	return visible.join(' · ');
+}
+
+function publicTitleLabel(observation: WorldIntelligencePlayerObservationV1): string {
+	const profile = observation.publicProfile;
+	if (!profile) return '';
+	const parts: string[] = [];
+	if (profile.titlePrefixId != null && profile.titlePrefixId > 0) parts.push(`prefix ${profile.titlePrefixId}`);
+	if (profile.titleSuffixId != null && profile.titleSuffixId > 0) parts.push(`suffix ${profile.titleSuffixId}`);
+	if (profile.titleId != null && profile.titleId > 0) parts.push(`title ${profile.titleId}`);
+	return parts.join(' · ');
+}
 
 function normalizedHistory(profile: WorldIntelligencePlayerProfileV1): WorldIntelligencePlayerObservationV1[] {
 	const byTimestamp = new Map<string, WorldIntelligencePlayerObservationV1>();

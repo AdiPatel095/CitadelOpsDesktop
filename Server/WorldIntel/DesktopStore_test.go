@@ -2,9 +2,11 @@ package WorldIntel
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
@@ -25,6 +27,44 @@ func TestDesktopStoreRestrictsDatabasePermissions(t *testing.T) {
 	}
 	if permissions := info.Mode().Perm(); permissions != 0o600 {
 		t.Fatalf("database permissions = %o, want 600", permissions)
+	}
+}
+
+func TestDesktopStoreQueuesCatalogSnapshotsSeparately(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenDesktopStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	now := time.Now().UTC().Truncate(time.Second)
+	snapshot, err := FinalizeCatalogSnapshot(CatalogDatasetSnapshot{
+		Source: OfficialCatalogSource, SourceVersion: "781.02",
+		SourceURL:    "https://empire-html5.goodgamestudios.com/default/items/items_v781.02.json",
+		SourceDigest: strings.Repeat("a", 64), DatasetKey: "islandrewardranks",
+		DatasetLabel: "Storm alliance rank rewards", Category: "storm",
+		Rows: json.RawMessage(`[{"cargoPointRequirement":"500"}]`), CapturedAt: now, CollectorPlayerID: 17334928,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	inserted, err := store.EnqueueCatalog(ctx, snapshot)
+	if err != nil || !inserted {
+		t.Fatalf("catalog enqueue = %v, %v", inserted, err)
+	}
+	inserted, err = store.EnqueueCatalog(ctx, snapshot)
+	if err != nil || inserted {
+		t.Fatalf("duplicate catalog enqueue = %v, %v", inserted, err)
+	}
+	pending, err := store.PendingCatalog(ctx, now.Add(time.Second), 10)
+	if err != nil || len(pending) != 1 || pending[0].Snapshot.SnapshotID != snapshot.SnapshotID {
+		t.Fatalf("catalog pending = %#v, %v", pending, err)
+	}
+	if status := store.Status(ctx); status.Pending != 1 || status.PendingCatalogs != 1 {
+		t.Fatalf("catalog status = %#v", status)
+	}
+	if err := store.ConfirmCatalog(ctx, snapshot.SnapshotID, now); err != nil {
+		t.Fatal(err)
 	}
 }
 

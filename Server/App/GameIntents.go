@@ -573,10 +573,6 @@ func (application *Application) registerGameIntents() error {
 			Planner: planEventRankingRefresh,
 		},
 		{
-			Name: "world-intelligence.leaderboard.page", Description: "Read one bounded page of the public GGE player leaderboard", Effect: Intent.EffectRead,
-			Planner: planWorldIntelLeaderboardPage,
-		},
-		{
 			Name: "advisor.run.launch", Description: "Launch one guarded server-managed Nomad or Samurai advisor run", Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoAdvisor", Label: "Auto Advisor", Description: "Server-managed Nomad and Samurai advisor attack runs", DefaultWeight: 50},
 			Planner:      planAdvisorAttack,
