@@ -30,6 +30,18 @@ export interface PatchNotesRelease {
 
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
   {
+    version: '2.1.3',
+    subtitle: 'Official World Intel catalogs, selectable public datasets, and clearer historical dossiers',
+    date: '2026-08-09',
+    items: [
+      { kind: 'added', text: 'World Intelligence now collects versioned Storm thresholds, ranking and league definitions, gacha pull rules, event scoring, reward brackets, and referenced reward definitions from the same official Goodgame Studios CDN used for CitadelOps game data' },
+      { kind: 'added', text: 'The World Intelligence table includes a searchable public-dataset selector and renders every collected official category with source version, row coverage, contributor count, and stored version history' },
+      { kind: 'changed', text: 'Only the configured Adolphus Murtry and James Holden profiles contribute official catalog snapshots; Amos Burton remains a read-only viewer, and collection no longer requires a connected or baseline-synchronized game session' },
+      { kind: 'removed', text: 'World Intelligence no longer sends game-socket leaderboard commands or builds scheduled observations from local account state' },
+      { kind: 'fixed', text: 'Player and alliance dossiers retain a visible back button and full-page navigation while preserved historical observations remain available below the official catalog view' },
+    ],
+  },
+  {
     version: '2.1.1',
     subtitle: 'Reliable Berimond construction, schedule-driven recruiting, corrected tool limits, and Background login recovery',
     date: '2026-08-06',
