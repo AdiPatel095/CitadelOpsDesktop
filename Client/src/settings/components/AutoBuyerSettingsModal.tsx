@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Clock3, PackageSearch, ShieldCheck, ShoppingCart, Sparkles, Store, Users } from 'lucide-react';
+import { Clock3, Coins, PackageSearch, ShieldCheck, ShoppingCart, Sparkles, Store, Users } from 'lucide-react';
 import { CitadelAPI } from '../../api/CitadelClient';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
@@ -28,6 +28,7 @@ interface AutoBuyerSettingsModalProps {
 }
 
 type AutoBuyerSection = 'shops' | 'specialists' | 'feast';
+const ALL_AUTO_BUYER_CURRENCIES = 'all';
 
 export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ isOpen, onClose }) => {
   const { state, configuration, updateConfiguration } = useCitadelAPI();
@@ -36,6 +37,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [section, setSection] = useState<AutoBuyerSection>('shops');
+  const [selectedShopId, setSelectedShopId] = useState('');
+  const [selectedCurrencyKey, setSelectedCurrencyKey] = useState(ALL_AUTO_BUYER_CURRENCIES);
   const [query, setQuery] = useState('');
   const castles = useMemo(
     () => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0 && castle.type === 'Slot 1'),
@@ -52,6 +55,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
       feast: { ...parsed.feast, sourceCastleId: parsed.feast.sourceCastleId || parsed.sourceCastleId || defaultCastleID },
     });
     setSection('shops');
+    setSelectedShopId(parsed.packages.find((rule) => rule.enabled)?.shopId ?? '');
+    setSelectedCurrencyKey(ALL_AUTO_BUYER_CURRENCIES);
     setQuery('');
   }, [configuration?.sections, defaultCastleID, isOpen]);
 
@@ -64,6 +69,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
       .then((catalog) => {
         if (cancelled) return;
         setProjection(catalog);
+        setSelectedShopId((current) => (
+          catalog.shops.some((shop) => shop.id === current) ? current : (catalog.shops[0]?.id ?? '')
+        ));
         setDraft((current) => {
           const feastExists = catalog.feasts.some((feast) => feast.id === current.feast.feastId);
           return feastExists || catalog.feasts.length === 0
@@ -86,20 +94,44 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     [draft.specialists],
   );
   const selectedFeast = projection?.feasts.find((feast) => feast.id === draft.feast.feastId) ?? null;
-  const filteredPackages = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!projection || !normalized) return projection?.packages ?? [];
-    return projection.packages.filter((product) => (
-      `${product.name} ${product.detail ?? ''} ${product.shopName} ${product.packageId}`.toLowerCase().includes(normalized)
+  const selectedShop = projection?.shops.find((shop) => shop.id === selectedShopId) ?? null;
+  const currencyOptions = useMemo(() => {
+    if (!projection || !selectedShopId) return [];
+    const currencies = new Map<string, { value: string; name: string; count: number; premium: boolean }>();
+    for (const product of projection.packages) {
+      if (product.shopId !== selectedShopId) continue;
+      const value = autoBuyerCurrencyKey(product);
+      const existing = currencies.get(value);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        currencies.set(value, { value, name: product.price.name, count: 1, premium: product.price.premium });
+      }
+    }
+    return [...currencies.values()].sort((left, right) => (
+      Number(left.premium) - Number(right.premium) || left.name.localeCompare(right.name)
     ));
-  }, [projection, query]);
-  const packagesByShop = useMemo(() => {
-    if (!projection) return [];
-    return projection.shops.map((shop) => ({
-      shop,
-      packages: filteredPackages.filter((product) => product.shopId === shop.id),
-    })).filter((group) => group.packages.length > 0);
-  }, [filteredPackages, projection]);
+  }, [projection, selectedShopId]);
+  const filteredPackages = useMemo(() => {
+    if (!projection || !selectedShopId) return [];
+    const shopPackages = projection.packages.filter((product) => (
+      product.shopId === selectedShopId && (
+        selectedCurrencyKey === ALL_AUTO_BUYER_CURRENCIES || autoBuyerCurrencyKey(product) === selectedCurrencyKey
+      )
+    ));
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return shopPackages;
+    return shopPackages.filter((product) => (
+      `${product.name} ${product.detail ?? ''} ${product.packageId}`.toLowerCase().includes(normalized)
+    ));
+  }, [projection, query, selectedCurrencyKey, selectedShopId]);
+  const enabledPackageCountByShop = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const rule of draft.packages) {
+      if (rule.enabled) counts.set(rule.shopId, (counts.get(rule.shopId) ?? 0) + 1);
+    }
+    return counts;
+  }, [draft.packages]);
 
   const updatePackage = (product: AutoBuyerPackageV1, update: Partial<AutoBuyerPackageRuleV1>) => {
     setDraft((current) => {
@@ -276,29 +308,82 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
 
         {projection && section === 'shops' ? (
           <div className="space-y-3">
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search items, shops, or package IDs"
-              leftIcon={<PackageSearch className="h-4 w-4" />}
-            />
-            {packagesByShop.map(({ shop, packages }) => (
-              <Card key={shop.id} variant="solid" className="overflow-hidden">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,18rem)_minmax(0,18rem)_minmax(0,1fr)]">
+              <label className="block">
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Shop</span>
+                <Select
+                  value={selectedShopId}
+                  onChange={(value) => {
+                    setSelectedShopId(value);
+                    setSelectedCurrencyKey(ALL_AUTO_BUYER_CURRENCIES);
+                    setQuery('');
+                  }}
+                  options={projection.shops.map((shop) => {
+                    const selectedCount = enabledPackageCountByShop.get(shop.id) ?? 0;
+                    return {
+                      value: shop.id,
+                      label: `${shop.name} · ${shop.packageCount} item${shop.packageCount === 1 ? '' : 's'}${selectedCount > 0 ? ` · ${selectedCount} selected` : ''}`,
+                    };
+                  })}
+                  placeholder="Choose a supported shop"
+                  icon={<Store className="h-4 w-4" />}
+                  ariaLabel="Auto Buyer shop"
+                  menuGrowToViewport
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Currency</span>
+                <Select
+                  value={selectedCurrencyKey}
+                  onChange={setSelectedCurrencyKey}
+                  options={[
+                    {
+                      value: ALL_AUTO_BUYER_CURRENCIES,
+                      label: `All currencies · ${selectedShop?.packageCount ?? 0} items`,
+                    },
+                    ...currencyOptions.map((currency) => ({
+                      value: currency.value,
+                      label: `${currency.name} · ${currency.count} item${currency.count === 1 ? '' : 's'}`,
+                    })),
+                  ]}
+                  placeholder="Choose a currency"
+                  icon={<Coins className="h-4 w-4" />}
+                  ariaLabel="Auto Buyer currency"
+                  menuGrowToViewport
+                />
+              </label>
+              <label className="block md:col-span-2 xl:col-span-1">
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Search selected shop</span>
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder={`Search ${selectedShop?.name ?? 'shop'} items or package IDs`}
+                  leftIcon={<PackageSearch className="h-4 w-4" />}
+                />
+              </label>
+            </div>
+            {selectedShop ? (
+              <Card key={selectedShop.id} variant="solid" className="overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-base px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-black text-text-main">{shop.name}</h3>
-                    <Badge variant={shop.requiresEvent ? 'warning' : 'outline'}>{shop.requiresEvent ? 'Event only' : 'Reset tracked'}</Badge>
+                    <h3 className="text-sm font-black text-text-main">{selectedShop.name}</h3>
+                    <Badge variant={selectedShop.requiresEvent ? 'warning' : 'outline'}>{selectedShop.requiresEvent ? 'Event only' : 'Reset tracked'}</Badge>
+                    {(enabledPackageCountByShop.get(selectedShop.id) ?? 0) > 0 ? (
+                      <Badge variant="secondary">{enabledPackageCountByShop.get(selectedShop.id)} selected</Badge>
+                    ) : null}
                   </div>
-                  <span className="text-xs text-text-muted">{packages.length} supported item{packages.length === 1 ? '' : 's'}</span>
+                  <span className="text-xs text-text-muted">
+                    {filteredPackages.length}{query.trim() || selectedCurrencyKey !== ALL_AUTO_BUYER_CURRENCIES ? ` of ${selectedShop.packageCount}` : ''} supported item{filteredPackages.length === 1 ? '' : 's'}
+                  </span>
                 </div>
                 <div className="divide-y divide-border-base">
-                  {packages.map((product) => {
+                  {filteredPackages.map((product) => {
                     const rule = packageRules.get(`${product.shopId}:${product.packageId}`);
                     const enabled = rule?.enabled === true;
                     const purchased = state?.inventory.constructionOffers[String(product.packageId)] ?? 0;
                     return (
                       <div key={`${product.shopId}:${product.packageId}`} className="p-4">
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="font-bold text-text-main">{product.name}</span>
@@ -308,26 +393,30 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                             </div>
                             {product.detail ? <p className="mt-1 text-xs text-text-muted">{product.detail}</p> : null}
                           </div>
-                          <Switch
-                            checked={enabled}
-                            onChange={(value) => updatePackage(product, {
-                              enabled: value,
-                              maximumRubySpendPerReset: product.price.premium
-                                ? Math.max(rule?.maximumRubySpendPerReset ?? 0, product.price.amount)
-                                : 0,
-                            })}
-                            ariaLabel={`Automatically buy ${product.name}`}
-                          />
+                          <div className="flex shrink-0 items-end gap-3">
+                            <div className="w-44">
+                              <NumberField
+                                label="Purchase limit / reset"
+                                value={rule?.targetPurchasesPerReset ?? 1}
+                                minimum={1}
+                                maximum={product.stock}
+                                onChange={(targetPurchasesPerReset) => updatePackage(product, { targetPurchasesPerReset })}
+                              />
+                            </div>
+                            <Switch
+                              checked={enabled}
+                              onChange={(value) => updatePackage(product, {
+                                enabled: value,
+                                maximumRubySpendPerReset: product.price.premium
+                                  ? Math.max(rule?.maximumRubySpendPerReset ?? 0, product.price.amount)
+                                  : 0,
+                              })}
+                              ariaLabel={`Automatically buy ${product.name}`}
+                            />
+                          </div>
                         </div>
                         {enabled ? (
-                          <div className="mt-3 grid gap-3 border-t border-border-base pt-3 md:grid-cols-3">
-                            <NumberField
-                              label="Target each stock reset"
-                              value={rule?.targetPurchasesPerReset ?? 1}
-                              minimum={1}
-                              maximum={product.stock}
-                              onChange={(targetPurchasesPerReset) => updatePackage(product, { targetPurchasesPerReset })}
-                            />
+                          <div className="mt-3 grid gap-3 border-t border-border-base pt-3 md:grid-cols-2">
                             <NumberField
                               label={`Keep at least ${product.price.name}`}
                               value={rule?.minimumBalanceReserve ?? 0}
@@ -343,7 +432,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                               />
                             ) : (
                               <div className="rounded-xl border border-border-base bg-surface-base/40 px-3 py-2 text-xs text-text-muted">
-                                The server purchase counter resets this goal automatically when stock refreshes.
+                                Auto Buyer stops at the purchase limit, then waits for the server stock counter to reset.
                               </div>
                             )}
                           </div>
@@ -351,12 +440,14 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                       </div>
                     );
                   })}
+                  {filteredPackages.length === 0 ? (
+                    <div className="p-8 text-center text-sm text-text-muted">No supported stock-limited items match these filters.</div>
+                  ) : null}
                 </div>
               </Card>
-            ))}
-            {packagesByShop.length === 0 ? (
-              <Card variant="solid" className="p-8 text-center text-sm text-text-muted">No supported stock-limited items match this search.</Card>
-            ) : null}
+            ) : (
+              <Card variant="solid" className="p-8 text-center text-sm text-text-muted">No supported shops are available in the current official catalog.</Card>
+            )}
           </div>
         ) : null}
 
@@ -580,6 +671,17 @@ function SectionButton({
 
 function formatPrice(product: AutoBuyerPackageV1): string {
   return `${product.price.amount.toLocaleString()} ${product.price.name}`;
+}
+
+function autoBuyerCurrencyKey(product: AutoBuyerPackageV1): string {
+  const { price } = product;
+  if (price.scope === 'currency' && price.currencyId !== undefined) {
+    return `currency:${price.currencyId}`;
+  }
+  if (price.resourceId !== undefined) {
+    return `${price.scope}:${price.resourceId}`;
+  }
+  return `${price.scope}:${price.jsonKey ?? price.field}`;
 }
 
 function formatFeastPrice(feast: AutoBuyerFeastV1): string {

@@ -30,15 +30,20 @@ export interface PatchNotesRelease {
 
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
   {
-    version: '2.1.5',
-    subtitle: 'Guarded Auto Buyer for reset shops, specialist floors, and feast upkeep',
+    version: '2.2.0',
+    subtitle: 'Guarded Auto Buyer controls and unified event-aware World Intelligence',
     date: '2026-08-11',
     items: [
-      { kind: 'added', text: 'Auto Buyer can purchase explicitly selected stock-limited items from supported merchants and active Nomad or Rift shops, then automatically recognize the next server stock reset' },
-      { kind: 'added', text: 'All supported fixed-price specialists can be maintained at a user-selected floor of at least 14 days, one discounted seven-day renewal at a time, with a ruby reserve and per-purchase ceiling' },
-      { kind: 'added', text: 'Food or ruby feasts can be maintained above a selected remaining-time floor while preserving the configured food or ruby reserve' },
-      { kind: 'security', text: 'Every automatic purchase rechecks its official catalog entry, live stock or timer state, event availability, balances, reserves, and ruby ceilings immediately before spending, then verifies the resulting server counter or timer' },
-      { kind: 'changed', text: 'Timed account offers remain disabled for unattended purchase until item matching and the server-quoted ruby confirmation can be enforced end to end' },
+      { kind: 'added', text: 'Auto Buyer can purchase explicitly selected stock-limited items from supported merchants and active event shops, maintain fixed-price specialists at a user-selected floor of at least 14 days, and keep food or ruby feasts above a selected remaining-time floor' },
+      { kind: 'changed', text: 'Auto Buyer shop items are now selected through a focused shop dropdown with currency filtering, substring search, official localized package and price names, and a per-reset purchase limit that can be lower than the available stock' },
+      { kind: 'security', text: 'Every automatic purchase rechecks its official catalog entry, live stock or timer state, event availability, balances, reserves, ruby ceilings, and configured purchase limit immediately before spending, then verifies the resulting server counter or timer' },
+      { kind: 'changed', text: 'Timed account offers remain disabled for unattended purchase until offer-item matching and the server-quoted ruby confirmation can be enforced end to end' },
+      { kind: 'added', text: 'World Intelligence now consumes the backend event-run and event-score history contract, including occurrence identity, rank-only observations, score units, public event titles, and level-league metadata' },
+      { kind: 'changed', text: 'World rankings now use one event-aware table with permanent Name, Might, Honor, and Alliance columns plus Rank and Score for the selected event; every header is sortable and player or alliance search matches any substring' },
+      { kind: 'changed', text: 'Event selection uses human-readable public titles without exposing board IDs, adds Storm Islands rankings, and shows a level-league selector only for events that need one while defaulting to the viewing player\'s current league' },
+      { kind: 'removed', text: 'The official definition-catalog browser and separate regular-versus-event ranking tables were removed from World Intelligence in favor of the unified public leaderboard' },
+      { kind: 'changed', text: 'Player dossiers now place localized public titles and relevant profile facts in the header, remove raw player IDs and redundant profile or observation-history sections, and add chartable Storm metrics beside Might, Loot, Glory, and Honor' },
+      { kind: 'fixed', text: 'Alliance dossiers are restored as full graph-driven views with Combined Might and Members history, 24-hour through all-time ranges, public event activity, holdings, and the observed roster' },
     ],
   },
   {

@@ -37,6 +37,9 @@ import type {
 	WorldIntelligenceCatalogDatasetCatalogV1,
 	WorldIntelligenceCatalogDatasetV1,
 	WorldIntelligenceCoverageResponseV1,
+	WorldIntelligenceEventRunListV1,
+	WorldIntelligenceEventRunRankingV1,
+	WorldIntelligencePlayerEventScoreHistoryV1,
 	WorldIntelligencePlayerProfileV1,
 	WorldIntelligenceRankingMetricCatalogV1,
 	WorldIntelligenceRankingResponseV1,
@@ -229,12 +232,61 @@ class CitadelClient {
 		);
 	}
 
-	getWorldIntelligenceAlliance(worldId: string, allianceId: number, limit = 365): Promise<WorldIntelligenceAllianceProfileV1> {
+		getWorldIntelligenceAlliance(worldId: string, allianceId: number, limit = 365): Promise<WorldIntelligenceAllianceProfileV1> {
 		const query = new URLSearchParams({ worldId, limit: String(limit) });
 		return this.request<WorldIntelligenceAllianceProfileV1>(
 			`/api/v2/world-intelligence/alliances/${encodeURIComponent(String(allianceId))}?${query.toString()}`,
 		);
-	}
+		}
+
+		getWorldIntelligenceEventRuns(input: {
+			worldId: string;
+			eventKey?: string;
+			limit?: number;
+		}): Promise<WorldIntelligenceEventRunListV1> {
+			const query = new URLSearchParams({
+				worldId: input.worldId,
+				limit: String(input.limit ?? 50),
+			});
+			if (input.eventKey?.trim()) query.set('eventKey', input.eventKey.trim());
+			return this.request<WorldIntelligenceEventRunListV1>(`/api/v2/world-intelligence/event-runs?${query.toString()}`);
+		}
+
+		getWorldIntelligenceEventRunRankings(input: {
+			worldId: string;
+			occurrenceId: string;
+			listType?: number;
+			leagueId?: number;
+			limit?: number;
+		}): Promise<WorldIntelligenceEventRunRankingV1> {
+			const query = new URLSearchParams({
+				worldId: input.worldId,
+				limit: String(input.limit ?? 250),
+			});
+			if (input.listType != null) query.set('listType', String(input.listType));
+			if (input.leagueId != null) query.set('leagueId', String(input.leagueId));
+			return this.request<WorldIntelligenceEventRunRankingV1>(
+				`/api/v2/world-intelligence/event-runs/${encodeURIComponent(input.occurrenceId)}/rankings?${query.toString()}`,
+			);
+		}
+
+		getWorldIntelligencePlayerEventScores(input: {
+			worldId: string;
+			playerId: number;
+			eventKey?: string;
+			occurrenceId?: string;
+			limit?: number;
+		}): Promise<WorldIntelligencePlayerEventScoreHistoryV1> {
+			const query = new URLSearchParams({
+				worldId: input.worldId,
+				limit: String(input.limit ?? 1_000),
+			});
+			if (input.eventKey?.trim()) query.set('eventKey', input.eventKey.trim());
+			if (input.occurrenceId?.trim()) query.set('occurrenceId', input.occurrenceId.trim());
+			return this.request<WorldIntelligencePlayerEventScoreHistoryV1>(
+				`/api/v2/world-intelligence/players/${encodeURIComponent(String(input.playerId))}/event-scores?${query.toString()}`,
+			);
+		}
 
 	getWorldIntelligenceRankings(input: {
 		worldId: string;

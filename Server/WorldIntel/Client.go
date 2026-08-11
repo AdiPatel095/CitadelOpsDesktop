@@ -140,6 +140,70 @@ func (client *CloudClient) Alliance(
 	return result, err
 }
 
+func (client *CloudClient) EventRuns(
+	ctx context.Context,
+	worldID string,
+	eventKey string,
+	limit int,
+) (EventRunListResponse, error) {
+	values := url.Values{
+		"worldId": {NormalizeWorldID(worldID)},
+		"limit":   {strconv.Itoa(boundedLimitMaximum(limit, 50, 250))},
+	}
+	if normalized := strings.ToLower(strings.TrimSpace(eventKey)); normalized != "" {
+		values.Set("eventKey", normalized)
+	}
+	var result EventRunListResponse
+	err := client.getJSON(ctx, "/event-runs?"+values.Encode(), &result)
+	return result, err
+}
+
+func (client *CloudClient) EventRunRankings(
+	ctx context.Context,
+	worldID string,
+	occurrenceID string,
+	listType int64,
+	leagueID int64,
+	limit int,
+) (EventRunRankingResponse, error) {
+	values := url.Values{
+		"worldId": {NormalizeWorldID(worldID)},
+		"limit":   {strconv.Itoa(boundedLimitMaximum(limit, 250, 5_000))},
+	}
+	if listType > 0 {
+		values.Set("listType", strconv.FormatInt(listType, 10))
+	}
+	if leagueID >= -1 {
+		values.Set("leagueId", strconv.FormatInt(leagueID, 10))
+	}
+	var result EventRunRankingResponse
+	err := client.getJSON(ctx, "/event-runs/"+url.PathEscape(strings.ToLower(strings.TrimSpace(occurrenceID)))+"/rankings?"+values.Encode(), &result)
+	return result, err
+}
+
+func (client *CloudClient) PlayerEventScores(
+	ctx context.Context,
+	worldID string,
+	playerID int64,
+	eventKey string,
+	occurrenceID string,
+	limit int,
+) (PlayerEventScoreResponse, error) {
+	values := url.Values{
+		"worldId": {NormalizeWorldID(worldID)},
+		"limit":   {strconv.Itoa(boundedLimitMaximum(limit, 1_000, 5_000))},
+	}
+	if normalized := strings.ToLower(strings.TrimSpace(eventKey)); normalized != "" {
+		values.Set("eventKey", normalized)
+	}
+	if normalized := strings.ToLower(strings.TrimSpace(occurrenceID)); normalized != "" {
+		values.Set("occurrenceId", normalized)
+	}
+	var result PlayerEventScoreResponse
+	err := client.getJSON(ctx, "/players/"+strconv.FormatInt(playerID, 10)+"/event-scores?"+values.Encode(), &result)
+	return result, err
+}
+
 func (client *CloudClient) Rankings(
 	ctx context.Context,
 	worldID string,
@@ -249,8 +313,12 @@ func (client *CloudClient) doJSON(
 }
 
 func boundedLimit(value int, fallback int) int {
+	return boundedLimitMaximum(value, fallback, 1_000)
+}
+
+func boundedLimitMaximum(value int, fallback int, maximum int) int {
 	if value <= 0 {
 		return fallback
 	}
-	return min(value, 1_000)
+	return min(value, maximum)
 }

@@ -103,6 +103,51 @@ func TestAutoBuyerEventPackageWaitsForRouteAndUsesResetCounter(t *testing.T) {
 	}
 }
 
+func TestAutoBuyerPackageHonorsPerResetLimitBelowStock(t *testing.T) {
+	gameData := autoBuyerPolicyTestStore(t)
+	now := time.Date(2026, 8, 10, 12, 0, 0, 0, time.UTC)
+	gameState := autoBuyerPolicyTestState(now)
+	gameState.Player.Currencies[36] = 100
+	gameState.Inventory.ConstructionOffersCastleID = 10
+	gameState.Inventory.ConstructionOffersKingdomID = 0
+	gameState.Inventory.ConstructionOffersObservedAt = now
+	settings := json.RawMessage(`{
+		"version":1,"checkIntervalSec":60,"historyRefreshSec":900,"sourceCastleId":10,
+		"packages":[{"enabled":true,"shopId":"master-blacksmith","packageId":100,"targetPurchasesPerReset":2,"minimumBalanceReserve":0}],
+		"specialists":[],"feast":{"enabled":false}
+	}`)
+	evaluate := func() Decision {
+		t.Helper()
+		decision, err := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{
+			State: gameState, GameData: gameData, Now: now,
+			Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return decision
+	}
+
+	decision := evaluate()
+	if decision.Request == nil || decision.Request.Name != "autoBuyer.package.purchase" {
+		t.Fatalf("limited package decision = %#v", decision)
+	}
+	var request struct {
+		Amount                  int64 `json:"amount"`
+		TargetPurchasesPerReset int64 `json:"targetPurchasesPerReset"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil ||
+		request.Amount != 2 || request.TargetPurchasesPerReset != 2 {
+		t.Fatalf("limited package request = %#v err=%v", request, err)
+	}
+
+	gameState.Inventory.ConstructionOffers[100] = 2
+	decision = evaluate()
+	if decision.Request != nil || decision.Status != "idle" {
+		t.Fatalf("completed lower purchase limit decision = %#v", decision)
+	}
+}
+
 func TestAutoBuyerFeastPreservesFoodReserve(t *testing.T) {
 	gameData := autoBuyerPolicyTestStore(t)
 	now := time.Date(2026, 8, 10, 12, 0, 0, 0, time.UTC)
