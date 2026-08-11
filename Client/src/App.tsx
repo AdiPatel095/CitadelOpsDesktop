@@ -22,6 +22,7 @@ type SettingsModalId =
   | 'invasion'
   | 'nomad'
   | 'advisor'
+  | 'buyer'
   | 'khan'
   | 'beri'
   | 'storm';
@@ -86,6 +87,7 @@ const settingsModals: Record<SettingsModalId, React.LazyExoticComponent<Componen
   invasion: lazySettingsModal(() => import('./settings/components/AutoInvasionSettingsModal'), 'AutoInvasionSettingsModal'),
   nomad: lazySettingsModal(() => import('./settings/components/AutoNomadSettingsModal'), 'AutoNomadSettingsModal'),
   advisor: lazySettingsModal(() => import('./settings/components/AutoAdvisorSettingsModal'), 'AutoAdvisorSettingsModal'),
+  buyer: lazySettingsModal(() => import('./settings/components/AutoBuyerSettingsModal'), 'AutoBuyerSettingsModal'),
   khan: lazySettingsModal(() => import('./settings/components/AutoKhanSettingsModal'), 'AutoKhanSettingsModal'),
   beri: lazySettingsModal(() => import('./settings/components/AutoBeriWorldSettingsModal'), 'AutoBeriWorldSettingsModal'),
   storm: lazySettingsModal(() => import('./settings/components/AutoStormSettingsModal'), 'AutoStormSettingsModal'),
@@ -126,6 +128,7 @@ const AppContent: React.FC = () => {
       onOpenAutoInvasionSettings={openSettings('invasion')}
       onOpenAutoNomadSettings={openSettings('nomad')}
       onOpenAutoAdvisorSettings={openSettings('advisor')}
+      onOpenAutoBuyerSettings={openSettings('buyer')}
       onOpenAutoKhanSettings={openSettings('khan')}
       onOpenAutoBeriWorldSettings={openSettings('beri')}
       onOpenAutoStormSettings={openSettings('storm')}

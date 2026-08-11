@@ -33,6 +33,11 @@ type Store struct {
 	berimondArmorerOnce      sync.Once
 	berimondArmorerProducts  map[int64]BerimondArmorerToolPackage
 	berimondArmorerErr       error
+	autoBuyerOnce            sync.Once
+	autoBuyerCatalog         AutoBuyerCatalog
+	autoBuyerProducts        map[string]map[int64]AutoBuyerPackage
+	autoBuyerFeasts          map[int64]AutoBuyerFeast
+	autoBuyerErr             error
 }
 
 func DecodeStore(raw []byte, metadata SourceMetadata) (*Store, error) {

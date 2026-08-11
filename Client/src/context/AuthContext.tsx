@@ -59,6 +59,7 @@ interface AuthContextType {
 	autoInvasionEnabled: boolean;
 	autoNomadEnabled: boolean;
 	autoAdvisorEnabled: boolean;
+	autoBuyerEnabled: boolean;
 	autoKhanEnabled: boolean;
 	autoBeriWorldEnabled: boolean;
 	autoStormEnabled: boolean;
@@ -89,6 +90,7 @@ interface AuthContextType {
 	toggleAutoInvasion: () => void;
 	toggleAutoNomad: () => void;
 	toggleAutoAdvisor: () => void;
+	toggleAutoBuyer: () => void;
 	toggleAutoKhan: () => void;
 	toggleAutoBeriWorld: () => void;
 	toggleAutoStorm: () => void;
@@ -132,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const autoInvasionEnabled = automationEnabledByKey.auto_invasion === true;
 	const autoNomadEnabled = automationEnabledByKey.auto_nomad === true;
 	const autoAdvisorEnabled = automationEnabledByKey.auto_advisor === true;
+	const autoBuyerEnabled = automationEnabledByKey.auto_buyer === true;
 	const autoKhanEnabled = automationEnabledByKey.auto_khan === true;
 	const autoBeriWorldEnabled = automationEnabledByKey.auto_beri_world === true;
 	const autoStormEnabled = automationEnabledByKey.auto_storm === true;
@@ -238,6 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		autoInvasionEnabled,
 		autoNomadEnabled,
 		autoAdvisorEnabled,
+		autoBuyerEnabled,
 		autoKhanEnabled,
 		autoBeriWorldEnabled,
 		autoStormEnabled,
@@ -268,6 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		toggleAutoInvasion: () => toggle('auto_invasion', autoInvasionEnabled),
 		toggleAutoNomad: () => toggle('auto_nomad', autoNomadEnabled),
 		toggleAutoAdvisor: () => toggle('auto_advisor', autoAdvisorEnabled),
+		toggleAutoBuyer: () => toggle('auto_buyer', autoBuyerEnabled),
 		toggleAutoKhan: () => toggle('auto_khan', autoKhanEnabled),
 		toggleAutoBeriWorld: () => toggle('auto_beri_world', autoBeriWorldEnabled),
 		toggleAutoStorm: () => toggle('auto_storm', autoStormEnabled),
@@ -294,6 +299,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		autoInvasionEnabled,
 		autoNomadEnabled,
 		autoAdvisorEnabled,
+		autoBuyerEnabled,
 		autoKhanEnabled,
 		autoBeriWorldEnabled,
 		autoStormEnabled,

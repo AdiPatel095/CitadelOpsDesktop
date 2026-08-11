@@ -147,13 +147,13 @@ func TestRuntimeTransportAndSubscriptionReducers(t *testing.T) {
 
 	_, changed, err = reduceMarketBooster(t.Context(), Protocol.Frame{
 		Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
-		Payload: json.RawMessage(`{"BO":[{"ID":11,"L":21,"RT":2147483647},{"ID":24,"B":400,"RT":10702}]}`),
+		Payload: json.RawMessage(`{"BO":[{"ID":11,"L":21,"RT":2147483647},{"ID":24,"B":400,"RT":10702,"PC":2}],"bfs":{"T":3,"RT":7200}}`),
 	}, &gameState, gameData)
 	if err != nil || !changed || gameState.Market.CaravanLevel != 21 {
 		t.Fatalf("market booster: changed=%t market=%#v err=%v", changed, gameState.Market, err)
 	}
 	gallantry := gameState.Market.Boosters[24]
-	if gallantry.BonusPercent != 400 || gallantry.RemainingSec != 10702 ||
+	if gallantry.BonusPercent != 400 || gallantry.RemainingSec != 10702 || gallantry.ContinuousPurchaseCount != 2 ||
 		!gallantry.ExpiresAt.Equal(observedAt.Add(10702*time.Second)) || !gallantry.ActiveAt(observedAt) {
 		t.Fatalf("gallantry booster = %#v", gallantry)
 	}
@@ -162,6 +162,19 @@ func TestRuntimeTransportAndSubscriptionReducers(t *testing.T) {
 	}
 	if !gameState.Market.BoostersObservedAt.Equal(observedAt) {
 		t.Fatalf("booster observation time = %s", gameState.Market.BoostersObservedAt)
+	}
+	if feast := gameState.Market.Feast; feast.ID != 3 || feast.RemainingSec != 7200 ||
+		!feast.ExpiresAt.Equal(observedAt.Add(7200*time.Second)) || !feast.ActiveAt(observedAt) {
+		t.Fatalf("market feast = %#v", feast)
+	}
+
+	_, changed, err = reduceMarketFeast(t.Context(), Protocol.Frame{
+		Opcode: "bfs", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt.Add(time.Minute),
+		Payload: json.RawMessage(`{"bfs":{"T":3,"RT":14400}}`),
+	}, &gameState, gameData)
+	if err != nil || !changed || gameState.Market.Feast.RemainingSec != 14400 ||
+		!gameState.Market.Feast.ExpiresAt.Equal(observedAt.Add(time.Minute+14400*time.Second)) {
+		t.Fatalf("feast response: changed=%t feast=%#v err=%v", changed, gameState.Market.Feast, err)
 	}
 
 	_, changed, err = reduceKingdomTransport(t.Context(), Protocol.Frame{

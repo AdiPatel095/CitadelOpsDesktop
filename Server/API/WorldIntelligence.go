@@ -1,6 +1,8 @@
 package API
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 	"strconv"
 	"strings"
@@ -67,6 +69,88 @@ func (server *Server) handleWorldIntelligenceAlliance(writer http.ResponseWriter
 	}
 	result, err := server.config.WorldIntel.Alliance(
 		request.Context(), request.URL.Query().Get("worldId"), allianceID, queryLimit(request, 365, 1_000),
+	)
+	if err != nil {
+		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		return
+	}
+	writeJSON(writer, http.StatusOK, result)
+}
+
+func (server *Server) handleWorldIntelligenceEventRuns(writer http.ResponseWriter, request *http.Request) {
+	if server.config.WorldIntel == nil {
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		return
+	}
+	eventKey := strings.ToLower(strings.TrimSpace(request.URL.Query().Get("eventKey")))
+	if eventKey != "" && !validWorldIntelligenceEventKey(eventKey) {
+		writeError(writer, http.StatusBadRequest, "invalid_event_key", "eventKey is invalid")
+		return
+	}
+	result, err := server.config.WorldIntel.EventRuns(
+		request.Context(), request.URL.Query().Get("worldId"), eventKey, queryLimit(request, 50, 250),
+	)
+	if err != nil {
+		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		return
+	}
+	writeJSON(writer, http.StatusOK, result)
+}
+
+func (server *Server) handleWorldIntelligenceEventRunRankings(writer http.ResponseWriter, request *http.Request) {
+	if server.config.WorldIntel == nil {
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		return
+	}
+	occurrenceID := strings.ToLower(strings.TrimSpace(request.PathValue("id")))
+	if !validWorldIntelligenceOccurrenceID(occurrenceID) {
+		writeError(writer, http.StatusBadRequest, "invalid_occurrence_id", "event occurrence id is invalid")
+		return
+	}
+	listType, err := optionalIntegerQuery(request, "listType", 0, 0, 1_000_000)
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid_list_type", err.Error())
+		return
+	}
+	leagueID, err := optionalIntegerQuery(request, "leagueId", -2, -1, 1_000_000)
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid_league_id", err.Error())
+		return
+	}
+	result, err := server.config.WorldIntel.EventRunRankings(
+		request.Context(), request.URL.Query().Get("worldId"), occurrenceID,
+		listType, leagueID, queryLimit(request, 250, 5_000),
+	)
+	if err != nil {
+		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		return
+	}
+	writeJSON(writer, http.StatusOK, result)
+}
+
+func (server *Server) handleWorldIntelligencePlayerEventScores(writer http.ResponseWriter, request *http.Request) {
+	if server.config.WorldIntel == nil {
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		return
+	}
+	playerID, err := positivePathID(request.PathValue("id"))
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid_player_id", "player id must be positive")
+		return
+	}
+	eventKey := strings.ToLower(strings.TrimSpace(request.URL.Query().Get("eventKey")))
+	if eventKey != "" && !validWorldIntelligenceEventKey(eventKey) {
+		writeError(writer, http.StatusBadRequest, "invalid_event_key", "eventKey is invalid")
+		return
+	}
+	occurrenceID := strings.ToLower(strings.TrimSpace(request.URL.Query().Get("occurrenceId")))
+	if occurrenceID != "" && !validWorldIntelligenceOccurrenceID(occurrenceID) {
+		writeError(writer, http.StatusBadRequest, "invalid_occurrence_id", "event occurrence id is invalid")
+		return
+	}
+	result, err := server.config.WorldIntel.PlayerEventScores(
+		request.Context(), request.URL.Query().Get("worldId"), playerID,
+		eventKey, occurrenceID, queryLimit(request, 1_000, 5_000),
 	)
 	if err != nil {
 		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
@@ -181,4 +265,36 @@ func queryLimitNamed(request *http.Request, name string, fallback int, maximum i
 		return fallback
 	}
 	return min(value, maximum)
+}
+
+func optionalIntegerQuery(request *http.Request, name string, fallback int64, minimum int64, maximum int64) (int64, error) {
+	raw := strings.TrimSpace(request.URL.Query().Get(name))
+	if raw == "" {
+		return fallback, nil
+	}
+	value, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || value < minimum || value > maximum {
+		return 0, strconv.ErrSyntax
+	}
+	return value, nil
+}
+
+func validWorldIntelligenceEventKey(value string) bool {
+	if value == "" || len(value) > 80 || value[0] == '-' || value[len(value)-1] == '-' {
+		return false
+	}
+	for _, character := range value {
+		if (character < 'a' || character > 'z') && (character < '0' || character > '9') && character != '-' {
+			return false
+		}
+	}
+	return true
+}
+
+func validWorldIntelligenceOccurrenceID(value string) bool {
+	if len(value) != sha256.Size*2 {
+		return false
+	}
+	decoded, err := hex.DecodeString(value)
+	return err == nil && len(decoded) == sha256.Size
 }

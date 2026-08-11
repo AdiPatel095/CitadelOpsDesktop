@@ -7,6 +7,7 @@ import {
   HeartPulse,
   MousePointerClick,
   Settings,
+  ShoppingCart,
   Trash2,
   Users,
   Wheat,
@@ -44,6 +45,7 @@ interface AutomationViewProps {
   onOpenAutoInvasionSettings: () => void;
   onOpenAutoNomadSettings: () => void;
   onOpenAutoAdvisorSettings: () => void;
+  onOpenAutoBuyerSettings: () => void;
   onOpenAutoKhanSettings: () => void;
   onOpenAutoBeriWorldSettings: () => void;
   onOpenAutoStormSettings: () => void;
@@ -243,6 +245,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenAutoInvasionSettings,
   onOpenAutoNomadSettings,
   onOpenAutoAdvisorSettings,
+  onOpenAutoBuyerSettings,
   onOpenAutoKhanSettings,
   onOpenAutoBeriWorldSettings,
   onOpenAutoStormSettings,
@@ -265,6 +268,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoInvasionEnabled,
 		autoNomadEnabled,
     autoAdvisorEnabled,
+		autoBuyerEnabled,
     autoKhanEnabled,
     autoBeriWorldEnabled,
     autoStormEnabled,
@@ -278,6 +282,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		toggleAutoInvasion,
 		toggleAutoNomad,
 		toggleAutoAdvisor,
+		toggleAutoBuyer,
 		toggleAutoKhan,
 		toggleAutoBeriWorld,
 		toggleAutoStorm,
@@ -445,6 +450,21 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       onOpenSettings: onOpenAutoFoodBalanceSettings,
     },
     {
+      id: 'autoBuyer',
+      enabledKey: 'auto_buyer',
+      group: 'upkeep',
+      name: 'Auto Buyer',
+      description: 'Buys selected reset stock and maintains specialist and feast duration floors within explicit reserves.',
+      enabled: autoBuyerEnabled,
+      detail: autoBuyerEnabled
+        ? automationStates.autoBuyer?.detail ?? 'Waiting for configured stock or upkeep goals'
+        : 'Automatic purchases are paused',
+      status: automationStates.autoBuyer?.status ?? (autoBuyerEnabled ? 'waiting' : 'disabled'),
+      icon: ShoppingCart,
+      onToggle: toggleAutoBuyer,
+      onOpenSettings: onOpenAutoBuyerSettings,
+    },
+    {
 		id: 'autoTowers',
 		enabledKey: 'auto_towers',
 		group: 'offense',
@@ -592,6 +612,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoInvasionEnabled,
 		autoNomadEnabled,
 		autoAdvisorEnabled,
+		autoBuyerEnabled,
     autoKhanEnabled,
     autoBeriWorldEnabled,
     autoBeriWorldStatus,
@@ -614,6 +635,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     onOpenAutoInvasionSettings,
 		onOpenAutoNomadSettings,
 		onOpenAutoAdvisorSettings,
+		onOpenAutoBuyerSettings,
     onOpenAutoKhanSettings,
     onOpenAutoBeriWorldSettings,
     onOpenAutoStormSettings,
@@ -627,6 +649,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     toggleAutoInvasion,
 		toggleAutoNomad,
 		toggleAutoAdvisor,
+		toggleAutoBuyer,
     toggleAutoKhan,
     toggleAutoBeriWorld,
     toggleAutoStorm,

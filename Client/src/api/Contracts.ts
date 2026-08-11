@@ -152,6 +152,20 @@ export interface WorldIntelligenceCatalogDatasetV1 extends WorldIntelligenceCata
 	history: WorldIntelligenceCatalogDatasetSummaryV1[];
 }
 
+export interface WorldIntelligencePublicMetricV1 {
+	label: string;
+	value: number;
+	rank?: number;
+	unit?: string;
+	source?: 'gge-highscore' | 'gge-player-event';
+	listType?: number;
+	leagueId?: number;
+	eventId?: number;
+	metricId?: number;
+	observedAt: string;
+	validUntil?: string;
+}
+
 export interface WorldIntelligencePlayerObservationV1 {
 	worldId: string;
 	playerId: number;
@@ -174,17 +188,7 @@ export interface WorldIntelligencePlayerObservationV1 {
 		bestRank?: number;
 		ruined?: boolean;
 	};
-	publicMetrics?: Record<string, {
-		label: string;
-		value: number;
-		rank?: number;
-		unit?: string;
-		source?: 'gge-highscore';
-		listType?: number;
-		leagueId?: number;
-		observedAt: string;
-		validUntil?: string;
-	}>;
+	publicMetrics?: Record<string, WorldIntelligencePublicMetricV1>;
 	source: 'account' | 'alliance' | 'event-ranking' | 'leaderboard';
 	observedAt: string;
 }
@@ -195,6 +199,7 @@ export interface WorldIntelligenceAllianceObservationV1 {
 	name: string;
 	memberCount?: number;
 	totalMight?: number;
+	publicMetrics?: Record<string, WorldIntelligencePublicMetricV1>;
 	source: 'alliance' | 'event-ranking' | 'leaderboard';
 	observedAt: string;
 }
@@ -225,7 +230,7 @@ export interface WorldIntelligenceSearchResultV1 {
 	weeklyLoot?: number;
 	honor?: number;
 	publicProfile?: WorldIntelligencePlayerObservationV1['publicProfile'];
-	publicMetrics?: WorldIntelligencePlayerObservationV1['publicMetrics'];
+	publicMetrics?: Record<string, WorldIntelligencePublicMetricV1>;
 	memberCount?: number;
 	lastObservedAt: string;
 }
@@ -278,7 +283,7 @@ export interface WorldIntelligenceRankingMetricV1 {
 	metric: string;
 	label: string;
 	unit?: string;
-	source: 'public-ranking' | 'public-profile' | 'gge-highscore';
+	source: 'public-ranking' | 'public-profile' | 'gge-highscore' | 'gge-player-event';
 	populatedRows: number;
 	latestObservedAt?: string;
 }
@@ -289,11 +294,70 @@ export interface WorldIntelligenceRankingMetricCatalogV1 {
 	metrics: WorldIntelligenceRankingMetricV1[];
 }
 
+export interface WorldIntelligenceEventScoreObservationV1 {
+	worldId: string;
+	occurrenceId: string;
+	eventId: number;
+	eventKey: string;
+	eventName: string;
+	listType: number;
+	leagueId: number;
+	boardKey?: string;
+	playerId: number;
+	playerName: string;
+	allianceId?: number;
+	allianceName?: string;
+	rank: number;
+	score?: number;
+	scoreKnown: boolean;
+	scoreUnit: string;
+	runStartedOn: string;
+	eventEndsAt: string;
+	source: 'gge-highscore';
+	observedAt: string;
+}
+
+export interface WorldIntelligenceEventRunV1 {
+	occurrenceId: string;
+	worldId: string;
+	eventId: number;
+	eventKey: string;
+	eventName: string;
+	scoreUnit: string;
+	runStartedOn: string;
+	eventEndsAt: string;
+	firstObservedAt: string;
+	lastObservedAt: string;
+	participants: number;
+	scoreRows: number;
+}
+
+export interface WorldIntelligenceEventRunListV1 {
+	worldId: string;
+	eventKey?: string;
+	runs: WorldIntelligenceEventRunV1[];
+}
+
+export interface WorldIntelligenceEventRunRankingV1 {
+	run: WorldIntelligenceEventRunV1;
+	entries: WorldIntelligenceEventScoreObservationV1[];
+}
+
+export interface WorldIntelligencePlayerEventScoreHistoryV1 {
+	worldId: string;
+	playerId: number;
+	eventKey?: string;
+	occurrenceId?: string;
+	history: WorldIntelligenceEventScoreObservationV1[];
+}
+
 export interface WorldIntelligenceWorldCoverageV1 {
 	worldId: string;
 	players: number;
 	alliances: number;
 	holdings: number;
+	eventRuns: number;
+	eventScores: number;
 	observationCount: number;
 	firstObservedAt?: string;
 	lastObservedAt?: string;
@@ -686,9 +750,16 @@ export interface MarketStateV2 {
 		level?: number;
 		bonusPercent?: number;
 		remainingSec?: number;
+		continuousPurchaseCount?: number;
 		expiresAt?: string;
 		permanent?: boolean;
 	}>;
+	feast?: {
+		id?: number;
+		remainingSec?: number;
+		expiresAt?: string;
+		observedAt?: string;
+	};
 	caravanLevel?: number;
 	caravanLevelLoaded: boolean;
 	observedAt?: string;
@@ -1846,6 +1917,76 @@ export interface GameDataMetadata {
   digestSha256: string;
   fetchedAt: string;
   loadedAt: string;
+}
+
+export interface AutoBuyerPriceV1 {
+  field: string;
+  jsonKey?: string;
+  name: string;
+  scope: 'playerResource' | 'castleResource' | 'currency';
+  resourceId?: number;
+  currencyId?: number;
+  amount: number;
+  premium: boolean;
+}
+
+export interface AutoBuyerShopV1 {
+  id: string;
+  name: string;
+  kind: 'merchant' | 'event' | string;
+  tableId: number;
+  requiresEvent: boolean;
+  resetTracking: string;
+  packageCount: number;
+  unsupportedCount?: number;
+}
+
+export interface AutoBuyerPackageV1 {
+  shopId: string;
+  shopName: string;
+  shopKind: string;
+  tableId: number;
+  requiresEvent: boolean;
+  packageId: number;
+  packageType?: string;
+  name: string;
+  detail?: string;
+  stock: number;
+  maxBuyPerClick?: number;
+  minLevel?: number;
+  maxLevel?: number;
+  minLegendLevel?: number;
+  maxLegendLevel?: number;
+  price: AutoBuyerPriceV1;
+}
+
+export interface AutoBuyerSpecialistV1 {
+  id: number;
+  key: string;
+  name: string;
+  durationSec: number;
+  baseRubyCost: number;
+  bonusPercent?: number;
+}
+
+export interface AutoBuyerFeastV1 {
+  id: number;
+  name: string;
+  type?: string;
+  durationSec: number;
+  productionBoostPercent: number;
+  minLevel?: number;
+  maxLevel?: number;
+  price: AutoBuyerPriceV1;
+}
+
+export interface AutoBuyerProjectionV1 {
+  metadata: GameDataMetadata;
+  shops: AutoBuyerShopV1[];
+  packages: AutoBuyerPackageV1[];
+  specialists: AutoBuyerSpecialistV1[];
+  feasts: AutoBuyerFeastV1[];
+  timedOffers: { supported: boolean; reason?: string };
 }
 
 export interface LanguageMetadata {

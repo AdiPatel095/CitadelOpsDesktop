@@ -12,6 +12,9 @@ import (
 )
 
 func (application *Application) registerShopIntents() error {
+	if err := application.registerAutoBuyerIntents(); err != nil {
+		return err
+	}
 	definitions := []Intent.Definition{
 		{
 			Name:             "shop.package.history",
