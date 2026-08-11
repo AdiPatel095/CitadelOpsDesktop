@@ -193,6 +193,50 @@ func (service *DesktopService) Alliance(ctx context.Context, worldID string, all
 	return service.client.Alliance(ctx, service.resolveWorld(worldID), allianceID, limit)
 }
 
+func (service *DesktopService) EventRuns(
+	ctx context.Context,
+	worldID string,
+	eventKey string,
+	limit int,
+) (EventRunListResponse, error) {
+	if err := service.queryReady(); err != nil {
+		return EventRunListResponse{}, err
+	}
+	return service.client.EventRuns(ctx, service.resolveWorld(worldID), eventKey, limit)
+}
+
+func (service *DesktopService) EventRunRankings(
+	ctx context.Context,
+	worldID string,
+	occurrenceID string,
+	listType int64,
+	leagueID int64,
+	limit int,
+) (EventRunRankingResponse, error) {
+	if err := service.queryReady(); err != nil {
+		return EventRunRankingResponse{}, err
+	}
+	return service.client.EventRunRankings(
+		ctx, service.resolveWorld(worldID), occurrenceID, listType, leagueID, limit,
+	)
+}
+
+func (service *DesktopService) PlayerEventScores(
+	ctx context.Context,
+	worldID string,
+	playerID int64,
+	eventKey string,
+	occurrenceID string,
+	limit int,
+) (PlayerEventScoreResponse, error) {
+	if err := service.queryReady(); err != nil {
+		return PlayerEventScoreResponse{}, err
+	}
+	return service.client.PlayerEventScores(
+		ctx, service.resolveWorld(worldID), playerID, eventKey, occurrenceID, limit,
+	)
+}
+
 func (service *DesktopService) Rankings(
 	ctx context.Context,
 	worldID string,

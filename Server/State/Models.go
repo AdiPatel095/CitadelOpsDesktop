@@ -642,12 +642,13 @@ type MarketCastleState struct {
 }
 
 type MarketBoosterState struct {
-	ID           int       `json:"id"`
-	Level        int       `json:"level,omitempty"`
-	BonusPercent int       `json:"bonusPercent,omitempty"`
-	RemainingSec int       `json:"remainingSec,omitempty"`
-	ExpiresAt    time.Time `json:"expiresAt,omitempty"`
-	Permanent    bool      `json:"permanent,omitempty"`
+	ID                      int       `json:"id"`
+	Level                   int       `json:"level,omitempty"`
+	BonusPercent            int       `json:"bonusPercent,omitempty"`
+	RemainingSec            int       `json:"remainingSec,omitempty"`
+	ContinuousPurchaseCount int       `json:"continuousPurchaseCount,omitempty"`
+	ExpiresAt               time.Time `json:"expiresAt,omitempty"`
+	Permanent               bool      `json:"permanent,omitempty"`
 }
 
 func (booster MarketBoosterState) ActiveAt(now time.Time) bool {
@@ -657,9 +658,21 @@ func (booster MarketBoosterState) ActiveAt(now time.Time) bool {
 	return !booster.ExpiresAt.IsZero() && booster.ExpiresAt.After(now)
 }
 
+type MarketFeastState struct {
+	ID           int64     `json:"id,omitempty"`
+	RemainingSec int       `json:"remainingSec,omitempty"`
+	ExpiresAt    time.Time `json:"expiresAt,omitempty"`
+	ObservedAt   time.Time `json:"observedAt,omitempty"`
+}
+
+func (feast MarketFeastState) ActiveAt(now time.Time) bool {
+	return feast.ID >= 0 && !feast.ExpiresAt.IsZero() && feast.ExpiresAt.After(now)
+}
+
 type MarketState struct {
 	Castles            map[CastleID]MarketCastleState `json:"castles"`
 	Boosters           map[int]MarketBoosterState     `json:"boosters"`
+	Feast              MarketFeastState               `json:"feast"`
 	CaravanLevel       int                            `json:"caravanLevel,omitempty"`
 	CaravanLevelLoaded bool                           `json:"caravanLevelLoaded"`
 	ObservedAt         time.Time                      `json:"observedAt,omitempty"`
