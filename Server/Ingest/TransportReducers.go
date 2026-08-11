@@ -125,10 +125,11 @@ func reduceMarketBooster(
 		}
 	}
 	var rows []struct {
-		ID           wireInt64 `json:"ID"`
-		Level        int       `json:"L"`
-		Bonus        wireInt64 `json:"B"`
-		RemainingSec wireInt64 `json:"RT"`
+		ID                      wireInt64 `json:"ID"`
+		Level                   int       `json:"L"`
+		Bonus                   wireInt64 `json:"B"`
+		RemainingSec            wireInt64 `json:"RT"`
+		ContinuousPurchaseCount wireInt64 `json:"PC"`
 	}
 	if err := json.Unmarshal(root["BO"], &rows); err != nil {
 		return nil, false, fmt.Errorf("decode market booster rows: %w", err)
@@ -143,6 +144,7 @@ func reduceMarketBooster(
 		remainingSec := int(row.RemainingSec)
 		booster := State.MarketBoosterState{
 			ID: id, Level: row.Level, BonusPercent: int(row.Bonus), RemainingSec: remainingSec,
+			ContinuousPurchaseCount: int(row.ContinuousPurchaseCount),
 		}
 		if remainingSec == permanentBoosterRemainingSec {
 			booster.Permanent = true
@@ -154,16 +156,61 @@ func reduceMarketBooster(
 			level = row.Level
 		}
 	}
+	feast := marketFeastFromRaw(root["bfs"], frame.ReceivedAt)
 	if gameState.Market.CaravanLevelLoaded && gameState.Market.CaravanLevel == level &&
 		reflect.DeepEqual(gameState.Market.Boosters, boosters) &&
+		reflect.DeepEqual(gameState.Market.Feast, feast) &&
 		gameState.Market.BoostersObservedAt.Equal(frame.ReceivedAt) {
 		return nil, false, nil
 	}
 	gameState.Market.CaravanLevel = level
 	gameState.Market.CaravanLevelLoaded = true
 	gameState.Market.Boosters = boosters
+	gameState.Market.Feast = feast
 	gameState.Market.BoostersObservedAt = frame.ReceivedAt
 	return []string{"boosters", "market"}, true, nil
+}
+
+func reduceMarketFeast(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	feast := marketFeastFromRaw(frame.Payload, frame.ReceivedAt)
+	if reflect.DeepEqual(gameState.Market.Feast, feast) {
+		return nil, false, nil
+	}
+	gameState.Market.Feast = feast
+	return []string{"boosters", "market"}, true, nil
+}
+
+func marketFeastFromRaw(raw json.RawMessage, observedAt time.Time) State.MarketFeastState {
+	feast := State.MarketFeastState{ObservedAt: observedAt}
+	if len(raw) == 0 {
+		return feast
+	}
+	var values map[string]json.RawMessage
+	if json.Unmarshal(raw, &values) != nil {
+		return feast
+	}
+	if nested := values["bfs"]; len(nested) > 0 {
+		if json.Unmarshal(nested, &values) != nil {
+			return feast
+		}
+	}
+	feast.ID = rawInteger(values["T"])
+	feast.RemainingSec = int(rawInteger(values["RT"]))
+	if feast.ID < 0 || feast.RemainingSec <= 0 {
+		feast.ID = 0
+		feast.RemainingSec = 0
+		return feast
+	}
+	feast.ExpiresAt = observedAt.Add(time.Duration(feast.RemainingSec) * time.Second)
+	return feast
 }
 
 func reduceKingdomTransport(

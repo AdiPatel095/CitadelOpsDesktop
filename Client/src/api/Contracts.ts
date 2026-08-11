@@ -686,9 +686,16 @@ export interface MarketStateV2 {
 		level?: number;
 		bonusPercent?: number;
 		remainingSec?: number;
+		continuousPurchaseCount?: number;
 		expiresAt?: string;
 		permanent?: boolean;
 	}>;
+	feast?: {
+		id?: number;
+		remainingSec?: number;
+		expiresAt?: string;
+		observedAt?: string;
+	};
 	caravanLevel?: number;
 	caravanLevelLoaded: boolean;
 	observedAt?: string;
@@ -1846,6 +1853,76 @@ export interface GameDataMetadata {
   digestSha256: string;
   fetchedAt: string;
   loadedAt: string;
+}
+
+export interface AutoBuyerPriceV1 {
+  field: string;
+  jsonKey?: string;
+  name: string;
+  scope: 'playerResource' | 'castleResource' | 'currency';
+  resourceId?: number;
+  currencyId?: number;
+  amount: number;
+  premium: boolean;
+}
+
+export interface AutoBuyerShopV1 {
+  id: string;
+  name: string;
+  kind: 'merchant' | 'event' | string;
+  tableId: number;
+  requiresEvent: boolean;
+  resetTracking: string;
+  packageCount: number;
+  unsupportedCount?: number;
+}
+
+export interface AutoBuyerPackageV1 {
+  shopId: string;
+  shopName: string;
+  shopKind: string;
+  tableId: number;
+  requiresEvent: boolean;
+  packageId: number;
+  packageType?: string;
+  name: string;
+  detail?: string;
+  stock: number;
+  maxBuyPerClick?: number;
+  minLevel?: number;
+  maxLevel?: number;
+  minLegendLevel?: number;
+  maxLegendLevel?: number;
+  price: AutoBuyerPriceV1;
+}
+
+export interface AutoBuyerSpecialistV1 {
+  id: number;
+  key: string;
+  name: string;
+  durationSec: number;
+  baseRubyCost: number;
+  bonusPercent?: number;
+}
+
+export interface AutoBuyerFeastV1 {
+  id: number;
+  name: string;
+  type?: string;
+  durationSec: number;
+  productionBoostPercent: number;
+  minLevel?: number;
+  maxLevel?: number;
+  price: AutoBuyerPriceV1;
+}
+
+export interface AutoBuyerProjectionV1 {
+  metadata: GameDataMetadata;
+  shops: AutoBuyerShopV1[];
+  packages: AutoBuyerPackageV1[];
+  specialists: AutoBuyerSpecialistV1[];
+  feasts: AutoBuyerFeastV1[];
+  timedOffers: { supported: boolean; reason?: string };
 }
 
 export interface LanguageMetadata {

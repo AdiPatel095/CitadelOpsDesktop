@@ -30,6 +30,18 @@ export interface PatchNotesRelease {
 
 export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
   {
+    version: '2.1.5',
+    subtitle: 'Guarded Auto Buyer for reset shops, specialist floors, and feast upkeep',
+    date: '2026-08-11',
+    items: [
+      { kind: 'added', text: 'Auto Buyer can purchase explicitly selected stock-limited items from supported merchants and active Nomad or Rift shops, then automatically recognize the next server stock reset' },
+      { kind: 'added', text: 'All supported fixed-price specialists can be maintained at a user-selected floor of at least 14 days, one discounted seven-day renewal at a time, with a ruby reserve and per-purchase ceiling' },
+      { kind: 'added', text: 'Food or ruby feasts can be maintained above a selected remaining-time floor while preserving the configured food or ruby reserve' },
+      { kind: 'security', text: 'Every automatic purchase rechecks its official catalog entry, live stock or timer state, event availability, balances, reserves, and ruby ceilings immediately before spending, then verifies the resulting server counter or timer' },
+      { kind: 'changed', text: 'Timed account offers remain disabled for unattended purchase until item matching and the server-quoted ruby confirmation can be enforced end to end' },
+    ],
+  },
+  {
     version: '2.1.3',
     subtitle: 'Official World Intel catalogs, selectable public datasets, and clearer historical dossiers',
     date: '2026-08-09',

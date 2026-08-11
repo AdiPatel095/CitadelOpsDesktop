@@ -81,6 +81,7 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/game-data/{collection}", server.handleGameDataCollection)
 	mux.HandleFunc("POST /api/v2/game-data/localize", server.handleLocalization)
 	mux.HandleFunc("GET /api/v2/projections/crafting", server.handleCraftingProjection)
+	mux.HandleFunc("GET /api/v2/projections/auto-buyer", server.handleAutoBuyerProjection)
 	mux.HandleFunc("POST /api/v2/equipment/optimize", server.handleEquipmentOptimize)
 	mux.HandleFunc("GET /api/v2/buildings/catalog", server.handleBuildingCatalog)
 	mux.HandleFunc("POST /api/v2/buildings/preview", server.handleBuildingPreview)
