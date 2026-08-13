@@ -14,7 +14,7 @@ import {
 import { Icons } from '../components/Icons';
 import { CitadelAPI } from '../api/CitadelClient';
 import { useCitadelAPI } from '../api/ApiContext';
-import type { BrowserInventory, SettingsBundleV1 } from '../api/Contracts';
+import type { BackgroundLoginStatus, BrowserInventory, SettingsBundleV1 } from '../api/Contracts';
 import { Badge, Button, Input, PageHeader, SectionCard, Select, SettingsToggleRow } from '../components/ui';
 import { asRecord, configurationSection, numericSetting } from '../settings/Configuration';
 import {
@@ -74,6 +74,13 @@ const SettingsView: React.FC = () => {
 	const [browserSelectionError, setBrowserSelectionError] = useState('');
 	const [connectionModePending, setConnectionModePending] = useState(false);
 	const [connectionModeError, setConnectionModeError] = useState('');
+	const [backgroundLogin, setBackgroundLogin] = useState<BackgroundLoginStatus | null>(null);
+	const [backgroundUsername, setBackgroundUsername] = useState('');
+	const [backgroundPassword, setBackgroundPassword] = useState('');
+	const [backgroundServer, setBackgroundServer] = useState('');
+	const [backgroundLoginPending, setBackgroundLoginPending] = useState(false);
+	const [backgroundLoginError, setBackgroundLoginError] = useState('');
+	const [backgroundLoginMessage, setBackgroundLoginMessage] = useState('');
 	const [customBrowserPath, setCustomBrowserPath] = useState('');
 	const [relogDelayMinutes, setRelogDelayMinutes] = useState('5');
 	const [relogDelayError, setRelogDelayError] = useState('');
@@ -117,6 +124,24 @@ const SettingsView: React.FC = () => {
 		};
 	}, []);
 
+	useEffect(() => {
+		let active = true;
+		void CitadelAPI.getBackgroundLoginStatus()
+			.then((status) => {
+				if (!active) return;
+				setBackgroundLogin(status);
+				if (status.server) setBackgroundServer(status.server);
+			})
+			.catch((error) => {
+				if (active) {
+					setBackgroundLoginError(error instanceof Error ? error.message : 'Could not read the saved background login');
+				}
+			});
+		return () => {
+			active = false;
+		};
+	}, []);
+
   useEffect(() => {
 		setMinTimer(numericSetting(schedulerConfiguration.minAttackDelay, 4).toFixed(1));
 		setMaxTimer(numericSetting(schedulerConfiguration.maxAttackDelay, 6).toFixed(1));
@@ -130,6 +155,12 @@ const SettingsView: React.FC = () => {
 		const seconds = numericSetting(reconnectConfiguration.relogDelaySec, 300);
 		setRelogDelayMinutes(String(Math.min(1_440, Math.max(1, Math.round(seconds / 60)))));
 	}, [reconnectConfiguration]);
+
+	useEffect(() => {
+		if (!backgroundLogin?.server && typeof connectionConfiguration.server === 'string') {
+			setBackgroundServer(connectionConfiguration.server);
+		}
+	}, [backgroundLogin?.server, connectionConfiguration.server]);
 
 	const orderedAttackPriorityFeatures = useMemo(() => {
 		const features = new Map(attackPriorityFeatures.map((feature) => [feature.id, feature]));
@@ -223,15 +254,10 @@ const SettingsView: React.FC = () => {
 		if (mode === configuredConnectionMode || connectionModePending) return;
 		setConnectionModePending(true);
 		setConnectionModeError('');
-		void (async () => {
-			if (mode === 'background') {
-				await submitIntent('session.background.prepare');
-			}
-			await updateConfiguration('session.connection', {
-				...connectionConfiguration,
-				mode,
-			});
-		})()
+		void updateConfiguration('session.connection', {
+			...connectionConfiguration,
+			mode,
+		})
 			.catch((error) => {
 				setConnectionModeError(error instanceof Error ? error.message : 'Could not save the game connection mode');
 			})
@@ -285,6 +311,36 @@ const SettingsView: React.FC = () => {
 				setBrowserSelectionError(error instanceof Error ? error.message : 'Could not select browser');
 			})
 			.finally(() => setBrowserSelectionPending(false));
+	};
+
+	const saveBackgroundLogin = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		const username = backgroundUsername.trim();
+		const server = backgroundServer.trim();
+		if (!username || !backgroundPassword || !server || backgroundLoginPending) return;
+		setBackgroundLoginPending(true);
+		setBackgroundLoginError('');
+		setBackgroundLoginMessage('');
+		void CitadelAPI.configureBackgroundLogin({
+			username,
+			password: backgroundPassword,
+			server,
+		})
+			.then(async (status) => {
+				const savedServer = status.server ?? server.toUpperCase();
+				await updateConfiguration('session.connection', {
+					...connectionConfiguration,
+					server: savedServer,
+				});
+				setBackgroundLogin(status);
+				setBackgroundServer(savedServer);
+				setBackgroundPassword('');
+				setBackgroundLoginMessage('Background login saved. Start Bot can now connect without opening Full application mode.');
+			})
+			.catch((error) => {
+				setBackgroundLoginError(error instanceof Error ? error.message : 'Could not save the background login');
+			})
+			.finally(() => setBackgroundLoginPending(false));
 	};
 
 	const selectCustomBrowser = () => {
@@ -624,9 +680,9 @@ const SettingsView: React.FC = () => {
 								<span className="mt-1 block text-xs leading-relaxed text-text-muted">
 									Connects directly to the game server without opening Chromium or a game tab. Automations and live state continue with much lower resource use.
 								</span>
-								<span className="mt-3 block text-[11px] leading-relaxed text-text-muted">
-									Requires one successful sign-in in Full application mode to securely save the login and connection details on this computer.
-								</span>
+				<span className="mt-3 block text-[11px] leading-relaxed text-text-muted">
+					Uses the login and server selection saved on this computer, then derives the current client build and remaining WebSocket handshake automatically.
+				</span>
 							</span>
 						</div>
 					</button>
@@ -650,6 +706,87 @@ const SettingsView: React.FC = () => {
 					</div>
 				)}
 				{connectionModeError && <p role="alert" className="mt-2 text-xs font-medium text-error">{connectionModeError}</p>}
+				{configuredConnectionMode === 'background' && (
+					<form onSubmit={saveBackgroundLogin} className="mt-5 rounded-global border border-border-base bg-bg-app/45 p-4">
+						<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+							<div>
+								<h3 className="text-sm font-semibold text-text-main">Background game login</h3>
+								<p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-muted">
+									Enter the login and server explicitly. The server code determines the official WebSocket address;
+									CitadelOps derives only the remaining non-secret handshake values.
+								</p>
+							</div>
+							{backgroundLogin?.configured && (
+								<span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success">
+									<CheckCircle2 className="h-3.5 w-3.5" />
+									Saved for {backgroundLogin.server}
+								</span>
+							)}
+						</div>
+						<div className="mt-4 grid gap-3 lg:grid-cols-3">
+							<div>
+								<label htmlFor="background-login-username" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+									Username
+								</label>
+								<Input
+									id="background-login-username"
+									name="username"
+									autoComplete="username"
+									value={backgroundUsername}
+									onChange={(event) => setBackgroundUsername(event.target.value)}
+									placeholder="Game username"
+									disabled={backgroundLoginPending}
+								/>
+							</div>
+							<div>
+								<label htmlFor="background-login-password" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+									Password
+								</label>
+								<Input
+									id="background-login-password"
+									name="password"
+									type="password"
+									autoComplete="current-password"
+									value={backgroundPassword}
+									onChange={(event) => setBackgroundPassword(event.target.value)}
+									placeholder="Game password"
+									disabled={backgroundLoginPending}
+								/>
+							</div>
+							<div>
+								<label htmlFor="background-login-server" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+									Server
+								</label>
+								<Input
+									id="background-login-server"
+									name="server"
+									autoCapitalize="characters"
+									value={backgroundServer}
+									onChange={(event) => setBackgroundServer(event.target.value)}
+									placeholder="US1"
+									className="font-mono uppercase"
+									disabled={backgroundLoginPending}
+								/>
+								<p className="mt-1.5 text-[11px] text-text-muted">Use the world code shown by the game, such as US1, GB1, or DE1.</p>
+							</div>
+						</div>
+						<div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+							<Button
+								type="submit"
+								variant="secondary"
+								isLoading={backgroundLoginPending}
+								disabled={backgroundLoginPending || !backgroundUsername.trim() || !backgroundPassword || !backgroundServer.trim()}
+							>
+								Save background login
+							</Button>
+							<p className="text-[11px] leading-relaxed text-text-muted">
+								Saved only in this profile's protected session file and excluded from settings exports and operation receipts.
+							</p>
+						</div>
+						{backgroundLoginError && <p role="alert" className="mt-3 text-xs font-medium text-error">{backgroundLoginError}</p>}
+						{backgroundLoginMessage && <p role="status" className="mt-3 text-xs font-medium text-success">{backgroundLoginMessage}</p>}
+					</form>
+				)}
 			</div>
 
 			<div className="border-t border-border-base pt-5">

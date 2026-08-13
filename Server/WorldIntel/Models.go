@@ -155,33 +155,12 @@ type IngestResponse struct {
 }
 
 type DesktopStatus struct {
-	Enabled                     bool       `json:"enabled"`
-	Contributing                bool       `json:"contributing"`
-	Collector                   bool       `json:"collector"`
-	CollectorPlayerID           int64      `json:"collectorPlayerId,omitempty"`
-	CollectorSlot               int        `json:"collectorSlot,omitempty"`
-	CollectorSlots              int        `json:"collectorSlots,omitempty"`
-	CollectionMode              string     `json:"collectionMode"`
-	WorldID                     string     `json:"worldId,omitempty"`
-	Endpoint                    string     `json:"endpoint"`
-	PendingBatches              int        `json:"pendingBatches"`
-	PendingCatalogs             int        `json:"pendingCatalogs"`
-	LastCapturedAt              *time.Time `json:"lastCapturedAt,omitempty"`
-	LastUploadAt                *time.Time `json:"lastUploadAt,omitempty"`
-	LastUploadError             string     `json:"lastUploadError,omitempty"`
-	CatalogVersion              string     `json:"catalogVersion,omitempty"`
-	CatalogDatasets             int        `json:"catalogDatasets,omitempty"`
-	LastCatalogAt               *time.Time `json:"lastCatalogAt,omitempty"`
-	NextCatalogAt               *time.Time `json:"nextCatalogAt,omitempty"`
-	LastCatalogError            string     `json:"lastCatalogError,omitempty"`
-	CatalogCollectionInProgress bool       `json:"catalogCollectionInProgress"`
-	LastScanAt                  *time.Time `json:"lastScanAt,omitempty"`
-	NextScanAt                  *time.Time `json:"nextScanAt,omitempty"`
-	LastScanError               string     `json:"lastScanError,omitempty"`
-	ScanInProgress              bool       `json:"scanInProgress"`
-	ScannedPlayers              int        `json:"scannedPlayers,omitempty"`
-	PublicFieldsOnly            bool       `json:"publicFieldsOnly"`
-	OfficialSourceOnly          bool       `json:"officialSourceOnly"`
+	Enabled            bool   `json:"enabled"`
+	CollectionMode     string `json:"collectionMode"`
+	WorldID            string `json:"worldId,omitempty"`
+	Endpoint           string `json:"endpoint"`
+	PublicFieldsOnly   bool   `json:"publicFieldsOnly"`
+	OfficialSourceOnly bool   `json:"officialSourceOnly"`
 }
 
 type SearchResult struct {
@@ -502,12 +481,11 @@ func validatePublicMetric(key string, metric PublicMetricObservation, capturedAt
 }
 
 func validPublicMetricSource(value string) bool {
-	switch value {
-	case "gge-highscore", "gge-player-event":
-		return true
-	default:
-		return false
-	}
+	// Schema v1 originally accepted an optional, bounded source string. Keep
+	// omitted and legacy collector values valid so upgrading does not reject an
+	// otherwise valid persisted batch. Current collectors still emit the two
+	// canonical GGE source names.
+	return len(value) <= 32
 }
 
 func normalizePublicMetrics(metrics map[string]PublicMetricObservation) map[string]PublicMetricObservation {

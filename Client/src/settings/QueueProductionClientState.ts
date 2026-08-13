@@ -6,6 +6,8 @@ export type QueueProductionMode = 'global' | 'perCastle';
 
 export interface QueueProductionItem {
   id: number;
+  minId?: number;
+  maxId?: number;
   amount?: number;
 }
 
@@ -19,6 +21,7 @@ export interface QueueProductionClientSettingsV1 {
   version: 1;
   mode: QueueProductionMode;
   checkIntervalSec: number;
+  recruitLevel10OnTitleLoss?: boolean;
   globalItems: QueueProductionItem[];
   castles: Record<string, QueueProductionCastleSettings>;
 }
@@ -29,6 +32,7 @@ interface QueueProductionClientStateOptions {
   defaultCheckIntervalSec?: number;
   minCheckIntervalSec?: number;
   maxCheckIntervalSec?: number;
+  supportsGloryTitleFallback?: boolean;
 }
 
 export function createQueueProductionClientState({
@@ -37,6 +41,7 @@ export function createQueueProductionClientState({
   defaultCheckIntervalSec = 300,
   minCheckIntervalSec = 30,
   maxCheckIntervalSec = 86_400,
+  supportsGloryTitleFallback = false,
 }: QueueProductionClientStateOptions) {
   const minCheckIntervalMin = Math.ceil(minCheckIntervalSec / CHECK_INTERVAL_SEC_PER_MIN);
   const maxCheckIntervalMin = Math.floor(maxCheckIntervalSec / CHECK_INTERVAL_SEC_PER_MIN);
@@ -69,7 +74,17 @@ export function createQueueProductionClientState({
     const id = Number(item.id);
     const amount = item.amount == null ? 0 : Number(item.amount);
     if (!Number.isFinite(id) || id <= 0 || !Number.isFinite(amount) || amount < 0) return null;
-    return { id: Math.floor(id), amount: Math.floor(amount) };
+    const normalized: QueueProductionItem = { id: Math.floor(id), amount: Math.floor(amount) };
+    const firstRangeID = Number(item.minId);
+    const lastRangeID = Number(item.maxId);
+    const rangeIDs = [firstRangeID, lastRangeID]
+      .filter((value) => Number.isFinite(value) && value > 0)
+      .map((value) => Math.floor(value));
+    if (rangeIDs.length > 0) {
+      normalized.minId = Math.min(...rangeIDs);
+      normalized.maxId = Math.max(...rangeIDs);
+    }
+    return normalized;
   };
 
   const normalizeItems = (raw: unknown): QueueProductionItem[] => {
@@ -124,6 +139,7 @@ export function createQueueProductionClientState({
     version: 1,
     mode: 'global',
     checkIntervalSec: defaultCheckIntervalSec,
+    ...(supportsGloryTitleFallback ? { recruitLevel10OnTitleLoss: false } : {}),
     globalItems: [],
     castles: {},
   });
@@ -145,6 +161,7 @@ export function createQueueProductionClientState({
         version: 1,
         mode: 'perCastle',
         checkIntervalSec: defaultCheckIntervalSec,
+        ...(supportsGloryTitleFallback ? { recruitLevel10OnTitleLoss: false } : {}),
         globalItems: [],
         castles: targetsMapToCastles(payload),
       };
@@ -168,6 +185,9 @@ export function createQueueProductionClientState({
       version: 1,
       mode: payload.mode === 'perCastle' ? 'perCastle' : 'global',
       checkIntervalSec: clampCheckIntervalSec(Number(payload.checkIntervalSec)),
+      ...(supportsGloryTitleFallback
+        ? { recruitLevel10OnTitleLoss: payload.recruitLevel10OnTitleLoss === true }
+        : {}),
       globalItems: normalizeItems(payload.globalItems ?? payload.globalTargets),
       castles: {
         ...targetsMapToCastles(payload.targets, payload.enabledCastles),

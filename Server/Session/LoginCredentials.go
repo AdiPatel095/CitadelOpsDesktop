@@ -3,18 +3,154 @@ package Session
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
 const (
-	loginCredentialFileName      = "LoginCredentials.json"
-	loginCredentialSchemaVersion = 1
-	maxLoginUsernameBytes        = 1024
-	maxLoginPasswordBytes        = 16 << 10
+	loginCredentialFileName           = "LoginCredentials.json"
+	backgroundLoginCredentialFileName = "BackgroundLogin.json"
+	loginCredentialSchemaVersion      = 1
+	maxLoginUsernameBytes             = 1024
+	maxLoginPasswordBytes             = 16 << 10
+	maxGameServerSelectionBytes       = 32
 )
+
+var (
+	loginLanguagePattern       = regexp.MustCompile(`^[A-Za-z]{2}(?:_[A-Za-z]{2})?$`)
+	gameServerSelectionPattern = regexp.MustCompile(
+		`^[A-Za-z](?:[A-Za-z0-9-]{0,30}[A-Za-z0-9])?$`,
+	)
+	gameServerHostnamePattern = regexp.MustCompile(
+		`^ep-live-([a-z](?:[a-z0-9-]{0,30}[a-z0-9])?)-game\.goodgamestudios\.com$`,
+	)
+)
+
+// BackgroundLoginInput is accepted only by the protected session-login API.
+// It must not be submitted through the intent engine because intent arguments
+// are retained in operation receipts.
+type BackgroundLoginInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Server   string `json:"server"`
+	Language string `json:"language,omitempty"`
+}
+
+// BackgroundLoginStatus deliberately excludes the username and password.
+type BackgroundLoginStatus struct {
+	Configured bool       `json:"configured"`
+	Server     string     `json:"server,omitempty"`
+	ServerURL  string     `json:"serverUrl,omitempty"`
+	Language   string     `json:"language,omitempty"`
+	UpdatedAt  *time.Time `json:"updatedAt,omitempty"`
+}
+
+type BackgroundLoginStore struct {
+	dataDir string
+	mu      sync.Mutex
+}
+
+func NewBackgroundLoginStore(dataDir string) *BackgroundLoginStore {
+	return &BackgroundLoginStore{dataDir: dataDir}
+}
+
+func (store *BackgroundLoginStore) Status() (BackgroundLoginStatus, error) {
+	if store == nil {
+		return BackgroundLoginStatus{}, fmt.Errorf("background login store is unavailable")
+	}
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	return backgroundLoginStatus(store.dataDir)
+}
+
+func (store *BackgroundLoginStore) Configure(input BackgroundLoginInput) (BackgroundLoginStatus, error) {
+	if store == nil {
+		return BackgroundLoginStatus{}, fmt.Errorf("background login store is unavailable")
+	}
+	username := strings.TrimSpace(input.Username)
+	serverURL, server, err := backgroundGameServerURL(input.Server)
+	if err != nil {
+		return BackgroundLoginStatus{}, err
+	}
+	language := strings.TrimSpace(input.Language)
+	if language == "" {
+		language = defaultGameLanguage
+	}
+	credential := persistedLoginCredential{
+		SchemaVersion: loginCredentialSchemaVersion,
+		CapturedAt:    time.Now().UTC(),
+		AutoRestore:   true,
+		Username:      username,
+		Password:      input.Password,
+		ServerURL:     serverURL,
+		Language:      language,
+	}
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	if err := saveBackgroundLoginCredential(store.dataDir, credential); err != nil {
+		return BackgroundLoginStatus{}, err
+	}
+	return BackgroundLoginStatus{
+		Configured: true,
+		Server:     server,
+		ServerURL:  serverURL,
+		Language:   language,
+		UpdatedAt:  &credential.CapturedAt,
+	}, nil
+}
+
+func backgroundLoginStatus(dataDir string) (BackgroundLoginStatus, error) {
+	credential, err := loadBackgroundLoginCredential(dataDir)
+	if os.IsNotExist(err) {
+		return BackgroundLoginStatus{}, nil
+	}
+	if err != nil {
+		return BackgroundLoginStatus{}, err
+	}
+	server := gameServerSelection(credential.ServerURL)
+	configured := credential.AutoRestore && server != ""
+	return BackgroundLoginStatus{
+		Configured: configured,
+		Server:     server,
+		ServerURL:  credential.ServerURL,
+		Language:   credential.Language,
+		UpdatedAt:  &credential.CapturedAt,
+	}, nil
+}
+
+func backgroundGameServerURL(selection string) (string, string, error) {
+	selection = strings.TrimSpace(selection)
+	if len(selection) == 0 || len(selection) > maxGameServerSelectionBytes ||
+		!gameServerSelectionPattern.MatchString(selection) {
+		return "", "", fmt.Errorf("game server must be a server code such as US1")
+	}
+	server := strings.ToUpper(selection)
+	serverURL := fmt.Sprintf(
+		"wss://ep-live-%s-game.goodgamestudios.com:443",
+		strings.ToLower(server),
+	)
+	if err := validateDirectGameServerURL(serverURL); err != nil {
+		return "", "", fmt.Errorf("game server selection is invalid: %w", err)
+	}
+	return serverURL, server, nil
+}
+
+func gameServerSelection(serverURL string) string {
+	parsed, err := url.Parse(strings.TrimSpace(serverURL))
+	if err != nil {
+		return ""
+	}
+	match := gameServerHostnamePattern.FindStringSubmatch(strings.ToLower(parsed.Hostname()))
+	if len(match) != 2 {
+		return ""
+	}
+	return strings.ToUpper(match[1])
+}
 
 type persistedLoginCredential struct {
 	SchemaVersion int       `json:"schemaVersion"`
@@ -22,10 +158,19 @@ type persistedLoginCredential struct {
 	AutoRestore   bool      `json:"autoRestore"`
 	Username      string    `json:"username"`
 	Password      string    `json:"password"`
+	ServerURL     string    `json:"serverUrl,omitempty"`
+	Language      string    `json:"language,omitempty"`
 }
 
 func loadLoginCredential(dataDir string) (persistedLoginCredential, error) {
-	path := loginCredentialPath(dataDir)
+	return loadPersistedLoginCredential(loginCredentialPath(dataDir))
+}
+
+func loadBackgroundLoginCredential(dataDir string) (persistedLoginCredential, error) {
+	return loadPersistedLoginCredential(backgroundLoginCredentialPath(dataDir))
+}
+
+func loadPersistedLoginCredential(path string) (persistedLoginCredential, error) {
 	contents, err := os.ReadFile(path)
 	if err != nil {
 		return persistedLoginCredential{}, err
@@ -47,6 +192,19 @@ func loadLoginCredential(dataDir string) (persistedLoginCredential, error) {
 }
 
 func saveLoginCredential(dataDir string, credential persistedLoginCredential) error {
+	return savePersistedLoginCredential(dataDir, loginCredentialFileName, ".LoginCredentials-", credential)
+}
+
+func saveBackgroundLoginCredential(dataDir string, credential persistedLoginCredential) error {
+	return savePersistedLoginCredential(dataDir, backgroundLoginCredentialFileName, ".BackgroundLogin-", credential)
+}
+
+func savePersistedLoginCredential(
+	dataDir string,
+	fileName string,
+	temporaryPrefix string,
+	credential persistedLoginCredential,
+) error {
 	if strings.TrimSpace(dataDir) == "" {
 		return fmt.Errorf("game login data directory is required")
 	}
@@ -61,12 +219,15 @@ func saveLoginCredential(dataDir string, credential persistedLoginCredential) er
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return fmt.Errorf("create game login directory: %w", err)
 	}
+	if err := os.Chmod(directory, 0o700); err != nil {
+		return fmt.Errorf("protect game login directory: %w", err)
+	}
 	contents, err := json.Marshal(credential)
 	if err != nil {
 		return fmt.Errorf("encode game login: %w", err)
 	}
 	contents = append(contents, '\n')
-	temporary, err := os.CreateTemp(directory, ".LoginCredentials-*")
+	temporary, err := os.CreateTemp(directory, temporaryPrefix+"*")
 	if err != nil {
 		return fmt.Errorf("create game login file: %w", err)
 	}
@@ -87,7 +248,7 @@ func saveLoginCredential(dataDir string, credential persistedLoginCredential) er
 	if err := temporary.Close(); err != nil {
 		return err
 	}
-	destination := loginCredentialPath(dataDir)
+	destination := filepath.Join(directory, fileName)
 	if err := os.Rename(temporaryPath, destination); err != nil {
 		_ = os.Remove(destination)
 		if retryErr := os.Rename(temporaryPath, destination); retryErr != nil {
@@ -141,9 +302,22 @@ func validateLoginCredential(credential persistedLoginCredential) error {
 	if credential.Password == "" || len(credential.Password) > maxLoginPasswordBytes {
 		return fmt.Errorf("saved game login has an invalid password")
 	}
+	if serverURL := strings.TrimSpace(credential.ServerURL); serverURL != "" {
+		if err := validateDirectGameServerURL(serverURL); err != nil {
+			return fmt.Errorf("saved game login has an invalid server selection: %w", err)
+		}
+	}
+	if language := strings.TrimSpace(credential.Language); language != "" &&
+		!loginLanguagePattern.MatchString(language) {
+		return fmt.Errorf("saved game login has an invalid language")
+	}
 	return nil
 }
 
 func loginCredentialPath(dataDir string) string {
 	return filepath.Join(dataDir, "Session", loginCredentialFileName)
+}
+
+func backgroundLoginCredentialPath(dataDir string) string {
+	return filepath.Join(dataDir, "Session", backgroundLoginCredentialFileName)
 }

@@ -1,8 +1,10 @@
 package Session
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -16,6 +18,10 @@ const (
 	gameConnectionProfileFileName      = "GameConnection.json"
 	gameConnectionProfileSchemaVersion = 1
 	maxGameConnectionProfileBytes      = 64 << 10
+	defaultGameNamespace               = "EmpireEx_21"
+	defaultGamePlatform                = "web-html5"
+	defaultGameLanguage                = "en"
+	defaultGameReferrer                = "https://empire.goodgamestudios.com"
 )
 
 var (
@@ -27,9 +33,10 @@ var (
 	}
 )
 
-// gameConnectionProfile contains only the non-secret connection metadata that
-// cannot be derived from a username and password. Rotating login, captcha, and
-// social tokens are deliberately excluded.
+// gameConnectionProfile caches only validated, non-secret connection metadata.
+// It may be captured from a successful Full-mode login or derived from the
+// selected server after a successful Background-mode login. Rotating login,
+// captcha, and social tokens are deliberately excluded.
 type gameConnectionProfile struct {
 	SchemaVersion int                        `json:"schemaVersion"`
 	CapturedAt    time.Time                  `json:"capturedAt"`
@@ -123,13 +130,17 @@ func saveGameConnectionProfile(dataDir string, profile gameConnectionProfile) er
 }
 
 func validateGameConnectionProfile(profile gameConnectionProfile) error {
-	if !gameNamespacePattern.MatchString(strings.TrimSpace(profile.Namespace)) {
-		return fmt.Errorf("saved game connection has an invalid namespace")
-	}
 	if !gameBuildPattern.MatchString(strings.TrimSpace(profile.ClientBuild)) {
 		return fmt.Errorf("saved game connection has an invalid client build")
 	}
-	if strings.TrimSpace(profile.Platform) != "web-html5" {
+	return validateGameConnectionBootstrap(profile)
+}
+
+func validateGameConnectionBootstrap(profile gameConnectionProfile) error {
+	if !gameNamespacePattern.MatchString(strings.TrimSpace(profile.Namespace)) {
+		return fmt.Errorf("saved game connection has an invalid namespace")
+	}
+	if strings.TrimSpace(profile.Platform) != defaultGamePlatform {
 		return fmt.Errorf("saved game connection has an unsupported platform")
 	}
 	if err := validateDirectGameServerURL(profile.ServerURL); err != nil {
@@ -152,17 +163,82 @@ func validateGameConnectionProfile(profile gameConnectionProfile) error {
 	return nil
 }
 
+func derivedGameConnectionProfile(
+	serverURL string,
+	namespace string,
+	language string,
+) (gameConnectionProfile, error) {
+	serverURL = strings.TrimSpace(serverURL)
+	if err := validateDirectGameServerURL(serverURL); err != nil {
+		return gameConnectionProfile{}, err
+	}
+	namespace = strings.TrimSpace(namespace)
+	if namespace == "" {
+		namespace = defaultGameNamespace
+	}
+	if !gameNamespacePattern.MatchString(namespace) {
+		return gameConnectionProfile{}, fmt.Errorf("saved game connection has an invalid namespace")
+	}
+	language = strings.TrimSpace(language)
+	if language == "" {
+		language = defaultGameLanguage
+	}
+	if !loginLanguagePattern.MatchString(language) {
+		return gameConnectionProfile{}, fmt.Errorf("saved game connection has an invalid language")
+	}
+	capturedAt := time.Now().UTC()
+	profile := gameConnectionProfile{
+		SchemaVersion: gameConnectionProfileSchemaVersion,
+		CapturedAt:    capturedAt,
+		ServerURL:     serverURL,
+		Namespace:     namespace,
+		Platform:      defaultGamePlatform,
+		LoginContext: map[string]json.RawMessage{
+			"LANG":  mustMarshalGameConnectionValue(language),
+			"DID":   json.RawMessage(`"0"`),
+			"AID":   mustMarshalGameConnectionValue(newGameAccountID(capturedAt)),
+			"KID":   json.RawMessage(`""`),
+			"ID":    json.RawMessage(`0`),
+			"REF":   mustMarshalGameConnectionValue(defaultGameReferrer),
+			"PL":    json.RawMessage(`1`),
+			"GCI":   json.RawMessage(`""`),
+			"SID":   json.RawMessage(`9`),
+			"PLFID": json.RawMessage(`1`),
+		},
+	}
+	if err := validateGameConnectionBootstrap(profile); err != nil {
+		return gameConnectionProfile{}, err
+	}
+	return profile, nil
+}
+
+func mustMarshalGameConnectionValue(value string) json.RawMessage {
+	encoded, _ := json.Marshal(value)
+	return json.RawMessage(encoded)
+}
+
+func newGameAccountID(now time.Time) string {
+	suffix, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
+	if err != nil {
+		suffix = big.NewInt(now.UnixNano() % 1_000_000)
+	}
+	return fmt.Sprintf("%d%06d", now.UnixMilli(), suffix.Int64())
+}
+
 func validateDirectGameServerURL(raw string) error {
 	parsed, err := url.Parse(strings.TrimSpace(raw))
 	if err != nil || parsed.Scheme != "wss" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
 		return fmt.Errorf("saved game connection has an invalid secure server URL")
 	}
 	hostname := strings.ToLower(parsed.Hostname())
-	if !strings.HasPrefix(hostname, "ep-live-") || !strings.HasSuffix(hostname, ".goodgamestudios.com") {
+	if !gameServerHostnamePattern.MatchString(hostname) {
 		return fmt.Errorf("saved game connection server is not an official live game server")
 	}
 	if port := parsed.Port(); port != "" && port != "443" {
 		return fmt.Errorf("saved game connection server uses an unsupported port")
+	}
+	if parsed.Path != "" && parsed.Path != "/" {
+		return fmt.Errorf("saved game connection server uses an unsupported path")
 	}
 	return nil
 }

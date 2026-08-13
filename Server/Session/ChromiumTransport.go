@@ -1662,9 +1662,13 @@ func (transport *ChromiumTransport) rememberSuccessfulLogin(
 		return
 	}
 	credential := transport.loginCredential
+	language, _ := gameConnectionContextString(socket.loginContext, "LANG")
 	newCredential := persistedLoginCredential{
 		SchemaVersion: loginCredentialSchemaVersion, CapturedAt: observedAt, AutoRestore: true,
-		Username: socket.loginUsername, Password: socket.loginPassword,
+		Username: socket.loginUsername, Password: socket.loginPassword, Language: language,
+	}
+	if validateDirectGameServerURL(socket.serverURL) == nil {
+		newCredential.ServerURL = socket.serverURL
 	}
 	saveCredential := validateLoginCredential(newCredential) == nil
 	if saveCredential {

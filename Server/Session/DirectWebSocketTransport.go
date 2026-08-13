@@ -9,6 +9,8 @@ import (
 	"io"
 	"math/big"
 	"net/http"
+	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -22,22 +24,32 @@ import (
 
 const (
 	directGameOrigin          = "https://empire-html5.goodgamestudios.com"
-	directCacheBreakerURL     = "https://empire-html5.goodgamestudios.com/default/assets/CacheBreaker.js"
+	directGameIndexURL        = "https://empire-html5.goodgamestudios.com/default/index.html"
 	directDefaultPingInterval = 60 * time.Second
 	directMovementInterval    = 5 * time.Second
 	directHandshakeTimeout    = 45 * time.Second
 	directWriteTimeout        = 10 * time.Second
 	directMaxMessageBytes     = 64 << 20
+	directMaxFrontendBytes    = 2 << 20
 	directEmptyArgument       = "<RoundHouseKick>"
 )
 
-var transpilationVersionPattern = regexp.MustCompile(
-	`name\s*:\s*["']TranspilationEmpire["']\s*,\s*version\s*:\s*["']([0-9]+)\.([0-9]+)\.([0-9]+)["']`,
+var (
+	cacheBreakerBundlePattern = regexp.MustCompile(
+		`(?i)(?:src|href)\s*=\s*["']([^"']*CacheBreaker\.bundle\.[a-f0-9]+\.js)["']`,
+	)
+	transpilationVersionPattern = regexp.MustCompile(
+		`name\s*:\s*["']TranspilationEmpire["']\s*,\s*version\s*:\s*["']([0-9]+)\.([0-9]+)\.([0-9]+)["']`,
+	)
 )
 
 type DirectWebSocketConfig struct {
 	DataDir    string
 	HTTPClient *http.Client
+	Server     string
+	ServerURL  string
+	Namespace  string
+	Language   string
 
 	dialer            *websocket.Dialer
 	serverURLOverride string
@@ -100,17 +112,7 @@ type directLoginError struct {
 func (err *directLoginError) Error() string { return err.detail }
 
 func NewDirectWebSocketTransport(config DirectWebSocketConfig) *DirectWebSocketTransport {
-	credential, credentialErr := loadLoginCredential(config.DataDir)
-	profile, profileErr := loadGameConnectionProfile(config.DataDir)
-	var resolveErr error
-	switch {
-	case credentialErr != nil:
-		resolveErr = fmt.Errorf("Background mode needs a saved game login; start Full application mode and sign in once")
-	case !credential.AutoRestore:
-		resolveErr = fmt.Errorf("Background mode cannot use a saved login that has been disabled; open Settings > Game Connection to re-enable it")
-	case profileErr != nil:
-		resolveErr = fmt.Errorf("Background mode needs current connection details; start Full application mode and sign in once")
-	}
+	credential, profile, resolveErr := loadDirectWebSocketBootstrap(config)
 	preference := loadBrowserPreference(config.DataDir)
 	selectedBrowser, _ := ResolveChromiumBrowser(preference, "")
 	state := "stopped"
@@ -130,19 +132,100 @@ func NewDirectWebSocketTransport(config DirectWebSocketConfig) *DirectWebSocketT
 	}
 }
 
+func loadDirectWebSocketBootstrap(
+	config DirectWebSocketConfig,
+) (persistedLoginCredential, gameConnectionProfile, error) {
+	credential, credentialErr := loadBackgroundLoginCredential(config.DataDir)
+	if errors.Is(credentialErr, os.ErrNotExist) {
+		credential, credentialErr = loadLoginCredential(config.DataDir)
+	}
+	profile, profileErr := loadGameConnectionProfile(config.DataDir)
+	var resolveErr error
+	switch {
+	case errors.Is(credentialErr, os.ErrNotExist):
+		resolveErr = fmt.Errorf("Background mode needs a saved game login; enter username, password, and server in Settings or sign in once in Full application mode")
+	case credentialErr != nil:
+		resolveErr = fmt.Errorf("Background mode rejected the saved game login: %w", credentialErr)
+	case !credential.AutoRestore:
+		resolveErr = fmt.Errorf("Background mode cannot use a saved login that has been disabled")
+	case profileErr != nil && !errors.Is(profileErr, os.ErrNotExist) && strings.TrimSpace(credential.ServerURL) == "":
+		resolveErr = fmt.Errorf("Background mode rejected the saved game connection details: %w", profileErr)
+	default:
+		profile, resolveErr = resolveDirectGameProfile(config, credential, profile, profileErr == nil)
+	}
+	return credential, profile, resolveErr
+}
+
+func resolveDirectGameProfile(
+	config DirectWebSocketConfig,
+	credential persistedLoginCredential,
+	savedProfile gameConnectionProfile,
+	hasSavedProfile bool,
+) (gameConnectionProfile, error) {
+	selectedServerURL := strings.TrimSpace(credential.ServerURL)
+	if selectedServerURL == "" {
+		if configuredServerURL, _, err := backgroundGameServerURL(config.Server); err == nil {
+			selectedServerURL = configuredServerURL
+		}
+	}
+	if selectedServerURL == "" {
+		selectedServerURL = strings.TrimSpace(config.ServerURL)
+		if validateDirectGameServerURL(selectedServerURL) != nil {
+			selectedServerURL = ""
+		}
+	}
+	if selectedServerURL == "" && hasSavedProfile {
+		selectedServerURL = savedProfile.ServerURL
+	}
+	if selectedServerURL == "" {
+		return gameConnectionProfile{}, fmt.Errorf(
+			"Background mode needs a saved game server selection; enter the server in Settings",
+		)
+	}
+	if hasSavedProfile && selectedServerURL == savedProfile.ServerURL {
+		return savedProfile, nil
+	}
+
+	namespace := strings.TrimSpace(config.Namespace)
+	if !gameNamespacePattern.MatchString(namespace) {
+		namespace = defaultGameNamespace
+	}
+	language := strings.TrimSpace(credential.Language)
+	if !loginLanguagePattern.MatchString(language) {
+		language = strings.TrimSpace(config.Language)
+	}
+	if !loginLanguagePattern.MatchString(language) {
+		language = defaultGameLanguage
+	}
+	profile, err := derivedGameConnectionProfile(selectedServerURL, namespace, language)
+	if err != nil {
+		return gameConnectionProfile{}, fmt.Errorf("Background mode cannot use the saved game server selection: %w", err)
+	}
+	return profile, nil
+}
+
 func (transport *DirectWebSocketTransport) Start(ctx context.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	transport.mu.Lock()
-	if transport.resolveErr != nil {
-		err := transport.resolveErr
-		transport.mu.Unlock()
-		return err
-	}
 	if transport.cancel != nil {
 		transport.mu.Unlock()
 		return nil
+	}
+	credential, profile, resolveErr := loadDirectWebSocketBootstrap(transport.config)
+	transport.credential = credential
+	transport.profile = profile
+	transport.resolveErr = resolveErr
+	if resolveErr != nil {
+		status := Status{
+			Mode: ConnectionModeBackground, State: "unavailable", Namespace: profile.Namespace,
+			ServerURL: profile.ServerURL, Detail: resolveErr.Error(), ChangedAt: time.Now().UTC(),
+		}
+		transport.status = status
+		transport.mu.Unlock()
+		transport.enqueueStatus(status)
+		return resolveErr
 	}
 	runContext, cancel := context.WithCancel(ctx)
 	transport.runGeneration++
@@ -183,7 +266,27 @@ func (transport *DirectWebSocketTransport) Stop(context.Context) error {
 }
 
 func (transport *DirectWebSocketTransport) PrepareBackgroundMode() error {
-	credential, profile, err := prepareBackgroundLogin(transport.config.DataDir)
+	credential, err := loadBackgroundLoginCredential(transport.config.DataDir)
+	backgroundCredential := err == nil
+	if errors.Is(err, os.ErrNotExist) {
+		credential, err = loadLoginCredential(transport.config.DataDir)
+	}
+	if err != nil {
+		return fmt.Errorf("Background mode needs a valid saved game login; enter it in Settings or sign in once in Full application mode")
+	}
+	if !credential.AutoRestore {
+		credential.AutoRestore = true
+		credential.CapturedAt = time.Now().UTC()
+		if backgroundCredential {
+			err = saveBackgroundLoginCredential(transport.config.DataDir, credential)
+		} else {
+			err = saveLoginCredential(transport.config.DataDir, credential)
+		}
+		if err != nil {
+			return fmt.Errorf("authorize the saved game login for Background mode: %w", err)
+		}
+	}
+	credential, profile, err := loadDirectWebSocketBootstrap(transport.config)
 	if err != nil {
 		return err
 	}
@@ -334,6 +437,7 @@ func (transport *DirectWebSocketTransport) connectAndServe(ctx context.Context, 
 	}
 	connectionGeneration := transport.status.ConnectionGeneration + 1
 	transport.mu.Unlock()
+	transport.rememberSuccessfulDirectLogin(build, time.Now().UTC())
 	if !transport.publishRunStatus(generation, Status{
 		Mode: ConnectionModeBackground, State: "connected", Namespace: transport.profile.Namespace,
 		ServerURL: transport.profile.ServerURL, LoggedIn: true, SocketReady: true,
@@ -348,6 +452,18 @@ func (transport *DirectWebSocketTransport) connectAndServe(ctx context.Context, 
 	return transport.serveConnected(
 		ctx, connection, reads, decoder, roomID, roundTrip, connectionGeneration,
 	)
+}
+
+func (transport *DirectWebSocketTransport) rememberSuccessfulDirectLogin(build string, observedAt time.Time) {
+	transport.mu.RLock()
+	profile := transport.profile
+	transport.mu.RUnlock()
+	profile.SchemaVersion = gameConnectionProfileSchemaVersion
+	profile.CapturedAt = observedAt
+	profile.ClientBuild = build
+	if validateGameConnectionProfile(profile) == nil {
+		_ = saveGameConnectionProfile(transport.config.DataDir, profile)
+	}
 }
 
 func (transport *DirectWebSocketTransport) authenticate(
@@ -449,8 +565,8 @@ func (transport *DirectWebSocketTransport) authenticate(
 							code = *frame.ResponseCode
 						}
 						return 0, 0, nil, &directLoginError{
-							code: code, fatal: true,
-							detail: fmt.Sprintf("Background game client version was rejected with code %d; use Full application mode once to refresh it", code),
+							code:   code,
+							detail: fmt.Sprintf("Background game client version was rejected with code %d; refreshing it from the official frontend before retrying", code),
 						}
 					}
 					loginFrame, loginErr := transport.loginFrame(roomID, time.Since(connectedAt), roundTrip)
@@ -756,43 +872,104 @@ func (transport *DirectWebSocketTransport) clearPending() {
 }
 
 func (transport *DirectWebSocketTransport) resolveBuild(ctx context.Context) (string, error) {
-	fallback := transport.profile.ClientBuild
+	fallback := strings.TrimSpace(transport.profile.ClientBuild)
 	if transport.config.buildResolver != nil {
-		return transport.config.buildResolver(ctx, fallback)
+		build, err := transport.config.buildResolver(ctx, fallback)
+		if err != nil {
+			return "", err
+		}
+		if !gameBuildPattern.MatchString(strings.TrimSpace(build)) {
+			return "", fmt.Errorf("background game client build resolver returned an invalid value")
+		}
+		return strings.TrimSpace(build), nil
 	}
 	client := transport.config.HTTPClient
 	if client == nil {
 		client = &http.Client{Timeout: 10 * time.Second}
 	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, directCacheBreakerURL, nil)
-	if err != nil {
+	build, err := resolveCurrentGameBuild(ctx, client)
+	if err == nil {
+		return build, nil
+	}
+	if gameBuildPattern.MatchString(fallback) {
 		return fallback, nil
+	}
+	return "", fmt.Errorf("resolve current background game client build: %w", err)
+}
+
+func resolveCurrentGameBuild(ctx context.Context, client *http.Client) (string, error) {
+	index, err := fetchDirectFrontendDocument(ctx, client, directGameIndexURL)
+	if err != nil {
+		return "", fmt.Errorf("load game frontend index: %w", err)
+	}
+	bundleURL, err := resolveCacheBreakerBundleURL(index)
+	if err != nil {
+		return "", err
+	}
+	bundle, err := fetchDirectFrontendDocument(ctx, client, bundleURL)
+	if err != nil {
+		return "", fmt.Errorf("load game frontend version bundle: %w", err)
+	}
+	return transpilationBuild(bundle)
+}
+
+func fetchDirectFrontendDocument(ctx context.Context, client *http.Client, sourceURL string) ([]byte, error) {
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, sourceURL, nil)
+	if err != nil {
+		return nil, err
 	}
 	response, err := client.Do(request)
 	if err != nil {
-		return fallback, nil
+		return nil, err
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return fallback, nil
+		return nil, fmt.Errorf("unexpected HTTP status %d", response.StatusCode)
 	}
-	contents, err := io.ReadAll(io.LimitReader(response.Body, 2<<20))
+	contents, err := io.ReadAll(io.LimitReader(response.Body, directMaxFrontendBytes+1))
 	if err != nil {
-		return fallback, nil
+		return nil, err
 	}
+	if len(contents) > directMaxFrontendBytes {
+		return nil, fmt.Errorf("game frontend document is too large")
+	}
+	return contents, nil
+}
+
+func resolveCacheBreakerBundleURL(index []byte) (string, error) {
+	match := cacheBreakerBundlePattern.FindSubmatch(index)
+	if len(match) != 2 {
+		return "", fmt.Errorf("game frontend index did not identify its version bundle")
+	}
+	base, _ := url.Parse(directGameIndexURL)
+	reference, err := url.Parse(string(match[1]))
+	if err != nil {
+		return "", fmt.Errorf("game frontend version bundle URL is invalid")
+	}
+	resolved := base.ResolveReference(reference)
+	if resolved.Scheme != "https" || resolved.User != nil || resolved.Fragment != "" ||
+		!strings.EqualFold(resolved.Hostname(), base.Hostname()) || resolved.Port() != "" ||
+		!strings.HasPrefix(resolved.EscapedPath(), "/default/CacheBreaker.bundle.") ||
+		!strings.HasSuffix(resolved.EscapedPath(), ".js") {
+		return "", fmt.Errorf("game frontend version bundle is not an approved official asset")
+	}
+	return resolved.String(), nil
+}
+
+func transpilationBuild(contents []byte) (string, error) {
 	match := transpilationVersionPattern.FindSubmatch(contents)
 	if len(match) != 4 {
-		return fallback, nil
+		return "", fmt.Errorf("game frontend version bundle did not contain the client build")
 	}
 	major, majorErr := strconv.ParseUint(string(match[1]), 10, 32)
 	minor, minorErr := strconv.ParseUint(string(match[2]), 10, 32)
 	patch, patchErr := strconv.ParseUint(string(match[3]), 10, 32)
 	if majorErr != nil || minorErr != nil || patchErr != nil || minor > 999 || patch > 999 {
-		return fallback, nil
+		return "", fmt.Errorf("game frontend client build is invalid")
 	}
 	build := strconv.FormatUint(major*1_000_000+minor*1_000+patch, 10)
 	if !gameBuildPattern.MatchString(build) {
-		return fallback, nil
+		return "", fmt.Errorf("game frontend client build is invalid")
 	}
 	return build, nil
 }

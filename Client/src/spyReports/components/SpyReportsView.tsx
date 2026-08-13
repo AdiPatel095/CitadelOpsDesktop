@@ -7,16 +7,23 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader } f
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 
 interface SpyPlayer { id?: number; name?: string; alliance?: string }
-interface SpyCastle { id?: number; name?: string; kingdomID?: number; x?: number; y?: number }
+interface SpyCastle {
+  id?: number;
+  name?: string;
+  kingdomID?: number;
+  x?: number;
+  y?: number;
+  wallLevel?: number;
+  gateLevel?: number;
+  moatLevel?: number;
+  keepLevel?: number;
+  towerLevel?: number;
+}
 interface SpyUnit { wodID: number; amount: number }
 interface SpySection { index: number; name: string; units: SpyUnit[]; total: number }
 interface SpyCastellan {
   level?: number;
-  wall?: number;
-  gate?: number;
-  moat?: number;
-  courtyard?: number;
-  wallSlots?: number;
+  generalID?: number;
   effects?: unknown[][];
   equipment?: unknown[][];
   skillIDs?: unknown[];
@@ -135,7 +142,7 @@ export const SpyReportDetail = ({ report, onBack }: { report: SpyReport; onBack:
               </CardContent>
             </Card>
 
-            {report.castellan && <CastellanPanel castellan={report.castellan} />}
+            {report.castellan && <CastellanPanel castellan={report.castellan} castle={report.castle} />}
           </div>
         </>
       )}
@@ -156,9 +163,9 @@ const SetupSectionCard = ({ section, getTroop }: { section: SpySection; getTroop
   </div>
 );
 
-const CastellanPanel = ({ castellan }: { castellan: SpyCastellan }) => {
+const CastellanPanel = ({ castellan, castle }: { castellan: SpyCastellan; castle: SpyCastle }) => {
   const effects = (castellan.calculatedEffects ?? []).slice().sort((left, right) => (left.sortOrder ?? 900) - (right.sortOrder ?? 900));
-  return <Card variant="solid" className="liquid-prominent-header-card xl:sticky xl:top-4"><CardHeader className="liquid-card-header-prominent"><div><CardTitle>Defense setup</CardTitle><p className="mt-1 text-xs font-semibold text-text-muted">Calculated castellan and fortification stats.</p></div></CardHeader><CardContent className="liquid-prominent-header-content space-y-4"><div className="grid grid-cols-2 gap-2"><DefenseStat label="Castellan level" value={castellan.level} /><DefenseStat label="Wall" value={castellan.wall} /><DefenseStat label="Gate" value={castellan.gate} /><DefenseStat label="Moat" value={castellan.moat} /><DefenseStat label="Courtyard" value={castellan.courtyard} /><DefenseStat label="Wall slots" value={castellan.wallSlots} /></div><div className="space-y-2">{effects.map((effect, index) => <div key={`${effect.label}-${index}`} className="rounded-global border border-border-base bg-bg-app/35 p-3"><div className="flex items-start justify-between gap-3"><span className="text-xs font-semibold text-text-main">{effect.label || effect.name || 'Unknown effect'}</span><span className="shrink-0 text-sm font-bold tabular-nums text-primary">{effect.formattedValue || formatEffectValue(effect.value)}</span></div>{effect.category && <div className="mt-1 text-[10px] uppercase tracking-wide text-text-muted">{effect.category}</div>}</div>)}</div></CardContent></Card>;
+  return <Card variant="solid" className="liquid-prominent-header-card xl:sticky xl:top-4"><CardHeader className="liquid-card-header-prominent"><div><CardTitle>Defense setup</CardTitle><p className="mt-1 text-xs font-semibold text-text-muted">Observed castellan and fortification levels.</p></div></CardHeader><CardContent className="liquid-prominent-header-content space-y-4"><div className="grid grid-cols-2 gap-2"><DefenseStat label="Castellan level" value={castellan.level} /><DefenseStat label="General" value={castellan.generalID} /><DefenseStat label="Wall level" value={castle.wallLevel} /><DefenseStat label="Gate level" value={castle.gateLevel} /><DefenseStat label="Moat level" value={castle.moatLevel} /><DefenseStat label="Keep level" value={castle.keepLevel} /></div><div className="space-y-2">{effects.map((effect, index) => <div key={`${effect.label}-${index}`} className="rounded-global border border-border-base bg-bg-app/35 p-3"><div className="flex items-start justify-between gap-3"><span className="text-xs font-semibold text-text-main">{effect.label || effect.name || 'Unknown effect'}</span><span className="shrink-0 text-sm font-bold tabular-nums text-primary">{effect.formattedValue || formatEffectValue(effect.value)}</span></div>{effect.category && <div className="mt-1 text-[10px] uppercase tracking-wide text-text-muted">{effect.category}</div>}</div>)}</div></CardContent></Card>;
 };
 
 const StatusBadge = ({ status }: { status: SpyReport['status'] }) => <Badge variant={status === 'success' ? 'success' : status === 'failed' ? 'danger' : 'warning'}>{status === 'success' ? 'Successful' : status === 'partial' ? 'Partial intel' : 'Failed'}</Badge>;

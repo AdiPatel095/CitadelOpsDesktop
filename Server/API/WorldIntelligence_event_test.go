@@ -38,14 +38,10 @@ func TestWorldIntelligenceEventRoutesProxyBackendContract(t *testing.T) {
 		}
 	}))
 	defer upstream.Close()
-	service, err := WorldIntel.NewDesktopService(
-		t.TempDir(), nil, nil, nil, nil,
+	service := WorldIntel.NewDesktopService(
+		nil,
 		WorldIntel.NewCloudClient(WorldIntel.ClientConfig{Client: upstream.Client(), BaseURL: upstream.URL + "/v1", ClientVersion: "test"}),
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer service.Close()
 	handler := NewServer(Config{WorldIntel: service}).Handler()
 
 	tests := []struct {
@@ -68,11 +64,7 @@ func TestWorldIntelligenceEventRoutesProxyBackendContract(t *testing.T) {
 }
 
 func TestWorldIntelligenceEventRoutesRejectInvalidFilters(t *testing.T) {
-	service, err := WorldIntel.NewDesktopService(t.TempDir(), nil, nil, nil, nil, WorldIntel.NewCloudClient(WorldIntel.ClientConfig{}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer service.Close()
+	service := WorldIntel.NewDesktopService(nil, WorldIntel.NewCloudClient(WorldIntel.ClientConfig{}))
 	handler := NewServer(Config{WorldIntel: service}).Handler()
 	tests := []string{
 		"/api/v2/world-intelligence/event-runs?worldId=world.example&eventKey=-invalid",

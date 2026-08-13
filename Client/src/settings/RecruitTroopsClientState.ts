@@ -15,6 +15,7 @@ export const RECRUIT_CHECK_INTERVAL_SEC_PER_MIN = 60;
 const recruitTroopsState = createQueueProductionClientState({
   configurationSection: 'automation.recruitTroops',
   schedulePrefix: 'autoRecruit',
+  supportsGloryTitleFallback: true,
 });
 
 export const DEFAULT_RECRUIT_CHECK_INTERVAL_SEC = recruitTroopsState.defaultCheckIntervalSec;

@@ -60,20 +60,50 @@ type AccountBindingState struct {
 }
 
 type PlayerState struct {
-	ID             PlayerID                  `json:"id"`
-	Name           string                    `json:"name,omitempty"`
-	AllianceID     AllianceID                `json:"allianceId,omitempty"`
-	Level          int                       `json:"level,omitempty"`
-	LegendLevel    int                       `json:"legendLevel,omitempty"`
-	Might          float64                   `json:"might,omitempty"`
-	Glory          float64                   `json:"glory,omitempty"`
-	Gallantry      float64                   `json:"gallantry,omitempty"`
-	Resources      map[ResourceID]float64    `json:"resources"`
-	Currencies     map[CurrencyID]float64    `json:"currencies"`
-	VIP            VIPState                  `json:"vip"`
-	ProtectionMode PlayerProtectionModeState `json:"protectionMode"`
-	Achievements   AchievementState          `json:"achievements"`
-	LegendSkills   LegendSkillState          `json:"legendSkills"`
+	ID                PlayerID                  `json:"id"`
+	Name              string                    `json:"name,omitempty"`
+	AllianceID        AllianceID                `json:"allianceId,omitempty"`
+	Level             int                       `json:"level,omitempty"`
+	LegendLevel       int                       `json:"legendLevel,omitempty"`
+	Might             float64                   `json:"might,omitempty"`
+	Glory             float64                   `json:"glory,omitempty"`
+	GloryTitleID      int64                     `json:"gloryTitleId,omitempty"`
+	GloryTitleTopX    int                       `json:"gloryTitleTopX,omitempty"`
+	GloryTitleAt      time.Time                 `json:"gloryTitleObservedAt,omitempty"`
+	GloryTitleGen     uint64                    `json:"gloryTitleGeneration,omitempty"`
+	Gallantry         float64                   `json:"gallantry,omitempty"`
+	GallantryTitleID  int64                     `json:"gallantryTitleId,omitempty"`
+	GallantryTitleAt  time.Time                 `json:"gallantryTitleObservedAt,omitempty"`
+	GallantryTitleGen uint64                    `json:"gallantryTitleGeneration,omitempty"`
+	Resources         map[ResourceID]float64    `json:"resources"`
+	Currencies        map[CurrencyID]float64    `json:"currencies"`
+	VIP               VIPState                  `json:"vip"`
+	ProtectionMode    PlayerProtectionModeState `json:"protectionMode"`
+	Achievements      AchievementState          `json:"achievements"`
+	LegendSkills      LegendSkillState          `json:"legendSkills"`
+}
+
+// CurrentGloryTitle returns a title only when it was observed on the active
+// game connection. This prevents a persisted title from authorizing a recruit
+// after reconnecting into a newer game state.
+func (player PlayerState) CurrentGloryTitle(connectionGeneration uint64) (int64, bool) {
+	return currentPlayerTitle(player.GloryTitleID, player.GloryTitleAt, player.GloryTitleGen, connectionGeneration)
+}
+
+// CurrentGallantryTitle returns the separately reported FACTION title from
+// the active connection. Gallantry title updates never authorize recruitment.
+func (player PlayerState) CurrentGallantryTitle(connectionGeneration uint64) (int64, bool) {
+	return currentPlayerTitle(player.GallantryTitleID, player.GallantryTitleAt, player.GallantryTitleGen, connectionGeneration)
+}
+
+func currentPlayerTitle(titleID int64, observedAt time.Time, observedGeneration uint64, connectionGeneration uint64) (int64, bool) {
+	if observedAt.IsZero() || titleID < 0 {
+		return 0, false
+	}
+	if connectionGeneration > 0 && observedGeneration != connectionGeneration {
+		return 0, false
+	}
+	return titleID, true
 }
 
 type PlayerProtectionModeState struct {

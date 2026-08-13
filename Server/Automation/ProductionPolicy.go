@@ -25,14 +25,17 @@ type ProductionPolicy struct {
 }
 
 type productionSettings struct {
-	Mode             string                      `json:"mode"`
-	CheckIntervalSec int                         `json:"checkIntervalSec"`
-	GlobalItems      []productionTarget          `json:"globalItems"`
-	Castles          map[string]productionCastle `json:"castles"`
+	Mode                      string                      `json:"mode"`
+	CheckIntervalSec          int                         `json:"checkIntervalSec"`
+	RecruitLevel10OnTitleLoss bool                        `json:"recruitLevel10OnTitleLoss"`
+	GlobalItems               []productionTarget          `json:"globalItems"`
+	Castles                   map[string]productionCastle `json:"castles"`
 }
 
 type productionTarget struct {
 	ID     int64 `json:"id"`
+	MinID  int64 `json:"minId,omitempty"`
+	MaxID  int64 `json:"maxId,omitempty"`
 	Amount int64 `json:"amount,omitempty"`
 }
 
@@ -44,6 +47,21 @@ type productionCastle struct {
 
 const recruitmentStackCapacityEffectID = 189
 const productionBaseQueueCapacity = 2
+
+type productionTargetAvailability uint8
+
+const (
+	productionTargetAvailable productionTargetAvailability = iota
+	productionTargetUnavailable
+	productionTargetGloryTitleUnknown
+	productionTargetGloryTitlePaused
+)
+
+type productionGloryTitleGuard struct {
+	TitleGatedDefinitionID int64
+	RequiredGloryTitleID   int64
+	TitleLossFallback      bool
+}
 
 func NewRecruitPolicy() *ProductionPolicy {
 	return &ProductionPolicy{
@@ -64,6 +82,9 @@ func (policy *ProductionPolicy) ID() string { return policy.id }
 func (policy *ProductionPolicy) EnabledKey() string { return policy.enabledKey }
 
 func (policy *ProductionPolicy) WakeDomains() []string {
+	if policy.id == "autoRecruit" {
+		return []string{"production", "subscriptions", "glory-title"}
+	}
 	return []string{"production", "subscriptions"}
 }
 
@@ -83,6 +104,10 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	full := 0
 	unknownStackCapacity := 0
 	missingScheduledDefinition := 0
+	unavailableDefinition := 0
+	unavailableScheduledDefinition := 0
+	gloryTitleUnknown := 0
+	gloryTitlePaused := 0
 	var nextCastleSchedule time.Time
 	for _, castleKey := range policy.orderedCastleKeys(settings.Castles, snapshot.State.Castles) {
 		castlePlan := settings.Castles[castleKey]
@@ -124,6 +149,10 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 				continue
 			}
 			target = productionTarget{ID: definitionID}
+			if policy.lineID == 0 {
+				target.MinID, _ = productionScheduleDefinitionID(schedule.Options, "unitIDMin")
+				target.MaxID, _ = productionScheduleDefinitionID(schedule.Options, "unitIDMax")
+			}
 		} else {
 			if len(targets) == 0 {
 				continue
@@ -163,6 +192,58 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 			}
 			continue
 		}
+		resolvedTarget := target
+		availability := productionTargetUnavailable
+		var titleGuard *productionGloryTitleGuard
+		candidateCount := 1
+		if rotating {
+			candidateCount = len(targets)
+		}
+		for offset := 0; offset < candidateCount; offset++ {
+			candidateCursor := cursor
+			candidate := target
+			if rotating {
+				candidateCursor = (cursor + offset) % len(targets)
+				candidate = targets[candidateCursor]
+				if candidate.ID <= 0 {
+					continue
+				}
+			}
+			attemptTarget, attemptAvailability, attemptGuard := policy.resolveQueueableTarget(
+				candidate,
+				castle,
+				snapshot.State.Player,
+				snapshot.State.Session.ConnectionGeneration,
+				snapshot.GameData,
+				settings.RecruitLevel10OnTitleLoss,
+			)
+			if attemptAvailability == productionTargetAvailable {
+				resolvedTarget = attemptTarget
+				availability = attemptAvailability
+				titleGuard = attemptGuard
+				cursor = candidateCursor
+				break
+			}
+			if attemptAvailability == productionTargetGloryTitleUnknown ||
+				attemptAvailability == productionTargetGloryTitlePaused && availability != productionTargetGloryTitleUnknown {
+				availability = attemptAvailability
+			}
+		}
+		if availability != productionTargetAvailable {
+			switch availability {
+			case productionTargetGloryTitleUnknown:
+				gloryTitleUnknown++
+			case productionTargetGloryTitlePaused:
+				gloryTitlePaused++
+			default:
+				unavailableDefinition++
+			}
+			if scheduled {
+				unavailableScheduledDefinition++
+			}
+			continue
+		}
+		target = resolvedTarget
 		amount := policy.targetAmount(snapshot.State, castle, target, snapshot.GameData)
 		if amount <= 0 {
 			unknownStackCapacity++
@@ -173,6 +254,11 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 			"castleId": castleID, "lineId": policy.lineID,
 			"definitionId": target.ID, "amount": amount, "fillAvailable": fillAvailable,
 		}
+		if titleGuard != nil {
+			intentArguments["titleGatedDefinitionId"] = titleGuard.TitleGatedDefinitionID
+			intentArguments["requiredGloryTitleId"] = titleGuard.RequiredGloryTitleID
+			intentArguments["titleLossFallback"] = titleGuard.TitleLossFallback
+		}
 		if scheduled {
 			intentArguments["scheduledDefinitionId"] = target.ID
 			intentArguments["scheduleValidUntil"] = schedule.ValidUntil.UTC()
@@ -180,6 +266,9 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		arguments, _ := json.Marshal(intentArguments)
 		var followUp *Intent.Request
 		detail := fmt.Sprintf("Queue the configured %s at %s", policy.definitionKey, castleName(castle))
+		if titleGuard != nil && titleGuard.TitleLossFallback {
+			detail = fmt.Sprintf("Queue the level 10 glory-title fallback at %s", castleName(castle))
+		}
 		if scheduled {
 			detail = fmt.Sprintf("Queue scheduled %s %d at %s", policy.definitionKey, target.ID, castleName(castle))
 		} else if rotating {
@@ -217,6 +306,16 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		detail = "Waiting for production queues to be observed in the game session"
 	} else if configured > 0 && observed == full {
 		detail = "All observed production queues are full"
+	} else if gloryTitleUnknown > 0 {
+		detail = "Waiting for the current player glory title before recruiting a title-gated level 11 unit"
+	} else if gloryTitlePaused > 0 {
+		detail = "Glory-title level 11 recruit slots are paused while the required title is lost"
+	} else if unavailableDefinition > 0 {
+		if unavailableScheduledDefinition > 0 {
+			detail = fmt.Sprintf("The scheduled %s family is not currently available at any enabled castle", policy.definitionKey)
+		} else {
+			detail = fmt.Sprintf("No enabled castle can currently produce the configured %s family", policy.definitionKey)
+		}
 	} else if unknownStackCapacity > 0 {
 		detail = "Waiting for the official building stack capacity"
 	}
@@ -225,6 +324,145 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		nextCheck = nextCastleSchedule
 	}
 	return Decision{Status: "idle", Detail: detail, NextCheckAt: nextCheck}, nil
+}
+
+// resolveQueueableTarget treats a configured recruitment definition as an
+// official upgrade-family anchor. When the game replaces a researched unit ID
+// with its next tier, Auto Recruit selects the highest member of that same
+// family that the target castle currently reports as recruitable.
+func (policy *ProductionPolicy) resolveQueueableTarget(
+	target productionTarget,
+	castle State.CastleState,
+	player State.PlayerState,
+	connectionGeneration uint64,
+	gameData *GameData.Store,
+	recruitLevel10OnTitleLoss bool,
+) (productionTarget, productionTargetAvailability, *productionGloryTitleGuard) {
+	var titleGuard *productionGloryTitleGuard
+	if policy.lineID == 0 && gameData != nil {
+		if unlock, titleGated := gameData.GloryTitleUnlockForUnit(target.ID); titleGated {
+			currentTitleID, titleKnown := player.CurrentGloryTitle(connectionGeneration)
+			if !titleKnown {
+				return target, productionTargetGloryTitleUnknown, nil
+			}
+			titleEligible := gameData.GloryTitleIncludes(currentTitleID, unlock.RequiredTitleID)
+			if !titleEligible && !recruitLevel10OnTitleLoss {
+				return target, productionTargetGloryTitlePaused, nil
+			}
+			titleGuard = &productionGloryTitleGuard{
+				TitleGatedDefinitionID: unlock.UnitID,
+				RequiredGloryTitleID:   unlock.RequiredTitleID,
+				TitleLossFallback:      !titleEligible,
+			}
+			if !titleEligible {
+				if unlock.Level10UnitID <= 0 {
+					return target, productionTargetUnavailable, nil
+				}
+				target.ID = unlock.Level10UnitID
+			}
+		}
+	}
+	if policy.lineID != 0 || castle.QueueableObservedAt.IsZero() {
+		return target, productionTargetAvailable, titleGuard
+	}
+	available := make(map[int64]struct{})
+	for _, definition := range castle.QueueableProduction[policy.lineID] {
+		if definition.ID <= 0 || definition.Collection != "" && definition.Collection != "units" {
+			continue
+		}
+		available[definition.ID] = struct{}{}
+	}
+	if len(available) == 0 {
+		return target, productionTargetUnavailable, nil
+	}
+	if titleGuard != nil {
+		if _, found := available[target.ID]; !found {
+			return target, productionTargetUnavailable, nil
+		}
+		return target, productionTargetAvailable, titleGuard
+	}
+
+	family := productionUnitFamilyIDs(target, gameData)
+	for index := len(family) - 1; index >= 0; index-- {
+		if _, found := available[family[index]]; !found {
+			continue
+		}
+		target.ID = family[index]
+		return target, productionTargetAvailable, nil
+	}
+	return target, productionTargetUnavailable, nil
+}
+
+func productionUnitFamilyIDs(target productionTarget, gameData *GameData.Store) []int64 {
+	if target.ID <= 0 {
+		return nil
+	}
+	if gameData == nil {
+		return []int64{target.ID}
+	}
+	units, err := gameData.Catalog("units")
+	if err != nil {
+		return []int64{target.ID}
+	}
+
+	seed := target.ID
+	if _, found := productionRecord(units, seed); !found {
+		for _, candidate := range []int64{target.MinID, target.MaxID} {
+			if _, candidateFound := productionRecord(units, candidate); candidateFound {
+				seed = candidate
+				break
+			}
+		}
+	}
+	if _, found := productionRecord(units, seed); !found {
+		return []int64{target.ID}
+	}
+
+	const maximumFamilySize = 128
+	seen := map[int64]struct{}{seed: {}}
+	lower := []int64{seed}
+	for current := seed; len(seen) < maximumFamilySize; {
+		next := productionUnitLink(units, current, "downgradeWodID")
+		if next <= 0 {
+			break
+		}
+		if _, duplicate := seen[next]; duplicate {
+			break
+		}
+		seen[next] = struct{}{}
+		lower = append(lower, next)
+		current = next
+	}
+	for left, right := 0, len(lower)-1; left < right; left, right = left+1, right-1 {
+		lower[left], lower[right] = lower[right], lower[left]
+	}
+
+	family := append([]int64(nil), lower...)
+	for current := seed; len(seen) < maximumFamilySize; {
+		next := productionUnitLink(units, current, "upgradeWodID")
+		if next <= 0 {
+			break
+		}
+		if _, duplicate := seen[next]; duplicate {
+			break
+		}
+		seen[next] = struct{}{}
+		family = append(family, next)
+		current = next
+	}
+	return family
+}
+
+func productionUnitLink(catalog *GameData.Catalog, definitionID int64, field string) int64 {
+	record, found := productionRecord(catalog, definitionID)
+	if !found {
+		return 0
+	}
+	linkedID, exists := record.Int64(field)
+	if !exists || linkedID <= 0 {
+		return 0
+	}
+	return linkedID
 }
 
 func productionScheduleDefinitionID(options map[string]any, key string) (int64, bool) {

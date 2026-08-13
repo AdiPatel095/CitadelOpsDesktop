@@ -123,8 +123,12 @@ export const WorldEventHistory = ({
 			setRegularPlayers(playerIndex);
 
 			const allRuns = runResponse.runs ?? [];
-			const activeRuns = allRuns.filter((run) => Date.parse(run.eventEndsAt) >= Date.now() - 10 * 60 * 1_000);
-			const visibleRuns = (activeRuns.length > 0 ? activeRuns : allRuns.slice(0, 5)).slice(0, 12);
+			const activeCutoff = Date.now() - 10 * 60 * 1_000;
+			const orderedRuns = [...allRuns].sort((left, right) => Date.parse(right.eventEndsAt) - Date.parse(left.eventEndsAt));
+			const activeRuns = orderedRuns.filter((run) => Date.parse(run.eventEndsAt) >= activeCutoff);
+			const completedRuns = orderedRuns.filter((run) => Date.parse(run.eventEndsAt) < activeCutoff);
+			const activeLimit = completedRuns.length > 0 ? 8 : 12;
+			const visibleRuns = [...activeRuns.slice(0, activeLimit), ...completedRuns].slice(0, 12);
 			const rankingResults = await Promise.allSettled(visibleRuns.map((run) => (
 				CitadelAPI.getWorldIntelligenceEventRunRankings({ worldId, occurrenceId: run.occurrenceId, limit: 5_000 })
 			)));
@@ -153,28 +157,31 @@ export const WorldEventHistory = ({
 					});
 				}
 			}
-			nextBoards.push({
-				key: `public-metric:${stormBoard.metric}`,
-				eventId: stormBoard.eventId,
-				eventName: stormBoard.eventName,
-				listType: stormBoard.listType,
-				boardKey: '',
-				entries: (stormResponse.response?.entries ?? []).map((entry) => ({
-					worldId: entry.worldId,
+			const stormEntries = stormResponse.response?.entries ?? [];
+			if (stormResponse.available && stormEntries.length > 0) {
+				nextBoards.push({
+					key: `public-metric:${stormBoard.metric}`,
 					eventId: stormBoard.eventId,
+					eventName: stormBoard.eventName,
 					listType: stormBoard.listType,
-					leagueId: stormBoard.leagueId,
-					playerId: entry.id,
-					playerName: entry.name,
-					allianceId: entry.allianceId,
-					allianceName: entry.allianceName,
-					rank: entry.rank,
-					score: entry.value,
-					scoreKnown: true,
-					scoreUnit: 'points',
-					observedAt: entry.lastObservedAt,
-				})),
-			});
+					boardKey: '',
+					entries: stormEntries.map((entry) => ({
+						worldId: entry.worldId,
+						eventId: stormBoard.eventId,
+						listType: stormBoard.listType,
+						leagueId: stormBoard.leagueId,
+						playerId: entry.id,
+						playerName: entry.name,
+						allianceId: entry.allianceId,
+						allianceName: entry.allianceName,
+						rank: entry.rank,
+						score: entry.value,
+						scoreKnown: true,
+						scoreUnit: 'points',
+						observedAt: entry.lastObservedAt,
+					})),
+				});
+			}
 			nextBoards.sort((left, right) => eventBoardTitle(left).localeCompare(eventBoardTitle(right)));
 			setBoards(nextBoards);
 			setBoard((current) => nextBoards.some((candidate) => candidate.key === current) ? current : nextBoards[0]?.key ?? '');

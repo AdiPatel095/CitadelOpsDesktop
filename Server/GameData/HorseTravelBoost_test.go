@@ -95,12 +95,10 @@ func TestResolveHorseTravelBoostFailsClosedWithoutOneActiveSet(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := store.ResolveHorseTravelBoost(
-		State.CastleState{ID: 1, Layout: State.CastleLayout{ObservedAt: time.Now().UTC()}, Buildings: map[State.BuildingInstanceID]State.Building{
-			1: {DefinitionID: 226, Placed: false},
-		}},
+		State.CastleState{ID: 1, Layout: State.CastleLayout{ObservedAt: time.Now().UTC()}},
 		HorseTravelBoostStandard,
-	); err == nil || !errors.Is(err, ErrHorseTravelBoostUnavailable) || !strings.Contains(err.Error(), "no placed") {
-		t.Fatalf("stored Stable was accepted: %v", err)
+	); err == nil || !errors.Is(err, ErrHorseTravelBoostUnavailable) || !strings.Contains(err.Error(), "no Stable") {
+		t.Fatalf("missing travel building was accepted: %v", err)
 	}
 	if _, err := store.ResolveHorseTravelBoost(
 		State.CastleState{ID: 2, Buildings: map[State.BuildingInstanceID]State.Building{
@@ -110,6 +108,59 @@ func TestResolveHorseTravelBoostFailsClosedWithoutOneActiveSet(t *testing.T) {
 		HorseTravelBoostStandard,
 	); err == nil || !errors.Is(err, ErrHorseTravelBoostConflict) || !strings.Contains(err.Error(), "conflicting") {
 		t.Fatalf("conflicting travel buildings were accepted: %v", err)
+	}
+}
+
+func TestResolveHorseTravelBoostRecognizesDistrictAndFixedTravelBuildings(t *testing.T) {
+	store, err := DecodeStore([]byte(`{
+		"versionInfo":[],
+		"buildings":[
+			{"wodID":226,"name":"Stable","level":"3","unlockHorses":"1007,1008,1009"},
+			{"wodID":47,"name":"Harbor","level":"3","unlockHorses":"1036,1037,1038"}
+		],
+		"units":[],
+		"horses":[
+			{"wodID":1009,"group":"Travelbooster"},
+			{"wodID":1038,"group":"Travelbooster"}
+		]
+	}`), SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name     string
+		castle   State.CastleState
+		wantID   int64
+		wantName string
+	}{
+		{
+			name: "Stable housed in Military District",
+			castle: State.CastleState{ID: 1, Buildings: map[State.BuildingInstanceID]State.Building{
+				1: {DefinitionID: 226, GridX: -1, GridY: -1, Placed: false},
+			}},
+			wantID:   1009,
+			wantName: "Stable",
+		},
+		{
+			name: "fixed-position Harbor",
+			castle: State.CastleState{ID: 2, Layout: State.CastleLayout{Fixed: map[State.BuildingInstanceID]State.Building{
+				2: {DefinitionID: 47, GridX: -1, GridY: -1, Placed: false},
+			}}},
+			wantID:   1038,
+			wantName: "Harbor",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			definition, err := store.ResolveHorseTravelBoost(test.castle, HorseTravelBoostFastest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if definition.ID != test.wantID || definition.BuildingName != test.wantName {
+				t.Fatalf("unexpected resolved boost: %#v", definition)
+			}
+		})
 	}
 }
 

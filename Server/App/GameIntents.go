@@ -294,6 +294,10 @@ func (application *Application) registerGameIntents() error {
 	}
 	definitions := []Intent.Definition{
 		{
+			Name: "daily_attacks.refresh", Description: "Refresh the authoritative account-wide daily normal-attack count", Effect: Intent.EffectRead,
+			Planner: planDailyAttackRefresh,
+		},
+		{
 			Name: "game.refresh_movements", Description: "Request a fresh movement snapshot", Effect: Intent.EffectRead,
 			Planner: func(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
 				return Intent.Plan{

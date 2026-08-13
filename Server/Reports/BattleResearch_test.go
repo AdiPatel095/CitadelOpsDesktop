@@ -3,6 +3,7 @@ package Reports
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -121,6 +122,167 @@ func TestBuildBattleResearchPredictionProducesVersionedResolutionShape(t *testin
 		len(prediction.Waves) != 1 || prediction.Waves[0].Left.Winner != "attacker" ||
 		prediction.Courtyard.Winner != "attacker" || prediction.UnitStatCoverage != 1 {
 		t.Fatalf("unexpected prediction: %#v", prediction)
+	}
+}
+
+func TestBattleResearchFortificationCombinesDefenseAndAttackerReductions(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"units":[],
+		"buildings":[
+			{"wodID":1,"name":"Castlewall","level":"8","wallBonus":"200"},
+			{"wodID":2,"name":"Basic","level":"7","gateBonus":"160"},
+			{"wodID":3,"name":"Premium","level":"2","moatBonus":"65"}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := battleResearchBaseFortification(Castle{
+		WallLevel: 8, GateLevel: 7, MoatLevel: 6,
+	}, gameData)
+	if base != (researchFortification{wall: 200, gate: 160, moat: 65}) {
+		t.Fatalf("base fortification = %#v", base)
+	}
+	attack := researchCombatModifiers{wall: 20, gate: 30, moat: 10}
+	defense := researchCombatModifiers{wall: 40, gate: 50, moat: 60}
+	tools := researchToolModifiers{wall: 30, gate: 20, moat: 15}
+	if got := battleResearchLaneFortification(base, attack, defense, tools, false); got != 290 {
+		t.Fatalf("flank fortification = %v, want 290", got)
+	}
+	if got := battleResearchLaneFortification(base, attack, defense, tools, true); got != 450 {
+		t.Fatalf("center fortification = %v, want 450", got)
+	}
+}
+
+func TestBattleResearchReadsDefenderEquipmentEffectsAndExcludesRecovery(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"effects":[
+			{"effectID":901,"effectTypeID":31,"capID":99},
+			{"effectID":902,"effectTypeID":6,"capID":99},
+			{"effectID":903,"effectTypeID":58,"capID":99}
+		],
+		"equipment_effects":[{"equipmentEffectID":77,"effectID":902}],
+		"effectCaps":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var effects any
+	var equipment any
+	if err := json.Unmarshal([]byte(`[[901,[32],"AB"],[903,[35],"AB"]]`), &effects); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal([]byte(`[[0,0,0,1,0,[[77,[25]]]]]`), &equipment); err != nil {
+		t.Fatal(err)
+	}
+	modifiers := battleResearchSpyCombatModifiers(SpyReport{
+		Castellan: &SpyCastellan{Effects: effects, Equipment: equipment},
+	}, 1, true, gameData)
+	if modifiers.globalBonus != 32 || modifiers.wall != 25 {
+		t.Fatalf("defender modifiers = %#v", modifiers)
+	}
+}
+
+func TestBattleResearchDefenseMixIsPerUnitAndRoleAdjusted(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],
+		"units":[
+			{"wodID":1,"role":"melee","meleeDefence":"100","rangeDefence":"10"},
+			{"wodID":2,"role":"ranged","meleeDefence":"10","rangeDefence":"100"}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	force := researchDefenseFromCounts([]UnitCount{
+		{WodID: 1, Amount: 1}, {WodID: 2, Amount: 1},
+	}, gameData)
+	power := force.effectivePower(
+		researchPowerParts{melee: 50, rangePower: 50},
+		researchCombatModifiers{meleeBonus: 100}, researchToolModifiers{}, 0,
+	)
+	if math.Abs(power-54.5454545) > 0.0001 {
+		t.Fatalf("per-unit harmonic defense power = %v", power)
+	}
+}
+
+func TestBattleResearchAppliesCourtyardSupportToolEffects(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],
+		"units":[
+			{"wodID":381,"type":"SceatSuppAttAttackPower","slotTypes":"9,10","effects":"635&3,504&20,48&7"}
+		],
+		"effects":[
+			{"effectID":635,"effectTypeID":177,"capID":99},
+			{"effectID":504,"effectTypeID":33,"capID":99},
+			{"effectID":48,"effectTypeID":36,"capID":99}
+		],
+		"effectCaps":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	effects := battleResearchSupportEffects([]int64{381}, gameData)
+	if len(effects) != 3 {
+		t.Fatalf("support effects = %#v", effects)
+	}
+	modifiers := battleResearchCombatModifiers(
+		BattleResearchAttackerContext{}, effects, 1, true, gameData,
+	)
+	if modifiers.globalBonus != 7 || modifiers.yardBonus != 20 {
+		t.Fatalf("support combat modifiers = %#v", modifiers)
+	}
+	kills := battleResearchYardKillsFromEffects(effects, 1, true, gameData)
+	if kills != (researchYardKills{any: 3}) {
+		t.Fatalf("support yard kills = %#v", kills)
+	}
+	force := researchDefenseForce{
+		count: 10, knownCount: 10,
+		stacks: []researchDefenseStack{
+			{amount: 5, meleeDefense: 10, rangeDefense: 10},
+			{amount: 5, meleeDefense: 10, rangeDefense: 10, ranged: true},
+		},
+	}
+	if removed := force.remove(3, "melee"); removed != 3 || force.count != 7 ||
+		force.stacks[0].amount != 2 || force.stacks[1].amount != 5 {
+		t.Fatalf("role-specific support removal = %#v", force)
+	}
+}
+
+func TestBattleResearchCourtyardRequiresWallBreach(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],
+		"units":[
+			{"wodID":1,"meleeAttack":"100","meleeDefence":"20","rangeDefence":"20"},
+			{"wodID":2,"meleeAttack":"10","meleeDefence":"50","rangeDefence":"50"}
+		],
+		"effects":[],"effectCaps":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	formation, err := parseBattleResearchFormation(json.RawMessage(`{
+		"SX":1,"SY":2,"TX":10,"TY":20,"KID":0,"LID":7,
+		"A":[{"L":{},"M":{},"R":{}}],"RW":[[1,100]],"AST":[]
+	}`), time.Date(2026, 8, 6, 12, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	prediction, err := BuildBattleResearchPrediction(
+		formation, BattleResearchAttackerContext{}, State.MovementState{TargetTypeID: 4},
+		SpyReport{
+			Status:    "success",
+			Setup:     []SpySection{{Index: 3, Units: []UnitCount{{WodID: 2, Amount: 5}}}},
+			Castellan: &SpyCastellan{},
+		},
+		gameData, time.Date(2026, 8, 6, 12, 1, 0, 0, time.UTC),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prediction.PredictedResult != "Defeat" || prediction.Courtyard.AttackerLost != 0 {
+		t.Fatalf("support bypassed an unbreached wall: %#v", prediction.Courtyard)
 	}
 }
 

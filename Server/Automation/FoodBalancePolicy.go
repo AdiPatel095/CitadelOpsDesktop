@@ -14,7 +14,10 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-const foodBalanceKingdomDeliveryRatio = 0.90
+const (
+	foodBalanceKingdomDeliveryRatio           = 0.90
+	minimumStormFoodBalanceShipmentSize int64 = 10_000
+)
 
 type FoodBalancePolicy struct{}
 
@@ -25,6 +28,7 @@ type foodBalanceSettings struct {
 	SafetyHours              float64          `json:"safetyHours"`
 	SourceSafetyHours        float64          `json:"sourceSafetyHours"`
 	MinimumShipmentSize      int64            `json:"minimumShipmentSize"`
+	MinimumStormShipmentSize int64            `json:"minimumStormShipmentSize"`
 	MinimumSourceReserve     float64          `json:"minimumSourceReserve"`
 	MinimumCoinReserve       float64          `json:"minimumCoinReserve"`
 	AutoKingdomTransport     bool             `json:"autoKingdomTransport"`
@@ -73,7 +77,8 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	settings := foodBalanceSettings{
 		CheckIntervalSec: 60, StateRefreshIntervalSec: 900, LogisticsRefreshInterval: 300,
 		SafetyHours: 8, SourceSafetyHours: 24, MinimumShipmentSize: 1_000,
-		MinimumSourceReserve: 1_000, AutoKingdomTransport: true, TimeSkipReserve: map[string]int64{},
+		MinimumStormShipmentSize: minimumStormFoodBalanceShipmentSize,
+		MinimumSourceReserve:     1_000, AutoKingdomTransport: true, TimeSkipReserve: map[string]int64{},
 		HorseTravelBoostID: -1,
 	}
 	if !decodeSection(snapshot.Configuration, "automation.autoFoodBalance", &settings) {
@@ -637,9 +642,8 @@ func foodBalanceKingdomDispatchAmountForRisk(
 	risk foodBalanceRisk,
 	targetNeed float64,
 ) (float64, bool) {
-	amount := math.Floor(targetNeed / foodBalanceKingdomDeliveryRatio)
 	if risk.fillToCapacity {
-		return amount, amount > 0
+		settings.MinimumShipmentSize = max(settings.MinimumStormShipmentSize, minimumStormFoodBalanceShipmentSize)
 	}
 	return foodBalanceKingdomDispatchAmount(settings, targetNeed)
 }

@@ -176,8 +176,8 @@ func (submitter *coordinatorTestBlockingSubmitter) Submit(ctx context.Context, _
 	return Intent.Receipt{Status: Intent.StatusCancelled, Error: ctx.Err().Error()}
 }
 
-func TestPolicyOperationContextBoundsAutoBeriAttackQueueWait(t *testing.T) {
-	for _, policyID := range []string{"autoTowers", "autoBeriWorldAttack"} {
+func TestPolicyOperationContextBoundsAttackOperations(t *testing.T) {
+	for _, policyID := range []string{"autoTowers", "autoBeriWorldAttack", "autoStorm"} {
 		operationContext, cancel := policyOperationContext(t.Context(), policyID)
 		deadline, bounded := operationContext.Deadline()
 		cancel()

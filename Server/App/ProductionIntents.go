@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/GameData"
@@ -18,23 +19,30 @@ const (
 )
 
 type productionQueueCapacityGuard struct {
-	CastleID              State.CastleID `json:"castleId"`
-	LineID                int            `json:"lineId"`
-	ExpectedFreeSlots     int            `json:"expectedFreeSlots"`
-	FillAvailable         bool           `json:"fillAvailable"`
-	ScheduledDefinitionID int64          `json:"scheduledDefinitionId,omitempty"`
-	ScheduleValidUntil    *time.Time     `json:"scheduleValidUntil,omitempty"`
+	CastleID               State.CastleID `json:"castleId"`
+	LineID                 int            `json:"lineId"`
+	DefinitionID           int64          `json:"definitionId"`
+	ExpectedFreeSlots      int            `json:"expectedFreeSlots"`
+	FillAvailable          bool           `json:"fillAvailable"`
+	ScheduledDefinitionID  int64          `json:"scheduledDefinitionId,omitempty"`
+	ScheduleValidUntil     *time.Time     `json:"scheduleValidUntil,omitempty"`
+	TitleGatedDefinitionID int64          `json:"titleGatedDefinitionId,omitempty"`
+	RequiredGloryTitleID   int64          `json:"requiredGloryTitleId,omitempty"`
+	TitleLossFallback      bool           `json:"titleLossFallback,omitempty"`
 }
 
 func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct {
-		CastleID              State.CastleID `json:"castleId"`
-		LineID                int            `json:"lineId"`
-		DefinitionID          int64          `json:"definitionId"`
-		Amount                int64          `json:"amount,omitempty"`
-		FillAvailable         bool           `json:"fillAvailable,omitempty"`
-		ScheduledDefinitionID int64          `json:"scheduledDefinitionId,omitempty"`
-		ScheduleValidUntil    *time.Time     `json:"scheduleValidUntil,omitempty"`
+		CastleID               State.CastleID `json:"castleId"`
+		LineID                 int            `json:"lineId"`
+		DefinitionID           int64          `json:"definitionId"`
+		Amount                 int64          `json:"amount,omitempty"`
+		FillAvailable          bool           `json:"fillAvailable,omitempty"`
+		ScheduledDefinitionID  int64          `json:"scheduledDefinitionId,omitempty"`
+		ScheduleValidUntil     *time.Time     `json:"scheduleValidUntil,omitempty"`
+		TitleGatedDefinitionID int64          `json:"titleGatedDefinitionId,omitempty"`
+		RequiredGloryTitleID   int64          `json:"requiredGloryTitleId,omitempty"`
+		TitleLossFallback      bool           `json:"titleLossFallback,omitempty"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -67,6 +75,29 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	}
 	if err := requireOfficialDefinition(input.GameData, collection, request.DefinitionID); err != nil {
 		return Intent.Plan{}, err
+	}
+	if request.LineID == 0 && request.TitleGatedDefinitionID <= 0 &&
+		request.RequiredGloryTitleID <= 0 && !request.TitleLossFallback && input.GameData != nil {
+		if unlock, titleGated := input.GameData.GloryTitleUnlockForUnit(request.DefinitionID); titleGated {
+			request.TitleGatedDefinitionID = unlock.UnitID
+			request.RequiredGloryTitleID = unlock.RequiredTitleID
+		}
+	}
+	if err := validateProductionGloryTitle(
+		input.State,
+		input.GameData,
+		request.DefinitionID,
+		request.TitleGatedDefinitionID,
+		request.RequiredGloryTitleID,
+		request.TitleLossFallback,
+	); err != nil {
+		return Intent.Plan{}, err
+	}
+	if !productionDefinitionAvailable(castle, request.LineID, request.DefinitionID) {
+		return Intent.Plan{}, fmt.Errorf(
+			"%w: %s %d is not currently available for production at %s",
+			Intent.ErrPlanStale, strings.TrimSuffix(collection, "s"), request.DefinitionID, castleLabel(castle),
+		)
 	}
 	definitionLabel := productionDefinitionLabel(input.GameData, input.Language, collection, request.DefinitionID)
 	// Queue capacity represents the QS slots, not the active production stack.
@@ -103,15 +134,18 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		stackCount = queueCapacity - occupied
 	}
 	steps := castleContextSteps(input, castle)
-	guardArguments, _ := json.Marshal(productionQueueCapacityGuard{
-		CastleID: request.CastleID, LineID: request.LineID,
-		ExpectedFreeSlots: stackCount, FillAvailable: request.FillAvailable,
-		ScheduledDefinitionID: request.ScheduledDefinitionID, ScheduleValidUntil: request.ScheduleValidUntil,
-	})
-	steps = append(steps, Intent.RebuildOnResume(Intent.Step{
-		Name: "Revalidate production queue capacity", Action: "production.enqueue.verify_capacity", ActionArguments: guardArguments,
-	}))
 	for stack := 0; stack < stackCount; stack++ {
+		guardArguments, _ := json.Marshal(productionQueueCapacityGuard{
+			CastleID: request.CastleID, LineID: request.LineID, DefinitionID: request.DefinitionID,
+			ExpectedFreeSlots: stackCount - stack, FillAvailable: request.FillAvailable,
+			ScheduledDefinitionID: request.ScheduledDefinitionID, ScheduleValidUntil: request.ScheduleValidUntil,
+			TitleGatedDefinitionID: request.TitleGatedDefinitionID,
+			RequiredGloryTitleID:   request.RequiredGloryTitleID,
+			TitleLossFallback:      request.TitleLossFallback,
+		})
+		steps = append(steps, Intent.RebuildOnResume(Intent.Step{
+			Name: "Revalidate production queue and player title", Action: "production.enqueue.verify_capacity", ActionArguments: guardArguments,
+		}))
 		steps = append(steps, commandStep("Enqueue production stack", "bup", payload, "bup"))
 	}
 	summary := fmt.Sprintf("Queue %d %s at %s", request.Amount, definitionLabel, castleLabel(castle))
@@ -152,6 +186,20 @@ func (application *Application) verifyProductionQueueCapacityAt(arguments json.R
 		return fmt.Errorf("production state is unavailable")
 	}
 	gameState := application.State.Snapshot()
+	var gameData *GameData.Store
+	if application.GameData != nil {
+		gameData, _ = application.GameData.Current()
+	}
+	if err := validateProductionGloryTitle(
+		gameState,
+		gameData,
+		request.DefinitionID,
+		request.TitleGatedDefinitionID,
+		request.RequiredGloryTitleID,
+		request.TitleLossFallback,
+	); err != nil {
+		return err
+	}
 	castle, exists := gameState.Castles[request.CastleID]
 	if !exists || !castle.Focused {
 		return fmt.Errorf("%w: castle %d is no longer focused", Intent.ErrPlanStale, request.CastleID)
@@ -160,9 +208,11 @@ func (application *Application) verifyProductionQueueCapacityAt(arguments json.R
 	if !exists || queue.ObservedAt.IsZero() {
 		return fmt.Errorf("%w: production line %d is no longer observed", Intent.ErrPlanStale, request.LineID)
 	}
-	var gameData *GameData.Store
-	if application.GameData != nil {
-		gameData, _ = application.GameData.Current()
+	if !productionDefinitionAvailable(castle, request.LineID, request.DefinitionID) {
+		return fmt.Errorf(
+			"%w: production definition %d is no longer available at castle %d",
+			Intent.ErrPlanStale, request.DefinitionID, request.CastleID,
+		)
 	}
 	available := productionQueueCapacity(gameState, request.LineID, queue, gameData) - len(queue.Queued)
 	if available < request.ExpectedFreeSlots || request.FillAvailable && available != request.ExpectedFreeSlots {
@@ -172,6 +222,71 @@ func (application *Application) verifyProductionQueueCapacityAt(arguments json.R
 		)
 	}
 	return nil
+}
+
+func validateProductionGloryTitle(
+	gameState State.GameState,
+	gameData *GameData.Store,
+	definitionID int64,
+	titleGatedDefinitionID int64,
+	requiredGloryTitleID int64,
+	titleLossFallback bool,
+) error {
+	if titleGatedDefinitionID <= 0 && requiredGloryTitleID <= 0 && !titleLossFallback {
+		if gameData == nil {
+			return nil
+		}
+		unlock, titleGated := gameData.GloryTitleUnlockForUnit(definitionID)
+		if !titleGated {
+			return nil
+		}
+		titleGatedDefinitionID = unlock.UnitID
+		requiredGloryTitleID = unlock.RequiredTitleID
+	}
+	if gameData == nil || titleGatedDefinitionID <= 0 || requiredGloryTitleID <= 0 {
+		return fmt.Errorf("%w: glory-title production guard is incomplete", Intent.ErrPlanStale)
+	}
+	unlock, found := gameData.GloryTitleUnlockForUnit(titleGatedDefinitionID)
+	if !found || unlock.RequiredTitleID != requiredGloryTitleID {
+		return fmt.Errorf("%w: official glory-title unit mapping changed", Intent.ErrPlanStale)
+	}
+	currentTitleID, current := gameState.Player.CurrentGloryTitle(gameState.Session.ConnectionGeneration)
+	if !current {
+		return fmt.Errorf("%w: current player glory title has not been observed", Intent.ErrPlanStale)
+	}
+	titleEligible := gameData.GloryTitleIncludes(currentTitleID, requiredGloryTitleID)
+	if titleLossFallback {
+		if unlock.Level10UnitID <= 0 || definitionID != unlock.Level10UnitID {
+			return fmt.Errorf("%w: level 10 glory-title fallback mapping changed", Intent.ErrPlanStale)
+		}
+		if titleEligible {
+			return fmt.Errorf("%w: required glory title was restored before the fallback recruit", Intent.ErrPlanStale)
+		}
+		return nil
+	}
+	if definitionID != titleGatedDefinitionID {
+		return fmt.Errorf("%w: title-gated recruit definition changed", Intent.ErrPlanStale)
+	}
+	if !titleEligible {
+		return fmt.Errorf("%w: required glory title was lost before the level 11 recruit", Intent.ErrPlanStale)
+	}
+	return nil
+}
+
+func productionDefinitionAvailable(castle State.CastleState, lineID int, definitionID int64) bool {
+	if castle.QueueableObservedAt.IsZero() {
+		return true
+	}
+	collection := "units"
+	if lineID == 1 {
+		collection = "tools"
+	}
+	for _, definition := range castle.QueueableProduction[lineID] {
+		if definition.ID == definitionID && (definition.Collection == "" || definition.Collection == collection) {
+			return true
+		}
+	}
+	return false
 }
 
 func productionQueueCapacity(state State.GameState, lineID int, queue State.ProductionQueue, gameData *GameData.Store) int {

@@ -265,6 +265,43 @@ func TestAutoBirdWaitingCastleDoesNotBlockAnotherCastleCycle(t *testing.T) {
 	}
 }
 
+func TestAutoBirdWaitingCastlesHonorRetryAfterSharedObservationsAdvance(t *testing.T) {
+	now := time.Date(2026, 7, 29, 14, 0, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	gameState.Castles[11] = State.CastleState{
+		ID: 11, KingdomID: 0, X: 11, Y: 11, UnitsObservedAt: now,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
+	}
+	retryAt := now.Add(5 * time.Minute)
+	for _, castleID := range []State.CastleID{10, 11} {
+		gameState.Stationing[autoBirdTrackingID(castleID)] = State.StationingOperation{
+			ID:                 autoBirdTrackingID(castleID),
+			Purpose:            "autoBird",
+			Phase:              State.StationingPhaseWaiting,
+			SourceCastleID:     castleID,
+			TargetCastleID:     20,
+			AllianceObservedAt: now.Add(-time.Minute),
+			UnitsObservedAt:    now.Add(-time.Minute),
+			NextAttemptAt:      &retryAt,
+			StatusDetail:       "Fresh JAA contains too few eligible troops",
+			UpdatedAt:          now,
+		}
+	}
+
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil {
+		t.Fatalf("waiting Auto Bird castles unexpectedly restarted a cycle: %#v", decision)
+	}
+	if !decision.NextCheckAt.After(now) || decision.NextCheckAt.After(retryAt) {
+		t.Fatalf("waiting Auto Bird retry = %s, want after %s and no later than %s", decision.NextCheckAt, now, retryAt)
+	}
+}
+
 func TestAutoBirdTargetlessCastleHonorsItsOwnRetryDespiteOldUnitState(t *testing.T) {
 	now := time.Date(2026, 7, 29, 14, 0, 0, 0, time.UTC)
 	gameState, gameData := autoBirdEligibleTestState(t, now)

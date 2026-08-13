@@ -233,7 +233,7 @@ func TestPlanAutoBirdDispatchGuardsPreparedContextAndRecordsMovement(t *testing.
 	now := time.Now().UTC()
 	gameState, gameData := autoBirdIntentTestState(t, now)
 	gameState.Castles[10] = State.CastleState{
-		ID: 10, KingdomID: 0, X: 10, Y: 10, Focused: true, UnitsObservedAt: now,
+		ID: 10, KingdomID: 0, X: 10, Y: 10, Focused: false, UnitsObservedAt: now,
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
 	}
 	gameState.Stationing["autoBird:10"] = State.StationingOperation{
@@ -250,14 +250,16 @@ func TestPlanAutoBirdDispatchGuardsPreparedContextAndRecordsMovement(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 6 ||
-		plan.Steps[0].Action != "auto_bird.dispatch.guard" ||
-		plan.Steps[1].Opcode != "sdi" ||
-		plan.Steps[2].Resolver != "auto_bird.dispatch.build" ||
-		plan.Steps[3].Action != "auto_bird.movement.capture" ||
-		plan.Steps[4].Opcode != "gam" ||
-		plan.Steps[4].ResponseBarrier != Intent.ResponseBarrierCommitted ||
-		plan.Steps[5].Action != "auto_bird.movement.capture" {
+	if len(plan.Steps) != 7 ||
+		plan.Steps[0].Opcode != "jaa" ||
+		plan.Steps[0].ResponseBarrier != Intent.ResponseBarrierCommitted ||
+		plan.Steps[1].Action != "auto_bird.dispatch.guard" ||
+		plan.Steps[2].Opcode != "sdi" ||
+		plan.Steps[3].Resolver != "auto_bird.dispatch.build" ||
+		plan.Steps[4].Action != "auto_bird.movement.capture" ||
+		plan.Steps[5].Opcode != "gam" ||
+		plan.Steps[5].ResponseBarrier != Intent.ResponseBarrierCommitted ||
+		plan.Steps[6].Action != "auto_bird.movement.capture" {
 		t.Fatalf("Auto Bird dispatch steps = %#v", plan.Steps)
 	}
 }

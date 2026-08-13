@@ -69,7 +69,9 @@ type horseTravelBuildingDefinition struct {
 }
 
 // ResolveHorseTravelBoost selects the official travel-booster ID unlocked by
-// the source castle's placed Stable, Faction Stable, or Harbor.
+// the source castle's Stable, Faction Stable, or Harbor. District-contained
+// buildings and fixed-position Harbors are active even though the wire layout
+// reports their grid coordinates as -1,-1 and therefore marks them unplaced.
 func (store *Store) ResolveHorseTravelBoost(
 	castle State.CastleState,
 	tier HorseTravelBoostTier,
@@ -98,7 +100,7 @@ func (store *Store) ResolveHorseTravelBoost(
 		return HorseTravelBoostDefinition{}, horseTravelBoostResolutionError{
 			kind: ErrHorseTravelBoostUnavailable,
 			detail: fmt.Sprintf(
-				"castle %d has no placed Stable, Faction Stable, or Harbor with official horse unlocks",
+				"castle %d has no Stable, Faction Stable, or Harbor with official horse unlocks in its layout",
 				castle.ID,
 			),
 		}
@@ -173,7 +175,10 @@ func horseTravelBuildingDefinitions(
 	}
 	for _, collection := range collections {
 		for _, building := range collection {
-			if !building.Placed || building.DefinitionID <= 0 {
+			// Ordinary stored buildings are absent from the castle layout maps.
+			// Do not use Placed here: district children and fixed structures are
+			// active layout entries whose wire coordinates are intentionally -1,-1.
+			if building.DefinitionID <= 0 {
 				continue
 			}
 			raw, found := catalog.Find(strconv.FormatInt(int64(building.DefinitionID), 10))

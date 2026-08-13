@@ -79,9 +79,14 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
         <div className="grid gap-4 sm:grid-cols-2">
           <NumberField label="Polling interval" value={settings.checkIntervalSec} min={30} max={3600} suffix="seconds" onChange={(value) => setNumber('checkIntervalSec', value)} />
           <NumberField label="Minimum kingdom shipment" value={settings.minimumShipmentSize} min={1} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumShipmentSize', value)} />
+          <NumberField label="Minimum Storm delivery" value={settings.minimumStormShipmentSize} min={10_000} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumStormShipmentSize', value)} />
           <NumberField label="Donor reserve" value={settings.minimumSourceReserve} min={0} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumSourceReserve', value)} />
           <NumberField label="Coin reserve" value={settings.minimumCoinReserve} min={0} max={Number.MAX_SAFE_INTEGER} onChange={(value) => setNumber('minimumCoinReserve', value)} />
         </div>
+
+        <p className="text-xs text-text-muted">
+          Storm Food and Mead wait until the configured delivery threshold is available after the kingdom-transport toll. The minimum is 10,000.
+        </p>
 
         <div className="rounded-global border border-border-base bg-bg-card/40 p-4">
           <HorseTravelBoostSelect
