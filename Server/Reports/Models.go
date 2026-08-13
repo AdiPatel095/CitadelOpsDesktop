@@ -8,12 +8,17 @@ type Player struct {
 }
 
 type Castle struct {
-	ID        int64  `json:"id,omitempty"`
-	Name      string `json:"name,omitempty"`
-	KingdomID int    `json:"kingdomID,omitempty"`
-	TypeID    int    `json:"typeID,omitempty"`
-	X         int    `json:"x,omitempty"`
-	Y         int    `json:"y,omitempty"`
+	ID         int64  `json:"id,omitempty"`
+	Name       string `json:"name,omitempty"`
+	KingdomID  int    `json:"kingdomID,omitempty"`
+	TypeID     int    `json:"typeID,omitempty"`
+	X          int    `json:"x,omitempty"`
+	Y          int    `json:"y,omitempty"`
+	WallLevel  int    `json:"wallLevel,omitempty"`
+	GateLevel  int    `json:"gateLevel,omitempty"`
+	MoatLevel  int    `json:"moatLevel,omitempty"`
+	KeepLevel  int    `json:"keepLevel,omitempty"`
+	TowerLevel int    `json:"towerLevel,omitempty"`
 }
 
 type UnitCount struct {
@@ -29,15 +34,12 @@ type SpySection struct {
 }
 
 type SpyCastellan struct {
-	Level     int `json:"level,omitempty"`
-	Wall      int `json:"wall,omitempty"`
-	Gate      int `json:"gate,omitempty"`
-	Moat      int `json:"moat,omitempty"`
-	Courtyard int `json:"courtyard,omitempty"`
-	WallSlots int `json:"wallSlots,omitempty"`
-	Effects   any `json:"effects,omitempty"`
-	Equipment any `json:"equipment,omitempty"`
-	SkillIDs  any `json:"skillIDs,omitempty"`
+	Level                  int   `json:"level,omitempty"`
+	GeneralID              int64 `json:"generalID,omitempty"`
+	Effects                any   `json:"effects,omitempty"`
+	Equipment              any   `json:"equipment,omitempty"`
+	SkillIDs               any   `json:"skillIDs,omitempty"`
+	GeneralAbilitySkillIDs any   `json:"generalAbilitySkillIDs,omitempty"`
 }
 
 type SpyReport struct {

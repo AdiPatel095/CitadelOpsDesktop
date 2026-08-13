@@ -1,7 +1,16 @@
 /**
  * In-app changelog. Append a new release at the top when you ship a version.
  */
-export type PatchNoteKind = 'added' | 'fixed' | 'removed' | 'changed' | 'security' | 'deprecated';
+export const PATCH_NOTE_KIND_ORDER = [
+  'added',
+  'fixed',
+  'security',
+  'changed',
+  'removed',
+  'deprecated',
+] as const;
+
+export type PatchNoteKind = (typeof PATCH_NOTE_KIND_ORDER)[number];
 
 export interface PatchNoteItem {
   kind: PatchNoteKind;
@@ -12,9 +21,9 @@ export interface PatchNoteItem {
 export const PATCH_NOTE_KIND_LABEL: Record<PatchNoteKind, string> = {
   added: 'Added',
   fixed: 'Fixed',
-  removed: 'Removed',
-  changed: 'Changed',
   security: 'Security',
+  changed: 'Changed',
+  removed: 'Removed',
   deprecated: 'Deprecated',
 };
 
@@ -28,7 +37,45 @@ export interface PatchNotesRelease {
   items: PatchNoteItem[];
 }
 
-export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
+const PATCH_NOTE_KIND_RANK = PATCH_NOTE_KIND_ORDER.reduce<Record<PatchNoteKind, number>>(
+  (rank, kind, index) => {
+    rank[kind] = index;
+    return rank;
+  },
+  {} as Record<PatchNoteKind, number>,
+);
+
+export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteItem[] {
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((left, right) => (
+      PATCH_NOTE_KIND_RANK[left.item.kind] - PATCH_NOTE_KIND_RANK[right.item.kind]
+      || left.index - right.index
+    ))
+    .map(({ item }) => item);
+}
+
+const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
+  {
+    version: '2.2.1',
+    subtitle: 'Title-aware recruiting, independent Background login, and safer automation decisions',
+    date: '2026-08-13',
+    items: [
+      { kind: 'added', text: 'Background mode can now be configured directly with a game username, password, and world code, then connect without first capturing a Full application session; the current official client build and remaining WebSocket handshake values are derived automatically' },
+      { kind: 'added', text: 'Auto Recruit now tracks the current Glory and Gallantry titles from live game updates while keeping the two title systems independent; only the active connection\'s observed Glory title can authorize Glory-title recruits' },
+      { kind: 'added', text: 'A new off-by-default Recruit level 10 if glory title is lost option can queue the corresponding level 10 unit after title loss; while it is off, affected slots are softly paused and rotating schedules continue with another available slot' },
+      { kind: 'fixed', text: 'Auto Bird retains castle focus from its final source refresh through dispatch and respects each castle\'s retry window, preventing focus races, rapid back-and-forth preparation, and one waiting castle from blocking another castle\'s cycle' },
+      { kind: 'fixed', text: 'The authoritative daily attack count is refreshed on a bounded interval after the server maximum is reached, so attack automations can resume after the game resets the count without unrelated policy churn' },
+      { kind: 'fixed', text: 'Spy reports now preserve official wall, gate, moat, keep, tower, general, and general-ability fields instead of interpreting unrelated packet values as calculated defense percentages' },
+      { kind: 'fixed', text: 'Horse travel boosts fail closed when placed building data does not identify one active compatible building set, avoiding a travel selection based on ambiguous stable, faction-stable, or harbor state' },
+      { kind: 'security', text: 'Background credentials are kept in a separate protected profile file, excluded from settings exports, API responses, receipts, and logs, and can only be changed through a size-bounded same-origin local request' },
+      { kind: 'changed', text: 'Level 11 Protector of the North and Valkyrie Sniper selections are checked against their official Glory-title unlocks whenever Auto Recruit plans a queue and again immediately before each recruit command' },
+      { kind: 'changed', text: 'Recruit selections and weekly schedules now follow official unit upgrade families and automatically choose the highest member that the target castle currently exposes, while queue capacity and scheduled selections are revalidated before enqueueing' },
+      { kind: 'changed', text: 'Storm Food and Mead kingdom deliveries now use a configurable minimum shipment of at least 10,000 after transport tolls, with 10,000 as the default' },
+      { kind: 'changed', text: 'World Intelligence desktop access is now a read-only facade over the shared CitadelOps backend event, ranking, player, and alliance data; obsolete local catalog collection, scheduling, and storage were removed' },
+      { kind: 'changed', text: 'Experimental battle prediction now uses the catalog-effect combat v2 model with per-wave and per-lane forces, tools, capped equipment and skill effects, fortification levels, courtyard control, and explicit uncertainty for hidden defender tools' },
+    ],
+  },
   {
     version: '2.2.0',
     subtitle: 'Guarded Auto Buyer controls and unified event-aware World Intelligence',
@@ -232,5 +279,10 @@ export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = [
     ],
   },
 ];
+
+export const PATCH_NOTES_RELEASES: PatchNotesRelease[] = PATCH_NOTES_RELEASES_UNSORTED.map((release) => ({
+  ...release,
+  items: sortPatchNoteItems(release.items),
+}));
 
 export const APP_VERSION_CURRENT = PATCH_NOTES_RELEASES[0].version;

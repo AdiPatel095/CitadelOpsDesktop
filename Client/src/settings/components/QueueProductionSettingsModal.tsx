@@ -44,6 +44,12 @@ import {
   queueableIDsForCastles,
   type QueueableProductionField,
 } from '../QueueableProductionCatalog';
+import {
+  highestAvailableUnitIDInFamily,
+  highestUnitIDsByFamily,
+  unitIDsAvailableByFamilyAcrossCastles,
+  unitUpgradeFamily,
+} from '../UnitUpgradeFamily';
 
 export interface QueueProductionSettingsModalProps {
   isOpen: boolean;
@@ -183,6 +189,34 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       : <ToolImage toolId={itemID} size={size} showLevel className={className} />
   );
 
+  const itemWithCurrentUnitRange = (itemID: number, current?: QueueProductionItem): QueueProductionItem => {
+    const item: QueueProductionItem = { id: itemID, amount: current?.amount ?? 0 };
+    if (kind !== 'recruit') return item;
+    const family = troops[itemID] ? unitUpgradeFamily(itemID, troops) : null;
+    if (family) {
+      item.minId = family.minId;
+      item.maxId = family.maxId;
+    } else if (current?.minId || current?.maxId) {
+      item.minId = current.minId;
+      item.maxId = current.maxId;
+    }
+    return item;
+  };
+
+  const unitRangeLabel = (item: QueueProductionItem): string => {
+    if (kind !== 'recruit') return '';
+    const family = troops[item.id] ? unitUpgradeFamily(item.id, troops) : null;
+    const minID = family?.minId ?? item.minId ?? item.id;
+    const maxID = family?.maxId ?? item.maxId ?? item.id;
+    return minID === maxID ? `Auto ID ${minID}` : `Auto IDs ${minID}-${maxID}`;
+  };
+
+  const currentItemForUnitFamily = (items: QueueProductionItem[], unitID: number) => {
+    const exact = items.find((item) => item.id === unitID);
+    if (exact || kind !== 'recruit') return exact;
+    return items.find((item) => unitUpgradeFamily(item.id, troops)?.ids.includes(unitID));
+  };
+
   const currentItemsForScope = (scope: ItemScope) => {
     if (scope.type === 'global') return settings.globalItems;
     return settings.castles[scope.castleId]?.items ?? [];
@@ -192,7 +226,8 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     if (!queueableCatalogLoaded) return undefined;
     if (scope.type === 'castle') {
       if (!queueableBuildingRowsLoaded(queueableCatalog, scope.castleId)) return undefined;
-      return queueableIDsForCastle(queueableCatalog, scope.castleId, definition.queueField);
+      const availableIDs = queueableIDsForCastle(queueableCatalog, scope.castleId, definition.queueField);
+      return kind === 'recruit' ? highestUnitIDsByFamily(availableIDs, troops) : availableIDs;
     }
 
     const knownCastleIDs = eligibleCastles
@@ -200,10 +235,17 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       .filter((castleID) => queueableBuildingRowsLoaded(queueableCatalog, castleID));
     const enabledCastleIDs = knownCastleIDs.filter((castleID) => settings.castles[String(castleID)]?.enabled);
     if (enabledCastleIDs.length > 0) {
+      if (kind === 'recruit') {
+        return unitIDsAvailableByFamilyAcrossCastles(
+          enabledCastleIDs.map((castleID) => queueableIDsForCastle(queueableCatalog, castleID, definition.queueField)),
+          troops,
+        );
+      }
       return queueableIDsForCastles(queueableCatalog, enabledCastleIDs, definition.queueField, 'intersection');
     }
     if (knownCastleIDs.length > 0) {
-      return queueableIDsForCastles(queueableCatalog, knownCastleIDs, definition.queueField, 'union');
+      const availableIDs = queueableIDsForCastles(queueableCatalog, knownCastleIDs, definition.queueField, 'union');
+      return kind === 'recruit' ? highestUnitIDsByFamily(availableIDs, troops) : availableIDs;
     }
     return undefined;
   };
@@ -216,7 +258,10 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       const castleSettings = prev.castles[scope.castleId] ?? { enabled: true, items: [], cursor: 0 };
       const sameRotation = castleSettings.items.length === items.length
         && castleSettings.items.every((item, index) => (
-          item.id === items[index]?.id && (item.amount ?? 0) === (items[index]?.amount ?? 0)
+          item.id === items[index]?.id
+          && (item.amount ?? 0) === (items[index]?.amount ?? 0)
+          && (item.minId ?? 0) === (items[index]?.minId ?? 0)
+          && (item.maxId ?? 0) === (items[index]?.maxId ?? 0)
         ));
       return {
         ...prev,
@@ -237,29 +282,42 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     const allowedItemIDs = allowedItemIDsForScope(scope);
     const isPerCastleRecruitRotation = kind === 'recruit' && settings.mode === 'perCastle' && scope.type === 'castle';
     if (isPerCastleRecruitRotation) {
+      const pickerPreselected = currentItems
+        .map((item) => highestAvailableUnitIDInFamily(item.id, allowedItemIDs, troops))
+        .filter((itemID): itemID is number => itemID != null);
       const result = await showTroopPicker({
         mode: 'multi',
         title,
-        preselected: currentItems.map((item) => item.id),
+        preselected: Array.from(new Set(pickerPreselected)),
         allowedUnitIds: allowedItemIDs,
       });
       if (!Array.isArray(result)) return;
-      const currentByID = new Map(currentItems.map((item) => [item.id, item]));
-      const selectedIDs = result.filter((item): item is number => typeof item === 'number');
+      const allowed = allowedItemIDs == null ? null : new Set(allowedItemIDs);
+      const selectedIDs = highestUnitIDsByFamily(
+        result.filter((item): item is number => typeof item === 'number' && (!allowed || allowed.has(item))),
+        troops,
+      );
       updateItemsForScope(
         scope,
-        selectedIDs.map((itemID) => currentByID.get(itemID) ?? { id: itemID, amount: 0 }),
+        selectedIDs.map((itemID) => itemWithCurrentUnitRange(
+          itemID,
+          currentItemForUnitFamily(currentItems, itemID),
+        )),
       );
       return;
     }
 
-    const commonOptions = { mode: 'single' as const, title, preselected: currentItems[0]?.id ? [currentItems[0].id] : [] };
+    const currentItemID = currentItems[0]?.id;
+    const preselectedItemID = kind === 'recruit' && currentItemID
+      ? highestAvailableUnitIDInFamily(currentItemID, allowedItemIDs, troops)
+      : currentItemID;
+    const commonOptions = { mode: 'single' as const, title, preselected: preselectedItemID ? [preselectedItemID] : [] };
     const result = kind === 'recruit'
       ? await showTroopPicker({ ...commonOptions, allowedUnitIds: allowedItemIDs })
       : await showToolPicker({ ...commonOptions, allowedToolIds: allowedItemIDs });
 
     if (typeof result === 'number') {
-      updateItemsForScope(scope, [{ id: result, amount: 0 }]);
+      updateItemsForScope(scope, [itemWithCurrentUnitRange(result, currentItems[0])]);
     }
   };
 
@@ -344,7 +402,18 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
 
   const handleSave = () => {
     setIsSaving(true);
-    const sent = definition.persistSettings(settings);
+    const nextSettings = kind === 'recruit'
+      ? {
+          ...settings,
+          globalItems: settings.globalItems.map((item) => itemWithCurrentUnitRange(item.id, item)),
+          castles: Object.fromEntries(Object.entries(settings.castles).map(([castleID, castle]) => [
+            castleID,
+            { ...castle, items: castle.items.map((item) => itemWithCurrentUnitRange(item.id, item)) },
+          ])),
+        }
+      : settings;
+    setSettings(nextSettings);
+    const sent = definition.persistSettings(nextSettings);
     setIsSaving(false);
     if (sent) onClose();
   };
@@ -404,7 +473,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             className={`group/item relative flex w-[5.75rem] flex-col items-center gap-2 rounded-global border bg-bg-card/70 p-3 text-center shadow-sm transition-transform hover:-translate-y-1 hover:border-primary/45 ${
               index === nextRotationIndex ? 'border-primary/70 ring-1 ring-primary/25' : 'border-border-base'
             }`}
-            title={showsRecruitRotation ? `Rotation ${index + 1}: ${itemName(item.id)}` : itemName(item.id)}
+            title={`${showsRecruitRotation ? `Rotation ${index + 1}: ` : ''}${itemName(item.id)}${kind === 'recruit' ? ` · ${unitRangeLabel(item)} · highest available` : ''}`}
             onClick={() => openEditModal(scope, item)}
           >
             {showsRecruitRotation && (
@@ -416,6 +485,11 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             <span className="line-clamp-2 min-h-[2rem] text-xs font-bold leading-tight text-text-main">
               {itemName(item.id)}
             </span>
+            {kind === 'recruit' && (
+              <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+                {unitRangeLabel(item)}
+              </span>
+            )}
             <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-global bg-black/30 opacity-0 transition-opacity group-hover/item:opacity-100">
               <Settings className="h-5 w-5 text-white drop-shadow-md" />
             </span>
@@ -501,6 +575,9 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               const label = itemID
                 ? itemName(itemID)
                 : options.emptyItemLabel ?? `No ${definition.itemLabel} selected`;
+              const scheduledRange = itemID
+                ? unitRangeLabel({ id: itemID, amount: 0 })
+                : '';
               const day = WEEK_DAYS[slot.day]?.short ?? 'Day';
               return (
                 <div
@@ -519,6 +596,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                     <div className="truncate text-xs font-bold text-text-main">{label}</div>
                     <div className="mt-0.5 text-[11px] font-semibold text-text-muted">
                       {day} {formatMinuteOfDay(slot.startMinute)}-{formatMinuteOfDay(slot.endMinute)}
+                      {scheduledRange ? ` · ${scheduledRange}` : ''}
                     </div>
                   </div>
                 </div>
@@ -785,6 +863,34 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             </SectionCard>
           </div>
 
+          {kind === 'recruit' && (
+            <SectionCard
+              title="Glory-title fallback"
+              description="Controls level-11 Protector of the North and Valkyrie Sniper slots when your current glory title no longer unlocks them."
+              titleClassName="text-base"
+              contentClassName="flex flex-wrap items-center justify-between gap-4 p-5"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold text-text-main">Recruit level 10 if glory title is lost</div>
+                <p className="mt-1 text-xs font-semibold leading-relaxed text-text-muted">
+                  Off by default. When off, affected recruit slots stay softly paused until the required title returns.
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-3">
+                <Badge variant={settings.recruitLevel10OnTitleLoss ? 'success' : 'outline'}>
+                  {settings.recruitLevel10OnTitleLoss ? 'Level 10 fallback on' : 'Soft pause'}
+                </Badge>
+                <Switch
+                  checked={settings.recruitLevel10OnTitleLoss === true}
+                  onChange={(checked) => setSettings((previous) => ({
+                    ...previous,
+                    recruitLevel10OnTitleLoss: checked,
+                  }))}
+                />
+              </div>
+            </SectionCard>
+          )}
+
           {isGlobalMode ? (
             eligibleCastles.length === 0 ? (
               globalHasItemSourcePanel ? (
@@ -912,6 +1018,17 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         <div className="flex flex-col items-center gap-6 py-4">
           {editingItem && (
             itemImage(editingItem.item.id, 80, 'rounded-2xl shadow-lg')
+          )}
+
+          {editingItem && kind === 'recruit' && (
+            <div className="rounded-global border border-primary/20 bg-primary/5 px-4 py-3 text-center">
+              <div className="text-xs font-black uppercase tracking-wide text-primary">
+                {unitRangeLabel(editingItem.item)}
+              </div>
+              <p className="mt-1 text-xs font-semibold text-text-muted">
+                Auto Recruit queues the highest currently available upgrade in this unit family.
+              </p>
+            </div>
           )}
 
         </div>

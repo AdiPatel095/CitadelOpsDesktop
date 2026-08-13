@@ -7,6 +7,7 @@ export interface AutoFoodBalanceSettings {
   safetyHours: number;
   sourceSafetyHours: number;
   minimumShipmentSize: number;
+  minimumStormShipmentSize: number;
   minimumSourceReserve: number;
   minimumCoinReserve: number;
   autoKingdomTransport: boolean;
@@ -37,6 +38,7 @@ export const DEFAULT_AUTO_FOOD_BALANCE_SETTINGS: AutoFoodBalanceSettings = {
   safetyHours: 8,
   sourceSafetyHours: 24,
   minimumShipmentSize: 1_000,
+  minimumStormShipmentSize: 10_000,
   minimumSourceReserve: 1_000,
   minimumCoinReserve: 0,
   autoKingdomTransport: true,
@@ -68,6 +70,7 @@ export function parseAutoFoodBalanceSettings(payload: unknown): AutoFoodBalanceS
     safetyHours: number(value.safetyHours, DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.safetyHours, 1, 168),
     sourceSafetyHours: number(value.sourceSafetyHours, DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.sourceSafetyHours, 1, 336),
     minimumShipmentSize: integer(value.minimumShipmentSize, DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.minimumShipmentSize, 1, Number.MAX_SAFE_INTEGER),
+    minimumStormShipmentSize: integer(value.minimumStormShipmentSize, DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.minimumStormShipmentSize, 10_000, Number.MAX_SAFE_INTEGER),
     minimumSourceReserve: number(value.minimumSourceReserve, DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.minimumSourceReserve, 0, Number.MAX_SAFE_INTEGER),
     minimumCoinReserve: number(value.minimumCoinReserve, DEFAULT_AUTO_FOOD_BALANCE_SETTINGS.minimumCoinReserve, 0, Number.MAX_SAFE_INTEGER),
     autoKingdomTransport: value.autoKingdomTransport !== false,

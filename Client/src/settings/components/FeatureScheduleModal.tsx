@@ -20,6 +20,7 @@ import { WeeklyScheduler, type ScheduleSlotOptionsConfig } from './WeeklySchedul
 import { useCitadelAPI } from '../../api/ApiContext';
 import { configurationSection } from '../Configuration';
 import { useMetadata } from '../../context/MetadataContext';
+import { highestUnitIDsByFamily, unitIDsAvailableByFamilyAcrossCastles } from '../UnitUpgradeFamily';
 
 interface FeatureScheduleModalProps {
   isOpen: boolean;
@@ -71,7 +72,10 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
     const [, castleID] = featureID.split(':', 2);
     if (castleID) {
       if (!queueableBuildingRowsLoaded(queueableCatalog, castleID)) return undefined;
-      return queueableIDsForCastle(queueableCatalog, castleID, field);
+      const availableIDs = queueableIDsForCastle(queueableCatalog, castleID, field);
+      return featureID.startsWith('autoRecruit:')
+        ? highestUnitIDsByFamily(availableIDs, troops)
+        : availableIDs;
     }
 
     const knownCastleIDs = Object.keys(queueableCatalog).filter(
@@ -90,10 +94,19 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
       enabledCastleIDs = knownCastleIDs.filter((id) => settings.castles[id]?.enabled);
     }
     if (enabledCastleIDs.length > 0) {
+      if (featureID === 'autoRecruit') {
+        return unitIDsAvailableByFamilyAcrossCastles(
+          enabledCastleIDs.map((id) => queueableIDsForCastle(queueableCatalog, id, field)),
+          troops,
+        );
+      }
       return queueableIDsForCastles(queueableCatalog, enabledCastleIDs, field, 'intersection');
     }
     if (knownCastleIDs.length > 0) {
-      return queueableIDsForCastles(queueableCatalog, knownCastleIDs, field, 'union');
+      const availableIDs = queueableIDsForCastles(queueableCatalog, knownCastleIDs, field, 'union');
+      return featureID === 'autoRecruit'
+        ? highestUnitIDsByFamily(availableIDs, troops)
+        : availableIDs;
     }
     return undefined;
   };
@@ -115,6 +128,26 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
             integer: true,
             min: 1,
             allowedUnitIds: queueableIDsForFeature('recruitUnitIds'),
+            unitRange: {
+              minOptionId: 'unitIDMin',
+              maxOptionId: 'unitIDMax',
+            },
+          },
+          {
+            id: 'unitIDMin',
+            label: 'Unit family minimum ID',
+            type: 'number',
+            integer: true,
+            min: 1,
+            hidden: true,
+          },
+          {
+            id: 'unitIDMax',
+            label: 'Unit family maximum ID',
+            type: 'number',
+            integer: true,
+            min: 1,
+            hidden: true,
           },
         ],
       };

@@ -277,7 +277,9 @@ func planAutoBirdDispatch(
 	request.DispatchStartedAt = now
 	request.ExpectedTargetCastle = target.CastleID
 	resolverArguments, _ := json.Marshal(request)
-	steps := []Intent.Step{{
+	// Refresh the source after acquiring castle-focus and retain that claim through
+	// the guard and CDS. A different feature may have changed focus after prepare.
+	steps := []Intent.Step{stationCastleContextStep(source), {
 		Name:   "Verify prepared Auto Bird castle context",
 		Action: "auto_bird.dispatch.guard", ActionArguments: resolverArguments,
 	}}

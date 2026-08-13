@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -41,6 +42,7 @@ type Config struct {
 	Updates         *AppUpdate.Manager
 	Diagnostics     *Diagnostics.Monitor
 	Session         interface{ Status() Session.Status }
+	BackgroundLogin *Session.BackgroundLoginStore
 	Persistence     interface{ PersistenceError() error }
 	WorldIntel      *WorldIntel.DesktopService
 }
@@ -70,6 +72,8 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/diagnostics", server.handleDiagnostics)
 	mux.HandleFunc("GET /api/v2/state", server.handleState)
 	mux.HandleFunc("GET /api/v2/browsers", server.handleBrowsers)
+	mux.HandleFunc("GET /api/v2/session/background-login", server.handleBackgroundLoginStatus)
+	mux.HandleFunc("POST /api/v2/session/background-login", server.handleBackgroundLoginConfigure)
 	mux.HandleFunc("GET /api/v2/config", server.handleConfiguration)
 	mux.HandleFunc("GET /api/v2/config/export", server.handleConfigurationExport)
 	mux.HandleFunc("POST /api/v2/config/import", server.handleConfigurationImport)
@@ -156,6 +160,53 @@ func browserCandidatePointer(candidate Session.BrowserCandidate) *Session.Browse
 		return nil
 	}
 	return &candidate
+}
+
+func (server *Server) handleBackgroundLoginStatus(writer http.ResponseWriter, _ *http.Request) {
+	writer.Header().Set("Cache-Control", "no-store")
+	if server.config.BackgroundLogin == nil {
+		writeError(writer, http.StatusServiceUnavailable, "background_login_unavailable", "Background login storage is unavailable")
+		return
+	}
+	status, err := server.config.BackgroundLogin.Status()
+	if err != nil {
+		writeError(writer, http.StatusInternalServerError, "background_login_unavailable", err.Error())
+		return
+	}
+	writeJSON(writer, http.StatusOK, status)
+}
+
+func (server *Server) handleBackgroundLoginConfigure(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Cache-Control", "no-store")
+	if !server.originAllowed(request) {
+		writeError(writer, http.StatusForbidden, "origin_not_allowed", "Background login can only be configured from the local CitadelOps application")
+		return
+	}
+	if !strings.HasPrefix(strings.ToLower(strings.TrimSpace(request.Header.Get("Content-Type"))), "application/json") {
+		writeError(writer, http.StatusUnsupportedMediaType, "content_type_not_supported", "Background login requires an application/json request")
+		return
+	}
+	if server.config.BackgroundLogin == nil {
+		writeError(writer, http.StatusServiceUnavailable, "background_login_unavailable", "Background login storage is unavailable")
+		return
+	}
+	var input Session.BackgroundLoginInput
+	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 32<<10))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&input); err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		return
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		writeError(writer, http.StatusBadRequest, "invalid_request", "Background login requires exactly one JSON object")
+		return
+	}
+	status, err := server.config.BackgroundLogin.Configure(input)
+	if err != nil {
+		writeError(writer, http.StatusUnprocessableEntity, "background_login_invalid", err.Error())
+		return
+	}
+	writeJSON(writer, http.StatusOK, status)
 }
 
 func (server *Server) handleConfiguration(writer http.ResponseWriter, _ *http.Request) {

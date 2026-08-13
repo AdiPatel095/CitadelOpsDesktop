@@ -4,6 +4,7 @@ import { Badge, PageHeader, SectionCard } from '../components/ui';
 import {
   APP_VERSION_CURRENT,
   PATCH_NOTE_KIND_LABEL,
+  PATCH_NOTE_KIND_ORDER,
   PATCH_NOTES_RELEASES,
   type PatchNoteKind,
   type PatchNotesRelease,
@@ -13,13 +14,20 @@ import type { BadgeProps } from '../components/ui/Badge';
 const PATCH_NOTE_BADGE_VARIANT: Record<PatchNoteKind, NonNullable<BadgeProps['variant']>> = {
   added: 'primary',
   fixed: 'success',
-  removed: 'danger',
-  changed: 'warning',
   security: 'outline',
+  changed: 'warning',
+  removed: 'danger',
   deprecated: 'secondary',
 };
 
 function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLatest: boolean }) {
+  const groups = PATCH_NOTE_KIND_ORDER
+    .map((kind) => ({
+      kind,
+      items: release.items.filter((item) => item.kind === kind),
+    }))
+    .filter((group) => group.items.length > 0);
+
   return (
     <SectionCard
       variant="solid"
@@ -38,18 +46,34 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
           : 'liquid-prominent-header-card border-border-base opacity-95'
       }
     >
-        {release.items.length > 0 && (
-          <ul className="space-y-3 text-sm text-text-main leading-relaxed">
-            {release.items.map((item, idx) => (
-              <li key={`${release.version}-${idx}`} className="flex gap-3 items-start">
-                <Badge variant={PATCH_NOTE_BADGE_VARIANT[item.kind]} className="shrink-0 mt-0.5">
-                  {PATCH_NOTE_KIND_LABEL[item.kind]}
+      {groups.length > 0 && (
+        <div className="space-y-6">
+          {groups.map((group) => (
+            <section key={`${release.version}-${group.kind}`} aria-labelledby={`${release.version}-${group.kind}-heading`}>
+              <div className="mb-3 flex items-center gap-2">
+                <Badge
+                  id={`${release.version}-${group.kind}-heading`}
+                  variant={PATCH_NOTE_BADGE_VARIANT[group.kind]}
+                  className="shrink-0"
+                >
+                  {PATCH_NOTE_KIND_LABEL[group.kind]}
                 </Badge>
-                <span className="min-w-0 pt-0.5">{item.text}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+                <span className="text-xs tabular-nums text-text-muted">
+                  {group.items.length} {group.items.length === 1 ? 'change' : 'changes'}
+                </span>
+              </div>
+              <ul className="space-y-3 text-sm leading-relaxed text-text-main">
+                {group.items.map((item, index) => (
+                  <li key={`${release.version}-${group.kind}-${index}`} className="flex items-start gap-3">
+                    <span aria-hidden="true" className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-55" />
+                    <span className="min-w-0">{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      )}
     </SectionCard>
   );
 }

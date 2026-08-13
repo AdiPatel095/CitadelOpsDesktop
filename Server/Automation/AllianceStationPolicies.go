@@ -216,14 +216,10 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 					continue
 				}
 			case State.StationingPhaseWaiting:
-				allianceChanged := !operation.AllianceObservedAt.IsZero() &&
-					operation.AllianceObservedAt.Before(snapshot.State.Alliance.ObservedAt)
-				unitsChanged := !operation.UnitsObservedAt.IsZero() &&
-					operation.UnitsObservedAt.Before(castle.UnitsObservedAt)
-				stateChanged := allianceChanged || unitsChanged
-				waitingForTarget := operation.TargetCastleID <= 0
-				if operation.NextAttemptAt != nil && operation.NextAttemptAt.After(snapshot.Now) &&
-					(waitingForTarget || !stateChanged) {
+				// AIN and JAA observations can advance while another castle runs its
+				// independent cycle. The explicit per-castle retry remains authoritative
+				// so those shared timestamps cannot restart this castle in a tight loop.
+				if operation.NextAttemptAt != nil && operation.NextAttemptAt.After(snapshot.Now) {
 					nextCheck = earlierTime(nextCheck, *operation.NextAttemptAt)
 					continue
 				}

@@ -74,3 +74,26 @@ func TestFinalizeBatchRejectsInventedRankOnlyScore(t *testing.T) {
 		t.Fatalf("expected rank-only score validation error, got %v", err)
 	}
 }
+
+func TestFinalizeBatchPreservesSchemaOnePublicMetricSources(t *testing.T) {
+	now := time.Date(2026, time.August, 11, 16, 0, 0, 0, time.UTC)
+	for _, source := range []string{"", "legacy-collector"} {
+		t.Run(source, func(t *testing.T) {
+			batch, err := FinalizeBatch(ObservationBatch{
+				WorldID: "world.example", CapturedAt: now,
+				Players: []PlayerObservation{{
+					PlayerID: 7, Name: "Player", Source: "account", ObservedAt: now,
+					PublicMetrics: map[string]PublicMetricObservation{
+						"legacy-score": {Label: "Legacy score", Value: 42, Source: source, ObservedAt: now},
+					},
+				}},
+			})
+			if err != nil {
+				t.Fatalf("schema v1 source %q rejected: %v", source, err)
+			}
+			if got := batch.Players[0].PublicMetrics["legacy-score"].Source; got != source {
+				t.Fatalf("schema v1 source = %q, want %q", got, source)
+			}
+		})
+	}
+}

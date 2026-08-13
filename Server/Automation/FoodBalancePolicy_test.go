@@ -555,15 +555,25 @@ func TestFoodBalancePolicyKeepsStormFoodAndMeadFullWithoutConsumption(t *testing
 	}
 }
 
-func TestFoodBalanceStormFillDoesNotWaitForMinimumShipment(t *testing.T) {
+func TestFoodBalanceStormFillWaitsForConfiguredMinimumShipment(t *testing.T) {
 	settings := foodBalanceSettings{MinimumShipmentSize: 1_000}
 	risk := foodBalanceRisk{fillToCapacity: true}
 	amount, ready := foodBalanceKingdomDispatchAmountForRisk(settings, risk, 90)
-	if !ready || amount != 100 {
-		t.Fatalf("Storm residual refill = %.0f ready=%t, want 100 ready", amount, ready)
+	if ready || amount != 100 {
+		t.Fatalf("Storm residual refill = %.0f ready=%t, want 100 waiting for the 10,000 default", amount, ready)
 	}
-	if amount, ready = foodBalanceKingdomDispatchAmount(settings, 90); ready || amount != 100 {
-		t.Fatalf("ordinary residual refill = %.0f ready=%t, want minimum-shipment wait", amount, ready)
+	amount, ready = foodBalanceKingdomDispatchAmountForRisk(settings, risk, 10_001)
+	if !ready || amount != 11_112 {
+		t.Fatalf("default Storm refill = %.0f ready=%t, want 11,112 ready", amount, ready)
+	}
+
+	settings.MinimumStormShipmentSize = 20_000
+	if amount, ready = foodBalanceKingdomDispatchAmountForRisk(settings, risk, 10_001); ready || amount != 11_112 {
+		t.Fatalf("custom Storm refill = %.0f ready=%t, want custom-threshold wait", amount, ready)
+	}
+	amount, ready = foodBalanceKingdomDispatchAmountForRisk(settings, risk, 20_001)
+	if !ready || amount != 22_223 {
+		t.Fatalf("custom Storm refill = %.0f ready=%t, want 22,223 ready", amount, ready)
 	}
 }
 

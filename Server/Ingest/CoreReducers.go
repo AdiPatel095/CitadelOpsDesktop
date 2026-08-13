@@ -93,7 +93,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"crun", combineReducers(reduceCraftingBuilding, reduceResponseResources)},
 		{"crsk", combineReducers(reduceCraftingBuilding, reduceResponseResources)},
 		{"crca", combineReducers(reduceCraftingBuilding, reduceResponseResources)},
-		{"gam", combineReducers(newMovementReducer(true), reduceAdvisorMovement)},
+		{"gam", combineReducers(newMovementReducer(true), reduceAdvisorMovement, reducePlayerTitles)},
 		{"cat", combineReducers(newMovementReducer(false), reduceAdvisorMovement)},
 		{"csm", newMovementReducer(false)},
 		{"cra", combineReducers(craMovements, reduceRiftLaunchAck, reduceAdvisorMovement)},

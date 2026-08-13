@@ -10,7 +10,7 @@ import (
 const (
 	BattleResearchConfigurationSection = "research.battlePredictionBeta"
 	BattleResearchConsentVersion       = 1
-	BattleResearchModelVersion         = "transparent-combat-baseline-v1"
+	BattleResearchModelVersion         = "catalog-effect-combat-v2"
 )
 
 type BattleResearchConfiguration struct {
@@ -194,18 +194,22 @@ func researchCalculatorInfo() BattleResearchCalculatorInfo {
 	return BattleResearchCalculatorInfo{
 		ModelVersion: BattleResearchModelVersion,
 		Maturity:     "experimental-low-confidence",
-		Description:  "A transparent deterministic baseline saved before impact; it is a research estimate, not a guaranteed battle result.",
+		Description:  "A catalog-backed deterministic calculator calibrated on complete battle packets; it is a research estimate, not a guaranteed battle result.",
 		Considered: []string{
 			"exact per-wave and per-lane attacker formation",
 			"official melee and ranged unit combat values",
 			"observed defender deployment from the pre-battle spy report",
-			"recognized commander melee/ranged strength and wall/gate/moat reduction effects",
-			"reported wall, gate, moat, and courtyard defense percentages",
+			"capped commander, castellan, gem, legend-skill, and active combat effects",
+			"attacker lane and courtyard support tools, including fixed pre-yard losses",
+			"defender-side melee, ranged, global, lane, courtyard, wall, gate, and moat effects",
+			"official wall, gate, and moat levels plus one-, two-, or three-section courtyard control",
 		},
 		Limitations: []string{
-			"tool effects, defender equipment rows, heroes, temporary bonuses, and random or hidden server rules are recorded but not fully modeled",
+			"espionage does not reveal defender wall-tool placement, so those tool bonuses remain unknown before combat",
+			"general abilities with phase-dependent triggers cannot be resolved exactly before combat",
+			"some nonstandard target types expose fortification levels without a matching catalog base-bonus row",
 			"defender changes after the pre-battle spy snapshot cannot be predicted",
-			"casualty allocation is an approximation and confidence remains low until forward-tested training coverage grows",
+			"casualty allocation is calibrated but remains an approximation until forward-tested coverage grows",
 		},
 	}
 }

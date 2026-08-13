@@ -3,6 +3,8 @@ package Automation
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -10,6 +12,15 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
+
+func TestRecruitPolicyWakesOnLivePlayerGloryTitleChanges(t *testing.T) {
+	if got, want := NewRecruitPolicy().WakeDomains(), []string{"production", "subscriptions", "glory-title"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("Auto Recruit wake domains=%v, want %v", got, want)
+	}
+	if got, want := NewToolPolicy().WakeDomains(), []string{"production", "subscriptions"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("Auto Tool wake domains=%v, want %v", got, want)
+	}
+}
 
 func TestRecruitPolicyInfersStackCapacityFromBarracksAndConstructionItems(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
@@ -40,6 +51,85 @@ func TestRecruitPolicyAddsActiveSubscriptionStackBonus(t *testing.T) {
 	}
 	if arguments := productionIntentArguments(t, decision); arguments.Amount != 230 {
 		t.Fatalf("recruit stack amount = %d, want 230", arguments.Amount)
+	}
+}
+
+func TestRecruitPolicyResolvesSavedUnitToHighestQueueableUpgrade(t *testing.T) {
+	now := time.Date(2026, 8, 9, 12, 0, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(`{
+		"mode":"global","globalItems":[{"id":515,"minId":513,"maxId":516,"amount":25}],
+		"castles":{"77":{"enabled":true,"items":[]}}
+	}`)
+	castle := snapshot.State.Castles[77]
+	castle.QueueableObservedAt = now
+	castle.QueueableProduction = map[int][]State.DefinitionRef{
+		0: {
+			{Collection: "units", ID: 513},
+			{Collection: "units", ID: 516},
+		},
+	}
+	snapshot.State.Castles[77] = castle
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("upgraded recruit decision=%#v err=%v", decision, err)
+	}
+	if arguments := productionIntentArguments(t, decision); arguments.DefinitionID != 516 {
+		t.Fatalf("resolved recruit definition=%d, want highest queueable family member 516", arguments.DefinitionID)
+	}
+}
+
+func TestRecruitPolicyResolvesLegacyScheduledUnitAfterUpgrade(t *testing.T) {
+	now := time.Date(2026, 8, 6, 12, 0, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(`{
+		"mode":"global","globalItems":[],"castles":{"77":{"enabled":true}}
+	}`)
+	snapshot.Configuration.Sections["scheduler"] = json.RawMessage(`{
+		"featureSchedules":{"autoRecruit":{
+			"enabled":true,"timeZone":"UTC","slotOptionsEnabled":true,
+			"slots":[{"day":4,"startMinute":0,"endMinute":1440,
+				"options":{"unitID":515}}]
+		}}
+	}`)
+	castle := snapshot.State.Castles[77]
+	castle.QueueableObservedAt = now
+	castle.QueueableProduction = map[int][]State.DefinitionRef{
+		0: {{Collection: "units", ID: 516}},
+	}
+	snapshot.State.Castles[77] = castle
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("scheduled upgraded recruit decision=%#v err=%v", decision, err)
+	}
+	arguments := productionIntentArguments(t, decision)
+	if arguments.DefinitionID != 516 || arguments.ScheduledDefinitionID != 516 {
+		t.Fatalf("scheduled upgraded recruit arguments=%#v, want resolved definition 516", arguments)
+	}
+}
+
+func TestRecruitPolicyWaitsWhenNoConfiguredUnitFamilyMemberIsQueueable(t *testing.T) {
+	now := time.Date(2026, 8, 9, 12, 0, 0, 0, time.UTC)
+	snapshot := recruitPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(`{
+		"mode":"global","globalItems":[{"id":515,"amount":25}],
+		"castles":{"77":{"enabled":true,"items":[]}}
+	}`)
+	castle := snapshot.State.Castles[77]
+	castle.QueueableObservedAt = now
+	castle.QueueableProduction = map[int][]State.DefinitionRef{
+		0: {{Collection: "units", ID: 489}},
+	}
+	snapshot.State.Castles[77] = castle
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil || decision.Detail != "No enabled castle can currently produce the configured unit family" {
+		t.Fatalf("unavailable recruit family decision=%#v, want fail-closed wait", decision)
 	}
 }
 
@@ -508,13 +598,204 @@ func TestRecruitPolicyUsesGlobalScheduledUnitWithoutStaticFallback(t *testing.T)
 	}
 }
 
+func TestRecruitPolicyUsesTitleGatedLevel11WhileGloryTitleIsCurrent(t *testing.T) {
+	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
+	snapshot := gloryTitleRecruitPolicySnapshot(t, now, 493, 31, 493, false)
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("title-eligible decision=%#v err=%v", decision, err)
+	}
+	arguments := productionIntentArguments(t, decision)
+	if arguments.DefinitionID != 493 || arguments.TitleGatedDefinitionID != 493 ||
+		arguments.RequiredGloryTitleID != 31 || arguments.TitleLossFallback {
+		t.Fatalf("title-eligible arguments=%#v", arguments)
+	}
+}
+
+func TestRecruitPolicySoftPausesTitleGatedSlotByDefault(t *testing.T) {
+	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
+	snapshot := gloryTitleRecruitPolicySnapshot(t, now, 493, 30, 238, false)
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil || decision.Detail != "Glory-title level 11 recruit slots are paused while the required title is lost" {
+		t.Fatalf("title-loss default decision=%#v", decision)
+	}
+}
+
+func TestRecruitPolicyRotationSkipsSoftPausedTitleGatedSlot(t *testing.T) {
+	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
+	snapshot := gloryTitleRecruitPolicySnapshot(t, now, 493, 30, 515, false)
+	raw := json.RawMessage(`{
+		"mode":"perCastle","checkIntervalSec":300,"recruitLevel10OnTitleLoss":false,
+		"castles":{"77":{"enabled":true,"cursor":0,"items":[
+			{"id":493,"amount":25},{"id":515,"amount":25},{"id":516,"amount":25}
+		]}}
+	}`)
+	snapshot.Configuration.Sections["automation.recruitTroops"] = raw
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("rotation skip decision=%#v err=%v", decision, err)
+	}
+	arguments := productionIntentArguments(t, decision)
+	if arguments.DefinitionID != 515 || arguments.TitleGatedDefinitionID != 0 ||
+		arguments.RequiredGloryTitleID != 0 || arguments.TitleLossFallback {
+		t.Fatalf("rotation skip arguments=%#v", arguments)
+	}
+	if decision.Detail != "Queue Auto Recruit rotation unit 2 of 3 at castle 77" {
+		t.Fatalf("rotation skip detail=%q", decision.Detail)
+	}
+	if decision.FollowUp == nil || decision.FollowUp.Name != "config.update" {
+		t.Fatalf("rotation skip did not advance after the selected slot: %#v", decision)
+	}
+	var update struct {
+		Value         json.RawMessage  `json:"value"`
+		ExpectedValue *json.RawMessage `json:"expectedValue"`
+	}
+	if err := json.Unmarshal(decision.FollowUp.Arguments, &update); err != nil {
+		t.Fatal(err)
+	}
+	if update.ExpectedValue == nil {
+		t.Fatalf("rotation skip cursor update was not conditional: %#v", update)
+	}
+	var expected productionSettings
+	if err := json.Unmarshal(*update.ExpectedValue, &expected); err != nil {
+		t.Fatal(err)
+	}
+	if cursor := expected.Castles["77"].Cursor; cursor != 0 {
+		t.Fatalf("rotation skip expected cursor=%d, want 0", cursor)
+	}
+	var updated productionSettings
+	if err := json.Unmarshal(update.Value, &updated); err != nil {
+		t.Fatal(err)
+	}
+	if cursor := updated.Castles["77"].Cursor; cursor != 2 {
+		t.Fatalf("rotation skip cursor=%d, want 2", cursor)
+	}
+}
+
+func TestRecruitPolicyCanUseExactLevel10FallbackAfterTitleLoss(t *testing.T) {
+	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name           string
+		configuredID   int64
+		currentTitleID int64
+		queueableID    int64
+		wantID         int64
+		wantTitleID    int64
+	}{
+		{name: "Protector of the North", configuredID: 489, currentTitleID: 29, queueableID: 227, wantID: 227, wantTitleID: 30},
+		{name: "Valkyrie Sniper", configuredID: 493, currentTitleID: 30, queueableID: 238, wantID: 238, wantTitleID: 31},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			snapshot := gloryTitleRecruitPolicySnapshot(
+				t, now, test.configuredID, test.currentTitleID, test.queueableID, true,
+			)
+			decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+			if err != nil || decision.Request == nil {
+				t.Fatalf("fallback decision=%#v err=%v", decision, err)
+			}
+			arguments := productionIntentArguments(t, decision)
+			if arguments.DefinitionID != test.wantID ||
+				arguments.TitleGatedDefinitionID != test.configuredID ||
+				arguments.RequiredGloryTitleID != test.wantTitleID || !arguments.TitleLossFallback {
+				t.Fatalf("fallback arguments=%#v", arguments)
+			}
+		})
+	}
+}
+
+func TestRecruitPolicyWaitsWhenCurrentGloryTitleIsUnknown(t *testing.T) {
+	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
+	snapshot := gloryTitleRecruitPolicySnapshot(t, now, 493, 30, 238, true)
+	snapshot.State.Player.GloryTitleAt = time.Time{}
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil || decision.Detail != "Waiting for the current player glory title before recruiting a title-gated level 11 unit" {
+		t.Fatalf("unknown-title decision=%#v", decision)
+	}
+}
+
+func TestRecruitPolicyDoesNotUseLevel10ForNonTitleAvailabilityFailure(t *testing.T) {
+	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
+	snapshot := gloryTitleRecruitPolicySnapshot(t, now, 493, 31, 238, true)
+
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil || decision.Detail != "No enabled castle can currently produce the configured unit family" {
+		t.Fatalf("eligible-but-unavailable decision=%#v", decision)
+	}
+}
+
 type productionArguments struct {
-	CastleID              State.CastleID `json:"castleId"`
-	DefinitionID          int64          `json:"definitionId"`
-	Amount                int64          `json:"amount"`
-	FillAvailable         bool           `json:"fillAvailable"`
-	ScheduledDefinitionID int64          `json:"scheduledDefinitionId"`
-	ScheduleValidUntil    *time.Time     `json:"scheduleValidUntil"`
+	CastleID               State.CastleID `json:"castleId"`
+	DefinitionID           int64          `json:"definitionId"`
+	Amount                 int64          `json:"amount"`
+	FillAvailable          bool           `json:"fillAvailable"`
+	ScheduledDefinitionID  int64          `json:"scheduledDefinitionId"`
+	ScheduleValidUntil     *time.Time     `json:"scheduleValidUntil"`
+	TitleGatedDefinitionID int64          `json:"titleGatedDefinitionId"`
+	RequiredGloryTitleID   int64          `json:"requiredGloryTitleId"`
+	TitleLossFallback      bool           `json:"titleLossFallback"`
+}
+
+func gloryTitleRecruitPolicySnapshot(
+	t *testing.T,
+	now time.Time,
+	configuredID int64,
+	currentTitleID int64,
+	queueableID int64,
+	fallback bool,
+) Snapshot {
+	t.Helper()
+	snapshot := recruitPolicySnapshot(t, now)
+	snapshot.State.Session.ConnectionGeneration = 7
+	snapshot.State.Player.GloryTitleID = currentTitleID
+	snapshot.State.Player.GloryTitleAt = now
+	snapshot.State.Player.GloryTitleGen = 7
+	castle := snapshot.State.Castles[77]
+	castle.QueueableObservedAt = now
+	castle.QueueableProduction = map[int][]State.DefinitionRef{
+		0: {{Collection: "units", ID: queueableID}},
+	}
+	snapshot.State.Castles[77] = castle
+	snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(fmt.Sprintf(`{
+		"mode":"global","checkIntervalSec":300,"recruitLevel10OnTitleLoss":%t,
+		"globalItems":[{"id":%d,"amount":0}],"castles":{"77":{"enabled":true,"items":[]}}
+	}`, fallback, configuredID))
+	snapshot.GameData = productionPolicyGameData(t, `{
+		"versionInfo":[],
+		"buildings":[{"wodID":1939,"stackSize":"110","constructionItemGroupIDs":"2"}],
+		"units":[
+			{"wodID":227,"type":"MeadMace","level":"10"},
+			{"wodID":489,"type":"MeadMace","level":"11"},
+			{"wodID":238,"type":"MeadBow","level":"10"},
+			{"wodID":493,"type":"MeadBow","level":"11"},
+			{"wodID":515,"type":"Militia","level":"1"},
+			{"wodID":516,"type":"Spear","level":"1"}
+		],
+		"titles":[
+			{"titleID":"29","type":"FAME","displayType":"suffix"},
+			{"titleID":"30","previousTitleID":"29","type":"FAME","displayType":"suffix","effects":"46&489"},
+			{"titleID":"31","previousTitleID":"30","type":"FAME","displayType":"suffix","effects":"46&493"}
+		],
+		"constructionItems":[{
+			"constructionItemID":14,"constructionItemGroupID":"2","stackSize":"80",
+			"lockRemoval":"SOLDIER_RECRUITMENT"
+		}],
+		"subscriptionsBuffs":[],"viplevels":[]
+	}`)
+	return snapshot
 }
 
 func productionIntentArguments(t *testing.T, decision Decision) productionArguments {
@@ -552,7 +833,13 @@ func recruitPolicySnapshot(t *testing.T, now time.Time) Snapshot {
 		GameData: productionPolicyGameData(t, `{
 			"versionInfo":[],
 			"buildings":[{"wodID":1939,"stackSize":"110","constructionItemGroupIDs":"2"}],
-			"units":[{"wodID":489}],
+			"units":[
+				{"wodID":489},
+				{"wodID":513,"upgradeWodID":514},
+				{"wodID":514,"downgradeWodID":513,"upgradeWodID":515},
+				{"wodID":515,"downgradeWodID":514,"upgradeWodID":516},
+				{"wodID":516,"downgradeWodID":515}
+			],
 			"constructionItems":[{
 				"constructionItemID":14,"constructionItemGroupID":"2","stackSize":"80",
 				"lockRemoval":"SOLDIER_RECRUITMENT"

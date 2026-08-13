@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -122,6 +123,33 @@ func TestPlanProductionEnqueueDoesNotCountActiveStackAgainstQueueSlots(t *testin
 	}
 }
 
+func TestPlanProductionEnqueueRejectsDefinitionMissingFromLiveQueueableCatalog(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[{"wodID":515},{"wodID":516}],"constructionItems":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Castles[77] = State.CastleState{
+		ID: 77,
+		Production: map[int]State.ProductionQueue{
+			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+		},
+		QueueableObservedAt: now,
+		QueueableProduction: map[int][]State.DefinitionRef{
+			0: {{Collection: "units", ID: 516}},
+		},
+	}
+	_, err = planProductionEnqueue(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{"castleId":77,"lineId":0,"definitionId":515,"amount":110}`))
+	if !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "unit 515 is not currently available") {
+		t.Fatalf("unavailable production definition error=%v", err)
+	}
+}
+
 func TestPlanProductionEnqueueFillsEveryAvailableQueueSlotWithOneFocus(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[{"wodID":489}],"constructionItems":[]
@@ -142,18 +170,27 @@ func TestPlanProductionEnqueueFillsEveryAvailableQueueSlotWithOneFocus(t *testin
 	if err != nil {
 		t.Fatalf("plan production fill: %v", err)
 	}
-	if len(plan.Steps) != 7 {
-		t.Fatalf("production fill steps = %d, want focus, capacity guard, and five enqueue commands", len(plan.Steps))
+	if len(plan.Steps) != 11 {
+		t.Fatalf("production fill steps = %d, want focus and five guarded enqueue commands", len(plan.Steps))
 	}
 	if plan.Steps[0].Opcode != "jaa" {
 		t.Fatalf("first production fill opcode = %q, want jaa", plan.Steps[0].Opcode)
 	}
-	if plan.Steps[1].Action != "production.enqueue.verify_capacity" || plan.Steps[1].ResumePolicy != Intent.ResumeRebuild {
-		t.Fatalf("production capacity guard = %#v", plan.Steps[1])
-	}
-	for index, step := range plan.Steps[2:] {
-		if step.Opcode != "bup" || step.AwaitOpcode != "bup" {
-			t.Fatalf("production fill step %d = %#v, want awaited bup", index+2, step)
+	for stack := 0; stack < 5; stack++ {
+		guardStep := plan.Steps[1+stack*2]
+		if guardStep.Action != "production.enqueue.verify_capacity" || guardStep.ResumePolicy != Intent.ResumeRebuild {
+			t.Fatalf("production capacity guard %d = %#v", stack+1, guardStep)
+		}
+		var guard productionQueueCapacityGuard
+		if err := json.Unmarshal(guardStep.ActionArguments, &guard); err != nil {
+			t.Fatal(err)
+		}
+		if guard.ExpectedFreeSlots != 5-stack {
+			t.Fatalf("production capacity guard %d expects %d free slots, want %d", stack+1, guard.ExpectedFreeSlots, 5-stack)
+		}
+		commandStep := plan.Steps[2+stack*2]
+		if commandStep.Opcode != "bup" || commandStep.AwaitOpcode != "bup" {
+			t.Fatalf("production fill command %d = %#v, want awaited bup", stack+1, commandStep)
 		}
 	}
 }
@@ -259,9 +296,32 @@ func TestPlanProductionEnqueueCarriesScheduledSelectionIntoCapacityGuard(t *test
 	if err := json.Unmarshal(plan.Steps[1].ActionArguments, &guard); err != nil {
 		t.Fatal(err)
 	}
-	if guard.ScheduledDefinitionID != 2069 || guard.ScheduleValidUntil == nil ||
+	if guard.DefinitionID != 2069 || guard.ScheduledDefinitionID != 2069 || guard.ScheduleValidUntil == nil ||
 		!guard.ScheduleValidUntil.Equal(validUntil) || guard.FillAvailable || guard.ExpectedFreeSlots != 1 {
 		t.Fatalf("scheduled production guard=%#v", guard)
+	}
+}
+
+func TestVerifyProductionQueueCapacityRejectsDefinitionThatBecameUnavailable(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Castles[77] = State.CastleState{
+		ID: 77, Focused: true,
+		Production: map[int]State.ProductionQueue{
+			0: {LineID: 0, Capacity: 5, ObservedAt: now},
+		},
+		QueueableObservedAt: now,
+		QueueableProduction: map[int][]State.DefinitionRef{
+			0: {{Collection: "units", ID: 516}},
+		},
+	}
+	application := &Application{State: State.NewStore(gameState)}
+	arguments, _ := json.Marshal(productionQueueCapacityGuard{
+		CastleID: 77, LineID: 0, DefinitionID: 515, ExpectedFreeSlots: 1,
+	})
+	err := application.verifyProductionQueueCapacity(t.Context(), arguments)
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("unavailable definition guard error=%v, want stale plan", err)
 	}
 }
 
@@ -293,6 +353,110 @@ func TestVerifyProductionQueueCapacityRejectsExpiredScheduledSelection(t *testin
 	if err := application.verifyProductionQueueCapacityAt(arguments, now); err != nil {
 		t.Fatalf("active schedule guard error=%v", err)
 	}
+}
+
+func TestProductionGloryTitleGuardRevalidatesLevel11AndFallback(t *testing.T) {
+	gameData := productionGloryTitleGameData(t)
+	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Session.ConnectionGeneration = 7
+	gameState.Player.GloryTitleID = 31
+	gameState.Player.GloryTitleAt = now
+	gameState.Player.GloryTitleGen = 7
+
+	if err := validateProductionGloryTitle(gameState, gameData, 493, 493, 31, false); err != nil {
+		t.Fatalf("current title rejected level 11: %v", err)
+	}
+	if err := validateProductionGloryTitle(gameState, gameData, 493, 0, 0, false); err != nil {
+		t.Fatalf("implicit level-11 title guard rejected current title: %v", err)
+	}
+	gameState.Player.GloryTitleID = 30
+	if err := validateProductionGloryTitle(gameState, gameData, 493, 493, 31, false); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("lost title level-11 guard error=%v, want stale", err)
+	}
+	if err := validateProductionGloryTitle(gameState, gameData, 493, 0, 0, false); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("implicit lost-title level-11 guard error=%v, want stale", err)
+	}
+	if err := validateProductionGloryTitle(gameState, gameData, 238, 493, 31, true); err != nil {
+		t.Fatalf("lost title rejected level-10 fallback: %v", err)
+	}
+	gameState.Player.GloryTitleID = 31
+	if err := validateProductionGloryTitle(gameState, gameData, 238, 493, 31, true); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("restored title fallback guard error=%v, want stale", err)
+	}
+	gameState.Player.GloryTitleGen = 6
+	if err := validateProductionGloryTitle(gameState, gameData, 493, 493, 31, false); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("old-connection title guard error=%v, want stale", err)
+	}
+}
+
+func TestPlanProductionEnqueueDerivesGloryTitleGuardForDirectLevel11Request(t *testing.T) {
+	gameData := productionGloryTitleGameData(t)
+	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Session.ConnectionGeneration = 7
+	gameState.Player.GloryTitleID = 31
+	gameState.Player.GloryTitleAt = now
+	gameState.Player.GloryTitleGen = 7
+	gameState.Castles[77] = State.CastleState{
+		ID: 77,
+		Production: map[int]State.ProductionQueue{
+			0: {LineID: 0, Capacity: 2, ObservedAt: now},
+		},
+	}
+
+	plan, err := planProductionEnqueue(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{"castleId":77,"lineId":0,"definitionId":493,"amount":110,"fillAvailable":true}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 5 {
+		t.Fatalf("title-gated production steps=%#v", plan.Steps)
+	}
+	for stack := 0; stack < 2; stack++ {
+		guardStep := plan.Steps[1+stack*2]
+		commandStep := plan.Steps[2+stack*2]
+		if guardStep.Action != "production.enqueue.verify_capacity" || commandStep.Opcode != "bup" {
+			t.Fatalf("title-gated stack %d is not individually guarded: %#v", stack+1, plan.Steps)
+		}
+		var guard productionQueueCapacityGuard
+		if err := json.Unmarshal(guardStep.ActionArguments, &guard); err != nil {
+			t.Fatal(err)
+		}
+		if guard.TitleGatedDefinitionID != 493 || guard.RequiredGloryTitleID != 31 ||
+			guard.TitleLossFallback || guard.ExpectedFreeSlots != 2-stack {
+			t.Fatalf("derived title guard %d=%#v", stack+1, guard)
+		}
+	}
+
+	gameState.Player.GloryTitleID = 30
+	_, err = planProductionEnqueue(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, json.RawMessage(`{"castleId":77,"lineId":0,"definitionId":493,"amount":110}`))
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("direct level-11 request after title loss error=%v, want stale", err)
+	}
+}
+
+func productionGloryTitleGameData(t *testing.T) *GameData.Store {
+	t.Helper()
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],
+		"units":[
+			{"wodID":238,"type":"MeadBow","level":"10"},
+			{"wodID":493,"type":"MeadBow","level":"11"}
+		],
+		"titles":[
+			{"titleID":"30","type":"FAME","displayType":"suffix"},
+			{"titleID":"31","previousTitleID":"30","type":"FAME","displayType":"suffix","effects":"46&493"}
+		],
+		"constructionItems":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return gameData
 }
 
 func TestPlanHospitalHealAlwaysRefreshesFocusedCastle(t *testing.T) {
