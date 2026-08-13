@@ -20,11 +20,16 @@ func ParseSpyCapture(capture State.SpyReportCapture) (SpyReport, error) {
 		OI  spyPlayerWire `json:"OI"`
 		SO  spyPlayerWire `json:"SO"`
 		AI  struct {
-			Name      string `json:"N"`
-			KingdomID int    `json:"K"`
-			TypeID    int    `json:"AT"`
-			X         int    `json:"X"`
-			Y         int    `json:"Y"`
+			Name       string `json:"N"`
+			KingdomID  int    `json:"K"`
+			TypeID     int    `json:"AT"`
+			X          int    `json:"X"`
+			Y          int    `json:"Y"`
+			WallLevel  int    `json:"WL"`
+			GateLevel  int    `json:"GL"`
+			MoatLevel  int    `json:"ML"`
+			KeepLevel  int    `json:"KL"`
+			TowerLevel int    `json:"TL"`
 		} `json:"AI"`
 		Setup     [][][]json.RawMessage `json:"S"`
 		Castellan json.RawMessage       `json:"B"`
@@ -40,8 +45,14 @@ func ParseSpyCapture(capture State.SpyReportCapture) (SpyReport, error) {
 		CapturedAtUnixMillis: capture.CapturedAt.UnixMilli(), Status: "failed",
 		Accuracy: wire.SA, Risk: wire.SR, SpyCount: wire.SC, GuardCount: wire.GC,
 		Target: wire.OI.player(), Source: wire.SO.player(),
-		Castle: Castle{ID: wire.CID, Name: wire.AI.Name, KingdomID: wire.AI.KingdomID, TypeID: wire.AI.TypeID, X: wire.AI.X, Y: wire.AI.Y},
-		Setup:  []SpySection{},
+		Castle: Castle{
+			ID: wire.CID, Name: wire.AI.Name, KingdomID: wire.AI.KingdomID,
+			TypeID: wire.AI.TypeID, X: wire.AI.X, Y: wire.AI.Y,
+			WallLevel: wire.AI.WallLevel, GateLevel: wire.AI.GateLevel,
+			MoatLevel: wire.AI.MoatLevel, KeepLevel: wire.AI.KeepLevel,
+			TowerLevel: wire.AI.TowerLevel,
+		},
+		Setup: []SpySection{},
 	}
 	if capture.CapturedAt.IsZero() {
 		report.CapturedAtUnixMillis = time.Now().UnixMilli()
@@ -71,21 +82,19 @@ func ParseSpyCapture(capture State.SpyReportCapture) (SpyReport, error) {
 	}
 	if len(wire.Castellan) > 0 && string(wire.Castellan) != "null" && string(wire.Castellan) != "{}" {
 		var castellan struct {
-			Level     int `json:"L"`
-			Wall      int `json:"W"`
-			Gate      int `json:"GID"`
-			Moat      int `json:"D"`
-			Courtyard int `json:"SPR"`
-			WallSlots int `json:"ST"`
-			Effects   any `json:"AE"`
-			Equipment any `json:"EQ"`
-			SkillIDs  any `json:"SIDS"`
+			Level                  int   `json:"L"`
+			GeneralID              int64 `json:"GID"`
+			Effects                any   `json:"AE"`
+			Equipment              any   `json:"EQ"`
+			SkillIDs               any   `json:"SIDS"`
+			GeneralAbilitySkillIDs any   `json:"GASAIDS"`
 		}
 		if json.Unmarshal(wire.Castellan, &castellan) == nil {
 			report.Castellan = &SpyCastellan{
-				Level: castellan.Level, Wall: castellan.Wall, Gate: castellan.Gate,
-				Moat: castellan.Moat, Courtyard: castellan.Courtyard, WallSlots: castellan.WallSlots,
-				Effects: castellan.Effects, Equipment: castellan.Equipment, SkillIDs: castellan.SkillIDs,
+				Level: castellan.Level, GeneralID: castellan.GeneralID,
+				Effects: castellan.Effects, Equipment: castellan.Equipment,
+				SkillIDs:               castellan.SkillIDs,
+				GeneralAbilitySkillIDs: castellan.GeneralAbilitySkillIDs,
 			}
 		}
 	}

@@ -15,9 +15,9 @@ func TestParseSpyCaptureBuildsCanonicalReport(t *testing.T) {
 			"MID":101,"SA":95,"SR":10,"SC":20,"GC":30,"CID":77,
 			"OI":{"OID":2,"N":"Target","AN":"Them"},
 			"SO":{"OID":1,"N":"Source","AN":"Us"},
-			"AI":{"N":"Target Castle","K":0,"X":10,"Y":20},
+			"AI":{"N":"Target Castle","K":0,"X":10,"Y":20,"WL":8,"GL":7,"ML":6,"KL":5,"TL":4},
 			"S":[[[216,100]],[],[[227,50]]],
-			"B":{"L":70,"W":100,"GID":5,"D":10,"SPR":20,"ST":6,"AE":[],"EQ":[],"SIDS":[]}
+			"B":{"L":70,"W":100,"GID":105,"D":10,"SPR":20,"ST":6,"AE":[],"EQ":[],"SIDS":[],"GASAIDS":[[101057,10113]]}
 		}`),
 	}
 	report, err := ParseSpyCapture(capture)
@@ -26,6 +26,11 @@ func TestParseSpyCaptureBuildsCanonicalReport(t *testing.T) {
 	}
 	if report.Status != "success" || report.TotalTroops != 150 || report.Castle.Name != "Target Castle" {
 		t.Fatalf("unexpected report: %#v", report)
+	}
+	if report.Castle.WallLevel != 8 || report.Castle.GateLevel != 7 || report.Castle.MoatLevel != 6 ||
+		report.Castle.KeepLevel != 5 || report.Castle.TowerLevel != 4 || report.Castellan == nil ||
+		report.Castellan.GeneralID != 105 || report.Castellan.GeneralAbilitySkillIDs == nil {
+		t.Fatalf("fortification or castellan wire fields were misclassified: %#v", report)
 	}
 }
 

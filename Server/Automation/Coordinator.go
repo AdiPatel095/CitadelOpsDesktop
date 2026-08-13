@@ -509,7 +509,9 @@ func (coordinator *Coordinator) evaluate(
 
 func policyOperationContext(ctx context.Context, policyID string) (context.Context, context.CancelFunc) {
 	switch strings.TrimSpace(policyID) {
-	case "autoTowers", "autoBeriWorldAttack":
+	case "autoTowers", "autoBeriWorldAttack", "autoStorm":
+		// Bound attack orchestration, including any prerequisite castle or map
+		// refresh, so a lost protocol reply cannot leave the policy running forever.
 		return context.WithTimeout(ctx, boundedAttackIntentTTL)
 	default:
 		return context.WithCancel(ctx)

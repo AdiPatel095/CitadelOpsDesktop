@@ -1,7 +1,6 @@
 package WorldIntel
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -51,35 +50,6 @@ func (client *CloudClient) Endpoint() string {
 		return ""
 	}
 	return client.baseURL
-}
-
-func (client *CloudClient) Register(ctx context.Context, credentials InstallationCredentials) error {
-	request := InstallationRegistration{
-		InstallationID: credentials.InstallationID,
-		Secret:         credentials.Secret,
-		ClientVersion:  client.clientVersion,
-	}
-	return client.doJSON(ctx, http.MethodPost, "/installations", request, nil, InstallationCredentials{})
-}
-
-func (client *CloudClient) Upload(
-	ctx context.Context,
-	credentials InstallationCredentials,
-	batch ObservationBatch,
-) (IngestResponse, error) {
-	var response IngestResponse
-	err := client.doJSON(ctx, http.MethodPost, "/observations", batch, &response, credentials)
-	return response, err
-}
-
-func (client *CloudClient) UploadCatalog(
-	ctx context.Context,
-	credentials InstallationCredentials,
-	snapshot CatalogDatasetSnapshot,
-) (CatalogIngestResponse, error) {
-	var response CatalogIngestResponse
-	err := client.doJSON(ctx, http.MethodPost, "/catalog-snapshots", snapshot, &response, credentials)
-	return response, err
 }
 
 func (client *CloudClient) CatalogDatasets(ctx context.Context) (CatalogDatasetCatalogResponse, error) {
@@ -246,40 +216,15 @@ func (client *CloudClient) Coverage(ctx context.Context, worldID string) (Covera
 }
 
 func (client *CloudClient) getJSON(ctx context.Context, path string, target any) error {
-	return client.doJSON(ctx, http.MethodGet, path, nil, target, InstallationCredentials{})
-}
-
-func (client *CloudClient) doJSON(
-	ctx context.Context,
-	method string,
-	path string,
-	payload any,
-	target any,
-	credentials InstallationCredentials,
-) error {
 	if client == nil || client.client == nil || client.baseURL == "" {
 		return fmt.Errorf("world intelligence cloud client is unavailable")
 	}
-	var body io.Reader
-	if payload != nil {
-		encoded, err := json.Marshal(payload)
-		if err != nil {
-			return fmt.Errorf("encode world intelligence request: %w", err)
-		}
-		body = bytes.NewReader(encoded)
-	}
-	request, err := http.NewRequestWithContext(ctx, method, client.baseURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, client.baseURL+path, nil)
 	if err != nil {
 		return fmt.Errorf("create world intelligence request: %w", err)
 	}
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("User-Agent", "CitadelOpsDesktop/"+client.clientVersion)
-	if payload != nil {
-		request.Header.Set("Content-Type", "application/json")
-	}
-	if credentials.InstallationID != "" && credentials.Secret != "" {
-		request.Header.Set("Authorization", "CitadelInstall "+credentials.InstallationID+"."+credentials.Secret)
-	}
 	response, err := client.client.Do(request)
 	if err != nil {
 		return fmt.Errorf("world intelligence request failed: %w", err)

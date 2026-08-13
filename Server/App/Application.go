@@ -43,27 +43,28 @@ type Config struct {
 }
 
 type Application struct {
-	DataDir        string
-	State          *State.Store
-	GameData       *GameData.Manager
-	Configuration  *Configuration.Store
-	History        *History.Store
-	Telemetry      *Telemetry.Store
-	Ingest         *Ingest.Pipeline
-	Session        *Session.Controller
-	Intents        *Intent.Engine
-	OperationStore *Intent.SQLiteOperationStore
-	ProfileLease   *RuntimeKernel.ProfileLease
-	Automation     *Automation.Coordinator
-	Reports        *Reports.Manager
-	BattleResearch *Reports.BattleResearchManager
-	ReportStore    *Reports.SQLiteStore
-	Scheduler      *Scheduling.Scheduler
-	API            *API.Server
-	Updates        *AppUpdate.Manager
-	Diagnostics    *Diagnostics.Monitor
-	WorldIntel     *WorldIntel.DesktopService
-	StartupErr     error
+	DataDir         string
+	State           *State.Store
+	GameData        *GameData.Manager
+	Configuration   *Configuration.Store
+	History         *History.Store
+	Telemetry       *Telemetry.Store
+	Ingest          *Ingest.Pipeline
+	Session         *Session.Controller
+	Intents         *Intent.Engine
+	OperationStore  *Intent.SQLiteOperationStore
+	ProfileLease    *RuntimeKernel.ProfileLease
+	Automation      *Automation.Coordinator
+	Reports         *Reports.Manager
+	BattleResearch  *Reports.BattleResearchManager
+	ReportStore     *Reports.SQLiteStore
+	Scheduler       *Scheduling.Scheduler
+	API             *API.Server
+	Updates         *AppUpdate.Manager
+	Diagnostics     *Diagnostics.Monitor
+	WorldIntel      *WorldIntel.DesktopService
+	BackgroundLogin *Session.BackgroundLoginStore
+	StartupErr      error
 
 	statePersistenceMu  sync.Mutex
 	persistenceHealthMu sync.RWMutex
@@ -134,17 +135,28 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		chromium := *config.Chromium
 		chromium.DataDir = config.DataDir
 		mode := Session.ConnectionModeFull
+		serverSelection := ""
 		if raw, ok := configuration.Section("session.connection"); ok {
 			var selected struct {
-				Mode string `json:"mode"`
+				Mode   string `json:"mode"`
+				Server string `json:"server"`
 			}
 			if json.Unmarshal(raw, &selected) == nil {
 				mode = Session.ParseConnectionMode(selected.Mode)
+				serverSelection = strings.TrimSpace(selected.Server)
 			}
 		}
 		if mode == Session.ConnectionModeBackground {
+			language := "en"
+			if currentLanguage, ready := gameData.Language(); ready {
+				if selectedLanguage := strings.TrimSpace(currentLanguage.Metadata().Language); selectedLanguage != "" {
+					language = selectedLanguage
+				}
+			}
 			transport = Session.NewDirectWebSocketTransport(Session.DirectWebSocketConfig{
-				DataDir: config.DataDir,
+				DataDir: config.DataDir, Server: serverSelection,
+				ServerURL: strings.TrimSpace(initial.Session.ServerURL),
+				Namespace: initial.Session.Namespace, Language: language,
 			})
 		} else {
 			transport = Session.NewChromiumTransport(chromium)
@@ -196,28 +208,10 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err := restoreRecentAutoStormLaunchHistory(ctx, state, reportStore); err != nil {
 		return nil, fmt.Errorf("restore recent Auto Storm launch history: %w", err)
 	}
-	worldIntelligence, err := WorldIntel.NewDesktopService(
-		config.DataDir,
+	worldIntelligence := WorldIntel.NewDesktopService(
 		state,
-		gameData,
-		func(ctx context.Context) error {
-			if config.Offline {
-				return nil
-			}
-			return refreshGameDataStore(ctx, state, gameData)
-		},
-		configuration,
 		WorldIntel.NewCloudClient(WorldIntel.ClientConfig{ClientVersion: Version}),
 	)
-	if err != nil {
-		return nil, fmt.Errorf("open world intelligence service: %w", err)
-	}
-	closeWorldIntelligence := true
-	defer func() {
-		if closeWorldIntelligence {
-			_ = worldIntelligence.Close()
-		}
-	}()
 	application := &Application{
 		DataDir: config.DataDir,
 		State:   state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
@@ -227,8 +221,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 			CurrentVersion: Version, Endpoint: config.UpdateEndpoint,
 			InstallSupported: config.UpdateInstallSupported,
 		}),
-		Diagnostics: Diagnostics.NewMonitor(config.DataDir),
-		WorldIntel:  worldIntelligence,
+		Diagnostics:     Diagnostics.NewMonitor(config.DataDir),
+		WorldIntel:      worldIntelligence,
+		BackgroundLogin: Session.NewBackgroundLoginStore(config.DataDir),
 	}
 	session.SetAttackDelayProvider(application.attackLaunchDelay)
 	if relogTransport, ok := transport.(Session.RelogDelayTransport); ok {
@@ -259,6 +254,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewToolPolicy(),
 		Automation.NewHospitalPolicy(),
 		Automation.NewAllianceHelpPolicy(),
+		Automation.NewDailyAttackRefreshPolicy(),
 		Automation.NewConstructionPolicy(),
 		Automation.NewCraftingPolicy(),
 		Automation.NewCraftingLogisticsPolicy(),
@@ -291,13 +287,13 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	application.API = API.NewServer(API.Config{
 		Version: Version, State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
 		Intents: intents, ReportAnalytics: reportStore, Session: session, Updates: application.Updates, Diagnostics: application.Diagnostics,
-		CloudReports: application.Reports.CloudClient(), BattleResearch: application.BattleResearch, Persistence: application,
+		CloudReports: application.Reports.CloudClient(), BattleResearch: application.BattleResearch,
+		BackgroundLogin: application.BackgroundLogin, Persistence: application,
 		WorldIntel: application.WorldIntel,
 	})
 	closeOperationStore = false
 	closeReportStore = false
 	closeProfileLease = false
-	closeWorldIntelligence = false
 	return application, nil
 }
 
@@ -320,10 +316,6 @@ func (application *Application) start(ctx context.Context) {
 		}
 		if application.BattleResearch != nil {
 			application.BattleResearch.Wait()
-		}
-		if application.WorldIntel != nil {
-			application.WorldIntel.Wait()
-			_ = application.WorldIntel.Close()
 		}
 		if application.OperationStore != nil {
 			_ = application.OperationStore.Close()
@@ -356,7 +348,6 @@ func (application *Application) start(ctx context.Context) {
 	go application.Automation.Run(ctx)
 	go application.Reports.Run(ctx)
 	go application.BattleResearch.Run(ctx)
-	go application.WorldIntel.Run(ctx)
 	go application.Scheduler.Run(ctx)
 }
 
@@ -447,14 +438,7 @@ func (application *Application) PersistenceError() error {
 	if reportErr != nil {
 		reportErr = fmt.Errorf("report analytics persistence: %w", reportErr)
 	}
-	var worldIntelErr error
-	if application.WorldIntel != nil {
-		worldIntelErr = application.WorldIntel.PersistenceError()
-	}
-	if worldIntelErr != nil {
-		worldIntelErr = fmt.Errorf("world intelligence persistence: %w", worldIntelErr)
-	}
-	return errors.Join(actionErr, reportErr, worldIntelErr)
+	return errors.Join(actionErr, reportErr)
 }
 
 func (application *Application) actionPersistenceError() error {
@@ -747,12 +731,12 @@ func defaultConfiguration() map[string]json.RawMessage {
 		"session.connection": json.RawMessage(`{"mode":"full"}`),
 		"session.reconnect":  json.RawMessage(`{"relogDelaySec":300}`),
 		Reports.BattleResearchConfigurationSection: json.RawMessage(`{"enabled":false,"consentVersion":0,"spyCount":1}`),
-		"world-intelligence":                       json.RawMessage(`{"collectorPlayerId":0,"collectorSlot":0,"collectorSlots":0}`),
 		"automation.enabled":                       json.RawMessage(`{}`),
+		"automation.recruitTroops":                 json.RawMessage(`{"version":1,"mode":"global","checkIntervalSec":300,"recruitLevel10OnTitleLoss":false,"globalItems":[],"castles":{}}`),
 		"automation.autoBeriWorld":                 json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30,"presetId":"","attackCheckIntervalSec":30,"horseTravelBoostId":-1,"toolMinimums":{"611":0,"614":0,"620":0},"build":{"enabled":false,"stableLevel":5,"allowPremium":false,"allowDemolition":false,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"requireActiveGallantryBooster":false,"useTroopTransportTimeSkips":false,"troopTransportTimeSkipId":"MS5"}`),
 		"automation.autoBeriWorldBlueprints":       json.RawMessage(`{"version":1,"blueprints":{}}`),
 		"automation.commanderFeatures":             json.RawMessage(`{"version":2,"assignments":{},"requirements":{}}`),
-		"automation.autoFoodBalance":               json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{},"horseTravelBoostId":-1}`),
+		"automation.autoFoodBalance":               json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumStormShipmentSize":10000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{},"horseTravelBoostId":-1}`),
 		"automation.autoTowers":                    json.RawMessage(`{"version":2,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"castles":{}}`),
 		"automation.autoInvasion":                  json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
 		"automation.autoNomad":                     json.RawMessage(`{"version":5,"sourceCastleId":0,"nomadPresetId":"","samuraiPresetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),

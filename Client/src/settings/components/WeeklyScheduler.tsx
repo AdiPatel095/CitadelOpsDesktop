@@ -6,6 +6,7 @@ import { showToolPicker } from '../../components/ToolPickerModal';
 import UnitImage from '../../components/UnitImage';
 import ToolImage from '../../components/ToolImage';
 import { useMetadata } from '../../context/MetadataContext';
+import { highestAvailableUnitIDInFamily, unitUpgradeFamily } from '../UnitUpgradeFamily';
 import {
   DAY_MINUTES,
   MIN_SLOT_MINUTES,
@@ -74,6 +75,11 @@ export interface ScheduleSlotOptionField {
   max?: number;
   allowedUnitIds?: number[];
   allowedToolIds?: number[];
+  hidden?: boolean;
+  unitRange?: {
+    minOptionId: string;
+    maxOptionId: string;
+  };
 }
 
 export interface ScheduleSlotOptionsConfig {
@@ -225,6 +231,7 @@ function parseSlotFormOptions(
 function slotOptionsSummary(slot: WeeklyScheduleSlot, config?: ScheduleSlotOptionsConfig): string {
   if (!config) return '';
   const parts = config.fields
+    .filter((field) => !field.hidden)
     .map((field) => {
       const value = slot.options?.[field.id];
       return value == null || value === '' ? '' : `${field.label} ${value}`;
@@ -261,7 +268,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
   slotOptionsConfig,
   className = '',
 }) => {
-  const { getTool, getTroop } = useMetadata();
+  const { getTool, getTroop, troops } = useMetadata();
   const schedule = useMemo(() => normalizeWeeklySchedule(value), [value]);
   const slotOptionsEnabled = !!slotOptionsConfig && !!schedule.slotOptionsEnabled;
   const [editingSlot, setEditingSlot] = useState<SlotFormState | null>(null);
@@ -614,9 +621,19 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
       return;
     }
 
+    const formOptions = { ...editingSlot.options };
+    const unitField = troopOptionField(slotOptionsConfig);
+    if (slotOptionsEnabled && unitField?.unitRange) {
+      const family = unitUpgradeFamily(Number(formOptions[unitField.id]), troops);
+      if (family) {
+        formOptions[unitField.unitRange.minOptionId] = String(family.minId);
+        formOptions[unitField.unitRange.maxOptionId] = String(family.maxId);
+      }
+    }
+
     const parsedOptions =
       slotOptionsEnabled && slotOptionsConfig
-        ? parseSlotFormOptions(editingSlot.options, slotOptionsConfig)
+        ? parseSlotFormOptions(formOptions, slotOptionsConfig)
         : { options: {} };
     if (parsedOptions.error) {
       setEditingSlot({ ...editingSlot, error: parsedOptions.error });
@@ -684,22 +701,31 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
   const selectTroopForSlotOption = async (field: ScheduleSlotOptionField) => {
     if (!editingSlot) return;
     const currentValue = Number(editingSlot.options[field.id]);
+    const preselectedID = Number.isFinite(currentValue) && currentValue > 0
+      ? highestAvailableUnitIDInFamily(currentValue, field.allowedUnitIds, troops)
+      : null;
     const result = await showTroopPicker({
       mode: 'single',
       title: `Select ${field.label}`,
-      preselected: Number.isFinite(currentValue) && currentValue > 0 ? [currentValue] : [],
+      preselected: preselectedID != null ? [preselectedID] : [],
       allowedUnitIds: field.allowedUnitIds,
     });
     if (typeof result !== 'number') return;
 
     setEditingSlot((current) => {
       if (!current) return current;
+      const options = {
+        ...current.options,
+        [field.id]: String(result),
+      };
+      const family = unitUpgradeFamily(result, troops);
+      if (field.unitRange && family) {
+        options[field.unitRange.minOptionId] = String(family.minId);
+        options[field.unitRange.maxOptionId] = String(family.maxId);
+      }
       return {
         ...current,
-        options: {
-          ...current.options,
-          [field.id]: String(result),
-        },
+        options,
         error: '',
       };
     });
@@ -738,6 +764,10 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
 	  const rawLevel = Number(troop?.level);
 	  const level = Number.isFinite(rawLevel) && rawLevel > 0 ? rawLevel : undefined;
       const label = level ? `${unitName} L${level}` : unitName;
+      const family = unitUpgradeFamily(troopID, troops);
+      const familyLabel = family && family.minId !== family.maxId
+        ? `Auto IDs ${family.minId}-${family.maxId}`
+        : `Auto ID ${troopID}`;
       const slotUsableWidth = Math.max(0, slotLaneWidth - SLOT_OPTION_HORIZONTAL_INSET);
       const shouldShowIcon = visualHeight / Math.max(1, slotUsableWidth) > SLOT_OPTION_ICON_MIN_HEIGHT_RATIO;
       const iconSize = Math.round(Math.min(
@@ -752,7 +782,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
         return (
           <span
             className="schedule-slot-option-card"
-            title={label}
+            title={`${label} · ${familyLabel}`}
           >
             <span className="schedule-slot-option-image-stage">
               <UnitImage
@@ -770,7 +800,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
       return (
         <span
           className="schedule-slot-option-badge"
-          title={label}
+          title={`${label} · ${familyLabel}`}
         >
           {level && <span className="schedule-slot-level-badge">L{level}</span>}
           <span className="schedule-slot-unit-name">{unitName}</span>
@@ -1125,7 +1155,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                   {slotOptionsConfig.formTitle}
                 </div>
                 <div className="schedule-option-fields">
-                  {slotOptionsConfig.fields.map((field) => (
+                  {slotOptionsConfig.fields.filter((field) => !field.hidden).map((field) => (
                     <div
                       key={field.id}
                       className={`schedule-field${field.picker ? ' schedule-picker-field' : ''}`}
@@ -1154,7 +1184,16 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                                 : 'No unit selected'}
                             </div>
                             <div className="schedule-troop-picker-id">
-                              {Number(editingSlot.options[field.id]) > 0 ? editingSlot.options[field.id] : field.placeholder}
+                              {Number(editingSlot.options[field.id]) > 0
+                                ? (() => {
+                                    const unitID = Number(editingSlot.options[field.id]);
+                                    const family = unitUpgradeFamily(unitID, troops);
+                                    const range = family && family.minId !== family.maxId
+                                      ? `${family.minId}-${family.maxId}`
+                                      : String(unitID);
+                                    return `ID ${unitID} · auto ${range}`;
+                                  })()
+                                : field.placeholder}
                             </div>
                           </div>
                           <Button

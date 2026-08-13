@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Activity, Castle, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import type {
 	WorldIntelligenceAllianceObservationV1,
@@ -24,9 +24,8 @@ import {
 	PillSelector,
 } from '../../components/ui';
 
-type AllianceMetricKey = 'totalMight' | 'memberCount';
 type AllianceMetricDefinition = {
-	key: AllianceMetricKey;
+	key: string;
 	label: string;
 	shortLabel: string;
 	color: string;
@@ -38,6 +37,8 @@ const allianceMetrics: AllianceMetricDefinition[] = [
 	{ key: 'totalMight', label: 'Combined might', shortLabel: 'Might', color: '#a78bfa', icon: ShieldCheck, tone: 'brand' },
 	{ key: 'memberCount', label: 'Observed members', shortLabel: 'Members', color: '#60a5fa', icon: Users, tone: 'info' },
 ];
+
+const alliancePublicMetricColors = ['#fb7185', '#22d3ee', '#facc15', '#4ade80'];
 
 const historyRanges: Array<{ value: RangeKey; label: string; seconds: number | null }> = [
 	{ value: '24h', label: '24H', seconds: 24 * 60 * 60 },
@@ -52,7 +53,7 @@ interface WorldAllianceDetailViewProps {
 }
 
 const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailViewProps) => {
-	const [selectedMetric, setSelectedMetric] = useState<AllianceMetricKey>('totalMight');
+	const [selectedMetric, setSelectedMetric] = useState('totalMight');
 	const [selectedRange, setSelectedRange] = useState<RangeKey>('24h');
 	const [selectedWindow, setSelectedWindow] = useState<ChartTimeWindow | null>(null);
 	const current = profile.current;
@@ -64,9 +65,28 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 		const cutoff = latestTimestamp - rangeSeconds * 1_000;
 		return history.filter((observation) => Date.parse(observation.observedAt) >= cutoff);
 	}, [history, latestTimestamp, rangeSeconds]);
-	const selectedDefinition = allianceMetrics.find((metric) => metric.key === selectedMetric) ?? allianceMetrics[0];
+	const publicMetrics = useMemo(() => latestAlliancePublicMetrics(profile), [profile]);
+	const metricDefinitions = useMemo<AllianceMetricDefinition[]>(() => [
+		...allianceMetrics,
+		...publicMetrics
+			.filter((metric) => metric.unit !== 'unix-seconds')
+			.map((metric, index) => ({
+				key: `public:${metric.key}`,
+				label: metric.label,
+				shortLabel: metric.label,
+				color: alliancePublicMetricColors[index % alliancePublicMetricColors.length],
+				icon: Activity,
+				tone: 'brand' as const,
+			})),
+	], [publicMetrics]);
+	useEffect(() => {
+		if (metricDefinitions.some((definition) => definition.key === selectedMetric)) return;
+		setSelectedMetric(metricDefinitions[0]?.key ?? 'totalMight');
+		setSelectedWindow(null);
+	}, [metricDefinitions, selectedMetric]);
+	const selectedDefinition = metricDefinitions.find((metric) => metric.key === selectedMetric) ?? metricDefinitions[0];
 	const chartPoints: TrackerMetricPoint[] = visibleHistory.flatMap((observation) => {
-		const value = observation[selectedMetric];
+		const value = allianceMetricValue(observation, selectedMetric);
 		return typeof value === 'number' && Number.isFinite(value)
 			? [{ timestampUnix: Math.floor(Date.parse(observation.observedAt) / 1_000), value, source: 'local' as const }]
 			: [];
@@ -76,7 +96,6 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 		: chartPoints;
 	const firstSelectedValue = displayedPoints[0]?.value;
 	const currentSelectedValue = displayedPoints[displayedPoints.length - 1]?.value;
-	const publicMetrics = useMemo(() => latestAlliancePublicMetrics(profile), [profile]);
 
 	return (
 		<>
@@ -120,8 +139,8 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 						<PillSelector
 							ariaLabel="Public alliance metric"
 							value={selectedMetric}
-							onChange={(value) => { setSelectedMetric(value as AllianceMetricKey); setSelectedWindow(null); }}
-							options={allianceMetrics.map((metric) => ({ value: metric.key, label: metric.shortLabel, icon: <metric.icon className="h-4 w-4" style={{ color: metric.color }} /> }))}
+							onChange={(value) => { setSelectedMetric(value); setSelectedWindow(null); }}
+							options={metricDefinitions.map((metric) => ({ value: metric.key, label: metric.shortLabel, icon: <metric.icon className="h-4 w-4" style={{ color: metric.color }} /> }))}
 							size="body"
 						/>
 					</div>
@@ -147,7 +166,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 			</Card>
 
 			<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-				{allianceMetrics.map((definition) => <MetricTile key={definition.key} label={definition.label} value={formatNumber(current[definition.key])} tone={definition.tone} size="lg" caption={<MetricDelta current={current[definition.key]} first={history[0]?.[definition.key]} compact />} />)}
+				{allianceMetrics.map((definition) => <MetricTile key={definition.key} label={definition.label} value={formatNumber(allianceMetricValue(current, definition.key))} tone={definition.tone} size="lg" caption={<MetricDelta current={allianceMetricValue(current, definition.key)} first={history[0] ? allianceMetricValue(history[0], definition.key) : undefined} compact />} />)}
 				<MetricTile label="Public holdings" value={formatCount(profile.holdings.length)} size="lg" />
 				<MetricTile label="Public event scores" value={formatCount(publicMetrics.length)} size="lg" />
 			</div>
@@ -211,6 +230,15 @@ function latestAlliancePublicMetrics(profile: WorldIntelligenceAllianceProfileV1
 		}
 	}
 	return [...latest.values()].sort((left, right) => left.label.localeCompare(right.label));
+}
+
+function allianceMetricValue(observation: WorldIntelligenceAllianceObservationV1, metric: string): number | undefined {
+	const value = metric === 'totalMight'
+		? observation.totalMight
+		: metric === 'memberCount'
+			? observation.memberCount
+			: observation.publicMetrics?.[metric.replace(/^public:/, '')]?.value;
+	return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 function publicMetricSourceLabel(source?: WorldIntelligencePublicMetricV1['source']): string {

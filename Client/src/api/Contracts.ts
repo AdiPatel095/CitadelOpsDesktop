@@ -71,6 +71,21 @@ export interface BrowserInventory {
   selectionIntent: 'session.select_browser';
 }
 
+export interface BackgroundLoginInput {
+	username: string;
+	password: string;
+	server: string;
+	language?: string;
+}
+
+export interface BackgroundLoginStatus {
+	configured: boolean;
+	server?: string;
+	serverUrl?: string;
+	language?: string;
+	updatedAt?: string;
+}
+
 export interface ConfigurationSnapshot {
 	schemaVersion: number;
 	revision: number;
@@ -100,30 +115,9 @@ export interface SettingsImportResult {
 
 export interface WorldIntelligenceStatusV1 {
 	enabled: boolean;
-	contributing: boolean;
 	worldId?: string;
 	endpoint: string;
-	pendingBatches: number;
-	lastCapturedAt?: string;
-	lastUploadAt?: string;
-	lastUploadError?: string;
-	collector: boolean;
-	collectorPlayerId?: number;
-	collectorSlot?: number;
-	collectorSlots?: number;
-	collectionMode: 'official-catalog';
-	pendingCatalogs?: number;
-	catalogVersion?: string;
-	catalogDatasets?: number;
-	lastCatalogAt?: string;
-	nextCatalogAt?: string;
-	lastCatalogError?: string;
-	catalogCollectionInProgress: boolean;
-	lastScanAt?: string;
-	nextScanAt?: string;
-	lastScanError?: string;
-	scanInProgress: boolean;
-	scannedPlayers?: number;
+	collectionMode: 'shared-data-reader';
 	publicFieldsOnly: boolean;
 	officialSourceOnly: boolean;
 }
@@ -473,7 +467,14 @@ export interface PlayerStateV2 {
   legendLevel?: number;
 	might?: number;
 	glory?: number;
+	gloryTitleId?: number;
+	gloryTitleTopX?: number;
+	gloryTitleObservedAt?: string;
+	gloryTitleGeneration?: number;
 	gallantry?: number;
+	gallantryTitleId?: number;
+	gallantryTitleObservedAt?: string;
+	gallantryTitleGeneration?: number;
 	resources: Record<string, number>;
 	currencies: Record<string, number>;
 	vip: { points?: number; level?: number; remainingSec?: number; upgrade?: number };

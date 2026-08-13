@@ -21,6 +21,8 @@ import type {
 	BuildingTargetCaptureResponse,
 	ExpansionPreviewRequest,
 	ExpansionPreviewResponse,
+	BackgroundLoginInput,
+	BackgroundLoginStatus,
   BrowserInventory,
   CatalogManifest,
   CatalogResponse,
@@ -152,6 +154,17 @@ class CitadelClient {
   getBrowsers(): Promise<BrowserInventory> {
     return this.request<BrowserInventory>('/api/v2/browsers');
   }
+
+	getBackgroundLoginStatus(): Promise<BackgroundLoginStatus> {
+		return this.request<BackgroundLoginStatus>('/api/v2/session/background-login', { cache: 'no-store' });
+	}
+
+	configureBackgroundLogin(input: BackgroundLoginInput): Promise<BackgroundLoginStatus> {
+		return this.request<BackgroundLoginStatus>('/api/v2/session/background-login', {
+			method: 'POST',
+			body: JSON.stringify(input),
+		});
+	}
 
   getConfiguration(): Promise<ConfigurationSnapshot> {
     return this.request<ConfigurationSnapshot>('/api/v2/config');
