@@ -47,6 +47,11 @@ export function equipmentTargets(): EquipmentTarget[] {
 	return [...knownCastleTypeTargets];
 }
 
+export function equipmentTargetLabel(castleTypeID: number): string {
+	return knownCastleTypeTargets.find((target) => target.castleTypeID === castleTypeID)?.label
+		?? `Official target ${castleTypeID}`;
+}
+
 function castleTarget(castleTypeID: number, label: string): EquipmentTarget {
 	return {
 		id: `castle-${castleTypeID}`,

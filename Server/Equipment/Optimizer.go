@@ -42,6 +42,46 @@ type weightedPriority struct {
 	weight   float64
 }
 
+// A grouped client priority assigns the same tier and position to every
+// official effect ID in one top-level effect group. Tier 2's presence bonus is
+// therefore awarded once for the row, while every effect still contributes
+// its own capped value to the score. Legacy clients used unique positions, so
+// their behavior remains unchanged.
+type coverageGroupTracker struct {
+	position int
+	present  bool
+	weight   float64
+}
+
+func newCoverageGroupTracker() coverageGroupTracker {
+	return coverageGroupTracker{position: -1}
+}
+
+func (tracker *coverageGroupTracker) observe(priority weightedPriority, value float64) float64 {
+	if priority.tier != 2 {
+		return 0
+	}
+	bonus := 0.0
+	if tracker.position != priority.position {
+		bonus = tracker.finish()
+		tracker.position = priority.position
+		tracker.weight = priority.weight
+	}
+	if value > 0 {
+		tracker.present = true
+	}
+	return bonus
+}
+
+func (tracker *coverageGroupTracker) finish() float64 {
+	bonus := 0.0
+	if tracker.position >= 0 && tracker.present {
+		bonus = tracker.weight * 10
+	}
+	tracker.present = false
+	return bonus
+}
+
 // scoringRules contains just the information that affects the requested
 // priorities. Search candidates and partial loadouts do not need to carry the
 // complete effect catalogue or repeatedly build effect-total maps.
@@ -370,6 +410,7 @@ func scorePartial(loadout partialLoadout, priorities []weightedPriority, scoring
 	}
 
 	score := 0.0
+	coverage := newCoverageGroupTracker()
 	for priorityIndex, priority := range priorities {
 		value := 0.0
 		for _, item := range loadout.equipment {
@@ -392,12 +433,10 @@ func scorePartial(loadout partialLoadout, priorities []weightedPriority, scoring
 		if cap := scoring.caps[priorityIndex]; cap > 0 && value > cap {
 			value = cap
 		}
-		if priority.tier == 2 && value > 0 {
-			score += priority.weight * 10
-		}
+		score += coverage.observe(priority, value)
 		score += value * priority.weight
 	}
-	return score
+	return score + coverage.finish()
 }
 
 func (loadout partialLoadout) hasGem(id int64) bool {
@@ -546,32 +585,30 @@ func gemMatchesMode(gem State.GemInstance, kind string, combatMode string) bool 
 
 func scoreEffectTotals(totals map[int64]float64, priorities []weightedPriority, caps map[int64]float64) float64 {
 	score := 0.0
+	coverage := newCoverageGroupTracker()
 	for _, priority := range priorities {
 		value := totals[priority.effectID]
 		if capValue := caps[priority.effectID]; capValue > 0 && value > capValue {
 			value = capValue
 		}
-		if priority.tier == 2 && value > 0 {
-			score += priority.weight * 10
-		}
+		score += coverage.observe(priority, value)
 		score += value * priority.weight
 	}
-	return score
+	return score + coverage.finish()
 }
 
 func scoreValues(values []float64, priorities []weightedPriority, caps []float64) float64 {
 	score := 0.0
+	coverage := newCoverageGroupTracker()
 	for index, priority := range priorities {
 		value := values[index]
 		if cap := caps[index]; cap > 0 && value > cap {
 			value = cap
 		}
-		if priority.tier == 2 && value > 0 {
-			score += priority.weight * 10
-		}
+		score += coverage.observe(priority, value)
 		score += value * priority.weight
 	}
-	return score
+	return score + coverage.finish()
 }
 
 func assignmentEffects(
