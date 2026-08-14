@@ -39,6 +39,11 @@ type EventBoard = {
 	entries: EventLeaderboardRow[];
 	run?: WorldIntelligenceEventRunV1;
 };
+type EventBoardGroup = {
+	key: string;
+	title: string;
+	boards: EventBoard[];
+};
 type EventSortKey = 'name' | 'might' | 'honor' | 'alliance' | 'rank' | 'score';
 type EventSort = { key: EventSortKey; direction: 'ascending' | 'descending' };
 
@@ -70,6 +75,7 @@ export const WorldEventHistory = ({
 	onOpenAlliance,
 }: WorldEventHistoryProps) => {
 	const [boards, setBoards] = useState<EventBoard[]>([]);
+	const [event, setEvent] = useState('');
 	const [board, setBoard] = useState('');
 	const [league, setLeague] = useState(allLeagues);
 	const [leagueDefinitions, setLeagueDefinitions] = useState<LeagueDefinition[]>([]);
@@ -83,6 +89,7 @@ export const WorldEventHistory = ({
 	const refreshBoards = useCallback(async () => {
 		if (!worldId) {
 			setBoards([]);
+			setEvent('');
 			setBoard('');
 			return;
 		}
@@ -182,11 +189,15 @@ export const WorldEventHistory = ({
 					})),
 				});
 			}
-			nextBoards.sort((left, right) => eventBoardTitle(left).localeCompare(eventBoardTitle(right)));
+			nextBoards.sort((left, right) => (
+				eventBoardTitle(left).localeCompare(eventBoardTitle(right))
+				|| eventBoardEndTimestamp(right) - eventBoardEndTimestamp(left)
+				|| left.key.localeCompare(right.key)
+			));
 			setBoards(nextBoards);
-			setBoard((current) => nextBoards.some((candidate) => candidate.key === current) ? current : nextBoards[0]?.key ?? '');
 		} catch (requestError) {
 			setBoards([]);
+			setEvent('');
 			setBoard('');
 			setRegularPlayers(new Map());
 			setError(errorMessage(requestError, 'Could not load event boards.'));
@@ -205,9 +216,22 @@ export const WorldEventHistory = ({
 			.catch(() => setLeagueDefinitions([]));
 	}, []);
 
-	const selectedBoard = boards.find((candidate) => candidate.key === board) ?? null;
-	const boardOptions = boards.map((candidate) => ({ value: candidate.key, label: eventBoardTitle(candidate) }));
-	const boardEntries = selectedBoard?.entries ?? [];
+	const eventGroups = useMemo(() => groupEventBoards(boards), [boards]);
+	const selectedEventKey = eventGroups.some((candidate) => candidate.key === event)
+		? event
+		: eventGroups[0]?.key ?? '';
+	const selectedEvent = eventGroups.find((candidate) => candidate.key === selectedEventKey) ?? null;
+	const selectedBoardKey = selectedEvent?.boards.some((candidate) => candidate.key === board)
+		? board
+		: selectedEvent?.boards[0]?.key ?? '';
+	const selectedBoard = selectedEvent?.boards.find((candidate) => candidate.key === selectedBoardKey) ?? null;
+	const eventOptions = eventGroups.map((candidate) => ({ value: candidate.key, label: candidate.title }));
+	const runOptions = (selectedEvent?.boards ?? []).map((candidate) => ({
+		value: candidate.key,
+		label: eventBoardRunLabel(candidate),
+	}));
+	const needsRunSelector = runOptions.length > 1;
+	const boardEntries = useMemo(() => selectedBoard?.entries ?? [], [selectedBoard]);
 	const availableLeagueIds = useMemo(
 		() => [...new Set(boardEntries.map((entry) => entry.leagueId))].sort((left, right) => left - right),
 		[boardEntries],
@@ -258,6 +282,11 @@ export const WorldEventHistory = ({
 	const visibleEntries = entries.slice(safePage * eventPageSize, (safePage + 1) * eventPageSize);
 	const loadedScoreRows = boards.reduce((total, candidate) => total + candidate.entries.length, 0);
 	const knownRunCount = Math.max(eventRuns, new Set(boards.flatMap((candidate) => candidate.run ? [candidate.run.occurrenceId] : [])).size);
+	const filterGridColumns = needsRunSelector && needsLeagueSelector
+		? 'xl:grid-cols-4'
+		: needsRunSelector || needsLeagueSelector
+			? 'xl:grid-cols-3'
+			: 'xl:grid-cols-2';
 
 	return (
 		<div>
@@ -287,11 +316,34 @@ export const WorldEventHistory = ({
 				/>
 			) : (
 				<>
-					<div className={`mb-4 grid gap-3 md:grid-cols-2 ${needsLeagueSelector ? 'xl:grid-cols-3' : ''}`}>
+					<div className={`mb-4 grid gap-3 md:grid-cols-2 ${filterGridColumns}`}>
 						<div>
 							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Event</div>
-							<Select value={board} onChange={(value) => { setBoard(value); setPage(0); }} options={boardOptions} ariaLabel="Select an event" searchable disabled={boardOptions.length <= 1} menuGrowToViewport />
+							<Select
+								value={selectedEventKey}
+								onChange={(value) => {
+									const nextEvent = eventGroups.find((candidate) => candidate.key === value);
+									setEvent(value);
+									setBoard(nextEvent?.boards[0]?.key ?? '');
+									setPage(0);
+								}}
+								options={eventOptions}
+								ariaLabel="Select an event"
+								searchable
+								disabled={eventOptions.length <= 1}
+								menuGrowToViewport
+							/>
 						</div>
+						{needsRunSelector && <div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Event dates</div>
+							<Select
+								value={selectedBoardKey}
+								onChange={(value) => { setBoard(value); setPage(0); }}
+								options={runOptions}
+								ariaLabel="Select an event session by date range"
+								menuGrowToViewport
+							/>
+						</div>}
 						{needsLeagueSelector && <div>
 							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Level league</div>
 							<Select value={league} onChange={(value) => { setLeague(value); setPage(0); }} options={leagueOptions} ariaLabel="Filter event scores by level league" searchable menuGrowToViewport />
@@ -348,13 +400,13 @@ interface PlayerEventHistoryProps {
 	onOpenAlliance: (allianceId: number, worldId: string) => void;
 }
 
-export const WorldPlayerEventHistory = ({ history, error = '', onOpenAlliance }: PlayerEventHistoryProps) => {
+export const WorldPlayerEventHistory = (props: PlayerEventHistoryProps) => (
+	<WorldPlayerEventHistoryContent key={props.history?.playerId ?? 'empty'} {...props} />
+);
+
+const WorldPlayerEventHistoryContent = ({ history, error = '', onOpenAlliance }: PlayerEventHistoryProps) => {
 	const [eventKey, setEventKey] = useState(allEvents);
 	const [page, setPage] = useState(0);
-	useEffect(() => {
-		setEventKey(allEvents);
-		setPage(0);
-	}, [history?.playerId]);
 	const eventOptions = useMemo(() => {
 		const events = new Map<string, string>();
 		for (const entry of history?.history ?? []) events.set(entry.eventKey, entry.eventName || humanizeKey(entry.eventKey));
@@ -575,6 +627,48 @@ function eventBoardTitle(board: EventBoard): string {
 	return `${board.eventName}${publicVariant}`;
 }
 
+function groupEventBoards(boards: readonly EventBoard[]): EventBoardGroup[] {
+	const groups = new Map<string, EventBoardGroup>();
+	for (const board of boards) {
+		const key = eventBoardGroupKey(board);
+		const group = groups.get(key) ?? { key, title: eventBoardTitle(board), boards: [] };
+		group.boards.push(board);
+		groups.set(key, group);
+	}
+	return [...groups.values()]
+		.map((group) => ({
+			...group,
+			boards: group.boards.sort((left, right) => (
+				eventBoardEndTimestamp(right) - eventBoardEndTimestamp(left)
+				|| left.key.localeCompare(right.key)
+			)),
+		}))
+		.sort((left, right) => left.title.localeCompare(right.title) || left.key.localeCompare(right.key));
+}
+
+function eventBoardGroupKey(board: EventBoard): string {
+	const eventKey = board.run?.eventKey.trim().toLocaleLowerCase() || `event-${board.eventId}`;
+	return `${eventKey}:${board.eventId}:${board.listType}:${board.boardKey}`;
+}
+
+function eventBoardRunLabel(board: EventBoard): string {
+	if (!board.run) return 'Current public ranking';
+	const startTimestamp = Date.parse(`${board.run.runStartedOn}T00:00:00Z`);
+	const endTimestamp = Date.parse(board.run.eventEndsAt);
+	if (Number.isFinite(startTimestamp) && Number.isFinite(endTimestamp)) {
+		return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' })
+			.formatRange(new Date(startTimestamp), new Date(endTimestamp));
+	}
+	const start = formatDate(board.run.runStartedOn);
+	const end = formatDate(board.run.eventEndsAt);
+	return start === end ? end : `${start} – ${end}`;
+}
+
+function eventBoardEndTimestamp(board: EventBoard): number {
+	const timestamp = board.run ? Date.parse(board.run.eventEndsAt) : Date.parse(latestBoardObservation(board.entries));
+	return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
 function eventBoardLabel(entry: Pick<EventLeaderboardRow, 'listType' | 'boardKey' | 'leagueId'>): string {
 	const parts = [entry.boardKey ? humanizeKey(entry.boardKey) : `List ${entry.listType}`];
 	if (entry.boardKey) parts.push(`List ${entry.listType}`);
@@ -653,20 +747,6 @@ function formatDate(value: string): string {
 function formatDateTime(value: string): string {
 	const timestamp = Date.parse(value);
 	return Number.isFinite(timestamp) ? new Date(timestamp).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Unknown';
-}
-
-function relativeTime(value: string): string {
-	const timestamp = Date.parse(value);
-	if (!Number.isFinite(timestamp)) return 'Unknown';
-	const delta = Math.round((Date.now() - timestamp) / 1000);
-	const seconds = Math.abs(delta);
-	if (seconds < 60) return 'just now';
-	if (delta < 0 && seconds < 3_600) return `in ${Math.ceil(seconds / 60)}m`;
-	if (delta < 0 && seconds < 86_400) return `in ${Math.ceil(seconds / 3_600)}h`;
-	if (delta < 0) return `in ${Math.ceil(seconds / 86_400)}d`;
-	if (seconds < 3_600) return `${Math.floor(seconds / 60)}m ago`;
-	if (seconds < 86_400) return `${Math.floor(seconds / 3_600)}h ago`;
-	return `${Math.floor(seconds / 86_400)}d ago`;
 }
 
 function errorMessage(error: unknown, fallback: string): string {

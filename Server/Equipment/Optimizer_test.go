@@ -146,6 +146,32 @@ func TestOptimizeKeepsCurrentLoadoutWhenNoPriorityEffectIsAvailable(t *testing.T
 	}
 }
 
+func TestCoverageBonusIsAppliedOncePerGroupedPosition(t *testing.T) {
+	grouped := []weightedPriority{
+		{effectID: 9001, tier: 2, position: 0, weight: 100},
+		{effectID: 9002, tier: 2, position: 0, weight: 100},
+	}
+	values := []float64{1, 2}
+	if got, want := scoreValues(values, grouped, []float64{0, 0}), 1300.0; got != want {
+		t.Fatalf("grouped coverage score = %.0f, want %.0f", got, want)
+	}
+	if got, want := scoreEffectTotals(
+		map[int64]float64{9001: 1, 9002: 2},
+		grouped,
+		map[int64]float64{},
+	), 1300.0; got != want {
+		t.Fatalf("grouped total score = %.0f, want %.0f", got, want)
+	}
+
+	separate := []weightedPriority{
+		{effectID: 9001, tier: 2, position: 0, weight: 100},
+		{effectID: 9002, tier: 2, position: 1, weight: 95},
+	}
+	if got, want := scoreValues(values, separate, []float64{0, 0}), 2240.0; got != want {
+		t.Fatalf("separate coverage score = %.0f, want %.0f", got, want)
+	}
+}
+
 func BenchmarkOptimizeLargeStorage(b *testing.B) {
 	gameState := largeOptimizerState(1_000, 2_000)
 	request := OptimizeRequest{
