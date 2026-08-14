@@ -57,6 +57,20 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.2.2',
+    subtitle: 'Catalog-driven relic reconfiguration targets and sortable official effect groups',
+    date: '2026-08-14',
+    items: [
+      { kind: 'added', text: 'Relic Reconfigure now opens with target cards for broad PvP, broad PvE, Glory Invasions, Nomads and Khan, Samurai and Daimyo, and Berimond; complete target-specific families in current official game data, such as Rift Raid equipment, appear automatically' },
+      { kind: 'fixed', text: 'Broad PvP and PvE profiles no longer mix in effects restricted to a narrow event target, while each event profile combines its matching official area effects with the broadly applicable effects for that combat mode' },
+      { kind: 'fixed', text: 'World Intelligence now works from its shared world binding without a launched game session, collapses repeated runs of the same event leaderboard under one title, and shows a separate date-range picker when multiple collected sessions are available' },
+      { kind: 'fixed', text: 'Persisted relic loadouts can open target selection, edit grouped priorities, and generate a read-only reconfiguration preview while the game is disconnected; applying the proposed loadout remains disabled until a live game socket is ready' },
+      { kind: 'changed', text: 'Priority rows now use the highest official effect category and group available instead of individual stat definitions, and each row expands to every compatible official effect when previewed so newly published definitions join without a client mapping update' },
+      { kind: 'changed', text: 'The Max Stat and Have in Random Slots tiers again support drag sorting within and between lists, with grouped Random Slots coverage scored once per row rather than once per underlying effect definition' },
+      { kind: 'changed', text: 'Saved priorities now use target-family and official-group keys per player and leader, while compatible per-castle effect priorities from the previous format are migrated when a new profile is first opened' },
+    ],
+  },
+  {
     version: '2.2.1',
     subtitle: 'Title-aware recruiting, independent Background login, and safer automation decisions',
     date: '2026-08-13',

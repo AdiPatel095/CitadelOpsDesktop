@@ -34,8 +34,8 @@ type SelectedEntity = { type: 'player' | 'alliance'; id: number; worldId: string
 
 const WorldIntelligenceView = () => {
 	const { state } = useCitadelAPI();
-	const worldId = state?.account.worldId || state?.session.serverUrl || '';
 	const [status, setStatus] = useState<WorldIntelligenceStatusV1 | null>(null);
+	const worldId = state?.account.worldId || status?.worldId || state?.session.serverUrl || '';
 	const [coverage, setCoverage] = useState<WorldIntelligenceCoverageResponseV1>({ worlds: [] });
 	const [coverageError, setCoverageError] = useState('');
 	const [selected, setSelected] = useState<SelectedEntity | null>(null);

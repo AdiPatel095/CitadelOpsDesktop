@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
+import type { GemInstanceV2 } from '../../api/Contracts';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
@@ -123,18 +124,29 @@ export default function EquipmentView() {
 		target.castleTypeID,
 	), [effects, rows, target.castleTypeID, troops]);
 
-	const candidateEffectIDs = useMemo(() => {
-		if (!state || !selected) return [];
+	const candidateEffectIDsByMode = useMemo<Record<CombatMode, number[]>>(() => {
+		const candidates: Record<CombatMode, Set<number>> = { PvP: new Set<number>(), PvE: new Set<number>() };
+		if (!state || !selected) return { PvP: [], PvE: [] };
 		const expectedType = selected.kind === 'commander' ? 2 : 1;
-		const ids = new Set<number>();
 		for (const item of Object.values(state.inventory.equipment)) {
 			if (item.typeId !== expectedType) continue;
-			for (const effect of item.effects ?? []) ids.add(effect.definitionId);
+			if (item.wearerKind && (item.wearerKind !== selected.kind || item.wearerId !== selected.id)) continue;
+			for (const effect of item.effects ?? []) {
+				candidates.PvP.add(effect.definitionId);
+				candidates.PvE.add(effect.definitionId);
+			}
 		}
 		for (const gem of Object.values(state.inventory.gems)) {
-			for (const effect of gem.effects ?? []) ids.add(effect.definitionId);
+			if (gem.wearerKind && (gem.wearerKind !== selected.kind || gem.wearerId !== selected.id)) continue;
+			for (const combatMode of ['PvP', 'PvE'] as const) {
+				if (!gemMatchesPriorityMode(gem, selected.kind, combatMode)) continue;
+				for (const effect of gem.effects ?? []) candidates[combatMode].add(effect.definitionId);
+			}
 		}
-		return Array.from(ids).filter((id) => id > 0).sort((left, right) => left - right);
+		return {
+			PvP: Array.from(candidates.PvP).filter((id) => id > 0).sort((left, right) => left - right),
+			PvE: Array.from(candidates.PvE).filter((id) => id > 0).sort((left, right) => left - right),
+		};
 	}, [selected, state]);
 
 	const run = useCallback(async (work: () => Promise<unknown>, success?: string) => {
@@ -218,6 +230,7 @@ export default function EquipmentView() {
 	const coins = Number(state?.player.resources['1'] ?? 0);
 	const coinBlocked = coinsUnderUpgradeReserve(coins, coinThreshold);
 	const controlsDisabled = !state?.session.loggedIn || busy || selected == null;
+	const reconfigureDisabled = busy || selected == null;
 
 	return (
 		<div className="equipment-view-shell">
@@ -269,6 +282,7 @@ export default function EquipmentView() {
 							effectProfile={effectProfile}
 							combatMode={combatMode}
 							disabled={controlsDisabled}
+							reconfigureDisabled={reconfigureDisabled}
 							onUnequip={setUnequipKind}
 							onUpgrade={setUpgradeKind}
 							onReconfigure={() => setShowOptimizer(true)}
@@ -295,14 +309,32 @@ export default function EquipmentView() {
 					isOpen
 					onClose={() => setShowOptimizer(false)}
 					leader={selected}
-					combatMode={combatMode}
-					target={target}
-					candidateEffectIDs={candidateEffectIDs}
-					disabled={controlsDisabled}
+					candidateEffectIDsByMode={candidateEffectIDsByMode}
+					disabled={reconfigureDisabled}
 				/>
 			)}
 		</div>
 	);
+}
+
+function gemMatchesPriorityMode(
+	gem: GemInstanceV2,
+	leaderKind: EquipmentLeader['kind'],
+	combatMode: CombatMode,
+): boolean {
+	const expectedWearerID = leaderKind === 'castellan' ? 1 : 2;
+	if ((gem.compatibleWearerId ?? 0) > 0 && gem.compatibleWearerId !== expectedWearerID) return false;
+	const normalizedMode = combatMode.toLowerCase();
+	if (gem.combatMode === 'pvp' || gem.combatMode === 'pve') return gem.combatMode === normalizedMode;
+	const wireID = gem.effects[0]?.wireId ?? 0;
+	if (leaderKind === 'castellan') {
+		return combatMode === 'PvP'
+			? wireID >= 10_300 && wireID < 10_400
+			: wireID >= 10_200 && wireID < 10_300;
+	}
+	return combatMode === 'PvP'
+		? wireID >= 300 && wireID < 400
+		: wireID >= 200 && wireID < 300;
 }
 
 function EffectiveBattleReport({
@@ -375,6 +407,7 @@ function EquipmentStatsPane({
 	effectProfile,
 	combatMode,
 	disabled,
+	reconfigureDisabled,
 	onUnequip,
 	onUpgrade,
 	onReconfigure,
@@ -385,6 +418,7 @@ function EquipmentStatsPane({
 	effectProfile: EquipmentEffectProfile;
 	combatMode: CombatMode;
 	disabled: boolean;
+	reconfigureDisabled: boolean;
 	onUnequip: (kind: 'equipment' | 'gems') => void;
 	onUpgrade: (kind: 'equipment' | 'gem') => void;
 	onReconfigure: () => void;
@@ -408,7 +442,7 @@ function EquipmentStatsPane({
 						{leader.kind === 'commander' && (
 							<Button size="sm" variant="secondary" disabled={disabled} onClick={onEventLoadout} leftIcon={<Sparkles className="h-4 w-4" />}>Event Set</Button>
 						)}
-						<Button size="sm" variant="secondary" disabled={disabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}>Reconfigure</Button>
+						<Button size="sm" variant="secondary" disabled={reconfigureDisabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}>Reconfigure</Button>
 						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUnequip('equipment')}>Unequip Equipment</Button>
 						<Button size="sm" disabled={disabled || gemCount === 0} onClick={() => onUnequip('gems')} className="border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:border-purple-500/50 hover:bg-purple-500/20">Unequip Gem</Button>
 					</div>
