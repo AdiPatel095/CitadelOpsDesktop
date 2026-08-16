@@ -3,6 +3,7 @@ package WorldIntel
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -58,6 +59,19 @@ func TestCloudClientOnlyQueriesSharedWorldIntelligence(t *testing.T) {
 				t.Errorf("player history limit = %q", got)
 			}
 			_ = json.NewEncoder(writer).Encode(PlayerEventScoreResponse{WorldID: request.URL.Query().Get("worldId"), PlayerID: 7, EventKey: request.URL.Query().Get("eventKey"), OccurrenceID: request.URL.Query().Get("occurrenceId"), History: []EventScoreObservation{{OccurrenceID: occurrenceID, PlayerID: 7, Rank: 3, ScoreKnown: false}}})
+		case "/v1/subscribe":
+			if request.Header.Get("Accept") != "text/event-stream" || request.Header.Get("Last-Event-ID") != "41" {
+				t.Errorf("subscription headers = Accept %q Last-Event-ID %q", request.Header.Get("Accept"), request.Header.Get("Last-Event-ID"))
+			}
+			writer.Header().Set("Content-Type", "text/event-stream")
+			_, _ = io.WriteString(writer, "id: 42\nevent: world-intel.update\ndata: {}\n\n")
+		case "/v1/event-runs/" + occurrenceID + "/subscribe":
+			if request.URL.Query().Has("limit") || request.URL.Query().Get("leagueId") != "-1" ||
+				request.URL.Query().Get("listType") != "47" {
+				t.Errorf("leaderboard subscription query = %q", request.URL.RawQuery)
+			}
+			writer.Header().Set("Content-Type", "text/event-stream")
+			_, _ = io.WriteString(writer, "id: 43\nevent: world-intel.leaderboard.snapshot\ndata: {}\n\n")
 		default:
 			http.NotFound(writer, request)
 		}
@@ -85,5 +99,23 @@ func TestCloudClientOnlyQueriesSharedWorldIntelligence(t *testing.T) {
 	history, err := client.PlayerEventScores(context.Background(), "world.example", 7, "nomad-invasion", occurrenceID, 9_999)
 	if err != nil || history.PlayerID != 7 || len(history.History) != 1 || history.History[0].ScoreKnown {
 		t.Fatalf("player event history = %#v, %v", history, err)
+	}
+	subscription, err := client.Subscribe(context.Background(), "https://WORLD.EXAMPLE/socket", "41")
+	if err != nil {
+		t.Fatal(err)
+	}
+	stream, err := io.ReadAll(subscription.Body)
+	subscription.Body.Close()
+	if err != nil || !strings.Contains(string(stream), "id: 42") {
+		t.Fatalf("subscription stream = %q, %v", stream, err)
+	}
+	leaderboard, err := client.SubscribeEventRun(context.Background(), "world.example", occurrenceID, 47, -1, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	leaderboardStream, err := io.ReadAll(leaderboard.Body)
+	leaderboard.Body.Close()
+	if err != nil || !strings.Contains(string(leaderboardStream), "world-intel.leaderboard.snapshot") {
+		t.Fatalf("leaderboard stream = %q, %v", leaderboardStream, err)
 	}
 }

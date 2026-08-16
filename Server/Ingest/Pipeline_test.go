@@ -110,7 +110,7 @@ func TestWireObservationPrecedesCommittedStateBarrier(t *testing.T) {
 	}
 }
 
-func TestProtocolObservationRetainsSuccessfulInboundAcrossOutbound(t *testing.T) {
+func TestProtocolObservationIgnoresUnusedOutboundFreshness(t *testing.T) {
 	gameState := State.NewGameState()
 	code := 0
 	inboundAt := time.Date(2026, 7, 21, 12, 0, 0, 0, time.UTC)
@@ -122,11 +122,96 @@ func TestProtocolObservationRetainsSuccessfulInboundAcrossOutbound(t *testing.T)
 	}, "")
 
 	observation := gameState.Observations["ggm"]
-	if observation.LastDirection != string(Protocol.DirectionOutbound) {
-		t.Fatalf("last direction = %q, want outbound", observation.LastDirection)
+	if observation.LastDirection != string(Protocol.DirectionInbound) || observation.Count != 1 {
+		t.Fatalf("unused outbound observation was retained: %+v", observation)
 	}
 	if got := observation.SuccessfulInboundAt(); !got.Equal(inboundAt) {
 		t.Fatalf("successful inbound = %s, want %s", got, inboundAt)
+	}
+}
+
+func TestUnconsumedProtocolFrameDoesNotReviseGameState(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	pipeline := NewPipeline(store, nil, NewRegistry())
+	observed := pipeline.ObserveFrame(Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "unused_opcode", ReceivedAt: time.Now().UTC(),
+	})
+	committed, err := pipeline.CommitFrame(t.Context(), observed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if committed.Revision != 0 || store.Revision() != 0 {
+		t.Fatalf("unused frame advanced state: committed=%d state=%d", committed.Revision, store.Revision())
+	}
+	if len(store.Snapshot().Observations) != 0 {
+		t.Fatalf("unused opcode entered durable observations: %+v", store.Snapshot().Observations)
+	}
+}
+
+func TestReducerSequencePublishesOnlyChangedStepComponents(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	events, unsubscribe := store.Subscribe(1)
+	defer unsubscribe()
+	registry := NewRegistry()
+	secondCalled := false
+	if err := registry.registerComponentSequence("multi",
+		reducerStep{writes: State.Components(State.ComponentPlayer), reducer: func(
+			_ context.Context, _ Protocol.Frame, gameState *State.GameState, _ *GameData.Store,
+		) ([]string, bool, error) {
+			gameState.Player.Level++
+			return []string{"player"}, true, nil
+		}},
+		reducerStep{writes: State.Components(State.ComponentAdvisor), reducer: func(
+			_ context.Context, _ Protocol.Frame, _ *State.GameState, _ *GameData.Store,
+		) ([]string, bool, error) {
+			secondCalled = true
+			return nil, false, nil
+		}},
+	); err != nil {
+		t.Fatal(err)
+	}
+	pipeline := NewPipeline(store, nil, registry)
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "multi", ReceivedAt: time.Now().UTC(),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if !secondCalled {
+		t.Fatal("later reducer step was skipped")
+	}
+	select {
+	case event := <-events:
+		if got := State.Components(event.Components...); got != State.Components(State.ComponentPlayer) {
+			t.Fatalf("dirty components = %v, want player only", event.Components)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("state event was not published")
+	}
+}
+
+func TestCommittedWatcherReceivesResponseWithoutStateRevision(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	pipeline := NewPipeline(store, nil, NewRegistry())
+	response, cancel := pipeline.Watch("unused_response", store.Revision())
+	defer cancel()
+	code := 147
+	committed, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "unused_response", ResponseCode: &code,
+		ReceivedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if committed.Revision != 0 || store.Revision() != 0 {
+		t.Fatal("response-only frame created durable state")
+	}
+	select {
+	case observed := <-response:
+		if observed.IngressID != committed.IngressID || observed.Frame.ResponseCode == nil || *observed.Frame.ResponseCode != 147 {
+			t.Fatalf("observed response = %+v", observed)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("response-only commit was not delivered")
 	}
 }
 
@@ -145,7 +230,7 @@ func TestProtocolObservationReconcilesBaselineAfterLoginOrderingRace(t *testing.
 	}
 
 	changed := recordObservation(&gameState, Protocol.Frame{
-		Direction: Protocol.DirectionInbound, Opcode: "gam", ResponseCode: &code,
+		Direction: Protocol.DirectionInbound, Opcode: "gbd", ResponseCode: &code,
 		ReceivedAt: baselineAt.Add(time.Millisecond),
 	}, "")
 	if !changed || gameState.Session.BaselineGeneration != gameState.Session.Generation {

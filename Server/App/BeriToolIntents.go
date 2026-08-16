@@ -178,7 +178,7 @@ func (application *Application) guardBeriToolPurchase(_ context.Context, argumen
 		return fmt.Errorf("official game data is unavailable")
 	}
 	_, castle, _, err := beriToolPurchaseContext(Intent.PlanningContext{
-		State: application.State.Snapshot(), GameData: gameData,
+		State: application.State.ReadOnlyView(), GameData: gameData,
 	}, arguments)
 	if err != nil {
 		return err

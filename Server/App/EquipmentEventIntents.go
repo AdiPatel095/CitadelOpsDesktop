@@ -55,6 +55,7 @@ func planEquipmentEventApply(_ context.Context, input Intent.PlanningContext, ar
 	var request struct {
 		CommanderID int64  `json:"commanderId"`
 		Event       string `json:"event"`
+		Tier        string `json:"tier"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -70,11 +71,15 @@ func planEquipmentEventApply(_ context.Context, input Intent.PlanningContext, ar
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	tiers, err := selectEquipmentEventTiers(config, request.Tier)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
 	if input.GameData == nil {
 		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
 	}
-	setIDs := make([]int64, 0, len(config.tiers))
-	for _, tier := range config.tiers {
+	setIDs := make([]int64, 0, len(tiers))
+	for _, tier := range tiers {
 		setIDs = append(setIDs, tier.setID)
 	}
 	officialSets, err := loadOfficialEquipmentEventSets(input.GameData, setIDs)
@@ -82,8 +87,8 @@ func planEquipmentEventApply(_ context.Context, input Intent.PlanningContext, ar
 		return Intent.Plan{}, err
 	}
 
-	candidates := make([]equipmentEventCandidate, 0, len(config.tiers))
-	for _, tier := range config.tiers {
+	candidates := make([]equipmentEventCandidate, 0, len(tiers))
+	for _, tier := range tiers {
 		officialSet, found := officialSets[tier.setID]
 		if !found || len(officialSet.equipmentBySlot) < len(baseEquipmentSlots) || len(officialSet.gemDefinitions) < 4 {
 			return Intent.Plan{}, fmt.Errorf("%s set %d is incomplete in the current official game data", config.label, tier.setID)
@@ -95,9 +100,31 @@ func planEquipmentEventApply(_ context.Context, input Intent.PlanningContext, ar
 	})
 	selected := candidates[0]
 	if selected.gearCount == 0 {
-		return Intent.Plan{}, fmt.Errorf("no available %s equipment is in storage or already on commander %d", config.label, leader.id)
+		label := config.label
+		if selected.tier.label != "" {
+			label = selected.tier.label + " " + label
+		}
+		return Intent.Plan{}, fmt.Errorf("no available %s equipment is in storage or already on commander %d", label, leader.id)
 	}
 	return buildEquipmentEventPlan(input.State, leader, selected)
+}
+
+func selectEquipmentEventTiers(config equipmentEventConfig, raw string) ([]equipmentEventTier, error) {
+	requested := strings.TrimSpace(raw)
+	if requested == "" {
+		return config.tiers, nil
+	}
+	for _, tier := range config.tiers {
+		if tier.label != "" && strings.EqualFold(tier.label, requested) {
+			return []equipmentEventTier{tier}, nil
+		}
+	}
+	for _, tier := range config.tiers {
+		if tier.label != "" {
+			return nil, fmt.Errorf("unknown %s equipment tier %q; expected Bronze, Silver, or Gold", config.label, requested)
+		}
+	}
+	return nil, fmt.Errorf("%s does not support equipment tier selection", config.label)
 }
 
 func resolveEquipmentEventConfig(raw string) (equipmentEventConfig, error) {

@@ -71,7 +71,7 @@ func restoreRecentAutoStormLaunchHistory(
 	if len(records) == 0 {
 		return nil
 	}
-	_, err = state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = state.ApplyComponents(State.Components(State.ComponentAttackAnalytics), func(gameState *State.GameState) ([]string, bool, error) {
 		changed := State.MergeAutoStormLaunchHistory(gameState, records, now)
 		return []string{"attack-analytics"}, changed, nil
 	})
@@ -93,19 +93,22 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 	if application.GameData != nil {
 		gameData, _ = application.GameData.Current()
 	}
-	_, err := application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(
+		State.ComponentAttackAnalytics, State.ComponentRift, State.ComponentTowerQueue,
+	), func(gameState *State.GameState) ([]string, bool, error) {
 		var selected State.MovementState
-		for _, movement := range gameState.Movements {
+		gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 			if movement.Direction != 0 || movement.SourceCastleID != request.SourceCastleID ||
 				movement.KingdomID != request.KingdomID || movement.TargetX != request.TargetX || movement.TargetY != request.TargetY ||
 				movement.CommanderID == nil || *movement.CommanderID != request.CommanderID || movement.ArrivesAt == nil {
-				continue
+				return true
 			}
 			if selected.ID == 0 || movement.ObservedAt.After(selected.ObservedAt) ||
 				movement.ObservedAt.Equal(selected.ObservedAt) && movement.ID > selected.ID {
 				selected = movement
 			}
-		}
+			return true
+		})
 		if selected.ID == 0 {
 			return nil, false, fmt.Errorf(
 				"CRA response did not return commander %d's %s movement to %d:%d",
@@ -138,10 +141,7 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 			}
 		}
 		if changed && request.FeatureID == State.AttackFeatureAutoTowers {
-			if gameState.TowerQueue.ConfirmedLaunchesByCastle == nil {
-				gameState.TowerQueue.ConfirmedLaunchesByCastle = map[State.CastleID]int64{}
-			}
-			gameState.TowerQueue.ConfirmedLaunchesByCastle[request.SourceCastleID]++
+			gameState.IncrementTowerQueueConfirmedLaunches(request.SourceCastleID)
 			domains = append(domains, "tower-queue")
 		}
 		return domains, changed, nil

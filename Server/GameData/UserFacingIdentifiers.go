@@ -237,7 +237,7 @@ func resolveCastellan(labels IdentifierLabels, id int64) (string, bool) {
 }
 
 func resolveMovement(labels IdentifierLabels, id int64) (string, bool) {
-	movement, found := labels.state.Movements[State.MovementID(id)]
+	movement, found := labels.state.LookupMovement(State.MovementID(id))
 	if !found {
 		return "", false
 	}
@@ -368,7 +368,7 @@ func resolveStormIsle(labels IdentifierLabels, id int64) (string, bool) {
 	if labels.store == nil {
 		return "", false
 	}
-	isle, found := labels.store.StormIsle(id)
+	isle, found := labels.store.StormIsleView(id)
 	if !found {
 		return "", false
 	}
@@ -402,7 +402,7 @@ func resolveSkill(labels IdentifierLabels, id int64) (string, bool) {
 }
 
 func resolveEvent(labels IdentifierLabels, id int64) (string, bool) {
-	if score, found := labels.state.EventScores.ByEvent[id]; found {
+	if score, found := labels.state.LookupScalableEventScore(id); found {
 		if name := localizedEventName(labels.language, score.LocalizationKey, score.Name, score.EventType, id); name != "" {
 			return fmt.Sprintf("%s (event ID %d)", name, id), true
 		}
@@ -441,20 +441,27 @@ func localizedEventName(language *LanguageStore, localizationKey string, name st
 }
 
 func resolveDifficulty(labels IdentifierLabels, id int64) (string, bool) {
-	for eventID, score := range labels.state.EventScores.ByEvent {
+	var resolved string
+	labels.state.RangeScalableEventScores(func(eventID int64, score State.ScalableEventScore) bool {
 		if score.DifficultyID != id {
-			continue
+			return true
 		}
 		if name := humanizeInternalName(score.DifficultyTypeName); name != "" {
-			return fmt.Sprintf("%s (difficulty ID %d)", name, id), true
+			resolved = fmt.Sprintf("%s (difficulty ID %d)", name, id)
+			return false
 		}
 		if labels.store != nil {
 			if definition, found := labels.store.ScalableEvent(eventID, id); found {
 				if name := humanizeInternalName(definition.DifficultyTypeName); name != "" {
-					return fmt.Sprintf("%s (difficulty ID %d)", name, id), true
+					resolved = fmt.Sprintf("%s (difficulty ID %d)", name, id)
+					return false
 				}
 			}
 		}
+		return true
+	})
+	if resolved != "" {
+		return resolved, true
 	}
 	if labels.store == nil {
 		return "", false

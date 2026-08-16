@@ -3,13 +3,16 @@ package Session
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/State"
 	"github.com/gorilla/websocket"
 )
 
@@ -215,4 +218,410 @@ func TestDirectWireDecoderBuffersFragmentedSmartFoxMessages(t *testing.T) {
 	if len(events) != 2 || !strings.Contains(events[0].raw, `%lli%`) || !strings.Contains(events[1].raw, `%gbd%`) {
 		t.Fatalf("fragmented XT events = %+v", events)
 	}
+}
+
+// fakeGameServer answers the Background handshake and replies to each login
+// frame with loginReply(attempt), so tests can observe how the transport
+// classifies a failed login and when it tries again, without a real game
+// server. It returns the server and a counter of login attempts seen.
+func fakeGameServer(t *testing.T, loginReply string) *httptest.Server {
+	t.Helper()
+	server, _ := fakeGameServerWithReplies(t, func(int) string { return loginReply })
+	return server
+}
+
+func fakeGameServerWithReplies(t *testing.T, loginReply func(attempt int) string) (*httptest.Server, *atomic.Int32) {
+	t.Helper()
+	var attempts atomic.Int32
+	upgrader := websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		connection, err := upgrader.Upgrade(writer, request, nil)
+		if err != nil {
+			return
+		}
+		defer connection.Close()
+		for {
+			_, payload, readErr := connection.ReadMessage()
+			if readErr != nil {
+				return
+			}
+			message := string(payload)
+			var reply string
+			switch {
+			case strings.Contains(message, "action='verChk'"):
+				reply = `<msg t='sys'><body action='apiOK' r='0'></body></msg>`
+			case strings.Contains(message, "action='login'"):
+				reply = `%xt%rlu%-1%0%{}%`
+			case strings.Contains(message, "action='autoJoin'"):
+				reply = `<msg t='sys'><body action='joinOK' r='1'><pid id='0'/></body></msg>`
+			case strings.Contains(message, "action='roundTrip'"):
+				reply = `<msg t='sys'><body action='roundTripRes' r='1'></body></msg>`
+			case strings.Contains(message, "%vck%"):
+				reply = `%xt%vck%1%0%{}%`
+			case strings.Contains(message, "%lli%"):
+				reply = loginReply(int(attempts.Add(1)))
+				if reply == "CLOSE" {
+					// Simulate a server-side drop right after the login frame.
+					_ = connection.Close()
+					return
+				}
+			case strings.Contains(message, "%abc%"):
+				reply = `%xt%abc%1%0%{"ok":true}%`
+			}
+			if reply != "" {
+				if writeErr := connection.WriteMessage(websocket.TextMessage, []byte(reply)); writeErr != nil {
+					return
+				}
+			}
+		}
+	}))
+	t.Cleanup(server.Close)
+	return server, &attempts
+}
+
+func startFakeGameTransport(t *testing.T, server *httptest.Server) *DirectWebSocketTransport {
+	t.Helper()
+	transport := newFakeGameTransport(t, server, t.TempDir())
+	if err := transport.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	return transport
+}
+
+func newFakeGameTransport(t *testing.T, server *httptest.Server, dataDir string) *DirectWebSocketTransport {
+	t.Helper()
+	return newFakeGameTransportWithConfig(t, server, dataDir, nil)
+}
+
+func newFakeGameTransportWithConfig(t *testing.T, server *httptest.Server, dataDir string, adjust func(*DirectWebSocketConfig)) *DirectWebSocketTransport {
+	t.Helper()
+	if err := saveBackgroundLoginCredential(dataDir, persistedLoginCredential{
+		SchemaVersion: loginCredentialSchemaVersion, CapturedAt: time.Now().UTC(), AutoRestore: true,
+		Username: "test-player", Password: "test-password",
+		ServerURL: "wss://ep-live-us1-game.goodgamestudios.com:443", Language: "en",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	config := DirectWebSocketConfig{
+		DataDir:           dataDir,
+		serverURLOverride: "ws" + strings.TrimPrefix(server.URL, "http"),
+		pingInterval:      25 * time.Millisecond,
+		movementInterval:  15 * time.Millisecond,
+		handshakeTimeout:  2 * time.Second,
+		buildResolver:     func(context.Context, string) (string, error) { return "1165009", nil },
+	}
+	if adjust != nil {
+		adjust(&config)
+	}
+	transport := NewDirectWebSocketTransport(config)
+	transport.SetRelogDelayProvider(func() time.Duration { return 30 * time.Millisecond })
+	t.Cleanup(func() { _ = transport.Stop(context.Background()) })
+	return transport
+}
+
+func awaitTransportState(t *testing.T, transport *DirectWebSocketTransport, states ...string) Status {
+	t.Helper()
+	deadline := time.After(5 * time.Second)
+	for {
+		select {
+		case <-deadline:
+			t.Fatalf("transport never reported %v: %+v", states, transport.Status())
+		case status := <-transport.StatusChanges():
+			for _, state := range states {
+				if status.State == state {
+					return status
+				}
+			}
+		}
+	}
+}
+
+func awaitLoginFailureStatus(t *testing.T, transport *DirectWebSocketTransport, states ...string) Status {
+	t.Helper()
+	deadline := time.After(5 * time.Second)
+	for {
+		select {
+		case <-deadline:
+			t.Fatalf("transport never reported %v: %+v", states, transport.Status())
+		case status := <-transport.StatusChanges():
+			for _, state := range states {
+				if status.State == state {
+					return status
+				}
+			}
+			if status.State == "connected" {
+				t.Fatalf("transport connected despite the failed login: %+v", status)
+			}
+		}
+	}
+}
+
+func TestDirectTransportClassifiesFailedLogins(t *testing.T) {
+	t.Run("temporary lockout is a non-fatal cooldown", func(t *testing.T) {
+		transport := startFakeGameTransport(t, fakeGameServer(t, `%xt%lli%1%453%{"CD":7}%`))
+		status := awaitLoginFailureStatus(t, transport, "cooldown")
+		if status.LoginFailure == nil || status.LoginFailure.Code != 453 ||
+			status.LoginFailure.Class != State.LoginFailureCooldown || status.LoginFailure.Fatal ||
+			status.CooldownUntil == nil || status.RetryAt == nil || status.LoggedIn {
+			t.Fatalf("cooldown status = %+v failure = %+v", status, status.LoginFailure)
+		}
+		if strings.Contains(status.Detail, "test-password") {
+			t.Fatal("status detail exposed the password")
+		}
+	})
+	t.Run("IS_BANNED with a remaining time suspends and resumes automatically", func(t *testing.T) {
+		before := time.Now().UTC()
+		transport := startFakeGameTransport(t, fakeGameServer(t, `%xt%lli%1%27%{"RS":86400}%`))
+		status := awaitLoginFailureStatus(t, transport, "suspended")
+		failure := status.LoginFailure
+		if failure == nil || failure.Code != 27 || failure.Class != State.LoginFailureSuspended || !failure.Fatal ||
+			failure.SuspendedUntil == nil || failure.SuspendedUntil.Before(before.Add(23*time.Hour)) ||
+			failure.SuspendedUntil.After(before.Add(25*time.Hour)) ||
+			status.RetryAt == nil || status.RetryAt.Before(*failure.SuspendedUntil) {
+			t.Fatalf("suspension status = %+v failure = %+v", status, failure)
+		}
+		if !strings.Contains(status.Detail, "IS_BANNED") {
+			t.Fatalf("detail did not name the official code: %q", status.Detail)
+		}
+		if !transport.Running() {
+			t.Fatal("a temporary suspension parked the transport instead of scheduling the resume")
+		}
+	})
+	t.Run("a short suspension resumes and connects without intervention", func(t *testing.T) {
+		server, attempts := fakeGameServerWithReplies(t, func(attempt int) string {
+			if attempt == 1 {
+				return `%xt%lli%1%27%{"RS":1}%`
+			}
+			return `%xt%lli%1%0%{}%`
+		})
+		transport := startFakeGameTransport(t, server)
+		awaitTransportState(t, transport, "suspended")
+		status := awaitTransportState(t, transport, "connected")
+		if !status.LoggedIn || attempts.Load() < 2 {
+			t.Fatalf("transport did not resume after the suspension: %+v attempts=%d", status, attempts.Load())
+		}
+	})
+	t.Run("permanent suspension parks until the saved login changes", func(t *testing.T) {
+		server, attempts := fakeGameServerWithReplies(t, func(int) string { return `%xt%lli%1%27%{}%` })
+		transport := startFakeGameTransport(t, server)
+		status := awaitLoginFailureStatus(t, transport, "error")
+		if status.RetryAt != nil || status.LoginFailure == nil || status.LoginFailure.SuspendedUntil != nil {
+			t.Fatalf("permanent suspension status = %+v", status)
+		}
+		waitUntilNotRunning(t, transport)
+		if err := transport.Start(context.Background()); !errors.Is(err, ErrLoginParked) {
+			t.Fatalf("Start on a parked login = %v", err)
+		}
+		time.Sleep(60 * time.Millisecond)
+		if attempts.Load() != 1 {
+			t.Fatalf("parked transport spent the login again: %d attempts", attempts.Load())
+		}
+	})
+	t.Run("IS_BANNED with the GDPR flag is a deactivated account", func(t *testing.T) {
+		transport := startFakeGameTransport(t, fakeGameServer(t, `%xt%lli%1%27%{"GDPR":true}%`))
+		status := awaitLoginFailureStatus(t, transport, "error")
+		if status.LoginFailure == nil || status.LoginFailure.Class != State.LoginFailureAccountDeleted ||
+			!status.LoginFailure.Fatal || status.LoginFailure.SuspendedUntil != nil {
+			t.Fatalf("deleted-account failure = %+v", status.LoginFailure)
+		}
+	})
+	t.Run("INVALID_PASSWORD parks and a changed login restarts", func(t *testing.T) {
+		server, attempts := fakeGameServerWithReplies(t, func(attempt int) string {
+			if attempt == 1 {
+				return `%xt%lli%1%20%{}%`
+			}
+			return `%xt%lli%1%0%{}%`
+		})
+		dataDir := t.TempDir()
+		transport := newFakeGameTransport(t, server, dataDir)
+		if err := transport.Start(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		status := awaitLoginFailureStatus(t, transport, "error")
+		if status.LoginFailure == nil || status.LoginFailure.Class != State.LoginFailureInvalidCredentials ||
+			!status.LoginFailure.Fatal || status.RetryAt != nil {
+			t.Fatalf("invalid password status = %+v failure = %+v", status, status.LoginFailure)
+		}
+		waitUntilNotRunning(t, transport)
+		if err := transport.Start(context.Background()); !errors.Is(err, ErrLoginParked) {
+			t.Fatalf("Start with the same rejected login = %v", err)
+		}
+		if err := saveBackgroundLoginCredential(dataDir, persistedLoginCredential{
+			SchemaVersion: loginCredentialSchemaVersion, CapturedAt: time.Now().UTC().Add(time.Second), AutoRestore: true,
+			Username: "test-player", Password: "corrected-password",
+			ServerURL: "wss://ep-live-us1-game.goodgamestudios.com:443", Language: "en",
+		}); err != nil {
+			t.Fatal(err)
+		}
+		if err := transport.Start(context.Background()); err != nil {
+			t.Fatalf("Start with a changed login = %v", err)
+		}
+		if status := awaitTransportState(t, transport, "connected"); !status.LoggedIn || attempts.Load() != 2 {
+			t.Fatalf("changed login did not connect: %+v attempts=%d", status, attempts.Load())
+		}
+	})
+	t.Run("PLAYER_NOT_FOUND is the wrong-server class", func(t *testing.T) {
+		transport := startFakeGameTransport(t, fakeGameServer(t, `%xt%lli%1%21%{}%`))
+		if failure := awaitLoginFailureStatus(t, transport, "error").LoginFailure; failure == nil ||
+			failure.Class != State.LoginFailureWrongServer || !failure.Fatal {
+			t.Fatalf("player not found failure = %+v", failure)
+		}
+	})
+	t.Run("unknown code keeps retrying with a doubling relog delay", func(t *testing.T) {
+		server, attempts := fakeGameServerWithReplies(t, func(int) string { return `%xt%lli%1%777%{}%` })
+		transport := startFakeGameTransport(t, server)
+		status := awaitLoginFailureStatus(t, transport, "error")
+		if status.LoginFailure == nil || status.LoginFailure.Code != 777 ||
+			status.LoginFailure.Class != State.LoginFailureUnknown || !status.LoginFailure.Fatal ||
+			status.LoginFailure.ObservedAt.IsZero() || status.RetryAt == nil {
+			t.Fatalf("fatal status = %+v failure = %+v", status, status.LoginFailure)
+		}
+		deadline := time.Now().Add(3 * time.Second)
+		for attempts.Load() < 3 && time.Now().Before(deadline) {
+			time.Sleep(10 * time.Millisecond)
+		}
+		if attempts.Load() < 3 || !transport.Running() {
+			t.Fatalf("unknown code stopped retrying: attempts=%d running=%t", attempts.Load(), transport.Running())
+		}
+	})
+}
+
+func waitUntilNotRunning(t *testing.T, transport *DirectWebSocketTransport) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for transport.Running() && time.Now().Before(deadline) {
+		time.Sleep(5 * time.Millisecond)
+	}
+	if transport.Running() {
+		t.Fatal("transport did not park after a fatal login failure")
+	}
+}
+
+func TestClassifyLoginFailure(t *testing.T) {
+	tests := []struct {
+		code  int
+		class State.LoginFailureClass
+		fatal bool
+		name  string
+	}{
+		{453, State.LoginFailureCooldown, false, "LOGIN_COOLDOWN_ACTIVE"},
+		{27, State.LoginFailureSuspended, true, "IS_BANNED"},
+		{20, State.LoginFailureInvalidCredentials, true, "INVALID_PASSWORD"},
+		{409, State.LoginFailureInvalidCredentials, true, "INVALID_LOGIN_TOKEN"},
+		{423, State.LoginFailureInvalidCredentials, true, "INVALID_GLOBALSERVER_LOGIN_TOKEN"},
+		{21, State.LoginFailureWrongServer, true, "PLAYER_NOT_FOUND"},
+		{26, State.LoginFailureWrongServer, true, "NO_AVATAR_CREATED"},
+		{368, State.LoginFailureWrongServer, true, "EXISTING_MAPPING_WRONG_SERVER"},
+		{369, State.LoginFailureUnknown, true, "UNEXPECTED_FACEBOOK_ERROR"},
+		{999, State.LoginFailureUnknown, true, ""},
+	}
+	for _, test := range tests {
+		class, fatal := State.ClassifyLoginFailure(test.code, false)
+		if class != test.class || fatal != test.fatal || State.LoginFailureCodeName(test.code) != test.name {
+			t.Fatalf("code %d = %s fatal %t name %q, want %s %t %q", test.code, class, fatal, State.LoginFailureCodeName(test.code), test.class, test.fatal, test.name)
+		}
+	}
+	if class, fatal := State.ClassifyLoginFailure(-1, true); class != State.LoginFailureClientVersionRejected || fatal {
+		t.Fatalf("client version = %s fatal %t", class, fatal)
+	}
+}
+
+func TestDirectTransportReleasePolicyHandsTheWaitToTheControlPlane(t *testing.T) {
+	t.Run("cooldown releases the session and refuses an unforced early start", func(t *testing.T) {
+		server, attempts := fakeGameServerWithReplies(t, func(attempt int) string {
+			if attempt == 1 {
+				return `%xt%lli%1%453%{"CD":3600}%`
+			}
+			return `%xt%lli%1%0%{}%`
+		})
+		transport := newFakeGameTransport(t, server, t.TempDir())
+		transport.SetReconnectPolicy(ReconnectPolicyRelease)
+		if err := transport.Start(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		before := time.Now().UTC()
+		status := awaitTransportState(t, transport, "released")
+		if status.CooldownUntil == nil || status.RetryAt == nil || status.RetryAt.Before(before.Add(59*time.Minute)) ||
+			status.LoginFailure == nil || status.LoginFailure.Class != State.LoginFailureCooldown ||
+			!strings.HasPrefix(status.Detail, "Session released") {
+			t.Fatalf("released status = %+v failure = %+v", status, status.LoginFailure)
+		}
+		waitUntilNotRunning(t, transport)
+		if err := transport.Start(context.Background()); !errors.Is(err, ErrReconnectScheduled) {
+			t.Fatalf("unforced Start during a released cooldown = %v", err)
+		}
+		if attempts.Load() != 1 {
+			t.Fatalf("released transport spent the login again: %d attempts", attempts.Load())
+		}
+		// The user or control plane forces a reconnect: the hold is bypassed once.
+		transport.ClearReconnectHold()
+		if err := transport.Start(context.Background()); err != nil {
+			t.Fatalf("forced Start = %v", err)
+		}
+		if status := awaitTransportState(t, transport, "connected"); !status.LoggedIn || attempts.Load() != 2 {
+			t.Fatalf("forced reconnect did not connect: %+v attempts=%d", status, attempts.Load())
+		}
+	})
+	t.Run("temporary suspension releases with the suspension end as retry time", func(t *testing.T) {
+		server, _ := fakeGameServerWithReplies(t, func(int) string { return `%xt%lli%1%27%{"RS":7200}%` })
+		transport := newFakeGameTransport(t, server, t.TempDir())
+		transport.SetReconnectPolicy(ReconnectPolicyRelease)
+		if err := transport.Start(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		before := time.Now().UTC()
+		status := awaitTransportState(t, transport, "released")
+		if status.RetryAt == nil || status.RetryAt.Before(before.Add(119*time.Minute)) ||
+			status.LoginFailure == nil || status.LoginFailure.Class != State.LoginFailureSuspended {
+			t.Fatalf("released suspension status = %+v", status)
+		}
+		waitUntilNotRunning(t, transport)
+	})
+	t.Run("invalid password releases without a retry time", func(t *testing.T) {
+		server, _ := fakeGameServerWithReplies(t, func(int) string { return `%xt%lli%1%20%{}%` })
+		transport := newFakeGameTransport(t, server, t.TempDir())
+		transport.SetReconnectPolicy(ReconnectPolicyRelease)
+		if err := transport.Start(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		status := awaitTransportState(t, transport, "released")
+		if status.RetryAt != nil || status.LoginFailure == nil || status.LoginFailure.Class != State.LoginFailureInvalidCredentials {
+			t.Fatalf("released invalid-password status = %+v", status)
+		}
+		waitUntilNotRunning(t, transport)
+		if err := transport.Start(context.Background()); !errors.Is(err, ErrLoginParked) {
+			t.Fatalf("Start with the same rejected login = %v", err)
+		}
+	})
+	t.Run("plain drops get a short immediate retry window before release", func(t *testing.T) {
+		server, attempts := fakeGameServerWithReplies(t, func(int) string { return "CLOSE" })
+		transport := newFakeGameTransportWithConfig(t, server, t.TempDir(), func(config *DirectWebSocketConfig) {
+			config.releaseRetryDelay = 10 * time.Millisecond
+			config.releaseRetryAttempts = 2
+		})
+		transport.SetReconnectPolicy(ReconnectPolicyRelease)
+		if err := transport.Start(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		status := awaitTransportState(t, transport, "released")
+		if status.RetryAt == nil || status.LoginFailure != nil {
+			t.Fatalf("released drop status = %+v", status)
+		}
+		waitUntilNotRunning(t, transport)
+		if got := attempts.Load(); got != 3 {
+			t.Fatalf("login attempts before release = %d, want 1 + 2 immediate retries", got)
+		}
+	})
+	t.Run("hold policy keeps reconnecting after drops", func(t *testing.T) {
+		server, attempts := fakeGameServerWithReplies(t, func(attempt int) string {
+			if attempt <= 2 {
+				return "CLOSE"
+			}
+			return `%xt%lli%1%0%{}%`
+		})
+		transport := startFakeGameTransport(t, server)
+		if status := awaitTransportState(t, transport, "connected"); !status.LoggedIn || attempts.Load() < 3 {
+			t.Fatalf("hold policy did not reconnect through drops: %+v attempts=%d", status, attempts.Load())
+		}
+	})
 }

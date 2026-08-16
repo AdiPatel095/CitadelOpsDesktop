@@ -64,7 +64,7 @@ func (*AutoNomadPolicy) ID() string { return "autoNomad" }
 func (*AutoNomadPolicy) EnabledKey() string { return "auto_nomad" }
 
 func (*AutoNomadPolicy) WakeDomains() []string {
-	return []string{"attacks", "map", "movements", "commanders", "units", "events", "event-scores", "nomad-camps", "tower-cooldowns", "currencies", "attack_dialog", "achievements"}
+	return []string{"attacks", "map-event-camp", "movements", "commanders", "units", "events", "event-scores", "nomad-camps", "tower-cooldowns", "currencies", "attack_dialog", "achievements"}
 }
 
 func (*AutoNomadPolicy) WakeSections() []string {
@@ -105,6 +105,11 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 
 	score, found := activeNomadEventScore(snapshot.State, snapshot.Now)
 	if !found {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{nomadEventID, samuraiEventID}, "Nomad or Samurai event",
+		); locked {
+			return decision, nil
+		}
 		return nomadWaiting(snapshot.Now, "No Nomad or Samurai scalable event is active"), nil
 	}
 	targetTypeID, _ := nomadTargetType(score.EventID)
@@ -191,7 +196,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
 			}, nil
 		}
-		if observation, found := snapshot.State.Map[locked.KingdomID][fmt.Sprintf("%d:%d", locked.X, locked.Y)]; found &&
+		if observation, found := snapshot.State.LookupMapObservation(locked.KingdomID, fmt.Sprintf("%d:%d", locked.X, locked.Y)); found &&
 			observation.TypeID == locked.TypeID && observation.EventCampID == locked.EventCampID {
 			remaining := nomadCampCooldownRemaining(snapshot.State, observation, snapshot.Now)
 			if remaining > 0 {
@@ -375,7 +380,7 @@ func activeNomadEventScore(gameState State.GameState, now time.Time) (State.Scal
 	var selected State.ScalableEventScore
 	found := false
 	for _, eventID := range []int64{nomadEventID, samuraiEventID} {
-		score, exists := gameState.EventScores.ByEvent[eventID]
+		score, exists := gameState.LookupScalableEventScore(eventID)
 		if !exists || !nomadScoreStillActive(score, now) {
 			continue
 		}
@@ -447,18 +452,19 @@ func nomadCampCandidates(
 	lastScan time.Time,
 ) []nomadCampCandidate {
 	result := make([]nomadCampCandidate, 0, nomadCampCount)
-	for _, observation := range gameState.Map[source.KingdomID] {
+	gameState.RangeMapObservationsByKind(source.KingdomID, State.MapProjectionEventCamp, func(_ string, observation State.MapObservation) bool {
 		if observation.TypeID != targetTypeID || observation.ObservedAt.Before(lastScan) ||
 			invasionDistanceSquared(source, observation) > fixedNomadRadius*fixedNomadRadius || observation.EventCampID <= 0 {
-			continue
+			return true
 		}
 		definition, found := gameData.EventCamp(observation.EventCampID)
 		if !found || definition.EventID != eventID || definition.DifficultyID != difficultyID ||
 			definition.AreaTypeID != targetTypeID || definition.VictoryCount != observation.EventCampVictoryCount {
-			continue
+			return true
 		}
 		result = append(result, nomadCampCandidate{Observation: observation, Definition: definition})
-	}
+		return true
+	})
 	sort.Slice(result, func(left, right int) bool {
 		leftDistance := invasionDistanceSquared(source, result[left].Observation)
 		rightDistance := invasionDistanceSquared(source, result[right].Observation)
@@ -596,14 +602,15 @@ func activeNomadCampAttackCount(gameState State.GameState, sourceCastleID State.
 		targets[fmt.Sprintf("%d:%d:%d", camp.Observation.KingdomID, camp.Observation.X, camp.Observation.Y)] = struct{}{}
 	}
 	count := 0
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 0 || movement.SourceCastleID != sourceCastleID || !towerMovementActiveAt(movement, now) {
-			continue
+			return true
 		}
 		if _, found := targets[fmt.Sprintf("%d:%d:%d", movement.KingdomID, movement.TargetX, movement.TargetY)]; found {
 			count++
 		}
-	}
+		return true
+	})
 	return count
 }
 
@@ -729,7 +736,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 	if !exists {
 		return nomadWaiting(snapshot.Now, "The selected Nomad preset for the RBC trial no longer exists"), nil
 	}
-	target, exists := snapshot.State.Map[source.KingdomID][fmt.Sprintf("%d:%d", trial.TargetX, trial.TargetY)]
+	target, exists := snapshot.State.LookupMapObservation(source.KingdomID, fmt.Sprintf("%d:%d", trial.TargetX, trial.TargetY))
 	if !exists || target.TypeID != kingdomTowerMapTypeID {
 		return nomadRBCTestMapRefresh(snapshot.Now, source.KingdomID, trial.TargetX, trial.TargetY, "Discover the configured RBC trial target", nil), nil
 	}
@@ -746,7 +753,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 		return nomadRBCTestMapRefresh(snapshot.Now, source.KingdomID, target.X, target.Y, "Refresh the RBC trial target before launch", metrics), nil
 	}
 	key := towerTargetKey(target.KingdomID, target.X, target.Y)
-	if cooldown, found := snapshot.State.TowerCooldowns[key]; found && cooldown.PendingCooldownRefresh &&
+	if cooldown, found := snapshot.State.LookupTowerCooldown(key); found && cooldown.PendingCooldownRefresh &&
 		(!activeTest || cooldown.LastSuccessfulBattleAt.After(test.StartedAt)) {
 		return nomadRBCTestMapRefresh(snapshot.Now, target.KingdomID, target.X, target.Y,
 			fmt.Sprintf("Refresh RBC %d:%d immediately after confirmed hit %d", target.X, target.Y, test.VictoriesConfirmed), metrics), nil

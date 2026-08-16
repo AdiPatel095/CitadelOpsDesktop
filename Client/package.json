@@ -1,10 +1,10 @@
 {
   "name": "citadel-ops-client",
   "private": true,
-  "version": "2.2.1",
+  "version": "2.3.0",
   "type": "module",
   "scripts": {
-    "dev": "tsc && vite",
+    "dev": "tsc && vite --host 127.0.0.1 --port 41731 --strictPort",
     "build": "tsc && vite build",
     "preview": "tsc && vite preview"
   },

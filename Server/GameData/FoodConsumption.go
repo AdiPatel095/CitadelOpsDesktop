@@ -64,13 +64,13 @@ func (store *Store) UnitUsesFoodSupply(unitID State.UnitID) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	record, err := catalogRecord(units, int64(unitID), "unit")
-	if err != nil {
-		return false, err
+	id := strconv.FormatInt(int64(unitID), 10)
+	if _, found := units.findIndex(id); !found {
+		return false, fmt.Errorf("official unit definition %d is unavailable", unitID)
 	}
-	foodSupply, _ := record.Float64("foodSupply")
-	meadSupply, _ := record.Float64("meadSupply")
-	beefSupply, _ := record.Float64("beefSupply")
+	foodSupply, _ := units.Float64(id, "foodSupply")
+	meadSupply, _ := units.Float64(id, "meadSupply")
+	beefSupply, _ := units.Float64(id, "beefSupply")
 	if meadSupply > 0 || beefSupply > 0 {
 		return false, nil
 	}
@@ -158,26 +158,13 @@ func (store *Store) EstimateFoodConsumption(castle State.CastleState) (CastleFoo
 }
 
 func foodResourceIDs(store *Store) (map[string]State.ResourceID, error) {
-	resources, err := store.Catalog("resources")
-	if err != nil {
-		return nil, err
-	}
 	result := map[string]State.ResourceID{}
-	for _, raw := range resources.Rows() {
-		record, decodeErr := DecodeRecord(raw)
-		if decodeErr != nil {
-			continue
-		}
-		id, idExists := record.Int64("resourceID")
-		jsonKey, keyExists := record.String("JSONKey")
-		if idExists && id > 0 && keyExists {
-			result[jsonKey] = State.ResourceID(id)
-		}
-	}
 	for _, jsonKey := range foodResourceJSONKeys {
-		if result[jsonKey] == 0 {
+		resourceID, found := store.ResourceIDForJSONKey(jsonKey)
+		if !found || resourceID <= 0 {
 			return nil, fmt.Errorf("official resource %s is unavailable", jsonKey)
 		}
+		result[jsonKey] = State.ResourceID(resourceID)
 	}
 	return result, nil
 }
@@ -258,11 +245,11 @@ func meadProductionInputs(store *Store, castle State.CastleState) (meadInputs, e
 	}
 	result := meadInputs{}
 	for _, building := range castle.Buildings {
-		record, recordErr := catalogRecord(buildings, int64(building.DefinitionID), "building")
-		if recordErr != nil {
-			return meadInputs{}, recordErr
+		id := strconv.FormatInt(int64(building.DefinitionID), 10)
+		if _, found := buildings.findIndex(id); !found {
+			return meadInputs{}, fmt.Errorf("official building definition %d is unavailable", building.DefinitionID)
 		}
-		production, exists := record.Float64("meadProduction")
+		production, exists := buildings.Float64(id, "meadProduction")
 		if !exists || production <= 0 {
 			continue
 		}
@@ -274,8 +261,8 @@ func meadProductionInputs(store *Store, castle State.CastleState) (meadInputs, e
 		if percent < 0 || percent > 100 {
 			return meadInputs{}, fmt.Errorf("brewery production percentage %.2f is invalid for building %d", percent, building.InstanceID)
 		}
-		honeyRatio, _ := record.Float64("honeyRatio")
-		foodRatio, _ := record.Float64("foodRatio")
+		honeyRatio, _ := buildings.Float64(id, "honeyRatio")
+		foodRatio, _ := buildings.Float64(id, "foodRatio")
 		// The catalog rate is stored in hundredths; PA.MEAD is the configured
 		// operating percentage. Live DMEAD output does not determine inputs.
 		configuredRate := production / 100 * percent / 100
@@ -336,18 +323,13 @@ func foodConsumptionBase(stationed map[State.UnitID]int64, units *Catalog) (map[
 		if amount <= 0 {
 			continue
 		}
-		raw, exists := units.Find(strconv.FormatInt(int64(unitID), 10))
-		if !exists {
-			missing = append(missing, int64(unitID))
-			continue
-		}
-		record, decodeErr := DecodeRecord(raw)
-		if decodeErr != nil {
+		id := strconv.FormatInt(int64(unitID), 10)
+		if _, exists := units.findIndex(id); !exists {
 			missing = append(missing, int64(unitID))
 			continue
 		}
 		for _, definition := range foodConsumptionDefinitions {
-			if supply, exists := record.Float64(definition.supplyField); exists && supply > 0 {
+			if supply, exists := units.Float64(id, definition.supplyField); exists && supply > 0 {
 				result[definition.resourceJSONKey] += float64(amount) * supply
 			}
 		}
@@ -366,11 +348,11 @@ func foodConsumptionReductions(store *Store, castle State.CastleState) (map[stri
 	}
 	result := map[string]float64{}
 	for _, building := range castle.Buildings {
-		record, err := catalogRecord(buildings, int64(building.DefinitionID), "building")
-		if err != nil {
-			return nil, err
+		id := strconv.FormatInt(int64(building.DefinitionID), 10)
+		if _, found := buildings.findIndex(id); !found {
+			return nil, fmt.Errorf("official building definition %d is unavailable", building.DefinitionID)
 		}
-		addFoodConsumptionReductions(result, record)
+		addFoodConsumptionReductions(result, buildings, id)
 	}
 	if len(castle.ConstructionSlots) == 0 {
 		return result, nil
@@ -384,31 +366,19 @@ func foodConsumptionReductions(store *Store, castle State.CastleState) (map[stri
 			if slot.DefinitionID <= 0 {
 				continue
 			}
-			record, recordErr := catalogRecord(items, int64(slot.DefinitionID), "construction item")
-			if recordErr != nil {
-				return nil, recordErr
+			id := strconv.FormatInt(int64(slot.DefinitionID), 10)
+			if _, found := items.findIndex(id); !found {
+				return nil, fmt.Errorf("official construction item definition %d is unavailable", slot.DefinitionID)
 			}
-			addFoodConsumptionReductions(result, record)
+			addFoodConsumptionReductions(result, items, id)
 		}
 	}
 	return result, nil
 }
 
-func catalogRecord(catalog *Catalog, id int64, kind string) (Record, error) {
-	raw, exists := catalog.Find(strconv.FormatInt(id, 10))
-	if !exists {
-		return nil, fmt.Errorf("official %s definition %d is unavailable", kind, id)
-	}
-	record, err := DecodeRecord(raw)
-	if err != nil {
-		return nil, fmt.Errorf("decode official %s definition %d: %w", kind, id, err)
-	}
-	return record, nil
-}
-
-func addFoodConsumptionReductions(target map[string]float64, record Record) {
+func addFoodConsumptionReductions(target map[string]float64, catalog *Catalog, id string) {
 	for _, definition := range foodConsumptionDefinitions {
-		if reduction, exists := record.Float64(definition.reductionField); exists && reduction > 0 {
+		if reduction, exists := catalog.Float64(id, definition.reductionField); exists && reduction > 0 {
 			target[definition.resourceJSONKey] += reduction
 		}
 	}

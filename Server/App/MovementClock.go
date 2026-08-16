@@ -43,7 +43,10 @@ func (application *Application) runMovementClock(ctx context.Context) {
 	}
 	reconcile := func() {
 		now := time.Now().UTC()
-		_, _ = application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+		_, _ = application.State.ApplyComponents(State.Components(
+			State.ComponentMovements, State.ComponentCommanders, State.ComponentCastles,
+			State.ComponentKhan, State.ComponentEventScores,
+		), func(gameState *State.GameState) ([]string, bool, error) {
 			if !Ingest.ReconcileExpiredMovements(gameState, now) {
 				return nil, false, nil
 			}
@@ -73,7 +76,7 @@ func (application *Application) runMovementClock(ctx context.Context) {
 
 func nextMovementCompletion(gameState State.GameState) time.Time {
 	var next time.Time
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		var completion *time.Time
 		owned := State.MovementOwnedByCurrentPlayer(gameState, movement)
 		if movement.Direction == 0 && movement.WaitSeconds > 0 {
@@ -93,12 +96,13 @@ func nextMovementCompletion(gameState State.GameState) time.Time {
 			}
 		}
 		if completion == nil || completion.IsZero() {
-			continue
+			return true
 		}
 		if next.IsZero() || completion.Before(next) {
 			next = *completion
 		}
-	}
+		return true
+	})
 	return next
 }
 

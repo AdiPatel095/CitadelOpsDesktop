@@ -315,7 +315,7 @@ func invasionAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 	if source.KingdomID != 0 || request.KingdomID != source.KingdomID {
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("invasion attack source and target must be in the Great Empire")
 	}
-	target, exists := input.State.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	target, exists := input.State.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || target.TypeID != request.TargetTypeID {
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("invasion target %d:%d is no longer available", request.TargetX, request.TargetY)
 	}
@@ -441,11 +441,11 @@ func resolveInvasionAttackCapacity(
 }
 
 func (application *Application) captureInvasionScan(_ context.Context, arguments json.RawMessage) error {
-	request, _, err := invasionMapScanContext(Intent.PlanningContext{State: application.State.Snapshot()}, arguments)
+	request, _, err := invasionMapScanContext(Intent.PlanningContext{State: application.State.ReadOnlyView()}, arguments)
 	if err != nil {
 		return err
 	}
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentInvasion), func(gameState *State.GameState) ([]string, bool, error) {
 		source, exists := gameState.Castles[request.SourceCastleID]
 		if !exists || !source.Focused {
 			return nil, false, fmt.Errorf("invasion source castle %d is no longer focused", request.SourceCastleID)
@@ -471,19 +471,20 @@ func (application *Application) captureInvasionLaunch(_ context.Context, argumen
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentEventScores), func(gameState *State.GameState) ([]string, bool, error) {
 		var selected State.MovementState
-		for _, movement := range gameState.Movements {
+		gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 			if movement.Direction != 0 || movement.SourceCastleID != request.SourceCastleID ||
 				movement.KingdomID != request.KingdomID || movement.TargetX != request.TargetX || movement.TargetY != request.TargetY ||
 				movement.CommanderID == nil || *movement.CommanderID != request.CommanderID || movement.ArrivesAt == nil {
-				continue
+				return true
 			}
 			if selected.ID == 0 || movement.ObservedAt.After(selected.ObservedAt) ||
 				movement.ObservedAt.Equal(selected.ObservedAt) && movement.ID > selected.ID {
 				selected = movement
 			}
-		}
+			return true
+		})
 		if selected.ID == 0 {
 			return nil, false, fmt.Errorf("CRA response did not return commander %d's invasion movement", request.CommanderID)
 		}
@@ -506,7 +507,7 @@ func (application *Application) guardInvasionAttack(_ context.Context, arguments
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	_, source, target, err := invasionAttackContext(Intent.PlanningContext{State: state}, mustMarshalInvasionAttackRequest(request.invasionAttackRequest))
 	if err != nil {
 		return err
@@ -539,7 +540,7 @@ func (application *Application) guardInvasionTarget(_ context.Context, arguments
 		return err
 	}
 	request := verification.Request
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	_, _, target, err := invasionAttackContext(
 		Intent.PlanningContext{State: state},
 		mustMarshalInvasionAttackRequest(request.invasionAttackRequest),
@@ -575,7 +576,7 @@ func (application *Application) guardInvasionFortify(_ context.Context, argument
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	request, _, target, err := invasionAttackContext(Intent.PlanningContext{State: state}, mustMarshalInvasionAttackRequest(request))
 	if err != nil {
 		return err
@@ -603,14 +604,12 @@ func (application *Application) consumeInvasionTarget(_ context.Context, argumen
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		observations := gameState.Map[request.KingdomID]
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentWorldMap), func(gameState *State.GameState) ([]string, bool, error) {
 		key := fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)
-		if _, exists := observations[key]; !exists {
+		if !gameState.DeleteMapObservation(request.KingdomID, key) {
 			return nil, false, nil
 		}
-		delete(observations, key)
-		return []string{"map", "invasion"}, true, nil
+		return []string{"map-invasion", "invasion"}, true, nil
 	})
 	return err
 }

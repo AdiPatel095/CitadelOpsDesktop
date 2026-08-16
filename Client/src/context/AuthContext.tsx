@@ -17,6 +17,8 @@ export type GameConnectionState =
   | 'connected'
   | 'cooldown'
   | 'reconnecting'
+  | 'suspended'
+  | 'released'
   | 'disconnected'
   | 'error';
 
@@ -80,6 +82,8 @@ interface AuthContextType {
 	automationTimedUntilByKey: Record<string, number>;
   startGame: () => void;
   stopGame: () => void;
+  /** Force a fresh game connection now, bypassing a scheduled retry, cooldown wait, or login park. */
+  reconnectGame: () => void;
   toggleRecruitTroops: () => void;
   toggleAutoTool: () => void;
   toggleAutoSceatRes: () => void;
@@ -262,6 +266,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	automationTimedUntilByKey,
     startGame: () => submit('session.start'),
     stopGame: () => submit('session.stop'),
+    reconnectGame: () => submit('session.reconnect'),
 	toggleRecruitTroops: () => toggle('recruit_troops', recruitTroopsEnabled),
 	toggleAutoTool: () => toggle('auto_tool', autoToolEnabled),
 	toggleAutoSceatRes: () => toggle('auto_sceat_resources', autoSceatResEnabled),
@@ -350,6 +355,8 @@ function normalizeConnectionState(status: string | undefined, loggedIn: boolean)
     case 'authenticating':
     case 'cooldown':
     case 'reconnecting':
+    case 'suspended':
+    case 'released':
     case 'disconnected':
       return status;
     case 'connected':

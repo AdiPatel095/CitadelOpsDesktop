@@ -837,7 +837,7 @@ func (application *Application) verifyAllianceInspection(_ context.Context, argu
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	alliance, found := application.State.Snapshot().Alliances[request.AllianceID]
+	alliance, found := application.State.ReadOnlyView().Alliances[request.AllianceID]
 	if !found || alliance.ID != request.AllianceID {
 		return fmt.Errorf("alliance %d did not return a matching live roster", request.AllianceID)
 	}

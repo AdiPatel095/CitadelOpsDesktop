@@ -22,7 +22,7 @@ func (server *Server) handlePlayerTrackerHistory(writer http.ResponseWriter, req
 		}
 	}
 	since := time.Now().UTC().Add(-time.Duration(rangeSeconds) * time.Second)
-	current := History.NewPlayerSample(server.config.State.Snapshot(), server.config.GameData)
+	current := History.NewPlayerSample(server.config.State.ReadOnlyView(), server.config.GameData)
 	samples, err := server.config.History.PlayerSamplesForPlayer(since, 100_000, current.PlayerID)
 	if err != nil {
 		writeError(writer, http.StatusInternalServerError, "history_read_failed", err.Error())

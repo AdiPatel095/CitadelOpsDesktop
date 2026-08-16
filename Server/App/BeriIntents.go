@@ -120,7 +120,7 @@ func (application *Application) verifyBeriCapacity(_ context.Context, arguments 
 	if application == nil || application.State == nil {
 		return fmt.Errorf("Berimond capacity state is unavailable")
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	castle, exists := state.Castles[request.BeriCastleID]
 	if !exists || castle.KingdomID != beriKingdomID {
 		return fmt.Errorf("%w: the Berimond capacity castle is no longer owned", Intent.ErrPlanStale)
@@ -320,7 +320,7 @@ func (application *Application) verifyBeriTransfer(_ context.Context, arguments 
 		return fmt.Errorf("official game data is unavailable")
 	}
 	if err := validateBeriTransferState(Intent.PlanningContext{
-		State: application.State.Snapshot(), GameData: gameData,
+		State: application.State.ReadOnlyView(), GameData: gameData,
 	}, request); err != nil {
 		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
@@ -334,7 +334,7 @@ func (application *Application) consumeBeriCapacity(_ context.Context, arguments
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentBeri), func(gameState *State.GameState) ([]string, bool, error) {
 		if request.ObservedAt.IsZero() || !gameState.Beri.ObservedAt.Equal(request.ObservedAt) {
 			return nil, false, fmt.Errorf("Berimond capacity changed before it could be consumed")
 		}
@@ -440,7 +440,7 @@ func (application *Application) verifyBeriCampOpen(_ context.Context, arguments 
 		return fmt.Errorf("official game data is unavailable")
 	}
 	if _, err := beriCampOpenOption(Intent.PlanningContext{
-		State: application.State.Snapshot(), GameData: gameData,
+		State: application.State.ReadOnlyView(), GameData: gameData,
 	}, request.CampID, request.RefreshStartedAt); err != nil {
 		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
@@ -506,8 +506,7 @@ func currentBeriTarget(gameState State.GameState, observedAfter time.Time) (Stat
 	if !observedAfter.IsZero() && beri.TargetObservedAt.Before(observedAfter) {
 		return State.MapObservation{}, fmt.Errorf("Berimond did not return a fresh tower selection")
 	}
-	targets := gameState.Map[beriKingdomID]
-	target, exists := targets[fmt.Sprintf("%d:%d", beri.TargetX, beri.TargetY)]
+	target, exists := gameState.LookupMapObservation(beriKingdomID, fmt.Sprintf("%d:%d", beri.TargetX, beri.TargetY))
 	if !exists || beri.TargetTypeID != AttackCapacity.BerimondTowerMapTypeID ||
 		target.TypeID != AttackCapacity.BerimondTowerMapTypeID || target.Level <= 0 ||
 		target.ObservedAt.Before(beri.TargetObservedAt) {
@@ -527,7 +526,7 @@ func (application *Application) verifyBeriTargetFound(_ context.Context, argumen
 	if application == nil || application.State == nil {
 		return fmt.Errorf("Berimond target state is unavailable")
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	source, exists := state.Castles[request.SourceCastleID]
 	if !exists || source.KingdomID != beriKingdomID {
 		return fmt.Errorf("%w: the Berimond attack source is no longer owned", Intent.ErrPlanStale)
@@ -713,7 +712,7 @@ func beriTowerAttackContext(
 		return request, State.CastleState{}, State.MapObservation{},
 			fmt.Errorf("%w: Berimond tower selection is no longer current", Intent.ErrPlanStale)
 	}
-	target, exists := input.State.Map[beriKingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	target, exists := input.State.LookupMapObservation(beriKingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || target.KingdomID != beriKingdomID || target.X != request.TargetX || target.Y != request.TargetY ||
 		target.TypeID != AttackCapacity.BerimondTowerMapTypeID || target.TypeID != request.TargetTypeID ||
 		target.Level <= 0 ||
@@ -733,7 +732,7 @@ func (application *Application) guardBeriTowerAttack(_ context.Context, argument
 	if application == nil || application.State == nil {
 		return fmt.Errorf("Berimond attack state is unavailable")
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	if !beriTargetConfirmedAfterGAA(state, request) {
 		if err := application.invalidateBeriTarget(request); err != nil {
 			return err
@@ -774,7 +773,7 @@ func beriTargetConfirmedAfterGAA(gameState State.GameState, request beriTowerAtt
 	if request.TargetRefreshAfter.IsZero() {
 		return false
 	}
-	target, exists := gameState.Map[beriKingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	target, exists := gameState.LookupMapObservation(beriKingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	return exists &&
 		target.KingdomID == beriKingdomID &&
 		target.X == request.TargetX &&
@@ -786,7 +785,7 @@ func beriTargetConfirmedAfterGAA(gameState State.GameState, request beriTowerAtt
 }
 
 func (application *Application) invalidateBeriTarget(request beriTowerAttackRequest) error {
-	_, err := application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentBeri), func(gameState *State.GameState) ([]string, bool, error) {
 		beri := gameState.Beri
 		if request.TargetObservedAt.IsZero() || !beri.TargetObservedAt.Equal(request.TargetObservedAt) ||
 			beri.TargetX != request.TargetX || beri.TargetY != request.TargetY ||
@@ -810,7 +809,7 @@ func (application *Application) markBeriCampOpened(_ context.Context, arguments 
 	if request.RequestedAt.IsZero() {
 		return fmt.Errorf("requestedAt is required")
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentBeri), func(gameState *State.GameState) ([]string, bool, error) {
 		if !gameState.Beri.CampOpenRequestedAt.Before(request.RequestedAt) {
 			return nil, false, nil
 		}

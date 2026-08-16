@@ -140,7 +140,7 @@ func planNomadDifficulty(_ context.Context, input Intent.PlanningContext, argume
 	if difficulty.IsLocked && (difficulty.UnlockAchievementID <= 0 || !input.State.Player.Achievements.Completed[difficulty.UnlockAchievementID]) {
 		return Intent.Plan{}, fmt.Errorf("difficulty %d is not unlocked by this player's achievements", request.DifficultyID)
 	}
-	score, active := input.State.EventScores.ByEvent[request.EventID]
+	score, active := input.State.LookupScalableEventScore(request.EventID)
 	if !active {
 		return Intent.Plan{}, fmt.Errorf("event %d is no longer active", request.EventID)
 	}
@@ -382,7 +382,7 @@ func nomadCampAttackContext(
 			return nomadCampAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, 0, fmt.Errorf("chain mode target does not match the locked camp")
 		}
 	}
-	score, active := input.State.EventScores.ByEvent[request.EventID]
+	score, active := input.State.LookupScalableEventScore(request.EventID)
 	if !active || score.DifficultyID != request.DifficultyID {
 		return nomadCampAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, 0, fmt.Errorf("event %d difficulty %d is no longer active", request.EventID, request.DifficultyID)
 	}
@@ -423,18 +423,19 @@ func validatedNomadCampSet(
 		return State.CastleState{}, nil, 0, fmt.Errorf("the four regular camps have not been scanned")
 	}
 	camps := make([]appNomadCamp, 0, nomadIntentCampCount)
-	for _, observation := range input.State.Map[source.KingdomID] {
+	input.State.RangeMapObservationsByKind(source.KingdomID, State.MapProjectionEventCamp, func(_ string, observation State.MapObservation) bool {
 		if observation.TypeID != request.TargetTypeID || observation.EventCampID <= 0 || observation.ObservedAt.Before(lastScan) ||
 			appNomadDistanceSquared(source, observation) > nomadIntentRadius*nomadIntentRadius {
-			continue
+			return true
 		}
 		definition, found := input.GameData.EventCamp(observation.EventCampID)
 		if !found || definition.EventID != request.EventID || definition.DifficultyID != request.DifficultyID ||
 			definition.AreaTypeID != request.TargetTypeID || definition.VictoryCount != observation.EventCampVictoryCount {
-			continue
+			return true
 		}
 		camps = append(camps, appNomadCamp{Observation: observation, Definition: definition})
-	}
+		return true
+	})
 	sort.Slice(camps, func(left, right int) bool {
 		leftDistance := appNomadDistanceSquared(source, camps[left].Observation)
 		rightDistance := appNomadDistanceSquared(source, camps[right].Observation)
@@ -504,19 +505,20 @@ func (application *Application) captureNomadCampLaunch(_ context.Context, argume
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentEventScores), func(gameState *State.GameState) ([]string, bool, error) {
 		var selected State.MovementState
-		for _, movement := range gameState.Movements {
+		gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 			if movement.Direction != 0 || movement.SourceCastleID != request.SourceCastleID ||
 				movement.KingdomID != request.KingdomID || movement.TargetX != request.TargetX || movement.TargetY != request.TargetY ||
 				movement.CommanderID == nil || *movement.CommanderID != request.CommanderID || movement.ArrivesAt == nil {
-				continue
+				return true
 			}
 			if selected.ID == 0 || movement.ObservedAt.After(selected.ObservedAt) ||
 				movement.ObservedAt.Equal(selected.ObservedAt) && movement.ID > selected.ID {
 				selected = movement
 			}
-		}
+			return true
+		})
 		if selected.ID == 0 {
 			return nil, false, fmt.Errorf("CRA response did not return commander %d's Nomad/Samurai movement", request.CommanderID)
 		}
@@ -535,11 +537,11 @@ func (application *Application) captureNomadCampLaunch(_ context.Context, argume
 }
 
 func (application *Application) captureNomadScan(_ context.Context, arguments json.RawMessage) error {
-	request, _, err := nomadMapScanContext(Intent.PlanningContext{State: application.State.Snapshot()}, arguments)
+	request, _, err := nomadMapScanContext(Intent.PlanningContext{State: application.State.ReadOnlyView()}, arguments)
 	if err != nil {
 		return err
 	}
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentNomadCamps), func(gameState *State.GameState) ([]string, bool, error) {
 		source, exists := gameState.Castles[request.SourceCastleID]
 		if !exists || !source.Focused {
 			return nil, false, fmt.Errorf("source castle %d is no longer focused", request.SourceCastleID)
@@ -565,14 +567,16 @@ func (application *Application) resetNomadRun(_ context.Context, arguments json.
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(
+		State.ComponentNomadCamps, State.ComponentEventScores,
+	), func(gameState *State.GameState) ([]string, bool, error) {
 		changed := gameState.NomadCamps.LockedTarget != nil || len(gameState.NomadCamps.Cooldowns) > 0 || len(gameState.NomadCamps.LastScannedAt) > 0
 		gameState.NomadCamps.LockedTarget = nil
 		gameState.NomadCamps.Cooldowns = map[string]State.NomadCampCooldownState{}
 		gameState.NomadCamps.LastScannedAt = map[State.CastleID]time.Time{}
-		if score, found := gameState.EventScores.ByEvent[request.EventID]; found && score.DifficultyID != request.DifficultyID {
+		if score, found := gameState.LookupScalableEventScore(request.EventID); found && score.DifficultyID != request.DifficultyID {
 			score.DifficultyID = request.DifficultyID
-			gameState.EventScores.ByEvent[request.EventID] = score
+			gameState.SetScalableEventScore(request.EventID, score)
 			changed = true
 		}
 		return []string{"nomad-camps", "event-scores"}, changed, nil
@@ -585,8 +589,8 @@ func (application *Application) captureNomadTarget(_ context.Context, arguments 
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		observation, exists := gameState.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentNomadCamps), func(gameState *State.GameState) ([]string, bool, error) {
+		observation, exists := gameState.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 		if !exists || observation.TypeID != request.TargetTypeID || observation.EventCampID != request.EventCampID ||
 			observation.EventCampVictoryCount != request.VictoryCount {
 			return nil, false, fmt.Errorf("camp %d:%d changed before it could be locked", request.TargetX, request.TargetY)
@@ -611,7 +615,7 @@ func (application *Application) guardNomadCampAttack(_ context.Context, argument
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	currentData, ready := application.GameData.Current()
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
@@ -640,7 +644,7 @@ func (application *Application) guardNomadAttackInventory(_ context.Context, arg
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	source, exists := state.Castles[request.SourceCastleID]
 	if !exists {
 		return fmt.Errorf("source castle %d is unavailable", request.SourceCastleID)
@@ -662,7 +666,7 @@ func (application *Application) guardNomadChainArrival(_ context.Context, argume
 		request.PreviousCommander == request.CurrentCommander {
 		return fmt.Errorf("invalid Nomad chain arrival guard")
 	}
-	gameState := application.State.Snapshot()
+	gameState := application.State.ReadOnlyView()
 	previous, previousFound := latestNomadChainMovement(gameState, request, request.PreviousCommander)
 	current, currentFound := latestNomadChainMovement(gameState, request, request.CurrentCommander)
 	if !previousFound || !currentFound {
@@ -688,16 +692,17 @@ func latestNomadChainMovement(
 ) (State.MovementState, bool) {
 	var selected State.MovementState
 	found := false
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 0 || movement.SourceCastleID != request.SourceCastleID || movement.KingdomID != request.KingdomID ||
 			movement.TargetX != request.TargetX || movement.TargetY != request.TargetY || movement.CommanderID == nil ||
 			*movement.CommanderID != commanderID || movement.ArrivesAt == nil || movement.ArrivesAt.IsZero() {
-			continue
+			return true
 		}
 		if !found || movement.ArrivesAt.After(*selected.ArrivesAt) {
 			selected, found = movement, true
 		}
-	}
+		return true
+	})
 	return selected, found
 }
 
@@ -710,7 +715,7 @@ func (application *Application) guardNomadCooldownSkip(_ context.Context, argume
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
 	}
-	_, _, err := validateNomadCooldownSkip(application.State.Snapshot(), currentData, request, time.Now().UTC())
+	_, _, err := validateNomadCooldownSkip(application.State.ReadOnlyView(), currentData, request, time.Now().UTC())
 	return err
 }
 
@@ -719,8 +724,8 @@ func (application *Application) verifyNomadCooldownSkip(_ context.Context, argum
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
-	observation, exists := state.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	state := application.State.ReadOnlyView()
+	observation, exists := state.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || observation.TypeID != request.TargetTypeID || observation.EventCampID != request.EventCampID ||
 		observation.ObservedAt.Before(request.ResetStartedAt) || observation.EventCampCooldownRemaining != 0 {
 		return fmt.Errorf("cooldown reset did not return an authoritative zero-cooldown row for camp %d:%d", request.TargetX, request.TargetY)
@@ -740,7 +745,7 @@ func validateNomadCooldownSkip(
 	if !nomadLockMatches(gameState.NomadCamps.LockedTarget, request.nomadTargetRequest) {
 		return GameData.EventCampDefinition{}, 0, fmt.Errorf("cooldown reset target does not match the locked camp")
 	}
-	observation, exists := gameState.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	observation, exists := gameState.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || observation.TypeID != request.TargetTypeID || observation.EventCampID != request.EventCampID {
 		return GameData.EventCampDefinition{}, 0, fmt.Errorf("locked camp %d:%d is unavailable", request.TargetX, request.TargetY)
 	}

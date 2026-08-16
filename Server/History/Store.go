@@ -365,8 +365,18 @@ func (store *Store) PlayerSamplesForPlayer(
 }
 
 func NewPlayerSample(snapshot State.GameState, gameData *GameData.Manager) PlayerSample {
+	return NewPlayerSampleAt(snapshot, gameData, time.Now().UTC())
+}
+
+// NewPlayerSampleAt builds the same complete My Stats projection at a caller-
+// supplied observation time. Cloud publishers use this to keep the sample
+// timestamp, idempotency key, and enclosing runtime observation consistent.
+func NewPlayerSampleAt(snapshot State.GameState, gameData *GameData.Manager, observedAt time.Time) PlayerSample {
+	if observedAt.IsZero() {
+		observedAt = time.Now().UTC()
+	}
 	sample := PlayerSample{
-		TimestampUnix: time.Now().Unix(), PlayerID: snapshot.Player.ID,
+		TimestampUnix: observedAt.UTC().Unix(), PlayerID: snapshot.Player.ID,
 		Might: snapshot.Player.Might, Glory: snapshot.Player.Glory, Gallantry: snapshot.Player.Gallantry,
 		TroopsByUnit: map[string]int64{}, Currencies: map[string]float64{},
 	}

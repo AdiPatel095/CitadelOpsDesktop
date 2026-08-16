@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Trophy } from 'lucide-react';
+import { Coins, Trophy } from 'lucide-react';
 import { CitadelAPI } from '../../api/CitadelClient';
 import type { ScalableEventScoreV2 } from '../../api/Contracts';
+import { useCitadelAPI } from '../../api/ApiContext';
 import { Button, MetricTile, SectionCard } from '../../components/ui';
+import { useMetadata } from '../../context/MetadataContext';
 
 interface EventScoreCardProps {
   live: boolean;
@@ -11,7 +13,23 @@ interface EventScoreCardProps {
 	rankingLoading?: boolean;
 }
 
+const EVENT_CURRENCIES: Record<number, number[]> = {
+  72: [1, 10, 77],
+  80: [7, 13, 78],
+};
+
+const CURRENCY_FALLBACK_NAMES: Record<number, string> = {
+  1: 'Khan tablets',
+  7: 'Samurai tokens',
+  10: 'Khan medals',
+  13: 'Samurai medals',
+  77: 'Nomad Advisor tokens',
+  78: 'Samurai Advisor tokens',
+};
+
 const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRanking, rankingLoading = false }) => {
+  const { state } = useCitadelAPI();
+  const { currencies } = useMetadata();
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [now, setNow] = useState(() => Date.now());
 
@@ -47,6 +65,12 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
     : 'Active event';
   const difficulty = event ? difficultyLabel(event, translations) : '';
   const canOpenRanking = event?.eventId === 72 && (event.allianceLeagueId ?? 0) > 0;
+  const currencyIDs = useMemo(() => {
+    if (!event) return [];
+    const IDs = new Set(EVENT_CURRENCIES[event.eventId] ?? []);
+    if ((event.advisorCurrencyId ?? 0) > 0) IDs.add(event.advisorCurrencyId as number);
+    return Array.from(IDs);
+  }, [event?.advisorCurrencyId, event?.eventId]);
 
   return (
     <SectionCard
@@ -55,26 +79,53 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
       description="Live event score and reward progress"
       titleClassName="truncate text-primary"
       descriptionClassName="font-bold uppercase tracking-wider"
-      className="flex min-h-0 flex-col"
+      headerClassName="feature-event-score-header flex-wrap gap-3"
+      className="feature-event-score-card flex min-h-0 flex-col"
       actions={(
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {event && onOpenRanking && canOpenRanking && (
-            <Button
-              type="button"
-              variant="solid"
-              size="sm"
-              leftIcon={<Trophy className="h-3.5 w-3.5" />}
-              isLoading={rankingLoading}
-              disabled={!live}
-              onClick={onOpenRanking}
-              title="Open the live GGE Nomad alliance ranking"
-            >
-              Alliance ranking
-            </Button>
+        <div className="feature-event-score-actions">
+          {currencyIDs.length > 0 && (
+            <div className="feature-event-balance-list" aria-label="Event balances">
+              {currencyIDs.map((currencyID) => {
+                const metadata = currencies[currencyID];
+                const name = metadata?.name ?? CURRENCY_FALLBACK_NAMES[currencyID] ?? `Currency ${currencyID}`;
+                const amount = state?.player.currencies[String(currencyID)] ?? 0;
+                return (
+                  <div key={currencyID} className="feature-event-balance-chip" title={`${name}: ${amount.toLocaleString()}`}>
+                    <span className="feature-event-balance-icon" aria-hidden="true">
+                      {metadata?.image ? (
+                        <img src={metadata.image} alt="" loading="lazy" decoding="async" />
+                      ) : (
+                        <Coins />
+                      )}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="feature-event-balance-name">{name}</span>
+                      <strong className="feature-event-balance-value">{amount.toLocaleString()}</strong>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           )}
-          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${live ? 'border-success/30 bg-success/10 text-success' : 'border-border-light bg-bg-card/50 text-text-muted'}`}>
-            {live ? 'Live' : 'Last known'}
-          </span>
+          <div className="feature-event-score-controls">
+            {event && onOpenRanking && canOpenRanking && (
+              <Button
+                type="button"
+                variant="solid"
+                size="sm"
+                leftIcon={<Trophy className="h-3.5 w-3.5" />}
+                isLoading={rankingLoading}
+                disabled={!live}
+                onClick={onOpenRanking}
+                title="Open the live GGE Nomad alliance ranking"
+              >
+                Alliance ranking
+              </Button>
+            )}
+            <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${live ? 'border-success/30 bg-success/10 text-success' : 'border-border-light bg-bg-card/50 text-text-muted'}`}>
+              {live ? 'Live' : 'Last known'}
+            </span>
+          </div>
         </div>
       )}
     >

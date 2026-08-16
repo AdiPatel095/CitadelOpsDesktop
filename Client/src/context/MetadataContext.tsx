@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CitadelAPI } from '../api/CitadelClient';
+import { officialEquipmentEffectScope } from '../equipment/EquipmentEffectApplicability';
 
 export interface MetadataItem {
   id: number;
@@ -92,12 +93,18 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			...effectsResponse.items,
 			...effectTypesResponse.items,
 		]);
-		const [baseTranslations, effectTranslations, currencyTranslations] = await Promise.all([
+		const [baseTranslations, decorationTranslations, effectTranslations, currencyTranslations] = await Promise.all([
 			CitadelAPI.localize(keys),
+			CitadelAPI.localize(decorationLocalizationKeys(buildingsResponse.items)),
 			CitadelAPI.localize(effectLocalizationKeys(effectsResponse.items, effectTypesResponse.items)),
 			CitadelAPI.localize(currencyLocalizationKeys(currenciesResponse.items)),
 		]);
-		const translations = { ...baseTranslations, ...effectTranslations, ...currencyTranslations };
+		const translations = {
+			...baseTranslations,
+			...decorationTranslations,
+			...effectTranslations,
+			...currencyTranslations,
+		};
         if (cancelled) return;
 
         const nextTroops: Record<number, MetadataItem> = {};
@@ -121,15 +128,19 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
           const id = positiveID(row.wodID);
           if (id === 0) continue;
           const level = positiveID(row.level);
+			const decoration = isDecoration(row);
+			const internalName = decoration ? row.type : row.name;
 			const item: MetadataItem = {
             ...row,
             id,
-			internalName: typeof row.name === 'string' ? row.name : undefined,
-			name: displayName(row, translations, `Building ${id}`),
+			internalName: typeof internalName === 'string' ? internalName : undefined,
+			name: decoration
+				? decorationDisplayName(row, translations, id)
+				: displayName(row, translations, `Building ${id}`),
             ...(level > 0 ? { level } : {}),
           };
 			nextBuildings[id] = item;
-			if (isDecoration(row)) {
+			if (decoration) {
 				nextDecorations[id] = { ...item, image: `/game-data/decorations/images/${id}.webp` };
 			}
         }
@@ -155,7 +166,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			effectCapsResponse.items,
 			translations,
 		);
-		const nextKingdoms = definitionMetadata(kingdomsResponse.items, 'kID', translations, 'Kingdom');
+		const nextKingdoms = definitionMetadata(kingdomsResponse.items, 'kID', translations, 'Kingdom', true);
 		const nextCraftingRecipes: Record<number, MetadataItem> = {};
 		for (const recipe of craftingResponse.recipes ?? []) {
 			const id = positiveID(recipe.recipeID);
@@ -278,9 +289,36 @@ function isDecoration(row: OfficialRecord): boolean {
     || (typeof row.type === 'string' && row.type.includes('Deco'));
 }
 
+function decorationLocalizationKeys(rows: OfficialRecord[]): string[] {
+	const keys = new Set<string>();
+	for (const row of rows) {
+		if (!isDecoration(row) || typeof row.type !== 'string' || !row.type.trim()) continue;
+		keys.add(`deco_${row.type.trim()}_name`);
+	}
+	return Array.from(keys).slice(0, 5000);
+}
+
+function decorationDisplayName(
+	row: OfficialRecord,
+	translations: Record<string, string>,
+	id: number,
+): string {
+	const type = typeof row.type === 'string' ? row.type.trim() : '';
+	if (type) {
+		const localized = translations[`deco_${type}_name`];
+		if (localized?.trim()) return localized.trim();
+	}
+	const explicit = typeof row._display_name === 'string' ? row._display_name.trim() : '';
+	if (explicit && !/^decorative items?$/i.test(explicit)) return explicit;
+	return `Decoration ${id}`;
+}
+
 function localizationKeys(rows: OfficialRecord[]): string[] {
   const keys = new Set<string>();
   for (const row of rows) {
+	if (typeof row.kingdomName === 'string' && row.kingdomName.trim()) {
+		keys.add(`kingdomName_${row.kingdomName.trim()}`);
+	}
     for (const value of [row.type, row.name, row.Name, row.JSONKey, row.kingdomName, row.comment2]) {
       if (typeof value !== 'string' || value.trim() === '') continue;
       keys.add(`${value}_name`);
@@ -312,13 +350,13 @@ function effectLocalizationKeys(effectRows: OfficialRecord[], effectTypeRows: Of
 	for (const row of effectTypeRows) {
 		const category = metadataInteger(row.sortCategory);
 		const group = metadataInteger(row.sortGroup);
+		if (category) keys.add(`effect_category_${category}`);
 		if (!category || !group) continue;
 		const prefix = `effect_group_${category}_${group}`;
 		keys.add(`${prefix}_passive`);
 		keys.add(`${prefix}_active`);
 		keys.add(`${prefix}_active_malus`);
 	}
-	for (let category = 1; category <= 9; category += 1) keys.add(`effect_category_${category}`);
 	keys.add('effect_category_commonEffectCap');
 	return Array.from(keys).slice(0, 5000);
 }
@@ -340,7 +378,7 @@ function displayName(row: OfficialRecord, translations: Record<string, string>, 
   if (typeof row._display_name === 'string' && row._display_name.trim() !== '') return row._display_name;
   for (const value of [row.type, row.name, row.Name, row.JSONKey, row.kingdomName, row.comment2]) {
     if (typeof value !== 'string' || value.trim() === '') continue;
-    const translated = translations[`${value}_name`] ?? translations[value];
+    const translated = translations[`kingdomName_${value}`] ?? translations[`${value}_name`] ?? translations[value];
     if (translated?.trim()) return translated;
   }
   for (const value of [row.type, row.name, row.Name, row.kingdomName, row.comment2]) {
@@ -361,11 +399,13 @@ function definitionMetadata(
 	idField: string,
 	translations: Record<string, string>,
 	fallbackPrefix: string,
+	allowZero = false,
 ): Record<number, MetadataItem> {
 	const result: Record<number, MetadataItem> = {};
 	for (const row of rows) {
-		const id = positiveID(row[idField]);
-		if (id === 0) continue;
+		const parsedID = Number(row[idField]);
+		const id = Number.isFinite(parsedID) ? Math.trunc(parsedID) : -1;
+		if (id < 0 || (!allowZero && id === 0)) continue;
 		const internalName = [row.name, row.Name, row.kingdomName, row.assetName]
 			.find((value): value is string => typeof value === 'string' && value.trim() !== '');
 		const officialCurrencyName = idField === 'currencyID' ? currencyDisplayName(row, translations) : '';
@@ -467,7 +507,8 @@ function effectDefinitionMetadata(
 		const effectTypeName = typeof effectType?.name === 'string' ? effectType.name.trim() : '';
 		const translatedName = displayName(row, translations, internalName || `Effect ${id}`);
 		const cap = effectCaps.get(String(row.capID ?? ''));
-		const scope = effectScope(row, internalName);
+		const officialScope = officialEquipmentEffectScope({ ...row, internalName, effectTypeName });
+		const scope = officialScope === 'PvP' ? 'pvp' : officialScope === 'PvE' ? 'pve' : 'generic';
 		const category = metadataInteger(effectType?.sortCategory);
 		const group = metadataInteger(effectType?.sortGroup);
 		const effectTemplate = firstTranslation(translations, [
@@ -488,6 +529,7 @@ function effectDefinitionMetadata(
 				: humanizeEffectName(effectTypeName || internalName || `Effect ${id}`),
 			effectTypeId: metadataInteger(row.effectTypeID),
 			effectTypeName,
+			combatType: metadataInteger(effectType?.combatType),
 			sortCategory: category,
 			sortGroup: group,
 			categoryName: category ? translations[`effect_category_${category}`] : undefined,
@@ -508,13 +550,6 @@ function effectDefinitionMetadata(
 function metadataIntegerList(value: unknown): number[] {
 	const values = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [value];
 	return Array.from(new Set(values.map(metadataInteger).filter((entry) => entry > 0)));
-}
-
-function effectScope(row: OfficialRecord, internalName: string): 'generic' | 'pvp' | 'pve' {
-	const normalized = internalName.toLowerCase();
-	if (String(row.isPvPFight ?? '') === '1' || normalized.includes('pvp') || normalized.includes('castlelord')) return 'pvp';
-	if (String(row.isPvEFight ?? '') === '1' || /pve|npc|nomad|samurai|khan|daimyo|berimond|bloodcrow/.test(normalized)) return 'pve';
-	return 'generic';
 }
 
 function firstTranslation(translations: Record<string, string>, keys: string[]): string | undefined {

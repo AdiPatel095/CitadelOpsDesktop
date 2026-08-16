@@ -54,6 +54,10 @@ func TestScalableEventScoresTrackSnapshotsAndPointUpdates(t *testing.T) {
 			t.Fatalf("package %d route = %#v active=%t", packageID, route, active)
 		}
 	}
+	if _, active := gameState.EventAvailable(72, observedAt.Add(time.Second)); !active ||
+		!gameState.EventScores.Inventory.ObservedAt.Equal(observedAt.Truncate(time.Minute)) {
+		t.Fatalf("authoritative event inventory = %#v", gameState.EventScores.Inventory)
+	}
 
 	_, changed, err = reduceEventPoints(t.Context(), Protocol.Frame{
 		Opcode: "pep", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt.Add(time.Minute),
@@ -76,6 +80,41 @@ func TestScalableEventScoresTrackSnapshotsAndPointUpdates(t *testing.T) {
 		t.Fatalf("Khan rage update: changed=%t state=%#v err=%v", changed, gameState.Khan, err)
 	}
 
+}
+
+func TestScalableEventSnapshotReplacesAuthoritativeAvailability(t *testing.T) {
+	gameState := State.NewGameState()
+	gameData := scalableEventTestGameData(t)
+	code := 0
+	start := time.Date(2026, 8, 14, 8, 0, 4, 0, time.UTC)
+	apply := func(at time.Time, payload string) {
+		t.Helper()
+		_, changed, err := reduceScalableEventSnapshot(t.Context(), Protocol.Frame{
+			Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: at,
+			Payload: json.RawMessage(payload),
+		}, &gameState, gameData)
+		if err != nil || !changed {
+			t.Fatalf("event inventory at %s: changed=%t err=%v", at, changed, err)
+		}
+	}
+
+	apply(start, `{"E":[{"EID":71,"RS":1800,"EASE":1},{"EID":3,"RS":3600}]}`)
+	if _, active := gameState.EventAvailable(71, start); !active {
+		t.Fatal("scalable event missing from authoritative inventory")
+	}
+	if _, active := gameState.EventAvailable(3, start); !active {
+		t.Fatal("non-scalable Berimond event missing from authoritative inventory")
+	}
+
+	settled := start.Add(6 * time.Minute)
+	apply(settled, `{"E":[]}`)
+	if _, active := gameState.EventAvailable(71, settled); active {
+		t.Fatal("event omitted from the replacement snapshot remained active")
+	}
+	if len(gameState.EventScores.Inventory.ActiveByEvent) != 0 ||
+		!gameState.EventScores.Inventory.ObservedAt.Equal(settled.Truncate(time.Minute)) {
+		t.Fatalf("replacement inventory = %#v", gameState.EventScores.Inventory)
+	}
 }
 
 func TestScalableEventSnapshotCachesFirstCurrenciesForEachOccurrence(t *testing.T) {

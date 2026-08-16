@@ -52,13 +52,17 @@ func reduceProductionSnapshot(
 		return nil, false, nil
 	}
 	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
+	castle, ok = gameState.MutableCastleParts(castleID, State.CastlePartProduction)
+	if !ok {
+		return nil, false, nil
+	}
 	changed, err := applyProductionSnapshot(
 		frame.Payload, castleID, &castle, frame.ReceivedAt, recruitmentHelpOutstanding,
 	)
 	if err != nil || !changed {
 		return nil, false, err
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 	return []string{"castles", "production"}, true, nil
 }
 
@@ -79,6 +83,10 @@ func reduceEmbeddedProductionSnapshots(
 	if err := json.Unmarshal(frame.Payload, &root); err != nil {
 		return nil, false, fmt.Errorf("decode embedded production snapshots: %w", err)
 	}
+	castle, ok = gameState.MutableCastleParts(castleID, State.CastlePartProduction)
+	if !ok {
+		return nil, false, nil
+	}
 	changed := false
 	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
 	for key, raw := range root {
@@ -98,7 +106,7 @@ func reduceEmbeddedProductionSnapshots(
 	if !changed {
 		return nil, false, nil
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 	return []string{"castles", "production"}, true, nil
 }
 
@@ -208,6 +216,10 @@ func reduceAllianceHelpCommand(
 	if !focused {
 		return nil, false, nil
 	}
+	castle, focused = gameState.MutableCastleParts(castleID, State.CastlePartProduction)
+	if !focused {
+		return nil, false, nil
+	}
 	lineID := -1
 	productionID := int64(payload.ProductionID)
 	markAll := false
@@ -228,7 +240,7 @@ func reduceAllianceHelpCommand(
 		return nil, false, nil
 	}
 	castle.Production[lineID] = queue
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 	return []string{"castles", "production", "alliance-help"}, true, nil
 }
 
@@ -368,7 +380,7 @@ func reduceAllianceHelpRequest(
 		if request.Optional.CastleID <= 0 {
 			continue
 		}
-		castle, exists := gameState.Castles[request.Optional.CastleID]
+		castle, exists := gameState.MutableCastleParts(request.Optional.CastleID, State.CastlePartProduction)
 		if !exists {
 			continue
 		}
@@ -389,7 +401,7 @@ func reduceAllianceHelpRequest(
 		}
 		if markAllianceHelpQueue(&queue, lineID == 0, productionID) {
 			castle.Production[lineID] = queue
-			gameState.Castles[request.Optional.CastleID] = castle
+			gameState.SetCastleParts(request.Optional.CastleID, castle, State.CastlePartProduction)
 			changed = true
 		}
 	}

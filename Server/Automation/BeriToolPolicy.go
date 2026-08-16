@@ -30,7 +30,7 @@ func (*BeriToolPolicy) ScheduleKey() string {
 }
 
 func (*BeriToolPolicy) WakeDomains() []string {
-	return []string{"boosters", "castles", "kingdom-transport", "resources", "units"}
+	return []string{"boosters", "castles", "events", "event-scores", "kingdom-transport", "resources", "units"}
 }
 
 func (*BeriToolPolicy) WakeSections() []string {
@@ -49,6 +49,11 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			Status: "idle", Detail: "No Berimond armorer tool minimums are configured",
 			NextCheckAt: snapshot.Now.Add(beriToolCheckInterval),
 		}, nil
+	}
+	if decision, locked := limitedEventGate(
+		snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
+	); locked {
+		return decision, nil
 	}
 	if snapshot.GameData == nil {
 		return beriToolWaiting(snapshot.Now, "Official game data is unavailable"), nil

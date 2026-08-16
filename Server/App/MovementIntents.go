@@ -53,7 +53,7 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 	}
 	if operation, exists := input.State.Stationing[request.TrackingID]; exists &&
 		(request.Purpose == "autoBird" || request.Purpose == "autoStation") &&
-		operation.ActiveAt(input.State.Movements, now) {
+		operation.ActiveInState(input.State, now) {
 		return Intent.Plan{
 			Summary: fmt.Sprintf("Skip %s stationing from castle %d; its tracked movement is already active", request.Purpose, request.SourceCastleID),
 		}, nil
@@ -161,7 +161,7 @@ func resolveTroopsStationStep(_ context.Context, input Intent.PlanningContext, a
 		return Intent.Step{}, fmt.Errorf("%s stationing is disabled while Protection Mode is preparing or active", request.Purpose)
 	}
 	if operation, exists := input.State.Stationing[request.TrackingID]; exists && automation &&
-		operation.ActiveAt(input.State.Movements, now) {
+		operation.ActiveInState(input.State, now) {
 		return Intent.Step{}, fmt.Errorf("%s stationing is already active from castle %d", request.Purpose, request.SourceCastleID)
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
@@ -273,7 +273,7 @@ func planMovementRecall(_ context.Context, input Intent.PlanningContext, argumen
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
 	}
-	movement, exists := input.State.Movements[request.MovementID]
+	movement, exists := input.State.LookupMovement(request.MovementID)
 	if !exists || request.MovementID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("movement %d is not active", request.MovementID)
 	}
@@ -305,7 +305,7 @@ func (application *Application) trackStationMovement(_ context.Context, argument
 	for _, item := range request.Units {
 		units[item.UnitID] = item.Amount
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
 		now := time.Now().UTC()
 		current := gameState.Stationing[request.TrackingID]
 		successCooldownUntil := now.Add(time.Duration(request.DelayHours) * time.Hour)
@@ -322,11 +322,11 @@ func (application *Application) trackStationMovement(_ context.Context, argument
 			next.SafeAfter = &safeAfter
 		}
 		target, _ := allianceHolding(gameState.Alliance, request.TargetCastleID)
-		for id, movement := range gameState.Movements {
+		gameState.RangeMovements(func(id State.MovementID, movement State.MovementState) bool {
 			if movement.SourceCastleID != request.SourceCastleID || movement.Direction != 0 ||
 				movement.TargetX != target.X || movement.TargetY != target.Y ||
 				(!request.FreshManifest && !stationMovementUnitsWithinRequest(movement.Units, units)) {
-				continue
+				return true
 			}
 			if id > next.MovementID {
 				next.MovementID = id
@@ -337,7 +337,8 @@ func (application *Application) trackStationMovement(_ context.Context, argument
 				release := releasesAt.UTC()
 				next.SuccessCooldownUntil = &release
 			}
-		}
+			return true
+		})
 		if reflect.DeepEqual(current, next) {
 			return nil, false, nil
 		}

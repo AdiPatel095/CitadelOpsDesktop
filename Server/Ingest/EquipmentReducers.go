@@ -112,11 +112,17 @@ func reduceEquipmentStorage(
 			}
 		}
 	}
-	if reflect.DeepEqual(gameState.Inventory.Equipment, next) && reflect.DeepEqual(gameState.Inventory.Gems, nextGems) {
+	equipmentChanged := !reflect.DeepEqual(gameState.Inventory.Equipment, next)
+	gemsChanged := !reflect.DeepEqual(gameState.Inventory.Gems, nextGems)
+	if !equipmentChanged && !gemsChanged {
 		return nil, false, nil
 	}
-	gameState.Inventory.Equipment = next
-	gameState.Inventory.Gems = nextGems
+	if equipmentChanged {
+		gameState.ReplaceInventoryEquipment(next)
+	}
+	if gemsChanged {
+		gameState.ReplaceInventoryGems(nextGems)
+	}
 	return []string{"inventory", "equipment", "gems"}, true, nil
 }
 
@@ -163,11 +169,17 @@ func reduceGemStorage(
 			}
 		}
 	}
-	if reflect.DeepEqual(gameState.Inventory.GemStacks, nextStacks) && reflect.DeepEqual(gameState.Inventory.Gems, nextGems) {
+	stacksChanged := !reflect.DeepEqual(gameState.Inventory.GemStacks, nextStacks)
+	gemsChanged := !reflect.DeepEqual(gameState.Inventory.Gems, nextGems)
+	if !stacksChanged && !gemsChanged {
 		return nil, false, nil
 	}
-	gameState.Inventory.GemStacks = nextStacks
-	gameState.Inventory.Gems = nextGems
+	if stacksChanged {
+		gameState.ReplaceInventoryGemStacks(nextStacks)
+	}
+	if gemsChanged {
+		gameState.ReplaceInventoryGems(nextGems)
+	}
 	return []string{"inventory", "gems"}, true, nil
 }
 
@@ -206,11 +218,11 @@ func reduceEquipmentMutation(
 			item, gem, ok := parseEquipment(row, current.WearerKind, current.WearerID, gameData)
 			if ok {
 				if !reflect.DeepEqual(current, item) {
-					gameState.Inventory.Equipment[id] = item
+					gameState.SetInventoryEquipment(id, item)
 					changed = true
 				}
 				if gem != nil && !reflect.DeepEqual(gameState.Inventory.Gems[gem.ID], *gem) {
-					gameState.Inventory.Gems[gem.ID] = *gem
+					gameState.SetInventoryGem(gem.ID, *gem)
 					changed = true
 				}
 			}
@@ -260,8 +272,7 @@ func reduceConstructionInventory(
 	if reflect.DeepEqual(gameState.Inventory.ConstructionItems, next) && gameState.Inventory.ConstructionItemsObservedAt.Equal(frame.ReceivedAt) {
 		return nil, false, nil
 	}
-	gameState.Inventory.ConstructionItems = next
-	gameState.Inventory.ConstructionItemsObservedAt = frame.ReceivedAt
+	gameState.ReplaceInventoryConstructionItems(next, frame.ReceivedAt)
 	return []string{"inventory", "construction-items"}, true, nil
 }
 
@@ -334,16 +345,25 @@ func applyLeaders(raw json.RawMessage, gameState *State.GameState, gameData *Gam
 		castellans[id] = castellan
 	}
 
-	if reflect.DeepEqual(gameState.Commanders, commanders) &&
-		reflect.DeepEqual(gameState.Castellans, castellans) &&
-		reflect.DeepEqual(gameState.Inventory.Equipment, equipment) &&
-		reflect.DeepEqual(gameState.Inventory.Gems, gems) {
+	commandersChanged := !reflect.DeepEqual(gameState.Commanders, commanders)
+	castellansChanged := !reflect.DeepEqual(gameState.Castellans, castellans)
+	equipmentChanged := !reflect.DeepEqual(gameState.Inventory.Equipment, equipment)
+	gemsChanged := !reflect.DeepEqual(gameState.Inventory.Gems, gems)
+	if !commandersChanged && !castellansChanged && !equipmentChanged && !gemsChanged {
 		return false, nil
 	}
-	gameState.Commanders = commanders
-	gameState.Castellans = castellans
-	gameState.Inventory.Equipment = equipment
-	gameState.Inventory.Gems = gems
+	if commandersChanged {
+		gameState.Commanders = commanders
+	}
+	if castellansChanged {
+		gameState.Castellans = castellans
+	}
+	if equipmentChanged {
+		gameState.ReplaceInventoryEquipment(equipment)
+	}
+	if gemsChanged {
+		gameState.ReplaceInventoryGems(gems)
+	}
 	return true, nil
 }
 
@@ -538,15 +558,7 @@ func officialEquipmentEffectID(gameData *GameData.Store, wireID int64, relic boo
 	if err != nil {
 		return wireID
 	}
-	raw, ok := catalog.Find(strconv.FormatInt(wireID, 10))
-	if !ok {
-		return wireID
-	}
-	record, err := GameData.DecodeRecord(raw)
-	if err != nil {
-		return wireID
-	}
-	definitionID, ok := record.Int64("effectID")
+	definitionID, ok := catalog.Int64(strconv.FormatInt(wireID, 10), "effectID")
 	if !ok || definitionID <= 0 {
 		return wireID
 	}

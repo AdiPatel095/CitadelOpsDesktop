@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -349,19 +348,11 @@ func craftingRecipeMatches(
 	if snapshot.GameData == nil {
 		return false
 	}
-	catalog, err := snapshot.GameData.Catalog("craftingRecipes")
-	if err != nil {
+	definition, found := snapshot.GameData.CraftingRecipeView(recipeID)
+	if !found {
 		return false
 	}
-	raw, exists := catalog.Find(strconv.FormatInt(recipeID, 10))
-	if !exists {
-		return false
-	}
-	record, err := GameData.DecodeRecord(raw)
-	if err != nil {
-		return false
-	}
-	return craftingRecipeAvailable(record, recipeID, building, crafting)
+	return craftingRecipeAvailable(definition, recipeID, building, crafting)
 }
 
 // resolveCraftingRecipe keeps plans saved by the former group-level entitlement
@@ -381,48 +372,29 @@ func resolveCraftingRecipe(
 	if snapshot.GameData == nil {
 		return 0
 	}
-	catalog, err := snapshot.GameData.Catalog("craftingRecipes")
-	if err != nil {
+	target, found := snapshot.GameData.CraftingRecipeView(configuredID)
+	if !found {
 		return 0
 	}
-	targetRaw, exists := catalog.Find(strconv.FormatInt(configuredID, 10))
-	if !exists {
-		return 0
-	}
-	target, err := GameData.DecodeRecord(targetRaw)
-	if err != nil {
-		return 0
-	}
-	targetQueue, _ := target.Int64("queueTypeId")
-	targetGroup, _ := target.Int64("recipeGroupID")
-	targetLevel, _ := target.Int64("level")
-	targetType, _ := target.String("type")
-	if int(targetQueue) != building.QueueTypeID || targetGroup <= 0 || targetLevel <= 0 || strings.TrimSpace(targetType) == "" {
+	if int(target.QueueTypeID) != building.QueueTypeID || target.GroupID <= 0 ||
+		target.Level <= 0 || strings.TrimSpace(target.Type) == "" {
 		return 0
 	}
 
 	bestID := int64(0)
 	bestLevel := int64(0)
-	for _, raw := range catalog.Rows() {
-		record, decodeErr := GameData.DecodeRecord(raw)
-		if decodeErr != nil {
+	for _, candidate := range snapshot.GameData.CraftingRecipesView() {
+		if candidate.QueueTypeID != target.QueueTypeID || candidate.GroupID != target.GroupID ||
+			candidate.Level <= 0 || candidate.Level > target.Level ||
+			!strings.EqualFold(strings.TrimSpace(candidate.Type), strings.TrimSpace(target.Type)) {
 			continue
 		}
-		queueType, _ := record.Int64("queueTypeId")
-		groupID, _ := record.Int64("recipeGroupID")
-		level, _ := record.Int64("level")
-		recipeType, _ := record.String("type")
-		if queueType != targetQueue || groupID != targetGroup || level <= 0 || level > targetLevel ||
-			!strings.EqualFold(strings.TrimSpace(recipeType), strings.TrimSpace(targetType)) {
+		if candidate.ID <= 0 || !craftingRecipeAvailable(candidate, candidate.ID, building, crafting) {
 			continue
 		}
-		candidateID, _ := record.Int64("craftingRecipeId")
-		if candidateID <= 0 || !craftingRecipeAvailable(record, candidateID, building, crafting) {
-			continue
-		}
-		if level > bestLevel || level == bestLevel && candidateID > bestID {
-			bestID = candidateID
-			bestLevel = level
+		if candidate.Level > bestLevel || candidate.Level == bestLevel && candidate.ID > bestID {
+			bestID = candidate.ID
+			bestLevel = candidate.Level
 		}
 	}
 	return bestID

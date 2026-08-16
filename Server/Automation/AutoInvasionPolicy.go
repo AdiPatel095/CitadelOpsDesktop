@@ -48,7 +48,7 @@ func (*AutoInvasionPolicy) ID() string { return "autoInvasion" }
 func (*AutoInvasionPolicy) EnabledKey() string { return "auto_invasion" }
 
 func (*AutoInvasionPolicy) WakeDomains() []string {
-	return []string{"attacks", "map", "movements", "commanders", "units", "events", "event-scores", "invasion", "achievements", "player-protection"}
+	return []string{"attacks", "map-invasion", "movements", "commanders", "units", "events", "event-scores", "invasion", "achievements", "player-protection"}
 }
 
 func (*AutoInvasionPolicy) WakeSections() []string {
@@ -92,10 +92,20 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 
 	score, found := snapshot.State.ActiveScalableEventScore()
 	if !found {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{foreignLordsEventID, bloodcrowEventID}, "Foreign Lords or Bloodcrow event",
+		); locked {
+			return decision, nil
+		}
 		return invasionWaiting(snapshot.Now, "No scalable invasion event is active"), nil
 	}
 	targetTypeID, supported := invasionTargetType(score.EventID)
 	if !supported {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{foreignLordsEventID, bloodcrowEventID}, "Foreign Lords or Bloodcrow event",
+		); locked {
+			return decision, nil
+		}
 		return invasionWaiting(snapshot.Now, "Auto Invasion supports Foreign Lords and Bloodcrow"), nil
 	}
 	fortifyCurrency, fortifyCurrencyValid := invasionFortifyCurrencyForEvent(
@@ -424,16 +434,17 @@ func addPresetCourtyardRequirements(
 
 func activeInvasionTargets(gameState State.GameState, sourceCastleID State.CastleID, targetTypeID int, now time.Time) map[string]struct{} {
 	result := map[string]struct{}{}
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 0 || movement.SourceCastleID != sourceCastleID || movement.TargetTypeID != targetTypeID {
-			continue
+			return true
 		}
 		if movement.ArrivesAt != nil && !movement.ArrivesAt.IsZero() && !movement.ArrivesAt.After(now) &&
 			movement.ReturnsAt != nil && !movement.ReturnsAt.IsZero() && !movement.ReturnsAt.After(now) {
-			continue
+			return true
 		}
 		result[fmt.Sprintf("%d:%d:%d", movement.KingdomID, movement.TargetX, movement.TargetY)] = struct{}{}
-	}
+		return true
+	})
 	return result
 }
 
@@ -446,16 +457,17 @@ func invasionCandidates(
 	active map[string]struct{},
 ) []State.MapObservation {
 	result := make([]State.MapObservation, 0)
-	for _, target := range gameState.Map[source.KingdomID] {
+	gameState.RangeMapObservationsByKind(source.KingdomID, State.MapProjectionInvasion, func(_ string, target State.MapObservation) bool {
 		key := fmt.Sprintf("%d:%d:%d", target.KingdomID, target.X, target.Y)
 		if target.TypeID != targetTypeID || target.ObservedAt.Before(lastScan) || invasionDistanceSquared(source, target) > radius*radius {
-			continue
+			return true
 		}
 		if _, busy := active[key]; busy {
-			continue
+			return true
 		}
 		result = append(result, target)
-	}
+		return true
+	})
 	sort.Slice(result, func(left, right int) bool {
 		leftDistance := invasionDistanceSquared(source, result[left])
 		rightDistance := invasionDistanceSquared(source, result[right])

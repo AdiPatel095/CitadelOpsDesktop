@@ -77,7 +77,7 @@ func resolveDefaultBerimondDefinitions(
 	stableTargets := 0
 	for index := range target.Buildings {
 		building := &target.Buildings[index]
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found {
 			return fmt.Errorf("official Berimond building definition %d is unavailable", building.DefinitionID)
 		}
@@ -140,7 +140,7 @@ func terminalBerimondDefinition(
 			)
 		}
 		visited[current.ID] = struct{}{}
-		next, found := catalog.Definition(current.UpgradeDefinitionID)
+		next, found := catalog.DefinitionView(current.UpgradeDefinitionID)
 		if !found {
 			return GameData.BuildingDefinition{}, fmt.Errorf(
 				"official upgrade definition %d for Berimond %s is unavailable",

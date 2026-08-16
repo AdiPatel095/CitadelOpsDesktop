@@ -15,7 +15,7 @@ import (
 
 func TestBeriPolicyDeclaresStateDependencies(t *testing.T) {
 	if got, want := NewBeriPolicy().WakeDomains(),
-		[]string{"beri", "boosters", "castles", "currencies", "kingdom-transport", "units"}; !reflect.DeepEqual(got, want) {
+		[]string{"beri", "boosters", "castles", "currencies", "events", "event-scores", "kingdom-transport", "units"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("wake domains = %v, want %v", got, want)
 	}
 }

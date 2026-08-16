@@ -130,8 +130,7 @@ func TestPlanConstructionPurchaseUsesLiveOfficialOffer(t *testing.T) {
 	castle := resourceIntentCastle(10, 0, 10, 20)
 	gameState.Castles[10] = castle
 	gameState.Inventory.ConstructionItemsObservedAt = time.Now().UTC()
-	gameState.Inventory.ConstructionOffersObservedAt = time.Now().UTC()
-	gameState.Inventory.ConstructionOffers[500] = 1
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{500: 1}, time.Now().UTC(), 10, 0)
 	plan, err := planConstructionPurchase(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
 		"castleId":10,"productId":500,"amount":1
 	}`))
@@ -157,7 +156,7 @@ func TestPlanConstructionPurchaseAllowsOfficialTrivialProductOutsideLiveOffers(t
 	gameState := State.NewGameState()
 	gameState.Castles[10] = resourceIntentCastle(10, 0, 10, 20)
 	gameState.Inventory.ConstructionItemsObservedAt = time.Now().UTC()
-	gameState.Inventory.ConstructionOffersObservedAt = time.Now().UTC()
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{}, time.Now().UTC(), 10, 0)
 	plan, err := planConstructionPurchase(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: constructionPolicyGameDataForApp(t),
 	}, json.RawMessage(`{"castleId":10,"productId":501,"amount":1}`))
@@ -175,8 +174,7 @@ func TestPlanConstructionPurchaseRejectsFullInventory(t *testing.T) {
 	gameState.Castles[10] = resourceIntentCastle(10, 0, 10, 20)
 	gameState.Inventory.ConstructionItemsObservedAt = time.Now().UTC()
 	gameState.Inventory.ConstructionItems[101] = State.ConstructionItemInventoryLimit
-	gameState.Inventory.ConstructionOffersObservedAt = time.Now().UTC()
-	gameState.Inventory.ConstructionOffers[500] = 1
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{500: 1}, time.Now().UTC(), 10, 0)
 
 	_, err := planConstructionPurchase(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: constructionPolicyGameDataForApp(t),

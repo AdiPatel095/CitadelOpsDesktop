@@ -25,3 +25,17 @@ func streamEnvelope(id string, messageType string, revision uint64, sequence uin
 	envelope.Gap = gap
 	return envelope
 }
+
+func streamEnvelopeRaw(
+	id string,
+	messageType string,
+	revision uint64,
+	sequence uint64,
+	gap bool,
+	payload json.RawMessage,
+) Envelope {
+	return Envelope{
+		Version: ContractVersion, ID: id, Type: messageType, Revision: revision,
+		Sequence: sequence, Gap: gap, Payload: payload,
+	}
+}

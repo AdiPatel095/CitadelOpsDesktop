@@ -85,7 +85,7 @@ func reduceCraftingSnapshot(
 			castle.Crafting.EnabledRecipeIDs = recipes
 			castle.Crafting.EnabledRecipeGroupIDs = recipeGroups
 			castle.Crafting.OutputBoostByQueueType = boosts
-			gameState.Castles[castleID] = castle
+			gameState.SetCastleParts(castleID, castle, State.CastlePartCrafting)
 			changed = true
 		}
 	}
@@ -158,7 +158,7 @@ func reconcileRejectedCraftingResources(
 			break
 		}
 	}
-	castle, exists := gameState.Castles[castleID]
+	castle, exists := gameState.MutableCastleParts(castleID, State.CastlePartResources)
 	if !exists {
 		return false
 	}
@@ -193,7 +193,7 @@ func reconcileRejectedCraftingResources(
 		}
 	}
 	if changed {
-		gameState.Castles[castleID] = castle
+		gameState.SetCastleParts(castleID, castle, State.CastlePartResources)
 	}
 	return changed
 }
@@ -237,7 +237,7 @@ func deductCraftingRecipeCosts(
 	if err != nil {
 		return false
 	}
-	castle, exists := gameState.Castles[castleID]
+	castle, exists := gameState.MutableCastleParts(castleID, State.CastlePartResources)
 	if !exists {
 		return false
 	}
@@ -273,7 +273,7 @@ func deductCraftingRecipeCosts(
 		}
 	}
 	if changed {
-		gameState.Castles[castleID] = castle
+		gameState.SetCastleParts(castleID, castle, State.CastlePartResources)
 	}
 	return changed
 }
@@ -318,7 +318,7 @@ func decodeCraftingPayload(raw json.RawMessage) ([]craftingWireGroup, *craftingW
 
 func mergeCraftingBuilding(gameState *State.GameState, wire craftingWireBuilding, observedAt time.Time) bool {
 	castleID := State.CastleID(wire.CastleID)
-	castle, ok := gameState.Castles[castleID]
+	castle, ok := gameState.MutableCastleParts(castleID, State.CastlePartCrafting)
 	if !ok || castleID <= 0 || wire.InstanceID <= 0 {
 		return false
 	}
@@ -328,7 +328,7 @@ func mergeCraftingBuilding(gameState *State.GameState, wire craftingWireBuilding
 		return false
 	}
 	castle.Crafting.Buildings[next.InstanceID] = next
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartCrafting)
 	return true
 }
 

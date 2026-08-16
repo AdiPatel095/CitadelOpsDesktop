@@ -66,6 +66,7 @@ type frameWatcher struct {
 	opcode        string
 	responseToken string
 	afterRevision uint64
+	afterIngress  uint64
 	channel       chan Protocol.CommittedFrame
 }
 
@@ -189,14 +190,14 @@ func (pipeline *Pipeline) observeFrame(frame Protocol.Frame, causationOperationI
 		DecoderVersion: observationDecoderVersion, CausationOperationID: strings.TrimSpace(causationOperationID),
 	}
 	if pipeline.state != nil {
-		view := pipeline.state.PlanningView()
-		observed.WorldID = strings.TrimSpace(view.State.Session.ServerURL)
-		observed.PlayerID = view.State.Player.ID
-		observed.SessionGeneration = view.ProtocolContext.SessionGeneration
-		observed.ConnectionGeneration = view.ProtocolContext.ConnectionGeneration
-		observed.FocusEpoch = view.ProtocolContext.FocusEpoch
-		observed.FocusedCastleID = view.ProtocolContext.FocusedCastleID
-		observed.CatalogVersion = view.State.CatalogVersion
+		view := pipeline.state.IngestObservationView()
+		observed.WorldID = view.ServerURL
+		observed.PlayerID = view.PlayerID
+		observed.SessionGeneration = view.SessionGeneration
+		observed.ConnectionGeneration = view.ConnectionGeneration
+		observed.FocusEpoch = view.FocusEpoch
+		observed.FocusedCastleID = view.FocusedCastleID
+		observed.CatalogVersion = view.CatalogVersion
 	}
 	pipeline.publishWire(Protocol.CommittedFrame{Frame: frame, IngressID: observed.IngressID})
 	return observed
@@ -219,37 +220,44 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 	frame := observed.Frame
 	focusSubcontext := protocolFocusSubcontextForFrame(frame)
 	authoritativePlayerID, accountAuthoritative := observationAuthoritativePlayerID(frame)
-	validateCommit := func(gameState *State.GameState, afterReducer bool) error {
+	validateObserved := func(
+		sessionGeneration uint64,
+		connectionGeneration uint64,
+		serverURL string,
+		playerID State.PlayerID,
+		focusEpoch uint64,
+		focusedCastleID State.CastleID,
+		afterReducer bool,
+	) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 		if observed.ConnectionGeneration > 0 &&
-			gameState.Session.ConnectionGeneration != observed.ConnectionGeneration {
+			connectionGeneration != observed.ConnectionGeneration {
 			return Outbound.ErrConnectionChanged
 		}
-		if observed.SessionGeneration > 0 && gameState.Session.Generation != observed.SessionGeneration {
+		if observed.SessionGeneration > 0 && sessionGeneration != observed.SessionGeneration {
 			return ErrObservationSessionChanged
 		}
-		if observed.WorldID != "" && gameState.Session.ServerURL != "" &&
-			!strings.EqualFold(strings.TrimSpace(observed.WorldID), strings.TrimSpace(gameState.Session.ServerURL)) {
+		if observed.WorldID != "" && serverURL != "" &&
+			!strings.EqualFold(strings.TrimSpace(observed.WorldID), strings.TrimSpace(serverURL)) {
 			return ErrObservationAccountChanged
 		}
 		if accountAuthoritative && afterReducer {
-			if authoritativePlayerID > 0 && gameState.Player.ID > 0 && authoritativePlayerID != gameState.Player.ID {
+			if authoritativePlayerID > 0 && playerID > 0 && authoritativePlayerID != playerID {
 				return ErrObservationAccountChanged
 			}
-		} else if observed.PlayerID > 0 && gameState.Player.ID > 0 && observed.PlayerID != gameState.Player.ID {
+		} else if observed.PlayerID > 0 && playerID > 0 && observed.PlayerID != playerID {
 			return ErrObservationAccountChanged
-		} else if accountAuthoritative && observed.PlayerID == 0 && gameState.Player.ID > 0 &&
-			authoritativePlayerID > 0 && authoritativePlayerID != gameState.Player.ID {
+		} else if accountAuthoritative && observed.PlayerID == 0 && playerID > 0 &&
+			authoritativePlayerID > 0 && authoritativePlayerID != playerID {
 			// Two account-authoritative baselines may have been decoded before
 			// either committed. Do not let a later, stale bootstrap frame replace
 			// the identity established by the first committed baseline.
 			return ErrObservationAccountChanged
 		}
 		if observationRequiresCapturedFocus(frame) && observed.FocusEpoch > 0 {
-			current := pipeline.state.ProtocolContext()
-			if current.FocusEpoch != observed.FocusEpoch || current.FocusedCastleID != observed.FocusedCastleID {
+			if focusEpoch != observed.FocusEpoch || focusedCastleID != observed.FocusedCastleID {
 				return ErrObservationFocusChanged
 			}
 		}
@@ -258,30 +266,77 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 		}
 		return nil
 	}
+	validateCommit := func(gameState *State.GameState, afterReducer bool) error {
+		current := pipeline.state.ProtocolContext()
+		return validateObserved(
+			gameState.Session.Generation, gameState.Session.ConnectionGeneration,
+			gameState.Session.ServerURL, gameState.Player.ID,
+			current.FocusEpoch, current.FocusedCastleID, afterReducer,
+		)
+	}
 	var currentData *GameData.Store
 	if pipeline.gameData != nil {
 		currentData, _ = pipeline.gameData.Current()
 	}
-	reducer := pipeline.registry.reducer(frame.Opcode, frame.Direction)
-	applyScoped := pipeline.state.ApplyScopedWithoutMapMutation
-	if frameMutatesWorldMap(frame) {
-		applyScoped = pipeline.state.ApplyScoped
+	registration := pipeline.registry.registered(frame.Opcode, frame.Direction)
+	reducer := registration.reducer
+	retainsObservation := State.RetainProtocolObservation(frame.Opcode) &&
+		(frame.Direction == Protocol.DirectionInbound || State.RetainOutboundProtocolObservation(frame.Opcode))
+	writes := State.ComponentSet(0)
+	if retainsObservation {
+		// recordObservation can also reconcile a baseline decoded before the
+		// session-ready transition. Session is the conservative COW boundary;
+		// the emitted dirty set includes it only when reconciliation occurs.
+		writes = writes.Union(State.Components(State.ComponentObservations, State.ComponentSession))
 	}
-	event, err := applyScoped(func(gameState *State.GameState) (State.ScopedChange, error) {
+	if reducer != nil {
+		writes = writes.Union(registration.writes)
+	}
+	if writes == 0 {
+		view := pipeline.state.IngestObservationView()
+		if validateErr := validateObserved(
+			view.SessionGeneration, view.ConnectionGeneration, view.ServerURL, view.PlayerID,
+			view.FocusEpoch, view.FocusedCastleID, false,
+		); validateErr != nil {
+			pipeline.completeWireCommit(observed.IngressID, Protocol.CommittedFrame{}, validateErr)
+			return Protocol.CommittedFrame{}, validateErr
+		}
+		pipeline.state.ObserveProtocolFocus(focusSubcontext, frame.ReceivedAt)
+		committed := Protocol.CommittedFrame{
+			Frame: frame, IngressID: observed.IngressID, Revision: pipeline.state.Revision(),
+		}
+		pipeline.publish(committed)
+		pipeline.completeWireCommit(observed.IngressID, committed, nil)
+		if pipeline.telemetry != nil {
+			pipeline.telemetry.Record(committed, nil)
+		}
+		return committed, nil
+	}
+	event, err := pipeline.state.ApplyScopedComponents(writes, func(gameState *State.GameState) (State.ScopedChange, error) {
 		if validateErr := validateCommit(gameState, false); validateErr != nil {
 			return State.ScopedChange{}, validateErr
 		}
-		baselineChanged := recordObservation(gameState, frame, "")
-		domains := []string{"protocol"}
+		baselineChanged := false
+		domains := []string{}
+		dirtyComponents := State.ComponentSet(0)
+		if retainsObservation {
+			baselineChanged = recordObservation(gameState, frame, "")
+			domains = append(domains, "protocol")
+			dirtyComponents = dirtyComponents.Union(State.Components(State.ComponentObservations))
+		}
+		reducerChanged := false
 		if baselineChanged {
 			domains = append(domains, "session")
+			dirtyComponents = dirtyComponents.Union(State.Components(State.ComponentSession))
 		}
-		if reducer != nil {
-			reducerDomains, reducerChanged, reduceErr := reducer(ctx, frame, gameState, currentData)
+		for _, step := range registration.steps {
+			reducerDomains, changed, reduceErr := step.reducer(ctx, frame, gameState, currentData)
 			if reduceErr != nil {
 				return State.ScopedChange{}, fmt.Errorf("reduce %s: %w", frame.Opcode, reduceErr)
 			}
-			if reducerChanged {
+			if changed {
+				reducerChanged = true
+				dirtyComponents = dirtyComponents.Union(step.writes)
 				domains = append(domains, reducerDomains...)
 			}
 		}
@@ -290,7 +345,8 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 		}
 		return State.ScopedChange{
 			Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains),
-			FocusSubcontext: focusSubcontext, Changed: true,
+			FocusSubcontext: focusSubcontext, Changed: retainsObservation || baselineChanged || reducerChanged,
+			DirtyComponents: dirtyComponents, DirtyComponentsSet: true,
 		}, nil
 	})
 	if err != nil {
@@ -302,20 +358,39 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 			return Protocol.CommittedFrame{}, err
 		}
 		reduceErr := err
-		event, err = pipeline.state.ApplyScopedWithoutMapMutation(func(gameState *State.GameState) (State.ScopedChange, error) {
-			if validateErr := validateCommit(gameState, false); validateErr != nil {
-				return State.ScopedChange{}, validateErr
+		if !retainsObservation {
+			committed := Protocol.CommittedFrame{
+				Frame: frame, IngressID: observed.IngressID, Revision: pipeline.state.Revision(), ReduceError: reduceErr.Error(),
 			}
-			baselineChanged := recordObservation(gameState, frame, reduceErr.Error())
-			domains := []string{"protocol"}
-			if baselineChanged {
-				domains = append(domains, "session")
+			pipeline.publish(committed)
+			pipeline.completeWireCommit(observed.IngressID, committed, reduceErr)
+			if pipeline.telemetry != nil {
+				pipeline.telemetry.Record(committed, reduceErr)
 			}
-			return State.ScopedChange{
-				Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains),
-				FocusSubcontext: focusSubcontext, Changed: true,
-			}, nil
-		})
+			return committed, reduceErr
+		}
+		event, err = pipeline.state.ApplyScopedComponents(
+			State.Components(State.ComponentObservations, State.ComponentSession),
+			func(gameState *State.GameState) (State.ScopedChange, error) {
+				if validateErr := validateCommit(gameState, false); validateErr != nil {
+					return State.ScopedChange{}, validateErr
+				}
+				baselineChanged := recordObservation(gameState, frame, reduceErr.Error())
+				domains := []string{"protocol"}
+				if baselineChanged {
+					domains = append(domains, "session")
+				}
+				dirtyComponents := State.Components(State.ComponentObservations)
+				if baselineChanged {
+					dirtyComponents = dirtyComponents.Union(State.Components(State.ComponentSession))
+				}
+				return State.ScopedChange{
+					Domains: domains, Partitions: scopedPartitionsForFrame(frame, *gameState, domains),
+					FocusSubcontext: focusSubcontext, Changed: true,
+					DirtyComponents: dirtyComponents, DirtyComponentsSet: true,
+				}, nil
+			},
+		)
 		if err != nil {
 			err = fmt.Errorf("record failed %s frame: %w", frame.Opcode, err)
 			pipeline.completeWireCommit(observed.IngressID, Protocol.CommittedFrame{}, err)
@@ -442,7 +517,7 @@ func (pipeline *Pipeline) watch(
 	pipeline.watchMu.Lock()
 	pipeline.watchers[id] = frameWatcher{
 		opcode: strings.ToLower(strings.TrimSpace(opcode)), responseToken: strings.TrimSpace(responseToken),
-		afterRevision: afterRevision, channel: channel,
+		afterRevision: afterRevision, afterIngress: pipeline.nextIngress.Load(), channel: channel,
 	}
 	pipeline.watchMu.Unlock()
 	var once sync.Once
@@ -522,6 +597,10 @@ func (pipeline *Pipeline) watchWire(
 }
 
 func recordObservation(gameState *State.GameState, frame Protocol.Frame, lastError string) bool {
+	if gameState == nil || !State.RetainProtocolObservation(frame.Opcode) ||
+		frame.Direction == Protocol.DirectionOutbound && !State.RetainOutboundProtocolObservation(frame.Opcode) {
+		return false
+	}
 	observation := gameState.Observations[frame.Opcode]
 	observation.Opcode = frame.Opcode
 	observation.Count++
@@ -576,7 +655,10 @@ func (pipeline *Pipeline) publish(frame Protocol.CommittedFrame) {
 		if watcher.responseToken != "" && watcher.responseToken != frame.Frame.ResponseToken {
 			continue
 		}
-		if frame.Revision <= watcher.afterRevision {
+		// A committed response need not create durable state. The ingress floor
+		// proves it was observed after this live watcher was registered; the
+		// revision floor only rejects a genuinely older state generation.
+		if frame.IngressID <= watcher.afterIngress || frame.Revision < watcher.afterRevision {
 			continue
 		}
 		select {

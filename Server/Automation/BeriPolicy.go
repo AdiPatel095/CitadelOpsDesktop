@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/AttackPresets"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -57,7 +58,7 @@ func (*BeriPolicy) ID() string { return "autoBeriWorld" }
 func (*BeriPolicy) EnabledKey() string { return "auto_beri_world" }
 
 func (*BeriPolicy) WakeDomains() []string {
-	return []string{"beri", "boosters", "castles", "currencies", "kingdom-transport", "units"}
+	return []string{"beri", "boosters", "castles", "currencies", "events", "event-scores", "kingdom-transport", "units"}
 }
 
 func (*BeriPolicy) WakeSections() []string { return []string{autoBeriWorldSection} }
@@ -68,6 +69,11 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		TroopTransportTimeSkipID: defaultBeriTroopTransportTimeSkipID,
 	}
 	decodeSection(snapshot.Configuration, autoBeriWorldSection, &settings)
+	if decision, locked := limitedEventGate(
+		snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
+	); locked {
+		return decision, nil
+	}
 	if decision := beriGallantryBoosterGate(snapshot, settings); decision != nil {
 		return *decision, nil
 	}

@@ -134,14 +134,6 @@ func planShopPackagePurchase(_ context.Context, input Intent.PlanningContext, ar
 	if request.Amount <= 0 {
 		return Intent.Plan{}, fmt.Errorf("amount must be positive")
 	}
-	if stock, limited := packageRecord.Int64("stock"); limited && stock > 0 {
-		purchased := input.State.Inventory.ConstructionOffers[request.ProductID]
-		if request.Amount > stock || purchased+request.Amount > stock {
-			remaining := max(int64(0), stock-purchased)
-			return Intent.Plan{}, fmt.Errorf("amount exceeds package %d remaining stock %d", request.ProductID, remaining)
-		}
-	}
-
 	kingdomID := int64Value(request.KingdomID, 0)
 	castleID := int64Value(request.CastleID, -1)
 	buildType := int64Value(request.BuildType, 0)
@@ -149,6 +141,22 @@ func planShopPackagePurchase(_ context.Context, input Intent.PlanningContext, ar
 	buyAll := int64Value(request.BuyAll, 0)
 	power := int64Value(request.Power, 0)
 	position := int64Value(request.Position, -1)
+	if stock, limited := packageRecord.Int64("stock"); limited && stock > 0 {
+		offers := input.State.Inventory.ConstructionOffers
+		if castleID > 0 {
+			scoped, _, found := input.State.ConstructionOffersFor(State.CastleID(castleID), State.KingdomID(kingdomID))
+			if !found {
+				return Intent.Plan{}, fmt.Errorf("package counters are unavailable for castle %d in kingdom %d", castleID, kingdomID)
+			}
+			offers = scoped
+		}
+		purchased := offers[request.ProductID]
+		if request.Amount > stock || purchased+request.Amount > stock {
+			remaining := max(int64(0), stock-purchased)
+			return Intent.Plan{}, fmt.Errorf("amount exceeds package %d remaining stock %d", request.ProductID, remaining)
+		}
+	}
+
 	if kingdomID < 0 {
 		return Intent.Plan{}, fmt.Errorf("kingdomId cannot be negative")
 	}

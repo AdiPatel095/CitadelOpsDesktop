@@ -120,7 +120,7 @@ func (application *Application) markAllianceHelpAnswered(_ context.Context, argu
 			answered[listID] = struct{}{}
 		}
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentAllianceHelp), func(gameState *State.GameState) ([]string, bool, error) {
 		if gameState.Session.Generation != request.SessionGeneration {
 			return nil, false, nil
 		}
@@ -275,7 +275,7 @@ func (application *Application) markAllianceHelpRequested(_ context.Context, arg
 	if request.ProductionID <= 0 || application == nil || application.State == nil {
 		return nil
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentCastles), func(gameState *State.GameState) ([]string, bool, error) {
 		if request.CastleID <= 0 {
 			job, found := findAllianceHelpJob(*gameState, request.ProductionID)
 			if !found {
@@ -284,7 +284,7 @@ func (application *Application) markAllianceHelpRequested(_ context.Context, arg
 			request.CastleID = job.CastleID
 			request.LineID = job.LineID
 		}
-		castle, exists := gameState.Castles[request.CastleID]
+		castle, exists := gameState.MutableCastleParts(request.CastleID, State.CastlePartProduction)
 		if !exists {
 			return nil, false, nil
 		}
@@ -294,7 +294,7 @@ func (application *Application) markAllianceHelpRequested(_ context.Context, arg
 		}
 		changed := markAllianceHelpQueueRequested(&queue, request.LineID, request.ProductionID)
 		castle.Production[request.LineID] = queue
-		gameState.Castles[request.CastleID] = castle
+		gameState.SetCastleParts(request.CastleID, castle, State.CastlePartProduction)
 		return []string{"castles", "production"}, changed, nil
 	})
 	return err

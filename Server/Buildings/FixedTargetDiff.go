@@ -68,7 +68,7 @@ func CompileFixedTargetDiff(
 			continue
 		}
 		seenTargets[target.TargetID] = struct{}{}
-		desired, found := catalog.Definition(int64(target.DefinitionID))
+		desired, found := catalog.DefinitionView(int64(target.DefinitionID))
 		if !found || target.DefinitionID <= 0 {
 			addTargetIssue(&result, index, TargetIssueError, "unknown_definition", fmt.Sprintf("fixed definition %d is not in the official catalog", target.DefinitionID), nil)
 			continue
@@ -151,12 +151,12 @@ func matchFixedTarget(
 			continue
 		}
 		building := castle.Layout.Fixed[buildingID]
-		current, found := catalog.Definition(int64(building.DefinitionID))
+		current, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found {
 			continue
 		}
-		path, canUpgrade := catalog.UpgradePath(current.ID, desired.ID)
-		_, alreadyHigher := catalog.UpgradePath(desired.ID, current.ID)
+		path, canUpgrade := catalog.UpgradePathView(current.ID, desired.ID)
+		_, alreadyHigher := catalog.UpgradePathView(desired.ID, current.ID)
 		if !canUpgrade && !alreadyHigher {
 			continue
 		}

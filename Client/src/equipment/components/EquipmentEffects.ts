@@ -1,7 +1,13 @@
 import type { EquipmentEffectV2 } from '../../api/Contracts';
 import type { MetadataItem } from '../../context/MetadataContext';
+import {
+	buildOfficialEquipmentTargetIndex,
+	officialEquipmentEffectAppliesToArea,
+	officialEquipmentEffectScope,
+	type OfficialEquipmentEffectScope,
+} from '../EquipmentEffectApplicability';
 
-export type EquipmentEffectScope = 'Always' | 'PvP' | 'PvE';
+export type EquipmentEffectScope = OfficialEquipmentEffectScope;
 
 export interface EquipmentEffectSource {
 	label: string;
@@ -17,12 +23,14 @@ export interface MappedEquipmentEffect {
 	value: number;
 	rawValue: number;
 	polarityValue: number;
+	displayValue?: string;
 	unit: 'percent' | 'number';
 	scope: EquipmentEffectScope;
 	areaTypeIds: number[];
 	category: number;
 	categoryName: string;
 	group: number;
+	groupKey: string;
 	groupLabel: string;
 	groupActiveTemplate: string;
 	groupMalusTemplate: string;
@@ -46,6 +54,7 @@ export interface EquipmentEffectGroup {
 	value: number;
 	rawValue: number;
 	polarityValue: number;
+	displayValue?: string;
 	unit: 'percent' | 'number';
 	capped: boolean;
 	rows: MappedEquipmentEffect[];
@@ -66,6 +75,7 @@ export interface EquipmentEffectShowcase {
 	label: string;
 	value: number;
 	rawValue: number;
+	displayValue?: string;
 	unit: 'percent' | 'number';
 	category: number;
 	group: number;
@@ -84,12 +94,14 @@ interface EffectContribution {
 	template: string;
 	value: number;
 	polarityValue: number;
+	displayValue?: string;
 	unit: 'percent' | 'number';
 	scope: EquipmentEffectScope;
 	areaTypeIds: number[];
 	category: number;
 	categoryName: string;
 	group: number;
+	groupKey: string;
 	groupLabel: string;
 	groupActiveTemplate: string;
 	groupMalusTemplate: string;
@@ -108,6 +120,28 @@ interface EffectValue {
 	argumentLabel?: string;
 }
 
+export interface OfficialEquipmentEffectGroupingMetadata {
+	name?: unknown;
+	internalName?: unknown;
+	effectTypeId?: unknown;
+	effectTypeName?: unknown;
+	combatType?: unknown;
+	sortCategory?: unknown;
+	sortGroup?: unknown;
+	categoryName?: unknown;
+	effectGroupPassive?: unknown;
+	effectGroupActive?: unknown;
+}
+
+export interface OfficialEquipmentEffectGroupIdentity {
+	key: string;
+	category: number;
+	categoryLabel: string;
+	group: number;
+	label: string;
+	effectTypeId: number;
+}
+
 const categoryNames: Record<number, string> = {
 	1: 'Unit effects',
 	2: 'Defense structure effects',
@@ -120,91 +154,70 @@ const categoryNames: Record<number, string> = {
 	9: 'Other effects',
 };
 
-const showcaseLabels: Record<number, string> = {
-	1: 'Capture Speed',
-	2: 'Loot Protection',
-	3: 'Spy Detection',
-	4: 'Fire Protection',
-	5: 'Occupation Time Reduction',
-	6: 'Wall Strength',
-	7: 'Gate Strength',
-	8: 'Moat Strength',
-	9: 'Melee Defense',
-	10: 'Ranged Defense',
-	11: 'NPC Defense',
-	12: 'Wall Limit Bonus',
-	13: 'Attack Glory Bonus',
-	14: 'Honor Bonus',
-	15: 'Travel Speed',
-	16: 'Loot Bonus',
-	17: 'Stealth',
-	18: 'Fire Damage',
-	19: 'Wall Reduction',
-	20: 'Gate Reduction',
-	21: 'Moat Reduction',
-	22: 'Equipment Find Bonus',
-	23: 'Melee Strength',
-	24: 'Ranged Strength',
-	25: 'Building Damage',
-	26: 'Travel Cost Reduction',
-	27: 'Cooldown Reduction',
-	28: 'Flank Limit Bonus',
-	31: 'Defense Strength',
-	32: 'Courtyard Defense',
-	33: 'Courtyard Strength',
-	34: 'Front Limit Bonus',
-	35: 'Hideout Capacity',
-	36: 'Attack Strength',
-	37: 'Loot Capacity',
-	38: 'Return Speed',
-	39: 'Support Speed',
-	40: 'Stationing Speed',
-	41: 'Stationing Cost Reduction',
-	42: 'Support Cost Reduction',
-	43: 'PvP Travel Cost Reduction',
-	44: 'PvP Travel Speed',
-	45: 'PvP Return Speed',
-	46: 'PvP Wall Limit Bonus',
-	47: 'Defense Support Bonus',
-	49: 'Front Defense Bonus',
-	50: 'Flank Defense Bonus',
-	51: 'Attack Support Bonus',
-	53: 'Front Strength Bonus',
-	54: 'Flank Strength Bonus',
-	55: 'PvP Loot Bonus',
-	58: 'Survival Bonus',
-	59: 'Sight Radius',
-	60: 'XP Bonus',
-	75: 'NPC Coin Loot',
-	102: 'Unit Travel Speed',
-	103: 'Kingdom Travel Speed',
-	105: 'Glory Bonus',
-	114: 'Loot Capacity Bonus',
-	115: 'Battle XP Bonus',
-	156: 'Additional Waves',
-	157: 'Fire Chance',
-	179: 'Courtyard Reinforcement Limit',
-	180: 'Courtyard Reinforcement Bonus',
-};
+export function officialEquipmentEffectGroupIdentity(
+	definitionId: number,
+	definition: OfficialEquipmentEffectGroupingMetadata | undefined,
+): OfficialEquipmentEffectGroupIdentity {
+	// effecttypes.sortCategory/sortGroup is the highest hierarchy published by
+	// the game. Only fall back to an effect-type row when that hierarchy is absent.
+	const effectTypeId = positiveMetadataInteger(definition?.effectTypeId) || positiveMetadataInteger(definitionId) || definitionId;
+	const officialCategory = positiveMetadataInteger(definition?.sortCategory);
+	const officialGroup = positiveMetadataInteger(definition?.sortGroup);
+	const category = officialCategory || 99;
+	const categoryLabel = cleanOfficialGroupingLabel(definition?.categoryName)
+		|| categoryNames[category]
+		|| (officialCategory ? `Official category ${officialCategory}` : 'Other effects');
+
+	if (officialCategory && officialGroup) {
+		return {
+			key: `official-group-${officialCategory}-${officialGroup}`,
+			category,
+			categoryLabel,
+			group: officialGroup,
+			label: cleanOfficialGroupingLabel(definition?.effectGroupPassive)
+				|| cleanOfficialGroupingLabel(definition?.effectGroupActive)
+				|| `Official effect group ${officialCategory}.${officialGroup}`,
+			effectTypeId,
+		};
+	}
+
+	return {
+		key: `official-effect-type-${effectTypeId}`,
+		category,
+		categoryLabel,
+		group: effectTypeId,
+		label: humanizeOfficialGroupingIdentifier(definition?.effectTypeName)
+			|| cleanOfficialGroupingLabel(definition?.name)
+			|| humanizeOfficialGroupingIdentifier(definition?.internalName)
+			|| `Official effect type ${effectTypeId}`,
+		effectTypeId,
+	};
+}
 
 export function buildEquipmentEffectProfile(
 	sources: EquipmentEffectSource[],
 	definitions: Record<number, MetadataItem>,
 	units: Record<number, MetadataItem>,
 	castleTypeID: number,
+	combatMode: 'PvP' | 'PvE' | null = null,
 ): EquipmentEffectProfile {
+	const targetIndex = buildOfficialEquipmentTargetIndex(definitions);
 	const contributions = sources.flatMap((source) => source.effects.flatMap((effect) => {
 		const definition = definitions[effect.definitionId];
 		const internalName = metadataString(definition?.internalName);
 		const effectTypeName = metadataString(definition?.effectTypeName) || internalName;
 		const template = metadataString(definition?.effectTemplate);
-		const effectTypeId = metadataInteger(definition?.effectTypeId) || effect.definitionId;
-		const category = metadataInteger(definition?.sortCategory) || 99;
-		const group = metadataInteger(definition?.sortGroup) || effectTypeId;
+		const identity = officialEquipmentEffectGroupIdentity(effect.definitionId, definition);
+		const effectTypeId = identity.effectTypeId;
 		const areaTypeIds = metadataIntegerList(definition?.areaTypeIds ?? definition?.areaTypeID);
 		return resolveEffectValues(effect.values, units).flatMap((resolved) => {
 			const value = normalizeSemanticValue(template, resolved.value);
 			if (!Number.isFinite(value) || value === 0) return [];
+			const isUnitReplacement = effectTypeId === 118 || effectTypeName.toLowerCase() === 'strongerpeasant';
+			const replacementUnitID = isUnitReplacement ? Math.trunc(resolved.value) : 0;
+			const replacementUnitName = replacementUnitID > 0
+				? units[replacementUnitID]?.name?.trim() || `Unit ${replacementUnitID}`
+				: '';
 			return [{
 				definitionId: effect.definitionId,
 				effectTypeId,
@@ -212,21 +225,23 @@ export function buildEquipmentEffectProfile(
 				template,
 				value,
 				polarityValue: resolved.value,
-				unit: effectUnit(effectTypeName, template),
-				scope: effectScope(definition, internalName),
+				displayValue: replacementUnitName || undefined,
+				unit: isUnitReplacement ? 'number' : effectUnit(effectTypeName, template),
+					scope: officialEquipmentEffectScope(definition),
 				areaTypeIds,
-				category,
-				categoryName: metadataString(definition?.categoryName) || categoryNames[category] || 'Other effects',
-				group,
-				groupLabel: metadataString(definition?.effectGroupPassive),
+				category: identity.category,
+				categoryName: identity.categoryLabel,
+				group: identity.group,
+				groupKey: identity.key,
+				groupLabel: identity.label,
 				groupActiveTemplate: metadataString(definition?.effectGroupActive),
 				groupMalusTemplate: metadataString(definition?.effectGroupActiveMalus),
 				sortOrder: metadataString(definition?.sortOrder),
 				capId: metadataInteger(definition?.capId),
 				cap: metadataNumber(definition?.maxTotalBonus),
 				source: source.label,
-				argumentId: resolved.argumentId,
-				argumentLabel: resolved.argumentLabel,
+				argumentId: replacementUnitID || resolved.argumentId,
+				argumentLabel: replacementUnitName || resolved.argumentLabel,
 				commonCapTemplate: metadataString(definition?.commonEffectCapTemplate),
 			} satisfies EffectContribution];
 		});
@@ -251,19 +266,25 @@ export function buildEquipmentEffectProfile(
 
 	const showcase = Array.from(
 		groupBy(
-			detailed.filter((effect) => effect.areaTypeIds.length === 0 || effect.areaTypeIds.includes(castleTypeID)),
-			showcaseKey,
+			detailed.filter((effect) => officialEquipmentEffectAppliesToArea(
+				definitions[effect.definitionId],
+				castleTypeID,
+				targetIndex,
+				combatMode,
+			)),
+			groupKey,
 		),
-		([key, rows]) => buildShowcase(key, rows),
+		([key, rows]) => buildShowcase(buildEffectGroup(key, rows)),
 	).filter((effect) => effect.value !== 0).sort(compareShowcase);
 
 	return { showcase, sections };
 }
 
 export function formatEquipmentEffectValue(
-	effect: Pick<MappedEquipmentEffect | EquipmentEffectGroup | EquipmentEffectShowcase, 'unit'>,
+	effect: Pick<MappedEquipmentEffect | EquipmentEffectGroup | EquipmentEffectShowcase, 'unit' | 'displayValue'>,
 	value: number,
 ): string {
+	if (effect.displayValue) return effect.displayValue;
 	const sign = value > 0 ? '+' : value < 0 ? '-' : '';
 	return `${sign}${formatUnsignedNumber(value)}${effect.unit === 'percent' ? '%' : ''}`;
 }
@@ -319,12 +340,14 @@ function aggregateDetail(key: string, rows: EffectContribution[]): MappedEquipme
 		value,
 		rawValue,
 		polarityValue,
+		displayValue: first.displayValue,
 		unit: first.unit,
 		scope: first.scope,
 		areaTypeIds: first.areaTypeIds,
 		category: first.category,
 		categoryName: first.categoryName,
 		group: first.group,
+		groupKey: first.groupKey,
 		groupLabel: first.groupLabel,
 		groupActiveTemplate: first.groupActiveTemplate,
 		groupMalusTemplate: first.groupMalusTemplate,
@@ -355,12 +378,13 @@ function buildEffectGroup(key: string, rows: MappedEquipmentEffect[]): Equipment
 		key,
 		category: first.category,
 		group: first.group,
-		label: first.groupLabel || `Effect group ${first.category}.${first.group}`,
+		label: first.groupLabel || `Official effect group ${first.category}.${first.group}`,
 		activeTemplate: first.groupActiveTemplate,
 		malusTemplate: first.groupMalusTemplate,
 		value: totals.value,
 		rawValue: totals.rawValue,
 		polarityValue: round(sortedRows.reduce((total, row) => total + row.polarityValue, 0)),
+		displayValue: sortedRows.every((row) => row.displayValue === first.displayValue) ? first.displayValue : undefined,
 		unit: sortedRows.every((row) => row.unit === 'number') ? 'number' : 'percent',
 		capped: totals.value !== totals.rawValue,
 		rows: sortedRows,
@@ -372,44 +396,18 @@ function buildEffectGroup(key: string, rows: MappedEquipmentEffect[]): Equipment
 	};
 }
 
-function buildShowcase(key: string, rows: MappedEquipmentEffect[]): EquipmentEffectShowcase {
-	const first = [...rows].sort(compareMappedEffects)[0];
-	const totals = aggregateCappedValues(rows.map((row) => ({
-		value: row.rawValue,
-		capId: row.capId || 0,
-		cap: row.cap || 0,
-	})));
+function buildShowcase(group: EquipmentEffectGroup): EquipmentEffectShowcase {
 	return {
-		key,
-		label: showcaseLabel(first),
-		value: totals.value,
-		rawValue: totals.rawValue,
-		unit: rows.every((row) => row.unit === 'number') ? 'number' : 'percent',
-		category: first.category,
-		group: first.group,
-		capped: totals.value !== totals.rawValue,
+		key: group.key,
+		label: group.label,
+		value: group.value,
+		rawValue: group.rawValue,
+		displayValue: group.displayValue,
+		unit: group.unit,
+		category: group.category,
+		group: group.group,
+		capped: group.capped,
 	};
-}
-
-function showcaseLabel(effect: MappedEquipmentEffect): string {
-	const argumentLabel = effect.argumentLabel?.trim();
-	if (argumentLabel) {
-		const conciseArgument = /horror/i.test(argumentLabel) ? 'Horror Unit' : argumentLabel;
-		switch (effect.effectTypeId) {
-			case 51: return `${conciseArgument} Support`;
-			case 148: return `${conciseArgument} Strength`;
-			case 149: return `${conciseArgument} Travel Speed`;
-			case 150: return `${conciseArgument} Loot Bonus`;
-			case 154: return `${conciseArgument} Glory Bonus`;
-		}
-	}
-	return showcaseLabels[effect.effectTypeId]
-		|| firstWords(effect.groupLabel || formatEquipmentEffectLabel(effect), 5);
-}
-
-function firstWords(value: string, maximum: number): string {
-	const words = value.trim().split(/\s+/);
-	return words.length > maximum ? `${words.slice(0, maximum).join(' ')}…` : value;
 }
 
 function aggregateCappedValues(rows: Array<{ value: number; capId: number; cap: number }>): { value: number; rawValue: number } {
@@ -455,16 +453,8 @@ function normalizeSemanticValue(template: string, value: number): number {
 	return value;
 }
 
-function effectScope(definition: MetadataItem | undefined, internalName: string): EquipmentEffectScope {
-	if (definition?.scope === 'pvp') return 'PvP';
-	if (definition?.scope === 'pve') return 'PvE';
-	const normalized = internalName.toLowerCase();
-	if (normalized.includes('pvp') || normalized.includes('castlelord')) return 'PvP';
-	if (/pve|npc|nomad|samurai|khan|daimyo|berimond|bloodcrow/.test(normalized)) return 'PvE';
-	return 'Always';
-}
-
 function effectUnit(effectTypeName: string, template: string): 'percent' | 'number' {
+	if (/unitamountyard|unitwallabsolute/i.test(effectTypeName)) return 'number';
 	if (template.includes('%')) return 'percent';
 	return /wave|supportunits|reinforcement|slotbonus|amount(?:spies|guards|peasant|population)/i.test(effectTypeName)
 		? 'number'
@@ -476,11 +466,7 @@ function detailKey(effect: EffectContribution): string {
 }
 
 function groupKey(effect: MappedEquipmentEffect): string {
-	return `${effect.category}:${effect.group || effect.effectTypeId}`;
-}
-
-function showcaseKey(effect: MappedEquipmentEffect): string {
-	return `${effect.effectTypeId}:${effect.argumentId || 0}`;
+	return effect.groupKey;
 }
 
 function compareEffectGroups(left: EquipmentEffectGroup, right: EquipmentEffectGroup): number {
@@ -562,6 +548,30 @@ function metadataString(value: unknown): string {
 function metadataInteger(value: unknown): number {
 	const parsed = typeof value === 'number' ? value : Number(value);
 	return Number.isFinite(parsed) ? Math.trunc(parsed) : 0;
+}
+
+function positiveMetadataInteger(value: unknown): number {
+	return Math.max(0, metadataInteger(value));
+}
+
+function cleanOfficialGroupingLabel(value: unknown): string {
+	const label = metadataString(value)
+		.replace(/\{\d+\}/g, '')
+		.replace(/^[+\-%\s:]+/, '')
+		.replace(/[+\-%\s:]+$/, '')
+		.replace(/\s+/g, ' ')
+		.trim();
+	return label ? label.charAt(0).toUpperCase() + label.slice(1) : '';
+}
+
+function humanizeOfficialGroupingIdentifier(value: unknown): string {
+	const label = metadataString(value)
+		.replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+		.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+		.replace(/[_-]+/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim();
+	return label ? label.charAt(0).toUpperCase() + label.slice(1) : '';
 }
 
 function metadataNumber(value: unknown): number {

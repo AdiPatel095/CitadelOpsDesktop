@@ -200,25 +200,14 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     ? `${stormMapState.coveredBounds.x2 - stormMapState.coveredBounds.x1 + 1} × ${stormMapState.coveredBounds.y2 - stormMapState.coveredBounds.y1 + 1} · ${stormMapState.windowCount} windows`
     : 'Learns on first sweep';
   const stormOpportunities = useMemo(() => {
-    const now = Date.now();
-    let ready = 0;
-    let nextReadyAt = Number.POSITIVE_INFINITY;
-    for (const target of Object.values(stormMapState?.targets ?? {})) {
-      const observedAt = Date.parse(target.observedAt);
-      const inferredReadyAt = observedAt + (
-        target.stormCooldownRemaining
-        && (target.typeId === 25 || (target.typeId === 24 && (target.ownerId ?? 0) > 0))
-          ? target.stormCooldownRemaining * 1000
-          : 0
-      );
-      const readyAt = target.stormReadyAt ? Date.parse(target.stormReadyAt) : inferredReadyAt;
-      const expiresAt = target.stormExpiresAt ? Date.parse(target.stormExpiresAt) : Number.POSITIVE_INFINITY;
-      if (Number.isFinite(expiresAt) && expiresAt <= now) continue;
-      if (Number.isFinite(readyAt) && readyAt <= now) ready += 1;
-      else if (Number.isFinite(readyAt)) nextReadyAt = Math.min(nextReadyAt, readyAt);
-    }
-    return { ready, nextReadyAt };
-  }, [stormMapState?.targets]);
+	const nextReadyAt = stormMapState?.nextTargetReadyAt
+	  ? Date.parse(stormMapState.nextTargetReadyAt)
+	  : Number.POSITIVE_INFINITY;
+	return {
+	  ready: Math.max(0, stormMapState?.readyTargetCount ?? 0),
+	  nextReadyAt: Number.isFinite(nextReadyAt) ? nextReadyAt : Number.POSITIVE_INFINITY,
+	};
+	}, [stormMapState?.nextTargetReadyAt, stormMapState?.readyTargetCount]);
   const configuredLunaPurchases = useMemo(
     () => new Map(draft.aquamarine.purchases.map((purchase) => [purchase.packageId, purchase])),
     [draft.aquamarine.purchases],

@@ -69,6 +69,76 @@ func TestParseBattleCaptureBuildsCombatantsAndMetrics(t *testing.T) {
 	}
 }
 
+func TestParseBattleCaptureBuildsRichBattleResolution(t *testing.T) {
+	capture := State.BattleReportCapture{
+		MessageID: 401, ReportID: 402,
+		CapturedAt: time.Date(2026, 8, 15, 12, 0, 0, 0, time.UTC),
+		Summary: json.RawMessage(`{
+			"MID":401,"LID":402,"MT":6,"AHP":1,"DHP":0,
+			"PI":[{"OID":1,"N":"Attacker"},{"OID":2,"N":"Defender"}],
+			"PBI":[[1,0,100,-10],[2,1,80,-80]],
+			"AI":{"N":"Main Castle","DP":2,"AT":1,"K":0,"X":100,"Y":200}
+		}`),
+		Waves: json.RawMessage(`{
+			"AL":{"AE":[[61,[35.0],"EQ"],[512,[216,5.0],"DE"]]},
+			"DB":{"AE":[[10,[45.0],"EQ"]]}
+		}`),
+		Details: json.RawMessage(`{
+			"Y":[[1,[216,100,-10]],[2,[227,80,-80]]],
+			"S":[[1,[400,2,-1]],[2,[440,1,0]]],
+			"W":[[
+				[1,[[[216,40,-5]],[[651,2,-1]],[0,0,0]],[[[216,60,-5]],[],[0,0,0]],[[],[],[0,0,0]]],
+				[2,[[[227,40,-40]],[[626,1,-1]],[0,0,0]],[[[227,40,-40]],[],[0,0,0]],[[],[],[0,0,0]]]
+			]]
+		}`),
+	}
+	report, err := ParseBattleCapture(capture, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.KingdomID != 0 || !report.KingdomKnown {
+		t.Fatalf("kingdom zero was not retained as known: id=%d known=%t", report.KingdomID, report.KingdomKnown)
+	}
+	if len(report.CommanderEffects) != 2 || len(report.CastellanEffects) != 1 ||
+		report.CommanderEffects[1].DefinitionID != 512 || len(report.CommanderEffects[1].Values) != 2 {
+		t.Fatalf("leader effects were not retained: commander=%#v castellan=%#v", report.CommanderEffects, report.CastellanEffects)
+	}
+	if len(report.Waves) != 1 || len(report.Waves[0].Lanes) != 2 {
+		t.Fatalf("wall waves were not resolved: %#v", report.Waves)
+	}
+	left := report.Waves[0].Lanes[0]
+	if left.Lane != "Left flank" || left.Result != "BREACHED" || left.AttackerStart != 40 ||
+		left.AttackerLost != 5 || left.DefenderStart != 40 || left.DefenderLost != 40 ||
+		len(left.AttackerToolDetails) != 1 || left.AttackerToolDetails[0].Used != 1 {
+		t.Fatalf("left lane was not resolved: %#v", left)
+	}
+	if len(report.SupportTools) != 4 || battleTool(report.SupportTools, "attacker", 400).Used != 1 ||
+		battleTool(report.SupportTools, "attacker", 651).Used != 1 ||
+		battleTool(report.SupportTools, "defender", 626).Used != 1 {
+		t.Fatalf("battle tools were not resolved: %#v", report.SupportTools)
+	}
+	encoded, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var identity struct {
+		KingdomID    *int `json:"kingdomID"`
+		KingdomKnown bool `json:"kingdomKnown"`
+	}
+	if err := json.Unmarshal(encoded, &identity); err != nil || identity.KingdomID == nil || *identity.KingdomID != 0 || !identity.KingdomKnown {
+		t.Fatalf("known kingdom zero was not serialized: %s (%v)", encoded, err)
+	}
+}
+
+func battleTool(items []BattleItemDetail, side string, id int64) BattleItemDetail {
+	for _, item := range items {
+		if item.Side == side && item.WodID == id {
+			return item
+		}
+	}
+	return BattleItemDetail{}
+}
+
 func TestParseBattleCaptureReadsBerimondGallantry(t *testing.T) {
 	capture := State.BattleReportCapture{
 		MessageID: 301, ReportID: 302, BattleKey: "beri#tower",

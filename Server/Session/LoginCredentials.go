@@ -38,7 +38,13 @@ type BackgroundLoginInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Server   string `json:"server"`
-	Language string `json:"language,omitempty"`
+	// ServerURL and Zone optionally pin the world's websocket endpoint and
+	// SmartFox zone, as resolved by the hosted control plane's game server
+	// directory. Both are validated against the official host and zone
+	// shapes; empty means "resolve from the local catalog".
+	ServerURL string `json:"serverUrl,omitempty"`
+	Zone      string `json:"zone,omitempty"`
+	Language  string `json:"language,omitempty"`
 }
 
 // BackgroundLoginStatus deliberately excludes the username and password.
@@ -77,6 +83,19 @@ func (store *BackgroundLoginStore) Configure(input BackgroundLoginInput) (Backgr
 	if err != nil {
 		return BackgroundLoginStatus{}, err
 	}
+	// An explicitly resolved endpoint (from the control plane's game server
+	// directory) wins over the local catalog, but only when it points at an
+	// official live game host.
+	if explicitURL := strings.TrimSpace(input.ServerURL); explicitURL != "" {
+		if err := validateDirectGameServerURL(explicitURL); err != nil {
+			return BackgroundLoginStatus{}, fmt.Errorf("game server URL is invalid: %w", err)
+		}
+		serverURL = explicitURL
+	}
+	zone := strings.TrimSpace(input.Zone)
+	if zone != "" && !gameNamespacePattern.MatchString(zone) {
+		return BackgroundLoginStatus{}, fmt.Errorf("game server zone is invalid")
+	}
 	language := strings.TrimSpace(input.Language)
 	if language == "" {
 		language = defaultGameLanguage
@@ -87,7 +106,9 @@ func (store *BackgroundLoginStore) Configure(input BackgroundLoginInput) (Backgr
 		AutoRestore:   true,
 		Username:      username,
 		Password:      input.Password,
+		Server:        server,
 		ServerURL:     serverURL,
+		Zone:          zone,
 		Language:      language,
 	}
 	store.mu.Lock()
@@ -104,6 +125,33 @@ func (store *BackgroundLoginStore) Configure(input BackgroundLoginInput) (Backgr
 	}, nil
 }
 
+// Clear removes every saved game login for the profile: the Background login
+// written through Configure and any Full-mode capture. It is used when
+// orchestration revokes an account's credential from a cell.
+func (store *BackgroundLoginStore) Clear() error {
+	if store == nil {
+		return fmt.Errorf("background login store is unavailable")
+	}
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	return ClearSavedLogins(store.dataDir)
+}
+
+// ClearSavedLogins deletes the saved game login files under dataDir without
+// touching the rest of the profile. Missing files are not an error.
+func ClearSavedLogins(dataDir string) error {
+	if strings.TrimSpace(dataDir) == "" {
+		return fmt.Errorf("game login data directory is required")
+	}
+	var clearErr error
+	for _, path := range []string{backgroundLoginCredentialPath(dataDir), loginCredentialPath(dataDir)} {
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			clearErr = fmt.Errorf("remove saved game login: %w", err)
+		}
+	}
+	return clearErr
+}
+
 func backgroundLoginStatus(dataDir string) (BackgroundLoginStatus, error) {
 	credential, err := loadBackgroundLoginCredential(dataDir)
 	if os.IsNotExist(err) {
@@ -112,7 +160,10 @@ func backgroundLoginStatus(dataDir string) (BackgroundLoginStatus, error) {
 	if err != nil {
 		return BackgroundLoginStatus{}, err
 	}
-	server := gameServerSelection(credential.ServerURL)
+	server := strings.ToUpper(strings.TrimSpace(credential.Server))
+	if server == "" {
+		server = gameServerSelection(credential.ServerURL)
+	}
 	configured := credential.AutoRestore && server != ""
 	return BackgroundLoginStatus{
 		Configured: configured,
@@ -123,13 +174,21 @@ func backgroundLoginStatus(dataDir string) (BackgroundLoginStatus, error) {
 	}, nil
 }
 
+// backgroundGameServerURL resolves a world code (US1, GB1, INT1 …) to its
+// secure WebSocket URL. Known worlds come from the game server catalog, which
+// is what makes multi-zone hosts (GB1 lives on ep-live-mz-int1-sk1-gb1-game)
+// connect; a code the catalog does not list yet falls back to the single-world
+// host convention so a freshly opened world is still reachable.
 func backgroundGameServerURL(selection string) (string, string, error) {
 	selection = strings.TrimSpace(selection)
 	if len(selection) == 0 || len(selection) > maxGameServerSelectionBytes ||
 		!gameServerSelectionPattern.MatchString(selection) {
-		return "", "", fmt.Errorf("game server must be a server code such as US1")
+		return "", "", fmt.Errorf("game server must be a world code such as US1")
 	}
 	server := strings.ToUpper(selection)
+	if known, ok := LookupGameServer(server); ok {
+		return known.URL, known.Code, nil
+	}
 	serverURL := fmt.Sprintf(
 		"wss://ep-live-%s-game.goodgamestudios.com:443",
 		strings.ToLower(server),
@@ -140,10 +199,16 @@ func backgroundGameServerURL(selection string) (string, string, error) {
 	return serverURL, server, nil
 }
 
+// gameServerSelection recovers a world code from a server URL for logins
+// saved before the code itself was persisted. Single-world hosts resolve
+// exactly; a multi-zone host without a saved code reports its first world.
 func gameServerSelection(serverURL string) string {
 	parsed, err := url.Parse(strings.TrimSpace(serverURL))
 	if err != nil {
 		return ""
+	}
+	if servers := gameServersForHost(parsed.Hostname()); len(servers) > 0 {
+		return servers[0].Code
 	}
 	match := gameServerHostnamePattern.FindStringSubmatch(strings.ToLower(parsed.Hostname()))
 	if len(match) != 2 {
@@ -158,8 +223,14 @@ type persistedLoginCredential struct {
 	AutoRestore   bool      `json:"autoRestore"`
 	Username      string    `json:"username"`
 	Password      string    `json:"password"`
-	ServerURL     string    `json:"serverUrl,omitempty"`
-	Language      string    `json:"language,omitempty"`
+	// Server is the world code the login was saved for (US1, GB1 …). It is
+	// what picks the SmartFox zone on multi-zone hosts; ServerURL alone cannot.
+	Server    string `json:"server,omitempty"`
+	ServerURL string `json:"serverUrl,omitempty"`
+	// Zone pins the SmartFox zone when the login was installed with an
+	// explicitly resolved endpoint; empty means "derive from the catalog".
+	Zone     string `json:"zone,omitempty"`
+	Language string `json:"language,omitempty"`
 }
 
 func loadLoginCredential(dataDir string) (persistedLoginCredential, error) {

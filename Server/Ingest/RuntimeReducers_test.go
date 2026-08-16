@@ -15,6 +15,9 @@ func TestRuntimeInventoryAndQueueableReducers(t *testing.T) {
 	gameData := runtimeTestGameData(t)
 	gameState := State.NewGameState()
 	gameState.Castles[100] = newCastleState(100)
+	stormCastle := newCastleState(200)
+	stormCastle.KingdomID = 4
+	gameState.Castles[200] = stormCastle
 	observedAt := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	code := 0
 
@@ -44,12 +47,41 @@ func TestRuntimeInventoryAndQueueableReducers(t *testing.T) {
 		t.Fatalf("storage namespaces collided: %#v", gameState.Inventory.Items)
 	}
 
+	_, changed, err = reduceConstructionOffersCommand(t.Context(), Protocol.Frame{
+		Opcode: "gbc", Direction: Protocol.DirectionOutbound, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"CID":100,"KID":0}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("construction offer context: changed=%t err=%v", changed, err)
+	}
 	_, changed, err = reduceConstructionOffers(t.Context(), Protocol.Frame{
 		Opcode: "gbc", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
 		Payload: json.RawMessage(`{"PL":[{"PID":4743,"AMT":5},{"PID":4741,"AMT":1}]}`),
 	}, &gameState, gameData)
 	if err != nil || !changed || gameState.Inventory.ConstructionOffers[4743] != 5 {
 		t.Fatalf("construction offers: changed=%t offers=%#v err=%v", changed, gameState.Inventory.ConstructionOffers, err)
+	}
+	_, changed, err = reduceConstructionOffersCommand(t.Context(), Protocol.Frame{
+		Opcode: "gbc", Direction: Protocol.DirectionOutbound, ReceivedAt: observedAt.Add(time.Minute),
+		Payload: json.RawMessage(`{"CID":200,"KID":4}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("Storm construction offer context: changed=%t err=%v", changed, err)
+	}
+	_, changed, err = reduceConstructionOffers(t.Context(), Protocol.Frame{
+		Opcode: "gbc", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt.Add(time.Minute),
+		Payload: json.RawMessage(`{"PL":[{"PID":245,"AMT":12}]}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("Storm construction offers: changed=%t err=%v", changed, err)
+	}
+	greatEmpireOffers, _, found := gameState.ConstructionOffersFor(100, 0)
+	if !found || greatEmpireOffers[4743] != 5 {
+		t.Fatalf("Great Empire construction offers were overwritten: %#v found=%t", greatEmpireOffers, found)
+	}
+	stormOffers, _, found := gameState.ConstructionOffersFor(200, 4)
+	if !found || stormOffers[245] != 12 {
+		t.Fatalf("Storm construction offers = %#v found=%t", stormOffers, found)
 	}
 }
 

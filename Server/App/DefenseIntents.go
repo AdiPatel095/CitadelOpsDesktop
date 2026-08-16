@@ -115,12 +115,13 @@ func planDefenseOpenGate(_ context.Context, input Intent.PlanningContext, argume
 	}
 	if request.RequireIncomingAttack {
 		incoming := false
-		for _, movement := range input.State.Movements {
+		input.State.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 			if movement.TargetCastleID == castle.ID && State.IsIncomingPlayerAttack(input.State, movement, now) {
 				incoming = true
-				break
+				return false
 			}
-		}
+			return true
+		})
 		if !incoming {
 			return Intent.Plan{}, fmt.Errorf("castle %d no longer has an incoming player attack", castle.ID)
 		}
@@ -341,7 +342,7 @@ func (application *Application) verifyDefenseRefresh(_ context.Context, argument
 	if err := decodeIntentArguments(arguments, &verification); err != nil {
 		return err
 	}
-	castle, found := application.State.Snapshot().Castles[verification.CastleID]
+	castle, found := application.State.ReadOnlyView().Castles[verification.CastleID]
 	if !found {
 		return fmt.Errorf("castle %d is no longer in the current player state", verification.CastleID)
 	}
@@ -353,7 +354,7 @@ func (application *Application) verifyDefenseKeep(_ context.Context, arguments j
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	castle, found := application.State.Snapshot().Castles[request.CastleID]
+	castle, found := application.State.ReadOnlyView().Castles[request.CastleID]
 	if !found {
 		return fmt.Errorf("castle %d is no longer in the current player state", request.CastleID)
 	}
@@ -374,7 +375,7 @@ func (application *Application) verifyDefenseWall(_ context.Context, arguments j
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	castle, found := application.State.Snapshot().Castles[request.CastleID]
+	castle, found := application.State.ReadOnlyView().Castles[request.CastleID]
 	if !found {
 		return fmt.Errorf("castle %d is no longer in the current player state", request.CastleID)
 	}
@@ -394,7 +395,7 @@ func (application *Application) verifyDefenseMoat(_ context.Context, arguments j
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	castle, found := application.State.Snapshot().Castles[request.CastleID]
+	castle, found := application.State.ReadOnlyView().Castles[request.CastleID]
 	if !found {
 		return fmt.Errorf("castle %d is no longer in the current player state", request.CastleID)
 	}

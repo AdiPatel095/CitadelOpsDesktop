@@ -1,6 +1,7 @@
 package Telemetry
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"CitadelDesktop/Server/Protocol"
@@ -36,10 +38,13 @@ const (
 	ChannelAutoStorm       = "autostorm"
 	ChannelRift            = "rift"
 
-	maxPendingAppCommands       = 1024
-	channelLogRotation          = 3 * time.Hour
-	tailReadBlockSize     int64 = 64 * 1024
-	tailMaxReadBytes      int64 = 16 * 1024 * 1024
+	maxPendingAppCommands            = 1024
+	channelLogRotation               = 3 * time.Hour
+	persistenceBatchWindow           = 5 * time.Millisecond
+	persistenceWriteBufferSize       = 256 * 1024
+	diagnosticLiveTailMaxBytes       = 8 * 1024 * 1024
+	tailReadBlockSize          int64 = 64 * 1024
+	tailMaxReadBytes           int64 = 16 * 1024 * 1024
 )
 
 // Channel identifies one persistent logger view in the dashboard.
@@ -103,24 +108,59 @@ type persistenceEntry struct {
 	flushed    chan struct{}
 }
 
+// memoryTail is an append-only window with an amortized O(1) eviction path.
+// Cleared entries release large raw websocket payloads before the backing slice
+// is compacted.
+type memoryTail struct {
+	lines []string
+	head  int
+	bytes int
+}
+
+func (tail *memoryTail) append(line string, maxLines int, maxBytes int) {
+	tail.lines = append(tail.lines, line)
+	tail.bytes += len(line)
+	for tail.head < len(tail.lines) &&
+		(len(tail.lines)-tail.head > maxLines || (maxBytes > 0 && tail.bytes > maxBytes)) {
+		tail.bytes -= len(tail.lines[tail.head])
+		tail.lines[tail.head] = ""
+		tail.head++
+	}
+	if tail.head >= 1024 && tail.head*2 >= len(tail.lines) {
+		active := copy(tail.lines, tail.lines[tail.head:])
+		clear(tail.lines[active:])
+		tail.lines = tail.lines[:active]
+		tail.head = 0
+	}
+}
+
+func (tail *memoryTail) activeLines() []string {
+	if tail == nil || tail.head >= len(tail.lines) {
+		return nil
+	}
+	return tail.lines[tail.head:]
+}
+
 // Store keeps a short live tail for each channel and persists the complete logger stream.
 // Persistence is optional so replay and unit-test callers can use the in-memory store alone.
 type Store struct {
 	mu       sync.RWMutex
 	capacity int
-	lines    map[string][]string
+	tails    map[string]*memoryTail
+
+	persistenceEnabled atomic.Bool
 
 	pendingAppCommand []pendingAppCommand
 
 	fileMu          sync.Mutex
 	channelsDir     string
 	files           map[string]*os.File
+	buffers         map[string]*bufio.Writer
 	filePaths       map[string]string
 	channelSessions map[string]*channelLogSession
 
 	persistMu     sync.Mutex
 	persistQueue  []persistenceEntry
-	persistHead   int
 	persistWake   chan struct{}
 	persistDone   chan struct{}
 	persistClosed bool
@@ -143,8 +183,9 @@ func NewStore(capacity int) *Store {
 	}
 	store := &Store{
 		capacity:        capacity,
-		lines:           map[string][]string{},
+		tails:           map[string]*memoryTail{},
 		files:           map[string]*os.File{},
+		buffers:         map[string]*bufio.Writer{},
 		filePaths:       map[string]string{},
 		channelSessions: map[string]*channelLogSession{},
 		persistWake:     make(chan struct{}, 1),
@@ -174,6 +215,7 @@ func (store *Store) SetDataDir(dataDir string) error {
 	store.fileMu.Lock()
 	store.closeFilesLocked()
 	store.channelsDir = directory
+	store.persistenceEnabled.Store(true)
 	store.fileMu.Unlock()
 	store.retentionFileMu.Unlock()
 	store.attackMu.Lock()
@@ -343,9 +385,10 @@ func (store *Store) Tail(channel string, limit int) []string {
 	}
 
 	store.mu.RLock()
-	lines := tailLines(store.lines[channel], limit)
+	memoryLines := store.tails[channel].activeLines()
+	lines := tailLines(memoryLines, limit)
 	if isFeatureChannel(channel) {
-		lines = tailFeatureActivityLines(store.lines[channel], limit)
+		lines = tailFeatureActivityLines(memoryLines, limit)
 	}
 	store.mu.RUnlock()
 	store.flushPersistence()
@@ -452,12 +495,16 @@ func (store *Store) append(channel string, line string) {
 }
 
 func (store *Store) appendLocked(channel string, line string, observedAt time.Time) {
-	lines := append(store.lines[channel], line)
-	if len(lines) > store.capacity {
-		copy(lines, lines[len(lines)-store.capacity:])
-		lines = lines[:store.capacity]
+	tail := store.tails[channel]
+	if tail == nil {
+		tail = &memoryTail{}
+		store.tails[channel] = tail
 	}
-	store.lines[channel] = lines
+	maxBytes := 0
+	if store.persistenceEnabled.Load() && isDiagnosticChannel(channel) {
+		maxBytes = diagnosticLiveTailMaxBytes
+	}
+	tail.append(line, store.capacity, maxBytes)
 	store.persistMu.Lock()
 	if !store.persistClosed {
 		store.persistQueue = append(store.persistQueue, persistenceEntry{
@@ -471,45 +518,68 @@ func (store *Store) appendLocked(channel string, line string, observedAt time.Ti
 func (store *Store) runPersistence() {
 	defer close(store.persistDone)
 	for {
-		entry, ok := store.nextPersistence()
+		batch, ok := store.nextPersistenceBatch()
 		if !ok {
 			return
 		}
-		if entry.flushed != nil {
-			close(entry.flushed)
-			continue
-		}
-		store.fileMu.Lock()
-		if store.channelsDir != "" {
-			file, err := store.channelFileLocked(entry.channel, entry.observedAt)
-			if err == nil {
-				_, _ = file.WriteString(entry.line + "\n")
-			}
-		}
-		store.fileMu.Unlock()
+		store.persistBatch(batch)
 	}
 }
 
-func (store *Store) nextPersistence() (persistenceEntry, bool) {
+func (store *Store) nextPersistenceBatch() ([]persistenceEntry, bool) {
 	for {
 		store.persistMu.Lock()
-		if store.persistHead < len(store.persistQueue) {
-			entry := store.persistQueue[store.persistHead]
-			store.persistQueue[store.persistHead] = persistenceEntry{}
-			store.persistHead++
-			if store.persistHead == len(store.persistQueue) {
-				store.persistQueue = nil
-				store.persistHead = 0
-			}
+		if len(store.persistQueue) > 0 {
+			flushFirst := store.persistQueue[0].flushed != nil
 			store.persistMu.Unlock()
-			return entry, true
+			if !flushFirst {
+				time.Sleep(persistenceBatchWindow)
+			}
+			store.persistMu.Lock()
+			batch := store.persistQueue
+			store.persistQueue = nil
+			store.persistMu.Unlock()
+			return batch, true
 		}
 		closed := store.persistClosed
 		store.persistMu.Unlock()
 		if closed {
-			return persistenceEntry{}, false
+			return nil, false
 		}
 		<-store.persistWake
+	}
+}
+
+func (store *Store) persistBatch(batch []persistenceEntry) {
+	store.fileMu.Lock()
+	touched := make(map[string]struct{}, 2)
+	for index := range batch {
+		entry := &batch[index]
+		if entry.flushed != nil {
+			store.flushBuffersLocked(touched)
+			clear(touched)
+			close(entry.flushed)
+			continue
+		}
+		if store.channelsDir != "" {
+			writer, err := store.channelBufferLocked(entry.channel, entry.observedAt)
+			if err == nil {
+				_, _ = writer.WriteString(entry.line)
+				_ = writer.WriteByte('\n')
+				touched[entry.channel] = struct{}{}
+			}
+		}
+		*entry = persistenceEntry{}
+	}
+	store.flushBuffersLocked(touched)
+	store.fileMu.Unlock()
+}
+
+func (store *Store) flushBuffersLocked(channels map[string]struct{}) {
+	for channel := range channels {
+		if writer := store.buffers[channel]; writer != nil {
+			_ = writer.Flush()
+		}
 	}
 }
 
@@ -555,6 +625,19 @@ func (store *Store) channelFileLocked(channel string, now time.Time) (*os.File, 
 	return file, nil
 }
 
+func (store *Store) channelBufferLocked(channel string, now time.Time) (*bufio.Writer, error) {
+	file, err := store.channelFileLocked(channel, now)
+	if err != nil {
+		return nil, err
+	}
+	if writer := store.buffers[channel]; writer != nil {
+		return writer, nil
+	}
+	writer := bufio.NewWriterSize(file, persistenceWriteBufferSize)
+	store.buffers[channel] = writer
+	return writer, nil
+}
+
 func (store *Store) writableChannelPathLocked(channel string, now time.Time) (string, error) {
 	return store.ensureChannelSessionLocked(channel, now, false)
 }
@@ -580,9 +663,13 @@ func (store *Store) ensureChannelSessionLocked(channel string, now time.Time, fo
 }
 
 func (store *Store) closeFileLocked(channel string) {
+	if writer := store.buffers[channel]; writer != nil {
+		_ = writer.Flush()
+	}
 	if file := store.files[channel]; file != nil {
 		_ = file.Close()
 	}
+	delete(store.buffers, channel)
 	delete(store.files, channel)
 	delete(store.filePaths, channel)
 }
@@ -817,4 +904,8 @@ func isKnownChannel(channel string) bool {
 
 func isFeatureChannel(channel string) bool {
 	return isKnownChannel(channel) && channel != ChannelWebSocketGame && channel != ChannelAppSend
+}
+
+func isDiagnosticChannel(channel string) bool {
+	return channel == ChannelWebSocketGame || channel == ChannelAppSend
 }

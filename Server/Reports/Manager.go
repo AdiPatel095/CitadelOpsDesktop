@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	reportPollInterval      = time.Second
-	reportRetryDelay        = time.Minute
-	reportArchiveQueueLimit = 256
+	reportResponseSettleDelay = time.Second
+	reportRetryDelay          = time.Minute
+	reportArchiveQueueLimit   = 256
+	reportNoticeRetention     = 512
 )
 
 type battleArchiveTask struct {
@@ -68,6 +69,20 @@ func (manager *Manager) SetArchiveObserver(observer ArchiveObserver) {
 func NewManager(state *State.Store, history *History.Store, intents interface {
 	Submit(context.Context, Intent.Request) Intent.Receipt
 }, analytics ...*SQLiteStore) *Manager {
+	return newManager(state, history, intents, nil, analytics...)
+}
+
+// NewManagerWithCloudClient keeps all report queues, databases, and uploader
+// progress account-private while sharing the immutable process HTTP client.
+func NewManagerWithCloudClient(state *State.Store, history *History.Store, intents interface {
+	Submit(context.Context, Intent.Request) Intent.Receipt
+}, cloudClient *CloudClient, analytics ...*SQLiteStore) *Manager {
+	return newManager(state, history, intents, cloudClient, analytics...)
+}
+
+func newManager(state *State.Store, history *History.Store, intents interface {
+	Submit(context.Context, Intent.Request) Intent.Receipt
+}, cloudClient *CloudClient, analytics ...*SQLiteStore) *Manager {
 	manager := &Manager{
 		state: state, history: history, intents: intents,
 		nextAttempt: map[int64]time.Time{}, archived: map[int64]struct{}{}, pending: map[int64]struct{}{},
@@ -79,7 +94,10 @@ func NewManager(state *State.Store, history *History.Store, intents interface {
 		manager.analytics = analytics[0]
 	}
 	if manager.analytics != nil {
-		manager.cloud = NewCloudUploader(state, history, manager.analytics, NewCloudClient(CloudConfig{}))
+		if cloudClient == nil {
+			cloudClient = NewCloudClient(CloudConfig{})
+		}
+		manager.cloud = NewCloudUploader(state, history, manager.analytics, cloudClient)
 	}
 	return manager
 }
@@ -99,6 +117,8 @@ func (manager *Manager) Run(ctx context.Context) {
 		return
 	}
 	defer close(manager.done)
+	stateEvents, unsubscribeState := manager.state.Subscribe(64)
+	defer unsubscribeState()
 	manager.loadArchivedMessages()
 	if manager.analytics != nil {
 		manager.workers.Add(1)
@@ -115,24 +135,62 @@ func (manager *Manager) Run(ctx context.Context) {
 		}()
 	}
 	defer manager.workers.Wait()
-	ticker := time.NewTicker(reportPollInterval)
-	defer ticker.Stop()
-	manager.processNext(ctx)
+	var retryTimer *time.Timer
+	var retryChannel <-chan time.Time
+	scheduleRetry := func(at time.Time) {
+		if retryTimer != nil {
+			if !retryTimer.Stop() {
+				select {
+				case <-retryTimer.C:
+				default:
+				}
+			}
+			retryTimer = nil
+			retryChannel = nil
+		}
+		if at.IsZero() {
+			return
+		}
+		delay := time.Until(at)
+		if delay < 0 {
+			delay = 0
+		}
+		retryTimer = time.NewTimer(delay)
+		retryChannel = retryTimer.C
+	}
+	process := func() { scheduleRetry(manager.processNext(ctx)) }
+	process()
 	for {
 		select {
 		case <-ctx.Done():
+			if retryTimer != nil {
+				retryTimer.Stop()
+			}
 			return
 		case result := <-manager.archiveResults:
 			manager.handleArchiveResult(result)
-		case <-ticker.C:
-			manager.processNext(ctx)
+			process()
+		case event := <-stateEvents:
+			if reportStateEventRelevant(event) {
+				process()
+			}
+		case <-retryChannel:
+			retryTimer = nil
+			retryChannel = nil
+			process()
 		}
 	}
 }
 
-func (manager *Manager) processNext(ctx context.Context) {
+func (manager *Manager) processNext(ctx context.Context) time.Time {
 	snapshot := manager.state.ReadOnlyView()
-	notices := orderedNotices(snapshot.Reports.Notices)
+	notices := orderedNotices(snapshot)
+	if manager.pruneTerminalNotices(notices) {
+		snapshot = manager.state.ReadOnlyView()
+		notices = orderedNotices(snapshot)
+	}
+	now := time.Now()
+	var nextWake time.Time
 	for _, notice := range notices {
 		if _, pending := manager.pending[notice.MessageID]; pending {
 			continue
@@ -145,10 +203,10 @@ func (manager *Manager) processNext(ctx context.Context) {
 			continue
 		}
 		if notice.Status == "archived" {
-			if _, hasSpy := snapshot.Reports.SpyCaptures[notice.MessageID]; hasSpy {
+			if _, hasSpy := snapshot.LookupSpyReportCapture(notice.MessageID); hasSpy {
 				manager.completeNotice(notice.MessageID)
 				snapshot = manager.state.ReadOnlyView()
-			} else if _, hasBattle := snapshot.Reports.BattleCaptures[notice.MessageID]; hasBattle {
+			} else if _, hasBattle := snapshot.LookupBattleReportCapture(notice.MessageID); hasBattle {
 				manager.completeNotice(notice.MessageID)
 				snapshot = manager.state.ReadOnlyView()
 			}
@@ -157,12 +215,15 @@ func (manager *Manager) processNext(ctx context.Context) {
 		if notice.Status == "expired" || notice.Status == "ignored" || notice.Status == "unavailable" {
 			continue
 		}
-		if next := manager.nextAttempt[notice.MessageID]; !next.IsZero() && time.Now().Before(next) {
+		if next := manager.nextAttempt[notice.MessageID]; !next.IsZero() && now.Before(next) {
+			if nextWake.IsZero() || next.Before(nextWake) {
+				nextWake = next
+			}
 			continue
 		}
 		switch notice.TypeID {
 		case 3:
-			if capture, exists := snapshot.Reports.SpyCaptures[notice.MessageID]; exists {
+			if capture, exists := snapshot.LookupSpyReportCapture(notice.MessageID); exists {
 				manager.archiveSpy(ctx, notice, capture)
 				snapshot = manager.state.ReadOnlyView()
 				continue
@@ -171,13 +232,13 @@ func (manager *Manager) processNext(ctx context.Context) {
 				continue
 			}
 			manager.fetch(ctx, notice, "report.spy.fetch", map[string]any{"messageId": notice.MessageID})
-			return
+			return manager.nextAttempt[notice.MessageID]
 		case 6:
 			if !strings.Contains(notice.BattleKey, "#") {
 				manager.setNoticeStatus(notice.MessageID, "ignored")
 				continue
 			}
-			capture := snapshot.Reports.BattleCaptures[notice.MessageID]
+			capture, _ := snapshot.LookupBattleReportCapture(notice.MessageID)
 			if len(capture.Summary) > 0 && len(capture.Waves) > 0 && len(capture.Details) > 0 {
 				manager.archiveBattle(ctx, snapshot, notice, capture)
 				snapshot = manager.state.ReadOnlyView()
@@ -188,22 +249,23 @@ func (manager *Manager) processNext(ctx context.Context) {
 			}
 			if len(capture.Summary) == 0 {
 				manager.fetch(ctx, notice, "report.battle.summary", map[string]any{"messageId": notice.MessageID})
-				return
+				return manager.nextAttempt[notice.MessageID]
 			}
 			if capture.ReportID <= 0 {
 				manager.setNoticeStatus(notice.MessageID, "error")
-				manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
-				return
+				manager.nextAttempt[notice.MessageID] = now.Add(reportRetryDelay)
+				return manager.nextAttempt[notice.MessageID]
 			}
 			manager.fetch(ctx, notice, "report.battle.details", map[string]any{
 				"messageId": notice.MessageID, "reportId": capture.ReportID,
 			})
-			return
+			return manager.nextAttempt[notice.MessageID]
 		default:
 			manager.setNoticeStatus(notice.MessageID, "ignored")
 			continue
 		}
 	}
+	return nextWake
 }
 
 func (manager *Manager) fetch(ctx context.Context, notice State.ReportNotice, name string, argumentsValue map[string]any) {
@@ -214,7 +276,10 @@ func (manager *Manager) fetch(ctx context.Context, notice State.ReportNotice, na
 	})
 	if receipt.Status == Intent.StatusSucceeded {
 		manager.setNoticeStatus(notice.MessageID, "pending")
-		delete(manager.nextAttempt, notice.MessageID)
+		// The command receipt precedes the reducer response. Keep the old
+		// one-second settle cadence without scanning every retained notice once a
+		// second forever.
+		manager.nextAttempt[notice.MessageID] = time.Now().Add(reportResponseSettleDelay)
 		return
 	}
 	status := "error"
@@ -224,7 +289,11 @@ func (manager *Manager) fetch(ctx context.Context, notice State.ReportNotice, na
 		status = "unavailable"
 	}
 	manager.setNoticeStatus(notice.MessageID, status)
-	manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
+	if status == "unavailable" {
+		delete(manager.nextAttempt, notice.MessageID)
+	} else {
+		manager.nextAttempt[notice.MessageID] = time.Now().Add(reportRetryDelay)
+	}
 }
 
 func (manager *Manager) archiveSpy(ctx context.Context, notice State.ReportNotice, capture State.SpyReportCapture) {
@@ -346,6 +415,11 @@ func (manager *Manager) Wait() {
 }
 
 func (manager *Manager) loadArchivedMessages() {
+	current := map[int64]struct{}{}
+	manager.state.ReadOnlyView().RangeReportNotices(func(messageID int64, _ State.ReportNotice) bool {
+		current[messageID] = struct{}{}
+		return true
+	})
 	for _, collection := range []string{History.CollectionSpyReports, History.CollectionBattleReports} {
 		rows, err := manager.history.Read(collection, time.Time{}, 100_000)
 		if err != nil {
@@ -356,6 +430,9 @@ func (manager *Manager) loadArchivedMessages() {
 				MessageID int64 `json:"mid"`
 			}
 			if json.Unmarshal(row, &report) == nil && report.MessageID > 0 {
+				if _, retained := current[report.MessageID]; !retained {
+					continue
+				}
 				manager.archived[report.MessageID] = struct{}{}
 			}
 		}
@@ -369,15 +446,64 @@ func (manager *Manager) loadArchivedMessages() {
 		})
 		if err == nil {
 			for _, messageID := range messageIDs {
+				if _, retained := current[messageID]; !retained {
+					continue
+				}
 				manager.archived[messageID] = struct{}{}
 			}
 		}
 	}
 }
 
+func reportStateEventRelevant(event State.Event) bool {
+	if event.Gap {
+		return true
+	}
+	for _, domain := range event.Domains {
+		switch strings.ToLower(strings.TrimSpace(domain)) {
+		case "reports", "session":
+			return true
+		}
+	}
+	return false
+}
+
+func (manager *Manager) pruneTerminalNotices(notices []State.ReportNotice) bool {
+	terminal := make([]int64, 0)
+	for _, notice := range notices {
+		if reportNoticeTerminal(notice.Status) {
+			terminal = append(terminal, notice.MessageID)
+		}
+	}
+	removeCount := len(terminal) - reportNoticeRetention
+	if removeCount <= 0 {
+		return false
+	}
+	remove := append([]int64(nil), terminal[:removeCount]...)
+	_, _ = manager.state.ApplyComponents(State.Components(State.ComponentReports), func(gameState *State.GameState) ([]string, bool, error) {
+		changed := false
+		for _, messageID := range remove {
+			if _, exists := gameState.LookupReportNotice(messageID); !exists {
+				continue
+			}
+			gameState.DeleteReportNotice(messageID)
+			gameState.DeleteSpyReportCapture(messageID)
+			gameState.DeleteBattleReportCapture(messageID)
+			changed = true
+		}
+		return []string{"reports"}, changed, nil
+	})
+	for _, messageID := range remove {
+		delete(manager.archived, messageID)
+		delete(manager.nextAttempt, messageID)
+		delete(manager.pending, messageID)
+	}
+	return true
+}
+
 func (manager *Manager) setNoticeStatus(messageID int64, status string) {
-	_, _ = manager.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
-		notice, exists := gameState.Reports.Notices[messageID]
+	_, _ = manager.state.ApplyComponents(State.Components(State.ComponentReports), func(gameState *State.GameState) ([]string, bool, error) {
+		notice, exists := gameState.LookupReportNotice(messageID)
 		if !exists || notice.Status == status {
 			return nil, false, nil
 		}
@@ -385,7 +511,7 @@ func (manager *Manager) setNoticeStatus(messageID int64, status string) {
 			return nil, false, nil
 		}
 		notice.Status = status
-		gameState.Reports.Notices[messageID] = notice
+		gameState.SetReportNotice(messageID, notice)
 		return []string{"reports"}, true, nil
 	})
 }
@@ -400,16 +526,16 @@ func reportNoticeTerminal(status string) bool {
 }
 
 func (manager *Manager) completeNotice(messageID int64) {
-	_, _ = manager.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
-		notice, exists := gameState.Reports.Notices[messageID]
+	_, _ = manager.state.ApplyComponents(State.Components(State.ComponentReports), func(gameState *State.GameState) ([]string, bool, error) {
+		notice, exists := gameState.LookupReportNotice(messageID)
 		if !exists {
 			return nil, false, nil
 		}
 		notice.Status = "archived"
-		gameState.Reports.Notices[messageID] = notice
-		delete(gameState.Reports.SpyCaptures, messageID)
-		capture := gameState.Reports.BattleCaptures[messageID]
-		delete(gameState.Reports.BattleCaptures, messageID)
+		gameState.SetReportNotice(messageID, notice)
+		gameState.DeleteSpyReportCapture(messageID)
+		capture, _ := gameState.LookupBattleReportCapture(messageID)
+		gameState.DeleteBattleReportCapture(messageID)
 		if capture.ReportID > 0 && gameState.Reports.ActiveBattleReport == capture.ReportID {
 			gameState.Reports.ActiveBattleReport = 0
 		}
@@ -418,11 +544,12 @@ func (manager *Manager) completeNotice(messageID int64) {
 	delete(manager.nextAttempt, messageID)
 }
 
-func orderedNotices(notices map[int64]State.ReportNotice) []State.ReportNotice {
-	result := make([]State.ReportNotice, 0, len(notices))
-	for _, notice := range notices {
+func orderedNotices(state State.GameState) []State.ReportNotice {
+	result := []State.ReportNotice{}
+	state.RangeReportNotices(func(_ int64, notice State.ReportNotice) bool {
 		result = append(result, notice)
-	}
+		return true
+	})
 	sort.Slice(result, func(left, right int) bool {
 		if !result[left].ObservedAt.Equal(result[right].ObservedAt) {
 			return result[left].ObservedAt.Before(result[right].ObservedAt)

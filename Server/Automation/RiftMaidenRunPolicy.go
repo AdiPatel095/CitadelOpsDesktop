@@ -26,7 +26,7 @@ func (*RiftMaidenRunPolicy) Active(state State.GameState) bool {
 }
 
 func (*RiftMaidenRunPolicy) WakeDomains() []string {
-	return []string{"rift", "commanders", "movements", "units", "equipment", "map"}
+	return []string{"rift", "commanders", "movements", "units", "equipment", "map-rift"}
 }
 
 func (*RiftMaidenRunPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
@@ -47,7 +47,7 @@ func (*RiftMaidenRunPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Deci
 	if !exists || source.X != run.SourceX || source.Y != run.SourceY || source.KingdomID != run.KingdomID {
 		return riftMaidenRunWaiting(snapshot.Now, "The run's main-castle source is no longer authoritative", metrics), nil
 	}
-	target, exists := snapshot.State.Map[run.KingdomID][fmt.Sprintf("%d:%d", run.TargetX, run.TargetY)]
+	target, exists := snapshot.State.LookupMapObservation(run.KingdomID, fmt.Sprintf("%d:%d", run.TargetX, run.TargetY))
 	if !exists || target.TypeID != 43 {
 		return riftMaidenRunWaiting(snapshot.Now, "The run's Rift target is not in the current map state", metrics), nil
 	}

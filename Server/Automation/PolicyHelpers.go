@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"CitadelDesktop/Server/CommanderFeatures"
@@ -263,35 +262,7 @@ func recordNumber(store *GameData.Store, collection string, id int64, field stri
 	if err != nil {
 		return 0, false
 	}
-	raw, exists := catalog.Find(strconv.FormatInt(id, 10))
-	if !exists {
-		return 0, false
-	}
-	record, err := GameData.DecodeRecord(raw)
-	if err != nil {
-		return 0, false
-	}
-	return record.Float64(field)
-}
-
-func recordInteger(store *GameData.Store, collection string, id int64, field string) int64 {
-	value, ok := recordNumber(store, collection, id, field)
-	if !ok {
-		return 0
-	}
-	return int64(value)
-}
-
-func commaSeparatedIDs(value string) map[int64]struct{} {
-	result := map[int64]struct{}{}
-	for _, part := range strings.FieldsFunc(value, func(character rune) bool {
-		return character == ',' || character == '#'
-	}) {
-		if id, err := strconv.ParseInt(strings.TrimSpace(part), 10, 64); err == nil && id > 0 {
-			result[id] = struct{}{}
-		}
-	}
-	return result
+	return catalog.Float64(strconv.FormatInt(id, 10), field)
 }
 
 func eligibleAllianceHelpProductionID(queue State.ProductionQueue) int64 {

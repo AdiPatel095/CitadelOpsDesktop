@@ -218,7 +218,7 @@ func constructionCandidates(
 				continue
 			}
 			seen[id] = struct{}{}
-			if definition, found := catalog.Definition(id); found {
+			if definition, found := catalog.DefinitionView(id); found {
 				definitions = append(definitions, definition)
 			}
 		}
@@ -289,11 +289,11 @@ func upgradeCandidates(
 	for _, source := range previewUpgradeBuildings(castle) {
 		buildingID := source.building.InstanceID
 		building := source.building
-		current, found := catalog.Definition(int64(building.DefinitionID))
+		current, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found || current.UpgradeDefinitionID <= 0 || strings.EqualFold(current.Group, "Ground") {
 			continue
 		}
-		next, found := catalog.Definition(current.UpgradeDefinitionID)
+		next, found := catalog.DefinitionView(current.UpgradeDefinitionID)
 		if !found {
 			continue
 		}
@@ -449,7 +449,7 @@ func currentBuildingValues(castle State.CastleState, catalog *GameData.BuildingC
 		if !building.Placed || !buildingValuesActive(building) {
 			continue
 		}
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found {
 			continue
 		}
@@ -589,7 +589,7 @@ func normalizePreviewLayout(castle State.CastleState, catalog *GameData.Building
 		if building.Layer == "" {
 			building.Placed = building.GridX >= 0 && building.GridY >= 0
 		}
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if found && strings.EqualFold(definition.Group, "Ground") {
 			castle.Layout.Ground[id] = building
 		} else if found && fixedBuildingGroup(definition.Group) {
@@ -622,7 +622,7 @@ func previewCastle(state State.GameState, requested State.CastleID) (State.Castl
 func buildingCountsByName(castle State.CastleState, catalog *GameData.BuildingCatalog) map[string]int64 {
 	result := map[string]int64{}
 	for _, building := range previewValueBuildings(castle) {
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if found && definition.InternalName != "" {
 			result[strings.ToLower(definition.InternalName)]++
 		}

@@ -113,3 +113,77 @@ func TestManagerUsesHistoryToCompleteStalePersistedNotice(t *testing.T) {
 		t.Fatalf("persisted notice status = %q", status)
 	}
 }
+
+func TestManagerSuccessfulFetchUsesOneSecondSettleTimer(t *testing.T) {
+	history, err := History.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	gameState.Session.LoggedIn = true
+	gameState.Session.SocketReady = true
+	gameState.Reports.Notices[7] = State.ReportNotice{MessageID: 7, TypeID: 3, Status: "pending"}
+	intents := &managerTestIntents{}
+	manager := NewManager(State.NewStore(gameState), history, intents)
+
+	before := time.Now()
+	next := manager.processNext(t.Context())
+	if intents.submissions != 1 || next.Before(before.Add(900*time.Millisecond)) || next.After(before.Add(2*time.Second)) {
+		t.Fatalf("first fetch = submissions %d next %s", intents.submissions, next)
+	}
+	manager.processNext(t.Context())
+	if intents.submissions != 1 {
+		t.Fatalf("settle guard allowed %d immediate fetches", intents.submissions)
+	}
+}
+
+func TestManagerBoundsOnlyTerminalReportNotices(t *testing.T) {
+	history, err := History.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	base := time.Date(2026, 8, 14, 12, 0, 0, 0, time.UTC)
+	for index := 1; index <= reportNoticeRetention+88; index++ {
+		gameState.Reports.Notices[int64(index)] = State.ReportNotice{
+			MessageID: int64(index), TypeID: 6, Status: "archived", ObservedAt: base.Add(time.Duration(index) * time.Second),
+		}
+	}
+	activeID := int64(10_000)
+	gameState.Reports.Notices[activeID] = State.ReportNotice{
+		MessageID: activeID, TypeID: 3, Status: "pending", ObservedAt: base.Add(-time.Hour),
+	}
+	state := State.NewStore(gameState)
+	manager := NewManager(state, history, &managerTestIntents{})
+	manager.processNext(t.Context())
+
+	terminal := 0
+	activeRetained := false
+	state.ReadOnlyView().RangeReportNotices(func(messageID int64, notice State.ReportNotice) bool {
+		if reportNoticeTerminal(notice.Status) {
+			terminal++
+		}
+		if messageID == activeID {
+			activeRetained = true
+		}
+		return true
+	})
+	if terminal != reportNoticeRetention || !activeRetained {
+		t.Fatalf("retained terminal=%d active=%t", terminal, activeRetained)
+	}
+}
+
+func TestReportManagerWakesOnlyForReportSessionOrGapEvents(t *testing.T) {
+	for _, event := range []State.Event{
+		{Domains: []string{"reports"}},
+		{Domains: []string{"session"}},
+		{Gap: true},
+	} {
+		if !reportStateEventRelevant(event) {
+			t.Fatalf("relevant event was ignored: %#v", event)
+		}
+	}
+	if reportStateEventRelevant(State.Event{Domains: []string{"resources", "movements"}}) {
+		t.Fatal("unrelated state churn woke the report manager")
+	}
+}

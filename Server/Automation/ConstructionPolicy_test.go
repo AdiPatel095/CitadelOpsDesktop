@@ -88,8 +88,7 @@ func TestConstructionPolicyEquipsLowestAvailableConfiguredTier(t *testing.T) {
 func TestConstructionPolicyPurchasesMissingTierFromLiveOfficialOffer(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := constructionPolicyState(now)
-	gameState.Inventory.ConstructionOffersObservedAt = now
-	gameState.Inventory.ConstructionOffers[500] = 1
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{500: 1}, now, 10, 0)
 	decision, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
 		State: gameState, Configuration: constructionPolicyConfiguration(),
 		GameData: constructionPolicyGameData(t), Now: now,
@@ -108,7 +107,7 @@ func TestConstructionPolicyPurchasesMissingTierFromLiveOfficialOffer(t *testing.
 func TestConstructionPolicyPurchasesOfficialTrivialTierOutsideLiveOffers(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := constructionPolicyState(now)
-	gameState.Inventory.ConstructionOffersObservedAt = now
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{}, now, 10, 0)
 
 	decision, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
 		State: gameState, Configuration: constructionPolicyConfiguration(),
@@ -126,7 +125,7 @@ func TestConstructionPolicyWaitsWhenInventoryIsFull(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := constructionPolicyState(now)
 	gameState.Inventory.ConstructionItems[201] = State.ConstructionItemInventoryLimit
-	gameState.Inventory.ConstructionOffersObservedAt = now
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{}, now, 10, 0)
 
 	decision, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
 		State: gameState, Configuration: constructionPolicyConfiguration(),
@@ -248,8 +247,7 @@ func TestConstructionPolicyUpgradesTowardFloorOneTierAtATime(t *testing.T) {
 func TestConstructionPolicyWaitsForOccupiedTemporarySlotBeforeBuying(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := constructionPolicyState(now)
-	gameState.Inventory.ConstructionOffersObservedAt = now
-	gameState.Inventory.ConstructionOffers[500] = 1
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{500: 1}, now, 10, 0)
 	remaining := 600
 	castle := gameState.Castles[10]
 	castle.ConstructionSlots[100] = []State.ConstructionSlot{{DefinitionID: 301, Slot: 0, RemainingSec: &remaining}}

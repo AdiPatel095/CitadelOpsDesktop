@@ -146,14 +146,14 @@ func nomadRBCTestAttackContext(
 	if !exists || source.KingdomID != request.KingdomID {
 		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("RBC trial source castle is unavailable")
 	}
-	target, exists := input.State.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	target, exists := input.State.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || target.TypeID != kingdomTowerMapTypeID || target.TowerVictoryCount != request.VictoryCount {
 		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
 			"RBC trial target %d:%d changed or is not a kingdom tower", request.TargetX, request.TargetY,
 		)
 	}
 	key := fmt.Sprintf("%d:%d:%d", target.KingdomID, target.X, target.Y)
-	if cooldown, found := input.State.TowerCooldowns[key]; found && cooldown.PendingCooldownRefresh {
+	if cooldown, found := input.State.LookupTowerCooldown(key); found && cooldown.PendingCooldownRefresh {
 		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
 			"RBC trial target %d:%d is awaiting an authoritative cooldown refresh", target.X, target.Y,
 		)
@@ -256,7 +256,7 @@ func (application *Application) beginNomadRBCTest(_ context.Context, arguments j
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentNomadCamps), func(gameState *State.GameState) ([]string, bool, error) {
 		if current := gameState.NomadCamps.RBCTest; current != nil && current.RunID == request.RunID {
 			return nil, false, nil
 		}
@@ -275,7 +275,7 @@ func (application *Application) guardNomadRBCTestInventory(_ context.Context, ar
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	source, exists := state.Castles[request.SourceCastleID]
 	if !exists {
 		return fmt.Errorf("RBC trial source castle %d is unavailable", request.SourceCastleID)
@@ -293,7 +293,7 @@ func (application *Application) guardNomadRBCTestAttack(_ context.Context, argum
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	gameData, ready := application.GameData.Current()
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
@@ -323,7 +323,7 @@ func (application *Application) captureNomadRBCTestLaunch(_ context.Context, arg
 		return err
 	}
 	var safetyError string
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentNomadCamps), func(gameState *State.GameState) ([]string, bool, error) {
 		test := gameState.NomadCamps.RBCTest
 		if test == nil || test.RunID != request.RunID {
 			return nil, false, fmt.Errorf("RBC trial %s is not active", request.RunID)
@@ -335,16 +335,17 @@ func (application *Application) captureNomadRBCTestLaunch(_ context.Context, arg
 		}
 		var selected State.MovementState
 		found := false
-		for _, movement := range gameState.Movements {
+		gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 			if movement.Direction != 0 || movement.SourceCastleID != test.SourceCastleID || movement.KingdomID != test.KingdomID ||
 				movement.TargetX != test.TargetX || movement.TargetY != test.TargetY || movement.CommanderID == nil ||
 				*movement.CommanderID != request.CommanderID || movement.ArrivesAt == nil || movement.ArrivesAt.IsZero() {
-				continue
+				return true
 			}
 			if !found || movement.ArrivesAt.After(*selected.ArrivesAt) {
 				selected, found = movement, true
 			}
-		}
+			return true
+		})
 		if !found {
 			return nil, false, fmt.Errorf("CRA response did not return commander %d's RBC trial movement", request.CommanderID)
 		}

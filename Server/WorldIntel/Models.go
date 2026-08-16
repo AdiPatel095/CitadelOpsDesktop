@@ -267,6 +267,25 @@ type EventRunRankingResponse struct {
 	Entries []EventScoreObservation `json:"entries"`
 }
 
+type EventScoreIdentity struct {
+	ListType int64 `json:"listType"`
+	LeagueID int64 `json:"leagueId"`
+	PlayerID int64 `json:"playerId"`
+}
+
+type EventRunRankingSnapshot struct {
+	Revision int64 `json:"revision"`
+	Complete bool  `json:"complete"`
+	EventRunRankingResponse
+}
+
+type EventRunRankingDelta struct {
+	Revision int64                   `json:"revision"`
+	Run      EventRun                `json:"run"`
+	Upserts  []EventScoreObservation `json:"upserts"`
+	Removed  []EventScoreIdentity    `json:"removed"`
+}
+
 type PlayerEventScoreResponse struct {
 	WorldID      string                  `json:"worldId"`
 	PlayerID     int64                   `json:"playerId"`
@@ -289,6 +308,17 @@ type WorldCoverage struct {
 
 type CoverageResponse struct {
 	Worlds []WorldCoverage `json:"worlds"`
+}
+
+type WorldUpdateManifest struct {
+	SchemaVersion     int        `json:"schemaVersion"`
+	WorldID           string     `json:"worldId"`
+	Revision          int64      `json:"revision"`
+	CoverageRevision  int64      `json:"coverageRevision"`
+	RankingsRevision  int64      `json:"rankingsRevision"`
+	ProfilesRevision  int64      `json:"profilesRevision"`
+	EventRunsRevision int64      `json:"eventRunsRevision"`
+	UpdatedAt         *time.Time `json:"updatedAt,omitempty"`
 }
 
 func NormalizeWorldID(value string) string {

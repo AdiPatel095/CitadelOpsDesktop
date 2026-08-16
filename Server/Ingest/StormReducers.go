@@ -91,7 +91,7 @@ func reduceStormShopResponse(
 			return nil, false, fmt.Errorf("decode Storm shop response: %w", err)
 		}
 	}
-	castle, exists := gameState.Castles[castleID]
+	castle, exists := gameState.MutableCastleParts(castleID, State.CastlePartResources)
 	if exists {
 		ensureCastleMaps(&castle)
 		balance := castle.Resources[State.ResourceID(GameData.StormAquamarineID)]
@@ -110,7 +110,7 @@ func reduceStormShopResponse(
 		}
 		if resourceChanged {
 			castle.Resources[State.ResourceID(GameData.StormAquamarineID)] = balance
-			gameState.Castles[castleID] = castle
+			gameState.SetCastleParts(castleID, castle, State.CastlePartResources)
 		}
 	}
 	gameState.Storm.LunaShopPending = false

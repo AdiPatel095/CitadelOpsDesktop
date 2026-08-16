@@ -30,7 +30,11 @@ import {
 
 const PROBE_UNITS_PER_COMMANDER = 33;
 
-const RiftMaidenCommsPanel: React.FC = () => {
+interface RiftMaidenCommsPanelProps {
+  headerActions?: React.ReactNode;
+}
+
+const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActions }) => {
   const { state, configuration, connectionStatus, submitIntent, updateConfiguration } = useCitadelAPI();
   const { getTroop } = useMetadata();
   const { gameLoggedIn } = useAuth();
@@ -199,7 +203,8 @@ const RiftMaidenCommsPanel: React.FC = () => {
   return (
     <SectionCard variant="solid" title="Maiden comms wave" titleClassName="text-lg text-primary"
       description="Starts an exact-count run of dummy 1-wave Rift attacks (11 per flank). Eligible commanders launch in rounds and automatically continue after they return until the requested number is confirmed."
-      descriptionClassName="" contentClassName="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      descriptionClassName="" headerClassName="flex-wrap gap-3" actions={headerActions}
+      contentClassName="flex flex-col gap-4">
         <div className="flex flex-col gap-2 min-w-0">
           <p className="text-sm text-text-muted">
 			Launch point: {mainCastle?.name || 'main castle'}.
@@ -236,8 +241,8 @@ const RiftMaidenCommsPanel: React.FC = () => {
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
-          <div className="min-w-[15rem]">
+        <div className="flex w-full flex-wrap items-center gap-2">
+          <div className="w-full min-w-0 md:w-80 md:flex-none">
             <HorseTravelBoostSelect value={horseTravelBoostId} onChange={updateMaidenHorseTravelBoost} />
           </div>
           <Button
@@ -259,7 +264,7 @@ const RiftMaidenCommsPanel: React.FC = () => {
           </Button>
 
           <div
-            className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 min-w-[140px] ${
+            className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg border px-2.5 py-1.5 md:min-w-[140px] md:flex-none ${
               selectedInStock ? 'border-border-base bg-bg-card/50' : 'border-amber-500/40 bg-amber-500/5'
             }`}
             title={selectedInStock ? unitLabel : 'Selected unit is not in main castle stock'}

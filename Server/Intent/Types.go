@@ -198,6 +198,14 @@ type Receipt struct {
 	CompletedAt *time.Time `json:"completedAt,omitempty"`
 }
 
+// Terminal reports whether the operation has finished. Every completion path
+// (succeeded, failed, cancelled, partially succeeded, indeterminate, and a
+// planned dry run) stamps CompletedAt; paused and reconciling checkpoints clear
+// it because the operation may still resume.
+func (receipt Receipt) Terminal() bool {
+	return receipt.CompletedAt != nil
+}
+
 func (receipt Receipt) DiagnosticError() string {
 	if receipt.RawError != "" {
 		return receipt.RawError
@@ -214,7 +222,9 @@ type CommandExchange struct {
 }
 
 type StateReader interface {
-	Snapshot() State.GameState
+	// ReadOnlyView returns an immutable generation. Intent planning is read-only
+	// and must not pay for a defensive clone on every plan/revalidation.
+	ReadOnlyView() State.GameState
 	Revision() uint64
 	Session() State.SessionState
 }

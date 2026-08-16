@@ -78,14 +78,11 @@ func reduceAttackDialog(
 					OwnerID: dialog.Target.OwnerID, ObservedAt: frame.ReceivedAt,
 				}
 				populateStormObservation(&observation, row, gameData)
-				labelStormOpportunity(&observation, gameData)
 				dialog.Target.ObjectID = observation.ObjectID
 				dialog.Target.OwnerID = observation.OwnerID
 				dialog.Target.StormIsleID = observation.StormIsleID
 				dialog.Target.StormVictoryCount = observation.StormVictoryCount
 				dialog.Target.StormCooldownRemaining = observation.StormCooldownRemaining
-				dialog.Target.StormReadyAt = observation.StormReadyAt
-				dialog.Target.StormExpiresAt = observation.StormExpiresAt
 				stormObservation = &observation
 			}
 		}
@@ -100,16 +97,8 @@ func reduceAttackDialog(
 		changed = true
 	}
 	if khanObservation != nil {
-		if gameState.Map == nil {
-			gameState.Map = map[State.KingdomID]map[string]State.MapObservation{}
-		}
-		observations := gameState.Map[khanObservation.KingdomID]
-		if observations == nil {
-			observations = map[string]State.MapObservation{}
-			gameState.Map[khanObservation.KingdomID] = observations
-		}
 		key := fmt.Sprintf("%d:%d", khanObservation.X, khanObservation.Y)
-		if current, exists := observations[key]; exists {
+		if current, exists := gameState.LookupMapObservation(khanObservation.KingdomID, key); exists {
 			if khanObservation.Name == "" {
 				khanObservation.Name = current.Name
 			}
@@ -117,10 +106,9 @@ func reduceAttackDialog(
 				khanObservation.Level = current.Level
 			}
 		}
-		if current, exists := observations[key]; !exists || !reflect.DeepEqual(current, *khanObservation) {
-			observations[key] = *khanObservation
+		if gameState.SetMapObservation(*khanObservation) {
 			changed = true
-			domains = append(domains, "map")
+			domains = append(domains, "map-event-camp")
 		}
 		if refreshNomadCampCooldownFromMap(gameState, *khanObservation) {
 			changed = true
@@ -128,22 +116,11 @@ func reduceAttackDialog(
 		}
 	}
 	if stormObservation != nil {
-		if gameState.Map == nil {
-			gameState.Map = map[State.KingdomID]map[string]State.MapObservation{}
-		}
-		observations := gameState.Map[stormObservation.KingdomID]
-		if observations == nil {
-			observations = map[string]State.MapObservation{}
-			gameState.Map[stormObservation.KingdomID] = observations
-		}
-		key := fmt.Sprintf("%d:%d", stormObservation.X, stormObservation.Y)
-		if current, exists := observations[key]; !exists || !reflect.DeepEqual(current, *stormObservation) {
-			observations[key] = *stormObservation
+		if gameState.SetMapObservation(*stormObservation) {
 			changed = true
-			domains = append(domains, "map")
+			domains = append(domains, "map-storm")
 		}
-		if current, tracked := gameState.Storm.Map.Targets[key]; tracked && !reflect.DeepEqual(current, *stormObservation) {
-			gameState.Storm.Map.Targets[key] = *stormObservation
+		if gameState.RefreshStormTargetObservation(*stormObservation) {
 			changed = true
 			domains = append(domains, "storm")
 		}

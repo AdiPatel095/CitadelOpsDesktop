@@ -31,7 +31,7 @@ func (*BeriAttackPolicy) ScheduleKey() string {
 }
 
 func (*BeriAttackPolicy) WakeDomains() []string {
-	return []string{"beri", "boosters", "castles", "commanders", "kingdom-transport", "map", "movements", "units"}
+	return []string{"beri", "boosters", "castles", "commanders", "events", "event-scores", "kingdom-transport", "map-berimond", "movements", "units"}
 }
 
 // A returned commander and its troops reopen one launch slot independently of
@@ -49,6 +49,11 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 	settings := beriSettings{AttackCheckIntervalSec: 30, HorseTravelBoostID: -1}
 	if !decodeSection(snapshot.Configuration, autoBeriWorldSection, &settings) {
 		return beriAttackWaiting(snapshot.Now, "Auto Beri World settings have not been saved", 30), nil
+	}
+	if decision, locked := limitedEventGate(
+		snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
+	); locked {
+		return decision, nil
 	}
 	interval := policyInterval(settings.AttackCheckIntervalSec, 30)
 	if decision := beriGallantryBoosterGate(snapshot, settings); decision != nil {
@@ -179,7 +184,7 @@ func beriPendingTarget(gameState State.GameState, now time.Time) (State.MapObser
 	if state.TargetObservedAt.IsZero() || !state.TargetInvalidatedAt.Before(state.TargetObservedAt) {
 		return State.MapObservation{}, false
 	}
-	target, found := gameState.Map[State.KingdomID(GameData.BerimondKingdomID)][fmt.Sprintf("%d:%d", state.TargetX, state.TargetY)]
+	target, found := gameState.LookupMapObservation(State.KingdomID(GameData.BerimondKingdomID), fmt.Sprintf("%d:%d", state.TargetX, state.TargetY))
 	if !found || state.TargetTypeID != AttackCapacity.BerimondTowerMapTypeID ||
 		target.TypeID != AttackCapacity.BerimondTowerMapTypeID || target.Level <= 0 ||
 		target.ObservedAt.Before(state.TargetObservedAt) {
@@ -194,12 +199,12 @@ func unreflectedBeriTowerLaunches(
 	now time.Time,
 ) int {
 	count := 0
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.SourceCastleID != source.ID ||
 			movement.KingdomID != State.KingdomID(GameData.BerimondKingdomID) ||
 			!State.MovementOwnedByCurrentPlayer(gameState, movement) ||
 			!State.CommanderMovementActiveAt(movement, now) {
-			continue
+			return true
 		}
 		isTower := movement.TargetTypeID == AttackCapacity.BerimondTowerMapTypeID
 		if !isTower {
@@ -208,7 +213,7 @@ func unreflectedBeriTowerLaunches(
 				movement.TargetX == beri.TargetX && movement.TargetY == beri.TargetY
 		}
 		if !isTower {
-			continue
+			return true
 		}
 		launchedAt := movement.StartedAt
 		if launchedAt.IsZero() {
@@ -217,7 +222,8 @@ func unreflectedBeriTowerLaunches(
 		if source.UnitsObservedAt.IsZero() || launchedAt.IsZero() || launchedAt.After(source.UnitsObservedAt) {
 			count++
 		}
-	}
+		return true
+	})
 	return count
 }
 

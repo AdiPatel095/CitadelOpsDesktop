@@ -128,7 +128,7 @@ func (application *Application) clearAutoBirdTracking(
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
 		changed := false
 		for trackingID, operation := range gameState.Stationing {
 			if operation.Purpose != "autoBird" && !strings.HasPrefix(trackingID, "autoBird:") {
@@ -401,7 +401,7 @@ func (application *Application) captureAutoBirdTarget(
 		return err
 	}
 	delayHours := randomAutoBirdDelayHours(request.MinimumDelayHours, request.MaximumDelayHours)
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
 		now := time.Now().UTC()
 		current := gameState.Stationing[request.TrackingID]
 		next := discoveredAutoBirdOperation(*gameState, current, request, delayHours, now)
@@ -477,7 +477,7 @@ func (application *Application) captureAutoBirdManifest(
 	if application.GameData != nil {
 		gameData, _ = application.GameData.Current()
 	}
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
 		now := time.Now().UTC()
 		current := gameState.Stationing[request.TrackingID]
 		next := preparedAutoBirdManifest(*gameState, gameData, current, request, now)
@@ -585,7 +585,7 @@ func (application *Application) guardAutoBirdDispatch(
 		return fmt.Errorf("%w: Protection Mode became active before Auto Bird dispatch", Intent.ErrPlanStale)
 	}
 	contextReady := false
-	_, applyErr := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, applyErr := application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
 		operation, exists := gameState.Stationing[request.TrackingID]
 		if !exists || operation.Purpose != "autoBird" ||
 			operation.SourceCastleID != request.SourceCastleID ||
@@ -730,7 +730,7 @@ func (application *Application) deferAutoBirdDispatch(
 	if application == nil || application.State == nil {
 		return
 	}
-	_, _ = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, _ = application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
 		current, exists := gameState.Stationing[request.TrackingID]
 		if !exists || current.Purpose != "autoBird" ||
 			current.SourceCastleID != request.SourceCastleID ||
@@ -810,7 +810,7 @@ func (application *Application) captureAutoBirdMovement(
 	if err != nil {
 		return err
 	}
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
 		current, exists := gameState.Stationing[request.TrackingID]
 		if !exists || current.Purpose != "autoBird" ||
 			current.SourceCastleID != request.SourceCastleID ||
@@ -885,10 +885,10 @@ func findAutoBirdMovement(
 	var best State.MovementState
 	target, targetKnown := allianceHolding(gameState.Alliance, operation.TargetCastleID)
 	source, sourceKnown := gameState.Castles[operation.SourceCastleID]
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.OwnerPlayerID > 0 && gameState.Player.ID > 0 &&
 			movement.OwnerPlayerID != gameState.Player.ID {
-			continue
+			return true
 		}
 		outboundSource := movement.SourceCastleID == operation.SourceCastleID ||
 			sourceKnown && movement.SourceX == source.X && movement.SourceY == source.Y
@@ -905,17 +905,18 @@ func findAutoBirdMovement(
 			returningSource &&
 			returningTarget
 		if !outbound && !returning {
-			continue
+			return true
 		}
 		if operation.DispatchedAt != nil && !movement.ObservedAt.IsZero() &&
 			movement.ObservedAt.Before(operation.DispatchedAt.Add(-time.Second)) {
-			continue
+			return true
 		}
 		if best.ID == 0 || movement.ObservedAt.After(best.ObservedAt) ||
 			movement.ObservedAt.Equal(best.ObservedAt) && movement.ID > best.ID {
 			best = movement
 		}
-	}
+		return true
+	})
 	return best, best.ID > 0
 }
 

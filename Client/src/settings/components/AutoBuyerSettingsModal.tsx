@@ -261,13 +261,13 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 menuGrowToViewport
               />
             </label>
-            <NumberField
-              label="Check every (seconds)"
-              value={draft.checkIntervalSec}
-              minimum={10}
-              maximum={3600}
-              onChange={(checkIntervalSec) => setDraft((current) => ({ ...current, checkIntervalSec }))}
-            />
+			<NumberField
+			  label="Check every (minutes)"
+			  value={Math.round(draft.checkIntervalSec / 60)}
+			  minimum={30}
+			  maximum={60}
+			  onChange={(minutes) => setDraft((current) => ({ ...current, checkIntervalSec: minutes * 60 }))}
+			/>
             <NumberField
               label="Keep at least rubies"
               value={draft.minimumRubyReserve}

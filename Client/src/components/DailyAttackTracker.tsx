@@ -1,7 +1,6 @@
 import React from 'react';
 import { Gauge } from 'lucide-react';
 import { useCitadelAPI } from '../api/ApiContext';
-import { Badge } from './ui';
 
 const DailyAttackTracker: React.FC = () => {
   const { state } = useCitadelAPI();
@@ -20,18 +19,19 @@ const DailyAttackTracker: React.FC = () => {
     : 'Waiting for the server daily attack counter.';
 
   return (
-    <Badge
-      variant={synced ? 'primary' : 'secondary'}
-      className="shrink-0 gap-2 px-3 py-1.5"
+    <div
+      className={`liquid-status-dock-item liquid-daily-attacks-dock ${synced ? 'liquid-status-dock-item-primary' : 'liquid-status-dock-item-muted'}`}
       title={title}
       aria-label={synced
         ? `Daily attacks: ${formattedCount}`
         : 'Daily attacks: waiting for server count'}
     >
-      <Gauge className="h-3.5 w-3.5" aria-hidden="true" />
-      <span className="text-[9px] font-bold uppercase tracking-wider opacity-80">Daily attacks</span>
-      <span className="font-mono text-xs tabular-nums">{formattedCount}</span>
-    </Badge>
+      <span className="liquid-status-dock-icon" aria-hidden="true">
+        <Gauge className="h-4 w-4" />
+      </span>
+      <span className="liquid-desktop-status-label">Daily attacks</span>
+      <span className="liquid-daily-attacks-value font-mono tabular-nums">{formattedCount}</span>
+    </div>
   );
 };
 

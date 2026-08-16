@@ -47,6 +47,11 @@ export function equipmentTargets(): EquipmentTarget[] {
 	return [...knownCastleTypeTargets];
 }
 
+export function equipmentTargetLabel(castleTypeID: number): string {
+	return knownCastleTypeTargets.find((target) => target.castleTypeID === castleTypeID)?.label
+		?? `Official target ${castleTypeID}`;
+}
+
 function castleTarget(castleTypeID: number, label: string): EquipmentTarget {
 	return {
 		id: `castle-${castleTypeID}`,
@@ -54,10 +59,6 @@ function castleTarget(castleTypeID: number, label: string): EquipmentTarget {
 		label,
 		description: `Combines every equipment effect that applies when battling this ${label.toLowerCase()}.`,
 	};
-}
-
-export function targetCombatMode(castleTypeID: number): CombatMode {
-	return new Set([1, 3, 4, 10, 12, 15, 21, 22, 23, 24, 26, 28, 34]).has(castleTypeID) ? 'PvP' : 'PvE';
 }
 
 export interface EquipmentLeader {

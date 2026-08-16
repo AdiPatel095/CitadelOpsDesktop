@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"CitadelDesktop/Server/API"
@@ -21,6 +22,7 @@ import (
 	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/PrivateMetrics"
 	"CitadelDesktop/Server/Reports"
 	RuntimeKernel "CitadelDesktop/Server/Runtime"
 	"CitadelDesktop/Server/Scheduling"
@@ -33,43 +35,85 @@ import (
 const GameDataRefreshInterval = 6 * time.Hour
 
 type Config struct {
-	DataDir                string
-	Offline                bool
-	Transport              Session.Transport
-	Chromium               *Session.ChromiumConfig
+	DataDir string
+	Offline bool
+	// AccountKey is an optional process-local coordination identity. It is never
+	// included in persistence, API responses, or frontend events.
+	AccountKey string
+	// GameData optionally injects an official-data manager for tests or custom
+	// compositions. CitadelOpsDesktop creates and refreshes its own manager.
+	GameData *GameData.Manager
+	// WorldMaps optionally provides a process-local observed-world store.
+	WorldMaps *State.WorldMapStore
+	// IngestRegistry optionally supplies immutable opcode-to-reducer definitions.
+	IngestRegistry *Ingest.Registry
+	// RefreshGameData optionally coordinates an injected GameData manager.
+	RefreshGameData func(context.Context) error
+	// Updates optionally supplies the application update manager.
+	Updates *AppUpdate.Manager
+	// WorldIntelClient optionally supplies an immutable cloud client.
+	WorldIntelClient *WorldIntel.CloudClient
+	// ReportsCloudClient optionally supplies an immutable report client.
+	ReportsCloudClient *Reports.CloudClient
+	// PrivateMetricsClient is present only in explicitly configured hosted
+	// compositions. The placement grant remains account-scoped.
+	PrivateMetricsClient    *PrivateMetrics.Client
+	PrivateMetricsPlacement *PrivateMetrics.Placement
+	Transport               Session.Transport
+	Chromium                *Session.ChromiumConfig
+	// BackgroundOnly is the hosted composition. It always constructs the
+	// account-private direct game transport and never starts Chromium, even if
+	// the account profile was originally created by a desktop build.
+	BackgroundOnly         bool
 	RuntimeContext         context.Context
 	UpdateEndpoint         string
 	UpdateInstallSupported bool
 }
 
 type Application struct {
-	DataDir         string
-	State           *State.Store
-	GameData        *GameData.Manager
-	Configuration   *Configuration.Store
-	History         *History.Store
-	Telemetry       *Telemetry.Store
-	Ingest          *Ingest.Pipeline
-	Session         *Session.Controller
-	Intents         *Intent.Engine
-	OperationStore  *Intent.SQLiteOperationStore
-	ProfileLease    *RuntimeKernel.ProfileLease
-	Automation      *Automation.Coordinator
-	Reports         *Reports.Manager
-	BattleResearch  *Reports.BattleResearchManager
-	ReportStore     *Reports.SQLiteStore
-	Scheduler       *Scheduling.Scheduler
-	API             *API.Server
-	Updates         *AppUpdate.Manager
-	Diagnostics     *Diagnostics.Monitor
-	WorldIntel      *WorldIntel.DesktopService
-	BackgroundLogin *Session.BackgroundLoginStore
-	StartupErr      error
+	DataDir          string
+	AccountKey       string
+	State            *State.Store
+	GameData         *GameData.Manager
+	WorldMaps        *State.WorldMapStore
+	Configuration    *Configuration.Store
+	History          *History.Store
+	Telemetry        *Telemetry.Store
+	Ingest           *Ingest.Pipeline
+	Session          *Session.Controller
+	Intents          *Intent.Engine
+	OperationStore   *Intent.SQLiteOperationStore
+	ProfileLease     *RuntimeKernel.ProfileLease
+	Automation       *Automation.Coordinator
+	Reports          *Reports.Manager
+	BattleResearch   *Reports.BattleResearchManager
+	ReportStore      *Reports.SQLiteStore
+	Scheduler        *Scheduling.Scheduler
+	API              *API.Server
+	Updates          *AppUpdate.Manager
+	Diagnostics      *Diagnostics.Monitor
+	WorldIntelClient *WorldIntel.CloudClient
+	WorldIntel       *WorldIntel.DesktopService
+	PrivateMetrics   *PrivateMetrics.Publisher
+	Checkpoints      *PrivateMetrics.CheckpointPublisher
+	BackgroundLogin  *Session.BackgroundLoginStore
+	StartupErr       error
 
-	statePersistenceMu  sync.Mutex
-	persistenceHealthMu sync.RWMutex
-	statePersistenceErr error
-	startOnce           sync.Once
+	persistenceHealthMu     sync.RWMutex
+	statePersistenceErr     error
+	statePersistence        chan statePersistenceRequest
+	statePersistenceDone    chan struct{}
+	statePersistenceStarted atomic.Bool
+	ownsGameData            bool
+	ownsUpdates             bool
+	refreshGameDataAll      func(context.Context) error
+	startOnce               sync.Once
+	shutdownDone            chan struct{}
+}
+
+type statePersistenceRequest struct {
+	revision uint64
+	result   chan error
 }
 
 func New(ctx context.Context, config Config) (*Application, error) {
@@ -94,14 +138,20 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	gameData := GameData.NewManager(GameData.UpdaterConfig{
-		CacheDir: filepath.Join(config.DataDir, "GameData", "Items"),
-	})
 	var startupErr error
-	if config.Offline {
-		startupErr = gameData.LoadCache()
-	} else {
-		startupErr = gameData.Initialize(ctx)
+	gameData := config.GameData
+	ownsGameData := gameData == nil
+	if ownsGameData {
+		gameData = GameData.NewManager(GameData.UpdaterConfig{
+			CacheDir: filepath.Join(config.DataDir, "GameData", "Items"),
+		})
+		if config.Offline {
+			startupErr = gameData.LoadCache()
+		} else {
+			startupErr = gameData.Initialize(ctx)
+		}
+	} else if _, ready := gameData.Current(); !ready {
+		startupErr = errors.Join(startupErr, fmt.Errorf("shared official game data is not initialized"))
 	}
 
 	initial := State.NewGameState()
@@ -115,13 +165,16 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		initial.LanguageVersion = current.Metadata().LanguageVersion
 		EquipmentDomain.HydrateState(&initial, current)
 	}
-	state := State.NewStore(initial)
+	state := State.NewStoreWithWorldMap(initial, config.WorldMaps)
 	if migrationErr := Reports.MigrateLegacyHistory(config.DataDir, history, initial.Player.ID); migrationErr != nil {
 		startupErr = errors.Join(startupErr, migrationErr)
 	}
-	registry := Ingest.NewRegistry()
-	if err := Ingest.RegisterCoreReducers(registry); err != nil {
-		return nil, fmt.Errorf("register protocol reducers: %w", err)
+	registry := config.IngestRegistry
+	if registry == nil {
+		registry = Ingest.NewRegistry()
+		if err := Ingest.RegisterCoreReducers(registry); err != nil {
+			return nil, fmt.Errorf("register protocol reducers: %w", err)
+		}
 	}
 	ingest := Ingest.NewPipeline(state, gameData, registry)
 	ingest.SetProfileID(profileLease.ProfileID)
@@ -131,9 +184,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	}
 	ingest.SetTelemetry(telemetry)
 	transport := config.Transport
-	if transport == nil && config.Chromium != nil {
-		chromium := *config.Chromium
-		chromium.DataDir = config.DataDir
+	if transport == nil && (config.Chromium != nil || config.BackgroundOnly) {
 		mode := Session.ConnectionModeFull
 		serverSelection := ""
 		if raw, ok := configuration.Section("session.connection"); ok {
@@ -145,6 +196,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 				mode = Session.ParseConnectionMode(selected.Mode)
 				serverSelection = strings.TrimSpace(selected.Server)
 			}
+		}
+		if config.BackgroundOnly {
+			mode = Session.ConnectionModeBackground
 		}
 		if mode == Session.ConnectionModeBackground {
 			language := "en"
@@ -159,6 +213,8 @@ func New(ctx context.Context, config Config) (*Application, error) {
 				Namespace: initial.Session.Namespace, Language: language,
 			})
 		} else {
+			chromium := *config.Chromium
+			chromium.DataDir = config.DataDir
 			transport = Session.NewChromiumTransport(chromium)
 		}
 	}
@@ -173,6 +229,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	intentRegistry := Intent.NewRegistry()
 	intentRegistry.EnforceResourceDeclarations()
 	intents := Intent.NewEngine(intentRegistry, state, gameData, session, ingest)
+	// Dashboard and API submissions execute under the application's runtime
+	// context: closing a control panel never cancels a running operation.
+	intents.SetRuntimeContext(runtimeContext)
 	operationStore, err := Intent.OpenOperationStore(config.DataDir)
 	if err != nil {
 		return nil, fmt.Errorf("open intent operation store: %w", err)
@@ -208,22 +267,58 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err := restoreRecentAutoStormLaunchHistory(ctx, state, reportStore); err != nil {
 		return nil, fmt.Errorf("restore recent Auto Storm launch history: %w", err)
 	}
-	worldIntelligence := WorldIntel.NewDesktopService(
-		state,
-		WorldIntel.NewCloudClient(WorldIntel.ClientConfig{ClientVersion: Version}),
-	)
-	application := &Application{
-		DataDir: config.DataDir,
-		State:   state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
-		Ingest: ingest, Session: session, Intents: intents, OperationStore: operationStore, ReportStore: reportStore,
-		ProfileLease: profileLease, StartupErr: startupErr,
-		Updates: AppUpdate.NewManager(AppUpdate.Config{
+	worldIntelClient := config.WorldIntelClient
+	if worldIntelClient == nil {
+		worldIntelClient = WorldIntel.NewCloudClient(WorldIntel.ClientConfig{ClientVersion: Version})
+	}
+	worldIntelligence := WorldIntel.NewDesktopService(state, worldIntelClient)
+	var privateMetricsPublisher *PrivateMetrics.Publisher
+	var checkpointPublisher *PrivateMetrics.CheckpointPublisher
+	if config.PrivateMetricsClient != nil && config.PrivateMetricsClient.Enabled() {
+		privateMetricsPublisher, err = PrivateMetrics.NewPublisher(PrivateMetrics.PublisherConfig{
+			RuntimeID: strings.TrimSpace(config.AccountKey), State: state, GameData: gameData,
+			Reports: reportStore, Client: config.PrivateMetricsClient,
+			Placement: config.PrivateMetricsPlacement,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("initialize private metrics publisher: %w", err)
+		}
+		if config.PrivateMetricsClient.CheckpointsEnabled() {
+			checkpointPublisher, err = PrivateMetrics.NewCheckpointPublisher(PrivateMetrics.CheckpointPublisherConfig{
+				RuntimeID: strings.TrimSpace(config.AccountKey), State: state, Configuration: configuration,
+				Intents: intents, Client: config.PrivateMetricsClient, Placement: config.PrivateMetricsPlacement,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("initialize dashboard checkpoint publisher: %w", err)
+			}
+		}
+	}
+	updates := config.Updates
+	ownsUpdates := updates == nil
+	if updates == nil {
+		updates = AppUpdate.NewManager(AppUpdate.Config{
 			CurrentVersion: Version, Endpoint: config.UpdateEndpoint,
 			InstallSupported: config.UpdateInstallSupported,
-		}),
-		Diagnostics:     Diagnostics.NewMonitor(config.DataDir),
-		WorldIntel:      worldIntelligence,
-		BackgroundLogin: Session.NewBackgroundLoginStore(config.DataDir),
+		})
+	}
+	application := &Application{
+		DataDir: config.DataDir, AccountKey: strings.TrimSpace(config.AccountKey),
+		State: state, GameData: gameData, WorldMaps: config.WorldMaps, Configuration: configuration, History: history, Telemetry: telemetry,
+		Ingest: ingest, Session: session, Intents: intents, OperationStore: operationStore, ReportStore: reportStore,
+		ProfileLease: profileLease, StartupErr: startupErr,
+		Updates:              updates,
+		Diagnostics:          Diagnostics.NewMonitor(config.DataDir),
+		WorldIntelClient:     worldIntelClient,
+		WorldIntel:           worldIntelligence,
+		PrivateMetrics:       privateMetricsPublisher,
+		Checkpoints:          checkpointPublisher,
+		BackgroundLogin:      Session.NewBackgroundLoginStore(config.DataDir),
+		ownsGameData:         ownsGameData,
+		ownsUpdates:          ownsUpdates,
+		refreshGameDataAll:   config.RefreshGameData,
+		shutdownDone:         make(chan struct{}),
+		statePersistence:     make(chan statePersistenceRequest),
+		statePersistenceDone: make(chan struct{}),
 	}
 	session.SetAttackDelayProvider(application.attackLaunchDelay)
 	if relogTransport, ok := transport.(Session.RelogDelayTransport); ok {
@@ -250,6 +345,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	}
 	application.Automation = Automation.NewCoordinator(
 		state, configuration, gameData, intents,
+		Automation.NewSharedStormScanPolicy(application.AccountKey, config.WorldMaps),
 		Automation.NewRecruitPolicy(),
 		Automation.NewToolPolicy(),
 		Automation.NewHospitalPolicy(),
@@ -279,7 +375,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewAutoStormShopPolicy(),
 		Automation.NewAutoStormBuildPolicy(),
 	)
-	application.Reports = Reports.NewManager(state, history, intents, reportStore)
+	application.Reports = Reports.NewManagerWithCloudClient(
+		state, history, intents, config.ReportsCloudClient, reportStore,
+	)
 	application.BattleResearch = Reports.NewBattleResearchManager(
 		state, configuration, gameData, intents, ingest, reportStore, application.Reports.CloudClient(),
 	)
@@ -307,15 +405,26 @@ func (application *Application) Start(ctx context.Context) {
 }
 
 func (application *Application) start(ctx context.Context) {
+	application.statePersistenceStarted.Store(true)
 	go application.captureIntentLogs(ctx)
 	go func() {
+		defer close(application.shutdownDone)
 		<-ctx.Done()
+		<-application.statePersistenceDone
 		application.Telemetry.Close()
 		if application.Reports != nil {
 			application.Reports.Wait()
 		}
 		if application.BattleResearch != nil {
 			application.BattleResearch.Wait()
+		}
+		if application.Intents != nil {
+			// Detached operations were cancelled with the runtime context; give
+			// them a bounded moment to record their final receipts before the
+			// operation store closes underneath them.
+			drainContext, cancelDrain := context.WithTimeout(context.Background(), 5*time.Second)
+			_ = application.Intents.WaitIdle(drainContext)
+			cancelDrain()
 		}
 		if application.OperationStore != nil {
 			_ = application.OperationStore.Close()
@@ -327,28 +436,89 @@ func (application *Application) start(ctx context.Context) {
 			_ = application.ProfileLease.Close()
 		}
 	}()
-	go application.Updates.Run(ctx)
-	go func() {
-		ticker := time.NewTicker(GameDataRefreshInterval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				refreshContext, cancel := context.WithTimeout(ctx, 90*time.Second)
-				_ = application.refreshGameData(refreshContext)
-				cancel()
+	if application.ownsUpdates {
+		go application.Updates.Run(ctx)
+	}
+	if application.ownsGameData {
+		go func() {
+			ticker := time.NewTicker(GameDataRefreshInterval)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					refreshContext, cancel := context.WithTimeout(ctx, 90*time.Second)
+					_ = application.refreshGameData(refreshContext)
+					cancel()
+				}
 			}
-		}
-	}()
+		}()
+	}
 	go application.capturePlayerHistory(ctx)
+	if application.PrivateMetrics != nil {
+		go application.PrivateMetrics.Run(ctx)
+	}
+	if application.Checkpoints != nil {
+		go application.Checkpoints.Run(ctx)
+	}
 	go application.persistState(ctx)
 	go application.runMovementClock(ctx)
 	go application.Automation.Run(ctx)
 	go application.Reports.Run(ctx)
 	go application.BattleResearch.Run(ctx)
 	go application.Scheduler.Run(ctx)
+}
+
+// SetSessionReconnectPolicy tells the game transport whether to hold the
+// session loop across disconnects or to release it for the control plane.
+func (application *Application) SetSessionReconnectPolicy(policy Session.ReconnectPolicy) {
+	if application == nil || application.Session == nil {
+		return
+	}
+	application.Session.SetReconnectPolicy(policy)
+}
+
+// SetPrivateMetricsPlacement rotates only this account runtime's outbound
+// metrics grant. It never changes dashboard authentication or another runtime.
+func (application *Application) SetPrivateMetricsPlacement(placement *PrivateMetrics.Placement) error {
+	if application == nil || application.PrivateMetrics == nil {
+		if placement == nil {
+			return nil
+		}
+		return fmt.Errorf("private metrics publisher is unavailable")
+	}
+	if err := application.PrivateMetrics.SetPlacement(placement); err != nil {
+		return err
+	}
+	if application.Checkpoints != nil {
+		return application.Checkpoints.SetPlacement(placement)
+	}
+	return nil
+}
+
+// Checkpoint publishes the dashboard read model now (for example the final
+// checkpoint before the runtime is drained). It is a no-op without a
+// checkpoint publisher or without a current placement.
+func (application *Application) Checkpoint(ctx context.Context, reason PrivateMetrics.CheckpointReason) error {
+	if application == nil || application.Checkpoints == nil {
+		return nil
+	}
+	return application.Checkpoints.Checkpoint(ctx, reason)
+}
+
+// Wait blocks until every application worker has stopped and its durable
+// stores and profile lease are closed.
+func (application *Application) Wait(ctx context.Context) error {
+	if application == nil || application.shutdownDone == nil {
+		return nil
+	}
+	select {
+	case <-application.shutdownDone:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (application *Application) captureIntentLogs(ctx context.Context) {
@@ -379,12 +549,52 @@ func (application *Application) recordIntentLog(receipt Intent.Receipt) {
 }
 
 func (application *Application) persistState(ctx context.Context) {
+	defer close(application.statePersistenceDone)
 	events, unsubscribe := application.State.Subscribe(128)
 	defer unsubscribe()
+	writer := State.NewComponentSnapshotWriter(application.DataDir)
 	var timer *time.Timer
 	var timerChannel <-chan time.Time
-	flush := func() bool {
-		return application.saveStateSnapshot() == nil
+	var pending State.PersistenceBatch
+	var persistedRevision uint64
+	accumulate := func(event State.Event) {
+		if !pending.Accumulate(event) {
+			return
+		}
+		if timer == nil {
+			timer = time.NewTimer(2 * time.Second)
+			timerChannel = timer.C
+		}
+	}
+	flush := func() error {
+		if pending.Revision() == 0 {
+			return nil
+		}
+		revision, err := pending.FlushWithWriter(writer)
+		application.persistenceHealthMu.Lock()
+		application.statePersistenceErr = err
+		application.persistenceHealthMu.Unlock()
+		if err == nil {
+			persistedRevision = revision
+			if timer != nil {
+				timer.Stop()
+				timer = nil
+				timerChannel = nil
+			}
+		}
+		return err
+	}
+	force := func(request statePersistenceRequest) {
+		for pending.Revision() < request.revision && persistedRevision < request.revision {
+			select {
+			case event := <-events:
+				accumulate(event)
+			case <-ctx.Done():
+				request.result <- ctx.Err()
+				return
+			}
+		}
+		request.result <- flush()
 	}
 	for {
 		select {
@@ -392,20 +602,14 @@ func (application *Application) persistState(ctx context.Context) {
 			if timer != nil {
 				timer.Stop()
 			}
-			flush()
+			_ = flush()
 			return
-		case <-events:
-			if timer == nil {
-				timer = time.NewTimer(2 * time.Second)
-				timerChannel = timer.C
-			} else if timer.Stop() {
-				timer.Reset(2 * time.Second)
-			}
+		case event := <-events:
+			accumulate(event)
+		case request := <-application.statePersistence:
+			force(request)
 		case <-timerChannel:
-			if flush() {
-				timer = nil
-				timerChannel = nil
-			} else {
+			if flush() != nil {
 				timer = time.NewTimer(2 * time.Second)
 				timerChannel = timer.C
 			}
@@ -413,17 +617,33 @@ func (application *Application) persistState(ctx context.Context) {
 	}
 }
 
-func (application *Application) saveStateSnapshot() error {
-	if application == nil || application.State == nil || strings.TrimSpace(application.DataDir) == "" {
+func (application *Application) saveStateEvent(ctx context.Context, event State.Event) error {
+	if application == nil || application.State == nil || event.Patch == nil || strings.TrimSpace(application.DataDir) == "" {
 		return nil
 	}
-	application.statePersistenceMu.Lock()
-	defer application.statePersistenceMu.Unlock()
-	err := State.SaveSnapshot(application.DataDir, application.State.ReadOnlyView())
-	application.persistenceHealthMu.Lock()
-	application.statePersistenceErr = err
-	application.persistenceHealthMu.Unlock()
-	return err
+	if !application.statePersistenceStarted.Load() {
+		err := State.SaveComponentSnapshot(application.DataDir, event, State.Components(event.Components...))
+		application.persistenceHealthMu.Lock()
+		application.statePersistenceErr = err
+		application.persistenceHealthMu.Unlock()
+		return err
+	}
+	request := statePersistenceRequest{revision: event.Revision, result: make(chan error, 1)}
+	select {
+	case application.statePersistence <- request:
+	case <-application.statePersistenceDone:
+		return fmt.Errorf("state persistence worker is stopped")
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	select {
+	case err := <-request.result:
+		return err
+	case <-application.statePersistenceDone:
+		return fmt.Errorf("state persistence worker stopped before revision %d was durable", event.Revision)
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (application *Application) PersistenceError() error {
@@ -448,6 +668,10 @@ func (application *Application) actionPersistenceError() error {
 	application.persistenceHealthMu.RLock()
 	stateErr := application.statePersistenceErr
 	application.persistenceHealthMu.RUnlock()
+	var worldMapErr error
+	if application.WorldMaps != nil {
+		worldMapErr = application.WorldMaps.PersistenceError()
+	}
 	var operationErr error
 	if application.Intents != nil {
 		operationErr = application.Intents.PersistenceError()
@@ -458,7 +682,7 @@ func (application *Application) actionPersistenceError() error {
 	if operationErr != nil {
 		operationErr = fmt.Errorf("operation journal persistence: %w", operationErr)
 	}
-	return errors.Join(stateErr, operationErr)
+	return errors.Join(stateErr, worldMapErr, operationErr)
 }
 
 func (application *Application) capturePlayerHistory(ctx context.Context) {
@@ -470,7 +694,7 @@ func (application *Application) capturePlayerHistory(ctx context.Context) {
 	var debounceChannel <-chan time.Time
 	lastCaptured := time.Time{}
 	capture := func() {
-		snapshot := application.State.Snapshot()
+		snapshot := application.State.ReadOnlyView()
 		if snapshot.Player.ID == 0 || time.Since(lastCaptured) < 55*time.Second {
 			return
 		}
@@ -506,8 +730,9 @@ func (application *Application) capturePlayerHistory(ctx context.Context) {
 
 func (application *Application) registerCoreIntents() error {
 	for name, action := range map[string]Intent.Action{
-		"session.start": ignoreArguments(application.Session.Start),
-		"session.stop":  ignoreArguments(application.Session.Stop),
+		"session.start":     ignoreArguments(application.Session.Start),
+		"session.stop":      ignoreArguments(application.Session.Stop),
+		"session.reconnect": ignoreArguments(application.Session.Reconnect),
 		"session.background.prepare": ignoreArguments(func(context.Context) error {
 			return application.Session.PrepareBackgroundMode(application.DataDir)
 		}),
@@ -547,6 +772,10 @@ func (application *Application) registerCoreIntents() error {
 		{
 			Name: "session.start", Description: "Start the configured game session adapter", Effect: Intent.EffectExternal,
 			Planner: actionPlanner("session.start", "session", "Start the game session"),
+		},
+		{
+			Name: "session.reconnect", Description: "Reconnect the game session now, bypassing a scheduled retry, cooldown wait, or login park", Effect: Intent.EffectExternal,
+			Planner: actionPlanner("session.reconnect", "session", "Reconnect the game session now"),
 		},
 		{
 			Name: "session.stop", Description: "Stop the active game session", Effect: Intent.EffectExternal,
@@ -641,6 +870,9 @@ func (application *Application) cancelOperation(_ context.Context, arguments jso
 }
 
 func (application *Application) refreshGameData(ctx context.Context) error {
+	if application.refreshGameDataAll != nil {
+		return application.refreshGameDataAll(ctx)
+	}
 	return refreshGameDataStore(ctx, application.State, application.GameData)
 }
 
@@ -651,13 +883,31 @@ func refreshGameDataStore(ctx context.Context, state *State.Store, gameData *Gam
 	if err := gameData.Refresh(ctx); err != nil {
 		return err
 	}
+	return synchronizeGameDataStore(state, gameData)
+}
+
+// SynchronizeGameData applies the current process-owned catalog generation to
+// this account without downloading or decoding the catalog again.
+func (application *Application) SynchronizeGameData() error {
+	if application == nil {
+		return fmt.Errorf("application is unavailable")
+	}
+	return synchronizeGameDataStore(application.State, application.GameData)
+}
+
+func synchronizeGameDataStore(state *State.Store, gameData *GameData.Manager) error {
+	if state == nil || gameData == nil {
+		return fmt.Errorf("official game data is unavailable")
+	}
 	current, ok := gameData.Current()
 	if !ok {
 		return fmt.Errorf("official game data did not produce a snapshot")
 	}
 	version := current.Metadata().ItemVersion
 	languageVersion := current.Metadata().LanguageVersion
-	_, err := state.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := state.ApplyComponents(State.Components(
+		State.ComponentCatalog, State.ComponentInventory, State.ComponentCommanders, State.ComponentCastellans,
+	), func(gameState *State.GameState) ([]string, bool, error) {
 		changed := EquipmentDomain.HydrateState(gameState, current)
 		if gameState.CatalogVersion != version || gameState.LanguageVersion != languageVersion {
 			gameState.CatalogVersion = version
@@ -741,7 +991,7 @@ func defaultConfiguration() map[string]json.RawMessage {
 		"automation.autoInvasion":                  json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
 		"automation.autoNomad":                     json.RawMessage(`{"version":5,"sourceCastleId":0,"nomadPresetId":"","samuraiPresetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
 		"automation.autoAdvisor":                   json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"maxAttackCount":9999,"minimumRemainingSec":1800,"coinCostPerAttack":500,"minimumCoinReserve":0,"rubyCostPerAttack":0,"minimumRubyReserve":0,"minimumFeatherReserve":0,"timeSkipReserve":{},"checkIntervalSec":30,"mapRefreshIntervalSec":300,"horseTravelBoostId":-1}`),
-		"automation.autoBuyer":                     json.RawMessage(`{"version":1,"checkIntervalSec":60,"historyRefreshSec":900,"sourceCastleId":0,"minimumRubyReserve":0,"allowRubyPackages":false,"packages":[],"specialists":[],"feast":{"enabled":false,"feastId":0,"minimumRemainingHours":12,"sourceCastleId":0,"minimumFoodReserve":0,"allowRubies":false,"maximumRubyCostPerPurchase":0}}`),
+		"automation.autoBuyer":                     json.RawMessage(`{"version":1,"checkIntervalSec":1800,"historyRefreshSec":3600,"sourceCastleId":0,"minimumRubyReserve":0,"allowRubyPackages":false,"packages":[],"specialists":[],"feast":{"enabled":false,"feastId":0,"minimumRemainingHours":12,"sourceCastleId":0,"minimumFoodReserve":0,"allowRubies":false,"maximumRubyCostPerPurchase":0}}`),
 		"automation.autoKhan":                      json.RawMessage(`{"version":1,"sourceCastleId":0,"attackPresetId":"","defensePresetId":"","minimumRemainingSec":300,"checkIntervalSec":30,"defenseRefreshIntervalSec":30,"mapRefreshIntervalSec":30,"dailyAttackLimit":0,"skipCooldowns":true,"timeSkipReserve":{},"openGateProtection":true,"offensiveUnitThreshold":1000,"horseTravelBoostId":-1,"nomadPointThreshold":0,"replenishDefenseTools":false}`),
 		"automation.autoStorm":                     json.RawMessage(`{"version":1,"unlock":{"enabled":false,"prebuiltCastleId":0},"decorationPresetCastleId":0,"decorationPresetId":"","build":{"allowPremium":false,"allowDemolition":false,"allowResourceTransport":true,"allowTimeSkips":false,"resourceReserves":{},"sourceResourceReserves":{},"timeSkipReserve":{}},"harbor":{"enabled":false,"targetLevel":1},"forts":{"enabled":false,"levels":[40,50,60,70,80],"minimumWins":0,"presetId":""},"islands":{"enabled":false,"resources":["wood","stone","aquamarine"],"sizes":["large","small"],"presetId":"","defenseUnits":[]},"troopImport":{"enabled":false,"donorCastleIds":[],"minimumTroops":0,"historyHours":24},"aquamarine":{"reserve":0,"shopTableId":0,"purchases":[]},"targetPriority":["fort:80","fort:70","fort:60","fort:50","fort:40","island:large","island:small"],"checkIntervalSec":30,"mapRefreshIntervalSec":7200,"dailyAttackLimit":0,"horseTravelBoostId":-1}`),
 		"automation.autoStormBlueprints":           json.RawMessage(`{"version":1,"blueprints":{}}`),

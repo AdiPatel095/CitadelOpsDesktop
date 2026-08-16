@@ -63,7 +63,7 @@ func reconcileEventBattleActivity(gameState *State.GameState, capture *State.Bat
 	if !found {
 		return false, nil
 	}
-	activity := gameState.EventScores.ActivityByEvent[eventID]
+	activity, _ := gameState.MutableEventActivity(eventID)
 	for _, processed := range activity.ProcessedReportIDs {
 		if processed == reportID {
 			return false, nil
@@ -108,7 +108,7 @@ func reconcileEventBattleActivity(gameState *State.GameState, capture *State.Bat
 		totals.ToolsUsed += capture.ToolsUsed
 		totals.Loot += ownBattleLoot(summary.Participants, gameState.Player.ID)
 	}
-	gameState.EventScores.ActivityByEvent[eventID] = activity
+	gameState.SetEventActivity(eventID, activity)
 	return true, nil
 }
 
@@ -122,7 +122,7 @@ func matchingEventAttack(
 	bestEventID, bestIndex := int64(0), -1
 	bestDistance := eventReportLaunchMatchWindow + time.Second
 	var best State.EventAttackRecord
-	for eventID, activity := range gameState.EventScores.ActivityByEvent {
+	gameState.RangeEventActivities(func(eventID int64, activity State.EventActivityState) bool {
 		for index, record := range activity.PendingAttacks {
 			defense := record.Kind == State.EventActivityKhanDefense
 			if defense != (role == "defender") || record.KingdomID != kingdomID ||
@@ -145,7 +145,8 @@ func matchingEventAttack(
 			}
 			bestEventID, bestIndex, best, bestDistance = eventID, index, record, distance
 		}
-	}
+		return true
+	})
 	return bestEventID, bestIndex, best, bestIndex >= 0
 }
 

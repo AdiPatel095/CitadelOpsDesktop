@@ -188,7 +188,8 @@ func TestPlanEquipmentSellRequiresFreshStorageAndFreezesSelection(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Summary != "Sell 2 item(s) from non_relic_equipment" || len(plan.Steps) != 4 || plan.Steps[0].Opcode != "seq" || plan.Steps[1].Opcode != "seq" {
+	if plan.Summary != "Sell 2 item(s) from non_relic_equipment" || len(plan.Steps) != 3 ||
+		plan.Steps[0].Opcode != "seq" || plan.Steps[1].Opcode != "seq" || plan.Steps[2].Opcode != "gei" {
 		t.Fatalf("plan = %#v", plan)
 	}
 }
@@ -219,12 +220,33 @@ func TestPlanEquipmentSellSellsAllEligibleNonRelicGemStacks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Summary != "Sell 3 item(s) from non_relic_gems" || len(plan.Steps) != 5 {
+	if plan.Summary != "Sell 3 item(s) from non_relic_gems" || len(plan.Steps) != 4 || plan.Steps[3].Opcode != "ggm" {
 		t.Fatalf("plan = %#v", plan)
 	}
 	for index := 0; index < 3; index++ {
 		if plan.Steps[index].Opcode != "sge" {
 			t.Fatalf("step %d opcode = %q, want sge", index, plan.Steps[index].Opcode)
 		}
+	}
+}
+
+func TestPlanEquipmentSellDoesNotRefreshWhenNothingMatches(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	gameState.Observations["gei"] = State.ProtocolObservation{
+		Opcode: "gei", LastDirection: "inbound", LastCode: &code, LastSeenAt: time.Now().UTC(),
+	}
+	gameState.Inventory.Equipment[11] = State.EquipmentInstance{ID: 11, DefinitionID: 100, Slot: 1, RarityID: 5}
+
+	plan, err := planEquipmentSell(
+		context.Background(),
+		Intent.PlanningContext{State: gameState},
+		json.RawMessage(`{"category":"non_relic_equipment"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Summary != "Sell 0 item(s) from non_relic_equipment" || len(plan.Steps) != 0 {
+		t.Fatalf("empty sale still emitted game traffic: %#v", plan)
 	}
 }

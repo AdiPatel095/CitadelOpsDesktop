@@ -59,7 +59,7 @@ func (application *Application) guardDailyAttackLimit(_ context.Context, argumen
 	if application == nil || application.State == nil {
 		return fmt.Errorf("game state is unavailable")
 	}
-	detail, blocked, err := dailyAttackLimitStatus(application.State.Snapshot(), request.Limit)
+	detail, blocked, err := dailyAttackLimitStatus(application.State.ReadOnlyView(), request.Limit)
 	if err != nil {
 		return err
 	}

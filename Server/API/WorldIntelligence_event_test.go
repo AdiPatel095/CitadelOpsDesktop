@@ -80,3 +80,57 @@ func TestWorldIntelligenceEventRoutesRejectInvalidFilters(t *testing.T) {
 		}
 	}
 }
+
+func TestWorldIntelligenceSubscriptionProxiesServerSentEvents(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/v1/subscribe" || request.URL.Query().Get("worldId") != "world.example" {
+			t.Errorf("subscription request = %s?%s", request.URL.Path, request.URL.RawQuery)
+		}
+		if request.Header.Get("Last-Event-ID") != "8" {
+			t.Errorf("last event id = %q", request.Header.Get("Last-Event-ID"))
+		}
+		writer.Header().Set("Content-Type", "text/event-stream")
+		_, _ = writer.Write([]byte("id: 9\nevent: world-intel.update\ndata: {\"revision\":9}\n\n"))
+	}))
+	defer upstream.Close()
+	service := WorldIntel.NewDesktopService(nil, WorldIntel.NewCloudClient(WorldIntel.ClientConfig{
+		Client: upstream.Client(), BaseURL: upstream.URL + "/v1", ClientVersion: "test",
+	}))
+	handler := NewServer(Config{WorldIntel: service}).Handler()
+	request := httptest.NewRequest(http.MethodGet, "/api/v2/world-intelligence/subscribe?worldId=world.example", nil)
+	request.Header.Set("Last-Event-ID", "8")
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK || recorder.Header().Get("Content-Type") != "text/event-stream" {
+		t.Fatalf("subscription response = %d %q", recorder.Code, recorder.Header().Get("Content-Type"))
+	}
+	if body := recorder.Body.String(); !strings.Contains(body, "id: 9") || !strings.Contains(body, "world-intel.update") {
+		t.Fatalf("subscription body = %q", body)
+	}
+}
+
+func TestWorldIntelligenceLeaderboardSubscriptionProxiesFullBase(t *testing.T) {
+	occurrenceID := strings.Repeat("b", 64)
+	upstream := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/v1/event-runs/"+occurrenceID+"/subscribe" ||
+			request.URL.Query().Get("worldId") != "world.example" || request.URL.Query().Has("limit") {
+			t.Errorf("leaderboard subscription = %s?%s", request.URL.Path, request.URL.RawQuery)
+		}
+		writer.Header().Set("Content-Type", "text/event-stream")
+		_, _ = writer.Write([]byte("id: 10\nevent: world-intel.leaderboard.snapshot\ndata: {\"revision\":10,\"complete\":true,\"run\":{},\"entries\":[]}\n\n"))
+	}))
+	defer upstream.Close()
+	service := WorldIntel.NewDesktopService(nil, WorldIntel.NewCloudClient(WorldIntel.ClientConfig{
+		Client: upstream.Client(), BaseURL: upstream.URL + "/v1", ClientVersion: "test",
+	}))
+	handler := NewServer(Config{WorldIntel: service}).Handler()
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v2/world-intelligence/event-runs/"+occurrenceID+"/subscribe?worldId=world.example", nil,
+	)
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), "world-intel.leaderboard.snapshot") {
+		t.Fatalf("leaderboard proxy = %d %q", recorder.Code, recorder.Body.String())
+	}
+}

@@ -131,12 +131,11 @@ func combineReducers(reducers ...Reducer) Reducer {
 }
 
 func knownRiftTarget(gameState *State.GameState, kingdomID State.KingdomID, x, y int) bool {
-	for _, observation := range gameState.Map[kingdomID] {
-		if observation.TypeID == riftObservationTypeID && observation.X == x && observation.Y == y {
-			return true
-		}
+	if gameState == nil {
+		return false
 	}
-	return false
+	observation, found := gameState.LookupMapObservation(kingdomID, fmt.Sprintf("%d:%d", x, y))
+	return found && observation.TypeID == riftObservationTypeID && observation.X == x && observation.Y == y
 }
 
 func riftBodyHasLayout(body map[string]json.RawMessage) bool {

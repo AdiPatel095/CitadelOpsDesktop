@@ -544,3 +544,57 @@ func TestControllerAdvancesGenerationForReadySocketReplacement(t *testing.T) {
 		t.Fatalf("socket replacement did not start a fresh session epoch: %+v", session)
 	}
 }
+
+// parkableTransport reports whether its connection loop is running so the
+// controller can restart a transport that parked itself on a login failure
+// while leaving a still-running errored transport alone.
+type parkableTransport struct {
+	*pacingTransport
+	running bool
+}
+
+func (transport *parkableTransport) Running() bool {
+	transport.mu.Lock()
+	defer transport.mu.Unlock()
+	return transport.running
+}
+
+func TestControllerRestartsOnlyParkedErroredTransports(t *testing.T) {
+	transport := &parkableTransport{pacingTransport: newPacingTransport(), running: true}
+	controller := NewController(context.Background(), transport, nil, nil)
+	defer controller.outbound.Close()
+	defer controller.Stop(context.Background())
+	if err := controller.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	transport.mu.Lock()
+	transport.status.State = "error"
+	transport.status.LoggedIn = false
+	transport.status.SocketReady = false
+	transport.mu.Unlock()
+
+	// A running transport in an error state keeps its own retry loop; the
+	// controller must not stack a second start on top of it.
+	if err := controller.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	transport.mu.Lock()
+	starts := transport.starts
+	transport.running = false
+	transport.mu.Unlock()
+	if starts != 1 {
+		t.Fatalf("running errored transport was restarted: starts = %d", starts)
+	}
+
+	// Once the transport parked itself, Start restarts it (the transport
+	// decides whether the saved login changed enough to try again).
+	if err := controller.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	transport.mu.Lock()
+	starts = transport.starts
+	transport.mu.Unlock()
+	if starts != 2 {
+		t.Fatalf("parked transport was not restarted: starts = %d", starts)
+	}
+}

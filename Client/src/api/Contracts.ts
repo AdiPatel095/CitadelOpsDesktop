@@ -46,6 +46,14 @@ export interface SessionStateV2 {
   detail?: string;
 	cooldownUntil?: string;
 	retryAt?: string;
+	/** Structured outcome of the most recent failed game login (cooldown, error, reconnecting). */
+	loginFailure?: {
+		code: number;
+		class: 'cooldown' | 'client_version_rejected' | 'suspended' | 'account_deleted' | 'invalid_credentials' | 'wrong_server' | 'unknown';
+		fatal: boolean;
+		observedAt: string;
+		suspendedUntil?: string;
+	};
   changedAt: string;
 }
 
@@ -86,6 +94,25 @@ export interface BackgroundLoginStatus {
 	updatedAt?: string;
 }
 
+/** One selectable game world from `GET /api/v2/session/game-servers`. */
+export interface GameServerEntry {
+	code: string;
+	label: string;
+	zone: string;
+	zoneId?: number;
+	host: string;
+	url: string;
+	international?: boolean;
+	instance?: number;
+}
+
+export interface GameServerCatalog {
+	version?: string;
+	source?: string;
+	updatedAt?: string;
+	servers: GameServerEntry[];
+}
+
 export interface ConfigurationSnapshot {
 	schemaVersion: number;
 	revision: number;
@@ -117,7 +144,7 @@ export interface WorldIntelligenceStatusV1 {
 	enabled: boolean;
 	worldId?: string;
 	endpoint: string;
-	collectionMode: 'shared-data-reader';
+	collectionMode: 'shared-data-subscriber';
 	publicFieldsOnly: boolean;
 	officialSourceOnly: boolean;
 }
@@ -337,6 +364,24 @@ export interface WorldIntelligenceEventRunRankingV1 {
 	entries: WorldIntelligenceEventScoreObservationV1[];
 }
 
+export interface WorldIntelligenceEventRunRankingSnapshotV1 extends WorldIntelligenceEventRunRankingV1 {
+	revision: number;
+	complete: true;
+}
+
+export interface WorldIntelligenceEventScoreIdentityV1 {
+	listType: number;
+	leagueId: number;
+	playerId: number;
+}
+
+export interface WorldIntelligenceEventRunRankingDeltaV1 {
+	revision: number;
+	run: WorldIntelligenceEventRunV1;
+	upserts: WorldIntelligenceEventScoreObservationV1[];
+	removed: WorldIntelligenceEventScoreIdentityV1[];
+}
+
 export interface WorldIntelligencePlayerEventScoreHistoryV1 {
 	worldId: string;
 	playerId: number;
@@ -359,6 +404,17 @@ export interface WorldIntelligenceWorldCoverageV1 {
 
 export interface WorldIntelligenceCoverageResponseV1 {
 	worlds: WorldIntelligenceWorldCoverageV1[];
+}
+
+export interface WorldIntelligenceUpdateManifestV1 {
+	schemaVersion: 1;
+	worldId: string;
+	revision: number;
+	coverageRevision: number;
+	rankingsRevision: number;
+	profilesRevision: number;
+	eventRunsRevision: number;
+	updatedAt?: string;
 }
 
 export interface BattleResearchPhasePredictionV2 {
@@ -1367,14 +1423,8 @@ export interface MapObservationV2 {
 	eventCampBaseGateBonus?: number;
 	eventCampBaseMoatBonus?: number;
 	stormIsleId?: number;
-	stormKind?: 'fort' | 'island';
-	stormResource?: 'wood' | 'stone' | 'aquamarine';
-	stormSize?: 'large' | 'small';
-	stormFixedLoot?: number;
 	stormVictoryCount?: number;
 	stormCooldownRemaining?: number;
-	stormReadyAt?: string;
-	stormExpiresAt?: string;
 	observedAt: string;
 }
 
@@ -1419,6 +1469,9 @@ export interface StormMapStateV2 {
 	lastCompletedAt?: string;
 	windowCount?: number;
 	targets: Record<string, MapObservationV2>;
+	targetCount?: number;
+	readyTargetCount?: number;
+	nextTargetReadyAt?: string;
 }
 
 export interface StormIslandReturnStateV2 {
@@ -1542,6 +1595,7 @@ export interface AttackLaunchRatesV2 {
 
 export interface MovementSnapshotV2 {
 	version: number;
+	connectionGeneration?: number;
 	observedAt?: string;
 }
 
@@ -1733,11 +1787,22 @@ export interface EventRankingStateV2 {
 	observedAt?: string;
 }
 
+export interface EventAvailabilityV2 {
+	eventId: number;
+	endsAt: string;
+}
+
+export interface EventInventoryStateV2 {
+	observedAt?: string;
+	activeByEvent?: Record<string, EventAvailabilityV2> | null;
+}
+
 export interface EventScoreStateV2 {
 	activeEventId?: number;
 	byEvent: Record<string, ScalableEventScoreV2>;
 	activityByEvent?: Record<string, EventActivityStateV2>;
 	rankingByEvent?: Record<string, EventRankingStateV2>;
+	inventory: EventInventoryStateV2;
 }
 
 export interface AdvisorRunStateV2 {
@@ -1880,6 +1945,7 @@ export interface GameStateV2 {
   player: PlayerStateV2;
 	castles: Record<string, CastleStateV2>;
 	commanders: Record<string, CommanderStateV2>;
+	generals: Record<string, unknown>;
 	castellans: Record<string, CastellanStateV2>;
 	movements: Record<string, MovementStateV2>;
 	movementSnapshot: MovementSnapshotV2;
@@ -1902,12 +1968,135 @@ export interface GameStateV2 {
 	nomadCamps: NomadCampStateV2;
 	khan: KhanStateV2;
 	dailyAttacks: DailyAttackStateV2;
+	attackDialog: unknown;
+	attackPresets: unknown[];
 	eventScores: EventScoreStateV2;
 	advisor: AdvisorStateV2;
 	commandContext: CommandContextStateV2;
 	automations: Record<string, AutomationStateV2>;
 	reports: ReportStateV2;
 	observations: Record<string, ProtocolObservationV2>;
+}
+
+export type GameStateComponentV2 =
+	| 'catalog'
+	| 'session'
+	| 'account'
+	| 'player'
+	| 'castles'
+	| 'commanders'
+	| 'generals'
+	| 'castellans'
+	| 'movements'
+	| 'movementSnapshot'
+	| 'stationing'
+	| 'scheduled'
+	| 'rift'
+	| 'inventory'
+	| 'subscriptions'
+	| 'market'
+	| 'kingdomTransport'
+	| 'beri'
+	| 'alliance'
+	| 'alliances'
+	| 'allianceHelpRequests'
+	| 'map'
+	| 'towerCooldowns'
+	| 'towerQueue'
+	| 'invasion'
+	| 'storm'
+	| 'nomadCamps'
+	| 'advisor'
+	| 'khan'
+	| 'dailyAttacks'
+	| 'attackDialog'
+	| 'attackPresets'
+	| 'attackAnalytics'
+	| 'eventScores'
+	| 'commandContext'
+	| 'automations'
+	| 'reports'
+	| 'observations';
+
+export interface MapChangeV2 {
+	kingdomId: number;
+	key: string;
+	observation?: MapObservationV2;
+	deleted?: boolean;
+}
+
+export interface CastleChangeV2 {
+	id: number;
+	castle?: CastleStateV2;
+	patch?: Partial<CastleStateV2>;
+	deleted?: boolean;
+}
+
+export interface MovementChangeV2 {
+	id: number;
+	movement?: MovementStateV2;
+	deleted?: boolean;
+}
+
+export interface EquipmentChangeV2 {
+	id: number;
+	equipment?: EquipmentInstanceV2;
+	deleted?: boolean;
+}
+
+export interface GemChangeV2 {
+	id: number;
+	gem?: GemInstanceV2;
+	deleted?: boolean;
+}
+
+export interface InventoryItemChangeV2 {
+	collection: string;
+	items?: Record<string, number>;
+	deleted?: boolean;
+}
+
+export type InventoryPatchV2 = Partial<InventoryStateV2> & {
+	equipmentChanges?: EquipmentChangeV2[];
+	gemChanges?: GemChangeV2[];
+	itemChanges?: InventoryItemChangeV2[];
+};
+
+export interface EventScoreChangeV2 {
+	eventId: number;
+	score?: ScalableEventScoreV2;
+	scoreDeleted?: boolean;
+	activity?: EventActivityStateV2;
+	activityDeleted?: boolean;
+	ranking?: EventRankingStateV2;
+	rankingDeleted?: boolean;
+}
+
+export interface EventScorePatchV2 {
+	activeEventId?: number;
+	inventory?: EventInventoryStateV2;
+	changes?: EventScoreChangeV2[];
+}
+
+export type GameStatePatchV2 = Partial<GameStateV2>
+	& Pick<GameStateV2, 'schemaVersion' | 'revision' | 'updatedAt'>
+	& {
+		mapChanges?: MapChangeV2[];
+		castleChanges?: CastleChangeV2[];
+		movementChanges?: MovementChangeV2[];
+		inventoryChanges?: InventoryPatchV2;
+		eventScoreChanges?: EventScorePatchV2;
+	};
+
+export interface StateChangeEventV2 {
+	sequence: number;
+	gap?: boolean;
+	revision: number;
+	domains: string[];
+	components: GameStateComponentV2[];
+	partitions?: unknown[];
+	occurredAt: string;
+	patch: GameStatePatchV2;
 }
 
 export interface GameDataMetadata {

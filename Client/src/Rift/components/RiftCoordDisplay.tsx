@@ -77,7 +77,7 @@ const RiftCoordDisplay: React.FC = () => {
             </div>
 
             {hasCastleCoords ? (
-              <div className="rounded-lg border border-border-base bg-bg-card/40 px-4 py-3 min-w-[12rem]">
+              <div className="w-full rounded-lg border border-border-base bg-bg-card/40 px-4 py-3 md:w-auto md:min-w-[12rem]">
                 <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">
                   From {castleName}
                 </p>

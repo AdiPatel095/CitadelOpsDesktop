@@ -1631,7 +1631,7 @@ func (transport *ChromiumTransport) recordSocketLoginFrame(
 	password string,
 ) {
 	decoded, err := Protocol.Decode(frame, Protocol.DirectionOutbound, time.Now().UTC())
-	if err != nil || decoded.Opcode != "lli" || !strings.HasPrefix(decoded.Namespace, "EmpireEx_") {
+	if err != nil || decoded.Opcode != "lli" || !strings.HasPrefix(decoded.Namespace, "EmpireEx") {
 		return
 	}
 	transport.mu.Lock()
@@ -2477,7 +2477,7 @@ const chromiumTransportInjection = `
       if (typeof payload !== 'string') return '';
       const parts = payload.split('%');
       if (parts.length <= 4) return '';
-      return String(parts[2] || '').startsWith('EmpireEx_')
+      return String(parts[2] || '').startsWith('EmpireEx')
         ? String(parts[3] || '').toLowerCase()
         : String(parts[2] || '').toLowerCase();
     };

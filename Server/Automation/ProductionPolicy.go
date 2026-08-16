@@ -406,15 +406,15 @@ func productionUnitFamilyIDs(target productionTarget, gameData *GameData.Store) 
 	}
 
 	seed := target.ID
-	if _, found := productionRecord(units, seed); !found {
+	if !units.Contains(strconv.FormatInt(seed, 10)) {
 		for _, candidate := range []int64{target.MinID, target.MaxID} {
-			if _, candidateFound := productionRecord(units, candidate); candidateFound {
+			if units.Contains(strconv.FormatInt(candidate, 10)) {
 				seed = candidate
 				break
 			}
 		}
 	}
-	if _, found := productionRecord(units, seed); !found {
+	if !units.Contains(strconv.FormatInt(seed, 10)) {
 		return []int64{target.ID}
 	}
 
@@ -454,11 +454,10 @@ func productionUnitFamilyIDs(target productionTarget, gameData *GameData.Store) 
 }
 
 func productionUnitLink(catalog *GameData.Catalog, definitionID int64, field string) int64 {
-	record, found := productionRecord(catalog, definitionID)
-	if !found {
+	if catalog == nil || definitionID <= 0 {
 		return 0
 	}
-	linkedID, exists := record.Int64(field)
+	linkedID, exists := catalog.Int64(strconv.FormatInt(definitionID, 10), field)
 	if !exists || linkedID <= 0 {
 		return 0
 	}
@@ -588,15 +587,11 @@ func productionVIPQueueCapacity(state State.GameState, lineID int, gameData *Gam
 	if err != nil {
 		return productionBaseQueueCapacity, false
 	}
-	record, found := productionRecord(catalog, int64(state.Player.VIP.Level))
-	if !found {
-		return productionBaseQueueCapacity, false
-	}
 	field := "recruitmentBonusSlots"
 	if lineID == 1 {
 		field = "productionBonusSlots"
 	}
-	bonus, exists := record.Int64(field)
+	bonus, exists := catalog.Int64(strconv.Itoa(state.Player.VIP.Level), field)
 	if !exists || bonus < 0 {
 		return productionBaseQueueCapacity, false
 	}
@@ -619,23 +614,28 @@ func (policy *ProductionPolicy) targetAmount(
 }
 
 func recruitmentStackAmount(state State.GameState, castle State.CastleState, gameData *GameData.Store) int64 {
-	buildings, constructionItems, ok := productionCatalogs(gameData)
-	if !ok {
+	if gameData == nil {
+		return 0
+	}
+	buildings, buildingsErr := gameData.BuildingCatalog()
+	constructionItems, constructionItemsErr := gameData.ConstructionItemCatalog()
+	if buildingsErr != nil || constructionItemsErr != nil {
 		return 0
 	}
 	subscriptionBonus := recruitmentSubscriptionStackBonus(state, gameData)
 	var best int64
 	for instanceID, building := range castle.Buildings {
-		record, found := productionRecord(buildings, int64(building.DefinitionID))
+		definition, found := buildings.DefinitionView(int64(building.DefinitionID))
 		if !found {
 			continue
 		}
-		base, exists := record.Int64("stackSize")
-		if !exists || base <= 0 {
+		base := int64(definition.Values["stackSize"])
+		if base <= 0 {
 			continue
 		}
-		groups := commaSeparatedIDs(recordString(record, "constructionItemGroupIDs"))
-		amount := base + recruitmentConstructionBonus(castle.ConstructionSlots[instanceID], groups, constructionItems) + subscriptionBonus
+		amount := base + recruitmentConstructionBonus(
+			castle.ConstructionSlots[instanceID], definition.ConstructionItemGroupIDs, constructionItems,
+		) + subscriptionBonus
 		if amount > best {
 			best = amount
 		}
@@ -659,35 +659,11 @@ func recruitmentSubscriptionStackBonus(state State.GameState, gameData *GameData
 	if len(activeTypeIDs) == 0 {
 		return 0
 	}
-	raw, exists := gameData.RawCollection("subscriptionsBuffs")
-	if !exists {
-		return 0
-	}
-	var buffs []struct {
-		SubscriptionTypeID string `json:"subscriptionTypeID"`
-		Effects            string `json:"effects"`
-	}
-	if err := json.Unmarshal(raw, &buffs); err != nil {
-		return 0
-	}
 	bonuses := map[int]int64{}
-	for _, buff := range buffs {
-		typeID, err := strconv.Atoi(strings.TrimSpace(buff.SubscriptionTypeID))
-		if err != nil || typeID <= 0 {
-			continue
-		}
-		if _, active := activeTypeIDs[typeID]; !active {
-			continue
-		}
-		for _, effect := range strings.Split(buff.Effects, ",") {
-			effectIDText, valueText, found := strings.Cut(strings.TrimSpace(effect), "&")
-			if !found || strings.ContainsAny(valueText, "+#") {
-				continue
-			}
-			effectID, effectErr := strconv.Atoi(strings.TrimSpace(effectIDText))
-			value, valueErr := strconv.ParseInt(strings.TrimSpace(valueText), 10, 64)
-			if effectErr == nil && valueErr == nil && effectID == recruitmentStackCapacityEffectID && value > 0 {
-				bonuses[typeID] = value
+	for typeID := range activeTypeIDs {
+		for _, effect := range gameData.SubscriptionEffectsView(typeID) {
+			if !effect.Decorated && effect.ID == recruitmentStackCapacityEffectID && effect.Value > 0 {
+				bonuses[typeID] = effect.Value
 			}
 		}
 	}
@@ -698,60 +674,61 @@ func recruitmentSubscriptionStackBonus(state State.GameState, gameData *GameData
 	return total
 }
 
-func recruitmentConstructionBonus(slots []State.ConstructionSlot, buildingGroups map[int64]struct{}, catalog *GameData.Catalog) int64 {
+func recruitmentConstructionBonus(
+	slots []State.ConstructionSlot,
+	buildingGroups []int64,
+	catalog *GameData.ConstructionItemCatalog,
+) int64 {
 	var total int64
 	for _, slot := range slots {
-		record, found := productionRecord(catalog, int64(slot.DefinitionID))
-		if !found || !recruitmentConstructionApplies(record, buildingGroups) {
+		definition, found := catalog.DefinitionView(int64(slot.DefinitionID))
+		if !found || !recruitmentConstructionApplies(definition, buildingGroups) {
 			continue
 		}
-		if stackSize, exists := record.Int64("stackSize"); exists && stackSize > 0 {
-			total += stackSize
+		if definition.StackSize > 0 {
+			total += definition.StackSize
 		}
 	}
 	return total
 }
 
-func recruitmentConstructionApplies(record GameData.Record, buildingGroups map[int64]struct{}) bool {
-	if groupID, exists := record.Int64("constructionItemGroupID"); exists && groupID > 0 {
-		if _, applies := buildingGroups[groupID]; applies {
-			return true
-		}
-	}
-	if strings.EqualFold(recordString(record, "lockRemoval"), "SOLDIER_RECRUITMENT") {
+func recruitmentConstructionApplies(definition GameData.ConstructionItemTier, buildingGroups []int64) bool {
+	if definition.GroupID > 0 && containsInt64(buildingGroups, definition.GroupID) {
 		return true
 	}
-	name := strings.ToLower(recordString(record, "name") + " " + recordString(record, "comment2") + " " + recordString(record, "displayNameKey"))
+	if strings.EqualFold(definition.LockRemoval, "SOLDIER_RECRUITMENT") {
+		return true
+	}
+	name := strings.ToLower(definition.InternalName + " " + definition.Comment + " " + definition.DisplayNameKey)
 	return strings.Contains(name, "barrack") && strings.Contains(name, "stack")
 }
 
 func toolProductionStackAmount(castle State.CastleState, toolID int64, gameData *GameData.Store) int64 {
-	buildings, _, ok := productionCatalogs(gameData)
-	if !ok {
+	if gameData == nil {
 		return 0
 	}
-	units, err := gameData.Catalog("units")
+	buildings, err := gameData.BuildingCatalog()
 	if err != nil {
 		return 0
 	}
-	tool, found := productionRecord(units, toolID)
+	tool, found := gameData.UnitRuntimeView(toolID)
 	if !found {
 		return 0
 	}
-	workshopName := strings.ToLower(strings.TrimSpace(recordString(tool, "name")))
+	workshopName := strings.ToLower(strings.TrimSpace(tool.InternalName))
 	if workshopName != "workshop" && workshopName != "dworkshop" {
 		return 0
 	}
 	var best int64
 	for _, building := range castle.Buildings {
-		record, found := productionRecord(buildings, int64(building.DefinitionID))
-		if !found || !strings.EqualFold(recordString(record, "name"), workshopName) {
+		definition, found := buildings.DefinitionView(int64(building.DefinitionID))
+		if !found || !strings.EqualFold(definition.InternalName, workshopName) {
 			continue
 		}
-		amount, exists := record.Int64("stackSize")
-		if !exists || amount <= 0 {
-			if level, levelExists := record.Int64("level"); levelExists && level > 0 && level <= 4 {
-				amount = level * 20
+		amount := int64(definition.Values["stackSize"])
+		if amount <= 0 {
+			if definition.Level > 0 && definition.Level <= 4 {
+				amount = definition.Level * 20
 			}
 		}
 		if amount > best {
@@ -759,35 +736,6 @@ func toolProductionStackAmount(castle State.CastleState, toolID int64, gameData 
 		}
 	}
 	return best
-}
-
-func productionCatalogs(gameData *GameData.Store) (*GameData.Catalog, *GameData.Catalog, bool) {
-	if gameData == nil {
-		return nil, nil, false
-	}
-	buildings, buildingsErr := gameData.Catalog("buildings")
-	constructionItems, constructionItemsErr := gameData.Catalog("constructionItems")
-	if buildingsErr != nil || constructionItemsErr != nil {
-		return nil, nil, false
-	}
-	return buildings, constructionItems, true
-}
-
-func productionRecord(catalog *GameData.Catalog, id int64) (GameData.Record, bool) {
-	if catalog == nil || id <= 0 {
-		return nil, false
-	}
-	raw, found := catalog.Find(strconv.FormatInt(id, 10))
-	if !found {
-		return nil, false
-	}
-	record, err := GameData.DecodeRecord(raw)
-	return record, err == nil
-}
-
-func recordString(record GameData.Record, field string) string {
-	value, _ := record.String(field)
-	return value
 }
 
 func castleName(castle State.CastleState) string {

@@ -47,12 +47,15 @@ type stormCastleUnlockGuardRequest struct {
 }
 
 type stormMapScanRequest struct {
-	SourceCastleID State.CastleID       `json:"sourceCastleId"`
-	FullMap        bool                 `json:"fullMap,omitempty"`
-	Targeted       bool                 `json:"targeted,omitempty"`
-	Bounds         State.StormMapBounds `json:"bounds"`
-	Radius         int                  `json:"radius,omitempty"`
-	ScanStartedAt  time.Time            `json:"scanStartedAt"`
+	SourceCastleID State.CastleID         `json:"sourceCastleId"`
+	FullMap        bool                   `json:"fullMap,omitempty"`
+	Cooperative    bool                   `json:"cooperative,omitempty"`
+	LeaseID        string                 `json:"leaseId,omitempty"`
+	Windows        []State.StormMapBounds `json:"windows,omitempty"`
+	Targeted       bool                   `json:"targeted,omitempty"`
+	Bounds         State.StormMapBounds   `json:"bounds"`
+	Radius         int                    `json:"radius,omitempty"`
+	ScanStartedAt  time.Time              `json:"scanStartedAt"`
 }
 
 type stormMapBurstSender interface {
@@ -323,7 +326,7 @@ func (application *Application) verifyStormCastleUnlock(_ context.Context, argum
 		return fmt.Errorf("official game data is unavailable")
 	}
 	if _, err := stormCastleUnlockOption(Intent.PlanningContext{
-		State: application.State.Snapshot(), GameData: gameData,
+		State: application.State.ReadOnlyView(), GameData: gameData,
 	}, request.PrebuiltCastleID, request.RefreshStartedAt); err != nil {
 		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
@@ -367,13 +370,15 @@ func planStormMapScan(_ context.Context, input Intent.PlanningContext, arguments
 	} else if input.State.Storm.Map.SourceCastleID == 0 {
 		lastAttemptAt = input.State.Storm.LastScannedAt[source.ID]
 	}
-	if request.FullMap && !lastAttemptAt.IsZero() && time.Now().UTC().Before(lastAttemptAt.Add(stormMapMinimumAttemptInterval)) {
+	if request.FullMap && !request.Cooperative && !lastAttemptAt.IsZero() && time.Now().UTC().Before(lastAttemptAt.Add(stormMapMinimumAttemptInterval)) {
 		return Intent.Plan{}, fmt.Errorf("full Storm map sweeps are limited to one attempt every two hours")
 	}
 	request.ScanStartedAt = time.Now().UTC()
 	normalizedArguments, _ := json.Marshal(request)
 	windows := towerMapScanWindows(source, request.Radius)
-	if request.FullMap || request.Targeted {
+	if request.Cooperative {
+		windows = stormCooperativeScanWindows(request.Windows)
+	} else if request.FullMap || request.Targeted {
 		windows = stormMapScanWindows(request.Bounds)
 	}
 	steps := make([]Intent.Step, 0, len(windows)+3)
@@ -413,7 +418,11 @@ func planStormMapScan(_ context.Context, input Intent.PlanningContext, arguments
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	summary := fmt.Sprintf("Refresh Storm forts and resource islands around %s", castleLabel(source))
 	if request.FullMap {
-		summary = fmt.Sprintf("Refresh the Storm map outward from %d:%d", stormMapCenterCoordinate, stormMapCenterCoordinate)
+		if request.Cooperative {
+			summary = fmt.Sprintf("Refresh %d leased windows for shared Storm coverage", len(request.Windows))
+		} else {
+			summary = fmt.Sprintf("Refresh the Storm map outward from %d:%d", stormMapCenterCoordinate, stormMapCenterCoordinate)
+		}
 	} else if request.Targeted {
 		summary = fmt.Sprintf("Refresh Storm target at %d:%d", request.Bounds.X1, request.Bounds.Y1)
 	}
@@ -421,6 +430,14 @@ func planStormMapScan(_ context.Context, input Intent.PlanningContext, arguments
 		Claims:  []string{"castle-focus", "castle:" + castleID, "map:" + strconv.FormatInt(int64(source.KingdomID), 10)},
 		Summary: summary, Steps: steps,
 	}, nil
+}
+
+func stormCooperativeScanWindows(bounds []State.StormMapBounds) []towerMapWindow {
+	windows := make([]towerMapWindow, 0, len(bounds))
+	for _, value := range bounds {
+		windows = append(windows, towerMapWindow{X1: value.X1, Y1: value.Y1, X2: value.X2, Y2: value.Y2})
+	}
+	return windows
 }
 
 func stormMapScanWindows(bounds State.StormMapBounds) []towerMapWindow {
@@ -508,20 +525,18 @@ func absStormMapOffset(value int) int {
 }
 
 func stormMapSweepNeedsExpansion(state State.GameState, bounds State.StormMapBounds, startedAt time.Time) bool {
-	for _, observation := range state.Storm.Map.Targets {
-		if stormMapTargetTouchesEdge(observation, bounds) {
+	touchesEdge := false
+	state.RangeStormMapObservations(func(_ string, observation State.MapObservation) bool {
+		if !observation.ObservedAt.IsZero() && observation.ObservedAt.Before(startedAt) {
 			return true
 		}
-	}
-	for _, observation := range state.Map[stormIntentKingdomID] {
-		if observation.ObservedAt.Before(startedAt) {
-			continue
-		}
 		if stormMapTargetTouchesEdge(observation, bounds) {
-			return true
+			touchesEdge = true
+			return false
 		}
-	}
-	return false
+		return true
+	})
+	return touchesEdge
 }
 
 func stormMapTargetTouchesEdge(observation State.MapObservation, bounds State.StormMapBounds) bool {
@@ -669,7 +684,7 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 }
 
 func planStormShopPurchase(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
-	request, castle, purchases, err := stormShopPurchaseContext(input, arguments)
+	request, castle, purchases, err := stormShopPurchaseContext(input, arguments, false)
 	if err != nil {
 		return Intent.Plan{}, err
 	}
@@ -743,7 +758,29 @@ func stormMapScanContext(input Intent.PlanningContext, arguments json.RawMessage
 	if !exists || source.KingdomID != stormIntentKingdomID {
 		return stormMapScanRequest{}, State.CastleState{}, fmt.Errorf("Storm source castle %d is unavailable in kingdom %d", request.SourceCastleID, stormIntentKingdomID)
 	}
-	if request.FullMap {
+	if request.FullMap && request.Cooperative {
+		if strings.TrimSpace(request.LeaseID) == "" || len(request.Windows) == 0 || len(request.Windows) > stormMapMaximumWindowCount {
+			return stormMapScanRequest{}, State.CastleState{}, fmt.Errorf("cooperative Storm scan requires one bounded shared lease")
+		}
+		covered := State.StormMapBounds{}
+		for index, window := range request.Windows {
+			if !window.IsValid() || window.X2 > stormMapMaximumCoordinate || window.Y2 > stormMapMaximumCoordinate ||
+				len(stormMapScanWindows(window)) != 1 {
+				return stormMapScanRequest{}, State.CastleState{}, fmt.Errorf("cooperative Storm scan contains an invalid map window")
+			}
+			if index == 0 {
+				covered = window
+			} else {
+				covered.X1 = min(covered.X1, window.X1)
+				covered.Y1 = min(covered.Y1, window.Y1)
+				covered.X2 = max(covered.X2, window.X2)
+				covered.Y2 = max(covered.Y2, window.Y2)
+			}
+		}
+		if request.Bounds != covered {
+			return stormMapScanRequest{}, State.CastleState{}, fmt.Errorf("cooperative Storm scan bounds do not match its leased windows")
+		}
+	} else if request.FullMap {
 		initialBounds := stormMapConcentricBounds(0)
 		if request.Bounds != initialBounds {
 			return stormMapScanRequest{}, State.CastleState{}, fmt.Errorf(
@@ -786,14 +823,14 @@ func stormAttackContext(
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("Storm source castle %d is unavailable", request.SourceCastleID)
 	}
 	key := fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)
-	target, exists := input.State.Map[request.KingdomID][key]
+	target, exists := input.State.LookupMapObservation(request.KingdomID, key)
 	mapStateCurrent := stormMapStateMatches(input.State, input.State.Storm.Map, source.ID)
 	if mapStateCurrent && !input.State.Storm.Map.LastAttemptAt.IsZero() &&
 		(input.State.Storm.Map.LastCompletedAt.IsZero() || input.State.Storm.Map.LastCompletedAt.Before(input.State.Storm.Map.LastAttemptAt)) {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("the latest full Storm map sweep has not completed")
 	}
 	if !input.State.Storm.Map.LastCompletedAt.IsZero() && mapStateCurrent {
-		scannedTarget, scanned := input.State.Storm.Map.Targets[key]
+		scannedTarget, scanned := input.State.LookupStormTarget(key)
 		if !scanned {
 			return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("Storm target %d:%d is no longer in the authoritative map state", request.TargetX, request.TargetY)
 		}
@@ -805,7 +842,7 @@ func stormAttackContext(
 	if !exists || target.TypeID != request.TargetTypeID || target.StormIsleID != request.StormIsleID {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("Storm target %d:%d is no longer the selected isle", request.TargetX, request.TargetY)
 	}
-	definition, found := input.GameData.StormIsle(request.StormIsleID)
+	definition, found := input.GameData.StormIsleView(request.StormIsleID)
 	if !found || definition.Kind == GameData.StormIsleKindFort && request.TargetTypeID != stormIntentFortMapTypeID ||
 		definition.Kind == GameData.StormIsleKindIsland && request.TargetTypeID != stormIntentIslandMapTypeID {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("Storm isle %d does not match target type %d", request.StormIsleID, request.TargetTypeID)
@@ -817,7 +854,7 @@ func stormAttackContext(
 	if stormTargetCooldownRemaining(target, now) > 0 {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("Storm target %d:%d is still on cooldown", request.TargetX, request.TargetY)
 	}
-	if request.TargetTypeID == stormIntentIslandMapTypeID && stormTargetExpired(target, now) {
+	if request.TargetTypeID == stormIntentIslandMapTypeID && stormTargetExpired(target, definition, now) {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("Storm resource island %d:%d has expired from the learned map state", request.TargetX, request.TargetY)
 	}
 	if request.TargetTypeID == stormIntentIslandMapTypeID && target.ObjectID <= 0 {
@@ -923,6 +960,7 @@ func stormIslandReturnContext(
 func stormShopPurchaseContext(
 	input Intent.PlanningContext,
 	arguments json.RawMessage,
+	requireCurrentCounters bool,
 ) (stormShopPurchaseRequest, State.CastleState, []stormShopPurchaseLine, error) {
 	var request stormShopPurchaseRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -961,9 +999,8 @@ func stormShopPurchaseContext(
 	if !exists || castle.KingdomID != stormIntentKingdomID {
 		return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("castle %d is not the current Storm castle", request.CastleID)
 	}
-	if input.State.Inventory.ConstructionOffersCastleID != castle.ID ||
-		input.State.Inventory.ConstructionOffersKingdomID != castle.KingdomID ||
-		input.State.Inventory.ConstructionOffersObservedAt.IsZero() {
+	offers, observedAt, countersFound := input.State.ConstructionOffersFor(castle.ID, castle.KingdomID)
+	if requireCurrentCounters && (!countersFound || observedAt.IsZero()) {
 		return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("Luna package purchase counters are not current for Storm castle %d", castle.ID)
 	}
 	purchases := make([]stormShopPurchaseLine, 0, len(normalized))
@@ -977,8 +1014,8 @@ func stormShopPurchaseContext(
 			return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("Storm shop amount is too large")
 		}
 		totalCost += line.Amount * item.AquamarinePrice
-		if item.Stock > 0 {
-			purchased := input.State.Inventory.ConstructionOffers[line.ProductID]
+		if requireCurrentCounters && item.Stock > 0 {
+			purchased := offers[line.ProductID]
 			if line.Amount > max(int64(0), item.Stock-purchased) {
 				return stormShopPurchaseRequest{}, State.CastleState{}, nil, fmt.Errorf("package %d has only %d purchases remaining", line.ProductID, max(int64(0), item.Stock-purchased))
 			}
@@ -1015,26 +1052,32 @@ func validateStormDefenseUnits(units []stormDefenseUnit) error {
 }
 
 func (application *Application) beginStormScan(_ context.Context, arguments json.RawMessage) error {
-	request, _, err := stormMapScanContext(Intent.PlanningContext{State: application.State.Snapshot()}, arguments)
+	request, _, err := stormMapScanContext(Intent.PlanningContext{State: application.State.ReadOnlyView()}, arguments)
 	if err != nil {
 		return err
 	}
 	if !request.FullMap {
 		return nil
 	}
+	if request.Cooperative {
+		// The process-owned lease is the attempt record. Keeping contributor,
+		// lease, and partial-coverage metadata out of account GameState prevents
+		// both duplication and cross-account attribution leaks.
+		return nil
+	}
 	startedAt := stormScanStartedAt(request)
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentStorm), func(gameState *State.GameState) ([]string, bool, error) {
 		source, exists := gameState.Castles[request.SourceCastleID]
 		if !exists || !source.Focused {
 			return nil, false, fmt.Errorf("Storm source castle %d is no longer focused", request.SourceCastleID)
 		}
 		if !stormMapStateMatches(*gameState, gameState.Storm.Map, request.SourceCastleID) {
-			gameState.Storm.Map = State.StormMapState{
+			gameState.ReplaceStormMap(State.StormMapState{
 				ServerURL:      gameState.Session.ServerURL,
 				PlayerID:       gameState.Player.ID,
 				SourceCastleID: request.SourceCastleID,
 				Targets:        map[string]State.MapObservation{},
-			}
+			})
 		}
 		if gameState.Storm.Map.LastAttemptAt.Equal(startedAt) {
 			return nil, false, nil
@@ -1053,7 +1096,7 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 	if application == nil || application.State == nil || application.Session == nil || application.Ingest == nil {
 		return fmt.Errorf("Storm map burst dependencies are unavailable")
 	}
-	request, source, err := stormMapScanContext(Intent.PlanningContext{State: application.State.Snapshot()}, arguments)
+	request, source, err := stormMapScanContext(Intent.PlanningContext{State: application.State.ReadOnlyView()}, arguments)
 	if err != nil {
 		return err
 	}
@@ -1067,6 +1110,22 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 	defer cancelBurst()
 
 	startedAt := stormScanStartedAt(request)
+	if request.Cooperative {
+		windows := stormCooperativeScanWindows(request.Windows)
+		timeout := stormMapBurstRemaining(burstContext)
+		if timeout <= 0 {
+			return fmt.Errorf("cooperative Storm scan exceeded the %s response deadline: %w", stormMapBurstResponseTimeout, burstContext.Err())
+		}
+		if err := runStormMapGAABurst(
+			burstContext, application.Session, application.Ingest, source.KingdomID, windows, timeout,
+		); err != nil {
+			if application.WorldMaps != nil {
+				application.WorldMaps.ReleaseStormScan(application.AccountKey, request.LeaseID)
+			}
+			return fmt.Errorf("scan leased Storm map windows: %w", err)
+		}
+		return application.captureStormScanRequest(request)
+	}
 	for ring := 0; ; ring++ {
 		windows := stormMapConcentricRingWindows(ring)
 		if len(windows) == 0 {
@@ -1085,7 +1144,7 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 			return fmt.Errorf("scan Storm map ring %d: %w", ring, err)
 		}
 		request.Bounds = stormMapConcentricBounds(ring)
-		if !stormMapSweepNeedsExpansion(application.State.Snapshot(), request.Bounds, startedAt) {
+		if !stormMapSweepNeedsExpansion(application.State.ReadOnlyView(), request.Bounds, startedAt) {
 			return application.captureStormScanRequest(request)
 		}
 	}
@@ -1252,7 +1311,7 @@ func runStormMapGAABurst(
 }
 
 func (application *Application) captureStormScan(_ context.Context, arguments json.RawMessage) error {
-	request, _, err := stormMapScanContext(Intent.PlanningContext{State: application.State.Snapshot()}, arguments)
+	request, _, err := stormMapScanContext(Intent.PlanningContext{State: application.State.ReadOnlyView()}, arguments)
 	if err != nil {
 		return err
 	}
@@ -1260,41 +1319,68 @@ func (application *Application) captureStormScan(_ context.Context, arguments js
 }
 
 func (application *Application) captureStormScanRequest(request stormMapScanRequest) error {
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		if _, exists := gameState.Castles[request.SourceCastleID]; !exists {
-			return nil, false, fmt.Errorf("Storm source castle %d is no longer available", request.SourceCastleID)
-		}
-		if gameState.Storm.LastScannedAt == nil {
-			gameState.Storm.LastScannedAt = map[State.CastleID]time.Time{}
+	if request.Cooperative {
+		if application.WorldMaps == nil || strings.TrimSpace(application.AccountKey) == "" {
+			return fmt.Errorf("shared Storm scan coordinator is unavailable")
 		}
 		startedAt := stormScanStartedAt(request)
 		completedAt := time.Now().UTC()
+		state := application.State.ReadOnlyView()
+		worldID := strings.TrimSpace(state.Account.WorldID)
+		if worldID == "" {
+			worldID = strings.TrimSpace(state.Session.ServerURL)
+		}
+		worldEvent, err := application.WorldMaps.CompleteStormScan(
+			application.AccountKey, worldID, stormIntentKingdomID, request.LeaseID,
+			request.Windows, startedAt, completedAt,
+		)
+		if err != nil {
+			return err
+		}
+		// Adopt immediately instead of waiting for supervisor fan-out. No
+		// contributor identity is retained in the generation or emitted patch.
+		application.State.AdoptWorldMap(worldEvent)
+		_, err = application.State.ApplyComponents(State.Components(State.ComponentStorm), func(gameState *State.GameState) ([]string, bool, error) {
+			lastScannedAt := gameState.MutableStormLastScannedAt()
+			if lastScannedAt[request.SourceCastleID].Equal(completedAt) {
+				return nil, false, nil
+			}
+			lastScannedAt[request.SourceCastleID] = completedAt
+			return []string{"storm-scan"}, true, nil
+		})
+		return err
+	}
+	_, err := application.State.ApplyComponents(State.Components(
+		State.ComponentStorm, State.ComponentWorldMap,
+	), func(gameState *State.GameState) ([]string, bool, error) {
+		if _, exists := gameState.Castles[request.SourceCastleID]; !exists {
+			return nil, false, fmt.Errorf("Storm source castle %d is no longer available", request.SourceCastleID)
+		}
+		lastScannedAt := gameState.MutableStormLastScannedAt()
+		startedAt := stormScanStartedAt(request)
+		completedAt := time.Now().UTC()
 		if !request.FullMap {
-			changed := !gameState.Storm.LastScannedAt[request.SourceCastleID].Equal(completedAt)
-			gameState.Storm.LastScannedAt[request.SourceCastleID] = completedAt
+			changed := !lastScannedAt[request.SourceCastleID].Equal(completedAt)
+			lastScannedAt[request.SourceCastleID] = completedAt
 			if request.Targeted {
 				if !stormMapStateMatches(*gameState, gameState.Storm.Map, request.SourceCastleID) {
 					return nil, false, fmt.Errorf("Storm map identity changed before targeted refresh capture")
 				}
-				observations := gameState.Map[stormIntentKingdomID]
-				for key, tracked := range gameState.Storm.Map.Targets {
+				gameState.RangeStormTargets(func(key string, tracked State.MapObservation) bool {
 					if !request.Bounds.Contains(tracked.X, tracked.Y) {
-						continue
+						return true
 					}
-					observation, exists := observations[key]
+					observation, exists := gameState.LookupMapObservation(stormIntentKingdomID, key)
 					if !exists || observation.ObservedAt.Before(startedAt) ||
 						(observation.TypeID != stormIntentIslandMapTypeID && observation.TypeID != stormIntentFortMapTypeID) {
-						delete(gameState.Storm.Map.Targets, key)
-						changed = true
-						continue
+						if gameState.DeleteStormTarget(key) {
+							changed = true
+						}
 					}
-					if observation != tracked {
-						gameState.Storm.Map.Targets[key] = observation
-						changed = true
-					}
-				}
+					return true
+				})
 			}
-			return []string{"storm", "map"}, changed, nil
+			return []string{"storm", "map-storm"}, changed, nil
 		}
 		if !stormMapStateMatches(*gameState, gameState.Storm.Map, request.SourceCastleID) ||
 			!gameState.Storm.Map.LastAttemptAt.Equal(startedAt) {
@@ -1305,23 +1391,27 @@ func (application *Application) captureStormScanRequest(request stormMapScanRequ
 		}
 
 		targets := map[string]State.MapObservation{}
-		observations := gameState.Map[stormIntentKingdomID]
-		for key, observation := range observations {
+		staleKeys := []string{}
+		gameState.RangeMapObservationsByKind(stormIntentKingdomID, State.MapProjectionStorm, func(key string, observation State.MapObservation) bool {
 			if !request.Bounds.Contains(observation.X, observation.Y) {
-				continue
+				return true
 			}
 			if observation.ObservedAt.Before(startedAt) {
 				if observation.TypeID == stormIntentIslandMapTypeID || observation.TypeID == stormIntentFortMapTypeID {
-					delete(observations, key)
+					staleKeys = append(staleKeys, key)
 				}
-				continue
+				return true
 			}
 			if observation.TypeID == stormIntentIslandMapTypeID || observation.TypeID == stormIntentFortMapTypeID {
 				targets[key] = observation
 			}
+			return true
+		})
+		for _, key := range staleKeys {
+			gameState.DeleteMapObservation(stormIntentKingdomID, key)
 		}
 
-		gameState.Storm.Map = State.StormMapState{
+		gameState.ReplaceStormMap(State.StormMapState{
 			ServerURL:       gameState.Session.ServerURL,
 			PlayerID:        gameState.Player.ID,
 			SourceCastleID:  request.SourceCastleID,
@@ -1331,9 +1421,9 @@ func (application *Application) captureStormScanRequest(request stormMapScanRequ
 			LastCompletedAt: completedAt,
 			WindowCount:     len(stormMapScanWindows(request.Bounds)),
 			Targets:         targets,
-		}
-		gameState.Storm.LastScannedAt[request.SourceCastleID] = completedAt
-		return []string{"storm", "map"}, true, nil
+		})
+		lastScannedAt[request.SourceCastleID] = completedAt
+		return []string{"storm", "map-storm"}, true, nil
 	})
 	return err
 }
@@ -1356,7 +1446,7 @@ func (application *Application) guardStormAttack(_ context.Context, arguments js
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	gameData, ready := application.GameData.Current()
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
@@ -1463,28 +1553,18 @@ func (application *Application) consumeStormTarget(_ context.Context, arguments 
 		(request.IslandObjectID <= 0 || request.LeaveBehind < 0 || request.LeaveBehind > 1) {
 		return fmt.Errorf("Storm island consumption requires an object id and valid occupation count")
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(
+		State.ComponentStorm,
+	), func(gameState *State.GameState) ([]string, bool, error) {
 		source, exists := gameState.Castles[request.SourceCastleID]
 		if !exists || source.KingdomID != stormIntentKingdomID {
 			return nil, false, fmt.Errorf("Storm source castle %d is unavailable", request.SourceCastleID)
 		}
-		observations := gameState.Map[request.KingdomID]
 		key := fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)
-		changed := false
-		if _, exists := observations[key]; exists {
-			delete(observations, key)
-			changed = true
-		}
-		if _, exists := gameState.Storm.Map.Targets[key]; exists {
-			delete(gameState.Storm.Map.Targets, key)
-			changed = true
-		}
+		changed := gameState.DeleteStormTarget(key)
 		if request.TargetTypeID == stormIntentIslandMapTypeID {
-			if gameState.Storm.IslandReturns == nil {
-				gameState.Storm.IslandReturns = map[string]State.StormIslandReturnState{}
-			}
 			returnKey := State.StormIslandReturnKey(request.KingdomID, request.TargetX, request.TargetY)
-			gameState.Storm.IslandReturns[returnKey] = State.StormIslandReturnState{
+			gameState.MutableStormIslandReturns()[returnKey] = State.StormIslandReturnState{
 				KingdomID:      request.KingdomID,
 				SourceCastleID: request.SourceCastleID,
 				TargetX:        request.TargetX,
@@ -1500,7 +1580,7 @@ func (application *Application) consumeStormTarget(_ context.Context, arguments 
 		if !changed {
 			return nil, false, nil
 		}
-		return []string{"map", "storm"}, true, nil
+		return []string{"storm"}, true, nil
 	})
 	return err
 }
@@ -1511,7 +1591,7 @@ func (application *Application) guardStormIslandReturn(_ context.Context, argume
 		return fmt.Errorf("official game data is unavailable")
 	}
 	_, _, _, err := stormIslandReturnContext(Intent.PlanningContext{
-		State: application.State.Snapshot(), GameData: gameData,
+		State: application.State.ReadOnlyView(), GameData: gameData,
 	}, arguments)
 	return err
 }
@@ -1522,8 +1602,9 @@ func (application *Application) completeStormIslandReturn(_ context.Context, arg
 		return err
 	}
 	key := State.StormIslandReturnKey(request.KingdomID, request.IslandX, request.IslandY)
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		operation, exists := gameState.Storm.IslandReturns[key]
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentStorm), func(gameState *State.GameState) ([]string, bool, error) {
+		returns := gameState.MutableStormIslandReturns()
+		operation, exists := returns[key]
 		if !exists {
 			return nil, false, nil
 		}
@@ -1531,7 +1612,7 @@ func (application *Application) completeStormIslandReturn(_ context.Context, arg
 			operation.IslandObjectID != request.IslandObjectID || operation.ReportID != request.ReportID {
 			return nil, false, fmt.Errorf("Storm island return identity changed before completion")
 		}
-		delete(gameState.Storm.IslandReturns, key)
+		delete(returns, key)
 		return []string{"storm"}, true, nil
 	})
 	return err
@@ -1543,8 +1624,8 @@ func (application *Application) guardStormShopPurchase(_ context.Context, argume
 		return fmt.Errorf("official game data is unavailable")
 	}
 	_, _, _, err := stormShopPurchaseContext(Intent.PlanningContext{
-		State: application.State.Snapshot(), GameData: gameData,
-	}, arguments)
+		State: application.State.ReadOnlyView(), GameData: gameData,
+	}, arguments, true)
 	return err
 }
 
@@ -1560,18 +1641,7 @@ func stormTargetCooldownRemaining(target State.MapObservation, now time.Time) in
 }
 
 func stormTargetReadyAt(target State.MapObservation) time.Time {
-	if !target.StormReadyAt.IsZero() {
-		return target.StormReadyAt
-	}
-	if target.ObservedAt.IsZero() {
-		return time.Time{}
-	}
-	readyAt := target.ObservedAt
-	if target.StormCooldownRemaining > 0 &&
-		(target.TypeID == stormIntentFortMapTypeID || target.TypeID == stormIntentIslandMapTypeID && target.OwnerID > 0) {
-		readyAt = readyAt.Add(time.Duration(target.StormCooldownRemaining) * time.Second)
-	}
-	return readyAt
+	return target.StormReadyAt()
 }
 
 func stormIslandUnavailable(target State.MapObservation, now time.Time) bool {
@@ -1582,12 +1652,8 @@ func stormIslandUnavailable(target State.MapObservation, now time.Time) bool {
 	return readyAt.IsZero() || readyAt.After(now)
 }
 
-func stormTargetExpired(target State.MapObservation, now time.Time) bool {
-	expiresAt := target.StormExpiresAt
-	if expiresAt.IsZero() && target.TypeID == stormIntentIslandMapTypeID && target.OwnerID <= 0 &&
-		target.StormCooldownRemaining > 0 && !target.ObservedAt.IsZero() {
-		expiresAt = target.ObservedAt.Add(time.Duration(target.StormCooldownRemaining) * time.Second)
-	}
+func stormTargetExpired(target State.MapObservation, definition GameData.StormIsleDefinition, now time.Time) bool {
+	expiresAt := target.StormExpiresAt(definition.GlobalCooldownSec)
 	return !expiresAt.IsZero() && !expiresAt.After(now)
 }
 

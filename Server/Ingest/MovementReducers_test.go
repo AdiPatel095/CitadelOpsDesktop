@@ -171,6 +171,11 @@ func TestMovementReducerNewConnectionDropsPriorMovement(t *testing.T) {
 	if len(gameState.Movements) != 0 || !gameState.Commanders[7].Available {
 		t.Fatalf("prior connection movement survived new baseline: movements=%+v commander=%+v", gameState.Movements, gameState.Commanders[7])
 	}
+	if gameState.MovementSnapshot.Version != 2 ||
+		gameState.MovementSnapshot.ConnectionGeneration != 2 ||
+		!gameState.MovementSnapshot.ObservedAt.Equal(now.Add(time.Second)) {
+		t.Fatalf("movement snapshot marker = %+v", gameState.MovementSnapshot)
+	}
 }
 
 func TestMovementReducerPreservesOwnedCommanderAcrossScopedSnapshotOmission(t *testing.T) {

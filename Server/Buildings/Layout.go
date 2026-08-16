@@ -160,7 +160,7 @@ func buildLayoutGrid(
 	groundIDs := sortedBuildingIDs(castle.Layout.Ground)
 	for _, id := range groundIDs {
 		building := castle.Layout.Ground[id]
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found || definition.Width <= 0 || definition.Height <= 0 {
 			grid.issues = append(grid.issues, LayoutIssue{
 				Code: "unknown_ground", Message: fmt.Sprintf("Ground object %d has no usable official definition", id),
@@ -194,7 +194,7 @@ func buildLayoutGrid(
 			grid.stored++
 			continue
 		}
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found || definition.Width <= 0 || definition.Height <= 0 {
 			grid.issues = append(grid.issues, LayoutIssue{
 				Code: "unknown_object", Message: fmt.Sprintf("Object %d has no usable official definition", id),

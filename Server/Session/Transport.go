@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Protocol"
+	"CitadelDesktop/Server/State"
 )
 
 var (
@@ -41,7 +42,10 @@ type Status struct {
 	Detail               string         `json:"detail,omitempty"`
 	CooldownUntil        *time.Time     `json:"cooldownUntil,omitempty"`
 	RetryAt              *time.Time     `json:"retryAt,omitempty"`
-	ChangedAt            time.Time      `json:"changedAt"`
+	// LoginFailure carries the structured outcome of a failed game login for
+	// cooldown, error, and reconnecting statuses; other statuses leave it nil.
+	LoginFailure *State.LoginFailure `json:"loginFailure,omitempty"`
+	ChangedAt    time.Time           `json:"changedAt"`
 }
 
 type RawFrame struct {
@@ -72,6 +76,53 @@ type BrowserInventoryProvider interface {
 
 type RelogDelayTransport interface {
 	SetRelogDelayProvider(func() time.Duration)
+}
+
+// RunningTransport is implemented by transports whose connection loop can stop
+// on its own (for example after a login failure that retrying cannot fix). The
+// controller uses it to restart such a transport on the next Start instead of
+// treating the parked session as already started.
+type RunningTransport interface {
+	Running() bool
+}
+
+// ReconnectPolicy decides who owns the wait after a game disconnect.
+type ReconnectPolicy string
+
+const (
+	// ReconnectPolicyHold keeps the runtime and its session loop alive and
+	// reconnects on its own after the relog delay, cooldown, or suspension.
+	ReconnectPolicyHold ReconnectPolicy = "hold"
+	// ReconnectPolicyRelease makes the runtime's lifetime follow the game
+	// connection: after a short immediate retry window the transport reports
+	// state "released" with the earliest retry time and stops, so the control
+	// plane can drain the runtime, free its slot, and create a fresh runtime
+	// when the wait elapses (or when the user forces a reconnect).
+	ReconnectPolicyRelease ReconnectPolicy = "release"
+)
+
+func ParseReconnectPolicy(raw string) (ReconnectPolicy, bool) {
+	switch ReconnectPolicy(strings.ToLower(strings.TrimSpace(raw))) {
+	case "", ReconnectPolicyHold:
+		return ReconnectPolicyHold, true
+	case ReconnectPolicyRelease:
+		return ReconnectPolicyRelease, true
+	default:
+		return "", false
+	}
+}
+
+// ReconnectPolicyTransport is implemented by transports that can switch
+// between holding and releasing the session after a disconnect.
+type ReconnectPolicyTransport interface {
+	SetReconnectPolicy(ReconnectPolicy)
+}
+
+// ReconnectHoldTransport is implemented by transports that refuse an automatic
+// Start while a park or scheduled retry is in effect; ClearReconnectHold lets
+// an explicit user or control-plane reconnect bypass that wait once.
+type ReconnectHoldTransport interface {
+	ClearReconnectHold()
 }
 
 type FrontendInteractionTransport interface {

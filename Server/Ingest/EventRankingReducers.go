@@ -48,10 +48,7 @@ func reduceEventRanking(
 	if eventID <= 0 {
 		return nil, false, nil
 	}
-	if gameState.EventScores.RankingByEvent == nil {
-		gameState.EventScores.RankingByEvent = map[int64]State.EventRankingState{}
-	}
-	ranking := gameState.EventScores.RankingByEvent[eventID]
+	ranking, _ := gameState.MutableEventRanking(eventID)
 	if ranking.EventID != eventID || ranking.LeagueID != leagueID || ranking.ListType != listType {
 		ranking = State.EventRankingState{
 			EventID: eventID, Scope: "alliance", LeagueID: leagueID, ListType: listType,
@@ -84,17 +81,20 @@ func reduceEventRanking(
 	ranking.GlobalFlag = int64(payload.GlobalFlag)
 	ranking.Pending = false
 	ranking.ObservedAt = frame.ReceivedAt.UTC()
-	gameState.EventScores.RankingByEvent[eventID] = ranking
+	gameState.SetEventRanking(eventID, ranking)
 	return []string{"events", "event-scores"}, true, nil
 }
 
 func rankingEventID(gameState State.GameState, leagueID int64, listType int64) int64 {
-	for eventID, ranking := range gameState.EventScores.RankingByEvent {
+	var selected int64
+	gameState.RangeEventRankings(func(eventID int64, ranking State.EventRankingState) bool {
 		if ranking.Pending && ranking.LeagueID == leagueID && ranking.ListType == listType {
-			return eventID
+			selected = eventID
+			return false
 		}
-	}
-	return 0
+		return true
+	})
+	return selected
 }
 
 func clearPendingEventRankings(gameState *State.GameState) bool {
@@ -102,14 +102,15 @@ func clearPendingEventRankings(gameState *State.GameState) bool {
 		return false
 	}
 	changed := false
-	for eventID, ranking := range gameState.EventScores.RankingByEvent {
+	gameState.RangeEventRankings(func(eventID int64, ranking State.EventRankingState) bool {
 		if !ranking.Pending {
-			continue
+			return true
 		}
 		ranking.Pending = false
-		gameState.EventScores.RankingByEvent[eventID] = ranking
+		gameState.SetEventRanking(eventID, ranking)
 		changed = true
-	}
+		return true
+	})
 	return changed
 }
 

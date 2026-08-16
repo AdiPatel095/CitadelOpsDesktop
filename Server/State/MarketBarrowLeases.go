@@ -38,17 +38,18 @@ func MarketBarrowLeaseAt(gameState GameState, castleID CastleID, now time.Time) 
 		now = time.Now().UTC()
 	}
 	lease := MarketBarrowLease{}
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ MovementID, movement MovementState) bool {
 		if movement.SourceCastleID != castleID || movement.MarketBarrows <= 0 ||
 			!MovementOwnedByCurrentPlayer(gameState, movement) || !MarketBarrowMovementActiveAt(movement, now) {
-			continue
+			return true
 		}
 		lease.Barrows += movement.MarketBarrows
 		releasesAt := MarketBarrowMovementReleaseAt(movement)
 		if releasesAt != nil && (lease.ReleasesAt.IsZero() || releasesAt.Before(lease.ReleasesAt)) {
 			lease.ReleasesAt = releasesAt.UTC()
 		}
-	}
+		return true
+	})
 	return lease
 }
 
@@ -57,16 +58,17 @@ func NextMarketBarrowLeaseRelease(gameState GameState, now time.Time) time.Time 
 		now = time.Now().UTC()
 	}
 	var next time.Time
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ MovementID, movement MovementState) bool {
 		if movement.MarketBarrows <= 0 || !MovementOwnedByCurrentPlayer(gameState, movement) ||
 			!MarketBarrowMovementActiveAt(movement, now) {
-			continue
+			return true
 		}
 		releasesAt := MarketBarrowMovementReleaseAt(movement)
 		if releasesAt != nil && (next.IsZero() || releasesAt.Before(next)) {
 			next = releasesAt.UTC()
 		}
-	}
+		return true
+	})
 	return next
 }
 

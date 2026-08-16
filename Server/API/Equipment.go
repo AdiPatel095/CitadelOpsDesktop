@@ -23,7 +23,7 @@ func (server *Server) handleEquipmentOptimize(writer http.ResponseWriter, reques
 		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
 		return
 	}
-	result, err := Equipment.Optimize(server.config.State.Snapshot(), gameData, input)
+	result, err := Equipment.Optimize(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		writeError(writer, http.StatusUnprocessableEntity, "equipment_optimization_failed", err.Error())
 		return

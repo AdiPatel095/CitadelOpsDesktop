@@ -33,6 +33,39 @@ type EventScoreState struct {
 	ShopByPackage   map[PackageID]EventShopRoute `json:"shopByPackage"`
 	ActivityByEvent map[int64]EventActivityState `json:"activityByEvent"`
 	RankingByEvent  map[int64]EventRankingState  `json:"rankingByEvent"`
+	// Inventory is the last authoritative `sei` inventory for this account.
+	// It deliberately remains account-private: event and shop eligibility can
+	// vary by server, level, rollout, or account even when the public calendar
+	// is shared.
+	Inventory EventInventoryState `json:"inventory"`
+}
+
+type EventInventoryState struct {
+	ObservedAt    time.Time                   `json:"observedAt,omitempty"`
+	ActiveByEvent map[int64]EventAvailability `json:"activeByEvent"`
+}
+
+type EventAvailability struct {
+	EventID int64     `json:"eventId"`
+	EndsAt  time.Time `json:"endsAt"`
+}
+
+func (availability EventAvailability) ActiveAt(now time.Time) bool {
+	return availability.EventID > 0 && !availability.EndsAt.IsZero() && now.Before(availability.EndsAt)
+}
+
+func (state GameState) EventAvailable(eventID int64, now time.Time) (EventAvailability, bool) {
+	availability, found := state.EventScores.Inventory.ActiveByEvent[eventID]
+	return availability, found && availability.ActiveAt(now)
+}
+
+func (state GameState) AnyEventAvailable(eventIDs []int64, now time.Time) (EventAvailability, bool) {
+	for _, eventID := range eventIDs {
+		if availability, found := state.EventAvailable(eventID, now); found {
+			return availability, true
+		}
+	}
+	return EventAvailability{}, false
 }
 
 type EventActivityKind string
@@ -117,12 +150,12 @@ func (state GameState) ActiveScalableEventScore() (ScalableEventScore, bool) {
 	if state.EventScores.ActiveEventID <= 0 {
 		return ScalableEventScore{}, false
 	}
-	score, found := state.EventScores.ByEvent[state.EventScores.ActiveEventID]
+	score, found := state.LookupScalableEventScore(state.EventScores.ActiveEventID)
 	return score, found
 }
 
 func (state GameState) ScalableEventScoreReached(eventID int64, threshold int64) bool {
-	score, found := state.EventScores.ByEvent[eventID]
+	score, found := state.LookupScalableEventScore(eventID)
 	return threshold > 0 && found && score.PlayerScore >= threshold
 }
 
@@ -142,15 +175,12 @@ func EnsureEventActivity(gameState *GameState, eventID int64, observedAt time.Ti
 	if gameState == nil || eventID <= 0 {
 		return EventActivityState{}, false
 	}
-	if gameState.EventScores.ActivityByEvent == nil {
-		gameState.EventScores.ActivityByEvent = map[int64]EventActivityState{}
-	}
-	score, active := gameState.EventScores.ByEvent[eventID]
+	score, active := gameState.LookupScalableEventScore(eventID)
 	if !active {
 		return EventActivityState{}, false
 	}
 	endsAt := ScalableEventEndsAt(score)
-	current, exists := gameState.EventScores.ActivityByEvent[eventID]
+	current, exists := gameState.MutableEventActivity(eventID)
 	if !exists || !sameEventOccurrence(current.OccurrenceEndsAt, endsAt) {
 		if observedAt.IsZero() {
 			observedAt = score.ObservedAt
@@ -159,7 +189,7 @@ func EnsureEventActivity(gameState *GameState, eventID int64, observedAt time.Ti
 			EventID: eventID, OccurrenceEndsAt: endsAt, ObservedFrom: observedAt.UTC(),
 			LaunchIDs: []MovementID{}, PendingAttacks: []EventAttackRecord{}, ProcessedReportIDs: []int64{},
 		}
-		gameState.EventScores.ActivityByEvent[eventID] = current
+		gameState.SetEventActivity(eventID, current)
 		return current, true
 	}
 	return current, true
@@ -188,7 +218,7 @@ func RecordEventAttackLaunch(gameState *GameState, eventID int64, record EventAt
 		return false
 	}
 	totals.Launches++
-	gameState.EventScores.ActivityByEvent[eventID] = activity
+	gameState.SetEventActivity(eventID, activity)
 	return true
 }
 
@@ -207,7 +237,7 @@ func UpdateAdvisorEventActivity(gameState *GameState, eventID int64, observedAt 
 	activity.Advisor.TroopLosses = max(int64(0), troopLosses)
 	activity.Advisor.ToolsUsed = max(int64(0), toolsUsed)
 	activity.AdvisorObservedAt = observedAt.UTC()
-	gameState.EventScores.ActivityByEvent[eventID] = activity
+	gameState.SetEventActivity(eventID, activity)
 	return previous != activity.Advisor || !previousObservedAt.Equal(activity.AdvisorObservedAt)
 }
 

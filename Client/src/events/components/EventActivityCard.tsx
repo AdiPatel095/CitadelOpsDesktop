@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react';
-import { Coins, Crosshair, Database, Shield, Sparkles, Swords } from 'lucide-react';
+import React from 'react';
+import { Crosshair, Shield, Sparkles, Swords } from 'lucide-react';
 import type { EventActivityStateV2, EventCombatTotalsV2, ScalableEventScoreV2 } from '../../api/Contracts';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { MetricTile, SectionCard } from '../../components/ui';
-import { useMetadata } from '../../context/MetadataContext';
 
 interface EventActivityCardProps {
 	event?: ScalableEventScoreV2;
@@ -30,92 +29,41 @@ const EMPTY_TOTALS: EventCombatTotalsV2 = {
 	loot: 0,
 };
 
-const EVENT_CURRENCIES: Record<number, number[]> = {
-	72: [1, 10, 77],
-	80: [7, 13, 78],
-};
-
-const CURRENCY_FALLBACK_NAMES: Record<number, string> = {
-	1: 'Khan tablets',
-	7: 'Samurai tokens',
-	10: 'Khan medals',
-	13: 'Samurai medals',
-	77: 'Nomad Advisor tokens',
-	78: 'Samurai Advisor tokens',
-};
-
 const EventActivityCard: React.FC<EventActivityCardProps> = ({ event }) => {
 	const { state } = useCitadelAPI();
-	const { currencies } = useMetadata();
 	const activity = event ? state?.eventScores.activityByEvent?.[String(event.eventId)] : undefined;
 	const family = event ? eventFamily(event) : 'other';
-	const currencyIDs = useMemo(() => {
-		if (!event) return [];
-		const IDs = new Set(EVENT_CURRENCIES[event.eventId] ?? []);
-		if ((event.advisorCurrencyId ?? 0) > 0) IDs.add(event.advisorCurrencyId as number);
-		return Array.from(IDs);
-	}, [event]);
 	const groups = activityGroups(activity, family);
 	const outbound = sumTotals(groups.filter((group) => group.key !== 'khanDefense').map((group) => group.totals));
 	const combined = sumTotals(groups.map((group) => group.totals));
 	const includesDefense = groups.some((group) => group.key === 'khanDefense');
 	const showsLoot = family === 'foreignLords' || family === 'bloodcrow';
 
-	if (!event || (currencyIDs.length === 0 && groups.length === 0)) return null;
+	if (!event || groups.length === 0) return null;
 
 	return (
-		<>
-			{currencyIDs.length > 0 && <SectionCard
-				variant="solid"
-				title="Event balances"
-				description="Current currencies used by this event"
-				icon={<Coins className="h-5 w-5" />}
-			>
-				<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-						{currencyIDs.map((currencyID) => {
-							const metadata = currencies[currencyID];
-							const amount = state?.player.currencies[String(currencyID)] ?? 0;
-							return (
-								<div key={currencyID} className="flex items-center gap-3 rounded-global border border-border-light bg-bg-card/40 p-3">
-									<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-global border border-border-base bg-bg-input/55">
-										{metadata?.image ? (
-											<img src={metadata.image} alt="" loading="lazy" decoding="async" className="h-10 w-10 object-contain drop-shadow-md" />
-										) : (
-											<Database className="h-7 w-7 text-primary" />
-										)}
-									</div>
-									<div className="min-w-0">
-										<p className="truncate text-xs font-bold uppercase tracking-wider text-text-muted">{metadata?.name ?? CURRENCY_FALLBACK_NAMES[currencyID] ?? `Currency ${currencyID}`}</p>
-										<p className="mt-1 font-mono text-xl font-black tabular-nums text-text-main">{amount.toLocaleString()}</p>
-									</div>
-								</div>
-							);
-						})}
-					</div>
-			</SectionCard>}
+		<SectionCard
+			variant="solid"
+			title="Automation results"
+			description={activity?.observedFrom ? `Observed since ${formatDateTime(activity.observedFrom)}` : 'Current event occurrence'}
+			icon={<Sparkles className="h-5 w-5" />}
+			className="feature-event-activity-card"
+		>
+			<div className={`grid grid-cols-2 gap-3 ${showsLoot ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
+				<MetricTile label="Attacks made" value={observedActions(outbound)} tone="brand" caption={attackCaption(family)} />
+				<MetricTile label="Victories" value={combined.victories} tone="success" caption={includesDefense ? 'Offense and Khan defense' : 'Confirmed battle reports'} />
+				{showsLoot && <MetricTile label="Loot" value={combined.loot} tone="warning" caption="Resources from confirmed reports" />}
+				<MetricTile label="Troops lost" value={combined.troopLosses} tone={combined.troopLosses > 0 ? 'danger' : 'default'} />
+				<MetricTile label="Tools used" value={combined.toolsUsed} tone="info" />
+			</div>
 
-			{groups.length > 0 && <SectionCard
-				variant="solid"
-				title="Automation results"
-				description={activity?.observedFrom ? `Observed since ${formatDateTime(activity.observedFrom)}` : 'Current event occurrence'}
-				icon={<Sparkles className="h-5 w-5" />}
-			>
-				<div className={`grid grid-cols-2 gap-3 ${showsLoot ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
-					<MetricTile label="Attacks made" value={observedActions(outbound)} tone="brand" caption={attackCaption(family)} />
-					<MetricTile label="Victories" value={combined.victories} tone="success" caption={includesDefense ? 'Offense and Khan defense' : 'Confirmed battle reports'} />
-					{showsLoot && <MetricTile label="Loot" value={combined.loot} tone="warning" caption="Resources from confirmed reports" />}
-					<MetricTile label="Troops lost" value={combined.troopLosses} tone={combined.troopLosses > 0 ? 'danger' : 'default'} />
-					<MetricTile label="Tools used" value={combined.toolsUsed} tone="info" />
-				</div>
-
-				<div className="mt-4 grid gap-3 xl:grid-cols-2">
-					{groups.map((group) => <ActivityGroupCard key={group.key} group={group} />)}
-				</div>
-				<p className="mt-4 border-t border-border-base/60 pt-3 text-xs text-text-muted">
-					{activityFootnote(family)}
-				</p>
-			</SectionCard>}
-		</>
+			<div className="mt-4 grid gap-3 xl:grid-cols-2">
+				{groups.map((group) => <ActivityGroupCard key={group.key} group={group} />)}
+			</div>
+			<p className="mt-4 border-t border-border-base/60 pt-3 text-xs text-text-muted">
+				{activityFootnote(family)}
+			</p>
+		</SectionCard>
 	);
 };
 

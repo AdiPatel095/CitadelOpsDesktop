@@ -25,7 +25,9 @@ const (
 )
 
 var (
-	gameNamespacePattern = regexp.MustCompile(`^EmpireEx_[0-9]+$`)
+	// gameNamespacePattern accepts every SmartFox zone in the official server
+	// directory: EmpireEx_<n>, plus INT1's bare EmpireEx.
+	gameNamespacePattern = regexp.MustCompile(`^EmpireEx(?:_[0-9]+)?$`)
 	gameBuildPattern     = regexp.MustCompile(`^[0-9]{1,20}$`)
 	safeLoginContextKeys = map[string]struct{}{
 		"LANG": {}, "DID": {}, "AID": {}, "KID": {}, "ID": {}, "REF": {},

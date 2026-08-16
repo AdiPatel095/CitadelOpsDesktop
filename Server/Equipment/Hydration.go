@@ -16,11 +16,21 @@ func HydrateState(gameState *State.GameState, gameData *GameData.Store) bool {
 		return false
 	}
 	changed := migrateLegacyGemIdentities(gameState)
+	var hydrated map[State.GemInstanceID]State.GemInstance
 	for id, gem := range gameState.Inventory.Gems {
 		if HydrateGem(&gem, gameData) {
-			gameState.Inventory.Gems[id] = gem
+			if hydrated == nil {
+				hydrated = make(map[State.GemInstanceID]State.GemInstance, len(gameState.Inventory.Gems))
+				for existingID, existing := range gameState.Inventory.Gems {
+					hydrated[existingID] = existing
+				}
+			}
+			hydrated[id] = gem
 			changed = true
 		}
+	}
+	if hydrated != nil {
+		gameState.ReplaceInventoryGems(hydrated)
 	}
 	return rebuildLeaderGemAssignments(gameState) || changed
 }
@@ -102,7 +112,7 @@ func migrateLegacyGemIdentities(gameState *State.GameState) bool {
 	if reflect.DeepEqual(gameState.Inventory.Gems, next) {
 		return false
 	}
-	gameState.Inventory.Gems = next
+	gameState.ReplaceInventoryGems(next)
 	return true
 }
 

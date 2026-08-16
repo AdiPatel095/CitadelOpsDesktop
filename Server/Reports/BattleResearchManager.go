@@ -134,18 +134,48 @@ func (manager *BattleResearchManager) Run(ctx context.Context) {
 	}
 	frames, unsubscribe := manager.frames.SubscribeFrames(512)
 	defer unsubscribe()
-	ticker := time.NewTicker(battleResearchTickInterval)
-	defer ticker.Stop()
+	configurationEvents, unsubscribeConfiguration := manager.configuration.Subscribe(8)
+	defer unsubscribeConfiguration()
+	var tickTimer *time.Timer
+	var tickChannel <-chan time.Time
+	scheduleTick := func() {
+		if tickTimer != nil {
+			if !tickTimer.Stop() {
+				select {
+				case <-tickTimer.C:
+				default:
+				}
+			}
+			tickTimer = nil
+			tickChannel = nil
+		}
+		if !manager.currentConfiguration().Active() {
+			return
+		}
+		tickTimer = time.NewTimer(battleResearchTickInterval)
+		tickChannel = tickTimer.C
+	}
+	scheduleTick()
 	for {
 		select {
 		case <-ctx.Done():
+			if tickTimer != nil {
+				tickTimer.Stop()
+			}
 			return
 		case frame := <-frames:
 			manager.handleFrame(ctx, frame)
 		case event := <-manager.events:
 			manager.handleArchiveEvent(ctx, event)
-		case now := <-ticker.C:
+		case event := <-configurationEvents:
+			if event.Gap || strings.EqualFold(strings.TrimSpace(event.Section), BattleResearchConfigurationSection) {
+				scheduleTick()
+			}
+		case now := <-tickChannel:
+			tickTimer = nil
+			tickChannel = nil
 			manager.tick(ctx, now.UTC())
+			scheduleTick()
 		}
 	}
 }
@@ -664,15 +694,15 @@ func matchBattleResearchMovement(
 ) (State.MovementState, bool) {
 	var selected State.MovementState
 	best := battleResearchFormationMatch + time.Second
-	for _, movement := range snapshot.Movements {
+	snapshot.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if _, used := assigned[movement.ID]; used || !State.IsOutgoingPlayerAttack(snapshot, movement, now) ||
 			movement.KingdomID != trial.Formation.KingdomID || movement.TargetX != trial.Formation.TargetX ||
 			movement.TargetY != trial.Formation.TargetY || movement.SourceX != trial.Formation.SourceX ||
 			movement.SourceY != trial.Formation.SourceY {
-			continue
+			return true
 		}
 		if movement.CommanderID != nil && *movement.CommanderID != trial.Formation.CommanderID {
-			continue
+			return true
 		}
 		observedLaunch := movement.StartedAt
 		if observedLaunch.IsZero() {
@@ -686,7 +716,8 @@ func matchBattleResearchMovement(
 			selected = movement
 			best = delta
 		}
-	}
+		return true
+	})
 	return selected, selected.ID > 0
 }
 

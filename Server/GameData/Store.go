@@ -21,9 +21,35 @@ type Store struct {
 	constructionShopOnce     sync.Once
 	constructionShopProducts map[int64][]ConstructionShopProduct
 	constructionShopErr      error
+	constructionItemsOnce    sync.Once
+	constructionItems        *ConstructionItemCatalog
+	constructionItemsErr     error
+	unitKindsOnce            sync.Once
+	unitDefinitions          map[int64]UnitRuntimeDefinition
+	unitKindsErr             error
+	subscriptionEffectsOnce  sync.Once
+	subscriptionEffects      map[int][]SubscriptionEffect
+	subscriptionEffectsErr   error
 	buildingCatalogOnce      sync.Once
 	buildingCatalog          *BuildingCatalog
 	buildingCatalogErr       error
+	stormCatalogOnce         sync.Once
+	stormIslesByID           map[int64]StormIsleDefinition
+	stormIsles               []StormIsleDefinition
+	stormShopPackagesByID    map[int64]StormShopPackage
+	stormShopPackages        []StormShopPackage
+	stormCastleOptionsByID   map[int64]StormCastleOption
+	stormCastleOptions       []StormCastleOption
+	craftingDefinitionsOnce  sync.Once
+	craftingDefinitionsByID  map[int64]CraftingRecipeDefinition
+	craftingDefinitions      []CraftingRecipeDefinition
+	craftingDefinitionErrors map[int64]error
+	craftingDefinitionsErr   error
+	resourceLookupOnce       sync.Once
+	resourceIDsByJSONKey     map[string]int64
+	resourceJSONKeysByID     map[int64]string
+	currencyIDsByJSONKey     map[string]int64
+	sovereignResourceIDs     []int64
 	expansionCatalogOnce     sync.Once
 	expansionCatalog         *ExpansionCatalog
 	expansionCatalogErr      error

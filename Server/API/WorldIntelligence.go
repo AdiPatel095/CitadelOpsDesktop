@@ -1,6 +1,8 @@
 package API
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"net/http"
@@ -212,6 +214,80 @@ func (server *Server) handleWorldIntelligenceCoverage(writer http.ResponseWriter
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
+}
+
+func (server *Server) handleWorldIntelligenceSubscribe(writer http.ResponseWriter, request *http.Request) {
+	if server.config.WorldIntel == nil {
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		return
+	}
+	response, err := server.config.WorldIntel.Subscribe(
+		request.Context(), request.URL.Query().Get("worldId"), request.Header.Get("Last-Event-ID"),
+	)
+	if err != nil {
+		writeError(writer, http.StatusBadGateway, "world_intelligence_subscription_failed", err.Error())
+		return
+	}
+	proxyWorldIntelligenceEventStream(writer, response)
+}
+
+func (server *Server) handleWorldIntelligenceEventRunSubscribe(writer http.ResponseWriter, request *http.Request) {
+	if server.config.WorldIntel == nil {
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		return
+	}
+	occurrenceID := strings.ToLower(strings.TrimSpace(request.PathValue("id")))
+	if !validWorldIntelligenceOccurrenceID(occurrenceID) {
+		writeError(writer, http.StatusBadRequest, "invalid_occurrence_id", "event occurrence id is invalid")
+		return
+	}
+	listType, err := optionalIntegerQuery(request, "listType", 0, 0, 1_000_000)
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid_list_type", err.Error())
+		return
+	}
+	leagueID, err := optionalIntegerQuery(request, "leagueId", -2, -1, 1_000_000)
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid_league_id", err.Error())
+		return
+	}
+	response, err := server.config.WorldIntel.SubscribeEventRun(
+		request.Context(), request.URL.Query().Get("worldId"), occurrenceID, listType, leagueID,
+		request.Header.Get("Last-Event-ID"),
+	)
+	if err != nil {
+		writeError(writer, http.StatusBadGateway, "world_intelligence_subscription_failed", err.Error())
+		return
+	}
+	proxyWorldIntelligenceEventStream(writer, response)
+}
+
+func proxyWorldIntelligenceEventStream(writer http.ResponseWriter, response *http.Response) {
+	defer response.Body.Close()
+	flusher, ok := writer.(http.Flusher)
+	if !ok {
+		writeError(writer, http.StatusInternalServerError, "stream_unsupported", "Streaming responses are unavailable")
+		return
+	}
+	writer.Header().Set("Content-Type", "text/event-stream")
+	writer.Header().Set("Cache-Control", "no-cache, no-transform")
+	writer.Header().Set("X-Accel-Buffering", "no")
+	writer.WriteHeader(http.StatusOK)
+	reader := bufio.NewReaderSize(response.Body, 64<<10)
+	for {
+		line, readErr := reader.ReadBytes('\n')
+		if len(line) > 0 {
+			if _, err := writer.Write(line); err != nil {
+				return
+			}
+			if bytes.Equal(line, []byte("\n")) || bytes.Equal(line, []byte("\r\n")) {
+				flusher.Flush()
+			}
+		}
+		if readErr != nil {
+			return
+		}
+	}
 }
 
 func (server *Server) handleWorldIntelligenceCatalogDatasets(writer http.ResponseWriter, request *http.Request) {

@@ -1,7 +1,7 @@
 {
   "name": "citadel-ops",
   "private": true,
-  "version": "2.2.1",
+  "version": "2.3.0",
   "type": "module",
   "scripts": {
     "client:dev": "cd Client && npm run dev",

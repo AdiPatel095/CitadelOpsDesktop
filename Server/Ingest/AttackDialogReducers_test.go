@@ -92,7 +92,7 @@ func TestReduceAttackDialogStoresKhanCooldown(t *testing.T) {
 		!observation.ObservedAt.Equal(observedAt) {
 		t.Fatalf("unexpected tracked Khan cooldown: %#v", observation)
 	}
-	if !slices.Contains(domains, "map") || !slices.Contains(domains, "nomad-camps") {
+	if !slices.Contains(domains, "map-event-camp") || !slices.Contains(domains, "nomad-camps") {
 		t.Fatalf("Khan cooldown update domains = %v", domains)
 	}
 	cooldown := gameState.NomadCamps.Cooldowns["0:939:1123"]
@@ -127,13 +127,13 @@ func TestReduceAttackDialogRefreshesTrackedStormOpportunity(t *testing.T) {
 		t.Fatalf("Storm attack dialog: changed=%t err=%v", changed, err)
 	}
 	target := gameState.AttackDialog.Target
-	if target.OwnerID != -403 || !target.StormReadyAt.Equal(observedAt) ||
-		!target.StormExpiresAt.Equal(observedAt.Add(100*time.Second)) {
+	if target.OwnerID != -403 || target.StormCooldownRemaining != 100 ||
+		!gameState.AttackDialog.ObservedAt.Equal(observedAt) {
 		t.Fatalf("Storm dialog target = %#v", target)
 	}
 	tracked := gameState.Storm.Map.Targets["100:101"]
-	if tracked.OwnerID != -403 || !tracked.StormReadyAt.Equal(observedAt) ||
-		!tracked.StormExpiresAt.Equal(observedAt.Add(100*time.Second)) {
+	if tracked.OwnerID != -403 || !tracked.StormReadyAt().Equal(observedAt) ||
+		!tracked.StormExpiresAt(0).Equal(observedAt.Add(100*time.Second)) {
 		t.Fatalf("tracked Storm opportunity = %#v", tracked)
 	}
 }

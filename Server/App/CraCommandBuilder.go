@@ -70,7 +70,7 @@ func (application *Application) guardCRAInventory(_ context.Context, arguments j
 	if request.SourceCastleID <= 0 || len(request.Payloads) == 0 {
 		return fmt.Errorf("fresh CRA inventory guard requires a source castle and payload")
 	}
-	source, exists := application.State.Snapshot().Castles[request.SourceCastleID]
+	source, exists := application.State.ReadOnlyView().Castles[request.SourceCastleID]
 	if !exists {
 		return fmt.Errorf("source castle %d is not in the current player state", request.SourceCastleID)
 	}

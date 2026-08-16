@@ -15,6 +15,46 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+func TestAutoStormBuildWakeDomainsIgnoreBalanceOnlyChurn(t *testing.T) {
+	got := NewAutoStormBuildPolicy().WakeDomains()
+	want := []string{"buildings", "construction-items", "construction-offers", "kingdom-transport"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("wake domains = %v, want %v", got, want)
+	}
+}
+
+func TestAutoStormShopWakeDomainsPaceAquamarineBalanceChurn(t *testing.T) {
+	got := NewAutoStormShopPolicy().WakeDomains()
+	want := []string{"construction-offers", "movements", "storm"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("wake domains = %v, want %v", got, want)
+	}
+}
+
+func TestAutoStormPassiveLanesDoNotPollCompletedWork(t *testing.T) {
+	now := time.Date(2026, time.August, 14, 12, 0, 0, 0, time.UTC)
+	settings := defaultAutoStormSettings()
+	rawSettings, err := json.Marshal(settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := State.NewGameState()
+	state.Castles[40] = autoStormTestCastle(40, autoStormKingdomID, "Storm")
+	snapshot := Snapshot{
+		State: state, GameData: autoStormTestGameData(t), Now: now,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoStormSection: rawSettings}},
+	}
+	for _, policy := range []Policy{NewAutoStormPolicy(), NewAutoStormBuildPolicy(), NewAutoStormShopPolicy()} {
+		decision, evaluateErr := policy.Evaluate(t.Context(), snapshot)
+		if evaluateErr != nil {
+			t.Fatalf("%s evaluation: %v", policy.ID(), evaluateErr)
+		}
+		if !decision.EventDriven || !decision.NextCheckAt.IsZero() || decision.Request != nil {
+			t.Fatalf("%s passive decision = %#v", policy.ID(), decision)
+		}
+	}
+}
+
 func TestAutoStormMapScanBoundsStartAtSixFiftyCenter(t *testing.T) {
 	state := State.NewGameState()
 	storm := autoStormTestCastle(40, 4, "Storm")
@@ -596,7 +636,7 @@ func TestAutoStormIslandLaunchWaitsForReportBeforeChoosingOccupier(t *testing.T)
 	state.Commanders[1] = State.CommanderState{ID: 1, Available: true}
 	target := State.MapObservation{
 		KingdomID: 4, X: 101, Y: 101, TypeID: autoStormIslandMapTypeID, OwnerID: -403,
-		ObjectID: 777, StormIsleID: 4, StormReadyAt: now, StormExpiresAt: now.Add(time.Hour), ObservedAt: now,
+		ObjectID: 777, StormIsleID: 4, StormCooldownRemaining: 3_600, ObservedAt: now,
 	}
 	state.Storm.Map = State.StormMapState{
 		SourceCastleID: storm.ID, LastAttemptAt: now, LastCompletedAt: now,
@@ -730,13 +770,13 @@ func TestAutoStormCandidatesUseNewerLiveCooldown(t *testing.T) {
 	state.Castles[storm.ID] = storm
 	state.Storm.Map.Targets["612:667"] = State.MapObservation{
 		KingdomID: 4, X: 612, Y: 667, TypeID: autoStormFortMapTypeID, StormIsleID: 10,
-		ObservedAt: now.Add(-2 * time.Hour), StormReadyAt: now.Add(-time.Hour),
+		ObservedAt: now.Add(-2 * time.Hour), StormCooldownRemaining: 3_600,
 	}
 	readyAt := now.Add(10 * time.Hour)
 	state.Map[4] = map[string]State.MapObservation{
 		"612:667": {
 			KingdomID: 4, X: 612, Y: 667, TypeID: autoStormFortMapTypeID, StormIsleID: 8,
-			StormCooldownRemaining: 36_000, StormReadyAt: readyAt, ObservedAt: now,
+			StormCooldownRemaining: 36_000, ObservedAt: now,
 		},
 	}
 	settings := defaultAutoStormSettings()
@@ -774,12 +814,11 @@ func TestAutoStormCandidatesUseReadyAtAndIslandExpiryLabels(t *testing.T) {
 	state.Castles[storm.ID] = storm
 	unoccupied := State.MapObservation{
 		KingdomID: 4, X: 101, Y: 101, TypeID: autoStormIslandMapTypeID, OwnerID: -403,
-		StormIsleID: 4, StormCooldownRemaining: 3_600, StormReadyAt: now, StormExpiresAt: now.Add(time.Hour), ObservedAt: now,
+		StormIsleID: 4, StormCooldownRemaining: 3_600, ObservedAt: now,
 	}
 	occupied := State.MapObservation{
 		KingdomID: 4, X: 102, Y: 102, TypeID: autoStormIslandMapTypeID, OwnerID: 99,
-		StormIsleID: 4, StormCooldownRemaining: 120, StormReadyAt: now.Add(120 * time.Second),
-		StormExpiresAt: now.Add((120 + 115_200) * time.Second), ObservedAt: now,
+		StormIsleID: 4, StormCooldownRemaining: 120, ObservedAt: now,
 	}
 	state.Storm.Map.Targets = map[string]State.MapObservation{"101:101": unoccupied, "102:102": occupied}
 	settings := defaultAutoStormSettings()
@@ -790,21 +829,20 @@ func TestAutoStormCandidatesUseReadyAtAndIslandExpiryLabels(t *testing.T) {
 	if len(candidates) != 1 || candidates[0].Observation.X != unoccupied.X {
 		t.Fatalf("ready island candidates = %#v", candidates)
 	}
-	if next := autoStormNextOpportunityAt(snapshot, settings, storm); !next.Equal(occupied.StormReadyAt) {
-		t.Fatalf("next Storm opportunity = %s, want %s", next, occupied.StormReadyAt)
+	if next := autoStormNextOpportunityAt(snapshot, settings, storm); !next.Equal(occupied.StormReadyAt()) {
+		t.Fatalf("next Storm opportunity = %s, want %s", next, occupied.StormReadyAt())
 	}
 
 	delete(state.Storm.Map.Targets, "101:101")
 	snapshot.State = state
-	snapshot.Now = occupied.StormReadyAt.Add(time.Second)
+	snapshot.Now = occupied.StormReadyAt().Add(time.Second)
 	candidates = autoStormCombatCandidates(snapshot, settings, storm, now)
 	if len(candidates) != 1 || candidates[0].Observation.X != occupied.X {
 		t.Fatalf("released island candidates = %#v", candidates)
 	}
 
 	occupied.OwnerID = -403
-	occupied.StormReadyAt = now
-	occupied.StormExpiresAt = now
+	occupied.ObservedAt = now.Add(-121 * time.Second)
 	state.Storm.Map.Targets["102:102"] = occupied
 	snapshot.State = state
 	snapshot.Now = now.Add(time.Second)
@@ -820,7 +858,7 @@ func TestAutoStormFortReadyAtTriggersAuthoritativeVictoryRefresh(t *testing.T) {
 	state.Castles[storm.ID] = storm
 	target := State.MapObservation{
 		KingdomID: 4, X: 101, Y: 101, TypeID: autoStormFortMapTypeID, StormIsleID: 7,
-		StormVictoryCount: 0, StormCooldownRemaining: 60, StormReadyAt: now.Add(time.Minute), ObservedAt: now,
+		StormVictoryCount: 0, StormCooldownRemaining: 60, ObservedAt: now,
 	}
 	state.Storm.Map.Targets = map[string]State.MapObservation{"101:101": target}
 	settings := defaultAutoStormSettings()
@@ -831,10 +869,10 @@ func TestAutoStormFortReadyAtTriggersAuthoritativeVictoryRefresh(t *testing.T) {
 	if candidates := autoStormCombatCandidates(snapshot, settings, storm, now); len(candidates) != 0 {
 		t.Fatalf("cooling fort candidates = %#v", candidates)
 	}
-	if next := autoStormNextOpportunityAt(snapshot, settings, storm); !next.Equal(target.StormReadyAt) {
-		t.Fatalf("fort next readyAt = %s, want %s", next, target.StormReadyAt)
+	if next := autoStormNextOpportunityAt(snapshot, settings, storm); !next.Equal(target.StormReadyAt()) {
+		t.Fatalf("fort next readyAt = %s, want %s", next, target.StormReadyAt())
 	}
-	snapshot.Now = target.StormReadyAt
+	snapshot.Now = target.StormReadyAt()
 	if candidates := autoStormCombatCandidates(snapshot, settings, storm, now); len(candidates) != 1 {
 		t.Fatalf("fort readyAt verification candidates = %#v", candidates)
 	}
@@ -874,6 +912,38 @@ func TestAutoStormShopUnlimitedKeepsBuying(t *testing.T) {
 	}
 	if len(request.Purchases) != 1 || request.Purchases[0].Amount != 33 {
 		t.Fatalf("unlimited Luna purchases = %#v, want every affordable pack in one purchase", request.Purchases)
+	}
+}
+
+func TestAutoStormShopKeepsItsFiveMinuteCastleScopedSnapshot(t *testing.T) {
+	now := time.Date(2026, 8, 14, 10, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	storm := autoStormTestCastle(40, 4, "Storm")
+	storm.Resources = map[State.ResourceID]State.ResourceBalance{
+		GameData.StormAquamarineID: {Amount: 100_000},
+	}
+	state.Castles[storm.ID] = storm
+	state.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{245: 2}, now, storm.ID, storm.KingdomID)
+	// A separate Auto Buyer refresh becomes the legacy current response. Luna
+	// must continue reading its own snapshot instead of immediately re-querying.
+	state.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{100: 1}, now, 10, 0)
+	settings := defaultAutoStormSettings()
+	settings.Aquamarine.Purchases = []autoStormShopPurchase{{
+		PackageID: 245, TargetPurchases: 5, Priority: 1,
+	}}
+
+	decision, complete, detail, err := evaluateAutoStormShop(Snapshot{
+		State: state, GameData: autoStormTestGameData(t), Now: now.Add(4 * time.Minute),
+	}, settings, storm, map[string]float64{})
+	if err != nil || complete || detail != "" || decision == nil || decision.Request == nil ||
+		decision.Request.Name != "storm.shop.purchase" {
+		t.Fatalf("scoped Luna decision = %#v complete=%t detail=%q err=%v", decision, complete, detail, err)
+	}
+	decision, _, _, err = evaluateAutoStormShop(Snapshot{
+		State: state, GameData: autoStormTestGameData(t), Now: now.Add(5 * time.Minute),
+	}, settings, storm, map[string]float64{})
+	if err != nil || decision == nil || decision.Request == nil || decision.Request.Name != "shop.package.history" {
+		t.Fatalf("expired Luna snapshot decision = %#v err=%v", decision, err)
 	}
 }
 

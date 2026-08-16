@@ -41,30 +41,35 @@ type Coordinator struct {
 }
 
 type policyRuntime struct {
-	nextCheck                     time.Time
-	running                       bool
-	runtimeWakePending            bool
-	stateProgressPending          bool
-	configurationWakePending      bool
-	configurationRebuildPending   bool
-	immediateRuns                 int
-	evaluatedStateRevision        uint64
-	evaluatedConfigRevision       uint64
-	evaluatedConfiguration        string
-	evaluatedDerivedConfiguration string
-	evaluatedSessionReady         bool
-	evaluatedSessionKnown         bool
-	evaluatedSessionGeneration    uint64
-	lastDecisionFingerprint       string
-	rejectRepeatedDecision        bool
-	submissionBlockedUntil        time.Time
-	blockedDecisionFingerprint    string
-	failureBlockedUntil           time.Time
-	troopAvailabilityGate         *troopAvailabilityGate
-	runningScheduleKey            string
-	runningSessionGeneration      uint64
-	allowedConfigurationChange    string
-	cancelRun                     context.CancelFunc
+	nextCheck                      time.Time
+	stateWakeNextCheck             time.Time
+	evaluationPending              bool
+	eventOnly                      bool
+	running                        bool
+	runtimeWakePending             bool
+	stateProgressPending           bool
+	configurationWakePending       bool
+	configurationRebuildPending    bool
+	immediateRuns                  int
+	evaluatedStateRevision         uint64
+	evaluatedConfigRevision        uint64
+	evaluatedConfiguration         string
+	evaluatedDerivedConfiguration  string
+	evaluatedSessionReady          bool
+	evaluatedSessionKnown          bool
+	evaluatedSessionGeneration     uint64
+	lastDecisionFingerprint        string
+	lastPassiveDecisionFingerprint string
+	lastPassiveDecisionKnown       bool
+	rejectRepeatedDecision         bool
+	submissionBlockedUntil         time.Time
+	blockedDecisionFingerprint     string
+	failureBlockedUntil            time.Time
+	troopAvailabilityGate          *troopAvailabilityGate
+	runningScheduleKey             string
+	runningSessionGeneration       uint64
+	allowedConfigurationChange     string
+	cancelRun                      context.CancelFunc
 }
 
 type troopAvailabilityGate struct {
@@ -95,7 +100,7 @@ func NewCoordinator(
 ) *Coordinator {
 	filtered := make([]Policy, 0, len(policies))
 	for _, policy := range policies {
-		if policy != nil && strings.TrimSpace(policy.ID()) != "" {
+		if !nilPolicy(policy) && strings.TrimSpace(policy.ID()) != "" {
 			filtered = append(filtered, policy)
 		}
 	}
@@ -105,6 +110,19 @@ func NewCoordinator(
 		stateWakeByDomain:          indexPolicyWakeDomains(filtered),
 		urgentWakeByDomain:         indexPolicyUrgentWakeDomains(filtered),
 		configurationWakeBySection: indexPolicyWakeSections(filtered),
+	}
+}
+
+func nilPolicy(policy Policy) bool {
+	if policy == nil {
+		return true
+	}
+	value := reflect.ValueOf(policy)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
 	}
 }
 
@@ -130,12 +148,10 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 	defer unsubscribeState()
 	configurationEvents, unsubscribeConfiguration := coordinator.configuration.Subscribe(configurationEventBuffer)
 	defer unsubscribeConfiguration()
-	ticker := time.NewTicker(coordinatorTick)
-	defer ticker.Stop()
 	results := make(chan operationResult, len(coordinator.policies)*2+1)
 	runtime := make(map[string]*policyRuntime, len(coordinator.policies))
 	for _, policy := range coordinator.policies {
-		runtime[policy.ID()] = &policyRuntime{}
+		runtime[policy.ID()] = &policyRuntime{evaluationPending: true}
 	}
 	var expirationTimer *time.Timer
 	var expirationChannel <-chan time.Time
@@ -164,17 +180,46 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 	}()
 	var debounce *time.Timer
 	var debounceChannel <-chan time.Time
+	var policyTimer *time.Timer
+	var policyTimerChannel <-chan time.Time
+	resetPolicyTimer := func() {
+		if policyTimer != nil {
+			if !policyTimer.Stop() {
+				select {
+				case <-policyTimer.C:
+				default:
+				}
+			}
+			policyTimer = nil
+			policyTimerChannel = nil
+		}
+		next := nextPolicyEvaluationAt(runtime, time.Now().UTC())
+		if next.IsZero() {
+			return
+		}
+		delay := time.Until(next)
+		if delay < 0 {
+			delay = 0
+		}
+		policyTimer = time.NewTimer(delay)
+		policyTimerChannel = policyTimer.C
+	}
 	evaluate := func() {
 		coordinator.evaluate(ctx, runtime, results)
+		resetPolicyTimer()
 	}
 	handleStateEvent := func(event State.Event) (bool, bool) {
 		if !meaningfulStateEvent(event) {
 			return false, false
 		}
-		state := coordinator.state.ReadOnlyView()
-		clearTroopAvailabilityGates(runtime, event, state)
-		if stateEventHasDomain(event, "session") {
-			coordinator.cancelRunsForUnavailableSession(runtime, state)
+		// Only session and unit changes need an account-state read here. All
+		// other domains route directly through the policy wake index.
+		if stateEventHasDomain(event, "session") || stateEventHasDomain(event, "units") {
+			state := coordinator.state.ReadOnlyView()
+			clearTroopAvailabilityGates(runtime, event, state)
+			if stateEventHasDomain(event, "session") {
+				coordinator.cancelRunsForUnavailableSession(runtime, state)
+			}
 		}
 		return wakePoliciesForStateEvent(
 			runtime, coordinator.stateWakeByDomain, coordinator.urgentWakeByDomain, event,
@@ -195,6 +240,11 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 	coordinator.expireTimedAutomations(time.Now().UTC())
 	resetExpirationTimer()
 	evaluate()
+	defer func() {
+		if policyTimer != nil {
+			policyTimer.Stop()
+		}
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -262,11 +312,38 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 			coordinator.recordReceipt(result)
 			if wakeImmediately || stateWake || configurationWake {
 				evaluate()
+			} else {
+				resetPolicyTimer()
 			}
-		case <-ticker.C:
+		case <-policyTimerChannel:
+			policyTimer = nil
+			policyTimerChannel = nil
 			evaluate()
 		}
 	}
+}
+
+func nextPolicyEvaluationAt(runtime map[string]*policyRuntime, now time.Time) time.Time {
+	var next time.Time
+	for _, current := range runtime {
+		if current == nil || current.running {
+			continue
+		}
+		if current.evaluationPending || current.configurationRebuildPending || !current.evaluatedSessionKnown {
+			return now
+		}
+		if current.eventOnly {
+			continue
+		}
+		candidate := current.nextCheck
+		if candidate.IsZero() || !candidate.After(now) {
+			return now
+		}
+		if next.IsZero() || candidate.Before(next) {
+			next = candidate
+		}
+	}
+	return next
 }
 
 func (coordinator *Coordinator) evaluate(
@@ -287,6 +364,13 @@ func (coordinator *Coordinator) evaluate(
 		if current == nil || current.running {
 			continue
 		}
+		if !policyEvaluationDue(current, configuration.Revision, sessionReady, state.Session.Generation, now) {
+			continue
+		}
+		stateWakeNextCheck := current.stateWakeNextCheck
+		current.stateWakeNextCheck = time.Time{}
+		current.evaluationPending = false
+		current.eventOnly = false
 		isEnabled := policyEnabled(policy, enabled, state)
 		configurationFingerprint := policyConfigurationFingerprint(policy, configuration)
 		derivedConfigurationFingerprint := policyDerivedConfigurationFingerprint(policy, configuration)
@@ -300,7 +384,7 @@ func (coordinator *Coordinator) evaluate(
 			if !supportsDerivedState {
 				current.configurationRebuildPending = false
 			} else {
-				_, err := coordinator.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+				_, err := coordinator.state.ApplyComponents(derived.ConfigurationDerivedStateComponents(), func(gameState *State.GameState) ([]string, bool, error) {
 					domains, changed := derived.ResetConfigurationDerivedState(gameState)
 					return domains, changed, nil
 				})
@@ -329,6 +413,7 @@ func (coordinator *Coordinator) evaluate(
 			current.failureBlockedUntil = time.Time{}
 			current.troopAvailabilityGate = nil
 			current.nextCheck = time.Time{}
+			current.eventOnly = true
 			coordinator.recordDecision(policy.ID(), false, Decision{Status: "disabled", Detail: "Automation is disabled"})
 			continue
 		}
@@ -378,6 +463,7 @@ func (coordinator *Coordinator) evaluate(
 		}
 		if current.troopAvailabilityGate != nil {
 			current.nextCheck = time.Time{}
+			current.eventOnly = true
 			coordinator.recordTroopAvailabilityGate(policy.ID(), *current.troopAvailabilityGate)
 			continue
 		}
@@ -401,15 +487,27 @@ func (coordinator *Coordinator) evaluate(
 			})
 			continue
 		}
-		if decision.NextCheckAt.IsZero() {
+		if decision.NextCheckAt.IsZero() && (decision.Request != nil || !decision.EventDriven) {
 			decision.NextCheckAt = now.Add(defaultRetry)
 		}
-		current.nextCheck = decision.NextCheckAt
 		if decision.Request == nil {
+			fingerprint, known := passiveDecisionFingerprint(decision)
+			if known && current.lastPassiveDecisionKnown &&
+				fingerprint == current.lastPassiveDecisionFingerprint &&
+				stateWakeNextCheck.After(now) && decision.NextCheckAt.After(stateWakeNextCheck) {
+				decision.NextCheckAt = stateWakeNextCheck
+			}
+			current.lastPassiveDecisionFingerprint = fingerprint
+			current.lastPassiveDecisionKnown = known
+			current.nextCheck = decision.NextCheckAt
+			current.eventOnly = decision.EventDriven && decision.NextCheckAt.IsZero()
 			resetContinuation(current)
 			coordinator.recordDecision(policy.ID(), true, decision)
 			continue
 		}
+		current.lastPassiveDecisionFingerprint = ""
+		current.lastPassiveDecisionKnown = false
+		current.nextCheck = decision.NextCheckAt
 		fingerprint := decisionRequestFingerprint(decision)
 		if current.rejectRepeatedDecision && fingerprint == current.lastDecisionFingerprint {
 			current.rejectRepeatedDecision = false
@@ -507,9 +605,34 @@ func (coordinator *Coordinator) evaluate(
 	}
 }
 
+func policyEvaluationDue(
+	current *policyRuntime,
+	configurationRevision uint64,
+	sessionReady bool,
+	sessionGeneration uint64,
+	now time.Time,
+) bool {
+	if current == nil || current.running {
+		return false
+	}
+	if current.evaluationPending || current.configurationRebuildPending || !current.evaluatedSessionKnown ||
+		current.evaluatedConfigRevision != configurationRevision ||
+		current.evaluatedSessionReady != sessionReady ||
+		current.evaluatedSessionGeneration != sessionGeneration {
+		return true
+	}
+	if current.eventOnly {
+		return false
+	}
+	if current.nextCheck.IsZero() {
+		return true
+	}
+	return !current.nextCheck.IsZero() && !now.Before(current.nextCheck)
+}
+
 func policyOperationContext(ctx context.Context, policyID string) (context.Context, context.CancelFunc) {
 	switch strings.TrimSpace(policyID) {
-	case "autoTowers", "autoBeriWorldAttack", "autoStorm":
+	case "autoTowers", "autoBeriWorldAttack", "autoStorm", "sharedStormScan":
 		// Bound attack orchestration, including any prerequisite castle or map
 		// refresh, so a lost protocol reply cannot leave the policy running forever.
 		return context.WithTimeout(ctx, boundedAttackIntentTTL)
@@ -586,7 +709,10 @@ func (coordinator *Coordinator) wakePoliciesForConfigurationEvent(
 		}
 		resetContinuation(current)
 		current.troopAvailabilityGate = nil
+		current.stateWakeNextCheck = time.Time{}
 		current.nextCheck = time.Time{}
+		current.evaluationPending = true
+		current.eventOnly = false
 		wokeIdle = true
 	}
 	return wokeIdle
@@ -830,6 +956,8 @@ func clearTroopAvailabilityGates(
 		current.troopAvailabilityGate = nil
 		resetContinuation(current)
 		current.nextCheck = time.Time{}
+		current.evaluationPending = true
+		current.eventOnly = false
 	}
 }
 
@@ -867,6 +995,8 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 		current.troopAvailabilityGate = &troopGate
 		resetContinuation(current)
 		current.nextCheck = time.Time{}
+		current.evaluationPending = false
+		current.eventOnly = true
 		result.nextCheck = time.Time{}
 		return result, false
 	}
@@ -879,6 +1009,8 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 	if !immediate {
 		resetContinuation(current)
 		current.nextCheck = result.nextCheck
+		current.evaluationPending = false
+		current.eventOnly = false
 		return result, false
 	}
 
@@ -895,6 +1027,8 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 		current.blockedDecisionFingerprint = ""
 	}
 	current.nextCheck = result.nextCheck
+	current.evaluationPending = true
+	current.eventOnly = false
 	return result, true
 }
 
@@ -914,7 +1048,7 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 	}); ok {
 		language, _ = provider.Language()
 	}
-	_, _ = coordinator.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, _ = coordinator.state.ApplyComponents(State.Components(State.ComponentAutomations), func(gameState *State.GameState) ([]string, bool, error) {
 		if gameState.Automations == nil {
 			gameState.Automations = map[string]State.AutomationState{}
 		}
@@ -941,7 +1075,7 @@ func automationSessionReady(session State.SessionState) bool {
 func meaningfulStateEvent(event State.Event) bool {
 	for _, domain := range event.Domains {
 		normalized := strings.ToLower(strings.TrimSpace(domain))
-		if normalized != "protocol" && normalized != "automation" {
+		if normalized != "protocol" && normalized != "automation" && normalized != "storm-scan-progress" {
 			return true
 		}
 	}
@@ -1213,7 +1347,14 @@ func wakePoliciesForStateEvent(
 			return false
 		}
 		resetContinuation(current)
+		if session {
+			current.stateWakeNextCheck = time.Time{}
+		} else if current.stateWakeNextCheck.IsZero() {
+			current.stateWakeNextCheck = current.nextCheck
+		}
 		current.nextCheck = time.Time{}
+		current.evaluationPending = true
+		current.eventOnly = false
 		wokeIdle = true
 		return true
 	}
@@ -1262,7 +1403,10 @@ func wakePolicyIDsForConfigurationEvent(
 		}
 		resetContinuation(current)
 		current.troopAvailabilityGate = nil
+		current.stateWakeNextCheck = time.Time{}
 		current.nextCheck = time.Time{}
+		current.evaluationPending = true
+		current.eventOnly = false
 		wokeIdle = true
 	}
 	return wokeIdle
@@ -1324,6 +1468,25 @@ func decisionRequestFingerprint(decision Decision) string {
 		)
 	}
 	return strings.Join(parts, "\x00")
+}
+
+func passiveDecisionFingerprint(decision Decision) (string, bool) {
+	status := decision.Status
+	if status == "" {
+		status = "idle"
+	}
+	payload := struct {
+		Status  string             `json:"status"`
+		Detail  string             `json:"detail,omitempty"`
+		Metrics map[string]float64 `json:"metrics,omitempty"`
+	}{Status: status, Detail: decision.Detail, Metrics: decision.Metrics}
+	encoded, err := json.Marshal(payload)
+	if err != nil {
+		// A non-finite metric should still be published through the existing
+		// state path, but it is not safe to use as a no-change identity.
+		return "", false
+	}
+	return string(encoded), true
 }
 
 func timePointer(value time.Time) *time.Time {

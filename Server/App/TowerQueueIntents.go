@@ -163,30 +163,25 @@ func towerQueueScanContext(input Intent.PlanningContext, arguments json.RawMessa
 }
 
 func (application *Application) captureTowerQueue(_ context.Context, arguments json.RawMessage) error {
-	request, _, err := towerQueueScanContext(Intent.PlanningContext{State: application.State.Snapshot()}, arguments)
+	request, _, err := towerQueueScanContext(Intent.PlanningContext{State: application.State.ReadOnlyView()}, arguments)
 	if err != nil {
 		return err
 	}
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentTowerQueue), func(gameState *State.GameState) ([]string, bool, error) {
 		source, exists := gameState.Castles[request.SourceCastleID]
 		if !exists || !source.Focused {
 			return nil, false, fmt.Errorf("tower queue source castle %d is no longer focused", request.SourceCastleID)
 		}
-		if gameState.TowerQueue.EntriesByCastle == nil {
-			gameState.TowerQueue.EntriesByCastle = map[State.CastleID][]State.TowerQueueEntry{}
-		}
-		if gameState.TowerQueue.LastScannedAt == nil {
-			gameState.TowerQueue.LastScannedAt = map[State.CastleID]time.Time{}
-		}
 		candidates := make([]State.MapObservation, 0)
-		for _, target := range gameState.Map[source.KingdomID] {
+		gameState.RangeMapObservationsByKind(source.KingdomID, State.MapProjectionTower, func(_ string, target State.MapObservation) bool {
 			if target.TypeID != kingdomTowerMapTypeID ||
 				towerQueueDistanceSquared(source, target) > request.Radius*request.Radius ||
 				(!request.ScanStartedAt.IsZero() && target.ObservedAt.Before(request.ScanStartedAt)) {
-				continue
+				return true
 			}
 			candidates = append(candidates, target)
-		}
+			return true
+		})
 		sort.Slice(candidates, func(left, right int) bool {
 			leftDistance := towerQueueDistanceSquared(source, candidates[left])
 			rightDistance := towerQueueDistanceSquared(source, candidates[right])
@@ -206,8 +201,8 @@ func (application *Application) captureTowerQueue(_ context.Context, arguments j
 				MapObservedAt: target.ObservedAt, QueuedAt: now,
 			})
 		}
-		gameState.TowerQueue.EntriesByCastle[source.ID] = entries
-		gameState.TowerQueue.LastScannedAt[source.ID] = now
+		gameState.SetTowerQueueEntries(source.ID, entries)
+		gameState.SetTowerQueueLastScannedAt(source.ID, now)
 		return []string{"tower-queue"}, true, nil
 	})
 	return err
@@ -218,13 +213,13 @@ func (application *Application) consumeTowerQueueEntry(_ context.Context, argume
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		entries := gameState.TowerQueue.EntriesByCastle[request.SourceCastleID]
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentTowerQueue), func(gameState *State.GameState) ([]string, bool, error) {
+		entries := gameState.MutableTowerQueueEntries(request.SourceCastleID)
 		for index, entry := range entries {
 			if entry.KingdomID != request.KingdomID || entry.TargetX != request.TargetX || entry.TargetY != request.TargetY {
 				continue
 			}
-			gameState.TowerQueue.EntriesByCastle[request.SourceCastleID] = append(entries[:index:index], entries[index+1:]...)
+			gameState.SetTowerQueueEntries(request.SourceCastleID, append(entries[:index:index], entries[index+1:]...))
 			return []string{"tower-queue"}, true, nil
 		}
 		return nil, false, nil
@@ -237,15 +232,12 @@ func (application *Application) deferTowerQueueEntry(_ context.Context, argument
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentTowerQueue), func(gameState *State.GameState) ([]string, bool, error) {
 		now := time.Now().UTC()
 		if !rotateTowerQueueEntry(gameState, request, now) {
 			return nil, false, nil
 		}
-		if gameState.TowerQueue.LastAttemptedAt == nil {
-			gameState.TowerQueue.LastAttemptedAt = map[State.CastleID]time.Time{}
-		}
-		gameState.TowerQueue.LastAttemptedAt[request.SourceCastleID] = now
+		gameState.SetTowerQueueLastAttemptedAt(request.SourceCastleID, now)
 		return []string{"tower-queue"}, true, nil
 	})
 	return err
@@ -256,8 +248,8 @@ func (application *Application) rotateStaleTowerQueueEntry(_ context.Context, ar
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		target, found := gameState.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentTowerQueue), func(gameState *State.GameState) ([]string, bool, error) {
+		target, found := gameState.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 		if found && !target.ObservedAt.IsZero() && !target.ObservedAt.Before(request.RefreshStartedAt) {
 			return nil, false, nil
 		}
@@ -270,7 +262,7 @@ func (application *Application) rotateStaleTowerQueueEntry(_ context.Context, ar
 }
 
 func rotateTowerQueueEntry(gameState *State.GameState, request towerQueueEntryRequest, now time.Time) bool {
-	entries := gameState.TowerQueue.EntriesByCastle[request.SourceCastleID]
+	entries := gameState.MutableTowerQueueEntries(request.SourceCastleID)
 	for index, entry := range entries {
 		if entry.KingdomID != request.KingdomID || entry.TargetX != request.TargetX || entry.TargetY != request.TargetY {
 			continue
@@ -282,7 +274,7 @@ func rotateTowerQueueEntry(gameState *State.GameState, request towerQueueEntryRe
 		rotated = append(rotated, entries[:index]...)
 		rotated = append(rotated, entries[index+1:]...)
 		rotated = append(rotated, entry)
-		gameState.TowerQueue.EntriesByCastle[request.SourceCastleID] = rotated
+		gameState.SetTowerQueueEntries(request.SourceCastleID, rotated)
 		return true
 	}
 	return false

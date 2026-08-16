@@ -185,7 +185,7 @@ func (application *Application) verifyProductionQueueCapacityAt(arguments json.R
 	if application == nil || application.State == nil {
 		return fmt.Errorf("production state is unavailable")
 	}
-	gameState := application.State.Snapshot()
+	gameState := application.State.ReadOnlyView()
 	var gameData *GameData.Store
 	if application.GameData != nil {
 		gameData, _ = application.GameData.Current()

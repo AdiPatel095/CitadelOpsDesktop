@@ -77,18 +77,30 @@ func (uploader *CloudUploader) Run(ctx context.Context) {
 	if !uploader.started.CompareAndSwap(false, true) {
 		return
 	}
-	ticker := time.NewTicker(cloudReportRetryInterval)
-	defer ticker.Stop()
 	for {
 		processed, err := uploader.processNext(ctx)
 		if err != nil {
 			log.Printf("[battle-report] cloud outbox retry pending: %v", err)
 		}
-		if processed {
+		if processed || err != nil {
+			delay := 250 * time.Millisecond
+			if err != nil {
+				delay = cloudReportRetryInterval
+			}
+			retry := time.NewTimer(delay)
 			select {
 			case <-ctx.Done():
+				retry.Stop()
 				return
-			case <-time.After(250 * time.Millisecond):
+			case <-uploader.wake:
+				if !retry.Stop() {
+					select {
+					case <-retry.C:
+					default:
+					}
+				}
+				continue
+			case <-retry.C:
 				continue
 			}
 		}
@@ -96,7 +108,6 @@ func (uploader *CloudUploader) Run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-uploader.wake:
-		case <-ticker.C:
 		}
 	}
 }

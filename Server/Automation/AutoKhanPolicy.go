@@ -77,26 +77,26 @@ func (*AutoKhanDefensePolicy) ActorID() string  { return "autoKhan" }
 
 func (*AutoKhanPolicy) WakeDomains() []string {
 	return []string{
-		"achievements", "attacks", "commanders", "currencies", "defense", "events", "event-scores", "inventory", "khan", "map",
+		"achievements", "attacks", "commanders", "currencies", "defense", "events", "event-scores", "inventory", "khan", "map-event-camp",
 		"movement-snapshot", "movements", "nomad-camps", "resources", "stationing", "units",
 	}
 }
 
 func (*AutoKhanCooldownPolicy) WakeDomains() []string {
 	return []string{
-		"currencies", "defense", "events", "event-scores", "khan", "map", "movements", "nomad-camps", "stationing",
+		"currencies", "defense", "events", "event-scores", "khan", "map-event-camp", "movements", "nomad-camps", "stationing",
 	}
 }
 
 func (*AutoKhanRagePolicy) WakeDomains() []string {
 	return []string{
-		"defense", "events", "event-scores", "inventory", "khan", "map", "movement-snapshot", "movements", "stationing",
+		"defense", "events", "event-scores", "inventory", "khan", "map-event-camp", "movement-snapshot", "movements", "stationing",
 	}
 }
 
 func (*AutoKhanDefensePolicy) WakeDomains() []string {
 	return []string{
-		"defense", "events", "event-scores", "inventory", "khan", "map", "movements", "stationing",
+		"defense", "events", "event-scores", "inventory", "khan", "map-event-camp", "movements", "stationing",
 	}
 }
 
@@ -164,8 +164,13 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		settings.OpenGateProtection = false
 	}
 
-	score, active := snapshot.State.EventScores.ByEvent[autoKhanEventID]
+	score, active := snapshot.State.LookupScalableEventScore(autoKhanEventID)
 	if !active || score.RemainingSec <= 0 || score.ObservedAt.IsZero() {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{autoKhanEventID}, "Nomad Khan event",
+		); locked {
+			return decision, nil
+		}
 		return autoKhanWaiting(snapshot.Now, "Waiting for the Nomad event and Khan camp", settings.CheckIntervalSec, nil), nil
 	}
 	remaining := autoKhanRemaining(score, snapshot.Now)
@@ -596,7 +601,7 @@ func (*AutoKhanCooldownPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 			Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
 	}
-	observation, found := snapshot.State.Map[selected.KingdomID][fmt.Sprintf("%d:%d", selected.X, selected.Y)]
+	observation, found := snapshot.State.LookupMapObservation(selected.KingdomID, fmt.Sprintf("%d:%d", selected.X, selected.Y))
 	if !found || observation.TypeID != autoKhanCampTypeID ||
 		observation.ObservedAt.Before(selected.CooldownObservedAt) {
 		selected.CooldownObservedAt = time.Time{}
@@ -798,8 +803,13 @@ func autoKhanAsyncLaneContext(
 	if settings.OpenGateProtection && source.ID != main.ID {
 		settings.OpenGateProtection = false
 	}
-	score, active := snapshot.State.EventScores.ByEvent[autoKhanEventID]
+	score, active := snapshot.State.LookupScalableEventScore(autoKhanEventID)
 	if !active || score.RemainingSec <= 0 || score.ObservedAt.IsZero() {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{autoKhanEventID}, "Nomad Khan event",
+		); locked {
+			return autoKhanLaneContext{}, &decision, nil
+		}
 		return wait("Waiting for the Nomad event and Khan camp", nil)
 	}
 	defensePreset, err := KhanDomain.DecodeDefensePreset(
@@ -911,16 +921,17 @@ func autoKhanMainCastle(gameState State.GameState) (State.CastleState, bool) {
 
 func autoKhanTarget(gameState State.GameState) (State.MapObservation, bool) {
 	if gameState.Khan.RunID != "" {
-		if target, found := gameState.Map[0][fmt.Sprintf("%d:%d", gameState.Khan.TargetX, gameState.Khan.TargetY)]; found && autoKhanTargetCandidate(target) {
+		if target, found := gameState.LookupMapObservation(0, fmt.Sprintf("%d:%d", gameState.Khan.TargetX, gameState.Khan.TargetY)); found && autoKhanTargetCandidate(target) {
 			return target, true
 		}
 	}
 	candidates := make([]State.MapObservation, 0)
-	for _, target := range gameState.Map[0] {
+	gameState.RangeMapObservationsByKind(0, State.MapProjectionEventCamp, func(_ string, target State.MapObservation) bool {
 		if autoKhanTargetCandidate(target) {
 			candidates = append(candidates, target)
 		}
-	}
+		return true
+	})
 	sort.Slice(candidates, func(left, right int) bool {
 		if !candidates[left].ObservedAt.Equal(candidates[right].ObservedAt) {
 			return candidates[left].ObservedAt.After(candidates[right].ObservedAt)
@@ -1081,6 +1092,7 @@ func autoKhanDefenseToolPurchase(
 		return nil, 0, nil
 	}
 
+	offers, _, _ := snapshot.State.ConstructionOffersFor(main.ID, main.KingdomID)
 	candidates := make([]autoKhanDefenseToolPurchaseCandidate, 0)
 	for toolID, deficit := range deficits {
 		packages, err := snapshot.GameData.DefenseToolShopPackages(int64(toolID))
@@ -1102,7 +1114,7 @@ func autoKhanDefenseToolPurchase(
 				amount = min(amount, item.MaxBuyPerClick)
 			}
 			if item.Stock > 0 {
-				remaining := max(int64(0), item.Stock-snapshot.State.Inventory.ConstructionOffers[State.PackageID(item.PackageID)])
+				remaining := max(int64(0), item.Stock-offers[State.PackageID(item.PackageID)])
 				amount = min(amount, remaining)
 			}
 			if amount <= 0 {
@@ -1241,7 +1253,7 @@ func autoKhanOutgoingMovementIDs(gameState State.GameState, now time.Time) []Sta
 	seen := map[State.MovementID]struct{}{}
 	result := make([]State.MovementID, 0, len(gameState.Khan.Launches))
 	for _, launch := range gameState.Khan.Launches {
-		movement, found := gameState.Movements[launch.MovementID]
+		movement, found := gameState.LookupMovement(launch.MovementID)
 		if !found || movement.Direction != 0 || !towerMovementActiveAt(movement, now) {
 			continue
 		}

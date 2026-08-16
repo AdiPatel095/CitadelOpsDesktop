@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strconv"
-	"strings"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -189,33 +187,9 @@ func hasHospitalSubscriptionStackBonus(state State.GameState, gameData *GameData
 	if len(activeTypeIDs) == 0 {
 		return false
 	}
-	raw, exists := gameData.RawCollection("subscriptionsBuffs")
-	if !exists {
-		return false
-	}
-	var buffs []struct {
-		SubscriptionTypeID string `json:"subscriptionTypeID"`
-		Effects            string `json:"effects"`
-	}
-	if err := json.Unmarshal(raw, &buffs); err != nil {
-		return false
-	}
-	for _, buff := range buffs {
-		typeID, err := strconv.Atoi(strings.TrimSpace(buff.SubscriptionTypeID))
-		if err != nil || typeID <= 0 {
-			continue
-		}
-		if _, active := activeTypeIDs[typeID]; !active {
-			continue
-		}
-		for _, effect := range strings.Split(buff.Effects, ",") {
-			effectIDText, valueText, found := strings.Cut(strings.TrimSpace(effect), "&")
-			if !found {
-				continue
-			}
-			effectID, effectErr := strconv.Atoi(strings.TrimSpace(effectIDText))
-			value, valueErr := strconv.Atoi(strings.TrimSpace(valueText))
-			if effectErr == nil && valueErr == nil && effectID == hospitalSubscriptionEffectID && value > 0 {
+	for typeID := range activeTypeIDs {
+		for _, effect := range gameData.SubscriptionEffectsView(typeID) {
+			if effect.ID == hospitalSubscriptionEffectID && effect.Value > 0 {
 				return true
 			}
 		}
@@ -227,9 +201,17 @@ func hospitalQueueCapacity(castle State.CastleState, gameData *GameData.Store) i
 	if gameData == nil {
 		return 0
 	}
+	catalog, err := gameData.BuildingCatalog()
+	if err != nil {
+		return 0
+	}
 	var capacity int
 	for _, building := range castle.Buildings {
-		slots := recordInteger(gameData, "buildings", int64(building.DefinitionID), "hospitalSlots")
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
+		if !found {
+			continue
+		}
+		slots := int64(definition.Values["hospitalSlots"])
 		if int(slots) > capacity {
 			capacity = int(slots)
 		}

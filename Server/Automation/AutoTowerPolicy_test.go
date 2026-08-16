@@ -13,6 +13,18 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
+func TestAutoTowerWithoutConfigurationWaitsForConfigurationWake(t *testing.T) {
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), Snapshot{
+		State: State.NewGameState(), Now: time.Date(2026, 8, 14, 12, 0, 0, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !decision.EventDriven || !decision.NextCheckAt.IsZero() || decision.Request != nil {
+		t.Fatalf("passive Auto Tower decision = %#v", decision)
+	}
+}
+
 func TestAutoTowerSettingsResetClearsOnlyDerivedQueueState(t *testing.T) {
 	now := time.Date(2026, 7, 22, 22, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()

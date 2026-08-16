@@ -194,7 +194,7 @@ func NormalizeTargetCapture(target TargetCaptureResult, catalog *GameData.Buildi
 	if catalog != nil {
 		buildings := make([]TargetBuilding, 0, len(target.Buildings))
 		for _, building := range target.Buildings {
-			definition, found := catalog.Definition(int64(building.DefinitionID))
+			definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 			if found && fixedTargetDefinition(definition) {
 				target.Fixed = append(target.Fixed, TargetFixedBuilding{
 					TargetID: building.TargetID, DefinitionID: building.DefinitionID,
@@ -216,7 +216,7 @@ func NormalizeTargetCapture(target TargetCaptureResult, catalog *GameData.Buildi
 	for _, building := range target.Buildings {
 		definition, found := GameData.BuildingDefinition{}, false
 		if catalog != nil {
-			definition, found = catalog.Definition(int64(building.DefinitionID))
+			definition, found = catalog.DefinitionView(int64(building.DefinitionID))
 		}
 		if found && (strings.EqualFold(definition.GroundType, "DECO") || strings.EqualFold(definition.InternalName, "Deco")) {
 			target.Summary.DecorationCount++

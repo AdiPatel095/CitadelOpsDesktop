@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 )
 
@@ -17,8 +18,20 @@ const (
 )
 
 type BuildingCatalog struct {
-	definitions []BuildingDefinition
-	byID        map[int64]BuildingDefinition
+	definitions      []BuildingDefinition
+	byID             map[int64]BuildingDefinition
+	upgradePaths     sync.Map
+	constructionPath sync.Map
+}
+
+type buildingUpgradePathKey struct {
+	sourceID int64
+	targetID int64
+}
+
+type buildingPathResult struct {
+	path  []BuildingDefinition
+	found bool
 }
 
 func (store *Store) BuildingCatalog() (*BuildingCatalog, error) {
@@ -40,6 +53,17 @@ func (catalog *BuildingCatalog) Definitions() []BuildingDefinition {
 }
 
 func (catalog *BuildingCatalog) Definition(id int64) (BuildingDefinition, bool) {
+	definition, found := catalog.DefinitionView(id)
+	if !found {
+		return BuildingDefinition{}, false
+	}
+	return cloneBuildingDefinition(definition), true
+}
+
+// DefinitionView returns an immutable catalog-owned definition. Backend hot
+// paths may read it without allocating, but must never mutate nested slices,
+// maps, or pointers. Use Definition at external/ownership boundaries.
+func (catalog *BuildingCatalog) DefinitionView(id int64) (BuildingDefinition, bool) {
 	if catalog == nil {
 		return BuildingDefinition{}, false
 	}
@@ -47,37 +71,59 @@ func (catalog *BuildingCatalog) Definition(id int64) (BuildingDefinition, bool) 
 	if !found {
 		return BuildingDefinition{}, false
 	}
-	return cloneBuildingDefinition(definition), true
+	return definition, true
 }
 
 // UpgradePath returns the inclusive official forward-upgrade path from source
 // to target. It rejects missing links and cycles instead of inferring a family
 // from names or level numbers.
 func (catalog *BuildingCatalog) UpgradePath(sourceID int64, targetID int64) ([]BuildingDefinition, bool) {
+	path, found := catalog.UpgradePathView(sourceID, targetID)
+	if !found {
+		return nil, false
+	}
+	return cloneBuildingPath(path), true
+}
+
+// UpgradePathView returns an immutable, catalog-owned cached path. Callers may
+// iterate or copy values from it, but must not modify the slice or nested data.
+func (catalog *BuildingCatalog) UpgradePathView(sourceID int64, targetID int64) ([]BuildingDefinition, bool) {
 	if catalog == nil || sourceID <= 0 || targetID <= 0 {
 		return nil, false
 	}
+	key := buildingUpgradePathKey{sourceID: sourceID, targetID: targetID}
+	if cached, found := catalog.upgradePaths.Load(key); found {
+		result := cached.(buildingPathResult)
+		return result.path, result.found
+	}
+	result := catalog.buildUpgradePath(sourceID, targetID)
+	actual, _ := catalog.upgradePaths.LoadOrStore(key, result)
+	result = actual.(buildingPathResult)
+	return result.path, result.found
+}
+
+func (catalog *BuildingCatalog) buildUpgradePath(sourceID int64, targetID int64) buildingPathResult {
 	current, found := catalog.byID[sourceID]
 	if !found {
-		return nil, false
+		return buildingPathResult{}
 	}
 	path := make([]BuildingDefinition, 0, 4)
 	visited := map[int64]struct{}{}
 	for {
 		if _, duplicate := visited[current.ID]; duplicate {
-			return nil, false
+			return buildingPathResult{}
 		}
 		visited[current.ID] = struct{}{}
-		path = append(path, cloneBuildingDefinition(current))
+		path = append(path, current)
 		if current.ID == targetID {
-			return path, true
+			return buildingPathResult{path: path, found: true}
 		}
 		if current.UpgradeDefinitionID <= 0 {
-			return nil, false
+			return buildingPathResult{}
 		}
 		next, nextFound := catalog.byID[current.UpgradeDefinitionID]
 		if !nextFound {
-			return nil, false
+			return buildingPathResult{}
 		}
 		current = next
 	}
@@ -87,27 +133,47 @@ func (catalog *BuildingCatalog) UpgradePath(sourceID int64, targetID int64) ([]B
 // root to target. Both backward and forward links must agree so an executor can
 // safely construct the root and then apply each returned upgrade in order.
 func (catalog *BuildingCatalog) ConstructionPath(targetID int64) ([]BuildingDefinition, bool) {
+	path, found := catalog.ConstructionPathView(targetID)
+	if !found {
+		return nil, false
+	}
+	return cloneBuildingPath(path), true
+}
+
+// ConstructionPathView returns an immutable, catalog-owned cached path.
+func (catalog *BuildingCatalog) ConstructionPathView(targetID int64) ([]BuildingDefinition, bool) {
 	if catalog == nil || targetID <= 0 {
 		return nil, false
 	}
+	if cached, found := catalog.constructionPath.Load(targetID); found {
+		result := cached.(buildingPathResult)
+		return result.path, result.found
+	}
+	result := catalog.buildConstructionPath(targetID)
+	actual, _ := catalog.constructionPath.LoadOrStore(targetID, result)
+	result = actual.(buildingPathResult)
+	return result.path, result.found
+}
+
+func (catalog *BuildingCatalog) buildConstructionPath(targetID int64) buildingPathResult {
 	current, found := catalog.byID[targetID]
 	if !found {
-		return nil, false
+		return buildingPathResult{}
 	}
 	reversed := make([]BuildingDefinition, 0, 4)
 	visited := map[int64]struct{}{}
 	for {
 		if _, duplicate := visited[current.ID]; duplicate {
-			return nil, false
+			return buildingPathResult{}
 		}
 		visited[current.ID] = struct{}{}
-		reversed = append(reversed, cloneBuildingDefinition(current))
+		reversed = append(reversed, current)
 		if current.DowngradeDefinitionID <= 0 {
 			break
 		}
 		previous, previousFound := catalog.byID[current.DowngradeDefinitionID]
 		if !previousFound || previous.UpgradeDefinitionID != current.ID {
-			return nil, false
+			return buildingPathResult{}
 		}
 		current = previous
 	}
@@ -115,7 +181,15 @@ func (catalog *BuildingCatalog) ConstructionPath(targetID int64) ([]BuildingDefi
 	for index := range reversed {
 		path[len(reversed)-1-index] = reversed[index]
 	}
-	return path, true
+	return buildingPathResult{path: path, found: true}
+}
+
+func cloneBuildingPath(source []BuildingDefinition) []BuildingDefinition {
+	result := make([]BuildingDefinition, len(source))
+	for index, definition := range source {
+		result[index] = cloneBuildingDefinition(definition)
+	}
+	return result
 }
 
 type buildingCostReference struct {

@@ -22,6 +22,11 @@ type Decision struct {
 	Status      string
 	Detail      string
 	NextCheckAt time.Time
+	// EventDriven leaves a passive decision asleep when NextCheckAt is zero.
+	// Only a declared state/configuration/session wake will reevaluate it. This
+	// is used for authoritative blockers whose state cannot change merely
+	// because another polling interval elapsed.
+	EventDriven bool
 	Metrics     map[string]float64
 	Request     *Intent.Request
 	FollowUp    *Intent.Request
@@ -105,6 +110,7 @@ type ConfigurationWakePolicy interface {
 // ResetConfigurationDerivedState must not modify GameState.Map.
 type ConfigurationDerivedStatePolicy interface {
 	ConfigurationDerivedStateSections() []string
+	ConfigurationDerivedStateComponents() State.ComponentSet
 	ResetConfigurationDerivedState(*State.GameState) (domains []string, changed bool)
 }
 

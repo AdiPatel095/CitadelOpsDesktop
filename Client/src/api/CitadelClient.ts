@@ -1,4 +1,4 @@
-import { API_CONFIG } from '../config/Api';
+import { runtimeURL } from './RuntimeURL';
 import type {
   APIConnectionStatus,
   APIEnvelope,
@@ -23,6 +23,7 @@ import type {
 	ExpansionPreviewResponse,
 	BackgroundLoginInput,
 	BackgroundLoginStatus,
+	GameServerCatalog,
   BrowserInventory,
   CatalogManifest,
   CatalogResponse,
@@ -41,17 +42,22 @@ import type {
 	WorldIntelligenceCoverageResponseV1,
 	WorldIntelligenceEventRunListV1,
 	WorldIntelligenceEventRunRankingV1,
+	WorldIntelligenceEventRunRankingDeltaV1,
+	WorldIntelligenceEventRunRankingSnapshotV1,
 	WorldIntelligencePlayerEventScoreHistoryV1,
 	WorldIntelligencePlayerProfileV1,
 	WorldIntelligenceRankingMetricCatalogV1,
 	WorldIntelligenceRankingResponseV1,
 	WorldIntelligenceSearchResponseV1,
 	WorldIntelligenceStatusV1,
+	WorldIntelligenceUpdateManifestV1,
   SubmitIntentOptions,
 } from './Contracts';
 
 type EnvelopeListener = (message: APIEnvelope) => void;
 type StatusListener = (status: APIConnectionStatus) => void;
+export type WorldIntelligenceSubscriptionStatus = 'connecting' | 'connected' | 'reconnecting';
+type WorldIntelligenceUpdateListener = (manifest: WorldIntelligenceUpdateManifestV1) => void;
 
 export class APIError extends Error {
   readonly status: number;
@@ -74,6 +80,7 @@ class CitadelClient {
   private reconnectAttempt = 0;
   private intentionalClose = false;
   private pendingIntents = new Map<string, Promise<IntentReceipt>>();
+  private operationWaiters = new Map<string, Set<(receipt: IntentReceipt) => void>>();
 
   connect() {
     this.intentionalClose = false;
@@ -93,6 +100,7 @@ class CitadelClient {
       try {
         const message = JSON.parse(String(event.data)) as APIEnvelope;
         if (message.v !== 2 || typeof message.type !== 'string') return;
+        this.notifyOperationWaiters(message);
         for (const listener of this.listeners) listener(message);
       } catch (error) {
         console.error('Could not decode CitadelOps API event', error);
@@ -154,6 +162,10 @@ class CitadelClient {
   getBrowsers(): Promise<BrowserInventory> {
     return this.request<BrowserInventory>('/api/v2/browsers');
   }
+
+	getGameServers(): Promise<GameServerCatalog> {
+		return this.request<GameServerCatalog>('/api/v2/session/game-servers');
+	}
 
 	getBackgroundLoginStatus(): Promise<BackgroundLoginStatus> {
 		return this.request<BackgroundLoginStatus>('/api/v2/session/background-login', { cache: 'no-store' });
@@ -331,6 +343,55 @@ class CitadelClient {
 		return this.request<WorldIntelligenceCoverageResponseV1>(`/api/v2/world-intelligence/coverage${suffix}`);
 	}
 
+	subscribeWorldIntelligenceUpdates(
+		worldId: string,
+		onUpdate: WorldIntelligenceUpdateListener,
+		onStatus?: (status: WorldIntelligenceSubscriptionStatus) => void,
+	): () => void {
+		const query = new URLSearchParams({ worldId });
+		const endpoint = this.httpURL(`/api/v2/world-intelligence/subscribe?${query.toString()}`);
+		const receive = (event: Event) => {
+			try {
+				const manifest = JSON.parse((event as MessageEvent<string>).data) as WorldIntelligenceUpdateManifestV1;
+				if (manifest.schemaVersion !== 1 || !manifest.worldId || !Number.isSafeInteger(manifest.revision)) return;
+				onUpdate(manifest);
+			} catch (error) {
+				console.error('Could not decode World Intelligence update', error);
+			}
+		};
+		return this.subscribeEventStream(endpoint, {
+			'world-intel.ready': receive,
+			'world-intel.update': receive,
+		}, onStatus);
+	}
+
+	subscribeWorldIntelligenceLeaderboard(
+		input: { worldId: string; occurrenceId: string },
+		onSnapshot: (snapshot: WorldIntelligenceEventRunRankingSnapshotV1) => void,
+		onDelta: (delta: WorldIntelligenceEventRunRankingDeltaV1) => void,
+		onStatus?: (status: WorldIntelligenceSubscriptionStatus) => void,
+	): () => void {
+		const query = new URLSearchParams({ worldId: input.worldId });
+		const endpoint = this.httpURL(
+			`/api/v2/world-intelligence/event-runs/${encodeURIComponent(input.occurrenceId)}/subscribe?${query.toString()}`,
+		);
+		const decode = <T>(event: Event, receive: (value: T) => void) => {
+			try {
+				const value = JSON.parse((event as MessageEvent<string>).data) as T & { revision?: number };
+				if (!Number.isSafeInteger(value.revision)) return;
+				receive(value);
+			} catch (error) {
+				console.error('Could not decode World Intelligence leaderboard update', error);
+			}
+		};
+		return this.subscribeEventStream(endpoint, {
+			'world-intel.leaderboard.snapshot': (event) => decode<WorldIntelligenceEventRunRankingSnapshotV1>(event, (snapshot) => {
+				if (snapshot.complete === true) onSnapshot(snapshot);
+			}),
+			'world-intel.leaderboard.delta': (event) => decode(event, onDelta),
+		}, onStatus);
+	}
+
 	getWorldIntelligenceCatalogDatasets(): Promise<WorldIntelligenceCatalogDatasetCatalogV1> {
 		return this.request<WorldIntelligenceCatalogDatasetCatalogV1>('/api/v2/world-intelligence/catalog-datasets');
 	}
@@ -422,6 +483,9 @@ class CitadelClient {
 	const duplicateKey = options.id?.trim() ? `id:${operationId}\u0000${requestKey}` : `intent:${requestKey}`;
 	const pending = this.pendingIntents.get(duplicateKey);
 	if (pending) return pending;
+	// The runtime accepts the operation and keeps executing it whether or not
+	// this dashboard stays connected; the promise still resolves with the final
+	// receipt by following the operation stream (with a poll fallback).
 	const request = this.request<IntentReceipt>(`/api/v2/intents/${encodeURIComponent(name)}`, {
       method: 'POST',
       body: JSON.stringify({
@@ -432,7 +496,7 @@ class CitadelClient {
         expectedRevision: options.expectedRevision,
         dryRun: options.dryRun,
       }),
-    });
+    }).then((accepted) => this.awaitOperation(accepted));
 	this.pendingIntents.set(duplicateKey, request);
 	void request.finally(() => {
 	  if (this.pendingIntents.get(duplicateKey) === request) this.pendingIntents.delete(duplicateKey);
@@ -446,6 +510,96 @@ class CitadelClient {
     });
   }
 
+  getOperation(id: string): Promise<IntentReceipt> {
+    return this.request<IntentReceipt>(`/api/v2/operations/${encodeURIComponent(id)}`);
+  }
+
+  /**
+   * Resolves once the accepted operation reaches a terminal receipt. Progress
+   * arrives through operation.changed events; polling covers a completion that
+   * raced the subscription and any period without an event socket. A failed
+   * final receipt is surfaced as an APIError, matching the former synchronous
+   * HTTP contract, so existing callers keep their try/catch behaviour.
+   */
+  private awaitOperation(accepted: IntentReceipt): Promise<IntentReceipt> {
+    if (isTerminalReceipt(accepted)) return Promise.resolve(finalizeReceipt(accepted));
+    return new Promise<IntentReceipt>((resolve, reject) => {
+      let settled = false;
+      let pollTimer: ReturnType<typeof setTimeout> | null = null;
+      let missing = 0;
+      const waiter = (receipt: IntentReceipt) => {
+        if (isTerminalReceipt(receipt)) settle(receipt);
+      };
+      const cleanup = () => {
+        settled = true;
+        if (pollTimer != null) clearTimeout(pollTimer);
+        pollTimer = null;
+        this.removeOperationWaiter(accepted.id, waiter);
+      };
+      const settle = (receipt: IntentReceipt) => {
+        if (settled) return;
+        cleanup();
+        try {
+          resolve(finalizeReceipt(receipt));
+        } catch (error) {
+          reject(error);
+        }
+      };
+      const fail = (error: unknown) => {
+        if (settled) return;
+        cleanup();
+        reject(error);
+      };
+      this.addOperationWaiter(accepted.id, waiter);
+      const poll = async () => {
+        if (settled) return;
+        try {
+          const receipt = await this.getOperation(accepted.id);
+          missing = 0;
+          if (isTerminalReceipt(receipt)) {
+            settle(receipt);
+            return;
+          }
+        } catch (error) {
+          if (error instanceof APIError && error.status === 404) {
+            missing += 1;
+            if (missing >= 3) {
+              fail(new APIError(`Operation ${accepted.id} is no longer tracked by the runtime`, 404, 'operation_not_found'));
+              return;
+            }
+          }
+        }
+        if (!settled) pollTimer = setTimeout(() => void poll(), OPERATION_POLL_INTERVAL_MS);
+      };
+      void poll();
+    });
+  }
+
+  private addOperationWaiter(id: string, waiter: (receipt: IntentReceipt) => void) {
+    let waiters = this.operationWaiters.get(id);
+    if (!waiters) {
+      waiters = new Set();
+      this.operationWaiters.set(id, waiters);
+    }
+    waiters.add(waiter);
+  }
+
+  private removeOperationWaiter(id: string, waiter: (receipt: IntentReceipt) => void) {
+    const waiters = this.operationWaiters.get(id);
+    if (!waiters) return;
+    waiters.delete(waiter);
+    if (waiters.size === 0) this.operationWaiters.delete(id);
+  }
+
+  private notifyOperationWaiters(message: APIEnvelope) {
+    if (message.type !== 'operation.changed' && message.type !== 'intent.receipt') return;
+    if (this.operationWaiters.size === 0 || !isRecord(message.payload) || typeof message.payload.id !== 'string') return;
+    const waiters = this.operationWaiters.get(message.payload.id);
+    if (!waiters) return;
+    const receipt = message.payload as unknown as IntentReceipt;
+    for (const waiter of [...waiters]) waiter(receipt);
+  }
+
   getOperations(limit = 100): Promise<IntentReceipt[]> {
     const bounded = Math.max(1, Math.min(1000, Math.trunc(limit)));
     return this.request<IntentReceipt[]>(`/api/v2/operations?limit=${bounded}`);
@@ -454,6 +608,7 @@ class CitadelClient {
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const response = await fetch(this.httpURL(path), {
       ...init,
+	  credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
         ...(init.body ? { 'Content-Type': 'application/json' } : {}),
@@ -476,17 +631,55 @@ class CitadelClient {
     return payload as T;
   }
 
-  private httpURL(path: string): string {
-    const base = API_CONFIG.BASE_URL.replace(/\/$/, '');
-    return `${base}${path}`;
+	private httpURL(path: string): string {
+	return runtimeURL(path);
   }
 
   private eventsURL(): string {
-    const base = API_CONFIG.BASE_URL || window.location.origin;
-    const url = new URL('/api/v2/events', base);
+	const url = new URL(runtimeURL('/api/v2/events'), window.location.origin);
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     return url.toString();
   }
+
+	private subscribeEventStream(
+		endpoint: string,
+		listeners: Record<string, (event: Event) => void>,
+		onStatus?: (status: WorldIntelligenceSubscriptionStatus) => void,
+	): () => void {
+		let source: EventSource | null = null;
+		let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+		let reconnectAttempt = 0;
+		let closed = false;
+		onStatus?.('connecting');
+		const connect = () => {
+			if (closed) return;
+			const next = new EventSource(endpoint, { withCredentials: true });
+			source = next;
+			for (const [event, listener] of Object.entries(listeners)) next.addEventListener(event, listener);
+			next.onopen = () => {
+				reconnectAttempt = 0;
+				onStatus?.('connected');
+			};
+			next.onerror = () => {
+				if (source !== next || closed) return;
+				next.close();
+				source = null;
+				onStatus?.('reconnecting');
+				const delay = Math.min(30_000, 5_000 * 2 ** reconnectAttempt);
+				reconnectAttempt += 1;
+				reconnectTimer = setTimeout(() => {
+					reconnectTimer = null;
+					connect();
+				}, delay);
+			};
+		};
+		connect();
+		return () => {
+			closed = true;
+			if (reconnectTimer != null) clearTimeout(reconnectTimer);
+			source?.close();
+		};
+	}
 
   private newOperationId(): string {
 	return globalThis.crypto?.randomUUID?.()
@@ -508,6 +701,19 @@ class CitadelClient {
     this.status = status;
     for (const listener of this.statusListeners) listener(status);
   }
+}
+
+const OPERATION_POLL_INTERVAL_MS = 2000;
+
+function isTerminalReceipt(receipt: IntentReceipt): boolean {
+  return typeof receipt.completedAt === 'string' && receipt.completedAt !== '';
+}
+
+function finalizeReceipt(receipt: IntentReceipt): IntentReceipt {
+  if (receipt.status === 'failed') {
+    throw new APIError(receipt.error || `Operation ${receipt.id} failed`, 422);
+  }
+  return receipt;
 }
 
 function isRecord(value: unknown): value is Record<string, any> {

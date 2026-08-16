@@ -48,7 +48,7 @@ func (*AutoAdvisorPolicy) EnabledKey() string { return "auto_advisor" }
 
 func (*AutoAdvisorPolicy) WakeDomains() []string {
 	return []string{
-		"advisor", "map", "commanders", "units", "events", "event-scores", "nomad-camps",
+		"advisor", "map-event-camp", "commanders", "units", "events", "event-scores", "nomad-camps",
 		"currencies", "resources", "attack_dialog", "achievements",
 	}
 }
@@ -84,6 +84,11 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	}
 	score, found := activeNomadEventScore(snapshot.State, snapshot.Now)
 	if !found {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{nomadEventID, samuraiEventID}, "Nomad or Samurai event",
+		); locked {
+			return decision, nil
+		}
 		return autoAdvisorWaiting(snapshot.Now, "No Nomad or Samurai event is active", nil), nil
 	}
 	targetTypeID, _ := nomadTargetType(score.EventID)

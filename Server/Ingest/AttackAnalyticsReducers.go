@@ -49,11 +49,12 @@ func reconcileAttackFeatureBattleReport(gameState *State.GameState, capture *Sta
 	if bestIndex < 0 {
 		return false, nil
 	}
-	record := gameState.AttackAnalytics.PendingAttacks[bestIndex]
-	gameState.AttackAnalytics.PendingAttacks = append(
-		gameState.AttackAnalytics.PendingAttacks[:bestIndex],
-		gameState.AttackAnalytics.PendingAttacks[bestIndex+1:]...,
-	)
+	pending := gameState.MutablePendingAttackAnalytics()
+	record := pending[bestIndex]
+	gameState.SetPendingAttackAnalytics(append(
+		pending[:bestIndex],
+		pending[bestIndex+1:]...,
+	))
 	capture.AutomationFeature = record.FeatureID
 	capture.MovementID = record.MovementID
 	if capture.OccurredAt.IsZero() {
@@ -67,7 +68,7 @@ func battleCaptureOccurredAt(gameState *State.GameState, capture State.BattleRep
 		return capture.OccurredAt.UTC()
 	}
 	if gameState != nil {
-		if notice, found := gameState.Reports.Notices[capture.MessageID]; found && !notice.ObservedAt.IsZero() {
+		if notice, found := gameState.LookupReportNotice(capture.MessageID); found && !notice.ObservedAt.IsZero() {
 			occurredAt := notice.ObservedAt
 			if notice.AgeSec > 0 {
 				occurredAt = occurredAt.Add(-time.Duration(notice.AgeSec) * time.Second)

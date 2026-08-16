@@ -186,8 +186,8 @@ func (*AutoStormPolicy) EnabledKey() string { return "auto_storm" }
 
 func (*AutoStormPolicy) WakeDomains() []string {
 	return []string{
-		"attacks", "buildings", "castles", "construction-items", "construction-offers", "inventory", "map", "movements",
-		"reports", "resources", "storm", "units", "kingdom-transport",
+		"attacks", "buildings", "castles", "construction-items", "construction-offers", "inventory", "map-storm", "movements",
+		"reports", "resources", "storm", "storm-scan", "units", "kingdom-transport",
 	}
 }
 
@@ -261,13 +261,6 @@ func (*AutoStormPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	combatDetail := ""
 	nextStormOpportunityAt := time.Time{}
 	if settings.Forts.Enabled || settings.Islands.Enabled {
-		if scanDecision := autoStormFullMapScanDecision(snapshot, castle, metrics); scanDecision != nil {
-			return *scanDecision, nil
-		}
-		nextStormOpportunityAt = autoStormNextOpportunityAt(snapshot, settings, castle)
-		if !nextStormOpportunityAt.IsZero() {
-			metrics["nextStormOpportunityAtUnix"] = float64(nextStormOpportunityAt.Unix())
-		}
 		combatDecision, detail, err := evaluateAutoStormCombat(snapshot, settings, castle, metrics)
 		if err != nil {
 			return Decision{}, err
@@ -275,6 +268,9 @@ func (*AutoStormPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		combatDetail = detail
 		if combatDecision != nil {
 			return *combatDecision, nil
+		}
+		if nextUnix := int64(metrics["nextStormOpportunityAtUnix"]); nextUnix > 0 {
+			nextStormOpportunityAt = time.Unix(nextUnix, 0).UTC()
 		}
 	}
 
@@ -293,13 +289,18 @@ func (*AutoStormPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		status = "complete"
 	}
 	nextCheckAt := snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30))
-	if nextStormOpportunityAt.After(snapshot.Now) && nextStormOpportunityAt.Before(nextCheckAt) {
+	if nextStormOpportunityAt.After(snapshot.Now) {
 		nextCheckAt = nextStormOpportunityAt
 	}
-	return Decision{
+	result := Decision{
 		Status: status, Detail: strings.Join(details, " · "), Metrics: metrics,
 		NextCheckAt: nextCheckAt,
-	}, nil
+	}
+	if status == "complete" {
+		result.NextCheckAt = time.Time{}
+		result.EventDriven = true
+	}
+	return result, nil
 }
 
 func defaultAutoStormSettings() autoStormSettings {
@@ -414,12 +415,28 @@ func autoStormMapScanBounds(_ State.GameState, _ State.CastleState) State.StormM
 }
 
 func autoStormFullMapScanDecision(snapshot Snapshot, castle State.CastleState, metrics map[string]float64) *Decision {
+	return autoStormFullMapScanDecisionWithCoverage(
+		snapshot, castle, metrics, snapshot.State.SharedStormScanCoverage(autoStormKingdomID, snapshot.Now),
+	)
+}
+
+func autoStormFullMapScanDecisionWithCoverage(
+	snapshot Snapshot,
+	castle State.CastleState,
+	metrics map[string]float64,
+	coverage State.StormScanCoverage,
+) *Decision {
+	if coverage.Available {
+		metrics["sharedStormWindows"] = float64(coverage.WindowCount)
+		metrics["sharedStormFreshWindows"] = float64(coverage.FreshWindowCount)
+		return nil
+	}
 	mapStateCurrent := autoStormMapStateMatches(snapshot.State, castle)
 	mapState := snapshot.State.Storm.Map
 	lastAttemptAt := time.Time{}
 	if mapStateCurrent {
 		lastAttemptAt = mapState.LastAttemptAt
-		metrics["stormMapTargets"] = float64(len(mapState.Targets))
+		metrics["stormMapTargets"] = float64(snapshot.State.StormTargetCount())
 		metrics["stormMapWindows"] = float64(mapState.WindowCount)
 		metrics["stormMapMaximumX"] = float64(mapState.CoveredBounds.X2)
 		metrics["stormMapMaximumY"] = float64(mapState.CoveredBounds.Y2)
@@ -673,7 +690,7 @@ func autoStormExpansionGift(castle State.CastleState, catalog *GameData.Building
 	ids := sortedAutoStormBuildingIDs(castle.Layout.Objects)
 	for _, id := range ids {
 		building := castle.Layout.Objects[id]
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if found && building.Placed && strings.EqualFold(definition.InternalName, "TreasureChest") {
 			return id, true
 		}
@@ -732,7 +749,7 @@ func autoStormBuildingRemaining(
 	catalog *GameData.BuildingCatalog,
 	now time.Time,
 ) (int64, bool) {
-	current, found := catalog.Definition(int64(building.DefinitionID))
+	current, found := catalog.DefinitionView(int64(building.DefinitionID))
 	if !found {
 		return 0, false
 	}
@@ -746,7 +763,7 @@ func autoStormBuildingRemaining(
 		if current.UpgradeDefinitionID <= 0 {
 			return 0, false
 		}
-		target, found = catalog.Definition(current.UpgradeDefinitionID)
+		target, found = catalog.DefinitionView(current.UpgradeDefinitionID)
 		if !found {
 			return 0, false
 		}
@@ -922,7 +939,7 @@ func autoStormTargetBuildings(
 	}
 	filtered := make([]Buildings.TargetBuilding, 0, len(result))
 	for _, target := range result {
-		definition, found := catalog.Definition(int64(target.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(target.DefinitionID))
 		if found && fixedAutoStormDefinition(definition) {
 			continue
 		}
@@ -948,7 +965,7 @@ func autoStormFixedTargets(
 	}
 	filtered := result[:0]
 	for _, target := range result {
-		definition, found := catalog.Definition(int64(target.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(target.DefinitionID))
 		if found && strings.EqualFold(definition.InternalName, "Harbor") {
 			continue
 		}
@@ -1037,7 +1054,7 @@ func autoStormBuildingRemovalDecision(
 	if !exists || !building.Placed || autoStormBuildingQueued(castle, buildingID) {
 		return nil
 	}
-	definition, found := catalog.Definition(int64(building.DefinitionID))
+	definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 	if !found {
 		return nil
 	}
@@ -1333,7 +1350,7 @@ func autoStormDecorationPresetSatisfied(
 	matched := make([]bool, len(preset.Items))
 	decorationCount := 0
 	for _, building := range castle.Layout.Objects {
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found || !building.Placed || !autoStormDecorationDefinition(definition) {
 			continue
 		}
@@ -1370,10 +1387,8 @@ func evaluateAutoStormShop(
 	if settings.Aquamarine.Reserve < 0 {
 		return nil, false, "Aquamarine reserve cannot be negative", nil
 	}
-	if snapshot.State.Inventory.ConstructionOffersCastleID != castle.ID ||
-		snapshot.State.Inventory.ConstructionOffersKingdomID != castle.KingdomID ||
-		snapshot.State.Inventory.ConstructionOffersObservedAt.IsZero() ||
-		snapshot.Now.Sub(snapshot.State.Inventory.ConstructionOffersObservedAt) >= 5*time.Minute {
+	offers, observedAt, found := snapshot.State.ConstructionOffersFor(castle.ID, castle.KingdomID)
+	if !found || observedAt.IsZero() || snapshot.Now.Sub(observedAt) >= 5*time.Minute {
 		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh Luna package purchase counters", "shop.package.history", map[string]any{
 			"castleId": castle.ID, "kingdomId": castle.KingdomID,
 		}), false, "", nil
@@ -1408,7 +1423,7 @@ func evaluateAutoStormShop(
 		if !found {
 			return nil, false, fmt.Sprintf("Configured package %d is not sold by Luna", rule.PackageID), nil
 		}
-		purchased := snapshot.State.Inventory.ConstructionOffers[rule.PackageID]
+		purchased := offers[rule.PackageID]
 		if item.Stock > 0 && purchased >= item.Stock {
 			continue
 		}
@@ -1579,11 +1594,16 @@ func evaluateAutoStormCombat(
 		return nil, "Waiting for the pending Storm troop transfer", nil
 	}
 	mapState := snapshot.State.Storm.Map
-	if decision := autoStormFullMapScanDecision(snapshot, castle, metrics); decision != nil {
+	coverage := snapshot.State.SharedStormScanCoverage(autoStormKingdomID, snapshot.Now)
+	if decision := autoStormFullMapScanDecisionWithCoverage(snapshot, castle, metrics, coverage); decision != nil {
 		return decision, "", nil
 	}
-	if mapState.LastCompletedAt.IsZero() || mapState.LastCompletedAt.Before(mapState.LastAttemptAt) {
+	if !coverage.Available && (mapState.LastCompletedAt.IsZero() || mapState.LastCompletedAt.Before(mapState.LastAttemptAt)) {
 		return nil, "The latest full Storm map sweep did not complete; the two-hour scan safety interval is still active", nil
+	}
+	if coverage.Available {
+		metrics["sharedStormWindows"] = float64(coverage.WindowCount)
+		metrics["sharedStormFreshWindows"] = float64(coverage.FreshWindowCount)
 	}
 	document, err := AttackPresets.Decode(snapshot.Configuration.Sections[AttackPresets.ConfigurationSection])
 	if err != nil {
@@ -1597,11 +1617,20 @@ func evaluateAutoStormCombat(
 	if !available {
 		return nil, "No assigned Auto Storm commander is currently available", nil
 	}
-	candidates := autoStormCombatCandidates(snapshot, settings, castle, mapState.LastCompletedAt)
+	candidates, nextOpportunityAt := autoStormCombatOpportunities(snapshot, settings, castle)
+	if !nextOpportunityAt.IsZero() {
+		metrics["nextStormOpportunityAtUnix"] = float64(nextOpportunityAt.Unix())
+	}
 	metrics["eligibleStormTargets"] = float64(len(candidates))
 	metrics["minimumFortAttacksRemaining"] = float64(settings.Forts.MinimumWins)
 	if len(candidates) == 0 {
-		if nextOpportunityAt := autoStormNextOpportunityAt(snapshot, settings, castle); !nextOpportunityAt.IsZero() {
+		if coverage.Available && !coverage.Complete() {
+			return nil, fmt.Sprintf(
+				"Shared Storm coverage is still aggregating (%d/%d windows fresh)",
+				coverage.FreshWindowCount, coverage.WindowCount,
+			), nil
+		}
+		if !nextOpportunityAt.IsZero() {
 			return nil, fmt.Sprintf("Next learned Storm opportunity is ready at %s", nextOpportunityAt.Format(time.RFC3339)), nil
 		}
 		return nil, "No eligible Storm fort or resource island is available in the latest map scan", nil
@@ -1709,23 +1738,41 @@ func autoStormCombatCandidates(
 	castle State.CastleState,
 	_ time.Time,
 ) []autoStormCombatCandidate {
+	candidates, _ := autoStormCombatOpportunities(snapshot, settings, castle)
+	return candidates
+}
+
+func autoStormCombatOpportunities(
+	snapshot Snapshot,
+	settings autoStormSettings,
+	castle State.CastleState,
+) ([]autoStormCombatCandidate, time.Time) {
 	active := autoStormActiveTargets(snapshot.State, castle.ID, snapshot.Now)
 	result := make([]autoStormCombatCandidate, 0)
-	for _, scannedTarget := range snapshot.State.Storm.Map.Targets {
-		target := autoStormLatestTargetObservation(snapshot.State, scannedTarget)
+	next := time.Time{}
+	snapshot.State.RangeStormTargets(func(_ string, scannedTarget State.MapObservation) bool {
+		target := scannedTarget
 		if _, busy := active[fmt.Sprintf("%d:%d", target.X, target.Y)]; busy {
-			continue
+			return true
 		}
-		definition, found := snapshot.GameData.StormIsle(target.StormIsleID)
+		definition, found := snapshot.GameData.StormIsleView(target.StormIsleID)
 		if !found {
-			continue
+			return true
 		}
 		candidate, eligible := autoStormCandidateForTarget(settings, target, definition)
-		if !eligible || autoStormTargetExpired(target, definition, snapshot.Now) || autoStormTargetReadyAt(target).After(snapshot.Now) {
-			continue
+		if !eligible || autoStormTargetExpired(target, definition, snapshot.Now) {
+			return true
+		}
+		readyAt := autoStormTargetReadyAt(target)
+		if readyAt.After(snapshot.Now) {
+			if next.IsZero() || readyAt.Before(next) {
+				next = readyAt
+			}
+			return true
 		}
 		result = append(result, candidate)
-	}
+		return true
+	})
 	sort.Slice(result, func(left, right int) bool {
 		leftRank := autoStormTargetPriorityRank(settings.TargetPriority, result[left].Definition)
 		rightRank := autoStormTargetPriorityRank(settings.TargetPriority, result[right].Definition)
@@ -1751,33 +1798,11 @@ func autoStormCombatCandidates(
 		}
 		return result[left].Observation.X < result[right].Observation.X
 	})
-	return result
+	return result, next
 }
 
 func autoStormNextOpportunityAt(snapshot Snapshot, settings autoStormSettings, castle State.CastleState) time.Time {
-	active := autoStormActiveTargets(snapshot.State, castle.ID, snapshot.Now)
-	next := time.Time{}
-	for _, scannedTarget := range snapshot.State.Storm.Map.Targets {
-		target := autoStormLatestTargetObservation(snapshot.State, scannedTarget)
-		if _, busy := active[fmt.Sprintf("%d:%d", target.X, target.Y)]; busy {
-			continue
-		}
-		definition, found := snapshot.GameData.StormIsle(target.StormIsleID)
-		if !found {
-			continue
-		}
-		if _, eligible := autoStormCandidateForTarget(settings, target, definition); !eligible ||
-			autoStormTargetExpired(target, definition, snapshot.Now) {
-			continue
-		}
-		readyAt := autoStormTargetReadyAt(target)
-		if !readyAt.After(snapshot.Now) {
-			continue
-		}
-		if next.IsZero() || readyAt.Before(next) {
-			next = readyAt
-		}
-	}
+	_, next := autoStormCombatOpportunities(snapshot, settings, castle)
 	return next
 }
 
@@ -1891,14 +1916,6 @@ func autoStormTargetPriorityRank(priority []string, definition GameData.StormIsl
 		}
 	}
 	return len(priority)
-}
-
-func autoStormLatestTargetObservation(state State.GameState, scanned State.MapObservation) State.MapObservation {
-	key := fmt.Sprintf("%d:%d", scanned.X, scanned.Y)
-	if current, found := state.Map[scanned.KingdomID][key]; found && current.ObservedAt.After(scanned.ObservedAt) {
-		return current
-	}
-	return scanned
 }
 
 func autoStormTargetNeedsVerification(target State.MapObservation, now time.Time) bool {
@@ -2201,14 +2218,15 @@ func autoStormTroopInventory(snapshot Snapshot, castle State.CastleState) (int64
 	stationed := autoStormTroopMapTotal(snapshot.GameData, castle.Units.Stationed)
 	traveling := autoStormTroopMapTotal(snapshot.GameData, castle.Units.Traveling)
 	movementTroops := int64(0)
-	for _, movement := range snapshot.State.Movements {
+	snapshot.State.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.SourceCastleID == castle.ID {
 			movementTroops = autoStormSaturatingAdd(
 				movementTroops,
 				autoStormTroopMapTotal(snapshot.GameData, movement.Units),
 			)
 		}
-	}
+		return true
+	})
 	committed := autoStormSaturatingAdd(stationed, max(traveling, movementTroops))
 	for _, pending := range snapshot.State.KingdomTransport.PendingUnits {
 		if pending.KingdomID != castle.KingdomID {
@@ -2357,19 +2375,7 @@ func autoStormUnitIsTool(gameData *GameData.Store, unitID State.UnitID) (bool, b
 	if gameData == nil || unitID <= 0 {
 		return false, false
 	}
-	catalog, err := gameData.Catalog("units")
-	if err != nil {
-		return false, false
-	}
-	raw, found := catalog.Find(strconv.FormatInt(int64(unitID), 10))
-	if !found {
-		return false, false
-	}
-	record, err := GameData.DecodeRecord(raw)
-	if err != nil {
-		return false, false
-	}
-	return GameData.IsToolRecord(record), true
+	return gameData.UnitIsTool(int64(unitID))
 }
 
 func sortedAutoStormUnitIDs(values map[State.UnitID]int64) []State.UnitID {
@@ -2383,49 +2389,26 @@ func sortedAutoStormUnitIDs(values map[State.UnitID]int64) []State.UnitID {
 
 func autoStormActiveTargets(state State.GameState, castleID State.CastleID, now time.Time) map[string]struct{} {
 	result := map[string]struct{}{}
-	for _, movement := range state.Movements {
+	state.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 0 || movement.SourceCastleID != castleID ||
 			(movement.TargetTypeID != autoStormIslandMapTypeID && movement.TargetTypeID != autoStormFortMapTypeID) {
-			continue
+			return true
 		}
 		if movement.ReturnsAt != nil && !movement.ReturnsAt.IsZero() && !movement.ReturnsAt.After(now) {
-			continue
+			return true
 		}
 		result[fmt.Sprintf("%d:%d", movement.TargetX, movement.TargetY)] = struct{}{}
-	}
+		return true
+	})
 	return result
 }
 
 func autoStormTargetReadyAt(target State.MapObservation) time.Time {
-	if !target.StormReadyAt.IsZero() {
-		return target.StormReadyAt
-	}
-	if target.ObservedAt.IsZero() {
-		return time.Time{}
-	}
-	readyAt := target.ObservedAt
-	if target.StormCooldownRemaining > 0 &&
-		(target.TypeID == autoStormFortMapTypeID || target.TypeID == autoStormIslandMapTypeID && target.OwnerID > 0) {
-		readyAt = readyAt.Add(time.Duration(target.StormCooldownRemaining) * time.Second)
-	}
-	return readyAt
+	return target.StormReadyAt()
 }
 
 func autoStormTargetExpiresAt(target State.MapObservation, definition GameData.StormIsleDefinition) time.Time {
-	if !target.StormExpiresAt.IsZero() {
-		return target.StormExpiresAt
-	}
-	if target.TypeID != autoStormIslandMapTypeID || target.ObservedAt.IsZero() {
-		return time.Time{}
-	}
-	if target.OwnerID <= 0 && target.StormCooldownRemaining > 0 {
-		return target.ObservedAt.Add(time.Duration(target.StormCooldownRemaining) * time.Second)
-	}
-	readyAt := autoStormTargetReadyAt(target)
-	if target.OwnerID > 0 && !readyAt.IsZero() && definition.GlobalCooldownSec > 0 {
-		return readyAt.Add(time.Duration(definition.GlobalCooldownSec) * time.Second)
-	}
-	return time.Time{}
+	return target.StormExpiresAt(definition.GlobalCooldownSec)
 }
 
 func autoStormTargetExpired(target State.MapObservation, definition GameData.StormIsleDefinition, now time.Time) bool {

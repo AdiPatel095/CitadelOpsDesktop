@@ -57,7 +57,7 @@ func planAdvisorActivation(_ context.Context, input Intent.PlanningContext, argu
 	if !request.ConfirmedTokenSpend {
 		return Intent.Plan{}, fmt.Errorf("advisor activation consumes a paid event token; confirmedTokenSpend=true is required")
 	}
-	score, found := input.State.EventScores.ByEvent[request.EventID]
+	score, found := input.State.LookupScalableEventScore(request.EventID)
 	if !found || (request.EventID != nomadIntentEventID && request.EventID != samuraiIntentEventID) {
 		return Intent.Plan{}, fmt.Errorf("event %d is not an active Nomad or Samurai event", request.EventID)
 	}
@@ -227,7 +227,7 @@ func advisorAttackContext(
 	if input.GameData == nil {
 		return request, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, fmt.Errorf("official game data is unavailable")
 	}
-	score, active := input.State.EventScores.ByEvent[request.EventID]
+	score, active := input.State.LookupScalableEventScore(request.EventID)
 	if !active || score.DifficultyID != request.DifficultyID || !score.AdvisorActive {
 		return request, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, fmt.Errorf("advisor is not active for event %d difficulty %d", request.EventID, request.DifficultyID)
 	}
@@ -372,7 +372,7 @@ func activeAppAdvisorEvent(gameState State.GameState) (State.ScalableEventScore,
 		return score, true
 	}
 	for _, eventID := range []int64{nomadIntentEventID, samuraiIntentEventID} {
-		if score, found := gameState.EventScores.ByEvent[eventID]; found && score.RemainingSec > 0 {
+		if score, found := gameState.LookupScalableEventScore(eventID); found && score.RemainingSec > 0 {
 			return score, true
 		}
 	}

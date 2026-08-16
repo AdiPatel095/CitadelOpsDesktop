@@ -595,7 +595,9 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 			steps = append(steps, step)
 		}
 		count = len(ids)
-		steps = append(steps, equipmentMutationRefreshSteps()...)
+		if count > 0 {
+			steps = append(steps, commandStep("Refresh equipment storage", "gei", json.RawMessage(`{}`), "gei"))
+		}
 	case "non_relic_gems":
 		if err := requireRecentEquipmentSnapshot(input.State, "ggm"); err != nil {
 			return Intent.Plan{}, err
@@ -619,7 +621,9 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 				count++
 			}
 		}
-		steps = append(steps, gemMutationRefreshSteps()...)
+		if count > 0 {
+			steps = append(steps, commandStep("Refresh gem storage", "ggm", json.RawMessage(`{}`), "ggm"))
+		}
 	case "relic1_gems", "relic2_gems":
 		if err := requireRecentEquipmentSnapshot(input.State, "ggm"); err != nil {
 			return Intent.Plan{}, err
@@ -641,7 +645,9 @@ func planEquipmentSell(_ context.Context, input Intent.PlanningContext, argument
 			steps = append(steps, step)
 		}
 		count = len(ids)
-		steps = append(steps, gemMutationRefreshSteps()...)
+		if count > 0 {
+			steps = append(steps, commandStep("Refresh gem storage", "ggm", json.RawMessage(`{}`), "ggm"))
+		}
 	default:
 		return Intent.Plan{}, fmt.Errorf("unknown equipment sale category %q", request.Category)
 	}
@@ -655,7 +661,7 @@ func (application *Application) verifyEquipmentCoinReserve(_ context.Context, _ 
 	if threshold <= 0 {
 		return nil
 	}
-	coins := application.State.Snapshot().Player.Resources[State.ResourceID(1)]
+	coins := application.State.ReadOnlyView().Player.Resources[State.ResourceID(1)]
 	if coins <= threshold {
 		return fmt.Errorf("coins under upgrade reserve (%.0f <= %.0f)", coins, threshold)
 	}

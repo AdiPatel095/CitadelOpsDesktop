@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -103,8 +102,25 @@ func applyScalableEventSnapshot(
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		return false, fmt.Errorf("decode event snapshot: %w", err)
 	}
-	ensureEventScoreMap(gameState)
 	changed := false
+	activeByEvent := make(map[int64]State.EventAvailability, len(payload.Events))
+	for _, event := range payload.Events {
+		eventID := int64(event.EventID)
+		remainingSec := int64(event.RemainingSec)
+		if eventID <= 0 || remainingSec <= 0 {
+			continue
+		}
+		activeByEvent[eventID] = State.EventAvailability{
+			EventID: eventID,
+			EndsAt:  observedAt.Add(time.Duration(remainingSec) * time.Second).UTC().Truncate(time.Minute),
+		}
+	}
+	if gameState.ReplaceEventInventory(State.EventInventoryState{
+		ObservedAt:    observedAt,
+		ActiveByEvent: activeByEvent,
+	}) {
+		changed = true
+	}
 	shopByPackage := make(map[State.PackageID]State.EventShopRoute)
 	for _, event := range payload.Events {
 		eventID := int64(event.EventID)
@@ -117,8 +133,7 @@ func applyScalableEventSnapshot(
 			shopByPackage[State.PackageID(packageID)] = route
 		}
 	}
-	if !maps.Equal(gameState.EventScores.ShopByPackage, shopByPackage) {
-		gameState.EventScores.ShopByPackage = shopByPackage
+	if gameState.ReplaceEventShopRoutes(shopByPackage) {
 		changed = true
 	}
 	activeEventID := int64(0)
@@ -165,8 +180,8 @@ func applyScalableEventSnapshot(
 		score.RewardPagesReached = rewards.Reached
 		score.RewardPagesTotal = rewards.Total
 		score.NextRewardScore = rewards.NextScore
-		if previous, found := gameState.EventScores.ByEvent[eventID]; !found || previous != score {
-			gameState.EventScores.ByEvent[eventID] = score
+		if previous, found := gameState.LookupScalableEventScore(eventID); !found || previous != score {
+			gameState.SetScalableEventScore(eventID, score)
 			changed = true
 		}
 		activity, activityAvailable := State.EnsureEventActivity(gameState, eventID, observedAt)
@@ -177,7 +192,7 @@ func applyScalableEventSnapshot(
 				if len(activity.FortifyCurrencies) == 0 && len(offered) > 0 {
 					activity.FortifyCurrencies = append([]string(nil), offered...)
 					activity.FortifyCurrenciesObservedAt = observedAt.UTC()
-					gameState.EventScores.ActivityByEvent[eventID] = activity
+					gameState.SetEventActivity(eventID, activity)
 					changed = true
 				}
 				fortifyCurrencies = append([]string(nil), activity.FortifyCurrencies...)
@@ -186,8 +201,7 @@ func applyScalableEventSnapshot(
 			}
 		}
 	}
-	if gameState.EventScores.ActiveEventID != activeEventID {
-		gameState.EventScores.ActiveEventID = activeEventID
+	if gameState.SetActiveEventID(activeEventID) {
 		changed = true
 	}
 	if !slices.Equal(gameState.Invasion.FortifyCurrencies, fortifyCurrencies) {
@@ -346,8 +360,7 @@ func reduceEventPoints(
 	if eventID <= 0 {
 		return nil, false, nil
 	}
-	ensureEventScoreMap(gameState)
-	score, tracked := gameState.EventScores.ByEvent[eventID]
+	score, tracked := gameState.LookupScalableEventScore(eventID)
 	definition, scalable := gameData.ScalableEvent(eventID, score.DifficultyID)
 	if !tracked && !scalable {
 		return nil, false, nil
@@ -387,11 +400,11 @@ func reduceEventPoints(
 		score.RemainingSec = max(0, score.RemainingSec-int64(frame.ReceivedAt.Sub(score.ObservedAt).Seconds()))
 	}
 	score.ObservedAt = frame.ReceivedAt.UTC()
-	previous := gameState.EventScores.ByEvent[eventID]
-	gameState.EventScores.ByEvent[eventID] = score
+	previous, _ := gameState.LookupScalableEventScore(eventID)
+	gameState.SetScalableEventScore(eventID, score)
 	changed := !tracked || previous != score
 	if scalable && gameState.EventScores.ActiveEventID == 0 {
-		gameState.EventScores.ActiveEventID = eventID
+		gameState.SetActiveEventID(eventID)
 		changed = true
 	}
 	return []string{"events", "event-scores"}, changed, nil
@@ -402,19 +415,4 @@ func eventPointValue(values []wireInt64, index int) (int64, bool) {
 		return 0, false
 	}
 	return int64(values[index]), true
-}
-
-func ensureEventScoreMap(gameState *State.GameState) {
-	if gameState.EventScores.ByEvent == nil {
-		gameState.EventScores.ByEvent = map[int64]State.ScalableEventScore{}
-	}
-	if gameState.EventScores.ShopByPackage == nil {
-		gameState.EventScores.ShopByPackage = map[State.PackageID]State.EventShopRoute{}
-	}
-	if gameState.EventScores.ActivityByEvent == nil {
-		gameState.EventScores.ActivityByEvent = map[int64]State.EventActivityState{}
-	}
-	if gameState.EventScores.RankingByEvent == nil {
-		gameState.EventScores.RankingByEvent = map[int64]State.EventRankingState{}
-	}
 }

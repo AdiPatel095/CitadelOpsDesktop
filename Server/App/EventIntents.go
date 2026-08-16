@@ -22,7 +22,7 @@ func planEventRankingRefresh(_ context.Context, input Intent.PlanningContext, ar
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
 	}
-	score, found := input.State.EventScores.ByEvent[request.EventID]
+	score, found := input.State.LookupScalableEventScore(request.EventID)
 	leagueID, listType, leaderboardFound := publicEventRanking(score)
 	if !found || request.EventID <= 0 || !leaderboardFound {
 		return Intent.Plan{}, fmt.Errorf("event %d does not expose a supported public GGE leaderboard", request.EventID)
@@ -46,20 +46,17 @@ func (application *Application) beginEventRankingRefresh(_ context.Context, argu
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
-		score, found := gameState.EventScores.ByEvent[request.EventID]
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentEventScores), func(gameState *State.GameState) ([]string, bool, error) {
+		score, found := gameState.LookupScalableEventScore(request.EventID)
 		leagueID, listType, rankingFound := publicEventRanking(score)
 		if !found || !rankingFound {
 			return nil, false, fmt.Errorf("event %d leaderboard is unavailable", request.EventID)
 		}
-		if gameState.EventScores.RankingByEvent == nil {
-			gameState.EventScores.RankingByEvent = map[int64]State.EventRankingState{}
-		}
-		gameState.EventScores.RankingByEvent[request.EventID] = State.EventRankingState{
+		gameState.SetEventRanking(request.EventID, State.EventRankingState{
 			EventID: request.EventID, Scope: "alliance", LeagueID: leagueID, ListType: listType,
 			OwnAllianceID: gameState.Player.AllianceID,
 			Entries:       []State.EventRankingEntry{}, Pending: true, ObservedAt: time.Now().UTC(),
-		}
+		})
 		return []string{"event-scores"}, true, nil
 	})
 	return err

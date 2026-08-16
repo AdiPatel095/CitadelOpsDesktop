@@ -70,7 +70,7 @@ func TestBackgroundLoginStoreRequiresExplicitServerCode(t *testing.T) {
 		_, err := store.Configure(BackgroundLoginInput{
 			Username: "player", Password: "password", Server: selection,
 		})
-		if err == nil || !strings.Contains(err.Error(), "server code") {
+		if err == nil || !strings.Contains(err.Error(), "world code") {
 			t.Fatalf("server selection %q returned %v", selection, err)
 		}
 	}

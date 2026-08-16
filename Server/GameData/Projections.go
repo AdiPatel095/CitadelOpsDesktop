@@ -141,13 +141,18 @@ type GemDefinition struct {
 }
 
 type CraftingRecipeDefinition struct {
-	ID          int64   `json:"id"`
-	GroupID     int64   `json:"groupId,omitempty"`
-	QueueTypeID int64   `json:"queueTypeId,omitempty"`
-	Level       int64   `json:"level,omitempty"`
-	DurationSec int64   `json:"durationSec,omitempty"`
-	RewardIDs   []int64 `json:"rewardIds,omitempty"`
-	DisplayName string  `json:"displayName"`
+	ID                   int64                `json:"id"`
+	GroupID              int64                `json:"groupId,omitempty"`
+	QueueTypeID          int64                `json:"queueTypeId,omitempty"`
+	ResearchGroupID      int64                `json:"researchGroupId,omitempty"`
+	Level                int64                `json:"level,omitempty"`
+	Type                 string               `json:"type,omitempty"`
+	DurationSec          int64                `json:"durationSec,omitempty"`
+	SkipCostRubies       int64                `json:"skipCostRubies,omitempty"`
+	RequiredBuildingWIDs []int64              `json:"requiredBuildingWids,omitempty"`
+	Costs                []CraftingRecipeCost `json:"costs,omitempty"`
+	RewardIDs            []int64              `json:"rewardIds,omitempty"`
+	DisplayName          string               `json:"displayName"`
 }
 
 func (manager *Manager) Unit(id int64) (UnitDefinition, error) {

@@ -23,7 +23,6 @@ import {
   CollectionToolbar,
   EmptyState,
   MetricTile,
-  PageHeader,
   Select,
 } from '../components/ui';
 import { useMetadata } from '../context/MetadataContext';
@@ -223,68 +222,61 @@ const DefensePresetsView: React.FC = () => {
 
   return (
     <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-5 pb-10">
-      <PageHeader
-        title="Defense Presets"
-        description="Author reusable wall, moat, and optional keep setups, then validate and apply them to any compatible castle."
-        icon={<ShieldCheck className="h-5 w-5" />}
-        actions={(
-          <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="secondary"
-            disabled={!selectedCastle || !hasDefenseObservation(selectedCastle)}
-            leftIcon={<Camera className="h-4 w-4" />}
-            title={!selectedCastle || !hasDefenseObservation(selectedCastle) ? 'Refresh the selected castle before capturing it' : 'Capture the currently observed setup'}
-            onClick={() => selectedCastle && setEditor({ presetID: null, draft: defensePresetDraftFromCastle(selectedCastle) })}
-          >
-            Capture current
-          </Button>
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ presetID: null, draft: emptyDefensePresetDraft() })}>
-            New preset
-          </Button>
-          </div>
-        )}
-      />
-
-      <section className="grid gap-3 rounded-global border border-border-base bg-bg-card/55 p-4 shadow-[var(--shadow-raised)] lg:grid-cols-[minmax(18rem,1fr)_auto]">
-        <div>
-          <label className="mb-2 block text-[10px] font-black uppercase tracking-wider text-text-muted">Apply target</label>
-          <Select
-            value={selectedCastleID}
-            options={castles.map((castle) => ({
-              value: String(castle.id),
-              label: `${castleLabel(castle)} · ${castle.x}:${castle.y}`,
-              searchText: `${castleLabel(castle)} ${castle.id} ${castle.x} ${castle.y}`,
-            }))}
-            onChange={setSelectedCastleID}
-            placeholder={castles.length > 0 ? 'Select castle' : 'No primary-kingdom castles'}
-            searchable
-            disabled={castles.length === 0}
-            icon={<Shield className="h-4 w-4" />}
-          />
-          <p className="mt-2 text-xs text-text-muted">
-            Applying always forces a new DFC read. Missing tools are reported; presets never purchase tools automatically.
-          </p>
-        </div>
-        <div className="flex items-end">
-          <Button
-            variant="outline"
-            isLoading={refreshing}
-            disabled={!selectedCastle || applyingID != null}
-            leftIcon={<RefreshCw className="h-4 w-4" />}
-            onClick={() => void handleRefresh()}
-          >
-            Refresh defense
-          </Button>
-        </div>
-      </section>
-
       <CollectionToolbar
         summary={(
           <>
-          <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
-            {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
-          </Badge>
-          <Badge variant="outline" className="normal-case tracking-normal">Stored by CitadelOps</Badge>
+            <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
+              {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
+            </Badge>
+            <Badge variant="outline" className="normal-case tracking-normal">Stored by CitadelOps</Badge>
+          </>
+        )}
+        actions={(
+          <>
+            <Select
+              value={selectedCastleID}
+              options={castles.map((castle) => ({
+                value: String(castle.id),
+                label: `${castleLabel(castle)} · ${castle.x}:${castle.y}`,
+                searchText: `${castleLabel(castle)} ${castle.id} ${castle.x} ${castle.y}`,
+              }))}
+              onChange={setSelectedCastleID}
+              placeholder={castles.length > 0 ? 'Apply target' : 'No primary castles'}
+              searchable
+              disabled={castles.length === 0}
+              icon={<Shield className="h-4 w-4" />}
+              ariaLabel="Apply target castle"
+              className="w-44 2xl:w-52"
+            />
+            <Button
+              variant="outline"
+              isLoading={refreshing}
+              disabled={!selectedCastle || applyingID != null}
+              leftIcon={<RefreshCw className="h-4 w-4" />}
+              title="Refresh the selected castle's defense"
+              aria-label="Refresh defense"
+              onClick={() => void handleRefresh()}
+            >
+              <span className="hidden 2xl:inline">Refresh defense</span>
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={!selectedCastle || !hasDefenseObservation(selectedCastle)}
+              leftIcon={<Camera className="h-4 w-4" />}
+              title={!selectedCastle || !hasDefenseObservation(selectedCastle) ? 'Refresh the selected castle before capturing it' : 'Capture the currently observed setup'}
+              aria-label="Capture current defense"
+              onClick={() => selectedCastle && setEditor({ presetID: null, draft: defensePresetDraftFromCastle(selectedCastle) })}
+            >
+              <span className="hidden 2xl:inline">Capture current</span>
+            </Button>
+            <Button
+              leftIcon={<Plus className="h-4 w-4" />}
+              title="Create a defense preset"
+              aria-label="New defense preset"
+              onClick={() => setEditor({ presetID: null, draft: emptyDefensePresetDraft() })}
+            >
+              <span className="hidden 2xl:inline">New preset</span>
+            </Button>
           </>
         )}
         searchValue={query}
@@ -376,7 +368,7 @@ const PresetCard: React.FC<{
         </div>
       </div>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           <MetricTile label="Left" value={`${preset.wall.left.unitPercent}%`} />
           <MetricTile label="Front" value={`${preset.wall.middle.unitPercent}%`} />
           <MetricTile label="Right" value={`${preset.wall.right.unitPercent}%`} />

@@ -69,7 +69,7 @@ func reduceBuildingMutation(
 	if !changed {
 		return []string{"castles", "building-layout", "building-construction"}, false, nil
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartBuildings|State.CastlePartConstruction)
 	return []string{"castles", "building-layout", "building-construction"}, true, nil
 }
 
@@ -99,7 +99,7 @@ func reduceBuildingProduction(
 	if reflect.DeepEqual(before, castle.BuildingProduction) {
 		return []string{"castles", "building-production"}, false, nil
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartBuildings)
 	return []string{"castles", "building-production"}, true, nil
 }
 

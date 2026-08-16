@@ -2,6 +2,7 @@ package State
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,6 +18,13 @@ type persistedSnapshot struct {
 }
 
 func LoadSnapshot(dataDir string) (GameState, error) {
+	state, err := loadComponentSnapshot(dataDir)
+	if err == nil {
+		return state, nil
+	}
+	if !errors.Is(err, os.ErrNotExist) {
+		return GameState{}, err
+	}
 	contents, err := os.ReadFile(snapshotPath(dataDir))
 	if err != nil {
 		return GameState{}, err
@@ -28,14 +36,22 @@ func LoadSnapshot(dataDir string) (GameState, error) {
 	if document.SchemaVersion != SchemaVersion || document.State.SchemaVersion != SchemaVersion {
 		return GameState{}, fmt.Errorf("state snapshot schema %d is not supported by schema %d", document.SchemaVersion, SchemaVersion)
 	}
-	state := document.State
+	return prepareLoadedState(document.State), nil
+}
+
+func prepareLoadedState(state GameState) GameState {
 	normalizeStateMaps(&state)
+	pruneIrrelevantMapObservations(&state)
 	lastServerURL := state.Session.ServerURL
 	lastGeneration := state.Session.Generation
 	state.Session = NewGameState().Session
 	state.Session.ServerURL = lastServerURL
 	state.Session.Generation = lastGeneration
-	return state, nil
+	// A movement baseline belongs to one live game socket. Connection
+	// generations restart with the process, so retaining this marker could make
+	// a new connection appear synchronized before its first authoritative GAM.
+	state.MovementSnapshot = MovementSnapshot{}
+	return state
 }
 
 func SaveSnapshot(dataDir string, state GameState) error {
@@ -271,6 +287,27 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.Inventory.ConstructionOffers == nil {
 		state.Inventory.ConstructionOffers = defaults.Inventory.ConstructionOffers
+	}
+	if state.Inventory.ConstructionOffersByCastle == nil {
+		state.Inventory.ConstructionOffersByCastle = map[CastleID]ConstructionOfferSnapshot{}
+	}
+	if state.Inventory.ConstructionOffersCastleID > 0 {
+		if _, found := state.Inventory.ConstructionOffersByCastle[state.Inventory.ConstructionOffersCastleID]; !found {
+			state.Inventory.ConstructionOffersByCastle[state.Inventory.ConstructionOffersCastleID] = ConstructionOfferSnapshot{
+				Offers: state.Inventory.ConstructionOffers, ObservedAt: state.Inventory.ConstructionOffersObservedAt,
+				CastleID:  state.Inventory.ConstructionOffersCastleID,
+				KingdomID: state.Inventory.ConstructionOffersKingdomID,
+			}
+		}
+	}
+	for castleID, snapshot := range state.Inventory.ConstructionOffersByCastle {
+		if snapshot.Offers == nil {
+			snapshot.Offers = map[PackageID]int64{}
+		}
+		if snapshot.CastleID <= 0 {
+			snapshot.CastleID = castleID
+		}
+		state.Inventory.ConstructionOffersByCastle[castleID] = snapshot
 	}
 	if state.Inventory.Equipment == nil {
 		state.Inventory.Equipment = defaults.Inventory.Equipment
@@ -535,6 +572,11 @@ func normalizeStateMaps(state *GameState) {
 	if state.Observations == nil {
 		state.Observations = defaults.Observations
 	}
+	for opcode := range state.Observations {
+		if !RetainProtocolObservation(opcode) {
+			delete(state.Observations, opcode)
+		}
+	}
 }
 
 func seedKhanCooldownReport(state *GameState) {
@@ -608,7 +650,7 @@ func reconcileStormMapTargets(state *GameState) {
 		if !found || !current.ObservedAt.After(tracked.ObservedAt) {
 			continue
 		}
-		if current.TypeID != stormIslandMapObservationTypeID && current.TypeID != stormFortMapObservationTypeID {
+		if current.TypeID != MapTypeStormIsland && current.TypeID != MapTypeStormFort {
 			delete(state.Storm.Map.Targets, key)
 			continue
 		}

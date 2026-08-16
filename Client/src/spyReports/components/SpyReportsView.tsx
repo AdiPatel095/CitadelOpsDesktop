@@ -5,6 +5,7 @@ import DetailBackButton from '../../components/DetailBackButton';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader } from '../../components/ui';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
+import { runtimeURL } from '../../api/RuntimeURL';
 
 interface SpyPlayer { id?: number; name?: string; alliance?: string }
 interface SpyCastle {
@@ -57,7 +58,7 @@ const SpyReportsView = () => {
   const load = async () => {
     setLoading(true);
     try {
-	  const response = await fetch('/api/v2/history/spy-reports', { cache: 'no-cache' });
+	  const response = await fetch(runtimeURL('/api/v2/history/spy-reports'), { cache: 'no-cache' });
       if (!response.ok) throw new Error(`Spy reports request failed (${response.status})`);
       const payload = await response.json();
       setReports(Array.isArray(payload) ? payload : []);

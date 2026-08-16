@@ -32,6 +32,11 @@ export interface BattleMetrics {
 }
 
 export interface BattleEffect {
+  definitionId?: number;
+  effectTypeId?: number;
+  argumentId?: number;
+  values?: number[];
+  source?: string;
   code?: string;
   label?: string;
   name?: string;
@@ -39,6 +44,10 @@ export interface BattleEffect {
   formattedValue?: string;
   displayText?: string;
   category?: string;
+  officialCategory?: number;
+  officialGroup?: number;
+  officialGroupKey?: string;
+  officialGroupLabel?: string;
   sortOrder?: number;
   side?: 'commander' | 'castellan' | string;
 }
@@ -83,11 +92,15 @@ export interface ParsedReport {
   lid?: string | number;
   kingdomID?: number;
   kingdomId?: number;
+  kingdomKnown?: boolean;
   targetX?: number;
   targetY?: number;
   targetName?: string;
   castleName?: string;
   battleType?: string;
+  battleTypeID?: number;
+  targetType?: string;
+  targetTypeID?: number;
   occurredAt?: string;
   timestamp?: string;
   receivedAt?: string;

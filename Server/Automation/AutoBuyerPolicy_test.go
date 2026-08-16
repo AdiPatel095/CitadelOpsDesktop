@@ -2,6 +2,7 @@ package Automation
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 
@@ -9,6 +10,14 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
+
+func TestAutoBuyerWakeDomainsHonorLongConfiguredCadence(t *testing.T) {
+	got := NewAutoBuyerPolicy().WakeDomains()
+	want := []string{"boosters", "market", "construction-offers", "events", "event-scores"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("wake domains = %v, want %v", got, want)
+	}
+}
 
 func TestAutoBuyerSpecialistRequiresFourteenDayFloorAndRenewsOneWeekAtATime(t *testing.T) {
 	gameData := autoBuyerPolicyTestStore(t)
@@ -82,7 +91,8 @@ func TestAutoBuyerEventPackageWaitsForRouteAndUsesResetCounter(t *testing.T) {
 		State: gameState, GameData: gameData, Now: now,
 		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}},
 	})
-	if err != nil || decision.Request != nil || decision.Status != "waiting" {
+	if err != nil || decision.Request != nil || decision.Status != "idle" ||
+		decision.Metrics["ignoredUnavailableEventShops"] != 1 {
 		t.Fatalf("inactive event decision = %#v err=%v", decision, err)
 	}
 	gameState.EventScores.ShopByPackage[102] = State.EventShopRoute{EventID: 88, RemainingSec: 3600, ObservedAt: now}
@@ -100,6 +110,41 @@ func TestAutoBuyerEventPackageWaitsForRouteAndUsesResetCounter(t *testing.T) {
 	})
 	if err != nil || decision.Request != nil || decision.Status != "idle" {
 		t.Fatalf("completed reset goal = %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoBuyerIgnoresUnavailableEventShopAndContinuesOtherShopGoals(t *testing.T) {
+	gameData := autoBuyerPolicyTestStore(t)
+	now := time.Date(2026, 8, 10, 12, 0, 0, 0, time.UTC)
+	gameState := autoBuyerPolicyTestState(now)
+	gameState.Player.Currencies[70] = 100
+	gameState.Player.Currencies[36] = 100
+	gameState.Inventory.ConstructionOffersCastleID = 10
+	gameState.Inventory.ConstructionOffersKingdomID = 0
+	gameState.Inventory.ConstructionOffersObservedAt = now
+	settings := json.RawMessage(`{
+		"version":1,"checkIntervalSec":1800,"historyRefreshSec":3600,"sourceCastleId":10,
+		"packages":[
+			{"enabled":true,"shopId":"rift","packageId":102,"targetPurchasesPerReset":1,"minimumBalanceReserve":50},
+			{"enabled":true,"shopId":"master-blacksmith","packageId":100,"targetPurchasesPerReset":1,"minimumBalanceReserve":0}
+		],
+		"specialists":[],"feast":{"enabled":false}
+	}`)
+	decision, err := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}},
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "autoBuyer.package.purchase" ||
+		decision.Metrics["ignoredUnavailableEventShops"] != 1 {
+		t.Fatalf("mixed-shop decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		ShopID    string          `json:"shopId"`
+		PackageID State.PackageID `json:"packageId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil ||
+		request.ShopID != GameData.AutoBuyerShopMasterBlacksmith || request.PackageID != 100 {
+		t.Fatalf("mixed-shop request = %#v err=%v", request, err)
 	}
 }
 
@@ -145,6 +190,40 @@ func TestAutoBuyerPackageHonorsPerResetLimitBelowStock(t *testing.T) {
 	decision = evaluate()
 	if decision.Request != nil || decision.Status != "idle" {
 		t.Fatalf("completed lower purchase limit decision = %#v", decision)
+	}
+}
+
+func TestAutoBuyerEnforcesHourlyHistoryAndThirtyMinuteChecks(t *testing.T) {
+	gameData := autoBuyerPolicyTestStore(t)
+	now := time.Date(2026, 8, 14, 10, 0, 0, 0, time.UTC)
+	gameState := autoBuyerPolicyTestState(now)
+	gameState.Player.Currencies[36] = 100
+	gameState.ReplaceInventoryConstructionOffers(
+		map[State.PackageID]int64{100: 2}, now.Add(-30*time.Minute), 10, 0,
+	)
+	settings := json.RawMessage(`{
+		"version":1,"checkIntervalSec":60,"historyRefreshSec":900,"sourceCastleId":10,
+		"packages":[{"enabled":true,"shopId":"master-blacksmith","packageId":100,"targetPurchasesPerReset":2,"minimumBalanceReserve":0}],
+		"specialists":[],"feast":{"enabled":false}
+	}`)
+	evaluate := func(at time.Time) Decision {
+		t.Helper()
+		decision, err := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{
+			State: gameState, GameData: gameData, Now: at,
+			Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return decision
+	}
+	decision := evaluate(now)
+	if decision.Request != nil || decision.Status != "idle" || !decision.NextCheckAt.Equal(now.Add(30*time.Minute)) {
+		t.Fatalf("low-frequency idle decision = %#v", decision)
+	}
+	decision = evaluate(now.Add(31 * time.Minute))
+	if decision.Request == nil || decision.Request.Name != "autoBuyer.package.history" {
+		t.Fatalf("hourly history refresh decision = %#v", decision)
 	}
 }
 

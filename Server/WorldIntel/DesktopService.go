@@ -3,6 +3,7 @@ package WorldIntel
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"CitadelDesktop/Server/State"
 )
@@ -24,7 +25,7 @@ func NewDesktopService(state *State.Store, client *CloudClient) *DesktopService 
 
 func (service *DesktopService) Status(_ context.Context) DesktopStatus {
 	status := DesktopStatus{
-		Enabled: true, CollectionMode: "shared-data-reader",
+		Enabled: true, CollectionMode: "shared-data-subscriber",
 		PublicFieldsOnly: true, OfficialSourceOnly: true,
 	}
 	if service != nil && service.client != nil {
@@ -38,7 +39,7 @@ func (service *DesktopService) CurrentWorldID() string {
 	if service == nil || service.state == nil {
 		return ""
 	}
-	snapshot := service.state.Snapshot()
+	snapshot := service.state.ReadOnlyView()
 	worldID := NormalizeWorldID(snapshot.Account.WorldID)
 	if worldID == "" {
 		worldID = NormalizeWorldID(snapshot.Session.ServerURL)
@@ -146,6 +147,31 @@ func (service *DesktopService) Coverage(ctx context.Context, worldID string) (Co
 		return CoverageResponse{}, err
 	}
 	return service.client.Coverage(ctx, service.resolveWorld(worldID))
+}
+
+func (service *DesktopService) Subscribe(
+	ctx context.Context,
+	worldID string,
+	lastEventID string,
+) (*http.Response, error) {
+	if err := service.queryReady(); err != nil {
+		return nil, err
+	}
+	return service.client.Subscribe(ctx, service.resolveWorld(worldID), lastEventID)
+}
+
+func (service *DesktopService) SubscribeEventRun(
+	ctx context.Context,
+	worldID string,
+	occurrenceID string,
+	listType int64,
+	leagueID int64,
+	lastEventID string,
+) (*http.Response, error) {
+	if err := service.queryReady(); err != nil {
+		return nil, err
+	}
+	return service.client.SubscribeEventRun(ctx, service.resolveWorld(worldID), occurrenceID, listType, leagueID, lastEventID)
 }
 
 func (service *DesktopService) CatalogDatasets(ctx context.Context) (CatalogDatasetCatalogResponse, error) {

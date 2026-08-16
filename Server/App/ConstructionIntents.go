@@ -54,10 +54,11 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 	if packageType != "constructionItem" || constructionItemID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("package %d is not a construction-item product", request.ProductID)
 	}
-	if input.State.Inventory.ConstructionOffersObservedAt.IsZero() {
+	offers, offersObservedAt, offersFound := input.State.ConstructionOffersFor(castle.ID, castle.KingdomID)
+	if !offersFound || offersObservedAt.IsZero() {
 		return Intent.Plan{}, fmt.Errorf("construction-item shop offers have not been observed")
 	}
-	liveAmount, offered := input.State.Inventory.ConstructionOffers[request.ProductID]
+	liveAmount, offered := offers[request.ProductID]
 	availableAmount := liveAmount
 	if !offered || availableAmount <= 0 {
 		if !GameData.ConstructionItemPackageIsTrivial(record) {

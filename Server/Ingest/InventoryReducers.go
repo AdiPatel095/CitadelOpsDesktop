@@ -103,7 +103,7 @@ func applyQueueableProduction(
 		}
 		castle.QueueableProduction = next
 		castle.QueueableObservedAt = observedAt
-		gameState.Castles[castleID] = castle
+		gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 		changed = true
 	}
 	return changed, nil
@@ -147,9 +147,6 @@ func applyStorageInventory(raw json.RawMessage, gameState *State.GameState) (boo
 	if err := json.Unmarshal(raw, &segments); err != nil {
 		return false, fmt.Errorf("decode storage inventory: %w", err)
 	}
-	if gameState.Inventory.Items == nil {
-		gameState.Inventory.Items = map[string]map[int64]int64{}
-	}
 	changed := false
 	for _, segment := range segments {
 		if segment.SegmentID <= 0 {
@@ -166,7 +163,7 @@ func applyStorageInventory(raw json.RawMessage, gameState *State.GameState) (boo
 		if reflect.DeepEqual(gameState.Inventory.Items[key], next) {
 			continue
 		}
-		gameState.Inventory.Items[key] = next
+		gameState.SetInventoryItemsCollection(key, next)
 		changed = true
 	}
 	return changed, nil
@@ -200,8 +197,11 @@ func reduceConstructionOffers(
 		gameState.Inventory.ConstructionOffersObservedAt.Equal(frame.ReceivedAt) {
 		return nil, false, nil
 	}
-	gameState.Inventory.ConstructionOffers = next
-	gameState.Inventory.ConstructionOffersObservedAt = frame.ReceivedAt
+	gameState.ReplaceInventoryConstructionOffers(
+		next, frame.ReceivedAt,
+		gameState.Inventory.ConstructionOffersCastleID,
+		gameState.Inventory.ConstructionOffersKingdomID,
+	)
 	return []string{"inventory", "construction-offers"}, true, nil
 }
 
@@ -230,9 +230,6 @@ func reduceConstructionOffersCommand(
 		gameState.Inventory.ConstructionOffersKingdomID == kingdomID {
 		return nil, false, nil
 	}
-	gameState.Inventory.ConstructionOffersCastleID = castleID
-	gameState.Inventory.ConstructionOffersKingdomID = kingdomID
-	gameState.Inventory.ConstructionOffers = map[State.PackageID]int64{}
-	gameState.Inventory.ConstructionOffersObservedAt = time.Time{}
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{}, time.Time{}, castleID, kingdomID)
 	return []string{"inventory", "construction-offers"}, true, nil
 }

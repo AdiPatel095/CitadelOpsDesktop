@@ -11,14 +11,16 @@ func CommanderHasActiveMovementAt(gameState GameState, commanderID CommanderID, 
 	if now.IsZero() {
 		now = time.Now().UTC()
 	}
-	for _, movement := range gameState.Movements {
+	active := false
+	gameState.RangeMovements(func(_ MovementID, movement MovementState) bool {
 		if movement.CommanderID == nil || *movement.CommanderID != commanderID ||
 			!MovementOwnedByCurrentPlayer(gameState, movement) || !CommanderMovementActiveAt(movement, now) {
-			continue
+			return true
 		}
-		return true
-	}
-	return false
+		active = true
+		return false
+	})
+	return active
 }
 
 func MovementOwnedByCurrentPlayer(gameState GameState, movement MovementState) bool {

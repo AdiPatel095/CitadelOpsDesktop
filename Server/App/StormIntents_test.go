@@ -356,6 +356,40 @@ func TestPlanFullStormMapScanUsesOneLeaseHeldBurstStep(t *testing.T) {
 	}
 }
 
+func TestPlanCooperativeStormMapScanUsesOnlyLeasedWindows(t *testing.T) {
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{
+		ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 50, Focused: true,
+	}
+	windows := []State.StormMapBounds{
+		{X1: 400, Y1: 400, X2: 500, Y2: 500},
+		{X1: 602, Y1: 400, X2: 702, Y2: 500},
+	}
+	arguments, err := json.Marshal(stormMapScanRequest{
+		SourceCastleID: 40, FullMap: true, Cooperative: true, LeaseID: "storm-lease",
+		Windows: windows, Bounds: State.StormMapBounds{X1: 400, Y1: 400, X2: 702, Y2: 500},
+		ScanStartedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := planStormMapScan(t.Context(), Intent.PlanningContext{State: state}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 2 || plan.Steps[0].Action != "storm.scan.begin" || plan.Steps[1].Action != "storm.scan.burst" {
+		t.Fatalf("cooperative Storm steps = %#v", plan.Steps)
+	}
+	for _, step := range plan.Steps {
+		if step.Opcode == "gaa" {
+			t.Fatal("cooperative plan expanded leased windows into sequential per-account commands")
+		}
+	}
+	if !strings.Contains(plan.Summary, "2 leased windows") {
+		t.Fatalf("cooperative summary = %q", plan.Summary)
+	}
+}
+
 func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
 	windows := []towerMapWindow{
 		{X1: 0, Y1: 0, X2: 100, Y2: 100},
@@ -501,11 +535,11 @@ func TestCaptureTargetedStormScanRefreshesTrackedCooldown(t *testing.T) {
 			},
 		},
 	}
-	readyAt := startedAt.Add(10 * time.Hour)
+	readyAt := startedAt.Add(time.Second + 10*time.Hour)
 	state.Map[4] = map[string]State.MapObservation{
 		"612:667": {
 			KingdomID: 4, X: 612, Y: 667, TypeID: stormIntentFortMapTypeID, StormIsleID: 7,
-			StormCooldownRemaining: 36_000, StormReadyAt: readyAt, ObservedAt: startedAt.Add(time.Second),
+			StormCooldownRemaining: 36_000, ObservedAt: startedAt.Add(time.Second),
 		},
 	}
 	application := &Application{State: State.NewStore(state)}
@@ -521,7 +555,7 @@ func TestCaptureTargetedStormScanRefreshesTrackedCooldown(t *testing.T) {
 		t.Fatal(err)
 	}
 	tracked := application.State.Snapshot().Storm.Map.Targets["612:667"]
-	if tracked.StormIsleID != 7 || tracked.StormCooldownRemaining != 36_000 || !tracked.StormReadyAt.Equal(readyAt) {
+	if tracked.StormIsleID != 7 || tracked.StormCooldownRemaining != 36_000 || !tracked.StormReadyAt().Equal(readyAt) {
 		t.Fatalf("targeted cooldown refresh = %#v", tracked)
 	}
 }
@@ -565,7 +599,6 @@ func TestStormAttackContextEnforcesMinimumFortAttacksRemaining(t *testing.T) {
 	target = state.Map[4]["101:102"]
 	target.StormVictoryCount = 0
 	target.StormCooldownRemaining = 60
-	target.StormReadyAt = readyAt
 	target.ObservedAt = readyAt.Add(-time.Minute)
 	state.Map[4]["101:102"] = target
 	input.State = state
@@ -591,8 +624,7 @@ func TestStormAttackContextUsesIslandReadyAndExpiryLabels(t *testing.T) {
 	state.Castles[40] = State.CastleState{ID: 40, KingdomID: 4}
 	target := State.MapObservation{
 		KingdomID: 4, X: 101, Y: 102, TypeID: stormIntentIslandMapTypeID, OwnerID: -403,
-		ObjectID: 777, StormIsleID: 4, StormCooldownRemaining: 3_600, StormReadyAt: now.Add(-time.Minute),
-		StormExpiresAt: now.Add(time.Hour), ObservedAt: now.Add(-time.Minute),
+		ObjectID: 777, StormIsleID: 4, StormCooldownRemaining: 3_600, ObservedAt: now.Add(-time.Minute),
 	}
 	state.Map[4] = map[string]State.MapObservation{"101:102": target}
 	input := Intent.PlanningContext{State: state, GameData: gameData}
@@ -605,7 +637,8 @@ func TestStormAttackContextUsesIslandReadyAndExpiryLabels(t *testing.T) {
 	}
 
 	target.OwnerID = 99
-	target.StormReadyAt = now.Add(time.Minute)
+	target.StormCooldownRemaining = 60
+	target.ObservedAt = now
 	state.Map[4]["101:102"] = target
 	input.State = state
 	if _, _, _, _, err := stormAttackContext(input, request); err == nil || !strings.Contains(err.Error(), "occupied") {
@@ -613,8 +646,8 @@ func TestStormAttackContextUsesIslandReadyAndExpiryLabels(t *testing.T) {
 	}
 
 	target.OwnerID = -403
-	target.StormReadyAt = now.Add(-time.Minute)
-	target.StormExpiresAt = now.Add(-time.Second)
+	target.StormCooldownRemaining = 3_600
+	target.ObservedAt = now.Add(-3_601 * time.Second)
 	state.Map[4]["101:102"] = target
 	input.State = state
 	if _, _, _, _, err := stormAttackContext(input, request); err == nil || !strings.Contains(err.Error(), "expired") {
@@ -646,8 +679,11 @@ func TestConsumeStormIslandTargetRecordsReportGatedReturn(t *testing.T) {
 		operation.IslandObjectID != 777 || operation.LeaveBehind != 1 || operation.LaunchedAt.IsZero() {
 		t.Fatalf("pending island return = %#v", operation)
 	}
-	if _, exists := snapshot.Map[4]["101:102"]; exists {
-		t.Fatal("consumed island remained in the live map")
+	if _, exists := snapshot.Storm.Map.Targets["101:102"]; exists {
+		t.Fatal("consumed island remained actionable for the account")
+	}
+	if _, exists := snapshot.Map[4]["101:102"]; !exists {
+		t.Fatal("account-private consumption removed the process-shareable map fact")
 	}
 }
 
@@ -764,5 +800,43 @@ func TestPlanStormShopPurchaseUsesLunaStorefrontWireShape(t *testing.T) {
 	}
 	if batch.Summary != "Buy 2 x War horn and 3 x Silver Coins from Luna for 35920 Aquamarine at castle 40" {
 		t.Fatalf("batched Storm shop summary = %q", batch.Summary)
+	}
+
+	// Package-history responses are account-global. Another shop automation may
+	// replace the observed castle between AutoStorm's decision and planning, so
+	// planning must be able to build the refresh-and-guard transaction anyway.
+	state.Inventory.ConstructionOffersCastleID = 99
+	state.Inventory.ConstructionOffersKingdomID = 0
+	raceArguments := json.RawMessage(`{
+		"castleId":40,"productId":3119,"amount":1,"aquamarineReserve":50000
+	}`)
+	if _, err := planStormShopPurchase(
+		context.Background(), Intent.PlanningContext{State: state, GameData: gameData}, raceArguments,
+	); err != nil {
+		t.Fatalf("plan with counters from another castle: %v", err)
+	}
+	if _, _, _, err := stormShopPurchaseContext(
+		Intent.PlanningContext{State: state, GameData: gameData}, raceArguments, true,
+	); err == nil || !strings.Contains(err.Error(), "counters are not current") {
+		t.Fatalf("strict counter validation error = %v", err)
+	}
+
+	// Once the in-plan GBC response is committed, the execution guard applies
+	// the freshly observed stock limit immediately before SBP.
+	state.Inventory.ConstructionOffersCastleID = 40
+	state.Inventory.ConstructionOffersKingdomID = 4
+	state.Inventory.ConstructionOffers[3119] = 2
+	stockArguments := json.RawMessage(`{
+		"castleId":40,"productId":3119,"amount":2,"aquamarineReserve":50000
+	}`)
+	if _, _, _, err := stormShopPurchaseContext(
+		Intent.PlanningContext{State: state, GameData: gameData}, stockArguments, true,
+	); err == nil || !strings.Contains(err.Error(), "only 1 purchases remaining") {
+		t.Fatalf("strict stock validation error = %v", err)
+	}
+	if _, _, _, err := stormShopPurchaseContext(
+		Intent.PlanningContext{State: state, GameData: gameData}, raceArguments, true,
+	); err != nil {
+		t.Fatalf("strict validation after current GBC: %v", err)
 	}
 }

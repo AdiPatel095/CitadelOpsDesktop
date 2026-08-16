@@ -1,14 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import StaleSessionBanner from '../components/StaleSessionBanner';
 import EventScoreCard from '../dashboard/components/EventScoreCard';
 import { useAuth } from '../context/AuthContext';
-import { PageHeader, PillSelector } from '../components/ui';
+import { PillSelector } from '../components/ui';
 import { useCitadelAPI } from '../api/ApiContext';
 import EventActivityCard from '../events/components/EventActivityCard';
 import EventRankingModal from '../events/components/EventRankingModal';
 import AttackEconomyView, { type AttackEconomyFeatureID } from '../attackAnalytics/components/AttackEconomyView';
 
 type EventsAnalyticsView = 'events' | AttackEconomyFeatureID;
+const berimondBattleEventID = 3;
 
 const EventsView: React.FC = () => {
   const { gameLoggedIn } = useAuth();
@@ -20,11 +21,45 @@ const EventsView: React.FC = () => {
   const [rankingLoading, setRankingLoading] = useState(false);
   const [rankingError, setRankingError] = useState('');
   const [analyticsView, setAnalyticsView] = useState<EventsAnalyticsView>('events');
+  const beriAvailability = state?.eventScores.inventory?.activeByEvent?.[String(berimondBattleEventID)];
+  const [availabilityNow, setAvailabilityNow] = useState(() => Date.now());
+  const autoBeriAvailable = isAuthoritativeEventActive(
+    state?.eventScores.inventory?.observedAt,
+    beriAvailability,
+    berimondBattleEventID,
+    availabilityNow,
+  );
+  const selectedAnalyticsView = analyticsView === 'autoBeriWorld' && !autoBeriAvailable
+    ? 'events'
+    : analyticsView;
+  const analyticsOptions = useMemo(() => [
+    { value: 'events', label: 'Active Event' },
+    { value: 'autoTowers', label: 'Auto Towers' },
+    { value: 'autoStorm', label: 'Auto Storm' },
+    ...(autoBeriAvailable ? [{ value: 'autoBeriWorld', label: 'Auto Beri' }] : []),
+  ], [autoBeriAvailable]);
 
   useEffect(() => {
     setRankingOpen(false);
     setRankingError('');
   }, [activeEventID]);
+
+  useEffect(() => {
+    const now = Date.now();
+    setAvailabilityNow(now);
+    if (!beriAvailability?.endsAt) return undefined;
+    const endsAt = Date.parse(beriAvailability.endsAt);
+    if (!Number.isFinite(endsAt) || endsAt <= now) return undefined;
+    const timer = window.setTimeout(
+      () => setAvailabilityNow(Date.now()),
+      Math.min(endsAt - now + 50, 2_147_483_647),
+    );
+    return () => window.clearTimeout(timer);
+  }, [beriAvailability?.endsAt, state?.eventScores.inventory?.observedAt]);
+
+  useEffect(() => {
+    if (!autoBeriAvailable && analyticsView === 'autoBeriWorld') setAnalyticsView('events');
+  }, [analyticsView, autoBeriAvailable]);
 
   const refreshRanking = useCallback(async () => {
     if (!event || !gameLoggedIn || event.eventId !== 72 || (event.allianceLeagueId ?? 0) <= 0 || rankingLoading) return;
@@ -51,21 +86,15 @@ const EventsView: React.FC = () => {
     <div className="flex flex-col gap-6">
       <PillSelector
         ariaLabel="Feature stats view"
-        value={analyticsView}
+        value={selectedAnalyticsView}
         onChange={(value) => setAnalyticsView(value as EventsAnalyticsView)}
-        options={[
-          { value: 'events', label: 'Active Event' },
-          { value: 'autoTowers', label: 'Auto Towers' },
-          { value: 'autoStorm', label: 'Auto Storm' },
-          { value: 'autoBeriWorld', label: 'Auto Beri' },
-        ]}
+        options={analyticsOptions}
         size="header"
         className="w-full"
       />
-      {analyticsView === 'events' ? (
+      {selectedAnalyticsView === 'events' ? (
         <>
           <StaleSessionBanner />
-          <PageHeader title="Feature Stats" description="Review live event progress, balances, automation outcomes, and rankings." />
           <EventScoreCard key={activeEventID} live={gameLoggedIn} event={event} onOpenRanking={openRanking} rankingLoading={rankingLoading} />
           <EventActivityCard key={activeEventID} event={event} />
           {isInvasionEvent(event?.eventId, event?.eventType, event?.name, event?.localizationKey) && (
@@ -88,9 +117,11 @@ const EventsView: React.FC = () => {
         </>
       ) : (
         <AttackEconomyView
-          selectedFeature={analyticsView}
+          key={selectedAnalyticsView}
+          selectedFeature={selectedAnalyticsView}
           onFeatureChange={setAnalyticsView}
           showFeatureSelector={false}
+          embedded
         />
       )}
     </div>
@@ -110,6 +141,19 @@ function isInvasionEvent(eventID?: number, ...identityParts: Array<string | unde
   if (eventID === 71 || eventID === 103) return true;
   const identity = identityParts.join(' ').toLowerCase();
   return identity.includes('alien invasion') || identity.includes('bloodcrow') || identity.includes('foreign lord');
+}
+
+function isAuthoritativeEventActive(
+  observedAt: string | undefined,
+  availability: { eventId: number; endsAt: string } | undefined,
+  eventID: number,
+  now: number,
+): boolean {
+  if (!observedAt || !availability || availability.eventId !== eventID) return false;
+  const inventoryObservedAt = Date.parse(observedAt);
+  const endsAt = Date.parse(availability.endsAt);
+  return Number.isFinite(inventoryObservedAt) && inventoryObservedAt > 0
+    && Number.isFinite(endsAt) && now < endsAt;
 }
 
 export default EventsView;

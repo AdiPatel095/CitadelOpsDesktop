@@ -4,6 +4,7 @@ import { Check, Copy, Pause, Play, RefreshCw, Search, X } from 'lucide-react';
 import { Icons } from './Icons';
 import { Notifications } from './Notifications';
 import { Button, Input, PillSelector, Select } from './ui';
+import { runtimeURL } from '../api/RuntimeURL';
 
 type ChannelMeta = { id: string; label: string; description?: string };
 type LogTone = 'send' | 'recv' | 'info' | 'warn' | 'error' | 'debug' | 'plain';
@@ -488,7 +489,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/v2/telemetry/channels');
+        const res = await fetch(runtimeURL('/api/v2/telemetry/channels'));
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as { channels?: ChannelMeta[] };
         const list = data.channels ?? [];
@@ -513,7 +514,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
     const requestID = ++fetchSequenceRef.current;
     if (showProgress) setIsRefreshing(true);
     try {
-      const res = await fetch(`/api/v2/telemetry/${encodeURIComponent(activeId)}?limit=${tailLimit}`);
+      const res = await fetch(runtimeURL(`/api/v2/telemetry/${encodeURIComponent(activeId)}?limit=${tailLimit}`));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { lines?: string[] };
       if (requestID !== fetchSequenceRef.current) return;
