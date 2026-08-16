@@ -1,0 +1,24 @@
+# Builds the hosted worker-cell image (Dockerfile.hosted) on develop pushes.
+# The image is NOT auto-rolled onto running cell VMs: cells hold live game
+# sessions, so operators pull the new tag and restart per-cell on purpose
+# (ssh: cd /opt/citadelops && docker compose pull && docker compose up -d).
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-f', 'Dockerfile.hosted',
+        '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_VERSION}',
+        '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:$COMMIT_SHA',
+        '.',
+      ]
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_VERSION}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:$COMMIT_SHA'
+substitutions:
+  _REGION: 'us-east1'
+  _REPO_NAME: 'citadelops'
+  _IMAGE_NAME: 'cell'
+  _VERSION: '2.3.0'
+options:
+  logging: CLOUD_LOGGING_ONLY
