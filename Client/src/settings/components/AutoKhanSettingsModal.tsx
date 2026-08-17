@@ -3,6 +3,7 @@ import {
   Castle,
   Clock3,
   Crosshair,
+  Flame,
   LockKeyhole,
   RotateCcw,
   ShieldAlert,
@@ -160,6 +161,34 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">
             Auto Station has precedence. Any incoming player attack pauses new Khan attacks, cooldown skips, and defense changes while stationing runs. Khan taunts do not count as player attacks.
           </p>
+        </Card>
+
+        <Card variant="solid" className="p-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> Lock automatic Khan attacks</div>
+                <p className="mt-1 text-xs text-text-muted">Stops only Auto Khan&apos;s own attack launches. Map and cooldown maintenance plus the enabled rage and defense lanes continue for a manually driven chain.</p>
+              </div>
+              <Switch
+                checked={!draft.attackLaunchesEnabled}
+                onChange={(locked) => setDraft((current) => ({ ...current, attackLaunchesEnabled: !locked }))}
+                ariaLabel="Lock automatic Khan attacks"
+              />
+            </div>
+
+            <div className="flex items-start justify-between gap-4 border-t border-border-base pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> Trigger Khan at full rage</div>
+                <p className="mt-1 text-xs text-text-muted">Turn this off to keep attacking and skipping cooldowns without automatically dispatching the Khan retaliation.</p>
+              </div>
+              <Switch
+                checked={draft.triggerRage}
+                onChange={(triggerRage) => setDraft((current) => ({ ...current, triggerRage }))}
+                ariaLabel="Trigger Khan retaliation at full rage"
+              />
+            </div>
+          </div>
         </Card>
 
         <Card variant="solid" className="p-4">

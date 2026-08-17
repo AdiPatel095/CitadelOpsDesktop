@@ -82,6 +82,7 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 		"versionInfo":[],
 		"buildings":[],
 		"units":[{"wodID":77}],
+		"effects":[],
 		"eventAutoScalingCamps":[{
 			"eventAutoScalingCampID":5001,"eventID":80,"difficultyID":201,"areaType":29,
 			"camplevel":90,"countVictory":9,"coolDown":3600,"skipCosts":9950,"maxTroopCapacityDefense":620
@@ -181,6 +182,7 @@ func TestNomadLevelSelectsOneAvailableCommanderFromCandidatePool(t *testing.T) {
 		"versionInfo":[],
 		"buildings":[],
 		"units":[{"wodID":77}],
+		"effects":[],
 		"eventAutoScalingCamps":[
 			{"eventAutoScalingCampID":5000,"eventID":80,"difficultyID":201,"areaType":29,
 			 "camplevel":80,"countVictory":8,"coolDown":0,"skipCosts":0,"maxTroopCapacityDefense":500},
@@ -195,7 +197,7 @@ func TestNomadLevelSelectsOneAvailableCommanderFromCandidatePool(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 100, Y: 100, Focused: true,
-		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 1_000}},
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 200}},
 	}
 	gameState.Commanders[1] = State.CommanderState{ID: 1, Available: false}
 	gameState.Commanders[2] = State.CommanderState{ID: 2, Available: true}
@@ -222,7 +224,7 @@ func TestNomadLevelSelectsOneAvailableCommanderFromCandidatePool(t *testing.T) {
 		Mode: "level", ScoreTarget: 100_000, MinimumRemainingSec: 1_800, VictoryCount: 8,
 		CommanderIDs: []State.CommanderID{1, 2, 3},
 		Preset: AttackPresets.Preset{ID: "camp", Name: "Camp", Waves: []AttackPresets.Wave{{
-			Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 100}}},
+			Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 300}}},
 		}}},
 	}
 	arguments, _ := json.Marshal(request)

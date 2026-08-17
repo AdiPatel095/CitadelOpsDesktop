@@ -192,7 +192,7 @@ func planNomadTargetLock(_ context.Context, input Intent.PlanningContext, argume
 }
 
 func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
-	request, source, target, _, _, err := nomadCampAttackContext(input, arguments)
+	request, source, target, definition, _, err := nomadCampAttackContext(input, arguments)
 	if err != nil {
 		if errors.Is(err, Intent.ErrPlanStale) {
 			return Intent.Plan{Summary: "Nomad/Samurai camp progression changed; reevaluate the current camp state"}, nil
@@ -217,8 +217,10 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 	}
 	resolution.Selected = orderNomadChainCommanders(input, source, target, resolution.Selected)
 	request.CommanderIDs = append([]State.CommanderID(nil), resolution.Selected...)
-	if _, err := buildAttackSetupForCommanders(invasionAttackSetup(request.Preset), source, input.GameData, len(resolution.Selected)); err != nil {
-		return Intent.Plan{}, fmt.Errorf("validate chained preset inventory: %w", err)
+	if err := validateNomadCampPresetInventory(
+		input.State, input.GameData, source, target, definition, request.Preset, resolution.Selected,
+	); err != nil {
+		return Intent.Plan{}, fmt.Errorf("validate capacity-adjusted preset inventory: %w", err)
 	}
 	contextPayload, _ := json.Marshal(struct {
 		SourceX   int             `json:"SX"`
@@ -470,21 +472,13 @@ func (application *Application) resolveNomadCampAttackStep(
 	if !exists || !commander.Available {
 		return Intent.Step{}, fmt.Errorf("commander %d is no longer available", request.CommanderID)
 	}
-	capacity, err := (AttackCapacity.Resolver{}).Resolve(input.State, input.GameData, AttackCapacity.Request{
-		SourceCastleID: source.ID, CommanderID: request.CommanderID, UseAttackDialogEffects: true,
-		Target: AttackCapacity.TargetContext{
-			ID: fmt.Sprintf("event-camp:%d:%d:%d", target.KingdomID, target.X, target.Y),
-			Map: &AttackCapacity.MapTarget{
-				KingdomID: target.KingdomID, TypeID: target.TypeID, X: target.X, Y: target.Y,
-				ObjectID: target.EventCampID, Level: definition.CampLevel, VictoryCount: target.EventCampVictoryCount,
-			},
-			Level: definition.CampLevel, CastleTypeID: target.TypeID, PvP: false, LegendaryFight: false,
-		},
-	})
+	limitedPreset, err := capacityLimitedNomadCampPreset(
+		input.State, input.GameData, source, target, definition, request.Preset, request.CommanderID, true,
+	)
 	if err != nil {
-		return Intent.Step{}, fmt.Errorf("resolve Nomad/Samurai camp attack capacity: %w", err)
+		return Intent.Step{}, err
 	}
-	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity))
+	setup := invasionAttackSetup(limitedPreset)
 	built, err := buildAttackSetup(setup, source, input.GameData)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build camp preset %q: %w", request.Preset.Name, err)
@@ -645,16 +639,121 @@ func (application *Application) guardNomadAttackInventory(_ context.Context, arg
 		return err
 	}
 	state := application.State.ReadOnlyView()
-	source, exists := state.Castles[request.SourceCastleID]
-	if !exists {
-		return fmt.Errorf("source castle %d is unavailable", request.SourceCastleID)
-	}
 	currentData, ready := application.GameData.Current()
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
 	}
-	_, err := buildAttackSetupForCommanders(invasionAttackSetup(request.Preset), source, currentData, len(request.CommanderIDs))
-	return err
+	_, source, target, definition, _, err := nomadCampAttackContext(
+		Intent.PlanningContext{State: state, GameData: currentData}, arguments,
+	)
+	if err != nil {
+		return err
+	}
+	return validateNomadCampPresetInventory(
+		state, currentData, source, target, definition, request.Preset, request.CommanderIDs,
+	)
+}
+
+func validateNomadCampPresetInventory(
+	gameState State.GameState,
+	gameData *GameData.Store,
+	source State.CastleState,
+	target State.MapObservation,
+	definition GameData.EventCampDefinition,
+	preset AttackPresets.Preset,
+	commanderIDs []State.CommanderID,
+) error {
+	if len(commanderIDs) == 0 {
+		return fmt.Errorf("camp attack requires at least one commander")
+	}
+	requested := map[State.UnitID]int64{}
+	useAttackDialog := matchingNomadAttackDialog(gameState, source, target)
+	for _, commanderID := range commanderIDs {
+		limited, err := capacityLimitedNomadCampPreset(
+			gameState, gameData, source, target, definition, preset, commanderID, useAttackDialog,
+		)
+		if err != nil {
+			return err
+		}
+		if _, err := buildAttackSetup(invasionAttackSetup(limited), source, gameData); err != nil {
+			return fmt.Errorf("build camp preset %q for commander %d: %w", preset.Name, commanderID, err)
+		}
+		addNomadPresetRequirements(requested, limited)
+	}
+	ids := make([]State.UnitID, 0, len(requested))
+	for itemID := range requested {
+		ids = append(ids, itemID)
+	}
+	sort.Slice(ids, func(left, right int) bool { return ids[left] < ids[right] })
+	for _, itemID := range ids {
+		required, available := requested[itemID], source.Units.Stationed[itemID]
+		if required > available {
+			return fmt.Errorf(
+				"castle %d has %d of item %d; %d commander(s) require %d after camp capacity limits",
+				source.ID, available, itemID, len(commanderIDs), required,
+			)
+		}
+	}
+	return nil
+}
+
+func capacityLimitedNomadCampPreset(
+	gameState State.GameState,
+	gameData *GameData.Store,
+	source State.CastleState,
+	target State.MapObservation,
+	definition GameData.EventCampDefinition,
+	preset AttackPresets.Preset,
+	commanderID State.CommanderID,
+	useAttackDialog bool,
+) (AttackPresets.Preset, error) {
+	capacity, err := (AttackCapacity.Resolver{}).Resolve(gameState, gameData, AttackCapacity.Request{
+		SourceCastleID: source.ID, CommanderID: commanderID, UseAttackDialogEffects: useAttackDialog,
+		Target: AttackCapacity.TargetContext{
+			ID: fmt.Sprintf("event-camp:%d:%d:%d", target.KingdomID, target.X, target.Y),
+			Map: &AttackCapacity.MapTarget{
+				KingdomID: target.KingdomID, TypeID: target.TypeID, X: target.X, Y: target.Y,
+				ObjectID: target.EventCampID, Level: definition.CampLevel, VictoryCount: target.EventCampVictoryCount,
+			},
+			Level: definition.CampLevel, CastleTypeID: target.TypeID, PvP: false, LegendaryFight: false,
+		},
+	})
+	if err != nil {
+		return AttackPresets.Preset{}, fmt.Errorf("resolve Nomad/Samurai camp attack capacity: %w", err)
+	}
+	return AttackPresets.LimitToCapacity(preset, capacity), nil
+}
+
+func matchingNomadAttackDialog(gameState State.GameState, source State.CastleState, target State.MapObservation) bool {
+	dialog := gameState.AttackDialog
+	return dialog.SourceCastleID == source.ID && dialog.KingdomID == target.KingdomID &&
+		dialog.Target.TypeID == target.TypeID && dialog.Target.X == target.X && dialog.Target.Y == target.Y &&
+		dialog.Target.EventCampID == target.EventCampID &&
+		dialog.Target.EventCampVictoryCount == target.EventCampVictoryCount
+}
+
+func addNomadPresetRequirements(requested map[State.UnitID]int64, preset AttackPresets.Preset) {
+	for _, wave := range preset.Waves {
+		for _, lane := range []AttackPresets.Lane{wave.Left, wave.Middle, wave.Right} {
+			for _, slots := range [][]AttackPresets.Slot{lane.Troops, lane.Tools} {
+				for _, slot := range slots {
+					if slot.ItemID != nil && *slot.ItemID > 0 && slot.Quantity > 0 {
+						requested[State.UnitID(*slot.ItemID)] += slot.Quantity
+					}
+				}
+			}
+		}
+	}
+	for _, slot := range preset.CourtyardSupport.Troops {
+		if slot.ItemID != nil && *slot.ItemID > 0 && slot.Quantity > 0 {
+			requested[State.UnitID(*slot.ItemID)] += slot.Quantity
+		}
+	}
+	for _, slot := range preset.CourtyardSupport.Tools {
+		if slot.ItemID != nil && *slot.ItemID > 0 {
+			requested[State.UnitID(*slot.ItemID)]++
+		}
+	}
 }
 
 func (application *Application) guardNomadChainArrival(_ context.Context, arguments json.RawMessage) error {

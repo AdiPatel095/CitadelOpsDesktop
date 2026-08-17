@@ -399,6 +399,58 @@ func TestAutoKhanMissingPresetUnitsPausesOnlyTheCRALaunchCursor(t *testing.T) {
 	}
 }
 
+func TestAutoKhanRageToggleStopsTauntsWithoutStoppingAttacks(t *testing.T) {
+	now := time.Date(2026, 8, 16, 20, 0, 0, 0, time.UTC)
+	snapshot := autoKhanPolicySnapshot(t, now, 2)
+	setAutoKhanPolicySetting(t, &snapshot, "triggerRage", false)
+	snapshot.State.Khan.RageCampID = 1147
+	snapshot.State.Khan.PlayerRage = 1740
+	snapshot.State.Khan.PlayerRageCap = 1740
+	snapshot.State.Khan.PlayerTotalRage = 1740
+	snapshot.State.Khan.RageObservedAt = now
+
+	rageDecision, err := NewAutoKhanRagePolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || rageDecision.Request != nil || rageDecision.Status != "idle" ||
+		!strings.Contains(rageDecision.Detail, "disabled") || rageDecision.Metrics["rageTriggerEnabled"] != 0 {
+		t.Fatalf("disabled rage decision: %#v err=%v", rageDecision, err)
+	}
+	attackDecision, err := NewAutoKhanPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || attackDecision.Request == nil || attackDecision.Request.Name != "khan.attack" {
+		t.Fatalf("disabled rage stopped Khan attacks: %#v err=%v", attackDecision, err)
+	}
+}
+
+func TestAutoKhanAttackLockMaintainsManualChainWithoutLaunching(t *testing.T) {
+	now := time.Date(2026, 8, 16, 20, 5, 0, 0, time.UTC)
+	snapshot := autoKhanPolicySnapshot(t, now, 2)
+	setAutoKhanPolicySetting(t, &snapshot, "attackLaunchesEnabled", false)
+
+	decision, err := NewAutoKhanPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "idle" ||
+		!strings.Contains(decision.Detail, "manual chain") || decision.Metrics["attackLaunchLocked"] != 1 {
+		t.Fatalf("locked attack decision: %#v err=%v", decision, err)
+	}
+
+	target := snapshot.State.Map[0]["210:942"]
+	target.EventCampCooldownRemaining = 194
+	snapshot.State.Map[0]["210:942"] = target
+	decision, err = NewAutoKhanPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "nomad.cooldown.minute_skip" ||
+		!strings.Contains(decision.Detail, "maintain the manual chain") {
+		t.Fatalf("locked attack cooldown maintenance: %#v err=%v", decision, err)
+	}
+
+	snapshot.State.Khan.RageCampID = 1147
+	snapshot.State.Khan.PlayerRage = 1740
+	snapshot.State.Khan.PlayerRageCap = 1740
+	snapshot.State.Khan.PlayerTotalRage = 1740
+	snapshot.State.Khan.RageObservedAt = now
+	rageDecision, err := NewAutoKhanRagePolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || rageDecision.Request == nil || rageDecision.Request.Name != "khan.taunt" {
+		t.Fatalf("attack lock stopped the independent rage lane: %#v err=%v", rageDecision, err)
+	}
+}
+
 func TestAutoKhanRagePolicyTriggersLTAThenDefenseWithoutWaitingForExistingTaunts(t *testing.T) {
 	now := time.Date(2026, 7, 25, 16, 20, 0, 0, time.UTC)
 	snapshot := autoKhanPolicySnapshot(t, now, 2)
@@ -450,6 +502,20 @@ func TestAutoKhanRagePolicyTriggersLTAThenDefenseWithoutWaitingForExistingTaunts
 	if err != nil || decision.Request == nil || decision.Request.Name != "khan.attack" {
 		t.Fatalf("active taunt blocked the independent attack lane: %#v err=%v", decision, err)
 	}
+}
+
+func setAutoKhanPolicySetting(t *testing.T, snapshot *Snapshot, key string, value any) {
+	t.Helper()
+	settings := map[string]any{}
+	if err := json.Unmarshal(snapshot.Configuration.Sections["automation.autoKhan"], &settings); err != nil {
+		t.Fatal(err)
+	}
+	settings[key] = value
+	raw, err := json.Marshal(settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot.Configuration.Sections["automation.autoKhan"] = raw
 }
 
 func autoKhanPolicySnapshot(t *testing.T, now time.Time, sourceCastleID State.CastleID) Snapshot {
