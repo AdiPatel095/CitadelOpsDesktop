@@ -475,10 +475,17 @@ func (coordinator *Coordinator) evaluate(
 			continue
 		}
 		current.failureBlockedUntil = time.Time{}
-		decision, err := policy.Evaluate(ctx, Snapshot{
+		snapshot := Snapshot{
 			State: state, Configuration: configuration, GameData: gameDataStore, Now: now,
 			PolicyConfigurationChanged: previouslyEvaluated && configurationChanged,
-		})
+		}
+		decision, err := policy.Evaluate(ctx, snapshot)
+		if err == nil {
+			// The combat circuit breaker substitutes hostile attack launches
+			// with a standing-down wait; every other decision — rage taunts,
+			// purchases, scans, defense — passes through untouched.
+			decision = gateCombatLaunchDecision(snapshot, decision)
+		}
 		if err != nil {
 			resetContinuation(current)
 			current.nextCheck = now.Add(defaultRetry)

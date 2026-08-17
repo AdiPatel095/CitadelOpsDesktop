@@ -125,9 +125,6 @@ func (*AutoKhanDefensePolicy) WakeSections() []string {
 }
 
 func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
-	if decision, blocked := combatCooldownDecision(snapshot); blocked {
-		return decision, nil
-	}
 
 	settings := autoKhanSettings{
 		MinimumRemainingSec: 300, CheckIntervalSec: defaultKhanCheckIntervalSec,

@@ -56,9 +56,6 @@ func (*AutoInvasionPolicy) WakeSections() []string {
 }
 
 func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision Decision, err error) {
-	if decision, blocked := combatCooldownDecision(snapshot); blocked {
-		return decision, nil
-	}
 
 	settings := autoInvasionSettings{
 		MinimumRemainingSec: 1800,
