@@ -265,6 +265,16 @@ func fakeGameServerWithReplies(t *testing.T, loginReply func(attempt int) string
 					_ = connection.Close()
 					return
 				}
+				if reply == "OKTHENDROP" {
+					// Log the session in, then kill the socket the way the
+					// live game does on displacement: abruptly, no close frame.
+					if writeErr := connection.WriteMessage(websocket.TextMessage, []byte(`%xt%lli%1%0%{}%`)); writeErr != nil {
+						return
+					}
+					time.Sleep(50 * time.Millisecond)
+					_ = connection.Close()
+					return
+				}
 				if reply == "KICK" {
 					// Simulate the game displacing this session because the
 					// player logged in: a deliberate close frame, then close.
@@ -640,12 +650,38 @@ func TestDirectTransportReleasePolicyHandsTheWaitToTheControlPlane(t *testing.T)
 		if status.RetryAt == nil || status.LoginFailure != nil {
 			t.Fatalf("displaced status = %+v", status)
 		}
-		if !strings.Contains(status.Detail, "took over") {
+		if !strings.Contains(status.Detail, "taken over") {
 			t.Fatalf("displaced detail = %q", status.Detail)
 		}
 		waitUntilNotRunning(t, transport)
 		if got := attempts.Load(); got != 1 {
 			t.Fatalf("login attempts after displacement = %d, want exactly 1 (no immediate retries)", got)
+		}
+	})
+	t.Run("a session that dies young releases with the relog wait", func(t *testing.T) {
+		// The live game kicks the runtime with an abrupt drop (no close
+		// frame) when the player logs in. A session that connected and then
+		// died inside the stability window must not burn immediate retries —
+		// that is the relog ping-pong that kicks the player straight back out.
+		server, attempts := fakeGameServerWithReplies(t, func(int) string { return "OKTHENDROP" })
+		transport := newFakeGameTransportWithConfig(t, server, t.TempDir(), func(config *DirectWebSocketConfig) {
+			config.releaseRetryDelay = 10 * time.Millisecond
+			config.releaseRetryAttempts = 2
+		})
+		transport.SetReconnectPolicy(ReconnectPolicyRelease)
+		if err := transport.Start(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		status := awaitTransportState(t, transport, "released")
+		if status.RetryAt == nil || status.LoginFailure != nil {
+			t.Fatalf("young-session release status = %+v", status)
+		}
+		if !strings.Contains(status.Detail, "relog delay") {
+			t.Fatalf("young-session release detail = %q", status.Detail)
+		}
+		waitUntilNotRunning(t, transport)
+		if got := attempts.Load(); got != 1 {
+			t.Fatalf("login attempts after young-session drop = %d, want exactly 1", got)
 		}
 	})
 	t.Run("hold policy keeps reconnecting after drops", func(t *testing.T) {
