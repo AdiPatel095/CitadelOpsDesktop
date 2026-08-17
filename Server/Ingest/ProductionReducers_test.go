@@ -409,3 +409,58 @@ func TestProductionCommandLearnsSessionKeyFromOutboundFrame(t *testing.T) {
 		t.Fatalf("unexpected observed time: %v", gameState.CommandContext.ProductionObservedAt)
 	}
 }
+
+func TestProductionLearnedStackHighWaterAndSubscriptionScopeReset(t *testing.T) {
+	gameState := State.NewGameState()
+	castle := newCastleState(77)
+	castle.Focused = true
+	gameState.Castles[castle.ID] = castle
+	gameState.Subscriptions = map[int]State.SubscriptionState{
+		7: {TypeID: 7, RemainingSec: 86400},
+	}
+	responseCode := 0
+	snapshot := func(amount int64) Protocol.Frame {
+		payload, _ := json.Marshal(map[string]any{
+			"PS":  map[string]any{"WID": 489, "TUA": amount, "RCT": 75, "PID": 11},
+			"QS":  []any{map[string]any{"P": map[string]any{"WID": 489, "TUA": amount, "PID": 12}}},
+			"LID": 0,
+		})
+		return Protocol.Frame{
+			Direction: Protocol.DirectionInbound, Opcode: "spl", ResponseCode: &responseCode,
+			ReceivedAt: time.Date(2026, 8, 17, 12, 0, 0, 0, time.UTC), Payload: payload,
+		}
+	}
+
+	// A subscription-sized stack teaches the high-water mark.
+	if _, _, err := reduceProductionSnapshot(context.Background(), snapshot(260), &gameState, nil); err != nil {
+		t.Fatalf("reduce first snapshot: %v", err)
+	}
+	queue := gameState.Castles[77].Production[0]
+	if queue.LearnedStack != 260 || queue.LearnedStackScope != "sub:7" {
+		t.Fatalf("learned = %d scope %q, want 260 under sub:7", queue.LearnedStack, queue.LearnedStackScope)
+	}
+
+	// Smaller stacks must NOT ratchet the learned size down while the
+	// subscription set is unchanged.
+	if _, _, err := reduceProductionSnapshot(context.Background(), snapshot(220), &gameState, nil); err != nil {
+		t.Fatalf("reduce second snapshot: %v", err)
+	}
+	queue = gameState.Castles[77].Production[0]
+	if queue.LearnedStack != 260 {
+		t.Fatalf("learned after smaller stacks = %d, want held at 260", queue.LearnedStack)
+	}
+	if len(queue.Queued) != 1 || queue.Queued[0].Amount != 220 {
+		t.Fatalf("live queue should reflect the observed 220 stack: %#v", queue.Queued)
+	}
+
+	// A lapsed subscription changes the scope: the stale learned value is
+	// discarded and the line re-learns from the live (smaller) stacks.
+	gameState.Subscriptions = nil
+	if _, _, err := reduceProductionSnapshot(context.Background(), snapshot(220), &gameState, nil); err != nil {
+		t.Fatalf("reduce post-lapse snapshot: %v", err)
+	}
+	queue = gameState.Castles[77].Production[0]
+	if queue.LearnedStack != 220 || queue.LearnedStackScope != "" {
+		t.Fatalf("post-lapse learned = %d scope %q, want re-learned 220 under empty scope", queue.LearnedStack, queue.LearnedStackScope)
+	}
+}

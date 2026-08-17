@@ -488,3 +488,30 @@ func TestPlanHospitalHealAlwaysRefreshesFocusedCastle(t *testing.T) {
 		t.Fatalf("hospital heal summary = %q", plan.Summary)
 	}
 }
+
+func TestObservedProductionStackHonorsScopedLearnedFloor(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Subscriptions = map[int]State.SubscriptionState{7: {TypeID: 7, RemainingSec: 3600}}
+	queue := State.ProductionQueue{
+		LineID:            0,
+		Queued:            []State.QueueItem{{Amount: 220}},
+		LearnedStack:      260,
+		LearnedStackScope: "sub:7",
+	}
+	if got := observedProductionStack(gameState, queue); got != 260 {
+		t.Fatalf("matching scope should floor at learned 260, got %d", got)
+	}
+
+	// After a subscription lapse the learned floor is stale and live stacks rule.
+	gameState.Subscriptions = nil
+	if got := observedProductionStack(gameState, queue); got != 220 {
+		t.Fatalf("stale scope must fall back to live stacks (220), got %d", got)
+	}
+
+	// A live stack larger than the learned floor always wins.
+	gameState.Subscriptions = map[int]State.SubscriptionState{7: {TypeID: 7}}
+	queue.Queued = append(queue.Queued, State.QueueItem{Amount: 300})
+	if got := observedProductionStack(gameState, queue); got != 300 {
+		t.Fatalf("live 300 should beat learned 260, got %d", got)
+	}
+}

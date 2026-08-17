@@ -110,7 +110,7 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		return Intent.Plan{}, fmt.Errorf("production line %d is full", request.LineID)
 	}
 	if request.Amount <= 0 {
-		request.Amount = observedProductionStack(queue)
+		request.Amount = observedProductionStack(input.State, queue)
 	}
 	if request.Amount <= 0 {
 		return Intent.Plan{}, fmt.Errorf("production stack size is unknown; create one %s stack in-game so CitadelOps can learn the live amount", collection)
@@ -394,8 +394,18 @@ func planHospitalOperation(input Intent.PlanningContext, arguments json.RawMessa
 	}, nil
 }
 
-func observedProductionStack(queue State.ProductionQueue) int64 {
+// observedProductionStack picks the per-stack amount FillAvailable sends.
+// The game never reports the entitled batch size directly (subscriptions
+// carry only type + remaining time), so the size is learned from what is
+// visible in the queue — floored by the LearnedStack high-water mark so a
+// spell of smaller stacks cannot ratchet the batch size down. The learned
+// floor only applies while the subscription set it was recorded under still
+// matches; after a lapse the floor is ignored and live stacks rule again.
+func observedProductionStack(gameState State.GameState, queue State.ProductionQueue) int64 {
 	var amount int64
+	if queue.LearnedStack > 0 && queue.LearnedStackScope == gameState.SubscriptionScope() {
+		amount = queue.LearnedStack
+	}
 	if queue.Active != nil && queue.Active.Amount > amount {
 		amount = queue.Active.Amount
 	}

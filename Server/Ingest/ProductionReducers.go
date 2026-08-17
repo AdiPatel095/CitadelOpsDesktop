@@ -58,6 +58,7 @@ func reduceProductionSnapshot(
 	}
 	changed, err := applyProductionSnapshot(
 		frame.Payload, castleID, &castle, frame.ReceivedAt, recruitmentHelpOutstanding,
+		gameState.SubscriptionScope(),
 	)
 	if err != nil || !changed {
 		return nil, false, err
@@ -95,6 +96,7 @@ func reduceEmbeddedProductionSnapshots(
 		}
 		updated, err := applyProductionSnapshot(
 			raw, castleID, &castle, frame.ReceivedAt, recruitmentHelpOutstanding,
+			gameState.SubscriptionScope(),
 		)
 		if err != nil {
 			return nil, false, err
@@ -116,6 +118,7 @@ func applyProductionSnapshot(
 	castle *State.CastleState,
 	observedAt time.Time,
 	recruitmentHelpOutstanding bool,
+	subscriptionScope string,
 ) (bool, error) {
 	var root map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &root); err != nil {
@@ -190,6 +193,18 @@ func applyProductionSnapshot(
 	}
 	if wire.LineID == 0 && recruitmentHelpOutstanding {
 		markAllianceHelpQueue(&queue, true, 0)
+	}
+	// High-water stack learning: carry the largest stack ever observed on
+	// this line forward across snapshots, but only while the subscription
+	// set it was learned under still holds. A scope change (subscription
+	// gained or lapsed) discards the learned value so the line re-learns
+	// from live stacks instead of overshooting a lapsed entitlement.
+	if previous := castle.Production[wire.LineID]; previous.LearnedStackScope == subscriptionScope {
+		queue.LearnedStack = previous.LearnedStack
+	}
+	queue.LearnedStackScope = subscriptionScope
+	if observed := largestObservedStack(queue); observed > queue.LearnedStack {
+		queue.LearnedStack = observed
 	}
 	if reflect.DeepEqual(castle.Production[wire.LineID], queue) {
 		return false, nil
@@ -614,6 +629,22 @@ func markAllianceHelpQueue(queue *State.ProductionQueue, markAll bool, productio
 		}
 	}
 	return changed
+}
+
+// largestObservedStack reports the biggest per-stack amount visible on the
+// line right now (active production included). It feeds the LearnedStack
+// high-water mark.
+func largestObservedStack(queue State.ProductionQueue) int64 {
+	var amount int64
+	if queue.Active != nil && queue.Active.Amount > amount {
+		amount = queue.Active.Amount
+	}
+	for _, item := range queue.Queued {
+		if item.Amount > amount {
+			amount = item.Amount
+		}
+	}
+	return amount
 }
 
 func requestedProductionHelp(queue State.ProductionQueue) map[int64]bool {

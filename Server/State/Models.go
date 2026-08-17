@@ -2,7 +2,9 @@ package State
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -485,6 +487,15 @@ type ProductionQueue struct {
 	Queued     []QueueItem `json:"queued"`
 	Capacity   int         `json:"capacity"`
 	ObservedAt time.Time   `json:"observedAt"`
+	// LearnedStack is the largest per-stack amount ever observed on this line
+	// while the account's subscription set matched LearnedStackScope. It
+	// floors what FillAvailable enqueues, so a spell of smaller stacks cannot
+	// ratchet the learned batch size down. A subscription change (lapse or
+	// gain) produces a new scope: the stale learned value is discarded and
+	// the line re-learns from live stacks, so a lapsed entitlement is never
+	// overshot.
+	LearnedStack      int64  `json:"learnedStack,omitempty"`
+	LearnedStackScope string `json:"learnedStackScope,omitempty"`
 }
 
 type AllianceHelpRequestState struct {
@@ -787,6 +798,27 @@ type SubscriptionState struct {
 	TypeID         int `json:"typeId"`
 	RemainingSec   int `json:"remainingSec,omitempty"`
 	GracePeriodSec int `json:"gracePeriodSec,omitempty"`
+}
+
+// SubscriptionScope fingerprints WHICH subscriptions are active — the sorted
+// set of type IDs, ignoring remaining time (which ticks down every refresh).
+// Learned production batch sizes are valid only within one scope: the game
+// sizes batches by entitlement, so a change in the active set (either
+// direction) must invalidate what was learned under the old set.
+func (state GameState) SubscriptionScope() string {
+	if len(state.Subscriptions) == 0 {
+		return ""
+	}
+	typeIDs := make([]int, 0, len(state.Subscriptions))
+	for typeID := range state.Subscriptions {
+		typeIDs = append(typeIDs, typeID)
+	}
+	sort.Ints(typeIDs)
+	parts := make([]string, len(typeIDs))
+	for index, typeID := range typeIDs {
+		parts[index] = strconv.Itoa(typeID)
+	}
+	return "sub:" + strings.Join(parts, ",")
 }
 
 type MarketAreaEffect struct {
