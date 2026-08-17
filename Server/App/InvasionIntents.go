@@ -174,7 +174,7 @@ func planInvasionAttack(_ context.Context, input Intent.PlanningContext, argumen
 	resolution, err := resolveCRACommanders(
 		input.State,
 		commanderSelection,
-		craCommanderSelectionOptions{DefaultCount: 1, RequireAvailable: true},
+		craCommanderSelectionOptions{Holds: input.CommanderHolds, DefaultCount: 1, RequireAvailable: true},
 	)
 	if err != nil {
 		if errors.Is(err, errCRACommanderUnavailable) {

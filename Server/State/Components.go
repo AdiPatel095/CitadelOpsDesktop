@@ -51,6 +51,7 @@ const (
 	ComponentAutomations
 	ComponentReports
 	ComponentObservations
+	ComponentCombatCooldown
 	componentCount
 )
 
@@ -93,6 +94,7 @@ var componentNames = [...]string{
 	"automations",
 	"reports",
 	"observations",
+	"combatCooldown",
 }
 
 func (component Component) String() string {

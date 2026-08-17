@@ -73,6 +73,10 @@ func (*AutoNomadPolicy) WakeSections() []string {
 }
 
 func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+	if decision, blocked := combatCooldownDecision(snapshot); blocked {
+		return decision, nil
+	}
+
 	settings := autoNomadSettings{
 		MinimumRemainingSec: 1800, CheckIntervalSec: 30, MapRefreshIntervalSec: defaultNomadMapRefresh,
 		TimeSkipReserve: map[string]int64{}, HorseTravelBoostID: -1,

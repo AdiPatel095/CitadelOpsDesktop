@@ -58,6 +58,10 @@ func (*AutoBirdPolicy) WakeDomains() []string {
 func (*AutoBirdPolicy) WakeSections() []string { return []string{"automation.autoBird"} }
 
 func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision Decision, err error) {
+	if decision, blocked := combatCooldownDecision(snapshot); blocked {
+		return decision, nil
+	}
+
 	if refresh, required := playerProtectionRefreshDecision(snapshot); required {
 		return withAutoBirdSchedule(snapshot, refresh, time.Time{}), nil
 	}

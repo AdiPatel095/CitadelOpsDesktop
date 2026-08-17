@@ -61,7 +61,7 @@ func planNomadRBCTestAttack(
 	resolution, err := resolveCRACommanders(
 		input.State,
 		&craCommanderSelectionRequest{Candidates: request.CommanderIDs, Count: request.ExpectedAttacks, Strategy: "lowest_id"},
-		craCommanderSelectionOptions{DefaultCount: request.ExpectedAttacks, RequireAvailable: true},
+		craCommanderSelectionOptions{Holds: input.CommanderHolds, DefaultCount: request.ExpectedAttacks, RequireAvailable: true},
 	)
 	if err != nil {
 		return Intent.Plan{}, err

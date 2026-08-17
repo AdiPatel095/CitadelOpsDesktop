@@ -232,6 +232,10 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	// Dashboard and API submissions execute under the application's runtime
 	// context: closing a control panel never cancels a running operation.
 	intents.SetRuntimeContext(runtimeContext)
+	// Launch bursts must never re-select a commander whose movement is not
+	// yet visible; the hold registry closes that window (see
+	// CommanderLaunchHolds.go and the CRA 256 churn it prevents).
+	intents.SetCommanderHolds(newCommanderLaunchHolds())
 	operationStore, err := Intent.OpenOperationStore(config.DataDir)
 	if err != nil {
 		return nil, fmt.Errorf("open intent operation store: %w", err)

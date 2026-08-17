@@ -101,7 +101,9 @@ type Engine struct {
 	observer    Observer
 	claims      *claimManager
 	admission   *admissionManager
-	labelsMu    sync.RWMutex
+	// commanderHolds is set once during composition, before planning begins.
+	commanderHolds CommanderHoldRegistry
+	labelsMu       sync.RWMutex
 	labels      GameData.IdentifierLabels
 	labelsReady bool
 
@@ -1714,8 +1716,14 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 	return plan
 }
 
+// SetCommanderHolds installs the launch-hold registry consulted by every CRA
+// commander selection this engine plans.
+func (engine *Engine) SetCommanderHolds(registry CommanderHoldRegistry) {
+	engine.commanderHolds = registry
+}
+
 func (engine *Engine) planningContext() PlanningContext {
-	input := PlanningContext{}
+	input := PlanningContext{CommanderHolds: engine.commanderHolds}
 	if provider, ok := engine.state.(interface{ PlanningView() State.PlanningView }); ok {
 		view := provider.PlanningView()
 		input.State = view.State

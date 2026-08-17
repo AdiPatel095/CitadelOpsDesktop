@@ -108,7 +108,7 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	if input.GameData == nil {
 		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
 	}
-	commander, err := towerCommander(input.State, request.MaidenOnly, request.CommanderIDs)
+	commander, err := towerCommander(input.State, input.CommanderHolds, request.MaidenOnly, request.CommanderIDs)
 	if err != nil {
 		return Intent.Plan{}, fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
@@ -390,6 +390,7 @@ func towerLaunchContext(input Intent.PlanningContext, arguments json.RawMessage)
 
 func towerCommander(
 	gameState State.GameState,
+	holds Intent.CommanderHoldRegistry,
 	maidenOnly bool,
 	configured []State.CommanderID,
 ) (State.CommanderID, error) {
@@ -427,6 +428,7 @@ func towerCommander(
 		return 0, fmt.Errorf("no commander is in the current roster")
 	}
 	resolution, err := resolveCRACommanders(gameState, &craCommanderSelectionRequest{Candidates: candidates, Count: 1, Strategy: "lowest_id"}, craCommanderSelectionOptions{
+		Holds:        holds,
 		DefaultCount: 1, RequireAvailable: true,
 	})
 	if err != nil {

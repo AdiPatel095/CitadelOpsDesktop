@@ -83,6 +83,10 @@ func (*AutoTowerPolicy) ResetConfigurationDerivedState(gameState *State.GameStat
 }
 
 func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+	if decision, blocked := combatCooldownDecision(snapshot); blocked {
+		return decision, nil
+	}
+
 	settings := autoTowerSettings{CheckIntervalSec: 30, MapRefreshIntervalSec: 1800, HorseTravelBoostID: -1, Castles: map[string]autoTowerCastle{}}
 	if !decodeSection(snapshot.Configuration, "automation.autoTowers", &settings) || len(settings.Castles) == 0 {
 		return Decision{

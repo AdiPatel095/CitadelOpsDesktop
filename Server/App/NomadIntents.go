@@ -210,6 +210,7 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 	}
 	selection := &craCommanderSelectionRequest{Candidates: request.CommanderIDs, Count: commanderCount, Strategy: "lowest_id"}
 	resolution, err := resolveCRACommanders(input.State, selection, craCommanderSelectionOptions{
+		Holds:        input.CommanderHolds,
 		DefaultCount: commanderCount, RequireAvailable: true,
 	})
 	if err != nil {

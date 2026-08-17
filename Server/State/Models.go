@@ -1476,6 +1476,22 @@ type KhanState struct {
 const KhanTauntCounterVersion = 1
 const KhanCooldownReportVersion = 1
 
+// CombatCooldownState is the account-wide attack-automation circuit breaker.
+// It trips when the game rejects a commander assignment (CRA response code
+// 256): repeated rejected launches are the request pattern that precedes
+// temporary suspensions, so the combat lanes stand down for a fixed window
+// while every non-combat lane keeps running. Manual attacks stay possible —
+// the gate lives in automation policies, not in intent planning.
+type CombatCooldownState struct {
+	Until  time.Time `json:"until,omitempty"`
+	Reason string    `json:"reason,omitempty"`
+}
+
+// ActiveAt reports whether the combat lanes are standing down at now.
+func (cooldown CombatCooldownState) ActiveAt(now time.Time) bool {
+	return !cooldown.Until.IsZero() && now.Before(cooldown.Until)
+}
+
 // AttackDialogState is the current pre-attack context returned by ADI. Its
 // active effects are authoritative for the selected castle while the dialog
 // remains current; a planned attack can therefore include temporary effects
@@ -1651,6 +1667,7 @@ type GameState struct {
 	Khan                 KhanState                               `json:"khan"`
 	DailyAttacks         DailyAttackState                        `json:"dailyAttacks"`
 	AttackDialog         AttackDialogState                       `json:"attackDialog"`
+	CombatCooldown       CombatCooldownState                     `json:"combatCooldown"`
 	AttackPresets        []AttackPreset                          `json:"attackPresets"`
 	AttackAnalytics      AttackAnalyticsState                    `json:"attackAnalytics"`
 	EventScores          EventScoreState                         `json:"eventScores"`

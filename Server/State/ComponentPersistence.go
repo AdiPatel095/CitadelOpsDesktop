@@ -2070,6 +2070,11 @@ func applyComponentPatch(state *GameState, component Component, patch *Component
 			return err
 		}
 		state.Observations = *patch.Observations
+	case ComponentCombatCooldown:
+		if err := require(patch.CombatCooldown); err != nil {
+			return err
+		}
+		state.CombatCooldown = *patch.CombatCooldown
 	default:
 		return fmt.Errorf("unknown persisted state component %d", component)
 	}

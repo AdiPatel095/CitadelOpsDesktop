@@ -232,6 +232,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		reducerStep{writes: movements, reducer: craMovements},
 		reducerStep{writes: components(State.ComponentRift), reducer: reduceRiftLaunchAck},
 		reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
+		reducerStep{writes: components(State.ComponentCombatCooldown), reducer: reduceCombatCooldownOnCommanderBusy},
 	); err != nil {
 		return err
 	}

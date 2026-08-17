@@ -166,6 +166,7 @@ type ComponentPatch struct {
 	Khan                 *KhanState                      `json:"khan,omitempty"`
 	DailyAttacks         *DailyAttackState               `json:"dailyAttacks,omitempty"`
 	AttackDialog         *AttackDialogState              `json:"attackDialog,omitempty"`
+	CombatCooldown       *CombatCooldownState            `json:"combatCooldown,omitempty"`
 	AttackPresets        *[]AttackPreset                 `json:"attackPresets,omitempty"`
 	AttackAnalytics      *AttackAnalyticsState           `json:"attackAnalytics,omitempty"`
 	EventScores          *EventScoreState                `json:"eventScores,omitempty"`
@@ -328,6 +329,9 @@ func componentPatch(
 	}
 	if components.Has(ComponentAttackDialog) {
 		patch.AttackDialog = &state.AttackDialog
+	}
+	if components.Has(ComponentCombatCooldown) {
+		patch.CombatCooldown = &state.CombatCooldown
 	}
 	if components.Has(ComponentAttackPresets) {
 		patch.AttackPresets = &state.AttackPresets

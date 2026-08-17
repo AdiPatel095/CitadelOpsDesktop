@@ -195,6 +195,7 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 		defaultCount = 1
 	}
 	resolution, err := resolveCRACommanders(input.State, request.CommanderSelection, craCommanderSelectionOptions{
+		Holds:             input.CommanderHolds,
 		DefaultCandidates: eligibleCommanders,
 		DefaultCount:      defaultCount,
 		Eligible:          eligibleSet,
@@ -316,6 +317,7 @@ func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, a
 		}
 	}
 	resolution, err := resolveCRACommanders(input.State, commanderSelection, craCommanderSelectionOptions{
+		Holds: input.CommanderHolds,
 		DefaultCount: 1, RequireAvailable: true,
 	})
 	if err != nil {
@@ -570,6 +572,7 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		return Intent.Plan{}, err
 	}
 	resolution, err := resolveCRACommanders(input.State, request.CommanderSelection, craCommanderSelectionOptions{
+		Holds:             input.CommanderHolds,
 		DefaultCandidates: []State.CommanderID{State.CommanderID(rawMapInt(fields, "LID"))},
 		DefaultCount:      1,
 		RequireAvailable:  !scheduled,

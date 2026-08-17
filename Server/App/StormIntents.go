@@ -566,7 +566,7 @@ func planStormAttack(_ context.Context, input Intent.PlanningContext, arguments 
 		}
 		selection = &craCommanderSelectionRequest{Candidates: request.CommanderIDs, Count: 1, Strategy: "lowest_id"}
 	}
-	resolution, err := resolveCRACommanders(input.State, selection, craCommanderSelectionOptions{DefaultCount: 1, RequireAvailable: true})
+	resolution, err := resolveCRACommanders(input.State, selection, craCommanderSelectionOptions{Holds: input.CommanderHolds, DefaultCount: 1, RequireAvailable: true})
 	if err != nil {
 		if errors.Is(err, errCRACommanderUnavailable) {
 			detail := "no commander is currently available"
