@@ -840,3 +840,52 @@ func TestPlanStormShopPurchaseUsesLunaStorefrontWireShape(t *testing.T) {
 		t.Fatalf("strict validation after current GBC: %v", err)
 	}
 }
+
+// A hosted account only ever scans cooperatively, so the shared capture must
+// bind the per-account Storm map identity — otherwise the identity stays zero
+// and every targeted pre-attack refresh is refused with "Storm map identity
+// changed before targeted refresh capture" (the live-cell failure this
+// reproduces).
+func TestCooperativeCaptureBindsIdentityForTargetedRefresh(t *testing.T) {
+	startedAt := time.Date(2026, time.August, 17, 0, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.Session.ServerURL = "wss://ep-live-us1-game.goodgamestudios.com:443"
+	state.Player.ID = 901
+	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, Focused: true}
+	state.Map = map[State.KingdomID]map[string]State.MapObservation{
+		stormIntentKingdomID: {
+			"650:650": {
+				KingdomID: stormIntentKingdomID, X: 650, Y: 650, TypeID: stormIntentFortMapTypeID,
+				StormIsleID: 8, ObservedAt: startedAt.Add(time.Second),
+			},
+		},
+	}
+	worldMaps := State.NewWorldMapStore()
+	application := &Application{
+		State: State.NewStoreWithWorldMap(state, worldMaps), WorldMaps: worldMaps, AccountKey: "acct-test",
+	}
+	assignment := worldMaps.AcquireStormScan("acct-test", "ep-live-us1", stormIntentKingdomID, startedAt)
+	if len(assignment.Windows) == 0 {
+		t.Fatal("expected leased storm windows for the only participant")
+	}
+	if err := application.captureStormScanRequest(stormMapScanRequest{
+		SourceCastleID: 40, FullMap: true, Cooperative: true, LeaseID: assignment.LeaseID,
+		Windows: assignment.Windows, ScanStartedAt: startedAt,
+	}); err != nil {
+		t.Fatalf("cooperative capture: %v", err)
+	}
+	snapshot := application.State.Snapshot()
+	if snapshot.Storm.Map.ServerURL != state.Session.ServerURL ||
+		snapshot.Storm.Map.PlayerID != 901 || snapshot.Storm.Map.SourceCastleID != 40 {
+		t.Fatalf("cooperative capture left storm map identity unbound: %#v", snapshot.Storm.Map)
+	}
+
+	// The targeted pre-attack refresh must now pass the identity guard.
+	if err := application.captureStormScanRequest(stormMapScanRequest{
+		SourceCastleID: 40, Targeted: true,
+		Bounds:        State.StormMapBounds{X1: 650, Y1: 650, X2: 650, Y2: 650},
+		ScanStartedAt: startedAt.Add(time.Minute),
+	}); err != nil {
+		t.Fatalf("targeted refresh after cooperative capture: %v", err)
+	}
+}

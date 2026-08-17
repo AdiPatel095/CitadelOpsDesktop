@@ -1341,12 +1341,31 @@ func (application *Application) captureStormScanRequest(request stormMapScanRequ
 		// contributor identity is retained in the generation or emitted patch.
 		application.State.AdoptWorldMap(worldEvent)
 		_, err = application.State.ApplyComponents(State.Components(State.ComponentStorm), func(gameState *State.GameState) ([]string, bool, error) {
+			changed := false
+			if !stormMapStateMatches(*gameState, gameState.Storm.Map, request.SourceCastleID) {
+				// Cooperative scans skip the burst-path initialization, so a
+				// hosted account's map identity would stay zero forever — and
+				// every later targeted pre-attack refresh would be refused
+				// with "Storm map identity changed". Bind the identity to
+				// this session the first time shared coverage lands (and
+				// again after a server, player, or source-castle change).
+				gameState.ReplaceStormMap(State.StormMapState{
+					ServerURL:      gameState.Session.ServerURL,
+					PlayerID:       gameState.Player.ID,
+					SourceCastleID: request.SourceCastleID,
+					Targets:        map[string]State.MapObservation{},
+				})
+				changed = true
+			}
 			lastScannedAt := gameState.MutableStormLastScannedAt()
-			if lastScannedAt[request.SourceCastleID].Equal(completedAt) {
+			if !lastScannedAt[request.SourceCastleID].Equal(completedAt) {
+				lastScannedAt[request.SourceCastleID] = completedAt
+				changed = true
+			}
+			if !changed {
 				return nil, false, nil
 			}
-			lastScannedAt[request.SourceCastleID] = completedAt
-			return []string{"storm-scan"}, true, nil
+			return []string{"storm", "storm-scan"}, true, nil
 		})
 		return err
 	}
