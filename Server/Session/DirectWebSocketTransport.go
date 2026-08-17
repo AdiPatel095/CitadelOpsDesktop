@@ -447,6 +447,7 @@ func (transport *DirectWebSocketTransport) run(ctx context.Context, generation u
 		if !isLoginErr {
 			unknownFailures = 0
 		}
+		displaced := !isLoginErr && isDisplacementClose(err)
 		now := time.Now().UTC()
 		delay := transport.relogDelay()
 		status := Status{
@@ -458,12 +459,20 @@ func (transport *DirectWebSocketTransport) run(ctx context.Context, generation u
 			status.LoginFailure = loginErr.failure(now)
 			status.Detail = loginErr.Error()
 		}
+		if displaced {
+			// The server sent a deliberate close frame mid-session: another
+			// login (the player) took the account over. Reconnecting inside
+			// the immediate-retry window would kick the player right back
+			// out, so the full relog delay applies — their play window.
+			status.Detail = "Another login took over the game session; waiting out the relog delay before reconnecting"
+		}
 		if transport.currentReconnectPolicy() == ReconnectPolicyRelease {
 			// Under the release policy the runtime's lifetime follows the game
-			// connection. A plain drop gets a short immediate retry window; any
+			// connection. A plain drop gets a short immediate retry window; a
+			// deliberate displacement skips it (the player is playing); any
 			// login outcome that needs waiting is reported and the session is
 			// released so the control plane can free the slot and come back.
-			if !isLoginErr && immediateRetries < transport.releaseRetryAttempts() {
+			if !isLoginErr && !displaced && immediateRetries < transport.releaseRetryAttempts() {
 				immediateRetries++
 				retryAt := now.Add(transport.releaseRetryDelay())
 				status.RetryAt = &retryAt
@@ -1267,6 +1276,21 @@ func transpilationBuild(contents []byte) (string, error) {
 		return "", fmt.Errorf("game frontend client build is invalid")
 	}
 	return build, nil
+}
+
+// isDisplacementClose reports whether the connection ended with a close frame
+// the server sent on purpose. The game closes an account's socket cleanly when
+// a second login takes the session over (the player signing in); network
+// faults surface as read errors without a close frame. Server restarts also
+// close cleanly — waiting the relog delay is the right behaviour there too.
+func isDisplacementClose(err error) bool {
+	var closeErr *websocket.CloseError
+	if !errors.As(err, &closeErr) {
+		return false
+	}
+	// 1006 is synthesized locally when the connection dies WITHOUT a close
+	// frame (network fault) — that is a plain drop, not a displacement.
+	return closeErr.Code != websocket.CloseAbnormalClosure
 }
 
 func readDirectWebSocket(ctx context.Context, connection *websocket.Conn, output chan<- directReadResult) {

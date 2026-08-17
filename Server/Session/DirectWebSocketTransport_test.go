@@ -265,6 +265,17 @@ func fakeGameServerWithReplies(t *testing.T, loginReply func(attempt int) string
 					_ = connection.Close()
 					return
 				}
+				if reply == "KICK" {
+					// Simulate the game displacing this session because the
+					// player logged in: a deliberate close frame, then close.
+					_ = connection.WriteControl(
+						websocket.CloseMessage,
+						websocket.FormatCloseMessage(websocket.CloseNormalClosure, "kicked"),
+						time.Now().Add(time.Second),
+					)
+					_ = connection.Close()
+					return
+				}
 			case strings.Contains(message, "%abc%"):
 				reply = `%xt%abc%1%0%{"ok":true}%`
 			}
@@ -610,6 +621,31 @@ func TestDirectTransportReleasePolicyHandsTheWaitToTheControlPlane(t *testing.T)
 		waitUntilNotRunning(t, transport)
 		if got := attempts.Load(); got != 3 {
 			t.Fatalf("login attempts before release = %d, want 1 + 2 immediate retries", got)
+		}
+	})
+	t.Run("a deliberate server close skips the immediate retry window", func(t *testing.T) {
+		// The player logging in displaces the runtime's session with a close
+		// frame. Reconnecting immediately would kick the player right back
+		// out, so the release must happen at once with the full relog wait.
+		server, attempts := fakeGameServerWithReplies(t, func(int) string { return "KICK" })
+		transport := newFakeGameTransportWithConfig(t, server, t.TempDir(), func(config *DirectWebSocketConfig) {
+			config.releaseRetryDelay = 10 * time.Millisecond
+			config.releaseRetryAttempts = 2
+		})
+		transport.SetReconnectPolicy(ReconnectPolicyRelease)
+		if err := transport.Start(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		status := awaitTransportState(t, transport, "released")
+		if status.RetryAt == nil || status.LoginFailure != nil {
+			t.Fatalf("displaced status = %+v", status)
+		}
+		if !strings.Contains(status.Detail, "took over") {
+			t.Fatalf("displaced detail = %q", status.Detail)
+		}
+		waitUntilNotRunning(t, transport)
+		if got := attempts.Load(); got != 1 {
+			t.Fatalf("login attempts after displacement = %d, want exactly 1 (no immediate retries)", got)
 		}
 	})
 	t.Run("hold policy keeps reconnecting after drops", func(t *testing.T) {
