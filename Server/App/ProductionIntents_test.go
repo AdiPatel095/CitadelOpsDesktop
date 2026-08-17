@@ -494,24 +494,32 @@ func TestObservedProductionStackHonorsScopedLearnedFloor(t *testing.T) {
 	gameState.Subscriptions = map[int]State.SubscriptionState{7: {TypeID: 7, RemainingSec: 3600}}
 	queue := State.ProductionQueue{
 		LineID:            0,
-		Queued:            []State.QueueItem{{Amount: 220}},
-		LearnedStack:      260,
+		Queued:            []State.QueueItem{{Definition: State.DefinitionRef{ID: 489}, Amount: 220}},
+		LearnedStacks:     map[int64]int64{489: 260},
 		LearnedStackScope: "sub:7",
 	}
-	if got := observedProductionStack(gameState, queue); got != 260 {
+	if got := observedProductionStack(gameState, queue, 489); got != 260 {
 		t.Fatalf("matching scope should floor at learned 260, got %d", got)
 	}
 
 	// After a subscription lapse the learned floor is stale and live stacks rule.
 	gameState.Subscriptions = nil
-	if got := observedProductionStack(gameState, queue); got != 220 {
+	if got := observedProductionStack(gameState, queue, 489); got != 220 {
 		t.Fatalf("stale scope must fall back to live stacks (220), got %d", got)
 	}
 
 	// A live stack larger than the learned floor always wins.
 	gameState.Subscriptions = map[int]State.SubscriptionState{7: {TypeID: 7}}
-	queue.Queued = append(queue.Queued, State.QueueItem{Amount: 300})
-	if got := observedProductionStack(gameState, queue); got != 300 {
+	queue.Queued = append(queue.Queued, State.QueueItem{Definition: State.DefinitionRef{ID: 489}, Amount: 300})
+	if got := observedProductionStack(gameState, queue, 489); got != 300 {
 		t.Fatalf("live 300 should beat learned 260, got %d", got)
+	}
+
+	// Another unit's learned cap must not floor this unit: a different
+	// definition with no history mimics the line (cold start) but ignores
+	// unit 489's high-water mark.
+	queue.Queued = []State.QueueItem{{Definition: State.DefinitionRef{ID: 512}, Amount: 132}}
+	if got := observedProductionStack(gameState, queue, 512); got != 132 {
+		t.Fatalf("unit 512 must not inherit unit 489's 260 floor, got %d", got)
 	}
 }

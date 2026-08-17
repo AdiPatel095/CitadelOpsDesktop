@@ -194,18 +194,21 @@ func applyProductionSnapshot(
 	if wire.LineID == 0 && recruitmentHelpOutstanding {
 		markAllianceHelpQueue(&queue, true, 0)
 	}
-	// High-water stack learning: carry the largest stack ever observed on
-	// this line forward across snapshots, but only while the subscription
-	// set it was learned under still holds. A scope change (subscription
-	// gained or lapsed) discards the learned value so the line re-learns
-	// from live stacks instead of overshooting a lapsed entitlement.
-	if previous := castle.Production[wire.LineID]; previous.LearnedStackScope == subscriptionScope {
-		queue.LearnedStack = previous.LearnedStack
+	// High-water stack learning: carry the largest stack ever observed per
+	// unit definition forward across snapshots, but only while the
+	// subscription set it was learned under still holds. A scope change
+	// (subscription gained or lapsed) discards learned values so the line
+	// re-learns from live stacks instead of overshooting a lapsed
+	// entitlement. Keyed by definition because batch caps are per-unit —
+	// one unit's learned cap must never floor another unit's stacks.
+	if previous := castle.Production[wire.LineID]; previous.LearnedStackScope == subscriptionScope && len(previous.LearnedStacks) > 0 {
+		queue.LearnedStacks = make(map[int64]int64, len(previous.LearnedStacks))
+		for definitionID, amount := range previous.LearnedStacks {
+			queue.LearnedStacks[definitionID] = amount
+		}
 	}
 	queue.LearnedStackScope = subscriptionScope
-	if observed := largestObservedStack(queue); observed > queue.LearnedStack {
-		queue.LearnedStack = observed
-	}
+	learnObservedStacks(&queue)
 	if reflect.DeepEqual(castle.Production[wire.LineID], queue) {
 		return false, nil
 	}
@@ -631,20 +634,24 @@ func markAllianceHelpQueue(queue *State.ProductionQueue, markAll bool, productio
 	return changed
 }
 
-// largestObservedStack reports the biggest per-stack amount visible on the
-// line right now (active production included). It feeds the LearnedStack
-// high-water mark.
-func largestObservedStack(queue State.ProductionQueue) int64 {
-	var amount int64
-	if queue.Active != nil && queue.Active.Amount > amount {
-		amount = queue.Active.Amount
+// learnObservedStacks raises the per-definition high-water marks with every
+// stack visible on the line right now (active production included).
+func learnObservedStacks(queue *State.ProductionQueue) {
+	learn := func(definitionID, amount int64) {
+		if definitionID <= 0 || amount <= 0 || amount <= queue.LearnedStacks[definitionID] {
+			return
+		}
+		if queue.LearnedStacks == nil {
+			queue.LearnedStacks = map[int64]int64{}
+		}
+		queue.LearnedStacks[definitionID] = amount
+	}
+	if queue.Active != nil {
+		learn(int64(queue.Active.Definition.ID), queue.Active.Amount)
 	}
 	for _, item := range queue.Queued {
-		if item.Amount > amount {
-			amount = item.Amount
-		}
+		learn(int64(item.Definition.ID), item.Amount)
 	}
-	return amount
 }
 
 func requestedProductionHelp(queue State.ProductionQueue) map[int64]bool {

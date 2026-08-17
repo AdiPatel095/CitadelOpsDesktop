@@ -110,7 +110,7 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		return Intent.Plan{}, fmt.Errorf("production line %d is full", request.LineID)
 	}
 	if request.Amount <= 0 {
-		request.Amount = observedProductionStack(input.State, queue)
+		request.Amount = observedProductionStack(input.State, queue, request.DefinitionID)
 	}
 	if request.Amount <= 0 {
 		return Intent.Plan{}, fmt.Errorf("production stack size is unknown; create one %s stack in-game so CitadelOps can learn the live amount", collection)
@@ -394,27 +394,41 @@ func planHospitalOperation(input Intent.PlanningContext, arguments json.RawMessa
 	}, nil
 }
 
-// observedProductionStack picks the per-stack amount FillAvailable sends.
-// The game never reports the entitled batch size directly (subscriptions
-// carry only type + remaining time), so the size is learned from what is
-// visible in the queue — floored by the LearnedStack high-water mark so a
-// spell of smaller stacks cannot ratchet the batch size down. The learned
-// floor only applies while the subscription set it was recorded under still
-// matches; after a lapse the floor is ignored and live stacks rule again.
-func observedProductionStack(gameState State.GameState, queue State.ProductionQueue) int64 {
+// observedProductionStack picks the per-stack amount FillAvailable sends for
+// one unit definition. The game never reports the entitled batch size
+// directly (subscriptions carry only type + remaining time), so the size is
+// learned from what is visible in the queue — floored by the per-definition
+// LearnedStacks high-water mark so a spell of smaller stacks cannot ratchet
+// the batch size down. The learned floor only applies while the subscription
+// set it was recorded under still matches; after a lapse the floor is
+// ignored and live stacks rule again. Batch caps are per-unit, so only
+// stacks of the SAME definition inform the amount; a unit with no history at
+// all falls back to mimicking whatever the line currently runs (the only
+// signal available on a cold start).
+func observedProductionStack(gameState State.GameState, queue State.ProductionQueue, definitionID int64) int64 {
 	var amount int64
-	if queue.LearnedStack > 0 && queue.LearnedStackScope == gameState.SubscriptionScope() {
-		amount = queue.LearnedStack
+	if queue.LearnedStackScope == gameState.SubscriptionScope() {
+		amount = queue.LearnedStacks[definitionID]
 	}
-	if queue.Active != nil && queue.Active.Amount > amount {
-		amount = queue.Active.Amount
-	}
-	for _, item := range queue.Queued {
-		if item.Amount > amount {
-			amount = item.Amount
+	var anyDefinition int64
+	consider := func(itemDefinition, itemAmount int64) {
+		if itemAmount > anyDefinition {
+			anyDefinition = itemAmount
+		}
+		if itemDefinition == definitionID && itemAmount > amount {
+			amount = itemAmount
 		}
 	}
-	return amount
+	if queue.Active != nil {
+		consider(int64(queue.Active.Definition.ID), queue.Active.Amount)
+	}
+	for _, item := range queue.Queued {
+		consider(int64(item.Definition.ID), item.Amount)
+	}
+	if amount > 0 {
+		return amount
+	}
+	return anyDefinition
 }
 
 func requireOfficialDefinition(store *GameData.Store, collection string, id int64) error {

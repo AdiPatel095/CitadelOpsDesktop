@@ -487,15 +487,18 @@ type ProductionQueue struct {
 	Queued     []QueueItem `json:"queued"`
 	Capacity   int         `json:"capacity"`
 	ObservedAt time.Time   `json:"observedAt"`
-	// LearnedStack is the largest per-stack amount ever observed on this line
-	// while the account's subscription set matched LearnedStackScope. It
-	// floors what FillAvailable enqueues, so a spell of smaller stacks cannot
-	// ratchet the learned batch size down. A subscription change (lapse or
-	// gain) produces a new scope: the stale learned value is discarded and
-	// the line re-learns from live stacks, so a lapsed entitlement is never
-	// overshot.
-	LearnedStack      int64  `json:"learnedStack,omitempty"`
-	LearnedStackScope string `json:"learnedStackScope,omitempty"`
+	// LearnedStacks maps unit definition ID → the largest per-stack amount
+	// ever observed for that unit on this line while the account's
+	// subscription set matched LearnedStackScope. Batch entitlements are
+	// per-unit (different castles recruit different units at different batch
+	// caps), so the high-water mark is keyed by definition: it floors what
+	// FillAvailable enqueues for that unit — a spell of smaller stacks
+	// cannot ratchet the batch size down — without one unit's cap ever
+	// leaking onto another. A subscription change (lapse or gain) produces
+	// a new scope: stale learned values are discarded and the line
+	// re-learns from live stacks, so a lapsed entitlement is never overshot.
+	LearnedStacks     map[int64]int64 `json:"learnedStacks,omitempty"`
+	LearnedStackScope string          `json:"learnedStackScope,omitempty"`
 }
 
 type AllianceHelpRequestState struct {

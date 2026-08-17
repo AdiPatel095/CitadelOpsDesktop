@@ -431,13 +431,13 @@ func TestProductionLearnedStackHighWaterAndSubscriptionScopeReset(t *testing.T) 
 		}
 	}
 
-	// A subscription-sized stack teaches the high-water mark.
+	// A subscription-sized stack teaches the high-water mark for unit 489.
 	if _, _, err := reduceProductionSnapshot(context.Background(), snapshot(260), &gameState, nil); err != nil {
 		t.Fatalf("reduce first snapshot: %v", err)
 	}
 	queue := gameState.Castles[77].Production[0]
-	if queue.LearnedStack != 260 || queue.LearnedStackScope != "sub:7" {
-		t.Fatalf("learned = %d scope %q, want 260 under sub:7", queue.LearnedStack, queue.LearnedStackScope)
+	if queue.LearnedStacks[489] != 260 || queue.LearnedStackScope != "sub:7" {
+		t.Fatalf("learned = %v scope %q, want 489→260 under sub:7", queue.LearnedStacks, queue.LearnedStackScope)
 	}
 
 	// Smaller stacks must NOT ratchet the learned size down while the
@@ -446,21 +446,21 @@ func TestProductionLearnedStackHighWaterAndSubscriptionScopeReset(t *testing.T) 
 		t.Fatalf("reduce second snapshot: %v", err)
 	}
 	queue = gameState.Castles[77].Production[0]
-	if queue.LearnedStack != 260 {
-		t.Fatalf("learned after smaller stacks = %d, want held at 260", queue.LearnedStack)
+	if queue.LearnedStacks[489] != 260 {
+		t.Fatalf("learned after smaller stacks = %v, want 489 held at 260", queue.LearnedStacks)
 	}
 	if len(queue.Queued) != 1 || queue.Queued[0].Amount != 220 {
 		t.Fatalf("live queue should reflect the observed 220 stack: %#v", queue.Queued)
 	}
 
-	// A lapsed subscription changes the scope: the stale learned value is
+	// A lapsed subscription changes the scope: stale learned values are
 	// discarded and the line re-learns from the live (smaller) stacks.
 	gameState.Subscriptions = nil
 	if _, _, err := reduceProductionSnapshot(context.Background(), snapshot(220), &gameState, nil); err != nil {
 		t.Fatalf("reduce post-lapse snapshot: %v", err)
 	}
 	queue = gameState.Castles[77].Production[0]
-	if queue.LearnedStack != 220 || queue.LearnedStackScope != "" {
-		t.Fatalf("post-lapse learned = %d scope %q, want re-learned 220 under empty scope", queue.LearnedStack, queue.LearnedStackScope)
+	if queue.LearnedStacks[489] != 220 || queue.LearnedStackScope != "" {
+		t.Fatalf("post-lapse learned = %v scope %q, want re-learned 489→220 under empty scope", queue.LearnedStacks, queue.LearnedStackScope)
 	}
 }
