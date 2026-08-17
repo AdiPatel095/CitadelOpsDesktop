@@ -968,8 +968,20 @@ func (transport *DirectWebSocketTransport) serveConnected(
 				return result.err
 			}
 			for _, event := range decoder.append(result.payload) {
-				if event.raw != "" {
-					transport.deliverInbound(event.raw, connectionGeneration)
+				if event.raw == "" {
+					continue
+				}
+				transport.deliverInbound(event.raw, connectionGeneration)
+				// The authenticated baseline (gbd) may follow a login-time
+				// state reset that discards anything reduced before it —
+				// including the subscription packages pulled right after
+				// login. Re-pull after every baseline so subscription-aware
+				// automation math always has its input; hasPendingOpcode
+				// dedupes overlapping requests.
+				if strings.Contains(event.raw, "%xt%gbd%") {
+					if err := requestSubscriptions(); err != nil {
+						return err
+					}
 				}
 			}
 		case <-pingTicker.C:

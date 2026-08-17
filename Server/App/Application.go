@@ -460,6 +460,7 @@ func (application *Application) start(ctx context.Context) {
 		}()
 	}
 	go application.capturePlayerHistory(ctx)
+	go application.refreshAttackHistoryOnBaseline(ctx)
 	if application.PrivateMetrics != nil {
 		go application.PrivateMetrics.Run(ctx)
 	}

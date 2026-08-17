@@ -21,6 +21,7 @@ func TestDirectWebSocketTransportAuthenticatesAndKeepsGameSessionAlive(t *testin
 		t.Fatalf("background ping interval = %s, want 60s", directDefaultPingInterval)
 	}
 	received := make(chan string, 128)
+	gbdPushed := false
 	upgrader := websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		connection, err := upgrader.Upgrade(writer, request, nil)
@@ -51,6 +52,13 @@ func TestDirectWebSocketTransportAuthenticatesAndKeepsGameSessionAlive(t *testin
 				reply = `%xt%lli%1%0%{}%`
 			case strings.Contains(message, "%sie%"):
 				reply = `%xt%sie%1%0%{"SP":[{"STID":1,"RS":86400,"RSGP":172800}]}%`
+				// Push the authenticated baseline after the first pull: the
+				// transport must PULL SUBSCRIPTIONS AGAIN because a login-time
+				// state reset during gbd can discard the earlier answer.
+				if !gbdPushed {
+					gbdPushed = true
+					reply += `%xt%gbd%1%0%{"gpi":{"UID":1,"PID":2}}%`
+				}
 			case strings.Contains(message, "%abc%"):
 				reply = `%xt%abc%1%0%{"ok":true}%`
 			}
@@ -133,25 +141,29 @@ connected:
 	wantPing := `%xt%EmpireEx_21%pin%1%<RoundHouseKick>%`
 	wantMovement := `%xt%EmpireEx_21%gam%1%{}%`
 	// The server never volunteers subscription packages: the transport must
-	// pull them (C2S "sie") right after login or subscription-aware
-	// automation math silently loses its input.
+	// pull them (C2S "sie") right after login — and pull AGAIN after the gbd
+	// baseline, because a login-time state reset during gbd can discard the
+	// first answer. The fake server pushes gbd with the first sie reply, so
+	// two pulls prove both triggers.
 	wantSubscriptions := `%xt%EmpireEx_21%sie%1%{}%`
 	seenPing := false
 	seenMovement := false
-	seenSubscriptionPull := false
+	subscriptionPulls := 0
 	seenFreshSessionID := false
 	seenCorrelatedResponse := false
-	for !seenPing || !seenMovement || !seenSubscriptionPull || !seenCorrelatedResponse {
+	for !seenPing || !seenMovement || subscriptionPulls < 2 || !seenCorrelatedResponse {
 		select {
 		case <-ctx.Done():
 			t.Fatalf(
-				"missing background traffic: ping=%v movement=%v subscriptions=%v response=%v",
-				seenPing, seenMovement, seenSubscriptionPull, seenCorrelatedResponse,
+				"missing background traffic: ping=%v movement=%v subscriptionPulls=%d response=%v",
+				seenPing, seenMovement, subscriptionPulls, seenCorrelatedResponse,
 			)
 		case message := <-received:
 			seenPing = seenPing || message == wantPing
 			seenMovement = seenMovement || message == wantMovement
-			seenSubscriptionPull = seenSubscriptionPull || message == wantSubscriptions
+			if message == wantSubscriptions {
+				subscriptionPulls++
+			}
 			if strings.Contains(message, "%vck%") {
 				parts := strings.Split(message, "%")
 				seenFreshSessionID = len(parts) >= 10 && parts[7] == directEmptyArgument && parts[8] != directEmptyArgument && parts[8] != ""

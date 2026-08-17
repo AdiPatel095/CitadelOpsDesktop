@@ -41,10 +41,23 @@ func restoreRecentAutoStormLaunchHistory(
 	}
 	now := time.Now().UTC()
 	snapshot := state.ReadOnlyView()
+	// At process start the live player profile has not arrived yet
+	// (Player.ID is 0 until the first authenticated baseline), but the
+	// persisted account binding already knows who this profile belongs to.
+	// Without the fallback the report query silently returns nothing and
+	// the rolling attack history starts empty after every restart.
+	playerID := int64(snapshot.Player.ID)
+	if playerID <= 0 {
+		playerID = int64(snapshot.Account.PlayerID)
+	}
+	worldID := snapshot.Account.WorldID
+	if worldID == "" {
+		worldID = snapshot.Session.ServerURL
+	}
 	reports, err := reportStore.Recent(ctx, Reports.BattleReportQuery{
 		AccountUID: snapshot.Account.UID,
-		WorldID:    snapshot.Account.WorldID,
-		PlayerID:   int64(snapshot.Player.ID),
+		WorldID:    worldID,
+		PlayerID:   playerID,
 		FeatureID:  string(State.AttackFeatureAutoStorm),
 		Since:      now.Add(-72 * time.Hour),
 		Limit:      100_000,
@@ -76,6 +89,38 @@ func restoreRecentAutoStormLaunchHistory(
 		return []string{"attack-analytics"}, changed, nil
 	})
 	return err
+}
+
+// refreshAttackHistoryOnBaseline re-runs the Auto Storm launch-history
+// restore every time a new authenticated baseline commits (gbd). The login
+// path can drop or reset state assembled before the baseline — after a
+// process restart the startup restore may even have run before identity was
+// known — so each baseline re-merges the rolling history from the local
+// battle-report store. MergeAutoStormLaunchHistory is idempotent (keyed by
+// movement, max troop count wins), so repeated merges only ever heal.
+func (application *Application) refreshAttackHistoryOnBaseline(ctx context.Context) {
+	if application.State == nil || application.ReportStore == nil {
+		return
+	}
+	events, unsubscribe := application.State.Subscribe(32)
+	defer unsubscribe()
+	var restoredBaseline uint64
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-events:
+			snapshot := application.State.ReadOnlyView()
+			baseline := snapshot.Session.BaselineGeneration
+			if baseline == 0 || baseline == restoredBaseline {
+				continue
+			}
+			if err := restoreRecentAutoStormLaunchHistory(ctx, application.State, application.ReportStore); err != nil {
+				continue
+			}
+			restoredBaseline = baseline
+		}
+	}
 }
 
 func (application *Application) captureAttackFeatureLaunch(_ context.Context, arguments json.RawMessage) error {
