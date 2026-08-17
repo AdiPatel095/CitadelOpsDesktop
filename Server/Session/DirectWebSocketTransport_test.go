@@ -49,6 +49,8 @@ func TestDirectWebSocketTransportAuthenticatesAndKeepsGameSessionAlive(t *testin
 				reply = `%xt%vck%1%0%{}%`
 			case strings.Contains(message, "%lli%"):
 				reply = `%xt%lli%1%0%{}%`
+			case strings.Contains(message, "%sie%"):
+				reply = `%xt%sie%1%0%{"SP":[{"STID":1,"RS":86400,"RSGP":172800}]}%`
 			case strings.Contains(message, "%abc%"):
 				reply = `%xt%abc%1%0%{"ok":true}%`
 			}
@@ -130,20 +132,26 @@ connected:
 
 	wantPing := `%xt%EmpireEx_21%pin%1%<RoundHouseKick>%`
 	wantMovement := `%xt%EmpireEx_21%gam%1%{}%`
+	// The server never volunteers subscription packages: the transport must
+	// pull them (C2S "sie") right after login or subscription-aware
+	// automation math silently loses its input.
+	wantSubscriptions := `%xt%EmpireEx_21%sie%1%{}%`
 	seenPing := false
 	seenMovement := false
+	seenSubscriptionPull := false
 	seenFreshSessionID := false
 	seenCorrelatedResponse := false
-	for !seenPing || !seenMovement || !seenCorrelatedResponse {
+	for !seenPing || !seenMovement || !seenSubscriptionPull || !seenCorrelatedResponse {
 		select {
 		case <-ctx.Done():
 			t.Fatalf(
-				"missing background traffic: ping=%v movement=%v response=%v",
-				seenPing, seenMovement, seenCorrelatedResponse,
+				"missing background traffic: ping=%v movement=%v subscriptions=%v response=%v",
+				seenPing, seenMovement, seenSubscriptionPull, seenCorrelatedResponse,
 			)
 		case message := <-received:
 			seenPing = seenPing || message == wantPing
 			seenMovement = seenMovement || message == wantMovement
+			seenSubscriptionPull = seenSubscriptionPull || message == wantSubscriptions
 			if strings.Contains(message, "%vck%") {
 				parts := strings.Split(message, "%")
 				seenFreshSessionID = len(parts) >= 10 && parts[7] == directEmptyArgument && parts[8] != directEmptyArgument && parts[8] != ""

@@ -28,11 +28,14 @@ const (
 	directGameIndexURL        = "https://empire-html5.goodgamestudios.com/default/index.html"
 	directDefaultPingInterval = 60 * time.Second
 	directMovementInterval    = 5 * time.Second
-	directHandshakeTimeout    = 45 * time.Second
-	directWriteTimeout        = 10 * time.Second
-	directMaxMessageBytes     = 64 << 20
-	directMaxFrontendBytes    = 2 << 20
-	directEmptyArgument       = "<RoundHouseKick>"
+	// directSubscriptionRefreshInterval re-pulls subscription packages so a
+	// mid-session lapse or purchase is noticed without a relog.
+	directSubscriptionRefreshInterval = 6 * time.Hour
+	directHandshakeTimeout            = 45 * time.Second
+	directWriteTimeout                = 10 * time.Second
+	directMaxMessageBytes             = 64 << 20
+	directMaxFrontendBytes            = 2 << 20
+	directEmptyArgument               = "<RoundHouseKick>"
 )
 
 var (
@@ -936,6 +939,26 @@ func (transport *DirectWebSocketTransport) serveConnected(
 	defer pingTicker.Stop()
 	movementTicker := time.NewTicker(movementInterval)
 	defer movementTicker.Stop()
+	subscriptionTicker := time.NewTicker(directSubscriptionRefreshInterval)
+	defer subscriptionTicker.Stop()
+	// The official client PULLS its subscription packages (C2S "sie") at
+	// startup — the server never volunteers them on login or in the gbd
+	// baseline. In browser mode the embedded official client makes that
+	// request itself and the sniffer ingests the answer, but in background
+	// mode nobody asked, so Subscriptions state stayed empty and every
+	// subscription-aware computation (e.g. the +40-per-slot recruitment
+	// bonus) silently lost its input. Ask once per connection, then refresh
+	// periodically so a lapse or purchase is noticed without a relog.
+	requestSubscriptions := func() error {
+		frame := fmt.Sprintf("%%xt%%%s%%sie%%%d%%{}%%", transport.profile.Namespace, roomID)
+		_, err := transport.sendInternal(
+			connection, frame, connectionGeneration, "session:background:subscription-refresh", "sie",
+		)
+		return err
+	}
+	if err := requestSubscriptions(); err != nil {
+		return err
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -963,6 +986,10 @@ func (transport *DirectWebSocketTransport) serveConnected(
 			if _, err := transport.sendInternal(
 				connection, frame, connectionGeneration, "session:background:movement-refresh", "gam",
 			); err != nil {
+				return err
+			}
+		case <-subscriptionTicker.C:
+			if err := requestSubscriptions(); err != nil {
 				return err
 			}
 		}
