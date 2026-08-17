@@ -105,6 +105,13 @@ type WorldMapStore struct {
 	subscribers map[uint64]chan WorldMapEvent
 	nextID      uint64
 
+	// commitMu serializes every generation BUILDER (fact commits, shared storm
+	// scan completions). Builders do their cloning and plan rebuilding outside
+	// mu and only take mu for the pointer swap, so readers — every lane's
+	// target refresh on every account of a shared cell — wait microseconds,
+	// never for another account's commit work. Lock order: commitMu before mu.
+	commitMu sync.Mutex
+
 	db               *sql.DB
 	persistMu        sync.Mutex
 	dirtyFacts       map[string]persistedWorldMapChange
@@ -197,8 +204,14 @@ func (store *WorldMapStore) commitWithDomains(
 	if store == nil || worldID == "" {
 		return WorldMapEvent{}
 	}
-	store.mu.Lock()
+	// Serialize builders; keep readers free. The expensive clone/apply below
+	// runs without mu — commitMu guarantees `current` cannot be swapped out
+	// from under this builder.
+	store.commitMu.Lock()
+	defer store.commitMu.Unlock()
+	store.mu.RLock()
 	current := store.worlds[worldID]
+	store.mu.RUnlock()
 	if current == nil {
 		current = &worldMapGeneration{
 			values: worldFactMap{}, stormWindows: map[KingdomID]map[string]StormScanWindowState{},
@@ -270,6 +283,7 @@ func (store *WorldMapStore) commitWithDomains(
 	}
 	if len(applied) == 0 {
 		generation := current
+		store.mu.Lock()
 		store.worlds[worldID] = generation
 		store.mu.Unlock()
 		return WorldMapEvent{WorldID: worldID, Version: generation.version, UpdatedAt: generation.updatedAt, Source: source, generation: generation}
@@ -279,12 +293,13 @@ func (store *WorldMapStore) commitWithDomains(
 		version: current.version + 1, updatedAt: now, values: nextValues,
 		stormWindows: current.stormWindows, stormPlans: updateStormScanPlans(current.stormPlans, nextValues, applied),
 	}
-	store.worlds[worldID] = next
 	event := WorldMapEvent{
 		WorldID: worldID, Version: next.version, UpdatedAt: now,
 		Changes: applied, Domains: worldMapDomains(domains, applied), KingdomIDs: mapChangeKingdomIDs(applied),
 		Source: source, generation: next,
 	}
+	store.mu.Lock()
+	store.worlds[worldID] = next
 	subscribers := make([]chan WorldMapEvent, 0, len(store.subscribers))
 	for _, channel := range store.subscribers {
 		subscribers = append(subscribers, channel)

@@ -221,6 +221,13 @@ func (store *WorldMapStore) CompleteStormScan(
 		return WorldMapEvent{}, fmt.Errorf("invalid shared Storm scan completion")
 	}
 
+	// A scan completion rewrites the storm kingdom (fact sweeps, window and
+	// plan rebuilds). That work happens outside mu — serialized with every
+	// other generation builder by commitMu — so lane evaluations on other
+	// accounts never stall behind it. Lock order: commitMu before mu.
+	store.commitMu.Lock()
+	defer store.commitMu.Unlock()
+
 	store.mu.Lock()
 	lease, found := store.stormLeases[leaseID]
 	if !found || lease.account != accountKey || lease.worldID != worldID || lease.kingdomID != kingdomID ||
@@ -230,6 +237,7 @@ func (store *WorldMapStore) CompleteStormScan(
 	}
 	delete(store.stormLeases, leaseID)
 	current := store.worlds[worldID]
+	store.mu.Unlock()
 	if current == nil {
 		current = &worldMapGeneration{
 			values: worldFactMap{}, stormWindows: map[KingdomID]map[string]StormScanWindowState{},
@@ -280,11 +288,12 @@ func (store *WorldMapStore) CompleteStormScan(
 		version: current.version + 1, updatedAt: completedAt.UTC(), values: nextValues,
 		stormWindows: nextScanWindows, stormPlans: nextPlans,
 	}
-	store.worlds[worldID] = next
 	event := WorldMapEvent{
 		WorldID: worldID, Version: next.version, UpdatedAt: next.updatedAt,
 		Changes: normalizeMapChanges(changes), Domains: []string{"storm-scan"}, KingdomIDs: []KingdomID{kingdomID}, generation: next,
 	}
+	store.mu.Lock()
+	store.worlds[worldID] = next
 	subscribers := make([]chan WorldMapEvent, 0, len(store.subscribers))
 	for _, channel := range store.subscribers {
 		subscribers = append(subscribers, channel)
