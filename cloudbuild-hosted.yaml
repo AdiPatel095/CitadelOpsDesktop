@@ -9,16 +9,19 @@ steps:
         'build',
         '-f', 'Dockerfile.hosted',
         '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_VERSION}',
-        '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:$COMMIT_SHA',
+        '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_SHA_TAG}',
         '.',
       ]
 images:
   - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_VERSION}'
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:$COMMIT_SHA'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_SHA_TAG}'
 substitutions:
   _REGION: 'us-east1'
   _REPO_NAME: 'citadelops'
   _IMAGE_NAME: 'cell'
   _VERSION: '2.3.0'
+  # Manual submits have no COMMIT_SHA; the develop trigger overrides this
+  # with the real commit id.
+  _SHA_TAG: 'manual'
 options:
   logging: CLOUD_LOGGING_ONLY
