@@ -54,6 +54,36 @@ func TestProductionSnapshotUsesFocusedCastleAndPreservesCapacity(t *testing.T) {
 	}
 }
 
+func TestProductionSnapshotCountsEmptyEffectSlotsAsCapacity(t *testing.T) {
+	// Capacity effects (event boosters, premium slot purchases, castellan
+	// bonuses) grant slots that arrive in QS as entries with no product and
+	// no rental or VIP flag. Every owned slot is capacity, occupied or not.
+	gameState := State.NewGameState()
+	castle := newCastleState(88)
+	castle.Focused = true
+	gameState.Castles[castle.ID] = castle
+	responseCode := 0
+	frame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "spl", ResponseCode: &responseCode,
+		ReceivedAt: time.Date(2026, 8, 17, 12, 0, 0, 0, time.UTC),
+		Payload: json.RawMessage(`{
+			"PS":{"WID":489,"TUA":6,"RCT":75,"PID":11},
+			"QS":[{"P":{"WID":489,"TUA":100,"PID":12}},{},{"SI":{"VIP":1}},{"SI":{"RUT":900}},{}],
+			"LID":0
+		}`),
+	}
+	if _, changed, err := reduceProductionSnapshot(context.Background(), frame, &gameState, nil); err != nil || !changed {
+		t.Fatalf("reduce production snapshot changed=%t err=%v", changed, err)
+	}
+	queue := gameState.Castles[88].Production[0]
+	if queue.Capacity != 5 {
+		t.Fatalf("capacity = %d, want 5 (one occupied + two plain empty + one empty VIP + one empty rented)", queue.Capacity)
+	}
+	if len(queue.Queued) != 1 {
+		t.Fatalf("queued = %d, want 1", len(queue.Queued))
+	}
+}
+
 func TestProductionSnapshotPreservesRequestedAllianceHelpByProductionID(t *testing.T) {
 	gameState := State.NewGameState()
 	castle := newCastleState(77)

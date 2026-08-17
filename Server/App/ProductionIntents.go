@@ -290,13 +290,17 @@ func productionDefinitionAvailable(castle State.CastleState, lineID int, definit
 }
 
 func productionQueueCapacity(state State.GameState, lineID int, queue State.ProductionQueue, gameData *GameData.Store) int {
-	expected, known := productionVIPQueueCapacity(state, lineID, gameData)
-	if queue.Capacity <= 0 {
-		return expected
-	}
-	if !known || queue.Capacity < expected {
+	// The observed slot count is authoritative: the server reports every slot
+	// the player owns, including slots granted by capacity effects the VIP
+	// model below knows nothing about. Clamping to the VIP expectation used
+	// to discard those effect slots; the base+VIP expectation now serves only
+	// as the fallback before the first queue snapshot arrives. If a stale
+	// observation ever overshoots, the enqueue verify-capacity guard
+	// revalidates against live state before dispatch.
+	if queue.Capacity > 0 {
 		return queue.Capacity
 	}
+	expected, _ := productionVIPQueueCapacity(state, lineID, gameData)
 	return expected
 }
 

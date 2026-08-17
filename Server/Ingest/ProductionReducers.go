@@ -146,10 +146,13 @@ func applyProductionSnapshot(
 		queue.Active = &item
 	}
 	if len(root["QS"]) > 0 {
+		// QS lists every slot the player owns — base, VIP, rented, and slots
+		// granted by capacity effects — one entry per slot whether or not a
+		// unit occupies it. Purchasable-but-locked slots ride offer data, not
+		// QS, so the slot count IS the queue capacity; counting only occupied
+		// or rented entries silently discarded empty effect-granted slots.
+		queue.Capacity = len(wire.Queued)
 		for _, slot := range wire.Queued {
-			if slot.Product.DefinitionID > 0 || slot.Slot.RentalUntil != 0 {
-				queue.Capacity++
-			}
 			if item, exists := productionQueueItem(wire.LineID, slot.Product, observedAt, false); exists {
 				item.AllianceHelpRequested = item.AllianceHelpRequested || requestedHelp[item.ProductionID]
 				queue.Queued = append(queue.Queued, item)
