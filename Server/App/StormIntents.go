@@ -1382,7 +1382,17 @@ func (application *Application) captureStormScanRequest(request stormMapScanRequ
 			changed := !lastScannedAt[request.SourceCastleID].Equal(completedAt)
 			lastScannedAt[request.SourceCastleID] = completedAt
 			if request.Targeted {
-				if !stormMapStateMatches(*gameState, gameState.Storm.Map, request.SourceCastleID) {
+				if stormMapIdentityUnbound(gameState.Storm.Map) {
+					// Cooperative-only accounts may reach their first targeted
+					// refresh before any local capture bound the identity
+					// (shared coverage persists across restarts, so the scan
+					// lane can stay idle for hours). An unbound identity is
+					// not a change — bind it now and continue.
+					gameState.Storm.Map.ServerURL = gameState.Session.ServerURL
+					gameState.Storm.Map.PlayerID = gameState.Player.ID
+					gameState.Storm.Map.SourceCastleID = request.SourceCastleID
+					changed = true
+				} else if !stormMapStateMatches(*gameState, gameState.Storm.Map, request.SourceCastleID) {
 					return nil, false, fmt.Errorf("Storm map identity changed before targeted refresh capture")
 				}
 				gameState.RangeStormTargets(func(key string, tracked State.MapObservation) bool {
@@ -1458,6 +1468,13 @@ func stormScanStartedAt(request stormMapScanRequest) time.Time {
 func stormMapStateMatches(gameState State.GameState, mapState State.StormMapState, sourceCastleID State.CastleID) bool {
 	return mapState.ServerURL == gameState.Session.ServerURL && mapState.PlayerID == gameState.Player.ID &&
 		mapState.SourceCastleID == sourceCastleID
+}
+
+// stormMapIdentityUnbound reports a map that has never been bound to any
+// session — the state of a cooperative-only (hosted) account before its
+// first local capture.
+func stormMapIdentityUnbound(mapState State.StormMapState) bool {
+	return mapState.ServerURL == "" && mapState.PlayerID == 0 && mapState.SourceCastleID == 0
 }
 
 func (application *Application) guardStormAttack(_ context.Context, arguments json.RawMessage) error {

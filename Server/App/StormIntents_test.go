@@ -881,11 +881,53 @@ func TestCooperativeCaptureBindsIdentityForTargetedRefresh(t *testing.T) {
 	}
 
 	// The targeted pre-attack refresh must now pass the identity guard.
+	// (See also the unbound-identity case below.)
 	if err := application.captureStormScanRequest(stormMapScanRequest{
 		SourceCastleID: 40, Targeted: true,
 		Bounds:        State.StormMapBounds{X1: 650, Y1: 650, X2: 650, Y2: 650},
 		ScanStartedAt: startedAt.Add(time.Minute),
 	}); err != nil {
 		t.Fatalf("targeted refresh after cooperative capture: %v", err)
+	}
+}
+
+// A restart wipes in-memory state while shared coverage persists, so the
+// scan lane may stay idle for hours — the FIRST local storm action can be a
+// targeted pre-attack refresh with a never-bound map identity. That must
+// bind, not fail.
+func TestTargetedRefreshBindsUnboundIdentity(t *testing.T) {
+	startedAt := time.Date(2026, time.August, 17, 1, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.Session.ServerURL = "wss://ep-live-us1-game.goodgamestudios.com:443"
+	state.Player.ID = 901
+	state.Castles[40] = State.CastleState{ID: 40, KingdomID: stormIntentKingdomID, Focused: true}
+	application := &Application{State: State.NewStore(state)}
+	if err := application.captureStormScanRequest(stormMapScanRequest{
+		SourceCastleID: 40, Targeted: true,
+		Bounds:        State.StormMapBounds{X1: 650, Y1: 650, X2: 650, Y2: 650},
+		ScanStartedAt: startedAt,
+	}); err != nil {
+		t.Fatalf("targeted refresh with unbound identity: %v", err)
+	}
+	snapshot := application.State.Snapshot()
+	if snapshot.Storm.Map.ServerURL != state.Session.ServerURL || snapshot.Storm.Map.PlayerID != 901 ||
+		snapshot.Storm.Map.SourceCastleID != 40 {
+		t.Fatalf("identity not bound by targeted refresh: %#v", snapshot.Storm.Map)
+	}
+
+	// A genuinely different identity must still be refused.
+	if _, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+		gameState.Player.ID = 902
+		return []string{"player"}, true, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	err := application.captureStormScanRequest(stormMapScanRequest{
+		SourceCastleID: 40, Targeted: true,
+		Bounds:        State.StormMapBounds{X1: 650, Y1: 650, X2: 650, Y2: 650},
+		ScanStartedAt: startedAt.Add(time.Minute),
+	})
+	if err == nil || !strings.Contains(err.Error(), "identity changed") {
+		t.Fatalf("changed identity accepted: %v", err)
 	}
 }
