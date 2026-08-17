@@ -614,12 +614,11 @@ func TestDirectTransportReleasePolicyHandsTheWaitToTheControlPlane(t *testing.T)
 			t.Fatalf("Start with the same rejected login = %v", err)
 		}
 	})
-	t.Run("plain drops get a short immediate retry window before release", func(t *testing.T) {
+	t.Run("any drop releases at once with the relog wait", func(t *testing.T) {
+		// Every disconnect is treated as a displacement: no immediate
+		// retries, one release, the configured relog delay as the wait.
 		server, attempts := fakeGameServerWithReplies(t, func(int) string { return "CLOSE" })
-		transport := newFakeGameTransportWithConfig(t, server, t.TempDir(), func(config *DirectWebSocketConfig) {
-			config.releaseRetryDelay = 10 * time.Millisecond
-			config.releaseRetryAttempts = 2
-		})
+		transport := newFakeGameTransport(t, server, t.TempDir())
 		transport.SetReconnectPolicy(ReconnectPolicyRelease)
 		if err := transport.Start(context.Background()); err != nil {
 			t.Fatal(err)
@@ -628,9 +627,12 @@ func TestDirectTransportReleasePolicyHandsTheWaitToTheControlPlane(t *testing.T)
 		if status.RetryAt == nil || status.LoginFailure != nil {
 			t.Fatalf("released drop status = %+v", status)
 		}
+		if !strings.Contains(status.Detail, "relog delay") {
+			t.Fatalf("released drop detail = %q", status.Detail)
+		}
 		waitUntilNotRunning(t, transport)
-		if got := attempts.Load(); got != 3 {
-			t.Fatalf("login attempts before release = %d, want 1 + 2 immediate retries", got)
+		if got := attempts.Load(); got != 1 {
+			t.Fatalf("login attempts before release = %d, want exactly 1", got)
 		}
 	})
 	t.Run("a deliberate server close skips the immediate retry window", func(t *testing.T) {
@@ -638,10 +640,7 @@ func TestDirectTransportReleasePolicyHandsTheWaitToTheControlPlane(t *testing.T)
 		// frame. Reconnecting immediately would kick the player right back
 		// out, so the release must happen at once with the full relog wait.
 		server, attempts := fakeGameServerWithReplies(t, func(int) string { return "KICK" })
-		transport := newFakeGameTransportWithConfig(t, server, t.TempDir(), func(config *DirectWebSocketConfig) {
-			config.releaseRetryDelay = 10 * time.Millisecond
-			config.releaseRetryAttempts = 2
-		})
+		transport := newFakeGameTransport(t, server, t.TempDir())
 		transport.SetReconnectPolicy(ReconnectPolicyRelease)
 		if err := transport.Start(context.Background()); err != nil {
 			t.Fatal(err)
@@ -660,14 +659,10 @@ func TestDirectTransportReleasePolicyHandsTheWaitToTheControlPlane(t *testing.T)
 	})
 	t.Run("a session that dies young releases with the relog wait", func(t *testing.T) {
 		// The live game kicks the runtime with an abrupt drop (no close
-		// frame) when the player logs in. A session that connected and then
-		// died inside the stability window must not burn immediate retries —
-		// that is the relog ping-pong that kicks the player straight back out.
+		// frame) when the player logs in; like every disconnect it must
+		// release immediately and wait the configured relog delay.
 		server, attempts := fakeGameServerWithReplies(t, func(int) string { return "OKTHENDROP" })
-		transport := newFakeGameTransportWithConfig(t, server, t.TempDir(), func(config *DirectWebSocketConfig) {
-			config.releaseRetryDelay = 10 * time.Millisecond
-			config.releaseRetryAttempts = 2
-		})
+		transport := newFakeGameTransport(t, server, t.TempDir())
 		transport.SetReconnectPolicy(ReconnectPolicyRelease)
 		if err := transport.Start(context.Background()); err != nil {
 			t.Fatal(err)

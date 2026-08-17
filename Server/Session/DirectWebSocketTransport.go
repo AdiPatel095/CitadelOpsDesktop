@@ -44,13 +44,6 @@ var (
 	)
 )
 
-// unstableSessionWindow: a drop while the session is younger than this is
-// treated like a displacement — either the player is fighting the bot for
-// the account (relog ping-pong after a kick that arrives as a plain drop) or
-// the link is flapping; both deserve the configured relog wait, not another
-// instant relog.
-const unstableSessionWindow = 10 * time.Minute
-
 type DirectWebSocketConfig struct {
 	DataDir    string
 	HTTPClient *http.Client
@@ -65,10 +58,6 @@ type DirectWebSocketConfig struct {
 	movementInterval  time.Duration
 	handshakeTimeout  time.Duration
 	buildResolver     func(context.Context, string) (string, error)
-	// releaseRetryDelay and releaseRetryAttempts bound the immediate retry
-	// window used under ReconnectPolicyRelease before the session is released.
-	releaseRetryDelay    time.Duration
-	releaseRetryAttempts int
 }
 
 type DirectWebSocketTransport struct {
@@ -87,10 +76,6 @@ type DirectWebSocketTransport struct {
 	connection         *websocket.Conn
 	selectedBrowser    BrowserCandidate
 	relogDelayProvider func() time.Duration
-	// attemptConnectedAt is when the current connection attempt reached the
-	// logged-in state; zero while connecting. Read by the reconnect loop to
-	// spot sessions that die young (displacement/flapping).
-	attemptConnectedAt time.Time
 	// parkedFailure records why the run loop stopped on its own (a login
 	// failure only the user or the account holder can resolve, or a released
 	// session waiting for parkedRetryAt). Start refuses to spend the same saved
@@ -447,7 +432,6 @@ func (transport *DirectWebSocketTransport) PrepareBackgroundMode() error {
 //     account: park until the saved login or server selection changes.
 func (transport *DirectWebSocketTransport) run(ctx context.Context, generation uint64) {
 	unknownFailures := 0
-	immediateRetries := 0
 	for {
 		err := transport.connectAndServe(ctx, generation)
 		if ctx.Err() != nil || !transport.isCurrent(generation) {
@@ -458,11 +442,7 @@ func (transport *DirectWebSocketTransport) run(ctx context.Context, generation u
 		if !isLoginErr {
 			unknownFailures = 0
 		}
-		transport.mu.RLock()
-		connectedAt := transport.attemptConnectedAt
-		transport.mu.RUnlock()
-		establishedBriefly := !connectedAt.IsZero() && time.Since(connectedAt) < unstableSessionWindow
-		displaced := !isLoginErr && (isDisplacementClose(err) || establishedBriefly)
+		displaced := !isLoginErr && isDisplacementClose(err)
 		now := time.Now().UTC()
 		delay := transport.relogDelay()
 		status := Status{
@@ -475,41 +455,26 @@ func (transport *DirectWebSocketTransport) run(ctx context.Context, generation u
 			status.Detail = loginErr.Error()
 		}
 		if displaced {
-			// Either the server closed the session on purpose (another login —
-			// the player — took the account over), or the session died shortly
-			// after connecting, which is what the kick looks like when the
-			// game drops the socket without a close frame (and what a flapping
-			// link looks like). Reconnecting inside the immediate-retry window
-			// would kick the player right back out, so the configured relog
-			// delay applies — their play window.
 			status.Detail = fmt.Sprintf(
-				"The game session was taken over or dropped right after connecting; waiting the configured relog delay (%s) before reconnecting",
+				"The game session was taken over by another login; waiting the configured relog delay (%s) before reconnecting",
 				delay.Round(time.Second),
+			)
+		} else if !isLoginErr {
+			status.Detail = fmt.Sprintf(
+				"Game connection closed; waiting the configured relog delay (%s) before reconnecting", delay.Round(time.Second),
 			)
 		}
 		if transport.currentReconnectPolicy() == ReconnectPolicyRelease {
 			// Under the release policy the runtime's lifetime follows the game
-			// connection. A plain drop gets a short immediate retry window; a
-			// deliberate displacement skips it (the player is playing); any
-			// login outcome that needs waiting is reported and the session is
-			// released so the control plane can free the slot and come back.
-			if !isLoginErr && !displaced && immediateRetries < transport.releaseRetryAttempts() {
-				immediateRetries++
-				retryAt := now.Add(transport.releaseRetryDelay())
-				status.RetryAt = &retryAt
-				status.Detail = fmt.Sprintf("%s; retrying immediately (%d/%d)", status.Detail, immediateRetries, transport.releaseRetryAttempts())
-				if !transport.publishRunStatus(generation, status) {
-					return
-				}
-				if !transport.sleep(ctx, transport.releaseRetryDelay()) {
-					return
-				}
-				continue
-			}
+			// connection, and EVERY disconnect is treated as a displacement:
+			// the session is released at once and the configured relog delay
+			// is the wait before the control plane brings a runtime back.
+			// There is deliberately no immediate-retry window — the game kicks
+			// this session with a plain socket drop when the player logs in,
+			// and an instant relog would kick the player straight back out.
 			transport.release(generation, status, loginErr, isLoginErr, delay, now)
 			return
 		}
-		immediateRetries = 0
 		switch {
 		case isLoginErr && loginErr.code == 453:
 			cooldownUntil := now.Add(time.Duration(max(0, loginErr.cooldownSec)) * time.Second)
@@ -641,20 +606,6 @@ func (transport *DirectWebSocketTransport) currentReconnectPolicy() ReconnectPol
 	return transport.reconnectPolicy
 }
 
-func (transport *DirectWebSocketTransport) releaseRetryDelay() time.Duration {
-	if transport.config.releaseRetryDelay > 0 {
-		return transport.config.releaseRetryDelay
-	}
-	return defaultReleaseRetryDelay
-}
-
-func (transport *DirectWebSocketTransport) releaseRetryAttempts() int {
-	if transport.config.releaseRetryAttempts > 0 {
-		return transport.config.releaseRetryAttempts
-	}
-	return defaultReleaseRetryAttempts
-}
-
 // SetReconnectPolicy switches between holding and releasing the session after
 // a disconnect. It applies to the next interruption.
 func (transport *DirectWebSocketTransport) SetReconnectPolicy(policy ReconnectPolicy) {
@@ -675,9 +626,6 @@ func (transport *DirectWebSocketTransport) connectAndServe(ctx context.Context, 
 	if ctx.Err() != nil || !transport.isCurrent(generation) {
 		return context.Canceled
 	}
-	transport.mu.Lock()
-	transport.attemptConnectedAt = time.Time{}
-	transport.mu.Unlock()
 	serverURL := transport.profile.ServerURL
 	if override := strings.TrimSpace(transport.config.serverURLOverride); override != "" {
 		serverURL = override
@@ -753,9 +701,6 @@ func (transport *DirectWebSocketTransport) connectAndServe(ctx context.Context, 
 	connectionGeneration := transport.status.ConnectionGeneration + 1
 	transport.mu.Unlock()
 	transport.rememberSuccessfulDirectLogin(build, time.Now().UTC())
-	transport.mu.Lock()
-	transport.attemptConnectedAt = time.Now().UTC()
-	transport.mu.Unlock()
 	if !transport.publishRunStatus(generation, Status{
 		Mode: ConnectionModeBackground, State: "connected", Namespace: transport.profile.Namespace,
 		ServerURL: transport.profile.ServerURL, LoggedIn: true, SocketReady: true,
