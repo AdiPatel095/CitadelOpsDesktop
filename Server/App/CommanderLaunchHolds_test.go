@@ -47,24 +47,30 @@ func TestCRASelectionSkipsHeldCommandersAndRegistersHolds(t *testing.T) {
 		t.Fatalf("first selection = %v, want commander 1", first.Selected)
 	}
 
-	// The launched commander's movement is not visible yet; the hold must
-	// steer the immediate next volley to the other commander instead of
-	// re-selecting into a CRA 256.
+	// Selection must NOT register holds itself: plan validation re-runs the
+	// same selection before dispatch, and self-registration made the re-plan
+	// fail permanently stale on single-commander configurations. Repeating
+	// the selection therefore keeps yielding the same commander.
 	second, err := resolveCRACommanders(gameState,
 		&craCommanderSelectionRequest{Candidates: []State.CommanderID{1, 2}, Count: 1, Strategy: "lowest_id"},
 		craCommanderSelectionOptions{Holds: holds, DefaultCount: 1, RequireAvailable: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(second.Selected) != 1 || second.Selected[0] != 2 {
-		t.Fatalf("second selection = %v, want commander 2 while 1 is held", second.Selected)
+	if len(second.Selected) != 1 || second.Selected[0] != 1 {
+		t.Fatalf("second selection = %v, want commander 1 again (no self-registration)", second.Selected)
 	}
 
-	// Both held: the burst stops with the usual availability error instead
-	// of sending a doomed launch.
-	if _, err := resolveCRACommanders(gameState,
+	// An EXTERNALLY registered hold (the future dispatch-layer owner) is
+	// still honored by selection.
+	holds.HoldCommanders([]State.CommanderID{1}, time.Now().Add(15*time.Second))
+	third, err := resolveCRACommanders(gameState,
 		&craCommanderSelectionRequest{Candidates: []State.CommanderID{1, 2}, Count: 1, Strategy: "lowest_id"},
-		craCommanderSelectionOptions{Holds: holds, DefaultCount: 1, RequireAvailable: true}); err == nil {
-		t.Fatal("selection with every commander held must fail instead of re-launching")
+		craCommanderSelectionOptions{Holds: holds, DefaultCount: 1, RequireAvailable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(third.Selected) != 1 || third.Selected[0] != 2 {
+		t.Fatalf("third selection = %v, want commander 2 while 1 is externally held", third.Selected)
 	}
 }

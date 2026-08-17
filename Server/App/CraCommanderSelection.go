@@ -124,9 +124,12 @@ func resolveCRACommanders(
 		}
 		return craCommanderResolution{}, err
 	}
-	if options.Holds != nil {
-		options.Holds.HoldCommanders(selected, now.Add(craCommanderLaunchHold))
-	}
+	// NOTE: holds are consulted but deliberately NOT registered here. Plan
+	// validation re-runs this selection for the same operation before
+	// dispatch; registering at selection time made the re-plan see its own
+	// commander as taken and fail permanently stale on single-commander
+	// configurations. Until registration moves to the dispatch layer, the
+	// CRA 256 combat cooldown is the sole (and sufficient) burst defense.
 	return craCommanderResolution{Selected: selected, Candidates: candidates, Strategy: strategy}, nil
 }
 
