@@ -257,6 +257,23 @@ func (store *Store) Session() SessionState {
 	return cloneSessionState(generation.state.Session)
 }
 
+// AccountIdentity reports the bound game identity of this profile: the
+// canonical world plus the game player ID, which together stay stable for the
+// life of the game account no matter which hosted account or runtime plays
+// it. ok is false until the session has bound and confirmed the identity.
+func (store *Store) AccountIdentity() (worldID string, playerID int64, ok bool) {
+	generation := store.generation.Load()
+	if generation == nil {
+		return "", 0, false
+	}
+	account := generation.state.Account
+	world := CanonicalWorldID(account.WorldID)
+	if world == "" || account.PlayerID <= 0 || account.BoundAt.IsZero() {
+		return "", 0, false
+	}
+	return world, int64(account.PlayerID), true
+}
+
 func (store *Store) Apply(mutation Mutation) (Event, error) {
 	if mutation == nil {
 		return Event{}, fmt.Errorf("state mutation is required")

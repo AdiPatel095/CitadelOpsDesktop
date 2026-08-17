@@ -7,10 +7,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -31,6 +33,8 @@ var accountIDPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,63}$`)
 const (
 	mapRetentionSweepInterval = time.Hour
 	drainCheckpointTimeout    = 5 * time.Second
+	playerRebindSweepInterval = 20 * time.Second
+	playerRebindStopTimeout   = 60 * time.Second
 )
 
 type AccountID string
@@ -76,6 +80,9 @@ type AccountConfig struct {
 type accountRuntime struct {
 	application *App.Application
 	cancel      context.CancelFunc
+	// config is retained so the supervisor can restart the runtime unchanged,
+	// e.g. after rebinding its profile onto the player-keyed directory.
+	config AccountConfig
 }
 
 type Supervisor struct {
@@ -99,6 +106,14 @@ type Supervisor struct {
 	dataDirs map[string]AccountID
 	closed   bool
 	addWG    sync.WaitGroup
+
+	// playerBindings maps runtime IDs to the player-keyed profile directory
+	// under Players/ (see PlayerDirs.go). Guarded by mu; persisted next to the
+	// account root. identityOf is a test seam over State.AccountIdentity.
+	playerBindings     map[string]string
+	playerBindingsPath string
+	identityOf         func(*App.Application) (string, int64, bool)
+	rebindMu           sync.Mutex
 
 	refreshMu sync.Mutex
 	startOnce sync.Once
@@ -176,6 +191,15 @@ func New(ctx context.Context, config Config) (*Supervisor, error) {
 		return nil, fmt.Errorf("register shared protocol reducers: %w", err)
 	}
 
+	bindingsPath := filepath.Join(dataRoot, "Accounts", playerBindingsFileName)
+	bindings, bindingsErr := loadPlayerBindings(bindingsPath)
+	if bindingsErr != nil {
+		// A corrupt registry must not stop the cell: runtimes fall back to
+		// staging directories and rebind again from live identity.
+		startupErr = errors.Join(startupErr, bindingsErr)
+		bindings = map[string]string{}
+	}
+
 	return &Supervisor{
 		config: config, ctx: runtimeContext, cancel: cancel,
 		gameData: gameData, worldMaps: worldMaps, updates: updates, worldIntel: worldIntel,
@@ -184,6 +208,13 @@ func New(ctx context.Context, config Config) (*Supervisor, error) {
 		ownsGameData: ownsGameData, startupErr: startupErr,
 		accounts: map[AccountID]accountRuntime{}, stopping: map[AccountID]accountRuntime{},
 		pending: map[AccountID]struct{}{}, dataDirs: map[string]AccountID{},
+		playerBindings: bindings, playerBindingsPath: bindingsPath,
+		identityOf: func(application *App.Application) (string, int64, bool) {
+			if application == nil || application.State == nil {
+				return "", 0, false
+			}
+			return application.State.AccountIdentity()
+		},
 	}, nil
 }
 
@@ -219,6 +250,7 @@ func (supervisor *Supervisor) Start() {
 		go supervisor.runWorldMapPropagation(ready)
 		<-ready
 		go supervisor.runMapRetention()
+		go supervisor.runPlayerRebinds()
 		if supervisor.ownsGameData {
 			go supervisor.runCatalogRefresh()
 		}
@@ -377,7 +409,7 @@ func (supervisor *Supervisor) AddAccount(ctx context.Context, config AccountConf
 		return nil, fmt.Errorf("account supervisor closed while account %q was starting", id)
 	}
 	delete(supervisor.pending, id)
-	supervisor.accounts[id] = accountRuntime{application: application, cancel: cancel}
+	supervisor.accounts[id] = accountRuntime{application: application, cancel: cancel, config: config}
 	supervisor.mu.Unlock()
 	registered = true
 	application.Start(accountContext)
@@ -551,19 +583,166 @@ func (supervisor *Supervisor) releaseStoppedAccount(id AccountID, runtime accoun
 	}
 }
 
+// runPlayerRebinds migrates staging profiles onto their player-keyed
+// directories as soon as the game identity is known (see PlayerDirs.go).
+func (supervisor *Supervisor) runPlayerRebinds() {
+	ticker := time.NewTicker(playerRebindSweepInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-supervisor.ctx.Done():
+			return
+		case <-ticker.C:
+			supervisor.rebindSweep()
+		}
+	}
+}
+
+// rebindSweep rebinds at most one runtime per tick so restarts stay calm even
+// when a whole cell of fresh accounts resolves identity at the same time.
+func (supervisor *Supervisor) rebindSweep() {
+	supervisor.rebindMu.Lock()
+	defer supervisor.rebindMu.Unlock()
+
+	type candidate struct {
+		id      AccountID
+		runtime accountRuntime
+	}
+	supervisor.mu.RLock()
+	if supervisor.closed {
+		supervisor.mu.RUnlock()
+		return
+	}
+	candidates := make([]candidate, 0, len(supervisor.accounts))
+	for id, runtime := range supervisor.accounts {
+		if runtime.config.DataDir != "" {
+			// Explicit profile roots (the desktop N=1 composition) are never
+			// migrated.
+			continue
+		}
+		if _, bound := supervisor.playerBindings[string(id)]; bound {
+			continue
+		}
+		candidates = append(candidates, candidate{id: id, runtime: runtime})
+	}
+	supervisor.mu.RUnlock()
+	sort.Slice(candidates, func(left, right int) bool { return candidates[left].id < candidates[right].id })
+
+	for _, entry := range candidates {
+		worldID, playerID, ok := supervisor.identityOf(entry.runtime.application)
+		if !ok {
+			continue
+		}
+		if err := supervisor.rebindAccount(entry.id, entry.runtime, worldID, playerID); err != nil {
+			log.Printf("[accounts] rebind %s onto player %s failed: %v", entry.id, playerKey(worldID, playerID), err)
+		}
+		return
+	}
+}
+
+// rebindAccount performs the one-time migration of a staging profile onto the
+// player-keyed directory: stop, adopt or move the corpus, bind, restart.
+func (supervisor *Supervisor) rebindAccount(id AccountID, runtime accountRuntime, worldID string, playerID int64) error {
+	key := playerKey(worldID, playerID)
+	staging := filepath.Join(supervisor.config.DataRoot, "Accounts", string(id))
+	playerDir := filepath.Join(supervisor.config.DataRoot, playerDirsName, key)
+	log.Printf("[accounts] rebinding %s onto player profile %s", id, key)
+
+	stopContext, cancel := context.WithTimeout(context.Background(), playerRebindStopTimeout)
+	defer cancel()
+	if err := supervisor.RemoveAccount(stopContext, id); err != nil {
+		return fmt.Errorf("stop for rebind: %w", err)
+	}
+	if err := supervisor.waitForDataDirRelease(stopContext, staging); err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(playerDir); os.IsNotExist(err) {
+		// First time this player is seen: the staging corpus becomes the
+		// player directory wholesale.
+		if err := os.MkdirAll(filepath.Dir(playerDir), 0o700); err != nil {
+			return fmt.Errorf("create player root: %w", err)
+		}
+		if err := os.Rename(staging, playerDir); err != nil {
+			return fmt.Errorf("promote staging profile: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("inspect player directory: %w", err)
+	} else {
+		// The player already has a corpus (for example the hosted account was
+		// deleted and recreated): adopt it and fold the staging minutes in.
+		stamp := strconv.FormatInt(supervisorNow().Unix(), 10)
+		if err := mergeStagingIntoPlayerDir(staging, playerDir, stamp); err != nil {
+			return fmt.Errorf("adopt player profile: %w", err)
+		}
+	}
+
+	supervisor.mu.Lock()
+	supervisor.playerBindings[string(id)] = key
+	bindings := make(map[string]string, len(supervisor.playerBindings))
+	for runtimeID, boundKey := range supervisor.playerBindings {
+		bindings[runtimeID] = boundKey
+	}
+	path := supervisor.playerBindingsPath
+	supervisor.mu.Unlock()
+	if err := savePlayerBindings(path, bindings); err != nil {
+		return err
+	}
+
+	if _, err := supervisor.AddAccount(context.Background(), runtime.config); err != nil {
+		return fmt.Errorf("restart on player profile: %w", err)
+	}
+	log.Printf("[accounts] %s now runs on player profile %s", id, key)
+	return nil
+}
+
+func (supervisor *Supervisor) waitForDataDirRelease(ctx context.Context, dataDir string) error {
+	for {
+		supervisor.mu.RLock()
+		_, reserved := supervisor.dataDirs[dataDir]
+		supervisor.mu.RUnlock()
+		if !reserved {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("profile directory %s was not released in time", dataDir)
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+}
+
+// supervisorNow is a seam for tests; production uses the wall clock.
+var supervisorNow = time.Now
+
 func (supervisor *Supervisor) accountDataDir(id AccountID, requested string) (string, error) {
 	dataDir := strings.TrimSpace(requested)
 	if dataDir == "" {
-		dataDir = filepath.Join(supervisor.config.DataRoot, "Accounts", string(id))
+		// Profiles are keyed by game identity once it is known: a bound
+		// runtime lands on the shared player directory, an unbound one stages
+		// under its runtime ID until the first login reveals the player.
+		if key := supervisor.playerBindingFor(string(id)); key != "" {
+			dataDir = filepath.Join(supervisor.config.DataRoot, playerDirsName, key)
+		} else {
+			dataDir = filepath.Join(supervisor.config.DataRoot, "Accounts", string(id))
+		}
 	}
 	resolved, err := filepath.Abs(dataDir)
 	if err != nil {
 		return "", fmt.Errorf("resolve account data directory: %w", err)
 	}
-	if resolved != supervisor.config.DataRoot && !pathWithin(filepath.Join(supervisor.config.DataRoot, "Accounts"), resolved) {
-		return "", fmt.Errorf("account data directory must be the desktop root or remain inside the account root")
+	if resolved != supervisor.config.DataRoot &&
+		!pathWithin(filepath.Join(supervisor.config.DataRoot, "Accounts"), resolved) &&
+		!pathWithin(filepath.Join(supervisor.config.DataRoot, playerDirsName), resolved) {
+		return "", fmt.Errorf("account data directory must be the desktop root or remain inside the account or player roots")
 	}
 	return resolved, nil
+}
+
+func (supervisor *Supervisor) playerBindingFor(runtimeID string) string {
+	supervisor.mu.RLock()
+	defer supervisor.mu.RUnlock()
+	return supervisor.playerBindings[runtimeID]
 }
 
 func pathWithin(root string, candidate string) bool {
