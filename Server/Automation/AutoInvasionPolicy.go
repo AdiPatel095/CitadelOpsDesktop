@@ -30,7 +30,7 @@ const (
 	// invasionNeighborhoodHalfSize keeps the pre-pick refresh to a single
 	// 49x49 window (2401 tiles) centered on the candidate.
 	invasionNeighborhoodHalfSize = 24
-	eventMedalsCurrency    = "MEDALS"
+	eventMedalsCurrency          = "MEDALS"
 )
 
 type AutoInvasionPolicy struct{}
@@ -257,7 +257,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 				target.X, target.Y, snapshot.Now.Sub(target.ObservedAt).Round(time.Second),
 			),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
-			Request:     &Intent.Request{Name: "invasion.map.scan", Arguments: arguments}, ReevaluateOnSuccess: true,
+			Request: &Intent.Request{Name: "invasion.map.scan", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
 	}
 	if itemID, required, available, found, err := invasionCapacityShortage(
