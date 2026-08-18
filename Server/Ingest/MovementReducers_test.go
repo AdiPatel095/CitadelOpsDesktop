@@ -354,7 +354,7 @@ func TestMovementReducerReplacesRetainedOutboundWithObservedReturn(t *testing.T)
 		t.Fatal("commander was released before the observed return completed")
 	}
 
-	ReconcileExpiredMovements(&gameState, returnMovement.ReturnsAt.Add(time.Second))
+	ReconcileExpiredMovements(&gameState, returnMovement.ReturnsAt.Add(State.CommanderMovementReturnGrace+time.Second))
 	if len(gameState.Movements) != 0 || !gameState.Commanders[7].Available {
 		t.Fatalf("completed return did not release commander: movements=%+v commander=%+v", gameState.Movements, gameState.Commanders[7])
 	}
@@ -372,7 +372,7 @@ func TestCommanderAvailabilityUsesOwnedSourceWhenMovementOmitsOwner(t *testing.T
 
 func TestReconcileExpiredMovementsFreesCommander(t *testing.T) {
 	now := time.Now().UTC()
-	returnedAt := now.Add(-time.Second)
+	returnedAt := now.Add(-State.CommanderMovementReturnGrace - time.Second)
 	activeUntil := now.Add(time.Minute)
 	gameState := State.NewGameState()
 	gameState.Player.ID = 1
@@ -409,7 +409,7 @@ func TestReconcileExpiredMovementsFreesCommander(t *testing.T) {
 
 func TestReconcileExpiredMovementsReturnsObservedSurvivorsToCastle(t *testing.T) {
 	now := time.Now().UTC()
-	returnsAt := now.Add(-time.Second)
+	returnsAt := now.Add(-State.CommanderMovementReturnGrace - time.Second)
 	gameState := State.NewGameState()
 	gameState.Player.ID = 1
 	castle := newCastleState(100)
@@ -439,7 +439,7 @@ func TestReconcileExpiredMovementsReturnsObservedSurvivorsToCastle(t *testing.T)
 
 func TestReconcileExpiredMovementsDoesNotOverrideNewerUnitSnapshot(t *testing.T) {
 	now := time.Now().UTC()
-	returnsAt := now.Add(-time.Second)
+	returnsAt := now.Add(-State.CommanderMovementReturnGrace - time.Second)
 	gameState := State.NewGameState()
 	gameState.Player.ID = 1
 	castle := newCastleState(100)

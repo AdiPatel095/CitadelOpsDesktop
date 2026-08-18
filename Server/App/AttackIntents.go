@@ -317,7 +317,7 @@ func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, a
 		}
 	}
 	resolution, err := resolveCRACommanders(input.State, commanderSelection, craCommanderSelectionOptions{
-		Holds: input.CommanderHolds,
+		Holds:        input.CommanderHolds,
 		DefaultCount: 1, RequireAvailable: true,
 	})
 	if err != nil {

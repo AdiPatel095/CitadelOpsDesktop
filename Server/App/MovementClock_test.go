@@ -14,7 +14,7 @@ func TestMovementClockReleasesReturnedCommander(t *testing.T) {
 	gameState.Castles[100] = State.CastleState{ID: 100}
 	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: false}
 	commanderID := State.CommanderID(7)
-	returnsAt := time.Now().UTC().Add(40 * time.Millisecond)
+	returnsAt := time.Now().UTC().Add(40*time.Millisecond - State.CommanderMovementReturnGrace)
 	gameState.Movements[50] = State.MovementState{
 		ID: 50, Direction: 1, OwnerPlayerID: 1, TargetCastleID: 100,
 		CommanderID: &commanderID, ReturnsAt: &returnsAt,
@@ -39,7 +39,7 @@ func TestMovementClockReturnsObservedSurvivorsToCastle(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Player.ID = 1
 	commanderID := State.CommanderID(7)
-	returnsAt := time.Now().UTC().Add(40 * time.Millisecond)
+	returnsAt := time.Now().UTC().Add(40*time.Millisecond - State.CommanderMovementReturnGrace)
 	castle := State.CastleState{
 		ID: 100,
 		Units: State.CastleUnits{

@@ -121,7 +121,7 @@ func TestBeriAttackPolicyRefillsReturnedCommanderWhileLaterMovementIsActive(t *t
 	}
 	returnedCommander := State.CommanderID(0)
 	laterCommander := State.CommanderID(1)
-	returnedAt := now.Add(-time.Second)
+	returnedAt := now.Add(-State.CommanderMovementReturnGrace - time.Second)
 	laterReturn := now.Add(time.Minute)
 	snapshot.State.Movements[10] = State.MovementState{
 		ID: 10, Direction: 1, SourceCastleID: 900, KingdomID: 10,
