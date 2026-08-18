@@ -105,6 +105,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"gas", components(State.ComponentAttackPresets), reduceAttackPresets},
 		{"sin", components(State.ComponentInventory), reduceStorageInventory},
 		{"gbc", components(State.ComponentInventory), reduceConstructionOffers},
+		{"csp", components(State.ComponentInventory), reduceConstructionSpaceLeft},
 		{"sne", reports, reduceReportNotices},
 		{"dms", reports, reduceDeletedReportMessages},
 		{"bsd", reports, reduceSpyReportCapture},

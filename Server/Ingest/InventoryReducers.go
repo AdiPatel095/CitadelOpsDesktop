@@ -205,6 +205,37 @@ func reduceConstructionOffers(
 	return []string{"inventory", "construction-offers"}, true, nil
 }
 
+// reduceConstructionSpaceLeft records the server's construction-item inventory
+// space-left answer (S2C "csp" → {"C": n}). The official client asks for it
+// before every buy dialog; it is the authoritative fullness oracle and beats
+// any local count, which cannot see server-side expiry of temporary items.
+func reduceConstructionSpaceLeft(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var payload struct {
+		SpaceLeft *wireInt64 `json:"C"`
+	}
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode construction space left: %w", err)
+	}
+	if payload.SpaceLeft == nil {
+		return nil, false, nil
+	}
+	spaceLeft := int64(*payload.SpaceLeft)
+	if gameState.Inventory.ConstructionSpaceLeft == spaceLeft &&
+		gameState.Inventory.ConstructionSpaceLeftObservedAt.Equal(frame.ReceivedAt) {
+		return nil, false, nil
+	}
+	gameState.SetInventoryConstructionSpaceLeft(spaceLeft, frame.ReceivedAt)
+	return []string{"inventory", "construction-items"}, true, nil
+}
+
 func reduceConstructionOffersCommand(
 	_ context.Context,
 	frame Protocol.Frame,

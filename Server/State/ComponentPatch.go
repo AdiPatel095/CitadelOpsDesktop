@@ -52,20 +52,22 @@ type InventoryItemChange struct {
 }
 
 type InventoryPatch struct {
-	ConstructionItems            *map[ConstructionItemID]int64              `json:"constructionItems,omitempty"`
-	ConstructionItemsObservedAt  *time.Time                                 `json:"constructionItemsObservedAt,omitempty"`
-	ConstructionOffers           *map[PackageID]int64                       `json:"constructionOffers,omitempty"`
-	ConstructionOffersObservedAt *time.Time                                 `json:"constructionOffersObservedAt,omitempty"`
-	ConstructionOffersCastleID   *CastleID                                  `json:"constructionOffersCastleId,omitempty"`
-	ConstructionOffersKingdomID  *KingdomID                                 `json:"constructionOffersKingdomId,omitempty"`
-	ConstructionOffersByCastle   *map[CastleID]ConstructionOfferSnapshot    `json:"constructionOffersByCastle,omitempty"`
-	Equipment                    *map[EquipmentInstanceID]EquipmentInstance `json:"equipment,omitempty"`
-	EquipmentChanges             *[]EquipmentChange                         `json:"equipmentChanges,omitempty"`
-	Gems                         *map[GemInstanceID]GemInstance             `json:"gems,omitempty"`
-	GemChanges                   *[]GemChange                               `json:"gemChanges,omitempty"`
-	GemStacks                    *map[GemID]int64                           `json:"gemStacks,omitempty"`
-	Items                        *map[string]map[int64]int64                `json:"items,omitempty"`
-	ItemChanges                  *[]InventoryItemChange                     `json:"itemChanges,omitempty"`
+	ConstructionItems               *map[ConstructionItemID]int64              `json:"constructionItems,omitempty"`
+	ConstructionItemsObservedAt     *time.Time                                 `json:"constructionItemsObservedAt,omitempty"`
+	ConstructionSpaceLeft           *int64                                     `json:"constructionSpaceLeft,omitempty"`
+	ConstructionSpaceLeftObservedAt *time.Time                                 `json:"constructionSpaceLeftObservedAt,omitempty"`
+	ConstructionOffers              *map[PackageID]int64                       `json:"constructionOffers,omitempty"`
+	ConstructionOffersObservedAt    *time.Time                                 `json:"constructionOffersObservedAt,omitempty"`
+	ConstructionOffersCastleID      *CastleID                                  `json:"constructionOffersCastleId,omitempty"`
+	ConstructionOffersKingdomID     *KingdomID                                 `json:"constructionOffersKingdomId,omitempty"`
+	ConstructionOffersByCastle      *map[CastleID]ConstructionOfferSnapshot    `json:"constructionOffersByCastle,omitempty"`
+	Equipment                       *map[EquipmentInstanceID]EquipmentInstance `json:"equipment,omitempty"`
+	EquipmentChanges                *[]EquipmentChange                         `json:"equipmentChanges,omitempty"`
+	Gems                            *map[GemInstanceID]GemInstance             `json:"gems,omitempty"`
+	GemChanges                      *[]GemChange                               `json:"gemChanges,omitempty"`
+	GemStacks                       *map[GemID]int64                           `json:"gemStacks,omitempty"`
+	Items                           *map[string]map[int64]int64                `json:"items,omitempty"`
+	ItemChanges                     *[]InventoryItemChange                     `json:"itemChanges,omitempty"`
 }
 
 type EventScoreChange struct {
@@ -440,6 +442,8 @@ func inventoryComponentPatch(inventory *InventoryState, changes componentChanges
 	if parts&inventoryConstructionItemsMutable != 0 {
 		patch.ConstructionItems = &inventory.ConstructionItems
 		patch.ConstructionItemsObservedAt = &inventory.ConstructionItemsObservedAt
+		patch.ConstructionSpaceLeft = &inventory.ConstructionSpaceLeft
+		patch.ConstructionSpaceLeftObservedAt = &inventory.ConstructionSpaceLeftObservedAt
 	}
 	if parts&inventoryConstructionOffersMutable != 0 {
 		patch.ConstructionOffers = &inventory.ConstructionOffers

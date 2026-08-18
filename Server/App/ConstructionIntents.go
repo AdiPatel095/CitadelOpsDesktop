@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -76,7 +77,7 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 		return Intent.Plan{}, fmt.Errorf("construction-item inventory has not been observed")
 	}
 	inventoryCount := State.ConstructionItemInventoryCount(input.State.Inventory.ConstructionItems)
-	remainingCapacity := State.ConstructionItemInventoryLimit - inventoryCount
+	remainingCapacity := State.ConstructionItemInventorySpaceLeft(input.State.Inventory, time.Now().UTC())
 	if remainingCapacity <= 0 {
 		return Intent.Plan{}, fmt.Errorf(
 			"construction-item inventory is full (%d/%d)",
@@ -105,6 +106,10 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 	}{request.ProductID, 0, 116, request.Amount, castle.KingdomID, castle.ID, -1, 0, 0, -1})
 	steps := castleContextSteps(input, castle)
 	steps = append(steps, constructionShopContextSteps(castle)...)
+	// Mirror the official buy slider: ask the server for the remaining
+	// inventory space right before buying, so the next guard evaluation runs
+	// on the game's own number rather than a local estimate.
+	steps = append(steps, constructionSpaceLeftStep())
 	steps = append(steps, commandStep("Buy construction item", "sbp", payload, "sbp"))
 	itemLabel := fmt.Sprintf("construction item %d", constructionItemID)
 	if itemCatalog, catalogErr := input.GameData.Catalog("constructionItems"); catalogErr == nil {

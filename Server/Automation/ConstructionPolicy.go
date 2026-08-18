@@ -304,7 +304,10 @@ func constructionPurchaseDecision(
 	ceiling int,
 ) (Decision, string) {
 	inventoryCount := State.ConstructionItemInventoryCount(snapshot.State.Inventory.ConstructionItems)
-	remainingCapacity := State.ConstructionItemInventoryLimit - inventoryCount
+	// The server's own space-left answer (csp) is the fullness oracle when
+	// fresh; the softcap estimate is the fallback, exactly as the official
+	// client does it. A stale local count must never block the blacksmith.
+	remainingCapacity := State.ConstructionItemInventorySpaceLeft(snapshot.State.Inventory, snapshot.Now)
 	if remainingCapacity <= 0 {
 		return Decision{
 			Status: "waiting",

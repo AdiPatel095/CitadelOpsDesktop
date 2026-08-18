@@ -272,6 +272,19 @@ func (state *GameState) ReplaceInventoryConstructionItems(items map[Construction
 	}
 }
 
+// SetInventoryConstructionSpaceLeft records the server's construction-item
+// inventory space-left answer (csp). It rides the construction-items part.
+func (state *GameState) SetInventoryConstructionSpaceLeft(spaceLeft int64, observedAt time.Time) {
+	if state == nil {
+		return
+	}
+	state.Inventory.ConstructionSpaceLeft = spaceLeft
+	state.Inventory.ConstructionSpaceLeftObservedAt = observedAt
+	if state.inventoryMutationCOW {
+		state.mutableInventoryParts |= inventoryConstructionItemsMutable
+	}
+}
+
 func (state *GameState) ReplaceInventoryConstructionOffers(
 	offers map[PackageID]int64,
 	observedAt time.Time,

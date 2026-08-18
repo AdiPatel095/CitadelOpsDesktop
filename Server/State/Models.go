@@ -784,17 +784,22 @@ type ConstructionOfferSnapshot struct {
 }
 
 type InventoryState struct {
-	ConstructionItems            map[ConstructionItemID]int64              `json:"constructionItems"`
-	ConstructionItemsObservedAt  time.Time                                 `json:"constructionItemsObservedAt,omitempty"`
-	ConstructionOffers           map[PackageID]int64                       `json:"constructionOffers"`
-	ConstructionOffersObservedAt time.Time                                 `json:"constructionOffersObservedAt,omitempty"`
-	ConstructionOffersCastleID   CastleID                                  `json:"constructionOffersCastleId,omitempty"`
-	ConstructionOffersKingdomID  KingdomID                                 `json:"constructionOffersKingdomId"`
-	ConstructionOffersByCastle   map[CastleID]ConstructionOfferSnapshot    `json:"-"`
-	Equipment                    map[EquipmentInstanceID]EquipmentInstance `json:"equipment"`
-	Gems                         map[GemInstanceID]GemInstance             `json:"gems"`
-	GemStacks                    map[GemID]int64                           `json:"gemStacks"`
-	Items                        map[string]map[int64]int64                `json:"items"`
+	ConstructionItems           map[ConstructionItemID]int64 `json:"constructionItems"`
+	ConstructionItemsObservedAt time.Time                    `json:"constructionItemsObservedAt,omitempty"`
+	// ConstructionSpaceLeft is the server-reported remaining construction-item
+	// inventory room (S2C "csp" → C), the number the official client consults
+	// before every buy dialog. Zero with a zero ObservedAt means unobserved.
+	ConstructionSpaceLeft           int64                                     `json:"constructionSpaceLeft,omitempty"`
+	ConstructionSpaceLeftObservedAt time.Time                                 `json:"constructionSpaceLeftObservedAt,omitempty"`
+	ConstructionOffers              map[PackageID]int64                       `json:"constructionOffers"`
+	ConstructionOffersObservedAt    time.Time                                 `json:"constructionOffersObservedAt,omitempty"`
+	ConstructionOffersCastleID      CastleID                                  `json:"constructionOffersCastleId,omitempty"`
+	ConstructionOffersKingdomID     KingdomID                                 `json:"constructionOffersKingdomId"`
+	ConstructionOffersByCastle      map[CastleID]ConstructionOfferSnapshot    `json:"-"`
+	Equipment                       map[EquipmentInstanceID]EquipmentInstance `json:"equipment"`
+	Gems                            map[GemInstanceID]GemInstance             `json:"gems"`
+	GemStacks                       map[GemID]int64                           `json:"gemStacks"`
+	Items                           map[string]map[int64]int64                `json:"items"`
 }
 
 type SubscriptionState struct {

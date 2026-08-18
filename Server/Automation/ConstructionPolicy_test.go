@@ -2,6 +2,7 @@ package Automation
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -135,7 +136,7 @@ func TestConstructionPolicyWaitsWhenInventoryIsFull(t *testing.T) {
 		t.Fatal(err)
 	}
 	if decision.Request != nil || decision.Status != "waiting" ||
-		!strings.Contains(decision.Detail, "inventory is full (1000/1000)") {
+		!strings.Contains(decision.Detail, fmt.Sprintf("inventory is full (%d/%d)", State.ConstructionItemInventoryLimit, State.ConstructionItemInventoryLimit)) {
 		t.Fatalf("full inventory decision = %+v", decision)
 	}
 	if want := now.Add(constructionCheckInterval); !decision.NextCheckAt.Equal(want) {

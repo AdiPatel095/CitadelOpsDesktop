@@ -118,6 +118,14 @@ func constructionShopContextSteps(castle State.CastleState) []Intent.Step {
 	}
 }
 
+// constructionSpaceLeftStep asks the server how much construction-item
+// inventory room is left (C2S "csp"). The official client sends it from the
+// buy slider right before a purchase; the answer is the authoritative
+// fullness oracle for the purchase guard (State.ConstructionItemInventorySpaceLeft).
+func constructionSpaceLeftStep() Intent.Step {
+	return contextCommandStep("Refresh construction-item inventory space", "csp", json.RawMessage(`{}`), "csp")
+}
+
 func stationRouteContextSteps(source State.CastleState, target State.AllianceHolding) []Intent.Step {
 	payload, _ := json.Marshal(struct {
 		TargetX int `json:"TX"`

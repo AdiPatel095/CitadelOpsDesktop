@@ -1806,6 +1806,13 @@ func applyInventoryPersistencePart(inventory *InventoryState, part string, patch
 		}
 		inventory.ConstructionItems = *patch.ConstructionItems
 		inventory.ConstructionItemsObservedAt = *patch.ConstructionItemsObservedAt
+		// Space-left is optional so files written before it existed still load.
+		if patch.ConstructionSpaceLeft != nil {
+			inventory.ConstructionSpaceLeft = *patch.ConstructionSpaceLeft
+		}
+		if patch.ConstructionSpaceLeftObservedAt != nil {
+			inventory.ConstructionSpaceLeftObservedAt = *patch.ConstructionSpaceLeftObservedAt
+		}
 	case "construction-offers":
 		if patch.ConstructionOffers == nil || patch.ConstructionOffersObservedAt == nil ||
 			patch.ConstructionOffersCastleID == nil || patch.ConstructionOffersKingdomID == nil {

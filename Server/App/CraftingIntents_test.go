@@ -2,6 +2,7 @@ package App
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -137,7 +138,10 @@ func TestPlanConstructionPurchaseUsesLiveOfficialOffer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "jaa" || plan.Steps[1].Opcode != "aec" || plan.Steps[2].Opcode != "gbc" {
+	// jaa → aec → gbc → csp → sbp: the csp space-left query mirrors the official
+	// buy slider, which asks the server for remaining inventory room before buying.
+	if len(plan.Steps) != 5 || plan.Steps[0].Opcode != "jaa" || plan.Steps[1].Opcode != "aec" ||
+		plan.Steps[2].Opcode != "gbc" || plan.Steps[3].Opcode != "csp" {
 		t.Fatalf("construction purchase context = %#v", plan.Steps)
 	}
 	if plan.Steps[1].ResumePolicy != Intent.ResumeRebuild || plan.Steps[2].ResumePolicy != Intent.ResumeRebuild {
@@ -179,7 +183,7 @@ func TestPlanConstructionPurchaseRejectsFullInventory(t *testing.T) {
 	_, err := planConstructionPurchase(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: constructionPolicyGameDataForApp(t),
 	}, json.RawMessage(`{"castleId":10,"productId":500,"amount":1}`))
-	if err == nil || !strings.Contains(err.Error(), "inventory is full (1000/1000)") {
+	if err == nil || !strings.Contains(err.Error(), fmt.Sprintf("inventory is full (%d/%d)", State.ConstructionItemInventoryLimit, State.ConstructionItemInventoryLimit)) {
 		t.Fatalf("full construction-item inventory error = %v", err)
 	}
 }
