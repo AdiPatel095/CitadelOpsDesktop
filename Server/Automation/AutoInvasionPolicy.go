@@ -21,6 +21,15 @@ const (
 	bloodcrowMapTypeID     = 34
 	fixedInvasionRadius    = 50
 	defaultInvasionRefresh = 300
+	// invasionTargetFreshness is how recently the game must have confirmed a
+	// candidate before the policy attacks it. Older than this and the policy
+	// first refreshes the candidate's neighborhood (one gaa window) so the pick
+	// is made from a live set — invasion castles are defeated by other players
+	// constantly and a minutes-old sweep routinely offers dead ones.
+	invasionTargetFreshness = 60 * time.Second
+	// invasionNeighborhoodHalfSize keeps the pre-pick refresh to a single
+	// 49x49 window (2401 tiles) centered on the candidate.
+	invasionNeighborhoodHalfSize = 24
 	eventMedalsCurrency    = "MEDALS"
 )
 
@@ -232,6 +241,25 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		}, nil
 	}
 	target := candidates[0]
+	if target.ObservedAt.IsZero() || snapshot.Now.Sub(target.ObservedAt) > invasionTargetFreshness {
+		// Fresh set before the pick: refresh the candidate's neighborhood so a
+		// castle that vanished since the last sweep is dropped (the window is
+		// authoritative) and the next evaluation chooses from live targets.
+		bounds := invasionNeighborhoodBounds(target)
+		arguments, _ := json.Marshal(map[string]any{
+			"sourceCastleId": source.ID, "radius": fixedInvasionRadius, "scanStartedAt": snapshot.Now,
+			"bounds": bounds,
+		})
+		return Decision{
+			Status: "ready",
+			Detail: fmt.Sprintf(
+				"Refresh invasion targets around %d:%d before attacking (last confirmed %s ago)",
+				target.X, target.Y, snapshot.Now.Sub(target.ObservedAt).Round(time.Second),
+			),
+			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
+			Request:     &Intent.Request{Name: "invasion.map.scan", Arguments: arguments}, ReevaluateOnSuccess: true,
+		}, nil
+	}
 	if itemID, required, available, found, err := invasionCapacityShortage(
 		snapshot, source, target, preset, commanderID,
 	); err != nil {
@@ -484,6 +512,15 @@ func invasionCandidates(
 		return result[left].X < result[right].X
 	})
 	return result
+}
+
+// invasionNeighborhoodBounds is the single-window box refreshed before a pick:
+// 49x49 tiles centered on the candidate, clipped at the map origin.
+func invasionNeighborhoodBounds(target State.MapObservation) State.StormMapBounds {
+	return State.StormMapBounds{
+		X1: max(0, target.X-invasionNeighborhoodHalfSize), Y1: max(0, target.Y-invasionNeighborhoodHalfSize),
+		X2: target.X + invasionNeighborhoodHalfSize, Y2: target.Y + invasionNeighborhoodHalfSize,
+	}
 }
 
 func invasionDistanceSquared(source State.CastleState, target State.MapObservation) int {

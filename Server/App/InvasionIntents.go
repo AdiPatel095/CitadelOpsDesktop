@@ -19,7 +19,18 @@ type invasionMapScanRequest struct {
 	SourceCastleID State.CastleID `json:"sourceCastleId"`
 	Radius         int            `json:"radius"`
 	ScanStartedAt  time.Time      `json:"scanStartedAt"`
+	// Bounds turns the scan into a single-window neighborhood refresh (at
+	// most one gaa query) that is AUTHORITATIVE for its rectangle: invasion
+	// observations inside it that the game did not return again are dropped.
+	// It never advances the full-scan clock, so candidates outside the box
+	// stay eligible. The policy uses it right before picking a target so the
+	// pick is made from a set the game confirmed seconds ago.
+	Bounds *State.StormMapBounds `json:"bounds,omitempty"`
 }
+
+// invasionNeighborhoodTileLimit caps a bounded scan at one gaa window, the
+// same tile budget the full sweep uses per window.
+const invasionNeighborhoodTileLimit = 2500
 
 type invasionDifficultyRequest struct {
 	EventID      int64 `json:"eventId"`
@@ -84,6 +95,12 @@ func planInvasionMapScan(_ context.Context, input Intent.PlanningContext, argume
 		return Intent.Plan{}, err
 	}
 	windows := towerMapScanWindows(source, request.Radius)
+	if request.Bounds != nil {
+		// A neighborhood refresh is exactly one window over the requested box.
+		windows = []towerMapWindow{{
+			X1: request.Bounds.X1, Y1: request.Bounds.Y1, X2: request.Bounds.X2, Y2: request.Bounds.Y2,
+		}}
+	}
 	steps := make([]Intent.Step, 0, len(windows)+2)
 	if !source.Focused {
 		steps = append(steps, castleFocusStep(source))
@@ -267,6 +284,16 @@ func invasionMapScanContext(input Intent.PlanningContext, arguments json.RawMess
 	if request.SourceCastleID <= 0 || request.Radius < 1 || request.Radius > 50 {
 		return invasionMapScanRequest{}, State.CastleState{}, fmt.Errorf("invasion map scan requires a source castle and radius between 1 and 50")
 	}
+	if bounds := request.Bounds; bounds != nil {
+		if !bounds.IsValid() {
+			return invasionMapScanRequest{}, State.CastleState{}, fmt.Errorf("invasion neighborhood scan bounds are invalid")
+		}
+		if (bounds.X2-bounds.X1+1)*(bounds.Y2-bounds.Y1+1) > invasionNeighborhoodTileLimit {
+			return invasionMapScanRequest{}, State.CastleState{}, fmt.Errorf(
+				"invasion neighborhood scan may cover at most %d tiles", invasionNeighborhoodTileLimit,
+			)
+		}
+	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists {
 		return invasionMapScanRequest{}, State.CastleState{}, fmt.Errorf("invasion source castle %d is unavailable", request.SourceCastleID)
@@ -445,17 +472,45 @@ func (application *Application) captureInvasionScan(_ context.Context, arguments
 	if err != nil {
 		return err
 	}
-	_, err = application.State.ApplyComponents(State.Components(State.ComponentInvasion), func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentInvasion, State.ComponentWorldMap), func(gameState *State.GameState) ([]string, bool, error) {
 		source, exists := gameState.Castles[request.SourceCastleID]
 		if !exists || !source.Focused {
 			return nil, false, fmt.Errorf("invasion source castle %d is no longer focused", request.SourceCastleID)
 		}
-		if gameState.Invasion.LastScannedAt == nil {
-			gameState.Invasion.LastScannedAt = map[State.CastleID]time.Time{}
-		}
 		scannedAt := request.ScanStartedAt.UTC()
 		if scannedAt.IsZero() {
 			scannedAt = time.Now().UTC()
+		}
+		if bounds := request.Bounds; bounds != nil {
+			// The neighborhood window is authoritative for its rectangle: any
+			// invasion castle inside it that the game did not return again is
+			// gone (defeated, or the slot reverted to a dynamic area). Drop those
+			// phantoms so the pick that follows is made from a confirmed set.
+			// The full-scan clock is deliberately left alone — candidates outside
+			// the box remain eligible on their last full observation.
+			stale := []string{}
+			gameState.RangeMapObservationsByKind(source.KingdomID, State.MapProjectionInvasion, func(key string, observation State.MapObservation) bool {
+				if observation.X < bounds.X1 || observation.X > bounds.X2 || observation.Y < bounds.Y1 || observation.Y > bounds.Y2 {
+					return true
+				}
+				if observation.ObservedAt.Before(scannedAt) {
+					stale = append(stale, key)
+				}
+				return true
+			})
+			changed := false
+			for _, key := range stale {
+				if gameState.DeleteMapObservation(source.KingdomID, key) {
+					changed = true
+				}
+			}
+			if !changed {
+				return nil, false, nil
+			}
+			return []string{"map", "map-invasion"}, true, nil
+		}
+		if gameState.Invasion.LastScannedAt == nil {
+			gameState.Invasion.LastScannedAt = map[State.CastleID]time.Time{}
 		}
 		if gameState.Invasion.LastScannedAt[request.SourceCastleID].Equal(scannedAt) {
 			return nil, false, nil
