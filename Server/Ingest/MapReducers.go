@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 
@@ -15,11 +14,11 @@ import (
 )
 
 const (
-	nomadCampMapTypeID   = 27
-	samuraiCampMapTypeID = 29
-	khanCampMapTypeID    = 35
-	stormIslandMapTypeID = 24
-	stormFortMapTypeID   = 25
+	nomadCampMapTypeID   = State.MapTypeNomadCamp
+	samuraiCampMapTypeID = State.MapTypeSamuraiCamp
+	khanCampMapTypeID    = State.MapTypeKhanCamp
+	stormIslandMapTypeID = State.MapTypeStormIsland
+	stormFortMapTypeID   = State.MapTypeStormFort
 )
 
 func reduceInvasionFortification(
@@ -113,14 +112,8 @@ func reduceMapSnapshot(
 		return nil, false, fmt.Errorf("decode map snapshot: %w", err)
 	}
 	kingdomID := State.KingdomID(payload.KingdomID)
-	if gameState.Map == nil {
-		gameState.Map = map[State.KingdomID]map[string]State.MapObservation{}
-	}
-	observations := gameState.Map[kingdomID]
-	if observations == nil {
-		observations = map[string]State.MapObservation{}
-	}
 	changed := false
+	changedMapKinds := map[State.MapProjectionKind]struct{}{}
 	cooldownChanged := false
 	eventCampChanged := false
 	stormChanged := false
@@ -135,7 +128,10 @@ func reduceMapSnapshot(
 		observation := State.MapObservation{
 			KingdomID: kingdomID, X: x, Y: y, TypeID: typeID, ObservedAt: frame.ReceivedAt,
 		}
-		if len(row) >= 9 && !isRegularEventCampType(typeID) && typeID != khanCampMapTypeID {
+		// Player-castle rows can use the compact seven-field form. Its owner at
+		// index four is needed to turn the observation into a safe shared-world
+		// identity fact rather than another account-private copy.
+		if (typeID == 1 || len(row) >= 9) && !isRegularEventCampType(typeID) && typeID != khanCampMapTypeID {
 			observation.OwnerID = State.PlayerID(rowInt(row, 4))
 		}
 		if isRegularEventCampType(typeID) {
@@ -144,7 +140,6 @@ func reduceMapSnapshot(
 			populateKhanCampObservation(&observation, row, gameData)
 		} else if isStormMapType(typeID) {
 			populateStormObservation(&observation, row, gameData)
-			labelStormOpportunity(&observation, gameData)
 		} else if len(row) > 3 {
 			observation.ObjectID = rowInt(row, 3)
 		}
@@ -152,16 +147,33 @@ func reduceMapSnapshot(
 			observation.Level = int(rowInt(row, 5))
 		}
 		populateTowerObservation(&observation, row)
-		for index := 3; index < len(row); index++ {
-			if name := rowString(row, index); name != "" {
-				observation.Name = name
-				break
+		if policy, retained := State.MapProjectionFor(typeID); retained && policy.RetainObjectName {
+			for index := 3; index < len(row); index++ {
+				if name := rowString(row, index); name != "" {
+					observation.Name = name
+					break
+				}
 			}
 		}
-		key := fmt.Sprintf("%d:%d", x, y)
-		if current, exists := observations[key]; !exists || !reflect.DeepEqual(current, observation) {
-			observations[key] = observation
-			changed = true
+		if State.RetainMapObservation(observation) {
+			if gameState.SetMapObservation(observation) {
+				changed = true
+				if kind, retained := State.MapProjectionKindForType(typeID); retained {
+					changedMapKinds[kind] = struct{}{}
+				}
+			}
+		} else if previous, exists := gameState.LookupMapObservation(kingdomID, fmt.Sprintf("%d:%d", x, y)); exists &&
+			previous.TypeID != typeID {
+			// The coordinate now holds something we do not track (e.g. a Foreign
+			// Lord castle defeated and reverted to a dynamic area). Keeping the
+			// old retained observation would leave a phantom target that every
+			// scan silently re-confirms — drop it so policies stop selecting it.
+			if gameState.DeleteMapObservation(kingdomID, fmt.Sprintf("%d:%d", x, y)) {
+				changed = true
+				if kind, retained := State.MapProjectionKindForType(previous.TypeID); retained {
+					changedMapKinds[kind] = struct{}{}
+				}
+			}
 		}
 		if refreshTowerCooldownFromMap(gameState, observation) {
 			cooldownChanged = true
@@ -176,13 +188,11 @@ func reduceMapSnapshot(
 			beriChanged = true
 		}
 	}
-	if changed {
-		gameState.Map[kingdomID] = observations
-	}
 	if cooldownChanged || eventCampChanged || stormChanged || beriChanged {
 		changed = true
 	}
-	domains := []string{"map"}
+	stormScanProgress := strings.Contains(frame.ResponseToken, "/storm-gaa/")
+	domains := mapReducerDomains(changedMapKinds, stormScanProgress)
 	if cooldownChanged {
 		domains = append(domains, "tower-cooldowns")
 	}
@@ -190,12 +200,56 @@ func reduceMapSnapshot(
 		domains = append(domains, "nomad-camps")
 	}
 	if stormChanged {
-		domains = append(domains, "storm")
+		if stormScanProgress {
+			domains = append(domains, "storm-scan-progress")
+		} else {
+			domains = append(domains, "storm")
+		}
 	}
 	if beriChanged {
 		domains = append(domains, "beri")
 	}
 	return domains, changed, nil
+}
+
+func mapReducerDomains(changedKinds map[State.MapProjectionKind]struct{}, stormScanProgress bool) []string {
+	if len(changedKinds) == 0 {
+		return nil
+	}
+	if stormScanProgress {
+		// The account still commits coordinate patches and contributes them to the
+		// shared world generation, but a cooperative sweep wakes policies once at
+		// lease completion instead of once for every returned tile.
+		return []string{"storm-scan-progress"}
+	}
+	domains := make([]string, 0, len(changedKinds))
+	for _, kind := range []State.MapProjectionKind{
+		State.MapProjectionPlayerCastle,
+		State.MapProjectionTower,
+		State.MapProjectionBerimond,
+		State.MapProjectionInvasion,
+		State.MapProjectionEventCamp,
+		State.MapProjectionStorm,
+		State.MapProjectionRift,
+	} {
+		if _, changed := changedKinds[kind]; !changed {
+			continue
+		}
+		if domain, found := State.MapDomainForKind(kind); found {
+			domains = append(domains, domain)
+		}
+	}
+	return domains
+}
+
+func appendMapTypeDomain(domains []string, typeID int, changed bool) []string {
+	if !changed {
+		return domains
+	}
+	if domain, retained := State.MapDomainForType(typeID); retained {
+		return append(domains, domain)
+	}
+	return domains
 }
 
 func isRegularEventCampType(typeID int) bool {
@@ -231,60 +285,18 @@ func populateStormObservation(observation *State.MapObservation, row []json.RawM
 	if gameData == nil {
 		return
 	}
-	definition, found := gameData.StormIsle(observation.StormIsleID)
+	definition, found := gameData.StormIsleView(observation.StormIsleID)
 	if !found {
 		return
 	}
 	observation.Level = definition.Level
-	observation.StormKind = definition.Kind
-	observation.StormResource = definition.Resource
-	observation.StormSize = definition.Size
-	observation.StormFixedLoot = definition.FixedLoot
-}
-
-func labelStormOpportunity(observation *State.MapObservation, gameData *GameData.Store) {
-	if observation == nil || !isStormMapType(observation.TypeID) || observation.StormIsleID <= 0 || observation.ObservedAt.IsZero() {
-		return
-	}
-	observation.StormReadyAt = observation.ObservedAt
-	observation.StormExpiresAt = time.Time{}
-	timer := time.Duration(max(0, observation.StormCooldownRemaining)) * time.Second
-	if observation.TypeID == stormFortMapTypeID {
-		observation.StormReadyAt = observation.StormReadyAt.Add(timer)
-		return
-	}
-	if observation.OwnerID > 0 {
-		observation.StormReadyAt = observation.StormReadyAt.Add(timer)
-		if gameData != nil {
-			if definition, found := gameData.StormIsle(observation.StormIsleID); found && definition.GlobalCooldownSec > 0 {
-				observation.StormExpiresAt = observation.StormReadyAt.Add(time.Duration(definition.GlobalCooldownSec) * time.Second)
-			}
-		}
-		return
-	}
-	if timer > 0 {
-		observation.StormExpiresAt = observation.ObservedAt.Add(timer)
-	}
 }
 
 func refreshTrackedStormOpportunityFromMap(gameState *State.GameState, observation State.MapObservation) bool {
-	if gameState == nil || observation.KingdomID != State.KingdomID(GameData.StormKingdomID) || gameState.Storm.Map.Targets == nil {
+	if gameState == nil || observation.KingdomID != State.KingdomID(GameData.StormKingdomID) {
 		return false
 	}
-	key := fmt.Sprintf("%d:%d", observation.X, observation.Y)
-	current, tracked := gameState.Storm.Map.Targets[key]
-	if !tracked || current.ObservedAt.After(observation.ObservedAt) {
-		return false
-	}
-	if !isStormMapType(observation.TypeID) {
-		delete(gameState.Storm.Map.Targets, key)
-		return true
-	}
-	if reflect.DeepEqual(current, observation) {
-		return false
-	}
-	gameState.Storm.Map.Targets[key] = observation
-	return true
+	return gameState.RefreshStormTargetObservation(observation)
 }
 
 func populateEventCampObservation(observation *State.MapObservation, row []json.RawMessage, gameData *GameData.Store) {
@@ -421,8 +433,8 @@ func reduceDungeonCooldownSkip(
 		kingdomResolved = true
 	}
 	if !kingdomResolved {
-		for candidateKingdomID, observations := range gameState.Map {
-			if _, exists := observations[fmt.Sprintf("%d:%d", x, y)]; exists {
+		for _, candidateKingdomID := range gameState.MapKingdomIDs() {
+			if _, exists := gameState.LookupMapObservation(candidateKingdomID, fmt.Sprintf("%d:%d", x, y)); exists {
 				kingdomID = candidateKingdomID
 				break
 			}
@@ -441,19 +453,11 @@ func reduceDungeonCooldownSkip(
 	} else {
 		populateEventCampObservation(&observation, payload.Node, gameData)
 	}
-	if gameState.Map == nil {
-		gameState.Map = map[State.KingdomID]map[string]State.MapObservation{}
-	}
-	if gameState.Map[kingdomID] == nil {
-		gameState.Map[kingdomID] = map[string]State.MapObservation{}
-	}
-	key := fmt.Sprintf("%d:%d", x, y)
-	mapChanged := !reflect.DeepEqual(gameState.Map[kingdomID][key], observation)
-	gameState.Map[kingdomID][key] = observation
+	mapChanged := State.RetainMapObservation(observation) && gameState.SetMapObservation(observation)
 	if typeID == towerMapTypeID {
 		cooldownChanged := refreshTowerCooldownFromMap(gameState, observation)
 		testChanged := recordRBCTestCooldownSkip(gameState, observation, frame.ReceivedAt)
-		domains := []string{"map", "tower-cooldowns"}
+		domains := appendMapTypeDomain([]string{"tower-cooldowns"}, typeID, mapChanged)
 		if testChanged {
 			domains = append(domains, "nomad-camps")
 		}
@@ -461,10 +465,10 @@ func reduceDungeonCooldownSkip(
 	}
 	if typeID == khanCampMapTypeID {
 		cooldownChanged := refreshNomadCampCooldownFromMap(gameState, observation)
-		return []string{"map", "khan", "nomad-camps"}, mapChanged || cooldownChanged, nil
+		return appendMapTypeDomain([]string{"khan", "nomad-camps"}, typeID, mapChanged), mapChanged || cooldownChanged, nil
 	}
 	cooldownChanged := refreshNomadCampCooldownFromMap(gameState, observation)
-	return []string{"map", "nomad-camps"}, mapChanged || cooldownChanged, nil
+	return appendMapTypeDomain([]string{"nomad-camps"}, typeID, mapChanged), mapChanged || cooldownChanged, nil
 }
 
 func recordRBCTestCooldownSkip(gameState *State.GameState, observation State.MapObservation, observedAt time.Time) bool {
@@ -497,7 +501,7 @@ func reduceNestedMapSnapshot(
 		return nil, false, nil
 	}
 	frame.Payload = nested
-	domains, changed, err := combineReducers(reduceMapSnapshot, reducePlayerProtectionMode)(ctx, frame, gameState, gameData)
+	domains, changed, err := reduceMapSnapshot(ctx, frame, gameState, gameData)
 	if err != nil || frame.Opcode != "fnt" {
 		return domains, changed, err
 	}
@@ -526,7 +530,9 @@ func reduceNestedMapSnapshot(
 	targetX = rowInt(selected, 1)
 	targetY = rowInt(selected, 2)
 	targetTypeID := int(rowInt(selected, 0))
-	observation, exists := gameState.Map[State.KingdomID(GameData.BerimondKingdomID)][fmt.Sprintf("%d:%d", targetX, targetY)]
+	observation, exists := gameState.LookupMapObservation(
+		State.KingdomID(GameData.BerimondKingdomID), fmt.Sprintf("%d:%d", targetX, targetY),
+	)
 	if !exists || targetTypeID != AttackCapacity.BerimondTowerMapTypeID ||
 		observation.TypeID != targetTypeID || observation.Level <= 0 {
 		return domains, changed, nil
@@ -541,4 +547,25 @@ func reduceNestedMapSnapshot(
 		domains = append(domains, "beri")
 	}
 	return domains, changed || targetChanged, nil
+}
+
+func reduceNestedMapPlayerProtection(
+	ctx context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+		return nil, false, fmt.Errorf("decode nested map protection envelope: %w", err)
+	}
+	nested := root["gaa"]
+	if len(nested) == 0 {
+		return nil, false, nil
+	}
+	frame.Payload = nested
+	return reducePlayerProtectionMode(ctx, frame, gameState, gameData)
 }

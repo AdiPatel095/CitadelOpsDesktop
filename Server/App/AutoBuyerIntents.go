@@ -278,10 +278,8 @@ func autoBuyerPackagePurchaseContext(
 		return request, source, product, fmt.Errorf("package %d is not available at the current player level", request.PackageID)
 	}
 	if requireFresh {
-		if input.State.Inventory.ConstructionOffersCastleID != source.ID ||
-			input.State.Inventory.ConstructionOffersKingdomID != source.KingdomID ||
-			input.State.Inventory.ConstructionOffersObservedAt.IsZero() ||
-			now.Sub(input.State.Inventory.ConstructionOffersObservedAt) > 2*time.Minute {
+		offers, observedAt, found := input.State.ConstructionOffersFor(source.ID, source.KingdomID)
+		if !found || observedAt.IsZero() || now.Sub(observedAt) > 2*time.Minute {
 			return request, source, product, fmt.Errorf("%w: package purchase counters are not fresh for castle %d", Intent.ErrPlanStale, source.ID)
 		}
 		if product.RequiresEvent {
@@ -289,7 +287,7 @@ func autoBuyerPackagePurchaseContext(
 				return request, source, product, fmt.Errorf("%w: the event shop for package %d is not active", Intent.ErrPlanStale, request.PackageID)
 			}
 		}
-		purchased := input.State.Inventory.ConstructionOffers[request.PackageID]
+		purchased := offers[request.PackageID]
 		if purchased != request.ExpectedPurchasedBefore {
 			return request, source, product, fmt.Errorf("%w: package %d purchase count changed from %d to %d", Intent.ErrPlanStale, request.PackageID, request.ExpectedPurchasedBefore, purchased)
 		}
@@ -445,13 +443,17 @@ func (application *Application) verifyAutoBuyerPackagePurchase(_ context.Context
 	if !found {
 		return fmt.Errorf("package %d disappeared from the official Auto Buyer catalog", request.PackageID)
 	}
-	purchased := input.State.Inventory.ConstructionOffers[request.PackageID]
-	if purchased < request.ExpectedPurchasedBefore+request.Amount {
-		return fmt.Errorf("package %d purchase was not confirmed by the server counter", request.PackageID)
-	}
 	source, sourceErr := autoBuyerIntentSourceCastle(input.State, request.SourceCastleID)
 	if sourceErr != nil {
 		return sourceErr
+	}
+	offers, _, found := input.State.ConstructionOffersFor(source.ID, source.KingdomID)
+	if !found {
+		return fmt.Errorf("package counters are unavailable for castle %d", source.ID)
+	}
+	purchased := offers[request.PackageID]
+	if purchased < request.ExpectedPurchasedBefore+request.Amount {
+		return fmt.Errorf("package %d purchase was not confirmed by the server counter", request.PackageID)
 	}
 	balance, available := autoBuyerIntentPriceBalance(input.State, source, product.Price)
 	if !available {
@@ -579,7 +581,7 @@ func (application *Application) autoBuyerPlanningContext() (Intent.PlanningConte
 	if !ready {
 		return Intent.PlanningContext{}, fmt.Errorf("official game data is unavailable")
 	}
-	return Intent.PlanningContext{State: application.State.Snapshot(), GameData: gameData}, nil
+	return Intent.PlanningContext{State: application.State.ReadOnlyView(), GameData: gameData}, nil
 }
 
 func autoBuyerIntentSourceCastle(gameState State.GameState, castleID State.CastleID) (State.CastleState, error) {

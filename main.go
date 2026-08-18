@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	address := flag.String("addr", "127.0.0.1:8080", "HTTP listen address")
+	address := flag.String("addr", defaultListenAddress(), "HTTP listen address")
 	offline := flag.Bool("offline", false, "start without refreshing official game data")
 	browser := flag.String("browser", os.Getenv("CITADEL_BROWSER"), "Chromium browser id, executable, or auto")
 	browserPath := flag.String("browser-path", os.Getenv("CITADEL_BROWSER_PATH"), "explicit Chromium browser executable path")
@@ -26,6 +26,19 @@ func main() {
 	noAutoStart := flag.Bool("no-auto-start", false, "serve the dashboard without starting the game browser")
 	replayLog := flag.String("replay-log", "", "stream a captured websocket log instead of launching a browser")
 	replaySpeed := flag.Float64("replay-speed", 0, "capture replay speed multiplier; zero replays immediately")
+	replayReady := flag.Bool("replay-ready", false, "treat an offline replay as a ready game session")
+	replayAcceptOutbound := flag.Bool("replay-accept-outbound", false, "accept replay commands into an offline sink")
+	replayRecordAccepted := flag.Bool("replay-record-accepted", false, "include accepted replay command counts by opcode")
+	hosted := flag.Bool("hosted", false, "run an orchestrator-managed multi-runtime tenant process")
+	tenantConfig := flag.String("tenant-config", os.Getenv("CITADEL_TENANT_CONFIG"), "run the static hosted canary manifest at this path")
+	tenantCellID := flag.String("tenant-cell-id", environmentDefault("CITADEL_TENANT_CELL_ID", "local-cell"), "opaque hosted worker cell id")
+	tenantMaxRuntimes := flag.Int("tenant-max-runtimes", 8, "maximum account runtimes in one hosted process")
+	tenantControlTokenEnv := flag.String("tenant-control-token-env", "CITADEL_TENANT_ORCHESTRATOR_TOKEN", "environment variable containing the hosted orchestrator token")
+	tenantSessionKeyEnv := flag.String("tenant-session-key-env", "CITADEL_TENANT_SESSION_KEY", "environment variable containing the dashboard session signing key")
+	tenantPrivateMetricsURL := flag.String("tenant-private-metrics-url", os.Getenv("CITADEL_PRIVATE_METRICS_URL"), "internal CitadelOpsBackend endpoint for runtime-scoped private metrics")
+	tenantCheckpointURL := flag.String("tenant-dashboard-checkpoint-url", os.Getenv("CITADEL_DASHBOARD_CHECKPOINT_URL"), "internal CitadelOpsBackend endpoint for runtime dashboard checkpoints (requires the private metrics endpoint)")
+	tenantDashboardOrigins := flag.String("tenant-dashboard-origins", os.Getenv("CITADEL_TENANT_DASHBOARD_ORIGINS"), "comma-separated browser origins (for example https://app.citadelops.app) allowed to reach account shards and the tenant login besides same-host requests")
+	tenantInsecureHTTP := flag.Bool("tenant-insecure-http", false, "allow hosted dashboard cookies over plain HTTP for local canary use")
 	flag.Parse()
 
 	rootContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -35,7 +48,15 @@ func main() {
 			log.Printf("Could not remove the previous application binary: %v", err)
 		}
 	}
-	listener, err := listenDashboard(*address)
+	hostedMode := hostedModeEnabled(*hosted, *tenantConfig)
+	listenAddress := resolvedListenAddress(*address, hostedMode, commandLineFlagSet("addr"), os.Getenv("PORT"))
+	var listener net.Listener
+	var err error
+	if hostedMode {
+		listener, err = net.Listen("tcp", listenAddress)
+	} else {
+		listener, err = listenDashboard(listenAddress)
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,10 +65,29 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if hostedMode {
+		if err := runHosted(rootContext, listener, HostedOptions{
+			DataRoot: dataDir, Offline: *offline, StaticConfigPath: *tenantConfig,
+			Dynamic: *hosted, CellID: *tenantCellID, MaxRuntimes: *tenantMaxRuntimes,
+			ControlTokenEnvironment: *tenantControlTokenEnv,
+			SessionKeyEnvironment:   *tenantSessionKeyEnv,
+			PrivateMetricsURL:       *tenantPrivateMetricsURL,
+			CheckpointURL:           *tenantCheckpointURL,
+			DashboardOrigins:        *tenantDashboardOrigins,
+			SecureCookies:           !*tenantInsecureHTTP,
+		}); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 	var transport Session.Transport
 	var chromium *Session.ChromiumConfig
 	if *replayLog != "" {
-		transport = Session.NewReplayTransport(Session.ReplayConfig{Path: *replayLog, Speed: *replaySpeed})
+		transport = Session.NewReplayTransport(Session.ReplayConfig{
+			Path: *replayLog, Speed: *replaySpeed,
+			Ready: *replayReady, AcceptOutbound: *replayAcceptOutbound,
+			RecordAccepted: *replayRecordAccepted,
+		})
 	} else {
 		chromium = &Session.ChromiumConfig{
 			DataDir: dataDir, DashboardURL: dashboardURL,
@@ -97,6 +137,37 @@ func main() {
 	shutdownContext, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	_ = server.Shutdown(shutdownContext)
+	if err := application.Wait(shutdownContext); err != nil {
+		log.Printf("Application shutdown: %v", err)
+	}
+}
+
+func defaultListenAddress() string {
+	return "127.0.0.1:8080"
+}
+
+func resolvedListenAddress(configured string, hosted bool, explicitlySet bool, cloudPort string) string {
+	if hosted && !explicitlySet && cloudPort != "" {
+		return net.JoinHostPort("0.0.0.0", cloudPort)
+	}
+	return configured
+}
+
+func commandLineFlagSet(name string) bool {
+	found := false
+	flag.Visit(func(item *flag.Flag) {
+		if item.Name == name {
+			found = true
+		}
+	})
+	return found
+}
+
+func environmentDefault(name string, fallback string) string {
+	if value := os.Getenv(name); value != "" {
+		return value
+	}
+	return fallback
 }
 
 func listenDashboard(address string) (net.Listener, error) {

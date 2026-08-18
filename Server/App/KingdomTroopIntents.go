@@ -144,7 +144,7 @@ func (application *Application) guardKingdomTroopTargetCap(_ context.Context, ar
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
 	}
-	gameState := application.State.Snapshot()
+	gameState := application.State.ReadOnlyView()
 	source, sourceExists := gameState.Castles[request.SourceCastleID]
 	target, targetExists := gameState.Castles[request.TargetCastleID]
 	if !sourceExists || !targetExists || target.KingdomID != request.TargetKingdomID {
@@ -225,15 +225,21 @@ func kingdomTroopTargetInventory(
 		return 0, err
 	}
 	movementTroops := int64(0)
-	for _, movement := range gameState.Movements {
+	var movementErr error
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.SourceCastleID != target.ID {
-			continue
+			return true
 		}
 		amount, countErr := countMap(movement.Units)
 		if countErr != nil {
-			return 0, countErr
+			movementErr = countErr
+			return false
 		}
 		movementTroops = saturatingTroopAdd(movementTroops, amount)
+		return true
+	})
+	if movementErr != nil {
+		return 0, movementErr
 	}
 	total = saturatingTroopAdd(total, max(traveling, movementTroops))
 	for _, pending := range gameState.KingdomTransport.PendingUnits {
@@ -309,8 +315,8 @@ func (application *Application) consumeKingdomTroopSource(_ context.Context, arg
 		}
 		amounts[unit.UnitID] += unit.Amount
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		source, found := gameState.Castles[request.SourceCastleID]
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentCastles), func(gameState *State.GameState) ([]string, bool, error) {
+		source, found := gameState.MutableCastleParts(request.SourceCastleID, State.CastlePartUnits)
 		if !found {
 			return nil, false, fmt.Errorf("confirmed kingdom troop donor %d is unavailable", request.SourceCastleID)
 		}
@@ -329,7 +335,7 @@ func (application *Application) consumeKingdomTroopSource(_ context.Context, arg
 			}
 		}
 		source.UnitsObservedAt = time.Now().UTC()
-		gameState.Castles[source.ID] = source
+		gameState.SetCastleParts(source.ID, source, State.CastlePartUnits)
 		return []string{"castles", "units", "kingdom-transport"}, true, nil
 	})
 	return err

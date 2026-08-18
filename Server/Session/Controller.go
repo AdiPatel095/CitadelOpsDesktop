@@ -144,8 +144,18 @@ func (controller *Controller) Start(_ context.Context) error {
 	if controller.cancel != nil {
 		transport := controller.transport
 		controller.mu.Unlock()
-		if transport != nil && transport.Status().State == "disconnected" {
+		if transport == nil {
+			return nil
+		}
+		switch state := transport.Status().State; {
+		case state == "disconnected":
 			return transport.Start(controller.root)
+		case state == "error" || state == "unavailable":
+			// A transport that parked its own loop (login failure) restarts
+			// here; one that is still running keeps its session untouched.
+			if reporter, ok := transport.(RunningTransport); ok && !reporter.Running() {
+				return transport.Start(controller.root)
+			}
 		}
 		return nil
 	}
@@ -183,6 +193,40 @@ func (controller *Controller) Start(_ context.Context) error {
 	go controller.run(runContext, runID)
 	controller.applyStatus(controller.transport.Status())
 	return nil
+}
+
+// Reconnect forces a fresh game connection now: an explicit request from the
+// user (Command Center) or the control plane (Account Center) that bypasses a
+// scheduled retry, cooldown wait, or login park. It stops the current session
+// and starts it again; the transport decides what the new attempt yields.
+func (controller *Controller) Reconnect(ctx context.Context) error {
+	if controller == nil {
+		return ErrTransportUnavailable
+	}
+	if err := controller.Stop(ctx); err != nil {
+		return err
+	}
+	controller.mu.Lock()
+	transport := controller.transport
+	controller.mu.Unlock()
+	if holder, ok := transport.(ReconnectHoldTransport); ok {
+		holder.ClearReconnectHold()
+	}
+	return controller.Start(ctx)
+}
+
+// SetReconnectPolicy forwards the disconnect policy to transports that support
+// it; other transports keep their built-in behavior.
+func (controller *Controller) SetReconnectPolicy(policy ReconnectPolicy) {
+	if controller == nil {
+		return
+	}
+	controller.mu.Lock()
+	transport := controller.transport
+	controller.mu.Unlock()
+	if configurable, ok := transport.(ReconnectPolicyTransport); ok {
+		configurable.SetReconnectPolicy(policy)
+	}
 }
 
 func (controller *Controller) Stop(ctx context.Context) error {
@@ -607,7 +651,7 @@ func (controller *Controller) stateSessionConnectionGeneration() uint64 {
 	if controller == nil || controller.state == nil {
 		return 0
 	}
-	return controller.state.Session().ConnectionGeneration
+	return controller.state.IngestObservationView().ConnectionGeneration
 }
 
 func (controller *Controller) applyStatus(status Status) {
@@ -623,7 +667,7 @@ func (controller *Controller) applyStatus(status Status) {
 	if controller.state == nil {
 		return
 	}
-	_, _ = controller.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, _ = controller.state.ApplyComponents(State.Components(State.ComponentSession), func(gameState *State.GameState) ([]string, bool, error) {
 		if status.ConnectionGeneration == 0 {
 			status.ConnectionGeneration = gameState.Session.ConnectionGeneration
 		}
@@ -658,7 +702,8 @@ func (controller *Controller) applyStatus(status Status) {
 			Status:               status.State, LoggedIn: status.LoggedIn, SocketReady: status.SocketReady,
 			BrowserID: status.BrowserID, BrowserName: status.BrowserName,
 			ServerURL: status.ServerURL, Namespace: status.Namespace, Detail: status.Detail,
-			CooldownUntil: status.CooldownUntil, RetryAt: status.RetryAt, ChangedAt: status.ChangedAt,
+			CooldownUntil: status.CooldownUntil, RetryAt: status.RetryAt, LoginFailure: status.LoginFailure,
+			ChangedAt: status.ChangedAt,
 		}
 		if gameState.Session == next {
 			return nil, false, nil

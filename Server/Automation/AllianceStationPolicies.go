@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -59,6 +58,7 @@ func (*AutoBirdPolicy) WakeDomains() []string {
 func (*AutoBirdPolicy) WakeSections() []string { return []string{"automation.autoBird"} }
 
 func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision Decision, err error) {
+
 	if refresh, required := playerProtectionRefreshDecision(snapshot); required {
 		return withAutoBirdSchedule(snapshot, refresh, time.Time{}), nil
 	}
@@ -205,7 +205,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 		operation, tracked := snapshot.State.Stationing[autoBirdTrackingID(castle.ID)]
 		if hasActiveAllianceStationMovement(snapshot.State, castle.ID, allianceHoldings) ||
 			tracked && operation.Purpose == "autoBird" && operation.Phase == "" &&
-				operation.ActiveAt(snapshot.State.Movements, snapshot.Now) {
+				operation.ActiveInState(snapshot.State, snapshot.Now) {
 			continue
 		}
 		if tracked && operation.Purpose == "autoBird" {
@@ -229,7 +229,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 				continue
 			}
 		}
-		if tracked && operation.Purpose != "autoBird" && operation.ActiveAt(snapshot.State.Movements, snapshot.Now) {
+		if tracked && operation.Purpose != "autoBird" && operation.ActiveInState(snapshot.State, snapshot.Now) {
 			continue
 		}
 		return withAutoBirdSchedule(snapshot, autoBirdDiscoverDecision(
@@ -465,12 +465,12 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 		}
 		return Decision{
 			Status: "protected", Detail: detail,
-			NextCheckAt: snapshot.Now.Add(10 * time.Second), Metrics: metrics,
+			EventDriven: true, Metrics: metrics,
 		}, nil
 	}
 	return Decision{
 		Status: "armed", Detail: "Monitoring canonical movement snapshots for incoming attacks",
-		NextCheckAt: snapshot.Now.Add(10 * time.Second), Metrics: metrics,
+		EventDriven: true, Metrics: metrics,
 	}, nil
 }
 
@@ -621,9 +621,9 @@ func incomingThreats(gameState State.GameState, now time.Time) (map[State.Castle
 	count := 0
 	var earliest time.Time
 	var latest time.Time
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if !State.IsIncomingPlayerAttack(gameState, movement, now) {
-			continue
+			return true
 		}
 		impact := movement.ArrivesAt
 		window := result[movement.TargetCastleID]
@@ -643,7 +643,8 @@ func incomingThreats(gameState State.GameState, now time.Time) (map[State.Castle
 		if latest.IsZero() || impact.After(latest) {
 			latest = *impact
 		}
-	}
+		return true
+	})
 	return result, count, earliest, latest
 }
 
@@ -663,21 +664,13 @@ func stationableUnits(snapshot Snapshot, castle State.CastleState, reserves []re
 	if snapshot.GameData == nil {
 		return result
 	}
-	catalog, err := snapshot.GameData.Catalog("units")
-	if err != nil {
-		return result
-	}
 	for _, unitID := range unitIDs {
 		available := castle.Units.Stationed[unitID] - reserved[unitID]
 		if available <= 0 {
 			continue
 		}
-		raw, exists := catalog.Find(strconv.FormatInt(int64(unitID), 10))
-		if !exists {
-			continue
-		}
-		record, err := GameData.DecodeRecord(raw)
-		if err != nil || GameData.IsToolRecord(record) {
+		isTool, exists := snapshot.GameData.UnitIsTool(int64(unitID))
+		if !exists || isTool {
 			continue
 		}
 		result = append(result, stationUnit{UnitID: unitID, Amount: available})
@@ -739,10 +732,10 @@ func expectedAutoBirdReturns(gameState State.GameState, now time.Time) map[State
 		result[operation.SourceCastleID] = operation.ExpectedReturnAt.UTC()
 	}
 	actual := map[State.CastleID]time.Time{}
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		castleID, matches := autoBirdMovementCastle(gameState, movement)
 		if !matches {
-			continue
+			return true
 		}
 		candidate := time.Time{}
 		switch {
@@ -757,7 +750,8 @@ func expectedAutoBirdReturns(gameState State.GameState, now time.Time) map[State
 		if candidate.After(now) && (current.IsZero() || candidate.After(current)) {
 			actual[castleID] = candidate
 		}
-	}
+		return true
+	})
 	for castleID, candidate := range actual {
 		result[castleID] = candidate
 	}
@@ -780,13 +774,13 @@ func earliestAutoBirdReturn(expectedReturns map[State.CastleID]time.Time) (time.
 func nextGameReportedAutoBirdReturn(gameState State.GameState, now time.Time) (time.Time, State.CastleID) {
 	var next time.Time
 	var nextCastleID State.CastleID
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 1 || movement.ReturnsAt == nil {
-			continue
+			return true
 		}
 		castleID, matches := autoBirdMovementCastle(gameState, movement)
 		if !matches {
-			continue
+			return true
 		}
 		candidate := movement.ReturnsAt.UTC()
 		if candidate.After(now) && (next.IsZero() || candidate.Before(next) ||
@@ -794,7 +788,8 @@ func nextGameReportedAutoBirdReturn(gameState State.GameState, now time.Time) (t
 			next = candidate
 			nextCastleID = castleID
 		}
-	}
+		return true
+	})
 	return next, nextCastleID
 }
 
@@ -833,7 +828,7 @@ func autoBirdMovementCastle(gameState State.GameState, movement State.MovementSt
 
 func autoBirdStationActive(gameState State.GameState, castleID State.CastleID, now time.Time) bool {
 	operation := gameState.Stationing["autoBird:"+strconv.FormatInt(int64(castleID), 10)]
-	return operation.ActiveAt(gameState.Movements, now)
+	return operation.ActiveInState(gameState, now)
 }
 
 func hasActiveAllianceStationMovement(gameState State.GameState, castleID State.CastleID, holdings []State.AllianceHolding) bool {
@@ -841,27 +836,30 @@ func hasActiveAllianceStationMovement(gameState State.GameState, castleID State.
 	for _, holding := range holdings {
 		targets[holding.CastleID] = struct{}{}
 	}
-	for _, movement := range gameState.Movements {
+	active := false
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		_, outgoingTarget := targets[movement.TargetCastleID]
 		_, returningSource := targets[movement.SourceCastleID]
 		if (movement.Direction == 0 && movement.SourceCastleID == castleID && outgoingTarget) ||
 			(movement.Direction == 1 && movement.TargetCastleID == castleID && returningSource) {
-			return true
+			active = true
+			return false
 		}
-	}
-	return false
+		return true
+	})
+	return active
 }
 
 func activeTrackedStation(gameState State.GameState, castleID State.CastleID, now time.Time) bool {
 	operation := gameState.Stationing["autoStation:"+strconv.FormatInt(int64(castleID), 10)]
-	return operation.ActiveAt(gameState.Movements, now)
+	return operation.ActiveInState(gameState, now)
 }
 
 func trackedStationMovement(gameState State.GameState, operation State.StationingOperation) (State.MovementState, bool) {
 	if operation.MovementID <= 0 {
 		return State.MovementState{}, false
 	}
-	movement, exists := gameState.Movements[operation.MovementID]
+	movement, exists := gameState.LookupMovement(operation.MovementID)
 	if !exists {
 		return State.MovementState{}, false
 	}

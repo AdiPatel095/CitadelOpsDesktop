@@ -6,7 +6,6 @@ import (
 	"math"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"CitadelDesktop/Server/GameData"
@@ -397,9 +396,10 @@ func craftingOverflowAmount(settings craftingSettings, snapshot Snapshot, castle
 func craftingOverflowPressure(settings craftingSettings, snapshot Snapshot) map[State.ResourceID]bool {
 	result := map[State.ResourceID]bool{}
 	minimum := math.Max(1, float64(settings.MinimumShipmentSize))
+	resourceIDs := sovereignResourceIDs(snapshot.GameData)
 	for _, castleID := range sortedCastleIDs(snapshot.State.Castles) {
 		castle := snapshot.State.Castles[castleID]
-		for _, resourceID := range sovereignResourceIDs(snapshot.GameData) {
+		for _, resourceID := range resourceIDs {
 			balance := castle.Resources[resourceID]
 			if balance.Capacity == nil || *balance.Capacity <= 0 {
 				continue
@@ -417,30 +417,10 @@ func sovereignResourceIDs(store *GameData.Store) []State.ResourceID {
 	if store == nil {
 		return nil
 	}
-	catalog, err := store.Catalog("resources")
-	if err != nil {
-		return nil
-	}
-	byKey := map[string]State.ResourceID{}
-	for _, raw := range catalog.Rows() {
-		record, decodeErr := GameData.DecodeRecord(raw)
-		if decodeErr != nil {
-			continue
-		}
-		key, _ := record.String("JSONKey")
-		switch strings.ToUpper(strings.TrimSpace(key)) {
-		case "C", "O", "G", "I":
-			id, _ := record.Int64("resourceID")
-			if id > 0 {
-				byKey[strings.ToUpper(strings.TrimSpace(key))] = State.ResourceID(id)
-			}
-		}
-	}
-	result := make([]State.ResourceID, 0, len(byKey))
-	for _, key := range []string{"C", "O", "G", "I"} {
-		if id := byKey[key]; id > 0 {
-			result = append(result, id)
-		}
+	ids := store.SovereignResourceIDsView()
+	result := make([]State.ResourceID, 0, len(ids))
+	for _, id := range ids {
+		result = append(result, State.ResourceID(id))
 	}
 	return result
 }
@@ -463,32 +443,26 @@ func craftingPressureResource(store *GameData.Store, recipeID int64, pressured m
 	return 0
 }
 
-func craftingRecipeRecord(store *GameData.Store, recipeID int64) (GameData.Record, bool) {
+func craftingRecipeRecord(store *GameData.Store, recipeID int64) (GameData.CraftingRecipeDefinition, bool) {
 	if store == nil || recipeID <= 0 {
-		return nil, false
+		return GameData.CraftingRecipeDefinition{}, false
 	}
-	catalog, err := store.Catalog("craftingRecipes")
-	if err != nil {
-		return nil, false
-	}
-	raw, exists := catalog.Find(strconv.FormatInt(recipeID, 10))
-	if !exists {
-		return nil, false
-	}
-	record, err := GameData.DecodeRecord(raw)
-	return record, err == nil
+	return store.CraftingRecipeView(recipeID)
 }
 
-func craftingRecipeAvailable(record GameData.Record, recipeID int64, building State.CraftingBuilding, crafting State.CraftingState) bool {
-	queueType, _ := record.Int64("queueTypeId")
-	if int(queueType) != building.QueueTypeID {
+func craftingRecipeAvailable(
+	definition GameData.CraftingRecipeDefinition,
+	recipeID int64,
+	building State.CraftingBuilding,
+	crafting State.CraftingState,
+) bool {
+	if int(definition.QueueTypeID) != building.QueueTypeID {
 		return false
 	}
-	if required, _ := record.String("requiredCraftingBuildings"); strings.TrimSpace(required) != "" {
+	if len(definition.RequiredBuildingWIDs) > 0 {
 		allowed := false
-		for _, value := range strings.FieldsFunc(required, func(character rune) bool { return character == ',' || character == '#' }) {
-			id, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
-			if err == nil && State.BuildingID(id) == building.DefinitionID {
+		for _, definitionID := range definition.RequiredBuildingWIDs {
+			if State.BuildingID(definitionID) == building.DefinitionID {
 				allowed = true
 				break
 			}
@@ -497,25 +471,14 @@ func craftingRecipeAvailable(record GameData.Record, recipeID int64, building St
 			return false
 		}
 	}
-	researchGroupID, _ := record.Int64("researchGroupID")
-	if researchGroupID <= 0 {
+	if definition.ResearchGroupID <= 0 {
 		return true
 	}
 	return containsInt64(crafting.EnabledRecipeIDs, recipeID)
 }
 
-func craftingRecipeIsRuby(record GameData.Record) bool {
-	recipeType, _ := record.String("type")
-	if strings.EqualFold(strings.TrimSpace(recipeType), "ruby") {
-		return true
-	}
-	for field := range record {
-		if strings.EqualFold(field, "costC2") {
-			amount, _ := record.Float64(field)
-			return amount > 0
-		}
-	}
-	return false
+func craftingRecipeIsRuby(definition GameData.CraftingRecipeDefinition) bool {
+	return definition.IsRuby()
 }
 
 func craftingRemainingSeconds(item State.CraftingQueueItem, observedAt time.Time, now time.Time) int {
@@ -529,9 +492,9 @@ func craftingRemainingSeconds(item State.CraftingQueueItem, observedAt time.Time
 	return max(0, remaining)
 }
 
-func craftingRubySkipPrice(record GameData.Record, remainingSec int) int {
-	duration, _ := record.Int64("craftingDuration")
-	fullPrice, _ := record.Int64("skipCostC2")
+func craftingRubySkipPrice(definition GameData.CraftingRecipeDefinition, remainingSec int) int {
+	duration := int(definition.DurationSec)
+	fullPrice := int(definition.SkipCostRubies)
 	if duration <= 0 || fullPrice <= 0 || remainingSec <= 0 {
 		return 0
 	}

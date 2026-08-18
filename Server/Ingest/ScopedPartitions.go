@@ -46,7 +46,7 @@ func scopedPartitionsForFrame(
 			keys = append(keys, scopedCastleDomainPartitions(gameState, castleID, domains)...)
 		}
 	}
-	if containsIngestDomain(domains, "map") {
+	if containsMapIngestDomain(domains) {
 		for _, kingdomID := range scopedMapKingdoms(frame, gameState) {
 			keys = append(keys, State.KingdomPartition(gameState, State.CapabilityWorldMap, kingdomID))
 			if containsKingdomEventDomain(domains) {
@@ -55,6 +55,16 @@ func scopedPartitionsForFrame(
 		}
 	}
 	return keys
+}
+
+func containsMapIngestDomain(domains []string) bool {
+	for _, domain := range domains {
+		domain = strings.ToLower(strings.TrimSpace(domain))
+		if domain == "map" || strings.HasPrefix(domain, "map-") || domain == "storm-scan-progress" {
+			return true
+		}
+	}
+	return false
 }
 
 func protocolFocusSubcontextForFrame(frame Protocol.Frame) State.FocusSubcontext {
@@ -128,11 +138,7 @@ func scopedMapKingdoms(frame Protocol.Frame, gameState State.GameState) []State.
 		}
 		payload = nested
 	}
-	kingdoms := make([]State.KingdomID, 0, len(gameState.Map))
-	for kingdomID := range gameState.Map {
-		kingdoms = append(kingdoms, kingdomID)
-	}
-	return kingdoms
+	return gameState.MapKingdomIDs()
 }
 
 func containsKingdomEventDomain(domains []string) bool {

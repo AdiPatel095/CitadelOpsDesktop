@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"sync"
 	"time"
 
@@ -35,11 +34,8 @@ func newMovementReducer(authoritative bool) Reducer {
 		if authoritative && !fullSnapshot {
 			return nil, false, fmt.Errorf("gam response does not contain a movement array")
 		}
-		before := gameState.Movements
-		next := make(map[State.MovementID]State.MovementState, len(before)+len(items))
-		for id, movement := range before {
-			next[id] = movement
-		}
+		before := gameState.MovementViewMap()
+		next := before
 		if authoritative {
 			snapshotMu.Lock()
 			connectionGeneration := gameState.Session.ConnectionGeneration
@@ -82,17 +78,20 @@ func newMovementReducer(authoritative bool) Reducer {
 			next[movement.ID] = movement
 		}
 		khanChanged := reconcileKhanTaunts(gameState, next, frame.ReceivedAt, authoritative)
-		movementChanged := !reflect.DeepEqual(before, next)
+		movementChanged := gameState.ReplaceMovements(next)
 		if authoritative {
 			gameState.MovementSnapshot.Version++
+			gameState.MovementSnapshot.ConnectionGeneration = gameState.Session.ConnectionGeneration
 			gameState.MovementSnapshot.ObservedAt = frame.ReceivedAt
 		}
 		if !movementChanged && !authoritative && !khanChanged {
 			return nil, false, nil
 		}
-		gameState.Movements = next
 		syncCommanderAvailability(gameState)
-		domains := []string{"movements", "commanders", "movement-snapshot"}
+		domains := []string{"movements", "commanders"}
+		if authoritative {
+			domains = append(domains, "movement-snapshot")
+		}
 		if khanChanged {
 			domains = append(domains, "khan", "event-scores")
 		}
@@ -133,10 +132,10 @@ func reduceMovementRemoval(
 		return nil, false, fmt.Errorf("decode movement removal: %w", err)
 	}
 	id := State.MovementID(payload.ID)
-	if _, exists := gameState.Movements[id]; !exists {
+	if _, exists := gameState.LookupMovement(id); !exists {
 		return nil, false, nil
 	}
-	delete(gameState.Movements, id)
+	gameState.DeleteMovement(id)
 	khanChanged := resolveKhanTaunt(gameState, id, frame.ReceivedAt)
 	syncCommanderAvailability(gameState)
 	domains := []string{"movements", "commanders"}
@@ -157,18 +156,23 @@ func ReconcileExpiredMovements(gameState *State.GameState, now time.Time) bool {
 		now = time.Now().UTC()
 	}
 	changed := false
-	for id, movement := range gameState.Movements {
+	removals := []State.MovementID{}
+	gameState.RangeMovements(func(id State.MovementID, movement State.MovementState) bool {
 		owned := movementBelongsToCurrentPlayer(gameState, movement)
 		if movementActiveAt(movement, now) || owned && (movement.CommanderID != nil &&
 			State.CommanderMovementActiveAt(movement, now) || movement.MarketBarrows > 0 &&
 			State.MarketBarrowMovementActiveAt(movement, now) ||
 			State.TrackedStationMovementActiveAt(*gameState, movement, now)) {
-			continue
+			return true
 		}
 		reconcileReturnedMovementUnits(gameState, movement)
-		delete(gameState.Movements, id)
+		removals = append(removals, id)
 		resolveKhanTaunt(gameState, id, now)
 		changed = true
+		return true
+	})
+	for _, id := range removals {
+		gameState.DeleteMovement(id)
 	}
 	for id, commander := range gameState.Commanders {
 		available := commanderAvailableAt(gameState, id, now)
@@ -196,7 +200,7 @@ func reconcileReturnedMovementUnits(gameState *State.GameState, movement State.M
 		!movementBelongsToCurrentPlayer(gameState, movement) {
 		return false
 	}
-	castle, exists := gameState.Castles[movement.TargetCastleID]
+	castle, exists := gameState.MutableCastleParts(movement.TargetCastleID, State.CastlePartUnits)
 	if !exists || !castle.UnitsObservedAt.IsZero() &&
 		!castle.UnitsObservedAt.Before(movement.ReturnsAt.UTC()) {
 		return false
@@ -216,7 +220,7 @@ func reconcileReturnedMovementUnits(gameState *State.GameState, movement State.M
 			castle.Units.Traveling[unitID] = remaining
 		}
 	}
-	gameState.Castles[movement.TargetCastleID] = castle
+	gameState.SetCastleParts(movement.TargetCastleID, castle, State.CastlePartUnits)
 	return true
 }
 
@@ -494,7 +498,7 @@ func isKhanTauntMovement(gameState *State.GameState, movement State.MovementStat
 	if gameState.Khan.TargetX != 0 || gameState.Khan.TargetY != 0 {
 		return movement.SourceX == gameState.Khan.TargetX && movement.SourceY == gameState.Khan.TargetY
 	}
-	_, active := gameState.EventScores.ByEvent[72]
+	_, active := gameState.LookupScalableEventScore(72)
 	return active
 }
 

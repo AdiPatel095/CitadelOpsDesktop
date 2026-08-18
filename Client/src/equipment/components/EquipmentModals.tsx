@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpCircle, Gem, RefreshCw, Shield, Sparkles, Trash2, TriangleAlert } from 'lucide-react';
 import { Badge, Button, Input, Modal, PillSelector, Switch } from '../../components/ui';
-import type { EquipmentEventAvailability, EquipmentEventKey } from '../EquipmentEventLoadouts';
+import {
+	equipmentEventTierOrder,
+	type EquipmentEventAvailability,
+	type EquipmentEventKey,
+	type EquipmentEventTier,
+} from '../EquipmentEventLoadouts';
 import type { EquipmentLeader, EquipmentSlotRow } from './EquipmentTypes';
 
 export type SaleCategory =
@@ -206,15 +211,26 @@ export function EquipmentEventModal({
 	leader: EquipmentLeader | null;
 	availability: EquipmentEventAvailability[];
 	onClose: () => void;
-	onConfirm: (event: EquipmentEventKey) => void;
+	onConfirm: (event: EquipmentEventKey, tier?: EquipmentEventTier) => void;
 	busy: boolean;
 }) {
 	const [selectedEvent, setSelectedEvent] = useState<EquipmentEventKey | null>(null);
+	const [selectedTier, setSelectedTier] = useState<EquipmentEventTier | null>(null);
 	useEffect(() => {
-		if (isOpen) setSelectedEvent(null);
+		if (!isOpen) return;
+		setSelectedEvent(null);
+		setSelectedTier(null);
 	}, [isOpen, leader?.id]);
 	const selected = availability.find((entry) => entry.option.value === selectedEvent);
-	const canApply = selected != null && selected.equipmentCount > 0 && leader?.available === true;
+	const tierRequired = (selected?.sets.length ?? 0) > 1;
+	const selectedSet = tierRequired
+		? selected?.sets.find((candidate) => candidate.tier === selectedTier)
+		: selected;
+	const canApply = selectedSet != null && selectedSet.equipmentCount > 0 && leader?.available === true;
+	const selectEvent = (entry: EquipmentEventAvailability) => {
+		setSelectedEvent(entry.option.value);
+		setSelectedTier(entry.sets.length > 1 ? entry.tier ?? null : null);
+	};
 
 	return (
 		<Modal
@@ -227,10 +243,10 @@ export function EquipmentEventModal({
 					<Button variant="ghost" onClick={onClose}>Cancel</Button>
 					<Button
 						disabled={!canApply}
-						onClick={() => selectedEvent && onConfirm(selectedEvent)}
+						onClick={() => selectedEvent && onConfirm(selectedEvent, selectedTier ?? undefined)}
 						isLoading={busy}
 					>
-						Apply Event Set
+						Apply{selectedTier ? ` ${selectedTier}` : ''} Event Set
 					</Button>
 				</>
 			)}
@@ -258,39 +274,57 @@ export function EquipmentEventModal({
 				<div className="space-y-2">
 					{availability.map((entry) => {
 						const isSelected = selectedEvent === entry.option.value;
+						const displayedSet = isSelected && selectedSet ? selectedSet : entry;
+						const hasTierChoice = entry.sets.length > 1;
 						return (
-							<button
-								type="button"
+							<div
 								key={entry.option.value}
-								onClick={() => setSelectedEvent(entry.option.value)}
-								className={`w-full rounded-global border p-3 text-left transition-colors ${isSelected ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
+								className={`overflow-hidden rounded-global border transition-colors ${isSelected ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
 							>
-								<span className="flex items-start gap-3">
-									<span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${isSelected ? 'border-primary bg-primary shadow-[inset_0_0_0_3px_var(--bg-app)]' : 'border-border-base'}`} />
-									<span className="min-w-0 flex-1">
-										<span className="flex flex-wrap items-center gap-2">
-											<span className="text-sm font-semibold text-text-main">{entry.option.label}</span>
-											{entry.tier && <Badge variant="secondary">{entry.tier}</Badge>}
-											{entry.complete && <Badge variant="success">Complete</Badge>}
-										</span>
-										<span className="mt-1 block text-xs text-text-muted">{entry.option.description}</span>
-										<span className="mt-2 flex flex-wrap gap-2">
-											<Badge variant={entry.equipmentCount === 5 ? 'success' : entry.equipmentCount > 0 ? 'warning' : 'outline'}>
-												{entry.equipmentCount}/5 equipment
-											</Badge>
-											<Badge variant={entry.gemCount === 4 ? 'success' : entry.gemCount > 0 ? 'warning' : 'outline'}>
-												{entry.gemCount}/4 gems
-											</Badge>
+								<button type="button" onClick={() => selectEvent(entry)} className="w-full p-3 text-left">
+									<span className="flex items-start gap-3">
+										<span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${isSelected ? 'border-primary bg-primary shadow-[inset_0_0_0_3px_var(--bg-app)]' : 'border-border-base'}`} />
+										<span className="min-w-0 flex-1">
+											<span className="flex flex-wrap items-center gap-2">
+												<span className="text-sm font-semibold text-text-main">{entry.option.label}</span>
+												{hasTierChoice && <Badge variant="secondary">{isSelected && selectedTier ? selectedTier : `${entry.sets.length} tiers`}</Badge>}
+												{displayedSet.complete && <Badge variant="success">Complete</Badge>}
+											</span>
+											<span className="mt-1 block text-xs text-text-muted">{entry.option.description}</span>
+											<span className="mt-2 flex flex-wrap gap-2">
+												<Badge variant={displayedSet.equipmentCount === 5 ? 'success' : displayedSet.equipmentCount > 0 ? 'warning' : 'outline'}>
+													{displayedSet.equipmentCount}/5 equipment
+												</Badge>
+												<Badge variant={displayedSet.gemCount === 4 ? 'success' : displayedSet.gemCount > 0 ? 'warning' : 'outline'}>
+													{displayedSet.gemCount}/4 gems
+												</Badge>
+											</span>
 										</span>
 									</span>
-								</span>
-							</button>
+								</button>
+								{isSelected && hasTierChoice && (
+									<div className="border-t border-primary/20 px-3 pb-3 pt-2.5">
+										<div className="mb-2 flex items-center justify-between gap-3">
+											<span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Set tier</span>
+											<span className="text-[11px] text-text-muted">Equip only this tier</span>
+										</div>
+										<PillSelector
+											ariaLabel={`${entry.option.label} equipment tier`}
+											value={selectedTier ?? ''}
+											onChange={(value) => setSelectedTier(value as EquipmentEventTier)}
+											options={equipmentEventTierOrder}
+											size="body"
+											fullWidth
+										/>
+									</div>
+								)}
+							</div>
 						);
 					})}
 				</div>
 
-				{selected && selected.equipmentCount === 0 && (
-					<p className="text-center text-xs text-warning">No eligible {selected.option.label} equipment is currently available.</p>
+				{selected && selectedSet && selectedSet.equipmentCount === 0 && (
+					<p className="text-center text-xs text-warning">No eligible {selectedTier ? `${selectedTier} ` : ''}{selected.option.label} equipment is currently available.</p>
 				)}
 				{leader && !leader.available && (
 					<p className="text-center text-xs text-warning">This commander is busy and cannot be reconfigured.</p>

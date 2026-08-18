@@ -54,6 +54,36 @@ func TestProductionSnapshotUsesFocusedCastleAndPreservesCapacity(t *testing.T) {
 	}
 }
 
+func TestProductionSnapshotCountsEmptyEffectSlotsAsCapacity(t *testing.T) {
+	// Capacity effects (event boosters, premium slot purchases, castellan
+	// bonuses) grant slots that arrive in QS as entries with no product and
+	// no rental or VIP flag. Every owned slot is capacity, occupied or not.
+	gameState := State.NewGameState()
+	castle := newCastleState(88)
+	castle.Focused = true
+	gameState.Castles[castle.ID] = castle
+	responseCode := 0
+	frame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "spl", ResponseCode: &responseCode,
+		ReceivedAt: time.Date(2026, 8, 17, 12, 0, 0, 0, time.UTC),
+		Payload: json.RawMessage(`{
+			"PS":{"WID":489,"TUA":6,"RCT":75,"PID":11},
+			"QS":[{"P":{"WID":489,"TUA":100,"PID":12}},{},{"SI":{"VIP":1}},{"SI":{"RUT":900}},{}],
+			"LID":0
+		}`),
+	}
+	if _, changed, err := reduceProductionSnapshot(context.Background(), frame, &gameState, nil); err != nil || !changed {
+		t.Fatalf("reduce production snapshot changed=%t err=%v", changed, err)
+	}
+	queue := gameState.Castles[88].Production[0]
+	if queue.Capacity != 5 {
+		t.Fatalf("capacity = %d, want 5 (one occupied + two plain empty + one empty VIP + one empty rented)", queue.Capacity)
+	}
+	if len(queue.Queued) != 1 {
+		t.Fatalf("queued = %d, want 1", len(queue.Queued))
+	}
+}
+
 func TestProductionSnapshotPreservesRequestedAllianceHelpByProductionID(t *testing.T) {
 	gameState := State.NewGameState()
 	castle := newCastleState(77)
@@ -377,5 +407,60 @@ func TestProductionCommandLearnsSessionKeyFromOutboundFrame(t *testing.T) {
 	}
 	if gameState.CommandContext.ProductionObservedAt == nil || !gameState.CommandContext.ProductionObservedAt.Equal(frame.ReceivedAt) {
 		t.Fatalf("unexpected observed time: %v", gameState.CommandContext.ProductionObservedAt)
+	}
+}
+
+func TestProductionLearnedStackHighWaterAndSubscriptionScopeReset(t *testing.T) {
+	gameState := State.NewGameState()
+	castle := newCastleState(77)
+	castle.Focused = true
+	gameState.Castles[castle.ID] = castle
+	gameState.Subscriptions = map[int]State.SubscriptionState{
+		7: {TypeID: 7, RemainingSec: 86400},
+	}
+	responseCode := 0
+	snapshot := func(amount int64) Protocol.Frame {
+		payload, _ := json.Marshal(map[string]any{
+			"PS":  map[string]any{"WID": 489, "TUA": amount, "RCT": 75, "PID": 11},
+			"QS":  []any{map[string]any{"P": map[string]any{"WID": 489, "TUA": amount, "PID": 12}}},
+			"LID": 0,
+		})
+		return Protocol.Frame{
+			Direction: Protocol.DirectionInbound, Opcode: "spl", ResponseCode: &responseCode,
+			ReceivedAt: time.Date(2026, 8, 17, 12, 0, 0, 0, time.UTC), Payload: payload,
+		}
+	}
+
+	// A subscription-sized stack teaches the high-water mark for unit 489.
+	if _, _, err := reduceProductionSnapshot(context.Background(), snapshot(260), &gameState, nil); err != nil {
+		t.Fatalf("reduce first snapshot: %v", err)
+	}
+	queue := gameState.Castles[77].Production[0]
+	if queue.LearnedStacks[489] != 260 || queue.LearnedStackScope != "sub:7" {
+		t.Fatalf("learned = %v scope %q, want 489→260 under sub:7", queue.LearnedStacks, queue.LearnedStackScope)
+	}
+
+	// Smaller stacks must NOT ratchet the learned size down while the
+	// subscription set is unchanged.
+	if _, _, err := reduceProductionSnapshot(context.Background(), snapshot(220), &gameState, nil); err != nil {
+		t.Fatalf("reduce second snapshot: %v", err)
+	}
+	queue = gameState.Castles[77].Production[0]
+	if queue.LearnedStacks[489] != 260 {
+		t.Fatalf("learned after smaller stacks = %v, want 489 held at 260", queue.LearnedStacks)
+	}
+	if len(queue.Queued) != 1 || queue.Queued[0].Amount != 220 {
+		t.Fatalf("live queue should reflect the observed 220 stack: %#v", queue.Queued)
+	}
+
+	// A lapsed subscription changes the scope: stale learned values are
+	// discarded and the line re-learns from the live (smaller) stacks.
+	gameState.Subscriptions = nil
+	if _, _, err := reduceProductionSnapshot(context.Background(), snapshot(220), &gameState, nil); err != nil {
+		t.Fatalf("reduce post-lapse snapshot: %v", err)
+	}
+	queue = gameState.Castles[77].Production[0]
+	if queue.LearnedStacks[489] != 220 || queue.LearnedStackScope != "" {
+		t.Fatalf("post-lapse learned = %v scope %q, want re-learned 489→220 under empty scope", queue.LearnedStacks, queue.LearnedStackScope)
 	}
 }

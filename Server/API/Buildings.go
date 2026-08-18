@@ -28,7 +28,7 @@ func (server *Server) handleBuildingPreview(writer http.ResponseWriter, request 
 		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
 		return
 	}
-	result, err := Buildings.Preview(server.config.State.Snapshot(), gameData, input)
+	result, err := Buildings.Preview(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		var mismatch Buildings.RevisionMismatchError
 		if errors.As(err, &mismatch) {
@@ -57,7 +57,7 @@ func (server *Server) handleExpansionPreview(writer http.ResponseWriter, request
 		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
 		return
 	}
-	result, err := Buildings.PreviewExpansion(server.config.State.Snapshot(), gameData, input)
+	result, err := Buildings.PreviewExpansion(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		var mismatch Buildings.RevisionMismatchError
 		if errors.As(err, &mismatch) {
@@ -86,7 +86,7 @@ func (server *Server) handleBuildingTargetDiff(writer http.ResponseWriter, reque
 		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
 		return
 	}
-	result, err := Buildings.CompileTargetDiff(server.config.State.Snapshot(), gameData, input)
+	result, err := Buildings.CompileTargetDiff(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		var mismatch Buildings.RevisionMismatchError
 		if errors.As(err, &mismatch) {
@@ -115,7 +115,7 @@ func (server *Server) handleBuildingTargetCapture(writer http.ResponseWriter, re
 		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
 		return
 	}
-	result, err := Buildings.CaptureTarget(server.config.State.Snapshot(), gameData, input)
+	result, err := Buildings.CaptureTarget(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		var mismatch Buildings.RevisionMismatchError
 		if errors.As(err, &mismatch) {
@@ -144,7 +144,7 @@ func (server *Server) handleBuildingBlueprintDiff(writer http.ResponseWriter, re
 		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
 		return
 	}
-	result, err := Buildings.CompileBlueprintDiff(server.config.State.Snapshot(), gameData, input)
+	result, err := Buildings.CompileBlueprintDiff(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		var mismatch Buildings.RevisionMismatchError
 		if errors.As(err, &mismatch) {

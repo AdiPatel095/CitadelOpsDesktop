@@ -25,7 +25,7 @@ func ParseBattleCapture(capture State.BattleReportCapture, ownPlayerID State.Pla
 			Name       string `json:"N"`
 			DefenderID int64  `json:"DP"`
 			TypeID     int    `json:"AT"`
-			KingdomID  int    `json:"K"`
+			KingdomID  *int   `json:"K"`
 			X          int    `json:"X"`
 			Y          int    `json:"Y"`
 		} `json:"AI"`
@@ -100,6 +100,11 @@ func ParseBattleCapture(capture State.BattleReportCapture, ownPlayerID State.Pla
 	if capturedAt.IsZero() {
 		capturedAt = time.Now().UTC()
 	}
+	kingdomID := 0
+	kingdomKnown := summary.Target.KingdomID != nil
+	if kingdomKnown {
+		kingdomID = *summary.Target.KingdomID
+	}
 	id := fmt.Sprintf("%d-%d", summary.MID, summary.LID)
 	eventOccurrenceEndsAt := ""
 	if !capture.EventOccurrenceEndsAt.IsZero() {
@@ -113,7 +118,7 @@ func ParseBattleCapture(capture State.BattleReportCapture, ownPlayerID State.Pla
 		ID: id, ReportID: id, BattleKey: capture.BattleKey, AutomationFeature: string(capture.AutomationFeature), MID: summary.MID, LID: summary.LID,
 		MovementID: int64(capture.MovementID), EventID: capture.EventID, EventActivity: string(capture.EventActivity),
 		EventOccurrenceEndsAt: eventOccurrenceEndsAt, ToolsUsed: capture.ToolsUsed,
-		KingdomID: summary.Target.KingdomID, TargetX: summary.Target.X, TargetY: summary.Target.Y,
+		KingdomID: kingdomID, KingdomKnown: kingdomKnown, TargetX: summary.Target.X, TargetY: summary.Target.Y,
 		TargetName: summary.Target.Name, CastleName: summary.Target.Name,
 		BattleTypeID: summary.TypeID, BattleType: fmt.Sprintf("Type %d", summary.TypeID),
 		TargetTypeID: summary.Target.TypeID, TargetType: targetType, OccurredAt: capturedAt.Format(time.RFC3339),
@@ -122,12 +127,18 @@ func ParseBattleCapture(capture State.BattleReportCapture, ownPlayerID State.Pla
 	}
 	if role == "attacker" {
 		report.Loot = parseBattleLoot(summary.Participants, int64(ownPlayerID))
-		if summary.Target.KingdomID == GameData.BerimondKingdomID &&
+		if kingdomID == GameData.BerimondKingdomID &&
 			summary.Target.TypeID == AttackCapacity.BerimondTowerMapTypeID {
 			report.GallantryPoints = parseBattleGallantry(summary.Participants, int64(ownPlayerID))
 		}
 	}
 	report.TopUnits = parseBattleUnits(capture.Details, attackerID, defenderID)
+	report.Waves = parseBattleWaves(capture.Details, attackerID, defenderID)
+	report.SupportTools = parseBattleTools(capture.Details, report.Waves, attackerID, defenderID)
+	report.CommanderEffects, report.CastellanEffects = parseBattleEffects(capture.Waves)
+	if len(report.CommanderEffects) == 0 && len(report.CastellanEffects) == 0 {
+		report.CommanderEffects, report.CastellanEffects = parseBattleEffects(capture.Summary)
+	}
 	return report, nil
 }
 

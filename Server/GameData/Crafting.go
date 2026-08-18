@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"unicode"
 )
@@ -48,6 +47,18 @@ type CraftingRecipeCost struct {
 	Amount     float64 `json:"amount"`
 }
 
+func (definition CraftingRecipeDefinition) IsRuby() bool {
+	if strings.EqualFold(strings.TrimSpace(definition.Type), "ruby") {
+		return true
+	}
+	for _, cost := range definition.Costs {
+		if strings.EqualFold(strings.TrimSpace(cost.JSONKey), "C2") && cost.Amount > 0 {
+			return true
+		}
+	}
+	return false
+}
+
 type CraftingCatalog struct {
 	Recipes      []CraftingRecipe            `json:"recipes"`
 	Resources    map[string]CraftingResource `json:"resources"`
@@ -58,28 +69,70 @@ type CraftingCatalog struct {
 // currency IDs used by live state. Recipe fields use names such as costGlass,
 // while resource snapshots use compact JSON keys such as G.
 func CraftingRecipeCosts(store *Store, recipeID int64) ([]CraftingRecipeCost, error) {
-	if store == nil || recipeID <= 0 {
-		return nil, fmt.Errorf("official game data is unavailable")
-	}
-	recipes, err := store.Catalog("craftingRecipes")
+	costs, err := CraftingRecipeCostsView(store, recipeID)
 	if err != nil {
 		return nil, err
 	}
-	raw, exists := recipes.Find(strconv.FormatInt(recipeID, 10))
+	return append([]CraftingRecipeCost(nil), costs...), nil
+}
+
+// CraftingRecipeCostsView returns an immutable Store-owned cost slice. Trusted
+// backend callers may read it without allocating but must not modify it.
+func CraftingRecipeCostsView(store *Store, recipeID int64) ([]CraftingRecipeCost, error) {
+	if store == nil || recipeID <= 0 {
+		return nil, fmt.Errorf("official game data is unavailable")
+	}
+	store.ensureCraftingDefinitions()
+	if store.craftingDefinitionsErr != nil {
+		return nil, store.craftingDefinitionsErr
+	}
+	if err := store.craftingDefinitionErrors[recipeID]; err != nil {
+		return nil, err
+	}
+	definition, exists := store.craftingDefinitionsByID[recipeID]
 	if !exists {
 		return nil, fmt.Errorf("crafting recipe %d is not in the official catalog", recipeID)
 	}
-	recipe, err := DecodeRecord(raw)
-	if err != nil {
-		return nil, fmt.Errorf("decode crafting recipe %d: %w", recipeID, err)
-	}
+	return definition.Costs, nil
+}
 
-	type costDefinition struct {
-		jsonKey    string
-		resourceID int64
-		currencyID int64
+// CraftingRecipeView returns one immutable Store-owned recipe projection.
+func (store *Store) CraftingRecipeView(recipeID int64) (CraftingRecipeDefinition, bool) {
+	if store == nil || recipeID <= 0 {
+		return CraftingRecipeDefinition{}, false
 	}
-	definitions := map[string]costDefinition{}
+	store.ensureCraftingDefinitions()
+	if store.craftingDefinitionsErr != nil || store.craftingDefinitionErrors[recipeID] != nil {
+		return CraftingRecipeDefinition{}, false
+	}
+	definition, found := store.craftingDefinitionsByID[recipeID]
+	return definition, found
+}
+
+// CraftingRecipesView returns every valid immutable runtime recipe projection.
+// Callers must not modify the slice or either nested slice.
+func (store *Store) CraftingRecipesView() []CraftingRecipeDefinition {
+	if store == nil {
+		return nil
+	}
+	store.ensureCraftingDefinitions()
+	return store.craftingDefinitions
+}
+
+func (store *Store) ensureCraftingDefinitions() {
+	store.craftingDefinitionsOnce.Do(store.loadCraftingDefinitions)
+}
+
+type craftingCostSource struct {
+	jsonKey    string
+	resourceID int64
+	currencyID int64
+}
+
+func (store *Store) loadCraftingDefinitions() {
+	store.craftingDefinitionsByID = map[int64]CraftingRecipeDefinition{}
+	store.craftingDefinitionErrors = map[int64]error{}
+	costSources := map[string]craftingCostSource{}
 	for _, collection := range []string{"resources", "currencies"} {
 		catalog, catalogErr := store.Catalog(collection)
 		if catalogErr != nil {
@@ -92,48 +145,85 @@ func CraftingRecipeCosts(store *Store, recipeID int64) ([]CraftingRecipeCost, er
 			}
 			jsonKey, _ := record.String("JSONKey")
 			nameField := "name"
-			definition := costDefinition{jsonKey: jsonKey}
+			source := craftingCostSource{jsonKey: jsonKey}
 			if collection == "resources" {
-				definition.resourceID, _ = record.Int64("resourceID")
+				source.resourceID, _ = record.Int64("resourceID")
 			} else {
 				nameField = "Name"
-				definition.currencyID, _ = record.Int64("currencyID")
+				source.currencyID, _ = record.Int64("currencyID")
 			}
 			name, _ := record.String(nameField)
 			assetName, _ := record.String("assetName")
 			for _, alias := range []string{jsonKey, name, assetName} {
 				alias = strings.ToLower(strings.TrimSpace(alias))
 				if alias != "" {
-					definitions[alias] = definition
+					costSources[alias] = source
 				}
 			}
 		}
 	}
 
-	fields := make([]string, 0)
-	for field := range recipe {
-		if strings.HasPrefix(field, "cost") && field != "cost" {
-			fields = append(fields, field)
-		}
+	recipes, err := store.Catalog("craftingRecipes")
+	if err != nil {
+		store.craftingDefinitionsErr = err
+		return
 	}
-	sort.Strings(fields)
-	costs := make([]CraftingRecipeCost, 0, len(fields))
-	for _, field := range fields {
-		amount, valid := recipe.Float64(field)
-		if !valid || amount <= 0 {
+	for _, raw := range recipes.Rows() {
+		record, decodeErr := DecodeRecord(raw)
+		if decodeErr != nil {
 			continue
 		}
-		alias := strings.ToLower(strings.TrimSpace(strings.TrimPrefix(field, "cost")))
-		definition, found := definitions[alias]
-		if !found || definition.resourceID <= 0 && definition.currencyID <= 0 {
-			return nil, fmt.Errorf("crafting recipe %d cost field %s has no official resource mapping", recipeID, field)
+		recipeID, hasID := record.Int64("craftingRecipeId")
+		if !hasID || recipeID <= 0 {
+			continue
 		}
-		costs = append(costs, CraftingRecipeCost{
-			Field: field, JSONKey: definition.jsonKey, ResourceID: definition.resourceID,
-			CurrencyID: definition.currencyID, Amount: amount,
-		})
+		definition := CraftingRecipeDefinition{ID: recipeID}
+		queueTypeID, _ := record.Int64("queueTypeId")
+		definition.QueueTypeID = queueTypeID
+		definition.GroupID, _ = record.Int64("recipeGroupID")
+		definition.ResearchGroupID, _ = record.Int64("researchGroupID")
+		definition.Level, _ = record.Int64("level")
+		definition.Type, _ = record.String("type")
+		definition.DurationSec, _ = record.Int64("craftingDuration")
+		definition.SkipCostRubies, _ = record.Int64("skipCostC2")
+		required, _ := record.String("requiredCraftingBuildings")
+		definition.RequiredBuildingWIDs = commaSeparatedInts(required)
+
+		fields := make([]string, 0)
+		for field := range record {
+			if strings.HasPrefix(field, "cost") && field != "cost" {
+				fields = append(fields, field)
+			}
+		}
+		sort.Strings(fields)
+		for _, field := range fields {
+			amount, valid := record.Float64(field)
+			if !valid || amount <= 0 {
+				continue
+			}
+			alias := strings.ToLower(strings.TrimSpace(strings.TrimPrefix(field, "cost")))
+			source, found := costSources[alias]
+			if !found || source.resourceID <= 0 && source.currencyID <= 0 {
+				store.craftingDefinitionErrors[recipeID] = fmt.Errorf(
+					"crafting recipe %d cost field %s has no official resource mapping", recipeID, field,
+				)
+				break
+			}
+			definition.Costs = append(definition.Costs, CraftingRecipeCost{
+				Field: field, JSONKey: source.jsonKey, ResourceID: source.resourceID,
+				CurrencyID: source.currencyID, Amount: amount,
+			})
+		}
+		store.craftingDefinitionsByID[recipeID] = definition
 	}
-	return costs, nil
+	for recipeID, definition := range store.craftingDefinitionsByID {
+		if store.craftingDefinitionErrors[recipeID] == nil {
+			store.craftingDefinitions = append(store.craftingDefinitions, definition)
+		}
+	}
+	sort.Slice(store.craftingDefinitions, func(left, right int) bool {
+		return store.craftingDefinitions[left].ID < store.craftingDefinitions[right].ID
+	})
 }
 
 func (manager *Manager) CraftingCatalog() (CraftingCatalog, error) {

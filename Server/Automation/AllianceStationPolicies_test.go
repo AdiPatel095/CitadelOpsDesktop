@@ -715,6 +715,18 @@ func TestAutoStationUsesOnlyOpenGatesDuringPurchasedProtectionMode(t *testing.T)
 	}
 }
 
+func TestAutoStationArmedStateWaitsForTargetedStateWake(t *testing.T) {
+	now := time.Date(2026, 8, 14, 12, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Status != "armed" || !decision.EventDriven || !decision.NextCheckAt.IsZero() {
+		t.Fatalf("passive Auto Station decision = %#v", decision)
+	}
+}
+
 func TestAutoStationNeverFallsBackToStationingWithoutOpenGateOptIn(t *testing.T) {
 	now := time.Date(2026, 7, 22, 9, 0, 0, 0, time.UTC)
 	arrives := now.Add(30 * time.Second)

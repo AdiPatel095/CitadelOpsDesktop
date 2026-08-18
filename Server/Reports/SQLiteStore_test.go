@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -402,5 +403,141 @@ func TestSQLiteStoreMigratesCanonicalRowsToPvEAndCloudOutbox(t *testing.T) {
 	}
 	if columns["report_json"] || !columns["gallantry_points"] || !columns["troops_sent"] {
 		t.Fatalf("unexpected compact migration columns: %#v", columns)
+	}
+}
+
+func TestAnalyticsGenerationAdvancesOnlyOnCommittedAnalyticsWrites(t *testing.T) {
+	store, err := OpenSQLiteStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	initial := store.AnalyticsGeneration()
+	report := BattleReport{
+		ID: "generation-1", AccountUID: 7001, WorldID: "world.example", PlayerID: 42,
+		AutomationFeature: "autoTowers", OccurredAt: time.Now().UTC().Format(time.RFC3339Nano),
+		Result: "Victory", Role: "attacker", Attacker: &BattleCombatant{PlayerID: 42},
+	}
+	if err := store.Save(context.Background(), report); err != nil {
+		t.Fatal(err)
+	}
+	afterSave := store.AnalyticsGeneration()
+	if afterSave <= initial {
+		t.Fatalf("generation did not advance after Save: %d -> %d", initial, afterSave)
+	}
+	if err := store.Save(context.Background(), BattleReport{}); err == nil {
+		t.Fatal("empty report was accepted")
+	}
+	pvp := report
+	pvp.ID = "generation-pvp"
+	pvp.Defender = &BattleCombatant{PlayerID: 77}
+	if err := store.Save(context.Background(), pvp); err != nil {
+		t.Fatal(err)
+	}
+	if store.AnalyticsGeneration() != afterSave {
+		t.Fatalf("generation advanced without an analytics write: %d -> %d", afterSave, store.AnalyticsGeneration())
+	}
+	second := report
+	second.ID = "generation-2"
+	if err := store.SaveMany(context.Background(), []BattleReport{report, second}); err != nil {
+		t.Fatal(err)
+	}
+	if store.AnalyticsGeneration() != afterSave+1 {
+		t.Fatalf("SaveMany generation = %d, want %d", store.AnalyticsGeneration(), afterSave+1)
+	}
+	if err := store.SaveMany(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+	if store.AnalyticsGeneration() != afterSave+1 {
+		t.Fatal("empty SaveMany advanced the analytics generation")
+	}
+}
+
+func TestRecentFeatureAnalyticsMatchesRecentAttackerRows(t *testing.T) {
+	store, err := OpenSQLiteStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	now := time.Now().UTC()
+	reports := []BattleReport{
+		{
+			ID: "feature-1", AccountUID: 7001, WorldID: "world.example", PlayerID: 42,
+			AutomationFeature: "autoTowers", OccurredAt: now.Add(-time.Hour).Format(time.RFC3339Nano),
+			Result: "Victory", Role: "attacker", Attacker: &BattleCombatant{PlayerID: 42},
+			Metrics: BattleMetrics{AttackerSent: 300, AttackerLost: 5}, ToolsUsed: 2, GallantryPoints: 1,
+			Loot: map[string]int64{"resource:1": 40, "resource:2": 2},
+		},
+		{
+			// A defender report is never part of the feature projection.
+			ID: "feature-2", AccountUID: 7001, WorldID: "world.example", PlayerID: 42,
+			AutomationFeature: "autoTowers", OccurredAt: now.Add(-30 * time.Minute).Format(time.RFC3339Nano),
+			Result: "Defeat", Role: "defender", Defender: &BattleCombatant{PlayerID: 42},
+		},
+		{
+			// Bound only by world and player (legacy row without an account UID)
+			// must still be included through the account binding fallback.
+			ID: "feature-3", WorldID: "world.example", PlayerID: 42,
+			AutomationFeature: "autoStorm", OccurredAt: now.Add(-2 * time.Hour).Format(time.RFC3339Nano),
+			Result: "Defeat", Role: "attacker", Attacker: &BattleCombatant{PlayerID: 42},
+			Metrics: BattleMetrics{AttackerSent: 120, AttackerLost: 120}, Loot: map[string]int64{},
+		},
+	}
+	if err := store.SaveMany(context.Background(), reports); err != nil {
+		t.Fatal(err)
+	}
+	// Re-saving feature-3 under the account UID must consolidate the binding
+	// so the report appears exactly once with the account-bound values.
+	rebound := reports[2]
+	rebound.AccountUID = 7001
+	rebound.Metrics.AttackerLost = 100
+	if err := store.Save(context.Background(), rebound); err != nil {
+		t.Fatal(err)
+	}
+	query := BattleReportQuery{AccountUID: 7001, WorldID: "world.example", PlayerID: 42, Limit: 10}
+	complete, err := store.Recent(context.Background(), query)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lean, err := store.RecentFeatureAnalytics(context.Background(), query)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := make(map[string]BattleAnalyticsReport)
+	for _, report := range complete {
+		if strings.EqualFold(report.Role, "attacker") {
+			expected[report.ID] = report
+		}
+	}
+	if len(lean) != len(expected) || len(lean) != 2 {
+		t.Fatalf("lean rows = %d, attacker rows in Recent = %d (%+v)", len(lean), len(expected), lean)
+	}
+	for index, row := range lean {
+		want, found := expected[row.ReportKey]
+		if !found {
+			t.Fatalf("lean row %q missing from Recent", row.ReportKey)
+		}
+		lootPayload, _ := json.Marshal(want.Loot)
+		if row.AutomationFeature != want.AutomationFeature || row.OccurredAt != want.OccurredAt || row.Result != want.Result ||
+			row.TroopsSent != want.TroopsSent || row.OwnTroopLosses != want.OwnTroopLosses || row.ToolsUsed != want.ToolsUsed ||
+			row.GallantryPoints != want.GallantryPoints || row.LootTotal != want.LootTotal ||
+			(len(want.Loot) > 0 && string(row.LootJSON) != string(lootPayload)) {
+			t.Fatalf("lean row %d = %+v, want %+v", index, row, want)
+		}
+		if index > 0 && lean[index-1].OccurredAt < row.OccurredAt {
+			t.Fatalf("lean rows are not newest first: %+v", lean)
+		}
+	}
+	if lean[len(lean)-1].ReportKey != "feature-3" || lean[len(lean)-1].OwnTroopLosses != 100 {
+		t.Fatalf("consolidated binding did not win: %+v", lean[len(lean)-1])
+	}
+	limited, err := store.RecentFeatureAnalytics(context.Background(), BattleReportQuery{
+		AccountUID: 7001, WorldID: "world.example", PlayerID: 42, Limit: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(limited) != 1 || limited[0].ReportKey != "feature-1" {
+		t.Fatalf("limited lean rows = %+v", limited)
 	}
 }

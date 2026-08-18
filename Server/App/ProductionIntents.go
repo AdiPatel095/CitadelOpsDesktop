@@ -110,7 +110,7 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		return Intent.Plan{}, fmt.Errorf("production line %d is full", request.LineID)
 	}
 	if request.Amount <= 0 {
-		request.Amount = observedProductionStack(queue)
+		request.Amount = observedProductionStack(input.State, queue, request.DefinitionID)
 	}
 	if request.Amount <= 0 {
 		return Intent.Plan{}, fmt.Errorf("production stack size is unknown; create one %s stack in-game so CitadelOps can learn the live amount", collection)
@@ -185,7 +185,7 @@ func (application *Application) verifyProductionQueueCapacityAt(arguments json.R
 	if application == nil || application.State == nil {
 		return fmt.Errorf("production state is unavailable")
 	}
-	gameState := application.State.Snapshot()
+	gameState := application.State.ReadOnlyView()
 	var gameData *GameData.Store
 	if application.GameData != nil {
 		gameData, _ = application.GameData.Current()
@@ -290,13 +290,17 @@ func productionDefinitionAvailable(castle State.CastleState, lineID int, definit
 }
 
 func productionQueueCapacity(state State.GameState, lineID int, queue State.ProductionQueue, gameData *GameData.Store) int {
-	expected, known := productionVIPQueueCapacity(state, lineID, gameData)
-	if queue.Capacity <= 0 {
-		return expected
-	}
-	if !known || queue.Capacity < expected {
+	// The observed slot count is authoritative: the server reports every slot
+	// the player owns, including slots granted by capacity effects the VIP
+	// model below knows nothing about. Clamping to the VIP expectation used
+	// to discard those effect slots; the base+VIP expectation now serves only
+	// as the fallback before the first queue snapshot arrives. If a stale
+	// observation ever overshoots, the enqueue verify-capacity guard
+	// revalidates against live state before dispatch.
+	if queue.Capacity > 0 {
 		return queue.Capacity
 	}
+	expected, _ := productionVIPQueueCapacity(state, lineID, gameData)
 	return expected
 }
 
@@ -390,17 +394,41 @@ func planHospitalOperation(input Intent.PlanningContext, arguments json.RawMessa
 	}, nil
 }
 
-func observedProductionStack(queue State.ProductionQueue) int64 {
+// observedProductionStack picks the per-stack amount FillAvailable sends for
+// one unit definition. The game never reports the entitled batch size
+// directly (subscriptions carry only type + remaining time), so the size is
+// learned from what is visible in the queue — floored by the per-definition
+// LearnedStacks high-water mark so a spell of smaller stacks cannot ratchet
+// the batch size down. The learned floor only applies while the subscription
+// set it was recorded under still matches; after a lapse the floor is
+// ignored and live stacks rule again. Batch caps are per-unit, so only
+// stacks of the SAME definition inform the amount; a unit with no history at
+// all falls back to mimicking whatever the line currently runs (the only
+// signal available on a cold start).
+func observedProductionStack(gameState State.GameState, queue State.ProductionQueue, definitionID int64) int64 {
 	var amount int64
-	if queue.Active != nil && queue.Active.Amount > amount {
-		amount = queue.Active.Amount
+	if queue.LearnedStackScope == gameState.SubscriptionScope() {
+		amount = queue.LearnedStacks[definitionID]
 	}
-	for _, item := range queue.Queued {
-		if item.Amount > amount {
-			amount = item.Amount
+	var anyDefinition int64
+	consider := func(itemDefinition, itemAmount int64) {
+		if itemAmount > anyDefinition {
+			anyDefinition = itemAmount
+		}
+		if itemDefinition == definitionID && itemAmount > amount {
+			amount = itemAmount
 		}
 	}
-	return amount
+	if queue.Active != nil {
+		consider(int64(queue.Active.Definition.ID), queue.Active.Amount)
+	}
+	for _, item := range queue.Queued {
+		consider(int64(item.Definition.ID), item.Amount)
+	}
+	if amount > 0 {
+		return amount
+	}
+	return anyDefinition
 }
 
 func requireOfficialDefinition(store *GameData.Store, collection string, id int64) error {

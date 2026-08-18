@@ -165,7 +165,13 @@ type PartitionDependency struct {
 }
 
 type partitionVersionSnapshot struct {
-	values map[string]PartitionVersion
+	// PartitionKey is fully comparable. Using it directly avoids formatting and
+	// URL-escaping an identity string on every state revision and dependency
+	// lookup. The normal account/session capabilities occupy fixed immutable
+	// slots; only uncommon kingdom/castle or custom scopes use the fallback map.
+	common [32]*PartitionVersion
+	extra  map[PartitionKey]*PartitionVersion
+	count  int
 }
 
 type PartitionVersions struct {
@@ -180,7 +186,18 @@ func (versions PartitionVersions) Version(key PartitionKey) uint64 {
 	if versions.snapshot == nil {
 		return 0
 	}
-	return versions.snapshot.values[key.Canonical()].Version
+	key = normalizePartitionKey(key)
+	if slot, standard := commonPartitionVersionSlot(key); standard {
+		version := versions.snapshot.common[slot]
+		if version == nil || version.Key != key {
+			return 0
+		}
+		return version.Version
+	}
+	if version := versions.snapshot.extra[key]; version != nil {
+		return version.Version
+	}
+	return 0
 }
 
 func (versions PartitionVersions) Dependencies(keys ...PartitionKey) []PartitionDependency {
@@ -205,13 +222,16 @@ func (versions PartitionVersions) List() []PartitionVersion {
 	if versions.snapshot == nil {
 		return []PartitionVersion{}
 	}
-	out := make([]PartitionVersion, 0, len(versions.snapshot.values))
-	for _, version := range versions.snapshot.values {
-		out = append(out, version)
+	out := make([]PartitionVersion, 0, versions.snapshot.count)
+	for _, version := range versions.snapshot.common {
+		if version != nil {
+			out = append(out, *version)
+		}
 	}
-	sort.Slice(out, func(left, right int) bool {
-		return out[left].Key.Canonical() < out[right].Key.Canonical()
-	})
+	for _, version := range versions.snapshot.extra {
+		out = append(out, *version)
+	}
+	sort.Slice(out, func(left, right int) bool { return partitionKeyLess(out[left].Key, out[right].Key) })
 	return out
 }
 
@@ -239,7 +259,11 @@ type PlanningView struct {
 }
 
 func CapabilityForDomain(domain string) string {
-	switch strings.ToLower(strings.TrimSpace(domain)) {
+	normalized := strings.ToLower(strings.TrimSpace(domain))
+	if strings.HasPrefix(normalized, "map-") || normalized == "storm-scan-progress" || normalized == "storm-scan" {
+		return CapabilityWorldMap
+	}
+	switch normalized {
 	case "protocol":
 		return CapabilityProtocol
 	case "session":
@@ -317,28 +341,167 @@ func defaultPartitionKeys(state GameState, domains []string) []PartitionKey {
 			keys = append(keys, AccountPartition(state, CapabilityAccountWallet))
 		}
 	}
-	return normalizePartitionKeys(keys)
+	return keys
 }
 
 func normalizePartitionKeys(keys []PartitionKey) []PartitionKey {
-	unique := make(map[string]PartitionKey, len(keys))
+	out := make([]PartitionKey, 0, len(keys))
 	for _, key := range keys {
-		key.Capability = normalizeCapability(key.Capability)
+		key = normalizePartitionKey(key)
 		if key.Capability == "" || key.Scope.Kind == "" {
 			continue
 		}
-		unique[key.Canonical()] = key
+		duplicate := false
+		for _, existing := range out {
+			if existing == key {
+				duplicate = true
+				break
+			}
+		}
+		if !duplicate {
+			out = append(out, key)
+		}
 	}
-	canonical := make([]string, 0, len(unique))
-	for key := range unique {
-		canonical = append(canonical, key)
-	}
-	sort.Strings(canonical)
-	out := make([]PartitionKey, 0, len(canonical))
-	for _, key := range canonical {
-		out = append(out, unique[key])
-	}
+	sort.Slice(out, func(left, right int) bool { return partitionKeyLess(out[left], out[right]) })
 	return out
+}
+
+func normalizePartitionKey(key PartitionKey) PartitionKey {
+	key.Capability = normalizeCapability(key.Capability)
+	key.Scope.World = strings.TrimSpace(key.Scope.World)
+	// Preserve the identity semantics of ScopeKey.Canonical: application and
+	// session partitions are process/session capabilities, while increasingly
+	// specific account scopes include only their identifying coordinates.
+	switch key.Scope.Kind {
+	case ScopeApplication:
+		key.Scope = ScopeKey{Kind: ScopeApplication}
+	case ScopeSession:
+		key.Scope = ScopeKey{Kind: ScopeSession}
+	case ScopeKingdom:
+		key.Scope.CastleID = 0
+		key.Scope.SessionGeneration = 0
+		key.Scope.ConnectionGeneration = 0
+	case ScopeCastle:
+		key.Scope.SessionGeneration = 0
+		key.Scope.ConnectionGeneration = 0
+	default:
+		key.Scope.Kind = ScopeAccount
+		key.Scope.KingdomID = 0
+		key.Scope.CastleID = 0
+		key.Scope.SessionGeneration = 0
+		key.Scope.ConnectionGeneration = 0
+	}
+	return key
+}
+
+func partitionKeyLess(left PartitionKey, right PartitionKey) bool {
+	left = normalizePartitionKey(left)
+	right = normalizePartitionKey(right)
+	if left.Capability != right.Capability {
+		return left.Capability < right.Capability
+	}
+	if left.Scope.Kind != right.Scope.Kind {
+		return left.Scope.Kind < right.Scope.Kind
+	}
+	if left.Scope.World != right.Scope.World {
+		return left.Scope.World < right.Scope.World
+	}
+	if left.Scope.PlayerID != right.Scope.PlayerID {
+		return left.Scope.PlayerID < right.Scope.PlayerID
+	}
+	if left.Scope.KingdomID != right.Scope.KingdomID {
+		return left.Scope.KingdomID < right.Scope.KingdomID
+	}
+	if left.Scope.CastleID != right.Scope.CastleID {
+		return left.Scope.CastleID < right.Scope.CastleID
+	}
+	if left.Scope.SessionGeneration != right.Scope.SessionGeneration {
+		return left.Scope.SessionGeneration < right.Scope.SessionGeneration
+	}
+	return left.Scope.ConnectionGeneration < right.Scope.ConnectionGeneration
+}
+
+func commonPartitionVersionSlot(key PartitionKey) (int, bool) {
+	expectedScope := ScopeAccount
+	switch key.Capability {
+	case CapabilityProtocol:
+		expectedScope = ScopeSession
+		if key.Scope.Kind == expectedScope {
+			return 0, true
+		}
+	case CapabilitySession:
+		expectedScope = ScopeSession
+		if key.Scope.Kind == expectedScope {
+			return 1, true
+		}
+	case CapabilitySessionContext:
+		expectedScope = ScopeSession
+		if key.Scope.Kind == expectedScope {
+			return 2, true
+		}
+	case CapabilityAccountProfile:
+		return 3, key.Scope.Kind == expectedScope
+	case CapabilityAccountWallet:
+		return 4, key.Scope.Kind == expectedScope
+	case CapabilityCastleDirectory:
+		return 5, key.Scope.Kind == expectedScope
+	case CapabilityBuildings:
+		return 6, key.Scope.Kind == expectedScope
+	case CapabilityBuildingQueue:
+		return 7, key.Scope.Kind == expectedScope
+	case CapabilityConstruction:
+		return 8, key.Scope.Kind == expectedScope
+	case CapabilityConstructionItems:
+		return 9, key.Scope.Kind == expectedScope
+	case CapabilityConstructionInventory:
+		return 10, key.Scope.Kind == expectedScope
+	case CapabilityConstructionCommerce:
+		return 11, key.Scope.Kind == expectedScope
+	case CapabilityInventory:
+		return 12, key.Scope.Kind == expectedScope
+	case CapabilityEconomy:
+		return 13, key.Scope.Kind == expectedScope
+	case CapabilityGarrison:
+		return 14, key.Scope.Kind == expectedScope
+	case CapabilityDefense:
+		return 15, key.Scope.Kind == expectedScope
+	case CapabilityProduction:
+		return 16, key.Scope.Kind == expectedScope
+	case CapabilityCrafting:
+		return 17, key.Scope.Kind == expectedScope
+	case CapabilityMovement:
+		return 18, key.Scope.Kind == expectedScope
+	case CapabilityAttacks:
+		expectedScope = ScopeSession
+		if key.Scope.Kind == expectedScope {
+			return 19, true
+		}
+	case CapabilityLogistics:
+		return 20, key.Scope.Kind == expectedScope
+	case CapabilityLeaders:
+		return 21, key.Scope.Kind == expectedScope
+	case CapabilityEquipment:
+		return 22, key.Scope.Kind == expectedScope
+	case CapabilityAlliance:
+		return 23, key.Scope.Kind == expectedScope
+	case CapabilityWorldMap:
+		return 24, key.Scope.Kind == expectedScope
+	case CapabilityEvents:
+		return 25, key.Scope.Kind == expectedScope
+	case CapabilityReports:
+		return 26, key.Scope.Kind == expectedScope
+	case CapabilityAutomation:
+		return 27, key.Scope.Kind == expectedScope
+	}
+	return 0, false
+}
+
+func cloneExtraPartitionVersions(source map[PartitionKey]*PartitionVersion, extra int) map[PartitionKey]*PartitionVersion {
+	clone := make(map[PartitionKey]*PartitionVersion, len(source)+extra)
+	for key, version := range source {
+		clone[key] = version
+	}
+	return clone
 }
 
 func normalizeCapability(capability string) string {
@@ -351,25 +514,52 @@ func advancePartitionVersions(
 	revision uint64,
 	updatedAt time.Time,
 ) (*partitionVersionSnapshot, []PartitionVersion) {
-	values := map[string]PartitionVersion{}
+	next := partitionVersionSnapshot{}
 	if current != nil {
-		values = make(map[string]PartitionVersion, len(current.values)+len(keys))
-		for key, version := range current.values {
-			values[key] = version
-		}
+		next = *current
 	}
-	changed := make([]PartitionVersion, 0, len(keys))
-	for _, key := range normalizePartitionKeys(keys) {
-		canonical := key.Canonical()
-		version := values[canonical]
+	normalized := normalizePartitionKeys(keys)
+	changed := make([]PartitionVersion, 0, len(normalized))
+	extraMutable := false
+	for _, key := range normalized {
+		var previous *PartitionVersion
+		slot, standard := commonPartitionVersionSlot(key)
+		if standard {
+			previous = next.common[slot]
+			if previous != nil && previous.Key != key {
+				previous = nil
+			}
+		} else {
+			if !extraMutable {
+				next.extra = cloneExtraPartitionVersions(next.extra, 1)
+				extraMutable = true
+			}
+			previous = next.extra[key]
+		}
+		version := PartitionVersion{Key: key}
+		if previous != nil {
+			version = *previous
+		}
 		version.Key = key
 		version.Version++
 		version.Revision = revision
 		version.UpdatedAt = updatedAt
-		values[canonical] = version
+		if standard {
+			next.common[slot] = &version
+		} else {
+			next.extra[key] = &version
+		}
+		if previous == nil {
+			if standard && next.common[slot] != nil && current != nil && current.common[slot] != nil {
+				// Rebinding replaces a standard slot instead of retaining an
+				// unreachable identity from the previous account.
+			} else {
+				next.count++
+			}
+		}
 		changed = append(changed, version)
 	}
-	return &partitionVersionSnapshot{values: values}, changed
+	return &next, changed
 }
 
 func initialProtocolContext(state GameState) ProtocolContextState {

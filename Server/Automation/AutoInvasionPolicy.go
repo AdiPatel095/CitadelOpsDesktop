@@ -21,7 +21,16 @@ const (
 	bloodcrowMapTypeID     = 34
 	fixedInvasionRadius    = 50
 	defaultInvasionRefresh = 300
-	eventMedalsCurrency    = "MEDALS"
+	// invasionTargetFreshness is how recently the game must have confirmed a
+	// candidate before the policy attacks it. Older than this and the policy
+	// first refreshes the candidate's neighborhood (one gaa window) so the pick
+	// is made from a live set — invasion castles are defeated by other players
+	// constantly and a minutes-old sweep routinely offers dead ones.
+	invasionTargetFreshness = 60 * time.Second
+	// invasionNeighborhoodHalfSize keeps the pre-pick refresh to a single
+	// 49x49 window (2401 tiles) centered on the candidate.
+	invasionNeighborhoodHalfSize = 24
+	eventMedalsCurrency          = "MEDALS"
 )
 
 type AutoInvasionPolicy struct{}
@@ -48,7 +57,7 @@ func (*AutoInvasionPolicy) ID() string { return "autoInvasion" }
 func (*AutoInvasionPolicy) EnabledKey() string { return "auto_invasion" }
 
 func (*AutoInvasionPolicy) WakeDomains() []string {
-	return []string{"attacks", "map", "movements", "commanders", "units", "events", "event-scores", "invasion", "achievements", "player-protection"}
+	return []string{"attacks", "map-invasion", "movements", "commanders", "units", "events", "event-scores", "invasion", "achievements", "player-protection"}
 }
 
 func (*AutoInvasionPolicy) WakeSections() []string {
@@ -56,6 +65,7 @@ func (*AutoInvasionPolicy) WakeSections() []string {
 }
 
 func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision Decision, err error) {
+
 	settings := autoInvasionSettings{
 		MinimumRemainingSec: 1800,
 		CheckIntervalSec:    30, MapRefreshIntervalSec: defaultInvasionRefresh, HorseTravelBoostID: -1,
@@ -92,10 +102,20 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 
 	score, found := snapshot.State.ActiveScalableEventScore()
 	if !found {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{foreignLordsEventID, bloodcrowEventID}, "Foreign Lords or Bloodcrow event",
+		); locked {
+			return decision, nil
+		}
 		return invasionWaiting(snapshot.Now, "No scalable invasion event is active"), nil
 	}
 	targetTypeID, supported := invasionTargetType(score.EventID)
 	if !supported {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{foreignLordsEventID, bloodcrowEventID}, "Foreign Lords or Bloodcrow event",
+		); locked {
+			return decision, nil
+		}
 		return invasionWaiting(snapshot.Now, "Auto Invasion supports Foreign Lords and Bloodcrow"), nil
 	}
 	fortifyCurrency, fortifyCurrencyValid := invasionFortifyCurrencyForEvent(
@@ -221,9 +241,31 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		}, nil
 	}
 	target := candidates[0]
+	if target.ObservedAt.IsZero() || snapshot.Now.Sub(target.ObservedAt) > invasionTargetFreshness {
+		// Fresh set before the pick: refresh the candidate's neighborhood so a
+		// castle that vanished since the last sweep is dropped (the window is
+		// authoritative) and the next evaluation chooses from live targets.
+		bounds := invasionNeighborhoodBounds(target)
+		arguments, _ := json.Marshal(map[string]any{
+			"sourceCastleId": source.ID, "radius": fixedInvasionRadius, "scanStartedAt": snapshot.Now,
+			"bounds": bounds,
+		})
+		return Decision{
+			Status: "ready",
+			Detail: fmt.Sprintf(
+				"Refresh invasion targets around %d:%d before attacking (last confirmed %s ago)",
+				target.X, target.Y, snapshot.Now.Sub(target.ObservedAt).Round(time.Second),
+			),
+			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
+			Request: &Intent.Request{Name: "invasion.map.scan", Arguments: arguments}, ReevaluateOnSuccess: true,
+		}, nil
+	}
 	if itemID, required, available, found, err := invasionCapacityShortage(
 		snapshot, source, target, preset, commanderID,
 	); err != nil {
+		if decision, refresh := generalSkillsRefreshDecision(err, snapshot.Now, metrics); refresh {
+			return decision, nil
+		}
 		return Decision{
 			Status: "waiting", Detail: fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
@@ -424,16 +466,17 @@ func addPresetCourtyardRequirements(
 
 func activeInvasionTargets(gameState State.GameState, sourceCastleID State.CastleID, targetTypeID int, now time.Time) map[string]struct{} {
 	result := map[string]struct{}{}
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 0 || movement.SourceCastleID != sourceCastleID || movement.TargetTypeID != targetTypeID {
-			continue
+			return true
 		}
 		if movement.ArrivesAt != nil && !movement.ArrivesAt.IsZero() && !movement.ArrivesAt.After(now) &&
 			movement.ReturnsAt != nil && !movement.ReturnsAt.IsZero() && !movement.ReturnsAt.After(now) {
-			continue
+			return true
 		}
 		result[fmt.Sprintf("%d:%d:%d", movement.KingdomID, movement.TargetX, movement.TargetY)] = struct{}{}
-	}
+		return true
+	})
 	return result
 }
 
@@ -446,16 +489,17 @@ func invasionCandidates(
 	active map[string]struct{},
 ) []State.MapObservation {
 	result := make([]State.MapObservation, 0)
-	for _, target := range gameState.Map[source.KingdomID] {
+	gameState.RangeMapObservationsByKind(source.KingdomID, State.MapProjectionInvasion, func(_ string, target State.MapObservation) bool {
 		key := fmt.Sprintf("%d:%d:%d", target.KingdomID, target.X, target.Y)
 		if target.TypeID != targetTypeID || target.ObservedAt.Before(lastScan) || invasionDistanceSquared(source, target) > radius*radius {
-			continue
+			return true
 		}
 		if _, busy := active[key]; busy {
-			continue
+			return true
 		}
 		result = append(result, target)
-	}
+		return true
+	})
 	sort.Slice(result, func(left, right int) bool {
 		leftDistance := invasionDistanceSquared(source, result[left])
 		rightDistance := invasionDistanceSquared(source, result[right])
@@ -468,6 +512,15 @@ func invasionCandidates(
 		return result[left].X < result[right].X
 	})
 	return result
+}
+
+// invasionNeighborhoodBounds is the single-window box refreshed before a pick:
+// 49x49 tiles centered on the candidate, clipped at the map origin.
+func invasionNeighborhoodBounds(target State.MapObservation) State.StormMapBounds {
+	return State.StormMapBounds{
+		X1: max(0, target.X-invasionNeighborhoodHalfSize), Y1: max(0, target.Y-invasionNeighborhoodHalfSize),
+		X2: target.X + invasionNeighborhoodHalfSize, Y2: target.Y + invasionNeighborhoodHalfSize,
+	}
 }
 
 func invasionDistanceSquared(source State.CastleState, target State.MapObservation) int {

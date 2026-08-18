@@ -63,13 +63,13 @@ func reduceMarketInfo(
 			}
 			resourceID := State.ResourceID(definitionID)
 			marketCastle.Resources[resourceID] = amount
-			if castle, exists := gameState.Castles[castleID]; exists {
+			if castle, exists := gameState.MutableCastleParts(castleID, State.CastlePartResources); exists {
 				ensureCastleMaps(&castle)
 				balance := castle.Resources[resourceID]
 				if balance.Amount != amount {
 					balance.Amount = amount
 					castle.Resources[resourceID] = balance
-					gameState.Castles[castleID] = castle
+					gameState.SetCastleParts(castleID, castle, State.CastlePartResources)
 					castleResourcesChanged = true
 				}
 			}

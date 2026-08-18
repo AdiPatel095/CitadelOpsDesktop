@@ -61,7 +61,6 @@ export function useAutoEquipmentCleanup(): AutoEquipmentCleanupController {
           sellLookItems: false,
           sellPost2026: false,
         }, { actor: 'ui:auto-equipment-cleanup' });
-        await submitIntent('equipment.refresh', {}, { actor: 'ui:auto-equipment-cleanup' });
         await submitIntent('equipment.sell', {
           category: 'non_relic_gems',
           sellPost2026: false,

@@ -51,7 +51,7 @@ func (*AutoTowerPolicy) ID() string { return "autoTowers" }
 func (*AutoTowerPolicy) EnabledKey() string { return "auto_towers" }
 
 func (*AutoTowerPolicy) WakeDomains() []string {
-	return []string{"attacks", "building-layout", "commanders", "map", "movements", "tower-cooldowns", "tower-queue", "units"}
+	return []string{"attacks", "building-layout", "commanders", "map-tower", "movements", "tower-cooldowns", "tower-queue", "units"}
 }
 
 func (*AutoTowerPolicy) WakeSections() []string {
@@ -62,29 +62,37 @@ func (*AutoTowerPolicy) ConfigurationDerivedStateSections() []string {
 	return []string{"automation.autoTowers"}
 }
 
+func (*AutoTowerPolicy) ConfigurationDerivedStateComponents() State.ComponentSet {
+	return State.Components(State.ComponentTowerQueue)
+}
+
 func (*AutoTowerPolicy) ResetConfigurationDerivedState(gameState *State.GameState) ([]string, bool) {
 	if gameState == nil || len(gameState.TowerQueue.EntriesByCastle) == 0 &&
 		len(gameState.TowerQueue.LastScannedAt) == 0 && len(gameState.TowerQueue.LastAttemptedAt) == 0 &&
 		len(gameState.TowerQueue.ConfirmedLaunchesByCastle) == 0 {
 		return nil, false
 	}
-	gameState.TowerQueue.EntriesByCastle = map[State.CastleID][]State.TowerQueueEntry{}
-	gameState.TowerQueue.LastScannedAt = map[State.CastleID]time.Time{}
-	gameState.TowerQueue.LastAttemptedAt = map[State.CastleID]time.Time{}
-	gameState.TowerQueue.ConfirmedLaunchesByCastle = map[State.CastleID]int64{}
+	gameState.ReplaceTowerQueue(State.TowerQueueState{
+		EntriesByCastle: map[State.CastleID][]State.TowerQueueEntry{},
+		LastScannedAt:   map[State.CastleID]time.Time{}, LastAttemptedAt: map[State.CastleID]time.Time{},
+		ConfirmedLaunchesByCastle: map[State.CastleID]int64{},
+		CursorVersion:             gameState.TowerQueue.CursorVersion,
+		CapacityByCastle:          gameState.TowerQueue.CapacityByCastle,
+	})
 	return []string{"tower-queue"}, true
 }
 
 func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+
 	settings := autoTowerSettings{CheckIntervalSec: 30, MapRefreshIntervalSec: 1800, HorseTravelBoostID: -1, Castles: map[string]autoTowerCastle{}}
 	if !decodeSection(snapshot.Configuration, "automation.autoTowers", &settings) || len(settings.Castles) == 0 {
 		return Decision{
 			Status: "waiting", Detail: "No tower castles are configured",
-			NextCheckAt: snapshot.Now.Add(30 * time.Second),
+			EventDriven: true,
 		}, nil
 	}
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
-		return Decision{Status: "waiting", Detail: "Choose a supported horse travel boost", NextCheckAt: snapshot.Now.Add(30 * time.Second)}, nil
+		return Decision{Status: "waiting", Detail: "Choose a supported horse travel boost", EventDriven: true}, nil
 	}
 	commanderIDs, commandersRestricted := commanderFeatureCandidates(
 		snapshot.State,
@@ -94,7 +102,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if commandersRestricted && len(commanderIDs) == 0 {
 		return Decision{
 			Status: "waiting", Detail: "No commanders are assigned to Auto Towers",
-			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
+			EventDriven: true,
 		}, nil
 	}
 	if cooldownTarget, found := pendingTowerCooldownRefresh(snapshot.State); found {
@@ -164,8 +172,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			}
 			return Decision{
 				Status: "waiting", Detail: detail,
-				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
-				Metrics:     metrics,
+				EventDriven: true, Metrics: metrics,
 			}, nil
 		}
 		if snapshot.GameData != nil {
@@ -193,7 +200,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		break
 	}
 	if selected.Castle.ID > 0 {
-		target := snapshot.State.Map[selected.Entry.KingdomID][fmt.Sprintf("%d:%d", selected.Entry.TargetX, selected.Entry.TargetY)]
+		target, _ := snapshot.State.LookupMapObservation(selected.Entry.KingdomID, fmt.Sprintf("%d:%d", selected.Entry.TargetX, selected.Entry.TargetY))
 		if target.ObservedAt.IsZero() || snapshot.Now.Sub(target.ObservedAt) >= autoTowerTargetVerificationAge {
 			arguments, _ := json.Marshal(map[string]any{
 				"sourceCastleId":   selected.Castle.ID,
@@ -241,6 +248,9 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		if firstTroopShortage != "" {
 			detail = "Waiting for tower troops: " + firstTroopShortage
 		} else if firstCapacityError != nil {
+			if decision, refresh := generalSkillsRefreshDecision(firstCapacityError, snapshot.Now, metrics); refresh {
+				return decision, nil
+			}
 			detail = "Cannot calculate tower troop requirements: " + firstCapacityError.Error()
 		}
 		return Decision{
@@ -409,7 +419,7 @@ func queuedTowerCandidates(snapshot Snapshot, settings autoTowerSettings) ([]tow
 			) {
 				continue
 			}
-			target, exists := snapshot.State.Map[entry.KingdomID][fmt.Sprintf("%d:%d", entry.TargetX, entry.TargetY)]
+			target, exists := snapshot.State.LookupMapObservation(entry.KingdomID, fmt.Sprintf("%d:%d", entry.TargetX, entry.TargetY))
 			if !exists || target.TypeID != kingdomTowerMapTypeID ||
 				towerCooldownRemaining(target, snapshot.Now) > 0 {
 				continue
@@ -515,7 +525,7 @@ func autoTowerCapacityRequirement(
 	candidate towerQueueCandidate,
 	commanderID State.CommanderID,
 ) (int64, error) {
-	target, exists := snapshot.State.Map[candidate.Entry.KingdomID][fmt.Sprintf("%d:%d", candidate.Entry.TargetX, candidate.Entry.TargetY)]
+	target, exists := snapshot.State.LookupMapObservation(candidate.Entry.KingdomID, fmt.Sprintf("%d:%d", candidate.Entry.TargetX, candidate.Entry.TargetY))
 	if !exists {
 		return 0, fmt.Errorf("tower %d:%d is no longer in map state", candidate.Entry.TargetX, candidate.Entry.TargetY)
 	}
@@ -615,9 +625,9 @@ func towerQueueEntryDistanceSquared(castle State.CastleState, entry State.TowerQ
 
 func activeTowerMovements(gameState State.GameState, castleID State.CastleID, now time.Time) int {
 	count := 0
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if !towerMovementActiveAt(movement, now) {
-			continue
+			return true
 		}
 		if movement.Direction == 0 && movement.SourceCastleID == castleID && movement.TargetTypeID == kingdomTowerMapTypeID {
 			count++
@@ -625,15 +635,16 @@ func activeTowerMovements(gameState State.GameState, castleID State.CastleID, no
 		if movement.Direction == 1 && movement.TargetCastleID == castleID && movement.SourceTypeID == kingdomTowerMapTypeID {
 			count++
 		}
-	}
+		return true
+	})
 	return count
 }
 
 func activeTowerTargetKeys(gameState State.GameState, now time.Time) map[string]struct{} {
 	locked := map[string]struct{}{}
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if !towerMovementActiveAt(movement, now) {
-			continue
+			return true
 		}
 		switch {
 		case movement.Direction == 0 && movement.TargetTypeID == kingdomTowerMapTypeID:
@@ -641,7 +652,8 @@ func activeTowerTargetKeys(gameState State.GameState, now time.Time) map[string]
 		case movement.Direction == 1 && movement.SourceTypeID == kingdomTowerMapTypeID:
 			locked[towerTargetKey(movement.KingdomID, movement.SourceX, movement.SourceY)] = struct{}{}
 		}
-	}
+		return true
+	})
 	return locked
 }
 
@@ -657,11 +669,12 @@ func towerMovementActiveAt(movement State.MovementState, now time.Time) bool {
 
 func pendingTowerCooldownRefresh(gameState State.GameState) (State.TowerCooldownState, bool) {
 	pending := make([]State.TowerCooldownState, 0)
-	for _, cooldown := range gameState.TowerCooldowns {
+	gameState.RangeTowerCooldowns(func(_ string, cooldown State.TowerCooldownState) bool {
 		if cooldown.PendingCooldownRefresh {
 			pending = append(pending, cooldown)
 		}
-	}
+		return true
+	})
 	sort.Slice(pending, func(left, right int) bool {
 		if !pending[left].LastSuccessfulBattleAt.Equal(pending[right].LastSuccessfulBattleAt) {
 			return pending[left].LastSuccessfulBattleAt.Before(pending[right].LastSuccessfulBattleAt)
@@ -681,7 +694,8 @@ func pendingTowerCooldownRefresh(gameState State.GameState) (State.TowerCooldown
 }
 
 func towerCooldownRefreshPending(gameState State.GameState, key string) bool {
-	return gameState.TowerCooldowns[key].PendingCooldownRefresh
+	cooldown, found := gameState.LookupTowerCooldown(key)
+	return found && cooldown.PendingCooldownRefresh
 }
 
 func towerCooldownRemaining(target State.MapObservation, now time.Time) int {

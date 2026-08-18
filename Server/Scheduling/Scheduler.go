@@ -71,7 +71,7 @@ func (scheduler *Scheduler) Schedule(request Request) error {
 	var previousVersion uint64
 	var previousExists bool
 	var changed bool
-	_, err := scheduler.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := scheduler.state.ApplyComponents(State.Components(State.ComponentScheduled), func(gameState *State.GameState) ([]string, bool, error) {
 		now := time.Now().UTC()
 		current, exists := gameState.Scheduled[request.ID]
 		worldID, playerID := State.BoundAccount(*gameState)
@@ -112,7 +112,7 @@ func (scheduler *Scheduler) Cancel(id string) error {
 	}
 	cancelled := false
 	var version uint64
-	_, err := scheduler.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := scheduler.state.ApplyComponents(State.Components(State.ComponentScheduled), func(gameState *State.GameState) ([]string, bool, error) {
 		operation, exists := gameState.Scheduled[id]
 		if !exists || operation.Status != "scheduled" && operation.Status != "running" {
 			return nil, false, nil
@@ -138,20 +138,53 @@ func (scheduler *Scheduler) Run(ctx context.Context) {
 	if !scheduler.started.CompareAndSwap(false, true) {
 		return
 	}
-	ticker := time.NewTicker(250 * time.Millisecond)
-	defer ticker.Stop()
-	scheduler.dispatchDue(ctx)
+	stateEvents, unsubscribe := scheduler.state.Subscribe(32)
+	defer unsubscribe()
+	var dueTimer *time.Timer
+	var dueChannel <-chan time.Time
+	scheduleNext := func(at time.Time) {
+		if dueTimer != nil {
+			if !dueTimer.Stop() {
+				select {
+				case <-dueTimer.C:
+				default:
+				}
+			}
+			dueTimer = nil
+			dueChannel = nil
+		}
+		if at.IsZero() {
+			return
+		}
+		delay := time.Until(at)
+		if delay < 0 {
+			delay = 0
+		}
+		dueTimer = time.NewTimer(delay)
+		dueChannel = dueTimer.C
+	}
+	dispatch := func() { scheduleNext(scheduler.dispatchDue(ctx)) }
+	dispatch()
 	for {
 		select {
 		case <-ctx.Done():
+			if dueTimer != nil {
+				dueTimer.Stop()
+			}
 			return
-		case <-ticker.C:
-			scheduler.dispatchDue(ctx)
+		case event := <-stateEvents:
+			if scheduledStateEventRelevant(event) {
+				dispatch()
+			}
+		case <-dueChannel:
+			dueTimer = nil
+			dueChannel = nil
+			dispatch()
 		}
 	}
 }
 
-func (scheduler *Scheduler) dispatchDue(ctx context.Context) {
+func (scheduler *Scheduler) dispatchDue(ctx context.Context) time.Time {
 	snapshot := scheduler.state.ReadOnlyView()
 	ids := make([]string, 0, len(snapshot.Scheduled))
 	for id := range snapshot.Scheduled {
@@ -159,12 +192,19 @@ func (scheduler *Scheduler) dispatchDue(ctx context.Context) {
 	}
 	sort.Strings(ids)
 	now := time.Now().UTC()
+	var nextDue time.Time
 	for _, id := range ids {
 		operation := snapshot.Scheduled[id]
-		if operation.Status != "scheduled" && operation.Status != "running" || operation.ExecuteAt.After(now) {
+		if operation.Status != "scheduled" && operation.Status != "running" {
 			continue
 		}
 		if !scheduledOperationMatchesAccount(snapshot, operation) {
+			continue
+		}
+		if operation.ExecuteAt.After(now) {
+			if nextDue.IsZero() || operation.ExecuteAt.Before(nextDue) {
+				nextDue = operation.ExecuteAt
+			}
 			continue
 		}
 		operationID := scheduledIntentOperationID(snapshot, operation)
@@ -181,7 +221,7 @@ func (scheduler *Scheduler) dispatchDue(ctx context.Context) {
 		scheduler.mu.Unlock()
 		claimed := false
 		claimedOperation := operation
-		_, _ = scheduler.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+		_, _ = scheduler.state.ApplyComponents(State.Components(State.ComponentScheduled), func(gameState *State.GameState) ([]string, bool, error) {
 			current, exists := gameState.Scheduled[id]
 			if !exists || current.Version != operation.Version ||
 				current.Status != "scheduled" && current.Status != "running" || current.ExecuteAt.After(now) ||
@@ -219,6 +259,20 @@ func (scheduler *Scheduler) dispatchDue(ctx context.Context) {
 		scheduler.mu.Unlock()
 		go scheduler.execute(executionContext, claimedOperation)
 	}
+	return nextDue
+}
+
+func scheduledStateEventRelevant(event State.Event) bool {
+	if event.Gap {
+		return true
+	}
+	for _, domain := range event.Domains {
+		switch strings.ToLower(strings.TrimSpace(domain)) {
+		case "scheduled-operations", "account", "player", "session":
+			return true
+		}
+	}
+	return false
 }
 
 func (scheduler *Scheduler) execute(ctx context.Context, operation State.ScheduledOperation) {
@@ -227,7 +281,7 @@ func (scheduler *Scheduler) execute(ctx context.Context, operation State.Schedul
 		ID: operation.LastOperationID, Name: operation.Intent, Actor: "scheduler:" + operation.Intent,
 		Arguments: append([]byte(nil), operation.Arguments...),
 	})
-	_, _ = scheduler.state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, _ = scheduler.state.ApplyComponents(State.Components(State.ComponentScheduled), func(gameState *State.GameState) ([]string, bool, error) {
 		current, exists := gameState.Scheduled[operation.ID]
 		if !exists || current.Version != operation.Version {
 			return nil, false, nil

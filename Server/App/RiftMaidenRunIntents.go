@@ -147,7 +147,7 @@ func (application *Application) startRiftMaidenRun(_ context.Context, arguments 
 		request.Run.SourceCastleID <= 0 || len(request.Run.CommanderIDs) == 0 {
 		return fmt.Errorf("Rift Maiden run state is invalid")
 	}
-	_, err := application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentRift), func(gameState *State.GameState) ([]string, bool, error) {
 		if current := gameState.Rift.MaidenRun; current != nil && current.Status == "running" {
 			if current.ID == request.Run.ID {
 				return nil, false, nil
@@ -169,7 +169,7 @@ func (application *Application) cancelRiftMaidenRun(_ context.Context, arguments
 		return err
 	}
 	request.RunID = strings.TrimSpace(request.RunID)
-	_, err := application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentRift), func(gameState *State.GameState) ([]string, bool, error) {
 		run := gameState.Rift.MaidenRun
 		if run == nil || run.Status != "running" || run.ID != request.RunID {
 			return nil, false, fmt.Errorf("%w: Rift Maiden run %s is no longer active", Intent.ErrPlanStale, request.RunID)

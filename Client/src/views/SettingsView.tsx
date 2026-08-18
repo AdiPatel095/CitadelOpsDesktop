@@ -14,7 +14,8 @@ import {
 import { Icons } from '../components/Icons';
 import { CitadelAPI } from '../api/CitadelClient';
 import { useCitadelAPI } from '../api/ApiContext';
-import type { BackgroundLoginStatus, BrowserInventory, SettingsBundleV1 } from '../api/Contracts';
+import type {
+	GameServerEntry, BackgroundLoginStatus, BrowserInventory, SettingsBundleV1 } from '../api/Contracts';
 import { Badge, Button, Input, PageHeader, SectionCard, Select, SettingsToggleRow } from '../components/ui';
 import { asRecord, configurationSection, numericSetting } from '../settings/Configuration';
 import {
@@ -78,6 +79,17 @@ const SettingsView: React.FC = () => {
 	const [backgroundUsername, setBackgroundUsername] = useState('');
 	const [backgroundPassword, setBackgroundPassword] = useState('');
 	const [backgroundServer, setBackgroundServer] = useState('');
+	const [gameServers, setGameServers] = useState<GameServerEntry[]>([]);
+
+	useEffect(() => {
+		let cancelled = false;
+		// The official world directory, from the runtime's catalog, so the
+		// server field offers real choices instead of a bare code box.
+		CitadelAPI.getGameServers()
+			.then((catalog) => { if (!cancelled) setGameServers(catalog.servers ?? []); })
+			.catch(() => { /* free-text entry still works without the list */ });
+		return () => { cancelled = true; };
+	}, []);
 	const [backgroundLoginPending, setBackgroundLoginPending] = useState(false);
 	const [backgroundLoginError, setBackgroundLoginError] = useState('');
 	const [backgroundLoginMessage, setBackgroundLoginMessage] = useState('');
@@ -766,8 +778,18 @@ const SettingsView: React.FC = () => {
 									placeholder="US1"
 									className="font-mono uppercase"
 									disabled={backgroundLoginPending}
+									list="background-login-server-options"
 								/>
-								<p className="mt-1.5 text-[11px] text-text-muted">Use the world code shown by the game, such as US1, GB1, or DE1.</p>
+								<datalist id="background-login-server-options">
+									{gameServers.map((server) => (
+										<option key={server.code} value={server.code}>{server.label}</option>
+									))}
+								</datalist>
+								<p className="mt-1.5 text-[11px] text-text-muted">
+									{gameServers.length > 0
+										? 'Pick the world you play on; the directory resolves its connection address automatically.'
+										: 'Use the world code shown by the game, such as US1, GB1, or DE1.'}
+								</p>
 							</div>
 						</div>
 						<div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">

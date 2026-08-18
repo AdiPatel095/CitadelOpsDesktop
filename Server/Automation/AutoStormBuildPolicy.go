@@ -25,7 +25,11 @@ func (*AutoStormBuildPolicy) ScheduleKey() string {
 }
 
 func (*AutoStormBuildPolicy) WakeDomains() []string {
-	return []string{"buildings", "castles", "currencies", "inventory", "kingdom-transport", "resources"}
+	// Resource and currency balances are intentionally paced by CheckIntervalSec.
+	// Their wire updates also publish the broad castles/inventory domains and
+	// previously rebuilt the complete target-layout diff many times per second.
+	// Structural build responses still wake this lane immediately.
+	return []string{"buildings", "construction-items", "construction-offers", "kingdom-transport"}
 }
 
 func (*AutoStormBuildPolicy) WakeSections() []string {
@@ -50,7 +54,7 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 	if settings.Target == nil && !settings.Harbor.Enabled {
 		return Decision{
 			Status: "complete", Detail: "No Storm castle blueprint or Harbor goal is active",
-			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
+			EventDriven: true,
 		}, nil
 	}
 	castle, found := autoStormCastle(snapshot.State, settings.Target)
@@ -83,10 +87,20 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 	if detail == "" {
 		detail = "Storm build lane is waiting for its next state change"
 	}
-	return Decision{
+	result := Decision{
 		Status: status, Detail: detail, Metrics: metrics,
 		NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
-	}, nil
+	}
+	// A completed blueprint or an exact target blocked only by an unmanaged
+	// building cannot become actionable merely because time passed. Buildings
+	// and configuration changes already wake this lane, so repeating the full
+	// layout compiler every 30 seconds only burns CPU while producing the same
+	// decision.
+	if complete || metrics["unmanagedBuildings"] > 0 && metrics["targetActionsRemaining"] == 0 {
+		result.NextCheckAt = time.Time{}
+		result.EventDriven = true
+	}
+	return result, nil
 }
 
 func autoStormBuildContinuation(decision Decision) Decision {

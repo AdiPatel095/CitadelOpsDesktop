@@ -48,6 +48,10 @@ func (policy *coordinatorTestDerivedStatePolicy) ConfigurationDerivedStateSectio
 	return policy.derivedSections
 }
 
+func (policy *coordinatorTestDerivedStatePolicy) ConfigurationDerivedStateComponents() State.ComponentSet {
+	return State.Components(State.ComponentTowerQueue)
+}
+
 func (policy *coordinatorTestDerivedStatePolicy) ResetConfigurationDerivedState(gameState *State.GameState) ([]string, bool) {
 	policy.resetCalls++
 	return NewAutoTowerPolicy().ResetConfigurationDerivedState(gameState)
@@ -63,6 +67,28 @@ func (policy *coordinatorTestPassivePolicy) EnabledKey() string { return policy.
 
 func (policy *coordinatorTestPassivePolicy) Evaluate(context.Context, Snapshot) (Decision, error) {
 	return Decision{}, nil
+}
+
+type coordinatorTestDecisionSequencePolicy struct {
+	id        string
+	domains   []string
+	decisions []Decision
+	calls     int
+}
+
+func (policy *coordinatorTestDecisionSequencePolicy) ID() string { return policy.id }
+
+func (policy *coordinatorTestDecisionSequencePolicy) EnabledKey() string { return policy.id }
+
+func (policy *coordinatorTestDecisionSequencePolicy) WakeDomains() []string { return policy.domains }
+
+func (policy *coordinatorTestDecisionSequencePolicy) Evaluate(context.Context, Snapshot) (Decision, error) {
+	index := policy.calls
+	policy.calls++
+	if index >= len(policy.decisions) {
+		index = len(policy.decisions) - 1
+	}
+	return policy.decisions[index], nil
 }
 
 type coordinatorTestScheduleLanePolicy struct {
@@ -223,8 +249,112 @@ func TestCoordinatorIndexesAndRoutesDeclaredWakeDomains(t *testing.T) {
 	if !runtime["alpha"].nextCheck.IsZero() || !runtime["zeta"].nextCheck.IsZero() {
 		t.Fatal("declared movement consumers were not woken")
 	}
+	if !runtime["alpha"].stateWakeNextCheck.Equal(next) || !runtime["zeta"].stateWakeNextCheck.Equal(next) {
+		t.Fatal("state wake did not retain the existing policy deadlines")
+	}
 	if !runtime["passive"].nextCheck.Equal(next) {
 		t.Fatal("state event woke a policy that did not declare the domain")
+	}
+}
+
+func TestNewCoordinatorSkipsTypedNilPolicies(t *testing.T) {
+	var policy *SharedStormScanPolicy
+	coordinator := NewCoordinator(nil, nil, nil, nil, policy)
+	if ids := coordinator.PolicyIDs(); len(ids) != 0 {
+		t.Fatalf("typed nil policy IDs = %v, want none", ids)
+	}
+}
+
+func TestNextPolicyEvaluationUsesExactDeadlineAndIgnoresEventOnlyLanes(t *testing.T) {
+	now := time.Date(2026, 8, 14, 12, 0, 0, 0, time.UTC)
+	runtime := map[string]*policyRuntime{
+		"event-only": {evaluatedSessionKnown: true, eventOnly: true},
+		"later":      {evaluatedSessionKnown: true, nextCheck: now.Add(time.Hour)},
+		"earlier":    {evaluatedSessionKnown: true, nextCheck: now.Add(5 * time.Minute)},
+		"running":    {running: true, evaluationPending: true},
+	}
+	if next := nextPolicyEvaluationAt(runtime, now); !next.Equal(now.Add(5 * time.Minute)) {
+		t.Fatalf("next policy deadline = %s", next)
+	}
+	runtime["earlier"].evaluationPending = true
+	if next := nextPolicyEvaluationAt(runtime, now); !next.Equal(now) {
+		t.Fatalf("pending policy deadline = %s, want now", next)
+	}
+	delete(runtime, "earlier")
+	delete(runtime, "later")
+	if next := nextPolicyEvaluationAt(runtime, now); !next.IsZero() {
+		t.Fatalf("event-only runtime scheduled timer at %s", next)
+	}
+}
+
+func TestCoordinatorUnchangedEarlyStateWakeDoesNotSlideDeadlineOrReviseState(t *testing.T) {
+	base := time.Now().UTC().Add(30 * time.Minute)
+	policy := &coordinatorTestDecisionSequencePolicy{
+		id: "steady", domains: []string{"units"},
+		decisions: []Decision{
+			{Status: "idle", Detail: "No work is ready", NextCheckAt: base, Metrics: map[string]float64{"ready": 0}},
+			{Status: "idle", Detail: "No work is ready", NextCheckAt: base.Add(time.Hour), Metrics: map[string]float64{"ready": 0}},
+			{Status: "idle", Detail: "One task is ready", NextCheckAt: base.Add(2 * time.Hour), Metrics: map[string]float64{"ready": 1}},
+		},
+	}
+	state := State.NewStore(coordinatorReadyState())
+	configuration := openCoordinatorTestConfiguration(t, policy.ID())
+	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)
+	runtime := map[string]*policyRuntime{policy.ID(): {}}
+
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	first := state.Snapshot()
+	firstAutomation := first.Automations[policy.ID()]
+	if firstAutomation.NextCheckAt == nil || !firstAutomation.NextCheckAt.Equal(base) {
+		t.Fatalf("initial passive deadline = %+v, want %s", firstAutomation.NextCheckAt, base)
+	}
+
+	event, err := state.ApplyComponents(State.Components(State.ComponentPlayer), func(gameState *State.GameState) ([]string, bool, error) {
+		gameState.Player.Level++
+		return []string{"units"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeUnchangedEvaluation := state.Snapshot()
+	if woke, _ := wakePoliciesForStateEvent(runtime, coordinator.stateWakeByDomain, coordinator.urgentWakeByDomain, event); !woke {
+		t.Fatal("targeted state change did not wake the policy")
+	}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	afterUnchangedEvaluation := state.Snapshot()
+	if afterUnchangedEvaluation.Revision != beforeUnchangedEvaluation.Revision {
+		t.Fatalf("unchanged passive evaluation revised state: before=%d after=%d", beforeUnchangedEvaluation.Revision, afterUnchangedEvaluation.Revision)
+	}
+	if !reflect.DeepEqual(afterUnchangedEvaluation.Automations[policy.ID()], firstAutomation) {
+		t.Fatalf("unchanged passive evaluation moved display state: before=%+v after=%+v", firstAutomation, afterUnchangedEvaluation.Automations[policy.ID()])
+	}
+	if !runtime[policy.ID()].nextCheck.Equal(base) {
+		t.Fatalf("unchanged passive evaluation slid deadline to %s", runtime[policy.ID()].nextCheck)
+	}
+
+	event, err = state.ApplyComponents(State.Components(State.ComponentPlayer), func(gameState *State.GameState) ([]string, bool, error) {
+		gameState.Player.Level++
+		return []string{"units"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeChangedEvaluation := state.Snapshot().Revision
+	if woke, _ := wakePoliciesForStateEvent(runtime, coordinator.stateWakeByDomain, coordinator.urgentWakeByDomain, event); !woke {
+		t.Fatal("second targeted state change did not wake the policy")
+	}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	afterChangedEvaluation := state.Snapshot()
+	if afterChangedEvaluation.Revision != beforeChangedEvaluation+1 {
+		t.Fatalf("changed passive evaluation revision = %d, want %d", afterChangedEvaluation.Revision, beforeChangedEvaluation+1)
+	}
+	changedAutomation := afterChangedEvaluation.Automations[policy.ID()]
+	if changedAutomation.Detail != "One task is ready" || changedAutomation.Metrics["ready"] != 1 ||
+		changedAutomation.NextCheckAt == nil || !changedAutomation.NextCheckAt.Equal(base.Add(2*time.Hour)) {
+		t.Fatalf("changed passive decision was not published immediately: %+v", changedAutomation)
+	}
+	if policy.calls != 3 {
+		t.Fatalf("policy evaluations = %d, want 3", policy.calls)
 	}
 }
 
@@ -869,7 +999,7 @@ func TestCoordinatorWaitsForCurrentSessionBaseline(t *testing.T) {
 func TestCoordinatorSessionEventWakesIdleAndLatchesRunningPolicies(t *testing.T) {
 	next := time.Now().UTC().Add(time.Hour)
 	runtime := map[string]*policyRuntime{
-		"idle":    {nextCheck: next, evaluatedStateRevision: 3},
+		"idle":    {nextCheck: next, stateWakeNextCheck: next.Add(-time.Minute), evaluatedStateRevision: 3},
 		"running": {nextCheck: next, running: true, evaluatedStateRevision: 3},
 	}
 	if woke, _ := wakePoliciesForStateEvent(runtime, nil, nil, State.Event{Revision: 4, Domains: []string{"session"}}); !woke {
@@ -877,6 +1007,9 @@ func TestCoordinatorSessionEventWakesIdleAndLatchesRunningPolicies(t *testing.T)
 	}
 	if !runtime["idle"].nextCheck.IsZero() {
 		t.Fatal("session event did not wake an idle policy")
+	}
+	if !runtime["idle"].stateWakeNextCheck.IsZero() {
+		t.Fatal("session event retained an obsolete account-state deadline")
 	}
 	if !runtime["running"].runtimeWakePending {
 		t.Fatal("session event was not latched for a running policy")
@@ -1630,6 +1763,76 @@ func TestCoordinatorRunsCoreAllianceHelpWithEveryFeatureDisabled(t *testing.T) {
 	}
 }
 
+func TestPolicyEvaluationDueRequiresTargetedWakeOrDeadline(t *testing.T) {
+	now := time.Now().UTC()
+	current := &policyRuntime{
+		evaluatedSessionKnown:      true,
+		evaluatedSessionReady:      true,
+		evaluatedSessionGeneration: 7,
+		evaluatedConfigRevision:    11,
+		eventOnly:                  true,
+	}
+	if policyEvaluationDue(current, 11, true, 7, now) {
+		t.Fatal("stable policy with no deadline was scanned again")
+	}
+	current.eventOnly = false
+	current.nextCheck = now.Add(time.Minute)
+	if policyEvaluationDue(current, 11, true, 7, now) {
+		t.Fatal("policy was scanned before its deliberate deadline")
+	}
+	current.evaluationPending = true
+	if !policyEvaluationDue(current, 11, true, 7, now) {
+		t.Fatal("targeted state wake did not make policy due")
+	}
+	current.evaluationPending = false
+	current.nextCheck = now.Add(-time.Millisecond)
+	if !policyEvaluationDue(current, 11, true, 7, now) {
+		t.Fatal("elapsed policy deadline was not due")
+	}
+	current.nextCheck = time.Time{}
+	if !policyEvaluationDue(current, 12, true, 7, now) ||
+		!policyEvaluationDue(current, 11, true, 8, now) {
+		t.Fatal("configuration or session change did not make policy due")
+	}
+}
+
+func TestCoordinatorEventDrivenDecisionSleepsUntilTargetedWake(t *testing.T) {
+	state := State.NewStore(coordinatorReadyState())
+	configuration := openCoordinatorTestConfiguration(t, "event-only")
+	policy := &coordinatorTestDecisionSequencePolicy{
+		id: "event-only", domains: []string{"events"},
+		decisions: []Decision{{
+			Status: "soft-locked", Detail: "Waiting for an authoritative event update", EventDriven: true,
+		}},
+	}
+	coordinator := NewCoordinator(
+		state, configuration, nil, &coordinatorTestSubmitter{calls: make(chan Intent.Request, 1)}, policy,
+	)
+	runtime := map[string]*policyRuntime{policy.ID(): {}}
+	results := make(chan operationResult, 1)
+
+	coordinator.evaluate(t.Context(), runtime, results)
+	if policy.calls != 1 || !runtime[policy.ID()].eventOnly || !runtime[policy.ID()].nextCheck.IsZero() {
+		t.Fatalf("event-only runtime = %+v calls=%d", runtime[policy.ID()], policy.calls)
+	}
+	if next := state.Snapshot().Automations[policy.ID()].NextCheckAt; next != nil {
+		t.Fatalf("event-only decision exposed a synthetic deadline: %s", *next)
+	}
+
+	coordinator.evaluate(t.Context(), runtime, results)
+	if policy.calls != 1 {
+		t.Fatalf("periodic coordinator evaluation rescanned event-only policy %d times", policy.calls)
+	}
+	event := State.Event{Revision: runtime[policy.ID()].evaluatedStateRevision + 1, Domains: []string{"events"}}
+	if woke, _ := wakePoliciesForStateEvent(runtime, coordinator.stateWakeByDomain, coordinator.urgentWakeByDomain, event); !woke {
+		t.Fatal("authoritative event update did not wake event-only policy")
+	}
+	coordinator.evaluate(t.Context(), runtime, results)
+	if policy.calls != 2 {
+		t.Fatalf("event-only policy calls after targeted wake = %d, want 2", policy.calls)
+	}
+}
+
 func openCoordinatorTestConfiguration(t *testing.T, enabledPolicy string) *Configuration.Store {
 	t.Helper()
 	enabled, err := json.Marshal(map[string]bool{enabledPolicy: true})
@@ -1643,4 +1846,30 @@ func openCoordinatorTestConfiguration(t *testing.T, enabledPolicy string) *Confi
 		t.Fatal(err)
 	}
 	return configuration
+}
+
+func TestCoordinatorRetryableStaleArmsRepeatedDecisionGuard(t *testing.T) {
+	// A stale plan re-evaluates immediately (so the policy can rotate to the
+	// next target) but must not spin: an IDENTICAL request afterwards hits
+	// the repeated-decision safety pause instead of another wire-speed pass.
+	next := time.Now().UTC().Add(time.Hour)
+	current := &policyRuntime{nextCheck: next, running: true, lastDecisionFingerprint: "attack-1124-238"}
+	result, wakeImmediately := completePolicyRun(current, operationResult{
+		policyID: "autoInvasion",
+		receipt: Intent.Receipt{
+			Status: Intent.StatusFailed,
+			Error:  Intent.ErrPlanStale.Error() + ": invasion target 1124:238 was not returned by the launch-time map refresh after 3 replans",
+		},
+		nextCheck:         next,
+		reevaluateOnStale: true,
+	}, time.Now().UTC())
+	if !wakeImmediately || !result.nextCheck.IsZero() {
+		t.Fatalf("retryable stale did not reevaluate immediately: result=%+v runtime=%+v", result, current)
+	}
+	if !current.failureBlockedUntil.IsZero() {
+		t.Fatalf("retryable stale must not take the failure pause (rotation stays immediate): %+v", current)
+	}
+	if !current.rejectRepeatedDecision {
+		t.Fatalf("retryable stale must arm the repeated-decision guard so an identical request pauses: %+v", current)
+	}
 }

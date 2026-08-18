@@ -40,10 +40,10 @@ export interface AutoBuyerClientStateV1 {
 }
 
 export function defaultAutoBuyerClientState(): AutoBuyerClientStateV1 {
-  return {
-    version: 1,
-    checkIntervalSec: 60,
-    historyRefreshSec: 900,
+	return {
+		version: 1,
+		checkIntervalSec: 1800,
+		historyRefreshSec: 3600,
     sourceCastleId: 0,
     minimumRubyReserve: 0,
     allowRubyPackages: false,
@@ -103,8 +103,8 @@ export function parseAutoBuyerClientState(value: unknown): AutoBuyerClientStateV
 
   return {
     version: 1,
-    checkIntervalSec: clampAutoBuyerInteger(value.checkIntervalSec, 10, 3600, fallback.checkIntervalSec),
-    historyRefreshSec: clampAutoBuyerInteger(value.historyRefreshSec, 60, 3600, fallback.historyRefreshSec),
+		checkIntervalSec: clampAutoBuyerInteger(value.checkIntervalSec, 1800, 3600, fallback.checkIntervalSec),
+		historyRefreshSec: clampAutoBuyerInteger(value.historyRefreshSec, 3600, 3600, fallback.historyRefreshSec),
     sourceCastleId: clampAutoBuyerInteger(value.sourceCastleId, 0, Number.MAX_SAFE_INTEGER, 0),
     minimumRubyReserve: clampAutoBuyerInteger(value.minimumRubyReserve, 0, Number.MAX_SAFE_INTEGER, 0),
     allowRubyPackages: value.allowRubyPackages === true,

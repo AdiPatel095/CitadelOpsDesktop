@@ -11,7 +11,12 @@ import {
 	equipmentEventOptions,
 	resolveEquipmentEventAvailability,
 	type EquipmentEventKey,
+	type EquipmentEventTier,
 } from '../EquipmentEventLoadouts';
+import {
+	buildOfficialEquipmentTargetIndex,
+	officialEquipmentTargetCombatMode,
+} from '../EquipmentEffectApplicability';
 import EquipmentOptimizer from './EquipmentOptimizer';
 import {
 	buildEquipmentEffectProfile,
@@ -38,7 +43,6 @@ import {
 	type EquipmentMode,
 	type EquipmentSlotRow,
 	equipmentTargets,
-	targetCombatMode,
 	type EquipmentTarget,
 } from './EquipmentTypes';
 
@@ -49,7 +53,11 @@ export default function EquipmentView() {
 	const [targetID, setTargetID] = useState('castle-1');
 	const targetOptions = useMemo(() => equipmentTargets(), []);
 	const target = useMemo(() => targetOptions.find((option) => option.id === targetID) ?? targetOptions[0]!, [targetID, targetOptions]);
-	const combatMode = targetCombatMode(target.castleTypeID);
+	const targetIndex = useMemo(() => buildOfficialEquipmentTargetIndex(effects), [effects]);
+	const combatMode = useMemo(
+		() => officialEquipmentTargetCombatMode(target.castleTypeID, targetIndex),
+		[target.castleTypeID, targetIndex],
+	);
 	const [selectedID, setSelectedID] = useState<number | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [showSell, setShowSell] = useState(false);
@@ -122,7 +130,8 @@ export default function EquipmentView() {
 		effects,
 		troops,
 		target.castleTypeID,
-	), [effects, rows, target.castleTypeID, troops]);
+		combatMode,
+	), [combatMode, effects, rows, target.castleTypeID, troops]);
 
 	const candidateEffectIDsByMode = useMemo<Record<CombatMode, number[]>>(() => {
 		const candidates: Record<CombatMode, Set<number>> = { PvP: new Set<number>(), PvE: new Set<number>() };
@@ -183,7 +192,7 @@ export default function EquipmentView() {
 		}), 'Equipment loadouts swapped').then((success) => success && setShowSwap(false));
 	};
 
-	const applyEventLoadout = (event: EquipmentEventKey) => {
+	const applyEventLoadout = (event: EquipmentEventKey, tier?: EquipmentEventTier) => {
 		if (!selected || selected.kind !== 'commander') return;
 		const eventLabel = equipmentEventOptions.find((option) => option.value === event)?.label ?? 'Event';
 		void run(async () => {
@@ -191,8 +200,9 @@ export default function EquipmentView() {
 			await submitIntent('equipment.event.apply', {
 				commanderId: selected.id,
 				event,
+				...(tier ? { tier } : {}),
 			});
-		}, `${eventLabel} loadout applied`).then((success) => success && setShowEventLoadout(false));
+		}, `${tier ? `${tier} ` : ''}${eventLabel} loadout applied`).then((success) => success && setShowEventLoadout(false));
 	};
 
 	const unequip = (slots: number[]) => {
@@ -416,7 +426,7 @@ function EquipmentStatsPane({
 	leader: EquipmentLeader | null;
 	rows: EquipmentSlotRow[];
 	effectProfile: EquipmentEffectProfile;
-	combatMode: CombatMode;
+	combatMode: CombatMode | null;
 	disabled: boolean;
 	reconfigureDisabled: boolean;
 	onUnequip: (kind: 'equipment' | 'gems') => void;
@@ -435,16 +445,18 @@ function EquipmentStatsPane({
 					<CardTitle className="truncate text-lg">{leader.name}</CardTitle>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
-					<Badge variant={combatMode === 'PvP' ? 'danger' : 'success'}>{combatMode} Stats</Badge>
+					<Badge variant={combatMode === 'PvP' ? 'danger' : combatMode === 'PvE' ? 'success' : 'outline'}>
+						{combatMode ? `${combatMode} Stats` : 'Target Stats'}
+					</Badge>
 					<div className="ml-auto flex flex-wrap justify-end gap-2">
 						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUpgrade('equipment')}>Upgrade Equipment</Button>
-						<Button size="sm" disabled={disabled || upgradeableGemCount === 0} onClick={() => onUpgrade('gem')} className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:border-emerald-500/50 hover:bg-emerald-500/20">Upgrade Gem</Button>
+						<Button size="sm" disabled={disabled || upgradeableGemCount === 0} onClick={() => onUpgrade('gem')}>Upgrade Gem</Button>
 						{leader.kind === 'commander' && (
-							<Button size="sm" variant="secondary" disabled={disabled} onClick={onEventLoadout} leftIcon={<Sparkles className="h-4 w-4" />}>Event Set</Button>
+							<Button size="sm" variant="outline" disabled={disabled} onClick={onEventLoadout} leftIcon={<Sparkles className="h-4 w-4" />}>Event Set</Button>
 						)}
-						<Button size="sm" variant="secondary" disabled={reconfigureDisabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}>Reconfigure</Button>
+						<Button size="sm" disabled={reconfigureDisabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}>Reconfigure</Button>
 						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUnequip('equipment')}>Unequip Equipment</Button>
-						<Button size="sm" disabled={disabled || gemCount === 0} onClick={() => onUnequip('gems')} className="border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:border-purple-500/50 hover:bg-purple-500/20">Unequip Gem</Button>
+						<Button size="sm" disabled={disabled || gemCount === 0} onClick={() => onUnequip('gems')}>Unequip Gem</Button>
 					</div>
 				</div>
 			</div>

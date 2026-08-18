@@ -34,6 +34,64 @@ func TestReduceMapSnapshotParsesKingdomTowerVictoryLevelAndCooldown(t *testing.T
 	}
 }
 
+func TestReduceMapSnapshotEmitsOnlyChangedFeatureDomains(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: time.Date(2026, time.August, 13, 12, 0, 0, 0, time.UTC),
+		Payload:    json.RawMessage(`{"KID":0,"AI":[[2,10,10,-1,1,0,0],[43,20,20,99]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("mixed map snapshot: changed=%t err=%v", changed, err)
+	}
+	for _, expected := range []string{"map-tower", "map-rift"} {
+		if !slices.Contains(domains, expected) {
+			t.Fatalf("targeted map domains = %v, missing %s", domains, expected)
+		}
+	}
+	if slices.Contains(domains, "map") || slices.Contains(domains, "map-storm") || slices.Contains(domains, "map-event-camp") {
+		t.Fatalf("mixed snapshot emitted unrelated map domains: %v", domains)
+	}
+}
+
+func TestNestedMapReducersOwnMapAndPlayerIndependently(t *testing.T) {
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	for _, opcode := range []string{"fnm", "fnt", "ssi"} {
+		registered := registry.registered(opcode, Protocol.DirectionInbound)
+		if len(registered.steps) != 2 {
+			t.Fatalf("%s reducer steps = %d, want 2", opcode, len(registered.steps))
+		}
+		if !registered.steps[0].writes.Has(State.ComponentWorldMap) ||
+			registered.steps[0].writes.Has(State.ComponentPlayer) {
+			t.Fatalf("%s map writes = %v", opcode, registered.steps[0].writes.List())
+		}
+		if registered.steps[1].writes != State.Components(State.ComponentPlayer) {
+			t.Fatalf("%s player writes = %v", opcode, registered.steps[1].writes.List())
+		}
+	}
+}
+
+func TestCooperativeStormTileEmitsNonWakingProgressDomain(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ResponseToken: "shared/storm-gaa/20260813/4", ReceivedAt: time.Date(2026, time.August, 13, 12, 0, 0, 0, time.UTC),
+		Payload: json.RawMessage(`{"KID":4,"AI":[[25,610,610,1,-1,10,0,0,0]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("cooperative Storm tile: changed=%t err=%v", changed, err)
+	}
+	if !slices.Contains(domains, "storm-scan-progress") || slices.Contains(domains, "map") ||
+		slices.Contains(domains, "map-storm") || slices.Contains(domains, "storm") {
+		t.Fatalf("cooperative Storm domains = %v", domains)
+	}
+}
+
 func TestReduceNestedMapSnapshotParsesCapturedKhanCamp(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],
@@ -165,7 +223,7 @@ func TestMapObservationMigratesLegacyTowerMapValueAsVictoryCount(t *testing.T) {
 	}
 }
 
-func TestMapObservationMigratesStormOpportunityLabels(t *testing.T) {
+func TestMapObservationDerivesStormOpportunityTimes(t *testing.T) {
 	observedAt := time.Date(2026, 7, 15, 16, 20, 0, 0, time.UTC)
 	var fort State.MapObservation
 	if err := json.Unmarshal([]byte(`{
@@ -173,8 +231,8 @@ func TestMapObservationMigratesStormOpportunityLabels(t *testing.T) {
 	}`), &fort); err != nil {
 		t.Fatal(err)
 	}
-	if !fort.StormReadyAt.Equal(observedAt.Add(300 * time.Second)) {
-		t.Fatalf("migrated fort readyAt = %s", fort.StormReadyAt)
+	if !fort.StormReadyAt().Equal(observedAt.Add(300 * time.Second)) {
+		t.Fatalf("derived fort readyAt = %s", fort.StormReadyAt())
 	}
 	var island State.MapObservation
 	if err := json.Unmarshal([]byte(`{
@@ -182,8 +240,8 @@ func TestMapObservationMigratesStormOpportunityLabels(t *testing.T) {
 	}`), &island); err != nil {
 		t.Fatal(err)
 	}
-	if !island.StormReadyAt.Equal(observedAt) || !island.StormExpiresAt.Equal(observedAt.Add(time.Hour)) {
-		t.Fatalf("migrated island labels = %#v", island)
+	if !island.StormReadyAt().Equal(observedAt) || !island.StormExpiresAt(0).Equal(observedAt.Add(time.Hour)) {
+		t.Fatalf("derived island times = %#v", island)
 	}
 }
 
@@ -197,7 +255,7 @@ func TestMapObservationOmitsEmptyStormOpportunityLabels(t *testing.T) {
 	}
 }
 
-func TestReduceMapSnapshotLabelsStormReadyAndExpiryTimes(t *testing.T) {
+func TestReduceMapSnapshotRetainsOfficialStormTimers(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[],
 		"isles":[
@@ -228,17 +286,17 @@ func TestReduceMapSnapshotLabelsStormReadyAndExpiryTimes(t *testing.T) {
 		t.Fatalf("Storm map snapshot: changed=%t err=%v", changed, err)
 	}
 	unoccupied := gameState.Map[4]["100:101"]
-	if !unoccupied.StormReadyAt.Equal(observedAt) || !unoccupied.StormExpiresAt.Equal(observedAt.Add(100*time.Second)) {
-		t.Fatalf("unoccupied island labels = %#v", unoccupied)
+	if !unoccupied.StormReadyAt().Equal(observedAt) || !unoccupied.StormExpiresAt(115_200).Equal(observedAt.Add(100*time.Second)) {
+		t.Fatalf("unoccupied island times = %#v", unoccupied)
 	}
 	occupied := gameState.Map[4]["102:103"]
-	if !occupied.StormReadyAt.Equal(observedAt.Add(120*time.Second)) ||
-		!occupied.StormExpiresAt.Equal(observedAt.Add((120+115_200)*time.Second)) {
-		t.Fatalf("occupied island labels = %#v", occupied)
+	if !occupied.StormReadyAt().Equal(observedAt.Add(120*time.Second)) ||
+		!occupied.StormExpiresAt(115_200).Equal(observedAt.Add((120+115_200)*time.Second)) {
+		t.Fatalf("occupied island times = %#v", occupied)
 	}
 	fort := gameState.Map[4]["104:105"]
-	if !fort.StormReadyAt.Equal(observedAt.Add(300*time.Second)) || !fort.StormExpiresAt.IsZero() {
-		t.Fatalf("fort labels = %#v", fort)
+	if !fort.StormReadyAt().Equal(observedAt.Add(300*time.Second)) || !fort.StormExpiresAt(115_200).IsZero() {
+		t.Fatalf("fort times = %#v", fort)
 	}
 	if tracked := gameState.Storm.Map.Targets["104:105"]; tracked != fort {
 		t.Fatalf("tracked Storm fort was not refreshed from the newer map row: %#v", tracked)
@@ -268,5 +326,38 @@ func TestInvasionFortificationTracksReceiptUntilServerCountersReset(t *testing.T
 	}, &gameState, nil)
 	if err != nil || !changed || len(gameState.Invasion.FortifiedTargets) != 0 {
 		t.Fatalf("reset fortification counters: state=%#v changed=%t err=%v", gameState.Invasion, changed, err)
+	}
+}
+
+func TestReduceMapSnapshotDropsRetainedObservationReplacedByUntrackedRow(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	first := time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
+	// A Foreign Lord castle (type 21) is observed by a full scan.
+	if _, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: first,
+		Payload: json.RawMessage(`{"KID":0,"AI":[[21,1124,238,70,0,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]}`),
+	}, &gameState, nil); err != nil || !changed {
+		t.Fatalf("initial invasion observation: changed=%t err=%v", changed, err)
+	}
+	if _, exists := gameState.LookupMapObservation(0, "1124:238"); !exists {
+		t.Fatal("foreign lord castle was not retained")
+	}
+	// The castle is defeated; the coordinate now reports as AREA_TYPE_DYNAMIC
+	// (31), which is not a tracked map kind. The stale type-21 observation
+	// must go with it — otherwise it stays a phantom attack candidate that
+	// every refresh silently re-confirms.
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: first.Add(time.Minute),
+		Payload: json.RawMessage(`{"KID":0,"AI":[[31,1124,238]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("dynamic-area replacement: changed=%t err=%v", changed, err)
+	}
+	if _, exists := gameState.LookupMapObservation(0, "1124:238"); exists {
+		t.Fatal("phantom foreign lord castle survived the dynamic-area row")
+	}
+	if !slices.Contains(domains, "map-invasion") {
+		t.Fatalf("invasion domain did not wake on the deletion: %v", domains)
 	}
 }

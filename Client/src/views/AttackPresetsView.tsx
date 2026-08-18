@@ -4,7 +4,6 @@ import {
   ClipboardPaste,
   Edit3,
   Files,
-  Library,
   Plus,
   Shield,
   Swords,
@@ -22,7 +21,6 @@ import {
   MetricTile,
   Modal,
   ModalTitle,
-  PageHeader,
 } from '../components/ui';
 import { Notifications } from '../components/Notifications';
 import ToolImage from '../components/ToolImage';
@@ -247,22 +245,6 @@ const AttackPresetsView: React.FC = () => {
 
   return (
     <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-5 pb-10">
-      <PageHeader
-        title="Attack Presets"
-        description="Build reusable multi-wave formations, or import and share them as CRA command strings."
-        icon={<Library className="h-5 w-5" />}
-        actions={(
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" leftIcon={<ClipboardPaste className="h-4 w-4" />} onClick={openImport}>
-              Import CRA
-            </Button>
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
-              New preset
-            </Button>
-          </div>
-        )}
-      />
-
       <CollectionToolbar
         summary={(
           <>
@@ -270,6 +252,16 @@ const AttackPresetsView: React.FC = () => {
             {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
           </Badge>
           <Badge variant="outline" className="normal-case tracking-normal">Stored by CitadelOps</Badge>
+          </>
+        )}
+        actions={(
+          <>
+            <Button variant="secondary" leftIcon={<ClipboardPaste className="h-4 w-4" />} onClick={openImport}>
+              Import CRA
+            </Button>
+            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
+              New preset
+            </Button>
           </>
         )}
         searchValue={query}

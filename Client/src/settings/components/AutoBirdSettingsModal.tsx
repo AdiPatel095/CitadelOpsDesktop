@@ -285,7 +285,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                 />
               </div>
             </div>
-            <div className="flex min-w-[200px] flex-col gap-1 lg:min-w-[200px]">
+            <div className="flex min-w-0 flex-1 basis-full flex-col gap-1 md:basis-52 lg:min-w-[200px]">
               <span className="text-xs font-bold uppercase tracking-wider text-primary">Minimum to send</span>
               <div className="flex items-center gap-2">
                 <Input
@@ -298,7 +298,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                 />
               </div>
             </div>
-            <div className="flex min-w-[200px] flex-col gap-1 lg:min-w-[200px]">
+            <div className="flex min-w-0 flex-1 basis-full flex-col gap-1 md:basis-52 lg:min-w-[200px]">
               <span className="text-xs font-bold uppercase tracking-wider text-primary">Minimum RPT</span>
               <div className="flex items-center gap-2">
                 <Input

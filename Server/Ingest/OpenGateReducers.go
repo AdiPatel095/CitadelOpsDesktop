@@ -36,6 +36,10 @@ func reduceOpenGate(
 	if castleID <= 0 || !found {
 		return nil, false, nil
 	}
+	castle, found = gameState.MutableCastleParts(castleID, State.CastlePartDefense)
+	if !found {
+		return nil, false, nil
+	}
 	before := castle.Defense.OpenGateUntil
 	castle.Defense.OpenGateUntil = nil
 	if payload.RemainingSec > 0 {
@@ -45,6 +49,6 @@ func reduceOpenGate(
 	if reflect.DeepEqual(before, castle.Defense.OpenGateUntil) {
 		return nil, false, nil
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartDefense)
 	return []string{"castles", "defense", "khan"}, true, nil
 }

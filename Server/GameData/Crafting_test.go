@@ -67,4 +67,40 @@ func TestCraftingRecipeCostsResolveNamedFieldsToLiveResourceIDs(t *testing.T) {
 		costs[1].ResourceID != 10 || costs[1].JSONKey != "I" || costs[1].Amount != 19200 {
 		t.Fatalf("crafting costs = %#v", costs)
 	}
+	cached, err := CraftingRecipeCostsView(store, 110)
+	if err != nil || len(cached) != 2 {
+		t.Fatalf("cached crafting costs = %#v err=%v", cached, err)
+	}
+	definition, found := store.CraftingRecipeView(110)
+	if !found || len(definition.Costs) != 2 {
+		t.Fatalf("cached crafting definition = %#v", definition)
+	}
+	costs[0].Amount = 0
+	unchanged, _ := CraftingRecipeCostsView(store, 110)
+	if unchanged[0].Amount != 21200 {
+		t.Fatalf("public mutation reached cached crafting costs: %#v", unchanged)
+	}
+}
+
+func TestResourceLookupsReuseOfficialProjection(t *testing.T) {
+	store, err := DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"resources":[
+			{"resourceID":1,"name":"coins","JSONKey":"C1"},
+			{"resourceID":8,"name":"glass","JSONKey":"G"}
+		],
+		"currencies":[{"currencyID":9,"Name":"token","JSONKey":"STP"}]
+	}`), SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id, found := store.ResourceIDForJSONKey("c1"); !found || id != 1 {
+		t.Fatalf("C1 resource = %d found=%t", id, found)
+	}
+	if key, found := store.ResourceJSONKey(8); !found || key != "G" {
+		t.Fatalf("resource 8 key = %q found=%t", key, found)
+	}
+	if id, found := store.CurrencyIDForJSONKey("stp"); !found || id != 9 {
+		t.Fatalf("STP currency = %d found=%t", id, found)
+	}
 }

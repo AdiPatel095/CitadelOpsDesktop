@@ -15,7 +15,7 @@ func TestDesktopServiceReportsSharedDataReaderMode(t *testing.T) {
 		NewCloudClient(ClientConfig{BaseURL: "https://intel.example/v1", ClientVersion: "test"}),
 	)
 	status := service.Status(context.Background())
-	if !status.Enabled || status.CollectionMode != "shared-data-reader" || status.WorldID != "world.example" ||
+	if !status.Enabled || status.CollectionMode != "shared-data-subscriber" || status.WorldID != "world.example" ||
 		status.Endpoint != "https://intel.example/v1" || !status.PublicFieldsOnly || !status.OfficialSourceOnly {
 		t.Fatalf("unexpected read-only status: %#v", status)
 	}

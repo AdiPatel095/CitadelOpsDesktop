@@ -157,11 +157,12 @@ func spyAvailability(gameState State.GameState, gameData *GameData.Store) SpyAva
 		}
 		return result.Taverns[left].Capacity < result.Taverns[right].Capacity
 	})
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.TypeID == 3 && movement.SourceCastleID == source.ID {
 			result.Active += movement.SpyCount
 		}
-	}
+		return true
+	})
 	result.Available = max(0, result.Capacity-result.Active)
 	return result
 }
@@ -244,28 +245,30 @@ func enrichTargetIntelligence(gameState State.GameState, archivedReports []Repor
 			latestLegacyByCoordinate[key] = report
 		}
 	}
-	for _, kingdom := range gameState.Map {
-		for _, observation := range kingdom {
+	for _, kingdomID := range gameState.MapKingdomIDs() {
+		gameState.RangeMapObservationsByKind(kingdomID, State.MapProjectionPlayerCastle, func(_ string, observation State.MapObservation) bool {
 			name := strings.TrimSpace(observation.Name)
 			if name == "" {
-				continue
+				return true
 			}
 			byCoordinate[coordinateKey(observation.X, observation.Y)] = name
 			if observation.ObjectID > 0 {
 				byID[observation.ObjectID] = name
 			}
-		}
+			return true
+		})
 	}
 	for _, report := range archivedReports {
 		considerReport(report)
 	}
-	for _, capture := range gameState.Reports.SpyCaptures {
+	gameState.RangeSpyReportCaptures(func(_ int64, capture State.SpyReportCapture) bool {
 		report, err := Reports.ParseSpyCapture(capture)
 		if err != nil {
-			continue
+			return true
 		}
 		considerReport(report)
-	}
+		return true
+	})
 	for index := range targets {
 		castle := &targets[index].TargetCastle
 		if castle.TypeName == "" {

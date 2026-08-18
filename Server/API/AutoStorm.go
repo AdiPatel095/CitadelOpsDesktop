@@ -29,7 +29,7 @@ func (server *Server) handleAutoStormTroopCapPreview(writer http.ResponseWriter,
 		return
 	}
 	result, err := Automation.PreviewAutoStormTroopCap(
-		server.config.State.Snapshot(),
+		server.config.State.ReadOnlyView(),
 		server.config.Configuration.Snapshot(),
 		gameData,
 		input.Settings,

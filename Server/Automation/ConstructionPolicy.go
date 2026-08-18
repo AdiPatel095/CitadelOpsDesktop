@@ -27,14 +27,7 @@ type constructionTarget struct {
 	MinLevel int   `json:"minLevel,omitempty"`
 }
 
-type constructionMetadata struct {
-	id         State.ConstructionItemID
-	groupID    int64
-	variantKey string
-	level      int
-	slot       int
-	temporary  bool
-}
+type constructionMetadata = GameData.ConstructionItemTier
 
 type equippedConstruction struct {
 	buildingID State.BuildingInstanceID
@@ -64,7 +57,10 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 			NextCheckAt: snapshot.Now.Add(constructionCheckInterval),
 		}, nil
 	}
-	metadata, tiersByVariant, err := constructionCatalog(snapshot.GameData)
+	if snapshot.GameData == nil {
+		return Decision{}, fmt.Errorf("official game data is unavailable")
+	}
+	metadata, err := snapshot.GameData.ConstructionItemCatalog()
 	if err != nil {
 		return Decision{}, err
 	}
@@ -104,11 +100,11 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 			}, nil
 		}
 		for _, target := range settings.Targets[castleKey] {
-			representative, exists := metadata[State.ConstructionItemID(target.ID)]
-			if !exists || !representative.temporary || representative.groupID <= 0 || representative.variantKey == "" {
+			representative, exists := metadata.DefinitionView(target.ID)
+			if !exists || !representative.Temporary || representative.GroupID <= 0 || representative.VariantKey == "" {
 				continue
 			}
-			tiers := tiersByVariant[representative.variantKey]
+			tiers := metadata.TiersView(representative.VariantKey)
 			targets++
 			floor := target.MinLevel
 			if floor <= 0 {
@@ -119,22 +115,22 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 				ceiling = floor
 			}
 			equipped, hasEquipped := equippedConstructionForVariant(
-				castle, metadata, representative.variantKey, snapshot.Now,
+				castle, metadata, representative.VariantKey, snapshot.Now,
 			)
 			if hasEquipped {
-				if nextTier, hasNext := nextConstructionTier(tiers, equipped.item.id); hasNext &&
-					nextTier.level <= ceiling && equipped.slot.RemainingSec != nil {
+				if nextTier, hasNext := nextConstructionTier(tiers, State.ConstructionItemID(equipped.item.ID)); hasNext &&
+					nextTier.Level <= ceiling && equipped.slot.RemainingSec != nil {
 					remaining := *equipped.slot.RemainingSec
 					if remaining <= 300 {
-						offerCode, mapped := constructionUpgradeCode(nextTier.level)
+						offerCode, mapped := constructionUpgradeCode(nextTier.Level)
 						if mapped {
 							arguments, _ := json.Marshal(map[string]any{
 								"castleId": castle.ID, "buildingInstanceId": equipped.buildingID,
-								"constructionItemId": equipped.item.id, "slot": equipped.slot.Slot, "offerCode": offerCode,
+								"constructionItemId": equipped.item.ID, "slot": equipped.slot.Slot, "offerCode": offerCode,
 							})
 							return Decision{
 								Status:              "ready",
-								Detail:              fmt.Sprintf("Upgrade construction item %d to level %d at %s", equipped.item.id, nextTier.level, castleName(castle)),
+								Detail:              fmt.Sprintf("Upgrade construction item %d to level %d at %s", equipped.item.ID, nextTier.Level, castleName(castle)),
 								NextCheckAt:         snapshot.Now.Add(10 * time.Second),
 								Request:             &Intent.Request{Name: "construction.upgrade", Arguments: arguments},
 								ReevaluateOnSuccess: true,
@@ -144,7 +140,7 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 					nextCheck = earlierConstructionCheck(nextCheck, snapshot.Now, remaining-300)
 					continue
 				}
-				if equipped.item.level >= floor && equipped.item.level <= ceiling {
+				if equipped.item.Level >= floor && equipped.item.Level <= ceiling {
 					if equipped.slot.RemainingSec != nil {
 						remaining := *equipped.slot.RemainingSec
 						nextCheck = earlierConstructionCheck(nextCheck, snapshot.Now, remaining)
@@ -171,7 +167,7 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 				continue
 			}
 			hostID, compatibleHost, hostAvailableAt := constructionHost(
-				castle, snapshot.GameData, metadata, representative.groupID, representative.slot, snapshot.Now,
+				castle, snapshot.GameData, metadata, representative.GroupID, representative.Slot, snapshot.Now,
 			)
 			if hostID <= 0 {
 				if compatibleHost {
@@ -199,11 +195,11 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 			}
 			arguments, _ := json.Marshal(map[string]any{
 				"castleId": castleID, "buildingInstanceId": hostID,
-				"constructionItemId": tier.id, "slot": representative.slot, "mode": 0,
+				"constructionItemId": tier.ID, "slot": representative.Slot, "mode": 0,
 			})
 			return Decision{
 				Status:              "ready",
-				Detail:              fmt.Sprintf("Equip construction item %d at %s", tier.id, castleName(castle)),
+				Detail:              fmt.Sprintf("Equip construction item %d at %s", tier.ID, castleName(castle)),
 				NextCheckAt:         snapshot.Now.Add(30 * time.Second),
 				Request:             &Intent.Request{Name: "construction.equip", Arguments: arguments},
 				FollowUp:            &Intent.Request{Name: "construction.inventory.refresh", Arguments: json.RawMessage(`{}`)},
@@ -229,54 +225,9 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 	return Decision{Status: "idle", Detail: detail, NextCheckAt: nextCheck}, nil
 }
 
-func constructionCatalog(store *GameData.Store) (
-	map[State.ConstructionItemID]constructionMetadata,
-	map[string][]constructionMetadata,
-	error,
-) {
-	if store == nil {
-		return nil, nil, fmt.Errorf("official game data is unavailable")
-	}
-	catalog, err := store.Catalog("constructionItems")
-	if err != nil {
-		return nil, nil, err
-	}
-	byID := make(map[State.ConstructionItemID]constructionMetadata, len(catalog.Rows()))
-	byVariant := map[string][]constructionMetadata{}
-	for _, raw := range catalog.Rows() {
-		record, decodeErr := GameData.DecodeRecord(raw)
-		if decodeErr != nil {
-			continue
-		}
-		id, _ := record.Int64("constructionItemID")
-		groupID, _ := record.Int64("constructionItemGroupID")
-		level, _ := record.Int64("level")
-		slot, _ := record.Int64("slotTypeID")
-		if id <= 0 || groupID <= 0 {
-			continue
-		}
-		metadata := constructionMetadata{
-			id: State.ConstructionItemID(id), groupID: groupID,
-			variantKey: GameData.ConstructionItemVariantKey(record), level: int(level), slot: int(slot),
-			temporary: GameData.ConstructionItemIsTemporary(record),
-		}
-		byID[metadata.id] = metadata
-		byVariant[metadata.variantKey] = append(byVariant[metadata.variantKey], metadata)
-	}
-	for variantKey := range byVariant {
-		sort.Slice(byVariant[variantKey], func(left, right int) bool {
-			if byVariant[variantKey][left].level != byVariant[variantKey][right].level {
-				return byVariant[variantKey][left].level > byVariant[variantKey][right].level
-			}
-			return byVariant[variantKey][left].id < byVariant[variantKey][right].id
-		})
-	}
-	return byID, byVariant, nil
-}
-
 func equippedConstructionForVariant(
 	castle State.CastleState,
-	metadata map[State.ConstructionItemID]constructionMetadata,
+	metadata *GameData.ConstructionItemCatalog,
 	variantKey string,
 	now time.Time,
 ) (equippedConstruction, bool) {
@@ -289,8 +240,8 @@ func equippedConstructionForVariant(
 		slots := append([]State.ConstructionSlot(nil), castle.ConstructionSlots[buildingID]...)
 		sort.Slice(slots, func(left, right int) bool { return slots[left].Slot < slots[right].Slot })
 		for _, slot := range slots {
-			item, exists := metadata[slot.DefinitionID]
-			if !exists || item.variantKey != variantKey {
+			item, exists := metadata.DefinitionView(int64(slot.DefinitionID))
+			if !exists || item.VariantKey != variantKey {
 				continue
 			}
 			occupied, remaining := occupiedConstructionSlot(slot, item, castle.ConstructionSlotsObservedAt, now)
@@ -306,8 +257,8 @@ func equippedConstructionForVariant(
 func nextConstructionTier(tiers []constructionMetadata, currentID State.ConstructionItemID) (constructionMetadata, bool) {
 	currentLevel := 0
 	for _, tier := range tiers {
-		if tier.id == currentID {
-			currentLevel = tier.level
+		if tier.ID == int64(currentID) {
+			currentLevel = tier.Level
 			break
 		}
 	}
@@ -316,11 +267,11 @@ func nextConstructionTier(tiers []constructionMetadata, currentID State.Construc
 	}
 	next := constructionMetadata{}
 	for _, tier := range tiers {
-		if tier.level > currentLevel && (next.level == 0 || tier.level < next.level) {
+		if tier.Level > currentLevel && (next.Level == 0 || tier.Level < next.Level) {
 			next = tier
 		}
 	}
-	return next, next.id > 0
+	return next, next.ID > 0
 }
 
 func constructionUpgradeCode(targetLevel int) (int, bool) {
@@ -353,7 +304,10 @@ func constructionPurchaseDecision(
 	ceiling int,
 ) (Decision, string) {
 	inventoryCount := State.ConstructionItemInventoryCount(snapshot.State.Inventory.ConstructionItems)
-	remainingCapacity := State.ConstructionItemInventoryLimit - inventoryCount
+	// The server's own space-left answer (csp) is the fullness oracle when
+	// fresh; the softcap estimate is the fallback, exactly as the official
+	// client does it. A stale local count must never block the blacksmith.
+	remainingCapacity := State.ConstructionItemInventorySpaceLeft(snapshot.State.Inventory, snapshot.Now)
 	if remainingCapacity <= 0 {
 		return Decision{
 			Status: "waiting",
@@ -369,8 +323,9 @@ func constructionPurchaseDecision(
 	if !exists {
 		return Decision{}, "no-main-castle"
 	}
-	if snapshot.State.Inventory.ConstructionOffersObservedAt.IsZero() ||
-		snapshot.Now.Sub(snapshot.State.Inventory.ConstructionOffersObservedAt) >= constructionCheckInterval {
+	offers, offersObservedAt, offersFound := snapshot.State.ConstructionOffersFor(mainCastle.ID, mainCastle.KingdomID)
+	if !offersFound || offersObservedAt.IsZero() ||
+		snapshot.Now.Sub(offersObservedAt) >= constructionCheckInterval {
 		arguments, _ := json.Marshal(map[string]any{"castleId": mainCastle.ID})
 		return Decision{
 			Status:              "ready",
@@ -381,19 +336,19 @@ func constructionPurchaseDecision(
 		}, "refresh-shop"
 	}
 	ascending := append([]constructionMetadata(nil), tiers...)
-	sort.Slice(ascending, func(left, right int) bool { return ascending[left].level < ascending[right].level })
+	sort.Slice(ascending, func(left, right int) bool { return ascending[left].Level < ascending[right].Level })
 	for _, tier := range ascending {
-		if tier.level < floor || tier.level > ceiling {
+		if tier.Level < floor || tier.Level > ceiling {
 			continue
 		}
-		products, err := snapshot.GameData.ConstructionShopProducts(int64(tier.id))
+		products, err := snapshot.GameData.ConstructionShopProducts(tier.ID)
 		if err != nil {
 			continue
 		}
 		selected := GameData.ConstructionShopProduct{}
 		amount := int64(0)
 		for _, product := range products {
-			liveAmount := snapshot.State.Inventory.ConstructionOffers[State.PackageID(product.PackageID)]
+			liveAmount := offers[State.PackageID(product.PackageID)]
 			if liveAmount <= 0 {
 				continue
 			}
@@ -423,7 +378,7 @@ func constructionPurchaseDecision(
 		})
 		return Decision{
 			Status:              "ready",
-			Detail:              fmt.Sprintf("Buy construction item %d for configured targets", tier.id),
+			Detail:              fmt.Sprintf("Buy construction item %d for configured targets", tier.ID),
 			NextCheckAt:         snapshot.Now.Add(10 * time.Second),
 			Request:             &Intent.Request{Name: "construction.purchase", Arguments: arguments},
 			FollowUp:            &Intent.Request{Name: "construction.inventory.refresh", Arguments: json.RawMessage(`{}`)},
@@ -458,20 +413,20 @@ func bestConstructionInventoryTier(
 ) (constructionMetadata, bool) {
 	best := constructionMetadata{}
 	for _, tier := range tiers {
-		if tier.level < floor || tier.level > ceiling || inventory[tier.id] <= 0 {
+		if tier.Level < floor || tier.Level > ceiling || inventory[State.ConstructionItemID(tier.ID)] <= 0 {
 			continue
 		}
-		if best.id == 0 || tier.level < best.level || (tier.level == best.level && tier.id < best.id) {
+		if best.ID == 0 || tier.Level < best.Level || (tier.Level == best.Level && tier.ID < best.ID) {
 			best = tier
 		}
 	}
-	return best, best.id > 0
+	return best, best.ID > 0
 }
 
 func constructionHost(
 	castle State.CastleState,
 	store *GameData.Store,
-	metadata map[State.ConstructionItemID]constructionMetadata,
+	metadata *GameData.ConstructionItemCatalog,
 	groupID int64,
 	targetSlot int,
 	now time.Time,
@@ -479,7 +434,7 @@ func constructionHost(
 	if store == nil {
 		return 0, false, time.Time{}
 	}
-	buildings, err := store.Catalog("buildings")
+	buildings, err := store.BuildingCatalog()
 	if err != nil {
 		return 0, false, time.Time{}
 	}
@@ -487,16 +442,11 @@ func constructionHost(
 	compatible := false
 	var nextAvailable time.Time
 	for instanceID, building := range castle.Buildings {
-		raw, exists := buildings.Find(strconv.FormatInt(int64(building.DefinitionID), 10))
+		definition, exists := buildings.DefinitionView(int64(building.DefinitionID))
 		if !exists {
 			continue
 		}
-		record, decodeErr := GameData.DecodeRecord(raw)
-		if decodeErr != nil {
-			continue
-		}
-		groups, _ := record.String("constructionItemGroupIDs")
-		if _, allowed := commaSeparatedIDs(groups)[groupID]; !allowed {
+		if !containsInt64(definition.ConstructionItemGroupIDs, groupID) {
 			continue
 		}
 		compatible = true
@@ -504,13 +454,13 @@ func constructionHost(
 		availabilityKnown := true
 		var buildingAvailableAt time.Time
 		for _, slot := range castle.ConstructionSlots[instanceID] {
-			item, known := metadata[slot.DefinitionID]
+			item, known := metadata.DefinitionView(int64(slot.DefinitionID))
 			if !known {
 				occupied = true
 				availabilityKnown = false
 				continue
 			}
-			if item.slot != targetSlot {
+			if item.Slot != targetSlot {
 				continue
 			}
 			active, remaining := occupiedConstructionSlot(slot, item, castle.ConstructionSlotsObservedAt, now)
@@ -547,7 +497,7 @@ func occupiedConstructionSlot(
 	observedAt time.Time,
 	now time.Time,
 ) (bool, *int) {
-	if !item.temporary {
+	if !item.Temporary {
 		return true, nil
 	}
 	if slot.RemainingSec == nil {

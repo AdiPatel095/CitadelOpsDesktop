@@ -40,6 +40,8 @@ type autoKhanSettings struct {
 	DefenseRefreshIntervalSec int              `json:"defenseRefreshIntervalSec"`
 	MapRefreshIntervalSec     int              `json:"mapRefreshIntervalSec"`
 	DailyAttackLimit          int64            `json:"dailyAttackLimit"`
+	AttackLaunchesEnabled     bool             `json:"attackLaunchesEnabled"`
+	TriggerRage               bool             `json:"triggerRage"`
 	SkipCooldowns             bool             `json:"skipCooldowns"`
 	TimeSkipReserve           map[string]int64 `json:"timeSkipReserve"`
 	OpenGateProtection        bool             `json:"openGateProtection"`
@@ -77,26 +79,26 @@ func (*AutoKhanDefensePolicy) ActorID() string  { return "autoKhan" }
 
 func (*AutoKhanPolicy) WakeDomains() []string {
 	return []string{
-		"achievements", "attacks", "commanders", "currencies", "defense", "events", "event-scores", "inventory", "khan", "map",
+		"achievements", "attacks", "commanders", "currencies", "defense", "events", "event-scores", "inventory", "khan", "map-event-camp",
 		"movement-snapshot", "movements", "nomad-camps", "resources", "stationing", "units",
 	}
 }
 
 func (*AutoKhanCooldownPolicy) WakeDomains() []string {
 	return []string{
-		"currencies", "defense", "events", "event-scores", "khan", "map", "movements", "nomad-camps", "stationing",
+		"currencies", "defense", "events", "event-scores", "khan", "map-event-camp", "movements", "nomad-camps", "stationing",
 	}
 }
 
 func (*AutoKhanRagePolicy) WakeDomains() []string {
 	return []string{
-		"defense", "events", "event-scores", "inventory", "khan", "map", "movement-snapshot", "movements", "stationing",
+		"defense", "events", "event-scores", "inventory", "khan", "map-event-camp", "movement-snapshot", "movements", "stationing",
 	}
 }
 
 func (*AutoKhanDefensePolicy) WakeDomains() []string {
 	return []string{
-		"defense", "events", "event-scores", "inventory", "khan", "map", "movements", "stationing",
+		"defense", "events", "event-scores", "inventory", "khan", "map-event-camp", "movements", "stationing",
 	}
 }
 
@@ -123,10 +125,12 @@ func (*AutoKhanDefensePolicy) WakeSections() []string {
 }
 
 func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+
 	settings := autoKhanSettings{
 		MinimumRemainingSec: 300, CheckIntervalSec: defaultKhanCheckIntervalSec,
 		DefenseRefreshIntervalSec: defaultKhanDefenseRefreshSec, MapRefreshIntervalSec: defaultKhanMapRefreshSec,
-		SkipCooldowns: true, TimeSkipReserve: map[string]int64{}, OffensiveUnitThreshold: 1000,
+		AttackLaunchesEnabled: true, TriggerRage: true, SkipCooldowns: true,
+		TimeSkipReserve: map[string]int64{}, OffensiveUnitThreshold: 1000,
 		HorseTravelBoostID: -1,
 	}
 	if !decodeSection(snapshot.Configuration, "automation.autoKhan", &settings) {
@@ -164,8 +168,13 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		settings.OpenGateProtection = false
 	}
 
-	score, active := snapshot.State.EventScores.ByEvent[autoKhanEventID]
+	score, active := snapshot.State.LookupScalableEventScore(autoKhanEventID)
 	if !active || score.RemainingSec <= 0 || score.ObservedAt.IsZero() {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{autoKhanEventID}, "Nomad Khan event",
+		); locked {
+			return decision, nil
+		}
 		return autoKhanWaiting(snapshot.Now, "Waiting for the Nomad event and Khan camp", settings.CheckIntervalSec, nil), nil
 	}
 	remaining := autoKhanRemaining(score, snapshot.Now)
@@ -173,6 +182,11 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	metrics["eventRemainingSec"] = float64(max(int64(0), remaining))
 	metrics["nomadPoints"] = float64(score.PlayerScore)
 	metrics["nomadPointThreshold"] = float64(settings.NomadPointThreshold)
+	if settings.AttackLaunchesEnabled {
+		metrics["attackLaunchesEnabled"] = 1
+	} else {
+		metrics["attackLaunchesEnabled"] = 0
+	}
 	if settings.NomadPointThreshold > 0 && score.PlayerScore >= settings.NomadPointThreshold {
 		outgoing := autoKhanOutgoingMovementIDs(snapshot.State, snapshot.Now)
 		metrics["outgoingKhanMovements"] = float64(len(outgoing))
@@ -411,17 +425,23 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 				metrics,
 			), nil
 		}
+		detail := "Report-linked cooldown lane is re-pinging the Khan camp; only the CRA launch cursor is held"
+		if !settings.AttackLaunchesEnabled {
+			detail = "Report-linked cooldown lane is re-pinging the Khan camp while automatic Khan attacks remain locked"
+		}
 		return Decision{
-			Status: "cooldown", Detail: "Report-linked cooldown lane is re-pinging the Khan camp; only the CRA launch cursor is held",
+			Status: "cooldown", Detail: detail,
 			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 		}, nil
 	}
 	remainingCooldown := nomadCampCooldownRemaining(snapshot.State, target, snapshot.Now)
 	metrics["cooldownRemaining"] = float64(remainingCooldown)
-	if _, blocked := dailyAttackLimitAllowance(
-		snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, defaultKhanCheckIntervalSec), metrics,
-	); blocked != nil {
-		return *blocked, nil
+	if settings.AttackLaunchesEnabled {
+		if _, blocked := dailyAttackLimitAllowance(
+			snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, defaultKhanCheckIntervalSec), metrics,
+		); blocked != nil {
+			return *blocked, nil
+		}
 	}
 	if remainingCooldown > 0 {
 		if len(pendingCooldownReports) == 0 {
@@ -446,22 +466,45 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 					"nomadPointThreshold":    settings.NomadPointThreshold,
 				},
 			})
-			return Decision{
-				Status: "cooldown", Detail: fmt.Sprintf(
-					"Clear the unreported %d-second Khan cooldown immediately before the next CRA",
+			detail := fmt.Sprintf(
+				"Clear the unreported %d-second Khan cooldown immediately before the next CRA",
+				remainingCooldown,
+			)
+			if !settings.AttackLaunchesEnabled {
+				detail = fmt.Sprintf(
+					"Clear the unreported %d-second Khan cooldown to maintain the manual chain",
 					remainingCooldown,
-				),
+				)
+			}
+			return Decision{
+				Status: "cooldown", Detail: detail,
 				NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 				Request:             &Intent.Request{Name: "nomad.cooldown.minute_skip", Arguments: arguments},
 				ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 			}, nil
 		}
-		return Decision{
-			Status: "cooldown", Detail: fmt.Sprintf(
-				"Report-linked cooldown lane is clearing %d seconds; only the CRA launch cursor is held",
+		detail := fmt.Sprintf(
+			"Report-linked cooldown lane is clearing %d seconds; only the CRA launch cursor is held",
+			remainingCooldown,
+		)
+		if !settings.AttackLaunchesEnabled {
+			detail = fmt.Sprintf(
+				"Report-linked cooldown lane is clearing %d seconds while automatic Khan attacks remain locked",
 				remainingCooldown,
-			),
+			)
+		}
+		return Decision{
+			Status: "cooldown", Detail: detail,
 			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
+		}, nil
+	}
+	if !settings.AttackLaunchesEnabled {
+		metrics["attackLaunchLocked"] = 1
+		return Decision{
+			Status:      "idle",
+			Detail:      "Automatic Khan attacks are locked; cooldown, rage, and defense lanes remain active for a manual chain",
+			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, defaultKhanCheckIntervalSec)),
+			Metrics:     metrics,
 		}, nil
 	}
 
@@ -495,6 +538,9 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	commanderID := ordered[0]
 	limitedPreset, err := autoKhanCapacityLimitedPreset(snapshot, source, target, attackPreset, commanderID)
 	if err != nil {
+		if decision, refresh := generalSkillsRefreshDecision(err, snapshot.Now, metrics); refresh {
+			return decision, nil
+		}
 		return autoKhanWaiting(
 			snapshot.Now,
 			fmt.Sprintf("Cannot calculate %s inventory requirements: %v", attackPreset.Name, err),
@@ -596,7 +642,7 @@ func (*AutoKhanCooldownPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 			Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
 	}
-	observation, found := snapshot.State.Map[selected.KingdomID][fmt.Sprintf("%d:%d", selected.X, selected.Y)]
+	observation, found := snapshot.State.LookupMapObservation(selected.KingdomID, fmt.Sprintf("%d:%d", selected.X, selected.Y))
 	if !found || observation.TypeID != autoKhanCampTypeID ||
 		observation.ObservedAt.Before(selected.CooldownObservedAt) {
 		selected.CooldownObservedAt = time.Time{}
@@ -663,6 +709,15 @@ func (*AutoKhanRagePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 		}
 		return Decision{}, err
 	}
+	if !lane.Settings.TriggerRage {
+		lane.Metrics["rageTriggerEnabled"] = 0
+		return Decision{
+			Status: "idle", Detail: "Automatic Khan rage retaliation is disabled; attacks and cooldown handling remain active",
+			NextCheckAt: snapshot.Now.Add(policyInterval(lane.Settings.CheckIntervalSec, defaultKhanCheckIntervalSec)),
+			Metrics:     lane.Metrics,
+		}, nil
+	}
+	lane.Metrics["rageTriggerEnabled"] = 1
 	target, found := autoKhanTarget(snapshot.State)
 	if !found {
 		return autoKhanWaiting(snapshot.Now, "Waiting for the attack lane to locate the type-35 Khan camp", 1, lane.Metrics), nil
@@ -763,7 +818,8 @@ func autoKhanAsyncLaneContext(
 	settings := autoKhanSettings{
 		MinimumRemainingSec: 300, CheckIntervalSec: defaultKhanCheckIntervalSec,
 		DefenseRefreshIntervalSec: defaultKhanDefenseRefreshSec, MapRefreshIntervalSec: defaultKhanMapRefreshSec,
-		SkipCooldowns: true, TimeSkipReserve: map[string]int64{}, OffensiveUnitThreshold: 1000,
+		AttackLaunchesEnabled: true, TriggerRage: true, SkipCooldowns: true,
+		TimeSkipReserve: map[string]int64{}, OffensiveUnitThreshold: 1000,
 		HorseTravelBoostID: -1,
 	}
 	wait := func(detail string, metrics map[string]float64) (autoKhanLaneContext, *Decision, error) {
@@ -798,8 +854,13 @@ func autoKhanAsyncLaneContext(
 	if settings.OpenGateProtection && source.ID != main.ID {
 		settings.OpenGateProtection = false
 	}
-	score, active := snapshot.State.EventScores.ByEvent[autoKhanEventID]
+	score, active := snapshot.State.LookupScalableEventScore(autoKhanEventID)
 	if !active || score.RemainingSec <= 0 || score.ObservedAt.IsZero() {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{autoKhanEventID}, "Nomad Khan event",
+		); locked {
+			return autoKhanLaneContext{}, &decision, nil
+		}
 		return wait("Waiting for the Nomad event and Khan camp", nil)
 	}
 	defensePreset, err := KhanDomain.DecodeDefensePreset(
@@ -911,16 +972,17 @@ func autoKhanMainCastle(gameState State.GameState) (State.CastleState, bool) {
 
 func autoKhanTarget(gameState State.GameState) (State.MapObservation, bool) {
 	if gameState.Khan.RunID != "" {
-		if target, found := gameState.Map[0][fmt.Sprintf("%d:%d", gameState.Khan.TargetX, gameState.Khan.TargetY)]; found && autoKhanTargetCandidate(target) {
+		if target, found := gameState.LookupMapObservation(0, fmt.Sprintf("%d:%d", gameState.Khan.TargetX, gameState.Khan.TargetY)); found && autoKhanTargetCandidate(target) {
 			return target, true
 		}
 	}
 	candidates := make([]State.MapObservation, 0)
-	for _, target := range gameState.Map[0] {
+	gameState.RangeMapObservationsByKind(0, State.MapProjectionEventCamp, func(_ string, target State.MapObservation) bool {
 		if autoKhanTargetCandidate(target) {
 			candidates = append(candidates, target)
 		}
-	}
+		return true
+	})
 	sort.Slice(candidates, func(left, right int) bool {
 		if !candidates[left].ObservedAt.Equal(candidates[right].ObservedAt) {
 			return candidates[left].ObservedAt.After(candidates[right].ObservedAt)
@@ -1081,6 +1143,7 @@ func autoKhanDefenseToolPurchase(
 		return nil, 0, nil
 	}
 
+	offers, _, _ := snapshot.State.ConstructionOffersFor(main.ID, main.KingdomID)
 	candidates := make([]autoKhanDefenseToolPurchaseCandidate, 0)
 	for toolID, deficit := range deficits {
 		packages, err := snapshot.GameData.DefenseToolShopPackages(int64(toolID))
@@ -1102,7 +1165,7 @@ func autoKhanDefenseToolPurchase(
 				amount = min(amount, item.MaxBuyPerClick)
 			}
 			if item.Stock > 0 {
-				remaining := max(int64(0), item.Stock-snapshot.State.Inventory.ConstructionOffers[State.PackageID(item.PackageID)])
+				remaining := max(int64(0), item.Stock-offers[State.PackageID(item.PackageID)])
 				amount = min(amount, remaining)
 			}
 			if amount <= 0 {
@@ -1241,7 +1304,7 @@ func autoKhanOutgoingMovementIDs(gameState State.GameState, now time.Time) []Sta
 	seen := map[State.MovementID]struct{}{}
 	result := make([]State.MovementID, 0, len(gameState.Khan.Launches))
 	for _, launch := range gameState.Khan.Launches {
-		movement, found := gameState.Movements[launch.MovementID]
+		movement, found := gameState.LookupMovement(launch.MovementID)
 		if !found || movement.Direction != 0 || !towerMovementActiveAt(movement, now) {
 			continue
 		}

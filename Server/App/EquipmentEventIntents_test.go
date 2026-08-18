@@ -72,6 +72,74 @@ func TestPlanEquipmentEventApplyClearsCommanderBeforeEquippingOwnedPartialSet(t 
 }
 
 func TestPlanEquipmentEventApplyChoosesOneMostCompleteHollowMoonTier(t *testing.T) {
+	gameState := hollowMoonEventState()
+
+	plan, err := planEquipmentEventApply(
+		t.Context(),
+		Intent.PlanningContext{State: gameState, GameData: equipmentEventGameData(t)},
+		json.RawMessage(`{"commanderId":0,"event":"hollow_moon_pvp"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(plan.Summary, "Bronze Hollow Moon PvP") {
+		t.Fatalf("summary = %q", plan.Summary)
+	}
+	for index := range baseEquipmentSlots {
+		if !hasEquipmentCommand(plan, int64(200+index), 1) {
+			t.Fatalf("bronze item %d was not equipped", 200+index)
+		}
+	}
+	for id := int64(300); id <= 303; id++ {
+		if hasEquipmentCommand(plan, id, 1) {
+			t.Fatalf("silver item %d was mixed into the bronze loadout", id)
+		}
+	}
+	if hasEquipmentCommand(plan, 400, 1) {
+		t.Fatal("gold equipment was mixed into the bronze loadout")
+	}
+}
+
+func TestPlanEquipmentEventApplyHonorsRequestedHollowMoonTier(t *testing.T) {
+	gameState := hollowMoonEventState()
+	plan, err := planEquipmentEventApply(
+		t.Context(),
+		Intent.PlanningContext{State: gameState, GameData: equipmentEventGameData(t)},
+		json.RawMessage(`{"commanderId":0,"event":"hollow_moon_pvp","tier":"Silver"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(plan.Summary, "Silver Hollow Moon PvP") {
+		t.Fatalf("summary = %q", plan.Summary)
+	}
+	for id := int64(300); id <= 303; id++ {
+		if !hasEquipmentCommand(plan, id, 1) {
+			t.Fatalf("silver item %d was not equipped", id)
+		}
+	}
+	for id := int64(200); id <= 204; id++ {
+		if hasEquipmentCommand(plan, id, 1) {
+			t.Fatalf("bronze item %d was mixed into the silver loadout", id)
+		}
+	}
+	if hasEquipmentCommand(plan, 400, 1) {
+		t.Fatal("gold equipment was mixed into the silver loadout")
+	}
+}
+
+func TestPlanEquipmentEventApplyRejectsUnknownTier(t *testing.T) {
+	_, err := planEquipmentEventApply(
+		t.Context(),
+		Intent.PlanningContext{State: hollowMoonEventState(), GameData: equipmentEventGameData(t)},
+		json.RawMessage(`{"commanderId":0,"event":"hollow_moon_pvp","tier":"Platinum"}`),
+	)
+	if err == nil || !strings.Contains(err.Error(), "expected Bronze, Silver, or Gold") {
+		t.Fatalf("error = %v", err)
+	}
+}
+
+func hollowMoonEventState() State.GameState {
 	gameState := State.NewGameState()
 	gameState.Commanders[0] = State.CommanderState{
 		ID: 0, Available: true,
@@ -99,31 +167,7 @@ func TestPlanEquipmentEventApplyChoosesOneMostCompleteHollowMoonTier(t *testing.
 	for definitionID := State.GemID(494); definitionID <= 497; definitionID++ {
 		gameState.Inventory.GemStacks[definitionID] = 1
 	}
-
-	plan, err := planEquipmentEventApply(
-		t.Context(),
-		Intent.PlanningContext{State: gameState, GameData: equipmentEventGameData(t)},
-		json.RawMessage(`{"commanderId":0,"event":"hollow_moon_pvp"}`),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(plan.Summary, "Bronze Hollow Moon PvP") {
-		t.Fatalf("summary = %q", plan.Summary)
-	}
-	for index := range baseEquipmentSlots {
-		if !hasEquipmentCommand(plan, int64(200+index), 1) {
-			t.Fatalf("bronze item %d was not equipped", 200+index)
-		}
-	}
-	for id := int64(300); id <= 303; id++ {
-		if hasEquipmentCommand(plan, id, 1) {
-			t.Fatalf("silver item %d was mixed into the bronze loadout", id)
-		}
-	}
-	if hasEquipmentCommand(plan, 400, 1) {
-		t.Fatal("gold equipment was mixed into the bronze loadout")
-	}
+	return gameState
 }
 
 func TestPlanEquipmentEventApplyDoesNotStripCommanderWithoutAvailableEventGear(t *testing.T) {

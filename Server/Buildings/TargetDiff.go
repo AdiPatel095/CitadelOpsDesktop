@@ -260,7 +260,7 @@ func normalizeTargetDiffWorks(
 			continue
 		}
 		seen[target.TargetID] = struct{}{}
-		definition, found := catalog.Definition(int64(target.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(target.DefinitionID))
 		if !found || target.DefinitionID <= 0 {
 			addTargetIssue(result, index, TargetIssueError, "unknown_definition", fmt.Sprintf("building definition %d is not in the official catalog", target.DefinitionID), nil)
 			continue
@@ -326,7 +326,7 @@ func targetDiffSources(
 	result := make([]targetDiffSource, 0, len(castle.Layout.Objects)+len(castle.Layout.Fixed))
 	for _, id := range sortedBuildingIDs(castle.Layout.Objects) {
 		building := castle.Layout.Objects[id]
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found || !building.Placed {
 			continue
 		}
@@ -336,7 +336,7 @@ func targetDiffSources(
 	}
 	for _, id := range sortedBuildingIDs(castle.Layout.Fixed) {
 		building := castle.Layout.Fixed[id]
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found || !building.Placed {
 			continue
 		}
@@ -353,7 +353,7 @@ func targetDiffSources(
 	}
 	sort.Slice(definitionIDs, func(left, right int) bool { return definitionIDs[left] < definitionIDs[right] })
 	for _, definitionID := range definitionIDs {
-		definition, found := catalog.Definition(definitionID)
+		definition, found := catalog.DefinitionView(definitionID)
 		if !found || strings.EqualFold(definition.Group, "Ground") {
 			continue
 		}
@@ -381,7 +381,7 @@ func targetDiffCandidates(
 			if !work.valid {
 				continue
 			}
-			path, found := catalog.UpgradePath(source.definition.ID, work.definition.ID)
+			path, found := catalog.UpgradePathView(source.definition.ID, work.definition.ID)
 			if !found {
 				continue
 			}
@@ -419,7 +419,7 @@ func compileAssignedTarget(
 	source targetDiffSource,
 	result *TargetDiffResult,
 ) {
-	path, found := catalog.UpgradePath(source.definition.ID, work.definition.ID)
+	path, found := catalog.UpgradePathView(source.definition.ID, work.definition.ID)
 	if !found {
 		addTargetIssue(result, targetIndex, TargetIssueError, "upgrade_path_unavailable", "the selected source no longer has an official upgrade path to the target", nil)
 		return
@@ -477,7 +477,7 @@ func compileConstructedTarget(
 	work *targetDiffWork,
 	result *TargetDiffResult,
 ) {
-	path, found := catalog.ConstructionPath(work.definition.ID)
+	path, found := catalog.ConstructionPathView(work.definition.ID)
 	if !found || len(path) == 0 {
 		addTargetIssue(result, targetIndex, TargetIssueError, "construction_path_unavailable", "the official catalog does not provide a consistent construction-root upgrade path to the target", nil)
 		return
@@ -602,7 +602,7 @@ func addCurrentTargetPlacementIssues(
 			if !found {
 				continue
 			}
-			obstacle, definitionFound := catalog.Definition(int64(building.DefinitionID))
+			obstacle, definitionFound := catalog.DefinitionView(int64(building.DefinitionID))
 			if definitionFound && strings.EqualFold(obstacle.InternalName, "TreasureChest") {
 				hasGift = true
 				break
@@ -663,7 +663,7 @@ func targetDiffUnmanaged(
 			continue
 		}
 		building := castle.Layout.Objects[id]
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found {
 			continue
 		}

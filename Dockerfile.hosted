@@ -1,0 +1,63 @@
+# CitadelOps hosted worker cell.
+#
+# One container = one cell process that runs up to --tenant-max-runtimes
+# Background-only account runtimes for CitadelOpsBackend's hosted control
+# plane. It serves only the orchestrator control API and the per-account
+# dashboard shards; the customer-facing dashboard is the CitadelOpsFrontend
+# portal, so no Client build ships in this image (hosted mode returns before
+# the desktop frontend handler is mounted).
+#
+# Build:
+#   docker build -f Dockerfile.hosted -t citadelops-cell:2.3.0 .
+#   (multi-arch: docker buildx build --platform linux/amd64,linux/arm64 …)
+#
+# Run (one cell):
+#   docker run -d --name cell-a \
+#     -e CITADEL_TENANT_ORCHESTRATOR_TOKEN=<32+ char token shared with the backend> \
+#     -e CITADEL_TENANT_SESSION_KEY=<32+ char dashboard cookie key> \
+#     -e PORT=8080 -p 8080:8080 \
+#     -v citadel-cell-a:/data \
+#     citadelops-cell:2.3.0 \
+#       --tenant-cell-id=cell-a \
+#       --tenant-max-runtimes=8 \
+#       --tenant-private-metrics-url=https://citadelops.app/internal/hosted/private-metrics \
+#       --tenant-dashboard-checkpoint-url=https://citadelops.app/internal/hosted/dashboard-checkpoints \
+#       --tenant-dashboard-origins=https://citadelops.app
+#
+# The backend reaches the cell at http://cell-a:8080 (HOSTED_CELLS_JSON) and
+# reconciles the desired runtime set; the cell holds each account's game
+# session for as long as the account stays enabled.
+
+# --- Build stage ---
+FROM golang:1.25-alpine AS builder
+ARG TARGETARCH
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+# No `desktop` build tag: hosted cells never embed the desktop client bundle.
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} \
+    go build -trimpath -ldflags '-s -w' -o /out/citadelops-cell .
+
+# --- Runtime stage ---
+FROM alpine:3.20
+
+# TLS roots for the game connection and backend publications; tzdata because
+# schedules and relog windows are user-local times.
+RUN apk --no-cache add ca-certificates tzdata \
+    && addgroup -S citadel && adduser -S -G citadel citadel \
+    && mkdir -p /data && chown citadel:citadel /data
+
+COPY --from=builder /out/citadelops-cell /usr/local/bin/citadelops-cell
+
+# All runtime profiles (saved logins, checkpoints, history) live under the
+# volume; one directory per account runtime.
+ENV CITADEL_DATA_DIR=/data
+VOLUME ["/data"]
+
+USER citadel
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/citadelops-cell", "--hosted"]

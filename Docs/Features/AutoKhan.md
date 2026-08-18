@@ -62,6 +62,8 @@ attack ──lands──▶ battle report ──▶ cooldown lane skips the cool
 |---|---|
 | `sourceCastleId` | Great Empire castle the chain attacks from |
 | `attackPresetId` / `defensePresetId` | Attack formation, and the wall preset restocked after each taunt |
+| `attackLaunchesEnabled` | When false, blocks only automatic `khan.attack` launches while map, cooldown, rage, and defense maintenance stays active for manual chains |
+| `triggerRage` | When false, blocks automatic `khan.taunt` dispatch while attacks and cooldown handling continue |
 | `skipCooldowns` | Enables the cooldown lane at all |
 | `timeSkipReserve` | Per-skip-item reserves the lane will not spend below |
 | `openGateProtection` + `offensiveUnitThreshold` | The wall guard |
@@ -123,6 +125,10 @@ it inline when no report exists yet) → daily attack limit → commander
 availability → uncommitted skips available → preset copies/capacity →
 **launch** (`khan.attack`).
 
+When `attackLaunchesEnabled` is false, the lane still locates and refreshes the
+camp and clears eligible cooldowns, then stops before commander selection and
+`khan.attack`. This lets the other lanes maintain a manually driven chain.
+
 ### Cooldown lane (`autoKhan:cooldown`)
 
 Skips disabled → no confirmed report yet → re-ping the camp for the report's MSD
@@ -138,6 +144,9 @@ track to resolution → idle, watching rage.
 `autoKhanTauntDue` is true when the bar is at cap, a rage observation exists,
 and either no taunt has ever fired or total rage has increased since the last
 one — so each fill taunts exactly once.
+
+When `triggerRage` is false, the lane remains idle and never submits
+`khan.taunt`; the attack and cooldown lanes continue independently.
 
 ### Defense lane (`autoKhan:defense`)
 

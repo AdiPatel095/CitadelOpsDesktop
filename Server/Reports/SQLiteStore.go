@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"CitadelDesktop/Server/History"
@@ -36,8 +37,23 @@ type BattleReportQuery struct {
 type SQLiteStore struct {
 	db *sql.DB
 
+	// analyticsGeneration counts committed writes to battle report analytics
+	// made through this store. Readers use it to skip re-reading unchanged
+	// history; it is process-local and never persisted.
+	analyticsGeneration atomic.Uint64
+
 	errorMu sync.RWMutex
 	lastErr error
+}
+
+// AnalyticsGeneration reports a monotonically increasing, process-local
+// counter that advances after every committed battle report analytics write.
+// Two equal values guarantee the analytics rows have not changed in between.
+func (store *SQLiteStore) AnalyticsGeneration() uint64 {
+	if store == nil {
+		return 0
+	}
+	return store.analyticsGeneration.Load()
 }
 
 func OpenSQLiteStore(dataDir string) (*SQLiteStore, error) {
@@ -440,6 +456,9 @@ func (store *SQLiteStore) Save(ctx context.Context, report BattleReport) error {
 	}
 	err := upsertBattleReport(ctx, store.db, report)
 	store.setLastError(err)
+	if err == nil {
+		store.analyticsGeneration.Add(1)
+	}
 	return err
 }
 
@@ -470,6 +489,7 @@ func (store *SQLiteStore) SaveMany(ctx context.Context, reports []BattleReport) 
 		store.setLastError(err)
 		return fmt.Errorf("commit report analytics backfill: %w", err)
 	}
+	store.analyticsGeneration.Add(1)
 	store.setLastError(nil)
 	return nil
 }
@@ -1025,9 +1045,9 @@ type invasionReportAttribution struct {
 
 func currentInvasionReportAttribution(snapshot State.GameState) map[int64]invasionReportAttribution {
 	result := map[int64]invasionReportAttribution{}
-	for eventID, activity := range snapshot.EventScores.ActivityByEvent {
+	snapshot.RangeEventActivities(func(eventID int64, activity State.EventActivityState) bool {
 		if eventID != 71 && eventID != 103 {
-			continue
+			return true
 		}
 		occurrenceEndsAt := ""
 		if !activity.OccurrenceEndsAt.IsZero() {
@@ -1038,7 +1058,8 @@ func currentInvasionReportAttribution(snapshot State.GameState) map[int64]invasi
 				result[reportID] = invasionReportAttribution{eventID: eventID, occurrenceEndsAt: occurrenceEndsAt}
 			}
 		}
-	}
+		return true
+	})
 	return result
 }
 
@@ -1049,4 +1070,100 @@ func (store *SQLiteStore) setLastError(err error) {
 	store.errorMu.Lock()
 	store.lastErr = err
 	store.errorMu.Unlock()
+}
+
+// FeatureAnalyticsRow is the narrow attacker-report projection needed to
+// aggregate rolling automation feature windows. It deliberately omits target
+// identity and message metadata so callers that only roll up totals do not pay
+// for decoding the complete analytics row.
+type FeatureAnalyticsRow struct {
+	ReportKey         string
+	AutomationFeature string
+	OccurredAt        string
+	Result            string
+	TroopsSent        int64
+	OwnTroopLosses    int64
+	ToolsUsed         int64
+	GallantryPoints   int64
+	LootTotal         int64
+	LootJSON          []byte
+}
+
+// RecentFeatureAnalytics returns the newest attacker reports for the given
+// account binding, deduplicated by report key with the same binding preference
+// as Recent, but projected to the feature-window columns only.
+func (store *SQLiteStore) RecentFeatureAnalytics(ctx context.Context, query BattleReportQuery) ([]FeatureAnalyticsRow, error) {
+	if store == nil || store.db == nil {
+		return nil, fmt.Errorf("report analytics database is unavailable")
+	}
+	accountKey := reportAccountKey(query.AccountUID, query.WorldID, query.PlayerID)
+	worldID := strings.TrimSpace(query.WorldID)
+	if accountKey == "" && (worldID == "" || query.PlayerID <= 0) {
+		return []FeatureAnalyticsRow{}, nil
+	}
+	limit := query.Limit
+	if limit <= 0 || limit > battleReportAnalyticsLimit {
+		limit = battleReportAnalyticsLimit
+	}
+	clauses := make([]string, 0, 3)
+	arguments := make([]any, 0, 6)
+	if accountKey != "" && worldID != "" && query.PlayerID > 0 {
+		clauses = append(clauses, "(account_key = ? OR (world_id = ? AND player_id = ?))")
+		arguments = append(arguments, accountKey, worldID, query.PlayerID)
+	} else if accountKey != "" {
+		clauses = append(clauses, "account_key = ?")
+		arguments = append(arguments, accountKey)
+	} else {
+		clauses = append(clauses, "world_id = ? AND player_id = ?")
+		arguments = append(arguments, worldID, query.PlayerID)
+	}
+	clauses = append(clauses, "lower(role) = 'attacker'")
+	preference := "0"
+	queryArguments := make([]any, 0, len(arguments)+2)
+	if accountKey != "" {
+		preference = "CASE WHEN account_key = ? THEN 0 ELSE 1 END"
+		queryArguments = append(queryArguments, accountKey)
+	}
+	queryArguments = append(queryArguments, arguments...)
+	queryArguments = append(queryArguments, limit)
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT report_key, automation_feature, occurred_at, result,
+			troops_sent, own_troop_losses, tools_used, gallantry_points, loot_total, loot_json
+		FROM (
+			SELECT report_key, automation_feature, occurred_at, result,
+				troops_sent, own_troop_losses, tools_used, gallantry_points, loot_total, loot_json,
+				ROW_NUMBER() OVER (
+					PARTITION BY report_key
+					ORDER BY `+preference+` ASC, updated_at DESC
+				) AS binding_rank
+			FROM battle_report_analytics
+			WHERE `+strings.Join(clauses, " AND ")+`
+		)
+		WHERE binding_rank = 1
+		ORDER BY occurred_at DESC, report_key DESC
+		LIMIT ?
+	`, queryArguments...)
+	if err != nil {
+		store.setLastError(err)
+		return nil, fmt.Errorf("list feature analytics: %w", err)
+	}
+	defer rows.Close()
+	result := make([]FeatureAnalyticsRow, 0, min(limit, 1024))
+	for rows.Next() {
+		var row FeatureAnalyticsRow
+		if err := rows.Scan(
+			&row.ReportKey, &row.AutomationFeature, &row.OccurredAt, &row.Result,
+			&row.TroopsSent, &row.OwnTroopLosses, &row.ToolsUsed, &row.GallantryPoints, &row.LootTotal, &row.LootJSON,
+		); err != nil {
+			store.setLastError(err)
+			return nil, fmt.Errorf("scan feature analytics: %w", err)
+		}
+		result = append(result, row)
+	}
+	if err := rows.Err(); err != nil {
+		store.setLastError(err)
+		return nil, fmt.Errorf("list feature analytics: %w", err)
+	}
+	store.setLastError(nil)
+	return result, nil
 }

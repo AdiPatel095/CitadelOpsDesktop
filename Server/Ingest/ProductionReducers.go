@@ -52,13 +52,18 @@ func reduceProductionSnapshot(
 		return nil, false, nil
 	}
 	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
+	castle, ok = gameState.MutableCastleParts(castleID, State.CastlePartProduction)
+	if !ok {
+		return nil, false, nil
+	}
 	changed, err := applyProductionSnapshot(
 		frame.Payload, castleID, &castle, frame.ReceivedAt, recruitmentHelpOutstanding,
+		gameState.SubscriptionScope(),
 	)
 	if err != nil || !changed {
 		return nil, false, err
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 	return []string{"castles", "production"}, true, nil
 }
 
@@ -79,6 +84,10 @@ func reduceEmbeddedProductionSnapshots(
 	if err := json.Unmarshal(frame.Payload, &root); err != nil {
 		return nil, false, fmt.Errorf("decode embedded production snapshots: %w", err)
 	}
+	castle, ok = gameState.MutableCastleParts(castleID, State.CastlePartProduction)
+	if !ok {
+		return nil, false, nil
+	}
 	changed := false
 	recruitmentHelpOutstanding := State.HasOutstandingRecruitmentAllianceHelpRequest(*gameState, castleID)
 	for key, raw := range root {
@@ -87,6 +96,7 @@ func reduceEmbeddedProductionSnapshots(
 		}
 		updated, err := applyProductionSnapshot(
 			raw, castleID, &castle, frame.ReceivedAt, recruitmentHelpOutstanding,
+			gameState.SubscriptionScope(),
 		)
 		if err != nil {
 			return nil, false, err
@@ -98,7 +108,7 @@ func reduceEmbeddedProductionSnapshots(
 	if !changed {
 		return nil, false, nil
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 	return []string{"castles", "production"}, true, nil
 }
 
@@ -108,6 +118,7 @@ func applyProductionSnapshot(
 	castle *State.CastleState,
 	observedAt time.Time,
 	recruitmentHelpOutstanding bool,
+	subscriptionScope string,
 ) (bool, error) {
 	var root map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &root); err != nil {
@@ -138,10 +149,13 @@ func applyProductionSnapshot(
 		queue.Active = &item
 	}
 	if len(root["QS"]) > 0 {
+		// QS lists every slot the player owns — base, VIP, rented, and slots
+		// granted by capacity effects — one entry per slot whether or not a
+		// unit occupies it. Purchasable-but-locked slots ride offer data, not
+		// QS, so the slot count IS the queue capacity; counting only occupied
+		// or rented entries silently discarded empty effect-granted slots.
+		queue.Capacity = len(wire.Queued)
 		for _, slot := range wire.Queued {
-			if slot.Product.DefinitionID > 0 || slot.Slot.RentalUntil != 0 {
-				queue.Capacity++
-			}
 			if item, exists := productionQueueItem(wire.LineID, slot.Product, observedAt, false); exists {
 				item.AllianceHelpRequested = item.AllianceHelpRequested || requestedHelp[item.ProductionID]
 				queue.Queued = append(queue.Queued, item)
@@ -180,6 +194,21 @@ func applyProductionSnapshot(
 	if wire.LineID == 0 && recruitmentHelpOutstanding {
 		markAllianceHelpQueue(&queue, true, 0)
 	}
+	// High-water stack learning: carry the largest stack ever observed per
+	// unit definition forward across snapshots, but only while the
+	// subscription set it was learned under still holds. A scope change
+	// (subscription gained or lapsed) discards learned values so the line
+	// re-learns from live stacks instead of overshooting a lapsed
+	// entitlement. Keyed by definition because batch caps are per-unit —
+	// one unit's learned cap must never floor another unit's stacks.
+	if previous := castle.Production[wire.LineID]; previous.LearnedStackScope == subscriptionScope && len(previous.LearnedStacks) > 0 {
+		queue.LearnedStacks = make(map[int64]int64, len(previous.LearnedStacks))
+		for definitionID, amount := range previous.LearnedStacks {
+			queue.LearnedStacks[definitionID] = amount
+		}
+	}
+	queue.LearnedStackScope = subscriptionScope
+	learnObservedStacks(&queue)
 	if reflect.DeepEqual(castle.Production[wire.LineID], queue) {
 		return false, nil
 	}
@@ -208,6 +237,10 @@ func reduceAllianceHelpCommand(
 	if !focused {
 		return nil, false, nil
 	}
+	castle, focused = gameState.MutableCastleParts(castleID, State.CastlePartProduction)
+	if !focused {
+		return nil, false, nil
+	}
 	lineID := -1
 	productionID := int64(payload.ProductionID)
 	markAll := false
@@ -228,7 +261,7 @@ func reduceAllianceHelpCommand(
 		return nil, false, nil
 	}
 	castle.Production[lineID] = queue
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartProduction)
 	return []string{"castles", "production", "alliance-help"}, true, nil
 }
 
@@ -368,7 +401,7 @@ func reduceAllianceHelpRequest(
 		if request.Optional.CastleID <= 0 {
 			continue
 		}
-		castle, exists := gameState.Castles[request.Optional.CastleID]
+		castle, exists := gameState.MutableCastleParts(request.Optional.CastleID, State.CastlePartProduction)
 		if !exists {
 			continue
 		}
@@ -389,7 +422,7 @@ func reduceAllianceHelpRequest(
 		}
 		if markAllianceHelpQueue(&queue, lineID == 0, productionID) {
 			castle.Production[lineID] = queue
-			gameState.Castles[request.Optional.CastleID] = castle
+			gameState.SetCastleParts(request.Optional.CastleID, castle, State.CastlePartProduction)
 			changed = true
 		}
 	}
@@ -599,6 +632,26 @@ func markAllianceHelpQueue(queue *State.ProductionQueue, markAll bool, productio
 		}
 	}
 	return changed
+}
+
+// learnObservedStacks raises the per-definition high-water marks with every
+// stack visible on the line right now (active production included).
+func learnObservedStacks(queue *State.ProductionQueue) {
+	learn := func(definitionID, amount int64) {
+		if definitionID <= 0 || amount <= 0 || amount <= queue.LearnedStacks[definitionID] {
+			return
+		}
+		if queue.LearnedStacks == nil {
+			queue.LearnedStacks = map[int64]int64{}
+		}
+		queue.LearnedStacks[definitionID] = amount
+	}
+	if queue.Active != nil {
+		learn(int64(queue.Active.Definition.ID), queue.Active.Amount)
+	}
+	for _, item := range queue.Queued {
+		learn(int64(item.Definition.ID), item.Amount)
+	}
 }
 
 func requestedProductionHelp(queue State.ProductionQueue) map[int64]bool {

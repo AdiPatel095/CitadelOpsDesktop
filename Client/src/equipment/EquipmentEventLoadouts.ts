@@ -9,6 +9,10 @@ export type EquipmentEventKey =
 	| 'foreign_lords'
 	| 'hollow_moon_pvp';
 
+export type EquipmentEventTier = 'Bronze' | 'Silver' | 'Gold';
+
+export const equipmentEventTierOrder: EquipmentEventTier[] = ['Bronze', 'Silver', 'Gold'];
+
 export interface EquipmentEventOption {
 	value: EquipmentEventKey;
 	label: string;
@@ -16,13 +20,17 @@ export interface EquipmentEventOption {
 	setIDs: number[];
 }
 
-export interface EquipmentEventAvailability {
-	option: EquipmentEventOption;
+export interface EquipmentEventSetAvailability {
 	setID: number;
-	tier?: 'Bronze' | 'Silver' | 'Gold';
+	tier?: EquipmentEventTier;
 	equipmentCount: number;
 	gemCount: number;
 	complete: boolean;
+}
+
+export interface EquipmentEventAvailability extends EquipmentEventSetAvailability {
+	option: EquipmentEventOption;
+	sets: EquipmentEventSetAvailability[];
 }
 
 export const equipmentEventOptions: EquipmentEventOption[] = [
@@ -53,7 +61,7 @@ export const equipmentEventOptions: EquipmentEventOption[] = [
 	{
 		value: 'hollow_moon_pvp',
 		label: 'Hollow Moon PvP',
-		description: 'Chooses one coherent Bronze, Silver, or Gold 2026 PvP set.',
+		description: 'Select one coherent Bronze, Silver, or Gold 2026 PvP set.',
 		setIDs: [1096, 1095, 1094],
 	},
 ];
@@ -65,21 +73,20 @@ export function resolveEquipmentEventAvailability(
 	gemMetadata: Record<number, MetadataItem>,
 ): EquipmentEventAvailability[] {
 	return equipmentEventOptions.map((option) => {
-		const candidates = option.setIDs.map((setID) => eventSetAvailability(
+		const sets = option.setIDs.map((setID) => eventSetAvailability(
 			state,
 			leader,
 			equipmentMetadata,
 			gemMetadata,
-			option,
 			setID,
 		));
-		candidates.sort((left, right) => {
+		sets.sort((left, right) => {
 			if (left.complete !== right.complete) return left.complete ? -1 : 1;
 			if (left.equipmentCount !== right.equipmentCount) return right.equipmentCount - left.equipmentCount;
 			if (left.gemCount !== right.gemCount) return right.gemCount - left.gemCount;
 			return right.setID - left.setID;
 		});
-		return candidates[0]!;
+		return { option, sets, ...sets[0]! };
 	});
 }
 
@@ -88,9 +95,8 @@ function eventSetAvailability(
 	leader: EquipmentLeader,
 	equipmentMetadata: Record<number, MetadataItem>,
 	gemMetadata: Record<number, MetadataItem>,
-	option: EquipmentEventOption,
 	setID: number,
-): EquipmentEventAvailability {
+): EquipmentEventSetAvailability {
 	const equipmentSlots = new Set<number>();
 	const accessibleEquipment = new Set<number>();
 	for (const item of Object.values(state.inventory.equipment)) {
@@ -120,7 +126,6 @@ function eventSetAvailability(
 	const equipmentCount = equipmentSlots.size;
 	const gemCount = Math.min(4, gemDefinitions.size);
 	return {
-		option,
 		setID,
 		tier: hollowMoonTier(setID),
 		equipmentCount,
@@ -138,7 +143,7 @@ function equipmentAvailableToLeader(
 	return wearerKind === leader.kind && (wearerID ?? 0) === leader.id;
 }
 
-function hollowMoonTier(setID: number): 'Bronze' | 'Silver' | 'Gold' | undefined {
+function hollowMoonTier(setID: number): EquipmentEventTier | undefined {
 	if (setID === 1096) return 'Gold';
 	if (setID === 1095) return 'Silver';
 	if (setID === 1094) return 'Bronze';

@@ -180,10 +180,10 @@ function TargetProfileCard({
 			<div className="mt-4 grid grid-cols-2 gap-2">
 				<MetricTile
 					size="sm"
-					label={profile.kind === 'event' ? 'Target groups' : 'Official scope'}
+					label={profile.kind === 'event' ? 'Target battle stats' : 'Official scope'}
 					value={profile.kind === 'event' ? profile.officialGroupCount.toLocaleString() : 'Broad'}
 				/>
-				<MetricTile size="sm" label="Usable groups" value={availableGroups.toLocaleString()} />
+				<MetricTile size="sm" label="Usable battle stats" value={availableGroups.toLocaleString()} />
 			</div>
 			<div className="mt-4 text-xs font-black uppercase tracking-wide text-primary">
 				{availableGroups > 0 ? `Configure ${profile.label}` : 'No matching effects available'}
@@ -263,8 +263,8 @@ function EquipmentOptimizerEditor({
 		[leader, state?.player.id, target.id],
 	);
 	const legacySections = useMemo(
-		() => legacyEquipmentPrioritySections(state?.player.id, leader, target),
-		[leader, state?.player.id, target],
+		() => legacyEquipmentPrioritySections(state?.player.id, leader, target, effects),
+		[effects, leader, state?.player.id, target],
 	);
 	const storedProfileJSON = useMemo(() => safeJSONStringify(
 		prioritySection ? configuration?.sections[prioritySection] ?? null : null,
@@ -461,7 +461,7 @@ function EquipmentOptimizerEditor({
 				title={(
 					<ModalTitle
 						icon={<Activity className="h-5 w-5" />}
-						description={`${target.label} · official effect-group priority`}
+						description={`${target.label} · Effective Battle Report stat priority`}
 					>
 						Stat Priority &amp; Reconfigure
 					</ModalTitle>
@@ -496,7 +496,7 @@ function EquipmentOptimizerEditor({
 							</div>
 						</div>
 						<div className="flex items-center justify-end gap-2 sm:shrink-0">
-							<Button size="icon" variant="ghost" onClick={() => setShowInfo(true)} aria-label="Explain group priority"><Info className="h-4 w-4" /></Button>
+							<Button size="icon" variant="ghost" onClick={() => setShowInfo(true)} aria-label="Explain battle stat priority"><Info className="h-4 w-4" /></Button>
 							<Button
 								size="sm"
 								variant="outline"
@@ -504,7 +504,7 @@ function EquipmentOptimizerEditor({
 								disabled={availableGroups.length === 0}
 								leftIcon={<Plus className="h-4 w-4" />}
 							>
-								Add Effect Group
+								Add Battle Stat
 							</Button>
 						</div>
 					</div>
@@ -552,9 +552,9 @@ function EquipmentOptimizerEditor({
 				</div>
 			</Modal>
 
-			<Modal isOpen={showPicker} onClose={() => setShowPicker(false)} title="Add Official Effect Group" maxWidth="3xl">
+			<Modal isOpen={showPicker} onClose={() => setShowPicker(false)} title="Add Effective Battle Stat" maxWidth="3xl">
 				<div className="space-y-3">
-					<Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search official groups" leftIcon={<Search className="h-4 w-4" />} />
+					<Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search battle stats" leftIcon={<Search className="h-4 w-4" />} />
 					<div className="max-h-[65vh] space-y-4 overflow-y-auto custom-scrollbar">
 						{pickerSections.map((section) => (
 							<section key={`${section.category}:${section.label}`}>
@@ -575,15 +575,15 @@ function EquipmentOptimizerEditor({
 								</div>
 							</section>
 						))}
-						{availableGroups.length === 0 && <p className="py-6 text-center text-sm text-text-muted">No matching unused official groups.</p>}
+						{availableGroups.length === 0 && <p className="py-6 text-center text-sm text-text-muted">No matching unused battle stats.</p>}
 					</div>
 				</div>
 			</Modal>
 
-			<Modal isOpen={showInfo} onClose={() => setShowInfo(false)} title="How Group Priority Works" maxWidth="2xl">
+			<Modal isOpen={showInfo} onClose={() => setShowInfo(false)} title="How Battle Stat Priority Works" maxWidth="2xl">
 				<div className="space-y-3 text-sm text-text-muted">
-					<p>Each draggable row is the highest official effect group exposed by current game data, not one individual effect.</p>
-					<p>When previewing, CitadelOps expands each row into every target-compatible effect definition in that group. New official definitions therefore join the group automatically.</p>
+						<p>Each draggable row is the same official game-data effect group shown in the Equipment view's Effective Battle Report.</p>
+						<p>When previewing, CitadelOps expands that group into every target-compatible official effect definition. New definitions therefore join their catalog group automatically.</p>
 					<p><span className="font-semibold text-error">Max Stat</span> groups receive the strongest position-decayed score. <span className="font-semibold text-primary">Have in Random Slots</span> groups receive a presence bonus and lower weighted score.</p>
 					<p>The server searches storage plus the selected leader’s current pieces, respects official caps and set bonuses, and never borrows gear from another leader.</p>
 				</div>
@@ -686,7 +686,7 @@ function PriorityTier({
 						</div>
 					);
 				})}
-				{keys.length === 0 && <p className="py-5 text-center text-xs text-text-muted">Drag official groups here</p>}
+				{keys.length === 0 && <p className="py-5 text-center text-xs text-text-muted">Drag battle stats here</p>}
 			</div>
 		</div>
 	);

@@ -33,7 +33,7 @@ func (*BeriBuildPolicy) ScheduleKey() string {
 }
 
 func (*BeriBuildPolicy) WakeDomains() []string {
-	return []string{"boosters", "buildings", "castles", "currencies", "movements", "reports", "resources"}
+	return []string{"boosters", "buildings", "castles", "currencies", "events", "event-scores", "movements", "reports", "resources"}
 }
 
 func (*BeriBuildPolicy) WakeSections() []string {
@@ -54,6 +54,11 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			Status: "complete", Detail: "Automatic Berimond construction is disabled",
 			NextCheckAt: snapshot.Now.Add(30 * time.Second),
 		}, nil
+	}
+	if decision, locked := limitedEventGate(
+		snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
+	); locked {
+		return decision, nil
 	}
 	if snapshot.GameData == nil {
 		return beriBuildWaiting(snapshot.Now, "Official game data is unavailable", nil), nil
@@ -185,7 +190,7 @@ func preserveHigherBeriStableTarget(
 		if !building.Placed {
 			continue
 		}
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if found && strings.EqualFold(definition.InternalName, "FactionStable") && definition.Level > current.Level {
 			current = definition
 		}
@@ -194,7 +199,7 @@ func preserveHigherBeriStableTarget(
 		return configuredLevel
 	}
 	for index := range target.Buildings {
-		definition, found := catalog.Definition(int64(target.Buildings[index].DefinitionID))
+		definition, found := catalog.DefinitionView(int64(target.Buildings[index].DefinitionID))
 		if found && strings.EqualFold(definition.InternalName, "FactionStable") {
 			target.Buildings[index].DefinitionID = State.BuildingID(current.ID)
 			return current.Level

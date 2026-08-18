@@ -1,8 +1,12 @@
-# CitadelOps 2.0 Architecture
+# CitadelOps Architecture
 
-This document is the implementation boundary for the 2.0 rewrite. The frozen
-reference implementation is commit `a9fe656` on `codex/version-1.3.8`. The
-rewrite lives in the sibling worktree on `codex/version-2.0.0`.
+This document describes the application boundaries shared by two explicit
+compositions of the same binary. CitadelOpsDesktop remains the default N=1
+composition with one local profile, game session, and dashboard. Opt-in hosted
+mode owns one bounded process supervisor and can reconcile N independent
+Background account runtimes live. The hosted web application and backend
+control plane remain separate products; they connect through the worker's
+private orchestration and runtime-shard contracts.
 
 ## Goals
 
@@ -10,7 +14,8 @@ rewrite lives in the sibling worktree on `codex/version-2.0.0`.
 - Replace the server implementation and frontend transport contract.
 - Treat official Goodgame Empire data as versioned runtime input, not source
   code or manually maintained lists.
-- Build one canonical, normalized game state from every incoming game frame.
+- Build one canonical normalized account view from private state plus
+  allowlisted same-world facts observed in incoming game frames.
 - Route every mutation through one deterministic intent planner and executor.
 - Let the desktop UI, automations, CLI, detached API, and future LLM tools use
   the same read and command surfaces.
@@ -141,15 +146,16 @@ Reducers do not send commands or notify the frontend.
 
 ### `Server/State`
 
-Owns live player state and revision ordering.
+Owns live player state, allowlisted observed-world facts, and revision ordering.
 
 - Apply mutations serially and assign a monotonic revision.
 - Store runtime facts only. Static names, levels, effects, costs, and images
   remain references into `GameData`.
 - Emit domain changes after a committed mutation.
-- Return immutable snapshots for queries and intent planning.
-- Persist a schema-versioned recovery snapshot without coupling persistence to
-  individual model types.
+- Return immutable component generations and bounded projections for queries
+  and intent planning.
+- Persist dirty account components and bounded world-map partitions independently;
+  the legacy complete snapshot is a migration source, not a hot write path.
 
 The normalized aggregate contains:
 
@@ -300,7 +306,11 @@ place. The communication and data layers change:
 - Replace feature-specific initial websocket requests with one state snapshot,
   one catalog manifest, and event subscription.
 - Submit mutations as named intents with request IDs and render operation
-  receipts/progress consistently.
+  receipts/progress consistently. Submission is asynchronous: the runtime
+  accepts the operation (`202` with the accepted receipt), executes it under
+  its own lifetime, and streams `operation.changed` until completion, so a
+  closed or disconnected dashboard never cancels an operation. `?wait=true`
+  keeps a synchronous response for callers that want the final receipt.
 - Resolve names, images, costs, levels, and picker options from the backend
   catalog service.
 - Remove `Client/public/game-data` after all consumers use the catalog client.

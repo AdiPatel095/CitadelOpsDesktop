@@ -509,7 +509,7 @@ func expansionPendingStorageBuild(
 		if !found {
 			continue
 		}
-		current, found := catalog.Definition(int64(building.DefinitionID))
+		current, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found {
 			continue
 		}
@@ -522,7 +522,7 @@ func expansionPendingStorageBuild(
 			}
 		case State.BuildingStateUpgradeStopped, State.BuildingStateUpgradeInProgress:
 			var targetFound bool
-			target, targetFound = catalog.Definition(current.UpgradeDefinitionID)
+			target, targetFound = catalog.DefinitionView(current.UpgradeDefinitionID)
 			if !targetFound || current.UpgradeDefinitionID <= 0 {
 				continue
 			}
@@ -573,7 +573,7 @@ func expansionConstructionHosts(
 	compatible := make([]State.Building, 0)
 	available := make([]State.Building, 0)
 	for _, building := range castle.Buildings {
-		definition, found := catalog.Definition(int64(building.DefinitionID))
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
 		if !found || !containsInt64(definition.ConstructionItemGroupIDs, groupID) {
 			continue
 		}

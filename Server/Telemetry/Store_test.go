@@ -1,6 +1,7 @@
 package Telemetry
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -38,6 +39,73 @@ func TestPersistentLoggingDoesNotBlockCommandRecording(t *testing.T) {
 	}
 	if !strings.Contains(string(contents), "[SEND] [bup]") {
 		t.Fatalf("persistent app log = %q", contents)
+	}
+}
+
+func TestPersistentDiagnosticTailDoesNotRetainOversizedRawFrame(t *testing.T) {
+	store := NewStore(100)
+	if err := store.SetDataDir(t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+
+	line := strings.Repeat("x", diagnosticLiveTailMaxBytes+1)
+	store.mu.Lock()
+	store.appendLocked(ChannelWebSocketGame, line, time.Now())
+	store.mu.Unlock()
+	store.flushPersistence()
+
+	store.mu.RLock()
+	tail := store.tails[ChannelWebSocketGame]
+	retainedLines := len(tail.activeLines())
+	retainedBytes := tail.bytes
+	store.mu.RUnlock()
+	if retainedLines != 0 || retainedBytes != 0 {
+		t.Fatalf("oversized live tail retained %d lines and %d bytes", retainedLines, retainedBytes)
+	}
+
+	paths := channelLogPathsNewest(store.channelsDir, ChannelWebSocketGame)
+	if len(paths) != 1 {
+		t.Fatalf("persistent websocket paths = %v, want one", paths)
+	}
+	info, err := os.Stat(paths[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Size() != int64(len(line)+1) {
+		t.Fatalf("persistent websocket bytes = %d, want %d", info.Size(), len(line)+1)
+	}
+}
+
+func TestPersistentBatchPreservesLineOrder(t *testing.T) {
+	store := NewStore(100)
+	if err := store.SetDataDir(t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+
+	const lineCount = 1000
+	for index := range lineCount {
+		store.append(ChannelWebSocketGame, fmt.Sprintf("line-%04d", index))
+	}
+	store.flushPersistence()
+	paths := channelLogPathsNewest(store.channelsDir, ChannelWebSocketGame)
+	if len(paths) != 1 {
+		t.Fatalf("persistent websocket paths = %v, want one", paths)
+	}
+	contents, err := os.ReadFile(paths[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSuffix(string(contents), "\n"), "\n")
+	if len(lines) != lineCount {
+		t.Fatalf("persistent lines = %d, want %d", len(lines), lineCount)
+	}
+	for index, line := range lines {
+		expected := fmt.Sprintf("line-%04d", index)
+		if line != expected {
+			t.Fatalf("persistent line %d = %q, want %q", index, line, expected)
+		}
 	}
 }
 
@@ -252,4 +320,28 @@ func TestStoreAlwaysExposesLegacyLoggerChannels(t *testing.T) {
 	if channels[0].ID != ChannelWebSocketGame || channels[1].ID != ChannelAppSend {
 		t.Fatalf("first logger channels = %#v, want websocket then app commands", channels[:2])
 	}
+}
+
+func BenchmarkMemoryTailAppendAtCapacity(b *testing.B) {
+	tail := &memoryTail{}
+	for range 5000 {
+		tail.append("frame", 5000, 0)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		tail.append("frame", 5000, 0)
+	}
+}
+
+func BenchmarkLegacySliceTailAppendAtCapacity(b *testing.B) {
+	lines := make([]string, 5000)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		lines = append(lines, "frame")
+		copy(lines, lines[len(lines)-5000:])
+		lines = lines[:5000]
+	}
+	_ = lines
 }

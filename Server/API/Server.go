@@ -73,6 +73,7 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/state", server.handleState)
 	mux.HandleFunc("GET /api/v2/browsers", server.handleBrowsers)
 	mux.HandleFunc("GET /api/v2/session/background-login", server.handleBackgroundLoginStatus)
+	mux.HandleFunc("GET /api/v2/session/game-servers", server.handleGameServers)
 	mux.HandleFunc("POST /api/v2/session/background-login", server.handleBackgroundLoginConfigure)
 	mux.HandleFunc("GET /api/v2/config", server.handleConfiguration)
 	mux.HandleFunc("GET /api/v2/config/export", server.handleConfigurationExport)
@@ -103,9 +104,11 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/world-intelligence/alliances/{id}", server.handleWorldIntelligenceAlliance)
 	mux.HandleFunc("GET /api/v2/world-intelligence/event-runs", server.handleWorldIntelligenceEventRuns)
 	mux.HandleFunc("GET /api/v2/world-intelligence/event-runs/{id}/rankings", server.handleWorldIntelligenceEventRunRankings)
+	mux.HandleFunc("GET /api/v2/world-intelligence/event-runs/{id}/subscribe", server.handleWorldIntelligenceEventRunSubscribe)
 	mux.HandleFunc("GET /api/v2/world-intelligence/ranking-metrics/{type}", server.handleWorldIntelligenceRankingMetrics)
 	mux.HandleFunc("GET /api/v2/world-intelligence/rankings/{type}", server.handleWorldIntelligenceRankings)
 	mux.HandleFunc("GET /api/v2/world-intelligence/coverage", server.handleWorldIntelligenceCoverage)
+	mux.HandleFunc("GET /api/v2/world-intelligence/subscribe", server.handleWorldIntelligenceSubscribe)
 	mux.HandleFunc("GET /api/v2/world-intelligence/catalog-datasets", server.handleWorldIntelligenceCatalogDatasets)
 	mux.HandleFunc("GET /api/v2/world-intelligence/catalog-datasets/{key}", server.handleWorldIntelligenceCatalogDataset)
 	mux.HandleFunc("GET /api/v2/history/player-tracker", server.handlePlayerTrackerHistory)
@@ -160,6 +163,14 @@ func browserCandidatePointer(candidate Session.BrowserCandidate) *Session.Browse
 		return nil
 	}
 	return &candidate
+}
+
+// handleGameServers lists the selectable game worlds — code, label, secure
+// websocket URL and SmartFox zone — so login forms offer the official
+// directory instead of a free-text code.
+func (server *Server) handleGameServers(writer http.ResponseWriter, _ *http.Request) {
+	writer.Header().Set("Cache-Control", "no-store")
+	writeJSON(writer, http.StatusOK, Session.GameServers())
 }
 
 func (server *Server) handleBackgroundLoginStatus(writer http.ResponseWriter, _ *http.Request) {
@@ -289,7 +300,7 @@ func (server *Server) handleState(writer http.ResponseWriter, _ *http.Request) {
 		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "State store is unavailable")
 		return
 	}
-	writeJSON(writer, http.StatusOK, server.config.State.ReadOnlyView())
+	writeJSON(writer, http.StatusOK, State.NewClientStateSnapshot(server.config.State.ReadOnlyView()))
 }
 
 func (server *Server) handleGameDataManifest(writer http.ResponseWriter, _ *http.Request) {
@@ -391,12 +402,36 @@ func (server *Server) handleIntentSubmit(writer http.ResponseWriter, request *ht
 	intentRequest.Name = request.PathValue("name")
 	intentRequest.Actor = "ui"
 	intentRequest.Priority = Outbound.PriorityInteractive
-	receipt := server.config.Intents.Submit(request.Context(), intentRequest)
-	status := http.StatusOK
-	if receipt.Status == Intent.StatusFailed {
+	// The dashboard is a control panel, not the runtime: execution is detached
+	// from this request so a closed tab, a sleeping laptop, or a gateway
+	// timeout never cancels an operation. Completion flows through the
+	// operation stream; `?wait=true` keeps synchronous semantics for callers
+	// that want the final receipt in the response, still without coupling the
+	// operation's lifetime to the connection.
+	receipt := server.config.Intents.SubmitDetached(intentRequest)
+	if !receipt.Terminal() && waitRequested(request) {
+		awaited, err := server.config.Intents.Await(request.Context(), receipt.ID)
+		if err == nil || awaited.ID != "" {
+			receipt = awaited
+		}
+	}
+	status := http.StatusAccepted
+	switch {
+	case receipt.Terminal() && receipt.Status == Intent.StatusFailed:
 		status = http.StatusUnprocessableEntity
+	case receipt.Terminal():
+		status = http.StatusOK
 	}
 	writeJSON(writer, status, receipt)
+}
+
+func waitRequested(request *http.Request) bool {
+	switch strings.ToLower(strings.TrimSpace(request.URL.Query().Get("wait"))) {
+	case "1", "true", "yes":
+		return true
+	default:
+		return false
+	}
 }
 
 func (server *Server) handleOperation(writer http.ResponseWriter, request *http.Request) {
@@ -478,7 +513,9 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 
 	initialState := server.config.State.ReadOnlyView()
 	initialRevision := initialState.Revision
-	if err := connection.WriteJSON(streamEnvelope("", "state.snapshot", initialRevision, initialRevision, false, initialState)); err != nil {
+	if err := connection.WriteJSON(streamEnvelope(
+		"", "state.snapshot", initialRevision, initialRevision, false, State.NewClientStateSnapshot(initialState),
+	)); err != nil {
 		return
 	}
 	if server.config.Configuration != nil {
@@ -513,7 +550,11 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 				return
 			}
 		case event := <-stateEvents:
-			if err := connection.WriteJSON(streamEnvelope("", "state.changed", event.Revision, event.Sequence, event.Gap, event)); err != nil {
+			payload, err := State.ClientEventPayload(event)
+			if err != nil {
+				return
+			}
+			if err := connection.WriteJSON(streamEnvelopeRaw("", "state.changed", event.Revision, event.Sequence, event.Gap, payload)); err != nil {
 				return
 			}
 		case receipt := <-operationEvents:
@@ -538,7 +579,9 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 			case "query.state":
 				state := server.config.State.ReadOnlyView()
 				revision := state.Revision
-				if err := connection.WriteJSON(newEnvelope(message.ID, "state.snapshot", revision, state)); err != nil {
+				if err := connection.WriteJSON(newEnvelope(
+					message.ID, "state.snapshot", revision, State.NewClientStateSnapshot(state),
+				)); err != nil {
 					return
 				}
 			case "query.catalogs":
@@ -576,8 +619,11 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 				}
 				intentRequest.Actor = "ui"
 				intentRequest.Priority = Outbound.PriorityInteractive
+				// Detached like the HTTP path: the socket receives the accepted
+				// receipt now and every later change through operation.changed,
+				// and closing the socket never cancels the operation.
 				go func() {
-					receipt := server.config.Intents.Submit(ctx, intentRequest)
+					receipt := server.config.Intents.SubmitDetached(intentRequest)
 					select {
 					case responses <- newEnvelope(message.ID, "intent.receipt", server.config.State.Revision(), receipt):
 					case <-ctx.Done():

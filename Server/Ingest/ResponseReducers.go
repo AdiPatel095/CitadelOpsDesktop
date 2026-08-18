@@ -83,13 +83,17 @@ func applyCastleResourceUpdate(
 			return false, nil
 		}
 	}
+	castle, exists = gameState.MutableCastleParts(castleID, State.CastlePartResources)
+	if !exists {
+		return false, nil
+	}
 	ensureCastleMaps(&castle)
 	before := copyResourceBalances(castle.Resources)
 	applyCastleResourceValues(values, &castle, gameData)
 	if reflect.DeepEqual(before, castle.Resources) {
 		return false, nil
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartResources)
 	return true, nil
 }
 
@@ -102,6 +106,10 @@ func applyFocusedCastleProduction(
 	if !focused {
 		return false, nil
 	}
+	castle, focused = gameState.MutableCastleParts(castleID, State.CastlePartResources)
+	if !focused {
+		return false, nil
+	}
 	ensureCastleMaps(&castle)
 	before := copyResourceBalances(castle.Resources)
 	if err := applyCastleProductionValues(raw, &castle, gameData); err != nil {
@@ -110,6 +118,6 @@ func applyFocusedCastleProduction(
 	if reflect.DeepEqual(before, castle.Resources) {
 		return false, nil
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartResources)
 	return true, nil
 }

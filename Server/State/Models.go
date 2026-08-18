@@ -2,7 +2,9 @@ package State
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -49,7 +51,128 @@ type SessionState struct {
 	Detail               string     `json:"detail,omitempty"`
 	CooldownUntil        *time.Time `json:"cooldownUntil,omitempty"`
 	RetryAt              *time.Time `json:"retryAt,omitempty"`
-	ChangedAt            time.Time  `json:"changedAt"`
+	// LoginFailure describes the most recent failed game login while the
+	// session is in a cooldown, error, or reconnecting state. It is cleared by
+	// the next status change and never contains credential material.
+	LoginFailure *LoginFailure `json:"loginFailure,omitempty"`
+	ChangedAt    time.Time     `json:"changedAt"`
+}
+
+// LoginFailureClass is the sanitized classification of a failed game login.
+// Orchestration decides on it: a cooldown is waited out, a suspended account or
+// rejected credential needs the user, and an unknown fatal code is a reason to
+// re-place the account with its stored credential rather than to keep retrying
+// on a possibly corrupted runtime.
+type LoginFailureClass string
+
+const (
+	// LoginFailureCooldown is the game's temporary lockout
+	// (LOGIN_COOLDOWN_ACTIVE, code 453, payload "CD" = remaining seconds);
+	// it clears on its own.
+	LoginFailureCooldown LoginFailureClass = "cooldown"
+	// LoginFailureClientVersionRejected means the announced client build was
+	// refused; the runtime refreshes the official build and retries.
+	LoginFailureClientVersionRejected LoginFailureClass = "client_version_rejected"
+	// LoginFailureSuspended is IS_BANNED (code 27): the game refused the
+	// account itself, temporarily (payload "RS" = remaining seconds) or
+	// permanently. Only the user and Goodgame support can resolve it.
+	LoginFailureSuspended LoginFailureClass = "suspended"
+	// LoginFailureAccountDeleted is IS_BANNED with the "GDPR" flag: the
+	// account was deactivated and is being deleted.
+	LoginFailureAccountDeleted LoginFailureClass = "account_deleted"
+	// LoginFailureInvalidCredentials covers INVALID_PASSWORD (20) and the
+	// login-token rejections (409, 423): the credential itself was refused.
+	LoginFailureInvalidCredentials LoginFailureClass = "invalid_credentials"
+	// LoginFailureWrongServer covers PLAYER_NOT_FOUND (21), NO_AVATAR_CREATED
+	// (26), and EXISTING_MAPPING_WRONG_SERVER (368): the account is not
+	// playable on the selected server, so the server selection (or username)
+	// must change.
+	LoginFailureWrongServer LoginFailureClass = "wrong_server"
+	// LoginFailureUnknown covers every code without an established meaning.
+	LoginFailureUnknown LoginFailureClass = "unknown"
+)
+
+// LoginFailure is the structured outcome of one failed Background login. Code
+// is the raw game response code so orchestration can classify codes this
+// build does not know yet.
+type LoginFailure struct {
+	Code       int               `json:"code"`
+	Class      LoginFailureClass `json:"class"`
+	Fatal      bool              `json:"fatal"`
+	ObservedAt time.Time         `json:"observedAt"`
+	// SuspendedUntil is set for a temporary suspension from the game's
+	// remaining-seconds payload; nil for permanent or unrelated failures.
+	SuspendedUntil *time.Time `json:"suspendedUntil,omitempty"`
+}
+
+// knownLoginFailureCodes maps game login (lli) response codes to their class.
+// The codes and names come from the official HTML5 client's
+// BasicErrorConstants and the cases its LLI command handles.
+var knownLoginFailureCodes = map[int]LoginFailureClass{
+	20:  LoginFailureInvalidCredentials, // INVALID_PASSWORD
+	21:  LoginFailureWrongServer,        // PLAYER_NOT_FOUND
+	26:  LoginFailureWrongServer,        // NO_AVATAR_CREATED
+	27:  LoginFailureSuspended,          // IS_BANNED
+	368: LoginFailureWrongServer,        // EXISTING_MAPPING_WRONG_SERVER
+	369: LoginFailureUnknown,            // UNEXPECTED_FACEBOOK_ERROR
+	409: LoginFailureInvalidCredentials, // INVALID_LOGIN_TOKEN
+	423: LoginFailureInvalidCredentials, // INVALID_GLOBALSERVER_LOGIN_TOKEN
+	453: LoginFailureCooldown,           // LOGIN_COOLDOWN_ACTIVE
+}
+
+// LoginFailureCodeName returns the official client's constant name for a login
+// response code, or an empty string for a code it does not name.
+func LoginFailureCodeName(code int) string {
+	switch code {
+	case 0:
+		return "ALL_OK"
+	case 20:
+		return "INVALID_PASSWORD"
+	case 21:
+		return "PLAYER_NOT_FOUND"
+	case 26:
+		return "NO_AVATAR_CREATED"
+	case 27:
+		return "IS_BANNED"
+	case 368:
+		return "EXISTING_MAPPING_WRONG_SERVER"
+	case 369:
+		return "UNEXPECTED_FACEBOOK_ERROR"
+	case 409:
+		return "INVALID_LOGIN_TOKEN"
+	case 423:
+		return "INVALID_GLOBALSERVER_LOGIN_TOKEN"
+	case 453:
+		return "LOGIN_COOLDOWN_ACTIVE"
+	default:
+		return ""
+	}
+}
+
+// ClassifyLoginFailure returns the class for a login response code and whether
+// the failure is fatal for the current bootstrap (retrying without a change is
+// pointless). Cooldowns and client-version rejections are the only non-fatal
+// classes.
+func ClassifyLoginFailure(code int, clientVersionRejected bool) (LoginFailureClass, bool) {
+	if clientVersionRejected {
+		return LoginFailureClientVersionRejected, false
+	}
+	if class, known := knownLoginFailureCodes[code]; known {
+		return class, class != LoginFailureCooldown
+	}
+	return LoginFailureUnknown, true
+}
+
+func cloneLoginFailure(failure *LoginFailure) *LoginFailure {
+	if failure == nil {
+		return nil
+	}
+	cloned := *failure
+	if failure.SuspendedUntil != nil {
+		until := *failure.SuspendedUntil
+		cloned.SuspendedUntil = &until
+	}
+	return &cloned
 }
 
 type AccountBindingState struct {
@@ -364,6 +487,18 @@ type ProductionQueue struct {
 	Queued     []QueueItem `json:"queued"`
 	Capacity   int         `json:"capacity"`
 	ObservedAt time.Time   `json:"observedAt"`
+	// LearnedStacks maps unit definition ID → the largest per-stack amount
+	// ever observed for that unit on this line while the account's
+	// subscription set matched LearnedStackScope. Batch entitlements are
+	// per-unit (different castles recruit different units at different batch
+	// caps), so the high-water mark is keyed by definition: it floors what
+	// FillAvailable enqueues for that unit — a spell of smaller stacks
+	// cannot ratchet the batch size down — without one unit's cap ever
+	// leaking onto another. A subscription change (lapse or gain) produces
+	// a new scope: stale learned values are discarded and the line
+	// re-learns from live stacks, so a lapsed entitlement is never overshot.
+	LearnedStacks     map[int64]int64 `json:"learnedStacks,omitempty"`
+	LearnedStackScope string          `json:"learnedStackScope,omitempty"`
 }
 
 type AllianceHelpRequestState struct {
@@ -637,23 +772,61 @@ type GemInstance struct {
 	Effects             EquipmentEffects    `json:"effects"`
 }
 
+// ConstructionOfferSnapshot keeps one official GBC purchase-counter view
+// bound to the castle and kingdom that produced it. The index is private
+// runtime state: dashboard clients continue receiving only the most recently
+// observed official response through InventoryState's legacy projection.
+type ConstructionOfferSnapshot struct {
+	Offers     map[PackageID]int64 `json:"offers"`
+	ObservedAt time.Time           `json:"observedAt,omitempty"`
+	CastleID   CastleID            `json:"castleId"`
+	KingdomID  KingdomID           `json:"kingdomId"`
+}
+
 type InventoryState struct {
-	ConstructionItems            map[ConstructionItemID]int64              `json:"constructionItems"`
-	ConstructionItemsObservedAt  time.Time                                 `json:"constructionItemsObservedAt,omitempty"`
-	ConstructionOffers           map[PackageID]int64                       `json:"constructionOffers"`
-	ConstructionOffersObservedAt time.Time                                 `json:"constructionOffersObservedAt,omitempty"`
-	ConstructionOffersCastleID   CastleID                                  `json:"constructionOffersCastleId,omitempty"`
-	ConstructionOffersKingdomID  KingdomID                                 `json:"constructionOffersKingdomId"`
-	Equipment                    map[EquipmentInstanceID]EquipmentInstance `json:"equipment"`
-	Gems                         map[GemInstanceID]GemInstance             `json:"gems"`
-	GemStacks                    map[GemID]int64                           `json:"gemStacks"`
-	Items                        map[string]map[int64]int64                `json:"items"`
+	ConstructionItems           map[ConstructionItemID]int64 `json:"constructionItems"`
+	ConstructionItemsObservedAt time.Time                    `json:"constructionItemsObservedAt,omitempty"`
+	// ConstructionSpaceLeft is the server-reported remaining construction-item
+	// inventory room (S2C "csp" → C), the number the official client consults
+	// before every buy dialog. Zero with a zero ObservedAt means unobserved.
+	ConstructionSpaceLeft           int64                                     `json:"constructionSpaceLeft,omitempty"`
+	ConstructionSpaceLeftObservedAt time.Time                                 `json:"constructionSpaceLeftObservedAt,omitempty"`
+	ConstructionOffers              map[PackageID]int64                       `json:"constructionOffers"`
+	ConstructionOffersObservedAt    time.Time                                 `json:"constructionOffersObservedAt,omitempty"`
+	ConstructionOffersCastleID      CastleID                                  `json:"constructionOffersCastleId,omitempty"`
+	ConstructionOffersKingdomID     KingdomID                                 `json:"constructionOffersKingdomId"`
+	ConstructionOffersByCastle      map[CastleID]ConstructionOfferSnapshot    `json:"-"`
+	Equipment                       map[EquipmentInstanceID]EquipmentInstance `json:"equipment"`
+	Gems                            map[GemInstanceID]GemInstance             `json:"gems"`
+	GemStacks                       map[GemID]int64                           `json:"gemStacks"`
+	Items                           map[string]map[int64]int64                `json:"items"`
 }
 
 type SubscriptionState struct {
 	TypeID         int `json:"typeId"`
 	RemainingSec   int `json:"remainingSec,omitempty"`
 	GracePeriodSec int `json:"gracePeriodSec,omitempty"`
+}
+
+// SubscriptionScope fingerprints WHICH subscriptions are active — the sorted
+// set of type IDs, ignoring remaining time (which ticks down every refresh).
+// Learned production batch sizes are valid only within one scope: the game
+// sizes batches by entitlement, so a change in the active set (either
+// direction) must invalidate what was learned under the old set.
+func (state GameState) SubscriptionScope() string {
+	if len(state.Subscriptions) == 0 {
+		return ""
+	}
+	typeIDs := make([]int, 0, len(state.Subscriptions))
+	for typeID := range state.Subscriptions {
+		typeIDs = append(typeIDs, typeID)
+	}
+	sort.Ints(typeIDs)
+	parts := make([]string, len(typeIDs))
+	for index, typeID := range typeIDs {
+		parts[index] = strconv.Itoa(typeID)
+	}
+	return "sub:" + strings.Join(parts, ",")
 }
 
 type MarketAreaEffect struct {
@@ -798,8 +971,9 @@ type AllianceState struct {
 }
 
 type MovementSnapshot struct {
-	Version    uint64    `json:"version"`
-	ObservedAt time.Time `json:"observedAt,omitempty"`
+	Version              uint64    `json:"version"`
+	ConnectionGeneration uint64    `json:"connectionGeneration,omitempty"`
+	ObservedAt           time.Time `json:"observedAt,omitempty"`
 }
 
 type StationingPhase string
@@ -939,21 +1113,10 @@ type MapObservation struct {
 	EventCampBaseGateBonus     int64     `json:"eventCampBaseGateBonus,omitempty"`
 	EventCampBaseMoatBonus     int64     `json:"eventCampBaseMoatBonus,omitempty"`
 	StormIsleID                int64     `json:"stormIsleId,omitempty"`
-	StormKind                  string    `json:"stormKind,omitempty"`
-	StormResource              string    `json:"stormResource,omitempty"`
-	StormSize                  string    `json:"stormSize,omitempty"`
-	StormFixedLoot             int64     `json:"stormFixedLoot,omitempty"`
 	StormVictoryCount          int64     `json:"stormVictoryCount,omitempty"`
 	StormCooldownRemaining     int       `json:"stormCooldownRemaining,omitempty"`
-	StormReadyAt               time.Time `json:"stormReadyAt,omitzero"`
-	StormExpiresAt             time.Time `json:"stormExpiresAt,omitzero"`
 	ObservedAt                 time.Time `json:"observedAt"`
 }
-
-const (
-	stormIslandMapObservationTypeID = 24
-	stormFortMapObservationTypeID   = 25
-)
 
 func (observation *MapObservation) UnmarshalJSON(raw []byte) error {
 	type mapObservationAlias MapObservation
@@ -962,7 +1125,6 @@ func (observation *MapObservation) UnmarshalJSON(raw []byte) error {
 		return err
 	}
 	*observation = MapObservation(decoded)
-	observation.restoreStormOpportunityLabels()
 	if observation.TowerVictoryCount != 0 {
 		return nil
 	}
@@ -976,22 +1138,34 @@ func (observation *MapObservation) UnmarshalJSON(raw []byte) error {
 	return nil
 }
 
-func (observation *MapObservation) restoreStormOpportunityLabels() {
-	if observation == nil || observation.StormIsleID <= 0 || observation.ObservedAt.IsZero() {
-		return
+// StormReadyAt and StormExpiresAt are deterministic projections of the
+// official map fields. Keeping them out of GameState saves two time.Time
+// values on every map record and prevents reducers from persisting duplicate
+// derived facts.
+func (observation MapObservation) StormReadyAt() time.Time {
+	if observation.ObservedAt.IsZero() {
+		return time.Time{}
 	}
-	if observation.StormReadyAt.IsZero() {
-		observation.StormReadyAt = observation.ObservedAt
-		if observation.StormCooldownRemaining > 0 &&
-			(observation.TypeID == stormFortMapObservationTypeID ||
-				observation.TypeID == stormIslandMapObservationTypeID && observation.OwnerID > 0) {
-			observation.StormReadyAt = observation.ObservedAt.Add(time.Duration(observation.StormCooldownRemaining) * time.Second)
-		}
+	readyAt := observation.ObservedAt
+	if observation.StormCooldownRemaining > 0 &&
+		(observation.TypeID == MapTypeStormFort || observation.TypeID == MapTypeStormIsland && observation.OwnerID > 0) {
+		readyAt = readyAt.Add(time.Duration(observation.StormCooldownRemaining) * time.Second)
 	}
-	if observation.StormExpiresAt.IsZero() && observation.TypeID == stormIslandMapObservationTypeID && observation.OwnerID <= 0 &&
-		observation.StormCooldownRemaining > 0 {
-		observation.StormExpiresAt = observation.ObservedAt.Add(time.Duration(observation.StormCooldownRemaining) * time.Second)
+	return readyAt
+}
+
+func (observation MapObservation) StormExpiresAt(globalCooldownSec int64) time.Time {
+	if observation.TypeID != MapTypeStormIsland || observation.ObservedAt.IsZero() {
+		return time.Time{}
 	}
+	if observation.OwnerID <= 0 && observation.StormCooldownRemaining > 0 {
+		return observation.ObservedAt.Add(time.Duration(observation.StormCooldownRemaining) * time.Second)
+	}
+	readyAt := observation.StormReadyAt()
+	if observation.OwnerID > 0 && !readyAt.IsZero() && globalCooldownSec > 0 {
+		return readyAt.Add(time.Duration(globalCooldownSec) * time.Second)
+	}
+	return time.Time{}
 }
 
 // TowerCooldownState records a confirmed successful tower battle and the
@@ -1082,6 +1256,10 @@ type StormMapState struct {
 	LastCompletedAt time.Time                 `json:"lastCompletedAt,omitempty"`
 	WindowCount     int                       `json:"windowCount,omitempty"`
 	Targets         map[string]MapObservation `json:"targets"`
+	// suppressedTargets is account-private negative membership restored from
+	// component persistence. It never appears in the official logical model or
+	// crosses the account API boundary.
+	suppressedTargets []string
 }
 
 const (
@@ -1338,6 +1516,22 @@ type KhanState struct {
 const KhanTauntCounterVersion = 1
 const KhanCooldownReportVersion = 1
 
+// CombatCooldownState is the account-wide attack-automation circuit breaker.
+// It trips when the game rejects a commander assignment (CRA response code
+// 256): repeated rejected launches are the request pattern that precedes
+// temporary suspensions, so the combat lanes stand down for a fixed window
+// while every non-combat lane keeps running. Manual attacks stay possible —
+// the gate lives in automation policies, not in intent planning.
+type CombatCooldownState struct {
+	Until  time.Time `json:"until,omitempty"`
+	Reason string    `json:"reason,omitempty"`
+}
+
+// ActiveAt reports whether the combat lanes are standing down at now.
+func (cooldown CombatCooldownState) ActiveAt(now time.Time) bool {
+	return !cooldown.Until.IsZero() && now.Before(cooldown.Until)
+}
+
 // AttackDialogState is the current pre-attack context returned by ADI. Its
 // active effects are authoritative for the selected castle while the dialog
 // remains current; a planned attack can therefore include temporary effects
@@ -1351,21 +1545,19 @@ type AttackDialogState struct {
 }
 
 type AttackDialogTarget struct {
-	TypeID                     int       `json:"typeId,omitempty"`
-	X                          int       `json:"x,omitempty"`
-	Y                          int       `json:"y,omitempty"`
-	ObjectID                   int64     `json:"objectId,omitempty"`
-	OwnerID                    PlayerID  `json:"ownerId,omitempty"`
-	TowerVictoryCount          int64     `json:"towerVictoryCount,omitempty"`
-	TowerCooldownRemaining     int       `json:"towerCooldownRemaining,omitempty"`
-	EventCampID                int64     `json:"eventCampId,omitempty"`
-	EventCampVictoryCount      int64     `json:"eventCampVictoryCount,omitempty"`
-	EventCampCooldownRemaining int       `json:"eventCampCooldownRemaining,omitempty"`
-	StormIsleID                int64     `json:"stormIsleId,omitempty"`
-	StormVictoryCount          int64     `json:"stormVictoryCount,omitempty"`
-	StormCooldownRemaining     int       `json:"stormCooldownRemaining,omitempty"`
-	StormReadyAt               time.Time `json:"stormReadyAt,omitzero"`
-	StormExpiresAt             time.Time `json:"stormExpiresAt,omitzero"`
+	TypeID                     int      `json:"typeId,omitempty"`
+	X                          int      `json:"x,omitempty"`
+	Y                          int      `json:"y,omitempty"`
+	ObjectID                   int64    `json:"objectId,omitempty"`
+	OwnerID                    PlayerID `json:"ownerId,omitempty"`
+	TowerVictoryCount          int64    `json:"towerVictoryCount,omitempty"`
+	TowerCooldownRemaining     int      `json:"towerCooldownRemaining,omitempty"`
+	EventCampID                int64    `json:"eventCampId,omitempty"`
+	EventCampVictoryCount      int64    `json:"eventCampVictoryCount,omitempty"`
+	EventCampCooldownRemaining int      `json:"eventCampCooldownRemaining,omitempty"`
+	StormIsleID                int64    `json:"stormIsleId,omitempty"`
+	StormVictoryCount          int64    `json:"stormVictoryCount,omitempty"`
+	StormCooldownRemaining     int      `json:"stormCooldownRemaining,omitempty"`
 }
 
 type AttackDialogEffect struct {
@@ -1505,7 +1697,7 @@ type GameState struct {
 	Alliance             AllianceState                           `json:"alliance"`
 	Alliances            map[AllianceID]AllianceState            `json:"alliances"`
 	AllianceHelpRequests AllianceHelpRequestState                `json:"allianceHelpRequests"`
-	Map                  map[KingdomID]map[string]MapObservation `json:"map"`
+	Map                  map[KingdomID]map[string]MapObservation `json:"-"`
 	TowerCooldowns       map[string]TowerCooldownState           `json:"towerCooldowns"`
 	TowerQueue           TowerQueueState                         `json:"towerQueue"`
 	Invasion             InvasionState                           `json:"invasion"`
@@ -1515,6 +1707,7 @@ type GameState struct {
 	Khan                 KhanState                               `json:"khan"`
 	DailyAttacks         DailyAttackState                        `json:"dailyAttacks"`
 	AttackDialog         AttackDialogState                       `json:"attackDialog"`
+	CombatCooldown       CombatCooldownState                     `json:"combatCooldown"`
 	AttackPresets        []AttackPreset                          `json:"attackPresets"`
 	AttackAnalytics      AttackAnalyticsState                    `json:"attackAnalytics"`
 	EventScores          EventScoreState                         `json:"eventScores"`
@@ -1522,6 +1715,61 @@ type GameState struct {
 	Automations          map[string]AutomationState              `json:"automations"`
 	Reports              ReportState                             `json:"reports"`
 	Observations         map[string]ProtocolObservation          `json:"observations"`
+
+	sharedMap                   *worldMapGeneration
+	mapOverlay                  *accountMapGeneration
+	worldSharing                bool
+	pendingMapChanges           map[string]MapChange
+	replaceMap                  bool
+	mapMutationCOW              bool
+	mutableMapRegions           map[KingdomID]*mutableAccountMapRegion
+	movementRecords             *movementGeneration
+	movementMutationCOW         bool
+	mutableMovementShards       [4]uint64
+	pendingMovementChanges      map[MovementID]struct{}
+	replaceMovements            bool
+	castleMutationCOW           bool
+	mutableCastles              map[CastleID]CastleMutationPart
+	pendingCastleChanges        map[CastleID]CastleMutationPart
+	replaceCastles              bool
+	inventoryMutationCOW        bool
+	mutableInventoryParts       inventoryMutationPart
+	pendingEquipmentChanges     map[EquipmentInstanceID]struct{}
+	replaceInventoryEquipment   bool
+	pendingGemChanges           map[GemInstanceID]struct{}
+	replaceInventoryGems        bool
+	pendingInventoryItemChanges map[string]struct{}
+	replaceInventoryItems       bool
+	stormTargets                *stormTargetGeneration
+	stormMutationCOW            bool
+	mutableStormParts           stormMutationPart
+	mutableStormTargetShards    [4]uint64
+	pendingStormTargetChanges   map[string]struct{}
+	replaceStormTargets         bool
+	towerCooldowns              *towerCooldownGeneration
+	towerCooldownMutationCOW    bool
+	mutableTowerCooldownShards  [4]uint64
+	pendingTowerCooldownChanges map[string]struct{}
+	replaceTowerCooldowns       bool
+	towerQueueMutationCOW       bool
+	mutableTowerQueueEntries    map[CastleID]struct{}
+	pendingTowerQueueCastles    map[CastleID]struct{}
+	replaceTowerQueue           bool
+	reportMutationCOW           bool
+	reportRecords               *reportGeneration
+	mutableReportShards         [4]uint64
+	pendingReportMessages       map[int64]struct{}
+	replaceReports              bool
+	eventScoreMutationCOW       bool
+	eventScoreRecords           *eventScoreGeneration
+	mutableEventScoreShards     [4]uint64
+	pendingEventScoreIDs        map[int64]struct{}
+	eventScoreMetadataDirty     bool
+	eventScoreShopDirty         bool
+	replaceEventScores          bool
+	attackAnalyticsMutationCOW  bool
+	mutableAttackAnalyticsParts attackAnalyticsMutationPart
+	mutationWrites              ComponentSet
 }
 
 func NewGameState() GameState {
@@ -1544,12 +1792,13 @@ func NewGameState() GameState {
 		Scheduled:  map[string]ScheduledOperation{},
 		Rift:       RiftState{Launches: map[string]RiftLaunch{}, DeletedLaunchIDs: map[string]int64{}},
 		Inventory: InventoryState{
-			ConstructionItems:  map[ConstructionItemID]int64{},
-			ConstructionOffers: map[PackageID]int64{},
-			Equipment:          map[EquipmentInstanceID]EquipmentInstance{},
-			Gems:               map[GemInstanceID]GemInstance{},
-			GemStacks:          map[GemID]int64{},
-			Items:              map[string]map[int64]int64{},
+			ConstructionItems:          map[ConstructionItemID]int64{},
+			ConstructionOffers:         map[PackageID]int64{},
+			ConstructionOffersByCastle: map[CastleID]ConstructionOfferSnapshot{},
+			Equipment:                  map[EquipmentInstanceID]EquipmentInstance{},
+			Gems:                       map[GemInstanceID]GemInstance{},
+			GemStacks:                  map[GemID]int64{},
+			Items:                      map[string]map[int64]int64{},
 		},
 		Subscriptions: map[int]SubscriptionState{},
 		Market: MarketState{
@@ -1599,6 +1848,7 @@ func NewGameState() GameState {
 		EventScores: EventScoreState{
 			ByEvent: map[int64]ScalableEventScore{}, ShopByPackage: map[PackageID]EventShopRoute{},
 			ActivityByEvent: map[int64]EventActivityState{}, RankingByEvent: map[int64]EventRankingState{},
+			Inventory: EventInventoryState{ActiveByEvent: map[int64]EventAvailability{}},
 		},
 		Automations: map[string]AutomationState{},
 		Reports: ReportState{

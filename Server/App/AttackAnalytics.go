@@ -41,10 +41,23 @@ func restoreRecentAutoStormLaunchHistory(
 	}
 	now := time.Now().UTC()
 	snapshot := state.ReadOnlyView()
+	// At process start the live player profile has not arrived yet
+	// (Player.ID is 0 until the first authenticated baseline), but the
+	// persisted account binding already knows who this profile belongs to.
+	// Without the fallback the report query silently returns nothing and
+	// the rolling attack history starts empty after every restart.
+	playerID := int64(snapshot.Player.ID)
+	if playerID <= 0 {
+		playerID = int64(snapshot.Account.PlayerID)
+	}
+	worldID := snapshot.Account.WorldID
+	if worldID == "" {
+		worldID = snapshot.Session.ServerURL
+	}
 	reports, err := reportStore.Recent(ctx, Reports.BattleReportQuery{
 		AccountUID: snapshot.Account.UID,
-		WorldID:    snapshot.Account.WorldID,
-		PlayerID:   int64(snapshot.Player.ID),
+		WorldID:    worldID,
+		PlayerID:   playerID,
 		FeatureID:  string(State.AttackFeatureAutoStorm),
 		Since:      now.Add(-72 * time.Hour),
 		Limit:      100_000,
@@ -71,11 +84,43 @@ func restoreRecentAutoStormLaunchHistory(
 	if len(records) == 0 {
 		return nil
 	}
-	_, err = state.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = state.ApplyComponents(State.Components(State.ComponentAttackAnalytics), func(gameState *State.GameState) ([]string, bool, error) {
 		changed := State.MergeAutoStormLaunchHistory(gameState, records, now)
 		return []string{"attack-analytics"}, changed, nil
 	})
 	return err
+}
+
+// refreshAttackHistoryOnBaseline re-runs the Auto Storm launch-history
+// restore every time a new authenticated baseline commits (gbd). The login
+// path can drop or reset state assembled before the baseline — after a
+// process restart the startup restore may even have run before identity was
+// known — so each baseline re-merges the rolling history from the local
+// battle-report store. MergeAutoStormLaunchHistory is idempotent (keyed by
+// movement, max troop count wins), so repeated merges only ever heal.
+func (application *Application) refreshAttackHistoryOnBaseline(ctx context.Context) {
+	if application.State == nil || application.ReportStore == nil {
+		return
+	}
+	events, unsubscribe := application.State.Subscribe(32)
+	defer unsubscribe()
+	var restoredBaseline uint64
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-events:
+			snapshot := application.State.ReadOnlyView()
+			baseline := snapshot.Session.BaselineGeneration
+			if baseline == 0 || baseline == restoredBaseline {
+				continue
+			}
+			if err := restoreRecentAutoStormLaunchHistory(ctx, application.State, application.ReportStore); err != nil {
+				continue
+			}
+			restoredBaseline = baseline
+		}
+	}
 }
 
 func (application *Application) captureAttackFeatureLaunch(_ context.Context, arguments json.RawMessage) error {
@@ -93,19 +138,22 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 	if application.GameData != nil {
 		gameData, _ = application.GameData.Current()
 	}
-	_, err := application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(
+		State.ComponentAttackAnalytics, State.ComponentRift, State.ComponentTowerQueue,
+	), func(gameState *State.GameState) ([]string, bool, error) {
 		var selected State.MovementState
-		for _, movement := range gameState.Movements {
+		gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 			if movement.Direction != 0 || movement.SourceCastleID != request.SourceCastleID ||
 				movement.KingdomID != request.KingdomID || movement.TargetX != request.TargetX || movement.TargetY != request.TargetY ||
 				movement.CommanderID == nil || *movement.CommanderID != request.CommanderID || movement.ArrivesAt == nil {
-				continue
+				return true
 			}
 			if selected.ID == 0 || movement.ObservedAt.After(selected.ObservedAt) ||
 				movement.ObservedAt.Equal(selected.ObservedAt) && movement.ID > selected.ID {
 				selected = movement
 			}
-		}
+			return true
+		})
 		if selected.ID == 0 {
 			return nil, false, fmt.Errorf(
 				"CRA response did not return commander %d's %s movement to %d:%d",
@@ -138,10 +186,7 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 			}
 		}
 		if changed && request.FeatureID == State.AttackFeatureAutoTowers {
-			if gameState.TowerQueue.ConfirmedLaunchesByCastle == nil {
-				gameState.TowerQueue.ConfirmedLaunchesByCastle = map[State.CastleID]int64{}
-			}
-			gameState.TowerQueue.ConfirmedLaunchesByCastle[request.SourceCastleID]++
+			gameState.IncrementTowerQueueConfirmedLaunches(request.SourceCastleID)
 			domains = append(domains, "tower-queue")
 		}
 		return domains, changed, nil

@@ -7,7 +7,6 @@ import {
   ChevronDown,
   ChevronRight,
   MapPin,
-	Microscope,
   RefreshCw,
   Search,
   Shield,
@@ -20,8 +19,13 @@ import ToolImage from '../../components/ToolImage';
 import DetailBackButton from '../../components/DetailBackButton';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { useCitadelAPI } from '../../api/ApiContext';
-import { CitadelAPI } from '../../api/CitadelClient';
-import type { BattleResearchPhasePredictionV2, BattleResearchStatusV2, GameStateV2 } from '../../api/Contracts';
+import type { EquipmentEffectV2, GameStateV2 } from '../../api/Contracts';
+import { runtimeURL } from '../../api/RuntimeURL';
+import {
+  buildEquipmentEffectProfile,
+  formatEquipmentEffectValue,
+  officialEquipmentEffectGroupIdentity,
+} from '../../equipment/components/EquipmentEffects';
 import type {
   BattleCombatant,
   BattleEffect,
@@ -39,6 +43,7 @@ const dataSources = [
 ];
 
 const REPORT_ROWS_PAGE_SIZE = 250;
+const AGGREGATE_ROW_LIMIT = 10;
 
 const allOption = 'all';
 
@@ -68,8 +73,6 @@ const BattleStatsView: React.FC = () => {
   const [endDate, setEndDate] = useState(() => inputDateFromDate(new Date()));
   const [selectedReportID, setSelectedReportID] = useState<string | null>(null);
   const [visibleReportLimit, setVisibleReportLimit] = useState(REPORT_ROWS_PAGE_SIZE);
-	const [battleResearch, setBattleResearch] = useState<BattleResearchStatusV2 | null>(null);
-	const [battleResearchError, setBattleResearchError] = useState('');
 
   const loadReports = async () => {
     setIsLoading(true);
@@ -106,21 +109,6 @@ const BattleStatsView: React.FC = () => {
   useEffect(() => {
     void loadReports();
   }, []);
-
-	const loadBattleResearch = async () => {
-		try {
-			setBattleResearch(await CitadelAPI.getBattleResearchStatus());
-			setBattleResearchError('');
-		} catch (error) {
-			setBattleResearchError(error instanceof Error ? error.message : 'Could not load battle research status');
-		}
-	};
-
-	useEffect(() => {
-		void loadBattleResearch();
-		const timer = window.setInterval(() => void loadBattleResearch(), 5_000);
-		return () => window.clearInterval(timer);
-	}, []);
 
   useEffect(() => {
     if (
@@ -318,14 +306,10 @@ const BattleStatsView: React.FC = () => {
 
   return (
     <div className="data-view-render-stable flex flex-col gap-4">
-		<BattleResearchBetaPanel
-			status={battleResearch}
-			error={battleResearchError}
-			onRefresh={() => void loadBattleResearch()}
-		/>
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
-        <aside className="xl:w-[21.5rem] shrink-0">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start 2xl:items-stretch">
+        <aside className="shrink-0 xl:w-[21.5rem] 2xl:flex">
           <SectionCard
+            className="2xl:h-full 2xl:w-full"
             title="Battle Stats"
             description={sourceLabel}
             descriptionClassName="mt-1.5 font-semibold"
@@ -404,7 +388,7 @@ const BattleStatsView: React.FC = () => {
           </SectionCard>
         </aside>
 
-        <section className="flex-1 min-w-0 space-y-4">
+        <section className="flex min-w-0 flex-1 flex-col gap-4">
           <div className="battle-summary-grid">
             <StatCard label="Reports counted" value={formatNumber(summary.reports)} tone="neutral" />
             <StatCard label="Wins" value={formatNumber(summary.victories)} tone="success" />
@@ -414,24 +398,26 @@ const BattleStatsView: React.FC = () => {
             <StatCard label="Defenders killed" value={formatNumber(summary.defendersKilled)} tone="info" />
           </div>
 
-          <div className="grid 2xl:grid-cols-2 gap-4">
+          <div className="grid gap-4 2xl:flex-1 2xl:auto-rows-fr 2xl:grid-cols-2">
             <PlayerAggregateTable rows={playerAggregates} />
             <AllianceAggregateTable rows={allianceAggregates} />
           </div>
+        </section>
+      </div>
 
-          <SectionCard
-            title="Reports"
-            description={(
-              <>
-                Showing {formatNumber(visibleReports.length)} of {formatNumber(filteredReports.length)} filtered reports
-                <span className="text-text-muted/70"> · {formatNumber(scopedReports.length)} parsed</span>
-              </>
-            )}
-            descriptionClassName=""
-            actions={<Badge variant="secondary">{isLoading ? 'Loading' : 'Ready'}</Badge>}
-            contentClassName="overflow-x-auto"
-            flush
-          >
+      <SectionCard
+        title="Reports"
+        description={(
+          <>
+            Showing {formatNumber(visibleReports.length)} of {formatNumber(filteredReports.length)} filtered reports
+            <span className="text-text-muted/70"> · {formatNumber(scopedReports.length)} parsed</span>
+          </>
+        )}
+        descriptionClassName=""
+        actions={<Badge variant="secondary">{isLoading ? 'Loading' : 'Ready'}</Badge>}
+        contentClassName="overflow-x-auto"
+        flush
+      >
             <table className="battle-table w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
@@ -500,146 +486,10 @@ const BattleStatsView: React.FC = () => {
                 No player battle reports match the current filters.
               </div>
             )}
-          </SectionCard>
-        </section>
-      </div>
+      </SectionCard>
     </div>
   );
 };
-
-const BattleResearchBetaPanel: React.FC<{
-	status: BattleResearchStatusV2 | null;
-	error: string;
-	onRefresh: () => void;
-}> = ({ status, error, onRefresh }) => {
-	const predictedTrial = status?.trials.find((trial) => trial.prediction != null);
-	const prediction = predictedTrial?.prediction;
-	const newestTrial = status?.trials[0];
-	const stateLabel = !status
-		? 'Loading'
-		: status.enabled
-			? status.state === 'observing' ? 'Observing outgoing attacks' : 'Waiting for a live session'
-			: 'Disabled in Settings';
-	return (
-		<SectionCard
-			title="Battle Prediction Calculator"
-			description={status?.calculator.description ?? 'Loading the experimental calculator…'}
-			icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-fuchsia-500/10"><Microscope className="h-4 w-4 text-fuchsia-400" /></span>}
-			actions={<div className="flex items-center gap-2">
-				<Badge variant="warning">Beta</Badge>
-				<Badge variant={status?.enabled ? 'success' : 'secondary'}>{stateLabel}</Badge>
-				<Button variant="ghost" size="icon" onClick={onRefresh} title="Refresh battle research">
-					<RefreshCw className="h-4 w-4" />
-				</Button>
-			</div>}
-			contentClassName="space-y-4"
-		>
-			{error && <p role="alert" className="text-xs font-medium text-error">{error}</p>}
-			<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-				<ResearchMetric label="Active trials" value={formatNumber(status?.activeTrials ?? 0)} />
-				<ResearchMetric label="Completed" value={formatNumber(status?.completedTrials ?? 0)} />
-				<ResearchMetric label="Pending upload" value={formatNumber(status?.pendingUploads ?? 0)} />
-				<ResearchMetric label="Model" value={status?.calculator.modelVersion ?? '—'} compact />
-			</div>
-
-			{prediction && predictedTrial ? (
-				<div className="space-y-4 rounded-global border border-fuchsia-500/20 bg-fuchsia-500/[0.04] p-4">
-					<div className="flex flex-wrap items-start justify-between gap-3">
-						<div>
-							<div className="flex flex-wrap items-center gap-2">
-								<h3 className="text-sm font-bold text-text-main">Latest saved pre-impact prediction</h3>
-								<Badge variant={prediction.predictedResult === 'Victory' ? 'success' : 'danger'}>
-									Predicted {prediction.predictedResult}
-								</Badge>
-								<Badge variant="outline">{prediction.confidence} confidence</Badge>
-							</div>
-							<p className="mt-1 text-xs text-text-muted">
-								Target {predictedTrial.kingdomID}:{predictedTrial.targetX}:{predictedTrial.targetY}
-								{' · '}movement {predictedTrial.movementID ?? 'pending'}
-								{' · '}saved {new Date(prediction.generatedAt).toLocaleString()}
-							</p>
-						</div>
-						{predictedTrial.actualResult && (
-							<Badge variant={predictedTrial.actualResult === prediction.predictedResult ? 'success' : 'danger'}>
-								Actual {predictedTrial.actualResult}
-							</Badge>
-						)}
-					</div>
-					<div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-						<ResearchMetric label="Attack win estimate" value={`${Math.round(prediction.attackWinProbability * 100)}%`} />
-						<ResearchMetric label="Attackers sent" value={formatNumber(prediction.attackerSent)} />
-						<ResearchMetric label="Defenders seen" value={formatNumber(prediction.defenderObserved)} />
-						<ResearchMetric label={predictedTrial.actualAttackerLost == null ? 'Expected attacker loss' : 'Attacker loss · est / actual'} value={formatResearchComparison(prediction.expectedAttackerLost, predictedTrial.actualAttackerLost)} tone="danger" />
-						<ResearchMetric label={predictedTrial.actualDefenderLost == null ? 'Expected defender loss' : 'Defender loss · est / actual'} value={formatResearchComparison(prediction.expectedDefenderLost, predictedTrial.actualDefenderLost)} tone="success" />
-						<ResearchMetric label="Unit-stat coverage" value={`${Math.round(prediction.unitStatCoverage * 100)}%`} />
-					</div>
-					<div className="overflow-x-auto rounded-global border border-border-base">
-						<table className="w-full min-w-[680px] text-xs">
-							<thead className="bg-bg-app/50 text-left uppercase tracking-wider text-text-muted">
-								<tr><th className="px-3 py-2">Wave</th><th className="px-3 py-2">Left</th><th className="px-3 py-2">Center</th><th className="px-3 py-2">Right</th></tr>
-							</thead>
-							<tbody>
-								{prediction.waves.map((wave) => (
-									<tr key={wave.wave} className="border-t border-border-base">
-										<td className="px-3 py-2 font-bold text-text-main">{wave.wave}</td>
-										<td className="px-3 py-2"><ResearchPhase phase={wave.left} /></td>
-										<td className="px-3 py-2"><ResearchPhase phase={wave.center} /></td>
-										<td className="px-3 py-2"><ResearchPhase phase={wave.right} /></td>
-									</tr>
-								))}
-								<tr className="border-t border-border-base bg-bg-app/30">
-									<td className="px-3 py-2 font-bold text-text-main">Courtyard</td>
-									<td className="px-3 py-2" colSpan={3}><ResearchPhase phase={prediction.courtyard} /></td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<details className="rounded-global border border-border-base bg-bg-app/30 px-3 py-2 text-xs">
-						<summary className="cursor-pointer font-semibold text-text-main">What this version uses and still ignores</summary>
-						<div className="mt-3 grid gap-4 md:grid-cols-2">
-							<div><p className="font-semibold text-success">Considered</p><ul className="mt-1 list-disc space-y-1 pl-4 text-text-muted">{prediction.considered.map((item) => <li key={item}>{item}</li>)}</ul></div>
-							<div><p className="font-semibold text-warning">Recorded, not fully modeled</p><ul className="mt-1 list-disc space-y-1 pl-4 text-text-muted">{prediction.recordedNotModeled.map((item) => <li key={item}>{item}</li>)}</ul></div>
-						</div>
-					</details>
-				</div>
-			) : (
-				<div className="rounded-global border border-dashed border-border-base px-4 py-5 text-sm text-text-muted">
-					{status?.enabled
-						? newestTrial ? `Latest trial: ${readableResearchPhase(newestTrial.phase)}. A prediction appears here only after the pre-battle spy report is captured and saved before impact.` : 'Waiting for an outgoing PvP attack that you launch.'
-						: 'Enable Experimental Battle Research in Settings to collect forward-tested predictions.'}
-				</div>
-			)}
-			<div className="rounded-global border border-warning/25 bg-warning/5 px-3 py-2 text-[11px] leading-relaxed text-warning">
-				Experimental estimate only. This version can be materially wrong and should not be treated as a guaranteed outcome; later releases will be calibrated from the saved pre/post trials.
-			</div>
-			{status?.lastError && <p className="text-[11px] text-error">Latest research error: {status.lastError}</p>}
-		</SectionCard>
-	);
-};
-
-const ResearchMetric: React.FC<{ label: string; value: string; tone?: 'default' | 'success' | 'danger'; compact?: boolean }> = ({
-	label, value, tone = 'default', compact = false,
-}) => (
-	<div className="rounded-global border border-border-base bg-bg-app/35 px-3 py-2">
-		<p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">{label}</p>
-		<p className={`mt-1 font-bold ${compact ? 'break-all text-[11px]' : 'text-lg'} ${tone === 'success' ? 'text-success' : tone === 'danger' ? 'text-error' : 'text-text-main'}`}>{value}</p>
-	</div>
-);
-
-const ResearchPhase: React.FC<{ phase: BattleResearchPhasePredictionV2 }> = ({ phase }) => (
-	<span className={phase.winner === 'attacker' ? 'text-success' : 'text-error'}>
-		<span className="font-semibold">{phase.winner === 'attacker' ? 'Attack' : 'Defense'}</span>
-		<span className="ml-1 text-text-muted">A {formatNumber(phase.attackerStarted)}→{formatNumber(phase.attackerSurvivors)}, D {formatNumber(phase.defenderStarted)}→{formatNumber(phase.defenderSurvivors)}</span>
-	</span>
-);
-
-function readableResearchPhase(phase: string): string {
-	return phase.replaceAll('_', ' ').replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
-function formatResearchComparison(expected: number, actual?: number): string {
-	return actual == null ? formatNumber(expected) : `${formatNumber(expected)} / ${formatNumber(actual)}`;
-}
 
 interface FilterFieldProps {
   label: string;
@@ -753,8 +603,8 @@ interface AllianceAggregate {
 }
 
 const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) => (
-  <SectionCard title="Player Aggregate" description="Filtered battle totals by player" descriptionClassName="" actions={<Badge variant="secondary">{rows.length} players</Badge>} flush>
-    <div className="overflow-x-auto">
+  <SectionCard className="flex h-full flex-col" title="Player Aggregate" description="Filtered battle totals by player" descriptionClassName="" actions={<Badge variant="secondary">{rows.length} players</Badge>} contentClassName="flex min-h-0 flex-1 flex-col" flush>
+    <div className="min-h-0 flex-1 overflow-x-auto">
         <table className="battle-aggregate-table w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
@@ -767,39 +617,42 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
             </tr>
           </thead>
           <tbody>
-            {rows.slice(0, 10).map((row) => (
-              <tr key={row.key} className="border-b border-border-base/70">
-                <td className="px-4 py-3">
+            {rows.slice(0, AGGREGATE_ROW_LIMIT).map((row) => (
+              <tr key={row.key} className="h-[3.25rem] border-b border-border-base/70">
+                <td className="px-4 py-2">
                   <div className="font-semibold text-text-main">{row.name}</div>
                   <div className="text-xs text-text-muted">{row.alliance}</div>
                 </td>
-                <td className="px-4 py-3 text-right text-text-main font-semibold">{formatNumber(row.reports)}</td>
-                <td className="px-4 py-3 text-right text-text-muted">{formatNumber(row.attacks)} / {formatNumber(row.defenses)}</td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-4 py-2 text-right text-text-main font-semibold">{formatNumber(row.reports)}</td>
+                <td className="px-4 py-2 text-right text-text-muted">{formatNumber(row.attacks)} / {formatNumber(row.defenses)}</td>
+                <td className="px-4 py-2 text-right">
                   <span className="text-success font-semibold">{formatNumber(row.wins)}</span>
                   <span className="text-text-muted"> / </span>
                   <span className="text-error font-semibold">{formatNumber(row.losses)}</span>
                 </td>
-                <td className="px-4 py-3 text-right text-info font-semibold">
+                <td className="px-4 py-2 text-right text-info font-semibold">
                   {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
                 </td>
-                <td className="px-4 py-3 text-right text-error font-semibold">
+                <td className="px-4 py-2 text-right text-error font-semibold">
                   {formatRatio(row.defenseAttackersKilled, row.defenseDefendersLost)}
                 </td>
               </tr>
             ))}
+            {rows.length === 0 && (
+              <tr className="h-[3.25rem] border-b border-border-base/70">
+                <td className="px-4 text-center text-text-muted" colSpan={6}>No player aggregate for the current filters.</td>
+              </tr>
+            )}
+            <AggregateSpacerRows count={AGGREGATE_ROW_LIMIT - Math.min(AGGREGATE_ROW_LIMIT, Math.max(1, rows.length))} columns={6} />
           </tbody>
         </table>
     </div>
-    {rows.length === 0 && (
-      <div className="px-5 py-10 text-center text-text-muted">No player aggregate for the current filters.</div>
-    )}
   </SectionCard>
 );
 
 const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows }) => (
-  <SectionCard title="Alliance Aggregate" description="Filtered battle totals by alliance" descriptionClassName="" actions={<Badge variant="secondary">{rows.length} alliances</Badge>} flush>
-    <div className="overflow-x-auto">
+  <SectionCard className="flex h-full flex-col" title="Alliance Aggregate" description="Filtered battle totals by alliance" descriptionClassName="" actions={<Badge variant="secondary">{rows.length} alliances</Badge>} contentClassName="flex min-h-0 flex-1 flex-col" flush>
+    <div className="min-h-0 flex-1 overflow-x-auto">
         <table className="battle-aggregate-table w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
@@ -811,30 +664,43 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
             </tr>
           </thead>
           <tbody>
-            {rows.slice(0, 10).map((row) => (
-              <tr key={row.key} className="border-b border-border-base/70">
-                <td className="px-4 py-3 font-semibold text-text-main">{row.name}</td>
-                <td className="px-4 py-3 text-right text-text-main font-semibold">{formatNumber(row.reports)}</td>
-                <td className="px-4 py-3 text-right">
+            {rows.slice(0, AGGREGATE_ROW_LIMIT).map((row) => (
+              <tr key={row.key} className="h-[3.25rem] border-b border-border-base/70">
+                <td className="px-4 py-2 font-semibold text-text-main">{row.name}</td>
+                <td className="px-4 py-2 text-right text-text-main font-semibold">{formatNumber(row.reports)}</td>
+                <td className="px-4 py-2 text-right">
                   <span className="text-success font-semibold">{formatNumber(row.wins)}</span>
                   <span className="text-text-muted"> / </span>
                   <span className="text-error font-semibold">{formatNumber(row.losses)}</span>
                 </td>
-                <td className="px-4 py-3 text-right text-info font-semibold">
+                <td className="px-4 py-2 text-right text-info font-semibold">
                   {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
                 </td>
-                <td className="px-4 py-3 text-right text-error font-semibold">
+                <td className="px-4 py-2 text-right text-error font-semibold">
                   {formatRatio(row.defenseAttackersKilled, row.defenseDefendersLost)}
                 </td>
               </tr>
             ))}
+            {rows.length === 0 && (
+              <tr className="h-[3.25rem] border-b border-border-base/70">
+                <td className="px-4 text-center text-text-muted" colSpan={5}>No alliance aggregate for the current filters.</td>
+              </tr>
+            )}
+            <AggregateSpacerRows count={AGGREGATE_ROW_LIMIT - Math.min(AGGREGATE_ROW_LIMIT, Math.max(1, rows.length))} columns={5} />
           </tbody>
         </table>
     </div>
-    {rows.length === 0 && (
-      <div className="px-5 py-10 text-center text-text-muted">No alliance aggregate for the current filters.</div>
-    )}
   </SectionCard>
+);
+
+const AggregateSpacerRows: React.FC<{ count: number; columns: number }> = ({ count, columns }) => (
+  <>
+    {Array.from({ length: count }, (_, index) => (
+      <tr key={`aggregate-spacer-${index}`} aria-hidden="true" className="hidden h-[3.25rem] border-b border-border-base/40 2xl:table-row">
+        <td colSpan={columns}>&nbsp;</td>
+      </tr>
+    ))}
+  </>
 );
 
 const ReportDetailPage: React.FC<{
@@ -859,8 +725,15 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
   outcome,
   perspectiveSide,
 }) => {
-  const commanderEffects = effectsForSide(report, 'commander');
-  const castellanEffects = effectsForSide(report, 'castellan');
+  const { effects, troops } = useMetadata();
+  const commanderEffects = useMemo(
+    () => effectsForSide(report, 'commander', effects, troops),
+    [effects, report, troops]
+  );
+  const castellanEffects = useMemo(
+    () => effectsForSide(report, 'castellan', effects, troops),
+    [effects, report, troops]
+  );
   const attackerUnits = itemsForSide(report.topUnits, 'attacker').slice(0, 12);
   const defenderUnits = itemsForSide(report.topUnits, 'defender').slice(0, 12);
   const attackerTools = itemsForSide(report.supportTools, 'attacker').slice(0, 12);
@@ -1142,19 +1015,20 @@ const EffectComparison: React.FC<{
   castellanName: string;
   castellanEffects: BattleEffect[];
 }> = ({ commanderName, commanderEffects, castellanName, castellanEffects }) => {
-  const visibleCommanderEffects = commanderEffects.filter(isVisibleEffectComparisonEffect);
-  const visibleCastellanEffects = castellanEffects.filter(isVisibleEffectComparisonEffect);
-  const groups = effectComparisonGroups(visibleCommanderEffects, visibleCastellanEffects);
-  const totalEffects = visibleCommanderEffects.length + visibleCastellanEffects.length;
+  const groups = effectComparisonGroups(commanderEffects, castellanEffects);
+  const totalEffects = commanderEffects.length + castellanEffects.length;
 
   return (
     <CollapsibleDetailCard title="Commander / Castellan" subtitle={`${commanderName} vs ${castellanName}`}>
       {totalEffects > 0 ? (
         <div className="overflow-x-auto">
           <div className="min-w-[44rem] space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-[1fr_1.5fr_1fr] divide-x divide-border-base overflow-hidden rounded-global border border-border-base bg-bg-app">
               <EffectComparisonHeader label="Commander" name={commanderName} tone="danger" />
-              <EffectComparisonHeader label="Castellan" name={castellanName} tone="info" align="right" />
+              <div className="flex min-w-0 items-center justify-center bg-bg-surface/45 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                Effect
+              </div>
+              <EffectComparisonHeader label="Castellan" name={castellanName} tone="info" />
             </div>
 
             {groups.map((group) => (
@@ -1162,14 +1036,17 @@ const EffectComparison: React.FC<{
                 <div className="text-[11px] uppercase tracking-wider font-bold text-text-muted">
                   {group.category}
                 </div>
-                <div className="overflow-hidden rounded-global border border-border-base bg-bg-app">
+                <div className="space-y-px overflow-hidden rounded-global border border-border-base bg-border-base">
                   {group.rows.map((row) => (
                     <div
                       key={row.key}
-                      className="grid grid-cols-2 divide-x divide-border-base border-b border-border-base last:border-b-0"
+                      className="grid min-h-12 grid-cols-[1fr_1.5fr_1fr] divide-x divide-border-base bg-bg-app"
                     >
-                      <EffectComparisonCell effects={row.commander} side="commander" />
-                      <EffectComparisonCell effects={row.castellan} side="castellan" />
+                      <EffectComparisonValues effects={row.commander} side="commander" />
+                      <div className="flex items-center justify-center bg-bg-surface/45 px-4 py-2.5 text-center text-sm font-semibold text-text-main">
+                        {row.label}
+                      </div>
+                      <EffectComparisonValues effects={row.castellan} side="castellan" />
                     </div>
                   ))}
                 </div>
@@ -1188,59 +1065,49 @@ const EffectComparisonHeader: React.FC<{
   label: string;
   name: string;
   tone: 'danger' | 'info';
-  align?: 'left' | 'right';
-}> = ({ label, name, tone, align = 'left' }) => {
-  const toneClass = tone === 'danger' ? 'border-error/25 text-error' : 'border-info/25 text-info';
-  const alignClass = align === 'right' ? 'items-end text-right' : 'items-start text-left';
+}> = ({ label, name, tone }) => {
+  const toneClass = tone === 'danger' ? 'bg-error/5 text-error' : 'bg-info/5 text-info';
 
   return (
-    <div className={`flex min-w-0 flex-col rounded-global border bg-bg-app px-3 py-2 ${toneClass} ${alignClass}`}>
+    <div className={`flex min-w-0 flex-col items-center px-3 py-2 text-center ${toneClass}`}>
       <div className="text-[10px] font-bold uppercase tracking-wider">{label}</div>
       <div className="mt-1 max-w-full truncate text-sm font-semibold text-text-main">{name}</div>
     </div>
   );
 };
 
-function effectCellKey(effect: BattleEffect, index: number): string {
+function effectValueKey(effect: BattleEffect, index: number): string {
   return `${effectLabel(effect)}|${effectDescription(effect)}|${effectValue(effect)}|${index}`;
 }
 
-const EffectComparisonCell: React.FC<{ effects?: BattleEffect[]; side: 'commander' | 'castellan' }> = ({ effects, side }) => {
+const EffectComparisonValues: React.FC<{
+  effects?: BattleEffect[];
+  side: 'commander' | 'castellan';
+}> = ({ effects, side }) => {
   const visibleEffects = effects ?? [];
   if (visibleEffects.length === 0) {
-    return <div className="min-h-12 px-3 py-2.5 text-xs font-semibold text-text-muted/50">-</div>;
+    return (
+      <div
+        className="flex min-h-12 items-center justify-center px-3 py-2.5 text-center text-xs font-semibold text-text-muted/50"
+        aria-label={`No ${side} value`}
+      >
+        -
+      </div>
+    );
   }
 
   return (
-    <div className="flex min-h-12 flex-col gap-2 px-3 py-2.5">
-      {visibleEffects.map((effect, index) => {
-        const value = (
-          <span className="shrink-0 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-black tabular-nums text-success">
-            {effectValue(effect)}
-          </span>
-        );
-        const description = (
-          <span className={`min-w-0 text-sm font-medium text-text-main ${side === 'castellan' ? 'text-right' : ''}`}>
-            {effectDescription(effect)}
-          </span>
-        );
-
-        return (
-          <div key={effectCellKey(effect, index)} className="flex items-start justify-between gap-3">
-            {side === 'commander' ? (
-              <>
-                {description}
-                {value}
-              </>
-            ) : (
-              <>
-                {value}
-                {description}
-              </>
-            )}
-          </div>
-        );
-      })}
+    <div className="flex min-h-12 flex-wrap items-center justify-center gap-2 px-3 py-2.5 text-center">
+      {visibleEffects.map((effect, index) => (
+        <span
+          key={effectValueKey(effect, index)}
+          className="shrink-0 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-black tabular-nums text-success"
+          title={effectDescription(effect)}
+          aria-label={`${side} ${effectDescription(effect)}: ${effectValue(effect)}`}
+        >
+          {effectValue(effect)}
+        </span>
+      ))}
     </div>
   );
 };
@@ -1532,7 +1399,7 @@ const LaneItemStrip: React.FC<{
 
 async function fetchReports(source: string): Promise<{ source: string; reports: ParsedReport[] } | null> {
   try {
-    const response = await fetch(source, { cache: 'no-store' });
+    const response = await fetch(runtimeURL(source), { cache: 'no-store' });
     if (!response.ok) {
       return null;
     }
@@ -2259,7 +2126,7 @@ function battlePhaseTotals(
 
 function kingdomLabel(report: ParsedReport, kingdoms: Record<number, MetadataItem> = {}): string {
   const id = numericValue(report.kingdomID ?? report.kingdomId);
-  if (id !== null) {
+  if (id !== null && (id !== 0 || report.kingdomKnown === true)) {
 		return kingdoms[id]?.name ?? `Kingdom ${id}`;
   }
   return 'Kingdom unknown';
@@ -2426,15 +2293,97 @@ function allianceKey(combatant?: BattleCombatant): string {
   return alliance === 'No alliance' ? '' : alliance.toLowerCase();
 }
 
-function effectsForSide(report: ParsedReport, side: 'commander' | 'castellan'): BattleEffect[] {
-  if (side === 'commander' && report.commanderEffects) {
-    return report.commanderEffects;
-  }
-  if (side === 'castellan' && report.castellanEffects) {
-    return report.castellanEffects;
+function effectsForSide(
+  report: ParsedReport,
+  side: 'commander' | 'castellan',
+  definitions: Record<number, MetadataItem>,
+  troops: Record<number, MetadataItem>
+): BattleEffect[] {
+  const reported = side === 'commander' && report.commanderEffects
+    ? report.commanderEffects
+    : side === 'castellan' && report.castellanEffects
+      ? report.castellanEffects
+      : (report.effects ?? []).filter((effect) => stringValue(effect.side).toLowerCase() === side);
+  const rawEffects: EquipmentEffectV2[] = [];
+  const alreadyResolved: BattleEffect[] = [];
+
+  reported.forEach((effect) => {
+    const definitionId = numericValue(effect.definitionId);
+    const values = (effect.values ?? []).map(Number).filter(Number.isFinite);
+    if (definitionId !== null && definitionId > 0 && values.length > 0) {
+      rawEffects.push({ wireId: definitionId, definitionId, values });
+    } else {
+      alreadyResolved.push(withOfficialEffectGrouping(effect, side, definitions));
+    }
+  });
+  if (rawEffects.length === 0) {
+    return alreadyResolved;
   }
 
-  return (report.effects ?? []).filter((effect) => stringValue(effect.side).toLowerCase() === side);
+  const targetTypeID = numericValue(report.targetTypeID) ?? 0;
+  const profile = buildEquipmentEffectProfile(
+    [{ label: 'Battle report', effects: rawEffects }],
+    definitions,
+    troops,
+    targetTypeID,
+    battleReportCombatMode(report)
+  );
+  const categoryLabels = new Map(profile.sections.map((section) => [Number(section.key), section.title]));
+  const resolved = profile.showcase.map((effect) => ({
+    code: effect.key,
+    label: effect.label,
+    value: effect.value,
+    formattedValue: formatEquipmentEffectValue(effect, effect.value),
+    displayText: effect.label,
+    category: categoryLabels.get(effect.category) || `Official category ${effect.category}`,
+    officialCategory: effect.category,
+    officialGroup: effect.group,
+    officialGroupKey: effect.key,
+    officialGroupLabel: effect.label,
+    sortOrder: effect.category * 100_000 + effect.group * 100,
+    side,
+  } satisfies BattleEffect));
+  return [...resolved, ...alreadyResolved];
+}
+
+function battleReportCombatMode(report: ParsedReport): 'PvP' | 'PvE' | null {
+  const dummyFlags = [report.attacker?.dummy, report.defender?.dummy]
+    .filter((value): value is boolean => typeof value === 'boolean');
+  if (dummyFlags.some(Boolean)) return 'PvE';
+  if (dummyFlags.length > 0) return 'PvP';
+  return null;
+}
+
+function withOfficialEffectGrouping(
+  effect: BattleEffect,
+  side: 'commander' | 'castellan',
+  definitions: Record<number, MetadataItem>
+): BattleEffect {
+  const definitionId = numericValue(effect.definitionId);
+  const definition = definitionId !== null ? definitions[definitionId] : undefined;
+  const fallbackID = definitionId
+    ?? numericValue(effect.effectTypeId)
+    ?? numericValue(effect.officialGroup)
+    ?? 999;
+  const identity = officialEquipmentEffectGroupIdentity(fallbackID, definition ?? {
+    name: effect.label ?? effect.name,
+    effectTypeId: effect.effectTypeId,
+    sortCategory: effect.officialCategory,
+    sortGroup: effect.officialGroup,
+    categoryName: effect.category,
+    effectGroupPassive: effect.officialGroupLabel,
+  });
+  return {
+    ...effect,
+    effectTypeId: numericValue(effect.effectTypeId) ?? identity.effectTypeId,
+    category: identity.categoryLabel,
+    officialCategory: identity.category,
+    officialGroup: identity.group,
+    officialGroupKey: identity.key,
+    officialGroupLabel: identity.label,
+    sortOrder: identity.category * 100_000 + identity.group * 100,
+    side,
+  };
 }
 
 function effectLabel(effect: BattleEffect): string {
@@ -2464,6 +2413,7 @@ interface EffectComparisonGroup {
 
 interface EffectComparisonRow {
   key: string;
+  label: string;
   order: number;
   commander: BattleEffect[];
   castellan: BattleEffect[];
@@ -2472,99 +2422,36 @@ interface EffectComparisonRow {
 interface EffectComparisonBucket {
   key: string;
   category: string;
+  categoryOrder: number;
+  label: string;
   order: number;
   commander: BattleEffect[];
   castellan: BattleEffect[];
 }
 
-const attackDefenseUnitEffectCategory = 'Bonus Effects';
-const attackDefenseUnitUnkeyedBucketKey = `${attackDefenseUnitEffectCategory}|unkeyed`;
-
-const effectCategoryOrder: Record<string, number> = {
-  'Unit effects': 10,
-  [attackDefenseUnitEffectCategory]: 20,
-  'Structure Effects': 40,
-  'Courtyard effects': 50,
-  'Pre-battle effects': 60,
-  'Post-battle effects': 70,
-  'Other effects': 90,
-};
-
-const effectAlignmentOrder: Record<string, number> = {
-  meleeStrength: 10,
-  rangedStrength: 11,
-  courtyardStrength: 12,
-  frontStrength: 13,
-  flankStrength: 14,
-  unitStrength: 15,
-  wallProtection: 16,
-  gateProtection: 17,
-  moatProtection: 18,
-  fireDamage: 19,
-  frontUnitLimit: 20,
-  flankUnitLimit: 21,
-  wallUnitLimit: 22,
-  courtyardCapacity: 23,
-  allianceSupportCapacity: 25,
-  armyTravelSpeed: 30,
-  attackDetectionWindow: 31,
-  sightRadius: 33,
-  lootCapacity: 40,
-  resources: 41,
-  glory: 42,
-  honor: 43,
-  xp: 44,
-  coinLoot: 45,
-  equipmentFind: 46,
-};
-
-const hiddenEffectComparisonKeys = new Set([
-  'lootCapacity',
-  'resources',
-  'glory',
-  'honor',
-  'xp',
-  'coinLoot',
-  'equipmentFind',
-]);
-
-function isVisibleEffectComparisonEffect(effect: BattleEffect): boolean {
-  return !hiddenEffectComparisonKeys.has(effectAlignmentKey(effect));
-}
-
 function effectComparisonGroups(commanderEffects: BattleEffect[], castellanEffects: BattleEffect[]): EffectComparisonGroup[] {
   const buckets = new Map<string, EffectComparisonBucket>();
-  const pairedAttackDefenseKeys = pairedAttackDefenseUnitKeys(commanderEffects, castellanEffects);
-  commanderEffects.forEach((effect) => addEffectComparisonBucket(buckets, effect, 'commander', pairedAttackDefenseKeys));
-  castellanEffects.forEach((effect) => addEffectComparisonBucket(buckets, effect, 'castellan', pairedAttackDefenseKeys));
+  commanderEffects.forEach((effect) => addOfficialEffectBucket(buckets, effect, 'commander'));
+  castellanEffects.forEach((effect) => addOfficialEffectBucket(buckets, effect, 'castellan'));
 
   const groups = new Map<string, EffectComparisonGroup>();
   Array.from(buckets.values())
     .sort((a, b) => a.order - b.order || a.key.localeCompare(b.key))
     .forEach((bucket) => {
-      const commander = sortEffectsForComparison(bucket.commander);
-      const castellan = sortEffectsForComparison(bucket.castellan);
-      const rowCount = Math.max(commander.length, castellan.length);
-      if (rowCount === 0) {
-        return;
-      }
-      const commanderRows = singleEffectRows(commander, rowCount);
-      const castellanRows = singleEffectRows(castellan, rowCount);
-
-      const group = groups.get(bucket.category) ?? {
+      const categoryKey = `${bucket.categoryOrder}:${bucket.category}`;
+      const group = groups.get(categoryKey) ?? {
         category: bucket.category,
-        order: effectCategoryOrder[bucket.category] ?? 900,
+        order: bucket.categoryOrder,
         rows: [],
       };
-      for (let index = 0; index < rowCount; index += 1) {
-        group.rows.push({
-          key: `${bucket.key}-${index}`,
-          order: bucket.order + index / 100,
-          commander: commanderRows[index] ?? [],
-          castellan: castellanRows[index] ?? [],
-        });
-      }
-      groups.set(bucket.category, group);
+      group.rows.push({
+        key: bucket.key,
+        label: bucket.label,
+        order: bucket.order,
+        commander: sortOfficialGroupEffects(bucket.commander),
+        castellan: sortOfficialGroupEffects(bucket.castellan),
+      });
+      groups.set(categoryKey, group);
     });
 
   return Array.from(groups.values())
@@ -2575,204 +2462,53 @@ function effectComparisonGroups(commanderEffects: BattleEffect[], castellanEffec
     .sort((a, b) => a.order - b.order || a.category.localeCompare(b.category));
 }
 
-function singleEffectRows(effects: BattleEffect[], rowCount: number): BattleEffect[][] {
-  return Array.from({ length: rowCount }, (_, index) => {
-    const effect = effects[index];
-    return effect ? [effect] : [];
-  });
-}
-
-function addEffectComparisonBucket(
+function addOfficialEffectBucket(
   buckets: Map<string, EffectComparisonBucket>,
   effect: BattleEffect,
-  side: 'commander' | 'castellan',
-  pairedAttackDefenseKeys: Set<string>
+  side: 'commander' | 'castellan'
 ) {
-  const alignmentKey = effectAlignmentKey(effect);
-  const valueKind = effectValueKind(effect);
-  const category = effectComparisonCategory(effect, alignmentKey);
-  const comparisonKey = `${alignmentKey}|${valueKind}`;
-  const hasPairedAttackDefenseKey = pairedAttackDefenseKeys.has(comparisonKey);
-  const bucketKey = category === attackDefenseUnitEffectCategory && !hasPairedAttackDefenseKey
-    ? attackDefenseUnitUnkeyedBucketKey
-    : `${category}|${comparisonKey}`;
-  const order = effectComparisonOrder(effect, alignmentKey);
+  const categoryID = officialEffectCategory(effect);
+  const groupID = officialEffectGroup(effect);
+  const category = stringValue(effect.category) || `Official category ${categoryID}`;
+  const label = stringValue(effect.officialGroupLabel) || effectLabel(effect);
+  const groupKey = stringValue(effect.officialGroupKey) || `official-group-${categoryID}-${groupID}`;
+  const bucketKey = `${categoryID}:${groupKey}`;
+  const order = numericValue(effect.sortOrder) ?? categoryID * 100_000 + groupID;
   const bucket = buckets.get(bucketKey) ?? {
     key: bucketKey,
     category,
+    categoryOrder: categoryID,
+    label,
     order,
     commander: [],
     castellan: [],
   };
-  bucket.order = Math.min(bucket.order, order);
   bucket[side].push(effect);
   buckets.set(bucketKey, bucket);
 }
 
-function pairedAttackDefenseUnitKeys(commanderEffects: BattleEffect[], castellanEffects: BattleEffect[]): Set<string> {
-  const commanderKeys = attackDefenseUnitKeys(commanderEffects);
-  const castellanKeys = attackDefenseUnitKeys(castellanEffects);
-  return new Set(Array.from(commanderKeys).filter((key) => castellanKeys.has(key)));
-}
-
-function attackDefenseUnitKeys(effects: BattleEffect[]): Set<string> {
-  const keys = new Set<string>();
-  effects.forEach((effect) => {
-    const alignmentKey = effectAlignmentKey(effect);
-    if (alignmentKey.startsWith('effect:')) {
-      return;
-    }
-    if (effectComparisonCategory(effect, alignmentKey) === attackDefenseUnitEffectCategory) {
-      keys.add(`${alignmentKey}|${effectValueKind(effect)}`);
-    }
-  });
-  return keys;
-}
-
-function sortEffectsForComparison(effects: BattleEffect[]): BattleEffect[] {
+function sortOfficialGroupEffects(effects: BattleEffect[]): BattleEffect[] {
   return effects
     .slice()
-    .sort((a, b) => effectSortOrder(a) - effectSortOrder(b) || effectDescription(a).localeCompare(effectDescription(b)));
+    .sort((a, b) => (
+      (numericValue(a.argumentId) ?? 0) - (numericValue(b.argumentId) ?? 0)
+      || effectDescription(a).localeCompare(effectDescription(b))
+    ));
 }
 
-function effectSortOrder(effect: BattleEffect): number {
-  return numericValue(effect.sortOrder) ?? 900;
+function officialEffectCategory(effect: BattleEffect): number {
+  const explicit = numericValue(effect.officialCategory);
+  if (explicit !== null) return Math.trunc(explicit);
+  const sortOrder = numericValue(effect.sortOrder);
+  return sortOrder !== null && sortOrder >= 1000 ? Math.trunc(sortOrder / 1000) : 99;
 }
 
-function effectComparisonOrder(effect: BattleEffect, alignmentKey: string): number {
-  return effectAlignmentOrder[alignmentKey] ?? effectSortOrder(effect);
-}
-
-function effectComparisonCategory(effect: BattleEffect, alignmentKey: string): string {
-  if (
-    [
-      'meleeStrength',
-      'rangedStrength',
-      'courtyardStrength',
-      'frontStrength',
-      'flankStrength',
-      'unitStrength',
-    ].includes(alignmentKey)
-  ) {
-    return 'Unit effects';
-  }
-  if (['wallProtection', 'gateProtection', 'moatProtection', 'fireDamage'].includes(alignmentKey)) {
-    return 'Structure Effects';
-  }
-  if (['courtyardCapacity', 'allianceSupportCapacity'].includes(alignmentKey)) {
-    return 'Courtyard effects';
-  }
-  if (['armyTravelSpeed', 'attackDetectionWindow', 'sightRadius'].includes(alignmentKey)) {
-    return 'Pre-battle effects';
-  }
-  if (['lootCapacity', 'resources', 'glory', 'honor', 'xp', 'coinLoot', 'equipmentFind'].includes(alignmentKey)) {
-    return 'Post-battle effects';
-  }
-  const category = stringValue(effect.category) || 'Other effects';
-  if (category === 'Attack effects' || category === 'Defense unit effects') {
-    return attackDefenseUnitEffectCategory;
-  }
-  return category;
-}
-
-function effectAlignmentKey(effect: BattleEffect): string {
-  const text = `${effectLabel(effect)} ${effectDescription(effect)}`.toLowerCase();
-
-  if (text.includes('melee')) {
-    return 'meleeStrength';
-  }
-  if (text.includes('ranged') || text.includes('range ')) {
-    return 'rangedStrength';
-  }
-  if (text.includes('combat strength') && text.includes('courtyard')) {
-    return 'courtyardStrength';
-  }
-  if (text.includes('combat strength') && text.includes('front')) {
-    return 'frontStrength';
-  }
-  if (text.includes('combat strength') && (text.includes('flank') || text.includes('flanks'))) {
-    return 'flankStrength';
-  }
-  if (text.includes('unit combat strength') || text.includes('combat strength for defense units')) {
-    return 'unitStrength';
-  }
-  if (text.includes('wall protection') || text.includes('wall reduction')) {
-    return 'wallProtection';
-  }
-  if (text.includes('gate protection') || text.includes('gate reduction')) {
-    return 'gateProtection';
-  }
-  if (text.includes('moat protection') || text.includes('moat reduction')) {
-    return 'moatProtection';
-  }
-  if (text.includes('fire damage')) {
-    return 'fireDamage';
-  }
-  if (text.includes('unit limit') && text.includes('front')) {
-    return 'frontUnitLimit';
-  }
-  if (text.includes('unit limit') && (text.includes('flank') || text.includes('flanks'))) {
-    return 'flankUnitLimit';
-  }
-  if (text.includes('unit limit') && text.includes('wall')) {
-    return 'wallUnitLimit';
-  }
-  if (
-    text.includes('final assault') ||
-    text.includes('courtyard defense capacity') ||
-    text.includes('troop capacity in courtyard defense')
-  ) {
-    return 'courtyardCapacity';
-  }
-  if (text.includes('alliance support')) {
-    return 'allianceSupportCapacity';
-  }
-  if (text.includes('later army detection')) {
-    return 'attackDetectionWindow';
-  }
-  if (text.includes('attack warning')) {
-    return 'attackDetectionWindow';
-  }
-  if (text.includes('sight radius')) {
-    return 'sightRadius';
-  }
-  if (text.includes('travel speed') || text.includes('speed')) {
-    return 'armyTravelSpeed';
-  }
-  if (text.includes('loot capacity')) {
-    return 'lootCapacity';
-  }
-  if (text.includes('resources')) {
-    return 'resources';
-  }
-  if (text.includes('glory')) {
-    return 'glory';
-  }
-  if (text.includes('honor')) {
-    return 'honor';
-  }
-  if (text.includes('xp')) {
-    return 'xp';
-  }
-  if (text.includes('coin')) {
-    return 'coinLoot';
-  }
-  if (text.includes('equipment')) {
-    return 'equipmentFind';
-  }
-
-  return `effect:${effectLabel(effect).toLowerCase()}:${effectDescription(effect).toLowerCase()}`;
-}
-
-function effectValueKind(effect: BattleEffect): string {
-  const value = effectValue(effect);
-  if (!value || value === '-') {
-    return 'none';
-  }
-  if (value.includes('%')) {
-    return 'percent';
-  }
-  return 'number';
+function officialEffectGroup(effect: BattleEffect): number {
+  const explicit = numericValue(effect.officialGroup);
+  if (explicit !== null) return Math.trunc(explicit);
+  const sortOrder = numericValue(effect.sortOrder);
+  if (sortOrder !== null && sortOrder >= 1000) return Math.trunc(sortOrder) % 1000;
+  return Math.trunc(numericValue(effect.effectTypeId) ?? numericValue(effect.definitionId) ?? 999);
 }
 
 function effectDisplayText(effect: BattleEffect): string {

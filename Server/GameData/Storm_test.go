@@ -20,6 +20,33 @@ func TestStormFortAttacksRemainingUsesOfficialMaximum(t *testing.T) {
 	}
 }
 
+func TestStormIsleViewIsCachedAndPublicResultIsDefensive(t *testing.T) {
+	store, err := DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"isles":[{"IsleID":7,"type":"DUNGEON","dungeonlevel":60,"countVictories":"0#1#2"}]
+	}`), SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, found := store.StormIsleView(7)
+	if !found || len(first.VictoryCounts) != 3 {
+		t.Fatalf("cached Storm definition = %#v", first)
+	}
+	second, found := store.StormIsleView(7)
+	if !found || &first.VictoryCounts[0] != &second.VictoryCounts[0] {
+		t.Fatal("Storm view did not reuse its immutable decoded slice")
+	}
+	public, found := store.StormIsle(7)
+	if !found {
+		t.Fatal("public Storm definition is missing")
+	}
+	public.VictoryCounts[0] = 99
+	unchanged, _ := store.StormIsleView(7)
+	if unchanged.VictoryCounts[0] != 0 {
+		t.Fatalf("public mutation reached immutable Storm view: %#v", unchanged.VictoryCounts)
+	}
+}
+
 func TestStormShopPackagesOnlyIncludeCurrentLiveInventory(t *testing.T) {
 	store, err := DecodeStore([]byte(`{
 		"versionInfo":[],

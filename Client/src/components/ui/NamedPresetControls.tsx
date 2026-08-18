@@ -35,7 +35,7 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
   <Card variant="solid" className={`shrink-0 border-border-base bg-bg-app p-4 ${className}`}>
     <div className="mb-3 text-xs font-bold uppercase tracking-wider text-primary">Presets</div>
     <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
-      <label className="flex min-w-[220px] flex-1 flex-col gap-1.5">
+      <label className="flex min-w-0 flex-1 flex-col gap-1.5 md:min-w-[220px]">
         <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Preset name</span>
         <Input
           type="text"
@@ -45,25 +45,25 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
           error={nameError}
         />
       </label>
-      <div className="flex min-w-[280px] flex-[2] flex-col gap-1.5">
+      <div className="flex min-w-0 flex-[2] flex-col gap-1.5 md:min-w-[280px]">
         <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Load preset</span>
-        <div className="flex gap-2">
-          <div className="flex-1">
+        <div className="flex flex-col gap-2 md:flex-row">
+          <div className="min-w-0 flex-1">
             <Select value={selectedID} onChange={onSelectedIDChange} options={options} ariaLabel="Load preset" />
           </div>
-          <Button variant="outline" onClick={onApply} className="shrink-0 bg-bg-card">Apply</Button>
+          <Button variant="outline" onClick={onApply} className="w-full shrink-0 bg-bg-card md:w-auto">Apply</Button>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
         <Button
           variant="secondary"
           onClick={onSaveAsNew}
-          className="border-info/40 text-info hover:bg-info/10"
+          className="min-w-0 border-info/40 px-2 text-info hover:bg-info/10 md:px-3"
           leftIcon={<Plus className="h-4 w-4" />}
         >
           Save as new
         </Button>
-        <Button variant="danger" disabled={!selectedID} onClick={onDelete} leftIcon={<Trash2 className="h-4 w-4" />}>
+        <Button variant="danger" disabled={!selectedID} onClick={onDelete} className="min-w-0 px-2 md:px-3" leftIcon={<Trash2 className="h-4 w-4" />}>
           Delete
         </Button>
       </div>

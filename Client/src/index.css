@@ -544,6 +544,16 @@
         flex-direction: column;
     }
 
+    .liquid-sidebar-system-row {
+        display: flex;
+        min-width: 0;
+        align-items: flex-start;
+    }
+
+    .liquid-sidebar-system-row > .liquid-sidebar-system-island {
+        width: 100%;
+    }
+
     .liquid-sidebar-system-island {
         display: flex;
         min-height: 3.35rem;

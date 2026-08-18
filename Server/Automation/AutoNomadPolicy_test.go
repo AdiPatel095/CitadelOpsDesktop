@@ -288,6 +288,64 @@ func TestAutoNomadPolicyClearsCooldownWhileLeveling(t *testing.T) {
 	}
 }
 
+func TestAutoNomadPolicyKeepsLevelingWhileEarlierAttackIsInFlight(t *testing.T) {
+	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
+	snapshot := autoNomadPolicySnapshot(t, now)
+	commanderID := State.CommanderID(1)
+	arrivesAt := now.Add(10 * time.Minute)
+	snapshot.State.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: false}
+	snapshot.State.Movements[1] = State.MovementState{
+		ID: 1, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetX: 99, TargetY: 100,
+		CommanderID: &commanderID, ArrivesAt: &arrivesAt,
+	}
+
+	decision, err := NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "nomad.camp.attack" {
+		t.Fatalf("leveling waited for the earlier camp result: %#v err=%v", decision, err)
+	}
+	var request struct {
+		Mode         string              `json:"mode"`
+		CommanderIDs []State.CommanderID `json:"commanderIds"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.Mode != "level" || len(request.CommanderIDs) != 1 || request.CommanderIDs[0] != 2 {
+		t.Fatalf("leveling did not use the next available commander: %#v", request)
+	}
+	if decision.Metrics["activeAttacks"] != 1 {
+		t.Fatalf("active leveling attack metric = %v, want 1", decision.Metrics["activeAttacks"])
+	}
+}
+
+func TestAutoNomadPolicySizesInventoryFromCapacityLimitedPreset(t *testing.T) {
+	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
+	snapshot := autoNomadPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["attacks.presets"] = json.RawMessage(`{
+		"version":1,
+		"presets":[
+			{"id":"nomad-camp","name":"Nomad Camp","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":77,"quantity":300}],"tools":[]},"R":{"troops":[],"tools":[]}}]},
+			{"id":"samurai-camp","name":"Samurai Camp","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":77,"quantity":300}],"tools":[]},"R":{"troops":[],"tools":[]}}]}
+		]
+	}`)
+	source := snapshot.State.Castles[1]
+	source.Units.Stationed[77] = 200
+	snapshot.State.Castles[1] = source
+
+	decision, err := NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "nomad.camp.attack" {
+		t.Fatalf("capacity-limited preset should fit 200 units: %#v err=%v", decision, err)
+	}
+
+	source.Units.Stationed[77] = 191
+	snapshot.State.Castles[1] = source
+	decision, err = NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" ||
+		!strings.Contains(decision.Detail, "needs 192 of item 77") {
+		t.Fatalf("capacity-limited shortage was not reported at 192 units: %#v err=%v", decision, err)
+	}
+}
+
 func TestAutoNomadRBCTestSizesChainToResponseGatedSkipSequences(t *testing.T) {
 	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
 	snapshot := autoNomadPolicySnapshot(t, now)
@@ -357,7 +415,8 @@ func autoNomadPolicySnapshot(t *testing.T, now time.Time) Snapshot {
 			{"eventAutoScalingCampID":5001,"eventID":80,"difficultyID":201,"areaType":29,"camplevel":90,"countVictory":9,"coolDown":3600,"skipCosts":9950,"maxTroopCapacityDefense":600},
 			{"eventAutoScalingCampID":6000,"eventID":72,"difficultyID":301,"areaType":27,"camplevel":80,"countVictory":8,"coolDown":0,"skipCosts":0,"maxTroopCapacityDefense":500},
 			{"eventAutoScalingCampID":6001,"eventID":72,"difficultyID":301,"areaType":27,"camplevel":90,"countVictory":9,"coolDown":3600,"skipCosts":9950,"maxTroopCapacityDefense":600}
-		]
+		],
+		"effects":[]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)

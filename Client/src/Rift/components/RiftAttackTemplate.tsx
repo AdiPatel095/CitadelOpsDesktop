@@ -354,7 +354,7 @@ const RiftAttackTemplate: React.FC = () => {
         headerClassName="flex-col items-stretch gap-4 lg:flex-row lg:items-start"
         actions={<div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-end lg:shrink-0">
           {launches.length > 0 ? (
-            <div className="min-w-[13rem]">
+            <div className="min-w-0 md:min-w-[13rem]">
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
                 Replay commander
               </p>
@@ -373,7 +373,7 @@ const RiftAttackTemplate: React.FC = () => {
             </div>
           ) : null}
           {launches.length > 0 ? (
-            <div className="min-w-[15rem]">
+            <div className="min-w-0 md:min-w-[15rem]">
               <HorseTravelBoostSelect value={horseTravelBoostId} onChange={updateReplayHorseTravelBoost} />
             </div>
           ) : null}
@@ -401,7 +401,7 @@ const RiftAttackTemplate: React.FC = () => {
           />
         ) : (
           <div className="overflow-x-auto rounded-lg border border-border-base">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[56rem] text-sm">
               <thead>
                 <tr className="border-b border-border-base bg-bg-card/50 text-left text-[10px] uppercase tracking-wider text-text-muted">
                   <th className="px-3 py-2 font-semibold">Name</th>

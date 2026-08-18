@@ -102,6 +102,7 @@ const WorkspaceFallback = () => (
 
 const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewId>('castle');
+  const [navigationOpen, setNavigationOpen] = useState(false);
   const [activeSettingsModal, setActiveSettingsModal] = useState<SettingsModalId | null>(null);
   const [scheduleTarget, setScheduleTarget] = useState<{ id: string; label: string } | null>(null);
   const [durationTarget, setDurationTarget] = useState<{ key: string; label: string } | null>(null);
@@ -115,6 +116,15 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTop = 0;
   }, [activeView]);
+
+  useEffect(() => {
+    if (!navigationOpen) return undefined;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setNavigationOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [navigationOpen]);
 
   const workspace = activeView === 'automation' ? (
     <AutomationView
@@ -149,11 +159,18 @@ const AppContent: React.FC = () => {
         onOpenAutoBirdSettings={openSettings('bird')}
         onOpenAutoStationSettings={openSettings('station')}
         onOpenAutomationDuration={openDuration}
+        onOpenNavigation={() => setNavigationOpen(true)}
+        navigationOpen={navigationOpen}
       />
-      <Sidebar currentView={activeView} onViewChange={setActiveView} />
+      <Sidebar
+        currentView={activeView}
+        onViewChange={setActiveView}
+        open={navigationOpen}
+        onClose={() => setNavigationOpen(false)}
+      />
 
       <main ref={mainRef} className="liquid-main custom-scrollbar">
-        <div className="liquid-content animate-fade-in">
+        <div className={`liquid-content liquid-view-${activeView} animate-fade-in`} data-view={activeView}>
           <Suspense fallback={<WorkspaceFallback />}>{workspace}</Suspense>
         </div>
       </main>

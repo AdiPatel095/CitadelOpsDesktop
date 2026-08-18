@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEven
 import {
   Activity,
   CircleDollarSign,
-  Clock3,
   Coins,
   Crosshair,
   Shield,
@@ -16,12 +15,13 @@ import {
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import type { FoodFilter, RoleFilter, TypeFilter } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector, Select } from '../../components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector, Select } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { Notifications } from '../../components/Notifications';
 import { useCitadelAPI } from '../../api/ApiContext';
 import type { CastleStateV2 } from '../../api/Contracts';
+import { runtimeURL } from '../../api/RuntimeURL';
 
 interface PlayerTrackerSample {
   timestampUnix: number;
@@ -191,7 +191,7 @@ const PlayerTrackerView = () => {
   const [troopTypeFilter, setTroopTypeFilter] = useState<TypeFilter>('all');
   const [troopRoleFilter, setTroopRoleFilter] = useState<RoleFilter>('all');
   const [troopFoodFilter, setTroopFoodFilter] = useState<FoodFilter>('all');
-  const [loading, setLoading] = useState(true);
+  const [selectedTroopUnitID, setSelectedTroopUnitID] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 	const selectedExtraMetric = extraMetricDefinitions.find((definition) => definition.key === selectedMetric);
 	const activePlayerID = Math.max(0, finite(state?.player.id));
@@ -244,7 +244,7 @@ const PlayerTrackerView = () => {
 
   useEffect(() => {
 	setTracker(emptyResponse);
-	setLoading(true);
+    setSelectedTroopUnitID(null);
   }, [activePlayerID]);
 
   useEffect(() => {
@@ -255,7 +255,7 @@ const PlayerTrackerView = () => {
         const primarySeconds = ranges.find((range) => range.key === selectedRange)?.seconds ?? 365 * 24 * 60 * 60;
         const troopSeconds = ranges.find((range) => range.key === troopRange)?.seconds ?? 365 * 24 * 60 * 60;
         const rangeSeconds = Math.max(primarySeconds, troopSeconds);
-		const response = await fetch(`/api/v2/history/player-tracker?rangeSeconds=${rangeSeconds}`, { cache: 'no-store', signal: controller.signal });
+		const response = await fetch(runtimeURL(`/api/v2/history/player-tracker?rangeSeconds=${rangeSeconds}`), { cache: 'no-store', signal: controller.signal });
         if (!response.ok) throw new Error(`Tracker returned HTTP ${response.status}`);
         const payload = await response.json() as PlayerTrackerResponse;
         if (!active) return;
@@ -266,8 +266,6 @@ const PlayerTrackerView = () => {
         if (!active) return;
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setLoadError(error instanceof Error ? error.message : 'Could not load player history');
-      } finally {
-        if (active) setLoading(false);
       }
     };
     void load();
@@ -304,7 +302,10 @@ const PlayerTrackerView = () => {
   const currentForMetric = currentMetricPoint?.value ?? 0;
   const firstForMetric = displayedPoints[0]?.value ?? currentForMetric;
   const metricDelta = currentForMetric - firstForMetric;
-  const troopFiltersActive = troopTypeFilter !== 'all' || troopRoleFilter !== 'all' || troopFoodFilter !== 'all';
+  const troopFiltersActive = selectedTroopUnitID != null
+    || troopTypeFilter !== 'all'
+    || troopRoleFilter !== 'all'
+    || troopFoodFilter !== 'all';
   const troopPoints = useMemo(() => {
     const points = troopFiltersActive
       ? buildFilteredTroopPoints(
@@ -314,6 +315,7 @@ const PlayerTrackerView = () => {
           troopTypeFilter,
           troopRoleFilter,
           troopFoodFilter,
+          selectedTroopUnitID,
         )
       : series.troopsTotal ?? [];
     return filterMetricPointsRange(points, troopRange);
@@ -327,6 +329,7 @@ const PlayerTrackerView = () => {
     troopRoleFilter,
     troopTypeFilter,
     troopFiltersActive,
+    selectedTroopUnitID,
   ]);
   const troopChartPoints = useMemo(
     () => bucketMetricPoints(troopPoints, troopRange),
@@ -343,6 +346,10 @@ const PlayerTrackerView = () => {
   const currentTroopTotal = currentTroopPoint?.value ?? (!troopFiltersActive ? current?.troopsTotal ?? 0 : 0);
   const firstTroopTotal = displayedTroopPoints[0]?.value ?? currentTroopTotal;
   const troopDelta = currentTroopTotal - firstTroopTotal;
+  const selectableTroopUnitIDs = useMemo(
+    () => collectTrackedTroopUnitIDs(scopedTracker.samples, current, troopMetadata),
+    [current, scopedTracker.samples, troopMetadata],
+  );
   const sampledTroopRatePoints = useMemo(() => {
     if (troopFiltersActive) {
       return buildFilteredTroopPoints(
@@ -352,6 +359,7 @@ const PlayerTrackerView = () => {
         troopTypeFilter,
         troopRoleFilter,
         troopFoodFilter,
+        selectedTroopUnitID,
       );
     }
     return scopedTracker.samples.flatMap((sample) => sample.troopsByUnit
@@ -364,6 +372,7 @@ const PlayerTrackerView = () => {
     troopMetadata,
     troopRoleFilter,
     troopTypeFilter,
+    selectedTroopUnitID,
   ]);
   const latestTroopRatePoint = sampledTroopRatePoints[sampledTroopRatePoints.length - 1];
   const previousTroopRatePoint = sampledTroopRatePoints[sampledTroopRatePoints.length - 2];
@@ -382,6 +391,7 @@ const PlayerTrackerView = () => {
       troopTypeFilter,
       troopRoleFilter,
       troopFoodFilter,
+      selectedTroopUnitID,
       troopRange,
     ),
     [
@@ -392,6 +402,7 @@ const PlayerTrackerView = () => {
       troopRange,
       troopRoleFilter,
       troopTypeFilter,
+      selectedTroopUnitID,
     ],
   );
   useEffect(() => {
@@ -400,29 +411,11 @@ const PlayerTrackerView = () => {
 
   useEffect(() => {
     setTroopWindow(null);
-  }, [troopRange, troopTypeFilter, troopRoleFilter, troopFoodFilter]);
+  }, [troopRange, troopTypeFilter, troopRoleFilter, troopFoodFilter, selectedTroopUnitID]);
 
   return (
     <div className="flex flex-col gap-6 pb-8">
       <StaleSessionBanner />
-
-      <PageHeader
-        title="My Stats"
-        description={scopedTracker.fallback.playerName
-          ? `${scopedTracker.fallback.playerName}${scopedTracker.fallback.server ? ` · ${scopedTracker.fallback.server}` : ''}`
-          : current?.playerId ? `Your account · Player ${current.playerId}` : 'Your account analytics'}
-        icon={<Activity className="h-6 w-6" />}
-        meta={(
-          <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="gap-1.5">
-            <Clock3 className="h-3.5 w-3.5" />
-            {formatSampleInterval(scopedTracker.intervalSeconds)} samples
-          </Badge>
-          {loading && <Badge variant="outline">Loading history…</Badge>}
-          {loadError && <Badge variant="danger">Live values only</Badge>}
-          </div>
-        )}
-      />
 
       {!current ? (
         <Card>
@@ -538,7 +531,7 @@ const PlayerTrackerView = () => {
                     Troop strength
                   </CardTitle>
                   <p className="mt-1 text-xs font-medium text-text-muted">
-                    {troopFilterLabel(troopTypeFilter, troopRoleFilter, troopFoodFilter)}
+                    {troopFilterLabel(troopTypeFilter, troopRoleFilter, troopFoodFilter, selectedTroopUnitID, troopMetadata)}
                   </p>
                   <div className="mt-2 flex items-baseline gap-3">
                     <span className="font-mono text-3xl font-bold text-text-main">
@@ -573,7 +566,7 @@ const PlayerTrackerView = () => {
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-muted">Chart filters</p>
-                    <p className="mt-1 text-xs text-text-muted">Type, role, and food filters combine together.</p>
+                    <p className="mt-1 text-xs text-text-muted">Choose one unit, or combine type, role, and food filters.</p>
                   </div>
                   {troopFiltersActive && (
                     <Button
@@ -583,6 +576,7 @@ const PlayerTrackerView = () => {
                         setTroopTypeFilter('all');
                         setTroopRoleFilter('all');
                         setTroopFoodFilter('all');
+                        setSelectedTroopUnitID(null);
                       }}
                     >
                       Clear filters
@@ -590,10 +584,51 @@ const PlayerTrackerView = () => {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-3">
+                  <Select
+                    value={selectedTroopUnitID == null ? 'all' : String(selectedTroopUnitID)}
+                    onChange={(value) => {
+                      const unitID = value === 'all' ? null : Number(value);
+                      setSelectedTroopUnitID(unitID != null && Number.isFinite(unitID) ? unitID : null);
+                      if (unitID != null) {
+                        setTroopTypeFilter('all');
+                        setTroopRoleFilter('all');
+                        setTroopFoodFilter('all');
+                      }
+                    }}
+                    ariaLabel="Troop unit filter"
+                    className="w-full sm:w-80"
+                    searchable
+                    searchPlaceholder="Search units"
+                    menuGrowToViewport
+                    options={[
+                      { value: 'all', label: 'All units', searchText: 'All units' },
+                      ...selectableTroopUnitIDs.map((unitID) => {
+                        const item = troopMetadata[unitID];
+                        const level = Math.max(0, Math.floor(metadataNumber(item?.level)));
+                        const name = item?.name || `Unit #${unitID}`;
+                        return {
+                          value: String(unitID),
+                          searchText: `${name} ${level ? `level ${level} ` : ''}unit ${unitID}`,
+                          label: (
+                            <span className="flex min-w-0 items-center gap-2">
+                              <UnitImage unitId={unitID} size={32} showLevel className="!bg-transparent" />
+                              <span className="min-w-0 flex-1 truncate">{name}</span>
+                              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                                #{unitID}
+                              </span>
+                            </span>
+                          ),
+                        };
+                      }),
+                    ]}
+                  />
                   <PillSelector
                     ariaLabel="Troop type filter"
                     value={troopTypeFilter}
-                    onChange={(value) => setTroopTypeFilter(value as TypeFilter)}
+                    onChange={(value) => {
+                      setTroopTypeFilter(value as TypeFilter);
+                      if (value !== 'all') setSelectedTroopUnitID(null);
+                    }}
                     options={[
                       { value: 'all', label: 'All Types' },
                       { value: 'melee', label: 'Melee' },
@@ -604,7 +639,10 @@ const PlayerTrackerView = () => {
                   <PillSelector
                     ariaLabel="Troop role filter"
                     value={troopRoleFilter}
-                    onChange={(value) => setTroopRoleFilter(value as RoleFilter)}
+                    onChange={(value) => {
+                      setTroopRoleFilter(value as RoleFilter);
+                      if (value !== 'all') setSelectedTroopUnitID(null);
+                    }}
                     options={[
                       { value: 'all', label: 'All Roles' },
                       { value: 'attack', label: 'Attack' },
@@ -615,7 +653,10 @@ const PlayerTrackerView = () => {
                   <PillSelector
                     ariaLabel="Troop food filter"
                     value={troopFoodFilter}
-                    onChange={(value) => setTroopFoodFilter(value as FoodFilter)}
+                    onChange={(value) => {
+                      setTroopFoodFilter(value as FoodFilter);
+                      if (value !== 'all') setSelectedTroopUnitID(null);
+                    }}
                     options={[
                       { value: 'all', label: 'All Food' },
                       { value: 'mead', label: 'Mead' },
@@ -1174,15 +1215,18 @@ function buildTroopTrendLines(
   typeFilter: TypeFilter,
   roleFilter: RoleFilter,
   foodFilter: FoodFilter,
+  selectedUnitID: number | null,
   range: RangeKey,
 ): TrendLineSeries[] {
   const currentValues = current?.troopsByUnit;
-  const rankedUnits = currentValues
+  const rankedUnits = selectedUnitID != null && metadata[selectedUnitID]
+    ? [{ unitID: selectedUnitID, count: Math.max(0, finite(currentValues?.[String(selectedUnitID)])) }]
+    : currentValues
     ? Object.entries(currentValues)
         .map(([unitIDText, rawCount]) => ({ unitID: Number(unitIDText), count: Math.max(0, finite(rawCount)) }))
         .filter(({ unitID, count }) => Number.isFinite(unitID)
           && count > 0
-          && troopMatchesFilters(unitID, metadata, typeFilter, roleFilter, foodFilter))
+          && troopMatchesFilters(unitID, metadata, typeFilter, roleFilter, foodFilter, null))
         .sort((left, right) => right.count - left.count || left.unitID - right.unitID)
         .slice(0, 5)
     : [];
@@ -1202,7 +1246,7 @@ function buildTroopTrendLines(
     for (const [unitIDText, rawCount] of Object.entries(sample.troopsByUnit ?? {})) {
       const unitID = Number(unitIDText);
       const count = Math.max(0, finite(rawCount));
-      if (Number.isFinite(unitID) && count > 0 && troopMatchesFilters(unitID, metadata, typeFilter, roleFilter, foodFilter)) {
+      if (Number.isFinite(unitID) && count > 0 && troopMatchesFilters(unitID, metadata, typeFilter, roleFilter, foodFilter, selectedUnitID)) {
         includedTotal += count;
       }
     }
@@ -1238,12 +1282,14 @@ function buildTroopTrendLines(
     });
   });
 
-  rawLines.push({
-    key: 'troops-other',
-    label: 'Other',
-    color: '#94a3b8',
-    points: preparePoints(otherPoints),
-  });
+  if (selectedUnitID == null) {
+    rawLines.push({
+      key: 'troops-other',
+      label: 'Other',
+      color: '#94a3b8',
+      points: preparePoints(otherPoints),
+    });
+  }
 
   const cumulativeByTimestamp = new Map<number, number>();
   return rawLines.map((line) => {
@@ -1264,6 +1310,7 @@ function buildFilteredTroopPoints(
   typeFilter: TypeFilter,
   roleFilter: RoleFilter,
   foodFilter: FoodFilter,
+  selectedUnitID: number | null,
 ): TrackerMetricPoint[] {
   const pointsByTimestamp = new Map<number, TrackerMetricPoint>();
   const appendSample = (sample: PlayerTrackerSample) => {
@@ -1273,7 +1320,7 @@ function buildFilteredTroopPoints(
       const unitID = Number(unitIDText);
       const amount = Math.max(0, finite(rawAmount));
       if (!Number.isFinite(unitID) || amount <= 0) continue;
-      if (troopMatchesFilters(unitID, metadata, typeFilter, roleFilter, foodFilter)) {
+      if (troopMatchesFilters(unitID, metadata, typeFilter, roleFilter, foodFilter, selectedUnitID)) {
         value += amount;
       }
     }
@@ -1332,8 +1379,10 @@ function troopMatchesFilters(
   typeFilter: TypeFilter,
   roleFilter: RoleFilter,
   foodFilter: FoodFilter,
+  selectedUnitID: number | null,
 ): boolean {
 	if (!metadata[unitID]) return false;
+  if (selectedUnitID != null && unitID !== selectedUnitID) return false;
   return classificationMatchesFilters(
     troopUnitClassification(unitID, metadata),
     typeFilter,
@@ -1365,7 +1414,19 @@ function classificationMatchesFilters(
     && (foodFilter === 'all' || classification.foodType === foodFilter);
 }
 
-function troopFilterLabel(typeFilter: TypeFilter, roleFilter: RoleFilter, foodFilter: FoodFilter): string {
+function troopFilterLabel(
+  typeFilter: TypeFilter,
+  roleFilter: RoleFilter,
+  foodFilter: FoodFilter,
+  selectedUnitID: number | null,
+  metadata: Record<number, MetadataItem>,
+): string {
+  if (selectedUnitID != null) {
+    const item = metadata[selectedUnitID];
+    const name = item?.name || `Unit #${selectedUnitID}`;
+    const level = Math.max(0, Math.floor(metadataNumber(item?.level)));
+    return level > 0 ? `${name} · Lv ${level}` : name;
+  }
   const labels: string[] = [];
   if (typeFilter === 'melee') labels.push('Melee');
   if (typeFilter === 'range') labels.push('Ranged');
@@ -1375,6 +1436,29 @@ function troopFilterLabel(typeFilter: TypeFilter, roleFilter: RoleFilter, foodFi
   if (foodFilter === 'beef') labels.push('Beef');
   if (foodFilter === 'food') labels.push('Food');
   return labels.length > 0 ? labels.join(' · ') : 'All troops';
+}
+
+function collectTrackedTroopUnitIDs(
+  samples: PlayerTrackerSample[],
+  current: PlayerTrackerSample | null,
+  metadata: Record<number, MetadataItem>,
+): number[] {
+  const unitIDs = new Set<number>();
+  const collect = (sample: PlayerTrackerSample | null) => {
+    for (const [unitIDText, rawAmount] of Object.entries(sample?.troopsByUnit ?? {})) {
+      const unitID = Number(unitIDText);
+      if (!Number.isFinite(unitID) || finite(rawAmount) <= 0 || !metadata[unitID]) continue;
+      unitIDs.add(unitID);
+    }
+  };
+
+  for (const sample of samples) collect(sample);
+  collect(current);
+
+  return [...unitIDs].sort((left, right) => {
+    const nameOrder = (metadata[left]?.name || '').localeCompare(metadata[right]?.name || '', undefined, { sensitivity: 'base' });
+    return nameOrder || left - right;
+  });
 }
 
 function addTroopsByUnit(
@@ -1746,11 +1830,6 @@ function formatHoverTime(timestampUnix: number, range: RangeKey): string {
     return date.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric' });
   }
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function formatSampleInterval(intervalSeconds: number): string {
-  const minutes = Math.max(1, Math.round(finite(intervalSeconds) / 60));
-  return `${minutes} minute${minutes === 1 ? '' : 's'}`;
 }
 
 function formatDate(timestampUnix: number): string {

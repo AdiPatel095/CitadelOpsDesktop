@@ -20,7 +20,6 @@ import {
   Input,
   Modal,
   ModalTitle,
-  PageHeader,
   ScheduleSummaryRow,
   Switch,
   type StatusTone,
@@ -662,18 +661,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 
   return (
     <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-4 pb-10">
-      <PageHeader
-        title="Automation"
-        description="Configure automation and see what each feature is doing now."
-        icon={<Bot className="h-5 w-5" />}
-        actions={(
-          <div className="automation-right-click-banner">
-            <MousePointerClick aria-hidden="true" />
-            <span><strong className="text-text-main">Right-click</strong> a toggle for temporary activation</span>
-          </div>
-        )}
-      />
-
       <div className="automation-function-groups">
         {groupedFeatures.map((group) => {
           const GroupIcon = group.icon;
@@ -685,6 +672,10 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 </span>
                 <h2>{group.name}</h2>
                 <span className="automation-function-group-rule" aria-hidden="true" />
+                <div className="automation-right-click-banner automation-right-click-inline" role="note">
+                  <MousePointerClick aria-hidden="true" />
+                  <span><strong className="text-text-main">Right-click</strong> a toggle for temporary activation</span>
+                </div>
               </div>
               <div className="automation-function-grid">
                 {group.features.map((feature) => {

@@ -1,13 +1,24 @@
 import {
 	equipmentTargetLabel,
 	equipmentTargets,
-	targetCombatMode,
 	type CombatMode,
 	type EquipmentLeader,
 } from './EquipmentTypes';
+import {
+	buildOfficialEquipmentTargetIndex,
+	officialEquipmentAreaSupportsCombatMode,
+	officialEquipmentEffectAreaTypeIDs,
+	officialEquipmentEffectMatchesCombatMode,
+	officialEquipmentEffectScope,
+	officialEquipmentTargetCombatModeForAreas,
+	type OfficialEquipmentTargetIndex,
+} from '../EquipmentEffectApplicability';
+import {
+	officialEquipmentEffectGroupIdentity,
+	type OfficialEquipmentEffectGroupingMetadata,
+} from './EquipmentEffects';
 
 const priorityCachePrefix = 'citadel.equipment.optimizer.';
-const officialGroupPrefix = 'official-group-';
 // A narrow area signature must span a substantial official effect family
 // before it earns its own card. This keeps one-off castle modifiers folded into
 // PvP/PvE while allowing newly published complete families to appear without a
@@ -39,42 +50,30 @@ export interface EquipmentTargetProfile {
 	discovered: boolean;
 }
 
-export type EquipmentEffectMetadata = {
-	internalName?: unknown;
-	name?: unknown;
+export interface EquipmentEffectMetadata extends OfficialEquipmentEffectGroupingMetadata {
 	scope?: unknown;
 	isPvPFight?: unknown;
 	isPvEFight?: unknown;
-	effectTypeId?: unknown;
-	effectTypeName?: unknown;
-	sortCategory?: unknown;
-	sortGroup?: unknown;
-	categoryName?: unknown;
-	effectGroupPassive?: unknown;
-	effectGroupActive?: unknown;
+	effectTemplate?: unknown;
 	areaTypeID?: unknown;
 	areaTypeIds?: unknown;
-};
+}
 
-interface StoredEquipmentPriorityProfileV2 extends EquipmentPriorityProfile {
-	version: 2;
+interface StoredEquipmentPriorityProfileV4 extends EquipmentPriorityProfile {
+	version: 4;
 }
 
 interface TargetProfileSeed {
 	id: string;
 	label: string;
 	description: string;
-	combatMode: CombatMode;
 	areaTypeIDs: number[];
-	tokens: string[];
 }
 
 interface TargetSignature {
 	areaTypeIDs: number[];
 	effectIDs: number[];
 	groupKeys: Set<string>;
-	pvpSignals: number;
-	pveSignals: number;
 }
 
 const knownEventProfileSeeds: TargetProfileSeed[] = [
@@ -82,33 +81,25 @@ const knownEventProfileSeeds: TargetProfileSeed[] = [
 		id: 'glory-invasion',
 		label: 'Glory Invasion',
 		description: 'PvP loadouts for Foreign Lords and Bloodcrows, including effects scoped specifically to Glory invasion castles.',
-		combatMode: 'PvP',
 		areaTypeIDs: [21, 34],
-		tokens: ['alien', 'bloodcrow', 'gloryinvasion', 'glory_invasion'],
 	},
 	{
 		id: 'nomad-khan',
 		label: 'Nomad & Khan',
 		description: 'PvE loadouts for Nomad camps and the Khan, including their official event-only combat and loot effects.',
-		combatMode: 'PvE',
 		areaTypeIDs: [27, 35],
-		tokens: ['nomad', 'khan'],
 	},
 	{
 		id: 'samurai-daimyo',
 		label: 'Samurai & Daimyo',
 		description: 'PvE loadouts for Samurai camps and Daimyo targets, including effects restricted to that event family.',
-		combatMode: 'PvE',
 		areaTypeIDs: [29, 37],
-		tokens: ['samurai', 'daimyo'],
 	},
 	{
 		id: 'berimond',
 		label: 'Berimond',
 		description: 'Event loadouts for Berimond kingdom and invasion targets, including faction-point and Berimond-only effects.',
-		combatMode: 'PvE',
 		areaTypeIDs: [15, 16, 17, 18, 30],
-		tokens: ['berimond'],
 	},
 ];
 
@@ -125,12 +116,18 @@ export function legacyEquipmentPrioritySections(
 	playerID: number | undefined,
 	leader: EquipmentLeader | null,
 	target: EquipmentTargetProfile,
+	effects: Record<number, EquipmentEffectMetadata>,
 ): string[] {
 	if (!leader || !Number.isSafeInteger(playerID) || (playerID ?? -1) < 0) return [];
+	const targetIndex = buildOfficialEquipmentTargetIndex(effects);
 	const areaTypeIDs = target.kind === 'event'
 		? target.areaTypeIDs
 		: equipmentTargets()
-			.filter((candidate) => targetCombatMode(candidate.castleTypeID) === target.combatMode)
+			.filter((candidate) => officialEquipmentAreaSupportsCombatMode(
+				candidate.castleTypeID,
+				target.combatMode,
+				targetIndex,
+			))
 			.map((candidate) => candidate.castleTypeID);
 	return areaTypeIDs.map((areaTypeID) => (
 		`equipment.optimizerPriorities.v1.${playerID}.${leader.kind}.${leader.id}.castle-${areaTypeID}`
@@ -140,6 +137,7 @@ export function legacyEquipmentPrioritySections(
 export function equipmentTargetProfiles(
 	effects: Record<number, EquipmentEffectMetadata>,
 ): EquipmentTargetProfile[] {
+	const targetIndex = buildOfficialEquipmentTargetIndex(effects);
 	const signatures = targetSignatures(effects);
 	const signatureByKey = new Map(signatures.map((signature) => [areaSignature(signature.areaTypeIDs), signature]));
 	const baseProfiles: EquipmentTargetProfile[] = [
@@ -150,7 +148,7 @@ export function equipmentTargetProfiles(
 			combatMode: 'PvP',
 			areaTypeIDs: [],
 			kind: 'base',
-			officialGroupCount: countProfileGroups(effects, 'PvP'),
+			officialGroupCount: countProfileGroups(effects, 'PvP', targetIndex),
 			discovered: false,
 		},
 		{
@@ -160,20 +158,24 @@ export function equipmentTargetProfiles(
 			combatMode: 'PvE',
 			areaTypeIDs: [],
 			kind: 'base',
-			officialGroupCount: countProfileGroups(effects, 'PvE'),
+			officialGroupCount: countProfileGroups(effects, 'PvE', targetIndex),
 			discovered: false,
 		},
 	];
-	const knownProfiles = knownEventProfileSeeds.map((seed): EquipmentTargetProfile => ({
-		id: seed.id,
-		label: seed.label,
-		description: seed.description,
-		combatMode: seed.combatMode,
-		areaTypeIDs: [...seed.areaTypeIDs],
-		kind: 'event',
-		officialGroupCount: signatureByKey.get(areaSignature(seed.areaTypeIDs))?.groupKeys.size ?? 0,
-		discovered: false,
-	}));
+	const knownProfiles = knownEventProfileSeeds.flatMap((seed): EquipmentTargetProfile[] => {
+		const combatMode = officialEquipmentTargetCombatModeForAreas(seed.areaTypeIDs, targetIndex);
+		if (!combatMode) return [];
+		return [{
+			id: seed.id,
+			label: seed.label,
+			description: seed.description,
+			combatMode,
+			areaTypeIDs: [...seed.areaTypeIDs],
+			kind: 'event',
+			officialGroupCount: signatureByKey.get(areaSignature(seed.areaTypeIDs))?.groupKeys.size ?? 0,
+			discovered: false,
+		}];
+	});
 	const knownSignatures = new Set(knownEventProfileSeeds.map((seed) => areaSignature(seed.areaTypeIDs)));
 	const discoveredProfiles = signatures
 		.filter((signature) => (
@@ -182,18 +184,20 @@ export function equipmentTargetProfiles(
 			&& signature.groupKeys.size >= minimumDiscoveredTargetGroups
 			&& !knownSignatures.has(areaSignature(signature.areaTypeIDs))
 		))
-		.map((signature): EquipmentTargetProfile => {
+		.flatMap((signature): EquipmentTargetProfile[] => {
+			const combatMode = officialEquipmentTargetCombatModeForAreas(signature.areaTypeIDs, targetIndex);
+			if (!combatMode) return [];
 			const label = discoveredTargetLabel(signature.areaTypeIDs);
-			return {
+			return [{
 				id: `official-${signature.areaTypeIDs.join('-')}`,
 				label,
 				description: `Official equipment defines a complete target-specific effect family for ${targetListLabel(signature.areaTypeIDs)}.`,
-				combatMode: inferredSignatureCombatMode(signature),
+				combatMode,
 				areaTypeIDs: [...signature.areaTypeIDs],
 				kind: 'event',
 				officialGroupCount: signature.groupKeys.size,
 				discovered: true,
-			};
+			}];
 		})
 		.sort((left, right) => left.label.localeCompare(right.label) || left.id.localeCompare(right.id));
 	return [...baseProfiles, ...knownProfiles, ...discoveredProfiles];
@@ -204,8 +208,9 @@ export function targetProfileEffectIDs(
 	effects: Record<number, EquipmentEffectMetadata>,
 	target: EquipmentTargetProfile,
 ): number[] {
+	const targetIndex = buildOfficialEquipmentTargetIndex(effects);
 	return Array.from(new Set(effectIDs))
-		.filter((id) => Number.isSafeInteger(id) && id > 0 && effectMatchesTargetProfile(effects[id], target))
+		.filter((id) => Number.isSafeInteger(id) && id > 0 && effectMatchesTargetProfile(effects[id], target, targetIndex))
 		.sort((left, right) => left - right);
 }
 
@@ -213,7 +218,7 @@ export function groupEquipmentPriorityEffects(
 	candidateEffectIDs: readonly number[],
 	effects: Record<number, EquipmentEffectMetadata>,
 ): EquipmentPriorityGroup[] {
-	const groups = new Map<string, EquipmentPriorityGroup & { labelRank: number }>();
+	const groups = new Map<string, EquipmentPriorityGroup>();
 	for (const id of candidateEffectIDs) {
 		const effect = effects[id];
 		const definition = officialPriorityGroup(id, effect);
@@ -223,11 +228,6 @@ export function groupEquipmentPriorityEffects(
 			continue;
 		}
 		current.effectIDs.push(id);
-		if (definition.labelRank > current.labelRank) {
-			current.label = definition.label;
-			current.categoryLabel = definition.categoryLabel;
-			current.labelRank = definition.labelRank;
-		}
 	}
 	return [...groups.values()]
 		.map((group) => ({
@@ -250,11 +250,13 @@ export function inferredEquipmentPriorityProfile(
 	groups: readonly EquipmentPriorityGroup[],
 	leaderKind: EquipmentLeader['kind'] | undefined,
 ): EquipmentPriorityProfile {
-	const preferred = leaderKind === 'castellan'
-		? [`${officialGroupPrefix}1-7`, `${officialGroupPrefix}1-8`]
-		: [`${officialGroupPrefix}1-2`, `${officialGroupPrefix}1-3`];
-	const available = new Set(groups.map((group) => group.key));
-	let tier2 = preferred.filter((key) => available.has(key));
+	const combatStrengthGroups = groups.filter((group) => (
+		/combat strength/i.test(group.label) && /melee|range|ranged/i.test(group.label)
+	));
+	let tier2 = combatStrengthGroups
+		.filter((group) => leaderKind === 'castellan' ? /defensive/i.test(group.label) : !/defensive/i.test(group.label))
+		.slice(0, 2)
+		.map((group) => group.key);
 	if (tier2.length === 0) {
 		tier2 = groups
 			.filter((group) => /melee|range|ranged/i.test(group.label))
@@ -271,8 +273,20 @@ export function readEquipmentPriorityProfile(
 	effects: Record<number, EquipmentEffectMetadata>,
 ): EquipmentPriorityProfile | null {
 	if (!isRecord(raw)) return null;
-	if (raw.version === 2) {
+	if (raw.version === 4) {
 		return normalizeEquipmentPriorityProfile({ tier1: raw.tier1, tier2: raw.tier2 }, groups);
+	}
+	if (raw.version === 3) {
+		return normalizeEquipmentPriorityProfile({
+			tier1: migrateEffectTypeTier(raw.tier1, groups, effects),
+			tier2: migrateEffectTypeTier(raw.tier2, groups, effects),
+		}, groups);
+	}
+	if (raw.version === 2) {
+		return normalizeEquipmentPriorityProfile({
+			tier1: migrateOfficialGroupTier(raw.tier1, groups),
+			tier2: migrateOfficialGroupTier(raw.tier2, groups),
+		}, groups);
 	}
 	if (raw.version === 1) {
 		return normalizeEquipmentPriorityProfile({
@@ -328,39 +342,89 @@ export function normalizeEquipmentPriorityProfile(
 	return { tier1, tier2 };
 }
 
-export function storedEquipmentPriorityProfile(profile: EquipmentPriorityProfile): StoredEquipmentPriorityProfileV2 {
-	return { version: 2, tier1: [...profile.tier1], tier2: [...profile.tier2] };
+export function storedEquipmentPriorityProfile(profile: EquipmentPriorityProfile): StoredEquipmentPriorityProfileV4 {
+	return { version: 4, tier1: [...profile.tier1], tier2: [...profile.tier2] };
+}
+
+function migrateOfficialGroupTier(
+	source: unknown,
+	groups: readonly EquipmentPriorityGroup[],
+): string[] {
+	if (!Array.isArray(source)) return [];
+	const currentKeys = new Set(groups.map((group) => group.key));
+	const migrated: string[] = [];
+	for (const value of source) {
+		if (typeof value !== 'string') continue;
+		if (currentKeys.has(value)) {
+			migrated.push(value);
+			continue;
+		}
+		const match = /^official-group-(\d+)-(\d+)$/.exec(value);
+		if (!match) continue;
+		const category = Number(match[1]);
+		const groupID = Number(match[2]);
+		for (const group of groups) {
+			if (group.category === category && group.group === groupID) migrated.push(group.key);
+		}
+	}
+	return Array.from(new Set(migrated));
+}
+
+function migrateEffectTypeTier(
+	source: unknown,
+	groups: readonly EquipmentPriorityGroup[],
+	effects: Record<number, EquipmentEffectMetadata>,
+): string[] {
+	if (!Array.isArray(source)) return [];
+	const currentKeys = new Set(groups.map((group) => group.key));
+	const migrated: string[] = [];
+	for (const value of source) {
+		if (typeof value !== 'string') continue;
+		if (currentKeys.has(value)) {
+			migrated.push(value);
+			continue;
+		}
+		const match = /^effect-type-(\d+)(?::argument-\d+)?$/.exec(value);
+		if (!match) continue;
+		const effectTypeID = Number(match[1]);
+		for (const group of groups) {
+			if (group.effectIDs.some((id) => (
+				officialEquipmentEffectGroupIdentity(id, effects[id]).effectTypeId === effectTypeID
+			))) migrated.push(group.key);
+		}
+	}
+	return Array.from(new Set(migrated));
 }
 
 function targetSignatures(effects: Record<number, EquipmentEffectMetadata>): TargetSignature[] {
 	const signatures = new Map<string, TargetSignature>();
 	for (const [rawID, effect] of Object.entries(effects)) {
 		const id = Number(rawID);
-		const areaTypeIDs = effectAreaTypeIDs(effect);
-		const groupKey = officialGroupKey(effect);
-		if (!Number.isSafeInteger(id) || id <= 0 || areaTypeIDs.length === 0 || !groupKey) continue;
+		if (!Number.isSafeInteger(id) || id <= 0) continue;
+		const areaTypeIDs = officialEquipmentEffectAreaTypeIDs(effect);
+		const groupKey = officialPriorityGroup(id, effect).key;
+		if (areaTypeIDs.length === 0) continue;
 		const key = areaSignature(areaTypeIDs);
 		const signature = signatures.get(key) ?? {
 			areaTypeIDs,
 			effectIDs: [],
 			groupKeys: new Set<string>(),
-			pvpSignals: 0,
-			pveSignals: 0,
 		};
 		signature.effectIDs.push(id);
 		signature.groupKeys.add(groupKey);
-		const mode = effectCombatMode(effect);
-		if (mode === 'PvP') signature.pvpSignals += 1;
-		if (mode === 'PvE') signature.pveSignals += 1;
 		signatures.set(key, signature);
 	}
 	return [...signatures.values()];
 }
 
-function countProfileGroups(effects: Record<number, EquipmentEffectMetadata>, combatMode: CombatMode): number {
+function countProfileGroups(
+	effects: Record<number, EquipmentEffectMetadata>,
+	combatMode: CombatMode,
+	targetIndex: OfficialEquipmentTargetIndex,
+): number {
 	const ids = Object.keys(effects).map(Number);
 	return groupEquipmentPriorityEffects(
-		ids.filter((id) => effectMatchesBaseProfile(effects[id], combatMode)),
+		ids.filter((id) => effectMatchesBaseProfile(effects[id], combatMode, targetIndex)),
 		effects,
 	).length;
 }
@@ -368,85 +432,45 @@ function countProfileGroups(effects: Record<number, EquipmentEffectMetadata>, co
 function effectMatchesTargetProfile(
 	effect: EquipmentEffectMetadata | undefined,
 	target: EquipmentTargetProfile,
+	targetIndex: OfficialEquipmentTargetIndex,
 ): boolean {
 	if (!effect) return false;
-	if (target.kind === 'base') return effectMatchesBaseProfile(effect, target.combatMode);
-	const areas = effectAreaTypeIDs(effect);
+	if (target.kind === 'base') return effectMatchesBaseProfile(effect, target.combatMode, targetIndex);
+	const areas = officialEquipmentEffectAreaTypeIDs(effect);
 	const targetAreas = new Set(target.areaTypeIDs);
-	if (areas.length > 0 && areas.every((areaTypeID) => targetAreas.has(areaTypeID))) return true;
-	const namedProfile = namedEventProfileID(effect);
-	if (areas.length === 0 && namedProfile) return namedProfile === target.id;
-	return effectMatchesBaseProfile(effect, target.combatMode);
+	if (areas.length > 0 && !areas.some((areaTypeID) => targetAreas.has(areaTypeID))) return false;
+	return officialEquipmentEffectMatchesCombatMode(effect, target.combatMode, areas.length === 0);
 }
 
-function effectMatchesBaseProfile(effect: EquipmentEffectMetadata, combatMode: CombatMode): boolean {
-	const areas = effectAreaTypeIDs(effect);
+function effectMatchesBaseProfile(
+	effect: EquipmentEffectMetadata,
+	combatMode: CombatMode,
+	targetIndex: OfficialEquipmentTargetIndex,
+): boolean {
+	const areas = officialEquipmentEffectAreaTypeIDs(effect);
 	if (areas.length === 0) {
-		if (namedEventProfileID(effect)) return false;
-		const mode = effectCombatMode(effect);
-		return mode == null || mode === combatMode;
+		return officialEquipmentEffectMatchesCombatMode(effect, combatMode);
 	}
 	// A short official area list represents a target-specific modifier. Those
 	// effects belong on the matching event card, not the broad PvP/PvE profile.
 	if (areas.length <= 5) return false;
-	const mode = effectCombatMode(effect) ?? inferredAreaCombatMode(areas);
-	return mode == null || mode === combatMode;
-}
-
-function namedEventProfileID(effect: EquipmentEffectMetadata): string | null {
-	const name = `${String(effect.internalName ?? '')} ${String(effect.name ?? '')}`.toLowerCase();
-	for (const seed of knownEventProfileSeeds) {
-		if (seed.tokens.some((token) => name.includes(token))) return seed.id;
-	}
-	return null;
+	const scope = officialEquipmentEffectScope(effect);
+	if (scope !== 'Always') return scope === combatMode;
+	return areas.some((areaTypeID) => officialEquipmentAreaSupportsCombatMode(areaTypeID, combatMode, targetIndex));
 }
 
 function officialPriorityGroup(
 	id: number,
 	effect: EquipmentEffectMetadata | undefined,
-): Omit<EquipmentPriorityGroup, 'effectIDs'> & { labelRank: number } {
-	const category = metadataInteger(effect?.sortCategory);
-	const group = metadataInteger(effect?.sortGroup);
-	const passiveLabel = cleanOfficialLabel(effect?.effectGroupPassive);
-	const activeLabel = cleanOfficialLabel(effect?.effectGroupActive);
-	const effectTypeLabel = cleanOfficialLabel(effect?.effectTypeName);
-	const effectLabel = cleanOfficialLabel(effect?.name ?? effect?.internalName);
-	const categoryLabel = cleanOfficialLabel(effect?.categoryName) || (category > 0 ? `Official category ${category}` : 'Other effects');
-	if (category > 0 && group > 0) {
-		return {
-			key: `${officialGroupPrefix}${category}-${group}`,
-			label: passiveLabel || activeLabel || effectTypeLabel || effectLabel || `Official effect group ${category}.${group}`,
-			category,
-			categoryLabel,
-			group,
-			labelRank: passiveLabel ? 4 : activeLabel ? 3 : effectTypeLabel ? 2 : effectLabel ? 1 : 0,
-		};
-	}
-	const effectTypeID = metadataInteger(effect?.effectTypeId);
-	if (effectTypeID > 0) {
-		return {
-			key: `effect-type-${effectTypeID}`,
-			label: effectTypeLabel || effectLabel || `Effect type ${effectTypeID}`,
-			category: category || 99,
-			categoryLabel,
-			group: group || effectTypeID,
-			labelRank: effectTypeLabel ? 2 : effectLabel ? 1 : 0,
-		};
-	}
+): Omit<EquipmentPriorityGroup, 'effectIDs'> {
+	const identity = officialEquipmentEffectGroupIdentity(id, effect);
 	return {
-		key: `effect-${id}`,
-		label: effectLabel || `Effect ${id}`,
-		category: category || 99,
-		categoryLabel,
-		group: group || id,
-		labelRank: effectLabel ? 1 : 0,
+		key: identity.key,
+		label: identity.label,
+		category: identity.category,
+		categoryLabel: identity.categoryLabel,
+		group: identity.group,
 	};
-}
-
-function officialGroupKey(effect: EquipmentEffectMetadata | undefined): string | null {
-	const category = metadataInteger(effect?.sortCategory);
-	const group = metadataInteger(effect?.sortGroup);
-	return category > 0 && group > 0 ? `${officialGroupPrefix}${category}-${group}` : null;
 }
 
 function legacyTierToGroups(source: unknown, effects: Record<number, EquipmentEffectMetadata>): string[] {
@@ -474,36 +498,6 @@ function normalizeTier(source: unknown, candidates: Set<string>, used: Set<strin
 	return result;
 }
 
-function inferredSignatureCombatMode(signature: TargetSignature): CombatMode {
-	if (signature.pvpSignals !== signature.pveSignals) return signature.pvpSignals > signature.pveSignals ? 'PvP' : 'PvE';
-	return inferredAreaCombatMode(signature.areaTypeIDs) ?? 'PvE';
-}
-
-function inferredAreaCombatMode(areaTypeIDs: readonly number[]): CombatMode | null {
-	let pvp = 0;
-	let pve = 0;
-	for (const areaTypeID of areaTypeIDs) {
-		if (targetCombatMode(areaTypeID) === 'PvP') pvp += 1;
-		else pve += 1;
-	}
-	if (pvp === pve) return null;
-	return pvp > pve ? 'PvP' : 'PvE';
-}
-
-function effectCombatMode(effect: EquipmentEffectMetadata | undefined): CombatMode | null {
-	const scope = String(effect?.scope ?? '').trim().toLowerCase();
-	if (scope === 'pvp' || officialFlag(effect?.isPvPFight)) return 'PvP';
-	if (scope === 'pve' || officialFlag(effect?.isPvEFight)) return 'PvE';
-	const name = `${String(effect?.internalName ?? '')} ${String(effect?.effectTypeName ?? '')}`.toLowerCase();
-	if (/\bpvp\b|castlelord/.test(name)) return 'PvP';
-	if (/\bpve\b|\bnpc\b/.test(name)) return 'PvE';
-	return null;
-}
-
-function officialFlag(value: unknown): boolean {
-	return value === true || value === 1 || String(value).trim() === '1';
-}
-
 function discoveredTargetLabel(areaTypeIDs: readonly number[]): string {
 	if (areaTypeIDs.length === 1) return equipmentTargetLabel(areaTypeIDs[0]);
 	return targetListLabel(areaTypeIDs);
@@ -524,27 +518,6 @@ function targetListLabel(areaTypeIDs: readonly number[]): string {
 
 function areaSignature(areaTypeIDs: readonly number[]): string {
 	return [...new Set(areaTypeIDs)].sort((left, right) => left - right).join(',');
-}
-
-function effectAreaTypeIDs(effect: EquipmentEffectMetadata | undefined): number[] {
-	const source = effect?.areaTypeIds ?? effect?.areaTypeID;
-	const values = Array.isArray(source) ? source : typeof source === 'string' ? source.split(',') : [source];
-	return Array.from(new Set(values.map(Number).filter((value) => Number.isSafeInteger(value) && value > 0)))
-		.sort((left, right) => left - right);
-}
-
-function metadataInteger(value: unknown): number {
-	const parsed = Number(value);
-	return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 0;
-}
-
-function cleanOfficialLabel(value: unknown): string {
-	const text = String(value ?? '')
-		.replace(/\{\d+\}/g, '')
-		.replace(/^[+\-\s%:]+/, '')
-		.replace(/\s+/g, ' ')
-		.trim();
-	return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

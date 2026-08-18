@@ -101,7 +101,9 @@ type Engine struct {
 	observer    Observer
 	claims      *claimManager
 	admission   *admissionManager
-	labelsMu    sync.RWMutex
+	// commanderHolds is set once during composition, before planning begins.
+	commanderHolds CommanderHoldRegistry
+	labelsMu       sync.RWMutex
 	labels      GameData.IdentifierLabels
 	labelsReady bool
 
@@ -121,10 +123,17 @@ type Engine struct {
 	subscribers       map[uint64]chan Receipt
 	eventSequence     uint64
 	persistenceErr    error
-	nextID            atomic.Uint64
-	nextSubID         atomic.Uint64
-	nextResponseID    atomic.Uint64
+	// runtimeContext bounds detached executions. It belongs to the owning
+	// application, never to the API client that submitted the intent.
+	runtimeContext context.Context
+	inflight       int
+	nextID         atomic.Uint64
+	nextSubID      atomic.Uint64
+	nextResponseID atomic.Uint64
 }
+
+// ErrOperationNotFound is returned by Await for an unknown operation ID.
+var ErrOperationNotFound = errors.New("operation was not found")
 
 func NewEngine(registry *Registry, state StateReader, gameData GameDataProvider, sender Sender, observer Observer) *Engine {
 	if registry == nil {
@@ -241,13 +250,139 @@ func (engine *Engine) SetOperationStore(ctx context.Context, store OperationStor
 	return nil
 }
 
-func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
+// SetRuntimeContext installs the context that bounds detached executions.
+// Detached intents therefore stop with the application, not with the API
+// connection that submitted them.
+func (engine *Engine) SetRuntimeContext(ctx context.Context) {
+	if engine == nil || ctx == nil {
+		return
+	}
+	engine.mu.Lock()
+	engine.runtimeContext = ctx
+	engine.mu.Unlock()
+}
+
+func (engine *Engine) detachedContext() context.Context {
+	engine.mu.RLock()
+	ctx := engine.runtimeContext
+	engine.mu.RUnlock()
+	if ctx == nil {
+		return context.Background()
+	}
+	return ctx
+}
+
+func (engine *Engine) newOperationID() string {
+	return fmt.Sprintf("op-%d-%d", time.Now().UTC().UnixMilli(), engine.nextID.Add(1))
+}
+
+// SubmitDetached accepts an intent and returns as soon as its operation is
+// reserved: the returned receipt is normally still planning. Execution
+// continues under the engine's runtime context, so an API client that
+// disconnects, times out, or navigates away never cancels the operation; only
+// Cancel or application shutdown does. Callers follow completion through the
+// operation stream, Operation, or Await. Idempotent replays and reservation
+// failures return their final receipt immediately, exactly like Submit.
+func (engine *Engine) SubmitDetached(request Request) Receipt {
+	prepared, receipt, done := engine.prepare(engine.detachedContext(), request)
+	if done {
+		return receipt
+	}
+	go engine.execute(prepared)
+	return engine.humanizeReceiptIdentifiers(receipt)
+}
+
+// Await blocks until the operation reaches a terminal receipt or ctx ends. The
+// context bounds only the wait: an abandoned Await never cancels the operation.
+func (engine *Engine) Await(ctx context.Context, id string) (Receipt, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	id = strings.TrimSpace(id)
+	receipts, unsubscribe := engine.Subscribe(64)
+	defer unsubscribe()
+	current, ok := engine.Operation(id)
+	if !ok {
+		return Receipt{}, ErrOperationNotFound
+	}
+	if current.Terminal() {
+		return current, nil
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			if latest, ok := engine.Operation(id); ok {
+				current = latest
+			}
+			return current, ctx.Err()
+		case receipt := <-receipts:
+			if receipt.ID == id {
+				current = receipt
+			} else if receipt.StreamGap {
+				if latest, ok := engine.Operation(id); ok {
+					current = latest
+				}
+			}
+			if current.Terminal() {
+				return current, nil
+			}
+		}
+	}
+}
+
+// WaitIdle blocks until no operation is executing or ctx ends. Applications
+// call it during shutdown, after cancelling the runtime context, so detached
+// operations can record their final receipts before durable stores close.
+func (engine *Engine) WaitIdle(ctx context.Context) error {
+	if engine == nil {
+		return nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		engine.mu.RLock()
+		inflight := engine.inflight
+		engine.mu.RUnlock()
+		if inflight == 0 {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+}
+
+// preparedSubmission is one reserved, registered operation that has not
+// started executing. It carries everything execute needs so the same code
+// path serves synchronous and detached submissions.
+type preparedSubmission struct {
+	request          Request
+	receipt          Receipt
+	definition       Definition
+	definitionExists bool
+	durable          bool
+	priority         Outbound.Priority
+	priorityErr      error
+	requestHash      string
+	executionContext context.Context
+	cancel           context.CancelFunc
+}
+
+// prepare normalizes the request and reserves its operation. When done is
+// true the returned receipt is final for this submission — an idempotent
+// replay or a reservation failure — and nothing was registered.
+func (engine *Engine) prepare(ctx context.Context, request Request) (*preparedSubmission, Receipt, bool) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	request.ID = strings.TrimSpace(request.ID)
 	if request.ID == "" {
-		request.ID = fmt.Sprintf("op-%d-%d", time.Now().UTC().UnixMilli(), engine.nextID.Add(1))
+		request.ID = engine.newOperationID()
 	}
 	request.Actor = strings.TrimSpace(request.Actor)
 	if request.Actor == "" {
@@ -272,25 +407,59 @@ func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
 		receipt.Phase = EffectPhaseCompleted
 		receipt.Error = reserveErr.Error()
 		receipt.CompletedAt = &now
-		return receipt
+		return nil, receipt, true
 	}
 	if !created {
-		return engine.humanizeReceiptIdentifiers(reserved)
+		return nil, engine.humanizeReceiptIdentifiers(reserved), true
 	}
 	executionContext, cancel := context.WithCancel(ctx)
 	if !engine.registerActive(request.ID, cancel) {
 		cancel()
 		if existing, ok := engine.Operation(request.ID); ok {
-			return existing
+			return nil, existing, true
 		}
-		return reserved
+		return nil, reserved, true
 	}
 	executionContext = Outbound.WithMetadata(executionContext, Outbound.Metadata{
 		OperationID: request.ID, Intent: request.Name, Actor: request.Actor, SubmittedAt: receipt.SubmittedAt, Priority: priority,
 	})
+	engine.mu.Lock()
+	engine.inflight++
+	engine.mu.Unlock()
+	return &preparedSubmission{
+		request: request, receipt: receipt, definition: definition, definitionExists: definitionExists,
+		durable: durable, priority: priority, priorityErr: priorityErr, requestHash: requestHash,
+		executionContext: executionContext, cancel: cancel,
+	}, reserved, false
+}
+
+// Submit reserves and executes an intent, returning its final receipt. The
+// execution runs under ctx: automation and other runtime-owned callers use it
+// to bound their own operations.
+func (engine *Engine) Submit(ctx context.Context, request Request) Receipt {
+	prepared, receipt, done := engine.prepare(ctx, request)
+	if done {
+		return receipt
+	}
+	return engine.execute(prepared)
+}
+
+func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
+	request := prepared.request
+	receipt := prepared.receipt
+	definition := prepared.definition
+	definitionExists := prepared.definitionExists
+	durable := prepared.durable
+	priorityErr := prepared.priorityErr
+	requestHash := prepared.requestHash
+	executionContext := prepared.executionContext
+	cancel := prepared.cancel
 	defer func() {
 		cancel()
 		engine.unregisterActive(request.ID)
+		engine.mu.Lock()
+		engine.inflight--
+		engine.mu.Unlock()
 	}()
 	if priorityErr != nil {
 		return engine.fail(receipt, priorityErr)
@@ -1547,15 +1716,21 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 	return plan
 }
 
+// SetCommanderHolds installs the launch-hold registry consulted by every CRA
+// commander selection this engine plans.
+func (engine *Engine) SetCommanderHolds(registry CommanderHoldRegistry) {
+	engine.commanderHolds = registry
+}
+
 func (engine *Engine) planningContext() PlanningContext {
-	input := PlanningContext{}
+	input := PlanningContext{CommanderHolds: engine.commanderHolds}
 	if provider, ok := engine.state.(interface{ PlanningView() State.PlanningView }); ok {
 		view := provider.PlanningView()
 		input.State = view.State
 		input.Partitions = view.Partitions
 		input.ProtocolContext = view.ProtocolContext
 	} else if engine.state != nil {
-		input.State = engine.state.Snapshot()
+		input.State = engine.state.ReadOnlyView()
 	}
 	if engine.gameData != nil {
 		input.GameData, _ = engine.gameData.Current()

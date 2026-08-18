@@ -188,8 +188,9 @@ const MovementView: React.FC = () => {
     gameLoggedIn &&
     snapshotReady &&
     movement != null &&
-    movement.lastSnapshotUnix > 0 &&
-    nowUnix - movement.lastSnapshotUnix <= freshnessWindow;
+    (freshnessWindow <= 0 || (
+      movement.lastSnapshotUnix > 0 && nowUnix - movement.lastSnapshotUnix <= freshnessWindow
+    ));
   const availableCount = rows.filter(
     (row) => statusForRow(row, gameLoggedIn, snapshotReady, snapshotFresh, nowUnix) === 'free'
   ).length;
@@ -292,7 +293,7 @@ const MovementView: React.FC = () => {
             {mode === 'Live Movements' && rows.length > 0 ? (
               <span className="text-xs text-text-muted">{availableCount} available</span>
             ) : null}
-            {mode === 'Live Movements' ? <span className="text-xs text-text-muted">Auto-refreshes every 5s</span> : null}
+            {mode === 'Live Movements' ? <span className="text-xs text-text-muted">Live socket updates</span> : null}
           </div>
           {mode === 'Functions' ? (
             <Button

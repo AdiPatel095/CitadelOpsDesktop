@@ -33,7 +33,7 @@ const CastleFocusSwitcher: React.FC = () => {
     : 'Select castle';
 
   return (
-    <div className="flex items-center min-w-[14rem] sm:min-w-[18rem]">
+    <div className="castle-focus-shell flex items-center min-w-[14rem] sm:min-w-[18rem]">
       <Select
         value={currentCastleId > 0 ? String(currentCastleId) : ''}
         options={dropdownOptions}

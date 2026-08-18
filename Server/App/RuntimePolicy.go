@@ -206,7 +206,7 @@ func (application *Application) requireAssignedAttackCommanders(plan Intent.Plan
 	}
 	gameState := State.NewGameState()
 	if application.State != nil {
-		gameState = application.State.Snapshot()
+		gameState = application.State.ReadOnlyView()
 	}
 	for _, commanderID := range commanders {
 		if !CommanderFeatures.AssignmentAllows(settings, moduleID, commanderID) {

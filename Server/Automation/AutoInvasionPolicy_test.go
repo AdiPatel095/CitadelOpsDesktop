@@ -275,3 +275,148 @@ func TestAutoInvasionRefreshesProtectionAfterToggleOrStaleObservation(t *testing
 		})
 	}
 }
+
+func TestAutoInvasionRefreshesGeneralSkillsInsteadOfWaitingForever(t *testing.T) {
+	now := time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"units":[{"wodID":216}],"buildings":[],"effects":[],"legendskills":[],
+		"generalSkills":[],
+		"eventAutoScalingDifficulties":[{"difficultyID":8,"eventID":71,"difficultyTypeID":1,"isLocked":0}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	gameState.Castles[1] = State.CastleState{
+		ID: 1, Name: "Main", KingdomID: 0, X: 100, Y: 100,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{216: 2_000}},
+	}
+	// The commander has a general assigned whose skills were never observed —
+	// the live hosted deadlock ("general 125 skills have not been observed").
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true, GeneralID: 125}
+	gameState.Player.LegendSkills.ObservedAt = now
+	gameState.EventScores.ActiveEventID = foreignLordsEventID
+	gameState.EventScores.ByEvent[foreignLordsEventID] = State.ScalableEventScore{
+		EventID: foreignLordsEventID, DifficultyID: 8, RemainingSec: 7_200, ObservedAt: now,
+	}
+	gameState.Invasion.LastScannedAt[1] = now
+	gameState.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, TypeID: foreignLordsMapTypeID, X: 101, Y: 100, ObjectID: 70, Level: 70, ObservedAt: now},
+	}
+	snapshot := Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+			"automation.autoInvasion": json.RawMessage(`{
+				"version":1,"sourceCastleId":1,"presetId":"trial",
+				"foreignLordsDifficultyId":8,"bloodcrowDifficultyId":108,
+				"scoreTarget":5000000,"minimumRemainingSec":1800,
+				"checkIntervalSec":30,"mapRefreshIntervalSec":300
+			}`),
+			"attacks.presets": json.RawMessage(`{
+				"version":1,"presets":[{"id":"trial","name":"Trial","waves":[{
+					"L":{"troops":[],"tools":[]},
+					"M":{"troops":[{"itemId":216,"quantity":1000}],"tools":[]},
+					"R":{"troops":[],"tools":[]}
+				}]}]
+			}`),
+		}},
+	}
+
+	decision, err := NewAutoInvasionPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request == nil || decision.Request.Name != "general.skills.refresh" || !decision.ReevaluateOnSuccess {
+		t.Fatalf("unobserved general must schedule a skills refresh, got %#v", decision)
+	}
+
+	// Once the roster is observed the same evaluation resolves capacity and
+	// proceeds to the attack instead of re-requesting the refresh.
+	snapshot.State.Generals[125] = State.GeneralState{ID: 125, ObservedAt: now}
+	decision, err = NewAutoInvasionPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request == nil || decision.Request.Name != "invasion.attack" {
+		t.Fatalf("observed general should let the attack plan through, got %#v", decision)
+	}
+}
+
+func TestAutoInvasionRefreshesNeighborhoodBeforePickingStaleTarget(t *testing.T) {
+	now := time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"units":[{"wodID":216}],"buildings":[],"effects":[],"legendskills":[],
+		"eventAutoScalingDifficulties":[{"difficultyID":8,"eventID":71,"difficultyTypeID":1,"isLocked":0}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	gameState.Castles[1] = State.CastleState{
+		ID: 1, Name: "Main", KingdomID: 0, X: 100, Y: 100,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{216: 2_000}},
+	}
+	gameState.Commanders[0] = State.CommanderState{ID: 0, Available: true}
+	gameState.Player.LegendSkills.ObservedAt = now
+	gameState.EventScores.ActiveEventID = foreignLordsEventID
+	gameState.EventScores.ByEvent[foreignLordsEventID] = State.ScalableEventScore{
+		EventID: foreignLordsEventID, DifficultyID: 8, RemainingSec: 7_200, ObservedAt: now,
+	}
+	// The full sweep ran 4 minutes ago and the best candidate is from it — a
+	// castle other players may have defeated since. The policy must refresh the
+	// neighborhood before committing an attack to it.
+	lastScan := now.Add(-4 * time.Minute)
+	gameState.Invasion.LastScannedAt[1] = lastScan
+	gameState.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, TypeID: foreignLordsMapTypeID, X: 101, Y: 100, ObjectID: 70, Level: 70, ObservedAt: lastScan},
+	}
+	snapshot := Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+			"automation.autoInvasion": json.RawMessage(`{
+				"version":1,"sourceCastleId":1,"presetId":"trial",
+				"foreignLordsDifficultyId":8,"bloodcrowDifficultyId":108,
+				"scoreTarget":5000000,"minimumRemainingSec":1800,
+				"checkIntervalSec":30,"mapRefreshIntervalSec":300
+			}`),
+			"attacks.presets": json.RawMessage(`{
+				"version":1,"presets":[{"id":"trial","name":"Trial","waves":[{
+					"L":{"troops":[],"tools":[]},
+					"M":{"troops":[{"itemId":216,"quantity":1000}],"tools":[]},
+					"R":{"troops":[],"tools":[]}
+				}]}]
+			}`),
+		}},
+	}
+
+	decision, err := NewAutoInvasionPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request == nil || decision.Request.Name != "invasion.map.scan" || !decision.ReevaluateOnSuccess {
+		t.Fatalf("stale candidate must trigger a neighborhood refresh first, got %#v", decision)
+	}
+	var arguments struct {
+		Bounds *State.StormMapBounds `json:"bounds"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &arguments); err != nil || arguments.Bounds == nil {
+		t.Fatalf("neighborhood refresh must carry bounds: %s err=%v", decision.Request.Arguments, err)
+	}
+	if arguments.Bounds.X1 != 101-invasionNeighborhoodHalfSize || arguments.Bounds.X2 != 101+invasionNeighborhoodHalfSize ||
+		arguments.Bounds.Y1 != 100-invasionNeighborhoodHalfSize || arguments.Bounds.Y2 != 100+invasionNeighborhoodHalfSize {
+		t.Fatalf("neighborhood bounds should be centered on the candidate, got %+v", *arguments.Bounds)
+	}
+
+	// Once the game confirmed the castle seconds ago, the same evaluation
+	// commits the attack.
+	target := gameState.Map[0]["101:100"]
+	target.ObservedAt = now.Add(-10 * time.Second)
+	gameState.Map[0]["101:100"] = target
+	decision, err = NewAutoInvasionPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request == nil || decision.Request.Name != "invasion.attack" {
+		t.Fatalf("fresh candidate should be attacked directly, got %#v", decision)
+	}
+}

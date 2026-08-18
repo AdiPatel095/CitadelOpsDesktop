@@ -3,11 +3,14 @@ package Automation
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"CitadelDesktop/Server/Buildings"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
+
+const autoStormShopWatchdogInterval = 5 * time.Minute
 
 type AutoStormShopPolicy struct{}
 
@@ -21,7 +24,10 @@ func (*AutoStormShopPolicy) ScheduleKey() string {
 }
 
 func (*AutoStormShopPolicy) WakeDomains() []string {
-	return []string{"castles", "construction-offers", "inventory", "resources", "storm"}
+	// A Storm response or a returning movement can change Aquamarine or shop
+	// stock immediately. The five-minute watchdog covers any game response that
+	// did not carry a focused domain without returning to the old 30-second poll.
+	return []string{"construction-offers", "movements", "storm"}
 }
 
 func (*AutoStormShopPolicy) WakeSections() []string {
@@ -65,8 +71,13 @@ func (*AutoStormShopPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Deci
 	if detail == "" {
 		detail = "No Aquamarine shop goal is configured"
 	}
-	return Decision{
+	result := Decision{
 		Status: status, Detail: detail, Metrics: metrics,
-		NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
-	}, nil
+		NextCheckAt: snapshot.Now.Add(autoStormShopWatchdogInterval),
+	}
+	if len(settings.Aquamarine.Purchases) == 0 {
+		result.NextCheckAt = time.Time{}
+		result.EventDriven = true
+	}
+	return result, nil
 }

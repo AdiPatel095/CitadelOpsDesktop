@@ -201,8 +201,10 @@ func TestReceiptIdentifiersAreHumanizedWithoutLosingDiagnosticError(t *testing.T
 	}
 }
 
-func (reader *dispatchMutationStateReader) Snapshot() State.GameState { return reader.store.Snapshot() }
-func (reader *dispatchMutationStateReader) Revision() uint64          { return reader.store.Revision() }
+func (reader *dispatchMutationStateReader) ReadOnlyView() State.GameState {
+	return reader.store.ReadOnlyView()
+}
+func (reader *dispatchMutationStateReader) Revision() uint64 { return reader.store.Revision() }
 func (reader *dispatchMutationStateReader) Session() State.SessionState {
 	return reader.store.Session()
 }
@@ -216,9 +218,9 @@ func (reader *dispatchMutationStateReader) PlanningView() State.PlanningView {
 	return reader.store.PlanningView()
 }
 
-func (reader *countingStateReader) Snapshot() State.GameState {
+func (reader *countingStateReader) ReadOnlyView() State.GameState {
 	reader.snapshots.Add(1)
-	return reader.store.Snapshot()
+	return reader.store.ReadOnlyView()
 }
 
 func (reader *countingStateReader) Revision() uint64 {
@@ -1646,5 +1648,67 @@ func waitForIntentStatus(t *testing.T, updates <-chan Receipt, wanted Status) {
 		case <-timer.C:
 			t.Fatalf("intent status did not reach %q", wanted)
 		}
+	}
+}
+
+func TestSubmitDetachedAcceptsImmediatelyAndStaysIdempotent(t *testing.T) {
+	registry := NewRegistry()
+	if err := registry.Register(Definition{
+		Name: "test.slow", Effect: EffectWrite,
+		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+			return Plan{Steps: []Step{{Action: "test.slow"}}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, nil, nil)
+	release := make(chan struct{})
+	var runs atomic.Int32
+	if err := engine.RegisterAction("test.slow", func(ctx context.Context, _ json.RawMessage) error {
+		runs.Add(1)
+		select {
+		case <-release:
+			return nil
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	accepted := engine.SubmitDetached(Request{ID: "slow-1", Name: "test.slow", Arguments: json.RawMessage(`{"a":1}`)})
+	if accepted.ID != "slow-1" || accepted.Terminal() || accepted.Actor != "api" {
+		t.Fatalf("accepted receipt = %+v", accepted)
+	}
+	replay := engine.SubmitDetached(Request{ID: "slow-1", Name: "test.slow", Arguments: json.RawMessage(`{"a":1}`)})
+	if replay.ID != "slow-1" || replay.Terminal() {
+		t.Fatalf("replayed receipt = %+v", replay)
+	}
+	conflict := engine.SubmitDetached(Request{ID: "slow-1", Name: "test.slow", Arguments: json.RawMessage(`{"a":2}`)})
+	if conflict.Status != StatusFailed || !strings.Contains(conflict.Error, "already used") {
+		t.Fatalf("conflicting replay = %+v", conflict)
+	}
+	generated := engine.SubmitDetached(Request{Name: "test.slow"})
+	if generated.ID == "" || generated.ID == "slow-1" || generated.Terminal() {
+		t.Fatalf("generated-id receipt = %+v", generated)
+	}
+	time.Sleep(20 * time.Millisecond)
+	if runs.Load() != 2 {
+		t.Fatalf("action ran %d times, want 2 (one per distinct operation)", runs.Load())
+	}
+	close(release)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	for _, id := range []string{"slow-1", generated.ID} {
+		final, err := engine.Await(ctx, id)
+		if err != nil || final.Status != StatusSucceeded || !final.Terminal() {
+			t.Fatalf("Await(%s) = %+v, %v", id, final, err)
+		}
+	}
+	if again := engine.SubmitDetached(Request{ID: "slow-1", Name: "test.slow", Arguments: json.RawMessage(`{"a":1}`)}); !again.Terminal() || again.Status != StatusSucceeded {
+		t.Fatalf("terminal replay = %+v", again)
+	}
+	if err := engine.WaitIdle(ctx); err != nil {
+		t.Fatal(err)
 	}
 }

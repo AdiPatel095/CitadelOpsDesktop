@@ -234,7 +234,7 @@ func (application *Application) verifyDefensePreset(_ context.Context, arguments
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	castle, found := application.State.Snapshot().Castles[request.CastleID]
+	castle, found := application.State.ReadOnlyView().Castles[request.CastleID]
 	if !found {
 		return fmt.Errorf("castle %d is no longer in the current player state", request.CastleID)
 	}

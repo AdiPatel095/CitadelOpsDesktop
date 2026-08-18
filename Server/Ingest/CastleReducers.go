@@ -57,7 +57,7 @@ func applyCastleList(raw json.RawMessage, gameState *State.GameState) (bool, err
 	if reflect.DeepEqual(gameState.Castles, next) {
 		return false, nil
 	}
-	gameState.Castles = next
+	gameState.ReplaceCastles(next)
 	return true, nil
 }
 
@@ -114,7 +114,9 @@ func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameDat
 				continue
 			}
 			castleID := State.CastleID(castleIDValue)
-			castle, exists := gameState.Castles[castleID]
+			castle, exists := gameState.MutableCastleParts(
+				castleID, State.CastlePartIdentity|State.CastlePartResources|State.CastlePartUnits|State.CastlePartDefense,
+			)
 			if !exists {
 				castle = newCastleState(castleID)
 			}
@@ -136,7 +138,10 @@ func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameDat
 			if beforeKingdomID != castle.KingdomID || !reflect.DeepEqual(beforeResources, castle.Resources) ||
 				!reflect.DeepEqual(beforeUnits, castle.Units) || !beforeUnitsObservedAt.Equal(castle.UnitsObservedAt) ||
 				!reflect.DeepEqual(beforeOpenGateUntil, castle.Defense.OpenGateUntil) {
-				gameState.Castles[castleID] = castle
+				gameState.SetCastleParts(
+					castleID, castle,
+					State.CastlePartIdentity|State.CastlePartResources|State.CastlePartUnits|State.CastlePartDefense,
+				)
 				changed = true
 			}
 		}
@@ -199,9 +204,15 @@ func reduceCastleSnapshot(
 			changed = true
 		}
 		candidate.Focused = focused
-		gameState.Castles[id] = candidate
+		gameState.SetCastleParts(id, candidate, State.CastlePartIdentity)
 	}
-	castle = gameState.Castles[castleID]
+	castle, known = gameState.MutableCastleParts(
+		castleID,
+		State.CastlePartIdentity|State.CastlePartUnits|State.CastlePartBuildings|State.CastlePartConstruction,
+	)
+	if !known {
+		return nil, false, nil
+	}
 	beforeCastle := castle
 	if rawKingdomID, found := root["KID"]; found {
 		castle.KingdomID = State.KingdomID(rawInteger(rawKingdomID))
@@ -256,7 +267,10 @@ func reduceCastleSnapshot(
 	if !frame.ReceivedAt.IsZero() {
 		castle.FoodStateObservedAt = frame.ReceivedAt.UTC()
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(
+		castleID, castle,
+		State.CastlePartIdentity|State.CastlePartUnits|State.CastlePartBuildings|State.CastlePartConstruction,
+	)
 	applyCastleOwner(gca["O"], gameState)
 	changed = changed || !reflect.DeepEqual(beforeCastle, castle) ||
 		!reflect.DeepEqual(beforePlayer, gameState.Player) || !reflect.DeepEqual(beforeAlliance, gameState.Alliance)
@@ -325,7 +339,7 @@ func reduceFocusedUnits(
 	}
 	castle.Units = units
 	castle.UnitsObservedAt = observedAt
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartUnits)
 	return []string{"castles", "units"}, true, nil
 }
 
@@ -357,7 +371,7 @@ func reduceFocusedConstructionItems(
 	}
 	castle.ConstructionSlots = next
 	castle.ConstructionSlotsObservedAt = observedAt
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartConstruction)
 	return []string{"castles", "construction-items"}, true, nil
 }
 

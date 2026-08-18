@@ -19,7 +19,18 @@ type invasionMapScanRequest struct {
 	SourceCastleID State.CastleID `json:"sourceCastleId"`
 	Radius         int            `json:"radius"`
 	ScanStartedAt  time.Time      `json:"scanStartedAt"`
+	// Bounds turns the scan into a single-window neighborhood refresh (at
+	// most one gaa query) that is AUTHORITATIVE for its rectangle: invasion
+	// observations inside it that the game did not return again are dropped.
+	// It never advances the full-scan clock, so candidates outside the box
+	// stay eligible. The policy uses it right before picking a target so the
+	// pick is made from a set the game confirmed seconds ago.
+	Bounds *State.StormMapBounds `json:"bounds,omitempty"`
 }
+
+// invasionNeighborhoodTileLimit caps a bounded scan at one gaa window, the
+// same tile budget the full sweep uses per window.
+const invasionNeighborhoodTileLimit = 2500
 
 type invasionDifficultyRequest struct {
 	EventID      int64 `json:"eventId"`
@@ -84,6 +95,12 @@ func planInvasionMapScan(_ context.Context, input Intent.PlanningContext, argume
 		return Intent.Plan{}, err
 	}
 	windows := towerMapScanWindows(source, request.Radius)
+	if request.Bounds != nil {
+		// A neighborhood refresh is exactly one window over the requested box.
+		windows = []towerMapWindow{{
+			X1: request.Bounds.X1, Y1: request.Bounds.Y1, X2: request.Bounds.X2, Y2: request.Bounds.Y2,
+		}}
+	}
 	steps := make([]Intent.Step, 0, len(windows)+2)
 	if !source.Focused {
 		steps = append(steps, castleFocusStep(source))
@@ -174,7 +191,7 @@ func planInvasionAttack(_ context.Context, input Intent.PlanningContext, argumen
 	resolution, err := resolveCRACommanders(
 		input.State,
 		commanderSelection,
-		craCommanderSelectionOptions{DefaultCount: 1, RequireAvailable: true},
+		craCommanderSelectionOptions{Holds: input.CommanderHolds, DefaultCount: 1, RequireAvailable: true},
 	)
 	if err != nil {
 		if errors.Is(err, errCRACommanderUnavailable) {
@@ -267,6 +284,16 @@ func invasionMapScanContext(input Intent.PlanningContext, arguments json.RawMess
 	if request.SourceCastleID <= 0 || request.Radius < 1 || request.Radius > 50 {
 		return invasionMapScanRequest{}, State.CastleState{}, fmt.Errorf("invasion map scan requires a source castle and radius between 1 and 50")
 	}
+	if bounds := request.Bounds; bounds != nil {
+		if !bounds.IsValid() {
+			return invasionMapScanRequest{}, State.CastleState{}, fmt.Errorf("invasion neighborhood scan bounds are invalid")
+		}
+		if (bounds.X2-bounds.X1+1)*(bounds.Y2-bounds.Y1+1) > invasionNeighborhoodTileLimit {
+			return invasionMapScanRequest{}, State.CastleState{}, fmt.Errorf(
+				"invasion neighborhood scan may cover at most %d tiles", invasionNeighborhoodTileLimit,
+			)
+		}
+	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists {
 		return invasionMapScanRequest{}, State.CastleState{}, fmt.Errorf("invasion source castle %d is unavailable", request.SourceCastleID)
@@ -315,7 +342,7 @@ func invasionAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 	if source.KingdomID != 0 || request.KingdomID != source.KingdomID {
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("invasion attack source and target must be in the Great Empire")
 	}
-	target, exists := input.State.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	target, exists := input.State.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || target.TypeID != request.TargetTypeID {
 		return invasionAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("invasion target %d:%d is no longer available", request.TargetX, request.TargetY)
 	}
@@ -441,21 +468,49 @@ func resolveInvasionAttackCapacity(
 }
 
 func (application *Application) captureInvasionScan(_ context.Context, arguments json.RawMessage) error {
-	request, _, err := invasionMapScanContext(Intent.PlanningContext{State: application.State.Snapshot()}, arguments)
+	request, _, err := invasionMapScanContext(Intent.PlanningContext{State: application.State.ReadOnlyView()}, arguments)
 	if err != nil {
 		return err
 	}
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentInvasion, State.ComponentWorldMap), func(gameState *State.GameState) ([]string, bool, error) {
 		source, exists := gameState.Castles[request.SourceCastleID]
 		if !exists || !source.Focused {
 			return nil, false, fmt.Errorf("invasion source castle %d is no longer focused", request.SourceCastleID)
 		}
-		if gameState.Invasion.LastScannedAt == nil {
-			gameState.Invasion.LastScannedAt = map[State.CastleID]time.Time{}
-		}
 		scannedAt := request.ScanStartedAt.UTC()
 		if scannedAt.IsZero() {
 			scannedAt = time.Now().UTC()
+		}
+		if bounds := request.Bounds; bounds != nil {
+			// The neighborhood window is authoritative for its rectangle: any
+			// invasion castle inside it that the game did not return again is
+			// gone (defeated, or the slot reverted to a dynamic area). Drop those
+			// phantoms so the pick that follows is made from a confirmed set.
+			// The full-scan clock is deliberately left alone — candidates outside
+			// the box remain eligible on their last full observation.
+			stale := []string{}
+			gameState.RangeMapObservationsByKind(source.KingdomID, State.MapProjectionInvasion, func(key string, observation State.MapObservation) bool {
+				if observation.X < bounds.X1 || observation.X > bounds.X2 || observation.Y < bounds.Y1 || observation.Y > bounds.Y2 {
+					return true
+				}
+				if observation.ObservedAt.Before(scannedAt) {
+					stale = append(stale, key)
+				}
+				return true
+			})
+			changed := false
+			for _, key := range stale {
+				if gameState.DeleteMapObservation(source.KingdomID, key) {
+					changed = true
+				}
+			}
+			if !changed {
+				return nil, false, nil
+			}
+			return []string{"map", "map-invasion"}, true, nil
+		}
+		if gameState.Invasion.LastScannedAt == nil {
+			gameState.Invasion.LastScannedAt = map[State.CastleID]time.Time{}
 		}
 		if gameState.Invasion.LastScannedAt[request.SourceCastleID].Equal(scannedAt) {
 			return nil, false, nil
@@ -471,19 +526,20 @@ func (application *Application) captureInvasionLaunch(_ context.Context, argumen
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentEventScores), func(gameState *State.GameState) ([]string, bool, error) {
 		var selected State.MovementState
-		for _, movement := range gameState.Movements {
+		gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 			if movement.Direction != 0 || movement.SourceCastleID != request.SourceCastleID ||
 				movement.KingdomID != request.KingdomID || movement.TargetX != request.TargetX || movement.TargetY != request.TargetY ||
 				movement.CommanderID == nil || *movement.CommanderID != request.CommanderID || movement.ArrivesAt == nil {
-				continue
+				return true
 			}
 			if selected.ID == 0 || movement.ObservedAt.After(selected.ObservedAt) ||
 				movement.ObservedAt.Equal(selected.ObservedAt) && movement.ID > selected.ID {
 				selected = movement
 			}
-		}
+			return true
+		})
 		if selected.ID == 0 {
 			return nil, false, fmt.Errorf("CRA response did not return commander %d's invasion movement", request.CommanderID)
 		}
@@ -506,7 +562,7 @@ func (application *Application) guardInvasionAttack(_ context.Context, arguments
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	_, source, target, err := invasionAttackContext(Intent.PlanningContext{State: state}, mustMarshalInvasionAttackRequest(request.invasionAttackRequest))
 	if err != nil {
 		return err
@@ -539,7 +595,7 @@ func (application *Application) guardInvasionTarget(_ context.Context, arguments
 		return err
 	}
 	request := verification.Request
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	_, _, target, err := invasionAttackContext(
 		Intent.PlanningContext{State: state},
 		mustMarshalInvasionAttackRequest(request.invasionAttackRequest),
@@ -548,6 +604,11 @@ func (application *Application) guardInvasionTarget(_ context.Context, arguments
 		return err
 	}
 	if verification.RefreshStartedAt.IsZero() || target.ObservedAt.IsZero() || target.ObservedAt.Before(verification.RefreshStartedAt) {
+		// The 1x1 launch-time refresh is authoritative for this coordinate: the
+		// castle is gone (defeated, or the slot reverted to a dynamic area).
+		// Drop the phantom so the immediate re-evaluation rotates to the next
+		// candidate instead of re-picking this one until the next full scan.
+		application.forgetInvasionTarget(target)
 		return fmt.Errorf(
 			"%w: invasion target %d:%d was not returned by the launch-time map refresh",
 			Intent.ErrPlanStale, target.X, target.Y,
@@ -570,12 +631,38 @@ func (application *Application) guardInvasionTarget(_ context.Context, arguments
 	return nil
 }
 
+// forgetInvasionTarget removes a map observation that a launch-time refresh
+// failed to confirm. Without this the candidate list keeps offering the
+// vanished castle (it was observed after the last full scan) and the policy
+// re-plans it back-to-back until the next full scan — a wire-speed loop of
+// context refreshes and targeted map queries against the game.
+func (application *Application) forgetInvasionTarget(target State.MapObservation) {
+	if application == nil || application.State == nil {
+		return
+	}
+	key := fmt.Sprintf("%d:%d", target.X, target.Y)
+	_, _ = application.State.ApplyComponents(State.Components(State.ComponentWorldMap), func(gameState *State.GameState) ([]string, bool, error) {
+		current, exists := gameState.LookupMapObservation(target.KingdomID, key)
+		if !exists || current.TypeID != target.TypeID {
+			return nil, false, nil
+		}
+		if !gameState.DeleteMapObservation(target.KingdomID, key) {
+			return nil, false, nil
+		}
+		domains := []string{"map"}
+		if domain, retained := State.MapDomainForType(target.TypeID); retained {
+			domains = append(domains, domain)
+		}
+		return domains, true, nil
+	})
+}
+
 func (application *Application) guardInvasionFortify(_ context.Context, arguments json.RawMessage) error {
 	var request invasionAttackRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	request, _, target, err := invasionAttackContext(Intent.PlanningContext{State: state}, mustMarshalInvasionAttackRequest(request))
 	if err != nil {
 		return err
@@ -603,14 +690,12 @@ func (application *Application) consumeInvasionTarget(_ context.Context, argumen
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		observations := gameState.Map[request.KingdomID]
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentWorldMap), func(gameState *State.GameState) ([]string, bool, error) {
 		key := fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)
-		if _, exists := observations[key]; !exists {
+		if !gameState.DeleteMapObservation(request.KingdomID, key) {
 			return nil, false, nil
 		}
-		delete(observations, key)
-		return []string{"map", "invasion"}, true, nil
+		return []string{"map-invasion", "invasion"}, true, nil
 	})
 	return err
 }

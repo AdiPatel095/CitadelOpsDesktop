@@ -18,12 +18,6 @@ const craftingActiveRentalCost = 5_000_000
 
 var craftingQueueRentalCosts = map[int]float64{1: 500_000, 2: 3_000_000, 3: 6_500_000}
 
-type craftingCostDefinition struct {
-	ResourceID State.ResourceID
-	CurrencyID State.CurrencyID
-	JSONKey    string
-}
-
 type craftingCostEvaluation struct {
 	Missing map[State.ResourceID]float64
 	Blocked string
@@ -109,95 +103,37 @@ func craftingRecipeCostState(
 	settings craftingSettings,
 ) (craftingCostEvaluation, error) {
 	result := craftingCostEvaluation{Missing: map[State.ResourceID]float64{}}
-	definitions, err := craftingCostDefinitions(snapshot.GameData)
+	costs, err := GameData.CraftingRecipeCostsView(snapshot.GameData, recipeID)
 	if err != nil {
 		return result, err
 	}
-	catalog, err := snapshot.GameData.Catalog("craftingRecipes")
-	if err != nil {
-		return result, err
-	}
-	raw, exists := catalog.Find(strconv.FormatInt(recipeID, 10))
-	if !exists {
-		return result, fmt.Errorf("crafting recipe %d is not in the official catalog", recipeID)
-	}
-	record, err := GameData.DecodeRecord(raw)
-	if err != nil {
-		return result, err
-	}
-	for field := range record {
-		if !strings.HasPrefix(field, "cost") || field == "cost" {
-			continue
-		}
-		amount, valid := record.Float64(field)
-		if !valid || amount <= 0 {
-			continue
-		}
-		definition := definitions[strings.ToLower(strings.TrimPrefix(field, "cost"))]
-		if definition.ResourceID > 0 {
-			available := castle.Resources[definition.ResourceID].Amount
+	for _, cost := range costs {
+		resourceID := State.ResourceID(cost.ResourceID)
+		if resourceID > 0 {
+			available := castle.Resources[resourceID].Amount
 			reserve := float64(0)
-			switch strings.ToUpper(definition.JSONKey) {
+			switch strings.ToUpper(cost.JSONKey) {
 			case "C1":
-				available = snapshot.State.Player.Resources[definition.ResourceID]
+				available = snapshot.State.Player.Resources[resourceID]
 				reserve = settings.MinimumCoinReserve
 			case "C2":
 				if !settings.AllowRubyRecipes {
 					result.Blocked = "Ruby recipes are disabled"
 					continue
 				}
-				available = snapshot.State.Player.Resources[definition.ResourceID]
+				available = snapshot.State.Player.Resources[resourceID]
 				reserve = settings.MinimumRubyReserve
 			}
-			if available-reserve < amount && transportableResource(definition.JSONKey) {
-				result.Missing[definition.ResourceID] = amount - math.Max(0, available-reserve)
-			} else if available-reserve < amount {
-				result.Blocked = fmt.Sprintf("Insufficient %s above its configured reserve", definition.JSONKey)
+			if available-reserve < cost.Amount && transportableResource(cost.JSONKey) {
+				result.Missing[resourceID] = cost.Amount - math.Max(0, available-reserve)
+			} else if available-reserve < cost.Amount {
+				result.Blocked = fmt.Sprintf("Insufficient %s above its configured reserve", cost.JSONKey)
 			}
 			continue
 		}
-		if definition.CurrencyID > 0 && snapshot.State.Player.Currencies[definition.CurrencyID] < amount {
-			result.Blocked = fmt.Sprintf("Insufficient %s currency", definition.JSONKey)
-		}
-	}
-	return result, nil
-}
-
-func craftingCostDefinitions(store *GameData.Store) (map[string]craftingCostDefinition, error) {
-	if store == nil {
-		return nil, fmt.Errorf("official game data is unavailable")
-	}
-	result := map[string]craftingCostDefinition{}
-	for _, collection := range []string{"resources", "currencies"} {
-		catalog, err := store.Catalog(collection)
-		if err != nil {
-			return nil, err
-		}
-		for _, raw := range catalog.Rows() {
-			record, decodeErr := GameData.DecodeRecord(raw)
-			if decodeErr != nil {
-				continue
-			}
-			jsonKey, _ := record.String("JSONKey")
-			nameField := "name"
-			idField := "resourceID"
-			definition := craftingCostDefinition{JSONKey: jsonKey}
-			if collection == "resources" {
-				id, _ := record.Int64(idField)
-				definition.ResourceID = State.ResourceID(id)
-			} else {
-				nameField, idField = "Name", "currencyID"
-				id, _ := record.Int64(idField)
-				definition.CurrencyID = State.CurrencyID(id)
-			}
-			name, _ := record.String(nameField)
-			assetName, _ := record.String("assetName")
-			for _, alias := range []string{jsonKey, name, assetName} {
-				alias = strings.ToLower(strings.TrimSpace(alias))
-				if alias != "" {
-					result[alias] = definition
-				}
-			}
+		currencyID := State.CurrencyID(cost.CurrencyID)
+		if currencyID > 0 && snapshot.State.Player.Currencies[currencyID] < cost.Amount {
+			result.Blocked = fmt.Sprintf("Insufficient %s currency", cost.JSONKey)
 		}
 	}
 	return result, nil
@@ -697,27 +633,13 @@ func protectedCraftingDemand(settings craftingSettings, snapshot Snapshot, castl
 }
 
 func craftingRecipeResourceCost(store *GameData.Store, recipeID int64, resourceID State.ResourceID) float64 {
-	definitions, err := craftingCostDefinitions(store)
+	costs, err := GameData.CraftingRecipeCostsView(store, recipeID)
 	if err != nil {
 		return 0
 	}
-	catalog, err := store.Catalog("craftingRecipes")
-	if err != nil {
-		return 0
-	}
-	raw, exists := catalog.Find(strconv.FormatInt(recipeID, 10))
-	if !exists {
-		return 0
-	}
-	record, err := GameData.DecodeRecord(raw)
-	if err != nil {
-		return 0
-	}
-	for field := range record {
-		definition := definitions[strings.ToLower(strings.TrimPrefix(field, "cost"))]
-		if strings.HasPrefix(field, "cost") && definition.ResourceID == resourceID {
-			amount, _ := record.Float64(field)
-			return amount
+	for _, cost := range costs {
+		if State.ResourceID(cost.ResourceID) == resourceID {
+			return cost.Amount
 		}
 	}
 	return 0
@@ -725,34 +647,36 @@ func craftingRecipeResourceCost(store *GameData.Store, recipeID int64, resourceI
 
 func incomingMarketResource(snapshot Snapshot, target State.CastleState, resourceID State.ResourceID) float64 {
 	amount := float64(0)
-	for _, movement := range snapshot.State.Movements {
+	snapshot.State.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 0 || movement.KingdomID != target.KingdomID || movement.TargetX != target.X || movement.TargetY != target.Y {
-			continue
+			return true
 		}
 		if movement.ArrivesAt != nil && !movement.ArrivesAt.After(snapshot.Now) {
-			continue
+			return true
 		}
 		for _, good := range movement.MarketGoods {
 			if good.ResourceID == resourceID {
 				amount += good.Amount
 			}
 		}
-	}
+		return true
+	})
 	return amount
 }
 
 func nextMarketArrival(snapshot Snapshot, target State.CastleState, resourceID State.ResourceID, fallback time.Duration) time.Time {
 	next := snapshot.Now.Add(fallback)
-	for _, movement := range snapshot.State.Movements {
+	snapshot.State.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 0 || movement.KingdomID != target.KingdomID || movement.TargetX != target.X || movement.TargetY != target.Y || movement.ArrivesAt == nil {
-			continue
+			return true
 		}
 		for _, good := range movement.MarketGoods {
 			if good.ResourceID == resourceID && movement.ArrivesAt.Before(next) && movement.ArrivesAt.After(snapshot.Now) {
 				next = *movement.ArrivesAt
 			}
 		}
-	}
+		return true
+	})
 	return next
 }
 
@@ -796,65 +720,29 @@ func playerResourceAmount(snapshot Snapshot, jsonKey string) float64 {
 	if snapshot.GameData == nil {
 		return 0
 	}
-	catalog, err := snapshot.GameData.Catalog("resources")
-	if err != nil {
+	id, found := snapshot.GameData.ResourceIDForJSONKey(jsonKey)
+	if !found {
 		return 0
 	}
-	for _, raw := range catalog.Rows() {
-		record, decodeErr := GameData.DecodeRecord(raw)
-		if decodeErr != nil {
-			continue
-		}
-		candidate, _ := record.String("JSONKey")
-		if !strings.EqualFold(candidate, jsonKey) {
-			continue
-		}
-		id, _ := record.Int64("resourceID")
-		return snapshot.State.Player.Resources[State.ResourceID(id)]
-	}
-	return 0
+	return snapshot.State.Player.Resources[State.ResourceID(id)]
 }
 
 func currencyIDForJSONKey(store *GameData.Store, jsonKey string) State.CurrencyID {
 	if store == nil {
 		return 0
 	}
-	catalog, err := store.Catalog("currencies")
-	if err != nil {
+	id, found := store.CurrencyIDForJSONKey(jsonKey)
+	if !found {
 		return 0
 	}
-	for _, raw := range catalog.Rows() {
-		record, decodeErr := GameData.DecodeRecord(raw)
-		if decodeErr != nil {
-			continue
-		}
-		candidate, _ := record.String("JSONKey")
-		if !strings.EqualFold(candidate, jsonKey) {
-			continue
-		}
-		id, _ := record.Int64("currencyID")
-		return State.CurrencyID(id)
-	}
-	return 0
+	return State.CurrencyID(id)
 }
 
 func resourceJSONKey(store *GameData.Store, resourceID State.ResourceID) string {
 	if store == nil || resourceID <= 0 {
 		return ""
 	}
-	catalog, err := store.Catalog("resources")
-	if err != nil {
-		return ""
-	}
-	raw, exists := catalog.Find(strconv.FormatInt(int64(resourceID), 10))
-	if !exists {
-		return ""
-	}
-	record, err := GameData.DecodeRecord(raw)
-	if err != nil {
-		return ""
-	}
-	value, _ := record.String("JSONKey")
+	value, _ := store.ResourceJSONKey(int64(resourceID))
 	return value
 }
 

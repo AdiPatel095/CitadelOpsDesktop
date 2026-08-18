@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
 
@@ -25,6 +26,11 @@ type craCommanderSelectionOptions struct {
 	DefaultCount      int
 	Eligible          map[State.CommanderID]struct{}
 	RequireAvailable  bool
+	// Holds skips commanders that a just-planned launch already took (their
+	// movement is not yet visible in state) and registers the selected ones
+	// for craCommanderLaunchHold, so launch bursts never re-select a
+	// commander into a CRA 256.
+	Holds Intent.CommanderHoldRegistry
 }
 
 type craCommanderResolution struct {
@@ -84,6 +90,7 @@ func resolveCRACommanders(
 		return craCommanderResolution{}, fmt.Errorf("CRA commander selection count may not exceed %d", maximumCRACommanderCount)
 	}
 
+	now := time.Now().UTC()
 	selected := make([]State.CommanderID, 0, count)
 	for _, id := range ordered {
 		if options.Eligible != nil {
@@ -92,7 +99,10 @@ func resolveCRACommanders(
 			}
 		}
 		if options.RequireAvailable && (!gameState.Commanders[id].Available ||
-			State.CommanderHasActiveMovementAt(gameState, id, time.Now().UTC())) {
+			State.CommanderHasActiveMovementAt(gameState, id, now)) {
+			continue
+		}
+		if options.Holds != nil && options.Holds.CommanderHeldAt(id, now) {
 			continue
 		}
 		selected = append(selected, id)
@@ -114,6 +124,12 @@ func resolveCRACommanders(
 		}
 		return craCommanderResolution{}, err
 	}
+	// NOTE: holds are consulted but deliberately NOT registered here. Plan
+	// validation re-runs this selection for the same operation before
+	// dispatch; registering at selection time made the re-plan see its own
+	// commander as taken and fail permanently stale on single-commander
+	// configurations. Until registration moves to the dispatch layer, the
+	// CRA 256 combat cooldown is the sole (and sufficient) burst defense.
 	return craCommanderResolution{Selected: selected, Candidates: candidates, Strategy: strategy}, nil
 }
 

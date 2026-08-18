@@ -151,7 +151,7 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	}
 	target, ok := riftTargetForKingdom(input.State, source.KingdomID)
 	if maidenRun != nil {
-		target, ok = input.State.Map[maidenRun.KingdomID][fmt.Sprintf("%d:%d", maidenRun.TargetX, maidenRun.TargetY)]
+		target, ok = input.State.LookupMapObservation(maidenRun.KingdomID, fmt.Sprintf("%d:%d", maidenRun.TargetX, maidenRun.TargetY))
 		ok = ok && target.TypeID == riftMapTypeID
 	}
 	if !ok {
@@ -195,6 +195,7 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 		defaultCount = 1
 	}
 	resolution, err := resolveCRACommanders(input.State, request.CommanderSelection, craCommanderSelectionOptions{
+		Holds:             input.CommanderHolds,
 		DefaultCandidates: eligibleCommanders,
 		DefaultCount:      defaultCount,
 		Eligible:          eligibleSet,
@@ -316,6 +317,7 @@ func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, a
 		}
 	}
 	resolution, err := resolveCRACommanders(input.State, commanderSelection, craCommanderSelectionOptions{
+		Holds:        input.CommanderHolds,
 		DefaultCount: 1, RequireAvailable: true,
 	})
 	if err != nil {
@@ -570,6 +572,7 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		return Intent.Plan{}, err
 	}
 	resolution, err := resolveCRACommanders(input.State, request.CommanderSelection, craCommanderSelectionOptions{
+		Holds:             input.CommanderHolds,
 		DefaultCandidates: []State.CommanderID{State.CommanderID(rawMapInt(fields, "LID"))},
 		DefaultCount:      1,
 		RequireAvailable:  !scheduled,
@@ -940,7 +943,7 @@ func planRiftTemplateDelete(_ context.Context, input Intent.PlanningContext, arg
 	}, nil
 }
 
-func (application *Application) renameRiftTemplate(_ context.Context, arguments json.RawMessage) error {
+func (application *Application) renameRiftTemplate(ctx context.Context, arguments json.RawMessage) error {
 	var request struct {
 		LaunchID    string `json:"launchId"`
 		DisplayName string `json:"displayName"`
@@ -948,7 +951,7 @@ func (application *Application) renameRiftTemplate(_ context.Context, arguments 
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	event, err := application.State.ApplyComponents(State.Components(State.ComponentRift), func(gameState *State.GameState) ([]string, bool, error) {
 		launch, exists := gameState.Rift.Launches[request.LaunchID]
 		if !exists {
 			return nil, false, fmt.Errorf("Rift launch %q was not found", request.LaunchID)
@@ -964,17 +967,17 @@ func (application *Application) renameRiftTemplate(_ context.Context, arguments 
 	if err != nil {
 		return err
 	}
-	return application.saveStateSnapshot()
+	return application.saveStateEvent(ctx, event)
 }
 
-func (application *Application) deleteRiftTemplate(_ context.Context, arguments json.RawMessage) error {
+func (application *Application) deleteRiftTemplate(ctx context.Context, arguments json.RawMessage) error {
 	var request struct {
 		LaunchID string `json:"launchId"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	event, err := application.State.ApplyComponents(State.Components(State.ComponentRift), func(gameState *State.GameState) ([]string, bool, error) {
 		if _, exists := gameState.Rift.Launches[request.LaunchID]; !exists {
 			return nil, false, nil
 		}
@@ -991,7 +994,7 @@ func (application *Application) deleteRiftTemplate(_ context.Context, arguments 
 	if err != nil {
 		return err
 	}
-	return application.saveStateSnapshot()
+	return application.saveStateEvent(ctx, event)
 }
 
 func roundUpUnixMinute(value int64) int64 {
@@ -1122,12 +1125,16 @@ func sourceCastle(state State.GameState, requested State.CastleID) (State.Castle
 }
 
 func riftTargetForKingdom(state State.GameState, kingdomID State.KingdomID) (State.MapObservation, bool) {
-	for _, observation := range state.Map[kingdomID] {
+	var target State.MapObservation
+	found := false
+	state.RangeMapObservationsByKind(kingdomID, State.MapProjectionRift, func(_ string, observation State.MapObservation) bool {
 		if observation.TypeID == riftMapTypeID {
-			return observation, true
+			target, found = observation, true
+			return false
 		}
-	}
-	return State.MapObservation{}, false
+		return true
+	})
+	return target, found
 }
 
 func eligibleMaidenCommanders(state State.GameState) []State.CommanderID {

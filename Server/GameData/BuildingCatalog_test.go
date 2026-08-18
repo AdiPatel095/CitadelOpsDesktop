@@ -53,3 +53,97 @@ func TestBuildingCatalogDecodesPlanningFieldsAndCosts(t *testing.T) {
 		t.Fatalf("cost references were not resolved: %#v", costs)
 	}
 }
+
+func TestBuildingCatalogImmutableViewsCachePathsAndKeepPublicCopiesDefensive(t *testing.T) {
+	catalog := testBuildingPathCatalog()
+	first, found := catalog.UpgradePathView(1, 3)
+	if !found || len(first) != 3 {
+		t.Fatalf("upgrade path = %#v, found %t", first, found)
+	}
+	second, found := catalog.UpgradePathView(1, 3)
+	if !found || &first[0] != &second[0] {
+		t.Fatal("immutable upgrade path was not reused")
+	}
+	construction, found := catalog.ConstructionPathView(3)
+	if !found || len(construction) != 3 || construction[0].ID != 1 {
+		t.Fatalf("construction path = %#v, found %t", construction, found)
+	}
+
+	publicPath, found := catalog.UpgradePath(1, 3)
+	if !found {
+		t.Fatal("public upgrade path was not found")
+	}
+	publicPath[0].Values["capacity"] = 999
+	publicPath[0].Costs[0].Amount = 999
+	publicAgain, _ := catalog.UpgradePath(1, 3)
+	if publicAgain[0].Values["capacity"] != 1 || publicAgain[0].Costs[0].Amount != 10 {
+		t.Fatalf("public path mutation reached catalog data: %#v", publicAgain[0])
+	}
+
+	definition, found := catalog.Definition(1)
+	if !found {
+		t.Fatal("public definition was not found")
+	}
+	definition.Values["capacity"] = 777
+	view, _ := catalog.DefinitionView(1)
+	if view.Values["capacity"] != 1 {
+		t.Fatalf("public definition mutation reached immutable view: %#v", view.Values)
+	}
+}
+
+func testBuildingPathCatalog() *BuildingCatalog {
+	definitions := []BuildingDefinition{
+		{ID: 1, UpgradeDefinitionID: 2, Values: map[string]float64{"capacity": 1}, Costs: []BuildingCost{{Amount: 10}}},
+		{ID: 2, UpgradeDefinitionID: 3, DowngradeDefinitionID: 1, Values: map[string]float64{"capacity": 2}},
+		{ID: 3, DowngradeDefinitionID: 2, Values: map[string]float64{"capacity": 3}},
+	}
+	byID := make(map[int64]BuildingDefinition, len(definitions))
+	for _, definition := range definitions {
+		byID[definition.ID] = definition
+	}
+	return &BuildingCatalog{definitions: definitions, byID: byID}
+}
+
+func BenchmarkBuildingCatalogDefinitionClone(benchmark *testing.B) {
+	catalog := testBuildingPathCatalog()
+	benchmark.ReportAllocs()
+	for benchmark.Loop() {
+		if _, found := catalog.Definition(1); !found {
+			benchmark.Fatal("definition missing")
+		}
+	}
+}
+
+func BenchmarkBuildingCatalogDefinitionView(benchmark *testing.B) {
+	catalog := testBuildingPathCatalog()
+	benchmark.ReportAllocs()
+	for benchmark.Loop() {
+		if _, found := catalog.DefinitionView(1); !found {
+			benchmark.Fatal("definition missing")
+		}
+	}
+}
+
+func BenchmarkBuildingCatalogUpgradePathClone(benchmark *testing.B) {
+	catalog := testBuildingPathCatalog()
+	benchmark.ReportAllocs()
+	for benchmark.Loop() {
+		if _, found := catalog.UpgradePath(1, 3); !found {
+			benchmark.Fatal("path missing")
+		}
+	}
+}
+
+func BenchmarkBuildingCatalogUpgradePathView(benchmark *testing.B) {
+	catalog := testBuildingPathCatalog()
+	if _, found := catalog.UpgradePathView(1, 3); !found {
+		benchmark.Fatal("path missing")
+	}
+	benchmark.ReportAllocs()
+	benchmark.ResetTimer()
+	for benchmark.Loop() {
+		if _, found := catalog.UpgradePathView(1, 3); !found {
+			benchmark.Fatal("path missing")
+		}
+	}
+}

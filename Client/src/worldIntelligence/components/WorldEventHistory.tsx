@@ -1,15 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, History, RefreshCw, Search, Trophy } from 'lucide-react';
-import { CitadelAPI } from '../../api/CitadelClient';
+import { CitadelAPI, type WorldIntelligenceSubscriptionStatus } from '../../api/CitadelClient';
 import type {
 	WorldIntelligenceEventRunV1,
+	WorldIntelligenceEventRunRankingV1,
+	WorldIntelligenceEventRunRankingDeltaV1,
+	WorldIntelligenceEventRunRankingSnapshotV1,
 	WorldIntelligenceEventScoreObservationV1,
 	WorldIntelligencePlayerEventScoreHistoryV1,
 	WorldIntelligenceRankingEntryV1,
+	WorldIntelligenceRankingResponseV1,
+	WorldIntelligenceUpdateManifestV1,
 } from '../../api/Contracts';
 import { Badge, Button, Card, CardContent, EmptyState, Input, MetricTile, Select } from '../../components/ui';
 
 const eventPageSize = 25;
+const metadataRefreshInterval = 30_000;
 const allEvents = '__all_events__';
 const allLeagues = '__all_leagues__';
 
@@ -39,11 +45,13 @@ type EventBoard = {
 	entries: EventLeaderboardRow[];
 	run?: WorldIntelligenceEventRunV1;
 };
-type EventBoardGroup = {
+type EventRunGroup = {
 	key: string;
 	title: string;
-	boards: EventBoard[];
+	runs: WorldIntelligenceEventRunV1[];
+	publicBoard?: EventBoard;
 };
+type CachedRunBoards = { revision: number; lastObservedAt: string; response: WorldIntelligenceEventRunRankingV1 };
 type EventSortKey = 'name' | 'might' | 'honor' | 'alliance' | 'rank' | 'score';
 type EventSort = { key: EventSortKey; direction: 'ascending' | 'descending' };
 
@@ -54,6 +62,7 @@ const stormBoard = {
 	leagueId: 1,
 	metric: 'public:storm-cargo-points',
 };
+const stormRunKey = `public-metric:${stormBoard.metric}`;
 
 interface WorldEventHistoryProps {
 	worldId: string;
@@ -61,6 +70,8 @@ interface WorldEventHistoryProps {
 	eventScores?: number;
 	currentPlayerId?: number;
 	currentLeagueByEvent?: Record<number, number>;
+	worldUpdate?: WorldIntelligenceUpdateManifestV1 | null;
+	updateStreamConnected?: boolean;
 	onOpenPlayer: (playerId: number, worldId: string) => void;
 	onOpenAlliance: (allianceId: number, worldId: string) => void;
 }
@@ -71,11 +82,16 @@ export const WorldEventHistory = ({
 	eventScores = 0,
 	currentPlayerId,
 	currentLeagueByEvent,
+	worldUpdate,
+	updateStreamConnected = false,
 	onOpenPlayer,
 	onOpenAlliance,
 }: WorldEventHistoryProps) => {
-	const [boards, setBoards] = useState<EventBoard[]>([]);
+	const [runs, setRuns] = useState<WorldIntelligenceEventRunV1[]>([]);
+	const [runBoards, setRunBoards] = useState<Record<string, CachedRunBoards>>({});
+	const [stormPublicBoard, setStormPublicBoard] = useState<EventBoard | null>(null);
 	const [event, setEvent] = useState('');
+	const [run, setRun] = useState('');
 	const [board, setBoard] = useState('');
 	const [league, setLeague] = useState(allLeagues);
 	const [leagueDefinitions, setLeagueDefinitions] = useState<LeagueDefinition[]>([]);
@@ -83,28 +99,30 @@ export const WorldEventHistory = ({
 	const [searchQuery, setSearchQuery] = useState('');
 	const [sort, setSort] = useState<EventSort>({ key: 'rank', direction: 'ascending' });
 	const [page, setPage] = useState(0);
-	const [loading, setLoading] = useState(false);
+	const [directoryLoading, setDirectoryLoading] = useState(false);
+	const [boardLoading, setBoardLoading] = useState(false);
+	const [boardStreamStatus, setBoardStreamStatus] = useState<WorldIntelligenceSubscriptionStatus>('connecting');
+	const [boardRefreshToken, setBoardRefreshToken] = useState(0);
 	const [error, setError] = useState('');
+	const directoryRequest = useRef(0);
+	const metadataRefreshInFlight = useRef(false);
+	const previousWorldUpdate = useRef<WorldIntelligenceUpdateManifestV1 | null>(null);
 
-	const refreshBoards = useCallback(async () => {
-		if (!worldId) {
-			setBoards([]);
-			setEvent('');
-			setBoard('');
-			return;
-		}
-		setLoading(true);
-		setError('');
-		try {
-			const [runResponse, regularResponses, stormResponse] = await Promise.all([
-				CitadelAPI.getWorldIntelligenceEventRuns({ worldId, limit: 250 }),
-				Promise.allSettled(['might', 'honor'].map((metric) => (
-					CitadelAPI.getWorldIntelligenceRankings({ worldId, type: 'players', metric, limit: 250 })
-				))),
-				CitadelAPI.getWorldIntelligenceRankings({ worldId, type: 'players', metric: stormBoard.metric, limit: 250 })
-					.then((response) => ({ response, available: true as const }))
-					.catch(() => ({ response: null, available: false as const })),
-			]);
+	const loadRunMetadata = useCallback(async (requestID: number) => {
+		const response = await CitadelAPI.getWorldIntelligenceEventRuns({ worldId, limit: 25 });
+		if (requestID === directoryRequest.current) setRuns(visibleEventRuns(response.runs ?? []));
+	}, [worldId]);
+
+	const loadReferenceRankings = useCallback(async (requestID: number) => {
+		const [regularResponses, stormResponse] = await Promise.all([
+			Promise.allSettled(['might', 'honor'].map((metric) => (
+				CitadelAPI.getWorldIntelligenceRankings({ worldId, type: 'players', metric, limit: 250 })
+			))),
+			CitadelAPI.getWorldIntelligenceRankings({ worldId, type: 'players', metric: stormBoard.metric, limit: 250 })
+				.then((response) => ({ response, available: true as const }))
+				.catch(() => ({ response: null, available: false as const })),
+		]);
+		if (requestID === directoryRequest.current) {
 			const playerIndex = new Map<number, WorldIntelligenceRankingEntryV1>();
 			for (const result of regularResponses) {
 				if (result.status !== 'fulfilled') continue;
@@ -128,87 +146,75 @@ export const WorldEventHistory = ({
 				});
 			}
 			setRegularPlayers(playerIndex);
-
-			const allRuns = runResponse.runs ?? [];
-			const activeCutoff = Date.now() - 10 * 60 * 1_000;
-			const orderedRuns = [...allRuns].sort((left, right) => Date.parse(right.eventEndsAt) - Date.parse(left.eventEndsAt));
-			const activeRuns = orderedRuns.filter((run) => Date.parse(run.eventEndsAt) >= activeCutoff);
-			const completedRuns = orderedRuns.filter((run) => Date.parse(run.eventEndsAt) < activeCutoff);
-			const activeLimit = completedRuns.length > 0 ? 8 : 12;
-			const visibleRuns = [...activeRuns.slice(0, activeLimit), ...completedRuns].slice(0, 12);
-			const rankingResults = await Promise.allSettled(visibleRuns.map((run) => (
-				CitadelAPI.getWorldIntelligenceEventRunRankings({ worldId, occurrenceId: run.occurrenceId, limit: 5_000 })
-			)));
-			const nextBoards: EventBoard[] = [];
-			for (let index = 0; index < rankingResults.length; index += 1) {
-				const result = rankingResults[index];
-				if (result.status !== 'fulfilled') continue;
-				const run = result.value.run ?? visibleRuns[index];
-				const groups = new Map<string, WorldIntelligenceEventScoreObservationV1[]>();
-				for (const entry of result.value.entries ?? []) {
-					const identity = eventBoardIdentity(entry);
-					const group = groups.get(identity) ?? [];
-					group.push(entry);
-					groups.set(identity, group);
-				}
-				for (const [identity, entries] of groups) {
-					const sample = entries[0];
-					nextBoards.push({
-						key: `${run.occurrenceId}:${identity}`,
-						eventId: run.eventId,
-						eventName: run.eventName || humanizeKey(run.eventKey),
-						listType: sample.listType,
-						boardKey: sample.boardKey ?? '',
-						entries,
-						run,
-					});
-				}
-			}
-			const stormEntries = stormResponse.response?.entries ?? [];
-			if (stormResponse.available && stormEntries.length > 0) {
-				nextBoards.push({
-					key: `public-metric:${stormBoard.metric}`,
-					eventId: stormBoard.eventId,
-					eventName: stormBoard.eventName,
-					listType: stormBoard.listType,
-					boardKey: '',
-					entries: stormEntries.map((entry) => ({
-						worldId: entry.worldId,
-						eventId: stormBoard.eventId,
-						listType: stormBoard.listType,
-						leagueId: stormBoard.leagueId,
-						playerId: entry.id,
-						playerName: entry.name,
-						allianceId: entry.allianceId,
-						allianceName: entry.allianceName,
-						rank: entry.rank,
-						score: entry.value,
-						scoreKnown: true,
-						scoreUnit: 'points',
-						observedAt: entry.lastObservedAt,
-					})),
-				});
-			}
-			nextBoards.sort((left, right) => (
-				eventBoardTitle(left).localeCompare(eventBoardTitle(right))
-				|| eventBoardEndTimestamp(right) - eventBoardEndTimestamp(left)
-				|| left.key.localeCompare(right.key)
-			));
-			setBoards(nextBoards);
-		} catch (requestError) {
-			setBoards([]);
-			setEvent('');
-			setBoard('');
-			setRegularPlayers(new Map());
-			setError(errorMessage(requestError, 'Could not load event boards.'));
-		} finally {
-			setLoading(false);
+			setStormPublicBoard(stormResponse.available ? stormPublicRankingBoard(stormResponse.response) : null);
 		}
 	}, [worldId]);
 
+	const refreshDirectory = useCallback(async () => {
+		const requestID = ++directoryRequest.current;
+		if (!worldId) {
+			setRuns([]);
+			setRegularPlayers(new Map());
+			setStormPublicBoard(null);
+			setDirectoryLoading(false);
+			return;
+		}
+		setDirectoryLoading(true);
+		setError('');
+		try {
+			await Promise.all([loadRunMetadata(requestID), loadReferenceRankings(requestID)]);
+		} catch (requestError) {
+			if (requestID === directoryRequest.current) {
+				setError(errorMessage(requestError, 'Could not load event directory.'));
+			}
+		} finally {
+			if (requestID === directoryRequest.current) setDirectoryLoading(false);
+		}
+	}, [loadReferenceRankings, loadRunMetadata, worldId]);
+
 	useEffect(() => {
-		void refreshBoards();
-	}, [refreshBoards]);
+		setEvent('');
+		setRun('');
+		setBoard('');
+		setRuns([]);
+		setRunBoards({});
+		setRegularPlayers(new Map());
+		setStormPublicBoard(null);
+		previousWorldUpdate.current = null;
+		void refreshDirectory();
+	}, [refreshDirectory]);
+
+	useEffect(() => {
+		if (!worldId || updateStreamConnected) return;
+		const refreshMetadata = async () => {
+			if (metadataRefreshInFlight.current) return;
+			metadataRefreshInFlight.current = true;
+			const requestID = directoryRequest.current;
+			try {
+				await Promise.all([loadRunMetadata(requestID), loadReferenceRankings(requestID)]);
+			} catch {
+				// Preserve the last usable directory; the manual refresh surfaces errors.
+			} finally {
+				metadataRefreshInFlight.current = false;
+			}
+		};
+		const interval = window.setInterval(() => void refreshMetadata(), metadataRefreshInterval);
+		return () => window.clearInterval(interval);
+	}, [loadReferenceRankings, loadRunMetadata, updateStreamConnected, worldId]);
+
+	useEffect(() => {
+		if (!worldUpdate || worldUpdate.worldId !== normalizeWorldID(worldId)) return;
+		const previous = previousWorldUpdate.current;
+		previousWorldUpdate.current = worldUpdate;
+		if (!previous) return;
+		const requestID = directoryRequest.current;
+		if (worldUpdate.eventRunsRevision > previous.eventRunsRevision) {
+			void loadRunMetadata(requestID).catch(() => undefined);
+		}
+		if (worldUpdate.rankingsRevision > previous.rankingsRevision) {
+			void loadReferenceRankings(requestID).catch(() => undefined);
+		}
+	}, [loadReferenceRankings, loadRunMetadata, worldId, worldUpdate]);
 
 	useEffect(() => {
 		void CitadelAPI.getWorldIntelligenceCatalogDataset('leaguetypes', 1)
@@ -216,21 +222,105 @@ export const WorldEventHistory = ({
 			.catch(() => setLeagueDefinitions([]));
 	}, []);
 
-	const eventGroups = useMemo(() => groupEventBoards(boards), [boards]);
+	const eventGroups = useMemo(() => groupEventRuns(runs, stormPublicBoard), [runs, stormPublicBoard]);
 	const selectedEventKey = eventGroups.some((candidate) => candidate.key === event)
 		? event
 		: eventGroups[0]?.key ?? '';
 	const selectedEvent = eventGroups.find((candidate) => candidate.key === selectedEventKey) ?? null;
-	const selectedBoardKey = selectedEvent?.boards.some((candidate) => candidate.key === board)
+	const selectedRunKey = selectedEvent?.publicBoard
+		? stormRunKey
+		: selectedEvent?.runs.some((candidate) => candidate.occurrenceId === run)
+			? run
+			: selectedEvent?.runs[0]?.occurrenceId ?? '';
+	const selectedRun = selectedEvent?.runs.find((candidate) => candidate.occurrenceId === selectedRunKey) ?? null;
+	const cachedRun = selectedRun ? runBoards[selectedRun.occurrenceId] : undefined;
+	const selectedRunObservedAt = selectedRun?.lastObservedAt ?? '';
+	const cachedRunObservedAt = cachedRun?.lastObservedAt ?? '';
+
+	useEffect(() => {
+		if (!worldId || !selectedRunKey || selectedRunKey === stormRunKey) {
+			setBoardStreamStatus('connected');
+			setBoardLoading(false);
+			return;
+		}
+		setBoardStreamStatus('connecting');
+		setBoardLoading(true);
+		setError('');
+		return CitadelAPI.subscribeWorldIntelligenceLeaderboard(
+			{ worldId, occurrenceId: selectedRunKey },
+			(snapshot: WorldIntelligenceEventRunRankingSnapshotV1) => {
+				setRunBoards((current) => ({
+					...current,
+					[selectedRunKey]: {
+						revision: snapshot.revision,
+						lastObservedAt: snapshot.run.lastObservedAt,
+						response: { run: snapshot.run, entries: snapshot.entries },
+					},
+				}));
+				setBoardLoading(false);
+				setError('');
+			},
+			(delta: WorldIntelligenceEventRunRankingDeltaV1) => {
+				setRunBoards((current) => {
+					const existing = current[selectedRunKey];
+					if (!existing || delta.revision <= existing.revision) return current;
+					const response = applyEventRunRankingDelta(existing.response, delta);
+					return {
+						...current,
+						[selectedRunKey]: {
+							revision: delta.revision,
+							lastObservedAt: delta.run.lastObservedAt,
+							response,
+						},
+					};
+				});
+				setBoardLoading(false);
+			},
+			(status) => setBoardStreamStatus(status),
+		);
+	}, [boardRefreshToken, selectedRunKey, worldId]);
+
+	useEffect(() => {
+		if (!worldId || !selectedRunKey || selectedRunKey === stormRunKey || boardStreamStatus !== 'reconnecting' ||
+			cachedRunObservedAt === selectedRunObservedAt) return;
+		let cancelled = false;
+		setBoardLoading(true);
+		setError('');
+		void CitadelAPI.getWorldIntelligenceEventRunRankings({ worldId, occurrenceId: selectedRunKey, limit: 5_000 })
+			.then((response) => {
+				if (cancelled) return;
+				setRunBoards((current) => ({
+					...current,
+					[selectedRunKey]: {
+						revision: current[selectedRunKey]?.revision ?? 0,
+						lastObservedAt: response.run.lastObservedAt || selectedRunObservedAt,
+						response,
+					},
+				}));
+			})
+			.catch((requestError) => {
+				if (!cancelled) setError(errorMessage(requestError, 'Could not load the selected event leaderboard.'));
+			})
+			.finally(() => {
+				if (!cancelled) setBoardLoading(false);
+				});
+		return () => { cancelled = true; };
+	}, [boardStreamStatus, cachedRunObservedAt, selectedRunKey, selectedRunObservedAt, worldId]);
+
+	const availableBoards = selectedEvent?.publicBoard
+		? [selectedEvent.publicBoard]
+		: cachedRun ? eventBoardsFromRun(cachedRun.response) : [];
+	const selectedBoardKey = availableBoards.some((candidate) => candidate.key === board)
 		? board
-		: selectedEvent?.boards[0]?.key ?? '';
-	const selectedBoard = selectedEvent?.boards.find((candidate) => candidate.key === selectedBoardKey) ?? null;
+		: availableBoards[0]?.key ?? '';
+	const selectedBoard = availableBoards.find((candidate) => candidate.key === selectedBoardKey) ?? null;
 	const eventOptions = eventGroups.map((candidate) => ({ value: candidate.key, label: candidate.title }));
-	const runOptions = (selectedEvent?.boards ?? []).map((candidate) => ({
-		value: candidate.key,
-		label: eventBoardRunLabel(candidate),
-	}));
+	const runOptions = selectedEvent?.publicBoard
+		? [{ value: stormRunKey, label: 'Current public ranking' }]
+		: (selectedEvent?.runs ?? []).map((candidate) => ({ value: candidate.occurrenceId, label: eventRunLabel(candidate) }));
 	const needsRunSelector = runOptions.length > 1;
+	const boardOptions = availableBoards.map((candidate) => ({ value: candidate.key, label: eventBoardVariantLabel(candidate) }));
+	const needsBoardSelector = boardOptions.length > 1;
 	const boardEntries = useMemo(() => selectedBoard?.entries ?? [], [selectedBoard]);
 	const availableLeagueIds = useMemo(
 		() => [...new Set(boardEntries.map((entry) => entry.leagueId))].sort((left, right) => left - right),
@@ -280,13 +370,31 @@ export const WorldEventHistory = ({
 	const pageCount = Math.max(1, Math.ceil(entries.length / eventPageSize));
 	const safePage = Math.min(page, pageCount - 1);
 	const visibleEntries = entries.slice(safePage * eventPageSize, (safePage + 1) * eventPageSize);
-	const loadedScoreRows = boards.reduce((total, candidate) => total + candidate.entries.length, 0);
-	const knownRunCount = Math.max(eventRuns, new Set(boards.flatMap((candidate) => candidate.run ? [candidate.run.occurrenceId] : [])).size);
-	const filterGridColumns = needsRunSelector && needsLeagueSelector
+	const loadedBoards = [
+		...Object.values(runBoards).flatMap((candidate) => eventBoardsFromRun(candidate.response)),
+		...(stormPublicBoard ? [stormPublicBoard] : []),
+	];
+	const loadedScoreRows = loadedBoards.reduce((total, candidate) => total + candidate.entries.length, 0);
+	const knownRunCount = Math.max(eventRuns, runs.length);
+	const optionalFilterCount = Number(needsRunSelector) + Number(needsBoardSelector) + Number(needsLeagueSelector);
+	const filterGridColumns = optionalFilterCount >= 2
 		? 'xl:grid-cols-4'
-		: needsRunSelector || needsLeagueSelector
+		: optionalFilterCount === 1
 			? 'xl:grid-cols-3'
 			: 'xl:grid-cols-2';
+	const loading = directoryLoading || boardLoading;
+	const refreshBoards = useCallback(() => {
+		if (selectedRunKey && selectedRunKey !== stormRunKey) {
+			setRunBoards((current) => {
+				if (!(selectedRunKey in current)) return current;
+				const next = { ...current };
+				delete next[selectedRunKey];
+				return next;
+			});
+			setBoardRefreshToken((current) => current + 1);
+		}
+		void refreshDirectory();
+	}, [refreshDirectory, selectedRunKey]);
 
 	return (
 		<div>
@@ -299,15 +407,20 @@ export const WorldEventHistory = ({
 			</div>
 			<div className="mb-4 flex flex-wrap gap-2">
 				<Badge variant="outline">{formatCount(knownRunCount)} collected runs</Badge>
-				<Badge variant="outline">{eventScores > 0 ? `${formatCount(eventScores)} score observations` : `${formatCount(loadedScoreRows)} current score rows`}</Badge>
-				<Badge variant="outline">{formatCount(boards.length)} event leaderboards loaded</Badge>
+				<Badge variant="outline">{eventScores > 0 ? `${formatCount(eventScores)} current score rows` : `${formatCount(loadedScoreRows)} current score rows`}</Badge>
+				<Badge variant="outline">{formatCount(loadedBoards.length)} event leaderboards cached</Badge>
+				{selectedRunKey && selectedRunKey !== stormRunKey && (
+					<Badge variant={boardStreamStatus === 'connected' ? 'success' : 'warning'}>
+						{boardLoading || boardStreamStatus === 'connecting' ? 'Loading leaderboard base' : boardStreamStatus === 'connected' ? 'Leaderboard subscribed' : 'Leaderboard fallback active'}
+					</Badge>
+				)}
 			</div>
 
 			{error && <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">{error}</div>}
 
-			{loading && boards.length === 0 ? (
+			{directoryLoading && eventGroups.length === 0 ? (
 				<div className="flex min-h-72 items-center justify-center text-sm text-text-muted">Loading event history…</div>
-			) : boards.length === 0 ? (
+			) : eventGroups.length === 0 ? (
 				<EmptyState
 					size="md"
 					icon={<CalendarDays className="h-6 w-6" />}
@@ -324,7 +437,8 @@ export const WorldEventHistory = ({
 								onChange={(value) => {
 									const nextEvent = eventGroups.find((candidate) => candidate.key === value);
 									setEvent(value);
-									setBoard(nextEvent?.boards[0]?.key ?? '');
+									setRun(nextEvent?.publicBoard ? stormRunKey : nextEvent?.runs[0]?.occurrenceId ?? '');
+									setBoard('');
 									setPage(0);
 								}}
 								options={eventOptions}
@@ -337,10 +451,20 @@ export const WorldEventHistory = ({
 						{needsRunSelector && <div>
 							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Event dates</div>
 							<Select
-								value={selectedBoardKey}
-								onChange={(value) => { setBoard(value); setPage(0); }}
+								value={selectedRunKey}
+								onChange={(value) => { setRun(value); setBoard(''); setPage(0); }}
 								options={runOptions}
 								ariaLabel="Select an event session by date range"
+								menuGrowToViewport
+							/>
+						</div>}
+						{needsBoardSelector && <div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Leaderboard</div>
+							<Select
+								value={selectedBoardKey}
+								onChange={(value) => { setBoard(value); setPage(0); }}
+								options={boardOptions}
+								ariaLabel="Select an event leaderboard"
 								menuGrowToViewport
 							/>
 						</div>}
@@ -627,46 +751,146 @@ function eventBoardTitle(board: EventBoard): string {
 	return `${board.eventName}${publicVariant}`;
 }
 
-function groupEventBoards(boards: readonly EventBoard[]): EventBoardGroup[] {
-	const groups = new Map<string, EventBoardGroup>();
-	for (const board of boards) {
-		const key = eventBoardGroupKey(board);
-		const group = groups.get(key) ?? { key, title: eventBoardTitle(board), boards: [] };
-		group.boards.push(board);
+function visibleEventRuns(allRuns: readonly WorldIntelligenceEventRunV1[]): WorldIntelligenceEventRunV1[] {
+	const activeCutoff = Date.now() - 10 * 60 * 1_000;
+	const orderedRuns = [...allRuns].sort((left, right) => Date.parse(right.eventEndsAt) - Date.parse(left.eventEndsAt));
+	const activeRuns = orderedRuns.filter((run) => Date.parse(run.eventEndsAt) >= activeCutoff);
+	const completedRuns = orderedRuns.filter((run) => Date.parse(run.eventEndsAt) < activeCutoff);
+	const activeLimit = completedRuns.length > 0 ? 8 : 12;
+	return [...activeRuns.slice(0, activeLimit), ...completedRuns].slice(0, 12);
+}
+
+function eventBoardsFromRun(response: WorldIntelligenceEventRunRankingV1): EventBoard[] {
+	const groups = new Map<string, WorldIntelligenceEventScoreObservationV1[]>();
+	for (const entry of response.entries ?? []) {
+		const identity = eventBoardIdentity(entry);
+		const entries = groups.get(identity) ?? [];
+		entries.push(entry);
+		groups.set(identity, entries);
+	}
+	const boards: EventBoard[] = [];
+	for (const [identity, entries] of groups) {
+		const sample = entries[0];
+		boards.push({
+			key: `${response.run.occurrenceId}:${identity}`,
+			eventId: response.run.eventId,
+			eventName: response.run.eventName || humanizeKey(response.run.eventKey),
+			listType: sample.listType,
+			boardKey: sample.boardKey ?? '',
+			entries,
+			run: response.run,
+		});
+	}
+	if (boards.length === 0) {
+		boards.push({
+			key: `${response.run.occurrenceId}:empty`,
+			eventId: response.run.eventId,
+			eventName: response.run.eventName || humanizeKey(response.run.eventKey),
+			listType: 0,
+			boardKey: '',
+			entries: [],
+			run: response.run,
+		});
+	}
+	return boards.sort((left, right) => left.listType - right.listType || left.boardKey.localeCompare(right.boardKey));
+}
+
+function applyEventRunRankingDelta(
+	current: WorldIntelligenceEventRunRankingV1,
+	delta: WorldIntelligenceEventRunRankingDeltaV1,
+): WorldIntelligenceEventRunRankingV1 {
+	const entries = new Map<string, WorldIntelligenceEventScoreObservationV1>();
+	for (const entry of current.entries ?? []) entries.set(eventScoreIdentity(entry), entry);
+	for (const removed of delta.removed ?? []) entries.delete(eventScoreIdentity(removed));
+	for (const entry of delta.upserts ?? []) entries.set(eventScoreIdentity(entry), entry);
+	return {
+		run: delta.run,
+		entries: [...entries.values()].sort((left, right) => (
+			left.listType - right.listType
+			|| left.leagueId - right.leagueId
+			|| left.rank - right.rank
+			|| left.playerId - right.playerId
+		)),
+	};
+}
+
+function eventScoreIdentity(
+	entry: Pick<WorldIntelligenceEventScoreObservationV1, 'listType' | 'leagueId' | 'playerId'>,
+): string {
+	return `${entry.listType}:${entry.leagueId}:${entry.playerId}`;
+}
+
+function stormPublicRankingBoard(response: WorldIntelligenceRankingResponseV1 | null): EventBoard | null {
+	const entries = response?.entries ?? [];
+	if (entries.length === 0) return null;
+	return {
+		key: stormRunKey,
+		eventId: stormBoard.eventId,
+		eventName: stormBoard.eventName,
+		listType: stormBoard.listType,
+		boardKey: '',
+		entries: entries.map((entry) => ({
+			worldId: entry.worldId,
+			eventId: stormBoard.eventId,
+			listType: stormBoard.listType,
+			leagueId: stormBoard.leagueId,
+			playerId: entry.id,
+			playerName: entry.name,
+			allianceId: entry.allianceId,
+			allianceName: entry.allianceName,
+			rank: entry.rank,
+			score: entry.value,
+			scoreKnown: true,
+			scoreUnit: 'points',
+			observedAt: entry.lastObservedAt,
+		})),
+	};
+}
+
+function groupEventRuns(runs: readonly WorldIntelligenceEventRunV1[], publicBoard: EventBoard | null): EventRunGroup[] {
+	const groups = new Map<string, EventRunGroup>();
+	for (const run of runs) {
+		const eventKey = run.eventKey.trim().toLocaleLowerCase() || `event-${run.eventId}`;
+		const key = `${eventKey}:${run.eventId}`;
+		const group = groups.get(key) ?? {
+			key,
+			title: run.eventName || humanizeKey(run.eventKey),
+			runs: [],
+		};
+		group.runs.push(run);
 		groups.set(key, group);
+	}
+	if (publicBoard) {
+		groups.set(stormRunKey, {
+			key: stormRunKey,
+			title: publicBoard.eventName,
+			runs: [],
+			publicBoard,
+		});
 	}
 	return [...groups.values()]
 		.map((group) => ({
 			...group,
-			boards: group.boards.sort((left, right) => (
-				eventBoardEndTimestamp(right) - eventBoardEndTimestamp(left)
-				|| left.key.localeCompare(right.key)
-			)),
+			runs: group.runs.sort((left, right) => Date.parse(right.eventEndsAt) - Date.parse(left.eventEndsAt)),
 		}))
 		.sort((left, right) => left.title.localeCompare(right.title) || left.key.localeCompare(right.key));
 }
 
-function eventBoardGroupKey(board: EventBoard): string {
-	const eventKey = board.run?.eventKey.trim().toLocaleLowerCase() || `event-${board.eventId}`;
-	return `${eventKey}:${board.eventId}:${board.listType}:${board.boardKey}`;
-}
-
-function eventBoardRunLabel(board: EventBoard): string {
-	if (!board.run) return 'Current public ranking';
-	const startTimestamp = Date.parse(`${board.run.runStartedOn}T00:00:00Z`);
-	const endTimestamp = Date.parse(board.run.eventEndsAt);
+function eventRunLabel(run: WorldIntelligenceEventRunV1): string {
+	const startTimestamp = Date.parse(`${run.runStartedOn}T00:00:00Z`);
+	const endTimestamp = Date.parse(run.eventEndsAt);
 	if (Number.isFinite(startTimestamp) && Number.isFinite(endTimestamp)) {
 		return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' })
 			.formatRange(new Date(startTimestamp), new Date(endTimestamp));
 	}
-	const start = formatDate(board.run.runStartedOn);
-	const end = formatDate(board.run.eventEndsAt);
+	const start = formatDate(run.runStartedOn);
+	const end = formatDate(run.eventEndsAt);
 	return start === end ? end : `${start} – ${end}`;
 }
 
-function eventBoardEndTimestamp(board: EventBoard): number {
-	const timestamp = board.run ? Date.parse(board.run.eventEndsAt) : Date.parse(latestBoardObservation(board.entries));
-	return Number.isFinite(timestamp) ? timestamp : 0;
+function eventBoardVariantLabel(board: EventBoard): string {
+	if (board.boardKey) return `${humanizeKey(board.boardKey)} · List ${board.listType}`;
+	return board.listType > 0 ? `List ${board.listType}` : 'Leaderboard';
 }
 
 function eventBoardLabel(entry: Pick<EventLeaderboardRow, 'listType' | 'boardKey' | 'leagueId'>): string {
@@ -733,6 +957,18 @@ function eventRunActive(run: WorldIntelligenceEventRunV1): boolean {
 
 function humanizeKey(value: string): string {
 	return value.replace(/[_-]+/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (character) => character.toUpperCase());
+}
+
+function normalizeWorldID(value: string): string {
+	const trimmed = value.trim();
+	if (!trimmed) return '';
+	try {
+		const parsed = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`);
+		const port = parsed.port && parsed.port !== '80' && parsed.port !== '443' ? `:${parsed.port}` : '';
+		return `${parsed.hostname.toLocaleLowerCase()}${port}`;
+	} catch {
+		return trimmed.toLocaleLowerCase().replace(/^wss?:\/\//, '').split('/')[0].replace(/:(80|443)$/, '');
+	}
 }
 
 function formatCount(value?: number): string {

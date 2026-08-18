@@ -37,7 +37,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
         </CardTitle>
         {description && <p className={`mt-1 text-xs text-text-muted ${descriptionClassName}`}>{description}</p>}
       </div>
-      {actions}
+      {actions && <div className="ui-section-card-actions">{actions}</div>}
     </CardHeader>
     <CardContent className={`liquid-prominent-header-content ${flush ? 'liquid-prominent-header-content-flush' : ''} ${contentClassName}`}>
       {children}

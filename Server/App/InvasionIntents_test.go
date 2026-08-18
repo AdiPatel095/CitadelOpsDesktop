@@ -236,3 +236,87 @@ func TestCaptureInvasionLaunchTracksActiveEvent(t *testing.T) {
 		t.Fatalf("unexpected Bloodcrow activity: %#v", activity)
 	}
 }
+
+func TestGuardInvasionTargetForgetsUnconfirmedTarget(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 100, Y: 100}
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true}
+	gameState.EventScores.ActiveEventID = 71
+	gameState.EventScores.ByEvent[71] = State.ScalableEventScore{EventID: 71, RemainingSec: 3_600, ObservedAt: now}
+	gameState.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, TypeID: 21, X: 101, Y: 100, ObjectID: 70, ObservedAt: now},
+	}
+	request := resolvedInvasionAttackRequest{
+		invasionAttackRequest: invasionAttackRequest{
+			SourceCastleID: 1, EventID: 71, ScoreTarget: 1_000, MinimumRemainingSec: 60,
+			TargetTypeID: 21, KingdomID: 0, TargetX: 101, TargetY: 100, TargetObjectID: 70,
+		},
+		CommanderID: 7,
+	}
+	arguments, _ := json.Marshal(invasionTargetVerificationRequest{Request: request, RefreshStartedAt: now.Add(time.Second)})
+	application := &Application{State: State.NewStore(gameState)}
+	if err := application.guardInvasionTarget(t.Context(), arguments); err == nil {
+		t.Fatal("unconfirmed invasion target passed the guard")
+	}
+	// The 1x1 launch-time refresh is authoritative for the tile: the phantom
+	// must be gone so the immediate re-evaluation rotates instead of re-picking
+	// the same vanished castle until the next full sweep.
+	if _, exists := application.State.ReadOnlyView().LookupMapObservation(0, "101:100"); exists {
+		t.Fatal("guard left the vanished invasion castle in map state")
+	}
+}
+
+func TestBoundedInvasionScanIsAuthoritativeForItsWindowOnly(t *testing.T) {
+	now := time.Now().UTC()
+	old := now.Add(-5 * time.Minute)
+	gameState := State.NewGameState()
+	gameState.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 100, Y: 100, Focused: true}
+	gameState.Invasion.LastScannedAt[1] = old
+	gameState.Map[0] = map[string]State.MapObservation{
+		// Inside the box, NOT returned by the refresh (stale) → must be dropped.
+		"105:100": {KingdomID: 0, TypeID: 21, X: 105, Y: 100, ObjectID: 70, ObservedAt: old},
+		// Inside the box, returned by the refresh (fresh) → must survive.
+		"106:101": {KingdomID: 0, TypeID: 21, X: 106, Y: 101, ObjectID: 70, ObservedAt: now.Add(time.Second)},
+		// Outside the box and stale → untouched (its full-scan eligibility is
+		// decided by the full sweep, not by a neighborhood refresh elsewhere).
+		"140:140": {KingdomID: 0, TypeID: 21, X: 140, Y: 140, ObjectID: 70, ObservedAt: old},
+	}
+	application := &Application{State: State.NewStore(gameState)}
+	arguments, _ := json.Marshal(invasionMapScanRequest{
+		SourceCastleID: 1, Radius: 50, ScanStartedAt: now,
+		Bounds: &State.StormMapBounds{X1: 81, Y1: 76, X2: 129, Y2: 124},
+	})
+	plan, err := planInvasionMapScan(t.Context(), Intent.PlanningContext{State: gameState}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gaa := 0
+	for _, step := range plan.Steps {
+		if step.Opcode == "gaa" {
+			gaa++
+			if string(step.Command.Payload) != `{"KID":0,"AX1":81,"AY1":76,"AX2":129,"AY2":124}` {
+				t.Fatalf("bounded scan window payload = %s", step.Command.Payload)
+			}
+		}
+	}
+	if gaa != 1 {
+		t.Fatalf("bounded scan must be exactly one gaa window, got %d", gaa)
+	}
+	if err := application.captureInvasionScan(t.Context(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	view := application.State.ReadOnlyView()
+	if _, exists := view.LookupMapObservation(0, "105:100"); exists {
+		t.Fatal("stale castle inside the refreshed window survived")
+	}
+	if _, exists := view.LookupMapObservation(0, "106:101"); !exists {
+		t.Fatal("confirmed castle inside the refreshed window was dropped")
+	}
+	if _, exists := view.LookupMapObservation(0, "140:140"); !exists {
+		t.Fatal("castle outside the refreshed window was dropped")
+	}
+	if !view.Invasion.LastScannedAt[1].Equal(old) {
+		t.Fatalf("neighborhood refresh must not advance the full-scan clock, got %v", view.Invasion.LastScannedAt[1])
+	}
+}

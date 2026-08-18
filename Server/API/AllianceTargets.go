@@ -67,7 +67,7 @@ func (server *Server) handleAllianceTargets(writer http.ResponseWriter, request 
 	defer cancel()
 	view, err := server.config.AllianceTargets.View(
 		ctx,
-		server.config.State.Snapshot(),
+		server.config.State.ReadOnlyView(),
 		gameData,
 		values.Get("server"),
 		values.Get("allianceId"),
@@ -111,7 +111,7 @@ func (server *Server) handleAllianceTargetAttackPreview(writer http.ResponseWrit
 		return
 	}
 
-	gameState := server.config.State.Snapshot()
+	gameState := server.config.State.ReadOnlyView()
 	source, exists := gameState.Castles[input.SourceCastleID]
 	if !exists || source.KingdomID != input.KingdomID {
 		writeError(writer, http.StatusUnprocessableEntity, "source_unavailable", "The selected source is not an owned Great Empire castle")

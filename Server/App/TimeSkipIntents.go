@@ -37,7 +37,7 @@ func (application *Application) consumeTimeSkip(_ context.Context, arguments jso
 	if request.CurrencyID <= 0 || request.ExpectedBefore < 1 {
 		return fmt.Errorf("confirmed time skip has invalid currency data")
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentPlayer), func(gameState *State.GameState) ([]string, bool, error) {
 		current := gameState.Player.Currencies[request.CurrencyID]
 		expectedAfter := request.ExpectedBefore - 1
 		if current <= expectedAfter {

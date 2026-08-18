@@ -11,6 +11,7 @@ import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, PillSelector } from '../../components/ui';
 import { Notifications } from '../../components/Notifications';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
+import { runtimeURL } from '../../api/RuntimeURL';
 
 const featureDefinitions = [
   { id: 'autoInvasion', label: 'Auto Invasion', description: 'Foreign Lord and Bloodcrow castles', color: '#f97316' },
@@ -88,7 +89,7 @@ const AttackEconomyView = ({
 
   const loadReports = useCallback(async () => {
     try {
-      const response = await fetch('/api/v2/analytics/battle-reports?limit=10000', { cache: 'no-store' });
+      const response = await fetch(runtimeURL('/api/v2/analytics/battle-reports?limit=10000'), { cache: 'no-store' });
       if (!response.ok) throw new Error(`Battle history returned HTTP ${response.status}`);
       const payload = await response.json() as { reports?: AttackEconomyReport[] } | AttackEconomyReport[];
       const rows = Array.isArray(payload) ? payload : payload.reports ?? [];
@@ -152,7 +153,7 @@ const AttackEconomyView = ({
     [resourceRows, selectedFeature, summary.gallantryPoints],
   );
   const requestedMetricKey = requestedMetrics[selectedFeature]
-    ?? (selectedFeature === 'autoBeriWorld' ? gallantryMetricKey : 'C1');
+    ?? defaultMetricKey(selectedFeature);
   const selectedMetricKey = metricRows.some(([key]) => key === requestedMetricKey)
     ? requestedMetricKey
     : metricRows[0]?.[0] ?? '';
@@ -570,6 +571,12 @@ function metricPresentation(key: string, definition?: MetadataItem) {
   const walletLabel = key === 'C1' || key === 'C2' ? fallback[key]?.label : undefined;
   const label = capitalizeFirst(walletLabel || definition?.name || fallback[key]?.label || 'Resource');
   return { label, image: definition?.image || fallback[key]?.image };
+}
+
+function defaultMetricKey(feature: AttackEconomyFeatureID): string {
+  if (feature === 'autoBeriWorld') return gallantryMetricKey;
+  if (feature === 'autoStorm') return 'IAP';
+  return 'C1';
 }
 
 function capitalizeFirst(value: string): string {

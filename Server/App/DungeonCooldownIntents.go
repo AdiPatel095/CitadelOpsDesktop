@@ -120,8 +120,8 @@ func (application *Application) verifyDungeonMinuteSkip(_ context.Context, argum
 	if err := decodeIntentArguments(arguments, &verification); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
-	observation, exists := state.Map[verification.KingdomID][fmt.Sprintf("%d:%d", verification.TargetX, verification.TargetY)]
+	state := application.State.ReadOnlyView()
+	observation, exists := state.LookupMapObservation(verification.KingdomID, fmt.Sprintf("%d:%d", verification.TargetX, verification.TargetY))
 	if !exists || observation.TypeID != verification.TargetTypeID ||
 		verification.EventCampID > 0 && observation.EventCampID != verification.EventCampID ||
 		observation.ObservedAt.Before(verification.StartedAt) {
@@ -155,7 +155,7 @@ func validatedDungeonMinuteSkip(
 			"dungeon time skips support tower, Nomad, Samurai, and Khan targets only",
 		)
 	}
-	observation, exists := input.State.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	observation, exists := input.State.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || observation.TypeID != request.TargetTypeID ||
 		request.EventCampID > 0 && observation.EventCampID != request.EventCampID {
 		return dungeonMinuteSkipRequest{}, State.MapObservation{}, 0, buildingTimeSkipOption{}, fmt.Errorf(
@@ -251,7 +251,7 @@ func (application *Application) completeKhanCooldownReports(
 	if appliedAt.IsZero() {
 		appliedAt = time.Now().UTC()
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentKhan), func(gameState *State.GameState) ([]string, bool, error) {
 		changed := false
 		for _, reportID := range verification.KhanReportIDs {
 			report, found := gameState.Khan.CooldownReports[reportID]
@@ -333,13 +333,13 @@ func (application *Application) resolveKhanCooldownReports(
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
 	}
-	input := Intent.PlanningContext{State: application.State.Snapshot(), GameData: gameData}
+	input := Intent.PlanningContext{State: application.State.ReadOnlyView(), GameData: gameData}
 	observation, err := validateKhanCooldownReportResolution(input, request, time.Now().UTC())
 	if err != nil {
 		return err
 	}
 	resolvedAt := observation.ObservedAt.UTC()
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentKhan), func(gameState *State.GameState) ([]string, bool, error) {
 		changed := false
 		for _, reportID := range request.ReportIDs {
 			report, found := gameState.Khan.CooldownReports[reportID]
@@ -366,7 +366,7 @@ func validateKhanCooldownReportResolution(
 	if err := validateKhanLaneGuard(input.State, input.GameData, request.KhanGuard, now); err != nil {
 		return State.MapObservation{}, err
 	}
-	observation, found := input.State.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	observation, found := input.State.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !found || observation.TypeID != khanCampTypeID || observation.ObservedAt.Before(request.CooldownAt) ||
 		appDungeonCooldownRemaining(input.State, observation, now) > 0 {
 		return State.MapObservation{}, fmt.Errorf("%w: the Khan target is not authoritatively clear", Intent.ErrPlanStale)
@@ -455,7 +455,7 @@ func appDungeonCooldownRemaining(gameState State.GameState, observation State.Ma
 	if observation.TypeID == kingdomTowerMapTypeID {
 		remaining, observedAt := observation.TowerCooldownRemaining, observation.ObservedAt
 		key := fmt.Sprintf("%d:%d:%d", observation.KingdomID, observation.X, observation.Y)
-		if cooldown, found := gameState.TowerCooldowns[key]; found && cooldown.CooldownObservedAt.After(observedAt) {
+		if cooldown, found := gameState.LookupTowerCooldown(key); found && cooldown.CooldownObservedAt.After(observedAt) {
 			remaining, observedAt = cooldown.CooldownRemaining, cooldown.CooldownObservedAt
 		}
 		return elapsedCooldownRemaining(remaining, observedAt, now)

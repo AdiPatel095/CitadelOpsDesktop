@@ -64,7 +64,7 @@ func reduceAdvisorActivation(
 	if !found {
 		return nil, false, nil
 	}
-	score := gameState.EventScores.ByEvent[eventID]
+	score, _ := gameState.LookupScalableEventScore(eventID)
 	if score.AdvisorActive {
 		return nil, false, nil
 	}
@@ -72,7 +72,7 @@ func reduceAdvisorActivation(
 	if score.AdvisorCurrencyID == 0 {
 		score.AdvisorCurrencyID = advisorTokenCurrency(eventID)
 	}
-	gameState.EventScores.ByEvent[eventID] = score
+	gameState.SetScalableEventScore(eventID, score)
 	return []string{"advisor", "events", "event-scores"}, true, nil
 }
 
@@ -228,13 +228,13 @@ func applyAdvisorMovement(opcode string, observedAt time.Time, envelope advisorM
 			KingdomID: envelope.Movement.KingdomID, TargetTypeID: targetTypeID,
 			TargetX: next.TargetX, TargetY: next.TargetY, LaunchedAt: observedAt.UTC(),
 		}
-		if movement, found := gameState.Movements[envelope.Movement.MovementID]; found && movement.ArrivesAt != nil {
+		if movement, found := gameState.LookupMovement(envelope.Movement.MovementID); found && movement.ArrivesAt != nil {
 			record.ArrivesAt = movement.ArrivesAt.UTC()
 		}
 		State.RecordEventAttackLaunch(gameState, eventID, record)
-		activity := gameState.EventScores.ActivityByEvent[eventID]
+		activity, _ := gameState.LookupEventActivity(eventID)
 		activity.Advisor.Launches = max(activity.Advisor.Launches, int64(next.CurrentAttack))
-		gameState.EventScores.ActivityByEvent[eventID] = activity
+		gameState.SetEventActivity(eventID, activity)
 	}
 	return true
 }
@@ -251,7 +251,7 @@ func advisorSameRunOccurrence(left State.AdvisorRunState, right State.AdvisorRun
 }
 
 func advisorEventEndsAt(gameState State.GameState, eventID int64) time.Time {
-	score, found := gameState.EventScores.ByEvent[eventID]
+	score, found := gameState.LookupScalableEventScore(eventID)
 	if !found || score.ObservedAt.IsZero() || score.RemainingSec <= 0 {
 		return time.Time{}
 	}
@@ -302,14 +302,14 @@ func advisorEventForTarget(targetTypeID int) int64 {
 
 func activeAdvisorEvent(gameState State.GameState) (int64, bool) {
 	if eventID := gameState.EventScores.ActiveEventID; eventID == advisorNomadEventID || eventID == advisorSamuraiEventID {
-		if _, found := gameState.EventScores.ByEvent[eventID]; found {
+		if _, found := gameState.LookupScalableEventScore(eventID); found {
 			return eventID, true
 		}
 	}
 	selected := int64(0)
 	var observedAt time.Time
 	for _, eventID := range []int64{advisorNomadEventID, advisorSamuraiEventID} {
-		score, found := gameState.EventScores.ByEvent[eventID]
+		score, found := gameState.LookupScalableEventScore(eventID)
 		if found && score.RemainingSec > 0 && (selected == 0 || score.ObservedAt.After(observedAt)) {
 			selected, observedAt = eventID, score.ObservedAt
 		}

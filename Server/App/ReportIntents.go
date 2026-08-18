@@ -20,7 +20,7 @@ func planSpyReportFetch(_ context.Context, input Intent.PlanningContext, argumen
 	if request.MessageID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("messageId is required")
 	}
-	if notice, exists := input.State.Reports.Notices[request.MessageID]; exists {
+	if notice, exists := input.State.LookupReportNotice(request.MessageID); exists {
 		if notice.TypeID != 3 {
 			return Intent.Plan{}, fmt.Errorf("message %d is not a spy-report notice", request.MessageID)
 		}
@@ -46,7 +46,7 @@ func planSpyReportShare(_ context.Context, input Intent.PlanningContext, argumen
 	if request.MessageID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("messageId is required")
 	}
-	if _, exists := input.State.Reports.SpyCaptures[request.MessageID]; !exists {
+	if _, exists := input.State.LookupSpyReportCapture(request.MessageID); !exists {
 		return Intent.Plan{}, fmt.Errorf("spy report %d is not available for sharing", request.MessageID)
 	}
 	recipients := make([]State.PlayerID, 0, len(input.State.Alliance.Members))
@@ -85,7 +85,7 @@ func planBattleReportSummary(_ context.Context, input Intent.PlanningContext, ar
 	if request.MessageID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("messageId is required")
 	}
-	if notice, exists := input.State.Reports.Notices[request.MessageID]; exists {
+	if notice, exists := input.State.LookupReportNotice(request.MessageID); exists {
 		if notice.TypeID != 6 {
 			return Intent.Plan{}, fmt.Errorf("message %d is not a battle-report notice", request.MessageID)
 		}
@@ -115,10 +115,10 @@ func planBattleReportDetails(_ context.Context, input Intent.PlanningContext, ar
 	if request.MessageID <= 0 || request.ReportID <= 0 {
 		return Intent.Plan{}, fmt.Errorf("messageId and reportId are required")
 	}
-	if notice, exists := input.State.Reports.Notices[request.MessageID]; exists && reportNoticeCannotBeFetched(notice) {
+	if notice, exists := input.State.LookupReportNotice(request.MessageID); exists && reportNoticeCannotBeFetched(notice) {
 		return Intent.Plan{Summary: fmt.Sprintf("Skip unavailable battle report %d", request.MessageID)}, nil
 	}
-	capture, exists := input.State.Reports.BattleCaptures[request.MessageID]
+	capture, exists := input.State.LookupBattleReportCapture(request.MessageID)
 	if !exists || capture.ReportID != request.ReportID || len(capture.Summary) == 0 {
 		return Intent.Plan{}, fmt.Errorf("battle report %d summary context is unavailable", request.MessageID)
 	}

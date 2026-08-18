@@ -113,18 +113,16 @@ func RecordAttackFeatureLaunch(gameState *GameState, record AttackFeatureLaunch)
 			return false
 		}
 	}
-	gameState.AttackAnalytics.LaunchIDs = append(gameState.AttackAnalytics.LaunchIDs, record.MovementID)
-	if len(gameState.AttackAnalytics.LaunchIDs) > 12_000 {
-		gameState.AttackAnalytics.LaunchIDs = append(
-			[]MovementID(nil), gameState.AttackAnalytics.LaunchIDs[len(gameState.AttackAnalytics.LaunchIDs)-12_000:]...,
-		)
+	launchIDs := append(gameState.MutableAttackAnalyticsLaunchIDs(), record.MovementID)
+	if len(launchIDs) > 12_000 {
+		launchIDs = append([]MovementID(nil), launchIDs[len(launchIDs)-12_000:]...)
 	}
-	gameState.AttackAnalytics.PendingAttacks = append(gameState.AttackAnalytics.PendingAttacks, record)
-	if len(gameState.AttackAnalytics.PendingAttacks) > 512 {
-		gameState.AttackAnalytics.PendingAttacks = append(
-			[]AttackFeatureLaunch(nil), gameState.AttackAnalytics.PendingAttacks[len(gameState.AttackAnalytics.PendingAttacks)-512:]...,
-		)
+	gameState.SetAttackAnalyticsLaunchIDs(launchIDs)
+	pending := append(gameState.MutablePendingAttackAnalytics(), record)
+	if len(pending) > 512 {
+		pending = append([]AttackFeatureLaunch(nil), pending[len(pending)-512:]...)
 	}
+	gameState.SetPendingAttackAnalytics(pending)
 	if record.FeatureID == AttackFeatureAutoStorm {
 		MergeAutoStormLaunchHistory(gameState, []AttackFeatureLaunch{record}, record.LaunchedAt)
 	}
@@ -176,6 +174,6 @@ func MergeAutoStormLaunchHistory(gameState *GameState, records []AttackFeatureLa
 	if reflect.DeepEqual(gameState.AttackAnalytics.RecentAutoStormLaunches, next) {
 		return false
 	}
-	gameState.AttackAnalytics.RecentAutoStormLaunches = next
+	gameState.SetRecentAutoStormLaunches(next)
 	return true
 }

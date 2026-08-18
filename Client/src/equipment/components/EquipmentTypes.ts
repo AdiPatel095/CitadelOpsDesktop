@@ -61,10 +61,6 @@ function castleTarget(castleTypeID: number, label: string): EquipmentTarget {
 	};
 }
 
-export function targetCombatMode(castleTypeID: number): CombatMode {
-	return new Set([1, 3, 4, 10, 12, 15, 21, 22, 23, 24, 26, 28, 34]).has(castleTypeID) ? 'PvP' : 'PvE';
-}
-
 export interface EquipmentLeader {
 	kind: 'commander' | 'castellan';
 	id: number;

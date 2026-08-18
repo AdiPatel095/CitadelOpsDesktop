@@ -83,9 +83,38 @@ type BattleMetrics struct {
 type BattleItemDetail struct {
 	Side   string `json:"side,omitempty"`
 	Phase  string `json:"phase,omitempty"`
+	Lane   string `json:"lane,omitempty"`
 	WodID  int64  `json:"wodID,omitempty"`
 	Amount int64  `json:"amount,omitempty"`
 	Lost   int64  `json:"lost,omitempty"`
+	Used   int64  `json:"used,omitempty"`
+}
+
+type BattleEffect struct {
+	DefinitionID int64     `json:"definitionId"`
+	Values       []float64 `json:"values"`
+	Source       string    `json:"source,omitempty"`
+	Side         string    `json:"side,omitempty"`
+}
+
+type BattleWaveLane struct {
+	Lane                string             `json:"lane"`
+	Result              string             `json:"result,omitempty"`
+	AttackerLost        int64              `json:"attackerLost,omitempty"`
+	DefenderLost        int64              `json:"defenderLost,omitempty"`
+	AttackerStart       int64              `json:"attackerStart,omitempty"`
+	DefenderStart       int64              `json:"defenderStart,omitempty"`
+	AttackerUnitDetails []BattleItemDetail `json:"attackerUnitDetails,omitempty"`
+	DefenderUnitDetails []BattleItemDetail `json:"defenderUnitDetails,omitempty"`
+	AttackerToolDetails []BattleItemDetail `json:"attackerToolDetails,omitempty"`
+	DefenderToolDetails []BattleItemDetail `json:"defenderToolDetails,omitempty"`
+}
+
+type BattleWave struct {
+	Index  int              `json:"index"`
+	Wave   int              `json:"wave"`
+	Result string           `json:"result,omitempty"`
+	Lanes  []BattleWaveLane `json:"lanes,omitempty"`
 }
 
 type BattleReport struct {
@@ -102,7 +131,8 @@ type BattleReport struct {
 	EventOccurrenceEndsAt string             `json:"eventOccurrenceEndsAt,omitempty"`
 	MID                   int64              `json:"mid"`
 	LID                   int64              `json:"lid"`
-	KingdomID             int                `json:"kingdomID,omitempty"`
+	KingdomID             int                `json:"kingdomID"`
+	KingdomKnown          bool               `json:"kingdomKnown,omitempty"`
 	TargetX               int                `json:"targetX,omitempty"`
 	TargetY               int                `json:"targetY,omitempty"`
 	TargetName            string             `json:"targetName,omitempty"`
@@ -122,6 +152,10 @@ type BattleReport struct {
 	GallantryPoints       int64              `json:"gallantryPoints,omitempty"`
 	Loot                  map[string]int64   `json:"loot,omitempty"`
 	TopUnits              []BattleItemDetail `json:"topUnits,omitempty"`
+	SupportTools          []BattleItemDetail `json:"supportTools,omitempty"`
+	CommanderEffects      []BattleEffect     `json:"commanderEffects,omitempty"`
+	CastellanEffects      []BattleEffect     `json:"castellanEffects,omitempty"`
+	Waves                 []BattleWave       `json:"waves,omitempty"`
 }
 
 type BattleAnalyticsReport struct {

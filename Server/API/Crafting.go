@@ -75,7 +75,7 @@ func (server *Server) handleCraftingProjection(writer http.ResponseWriter, reque
 	if assets, assetErr := server.config.GameData.CurrencyAssets(request.Context()); assetErr == nil {
 		applyCraftingIconURLs(&catalog, assets.Icons)
 	}
-	snapshot := server.config.State.Snapshot()
+	snapshot := server.config.State.ReadOnlyView()
 	projection := craftingProjection{
 		Recipes: catalog.Recipes, Resources: catalog.Resources,
 		Nodes: make([]craftingNode, 0, len(snapshot.Castles)),

@@ -512,7 +512,7 @@ func (application *Application) verifyKingdomTransportAvailable(_ context.Contex
 	if application == nil || application.State == nil {
 		return fmt.Errorf("kingdom transport state is unavailable")
 	}
-	gameState := application.State.Snapshot()
+	gameState := application.State.ReadOnlyView()
 	switch guard.TransportKind {
 	case "resource":
 		if kingdomResourceTransportBusy(gameState, guard.TargetKingdomID) {
@@ -568,7 +568,7 @@ func (application *Application) verifyResourceTargetCapacity(_ context.Context, 
 		return fmt.Errorf("resource target state is unavailable")
 	}
 	if err := validateResourceTargetCapacity(
-		application.State.Snapshot(), guard.TargetCastleID, guard.Goods, guard.DeliveryRatio, time.Now().UTC(),
+		application.State.ReadOnlyView(), guard.TargetCastleID, guard.Goods, guard.DeliveryRatio, time.Now().UTC(),
 	); err != nil {
 		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
@@ -614,20 +614,21 @@ func incomingMarketResourceAt(
 	now time.Time,
 ) float64 {
 	amount := float64(0)
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 0 || movement.KingdomID != target.KingdomID ||
 			movement.TargetX != target.X || movement.TargetY != target.Y {
-			continue
+			return true
 		}
 		if movement.ArrivesAt != nil && !movement.ArrivesAt.After(now) {
-			continue
+			return true
 		}
 		for _, good := range movement.MarketGoods {
 			if good.ResourceID == resourceID {
 				amount += good.Amount
 			}
 		}
-	}
+		return true
+	})
 	return amount
 }
 
@@ -645,8 +646,10 @@ func (application *Application) consumeKingdomResourceSource(ctx context.Context
 	}
 	metadata := Outbound.MetadataFromContext(ctx)
 	workflowOwner := strings.TrimSpace(request.WorkflowOwner)
-	_, err = application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
-		source, found := gameState.Castles[request.SourceCastleID]
+	_, err = application.State.ApplyComponents(State.Components(
+		State.ComponentCastles, State.ComponentKingdomTransport,
+	), func(gameState *State.GameState) ([]string, bool, error) {
+		source, found := gameState.MutableCastleParts(request.SourceCastleID, State.CastlePartResources)
 		if !found {
 			return nil, false, fmt.Errorf("confirmed kingdom resource donor %d is unavailable", request.SourceCastleID)
 		}
@@ -663,7 +666,7 @@ func (application *Application) consumeKingdomResourceSource(ctx context.Context
 			balance.Amount -= float64(good.Amount)
 			source.Resources[good.ResourceID] = balance
 		}
-		gameState.Castles[source.ID] = source
+		gameState.SetCastleParts(source.ID, source, State.CastlePartResources)
 		if workflowOwner != "" && metadata.Actor == "automation:"+workflowOwner && request.TargetKingdomID >= 0 && request.TargetCastleID > 0 {
 			if gameState.KingdomTransport.ResourceWorkflows == nil {
 				gameState.KingdomTransport.ResourceWorkflows = map[State.KingdomID]State.KingdomResourceTransportWorkflow{}
@@ -733,7 +736,7 @@ func (application *Application) completeKingdomResourceWorkflow(ctx context.Cont
 	if Outbound.MetadataFromContext(ctx).Actor != "automation:"+request.Owner {
 		return fmt.Errorf("only automation %s can complete its kingdom resource workflow", request.Owner)
 	}
-	_, err := application.State.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport), func(gameState *State.GameState) ([]string, bool, error) {
 		workflow, exists := gameState.KingdomTransport.ResourceWorkflows[request.TargetKingdomID]
 		if !exists || workflow.Owner != request.Owner {
 			return nil, false, fmt.Errorf("%w: kingdom %d resource workflow ownership changed", Intent.ErrPlanStale, request.TargetKingdomID)

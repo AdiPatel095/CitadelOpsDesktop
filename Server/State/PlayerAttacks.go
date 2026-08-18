@@ -19,12 +19,15 @@ func IsIncomingPlayerAttack(gameState GameState, movement MovementState, now tim
 }
 
 func HasIncomingPlayerAttack(gameState GameState, now time.Time) bool {
-	for _, movement := range gameState.Movements {
+	active := false
+	gameState.RangeMovements(func(_ MovementID, movement MovementState) bool {
 		if IsIncomingPlayerAttack(gameState, movement, now) {
-			return true
+			active = true
+			return false
 		}
-	}
-	return false
+		return true
+	})
+	return active
 }
 
 // IsOutgoingPlayerAttack accepts only a fully identified, active PvP attack

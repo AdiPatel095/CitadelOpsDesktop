@@ -24,8 +24,10 @@ import type {
 	EquipmentOptimizeRequest,
 	EquipmentOptimizeResponse,
   GameStateV2,
+	GameStatePatchV2,
   IntentReceipt,
 	RuntimeDiagnosticsV2,
+	StateChangeEventV2,
   SubmitIntentOptions,
 } from './Contracts';
 import { Notifications } from '../components/Notifications';
@@ -80,9 +82,22 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	const [diagnostics, setDiagnostics] = useState<RuntimeDiagnosticsV2 | null>(null);
   const [operations, setOperations] = useState<Record<string, IntentReceipt>>({});
   const [error, setError] = useState<string | null>(null);
-  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const initialSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const stateRef = useRef<GameStateV2 | null>(null);
+	const stateReady = useRef(false);
+	const catalogsReady = useRef(false);
+	const configurationReady = useRef(false);
+	const operationsReady = useRef(false);
   const stateRefreshInFlight = useRef<Promise<void> | null>(null);
   const stateRefreshPending = useRef(false);
+
+	const acceptStateSnapshot = useCallback((snapshot: GameStateV2) => {
+		const current = stateRef.current;
+		if (current != null && current.revision > snapshot.revision) return;
+		stateRef.current = snapshot;
+		stateReady.current = true;
+		setState(snapshot);
+	}, []);
 
   const refreshState = useCallback(async function refreshStateRequest() {
     if (stateRefreshInFlight.current != null) {
@@ -95,7 +110,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
         stateRefreshPending.current = false;
         const startedAt = Date.now();
         try {
-          setState(await CitadelAPI.getState());
+		  acceptStateSnapshot(await CitadelAPI.getState());
           setError(null);
         } catch (requestError) {
           setError(errorMessage(requestError));
@@ -116,11 +131,12 @@ export function APIProvider({ children }: { children: ReactNode }) {
       await new Promise((resolve) => setTimeout(resolve, stateRefreshIntervalMs));
       await refreshStateRequest();
     }
-  }, []);
+  }, [acceptStateSnapshot]);
 
   const refreshCatalogs = useCallback(async () => {
     try {
-      setCatalogs(await CitadelAPI.getCatalogManifest());
+	  setCatalogs(await CitadelAPI.getCatalogManifest());
+	  catalogsReady.current = true;
       setError(null);
     } catch (requestError) {
       setError(errorMessage(requestError));
@@ -129,7 +145,8 @@ export function APIProvider({ children }: { children: ReactNode }) {
 
   const refreshConfiguration = useCallback(async () => {
     try {
-      setConfiguration(await CitadelAPI.getConfiguration());
+	  setConfiguration(await CitadelAPI.getConfiguration());
+	  configurationReady.current = true;
       setError(null);
     } catch (requestError) {
       setError(errorMessage(requestError));
@@ -159,6 +176,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 				...current,
 				...Object.fromEntries(receipts.map((receipt) => [receipt.id, receipt])),
 			}));
+			operationsReady.current = true;
 		} catch (requestError) {
 			console.warn('Could not resynchronize operation stream', requestError);
 		}
@@ -168,28 +186,36 @@ export function APIProvider({ children }: { children: ReactNode }) {
     const unsubscribeStatus = CitadelAPI.subscribeStatus(setConnectionStatus);
     const unsubscribeEvents = CitadelAPI.subscribe((message) => {
       if (message.type === 'state.snapshot' && isGameState(message.payload)) {
-        setState(message.payload);
+		acceptStateSnapshot(message.payload);
         return;
       }
-      if (message.type === 'state.changed') {
-        if (message.gap) {
-          if (refreshTimer.current != null) clearTimeout(refreshTimer.current);
-          refreshTimer.current = null;
-          void refreshState();
-        } else if (refreshTimer.current == null) {
-          refreshTimer.current = setTimeout(() => {
-            refreshTimer.current = null;
-            void refreshState();
-          }, stateRefreshIntervalMs);
-        }
+	  if (message.type === 'state.changed' && isStateChangeEvent(message.payload)) {
+		const current = stateRef.current;
+		const patch = message.payload.patch;
+		if (current != null && patch.revision <= current.revision) return;
+		if (message.gap || current == null || patch.schemaVersion !== current.schemaVersion
+			|| patch.revision !== current.revision + 1) {
+			void refreshState();
+			return;
+		}
+		const next = applyGameStatePatch(current, patch);
+		stateRef.current = next;
+		stateReady.current = true;
+		setState(next);
         return;
       }
+	  if (message.type === 'state.changed') {
+		void refreshState();
+		return;
+	  }
       if (message.type === 'catalog.changed' && isCatalogManifest(message.payload)) {
         setCatalogs(message.payload);
+		catalogsReady.current = true;
         return;
       }
       if (message.type === 'config.changed' && isConfigurationSnapshot(message.payload)) {
         setConfiguration(message.payload);
+		configurationReady.current = true;
 		if (message.gap) void refreshConfiguration();
         return;
       }
@@ -199,6 +225,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 			...current,
 			...Object.fromEntries(receipts.map((receipt) => [receipt.id, receipt])),
 		}));
+		operationsReady.current = true;
 		return;
 	  }
       if ((message.type === 'operation.changed' || message.type === 'intent.receipt') && isIntentReceipt(message.payload)) {
@@ -219,17 +246,22 @@ export function APIProvider({ children }: { children: ReactNode }) {
       }
     });
     CitadelAPI.connect();
-    void Promise.all([
-		refreshState(), refreshCatalogs(), refreshConfiguration(), refreshOperations(), refreshApplicationUpdate(),
-		runtimeDiagnosticsEnabled ? refreshDiagnostics() : Promise.resolve(),
+	initialSyncTimer.current = setTimeout(() => {
+		if (!stateReady.current) void refreshState();
+		if (!catalogsReady.current) void refreshCatalogs();
+		if (!configurationReady.current) void refreshConfiguration();
+		if (!operationsReady.current) void refreshOperations();
+	}, 2_500);
+	void Promise.all([
+		refreshApplicationUpdate(), runtimeDiagnosticsEnabled ? refreshDiagnostics() : Promise.resolve(),
 	]);
     return () => {
       unsubscribeEvents();
       unsubscribeStatus();
-      if (refreshTimer.current != null) clearTimeout(refreshTimer.current);
+	  if (initialSyncTimer.current != null) clearTimeout(initialSyncTimer.current);
       CitadelAPI.disconnect();
     };
-  }, [refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState]);
+  }, [acceptStateSnapshot, refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState]);
 
 	useEffect(() => {
 		const interval = window.setInterval(() => void refreshApplicationUpdate(), 5_000);
@@ -332,6 +364,113 @@ export function useCitadelAPI(): APIContextValue {
 
 function isGameState(value: unknown): value is GameStateV2 {
   return isRecord(value) && typeof value.revision === 'number' && isRecord(value.session);
+}
+
+function isStateChangeEvent(value: unknown): value is StateChangeEventV2 {
+	if (!isRecord(value) || !Array.isArray(value.components) || !isRecord(value.patch)) return false;
+	return typeof value.revision === 'number'
+		&& typeof value.patch.schemaVersion === 'number'
+		&& typeof value.patch.revision === 'number'
+		&& typeof value.patch.updatedAt === 'string'
+		&& value.revision === value.patch.revision;
+}
+
+function applyGameStatePatch(current: GameStateV2, patch: GameStatePatchV2): GameStateV2 {
+	const { mapChanges, castleChanges, movementChanges, inventoryChanges, eventScoreChanges, ...statePatch } = patch;
+	const next: GameStateV2 = { ...current, ...statePatch };
+	if (castleChanges != null && castleChanges.length > 0) {
+		const castles = { ...next.castles };
+		for (const change of castleChanges) {
+			const id = String(change.id);
+			if (change.deleted) delete castles[id];
+			else if (change.castle != null) castles[id] = change.castle;
+			else if (change.patch != null && castles[id] != null) castles[id] = { ...castles[id], ...change.patch };
+		}
+		next.castles = castles;
+	}
+	if (movementChanges != null && movementChanges.length > 0) {
+		const movements = { ...next.movements };
+		for (const change of movementChanges) {
+			const id = String(change.id);
+			if (change.deleted || change.movement == null) delete movements[id];
+			else movements[id] = change.movement;
+		}
+		next.movements = movements;
+	}
+	if (inventoryChanges != null) {
+		const { equipmentChanges, gemChanges, itemChanges, ...inventoryPatch } = inventoryChanges;
+		const inventory = { ...next.inventory, ...inventoryPatch };
+		if (equipmentChanges != null && equipmentChanges.length > 0) {
+			const equipment = { ...inventory.equipment };
+			for (const change of equipmentChanges) {
+				const id = String(change.id);
+				if (change.deleted || change.equipment == null) delete equipment[id];
+				else equipment[id] = change.equipment;
+			}
+			inventory.equipment = equipment;
+		}
+		if (gemChanges != null && gemChanges.length > 0) {
+			const gems = { ...inventory.gems };
+			for (const change of gemChanges) {
+				const id = String(change.id);
+				if (change.deleted || change.gem == null) delete gems[id];
+				else gems[id] = change.gem;
+			}
+			inventory.gems = gems;
+		}
+		if (itemChanges != null && itemChanges.length > 0) {
+			const items = { ...inventory.items };
+			for (const change of itemChanges) {
+				if (change.deleted || change.items == null) delete items[change.collection];
+				else items[change.collection] = change.items;
+			}
+			inventory.items = items;
+		}
+		next.inventory = inventory;
+	}
+	if (mapChanges != null && mapChanges.length > 0) {
+		const map = { ...next.map };
+		const changedKingdoms = new Map<string, Record<string, typeof mapChanges[number]['observation']>>();
+		for (const change of mapChanges) {
+			const kingdomId = String(change.kingdomId);
+			let kingdom = changedKingdoms.get(kingdomId);
+			if (kingdom == null) {
+				kingdom = { ...(map[kingdomId] ?? {}) };
+				changedKingdoms.set(kingdomId, kingdom);
+				map[kingdomId] = kingdom as Record<string, NonNullable<typeof change.observation>>;
+			}
+			if (change.deleted || change.observation == null) {
+				delete kingdom[change.key];
+			} else {
+				kingdom[change.key] = change.observation;
+			}
+		}
+		next.map = map;
+	}
+	if (eventScoreChanges != null) {
+		const eventScores = { ...next.eventScores };
+		if (eventScoreChanges.activeEventId != null) eventScores.activeEventId = eventScoreChanges.activeEventId;
+		if (eventScoreChanges.inventory != null) eventScores.inventory = eventScoreChanges.inventory;
+		if (eventScoreChanges.changes != null && eventScoreChanges.changes.length > 0) {
+			const byEvent = { ...eventScores.byEvent };
+			const activityByEvent = { ...eventScores.activityByEvent };
+			const rankingByEvent = { ...eventScores.rankingByEvent };
+			for (const change of eventScoreChanges.changes) {
+				const id = String(change.eventId);
+				if (change.scoreDeleted || change.score == null) delete byEvent[id];
+				else byEvent[id] = change.score;
+				if (change.activityDeleted || change.activity == null) delete activityByEvent[id];
+				else activityByEvent[id] = change.activity;
+				if (change.rankingDeleted || change.ranking == null) delete rankingByEvent[id];
+				else rankingByEvent[id] = change.ranking;
+			}
+			eventScores.byEvent = byEvent;
+			eventScores.activityByEvent = activityByEvent;
+			eventScores.rankingByEvent = rankingByEvent;
+		}
+		next.eventScores = eventScores;
+	}
+	return next;
 }
 
 function isCatalogManifest(value: unknown): value is CatalogManifest {

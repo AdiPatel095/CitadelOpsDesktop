@@ -243,6 +243,7 @@ func resetInitialAccountState(gameState *State.GameState) {
 	next.CatalogVersion = catalogVersion
 	next.LanguageVersion = languageVersion
 	*gameState = next
+	gameState.ReplaceMapState()
 }
 
 func reducePlayerProtectionMode(
@@ -1009,15 +1010,7 @@ func officialDefinitionID(
 	if err != nil {
 		return 0, false
 	}
-	raw, ok := catalog.FindByField("JSONKey", jsonKey)
-	if !ok {
-		return 0, false
-	}
-	record, err := GameData.DecodeRecord(raw)
-	if err != nil {
-		return 0, false
-	}
-	return record.Int64(idField)
+	return catalog.Int64ByField("JSONKey", jsonKey, idField)
 }
 
 func officialLevel(gameData *GameData.Store, collection string, id int64) int {
@@ -1028,15 +1021,7 @@ func officialLevel(gameData *GameData.Store, collection string, id int64) int {
 	if err != nil {
 		return 0
 	}
-	raw, ok := catalog.Find(strconv.FormatInt(id, 10))
-	if !ok {
-		return 0
-	}
-	record, err := GameData.DecodeRecord(raw)
-	if err != nil {
-		return 0
-	}
-	level, _ := record.Int64("level")
+	level, _ := catalog.Int64(strconv.FormatInt(id, 10), "level")
 	return int(level)
 }
 

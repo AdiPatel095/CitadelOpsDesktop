@@ -42,7 +42,7 @@ func reduceDefenseContext(
 		return nil, false, fmt.Errorf("defense context has no castle identity")
 	}
 	castleID := State.CastleID(rowInt(payload.Identity, 3))
-	castle, found := gameState.Castles[castleID]
+	castle, found := gameState.MutableCastleParts(castleID, State.CastlePartDefense)
 	if castleID <= 0 || !found {
 		return nil, false, nil
 	}
@@ -132,7 +132,7 @@ func reduceDefenseContext(
 	if reflect.DeepEqual(before, castle) {
 		return nil, false, nil
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartDefense)
 	return []string{"castles", "defense"}, true, nil
 }
 
@@ -217,7 +217,7 @@ func applyFocusedDefense(
 	if reflect.DeepEqual(before, castle.Defense) {
 		return nil, false, nil
 	}
-	gameState.Castles[castleID] = castle
+	gameState.SetCastleParts(castleID, castle, State.CastlePartDefense)
 	return []string{"castles", "defense"}, true, nil
 }
 

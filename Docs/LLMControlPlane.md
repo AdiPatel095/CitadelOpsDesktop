@@ -37,6 +37,13 @@ GET  /api/v2/intents        → server.handleIntentDefinitions
 POST /api/v2/intents/{name} → server.handleIntentSubmit
 ```
 
+`POST` is asynchronous by default: it answers `202` with the accepted receipt
+and the runtime keeps executing the operation whether or not the caller stays
+connected; follow `GET /api/v2/operations/{id}` or the `operation.changed`
+stream, or pass `?wait=true` to block for the final receipt (the wait can be
+abandoned without cancelling the operation; `POST /operations/{id}/cancel` is
+the only client-side cancellation).
+
 `Intent.Definition` (`Server/Intent/Types.go:139`):
 
 ```go

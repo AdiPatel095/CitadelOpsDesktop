@@ -16,6 +16,9 @@ import (
 func TestDefenseContextMatchesCapturedFixture(t *testing.T) {
 	payload, err := os.ReadFile(filepath.Join("..", "..", "Logs", "RecvCommandsJSON", "dfc.json"))
 	if err != nil {
+		if os.IsNotExist(err) {
+			t.Skipf("captured DFC fixture is not available in this checkout: %v", err)
+		}
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()

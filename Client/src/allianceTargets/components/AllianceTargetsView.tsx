@@ -18,7 +18,7 @@ import {
 	Swords,
   Users,
 } from 'lucide-react';
-import { Badge, Button, Input, Modal, ModalTitle, PageHeader, SectionCard, Select } from '../../components/ui';
+import { Badge, Button, Input, Modal, ModalTitle, SectionCard, Select } from '../../components/ui';
 import { SpyReportDetail, type SpyReport } from '../../spyReports/components/SpyReportsView';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { useMetadata } from '../../context/MetadataContext';
@@ -28,6 +28,7 @@ import {
 	summarizeAttackPreset,
 } from '../../attackPresets/AttackPresetTypes';
 import { Notifications } from '../../components/Notifications';
+import { runtimeURL } from '../../api/RuntimeURL';
 import type {
   AllianceTargetAttackPreviewV2,
   AllianceTargetCastleV2,
@@ -279,7 +280,7 @@ const AllianceTargetsContent = memo(({
     setLoadingIntelTarget(targetKey);
     setViewError('');
     try {
-      const response = await fetch('/api/v2/history/spy-reports?limit=10000', { cache: 'no-cache' });
+      const response = await fetch(runtimeURL('/api/v2/history/spy-reports?limit=10000'), { cache: 'no-cache' });
       if (!response.ok) throw new Error(`Spy reports request failed (${response.status})`);
       const reports = await response.json() as SpyReport[];
       const report = (Array.isArray(reports) ? reports : []).find((candidate) => {
@@ -317,13 +318,14 @@ const AllianceTargetsContent = memo(({
   return (
     <div className="data-view-render-stable space-y-4">
       {viewError && <p className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">{viewError}</p>}
-      <PageHeader
-        title="Alliance Targets"
-        description="Nearby castles from a top-50 alliance."
+      <SectionCard
+        title={data?.selectedAlliance?.name || 'Player targets'}
+        description={loading ? 'Loading targets…' : `${totalTargets} matching castles`}
         icon={<Crosshair className="h-5 w-5" />}
+        descriptionClassName=""
+        headerClassName="flex-wrap gap-3"
         actions={(
-          <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto">
-          <div className="min-w-[18rem] flex-1 xl:w-[28rem] xl:flex-none">
+          <div className="grid w-full basis-full gap-2 md:grid-cols-2 xl:grid-cols-[minmax(18rem,1.4fr)_minmax(15rem,1fr)_10rem_auto]">
             <Select
               value={selectedAlliance}
               options={allianceOptions}
@@ -331,43 +333,35 @@ const AllianceTargetsContent = memo(({
               placeholder="Choose a top-50 alliance"
               icon={<Users className="h-4 w-4" />}
               disabled={allianceOptions.length === 0}
+              ariaLabel="Alliance"
               menuGrowToViewport
             />
-          </div>
-          <div className="w-40">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Player, castle, or coordinates"
+              aria-label="Search alliance targets"
+              leftIcon={<Search className="h-4 w-4" />}
+            />
             <Select
               value={statusFilter}
               options={statusFilterOptions}
               onChange={changeStatus}
               icon={<Crosshair className="h-4 w-4" />}
+              ariaLabel="Target status"
               menuGrowToViewport
             />
-          </div>
-          <Button
-            variant="secondary"
-            onClick={refresh}
-            isLoading={loading}
-            leftIcon={<RefreshCw className="h-4 w-4" />}
-          >
-            Refresh
-          </Button>
+            <Button
+              className="w-full xl:w-auto"
+              variant="secondary"
+              onClick={refresh}
+              isLoading={loading}
+              leftIcon={<RefreshCw className="h-4 w-4" />}
+            >
+              Refresh
+            </Button>
           </div>
         )}
-      />
-
-      <SectionCard
-        title={data?.selectedAlliance?.name || 'Player targets'}
-        description={loading ? 'Loading targets…' : `${totalTargets} matching castles`}
-        descriptionClassName=""
-        headerClassName="flex-wrap gap-3"
-        actions={<div className="w-full max-w-sm">
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Player, castle, or coordinates"
-            leftIcon={<Search className="h-4 w-4" />}
-          />
-        </div>}
         contentClassName="overflow-hidden"
         flush
       >

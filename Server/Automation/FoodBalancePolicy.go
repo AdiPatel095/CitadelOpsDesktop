@@ -66,7 +66,11 @@ func (*FoodBalancePolicy) ID() string { return "autoFoodBalance" }
 func (*FoodBalancePolicy) EnabledKey() string { return "auto_food_balance" }
 
 func (*FoodBalancePolicy) WakeDomains() []string {
-	return []string{"building-layout", "currencies", "kingdom-transport", "market", "movements", "resources", "units"}
+	// Ordinary balance and movement churn is sampled on CheckIntervalSec. Only
+	// structural consumption changes and completed logistics wake the full
+	// all-castle projection early; this avoids decoding the same official unit
+	// and building data after every five-second movement snapshot.
+	return []string{"building-layout", "kingdom-transport", "market", "units"}
 }
 
 func (*FoodBalancePolicy) WakeSections() []string {

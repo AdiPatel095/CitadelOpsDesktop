@@ -1221,7 +1221,7 @@ func (application *Application) verifyBuildingMutation(ctx context.Context, argu
 	if verification.Kind == buildingMutationSkipTime {
 		return application.waitForBuildingTimeSkip(ctx, verification)
 	}
-	castle, err := buildingCastle(application.State.Snapshot(), verification.CastleID)
+	castle, err := buildingCastle(application.State.ReadOnlyView(), verification.CastleID)
 	if err != nil {
 		return err
 	}
@@ -1261,7 +1261,7 @@ func (application *Application) verifyBuildingMutation(ctx context.Context, argu
 		if _, found := buildingByID(castle, verification.BuildingInstanceID); found {
 			return fmt.Errorf("building %d is still placed after the store command", verification.BuildingInstanceID)
 		}
-		if ordinaryStorageCount(application.State.Snapshot(), verification.DefinitionID) <= 0 {
+		if ordinaryStorageCount(application.State.ReadOnlyView(), verification.DefinitionID) <= 0 {
 			return fmt.Errorf("building definition %d was not observed in ordinary storage after storing", verification.DefinitionID)
 		}
 	case buildingMutationDemolish:
@@ -1296,7 +1296,7 @@ func (application *Application) waitForFreeBuildingCompletion(ctx context.Contex
 }
 
 func (application *Application) verifyFreeBuildingCompletion(verification buildingVerification) error {
-	castle, err := buildingCastle(application.State.Snapshot(), verification.CastleID)
+	castle, err := buildingCastle(application.State.ReadOnlyView(), verification.CastleID)
 	if err != nil {
 		return err
 	}
@@ -1342,7 +1342,7 @@ func (application *Application) waitForBuildingTimeSkip(ctx context.Context, ver
 }
 
 func (application *Application) verifyBuildingTimeSkip(verification buildingVerification) error {
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	balance := state.Player.Currencies[verification.SkipCurrencyID]
 	if balance != verification.InitialSkipBalance-1 {
 		return fmt.Errorf(

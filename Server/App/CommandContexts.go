@@ -118,6 +118,14 @@ func constructionShopContextSteps(castle State.CastleState) []Intent.Step {
 	}
 }
 
+// constructionSpaceLeftStep asks the server how much construction-item
+// inventory room is left (C2S "csp"). The official client sends it from the
+// buy slider right before a purchase; the answer is the authoritative
+// fullness oracle for the purchase guard (State.ConstructionItemInventorySpaceLeft).
+func constructionSpaceLeftStep() Intent.Step {
+	return contextCommandStep("Refresh construction-item inventory space", "csp", json.RawMessage(`{}`), "csp")
+}
+
 func stationRouteContextSteps(source State.CastleState, target State.AllianceHolding) []Intent.Step {
 	payload, _ := json.Marshal(struct {
 		TargetX int `json:"TX"`
@@ -235,7 +243,7 @@ func (application *Application) resolveCRACommandDependencies(
 		return Intent.CommandDependencyPlan{}, err
 	}
 	guardedAt := time.Now().UTC()
-	target, towerTarget := input.State.Map[fields.KingdomID][fmt.Sprintf("%d:%d", fields.TargetX, fields.TargetY)]
+	target, towerTarget := input.State.LookupMapObservation(fields.KingdomID, fmt.Sprintf("%d:%d", fields.TargetX, fields.TargetY))
 	towerTarget = towerTarget && target.TypeID == kingdomTowerMapTypeID
 	var movementsObservedAfter time.Time
 	if fields.CommanderID != nil {
@@ -270,7 +278,7 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	state := application.State.Snapshot()
+	state := application.State.ReadOnlyView()
 	dialog := state.AttackDialog
 	if dialog.ObservedAt.IsZero() || dialog.ObservedAt.Before(request.DialogObservedAt) {
 		return fmt.Errorf("CRA attack dialog was not refreshed at send time")
@@ -306,7 +314,7 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 		if request.CommanderID == nil {
 			return fmt.Errorf("CRA tower launch does not identify a commander")
 		}
-		if cooldown, found := state.TowerCooldowns[key]; found && cooldown.PendingCooldownRefresh {
+		if cooldown, found := state.LookupTowerCooldown(key); found && cooldown.PendingCooldownRefresh {
 			return fmt.Errorf("CRA target %d:%d is awaiting a post-victory cooldown refresh", request.TargetX, request.TargetY)
 		}
 	case nomadIntentCampTypeID, samuraiIntentCampTypeID:
@@ -321,7 +329,7 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 			)
 		}
 	}
-	if target, found := state.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]; found &&
+	if target, found := state.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)); found &&
 		target.TypeID == dialog.Target.TypeID {
 		now := time.Now().UTC()
 		switch target.TypeID {

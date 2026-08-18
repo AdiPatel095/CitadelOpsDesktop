@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/AttackCapacity"
 	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -64,7 +65,7 @@ func (*AutoNomadPolicy) ID() string { return "autoNomad" }
 func (*AutoNomadPolicy) EnabledKey() string { return "auto_nomad" }
 
 func (*AutoNomadPolicy) WakeDomains() []string {
-	return []string{"attacks", "map", "movements", "commanders", "units", "events", "event-scores", "nomad-camps", "tower-cooldowns", "currencies", "attack_dialog", "achievements"}
+	return []string{"attacks", "map-event-camp", "movements", "commanders", "units", "events", "event-scores", "nomad-camps", "tower-cooldowns", "currencies", "attack_dialog", "achievements"}
 }
 
 func (*AutoNomadPolicy) WakeSections() []string {
@@ -72,6 +73,7 @@ func (*AutoNomadPolicy) WakeSections() []string {
 }
 
 func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+
 	settings := autoNomadSettings{
 		MinimumRemainingSec: 1800, CheckIntervalSec: 30, MapRefreshIntervalSec: defaultNomadMapRefresh,
 		TimeSkipReserve: map[string]int64{}, HorseTravelBoostID: -1,
@@ -105,6 +107,11 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 
 	score, found := activeNomadEventScore(snapshot.State, snapshot.Now)
 	if !found {
+		if decision, locked := limitedEventGate(
+			snapshot.State, snapshot.Now, []int64{nomadEventID, samuraiEventID}, "Nomad or Samurai event",
+		); locked {
+			return decision, nil
+		}
 		return nomadWaiting(snapshot.Now, "No Nomad or Samurai scalable event is active"), nil
 	}
 	targetTypeID, _ := nomadTargetType(score.EventID)
@@ -191,7 +198,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
 			}, nil
 		}
-		if observation, found := snapshot.State.Map[locked.KingdomID][fmt.Sprintf("%d:%d", locked.X, locked.Y)]; found &&
+		if observation, found := snapshot.State.LookupMapObservation(locked.KingdomID, fmt.Sprintf("%d:%d", locked.X, locked.Y)); found &&
 			observation.TypeID == locked.TypeID && observation.EventCampID == locked.EventCampID {
 			remaining := nomadCampCooldownRemaining(snapshot.State, observation, snapshot.Now)
 			if remaining > 0 {
@@ -259,12 +266,6 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	metrics["availableCommanders"] = float64(len(availableCommanders))
 
 	if maxedCount < nomadCampCount {
-		if metrics["activeAttacks"] > 0 {
-			return Decision{
-				Status: "waiting", Detail: fmt.Sprintf("Leveling the four camps: %d/%d maxed; waiting for the current camp victory", maxedCount, nomadCampCount),
-				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
-			}, nil
-		}
 		if len(availableCommanders) == 0 {
 			return nomadCommanderWaiting(snapshot.Now, commandersRestricted, metrics), nil
 		}
@@ -290,10 +291,20 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				NextCheckAt: snapshot.Now.Add(time.Duration(remaining) * time.Second), Metrics: metrics,
 			}, nil
 		}
-		if copies := availablePresetCopies(preset, source, 1); copies < 1 {
-			return nomadPresetWaiting(snapshot.Now, preset, source, metrics), nil
+		launchCommanders, limitedPreset, err := availableNomadPresetCommanders(
+			snapshot, source, target, preset, availableCommanders, len(availableCommanders), false,
+		)
+		if err != nil {
+			if decision, refresh := generalSkillsRefreshDecision(err, snapshot.Now, metrics); refresh {
+				return decision, nil
+			}
+			return nomadWaiting(snapshot.Now, fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err)), nil
 		}
-		return nomadAttackDecision(snapshot.Now, score, settings, source, preset, target, availableCommanders, "level", maximumVictoryCount, metrics), nil
+		metrics["presetCopies"] = float64(len(launchCommanders))
+		if len(launchCommanders) == 0 {
+			return nomadPresetWaiting(snapshot.Now, limitedPreset, source, metrics), nil
+		}
+		return nomadAttackDecision(snapshot.Now, score, settings, source, preset, target, launchCommanders, "level", maximumVictoryCount, metrics), nil
 	}
 
 	weakest := weakestNomadCamp(camps)
@@ -337,13 +348,9 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if len(availableCommanders) == 0 {
 		return nomadCommanderWaiting(snapshot.Now, commandersRestricted, metrics), nil
 	}
-	copyCount := availablePresetCopies(preset, source, len(availableCommanders))
-	if copyCount < 1 {
-		return nomadPresetWaiting(snapshot.Now, preset, source, metrics), nil
-	}
-	availableCommanders = availableCommanders[:copyCount]
+	maximumLaunches := len(availableCommanders)
 	if !settings.SkipCooldowns {
-		availableCommanders = availableCommanders[:1]
+		maximumLaunches = 1
 	} else {
 		availableSkips := responseGatedDungeonCooldownCount(snapshot.State, settings.TimeSkipReserve, target.Definition.CooldownSec)
 		committedSkips := int64(metrics["activeAttacks"])
@@ -357,13 +364,24 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 			}, nil
 		}
-		if usableSkips < int64(len(availableCommanders)) {
-			availableCommanders = availableCommanders[:int(usableSkips)]
-		}
+		maximumLaunches = min(maximumLaunches, int(usableSkips))
 	}
-	availableCommanders = availableCommanders[:capDailyAttackBatch(len(availableCommanders), dailyAllowance)]
-	metrics["chainSize"] = float64(len(availableCommanders))
-	return nomadAttackDecision(snapshot.Now, score, settings, source, preset, target, availableCommanders, "chain", maximumVictoryCount, metrics), nil
+	maximumLaunches = capDailyAttackBatch(maximumLaunches, dailyAllowance)
+	launchCommanders, limitedPreset, err := availableNomadPresetCommanders(
+		snapshot, source, target, preset, availableCommanders, maximumLaunches, true,
+	)
+	if err != nil {
+		if decision, refresh := generalSkillsRefreshDecision(err, snapshot.Now, metrics); refresh {
+			return decision, nil
+		}
+		return nomadWaiting(snapshot.Now, fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err)), nil
+	}
+	metrics["presetCopies"] = float64(len(launchCommanders))
+	if len(launchCommanders) == 0 {
+		return nomadPresetWaiting(snapshot.Now, limitedPreset, source, metrics), nil
+	}
+	metrics["chainSize"] = float64(len(launchCommanders))
+	return nomadAttackDecision(snapshot.Now, score, settings, source, preset, target, launchCommanders, "chain", maximumVictoryCount, metrics), nil
 }
 
 func activeNomadEventScore(gameState State.GameState, now time.Time) (State.ScalableEventScore, bool) {
@@ -375,7 +393,7 @@ func activeNomadEventScore(gameState State.GameState, now time.Time) (State.Scal
 	var selected State.ScalableEventScore
 	found := false
 	for _, eventID := range []int64{nomadEventID, samuraiEventID} {
-		score, exists := gameState.EventScores.ByEvent[eventID]
+		score, exists := gameState.LookupScalableEventScore(eventID)
 		if !exists || !nomadScoreStillActive(score, now) {
 			continue
 		}
@@ -447,18 +465,19 @@ func nomadCampCandidates(
 	lastScan time.Time,
 ) []nomadCampCandidate {
 	result := make([]nomadCampCandidate, 0, nomadCampCount)
-	for _, observation := range gameState.Map[source.KingdomID] {
+	gameState.RangeMapObservationsByKind(source.KingdomID, State.MapProjectionEventCamp, func(_ string, observation State.MapObservation) bool {
 		if observation.TypeID != targetTypeID || observation.ObservedAt.Before(lastScan) ||
 			invasionDistanceSquared(source, observation) > fixedNomadRadius*fixedNomadRadius || observation.EventCampID <= 0 {
-			continue
+			return true
 		}
 		definition, found := gameData.EventCamp(observation.EventCampID)
 		if !found || definition.EventID != eventID || definition.DifficultyID != difficultyID ||
 			definition.AreaTypeID != targetTypeID || definition.VictoryCount != observation.EventCampVictoryCount {
-			continue
+			return true
 		}
 		result = append(result, nomadCampCandidate{Observation: observation, Definition: definition})
-	}
+		return true
+	})
 	sort.Slice(result, func(left, right int) bool {
 		leftDistance := invasionDistanceSquared(source, result[left].Observation)
 		rightDistance := invasionDistanceSquared(source, result[right].Observation)
@@ -596,14 +615,15 @@ func activeNomadCampAttackCount(gameState State.GameState, sourceCastleID State.
 		targets[fmt.Sprintf("%d:%d:%d", camp.Observation.KingdomID, camp.Observation.X, camp.Observation.Y)] = struct{}{}
 	}
 	count := 0
-	for _, movement := range gameState.Movements {
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
 		if movement.Direction != 0 || movement.SourceCastleID != sourceCastleID || !towerMovementActiveAt(movement, now) {
-			continue
+			return true
 		}
 		if _, found := targets[fmt.Sprintf("%d:%d:%d", movement.KingdomID, movement.TargetX, movement.TargetY)]; found {
 			count++
 		}
-	}
+		return true
+	})
 	return count
 }
 
@@ -628,20 +648,8 @@ func availablePresetCopies(preset AttackPresets.Preset, source State.CastleState
 	if maximum <= 0 {
 		return 0
 	}
-	requested := map[State.UnitID]int64{}
-	for _, wave := range preset.Waves {
-		for _, lane := range []AttackPresets.Lane{wave.Left, wave.Middle, wave.Right} {
-			for _, slots := range [][]AttackPresets.Slot{lane.Troops, lane.Tools} {
-				for _, slot := range slots {
-					if slot.ItemID != nil && *slot.ItemID > 0 && slot.Quantity > 0 {
-						requested[State.UnitID(*slot.ItemID)] += slot.Quantity
-					}
-				}
-			}
-		}
-	}
-	addPresetCourtyardRequirements(requested, preset, true)
-	if len(requested) == 0 {
+	requested, hasLaunchTroops := nomadPresetRequirements(preset)
+	if !hasLaunchTroops || len(requested) == 0 {
 		return 0
 	}
 	result := maximum
@@ -649,6 +657,125 @@ func availablePresetCopies(preset AttackPresets.Preset, source State.CastleState
 		result = min(result, int(source.Units.Stationed[itemID]/amount))
 	}
 	return max(0, result)
+}
+
+func nomadPresetRequirements(preset AttackPresets.Preset) (map[State.UnitID]int64, bool) {
+	requested := map[State.UnitID]int64{}
+	hasLaunchTroops := false
+	for _, wave := range preset.Waves {
+		for _, lane := range []AttackPresets.Lane{wave.Left, wave.Middle, wave.Right} {
+			for _, slot := range lane.Troops {
+				if slot.ItemID != nil && *slot.ItemID > 0 && slot.Quantity > 0 {
+					requested[State.UnitID(*slot.ItemID)] += slot.Quantity
+					hasLaunchTroops = true
+				}
+			}
+			for _, slot := range lane.Tools {
+				if slot.ItemID != nil && *slot.ItemID > 0 && slot.Quantity > 0 {
+					requested[State.UnitID(*slot.ItemID)] += slot.Quantity
+				}
+			}
+		}
+	}
+	addPresetCourtyardRequirements(requested, preset, true)
+	return requested, hasLaunchTroops
+}
+
+func availableNomadPresetCommanders(
+	snapshot Snapshot,
+	source State.CastleState,
+	target nomadCampCandidate,
+	preset AttackPresets.Preset,
+	commanderIDs []State.CommanderID,
+	maximum int,
+	aggregateInventory bool,
+) ([]State.CommanderID, AttackPresets.Preset, error) {
+	if maximum <= 0 || len(commanderIDs) == 0 {
+		return nil, preset, nil
+	}
+	selected := make([]State.CommanderID, 0, min(maximum, len(commanderIDs)))
+	committed := map[State.UnitID]int64{}
+	var firstLimited AttackPresets.Preset
+	var firstResolveErr error
+	resolvedAny := false
+	for _, commanderID := range commanderIDs {
+		limited, err := autoNomadCapacityLimitedPreset(snapshot, source, target, preset, commanderID)
+		if err != nil {
+			if firstResolveErr == nil {
+				firstResolveErr = err
+			}
+			continue
+		}
+		resolvedAny = true
+		if firstLimited.ID == "" {
+			firstLimited = limited
+		}
+		required, hasLaunchTroops := nomadPresetRequirements(limited)
+		if !hasLaunchTroops {
+			continue
+		}
+		fits := true
+		for itemID, amount := range required {
+			committedAmount := int64(0)
+			if aggregateInventory {
+				committedAmount = committed[itemID]
+			}
+			if committedAmount+amount > source.Units.Stationed[itemID] {
+				fits = false
+				break
+			}
+		}
+		if !fits {
+			continue
+		}
+		if aggregateInventory {
+			for itemID, amount := range required {
+				committed[itemID] += amount
+			}
+		}
+		selected = append(selected, commanderID)
+		if len(selected) >= maximum {
+			break
+		}
+	}
+	if !resolvedAny && firstResolveErr != nil {
+		return nil, preset, firstResolveErr
+	}
+	if firstLimited.ID == "" {
+		firstLimited = preset
+	}
+	return selected, firstLimited, nil
+}
+
+func autoNomadCapacityLimitedPreset(
+	snapshot Snapshot,
+	source State.CastleState,
+	target nomadCampCandidate,
+	preset AttackPresets.Preset,
+	commanderID State.CommanderID,
+) (AttackPresets.Preset, error) {
+	dialog := snapshot.State.AttackDialog
+	useAttackDialog := dialog.SourceCastleID == source.ID && dialog.KingdomID == target.Observation.KingdomID &&
+		dialog.Target.TypeID == target.Observation.TypeID && dialog.Target.X == target.Observation.X &&
+		dialog.Target.Y == target.Observation.Y && dialog.Target.EventCampID == target.Observation.EventCampID &&
+		dialog.Target.EventCampVictoryCount == target.Observation.EventCampVictoryCount
+	capacity, err := (AttackCapacity.Resolver{}).Resolve(snapshot.State, snapshot.GameData, AttackCapacity.Request{
+		SourceCastleID: source.ID, CommanderID: commanderID, UseAttackDialogEffects: useAttackDialog,
+		Target: AttackCapacity.TargetContext{
+			ID: fmt.Sprintf("event-camp:%d:%d:%d", target.Observation.KingdomID, target.Observation.X, target.Observation.Y),
+			Map: &AttackCapacity.MapTarget{
+				KingdomID: target.Observation.KingdomID, TypeID: target.Observation.TypeID,
+				X: target.Observation.X, Y: target.Observation.Y, ObjectID: target.Observation.EventCampID,
+				Level: target.Definition.CampLevel, VictoryCount: target.Observation.EventCampVictoryCount,
+			},
+			Level: target.Definition.CampLevel, CastleTypeID: target.Observation.TypeID,
+			PvP: false, LegendaryFight: false,
+		},
+	})
+	if err != nil {
+		return AttackPresets.Preset{}, fmt.Errorf("resolve Nomad/Samurai camp attack capacity: %w", err)
+	}
+	return AttackPresets.LimitToCapacity(preset, capacity), nil
 }
 
 func nomadCommanderWaiting(now time.Time, restricted bool, metrics map[string]float64) Decision {
@@ -729,7 +856,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 	if !exists {
 		return nomadWaiting(snapshot.Now, "The selected Nomad preset for the RBC trial no longer exists"), nil
 	}
-	target, exists := snapshot.State.Map[source.KingdomID][fmt.Sprintf("%d:%d", trial.TargetX, trial.TargetY)]
+	target, exists := snapshot.State.LookupMapObservation(source.KingdomID, fmt.Sprintf("%d:%d", trial.TargetX, trial.TargetY))
 	if !exists || target.TypeID != kingdomTowerMapTypeID {
 		return nomadRBCTestMapRefresh(snapshot.Now, source.KingdomID, trial.TargetX, trial.TargetY, "Discover the configured RBC trial target", nil), nil
 	}
@@ -746,7 +873,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 		return nomadRBCTestMapRefresh(snapshot.Now, source.KingdomID, target.X, target.Y, "Refresh the RBC trial target before launch", metrics), nil
 	}
 	key := towerTargetKey(target.KingdomID, target.X, target.Y)
-	if cooldown, found := snapshot.State.TowerCooldowns[key]; found && cooldown.PendingCooldownRefresh &&
+	if cooldown, found := snapshot.State.LookupTowerCooldown(key); found && cooldown.PendingCooldownRefresh &&
 		(!activeTest || cooldown.LastSuccessfulBattleAt.After(test.StartedAt)) {
 		return nomadRBCTestMapRefresh(snapshot.Now, target.KingdomID, target.X, target.Y,
 			fmt.Sprintf("Refresh RBC %d:%d immediately after confirmed hit %d", target.X, target.Y, test.VictoriesConfirmed), metrics), nil

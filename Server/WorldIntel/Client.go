@@ -16,6 +16,7 @@ import (
 const (
 	defaultCloudURL = "https://citadelops.app/api/world-intel/v1"
 	requestTimeout  = 20 * time.Second
+	coverageTimeout = 5 * time.Second
 )
 
 type ClientConfig struct {
@@ -26,6 +27,7 @@ type ClientConfig struct {
 
 type CloudClient struct {
 	client        *http.Client
+	streamClient  *http.Client
 	baseURL       string
 	clientVersion string
 }
@@ -35,6 +37,11 @@ func NewCloudClient(config ClientConfig) *CloudClient {
 	if client == nil {
 		client = &http.Client{Timeout: requestTimeout}
 	}
+	streamClient := &http.Client{
+		Transport:     client.Transport,
+		CheckRedirect: client.CheckRedirect,
+		Jar:           client.Jar,
+	}
 	baseURL := strings.TrimRight(strings.TrimSpace(config.BaseURL), "/")
 	if baseURL == "" {
 		baseURL = strings.TrimRight(strings.TrimSpace(os.Getenv("CITADEL_WORLD_INTEL_URL")), "/")
@@ -42,7 +49,10 @@ func NewCloudClient(config ClientConfig) *CloudClient {
 	if baseURL == "" {
 		baseURL = defaultCloudURL
 	}
-	return &CloudClient{client: client, baseURL: baseURL, clientVersion: strings.TrimSpace(config.ClientVersion)}
+	return &CloudClient{
+		client: client, streamClient: streamClient,
+		baseURL: baseURL, clientVersion: strings.TrimSpace(config.ClientVersion),
+	}
 }
 
 func (client *CloudClient) Endpoint() string {
@@ -202,6 +212,8 @@ func (client *CloudClient) RankingMetrics(
 }
 
 func (client *CloudClient) Coverage(ctx context.Context, worldID string) (CoverageResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, coverageTimeout)
+	defer cancel()
 	values := url.Values{}
 	if normalized := NormalizeWorldID(worldID); normalized != "" {
 		values.Set("worldId", normalized)
@@ -213,6 +225,62 @@ func (client *CloudClient) Coverage(ctx context.Context, worldID string) (Covera
 	var result CoverageResponse
 	err := client.getJSON(ctx, path, &result)
 	return result, err
+}
+
+func (client *CloudClient) Subscribe(ctx context.Context, worldID string, lastEventID string) (*http.Response, error) {
+	values := url.Values{"worldId": {NormalizeWorldID(worldID)}}
+	return client.subscribe(ctx, "/subscribe?"+values.Encode(), lastEventID)
+}
+
+func (client *CloudClient) SubscribeEventRun(
+	ctx context.Context,
+	worldID string,
+	occurrenceID string,
+	listType int64,
+	leagueID int64,
+	lastEventID string,
+) (*http.Response, error) {
+	values := url.Values{
+		"worldId": {NormalizeWorldID(worldID)},
+	}
+	if listType > 0 {
+		values.Set("listType", strconv.FormatInt(listType, 10))
+	}
+	if leagueID >= -1 {
+		values.Set("leagueId", strconv.FormatInt(leagueID, 10))
+	}
+	path := "/event-runs/" + url.PathEscape(strings.ToLower(strings.TrimSpace(occurrenceID))) + "/subscribe?" + values.Encode()
+	return client.subscribe(ctx, path, lastEventID)
+}
+
+func (client *CloudClient) subscribe(ctx context.Context, path string, lastEventID string) (*http.Response, error) {
+	if client == nil || client.streamClient == nil || client.baseURL == "" {
+		return nil, fmt.Errorf("world intelligence cloud client is unavailable")
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, client.baseURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create World Intelligence subscription: %w", err)
+	}
+	request.Header.Set("Accept", "text/event-stream")
+	request.Header.Set("Cache-Control", "no-cache")
+	request.Header.Set("User-Agent", "CitadelOpsDesktop/"+client.clientVersion)
+	if lastEventID = strings.TrimSpace(lastEventID); lastEventID != "" {
+		request.Header.Set("Last-Event-ID", lastEventID)
+	}
+	response, err := client.streamClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("World Intelligence subscription failed: %w", err)
+	}
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		defer response.Body.Close()
+		body, _ := io.ReadAll(io.LimitReader(response.Body, 8<<10))
+		message := strings.TrimSpace(string(body))
+		if message == "" {
+			message = response.Status
+		}
+		return nil, fmt.Errorf("World Intelligence subscription returned %s: %s", response.Status, message)
+	}
+	return response, nil
 }
 
 func (client *CloudClient) getJSON(ctx context.Context, path string, target any) error {

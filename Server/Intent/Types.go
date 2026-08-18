@@ -30,12 +30,26 @@ type Request struct {
 	DryRun           bool              `json:"dryRun,omitempty"`
 }
 
+// CommanderHoldRegistry tracks commanders that were just selected for a CRA
+// launch. A launched commander's movement is invisible until the next
+// movement refresh, so without a hold the next volley in a burst re-selects
+// the same commander and the game answers CRA 256 — rejected-request churn
+// that anti-automation heuristics weigh heavily.
+type CommanderHoldRegistry interface {
+	HoldCommanders(ids []State.CommanderID, until time.Time)
+	CommanderHeldAt(id State.CommanderID, now time.Time) bool
+}
+
 type PlanningContext struct {
 	State           State.GameState
 	GameData        *GameData.Store
 	Language        *GameData.LanguageStore
 	Partitions      State.PartitionVersions
 	ProtocolContext State.ProtocolContextState
+	// CommanderHolds is consulted (and fed) by CRA commander selection so
+	// back-to-back launches never race the movement refresh into the same
+	// commander. Nil outside full application composition (tests).
+	CommanderHolds CommanderHoldRegistry
 }
 
 func (input PlanningContext) Dependencies(keys ...State.PartitionKey) []State.PartitionDependency {
@@ -198,6 +212,14 @@ type Receipt struct {
 	CompletedAt *time.Time `json:"completedAt,omitempty"`
 }
 
+// Terminal reports whether the operation has finished. Every completion path
+// (succeeded, failed, cancelled, partially succeeded, indeterminate, and a
+// planned dry run) stamps CompletedAt; paused and reconciling checkpoints clear
+// it because the operation may still resume.
+func (receipt Receipt) Terminal() bool {
+	return receipt.CompletedAt != nil
+}
+
 func (receipt Receipt) DiagnosticError() string {
 	if receipt.RawError != "" {
 		return receipt.RawError
@@ -214,7 +236,9 @@ type CommandExchange struct {
 }
 
 type StateReader interface {
-	Snapshot() State.GameState
+	// ReadOnlyView returns an immutable generation. Intent planning is read-only
+	// and must not pay for a defensive clone on every plan/revalidation.
+	ReadOnlyView() State.GameState
 	Revision() uint64
 	Session() State.SessionState
 }

@@ -2,6 +2,7 @@ package App
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -130,15 +131,17 @@ func TestPlanConstructionPurchaseUsesLiveOfficialOffer(t *testing.T) {
 	castle := resourceIntentCastle(10, 0, 10, 20)
 	gameState.Castles[10] = castle
 	gameState.Inventory.ConstructionItemsObservedAt = time.Now().UTC()
-	gameState.Inventory.ConstructionOffersObservedAt = time.Now().UTC()
-	gameState.Inventory.ConstructionOffers[500] = 1
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{500: 1}, time.Now().UTC(), 10, 0)
 	plan, err := planConstructionPurchase(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
 		"castleId":10,"productId":500,"amount":1
 	}`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "jaa" || plan.Steps[1].Opcode != "aec" || plan.Steps[2].Opcode != "gbc" {
+	// jaa → aec → gbc → csp → sbp: the csp space-left query mirrors the official
+	// buy slider, which asks the server for remaining inventory room before buying.
+	if len(plan.Steps) != 5 || plan.Steps[0].Opcode != "jaa" || plan.Steps[1].Opcode != "aec" ||
+		plan.Steps[2].Opcode != "gbc" || plan.Steps[3].Opcode != "csp" {
 		t.Fatalf("construction purchase context = %#v", plan.Steps)
 	}
 	if plan.Steps[1].ResumePolicy != Intent.ResumeRebuild || plan.Steps[2].ResumePolicy != Intent.ResumeRebuild {
@@ -157,7 +160,7 @@ func TestPlanConstructionPurchaseAllowsOfficialTrivialProductOutsideLiveOffers(t
 	gameState := State.NewGameState()
 	gameState.Castles[10] = resourceIntentCastle(10, 0, 10, 20)
 	gameState.Inventory.ConstructionItemsObservedAt = time.Now().UTC()
-	gameState.Inventory.ConstructionOffersObservedAt = time.Now().UTC()
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{}, time.Now().UTC(), 10, 0)
 	plan, err := planConstructionPurchase(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: constructionPolicyGameDataForApp(t),
 	}, json.RawMessage(`{"castleId":10,"productId":501,"amount":1}`))
@@ -175,13 +178,12 @@ func TestPlanConstructionPurchaseRejectsFullInventory(t *testing.T) {
 	gameState.Castles[10] = resourceIntentCastle(10, 0, 10, 20)
 	gameState.Inventory.ConstructionItemsObservedAt = time.Now().UTC()
 	gameState.Inventory.ConstructionItems[101] = State.ConstructionItemInventoryLimit
-	gameState.Inventory.ConstructionOffersObservedAt = time.Now().UTC()
-	gameState.Inventory.ConstructionOffers[500] = 1
+	gameState.ReplaceInventoryConstructionOffers(map[State.PackageID]int64{500: 1}, time.Now().UTC(), 10, 0)
 
 	_, err := planConstructionPurchase(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: constructionPolicyGameDataForApp(t),
 	}, json.RawMessage(`{"castleId":10,"productId":500,"amount":1}`))
-	if err == nil || !strings.Contains(err.Error(), "inventory is full (1000/1000)") {
+	if err == nil || !strings.Contains(err.Error(), fmt.Sprintf("inventory is full (%d/%d)", State.ConstructionItemInventoryLimit, State.ConstructionItemInventoryLimit)) {
 		t.Fatalf("full construction-item inventory error = %v", err)
 	}
 }

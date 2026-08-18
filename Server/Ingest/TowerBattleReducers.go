@@ -69,16 +69,13 @@ func reduceSuccessfulTowerBattle(
 	}
 
 	key := towerCooldownKey(kingdomID, summary.Target.X, summary.Target.Y)
-	if gameState.TowerCooldowns == nil {
-		gameState.TowerCooldowns = map[string]State.TowerCooldownState{}
-	}
-	if current, exists := gameState.TowerCooldowns[key]; exists && current.ReportID == reportID && reportID > 0 {
+	if current, exists := gameState.LookupTowerCooldown(key); exists && current.ReportID == reportID && reportID > 0 {
 		return nil, false, nil
 	}
-	gameState.TowerCooldowns[key] = State.TowerCooldownState{
+	gameState.SetTowerCooldown(key, State.TowerCooldownState{
 		KingdomID: kingdomID, X: summary.Target.X, Y: summary.Target.Y,
 		ReportID: reportID, LastSuccessfulBattleAt: frame.ReceivedAt, PendingCooldownRefresh: true,
-	}
+	})
 	domains := []string{"tower-cooldowns"}
 	if recordRBCTestVictory(gameState, kingdomID, summary.Target.X, summary.Target.Y, reportID) {
 		domains = append(domains, "nomad-camps")
@@ -179,11 +176,11 @@ func battleSummaryAttackerWon(participants [][]json.RawMessage) bool {
 }
 
 func refreshTowerCooldownFromMap(gameState *State.GameState, observation State.MapObservation) bool {
-	if observation.TypeID != towerMapTypeID || gameState.TowerCooldowns == nil {
+	if observation.TypeID != towerMapTypeID {
 		return false
 	}
 	key := towerCooldownKey(observation.KingdomID, observation.X, observation.Y)
-	current, exists := gameState.TowerCooldowns[key]
+	current, exists := gameState.LookupTowerCooldown(key)
 	if !exists || current.LastSuccessfulBattleAt.After(observation.ObservedAt) {
 		return false
 	}
@@ -194,8 +191,7 @@ func refreshTowerCooldownFromMap(gameState *State.GameState, observation State.M
 	if next == current {
 		return false
 	}
-	gameState.TowerCooldowns[key] = next
-	return true
+	return gameState.SetTowerCooldown(key, next)
 }
 
 func towerCooldownKey(kingdomID State.KingdomID, x, y int) string {

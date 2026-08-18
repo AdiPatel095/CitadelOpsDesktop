@@ -19,6 +19,7 @@ import (
 
 	"CitadelDesktop/Server/Outbound"
 	"CitadelDesktop/Server/Protocol"
+	"CitadelDesktop/Server/State"
 	"github.com/gorilla/websocket"
 )
 
@@ -27,11 +28,14 @@ const (
 	directGameIndexURL        = "https://empire-html5.goodgamestudios.com/default/index.html"
 	directDefaultPingInterval = 60 * time.Second
 	directMovementInterval    = 5 * time.Second
-	directHandshakeTimeout    = 45 * time.Second
-	directWriteTimeout        = 10 * time.Second
-	directMaxMessageBytes     = 64 << 20
-	directMaxFrontendBytes    = 2 << 20
-	directEmptyArgument       = "<RoundHouseKick>"
+	// directSubscriptionRefreshInterval re-pulls subscription packages so a
+	// mid-session lapse or purchase is noticed without a relog.
+	directSubscriptionRefreshInterval = 6 * time.Hour
+	directHandshakeTimeout            = 45 * time.Second
+	directWriteTimeout                = 10 * time.Second
+	directMaxMessageBytes             = 64 << 20
+	directMaxFrontendBytes            = 2 << 20
+	directEmptyArgument               = "<RoundHouseKick>"
 )
 
 var (
@@ -75,6 +79,15 @@ type DirectWebSocketTransport struct {
 	connection         *websocket.Conn
 	selectedBrowser    BrowserCandidate
 	relogDelayProvider func() time.Duration
+	// parkedFailure records why the run loop stopped on its own (a login
+	// failure only the user or the account holder can resolve, or a released
+	// session waiting for parkedRetryAt). Start refuses to spend the same saved
+	// login again until it changes, the wait elapses, or a reconnect is forced.
+	parkedFailure      *State.LoginFailure
+	parkedCredentialAt time.Time
+	parkedRetryAt      time.Time
+	forceNextStart     bool
+	reconnectPolicy    ReconnectPolicy
 
 	writeMu   sync.Mutex
 	pendingMu sync.Mutex
@@ -102,14 +115,65 @@ type directWireDecoder struct {
 	buffer string
 }
 
+// ErrLoginParked is returned by Start while the transport is parked on a login
+// failure that retrying cannot fix. Saving a different login or server
+// selection clears the park.
+var ErrLoginParked = errors.New("game login is parked until the saved login or server selection changes")
+
+// maximumUnknownLoginRetryDelay caps the doubling retry spacing used for login
+// codes without an established meaning.
+const maximumUnknownLoginRetryDelay = time.Hour
+
+const (
+	defaultReleaseRetryDelay    = 5 * time.Second
+	defaultReleaseRetryAttempts = 3
+)
+
+// ErrReconnectScheduled is returned by Start while a released or cooling-down
+// session is waiting for its retry time; ClearReconnectHold or a changed login
+// bypasses it.
+var ErrReconnectScheduled = errors.New("game reconnect is scheduled; the retry time has not elapsed")
+
+// loginParkNeedsUserAction reports whether a fatal login class can only be
+// resolved by a credential, server, or account change, so the runtime parks
+// instead of retrying.
+func loginParkNeedsUserAction(class State.LoginFailureClass) bool {
+	switch class {
+	case State.LoginFailureInvalidCredentials, State.LoginFailureWrongServer,
+		State.LoginFailureAccountDeleted, State.LoginFailureSuspended:
+		return true
+	default:
+		return false
+	}
+}
+
 type directLoginError struct {
-	code        int
-	cooldownSec int
-	detail      string
-	fatal       bool
+	code                  int
+	cooldownSec           int
+	suspendedSec          int
+	accountDeleted        bool
+	detail                string
+	fatal                 bool
+	clientVersionRejected bool
 }
 
 func (err *directLoginError) Error() string { return err.detail }
+
+func (err *directLoginError) failure(observedAt time.Time) *State.LoginFailure {
+	if err == nil {
+		return nil
+	}
+	class, _ := State.ClassifyLoginFailure(err.code, err.clientVersionRejected)
+	if class == State.LoginFailureSuspended && err.accountDeleted {
+		class = State.LoginFailureAccountDeleted
+	}
+	failure := &State.LoginFailure{Code: err.code, Class: class, Fatal: err.fatal, ObservedAt: observedAt.UTC()}
+	if class == State.LoginFailureSuspended && err.suspendedSec > 0 {
+		until := observedAt.UTC().Add(time.Duration(err.suspendedSec) * time.Second)
+		failure.SuspendedUntil = &until
+	}
+	return failure
+}
 
 func NewDirectWebSocketTransport(config DirectWebSocketConfig) *DirectWebSocketTransport {
 	credential, profile, resolveErr := loadDirectWebSocketBootstrap(config)
@@ -182,14 +246,43 @@ func resolveDirectGameProfile(
 			"Background mode needs a saved game server selection; enter the server in Settings",
 		)
 	}
+	// The zone belongs to the selected world, not to the process: an
+	// explicitly pinned zone (installed with the login by the hosted control
+	// plane) wins; otherwise several worlds share one multi-zone host, so the
+	// saved world code decides, then a single-world host, and only then
+	// whatever the state last saw.
+	selectedCode := strings.TrimSpace(credential.Server)
+	if selectedCode == "" {
+		selectedCode = strings.TrimSpace(config.Server)
+	}
+	catalogZone, zoneKnown := gameServerZoneForURL(selectedServerURL, selectedCode)
+	if pinnedZone := strings.TrimSpace(credential.Zone); pinnedZone != "" && gameNamespacePattern.MatchString(pinnedZone) {
+		catalogZone, zoneKnown = pinnedZone, true
+	}
 	if hasSavedProfile && selectedServerURL == savedProfile.ServerURL {
+		if zoneKnown && (credential.Server != "" || credential.Zone != "") && savedProfile.Namespace != catalogZone {
+			// A profile derived before the world code was recorded carries the
+			// default zone; re-derive it for the world the login is saved for.
+			return derivedGameConnectionProfile(selectedServerURL, catalogZone, resolvedLoginLanguage(config, credential))
+		}
 		return savedProfile, nil
 	}
 
 	namespace := strings.TrimSpace(config.Namespace)
+	if zoneKnown {
+		namespace = catalogZone
+	}
 	if !gameNamespacePattern.MatchString(namespace) {
 		namespace = defaultGameNamespace
 	}
+	profile, err := derivedGameConnectionProfile(selectedServerURL, namespace, resolvedLoginLanguage(config, credential))
+	if err != nil {
+		return gameConnectionProfile{}, fmt.Errorf("Background mode cannot use the saved game server selection: %w", err)
+	}
+	return profile, nil
+}
+
+func resolvedLoginLanguage(config DirectWebSocketConfig, credential persistedLoginCredential) string {
 	language := strings.TrimSpace(credential.Language)
 	if !loginLanguagePattern.MatchString(language) {
 		language = strings.TrimSpace(config.Language)
@@ -197,11 +290,7 @@ func resolveDirectGameProfile(
 	if !loginLanguagePattern.MatchString(language) {
 		language = defaultGameLanguage
 	}
-	profile, err := derivedGameConnectionProfile(selectedServerURL, namespace, language)
-	if err != nil {
-		return gameConnectionProfile{}, fmt.Errorf("Background mode cannot use the saved game server selection: %w", err)
-	}
-	return profile, nil
+	return language
 }
 
 func (transport *DirectWebSocketTransport) Start(ctx context.Context) error {
@@ -214,6 +303,28 @@ func (transport *DirectWebSocketTransport) Start(ctx context.Context) error {
 		return nil
 	}
 	credential, profile, resolveErr := loadDirectWebSocketBootstrap(transport.config)
+	force := transport.forceNextStart
+	transport.forceNextStart = false
+	if resolveErr == nil && !force && credential.CapturedAt.Equal(transport.parkedCredentialAt) {
+		if parked := transport.parkedFailure; parked != nil && loginParkNeedsUserAction(parked.Class) {
+			// The same saved login already failed for a reason retrying cannot
+			// fix (wrong password, wrong server, suspended, deactivated).
+			// Spending it again would only earn a login cooldown; wait for a
+			// changed login or an explicit reconnect.
+			transport.mu.Unlock()
+			return fmt.Errorf("%w: %s (code %d)", ErrLoginParked, parked.Class, parked.Code)
+		}
+		if !transport.parkedRetryAt.IsZero() && time.Now().Before(transport.parkedRetryAt) {
+			// A released session (or a suspension) is waiting for its retry
+			// time; an unforced Start must not shorten the game's cooldown.
+			retryAt := transport.parkedRetryAt
+			transport.mu.Unlock()
+			return fmt.Errorf("%w: retry at %s", ErrReconnectScheduled, retryAt.Format(time.RFC3339))
+		}
+	}
+	transport.parkedFailure = nil
+	transport.parkedCredentialAt = time.Time{}
+	transport.parkedRetryAt = time.Time{}
 	transport.credential = credential
 	transport.profile = profile
 	transport.resolveErr = resolveErr
@@ -310,53 +421,208 @@ func (transport *DirectWebSocketTransport) PrepareBackgroundMode() error {
 	return nil
 }
 
+// run keeps the account connected for as long as the transport is started.
+// Every interruption is followed by a reconnect after the user-configured
+// relog delay, except the login outcomes that retrying cannot fix:
+//
+//   - transient drops and rejected client builds: relog delay;
+//   - LOGIN_COOLDOWN_ACTIVE (453): the game's cooldown, then the relog delay;
+//   - a temporary suspension (27 with a remaining time): resume automatically
+//     when the suspension ends, plus the relog delay;
+//   - a code without an established meaning: retry with the relog delay
+//     doubling per repeat, capped at one hour;
+//   - invalid credentials, wrong server, permanent suspension, or a deactivated
+//     account: park until the saved login or server selection changes.
 func (transport *DirectWebSocketTransport) run(ctx context.Context, generation uint64) {
+	unknownFailures := 0
 	for {
 		err := transport.connectAndServe(ctx, generation)
 		if ctx.Err() != nil || !transport.isCurrent(generation) {
 			return
 		}
 		var loginErr *directLoginError
-		if errors.As(err, &loginErr) && loginErr.fatal {
-			transport.publishRunStatus(generation, Status{
-				Mode: ConnectionModeBackground, State: "error", Namespace: transport.profile.Namespace,
-				ServerURL: transport.profile.ServerURL, Detail: loginErr.Error(), ChangedAt: time.Now().UTC(),
-			})
-			return
+		isLoginErr := errors.As(err, &loginErr)
+		if !isLoginErr {
+			unknownFailures = 0
 		}
-		delay := transport.relogDelay()
+		displaced := !isLoginErr && isDisplacementClose(err)
 		now := time.Now().UTC()
+		delay := transport.relogDelay()
 		status := Status{
 			Mode: ConnectionModeBackground, State: "reconnecting", Namespace: transport.profile.Namespace,
 			ServerURL: transport.profile.ServerURL, LoggedIn: false, SocketReady: false,
 			Detail: fmt.Sprintf("Background game connection closed: %v", err), ChangedAt: now,
 		}
-		if errors.As(err, &loginErr) && loginErr.code == 453 {
+		if isLoginErr {
+			status.LoginFailure = loginErr.failure(now)
+			status.Detail = loginErr.Error()
+		}
+		if displaced {
+			status.Detail = fmt.Sprintf(
+				"The game session was taken over by another login; waiting the configured relog delay (%s) before reconnecting",
+				delay.Round(time.Second),
+			)
+		} else if !isLoginErr {
+			status.Detail = fmt.Sprintf(
+				"Game connection closed; waiting the configured relog delay (%s) before reconnecting", delay.Round(time.Second),
+			)
+		}
+		if transport.currentReconnectPolicy() == ReconnectPolicyRelease {
+			// Under the release policy the runtime's lifetime follows the game
+			// connection, and EVERY disconnect is treated as a displacement:
+			// the session is released at once and the configured relog delay
+			// is the wait before the control plane brings a runtime back.
+			// There is deliberately no immediate-retry window — the game kicks
+			// this session with a plain socket drop when the player logs in,
+			// and an instant relog would kick the player straight back out.
+			transport.release(generation, status, loginErr, isLoginErr, delay, now)
+			return
+		}
+		switch {
+		case isLoginErr && loginErr.code == 453:
 			cooldownUntil := now.Add(time.Duration(max(0, loginErr.cooldownSec)) * time.Second)
 			retryAt := cooldownUntil.Add(delay)
 			status.State = "cooldown"
-			status.Detail = loginErr.Error()
 			status.CooldownUntil = &cooldownUntil
 			status.RetryAt = &retryAt
 			delay = time.Until(retryAt)
-		} else {
+		case isLoginErr && loginErr.fatal && status.LoginFailure.Class == State.LoginFailureSuspended &&
+			status.LoginFailure.SuspendedUntil != nil:
+			retryAt := status.LoginFailure.SuspendedUntil.Add(delay)
+			status.State = "suspended"
+			status.RetryAt = &retryAt
+			delay = time.Until(retryAt)
+		case isLoginErr && loginErr.fatal && status.LoginFailure.Class == State.LoginFailureUnknown:
+			unknownFailures++
+			for index := 1; index < unknownFailures && delay < maximumUnknownLoginRetryDelay; index++ {
+				delay *= 2
+			}
+			if delay > maximumUnknownLoginRetryDelay {
+				delay = maximumUnknownLoginRetryDelay
+			}
+			retryAt := now.Add(delay)
+			status.State = "error"
+			status.RetryAt = &retryAt
+		case isLoginErr && loginErr.fatal:
+			// Only a changed login, server selection, or account can help. Park:
+			// publish the obstacle, release this run, and let Start refuse the
+			// unchanged login until it is replaced.
+			status.State = "error"
+			transport.publishRunStatus(generation, status)
+			transport.mu.Lock()
+			var release context.CancelFunc
+			if transport.runGeneration == generation {
+				transport.parkedFailure = status.LoginFailure
+				transport.parkedCredentialAt = transport.credential.CapturedAt
+				release = transport.cancel
+				transport.cancel = nil
+			}
+			transport.mu.Unlock()
+			if release != nil {
+				release()
+			}
+			return
+		default:
 			retryAt := now.Add(delay)
 			status.RetryAt = &retryAt
 		}
 		if !transport.publishRunStatus(generation, status) {
 			return
 		}
-		if delay < 0 {
-			delay = 0
-		}
-		timer := time.NewTimer(delay)
-		select {
-		case <-ctx.Done():
-			timer.Stop()
+		if !transport.sleep(ctx, delay) {
 			return
-		case <-timer.C:
 		}
 	}
+}
+
+// release publishes the "released" state for the given interruption and parks
+// the run so Start refuses to reconnect before the retry time (unless the login
+// changes or a reconnect is forced). RetryAt is the earliest sensible retry:
+// the game's cooldown or suspension end, never sooner than the relog delay.
+func (transport *DirectWebSocketTransport) release(
+	generation uint64,
+	status Status,
+	loginErr *directLoginError,
+	isLoginErr bool,
+	relogDelay time.Duration,
+	now time.Time,
+) {
+	status.State = "released"
+	retryAt := now.Add(relogDelay)
+	switch {
+	case isLoginErr && loginErr.code == 453:
+		cooldownUntil := now.Add(time.Duration(max(0, loginErr.cooldownSec)) * time.Second)
+		status.CooldownUntil = &cooldownUntil
+		if cooldownUntil.After(retryAt) {
+			retryAt = cooldownUntil
+		}
+	case isLoginErr && loginErr.fatal && status.LoginFailure != nil && status.LoginFailure.SuspendedUntil != nil:
+		if status.LoginFailure.SuspendedUntil.After(retryAt) {
+			retryAt = *status.LoginFailure.SuspendedUntil
+		}
+	case isLoginErr && loginErr.fatal && status.LoginFailure != nil && loginParkNeedsUserAction(status.LoginFailure.Class):
+		// Only a changed login or account can help; no retry time.
+		retryAt = time.Time{}
+	}
+	if !retryAt.IsZero() {
+		status.RetryAt = &retryAt
+	}
+	status.Detail = "Session released: " + status.Detail
+	transport.publishRunStatus(generation, status)
+	transport.mu.Lock()
+	var releaseRun context.CancelFunc
+	if transport.runGeneration == generation {
+		transport.parkedFailure = status.LoginFailure
+		transport.parkedCredentialAt = transport.credential.CapturedAt
+		transport.parkedRetryAt = retryAt
+		releaseRun = transport.cancel
+		transport.cancel = nil
+	}
+	transport.mu.Unlock()
+	if releaseRun != nil {
+		releaseRun()
+	}
+}
+
+// sleep waits for delay or the context; it reports false when the run should
+// stop.
+func (transport *DirectWebSocketTransport) sleep(ctx context.Context, delay time.Duration) bool {
+	if delay < 0 {
+		delay = 0
+	}
+	timer := time.NewTimer(delay)
+	select {
+	case <-ctx.Done():
+		timer.Stop()
+		return false
+	case <-timer.C:
+		return true
+	}
+}
+
+func (transport *DirectWebSocketTransport) currentReconnectPolicy() ReconnectPolicy {
+	transport.mu.RLock()
+	defer transport.mu.RUnlock()
+	if transport.reconnectPolicy == "" {
+		return ReconnectPolicyHold
+	}
+	return transport.reconnectPolicy
+}
+
+// SetReconnectPolicy switches between holding and releasing the session after
+// a disconnect. It applies to the next interruption.
+func (transport *DirectWebSocketTransport) SetReconnectPolicy(policy ReconnectPolicy) {
+	transport.mu.Lock()
+	transport.reconnectPolicy = policy
+	transport.mu.Unlock()
+}
+
+// ClearReconnectHold lets the next Start bypass a park or scheduled retry: an
+// explicit reconnect requested by the user or the control plane.
+func (transport *DirectWebSocketTransport) ClearReconnectHold() {
+	transport.mu.Lock()
+	transport.forceNextStart = true
+	transport.mu.Unlock()
 }
 
 func (transport *DirectWebSocketTransport) connectAndServe(ctx context.Context, generation uint64) error {
@@ -565,7 +831,7 @@ func (transport *DirectWebSocketTransport) authenticate(
 							code = *frame.ResponseCode
 						}
 						return 0, 0, nil, &directLoginError{
-							code:   code,
+							code: code, clientVersionRejected: true,
 							detail: fmt.Sprintf("Background game client version was rejected with code %d; refreshing it from the official frontend before retrying", code),
 						}
 					}
@@ -582,19 +848,32 @@ func (transport *DirectWebSocketTransport) authenticate(
 						continue
 					}
 					if *frame.ResponseCode != 0 {
-						cooldown := 0
-						if *frame.ResponseCode == 453 {
+						loginErr := &directLoginError{code: *frame.ResponseCode}
+						switch *frame.ResponseCode {
+						case 453:
+							// LOGIN_COOLDOWN_ACTIVE carries the remaining lockout.
 							var payload struct {
 								Seconds int `json:"CD"`
 							}
 							_ = json.Unmarshal(frame.Payload, &payload)
-							cooldown = max(0, payload.Seconds)
+							loginErr.cooldownSec = max(0, payload.Seconds)
+						case 27:
+							// IS_BANNED carries the remaining suspension and, for a
+							// deactivated account, the GDPR deletion flag.
+							var payload struct {
+								Seconds int  `json:"RS"`
+								Deleted bool `json:"GDPR"`
+							}
+							_ = json.Unmarshal(frame.Payload, &payload)
+							loginErr.suspendedSec = max(0, payload.Seconds)
+							loginErr.accountDeleted = payload.Deleted
 						}
-						return 0, 0, nil, &directLoginError{
-							code: *frame.ResponseCode, cooldownSec: cooldown,
-							fatal:  *frame.ResponseCode != 453,
-							detail: fmt.Sprintf("Background game login failed with code %d", *frame.ResponseCode),
+						_, loginErr.fatal = State.ClassifyLoginFailure(*frame.ResponseCode, false)
+						loginErr.detail = fmt.Sprintf("Background game login failed with code %d", *frame.ResponseCode)
+						if name := State.LoginFailureCodeName(*frame.ResponseCode); name != "" {
+							loginErr.detail += " (" + name + ")"
 						}
+						return 0, 0, nil, loginErr
 					}
 					buffered := []string{event.raw}
 					for _, remainder := range events[index+1:] {
@@ -660,6 +939,38 @@ func (transport *DirectWebSocketTransport) serveConnected(
 	defer pingTicker.Stop()
 	movementTicker := time.NewTicker(movementInterval)
 	defer movementTicker.Stop()
+	subscriptionTicker := time.NewTicker(directSubscriptionRefreshInterval)
+	defer subscriptionTicker.Stop()
+	// The official client PULLS its subscription packages (C2S "sie") at
+	// startup — the server never volunteers them on login or in the gbd
+	// baseline. In browser mode the embedded official client makes that
+	// request itself and the sniffer ingests the answer, but in background
+	// mode nobody asked, so Subscriptions state stayed empty and every
+	// subscription-aware computation (e.g. the +40-per-slot recruitment
+	// bonus) silently lost its input. Ask once per connection, then refresh
+	// periodically so a lapse or purchase is noticed without a relog.
+	// The same holds for the general roster with active skills (C2S "gie"):
+	// the official client asks at login (CastleLoginEvent) and gbd does not
+	// carry it, so without this pull every commander with a general assigned
+	// is "skills not observed" until an attack plan happens to ask — which
+	// capacity-gated lanes never do (they need the skills first).
+	requestSubscriptions := func() error {
+		for _, request := range []struct{ opcode, causation string }{
+			{"sie", "session:background:subscription-refresh"},
+			{"gie", "session:background:general-skills-refresh"},
+		} {
+			frame := fmt.Sprintf("%%xt%%%s%%%s%%%d%%{}%%", transport.profile.Namespace, request.opcode, roomID)
+			if _, err := transport.sendInternal(
+				connection, frame, connectionGeneration, request.causation, request.opcode,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := requestSubscriptions(); err != nil {
+		return err
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -669,8 +980,20 @@ func (transport *DirectWebSocketTransport) serveConnected(
 				return result.err
 			}
 			for _, event := range decoder.append(result.payload) {
-				if event.raw != "" {
-					transport.deliverInbound(event.raw, connectionGeneration)
+				if event.raw == "" {
+					continue
+				}
+				transport.deliverInbound(event.raw, connectionGeneration)
+				// The authenticated baseline (gbd) may follow a login-time
+				// state reset that discards anything reduced before it —
+				// including the subscription packages pulled right after
+				// login. Re-pull after every baseline so subscription-aware
+				// automation math always has its input; hasPendingOpcode
+				// dedupes overlapping requests.
+				if strings.Contains(event.raw, "%xt%gbd%") {
+					if err := requestSubscriptions(); err != nil {
+						return err
+					}
 				}
 			}
 		case <-pingTicker.C:
@@ -687,6 +1010,10 @@ func (transport *DirectWebSocketTransport) serveConnected(
 			if _, err := transport.sendInternal(
 				connection, frame, connectionGeneration, "session:background:movement-refresh", "gam",
 			); err != nil {
+				return err
+			}
+		case <-subscriptionTicker.C:
+			if err := requestSubscriptions(); err != nil {
 				return err
 			}
 		}
@@ -974,6 +1301,21 @@ func transpilationBuild(contents []byte) (string, error) {
 	return build, nil
 }
 
+// isDisplacementClose reports whether the connection ended with a close frame
+// the server sent on purpose. The game closes an account's socket cleanly when
+// a second login takes the session over (the player signing in); network
+// faults surface as read errors without a close frame. Server restarts also
+// close cleanly — waiting the relog delay is the right behaviour there too.
+func isDisplacementClose(err error) bool {
+	var closeErr *websocket.CloseError
+	if !errors.As(err, &closeErr) {
+		return false
+	}
+	// 1006 is synthesized locally when the connection dies WITHOUT a close
+	// frame (network fault) — that is a plain drop, not a displacement.
+	return closeErr.Code != websocket.CloseAbnormalClosure
+}
+
 func readDirectWebSocket(ctx context.Context, connection *websocket.Conn, output chan<- directReadResult) {
 	for {
 		messageType, payload, err := connection.ReadMessage()
@@ -1153,6 +1495,15 @@ func (transport *DirectWebSocketTransport) isCurrent(generation uint64) bool {
 	transport.mu.RLock()
 	defer transport.mu.RUnlock()
 	return transport.runGeneration == generation && transport.cancel != nil
+}
+
+// Running reports whether the connection loop is active. A transport that
+// parked itself on a login failure is not running and may be started again once
+// its saved login changes.
+func (transport *DirectWebSocketTransport) Running() bool {
+	transport.mu.RLock()
+	defer transport.mu.RUnlock()
+	return transport.cancel != nil
 }
 
 func (transport *DirectWebSocketTransport) SetRelogDelayProvider(provider func() time.Duration) {

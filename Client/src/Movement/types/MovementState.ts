@@ -51,13 +51,21 @@ export function movementViewFromState(state: GameStateV2 | null): MovementViewMo
       movement,
     });
   }
-  const observation = state.observations.gam;
+  const snapshot = state.movementSnapshot;
+  const observedAt = snapshot.observedAt ? Date.parse(snapshot.observedAt) : Number.NaN;
+  const snapshotReady = snapshot.version > 0
+    && state.session.connectionGeneration > 0
+    && snapshot.connectionGeneration === state.session.connectionGeneration
+    && Number.isFinite(observedAt);
   return {
     activeMovements: movements,
     commanderStatuses,
-    snapshotReady: (observation?.inboundCount ?? 0) > 0,
-    lastSnapshotUnix: observation ? Math.floor(Date.parse(observation.lastSeenAt) / 1000) : 0,
-    freshnessWindowSec: 45,
+    snapshotReady,
+    lastSnapshotUnix: snapshotReady ? Math.floor(observedAt / 1000) : 0,
+    // Once this game connection has an authoritative baseline, sparse
+    // movement frames and the backend's exact completion clock keep it live.
+    // A new connection generation requires a new baseline.
+    freshnessWindowSec: 0,
   };
 }
 

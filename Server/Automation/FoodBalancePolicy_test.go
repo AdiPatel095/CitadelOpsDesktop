@@ -3,6 +3,7 @@ package Automation
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +12,14 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
+
+func TestFoodBalanceWakeDomainsPaceBalanceAndMovementChurn(t *testing.T) {
+	got := NewFoodBalancePolicy().WakeDomains()
+	want := []string{"building-layout", "kingdom-transport", "market", "units"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("wake domains = %v, want %v", got, want)
+	}
+}
 
 func TestFoodBalancePolicyPrioritizesHoneyNeededForMead(t *testing.T) {
 	now := time.Date(2026, 7, 12, 12, 0, 0, 0, time.UTC)

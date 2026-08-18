@@ -1,20 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-	Cloud,
 	CloudOff,
 	Database,
-	Globe2,
 	UserRound,
 	Users,
 	X,
 } from 'lucide-react';
-import { CitadelAPI } from '../../api/CitadelClient';
+import { CitadelAPI, type WorldIntelligenceSubscriptionStatus } from '../../api/CitadelClient';
 import type {
 	WorldIntelligenceAllianceProfileV1,
 	WorldIntelligenceCoverageResponseV1,
 	WorldIntelligencePlayerEventScoreHistoryV1,
 	WorldIntelligencePlayerProfileV1,
 	WorldIntelligenceStatusV1,
+	WorldIntelligenceUpdateManifestV1,
 } from '../../api/Contracts';
 import {
 	Badge,
@@ -38,6 +37,8 @@ const WorldIntelligenceView = () => {
 	const worldId = state?.account.worldId || status?.worldId || state?.session.serverUrl || '';
 	const [coverage, setCoverage] = useState<WorldIntelligenceCoverageResponseV1>({ worlds: [] });
 	const [coverageError, setCoverageError] = useState('');
+	const [worldUpdate, setWorldUpdate] = useState<WorldIntelligenceUpdateManifestV1 | null>(null);
+	const [subscriptionStatus, setSubscriptionStatus] = useState<WorldIntelligenceSubscriptionStatus>('connecting');
 	const [selected, setSelected] = useState<SelectedEntity | null>(null);
 	const [playerProfile, setPlayerProfile] = useState<WorldIntelligencePlayerProfileV1 | null>(null);
 	const [playerEventHistory, setPlayerEventHistory] = useState<WorldIntelligencePlayerEventScoreHistoryV1 | null>(null);
@@ -46,6 +47,7 @@ const WorldIntelligenceView = () => {
 	const [profileLoading, setProfileLoading] = useState(false);
 	const [error, setError] = useState('');
 	const directoryScrollRef = useRef(0);
+	const previousWorldUpdate = useRef<WorldIntelligenceUpdateManifestV1 | null>(null);
 
 	const refreshStatus = useCallback(async () => {
 		try {
@@ -77,8 +79,34 @@ const WorldIntelligenceView = () => {
 	}, [refreshStatus]);
 
 	useEffect(() => {
-		void refreshCoverage();
+		const timeout = window.setTimeout(() => void refreshCoverage(), 10_000);
+		return () => window.clearTimeout(timeout);
 	}, [refreshCoverage]);
+
+	useEffect(() => {
+		if (!worldId || subscriptionStatus === 'connected') return;
+		const interval = window.setInterval(() => void refreshCoverage(), 30_000);
+		return () => window.clearInterval(interval);
+	}, [refreshCoverage, subscriptionStatus, worldId]);
+
+	useEffect(() => {
+		previousWorldUpdate.current = null;
+		setWorldUpdate(null);
+		if (!worldId) {
+			setSubscriptionStatus('connecting');
+			return;
+		}
+		return CitadelAPI.subscribeWorldIntelligenceUpdates(worldId, setWorldUpdate, setSubscriptionStatus);
+	}, [worldId]);
+
+	useEffect(() => {
+		if (!worldUpdate || worldUpdate.worldId !== displayWorld(worldId)) return;
+		const previous = previousWorldUpdate.current;
+		previousWorldUpdate.current = worldUpdate;
+		if (previous && worldUpdate.coverageRevision > previous.coverageRevision) {
+			void refreshCoverage();
+		}
+	}, [refreshCoverage, worldId, worldUpdate]);
 
 	const openEntity = useCallback(async (entity: SelectedEntity) => {
 		if (!selected) directoryScrollRef.current = window.scrollY;
@@ -187,22 +215,6 @@ const WorldIntelligenceView = () => {
 
 	return (
 		<div className="flex flex-col gap-6 pb-8">
-			<PageHeader
-				eyebrow="Shared public intelligence"
-				title="World Intelligence"
-				description="Browse collected event runs and leaderboards alongside preserved player and alliance histories for the active game world."
-				icon={<Globe2 className="h-6 w-6" />}
-				meta={(
-					<div className="flex flex-wrap justify-end gap-2">
-						<Badge variant={status == null ? 'secondary' : 'success'}>
-							<Cloud className="mr-1 h-3.5 w-3.5" />
-							{status == null ? 'Checking cloud' : 'Cloud enabled'}
-						</Badge>
-						{status?.worldId && <Badge variant="outline">{displayWorld(status.worldId)}</Badge>}
-					</div>
-				)}
-			/>
-
 			{error && (
 				<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
 					<span>{error}</span>
@@ -210,7 +222,10 @@ const WorldIntelligenceView = () => {
 				</div>
 			)}
 
-			<div className="flex flex-wrap items-center gap-2">
+			{(featureReady || currentCoverage || coverageError) && <div className="flex flex-wrap items-center gap-2">
+				{featureReady && <Badge variant={subscriptionStatus === 'connected' ? 'success' : 'warning'}>
+					{subscriptionStatus === 'connected' ? 'Live update stream' : subscriptionStatus === 'connecting' ? 'Connecting update stream' : 'Update stream reconnecting'}
+				</Badge>}
 				{currentCoverage ? (
 					<>
 						<Badge variant="outline">{formatCount(currentCoverage.players)} players</Badge>
@@ -218,13 +233,13 @@ const WorldIntelligenceView = () => {
 						<Badge variant="outline">{formatCount(currentCoverage.holdings)} holdings</Badge>
 						<Badge variant="outline">{formatCount(currentCoverage.eventRuns)} event runs</Badge>
 						<Badge variant="outline">{formatCount(currentCoverage.eventScores)} event scores</Badge>
-						<Badge variant="outline">{formatCount(currentCoverage.observationCount)} observations</Badge>
+						<Badge variant="outline">{formatCount(currentCoverage.observationCount)} current records</Badge>
 						<Badge variant={freshnessTone(currentCoverage.lastObservedAt)}>Updated {currentCoverage.lastObservedAt ? relativeTime(currentCoverage.lastObservedAt) : 'never'}</Badge>
 					</>
 				) : coverageError ? (
 					<Badge variant="warning" title={coverageError}>Coverage totals unavailable</Badge>
-				) : <Badge variant="secondary">Checking coverage</Badge>}
-			</div>
+				) : null}
+			</div>}
 
 			{!featureReady ? (
 				<EmptyState
@@ -245,6 +260,8 @@ const WorldIntelligenceView = () => {
 						eventScores={currentCoverage?.eventScores}
 						currentPlayerId={state?.player.id}
 						currentLeagueByEvent={currentLeagueByEvent}
+						worldUpdate={worldUpdate}
+						updateStreamConnected={subscriptionStatus === 'connected'}
 						onOpenPlayer={(playerId, entityWorldId) => void openEntity({ type: 'player', id: playerId, worldId: entityWorldId })}
 						onOpenAlliance={(allianceId, entityWorldId) => void openEntity({ type: 'alliance', id: allianceId, worldId: entityWorldId })}
 					/>

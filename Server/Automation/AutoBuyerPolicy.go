@@ -15,8 +15,8 @@ import (
 
 const (
 	autoBuyerSection                 = "automation.autoBuyer"
-	autoBuyerDefaultCheckIntervalSec = 60
-	autoBuyerDefaultRefreshSec       = 900
+	autoBuyerDefaultCheckIntervalSec = 30 * 60
+	autoBuyerDefaultRefreshSec       = 60 * 60
 	autoBuyerMinimumSpecialistDays   = 14
 )
 
@@ -66,10 +66,11 @@ func (*AutoBuyerPolicy) ID() string         { return "autoBuyer" }
 func (*AutoBuyerPolicy) EnabledKey() string { return "auto_buyer" }
 
 func (*AutoBuyerPolicy) WakeDomains() []string {
-	return []string{
-		"boosters", "market", "construction-offers", "currencies", "events",
-		"event-scores", "inventory", "resources", "castles",
-	}
+	// Resource, currency, inventory, and castle balance churn is deliberately
+	// sampled on CheckIntervalSec. Shop/reset observations and event routes are
+	// the only state changes that can invalidate the current passive decision
+	// before its configured 30-minute-or-longer cadence.
+	return []string{"boosters", "market", "construction-offers", "events", "event-scores"}
 }
 
 func (*AutoBuyerPolicy) WakeSections() []string { return []string{autoBuyerSection} }
@@ -85,14 +86,13 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if settings.Version != 1 {
 		return autoBuyerWaiting(snapshot.Now, fmt.Sprintf("Unsupported Auto Buyer settings version %d", settings.Version), nil), nil
 	}
-	if settings.CheckIntervalSec <= 0 {
+	if settings.CheckIntervalSec < autoBuyerDefaultCheckIntervalSec {
 		settings.CheckIntervalSec = autoBuyerDefaultCheckIntervalSec
 	}
-	if settings.HistoryRefreshSec <= 0 {
+	if settings.HistoryRefreshSec < autoBuyerDefaultRefreshSec {
 		settings.HistoryRefreshSec = autoBuyerDefaultRefreshSec
 	}
-	if settings.CheckIntervalSec < 10 || settings.CheckIntervalSec > 3600 ||
-		settings.HistoryRefreshSec < 60 || settings.HistoryRefreshSec > 3600 ||
+	if settings.CheckIntervalSec > 3600 || settings.HistoryRefreshSec > 3600 ||
 		settings.MinimumRubyReserve < 0 {
 		return autoBuyerWaiting(snapshot.Now, "Auto Buyer cadence and ruby reserve settings are invalid", nil), nil
 	}
@@ -126,12 +126,15 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if detail := validateAutoBuyerRules(snapshot.GameData, settings); detail != "" {
 		return autoBuyerWaiting(snapshot.Now, detail, metrics), nil
 	}
+	availablePackageGoals, unavailableEventShopGoals := autoBuyerAvailablePackageGoals(snapshot, settings)
+	metrics["availablePackageGoals"] = float64(availablePackageGoals)
+	metrics["ignoredUnavailableEventShops"] = float64(unavailableEventShopGoals)
 
 	var source State.CastleState
 	var sourceFound bool
-	if enabledPackages > 0 || settings.Feast.Enabled {
+	if availablePackageGoals > 0 || settings.Feast.Enabled {
 		sourceCastleID := settings.SourceCastleID
-		if enabledPackages == 0 && settings.Feast.SourceCastleID > 0 {
+		if availablePackageGoals == 0 && settings.Feast.SourceCastleID > 0 {
 			sourceCastleID = settings.Feast.SourceCastleID
 		}
 		source, sourceFound = autoBuyerSourceCastle(snapshot.State, sourceCastleID)
@@ -142,10 +145,9 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 
 	refreshAge := time.Duration(settings.HistoryRefreshSec) * time.Second
-	if enabledPackages > 0 && (snapshot.State.Inventory.ConstructionOffersCastleID != source.ID ||
-		snapshot.State.Inventory.ConstructionOffersKingdomID != source.KingdomID ||
-		snapshot.State.Inventory.ConstructionOffersObservedAt.IsZero() ||
-		snapshot.Now.Sub(snapshot.State.Inventory.ConstructionOffersObservedAt) >= refreshAge) {
+	_, packageHistoryObservedAt, packageHistoryFound := snapshot.State.ConstructionOffersFor(source.ID, source.KingdomID)
+	if availablePackageGoals > 0 && (!packageHistoryFound || packageHistoryObservedAt.IsZero() ||
+		snapshot.Now.Sub(packageHistoryObservedAt) >= refreshAge) {
 		return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh shop stock and reset counters", "autoBuyer.package.history", map[string]any{
 			"sourceCastleId": source.ID,
 		}), nil
@@ -185,8 +187,40 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if blockedDetail != "" {
 		return autoBuyerWaiting(snapshot.Now, blockedDetail, metrics), nil
 	}
+	if unavailableEventShopGoals > 0 && availablePackageGoals == 0 && enabledSpecialists == 0 && !settings.Feast.Enabled {
+		return Decision{
+			Status: "idle",
+			Detail: fmt.Sprintf(
+				"Ignoring %d configured event-shop goal(s) while their specific shops are unavailable",
+				unavailableEventShopGoals,
+			),
+			NextCheckAt: limitedEventOpeningAfter(snapshot.Now), Metrics: metrics,
+		}, nil
+	}
 
 	return autoBuyerIdle(snapshot.Now, settings.CheckIntervalSec, "All configured purchase floors and reset goals are currently satisfied", metrics), nil
+}
+
+func autoBuyerAvailablePackageGoals(snapshot Snapshot, settings autoBuyerSettings) (available int, unavailableEventShops int) {
+	for _, rule := range settings.Packages {
+		if !rule.Enabled {
+			continue
+		}
+		product, found := snapshot.GameData.AutoBuyerPackage(strings.TrimSpace(rule.ShopID), int64(rule.PackageID))
+		if !found || !autoBuyerLevelEligible(
+			snapshot.State.Player, product.MinLevel, product.MaxLevel, product.MinLegendLevel, product.MaxLegendLevel,
+		) {
+			continue
+		}
+		if product.RequiresEvent {
+			if _, active := snapshot.State.ActiveShopForPackage(rule.PackageID, snapshot.Now); !active {
+				unavailableEventShops++
+				continue
+			}
+		}
+		available++
+	}
+	return available, unavailableEventShops
 }
 
 func validateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings) string {
@@ -364,6 +398,7 @@ func evaluateAutoBuyerPackages(
 	metrics map[string]float64,
 ) (*Decision, string) {
 	firstBlocked := ""
+	offers, _, _ := snapshot.State.ConstructionOffersFor(source.ID, source.KingdomID)
 	for _, rule := range settings.Packages {
 		if !rule.Enabled {
 			continue
@@ -377,13 +412,10 @@ func evaluateAutoBuyerPackages(
 		}
 		if product.RequiresEvent {
 			if _, active := snapshot.State.ActiveShopForPackage(rule.PackageID, snapshot.Now); !active {
-				if firstBlocked == "" {
-					firstBlocked = fmt.Sprintf("Waiting for the event shop that sells %s", product.Name)
-				}
 				continue
 			}
 		}
-		purchased := snapshot.State.Inventory.ConstructionOffers[rule.PackageID]
+		purchased := offers[rule.PackageID]
 		target := min(rule.TargetPurchasesPerReset, product.Stock)
 		if purchased >= target || purchased >= product.Stock {
 			continue

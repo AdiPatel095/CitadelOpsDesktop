@@ -61,88 +61,61 @@ type StormCastleOption struct {
 }
 
 func (store *Store) StormCastleOption(id int64, playerLevel int) (StormCastleOption, bool) {
-	if id <= 0 {
+	if store == nil || id <= 0 {
 		return StormCastleOption{}, false
 	}
-	for _, option := range store.StormCastleOptions(playerLevel) {
-		if option.ID == id {
-			return option, true
-		}
+	store.ensureStormCatalog()
+	option, found := store.stormCastleOptionsByID[id]
+	if !found || option.MinLevel > playerLevel {
+		return StormCastleOption{}, false
 	}
-	return StormCastleOption{}, false
+	return option, true
 }
 
 func (store *Store) StormCastleOptions(playerLevel int) []StormCastleOption {
 	if store == nil {
 		return []StormCastleOption{}
 	}
-	catalog, err := store.Catalog("prebuiltcastles")
-	if err != nil {
-		return []StormCastleOption{}
-	}
-	options := make([]StormCastleOption, 0, len(catalog.Rows()))
-	for _, raw := range catalog.Rows() {
-		record, decodeErr := DecodeRecord(raw)
-		if decodeErr != nil || !recordIncludesInteger(record, "spaceIDs", StormKingdomID) {
-			continue
+	store.ensureStormCatalog()
+	options := make([]StormCastleOption, 0, len(store.stormCastleOptions))
+	for _, option := range store.stormCastleOptions {
+		if option.MinLevel <= playerLevel {
+			options = append(options, option)
 		}
-		id, hasID := record.Int64("preBuiltCastleID")
-		minimumLevel, _ := record.Int64("minLevel")
-		if !hasID || id <= 0 || minimumLevel > int64(playerLevel) {
-			continue
-		}
-		name, _ := record.String("comment2")
-		option := StormCastleOption{ID: id, Name: strings.TrimSpace(name), MinLevel: int(minimumLevel)}
-		option.CostWood, _ = record.Int64("costWood")
-		option.CostStone, _ = record.Int64("costStone")
-		option.CostFood, _ = record.Int64("costFood")
-		option.CostCoins, _ = record.Int64("costC1")
-		option.CostPremium, _ = record.Int64("costC2")
-		options = append(options, option)
 	}
-	sort.Slice(options, func(left, right int) bool { return options[left].ID < options[right].ID })
 	return options
 }
 
 func (store *Store) StormIsle(id int64) (StormIsleDefinition, bool) {
-	if store == nil || id <= 0 {
-		return StormIsleDefinition{}, false
-	}
-	catalog, err := store.Catalog("isles")
-	if err != nil {
-		return StormIsleDefinition{}, false
-	}
-	raw, found := catalog.Find(strconv.FormatInt(id, 10))
+	definition, found := store.StormIsleView(id)
 	if !found {
 		return StormIsleDefinition{}, false
 	}
-	record, err := DecodeRecord(raw)
-	if err != nil {
+	definition.VictoryCounts = append([]int64(nil), definition.VictoryCounts...)
+	return definition, true
+}
+
+// StormIsleView returns an immutable catalog-owned definition. Backend hot
+// paths may read it without allocating, but must not modify VictoryCounts.
+func (store *Store) StormIsleView(id int64) (StormIsleDefinition, bool) {
+	if store == nil || id <= 0 {
 		return StormIsleDefinition{}, false
 	}
-	return decodeStormIsle(record)
+	store.ensureStormCatalog()
+	definition, found := store.stormIslesByID[id]
+	return definition, found
 }
 
 func (store *Store) StormIsles() []StormIsleDefinition {
 	if store == nil {
 		return []StormIsleDefinition{}
 	}
-	catalog, err := store.Catalog("isles")
-	if err != nil {
-		return []StormIsleDefinition{}
+	store.ensureStormCatalog()
+	result := make([]StormIsleDefinition, len(store.stormIsles))
+	for index, definition := range store.stormIsles {
+		definition.VictoryCounts = append([]int64(nil), definition.VictoryCounts...)
+		result[index] = definition
 	}
-	result := make([]StormIsleDefinition, 0, len(catalog.Rows()))
-	for _, raw := range catalog.Rows() {
-		record, decodeErr := DecodeRecord(raw)
-		if decodeErr != nil {
-			continue
-		}
-		definition, valid := decodeStormIsle(record)
-		if valid {
-			result = append(result, definition)
-		}
-	}
-	sort.Slice(result, func(left, right int) bool { return result[left].ID < result[right].ID })
 	return result
 }
 
@@ -158,45 +131,88 @@ func (store *Store) StormShopPackage(productID int64) (StormShopPackage, bool) {
 	if store == nil || productID <= 0 || !isStormShopProductID(productID) {
 		return StormShopPackage{}, false
 	}
-	catalog, err := store.Catalog("packages")
-	if err != nil {
-		return StormShopPackage{}, false
-	}
-	raw, found := catalog.Find(strconv.FormatInt(productID, 10))
-	if !found {
-		return StormShopPackage{}, false
-	}
-	record, err := DecodeRecord(raw)
-	if err != nil {
-		return StormShopPackage{}, false
-	}
-	return decodeStormShopPackage(record)
+	store.ensureStormCatalog()
+	item, found := store.stormShopPackagesByID[productID]
+	return item, found
 }
 
 func (store *Store) StormShopPackages() []StormShopPackage {
 	if store == nil {
 		return []StormShopPackage{}
 	}
-	catalog, err := store.Catalog("packages")
-	if err != nil {
-		return []StormShopPackage{}
+	store.ensureStormCatalog()
+	return append([]StormShopPackage(nil), store.stormShopPackages...)
+}
+
+func (store *Store) ensureStormCatalog() {
+	store.stormCatalogOnce.Do(store.loadStormCatalog)
+}
+
+func (store *Store) loadStormCatalog() {
+	store.stormIslesByID = map[int64]StormIsleDefinition{}
+	store.stormShopPackagesByID = map[int64]StormShopPackage{}
+	store.stormCastleOptionsByID = map[int64]StormCastleOption{}
+
+	if catalog, err := store.Catalog("isles"); err == nil {
+		for _, raw := range catalog.Rows() {
+			record, decodeErr := DecodeRecord(raw)
+			if decodeErr != nil {
+				continue
+			}
+			definition, valid := decodeStormIsle(record)
+			if valid {
+				store.stormIslesByID[definition.ID] = definition
+				store.stormIsles = append(store.stormIsles, definition)
+			}
+		}
+		sort.Slice(store.stormIsles, func(left, right int) bool {
+			return store.stormIsles[left].ID < store.stormIsles[right].ID
+		})
 	}
-	result := make([]StormShopPackage, 0, len(stormShopProductIDs))
-	for _, productID := range stormShopProductIDs {
-		raw, found := catalog.Find(strconv.FormatInt(productID, 10))
-		if !found {
-			continue
-		}
-		record, decodeErr := DecodeRecord(raw)
-		if decodeErr != nil {
-			continue
-		}
-		item, valid := decodeStormShopPackage(record)
-		if valid {
-			result = append(result, item)
+
+	if catalog, err := store.Catalog("packages"); err == nil {
+		for _, productID := range stormShopProductIDs {
+			raw, found := catalog.Find(strconv.FormatInt(productID, 10))
+			if !found {
+				continue
+			}
+			record, decodeErr := DecodeRecord(raw)
+			if decodeErr != nil {
+				continue
+			}
+			item, valid := decodeStormShopPackage(record)
+			if valid {
+				store.stormShopPackagesByID[item.ProductID] = item
+				store.stormShopPackages = append(store.stormShopPackages, item)
+			}
 		}
 	}
-	return result
+
+	if catalog, err := store.Catalog("prebuiltcastles"); err == nil {
+		for _, raw := range catalog.Rows() {
+			record, decodeErr := DecodeRecord(raw)
+			if decodeErr != nil || !recordIncludesInteger(record, "spaceIDs", StormKingdomID) {
+				continue
+			}
+			id, hasID := record.Int64("preBuiltCastleID")
+			minimumLevel, _ := record.Int64("minLevel")
+			if !hasID || id <= 0 {
+				continue
+			}
+			name, _ := record.String("comment2")
+			option := StormCastleOption{ID: id, Name: strings.TrimSpace(name), MinLevel: int(minimumLevel)}
+			option.CostWood, _ = record.Int64("costWood")
+			option.CostStone, _ = record.Int64("costStone")
+			option.CostFood, _ = record.Int64("costFood")
+			option.CostCoins, _ = record.Int64("costC1")
+			option.CostPremium, _ = record.Int64("costC2")
+			store.stormCastleOptionsByID[id] = option
+			store.stormCastleOptions = append(store.stormCastleOptions, option)
+		}
+		sort.Slice(store.stormCastleOptions, func(left, right int) bool {
+			return store.stormCastleOptions[left].ID < store.stormCastleOptions[right].ID
+		})
+	}
 }
 
 func isStormShopProductID(productID int64) bool {

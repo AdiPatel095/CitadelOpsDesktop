@@ -108,7 +108,7 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	if input.GameData == nil {
 		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
 	}
-	commander, err := towerCommander(input.State, request.MaidenOnly, request.CommanderIDs)
+	commander, err := towerCommander(input.State, input.CommanderHolds, request.MaidenOnly, request.CommanderIDs)
 	if err != nil {
 		return Intent.Plan{}, fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
@@ -177,7 +177,7 @@ func (application *Application) guardTowerAttackInventory(_ context.Context, arg
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
 	}
-	input := Intent.PlanningContext{State: application.State.Snapshot(), GameData: gameData}
+	input := Intent.PlanningContext{State: application.State.ReadOnlyView(), GameData: gameData}
 	capacity, source, _, err := resolveTowerAttackCapacity(input, request.towerLaunchRequest, request.CommanderID, false)
 	if err != nil {
 		return err
@@ -195,7 +195,7 @@ func (application *Application) captureTowerCapacity(_ context.Context, argument
 		return fmt.Errorf("official game data is unavailable")
 	}
 	now := time.Now().UTC()
-	input := Intent.PlanningContext{State: application.State.Snapshot(), GameData: gameData}
+	input := Intent.PlanningContext{State: application.State.ReadOnlyView(), GameData: gameData}
 	_, source, target, err := towerLaunchContext(input, mustMarshalTowerLaunchRequest(request.towerLaunchRequest))
 	if err != nil {
 		return err
@@ -217,9 +217,9 @@ func (application *Application) captureTowerCapacity(_ context.Context, argument
 	if err != nil {
 		return err
 	}
-	_, err = application.State.ApplyWithoutMapMutation(func(gameState *State.GameState) ([]string, bool, error) {
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentTowerQueue), func(gameState *State.GameState) ([]string, bool, error) {
 		currentSource, sourceExists := gameState.Castles[source.ID]
-		currentTarget, targetExists := gameState.Map[target.KingdomID][fmt.Sprintf("%d:%d", target.X, target.Y)]
+		currentTarget, targetExists := gameState.LookupMapObservation(target.KingdomID, fmt.Sprintf("%d:%d", target.X, target.Y))
 		if !sourceExists || !targetExists ||
 			!towerAttackDialogFreshForTarget(gameState.AttackDialog, currentSource, currentTarget, now) {
 			return nil, false, fmt.Errorf(
@@ -227,13 +227,9 @@ func (application *Application) captureTowerCapacity(_ context.Context, argument
 				Intent.ErrPlanStale, target.X, target.Y,
 			)
 		}
-		if gameState.TowerQueue.CapacityByCastle == nil {
-			gameState.TowerQueue.CapacityByCastle = map[State.CastleID]State.TowerCapacityObservation{}
-		}
-		if gameState.TowerQueue.CapacityByCastle[source.ID] == observation {
+		if !gameState.SetTowerQueueCapacity(source.ID, observation) {
 			return nil, false, nil
 		}
-		gameState.TowerQueue.CapacityByCastle[source.ID] = observation
 		return []string{"tower-queue"}, true, nil
 	})
 	return err
@@ -385,7 +381,7 @@ func towerLaunchContext(input Intent.PlanningContext, arguments json.RawMessage)
 	if request.KingdomID != source.KingdomID {
 		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("tower target must be in source castle kingdom %d", source.KingdomID)
 	}
-	target, exists := input.State.Map[request.KingdomID][fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)]
+	target, exists := input.State.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || target.TypeID != kingdomTowerMapTypeID {
 		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("kingdom tower at %d:%d is not in the current map state", request.TargetX, request.TargetY)
 	}
@@ -394,6 +390,7 @@ func towerLaunchContext(input Intent.PlanningContext, arguments json.RawMessage)
 
 func towerCommander(
 	gameState State.GameState,
+	holds Intent.CommanderHoldRegistry,
 	maidenOnly bool,
 	configured []State.CommanderID,
 ) (State.CommanderID, error) {
@@ -431,6 +428,7 @@ func towerCommander(
 		return 0, fmt.Errorf("no commander is in the current roster")
 	}
 	resolution, err := resolveCRACommanders(gameState, &craCommanderSelectionRequest{Candidates: candidates, Count: 1, Strategy: "lowest_id"}, craCommanderSelectionOptions{
+		Holds:        holds,
 		DefaultCount: 1, RequireAvailable: true,
 	})
 	if err != nil {

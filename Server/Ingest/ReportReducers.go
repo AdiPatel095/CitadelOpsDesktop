@@ -42,32 +42,31 @@ func reduceDeletedReportMessages(
 	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
 		return nil, false, fmt.Errorf("decode deleted report messages: %w", err)
 	}
-	ensureReportMaps(gameState)
 	changed := false
 	for _, wireMessageID := range payload.MessageIDs {
 		messageID := int64(wireMessageID)
 		if messageID <= 0 {
 			continue
 		}
-		notice, exists := gameState.Reports.Notices[messageID]
+		notice, exists := gameState.LookupReportNotice(messageID)
 		if !exists {
 			notice = State.ReportNotice{MessageID: messageID, ObservedAt: frame.ReceivedAt.UTC()}
 		}
 		if notice.Status != "archived" && notice.Status != "unavailable" {
 			notice.Status = "unavailable"
-			gameState.Reports.Notices[messageID] = notice
+			gameState.SetReportNotice(messageID, notice)
 			changed = true
 		} else if !exists {
 			notice.Status = "unavailable"
-			gameState.Reports.Notices[messageID] = notice
+			gameState.SetReportNotice(messageID, notice)
 			changed = true
 		}
-		if _, exists := gameState.Reports.SpyCaptures[messageID]; exists {
-			delete(gameState.Reports.SpyCaptures, messageID)
+		if _, exists := gameState.LookupSpyReportCapture(messageID); exists {
+			gameState.DeleteSpyReportCapture(messageID)
 			changed = true
 		}
-		if capture, exists := gameState.Reports.BattleCaptures[messageID]; exists {
-			delete(gameState.Reports.BattleCaptures, messageID)
+		if capture, exists := gameState.LookupBattleReportCapture(messageID); exists {
+			gameState.DeleteBattleReportCapture(messageID)
 			if capture.ReportID > 0 && gameState.Reports.ActiveBattleReport == capture.ReportID {
 				gameState.Reports.ActiveBattleReport = 0
 			}
@@ -83,9 +82,6 @@ func applyReportNotices(raw json.RawMessage, observedAt time.Time, gameState *St
 	}
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		return false, fmt.Errorf("decode report notices: %w", err)
-	}
-	if gameState.Reports.Notices == nil {
-		gameState.Reports.Notices = map[int64]State.ReportNotice{}
 	}
 	changed := false
 	for _, row := range payload.Messages {
@@ -124,7 +120,8 @@ func applyReportNotices(raw json.RawMessage, observedAt time.Time, gameState *St
 		if typeID == 3 && (notice.AgeSec < 0 || notice.AgeSec >= int64(maxAutomaticSpyNoticeAge/time.Second)) {
 			notice.Status = "expired"
 		}
-		if current, exists := gameState.Reports.Notices[messageID]; exists {
+		current, exists := gameState.LookupReportNotice(messageID)
+		if exists {
 			if current.Status == "archived" || current.Status == "unavailable" {
 				notice.Status = current.Status
 			}
@@ -132,8 +129,8 @@ func applyReportNotices(raw json.RawMessage, observedAt time.Time, gameState *St
 				notice.ReportID = current.ReportID
 			}
 		}
-		if gameState.Reports.Notices[messageID] != notice {
-			gameState.Reports.Notices[messageID] = notice
+		if !exists || current != notice {
+			gameState.SetReportNotice(messageID, notice)
 			changed = true
 		}
 	}
@@ -158,19 +155,16 @@ func reduceSpyReportCapture(
 	if header.MessageID <= 0 {
 		return nil, false, nil
 	}
-	if notice := gameState.Reports.Notices[int64(header.MessageID)]; notice.Status == "archived" {
+	if notice, found := gameState.LookupReportNotice(int64(header.MessageID)); found && notice.Status == "archived" {
 		return nil, false, nil
 	}
-	if gameState.Reports.SpyCaptures == nil {
-		gameState.Reports.SpyCaptures = map[int64]State.SpyReportCapture{}
-	}
-	current := gameState.Reports.SpyCaptures[int64(header.MessageID)]
+	current, _ := gameState.LookupSpyReportCapture(int64(header.MessageID))
 	if bytes.Equal(current.Payload, frame.Payload) {
 		return nil, false, nil
 	}
-	gameState.Reports.SpyCaptures[int64(header.MessageID)] = State.SpyReportCapture{
+	gameState.SetSpyReportCapture(int64(header.MessageID), State.SpyReportCapture{
 		MessageID: int64(header.MessageID), Payload: append(json.RawMessage(nil), frame.Payload...), CapturedAt: frame.ReceivedAt,
-	}
+	})
 	return []string{"reports"}, true, nil
 }
 
@@ -193,16 +187,15 @@ func reduceBattleSummaryCapture(
 	if header.MessageID <= 0 {
 		return nil, false, nil
 	}
-	if notice := gameState.Reports.Notices[int64(header.MessageID)]; notice.Status == "archived" {
+	if notice, found := gameState.LookupReportNotice(int64(header.MessageID)); found && notice.Status == "archived" {
 		return nil, false, nil
 	}
-	ensureReportMaps(gameState)
-	capture := gameState.Reports.BattleCaptures[int64(header.MessageID)]
+	capture, _ := gameState.LookupBattleReportCapture(int64(header.MessageID))
 	capture.MessageID = int64(header.MessageID)
 	if header.ReportID > 0 {
 		capture.ReportID = int64(header.ReportID)
 	}
-	if notice := gameState.Reports.Notices[capture.MessageID]; notice.BattleKey != "" {
+	if notice, found := gameState.LookupReportNotice(capture.MessageID); found && notice.BattleKey != "" {
 		capture.BattleKey = notice.BattleKey
 	}
 	if bytes.Equal(capture.Summary, frame.Payload) {
@@ -213,7 +206,7 @@ func reduceBattleSummaryCapture(
 	if capture.OccurredAt.IsZero() {
 		capture.OccurredAt = battleCaptureOccurredAt(gameState, capture)
 	}
-	gameState.Reports.BattleCaptures[capture.MessageID] = capture
+	gameState.SetBattleReportCapture(capture.MessageID, capture)
 	return []string{"reports"}, true, nil
 }
 
@@ -245,7 +238,7 @@ func reduceBattleWaveCapture(
 	}
 	capture.Waves = append(json.RawMessage(nil), frame.Payload...)
 	capture.CapturedAt = frame.ReceivedAt
-	gameState.Reports.BattleCaptures[messageID] = capture
+	gameState.SetBattleReportCapture(messageID, capture)
 	return []string{"reports"}, true, nil
 }
 
@@ -289,7 +282,7 @@ func reduceBattleDetailCapture(
 	if err != nil {
 		return nil, false, err
 	}
-	gameState.Reports.BattleCaptures[messageID] = capture
+	gameState.SetBattleReportCapture(messageID, capture)
 	domains := []string{"reports"}
 	if stormChanged {
 		domains = append(domains, "storm")
@@ -326,12 +319,13 @@ func reconcileStormIslandBattleReport(gameState *State.GameState, capture State.
 		return false, nil
 	}
 	key := State.StormIslandReturnKey(State.KingdomID(summary.Target.KingdomID), summary.Target.X, summary.Target.Y)
-	operation, exists := gameState.Storm.IslandReturns[key]
+	returns := gameState.MutableStormIslandReturns()
+	operation, exists := returns[key]
 	if !exists || operation.Status != State.StormIslandReturnAwaitingReport {
 		return false, nil
 	}
 	battleAt := capture.CapturedAt
-	if notice, found := gameState.Reports.Notices[capture.MessageID]; found && !notice.ObservedAt.IsZero() {
+	if notice, found := gameState.LookupReportNotice(capture.MessageID); found && !notice.ObservedAt.IsZero() {
 		battleAt = notice.ObservedAt
 		if notice.AgeSec > 0 {
 			battleAt = battleAt.Add(-time.Duration(notice.AgeSec) * time.Second)
@@ -341,7 +335,7 @@ func reconcileStormIslandBattleReport(gameState *State.GameState, capture State.
 		return false, nil
 	}
 	if !battleSummaryAttackerWon(summary.Participants) {
-		delete(gameState.Storm.IslandReturns, key)
+		delete(returns, key)
 		return true, nil
 	}
 	survivors, found, err := stormIslandBattleSurvivors(capture.Details, gameState.Player.ID)
@@ -353,7 +347,7 @@ func reconcileStormIslandBattleReport(gameState *State.GameState, capture State.
 	}
 	operation.Survivors = survivors
 	if len(operation.UnitsToReturn()) == 0 {
-		delete(gameState.Storm.IslandReturns, key)
+		delete(returns, key)
 		return true, nil
 	}
 	reportID := int64(summary.ReportID)
@@ -369,7 +363,7 @@ func reconcileStormIslandBattleReport(gameState *State.GameState, capture State.
 	operation.ReportID = reportID
 	operation.Status = State.StormIslandReturnReady
 	operation.ReportedAt = capture.CapturedAt
-	gameState.Storm.IslandReturns[key] = operation
+	returns[key] = operation
 	return true, nil
 }
 
@@ -426,23 +420,16 @@ func reduceBattleCommandContext(
 	return []string{"reports"}, true, nil
 }
 
-func ensureReportMaps(gameState *State.GameState) {
-	if gameState.Reports.Notices == nil {
-		gameState.Reports.Notices = map[int64]State.ReportNotice{}
-	}
-	if gameState.Reports.SpyCaptures == nil {
-		gameState.Reports.SpyCaptures = map[int64]State.SpyReportCapture{}
-	}
-	if gameState.Reports.BattleCaptures == nil {
-		gameState.Reports.BattleCaptures = map[int64]State.BattleReportCapture{}
-	}
-}
-
 func battleCaptureByReportID(gameState *State.GameState, reportID int64) (int64, State.BattleReportCapture, bool) {
-	for messageID, capture := range gameState.Reports.BattleCaptures {
-		if capture.ReportID == reportID {
-			return messageID, capture, true
+	var messageID int64
+	var capture State.BattleReportCapture
+	found := false
+	gameState.RangeBattleReportCaptures(func(candidateID int64, candidate State.BattleReportCapture) bool {
+		if candidate.ReportID == reportID {
+			messageID, capture, found = candidateID, candidate, true
+			return false
 		}
-	}
-	return 0, State.BattleReportCapture{}, false
+		return true
+	})
+	return messageID, capture, found
 }
