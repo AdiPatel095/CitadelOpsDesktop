@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -638,6 +639,16 @@ func TestComponentSnapshotFilesComponentsMissingFromOlderManifest(t *testing.T) 
 	if err := os.WriteFile(filepath.Join(componentStatePath(directory), componentManifestName), contents, 0o600); err != nil {
 		t.Fatal(err)
 	}
+	// The aged manifest must still LOAD: the missing component keeps its
+	// default and the rest of the account (revision, player) is intact.
+	// Refusing it would start the account from an empty state.
+	aged, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatalf("load of a manifest predating combatCooldown: %v", err)
+	}
+	if aged.Revision != bootstrap.Revision || aged.Player.Level != 10 || aged.CombatCooldown.ActiveAt(time.Now()) {
+		t.Fatalf("aged load = revision %d player %+v cooldown %+v", aged.Revision, aged.Player, aged.CombatCooldown)
+	}
 
 	sessionEvent, err := store.ApplyComponents(Components(ComponentSession), func(state *GameState) ([]string, bool, error) {
 		state.Session.Generation = 3
@@ -658,5 +669,87 @@ func TestComponentSnapshotFilesComponentsMissingFromOlderManifest(t *testing.T) 
 	}
 	if _, err := LoadSnapshot(directory); err != nil {
 		t.Fatalf("load after upgrade: %v", err)
+	}
+}
+
+// A process whose revision counter restarted below the manifest on disk (its
+// snapshot could not be loaded, or the state was reset) must not have every
+// save silently skipped as stale: the old snapshot is set aside and a fresh
+// manifest takes over, so durability resumes at once.
+func TestComponentSnapshotSupersedesManifestOutrankingARestartedStore(t *testing.T) {
+	directory := t.TempDir()
+	veteran := NewGameState()
+	veteran.Player.ID = 99
+	veteran.Revision = 999
+	veteranStore := NewStore(veteran)
+	veteranEvent, err := veteranStore.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
+		state.Player.Level = 70
+		return []string{"player"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, veteranEvent, Components(veteranEvent.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	if veteranEvent.Revision != 1000 {
+		t.Fatalf("veteran revision = %d, want 1000", veteranEvent.Revision)
+	}
+
+	// A new process that could not recover starts from a fresh state: revision 1.
+	fresh := NewStore(NewGameState())
+	freshEvent, err := fresh.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
+		state.Player.ID = 99
+		state.Player.Level = 71
+		return []string{"player"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writer := NewComponentSnapshotWriter(directory)
+	if err := writer.Save(freshEvent, Components(freshEvent.Components...)); err != nil {
+		t.Fatalf("save below the on-disk revision: %v", err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Revision != freshEvent.Revision || loaded.Player.Level != 71 {
+		t.Fatalf("loaded = revision %d level %d, want the fresh process's %d / 71", loaded.Revision, loaded.Player.Level, freshEvent.Revision)
+	}
+	entries, err := os.ReadDir(filepath.Join(directory, "State"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	superseded := 0
+	for _, entry := range entries {
+		if entry.IsDir() && strings.HasPrefix(entry.Name(), componentStateDirectory+".superseded-1000-") {
+			superseded++
+		}
+	}
+	if superseded != 1 {
+		t.Fatalf("superseded snapshot directories = %d, want the veteran manifest set aside once", superseded)
+	}
+
+	// Within one process an older event after a newer one is still a no-op.
+	newer, err := fresh.ApplyComponents(Components(ComponentSession), func(state *GameState) ([]string, bool, error) {
+		state.Session.Generation = 2
+		return []string{"session"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Save(newer, Components(newer.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Save(freshEvent, Components(freshEvent.Components...)); err != nil {
+		t.Fatalf("stale in-process save must be a no-op, got %v", err)
+	}
+	after, err := readComponentManifest(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.Revision != newer.Revision {
+		t.Fatalf("manifest revision = %d after a stale save, want %d", after.Revision, newer.Revision)
 	}
 }

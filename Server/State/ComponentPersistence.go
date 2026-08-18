@@ -289,10 +289,28 @@ func saveComponentSnapshot(
 		}
 	}
 	if event.Revision < manifest.Revision {
-		if saved != nil {
-			*saved = manifest
+		if cached != nil {
+			// An older event flushed after a newer one within this process: the
+			// newer manifest already covers it.
+			if saved != nil {
+				*saved = manifest
+			}
+			return nil
 		}
-		return nil
+		// The manifest on disk outranks this process's revision counter: the
+		// process restarted below it (its snapshot could not be loaded, or the
+		// state was reset). Skipping would silently drop every save for the
+		// rest of the process's life — the account would run undurable with no
+		// error surfaced. Set the old snapshot aside for forensics and start a
+		// fresh manifest instead, so durability resumes now.
+		if err := quarantineComponentState(dataDir, manifest.Revision, time.Now().UTC()); err != nil {
+			return err
+		}
+		if err := os.MkdirAll(directory, 0o700); err != nil {
+			return fmt.Errorf("recreate component state directory: %w", err)
+		}
+		manifest = componentManifest{SchemaVersion: SchemaVersion, Files: map[string]string{}}
+		dirty = AllComponents
 	}
 	if manifest.Files == nil {
 		manifest.Files = map[string]string{}
@@ -1165,6 +1183,14 @@ func loadComponentSnapshot(dataDir string) (GameState, error) {
 	state := NewGameState()
 	for _, component := range AllComponents.List() {
 		filename := manifest.Files[component.String()]
+		if strings.TrimSpace(filename) == "" {
+			// The manifest predates this component (an upgrade added it): the
+			// component simply has no history yet and keeps its default value.
+			// Refusing the whole snapshot here would start the account from an
+			// empty state — and, with the revision counter restarting below the
+			// manifest's, leave every later save skipped as stale.
+			continue
+		}
 		if !safeComponentFilename(filename) {
 			return GameState{}, fmt.Errorf("component manifest has invalid %s filename %q", component, filename)
 		}
@@ -2141,4 +2167,23 @@ func safeComponentFilename(filename string) bool {
 
 func componentStatePath(dataDir string) string {
 	return filepath.Join(dataDir, "State", componentStateDirectory)
+}
+
+// quarantineComponentState moves the component state directory aside as
+// Components.superseded-<manifest revision>-<unix time>. Nothing is deleted:
+// the old snapshot stays readable for recovery while a fresh manifest takes
+// its place.
+func quarantineComponentState(dataDir string, manifestRevision uint64, at time.Time) error {
+	directory := componentStatePath(dataDir)
+	if _, err := os.Stat(directory); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("inspect component state directory: %w", err)
+	}
+	quarantine := fmt.Sprintf("%s.superseded-%d-%d", directory, manifestRevision, at.Unix())
+	if err := os.Rename(directory, quarantine); err != nil {
+		return fmt.Errorf("set superseded component state aside: %w", err)
+	}
+	return syncDirectory(filepath.Dir(directory))
 }
