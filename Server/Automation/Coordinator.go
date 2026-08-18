@@ -1008,7 +1008,13 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 		return result, false
 	}
 	authoritativeProgress := runtimeWakePending || stateProgressPending || configurationWakePending
-	if succeeded && result.reevaluateOnSuccess && !authoritativeProgress {
+	// A retryable-stale result also arms the repeated-decision guard: the
+	// engine already re-planned the same work three times before giving up,
+	// so a policy that answers with the IDENTICAL request cannot see what made
+	// it stale (a vanished target, a lagging observation) and would spin at
+	// wire speed. A different request — the intended "rotate to the next
+	// target" — still runs immediately.
+	if (succeeded && result.reevaluateOnSuccess || retryableStale) && !authoritativeProgress {
 		current.rejectRepeatedDecision = true
 	}
 	immediate := configurationWakePending || runtimeWakePending ||

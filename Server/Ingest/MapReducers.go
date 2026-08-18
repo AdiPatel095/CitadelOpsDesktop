@@ -155,10 +155,24 @@ func reduceMapSnapshot(
 				}
 			}
 		}
-		if State.RetainMapObservation(observation) && gameState.SetMapObservation(observation) {
-			changed = true
-			if kind, retained := State.MapProjectionKindForType(typeID); retained {
-				changedMapKinds[kind] = struct{}{}
+		if State.RetainMapObservation(observation) {
+			if gameState.SetMapObservation(observation) {
+				changed = true
+				if kind, retained := State.MapProjectionKindForType(typeID); retained {
+					changedMapKinds[kind] = struct{}{}
+				}
+			}
+		} else if previous, exists := gameState.LookupMapObservation(kingdomID, fmt.Sprintf("%d:%d", x, y)); exists &&
+			previous.TypeID != typeID {
+			// The coordinate now holds something we do not track (e.g. a Foreign
+			// Lord castle defeated and reverted to a dynamic area). Keeping the
+			// old retained observation would leave a phantom target that every
+			// scan silently re-confirms — drop it so policies stop selecting it.
+			if gameState.DeleteMapObservation(kingdomID, fmt.Sprintf("%d:%d", x, y)) {
+				changed = true
+				if kind, retained := State.MapProjectionKindForType(previous.TypeID); retained {
+					changedMapKinds[kind] = struct{}{}
+				}
 			}
 		}
 		if refreshTowerCooldownFromMap(gameState, observation) {

@@ -549,6 +549,11 @@ func (application *Application) guardInvasionTarget(_ context.Context, arguments
 		return err
 	}
 	if verification.RefreshStartedAt.IsZero() || target.ObservedAt.IsZero() || target.ObservedAt.Before(verification.RefreshStartedAt) {
+		// The 1x1 launch-time refresh is authoritative for this coordinate: the
+		// castle is gone (defeated, or the slot reverted to a dynamic area).
+		// Drop the phantom so the immediate re-evaluation rotates to the next
+		// candidate instead of re-picking this one until the next full scan.
+		application.forgetInvasionTarget(target)
 		return fmt.Errorf(
 			"%w: invasion target %d:%d was not returned by the launch-time map refresh",
 			Intent.ErrPlanStale, target.X, target.Y,
@@ -569,6 +574,32 @@ func (application *Application) guardInvasionTarget(_ context.Context, arguments
 		return fmt.Errorf("%w: commander %d is no longer available", Intent.ErrPlanStale, request.CommanderID)
 	}
 	return nil
+}
+
+// forgetInvasionTarget removes a map observation that a launch-time refresh
+// failed to confirm. Without this the candidate list keeps offering the
+// vanished castle (it was observed after the last full scan) and the policy
+// re-plans it back-to-back until the next full scan — a wire-speed loop of
+// context refreshes and targeted map queries against the game.
+func (application *Application) forgetInvasionTarget(target State.MapObservation) {
+	if application == nil || application.State == nil {
+		return
+	}
+	key := fmt.Sprintf("%d:%d", target.X, target.Y)
+	_, _ = application.State.ApplyComponents(State.Components(State.ComponentWorldMap), func(gameState *State.GameState) ([]string, bool, error) {
+		current, exists := gameState.LookupMapObservation(target.KingdomID, key)
+		if !exists || current.TypeID != target.TypeID {
+			return nil, false, nil
+		}
+		if !gameState.DeleteMapObservation(target.KingdomID, key) {
+			return nil, false, nil
+		}
+		domains := []string{"map"}
+		if domain, retained := State.MapDomainForType(target.TypeID); retained {
+			domains = append(domains, domain)
+		}
+		return domains, true, nil
+	})
 }
 
 func (application *Application) guardInvasionFortify(_ context.Context, arguments json.RawMessage) error {

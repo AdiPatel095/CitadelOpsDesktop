@@ -1847,3 +1847,29 @@ func openCoordinatorTestConfiguration(t *testing.T, enabledPolicy string) *Confi
 	}
 	return configuration
 }
+
+func TestCoordinatorRetryableStaleArmsRepeatedDecisionGuard(t *testing.T) {
+	// A stale plan re-evaluates immediately (so the policy can rotate to the
+	// next target) but must not spin: an IDENTICAL request afterwards hits
+	// the repeated-decision safety pause instead of another wire-speed pass.
+	next := time.Now().UTC().Add(time.Hour)
+	current := &policyRuntime{nextCheck: next, running: true, lastDecisionFingerprint: "attack-1124-238"}
+	result, wakeImmediately := completePolicyRun(current, operationResult{
+		policyID: "autoInvasion",
+		receipt: Intent.Receipt{
+			Status: Intent.StatusFailed,
+			Error:  Intent.ErrPlanStale.Error() + ": invasion target 1124:238 was not returned by the launch-time map refresh after 3 replans",
+		},
+		nextCheck:         next,
+		reevaluateOnStale: true,
+	}, time.Now().UTC())
+	if !wakeImmediately || !result.nextCheck.IsZero() {
+		t.Fatalf("retryable stale did not reevaluate immediately: result=%+v runtime=%+v", result, current)
+	}
+	if !current.failureBlockedUntil.IsZero() {
+		t.Fatalf("retryable stale must not take the failure pause (rotation stays immediate): %+v", current)
+	}
+	if !current.rejectRepeatedDecision {
+		t.Fatalf("retryable stale must arm the repeated-decision guard so an identical request pauses: %+v", current)
+	}
+}

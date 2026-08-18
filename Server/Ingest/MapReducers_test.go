@@ -328,3 +328,36 @@ func TestInvasionFortificationTracksReceiptUntilServerCountersReset(t *testing.T
 		t.Fatalf("reset fortification counters: state=%#v changed=%t err=%v", gameState.Invasion, changed, err)
 	}
 }
+
+func TestReduceMapSnapshotDropsRetainedObservationReplacedByUntrackedRow(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	first := time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
+	// A Foreign Lord castle (type 21) is observed by a full scan.
+	if _, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: first,
+		Payload: json.RawMessage(`{"KID":0,"AI":[[21,1124,238,70,0,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]}`),
+	}, &gameState, nil); err != nil || !changed {
+		t.Fatalf("initial invasion observation: changed=%t err=%v", changed, err)
+	}
+	if _, exists := gameState.LookupMapObservation(0, "1124:238"); !exists {
+		t.Fatal("foreign lord castle was not retained")
+	}
+	// The castle is defeated; the coordinate now reports as AREA_TYPE_DYNAMIC
+	// (31), which is not a tracked map kind. The stale type-21 observation
+	// must go with it — otherwise it stays a phantom attack candidate that
+	// every refresh silently re-confirms.
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: first.Add(time.Minute),
+		Payload: json.RawMessage(`{"KID":0,"AI":[[31,1124,238]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("dynamic-area replacement: changed=%t err=%v", changed, err)
+	}
+	if _, exists := gameState.LookupMapObservation(0, "1124:238"); exists {
+		t.Fatal("phantom foreign lord castle survived the dynamic-area row")
+	}
+	if !slices.Contains(domains, "map-invasion") {
+		t.Fatalf("invasion domain did not wake on the deletion: %v", domains)
+	}
+}
