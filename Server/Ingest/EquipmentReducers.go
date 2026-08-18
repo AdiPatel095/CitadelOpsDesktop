@@ -53,7 +53,14 @@ func applyGenerals(raw json.RawMessage, observedAt time.Time, gameState *State.G
 	if payload.Generals == nil {
 		return false, fmt.Errorf("general payload does not contain G rows")
 	}
-	next := make(map[int64]State.GeneralState, len(payload.Generals))
+	// Merge, never replace: the official client's parse_GIE updates the
+	// generals it is told about and keeps the rest. A partial answer must not
+	// erase an assigned general's observed skills — attack-capacity resolution
+	// treats a missing entry as "never observed" and the lane deadlocks.
+	next := make(map[int64]State.GeneralState, len(gameState.Generals)+len(payload.Generals))
+	for id, general := range gameState.Generals {
+		next[id] = general
+	}
 	for _, row := range payload.Generals {
 		if row.ID <= 0 {
 			continue

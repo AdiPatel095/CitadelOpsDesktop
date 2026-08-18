@@ -949,12 +949,24 @@ func (transport *DirectWebSocketTransport) serveConnected(
 	// subscription-aware computation (e.g. the +40-per-slot recruitment
 	// bonus) silently lost its input. Ask once per connection, then refresh
 	// periodically so a lapse or purchase is noticed without a relog.
+	// The same holds for the general roster with active skills (C2S "gie"):
+	// the official client asks at login (CastleLoginEvent) and gbd does not
+	// carry it, so without this pull every commander with a general assigned
+	// is "skills not observed" until an attack plan happens to ask — which
+	// capacity-gated lanes never do (they need the skills first).
 	requestSubscriptions := func() error {
-		frame := fmt.Sprintf("%%xt%%%s%%sie%%%d%%{}%%", transport.profile.Namespace, roomID)
-		_, err := transport.sendInternal(
-			connection, frame, connectionGeneration, "session:background:subscription-refresh", "sie",
-		)
-		return err
+		for _, request := range []struct{ opcode, causation string }{
+			{"sie", "session:background:subscription-refresh"},
+			{"gie", "session:background:general-skills-refresh"},
+		} {
+			frame := fmt.Sprintf("%%xt%%%s%%%s%%%d%%{}%%", transport.profile.Namespace, request.opcode, roomID)
+			if _, err := transport.sendInternal(
+				connection, frame, connectionGeneration, request.causation, request.opcode,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 	if err := requestSubscriptions(); err != nil {
 		return err

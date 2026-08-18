@@ -1669,6 +1669,9 @@ func evaluateAutoStormCombat(
 			snapshot, castle, candidate.Observation, candidate.Definition, preset, commanderID,
 		)
 		if err != nil {
+			if decision, refresh := generalSkillsRefreshDecision(err, snapshot.Now, metrics); refresh {
+				return &decision, "", nil
+			}
 			waitingDetail = fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err)
 			continue
 		}

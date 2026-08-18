@@ -59,6 +59,8 @@ func TestDirectWebSocketTransportAuthenticatesAndKeepsGameSessionAlive(t *testin
 					gbdPushed = true
 					reply += `%xt%gbd%1%0%{"gpi":{"UID":1,"PID":2}}%`
 				}
+			case strings.Contains(message, "%gie%"):
+				reply = `%xt%gie%1%0%{"G":[{"GID":125,"SIDS":[101251]}]}%`
 			case strings.Contains(message, "%abc%"):
 				reply = `%xt%abc%1%0%{"ok":true}%`
 			}
@@ -146,23 +148,31 @@ connected:
 	// first answer. The fake server pushes gbd with the first sie reply, so
 	// two pulls prove both triggers.
 	wantSubscriptions := `%xt%EmpireEx_21%sie%1%{}%`
+	// The general roster (gie) is pulled alongside: the official client asks
+	// at login and gbd never carries it, so capacity-gated attack lanes would
+	// otherwise see every general-assigned commander as "skills not observed".
+	wantGenerals := `%xt%EmpireEx_21%gie%1%{}%`
 	seenPing := false
 	seenMovement := false
 	subscriptionPulls := 0
+	generalPulls := 0
 	seenFreshSessionID := false
 	seenCorrelatedResponse := false
-	for !seenPing || !seenMovement || subscriptionPulls < 2 || !seenCorrelatedResponse {
+	for !seenPing || !seenMovement || subscriptionPulls < 2 || generalPulls < 1 || !seenCorrelatedResponse {
 		select {
 		case <-ctx.Done():
 			t.Fatalf(
-				"missing background traffic: ping=%v movement=%v subscriptionPulls=%d response=%v",
-				seenPing, seenMovement, subscriptionPulls, seenCorrelatedResponse,
+				"missing background traffic: ping=%v movement=%v subscriptionPulls=%d generalPulls=%d response=%v",
+				seenPing, seenMovement, subscriptionPulls, generalPulls, seenCorrelatedResponse,
 			)
 		case message := <-received:
 			seenPing = seenPing || message == wantPing
 			seenMovement = seenMovement || message == wantMovement
 			if message == wantSubscriptions {
 				subscriptionPulls++
+			}
+			if message == wantGenerals {
+				generalPulls++
 			}
 			if strings.Contains(message, "%vck%") {
 				parts := strings.Split(message, "%")

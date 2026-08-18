@@ -155,3 +155,28 @@ func testSuccessfulFrame(opcode string, payload string) Protocol.Frame {
 	code := 0
 	return Protocol.Frame{Opcode: opcode, ResponseCode: &code, Payload: json.RawMessage(payload)}
 }
+
+func TestApplyGeneralsMergesInsteadOfReplacing(t *testing.T) {
+	gameState := State.NewGameState()
+	first := time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
+	if _, err := applyGenerals(json.RawMessage(`{"G":[{"GID":125,"SIDS":[101251,101252]},{"GID":101,"SIDS":[]}]}`), first, &gameState); err != nil {
+		t.Fatal(err)
+	}
+	if len(gameState.Generals) != 2 || gameState.Generals[125].ObservedAt != first {
+		t.Fatalf("initial generals = %#v", gameState.Generals)
+	}
+	// A partial later answer (official parse_GIE semantics: update what is
+	// listed, keep the rest) must not erase general 125 — a missing entry
+	// reads as "never observed" and deadlocks capacity-gated attack lanes.
+	second := first.Add(time.Minute)
+	changed, err := applyGenerals(json.RawMessage(`{"G":[{"GID":101,"SIDS":[10001]}]}`), second, &gameState)
+	if err != nil || !changed {
+		t.Fatalf("partial merge changed=%v err=%v", changed, err)
+	}
+	if got := gameState.Generals[125]; got.ObservedAt != first || len(got.ActiveSkillIDs) != 2 {
+		t.Fatalf("general 125 must survive a partial answer, got %#v", got)
+	}
+	if got := gameState.Generals[101]; got.ObservedAt != second || len(got.ActiveSkillIDs) != 1 {
+		t.Fatalf("general 101 must be updated by the partial answer, got %#v", got)
+	}
+}

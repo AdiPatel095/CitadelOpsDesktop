@@ -248,6 +248,9 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		if firstTroopShortage != "" {
 			detail = "Waiting for tower troops: " + firstTroopShortage
 		} else if firstCapacityError != nil {
+			if decision, refresh := generalSkillsRefreshDecision(firstCapacityError, snapshot.Now, metrics); refresh {
+				return decision, nil
+			}
 			detail = "Cannot calculate tower troop requirements: " + firstCapacityError.Error()
 		}
 		return Decision{

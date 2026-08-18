@@ -427,13 +427,27 @@ func (builder contextBuilder) addLegendSkills(skills State.LegendSkillState) err
 	return nil
 }
 
+// GeneralSkillsUnobservedError reports that a commander's assigned general
+// has no observed skill set yet, so attack capacity cannot be resolved.
+// Policies match it with errors.As and answer with a general-skills refresh
+// instead of waiting: the observation only ever arrives from a "gie" pull,
+// which the game never volunteers on its own.
+type GeneralSkillsUnobservedError struct {
+	GeneralID   int64
+	CommanderID State.CommanderID
+}
+
+func (err *GeneralSkillsUnobservedError) Error() string {
+	return fmt.Sprintf("general %d skills have not been observed for commander %d", err.GeneralID, err.CommanderID)
+}
+
 func (builder contextBuilder) addGeneralSkills(gameState State.GameState, commander State.CommanderState) error {
 	if commander.GeneralID <= 0 {
 		return nil
 	}
 	general, exists := gameState.Generals[commander.GeneralID]
 	if !exists || general.ObservedAt.IsZero() {
-		return fmt.Errorf("general %d skills have not been observed for commander %d", commander.GeneralID, commander.ID)
+		return &GeneralSkillsUnobservedError{GeneralID: commander.GeneralID, CommanderID: commander.ID}
 	}
 	catalog, err := builder.gameData.Catalog("generalSkills")
 	if err != nil {

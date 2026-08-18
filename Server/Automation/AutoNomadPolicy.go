@@ -295,6 +295,9 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			snapshot, source, target, preset, availableCommanders, len(availableCommanders), false,
 		)
 		if err != nil {
+			if decision, refresh := generalSkillsRefreshDecision(err, snapshot.Now, metrics); refresh {
+				return decision, nil
+			}
 			return nomadWaiting(snapshot.Now, fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err)), nil
 		}
 		metrics["presetCopies"] = float64(len(launchCommanders))
@@ -368,6 +371,9 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		snapshot, source, target, preset, availableCommanders, maximumLaunches, true,
 	)
 	if err != nil {
+		if decision, refresh := generalSkillsRefreshDecision(err, snapshot.Now, metrics); refresh {
+			return decision, nil
+		}
 		return nomadWaiting(snapshot.Now, fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err)), nil
 	}
 	metrics["presetCopies"] = float64(len(launchCommanders))

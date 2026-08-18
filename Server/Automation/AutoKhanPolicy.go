@@ -538,6 +538,9 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	commanderID := ordered[0]
 	limitedPreset, err := autoKhanCapacityLimitedPreset(snapshot, source, target, attackPreset, commanderID)
 	if err != nil {
+		if decision, refresh := generalSkillsRefreshDecision(err, snapshot.Now, metrics); refresh {
+			return decision, nil
+		}
 		return autoKhanWaiting(
 			snapshot.Now,
 			fmt.Sprintf("Cannot calculate %s inventory requirements: %v", attackPreset.Name, err),

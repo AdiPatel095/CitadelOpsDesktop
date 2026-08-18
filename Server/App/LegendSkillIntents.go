@@ -41,6 +41,10 @@ func (application *Application) registerLegendSkillIntents() error {
 			ArgumentsExample: json.RawMessage(`{}`), Planner: planLegendSkillsRefresh,
 		},
 		{
+			Name: "general.skills.refresh", Description: "Refresh every owned general's active skills (the game never volunteers them; attack capacity needs them)", Effect: Intent.EffectRead,
+			ArgumentsExample: json.RawMessage(`{}`), Planner: planGeneralSkillsRefresh,
+		},
+		{
 			Name: "legend.skill.purchase", Description: "Spend Hall of Legends skill points on the next official skill-group level", Effect: Intent.EffectWrite,
 			ArgumentsExample: json.RawMessage(`{"skillId":11}`), Planner: planLegendSkillPurchase,
 		},
@@ -66,6 +70,26 @@ func planLegendSkillsRefresh(_ context.Context, _ Intent.PlanningContext, argume
 		Claims:  []string{"hall-of-legends"},
 		Summary: "Refresh Hall of Legends state",
 		Steps:   []Intent.Step{commandStep("Refresh Hall of Legends", "skl", json.RawMessage(`{}`), "skl")},
+	}, nil
+}
+
+// planGeneralSkillsRefresh pulls the general roster with active skills (C2S
+// "gie"). Attack-capacity resolution needs a commander's general skills, but
+// the game only sends them on request — the official client asks at login
+// and the attack plans ask again when stale. A policy whose commander has an
+// unobserved general cannot plan the attack that would ask, so it schedules
+// this refresh instead of waiting forever.
+func planGeneralSkillsRefresh(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request struct{}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	return Intent.Plan{
+		Claims:  []string{"generals"},
+		Summary: "Refresh general skills",
+		Steps: []Intent.Step{commandStep(
+			"Refresh commander general attack limits", "gie", json.RawMessage(`{}`), "gie",
+		)},
 	}, nil
 }
 
