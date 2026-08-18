@@ -1,6 +1,7 @@
 package State
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -601,5 +602,61 @@ func TestSnapshotLoadRemovesOwnKhanReturnsFromTauntHistory(t *testing.T) {
 		loaded.Khan.TauntCounterVersion != KhanTauntCounterVersion ||
 		!loaded.Khan.LastTauntResolvedAt.Equal(now.Add(2*time.Minute)) {
 		t.Fatalf("reconciled Khan taunts = %#v", loaded.Khan)
+	}
+}
+
+// An upgrade that adds a state component (combatCooldown arrived after
+// accounts already had manifests on disk) must not make durable storage
+// unavailable: the first save after the upgrade files the new component
+// even though the event never touched it.
+func TestComponentSnapshotFilesComponentsMissingFromOlderManifest(t *testing.T) {
+	directory := t.TempDir()
+	initial := NewGameState()
+	initial.Player.ID = 99
+	store := NewStore(initial)
+	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
+		state.Player.Level = 10
+		return []string{"player"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, bootstrap, Components(bootstrap.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	// Age the manifest: pretend it was written by a build that had no
+	// combatCooldown component.
+	manifest, err := readComponentManifest(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	delete(manifest.Files, ComponentCombatCooldown.String())
+	contents, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(componentStatePath(directory), componentManifestName), contents, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	sessionEvent, err := store.ApplyComponents(Components(ComponentSession), func(state *GameState) ([]string, bool, error) {
+		state.Session.Generation = 3
+		return []string{"session"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, sessionEvent, Components(sessionEvent.Components...)); err != nil {
+		t.Fatalf("save after upgrade: %v", err)
+	}
+	upgraded, err := readComponentManifest(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(upgraded.Files) != len(AllComponents.List()) || upgraded.Files[ComponentCombatCooldown.String()] == "" {
+		t.Fatalf("upgraded manifest files = %v, want every component including combatCooldown", upgraded.Files)
+	}
+	if _, err := LoadSnapshot(directory); err != nil {
+		t.Fatalf("load after upgrade: %v", err)
 	}
 }

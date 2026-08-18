@@ -297,6 +297,16 @@ func saveComponentSnapshot(
 	if manifest.Files == nil {
 		manifest.Files = map[string]string{}
 	}
+	// A component introduced after this manifest was written (an upgrade that
+	// added one — combatCooldown, say) has no file yet. It must be written on
+	// this save whether or not the event touched it; otherwise the manifest
+	// completeness check below fails on every save and durable storage stays
+	// unavailable until the component happens to change.
+	for _, component := range AllComponents.List() {
+		if strings.TrimSpace(manifest.Files[component.String()]) == "" {
+			dirty = dirty.Union(Components(component))
+		}
+	}
 
 	nextFiles := make(map[string]string, len(manifest.Files)+len(dirty.List()))
 	for name, filename := range manifest.Files {
