@@ -1,0 +1,133 @@
+/*
+ * Goodgame-inspired palette for the existing Material Expressive UI.
+ * Color tokens only: no typography, spacing, shape, layout, or motion changes.
+ */
+
+:root {
+    --md-sys-color-primary: #a33a2b;
+    --md-sys-color-on-primary: #fff8e7;
+    --md-sys-color-primary-container: #f1d5ab;
+    --md-sys-color-on-primary-container: #432018;
+    --md-sys-color-secondary: #83591f;
+    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-secondary-container: #f0dcae;
+    --md-sys-color-on-secondary-container: #30200b;
+    --md-sys-color-tertiary: #4d713e;
+    --md-sys-color-on-tertiary: #ffffff;
+    --md-sys-color-tertiary-container: #d5e8c5;
+    --md-sys-color-on-tertiary-container: #15290f;
+    --md-sys-color-error: #a6302a;
+    --md-sys-color-on-error: #ffffff;
+    --md-sys-color-error-container: #f8d9cf;
+    --md-sys-color-on-error-container: #42100d;
+    --md-sys-color-surface: #f8f0df;
+    --md-sys-color-surface-dim: #ded1ba;
+    --md-sys-color-surface-bright: #fff9ed;
+    --md-sys-color-surface-container-lowest: #fffdf7;
+    --md-sys-color-surface-container-low: #f4e9d6;
+    --md-sys-color-surface-container: #ecdec7;
+    --md-sys-color-surface-container-high: #e2d1b6;
+    --md-sys-color-surface-container-highest: #d6c09e;
+    --md-sys-color-on-surface: #2d2218;
+    --md-sys-color-on-surface-variant: #695743;
+    --md-sys-color-outline: #88745b;
+    --md-sys-color-outline-variant: #cbb99c;
+    --md-sys-color-inverse-surface: #352b21;
+    --md-sys-color-inverse-on-surface: #f8edd8;
+
+    --surface-canvas: var(--md-sys-color-surface);
+    --surface-default: var(--md-sys-color-surface-container-lowest);
+    --surface-subtle: var(--md-sys-color-surface-container);
+    --surface-shell: var(--md-sys-color-surface-container-lowest);
+    --surface-panel: var(--md-sys-color-surface-container-low);
+    --surface-raised: var(--md-sys-color-surface-container-lowest);
+    --surface-control: var(--md-sys-color-surface-container-high);
+    --bg-app: var(--md-sys-color-surface);
+    --bg-card: var(--md-sys-color-surface-container-lowest);
+    --bg-card-hover: var(--md-sys-color-surface-container-high);
+    --bg-input: var(--md-sys-color-surface-container-highest);
+    --border-base: var(--md-sys-color-outline-variant);
+    --border-light: color-mix(in srgb, var(--md-sys-color-outline-variant) 72%, transparent);
+    --border-control: var(--md-sys-color-outline);
+    --content-strong: var(--md-sys-color-on-surface);
+    --content-muted: var(--md-sys-color-on-surface-variant);
+    --text-main: var(--md-sys-color-on-surface);
+    --text-muted: var(--md-sys-color-on-surface-variant);
+    --text-inverted: var(--md-sys-color-on-primary);
+    --action-primary: var(--md-sys-color-primary);
+    --action-primary-hover: #882e23;
+    --primary: var(--md-sys-color-primary);
+    --primary-hover: var(--action-primary-hover);
+    --primary-glow: color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent);
+    --status-success: #47752f;
+    --status-warning: #96640d;
+    --status-danger: var(--md-sys-color-error);
+    --status-info: #3d7181;
+    --status-inactive: #756856;
+    --success: var(--status-success);
+    --warning: var(--status-warning);
+    --error: var(--status-danger);
+    --info: var(--status-info);
+
+    --control-background: var(--md-sys-color-surface-container-high);
+    --control-active-background: var(--md-sys-color-primary-container);
+}
+
+[data-theme="dark"] {
+    --md-sys-color-primary: #e17a62;
+    --md-sys-color-on-primary: #4e130d;
+    --md-sys-color-primary-container: #76291f;
+    --md-sys-color-on-primary-container: #ffdbcf;
+    --md-sys-color-secondary: #e1bb65;
+    --md-sys-color-on-secondary: #402d08;
+    --md-sys-color-secondary-container: #554019;
+    --md-sys-color-on-secondary-container: #f8dda0;
+    --md-sys-color-tertiary: #9bc38a;
+    --md-sys-color-on-tertiary: #193612;
+    --md-sys-color-tertiary-container: #325127;
+    --md-sys-color-on-tertiary-container: #d7f1c5;
+    --md-sys-color-error: #ffb3a2;
+    --md-sys-color-on-error: #65120d;
+    --md-sys-color-error-container: #8c251e;
+    --md-sys-color-on-error-container: #ffdad1;
+    --md-sys-color-surface: #15110d;
+    --md-sys-color-surface-dim: #15110d;
+    --md-sys-color-surface-bright: #46392c;
+    --md-sys-color-surface-container-lowest: #100c09;
+    --md-sys-color-surface-container-low: #1d1812;
+    --md-sys-color-surface-container: #251e17;
+    --md-sys-color-surface-container-high: #30271e;
+    --md-sys-color-surface-container-highest: #3c3025;
+    --md-sys-color-on-surface: #f0e3c8;
+    --md-sys-color-on-surface-variant: #c8b79a;
+    --md-sys-color-outline: #9a8462;
+    --md-sys-color-outline-variant: #514332;
+    --md-sys-color-inverse-surface: #f0e3c8;
+    --md-sys-color-inverse-on-surface: #352b21;
+
+    --action-primary-hover: #f08d72;
+    --border-light: color-mix(in srgb, var(--md-sys-color-outline-variant) 82%, transparent);
+    --status-success: #91c56e;
+    --status-warning: #e0b75b;
+    --status-danger: var(--md-sys-color-error);
+    --status-info: #76adbd;
+    --status-inactive: #a99a80;
+}
+
+.liquid-switch-rail {
+    border-color: var(--md-sys-color-tertiary);
+    background: var(--md-sys-color-tertiary-container);
+}
+
+.liquid-switch-thumb {
+    background: var(--md-sys-color-tertiary);
+}
+
+.liquid-switch-on .liquid-switch-rail {
+    border-color: var(--md-sys-color-tertiary);
+    background: var(--md-sys-color-tertiary);
+}
+
+.liquid-switch-on .liquid-switch-thumb {
+    background: var(--md-sys-color-on-tertiary);
+}

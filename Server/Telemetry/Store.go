@@ -48,7 +48,7 @@ const (
 	tailReadBlockSize          int64 = 64 * 1024
 	tailMaxReadBytes           int64 = 16 * 1024 * 1024
 	attackRateWindow                 = time.Hour
-	attackDailyWindow                = 24 * time.Hour
+	attackLaunchRetention            = logRetentionDuration
 )
 
 // Channel identifies one persistent logger view in the dashboard.
@@ -224,7 +224,7 @@ func (store *Store) SetDataDir(dataDir string) error {
 		return err
 	}
 	loadedAt := time.Now()
-	loadedAttackLaunches := loadAttackLaunches(directory, loadedAt.Add(-attackDailyWindow))
+	loadedAttackLaunches := loadAttackLaunches(directory, loadedAt.Add(-attackLaunchRetention))
 	store.retentionFileMu.Lock()
 	store.flushPersistence()
 	store.fileMu.Lock()
@@ -409,27 +409,35 @@ func (store *Store) Channels() []Channel {
 
 // AttackLaunchCounts returns the confirmed launches recorded during the rolling hour ending at now.
 func (store *Store) AttackLaunchCounts(now time.Time) map[string]int {
-	return store.attackLaunchCounts(now, attackRateWindow)
+	if now.IsZero() {
+		now = time.Now()
+	}
+	return store.attackLaunchCountsSince(now.Add(-attackRateWindow), now)
 }
 
-// DailyAttackLaunchCounts returns the confirmed launches recorded during the rolling 24 hours ending at now.
-func (store *Store) DailyAttackLaunchCounts(now time.Time) map[string]int {
-	return store.attackLaunchCounts(now, attackDailyWindow)
-}
-
-func (store *Store) attackLaunchCounts(now time.Time, window time.Duration) map[string]int {
+// AttackLaunchCountsSince returns confirmed launches in the current tracked
+// daily-attack session. The boolean is false when the reset boundary is
+// missing, in the future, or older than the retained feature telemetry.
+func (store *Store) AttackLaunchCountsSince(since time.Time, now time.Time) (map[string]int, bool) {
 	counts := make(map[string]int, len(attackFeatureChannels))
 	if store == nil {
-		return counts
+		return counts, false
 	}
 	if now.IsZero() {
 		now = time.Now()
 	}
-	if window <= 0 || window > attackDailyWindow {
-		window = attackDailyWindow
+	if since.IsZero() || since.After(now) || since.Before(now.Add(-attackLaunchRetention)) {
+		return counts, false
 	}
-	since := now.Add(-window)
-	retentionCutoff := now.Add(-attackDailyWindow)
+	return store.attackLaunchCountsSince(since, now), true
+}
+
+func (store *Store) attackLaunchCountsSince(since time.Time, now time.Time) map[string]int {
+	counts := make(map[string]int, len(attackFeatureChannels))
+	if store == nil {
+		return counts
+	}
+	retentionCutoff := now.Add(-attackLaunchRetention)
 	store.attackMu.Lock()
 	defer store.attackMu.Unlock()
 	for _, channel := range attackFeatureChannels {
@@ -505,7 +513,7 @@ func (store *Store) UserFacingTail(channel string, limit int) ([]string, bool) {
 func (store *Store) recordAttackLaunch(channel string, observedAt time.Time) {
 	store.attackMu.Lock()
 	launches := store.attackLaunches[channel]
-	cutoff := observedAt.Add(-attackDailyWindow)
+	cutoff := observedAt.Add(-attackLaunchRetention)
 	firstIncluded := 0
 	for firstIncluded < len(launches) && launches[firstIncluded].Before(cutoff) {
 		firstIncluded++

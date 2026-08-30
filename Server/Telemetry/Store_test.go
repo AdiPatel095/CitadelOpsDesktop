@@ -270,33 +270,51 @@ func TestAttackLaunchCountsTrackSuccessfulFeatureAttacksAcrossRestart(t *testing
 	}
 }
 
-func TestAttackLaunchCountsSeparateRollingHourAndDay(t *testing.T) {
+func TestAttackLaunchCountsSeparateRollingHourAndDailyResetSession(t *testing.T) {
 	store := NewStore(100)
 	defer store.Close()
 	now := time.Date(2026, 8, 25, 15, 0, 0, 0, time.UTC)
+	store.recordAttackLaunch(ChannelAutoTowers, now.Add(-20*time.Hour))
 	store.recordAttackLaunch(ChannelAutoTowers, now.Add(-2*time.Hour))
 	store.recordAttackLaunch(ChannelAutoTowers, now.Add(-30*time.Minute))
 	store.recordAttackLaunch(ChannelAutoStorm, now.Add(-25*time.Hour))
 
 	hourly := store.AttackLaunchCounts(now)
-	daily := store.DailyAttackLaunchCounts(now)
-	if hourly[ChannelAutoTowers] != 1 || daily[ChannelAutoTowers] != 2 {
-		t.Fatalf("Auto Towers hourly/daily counts = %d/%d, want 1/2", hourly[ChannelAutoTowers], daily[ChannelAutoTowers])
+	dailySession, available := store.AttackLaunchCountsSince(now.Add(-3*time.Hour), now)
+	if !available || hourly[ChannelAutoTowers] != 1 || dailySession[ChannelAutoTowers] != 2 {
+		t.Fatalf("Auto Towers hourly/session counts = %d/%d available=%t, want 1/2/true", hourly[ChannelAutoTowers], dailySession[ChannelAutoTowers], available)
 	}
-	if hourly[ChannelAutoStorm] != 0 || daily[ChannelAutoStorm] != 0 {
-		t.Fatalf("expired Auto Storm launch remained counted: hourly=%d daily=%d", hourly[ChannelAutoStorm], daily[ChannelAutoStorm])
+	if hourly[ChannelAutoStorm] != 0 || dailySession[ChannelAutoStorm] != 0 {
+		t.Fatalf("pre-session Auto Storm launch remained counted: hourly=%d session=%d", hourly[ChannelAutoStorm], dailySession[ChannelAutoStorm])
 	}
 }
 
-func TestDailyAttackLaunchCountsReloadOlderThanHourlyWindow(t *testing.T) {
+func TestAttackLaunchCountsSinceRejectsUnknownOrUnretainedSessionBoundary(t *testing.T) {
+	store := NewStore(100)
+	defer store.Close()
+	now := time.Date(2026, 8, 25, 15, 0, 0, 0, time.UTC)
+
+	for _, since := range []time.Time{
+		{},
+		now.Add(time.Minute),
+		now.Add(-attackLaunchRetention - time.Second),
+	} {
+		if counts, available := store.AttackLaunchCountsSince(since, now); available || len(counts) != 0 {
+			t.Fatalf("invalid session boundary %s returned counts=%#v available=%t", since, counts, available)
+		}
+	}
+}
+
+func TestDailyResetSessionCountsReloadOlderThanHourlyWindow(t *testing.T) {
 	dataDir := t.TempDir()
 	store := NewStore(100)
 	if err := store.SetDataDir(dataDir); err != nil {
 		t.Fatal(err)
 	}
+	now := time.Now()
 	store.append(
 		ChannelAutoBeriWorld,
-		formatLine(time.Now().Add(-2*time.Hour), "INFO", "ATTACK", "Launched Berimond tower attack"),
+		formatLine(now.Add(-2*time.Hour), "INFO", "ATTACK", "Launched Berimond tower attack"),
 	)
 	store.Close()
 
@@ -305,11 +323,12 @@ func TestDailyAttackLaunchCountsReloadOlderThanHourlyWindow(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer reloaded.Close()
-	if hourly := reloaded.AttackLaunchCounts(time.Now())[ChannelAutoBeriWorld]; hourly != 0 {
+	if hourly := reloaded.AttackLaunchCounts(now)[ChannelAutoBeriWorld]; hourly != 0 {
 		t.Fatalf("reloaded two-hour-old attack counted in rolling hour: %d", hourly)
 	}
-	if daily := reloaded.DailyAttackLaunchCounts(time.Now())[ChannelAutoBeriWorld]; daily != 1 {
-		t.Fatalf("reloaded daily Auto Beri count = %d, want 1", daily)
+	dailySession, available := reloaded.AttackLaunchCountsSince(now.Add(-3*time.Hour), now)
+	if !available || dailySession[ChannelAutoBeriWorld] != 1 {
+		t.Fatalf("reloaded daily-session Auto Beri count = %d available=%t, want 1/true", dailySession[ChannelAutoBeriWorld], available)
 	}
 }
 

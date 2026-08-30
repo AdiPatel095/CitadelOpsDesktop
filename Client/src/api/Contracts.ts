@@ -1622,12 +1622,16 @@ export interface AutoStormTroopCapPreviewV2 {
 	detail?: string;
 }
 
+export interface AttackLaunchDailySessionV2 {
+	startedAt: string;
+	launchesByFeature: Record<string, number>;
+}
+
 export interface AttackLaunchRatesV2 {
 	observedAt: string;
 	windowMinutes: number;
-	dailyWindowMinutes: number;
 	launchesByFeature: Record<string, number>;
-	dailyLaunchesByFeature: Record<string, number>;
+	dailySession?: AttackLaunchDailySessionV2 | null;
 }
 
 export interface MovementSnapshotV2 {
@@ -1968,6 +1972,7 @@ export interface DailyAttackStateV2 {
 	count: number;
 	serverThreshold: number;
 	growthRate: number;
+	sessionStartedAt?: string;
 	observedAt?: string;
 }
 

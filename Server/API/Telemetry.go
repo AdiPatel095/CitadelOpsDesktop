@@ -24,14 +24,27 @@ func (server *Server) handleAttackLaunchRates(writer http.ResponseWriter, _ *htt
 	}
 	observedAt := time.Now()
 	hourlyCounts := server.config.Telemetry.AttackLaunchCounts(observedAt)
-	dailyCounts := server.config.Telemetry.DailyAttackLaunchCounts(observedAt)
+	var dailySession *attackLaunchDailySession
+	if server.config.State != nil {
+		startedAt := server.config.State.ReadOnlyView().DailyAttacks.SessionStartedAt
+		if dailyCounts, available := server.config.Telemetry.AttackLaunchCountsSince(startedAt, observedAt); available {
+			dailySession = &attackLaunchDailySession{
+				StartedAt:         startedAt.UTC(),
+				LaunchesByFeature: attackLaunchCountsByFeature(dailyCounts),
+			}
+		}
+	}
 	writeJSON(writer, http.StatusOK, map[string]any{
-		"observedAt":             observedAt.UTC(),
-		"windowMinutes":          int(time.Hour / time.Minute),
-		"dailyWindowMinutes":     int((24 * time.Hour) / time.Minute),
-		"launchesByFeature":      attackLaunchCountsByFeature(hourlyCounts),
-		"dailyLaunchesByFeature": attackLaunchCountsByFeature(dailyCounts),
+		"observedAt":        observedAt.UTC(),
+		"windowMinutes":     int(time.Hour / time.Minute),
+		"launchesByFeature": attackLaunchCountsByFeature(hourlyCounts),
+		"dailySession":      dailySession,
 	})
+}
+
+type attackLaunchDailySession struct {
+	StartedAt         time.Time      `json:"startedAt"`
+	LaunchesByFeature map[string]int `json:"launchesByFeature"`
 }
 
 func attackLaunchCountsByFeature(counts map[string]int) map[string]int {

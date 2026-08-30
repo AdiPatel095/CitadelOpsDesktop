@@ -42,8 +42,16 @@ func applyDailyAttackCount(raw json.RawMessage, observedAt time.Time, gameState 
 	if count < 0 || threshold < 0 {
 		return false, fmt.Errorf("decode daily attack count: negative count or threshold")
 	}
+	observedAt = observedAt.UTC()
+	previous := gameState.DailyAttacks
+	sessionStartedAt := previous.SessionStartedAt
+	if (!previous.ObservedAt.IsZero() && count < previous.Count) ||
+		(previous.ObservedAt.IsZero() && count == 0) {
+		sessionStartedAt = observedAt
+	}
 	next := State.DailyAttackState{
-		Count: count, ServerThreshold: threshold, GrowthRate: float64(payload.GrowthRate), ObservedAt: observedAt.UTC(),
+		Count: count, ServerThreshold: threshold, GrowthRate: float64(payload.GrowthRate),
+		SessionStartedAt: sessionStartedAt, ObservedAt: observedAt,
 	}
 	if reflect.DeepEqual(gameState.DailyAttacks, next) {
 		return false, nil

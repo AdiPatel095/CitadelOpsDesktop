@@ -16,6 +16,11 @@ func TestComponentSnapshotWritesOnlyDirtyComponentsAfterBootstrap(t *testing.T) 
 	initial := NewGameState()
 	initial.Player.ID = 99
 	initial.Player.Level = 10
+	dailySessionStartedAt := time.Date(2026, 8, 25, 3, 0, 0, 0, time.UTC)
+	initial.DailyAttacks = DailyAttackState{
+		Count: 42, ServerThreshold: 3500, SessionStartedAt: dailySessionStartedAt,
+		ObservedAt: dailySessionStartedAt.Add(time.Hour),
+	}
 	store := NewStore(initial)
 
 	playerEvent, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
@@ -83,6 +88,9 @@ func TestComponentSnapshotWritesOnlyDirtyComponentsAfterBootstrap(t *testing.T) 
 	}
 	if loaded.Session.Generation != 7 || loaded.Session.ServerURL != "wss://example.test/socket" || loaded.Session.Status != "stopped" {
 		t.Fatalf("loaded session migration = %+v", loaded.Session)
+	}
+	if loaded.DailyAttacks.Count != 42 || !loaded.DailyAttacks.SessionStartedAt.Equal(dailySessionStartedAt) {
+		t.Fatalf("loaded daily attack session = %+v", loaded.DailyAttacks)
 	}
 }
 

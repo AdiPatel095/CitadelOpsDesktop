@@ -71,10 +71,13 @@ const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
       { kind: 'fixed', text: 'Windows component-state persistence no longer attempts an unsupported directory flush that could report Access is denied; state files and recovery directories use write-through Windows moves instead' },
       { kind: 'fixed', text: 'World Intelligence once again leads Storm Islands with its authoritative cargo ranking instead of presenting page-local session ranks as though every player held the same global place' },
       { kind: 'fixed', text: 'Current and recorded event boards now stay under one event choice, with the event-date picker retaining every returned run and dated Storm boards rebuilding inconsistent ranks from their final recorded scores' },
+      { kind: 'fixed', text: 'Offense automation daily badges now count confirmed launches from the authoritative server reset boundary instead of a rolling 24-hour window, with the boundary and retained feature telemetry restored after restart' },
       { kind: 'security', text: 'Desktop updates now require an exact SHA-256 match and remain restricted to the official release location; unexpected redirects, paths, filenames, missing checksums, and altered downloads are rejected' },
       { kind: 'security', text: 'Automatic updates now require the version service to return the platform artifact URL and SHA-256 directly; public source no longer embeds the provider storage origin or private release-manifest layout' },
       { kind: 'security', text: 'The public source tree excludes local report data, environment-specific files, provider-specific build configuration, and production rollout controls; release validation consumes an exact reviewed source revision outside this repository' },
       { kind: 'changed', text: 'Release output is now limited to the Windows desktop executable and the hosted tenant image; other desktop platform artifacts are no longer built or published' },
+      { kind: 'changed', text: 'Auto Beri Builder configuration now remains in Auto Beri settings while the Automation overview presents its runtime status without a second quick toggle' },
+      { kind: 'changed', text: 'The dashboard now uses a kingdom-inspired light and dark color palette without changing its layout or spacing' },
     ],
   },
   {

@@ -1834,10 +1834,11 @@ type CommandContextState struct {
 }
 
 type DailyAttackState struct {
-	Count           int64     `json:"count"`
-	ServerThreshold int64     `json:"serverThreshold"`
-	GrowthRate      float64   `json:"growthRate"`
-	ObservedAt      time.Time `json:"observedAt,omitempty"`
+	Count            int64     `json:"count"`
+	ServerThreshold  int64     `json:"serverThreshold"`
+	GrowthRate       float64   `json:"growthRate"`
+	SessionStartedAt time.Time `json:"sessionStartedAt,omitempty"`
+	ObservedAt       time.Time `json:"observedAt,omitempty"`
 }
 
 type AutomationState struct {

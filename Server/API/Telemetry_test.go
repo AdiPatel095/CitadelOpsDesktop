@@ -6,14 +6,20 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"CitadelDesktop/Server/State"
 	"CitadelDesktop/Server/Telemetry"
 )
 
-func TestAttackLaunchRatesExposeHourlyAndDailyCountsForEveryFeature(t *testing.T) {
+func TestAttackLaunchRatesExposeHourlyAndDailyResetSessionCountsForEveryFeature(t *testing.T) {
 	telemetry := Telemetry.NewStore(100)
 	defer telemetry.Close()
+	sessionStartedAt := time.Now().Add(-time.Hour).UTC()
+	gameState := State.NewGameState()
+	gameState.DailyAttacks = State.DailyAttackState{
+		Count: 1, ServerThreshold: 3500, SessionStartedAt: sessionStartedAt, ObservedAt: time.Now().UTC(),
+	}
 	features := []struct {
 		actor     string
 		featureID State.AttackFeatureID
@@ -30,32 +36,55 @@ func TestAttackLaunchRatesExposeHourlyAndDailyCountsForEveryFeature(t *testing.T
 		telemetry.RecordFeatureActivity(feature.actor, "test.attack", "INFO", "ATTACK", "Launched test attack")
 	}
 
-	server := &Server{config: Config{Telemetry: telemetry}}
+	server := &Server{config: Config{Telemetry: telemetry, State: State.NewStore(gameState)}}
 	recorder := httptest.NewRecorder()
 	server.handleAttackLaunchRates(recorder, httptest.NewRequest(http.MethodGet, "/api/v2/telemetry/attack-rates", nil))
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("status = %d body=%s", recorder.Code, recorder.Body.String())
 	}
 	var response struct {
-		WindowMinutes          int            `json:"windowMinutes"`
-		DailyWindowMinutes     int            `json:"dailyWindowMinutes"`
-		LaunchesByFeature      map[string]int `json:"launchesByFeature"`
-		DailyLaunchesByFeature map[string]int `json:"dailyLaunchesByFeature"`
+		WindowMinutes     int            `json:"windowMinutes"`
+		LaunchesByFeature map[string]int `json:"launchesByFeature"`
+		DailySession      *struct {
+			StartedAt         time.Time      `json:"startedAt"`
+			LaunchesByFeature map[string]int `json:"launchesByFeature"`
+		} `json:"dailySession"`
 	}
 	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
 		t.Fatal(err)
 	}
-	if response.WindowMinutes != 60 || response.DailyWindowMinutes != 1440 {
+	if response.WindowMinutes != 60 || response.DailySession == nil || !response.DailySession.StartedAt.Equal(sessionStartedAt) {
 		t.Fatalf("attack-rate response = %#v", response)
 	}
-	if len(response.LaunchesByFeature) != len(features) || len(response.DailyLaunchesByFeature) != len(features) {
-		t.Fatalf("feature coverage = hourly %d daily %d, want %d/%d", len(response.LaunchesByFeature), len(response.DailyLaunchesByFeature), len(features), len(features))
+	if len(response.LaunchesByFeature) != len(features) || len(response.DailySession.LaunchesByFeature) != len(features) {
+		t.Fatalf("feature coverage = hourly %d daily %d, want %d/%d", len(response.LaunchesByFeature), len(response.DailySession.LaunchesByFeature), len(features), len(features))
 	}
 	for _, feature := range features {
 		featureID := string(feature.featureID)
-		if response.LaunchesByFeature[featureID] != 1 || response.DailyLaunchesByFeature[featureID] != 1 {
-			t.Errorf("%s hourly/daily counts = %d/%d, want 1/1", featureID, response.LaunchesByFeature[featureID], response.DailyLaunchesByFeature[featureID])
+		if response.LaunchesByFeature[featureID] != 1 || response.DailySession.LaunchesByFeature[featureID] != 1 {
+			t.Errorf("%s hourly/daily counts = %d/%d, want 1/1", featureID, response.LaunchesByFeature[featureID], response.DailySession.LaunchesByFeature[featureID])
 		}
+	}
+}
+
+func TestAttackLaunchRatesWithholdDailySessionUntilResetBoundaryIsKnown(t *testing.T) {
+	telemetry := Telemetry.NewStore(100)
+	defer telemetry.Close()
+	server := &Server{config: Config{Telemetry: telemetry, State: State.NewStore(State.NewGameState())}}
+	recorder := httptest.NewRecorder()
+
+	server.handleAttackLaunchRates(recorder, httptest.NewRequest(http.MethodGet, "/api/v2/telemetry/attack-rates", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", recorder.Code, recorder.Body.String())
+	}
+	var response struct {
+		DailySession *attackLaunchDailySession `json:"dailySession"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.DailySession != nil {
+		t.Fatalf("unknown reset boundary exposed a daily session: %#v", response.DailySession)
 	}
 }
 

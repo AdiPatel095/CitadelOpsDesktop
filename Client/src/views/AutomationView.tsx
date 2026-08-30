@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Bot,
   Coins,
@@ -24,7 +24,7 @@ import {
   Switch,
   type StatusTone,
 } from '../components/ui';
-import type { AutomationStateV2 } from '../api/Contracts';
+import type { AttackLaunchDailySessionV2, AutomationStateV2 } from '../api/Contracts';
 import {
   AUTO_EQUIPMENT_CLEANUP_FEATURE_ID,
   AUTO_EQUIPMENT_CLEANUP_ENABLED_KEY,
@@ -34,7 +34,7 @@ import { scheduleSummary } from '../settings/SchedulerTypes';
 import { CitadelAPI } from '../api/CitadelClient';
 import { useCitadelAPI } from '../api/ApiContext';
 import { parseAutoBeriWorldSettings } from '../settings/AutoBeriWorldClientState';
-import { asRecord, configurationSection } from '../settings/Configuration';
+import { configurationSection } from '../settings/Configuration';
 
 interface AutomationViewProps {
   onOpenAutoTCISettings: () => void;
@@ -252,16 +252,33 @@ function attackRateTitle(featureName: string, count: number | null | undefined):
   return `${count.toLocaleString()} ${count === 1 ? 'attack was' : 'attacks were'} launched by ${featureName} in the past 60 minutes.`;
 }
 
-function dailyAttackCountLabel(count: number | null | undefined): string {
-  if (count === undefined) return 'Loading 24h';
-  if (count === null) return '24h unavailable';
-  return `${count.toLocaleString()} ${count === 1 ? 'attack' : 'attacks'} / 24h`;
+function dailyAttackSessionCount(
+  session: AttackLaunchDailySessionV2 | null | undefined,
+  featureID: string,
+): number | null | undefined {
+  if (session === undefined) return undefined;
+  if (session === null) return null;
+  return session.launchesByFeature[featureID] ?? 0;
 }
 
-function dailyAttackCountTitle(featureName: string, count: number | null | undefined): string {
-  if (count === undefined) return `Loading the ${featureName} rolling 24-hour attack count.`;
-  if (count === null) return `The ${featureName} rolling 24-hour attack count is unavailable.`;
-  return `${count.toLocaleString()} confirmed ${count === 1 ? 'attack was' : 'attacks were'} launched by ${featureName} in the past 24 hours.`;
+function dailyAttackCountLabel(count: number | null | undefined): string {
+  if (count === undefined) return 'Loading daily';
+  if (count === null) return 'Daily unavailable';
+  return `${count.toLocaleString()} since reset`;
+}
+
+function dailyAttackCountTitle(
+  featureName: string,
+  count: number | null | undefined,
+  sessionStartedAt?: string,
+): string {
+  if (count === undefined) return `Loading the current ${featureName} daily attack session count.`;
+  if (count === null) return `The ${featureName} daily attack session count is unavailable until a server reset boundary is observed.`;
+  const startedAt = sessionStartedAt ? new Date(sessionStartedAt) : null;
+  const boundary = startedAt && !Number.isNaN(startedAt.getTime())
+    ? ` since the server daily attack-count session began at ${startedAt.toLocaleString()}`
+    : ' in the current server daily attack-count session';
+  return `${count.toLocaleString()} confirmed ${count === 1 ? 'attack was' : 'attacks were'} launched by ${featureName}${boundary}.`;
 }
 
 export const AutomationView: React.FC<AutomationViewProps> = ({
@@ -283,7 +300,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenFeatureSchedule,
   onOpenAutomationDuration,
 }) => {
-  const { configuration, updateConfiguration } = useCitadelAPI();
+  const { configuration } = useCitadelAPI();
   const {
     gameLoggedIn,
     recruitTroopsEnabled,
@@ -323,7 +340,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const [now, setNow] = useState(() => Date.now());
   const [isEquipmentCleanupSettingsOpen, setIsEquipmentCleanupSettingsOpen] = useState(false);
   const [attackLaunchesByFeature, setAttackLaunchesByFeature] = useState<Record<string, number> | null | undefined>(undefined);
-  const [dailyAttackLaunchesByFeature, setDailyAttackLaunchesByFeature] = useState<Record<string, number> | null | undefined>(undefined);
+  const [dailyAttackSession, setDailyAttackSession] = useState<AttackLaunchDailySessionV2 | null | undefined>(undefined);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 30000);
@@ -337,12 +354,12 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
         const rates = await CitadelAPI.getAttackLaunchRates();
         if (!cancelled) {
           setAttackLaunchesByFeature(rates.launchesByFeature);
-          setDailyAttackLaunchesByFeature(rates.dailyLaunchesByFeature ?? null);
+          setDailyAttackSession(rates.dailySession ?? null);
         }
       } catch {
         if (!cancelled) {
           setAttackLaunchesByFeature(null);
-          setDailyAttackLaunchesByFeature(null);
+          setDailyAttackSession(null);
         }
       }
     };
@@ -364,27 +381,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   const autoBeriAttackRuntime = automationStates.autoBeriWorldAttack;
   const autoBeriToolRuntime = automationStates.autoBeriWorldTools;
   const autoBeriBuildRuntime = automationStates.autoBeriWorldBuild;
-  const autoBeriWorldConfiguration = useMemo(
-    () => configurationSection(configuration, 'automation.autoBeriWorld'),
-    [configuration?.sections['automation.autoBeriWorld']],
-  );
-  const autoBeriWorldConfigurationLoaded = configuration?.sections['automation.autoBeriWorld'] != null;
-  const autoBeriBuildEnabled = useMemo(
-    () => parseAutoBeriWorldSettings(autoBeriWorldConfiguration).build.enabled,
-    [autoBeriWorldConfiguration],
-  );
-  const setAutoBeriBuildEnabled = useCallback((enabled: boolean) => {
-    if (!autoBeriWorldConfigurationLoaded) return;
-    void updateConfiguration('automation.autoBeriWorld', {
-      ...autoBeriWorldConfiguration,
-      build: {
-        ...asRecord(autoBeriWorldConfiguration.build),
-        enabled,
-      },
-    }).catch((error) => {
-      console.error('Could not save the Auto Beri Builder lane preference', error);
-    });
-  }, [autoBeriWorldConfiguration, autoBeriWorldConfigurationLoaded, updateConfiguration]);
+  const autoBeriWorldConfiguration = configurationSection(configuration, 'automation.autoBeriWorld');
+  const autoBeriBuildEnabled = parseAutoBeriWorldSettings(autoBeriWorldConfiguration).build.enabled;
   const autoKhanAttackRuntime = automationStates.autoKhan;
   const autoKhanCooldownRuntime = automationStates['autoKhan:cooldown'];
   const autoKhanRageRuntime = automationStates['autoKhan:rage'];
@@ -638,21 +636,13 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 			automationStatusLane('transfers', 'Transfers', autoBeriTransferRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond transfer policy'),
 			automationStatusLane('attacks', 'Attacks', autoBeriAttackRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond attack policy'),
 			automationStatusLane('tools', 'Tools', autoBeriToolRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond tool policy'),
-			{
-				...automationStatusLane(
-					'builder',
-					'Builder',
-					autoBeriBuildRuntime,
-					autoBeriWorldEnabled && autoBeriBuildEnabled,
-					'Waiting for the Berimond builder policy',
-				),
-					toggle: {
-						checked: autoBeriBuildEnabled,
-						onChange: setAutoBeriBuildEnabled,
-						ariaLabel: 'Toggle Auto Beri Builder lane',
-						disabled: !autoBeriWorldConfigurationLoaded,
-					},
-			},
+			automationStatusLane(
+				'builder',
+				'Builder',
+				autoBeriBuildRuntime,
+				autoBeriWorldEnabled && autoBeriBuildEnabled,
+				'Waiting for the Berimond builder policy',
+			),
 		],
 		icon: Crosshair,
 		onToggle: toggleAutoBeriWorld,
@@ -682,7 +672,10 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoHospitalEnabled,
     autoEquipmentCleanup,
     autoRecruitMode,
+    recruitTroopsEnabled,
     autoSceatResEnabled,
+    autoSceatRuntime,
+    autoSceatLogisticsRuntime,
     autoFoodBalanceEnabled,
     autoTCIEnabled,
     autoTCINextWakeUp,
@@ -692,11 +685,21 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		autoAdvisorEnabled,
 		autoBuyerEnabled,
     autoKhanEnabled,
+    autoKhanAttackRuntime,
+    autoKhanCooldownRuntime,
+    autoKhanRageRuntime,
+    autoKhanDefenseRuntime,
     autoBeriWorldEnabled,
     autoBeriBuildEnabled,
-    autoBeriWorldConfigurationLoaded,
+    autoBeriTransferRuntime,
+    autoBeriAttackRuntime,
+    autoBeriToolRuntime,
+    autoBeriBuildRuntime,
     autoBeriWorldStatus,
     autoStormEnabled,
+    autoStormRuntime,
+    autoStormShopRuntime,
+    autoStormBuildRuntime,
     autoStormStatus,
     autoKhanStatus,
     autoSceatStatus,
@@ -719,7 +722,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     onOpenAutoKhanSettings,
     onOpenAutoBeriWorldSettings,
     onOpenAutoStormSettings,
-		onOpenFeatureSchedule,
     onOpenRecruitTroopsSettings,
     toggleAutoHospital,
     toggleAutoSceatRes,
@@ -732,7 +734,6 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		toggleAutoBuyer,
     toggleAutoKhan,
     toggleAutoBeriWorld,
-    setAutoBeriBuildEnabled,
     toggleAutoStorm,
     toggleAutoTool,
     toggleRecruitTroops,
@@ -767,7 +768,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                     ? attackRateCount(attackLaunchesByFeature, feature.id)
                     : undefined;
                   const dailyAttackLaunchCount = feature.group === 'offense'
-                    ? attackRateCount(dailyAttackLaunchesByFeature, feature.id)
+                    ? dailyAttackSessionCount(dailyAttackSession, feature.id)
                     : undefined;
                   return (
                     <div
@@ -806,7 +807,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                               <Badge
                                 variant="outline"
                                 className="shrink-0 whitespace-nowrap"
-                                title={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount)}
+                                title={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount, dailyAttackSession?.startedAt)}
                               >
                                 {dailyAttackCountLabel(dailyAttackLaunchCount)}
                               </Badge>
