@@ -1,0 +1,181 @@
+package Ingest
+
+import (
+	"encoding/json"
+	"testing"
+	"time"
+
+	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Protocol"
+	"CitadelDesktop/Server/State"
+)
+
+func TestScalableEventScoresTrackSnapshotsAndPointUpdates(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	gameState := State.NewGameState()
+	observedAt := time.Date(2026, 7, 13, 20, 23, 4, 0, time.UTC)
+	code := 0
+
+	_, changed, err := reduceScalableEventSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"E":[
+			{"EID":72,"RS":25616,"SP":{"OP":1500,"OR":25},"A":{"OP":184426,"OR":150},"EASE":1,"EDID":308,"PIDS":"10, 11,bad","RCKS":["GTO","STO","st","ST"],
+				"AC":{"ACID":1147,"AR":10000,"PCRP":1740,"PTRP":52140}},
+			{"EID":68,"RS":500,"PID":[12,13],"AC":0},
+			{"EID":69,"RS":400,"PID":14,"A":[]}
+		]}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("event snapshot: changed=%t err=%v", changed, err)
+	}
+	score, found := gameState.ActiveScalableEventScore()
+	if !found || score.EventID != 72 || score.DifficultyTypeName != "expertPlus" || score.PlayerScore != 1500 || score.AllianceScore != 184426 {
+		t.Fatalf("unexpected event score: %#v found=%t", score, found)
+	}
+	if !gameState.ScalableEventScoreReached(72, 1500) || gameState.ScalableEventScoreReached(72, 1501) || !gameState.ActiveScalableEventScoreReached(1500) {
+		t.Fatalf("threshold helper did not use the player score: %#v", gameState.EventScores)
+	}
+	if got := gameState.Invasion.FortifyCurrencies; len(got) != 3 || got[0] != "GTO" || got[1] != "STO" || got[2] != "ST" {
+		t.Fatalf("invasion fortification currencies = %#v", got)
+	}
+	activity := gameState.EventScores.ActivityByEvent[72]
+	if got := activity.FortifyCurrencies; len(got) != 3 || got[0] != "GTO" || got[1] != "STO" || got[2] != "ST" ||
+		!activity.FortifyCurrenciesObservedAt.Equal(observedAt) {
+		t.Fatalf("event fortification currency snapshot = %#v at %s", got, activity.FortifyCurrenciesObservedAt)
+	}
+	if gameState.Khan.RageCampID != 1147 || gameState.Khan.PlayerRage != 1740 ||
+		gameState.Khan.PlayerRageCap != 1740 || gameState.Khan.PlayerTotalRage != 52140 ||
+		!gameState.Khan.RageObservedAt.Equal(observedAt) {
+		t.Fatalf("Khan rage snapshot = %#v", gameState.Khan)
+	}
+	for packageID, eventID := range map[State.PackageID]int64{10: 72, 11: 72, 12: 68, 13: 68, 14: 69} {
+		route, active := gameState.ActiveShopForPackage(packageID, observedAt.Add(time.Second))
+		if !active || route.EventID != eventID {
+			t.Fatalf("package %d route = %#v active=%t", packageID, route, active)
+		}
+	}
+	if _, active := gameState.EventAvailable(72, observedAt.Add(time.Second)); !active ||
+		!gameState.EventScores.Inventory.ObservedAt.Equal(observedAt.Truncate(time.Minute)) {
+		t.Fatalf("authoritative event inventory = %#v", gameState.EventScores.Inventory)
+	}
+
+	_, changed, err = reduceEventPoints(t.Context(), Protocol.Frame{
+		Opcode: "pep", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt.Add(time.Minute),
+		Payload: json.RawMessage(`{"OP":[2200,190000],"OR":[18,140],"PT":[0],"EID":72}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("event points: changed=%t err=%v", changed, err)
+	}
+	score, _ = gameState.ActiveScalableEventScore()
+	if score.PlayerScore != 2200 || score.AllianceScore != 190000 || score.PlayerRank != 18 || score.AllianceRank != 140 || score.RemainingSec != 25556 {
+		t.Fatalf("point update was not applied: %#v", score)
+	}
+
+	_, changed, err = reduceKhanRagePoints(t.Context(), Protocol.Frame{
+		Opcode: "rpr", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt.Add(2 * time.Minute),
+		Payload: json.RawMessage(`{"EID":72,"PCRP":150,"PTRP":52290}`),
+	}, &gameState, gameData)
+	if err != nil || !changed || gameState.Khan.PlayerRage != 150 ||
+		gameState.Khan.PlayerRageCap != 1740 || gameState.Khan.PlayerTotalRage != 52290 {
+		t.Fatalf("Khan rage update: changed=%t state=%#v err=%v", changed, gameState.Khan, err)
+	}
+
+}
+
+func TestScalableEventSnapshotReplacesAuthoritativeAvailability(t *testing.T) {
+	gameState := State.NewGameState()
+	gameData := scalableEventTestGameData(t)
+	code := 0
+	start := time.Date(2026, 8, 14, 8, 0, 4, 0, time.UTC)
+	apply := func(at time.Time, payload string) {
+		t.Helper()
+		_, changed, err := reduceScalableEventSnapshot(t.Context(), Protocol.Frame{
+			Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: at,
+			Payload: json.RawMessage(payload),
+		}, &gameState, gameData)
+		if err != nil || !changed {
+			t.Fatalf("event inventory at %s: changed=%t err=%v", at, changed, err)
+		}
+	}
+
+	apply(start, `{"E":[{"EID":71,"RS":1800,"EASE":1},{"EID":3,"RS":3600}]}`)
+	if _, active := gameState.EventAvailable(71, start); !active {
+		t.Fatal("scalable event missing from authoritative inventory")
+	}
+	if _, active := gameState.EventAvailable(3, start); !active {
+		t.Fatal("non-scalable Berimond event missing from authoritative inventory")
+	}
+
+	settled := start.Add(6 * time.Minute)
+	apply(settled, `{"E":[]}`)
+	if _, active := gameState.EventAvailable(71, settled); active {
+		t.Fatal("event omitted from the replacement snapshot remained active")
+	}
+	if len(gameState.EventScores.Inventory.ActiveByEvent) != 0 ||
+		!gameState.EventScores.Inventory.ObservedAt.Equal(settled.Truncate(time.Minute)) {
+		t.Fatalf("replacement inventory = %#v", gameState.EventScores.Inventory)
+	}
+}
+
+func TestScalableEventSnapshotCachesFirstCurrenciesForEachOccurrence(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	gameState := State.NewGameState()
+	startedAt := time.Date(2026, 7, 28, 14, 0, 0, 0, time.UTC)
+	code := 0
+	apply := func(observedAt time.Time, payload string) {
+		t.Helper()
+		_, changed, err := reduceScalableEventSnapshot(t.Context(), Protocol.Frame{
+			Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+			Payload: json.RawMessage(payload),
+		}, &gameState, gameData)
+		if err != nil || !changed {
+			t.Fatalf("event snapshot at %s: changed=%t err=%v", observedAt, changed, err)
+		}
+	}
+
+	apply(startedAt, `{"E":[{"EID":71,"RS":7200,"EASE":1}]}`)
+	if got := gameState.Invasion.FortifyCurrencies; len(got) != 0 {
+		t.Fatalf("currencies before an authoritative list = %#v", got)
+	}
+
+	capturedAt := startedAt.Add(time.Minute)
+	apply(capturedAt, `{"E":[{"EID":71,"RS":7140,"EASE":1,"RCKS":["GTO","ST"]}]}`)
+	apply(startedAt.Add(2*time.Minute), `{"E":[{"EID":71,"RS":7080,"EASE":1,"RCKS":["GTO","KM"]}]}`)
+	activity := gameState.EventScores.ActivityByEvent[71]
+	if got := activity.FortifyCurrencies; len(got) != 2 || got[0] != "GTO" || got[1] != "ST" ||
+		!activity.FortifyCurrenciesObservedAt.Equal(capturedAt) {
+		t.Fatalf("cached first event currencies = %#v at %s", got, activity.FortifyCurrenciesObservedAt)
+	}
+	if got := gameState.Invasion.FortifyCurrencies; len(got) != 2 || got[0] != "GTO" || got[1] != "ST" {
+		t.Fatalf("active event currencies changed during the occurrence = %#v", got)
+	}
+
+	nextOccurrenceAt := startedAt.Add(24 * time.Hour)
+	apply(nextOccurrenceAt, `{"E":[{"EID":71,"RS":7200,"EASE":1,"RCKS":["GTO","KM"]}]}`)
+	activity = gameState.EventScores.ActivityByEvent[71]
+	if got := activity.FortifyCurrencies; len(got) != 2 || got[0] != "GTO" || got[1] != "KM" ||
+		!activity.FortifyCurrenciesObservedAt.Equal(nextOccurrenceAt) ||
+		!activity.ObservedFrom.Equal(nextOccurrenceAt) {
+		t.Fatalf("new occurrence currencies = %#v, activity = %#v", got, activity)
+	}
+}
+
+func scalableEventTestGameData(t *testing.T) *GameData.Store {
+	t.Helper()
+	store, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],
+		"buildings":[{"wodID":1}],
+		"units":[{"wodID":1}],
+		"events":[{"eventID":"72","comment1":"AllianceNomad Invasion","eventType":"AllianceNomadInvasion"}],
+		"eventAutoScalingDifficulties":[{"difficultyID":"308","eventID":"72","difficultyTypeID":"8"}],
+		"eventAutoScalingDifficultyTypes":[{"difficultyTypeID":"8","name":"expertPlus","sortOrder":"8"}],
+		"eventAutoScalingCamps":[{
+			"eventAutoScalingCampID":"1147","eventID":"72","difficultyID":"308",
+			"areaType":"35","camplevel":"107","playerRageCap":"1740","rageNeededForLevelUp":"34440"
+		}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return store
+}

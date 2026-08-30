@@ -1,0 +1,82 @@
+# Environment files - contain sensitive configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Sensitive local data - may contain credentials, hardware IDs, or game telemetry
+hardwareID.txt
+jsonExamples/loginBytes.json
+/BattleReports.jsonl
+
+# Build output - Go binary
+/CitadelDesktop
+/CitadelOpsDesktop
+/CitadelOpsDesktopNext
+/CitadelOpsDesktop.before-*
+/Build
+/Data/
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+.gocache
+
+# IDE directories
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+/screenlog.*
+.codex-local-tests/
+/PerformanceArtifacts/
+
+
+# GGE HTML5 mirrored textures (go run ./Server/cmd/fetchggeassets)
+Server/Data/GGEHtml5Assets/mirror/
+
+# Client build output
+Client/dist/
+Client/node_modules/
+
+# NPM debug logs
+npm-debug.log*
+yarn-debug.log*
+
+# Architecture notes (private design docs)
+**/ARCHITECTURE_NOTES.md
+**/TASKS.md
+**/scheduler_diagram.html
+
+# Refactor persistence snapshots
+Server/refactor_state/
+/ChromeProfile/
+/game_state_snapshot.json
+/Server/.../
+/.claude/
+/.cursor/
+
+# Local-only research, diagnostics, and developer tools
+/ArchitectureResearch/
+/cmd/
+/Logs/
+/Tools/
+/CitadelOps-Patch-Notes-v*.html
+/CitadelOpsUiRedesignResearch.md
+/IntentEngineCommandGuards.md

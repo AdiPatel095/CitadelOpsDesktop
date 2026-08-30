@@ -1,0 +1,619 @@
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ClipboardCopy,
+  ClipboardPaste,
+  Edit3,
+  Files,
+  Plus,
+  Shield,
+  Swords,
+  Trash2,
+} from 'lucide-react';
+import { useCitadelAPI } from '../api/ApiContext';
+import type { AttackSetupDraft } from '../components/AttackSetupModal';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CollectionToolbar,
+  EmptyState,
+  MetricTile,
+  Modal,
+  ModalTitle,
+} from '../components/ui';
+import { Notifications } from '../components/Notifications';
+import ToolImage from '../components/ToolImage';
+import UnitImage from '../components/UnitImage';
+import {
+  formatCRAAttackPresetString,
+  parseCRAAttackPresetString,
+} from '../attackPresets/AttackPresetCraCodec';
+import {
+  ATTACK_PRESETS_SECTION,
+  attackPresetToolLimits,
+  type AppAttackPreset,
+  type AttackPresetTargetType,
+  type AttackPresetToolLimits,
+  type AttackPresetToolProfile,
+  parseAttackPresetDocument,
+  summarizeAttackPreset,
+} from '../attackPresets/AttackPresetTypes';
+import { buildPresetDocumentUpdate } from '../configuration/PresetDocumentUpdate';
+
+const AttackSetupModal = React.lazy(() => import('../components/AttackSetupModal'));
+
+interface EditorState {
+  presetID: string | null;
+  targetType: AttackPresetTargetType;
+  draft?: AttackSetupDraft;
+}
+
+interface PendingPresetCreation {
+  draft?: AttackSetupDraft;
+}
+
+interface LegendSkillCatalogItem extends Record<string, unknown> {
+  skillID?: number | string;
+  effectType?: string;
+  totalEffectValue?: number | string;
+}
+
+interface HallFlankToolBonus {
+  value: number;
+  resolved: boolean;
+}
+
+const AttackPresetsView: React.FC = () => {
+  const { configuration, getCatalog, state, updateConfiguration } = useCitadelAPI();
+  const [query, setQuery] = useState('');
+  const [editor, setEditor] = useState<EditorState | null>(null);
+  const [pendingCreation, setPendingCreation] = useState<PendingPresetCreation | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [pendingID, setPendingID] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importValue, setImportValue] = useState('');
+  const [importError, setImportError] = useState('');
+  const [hallFlankToolBonus, setHallFlankToolBonus] = useState<HallFlankToolBonus>({ value: 0, resolved: false });
+  const getCatalogRef = useRef(getCatalog);
+  getCatalogRef.current = getCatalog;
+
+  const playerStateResolved = state != null;
+  const playerLegendary = (state?.player.legendLevel ?? 0) > 0;
+  const activeLegendSkillIDs = state?.player.legendSkills.activeIds ?? [];
+  const activeLegendSkillKey = activeLegendSkillIDs.join(',');
+  const legendSkillsObservedAt = state?.player.legendSkills.observedAt ?? '';
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!playerLegendary) {
+      setHallFlankToolBonus({ value: 0, resolved: playerStateResolved });
+      return () => { cancelled = true; };
+    }
+    if (!legendSkillsObservedAt) {
+      setHallFlankToolBonus({ value: 0, resolved: false });
+      return () => { cancelled = true; };
+    }
+    const activeIDs = new Set(
+      activeLegendSkillKey.split(',').map(Number).filter((id) => Number.isFinite(id) && id > 0),
+    );
+    void getCatalogRef.current<LegendSkillCatalogItem>('legendskills')
+      .then((response) => {
+        if (cancelled) return;
+        let value = 0;
+        for (const item of response.items) {
+          const skillID = Number(item.skillID);
+          const rawBonus = Number(item.totalEffectValue);
+          if (!activeIDs.has(skillID) ||
+              item.effectType !== 'additionalAttackToolAmountFlank' ||
+              !Number.isFinite(rawBonus)) {
+            continue;
+          }
+          value = Math.max(value, Math.min(10, Math.max(0, Math.trunc(rawBonus))));
+        }
+        setHallFlankToolBonus({ value, resolved: true });
+      })
+      .catch(() => {
+        if (!cancelled) setHallFlankToolBonus({ value: 0, resolved: false });
+      });
+    return () => { cancelled = true; };
+  }, [activeLegendSkillKey, legendSkillsObservedAt, playerLegendary, playerStateResolved]);
+
+  const document = useMemo(
+    () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
+    [configuration?.sections],
+  );
+  const filteredPresets = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return document.presets;
+    return document.presets.filter((preset) => preset.name.toLowerCase().includes(normalized));
+  }, [document.presets, query]);
+
+  const saveDocument = async (presets: AppAttackPreset[], successMessage: string) => {
+		const savedDocument = configuration?.sections[ATTACK_PRESETS_SECTION];
+		const sourceDocument = savedDocument ?? { version: 1, presets: [] };
+    await updateConfiguration(
+      ATTACK_PRESETS_SECTION,
+			buildPresetDocumentUpdate(sourceDocument, document.presets, presets),
+			savedDocument === undefined ? undefined : { expectedValue: savedDocument },
+    );
+    Notifications.success(successMessage);
+  };
+
+  const handleSave = async (draft: AttackSetupDraft) => {
+    if (saving) return;
+    const editingID = editor?.presetID;
+    const existing = editingID
+      ? document.presets.find((preset) => preset.id === editingID)
+      : undefined;
+    if (editingID && !existing) {
+      Notifications.error('This attack preset was deleted by another dashboard. Close the editor and create a new preset if needed.');
+      return;
+    }
+    setSaving(true);
+    const now = new Date().toISOString();
+    const preset: AppAttackPreset = {
+      id: existing?.id ?? createID(),
+      name: draft.name.trim(),
+      targetType: editor?.targetType ?? existing?.targetType ?? 'pve',
+      useTroopFamilies: Boolean(draft.useTroopFamilies),
+      waves: cloneWaves(draft.waves),
+      courtyardSupport: cloneCourtyardSupport(draft.courtyardSupport),
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    };
+    const presets = existing
+      ? document.presets.map((candidate) => candidate.id === existing.id ? preset : candidate)
+      : [...document.presets, preset];
+    try {
+      await saveDocument(presets, existing ? 'Attack preset updated.' : 'Attack preset created.');
+      setEditor(null);
+    } catch (error) {
+      Notifications.error(errorMessage(error, 'Could not save attack preset.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDuplicate = async (preset: AppAttackPreset) => {
+    if (pendingID) return;
+    setPendingID(preset.id);
+    const now = new Date().toISOString();
+    const duplicate: AppAttackPreset = {
+      ...preset,
+      id: createID(),
+      name: uniqueCopyName(preset.name, document.presets),
+      waves: cloneWaves(preset.waves),
+      courtyardSupport: cloneCourtyardSupport(preset.courtyardSupport),
+      createdAt: now,
+      updatedAt: now,
+    };
+    try {
+      await saveDocument([...document.presets, duplicate], 'Attack preset duplicated.');
+    } catch (error) {
+      Notifications.error(errorMessage(error, 'Could not duplicate attack preset.'));
+    } finally {
+      setPendingID(null);
+    }
+  };
+
+  const handleDelete = async (preset: AppAttackPreset) => {
+    if (pendingID || !window.confirm(`Delete “${preset.name}”? This cannot be undone.`)) return;
+    setPendingID(preset.id);
+    try {
+      await saveDocument(
+        document.presets.filter((candidate) => candidate.id !== preset.id),
+        'Attack preset deleted.',
+      );
+    } catch (error) {
+      Notifications.error(errorMessage(error, 'Could not delete attack preset.'));
+    } finally {
+      setPendingID(null);
+    }
+  };
+
+  const openImport = () => {
+    setImportValue('');
+    setImportError('');
+    setImportOpen(true);
+  };
+
+  const handleImport = () => {
+    try {
+      const draft = parseCRAAttackPresetString(importValue);
+      setImportOpen(false);
+      setPendingCreation({ draft });
+      Notifications.success('CRA formation loaded. Choose its target type before reviewing the preset.');
+    } catch (error) {
+      setImportError(errorMessage(error, 'Could not read the CRA command.'));
+    }
+  };
+
+  const openPresetCreation = (draft?: AttackSetupDraft) => {
+    setPendingCreation(draft ? { draft } : {});
+  };
+
+  const choosePresetTargetType = (targetType: AttackPresetTargetType) => {
+    const pending = pendingCreation;
+    if (!pending) return;
+    setPendingCreation(null);
+    setEditor({ presetID: null, targetType, draft: pending.draft });
+  };
+
+  const toolProfile: AttackPresetToolProfile = {
+    legendary: playerLegendary,
+    pvpFlankBonus: hallFlankToolBonus.value,
+  };
+  const pveToolLimits = attackPresetToolLimits('pve', toolProfile);
+  const pvpToolLimits = attackPresetToolLimits('pvp', toolProfile);
+
+  const handleCopyShareString = async (preset: AppAttackPreset) => {
+    try {
+      await writeClipboardText(formatCRAAttackPresetString(preset));
+      Notifications.success(`Copied “${preset.name}” as a CRA formation and courtyard-support share string.`);
+    } catch (error) {
+      Notifications.error(errorMessage(error, 'Could not copy the CRA share string.'));
+    }
+  };
+
+  return (
+    <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-5 pb-10">
+      <CollectionToolbar
+        summary={(
+          <>
+          <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
+            {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
+          </Badge>
+          <Badge variant="outline" className="normal-case tracking-normal">Stored by CitadelOps</Badge>
+          </>
+        )}
+        actions={(
+          <>
+            <Button variant="secondary" leftIcon={<ClipboardPaste className="h-4 w-4" />} onClick={openImport}>
+              Import CRA
+            </Button>
+            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
+              New preset
+            </Button>
+          </>
+        )}
+        searchValue={query}
+        onSearchChange={setQuery}
+        searchPlaceholder="Search presets"
+      />
+
+      {filteredPresets.length > 0 ? (
+        <div className="grid gap-4 xl:grid-cols-2">
+          {filteredPresets.map((preset) => (
+            <PresetCard
+              key={preset.id}
+              preset={preset}
+              toolProfile={toolProfile}
+              busy={pendingID === preset.id}
+              onEdit={() => setEditor({ presetID: preset.id, targetType: preset.targetType, draft: preset })}
+              onCopyShare={() => void handleCopyShareString(preset)}
+              onDuplicate={() => void handleDuplicate(preset)}
+              onDelete={() => void handleDelete(preset)}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          size="lg"
+          icon={<Swords className="h-6 w-6" />}
+          title={query.trim() ? 'No matching presets' : 'Create your first attack preset'}
+          description={query.trim()
+            ? 'Try a different preset name.'
+            : 'Presets are independent from the game’s saved slots and can contain up to 30 complete attack waves.'}
+          action={!query.trim() ? (
+            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
+              Create preset
+            </Button>
+          ) : undefined}
+        />
+      )}
+
+      {editor ? (
+        <Suspense fallback={null}>
+          <AttackSetupModal
+            isOpen
+            initialDraft={editor.draft}
+            inventoryPolicy="advisory"
+            targetType={editor.targetType}
+            toolLimits={attackPresetToolLimits(editor.targetType, toolProfile)}
+            allowTroopFamilyMode
+            isSaving={saving}
+            onClose={() => { if (!saving) setEditor(null); }}
+            onSave={(draft) => void handleSave(draft)}
+          />
+        </Suspense>
+      ) : null}
+
+      <Modal
+        isOpen={pendingCreation != null}
+        onClose={() => setPendingCreation(null)}
+        maxWidth="3xl"
+        title={(
+          <ModalTitle
+            icon={<Swords className="h-5 w-5" />}
+            description="This determines the maximum tools allowed in each section of every wave."
+          >
+            Choose preset target type
+          </ModalTitle>
+        )}
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-text-muted">
+            Select the targets this preset is designed for. CitadelOps will show these limits in the builder
+            and will check the real target again immediately before sending CRA.
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            <PresetTargetTypeChoice
+              type="pve"
+              title="PvE preset"
+              description="For Berimond towers, event camps, NPC towers, and other non-player targets using the fixed PvE limits."
+              limits={pveToolLimits}
+              bonusLabel="Fixed game limits"
+              onSelect={() => choosePresetTargetType('pve')}
+            />
+            <PresetTargetTypeChoice
+              type="pvp"
+              title="PvP preset"
+              description="For legendary player and Glory targets. Uses this account's active Hall of Legends flank-tool skill."
+              limits={pvpToolLimits}
+              bonusLabel={!playerLegendary
+                ? 'Legendary PvP tools unavailable'
+                : hallFlankToolBonus.resolved
+                  ? hallFlankToolBonus.value > 0
+                    ? `Hall flanks +${hallFlankToolBonus.value} active`
+                    : 'No Hall flank bonus active'
+                  : 'Hall data unavailable · legendary base limits'}
+              onSelect={() => choosePresetTargetType('pvp')}
+            />
+          </div>
+          <div className="rounded-global border border-border-base bg-bg-app/35 px-4 py-3 text-xs leading-relaxed text-text-muted">
+            PvE uses 30 / 40 / 30. Legendary PvP uses 40 / 50 / 40, then the active official
+            Hall flank-tool skill adds up to +10 on the left and right. The real target is checked again before sending.
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        maxWidth="xl"
+        title={(
+          <ModalTitle
+            icon={<ClipboardPaste className="h-5 w-5" />}
+            description="Accepts a full %xt% CRA wire command or its JSON payload."
+          >
+            Import CRA formation
+          </ModalTitle>
+        )}
+        footer={(
+          <div className="flex w-full items-center justify-end gap-2">
+            <Button variant="ghost" onClick={() => setImportOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleImport}
+              disabled={!importValue.trim()}
+              leftIcon={<ClipboardPaste className="h-4 w-4" />}
+            >
+              Load formation
+            </Button>
+          </div>
+        )}
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-text-muted">
+            The CRA <span className="font-mono text-text-main">A</span> formation,
+            <span className="font-mono text-text-main"> RW</span> courtyard troops, and
+            <span className="font-mono text-text-main"> AST</span> Sceat tools are imported.
+            Commander, source, target, travel, and other account-specific fields are ignored.
+          </p>
+          <label className="grid gap-2 text-xs font-bold text-text-muted">
+            CRA command or JSON payload
+            <textarea
+              value={importValue}
+              onChange={(event) => {
+                setImportValue(event.target.value);
+                if (importError) setImportError('');
+              }}
+              rows={9}
+              spellCheck={false}
+              placeholder={'%xt%EmpireEx_21%cra%1%{"A":[...]}%'}
+              className="w-full resize-y rounded-global border border-border-base bg-bg-input/70 px-4 py-3 font-mono text-xs font-normal text-text-main shadow-inner outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+          </label>
+          {importError ? (
+            <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+              {importError}
+            </div>
+          ) : null}
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+const PresetCard: React.FC<{
+  preset: AppAttackPreset;
+  toolProfile: AttackPresetToolProfile;
+  busy: boolean;
+  onEdit: () => void;
+  onCopyShare: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}> = ({ preset, toolProfile, busy, onEdit, onCopyShare, onDuplicate, onDelete }) => {
+  const summary = summarizeAttackPreset(preset);
+  const toolLimits = attackPresetToolLimits(preset.targetType, toolProfile);
+  return (
+    <Card variant="solid" className="liquid-prominent-header-card overflow-hidden">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-base bg-bg-card/45 px-5 py-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Swords className="h-4 w-4 shrink-0 text-primary" />
+            <h2 className="truncate text-base font-black text-text-main">{preset.name}</h2>
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <Badge
+              variant={preset.targetType === 'pvp' ? 'primary' : 'success'}
+              className="normal-case tracking-normal"
+            >
+              {preset.targetType === 'pvp' ? 'PvP' : 'PvE'}
+            </Badge>
+            {preset.useTroopFamilies ? (
+              <Badge variant="primary" className="normal-case tracking-normal">Family fill</Badge>
+            ) : null}
+            <span className="text-xs text-text-muted">
+              Tool max · L {toolLimits.L} · C {toolLimits.M} · R {toolLimits.R}
+            </span>
+            <span className="text-xs text-text-muted">Updated {formatUpdatedAt(preset.updatedAt)}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title="Edit preset"><Edit3 className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onCopyShare} title="Copy CRA share string"><ClipboardCopy className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onDuplicate} title="Duplicate preset"><Files className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onDelete} title="Delete preset" className="hover:!text-error"><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      </div>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-3 gap-2">
+          <MetricTile label="Waves" value={summary.waves.toLocaleString()} />
+          <MetricTile label="Troops" value={summary.troops.toLocaleString()} />
+          <MetricTile label="Tools" value={summary.tools.toLocaleString()} />
+        </div>
+        {summary.courtyardTroops > 0 || summary.courtyardTools > 0 ? (
+          <Badge variant="warning" className="w-fit normal-case tracking-normal">
+            Courtyard support · {summary.courtyardTroops.toLocaleString()} troops · {summary.courtyardTools.toLocaleString()} Sceat tools
+          </Badge>
+        ) : null}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormationPreview label="Unit types" ids={summary.troopTypes} emptyIcon={<Shield className="h-4 w-4" />} render={(id) => <UnitImage unitId={id} size={34} />} />
+          <FormationPreview label="Tool types" ids={summary.toolTypes} emptyIcon={<Shield className="h-4 w-4" />} render={(id) => <ToolImage toolId={id} size={34} showLevel={false} />} />
+        </div>
+        <Button variant="secondary" className="w-full" onClick={onEdit} disabled={busy} leftIcon={<Edit3 className="h-4 w-4" />}>
+          Edit formation
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
+const PresetTargetTypeChoice: React.FC<{
+  type: AttackPresetTargetType;
+  title: string;
+  description: string;
+  limits: AttackPresetToolLimits;
+  bonusLabel: string;
+  onSelect: () => void;
+}> = ({ type, title, description, limits, bonusLabel, onSelect }) => (
+  <button
+    type="button"
+    onClick={onSelect}
+    className="group rounded-global border border-border-base bg-bg-card/65 p-5 text-left shadow-[var(--shadow-raised)] transition hover:-translate-y-0.5 hover:border-primary/55 hover:bg-primary/8 focus:outline-none focus:ring-2 focus:ring-primary/45"
+  >
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-global border ${type === 'pvp' ? 'border-primary/40 bg-primary/12 text-primary' : 'border-success/40 bg-success/12 text-success'}`}>
+          {type === 'pvp' ? <Swords className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
+        </span>
+        <div>
+          <div className="text-base font-black text-text-main group-hover:text-primary">{title}</div>
+          <Badge
+            variant={type === 'pvp' ? 'primary' : 'success'}
+            className="mt-1 normal-case tracking-normal"
+          >
+            {bonusLabel}
+          </Badge>
+        </div>
+      </div>
+    </div>
+    <p className="mt-4 min-h-10 text-sm leading-relaxed text-text-muted">{description}</p>
+    <div className="mt-4 grid grid-cols-3 gap-2">
+      <MetricTile size="sm" label="Left" value={limits.L.toLocaleString()} />
+      <MetricTile size="sm" label="Center" value={limits.M.toLocaleString()} />
+      <MetricTile size="sm" label="Right" value={limits.R.toLocaleString()} />
+    </div>
+    <div className="mt-4 text-xs font-black uppercase tracking-wide text-primary">Select {type.toUpperCase()}</div>
+  </button>
+);
+
+const FormationPreview: React.FC<{
+  label: string;
+  ids: number[];
+  emptyIcon: React.ReactNode;
+  render: (id: number) => React.ReactNode;
+}> = ({ label, ids, emptyIcon, render }) => (
+  <div className="min-w-0 rounded-global border border-border-base bg-bg-app/35 p-3">
+    <div className="mb-2 text-[9px] font-black uppercase tracking-wider text-text-muted">{label}</div>
+    <div className="flex min-h-[2.125rem] items-center gap-1.5 overflow-hidden">
+      {ids.length > 0 ? ids.slice(0, 7).map((id) => <React.Fragment key={id}>{render(id)}</React.Fragment>) : (
+        <span className="flex items-center gap-2 text-xs text-text-muted">{emptyIcon} None</span>
+      )}
+      {ids.length > 7 ? <Badge variant="secondary">+{ids.length - 7}</Badge> : null}
+    </div>
+  </div>
+);
+
+function createID(): string {
+  return crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
+function uniqueCopyName(name: string, presets: AppAttackPreset[]): string {
+  const existing = new Set(presets.map((preset) => preset.name.toLowerCase()));
+  let candidate = `${name} copy`;
+  let suffix = 2;
+  while (existing.has(candidate.toLowerCase())) candidate = `${name} copy ${suffix++}`;
+  return candidate;
+}
+
+function cloneWaves(waves: AttackSetupDraft['waves']): AttackSetupDraft['waves'] {
+  return waves.map((wave) => ({
+    L: { troops: wave.L.troops.map((slot) => ({ ...slot })), tools: wave.L.tools.map((slot) => ({ ...slot })) },
+    M: { troops: wave.M.troops.map((slot) => ({ ...slot })), tools: wave.M.tools.map((slot) => ({ ...slot })) },
+    R: { troops: wave.R.troops.map((slot) => ({ ...slot })), tools: wave.R.tools.map((slot) => ({ ...slot })) },
+  }));
+}
+
+function cloneCourtyardSupport(
+  support: AttackSetupDraft['courtyardSupport'],
+): AttackSetupDraft['courtyardSupport'] {
+  return {
+    troops: support.troops.map((slot) => ({ ...slot })),
+    tools: support.tools.map((slot) => ({ ...slot })),
+  };
+}
+
+function formatUpdatedAt(value: string): string {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime()) || date.getTime() === 0) return 'previously';
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+}
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+async function writeClipboardText(value: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {
+      // Fall through when the desktop browser denies clipboard permission.
+    }
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = value;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand('copy');
+  textarea.remove();
+  if (!copied) throw new Error('Clipboard access is unavailable.');
+}
+
+export default AttackPresetsView;

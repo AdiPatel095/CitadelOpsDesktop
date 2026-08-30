@@ -1,0 +1,435 @@
+package Ingest
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Protocol"
+	"CitadelDesktop/Server/State"
+)
+
+const maxAutomaticSpyNoticeAge = 6 * time.Hour
+
+func reduceReportNotices(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	changed, err := applyReportNotices(frame.Payload, frame.ReceivedAt, gameState)
+	return []string{"reports"}, changed, err
+}
+
+func reduceDeletedReportMessages(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var payload struct {
+		MessageIDs []wireInt64 `json:"MID"`
+	}
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode deleted report messages: %w", err)
+	}
+	changed := false
+	for _, wireMessageID := range payload.MessageIDs {
+		messageID := int64(wireMessageID)
+		if messageID <= 0 {
+			continue
+		}
+		notice, exists := gameState.LookupReportNotice(messageID)
+		if !exists {
+			notice = State.ReportNotice{MessageID: messageID, ObservedAt: frame.ReceivedAt.UTC()}
+		}
+		if notice.Status != "archived" && notice.Status != "unavailable" {
+			notice.Status = "unavailable"
+			gameState.SetReportNotice(messageID, notice)
+			changed = true
+		} else if !exists {
+			notice.Status = "unavailable"
+			gameState.SetReportNotice(messageID, notice)
+			changed = true
+		}
+		if _, exists := gameState.LookupSpyReportCapture(messageID); exists {
+			gameState.DeleteSpyReportCapture(messageID)
+			changed = true
+		}
+		if capture, exists := gameState.LookupBattleReportCapture(messageID); exists {
+			gameState.DeleteBattleReportCapture(messageID)
+			if capture.ReportID > 0 && gameState.Reports.ActiveBattleReport == capture.ReportID {
+				gameState.Reports.ActiveBattleReport = 0
+			}
+			changed = true
+		}
+	}
+	return []string{"reports"}, changed, nil
+}
+
+func applyReportNotices(raw json.RawMessage, observedAt time.Time, gameState *State.GameState) (bool, error) {
+	var payload struct {
+		Messages [][]json.RawMessage `json:"MSG"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return false, fmt.Errorf("decode report notices: %w", err)
+	}
+	changed := false
+	for _, row := range payload.Messages {
+		if len(row) < 2 {
+			continue
+		}
+		messageID, ok := rawInt64(row[0])
+		if !ok || messageID <= 0 {
+			continue
+		}
+		typeID, _ := rawInt64(row[1])
+		if typeID != 3 && typeID != 6 {
+			continue
+		}
+		notice := State.ReportNotice{
+			MessageID: messageID, TypeID: int(typeID), Status: "pending", ObservedAt: observedAt,
+		}
+		if typeID == 3 {
+			notice.OwnedByPlayer = len(row) <= 4
+		}
+		if len(row) > 2 {
+			notice.BattleKey = rowString(row, 2)
+		}
+		if len(row) > 4 {
+			if value, exists := rawInt64(row[4]); exists {
+				if typeID == 3 {
+					notice.OwnedByPlayer = value <= 0
+				} else if value > 0 {
+					notice.ReportID = value
+				}
+			}
+		}
+		if len(row) > 5 {
+			notice.AgeSec, _ = rawInt64(row[5])
+		}
+		if typeID == 3 && (notice.AgeSec < 0 || notice.AgeSec >= int64(maxAutomaticSpyNoticeAge/time.Second)) {
+			notice.Status = "expired"
+		}
+		current, exists := gameState.LookupReportNotice(messageID)
+		if exists {
+			if current.Status == "archived" || current.Status == "unavailable" {
+				notice.Status = current.Status
+			}
+			if current.ReportID > 0 && notice.ReportID == 0 {
+				notice.ReportID = current.ReportID
+			}
+		}
+		if !exists || current != notice {
+			gameState.SetReportNotice(messageID, notice)
+			changed = true
+		}
+	}
+	return changed, nil
+}
+
+func reduceSpyReportCapture(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var header struct {
+		MessageID wireInt64 `json:"MID"`
+	}
+	if err := json.Unmarshal(frame.Payload, &header); err != nil {
+		return nil, false, fmt.Errorf("decode spy report capture: %w", err)
+	}
+	if header.MessageID <= 0 {
+		return nil, false, nil
+	}
+	if notice, found := gameState.LookupReportNotice(int64(header.MessageID)); found && notice.Status == "archived" {
+		return nil, false, nil
+	}
+	current, _ := gameState.LookupSpyReportCapture(int64(header.MessageID))
+	if bytes.Equal(current.Payload, frame.Payload) {
+		return nil, false, nil
+	}
+	gameState.SetSpyReportCapture(int64(header.MessageID), State.SpyReportCapture{
+		MessageID: int64(header.MessageID), Payload: append(json.RawMessage(nil), frame.Payload...), CapturedAt: frame.ReceivedAt,
+	})
+	return []string{"reports"}, true, nil
+}
+
+func reduceBattleSummaryCapture(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var header struct {
+		MessageID wireInt64 `json:"MID"`
+		ReportID  wireInt64 `json:"LID"`
+	}
+	if err := json.Unmarshal(frame.Payload, &header); err != nil {
+		return nil, false, fmt.Errorf("decode battle summary capture: %w", err)
+	}
+	if header.MessageID <= 0 {
+		return nil, false, nil
+	}
+	if notice, found := gameState.LookupReportNotice(int64(header.MessageID)); found && notice.Status == "archived" {
+		return nil, false, nil
+	}
+	capture, _ := gameState.LookupBattleReportCapture(int64(header.MessageID))
+	capture.MessageID = int64(header.MessageID)
+	if header.ReportID > 0 {
+		capture.ReportID = int64(header.ReportID)
+	}
+	if notice, found := gameState.LookupReportNotice(capture.MessageID); found && notice.BattleKey != "" {
+		capture.BattleKey = notice.BattleKey
+	}
+	if bytes.Equal(capture.Summary, frame.Payload) {
+		return nil, false, nil
+	}
+	capture.Summary = append(json.RawMessage(nil), frame.Payload...)
+	capture.CapturedAt = frame.ReceivedAt
+	if capture.OccurredAt.IsZero() {
+		capture.OccurredAt = battleCaptureOccurredAt(gameState, capture)
+	}
+	gameState.SetBattleReportCapture(capture.MessageID, capture)
+	return []string{"reports"}, true, nil
+}
+
+func reduceBattleWaveCapture(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var header struct {
+		ReportID wireInt64 `json:"LID"`
+	}
+	if err := json.Unmarshal(frame.Payload, &header); err != nil {
+		return nil, false, fmt.Errorf("decode battle wave capture: %w", err)
+	}
+	reportID := int64(header.ReportID)
+	if reportID <= 0 {
+		reportID = gameState.Reports.ActiveBattleReport
+	}
+	if reportID <= 0 {
+		return nil, false, nil
+	}
+	messageID, capture, exists := battleCaptureByReportID(gameState, reportID)
+	if !exists || bytes.Equal(capture.Waves, frame.Payload) {
+		return nil, false, nil
+	}
+	capture.Waves = append(json.RawMessage(nil), frame.Payload...)
+	capture.CapturedAt = frame.ReceivedAt
+	gameState.SetBattleReportCapture(messageID, capture)
+	return []string{"reports"}, true, nil
+}
+
+func reduceBattleDetailCapture(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var header struct {
+		ReportID wireInt64 `json:"LID"`
+	}
+	if err := json.Unmarshal(frame.Payload, &header); err != nil {
+		return nil, false, fmt.Errorf("decode battle detail capture: %w", err)
+	}
+	if header.ReportID <= 0 {
+		header.ReportID = wireInt64(gameState.Reports.ActiveBattleReport)
+	}
+	messageID, capture, exists := battleCaptureByReportID(gameState, int64(header.ReportID))
+	if !exists || bytes.Equal(capture.Details, frame.Payload) {
+		return nil, false, nil
+	}
+	capture.Details = append(json.RawMessage(nil), frame.Payload...)
+	capture.CapturedAt = frame.ReceivedAt
+	capture.ToolsUsed = ownBattleToolsUsed(capture.Details, gameState.Player.ID)
+	if capture.OccurredAt.IsZero() {
+		capture.OccurredAt = battleCaptureOccurredAt(gameState, capture)
+	}
+	analyticsChanged, err := reconcileAttackFeatureBattleReport(gameState, &capture)
+	if err != nil {
+		return nil, false, err
+	}
+	stormChanged, err := reconcileStormIslandBattleReport(gameState, capture)
+	if err != nil {
+		return nil, false, err
+	}
+	eventChanged, err := reconcileEventBattleActivity(gameState, &capture)
+	if err != nil {
+		return nil, false, err
+	}
+	gameState.SetBattleReportCapture(messageID, capture)
+	domains := []string{"reports"}
+	if stormChanged {
+		domains = append(domains, "storm")
+	}
+	if eventChanged {
+		domains = append(domains, "event-scores")
+	}
+	if analyticsChanged {
+		domains = append(domains, "attack-analytics")
+	}
+	return domains, true, nil
+}
+
+func reconcileStormIslandBattleReport(gameState *State.GameState, capture State.BattleReportCapture) (bool, error) {
+	if gameState.Player.ID <= 0 || len(capture.Summary) == 0 || len(capture.Details) == 0 {
+		return false, nil
+	}
+	var summary struct {
+		MessageID    wireInt64           `json:"MID"`
+		ReportID     wireInt64           `json:"LID"`
+		Participants [][]json.RawMessage `json:"PBI"`
+		Target       struct {
+			TypeID    int       `json:"AT"`
+			KingdomID wireInt64 `json:"K"`
+			X         int       `json:"X"`
+			Y         int       `json:"Y"`
+		} `json:"AI"`
+	}
+	if err := json.Unmarshal(capture.Summary, &summary); err != nil {
+		return false, fmt.Errorf("decode Storm island battle summary: %w", err)
+	}
+	if summary.Target.TypeID != 24 || State.KingdomID(summary.Target.KingdomID) != State.KingdomID(GameData.StormKingdomID) ||
+		!battleSummaryHasOwnAttacker(summary.Participants, gameState.Player.ID) {
+		return false, nil
+	}
+	key := State.StormIslandReturnKey(State.KingdomID(summary.Target.KingdomID), summary.Target.X, summary.Target.Y)
+	returns := gameState.MutableStormIslandReturns()
+	operation, exists := returns[key]
+	if !exists || operation.Status != State.StormIslandReturnAwaitingReport {
+		return false, nil
+	}
+	battleAt := capture.CapturedAt
+	if notice, found := gameState.LookupReportNotice(capture.MessageID); found && !notice.ObservedAt.IsZero() {
+		battleAt = notice.ObservedAt
+		if notice.AgeSec > 0 {
+			battleAt = battleAt.Add(-time.Duration(notice.AgeSec) * time.Second)
+		}
+	}
+	if !operation.LaunchedAt.IsZero() && battleAt.Add(2*time.Second).Before(operation.LaunchedAt) {
+		return false, nil
+	}
+	if !battleSummaryAttackerWon(summary.Participants) {
+		delete(returns, key)
+		return true, nil
+	}
+	survivors, found, err := stormIslandBattleSurvivors(capture.Details, gameState.Player.ID)
+	if err != nil {
+		return false, err
+	}
+	if !found {
+		return false, nil
+	}
+	operation.Survivors = survivors
+	if len(operation.UnitsToReturn()) == 0 {
+		delete(returns, key)
+		return true, nil
+	}
+	reportID := int64(summary.ReportID)
+	if reportID <= 0 {
+		reportID = capture.ReportID
+	}
+	if reportID <= 0 {
+		reportID = int64(summary.MessageID)
+	}
+	if reportID <= 0 {
+		reportID = capture.MessageID
+	}
+	operation.ReportID = reportID
+	operation.Status = State.StormIslandReturnReady
+	operation.ReportedAt = capture.CapturedAt
+	returns[key] = operation
+	return true, nil
+}
+
+func stormIslandBattleSurvivors(raw json.RawMessage, playerID State.PlayerID) (map[State.UnitID]int64, bool, error) {
+	var payload struct {
+		Units [][]json.RawMessage `json:"Y"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode Storm island battle details: %w", err)
+	}
+	survivors := map[State.UnitID]int64{}
+	found := false
+	for _, row := range payload.Units {
+		if len(row) < 2 || State.PlayerID(rowInt(row, 0)) != playerID {
+			continue
+		}
+		found = true
+		for _, rawUnit := range row[1:] {
+			var unit []json.RawMessage
+			if err := json.Unmarshal(rawUnit, &unit); err != nil || len(unit) < 2 {
+				continue
+			}
+			unitID := State.UnitID(rowInt(unit, 0))
+			amount := rowInt(unit, 1)
+			lost := rowInt(unit, 2)
+			if lost < 0 {
+				lost = -lost
+			}
+			remaining := amount - lost
+			if unitID > 0 && remaining > 0 {
+				survivors[unitID] += remaining
+			}
+		}
+	}
+	return survivors, found, nil
+}
+
+func reduceBattleCommandContext(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	var command struct {
+		ReportID wireInt64 `json:"LID"`
+	}
+	if len(frame.Payload) == 0 || json.Unmarshal(frame.Payload, &command) != nil || command.ReportID <= 0 {
+		return nil, false, nil
+	}
+	if gameState.Reports.ActiveBattleReport == int64(command.ReportID) {
+		return nil, false, nil
+	}
+	gameState.Reports.ActiveBattleReport = int64(command.ReportID)
+	return []string{"reports"}, true, nil
+}
+
+func battleCaptureByReportID(gameState *State.GameState, reportID int64) (int64, State.BattleReportCapture, bool) {
+	var messageID int64
+	var capture State.BattleReportCapture
+	found := false
+	gameState.RangeBattleReportCaptures(func(candidateID int64, candidate State.BattleReportCapture) bool {
+		if candidate.ReportID == reportID {
+			messageID, capture, found = candidateID, candidate, true
+			return false
+		}
+		return true
+	})
+	return messageID, capture, found
+}
