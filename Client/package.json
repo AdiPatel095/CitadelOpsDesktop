@@ -1,11 +1,12 @@
 {
   "name": "citadel-ops-client",
   "private": true,
-  "version": "2.3.2",
+  "version": "2.3.3",
   "type": "module",
   "scripts": {
     "dev": "tsc && vite --host 127.0.0.1 --port 41731 --strictPort",
     "build": "tsc && vite build",
+    "test": "node --test tests/*.test.mjs",
     "test:world-intel": "node --test tests/storm-ranking.test.mjs",
     "preview": "tsc && vite preview"
   },

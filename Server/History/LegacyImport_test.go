@@ -78,6 +78,44 @@ func TestOpenImportsChangedLegacyPlayerTrackerWithoutDuplicates(t *testing.T) {
 	}
 }
 
+func TestLegacyPlayerImportInvalidatesBoundedHistoryIndex(t *testing.T) {
+	dataDir := t.TempDir()
+	store, err := Open(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Append(CollectionPlayerSamples, PlayerSample{
+		TimestampUnix: 1783785600,
+		PlayerID:      7,
+		Might:         100,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if samples, _, err := store.PlayerSamplesForPlayerBounded(time.Time{}, 10, 7, 60); err != nil || len(samples) != 1 {
+		t.Fatalf("initial bounded history samples=%+v err=%v", samples, err)
+	}
+
+	sourcePath := filepath.Join(dataDir, "PlayerTracker.import.json")
+	legacy := `{"version":4,"players":{"7":[{"timestampUnix":1783785660,"playerId":7,"might":110}]}}`
+	if err := os.WriteFile(sourcePath, []byte(legacy), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if imported, err := store.ImportLegacySource(
+		sourcePath,
+		CollectionPlayerSamples,
+		decodeLegacyPlayerTracker,
+	); err != nil || imported != 1 {
+		t.Fatalf("legacy import count=%d err=%v", imported, err)
+	}
+	samples, _, err := store.PlayerSamplesForPlayerBounded(time.Time{}, 10, 7, 60)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(samples) != 2 || samples[1].Might != 110 {
+		t.Fatalf("bounded history did not rebuild after legacy import: %+v", samples)
+	}
+}
+
 func TestPlayerSamplesForPlayerIgnoresChangingLegacyUID(t *testing.T) {
 	store, err := Open(t.TempDir())
 	if err != nil {

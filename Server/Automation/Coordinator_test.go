@@ -1473,6 +1473,39 @@ func TestCoordinatorTroopGateParsesRawErrorAfterUserFacingLabeling(t *testing.T)
 	}
 }
 
+func TestCoordinatorExpectedFailureUsesLaneStatusWithoutRawError(t *testing.T) {
+	gameState := coordinatorReadyState()
+	state := State.NewStore(gameState)
+	result := operationResult{
+		policyID: "autoStorm",
+		receipt: Intent.Receipt{
+			ID: "busy-commander", Status: Intent.StatusFailed,
+			Error: "response code 256 for CRA was not successful",
+			Failure: &Intent.FailurePresentation{
+				Kind: Intent.FailureAvailability, Severity: Intent.FailureSeverityWarning, Toast: false,
+				Explanation: "No eligible commander is available right now.",
+				Recovery:    "Wait for a commander to return; the feature lane will reevaluate automatically.",
+			},
+		},
+	}
+	now := time.Now().UTC()
+	current := &policyRuntime{running: true}
+	result, immediate := completePolicyRun(current, result, now)
+	if immediate || result.nextCheck.Before(now.Add(defaultRetry)) || current.failureBlockedUntil.IsZero() {
+		t.Fatalf("expected lane-only failure retry state = result=%+v runtime=%+v", result, current)
+	}
+
+	NewCoordinator(state, nil, nil, nil).recordReceipt(result)
+	automation := state.Snapshot().Automations["autoStorm"]
+	if automation.Status != "gated" || automation.LastError != "" ||
+		automation.NextCheckAt == nil ||
+		!strings.Contains(automation.Detail, "No eligible commander") ||
+		!strings.Contains(automation.Detail, "reevaluate automatically") ||
+		strings.Contains(automation.Detail, "response code") || strings.Contains(automation.Detail, "CRA") {
+		t.Fatalf("expected lane-only failure state = %+v", automation)
+	}
+}
+
 func TestCoordinatorTroopAvailabilityGateSkipsTimedRetry(t *testing.T) {
 	gameState := coordinatorReadyState()
 	gameState.Castles[3849] = State.CastleState{

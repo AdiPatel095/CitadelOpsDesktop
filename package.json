@@ -1,7 +1,7 @@
 {
   "name": "citadel-ops",
   "private": true,
-  "version": "2.3.2",
+  "version": "2.3.3",
   "type": "module",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
@@ -9,7 +9,7 @@
   "scripts": {
     "client:dev": "npm --prefix Client run dev",
     "client:build": "npm --prefix Client run build",
-    "client:test": "npm --prefix Client run test:world-intel",
+    "client:test": "npm --prefix Client test",
     "server:dev": "go run .",
     "build": "npm run client:build && go build -tags desktop -o CitadelOpsDesktop .",
     "build:server": "go build -o CitadelOpsDesktop .",

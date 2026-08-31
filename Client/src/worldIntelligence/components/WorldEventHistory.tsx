@@ -13,12 +13,27 @@ import type {
 	WorldIntelligenceUpdateManifestV1,
 } from '../../api/Contracts';
 import { Badge, Button, Card, CardContent, EmptyState, Input, MetricTile, Select } from '../../components/ui';
-import { normalizeStormSessionRanking } from './StormRanking';
+import {
+	eventBoardSelectionKey,
+	eventPaginationSelectionKey,
+	reconcileEventPage,
+} from './WorldEventPagination';
+import { advanceSuccessfulLoadGeneration } from './WorldIntelligenceLoadGeneration';
+import {
+	isOriginalStormRanking,
+	normalizeStormSessionRanking,
+	stormGlobalLeagueId,
+} from './StormRanking';
 
 const eventPageSize = 25;
 const metadataRefreshInterval = 30_000;
 const allEvents = '__all_events__';
 const allLeagues = '__all_leagues__';
+const regularRankingMetrics = ['might', 'honor'] as const;
+
+type RegularRankingMetric = (typeof regularRankingMetrics)[number];
+type ReferenceRankingKey = RegularRankingMetric | 'storm';
+type ReferenceRankingSnapshots = Partial<Record<ReferenceRankingKey, WorldIntelligenceRankingResponseV1>>;
 
 type LeagueDefinition = { eventId: number; leagueId: number; minimumLevel: number; maximumLevel: number };
 type EventLeaderboardRow = {
@@ -60,7 +75,7 @@ const stormBoard = {
 	eventId: 102,
 	eventName: 'Storm Islands',
 	listType: 13,
-	leagueId: 1,
+	leagueId: stormGlobalLeagueId,
 	metric: 'public:storm-cargo-points',
 };
 const stormRunKey = `public-metric:${stormBoard.metric}`;
@@ -106,48 +121,59 @@ export const WorldEventHistory = ({
 	const [boardRefreshToken, setBoardRefreshToken] = useState(0);
 	const [error, setError] = useState('');
 	const directoryRequest = useRef(0);
+	const runMetadataRequest = useRef(0);
+	const runMetadataApplied = useRef(0);
+	const referenceRankingsRequest = useRef(0);
+	const regularRankingsApplied = useRef<Record<RegularRankingMetric, number>>({ might: 0, honor: 0 });
+	const stormRankingsApplied = useRef(0);
+	const referenceRankingSnapshots = useRef<ReferenceRankingSnapshots>({});
+	const boardSubscriptionRequest = useRef(0);
+	const boardFallbackRequest = useRef(0);
 	const metadataRefreshInFlight = useRef(false);
 	const previousWorldUpdate = useRef<WorldIntelligenceUpdateManifestV1 | null>(null);
 
 	const loadRunMetadata = useCallback(async (requestID: number) => {
+		const loadID = ++runMetadataRequest.current;
 		const response = await CitadelAPI.getWorldIntelligenceEventRuns({ worldId, limit: 250 });
-		if (requestID === directoryRequest.current) setRuns(orderedEventRuns(response.runs ?? []));
+		const applied = advanceSuccessfulLoadGeneration(runMetadataApplied.current, loadID);
+		if (requestID === directoryRequest.current && applied != null) {
+			runMetadataApplied.current = applied;
+			setRuns(orderedEventRuns(response.runs ?? []));
+		}
 	}, [worldId]);
 
 	const loadReferenceRankings = useCallback(async (requestID: number) => {
+		const loadID = ++referenceRankingsRequest.current;
 		const [regularResponses, stormResponse] = await Promise.all([
-			Promise.allSettled(['might', 'honor'].map((metric) => (
+			Promise.allSettled(regularRankingMetrics.map((metric) => (
 				CitadelAPI.getWorldIntelligenceRankings({ worldId, type: 'players', metric, limit: 250 })
 			))),
-			CitadelAPI.getWorldIntelligenceRankings({ worldId, type: 'players', metric: stormBoard.metric, limit: 250 })
+			CitadelAPI.getWorldIntelligenceRankings({ worldId, type: 'players', metric: stormBoard.metric, limit: 5_000 })
 				.then((response) => ({ response, available: true as const }))
 				.catch(() => ({ response: null, available: false as const })),
 		]);
-		if (requestID === directoryRequest.current) {
-			const playerIndex = new Map<number, WorldIntelligenceRankingEntryV1>();
-			for (const result of regularResponses) {
-				if (result.status !== 'fulfilled') continue;
-				for (const entry of result.value.entries ?? []) {
-					const current = playerIndex.get(entry.id);
-					playerIndex.set(entry.id, {
-						...current,
-						...entry,
-						might: entry.might ?? current?.might,
-						honor: entry.honor ?? current?.honor,
-					});
-				}
-			}
-			for (const entry of stormResponse.response?.entries ?? []) {
-				const current = playerIndex.get(entry.id);
-				playerIndex.set(entry.id, {
-					...current,
-					...entry,
-					might: entry.might ?? current?.might,
-					honor: entry.honor ?? current?.honor,
-				});
-			}
-			setRegularPlayers(playerIndex);
-			setStormPublicBoard(stormResponse.available ? stormPublicRankingBoard(stormResponse.response) : null);
+		if (requestID !== directoryRequest.current) return;
+		let referencesChanged = false;
+		for (const [index, result] of regularResponses.entries()) {
+			if (result.status !== 'fulfilled') continue;
+			const metric = regularRankingMetrics[index];
+			const applied = advanceSuccessfulLoadGeneration(regularRankingsApplied.current[metric], loadID);
+			if (applied == null) continue;
+			regularRankingsApplied.current[metric] = applied;
+			referenceRankingSnapshots.current[metric] = result.value;
+			referencesChanged = true;
+		}
+		const stormApplied = stormResponse.available
+			? advanceSuccessfulLoadGeneration(stormRankingsApplied.current, loadID)
+			: null;
+		if (stormApplied != null && stormResponse.response != null) {
+			stormRankingsApplied.current = stormApplied;
+			referenceRankingSnapshots.current.storm = stormResponse.response;
+			referencesChanged = true;
+			setStormPublicBoard(stormPublicRankingBoard(stormResponse.response));
+		}
+		if (referencesChanged) {
+			setRegularPlayers(mergeRankingPlayers(referenceRankingSnapshots.current));
 		}
 	}, [worldId]);
 
@@ -179,8 +205,11 @@ export const WorldEventHistory = ({
 		setBoard('');
 		setRuns([]);
 		setRunBoards({});
+		setLeague(allLeagues);
+		setPage(0);
 		setRegularPlayers(new Map());
 		setStormPublicBoard(null);
+		referenceRankingSnapshots.current = {};
 		previousWorldUpdate.current = null;
 		void refreshDirectory();
 	}, [refreshDirectory]);
@@ -207,12 +236,13 @@ export const WorldEventHistory = ({
 		if (!worldUpdate || worldUpdate.worldId !== normalizeWorldID(worldId)) return;
 		const previous = previousWorldUpdate.current;
 		previousWorldUpdate.current = worldUpdate;
-		if (!previous) return;
 		const requestID = directoryRequest.current;
-		if (worldUpdate.eventRunsRevision > previous.eventRunsRevision) {
+		// The ready manifest closes the race between the initial REST reads and
+		// stream establishment. Generation guards suppress any older response.
+		if (!previous || worldUpdate.eventRunsRevision > previous.eventRunsRevision) {
 			void loadRunMetadata(requestID).catch(() => undefined);
 		}
-		if (worldUpdate.rankingsRevision > previous.rankingsRevision) {
+		if (!previous || worldUpdate.rankingsRevision > previous.rankingsRevision) {
 			void loadReferenceRankings(requestID).catch(() => undefined);
 		}
 	}, [loadReferenceRankings, loadRunMetadata, worldId, worldUpdate]);
@@ -228,17 +258,21 @@ export const WorldEventHistory = ({
 		? event
 		: eventGroups[0]?.key ?? '';
 	const selectedEvent = eventGroups.find((candidate) => candidate.key === selectedEventKey) ?? null;
+	const defaultRunKey = selectedEvent?.publicBoard
+		? stormRunKey
+		: selectedEvent?.runs[0]?.occurrenceId ?? '';
 	const selectedRunKey = selectedEvent?.runs.some((candidate) => candidate.occurrenceId === run)
 		? run
-		: selectedEvent?.publicBoard
+		: run === stormRunKey && selectedEvent?.publicBoard
 			? stormRunKey
-			: selectedEvent?.runs[0]?.occurrenceId ?? '';
+			: defaultRunKey;
 	const selectedRun = selectedEvent?.runs.find((candidate) => candidate.occurrenceId === selectedRunKey) ?? null;
 	const cachedRun = selectedRun ? runBoards[selectedRun.occurrenceId] : undefined;
 	const selectedRunObservedAt = selectedRun?.lastObservedAt ?? '';
 	const cachedRunObservedAt = cachedRun?.lastObservedAt ?? '';
 
 	useEffect(() => {
+		const subscriptionID = ++boardSubscriptionRequest.current;
 		if (!worldId || !selectedRunKey || selectedRunKey === stormRunKey) {
 			setBoardStreamStatus('connected');
 			setBoardLoading(false);
@@ -247,21 +281,30 @@ export const WorldEventHistory = ({
 		setBoardStreamStatus('connecting');
 		setBoardLoading(true);
 		setError('');
-		return CitadelAPI.subscribeWorldIntelligenceLeaderboard(
+		const unsubscribe = CitadelAPI.subscribeWorldIntelligenceLeaderboard(
 			{ worldId, occurrenceId: selectedRunKey },
 			(snapshot: WorldIntelligenceEventRunRankingSnapshotV1) => {
-				setRunBoards((current) => ({
-					...current,
-					[selectedRunKey]: {
-						revision: snapshot.revision,
-						lastObservedAt: snapshot.run.lastObservedAt,
-						response: { run: snapshot.run, entries: snapshot.entries },
-					},
-				}));
+				if (subscriptionID !== boardSubscriptionRequest.current) return;
+				setRunBoards((current) => {
+					const existing = current[selectedRunKey];
+					if (existing && (existing.revision > snapshot.revision || (
+						existing.revision === snapshot.revision
+						&& observationAtLeast(existing.lastObservedAt, snapshot.run.lastObservedAt)
+					))) return current;
+					return {
+						...current,
+						[selectedRunKey]: {
+							revision: snapshot.revision,
+							lastObservedAt: snapshot.run.lastObservedAt,
+							response: { run: snapshot.run, entries: snapshot.entries },
+						},
+					};
+				});
 				setBoardLoading(false);
 				setError('');
 			},
 			(delta: WorldIntelligenceEventRunRankingDeltaV1) => {
+				if (subscriptionID !== boardSubscriptionRequest.current) return;
 				setRunBoards((current) => {
 					const existing = current[selectedRunKey];
 					if (!existing || delta.revision <= existing.revision) return current;
@@ -277,11 +320,18 @@ export const WorldEventHistory = ({
 				});
 				setBoardLoading(false);
 			},
-			(status) => setBoardStreamStatus(status),
+			(status) => {
+				if (subscriptionID === boardSubscriptionRequest.current) setBoardStreamStatus(status);
+			},
 		);
+		return () => {
+			if (subscriptionID === boardSubscriptionRequest.current) boardSubscriptionRequest.current += 1;
+			unsubscribe();
+		};
 	}, [boardRefreshToken, selectedRunKey, worldId]);
 
 	useEffect(() => {
+		const fallbackID = ++boardFallbackRequest.current;
 		if (!worldId || !selectedRunKey || selectedRunKey === stormRunKey || boardStreamStatus !== 'reconnecting' ||
 			cachedRunObservedAt === selectedRunObservedAt) return;
 		let cancelled = false;
@@ -289,44 +339,56 @@ export const WorldEventHistory = ({
 		setError('');
 		void CitadelAPI.getWorldIntelligenceEventRunRankings({ worldId, occurrenceId: selectedRunKey, limit: 5_000 })
 			.then((response) => {
-				if (cancelled) return;
-				setRunBoards((current) => ({
-					...current,
-					[selectedRunKey]: {
-						revision: current[selectedRunKey]?.revision ?? 0,
-						lastObservedAt: response.run.lastObservedAt || selectedRunObservedAt,
-						response,
-					},
-				}));
+				if (cancelled || fallbackID !== boardFallbackRequest.current) return;
+				const responseObservedAt = response.run.lastObservedAt || selectedRunObservedAt;
+				setRunBoards((current) => {
+					const existing = current[selectedRunKey];
+					if (existing && observationAtLeast(existing.lastObservedAt, responseObservedAt)) return current;
+					return {
+						...current,
+						[selectedRunKey]: {
+							revision: existing?.revision ?? 0,
+							lastObservedAt: responseObservedAt,
+							response,
+						},
+					};
+				});
 			})
 			.catch((requestError) => {
-				if (!cancelled) setError(errorMessage(requestError, 'Could not load the selected event leaderboard.'));
+				if (!cancelled && fallbackID === boardFallbackRequest.current) {
+					setError(errorMessage(requestError, 'Could not load the selected event leaderboard.'));
+				}
 			})
 			.finally(() => {
-				if (!cancelled) setBoardLoading(false);
-				});
+				if (!cancelled && fallbackID === boardFallbackRequest.current) setBoardLoading(false);
+			});
 		return () => { cancelled = true; };
 	}, [boardStreamStatus, cachedRunObservedAt, selectedRunKey, selectedRunObservedAt, worldId]);
 
-	const availableBoards = selectedRunKey === stormRunKey && selectedEvent?.publicBoard
-		? [selectedEvent.publicBoard]
-		: cachedRun ? eventBoardsFromRun(cachedRun.response) : [];
+	const availableBoards = useMemo(() => (
+		selectedRunKey === stormRunKey && selectedEvent?.publicBoard
+			? [selectedEvent.publicBoard]
+			: cachedRun ? eventBoardsFromRun(cachedRun.response) : []
+	), [cachedRun, selectedEvent?.publicBoard, selectedRunKey]);
 	const selectedBoardKey = availableBoards.some((candidate) => candidate.key === board)
 		? board
 		: availableBoards[0]?.key ?? '';
 	const selectedBoard = availableBoards.find((candidate) => candidate.key === selectedBoardKey) ?? null;
 	const eventOptions = eventGroups.map((candidate) => ({ value: candidate.key, label: candidate.title }));
 	const runOptions = [
-		...(selectedEvent?.publicBoard ? [{ value: stormRunKey, label: 'Current public ranking' }] : []),
+		...(selectedEvent?.publicBoard ? [{ value: stormRunKey, label: 'Live Storm metrics' }] : []),
 		...(selectedEvent?.runs ?? []).map((candidate) => ({ value: candidate.occurrenceId, label: eventRunLabel(candidate) })),
 	];
 	const needsRunSelector = runOptions.length > 1;
 	const boardOptions = availableBoards.map((candidate) => ({ value: candidate.key, label: eventBoardVariantLabel(candidate) }));
 	const needsBoardSelector = boardOptions.length > 1;
 	const boardEntries = useMemo(() => selectedBoard?.entries ?? [], [selectedBoard]);
+	const originalStormSelected = isOriginalStormRanking(selectedBoard?.eventId, selectedBoard?.listType);
 	const availableLeagueIds = useMemo(
-		() => [...new Set(boardEntries.map((entry) => entry.leagueId))].sort((left, right) => left - right),
-		[boardEntries],
+		() => originalStormSelected
+			? []
+			: [...new Set(boardEntries.map((entry) => entry.leagueId))].sort((left, right) => left - right),
+		[boardEntries, originalStormSelected],
 	);
 	const leagueOptions = useMemo(() => {
 		return [
@@ -337,9 +399,13 @@ export const WorldEventHistory = ({
 			})),
 		];
 	}, [availableLeagueIds, leagueDefinitions, selectedBoard?.eventId]);
-	const needsLeagueSelector = availableLeagueIds.length > 1;
+	const needsLeagueSelector = !originalStormSelected && availableLeagueIds.length > 1;
 	const livePlayerLeague = selectedBoard ? currentLeagueByEvent?.[selectedBoard.eventId] : undefined;
+	const selectedBoardIdentity = eventBoardSelectionKey(worldId, selectedEventKey, selectedRunKey, selectedBoardKey);
+	const previousBoardIdentity = useRef('');
 	useEffect(() => {
+		if (previousBoardIdentity.current === selectedBoardIdentity) return;
+		previousBoardIdentity.current = selectedBoardIdentity;
 		let defaultLeague = allLeagues;
 		if (needsLeagueSelector) {
 			const publicPlayerLeague = boardEntries.find((entry) => entry.playerId === currentPlayerId)?.leagueId;
@@ -350,8 +416,15 @@ export const WorldEventHistory = ({
 			}
 		}
 		setLeague(defaultLeague);
-		setPage(0);
-	}, [availableLeagueIds, boardEntries, currentPlayerId, livePlayerLeague, needsLeagueSelector, selectedBoard?.key]);
+		setSort(originalStormSelected
+			? { key: 'score', direction: 'descending' }
+			: { key: 'rank', direction: 'ascending' });
+	}, [availableLeagueIds, boardEntries, currentPlayerId, livePlayerLeague, needsLeagueSelector, originalStormSelected, selectedBoardIdentity]);
+	useEffect(() => {
+		if (selectedBoard && league !== allLeagues && !availableLeagueIds.includes(Number(league))) {
+			setLeague(allLeagues);
+		}
+	}, [availableLeagueIds, league, selectedBoard]);
 	const entries = useMemo(() => {
 		const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
 		const filtered = boardEntries.filter((entry) => {
@@ -371,11 +444,33 @@ export const WorldEventHistory = ({
 	};
 	const pageCount = Math.max(1, Math.ceil(entries.length / eventPageSize));
 	const safePage = Math.min(page, pageCount - 1);
+	const paginationSelection = eventPaginationSelectionKey({
+		worldId,
+		eventKey: selectedEventKey,
+		runKey: selectedRunKey,
+		boardKey: selectedBoardKey,
+		league,
+		searchQuery,
+		sortKey: sort.key,
+		sortDirection: sort.direction,
+	});
+	const previousPaginationSelection = useRef(paginationSelection);
+	useEffect(() => {
+		const previous = previousPaginationSelection.current;
+		previousPaginationSelection.current = paginationSelection;
+		setPage((current) => reconcileEventPage(
+			current,
+			previous,
+			paginationSelection,
+			entries.length,
+			eventPageSize,
+		));
+	}, [entries.length, paginationSelection]);
 	const visibleEntries = entries.slice(safePage * eventPageSize, (safePage + 1) * eventPageSize);
-	const loadedBoards = [
+	const loadedBoards = useMemo(() => [
 		...Object.values(runBoards).flatMap((candidate) => eventBoardsFromRun(candidate.response)),
 		...(stormPublicBoard ? [stormPublicBoard] : []),
-	];
+	], [runBoards, stormPublicBoard]);
 	const loadedScoreRows = loadedBoards.reduce((total, candidate) => total + candidate.entries.length, 0);
 	const knownRunCount = Math.max(eventRuns, runs.length);
 	const optionalFilterCount = Number(needsRunSelector) + Number(needsBoardSelector) + Number(needsLeagueSelector);
@@ -387,12 +482,8 @@ export const WorldEventHistory = ({
 	const loading = directoryLoading || boardLoading;
 	const refreshBoards = useCallback(() => {
 		if (selectedRunKey && selectedRunKey !== stormRunKey) {
-			setRunBoards((current) => {
-				if (!(selectedRunKey in current)) return current;
-				const next = { ...current };
-				delete next[selectedRunKey];
-				return next;
-			});
+			// Keep the current board visible while the replacement subscription
+			// opens. This preserves both the semantic selection and its page.
 			setBoardRefreshToken((current) => current + 1);
 		}
 		void refreshDirectory();
@@ -403,7 +494,7 @@ export const WorldEventHistory = ({
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div>
 					<div className="flex items-center gap-2 text-base font-bold text-text-main"><Trophy className="h-5 w-5 text-primary" /> Player rankings</div>
-					<p className="mt-1 text-xs text-text-muted">Name, Might, Honor, and Alliance stay visible while the selected public event adds its Rank and Score columns.</p>
+						<p className="mt-1 text-xs text-text-muted">Name, Might, Honor, and Alliance stay visible while the selected event adds its Rank and Score columns.</p>
 				</div>
 				<Button variant="ghost" size="icon" aria-label="Refresh event history" onClick={() => void refreshBoards()} isLoading={loading}><RefreshCw className="h-4 w-4" /></Button>
 			</div>
@@ -490,8 +581,12 @@ export const WorldEventHistory = ({
 						<div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 							<MetricTile label="Participants" value={formatCount(selectedBoard.run?.participants ?? selectedBoard.entries.length)} tone="brand" />
 							<MetricTile label="Current score rows" value={formatCount(selectedBoard.entries.length)} tone="info" />
-							<MetricTile label="Level leagues" value={formatCount(availableLeagueIds.length)} />
-							{selectedBoard.run ? (
+							{originalStormSelected
+								? <MetricTile label="Ranking scope" value="All levels" monospace={false} />
+								: <MetricTile label="Level leagues" value={formatCount(availableLeagueIds.length)} />}
+							{selectedBoard.run ? originalStormSelected ? (
+								<MetricTile label="Last collected" value={formatDateTime(selectedBoard.run.lastObservedAt)} />
+							) : (
 								<MetricTile label={eventRunActive(selectedBoard.run) ? 'Ends' : 'Ended'} value={formatDateTime(selectedBoard.run.eventEndsAt)} tone={eventRunActive(selectedBoard.run) ? 'warning' : 'default'} />
 							) : (
 								<MetricTile label="Updated" value={formatDateTime(latestBoardObservation(selectedBoard.entries))} />
@@ -664,8 +759,8 @@ const PlayerEventScoreTable = ({ entries, page, pageCount, total, onPageChange, 
 					{entries.map((entry, index) => (
 						<tr key={`${entry.occurrenceId}:${entry.listType}:${entry.leagueId}:${entry.observedAt}:${index}`} className="border-t border-border-base hover:bg-bg-card-hover">
 							<td className="whitespace-nowrap px-3 py-2.5 text-xs text-text-muted">{formatDateTime(entry.observedAt)}</td>
-							<td className="px-3 py-2.5"><div className="font-bold text-text-main">{entry.eventName || humanizeKey(entry.eventKey)}</div><div className="text-[11px] text-text-muted">Started {formatDate(entry.runStartedOn)} · ends {formatDateTime(entry.eventEndsAt)}</div></td>
-							<td className="px-3 py-2.5 text-xs text-text-muted" title={`Event ${entry.eventId} · list ${entry.listType} · league ${entry.leagueId}`}>{eventBoardLabel(entry)}</td>
+								<td className="px-3 py-2.5"><div className="font-bold text-text-main">{entry.eventName || humanizeKey(entry.eventKey)}</div><div className="text-[11px] text-text-muted">{isOriginalStormRanking(entry.eventId, entry.listType) ? `Monthly session · ${formatDate(entry.runStartedOn)}` : `Started ${formatDate(entry.runStartedOn)} · ends ${formatDateTime(entry.eventEndsAt)}`}</div></td>
+								<td className="px-3 py-2.5 text-xs text-text-muted" title={isOriginalStormRanking(entry.eventId, entry.listType) ? `Event ${entry.eventId} · list ${entry.listType} · all levels` : `Event ${entry.eventId} · list ${entry.listType} · league ${entry.leagueId}`}>{eventBoardLabel(entry)}</td>
 							<td className="px-3 py-2.5 text-right font-mono font-black text-primary">#{formatCount(entry.rank)}</td>
 							<td className="px-3 py-2.5 text-right"><EventScoreValue entry={entry} /></td>
 							<td className="px-3 py-2.5">{entry.allianceId ? <button type="button" className="max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpenAlliance(entry.allianceId!, entry.worldId)}>{entry.allianceName || `Alliance ${entry.allianceId}`}</button> : <span className="text-text-muted">No alliance</span>}</td>
@@ -817,6 +912,26 @@ function eventScoreIdentity(
 	return `${entry.listType}:${entry.leagueId}:${entry.playerId}`;
 }
 
+function mergeRankingPlayers(
+	snapshots: ReferenceRankingSnapshots,
+): Map<number, WorldIntelligenceRankingEntryV1> {
+	const next = new Map<number, WorldIntelligenceRankingEntryV1>();
+	for (const key of ['might', 'honor', 'storm'] as const) {
+		const response = snapshots[key];
+		if (response == null) continue;
+		for (const entry of response.entries ?? []) {
+			const existing = next.get(entry.id);
+			next.set(entry.id, {
+				...existing,
+				...entry,
+				might: entry.might ?? existing?.might,
+				honor: entry.honor ?? existing?.honor,
+			});
+		}
+	}
+	return next;
+}
+
 function stormPublicRankingBoard(response: WorldIntelligenceRankingResponseV1 | null): EventBoard | null {
 	const entries = response?.entries ?? [];
 	if (entries.length === 0) return null;
@@ -864,6 +979,9 @@ function groupEventRuns(runs: readonly WorldIntelligenceEventRunV1[], publicBoar
 			title: publicBoard.eventName,
 			runs: [],
 		};
+		// Current Storm inclusion is defined by cargo metrics, not optional
+		// occurrence metadata. Keep the live metric board available alongside
+		// dated history even when only some collectors could anchor a session.
 		stormGroup.publicBoard = publicBoard;
 		groups.set(stormEventKey, stormGroup);
 	}
@@ -878,6 +996,9 @@ function groupEventRuns(runs: readonly WorldIntelligenceEventRunV1[], publicBoar
 function eventRunLabel(run: WorldIntelligenceEventRunV1): string {
 	const startTimestamp = Date.parse(`${run.runStartedOn}T00:00:00Z`);
 	const endTimestamp = Date.parse(run.eventEndsAt);
+	if (isOriginalStormRanking(run.eventId, stormBoard.listType) && Number.isFinite(startTimestamp)) {
+		return `${new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(startTimestamp))} session`;
+	}
 	if (Number.isFinite(startTimestamp) && Number.isFinite(endTimestamp)) {
 		return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' })
 			.formatRange(new Date(startTimestamp), new Date(endTimestamp));
@@ -892,7 +1013,8 @@ function eventBoardVariantLabel(board: EventBoard): string {
 	return board.listType > 0 ? `List ${board.listType}` : 'Leaderboard';
 }
 
-function eventBoardLabel(entry: Pick<EventLeaderboardRow, 'listType' | 'boardKey' | 'leagueId'>): string {
+function eventBoardLabel(entry: Pick<EventLeaderboardRow, 'eventId' | 'listType' | 'boardKey' | 'leagueId'>): string {
+	if (isOriginalStormRanking(entry.eventId, entry.listType)) return 'Storm ranking · All levels';
 	const parts = [entry.boardKey ? humanizeKey(entry.boardKey) : `List ${entry.listType}`];
 	if (entry.boardKey) parts.push(`List ${entry.listType}`);
 	parts.push(entry.leagueId >= 0 ? `League ${entry.leagueId}` : 'No league');
@@ -968,6 +1090,15 @@ function normalizeWorldID(value: string): string {
 	} catch {
 		return trimmed.toLocaleLowerCase().replace(/^wss?:\/\//, '').split('/')[0].replace(/:(80|443)$/, '');
 	}
+}
+
+function observationAtLeast(current: string, candidate: string): boolean {
+	const currentTimestamp = Date.parse(current);
+	const candidateTimestamp = Date.parse(candidate);
+	if (Number.isFinite(currentTimestamp) && Number.isFinite(candidateTimestamp)) {
+		return currentTimestamp >= candidateTimestamp;
+	}
+	return current !== '' && current === candidate;
 }
 
 function formatCount(value?: number): string {

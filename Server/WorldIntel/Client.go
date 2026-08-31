@@ -191,9 +191,13 @@ func (client *CloudClient) Rankings(
 	metric string,
 	limit int,
 ) (RankingResponse, error) {
+	maximum := 1_000
+	if entityType == "players" && metric == "public:storm-cargo-points" {
+		maximum = 5_000
+	}
 	values := url.Values{
 		"worldId": {NormalizeWorldID(worldID)}, "metric": {metric},
-		"limit": {strconv.Itoa(boundedLimit(limit, 100))},
+		"limit": {strconv.Itoa(boundedLimitMaximum(limit, 100, maximum))},
 	}
 	var result RankingResponse
 	err := client.getJSON(ctx, "/rankings/"+url.PathEscape(entityType)+"?"+values.Encode(), &result)

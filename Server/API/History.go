@@ -14,18 +14,27 @@ import (
 	"CitadelDesktop/Server/Reports"
 )
 
+const maximumPlayerTrackerResponsePoints = 20_000
+
 func (server *Server) handlePlayerTrackerHistory(writer http.ResponseWriter, request *http.Request) {
 	if server.config.History == nil || server.config.State == nil {
 		writeError(writer, http.StatusServiceUnavailable, "history_unavailable", "Player history is unavailable")
 		return
 	}
-	policy := server.playerSamplesRetentionPolicy()
+	policy := server.playerSamplesRetentionPolicyWithStorage()
 	since := playerTrackerHistorySince(time.Now().UTC(), request.URL.Query().Get("rangeSeconds"), policy.Effective)
+	recordingIntervalSeconds := policy.RecordingIntervalSeconds
+	servedIntervalSeconds := recordingIntervalSeconds
 	current := History.NewPlayerSample(server.config.State.ReadOnlyView(), server.config.GameData)
 	samples := []History.PlayerSample{}
 	if policy.Effective != History.PlayerSamplesRetentionNone {
 		var err error
-		samples, err = server.config.History.PlayerSamplesForPlayer(since, 100_000, current.PlayerID)
+		samples, servedIntervalSeconds, err = server.config.History.PlayerSamplesForPlayerBounded(
+			since,
+			maximumPlayerTrackerResponsePoints,
+			current.PlayerID,
+			recordingIntervalSeconds,
+		)
 		if err != nil {
 			writeError(writer, http.StatusInternalServerError, "history_read_failed", err.Error())
 			return
@@ -34,16 +43,20 @@ func (server *Server) handlePlayerTrackerHistory(writer http.ResponseWriter, req
 	samples = History.NormalizePlayerSamplesTroops(samples, server.config.GameData)
 	if current.PlayerID == 0 {
 		writeJSON(writer, http.StatusOK, map[string]any{
-			"current": nil, "samples": samples, "series": map[string]any{}, "intervalSeconds": 60,
-			"fallback": map[string]any{"provider": "citadel-history", "status": "not-needed"},
-			"coverage": map[string]bool{"loot": false, "eventScores": false},
+			"current": nil, "samples": samples, "series": map[string]any{},
+			"intervalSeconds": servedIntervalSeconds, "recordingIntervalSeconds": recordingIntervalSeconds,
+			"resampled": servedIntervalSeconds > recordingIntervalSeconds,
+			"fallback":  map[string]any{"provider": "citadel-history", "status": "not-needed"},
+			"coverage":  map[string]bool{"loot": false, "eventScores": false},
 		})
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]any{
-		"current": current, "samples": samples, "series": map[string]any{}, "intervalSeconds": 60,
-		"fallback": map[string]any{"provider": "citadel-history", "status": "not-needed"},
-		"coverage": map[string]bool{"loot": false, "eventScores": false},
+		"current": current, "samples": samples, "series": map[string]any{},
+		"intervalSeconds": servedIntervalSeconds, "recordingIntervalSeconds": recordingIntervalSeconds,
+		"resampled": servedIntervalSeconds > recordingIntervalSeconds,
+		"fallback":  map[string]any{"provider": "citadel-history", "status": "not-needed"},
+		"coverage":  map[string]bool{"loot": false, "eventScores": false},
 	})
 }
 
@@ -53,7 +66,7 @@ func (server *Server) handlePlayerTrackerRetention(writer http.ResponseWriter, _
 		return
 	}
 	writer.Header().Set("Cache-Control", "no-store")
-	writeJSON(writer, http.StatusOK, server.playerSamplesRetentionPolicy())
+	writeJSON(writer, http.StatusOK, server.playerSamplesRetentionPolicyWithStorage())
 }
 
 type playerSamplesRetentionApplyResponse struct {
@@ -62,8 +75,9 @@ type playerSamplesRetentionApplyResponse struct {
 }
 
 type playerSamplesRetentionApplyRequest struct {
-	Retention        History.PlayerSamplesRetention `json:"retention"`
-	ExpectedRevision *uint64                        `json:"expectedRevision"`
+	Retention                *History.PlayerSamplesRetention `json:"retention"`
+	RecordingIntervalSeconds *int64                          `json:"recordingIntervalSeconds"`
+	ExpectedRevision         *uint64                         `json:"expectedRevision"`
 }
 
 // handlePlayerTrackerRetentionApply is the single durable update boundary for
@@ -97,20 +111,41 @@ func (server *Server) handlePlayerTrackerRetentionApply(writer http.ResponseWrit
 		writeError(writer, http.StatusBadRequest, "invalid_request", "expectedRevision is required")
 		return
 	}
-	if !History.ValidPlayerSamplesRetention(input.Retention) {
+	if input.Retention == nil && input.RecordingIntervalSeconds == nil {
+		writeError(writer, http.StatusBadRequest, "invalid_request", "retention or recordingIntervalSeconds is required")
+		return
+	}
+	if input.Retention != nil && !History.ValidPlayerSamplesRetention(*input.Retention) {
 		writeError(writer, http.StatusUnprocessableEntity, "history_retention_invalid", "Unknown My Stats retention value")
 		return
 	}
-	rawConfiguration, err := json.Marshal(History.PlayerSamplesConfiguration{
-		Version: 1, Retention: input.Retention,
-	})
-	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "history_retention_apply_failed", err.Error())
+	if input.RecordingIntervalSeconds != nil &&
+		!History.ValidPlayerSamplesRecordingIntervalSeconds(*input.RecordingIntervalSeconds) {
+		writeError(writer, http.StatusUnprocessableEntity, "history_recording_interval_invalid", "Unknown My Stats recording interval")
 		return
 	}
 
 	server.playerHistoryRetentionMu.Lock()
 	defer server.playerHistoryRetentionMu.Unlock()
+	requestedSnapshot := server.config.Configuration.Snapshot()
+	requestedPolicy := playerSamplesRetentionPolicyForSnapshot(requestedSnapshot, server.config.BackgroundOnly)
+	requestedRetention := requestedPolicy.Configured
+	if input.Retention != nil {
+		requestedRetention = *input.Retention
+	}
+	requestedIntervalSeconds := requestedPolicy.RecordingIntervalSeconds
+	if input.RecordingIntervalSeconds != nil {
+		requestedIntervalSeconds = *input.RecordingIntervalSeconds
+	}
+	rawConfiguration, err := json.Marshal(History.PlayerSamplesConfiguration{
+		Version:                  1,
+		Retention:                requestedRetention,
+		RecordingIntervalSeconds: requestedIntervalSeconds,
+	})
+	if err != nil {
+		writeError(writer, http.StatusInternalServerError, "history_retention_apply_failed", err.Error())
+		return
+	}
 	_, err = server.config.Configuration.UpdateConditional(
 		History.PlayerSamplesConfigurationSection,
 		rawConfiguration,
@@ -129,11 +164,14 @@ func (server *Server) handlePlayerTrackerRetentionApply(writer http.ResponseWrit
 	var currentSnapshot Configuration.Snapshot
 	var currentPolicy History.PlayerSamplesRetentionPolicy
 	for attempt := 0; attempt < 3; attempt++ {
-		report, err = server.config.History.CompactPlayerSamplesWithResolvedRetention(
+		var ran bool
+		report, ran, err = server.config.History.CompactPlayerSamplesIfDueResolvedPolicy(
 			time.Now().UTC(),
-			func() History.PlayerSamplesRetention {
+			func() History.PlayerSamplesStoragePolicy {
 				snapshot := server.config.Configuration.Snapshot()
-				return playerSamplesRetentionPolicyForSnapshot(snapshot, server.config.BackgroundOnly).Effective
+				return History.PlayerSamplesStoragePolicyFromRetentionPolicy(
+					playerSamplesRetentionPolicyForSnapshot(snapshot, server.config.BackgroundOnly),
+				)
 			},
 		)
 		if err != nil {
@@ -144,18 +182,32 @@ func (server *Server) handlePlayerTrackerRetentionApply(writer http.ResponseWrit
 		// writer changed the policy during compaction, retry before acknowledging.
 		currentSnapshot = server.config.Configuration.Snapshot()
 		currentPolicy = playerSamplesRetentionPolicyForSnapshot(currentSnapshot, server.config.BackgroundOnly)
-		if currentPolicy.Configured != input.Retention {
-			_, _ = server.config.History.CompactPlayerSamplesWithResolvedRetention(
+		if !ran {
+			observedAt := time.Now().UTC()
+			report = History.PlayerSamplesRetentionReport{
+				Retention:                currentPolicy.Effective,
+				RecordingIntervalSeconds: currentPolicy.RecordingIntervalSeconds,
+				StartedAt:                observedAt,
+				FinishedAt:               observedAt,
+				Complete:                 true,
+			}
+		}
+		if currentPolicy.Configured != requestedRetention ||
+			currentPolicy.RecordingIntervalSeconds != requestedIntervalSeconds {
+			_, _ = server.config.History.CompactPlayerSamplesWithResolvedPolicy(
 				time.Now().UTC(),
-				func() History.PlayerSamplesRetention {
+				func() History.PlayerSamplesStoragePolicy {
 					snapshot := server.config.Configuration.Snapshot()
-					return playerSamplesRetentionPolicyForSnapshot(snapshot, server.config.BackgroundOnly).Effective
+					return History.PlayerSamplesStoragePolicyFromRetentionPolicy(
+						playerSamplesRetentionPolicyForSnapshot(snapshot, server.config.BackgroundOnly),
+					)
 				},
 			)
-			writeError(writer, http.StatusConflict, "history_retention_conflict", "My Stats retention changed while it was being applied")
+			writeError(writer, http.StatusConflict, "history_retention_conflict", "My Stats storage policy changed while it was being applied")
 			return
 		}
-		if report.Retention == currentPolicy.Effective {
+		if report.Retention == currentPolicy.Effective &&
+			report.RecordingIntervalSeconds == currentPolicy.RecordingIntervalSeconds {
 			break
 		}
 		if attempt == 2 {
@@ -164,6 +216,7 @@ func (server *Server) handlePlayerTrackerRetentionApply(writer http.ResponseWrit
 		}
 	}
 	writer.Header().Set("Cache-Control", "no-store")
+	currentPolicy = server.enrichPlayerSamplesRetentionPolicy(currentPolicy)
 	writeJSON(writer, http.StatusOK, playerSamplesRetentionApplyResponse{
 		Policy: currentPolicy,
 		Report: report,
@@ -175,6 +228,25 @@ func (server *Server) playerSamplesRetentionPolicy() History.PlayerSamplesRetent
 		return History.ResolvePlayerSamplesRetention(nil, server != nil && server.config.BackgroundOnly)
 	}
 	return playerSamplesRetentionPolicyForSnapshot(server.config.Configuration.Snapshot(), server.config.BackgroundOnly)
+}
+
+func (server *Server) playerSamplesRetentionPolicyWithStorage() History.PlayerSamplesRetentionPolicy {
+	return server.enrichPlayerSamplesRetentionPolicy(server.playerSamplesRetentionPolicy())
+}
+
+func (server *Server) enrichPlayerSamplesRetentionPolicy(
+	policy History.PlayerSamplesRetentionPolicy,
+) History.PlayerSamplesRetentionPolicy {
+	if server == nil || server.config.History == nil {
+		return policy
+	}
+	current := History.PlayerSample{}
+	if server.config.State != nil {
+		current = History.NewPlayerSample(server.config.State.ReadOnlyView(), server.config.GameData)
+	}
+	estimate, _ := server.config.History.EstimatePlayerSamplesStorage(current)
+	policy.Storage = estimate
+	return policy
 }
 
 func playerSamplesRetentionPolicyForSnapshot(

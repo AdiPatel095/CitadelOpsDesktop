@@ -13,7 +13,11 @@ const compiled = ts.transpileModule(source, {
   fileName: sourceUrl.pathname,
 });
 const compiledUrl = `data:text/javascript;base64,${Buffer.from(compiled.outputText).toString('base64')}`;
-const { normalizeStormSessionRanking } = await import(compiledUrl);
+const {
+  isOriginalStormRanking,
+  normalizeStormSessionRanking,
+  stormGlobalLeagueId,
+} = await import(compiledUrl);
 
 const row = (overrides) => ({
   worldId: 'test-world', occurrenceId: 'run-1', eventId: 102, eventKey: 'storm-islands',
@@ -37,8 +41,8 @@ test('rebuilds malformed Storm ranks from final scores', () => {
 
 test('preserves a score-consistent Storm ranking', () => {
   const input = [
-    row({ playerId: 1, playerName: 'Top', rank: 1, score: 100 }),
-    row({ playerId: 2, playerName: 'Next', rank: 2, score: 50 }),
+    row({ leagueId: stormGlobalLeagueId, playerId: 1, playerName: 'Top', rank: 1, score: 100 }),
+    row({ leagueId: stormGlobalLeagueId, playerId: 2, playerName: 'Next', rank: 2, score: 50 }),
   ];
   assert.deepEqual(normalizeStormSessionRanking(102, input), input);
 });
@@ -57,10 +61,15 @@ test('does not invent ranks for an incomplete Storm board', () => {
     row({ playerId: 2, playerName: 'Top', rank: 1, score: 100 }),
     row({ playerId: 3, playerName: 'Unknown', rank: 1, scoreKnown: false }),
   ];
-  assert.deepEqual(normalizeStormSessionRanking(102, input), input);
+  const result = normalizeStormSessionRanking(102, input);
+  assert.deepEqual(result.map(({ playerId, rank, leagueId }) => [playerId, rank, leagueId]), [
+    [1, 1, stormGlobalLeagueId],
+    [2, 1, stormGlobalLeagueId],
+    [3, 1, stormGlobalLeagueId],
+  ]);
 });
 
-test('normalizes malformed boards without changing valid sibling leagues', () => {
+test('collapses false Storm leagues into one global ranking', () => {
   const result = normalizeStormSessionRanking(102, [
     row({ leagueId: 1, playerId: 5, playerName: 'Low', rank: 1, score: 10 }),
     row({ leagueId: 1, playerId: 4, playerName: 'Top', rank: 1, score: 100 }),
@@ -68,11 +77,45 @@ test('normalizes malformed boards without changing valid sibling leagues', () =>
     row({ leagueId: 2, playerId: 8, playerName: 'Other Next', rank: 2, score: 40 }),
   ]);
   assert.deepEqual(result.map(({ leagueId, playerId, rank }) => [leagueId, playerId, rank]), [
-    [1, 5, 2],
-    [1, 4, 1],
-    [2, 7, 1],
-    [2, 8, 2],
+    [stormGlobalLeagueId, 5, 4],
+    [stormGlobalLeagueId, 4, 1],
+    [stormGlobalLeagueId, 7, 2],
+    [stormGlobalLeagueId, 8, 3],
   ]);
+});
+
+test('deduplicates legacy Storm league rows by newest player observation', () => {
+  const result = normalizeStormSessionRanking(102, [
+    row({ leagueId: 1, playerId: 9, rank: 1, score: 50, observedAt: '2026-08-25T00:00:00Z' }),
+    row({ leagueId: 2, boardKey: 'legacy', playerId: 9, rank: 1, score: 75, observedAt: '2026-08-26T00:00:00Z' }),
+    row({ leagueId: 1, playerId: 10, rank: 1, score: 100 }),
+  ]);
+  assert.equal(result.length, 2);
+  assert.deepEqual(result.map(({ playerId, leagueId, score, rank, boardKey }) => (
+    [playerId, leagueId, score, rank, boardKey]
+  )), [
+    [9, stormGlobalLeagueId, 75, 2, undefined],
+    [10, stormGlobalLeagueId, 100, 1, undefined],
+  ]);
+});
+
+test('does not use a better wire rank to replace an equal Storm cargo metric', () => {
+  const result = normalizeStormSessionRanking(102, [
+    row({ leagueId: 1, playerId: 9, playerName: 'First metric', rank: 99, score: 75 }),
+    row({ leagueId: 2, playerId: 9, playerName: 'Rank-only candidate', rank: 1, score: 75 }),
+    row({ leagueId: 1, playerId: 10, playerName: 'Leader', rank: 50, score: 100 }),
+  ]);
+  assert.equal(result.find(({ playerId }) => playerId === 9)?.playerName, 'First metric');
+  assert.deepEqual(
+    [...result].sort((left, right) => left.rank - right.rank).map(({ playerId, rank }) => [playerId, rank]),
+    [[10, 1], [9, 2]],
+  );
+});
+
+test('recognizes only original Storm list 13 as un-leagued', () => {
+  assert.equal(isOriginalStormRanking(102, 13), true);
+  assert.equal(isOriginalStormRanking(102, 12), false);
+  assert.equal(isOriginalStormRanking(89, 13), false);
 });
 
 test('breaks equal-score ties by stable player identity', () => {

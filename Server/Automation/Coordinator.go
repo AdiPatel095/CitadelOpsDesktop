@@ -857,6 +857,14 @@ func (coordinator *Coordinator) recordReceipt(result operationResult) {
 			current.Status = "gated"
 			current.Detail = gate.detail
 			current.LastError = ""
+		} else if failure, laneOnly := operationResultLaneStatusFailure(result); laneOnly {
+			current.Status = "gated"
+			current.Detail = strings.TrimSpace(failure.Explanation)
+			if recovery := strings.TrimSpace(failure.Recovery); recovery != "" &&
+				!strings.EqualFold(recovery, current.Detail) {
+				current.Detail = strings.TrimSpace(current.Detail + " " + recovery)
+			}
+			current.LastError = ""
 		} else {
 			current.Status = "error"
 			current.Detail = "Automation operation failed"
@@ -886,6 +894,21 @@ func (coordinator *Coordinator) recordTroopAvailabilityGate(id string, gate troo
 		current.LastError = ""
 		return current
 	})
+}
+
+func operationResultLaneStatusFailure(result operationResult) (Intent.FailurePresentation, bool) {
+	receipt := result.receipt
+	if result.followUp != nil && result.followUp.Status != Intent.StatusSucceeded {
+		receipt = *result.followUp
+	}
+	if result.failureFallback != nil && result.failureFallback.Status != Intent.StatusSucceeded {
+		receipt = *result.failureFallback
+	}
+	if receipt.Status != Intent.StatusFailed || receipt.Failure == nil || receipt.Failure.Toast ||
+		receipt.Failure.Severity != Intent.FailureSeverityWarning {
+		return Intent.FailurePresentation{}, false
+	}
+	return *receipt.Failure, true
 }
 
 func operationResultSucceeded(result operationResult) bool {

@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icons } from './Icons';
-import { Notifications, type AppNotification } from './Notifications';
-
-const ALERT_DURATION_MS = 5000;
+import { Notifications, notificationDurationMs, type AppNotification } from './Notifications';
 
 export const Alerts = () => {
   const [alerts, setAlerts] = useState<AppNotification[]>([]);
@@ -18,9 +16,11 @@ export const Alerts = () => {
     <div className="fixed top-24 right-6 z-50 flex w-96 max-w-[calc(100vw-3rem)] flex-col gap-3 pointer-events-none">
       {alerts.map((alert) => (
         <AlertItem
-          key={alert.id}
+          key={`${alert.id}-${alert.revision}`}
           alert={alert}
-          onDismiss={() => setAlerts((current) => current.filter((item) => item.id !== alert.id))}
+          onDismiss={() => setAlerts((current) => current.filter((item) => (
+            item.id !== alert.id || item.revision !== alert.revision
+          )))}
         />
       ))}
     </div>
@@ -29,19 +29,25 @@ export const Alerts = () => {
 
 const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: () => void }) => {
   const [isExiting, setIsExiting] = useState(false);
+  const exitTimer = useRef<number | null>(null);
 
   const handleDismiss = () => {
+    if (exitTimer.current != null) return;
     setIsExiting(true);
-    window.setTimeout(onDismiss, 300);
+    exitTimer.current = window.setTimeout(onDismiss, 300);
   };
+
+  useEffect(() => () => {
+    if (exitTimer.current != null) window.clearTimeout(exitTimer.current);
+  }, []);
 
   useEffect(() => {
     if (alert.persistent) return;
-    const timer = window.setTimeout(handleDismiss, ALERT_DURATION_MS);
+    const timer = window.setTimeout(handleDismiss, notificationDurationMs(alert.category));
     return () => window.clearTimeout(timer);
     // The timer intentionally starts only when this notification is mounted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alert.id, alert.persistent]);
+  }, [alert.category, alert.id, alert.persistent, alert.revision]);
 
   const style = alertStyles(alert.category);
   const hasLines = Boolean(alert.lines?.length);

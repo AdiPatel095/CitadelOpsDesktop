@@ -172,9 +172,13 @@ func (server *Server) handleWorldIntelligenceRankings(writer http.ResponseWriter
 		return
 	}
 	metric := strings.TrimSpace(request.URL.Query().Get("metric"))
+	maximum := 250
+	if entityType == "players" && metric == "public:storm-cargo-points" {
+		maximum = 5_000
+	}
 	result, err := server.config.WorldIntel.Rankings(
 		request.Context(), request.URL.Query().Get("worldId"), entityType, metric,
-		queryLimit(request, 100, 250),
+		queryLimit(request, 100, maximum),
 	)
 	if err != nil {
 		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())

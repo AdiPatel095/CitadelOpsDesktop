@@ -34,10 +34,18 @@ func (engine *Engine) humanizeReceiptIdentifiers(receipt Receipt) Receipt {
 	labels := engine.identifierLabels()
 	if receipt.Error == "" {
 		receipt.RawError = ""
+		receipt.Failure = nil
 	} else if receipt.RawError == "" {
 		receipt.RawError = receipt.Error
 	}
 	receipt.Error = labels.Humanize(receipt.Error)
+	if receipt.Failure != nil {
+		failure := *receipt.Failure
+		failure.Message = labels.Humanize(failure.Message)
+		failure.Explanation = labels.Humanize(failure.Explanation)
+		failure.Recovery = labels.Humanize(failure.Recovery)
+		receipt.Failure = &failure
+	}
 	if receipt.Plan != nil {
 		plan := *receipt.Plan
 		plan.Summary = labels.Humanize(plan.Summary)

@@ -75,8 +75,7 @@ func (observer *stormMapBurstTestObserver) watcherCount() int {
 	return len(observer.watchers)
 }
 
-func (observer *stormMapBurstTestObserver) deliver(responseToken string, ingressID uint64) {
-	code := 0
+func (observer *stormMapBurstTestObserver) deliver(responseToken string, ingressID uint64, code int) {
 	frame := Protocol.CommittedFrame{
 		Frame: Protocol.Frame{
 			Direction: Protocol.DirectionInbound, Opcode: "gaa", ResponseCode: &code,
@@ -98,6 +97,7 @@ type stormMapBurstTestSender struct {
 	watchersAtFirstSend int
 	metadata            []Outbound.Metadata
 	frames              []Protocol.Frame
+	responseCode        int
 }
 
 func (*stormMapBurstTestSender) CorrelatesResponses() bool { return true }
@@ -118,7 +118,7 @@ func (sender *stormMapBurstTestSender) Send(ctx context.Context, payload []byte)
 	sender.metadata = append(sender.metadata, Outbound.MetadataFromContext(ctx))
 	if len(sender.frames) == sender.expectedSends {
 		for index := len(sender.metadata) - 1; index >= 0; index-- {
-			sender.observer.deliver(sender.metadata[index].ResponseToken, uint64(index+1))
+			sender.observer.deliver(sender.metadata[index].ResponseToken, uint64(index+1), sender.responseCode)
 		}
 	}
 	return nil
@@ -404,7 +404,7 @@ func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
 		OperationID: "storm-burst-test", Actor: "automation:autoStorm",
 	})
 	if err := runStormMapGAABurst(
-		ctx, sender, observer, stormIntentKingdomID, windows, stormMapBurstResponseTimeout,
+		ctx, sender, observer, nil, stormIntentKingdomID, windows, stormMapBurstResponseTimeout,
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -437,6 +437,33 @@ func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
 	observer.mu.Unlock()
 	if len(waited) != 3 || waited[0] != 1 || waited[1] != 2 || waited[2] != 3 {
 		t.Fatalf("committed response slots = %v, want [1 2 3]", waited)
+	}
+}
+
+func TestStormMapGAABurstPreservesCatalogResponseCodeMeaning(t *testing.T) {
+	language, err := GameData.DecodeLanguage(
+		[]byte(`{"errorCode_147":"This map request is already complete."}`),
+		GameData.LanguageMetadata{Language: "en"},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	observer := newStormMapBurstTestObserver()
+	sender := &stormMapBurstTestSender{observer: observer, expectedSends: 1, responseCode: 147}
+	err = runStormMapGAABurst(
+		Outbound.WithMetadata(t.Context(), Outbound.Metadata{OperationID: "storm-burst-rejected"}),
+		sender,
+		observer,
+		language,
+		stormIntentKingdomID,
+		[]towerMapWindow{{X1: 0, Y1: 0, X2: 100, Y2: 100}},
+		stormMapBurstResponseTimeout,
+	)
+	var responseError *Intent.ResponseCodeError
+	if !errors.As(err, &responseError) || responseError.Meaning.Code != 147 ||
+		responseError.Meaning.Source != GameData.ResponseCodeOfficial ||
+		responseError.Meaning.Message != "This map request is already complete." {
+		t.Fatalf("Storm burst response error = %v (%#v)", err, responseError)
 	}
 }
 

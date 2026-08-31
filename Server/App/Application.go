@@ -426,10 +426,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	application.Reports = Reports.NewManagerWithCloudClient(
 		state, history, intents, config.ReportsCloudClient, reportStore,
 	)
-	application.BattleResearch = Reports.NewBattleResearchManager(
-		state, configuration, gameData, intents, ingest, reportStore, application.Reports.CloudClient(),
-	)
-	application.Reports.SetArchiveObserver(application.BattleResearch)
+	// Experimental Battle Research is intentionally no longer composed. Keep
+	// the implementation and existing local trial rows intact for rollback,
+	// while ensuring old saved consent cannot trigger spies or uploads.
 	application.API = API.NewServer(API.Config{
 		Version: Version, BuildRevision: BuildRevision, BuildID: BuildID,
 		State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
@@ -516,7 +515,6 @@ func (application *Application) start(ctx context.Context) {
 	go application.runMovementClock(ctx)
 	go application.Automation.Run(ctx)
 	go application.Reports.Run(ctx)
-	go application.BattleResearch.Run(ctx)
 	go application.Scheduler.Run(ctx)
 }
 
@@ -740,46 +738,50 @@ func (application *Application) capturePlayerHistory(ctx context.Context) {
 	defer unsubscribe()
 	configurationEvents, unsubscribeConfiguration := application.Configuration.Subscribe(8)
 	defer unsubscribeConfiguration()
-	ticker := time.NewTicker(time.Minute)
+	initialPolicy := application.playerSamplesRetentionPolicy()
+	ticker := time.NewTicker(History.PlayerSamplesRecordingIntervalDuration(initialPolicy.RecordingIntervalSeconds))
 	defer ticker.Stop()
 	var debounce *time.Timer
 	var debounceChannel <-chan time.Time
 	lastCaptured := time.Time{}
-	resolveRetention := func() History.PlayerSamplesRetention {
-		return application.playerSamplesRetentionPolicy().Effective
+	resolvePolicy := func() History.PlayerSamplesStoragePolicy {
+		return History.PlayerSamplesStoragePolicyFromRetentionPolicy(application.playerSamplesRetentionPolicy())
 	}
 	compact := func(force bool) {
 		if force {
-			if _, err := application.History.CompactPlayerSamplesWithResolvedRetention(time.Now().UTC(), resolveRetention); err != nil {
+			if _, err := application.History.CompactPlayerSamplesWithResolvedPolicy(time.Now().UTC(), resolvePolicy); err != nil {
 				log.Printf("player history retention: %v", err)
 			}
 			return
 		}
-		if _, ran, err := application.History.CompactPlayerSamplesIfDueResolved(time.Now().UTC(), resolveRetention); ran && err != nil {
+		if _, ran, err := application.History.CompactPlayerSamplesIfDueResolvedPolicy(time.Now().UTC(), resolvePolicy); ran && err != nil {
 			log.Printf("player history retention: %v", err)
 		}
 	}
 	capture := func() {
 		policy := application.playerSamplesRetentionPolicy()
 		if policy.Effective == History.PlayerSamplesRetentionNone {
+			lastCaptured = time.Now().UTC()
 			return
 		}
 		snapshot := application.State.ReadOnlyView()
-		if snapshot.Player.ID == 0 || time.Since(lastCaptured) < 55*time.Second {
+		if snapshot.Player.ID == 0 {
 			return
 		}
 		observedAt := time.Now().UTC()
-		appended, _, err := application.History.CapturePlayerSampleWithRetention(
+		_, _, err := application.History.CapturePlayerSampleWithPolicy(
 			History.NewPlayerSampleAt(snapshot, application.GameData, observedAt),
 			observedAt,
-			policy.Effective,
+			History.PlayerSamplesStoragePolicyFromRetentionPolicy(policy),
 		)
 		if err != nil {
 			log.Printf("player history capture: %v", err)
+			return
 		}
-		if appended {
-			lastCaptured = observedAt
-		}
+		// A restart in an already-recorded bucket is still a completed attempt;
+		// ticker-driven capture owns subsequent buckets without a state-event
+		// retry storm.
+		lastCaptured = observedAt
 	}
 	// Apply a saved reduction even while the game is logged out and no player
 	// state is available. In particular, "none" clears the collection without
@@ -807,7 +809,9 @@ func (application *Application) capturePlayerHistory(ctx context.Context) {
 			debounceChannel = nil
 		case event := <-configurationEvents:
 			if event.Gap || event.Section == History.PlayerSamplesConfigurationSection {
-				compact(true)
+				policy := application.playerSamplesRetentionPolicy()
+				ticker.Reset(History.PlayerSamplesRecordingIntervalDuration(policy.RecordingIntervalSeconds))
+				compact(false)
 				capture()
 			}
 		case <-ticker.C:

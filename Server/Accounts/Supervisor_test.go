@@ -3,6 +3,7 @@ package Accounts
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,8 +13,10 @@ import (
 	"CitadelDesktop/Server/API"
 	"CitadelDesktop/Server/App"
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
+	"CitadelDesktop/Server/WorldIntel"
 	"github.com/gorilla/websocket"
 )
 
@@ -205,6 +208,150 @@ func TestTenantShardServesPersistedTablesAndSettingsWithoutGameSession(t *testin
 	}
 	if value, ok := application.Configuration.Section("scheduler"); !ok || !strings.Contains(string(value), `"minAttackDelay":11`) {
 		t.Fatalf("offline tenant settings were not persisted: %s", value)
+	}
+}
+
+func TestTenantShardAppliesAccountLocalPlayerHistoryRetention(t *testing.T) {
+	supervisor := newTestSupervisor(t)
+	addHostedAccount := func(id string) *App.Application {
+		t.Helper()
+		application, err := supervisor.AddAccount(context.Background(), AccountConfig{
+			ID: id, Transport: Session.NewUnavailableTransport(), BackgroundOnly: true,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return application
+	}
+	alpha := addHostedAccount("alpha")
+	bravo := addHostedAccount("bravo")
+	server := httptest.NewServer(supervisor.Handler(testAuthenticator(), nil))
+	defer server.Close()
+
+	type retentionApplyResponse struct {
+		Policy History.PlayerSamplesRetentionPolicy `json:"policy"`
+	}
+	request := func(accountID, method, path, body string) *http.Response {
+		t.Helper()
+		httpRequest, err := http.NewRequest(method, server.URL+"/accounts/"+accountID+path, strings.NewReader(body))
+		if err != nil {
+			t.Fatal(err)
+		}
+		httpRequest.Header.Set("X-Test-Account", accountID)
+		response, err := http.DefaultClient.Do(httpRequest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return response
+	}
+	readPolicy := func(accountID string) History.PlayerSamplesRetentionPolicy {
+		t.Helper()
+		response := request(accountID, http.MethodGet, "/api/v2/history/player-tracker/retention", "")
+		defer response.Body.Close()
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("%s retention GET = %d", accountID, response.StatusCode)
+		}
+		var policy History.PlayerSamplesRetentionPolicy
+		if err := json.NewDecoder(response.Body).Decode(&policy); err != nil {
+			t.Fatal(err)
+		}
+		return policy
+	}
+
+	alphaPolicy := readPolicy("alpha")
+	if !alphaPolicy.Hosted || alphaPolicy.Maximum != History.PlayerSamplesRetention30Days {
+		t.Fatalf("hosted alpha policy = %+v", alphaPolicy)
+	}
+	encoded, err := json.Marshal(map[string]any{
+		"retention": History.PlayerSamplesRetention1Year, "recordingIntervalSeconds": 300,
+		"expectedRevision": alphaPolicy.Revision,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := request("alpha", http.MethodPost, "/api/v2/history/player-tracker/retention/apply", string(encoded))
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		payload, _ := io.ReadAll(response.Body)
+		t.Fatalf("hosted alpha retention apply = %d: %s", response.StatusCode, payload)
+	}
+	var applied retentionApplyResponse
+	if err := json.NewDecoder(response.Body).Decode(&applied); err != nil {
+		t.Fatal(err)
+	}
+	if applied.Policy.Configured != History.PlayerSamplesRetention1Year ||
+		applied.Policy.Effective != History.PlayerSamplesRetention30Days || !applied.Policy.Hosted ||
+		applied.Policy.RecordingIntervalSeconds != 300 {
+		t.Fatalf("hosted alpha applied policy = %+v", applied.Policy)
+	}
+	if current := readPolicy("bravo"); current.Configured != History.PlayerSamplesRetention30Days ||
+		current.RecordingIntervalSeconds != 3600 {
+		t.Fatalf("alpha retention leaked to bravo: %+v", current)
+	}
+	alphaRaw, ok := alpha.Configuration.Section(History.PlayerSamplesConfigurationSection)
+	if !ok || !strings.Contains(string(alphaRaw), `"retention":"1y"`) ||
+		!strings.Contains(string(alphaRaw), `"recordingIntervalSeconds":300`) {
+		t.Fatalf("alpha retention was not persisted locally: %s", alphaRaw)
+	}
+	if bravoRaw, ok := bravo.Configuration.Section(History.PlayerSamplesConfigurationSection); ok && strings.Contains(string(bravoRaw), `"retention":"1y"`) {
+		t.Fatalf("alpha retention persisted into bravo: %s", bravoRaw)
+	}
+}
+
+func TestTenantShardProxiesWorldIntelligenceSubscriptions(t *testing.T) {
+	occurrenceID := strings.Repeat("c", 64)
+	upstream := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Query().Get("worldId") != "world.example" {
+			t.Errorf("upstream world id = %q", request.URL.Query().Get("worldId"))
+		}
+		writer.Header().Set("Content-Type", "text/event-stream")
+		switch request.URL.Path {
+		case "/v1/subscribe":
+			_, _ = writer.Write([]byte("id: 12\nevent: world-intel.update\ndata: {\"revision\":12}\n\n"))
+		case "/v1/event-runs/" + occurrenceID + "/subscribe":
+			_, _ = writer.Write([]byte("id: 13\nevent: world-intel.leaderboard.snapshot\ndata: {\"revision\":13,\"complete\":true,\"run\":{},\"entries\":[]}\n\n"))
+		default:
+			http.NotFound(writer, request)
+		}
+	}))
+	defer upstream.Close()
+
+	supervisor := newTestSupervisor(t)
+	supervisor.worldIntel = WorldIntel.NewCloudClient(WorldIntel.ClientConfig{
+		Client: upstream.Client(), BaseURL: upstream.URL + "/v1", ClientVersion: "test",
+	})
+	addTestAccount(t, supervisor, "alpha")
+	server := httptest.NewServer(supervisor.Handler(testAuthenticator(), nil))
+	defer server.Close()
+
+	tests := []struct {
+		path  string
+		event string
+	}{
+		{path: "/api/v2/world-intelligence/subscribe?worldId=world.example", event: "world-intel.update"},
+		{path: "/api/v2/world-intelligence/event-runs/" + occurrenceID + "/subscribe?worldId=world.example", event: "world-intel.leaderboard.snapshot"},
+	}
+	for _, test := range tests {
+		request, err := http.NewRequest(http.MethodGet, server.URL+"/accounts/alpha"+test.path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		request.Header.Set("X-Test-Account", "alpha")
+		response, err := http.DefaultClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, readErr := io.ReadAll(response.Body)
+		response.Body.Close()
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+		if response.StatusCode != http.StatusOK || !strings.HasPrefix(response.Header.Get("Content-Type"), "text/event-stream") {
+			t.Fatalf("hosted subscription %s = %d %q", test.path, response.StatusCode, response.Header.Get("Content-Type"))
+		}
+		if !strings.Contains(string(body), test.event) {
+			t.Fatalf("hosted subscription %s body = %q", test.path, body)
+		}
 	}
 }
 

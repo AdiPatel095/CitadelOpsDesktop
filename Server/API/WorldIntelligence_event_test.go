@@ -33,6 +33,11 @@ func TestWorldIntelligenceEventRoutesProxyBackendContract(t *testing.T) {
 				t.Errorf("player event query = %q", request.URL.RawQuery)
 			}
 			_ = json.NewEncoder(writer).Encode(WorldIntel.PlayerEventScoreResponse{WorldID: "world.example", PlayerID: 7, History: []WorldIntel.EventScoreObservation{{PlayerID: 7, Rank: 3, ScoreKnown: false}}})
+		case "/v1/rankings/players":
+			if request.URL.Query().Get("metric") != "public:storm-cargo-points" || request.URL.Query().Get("limit") != "5000" {
+				t.Errorf("Storm metric query = %q", request.URL.RawQuery)
+			}
+			_ = json.NewEncoder(writer).Encode(WorldIntel.RankingResponse{WorldID: "world.example", Type: "players", Metric: "public:storm-cargo-points", Entries: []WorldIntel.RankingEntry{}})
 		default:
 			http.NotFound(writer, request)
 		}
@@ -51,6 +56,7 @@ func TestWorldIntelligenceEventRoutesProxyBackendContract(t *testing.T) {
 		{name: "event runs", path: "/api/v2/world-intelligence/event-runs?worldId=https%3A%2F%2FWORLD.EXAMPLE%2Fsocket&eventKey=Nomad-Invasion&limit=999"},
 		{name: "run rankings", path: "/api/v2/world-intelligence/event-runs/" + occurrenceID + "/rankings?worldId=world.example&listType=47&leagueId=-1&limit=9999"},
 		{name: "player event history", path: "/api/v2/world-intelligence/players/7/event-scores?worldId=world.example&eventKey=Nomad-Invasion&occurrenceId=" + occurrenceID + "&limit=9999"},
+		{name: "full Storm metrics", path: "/api/v2/world-intelligence/rankings/players?worldId=world.example&metric=public%3Astorm-cargo-points&limit=9999"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

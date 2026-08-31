@@ -1,4 +1,6 @@
-import { configurationBaseURL, configurationFetch, runtimeFetch, runtimeURL } from './RuntimeURL';
+import { configurationBaseURL, configurationFetch, runtimeBasePath, runtimeFetch, runtimeURL } from './RuntimeURL';
+import { isOperationFailureStatus, operationFailureText } from './OperationNotifications';
+import { operationFailureReceiptFromHTTP } from './OperationHTTPFailure';
 import type {
   APIConnectionStatus,
   APIEnvelope,
@@ -72,6 +74,16 @@ export class APIError extends Error {
     this.status = status;
     this.code = code;
   }
+}
+
+export class OperationError extends APIError {
+	readonly receipt: IntentReceipt;
+
+	constructor(receipt: IntentReceipt) {
+		super(operationFailureText(receipt), 422, 'operation_failed');
+		this.name = 'OperationError';
+		this.receipt = receipt;
+	}
 }
 
 export interface ConfigurationUpdateCondition {
@@ -157,6 +169,10 @@ class CitadelClient {
 		return configurationBaseURL();
 	}
 
+	runtimeScope(): string {
+		return runtimeBasePath();
+	}
+
   getState(): Promise<GameStateV2> {
     return this.request<GameStateV2>('/api/v2/state');
   }
@@ -227,15 +243,34 @@ class CitadelClient {
 		});
 	}
 
-	getPlayerHistoryRetention(): Promise<PlayerHistoryRetentionV1> {
-		return this.request<PlayerHistoryRetentionV1>('/api/v2/history/player-tracker/retention', { cache: 'no-store' });
+	getPlayerHistoryRetention(scope = this.runtimeScope()): Promise<PlayerHistoryRetentionV1> {
+		return this.request<PlayerHistoryRetentionV1>(
+			'/api/v2/history/player-tracker/retention',
+			{ cache: 'no-store' },
+			scope,
+		);
 	}
 
-	applyPlayerHistoryRetention(retention: string, expectedRevision: number): Promise<PlayerHistoryRetentionApplyV1> {
+	applyPlayerHistoryRetention(
+		retention: string | undefined,
+		expectedRevision: number,
+		recordingIntervalSecondsOrScope?: number | string,
+		scope = this.runtimeScope(),
+	): Promise<PlayerHistoryRetentionApplyV1> {
+		const recordingIntervalSeconds = typeof recordingIntervalSecondsOrScope === 'number'
+			? recordingIntervalSecondsOrScope
+			: undefined;
+		const resolvedScope = typeof recordingIntervalSecondsOrScope === 'string'
+			? recordingIntervalSecondsOrScope
+			: scope;
 		return this.request<PlayerHistoryRetentionApplyV1>('/api/v2/history/player-tracker/retention/apply', {
 			method: 'POST',
-			body: JSON.stringify({ retention, expectedRevision }),
-		});
+			body: JSON.stringify({
+				...(retention == null ? {} : { retention }),
+				...(recordingIntervalSeconds == null ? {} : { recordingIntervalSeconds }),
+				expectedRevision,
+			}),
+		}, resolvedScope);
 	}
 
   selectBrowser(browser: string, options: SubmitIntentOptions = {}): Promise<IntentReceipt> {
@@ -394,7 +429,7 @@ class CitadelClient {
 		onStatus?: (status: WorldIntelligenceSubscriptionStatus) => void,
 	): () => void {
 		const query = new URLSearchParams({ worldId });
-		const endpoint = this.httpURL(`/api/v2/world-intelligence/subscribe?${query.toString()}`);
+		const endpoint = this.worldIntelligenceURL(`/subscribe?${query.toString()}`);
 		const receive = (event: Event) => {
 			try {
 				const manifest = JSON.parse((event as MessageEvent<string>).data) as WorldIntelligenceUpdateManifestV1;
@@ -417,8 +452,8 @@ class CitadelClient {
 		onStatus?: (status: WorldIntelligenceSubscriptionStatus) => void,
 	): () => void {
 		const query = new URLSearchParams({ worldId: input.worldId });
-		const endpoint = this.httpURL(
-			`/api/v2/world-intelligence/event-runs/${encodeURIComponent(input.occurrenceId)}/subscribe?${query.toString()}`,
+		const endpoint = this.worldIntelligenceURL(
+			`/event-runs/${encodeURIComponent(input.occurrenceId)}/subscribe?${query.toString()}`,
 		);
 		const decode = <T>(event: Event, receive: (value: T) => void) => {
 			try {
@@ -650,7 +685,7 @@ class CitadelClient {
     return this.request<IntentReceipt[]>(`/api/v2/operations?limit=${bounded}`);
   }
 
-  private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  private async request<T>(path: string, init: RequestInit = {}, scope?: string): Promise<T> {
 	const response = await runtimeFetch(path, {
 	  ...init,
 	  headers: {
@@ -658,8 +693,12 @@ class CitadelClient {
         ...(init.body ? { 'Content-Type': 'application/json' } : {}),
         ...init.headers,
       },
-	});
+	}, scope);
 	return this.decodeResponse<T>(response);
+	}
+
+	private worldIntelligenceURL(path: string): string {
+		return new URL(runtimeURL(`/api/v2/world-intelligence${path}`), window.location.origin).toString();
 	}
 
 	private async configurationRequest<T>(path: string, init: RequestInit = {}, scope = this.configurationScope()): Promise<T> {
@@ -677,6 +716,8 @@ class CitadelClient {
 	private async decodeResponse<T>(response: Response): Promise<T> {
     const payload = await response.json().catch(() => null) as unknown;
     if (!response.ok) {
+	  const failedReceipt = operationFailureReceiptFromHTTP(response.status, payload);
+	  if (failedReceipt) throw new OperationError(failedReceipt);
       const structuredError = isRecord(payload) && isRecord(payload.error) ? payload.error : null;
       const receiptError = isRecord(payload) && typeof payload.error === 'string' ? payload.error : null;
       const message = structuredError && typeof structuredError.message === 'string'
@@ -766,9 +807,7 @@ function isTerminalReceipt(receipt: IntentReceipt): boolean {
 }
 
 function finalizeReceipt(receipt: IntentReceipt): IntentReceipt {
-  if (receipt.status === 'failed') {
-    throw new APIError(receipt.error || `Operation ${receipt.id} failed`, 422);
-  }
+  if (isOperationFailureStatus(receipt.status)) throw new OperationError(receipt);
   return receipt;
 }
 

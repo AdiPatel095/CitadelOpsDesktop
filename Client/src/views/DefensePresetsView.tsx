@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { CastleStateV2, DefenseToolSlotV2 } from '../api/Contracts';
 import { useCitadelAPI } from '../api/ApiContext';
+import { OperationError } from '../api/CitadelClient';
 import DefensePresetEditor from '../components/DefensePresetEditor';
 import { Notifications } from '../components/Notifications';
 import ToolImage from '../components/ToolImage';
@@ -182,7 +183,9 @@ const DefensePresetsView: React.FC = () => {
       await refreshState();
       Notifications.success('Defense state refreshed.');
     } catch (error) {
-      Notifications.error(errorMessage(error, 'Could not refresh defense state.'));
+      if (!(error instanceof OperationError)) {
+        Notifications.error(errorMessage(error, 'Could not refresh defense state.'));
+      }
     } finally {
       setRefreshing(false);
     }
@@ -208,7 +211,7 @@ const DefensePresetsView: React.FC = () => {
         wall: cloneDefensePresetDraft(preset).wall,
         moat: cloneDefensePresetDraft(preset).moat,
         ...(preset.keep ? { keep: { ...preset.keep } } : {}),
-      }, { actor: 'ui:defense-presets' });
+      }, { actor: 'ui:defense-presets', notificationId: 'defense-preset-apply' });
       if (receipt.status === 'failed') throw new Error(receipt.error || 'Defense preset apply failed.');
       if (receipt.status === 'cancelled') {
         Notifications.publish({ id: 'defense-preset-apply', category: 'yellow', message: 'Defense preset apply was cancelled.' });
@@ -217,11 +220,13 @@ const DefensePresetsView: React.FC = () => {
         Notifications.publish({ id: 'defense-preset-apply', category: 'green', message: 'Defense preset applied and read back successfully.' });
       }
     } catch (error) {
-      Notifications.publish({
-        id: 'defense-preset-apply',
-        category: 'red',
-        message: errorMessage(error, 'Could not apply defense preset.'),
-      });
+      if (!(error instanceof OperationError)) {
+        Notifications.publish({
+          id: 'defense-preset-apply',
+          category: 'red',
+          message: errorMessage(error, 'Could not apply defense preset.'),
+        });
+      }
     } finally {
       setApplyingID(null);
     }

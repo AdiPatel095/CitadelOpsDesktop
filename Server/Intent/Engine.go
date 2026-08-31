@@ -94,18 +94,18 @@ func (collector *wireCommitCollector) flush(ctx context.Context, observer Observ
 }
 
 type Engine struct {
-	registry    *Registry
-	state       StateReader
-	gameData    GameDataProvider
-	sender      Sender
-	observer    Observer
-	claims      *claimManager
-	admission   *admissionManager
+	registry  *Registry
+	state     StateReader
+	gameData  GameDataProvider
+	sender    Sender
+	observer  Observer
+	claims    *claimManager
+	admission *admissionManager
 	// commanderHolds is set once during composition, before planning begins.
 	commanderHolds CommanderHoldRegistry
 	labelsMu       sync.RWMutex
-	labels      GameData.IdentifierLabels
-	labelsReady bool
+	labels         GameData.IdentifierLabels
+	labelsReady    bool
 
 	mu                sync.RWMutex
 	actions           map[string]Action
@@ -405,7 +405,7 @@ func (engine *Engine) prepare(ctx context.Context, request Request) (*preparedSu
 		now := time.Now().UTC()
 		receipt.Status = StatusFailed
 		receipt.Phase = EffectPhaseCompleted
-		receipt.Error = reserveErr.Error()
+		receipt = engine.withFailure(receipt, reserveErr)
 		receipt.CompletedAt = &now
 		return nil, receipt, true
 	}
@@ -498,7 +498,8 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		}
 		if !expectedRevisionAccepted && request.ExpectedRevision != nil && plannedFrom.Revision != *request.ExpectedRevision {
 			return engine.fail(receipt, fmt.Errorf(
-				"state revision changed: expected %d, current %d",
+				"%w: state revision changed: expected %d, current %d",
+				ErrPlanStale,
 				*request.ExpectedRevision, plannedFrom.Revision,
 			))
 		}
@@ -589,7 +590,8 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		if !expectedRevisionAccepted && request.ExpectedRevision != nil && current.Revision != *request.ExpectedRevision {
 			release()
 			return engine.fail(receipt, fmt.Errorf(
-				"state revision changed while waiting for claims: expected %d, current %d",
+				"%w: state revision changed while waiting for claims: expected %d, current %d",
+				ErrPlanStale,
 				*request.ExpectedRevision, current.Revision,
 			))
 		}
@@ -826,7 +828,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 				receipt.Status = StatusFailed
 			}
 			receipt.Phase = EffectPhaseReconciliationRequired
-			receipt.Error = fmt.Sprintf("persist completed operation: %v", err)
+			receipt = engine.withFailure(receipt, fmt.Errorf("persist completed operation: %w", err))
 			engine.publish(receipt)
 		}
 		return receipt
@@ -910,8 +912,7 @@ func (engine *Engine) pause(receipt Receipt) Receipt {
 func (engine *Engine) persistenceFailure(receipt Receipt, err error) Receipt {
 	receipt.Status = StatusFailed
 	receipt.Phase = EffectPhaseCompleted
-	receipt.RawError = err.Error()
-	receipt.Error = engine.humanizeText(err.Error())
+	receipt = engine.withFailure(receipt, err)
 	now := time.Now().UTC()
 	receipt.CompletedAt = &now
 	engine.publish(receipt)
@@ -1344,7 +1345,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				if !containsInt(step.SuccessCodes, *frame.Frame.ResponseCode) {
 					responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
 					if containsInt(step.StaleCodes, *frame.Frame.ResponseCode) {
-						return exchange, fmt.Errorf("%w: %v", ErrPlanStale, responseErr)
+						return exchange, fmt.Errorf("%w: %w", ErrPlanStale, responseErr)
 					}
 					return exchange, responseErr
 				}
@@ -1530,8 +1531,7 @@ func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 	} else if errors.Is(err, context.Canceled) {
 		receipt.Status = StatusCancelled
 	}
-	receipt.RawError = err.Error()
-	receipt.Error = engine.humanizeText(receipt.RawError)
+	receipt = engine.withFailure(receipt, err)
 	now := time.Now().UTC()
 	receipt.CompletedAt = &now
 	engine.update(receipt)
@@ -1546,8 +1546,7 @@ func (engine *Engine) failAfterProgress(receipt Receipt, err error, completedSte
 		if count > 0 {
 			receipt.Status = StatusPartiallySucceeded
 			receipt.Phase = EffectPhaseReconciliationRequired
-			receipt.RawError = err.Error()
-			receipt.Error = engine.humanizeText(receipt.RawError)
+			receipt = engine.withFailure(receipt, err)
 			now := time.Now().UTC()
 			receipt.CompletedAt = &now
 			engine.update(receipt)
