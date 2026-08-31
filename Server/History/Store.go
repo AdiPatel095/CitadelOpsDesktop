@@ -21,21 +21,27 @@ import (
 const SchemaVersion = 2
 
 const (
-	CollectionPlayerSamples = "PlayerSamples"
-	CollectionSpyReports    = "SpyReports"
-	CollectionBattleReports = "BattleReports"
-
-	PlayerSamplesFullResolutionRetention   = 24 * time.Hour
-	PlayerSamplesHourlyResolutionRetention = 7 * 24 * time.Hour
-	PlayerSamplesHistoryRetention          = 30 * 24 * time.Hour
-	playerSamplesCompactionInterval        = time.Hour
+	CollectionPlayerSamples         = "PlayerSamples"
+	CollectionSpyReports            = "SpyReports"
+	CollectionBattleReports         = "BattleReports"
+	PlayerSamplesHistoryRetention   = 30 * 24 * time.Hour
+	playerSamplesCompactionInterval = 24 * time.Hour
 )
 
 type Store struct {
 	directory                   string
 	mu                          sync.Mutex
 	lastPlayerSamplesCompaction time.Time
-	lastPlayerSamplesRetention  PlayerSamplesRetention
+	lastPlayerSamplesPolicy     PlayerSamplesStoragePolicy
+	lastPlayerSampleBucket      map[State.PlayerID]int64
+	playerSampleIndex           map[State.PlayerID][]playerSampleIndexEntry
+	playerSampleIndexValid      bool
+}
+
+type playerSampleIndexEntry struct {
+	TimestampUnix int64
+	Offset        int64
+	Length        int
 }
 
 type entry struct {
@@ -68,7 +74,7 @@ func Open(dataDir string) (*Store, error) {
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, fmt.Errorf("create history directory: %w", err)
 	}
-	store := &Store{directory: directory}
+	store := &Store{directory: directory, lastPlayerSampleBucket: map[State.PlayerID]int64{}}
 	if _, err := store.migrateLegacyPlayerTracker(filepath.Join(dataDir, "PlayerTracker.json")); err != nil {
 		return nil, fmt.Errorf("migrate legacy player history: %w", err)
 	}
@@ -101,10 +107,24 @@ func (store *Store) CapturePlayerSampleWithRetention(
 	observedAt time.Time,
 	requested PlayerSamplesRetention,
 ) (appended bool, ranCompaction bool, err error) {
+	return store.CapturePlayerSampleWithPolicy(sample, observedAt, PlayerSamplesStoragePolicy{
+		Retention:                requested,
+		RecordingIntervalSeconds: DefaultPlayerSamplesRecordingIntervalSeconds,
+	})
+}
+
+// CapturePlayerSampleWithPolicy stores no more than one recording per player
+// in the configured UTC-aligned interval. The complete policy is checked under
+// the history lock so a stale cadence cannot append after a newer apply.
+func (store *Store) CapturePlayerSampleWithPolicy(
+	sample PlayerSample,
+	observedAt time.Time,
+	requested PlayerSamplesStoragePolicy,
+) (appended bool, ranCompaction bool, err error) {
 	if store == nil {
 		return false, false, fmt.Errorf("history store is unavailable")
 	}
-	requested = NormalizePlayerSamplesRetention(requested)
+	requested = NormalizePlayerSamplesStoragePolicy(requested)
 	path, err := store.collectionPath(CollectionPlayerSamples)
 	if err != nil {
 		return false, false, err
@@ -117,12 +137,25 @@ func (store *Store) CapturePlayerSampleWithRetention(
 
 	store.mu.Lock()
 	defer store.mu.Unlock()
-	if requested == PlayerSamplesRetentionNone || store.lastPlayerSamplesRetention != requested {
+	if requested.Retention == PlayerSamplesRetentionNone || store.lastPlayerSamplesPolicy != requested {
 		return false, false, nil
 	}
-	if err := store.appendLocked(path, CollectionPlayerSamples, line); err != nil {
+	if sample.TimestampUnix <= 0 || sample.PlayerID <= 0 {
+		return false, false, fmt.Errorf("player sample identity and timestamp are required")
+	}
+	bucket := time.Unix(sample.TimestampUnix, 0).UTC().Truncate(
+		PlayerSamplesRecordingIntervalDuration(requested.RecordingIntervalSeconds),
+	).Unix()
+	if store.lastPlayerSampleBucket == nil {
+		store.lastPlayerSampleBucket = map[State.PlayerID]int64{}
+	}
+	if store.lastPlayerSampleBucket[sample.PlayerID] == bucket {
+		return false, false, nil
+	}
+	if err := store.appendPlayerSampleLocked(path, line, sample); err != nil {
 		return false, false, err
 	}
+	store.lastPlayerSampleBucket[sample.PlayerID] = bucket
 	if !store.lastPlayerSamplesCompaction.IsZero() &&
 		observedAt.Sub(store.lastPlayerSamplesCompaction) < playerSamplesCompactionInterval {
 		return true, false, nil
@@ -132,7 +165,7 @@ func (store *Store) CapturePlayerSampleWithRetention(
 		return true, true, err
 	}
 	store.lastPlayerSamplesCompaction = observedAt
-	store.lastPlayerSamplesRetention = requested
+	store.lastPlayerSamplesPolicy = requested
 	return true, true, nil
 }
 
@@ -153,15 +186,101 @@ func encodeHistoryEntry(collection string, value any) ([]byte, error) {
 }
 
 func (store *Store) appendLocked(path, collection string, line []byte) error {
+	_, _, err := store.writeHistoryLineLocked(path, collection, line)
+	if collection == CollectionPlayerSamples {
+		store.invalidatePlayerSampleIndexLocked()
+	}
+	return err
+}
+
+func (store *Store) appendPlayerSampleLocked(path string, line []byte, sample PlayerSample) error {
+	offset, length, err := store.writeHistoryLineLocked(path, CollectionPlayerSamples, line)
+	if err != nil {
+		// The write may have reached the file before a flush or sync failure.
+		// Rebuilding is safer than retaining an index that could omit that row.
+		store.invalidatePlayerSampleIndexLocked()
+		return err
+	}
+	if store.playerSampleIndexValid {
+		if store.playerSampleIndex == nil {
+			store.playerSampleIndex = map[State.PlayerID][]playerSampleIndexEntry{}
+		}
+		store.playerSampleIndex[sample.PlayerID] = append(store.playerSampleIndex[sample.PlayerID], playerSampleIndexEntry{
+			TimestampUnix: sample.TimestampUnix,
+			Offset:        offset,
+			Length:        length,
+		})
+	}
+	return nil
+}
+
+func (store *Store) writeHistoryLineLocked(path, collection string, line []byte) (int64, int, error) {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
-		return fmt.Errorf("open %s history: %w", collection, err)
+		return 0, 0, fmt.Errorf("open %s history: %w", collection, err)
 	}
 	defer file.Close()
-	if _, err := file.Write(append(line, '\n')); err != nil {
-		return fmt.Errorf("append %s history: %w", collection, err)
+	info, err := file.Stat()
+	if err != nil {
+		return 0, 0, fmt.Errorf("stat %s history before append: %w", collection, err)
 	}
-	return file.Sync()
+	if _, err := file.Write(append(line, '\n')); err != nil {
+		return 0, 0, fmt.Errorf("append %s history: %w", collection, err)
+	}
+	if err := file.Sync(); err != nil {
+		return 0, 0, err
+	}
+	return info.Size(), len(line), nil
+}
+
+func (store *Store) invalidatePlayerSampleIndexLocked() {
+	store.playerSampleIndex = nil
+	store.playerSampleIndexValid = false
+}
+
+// ensurePlayerSampleIndexLocked builds a lightweight in-memory offset index.
+// The history payloads remain in JSONL; only timestamps and byte locations are
+// retained here so repeated chart requests do not rescan a potentially large
+// file. The caller must hold store.mu.
+func (store *Store) ensurePlayerSampleIndexLocked(path string) error {
+	if store.playerSampleIndexValid {
+		return nil
+	}
+
+	file, err := os.Open(path)
+	if os.IsNotExist(err) {
+		store.playerSampleIndex = map[State.PlayerID][]playerSampleIndexEntry{}
+		store.playerSampleIndexValid = true
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("open %s history for index: %w", CollectionPlayerSamples, err)
+	}
+	defer file.Close()
+
+	index := map[State.PlayerID][]playerSampleIndexEntry{}
+	offset := int64(0)
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 64*1024), 16*1024*1024)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if playerID, timestampUnix, valid := decodePlayerSampleIndexIdentity(line); valid {
+			index[playerID] = append(index[playerID], playerSampleIndexEntry{
+				TimestampUnix: timestampUnix,
+				Offset:        offset,
+				Length:        len(line),
+			})
+		}
+		// All history writers terminate every JSON object with one newline.
+		offset += int64(len(line) + 1)
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("index %s history: %w", CollectionPlayerSamples, err)
+	}
+
+	store.playerSampleIndex = index
+	store.playerSampleIndexValid = true
+	return nil
 }
 
 func (store *Store) Replace(collection string, values []json.RawMessage) error {
@@ -273,7 +392,15 @@ func (store *Store) replaceLocked(path, collection string, values []json.RawMess
 	if err := temporary.Close(); err != nil {
 		return fmt.Errorf("close compacted %s history: %w", collection, err)
 	}
-	return commitReplacement(temporaryPath, path, collection)
+	if collection == CollectionPlayerSamples {
+		// The cross-platform replacement fallback may move the original before
+		// returning an error, so invalidate offsets before attempting the swap.
+		store.invalidatePlayerSampleIndexLocked()
+	}
+	if err := commitReplacement(temporaryPath, path, collection); err != nil {
+		return err
+	}
+	return nil
 }
 
 func commitReplacement(temporaryPath, path, collection string) error {
@@ -432,18 +559,145 @@ func (store *Store) PlayerSamplesForPlayer(
 	return samples, nil
 }
 
+// PlayerSamplesForPlayerBounded preserves the complete requested time span
+// while bounding the number of rows served to a chart. It starts at the saved
+// recording cadence and doubles the UTC bucket width only when needed, keeping
+// the earliest observation in each bucket plus the newest saved endpoint. Raw
+// JSONL retention is unchanged.
+func (store *Store) PlayerSamplesForPlayerBounded(
+	since time.Time,
+	limit int,
+	playerID State.PlayerID,
+	minimumIntervalSeconds int64,
+) ([]PlayerSample, int64, error) {
+	minimumIntervalSeconds = max(1, minimumIntervalSeconds)
+	if store == nil {
+		return nil, minimumIntervalSeconds, fmt.Errorf("history store is unavailable")
+	}
+	if playerID <= 0 {
+		return []PlayerSample{}, minimumIntervalSeconds, nil
+	}
+	if limit < 1 {
+		limit = 1000
+	}
+	if limit > 100_000 {
+		limit = 100_000
+	}
+	path, err := store.collectionPath(CollectionPlayerSamples)
+	if err != nil {
+		return nil, minimumIntervalSeconds, err
+	}
+
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	if err := store.ensurePlayerSampleIndexLocked(path); err != nil {
+		return nil, minimumIntervalSeconds, err
+	}
+
+	intervalSeconds := minimumIntervalSeconds
+	buckets := map[int64]playerSampleIndexEntry{}
+	latest := playerSampleIndexEntry{}
+	hasLatest := false
+	rebucket := func() {
+		intervalSeconds *= 2
+		next := make(map[int64]playerSampleIndexEntry, min(len(buckets), limit))
+		for _, indexed := range buckets {
+			bucket := indexed.TimestampUnix / intervalSeconds
+			existing, exists := next[bucket]
+			if !exists || indexed.TimestampUnix < existing.TimestampUnix {
+				next[bucket] = indexed
+			}
+		}
+		buckets = next
+	}
+
+	for _, indexed := range store.playerSampleIndex[playerID] {
+		if !since.IsZero() && time.Unix(indexed.TimestampUnix, 0).Before(since) {
+			continue
+		}
+		if !hasLatest || indexed.TimestampUnix > latest.TimestampUnix ||
+			(indexed.TimestampUnix == latest.TimestampUnix && indexed.Offset > latest.Offset) {
+			latest = indexed
+			hasLatest = true
+		}
+		bucket := indexed.TimestampUnix / intervalSeconds
+		existing, exists := buckets[bucket]
+		if !exists || indexed.TimestampUnix < existing.TimestampUnix {
+			buckets[bucket] = indexed
+		}
+		for len(buckets) > limit {
+			rebucket()
+		}
+	}
+	// Keep the newest saved endpoint rather than an earlier observation from
+	// its final display bucket. This makes the bounded response span the full
+	// available history while all preceding buckets retain their earliest row.
+	if hasLatest {
+		buckets[latest.TimestampUnix/intervalSeconds] = latest
+	}
+	if len(buckets) == 0 {
+		return []PlayerSample{}, intervalSeconds, nil
+	}
+
+	selected := make([]playerSampleIndexEntry, 0, len(buckets))
+	for _, indexed := range buckets {
+		selected = append(selected, indexed)
+	}
+	sort.Slice(selected, func(left, right int) bool {
+		if selected[left].TimestampUnix == selected[right].TimestampUnix {
+			return selected[left].Offset < selected[right].Offset
+		}
+		return selected[left].TimestampUnix < selected[right].TimestampUnix
+	})
+
+	file, err := os.Open(path)
+	if err != nil {
+		store.invalidatePlayerSampleIndexLocked()
+		return nil, intervalSeconds, fmt.Errorf("open %s history: %w", CollectionPlayerSamples, err)
+	}
+	defer file.Close()
+
+	samples := make([]PlayerSample, 0, len(selected))
+	for _, indexed := range selected {
+		line := make([]byte, indexed.Length)
+		read, readErr := file.ReadAt(line, indexed.Offset)
+		if readErr != nil && readErr != io.EOF {
+			store.invalidatePlayerSampleIndexLocked()
+			return nil, intervalSeconds, fmt.Errorf("read indexed %s history: %w", CollectionPlayerSamples, readErr)
+		}
+		if read != indexed.Length {
+			store.invalidatePlayerSampleIndexLocked()
+			return nil, intervalSeconds, fmt.Errorf(
+				"read indexed %s history: got %d bytes, want %d",
+				CollectionPlayerSamples, read, indexed.Length,
+			)
+		}
+		sample, valid := decodePlayerSampleLine(line)
+		if !valid || sample.PlayerID != playerID || sample.TimestampUnix != indexed.TimestampUnix {
+			store.invalidatePlayerSampleIndexLocked()
+			return nil, intervalSeconds, fmt.Errorf("read indexed %s history: index no longer matches file", CollectionPlayerSamples)
+		}
+		samples = append(samples, sample)
+	}
+	return samples, intervalSeconds, nil
+}
+
 type PlayerSamplesRetentionReport struct {
-	Retention            PlayerSamplesRetention `json:"retention"`
-	StartedAt            time.Time              `json:"startedAt"`
-	FinishedAt           time.Time              `json:"finishedAt"`
-	FullResolutionCutoff time.Time              `json:"fullResolutionCutoff"`
-	HourlyCutoff         time.Time              `json:"hourlyCutoff"`
-	RetentionCutoff      time.Time              `json:"retentionCutoff,omitempty"`
-	Unlimited            bool                   `json:"unlimited,omitempty"`
-	ScannedRows          int                    `json:"scannedRows"`
-	DeletedRows          int                    `json:"deletedRows"`
-	KeptRows             int                    `json:"keptRows"`
-	Complete             bool                   `json:"complete"`
+	Retention                PlayerSamplesRetention `json:"retention"`
+	RecordingIntervalSeconds int64                  `json:"recordingIntervalSeconds"`
+	StartedAt                time.Time              `json:"startedAt"`
+	FinishedAt               time.Time              `json:"finishedAt"`
+	// Deprecated compatibility fields. The selected cadence now applies across
+	// the retained window, so FullResolutionCutoff is the compaction time and
+	// HourlyCutoff is the finite retention boundary when one exists.
+	FullResolutionCutoff time.Time `json:"fullResolutionCutoff"`
+	HourlyCutoff         time.Time `json:"hourlyCutoff"`
+	RetentionCutoff      time.Time `json:"retentionCutoff,omitempty"`
+	Unlimited            bool      `json:"unlimited,omitempty"`
+	ScannedRows          int       `json:"scannedRows"`
+	DeletedRows          int       `json:"deletedRows"`
+	KeptRows             int       `json:"keptRows"`
+	Complete             bool      `json:"complete"`
 }
 
 type playerSampleBucket struct {
@@ -462,17 +716,26 @@ func (store *Store) CompactPlayerSamples(now time.Time) (PlayerSamplesRetentionR
 	return store.CompactPlayerSamplesWithRetention(now, PlayerSamplesRetention30Days)
 }
 
-// CompactPlayerSamplesWithRetention preserves every valid sample for 24
-// hours, the earliest sample in each UTC hour through day 7, and the earliest
-// sample in each UTC day for the configured remaining window. Malformed or
-// future-schema lines are copied unchanged unless the user explicitly selected
-// no history, which atomically clears the complete PlayerSamples collection.
+// CompactPlayerSamplesWithRetention preserves the earliest valid sample in
+// every default one-hour UTC bucket throughout the configured window.
+// Malformed or future-schema lines are copied unchanged unless the user
+// explicitly selected no history, which atomically clears the collection.
 func (store *Store) CompactPlayerSamplesWithRetention(
 	now time.Time,
 	retention PlayerSamplesRetention,
 ) (PlayerSamplesRetentionReport, error) {
-	return store.CompactPlayerSamplesWithResolvedRetention(now, func() PlayerSamplesRetention {
-		return retention
+	return store.CompactPlayerSamplesWithPolicy(now, PlayerSamplesStoragePolicy{
+		Retention:                retention,
+		RecordingIntervalSeconds: DefaultPlayerSamplesRecordingIntervalSeconds,
+	})
+}
+
+func (store *Store) CompactPlayerSamplesWithPolicy(
+	now time.Time,
+	policy PlayerSamplesStoragePolicy,
+) (PlayerSamplesRetentionReport, error) {
+	return store.CompactPlayerSamplesWithResolvedPolicy(now, func() PlayerSamplesStoragePolicy {
+		return policy
 	})
 }
 
@@ -484,69 +747,114 @@ func (store *Store) CompactPlayerSamplesWithResolvedRetention(
 	now time.Time,
 	resolve func() PlayerSamplesRetention,
 ) (PlayerSamplesRetentionReport, error) {
+	if resolve == nil {
+		return PlayerSamplesRetentionReport{}, fmt.Errorf("player samples retention resolver is required")
+	}
+	return store.CompactPlayerSamplesWithResolvedPolicy(now, func() PlayerSamplesStoragePolicy {
+		return PlayerSamplesStoragePolicy{
+			Retention:                resolve(),
+			RecordingIntervalSeconds: DefaultPlayerSamplesRecordingIntervalSeconds,
+		}
+	})
+}
+
+func (store *Store) CompactPlayerSamplesWithResolvedPolicy(
+	now time.Time,
+	resolve func() PlayerSamplesStoragePolicy,
+) (PlayerSamplesRetentionReport, error) {
 	if store == nil {
 		return PlayerSamplesRetentionReport{}, fmt.Errorf("history store is unavailable")
 	}
 	if resolve == nil {
-		return PlayerSamplesRetentionReport{}, fmt.Errorf("player samples retention resolver is required")
+		return PlayerSamplesRetentionReport{}, fmt.Errorf("player samples policy resolver is required")
 	}
 	now = normalizeRetentionNow(now)
 	store.mu.Lock()
 	defer store.mu.Unlock()
-	retention := NormalizePlayerSamplesRetention(resolve())
-	report, err := store.compactPlayerSamplesLocked(now, retention)
+	policy := NormalizePlayerSamplesStoragePolicy(resolve())
+	report, err := store.compactPlayerSamplesLocked(now, policy)
 	if err == nil {
 		store.lastPlayerSamplesCompaction = now
-		store.lastPlayerSamplesRetention = retention
+		store.lastPlayerSamplesPolicy = policy
 	}
 	return report, err
 }
 
-// CompactPlayerSamplesIfDue avoids re-reading the JSONL file on every
-// one-minute capture. The first live capture compacts immediately; subsequent
-// passes run at most once per hour.
+// CompactPlayerSamplesIfDue avoids re-reading the JSONL file on every capture
+// attempt. The first live capture compacts immediately; subsequent finite
+// retention passes run at most once per day. Unlimited and disabled policies
+// need no routine age pruning, so they run again only when the policy changes
+// or the process restarts. Policy changes always force an immediate pass.
 func (store *Store) CompactPlayerSamplesIfDue(now time.Time) (PlayerSamplesRetentionReport, bool, error) {
 	return store.CompactPlayerSamplesIfDueWithRetention(now, PlayerSamplesRetention30Days)
 }
 
 // CompactPlayerSamplesIfDueWithRetention runs immediately when the effective
-// policy changes, even if the previous hourly pass was recent. This makes a
+// policy changes, even if the previous maintenance pass was recent. This makes a
 // shorter retention choice (especially no history) take effect at once.
 func (store *Store) CompactPlayerSamplesIfDueWithRetention(
 	now time.Time,
 	retention PlayerSamplesRetention,
 ) (PlayerSamplesRetentionReport, bool, error) {
-	return store.CompactPlayerSamplesIfDueResolved(now, func() PlayerSamplesRetention {
-		return retention
+	return store.CompactPlayerSamplesIfDueWithPolicy(now, PlayerSamplesStoragePolicy{
+		Retention:                retention,
+		RecordingIntervalSeconds: DefaultPlayerSamplesRecordingIntervalSeconds,
+	})
+}
+
+func (store *Store) CompactPlayerSamplesIfDueWithPolicy(
+	now time.Time,
+	policy PlayerSamplesStoragePolicy,
+) (PlayerSamplesRetentionReport, bool, error) {
+	return store.CompactPlayerSamplesIfDueResolvedPolicy(now, func() PlayerSamplesStoragePolicy {
+		return policy
 	})
 }
 
 // CompactPlayerSamplesIfDueResolved is the retry/maintenance form of the
 // resolved policy boundary. Policy mismatches retry immediately; matching
-// policies retain the hourly compaction guard.
+// policies retain the daily compaction guard.
 func (store *Store) CompactPlayerSamplesIfDueResolved(
 	now time.Time,
 	resolve func() PlayerSamplesRetention,
+) (PlayerSamplesRetentionReport, bool, error) {
+	if resolve == nil {
+		return PlayerSamplesRetentionReport{}, false, fmt.Errorf("player samples retention resolver is required")
+	}
+	return store.CompactPlayerSamplesIfDueResolvedPolicy(now, func() PlayerSamplesStoragePolicy {
+		return PlayerSamplesStoragePolicy{
+			Retention:                resolve(),
+			RecordingIntervalSeconds: DefaultPlayerSamplesRecordingIntervalSeconds,
+		}
+	})
+}
+
+func (store *Store) CompactPlayerSamplesIfDueResolvedPolicy(
+	now time.Time,
+	resolve func() PlayerSamplesStoragePolicy,
 ) (PlayerSamplesRetentionReport, bool, error) {
 	if store == nil {
 		return PlayerSamplesRetentionReport{}, false, fmt.Errorf("history store is unavailable")
 	}
 	if resolve == nil {
-		return PlayerSamplesRetentionReport{}, false, fmt.Errorf("player samples retention resolver is required")
+		return PlayerSamplesRetentionReport{}, false, fmt.Errorf("player samples policy resolver is required")
 	}
 	now = normalizeRetentionNow(now)
 	store.mu.Lock()
 	defer store.mu.Unlock()
-	retention := NormalizePlayerSamplesRetention(resolve())
-	if store.lastPlayerSamplesRetention == retention &&
-		!store.lastPlayerSamplesCompaction.IsZero() &&
-		now.Sub(store.lastPlayerSamplesCompaction) < playerSamplesCompactionInterval {
-		return PlayerSamplesRetentionReport{}, false, nil
+	policy := NormalizePlayerSamplesStoragePolicy(resolve())
+	if store.lastPlayerSamplesPolicy == policy &&
+		!store.lastPlayerSamplesCompaction.IsZero() {
+		if policy.Retention == PlayerSamplesRetentionUnlimited ||
+			policy.Retention == PlayerSamplesRetentionNone ||
+			now.Sub(store.lastPlayerSamplesCompaction) < playerSamplesCompactionInterval {
+			return PlayerSamplesRetentionReport{}, false, nil
+		}
 	}
-	report, err := store.compactPlayerSamplesLocked(now, retention)
+	report, err := store.compactPlayerSamplesLocked(now, policy)
 	if err == nil {
 		store.lastPlayerSamplesCompaction = now
-		store.lastPlayerSamplesRetention = retention
+		store.lastPlayerSamplesPolicy = policy
 	}
 	return report, true, err
 }
@@ -558,43 +866,41 @@ func normalizeRetentionNow(now time.Time) time.Time {
 	return now.UTC()
 }
 
-func newPlayerSamplesRetentionReport(now time.Time, retention PlayerSamplesRetention) PlayerSamplesRetentionReport {
-	retention = NormalizePlayerSamplesRetention(retention)
+func newPlayerSamplesRetentionReport(now time.Time, policy PlayerSamplesStoragePolicy) PlayerSamplesRetentionReport {
+	policy = NormalizePlayerSamplesStoragePolicy(policy)
 	report := PlayerSamplesRetentionReport{
-		Retention:            retention,
-		StartedAt:            now,
-		FullResolutionCutoff: now.Add(-PlayerSamplesFullResolutionRetention),
-		HourlyCutoff:         now.Add(-PlayerSamplesHourlyResolutionRetention),
+		Retention:                policy.Retention,
+		RecordingIntervalSeconds: policy.RecordingIntervalSeconds,
+		StartedAt:                now,
+		FullResolutionCutoff:     now,
 	}
-	duration, unlimited := PlayerSamplesRetentionDuration(retention)
+	duration, unlimited := PlayerSamplesRetentionDuration(policy.Retention)
 	report.Unlimited = unlimited
 	if unlimited {
 		return report
 	}
 	report.RetentionCutoff = now.Add(-duration)
-	if report.RetentionCutoff.After(report.HourlyCutoff) {
-		report.HourlyCutoff = report.RetentionCutoff
-	}
-	if report.RetentionCutoff.After(report.FullResolutionCutoff) {
-		report.FullResolutionCutoff = report.RetentionCutoff
-	}
+	report.HourlyCutoff = report.RetentionCutoff
 	return report
 }
 
 func (store *Store) compactPlayerSamplesLocked(
 	now time.Time,
-	retention PlayerSamplesRetention,
+	policy PlayerSamplesStoragePolicy,
 ) (PlayerSamplesRetentionReport, error) {
-	report := newPlayerSamplesRetentionReport(now, retention)
+	policy = NormalizePlayerSamplesStoragePolicy(policy)
+	report := newPlayerSamplesRetentionReport(now, policy)
 	path, err := store.collectionPath(CollectionPlayerSamples)
 	if err != nil {
 		return report, err
 	}
-	if retention == PlayerSamplesRetentionNone {
+	if policy.Retention == PlayerSamplesRetentionNone {
 		return store.clearPlayerSamplesLocked(path, report)
 	}
 	file, err := os.Open(path)
 	if os.IsNotExist(err) {
+		store.lastPlayerSampleBucket = map[State.PlayerID]int64{}
+		store.invalidatePlayerSampleIndexLocked()
 		report.Complete = true
 		report.FinishedAt = time.Now().UTC()
 		return report, nil
@@ -604,6 +910,7 @@ func (store *Store) compactPlayerSamplesLocked(
 	}
 
 	keepers := map[playerSampleBucket]playerSampleKeeper{}
+	latestBuckets := map[State.PlayerID]int64{}
 	plannedDeletes := 0
 	scanner := bufio.NewScanner(file)
 	scanner.Buffer(make([]byte, 64*1024), 16*1024*1024)
@@ -617,6 +924,10 @@ func (store *Store) compactPlayerSamplesLocked(
 		if expired {
 			plannedDeletes++
 			continue
+		}
+		bucketUnix := bucket.BucketUnix
+		if bucketUnix > latestBuckets[sample.PlayerID] {
+			latestBuckets[sample.PlayerID] = bucketUnix
 		}
 		if keepAll {
 			continue
@@ -640,6 +951,7 @@ func (store *Store) compactPlayerSamplesLocked(
 		return report, fmt.Errorf("close %s history after retention scan: %w", CollectionPlayerSamples, err)
 	}
 	if plannedDeletes == 0 {
+		store.lastPlayerSampleBucket = latestBuckets
 		report.KeptRows = report.ScannedRows
 		report.Complete = true
 		report.FinishedAt = time.Now().UTC()
@@ -712,10 +1024,12 @@ func (store *Store) compactPlayerSamplesLocked(
 		return report, fmt.Errorf("close compacted %s history: %w", CollectionPlayerSamples, err)
 	}
 	if report.DeletedRows > 0 {
+		store.invalidatePlayerSampleIndexLocked()
 		if err := commitReplacement(temporaryPath, path, CollectionPlayerSamples); err != nil {
 			return report, err
 		}
 	}
+	store.lastPlayerSampleBucket = latestBuckets
 	report.Complete = true
 	report.FinishedAt = time.Now().UTC()
 	return report, nil
@@ -727,6 +1041,8 @@ func (store *Store) clearPlayerSamplesLocked(
 ) (PlayerSamplesRetentionReport, error) {
 	file, err := os.Open(path)
 	if os.IsNotExist(err) {
+		store.lastPlayerSampleBucket = map[State.PlayerID]int64{}
+		store.invalidatePlayerSampleIndexLocked()
 		report.Complete = true
 		report.FinishedAt = time.Now().UTC()
 		return report, nil
@@ -747,6 +1063,7 @@ func (store *Store) clearPlayerSamplesLocked(
 		return report, fmt.Errorf("clear %s history: %w", CollectionPlayerSamples, err)
 	}
 	report.DeletedRows = rows
+	store.lastPlayerSampleBucket = map[State.PlayerID]int64{}
 	report.Complete = true
 	report.FinishedAt = time.Now().UTC()
 	return report, nil
@@ -790,18 +1107,34 @@ func decodePlayerSampleLine(line []byte) (PlayerSample, bool) {
 	return sample, true
 }
 
+func decodePlayerSampleIndexIdentity(line []byte) (State.PlayerID, int64, bool) {
+	var item entry
+	decoder := json.NewDecoder(bytes.NewReader(line))
+	if decoder.Decode(&item) != nil || item.SchemaVersion < 1 || item.SchemaVersion > SchemaVersion || len(item.Payload) == 0 {
+		return 0, 0, false
+	}
+	var identity struct {
+		TimestampUnix int64          `json:"timestampUnix"`
+		PlayerID      State.PlayerID `json:"playerId"`
+	}
+	if json.Unmarshal(item.Payload, &identity) != nil || identity.TimestampUnix <= 0 || identity.PlayerID <= 0 {
+		return 0, 0, false
+	}
+	return identity.PlayerID, identity.TimestampUnix, true
+}
+
 func playerSampleRetentionBucket(sample PlayerSample, cutoffs PlayerSamplesRetentionReport) (playerSampleBucket, bool, bool) {
 	at := time.Unix(sample.TimestampUnix, 0).UTC()
-	switch {
-	case !cutoffs.RetentionCutoff.IsZero() && at.Before(cutoffs.RetentionCutoff):
+	// The rolling window is half-open at its oldest edge so N days retains at
+	// most N days worth of configured interval buckets rather than counting
+	// both endpoints.
+	if !cutoffs.RetentionCutoff.IsZero() && !at.After(cutoffs.RetentionCutoff) {
 		return playerSampleBucket{}, false, true
-	case at.Before(cutoffs.HourlyCutoff):
-		return playerSampleBucket{PlayerID: sample.PlayerID, Resolution: 2, BucketUnix: at.Truncate(24 * time.Hour).Unix()}, false, false
-	case at.Before(cutoffs.FullResolutionCutoff):
-		return playerSampleBucket{PlayerID: sample.PlayerID, Resolution: 1, BucketUnix: at.Truncate(time.Hour).Unix()}, false, false
-	default:
-		return playerSampleBucket{}, true, false
 	}
+	return playerSampleBucket{
+		PlayerID: sample.PlayerID, Resolution: 1,
+		BucketUnix: at.Truncate(PlayerSamplesRecordingIntervalDuration(cutoffs.RecordingIntervalSeconds)).Unix(),
+	}, false, false
 }
 
 func NewPlayerSample(snapshot State.GameState, gameData *GameData.Manager) PlayerSample {

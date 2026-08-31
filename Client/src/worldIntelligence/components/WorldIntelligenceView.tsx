@@ -48,6 +48,7 @@ const WorldIntelligenceView = () => {
 	const [error, setError] = useState('');
 	const directoryScrollRef = useRef(0);
 	const previousWorldUpdate = useRef<WorldIntelligenceUpdateManifestV1 | null>(null);
+	const coverageRequest = useRef(0);
 
 	const refreshStatus = useCallback(async () => {
 		try {
@@ -58,15 +59,19 @@ const WorldIntelligenceView = () => {
 	}, []);
 
 	const refreshCoverage = useCallback(async () => {
+		const requestID = ++coverageRequest.current;
 		if (!worldId) {
 			setCoverage({ worlds: [] });
 			setCoverageError('');
 			return;
 		}
 		try {
-			setCoverage(await CitadelAPI.getWorldIntelligenceCoverage(worldId));
+			const nextCoverage = await CitadelAPI.getWorldIntelligenceCoverage(worldId);
+			if (requestID !== coverageRequest.current) return;
+			setCoverage(nextCoverage);
 			setCoverageError('');
 		} catch (requestError) {
+			if (requestID !== coverageRequest.current) return;
 			setCoverage({ worlds: [] });
 			setCoverageError(errorMessage(requestError, 'Cloud coverage is temporarily unavailable.'));
 		}
@@ -103,7 +108,7 @@ const WorldIntelligenceView = () => {
 		if (!worldUpdate || worldUpdate.worldId !== displayWorld(worldId)) return;
 		const previous = previousWorldUpdate.current;
 		previousWorldUpdate.current = worldUpdate;
-		if (previous && worldUpdate.coverageRevision > previous.coverageRevision) {
+		if (!previous || worldUpdate.coverageRevision > previous.coverageRevision) {
 			void refreshCoverage();
 		}
 	}, [refreshCoverage, worldId, worldUpdate]);

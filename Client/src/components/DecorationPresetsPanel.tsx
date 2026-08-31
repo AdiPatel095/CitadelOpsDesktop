@@ -7,6 +7,7 @@ import { Input, Button, Select } from './ui';
 import { useCitadelAPI } from '../api/ApiContext';
 import { useMetadata } from '../context/MetadataContext';
 import { Notifications } from './Notifications';
+import { OperationError } from '../api/CitadelClient';
 
 interface NamedPreset {
   id: string;
@@ -91,7 +92,7 @@ const DecorationPresetsPanel: React.FC = () => {
       kingdomId: castle?.kingdomId,
       presetId,
       items: preset.items,
-    }, { id: operationId, actor: 'ui:decoration' })
+    }, { id: operationId, actor: 'ui:decoration', notificationId: 'decoration-apply' })
       .then((receipt) => {
         const cancelled = receipt.status === 'cancelled';
         const message = cancelled ? 'Decoration apply cancelled.' : 'Decoration preset applied.';
@@ -101,7 +102,9 @@ const DecorationPresetsPanel: React.FC = () => {
       .catch((error) => {
         const message = error instanceof Error ? error.message : 'Could not apply preset';
         setOperationError(message);
-        Notifications.publish({ id: 'decoration-apply', category: 'red', message });
+        if (!(error instanceof OperationError)) {
+          Notifications.publish({ id: 'decoration-apply', category: 'red', message });
+        }
       })
       .finally(() => {
         setApplyOperationId('');

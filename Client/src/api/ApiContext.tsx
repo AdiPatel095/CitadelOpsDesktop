@@ -8,7 +8,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { APIError, CitadelAPI } from './CitadelClient';
+import { APIError, CitadelAPI, OperationError } from './CitadelClient';
+import { OperationFailureNotificationCoordinator } from './OperationNotifications';
 import type {
   APIConnectionStatus,
 	AllianceTargetViewV2,
@@ -27,6 +28,7 @@ import type {
 	GameStatePatchV2,
 	IntentReceipt,
 	PlayerHistoryRetentionApplyV1,
+	PlayerHistoryRetentionV1,
 	RuntimeDiagnosticsV2,
 	StateChangeEventV2,
   SubmitIntentOptions,
@@ -36,13 +38,6 @@ import { hasExternalConfiguration } from './RuntimeURL';
 
 const runtimeDiagnosticsEnabled = import.meta.env.DEV === true || import.meta.env.VITE_SHOW_HEADER_MEMORY === 'true';
 const stateRefreshIntervalMs = 1_000;
-
-function isAvailabilityGateFailure(value: string): boolean {
-	const lower = value.trim().toLowerCase();
-	if (lower.includes('not enough troops') || lower.includes('insufficient troops')) return true;
-	return lower.includes(' of item ')
-		&& (lower.includes(' commander(s) require ') || lower.includes(' attack formation requires '));
-}
 
 interface APIContextValue {
   connectionStatus: APIConnectionStatus;
@@ -75,7 +70,14 @@ interface APIContextValue {
     value: unknown,
     options?: { expectedValue?: unknown },
   ) => Promise<ConfigurationSnapshot>;
-	applyPlayerHistoryRetention: (retention: string, expectedRevision: number) => Promise<PlayerHistoryRetentionApplyV1>;
+	getPlayerHistoryRetention: () => Promise<PlayerHistoryRetentionV1>;
+	applyPlayerHistoryRetention: (
+		retention: string,
+		recordingIntervalSeconds: number,
+		expectedRevision: number,
+		expectedConfigured: string,
+		expectedRecordingIntervalSeconds: number,
+	) => Promise<PlayerHistoryRetentionApplyV1>;
 }
 
 const APIContext = createContext<APIContextValue | undefined>(undefined);
@@ -93,10 +95,15 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	const stateRef = useRef<GameStateV2 | null>(null);
 	const configurationRef = useRef<ConfigurationSnapshot | null>(null);
 	const configurationUpdateQueue = useRef<Promise<void>>(Promise.resolve());
+	// Bind delayed runtime work to the account where this provider mounted.
+	// Account navigation may change the pathname before a queued save begins.
+	const runtimeScope = useRef(CitadelAPI.runtimeScope()).current;
 	const stateReady = useRef(false);
 	const catalogsReady = useRef(false);
 	const configurationReady = useRef(false);
 	const operationsReady = useRef(false);
+	const operationNotificationIDs = useRef(new Map<string, string>());
+	const operationFailureNotifications = useRef(new OperationFailureNotificationCoordinator());
   const stateRefreshInFlight = useRef<Promise<void> | null>(null);
   const stateRefreshPending = useRef(false);
 
@@ -114,6 +121,14 @@ export function APIProvider({ children }: { children: ReactNode }) {
 		configurationRef.current = snapshot;
 		configurationReady.current = true;
 		setConfiguration(snapshot);
+	}, []);
+
+	const publishOperationFailure = useCallback((receipt: IntentReceipt) => {
+		const notification = operationFailureNotifications.current.next(
+			receipt,
+			operationNotificationIDs.current.get(receipt.id),
+		);
+		if (notification) Notifications.publish(notification);
 	}, []);
 
   const refreshState = useCallback(async function refreshStateRequest() {
@@ -249,13 +264,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 		const receipt = message.payload;
 		setOperations((current) => ({ ...current, [receipt.id]: receipt }));
 		if (message.gap) void refreshOperations();
-		if (receipt.status === 'failed' && receipt.error) {
-			if (isAvailabilityGateFailure(receipt.error)) {
-				Notifications.warning(receipt.error, `operation-${receipt.id}`);
-			} else {
-				Notifications.error(receipt.error, `operation-${receipt.id}`);
-			}
-		}
+		publishOperationFailure(receipt);
 		return;
 	  }
 	  if (message.type === 'notification' && isNotification(message.payload)) {
@@ -279,7 +288,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	  if (initialSyncTimer.current != null) clearTimeout(initialSyncTimer.current);
       CitadelAPI.disconnect();
     };
-  }, [acceptConfigurationSnapshot, acceptStateSnapshot, refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState]);
+  }, [acceptConfigurationSnapshot, acceptStateSnapshot, publishOperationFailure, refreshApplicationUpdate, refreshCatalogs, refreshConfiguration, refreshDiagnostics, refreshOperations, refreshState]);
 
 	useEffect(() => {
 		const interval = window.setInterval(() => void refreshApplicationUpdate(), 5_000);
@@ -297,15 +306,29 @@ export function APIProvider({ children }: { children: ReactNode }) {
     argumentsValue: Record<string, unknown> = {},
     options: SubmitIntentOptions = {},
   ) => {
+	const preferredNotificationID = options.notificationId?.trim();
+	const operationID = options.id?.trim() || (preferredNotificationID ? newClientOperationID() : '');
+	const submitOptions = operationID ? { ...options, id: operationID } : options;
+	if (operationID && preferredNotificationID) {
+		operationNotificationIDs.current.set(operationID, preferredNotificationID);
+	}
 	try {
-	  const receipt = await CitadelAPI.submitIntent(name, argumentsValue, options);
+	  const receipt = await CitadelAPI.submitIntent(name, argumentsValue, submitOptions);
 	  setOperations((current) => ({ ...current, [receipt.id]: receipt }));
 	  return receipt;
 	} catch (requestError) {
-	  Notifications.error(errorMessage(requestError));
+	  if (requestError instanceof OperationError) {
+		publishOperationFailure(requestError.receipt);
+	  } else {
+		Notifications.error(errorMessage(requestError), preferredNotificationID);
+	  }
 	  throw requestError;
+	} finally {
+	  if (operationID && preferredNotificationID) {
+		operationNotificationIDs.current.delete(operationID);
+	  }
 	}
-  }, []);
+  }, [publishOperationFailure]);
 
   const getAllianceTargets = useCallback((input: AllianceTargetQueryV2 = {}) => (
 	CitadelAPI.getAllianceTargets(input)
@@ -353,10 +376,43 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	return result;
   }, [acceptConfigurationSnapshot]);
 
-	const applyPlayerHistoryRetention = useCallback((retention: string, expectedRevision: number) => {
+	const applyPlayerHistoryRetention = useCallback((
+		retention: string,
+		recordingIntervalSeconds: number,
+		expectedRevision: number,
+		expectedConfigured: string,
+		expectedRecordingIntervalSeconds: number,
+	) => {
 		const execute = async () => {
 			try {
-				return await CitadelAPI.applyPlayerHistoryRetention(retention, expectedRevision);
+				let policy = await CitadelAPI.getPlayerHistoryRetention(runtimeScope);
+				for (let attempt = 0; attempt < 2; attempt += 1) {
+					const policyIntervalSeconds = Number(policy.recordingIntervalSeconds) || 60 * 60;
+					if (policy.revision < expectedRevision ||
+						(policy.configured !== expectedConfigured && policy.configured !== retention) ||
+						(policyIntervalSeconds !== expectedRecordingIntervalSeconds &&
+							policyIntervalSeconds !== recordingIntervalSeconds)) {
+						throw new APIError(
+							'My Stats storage policy changed before this update could be applied. Please review the current settings and try again.',
+							409,
+							'history_retention_conflict',
+						);
+					}
+					try {
+						return await CitadelAPI.applyPlayerHistoryRetention(
+							retention,
+							policy.revision,
+							recordingIntervalSeconds,
+							runtimeScope,
+						);
+					} catch (requestError) {
+						if (!(requestError instanceof APIError)
+							|| requestError.code !== 'history_retention_conflict'
+							|| attempt > 0) throw requestError;
+						policy = await CitadelAPI.getPlayerHistoryRetention(runtimeScope);
+					}
+				}
+				throw new Error('My Stats storage policy could not be applied.');
 			} catch (requestError) {
 				Notifications.error(errorMessage(requestError));
 				throw requestError;
@@ -365,7 +421,12 @@ export function APIProvider({ children }: { children: ReactNode }) {
 		const result = configurationUpdateQueue.current.then(execute, execute);
 		configurationUpdateQueue.current = result.then(() => undefined, () => undefined);
 		return result;
-	}, []);
+	}, [runtimeScope]);
+
+	const getPlayerHistoryRetention = useCallback(
+		() => CitadelAPI.getPlayerHistoryRetention(runtimeScope),
+		[runtimeScope],
+	);
 
   const value = useMemo<APIContextValue>(() => ({
     connectionStatus,
@@ -390,6 +451,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
     submitIntent,
     cancelOperation,
     updateConfiguration,
+	getPlayerHistoryRetention,
 	applyPlayerHistoryRetention,
   }), [
     catalogs,
@@ -410,6 +472,7 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	previewAllianceTargetAttack,
 	cancelOperation,
     updateConfiguration,
+	getPlayerHistoryRetention,
 	applyPlayerHistoryRetention,
   ]);
 
@@ -567,4 +630,9 @@ function isRecord(value: unknown): value is Record<string, any> {
 
 function errorMessage(value: unknown): string {
   return value instanceof Error ? value.message : 'Could not reach the CitadelOps API';
+}
+
+function newClientOperationID(): string {
+	return globalThis.crypto?.randomUUID?.()
+		?? `ui-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }

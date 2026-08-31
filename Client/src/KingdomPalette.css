@@ -131,3 +131,30 @@
 .liquid-switch-on .liquid-switch-thumb {
     background: var(--md-sys-color-on-tertiary);
 }
+
+/* Feature switches communicate their persisted state even before the label is read. */
+.liquid-switch-tone-feature.liquid-switch-off .liquid-switch-rail {
+    border-color: color-mix(in srgb, var(--status-danger) 72%, var(--md-sys-color-outline));
+    background: color-mix(in srgb, var(--status-danger) 22%, var(--md-sys-color-surface-container-highest));
+}
+
+.liquid-switch-tone-feature.liquid-switch-off .liquid-switch-thumb {
+    background: var(--status-danger);
+}
+
+.liquid-switch-tone-feature.liquid-switch-on .liquid-switch-rail {
+    border-color: color-mix(in srgb, var(--status-success) 72%, var(--md-sys-color-outline));
+    background: color-mix(in srgb, var(--status-success) 30%, var(--md-sys-color-surface-container-highest));
+}
+
+.liquid-switch-tone-feature.liquid-switch-on .liquid-switch-thumb {
+    background: var(--status-success);
+}
+
+.liquid-switch-tone-feature.liquid-switch-off:focus-visible {
+    filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--status-danger) 58%, transparent));
+}
+
+.liquid-switch-tone-feature.liquid-switch-on:focus-visible {
+    filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--status-success) 58%, transparent));
+}

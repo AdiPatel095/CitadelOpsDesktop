@@ -265,6 +265,19 @@ func TestExecuteStepClassifiesDeclaredResponseCodeAsStale(t *testing.T) {
 	if !errors.Is(err, ErrPlanStale) || !strings.Contains(err.Error(), "response code 147") {
 		t.Fatalf("declared stale response error = %v", err)
 	}
+	var responseError *ResponseCodeError
+	if !errors.As(err, &responseError) || responseError.Meaning.Code != 147 {
+		t.Fatalf("declared stale response lost its game response = %#v", responseError)
+	}
+	receipt := engine.withFailure(Receipt{
+		Actor: "automation:test", Status: StatusFailed,
+		Plan: &Plan{Summary: "Complete the current process"},
+	}, err)
+	if receipt.Failure == nil || receipt.Failure.Kind != FailureStaleState ||
+		receipt.Failure.GameCode == nil || *receipt.Failure.GameCode != 147 ||
+		receipt.Failure.Recovery == "" || receipt.Failure.Toast {
+		t.Fatalf("declared stale response projection = %#v", receipt.Failure)
+	}
 }
 
 func (*correlatingPipelineResponseSender) CorrelatesResponses() bool { return true }

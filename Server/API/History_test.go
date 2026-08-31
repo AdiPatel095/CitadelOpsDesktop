@@ -48,16 +48,150 @@ func TestPlayerTrackerRetentionEndpointReportsConfiguredAndEffectivePolicy(t *te
 				t.Fatal(err)
 			}
 			if policy.Configured != History.PlayerSamplesRetentionUnlimited || policy.Effective != test.effective ||
-				policy.Hosted != test.hosted || policy.Maximum != test.maximum || len(policy.Options) != 7 ||
-				policy.Revision != configuration.Revision() {
+				policy.Hosted != test.hosted || policy.Maximum != test.maximum || len(policy.Options) != 8 ||
+				policy.Revision != configuration.Revision() || policy.RecordingIntervalSeconds != 3600 ||
+				len(policy.RecordingIntervalOptions) != 6 {
 				t.Fatalf("retention policy = %+v", policy)
+			}
+			if policy.Storage.Format != "jsonl" || policy.Storage.EstimatedBytesPerRecording <= 0 {
+				t.Fatalf("storage estimate = %+v", policy.Storage)
 			}
 			for _, option := range policy.Options {
 				if option.Value == "" || option.Label == "" || option.Description == "" {
 					t.Fatalf("incomplete option: %+v", option)
 				}
 			}
+			required := map[History.PlayerSamplesRetention]bool{
+				History.PlayerSamplesRetentionNone:    false,
+				History.PlayerSamplesRetention24Hours: false,
+				History.PlayerSamplesRetention100Days: false,
+				History.PlayerSamplesRetention1Year:   false,
+			}
+			for _, option := range policy.Options {
+				if _, ok := required[option.Value]; ok {
+					required[option.Value] = true
+				}
+			}
+			for value, present := range required {
+				if !present {
+					t.Fatalf("required retention option %q is missing from %+v", value, policy.Options)
+				}
+			}
 		})
+	}
+}
+
+func TestPlayerTrackerRetentionApplyAcceptsCustomWholeDays(t *testing.T) {
+	dataDir := t.TempDir()
+	configuration, err := Configuration.Open(dataDir, map[string]json.RawMessage{
+		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"30d"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	history, err := History.Open(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	custom := History.PlayerSamplesRetention("137d")
+	recorder := httptest.NewRecorder()
+	request := playerTrackerRetentionApplyRequest(t, custom, configuration.Revision())
+	NewServer(Config{Configuration: configuration, History: history}).Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("custom apply returned HTTP %d: %s", recorder.Code, recorder.Body.String())
+	}
+	var response playerSamplesRetentionApplyResponse
+	if err := json.NewDecoder(recorder.Body).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Policy.Configured != custom || response.Policy.Effective != custom ||
+		response.Policy.ConfiguredDays == nil || *response.Policy.ConfiguredDays != 137 ||
+		response.Policy.EffectiveDays == nil || *response.Policy.EffectiveDays != 137 {
+		t.Fatalf("custom policy = %+v", response.Policy)
+	}
+}
+
+func TestPlayerTrackerRetentionApplyPatchesCadenceWithoutResettingRetention(t *testing.T) {
+	dataDir := t.TempDir()
+	configuration, err := Configuration.Open(dataDir, map[string]json.RawMessage{
+		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"137d","recordingIntervalSeconds":3600}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	history, err := History.Open(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	body := strings.NewReader(fmt.Sprintf(
+		`{"recordingIntervalSeconds":300,"expectedRevision":%d}`,
+		configuration.Revision(),
+	))
+	request := httptest.NewRequest(http.MethodPost, "/api/v2/history/player-tracker/retention/apply", body)
+	NewServer(Config{Configuration: configuration, History: history}).Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("cadence apply returned HTTP %d: %s", recorder.Code, recorder.Body.String())
+	}
+	var response playerSamplesRetentionApplyResponse
+	if err := json.NewDecoder(recorder.Body).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Policy.Configured != "137d" || response.Policy.RecordingIntervalSeconds != 300 ||
+		response.Report.Retention != "137d" || response.Report.RecordingIntervalSeconds != 300 {
+		t.Fatalf("cadence apply response = %+v", response)
+	}
+}
+
+func TestPlayerTrackerRetentionLegacyApplyPreservesSavedCadence(t *testing.T) {
+	dataDir := t.TempDir()
+	configuration, err := Configuration.Open(dataDir, map[string]json.RawMessage{
+		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"30d","recordingIntervalSeconds":600}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	history, err := History.Open(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	request := playerTrackerRetentionApplyRequest(t, History.PlayerSamplesRetention100Days, configuration.Revision())
+	NewServer(Config{Configuration: configuration, History: history}).Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("legacy apply returned HTTP %d: %s", recorder.Code, recorder.Body.String())
+	}
+	var response playerSamplesRetentionApplyResponse
+	if err := json.NewDecoder(recorder.Body).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Policy.Configured != History.PlayerSamplesRetention100Days || response.Policy.RecordingIntervalSeconds != 600 {
+		t.Fatalf("legacy apply reset saved cadence: %+v", response.Policy)
+	}
+}
+
+func TestPlayerTrackerRetentionApplyRejectsUnknownCadence(t *testing.T) {
+	dataDir := t.TempDir()
+	configuration, err := Configuration.Open(dataDir, map[string]json.RawMessage{
+		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"30d"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	history, err := History.Open(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	body := strings.NewReader(fmt.Sprintf(
+		`{"recordingIntervalSeconds":120,"expectedRevision":%d}`,
+		configuration.Revision(),
+	))
+	request := httptest.NewRequest(http.MethodPost, "/api/v2/history/player-tracker/retention/apply", body)
+	NewServer(Config{Configuration: configuration, History: history}).Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusUnprocessableEntity ||
+		!strings.Contains(recorder.Body.String(), `"history_recording_interval_invalid"`) {
+		t.Fatalf("invalid cadence returned HTTP %d: %s", recorder.Code, recorder.Body.String())
 	}
 }
 
@@ -263,7 +397,7 @@ func TestPlayerTrackerHistorySinceHonorsAllAndCapsNumericRanges(t *testing.T) {
 func TestPlayerTrackerHistoryNoneStillReturnsCurrentValues(t *testing.T) {
 	dataDir := t.TempDir()
 	configuration, err := Configuration.Open(dataDir, map[string]json.RawMessage{
-		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"none"}`),
+		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"none","recordingIntervalSeconds":300}`),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -286,8 +420,10 @@ func TestPlayerTrackerHistoryNoneStillReturnsCurrentValues(t *testing.T) {
 		t.Fatalf("history returned HTTP %d: %s", recorder.Code, recorder.Body.String())
 	}
 	var response struct {
-		Current *History.PlayerSample  `json:"current"`
-		Samples []History.PlayerSample `json:"samples"`
+		Current                  *History.PlayerSample  `json:"current"`
+		Samples                  []History.PlayerSample `json:"samples"`
+		IntervalSeconds          int                    `json:"intervalSeconds"`
+		RecordingIntervalSeconds int                    `json:"recordingIntervalSeconds"`
 	}
 	if err := json.NewDecoder(recorder.Body).Decode(&response); err != nil {
 		t.Fatal(err)
@@ -297,5 +433,8 @@ func TestPlayerTrackerHistoryNoneStillReturnsCurrentValues(t *testing.T) {
 	}
 	if len(response.Samples) != 0 {
 		t.Fatalf("none retention returned historical samples: %+v", response.Samples)
+	}
+	if response.IntervalSeconds != 300 || response.RecordingIntervalSeconds != 300 {
+		t.Fatalf("history intervals = %+v, want 300", response)
 	}
 }

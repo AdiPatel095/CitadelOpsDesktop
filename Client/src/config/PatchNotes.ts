@@ -57,6 +57,21 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.3.3',
+    subtitle: 'Complete Storm intelligence and flexible local history',
+    date: '2026-08-31',
+    items: [
+      { kind: 'added', text: 'My Stats Storage now offers 1, 5, 10, 15, 30, or 60 minute recording intervals, any local whole-number day limit, quick choices including 100 and 365 days, unlimited local retention, and a live estimate of recording count and SQLite storage use' },
+      { kind: 'fixed', text: 'World Intelligence now subscribes through the correct local desktop or hosted-account runtime URL, preventing the client crash caused by the missing HTTP URL helper' },
+      { kind: 'fixed', text: 'Storm Islands collection now keeps every participating player with authoritative cargo metrics even when the game omits or contradicts rank and session metadata; cloud storage merges metrics independently across collectors and derives display order from cargo points' },
+      { kind: 'fixed', text: 'Current and dated Storm boards now load up to 5,000 participants, collapse legacy false league rows, update live without losing successful data to a stale request, and retain or clamp pagination correctly as rows refresh' },
+      { kind: 'fixed', text: 'Failed actions now surface concise user-facing reasons and stable notifications instead of internal response-code or transport wording, while account switches keep operation results scoped to the runtime that submitted them' },
+      { kind: 'changed', text: 'Feature switches now use a red off state and green on state while ordinary non-feature switches retain their neutral styling' },
+      { kind: 'changed', text: 'Local My Stats history keeps the chosen recording cadence throughout the complete retention window, safely compacts when moving to a slower cadence, and resamples chart responses without deleting saved detail; hosted history remains capped at 30 days' },
+      { kind: 'removed', text: 'Experimental Battle Research was removed from Settings and is no longer started by desktop or hosted runtimes; existing local trial records remain untouched' },
+    ],
+  },
+  {
     version: '2.3.2',
     subtitle: 'Account controls, Khan recovery, and verified releases',
     date: '2026-08-29',

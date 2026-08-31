@@ -37,7 +37,8 @@ func TestResolveResponseCodeDistinguishesOfficialObservedAndUnknown(t *testing.T
 		t.Fatalf("official response meaning = %#v", official)
 	}
 	observed := ResolveResponseCode(store, "HRU", 53)
-	if observed.Source != ResponseCodeObserved || !strings.Contains(observed.Message, "castle focus") {
+	if observed.Source != ResponseCodeObserved || !strings.Contains(observed.Message, "castle focus") ||
+		observed.Kind != ResponseCodeContext || !observed.ExpectedState || observed.Recovery == "" {
 		t.Fatalf("observed response meaning = %#v", observed)
 	}
 	fortification := ResolveResponseCode(store, "RAE", 327)
@@ -72,5 +73,35 @@ func TestResolveResponseCodeDistinguishesOfficialObservedAndUnknown(t *testing.T
 	}
 	if meaning := store.ResponseCodeMeanings("msk")[182]; meaning.Source != ResponseCodeObserved {
 		t.Fatalf("MSK response code map = %#v", meaning)
+	}
+}
+
+func TestResolveResponseCodeAddsContextualRecoveryWithoutReplacingOfficialText(t *testing.T) {
+	store, err := DecodeLanguage([]byte(`{
+		"errorCode_53":"The selected context is unavailable.",
+		"errorCode_55":"You do not have enough resources.",
+		"errorCode_95":"The target is still on cooldown."
+	}`), LanguageMetadata{Language: "en"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	focus := ResolveResponseCode(store, "hru", 53)
+	if focus.Source != ResponseCodeOfficial || focus.Message != "The selected context is unavailable." ||
+		focus.Kind != ResponseCodeContext || !focus.ExpectedState || !strings.Contains(focus.Recovery, "castle focus") {
+		t.Fatalf("official focus response = %#v", focus)
+	}
+	cooldown := ResolveResponseCode(store, "adi", 95)
+	if cooldown.Source != ResponseCodeOfficial || cooldown.Kind != ResponseCodeCooldown ||
+		!cooldown.ExpectedState || !strings.Contains(cooldown.Recovery, "cooldown") {
+		t.Fatalf("official cooldown response = %#v", cooldown)
+	}
+	shop := ResolveResponseCode(store, "sbp", 55)
+	if shop.Kind != ResponseCodeAvailability || !shop.ExpectedState || !strings.Contains(shop.Recovery, "shop currency") {
+		t.Fatalf("shop availability response = %#v", shop)
+	}
+	unrelated := ResolveResponseCode(store, "xyz", 55)
+	if unrelated.Kind != "" || unrelated.ExpectedState || unrelated.Recovery != "" {
+		t.Fatalf("opcode-scoped shop guidance leaked = %#v", unrelated)
 	}
 }

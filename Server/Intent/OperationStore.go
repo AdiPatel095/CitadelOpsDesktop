@@ -317,11 +317,13 @@ func (store *SQLiteOperationStore) Recover(ctx context.Context) ([]StoredOperati
 		if possiblyDispatched && mutating {
 			receipt.Status = StatusIndeterminate
 			receipt.Phase = EffectPhaseReconciliationRequired
-			receipt.Error = "application restarted after this operation may have dispatched an effect; automatic replay is prohibited"
+			receipt = (&Engine{}).withFailure(receipt, errors.New(
+				"application restarted after this operation may have dispatched an effect; automatic replay is prohibited",
+			))
 		} else {
 			receipt.Status = StatusFailed
 			receipt.Phase = EffectPhaseCompleted
-			receipt.Error = "application restarted before this operation completed"
+			receipt = (&Engine{}).withFailure(receipt, errors.New("application restarted before this operation completed"))
 		}
 		receipt.CompletedAt = &now
 		payload, err := json.Marshal(receipt)

@@ -167,6 +167,45 @@ type Status string
 
 type EffectPhase string
 
+type FailureKind string
+
+type FailureSeverity string
+
+type FailureKnowledge string
+
+const (
+	FailureGameRejected  FailureKind = "game_rejected"
+	FailureAvailability  FailureKind = "availability"
+	FailureStaleState    FailureKind = "stale_state"
+	FailureTimeout       FailureKind = "timeout"
+	FailureConnection    FailureKind = "connection"
+	FailureIndeterminate FailureKind = "indeterminate"
+	FailureInternal      FailureKind = "internal"
+	FailureUnknown       FailureKind = "unknown"
+
+	FailureSeverityWarning FailureSeverity = "warning"
+	FailureSeverityError   FailureSeverity = "error"
+
+	FailureKnowledgeOfficial FailureKnowledge = "official"
+	FailureKnowledgeObserved FailureKnowledge = "observed"
+	FailureKnowledgeUnknown  FailureKnowledge = "unknown"
+)
+
+// FailurePresentation is the public, user-facing projection of a failed
+// operation. Error and RawError retain durable diagnostic evidence; this
+// projection tells clients what happened, what the user can do, and whether an
+// expected automation-lane condition should interrupt them with a toast.
+type FailurePresentation struct {
+	Kind        FailureKind      `json:"kind"`
+	Message     string           `json:"message"`
+	Explanation string           `json:"explanation"`
+	Recovery    string           `json:"recovery,omitempty"`
+	Severity    FailureSeverity  `json:"severity"`
+	GameCode    *int             `json:"gameCode,omitempty"`
+	Knowledge   FailureKnowledge `json:"knowledge,omitempty"`
+	Toast       bool             `json:"toast"`
+}
+
 const (
 	StatusPlanning           Status = "planning"
 	StatusPlanned            Status = "planned"
@@ -193,18 +232,19 @@ const (
 )
 
 type Receipt struct {
-	StreamSequence uint64            `json:"streamSequence,omitempty"`
-	StreamGap      bool              `json:"streamGap,omitempty"`
-	ID             string            `json:"id"`
-	Intent         string            `json:"intent"`
-	Actor          string            `json:"actor"`
-	Priority       Outbound.Priority `json:"priority"`
-	Status         Status            `json:"status"`
-	Phase          EffectPhase       `json:"phase,omitempty"`
-	Attempt        int               `json:"attempt,omitempty"`
-	Plan           *Plan             `json:"plan,omitempty"`
-	Exchanges      []CommandExchange `json:"exchanges,omitempty"`
-	Error          string            `json:"error,omitempty"`
+	StreamSequence uint64               `json:"streamSequence,omitempty"`
+	StreamGap      bool                 `json:"streamGap,omitempty"`
+	ID             string               `json:"id"`
+	Intent         string               `json:"intent"`
+	Actor          string               `json:"actor"`
+	Priority       Outbound.Priority    `json:"priority"`
+	Status         Status               `json:"status"`
+	Phase          EffectPhase          `json:"phase,omitempty"`
+	Attempt        int                  `json:"attempt,omitempty"`
+	Plan           *Plan                `json:"plan,omitempty"`
+	Exchanges      []CommandExchange    `json:"exchanges,omitempty"`
+	Error          string               `json:"error,omitempty"`
+	Failure        *FailurePresentation `json:"failure,omitempty"`
 	// RawError preserves the machine-oriented wording for in-process recovery
 	// and gating logic. It is never serialized or shown to users.
 	RawError    string     `json:"-"`

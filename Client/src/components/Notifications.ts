@@ -1,7 +1,14 @@
 export type NotificationCategory = 'green' | 'yellow' | 'red';
 
+export const NOTIFICATION_DURATION_MS = 30_000;
+
+export function notificationDurationMs(_category: NotificationCategory): number {
+  return NOTIFICATION_DURATION_MS;
+}
+
 export interface AppNotification {
   id: string;
+  revision: number;
   category: NotificationCategory;
   message: string;
   lines?: string[];
@@ -16,16 +23,18 @@ type NotificationListener = (notification: AppNotification) => void;
 
 class NotificationCenter {
   private listeners = new Set<NotificationListener>();
+  private revision = 0;
 
   subscribe(listener: NotificationListener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
 
-  publish(input: Omit<AppNotification, 'id'> & { id?: string }): string {
+  publish(input: Omit<AppNotification, 'id' | 'revision'> & { id?: string }): string {
     const notification: AppNotification = {
       ...input,
       id: input.id ?? this.nextID(),
+      revision: ++this.revision,
     };
     for (const listener of this.listeners) listener(notification);
     return notification.id;
