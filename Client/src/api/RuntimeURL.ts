@@ -30,16 +30,20 @@ export function runtimeBasePath(): string {
 	return match ? `/accounts/${match[1]}` : '';
 }
 
-export function runtimeURL(path: string): string {
+export function runtimeURL(path: string, basePath = runtimeBasePath()): string {
 	const normalized = path.startsWith('/') ? path : `/${path}`;
-	return `${runtimeBasePath()}${normalized}`;
+	return `${basePath.trim().replace(/\/$/, '')}${normalized}`;
 }
 
 // Tenant runtime cookies live on the account shard. `include` is required when
 // the persistent frontend and the cell use separate allowlisted origins, and
 // is equivalent to the fetch default for the ordinary same-origin desktop.
-export function runtimeFetch(path: string, init: RequestInit = {}): Promise<Response> {
-	return fetch(runtimeURL(path), {
+export function runtimeFetch(
+	path: string,
+	init: RequestInit = {},
+	basePath = runtimeBasePath(),
+): Promise<Response> {
+	return fetch(runtimeURL(path, basePath), {
 		...init,
 		credentials: init.credentials ?? 'include',
 	});

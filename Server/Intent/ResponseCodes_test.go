@@ -1,6 +1,7 @@
 package Intent
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -33,6 +34,11 @@ func TestUnsuccessfulResponseCodeUsesLoadedLanguageCatalog(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "All market barrows are moving.") || !strings.Contains(err.Error(), "official game text") {
 		t.Fatalf("response code error = %v", err)
 	}
+	var responseError *ResponseCodeError
+	if !errors.As(err, &responseError) || responseError.Opcode != "mbr" ||
+		responseError.Meaning.Code != 109 || responseError.Meaning.Source != GameData.ResponseCodeOfficial {
+		t.Fatalf("structured response code error = %#v", responseError)
+	}
 }
 
 func TestUnsuccessfulResponseCodeLabelsObservedInference(t *testing.T) {
@@ -41,5 +47,10 @@ func TestUnsuccessfulResponseCodeLabelsObservedInference(t *testing.T) {
 	err := engine.unsuccessfulResponseCode("hru", 53)
 	if err == nil || !strings.Contains(err.Error(), "castle focus") || !strings.Contains(err.Error(), "inferred from captures") {
 		t.Fatalf("response code error = %v", err)
+	}
+	var responseError *ResponseCodeError
+	if !errors.As(err, &responseError) || !responseError.Meaning.ExpectedState ||
+		responseError.Meaning.Kind != GameData.ResponseCodeContext || responseError.Meaning.Recovery == "" {
+		t.Fatalf("observed response guidance = %#v", responseError)
 	}
 }

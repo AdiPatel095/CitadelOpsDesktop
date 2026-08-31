@@ -89,6 +89,8 @@ interface PlayerTrackerResponse {
   samples: PlayerTrackerSample[];
   series: Partial<Record<MetricKey, TrackerMetricPoint[]>>;
   intervalSeconds: number;
+  recordingIntervalSeconds: number;
+  resampled: boolean;
   fallback: TrackerFallbackInfo;
   coverage: {
     loot: boolean;
@@ -134,7 +136,9 @@ const emptyResponse: PlayerTrackerResponse = {
   current: null,
   samples: [],
   series: {},
-  intervalSeconds: 60,
+  intervalSeconds: 60 * 60,
+  recordingIntervalSeconds: 60 * 60,
+  resampled: false,
   fallback: { provider: 'citadel-history', status: 'not-needed' },
   coverage: { loot: false, eventScores: false },
 };
@@ -291,8 +295,8 @@ const PlayerTrackerView = () => {
   const selectedDefinition = metricDefinitions.find((definition) => definition.key === selectedMetric) ?? CORE_METRIC_DEFINITIONS[0];
   const selectedPoints = visibleSeries[selectedDefinition.key] ?? [];
   const chartPoints = useMemo(
-    () => bucketMetricPoints(selectedPoints, selectedRange),
-    [selectedPoints, selectedRange],
+    () => bucketMetricPoints(selectedPoints, selectedRange, scopedTracker.intervalSeconds),
+    [scopedTracker.intervalSeconds, selectedPoints, selectedRange],
   );
   const displayedPoints = useMemo(
     () => customWindow
@@ -334,8 +338,8 @@ const PlayerTrackerView = () => {
     selectedTroopUnitID,
   ]);
   const troopChartPoints = useMemo(
-    () => bucketMetricPoints(troopPoints, troopRange),
-    [troopPoints, troopRange],
+    () => bucketMetricPoints(troopPoints, troopRange, scopedTracker.intervalSeconds),
+    [scopedTracker.intervalSeconds, troopPoints, troopRange],
   );
   const displayedTroopPoints = useMemo(
     () => troopWindow
@@ -395,6 +399,7 @@ const PlayerTrackerView = () => {
       troopFoodFilter,
       selectedTroopUnitID,
       troopRange,
+		scopedTracker.intervalSeconds,
     ),
     [
       current,
@@ -405,6 +410,7 @@ const PlayerTrackerView = () => {
       troopRoleFilter,
       troopTypeFilter,
       selectedTroopUnitID,
+		scopedTracker.intervalSeconds,
     ],
   );
   useEffect(() => {
@@ -496,7 +502,7 @@ const PlayerTrackerView = () => {
 				)}
               </div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
-                <span>{hoverPointHint(selectedRange)} Drag horizontally to inspect a custom time period.</span>
+                <span>{hoverPointHint(scopedTracker)} Drag horizontally to inspect a custom time period.</span>
                 {customWindow && (
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">
@@ -670,7 +676,7 @@ const PlayerTrackerView = () => {
                 </div>
               </div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
-                <span>{hoverPointHint(troopRange)} Drag horizontally to inspect a custom time period.</span>
+                <span>{hoverPointHint(scopedTracker)} Drag horizontally to inspect a custom time period.</span>
                 {troopWindow && (
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">
@@ -718,7 +724,7 @@ const PlayerTrackerView = () => {
               )}
               {troopFiltersActive && troopChartPoints.length < 2 && (
                 <p className="mt-3 text-xs leading-5 text-text-muted">
-                  Earlier total-only samples cannot be separated by category. New one-minute samples will build this filtered trend.
+                  Earlier total-only samples cannot be separated by category. New recorded samples will build this filtered trend.
                 </p>
               )}
               <div className="mt-3 flex justify-between text-xs text-text-muted">
@@ -1219,6 +1225,7 @@ function buildTroopTrendLines(
   foodFilter: FoodFilter,
   selectedUnitID: number | null,
   range: RangeKey,
+	intervalSeconds: number,
 ): TrendLineSeries[] {
   const currentValues = current?.troopsByUnit;
   const rankedUnits = selectedUnitID != null && metadata[selectedUnitID]
@@ -1267,7 +1274,11 @@ function buildTroopTrendLines(
   }
 
   const colors = ['#34d399', '#60a5fa', '#f59e0b', '#fb7185', '#22d3ee'];
-  const preparePoints = (points: TrackerMetricPoint[]) => bucketMetricPoints(filterMetricPointsRange(points, range), range);
+  const preparePoints = (points: TrackerMetricPoint[]) => bucketMetricPoints(
+	filterMetricPointsRange(points, range),
+	range,
+	intervalSeconds,
+  );
   const rawLines: TrendLineSeries[] = [];
 
   rankedUnits.forEach((unit, index) => {
@@ -1626,7 +1637,11 @@ function normalizeResponse(
     current,
     samples,
     series: normalizeSeries(value?.series, samples, current, definitions),
-    intervalSeconds: finite(value?.intervalSeconds) || 60,
+    intervalSeconds: finite(value?.intervalSeconds) || 60 * 60,
+	recordingIntervalSeconds: finite(value?.recordingIntervalSeconds)
+		|| finite(value?.intervalSeconds)
+		|| 60 * 60,
+	resampled: value?.resampled === true,
     fallback: {
       provider: value?.fallback?.provider || 'citadel-history',
       status: value?.fallback?.status || 'not-needed',
@@ -1747,12 +1762,16 @@ function filterMetricPointsRange(points: TrackerMetricPoint[], range: RangeKey):
   return points.filter((point) => point.timestampUnix >= cutoff);
 }
 
-export function bucketMetricPoints(points: TrackerMetricPoint[], range: RangeKey): TrackerMetricPoint[] {
-  const bucketSeconds = range === '24h'
+export function bucketMetricPoints(
+  points: TrackerMetricPoint[],
+  range: RangeKey,
+  bucketSecondsOverride?: number,
+): TrackerMetricPoint[] {
+  const bucketSeconds = bucketSecondsOverride ?? (range === '24h'
     ? 60
     : range === '7d'
       ? 60 * 60
-      : 24 * 60 * 60;
+      : 24 * 60 * 60);
   const buckets = new Map<number, TrackerMetricPoint>();
   for (const point of points) {
     const bucket = Math.floor(point.timestampUnix / bucketSeconds);
@@ -1766,15 +1785,21 @@ export function bucketMetricPoints(points: TrackerMetricPoint[], range: RangeKey
   return [...buckets.values()].sort((left, right) => left.timestampUnix - right.timestampUnix);
 }
 
-function hoverPointHint(range: RangeKey): string {
-  switch (range) {
-    case '24h':
-      return 'Hover for 1-minute points.';
-    case '7d':
-      return 'Hover for 1-hour points.';
-    default:
-      return 'Hover for 1-day points.';
-  }
+function formatTrackerInterval(secondsValue: number): string {
+	const seconds = Math.max(60, Math.round(finite(secondsValue)) || 60 * 60);
+	if (seconds % (60 * 60) === 0) {
+		const hours = seconds / (60 * 60);
+		return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+	}
+	const minutes = Math.round(seconds / 60);
+	return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+}
+
+function hoverPointHint(response: PlayerTrackerResponse): string {
+	if (response.resampled || response.intervalSeconds > response.recordingIntervalSeconds) {
+		return `Saved every ${formatTrackerInterval(response.recordingIntervalSeconds)}; this range is condensed to one point every ${formatTrackerInterval(response.intervalSeconds)}.`;
+	}
+	return `Hover for points recorded every ${formatTrackerInterval(response.recordingIntervalSeconds)}.`;
 }
 
 function sumTroopRecord(

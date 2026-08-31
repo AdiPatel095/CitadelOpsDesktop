@@ -215,6 +215,7 @@ function AutomationStatusLines({
               checked={line.toggle.checked}
               onChange={line.toggle.onChange}
               size="sm"
+              tone="feature"
               ariaLabel={line.toggle.ariaLabel}
               disabled={line.toggle.disabled}
               className="automation-function-status-toggle"
@@ -787,6 +788,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                           checked={feature.enabled}
                           onChange={feature.onToggle}
                           size="sm"
+                          tone="feature"
                           ariaLabel={`Toggle ${feature.name}`}
                           disabled={feature.disabled}
                         />

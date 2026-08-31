@@ -1110,6 +1110,10 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 	defer cancelBurst()
 
 	startedAt := stormScanStartedAt(request)
+	var language *GameData.LanguageStore
+	if application.GameData != nil {
+		language, _ = application.GameData.Language()
+	}
 	if request.Cooperative {
 		windows := stormCooperativeScanWindows(request.Windows)
 		timeout := stormMapBurstRemaining(burstContext)
@@ -1117,7 +1121,7 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 			return fmt.Errorf("cooperative Storm scan exceeded the %s response deadline: %w", stormMapBurstResponseTimeout, burstContext.Err())
 		}
 		if err := runStormMapGAABurst(
-			burstContext, application.Session, application.Ingest, source.KingdomID, windows, timeout,
+			burstContext, application.Session, application.Ingest, language, source.KingdomID, windows, timeout,
 		); err != nil {
 			if application.WorldMaps != nil {
 				application.WorldMaps.ReleaseStormScan(application.AccountKey, request.LeaseID)
@@ -1139,7 +1143,7 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 			return fmt.Errorf("Storm map concentric sweep exceeded the %s response deadline: %w", stormMapBurstResponseTimeout, burstContext.Err())
 		}
 		if err := runStormMapGAABurst(
-			burstContext, application.Session, application.Ingest, source.KingdomID, windows, timeout,
+			burstContext, application.Session, application.Ingest, language, source.KingdomID, windows, timeout,
 		); err != nil {
 			return fmt.Errorf("scan Storm map ring %d: %w", ring, err)
 		}
@@ -1161,6 +1165,7 @@ func runStormMapGAABurst(
 	ctx context.Context,
 	sender stormMapBurstSender,
 	observer stormMapBurstObserver,
+	language *GameData.LanguageStore,
 	kingdomID State.KingdomID,
 	windows []towerMapWindow,
 	timeout time.Duration,
@@ -1296,8 +1301,9 @@ func runStormMapGAABurst(
 		}
 		if *committed.Frame.ResponseCode != 0 {
 			return fmt.Errorf(
-				"Storm map window %d/%d response code %d was not successful",
-				index+1, len(slots), *committed.Frame.ResponseCode,
+				"Storm map window %d/%d: %w",
+				index+1, len(slots),
+				Intent.NewResponseCodeError(language, committed.Frame.Opcode, *committed.Frame.ResponseCode),
 			)
 		}
 		if committed.ReduceError != "" {

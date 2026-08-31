@@ -59,6 +59,11 @@ func TestCloudClientOnlyQueriesSharedWorldIntelligence(t *testing.T) {
 				t.Errorf("player history limit = %q", got)
 			}
 			_ = json.NewEncoder(writer).Encode(PlayerEventScoreResponse{WorldID: request.URL.Query().Get("worldId"), PlayerID: 7, EventKey: request.URL.Query().Get("eventKey"), OccurrenceID: request.URL.Query().Get("occurrenceId"), History: []EventScoreObservation{{OccurrenceID: occurrenceID, PlayerID: 7, Rank: 3, ScoreKnown: false}}})
+		case "/v1/rankings/players":
+			if request.URL.Query().Get("metric") != "public:storm-cargo-points" || request.URL.Query().Get("limit") != "5000" {
+				t.Errorf("Storm metric query = %q", request.URL.RawQuery)
+			}
+			_ = json.NewEncoder(writer).Encode(RankingResponse{WorldID: request.URL.Query().Get("worldId"), Type: "players", Metric: request.URL.Query().Get("metric"), Entries: []RankingEntry{}})
 		case "/v1/subscribe":
 			if request.Header.Get("Accept") != "text/event-stream" || request.Header.Get("Last-Event-ID") != "41" {
 				t.Errorf("subscription headers = Accept %q Last-Event-ID %q", request.Header.Get("Accept"), request.Header.Get("Last-Event-ID"))
@@ -99,6 +104,10 @@ func TestCloudClientOnlyQueriesSharedWorldIntelligence(t *testing.T) {
 	history, err := client.PlayerEventScores(context.Background(), "world.example", 7, "nomad-invasion", occurrenceID, 9_999)
 	if err != nil || history.PlayerID != 7 || len(history.History) != 1 || history.History[0].ScoreKnown {
 		t.Fatalf("player event history = %#v, %v", history, err)
+	}
+	stormMetrics, err := client.Rankings(context.Background(), "world.example", "players", "public:storm-cargo-points", 9_999)
+	if err != nil || stormMetrics.Metric != "public:storm-cargo-points" {
+		t.Fatalf("Storm metrics = %#v, %v", stormMetrics, err)
 	}
 	subscription, err := client.Subscribe(context.Background(), "https://WORLD.EXAMPLE/socket", "41")
 	if err != nil {

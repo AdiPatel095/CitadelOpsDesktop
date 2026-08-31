@@ -6,7 +6,6 @@ import {
 	Download,
 	FileJson,
 	HardDrive,
-	Microscope,
 	MonitorPlay,
 	Server,
 	TriangleAlert,
@@ -78,6 +77,69 @@ function retentionMagnitude(value: string): number | null {
 	return amount * hoursPerUnit;
 }
 
+function retentionDays(value: string): number | null {
+	const hours = retentionMagnitude(value);
+	if (hours == null || !Number.isFinite(hours) || hours <= 0 || hours % 24 !== 0) return null;
+	return hours / 24;
+}
+
+function formatStorageBytes(bytes: number): string {
+	if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+	const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+	let value = bytes;
+	let unit = 0;
+	while (value >= 1024 && unit < units.length - 1) {
+		value /= 1024;
+		unit += 1;
+	}
+	const digits = value >= 100 || unit === 0 ? 0 : value >= 10 ? 1 : 2;
+	return `${value.toFixed(digits)} ${units[unit]}`;
+}
+
+function normalizedRecordingIntervalSeconds(value: unknown): number {
+	const seconds = Number(value);
+	return Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds) : 60 * 60;
+}
+
+function recordingsPerDay(intervalSeconds: number): number {
+	return Math.floor((24 * 60 * 60) / normalizedRecordingIntervalSeconds(intervalSeconds));
+}
+
+function recordingIntervalLabel(intervalSeconds: number): string {
+	const seconds = normalizedRecordingIntervalSeconds(intervalSeconds);
+	if (seconds % (60 * 60) === 0) {
+		const hours = seconds / (60 * 60);
+		return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+	}
+	const minutes = seconds / 60;
+	return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+}
+
+function retentionRecordings(option: PlayerHistoryRetentionOptionV1, intervalSeconds: number): number | null {
+	const days = option.days ?? retentionDays(option.value);
+	return days == null ? null : days * recordingsPerDay(intervalSeconds);
+}
+
+function retentionOptionLabel(
+	option: PlayerHistoryRetentionOptionV1,
+	bytesPerRecording: number,
+	intervalSeconds: number,
+): string {
+	const recordings = retentionRecordings(option, intervalSeconds);
+	if (option.value === 'none') return `${option.label} — 0 B`;
+	if (recordings == null) {
+		return `${option.label} — ~${formatStorageBytes(bytesPerRecording * recordingsPerDay(intervalSeconds))} per day`;
+	}
+	return `${option.label} — ${recordings.toLocaleString()} recordings · ~${formatStorageBytes(recordings * bytesPerRecording)}`;
+}
+
+function retentionLabel(value: string): string {
+	if (value === 'none') return 'No history';
+	if (value === 'unlimited') return 'Unlimited';
+	const days = retentionDays(value);
+	return days == null ? value : `${days.toLocaleString()} ${days === 1 ? 'day' : 'days'}`;
+}
+
 function allowedPlayerHistoryOptions(policy: PlayerHistoryRetentionV1 | null): PlayerHistoryRetentionOptionV1[] {
 	if (policy == null || !Array.isArray(policy.options)) return [];
 	if (!policy.maximum) return policy.options;
@@ -112,6 +174,7 @@ const SettingsView: React.FC = () => {
 		refreshConfiguration,
 		submitIntent,
 		updateConfiguration,
+		getPlayerHistoryRetention,
 		applyPlayerHistoryRetention,
 	} = useCitadelAPI();
   const [minTimer, setMinTimer] = useState<string>('4.0');
@@ -149,8 +212,6 @@ const SettingsView: React.FC = () => {
 	const [relogDelayMinutes, setRelogDelayMinutes] = useState('5');
 	const [relogDelayError, setRelogDelayError] = useState('');
 	const [settingsSaveError, setSettingsSaveError] = useState('');
-	const [battleResearchPending, setBattleResearchPending] = useState(false);
-	const [battleResearchError, setBattleResearchError] = useState('');
 	const settingsFileInputRef = useRef<HTMLInputElement>(null);
 	const [settingsTransferPending, setSettingsTransferPending] = useState<'export' | 'import' | null>(null);
 	const [settingsTransferError, setSettingsTransferError] = useState('');
@@ -160,6 +221,7 @@ const SettingsView: React.FC = () => {
 	const [playerHistoryRetentionPending, setPlayerHistoryRetentionPending] = useState(false);
 	const [playerHistoryRetentionError, setPlayerHistoryRetentionError] = useState('');
 	const [playerHistoryRetentionStatus, setPlayerHistoryRetentionStatus] = useState('');
+	const [playerHistoryDaysDraft, setPlayerHistoryDaysDraft] = useState('30');
 	const schedulerConfiguration = useMemo(
 		() => configurationSection(configuration, 'scheduler'),
 		[configuration?.sections.scheduler],
@@ -172,33 +234,51 @@ const SettingsView: React.FC = () => {
 		() => configurationSection(configuration, 'session.connection'),
 		[configuration],
 	);
-	const battleResearchConfiguration = useMemo(
-		() => configurationSection(configuration, 'research.battlePredictionBeta'),
-		[configuration?.sections['research.battlePredictionBeta']],
-	);
 	const playerHistoryRetentionOptions = useMemo(
 		() => allowedPlayerHistoryOptions(playerHistoryRetention),
 		[playerHistoryRetention],
 	);
-	const savedPlayerHistoryRetention = playerHistoryRetention?.configured ?? '';
+	const activePlayerHistoryRetention = playerHistoryRetention?.hosted
+		? playerHistoryRetention.effective
+		: playerHistoryRetention?.configured ?? '';
 	const selectedPlayerHistoryRetention = playerHistoryRetentionOptions.some(
-		(option) => option.value === savedPlayerHistoryRetention,
+		(option) => option.value === activePlayerHistoryRetention,
 	)
-		? savedPlayerHistoryRetention
-		: playerHistoryRetention?.effective ?? '';
+		? activePlayerHistoryRetention
+		: '';
 	const selectedPlayerHistoryRetentionOption = playerHistoryRetentionOptions.find(
-		(option) => option.value === selectedPlayerHistoryRetention,
+		(option) => option.value === activePlayerHistoryRetention,
 	);
 	const playerHistoryMaximumLabel = playerHistoryRetention?.options.find(
 		(option) => option.value === playerHistoryRetention.maximum,
-	)?.label ?? playerHistoryRetention?.maximum;
-	const battleResearchEnabled = battleResearchConfiguration.enabled === true
-		&& Number(battleResearchConfiguration.consentVersion) === 1;
+	)?.label ?? (playerHistoryRetention?.maximumDays != null
+		? `${playerHistoryRetention.maximumDays.toLocaleString()} days`
+		: playerHistoryRetention?.maximum);
+	const playerHistoryBytesPerRecording = Math.max(
+		1,
+		Number(playerHistoryRetention?.storage?.estimatedBytesPerRecording) || 4 * 1024,
+	);
+	const playerHistoryRecordingIntervalSeconds = normalizedRecordingIntervalSeconds(
+		playerHistoryRetention?.recordingIntervalSeconds,
+	);
+	const playerHistoryRecordingsPerDay = recordingsPerDay(playerHistoryRecordingIntervalSeconds);
+	const parsedPlayerHistoryDays = Number(playerHistoryDaysDraft);
+	const playerHistoryDaysValid = Number.isSafeInteger(parsedPlayerHistoryDays)
+		&& parsedPlayerHistoryDays > 0
+		&& (playerHistoryRetention?.maximumDays == null || parsedPlayerHistoryDays <= playerHistoryRetention.maximumDays);
+	const projectedPlayerHistoryRecordings = playerHistoryDaysValid
+		? parsedPlayerHistoryDays * playerHistoryRecordingsPerDay
+		: 0;
+	const activePlayerHistoryDays = playerHistoryRetention?.effectiveDays
+		?? retentionDays(playerHistoryRetention?.effective ?? '');
+	const activePlayerHistoryRecordings = activePlayerHistoryDays == null
+		? null
+		: activePlayerHistoryDays * playerHistoryRecordingsPerDay;
 
 	useEffect(() => {
 		let active = true;
 		setPlayerHistoryRetentionLoading(true);
-		void CitadelAPI.getPlayerHistoryRetention()
+		void getPlayerHistoryRetention()
 			.then((policy) => {
 				if (!active) return;
 				setPlayerHistoryRetention(policy);
@@ -215,7 +295,15 @@ const SettingsView: React.FC = () => {
 		return () => {
 			active = false;
 		};
-	}, []);
+	}, [getPlayerHistoryRetention]);
+
+	useEffect(() => {
+		if (playerHistoryRetention == null) return;
+		const days = playerHistoryRetention.hosted
+			? playerHistoryRetention.effectiveDays ?? retentionDays(playerHistoryRetention.effective)
+			: playerHistoryRetention.configuredDays ?? retentionDays(playerHistoryRetention.configured);
+		if (days != null) setPlayerHistoryDaysDraft(String(days));
+	}, [playerHistoryRetention]);
 
 	useEffect(() => {
 		let active = true;
@@ -383,29 +471,6 @@ const SettingsView: React.FC = () => {
 			.finally(() => setConnectionModePending(false));
 	};
 
-	const setBattleResearchEnabled = (enabled: boolean) => {
-		if (battleResearchPending || enabled === battleResearchEnabled) return;
-		if (enabled && !window.confirm(
-			'Enable Experimental Battle Research (Beta)?\n\n'
-			+ 'For outgoing PvP attacks you launch, CitadelOps will poll movements, record your account/world/player identifiers plus the exact formation and combat context, '
-			+ 'automatically send one military spy before and after battle, save an experimental pre-impact prediction and the final report, '
-			+ 'then upload the completed bundle to CitadelOps training data. Spy missions use game resources and may be detected. '
-			+ 'The calculator is incomplete and may be wrong. This feature respects Bot Lock and never launches an attack.',
-		)) return;
-		setBattleResearchPending(true);
-		setBattleResearchError('');
-		void updateConfiguration('research.battlePredictionBeta', {
-			...battleResearchConfiguration,
-			enabled,
-			consentVersion: enabled ? 1 : Number(battleResearchConfiguration.consentVersion ?? 0),
-			spyCount: 1,
-		})
-			.catch((error) => {
-				setBattleResearchError(error instanceof Error ? error.message : 'Could not update battle research consent');
-			})
-			.finally(() => setBattleResearchPending(false));
-	};
-
 	const selectBrowser = (browser: string) => {
 		if (!browser || browser === selectedBrowserID) return;
 		setBrowserSelectionPending(true);
@@ -568,37 +633,73 @@ const SettingsView: React.FC = () => {
 		setAttackPriorityDropTargetID(null);
 	};
 
-	const selectPlayerHistoryRetention = (nextRetention: string) => {
-		const nextOption = playerHistoryRetentionOptions.find((option) => option.value === nextRetention);
-		if (nextOption == null || playerHistoryRetentionPending || nextRetention === selectedPlayerHistoryRetention) return;
+	const applyPlayerHistoryStoragePolicy = (nextRetention: string, nextIntervalSeconds: number) => {
+		if (playerHistoryRetention == null || playerHistoryRetentionPending) return;
+		nextIntervalSeconds = normalizedRecordingIntervalSeconds(nextIntervalSeconds);
+		const intervalAllowed = playerHistoryRetention.recordingIntervalOptions?.some(
+			(option) => option.seconds === nextIntervalSeconds,
+		);
+		if (!intervalAllowed) {
+			setPlayerHistoryRetentionError('Choose one of the available My Stats recording frequencies.');
+			return;
+		}
+		const nextOption = playerHistoryRetention.options.find((option) => option.value === nextRetention);
+		const nextMagnitude = retentionMagnitude(nextRetention);
+		if (nextMagnitude == null) return;
+		const currentIntervalSeconds = normalizedRecordingIntervalSeconds(playerHistoryRetention.recordingIntervalSeconds);
+		const retentionChanged = nextRetention !== playerHistoryRetention.configured;
+		const intervalChanged = nextIntervalSeconds !== currentIntervalSeconds;
+		if (!retentionChanged && !intervalChanged) return;
+		if (retentionChanged && playerHistoryRetention?.maximumDays != null && Number.isFinite(nextMagnitude)
+			&& nextMagnitude > playerHistoryRetention.maximumDays * 24) {
+			setPlayerHistoryRetentionError(`Hosted My Stats history is capped at ${playerHistoryRetention.maximumDays.toLocaleString()} days.`);
+			return;
+		}
+		const nextLabel = nextOption?.label ?? retentionLabel(nextRetention);
 		const reducing = isRetentionReduction(
-			selectedPlayerHistoryRetention || playerHistoryRetention?.effective || '',
+			activePlayerHistoryRetention || playerHistoryRetention?.effective || '',
 			nextRetention,
 			playerHistoryRetentionOptions,
 		);
-		if ((retentionMagnitude(nextRetention) === 0 || reducing) && !window.confirm(
-			retentionMagnitude(nextRetention) === 0
-				? 'Stop saving My Stats history?\n\nExisting saved My Stats points will be permanently deleted. Current live values will remain available while CitadelOps is running.'
-				: `Reduce My Stats history to ${nextOption.label}?\n\nSaved points outside the new window will be permanently deleted and cannot be restored.`,
-		)) return;
+		const coarsening = nextIntervalSeconds > currentIntervalSeconds;
+		const hasSavedHistory = (activePlayerHistoryRetention || playerHistoryRetention.effective) !== 'none';
+		let confirmation = '';
+		if (nextMagnitude === 0 && hasSavedHistory) {
+			confirmation = 'Stop saving My Stats history?\n\nExisting saved My Stats points will be permanently deleted. Current live values will remain available while CitadelOps is running.';
+		} else if (hasSavedHistory && reducing && coarsening) {
+			confirmation = `Reduce My Stats history to ${nextLabel} and record every ${recordingIntervalLabel(nextIntervalSeconds)}?\n\nPoints outside the new window and intermediate points removed by the less-frequent cadence will be permanently deleted.`;
+		} else if (hasSavedHistory && reducing) {
+			confirmation = `Reduce My Stats history to ${nextLabel}?\n\nSaved points outside the new window will be permanently deleted and cannot be restored.`;
+		} else if (hasSavedHistory && coarsening) {
+			confirmation = `Record My Stats every ${recordingIntervalLabel(nextIntervalSeconds)}?\n\nExisting history will be compacted to the less-frequent cadence. Intermediate points will be permanently deleted and cannot be restored.`;
+		}
+		if (confirmation && !window.confirm(confirmation)) return;
 
 		setPlayerHistoryRetentionPending(true);
 		setPlayerHistoryRetentionError('');
 		setPlayerHistoryRetentionStatus('');
 		void (async () => {
 			try {
-				if (playerHistoryRetention == null) {
-					throw new Error('My Stats storage policy is unavailable. Please refresh and try again.');
-				}
-				const applied = await applyPlayerHistoryRetention(nextRetention, playerHistoryRetention.revision);
-				if (applied.policy.configured !== nextRetention) {
-					throw new Error('My Stats retention changed before it could be applied. Please try again.');
+				const applied = await applyPlayerHistoryRetention(
+					nextRetention,
+					nextIntervalSeconds,
+					playerHistoryRetention.revision,
+					playerHistoryRetention.configured,
+					currentIntervalSeconds,
+				);
+				if (applied.policy.configured !== nextRetention ||
+					normalizedRecordingIntervalSeconds(applied.policy.recordingIntervalSeconds) !== nextIntervalSeconds) {
+					throw new Error('My Stats storage policy changed before it could be applied. Please try again.');
 				}
 				setPlayerHistoryRetention(applied.policy);
 				setPlayerHistoryRetentionStatus(
-					retentionMagnitude(nextRetention) === 0
+					nextMagnitude === 0
 						? 'My Stats history storage is off. Current live values remain available.'
-						: `My Stats history retention is now ${nextOption.label}.`,
+						: intervalChanged && !retentionChanged
+							? `My Stats will now record every ${recordingIntervalLabel(nextIntervalSeconds)}.`
+							: nextRetention === 'unlimited'
+							? 'My Stats history retention is now unlimited.'
+							: `My Stats history retention is now ${nextLabel}, recording every ${recordingIntervalLabel(nextIntervalSeconds)}.`,
 				);
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Could not update My Stats storage';
@@ -607,7 +708,7 @@ const SettingsView: React.FC = () => {
 					? `The storage preference was saved, but existing history could not be updated: ${message}`
 					: message);
 				try {
-					setPlayerHistoryRetention(await CitadelAPI.getPlayerHistoryRetention());
+					setPlayerHistoryRetention(await getPlayerHistoryRetention());
 				} catch {
 					// The saved configuration remains authoritative and will retry in the runtime.
 				}
@@ -615,6 +716,26 @@ const SettingsView: React.FC = () => {
 				setPlayerHistoryRetentionPending(false);
 			}
 		})();
+	};
+
+	const selectPlayerHistoryRetention = (nextRetention: string) => {
+		applyPlayerHistoryStoragePolicy(nextRetention, playerHistoryRecordingIntervalSeconds);
+	};
+
+	const selectPlayerHistoryRecordingInterval = (nextInterval: string) => {
+		const seconds = Number(nextInterval);
+		if (!Number.isFinite(seconds) || playerHistoryRetention == null) return;
+		applyPlayerHistoryStoragePolicy(playerHistoryRetention.configured, seconds);
+	};
+
+	const applyPlayerHistoryDays = () => {
+		if (!playerHistoryDaysValid) {
+			setPlayerHistoryRetentionError(playerHistoryRetention?.maximumDays != null
+				? `Enter a whole number from 1 to ${playerHistoryRetention.maximumDays.toLocaleString()} days.`
+				: 'Enter a positive whole-number day limit.');
+			return;
+		}
+		selectPlayerHistoryRetention(`${parsedPlayerHistoryDays}d`);
 	};
 
 	const exportSettings = async () => {
@@ -733,10 +854,10 @@ const SettingsView: React.FC = () => {
 			{settingsTransferStatus && <p role="status" className="text-xs font-medium text-success">{settingsTransferStatus}</p>}
 			</SectionCard>
 
-			<SectionCard
-				variant="solid"
-				title="My Stats Storage"
-				description="Choose how much My Stats chart history this runtime profile keeps on disk."
+				<SectionCard
+					variant="solid"
+					title="My Stats Storage"
+					description="Choose how often My Stats is recorded, set its day limit, and preview local disk use."
 				icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10"><HardDrive className="h-4 w-4 text-cyan-400" /></span>}
 				actions={playerHistoryRetention == null ? undefined : (
 					<Badge variant={playerHistoryRetention.hosted ? 'warning' : 'secondary'}>
@@ -745,15 +866,28 @@ const SettingsView: React.FC = () => {
 				)}
 				contentClassName="p-6 space-y-4"
 			>
-				<div className="w-full sm:max-w-[420px]">
-					<label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-						Saved history window
+					<div className="grid gap-4 lg:grid-cols-3">
+						<div>
+						<label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+							Retention quick choices
 					</label>
 					<Select
 						value={selectedPlayerHistoryRetention}
-						options={playerHistoryRetentionOptions.map((option) => ({ value: option.value, label: option.label }))}
+						options={playerHistoryRetentionOptions.map((option) => ({
+							value: option.value,
+								label: retentionOptionLabel(
+									option,
+									playerHistoryBytesPerRecording,
+									playerHistoryRecordingIntervalSeconds,
+								),
+							searchText: `${option.label} ${option.value}`,
+						}))}
 						onChange={selectPlayerHistoryRetention}
-						placeholder={playerHistoryRetentionLoading ? 'Loading storage options…' : 'Storage options unavailable'}
+						placeholder={playerHistoryRetentionLoading
+							? 'Loading storage options…'
+							: activePlayerHistoryRetention
+								? `Custom: ${retentionLabel(activePlayerHistoryRetention)}`
+								: 'Storage options unavailable'}
 						icon={<HardDrive className="h-4 w-4" />}
 						disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending || playerHistoryRetentionOptions.length === 0}
 						ariaLabel="My Stats saved history window"
@@ -761,8 +895,67 @@ const SettingsView: React.FC = () => {
 					{selectedPlayerHistoryRetentionOption?.description && (
 						<p className="mt-2 text-xs leading-relaxed text-text-muted">{selectedPlayerHistoryRetentionOption.description}</p>
 					)}
-					{playerHistoryRetentionPending && <p role="status" className="mt-2 text-xs font-medium text-warning">Updating saved history…</p>}
-				</div>
+					</div>
+
+					<div>
+						<label htmlFor="player-history-days" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+							Custom day limit
+						</label>
+						<div className="flex flex-col gap-2 sm:flex-row">
+							<Input
+								id="player-history-days"
+								type="number"
+								min={1}
+								max={playerHistoryRetention?.maximumDays ?? undefined}
+								step={1}
+								inputMode="numeric"
+								value={playerHistoryDaysDraft}
+								onChange={(event) => setPlayerHistoryDaysDraft(event.target.value)}
+								disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending}
+								aria-label="Custom My Stats retention days"
+							/>
+							<Button
+								type="button"
+								variant="secondary"
+								className="sm:shrink-0"
+								onClick={applyPlayerHistoryDays}
+								disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending || !playerHistoryDaysValid}
+							>
+								Apply days
+							</Button>
+						</div>
+						<p className="mt-2 text-xs leading-relaxed text-text-muted">
+							{playerHistoryDaysValid
+								? `${projectedPlayerHistoryRecordings.toLocaleString()} recordings at the selected cadence · approximately ${formatStorageBytes(projectedPlayerHistoryRecordings * playerHistoryBytesPerRecording)}`
+								: playerHistoryRetention?.maximumDays != null
+									? `Enter 1–${playerHistoryRetention.maximumDays.toLocaleString()} whole days.`
+									: 'Enter a positive whole-number day limit.'}
+							</p>
+						</div>
+
+						<div>
+							<label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
+								Record My Stats every
+							</label>
+							<Select
+								value={String(playerHistoryRecordingIntervalSeconds)}
+								options={(playerHistoryRetention?.recordingIntervalOptions ?? []).map((option) => ({
+									value: String(option.seconds),
+									label: `${option.label} — ${option.recordingsPerDay.toLocaleString()}/day · ~${formatStorageBytes(option.recordingsPerDay * playerHistoryBytesPerRecording)}/day`,
+									searchText: `${option.label} ${option.seconds}`,
+								}))}
+								onChange={selectPlayerHistoryRecordingInterval}
+								placeholder={playerHistoryRetentionLoading ? 'Loading frequencies…' : 'Recording frequencies unavailable'}
+								icon={<HardDrive className="h-4 w-4" />}
+								disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending || !playerHistoryRetention?.recordingIntervalOptions?.length}
+								ariaLabel="My Stats recording frequency"
+							/>
+							<p className="mt-2 text-xs leading-relaxed text-text-muted">
+								Snapshots state already available in CitadelOps; it does not send additional game scan commands.
+							</p>
+						</div>
+					</div>
+					{playerHistoryRetentionPending && <p role="status" className="text-xs font-medium text-warning">Updating saved history policy…</p>}
 
 				{playerHistoryRetention?.hosted && (
 					<div className="rounded-global border border-warning/25 bg-warning/5 px-4 py-3 text-xs leading-relaxed text-text-muted">
@@ -771,22 +964,37 @@ const SettingsView: React.FC = () => {
 					</div>
 				)}
 
-				<div className="grid gap-3 md:grid-cols-3">
-					<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-						<p className="text-xs font-bold text-text-main">First 24 hours</p>
-						<p className="mt-1 text-[11px] leading-relaxed text-text-muted">Keeps one-minute history points for detailed recent charts.</p>
+					<div className="grid gap-3 md:grid-cols-3">
+						<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
+							<p className="text-xs font-bold text-text-main">Selected cadence throughout</p>
+							<p className="mt-1 text-[11px] leading-relaxed text-text-muted">
+								Keeps at most one recording every {recordingIntervalLabel(playerHistoryRecordingIntervalSeconds)} across the complete selected window.
+							</p>
 					</div>
 					<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-						<p className="text-xs font-bold text-text-main">Days 2 through 7</p>
-						<p className="mt-1 text-[11px] leading-relaxed text-text-muted">Keeps one representative point per hour.</p>
+						<p className="text-xs font-bold text-text-main">Current saved limit</p>
+						<p className="mt-1 text-[11px] leading-relaxed text-text-muted">
+							{playerHistoryRetention == null
+								? 'Loading the saved policy…'
+								: activePlayerHistoryRecordings == null
+								? activePlayerHistoryRetention === 'none'
+									? 'History storage is off.'
+									: `Unlimited, growing by up to ${playerHistoryRecordingsPerDay.toLocaleString()} recordings per day · approximately ${formatStorageBytes(playerHistoryRecordingsPerDay * playerHistoryBytesPerRecording)}/day.`
+								: `${activePlayerHistoryRecordings.toLocaleString()} recordings · approximately ${formatStorageBytes(activePlayerHistoryRecordings * playerHistoryBytesPerRecording)}`}
+						</p>
 					</div>
 					<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-						<p className="text-xs font-bold text-text-main">Older history</p>
-						<p className="mt-1 text-[11px] leading-relaxed text-text-muted">Keeps one representative point per day until the selected limit.</p>
+						<p className="text-xs font-bold text-text-main">Current history file</p>
+						<p className="mt-1 text-[11px] leading-relaxed text-text-muted">
+							{formatStorageBytes(Number(playerHistoryRetention?.storage?.currentBytes) || 0)} now · ~{formatStorageBytes(playerHistoryBytesPerRecording)} per recording
+						</p>
 					</div>
 				</div>
 
 				<p className="text-[11px] leading-relaxed text-text-muted">
+					My Stats uses this profile's <code>History/PlayerSamples.jsonl</code> file, not SQLite. Estimates use saved rows or the current sample shape; troop and currency counts can change the actual size.{' '}
+					Finite-window maintenance rewrites the file safely and can briefly require roughly twice the displayed retained size.{' '}
+					Choosing a more frequent cadence affects future recordings; choosing a less-frequent cadence permanently compacts existing intermediate points.{' '}
 					Turning storage off removes saved history but keeps current live values available while CitadelOps is running.{' '}
 					Reducing the window permanently removes older points. Increasing it later cannot restore points already deleted.{' '}
 					This setting does not affect logs, reports, World Intelligence, or live game state.
@@ -794,45 +1002,6 @@ const SettingsView: React.FC = () => {
 				{playerHistoryRetentionError && <p role="alert" className="text-xs font-medium text-error">{playerHistoryRetentionError}</p>}
 				{playerHistoryRetentionStatus && <p role="status" className="text-xs font-medium text-success">{playerHistoryRetentionStatus}</p>}
 			</SectionCard>
-
-			<SectionCard
-			variant="solid"
-			title="Experimental Battle Research"
-			description="Opt in to forward-tested battle predictions and privacy-bounded training capture."
-			icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-fuchsia-500/10"><Microscope className="h-4 w-4 text-fuchsia-400" /></span>}
-			actions={<Badge variant="warning">Beta</Badge>}
-			contentClassName="p-6 space-y-4"
-		>
-			<SettingsToggleRow
-				title="Contribute outgoing PvP battle trials"
-				description="Observe attacks you already launch, save an untouched prediction before impact, and upload the completed pre-spy, formation, report, and post-spy bundle."
-				icon={<Microscope className="h-4 w-4" />}
-				checked={battleResearchEnabled}
-				onChange={setBattleResearchEnabled}
-				disabled={battleResearchPending}
-				disabledReason="Saving consent…"
-				tone="warning"
-				ariaLabel="Contribute outgoing PvP battle trials"
-			/>
-			<div className="grid gap-3 md:grid-cols-3">
-				<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-					<p className="text-xs font-bold text-text-main">What is recorded</p>
-					<p className="mt-1 text-[11px] leading-relaxed text-text-muted">Your account, world, and player identifiers; exact waves, troops, tools, commander context, target identity, two spy snapshots, the pre-impact estimate, and the final report.</p>
-				</div>
-				<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-					<p className="text-xs font-bold text-text-main">What it does in-game</p>
-					<p className="mt-1 text-[11px] leading-relaxed text-text-muted">Polls movements every five seconds and automatically sends one-agent military espionage before and after an eligible battle. It respects Bot Lock and never launches attacks.</p>
-				</div>
-				<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-					<p className="text-xs font-bold text-text-main">Calculator maturity</p>
-					<p className="mt-1 text-[11px] leading-relaxed text-text-muted">The visible baseline is intentionally labeled low confidence. It records unsupported effects for later models but does not claim exact accuracy today.</p>
-				</div>
-			</div>
-			<p className="text-[11px] leading-relaxed text-text-muted">
-				Disabling stops new capture, automatic spies, and pending uploads. Consent stays on this installation and is never included in settings export or import. Existing local trial records remain available for audit; completed uploads are retained as training data.
-			</p>
-			{battleResearchError && <p role="alert" className="text-xs font-medium text-error">{battleResearchError}</p>}
-		</SectionCard>
 
 		<SectionCard variant="solid" title="Game Connection" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-6">
 			<div>

@@ -45,9 +45,13 @@ func featureActivities(receipt Intent.Receipt) []featureActivity {
 		summary := receiptSummary(receipt)
 		detail := "Could not " + attemptedActivityDetail(summary)
 		reason := userFacingFailureReason(receipt.Error)
+		if receipt.Failure != nil && strings.TrimSpace(receipt.Failure.Explanation) != "" {
+			reason = receipt.Failure.Explanation
+		}
 		detail += ": " + reason
 		severity := "ERROR"
-		if availabilityGateFailure(receipt.Error) {
+		if (receipt.Failure != nil && receipt.Failure.Severity == Intent.FailureSeverityWarning) ||
+			availabilityGateFailure(receipt.Error) {
 			severity = "WARN"
 		}
 		return []featureActivity{{severity: severity, event: featureActivityEvent(receipt.Intent), detail: userFacingActivityText(detail)}}
@@ -59,6 +63,11 @@ func featureActivities(receipt Intent.Receipt) []featureActivity {
 func availabilityGateFailure(value string) bool {
 	lower := strings.ToLower(strings.TrimSpace(value))
 	if strings.Contains(lower, "not enough troops") || strings.Contains(lower, "insufficient troops") {
+		return true
+	}
+	if strings.Contains(lower, "no commander") || strings.Contains(lower, "no commanders") ||
+		strings.Contains(lower, "commander availability changed") ||
+		(strings.Contains(lower, "no available") && strings.Contains(lower, "commander")) {
 		return true
 	}
 	return strings.Contains(lower, " commander(s) require ") ||

@@ -1,52 +1,67 @@
 import type { WorldIntelligenceEventScoreObservationV1 } from '../../api/Contracts';
 
-const stormEventId = 102;
+export const stormEventId = 102;
+export const stormListType = 13;
+export const stormGlobalLeagueId = -1;
 
-/** Rebuild dated Storm ranks only when complete final scores contradict stored page-local ranks. */
+/** Storm list 13 is one world-wide ranking. Wire LID 1 is not a player level league. */
+export function isOriginalStormRanking(eventId: number | undefined, listType: number | undefined): boolean {
+	return eventId === stormEventId && listType === stormListType;
+}
+
+/** Collapse legacy league-shaped Storm rows and rebuild their one global score ranking. */
 export function normalizeStormSessionRanking(
 	eventId: number,
 	entries: readonly WorldIntelligenceEventScoreObservationV1[],
 ): WorldIntelligenceEventScoreObservationV1[] {
-	const normalized = entries.map((entry) => ({ ...entry }));
-	if (eventId !== stormEventId || normalized.length < 2) return normalized;
+	if (eventId !== stormEventId) return entries.map((entry) => ({ ...entry }));
 
-	const boardIndices = new Map<string, number[]>();
-	for (let index = 0; index < normalized.length; index += 1) {
-		const entry = normalized[index];
-		const key = `${entry.listType}:${entry.boardKey ?? ''}:${entry.leagueId}`;
-		const indices = boardIndices.get(key) ?? [];
-		indices.push(index);
-		boardIndices.set(key, indices);
+	const normalized: WorldIntelligenceEventScoreObservationV1[] = [];
+	const stormPlayerIndices = new Map<number, number>();
+	for (const sourceEntry of entries) {
+		if (!isOriginalStormRanking(sourceEntry.eventId, sourceEntry.listType)) {
+			normalized.push({ ...sourceEntry });
+			continue;
+		}
+		const canonical = { ...sourceEntry, leagueId: stormGlobalLeagueId };
+		delete canonical.boardKey;
+		const existingIndex = stormPlayerIndices.get(canonical.playerId);
+		if (existingIndex == null) {
+			stormPlayerIndices.set(canonical.playerId, normalized.length);
+			normalized.push(canonical);
+			continue;
+		}
+		if (preferStormObservation(canonical, normalized[existingIndex])) {
+			normalized[existingIndex] = canonical;
+		}
 	}
 
-	for (const indices of boardIndices.values()) {
-		if (indices.length < 2 || stormRanksMatchScores(indices.map((index) => normalized[index]))) continue;
-		indices.sort((leftIndex, rightIndex) => compareStormScores(normalized[leftIndex], normalized[rightIndex]));
-		indices.forEach((entryIndex, rankIndex) => {
+	const stormIndices = [...stormPlayerIndices.values()];
+	// Cargo is the authority for a complete Storm board. The game-provided
+	// rank is display metadata and never controls inclusion or ordering.
+	if (stormIndices.length >= 2 && stormIndices.every((index) => stormScore(normalized[index]) != null)) {
+		stormIndices.sort((leftIndex, rightIndex) => compareStormScores(normalized[leftIndex], normalized[rightIndex]));
+		stormIndices.forEach((entryIndex, rankIndex) => {
 			normalized[entryIndex].rank = rankIndex + 1;
 		});
 	}
 	return normalized;
 }
 
-function stormRanksMatchScores(entries: readonly WorldIntelligenceEventScoreObservationV1[]): boolean {
-	if (!entries.every((entry) => stormScore(entry) != null)) return true;
-	const ordered = [...entries].sort((left, right) => left.rank - right.rank);
-	const scoreByRank = new Map<number, number>();
-	let priorRank = 0;
-	let priorScore = Number.POSITIVE_INFINITY;
-	for (const entry of ordered) {
-		const score = stormScore(entry);
-		if (score == null) continue;
-		if (!Number.isInteger(entry.rank) || entry.rank < 1) return false;
-		const sameRankScore = scoreByRank.get(entry.rank);
-		if (sameRankScore != null && sameRankScore !== score) return false;
-		if (entry.rank > priorRank && score > priorScore) return false;
-		scoreByRank.set(entry.rank, score);
-		priorRank = entry.rank;
-		priorScore = score;
+function preferStormObservation(
+	candidate: WorldIntelligenceEventScoreObservationV1,
+	current: WorldIntelligenceEventScoreObservationV1,
+): boolean {
+	const candidateObservedAt = Date.parse(candidate.observedAt);
+	const currentObservedAt = Date.parse(current.observedAt);
+	if (Number.isFinite(candidateObservedAt) && Number.isFinite(currentObservedAt) && candidateObservedAt !== currentObservedAt) {
+		return candidateObservedAt > currentObservedAt;
 	}
-	return scoreByRank.has(1);
+	if (candidate.scoreKnown !== current.scoreKnown) return candidate.scoreKnown;
+	const candidateScore = stormScore(candidate);
+	const currentScore = stormScore(current);
+	if (candidateScore != null && currentScore != null && candidateScore !== currentScore) return candidateScore > currentScore;
+	return false;
 }
 
 function compareStormScores(

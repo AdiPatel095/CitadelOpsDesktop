@@ -152,21 +152,43 @@ export interface PlayerHistoryRetentionOptionV1 {
 	value: string;
 	label: string;
 	description: string;
+	days?: number;
+	recordings?: number;
+}
+
+export interface PlayerHistoryRecordingIntervalOptionV1 {
+	seconds: number;
+	label: string;
+	description: string;
+	recordingsPerDay: number;
 }
 
 export interface PlayerHistoryRetentionV1 {
 	revision: number;
 	configured: string;
+	configuredDays?: number;
 	effective: string;
+	effectiveDays?: number;
+	recordingIntervalSeconds: number;
+	recordingIntervalOptions: PlayerHistoryRecordingIntervalOptionV1[];
 	hosted: boolean;
 	maximum?: string | null;
+	maximumDays?: number;
 	options: PlayerHistoryRetentionOptionV1[];
+	storage?: {
+		format: 'jsonl' | string;
+		currentBytes: number;
+		estimatedBytesPerRecording: number;
+		basis: 'saved-samples' | 'current-sample' | 'conservative-fallback' | string;
+		sampledRecordings?: number;
+	};
 }
 
 export interface PlayerHistoryRetentionApplyV1 {
 	policy: PlayerHistoryRetentionV1;
 	report: {
 		retention: string;
+		recordingIntervalSeconds: number;
 		scannedRows: number;
 		deletedRows: number;
 		keptRows: number;
@@ -2311,10 +2333,22 @@ export interface IntentReceipt {
   attempt?: number;
   plan?: IntentPlan;
 	exchanges?: IntentCommandExchange[];
-  error?: string;
+	error?: string;
+	failure?: IntentFailurePresentation;
   submittedAt: string;
   startedAt?: string;
   completedAt?: string;
+}
+
+export interface IntentFailurePresentation {
+	kind: 'game_rejected' | 'availability' | 'stale_state' | 'timeout' | 'connection' | 'indeterminate' | 'internal' | 'unknown';
+	message: string;
+	explanation: string;
+	recovery?: string;
+	severity: 'warning' | 'error';
+	gameCode?: number;
+	knowledge?: 'official' | 'observed' | 'unknown';
+	toast: boolean;
 }
 
 export interface IntentCommandExchange {
@@ -2358,6 +2392,8 @@ export interface IntentDefinition {
 export interface SubmitIntentOptions {
   id?: string;
   actor?: string;
+	/** Client-only toast ID used to replace a feature-owned progress notice. */
+	notificationId?: string;
   /** Explicit 1–100 override. Omit to derive priority from the actor. */
   priority?: number;
   expectedRevision?: number;

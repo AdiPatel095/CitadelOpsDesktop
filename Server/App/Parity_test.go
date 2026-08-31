@@ -14,6 +14,9 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if application.BattleResearch != nil {
+		t.Fatal("retired Experimental Battle Research runtime was composed")
+	}
 	capabilities := map[string][]string{
 		"application": {"app.update.check", "app.update.install", "game_data.refresh"},
 		"session":     {"session.start", "session.stop", "session.select_browser", "session.background.prepare"},

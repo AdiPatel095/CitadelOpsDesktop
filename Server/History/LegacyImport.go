@@ -112,6 +112,12 @@ func (store *Store) ImportLegacySource(
 		if err != nil {
 			return err
 		}
+		if collection == CollectionPlayerSamples && imported == 0 {
+			// A failed or partial direct write can still change the JSONL bytes.
+			// Invalidate before the first write so bounded reads never reuse stale
+			// offsets, even if the import later returns an error.
+			store.invalidatePlayerSampleIndexLocked()
+		}
 		if _, err := writer.Write(append(line, '\n')); err != nil {
 			return err
 		}
