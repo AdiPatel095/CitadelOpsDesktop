@@ -379,6 +379,12 @@ func (application *Application) resolveRecruitmentBUPAllianceHelpStep(
 			Intent.ErrPlanStale, request.CastleID,
 		)
 	}
+	if State.RecruitmentAllianceHelpCovers(input.State, request.CastleID, time.Now().UTC(), 0) {
+		return Intent.Step{}, fmt.Errorf(
+			"%w: recruitment castle %d already has a current alliance-help request",
+			Intent.ErrPlanStale, request.CastleID,
+		)
+	}
 	return recruitmentAllianceHelpCommand(input, request.CastleID), nil
 }
 

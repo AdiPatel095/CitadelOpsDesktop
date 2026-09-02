@@ -26,7 +26,13 @@ import {
   normalizeAutoToolSettings,
   persistAutoToolSettings,
 } from '../AutoToolClientState';
-import type { QueueProductionClientSettingsV1, QueueProductionItem } from '../QueueProductionClientState';
+import {
+  applyQueueProductionCastleIdentityMetadata,
+  queueProductionCastleConfigurationKey,
+  queueProductionKnownStormCastleIDs,
+  type QueueProductionClientSettingsV1,
+  type QueueProductionItem,
+} from '../QueueProductionClientState';
 import {
   formatMinuteOfDay,
   normalizeFeatureSchedules,
@@ -140,7 +146,7 @@ const DEFINITIONS: Record<QueueProductionSettingsModalProps['kind'], QueueProduc
   },
 };
 
-type ItemScope = { type: 'global' } | { type: 'castle'; castleId: string };
+type ItemScope = { type: 'global' } | { type: 'castle'; castleId: string; liveCastleId: string };
 
 export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModalProps> = ({
   isOpen,
@@ -153,6 +159,19 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   const { getTroop, getTool, buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<QueueProductionClientSettingsV1>(() => definition.defaultSettings());
+  const autoStormSettings = configurationSection(configuration, 'automation.autoStorm');
+  const knownStormCastleIDs = queueProductionKnownStormCastleIDs(
+    state?.storm.lastScannedAt,
+    state?.storm.map.sourceCastleId,
+    autoStormSettings.target,
+  );
+  const liveCastleIdentities = castles.map(({ id, kingdomId }) => ({ id, kingdomId }));
+  const configurationKeyForCastle = (castle: CastleOptionV2) => queueProductionCastleConfigurationKey(
+    settings,
+    castle,
+    liveCastleIdentities,
+    knownStormCastleIDs,
+  );
   const featureSchedules = normalizeFeatureSchedules(
     configurationSection(configuration, 'scheduler').featureSchedules,
   );
@@ -227,15 +246,18 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   const allowedItemIDsForScope = (scope: ItemScope): number[] | undefined => {
     if (!queueableCatalogLoaded) return undefined;
     if (scope.type === 'castle') {
-      if (!queueableBuildingRowsLoaded(queueableCatalog, scope.castleId)) return undefined;
-      const availableIDs = queueableIDsForCastle(queueableCatalog, scope.castleId, definition.queueField);
+      if (!queueableBuildingRowsLoaded(queueableCatalog, scope.liveCastleId)) return undefined;
+      const availableIDs = queueableIDsForCastle(queueableCatalog, scope.liveCastleId, definition.queueField);
       return kind === 'recruit' ? highestUnitIDsByFamily(availableIDs, troops) : availableIDs;
     }
 
     const knownCastleIDs = eligibleCastles
       .map((castle) => castle.id)
       .filter((castleID) => queueableBuildingRowsLoaded(queueableCatalog, castleID));
-    const enabledCastleIDs = knownCastleIDs.filter((castleID) => settings.castles[String(castleID)]?.enabled);
+    const enabledCastleIDs = knownCastleIDs.filter((castleID) => {
+      const castle = eligibleCastles.find((candidate) => candidate.id === castleID);
+      return castle != null && settings.castles[configurationKeyForCastle(castle)]?.enabled;
+    });
     if (enabledCastleIDs.length > 0) {
       if (kind === 'recruit') {
         return unitIDsAvailableByFamilyAcrossCastles(
@@ -405,7 +427,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   const handleSave = async () => {
     setIsSaving(true);
     setSaveError(null);
-    const nextSettings = kind === 'recruit'
+    const rangedSettings = kind === 'recruit'
       ? {
           ...settings,
           globalItems: settings.globalItems.map((item) => itemWithCurrentUnitRange(item.id, item)),
@@ -415,6 +437,11 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
           ])),
         }
       : settings;
+    const nextSettings = applyQueueProductionCastleIdentityMetadata(
+      rangedSettings,
+      liveCastleIdentities,
+      knownStormCastleIDs,
+    );
     setSettings(nextSettings);
     try {
       await definition.persistSettings(nextSettings);
@@ -433,7 +460,9 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   const eligibleCastles = queueableCatalogLoaded
     ? castles.filter((castle) => queueableCastleEligible(queueableCatalog, castle.id, definition.queueField))
     : castles;
-  const enabledCastleCount = eligibleCastles.filter(castle => settings.castles[castle.id.toString()]?.enabled).length;
+  const enabledCastleCount = eligibleCastles.filter(
+    (castle) => settings.castles[configurationKeyForCastle(castle)]?.enabled,
+  ).length;
   const isGlobalMode = settings.mode === 'global';
   const globalSchedule = featureSchedules[definition.featureID];
   const globalScheduleEnabled = !!globalSchedule?.enabled;
@@ -673,11 +702,15 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
     );
   };
 
-  const renderCastleScheduleSlots = (schedule: WeeklySchedule, castle: CastleOptionV2) => renderScheduleSlots(schedule, {
+  const renderCastleScheduleSlots = (
+    schedule: WeeklySchedule,
+    castle: CastleOptionV2,
+    castleConfigurationKey: string,
+  ) => renderScheduleSlots(schedule, {
     description: `${definition.itemFallbackLabel} choices come from this castle's calendar slots.`,
     editTitle: `${castle.name} ${definition.featureLabel} schedule`,
     onEdit: () => onOpenFeatureSchedule(
-      definition.castleScheduleID(castle.id),
+      definition.castleScheduleID(castleConfigurationKey),
       `${definition.featureLabel} - ${castle.name}`,
     ),
   });
@@ -765,7 +798,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
       )}
     >
         {eligibleCastles.map((castle) => {
-          const castleId = castle.id.toString();
+          const castleId = configurationKeyForCastle(castle);
           const castleSettings = settings.castles[castleId] ?? { enabled: false, items: [], cursor: 0 };
 
           return (
@@ -926,8 +959,8 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             <>
               <div className="grid w-full auto-rows-max grid-cols-1 gap-5 lg:grid-cols-2 2xl:grid-cols-3">
                 {eligibleCastles.map((castle) => {
-                  const castleId = castle.id.toString();
-                  const castleScheduleID = definition.castleScheduleID(castle.id);
+                  const castleId = configurationKeyForCastle(castle);
+                  const castleScheduleID = definition.castleScheduleID(castleId);
                   const castleSchedule = featureSchedules[castleScheduleID];
                   const scheduledItemSchedule = !isGlobalMode && castleSchedule?.enabled && castleSchedule.slotOptionsEnabled ? castleSchedule : null;
                   const castleUsesScheduledItems = !!scheduledItemSchedule;
@@ -997,11 +1030,11 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                             Shared {definition.itemLabel}
                           </div>
                         ) : scheduledItemSchedule ? (
-                          renderCastleScheduleSlots(scheduledItemSchedule, castle)
+                          renderCastleScheduleSlots(scheduledItemSchedule, castle, castleId)
                         ) : (
                           renderItems(
                             castleSettings.items,
-                            { type: 'castle', castleId },
+                            { type: 'castle', castleId, liveCastleId: String(castle.id) },
                             `Select ${kind === 'recruit' ? 'units' : definition.itemLabel}`,
                             `Select ${kind === 'recruit' ? 'recruit rotation' : 'tool'} - ${castle.name}`,
                           )

@@ -40,9 +40,15 @@ type productionTarget struct {
 }
 
 type productionCastle struct {
-	Enabled bool               `json:"enabled"`
-	Items   []productionTarget `json:"items"`
-	Cursor  int                `json:"cursor,omitempty"`
+	Enabled   bool               `json:"enabled"`
+	KingdomID *State.KingdomID   `json:"kingdomId,omitempty"`
+	Items     []productionTarget `json:"items"`
+	Cursor    int                `json:"cursor,omitempty"`
+}
+
+type productionCastleBinding struct {
+	ConfigurationKey string
+	Castle           State.CastleState
 }
 
 const recruitmentStackCapacityEffectID = 189
@@ -111,17 +117,14 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	focusUnavailable := 0
 	helpListPending := false
 	var nextCastleSchedule time.Time
-	for _, castleKey := range policy.orderedCastleKeys(settings.Castles, snapshot.State.Castles) {
+	for _, binding := range policy.orderedCastleBindings(settings.Castles, snapshot) {
+		castleKey := binding.ConfigurationKey
 		castlePlan := settings.Castles[castleKey]
 		if !castlePlan.Enabled {
 			continue
 		}
-		castleIDValue, _ := strconv.ParseInt(castleKey, 10, 64)
-		castleID := State.CastleID(castleIDValue)
-		castle, exists := snapshot.State.Castles[castleID]
-		if !exists {
-			continue
-		}
+		castle := binding.Castle
+		castleID := castle.ID
 		if State.CastleFocusKnownUnavailable(snapshot.State, castle) {
 			focusUnavailable++
 			continue
@@ -397,8 +400,9 @@ func (policy *ProductionPolicy) resolveQueueableTarget(
 	recruitLevel10OnTitleLoss bool,
 ) (productionTarget, productionTargetAvailability, *productionGloryTitleGuard) {
 	var titleGuard *productionGloryTitleGuard
+	family := productionUnitFamilyIDs(target, gameData)
 	if policy.lineID == 0 && gameData != nil {
-		if unlock, titleGated := gameData.GloryTitleUnlockForUnit(target.ID); titleGated {
+		if unlock, titleGated := productionGloryTitleUnlock(family, gameData); titleGated {
 			currentTitleID, titleKnown := player.CurrentGloryTitle(connectionGeneration)
 			if !titleKnown {
 				return target, productionTargetGloryTitleUnknown, nil
@@ -417,6 +421,8 @@ func (policy *ProductionPolicy) resolveQueueableTarget(
 					return target, productionTargetUnavailable, nil
 				}
 				target.ID = unlock.Level10UnitID
+			} else {
+				target.ID = unlock.UnitID
 			}
 		}
 	}
@@ -440,7 +446,6 @@ func (policy *ProductionPolicy) resolveQueueableTarget(
 		return target, productionTargetAvailable, titleGuard
 	}
 
-	family := productionUnitFamilyIDs(target, gameData)
 	for index := len(family) - 1; index >= 0; index-- {
 		if _, found := available[family[index]]; !found {
 			continue
@@ -449,6 +454,21 @@ func (policy *ProductionPolicy) resolveQueueableTarget(
 		return target, productionTargetAvailable, nil
 	}
 	return target, productionTargetUnavailable, nil
+}
+
+func productionGloryTitleUnlock(
+	family []int64,
+	gameData *GameData.Store,
+) (GameData.GloryTitleUnitUnlock, bool) {
+	if gameData == nil {
+		return GameData.GloryTitleUnitUnlock{}, false
+	}
+	for index := len(family) - 1; index >= 0; index-- {
+		if unlock, found := gameData.GloryTitleUnlockForUnit(family[index]); found {
+			return unlock, true
+		}
+	}
+	return GameData.GloryTitleUnitUnlock{}, false
 }
 
 func productionUnitFamilyIDs(target productionTarget, gameData *GameData.Store) []int64 {
@@ -558,26 +578,75 @@ func productionScheduleDefinitionID(options map[string]any, key string) (int64, 
 	return id, id > 0
 }
 
-func (policy *ProductionPolicy) orderedCastleKeys(
+func (policy *ProductionPolicy) orderedCastleBindings(
 	plans map[string]productionCastle,
-	castles map[State.CastleID]State.CastleState,
-) []string {
-	keys := make([]string, 0, len(plans))
+	snapshot Snapshot,
+) []productionCastleBinding {
+	bindings := make([]productionCastleBinding, 0, len(plans))
+	unresolved := make([]string, 0, len(plans))
+	boundCastleIDs := make(map[State.CastleID]struct{}, len(plans))
 	for key, plan := range plans {
 		castleIDValue, err := strconv.ParseInt(key, 10, 64)
 		castleID := State.CastleID(castleIDValue)
 		if err != nil || castleID <= 0 || !plan.Enabled {
 			continue
 		}
-		if _, exists := castles[castleID]; exists {
-			keys = append(keys, key)
+		castle, exists := snapshot.State.Castles[castleID]
+		if exists && (plan.KingdomID == nil || *plan.KingdomID == castle.KingdomID) {
+			bindings = append(bindings, productionCastleBinding{ConfigurationKey: key, Castle: castle})
+			boundCastleIDs[castle.ID] = struct{}{}
+			continue
+		}
+		unresolved = append(unresolved, key)
+	}
+
+	stormCastles := make([]State.CastleState, 0, 1)
+	for _, castle := range snapshot.State.Castles {
+		if castle.KingdomID != State.KingdomID(GameData.StormKingdomID) {
+			continue
+		}
+		if _, bound := boundCastleIDs[castle.ID]; !bound {
+			stormCastles = append(stormCastles, castle)
 		}
 	}
-	sort.Slice(keys, func(left, right int) bool {
-		leftIDValue, _ := strconv.ParseInt(keys[left], 10, 64)
-		rightIDValue, _ := strconv.ParseInt(keys[right], 10, 64)
-		leftCastle := castles[State.CastleID(leftIDValue)]
-		rightCastle := castles[State.CastleID(rightIDValue)]
+	if len(stormCastles) == 1 {
+		stableKeys := make([]string, 0, 1)
+		for _, key := range unresolved {
+			plan := plans[key]
+			if plan.KingdomID != nil && *plan.KingdomID == State.KingdomID(GameData.StormKingdomID) {
+				stableKeys = append(stableKeys, key)
+			}
+		}
+		selectedKey := ""
+		if len(stableKeys) == 1 {
+			selectedKey = stableKeys[0]
+		} else if len(stableKeys) == 0 {
+			knownStormIDs := knownProductionStormCastleIDs(snapshot)
+			legacyKeys := make([]string, 0, 1)
+			for _, key := range unresolved {
+				if plans[key].KingdomID != nil {
+					continue
+				}
+				castleIDValue, _ := strconv.ParseInt(key, 10, 64)
+				if _, known := knownStormIDs[State.CastleID(castleIDValue)]; known {
+					legacyKeys = append(legacyKeys, key)
+				}
+			}
+			if len(legacyKeys) == 1 {
+				selectedKey = legacyKeys[0]
+			}
+		}
+		if selectedKey != "" {
+			bindings = append(bindings, productionCastleBinding{
+				ConfigurationKey: selectedKey,
+				Castle:           stormCastles[0],
+			})
+		}
+	}
+
+	sort.Slice(bindings, func(left, right int) bool {
+		leftCastle := bindings[left].Castle
+		rightCastle := bindings[right].Castle
 		if leftCastle.KingdomID != rightCastle.KingdomID {
 			return leftCastle.KingdomID < rightCastle.KingdomID
 		}
@@ -588,18 +657,55 @@ func (policy *ProductionPolicy) orderedCastleKeys(
 		}
 		return leftCastle.ID < rightCastle.ID
 	})
-	if policy.lastCastleID <= 0 || len(keys) < 2 {
-		return keys
+	if policy.lastCastleID <= 0 || len(bindings) < 2 {
+		return bindings
 	}
-	for index, key := range keys {
-		castleIDValue, _ := strconv.ParseInt(key, 10, 64)
-		if State.CastleID(castleIDValue) != policy.lastCastleID {
+	for index, binding := range bindings {
+		if binding.Castle.ID != policy.lastCastleID {
 			continue
 		}
-		next := (index + 1) % len(keys)
-		return append(append(make([]string, 0, len(keys)), keys[next:]...), keys[:next]...)
+		next := (index + 1) % len(bindings)
+		return append(
+			append(make([]productionCastleBinding, 0, len(bindings)), bindings[next:]...),
+			bindings[:next]...,
+		)
 	}
-	return keys
+	return bindings
+}
+
+func knownProductionStormCastleIDs(snapshot Snapshot) map[State.CastleID]struct{} {
+	known := make(map[State.CastleID]struct{})
+	for castleID, castle := range snapshot.State.Castles {
+		if castle.KingdomID == State.KingdomID(GameData.StormKingdomID) {
+			known[castleID] = struct{}{}
+		}
+	}
+	if castleID := snapshot.State.Storm.Map.SourceCastleID; castleID > 0 {
+		known[castleID] = struct{}{}
+	}
+	for castleID := range snapshot.State.Storm.LastScannedAt {
+		if castleID > 0 {
+			known[castleID] = struct{}{}
+		}
+	}
+	for _, islandReturn := range snapshot.State.Storm.IslandReturns {
+		if islandReturn.KingdomID == State.KingdomID(GameData.StormKingdomID) && islandReturn.SourceCastleID > 0 {
+			known[islandReturn.SourceCastleID] = struct{}{}
+		}
+	}
+	var stormSettings struct {
+		Target *struct {
+			CastleID  State.CastleID  `json:"castleId"`
+			KingdomID State.KingdomID `json:"kingdomId"`
+		} `json:"target"`
+	}
+	if decodeSection(snapshot.Configuration, "automation.autoStorm", &stormSettings) &&
+		stormSettings.Target != nil &&
+		stormSettings.Target.KingdomID == State.KingdomID(GameData.StormKingdomID) &&
+		stormSettings.Target.CastleID > 0 {
+		known[stormSettings.Target.CastleID] = struct{}{}
+	}
+	return known
 }
 
 func productionRotationCursor(cursor int, count int) int {

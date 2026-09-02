@@ -58,7 +58,9 @@ type Config struct {
 	// ReportsCloudClient optionally supplies an immutable report client.
 	ReportsCloudClient *Reports.CloudClient
 	// PrivateMetricsClient is present only in explicitly configured hosted
-	// compositions. The placement grant remains account-scoped.
+	// compositions. It carries My Stats and Feature Stats projections; desktop
+	// compositions must keep those datasets on their profile disk. The placement
+	// grant remains account-scoped.
 	PrivateMetricsClient    *PrivateMetrics.Client
 	PrivateMetricsPlacement *PrivateMetrics.Placement
 	Transport               Session.Transport
@@ -159,6 +161,10 @@ type statePersistenceRequest struct {
 func New(ctx context.Context, config Config) (*Application, error) {
 	if config.DataDir == "" {
 		return nil, fmt.Errorf("application data directory is required")
+	}
+	if !config.BackgroundOnly &&
+		((config.PrivateMetricsClient != nil && config.PrivateMetricsClient.Enabled()) || config.PrivateMetricsPlacement != nil) {
+		return nil, fmt.Errorf("private metrics publishing requires hosted background mode")
 	}
 	profileLease, err := RuntimeKernel.AcquireProfileLease(config.DataDir)
 	if err != nil {

@@ -387,6 +387,8 @@ export interface WorldIntelligenceEventScoreObservationV1 {
 	rank: number;
 	score?: number;
 	scoreKnown: boolean;
+	/** Inclusion evidence for the active Storm session; never a reported rank. */
+	participating?: boolean;
 	scoreUnit: string;
 	runStartedOn: string;
 	eventEndsAt: string;

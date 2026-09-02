@@ -161,6 +161,8 @@ test('Settings route includes the My Stats storage control and required choices 
 	assert.match(settingsSource, /playerHistoryRecordingsPerDay/);
 	assert.match(settingsSource, /does not send additional game scan commands/);
 	assert.match(settingsSource, /estimatedBytesPerRecording/);
+	assert.match(settingsSource, /Local desktop mode applies this policy directly/);
+	assert.match(settingsSource, /Neither dataset is published to the hosted private-metrics backend/);
 	assert.doesNotMatch(settingsSource, /title="Experimental Battle Research"/);
 	assert.match(settingsSource, /getPlayerHistoryRetention\(\)/);
 	assert.match(settingsSource, /applyPlayerHistoryRetention\(\s*nextRetention,\s*nextIntervalSeconds,\s*playerHistoryRetention\.revision/);

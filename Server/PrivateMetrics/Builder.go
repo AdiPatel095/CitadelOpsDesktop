@@ -40,6 +40,13 @@ type FeatureAnalyticsReader interface {
 	RecentFeatureAnalytics(context.Context, Reports.BattleReportQuery) ([]Reports.FeatureAnalyticsRow, error)
 }
 
+// ResourceAggregateReader is the preferred report projection. It reads the
+// view-keyed UTC-minute rows created during report ingestion, so private cloud
+// samples never rescan or truncate high-volume raw battle history.
+type ResourceAggregateReader interface {
+	ResourceAggregates(context.Context, Reports.ResourceAggregateQuery) ([]Reports.ResourceAggregate, error)
+}
+
 // SampleBuilder produces complete private samples for one account runtime. It
 // keeps a compact, account-bound projection of the feature report history so
 // steady-state samples cost a rolling-window pass over in-memory records
@@ -193,15 +200,19 @@ type featureReportHistory struct {
 }
 
 type compactFeatureReport struct {
-	featureID   string
-	occurredAt  int64
-	outcome     reportOutcome
-	troopsSent  int64
-	troopLosses int64
-	toolsUsed   int64
-	gallantry   int64
-	lootTotal   int64
-	loot        []lootEntry
+	featureID       string
+	firstOccurredAt int64
+	occurredAt      int64
+	outcome         reportOutcome
+	battles         int64
+	victories       int64
+	defeats         int64
+	troopsSent      int64
+	troopLosses     int64
+	toolsUsed       int64
+	gallantry       int64
+	lootTotal       int64
+	loot            []lootEntry
 }
 
 type lootEntry struct {
@@ -237,7 +248,20 @@ func (cache *featureReportCache) load(
 		return current, nil
 	}
 	var history *featureReportHistory
-	if lean, ok := reader.(FeatureAnalyticsReader); ok {
+	if aggregateReader, ok := reader.(ResourceAggregateReader); ok {
+		rows := make([]Reports.ResourceAggregate, 0, 2048)
+		for _, viewKey := range Reports.ResourceViewKeys() {
+			viewRows, err := aggregateReader.ResourceAggregates(ctx, Reports.ResourceAggregateQuery{
+				AccountUID: query.AccountUID, WorldID: query.WorldID, PlayerID: query.PlayerID,
+				ViewKey: viewKey, Limit: 100_000,
+			})
+			if err != nil {
+				return nil, err
+			}
+			rows = append(rows, viewRows...)
+		}
+		history = compactResourceAggregates(rows)
+	} else if lean, ok := reader.(FeatureAnalyticsReader); ok {
 		rows, err := lean.RecentFeatureAnalytics(ctx, query)
 		if err != nil {
 			return nil, err
@@ -306,11 +330,50 @@ func (accumulator *featureHistoryAccumulator) add(
 		sort.Slice(loot, func(left, right int) bool { return loot[left].key < loot[right].key })
 	}
 	accumulator.history.records = append(accumulator.history.records, compactFeatureReport{
-		featureID: accumulator.intern(featureID), occurredAt: occurredAt.UnixNano(),
-		outcome:    reportOutcomeOf(result),
+		featureID: accumulator.intern(featureID), firstOccurredAt: occurredAt.UnixNano(), occurredAt: occurredAt.UnixNano(),
+		outcome: reportOutcomeOf(result), battles: 1,
 		troopsSent: troopsSent, troopLosses: troopLosses,
 		toolsUsed: toolsUsed, gallantry: gallantry, lootTotal: lootTotal, loot: loot,
 	})
+}
+
+func compactResourceAggregates(rows []Reports.ResourceAggregate) *featureReportHistory {
+	accumulator := newFeatureHistoryAccumulator(len(rows))
+	for _, aggregate := range rows {
+		featureID, valid := Reports.FeatureForResourceViewKey(aggregate.ViewKey)
+		if !valid || aggregate.BucketStart.IsZero() || aggregate.ReportCount <= 0 {
+			continue
+		}
+		firstOccurredAt := aggregate.FirstOccurredAt.UTC()
+		if firstOccurredAt.IsZero() {
+			firstOccurredAt = aggregate.BucketStart.UTC()
+		}
+		occurredAt := aggregate.LastOccurredAt.UTC()
+		if occurredAt.IsZero() {
+			occurredAt = aggregate.BucketStart.UTC().Add(time.Duration(max(int64(1), aggregate.BucketSeconds))*time.Second - time.Nanosecond)
+		}
+		loot := make([]lootEntry, 0, len(aggregate.Resources))
+		for key, amount := range aggregate.Resources {
+			if normalized := strings.TrimSpace(key); normalized != "" && amount != 0 {
+				loot = append(loot, lootEntry{key: accumulator.intern(normalized), amount: amount})
+			}
+		}
+		if len(loot) > 1 {
+			sort.Slice(loot, func(left, right int) bool { return loot[left].key < loot[right].key })
+		}
+		accumulator.history.count += aggregate.ReportCount
+		if occurredAt.After(accumulator.latest) {
+			accumulator.latest = occurredAt
+		}
+		accumulator.history.records = append(accumulator.history.records, compactFeatureReport{
+			featureID: accumulator.intern(string(featureID)), firstOccurredAt: firstOccurredAt.UnixNano(), occurredAt: occurredAt.UnixNano(),
+			battles: aggregate.ReportCount, victories: aggregate.Victories, defeats: aggregate.Defeats,
+			troopsSent: aggregate.TroopsSent, troopLosses: aggregate.TroopLosses,
+			toolsUsed: aggregate.ToolsUsed, gallantry: aggregate.GallantryPoints,
+			lootTotal: aggregate.LootTotal, loot: loot,
+		})
+	}
+	return accumulator.finish(0)
 }
 
 func (accumulator *featureHistoryAccumulator) finish(fetched int) *featureReportHistory {
@@ -555,12 +618,17 @@ func addCompactFeatureReport(values map[string]*FeatureTotals, record *compactFe
 		current = &FeatureTotals{FeatureID: record.featureID, Loot: map[string]int64{}}
 		values[record.featureID] = current
 	}
-	current.Battles++
-	switch record.outcome {
-	case reportOutcomeVictory:
-		current.Victories++
-	case reportOutcomeDefeat:
-		current.Defeats++
+	current.Battles += record.battles
+	if record.victories > 0 || record.defeats > 0 {
+		current.Victories += record.victories
+		current.Defeats += record.defeats
+	} else {
+		switch record.outcome {
+		case reportOutcomeVictory:
+			current.Victories++
+		case reportOutcomeDefeat:
+			current.Defeats++
+		}
 	}
 	current.TroopsSent += record.troopsSent
 	current.TroopLosses += record.troopLosses
@@ -570,12 +638,13 @@ func addCompactFeatureReport(values map[string]*FeatureTotals, record *compactFe
 	for _, entry := range record.loot {
 		current.Loot[entry.key] += entry.amount
 	}
-	occurredAt := time.Unix(0, record.occurredAt).UTC()
-	if current.FirstOccurredAt.IsZero() || occurredAt.Before(current.FirstOccurredAt) {
-		current.FirstOccurredAt = occurredAt
+	firstOccurredAt := time.Unix(0, record.firstOccurredAt).UTC()
+	lastOccurredAt := time.Unix(0, record.occurredAt).UTC()
+	if current.FirstOccurredAt.IsZero() || firstOccurredAt.Before(current.FirstOccurredAt) {
+		current.FirstOccurredAt = firstOccurredAt
 	}
-	if current.LastOccurredAt.IsZero() || occurredAt.After(current.LastOccurredAt) {
-		current.LastOccurredAt = occurredAt
+	if current.LastOccurredAt.IsZero() || lastOccurredAt.After(current.LastOccurredAt) {
+		current.LastOccurredAt = lastOccurredAt
 	}
 }
 

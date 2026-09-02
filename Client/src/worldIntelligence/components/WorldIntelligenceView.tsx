@@ -134,7 +134,7 @@ const WorldIntelligenceView = () => {
 				if (eventHistoryResult.status === 'fulfilled') {
 					setPlayerEventHistory(eventHistoryResult.value);
 				} else {
-					setPlayerEventError(errorMessage(eventHistoryResult.reason, 'Event score history is temporarily unavailable.'));
+					setPlayerEventError(errorMessage(eventHistoryResult.reason, 'Previous event scores are temporarily unavailable.'));
 				}
 			} else {
 				setAllianceProfile(await CitadelAPI.getWorldIntelligenceAlliance(entity.worldId, entity.id));

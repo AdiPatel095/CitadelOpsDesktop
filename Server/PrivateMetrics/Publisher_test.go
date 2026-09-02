@@ -13,8 +13,51 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/State"
 )
+
+type publisherOutboxReportReader struct {
+	pending  []Reports.PendingResourceAggregate
+	queries  chan Reports.ResourceAggregateOutboxQuery
+	ackCalls atomic.Int64
+}
+
+func (reader *publisherOutboxReportReader) Recent(context.Context, Reports.BattleReportQuery) ([]Reports.BattleAnalyticsReport, error) {
+	return nil, nil
+}
+
+func (reader *publisherOutboxReportReader) PendingResourceAggregates(_ context.Context, query Reports.ResourceAggregateOutboxQuery) ([]Reports.PendingResourceAggregate, error) {
+	reader.queries <- query
+	return append([]Reports.PendingResourceAggregate(nil), reader.pending...), nil
+}
+
+func (reader *publisherOutboxReportReader) AcknowledgeResourceAggregates(_ context.Context, items []Reports.PendingResourceAggregate) error {
+	if len(items) != len(reader.pending) {
+		return errors.New("unexpected resource aggregate acknowledgement")
+	}
+	if reader.ackCalls.Add(1) == 1 {
+		return errors.New("temporary aggregate acknowledgement failure")
+	}
+	reader.pending = nil
+	return nil
+}
+
+func (reader *publisherOutboxReportReader) ResourceAggregateMigrationStatus(
+	_ context.Context,
+	_ Reports.ResourceAggregateOutboxQuery,
+) (Reports.ResourceAggregateMigrationStatus, error) {
+	status := Reports.ResourceAggregateMigrationStatus{
+		SourceReports: 3, SourceBuckets: 1, PendingBuckets: int64(len(reader.pending)),
+	}
+	if len(reader.pending) > 0 {
+		status.OldestOccurredAt = reader.pending[0].Aggregate.BucketStart.Add(5 * time.Second)
+		status.NewestOccurredAt = reader.pending[0].Aggregate.BucketStart.Add(30 * time.Second)
+		status.OldestPendingBucket = reader.pending[0].Aggregate.BucketStart
+		status.NewestPendingBucket = reader.pending[len(reader.pending)-1].Aggregate.BucketStart
+	}
+	return status, nil
+}
 
 type receivedPublication struct {
 	authorization  string
@@ -266,6 +309,58 @@ func TestPublisherReplaysIdenticalSampleAfterTransientFailureThenResumesCadence(
 	}
 	if !fourth.request.Sample.ObservedAt.After(first.request.Sample.ObservedAt) {
 		t.Fatalf("fresh sample was not newer: %v vs %v", fourth.request.Sample.ObservedAt, first.request.Sample.ObservedAt)
+	}
+}
+
+func TestPublisherScopesResourceAggregatesAndAcknowledgesOnlyAfterDelivery(t *testing.T) {
+	server, received := publicationServer(t, func(_ int, _ *http.Request, writer http.ResponseWriter) {
+		writer.WriteHeader(http.StatusNoContent)
+	})
+	bucketStart := time.Now().UTC().Truncate(time.Minute)
+	reports := &publisherOutboxReportReader{
+		queries: make(chan Reports.ResourceAggregateOutboxQuery, 4),
+		pending: []Reports.PendingResourceAggregate{{
+			IdentityKey: "world:world.example:player:42",
+			Aggregate: Reports.ResourceAggregate{
+				ViewKey: Reports.ResourceViewTower, BucketStart: bucketStart, BucketSeconds: 60,
+				ReportCount: 3, Victories: 2, Defeats: 1, LootTotal: 90,
+				Resources: map[string]int64{"W": 90}, Revision: 7,
+			},
+			Rollups: []Reports.ResourceAggregate{
+				{ViewKey: Reports.ResourceViewTower, BucketStart: bucketStart.Truncate(time.Hour), BucketSeconds: 3600, ReportCount: 3, Resources: map[string]int64{"W": 90}, Revision: 7},
+				{ViewKey: Reports.ResourceViewTower, BucketStart: time.Date(bucketStart.Year(), bucketStart.Month(), bucketStart.Day(), 0, 0, 0, 0, time.UTC), BucketSeconds: 86400, ReportCount: 3, Resources: map[string]int64{"W": 90}, Revision: 7},
+			},
+		}},
+	}
+	legacyIdentity := reports.pending[0]
+	legacyIdentity.IdentityKey = "uid:7001"
+	reports.pending = append(reports.pending, legacyIdentity)
+	publisher := startPublisher(t, server, PublisherConfig{
+		Placement: testPlacement(time.Now().UTC(), 4, 10, strings.Repeat("a", 48)),
+		Reports:   reports, Interval: 40 * time.Millisecond, Debounce: time.Millisecond,
+	})
+
+	first := awaitPublication(t, received)
+	second := awaitPublication(t, received)
+	if first.request.SchemaVersion != SchemaVersion || len(first.request.Sample.ResourceAggregates) != 3 {
+		t.Fatalf("resource aggregate publication = %+v", first.request)
+	}
+	if first.request.Sample.ResourceAggregates[0].Resources["W"] != 90 ||
+		first.idempotencyKey != second.idempotencyKey || !bytes.Equal(first.body, second.body) {
+		t.Fatal("aggregate acknowledgement retry did not replay the identical publication")
+	}
+	query := <-reports.queries
+	if query.AccountUID != 7001 || query.WorldID != "world.example" || query.PlayerID != 42 {
+		t.Fatalf("resource aggregate outbox query = %+v", query)
+	}
+	waitForStatus(t, publisher, StatePublished)
+	if reports.ackCalls.Load() != 2 {
+		t.Fatalf("resource aggregate acknowledgements = %d", reports.ackCalls.Load())
+	}
+	status := publisher.Status()
+	if status.StatsMigrationState != "complete" || status.StatsMigrationSourceReports != 3 ||
+		status.StatsMigrationSourceBuckets != 1 || status.StatsMigrationPendingBuckets != 0 {
+		t.Fatalf("stats migration receipt = %+v", status)
 	}
 }
 

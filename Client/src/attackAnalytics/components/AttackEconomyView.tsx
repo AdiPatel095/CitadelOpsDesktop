@@ -12,6 +12,15 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PageHeader, Pi
 import { Notifications } from '../../components/Notifications';
 import { useMetadata, type MetadataItem } from '../../context/MetadataContext';
 import { runtimeFetch } from '../../api/RuntimeURL';
+import {
+  aggregateEndTimestamp,
+  aggregateTimestamp,
+  attackEconomyResourceFallbackLabel,
+  attackEconomyRangeSince,
+  fetchAttackEconomyAggregates,
+  summarizeAttackEconomyResources,
+  type AttackEconomyAggregate,
+} from './AttackEconomyHistory';
 
 const featureDefinitions = [
   { id: 'autoInvasion', label: 'Auto Invasion', description: 'Foreign Lord and Bloodcrow castles', color: '#f97316' },
@@ -23,6 +32,12 @@ const featureDefinitions = [
 export type AttackEconomyFeatureID = typeof featureDefinitions[number]['id'];
 type RangeKey = '24h' | '7d' | '30d' | 'all';
 const gallantryMetricKey = '__gallantry__';
+const featureViewKeys: Record<AttackEconomyFeatureID, string> = {
+  autoInvasion: 'invasion',
+  autoTowers: 'tower',
+  autoStorm: 'storm',
+  autoBeriWorld: 'berimond',
+};
 
 interface AttackEconomyViewProps {
   selectedFeature?: AttackEconomyFeatureID;
@@ -38,20 +53,6 @@ const ranges: Array<{ key: RangeKey; label: string; seconds: number | null }> = 
   { key: 'all', label: 'All', seconds: null },
 ];
 
-interface AttackEconomyReport {
-  automationFeature?: string;
-  dateMs?: number;
-  occurredAt?: string;
-  role?: string;
-  gallantryPoints?: number;
-  loot?: Record<string, number>;
-}
-
-interface EconomySummary {
-  gallantryPoints: number;
-  loot: Record<string, number>;
-}
-
 interface ChartPoint {
   timestampUnix: number;
   value: number;
@@ -62,11 +63,6 @@ interface ChartTimeWindow {
   endUnix: number;
 }
 
-const emptySummary = (): EconomySummary => ({
-  gallantryPoints: 0,
-  loot: {},
-});
-
 const AttackEconomyView = ({
   selectedFeature: controlledFeature,
   onFeatureChange,
@@ -74,68 +70,72 @@ const AttackEconomyView = ({
   embedded = false,
 }: AttackEconomyViewProps) => {
   const { resources: resourceMetadata, currencies: currencyMetadata } = useMetadata();
-  const [reports, setReports] = useState<AttackEconomyReport[]>([]);
+  const [aggregates, setAggregates] = useState<AttackEconomyAggregate[]>([]);
   const [selectedRange, setSelectedRange] = useState<RangeKey>('7d');
   const [customWindow, setCustomWindow] = useState<ChartTimeWindow | null>(null);
   const [localFeature, setLocalFeature] = useState<AttackEconomyFeatureID>('autoTowers');
   const [requestedMetrics, setRequestedMetrics] = useState<Partial<Record<AttackEconomyFeatureID, string>>>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const loadControllerRef = useRef<AbortController | null>(null);
   const selectedFeature = controlledFeature ?? localFeature;
+  const rangeSeconds = ranges.find((range) => range.key === selectedRange)?.seconds ?? null;
   const selectFeature = (feature: AttackEconomyFeatureID) => {
     if (controlledFeature == null) setLocalFeature(feature);
     onFeatureChange?.(feature);
   };
 
-  const loadReports = useCallback(async () => {
+  const loadAggregates = useCallback(async () => {
+    loadControllerRef.current?.abort();
+    const controller = new AbortController();
+    loadControllerRef.current = controller;
+    setLoading(true);
     try {
-      const response = await runtimeFetch('/api/v2/analytics/battle-reports?limit=10000', { cache: 'no-store' });
-      if (!response.ok) throw new Error(`Battle history returned HTTP ${response.status}`);
-      const payload = await response.json() as { reports?: AttackEconomyReport[] } | AttackEconomyReport[];
-      const rows = Array.isArray(payload) ? payload : payload.reports ?? [];
-      setReports(rows.filter((report) => report && typeof report === 'object'));
+      const rangeSince = attackEconomyRangeSince(rangeSeconds);
+      const rows = await fetchAttackEconomyAggregates(runtimeFetch, {
+        view: featureViewKeys[selectedFeature],
+        since: rangeSince,
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setAggregates(rows);
       setLoadError(null);
     } catch (error) {
+      if (controller.signal.aborted) return;
       const message = error instanceof Error ? error.message : 'Could not load attack loot history';
       setLoadError(message);
       Notifications.error(message, 'attack-economy-load');
     } finally {
-      setLoading(false);
+      if (loadControllerRef.current === controller && !controller.signal.aborted) setLoading(false);
     }
-  }, []);
+  }, [rangeSeconds, selectedFeature]);
 
   useEffect(() => {
-    void loadReports();
-    const timer = window.setInterval(() => void loadReports(), 60_000);
-    return () => window.clearInterval(timer);
-  }, [loadReports]);
+    setAggregates([]);
+    setLoadError(null);
+    void loadAggregates();
+    const timer = window.setInterval(() => void loadAggregates(), 60_000);
+    return () => {
+      window.clearInterval(timer);
+      loadControllerRef.current?.abort();
+    };
+  }, [loadAggregates]);
 
   const nowUnix = Math.floor(Date.now() / 1000);
-  const rangeSeconds = ranges.find((range) => range.key === selectedRange)?.seconds ?? null;
-  const trackedReports = useMemo(
-    () => reports
-      .filter((report) => report.role === 'attacker' && isFeatureID(report.automationFeature) && reportTimestamp(report) > 0)
-      .sort((left, right) => reportTimestamp(left) - reportTimestamp(right)),
-    [reports],
+  const rangedAggregates = useMemo(
+    () => aggregates.filter((aggregate) => rangeSeconds == null || aggregateEndTimestamp(aggregate) > nowUnix - rangeSeconds),
+    [aggregates, nowUnix, rangeSeconds],
   );
-  const rangedReports = useMemo(
-    () => trackedReports.filter((report) => rangeSeconds == null || reportTimestamp(report) >= nowUnix - rangeSeconds),
-    [nowUnix, rangeSeconds, trackedReports],
-  );
-  const visibleReports = useMemo(
-    () => rangedReports.filter((report) => report.automationFeature === selectedFeature),
-    [rangedReports, selectedFeature],
-  );
-  const displayedReports = useMemo(
+  const displayedAggregates = useMemo(
     () => customWindow
-      ? visibleReports.filter((report) => {
-          const timestamp = reportTimestamp(report);
-          return timestamp >= customWindow.startUnix && timestamp <= customWindow.endUnix;
+      ? rangedAggregates.filter((aggregate) => {
+          const timestamp = aggregateTimestamp(aggregate);
+          return aggregateEndTimestamp(aggregate) > customWindow.startUnix && timestamp <= customWindow.endUnix;
         })
-      : visibleReports,
-    [customWindow, visibleReports],
+      : rangedAggregates,
+    [customWindow, rangedAggregates],
   );
-  const summary = useMemo(() => summarizeReports(displayedReports), [displayedReports]);
+  const summary = useMemo(() => summarizeAttackEconomyResources(displayedAggregates), [displayedAggregates]);
   const resourceDefinitions = useMemo(
     () => metadataByJSONKey(resourceMetadata, currencyMetadata),
     [currencyMetadata, resourceMetadata],
@@ -160,14 +160,14 @@ const AttackEconomyView = ({
   const selectedMetric = metricPresentation(selectedMetricKey, resourceDefinitions[selectedMetricKey]);
   const chartPoints = useMemo(
     () => selectedMetricKey
-      ? buildCumulativePoints(displayedReports, selectedMetricKey, selectedRange, nowUnix, customWindow)
+      ? buildCumulativePoints(displayedAggregates, selectedMetricKey, selectedRange, nowUnix, customWindow)
       : [],
-    [customWindow, displayedReports, nowUnix, selectedMetricKey, selectedRange],
+    [customWindow, displayedAggregates, nowUnix, selectedMetricKey, selectedRange],
   );
   const metricTotal = selectedMetricKey === gallantryMetricKey
     ? summary.gallantryPoints
     : summary.loot[selectedMetricKey] ?? 0;
-  const rate = metricRate(metricTotal, displayedReports, selectedRange, nowUnix, customWindow);
+  const rate = metricRate(metricTotal, displayedAggregates, selectedRange, nowUnix, customWindow);
   const selectedFeatureLabel = featureDefinitions.find((feature) => feature.id === selectedFeature)?.label ?? selectedFeature;
   const selectMetric = (metricKey: string) => {
     setRequestedMetrics((current) => ({ ...current, [selectedFeature]: metricKey }));
@@ -194,7 +194,7 @@ const AttackEconomyView = ({
             variant="secondary"
             size="sm"
             leftIcon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
-            onClick={() => void loadReports()}
+            onClick={() => void loadAggregates()}
             disabled={loading}
           >
             Refresh
@@ -488,38 +488,26 @@ function EconomyChart({
   );
 }
 
-function summarizeReports(reports: AttackEconomyReport[]): EconomySummary {
-  const result = emptySummary();
-  for (const report of reports) {
-    result.gallantryPoints += finitePositive(report.gallantryPoints);
-    for (const [key, rawAmount] of Object.entries(report.loot ?? {})) {
-      const amount = finitePositive(rawAmount);
-      if (amount <= 0) continue;
-      result.loot[key] = (result.loot[key] ?? 0) + amount;
-    }
-  }
-  return result;
-}
-
 function buildCumulativePoints(
-  reports: AttackEconomyReport[],
+  aggregates: AttackEconomyAggregate[],
   metricKey: string,
   range: RangeKey,
   nowUnix: number,
   window: ChartTimeWindow | null,
 ): ChartPoint[] {
   const configuredSeconds = ranges.find((candidate) => candidate.key === range)?.seconds ?? null;
-  const firstReportAt = reports.length > 0 ? reportTimestamp(reports[0]) : nowUnix;
-  const startUnix = window?.startUnix ?? (configuredSeconds == null ? firstReportAt : nowUnix - configuredSeconds);
+  const firstAggregateAt = aggregates.length > 0 ? aggregateTimestamp(aggregates[0]) : nowUnix;
+  const startUnix = window?.startUnix ?? (configuredSeconds == null ? firstAggregateAt : nowUnix - configuredSeconds);
   const endUnix = window?.endUnix ?? nowUnix;
   const span = Math.max(1, endUnix - startUnix);
   const bucketSeconds = Math.max(60, Math.ceil(span / 72));
   const increments = new Map<number, number>();
-  for (const report of reports) {
-    const timestampUnix = reportTimestamp(report);
-    if (timestampUnix < startUnix || timestampUnix > endUnix) continue;
+  for (const aggregate of aggregates) {
+    const aggregateStartUnix = aggregateTimestamp(aggregate);
+    if (aggregateEndTimestamp(aggregate) <= startUnix || aggregateStartUnix > endUnix) continue;
+    const timestampUnix = Math.max(startUnix, aggregateStartUnix);
     const bucket = Math.min(71, Math.max(0, Math.floor((timestampUnix - startUnix) / bucketSeconds)));
-    increments.set(bucket, (increments.get(bucket) ?? 0) + reportMetricValue(report, metricKey));
+    increments.set(bucket, (increments.get(bucket) ?? 0) + aggregateMetricValue(aggregate, metricKey));
   }
   const points: ChartPoint[] = [{ timestampUnix: startUnix, value: 0 }];
   let cumulative = 0;
@@ -532,12 +520,12 @@ function buildCumulativePoints(
   return points;
 }
 
-function metricRate(total: number, reports: AttackEconomyReport[], range: RangeKey, nowUnix: number, window: ChartTimeWindow | null): number {
-  if (total <= 0 || reports.length === 0) return 0;
+function metricRate(total: number, aggregates: AttackEconomyAggregate[], range: RangeKey, nowUnix: number, window: ChartTimeWindow | null): number {
+  if (total <= 0 || aggregates.length === 0) return 0;
   const configuredSeconds = ranges.find((candidate) => candidate.key === range)?.seconds ?? null;
   const elapsedSeconds = window
     ? Math.max(60, window.endUnix - window.startUnix)
-    : configuredSeconds ?? Math.max(60 * 60, nowUnix - reportTimestamp(reports[0]));
+    : configuredSeconds ?? Math.max(60 * 60, nowUnix - aggregateTimestamp(aggregates[0]));
   const unitSeconds = elapsedSeconds <= 48 * 60 * 60 ? 60 * 60 : 24 * 60 * 60;
   return total / Math.max(1, elapsedSeconds / unitSeconds);
 }
@@ -569,7 +557,7 @@ function metricPresentation(key: string, definition?: MetadataItem) {
     BEEF: { label: 'Beef' },
   };
   const walletLabel = key === 'C1' || key === 'C2' ? fallback[key]?.label : undefined;
-  const label = capitalizeFirst(walletLabel || definition?.name || fallback[key]?.label || 'Resource');
+  const label = capitalizeFirst(walletLabel || definition?.name || fallback[key]?.label || attackEconomyResourceFallbackLabel(key));
   return { label, image: definition?.image || fallback[key]?.image };
 }
 
@@ -588,26 +576,15 @@ function isVisibleResource(feature: AttackEconomyFeatureID, resourceKey: string)
   return feature !== 'autoStorm' || resourceKey !== 'C2';
 }
 
-function isFeatureID(value?: string): value is AttackEconomyFeatureID {
-  return featureDefinitions.some((feature) => feature.id === value);
-}
-
-function reportTimestamp(report: AttackEconomyReport): number {
-  const dateMs = Number(report.dateMs);
-  if (Number.isFinite(dateMs) && dateMs > 0) return Math.floor(dateMs / 1000);
-  const parsed = report.occurredAt ? Date.parse(report.occurredAt) : Number.NaN;
-  return Number.isFinite(parsed) ? Math.floor(parsed / 1000) : 0;
-}
-
 function finitePositive(value: unknown): number {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : 0;
 }
 
-function reportMetricValue(report: AttackEconomyReport, metricKey: string): number {
+function aggregateMetricValue(aggregate: AttackEconomyAggregate, metricKey: string): number {
   return metricKey === gallantryMetricKey
-    ? finitePositive(report.gallantryPoints)
-    : finitePositive(report.loot?.[metricKey]);
+    ? finitePositive(aggregate.gallantryPoints)
+    : finitePositive(aggregate.resources?.[metricKey]);
 }
 
 function formatNumber(value: number): string {

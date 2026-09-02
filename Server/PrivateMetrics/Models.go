@@ -4,9 +4,13 @@
 // reaching into another account runtime.
 package PrivateMetrics
 
-import "time"
+import (
+	"time"
 
-const SchemaVersion = 1
+	"CitadelDesktop/Server/Reports"
+)
+
+const SchemaVersion = 2
 
 // Grant is an in-memory-only credential installed by the orchestrator for one
 // exact runtime placement. It must never be persisted or returned by status
@@ -145,16 +149,17 @@ type FeatureMetrics struct {
 // Sample is one complete private current-state projection. CitadelOpsBackend
 // can both upsert its current row and append the same body to sample history.
 type Sample struct {
-	SampleID             string                `json:"sampleId"`
-	ObservedAt           time.Time             `json:"observedAt"`
-	StateRevision        uint64                `json:"stateRevision"`
-	SessionGeneration    uint64                `json:"sessionGeneration"`
-	BaselineGeneration   uint64                `json:"baselineGeneration"`
-	ConnectionGeneration uint64                `json:"connectionGeneration"`
-	Account              AccountBinding        `json:"account"`
-	Player               PlayerMetrics         `json:"player"`
-	Features             FeatureMetrics        `json:"features"`
-	PublicCandidate      PublicPlayerCandidate `json:"publicCandidate"`
+	SampleID             string                      `json:"sampleId"`
+	ObservedAt           time.Time                   `json:"observedAt"`
+	StateRevision        uint64                      `json:"stateRevision"`
+	SessionGeneration    uint64                      `json:"sessionGeneration"`
+	BaselineGeneration   uint64                      `json:"baselineGeneration"`
+	ConnectionGeneration uint64                      `json:"connectionGeneration"`
+	Account              AccountBinding              `json:"account"`
+	Player               PlayerMetrics               `json:"player"`
+	Features             FeatureMetrics              `json:"features"`
+	ResourceAggregates   []Reports.ResourceAggregate `json:"resourceAggregates,omitempty"`
+	PublicCandidate      PublicPlayerCandidate       `json:"publicCandidate"`
 }
 
 // PublishRequest contains no credential material. The bearer grant is carried

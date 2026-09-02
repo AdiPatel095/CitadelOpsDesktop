@@ -254,10 +254,14 @@ func applyProductionSnapshot(
 			}
 			if len(row) > 4 {
 				// Hospital PIDL does not include RAH. Its fifth value is the
-				// server-applied alliance-help reduction; once positive, another
-				// AHR for that job is rejected.
-				helpRequested := rowInt(row, 4) > 0
-				product.HelpRequested = &helpRequested
+				// applied help-time reduction: positive confirms help, while zero
+				// does not disprove an AHR already confirmed by ahh/ahl. Treat zero
+				// as unknown so a fresh compact queue snapshot cannot erase the
+				// authoritative request lifecycle and trigger duplicate AHRs.
+				if rowInt(row, 4) > 0 {
+					helpRequested := true
+					product.HelpRequested = &helpRequested
+				}
 			}
 			if item, exists := productionQueueItem(wire.LineID, product, observedAt, false); exists {
 				reconcileItemHelp(&item, product)
@@ -366,10 +370,17 @@ func reconcileProductionHelpSnapshot(
 		}
 		return State.ReconcileOwnRecruitmentAllianceHelp(gameState, castleID, requested)
 	case 2:
-		if !snapshot.Complete {
-			return false
-		}
 		changed := false
+		// An incomplete hospital snapshot may still positively confirm a
+		// request, but it cannot clear authoritative ahh/ahl evidence.
+		for productionID, requested := range snapshot.Items {
+			if requested && State.ReconcileOwnHospitalAllianceHelp(gameState, productionID, true) {
+				changed = true
+			}
+		}
+		if !snapshot.Complete {
+			return changed
+		}
 		for productionID := range snapshot.PriorProductionIDs {
 			if _, stillPresent := snapshot.Items[productionID]; stillPresent {
 				continue

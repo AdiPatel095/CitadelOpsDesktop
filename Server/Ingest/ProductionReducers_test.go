@@ -263,6 +263,46 @@ func TestHospitalCompactProductionSnapshotParsesAllianceHelpJob(t *testing.T) {
 	}
 }
 
+func TestHospitalCompactZeroReductionPreservesConfirmedAHR(t *testing.T) {
+	now := time.Date(2026, 9, 1, 13, 2, 15, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 501
+	gameState.Session.Generation = 7
+	gameState.Session.ChangedAt = now.Add(-time.Minute)
+	gameState.AllianceHelpRequests = State.AllianceHelpRequestState{
+		HospitalProductionIDs: []int64{}, ObservedAt: now.Add(-time.Second), OwnObservedGeneration: 7,
+	}
+	castle := newCastleState(77)
+	castle.Focused = true
+	castle.Production[2] = State.ProductionQueue{
+		LineID: 2, ObservedAt: now.Add(-time.Second),
+		Queued: []State.QueueItem{{ProductionID: 1374447446, AllianceHelpAvailable: true}},
+	}
+	gameState.Castles[castle.ID] = castle
+	responseCode := 0
+	confirmed := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "ahh", ResponseCode: &responseCode, ReceivedAt: now,
+		Payload: json.RawMessage(`{"LID":5526,"P":0,"PID":501,"TID":2,"AC":0,"OP":{"RID":1374447446,"AID":77,"RLID":2}}`),
+	}
+	if _, changed, err := reduceAllianceHelpRequest(t.Context(), confirmed, &gameState, nil); err != nil || !changed {
+		t.Fatalf("reduce confirmed hospital AHR changed=%t err=%v", changed, err)
+	}
+	compact := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "spl", ResponseCode: &responseCode,
+		ReceivedAt: now.Add(time.Second),
+		Payload:    json.RawMessage(`{"LID":2,"PIDL":[[238,5,323,1378,0,1374447446,0,-1],[-1,0,0,0,0,0,0,-1]]}`),
+	}
+	if _, changed, err := reduceProductionSnapshot(t.Context(), compact, &gameState, nil); err != nil || !changed {
+		t.Fatalf("reduce compact hospital snapshot changed=%t err=%v", changed, err)
+	}
+	queue := gameState.Castles[77].Production[2]
+	if len(queue.Queued) != 1 || !queue.Queued[0].AllianceHelpRequested ||
+		!State.HasOutstandingHospitalAllianceHelpRequest(gameState, 1374447446) {
+		t.Fatalf("zero reduction erased confirmed hospital AHR: queue=%#v help=%#v",
+			queue, gameState.AllianceHelpRequests)
+	}
+}
+
 func TestRecruitmentAllianceHelpEventMarksWholeCastleQueue(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Player.ID = 501

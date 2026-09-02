@@ -7,12 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/State"
 )
 
@@ -22,8 +24,10 @@ const (
 	defaultAttemptTimeout  = 45 * time.Second
 	// maximumBackoffFactor caps retry spacing at this multiple of the publish
 	// interval. A refused grant also waits this long before it is spent again.
-	maximumBackoffFactor = 8
-	minimumGrantLength   = 32
+	maximumBackoffFactor          = 8
+	minimumGrantLength            = 32
+	resourceAggregatePublishBatch = 300
+	resourceAggregateBackfillPace = 10 * time.Second
 )
 
 const (
@@ -57,25 +61,44 @@ type PublisherConfig struct {
 }
 
 type PublisherStatus struct {
-	Enabled             bool      `json:"enabled"`
-	State               string    `json:"state"`
-	LastAttemptAt       time.Time `json:"lastAttemptAt,omitempty"`
-	LastPublishedAt     time.Time `json:"lastPublishedAt,omitempty"`
-	NextAttemptAt       time.Time `json:"nextAttemptAt,omitempty"`
-	ConsecutiveFailures int       `json:"consecutiveFailures,omitempty"`
-	LastError           string    `json:"lastError,omitempty"`
+	Enabled                      bool      `json:"enabled"`
+	State                        string    `json:"state"`
+	LastAttemptAt                time.Time `json:"lastAttemptAt,omitempty"`
+	LastPublishedAt              time.Time `json:"lastPublishedAt,omitempty"`
+	NextAttemptAt                time.Time `json:"nextAttemptAt,omitempty"`
+	ConsecutiveFailures          int       `json:"consecutiveFailures,omitempty"`
+	LastError                    string    `json:"lastError,omitempty"`
+	StatsMigrationState          string    `json:"statsMigrationState,omitempty"`
+	StatsMigrationSourceReports  int64     `json:"statsMigrationSourceReports,omitempty"`
+	StatsMigrationSourceBuckets  int64     `json:"statsMigrationSourceBuckets,omitempty"`
+	StatsMigrationPendingBuckets int64     `json:"statsMigrationPendingBuckets,omitempty"`
+	StatsMigrationOldestAt       time.Time `json:"statsMigrationOldestAt,omitempty"`
+	StatsMigrationNewestAt       time.Time `json:"statsMigrationNewestAt,omitempty"`
+	StatsMigrationPendingFrom    time.Time `json:"statsMigrationPendingFrom,omitempty"`
+	StatsMigrationPendingThrough time.Time `json:"statsMigrationPendingThrough,omitempty"`
+}
+
+type ResourceAggregateOutbox interface {
+	PendingResourceAggregates(context.Context, Reports.ResourceAggregateOutboxQuery) ([]Reports.PendingResourceAggregate, error)
+	AcknowledgeResourceAggregates(context.Context, []Reports.PendingResourceAggregate) error
+}
+
+type ResourceAggregateMigrationReader interface {
+	ResourceAggregateMigrationStatus(context.Context, Reports.ResourceAggregateOutboxQuery) (Reports.ResourceAggregateMigrationStatus, error)
 }
 
 type Publisher struct {
-	runtimeID string
-	state     *State.Store
-	builder   *SampleBuilder
-	client    *Client
-	interval  time.Duration
-	debounce  time.Duration
-	timeout   time.Duration
-	now       func() time.Time
-	jitter    func() float64
+	runtimeID      string
+	state          *State.Store
+	builder        *SampleBuilder
+	client         *Client
+	resourceOutbox ResourceAggregateOutbox
+	statsMigration ResourceAggregateMigrationReader
+	interval       time.Duration
+	debounce       time.Duration
+	timeout        time.Duration
+	now            func() time.Time
+	jitter         func() float64
 
 	placementMu      sync.RWMutex
 	placement        *Placement
@@ -88,9 +111,10 @@ type Publisher struct {
 }
 
 type pendingSample struct {
-	placementVersion uint64
-	placement        Placement
-	sample           Sample
+	placementVersion   uint64
+	placement          Placement
+	sample             Sample
+	resourceAggregates []Reports.PendingResourceAggregate
 }
 
 func NewPublisher(config PublisherConfig) (*Publisher, error) {
@@ -124,6 +148,13 @@ func NewPublisher(config PublisherConfig) (*Publisher, error) {
 		client:  config.Client, interval: interval, debounce: debounce, timeout: timeout,
 		now: now, jitter: jitter, wake: make(chan struct{}, 1),
 		status: PublisherStatus{Enabled: true, State: StateWaitingForPlacement},
+	}
+	if resourceOutbox, ok := config.Reports.(ResourceAggregateOutbox); ok {
+		publisher.resourceOutbox = resourceOutbox
+	}
+	if statsMigration, ok := config.Reports.(ResourceAggregateMigrationReader); ok {
+		publisher.statsMigration = statsMigration
+		publisher.status.StatsMigrationState = "pending"
 	}
 	if config.Placement != nil {
 		if err := publisher.SetPlacement(config.Placement); err != nil {
@@ -258,16 +289,101 @@ func (publisher *Publisher) Run(ctx context.Context) {
 				schedule(now.Add(publisher.backoff(failures)))
 				return
 			}
+			var pendingAggregates []Reports.PendingResourceAggregate
+			migrationQuery := Reports.ResourceAggregateOutboxQuery{
+				AccountUID: sample.Account.AccountUID,
+				WorldID:    sample.Account.WorldID,
+				PlayerID:   sample.Account.PlayerID,
+			}
+			if publisher.statsMigration != nil {
+				migrationStatus, migrationErr := publisher.statsMigration.ResourceAggregateMigrationStatus(attemptContext, migrationQuery)
+				if migrationErr != nil {
+					failures++
+					publisher.updateStatus(func(status *PublisherStatus) {
+						status.State = StateError
+						status.LastAttemptAt = now
+						status.ConsecutiveFailures = failures
+						status.LastError = migrationErr.Error()
+						status.StatsMigrationState = "error"
+					})
+					schedule(now.Add(publisher.backoff(failures)))
+					return
+				}
+				publisher.applyStatsMigrationStatus(migrationStatus)
+			}
+			if publisher.resourceOutbox != nil {
+				migrationQuery.Limit = resourceAggregatePublishBatch
+				pendingAggregates, err = publisher.resourceOutbox.PendingResourceAggregates(attemptContext, migrationQuery)
+				if err != nil {
+					failures++
+					publisher.updateStatus(func(status *PublisherStatus) {
+						status.State = StateError
+						status.LastAttemptAt = now
+						status.ConsecutiveFailures = failures
+						status.LastError = err.Error()
+					})
+					schedule(now.Add(publisher.backoff(failures)))
+					return
+				}
+				publications := make(map[string]Reports.ResourceAggregate, len(pendingAggregates)*3)
+				for _, item := range pendingAggregates {
+					values := append([]Reports.ResourceAggregate{item.Aggregate}, item.Rollups...)
+					for _, aggregate := range values {
+						key := fmt.Sprintf("%s\x00%s\x00%d", aggregate.ViewKey,
+							aggregate.BucketStart.UTC().Format(time.RFC3339Nano), aggregate.BucketSeconds)
+						existing, exists := publications[key]
+						if !exists || existing.Deleted || !aggregate.Deleted {
+							publications[key] = aggregate
+						}
+					}
+				}
+				sample.ResourceAggregates = make([]Reports.ResourceAggregate, 0, len(publications))
+				for _, aggregate := range publications {
+					sample.ResourceAggregates = append(sample.ResourceAggregates, aggregate)
+				}
+				sort.Slice(sample.ResourceAggregates, func(left, right int) bool {
+					if sample.ResourceAggregates[left].ViewKey != sample.ResourceAggregates[right].ViewKey {
+						return sample.ResourceAggregates[left].ViewKey < sample.ResourceAggregates[right].ViewKey
+					}
+					if !sample.ResourceAggregates[left].BucketStart.Equal(sample.ResourceAggregates[right].BucketStart) {
+						return sample.ResourceAggregates[left].BucketStart.Before(sample.ResourceAggregates[right].BucketStart)
+					}
+					return sample.ResourceAggregates[left].BucketSeconds < sample.ResourceAggregates[right].BucketSeconds
+				})
+			}
 			sample.SampleID = sampleID(placement, sample)
-			pending = &pendingSample{placementVersion: version, placement: placement, sample: sample}
+			pending = &pendingSample{
+				placementVersion:   version,
+				placement:          placement,
+				sample:             sample,
+				resourceAggregates: pendingAggregates,
+			}
 		}
 		publisher.updateStatus(func(status *PublisherStatus) {
 			status.State = StatePublishing
 			status.LastAttemptAt = now
 		})
 		err := publisher.client.Upload(attemptContext, pending.placement, pending.sample)
+		if err == nil && publisher.resourceOutbox != nil && len(pending.resourceAggregates) > 0 {
+			err = publisher.resourceOutbox.AcknowledgeResourceAggregates(attemptContext, pending.resourceAggregates)
+		}
+		remainingMigration := int64(-1)
+		if err == nil && publisher.statsMigration != nil {
+			account := pending.sample.Account
+			migrationStatus, migrationErr := publisher.statsMigration.ResourceAggregateMigrationStatus(attemptContext, Reports.ResourceAggregateOutboxQuery{
+				AccountUID: account.AccountUID, WorldID: account.WorldID, PlayerID: account.PlayerID,
+			})
+			if migrationErr != nil {
+				err = migrationErr
+				publisher.updateStatus(func(status *PublisherStatus) { status.StatsMigrationState = "error" })
+			} else {
+				remainingMigration = migrationStatus.PendingBuckets
+				publisher.applyStatsMigrationStatus(migrationStatus)
+			}
+		}
 		if err == nil {
 			lastPublished = now
+			publishedAggregateCount := len(pending.resourceAggregates)
 			pending = nil
 			failures = 0
 			publisher.updateStatus(func(status *PublisherStatus) {
@@ -276,7 +392,11 @@ func (publisher *Publisher) Run(ctx context.Context) {
 				status.ConsecutiveFailures = 0
 				status.LastError = ""
 			})
-			schedule(now.Add(publisher.interval))
+			nextDelay := publisher.interval
+			if remainingMigration > 0 || (remainingMigration < 0 && publishedAggregateCount == resourceAggregatePublishBatch) {
+				nextDelay = min(nextDelay, resourceAggregateBackfillPace)
+			}
+			schedule(now.Add(nextDelay))
 			return
 		}
 		if ctx.Err() != nil {
@@ -389,6 +509,22 @@ func (publisher *Publisher) updateStatus(update func(*PublisherStatus)) {
 	defer publisher.statusMu.Unlock()
 	publisher.status.Enabled = true
 	update(&publisher.status)
+}
+
+func (publisher *Publisher) applyStatsMigrationStatus(value Reports.ResourceAggregateMigrationStatus) {
+	publisher.updateStatus(func(status *PublisherStatus) {
+		status.StatsMigrationState = "complete"
+		if value.PendingBuckets > 0 {
+			status.StatsMigrationState = "migrating"
+		}
+		status.StatsMigrationSourceReports = value.SourceReports
+		status.StatsMigrationSourceBuckets = value.SourceBuckets
+		status.StatsMigrationPendingBuckets = value.PendingBuckets
+		status.StatsMigrationOldestAt = value.OldestOccurredAt.UTC()
+		status.StatsMigrationNewestAt = value.NewestOccurredAt.UTC()
+		status.StatsMigrationPendingFrom = value.OldestPendingBucket.UTC()
+		status.StatsMigrationPendingThrough = value.NewestPendingBucket.UTC()
+	})
 }
 
 func validatePlacement(placement Placement, runtimeID string, now time.Time) error {

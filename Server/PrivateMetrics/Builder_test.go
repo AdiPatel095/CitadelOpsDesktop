@@ -19,6 +19,20 @@ type stubReportReader struct {
 	query   Reports.BattleReportQuery
 }
 
+type aggregateReportReader struct {
+	rows        map[Reports.ResourceViewKey][]Reports.ResourceAggregate
+	recentCalls atomic.Int64
+}
+
+func (reader *aggregateReportReader) Recent(_ context.Context, _ Reports.BattleReportQuery) ([]Reports.BattleAnalyticsReport, error) {
+	reader.recentCalls.Add(1)
+	return nil, errors.New("raw reports must not be read when resource aggregates are available")
+}
+
+func (reader *aggregateReportReader) ResourceAggregates(_ context.Context, query Reports.ResourceAggregateQuery) ([]Reports.ResourceAggregate, error) {
+	return append([]Reports.ResourceAggregate(nil), reader.rows[query.ViewKey]...), nil
+}
+
 func (reader *stubReportReader) Recent(_ context.Context, query Reports.BattleReportQuery) ([]Reports.BattleAnalyticsReport, error) {
 	reader.query = query
 	return append([]Reports.BattleAnalyticsReport(nil), reader.reports...), reader.err
@@ -53,8 +67,15 @@ func TestBuildSampleMergesMyStatsAndPrivateFeatureStats(t *testing.T) {
 	}
 	if sample.Player.Might != 12345 || sample.Player.Glory != 678 || sample.Player.Gallantry != 90 ||
 		sample.Player.TroopsTotal != 19 || sample.Player.TroopsByUnit["10"] != 15 ||
-		sample.Player.Currencies["resource:1"] != 5000 || sample.Player.Currencies["currency:9"] != 7 {
+		sample.Player.Coins != 5000 || sample.Player.Rubies != 44 ||
+		sample.Player.Currencies["resource:1"] != 5000 || sample.Player.Currencies["resource:37"] != 88 ||
+		sample.Player.Currencies["currency:9"] != 7 || sample.Player.Currencies["currency:30"] != 99 {
 		t.Fatalf("player metrics = %+v", sample.Player)
+	}
+	for _, zeroBalanceKey := range []string{"resource:12", "currency:22"} {
+		if amount, found := sample.Player.Currencies[zeroBalanceKey]; !found || amount != 0 {
+			t.Fatalf("player metrics omitted zero balance %s: %+v", zeroBalanceKey, sample.Player.Currencies)
+		}
 	}
 	if reports.query.AccountUID != 7001 || reports.query.WorldID != "wss://world.example:443/socket" ||
 		reports.query.PlayerID != 42 || reports.query.Limit != reportHistoryLimit {
@@ -84,6 +105,33 @@ func TestBuildSampleMergesMyStatsAndPrivateFeatureStats(t *testing.T) {
 		if strings.Contains(strings.ToLower(string(publicPayload)), privateField) {
 			t.Fatalf("public candidate exposed %q: %s", privateField, publicPayload)
 		}
+	}
+}
+
+func TestBuildSampleUsesMinuteAggregatesBeyondRawReportLimit(t *testing.T) {
+	now := time.Date(2026, time.September, 1, 20, 0, 0, 0, time.UTC)
+	reader := &aggregateReportReader{rows: map[Reports.ResourceViewKey][]Reports.ResourceAggregate{
+		Reports.ResourceViewTower: {{
+			ViewKey: Reports.ResourceViewTower, BucketStart: now.Add(-time.Hour).Truncate(time.Minute),
+			BucketSeconds: 60, ReportCount: 12_050, Victories: 12_000, Defeats: 50,
+			TroopsSent: 500_000, TroopLosses: 1_000, ToolsUsed: 25_000,
+			LootTotal: 900_000, Resources: map[string]int64{"W": 900_000},
+			FirstOccurredAt: now.Add(-time.Hour), LastOccurredAt: now.Add(-time.Hour + 59*time.Second),
+		}},
+	}}
+	sample, err := BuildSample(t.Context(), readyPrivateMetricsState(t, now), nil, reader, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reader.recentCalls.Load() != 0 || sample.Features.ReportHistoryTruncated || sample.Features.ReportCount != 12_050 {
+		t.Fatalf("aggregate feature metadata = %+v; raw calls=%d", sample.Features, reader.recentCalls.Load())
+	}
+	if len(sample.Features.ReportWindows.Last24Hours) != 1 {
+		t.Fatalf("aggregate windows = %+v", sample.Features.ReportWindows)
+	}
+	towers := sample.Features.ReportWindows.Last24Hours[0]
+	if towers.Battles != 12_050 || towers.Victories != 12_000 || towers.Defeats != 50 || towers.Loot["W"] != 900_000 {
+		t.Fatalf("tower aggregate rollup = %+v", towers)
 	}
 }
 
@@ -149,8 +197,8 @@ func readyPrivateMetricsState(t testing.TB, now time.Time) *State.Store {
 		state.Player.Might = 12345
 		state.Player.Glory = 678
 		state.Player.Gallantry = 90
-		state.Player.Resources = map[State.ResourceID]float64{1: 5000}
-		state.Player.Currencies = map[State.CurrencyID]float64{9: 7}
+		state.Player.Resources = map[State.ResourceID]float64{1: 5000, 2: 44, 12: 0, 37: 88}
+		state.Player.Currencies = map[State.CurrencyID]float64{9: 7, 22: 0, 30: 99}
 		state.Alliance = State.AllianceState{ID: 11, Name: "The Alliance"}
 		state.SetCastle(1, State.CastleState{ID: 1, Units: State.CastleUnits{
 			Stationed: map[State.UnitID]int64{10: 12}, Traveling: map[State.UnitID]int64{10: 3},
