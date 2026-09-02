@@ -138,6 +138,7 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/history/battle-reports/cloud", server.handleCloudBattleReportHistory)
 	mux.HandleFunc("GET /api/v2/history/battle-reports", server.handleBattleReportHistory)
 	mux.HandleFunc("GET /api/v2/analytics/battle-reports", server.handleBattleReportAnalytics)
+	mux.HandleFunc("GET /api/v2/analytics/resource-aggregates", server.handleResourceAggregates)
 	mux.HandleFunc("GET /api/v2/battle-research", server.handleBattleResearchStatus)
 	mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
 	mux.HandleFunc("GET /api/v2/telemetry/attack-rates", server.handleAttackLaunchRates)

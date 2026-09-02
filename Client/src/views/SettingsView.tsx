@@ -963,6 +963,12 @@ const SettingsView: React.FC = () => {
 						The platform's private-metrics archive is separate and follows its server-managed retention policy.
 					</div>
 				)}
+				{playerHistoryRetention && !playerHistoryRetention.hosted && (
+					<div className="rounded-global border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-xs leading-relaxed text-text-muted">
+						Local desktop mode applies this policy directly to <code>History/PlayerSamples.jsonl</code>. Feature Stats aggregates remain in <code>Runtime/Reports.sqlite</code>.{' '}
+						Neither dataset is published to the hosted private-metrics backend; World Intelligence and report sharing remain separate features.
+					</div>
+				)}
 
 					<div className="grid gap-3 md:grid-cols-3">
 						<div className="rounded-global border border-border-base bg-bg-app/35 p-3">

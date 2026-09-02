@@ -22,6 +22,7 @@ import { Notifications } from '../../components/Notifications';
 import { useCitadelAPI } from '../../api/ApiContext';
 import type { CastleStateV2 } from '../../api/Contracts';
 import { runtimeFetch } from '../../api/RuntimeURL';
+import { collectWalletMetricIDs, retainedWalletBalance } from './PlayerTrackerWallet';
 
 interface PlayerTrackerSample {
   timestampUnix: number;
@@ -160,14 +161,16 @@ const PlayerTrackerView = () => {
   const { state } = useCitadelAPI();
   const { gameLoggedIn } = useAuth();
   const { troops: troopMetadata, resources: resourceMetadata, currencies: currencyMetadata } = useMetadata();
-  const resourceMetricIDs = Object.entries(state?.player.resources ?? {})
-    .filter(([, amount]) => amount !== 0)
-    .map(([id]) => id)
-    .sort();
-  const currencyMetricIDs = Object.entries(state?.player.currencies ?? {})
-    .filter(([, amount]) => amount !== 0)
-    .map(([id]) => id)
-    .sort();
+  const [tracker, setTracker] = useState<PlayerTrackerResponse>(emptyResponse);
+  const activePlayerID = Math.max(0, finite(state?.player.id));
+  const retainedWalletSamples = activePlayerID > 0
+    ? [tracker.current, ...tracker.samples].filter((sample) => sample?.playerId === activePlayerID)
+    : [];
+  const { resourceIDs: resourceMetricIDs, currencyIDs: currencyMetricIDs } = collectWalletMetricIDs(
+    state?.player.resources,
+    state?.player.currencies,
+    retainedWalletSamples,
+  );
   const walletMetricSignature = `resources:${resourceMetricIDs.join(',')}|currencies:${currencyMetricIDs.join(',')}`;
   const metricDefinitions = useMemo(
     () => buildMetricDefinitions(resourceMetricIDs, currencyMetricIDs, resourceMetadata, currencyMetadata),
@@ -184,9 +187,8 @@ const PlayerTrackerView = () => {
 	const extraMetricDefinitions = useMemo(
 		() => primaryMetricDefinitions.filter((definition) => !HIGHLIGHT_METRIC_KEYS.has(definition.key)),
 		[primaryMetricDefinitions],
-	);
+  );
   const troopMetricDefinition = metricDefinitions.find((definition) => definition.key === 'troopsTotal')!;
-  const [tracker, setTracker] = useState<PlayerTrackerResponse>(emptyResponse);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('might');
   const [selectedRange, setSelectedRange] = useState<RangeKey>('7d');
   const [customWindow, setCustomWindow] = useState<ChartTimeWindow | null>(null);
@@ -198,7 +200,6 @@ const PlayerTrackerView = () => {
   const [selectedTroopUnitID, setSelectedTroopUnitID] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 	const selectedExtraMetric = extraMetricDefinitions.find((definition) => definition.key === selectedMetric);
-	const activePlayerID = Math.max(0, finite(state?.player.id));
 	const scopedTracker = activePlayerID > 0 && tracker.current?.playerId !== activePlayerID ? emptyResponse : tracker;
 
 	useEffect(() => {
@@ -1350,14 +1351,10 @@ function buildFilteredTroopPoints(
 }
 
 function currencyValue(sample: PlayerTrackerSample | null, key: CurrencyKey): number | undefined {
-  const detailedValue = sample?.currencies?.[key];
-  if (typeof detailedValue === 'number' && Number.isFinite(detailedValue)) return detailedValue;
+  const walletValue = retainedWalletBalance(sample, key);
+  if (walletValue != null) return walletValue;
   if (!sample) return undefined;
   switch (key) {
-    case 'coins':
-      return finite(sample.coins);
-    case 'rubies':
-      return finite(sample.rubies);
     case 'might_pt':
       return finite(sample.might);
     case 'glory_pt':
@@ -1498,8 +1495,8 @@ function playerWallet(
     const internalName = typeof definition?.internalName === 'string' ? definition.internalName : '';
     const jsonKey = typeof definition?.JSONKey === 'string' ? definition.JSONKey : '';
     wallet[`resource:${rawID}`] = amount;
-    if (jsonKey === 'C1' || internalName === 'currency1') wallet.coins = amount;
-    if (jsonKey === 'C2' || internalName === 'currency2') wallet.rubies = amount;
+    if (jsonKey === 'C1' || internalName === 'currency1' || (!definition && rawID === '1')) wallet.coins = amount;
+    if (jsonKey === 'C2' || internalName === 'currency2' || (!definition && rawID === '2')) wallet.rubies = amount;
   }
   for (const [rawID, amount] of Object.entries(currencies)) {
     wallet[`currency:${rawID}`] = amount;
@@ -1520,7 +1517,7 @@ function buildMetricDefinitions(
     if (!Number.isFinite(id) || id <= 0) return;
     const jsonKey = typeof metadata?.JSONKey === 'string' ? metadata.JSONKey : '';
     const internalName = typeof metadata?.internalName === 'string' ? metadata.internalName : '';
-    if (kind === 'resource' && (jsonKey === 'C1' || jsonKey === 'C2' || internalName === 'currency1' || internalName === 'currency2')) return;
+    if (kind === 'resource' && (id === 1 || id === 2 || jsonKey === 'C1' || jsonKey === 'C2' || internalName === 'currency1' || internalName === 'currency2')) return;
     const name = metadata?.name?.trim() || `${kind === 'resource' ? 'Resource' : 'Currency'} ${id}`;
     definitions.push({
       key: `${kind}:${id}`,
@@ -1682,10 +1679,20 @@ function normalizeSeries(
   definitions: MetricDefinition[],
 ): Partial<Record<MetricKey, TrackerMetricPoint[]>> {
   const normalized: Partial<Record<MetricKey, TrackerMetricPoint[]>> = {};
-  for (const definition of definitions) {
-    const points = raw?.[definition.key];
+  const localSamples = current ? [...samples, current] : samples;
+  const metricKeys = new Set(definitions.map((definition) => definition.key));
+  for (const sample of localSamples) {
+    for (const key of Object.keys(sample.currencies ?? {})) {
+      if (/^(resource|currency):[1-9]\d*$/.test(key)) metricKeys.add(key);
+    }
+  }
+  for (const key of Object.keys(raw ?? {})) {
+    if (/^(resource|currency):[1-9]\d*$/.test(key)) metricKeys.add(key);
+  }
+  for (const key of metricKeys) {
+    const points = raw?.[key];
     if (Array.isArray(points)) {
-      normalized[definition.key] = points
+      normalized[key] = points
         .filter((point) => Number.isFinite(point?.timestampUnix) && Number.isFinite(point?.value))
         .map((point) => ({
           timestampUnix: point.timestampUnix,
@@ -1695,11 +1702,10 @@ function normalizeSeries(
         .sort((a, b) => a.timestampUnix - b.timestampUnix);
     }
   }
-  const localSamples = current ? [...samples, current] : samples;
-  for (const definition of definitions) {
-    if (normalized[definition.key] != null) continue;
-    normalized[definition.key] = localSamples.flatMap((sample) => {
-      const value = metricValue(sample, definition.key);
+  for (const key of metricKeys) {
+    if (normalized[key] != null) continue;
+    normalized[key] = localSamples.flatMap((sample) => {
+      const value = metricValue(sample, key);
       return value == null
         ? []
         : [{ timestampUnix: sample.timestampUnix, value, source: 'local' as const }];

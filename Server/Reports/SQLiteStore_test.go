@@ -51,6 +51,63 @@ func TestReportWritesAreIsolatedFromOperationJournal(t *testing.T) {
 	}
 }
 
+func TestResourceAggregateSchemaAddsOccurrenceBoundsToEarlyDatabase(t *testing.T) {
+	dataDir := t.TempDir()
+	store, err := OpenSQLiteStore(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	db, err := sql.Open("sqlite", filepath.Join(dataDir, "Runtime", "Reports.sqlite"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.ExecContext(t.Context(), `
+		DROP TABLE feature_resource_aggregates;
+		CREATE TABLE feature_resource_aggregates (
+			identity_key TEXT NOT NULL, view_key TEXT NOT NULL, bucket_start INTEGER NOT NULL,
+			bucket_seconds INTEGER NOT NULL, report_count INTEGER NOT NULL, victories INTEGER NOT NULL,
+			defeats INTEGER NOT NULL, troops_sent INTEGER NOT NULL, troop_losses INTEGER NOT NULL,
+			tools_used INTEGER NOT NULL, gallantry_points INTEGER NOT NULL, loot_total INTEGER NOT NULL,
+			resources_json BLOB NOT NULL, revision INTEGER NOT NULL, updated_at TEXT NOT NULL,
+			PRIMARY KEY (identity_key, view_key, bucket_start)
+		);
+		DELETE FROM battle_report_storage_metadata WHERE key IN (?, ?);
+	`, resourceAggregateSchemaKey, resourceAggregateWatermarkKey); err != nil {
+		db.Close()
+		t.Fatal(err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err = OpenSQLiteStore(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	columns, err := store.db.QueryContext(t.Context(), `PRAGMA table_info(feature_resource_aggregates)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer columns.Close()
+	found := map[string]bool{}
+	for columns.Next() {
+		var sequence, notNull, primaryKey int
+		var name, columnType string
+		var defaultValue any
+		if err := columns.Scan(&sequence, &name, &columnType, &notNull, &defaultValue, &primaryKey); err != nil {
+			t.Fatal(err)
+		}
+		found[name] = true
+	}
+	if !found["first_occurred_at"] || !found["last_occurred_at"] {
+		t.Fatalf("migrated feature resource aggregate columns = %+v", found)
+	}
+}
+
 func TestSQLiteStorePersistsScopedFeatureAndEventReport(t *testing.T) {
 	store, err := OpenSQLiteStore(t.TempDir())
 	if err != nil {
@@ -389,6 +446,27 @@ func TestSQLiteStoreMigratesCanonicalRowsToPvEAndCloudOutbox(t *testing.T) {
 		reports[0].TargetTypeID != 0 || reports[0].KingdomID != 4 ||
 		reports[0].TargetX != 10 || reports[0].TargetY != 20 {
 		t.Fatalf("migrated PvE analytics = %#v", reports)
+	}
+	aggregates, err := store.ResourceAggregates(context.Background(), ResourceAggregateQuery{
+		AccountUID: 44, PlayerID: 1, ViewKey: ResourceViewTower,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(aggregates) != 1 || aggregates[0].ReportCount != 1 || aggregates[0].Resources["W"] != 100 ||
+		aggregates[0].TroopsSent != 975 || aggregates[0].GallantryPoints != 1743 ||
+		!aggregates[0].BucketStart.Equal(battleTime.Truncate(time.Minute)) {
+		t.Fatalf("legacy PvE minute migration = %+v", aggregates)
+	}
+	migration, err := store.ResourceAggregateMigrationStatus(context.Background(), ResourceAggregateOutboxQuery{
+		AccountUID: 44, PlayerID: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if migration.SourceReports != 1 || migration.SourceBuckets != 1 || migration.PendingBuckets != 1 ||
+		!migration.OldestOccurredAt.Equal(battleTime) || !migration.NewestOccurredAt.Equal(battleTime) {
+		t.Fatalf("legacy PvE migration receipt = %+v", migration)
 	}
 	pending, err := store.PendingCloudReports(context.Background(), 25)
 	if err != nil {

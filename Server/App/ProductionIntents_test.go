@@ -369,10 +369,7 @@ func TestPlanRecruitmentBUPReusesAHROnlyDuringCurrentHelpLifecycle(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 5 || plan.Steps[3].Resolver != "production.enqueue.alliance_help.build" ||
-		plan.Steps[4].Action != "production.enqueue.mark_help_covered" {
-		t.Fatalf("post-refocus recruitment BUP steps=%#v, want a fresh AHR tail", plan.Steps)
-	}
+	assertRecruitmentBUPPlanHasNoAHR(t, plan)
 
 	input.ProtocolContext = State.ProtocolContextState{
 		SessionGeneration: 7, ConnectionGeneration: 3,
@@ -384,9 +381,17 @@ func TestPlanRecruitmentBUPReusesAHROnlyDuringCurrentHelpLifecycle(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
+	assertRecruitmentBUPPlanHasNoAHR(t, plan)
+
+	input.State.AllianceHelpRequests.OwnRecruitmentRequests = []State.RecruitmentAllianceHelpRequest{}
+	input.State.AllianceHelpRequests.RecruitmentCastleIDs = []State.CastleID{}
+	plan, err = planProductionEnqueue(t.Context(), input, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(plan.Steps) != 5 || plan.Steps[0].Resolver != "production.enqueue.alliance_help.build" ||
 		plan.Steps[1].Action != "production.enqueue.mark_help_covered" || plan.Steps[3].Opcode != "bup" {
-		t.Fatalf("uncovered prior BUP was not serviced before another enqueue: %#v", plan.Steps)
+		t.Fatalf("uncovered prior BUP without a live request was not serviced before another enqueue: %#v", plan.Steps)
 	}
 }
 
@@ -449,12 +454,10 @@ func TestStandaloneRecruitmentAHRLinksCurrentFocusBeforeFirstBUP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 5 || plan.Steps[3].Resolver != "production.enqueue.alliance_help.build" {
-		t.Fatalf("post-refocus BUP reused standalone AHR: %#v", plan.Steps)
-	}
+	assertRecruitmentBUPPlanHasNoAHR(t, plan)
 	for _, step := range plan.Steps {
 		if step.Action == "alliance.help.reconcile_recruitment_bup" {
-			t.Fatalf("post-refocus BUP inferred coverage from an old lifecycle: %#v", plan.Steps)
+			t.Fatalf("post-refocus BUP reused a focus-bound standalone marker: %#v", plan.Steps)
 		}
 	}
 }
@@ -505,7 +508,7 @@ func TestStandaloneRecruitmentAHRReconcilesUncoveredBUP(t *testing.T) {
 	assertRecruitmentBUPPlanHasNoAHR(t, plan)
 }
 
-func TestStandaloneRecruitmentAHRReconcileRejectsFocusRace(t *testing.T) {
+func TestStandaloneRecruitmentAHRReconcileRejectsFocusRaceWithoutDuplicatingLifecycle(t *testing.T) {
 	store, gameData, now := standaloneRecruitmentCoverageFixture(t)
 	view := store.PlanningView()
 	standalone, err := planAllianceHelpRequest(t.Context(), Intent.PlanningContext{
@@ -544,9 +547,7 @@ func TestStandaloneRecruitmentAHRReconcileRejectsFocusRace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 5 || plan.Steps[3].Resolver != "production.enqueue.alliance_help.build" {
-		t.Fatalf("focus race did not force a fresh post-BUP AHR: %#v", plan.Steps)
-	}
+	assertRecruitmentBUPPlanHasNoAHR(t, plan)
 }
 
 func TestStandaloneRecruitmentAHRResolverRejectsFocusRaceAfterPrepare(t *testing.T) {

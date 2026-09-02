@@ -600,11 +600,8 @@ func TestRecruitmentBUPAllianceHelpBatchIsScopedToFocusEpoch(t *testing.T) {
 	initial.Session.Generation = 7
 	initial.Session.ConnectionGeneration = 3
 	initial.AllianceHelpRequests = AllianceHelpRequestState{
-		RecruitmentCastleIDs: []CastleID{11}, OwnObservedGeneration: 7,
-		OwnRecruitmentRequests: []RecruitmentAllianceHelpRequest{
-			{ListID: 91, CastleID: 11, Progress: 1, MaximumHelpers: 3, ObservedAt: time.Now().UTC()},
-		},
-		OwnRecruitmentObservedGeneration: 7,
+		RecruitmentCastleIDs: []CastleID{}, OwnObservedGeneration: 7,
+		OwnRecruitmentRequests: []RecruitmentAllianceHelpRequest{}, OwnRecruitmentObservedGeneration: 7,
 	}
 	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
 	store := NewStore(initial)
@@ -617,6 +614,15 @@ func TestRecruitmentBUPAllianceHelpBatchIsScopedToFocusEpoch(t *testing.T) {
 	if context.RecruitmentBUPCastleID != 11 || context.RecruitmentBUPFocusEpoch != context.FocusEpoch ||
 		context.RecruitmentBUPSerial != 2 || context.RecruitmentAHRCoveredSerial != 0 {
 		t.Fatalf("two-BUP batch = %#v", context)
+	}
+	if _, err := store.Apply(func(state *GameState) ([]string, bool, error) {
+		state.AllianceHelpRequests.RecruitmentCastleIDs = []CastleID{11}
+		state.AllianceHelpRequests.OwnRecruitmentRequests = []RecruitmentAllianceHelpRequest{
+			{ListID: 91, CastleID: 11, Progress: 1, MaximumHelpers: 3, ObservedAt: time.Now().UTC()},
+		}
+		return []string{"alliance-help"}, true, nil
+	}); err != nil {
+		t.Fatal(err)
 	}
 	if !store.ObserveRecruitmentAHRCovered(11, 7, 3, context.FocusEpoch, context.RecruitmentBUPSerial) {
 		t.Fatal("correlated recruitment AHR did not cover the BUP batch")
@@ -674,7 +680,35 @@ func TestRecruitmentBUPAllianceHelpBatchIsScopedToFocusEpoch(t *testing.T) {
 	}
 }
 
-func TestStandaloneRecruitmentAHRLinksZeroSerialOnlyToCurrentFocusEpoch(t *testing.T) {
+func TestRecruitmentBUPInheritsCurrentLifecycleAcrossFocusEpoch(t *testing.T) {
+	now := time.Now().UTC()
+	initial := NewGameState()
+	initial.Session.Generation = 7
+	initial.Session.ConnectionGeneration = 3
+	initial.Session.ChangedAt = now.Add(-time.Minute)
+	initial.AllianceHelpRequests = AllianceHelpRequestState{
+		RecruitmentCastleIDs: []CastleID{11}, OwnObservedGeneration: 7,
+		OwnRecruitmentRequests: []RecruitmentAllianceHelpRequest{
+			{ListID: 91, CastleID: 11, Progress: 2, MaximumHelpers: 3, ObservedAt: now},
+		},
+		OwnRecruitmentObservedGeneration: 7,
+	}
+	initial.Castles[11] = CastleState{ID: 11, KingdomID: 1, Focused: true}
+	store := NewStore(initial)
+	store.ObserveProtocolFocus(FocusSubcontextMap, now)
+	store.ObserveProtocolFocus(FocusSubcontextCastle, now)
+	protocol := store.ProtocolContext()
+	if !store.ObserveRecruitmentBUP(11, 7, 3, protocol.FocusEpoch) {
+		t.Fatal("post-refocus recruitment BUP was not recorded")
+	}
+	protocol = store.ProtocolContext()
+	if protocol.RecruitmentBUPSerial != 1 || protocol.RecruitmentAHRCoveredSerial != 1 ||
+		!protocol.RecruitmentAHRFocusCovered {
+		t.Fatalf("same-castle lifecycle did not cover the post-refocus BUP: %#v", protocol)
+	}
+}
+
+func TestStandaloneRecruitmentAHRMarkerIsFocusScopedWhileLifecycleCoversAcrossFocus(t *testing.T) {
 	now := time.Now().UTC()
 	initial := NewGameState()
 	initial.Session.Generation = 7
@@ -726,8 +760,9 @@ func TestStandaloneRecruitmentAHRLinksZeroSerialOnlyToCurrentFocusEpoch(t *testi
 		t.Fatal("post-refocus BUP was not recorded")
 	}
 	protocol = store.ProtocolContext()
-	if protocol.RecruitmentBUPSerial != 1 || protocol.RecruitmentAHRCoveredSerial != 0 {
-		t.Fatalf("post-refocus BUP inherited old AHR coverage: %#v", protocol)
+	if protocol.RecruitmentBUPSerial != 1 || protocol.RecruitmentAHRCoveredSerial != 1 ||
+		!protocol.RecruitmentAHRFocusCovered {
+		t.Fatalf("post-refocus BUP did not inherit the current same-castle lifecycle: %#v", protocol)
 	}
 }
 

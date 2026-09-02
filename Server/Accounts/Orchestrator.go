@@ -172,6 +172,14 @@ type RuntimeStatus struct {
 	BackgroundLogin                 *BackgroundLoginSummary `json:"backgroundLogin,omitempty"`
 	PrivateMetricsState             string                  `json:"privateMetricsState,omitempty"`
 	PrivateMetricsAt                *time.Time              `json:"privateMetricsAt,omitempty"`
+	StatsMigrationState             string                  `json:"statsMigrationState,omitempty"`
+	StatsMigrationSourceReports     int64                   `json:"statsMigrationSourceReports,omitempty"`
+	StatsMigrationSourceBuckets     int64                   `json:"statsMigrationSourceBuckets,omitempty"`
+	StatsMigrationPendingBuckets    int64                   `json:"statsMigrationPendingBuckets,omitempty"`
+	StatsMigrationOldestAt          *time.Time              `json:"statsMigrationOldestAt,omitempty"`
+	StatsMigrationNewestAt          *time.Time              `json:"statsMigrationNewestAt,omitempty"`
+	StatsMigrationPendingFrom       *time.Time              `json:"statsMigrationPendingFrom,omitempty"`
+	StatsMigrationPendingThrough    *time.Time              `json:"statsMigrationPendingThrough,omitempty"`
 	CheckpointState                 string                  `json:"checkpointState,omitempty"`
 	CheckpointAt                    *time.Time              `json:"checkpointAt,omitempty"`
 	CheckpointRevision              uint64                  `json:"checkpointRevision,omitempty"`
@@ -1012,10 +1020,24 @@ func (orchestrator *Orchestrator) Status() CellStatus {
 			if application.PrivateMetrics != nil {
 				metricsStatus := application.PrivateMetrics.Status()
 				status.PrivateMetricsState = metricsStatus.State
+				status.StatsMigrationState = metricsStatus.StatsMigrationState
+				status.StatsMigrationSourceReports = metricsStatus.StatsMigrationSourceReports
+				status.StatsMigrationSourceBuckets = metricsStatus.StatsMigrationSourceBuckets
+				status.StatsMigrationPendingBuckets = metricsStatus.StatsMigrationPendingBuckets
 				if !metricsStatus.LastPublishedAt.IsZero() {
 					publishedAt := metricsStatus.LastPublishedAt.UTC()
 					status.PrivateMetricsAt = &publishedAt
 				}
+				assignTime := func(value time.Time, destination **time.Time) {
+					if !value.IsZero() {
+						at := value.UTC()
+						*destination = &at
+					}
+				}
+				assignTime(metricsStatus.StatsMigrationOldestAt, &status.StatsMigrationOldestAt)
+				assignTime(metricsStatus.StatsMigrationNewestAt, &status.StatsMigrationNewestAt)
+				assignTime(metricsStatus.StatsMigrationPendingFrom, &status.StatsMigrationPendingFrom)
+				assignTime(metricsStatus.StatsMigrationPendingThrough, &status.StatsMigrationPendingThrough)
 			}
 			if application.Checkpoints != nil {
 				checkpointStatus := application.Checkpoints.Status()

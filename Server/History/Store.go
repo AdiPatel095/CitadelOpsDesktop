@@ -1155,14 +1155,16 @@ func NewPlayerSampleAt(snapshot State.GameState, gameData *GameData.Manager, obs
 	}
 	for id, amount := range snapshot.Player.Resources {
 		key := fmt.Sprintf("resource:%d", id)
+		jsonKey := ""
 		if gameData != nil {
 			if definition, err := gameData.Resource(int64(id)); err == nil {
-				if definition.JSONKey == "C1" {
-					sample.Coins = amount
-				} else if definition.JSONKey == "C2" {
-					sample.Rubies = amount
-				}
+				jsonKey = strings.ToUpper(strings.TrimSpace(definition.JSONKey))
 			}
+		}
+		if jsonKey == "C1" || (jsonKey == "" && id == State.ResourceID(1)) {
+			sample.Coins = amount
+		} else if jsonKey == "C2" || (jsonKey == "" && id == State.ResourceID(2)) {
+			sample.Rubies = amount
 		}
 		sample.Currencies[key] = amount
 	}

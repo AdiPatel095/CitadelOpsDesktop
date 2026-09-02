@@ -250,9 +250,11 @@ func (store *Store) ObserveProtocolFocus(subcontext FocusSubcontext, observedAt 
 }
 
 // ObserveRecruitmentBUP records one committed recruitment enqueue in the
-// exact castle-focus epoch that accepted it. Once a correlated AHR succeeds,
-// later BUPs in that uninterrupted epoch remain covered only while exact
-// lifecycle evidence is pending or inside its bounded completion grace.
+// exact castle-focus epoch that accepted it. Exact current-session lifecycle
+// evidence for the same castle covers the committed BUP even after a focus
+// transition; the game permits only one live recruitment-help request per
+// castle. Coverage remains valid only while that request is pending or inside
+// its bounded completion grace.
 func (store *Store) ObserveRecruitmentBUP(
 	castleID CastleID,
 	sessionGeneration uint64,
@@ -281,15 +283,15 @@ func (store *Store) ObserveRecruitmentBUP(
 		protocol.RecruitmentAHRFocusCovered = false
 		protocol.RecruitmentAHRPending = false
 	}
-	epochAlreadyCovered := protocol.RecruitmentAHRFocusCovered &&
-		protocol.RecruitmentAHRCoveredSerial == protocol.RecruitmentBUPSerial &&
-		RecruitmentAllianceHelpCovers(*current.state, castleID, time.Now().UTC(), 0)
-	if !epochAlreadyCovered {
+	lifecycleCovers := RecruitmentAllianceHelpCovers(*current.state, castleID, time.Now().UTC(), 0)
+	if !lifecycleCovers {
 		protocol.RecruitmentAHRFocusCovered = false
 	}
 	protocol.RecruitmentBUPSerial++
-	if epochAlreadyCovered {
+	if lifecycleCovers {
 		protocol.RecruitmentAHRCoveredSerial = protocol.RecruitmentBUPSerial
+		protocol.RecruitmentAHRFocusCovered = true
+		protocol.RecruitmentAHRPending = false
 	}
 	store.generation.Store(&storeGeneration{state: current.state, versions: current.versions, protocol: protocol})
 	return true

@@ -763,6 +763,80 @@ func TestRecruitPolicyWakesWhenPerCastleScheduleOpens(t *testing.T) {
 	}
 }
 
+func TestRecruitPolicyRestoresStormScheduleAfterSeasonalCastleIDChange(t *testing.T) {
+	now := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
+	for _, test := range []struct {
+		name             string
+		kingdomMetadata  string
+		rememberOldStorm bool
+		queueableID      int64
+		wantRequest      bool
+	}{
+		{
+			name: "persisted kingdom identity", kingdomMetadata: `,"kingdomId":4`,
+			queueableID: 489, wantRequest: true,
+		},
+		{
+			name: "legacy Storm scan identity", rememberOldStorm: true,
+			queueableID: 489, wantRequest: true,
+		},
+		{
+			name: "live recruitability guard remains authoritative", rememberOldStorm: true,
+			queueableID: 516, wantRequest: false,
+		},
+		{
+			name:        "unknown missing castle is not guessed to be Storm",
+			queueableID: 489, wantRequest: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			snapshot := recruitPolicySnapshot(t, now)
+			storm := snapshot.State.Castles[77]
+			delete(snapshot.State.Castles, 77)
+			storm.ID = 88
+			storm.KingdomID = State.KingdomID(GameData.StormKingdomID)
+			storm.Name = "New Storm Castle"
+			storm.QueueableObservedAt = now
+			storm.QueueableProduction = map[int][]State.DefinitionRef{
+				0: {{Collection: "units", ID: test.queueableID}},
+			}
+			snapshot.State.Castles[88] = storm
+			if test.rememberOldStorm {
+				snapshot.State.Storm.LastScannedAt[77] = now.Add(-24 * time.Hour)
+			}
+			snapshot.Configuration.Sections["automation.recruitTroops"] = json.RawMessage(fmt.Sprintf(`{
+				"mode":"perCastle","checkIntervalSec":300,
+				"castles":{"77":{"enabled":true%s,"items":[{"id":489,"amount":25}]}}
+			}`, test.kingdomMetadata))
+			snapshot.Configuration.Sections["scheduler"] = json.RawMessage(`{
+				"featureSchedules":{"autoRecruit:77":{
+					"enabled":true,"timeZone":"UTC","slotOptionsEnabled":true,
+					"slots":[{"day":1,"startMinute":700,"endMinute":800,"options":{"unitID":489}}]
+				}}
+			}`)
+
+			decision, err := NewRecruitPolicy().Evaluate(context.Background(), snapshot)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !test.wantRequest {
+				if decision.Request != nil {
+					t.Fatalf("unsafe Storm restoration decision=%#v", decision)
+				}
+				return
+			}
+			if decision.Request == nil || decision.Request.Name != "production.enqueue" {
+				t.Fatalf("restored Storm decision=%#v, want production enqueue", decision)
+			}
+			arguments := productionIntentArguments(t, decision)
+			if arguments.CastleID != 88 || arguments.DefinitionID != 489 ||
+				arguments.ScheduledDefinitionID != 489 || decision.ScheduleKey != "autoRecruit:77" {
+				t.Fatalf("restored Storm arguments=%#v schedule=%q", arguments, decision.ScheduleKey)
+			}
+		})
+	}
+}
+
 func TestRecruitPolicyReevaluatesScheduledUnitForEveryOpenedSlot(t *testing.T) {
 	now := time.Date(2026, 8, 6, 0, 30, 0, 0, time.UTC)
 	snapshot := recruitPolicySnapshot(t, now)
@@ -979,6 +1053,41 @@ func TestRecruitPolicyCanUseExactLevel10FallbackAfterTitleLoss(t *testing.T) {
 	}
 }
 
+func TestRecruitPolicyAppliesGloryFallbackToLowerTierFamilyAnchor(t *testing.T) {
+	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
+
+	paused := gloryTitleRecruitPolicySnapshot(t, now, 238, 30, 238, false)
+	decision, err := NewRecruitPolicy().Evaluate(context.Background(), paused)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil || decision.Detail != "Glory-title level 11 recruit slots are paused while the required title is lost" {
+		t.Fatalf("lower-tier family anchor bypassed disabled fallback: %#v", decision)
+	}
+
+	fallback := gloryTitleRecruitPolicySnapshot(t, now, 238, 30, 238, true)
+	decision, err = NewRecruitPolicy().Evaluate(context.Background(), fallback)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("lower-tier fallback decision=%#v err=%v", decision, err)
+	}
+	arguments := productionIntentArguments(t, decision)
+	if arguments.DefinitionID != 238 || arguments.TitleGatedDefinitionID != 493 ||
+		arguments.RequiredGloryTitleID != 31 || !arguments.TitleLossFallback {
+		t.Fatalf("lower-tier fallback arguments=%#v", arguments)
+	}
+
+	titleRestored := gloryTitleRecruitPolicySnapshot(t, now, 238, 31, 493, true)
+	decision, err = NewRecruitPolicy().Evaluate(context.Background(), titleRestored)
+	if err != nil || decision.Request == nil {
+		t.Fatalf("restored-title decision=%#v err=%v", decision, err)
+	}
+	arguments = productionIntentArguments(t, decision)
+	if arguments.DefinitionID != 493 || arguments.TitleGatedDefinitionID != 493 ||
+		arguments.RequiredGloryTitleID != 31 || arguments.TitleLossFallback {
+		t.Fatalf("restored-title arguments=%#v", arguments)
+	}
+}
+
 func TestRecruitPolicyWaitsWhenCurrentGloryTitleIsUnknown(t *testing.T) {
 	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
 	snapshot := gloryTitleRecruitPolicySnapshot(t, now, 493, 30, 238, true)
@@ -1046,10 +1155,10 @@ func gloryTitleRecruitPolicySnapshot(
 		"versionInfo":[],
 		"buildings":[{"wodID":1939,"stackSize":"110","constructionItemGroupIDs":"2"}],
 		"units":[
-			{"wodID":227,"type":"MeadMace","level":"10"},
-			{"wodID":489,"type":"MeadMace","level":"11"},
-			{"wodID":238,"type":"MeadBow","level":"10"},
-			{"wodID":493,"type":"MeadBow","level":"11"},
+			{"wodID":227,"type":"MeadMace","level":"10","upgradeWodID":"489"},
+			{"wodID":489,"type":"MeadMace","level":"11","downgradeWodID":"227"},
+			{"wodID":238,"type":"MeadBow","level":"10","upgradeWodID":"493"},
+			{"wodID":493,"type":"MeadBow","level":"11","downgradeWodID":"238"},
 			{"wodID":515,"type":"Militia","level":"1"},
 			{"wodID":516,"type":"Spear","level":"1"}
 		],

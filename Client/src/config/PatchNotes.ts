@@ -57,6 +57,23 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.3.4',
+    subtitle: 'Hosted stats recovery and session-safe automation',
+    date: '2026-09-01',
+    items: [
+      { kind: 'added', text: 'World Intelligence player dossiers now show one final known score for each completed time-limited event run in a Previous scores section, dated by when the event ended in the viewer\'s local time' },
+      { kind: 'fixed', text: 'Storm Islands now admits only players the game marks as participating in the active run, keeps cargo observations rankless in storage, and derives display order from current-session scores so prior-season cargo cannot reappear' },
+      { kind: 'fixed', text: 'Mobile World Intelligence search selectors now keep their focus while the software keyboard changes the viewport, so event, date, and player choices remain editable' },
+      { kind: 'fixed', text: 'Auto Recruit keeps per-castle settings and schedules attached to the current Storm castle after a seasonal castle ID change, applies Glory-title fallback across the selected unit family, and still revalidates exact live recruitability before enqueueing' },
+      { kind: 'fixed', text: 'Recruitment and hospital alliance-help request lifecycles now survive castle-focus changes and zero-reduction compact queue updates, preventing duplicate requests while requiring current-session same-castle or same-job evidence' },
+      { kind: 'fixed', text: 'Feature Stats now records every positive parsed report resource into additive UTC-minute buckets keyed by view, then preserves every per-resource total while hosted retention merges older minutes into hourly and daily rows instead of truncating high-volume report history' },
+      { kind: 'fixed', text: 'Hosted tenants now backfill every exact feature report still recoverable from their persistent profile database into the new minute format, merge legacy UID and stable world/player history before account-scoped delivery, publish bounded acknowledgement-backed batches, and report migration coverage before a worker rollout can advance' },
+      { kind: 'fixed', text: 'My Stats now keeps every historically nonzero resource and currency selectable after its live balance reaches zero; desktop applies the selected cadence and day limit to its local profile files and cannot initialize hosted private-metrics publishing' },
+      { kind: 'fixed', text: 'The public landing page now loads privacy-bounded ruby loot and completed-attack totals from fresh current hosted accounts instead of waiting on a missing activity endpoint' },
+      { kind: 'security', text: 'Portal sign-out now revokes the server session with the supported method, expires the scoped HttpOnly cookie, verifies that it can no longer authenticate, and refuses to present a successful logout when revocation cannot be confirmed' },
+    ],
+  },
+  {
     version: '2.3.3',
     subtitle: 'Complete Storm intelligence and flexible local history',
     date: '2026-08-31',

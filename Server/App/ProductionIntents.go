@@ -146,11 +146,11 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	}
 	steps := castleContextSteps(input, castle)
 	recruitment := request.LineID == recruitmentProductionLineID
-	uncoveredRecruitmentBUP := recruitment && recruitmentBUPAllianceHelpUncovered(input, castle)
-	reuseRecruitmentAllianceHelp := recruitment && !uncoveredRecruitmentBUP &&
-		recruitmentBUPAllianceHelpCovered(
-			input, castle, time.Now().UTC(), time.Duration(stackCount)*10*time.Second,
-		)
+	reuseRecruitmentAllianceHelp := recruitment && State.RecruitmentAllianceHelpCovers(
+		input.State, castle.ID, time.Now().UTC(), time.Duration(stackCount)*10*time.Second,
+	)
+	uncoveredRecruitmentBUP := recruitment && !reuseRecruitmentAllianceHelp &&
+		recruitmentBUPAllianceHelpUncovered(input, castle)
 	appendAllianceHelpAfterFirstBUP := recruitment && !uncoveredRecruitmentBUP && !reuseRecruitmentAllianceHelp
 	requireNewerQueue := len(steps) > 0
 	for index := range steps {
@@ -222,21 +222,6 @@ func appendRecruitmentBUPAllianceHelpSteps(steps []Intent.Step, arguments json.R
 			ActionArguments: arguments,
 		},
 	)
-}
-
-func recruitmentBUPAllianceHelpCovered(
-	input Intent.PlanningContext,
-	castle State.CastleState,
-	now time.Time,
-	executionHorizon time.Duration,
-) bool {
-	protocol := input.ProtocolContext
-	return recruitmentAllianceHelpContextCurrent(input, castle) &&
-		State.RecruitmentAllianceHelpCovers(input.State, castle.ID, now, executionHorizon) &&
-		protocol.RecruitmentBUPCastleID == castle.ID &&
-		protocol.RecruitmentBUPFocusEpoch == protocol.FocusEpoch &&
-		protocol.RecruitmentAHRFocusCovered &&
-		protocol.RecruitmentAHRCoveredSerial == protocol.RecruitmentBUPSerial
 }
 
 func recruitmentBUPAllianceHelpUncovered(input Intent.PlanningContext, castle State.CastleState) bool {

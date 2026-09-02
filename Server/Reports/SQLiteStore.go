@@ -88,6 +88,10 @@ func OpenSQLiteStore(dataDir string) (*SQLiteStore, error) {
 		_ = db.Close()
 		return nil, err
 	}
+	if err := store.ensureResourceAggregatesCurrent(context.Background()); err != nil {
+		_ = db.Close()
+		return nil, err
+	}
 	return store, nil
 }
 
@@ -174,6 +178,12 @@ func (store *SQLiteStore) initialize(ctx context.Context) error {
 		return err
 	}
 	if err := createBattleAnalyticsIndexes(ctx, store.db); err != nil {
+		return err
+	}
+	if err := createResourceAggregateTables(ctx, store.db); err != nil {
+		return err
+	}
+	if err := ensureResourceAggregateColumns(ctx, store.db); err != nil {
 		return err
 	}
 	return nil
@@ -454,7 +464,32 @@ func (store *SQLiteStore) Save(ctx context.Context, report BattleReport) error {
 	if IsPvPBattleReport(report) {
 		return nil
 	}
-	err := upsertBattleReport(ctx, store.db, report)
+	tx, err := store.db.BeginTx(ctx, nil)
+	if err != nil {
+		store.setLastError(err)
+		return fmt.Errorf("begin report analytics write: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	affected, err := affectedResourceTuples(ctx, tx, report)
+	if err == nil {
+		err = upsertBattleReport(ctx, tx, report)
+	}
+	if err == nil {
+		for tuple := range affected {
+			if err = recomputeResourceAggregate(ctx, tx, tuple); err != nil {
+				break
+			}
+		}
+	}
+	if err == nil {
+		err = recordResourceAggregateWatermark(ctx, tx)
+	}
+	if err == nil {
+		err = tx.Commit()
+		if err != nil {
+			err = fmt.Errorf("commit report analytics write: %w", err)
+		}
+	}
 	store.setLastError(err)
 	if err == nil {
 		store.analyticsGeneration.Add(1)
@@ -484,6 +519,14 @@ func (store *SQLiteStore) SaveMany(ctx context.Context, reports []BattleReport) 
 			store.setLastError(err)
 			return err
 		}
+	}
+	if err := rebuildResourceAggregates(ctx, tx); err != nil {
+		store.setLastError(err)
+		return err
+	}
+	if err := recordResourceAggregateWatermark(ctx, tx); err != nil {
+		store.setLastError(err)
+		return err
 	}
 	if err := tx.Commit(); err != nil {
 		store.setLastError(err)
@@ -990,8 +1033,10 @@ func normalizeStoredBattleReport(report BattleReport) BattleReport {
 		} else {
 			report.OccurredAt = time.Unix(0, 0).UTC().Format(time.RFC3339Nano)
 		}
-	} else if report.DateMs <= 0 {
-		if occurredAt, err := time.Parse(time.RFC3339Nano, report.OccurredAt); err == nil {
+	} else if occurredAt, err := time.Parse(time.RFC3339Nano, report.OccurredAt); err == nil {
+		occurredAt = occurredAt.UTC()
+		report.OccurredAt = occurredAt.Format(time.RFC3339Nano)
+		if report.DateMs <= 0 {
 			report.DateMs = occurredAt.UnixMilli()
 		}
 	}
