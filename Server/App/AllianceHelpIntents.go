@@ -179,10 +179,6 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 		return Intent.Plan{}, fmt.Errorf("alliance help requires a positive production job id")
 	}
 	job, eligible := findAllianceHelpJob(input.State, request.ProductionID)
-	if job.LineID == recruitmentProductionLineID && job.CastleID > 0 &&
-		State.RecruitmentAllianceHelpCovers(input.State, job.CastleID, time.Now().UTC(), 10*time.Second) {
-		return Intent.Plan{Summary: "Skip alliance help: recruitment castle already has a current request"}, nil
-	}
 	if !eligible {
 		if job.CastleID > 0 && !allianceHelpLineSupported(job.LineID) {
 			return Intent.Plan{}, fmt.Errorf("production line %d does not support alliance help requests", job.LineID)
@@ -210,9 +206,6 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 	}
 	if job.LineID == hospitalProductionLineID && !State.OwnAllianceHelpListCurrent(input.State) {
 		return Intent.Plan{Summary: "Skip alliance help: waiting for the current hospital request list"}, nil
-	}
-	if job.LineID == recruitmentProductionLineID && !State.OwnAllianceHelpListCurrent(input.State) {
-		return Intent.Plan{Summary: "Skip alliance help: waiting for the current recruitment request list"}, nil
 	}
 	if job.LineID == recruitmentProductionLineID &&
 		!recruitmentAllianceHelpQueueCurrent(input.State, castle, time.Now().UTC()) {
@@ -249,17 +242,7 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 			Name: "Record alliance help request", Action: "alliance.help.mark_requested", ActionArguments: recordArguments,
 		})
 	} else {
-		steps = append(steps,
-			Intent.Step{
-				Name:   "Bind recruitment AHR to castle focus",
-				Action: "alliance.help.prepare_recruitment_bup", ActionArguments: recordArguments,
-			},
-			requestStep,
-			Intent.Step{
-				Name:   "Reconcile recruitment BUP alliance help",
-				Action: "alliance.help.reconcile_recruitment_bup", ActionArguments: recordArguments,
-			},
-		)
+		steps = append(steps, requestStep)
 	}
 	return Intent.Plan{
 		Claims:  claims,
@@ -281,13 +264,6 @@ func (application *Application) resolveAllianceHelpRequestStep(
 		return Intent.Step{}, fmt.Errorf("alliance help requires a positive production job id")
 	}
 	job, eligible := findAllianceHelpJob(input.State, request.ProductionID)
-	if job.LineID == recruitmentProductionLineID && job.CastleID > 0 &&
-		State.RecruitmentAllianceHelpCovers(input.State, job.CastleID, time.Now().UTC(), 10*time.Second) {
-		return Intent.Step{}, fmt.Errorf(
-			"%w: recruitment castle %d already has a current alliance-help request",
-			Intent.ErrPlanStale, job.CastleID,
-		)
-	}
 	if !eligible || job.CastleID != request.CastleID || job.LineID != request.LineID {
 		return Intent.Step{}, fmt.Errorf(
 			"%w: production job %d is no longer eligible for alliance help", Intent.ErrPlanStale, request.ProductionID,
@@ -317,11 +293,6 @@ func (application *Application) resolveAllianceHelpRequestStep(
 			"%w: hospital alliance help needs the current request list", Intent.ErrPlanStale,
 		)
 	}
-	if job.LineID == recruitmentProductionLineID && !State.OwnAllianceHelpListCurrent(input.State) {
-		return Intent.Step{}, fmt.Errorf(
-			"%w: recruitment alliance help needs the current request list", Intent.ErrPlanStale,
-		)
-	}
 	if job.LineID == hospitalProductionLineID &&
 		State.OutstandingHospitalAllianceHelpRequests(input.State) >=
 			State.MaximumOutstandingHospitalAllianceHelpRequests {
@@ -331,15 +302,6 @@ func (application *Application) resolveAllianceHelpRequestStep(
 		)
 	}
 	if job.LineID == recruitmentProductionLineID {
-		protocol := input.ProtocolContext
-		if !protocol.RecruitmentAHRPending ||
-			protocol.RecruitmentBUPCastleID != request.CastleID ||
-			protocol.RecruitmentBUPFocusEpoch != protocol.FocusEpoch {
-			return Intent.Step{}, fmt.Errorf(
-				"%w: recruitment AHR is not bound to castle %d current focus",
-				Intent.ErrPlanStale, request.CastleID,
-			)
-		}
 		return recruitmentAllianceHelpCommand(input, request.CastleID), nil
 	}
 	payload, _ := json.Marshal(struct {
@@ -369,22 +331,10 @@ func (application *Application) resolveRecruitmentBUPAllianceHelpStep(
 			Intent.ErrPlanStale, request.CastleID,
 		)
 	}
-	protocol := input.ProtocolContext
-	if protocol.RecruitmentBUPCastleID != request.CastleID ||
-		protocol.RecruitmentBUPFocusEpoch != protocol.FocusEpoch ||
-		protocol.RecruitmentBUPSerial == 0 ||
-		protocol.RecruitmentBUPSerial <= protocol.RecruitmentAHRCoveredSerial {
-		return Intent.Step{}, fmt.Errorf(
-			"%w: recruitment BUP batch at castle %d has no uncovered enqueue",
-			Intent.ErrPlanStale, request.CastleID,
-		)
-	}
-	if State.RecruitmentAllianceHelpCovers(input.State, request.CastleID, time.Now().UTC(), 0) {
-		return Intent.Step{}, fmt.Errorf(
-			"%w: recruitment castle %d already has a current alliance-help request",
-			Intent.ErrPlanStale, request.CastleID,
-		)
-	}
+	// The BUP response itself is the causal evidence for this request. Do not
+	// suppress it with focus-epoch markers or an older alliance-help lifecycle;
+	// the game may safely reject a duplicate. The current player/castle context
+	// above and the transport response identity remain mandatory.
 	return recruitmentAllianceHelpCommand(input, request.CastleID), nil
 }
 
@@ -676,7 +626,7 @@ func allianceHelpJobEligible(
 		return false
 	}
 	if lineID == recruitmentProductionLineID {
-		return !State.HasOutstandingRecruitmentAllianceHelpRequest(state, castleID)
+		return true
 	}
 	return lineID != hospitalProductionLineID ||
 		!State.HasOutstandingHospitalAllianceHelpRequest(state, item.ProductionID)

@@ -396,7 +396,7 @@ func TestRecruitPolicyRequestsAllianceHelpAfterFillingTheQueue(t *testing.T) {
 	}
 }
 
-func TestRecruitPolicyWaitsForCurrentAllianceHelpListBeforeAHR(t *testing.T) {
+func TestRecruitPolicyUsesQueueRAHInsteadOfOwnRequestList(t *testing.T) {
 	now := time.Date(2026, 8, 29, 12, 0, 0, 0, time.UTC)
 	snapshot := recruitPolicySnapshot(t, now)
 	snapshot.State.Session.Generation = 4
@@ -417,15 +417,41 @@ func TestRecruitPolicyWaitsForCurrentAllianceHelpListBeforeAHR(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decision.Status != "waiting" || decision.Request != nil ||
-		decision.Detail != "Waiting for the current recruitment alliance-help request list" {
-		t.Fatalf("unobserved recruitment help decision = %#v", decision)
+	if decision.Request == nil || decision.Request.Name != "alliance.help.request" {
+		t.Fatalf("missing own request list suppressed queue-without-RAH retry: %#v", decision)
 	}
 
 	observeOwnAllianceHelpList(&snapshot.State, now)
+	snapshot.State.AllianceHelpRequests.RecruitmentCastleIDs = []State.CastleID{77}
+	snapshot.State.AllianceHelpRequests.OwnRecruitmentObservedGeneration = 4
+	snapshot.State.AllianceHelpRequests.OwnRecruitmentRequests = []State.RecruitmentAllianceHelpRequest{
+		{ListID: 91, CastleID: 77, Progress: 1, MaximumHelpers: 3, ObservedAt: now},
+	}
 	decision, err = policy.Evaluate(t.Context(), snapshot)
 	if err != nil || decision.Request == nil || decision.Request.Name != "alliance.help.request" {
-		t.Fatalf("observed recruitment help decision = %#v err=%v", decision, err)
+		t.Fatalf("pending own request suppressed queue-without-RAH retry: %#v err=%v", decision, err)
+	}
+
+	castle = snapshot.State.Castles[77]
+	queue = castle.Production[0]
+	queue.Active.AllianceHelpRequested = true
+	queue.Queued[0].Amount = 1
+	castle.Production[0] = queue
+	snapshot.State.Castles[77] = castle
+	decision, err = policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "alliance.help.request" ||
+		allianceHelpProductionID(t, decision) != 202 {
+		t.Fatalf("mixed RAH queue did not target its first false slot: %#v err=%v", decision, err)
+	}
+
+	for index := range queue.Queued {
+		queue.Queued[index].AllianceHelpRequested = true
+	}
+	castle.Production[0] = queue
+	snapshot.State.Castles[77] = castle
+	decision, err = policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil && decision.Request.Name == "alliance.help.request" {
+		t.Fatalf("all-RAH queue still emitted a focus-refresh AHR: %#v err=%v", decision, err)
 	}
 }
 
@@ -482,8 +508,19 @@ func TestRecruitPolicyRefreshesStaleSlotsBeforeAHRThenUsesOpenSlot(t *testing.T)
 	castle.Production[0] = queue
 	snapshot.State.Castles[77] = castle
 	decision, err = policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "alliance.help.request" ||
+		allianceHelpProductionID(t, decision) != 202 {
+		t.Fatalf("mixed RAH queue did not request its first false slot: decision=%#v err=%v", decision, err)
+	}
+
+	for index := range queue.Queued {
+		queue.Queued[index].AllianceHelpRequested = true
+	}
+	castle.Production[0] = queue
+	snapshot.State.Castles[77] = castle
+	decision, err = policy.Evaluate(t.Context(), snapshot)
 	if err != nil || decision.Request != nil && decision.Request.Name == "alliance.help.request" {
-		t.Fatalf("outstanding help was requested twice: decision=%#v err=%v", decision, err)
+		t.Fatalf("all-RAH queue was requested twice: decision=%#v err=%v", decision, err)
 	}
 
 	queue.Queued = queue.Queued[:4]
@@ -554,10 +591,11 @@ func TestRecruitPolicyDoesNotRefocusWhenCurrentCastleSnapshotOmittedQueue(t *tes
 	}
 }
 
-func TestRecruitPolicyDoesNotRepeatOutstandingCastleWideAllianceHelp(t *testing.T) {
+func TestRecruitPolicyRequestsFirstFalseRAHSlotDespiteOtherRAH(t *testing.T) {
 	now := time.Date(2026, 8, 28, 12, 0, 0, 0, time.UTC)
 	snapshot := recruitPolicySnapshot(t, now)
 	snapshot.State.Session.Generation = 4
+	snapshot.State.Session.ChangedAt = now.Add(-time.Minute)
 	snapshot.State.AllianceHelpRequests = State.AllianceHelpRequestState{
 		RecruitmentCastleIDs: []State.CastleID{77}, OwnObservedGeneration: 4, ObservedAt: now,
 	}
@@ -575,12 +613,13 @@ func TestRecruitPolicyDoesNotRepeatOutstandingCastleWideAllianceHelp(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decision.Request != nil && decision.Request.Name == "alliance.help.request" {
-		t.Fatalf("outstanding castle-wide help was requested again: %#v", decision)
+	if decision.Request == nil || decision.Request.Name != "alliance.help.request" ||
+		allianceHelpProductionID(t, decision) != 202 {
+		t.Fatalf("first false-RAH slot was not requested: %#v", decision)
 	}
 }
 
-func TestRecruitPolicyDoesNotRequestAllianceHelpBelowMinimumStack(t *testing.T) {
+func TestRecruitPolicyRequestsFalseRAHBelowFormerMinimumStack(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	snapshot := recruitPolicySnapshot(t, now)
 	castle := snapshot.State.Castles[77]
@@ -596,8 +635,9 @@ func TestRecruitPolicyDoesNotRequestAllianceHelpBelowMinimumStack(t *testing.T) 
 	if err != nil {
 		t.Fatalf("evaluate policy: %v", err)
 	}
-	if decision.Request != nil {
-		t.Fatalf("unexpected alliance-help request: %#v", decision)
+	if decision.Request == nil || decision.Request.Name != "alliance.help.request" ||
+		allianceHelpProductionID(t, decision) != 201 {
+		t.Fatalf("small false-RAH slot was not requested: %#v", decision)
 	}
 }
 

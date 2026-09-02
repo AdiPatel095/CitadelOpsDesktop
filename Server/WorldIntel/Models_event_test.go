@@ -75,6 +75,26 @@ func TestFinalizeBatchRejectsInventedRankOnlyScore(t *testing.T) {
 	}
 }
 
+func TestFinalizeBatchAcceptsRawStormLifecycleStateFromPreviousMonth(t *testing.T) {
+	now := time.Date(2026, time.September, 2, 12, 0, 0, 0, time.UTC)
+	batch, err := FinalizeBatch(ObservationBatch{
+		WorldID: "world.example", CapturedAt: now,
+		EventScores: []EventScoreObservation{{
+			EventID: 102, EventKey: "storm-islands", EventName: "Storm Islands",
+			ListType: 13, LeagueID: 1, PlayerID: 7, PlayerName: "Player", Rank: 0,
+			Score: 5_000, ScoreKnown: true, Participating: false, ScoreUnit: "points",
+			RunStartedOn: "2026-08-01", EventEndsAt: time.Date(2026, time.September, 1, 0, 0, 0, 0, time.UTC),
+			Source: "gge-highscore", ObservedAt: now,
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(batch.EventScores) != 1 || batch.EventScores[0].Rank != 0 || batch.EventScores[0].Participating {
+		t.Fatalf("raw Storm lifecycle state = %#v", batch.EventScores)
+	}
+}
+
 func TestFinalizeBatchPreservesSchemaOnePublicMetricSources(t *testing.T) {
 	now := time.Date(2026, time.August, 11, 16, 0, 0, 0, time.UTC)
 	for _, source := range []string{"", "legacy-collector"} {
