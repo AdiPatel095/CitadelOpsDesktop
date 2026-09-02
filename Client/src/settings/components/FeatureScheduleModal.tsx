@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import { Badge, SettingsModal } from '../../components/ui';
 import {
@@ -21,6 +21,11 @@ import { useCitadelAPI } from '../../api/ApiContext';
 import { configurationSection } from '../Configuration';
 import { useMetadata } from '../../context/MetadataContext';
 import { highestUnitIDsByFamily, unitIDsAvailableByFamilyAcrossCastles } from '../UnitUpgradeFamily';
+import {
+  queueProductionCastleConfigurationKey,
+  queueProductionKnownStormCastleIDs,
+  queueProductionLiveCastleForKey,
+} from '../QueueProductionClientState';
 
 interface FeatureScheduleModalProps {
   isOpen: boolean;
@@ -37,42 +42,50 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
 }) => {
   const { configuration, state, updateConfiguration } = useCitadelAPI();
   const { buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
-  const [featureSchedules, setFeatureSchedules] = useState<FeatureSchedules>({});
+  const [draftFeatureSchedules, setDraftFeatureSchedules] = useState<FeatureSchedules | null>(null);
+  const persistedFeatureSchedules = normalizeFeatureSchedules(
+    configurationSection(configuration, 'scheduler').featureSchedules,
+  );
+  const featureSchedules = draftFeatureSchedules ?? persistedFeatureSchedules;
   const queueableCatalog = buildQueueableProductionCatalog(state, buildings, troops, tools);
   const queueableCatalogLoaded = state != null && !metadataLoading;
+  const liveCastleIdentities = Object.values(state?.castles ?? {}).map(({ id, kingdomId }) => ({ id, kingdomId }));
+  const knownStormCastleIDs = queueProductionKnownStormCastleIDs(
+    state?.storm.lastScannedAt,
+    state?.storm.map.sourceCastleId,
+    configurationSection(configuration, 'automation.autoStorm').target,
+  );
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
-  const dirtyRef = useRef(false);
 
   const setDirty = (dirty: boolean) => {
-    dirtyRef.current = dirty;
     setIsDirty(dirty);
   };
 
-  useEffect(() => {
-    if (!isOpen || dirtyRef.current) return;
-    const scheduler = configurationSection(configuration, 'scheduler');
-    setFeatureSchedules(normalizeFeatureSchedules(scheduler.featureSchedules));
-  }, [configuration?.sections.scheduler, isOpen]);
-
-  useEffect(() => {
-    if (isOpen) return;
-    setDirty(false);
-    setSaveError('');
-  }, [isOpen]);
-
-  const selectedSchedule = useMemo(() => {
-    if (!featureID) return createEmptyWeeklySchedule();
-    return featureSchedules[featureID] ?? createEmptyWeeklySchedule();
-  }, [featureID, featureSchedules]);
+  const selectedSchedule = featureID
+    ? featureSchedules[featureID] ?? createEmptyWeeklySchedule()
+    : createEmptyWeeklySchedule();
 
   const queueableIDsForFeature = (field: QueueableProductionField): number[] | undefined => {
     if (!featureID || !queueableCatalogLoaded) return undefined;
-    const [, castleID] = featureID.split(':', 2);
-    if (castleID) {
-      if (!queueableBuildingRowsLoaded(queueableCatalog, castleID)) return undefined;
-      const availableIDs = queueableIDsForCastle(queueableCatalog, castleID, field);
+    const [, castleConfigurationKey] = featureID.split(':', 2);
+    if (castleConfigurationKey) {
+      const productionSettings = featureID.startsWith('autoRecruit:')
+        ? normalizeRecruitTroopsSettings(
+            configuration?.sections['automation.recruitTroops'] ?? defaultRecruitTroopsSettings(),
+          )
+        : normalizeAutoToolSettings(
+            configuration?.sections['automation.autoTool'] ?? defaultAutoToolSettings(),
+          );
+      const liveCastleID = queueProductionLiveCastleForKey(
+        productionSettings,
+        castleConfigurationKey,
+        liveCastleIdentities,
+        knownStormCastleIDs,
+      )?.id ?? castleConfigurationKey;
+      if (!queueableBuildingRowsLoaded(queueableCatalog, liveCastleID)) return undefined;
+      const availableIDs = queueableIDsForCastle(queueableCatalog, liveCastleID, field);
       return featureID.startsWith('autoRecruit:')
         ? highestUnitIDsByFamily(availableIDs, troops)
         : availableIDs;
@@ -86,12 +99,24 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
       const settings = normalizeRecruitTroopsSettings(
         configuration?.sections['automation.recruitTroops'] ?? defaultRecruitTroopsSettings(),
       );
-      enabledCastleIDs = knownCastleIDs.filter((id) => settings.castles[id]?.enabled);
+      enabledCastleIDs = knownCastleIDs.filter((id) => {
+        const liveCastle = liveCastleIdentities.find((castle) => String(castle.id) === id);
+        const configurationKey = liveCastle
+          ? queueProductionCastleConfigurationKey(settings, liveCastle, liveCastleIdentities, knownStormCastleIDs)
+          : id;
+        return settings.castles[configurationKey]?.enabled;
+      });
     } else if (featureID === 'autoTool') {
       const settings = normalizeAutoToolSettings(
         configuration?.sections['automation.autoTool'] ?? defaultAutoToolSettings(),
       );
-      enabledCastleIDs = knownCastleIDs.filter((id) => settings.castles[id]?.enabled);
+      enabledCastleIDs = knownCastleIDs.filter((id) => {
+        const liveCastle = liveCastleIdentities.find((castle) => String(castle.id) === id);
+        const configurationKey = liveCastle
+          ? queueProductionCastleConfigurationKey(settings, liveCastle, liveCastleIdentities, knownStormCastleIDs)
+          : id;
+        return settings.castles[configurationKey]?.enabled;
+      });
     }
     if (enabledCastleIDs.length > 0) {
       if (featureID === 'autoRecruit') {
@@ -111,7 +136,7 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
     return undefined;
   };
 
-  const slotOptionsConfig = useMemo<ScheduleSlotOptionsConfig | undefined>(() => {
+  const slotOptionsConfig: ScheduleSlotOptionsConfig | undefined = (() => {
     if (!featureID) return undefined;
     if (featureID === 'autoRecruit' || featureID.startsWith('autoRecruit:')) {
       return {
@@ -172,12 +197,12 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
       };
     }
     return undefined;
-  }, [featureID, queueableCatalog, queueableCatalogLoaded]);
+  })();
 
   const handleScheduleChange = (schedule: WeeklySchedule) => {
     if (!featureID) return;
-    setFeatureSchedules((prev) => normalizeFeatureSchedules({
-      ...prev,
+    setDraftFeatureSchedules((previousDraft) => normalizeFeatureSchedules({
+      ...(previousDraft ?? persistedFeatureSchedules),
       [featureID]: schedule,
     }));
     setDirty(true);
@@ -186,7 +211,7 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
   const handleSave = () => {
     if (!featureID) return;
     const normalized = normalizeFeatureSchedules(featureSchedules);
-    setFeatureSchedules(normalized);
+    setDraftFeatureSchedules(normalized);
     const scheduler = configurationSection(configuration, 'scheduler');
     setSaving(true);
     setSaveError('');

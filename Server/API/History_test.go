@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/History"
+	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/State"
 )
 
@@ -436,5 +438,81 @@ func TestPlayerTrackerHistoryNoneStillReturnsCurrentValues(t *testing.T) {
 	}
 	if response.IntervalSeconds != 300 || response.RecordingIntervalSeconds != 300 {
 		t.Fatalf("history intervals = %+v, want 300", response)
+	}
+}
+
+func TestResourceAggregatesFilterByViewAndPageOnMinuteBoundary(t *testing.T) {
+	reportStore, err := Reports.OpenSQLiteStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = reportStore.Close() })
+	now := time.Date(2026, 9, 1, 19, 0, 0, 0, time.UTC)
+	for index, id := range []string{"oldest", "middle", "newest"} {
+		report := Reports.BattleReport{
+			ID: id, AccountUID: 77, WorldID: "world.example", PlayerID: 42,
+			AutomationFeature: string(State.AttackFeatureAutoTowers),
+			OccurredAt:        now.Add(time.Duration(index) * time.Minute).Add(15 * time.Second).Format(time.RFC3339Nano),
+			Role:              "attacker", Result: "Victory", Loot: map[string]int64{"W": int64(index + 1)},
+			Defender: &Reports.BattleCombatant{PlayerID: int64(-index - 1), Dummy: true},
+		}
+		if err := reportStore.Save(t.Context(), report); err != nil {
+			t.Fatal(err)
+		}
+	}
+	storm := Reports.BattleReport{
+		ID: "storm", AccountUID: 77, WorldID: "world.example", PlayerID: 42,
+		AutomationFeature: string(State.AttackFeatureAutoStorm),
+		OccurredAt:        now.Add(3 * time.Minute).Format(time.RFC3339Nano), Role: "attacker",
+		Loot: map[string]int64{"IAP": 50}, Defender: &Reports.BattleCombatant{PlayerID: -5, Dummy: true},
+	}
+	if err := reportStore.Save(t.Context(), storm); err != nil {
+		t.Fatal(err)
+	}
+	state := State.NewGameState()
+	state.Account.UID = 77
+	state.Account.WorldID = "world.example"
+	state.Player.ID = 42
+	server := NewServer(Config{ReportAnalytics: reportStore, State: State.NewStore(state)})
+
+	firstRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(firstRecorder, httptest.NewRequest(
+		http.MethodGet,
+		"/api/v2/analytics/resource-aggregates?view=tower&limit=2&since="+url.QueryEscape(now.Add(-time.Minute).Format(time.RFC3339Nano)),
+		nil,
+	))
+	if firstRecorder.Code != http.StatusOK {
+		t.Fatalf("first resource page returned HTTP %d: %s", firstRecorder.Code, firstRecorder.Body.String())
+	}
+	var first resourceAggregateResponse
+	if err := json.NewDecoder(firstRecorder.Body).Decode(&first); err != nil {
+		t.Fatal(err)
+	}
+	if len(first.Aggregates) != 2 || first.Aggregates[0].Resources["W"] != 3 ||
+		first.Aggregates[1].Resources["W"] != 2 || first.NextBefore == nil || first.SourceBucketSeconds != 60 {
+		t.Fatalf("first resource page = %+v", first)
+	}
+
+	secondRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(secondRecorder, httptest.NewRequest(
+		http.MethodGet,
+		"/api/v2/analytics/resource-aggregates?view=tower&limit=2&since="+url.QueryEscape(now.Add(-time.Minute).Format(time.RFC3339Nano))+"&before="+url.QueryEscape(first.NextBefore.Format(time.RFC3339Nano)),
+		nil,
+	))
+	if secondRecorder.Code != http.StatusOK {
+		t.Fatalf("second resource page returned HTTP %d: %s", secondRecorder.Code, secondRecorder.Body.String())
+	}
+	var second resourceAggregateResponse
+	if err := json.NewDecoder(secondRecorder.Body).Decode(&second); err != nil {
+		t.Fatal(err)
+	}
+	if len(second.Aggregates) != 1 || second.Aggregates[0].Resources["W"] != 1 || second.NextBefore != nil {
+		t.Fatalf("second resource page = %+v", second)
+	}
+
+	invalidRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(invalidRecorder, httptest.NewRequest(http.MethodGet, "/api/v2/analytics/resource-aggregates?view=unknown", nil))
+	if invalidRecorder.Code != http.StatusUnprocessableEntity || !strings.Contains(invalidRecorder.Body.String(), `"resource_view_invalid"`) {
+		t.Fatalf("invalid view returned HTTP %d: %s", invalidRecorder.Code, invalidRecorder.Body.String())
 	}
 }

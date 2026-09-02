@@ -330,6 +330,11 @@ func (server *Server) handleBattleReportAnalytics(writer http.ResponseWriter, re
 	}
 	limit := historyLimit(request, 2000)
 	eventID, _ := strconv.ParseInt(request.URL.Query().Get("eventId"), 10, 64)
+	since, err := optionalHistoryTime(request.URL.Query().Get("since"))
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid_history_since", err.Error())
+		return
+	}
 	snapshot := server.config.State.ReadOnlyView()
 	reports, err := server.config.ReportAnalytics.Recent(request.Context(), Reports.BattleReportQuery{
 		AccountUID: snapshot.Account.UID,
@@ -337,6 +342,7 @@ func (server *Server) handleBattleReportAnalytics(writer http.ResponseWriter, re
 		PlayerID:   int64(snapshot.Player.ID),
 		FeatureID:  request.URL.Query().Get("feature"),
 		EventID:    eventID,
+		Since:      since,
 		Limit:      limit,
 	})
 	if err != nil {
@@ -344,6 +350,69 @@ func (server *Server) handleBattleReportAnalytics(writer http.ResponseWriter, re
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]any{"reports": reports})
+}
+
+func (server *Server) handleResourceAggregates(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Cache-Control", "no-store")
+	if server.config.ReportAnalytics == nil || server.config.State == nil {
+		writeError(writer, http.StatusServiceUnavailable, "resource_aggregates_unavailable", "Feature resource aggregates are unavailable")
+		return
+	}
+	viewKey := Reports.ResourceViewKey(strings.TrimSpace(request.URL.Query().Get("view")))
+	if !Reports.ValidResourceViewKey(viewKey) {
+		writeError(writer, http.StatusUnprocessableEntity, "resource_view_invalid", "A valid feature resource view is required")
+		return
+	}
+	since, err := optionalHistoryTime(request.URL.Query().Get("since"))
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid_history_since", err.Error())
+		return
+	}
+	before, err := optionalHistoryTime(request.URL.Query().Get("before"))
+	if err != nil {
+		writeError(writer, http.StatusBadRequest, "invalid_history_cursor", "before must be an RFC3339 timestamp")
+		return
+	}
+	limit := historyLimit(request, 5000)
+	snapshot := server.config.State.ReadOnlyView()
+	aggregates, err := server.config.ReportAnalytics.ResourceAggregates(request.Context(), Reports.ResourceAggregateQuery{
+		AccountUID: snapshot.Account.UID,
+		WorldID:    snapshot.Account.WorldID,
+		PlayerID:   int64(snapshot.Player.ID),
+		ViewKey:    viewKey,
+		Since:      since,
+		Before:     before,
+		Limit:      limit + 1,
+	})
+	if err != nil {
+		writeError(writer, http.StatusInternalServerError, "resource_aggregates_read_failed", err.Error())
+		return
+	}
+	response := resourceAggregateResponse{Aggregates: aggregates, SourceBucketSeconds: Reports.ResourceAggregateSourceSeconds}
+	if len(aggregates) > limit {
+		response.Aggregates = aggregates[:limit]
+		nextBefore := response.Aggregates[len(response.Aggregates)-1].BucketStart
+		response.NextBefore = &nextBefore
+	}
+	writeJSON(writer, http.StatusOK, response)
+}
+
+type resourceAggregateResponse struct {
+	Aggregates          []Reports.ResourceAggregate `json:"aggregates"`
+	SourceBucketSeconds int64                       `json:"sourceBucketSeconds"`
+	NextBefore          *time.Time                  `json:"nextBefore,omitempty"`
+}
+
+func optionalHistoryTime(raw string) (time.Time, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return time.Time{}, nil
+	}
+	parsed, err := time.Parse(time.RFC3339Nano, raw)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("since must be an RFC3339 timestamp")
+	}
+	return parsed.UTC(), nil
 }
 
 func (server *Server) handleRawHistory(writer http.ResponseWriter, request *http.Request, collection string, wrapped bool) {

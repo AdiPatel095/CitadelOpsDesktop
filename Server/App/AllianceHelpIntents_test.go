@@ -166,7 +166,7 @@ func TestRecruitmentAllianceHelpResolverRequiresExactCommittedCastleContext(t *t
 	}
 }
 
-func TestRecruitmentBUPAllianceHelpBypassesOldOutstandingRequestForFreshBatch(t *testing.T) {
+func TestRecruitmentBUPAllianceHelpRejectsDuplicateCurrentCastleRequest(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.ID = 501
 	state.Session.Generation = 7
@@ -196,11 +196,18 @@ func TestRecruitmentBUPAllianceHelpBypassesOldOutstandingRequestForFreshBatch(t 
 		RecruitmentBUPSerial: 2,
 	}
 	input := Intent.PlanningContext{State: state, ProtocolContext: protocol}
+	if _, err := (&Application{}).resolveRecruitmentBUPAllianceHelpStep(
+		t.Context(), input, json.RawMessage(`{"castleId":77}`),
+	); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("current same-castle request did not suppress a duplicate AHR: %v", err)
+	}
+	input.State.AllianceHelpRequests.OwnRecruitmentRequests = []State.RecruitmentAllianceHelpRequest{}
+	input.State.AllianceHelpRequests.RecruitmentCastleIDs = []State.CastleID{}
 	step, err := (&Application{}).resolveRecruitmentBUPAllianceHelpStep(
 		t.Context(), input, json.RawMessage(`{"castleId":77}`),
 	)
 	if err != nil {
-		t.Fatalf("fresh post-BUP AHR was suppressed by old outstanding state: %v", err)
+		t.Fatalf("uncovered BUP without a current request did not produce AHR: %v", err)
 	}
 	var payload struct {
 		RequestID int64 `json:"ID"`
@@ -233,7 +240,7 @@ func TestRecruitmentBUPAllianceHelpBypassesOldOutstandingRequestForFreshBatch(t 
 	if _, err := (&Application{}).resolveRecruitmentBUPAllianceHelpStep(
 		t.Context(), input, json.RawMessage(`{"castleId":77}`),
 	); err != nil {
-		t.Fatalf("fresh post-refocus BUP did not produce a new AHR: %v", err)
+		t.Fatalf("fresh post-refocus BUP without a current request did not produce a new AHR: %v", err)
 	}
 }
 
@@ -259,15 +266,9 @@ func TestRecruitmentBUPAllianceHelpMarkersRequireExactFocus(t *testing.T) {
 		t.Fatal(err)
 	}
 	protocol := store.ProtocolContext()
-	if protocol.RecruitmentBUPSerial != 2 || protocol.RecruitmentAHRCoveredSerial != 0 {
+	if protocol.RecruitmentBUPSerial != 2 || protocol.RecruitmentAHRCoveredSerial != 2 ||
+		!protocol.RecruitmentAHRFocusCovered {
 		t.Fatalf("two committed BUP markers = %#v", protocol)
-	}
-	if err := application.markRecruitmentBUPAllianceHelpCovered(t.Context(), arguments); err != nil {
-		t.Fatal(err)
-	}
-	protocol = store.ProtocolContext()
-	if protocol.RecruitmentAHRCoveredSerial != 2 {
-		t.Fatalf("covered BUP marker = %#v", protocol)
 	}
 	store.ObserveProtocolFocus(State.FocusSubcontextMap, time.Now().UTC())
 	if err := application.markRecruitmentBUPAllianceHelpDue(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
@@ -318,8 +319,9 @@ func TestRecruitmentBUPMarkerStopsWhenReusedCoverageExpired(t *testing.T) {
 		t.Fatal("initial recruitment BUP was not recorded")
 	}
 	protocol = store.ProtocolContext()
-	if !store.ObserveRecruitmentAHRCovered(77, 7, 3, protocol.FocusEpoch, protocol.RecruitmentBUPSerial) {
-		t.Fatal("initial recruitment BUP was not marked covered")
+	if protocol.RecruitmentBUPSerial != 1 || protocol.RecruitmentAHRCoveredSerial != 1 ||
+		!protocol.RecruitmentAHRFocusCovered {
+		t.Fatalf("initial recruitment BUP did not inherit current lifecycle coverage: %#v", protocol)
 	}
 	if _, err := store.Apply(func(state *State.GameState) ([]string, bool, error) {
 		state.AllianceHelpRequests.OwnRecruitmentRequests[0] = State.RecruitmentAllianceHelpRequest{

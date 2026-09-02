@@ -13,6 +13,7 @@ export interface QueueProductionItem {
 
 export interface QueueProductionCastleSettings {
   enabled: boolean;
+  kingdomId?: number;
   items: QueueProductionItem[];
   cursor: number;
 }
@@ -33,6 +34,93 @@ interface QueueProductionClientStateOptions {
   minCheckIntervalSec?: number;
   maxCheckIntervalSec?: number;
   supportsGloryTitleFallback?: boolean;
+}
+
+export interface QueueProductionCastleIdentity {
+  id: number;
+  kingdomId: number;
+}
+
+const STORM_KINGDOM_ID = 4;
+
+function positiveInteger(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+export function queueProductionKnownStormCastleIDs(
+  lastScannedAt: unknown,
+  mapSourceCastleID: unknown,
+  autoStormTarget: unknown,
+): number[] {
+  const ids = new Set<number>();
+  const sourceCastleID = positiveInteger(mapSourceCastleID);
+  if (sourceCastleID != null) ids.add(sourceCastleID);
+  if (lastScannedAt && typeof lastScannedAt === 'object' && !Array.isArray(lastScannedAt)) {
+    Object.keys(lastScannedAt as Record<string, unknown>).forEach((rawID) => {
+      const castleID = positiveInteger(rawID);
+      if (castleID != null) ids.add(castleID);
+    });
+  }
+  if (autoStormTarget && typeof autoStormTarget === 'object' && !Array.isArray(autoStormTarget)) {
+    const target = autoStormTarget as Record<string, unknown>;
+    const castleID = positiveInteger(target.castleId);
+    if (Number(target.kingdomId) === STORM_KINGDOM_ID && castleID != null) ids.add(castleID);
+  }
+  return Array.from(ids).sort((left, right) => left - right);
+}
+
+export function queueProductionCastleConfigurationKey(
+  settings: QueueProductionClientSettingsV1,
+  castle: QueueProductionCastleIdentity,
+  liveCastles: QueueProductionCastleIdentity[],
+  knownStormCastleIDs: number[] = [],
+): string {
+  const currentKey = String(castle.id);
+  const exact = settings.castles[currentKey];
+  if (exact && (exact.kingdomId == null || exact.kingdomId === castle.kingdomId)) return currentKey;
+  if (castle.kingdomId !== STORM_KINGDOM_ID) return currentKey;
+
+  const stableKeys = Object.entries(settings.castles)
+    .filter(([key, candidate]) => key !== currentKey && positiveInteger(key) != null && candidate.kingdomId === STORM_KINGDOM_ID)
+    .map(([key]) => key);
+  if (stableKeys.length === 1) return stableKeys[0];
+  if (stableKeys.length > 1) return currentKey;
+
+  const liveIDs = new Set(liveCastles.map(({ id }) => id));
+  const historicalIDs = new Set(knownStormCastleIDs);
+  const legacyKeys = Object.entries(settings.castles)
+    .filter(([key, candidate]) => {
+      const configuredID = positiveInteger(key);
+      return candidate.kingdomId == null && configuredID != null && !liveIDs.has(configuredID) && historicalIDs.has(configuredID);
+    })
+    .map(([key]) => key);
+  return legacyKeys.length === 1 ? legacyKeys[0] : currentKey;
+}
+
+export function queueProductionLiveCastleForKey(
+  settings: QueueProductionClientSettingsV1,
+  configurationKey: string,
+  liveCastles: QueueProductionCastleIdentity[],
+  knownStormCastleIDs: number[] = [],
+): QueueProductionCastleIdentity | undefined {
+  return liveCastles.find((castle) => (
+    queueProductionCastleConfigurationKey(settings, castle, liveCastles, knownStormCastleIDs) === configurationKey
+  ));
+}
+
+export function applyQueueProductionCastleIdentityMetadata(
+  settings: QueueProductionClientSettingsV1,
+  liveCastles: QueueProductionCastleIdentity[],
+  knownStormCastleIDs: number[] = [],
+): QueueProductionClientSettingsV1 {
+  const castles = { ...settings.castles };
+  liveCastles.forEach((castle) => {
+    const key = queueProductionCastleConfigurationKey(settings, castle, liveCastles, knownStormCastleIDs);
+    const configured = castles[key];
+    if (configured) castles[key] = { ...configured, kingdomId: castle.kingdomId };
+  });
+  return { ...settings, castles };
 }
 
 export function createQueueProductionClientState({
@@ -172,8 +260,10 @@ export function createQueueProductionClientState({
           Object.entries(payload.castles as Record<string, unknown>).map(([castleID, value]) => {
             const castle = value && typeof value === 'object' ? value as Record<string, unknown> : {};
             const items = normalizeItems(castle.items);
+            const kingdomID = castle.kingdomId == null ? Number.NaN : Number(castle.kingdomId);
             return [castleID, {
               enabled: typeof castle.enabled === 'boolean' ? castle.enabled : items.length > 0,
+              ...(Number.isInteger(kingdomID) && kingdomID >= 0 ? { kingdomId: kingdomID } : {}),
               items,
               cursor: normalizeCursor(castle.cursor, items.length),
             }];

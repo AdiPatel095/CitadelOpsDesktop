@@ -1,6 +1,6 @@
 package App
 
-const Version = "2.3.3"
+const Version = "2.3.4"
 
 // BuildRevision and BuildID are injected by the release build. Keeping
 // explicit local defaults makes development binaries honest about their

@@ -24,6 +24,7 @@ import {
 	normalizeStormSessionRanking,
 	stormGlobalLeagueId,
 } from './StormRanking';
+import { completedEventScoreFinals, formatEventEndLocal, nextEventScoreEnd } from './WorldEventFinals';
 
 const eventPageSize = 25;
 const metadataRefreshInterval = 30_000;
@@ -628,18 +629,32 @@ export const WorldPlayerEventHistory = (props: PlayerEventHistoryProps) => (
 const WorldPlayerEventHistoryContent = ({ history, error = '', onOpenAlliance }: PlayerEventHistoryProps) => {
 	const [eventKey, setEventKey] = useState(allEvents);
 	const [page, setPage] = useState(0);
+	const [historyNow, setHistoryNow] = useState(() => Date.now());
+	const finalScores = useMemo(
+		() => completedEventScoreFinals(history?.history ?? [], historyNow),
+		[history, historyNow],
+	);
+	useEffect(() => {
+		const now = Date.now();
+		const nextEnd = nextEventScoreEnd(history?.history ?? [], now);
+		if (nextEnd == null) return undefined;
+		const timer = window.setTimeout(
+			() => setHistoryNow(Date.now()),
+			Math.min(Math.max(nextEnd - now + 250, 250), 2_147_483_647),
+		);
+		return () => window.clearTimeout(timer);
+	}, [history, historyNow]);
 	const eventOptions = useMemo(() => {
 		const events = new Map<string, string>();
-		for (const entry of history?.history ?? []) events.set(entry.eventKey, entry.eventName || humanizeKey(entry.eventKey));
+		for (const entry of finalScores) events.set(entry.eventKey, entry.eventName || humanizeKey(entry.eventKey));
 		return [
-			{ value: allEvents, label: 'All event history' },
+			{ value: allEvents, label: 'All previous scores' },
 			...[...events].sort((left, right) => left[1].localeCompare(right[1])).map(([value, label]) => ({ value, label })),
 		];
-	}, [history]);
+	}, [finalScores]);
 	const entries = useMemo(() => {
-		const matching = (history?.history ?? []).filter((entry) => eventKey === allEvents || entry.eventKey === eventKey);
-		return [...matching].reverse();
-	}, [eventKey, history]);
+		return finalScores.filter((entry) => eventKey === allEvents || entry.eventKey === eventKey);
+	}, [eventKey, finalScores]);
 	const pageCount = Math.max(1, Math.ceil(entries.length / eventPageSize));
 	const safePage = Math.min(page, pageCount - 1);
 	const visible = entries.slice(safePage * eventPageSize, (safePage + 1) * eventPageSize);
@@ -649,16 +664,16 @@ const WorldPlayerEventHistoryContent = ({ history, error = '', onOpenAlliance }:
 			<CardContent>
 				<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div>
-						<div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> Event score history</div>
-						<p className="mt-1 text-xs text-text-muted">Append-only public rank and score observations for this player, including personal records and rank-only boards.</p>
+						<div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> Previous scores</div>
+						<p className="mt-1 text-xs text-text-muted">Final known public score from each completed event run. End dates and times use this device's local time.</p>
 					</div>
 					<div className="w-full sm:w-72">
-						<Select value={eventKey} onChange={(value) => { setEventKey(value); setPage(0); }} options={eventOptions} ariaLabel="Filter this player's event history" searchable disabled={eventOptions.length <= 1} menuGrowToViewport />
+						<Select value={eventKey} onChange={(value) => { setEventKey(value); setPage(0); }} options={eventOptions} ariaLabel="Filter this player's previous event scores" searchable disabled={eventOptions.length <= 1} menuGrowToViewport />
 					</div>
 				</div>
 				{error && <div className="mb-4 rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning" role="status">{error}</div>}
 				{entries.length === 0 ? (
-					<EmptyState size="sm" surface="plain" icon={<Trophy className="h-5 w-5" />} title="No event scores observed yet" description="This section will populate as event boards are collected for this player." />
+					<EmptyState size="sm" surface="plain" icon={<Trophy className="h-5 w-5" />} title="No previous scores yet" description="A final known score appears here after a collected event run reaches its recorded end time." />
 				) : (
 					<PlayerEventScoreTable entries={visible} page={safePage} pageCount={pageCount} total={entries.length} onPageChange={setPage} onOpenAlliance={onOpenAlliance} />
 				)}
@@ -751,17 +766,15 @@ const PlayerEventScoreTable = ({ entries, page, pageCount, total, onPageChange, 
 }) => (
 	<div className="overflow-hidden rounded-global border border-border-base">
 		<div className="max-h-[36rem] overflow-auto custom-scrollbar">
-			<table className="min-w-[70rem] w-full text-sm">
+			<table className="min-w-[48rem] w-full text-sm">
 				<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted">
-					<tr><th className="px-3 py-2 text-left">Observed</th><th className="px-3 py-2 text-left">Event run</th><th className="px-3 py-2 text-left">Board</th><th className="px-3 py-2 text-right">Rank</th><th className="px-3 py-2 text-right">Score</th><th className="px-3 py-2 text-left">Alliance</th></tr>
+					<tr><th className="px-3 py-2 text-left">Event run</th><th className="px-3 py-2 text-left">Ended (local)</th><th className="px-3 py-2 text-right">Final score</th><th className="px-3 py-2 text-left">Alliance</th></tr>
 				</thead>
 				<tbody>
-					{entries.map((entry, index) => (
-						<tr key={`${entry.occurrenceId}:${entry.listType}:${entry.leagueId}:${entry.observedAt}:${index}`} className="border-t border-border-base hover:bg-bg-card-hover">
-							<td className="whitespace-nowrap px-3 py-2.5 text-xs text-text-muted">{formatDateTime(entry.observedAt)}</td>
-								<td className="px-3 py-2.5"><div className="font-bold text-text-main">{entry.eventName || humanizeKey(entry.eventKey)}</div><div className="text-[11px] text-text-muted">{isOriginalStormRanking(entry.eventId, entry.listType) ? `Monthly session · ${formatDate(entry.runStartedOn)}` : `Started ${formatDate(entry.runStartedOn)} · ends ${formatDateTime(entry.eventEndsAt)}`}</div></td>
-								<td className="px-3 py-2.5 text-xs text-text-muted" title={isOriginalStormRanking(entry.eventId, entry.listType) ? `Event ${entry.eventId} · list ${entry.listType} · all levels` : `Event ${entry.eventId} · list ${entry.listType} · league ${entry.leagueId}`}>{eventBoardLabel(entry)}</td>
-							<td className="px-3 py-2.5 text-right font-mono font-black text-primary">#{formatCount(entry.rank)}</td>
+					{entries.map((entry) => (
+						<tr key={entry.occurrenceId} className="border-t border-border-base hover:bg-bg-card-hover">
+							<td className="px-3 py-2.5"><div className="font-bold text-text-main">{entry.eventName || humanizeKey(entry.eventKey)}</div><div className="text-[11px] text-text-muted">Run started {formatDate(entry.runStartedOn)}</div></td>
+							<td className="whitespace-nowrap px-3 py-2.5 text-xs font-semibold text-text-main">{formatEventEndLocal(entry.eventEndsAt)}</td>
 							<td className="px-3 py-2.5 text-right"><EventScoreValue entry={entry} /></td>
 							<td className="px-3 py-2.5">{entry.allianceId ? <button type="button" className="max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpenAlliance(entry.allianceId!, entry.worldId)}>{entry.allianceName || `Alliance ${entry.allianceId}`}</button> : <span className="text-text-muted">No alliance</span>}</td>
 						</tr>
@@ -769,7 +782,7 @@ const PlayerEventScoreTable = ({ entries, page, pageCount, total, onPageChange, 
 				</tbody>
 			</table>
 		</div>
-		<TablePager page={page} pageCount={pageCount} total={total} noun="observations" onPageChange={onPageChange} />
+		<TablePager page={page} pageCount={pageCount} total={total} noun="runs" onPageChange={onPageChange} />
 	</div>
 );
 
@@ -1011,14 +1024,6 @@ function eventRunLabel(run: WorldIntelligenceEventRunV1): string {
 function eventBoardVariantLabel(board: EventBoard): string {
 	if (board.boardKey) return `${humanizeKey(board.boardKey)} · List ${board.listType}`;
 	return board.listType > 0 ? `List ${board.listType}` : 'Leaderboard';
-}
-
-function eventBoardLabel(entry: Pick<EventLeaderboardRow, 'eventId' | 'listType' | 'boardKey' | 'leagueId'>): string {
-	if (isOriginalStormRanking(entry.eventId, entry.listType)) return 'Storm ranking · All levels';
-	const parts = [entry.boardKey ? humanizeKey(entry.boardKey) : `List ${entry.listType}`];
-	if (entry.boardKey) parts.push(`List ${entry.listType}`);
-	parts.push(entry.leagueId >= 0 ? `League ${entry.leagueId}` : 'No league');
-	return parts.join(' · ');
 }
 
 function latestBoardObservation(entries: EventLeaderboardRow[]): string {

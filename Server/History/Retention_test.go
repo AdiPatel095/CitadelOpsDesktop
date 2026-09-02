@@ -2,6 +2,7 @@ package History
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -449,6 +450,10 @@ func TestPlayerSamplesForPlayerBoundedPreservesFullSpan(t *testing.T) {
 	for minute := 0; minute < 12; minute++ {
 		if err := store.Append(CollectionPlayerSamples, PlayerSample{
 			TimestampUnix: start.Add(time.Duration(minute) * time.Minute).Unix(), PlayerID: 1, Might: float64(minute),
+			Currencies: map[string]float64{
+				fmt.Sprintf("resource:%d", minute+10): float64(minute + 100),
+				fmt.Sprintf("currency:%d", minute+20): float64(minute + 200),
+			},
 		}); err != nil {
 			t.Fatal(err)
 		}
@@ -465,6 +470,10 @@ func TestPlayerSamplesForPlayerBoundedPreservesFullSpan(t *testing.T) {
 		if samples[index].TimestampUnix != want[index] {
 			t.Fatalf("sample[%d]=%d, want %d", index, samples[index].TimestampUnix, want[index])
 		}
+	}
+	if samples[1].Currencies["resource:14"] != 104 || samples[1].Currencies["currency:24"] != 204 ||
+		samples[2].Currencies["resource:21"] != 111 || samples[2].Currencies["currency:31"] != 211 {
+		t.Fatalf("bounded samples lost wallet maps: %+v", samples)
 	}
 
 	// Building the index must not make later policy-aware captures invisible.

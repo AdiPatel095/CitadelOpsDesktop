@@ -1,11 +1,14 @@
 package App
 
 import (
+	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/History"
+	"CitadelDesktop/Server/PrivateMetrics"
 	"CitadelDesktop/Server/RiftTemplates"
 )
 
@@ -90,21 +93,50 @@ func TestDefaultPlayerSamplesRetention(t *testing.T) {
 
 func TestApplicationPlayerSamplesRetentionPolicyAppliesHostedCap(t *testing.T) {
 	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
-		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"unlimited"}`),
+		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"137d","recordingIntervalSeconds":300}`),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	application := &Application{Configuration: configuration}
 	local := application.playerSamplesRetentionPolicy()
-	if local.Configured != History.PlayerSamplesRetentionUnlimited ||
-		local.Effective != History.PlayerSamplesRetentionUnlimited || local.Hosted {
+	if local.Configured != History.PlayerSamplesRetention("137d") ||
+		local.Effective != History.PlayerSamplesRetention("137d") ||
+		local.RecordingIntervalSeconds != 300 || local.Maximum != History.PlayerSamplesRetentionUnlimited || local.Hosted {
 		t.Fatalf("local player samples retention = %+v", local)
 	}
 	application.BackgroundOnly = true
 	hosted := application.playerSamplesRetentionPolicy()
-	if hosted.Configured != History.PlayerSamplesRetentionUnlimited ||
-		hosted.Effective != History.PlayerSamplesRetention30Days || !hosted.Hosted {
+	if hosted.Configured != History.PlayerSamplesRetention("137d") ||
+		hosted.Effective != History.PlayerSamplesRetention30Days ||
+		hosted.RecordingIntervalSeconds != 300 || !hosted.Hosted {
 		t.Fatalf("hosted player samples retention = %+v", hosted)
+	}
+}
+
+func TestDesktopApplicationRejectsHostedPrivateMetricsPublishing(t *testing.T) {
+	client, err := PrivateMetrics.NewClient(PrivateMetrics.ClientConfig{
+		Endpoint: "https://backend.example/internal/private-metrics",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		name      string
+		client    *PrivateMetrics.Client
+		placement *PrivateMetrics.Placement
+	}{
+		{name: "backend client", client: client},
+		{name: "placement grant", placement: &PrivateMetrics.Placement{}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := New(context.Background(), Config{
+				DataDir: t.TempDir(), PrivateMetricsClient: test.client,
+				PrivateMetricsPlacement: test.placement,
+			})
+			if err == nil || !strings.Contains(err.Error(), "requires hosted background mode") {
+				t.Fatalf("desktop private metrics error = %v", err)
+			}
+		})
 	}
 }
