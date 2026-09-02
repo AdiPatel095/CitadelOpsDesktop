@@ -62,7 +62,20 @@ func (store *Store) playerTitleFromDisplayIDs(prefixID int64, suffixID int64, wa
 			continue
 		}
 		if found && resolved != candidate.id {
-			return 0, false
+			switch {
+			case store.playerTitleIncludes(candidate.id, resolved, wantedType):
+				// The game can display two titles from the same track at once,
+				// such as a threshold-based Glory prefix and a top-X Glory
+				// suffix. The descendant is the effective title for unlocks.
+				resolved = candidate.id
+			case store.playerTitleIncludes(resolved, candidate.id, wantedType):
+				// Keep the already resolved descendant.
+			default:
+				// Conflicting titles from unrelated chains are not safe to use
+				// for title-gated production.
+				return 0, false
+			}
+			continue
 		}
 		resolved = candidate.id
 		found = true
@@ -73,6 +86,10 @@ func (store *Store) playerTitleFromDisplayIDs(prefixID int64, suffixID int64, wa
 // GloryTitleIncludes reports whether currentTitleID is the required glory
 // title or one of its descendants in the official previousTitleID chain.
 func (store *Store) GloryTitleIncludes(currentTitleID int64, requiredTitleID int64) bool {
+	return store.playerTitleIncludes(currentTitleID, requiredTitleID, "FAME")
+}
+
+func (store *Store) playerTitleIncludes(currentTitleID int64, requiredTitleID int64, wantedType string) bool {
 	if store == nil || currentTitleID < 0 || requiredTitleID < 0 {
 		return false
 	}
@@ -96,7 +113,7 @@ func (store *Store) GloryTitleIncludes(currentTitleID int64, requiredTitleID int
 			return false
 		}
 		titleType, _ := record.String("type")
-		if !strings.EqualFold(strings.TrimSpace(titleType), "FAME") {
+		if !strings.EqualFold(strings.TrimSpace(titleType), strings.TrimSpace(wantedType)) {
 			return false
 		}
 		if current == requiredTitleID {

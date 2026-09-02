@@ -270,7 +270,7 @@ func eligibleAllianceHelpProductionID(queue State.ProductionQueue) int64 {
 		return 0
 	}
 	eligible := func(item State.QueueItem) bool {
-		return item.ProductionID > 0 && !item.AllianceHelpRequested && (queue.LineID != 0 || item.Amount >= 5)
+		return item.ProductionID > 0 && !item.AllianceHelpRequested
 	}
 	if queue.Active != nil && eligible(*queue.Active) {
 		return queue.Active.ProductionID

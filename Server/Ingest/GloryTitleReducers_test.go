@@ -104,3 +104,35 @@ func TestPlayerTitlesTrackCurrentOwnerAndConnectionIndependently(t *testing.T) {
 		t.Fatalf("partial owner overwrote confirmed glory-title state=%#v", gameState.Player)
 	}
 }
+
+func TestPlayerTitlesUseDescendantWhenGloryPrefixAndSuffixShareATrack(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"titles":[
+			{"titleID":"13","type":"FAME","displayType":"prefix"},
+			{"titleID":"29","previousTitleID":"13","type":"FAME","displayType":"suffix"},
+			{"titleID":"30","previousTitleID":"29","type":"FAME","displayType":"suffix"}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 9, 2, 4, 2, 3, 0, time.UTC)
+	code := 0
+	gameState := State.NewGameState()
+	gameState.Player.ID = 42
+	gameState.Session.ConnectionGeneration = 8
+	frame := Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"O":[{"OID":42,"PRE":13,"SUF":30,"TOPX":100,"CF":123456}]}`),
+	}
+
+	domains, changed, err := reducePlayerTitles(context.Background(), frame, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("reduce dual glory titles domains=%v changed=%t err=%v", domains, changed, err)
+	}
+	if gameState.Player.GloryTitleID != 30 || gameState.Player.GloryTitleGen != 8 ||
+		!gameState.Player.GloryTitleAt.Equal(now) {
+		t.Fatalf("current dual glory title state=%#v", gameState.Player)
+	}
+}

@@ -1,7 +1,7 @@
 {
   "name": "citadel-ops-client",
   "private": true,
-  "version": "2.3.4",
+  "version": "2.3.5",
   "type": "module",
   "scripts": {
     "dev": "tsc && vite --host 127.0.0.1 --port 41731 --strictPort",
