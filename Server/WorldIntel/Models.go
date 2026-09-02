@@ -109,26 +109,27 @@ type EventRankingObservation struct {
 }
 
 type EventScoreObservation struct {
-	WorldID      string    `json:"worldId"`
-	OccurrenceID string    `json:"occurrenceId"`
-	EventID      int64     `json:"eventId"`
-	EventKey     string    `json:"eventKey"`
-	EventName    string    `json:"eventName"`
-	ListType     int64     `json:"listType"`
-	LeagueID     int64     `json:"leagueId"`
-	BoardKey     string    `json:"boardKey,omitempty"`
-	PlayerID     int64     `json:"playerId"`
-	PlayerName   string    `json:"playerName"`
-	AllianceID   int64     `json:"allianceId,omitempty"`
-	AllianceName string    `json:"allianceName,omitempty"`
-	Rank         int64     `json:"rank"`
-	Score        int64     `json:"score,omitempty"`
-	ScoreKnown   bool      `json:"scoreKnown"`
-	ScoreUnit    string    `json:"scoreUnit"`
-	RunStartedOn string    `json:"runStartedOn"`
-	EventEndsAt  time.Time `json:"eventEndsAt"`
-	Source       string    `json:"source"`
-	ObservedAt   time.Time `json:"observedAt"`
+	WorldID       string    `json:"worldId"`
+	OccurrenceID  string    `json:"occurrenceId"`
+	EventID       int64     `json:"eventId"`
+	EventKey      string    `json:"eventKey"`
+	EventName     string    `json:"eventName"`
+	ListType      int64     `json:"listType"`
+	LeagueID      int64     `json:"leagueId"`
+	BoardKey      string    `json:"boardKey,omitempty"`
+	PlayerID      int64     `json:"playerId"`
+	PlayerName    string    `json:"playerName"`
+	AllianceID    int64     `json:"allianceId,omitempty"`
+	AllianceName  string    `json:"allianceName,omitempty"`
+	Rank          int64     `json:"rank"`
+	Score         int64     `json:"score,omitempty"`
+	ScoreKnown    bool      `json:"scoreKnown"`
+	Participating bool      `json:"participating,omitempty"`
+	ScoreUnit     string    `json:"scoreUnit"`
+	RunStartedOn  string    `json:"runStartedOn"`
+	EventEndsAt   time.Time `json:"eventEndsAt"`
+	Source        string    `json:"source"`
+	ObservedAt    time.Time `json:"observedAt"`
 }
 
 type ObservationBatch struct {
@@ -454,18 +455,31 @@ func ValidateBatch(batch ObservationBatch) error {
 			score.EventID <= 0 || !validEventKey(score.EventKey) || score.EventName == "" || len(score.EventName) > 120 ||
 			score.ListType <= 0 || score.LeagueID < -1 || len(score.BoardKey) > 40 || score.PlayerID <= 0 ||
 			score.PlayerName == "" || len(score.PlayerName) > 160 || score.AllianceID < 0 || len(score.AllianceName) > 160 ||
-			score.Rank <= 0 || score.Score < 0 || score.ScoreUnit == "" || len(score.ScoreUnit) > 32 ||
+			!validEventScoreRank(score) || !validEventScoreParticipation(score) ||
+			score.Score < 0 || score.ScoreUnit == "" || len(score.ScoreUnit) > 32 ||
 			(!score.ScoreKnown && score.Score != 0) ||
 			score.Source != "gge-highscore" || score.ObservedAt.IsZero() || score.EventEndsAt.IsZero() ||
 			dateErr != nil || startedOn.After(score.ObservedAt.UTC().Truncate(24*time.Hour)) ||
 			startedOn.Before(score.ObservedAt.UTC().AddDate(0, -3, 0).Truncate(24*time.Hour)) ||
-			score.EventEndsAt.Before(score.ObservedAt.Add(-10*time.Minute)) ||
+			score.EventEndsAt.Before(startedOn) ||
 			score.EventEndsAt.After(score.ObservedAt.Add(90*24*time.Hour+10*time.Minute)) ||
 			observationTooFarAhead(score.ObservedAt, batch.CapturedAt) {
 			return fmt.Errorf("eventScores[%d] is invalid", index)
 		}
 	}
 	return nil
+}
+
+func validEventScoreRank(score EventScoreObservation) bool {
+	return score.Rank > 0 || score.Rank == 0 && isStormEventScore(score)
+}
+
+func validEventScoreParticipation(score EventScoreObservation) bool {
+	return !score.Participating || isStormEventScore(score)
+}
+
+func isStormEventScore(score EventScoreObservation) bool {
+	return score.EventID == 102 && score.EventKey == "storm-islands"
 }
 
 func NormalizeEventEndsAt(value time.Time) time.Time {

@@ -20,7 +20,7 @@ func TestPlanAllianceHelpRequestUsesCapturedAHRPayload(t *testing.T) {
 		requestType int
 		stepCount   int
 	}{
-		{name: "recruitment", lineID: recruitmentProductionLineID, requestID: 0, requestType: allianceHelpRecruitmentType, stepCount: 4},
+		{name: "recruitment", lineID: recruitmentProductionLineID, requestID: 0, requestType: allianceHelpRecruitmentType, stepCount: 2},
 		{name: "hospital", lineID: hospitalProductionLineID, requestID: 2033307472, requestType: allianceHelpHospitalType, stepCount: 3},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -46,9 +46,6 @@ func TestPlanAllianceHelpRequestUsesCapturedAHRPayload(t *testing.T) {
 				t.Fatal(err)
 			}
 			resolverIndex := 1
-			if test.lineID == recruitmentProductionLineID {
-				resolverIndex = 2
-			}
 			if len(plan.Steps) != test.stepCount || plan.Steps[0].Command.Opcode != "jaa" ||
 				plan.Steps[resolverIndex].Resolver != "alliance.help.build" {
 				t.Fatalf("unexpected plan: %#v", plan)
@@ -59,19 +56,9 @@ func TestPlanAllianceHelpRequestUsesCapturedAHRPayload(t *testing.T) {
 			if test.lineID == hospitalProductionLineID && plan.Steps[2].Action != "alliance.help.mark_requested" {
 				t.Fatalf("hospital request lost its post-success marker: %#v", plan)
 			}
-			if test.lineID == recruitmentProductionLineID &&
-				(plan.Steps[1].Action != "alliance.help.prepare_recruitment_bup" ||
-					plan.Steps[3].Action != "alliance.help.reconcile_recruitment_bup") {
-				t.Fatalf("recruitment request lost its post-success reconciliation: %#v", plan)
-			}
 			protocolContext := State.ProtocolContextState{
 				SessionGeneration: 7, ConnectionGeneration: 3, FocusedCastleID: 77,
 				FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 4,
-			}
-			if test.lineID == recruitmentProductionLineID {
-				protocolContext.RecruitmentBUPCastleID = 77
-				protocolContext.RecruitmentBUPFocusEpoch = 4
-				protocolContext.RecruitmentAHRPending = true
 			}
 			resolved, err := (&Application{}).resolveAllianceHelpRequestStep(
 				t.Context(), Intent.PlanningContext{
@@ -136,10 +123,6 @@ func TestRecruitmentAllianceHelpResolverRequiresExactCommittedCastleContext(t *t
 		SessionGeneration: 7, ConnectionGeneration: 3, FocusedCastleID: 77,
 		FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 4,
 	}
-	marked := exact
-	marked.RecruitmentBUPCastleID = 77
-	marked.RecruitmentBUPFocusEpoch = 4
-	marked.RecruitmentAHRPending = true
 	for _, test := range []struct {
 		name     string
 		context  State.ProtocolContextState
@@ -151,8 +134,7 @@ func TestRecruitmentAllianceHelpResolverRequiresExactCommittedCastleContext(t *t
 		{name: "map subcontext", context: State.ProtocolContextState{SessionGeneration: 7, ConnectionGeneration: 3, FocusedCastleID: 77, FocusSubcontext: State.FocusSubcontextMap, FocusEpoch: 4}, playerID: 501},
 		{name: "old session", context: State.ProtocolContextState{SessionGeneration: 6, ConnectionGeneration: 3, FocusedCastleID: 77, FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 4}, playerID: 501},
 		{name: "old connection", context: State.ProtocolContextState{SessionGeneration: 7, ConnectionGeneration: 2, FocusedCastleID: 77, FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 4}, playerID: 501},
-		{name: "missing AHR marker", context: exact, playerID: 501},
-		{name: "missing player identity", context: marked, playerID: 0},
+		{name: "missing player identity", context: exact, playerID: 0},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			candidate := state
@@ -164,9 +146,14 @@ func TestRecruitmentAllianceHelpResolverRequiresExactCommittedCastleContext(t *t
 			}
 		})
 	}
+	if _, err := (&Application{}).resolveAllianceHelpRequestStep(
+		t.Context(), Intent.PlanningContext{State: state, ProtocolContext: exact}, arguments,
+	); err != nil {
+		t.Fatalf("exact castle context without a focus-epoch AHR marker was rejected: %v", err)
+	}
 }
 
-func TestRecruitmentBUPAllianceHelpRejectsDuplicateCurrentCastleRequest(t *testing.T) {
+func TestRecruitmentBUPAllianceHelpIgnoresRAHAndHistoricalFocusCoverage(t *testing.T) {
 	state := State.NewGameState()
 	state.Player.ID = 501
 	state.Session.Generation = 7
@@ -196,18 +183,11 @@ func TestRecruitmentBUPAllianceHelpRejectsDuplicateCurrentCastleRequest(t *testi
 		RecruitmentBUPSerial: 2,
 	}
 	input := Intent.PlanningContext{State: state, ProtocolContext: protocol}
-	if _, err := (&Application{}).resolveRecruitmentBUPAllianceHelpStep(
-		t.Context(), input, json.RawMessage(`{"castleId":77}`),
-	); !errors.Is(err, Intent.ErrPlanStale) {
-		t.Fatalf("current same-castle request did not suppress a duplicate AHR: %v", err)
-	}
-	input.State.AllianceHelpRequests.OwnRecruitmentRequests = []State.RecruitmentAllianceHelpRequest{}
-	input.State.AllianceHelpRequests.RecruitmentCastleIDs = []State.CastleID{}
 	step, err := (&Application{}).resolveRecruitmentBUPAllianceHelpStep(
 		t.Context(), input, json.RawMessage(`{"castleId":77}`),
 	)
 	if err != nil {
-		t.Fatalf("uncovered BUP without a current request did not produce AHR: %v", err)
+		t.Fatalf("existing RAH suppressed a newly committed BUP AHR: %v", err)
 	}
 	var payload struct {
 		RequestID int64 `json:"ID"`
@@ -223,24 +203,17 @@ func TestRecruitmentBUPAllianceHelpRejectsDuplicateCurrentCastleRequest(t *testi
 	}
 
 	input.ProtocolContext.RecruitmentAHRCoveredSerial = 2
-	if _, err := (&Application{}).resolveRecruitmentBUPAllianceHelpStep(
-		t.Context(), input, json.RawMessage(`{"castleId":77}`),
-	); !errors.Is(err, Intent.ErrPlanStale) {
-		t.Fatalf("covered BUP batch produced duplicate AHR: %v", err)
-	}
 	input.ProtocolContext.FocusEpoch = 10
-	input.ProtocolContext.RecruitmentAHRCoveredSerial = 0
-	if _, err := (&Application{}).resolveRecruitmentBUPAllianceHelpStep(
-		t.Context(), input, json.RawMessage(`{"castleId":77}`),
-	); !errors.Is(err, Intent.ErrPlanStale) {
-		t.Fatalf("old focus-epoch BUP produced AHR after refocus: %v", err)
-	}
-	input.ProtocolContext.RecruitmentBUPFocusEpoch = 10
-	input.ProtocolContext.RecruitmentBUPSerial = 1
 	if _, err := (&Application{}).resolveRecruitmentBUPAllianceHelpStep(
 		t.Context(), input, json.RawMessage(`{"castleId":77}`),
 	); err != nil {
-		t.Fatalf("fresh post-refocus BUP without a current request did not produce a new AHR: %v", err)
+		t.Fatalf("historical BUP focus epoch suppressed an AHR in the same current castle: %v", err)
+	}
+	input.ProtocolContext.FocusedCastleID = 88
+	if _, err := (&Application{}).resolveRecruitmentBUPAllianceHelpStep(
+		t.Context(), input, json.RawMessage(`{"castleId":77}`),
+	); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("BUP AHR escaped the current-castle identity guard: %v", err)
 	}
 }
 
@@ -472,29 +445,39 @@ func TestHospitalAllianceHelpWaitsForCurrentRequestList(t *testing.T) {
 	}
 }
 
-func TestRecruitmentAllianceHelpWaitsForCurrentRequestList(t *testing.T) {
+func TestRecruitmentAllianceHelpIgnoresPendingOwnRequestWhenQueueLacksRAH(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
 	state.Player.ID = 501
 	state.Session.Generation = 7
 	state.Session.ConnectionGeneration = 3
 	state.Session.ChangedAt = now.Add(-time.Minute)
+	state.AllianceHelpRequests = State.AllianceHelpRequestState{
+		RecruitmentCastleIDs:  []State.CastleID{77},
+		ObservedAt:            now,
+		OwnObservedGeneration: 7,
+		OwnRecruitmentRequests: []State.RecruitmentAllianceHelpRequest{
+			{ListID: 91, CastleID: 77, Progress: 1, MaximumHelpers: 3, ObservedAt: now},
+		},
+		OwnRecruitmentObservedGeneration: 7,
+	}
 	state.Castles[77] = State.CastleState{
 		ID: 77, Focused: true,
 		Production: map[int]State.ProductionQueue{
 			recruitmentProductionLineID: {
 				LineID: recruitmentProductionLineID, ObservedAt: now,
-				Active: &State.QueueItem{ProductionID: 205, AllianceHelpAvailable: true},
+				Active: &State.QueueItem{ProductionID: 205, AllianceHelpAvailable: true, AllianceHelpRequested: true},
+				Queued: []State.QueueItem{{ProductionID: 206, AllianceHelpAvailable: true}},
 			},
 		},
 	}
-	arguments := json.RawMessage(`{"productionId":205,"castleId":77,"lineId":0}`)
+	arguments := json.RawMessage(`{"productionId":206,"castleId":77,"lineId":0}`)
 	plan, err := planAllianceHelpRequest(t.Context(), Intent.PlanningContext{State: state}, arguments)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 0 || !strings.Contains(plan.Summary, "waiting for the current recruitment request list") {
-		t.Fatalf("unobserved recruitment help plan = %#v", plan)
+	if len(plan.Steps) != 2 || plan.Steps[1].Resolver != "alliance.help.build" {
+		t.Fatalf("pending own request suppressed queue-without-RAH retry: %#v", plan)
 	}
 	protocolContext := State.ProtocolContextState{
 		SessionGeneration: 7, ConnectionGeneration: 3, FocusedCastleID: 77,
@@ -502,8 +485,8 @@ func TestRecruitmentAllianceHelpWaitsForCurrentRequestList(t *testing.T) {
 	}
 	if _, err := (&Application{}).resolveAllianceHelpRequestStep(
 		t.Context(), Intent.PlanningContext{State: state, ProtocolContext: protocolContext}, arguments,
-	); !errors.Is(err, Intent.ErrPlanStale) {
-		t.Fatalf("unobserved recruitment request list did not stale the resolver: %v", err)
+	); err != nil {
+		t.Fatalf("pending own request suppressed queue-without-RAH resolver: %v", err)
 	}
 }
 
@@ -533,24 +516,26 @@ func TestAllianceHelpGuardReplansAtAuthoritativeHospitalLimit(t *testing.T) {
 	}
 }
 
-func TestAllianceHelpGuardSkipsAuthoritativeRecruitmentRequestForCastle(t *testing.T) {
+func TestAllianceHelpGuardSkipsRecruitmentSlotWithRAH(t *testing.T) {
+	now := time.Now().UTC()
 	state := State.NewGameState()
 	state.Session.Generation = 7
+	state.Session.ChangedAt = now.Add(-time.Minute)
 	state.Castles[77] = State.CastleState{
 		ID: 77,
 		Production: map[int]State.ProductionQueue{
 			recruitmentProductionLineID: {
-				LineID: recruitmentProductionLineID,
-				Active: &State.QueueItem{ProductionID: 205},
+				LineID: recruitmentProductionLineID, ObservedAt: now,
+				Active: &State.QueueItem{ProductionID: 205, AllianceHelpRequested: true},
 			},
 		},
 	}
 	state.AllianceHelpRequests = State.AllianceHelpRequestState{
 		RecruitmentCastleIDs:  []State.CastleID{77},
-		ObservedAt:            time.Now().UTC(),
+		ObservedAt:            now,
 		OwnObservedGeneration: 7,
 		OwnRecruitmentRequests: []State.RecruitmentAllianceHelpRequest{
-			{ListID: 91, CastleID: 77, Progress: 1, MaximumHelpers: 3, ObservedAt: time.Now().UTC()},
+			{ListID: 91, CastleID: 77, Progress: 1, MaximumHelpers: 3, ObservedAt: now},
 		},
 		OwnRecruitmentObservedGeneration: 7,
 	}
@@ -561,29 +546,31 @@ func TestAllianceHelpGuardSkipsAuthoritativeRecruitmentRequestForCastle(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 0 || !strings.Contains(plan.Summary, "already has a current request") {
+	if len(plan.Steps) != 0 || !strings.Contains(plan.Summary, "no longer eligible") {
 		t.Fatalf("recruitment help duplicate guard plan = %#v", plan)
 	}
 }
 
-func TestAllianceHelpResolverRejectsNewRecruitQueueWhileCastleRequestIsOutstanding(t *testing.T) {
+func TestAllianceHelpResolverRejectsRecruitmentSlotWithRAH(t *testing.T) {
+	now := time.Now().UTC()
 	state := State.NewGameState()
 	state.Session.Generation = 7
+	state.Session.ChangedAt = now.Add(-time.Minute)
 	state.Castles[77] = State.CastleState{
 		ID: 77,
 		Production: map[int]State.ProductionQueue{
 			recruitmentProductionLineID: {
-				LineID: recruitmentProductionLineID,
-				Active: &State.QueueItem{ProductionID: 205},
+				LineID: recruitmentProductionLineID, ObservedAt: now,
+				Active: &State.QueueItem{ProductionID: 205, AllianceHelpRequested: true},
 			},
 		},
 	}
 	state.AllianceHelpRequests = State.AllianceHelpRequestState{
 		RecruitmentCastleIDs:  []State.CastleID{77},
-		ObservedAt:            time.Now().UTC(),
+		ObservedAt:            now,
 		OwnObservedGeneration: 7,
 		OwnRecruitmentRequests: []State.RecruitmentAllianceHelpRequest{
-			{ListID: 91, CastleID: 77, Progress: 1, MaximumHelpers: 3, ObservedAt: time.Now().UTC()},
+			{ListID: 91, CastleID: 77, Progress: 1, MaximumHelpers: 3, ObservedAt: now},
 		},
 		OwnRecruitmentObservedGeneration: 7,
 	}

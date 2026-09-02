@@ -115,7 +115,6 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	gloryTitleUnknown := 0
 	gloryTitlePaused := 0
 	focusUnavailable := 0
-	helpListPending := false
 	var nextCastleSchedule time.Time
 	for _, binding := range policy.orderedCastleBindings(settings.Castles, snapshot) {
 		castleKey := binding.ConfigurationKey
@@ -211,13 +210,6 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		if queueCapacity <= 0 || occupied >= queueCapacity {
 			full++
 			if policy.lineID == 0 && occupied >= queueCapacity {
-				if !State.OwnAllianceHelpListCurrent(snapshot.State) {
-					helpListPending = true
-					continue
-				}
-				if State.HasOutstandingRecruitmentAllianceHelpRequest(snapshot.State, castleID) {
-					continue
-				}
 				if productionID := eligibleAllianceHelpProductionID(queue); productionID > 0 {
 					arguments, _ := json.Marshal(map[string]any{"productionId": productionID})
 					policy.lastCastleID = castleID
@@ -354,9 +346,6 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		detail = fmt.Sprintf("The active schedule slot has no valid %s", policy.definitionKey)
 	} else if configured > 0 && observed == 0 {
 		detail = "Waiting for production queues to be observed in the game session"
-	} else if helpListPending {
-		status = "waiting"
-		detail = "Waiting for the current recruitment alliance-help request list"
 	} else if configured > 0 && observed == full {
 		detail = "All observed production queues are full"
 	} else if focusUnavailable > 0 && configured == 0 {

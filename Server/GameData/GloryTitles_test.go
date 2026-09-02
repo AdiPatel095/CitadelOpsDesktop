@@ -9,6 +9,13 @@ func TestGloryTitleCatalogResolvesDisplayTitleAndUnitUnlocks(t *testing.T) {
 	if !found || titleID != 31 {
 		t.Fatalf("glory title = %d, %t; want 31, true", titleID, found)
 	}
+	titleID, found = store.GloryTitleFromDisplayIDs(13, 30)
+	if !found || titleID != 30 {
+		t.Fatalf("dual glory display title = %d, %t; want descendant 30, true", titleID, found)
+	}
+	if titleID, found = store.GloryTitleFromDisplayIDs(40, 30); found {
+		t.Fatalf("unrelated glory display titles resolved as %d", titleID)
+	}
 	gallantryTitleID, found := store.GallantryTitleFromDisplayIDs(116, 31)
 	if !found || gallantryTitleID != 116 {
 		t.Fatalf("gallantry title = %d, %t; want 116, true", gallantryTitleID, found)
@@ -41,7 +48,9 @@ func gloryTitleTestStore(t *testing.T) *Store {
 			{"wodID":493,"type":"MeadBow","level":"11"}
 		],
 		"titles":[
-			{"titleID":"29","type":"FAME","displayType":"suffix"},
+			{"titleID":"13","type":"FAME","displayType":"prefix"},
+			{"titleID":"40","type":"FAME","displayType":"prefix"},
+			{"titleID":"29","previousTitleID":"13","type":"FAME","displayType":"suffix"},
 			{"titleID":"30","previousTitleID":"29","type":"FAME","displayType":"suffix","effects":"46&489"},
 			{"titleID":"31","previousTitleID":"30","type":"FAME","displayType":"suffix","effects":"46&493"},
 			{"titleID":"32","previousTitleID":"31","type":"FAME","displayType":"suffix"},

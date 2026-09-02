@@ -190,9 +190,9 @@ const PlayerTrackerView = () => {
   );
   const troopMetricDefinition = metricDefinitions.find((definition) => definition.key === 'troopsTotal')!;
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('might');
-  const [selectedRange, setSelectedRange] = useState<RangeKey>('7d');
+  const [selectedRange, setSelectedRange] = useState<RangeKey>('30d');
   const [customWindow, setCustomWindow] = useState<ChartTimeWindow | null>(null);
-  const [troopRange, setTroopRange] = useState<RangeKey>('7d');
+  const [troopRange, setTroopRange] = useState<RangeKey>('30d');
   const [troopWindow, setTroopWindow] = useState<ChartTimeWindow | null>(null);
   const [troopTypeFilter, setTroopTypeFilter] = useState<TypeFilter>('all');
   const [troopRoleFilter, setTroopRoleFilter] = useState<RoleFilter>('all');

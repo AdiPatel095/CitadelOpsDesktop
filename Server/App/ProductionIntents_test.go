@@ -73,7 +73,7 @@ func TestPlanProductionEnqueueUsesDefaultSessionKeyBeforeObservation(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 6 {
+	if len(plan.Steps) != 4 {
 		t.Fatalf("production enqueue steps = %d, want focus, guarded BUP, and causal AHR", len(plan.Steps))
 	}
 	var guard productionQueueCapacityGuard
@@ -96,9 +96,7 @@ func TestPlanProductionEnqueueUsesDefaultSessionKeyBeforeObservation(t *testing.
 	if payload.KingdomID != 4 {
 		t.Fatalf("production kingdom id = %d, want 4", payload.KingdomID)
 	}
-	if plan.Steps[3].Action != "production.enqueue.mark_help_due" ||
-		plan.Steps[4].Resolver != "production.enqueue.alliance_help.build" ||
-		plan.Steps[5].Action != "production.enqueue.mark_help_covered" ||
+	if plan.Steps[3].Resolver != "production.enqueue.alliance_help.build" ||
 		!containsString(plan.Claims, "alliance-help") {
 		t.Fatalf("recruitment BUP plan lacks one causal AHR tail: steps=%#v claims=%#v", plan.Steps, plan.Claims)
 	}
@@ -160,8 +158,8 @@ func TestPlanProductionEnqueueDoesNotCountActiveStackAgainstQueueSlots(t *testin
 	if err != nil {
 		t.Fatalf("plan production enqueue: %v", err)
 	}
-	if len(plan.Steps) != 6 || plan.Steps[2].Opcode != "bup" ||
-		plan.Steps[4].Resolver != "production.enqueue.alliance_help.build" {
+	if len(plan.Steps) != 4 || plan.Steps[2].Opcode != "bup" ||
+		plan.Steps[3].Resolver != "production.enqueue.alliance_help.build" {
 		t.Fatalf("production enqueue steps = %#v, want focus, guarded BUP, and causal AHR", plan.Steps)
 	}
 }
@@ -213,17 +211,14 @@ func TestPlanProductionEnqueueFillsEveryAvailableQueueSlotWithOneFocus(t *testin
 	if err != nil {
 		t.Fatalf("plan production fill: %v", err)
 	}
-	if len(plan.Steps) != 18 {
+	if len(plan.Steps) != 12 {
 		t.Fatalf("production fill steps = %d, want focus, five guarded BUPs, and one AHR", len(plan.Steps))
 	}
 	if plan.Steps[0].Opcode != "jaa" {
 		t.Fatalf("first production fill opcode = %q, want jaa", plan.Steps[0].Opcode)
 	}
 	for stack := 0; stack < 5; stack++ {
-		stepOffset := 1
-		if stack > 0 {
-			stepOffset = 6 + (stack-1)*3
-		}
+		stepOffset := 1 + stack*2
 		guardStep := plan.Steps[stepOffset]
 		if guardStep.Action != "production.enqueue.verify_capacity" || guardStep.ResumePolicy != Intent.ResumeRebuild {
 			t.Fatalf("production capacity guard %d = %#v", stack+1, guardStep)
@@ -240,14 +235,9 @@ func TestPlanProductionEnqueueFillsEveryAvailableQueueSlotWithOneFocus(t *testin
 			commandStep.ResponseBarrier != Intent.ResponseBarrierCommitted {
 			t.Fatalf("production fill command %d = %#v, want awaited bup", stack+1, commandStep)
 		}
-		if marker := plan.Steps[stepOffset+2]; marker.Action != "production.enqueue.mark_help_due" {
-			t.Fatalf("production fill marker %d = %#v", stack+1, marker)
-		}
 	}
-	if plan.Steps[4].Resolver != "production.enqueue.alliance_help.build" ||
-		plan.Steps[5].Action != "production.enqueue.mark_help_covered" ||
-		plan.Steps[7].Opcode != "bup" {
-		t.Fatalf("first BUP was not covered before later fallible BUPs: %#v", plan.Steps)
+	if plan.Steps[len(plan.Steps)-1].Resolver != "production.enqueue.alliance_help.build" {
+		t.Fatalf("recruitment AHR was not emitted once after the final BUP: %#v", plan.Steps)
 	}
 }
 
@@ -271,13 +261,13 @@ func TestPlanProductionEnqueueFillOnlyUsesFreeQueueSlots(t *testing.T) {
 	if err != nil {
 		t.Fatalf("plan production fill: %v", err)
 	}
-	if len(plan.Steps) != 6 || plan.Steps[2].Opcode != "bup" ||
-		plan.Steps[4].Resolver != "production.enqueue.alliance_help.build" {
+	if len(plan.Steps) != 4 || plan.Steps[2].Opcode != "bup" ||
+		plan.Steps[3].Resolver != "production.enqueue.alliance_help.build" {
 		t.Fatalf("production fill steps = %#v, want focus, one guarded BUP, and one AHR", plan.Steps)
 	}
 }
 
-func TestPlanRecruitmentBUPReusesAHROnlyDuringCurrentHelpLifecycle(t *testing.T) {
+func TestPlanRecruitmentBUPAlwaysRequestsAllianceHelpAfterBatch(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[{"wodID":489}],"constructionItems":[]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
@@ -308,7 +298,7 @@ func TestPlanRecruitmentBUPReusesAHROnlyDuringCurrentHelpLifecycle(t *testing.T)
 		State: gameState, GameData: gameData,
 		ProtocolContext: State.ProtocolContextState{
 			SessionGeneration: 7, ConnectionGeneration: 3,
-			FocusedCastleID: 77, FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 9,
+			FocusedCastleID: 77, FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 11,
 			RecruitmentBUPCastleID: 77, RecruitmentBUPFocusEpoch: 9,
 			RecruitmentBUPSerial: 2, RecruitmentAHRCoveredSerial: 2,
 			RecruitmentAHRFocusCovered: true,
@@ -321,324 +311,29 @@ func TestPlanRecruitmentBUPReusesAHROnlyDuringCurrentHelpLifecycle(t *testing.T)
 		t.Fatal(err)
 	}
 	if len(plan.Steps) != 3 || plan.Steps[0].Action != "production.enqueue.verify_capacity" ||
-		plan.Steps[1].Opcode != "bup" || plan.Steps[2].Action != "production.enqueue.mark_help_due" {
-		t.Fatalf("same-epoch recruitment BUP steps=%#v, want guard, BUP, and coverage marker", plan.Steps)
+		plan.Steps[1].Opcode != "bup" ||
+		plan.Steps[2].Resolver != "production.enqueue.alliance_help.build" {
+		t.Fatalf("recruitment BUP steps=%#v, want guard, BUP, then one AHR", plan.Steps)
 	}
 	if !containsString(plan.Claims, "alliance-help") {
-		t.Fatalf("same-epoch recruitment BUP claims=%#v, want alliance-help serialization", plan.Claims)
+		t.Fatalf("recruitment BUP claims=%#v, want alliance-help serialization", plan.Claims)
 	}
-	for _, step := range plan.Steps {
-		if step.Resolver == "production.enqueue.alliance_help.build" ||
-			step.Action == "production.enqueue.mark_help_covered" {
-			t.Fatalf("separate same-epoch BUP queued a second AHR: %#v", plan.Steps)
-		}
-	}
-
-	completed := gameState.AllianceHelpRequests
-	completed.OwnRecruitmentRequests = []State.RecruitmentAllianceHelpRequest{
-		{
-			ListID: 91, CastleID: 77, Progress: 3, MaximumHelpers: 3,
-			ObservedAt: now.Add(-time.Minute), CompletedAt: now.Add(-time.Minute), RemovedAt: now.Add(-time.Minute),
-		},
-	}
-	input.State.AllianceHelpRequests = completed
-	plan, err = planProductionEnqueue(t.Context(), input, arguments)
+	step, err := (&Application{}).resolveRecruitmentBUPAllianceHelpStep(
+		t.Context(), input, plan.Steps[2].ResolverArguments,
+	)
 	if err != nil {
+		t.Fatalf("pending lifecycle or prior focus epoch suppressed BUP AHR: %v", err)
+	}
+	var payload struct {
+		RequestID int64 `json:"ID"`
+		Type      int   `json:"T"`
+	}
+	if err := json.Unmarshal(step.Command.Payload, &payload); err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 3 {
-		t.Fatalf("P=3/AHD completion grace steps=%#v, want no duplicate AHR", plan.Steps)
-	}
-
-	completed.OwnRecruitmentRequests[0].CompletedAt = now.Add(-State.RecruitmentAllianceHelpCompletionGrace + 5*time.Second)
-	input.State.AllianceHelpRequests = completed
-	plan, err = planProductionEnqueue(t.Context(), input, arguments)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(plan.Steps) != 5 || plan.Steps[3].Resolver != "production.enqueue.alliance_help.build" {
-		t.Fatalf("unsafe remaining completion grace steps=%#v, want a fresh AHR", plan.Steps)
-	}
-
-	input.State.AllianceHelpRequests = gameState.AllianceHelpRequests
-	input.ProtocolContext = State.ProtocolContextState{
-		SessionGeneration: 7, ConnectionGeneration: 3,
-		FocusedCastleID: 77, FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 11,
-	}
-	plan, err = planProductionEnqueue(t.Context(), input, arguments)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertRecruitmentBUPPlanHasNoAHR(t, plan)
-
-	input.ProtocolContext = State.ProtocolContextState{
-		SessionGeneration: 7, ConnectionGeneration: 3,
-		FocusedCastleID: 77, FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 9,
-		RecruitmentBUPCastleID: 77, RecruitmentBUPFocusEpoch: 9,
-		RecruitmentBUPSerial: 3, RecruitmentAHRCoveredSerial: 2,
-	}
-	plan, err = planProductionEnqueue(t.Context(), input, arguments)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertRecruitmentBUPPlanHasNoAHR(t, plan)
-
-	input.State.AllianceHelpRequests.OwnRecruitmentRequests = []State.RecruitmentAllianceHelpRequest{}
-	input.State.AllianceHelpRequests.RecruitmentCastleIDs = []State.CastleID{}
-	plan, err = planProductionEnqueue(t.Context(), input, arguments)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(plan.Steps) != 5 || plan.Steps[0].Resolver != "production.enqueue.alliance_help.build" ||
-		plan.Steps[1].Action != "production.enqueue.mark_help_covered" || plan.Steps[3].Opcode != "bup" {
-		t.Fatalf("uncovered prior BUP without a live request was not serviced before another enqueue: %#v", plan.Steps)
-	}
-}
-
-func TestStandaloneRecruitmentAHRLinksCurrentFocusBeforeFirstBUP(t *testing.T) {
-	store, gameData, now := standaloneRecruitmentCoverageFixture(t)
-	view := store.PlanningView()
-	standalone, err := planAllianceHelpRequest(t.Context(), Intent.PlanningContext{
-		State: view.State, ProtocolContext: view.ProtocolContext,
-	}, json.RawMessage(`{"productionId":205}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(standalone.Steps) != 4 || standalone.Steps[1].Action != "alliance.help.prepare_recruitment_bup" ||
-		standalone.Steps[2].Resolver != "alliance.help.build" ||
-		standalone.Steps[3].Action != "alliance.help.reconcile_recruitment_bup" {
-		t.Fatalf("standalone recruitment AHR steps=%#v", standalone.Steps)
-	}
-	application := &Application{State: store}
-	if err := application.prepareStandaloneRecruitmentBUPAllianceHelp(
-		t.Context(), standalone.Steps[1].ActionArguments,
-	); err != nil {
-		t.Fatal(err)
-	}
-	commitStandaloneRecruitmentLifecycle(t, store, now)
-	if err := application.reconcileStandaloneRecruitmentBUPAllianceHelp(
-		t.Context(), standalone.Steps[3].ActionArguments,
-	); err != nil {
-		t.Fatal(err)
-	}
-	protocol := store.ProtocolContext()
-	if protocol.RecruitmentBUPSerial != 0 || protocol.RecruitmentAHRCoveredSerial != 0 ||
-		!protocol.RecruitmentAHRFocusCovered || protocol.RecruitmentAHRPending {
-		t.Fatalf("standalone AHR did not link zero-serial focus coverage: %#v", protocol)
-	}
-
-	view = store.PlanningView()
-	plan, err := planProductionEnqueue(t.Context(), Intent.PlanningContext{
-		State: view.State, ProtocolContext: view.ProtocolContext, GameData: gameData,
-	}, json.RawMessage(`{"castleId":77,"lineId":0,"definitionId":489,"amount":110}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertRecruitmentBUPPlanHasNoAHR(t, plan)
-
-	store.ObserveProtocolFocus(State.FocusSubcontextMap, now.Add(time.Second))
-	store.ObserveProtocolFocus(State.FocusSubcontextCastle, now.Add(2*time.Second))
-	view = store.PlanningView()
-	oldLifecycle, err := planAllianceHelpRequest(t.Context(), Intent.PlanningContext{
-		State: view.State, ProtocolContext: view.ProtocolContext,
-	}, json.RawMessage(`{"productionId":205}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(oldLifecycle.Steps) != 0 {
-		t.Fatalf("old post-refocus lifecycle produced an uncorrelated marker: %#v", oldLifecycle.Steps)
-	}
-	plan, err = planProductionEnqueue(t.Context(), Intent.PlanningContext{
-		State: view.State, ProtocolContext: view.ProtocolContext, GameData: gameData,
-	}, json.RawMessage(`{"castleId":77,"lineId":0,"definitionId":489,"amount":110}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertRecruitmentBUPPlanHasNoAHR(t, plan)
-	for _, step := range plan.Steps {
-		if step.Action == "alliance.help.reconcile_recruitment_bup" {
-			t.Fatalf("post-refocus BUP reused a focus-bound standalone marker: %#v", plan.Steps)
-		}
-	}
-}
-
-func TestStandaloneRecruitmentAHRReconcilesUncoveredBUP(t *testing.T) {
-	store, gameData, now := standaloneRecruitmentCoverageFixture(t)
-	protocol := store.ProtocolContext()
-	if !store.ObserveRecruitmentBUP(77, 7, 3, protocol.FocusEpoch) {
-		t.Fatal("uncovered BUP was not recorded")
-	}
-	view := store.PlanningView()
-	standalone, err := planAllianceHelpRequest(t.Context(), Intent.PlanningContext{
-		State: view.State, ProtocolContext: view.ProtocolContext,
-	}, json.RawMessage(`{"productionId":205}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(standalone.Steps) != 4 || standalone.Steps[1].Action != "alliance.help.prepare_recruitment_bup" ||
-		standalone.Steps[2].Resolver != "alliance.help.build" ||
-		standalone.Steps[3].Action != "alliance.help.reconcile_recruitment_bup" {
-		t.Fatalf("standalone AHR steps=%#v", standalone.Steps)
-	}
-	application := &Application{State: store}
-	if err := application.prepareStandaloneRecruitmentBUPAllianceHelp(
-		t.Context(), standalone.Steps[1].ActionArguments,
-	); err != nil {
-		t.Fatal(err)
-	}
-	commitStandaloneRecruitmentLifecycle(t, store, now)
-	if err := application.reconcileStandaloneRecruitmentBUPAllianceHelp(
-		t.Context(), standalone.Steps[3].ActionArguments,
-	); err != nil {
-		t.Fatal(err)
-	}
-	protocol = store.ProtocolContext()
-	if protocol.RecruitmentBUPSerial != 1 || protocol.RecruitmentAHRCoveredSerial != 1 ||
-		!protocol.RecruitmentAHRFocusCovered || protocol.RecruitmentAHRPending {
-		t.Fatalf("standalone AHR did not reconcile uncovered BUP: %#v", protocol)
-	}
-
-	view = store.PlanningView()
-	plan, err := planProductionEnqueue(t.Context(), Intent.PlanningContext{
-		State: view.State, ProtocolContext: view.ProtocolContext, GameData: gameData,
-	}, json.RawMessage(`{"castleId":77,"lineId":0,"definitionId":489,"amount":110}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertRecruitmentBUPPlanHasNoAHR(t, plan)
-}
-
-func TestStandaloneRecruitmentAHRReconcileRejectsFocusRaceWithoutDuplicatingLifecycle(t *testing.T) {
-	store, gameData, now := standaloneRecruitmentCoverageFixture(t)
-	view := store.PlanningView()
-	standalone, err := planAllianceHelpRequest(t.Context(), Intent.PlanningContext{
-		State: view.State, ProtocolContext: view.ProtocolContext,
-	}, json.RawMessage(`{"productionId":205}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(standalone.Steps) != 4 {
-		t.Fatalf("standalone AHR steps=%#v", standalone.Steps)
-	}
-	application := &Application{State: store}
-	if err := application.prepareStandaloneRecruitmentBUPAllianceHelp(
-		t.Context(), standalone.Steps[1].ActionArguments,
-	); err != nil {
-		t.Fatal(err)
-	}
-	commitStandaloneRecruitmentLifecycle(t, store, now)
-	store.ObserveProtocolFocus(State.FocusSubcontextMap, now.Add(time.Second))
-	store.ObserveProtocolFocus(State.FocusSubcontextCastle, now.Add(2*time.Second))
-	if err := application.reconcileStandaloneRecruitmentBUPAllianceHelp(
-		t.Context(), standalone.Steps[3].ActionArguments,
-	); !errors.Is(err, Intent.ErrPlanStale) {
-		t.Fatalf("post-focus-race reconciliation error=%v, want stale", err)
-	}
-	protocol := store.ProtocolContext()
-	if protocol.RecruitmentAHRPending || protocol.RecruitmentAHRFocusCovered ||
-		protocol.RecruitmentBUPSerial != 0 || protocol.RecruitmentAHRCoveredSerial != 0 {
-		t.Fatalf("focus race retained standalone AHR binding: %#v", protocol)
-	}
-
-	view = store.PlanningView()
-	plan, err := planProductionEnqueue(t.Context(), Intent.PlanningContext{
-		State: view.State, ProtocolContext: view.ProtocolContext, GameData: gameData,
-	}, json.RawMessage(`{"castleId":77,"lineId":0,"definitionId":489,"amount":110}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertRecruitmentBUPPlanHasNoAHR(t, plan)
-}
-
-func TestStandaloneRecruitmentAHRResolverRejectsFocusRaceAfterPrepare(t *testing.T) {
-	store, _, now := standaloneRecruitmentCoverageFixture(t)
-	view := store.PlanningView()
-	standalone, err := planAllianceHelpRequest(t.Context(), Intent.PlanningContext{
-		State: view.State, ProtocolContext: view.ProtocolContext,
-	}, json.RawMessage(`{"productionId":205}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(standalone.Steps) != 4 {
-		t.Fatalf("standalone AHR steps=%#v", standalone.Steps)
-	}
-	application := &Application{State: store}
-	if err := application.prepareStandaloneRecruitmentBUPAllianceHelp(
-		t.Context(), standalone.Steps[1].ActionArguments,
-	); err != nil {
-		t.Fatal(err)
-	}
-	store.ObserveProtocolFocus(State.FocusSubcontextMap, now.Add(time.Second))
-	store.ObserveProtocolFocus(State.FocusSubcontextCastle, now.Add(2*time.Second))
-	view = store.PlanningView()
-	if _, err := application.resolveAllianceHelpRequestStep(
-		t.Context(), Intent.PlanningContext{State: view.State, ProtocolContext: view.ProtocolContext},
-		standalone.Steps[2].ResolverArguments,
-	); !errors.Is(err, Intent.ErrPlanStale) {
-		t.Fatalf("post-prepare focus race resolver error=%v, want stale and no command", err)
-	}
-	protocol := store.ProtocolContext()
-	if protocol.RecruitmentAHRPending || protocol.RecruitmentAHRFocusCovered {
-		t.Fatalf("post-prepare focus race retained AHR binding: %#v", protocol)
-	}
-}
-
-func standaloneRecruitmentCoverageFixture(t *testing.T) (*State.Store, *GameData.Store, time.Time) {
-	t.Helper()
-	gameData, err := GameData.DecodeStore([]byte(`{
-		"versionInfo":[],"buildings":[],"units":[{"wodID":489}],"constructionItems":[]
-	}`), GameData.SourceMetadata{ItemVersion: "test"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	now := time.Now().UTC()
-	state := State.NewGameState()
-	state.Player.ID = 501
-	state.Session.Generation = 7
-	state.Session.ConnectionGeneration = 3
-	state.Session.ChangedAt = now.Add(-time.Minute)
-	state.AllianceHelpRequests = State.AllianceHelpRequestState{
-		ObservedAt: now, OwnObservedGeneration: 7,
-		OwnRecruitmentRequests:           []State.RecruitmentAllianceHelpRequest{},
-		OwnRecruitmentObservedGeneration: 7,
-	}
-	state.Castles[77] = State.CastleState{
-		ID: 77, KingdomID: 1, Focused: true, ContextSnapshotObservedAt: now,
-		Production: map[int]State.ProductionQueue{
-			0: {
-				LineID: 0, Capacity: 5, ObservedAt: now,
-				Active: &State.QueueItem{ProductionID: 205, AllianceHelpAvailable: true},
-			},
-		},
-	}
-	return State.NewStore(state), gameData, now
-}
-
-func commitStandaloneRecruitmentLifecycle(t *testing.T, store *State.Store, observedAt time.Time) {
-	t.Helper()
-	if _, err := store.Apply(func(state *State.GameState) ([]string, bool, error) {
-		state.AllianceHelpRequests.RecruitmentCastleIDs = []State.CastleID{77}
-		state.AllianceHelpRequests.OwnRecruitmentRequests = []State.RecruitmentAllianceHelpRequest{
-			{ListID: 91, CastleID: 77, Progress: 0, MaximumHelpers: 3, ObservedAt: observedAt},
-		}
-		state.AllianceHelpRequests.OwnRecruitmentObservedGeneration = state.Session.Generation
-		return []string{"alliance-help"}, true, nil
-	}); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func assertRecruitmentBUPPlanHasNoAHR(t *testing.T, plan Intent.Plan) {
-	t.Helper()
-	if len(plan.Steps) != 3 || plan.Steps[1].Opcode != "bup" ||
-		plan.Steps[2].Action != "production.enqueue.mark_help_due" {
-		t.Fatalf("same-focus BUP steps=%#v, want guard, BUP, and covered marker", plan.Steps)
-	}
-	for _, step := range plan.Steps {
-		if step.Resolver == "production.enqueue.alliance_help.build" ||
-			step.Action == "production.enqueue.mark_help_covered" {
-			t.Fatalf("same-focus BUP emitted duplicate AHR: %#v", plan.Steps)
-		}
+	if payload.RequestID != 0 || payload.Type != allianceHelpRecruitmentType ||
+		step.ResponseIdentity.PlayerID != 501 || step.ResponseIdentity.CastleID != 77 {
+		t.Fatalf("BUP AHR step=%#v payload=%#v", step, payload)
 	}
 }
 
@@ -748,8 +443,8 @@ func TestPlanProductionEnqueueCarriesScheduledSelectionIntoCapacityGuard(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 6 || plan.Steps[1].Action != "production.enqueue.verify_capacity" ||
-		plan.Steps[4].Resolver != "production.enqueue.alliance_help.build" {
+	if len(plan.Steps) != 4 || plan.Steps[1].Action != "production.enqueue.verify_capacity" ||
+		plan.Steps[3].Resolver != "production.enqueue.alliance_help.build" {
 		t.Fatalf("scheduled production steps=%#v", plan.Steps)
 	}
 	var guard productionQueueCapacityGuard
@@ -936,14 +631,11 @@ func TestPlanProductionEnqueueDerivesGloryTitleGuardForDirectLevel11Request(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 9 {
+	if len(plan.Steps) != 6 {
 		t.Fatalf("title-gated production steps=%#v", plan.Steps)
 	}
 	for stack := 0; stack < 2; stack++ {
-		stepOffset := 1
-		if stack > 0 {
-			stepOffset = 6
-		}
+		stepOffset := 1 + stack*2
 		guardStep := plan.Steps[stepOffset]
 		commandStep := plan.Steps[stepOffset+1]
 		if guardStep.Action != "production.enqueue.verify_capacity" || commandStep.Opcode != "bup" {

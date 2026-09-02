@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
@@ -110,4 +111,20 @@ test('feature summaries keep every positive resource across rendered views', () 
   });
   assert.equal(history.attackEconomyResourceFallbackLabel('EVENT_REWARD'), 'Event Reward');
   assert.equal(history.attackEconomyResourceFallbackLabel('IAP'), 'IAP');
+});
+
+test('desktop stat views open retained history locally and expose every stored report category', () => {
+  const economyView = readFileSync(new URL('../src/attackAnalytics/components/AttackEconomyView.tsx', import.meta.url), 'utf8');
+  const eventsView = readFileSync(new URL('../src/views/EventsView.tsx', import.meta.url), 'utf8');
+  const playerTracker = readFileSync(new URL('../src/playerTracker/components/PlayerTrackerView.tsx', import.meta.url), 'utf8');
+  assert.match(economyView, /useState<RangeKey>\('30d'\)/);
+  assert.match(economyView, /autoNomad: 'nomad'/);
+  assert.match(economyView, /autoAdvisor: 'advisor'/);
+  assert.match(economyView, /autoKhan: 'khan'/);
+  assert.match(economyView, /riftMaiden: 'rift'/);
+  assert.match(economyView, /riftReplay: 'rift-replay'/);
+  assert.match(economyView, /fetchAttackEconomyAggregates\(runtimeFetch,/);
+  assert.match(eventsView, /attackEconomyFeatureDefinitions\.map/);
+  assert.equal((playerTracker.match(/useState<RangeKey>\('30d'\)/g) ?? []).length, 2);
+  assert.match(playerTracker, /runtimeFetch\(`\/api\/v2\/history\/player-tracker/);
 });

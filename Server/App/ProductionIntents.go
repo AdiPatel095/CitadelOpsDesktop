@@ -146,20 +146,11 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 	}
 	steps := castleContextSteps(input, castle)
 	recruitment := request.LineID == recruitmentProductionLineID
-	reuseRecruitmentAllianceHelp := recruitment && State.RecruitmentAllianceHelpCovers(
-		input.State, castle.ID, time.Now().UTC(), time.Duration(stackCount)*10*time.Second,
-	)
-	uncoveredRecruitmentBUP := recruitment && !reuseRecruitmentAllianceHelp &&
-		recruitmentBUPAllianceHelpUncovered(input, castle)
-	appendAllianceHelpAfterFirstBUP := recruitment && !uncoveredRecruitmentBUP && !reuseRecruitmentAllianceHelp
 	requireNewerQueue := len(steps) > 0
 	for index := range steps {
 		steps[index].StaleCodes = []int{175}
 	}
 	helpArguments, _ := json.Marshal(recruitmentBUPAllianceHelpRequest{CastleID: request.CastleID})
-	if uncoveredRecruitmentBUP {
-		steps = appendRecruitmentBUPAllianceHelpSteps(steps, helpArguments)
-	}
 	for stack := 0; stack < stackCount; stack++ {
 		guardArguments, _ := json.Marshal(productionQueueCapacityGuard{
 			CastleID: request.CastleID, LineID: request.LineID, DefinitionID: request.DefinitionID,
@@ -178,19 +169,12 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		enqueueStep.StaleCodes = []int{175}
 		enqueueStep.ResponseBarrier = Intent.ResponseBarrierCommitted
 		steps = append(steps, enqueueStep)
-		if recruitment {
-			markerArguments, _ := json.Marshal(recruitmentBUPAllianceHelpRequest{
-				CastleID:       request.CastleID,
-				RequireCovered: reuseRecruitmentAllianceHelp || uncoveredRecruitmentBUP || stack > 0,
-			})
-			steps = append(steps, Intent.Step{
-				Name: "Record recruitment BUP for alliance help", Action: "production.enqueue.mark_help_due",
-				ActionArguments: markerArguments,
-			})
-		}
-		if stack == 0 && appendAllianceHelpAfterFirstBUP {
-			steps = appendRecruitmentBUPAllianceHelpSteps(steps, helpArguments)
-		}
+	}
+	if recruitment {
+		// Recruitment AHR is deliberately at-least-once. Every newly committed
+		// BUP batch gets one native request after its final enqueue, even when an
+		// older request or a previous focus epoch appears to cover the castle.
+		steps = appendRecruitmentBUPAllianceHelpSteps(steps, helpArguments)
 	}
 	summary := fmt.Sprintf("Queue %d %s at %s", request.Amount, definitionLabel, castleLabel(castle))
 	if stackCount > 1 {
@@ -211,25 +195,11 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 }
 
 func appendRecruitmentBUPAllianceHelpSteps(steps []Intent.Step, arguments json.RawMessage) []Intent.Step {
-	return append(steps,
-		Intent.Step{
-			Name:     "Request alliance help for recruitment BUPs",
-			Resolver: "production.enqueue.alliance_help.build", ResolverArguments: arguments,
-			AwaitOpcodes: []string{"ahh", "ahr"}, TimeoutMillis: 10_000, SuccessCodes: []int{0},
-		},
-		Intent.Step{
-			Name: "Record recruitment BUP alliance help", Action: "production.enqueue.mark_help_covered",
-			ActionArguments: arguments,
-		},
-	)
-}
-
-func recruitmentBUPAllianceHelpUncovered(input Intent.PlanningContext, castle State.CastleState) bool {
-	protocol := input.ProtocolContext
-	return recruitmentAllianceHelpContextCurrent(input, castle) &&
-		protocol.RecruitmentBUPCastleID == castle.ID &&
-		protocol.RecruitmentBUPFocusEpoch == protocol.FocusEpoch &&
-		protocol.RecruitmentBUPSerial > protocol.RecruitmentAHRCoveredSerial
+	return append(steps, Intent.Step{
+		Name:     "Request alliance help for recruitment BUPs",
+		Resolver: "production.enqueue.alliance_help.build", ResolverArguments: arguments,
+		AwaitOpcodes: []string{"ahh", "ahr"}, TimeoutMillis: 10_000, SuccessCodes: []int{0},
+	})
 }
 
 func (application *Application) verifyProductionQueueCapacity(_ context.Context, arguments json.RawMessage) error {

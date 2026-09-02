@@ -57,6 +57,17 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.3.5',
+    subtitle: 'Reliable recruiting and complete Storm history',
+    date: '2026-09-02',
+    items: [
+      { kind: 'fixed', text: 'Auto Recruit now resolves simultaneously displayed Glory prefix and suffix titles through their official ancestry, restoring the enabled level-10 fallback after reconnects while rejecting unrelated title conflicts' },
+      { kind: 'fixed', text: 'Recruitment now sends one alliance-help request after every newly committed BUP batch and retries after a castle refresh for the first full-queue slot where the game still reports RAH=false' },
+      { kind: 'fixed', text: 'Storm collection now discovers players from the complete Might map by their Storm-realm castle, preserves every readable participation and cargo state before filtering, derives displayed ranks from cargo points, and retains only the last participating scores from the previous calendar month' },
+      { kind: 'fixed', text: 'Hosted My Stats and Feature Stats now always read their account-scoped retained cloud series while desktop keeps profile-owned disk history; both views open on the full 30-day retention window, and every migrated report category remains selectable after its event ends' },
+    ],
+  },
+  {
     version: '2.3.4',
     subtitle: 'Hosted stats recovery and session-safe automation',
     date: '2026-09-01',
