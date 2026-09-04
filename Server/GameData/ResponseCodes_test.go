@@ -49,6 +49,15 @@ func TestResolveResponseCodeDistinguishesOfficialObservedAndUnknown(t *testing.T
 	if commanderBusy.Source != ResponseCodeObserved || !strings.Contains(commanderBusy.Message, "commander") {
 		t.Fatalf("CRA busy-commander response meaning = %#v", commanderBusy)
 	}
+	incompatibleTools := ResolveResponseCode(store, "CRA", 91)
+	if incompatibleTools.Source != ResponseCodeObserved || incompatibleTools.Kind != ResponseCodeContext ||
+		incompatibleTools.ExpectedState || !strings.Contains(incompatibleTools.Message, "incompatible tools") ||
+		!strings.Contains(incompatibleTools.Recovery, "attack preset") {
+		t.Fatalf("CRA incompatible-tools response meaning = %#v", incompatibleTools)
+	}
+	if unrelated := ResolveResponseCode(store, "xyz", 91); unrelated.Source != ResponseCodeUnknown {
+		t.Fatalf("opcode-scoped CRA response meaning leaked to another opcode = %#v", unrelated)
+	}
 	transportGone := ResolveResponseCode(store, "MSK", 182)
 	if transportGone.Source != ResponseCodeObserved || !strings.Contains(transportGone.Message, "no longer available") {
 		t.Fatalf("MSK unavailable-transport response meaning = %#v", transportGone)
@@ -70,6 +79,9 @@ func TestResolveResponseCodeDistinguishesOfficialObservedAndUnknown(t *testing.T
 	}
 	if meaning := store.ResponseCodeMeanings("cra")[256]; meaning.Source != ResponseCodeObserved {
 		t.Fatalf("CRA response code map = %#v", meaning)
+	}
+	if meaning := store.ResponseCodeMeanings("cra")[91]; meaning.Source != ResponseCodeObserved {
+		t.Fatalf("CRA incompatible-tools response code map = %#v", meaning)
 	}
 	if meaning := store.ResponseCodeMeanings("msk")[182]; meaning.Source != ResponseCodeObserved {
 		t.Fatalf("MSK response code map = %#v", meaning)

@@ -42,6 +42,13 @@ var observedResponseCodes = map[int]ResponseCodeMeaning{
 
 var observedOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
 	"cra": {
+		91: {
+			Code:     91,
+			Message:  "The selected attack preset has incompatible tools assigned for this attack.",
+			Source:   ResponseCodeObserved,
+			Kind:     ResponseCodeContext,
+			Recovery: "Remove or replace the incompatible tools in the selected attack preset, then retry.",
+		},
 		256: {
 			Code:          256,
 			Message:       "The selected commander is already assigned to an active movement or otherwise unavailable at launch time.",

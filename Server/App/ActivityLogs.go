@@ -42,6 +42,7 @@ func featureActivities(receipt Intent.Receipt) []featureActivity {
 		if receipt.Plan != nil && (receipt.Plan.Effect == Intent.EffectRead || !planHasGameCommand(receipt.Plan)) {
 			return nil
 		}
+		activities := completedAttackActivities(receipt)
 		summary := receiptSummary(receipt)
 		detail := "Could not " + attemptedActivityDetail(summary)
 		reason := userFacingFailureReason(receipt.Error)
@@ -54,7 +55,9 @@ func featureActivities(receipt Intent.Receipt) []featureActivity {
 			availabilityGateFailure(receipt.Error) {
 			severity = "WARN"
 		}
-		return []featureActivity{{severity: severity, event: featureActivityEvent(receipt.Intent), detail: userFacingActivityText(detail)}}
+		return append(activities, featureActivity{
+			severity: severity, event: featureActivityEvent(receipt.Intent), detail: userFacingActivityText(detail),
+		})
 	default:
 		return nil
 	}
@@ -164,6 +167,34 @@ func completedFeatureActivities(receipt Intent.Receipt) []featureActivity {
 	}}
 }
 
+func completedAttackActivities(receipt Intent.Receipt) []featureActivity {
+	if receipt.Plan == nil || featureActivityEvent(receipt.Intent) != "ATTACK" || len(receipt.CompletedStepIndexes) == 0 {
+		return nil
+	}
+	completed := make(map[int]struct{}, len(receipt.CompletedStepIndexes))
+	for _, index := range receipt.CompletedStepIndexes {
+		completed[index] = struct{}{}
+	}
+	launches := indexedAttackLaunchSteps(receipt.Plan.Steps)
+	activities := make([]featureActivity, 0, len(launches))
+	for ordinal, launch := range launches {
+		if _, confirmed := completed[launch.index]; !confirmed {
+			continue
+		}
+		detail := completedActivityDetail(launch.step.Name)
+		if strings.TrimSpace(launch.step.Name) == "" {
+			detail = completedActivityDetail(receiptSummary(receipt))
+		}
+		if len(launches) > 1 {
+			detail = fmt.Sprintf("%s (%d of %d)", detail, ordinal+1, len(launches))
+		}
+		activities = append(activities, featureActivity{
+			severity: "INFO", event: "ATTACK", detail: userFacingActivityText(detail),
+		})
+	}
+	return activities
+}
+
 func userFacingActivityText(value string) string {
 	value = (GameData.IdentifierLabels{}).Humanize(strings.TrimSpace(value))
 	for _, pattern := range userFacingActivityIdentifierPatterns {
@@ -190,8 +221,22 @@ func planHasGameCommand(plan *Intent.Plan) bool {
 }
 
 func attackLaunchSteps(steps []Intent.Step) []Intent.Step {
-	result := make([]Intent.Step, 0, len(steps))
-	for _, step := range steps {
+	indexed := indexedAttackLaunchSteps(steps)
+	result := make([]Intent.Step, 0, len(indexed))
+	for _, launch := range indexed {
+		result = append(result, launch.step)
+	}
+	return result
+}
+
+type indexedAttackLaunchStep struct {
+	index int
+	step  Intent.Step
+}
+
+func indexedAttackLaunchSteps(steps []Intent.Step) []indexedAttackLaunchStep {
+	result := make([]indexedAttackLaunchStep, 0, len(steps))
+	for index, step := range steps {
 		opcode := strings.ToLower(strings.TrimSpace(step.Opcode))
 		if opcode == "" {
 			opcode = strings.ToLower(strings.TrimSpace(step.Command.Opcode))
@@ -201,7 +246,7 @@ func attackLaunchSteps(steps []Intent.Step) []Intent.Step {
 			dependencyOpcode = strings.ToLower(strings.TrimSpace(step.CommandDependencies.Opcode))
 		}
 		if opcode == "cra" || dependencyOpcode == "cra" {
-			result = append(result, step)
+			result = append(result, indexedAttackLaunchStep{index: index, step: step})
 		}
 	}
 	return result

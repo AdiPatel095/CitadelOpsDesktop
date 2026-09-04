@@ -713,7 +713,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		flushWireCommits := func() error {
 			return wireCommits.flush(executionContext, engine.observer)
 		}
-		for _, step := range plan.Steps {
+		for stepIndex, step := range plan.Steps {
 			resumeKey := stepResumeKey(step)
 			if step.ResumePolicy != ResumeRebuild && completedThisAttempt[resumeKey] < completedSteps[resumeKey] {
 				completedThisAttempt[resumeKey]++
@@ -774,6 +774,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 			if step.ResumePolicy != ResumeRebuild {
 				completedSteps[resumeKey]++
 				completedThisAttempt[resumeKey]++
+				receipt.CompletedStepIndexes = appendCompletedStepIndex(receipt.CompletedStepIndexes, stepIndex)
 			}
 			if step.ResponseBarrier != ResponseBarrierWire {
 				if err := flushWireCommits(); err != nil {
@@ -842,6 +843,15 @@ func completedAnyStep(completedSteps map[string]int) bool {
 		}
 	}
 	return false
+}
+
+func appendCompletedStepIndex(indexes []int, index int) []int {
+	for _, completed := range indexes {
+		if completed == index {
+			return indexes
+		}
+	}
+	return append(indexes, index)
 }
 
 func planUsesFocus(resources []ResourceKey) bool {

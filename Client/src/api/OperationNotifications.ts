@@ -77,6 +77,10 @@ const legacyGameGuidance: Record<string, GameGuidance> = {
 		recovery: 'Wait for a commander to return. Automated combat pauses after this response to avoid repeated rejected launches.',
 		expectedState: true,
 	},
+	'cra:91': {
+		recovery: 'Remove or replace the incompatible tools in the selected attack preset, then retry.',
+		expectedState: false,
+	},
 	'jaa:337': {
 		recovery: 'Unlock or enter this kingdom in the game, then refresh the feature.',
 		expectedState: true,

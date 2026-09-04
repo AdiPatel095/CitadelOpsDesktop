@@ -47,6 +47,35 @@ func TestFeatureActivitiesRecordsEachAttackInChain(t *testing.T) {
 	}
 }
 
+func TestFeatureActivitiesKeepsConfirmedAttacksWhenLaterChainLaunchFails(t *testing.T) {
+	receipt := Intent.Receipt{
+		Intent: "nomad.camp.attack", Status: Intent.StatusPartiallySucceeded,
+		CompletedStepIndexes: []int{0, 1, 2},
+		Error:                "Build and launch camp attack with commander 7: the game rejected the action",
+		Plan: &Intent.Plan{
+			Effect: Intent.EffectLaunch, Summary: "Chain 3 attacks into locked camp 1166:1165",
+			Steps: []Intent.Step{
+				{Name: "Build and launch camp attack with commander 4", CommandDependencies: &Intent.CommandDependencyRequest{Opcode: "cra"}},
+				{Name: "Capture first launch", Action: "nomad.attack.capture"},
+				{Name: "Build and launch camp attack with commander 6", CommandDependencies: &Intent.CommandDependencyRequest{Opcode: "cra"}},
+				{Name: "Build and launch camp attack with commander 7", CommandDependencies: &Intent.CommandDependencyRequest{Opcode: "cra"}},
+			},
+		},
+	}
+	activities := featureActivities(receipt)
+	if len(activities) != 3 {
+		t.Fatalf("activities = %#v, want two confirmed attacks plus the chain failure", activities)
+	}
+	if activities[0].severity != "INFO" || activities[0].detail != "Launched camp attack with a commander (1 of 3)" ||
+		activities[1].severity != "INFO" || activities[1].detail != "Launched camp attack with a commander (2 of 3)" {
+		t.Fatalf("confirmed attack activities = %#v", activities[:2])
+	}
+	if activities[2].severity != "ERROR" || activities[2].event != "ATTACK" ||
+		!strings.Contains(activities[2].detail, "Could not launch 3 attacks") {
+		t.Fatalf("chain failure activity = %#v", activities[2])
+	}
+}
+
 func TestFeatureActivitiesSkipsLifecycleAndSupportWork(t *testing.T) {
 	for _, receipt := range []Intent.Receipt{
 		{Intent: "tower.attack", Status: Intent.StatusRunning},

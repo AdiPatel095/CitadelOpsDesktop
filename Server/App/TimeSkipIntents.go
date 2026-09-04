@@ -17,8 +17,12 @@ type timeSkipConsumeRequest struct {
 }
 
 func timeSkipConsumeStep(input Intent.PlanningContext, currencyID State.CurrencyID) Intent.Step {
+	return timeSkipConsumeStepAtBalance(currencyID, input.State.Player.Currencies[currencyID])
+}
+
+func timeSkipConsumeStepAtBalance(currencyID State.CurrencyID, expectedBefore float64) Intent.Step {
 	arguments, _ := json.Marshal(timeSkipConsumeRequest{
-		CurrencyID: currencyID, ExpectedBefore: input.State.Player.Currencies[currencyID],
+		CurrencyID: currencyID, ExpectedBefore: expectedBefore,
 	})
 	return Intent.Step{
 		Name:   "Reconcile confirmed time-skip inventory",

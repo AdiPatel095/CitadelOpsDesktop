@@ -1183,6 +1183,9 @@ func TestEngineCommitsAcknowledgedWireStepBeforeCancellationReleasesClaims(t *te
 		if receipt.Status != StatusPartiallySucceeded {
 			t.Fatalf("partially completed wire receipt = %#v", receipt)
 		}
+		if len(receipt.CompletedStepIndexes) != 1 || receipt.CompletedStepIndexes[0] != 0 {
+			t.Fatalf("completed step indexes = %v, want [0]", receipt.CompletedStepIndexes)
+		}
 	case <-time.After(time.Second):
 		t.Fatal("operation did not finish after acknowledged state committed")
 	}

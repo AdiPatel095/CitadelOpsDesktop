@@ -46,6 +46,26 @@ func TestExpectedInteractiveGameRejectionStillExplainsItself(t *testing.T) {
 	}
 }
 
+func TestCRA91ExplainsIncompatiblePresetToolsAcrossAttackLanes(t *testing.T) {
+	engine := &Engine{}
+	for _, actor := range []string{"automation:autoNomad", "automation:autoStorm", "ui"} {
+		receipt := Receipt{
+			ID: actor, Actor: actor, Status: StatusFailed,
+			Plan: &Plan{Summary: "Launch an attack"},
+		}
+		err := NewResponseCodeError(nil, "cra", 91)
+		receipt = engine.withFailure(receipt, err)
+
+		if receipt.Failure == nil || !receipt.Failure.Toast || receipt.Failure.Kind != FailureAvailability ||
+			receipt.Failure.Severity != FailureSeverityError || receipt.Failure.Knowledge != FailureKnowledgeObserved ||
+			receipt.Failure.GameCode == nil || *receipt.Failure.GameCode != 91 ||
+			!strings.Contains(receipt.Failure.Explanation, "incompatible tools") ||
+			!strings.Contains(receipt.Failure.Recovery, "attack preset") {
+			t.Errorf("CRA 91 failure for %q = %#v", actor, receipt.Failure)
+		}
+	}
+}
+
 func TestPartialAutomationRejectionStillNotifies(t *testing.T) {
 	engine := &Engine{}
 	receipt := Receipt{Actor: "automation:autoStorm", Status: StatusPartiallySucceeded, Plan: &Plan{Summary: "Buy two Storm offers"}}

@@ -2335,6 +2335,7 @@ export interface IntentReceipt {
   attempt?: number;
   plan?: IntentPlan;
 	exchanges?: IntentCommandExchange[];
+	completedStepIndexes?: number[];
 	error?: string;
 	failure?: IntentFailurePresentation;
   submittedAt: string;

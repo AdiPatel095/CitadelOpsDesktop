@@ -232,19 +232,22 @@ const (
 )
 
 type Receipt struct {
-	StreamSequence uint64               `json:"streamSequence,omitempty"`
-	StreamGap      bool                 `json:"streamGap,omitempty"`
-	ID             string               `json:"id"`
-	Intent         string               `json:"intent"`
-	Actor          string               `json:"actor"`
-	Priority       Outbound.Priority    `json:"priority"`
-	Status         Status               `json:"status"`
-	Phase          EffectPhase          `json:"phase,omitempty"`
-	Attempt        int                  `json:"attempt,omitempty"`
-	Plan           *Plan                `json:"plan,omitempty"`
-	Exchanges      []CommandExchange    `json:"exchanges,omitempty"`
-	Error          string               `json:"error,omitempty"`
-	Failure        *FailurePresentation `json:"failure,omitempty"`
+	StreamSequence uint64            `json:"streamSequence,omitempty"`
+	StreamGap      bool              `json:"streamGap,omitempty"`
+	ID             string            `json:"id"`
+	Intent         string            `json:"intent"`
+	Actor          string            `json:"actor"`
+	Priority       Outbound.Priority `json:"priority"`
+	Status         Status            `json:"status"`
+	Phase          EffectPhase       `json:"phase,omitempty"`
+	Attempt        int               `json:"attempt,omitempty"`
+	Plan           *Plan             `json:"plan,omitempty"`
+	Exchanges      []CommandExchange `json:"exchanges,omitempty"`
+	// CompletedStepIndexes preserves confirmed partial progress against Plan so
+	// downstream accounting can distinguish successful effects from the later failure.
+	CompletedStepIndexes []int                `json:"completedStepIndexes,omitempty"`
+	Error                string               `json:"error,omitempty"`
+	Failure              *FailurePresentation `json:"failure,omitempty"`
 	// RawError preserves the machine-oriented wording for in-process recovery
 	// and gating logic. It is never serialized or shown to users.
 	RawError    string     `json:"-"`

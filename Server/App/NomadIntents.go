@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -60,6 +61,8 @@ type nomadCampAttackRequest struct {
 	CommanderIDs        []State.CommanderID  `json:"commanderIds"`
 	HorseTravelBoostID  int                  `json:"horseTravelBoostId"`
 	DailyAttackLimit    int64                `json:"dailyAttackLimit"`
+	SkipCooldowns       bool                 `json:"skipCooldowns"`
+	TimeSkipReserve     map[string]int64     `json:"timeSkipReserve,omitempty"`
 }
 
 type resolvedNomadCampAttackRequest struct {
@@ -74,6 +77,11 @@ type nomadChainArrivalGuard struct {
 	TargetY           int               `json:"targetY"`
 	PreviousCommander State.CommanderID `json:"previousCommanderId"`
 	CurrentCommander  State.CommanderID `json:"currentCommanderId"`
+}
+
+type plannedNomadChainTimeSkip struct {
+	Option         buildingTimeSkipOption
+	ExpectedBefore float64
 }
 
 type nomadCooldownSkipRequest struct {
@@ -224,6 +232,18 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 	if err != nil {
 		return Intent.Plan{}, fmt.Errorf("validate capacity-adjusted preset inventory: %w", err)
 	}
+	var chainTimeSkips [][]plannedNomadChainTimeSkip
+	if request.Mode == "chain" && len(resolution.Selected) > 1 {
+		if !request.SkipCooldowns {
+			return Intent.Plan{}, fmt.Errorf("chained Nomad/Samurai attacks require cooldown time skips before every later attack")
+		}
+		chainTimeSkips, err = planNomadChainCooldownSkips(
+			input, definition.CooldownSec, request.TimeSkipReserve, len(resolution.Selected)-1,
+		)
+		if err != nil {
+			return Intent.Plan{}, err
+		}
+	}
 	contextPayload, _ := json.Marshal(struct {
 		SourceX   int             `json:"SX"`
 		SourceY   int             `json:"SY"`
@@ -244,10 +264,15 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 		ActionArguments: mustMarshalNomadAttackRequest(request),
 	}))
 	for index, commanderID := range resolution.Selected {
+		steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
+		if index > 0 {
+			for _, planned := range chainTimeSkips[index-1] {
+				steps = append(steps, nomadChainCooldownSkipSteps(target, planned)...)
+			}
+		}
 		resolvedRequest := request
 		resolvedRequest.Preset = resolvedPresets[commanderID]
 		resolvedArguments, _ := json.Marshal(resolvedNomadCampAttackRequest{nomadCampAttackRequest: resolvedRequest, CommanderID: commanderID})
-		steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 		steps = append(steps, deferredCRACommandStep(
 			fmt.Sprintf("Build and launch camp attack with commander %d", commanderID),
 			"nomad.attack.build", resolvedArguments, contextPayload,
@@ -271,6 +296,19 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 		"castle-focus", "attack-context", "castle:" + castleID, "attack-inventory:" + castleID,
 		nomadTargetClaim(request.nomadTargetRequest),
 	}
+	if len(chainTimeSkips) > 0 {
+		claims = append(claims, "account-resources")
+		seenCurrencies := map[State.CurrencyID]struct{}{}
+		for _, sequence := range chainTimeSkips {
+			for _, planned := range sequence {
+				if _, duplicate := seenCurrencies[planned.Option.CurrencyID]; duplicate {
+					continue
+				}
+				seenCurrencies[planned.Option.CurrencyID] = struct{}{}
+				claims = append(claims, "currency:"+strconv.FormatInt(int64(planned.Option.CurrencyID), 10))
+			}
+		}
+	}
 	claims = append(claims, craCommanderClaims(resolution.Selected)...)
 	summary := fmt.Sprintf("Level camp %d:%d with commander %d", target.X, target.Y, resolution.Selected[0])
 	if request.Mode == "chain" {
@@ -281,6 +319,98 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 		Admission: &Intent.Admission{Class: Intent.AdmissionAttackLaunch, Module: "autoNomad", Affinity: "castle:" + castleID},
 		Summary:   summary, Steps: steps,
 	}, nil
+}
+
+func planNomadChainCooldownSkips(
+	input Intent.PlanningContext,
+	cooldownSec int64,
+	reserves map[string]int64,
+	transitionCount int,
+) ([][]plannedNomadChainTimeSkip, error) {
+	if transitionCount <= 0 {
+		return nil, nil
+	}
+	if cooldownSec <= 0 {
+		return nil, fmt.Errorf("official camp cooldown duration is unavailable for a chained attack")
+	}
+	minutes := []int{1, 5, 10, 30, 60, 300, 1440}
+	options := make([]buildingTimeSkipOption, 0, len(minutes))
+	available := map[State.CurrencyID]int64{}
+	expectedBalance := map[State.CurrencyID]float64{}
+	for _, minute := range minutes {
+		option, err := officialBuildingTimeSkipOption(input.GameData, minute)
+		if err != nil {
+			return nil, fmt.Errorf("validate official cooldown time skip: %w", err)
+		}
+		reserve := timeSkipReserve(reserves, option.WireKey)
+		if reserve < 0 {
+			return nil, fmt.Errorf("%s time-skip reserve cannot be negative", option.WireKey)
+		}
+		balance := input.State.Player.Currencies[option.CurrencyID]
+		available[option.CurrencyID] = max(int64(0), int64(math.Floor(balance))-reserve)
+		expectedBalance[option.CurrencyID] = balance
+		options = append(options, option)
+	}
+
+	result := make([][]plannedNomadChainTimeSkip, transitionCount)
+	for transition := 0; transition < transitionCount; transition++ {
+		remaining := cooldownSec
+		for remaining > 0 {
+			selected := -1
+			for index, option := range options {
+				if available[option.CurrencyID] > 0 && int64(option.Minutes)*60 >= remaining {
+					selected = index
+					break
+				}
+			}
+			if selected < 0 {
+				for index := len(options) - 1; index >= 0; index-- {
+					if available[options[index].CurrencyID] > 0 {
+						selected = index
+						break
+					}
+				}
+			}
+			if selected < 0 {
+				return nil, fmt.Errorf(
+					"available time skips cannot clear the official cooldown before attack %d of %d while preserving configured reserves",
+					transition+2, transitionCount+1,
+				)
+			}
+			option := options[selected]
+			result[transition] = append(result[transition], plannedNomadChainTimeSkip{
+				Option: option, ExpectedBefore: expectedBalance[option.CurrencyID],
+			})
+			available[option.CurrencyID]--
+			expectedBalance[option.CurrencyID]--
+			remaining -= int64(option.Minutes) * 60
+		}
+	}
+	return result, nil
+}
+
+func nomadChainCooldownSkipSteps(
+	target State.MapObservation,
+	planned plannedNomadChainTimeSkip,
+) []Intent.Step {
+	payload, _ := json.Marshal(struct {
+		MinuteSkip string `json:"MST"`
+		KingdomID  string `json:"KID"`
+		X          int    `json:"X"`
+		Y          int    `json:"Y"`
+		MapID      int    `json:"MID"`
+		NodeID     int    `json:"NID"`
+	}{
+		MinuteSkip: planned.Option.WireKey, KingdomID: strconv.FormatInt(int64(target.KingdomID), 10),
+		X: target.X, Y: target.Y, MapID: -1, NodeID: -1,
+	})
+	return []Intent.Step{
+		commandStep(
+			fmt.Sprintf("Apply a %d-minute cooldown skip before the next camp attack", planned.Option.Minutes),
+			"msd", payload, "msd",
+		),
+		timeSkipConsumeStepAtBalance(planned.Option.CurrencyID, planned.ExpectedBefore),
+	}
 }
 
 func planNomadCooldownSkip(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -677,11 +807,21 @@ func validateNomadCampPresetInventory(
 	}
 	resolvedPresets := make(map[State.CommanderID]AttackPresets.Preset, len(commanderIDs))
 	useAttackDialog := matchingNomadAttackDialog(gameState, source, target)
+	targetLabel := "Nomad camps"
+	if definition.EventID == samuraiIntentEventID {
+		targetLabel = "Samurai camps"
+	}
 	for _, commanderID := range commanderIDs {
 		limited, err := capacityLimitedNomadCampPreset(
 			gameState, gameData, source, target, definition, preset, commanderID, useAttackDialog,
 		)
 		if err != nil {
+			return nil, err
+		}
+		if err := AttackPresets.ValidateToolCompatibility(limited, gameData, AttackPresets.ToolTarget{
+			KingdomID: int64(target.KingdomID), TypeID: target.TypeID,
+			EventID: definition.EventID, Label: targetLabel,
+		}); err != nil {
 			return nil, err
 		}
 		resolved, shortage, err := AttackPresets.CheckInventory(limited, remaining, gameData, 1)
