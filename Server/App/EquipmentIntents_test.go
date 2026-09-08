@@ -3,7 +3,9 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -146,7 +148,9 @@ func TestPlanEquipmentReconfigureTemporarilyClearsRetainedSlotForAnotherGemCarri
 
 func TestPlanEquipmentUpgradeHonorsConfiguredDelayFromFirstCommand(t *testing.T) {
 	gameState := State.NewGameState()
-	gameState.Inventory.Equipment[101] = State.EquipmentInstance{ID: 101, Level: 1}
+	gameState.Inventory.Equipment[101] = State.EquipmentInstance{
+		ID: 101, Slot: 1, RarityID: 5, Relic: true, RelicKnown: true, Level: 1,
+	}
 	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 		"scheduler": json.RawMessage(`{"upgradeEreDelayMs":75}`),
 	})
@@ -171,6 +175,189 @@ func TestPlanEquipmentUpgradeHonorsConfiguredDelayFromFirstCommand(t *testing.T)
 			t.Fatalf("upgrade guard %d delay = %dms, want 75ms", index, delay)
 		}
 	}
+}
+
+func TestPlanEquipmentUpgradeUsesOfficialRarityCapsAndOpcodes(t *testing.T) {
+	tests := []struct {
+		name       string
+		rarityID   int
+		slot       int
+		relic      bool
+		maximum    int
+		opcode     string
+		payload    string
+		hasContext bool
+	}{
+		{name: "unique", rarityID: 0, slot: 1, maximum: 20, opcode: "eqe", payload: `{"C2":0,"EID":101}`},
+		{name: "common", rarityID: 1, slot: 1, maximum: 3, opcode: "eqe", payload: `{"C2":0,"EID":101}`},
+		{name: "rare", rarityID: 2, slot: 2, maximum: 8, opcode: "eqe", payload: `{"C2":0,"EID":101}`},
+		{name: "epic", rarityID: 3, slot: 3, maximum: 12, opcode: "eqe", payload: `{"C2":0,"EID":101}`},
+		{name: "legendary", rarityID: 4, slot: 4, maximum: 16, opcode: "eqe", payload: `{"C2":0,"EID":101}`},
+		{name: "normal rarity five", rarityID: 5, slot: 1, maximum: 50, opcode: "eqe", payload: `{"C2":0,"EID":101}`},
+		{name: "relic", rarityID: 5, slot: 1, relic: true, maximum: 50, opcode: "ere", payload: `{"C2":0,"RIID":101,"EQ":1}`, hasContext: true},
+		{name: "relic hero", rarityID: 15, slot: 6, relic: true, maximum: 50, opcode: "ere", payload: `{"C2":0,"RIID":101,"EQ":1}`, hasContext: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Inventory.Equipment[101] = State.EquipmentInstance{
+				ID: 101, Slot: test.slot, RarityID: test.rarityID, Relic: test.relic, RelicKnown: true,
+				Level: test.maximum - 1,
+			}
+			configuration, err := Configuration.Open(t.TempDir(), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+			plan, err := application.planEquipmentUpgrade(
+				t.Context(),
+				Intent.PlanningContext{State: gameState},
+				json.RawMessage(`{"itemKind":"equipment","itemId":101,"targetLevel":`+strconv.Itoa(test.maximum)+`}`),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Contains(plan.Claims, "account-resources") {
+				t.Fatalf("upgrade claims do not reserve spendable resources: %#v", plan.Claims)
+			}
+			upgradeIndex := 1
+			if test.hasContext {
+				if plan.Steps[0].Opcode != "gnr" {
+					t.Fatalf("relic context opcode = %q, want gnr", plan.Steps[0].Opcode)
+				}
+				upgradeIndex = 2
+			} else if plan.Steps[0].Opcode != "" || plan.Steps[0].Action != "equipment.verify_coin_reserve" {
+				t.Fatalf("ordinary equipment unexpectedly opened relic context: %#v", plan.Steps[0])
+			}
+			upgrade := plan.Steps[upgradeIndex]
+			if upgrade.Opcode != test.opcode || upgrade.AwaitOpcode != test.opcode ||
+				upgrade.Command.Opcode != test.opcode || string(upgrade.Payload) != test.payload ||
+				len(upgrade.SuccessCodes) != 1 || upgrade.SuccessCodes[0] != 0 || len(upgrade.StaleCodes) != 0 ||
+				upgrade.ResponseRetry == nil || len(upgrade.ResponseRetry.Codes) != 1 || upgrade.ResponseRetry.Codes[0] != 227 ||
+				upgrade.ResponseRetry.GuardAction != "equipment.verify_coin_reserve" || upgrade.ResponseRetry.DelayMillis <= 0 {
+				t.Fatalf("upgrade step = %#v", upgrade)
+			}
+			_, err = application.planEquipmentUpgrade(
+				t.Context(),
+				Intent.PlanningContext{State: gameState},
+				json.RawMessage(`{"itemKind":"equipment","itemId":101,"targetLevel":`+strconv.Itoa(test.maximum+1)+`}`),
+			)
+			if err == nil {
+				t.Fatalf("target above rarity cap %d was accepted", test.maximum)
+			}
+		})
+	}
+}
+
+func TestPlanEquipmentUpgradeUsesRelicGemWireContract(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Inventory.Gems[501] = State.GemInstance{ID: 501, Level: 1}
+	configuration, err := Configuration.Open(t.TempDir(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+	plan, err := application.planEquipmentUpgrade(
+		t.Context(), Intent.PlanningContext{State: gameState},
+		json.RawMessage(`{"itemKind":"gem","itemId":501,"targetLevel":2}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(plan.Claims, "account-resources") {
+		t.Fatalf("relic gem upgrade claims do not reserve spendable resources: %#v", plan.Claims)
+	}
+	if len(plan.Steps) < 3 || plan.Steps[0].Opcode != "gnr" || plan.Steps[2].Opcode != "ere" ||
+		plan.Steps[2].AwaitOpcode != "ere" || string(plan.Steps[2].Payload) != `{"C2":0,"RIID":501,"EQ":0}` ||
+		plan.Steps[2].ResponseRetry == nil || len(plan.Steps[2].ResponseRetry.Codes) != 1 ||
+		plan.Steps[2].ResponseRetry.Codes[0] != 227 {
+		t.Fatalf("relic gem upgrade plan = %#v", plan)
+	}
+}
+
+func TestPlanEquipmentUpgradeRejectsUnverifiedTypesAndTravellingWearer(t *testing.T) {
+	tests := []struct {
+		name string
+		item State.EquipmentInstance
+	}{
+		{name: "unknown rarity", item: State.EquipmentInstance{ID: 101, Slot: 1, RarityID: 6, RelicKnown: true, Level: 1}},
+		{name: "missing relic discriminator", item: State.EquipmentInstance{ID: 101, Slot: 1, RarityID: 5, Level: 1}},
+		{name: "ordinary hero", item: State.EquipmentInstance{ID: 101, Slot: 6, RarityID: 10, RelicKnown: true, Level: 1}},
+		{name: "appearance item", item: State.EquipmentInstance{ID: 101, Slot: 5, RarityID: 0, RelicKnown: true, Level: 1}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Inventory.Equipment[101] = test.item
+			configuration, err := Configuration.Open(t.TempDir(), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+			_, err = application.planEquipmentUpgrade(
+				t.Context(), Intent.PlanningContext{State: gameState},
+				json.RawMessage(`{"itemKind":"equipment","itemId":101,"targetLevel":2}`),
+			)
+			if err == nil || !strings.Contains(err.Error(), "unsupported or unverified enchantment type") {
+				t.Fatalf("unsupported equipment error = %v", err)
+			}
+		})
+	}
+
+	t.Run("travelling commander", func(t *testing.T) {
+		gameState := State.NewGameState()
+		gameState.Commanders[7] = State.CommanderState{ID: 7, Available: false}
+		gameState.Inventory.Equipment[101] = State.EquipmentInstance{
+			ID: 101, Slot: 1, RarityID: 5, Relic: true, RelicKnown: true, Level: 1,
+			WearerKind: "commander", WearerID: 7,
+		}
+		configuration, err := Configuration.Open(t.TempDir(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+		_, err = application.planEquipmentUpgrade(
+			t.Context(), Intent.PlanningContext{State: gameState},
+			json.RawMessage(`{"itemKind":"equipment","itemId":101,"targetLevel":2}`),
+		)
+		if err == nil || !strings.Contains(err.Error(), "cannot be upgraded while commander 7 is travelling") {
+			t.Fatalf("travelling wearer error = %v", err)
+		}
+
+		commander := gameState.Commanders[7]
+		commander.Available = true
+		gameState.Commanders[7] = commander
+		gameState.Player.ID = 1
+		gameState.Castles[100] = State.CastleState{ID: 100}
+		arrivesAt := time.Now().UTC().Add(time.Minute)
+		commanderID := State.CommanderID(7)
+		gameState.Movements[50] = State.MovementState{
+			ID: 50, Direction: 0, OwnerPlayerID: 1, SourceCastleID: 100,
+			CommanderID: &commanderID, ArrivesAt: &arrivesAt,
+		}
+		application.State = State.NewStore(gameState)
+		_, err = application.planEquipmentUpgrade(
+			t.Context(), Intent.PlanningContext{State: gameState},
+			json.RawMessage(`{"itemKind":"equipment","itemId":101,"targetLevel":2}`),
+		)
+		if err == nil || !strings.Contains(err.Error(), "cannot be upgraded while commander 7 is travelling") {
+			t.Fatalf("active-movement wearer error = %v", err)
+		}
+
+		delete(gameState.Movements, 50)
+		application.State = State.NewStore(gameState)
+		plan, err := application.planEquipmentUpgrade(
+			t.Context(), Intent.PlanningContext{State: gameState},
+			json.RawMessage(`{"itemKind":"equipment","itemId":101,"targetLevel":2}`),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(plan.Claims) != 4 || !slices.Contains(plan.Claims, "account-resources") ||
+			!slices.Contains(plan.Claims, "leader:commander:7") {
+			t.Fatalf("available wearer claims = %#v", plan.Claims)
+		}
+	})
 }
 
 func TestPlanEquipmentSellRequiresFreshStorageAndFreezesSelection(t *testing.T) {

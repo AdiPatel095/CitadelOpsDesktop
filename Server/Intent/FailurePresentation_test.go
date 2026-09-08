@@ -46,6 +46,20 @@ func TestExpectedInteractiveGameRejectionStillExplainsItself(t *testing.T) {
 	}
 }
 
+func TestOfficialClientEnchantFailureProjectsAsOfficialExpectedWarning(t *testing.T) {
+	engine := &Engine{}
+	receipt := Receipt{Actor: "ui", Status: StatusFailed, Plan: &Plan{Summary: "Upgrade relic equipment"}}
+	receipt = engine.withFailure(receipt, NewResponseCodeError(nil, "ere", 227))
+
+	if receipt.Failure == nil || !receipt.Failure.Toast || receipt.Failure.Kind != FailureGameRejected ||
+		receipt.Failure.Severity != FailureSeverityWarning || receipt.Failure.Knowledge != FailureKnowledgeOfficial ||
+		receipt.Failure.GameCode == nil || *receipt.Failure.GameCode != 227 ||
+		!strings.Contains(receipt.Failure.Explanation, "did not gain a level") ||
+		!strings.Contains(receipt.Failure.Recovery, "Retry the same level") {
+		t.Fatalf("official-client enchant failure = %#v", receipt.Failure)
+	}
+}
+
 func TestCRA91ExplainsIncompatiblePresetToolsAcrossAttackLanes(t *testing.T) {
 	engine := &Engine{}
 	for _, actor := range []string{"automation:autoNomad", "automation:autoStorm", "ui"} {

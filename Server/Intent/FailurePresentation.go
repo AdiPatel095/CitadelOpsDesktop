@@ -200,7 +200,7 @@ func failureKindForResponseCode(kind GameData.ResponseCodeKind) FailureKind {
 
 func failureKnowledgeForResponseCode(source GameData.ResponseCodeSource) FailureKnowledge {
 	switch source {
-	case GameData.ResponseCodeOfficial:
+	case GameData.ResponseCodeOfficial, GameData.ResponseCodeOfficialClient:
 		return FailureKnowledgeOfficial
 	case GameData.ResponseCodeObserved:
 		return FailureKnowledgeObserved

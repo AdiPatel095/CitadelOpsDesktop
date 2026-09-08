@@ -472,6 +472,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		return engine.fail(receipt, fmt.Errorf("state store is unavailable"))
 	}
 	completedSteps := map[string]int{}
+	pendingResponseRetries := map[string]bool{}
 	var checkpointPlan *Plan
 	var admissionRelease func()
 	var admitted *Admission
@@ -750,10 +751,37 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 				metadata.ConnectionGeneration = operationConnectionGeneration
 				stepContext = Outbound.WithMetadata(attemptContext, metadata)
 			}
-			exchange, err := engine.executeStep(stepContext, currentRevision, step)
-			if exchange != nil {
-				receipt.Exchanges = append(receipt.Exchanges, *exchange)
-				engine.update(receipt)
+			var err error
+			if pendingResponseRetries[resumeKey] {
+				err = engine.executeResponseRetryGuard(stepContext, step.ResponseRetry)
+				if err == nil {
+					delete(pendingResponseRetries, resumeKey)
+					currentRevision = engine.state.Revision()
+				}
+			}
+			for err == nil {
+				var exchange *CommandExchange
+				exchange, err = engine.executeStep(stepContext, currentRevision, step)
+				if exchange != nil {
+					receipt.Exchanges = append(receipt.Exchanges, *exchange)
+					engine.update(receipt)
+				}
+				if !retryableStepResponse(step, err) {
+					break
+				}
+				pendingResponseRetries[resumeKey] = true
+				// A retry is another resource-spending dispatch, so honor the
+				// runtime gate and the step's explicit guard before every resend.
+				// The original response is already committed and captured above;
+				// it is never counted as successful or completed progress.
+				if err = engine.awaitExecutionGate(executionContext, request, plan, ExecutionBeforeStep); err != nil {
+					break
+				}
+				if err = engine.executeResponseRetryGuard(stepContext, step.ResponseRetry); err != nil {
+					break
+				}
+				delete(pendingResponseRetries, resumeKey)
+				currentRevision = engine.state.Revision()
 			}
 			if err != nil {
 				if flushErr := flushWireCommits(); flushErr != nil {
@@ -944,6 +972,7 @@ func stepResumeKey(step Step) string {
 		fmt.Sprint(step.TimeoutMillis),
 		fmt.Sprint(step.DelayMillis),
 		fmt.Sprint(step.SuccessCodes),
+		responseRetryPolicyKey(step.ResponseRetry),
 		fmt.Sprint(step.CaptureResponse),
 		string(step.ExpectedResponsePayload),
 		fmt.Sprint(step.ResponseIdentity.PlayerID),
@@ -962,6 +991,14 @@ func stepResumeKey(step Step) string {
 		fmt.Sprint(step.Command.Bare),
 		fmt.Sprint(step.Command.OmitNamespace),
 	}, "\x00")
+}
+
+func responseRetryPolicyKey(policy *ResponseRetryPolicy) string {
+	if policy == nil {
+		return ""
+	}
+	encoded, _ := json.Marshal(policy)
+	return string(encoded)
 }
 
 func (engine *Engine) Operation(id string) (Receipt, bool) {
@@ -1348,12 +1385,21 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 			if (expectedConnection > 0 || sessionAtSend.Generation > 0) && sessionChanged() {
 				return exchange, Outbound.MarkIndeterminate(fmt.Errorf("game session changed while waiting for %s", strings.Join(awaitOpcodes, " or ")))
 			}
+			if exchange != nil {
+				response := frame.Frame
+				exchange.Response = &response
+			}
 			if len(step.SuccessCodes) > 0 {
 				if frame.Frame.ResponseCode == nil {
 					return exchange, fmt.Errorf("response did not include a result code")
 				}
 				if !containsInt(step.SuccessCodes, *frame.Frame.ResponseCode) {
 					responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
+					if step.ResponseRetry != nil && containsInt(step.ResponseRetry.Codes, *frame.Frame.ResponseCode) {
+						if err := advanceEffectPhase(ctx, EffectPhaseObserved); err != nil {
+							return exchange, Outbound.MarkIndeterminate(fmt.Errorf("persist observed retry response: %w", err))
+						}
+					}
 					if containsInt(step.StaleCodes, *frame.Frame.ResponseCode) {
 						return exchange, fmt.Errorf("%w: %w", ErrPlanStale, responseErr)
 					}
@@ -1392,6 +1438,30 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 			return exchange, nil
 		}
 	}
+}
+
+func retryableStepResponse(step Step, err error) bool {
+	if err == nil || step.ResponseRetry == nil || errors.Is(err, ErrPlanStale) || Outbound.IsIndeterminate(err) {
+		return false
+	}
+	var responseError *ResponseCodeError
+	return errors.As(err, &responseError) && containsInt(step.ResponseRetry.Codes, responseError.Meaning.Code)
+}
+
+func (engine *Engine) executeResponseRetryGuard(ctx context.Context, policy *ResponseRetryPolicy) error {
+	if policy == nil {
+		return fmt.Errorf("response retry policy is unavailable")
+	}
+	guard := Step{
+		Name:            "Prepare response retry",
+		Action:          policy.GuardAction,
+		ActionArguments: append(json.RawMessage(nil), policy.GuardArguments...),
+		DelayMillis:     policy.DelayMillis,
+	}
+	if _, err := engine.executeStep(ctx, engine.state.Revision(), guard); err != nil {
+		return fmt.Errorf("response retry guard: %w", err)
+	}
+	return nil
 }
 
 func validateExpectedResponsePayload(expected json.RawMessage, actual json.RawMessage) error {
@@ -1696,6 +1766,20 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 		plan.Steps[index].AwaitOpcodes = normalizeAwaitOpcodes(plan.Steps[index].AwaitOpcodes)
 		plan.Steps[index].ResponseBarrier = ResponseBarrier(strings.ToLower(strings.TrimSpace(string(plan.Steps[index].ResponseBarrier))))
 		plan.Steps[index].ExpectedResponsePayload = append(json.RawMessage(nil), plan.Steps[index].ExpectedResponsePayload...)
+		if policy := plan.Steps[index].ResponseRetry; policy != nil {
+			copy := *policy
+			copy.Codes = normalizeResponseCodes(copy.Codes)
+			copy.GuardAction = strings.TrimSpace(copy.GuardAction)
+			copy.GuardArguments = append(json.RawMessage(nil), copy.GuardArguments...)
+			if copy.GuardAction != "" && len(copy.GuardArguments) == 0 {
+				copy.GuardArguments = json.RawMessage(`{}`)
+			}
+			plan.Steps[index].ResponseRetry = &copy
+			plan.Steps[index].CaptureResponse = true
+			if plan.Steps[index].ResponseBarrier == "" {
+				plan.Steps[index].ResponseBarrier = ResponseBarrierCommitted
+			}
+		}
 		if dependency := plan.Steps[index].CommandDependencies; dependency != nil {
 			copy := *dependency
 			copy.Opcode = strings.ToLower(strings.TrimSpace(copy.Opcode))
@@ -1766,6 +1850,9 @@ func finalizePlan(
 	plan Plan,
 ) (Plan, error) {
 	plan = normalizePlan(definition, input.State.Revision, plan)
+	if err := validateResponseRetryPolicies(plan); err != nil {
+		return Plan{}, err
+	}
 	plan.CatalogVersion = currentCatalogVersion(input)
 	if definition.ReadSet != nil && input.Partitions.Available() {
 		keys, err := definition.ReadSet(input, arguments, plan)
@@ -1783,6 +1870,56 @@ func finalizePlan(
 		return Plan{}, fmt.Errorf("intent %q uses an unmapped legacy claim; declare a typed resource", definition.Name)
 	}
 	return plan, nil
+}
+
+func normalizeResponseCodes(codes []int) []int {
+	seen := make(map[int]struct{}, len(codes))
+	normalized := make([]int, 0, len(codes))
+	for _, code := range codes {
+		if _, duplicate := seen[code]; duplicate {
+			continue
+		}
+		seen[code] = struct{}{}
+		normalized = append(normalized, code)
+	}
+	return normalized
+}
+
+func validateResponseRetryPolicies(plan Plan) error {
+	for index, step := range plan.Steps {
+		policy := step.ResponseRetry
+		if policy == nil {
+			continue
+		}
+		label := stepLabel(step)
+		if len(policy.Codes) == 0 {
+			return fmt.Errorf("step %d (%s) response retry policy requires at least one code", index, label)
+		}
+		if policy.GuardAction == "" {
+			return fmt.Errorf("step %d (%s) response retry policy requires a guard action", index, label)
+		}
+		if policy.DelayMillis <= 0 {
+			return fmt.Errorf("step %d (%s) response retry policy requires a positive delay", index, label)
+		}
+		if len(stepAwaitOpcodes(step)) == 0 || len(step.SuccessCodes) == 0 {
+			return fmt.Errorf("step %d (%s) response retry policy requires an awaited response with success codes", index, label)
+		}
+		if step.ResponseBarrier != ResponseBarrierCommitted {
+			return fmt.Errorf("step %d (%s) response retry policy requires a committed response barrier", index, label)
+		}
+		for _, code := range policy.Codes {
+			if containsInt(step.SuccessCodes, code) {
+				return fmt.Errorf("step %d (%s) response retry code %d is also a success code", index, label, code)
+			}
+			if containsInt(step.StaleCodes, code) {
+				return fmt.Errorf("step %d (%s) response retry code %d is also a stale code", index, label, code)
+			}
+			if code < 1 {
+				return fmt.Errorf("step %d (%s) response retry code must be positive", index, label)
+			}
+		}
+	}
+	return nil
 }
 
 func currentCatalogVersion(input PlanningContext) string {

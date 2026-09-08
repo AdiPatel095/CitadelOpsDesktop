@@ -88,6 +88,18 @@ type Admission struct {
 	Deadline  time.Time      `json:"deadline,omitempty"`
 }
 
+// ResponseRetryPolicy authorizes a command step to repeat only for the listed
+// definitive game response codes. The guard runs after DelayMillis and before
+// every resend so callers can recheck resources or other mutable eligibility.
+// Retry responses remain unsuccessful attempts: they do not complete the step
+// and are not treated as stale-plan signals.
+type ResponseRetryPolicy struct {
+	Codes          []int           `json:"codes"`
+	GuardAction    string          `json:"guardAction"`
+	GuardArguments json.RawMessage `json:"guardArguments,omitempty"`
+	DelayMillis    int             `json:"delayMillis"`
+}
+
 type Step struct {
 	Name                    string                    `json:"name,omitempty"`
 	Action                  string                    `json:"action,omitempty"`
@@ -102,6 +114,7 @@ type Step struct {
 	DelayMillis             int                       `json:"delayMillis,omitempty"`
 	SuccessCodes            []int                     `json:"successCodes,omitempty"`
 	StaleCodes              []int                     `json:"staleCodes,omitempty"`
+	ResponseRetry           *ResponseRetryPolicy      `json:"responseRetry,omitempty"`
 	CaptureResponse         bool                      `json:"captureResponse,omitempty"`
 	ExpectedResponsePayload json.RawMessage           `json:"expectedResponsePayload,omitempty"`
 	ResponseIdentity        Outbound.ResponseIdentity `json:"responseIdentity,omitzero"`

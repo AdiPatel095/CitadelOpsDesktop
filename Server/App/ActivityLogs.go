@@ -104,7 +104,7 @@ func userFacingFailureReason(value string) string {
 		const unsuccessfulMarker = " was not successful: "
 		if marker := strings.Index(lower, unsuccessfulMarker); marker >= 0 {
 			officialReason := strings.TrimSpace(reason[marker+len(unsuccessfulMarker):])
-			for _, source := range []string{" (official game text)", " (inferred from captures)", " (undocumented)"} {
+			for _, source := range []string{" (official game text)", " (official game client)", " (inferred from captures)", " (undocumented)"} {
 				officialReason = strings.TrimSuffix(officialReason, source)
 			}
 			if officialReason != "" {
@@ -127,7 +127,7 @@ func userFacingFailureReason(value string) string {
 	const unsuccessfulMarker = " was not successful: "
 	if marker := strings.Index(lower, unsuccessfulMarker); marker >= 0 {
 		reason = strings.TrimSpace(reason[marker+len(unsuccessfulMarker):])
-		for _, source := range []string{" (official game text)", " (inferred from captures)", " (undocumented)"} {
+		for _, source := range []string{" (official game text)", " (official game client)", " (inferred from captures)", " (undocumented)"} {
 			reason = strings.TrimSuffix(reason, source)
 		}
 		if reason != "" {

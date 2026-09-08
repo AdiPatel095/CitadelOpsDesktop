@@ -157,6 +157,15 @@ func TestFeatureActivitiesHidesResponseDiagnosticsFromFailure(t *testing.T) {
 	}
 }
 
+func TestUserFacingFailureReasonStripsOfficialClientProvenance(t *testing.T) {
+	reason := userFacingFailureReason(
+		"Upgrade relic equipment: response code 227 for ERE was not successful: The enchantment attempt failed, so the item did not gain a level. (official game client)",
+	)
+	if reason != "The enchantment attempt failed, so the item did not gain a level." {
+		t.Fatalf("official-client failure reason = %q", reason)
+	}
+}
+
 func TestUserFacingFailureReasonAlwaysExplainsFailure(t *testing.T) {
 	if reason := userFacingFailureReason(""); reason != "the action did not complete" {
 		t.Fatalf("empty failure reason = %q", reason)

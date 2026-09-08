@@ -34,6 +34,32 @@ func TestClientStateSnapshotKeepsOnlyDashboardMapKinds(t *testing.T) {
 	}
 }
 
+func TestClientStateSnapshotPreservesZeroEquipmentRarity(t *testing.T) {
+	state := NewGameState()
+	state.Inventory.Equipment[101] = EquipmentInstance{
+		ID: 101, Slot: 1, RarityID: 0, RelicKnown: true,
+	}
+	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var snapshot struct {
+		Inventory struct {
+			Equipment map[string]map[string]any `json:"equipment"`
+		} `json:"inventory"`
+	}
+	if err := json.Unmarshal(contents, &snapshot); err != nil {
+		t.Fatal(err)
+	}
+	item := snapshot.Inventory.Equipment["101"]
+	if rarity, found := item["rarityId"]; !found || rarity != float64(0) {
+		t.Fatalf("unique equipment rarity was omitted from client state: %#v", item)
+	}
+	if known, found := item["relicKnown"]; !found || known != true {
+		t.Fatalf("equipment relic classification was omitted from client state: %#v", item)
+	}
+}
+
 func TestClientEventPayloadReusesImmutableEncoding(t *testing.T) {
 	store := NewStore(NewGameState())
 	event, err := store.ApplyComponents(Components(ComponentSession), func(state *GameState) ([]string, bool, error) {

@@ -883,7 +883,9 @@ type EquipmentInstance struct {
 	DefinitionID EquipmentID         `json:"definitionId"`
 	Slot         int                 `json:"slot"`
 	TypeID       int                 `json:"typeId,omitempty"`
-	RarityID     int                 `json:"rarityId,omitempty"`
+	RarityID     int                 `json:"rarityId"`
+	Relic        bool                `json:"relic,omitempty"`
+	RelicKnown   bool                `json:"relicKnown,omitempty"`
 	SetID        int64               `json:"setId,omitempty"`
 	Level        int                 `json:"level,omitempty"`
 	WearerID     int64               `json:"wearerId,omitempty"`

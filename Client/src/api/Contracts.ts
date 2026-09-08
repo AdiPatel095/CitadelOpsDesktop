@@ -803,6 +803,8 @@ export interface EquipmentInstanceV2 {
 	slot: number;
 	typeId?: number;
 	rarityId?: number;
+	relic?: boolean;
+	relicKnown?: boolean;
 	setId?: number;
 	level?: number;
 	wearerId?: number;
@@ -2288,6 +2290,13 @@ export interface IntentResourceKey {
 	resourceId?: string;
 }
 
+export interface IntentResponseRetryPolicy {
+	codes: number[];
+	guardAction: string;
+	guardArguments?: Record<string, unknown>;
+	delayMillis: number;
+}
+
 export interface IntentStep {
   name?: string;
   action?: string;
@@ -2298,6 +2307,7 @@ export interface IntentStep {
   awaitOpcode?: string;
   timeoutMillis?: number;
 	successCodes?: number[];
+	responseRetry?: IntentResponseRetryPolicy;
 	captureResponse?: boolean;
 	responseBarrier?: 'wire' | 'wire-then-committed' | 'committed';
 	resumePolicy?: 'once' | 'rebuild';

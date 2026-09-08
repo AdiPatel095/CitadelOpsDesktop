@@ -73,6 +73,42 @@ const legacyGameGuidance: Record<string, GameGuidance> = {
 		recovery: 'Refresh the troop selection before trying again.',
 		expectedState: true,
 	},
+	'ere:222': {
+		recovery: 'Wait for the commander or castellan carrying this item to return, then refresh equipment before retrying.',
+		expectedState: true,
+	},
+	'ere:226': {
+		recovery: 'Refresh equipment and select an item below its maximum enchantment level.',
+		expectedState: true,
+	},
+	'ere:227': {
+		recovery: 'Retry the same level after rechecking the remaining coins and relic splinters.',
+		expectedState: true,
+	},
+	'ere:236': {
+		recovery: 'Refresh equipment and select an item the game currently allows to be enchanted.',
+		expectedState: true,
+	},
+	'eqe:222': {
+		recovery: 'Wait for the commander or castellan carrying this item to return, then refresh equipment before retrying.',
+		expectedState: true,
+	},
+	'eqe:226': {
+		recovery: 'Refresh equipment and select an item below its maximum enchantment level.',
+		expectedState: true,
+	},
+	'eqe:227': {
+		recovery: 'Retry the same level after rechecking the remaining coins.',
+		expectedState: true,
+	},
+	'eqe:236': {
+		recovery: 'Refresh equipment and select an item the game currently allows to be enchanted.',
+		expectedState: true,
+	},
+	'ebe:263': {
+		recovery: 'Choose a different expansion direction, then refresh the castle before retrying.',
+		expectedState: true,
+	},
 	'cra:256': {
 		recovery: 'Wait for a commander to return. Automated combat pauses after this response to avoid repeated rejected launches.',
 		expectedState: true,
@@ -288,11 +324,12 @@ function parseLegacyGameFailure(error: string): LegacyGameFailure | undefined {
 	if (!Number.isSafeInteger(code)) return undefined;
 	let explanation = cleanText(match[3]);
 	let knowledge: LegacyGameFailure['knowledge'] = 'unknown';
-	const source = /\s+\((official game text|inferred from captures|undocumented)\)\s*$/i.exec(explanation);
+	const source = /\s+\((official game text|official game client|inferred from captures|undocumented)\)\s*$/i.exec(explanation);
 	if (source) {
 		explanation = cleanText(explanation.slice(0, source.index));
-		if (source[1].toLowerCase() === 'official game text') knowledge = 'official';
-		else if (source[1].toLowerCase() === 'inferred from captures') knowledge = 'observed';
+		const normalizedSource = source[1].toLowerCase();
+		if (normalizedSource === 'official game text' || normalizedSource === 'official game client') knowledge = 'official';
+		else if (normalizedSource === 'inferred from captures') knowledge = 'observed';
 	}
 	return { code, opcode: cleanText(match[2]).toLowerCase(), explanation, knowledge };
 }

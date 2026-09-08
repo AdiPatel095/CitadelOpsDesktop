@@ -7,6 +7,7 @@ import {
 	type EquipmentEventKey,
 	type EquipmentEventTier,
 } from '../EquipmentEventLoadouts';
+import { officialUpgradeLevelCap } from '../EquipmentUpgradeCaps';
 import type { EquipmentLeader, EquipmentSlotRow } from './EquipmentTypes';
 
 export type SaleCategory =
@@ -421,9 +422,20 @@ export function UpgradeModal({
 	onConfirm: (itemID: number, targetLevel: number) => void;
 	busy: boolean;
 }) {
-	const candidates = useMemo(() => rows
-		.map((row) => ({ row, item: kind === 'equipment' ? row.item : row.gem }))
-		.filter((entry): entry is { row: EquipmentSlotRow; item: NonNullable<EquipmentSlotRow['item'] | EquipmentSlotRow['gem']> } => entry.item != null), [kind, rows]);
+	const candidates = useMemo(() => rows.flatMap((row) => {
+		const item = kind === 'equipment' ? row.item : row.gem;
+		if (item == null) return [];
+		return [{
+			row,
+			item,
+			levelCap: officialUpgradeLevelCap(kind, kind === 'equipment' ? {
+				rarityID: row.item?.rarityId,
+				relic: row.item?.relic,
+				relicKnown: row.item?.relicKnown,
+				slot: row.item?.slot,
+			} : {}),
+		}];
+	}), [kind, rows]);
 	const [selectedID, setSelectedID] = useState<number | null>(null);
 	const [targetLevel, setTargetLevel] = useState(1);
 	useEffect(() => {
@@ -433,9 +445,12 @@ export function UpgradeModal({
 	}, [isOpen, kind]);
 	const selected = candidates.find((candidate) => candidate.item.id === selectedID);
 	const currentLevel = selected?.item.level ?? 0;
+	const selectedLevelCap = selected?.levelCap ?? null;
 	useEffect(() => {
-		if (selected) setTargetLevel(Math.min(50, currentLevel + 1));
-	}, [currentLevel, selectedID]);
+		if (selectedID != null && selectedLevelCap != null) {
+			setTargetLevel(Math.min(selectedLevelCap, currentLevel + 1));
+		}
+	}, [currentLevel, selectedID, selectedLevelCap]);
 	return (
 		<Modal
 			isOpen={isOpen}
@@ -445,7 +460,7 @@ export function UpgradeModal({
 				<>
 					<Button variant="ghost" onClick={onClose}>Cancel</Button>
 					<Button
-						disabled={selectedID == null || targetLevel <= currentLevel || targetLevel > 50 || coinBlocked}
+						disabled={selectedID == null || selectedLevelCap == null || currentLevel >= selectedLevelCap || targetLevel <= currentLevel || targetLevel > selectedLevelCap || coinBlocked}
 						onClick={() => selectedID != null && onConfirm(selectedID, targetLevel)}
 						isLoading={busy}
 					>
@@ -460,29 +475,35 @@ export function UpgradeModal({
 				</div>
 				<p className="text-center text-sm text-text-muted">Choose one {kind} on <span className="font-semibold text-text-main">{leader?.name}</span>.</p>
 				<div className="max-h-[42vh] space-y-2 overflow-y-auto custom-scrollbar">
-					{candidates.map(({ row, item }) => (
-						<button
-							type="button"
-							key={`${row.slot}-${item.id}`}
-							disabled={(item.level ?? 0) >= 50 || item.id <= 0}
-							onClick={() => setSelectedID(item.id)}
-							className={`flex w-full items-center gap-3 rounded-global border p-3 text-left disabled:opacity-50 ${selectedID === item.id ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
-						>
-							<span className="flex-1 text-sm font-medium text-text-main">{row.label}</span>
-							<Badge variant={(item.level ?? 0) >= 50 ? 'success' : 'secondary'}>Level {item.level ?? 0}</Badge>
-							<span className="font-mono text-[10px] text-text-muted">{item.id}</span>
-						</button>
-					))}
+					{candidates.map(({ row, item, levelCap }) => {
+						const level = item.level ?? 0;
+						const capped = levelCap != null && level >= levelCap;
+						return (
+							<button
+								type="button"
+								key={`${row.slot}-${item.id}`}
+								disabled={levelCap == null || capped || item.id <= 0}
+								onClick={() => setSelectedID(item.id)}
+								className={`flex w-full items-center gap-3 rounded-global border p-3 text-left disabled:opacity-50 ${selectedID === item.id ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
+							>
+								<span className="flex-1 text-sm font-medium text-text-main">{row.label}</span>
+								<Badge variant={levelCap == null ? 'warning' : capped ? 'success' : 'secondary'}>
+									{levelCap == null ? 'Unknown rarity' : `Level ${level} / ${levelCap}`}
+								</Badge>
+								<span className="font-mono text-[10px] text-text-muted">{item.id}</span>
+							</button>
+						);
+					})}
 				</div>
-				{selected && (
+				{selected && selectedLevelCap != null && currentLevel < selectedLevelCap && (
 					<div className="rounded-global border border-border-base bg-bg-app/50 p-4">
-						<label className="mb-2 block text-sm font-medium text-text-main">Target level ({currentLevel + 1}–50)</label>
+						<label className="mb-2 block text-sm font-medium text-text-main">Target level ({currentLevel + 1}–{selectedLevelCap})</label>
 						<Input
 							type="number"
 							min={currentLevel + 1}
-							max={50}
+							max={selectedLevelCap}
 							value={targetLevel}
-							onChange={(event) => setTargetLevel(Math.max(currentLevel + 1, Math.min(50, Number(event.target.value))))}
+							onChange={(event) => setTargetLevel(Math.max(currentLevel + 1, Math.min(selectedLevelCap, Number(event.target.value))))}
 						/>
 					</div>
 				)}
