@@ -102,12 +102,12 @@ export function EquipmentSellModal({
 								<span className="block text-sm font-medium text-text-main">Sell post-2026 definitions</span>
 								<span className="block text-[11px] text-text-muted">Includes newly introduced catalog ranges.</span>
 							</span>
-							<Switch checked={sellPost2026} onChange={setSellPost2026} />
+							<Switch checked={sellPost2026} onChange={setSellPost2026} ariaLabel="Sell post-2026 definitions" />
 						</label>
 						{itemType === 'Equipment' && (
 							<label className="flex cursor-pointer items-center justify-between rounded-global border border-border-base bg-bg-app/50 p-3">
 								<span className="text-sm font-medium text-text-main">Sell look items</span>
-								<Switch checked={sellLookItems} onChange={setSellLookItems} />
+								<Switch checked={sellLookItems} onChange={setSellLookItems} ariaLabel="Sell look items" />
 							</label>
 						)}
 					</div>

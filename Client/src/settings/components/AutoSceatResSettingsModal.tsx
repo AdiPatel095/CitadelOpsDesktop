@@ -399,7 +399,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant={plan.enabled ? 'success' : 'secondary'}>{plan.enabled ? 'On' : 'Off'}</Badge>
-                              <Switch checked={plan.enabled} onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, enabled: checked }))} size="sm" />
+                              <Switch checked={plan.enabled} onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, enabled: checked }))} size="sm" ariaLabel={`Enable ${building.name} crafting in ${node.name}`} />
                             </div>
                           </div>
 
@@ -409,7 +409,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                                 <div className="text-xs font-bold text-text-main">Rent second active</div>
                                 <div className="text-[10px] font-semibold text-text-muted">5m coins / 7 days</div>
                               </div>
-                              <Switch checked={plan.autoRentActiveSlot} onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, autoRentActiveSlot: checked }))} size="sm" />
+                              <Switch checked={plan.autoRentActiveSlot} onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, autoRentActiveSlot: checked }))} size="sm" ariaLabel={`Rent a second active slot for ${building.name} in ${node.name}`} />
                             </div>
                             <div className="flex items-center justify-between gap-3">
                               <div>
@@ -423,6 +423,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                                   autoRentQueueSlots: checked ? Math.max(1, current.autoRentQueueSlots) : 0,
                                 }))}
                                 size="sm"
+                                ariaLabel={`Rent extra queue slots for ${building.name} in ${node.name}`}
                               />
                             </div>
                             {plan.autoRentQueueSlots > 0 && (
