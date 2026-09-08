@@ -261,6 +261,45 @@ func TestRuntimeTransportAndSubscriptionReducers(t *testing.T) {
 	}
 }
 
+func TestMarketBoosterPreservesFeastWhenBFSOmitted(t *testing.T) {
+	observedAt := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	existingFeast := State.MarketFeastState{
+		ID:           3,
+		RemainingSec: 14400,
+		ExpiresAt:    observedAt.Add(4 * time.Hour),
+		ObservedAt:   observedAt,
+	}
+	code := 0
+
+	for _, testCase := range []struct {
+		name    string
+		payload json.RawMessage
+	}{
+		{name: "top-level", payload: json.RawMessage(`{"BO":[]}`)},
+		{name: "nested", payload: json.RawMessage(`{"boi":{"BO":[]}}`)},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Market.Feast = existingFeast
+			receivedAt := observedAt.Add(time.Minute)
+
+			_, changed, err := reduceMarketBooster(t.Context(), Protocol.Frame{
+				Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+				ReceivedAt: receivedAt, Payload: testCase.payload,
+			}, &gameState, nil)
+			if err != nil || !changed {
+				t.Fatalf("market booster without bfs: changed=%t err=%v", changed, err)
+			}
+			if gameState.Market.Feast != existingFeast {
+				t.Fatalf("market feast was cleared: got=%#v want=%#v", gameState.Market.Feast, existingFeast)
+			}
+			if !gameState.Market.BoostersObservedAt.Equal(receivedAt) {
+				t.Fatalf("booster observation time = %s, want %s", gameState.Market.BoostersObservedAt, receivedAt)
+			}
+		})
+	}
+}
+
 func TestBeriCapacityReducerKeepsUnitIdentity(t *testing.T) {
 	gameState := State.NewGameState()
 	code := 0

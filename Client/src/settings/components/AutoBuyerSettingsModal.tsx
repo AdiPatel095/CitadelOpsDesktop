@@ -11,6 +11,7 @@ import type {
 } from '../../api/Contracts';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../../components/ui';
+import { useAuth } from '../../context/AuthContext';
 import {
   AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,
   AUTO_BUYER_SECTION,
@@ -32,10 +33,14 @@ const ALL_AUTO_BUYER_CURRENCIES = 'all';
 
 export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ isOpen, onClose }) => {
   const { state, configuration, updateConfiguration } = useCitadelAPI();
+  const { autoBuyerEnabled, setAutomationEnabled } = useAuth();
+  const autoBuyerConfiguration = configuration?.sections[AUTO_BUYER_SECTION];
+  const autoBuyerConfigurationKey = JSON.stringify(autoBuyerConfiguration ?? null);
   const [draft, setDraft] = useState<AutoBuyerClientStateV1>(defaultAutoBuyerClientState);
   const [projection, setProjection] = useState<AutoBuyerProjectionV1 | null>(null);
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [updatingMasterSwitch, setUpdatingMasterSwitch] = useState(false);
   const [section, setSection] = useState<AutoBuyerSection>('shops');
   const [selectedShopId, setSelectedShopId] = useState('');
   const [selectedCurrencyKey, setSelectedCurrencyKey] = useState(ALL_AUTO_BUYER_CURRENCIES);
@@ -48,7 +53,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
 
   useEffect(() => {
     if (!isOpen) return;
-    const parsed = parseAutoBuyerClientState(configuration?.sections[AUTO_BUYER_SECTION]);
+    const parsed = parseAutoBuyerClientState(JSON.parse(autoBuyerConfigurationKey));
     setDraft({
       ...parsed,
       sourceCastleId: parsed.sourceCastleId || defaultCastleID,
@@ -58,7 +63,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     setSelectedShopId(parsed.packages.find((rule) => rule.enabled)?.shopId ?? '');
     setSelectedCurrencyKey(ALL_AUTO_BUYER_CURRENCIES);
     setQuery('');
-  }, [configuration?.sections, defaultCastleID, isOpen]);
+  }, [autoBuyerConfigurationKey, defaultCastleID, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -194,7 +199,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   const enabledSpecialists = draft.specialists.filter((rule) => rule.enabled);
   const configurationValid = useMemo(() => {
     if (!projection) return false;
-    if ((enabledPackages.length > 0 || draft.feast.enabled) && draft.sourceCastleId <= 0) return false;
+    if (enabledPackages.length > 0 && draft.sourceCastleId <= 0) return false;
     for (const rule of enabledPackages) {
       const product = projection.packages.find((candidate) => candidate.shopId === rule.shopId && candidate.packageId === rule.packageId);
       if (!product || rule.targetPurchasesPerReset < 1 || rule.targetPurchasesPerReset > product.stock) return false;
@@ -210,6 +215,19 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     }
     return true;
   }, [draft, enabledPackages, enabledSpecialists, projection, selectedFeast]);
+
+  const updateMasterSwitch = async (enabled: boolean) => {
+    if (updatingMasterSwitch || enabled === autoBuyerEnabled) return;
+    setUpdatingMasterSwitch(true);
+    try {
+      await setAutomationEnabled('auto_buyer', enabled);
+      Notifications.success(enabled ? 'Auto Buyer enabled.' : 'Auto Buyer paused.');
+    } catch {
+      // The shared configuration boundary owns the user-facing failure notification.
+    } finally {
+      setUpdatingMasterSwitch(false);
+    }
+  };
 
   const save = async () => {
     if (saving || !configurationValid) return;
@@ -242,6 +260,26 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
       saveDisabled={!configurationValid || Boolean(loadError)}
     >
       <div className="space-y-3">
+        <Card variant="solid" className="p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-black text-text-main">Run Auto Buyer</h3>
+              <p className="mt-1 text-xs text-text-muted">
+                {autoBuyerEnabled
+                  ? 'Auto Buyer is running and can act on the saved shop, specialist, and feast goals below.'
+                  : 'Auto Buyer is paused. Saved goals, including feast upkeep, will not run until this master switch is on.'}
+              </p>
+            </div>
+            <Switch
+              checked={autoBuyerEnabled}
+              onChange={(enabled) => { void updateMasterSwitch(enabled); }}
+              disabled={updatingMasterSwitch}
+              size="md"
+              ariaLabel="Run Auto Buyer"
+            />
+          </div>
+        </Card>
+
         <Card variant="solid" className="p-4">
           <div className="mb-4 flex items-start gap-3">
             <span className="rounded-xl bg-primary/10 p-2 text-primary"><ShieldCheck className="h-5 w-5" /></span>

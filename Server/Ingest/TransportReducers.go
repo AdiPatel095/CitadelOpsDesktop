@@ -156,7 +156,10 @@ func reduceMarketBooster(
 			level = row.Level
 		}
 	}
-	feast := marketFeastFromRaw(root["bfs"], frame.ReceivedAt)
+	feast := gameState.Market.Feast
+	if rawFeast, ok := root["bfs"]; ok {
+		feast = marketFeastFromRaw(rawFeast, frame.ReceivedAt)
+	}
 	if gameState.Market.CaravanLevelLoaded && gameState.Market.CaravanLevel == level &&
 		reflect.DeepEqual(gameState.Market.Boosters, boosters) &&
 		reflect.DeepEqual(gameState.Market.Feast, feast) &&
