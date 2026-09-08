@@ -3,6 +3,7 @@ package Automation
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -10,13 +11,33 @@ import (
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
+	"CitadelDesktop/Server/Telemetry"
+)
+
+const autoStormTroopCapBaseline int64 = 5_000
+const autoStormLegacyTroopDemandMultiplier int64 = 2
+
+const (
+	autoStormTroopCapBasisBaseline  = "baseline"
+	autoStormTroopCapBasisResetRate = "reset_rate"
+	autoStormTroopCapBasisReserve   = "reserve"
 )
 
 type AutoStormTroopCapPreview struct {
-	Available                bool    `json:"available"`
-	MaximumTroops            int64   `json:"maximumTroops"`
-	TroopsPerAttack          int64   `json:"troopsPerAttack"`
-	MinimumTroops            int64   `json:"minimumTroops"`
+	Available             bool       `json:"available"`
+	MaximumTroops         int64      `json:"maximumTroops"`
+	TroopsPerAttack       int64      `json:"troopsPerAttack"`
+	MinimumTroops         int64      `json:"minimumTroops"`
+	BaselineTroops        int64      `json:"baselineTroops"`
+	EnabledPresetCount    int        `json:"enabledPresetCount"`
+	AveragePresetTroops   float64    `json:"averagePresetTroops"`
+	ResetSessionAvailable bool       `json:"resetSessionAvailable"`
+	ResetSessionStartedAt *time.Time `json:"resetSessionStartedAt,omitempty"`
+	AttacksSinceReset     int64      `json:"attacksSinceReset"`
+	AverageAttacksPerHour float64    `json:"averageAttacksPerHour"`
+	RateBasedTroops       int64      `json:"rateBasedTroops"`
+	CapBasis              string     `json:"capBasis"`
+	// Deprecated rolling-history fields remain during the client transition.
 	HistoryHours             int     `json:"historyHours"`
 	AttacksInHistory         int64   `json:"attacksInHistory"`
 	MeasuredAttacksInHistory int64   `json:"measuredAttacksInHistory"`
@@ -30,6 +51,7 @@ func PreviewAutoStormTroopCap(
 	state State.GameState,
 	configuration Configuration.Snapshot,
 	gameData *GameData.Store,
+	telemetry AttackLaunchCountsProvider,
 	settingsJSON json.RawMessage,
 	now time.Time,
 ) (AutoStormTroopCapPreview, error) {
@@ -48,21 +70,27 @@ func PreviewAutoStormTroopCap(
 		return AutoStormTroopCapPreview{}, fmt.Errorf("unsupported Auto Storm settings version %d", settings.Version)
 	}
 	return autoStormTroopCapPreview(Snapshot{
-		State: state, Configuration: configuration, GameData: gameData, Now: now,
+		State: state, Configuration: configuration, GameData: gameData, Telemetry: telemetry, Now: now,
 	}, settings)
 }
 
 func autoStormTroopCapPreview(snapshot Snapshot, settings autoStormSettings) (AutoStormTroopCapPreview, error) {
+	if snapshot.Now.IsZero() {
+		snapshot.Now = time.Now().UTC()
+	}
 	historyCount, measuredAttacks, troopsSent, averageHourlyTroops, bufferedTroops :=
-		autoStormAttackDemand(snapshot.State, snapshot.Now)
-	perAttackTroops, detail, err := autoStormMaximumConfiguredTroops(snapshot, settings)
+		autoStormLegacyAttackDemand(snapshot.State, snapshot.Now)
+	configured, detail, err := autoStormConfiguredTroops(snapshot, settings)
 	if err != nil {
 		return AutoStormTroopCapPreview{}, err
 	}
 	result := AutoStormTroopCapPreview{
-		Available:                perAttackTroops > 0,
-		TroopsPerAttack:          perAttackTroops,
+		MaximumTroops:            autoStormTroopCapBaseline,
+		TroopsPerAttack:          configured.maximum,
 		MinimumTroops:            settings.TroopImport.MinimumTroops,
+		BaselineTroops:           autoStormTroopCapBaseline,
+		EnabledPresetCount:       configured.count,
+		CapBasis:                 autoStormTroopCapBasisBaseline,
 		HistoryHours:             autoStormTroopHistoryHours,
 		AttacksInHistory:         historyCount,
 		MeasuredAttacksInHistory: measuredAttacks,
@@ -71,20 +99,109 @@ func autoStormTroopCapPreview(snapshot Snapshot, settings autoStormSettings) (Au
 		BufferedTroops:           bufferedTroops,
 		Detail:                   detail,
 	}
-	if perAttackTroops <= 0 {
+	resetStartedAt := snapshot.State.DailyAttacks.SessionStartedAt.UTC()
+	if !resetStartedAt.IsZero() {
+		result.ResetSessionStartedAt = &resetStartedAt
+	}
+	if configured.count <= 0 {
 		return result, nil
 	}
-	result.MaximumTroops = max(
-		autoStormSaturatingAdd(perAttackTroops, settings.TroopImport.MinimumTroops),
-		bufferedTroops,
+	result.Available = true
+	result.AveragePresetTroops = float64(configured.total) / float64(configured.count)
+	feasibilityFloor := autoStormSaturatingAdd(configured.maximum, settings.TroopImport.MinimumTroops)
+	if feasibilityFloor > result.MaximumTroops {
+		result.MaximumTroops = feasibilityFloor
+		result.CapBasis = autoStormTroopCapBasisReserve
+	}
+	if snapshot.Telemetry == nil {
+		result.Detail = "Confirmed attack telemetry is unavailable"
+		return result, nil
+	}
+	counts, resetAvailable := snapshot.Telemetry.AttackLaunchCountsSince(resetStartedAt, snapshot.Now)
+	result.ResetSessionAvailable = resetAvailable
+	if !resetAvailable {
+		switch {
+		case resetStartedAt.IsZero():
+			result.Detail = "Waiting for the authoritative daily attack reset boundary"
+		case resetStartedAt.After(snapshot.Now):
+			result.Detail = "The authoritative daily attack reset boundary is in the future"
+		default:
+			result.Detail = "Confirmed Auto Storm attacks are unavailable for the current reset session"
+		}
+		return result, nil
+	}
+	result.AttacksSinceReset = int64(max(0, counts[Telemetry.ChannelAutoStorm]))
+	result.AverageAttacksPerHour = float64(result.AttacksSinceReset) / float64(autoStormTroopHistoryHours)
+	averageTroopsPerHour := result.AverageAttacksPerHour * result.AveragePresetTroops
+	rateBasedTroops, err := autoStormCeilTroops(averageTroopsPerHour)
+	if err != nil {
+		return AutoStormTroopCapPreview{}, err
+	}
+	result.RateBasedTroops = rateBasedTroops
+	if rateBasedTroops > result.MaximumTroops {
+		result.MaximumTroops = rateBasedTroops
+		result.CapBasis = autoStormTroopCapBasisResetRate
+	}
+	rateDetail := fmt.Sprintf(
+		"%d confirmed Auto Storm attacks since reset / %d = %.2f attacks per hour; %.0f average troops across %d enabled presets; %d troop baseline; %d attack-plus-reserve floor",
+		result.AttacksSinceReset,
+		autoStormTroopHistoryHours,
+		result.AverageAttacksPerHour,
+		result.AveragePresetTroops,
+		result.EnabledPresetCount,
+		result.BaselineTroops,
+		feasibilityFloor,
 	)
+	result.Detail = strings.Trim(strings.Join([]string{detail, rateDetail}, " · "), " ·")
 	return result, nil
 }
 
-func autoStormMaximumConfiguredTroops(snapshot Snapshot, settings autoStormSettings) (int64, string, error) {
+func autoStormLegacyAttackDemand(
+	state State.GameState,
+	now time.Time,
+) (int64, int64, int64, float64, int64) {
+	cutoff := now.Add(-autoStormTroopHistoryHours * time.Hour)
+	troopsByMovement := map[State.MovementID]int64{}
+	for _, records := range [][]State.AttackFeatureLaunch{
+		state.AttackAnalytics.RecentAutoStormLaunches,
+		state.AttackAnalytics.PendingAttacks,
+	} {
+		for _, record := range records {
+			if record.MovementID <= 0 || record.FeatureID != State.AttackFeatureAutoStorm ||
+				record.KingdomID != autoStormKingdomID || record.LaunchedAt.Before(cutoff) ||
+				record.LaunchedAt.After(now) {
+				continue
+			}
+			troopsByMovement[record.MovementID] = max(
+				troopsByMovement[record.MovementID],
+				max(int64(0), record.TroopCount),
+			)
+		}
+	}
+	troopsSent := int64(0)
+	measuredAttacks := int64(0)
+	for _, troopCount := range troopsByMovement {
+		if troopCount <= 0 {
+			continue
+		}
+		measuredAttacks++
+		troopsSent = autoStormSaturatingAdd(troopsSent, troopCount)
+	}
+	averageHourly := float64(troopsSent) / float64(autoStormTroopHistoryHours)
+	bufferedTroops := int64(math.Ceil(averageHourly * float64(autoStormLegacyTroopDemandMultiplier)))
+	return int64(len(troopsByMovement)), measuredAttacks, troopsSent, averageHourly, bufferedTroops
+}
+
+type autoStormConfiguredTroopDemand struct {
+	maximum int64
+	total   int64
+	count   int
+}
+
+func autoStormConfiguredTroops(snapshot Snapshot, settings autoStormSettings) (autoStormConfiguredTroopDemand, string, error) {
 	document, err := AttackPresets.Decode(snapshot.Configuration.Sections[AttackPresets.ConfigurationSection])
 	if err != nil {
-		return 0, "", err
+		return autoStormConfiguredTroopDemand{}, "", err
 	}
 	type configuredPreset struct {
 		label                      string
@@ -103,9 +220,9 @@ func autoStormMaximumConfiguredTroops(snapshot Snapshot, settings autoStormSetti
 			defense: settings.Islands.DefenseUnits,
 		},
 	}
-	maximum := int64(0)
-	issues := make([]string, 0, len(configured))
+	result := autoStormConfiguredTroopDemand{}
 	enabled := 0
+	issues := make([]string, 0, len(configured))
 	for _, candidate := range configured {
 		if !candidate.enabled {
 			continue
@@ -125,18 +242,30 @@ func autoStormMaximumConfiguredTroops(snapshot Snapshot, settings autoStormSetti
 		}
 		total, err := autoStormRequiredTroopTotal(snapshot.GameData, required)
 		if err != nil {
-			return 0, "", err
+			return autoStormConfiguredTroopDemand{}, "", err
 		}
 		if total <= 0 {
 			issues = append(issues, fmt.Sprintf("The %s attack preset has no transferable troops", candidate.label))
 			continue
 		}
-		maximum = max(maximum, total)
+		result.count++
+		result.maximum = max(result.maximum, total)
+		if result.total > math.MaxInt64-total {
+			return autoStormConfiguredTroopDemand{}, "", fmt.Errorf("enabled Storm preset troop total exceeds the supported range")
+		}
+		result.total += total
 	}
 	if enabled == 0 {
-		return 0, "Enable Storm forts or resource islands to calculate the cap", nil
+		return result, "Enable Storm forts or resource islands to calculate the cap", nil
 	}
-	return maximum, strings.Join(issues, " · "), nil
+	return result, strings.Join(issues, " · "), nil
+}
+
+func autoStormCeilTroops(value float64) (int64, error) {
+	if math.IsNaN(value) || math.IsInf(value, 0) || value < 0 || value > float64(math.MaxInt64) {
+		return 0, fmt.Errorf("Auto Storm troop cap exceeds the supported range")
+	}
+	return int64(math.Ceil(value)), nil
 }
 
 func autoStormRequiredTroopTotal(gameData *GameData.Store, required map[State.UnitID]int64) (int64, error) {

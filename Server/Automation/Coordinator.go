@@ -33,6 +33,7 @@ type Coordinator struct {
 	state                          *State.Store
 	configuration                  *Configuration.Store
 	gameData                       GameDataProvider
+	telemetry                      AttackLaunchCountsProvider
 	intents                        IntentSubmitter
 	policies                       []Policy
 	stateWakeByDomain              map[string][]string
@@ -40,6 +41,15 @@ type Coordinator struct {
 	configurationWakeBySection     map[string][]string
 	started                        atomic.Bool
 	externalConfigurationAuthority atomic.Bool
+}
+
+// SetTelemetry supplies confirmed feature-attack launches to policy snapshots.
+// It must be called before Run starts.
+func (coordinator *Coordinator) SetTelemetry(telemetry AttackLaunchCountsProvider) {
+	if coordinator == nil {
+		return
+	}
+	coordinator.telemetry = telemetry
 }
 
 type policyRuntime struct {
@@ -492,7 +502,7 @@ func (coordinator *Coordinator) evaluate(
 		}
 		current.failureBlockedUntil = time.Time{}
 		snapshot := Snapshot{
-			State: state, Configuration: configuration, GameData: gameDataStore, Now: now,
+			State: state, Configuration: configuration, GameData: gameDataStore, Telemetry: coordinator.telemetry, Now: now,
 			PolicyConfigurationChanged:   previouslyEvaluated && configurationChanged,
 			ConfigurationExternallyOwned: coordinator.externalConfigurationAuthority.Load(),
 		}

@@ -2,6 +2,7 @@ package App
 
 import (
 	"encoding/json"
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -173,6 +174,35 @@ func TestKingdomTroopShipmentAddsExecutionTimeCapGuard(t *testing.T) {
 	if len(plan.Steps) != 5 || plan.Steps[2].Action != "troops.kingdom.guard_target_cap" ||
 		plan.Steps[3].Opcode != "kut" {
 		t.Fatalf("capped troop transfer steps = %#v", plan.Steps)
+	}
+}
+
+func TestKingdomTroopShipmentRejectsChangedExpectedAttackReset(t *testing.T) {
+	gameData := kingdomTroopIntentGameData(t)
+	gameState := State.NewGameState()
+	donor := kingdomTroopIntentCastle(10, 0, "Donor")
+	donor.Units.Stationed[10] = 20
+	target := kingdomTroopIntentCastle(40, 4, "Storm")
+	gameState.Castles[donor.ID] = donor
+	gameState.Castles[target.ID] = target
+	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
+	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+	gameState.DailyAttacks.SessionStartedAt = time.Date(2026, time.September, 9, 0, 0, 0, 0, time.UTC)
+	expected := gameState.DailyAttacks.SessionStartedAt.Add(-24 * time.Hour)
+	arguments, err := json.Marshal(kingdomTroopShipmentRequest{
+		SourceCastleID: 10, TargetCastleID: 40, TargetKingdomID: 4,
+		MaximumTargetTroops: 5_000, ExpectedDailyAttackSessionStartedAt: &expected,
+		Units: []kingdomTroopShipmentUnit{{UnitID: 10, Amount: 3}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = planKingdomTroopShipment(t.Context(), Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+	}, arguments)
+	if !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "reset changed") {
+		t.Fatalf("changed attack-reset guard error = %v", err)
 	}
 }
 

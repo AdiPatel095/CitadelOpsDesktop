@@ -22,11 +22,12 @@ type kingdomTroopShipmentUnit struct {
 }
 
 type kingdomTroopShipmentRequest struct {
-	SourceCastleID      State.CastleID             `json:"sourceCastleId"`
-	TargetCastleID      State.CastleID             `json:"targetCastleId"`
-	TargetKingdomID     State.KingdomID            `json:"targetKingdomId"`
-	MaximumTargetTroops int64                      `json:"maximumTargetTroops,omitempty"`
-	Units               []kingdomTroopShipmentUnit `json:"units"`
+	SourceCastleID                      State.CastleID             `json:"sourceCastleId"`
+	TargetCastleID                      State.CastleID             `json:"targetCastleId"`
+	TargetKingdomID                     State.KingdomID            `json:"targetKingdomId"`
+	MaximumTargetTroops                 int64                      `json:"maximumTargetTroops,omitempty"`
+	ExpectedDailyAttackSessionStartedAt *time.Time                 `json:"expectedDailyAttackSessionStartedAt,omitempty"`
+	Units                               []kingdomTroopShipmentUnit `json:"units"`
 }
 
 type kingdomTroopSkipRequest struct {
@@ -57,6 +58,9 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 	}
 	if source.ID == target.ID || source.KingdomID == target.KingdomID {
 		return Intent.Plan{}, fmt.Errorf("kingdom troop transfers require castles in different kingdoms")
+	}
+	if err := verifyKingdomTroopExpectedDailyAttackSession(input.State, request.ExpectedDailyAttackSessionStartedAt); err != nil {
+		return Intent.Plan{}, err
 	}
 	if err := requireStormTroopSupportMead(input.GameData, target); err != nil {
 		return Intent.Plan{}, err
@@ -145,6 +149,9 @@ func (application *Application) guardKingdomTroopTargetCap(_ context.Context, ar
 		return fmt.Errorf("official game data is unavailable")
 	}
 	gameState := application.State.ReadOnlyView()
+	if err := verifyKingdomTroopExpectedDailyAttackSession(gameState, request.ExpectedDailyAttackSessionStartedAt); err != nil {
+		return err
+	}
 	source, sourceExists := gameState.Castles[request.SourceCastleID]
 	target, targetExists := gameState.Castles[request.TargetCastleID]
 	if !sourceExists || !targetExists || target.KingdomID != request.TargetKingdomID {
@@ -155,6 +162,18 @@ func (application *Application) guardKingdomTroopTargetCap(_ context.Context, ar
 		return err
 	}
 	return verifyKingdomTroopTargetCap(gameData, gameState, target, units, request.MaximumTargetTroops)
+}
+
+func verifyKingdomTroopExpectedDailyAttackSession(gameState State.GameState, expected *time.Time) error {
+	if expected == nil {
+		return nil
+	}
+	wanted := expected.UTC()
+	observed := gameState.DailyAttacks.SessionStartedAt.UTC()
+	if wanted.IsZero() || observed.IsZero() || !observed.Equal(wanted) {
+		return fmt.Errorf("%w: the daily attack reset changed after the troop cap was calculated", Intent.ErrPlanStale)
+	}
+	return nil
 }
 
 func verifyKingdomTroopTargetCap(

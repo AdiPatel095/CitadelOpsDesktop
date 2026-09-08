@@ -428,6 +428,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewAutoStormShopPolicy(),
 		Automation.NewAutoStormBuildPolicy(),
 	)
+	application.Automation.SetTelemetry(telemetry)
 	application.Automation.SetExternalConfigurationAuthority(config.BackgroundOnly)
 	application.Reports = Reports.NewManagerWithCloudClient(
 		state, history, intents, config.ReportsCloudClient, reportStore,

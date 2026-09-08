@@ -1639,12 +1639,22 @@ export interface AutoStormTroopCapPreviewV2 {
 	maximumTroops: number;
 	troopsPerAttack: number;
 	minimumTroops: number;
-	historyHours: number;
-	attacksInHistory: number;
-	measuredAttacksInHistory: number;
-	troopsSentInHistory: number;
-	averageTroopsPerHour: number;
-	bufferedTroops: number;
+	baselineTroops?: number;
+	enabledPresetCount?: number;
+	averagePresetTroops?: number;
+	resetSessionAvailable?: boolean;
+	resetSessionStartedAt?: string;
+	attacksSinceReset?: number;
+	averageAttacksPerHour?: number;
+	rateBasedTroops?: number;
+	capBasis?: 'baseline' | 'reset_rate' | 'reserve';
+	// Kept optional while desktop clients and isolated runtimes can be updated independently.
+	historyHours?: number;
+	attacksInHistory?: number;
+	measuredAttacksInHistory?: number;
+	troopsSentInHistory?: number;
+	averageTroopsPerHour?: number;
+	bufferedTroops?: number;
 	detail?: string;
 }
 

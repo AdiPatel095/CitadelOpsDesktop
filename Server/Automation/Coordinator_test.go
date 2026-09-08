@@ -13,6 +13,7 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
+	"CitadelDesktop/Server/Telemetry"
 )
 
 type coordinatorTestPolicy struct {
@@ -262,6 +263,24 @@ func TestNewCoordinatorSkipsTypedNilPolicies(t *testing.T) {
 	coordinator := NewCoordinator(nil, nil, nil, nil, policy)
 	if ids := coordinator.PolicyIDs(); len(ids) != 0 {
 		t.Fatalf("typed nil policy IDs = %v, want none", ids)
+	}
+}
+
+func TestCoordinatorSuppliesAttackLaunchTelemetryToPolicySnapshot(t *testing.T) {
+	provider := autoStormTestAttackLaunchCounts{attacks: 7, available: true}
+	policy := &coordinatorTestPolicy{
+		id: "telemetry-snapshot", decision: Decision{EventDriven: true}, snapshots: make(chan Snapshot, 1),
+	}
+	state := State.NewStore(coordinatorReadyState())
+	configuration := openCoordinatorTestConfiguration(t, policy.ID())
+	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)
+	coordinator.SetTelemetry(provider)
+	coordinator.evaluate(t.Context(), map[string]*policyRuntime{policy.ID(): {}}, make(chan operationResult, 1))
+
+	snapshot := <-policy.snapshots
+	counts, available := snapshot.Telemetry.AttackLaunchCountsSince(time.Time{}, time.Time{})
+	if !available || counts[Telemetry.ChannelAutoStorm] != 7 {
+		t.Fatalf("policy telemetry snapshot = %#v available=%t", counts, available)
 	}
 }
 

@@ -99,6 +99,7 @@ type stormAttackRequest struct {
 	VictoryCount        int64                `json:"victoryCount,omitempty"`
 	MinimumVictoryCount int64                `json:"minimumVictoryCount,omitempty"`
 	Preset              AttackPresets.Preset `json:"preset"`
+	MinimumTroops       int64                `json:"minimumTroops,omitempty"`
 	CommanderIDs        []State.CommanderID  `json:"commanderIds,omitempty"`
 	HorseTravelBoostID  int                  `json:"horseTravelBoostId"`
 	DailyAttackLimit    int64                `json:"dailyAttackLimit"`
@@ -863,6 +864,9 @@ func stormAttackContext(
 	if request.MinimumVictoryCount < 0 {
 		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("minimum attacks remaining cannot be negative")
 	}
+	if request.MinimumTroops < 0 {
+		return stormAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.StormIsleDefinition{}, fmt.Errorf("minimum troops cannot be negative")
+	}
 	awaitingReadyVerification := request.TargetTypeID == stormIntentFortMapTypeID && target.StormCooldownRemaining > 0 &&
 		!stormTargetReadyAt(target).After(now)
 	if request.TargetTypeID == stormIntentFortMapTypeID && request.MinimumVictoryCount > 0 && !awaitingReadyVerification {
@@ -1565,7 +1569,51 @@ func (application *Application) resolveStormAttackStep(
 	if err := validateCRAInventoryPayloads([]json.RawMessage{payload}, source); err != nil {
 		return Intent.Step{}, err
 	}
+	if err := validateStormAttackTroopReserve(body, source, input.GameData, attackRequest.MinimumTroops); err != nil {
+		return Intent.Step{}, err
+	}
 	return commandStep(fmt.Sprintf("Attack Storm %s at %d:%d", definition.Kind, target.X, target.Y), "cra", payload, "cra"), nil
+}
+
+func validateStormAttackTroopReserve(
+	body attackBody,
+	source State.CastleState,
+	gameData *GameData.Store,
+	minimumTroops int64,
+) error {
+	if minimumTroops <= 0 {
+		return nil
+	}
+	stationedTroops := int64(0)
+	for unitID, amount := range source.Units.Stationed {
+		if amount <= 0 {
+			continue
+		}
+		isTool, found := gameData.UnitIsTool(int64(unitID))
+		if !found || isTool {
+			continue
+		}
+		stationedTroops = saturatingTroopAdd(stationedTroops, amount)
+	}
+	launchedTroops := int64(0)
+	for _, wave := range body.Waves {
+		for _, flank := range []attackFlank{wave.Left, wave.Middle, wave.Right} {
+			for _, pair := range flank.Units {
+				launchedTroops = saturatingTroopAdd(launchedTroops, pair[1])
+			}
+		}
+	}
+	for _, pair := range body.SupportTroops {
+		launchedTroops = saturatingTroopAdd(launchedTroops, pair[1])
+	}
+	remainingTroops := max(int64(0), stationedTroops-launchedTroops)
+	if remainingTroops < minimumTroops {
+		return fmt.Errorf(
+			"%w: Storm attack would leave %d stationed troops, below the configured minimum %d",
+			Intent.ErrPlanStale, remainingTroops, minimumTroops,
+		)
+	}
+	return nil
 }
 
 func stormSupportTroops(units []stormDefenseUnit) []attackPair {
