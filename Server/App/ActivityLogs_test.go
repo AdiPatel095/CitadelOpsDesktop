@@ -120,6 +120,44 @@ func TestFeatureActivitiesRecordsOneUserFacingFailure(t *testing.T) {
 	}
 }
 
+func TestFeatureActivitiesRecordsFailedAutoBuyerRefreshButNotSuccess(t *testing.T) {
+	failed := Intent.Receipt{
+		Intent: "autoBuyer.boosters.refresh", Status: Intent.StatusFailed,
+		Error: "Verify Auto Buyer feast refresh: the game omitted feast status from the committed Auto Buyer refresh",
+		Plan: &Intent.Plan{
+			Effect: Intent.EffectRead, Summary: "Refresh Auto Buyer feast cost, castle resources, and timers",
+			Steps: []Intent.Step{{Opcode: "fce"}, {Opcode: "dcl"}, {Opcode: "boi"}},
+		},
+	}
+	activities := featureActivities(failed)
+	if len(activities) != 1 || activities[0].severity != "ERROR" || activities[0].event != "PURCHASE" ||
+		activities[0].detail != "Could not refresh Auto Buyer feast cost, castle resources, and timers: the game did not return feast status, so Auto Buyer stopped before purchasing" {
+		t.Fatalf("failed Auto Buyer refresh activities = %#v", activities)
+	}
+
+	failed.Status = Intent.StatusSucceeded
+	failed.Error = ""
+	if activities := featureActivities(failed); len(activities) != 0 {
+		t.Fatalf("successful Auto Buyer refresh activities = %#v, want none", activities)
+	}
+}
+
+func TestFeatureActivitiesRecordsFailedAutoBuyerFeastReconciliation(t *testing.T) {
+	receipt := Intent.Receipt{
+		Intent: "autoBuyer.feast.reconcile", Status: Intent.StatusFailed,
+		Error: "Reconcile feast timer after incomplete purchase: the game did not confirm the action in time",
+		Plan: &Intent.Plan{
+			Effect: Intent.EffectRead, Summary: "Reconcile an incomplete feast purchase before another attempt",
+			Steps: []Intent.Step{{Action: "auto_buyer.feast.reconcile.mark"}, {Opcode: "boi"}, {Opcode: "dcl"}},
+		},
+	}
+	activities := featureActivities(receipt)
+	if len(activities) != 1 || activities[0].severity != "ERROR" || activities[0].event != "PURCHASE" ||
+		!strings.Contains(activities[0].detail, "Could not reconcile an incomplete feast purchase") {
+		t.Fatalf("failed Auto Buyer feast reconciliation activities = %#v", activities)
+	}
+}
+
 func TestFeatureActivitiesMarksAttackInventoryGateAsWarning(t *testing.T) {
 	receipt := Intent.Receipt{
 		Intent: "storm.attack", Status: Intent.StatusFailed,

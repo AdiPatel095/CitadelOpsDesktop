@@ -77,15 +77,31 @@ func TestAutoBuyerCatalogOnlyExposesBoundedUnambiguousPurchases(t *testing.T) {
 		t.Fatalf("supported feasts = %#v", catalog.Feasts)
 	}
 	food, found := store.AutoBuyerFeast(0)
-	if !found || food.DurationSec != 21600 || food.Price.ResourceID != 5 || food.Price.Premium {
+	if !found || food.DurationSec != 21600 || food.Price.ResourceID != 5 || food.Price.Premium ||
+		!food.AutomaticPurchase.Supported || food.AutomaticPurchase.Reason != "" {
 		t.Fatalf("food feast = %#v found=%t", food, found)
 	}
 	ruby, found := store.AutoBuyerFeast(1)
-	if !found || !ruby.Price.Premium || ruby.Price.Amount != 250 {
+	if !found || !ruby.Price.Premium || ruby.Price.Amount != 250 || ruby.AutomaticPurchase.Supported ||
+		ruby.AutomaticPurchase.Reason != AutoBuyerRubyFeastUnsupportedReason {
 		t.Fatalf("ruby feast = %#v found=%t", ruby, found)
 	}
 	if catalog.TimedOffers.Supported || catalog.TimedOffers.Reason == "" {
 		t.Fatalf("timed-offer capability must fail closed: %#v", catalog.TimedOffers)
+	}
+}
+
+func TestAutoBuyerFeastEffectiveCostOnlyDiscountsFood(t *testing.T) {
+	food := AutoBuyerFeast{Price: AutoBuyerPrice{Amount: 150001}}
+	if got := food.EffectiveCost(25); got != 112501 {
+		t.Fatalf("discounted food cost = %d, want 112501", got)
+	}
+	if got := food.EffectiveCost(100); got != 0 {
+		t.Fatalf("fully discounted food cost = %d, want 0", got)
+	}
+	ruby := AutoBuyerFeast{Price: AutoBuyerPrice{Amount: 30000, Premium: true}}
+	if got := ruby.EffectiveCost(25); got != 30000 {
+		t.Fatalf("ruby feast cost = %d, want 30000", got)
 	}
 }
 

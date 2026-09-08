@@ -6,6 +6,7 @@ export interface SelectOption {
   value: string;
   label: React.ReactNode;
   searchText?: string;
+  disabled?: boolean;
 }
 
 export interface SelectProps {
@@ -216,18 +217,23 @@ export const Select: React.FC<SelectProps> = ({
                     type="button"
                     role="option"
                     aria-selected={value === opt.value}
+                    aria-disabled={opt.disabled || undefined}
+                    disabled={opt.disabled}
                     key={opt.value}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      if (opt.disabled) return;
                       onChange(opt.value);
                       setIsOpen(false);
                       setSearchQuery('');
                     }}
                     className={`m3-select-option w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between group ${
-                      value === opt.value
-                        ? 'bg-primary/10 text-primary font-bold'
-                        : 'text-text-main hover:bg-bg-card-hover hover:text-primary'
+                      opt.disabled
+                        ? 'cursor-not-allowed text-text-muted opacity-60'
+                        : value === opt.value
+                          ? 'bg-primary/10 text-primary font-bold'
+                          : 'text-text-main hover:bg-bg-card-hover hover:text-primary'
                     }`}
                   >
                     <span className="truncate">{opt.label}</span>

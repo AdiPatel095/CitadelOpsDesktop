@@ -868,7 +868,10 @@ func (coordinator *Coordinator) recordReceipt(result operationResult) {
 			current.Detail = gate.detail
 			current.LastError = ""
 		} else if failure, laneOnly := operationResultLaneStatusFailure(result); laneOnly {
-			current.Status = "gated"
+			current.Status = "error"
+			if failure.Severity == Intent.FailureSeverityWarning {
+				current.Status = "gated"
+			}
 			current.Detail = strings.TrimSpace(failure.Explanation)
 			if recovery := strings.TrimSpace(failure.Recovery); recovery != "" &&
 				!strings.EqualFold(recovery, current.Detail) {
@@ -914,8 +917,7 @@ func operationResultLaneStatusFailure(result operationResult) (Intent.FailurePre
 	if result.failureFallback != nil && result.failureFallback.Status != Intent.StatusSucceeded {
 		receipt = *result.failureFallback
 	}
-	if receipt.Status != Intent.StatusFailed || receipt.Failure == nil || receipt.Failure.Toast ||
-		receipt.Failure.Severity != Intent.FailureSeverityWarning {
+	if receipt.Status != Intent.StatusFailed || receipt.Failure == nil || receipt.Failure.Toast {
 		return Intent.FailurePresentation{}, false
 	}
 	return *receipt.Failure, true

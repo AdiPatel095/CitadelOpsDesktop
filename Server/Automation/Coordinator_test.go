@@ -1525,6 +1525,31 @@ func TestCoordinatorExpectedFailureUsesLaneStatusWithoutRawError(t *testing.T) {
 	}
 }
 
+func TestCoordinatorNonToastErrorUsesStructuredLaneDetail(t *testing.T) {
+	state := State.NewStore(coordinatorReadyState())
+	result := operationResult{
+		policyID: "autoBuyer",
+		receipt: Intent.Receipt{
+			ID: "feast-refresh", Status: Intent.StatusFailed,
+			Error: "Verify Auto Buyer feast refresh: the game omitted feast status from the committed Auto Buyer refresh",
+			Failure: &Intent.FailurePresentation{
+				Kind: Intent.FailureUnknown, Severity: Intent.FailureSeverityError, Toast: false,
+				Explanation: "The game did not return the complete feast state, so Auto Buyer stopped before purchasing.",
+				Recovery:    "Auto Buyer will retry the read-only refresh and will not purchase until the response is complete.",
+			},
+		},
+	}
+	NewCoordinator(state, nil, nil, nil).recordReceipt(result)
+	automation := state.Snapshot().Automations["autoBuyer"]
+	if automation.Status != "error" || automation.LastError != "" ||
+		!strings.Contains(automation.Detail, "stopped before purchasing") ||
+		!strings.Contains(automation.Detail, "read-only refresh") ||
+		strings.Contains(automation.Detail, "Automation operation failed") ||
+		strings.Contains(automation.Detail, "omitted feast status") {
+		t.Fatalf("structured non-toast error state = %+v", automation)
+	}
+}
+
 func TestCoordinatorTroopAvailabilityGateSkipsTimedRetry(t *testing.T) {
 	gameState := coordinatorReadyState()
 	gameState.Castles[3849] = State.CastleState{

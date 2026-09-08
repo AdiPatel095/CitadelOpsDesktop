@@ -877,6 +877,8 @@ export interface MarketStateV2 {
 		expiresAt?: string;
 		observedAt?: string;
 	};
+	feastCostReductionPercent?: number;
+	feastCostReductionObservedAt?: string;
 	caravanLevel?: number;
 	caravanLevelLoaded: boolean;
 	observedAt?: string;
@@ -2237,6 +2239,11 @@ export interface AutoBuyerSpecialistV1 {
   bonusPercent?: number;
 }
 
+export interface AutoBuyerCapabilityV1 {
+  supported: boolean;
+  reason?: string;
+}
+
 export interface AutoBuyerFeastV1 {
   id: number;
   name: string;
@@ -2246,6 +2253,7 @@ export interface AutoBuyerFeastV1 {
   minLevel?: number;
   maxLevel?: number;
   price: AutoBuyerPriceV1;
+  automaticPurchase?: AutoBuyerCapabilityV1;
 }
 
 export interface AutoBuyerProjectionV1 {
@@ -2254,7 +2262,7 @@ export interface AutoBuyerProjectionV1 {
   packages: AutoBuyerPackageV1[];
   specialists: AutoBuyerSpecialistV1[];
   feasts: AutoBuyerFeastV1[];
-  timedOffers: { supported: boolean; reason?: string };
+  timedOffers: AutoBuyerCapabilityV1;
 }
 
 export interface LanguageMetadata {

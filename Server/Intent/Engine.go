@@ -969,6 +969,11 @@ func stepResumeKey(step Step) string {
 		step.AwaitOpcode,
 		strings.Join(step.AwaitOpcodes, ","),
 		string(step.ResponseBarrier),
+		step.PreDispatchAction,
+		string(step.PreDispatchArguments),
+		step.DefinitiveSendFailureAction,
+		string(step.DefinitiveSendFailureArguments),
+		fmt.Sprint(step.ResponseProjectionFailureIndeterminate),
 		fmt.Sprint(step.TimeoutMillis),
 		fmt.Sprint(step.DelayMillis),
 		fmt.Sprint(step.SuccessCodes),
@@ -1315,14 +1320,41 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 	if err := validateDispatchPermit(ctx, afterRevision); err != nil {
 		return nil, err
 	}
+	compensateDefinitiveSendFailure := func(primary error) error {
+		if step.DefinitiveSendFailureAction == "" {
+			return primary
+		}
+		engine.mu.RLock()
+		action := engine.actions[step.DefinitiveSendFailureAction]
+		engine.mu.RUnlock()
+		if action == nil {
+			return errors.Join(primary, fmt.Errorf("definitive-send-failure action %q is not registered", step.DefinitiveSendFailureAction))
+		}
+		if err := action(sendContext, step.DefinitiveSendFailureArguments); err != nil {
+			return errors.Join(primary, fmt.Errorf("definitive-send-failure action %q: %w", step.DefinitiveSendFailureAction, err))
+		}
+		return primary
+	}
+	if step.PreDispatchAction != "" {
+		engine.mu.RLock()
+		action := engine.actions[step.PreDispatchAction]
+		engine.mu.RUnlock()
+		if action == nil {
+			return nil, fmt.Errorf("pre-dispatch action %q is not registered", step.PreDispatchAction)
+		}
+		if err := action(sendContext, step.PreDispatchArguments); err != nil {
+			return nil, compensateDefinitiveSendFailure(fmt.Errorf("pre-dispatch action %q: %w", step.PreDispatchAction, err))
+		}
+	}
 	if err := advanceEffectPhase(ctx, EffectPhaseDispatching); err != nil {
-		return nil, fmt.Errorf("persist dispatching effect: %w", err)
+		return nil, compensateDefinitiveSendFailure(fmt.Errorf("persist dispatching effect: %w", err))
 	}
 	if err := engine.sender.Send(sendContext, payload); err != nil {
 		if Outbound.IsIndeterminate(err) {
 			_ = advanceEffectPhase(ctx, EffectPhaseReconciliationRequired)
+			return nil, err
 		}
-		return nil, err
+		return nil, compensateDefinitiveSendFailure(err)
 	}
 	var exchange *CommandExchange
 	if step.CaptureResponse {
@@ -1391,7 +1423,12 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 			}
 			if len(step.SuccessCodes) > 0 {
 				if frame.Frame.ResponseCode == nil {
-					return exchange, fmt.Errorf("response did not include a result code")
+					responseErr := fmt.Errorf("response did not include a result code")
+					if step.ResponseProjectionFailureIndeterminate {
+						_ = advanceEffectPhase(ctx, EffectPhaseReconciliationRequired)
+						return exchange, Outbound.MarkIndeterminate(responseErr)
+					}
+					return exchange, responseErr
 				}
 				if !containsInt(step.SuccessCodes, *frame.Frame.ResponseCode) {
 					responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
@@ -1426,7 +1463,12 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				}
 			}
 			if frame.ReduceError != "" {
-				return exchange, fmt.Errorf("response state reduction failed: %s", frame.ReduceError)
+				reduceErr := fmt.Errorf("response state reduction failed: %s", frame.ReduceError)
+				if step.ResponseProjectionFailureIndeterminate {
+					_ = advanceEffectPhase(ctx, EffectPhaseReconciliationRequired)
+					return exchange, Outbound.MarkIndeterminate(reduceErr)
+				}
+				return exchange, reduceErr
 			}
 			if exchange != nil {
 				response := frame.Frame
@@ -1765,6 +1807,16 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 		plan.Steps[index].AwaitOpcode = strings.ToLower(plan.Steps[index].AwaitOpcode)
 		plan.Steps[index].AwaitOpcodes = normalizeAwaitOpcodes(plan.Steps[index].AwaitOpcodes)
 		plan.Steps[index].ResponseBarrier = ResponseBarrier(strings.ToLower(strings.TrimSpace(string(plan.Steps[index].ResponseBarrier))))
+		plan.Steps[index].PreDispatchAction = strings.TrimSpace(plan.Steps[index].PreDispatchAction)
+		plan.Steps[index].PreDispatchArguments = append(json.RawMessage(nil), plan.Steps[index].PreDispatchArguments...)
+		if plan.Steps[index].PreDispatchAction != "" && len(plan.Steps[index].PreDispatchArguments) == 0 {
+			plan.Steps[index].PreDispatchArguments = json.RawMessage(`{}`)
+		}
+		plan.Steps[index].DefinitiveSendFailureAction = strings.TrimSpace(plan.Steps[index].DefinitiveSendFailureAction)
+		plan.Steps[index].DefinitiveSendFailureArguments = append(json.RawMessage(nil), plan.Steps[index].DefinitiveSendFailureArguments...)
+		if plan.Steps[index].DefinitiveSendFailureAction != "" && len(plan.Steps[index].DefinitiveSendFailureArguments) == 0 {
+			plan.Steps[index].DefinitiveSendFailureArguments = json.RawMessage(`{}`)
+		}
 		plan.Steps[index].ExpectedResponsePayload = append(json.RawMessage(nil), plan.Steps[index].ExpectedResponsePayload...)
 		if policy := plan.Steps[index].ResponseRetry; policy != nil {
 			copy := *policy

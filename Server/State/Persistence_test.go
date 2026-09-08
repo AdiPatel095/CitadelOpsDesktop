@@ -563,6 +563,55 @@ func TestSnapshotRoundTripResetsSession(t *testing.T) {
 	}
 }
 
+func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
+	directory := t.TempDir()
+	observedAt := time.Date(2026, time.September, 8, 16, 0, 0, 0, time.UTC)
+	pendingSince := observedAt.Add(time.Minute)
+	expectedExpiry := pendingSince.Add(6 * time.Hour)
+	store := NewStore(NewGameState())
+	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
+		state.Player.Level = 1
+		return []string{"player"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, bootstrap, Components(bootstrap.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	event, err := store.ApplyComponents(Components(ComponentMarket), func(state *GameState) ([]string, bool, error) {
+		state.Market.FeastCostReductionPercent = 75
+		state.Market.FeastCostReductionObservedAt = observedAt
+		state.Market.FeastPurchasePending = true
+		state.Market.FeastPurchaseExpectedID = 4
+		state.Market.FeastPurchasePendingSince = pendingSince
+		state.Market.FeastPurchaseExpectedExpiresAt = expectedExpiry
+		state.Market.FeastPurchaseOperationID = "feast-operation"
+		state.Market.FeastPurchaseResponseToken = "feast-operation/1"
+		return []string{"market"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, event, Components(event.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Market.FeastCostReductionPercent != 75 ||
+		!loaded.Market.FeastCostReductionObservedAt.Equal(observedAt) ||
+		!loaded.Market.FeastPurchasePending ||
+		loaded.Market.FeastPurchaseExpectedID != 4 ||
+		!loaded.Market.FeastPurchasePendingSince.Equal(pendingSince) ||
+		!loaded.Market.FeastPurchaseExpectedExpiresAt.Equal(expectedExpiry) ||
+		loaded.Market.FeastPurchaseOperationID != "feast-operation" ||
+		loaded.Market.FeastPurchaseResponseToken != "feast-operation/1" {
+		t.Fatalf("persisted feast state = %+v", loaded.Market)
+	}
+}
+
 func TestSnapshotLoadMovesInspectedAllianceOutOfOwnSlot(t *testing.T) {
 	directory := t.TempDir()
 	state := NewGameState()

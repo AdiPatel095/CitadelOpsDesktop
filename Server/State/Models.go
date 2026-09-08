@@ -2,6 +2,7 @@ package State
 
 import (
 	"encoding/json"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -290,9 +291,13 @@ type CastleState struct {
 	Focused   bool      `json:"focused"`
 	// ContextSnapshotObservedAt is advanced only by an authoritative JAA
 	// castle-context snapshot (including the JAA returned by JCA).
-	ContextSnapshotObservedAt   time.Time                                 `json:"contextSnapshotObservedAt,omitempty"`
-	Resources                   map[ResourceID]ResourceBalance            `json:"resources"`
-	FoodStateObservedAt         time.Time                                 `json:"foodStateObservedAt,omitempty"`
+	ContextSnapshotObservedAt time.Time                      `json:"contextSnapshotObservedAt,omitempty"`
+	Resources                 map[ResourceID]ResourceBalance `json:"resources"`
+	FoodStateObservedAt       time.Time                      `json:"foodStateObservedAt,omitempty"`
+	// FoodBalanceObservedAt is an internal dispatch authority. It advances
+	// only when a castle-scoped response actually contains numeric Food and is
+	// intentionally not persisted, so a restart must refresh before spending.
+	FoodBalanceObservedAt       time.Time                                 `json:"-"`
 	Units                       CastleUnits                               `json:"units"`
 	UnitsObservedAt             time.Time                                 `json:"unitsObservedAt,omitempty"`
 	Defense                     CastleDefenseState                        `json:"defense"`
@@ -1042,14 +1047,49 @@ func (feast MarketFeastState) ActiveAt(now time.Time) bool {
 	return feast.ID >= 0 && !feast.ExpiresAt.IsZero() && feast.ExpiresAt.After(now)
 }
 
+// FreshAt reports whether the feast value is a coherent observation from the
+// current session and is still within the caller's authority window. A zeroed
+// feast with a non-zero observation time is the normalized, explicitly
+// observed inactive state.
+func (feast MarketFeastState) FreshAt(now time.Time, sessionChangedAt time.Time, maxAge time.Duration) bool {
+	if now.IsZero() || maxAge <= 0 || feast.ObservedAt.IsZero() || feast.ObservedAt.After(now) ||
+		(!sessionChangedAt.IsZero() && feast.ObservedAt.Before(sessionChangedAt)) ||
+		now.Sub(feast.ObservedAt) >= maxAge {
+		return false
+	}
+	if feast.ExpiresAt.IsZero() {
+		return feast.ID == 0 && feast.RemainingSec == 0
+	}
+	if feast.ID < 0 || feast.RemainingSec <= 0 ||
+		int64(feast.RemainingSec) > int64(math.MaxInt64)/int64(time.Second) ||
+		!feast.ExpiresAt.After(feast.ObservedAt) {
+		return false
+	}
+	duration := time.Duration(feast.RemainingSec) * time.Second
+	return duration > 0 && feast.ExpiresAt.Equal(feast.ObservedAt.Add(duration))
+}
+
 type MarketState struct {
-	Castles            map[CastleID]MarketCastleState `json:"castles"`
-	Boosters           map[int]MarketBoosterState     `json:"boosters"`
-	Feast              MarketFeastState               `json:"feast"`
-	CaravanLevel       int                            `json:"caravanLevel,omitempty"`
-	CaravanLevelLoaded bool                           `json:"caravanLevelLoaded"`
-	ObservedAt         time.Time                      `json:"observedAt,omitempty"`
-	BoostersObservedAt time.Time                      `json:"boostersObservedAt,omitempty"`
+	Castles             map[CastleID]MarketCastleState `json:"castles"`
+	Boosters            map[int]MarketBoosterState     `json:"boosters"`
+	Feast               MarketFeastState               `json:"feast"`
+	FeastLastPurchaseAt time.Time                      `json:"feastLastPurchaseAt,omitempty"`
+	// FeastPurchasePending prevents a resource-spending BFS from being replayed
+	// after its outcome could not be reconciled. The latch is durable across
+	// restarts and is cleared only by an authoritative expected-feast result,
+	// an explicit game rejection, or expiry of the maximum possible effect.
+	FeastPurchasePending           bool      `json:"feastPurchasePending,omitempty"`
+	FeastPurchaseExpectedID        int64     `json:"feastPurchaseExpectedId,omitempty"`
+	FeastPurchasePendingSince      time.Time `json:"feastPurchasePendingSince,omitempty"`
+	FeastPurchaseExpectedExpiresAt time.Time `json:"feastPurchaseExpectedExpiresAt,omitempty"`
+	FeastPurchaseOperationID       string    `json:"feastPurchaseOperationId,omitempty"`
+	FeastPurchaseResponseToken     string    `json:"feastPurchaseResponseToken,omitempty"`
+	FeastCostReductionPercent      int       `json:"feastCostReductionPercent,omitempty"`
+	FeastCostReductionObservedAt   time.Time `json:"feastCostReductionObservedAt,omitempty"`
+	CaravanLevel                   int       `json:"caravanLevel,omitempty"`
+	CaravanLevelLoaded             bool      `json:"caravanLevelLoaded"`
+	ObservedAt                     time.Time `json:"observedAt,omitempty"`
+	BoostersObservedAt             time.Time `json:"boostersObservedAt,omitempty"`
 }
 
 type KingdomTransportUnlock struct {

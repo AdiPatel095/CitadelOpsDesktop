@@ -32,14 +32,15 @@ var userFacingTechnicalFailurePattern = regexp.MustCompile(
 )
 
 func featureActivities(receipt Intent.Receipt) []featureActivity {
-	if supportingFeatureIntent(receipt.Intent) {
+	if supportingFeatureIntent(receipt.Intent) && !recordSupportingFeatureFailure(receipt) {
 		return nil
 	}
 	switch receipt.Status {
 	case Intent.StatusSucceeded:
 		return completedFeatureActivities(receipt)
 	case Intent.StatusFailed, Intent.StatusPartiallySucceeded, Intent.StatusIndeterminate:
-		if receipt.Plan != nil && (receipt.Plan.Effect == Intent.EffectRead || !planHasGameCommand(receipt.Plan)) {
+		if receipt.Plan != nil &&
+			(receipt.Plan.Effect == Intent.EffectRead && !recordSupportingFeatureFailure(receipt) || !planHasGameCommand(receipt.Plan)) {
 			return nil
 		}
 		activities := completedAttackActivities(receipt)
@@ -60,6 +61,19 @@ func featureActivities(receipt Intent.Receipt) []featureActivity {
 		})
 	default:
 		return nil
+	}
+}
+
+func recordSupportingFeatureFailure(receipt Intent.Receipt) bool {
+	intent := strings.ToLower(strings.TrimSpace(receipt.Intent))
+	if intent != "autobuyer.boosters.refresh" && intent != "autobuyer.feast.reconcile" {
+		return false
+	}
+	switch receipt.Status {
+	case Intent.StatusFailed, Intent.StatusPartiallySucceeded, Intent.StatusIndeterminate:
+		return true
+	default:
+		return false
 	}
 }
 
@@ -84,6 +98,10 @@ func userFacingFailureReason(value string) string {
 	}
 	lower := strings.ToLower(reason)
 	switch {
+	case strings.Contains(lower, "omitted feast status"):
+		return "the game did not return feast status, so Auto Buyer stopped before purchasing"
+	case strings.Contains(lower, "omitted feast cost reduction"):
+		return "the game did not return the feast cost reduction, so Auto Buyer stopped before purchasing"
 	case strings.Contains(lower, "not enough troops"), strings.Contains(lower, "insufficient troops"),
 		strings.Contains(lower, " commander(s) require "), strings.Contains(lower, " attack formation requires "):
 		return "there were not enough eligible troops available"
@@ -276,6 +294,8 @@ func featureActivityEvent(intent string) string {
 		return "TRANSPORT"
 	case strings.Contains(intent, "purchase"), intent == "khan.defense_tools.replenish":
 		return "PURCHASE"
+	case intent == "autobuyer.boosters.refresh", intent == "autobuyer.feast.reconcile":
+		return "PURCHASE"
 	case strings.HasPrefix(intent, "construction."):
 		return "CONSTRUCTION"
 	case strings.HasPrefix(intent, "building."), strings.HasPrefix(intent, "decoration."):
@@ -353,6 +373,7 @@ func completedActivityDetail(summary string) string {
 		{"Rent ", "Rented "},
 		{"Complete ", "Completed "},
 		{"Request ", "Requested "},
+		{"Refresh ", "Refreshed "},
 		{"Update ", "Updated "},
 		{"Construct ", "Started construction of "},
 		{"Place ", "Placed "},
@@ -414,6 +435,8 @@ func attemptedActivityDetail(summary string) string {
 		{"Rent ", "rent "},
 		{"Complete ", "complete "},
 		{"Request ", "request "},
+		{"Refresh ", "refresh "},
+		{"Reconcile ", "reconcile "},
 		{"Update ", "update "},
 		{"Construct ", "construct "},
 		{"Place ", "place "},

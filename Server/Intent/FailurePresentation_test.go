@@ -152,6 +152,60 @@ func TestExpectedRevisionConflictIsARecoverableStaleState(t *testing.T) {
 	}
 }
 
+func TestAutomationPreflightStaleStateStaysOnLane(t *testing.T) {
+	engine := &Engine{}
+	receipt := engine.withFailure(
+		Receipt{Actor: "automation:autoBuyer", Status: StatusFailed},
+		fmt.Errorf("%w: feast cost reduction is stale", ErrPlanStale),
+	)
+	if receipt.Failure == nil || receipt.Failure.Kind != FailureStaleState ||
+		receipt.Failure.Severity != FailureSeverityWarning || receipt.Failure.Toast {
+		t.Fatalf("automation preflight stale projection = %#v", receipt.Failure)
+	}
+}
+
+func TestAutomationFeastRefreshProtocolGapStaysOnLaneAndLogs(t *testing.T) {
+	engine := &Engine{}
+	receipt := engine.withFailure(
+		Receipt{Actor: "automation:autoBuyer", Status: StatusFailed},
+		errorString("Verify Auto Buyer feast refresh: the game omitted feast status from the committed Auto Buyer refresh"),
+	)
+	if receipt.Failure == nil || receipt.Failure.Toast || receipt.Failure.Severity != FailureSeverityError ||
+		receipt.Failure.Knowledge != FailureKnowledgeObserved ||
+		!strings.Contains(receipt.Failure.Explanation, "stopped before purchasing") ||
+		!strings.Contains(receipt.Failure.Recovery, "read-only refresh") {
+		t.Fatalf("Auto Buyer feast refresh failure = %#v", receipt.Failure)
+	}
+}
+
+func TestPendingFeastReconciliationStaysVisibleOnAutomationLane(t *testing.T) {
+	engine := &Engine{}
+	receipt := engine.withFailure(
+		Receipt{Actor: "automation:autoBuyer", Status: StatusFailed},
+		errorString("the game has not yet resolved the pending feast purchase from an authoritative feast snapshot"),
+	)
+	if receipt.Failure == nil || receipt.Failure.Toast ||
+		receipt.Failure.Kind != FailureIndeterminate ||
+		receipt.Failure.Severity != FailureSeverityWarning ||
+		receipt.Failure.Knowledge != FailureKnowledgeObserved ||
+		!strings.Contains(receipt.Failure.Explanation, "not yet confirmed") ||
+		!strings.Contains(receipt.Failure.Recovery, "keep another feast purchase blocked") {
+		t.Fatalf("pending feast reconciliation projection = %#v", receipt.Failure)
+	}
+}
+
+func TestAutomationStaleStateAfterMutationStillWarnsUser(t *testing.T) {
+	engine := &Engine{}
+	receipt := engine.withFailure(
+		Receipt{Actor: "automation:autoBuyer", Status: StatusPartiallySucceeded},
+		fmt.Errorf("%w: feast timer did not refresh", ErrPlanStale),
+	)
+	if receipt.Failure == nil || receipt.Failure.Kind != FailureStaleState ||
+		receipt.Failure.Severity != FailureSeverityWarning || !receipt.Failure.Toast {
+		t.Fatalf("post-mutation stale projection = %#v", receipt.Failure)
+	}
+}
+
 func TestResponseRejectionDoesNotHideJoinedCommitFailure(t *testing.T) {
 	engine := &Engine{}
 	responseErr := NewResponseCodeError(nil, "cra", 256)

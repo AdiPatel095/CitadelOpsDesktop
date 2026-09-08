@@ -119,9 +119,22 @@ type Step struct {
 	ExpectedResponsePayload json.RawMessage           `json:"expectedResponsePayload,omitempty"`
 	ResponseIdentity        Outbound.ResponseIdentity `json:"responseIdentity,omitzero"`
 	ResponseBarrier         ResponseBarrier           `json:"responseBarrier,omitempty"`
-	ResumePolicy            ResumePolicy              `json:"resumePolicy,omitempty"`
-	CommandDependencies     *CommandDependencyRequest `json:"commandDependencies,omitempty"`
-	Command                 Protocol.Command          `json:"-"`
+	// PreDispatchAction runs after final command resolution, dependency refresh,
+	// readiness, and dispatch validation, but before the command can reach the
+	// transport. It supports durable no-replay markers around spending calls.
+	PreDispatchAction    string          `json:"preDispatchAction,omitempty"`
+	PreDispatchArguments json.RawMessage `json:"preDispatchArguments,omitempty"`
+	// DefinitiveSendFailureAction compensates PreDispatchAction only when the
+	// sender proves the command did not reach an indeterminate wire state.
+	DefinitiveSendFailureAction    string          `json:"definitiveSendFailureAction,omitempty"`
+	DefinitiveSendFailureArguments json.RawMessage `json:"definitiveSendFailureArguments,omitempty"`
+	// ResponseProjectionFailureIndeterminate marks a committed response whose
+	// missing result code or failed local state projection cannot prove that a
+	// mutating command was rejected. Read-only dependency steps leave this false.
+	ResponseProjectionFailureIndeterminate bool                      `json:"responseProjectionFailureIndeterminate,omitempty"`
+	ResumePolicy                           ResumePolicy              `json:"resumePolicy,omitempty"`
+	CommandDependencies                    *CommandDependencyRequest `json:"commandDependencies,omitempty"`
+	Command                                Protocol.Command          `json:"-"`
 }
 
 // CommandDependencyRequest declares the concrete opcode and route payload for

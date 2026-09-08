@@ -36,6 +36,10 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   const { autoBuyerEnabled, setAutomationEnabled } = useAuth();
   const autoBuyerConfiguration = configuration?.sections[AUTO_BUYER_SECTION];
   const autoBuyerConfigurationKey = JSON.stringify(autoBuyerConfiguration ?? null);
+  const savedFeast = useMemo(
+    () => parseAutoBuyerClientState(JSON.parse(autoBuyerConfigurationKey)).feast,
+    [autoBuyerConfigurationKey],
+  );
   const [draft, setDraft] = useState<AutoBuyerClientStateV1>(defaultAutoBuyerClientState);
   const [projection, setProjection] = useState<AutoBuyerProjectionV1 | null>(null);
   const [loadError, setLoadError] = useState('');
@@ -79,9 +83,10 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         ));
         setDraft((current) => {
           const feastExists = catalog.feasts.some((feast) => feast.id === current.feast.feastId);
-          return feastExists || catalog.feasts.length === 0
+          const firstSupportedFeast = catalog.feasts.find((feast) => feast.automaticPurchase?.supported !== false);
+          return feastExists || !firstSupportedFeast
             ? current
-            : { ...current, feast: { ...current.feast, feastId: catalog.feasts[0].id } };
+            : { ...current, feast: { ...current.feast, feastId: firstSupportedFeast.id } };
         });
       })
       .catch((error) => {
@@ -99,6 +104,10 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     [draft.specialists],
   );
   const selectedFeast = projection?.feasts.find((feast) => feast.id === draft.feast.feastId) ?? null;
+  const selectedFeastSupported = selectedFeast?.automaticPurchase?.supported !== false;
+  const preservingEnabledUnsupportedFeast = Boolean(
+    !selectedFeastSupported && savedFeast.enabled && savedFeast.feastId === draft.feast.feastId,
+  );
   const selectedShop = projection?.shops.find((shop) => shop.id === selectedShopId) ?? null;
   const currencyOptions = useMemo(() => {
     if (!projection || !selectedShopId) return [];
@@ -211,10 +220,19 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     }
     if (draft.feast.enabled) {
       if (!selectedFeast || (draft.feast.sourceCastleId || draft.sourceCastleId) <= 0 || draft.feast.minimumRemainingHours < 1) return false;
-      if (selectedFeast.price.premium && (!draft.feast.allowRubies || draft.feast.maximumRubyCostPerPurchase < selectedFeast.price.amount)) return false;
+      if (!selectedFeastSupported && !preservingEnabledUnsupportedFeast) return false;
+      if (selectedFeastSupported && selectedFeast.price.premium && (!draft.feast.allowRubies || draft.feast.maximumRubyCostPerPurchase < selectedFeast.price.amount)) return false;
     }
     return true;
-  }, [draft, enabledPackages, enabledSpecialists, projection, selectedFeast]);
+  }, [
+    draft,
+    enabledPackages,
+    enabledSpecialists,
+    preservingEnabledUnsupportedFeast,
+    projection,
+    selectedFeast,
+    selectedFeastSupported,
+  ]);
 
   const updateMasterSwitch = async (enabled: boolean) => {
     if (updatingMasterSwitch || enabled === autoBuyerEnabled) return;
@@ -561,11 +579,15 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 </div>
                 <Switch
                   checked={draft.feast.enabled}
-                  onChange={(enabled) => setDraft((current) => ({ ...current, feast: { ...current.feast, enabled } }))}
+                  onChange={(enabled) => {
+                    if (enabled && !selectedFeastSupported && !preservingEnabledUnsupportedFeast) return;
+                    setDraft((current) => ({ ...current, feast: { ...current.feast, enabled } }));
+                  }}
+                  disabled={!draft.feast.enabled && !selectedFeastSupported && !preservingEnabledUnsupportedFeast}
                   ariaLabel="Maintain a feast"
                 />
               </div>
-              {draft.feast.enabled ? (
+              {draft.feast.enabled || !selectedFeastSupported ? (
                 <div className="mt-4 grid gap-4 border-t border-border-base pt-4 md:grid-cols-2">
                   <label className="block md:col-span-2">
                     <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Feast</span>
@@ -588,7 +610,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                       }}
                       options={projection.feasts.map((feast) => ({
                         value: String(feast.id),
-                        label: `${feast.name} · +${feast.productionBoostPercent}% · ${formatFeastPrice(feast)}`,
+                        label: `${feast.name} · +${feast.productionBoostPercent}% · ${formatFeastPrice(feast)}${feast.automaticPurchase?.supported === false ? ' · Automatic purchase unavailable' : ''}`,
+                        disabled: feast.automaticPurchase?.supported === false,
                       }))}
                       placeholder="Choose an official feast"
                       menuGrowToViewport
@@ -611,7 +634,17 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                       menuGrowToViewport
                     />
                   </label>
-                  {selectedFeast?.price.premium ? (
+                  {!selectedFeastSupported ? (
+                    <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 md:col-span-2">
+                      <div className="text-sm font-bold text-text-main">Automatic purchase unavailable</div>
+                      <p className="mt-0.5 text-xs text-text-muted">
+                        {selectedFeast?.automaticPurchase?.reason ?? 'This feast cannot be purchased safely by Auto Buyer.'}
+                        {preservingEnabledUnsupportedFeast
+                          ? ' The saved selection is preserved so you can disable it or choose a supported feast.'
+                          : ' Choose a supported feast before enabling feast upkeep.'}
+                      </p>
+                    </div>
+                  ) : selectedFeast?.price.premium ? (
                     <>
                       <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/5 p-3">
                         <div>

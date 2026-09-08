@@ -1,11 +1,15 @@
 package Ingest
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/big"
 	"reflect"
+	"strconv"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/GameData"
@@ -157,13 +161,20 @@ func reduceMarketBooster(
 		}
 	}
 	feast := gameState.Market.Feast
-	if rawFeast, ok := root["bfs"]; ok {
-		feast = marketFeastFromRaw(rawFeast, frame.ReceivedAt)
+	feastPresent := false
+	if rawFeast, ok := root["bfs"]; ok && !rawJSONNull(rawFeast) {
+		var err error
+		feast, err = marketFeastFromRaw(rawFeast, frame.ReceivedAt)
+		if err != nil {
+			return nil, false, fmt.Errorf("decode market feast from boosters: %w", err)
+		}
+		feastPresent = true
 	}
+	pendingChanged := feastPresent && reconcilePendingFeastSnapshot(gameState, feast, frame.ReceivedAt)
 	if gameState.Market.CaravanLevelLoaded && gameState.Market.CaravanLevel == level &&
 		reflect.DeepEqual(gameState.Market.Boosters, boosters) &&
 		reflect.DeepEqual(gameState.Market.Feast, feast) &&
-		gameState.Market.BoostersObservedAt.Equal(frame.ReceivedAt) {
+		gameState.Market.BoostersObservedAt.Equal(frame.ReceivedAt) && !pendingChanged {
 		return nil, false, nil
 	}
 	gameState.Market.CaravanLevel = level
@@ -180,40 +191,204 @@ func reduceMarketFeast(
 	gameState *State.GameState,
 	_ *GameData.Store,
 ) ([]string, bool, error) {
-	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+	if frame.ResponseCode == nil {
+		return nil, false, fmt.Errorf("decode purchased feast: response result code is missing")
+	}
+	if *frame.ResponseCode != 0 {
+		if gameState.Market.FeastPurchasePending &&
+			!frame.ReceivedAt.Before(gameState.Market.FeastPurchasePendingSince) &&
+			pendingFeastResponseMatches(gameState.Market, frame) {
+			clearPendingFeastPurchase(&gameState.Market)
+			return []string{"boosters", "market"}, true, nil
+		}
 		return nil, false, nil
 	}
-	feast := marketFeastFromRaw(frame.Payload, frame.ReceivedAt)
-	if reflect.DeepEqual(gameState.Market.Feast, feast) {
+	feast, err := marketFeastFromRaw(frame.Payload, frame.ReceivedAt)
+	if err != nil {
+		return nil, false, fmt.Errorf("decode purchased feast: %w", err)
+	}
+	if !feast.ActiveAt(frame.ReceivedAt) {
+		return nil, false, fmt.Errorf("decode purchased feast: successful response did not contain an active feast")
+	}
+	if gameState.Market.FeastPurchasePending &&
+		(feast.ID != gameState.Market.FeastPurchaseExpectedID ||
+			frame.ReceivedAt.Before(gameState.Market.FeastPurchasePendingSince) ||
+			!pendingFeastExpiryConfirmed(gameState.Market, feast.ExpiresAt)) {
+		return nil, false, fmt.Errorf("decode purchased feast: response did not confirm the expected feast")
+	}
+	lastPurchaseAt := frame.ReceivedAt
+	pendingChanged := gameState.Market.FeastPurchasePending
+	clearPendingFeastPurchase(&gameState.Market)
+	if reflect.DeepEqual(gameState.Market.Feast, feast) &&
+		gameState.Market.FeastLastPurchaseAt.Equal(lastPurchaseAt) && !pendingChanged {
 		return nil, false, nil
 	}
 	gameState.Market.Feast = feast
+	gameState.Market.FeastLastPurchaseAt = lastPurchaseAt
 	return []string{"boosters", "market"}, true, nil
 }
 
-func marketFeastFromRaw(raw json.RawMessage, observedAt time.Time) State.MarketFeastState {
-	feast := State.MarketFeastState{ObservedAt: observedAt}
-	if len(raw) == 0 {
-		return feast
+func reconcilePendingFeastSnapshot(
+	gameState *State.GameState,
+	feast State.MarketFeastState,
+	observedAt time.Time,
+) bool {
+	market := &gameState.Market
+	if !market.FeastPurchasePending || market.FeastPurchasePendingSince.IsZero() ||
+		observedAt.Before(market.FeastPurchasePendingSince) {
+		return false
+	}
+	if feast.ActiveAt(observedAt) && feast.ID == market.FeastPurchaseExpectedID &&
+		pendingFeastExpiryConfirmed(*market, feast.ExpiresAt) {
+		if market.FeastLastPurchaseAt.Before(market.FeastPurchasePendingSince) {
+			market.FeastLastPurchaseAt = market.FeastPurchasePendingSince
+		}
+		clearPendingFeastPurchase(market)
+		return true
+	}
+	if feast.ActiveAt(observedAt) || market.FeastPurchaseExpectedExpiresAt.IsZero() ||
+		observedAt.Before(market.FeastPurchaseExpectedExpiresAt) {
+		return false
+	}
+	clearPendingFeastPurchase(market)
+	return true
+}
+
+func pendingFeastExpiryConfirmed(market State.MarketState, expiresAt time.Time) bool {
+	return !market.FeastPurchaseExpectedExpiresAt.IsZero() &&
+		!expiresAt.Before(market.FeastPurchaseExpectedExpiresAt.Add(-time.Minute))
+}
+
+func pendingFeastResponseMatches(market State.MarketState, frame Protocol.Frame) bool {
+	return market.FeastPurchaseResponseToken != "" && frame.ResponseToken == market.FeastPurchaseResponseToken ||
+		market.FeastPurchaseOperationID != "" && frame.CausationOperationID == market.FeastPurchaseOperationID
+}
+
+func clearPendingFeastPurchase(market *State.MarketState) {
+	market.FeastPurchasePending = false
+	market.FeastPurchaseExpectedID = 0
+	market.FeastPurchasePendingSince = time.Time{}
+	market.FeastPurchaseExpectedExpiresAt = time.Time{}
+	market.FeastPurchaseOperationID = ""
+	market.FeastPurchaseResponseToken = ""
+}
+
+func marketFeastFromRaw(raw json.RawMessage, observedAt time.Time) (State.MarketFeastState, error) {
+	if observedAt.IsZero() {
+		return State.MarketFeastState{}, fmt.Errorf("observation timestamp is required")
+	}
+	if rawJSONNull(raw) {
+		return State.MarketFeastState{}, fmt.Errorf("payload must be an object")
 	}
 	var values map[string]json.RawMessage
-	if json.Unmarshal(raw, &values) != nil {
-		return feast
+	if err := json.Unmarshal(raw, &values); err != nil {
+		return State.MarketFeastState{}, err
 	}
-	if nested := values["bfs"]; len(nested) > 0 {
-		if json.Unmarshal(nested, &values) != nil {
-			return feast
+	if values == nil {
+		return State.MarketFeastState{}, fmt.Errorf("payload must be an object")
+	}
+	if nested, found := values["bfs"]; found {
+		if rawJSONNull(nested) {
+			return State.MarketFeastState{}, fmt.Errorf("nested bfs payload must be an object")
+		}
+		if err := json.Unmarshal(nested, &values); err != nil {
+			return State.MarketFeastState{}, fmt.Errorf("decode nested bfs payload: %w", err)
+		}
+		if values == nil {
+			return State.MarketFeastState{}, fmt.Errorf("nested bfs payload must be an object")
 		}
 	}
-	feast.ID = rawInteger(values["T"])
-	feast.RemainingSec = int(rawInteger(values["RT"]))
-	if feast.ID < 0 || feast.RemainingSec <= 0 {
-		feast.ID = 0
-		feast.RemainingSec = 0
-		return feast
+	id, err := marketFeastInteger(values["T"], "T")
+	if err != nil {
+		return State.MarketFeastState{}, err
 	}
-	feast.ExpiresAt = observedAt.Add(time.Duration(feast.RemainingSec) * time.Second)
-	return feast
+	remainingSec, err := marketFeastInteger(values["RT"], "RT")
+	if err != nil {
+		return State.MarketFeastState{}, err
+	}
+	if id == -1 && remainingSec == 0 {
+		return State.MarketFeastState{ObservedAt: observedAt}, nil
+	}
+	if id < 0 || remainingSec <= 0 {
+		return State.MarketFeastState{}, fmt.Errorf("T and RT are incoherent: want T=-1/RT=0 or T>=0/RT>0")
+	}
+	if remainingSec > int64(math.MaxInt) || remainingSec > int64(math.MaxInt64)/int64(time.Second) {
+		return State.MarketFeastState{}, fmt.Errorf("RT is outside the supported duration range")
+	}
+	duration := time.Duration(remainingSec) * time.Second
+	expiresAt := observedAt.Add(duration)
+	if !expiresAt.After(observedAt) {
+		return State.MarketFeastState{}, fmt.Errorf("RT does not produce a future expiry")
+	}
+	return State.MarketFeastState{
+		ID: id, RemainingSec: int(remainingSec), ExpiresAt: expiresAt, ObservedAt: observedAt,
+	}, nil
+}
+
+func marketFeastInteger(raw json.RawMessage, field string) (int64, error) {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
+		return 0, fmt.Errorf("%s is required", field)
+	}
+	text := string(raw)
+	if raw[0] == '"' {
+		if err := json.Unmarshal(raw, &text); err != nil {
+			return 0, fmt.Errorf("%s must be an integer", field)
+		}
+		text = strings.TrimSpace(text)
+	}
+	if _, err := strconv.ParseFloat(text, 64); err != nil {
+		return 0, fmt.Errorf("%s must be an integer", field)
+	}
+	rational, ok := new(big.Rat).SetString(text)
+	if !ok || !rational.IsInt() || !rational.Num().IsInt64() {
+		return 0, fmt.Errorf("%s must be an integer", field)
+	}
+	return rational.Num().Int64(), nil
+}
+
+func rawJSONNull(raw json.RawMessage) bool {
+	raw = bytes.TrimSpace(raw)
+	return len(raw) == 0 || bytes.Equal(raw, []byte("null"))
+}
+
+func reduceFeastCostReduction(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) {
+		return nil, false, nil
+	}
+	if len(frame.Payload) == 0 {
+		return nil, false, fmt.Errorf("decode feast cost reduction: response payload is empty")
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+		return nil, false, fmt.Errorf("decode feast cost reduction: %w", err)
+	}
+	if nested := root["fce"]; len(nested) > 0 {
+		if err := json.Unmarshal(nested, &root); err != nil {
+			return nil, false, fmt.Errorf("decode nested feast cost reduction: %w", err)
+		}
+	}
+	rawPercent, found := root["FRM"]
+	percent, number := rawFloat64(rawPercent)
+	if !found || !number || math.IsNaN(percent) || math.IsInf(percent, 0) || percent != math.Trunc(percent) {
+		return nil, false, fmt.Errorf("decode feast cost reduction: FRM must be an integer percentage")
+	}
+	if percent < 0 || percent > 100 {
+		return nil, false, fmt.Errorf("decode feast cost reduction: FRM percentage %.0f is outside 0..100", percent)
+	}
+	reduction := int(percent)
+	if gameState.Market.FeastCostReductionPercent == reduction &&
+		gameState.Market.FeastCostReductionObservedAt.Equal(frame.ReceivedAt) {
+		return nil, false, nil
+	}
+	gameState.Market.FeastCostReductionPercent = reduction
+	gameState.Market.FeastCostReductionObservedAt = frame.ReceivedAt
+	return []string{"market"}, true, nil
 }
 
 func reduceKingdomTransport(

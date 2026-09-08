@@ -69,6 +69,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"dfm", castles, reduceDefenseMoat},
 		{"gpc", castles, reduceQueueableProduction},
 		{"boi", components(State.ComponentMarket), reduceMarketBooster},
+		{"fce", components(State.ComponentMarket), reduceFeastCostReduction},
 		{"cmi", components(State.ComponentMarket, State.ComponentCastles), reduceMarketInfo},
 		{"kpi", components(State.ComponentKingdomTransport), reduceKingdomTransport},
 		{"kgt", components(State.ComponentKingdomTransport), reduceKingdomTransport},
