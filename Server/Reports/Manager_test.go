@@ -3,6 +3,7 @@ package Reports
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -84,6 +85,87 @@ func TestManagerArchivesBattleReportsWithoutBlockingIngest(t *testing.T) {
 	}
 	cancel()
 	manager.Wait()
+}
+
+func TestManagerHoldsPossibleInvasionReportUntilReservationResolves(t *testing.T) {
+	history, err := History.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	reservedAt := now.Add(-time.Minute)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	for _, candidate := range []struct {
+		messageID int64
+		occurred  time.Time
+	}{
+		// This report is closest to dispatch, while the second is closest to
+		// the eventual movement impact. Both must survive until exact recovery.
+		{messageID: 101, occurred: reservedAt.Add(time.Second)},
+		{messageID: 102, occurred: reservedAt.Add(55 * time.Second)},
+	} {
+		reportID := candidate.messageID + 101
+		gameState.Reports.Notices[candidate.messageID] = State.ReportNotice{
+			MessageID: candidate.messageID, TypeID: 6, BattleKey: "battle#invasion", Status: "pending", ObservedAt: now,
+		}
+		gameState.Reports.BattleCaptures[candidate.messageID] = State.BattleReportCapture{
+			MessageID: candidate.messageID, ReportID: reportID, BattleKey: "battle#invasion",
+			OccurredAt: candidate.occurred, CapturedAt: now,
+			Summary: json.RawMessage(fmt.Sprintf(`{
+				"MID":%d,"LID":%d,"MT":6,"AHP":1,"DHP":0,
+				"PI":[{"OID":1,"N":"Attacker"},{"OID":-2,"DUM":true,"N":"Target"}],
+				"PBI":[[1,0,1000,-100],[-2,1,900,-900]],
+				"AI":{"N":"Target","DP":-2,"AT":34,"K":0,"X":120,"Y":121}
+			}`, candidate.messageID, reportID)),
+			Waves:   json.RawMessage(fmt.Sprintf(`{"LID":%d,"W":[]}`, reportID)),
+			Details: json.RawMessage(fmt.Sprintf(`{"LID":%d,"Y":[]}`, reportID)),
+		}
+	}
+	gameState.Invasion.ReserveTarget(State.InvasionTargetReservation{
+		KingdomID: 0, EventID: 103, OccurrenceEndsAt: now.Add(time.Hour),
+		TargetTypeID: 34, X: 120, Y: 121,
+		SourceCastleID: 1, SourceX: 100, SourceY: 101, SourceKnown: true,
+		CommanderID: 7, CommanderKnown: true,
+		OperationID: "unresolved-cra", ReservedAt: reservedAt,
+	})
+	state := State.NewStore(gameState)
+	manager := NewManager(state, history, &managerTestIntents{})
+
+	next := manager.processNext(t.Context())
+	held := state.ReadOnlyView()
+	if next.IsZero() {
+		t.Fatal("possible invasion reports did not schedule a hold deadline")
+	}
+	for _, messageID := range []int64{101, 102} {
+		heldNotice, heldNoticeFound := held.LookupReportNotice(messageID)
+		if !heldNoticeFound || heldNotice.Status != "pending" {
+			t.Fatalf("possible invasion report %d was not held: notice=%#v found=%t", messageID, heldNotice, heldNoticeFound)
+		}
+		if _, exists := held.LookupBattleReportCapture(messageID); !exists {
+			t.Fatalf("possible invasion report %d was archived before movement reconciliation", messageID)
+		}
+	}
+
+	if _, err := state.ApplyComponents(State.Components(State.ComponentInvasion), func(current *State.GameState) ([]string, bool, error) {
+		changed := current.Invasion.ReleaseTargetReservation(0, 120, 121, "unresolved-cra")
+		return []string{"invasion"}, changed, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	delete(manager.nextAttempt, 101)
+	delete(manager.nextAttempt, 102)
+	manager.processNext(t.Context())
+	archived := state.ReadOnlyView()
+	for _, messageID := range []int64{101, 102} {
+		archivedNotice, archivedNoticeFound := archived.LookupReportNotice(messageID)
+		if !archivedNoticeFound || archivedNotice.Status != "archived" {
+			t.Fatalf("resolved invasion report %d = %#v found=%t", messageID, archivedNotice, archivedNoticeFound)
+		}
+		if _, exists := archived.LookupBattleReportCapture(messageID); exists {
+			t.Fatalf("resolved invasion report %d was not archived", messageID)
+		}
+	}
 }
 
 func (intents *managerTestIntents) Submit(context.Context, Intent.Request) Intent.Receipt {

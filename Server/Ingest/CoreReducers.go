@@ -25,9 +25,13 @@ func RegisterCoreReducers(registry *Registry) error {
 		State.ComponentMovements, State.ComponentMovementSnapshot, State.ComponentCommanders,
 		State.ComponentKhan, State.ComponentEventScores,
 	)
+	invasionRecovery := components(
+		State.ComponentInvasion, State.ComponentEventScores,
+		State.ComponentAttackAnalytics, State.ComponentReports,
+	)
 	worldMap := components(
 		State.ComponentWorldMap, State.ComponentTowerCooldowns, State.ComponentNomadCamps,
-		State.ComponentStorm, State.ComponentBeri, State.ComponentKhan,
+		State.ComponentStorm, State.ComponentBeri, State.ComponentKhan, State.ComponentInvasion,
 	)
 	reports := components(State.ComponentReports)
 	equipment := components(
@@ -98,9 +102,8 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"crun", resources, combineReducers(reduceCraftingBuilding, reduceResponseResources)},
 		{"crsk", resources, combineReducers(reduceCraftingBuilding, reduceResponseResources)},
 		{"crca", resources, combineReducers(reduceCraftingBuilding, reduceResponseResources)},
-		{"csm", movements, newMovementReducer(false)},
-		{"cds", movements, newMovementReducer(false)},
 		{"mrm", movements, reduceMovementRemoval},
+		{"hac", components(State.ComponentInvasion), reduceHiddenInvasionTargets},
 		{"rae", components(State.ComponentInvasion), reduceInvasionFortification},
 		{"rce", components(State.ComponentInvasion), reduceInvasionFortificationCounters},
 		{"adi", worldMap.Union(components(State.ComponentAttackDialog)), reduceAttackDialog},
@@ -200,6 +203,10 @@ func RegisterCoreReducers(registry *Registry) error {
 			{writes: components(State.ComponentTowerCooldowns, State.ComponentNomadCamps, State.ComponentKhan), reducer: reduceSuccessfulTowerBattle},
 			{writes: components(State.ComponentNomadCamps), reducer: reduceSuccessfulNomadCampBattle},
 		}},
+		{[]string{"csm", "cds"}, []reducerStep{
+			{writes: movements, reducer: newMovementReducer(false)},
+			{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
+		}},
 	}
 	for _, group := range sequenceGroups {
 		for _, opcode := range group.opcodes {
@@ -218,6 +225,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}
 	if err := registry.registerComponentSequence("gam",
 		reducerStep{writes: movements, reducer: newMovementReducer(true)},
+		reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
 		reducerStep{writes: player, reducer: reducePlayerTitles},
 	); err != nil {
@@ -226,6 +234,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	for _, opcode := range []string{"cat", "mcm"} {
 		if err := registry.registerComponentSequence(opcode,
 			reducerStep{writes: movements, reducer: newMovementReducer(false)},
+			reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 			reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
 		); err != nil {
 			return err
@@ -233,6 +242,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}
 	if err := registry.registerComponentSequence("cra",
 		reducerStep{writes: movements, reducer: craMovements},
+		reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		reducerStep{writes: components(State.ComponentRift), reducer: reduceRiftLaunchAck},
 		reducerStep{writes: components(State.ComponentAdvisor, State.ComponentEventScores), reducer: reduceAdvisorMovement},
 		reducerStep{writes: components(State.ComponentCombatCooldown), reducer: reduceCombatCooldownOnCommanderBusy},
@@ -241,6 +251,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}
 	if err := registry.registerComponentSequence("crm",
 		reducerStep{writes: movements, reducer: newMovementReducer(false)},
+		reducerStep{writes: invasionRecovery, reducer: reduceInvasionReservationMovements},
 		reducerStep{writes: resources, reducer: reduceResponseResources},
 	); err != nil {
 		return err

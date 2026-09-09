@@ -154,8 +154,8 @@ func (application *Application) SetControlConfigurationReady(required, ready boo
 }
 
 type statePersistenceRequest struct {
-	revision uint64
-	result   chan error
+	event  State.Event
+	result chan error
 }
 
 func New(ctx context.Context, config Config) (*Application, error) {
@@ -372,6 +372,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		statePersistence:     make(chan statePersistenceRequest),
 		statePersistenceDone: make(chan struct{}),
 	}
+	ingest.SetDurabilityFence(application.saveStateEvent)
 	session.SetAttackDelayProvider(application.attackLaunchDelay)
 	if relogTransport, ok := transport.(Session.RelogDelayTransport); ok {
 		relogTransport.SetRelogDelayProvider(application.relogDelay)
@@ -415,6 +416,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewBeriAttackPolicy(),
 		Automation.NewFoodBalancePolicy(),
 		Automation.NewAutoTowerPolicy(),
+		Automation.NewInvasionRecoveryPolicy(),
 		Automation.NewAutoInvasionPolicy(),
 		Automation.NewAutoNomadPolicy(),
 		Automation.NewAutoAdvisorPolicy(),
@@ -460,6 +462,9 @@ func (application *Application) Start(ctx context.Context) {
 }
 
 func (application *Application) start(ctx context.Context) {
+	persistenceReady := make(chan struct{})
+	go application.persistState(ctx, persistenceReady)
+	<-persistenceReady
 	application.statePersistenceStarted.Store(true)
 	go application.captureIntentLogs(ctx)
 	go func() {
@@ -518,7 +523,6 @@ func (application *Application) start(ctx context.Context) {
 	if application.Checkpoints != nil {
 		go application.Checkpoints.Run(ctx)
 	}
-	go application.persistState(ctx)
 	go application.runMovementClock(ctx)
 	go application.Automation.Run(ctx)
 	go application.Reports.Run(ctx)
@@ -603,22 +607,32 @@ func (application *Application) recordIntentLog(receipt Intent.Receipt) {
 	}
 }
 
-func (application *Application) persistState(ctx context.Context) {
+func (application *Application) persistState(ctx context.Context, ready chan<- struct{}) {
 	defer close(application.statePersistenceDone)
 	events, unsubscribe := application.State.Subscribe(128)
 	defer unsubscribe()
+	subscriptionBaseline := application.State.Revision()
+	close(ready)
 	writer := State.NewComponentSnapshotWriter(application.DataDir)
 	var timer *time.Timer
 	var timerChannel <-chan time.Time
 	var pending State.PersistenceBatch
-	var persistedRevision uint64
-	accumulate := func(event State.Event) {
+	coveredRevision := subscriptionBaseline
+	var persistedCoverage uint64
+	accumulate := func(event State.Event) bool {
 		if !pending.Accumulate(event) {
-			return
+			return false
 		}
 		if timer == nil {
 			timer = time.NewTimer(2 * time.Second)
 			timerChannel = timer.C
+		}
+		return true
+	}
+	observe := func(event State.Event) {
+		accumulate(event)
+		if event.Revision > coveredRevision {
+			coveredRevision = event.Revision
 		}
 	}
 	flush := func() error {
@@ -630,7 +644,9 @@ func (application *Application) persistState(ctx context.Context) {
 		application.statePersistenceErr = err
 		application.persistenceHealthMu.Unlock()
 		if err == nil {
-			persistedRevision = revision
+			if coverage := min(coveredRevision, revision); coverage > persistedCoverage {
+				persistedCoverage = coverage
+			}
 			if timer != nil {
 				timer.Stop()
 				timer = nil
@@ -640,14 +656,39 @@ func (application *Application) persistState(ctx context.Context) {
 		return err
 	}
 	force := func(request statePersistenceRequest) {
-		for pending.Revision() < request.revision && persistedRevision < request.revision {
-			select {
-			case event := <-events:
-				accumulate(event)
-			case <-ctx.Done():
-				request.result <- ctx.Err()
+		if request.event.Revision == 0 {
+			request.result <- nil
+			return
+		}
+		if request.event.Revision <= subscriptionBaseline {
+			// Defensive fallback for an event produced before this subscriber was
+			// installed. Production keeps request-mode persistence disabled until
+			// the readiness handshake, but persisting the event's cumulative
+			// generation as a full snapshot keeps this path lossless as well.
+			full := request.event
+			full.Components = State.AllComponents.List()
+			if !accumulate(full) {
+				request.result <- nil
 				return
 			}
+		} else {
+			// The State subscription is ordered and coalescing preserves every
+			// dirty component/key. Drain through the requested revision before
+			// acknowledging it; a later sparse event is not by itself proof that an
+			// earlier invasion patch reached disk.
+			for coveredRevision < request.event.Revision {
+				select {
+				case event := <-events:
+					observe(event)
+				case <-ctx.Done():
+					request.result <- ctx.Err()
+					return
+				}
+			}
+		}
+		if persistedCoverage >= request.event.Revision {
+			request.result <- nil
+			return
 		}
 		request.result <- flush()
 	}
@@ -660,7 +701,7 @@ func (application *Application) persistState(ctx context.Context) {
 			_ = flush()
 			return
 		case event := <-events:
-			accumulate(event)
+			observe(event)
 		case request := <-application.statePersistence:
 			force(request)
 		case <-timerChannel:
@@ -683,7 +724,7 @@ func (application *Application) saveStateEvent(ctx context.Context, event State.
 		application.persistenceHealthMu.Unlock()
 		return err
 	}
-	request := statePersistenceRequest{revision: event.Revision, result: make(chan error, 1)}
+	request := statePersistenceRequest{event: event, result: make(chan error, 1)}
 	select {
 	case application.statePersistence <- request:
 	case <-application.statePersistenceDone:

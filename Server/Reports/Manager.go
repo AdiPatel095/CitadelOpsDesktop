@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/History"
+	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -240,6 +241,14 @@ func (manager *Manager) processNext(ctx context.Context) time.Time {
 			}
 			capture, _ := snapshot.LookupBattleReportCapture(notice.MessageID)
 			if len(capture.Summary) > 0 && len(capture.Waves) > 0 && len(capture.Details) > 0 {
+				if captureHeldForInvasionRecovery(snapshot, capture) {
+					next := now.Add(State.InvasionTargetReservationReconcileGrace)
+					manager.nextAttempt[notice.MessageID] = next
+					if nextWake.IsZero() || next.Before(nextWake) {
+						nextWake = next
+					}
+					continue
+				}
 				manager.archiveBattle(ctx, snapshot, notice, capture)
 				snapshot = manager.state.ReadOnlyView()
 				continue
@@ -266,6 +275,18 @@ func (manager *Manager) processNext(ctx context.Context) time.Time {
 		}
 	}
 	return nextWake
+}
+
+func captureHeldForInvasionRecovery(snapshot State.GameState, capture State.BattleReportCapture) bool {
+	if capture.MessageID <= 0 || capture.MovementID != 0 || len(snapshot.Invasion.TargetReservations) == 0 {
+		return false
+	}
+	for _, reservation := range snapshot.Invasion.TargetReservations {
+		if Ingest.InvasionReservationReportCandidate(snapshot, reservation, capture) {
+			return true
+		}
+	}
+	return false
 }
 
 func (manager *Manager) fetch(ctx context.Context, notice State.ReportNotice, name string, argumentsValue map[string]any) {

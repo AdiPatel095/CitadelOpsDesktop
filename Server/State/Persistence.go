@@ -427,6 +427,31 @@ func normalizeStateMaps(state *GameState) {
 	if state.Invasion.LastScannedAt == nil {
 		state.Invasion.LastScannedAt = defaults.Invasion.LastScannedAt
 	}
+	if state.Invasion.UnavailableTargets == nil {
+		state.Invasion.UnavailableTargets = defaults.Invasion.UnavailableTargets
+	}
+	if state.Invasion.TargetReservations == nil {
+		state.Invasion.TargetReservations = defaults.Invasion.TargetReservations
+	}
+	legacyInvasionTargets := false
+	for _, observations := range state.Map {
+		for _, observation := range observations {
+			if (observation.TypeID == MapTypeForeignLord || observation.TypeID == MapTypeBloodcrow) &&
+				!observation.InvasionAvailabilityKnown {
+				legacyInvasionTargets = true
+				break
+			}
+		}
+		if legacyInvasionTargets {
+			break
+		}
+	}
+	if legacyInvasionTargets {
+		// Availability was added after existing target snapshots. Invalidate the
+		// old sweep clock so the first policy pass migrates those rows from GAA
+		// instead of waiting up to the configured refresh interval.
+		state.Invasion.LastScannedAt = map[CastleID]time.Time{}
+	}
 	if state.Storm.LastScannedAt == nil {
 		state.Storm.LastScannedAt = defaults.Storm.LastScannedAt
 	}

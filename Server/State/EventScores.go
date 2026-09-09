@@ -205,6 +205,45 @@ func RecordEventAttackLaunch(gameState *GameState, eventID int64, record EventAt
 	if !ok || record.MovementID <= 0 {
 		return false
 	}
+	return recordEventAttackLaunch(gameState, eventID, activity, record)
+}
+
+// RecordEventAttackLaunchForOccurrence records a launch against the exact
+// persisted event boundary even after ActiveEventID advances. It refuses to
+// overwrite a different recurrence of the same numeric event ID.
+func RecordEventAttackLaunchForOccurrence(
+	gameState *GameState,
+	eventID int64,
+	occurrenceEndsAt time.Time,
+	record EventAttackRecord,
+) bool {
+	if gameState == nil || eventID <= 0 || occurrenceEndsAt.IsZero() || record.MovementID <= 0 {
+		return false
+	}
+	occurrenceEndsAt = occurrenceEndsAt.UTC()
+	if current, found := gameState.LookupEventOccurrence(eventID); found &&
+		!SameEventOccurrence(current.EndsAt, occurrenceEndsAt) {
+		return false
+	}
+	activity, found := gameState.MutableEventActivity(eventID)
+	if found && !SameEventOccurrence(activity.OccurrenceEndsAt, occurrenceEndsAt) {
+		return false
+	}
+	if !found {
+		activity = EventActivityState{
+			EventID: eventID, OccurrenceEndsAt: occurrenceEndsAt, ObservedFrom: record.LaunchedAt.UTC(),
+			LaunchIDs: []MovementID{}, PendingAttacks: []EventAttackRecord{}, ProcessedReportIDs: []int64{},
+		}
+	}
+	return recordEventAttackLaunch(gameState, eventID, activity, record)
+}
+
+func recordEventAttackLaunch(
+	gameState *GameState,
+	eventID int64,
+	activity EventActivityState,
+	record EventAttackRecord,
+) bool {
 	for _, movementID := range activity.LaunchIDs {
 		if movementID == record.MovementID {
 			return false

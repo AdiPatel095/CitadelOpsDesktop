@@ -32,6 +32,10 @@ type Pipeline struct {
 	state    *State.Store
 	gameData GameDataProvider
 	registry *Registry
+	// durabilityFence is configured by the application for the small set of
+	// protocol reductions that must be on disk before a command response is
+	// considered committed.
+	durabilityFence func(context.Context, State.Event) error
 
 	watchMu      sync.RWMutex
 	watchers     map[uint64]frameWatcher
@@ -122,6 +126,12 @@ func (pipeline *Pipeline) SetTelemetry(telemetry frameTelemetry) {
 
 func (pipeline *Pipeline) SetProfileID(profileID string) {
 	pipeline.profileID = strings.TrimSpace(profileID)
+}
+
+func (pipeline *Pipeline) SetDurabilityFence(fence func(context.Context, State.Event) error) {
+	if pipeline != nil {
+		pipeline.durabilityFence = fence
+	}
 }
 
 func (pipeline *Pipeline) HandleRaw(ctx context.Context, raw string, direction Protocol.Direction) (Protocol.CommittedFrame, error) {
@@ -408,12 +418,31 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 		return committed, reduceErr
 	}
 	committed := Protocol.CommittedFrame{Frame: frame, IngressID: observed.IngressID, Revision: event.Revision, Domains: event.Domains}
+	if pipeline.durabilityFence != nil && requiresDurabilityFence(event.Domains) {
+		if fenceErr := pipeline.durabilityFence(ctx, event); fenceErr != nil {
+			fenceErr = fmt.Errorf("persist committed %s frame revision %d: %w", frame.Opcode, event.Revision, fenceErr)
+			pipeline.completeWireCommit(observed.IngressID, Protocol.CommittedFrame{}, fenceErr)
+			if pipeline.telemetry != nil {
+				pipeline.telemetry.Record(committed, fenceErr)
+			}
+			return committed, fenceErr
+		}
+	}
 	pipeline.publish(committed)
 	pipeline.completeWireCommit(observed.IngressID, committed, nil)
 	if pipeline.telemetry != nil {
 		pipeline.telemetry.Record(committed, nil)
 	}
 	return committed, nil
+}
+
+func requiresDurabilityFence(domains []string) bool {
+	for _, domain := range domains {
+		if domain == invasionLaunchDurabilityDomain {
+			return true
+		}
+	}
+	return false
 }
 
 func frameMutatesWorldMap(frame Protocol.Frame) bool {

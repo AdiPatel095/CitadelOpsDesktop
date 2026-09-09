@@ -1314,6 +1314,8 @@ type MapObservation struct {
 	Level                      int       `json:"level,omitempty"`
 	OwnerID                    PlayerID  `json:"ownerId,omitempty"`
 	ObjectID                   int64     `json:"objectId,omitempty"`
+	InvasionAvailabilityKnown  bool      `json:"invasionAvailabilityKnown,omitempty"`
+	InvasionProtected          bool      `json:"invasionProtected,omitempty"`
 	TowerVictoryCount          int64     `json:"towerVictoryCount,omitempty"`
 	TowerCooldownRemaining     int       `json:"towerCooldownRemaining,omitempty"`
 	EventCampID                int64     `json:"eventCampId,omitempty"`
@@ -1422,11 +1424,33 @@ type TowerQueueState struct {
 const TowerQueueCursorVersion = 1
 
 type InvasionState struct {
-	LastScannedAt        map[CastleID]time.Time `json:"lastScannedAt"`
-	FortifiedTargets     map[string]string      `json:"fortifiedTargets"`
-	FortifyCurrencies    []string               `json:"fortifyCurrencies"`
-	FortifyResourceCount int64                  `json:"fortifyResourceCount"`
-	FortifyRubyCount     int64                  `json:"fortifyRubyCount"`
+	LastScannedAt        map[CastleID]time.Time               `json:"lastScannedAt"`
+	FortifiedTargets     map[string]string                    `json:"fortifiedTargets"`
+	UnavailableTargets   map[string]time.Time                 `json:"unavailableTargets,omitempty"`
+	TargetReservations   map[string]InvasionTargetReservation `json:"targetReservations,omitempty"`
+	FortifyCurrencies    []string                             `json:"fortifyCurrencies"`
+	FortifyResourceCount int64                                `json:"fortifyResourceCount"`
+	FortifyRubyCount     int64                                `json:"fortifyRubyCount"`
+}
+
+type InvasionTargetReservation struct {
+	KingdomID           KingdomID   `json:"kingdomId"`
+	EventID             int64       `json:"eventId,omitempty"`
+	OccurrenceEndsAt    time.Time   `json:"occurrenceEndsAt,omitempty"`
+	TargetTypeID        int         `json:"targetTypeId,omitempty"`
+	X                   int         `json:"x"`
+	Y                   int         `json:"y"`
+	SourceCastleID      CastleID    `json:"sourceCastleId,omitempty"`
+	SourceX             int         `json:"sourceX,omitempty"`
+	SourceY             int         `json:"sourceY,omitempty"`
+	SourceKnown         bool        `json:"sourceKnown,omitempty"`
+	CommanderID         CommanderID `json:"commanderId,omitempty"`
+	CommanderKnown      bool        `json:"commanderKnown,omitempty"`
+	OperationID         string      `json:"operationId,omitempty"`
+	ReservedAt          time.Time   `json:"reservedAt"`
+	ReconcileAfter      time.Time   `json:"reconcileAfter,omitempty"`
+	ReconcileAttempts   int         `json:"reconcileAttempts,omitempty"`
+	RecoveryExhaustedAt time.Time   `json:"recoveryExhaustedAt,omitempty"`
 }
 
 func (state InvasionState) SupportsFortifyCurrency(currency string) bool {
@@ -1774,6 +1798,8 @@ type AttackDialogTarget struct {
 	Y                          int      `json:"y,omitempty"`
 	ObjectID                   int64    `json:"objectId,omitempty"`
 	OwnerID                    PlayerID `json:"ownerId,omitempty"`
+	InvasionAvailabilityKnown  bool     `json:"invasionAvailabilityKnown,omitempty"`
+	InvasionProtected          bool     `json:"invasionProtected,omitempty"`
 	TowerVictoryCount          int64    `json:"towerVictoryCount,omitempty"`
 	TowerCooldownRemaining     int      `json:"towerCooldownRemaining,omitempty"`
 	EventCampID                int64    `json:"eventCampId,omitempty"`
@@ -2051,7 +2077,9 @@ func NewGameState() GameState {
 			CapacityByCastle:          map[CastleID]TowerCapacityObservation{},
 		},
 		Invasion: InvasionState{
-			LastScannedAt: map[CastleID]time.Time{}, FortifiedTargets: map[string]string{}, FortifyCurrencies: []string{},
+			LastScannedAt: map[CastleID]time.Time{}, FortifiedTargets: map[string]string{},
+			UnavailableTargets: map[string]time.Time{}, TargetReservations: map[string]InvasionTargetReservation{},
+			FortifyCurrencies: []string{},
 		},
 		Storm: StormState{
 			LastScannedAt: map[CastleID]time.Time{},

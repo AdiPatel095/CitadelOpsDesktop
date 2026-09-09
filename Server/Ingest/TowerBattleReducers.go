@@ -142,10 +142,8 @@ func recordKhanCooldownReport(
 
 func battleSummaryHasOwnAttacker(participants [][]json.RawMessage, playerID State.PlayerID) bool {
 	for _, participant := range participants {
-		if len(participant) < 2 {
-			continue
-		}
-		if State.PlayerID(rowInt(participant, 0)) == playerID && rowInt(participant, 1) == 0 {
+		observedPlayerID, role, valid := battleParticipantIdentity(participant)
+		if valid && observedPlayerID == playerID && role == 0 {
 			return true
 		}
 	}
@@ -159,11 +157,15 @@ func battleSummaryAttackerWon(participants [][]json.RawMessage) bool {
 		if len(participant) < 4 {
 			continue
 		}
+		_, role, valid := battleParticipantIdentity(participant)
+		if !valid {
+			continue
+		}
 		survivors := rowInt(participant, 2) + rowInt(participant, 3)
 		if survivors < 0 {
 			survivors = 0
 		}
-		switch rowInt(participant, 1) {
+		switch role {
 		case 0:
 			attackerPresent = true
 			attackerSurvivors += survivors

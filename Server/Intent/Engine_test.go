@@ -374,6 +374,65 @@ func TestExecuteStepClassifiesDeclaredResponseCodeAsStale(t *testing.T) {
 	}
 }
 
+func TestExecuteStepRoutesDefinitiveRetryAndStaleResponseActions(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		code       int
+		wantStale  bool
+		wantEvents string
+		retryable  bool
+	}{
+		{name: "definitive rejection", code: 91, wantEvents: "arm,release"},
+		{name: "stale cooldown", code: 95, wantStale: true, wantEvents: "arm,cooldown"},
+		{name: "declared retry remains armed", code: 227, wantEvents: "arm", retryable: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Session = State.SessionState{
+				Generation: 1, BaselineGeneration: 1, ConnectionGeneration: 1,
+				Status: "connected", LoggedIn: true, SocketReady: true, Namespace: "EmpireEx_21",
+			}
+			store := State.NewStore(gameState)
+			pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+			engine := NewEngine(nil, store, nil, &pipelineResponseSender{pipeline: pipeline, responseCode: test.code}, pipeline)
+			events := []string{}
+			if err := engine.RegisterAction("test.arm-response", func(context.Context, json.RawMessage) error {
+				events = append(events, "arm")
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if err := engine.RegisterAction("test.release-response", func(context.Context, json.RawMessage) error {
+				events = append(events, "release")
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if err := engine.RegisterAction("test.cooldown-response", func(context.Context, json.RawMessage) error {
+				events = append(events, "cooldown")
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			step := Step{
+				Opcode: "cra", AwaitOpcode: "cra", TimeoutMillis: 1_000,
+				SuccessCodes: []int{0}, StaleCodes: []int{95},
+				Command:                         Protocol.Command{Opcode: "cra", Payload: json.RawMessage(`{}`)},
+				PreDispatchAction:               "test.arm-response",
+				DefinitiveResponseFailureAction: "test.release-response",
+				StaleResponseAction:             "test.cooldown-response",
+			}
+			if test.retryable {
+				step.ResponseRetry = &ResponseRetryPolicy{Codes: []int{test.code}, GuardAction: "unused", DelayMillis: 1}
+			}
+			_, err := engine.executeStep(t.Context(), store.Revision(), step)
+			if errors.Is(err, ErrPlanStale) != test.wantStale || strings.Join(events, ",") != test.wantEvents {
+				t.Fatalf("response error=%v events=%v, wantStale=%t wantEvents=%s", err, events, test.wantStale, test.wantEvents)
+			}
+		})
+	}
+}
+
 func TestEngineRetriesDeclaredResponseAfterPriorProgress(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Player.Resources[1] = 100

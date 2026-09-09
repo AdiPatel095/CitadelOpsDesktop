@@ -128,6 +128,16 @@ type Step struct {
 	// sender proves the command did not reach an indeterminate wire state.
 	DefinitiveSendFailureAction    string          `json:"definitiveSendFailureAction,omitempty"`
 	DefinitiveSendFailureArguments json.RawMessage `json:"definitiveSendFailureArguments,omitempty"`
+	// DefinitiveResponseFailureAction compensates PreDispatchAction when the
+	// game returned an explicit non-success code. StaleCodes intentionally do
+	// not run it because their marker can be the state that prevents replay.
+	DefinitiveResponseFailureAction    string          `json:"definitiveResponseFailureAction,omitempty"`
+	DefinitiveResponseFailureArguments json.RawMessage `json:"definitiveResponseFailureArguments,omitempty"`
+	// StaleResponseAction handles a declared StaleCodes response before the
+	// engine returns ErrPlanStale. It is separate from generic rejection
+	// compensation because a stale target may require a different state change.
+	StaleResponseAction    string          `json:"staleResponseAction,omitempty"`
+	StaleResponseArguments json.RawMessage `json:"staleResponseArguments,omitempty"`
 	// ResponseProjectionFailureIndeterminate marks a committed response whose
 	// missing result code or failed local state projection cannot prove that a
 	// mutating command was rejected. Read-only dependency steps leave this false.

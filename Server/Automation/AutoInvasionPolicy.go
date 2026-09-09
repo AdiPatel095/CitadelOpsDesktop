@@ -71,11 +71,12 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		MinimumRemainingSec: 1800,
 		CheckIntervalSec:    30, MapRefreshIntervalSec: defaultInvasionRefresh, HorseTravelBoostID: -1,
 	}
-	if !decodeSection(snapshot.Configuration, "automation.autoInvasion", &settings) {
-		return invasionWaiting(snapshot.Now, "Auto Invasion is not configured"), nil
-	}
+	configured := decodeSection(snapshot.Configuration, "automation.autoInvasion", &settings)
 	settings.PresetID = strings.TrimSpace(settings.PresetID)
 	settings.FortifyCurrency = strings.ToUpper(strings.TrimSpace(settings.FortifyCurrency))
+	if !configured {
+		return invasionWaiting(snapshot.Now, "Auto Invasion is not configured"), nil
+	}
 	if settings.SourceCastleID <= 0 || settings.PresetID == "" || settings.ScoreTarget <= 0 ||
 		settings.ForeignLordsDifficultyID <= 0 || settings.BloodcrowDifficultyID <= 0 {
 		return invasionWaiting(snapshot.Now, "Choose a source castle, attack preset, both event difficulties, and score target"), nil
@@ -119,6 +120,20 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		}
 		return invasionWaiting(snapshot.Now, "Auto Invasion supports Foreign Lords and Bloodcrow"), nil
 	}
+	source, exists := snapshot.State.Castles[settings.SourceCastleID]
+	if !exists {
+		return invasionWaiting(snapshot.Now, fmt.Sprintf("Source castle %d is unavailable", settings.SourceCastleID)), nil
+	}
+	if source.KingdomID != 0 {
+		return invasionWaiting(snapshot.Now, "Foreign Lords and Bloodcrow attacks require a Great Empire castle"), nil
+	}
+	activeTargets := activeInvasionTargets(snapshot.State, targetTypeID, snapshot.Now)
+	activeCount := activeInvasionAttackCount(snapshot.State, source.ID, targetTypeID, snapshot.Now)
+	metrics := map[string]float64{
+		"score": float64(score.PlayerScore), "scoreTarget": float64(settings.ScoreTarget),
+		"activeAttacks": float64(activeCount),
+		"movingTargets": float64(len(activeTargets)),
+	}
 	fortifyCurrency, fortifyCurrencyValid := invasionFortifyCurrencyForEvent(
 		settings.FortifyCurrency,
 		score.EventID,
@@ -157,22 +172,14 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		return Decision{
 			Status: "complete", Detail: fmt.Sprintf("Score target reached: %d / %d", score.PlayerScore, settings.ScoreTarget),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
-			Metrics:     map[string]float64{"score": float64(score.PlayerScore), "scoreTarget": float64(settings.ScoreTarget)},
+			Metrics:     metrics,
 		}, nil
 	}
 	if remaining := invasionEventRemaining(score, snapshot.Now); remaining >= 0 && remaining <= max(0, settings.MinimumRemainingSec) {
 		return Decision{
 			Status: "idle", Detail: fmt.Sprintf("Event has %d seconds remaining; no new attacks will launch", remaining),
-			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
+			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
-	}
-
-	source, exists := snapshot.State.Castles[settings.SourceCastleID]
-	if !exists {
-		return invasionWaiting(snapshot.Now, fmt.Sprintf("Source castle %d is unavailable", settings.SourceCastleID)), nil
-	}
-	if source.KingdomID != 0 {
-		return invasionWaiting(snapshot.Now, "Foreign Lords and Bloodcrow attacks require a Great Empire castle"), nil
 	}
 	document, err := AttackPresets.Decode(snapshot.Configuration.Sections[AttackPresets.ConfigurationSection])
 	if err != nil {
@@ -181,12 +188,6 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 	preset, exists := AttackPresets.Find(document, settings.PresetID)
 	if !exists {
 		return invasionWaiting(snapshot.Now, "The selected CitadelOps attack preset no longer exists"), nil
-	}
-	activeTargets := activeInvasionTargets(snapshot.State, source.ID, targetTypeID, snapshot.Now)
-	activeCount := len(activeTargets)
-	metrics := map[string]float64{
-		"score": float64(score.PlayerScore), "scoreTarget": float64(settings.ScoreTarget),
-		"activeAttacks": float64(activeCount),
 	}
 	if _, blocked := dailyAttackLimitAllowance(
 		snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, 30), metrics,
@@ -229,9 +230,9 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		}, nil
 	}
 
-	candidates := invasionCandidates(snapshot.State, source, targetTypeID, fixedInvasionRadius, lastScan, activeTargets)
-	metrics["knownTargets"] = float64(len(candidates))
-	if len(candidates) == 0 {
+	pool := invasionCandidatePool(snapshot.State, source, targetTypeID, fixedInvasionRadius, lastScan)
+	metrics["knownTargets"] = float64(len(pool))
+	if len(pool) == 0 {
 		nextScan := lastScan.Add(refreshInterval)
 		if nextScan.Before(snapshot.Now) {
 			nextScan = snapshot.Now.Add(2 * time.Second)
@@ -239,6 +240,48 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		return Decision{
 			Status: "idle", Detail: "No eligible invasion castle is available in the latest map scan",
 			NextCheckAt: nextScan, Metrics: metrics,
+		}, nil
+	}
+	candidates, blocked := availableInvasionCandidates(
+		snapshot.State, pool, activeTargets, score.EventID, targetTypeID, snapshot.Now,
+	)
+	metrics["availableTargets"] = float64(len(candidates))
+	metrics["busyTargets"] = float64(blocked.busy)
+	metrics["reservedTargets"] = float64(blocked.reserved)
+	metrics["settlingTargets"] = float64(blocked.settling)
+	metrics["unavailableTargets"] = float64(blocked.unavailable)
+	metrics["unconfirmedTargets"] = float64(blocked.unconfirmed)
+	if len(candidates) == 0 {
+		nextCheck := snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30))
+		if nextScan := lastScan.Add(refreshInterval); nextScan.Before(nextCheck) {
+			nextCheck = nextScan
+		}
+		if target, refreshAt, found := nextUnconfirmedInvasionTarget(pool, snapshot.Now); found {
+			if !refreshAt.After(snapshot.Now) {
+				bounds := invasionNeighborhoodBounds(target)
+				arguments, _ := json.Marshal(map[string]any{
+					"sourceCastleId": source.ID, "radius": fixedInvasionRadius, "scanStartedAt": snapshot.Now,
+					"bounds": bounds,
+				})
+				return Decision{
+					Status:      "ready",
+					Detail:      fmt.Sprintf("Refresh invasion target %d:%d to confirm attack availability", target.X, target.Y),
+					NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
+					Request:             &Intent.Request{Name: "invasion.map.scan", Arguments: arguments},
+					ReevaluateOnSuccess: true,
+				}, nil
+			}
+			if refreshAt.Before(nextCheck) {
+				nextCheck = refreshAt
+			}
+		}
+		return Decision{
+			Status: "idle",
+			Detail: fmt.Sprintf(
+				"No attackable invasion castle is available: %d moving, %d reserved, %d settling, %d hidden or protected, %d awaiting confirmation",
+				blocked.busy, blocked.reserved, blocked.settling, blocked.unavailable, blocked.unconfirmed,
+			),
+			NextCheckAt: nextCheck, Metrics: metrics,
 		}, nil
 	}
 	target := candidates[0]
@@ -282,7 +325,8 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		}, nil
 	}
 	attackArguments := map[string]any{
-		"sourceCastleId": source.ID, "eventId": score.EventID, "scoreTarget": settings.ScoreTarget,
+		"sourceCastleId": source.ID, "eventId": score.EventID,
+		"eventEndsAt": State.ScalableEventEndsAt(score), "scoreTarget": settings.ScoreTarget,
 		"minimumRemainingSec": settings.MinimumRemainingSec, "targetTypeId": targetTypeID,
 		"kingdomId": target.KingdomID, "targetX": target.X, "targetY": target.Y,
 		"targetObjectId": target.ObjectID, "preset": preset,
@@ -454,37 +498,192 @@ func addPresetCourtyardRequirements(
 	}
 }
 
-func activeInvasionTargets(gameState State.GameState, sourceCastleID State.CastleID, targetTypeID int, now time.Time) map[string]struct{} {
+func activeInvasionTargets(gameState State.GameState, targetTypeID int, now time.Time) map[string]struct{} {
 	result := map[string]struct{}{}
 	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
-		if movement.Direction != 0 || movement.SourceCastleID != sourceCastleID || movement.TargetTypeID != targetTypeID {
-			return true
+		for _, target := range State.MovementMapEndpoints(movement) {
+			if !State.MovementOccupiesMapTargetAt(movement, State.MapTargetKey{
+				KingdomID: target.KingdomID, TypeID: targetTypeID, X: target.X, Y: target.Y,
+			}, now) {
+				continue
+			}
+			result[State.InvasionTargetKey(target.KingdomID, target.X, target.Y)] = struct{}{}
 		}
-		if movement.ArrivesAt != nil && !movement.ArrivesAt.IsZero() && !movement.ArrivesAt.After(now) &&
-			movement.ReturnsAt != nil && !movement.ReturnsAt.IsZero() && !movement.ReturnsAt.After(now) {
-			return true
-		}
-		result[fmt.Sprintf("%d:%d:%d", movement.KingdomID, movement.TargetX, movement.TargetY)] = struct{}{}
 		return true
 	})
 	return result
 }
 
-func invasionCandidates(
+func activeInvasionAttackCount(
+	gameState State.GameState,
+	sourceCastleID State.CastleID,
+	targetTypeID int,
+	now time.Time,
+) int {
+	active := 0
+	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
+		if !State.MovementOwnedByCurrentPlayer(gameState, movement) ||
+			movement.Direction == 0 && movement.SourceCastleID != sourceCastleID ||
+			movement.Direction == 1 && movement.TargetCastleID != sourceCastleID {
+			return true
+		}
+		target, found := State.MovementMapTarget(movement)
+		if !found || target.TypeID > 0 && target.TypeID != targetTypeID ||
+			!State.MovementOccupiesMapTargetAt(movement, State.MapTargetKey{
+				KingdomID: target.KingdomID, TypeID: targetTypeID, X: target.X, Y: target.Y,
+			}, now) {
+			return true
+		}
+		active++
+		return true
+	})
+	return active
+}
+
+func invasionReservationDueForReconciliation(
+	gameState State.GameState,
+	now time.Time,
+) (State.InvasionTargetReservation, State.MovementID, bool) {
+	keys := make([]string, 0, len(gameState.Invasion.TargetReservations))
+	for key := range gameState.Invasion.TargetReservations {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	// Positive evidence wins globally. A due absence/refresh candidate that is
+	// first by coordinate must never starve a later reservation whose exact
+	// movement is already available for accounting.
+	for _, key := range keys {
+		reservation := gameState.Invasion.TargetReservations[key]
+		if reservation.OperationID == "" || reservation.ReservedAt.IsZero() {
+			continue
+		}
+		if movement, matched := State.InvasionReservationMovement(gameState, reservation); matched {
+			return reservation, movement.ID, true
+		}
+	}
+	for _, key := range keys {
+		reservation := gameState.Invasion.TargetReservations[key]
+		if reservation.OperationID == "" || reservation.ReservedAt.IsZero() {
+			continue
+		}
+		occurrence, occurrenceKnown := gameState.LookupEventOccurrence(reservation.EventID)
+		occurrenceAdvanced := !reservation.OccurrenceEndsAt.IsZero() && occurrenceKnown &&
+			!State.SameEventOccurrence(reservation.OccurrenceEndsAt, occurrence.EndsAt)
+		if !reservation.RecoveryExhaustedAt.IsZero() && !occurrenceAdvanced {
+			continue
+		}
+		if occurrenceAdvanced {
+			return reservation, 0, true
+		}
+		dueAt := reservation.ReservedAt.Add(State.InvasionTargetReservationReconcileGrace)
+		if reservation.ReconcileAfter.After(dueAt) {
+			dueAt = reservation.ReconcileAfter
+		}
+		if now.Before(dueAt) {
+			continue
+		}
+		reservationOccurrenceKnown := !reservation.OccurrenceEndsAt.IsZero() && occurrenceKnown &&
+			State.SameEventOccurrence(reservation.OccurrenceEndsAt, occurrence.EndsAt)
+		if reservationOccurrenceKnown && State.AnyActiveMovementAtMapTarget(gameState, State.MapTargetKey{
+			KingdomID: reservation.KingdomID, TypeID: reservation.TargetTypeID,
+			X: reservation.X, Y: reservation.Y,
+		}, now) {
+			continue
+		}
+		return reservation, 0, true
+	}
+	return State.InvasionTargetReservation{}, 0, false
+}
+
+func invasionReservationReconciliationDecision(snapshot Snapshot, preferred State.CastleID) (Decision, bool) {
+	reservation, movementID, found := invasionReservationDueForReconciliation(snapshot.State, snapshot.Now)
+	if !found {
+		return Decision{}, false
+	}
+	arguments := map[string]any{
+		"kingdomId":        reservation.KingdomID,
+		"eventId":          reservation.EventID,
+		"occurrenceEndsAt": reservation.OccurrenceEndsAt,
+		"targetTypeId":     reservation.TargetTypeID,
+		"targetX":          reservation.X,
+		"targetY":          reservation.Y,
+		"operationId":      reservation.OperationID,
+		"reservedAt":       reservation.ReservedAt,
+		"reconcileAfter":   reservation.ReconcileAfter,
+	}
+	if movementID > 0 {
+		arguments["matchedMovementId"] = movementID
+		encoded, _ := json.Marshal(arguments)
+		return Decision{
+			Status:              "ready",
+			Detail:              fmt.Sprintf("Record confirmed invasion launch at %d:%d", reservation.X, reservation.Y),
+			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+			Metrics:             map[string]float64{"unresolvedLaunches": 1, "confirmedLaunches": 1},
+			Request:             &Intent.Request{Name: "invasion.target.reconcile", Arguments: encoded},
+			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+		}, true
+	}
+	occurrence, occurrenceKnown := snapshot.State.LookupEventOccurrence(reservation.EventID)
+	if !reservation.OccurrenceEndsAt.IsZero() && occurrenceKnown &&
+		!State.SameEventOccurrence(reservation.OccurrenceEndsAt, occurrence.EndsAt) {
+		encoded, _ := json.Marshal(arguments)
+		return Decision{
+			Status: "ready", Detail: fmt.Sprintf(
+				"Release prior-occurrence invasion reservation at %d:%d", reservation.X, reservation.Y,
+			),
+			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+			Metrics:             map[string]float64{"unresolvedLaunches": 1, "priorOccurrenceReservations": 1},
+			Request:             &Intent.Request{Name: "invasion.target.reconcile", Arguments: encoded},
+			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+		}, true
+	}
+	if preferred <= 0 {
+		preferred = reservation.SourceCastleID
+	}
+	source, sourceFound := snapshot.State.Castles[preferred]
+	if !sourceFound || source.KingdomID != reservation.KingdomID {
+		ids := make([]int64, 0, len(snapshot.State.Castles))
+		for id, castle := range snapshot.State.Castles {
+			if castle.KingdomID == reservation.KingdomID {
+				ids = append(ids, int64(id))
+			}
+		}
+		sort.Slice(ids, func(left, right int) bool { return ids[left] < ids[right] })
+		if len(ids) > 0 {
+			source, sourceFound = snapshot.State.Castles[State.CastleID(ids[0])]
+		}
+	}
+	if !sourceFound {
+		return Decision{
+			Status: "waiting", Detail: fmt.Sprintf(
+				"Cannot reconcile unresolved invasion launch at %d:%d without a castle in kingdom %d",
+				reservation.X, reservation.Y, reservation.KingdomID,
+			),
+			NextCheckAt: snapshot.Now.Add(30 * time.Second),
+		}, true
+	}
+	arguments["sourceCastleId"] = source.ID
+	encoded, _ := json.Marshal(arguments)
+	return Decision{
+		Status:              "ready",
+		Detail:              fmt.Sprintf("Reconcile unresolved invasion launch at %d:%d", reservation.X, reservation.Y),
+		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+		Metrics:             map[string]float64{"unresolvedLaunches": 1},
+		Request:             &Intent.Request{Name: "invasion.target.reconcile", Arguments: encoded},
+		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+	}, true
+}
+
+func invasionCandidatePool(
 	gameState State.GameState,
 	source State.CastleState,
 	targetTypeID int,
 	radius int,
 	lastScan time.Time,
-	active map[string]struct{},
 ) []State.MapObservation {
 	result := make([]State.MapObservation, 0)
 	gameState.RangeMapObservationsByKind(source.KingdomID, State.MapProjectionInvasion, func(_ string, target State.MapObservation) bool {
-		key := fmt.Sprintf("%d:%d:%d", target.KingdomID, target.X, target.Y)
 		if target.TypeID != targetTypeID || target.ObservedAt.Before(lastScan) || invasionDistanceSquared(source, target) > radius*radius {
-			return true
-		}
-		if _, busy := active[key]; busy {
 			return true
 		}
 		result = append(result, target)
@@ -502,6 +701,65 @@ func invasionCandidates(
 		return result[left].X < result[right].X
 	})
 	return result
+}
+
+type invasionBlockedTargets struct {
+	busy        int
+	reserved    int
+	settling    int
+	unavailable int
+	unconfirmed int
+}
+
+func availableInvasionCandidates(
+	gameState State.GameState,
+	pool []State.MapObservation,
+	active map[string]struct{},
+	eventID int64,
+	targetTypeID int,
+	now time.Time,
+) ([]State.MapObservation, invasionBlockedTargets) {
+	available := make([]State.MapObservation, 0, len(pool))
+	blocked := invasionBlockedTargets{}
+	for _, target := range pool {
+		key := State.InvasionTargetKey(target.KingdomID, target.X, target.Y)
+		_, busy := active[key]
+		_, reserved := gameState.Invasion.TargetReservation(target.KingdomID, target.X, target.Y)
+		switch {
+		case target.InvasionProtected || gameState.Invasion.TargetUnavailable(target.KingdomID, target.X, target.Y):
+			blocked.unavailable++
+		case !target.InvasionAvailabilityKnown || target.Level <= 0:
+			blocked.unconfirmed++
+		case reserved:
+			blocked.reserved++
+		case State.AttackFeatureTargetPendingAt(
+			gameState, State.AttackFeatureAutoInvasion, target.KingdomID, targetTypeID,
+			target.X, target.Y, now,
+		):
+			blocked.settling++
+		case busy:
+			blocked.busy++
+		default:
+			available = append(available, target)
+		}
+	}
+	return available, blocked
+}
+
+func nextUnconfirmedInvasionTarget(
+	pool []State.MapObservation,
+	now time.Time,
+) (State.MapObservation, time.Time, bool) {
+	for _, target := range pool {
+		if target.InvasionAvailabilityKnown && target.Level > 0 {
+			continue
+		}
+		if target.ObservedAt.IsZero() {
+			return target, now, true
+		}
+		return target, target.ObservedAt.Add(invasionTargetFreshness), true
+	}
+	return State.MapObservation{}, time.Time{}, false
 }
 
 // invasionNeighborhoodBounds is the single-window box refreshed before a pick:

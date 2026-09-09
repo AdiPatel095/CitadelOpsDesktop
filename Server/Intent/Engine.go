@@ -973,10 +973,15 @@ func stepResumeKey(step Step) string {
 		string(step.PreDispatchArguments),
 		step.DefinitiveSendFailureAction,
 		string(step.DefinitiveSendFailureArguments),
+		step.DefinitiveResponseFailureAction,
+		string(step.DefinitiveResponseFailureArguments),
+		step.StaleResponseAction,
+		string(step.StaleResponseArguments),
 		fmt.Sprint(step.ResponseProjectionFailureIndeterminate),
 		fmt.Sprint(step.TimeoutMillis),
 		fmt.Sprint(step.DelayMillis),
 		fmt.Sprint(step.SuccessCodes),
+		fmt.Sprint(step.StaleCodes),
 		responseRetryPolicyKey(step.ResponseRetry),
 		fmt.Sprint(step.CaptureResponse),
 		string(step.ExpectedResponsePayload),
@@ -1335,6 +1340,42 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		}
 		return primary
 	}
+	compensateDefinitiveResponseFailure := func(primary error) error {
+		if step.DefinitiveResponseFailureAction == "" {
+			return primary
+		}
+		engine.mu.RLock()
+		action := engine.actions[step.DefinitiveResponseFailureAction]
+		engine.mu.RUnlock()
+		if action == nil {
+			return errors.Join(primary, fmt.Errorf(
+				"definitive-response-failure action %q is not registered",
+				step.DefinitiveResponseFailureAction,
+			))
+		}
+		if err := action(sendContext, step.DefinitiveResponseFailureArguments); err != nil {
+			return errors.Join(primary, fmt.Errorf(
+				"definitive-response-failure action %q: %w",
+				step.DefinitiveResponseFailureAction, err,
+			))
+		}
+		return primary
+	}
+	handleStaleResponse := func(primary error) error {
+		if step.StaleResponseAction == "" {
+			return primary
+		}
+		engine.mu.RLock()
+		action := engine.actions[step.StaleResponseAction]
+		engine.mu.RUnlock()
+		if action == nil {
+			return errors.Join(primary, fmt.Errorf("stale-response action %q is not registered", step.StaleResponseAction))
+		}
+		if err := action(sendContext, step.StaleResponseArguments); err != nil {
+			return errors.Join(primary, fmt.Errorf("stale-response action %q: %w", step.StaleResponseAction, err))
+		}
+		return primary
+	}
 	if step.PreDispatchAction != "" {
 		engine.mu.RLock()
 		action := engine.actions[step.PreDispatchAction]
@@ -1436,11 +1477,15 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 						if err := advanceEffectPhase(ctx, EffectPhaseObserved); err != nil {
 							return exchange, Outbound.MarkIndeterminate(fmt.Errorf("persist observed retry response: %w", err))
 						}
+						// The response is definitive, but not terminal: the explicit
+						// retry policy will resend this same step. Keep its pre-dispatch
+						// marker armed across the guarded retry.
+						return exchange, responseErr
 					}
 					if containsInt(step.StaleCodes, *frame.Frame.ResponseCode) {
-						return exchange, fmt.Errorf("%w: %w", ErrPlanStale, responseErr)
+						return exchange, handleStaleResponse(fmt.Errorf("%w: %w", ErrPlanStale, responseErr))
 					}
-					return exchange, responseErr
+					return exchange, compensateDefinitiveResponseFailure(responseErr)
 				}
 			}
 			if err := validateExpectedResponsePayload(step.ExpectedResponsePayload, frame.Frame.Payload); err != nil {
@@ -1816,6 +1861,16 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 		plan.Steps[index].DefinitiveSendFailureArguments = append(json.RawMessage(nil), plan.Steps[index].DefinitiveSendFailureArguments...)
 		if plan.Steps[index].DefinitiveSendFailureAction != "" && len(plan.Steps[index].DefinitiveSendFailureArguments) == 0 {
 			plan.Steps[index].DefinitiveSendFailureArguments = json.RawMessage(`{}`)
+		}
+		plan.Steps[index].DefinitiveResponseFailureAction = strings.TrimSpace(plan.Steps[index].DefinitiveResponseFailureAction)
+		plan.Steps[index].DefinitiveResponseFailureArguments = append(json.RawMessage(nil), plan.Steps[index].DefinitiveResponseFailureArguments...)
+		if plan.Steps[index].DefinitiveResponseFailureAction != "" && len(plan.Steps[index].DefinitiveResponseFailureArguments) == 0 {
+			plan.Steps[index].DefinitiveResponseFailureArguments = json.RawMessage(`{}`)
+		}
+		plan.Steps[index].StaleResponseAction = strings.TrimSpace(plan.Steps[index].StaleResponseAction)
+		plan.Steps[index].StaleResponseArguments = append(json.RawMessage(nil), plan.Steps[index].StaleResponseArguments...)
+		if plan.Steps[index].StaleResponseAction != "" && len(plan.Steps[index].StaleResponseArguments) == 0 {
+			plan.Steps[index].StaleResponseArguments = json.RawMessage(`{}`)
 		}
 		plan.Steps[index].ExpectedResponsePayload = append(json.RawMessage(nil), plan.Steps[index].ExpectedResponsePayload...)
 		if policy := plan.Steps[index].ResponseRetry; policy != nil {

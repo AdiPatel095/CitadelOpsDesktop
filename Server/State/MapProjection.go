@@ -162,6 +162,8 @@ func projectMapObservation(source MapObservation) (MapObservation, bool) {
 	case MapProjectionInvasion:
 		projected.Level = source.Level
 		projected.ObjectID = source.ObjectID
+		projected.InvasionAvailabilityKnown = source.InvasionAvailabilityKnown
+		projected.InvasionProtected = source.InvasionProtected
 	case MapProjectionEventCamp:
 		projected.Level = source.Level
 		projected.ObjectID = source.ObjectID

@@ -3,6 +3,7 @@ package Ingest
 import (
 	"bytes"
 	"encoding/json"
+	"math/big"
 	"strconv"
 	"strings"
 )
@@ -44,12 +45,26 @@ func rawInt64(raw json.RawMessage) (int64, bool) {
 		integer, err := strconv.ParseInt(strings.TrimSpace(text), 10, 64)
 		return integer, err == nil
 	}
-	integer, err := strconv.ParseInt(string(raw), 10, 64)
-	if err == nil {
-		return integer, true
+	var number json.Number
+	if json.Unmarshal(raw, &number) != nil {
+		return 0, false
 	}
-	number, floatErr := strconv.ParseFloat(string(raw), 64)
-	return int64(number), floatErr == nil
+	rational, ok := new(big.Rat).SetString(number.String())
+	if !ok || !rational.IsInt() || !rational.Num().IsInt64() {
+		return 0, false
+	}
+	return rational.Num().Int64(), true
+}
+
+// rawJSONInt64 accepts only an integral JSON number. Some legacy payloads use
+// quoted numeric strings, which rawInt64 intentionally tolerates; protocol
+// identity fields must not silently accept that type mismatch.
+func rawJSONInt64(raw json.RawMessage) (int64, bool) {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || raw[0] == '"' {
+		return 0, false
+	}
+	return rawInt64(raw)
 }
 
 func rawFloat64(raw json.RawMessage) (float64, bool) {
@@ -70,11 +85,27 @@ func rawFloat64(raw json.RawMessage) (float64, bool) {
 }
 
 func rowInt(row []json.RawMessage, index int) int64 {
-	if index < 0 || index >= len(row) {
-		return 0
-	}
-	value, _ := rawInt64(row[index])
+	value, _ := rowIntValue(row, index)
 	return value
+}
+
+func rowIntValue(row []json.RawMessage, index int) (int64, bool) {
+	if index < 0 || index >= len(row) {
+		return 0, false
+	}
+	return rawInt64(row[index])
+}
+
+func rowExactInt(row []json.RawMessage, index int) (int, bool) {
+	if index < 0 || index >= len(row) {
+		return 0, false
+	}
+	value, ok := rawJSONInt64(row[index])
+	if !ok {
+		return 0, false
+	}
+	converted := int(value)
+	return converted, int64(converted) == value
 }
 
 func rowString(row []json.RawMessage, index int) string {
