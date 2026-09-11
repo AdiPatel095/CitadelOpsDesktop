@@ -282,6 +282,9 @@ func captureHeldForInvasionRecovery(snapshot State.GameState, capture State.Batt
 		return false
 	}
 	for _, reservation := range snapshot.Invasion.TargetReservations {
+		if !reservation.RecoveryExhaustedAt.IsZero() {
+			continue
+		}
 		if Ingest.InvasionReservationReportCandidate(snapshot, reservation, capture) {
 			return true
 		}
