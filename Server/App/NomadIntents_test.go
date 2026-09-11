@@ -2,6 +2,7 @@ package App
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -165,6 +166,16 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 			launchIndexes = append(launchIndexes, index)
 		}
 		if step.Opcode == "msd" {
+			if step.PreDispatchAction != timeSkipReserveGuardAction {
+				t.Fatalf("Nomad MSD is missing its dispatch-time reserve guard: %#v", step)
+			}
+			var guard timeSkipReserveGuardRequest
+			if err := json.Unmarshal(step.PreDispatchArguments, &guard); err != nil {
+				t.Fatal(err)
+			}
+			if guard.CurrencyID != 1005 || guard.MinimumRemaining != 0 {
+				t.Fatalf("Nomad MSD reserve guard = %#v", guard)
+			}
 			skipIndexes = append(skipIndexes, index)
 		}
 		if step.Action == timeSkipConsumeAction {
@@ -231,6 +242,24 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	}
 	if _, err := planNomadCampAttack(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments); err == nil {
 		t.Fatal("chain planned while the camp was awaiting a post-victory cooldown refresh")
+	}
+}
+
+func TestNomadTimeSkipReserveGuardRechecksInventoryBeforeDispatch(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.Currencies[1005] = 2
+	application := &Application{State: State.NewStore(gameState)}
+	arguments, _ := json.Marshal(timeSkipReserveGuardRequest{
+		CurrencyID: 1005, MinimumRemaining: 1,
+	})
+	if err := application.guardTimeSkipReserve(t.Context(), arguments); err != nil {
+		t.Fatalf("available time skip rejected before dispatch: %v", err)
+	}
+
+	gameState.Player.Currencies[1005] = 1
+	application.State = State.NewStore(gameState)
+	if err := application.guardTimeSkipReserve(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("spent time skip did not stale the planned dispatch: %v", err)
 	}
 }
 

@@ -80,8 +80,9 @@ type nomadChainArrivalGuard struct {
 }
 
 type plannedNomadChainTimeSkip struct {
-	Option         buildingTimeSkipOption
-	ExpectedBefore float64
+	Option           buildingTimeSkipOption
+	ExpectedBefore   float64
+	MinimumRemaining int64
 }
 
 type nomadCooldownSkipRequest struct {
@@ -380,6 +381,7 @@ func planNomadChainCooldownSkips(
 			option := options[selected]
 			result[transition] = append(result[transition], plannedNomadChainTimeSkip{
 				Option: option, ExpectedBefore: expectedBalance[option.CurrencyID],
+				MinimumRemaining: timeSkipReserve(reserves, option.WireKey),
 			})
 			available[option.CurrencyID]--
 			expectedBalance[option.CurrencyID]--
@@ -404,11 +406,17 @@ func nomadChainCooldownSkipSteps(
 		MinuteSkip: planned.Option.WireKey, KingdomID: strconv.FormatInt(int64(target.KingdomID), 10),
 		X: target.X, Y: target.Y, MapID: -1, NodeID: -1,
 	})
+	guardArguments, _ := json.Marshal(timeSkipReserveGuardRequest{
+		CurrencyID: planned.Option.CurrencyID, MinimumRemaining: planned.MinimumRemaining,
+	})
+	skip := commandStep(
+		fmt.Sprintf("Apply a %d-minute cooldown skip before the next camp attack", planned.Option.Minutes),
+		"msd", payload, "msd",
+	)
+	skip.PreDispatchAction = timeSkipReserveGuardAction
+	skip.PreDispatchArguments = guardArguments
 	return []Intent.Step{
-		commandStep(
-			fmt.Sprintf("Apply a %d-minute cooldown skip before the next camp attack", planned.Option.Minutes),
-			"msd", payload, "msd",
-		),
+		skip,
 		timeSkipConsumeStepAtBalance(planned.Option.CurrencyID, planned.ExpectedBefore),
 	}
 }
